@@ -200,14 +200,14 @@ typedef struct descr {
  * and to compute integer screen coordinates from them.
  * We thus make these variables only floating point.
  */
-STATIC struct {
+static struct {
 	double		left;		/* window edges */
 	double		bottom;
 	double		right;
 	double		top;
 } space;
-STATIC double	delta;			/* larger window dimension */
-STATIC double	deltao2;		/* delta / 2 */
+static double	delta;			/* larger window dimension */
+static double	deltao2;		/* delta / 2 */
 
 struct	relvect {
 	short	x,y;			/* x, y values (255,255 is end) */
@@ -220,7 +220,7 @@ struct	relvect {
  *  These character sets are taken from the Motorola MC6575 Pattern Generator,
  *  page 5-119 of 'The Complete Motorola Microcomputer Data Library'
  */
-STATIC struct vectorchar {
+static struct vectorchar {
 	char		ascii;		/* ASCII character emulated */
 	struct	relvect	r[10];		/* maximum # of vectors 1 char */
 } charset[] = {
@@ -276,29 +276,29 @@ STATIC struct vectorchar {
    {'\0'}
 };
 
-STATIC int	Nscanlines = 512;
-STATIC int	Npixels = 512;
-STATIC char	*framebuffer = NULL;
-STATIC char	*filename = NULL;
+static int	Nscanlines = 512;
+static int	Npixels = 512;
+static char	*framebuffer = NULL;
+static char	*filename = NULL;
 
 struct band  {
 	stroke	*first;
 	stroke	*last;
 };
-STATIC struct band	*band;		/* array of descriptor lists */
-STATIC struct band	*bandEnd;
+static struct band	*band;		/* array of descriptor lists */
+static struct band	*bandEnd;
 
-STATIC unsigned char	*buffer;		/* ptr to active band buffer */
-STATIC long	buffersize;		/* active band buffer bytes */
-STATIC short	ystart = 0;		/* active band starting scan */
-STATIC int	debug  = 0;
-STATIC int	over = 0;		/* !0 to overlay on existing image */
-STATIC int	immediate = 0;		/* !0 to plot immediately */
-STATIC int	single_banded = 0;	/* !0 if one fullscreen band */
-STATIC short	lines_per_band = 16;	/* scan lines per band */
-STATIC short	line_thickness = 1;
+static unsigned char	*buffer;		/* ptr to active band buffer */
+static long	buffersize;		/* active band buffer bytes */
+static short	ystart = 0;		/* active band starting scan */
+static int	debug  = 0;
+static int	over = 0;		/* !0 to overlay on existing image */
+static int	immediate = 0;		/* !0 to plot immediately */
+static int	single_banded = 0;	/* !0 if one fullscreen band */
+static short	lines_per_band = 16;	/* scan lines per band */
+static short	line_thickness = 1;
 
-STATIC int	sigs[] =		/* signals to be caught */
+static int	sigs[] =		/* signals to be caught */
 	{
 	SIGHUP,
 	SIGINT,
@@ -309,17 +309,17 @@ STATIC int	sigs[] =		/* signals to be caught */
 
 /*	Externals:	*/
 
-STATIC FILE	*pfin;		/* input file FIO block ptr */
+static FILE	*pfin;		/* input file FIO block ptr */
 
 FBIO	*fbp;			/* Current framebuffer */
 
 /*	Local subroutines:	*/
 
-STATIC int	DoFile(void), Foo(int code);
-STATIC stroke	*Dequeue(register struct band *bp, register stroke **hp);
-STATIC bool	BuildStr(coords *pt1, coords *pt2), GetCoords(register coords *coop),
+static int	DoFile(void), Foo(int code);
+static stroke	*Dequeue(register struct band *bp, register stroke **hp);
+static bool	BuildStr(coords *pt1, coords *pt2), GetCoords(register coords *coop),
 		OutBuild(void);
-STATIC void	Catch(register int sig), FreeUp(void), InitDesc(void), Requeue(register struct band *bp, register stroke *vp),
+static void	Catch(register int sig), FreeUp(void), InitDesc(void), Requeue(register struct band *bp, register stroke *vp),
 		Raster(register stroke *vp, register struct band *np), SetSigs(void);
 
 void		edgelimit(register coords *ppos), put_vector_char(register char c, register coords *pos);
@@ -336,10 +336,10 @@ bool	GetDCoords(register coords *coop);
  */
 #define	STROKE_NULL	((stroke *)0)
 
-STATIC struct descr	*freep = STROKE_NULL;	/* head of free stroke list */
+static struct descr	*freep = STROKE_NULL;	/* head of free stroke list */
 
 /* allocate new strokes to the free list */
-STATIC void
+static void
 get_strokes(void)
 {
 	register stroke	*sp;
@@ -557,7 +557,7 @@ main(int argc, char **argv)
 		   = 0	=> complete success
 		   > 0	=> line limit hit
 */
-STATIC int
+static int
 DoFile(void)	/* returns vpl status code */
 {
 	register bool	plotted;	/* false => empty frame image */
@@ -994,7 +994,7 @@ bool Get3Coords(register coords *coop)
 	return( ret );
 }
 
-STATIC bool
+static bool
 GetCoords(register coords *coop)
                	      		/* -> input coordinates */
 {
@@ -1111,7 +1111,7 @@ GetDCoords(register coords *coop)
 	InitDesc - initialize stroke descriptor lists
 */
 
-STATIC void
+static void
 InitDesc(void)
 {
 	register struct band *bp;	/* *bp -> start of descr list */
@@ -1126,7 +1126,7 @@ InitDesc(void)
 /*
  * 	Requeue - enqueue descriptor at END of band list
  */
-STATIC void
+static void
 Requeue(register struct band *bp, register stroke *vp)
 {
 	CK_STROKE(vp);
@@ -1144,7 +1144,7 @@ Requeue(register struct band *bp, register stroke *vp)
  *
  *  Returns addr of descriptor, or NULL if none left.
  */
-STATIC stroke *
+static stroke *
 Dequeue(register struct band *bp, register stroke **hp)
 
                      		/* *hp -> first descr in list */
@@ -1165,7 +1165,7 @@ Dequeue(register struct band *bp, register stroke **hp)
 	FreeUp - deallocate descriptors
 */
 
-STATIC void
+static void
 FreeUp(void)
 {
 	register struct band *bp;
@@ -1181,7 +1181,7 @@ FreeUp(void)
  *
  *  Set up multi-band DDA parameters for stroke
  */
-STATIC void
+static void
 prep_dda(register stroke *vp, register coords *pt1, register coords *pt2)
 {
 	CK_STROKE(vp);
@@ -1216,7 +1216,7 @@ prep_dda(register stroke *vp, register coords *pt1, register coords *pt2)
  *  banded buffered mode, we link the descriptor(s) into its starting
  *  point band(s).
  */
-STATIC bool
+static bool
 BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
       	           		/* endpoints */
 {
@@ -1271,7 +1271,7 @@ BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
 /*
  *	OutBuild - rasterize all strokes into raster frame image
  */
-STATIC bool
+static bool
 OutBuild(void)				/* returns true if successful */
 {
 	register struct band *hp;	/* *hp -> head of descr list */
@@ -1337,7 +1337,7 @@ OutBuild(void)				/* returns true if successful */
  *	a zero-length stroke.  Please do not try to "improve" this code
  *	as it is extremely hard to get all aspects just right.
  */
-STATIC void
+static void
 Raster(register stroke *vp, register struct band *np)
                     		/* -> rasterization descr */
                          	/* *np -> next band 1st descr */
@@ -1390,7 +1390,7 @@ Raster(register stroke *vp, register struct band *np)
 	Foo - clean up before return from rasterizer
 */
 
-STATIC int
+static int
 Foo(int code)				/* returns status code */
 	   	     			/* status code */
 	{
@@ -1405,7 +1405,7 @@ Foo(int code)				/* returns status code */
 /*
 	SetSigs - set up signal catchers
 */
-STATIC void
+static void
 SetSigs(void)
 {
 	register int	*psig;		/* -> sigs[.] */
@@ -1423,7 +1423,7 @@ SetSigs(void)
 	Catch - invoked on interrupt
 */
 
-STATIC void
+static void
 Catch(register int sig)
 	            	    		/* signal number */
 	{
