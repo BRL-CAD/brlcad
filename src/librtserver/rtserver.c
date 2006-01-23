@@ -1090,10 +1090,10 @@ rtserver_thread( void *num )
 
 	int queues_are_empty=1;		/* initially, all the queues will be empty */
 	struct application ap;
-	int thread_no=(int)(num);
+	long thread_no=(long)(num);
 
 	if( verbose ) {
-		fprintf( stderr, "starting thread x%lx (%d)\n", (long unsigned int)pthread_self(), thread_no );
+		fprintf( stderr, "starting thread x%lx (%ld)\n", (long unsigned int)pthread_self(), thread_no );
 	}
 
 	/* set up our own application structure */
@@ -1182,7 +1182,7 @@ rtserver_thread( void *num )
 					ap.a_uptr = (genptr_t)ray_res;
 
 					if( verbose ) {
-						fprintf( stderr, "thread x%lx (%d) got job %d\n",
+						fprintf( stderr, "thread x%lx (%ld) got job %d\n",
 							 (unsigned long int)pthread_self(), thread_no, ajob->rtjob_id );
 					}
 
@@ -1555,10 +1555,10 @@ get_muves_components()
 	name_entry = Tcl_FirstHashEntry( &name_tbl, &search );
 	while( name_entry ) {
 		char *name;
-		int index;
+		long index;
 
 		name = Tcl_GetHashKey( &name_tbl, name_entry );
-		index = (int)Tcl_GetHashValue( name_entry );
+		index = Tcl_GetHashValue( name_entry );
 		names[index] = bu_strdup( name );
 
 		name_entry = Tcl_NextHashEntry( &search );
