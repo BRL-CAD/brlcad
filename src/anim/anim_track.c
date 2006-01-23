@@ -181,7 +181,7 @@ main(int argc, char **argv)
 
     /*allocate memory for track information*/
     /* x: contains track geometry for the current frame */
-    x = (struct all *) bu_calloc(nmu_wheels,sizeof(struct all), "x all");
+    x = (struct all *) bu_calloc(num_wheels,sizeof(struct all), "x all");
     /* wh: contains geometry of wheels in mged database */
     wh = (struct wheel *) bu_calloc(num_wheels,sizeof(struct wheel), "wh wheel");
 
