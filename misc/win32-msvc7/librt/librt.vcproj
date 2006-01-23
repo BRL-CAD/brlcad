@@ -517,6 +517,12 @@ copy &quot;$(TargetDir)&quot;librt_d.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\db_flags.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\db_inmem.c">
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\db_io.c">
 				<FileConfiguration
 					Name="Release|Win32">
