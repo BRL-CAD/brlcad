@@ -228,10 +228,8 @@ main(int argc, char **argv)
  * Make a buffer will hold a single scan line of assuming a worst
  * case paste of 1 pixel of overlap.
  */
-	if ((buffer = (unsigned char *)malloc((org_width+paste_width)*num_bytes)) == (unsigned char *)NULL ) {
-		(void) fprintf(stderr, "pixpaste: Out of memory (malloc failed)\n");
-		exit(2);
-	}
+	buffer = (unsigned char *)bu_malloc((org_width+paste_width)*num_bytes, "buffer");
+
 /*
  * Set up the original buffer and the paste buffer.
  */

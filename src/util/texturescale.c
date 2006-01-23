@@ -246,8 +246,8 @@ main (int argc, char **argv)
     /*
      *	Allocate 1-scanline buffers for input and output
      */
-    outbuf = malloc(3*file_width);
-    inbuf  = malloc(3*file_width);
+    outbuf = bu_malloc(3*file_width, "outbuf");
+    inbuf  = bu_malloc(3*file_width, "inbuf");
 
     /*
      *	Do the filtering

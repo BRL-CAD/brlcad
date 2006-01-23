@@ -667,11 +667,7 @@ main(int ac, char **av)
 		fprintf(stderr, "Excess command line arguments ignored\n");
 
 	count = xdim*ydim;
-	buf = malloc(sizeof(*buf) * count);
-	if (! buf) {
-		fprintf(stderr, "malloc error\n");
-		exit(-1);
-	}
+	buf = bu_malloc(sizeof(*buf) * count, "buf");
 
 	if (! terrain_func) {
 		if (debug) bu_log("terrain func not specified\n");
