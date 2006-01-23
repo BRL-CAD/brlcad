@@ -21,23 +21,20 @@
 /** @file command.c
  *
  */
-
-/*      COMMAND.C       */
 #ifndef lint
 static const char RCSid[] = "$Header$";
 #endif
 
-/*	INCLUDES	*/
 #include "common.h"
 
-
-
+/*	INCLUDES	*/
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #if HAVE_STRING_H
-# include <string.h>
+#  include <string.h>
 #else
-# include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"

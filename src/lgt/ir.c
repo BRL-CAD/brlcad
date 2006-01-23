@@ -31,8 +31,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -41,11 +40,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
+
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
 #include "./vecmath.h"
 #include "./tree.h"
+
 #define IR_DATA_WID	512
 #define Avg_Fah(sum)	((sum)/(sample_sz))
 #define Kelvin2Fah( f )	(9.0/5.0)*((f)-273.15) + 32.0

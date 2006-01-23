@@ -31,8 +31,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -41,12 +40,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
+
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
 #include "./vecmath.h"
 #include "./ascii.h"
 #include "./tree.h"
+
+
 #define NewTrie( p ) \
 		if( ((p) = (Trie *) malloc( sizeof(Trie) )) == TRIE_NULL ) \
 			{ \

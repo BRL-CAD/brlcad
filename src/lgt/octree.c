@@ -38,8 +38,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -48,11 +47,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
+
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
 #include "./vecmath.h"
 #include "./tree.h"
+
 
 /* Error incurred while converting from double to float and back.	*/
 #define F2D_EPSILON	1.0e-1
