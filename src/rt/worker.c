@@ -38,13 +38,12 @@ static const char RCSworker[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -252,11 +251,7 @@ void do_run( int a, int b )
 	struct resource *tmp_res;
 
 	if( rt_g.rtg_parallel ) {
-		buffer = calloc(npsw, sizeof(resource[0]));
-		if (buffer == NULL) {
-			perror("calloc failed");
-			bu_bomb("Unable to allocate memory");
-		}
+		buffer = bu_calloc(npsw, sizeof(resource[0]), "buffer");
 		if (pipe(p) == -1) {
 			perror("pipe failed");
 		}

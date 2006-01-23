@@ -36,9 +36,9 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -295,7 +295,7 @@ void	view_end(struct application *ap)
 	weight *= conversion;
 	total_weight += weight;
 
-	ptr = (fastf_t *) malloc( sizeof(fastf_t) );
+	ptr = (fastf_t *) bu_malloc( sizeof(fastf_t), "ptr" );
 	*ptr = weight;
 	rp->reg_udata = (genptr_t) ptr;
 
@@ -315,7 +315,7 @@ void	view_end(struct application *ap)
 	*/
 	fastf_t *item_wt;
 	MAX_ITEM++;
-	item_wt = (fastf_t *) malloc( sizeof(fastf_t) * (MAX_ITEM + 1) );
+	item_wt = (fastf_t *) bu_malloc( sizeof(fastf_t) * (MAX_ITEM + 1), "item_wt" );
 	for( i=1; i<=MAX_ITEM; i++ )
 	    item_wt[i] = -1.0;
 	fprintf(outfp,"Weight by item number (in %s):\n\n",units);
@@ -397,7 +397,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segp)
 #if 0
 	bu_log( "\nhit: partition %d\n", part_count );
 #endif
-	dp = (struct datapoint *) malloc( sizeof(struct datapoint));
+	dp = (struct datapoint *) bu_malloc( sizeof(struct datapoint), "dp");
 	addp = reg->reg_udata;
 	reg->reg_udata = (genptr_t) dp;
 	dp->next = (struct datapoint *) addp;

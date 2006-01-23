@@ -36,15 +36,15 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
 #include <math.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <pthread.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -1290,16 +1290,16 @@ rts_start_server_threads( int thread_count, int queue_count )
 	  num_queues += queue_count;
 
 	  /* create the queues */
-	  input_queue = (struct rtserver_job *)realloc( input_queue,
-				      num_queues * sizeof( struct rtserver_job ) );
-	  output_queue = (struct rtserver_result *)realloc( output_queue,
-				      num_queues * sizeof( struct rtserver_result ) );
+	  input_queue = (struct rtserver_job *)bu_realloc( input_queue,
+				      num_queues * sizeof( struct rtserver_job ), "input_queue" );
+	  output_queue = (struct rtserver_result *)bu_realloc( output_queue,
+				      num_queues * sizeof( struct rtserver_result ), "output_queue" );
 
 	  /* create the mutexes */
-	  input_queue_mutex = (pthread_mutex_t *)realloc( input_queue_mutex,
-				      num_queues * sizeof( pthread_mutex_t ) );
-	  output_queue_mutex = (pthread_mutex_t *)realloc( output_queue_mutex,
-				      num_queues * sizeof( pthread_mutex_t ) );
+	  input_queue_mutex = (pthread_mutex_t *)bu_realloc( input_queue_mutex,
+				      num_queues * sizeof( pthread_mutex_t ), "input_queue_mutex" );
+	  output_queue_mutex = (pthread_mutex_t *)bu_realloc( output_queue_mutex,
+				      num_queues * sizeof( pthread_mutex_t ), "output_queue_mutex" );
 
 	  /* initialize the new mutexes and the new queues */
 	  for( i=old_queue_count ; i<num_queues ; i++ ) {
@@ -1316,7 +1316,7 @@ rts_start_server_threads( int thread_count, int queue_count )
 	  num_threads += thread_count;
 
 	  /* create the thread variables */
-	  threads = (pthread_t *)realloc( threads,  num_threads * sizeof( pthread_t ) );
+	  threads = (pthread_t *)bu_realloc( threads,  num_threads * sizeof( pthread_t ), "threads" );
 
 	  /* start the new threads */
 	  for( i=old_thread_count ; i<num_threads ; i++ ) {
