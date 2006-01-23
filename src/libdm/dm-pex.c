@@ -47,16 +47,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include "tk.h"
 
+#include <stdlib.h>
 #ifdef HAVE_XOSDEFS_H
-#include <X11/Xfuncproto.h>
-#include <X11/Xosdefs.h>
+#  include <X11/Xfuncproto.h>
+#  include <X11/Xosdefs.h>
 #endif
 #if defined(linux)
-#	undef   X_NOT_STDC_ENV
-#	undef   X_NOT_POSIX
+#  undef   X_NOT_STDC_ENV
+#  undef   X_NOT_POSIX
 #endif
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 
@@ -66,15 +66,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
-#if 0
-#include "mater.h"
-#endif
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-pex.h"
-#if 0
-#include "solid.h"
-#endif
 
 #define IMMED_MODE_SPT(info) (((info)->subset_info & 0xffff) ==\
 			      PEXCompleteImplementation ||\

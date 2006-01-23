@@ -40,6 +40,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #ifdef DM_X
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
 #ifdef HAVE_STRING_H

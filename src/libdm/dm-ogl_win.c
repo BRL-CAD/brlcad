@@ -41,14 +41,15 @@
 #undef VMIN		/* is used in vmath.h, too */
 
 #include <GL/gl.h>
-
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
