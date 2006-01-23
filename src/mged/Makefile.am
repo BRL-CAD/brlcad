@@ -81,7 +81,6 @@ mged_SOURCES = \
 	chgmodel.c \
 	chgtree.c \
 	chgview.c \
-	clip.c \
 	cmd.c \
 	clone.c \
 	color_scheme.c \
