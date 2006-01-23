@@ -61,16 +61,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int	LI, CO;
 #define MAX_PROMPT	10
-#define Alloc(p_,t_,s_)\
-		if( ((p_) = (t_ *) malloc((unsigned)(s_))) == (t_ *) 0 )\
-		{\
-		(void) fprintf( stderr, "\"%s\"(%d): Alloc of %ld bytes failed.\n",\
-				__FILE__, __LINE__, (long int)s_ );\
-		exit( 1 );\
-		} else	 ;
+#define Alloc(p_,t_,s_) (p_) = (t_ *) bu_malloc((unsigned)(s_), #p_);
+
 #ifndef Max
-#define Max(_a,_b)	((_a)<(_b)?(_b):(_a))
-#define Min(_a,_b)	((_a)>(_b)?(_b):(_a))
+#  define Max(_a,_b)	((_a)<(_b)?(_b):(_a))
+#  define Min(_a,_b)	((_a)>(_b)?(_b):(_a))
 #endif
 #define ring_Bell()	putchar( '\07' ),  (void) fflush( stdout )
 #define M_UP		'u'
