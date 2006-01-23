@@ -49,25 +49,25 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #ifdef HAVE_STDARG_H
-#include	<stdarg.h>
+#  include <stdarg.h>
 #else
-#include	<varargs.h>
+#  include <varargs.h>
 #endif
 
 #include "machine.h"
 #include "bu.h"
 
 #include "./vld_std.h"
+
 
 typedef struct
 	{
