@@ -43,9 +43,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "dm.h"
@@ -124,8 +123,8 @@ code (fastf_t x, fastf_t y)
 	return (cval);
 }
 
-#define EPSILON		0.0001
-#define INFINITY	100000000.0
+#define ANGLE_EPSILON 0.0001
+#define CLIP_DISTANCE 1000000000.0
 
 
 /*
@@ -153,19 +152,19 @@ vclip(fastf_t *a, fastf_t *b, register fastf_t *min, register fastf_t *max)
 	register fastf_t *dir = &diff[0];
 	register int i;
 
-	mindist = -INFINITY;
-	maxdist = INFINITY;
+	mindist = -CLIP_DISTANCE;
+	maxdist = CLIP_DISTANCE;
 	VSUB2( diff, b, a );
 
 	for( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
-		if( *dir < -EPSILON )  {
+		if( *dir < -ANGLE_EPSILON )  {
 			if( (sv = (*min - *pt) / *dir) < 0.0 )
 				return(0);	/* MISS */
 			if(maxdist > sv)
 				maxdist = sv;
 			if( mindist < (st = (*max - *pt) / *dir) )
 				mindist = st;
-		}  else if( *dir > EPSILON )  {
+		}  else if( *dir > ANGLE_EPSILON )  {
 			if( (st = (*max - *pt) / *dir) < 0.0 )
 				return(0);	/* MISS */
 			if(maxdist > st)
