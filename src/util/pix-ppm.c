@@ -151,7 +151,7 @@ main(int argc, char **argv)
 	/*
 	 * gobble up the bytes
 	 */
-	scanbuf = bu_malloc( SIZE, "scanbuf );
+	scanbuf = bu_malloc( SIZE, "scanbuf" );
 	if ( fread(scanbuf, 1, SIZE, infp) == 0 ) {
 		fprintf(stderr, "pix-ppm: Short read\n");
 		exit(1);
