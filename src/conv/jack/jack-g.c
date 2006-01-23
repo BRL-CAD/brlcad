@@ -148,7 +148,7 @@ main(int argc, char **argv)
 			base = argv[1];
 		else
 			base++;
-		reg_name = malloc(sizeof(base)+1);
+		reg_name = bu_malloc(sizeof(base)+1, "reg_name");
 		strcpy(reg_name, base);
 		/* Ignore .pss extension if it's there. */
 		doti = strlen(reg_name) - 4;
@@ -337,8 +337,8 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
 	struct shell *s;
 	struct nmgregion *r;
 
-	rname = malloc(sizeof(reg_name) + 3);	/* Region name. */
-	sname = malloc(sizeof(reg_name) + 3);	/* Solid name. */
+	rname = bu_malloc(sizeof(reg_name) + 3, "rname");	/* Region name. */
+	sname = bu_malloc(sizeof(reg_name) + 3, "sname");	/* Solid name. */
 
 	sprintf(sname, "s.%s", reg_name);
 	nmg_kill_zero_length_edgeuses( m );
