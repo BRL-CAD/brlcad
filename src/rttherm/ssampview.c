@@ -364,16 +364,16 @@ int
 tcl_fb_cursor(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 {
 	FBIO	*ifp;
-	int	mode, x, y;
+	long	mode, x, y;
 
 	if( argc != 5 )  {
 		interp->result = "Usage: fb_cursor fbp mode x y";
 		return TCL_ERROR;
 	}
-	ifp = (FBIO *)atoi(argv[1]);
-	mode = atoi(argv[2]);
-	x = atoi(argv[3]);
-	y = atoi(argv[4]);
+	ifp = (FBIO *)atol(argv[1]);
+	mode = atol(argv[2]);
+	x = atol(argv[3]);
+	y = atol(argv[4]);
 
 	ifp = fbp;	/* XXX hack, ignore tcl arg. */
 
@@ -392,16 +392,16 @@ int
 tcl_fb_readpixel(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 {
 	FBIO	*ifp;
-	int	mode, x, y;
+	long	mode, x, y;
 	unsigned char	pixel[4];
 
 	if( argc != 4 )  {
 		interp->result = "Usage: fb_readpixel fbp x y";
 		return TCL_ERROR;
 	}
-	ifp = (FBIO *)atoi(argv[1]);
-	x = atoi(argv[2]);
-	y = atoi(argv[3]);
+	ifp = (FBIO *)atol(argv[1]);
+	x = atol(argv[2]);
+	y = atol(argv[3]);
 
 	ifp = fbp;	/* XXX hack, ignore tcl arg. */
 
