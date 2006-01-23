@@ -163,6 +163,9 @@
 						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath="..\..\..\src\fbserv\server.c">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
