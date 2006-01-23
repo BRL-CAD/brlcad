@@ -580,9 +580,9 @@ main (int argc, char **argv)
      *	Allocate a 1-scanline output buffer
      *	and a circular input buffer of 3 scanlines
      */
-    outbuf = malloc(3*file_width);
+    outbuf = bu_malloc(3*file_width, "outbuf");
     for (i = 0; i < 3; ++i)
-	inrow[i] = malloc(3*(file_width + 2));
+	inrow[i] = bu_malloc(3*(file_width + 2), "inrow[i]");
     prev_row = 0;
     this_row = 1;
     next_row = 2;
@@ -670,7 +670,7 @@ main (int argc, char **argv)
 		*(inrow[next_row] + i) = 0;
     }
 
-    exit (1);
+    return 1;
 }
 
 /*

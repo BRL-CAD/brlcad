@@ -161,8 +161,8 @@ main(int argc, char **argv)
 	}
 
 	/* Allocate full size buffers for input and output */
-	inbuf = malloc( 3*file_width*file_height+8 );
-	outbuf = malloc( 2*file_width*file_height+8 );
+	inbuf = bu_malloc( 3*file_width*file_height+8, "inbuf" );
+	outbuf = bu_malloc( 2*file_width*file_height+8, "outbuf" );
 
 	if( mread( infd, inbuf, 3*file_width*file_height ) < 3*file_width*file_height )  {
 		fprintf(stderr, "pix-yuv: short input file, aborting\n");
@@ -181,6 +181,8 @@ main(int argc, char **argv)
 		fprintf(stderr, "pix-yuv: output write error, aborting\n");
 		exit(2);
 	}
+	bu_free(inbuf, "inbuf");
+	bu_free(outbuf, "outbuf");
 	return 0;
 }
 

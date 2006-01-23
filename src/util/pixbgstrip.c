@@ -158,12 +158,7 @@ main(int argc, char **argv)
 	}
 
 	scanbytes = file_width * sizeof(RGBpixel);
-	if( (scanline = (unsigned char *)malloc(scanbytes)) == (unsigned char *)NULL )  {
-		fprintf(stderr,
-			"pixbgstrip:  malloc(%d) failure for scanline buffer\n",
-			scanbytes);
-		exit(2);
-	}
+	scanline = (unsigned char *)bu_malloc(scanbytes, "scanline");
 
 	while( !feof(infp) )  {
 		if( fread( scanline, 1, scanbytes, infp ) != scanbytes )
@@ -193,6 +188,7 @@ main(int argc, char **argv)
 			exit(1);
 		}
 	}
+	bu_free(scanline, "scanline");
 	return(0);
 }
 
