@@ -638,14 +638,14 @@ fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_ERROR;
 	}
 
-	pp = (unsigned char *)calloc(width*height, sizeof(RGBpixel));
+	pp = (unsigned char *)bu_calloc(width*height, sizeof(RGBpixel), "pixel array");
 	for (i = 0; i < width*height*sizeof(RGBpixel); i+=sizeof(RGBpixel)) {
 		pp[i] = pixel[0];
 		pp[i+1] = pixel[1];
 		pp[i+2] = pixel[2];
 	}
 	fb_writerect(fbop->fbo_fbs.fbs_fbp, xmin, ymin, width, height, pp);
-	free((void *)pp);
+	bu_free((void *)pp, "pixel array");
 
 	return TCL_OK;
 }
