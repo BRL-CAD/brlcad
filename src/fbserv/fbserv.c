@@ -128,6 +128,12 @@ int	verbose = 0;
 
 /* from server.c */
 extern const struct pkg_switch fb_server_pkg_switch[];
+extern FBIO	*fb_server_fbp;
+extern fd_set	*fb_server_select_list;
+extern int	*fb_server_max_fd;
+extern int	fb_server_got_fb_free;       /* !0 => we have received an fb_free */
+extern int	fb_server_refuse_fb_free;    /* !0 => don't accept fb_free() */
+extern int	fb_server_retain_on_close;   /* !0 => we are holding a reusable FB open */
 
 
 /* Hidden args: -p<port_num> -F<frame_buffer> */
