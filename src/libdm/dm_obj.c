@@ -34,6 +34,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #endif
@@ -3158,6 +3159,7 @@ dmo_openFb(dmop, interp)
 	if (dmop->dmo_fbs.fbs_fbp != FBIO_NULL)
 		return TCL_OK;
 
+	/* don't use bu_calloc so we can fail slightly more gradefully */
 	if ((dmop->dmo_fbs.fbs_fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
 		Tcl_Obj	*obj;
 
@@ -3177,7 +3179,7 @@ dmo_openFb(dmop, interp)
 	case DM_TYPE_X:
 		*dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
 
-		dmop->dmo_fbs.fbs_fbp->if_name = malloc((unsigned)strlen(X_name) + 1);
+		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen(X_name) + 1, "if_name");
 		(void)strcpy(dmop->dmo_fbs.fbs_fbp->if_name, X_name);
 
 		/* Mark OK by filling in magic number */
@@ -3198,7 +3200,7 @@ dmo_openFb(dmop, interp)
 	case DM_TYPE_OGL:
 		*dmop->dmo_fbs.fbs_fbp = ogl_interface; /* struct copy */
 
-		dmop->dmo_fbs.fbs_fbp->if_name = malloc((unsigned)strlen(ogl_name) + 1);
+		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen(ogl_name) + 1, "if_name");
 		(void)strcpy(dmop->dmo_fbs.fbs_fbp->if_name, ogl_name);
 
 		/* Mark OK by filling in magic number */
