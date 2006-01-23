@@ -69,6 +69,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
@@ -2156,15 +2157,20 @@ box_in(char **cmd_argvs, struct rt_db_internal *intern)
 /*   R P P _ I N ( ) :   	reads rpp parameters from keyboard
  *				returns 0 if successful read
  *					1 if unsuccessful read
- */
+ */ 
 int
 rpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 {
 	point_t		min, max;
+	char *p;
+	int i;
 
 	CHECK_DBI_NULL;
 
 	intern->idb_ptr = NULL;
+
+	for (i=0 ; cmd_argvs[i] ; i++)
+	    bu_log("%d %s\n", i, cmd_argvs[i]);
 
 	min[X] = atof(cmd_argvs[3+0]) * local2base;
 	max[X] = atof(cmd_argvs[3+1]) * local2base;
@@ -2173,6 +2179,11 @@ rpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 	min[Z] = atof(cmd_argvs[3+4]) * local2base;
 	max[Z] = atof(cmd_argvs[3+5]) * local2base;
 
+	bu_log("l2b %g\n", local2base);
+	VPRINT("min", min);
+	VPRINT("max", max);
+
+	bu_log("atof %g", atof(cmd_argvs[3+0]));
 	if (min[X] >= max[X]) {
 	  Tcl_AppendResult(interp, "ERROR, XMIN greater than XMAX!\n", (char *)NULL);
 	  return(1);	/* failure */
