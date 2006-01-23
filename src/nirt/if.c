@@ -213,8 +213,7 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 	if (need_to_free)
 	{
 	    bu_vls_free(&claimant_list);
-	    bu_free(ValTab[VTI_CLAIMANT_LISTN].value.sval,
-		"returned by bu_vls_strdup");
+	    bu_free(ValTab[VTI_CLAIMANT_LISTN].value.sval, "returned by bu_vls_strdup");
 	    need_to_free = 0;
 	}
 
