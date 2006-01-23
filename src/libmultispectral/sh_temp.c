@@ -36,10 +36,10 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
+#include <stddef.h>
 #include <stdio.h>
 #include <ctype.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -70,7 +70,7 @@ struct temp_specific {
 	struct bu_mapped_file	*mp;
 };
 #define TX_NULL	((struct temp_specific *)0)
-#define TX_O(m)	offsetof(struct temp_specific, m)
+#define TX_O(m)	bu_offsetof(struct temp_specific, m)
 
 struct bu_structparse temp_parse[] = {
 	{"%s",	TXT_NAME_LEN, "file", bu_offsetofarray(struct temp_specific, t_file),		BU_STRUCTPARSE_FUNC_NULL },
