@@ -151,11 +151,7 @@ main(int argc, char **argv)
 	/*
 	 * gobble up the bytes
 	 */
-	scanbuf = malloc( SIZE );
-	if ( scanbuf == NULL ) {
-		perror("pix-ppm: malloc");
-		exit(1);
-	}
+	scanbuf = bu_malloc( SIZE, "scanbuf );
 	if ( fread(scanbuf, 1, SIZE, infp) == 0 ) {
 		fprintf(stderr, "pix-ppm: Short read\n");
 		exit(1);
@@ -186,7 +182,8 @@ main(int argc, char **argv)
 		fwrite(row, 1, ROWSIZE, stdout);
 	}
 
-	exit(0);
+	bu_free(scanbuf, "scanbuf");
+	return 0;
 }
 
 /*
