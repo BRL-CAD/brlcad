@@ -31,8 +31,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -150,7 +148,7 @@ lgt_Save_Db(char *file)
 
 	if( (fp = fopen( file, "w" )) == NULL )
 		return	0;
-	setbuf( fp, malloc( BUFSIZ ) );
+	setbuf( fp, bu_malloc( BUFSIZ, "buffer" ) );
 	for(	entry = lgts;
 		entry < &lgts[lgt_db_size]
 	     && put_Lgt_Entry( entry, fp );

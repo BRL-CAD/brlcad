@@ -30,8 +30,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <fcntl.h>
 #include <assert.h>
@@ -41,10 +39,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
+
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
 #include "./mat_db.h"
+
 
 #define DEBUG_TEXTURE	0
 
@@ -117,14 +117,7 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 			file );
 		return	NULL;
 		}
-	if(	(iconmap =
-		(icon_t *) malloc( BYTES_WIDE*hgt ))
-		== (icon_t *) 0
-		)
-		{
-		bu_log( "No space for icon texture map.\n" );
-		return	NULL;
-		}
+	iconmap = (icon_t *) bu_malloc( BYTES_WIDE*hgt, "iconmap" );
 #if DEBUG_TEXTURE
 	bu_log( "init_Icon_Texture(%s) wid=%d hgt=%d\n", file, wid, hgt );
 	bu_log( "%d bytes allocated for texture map.\n",
@@ -136,19 +129,9 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 		bu_log( "Read of icon texture map failed.\n" );
 		return	NULL;
 		}
-	if(	(iconp =
-		(struct icon_texture *) malloc( sizeof( struct icon_texture ) ))
-	    ==	(struct icon_texture *) 0
-		)
-		{
-		bu_log( "No space for icon texture.\n" );
-		return	NULL;
-		}
-	if( (iconp->filenm = malloc( strlen(file)+1 )) == NULL )
-		{
-		bu_log( "init_Icon_Texture: no space for file name.\n" );
-		return	NULL;
-		}
+	iconp =	(struct icon_texture *) bu_malloc( sizeof( struct icon_texture ), "iconp" );
+	iconp->filenm = malloc( strlen(file)+1, "iconp->filenm");
+
 	(void) strcpy( iconp->filenm, file );
 	iconp->map = iconmap;
 	iconp->wid = wid;
@@ -178,14 +161,7 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 		int		hgt = entry->df_rgb[1] << 3;
 	if( (txfbiop = fb_open( file, wid, hgt )) == FBIO_NULL )
 		return	NULL;
-	if(	(fbmap =
-		(RGBpixel *) malloc( wid*hgt*sizeof(RGBpixel) ))
-		== (RGBpixel *) 0
-		)
-		{
-		bu_log( "No space for frame buffer texture map.\n" );
-		return	NULL;
-		}
+	fbmap =	(RGBpixel *) bu_malloc( wid*hgt*sizeof(RGBpixel), "fbmap" );
 #if DEBUG_TEXTURE
 	bu_log( "init_Fb_Texture(%s) wid=%d hgt=%d\n", file, wid, hgt );
 	bu_log( "%d bytes allocated for texture map.\n",
@@ -196,19 +172,8 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 		bu_log( "Read of frame buffer texture failed.\n" );
 		return	NULL;
 		}
-	if(	(fbp =
-		(struct fb_texture *) malloc( sizeof( struct fb_texture ) ))
-	    ==	(struct fb_texture *) 0
-		)
-		{
-		bu_log( "No space for fb texture.\n" );
-		return	NULL;
-		}
-	if( (fbp->filenm = malloc( strlen(file)+1 )) == NULL )
-		{
-		bu_log( "init_Fb_Texture: no space for file name.\n" );
-		return	NULL;
-		}
+	fbp = (struct fb_texture *) bu_malloc( sizeof( struct fb_texture ), "fbp");
+	fbp->filenm = bu_malloc( strlen(file)+1, "fbp->filenm");
 	(void) strcpy( fbp->filenm, file );
 	fbp->map = fbmap;
 	fbp->wid = wid;

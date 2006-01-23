@@ -36,10 +36,7 @@
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-
 #include "common.h"
-
-
 
 #include <math.h>
 #include <stdio.h>
@@ -99,7 +96,7 @@ main(int argc, char **argv)
     if (enn<1) enn=1;
 
     /* allocate storage */
-    points = (fastf_t *) calloc((3*enn+1)*4, sizeof(fastf_t));
+    points = (fastf_t *) bu_calloc((3*enn+1)*4, sizeof(fastf_t), "points");
 
     /* read the first 3n points into the storage array*/
     VMOVEN(points+4, first, 4);
@@ -180,6 +177,7 @@ main(int argc, char **argv)
 	    printf("%.10g\n", 1000.0 * max_bank/max_cross);
 	}
     }
+    bu_free(points, "points");
     return( 0 );
 }
 

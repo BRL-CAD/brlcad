@@ -34,25 +34,17 @@
 #include "common.h"
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
-
 #include <math.h>
 #include <stdio.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "anim.h"
-
-#ifndef M_PI
-#define M_PI	3.14159265358979323846
-#endif
-
-#ifndef M_PI_2
-#define M_PI_2	1.57079632679489661923
-#endif
 
 #define GIVEN		0
 #define CALCULATED	1
@@ -189,9 +181,9 @@ main(int argc, char **argv)
 
     /*allocate memory for track information*/
     /* x: contains track geometry for the current frame */
-    x = (struct all *) calloc(num_wheels,sizeof(struct all));
+    x = (struct all *) bu_calloc(nmu_wheels,sizeof(struct all), "x all");
     /* wh: contains geometry of wheels in mged database */
-    wh = (struct wheel *) calloc(num_wheels,sizeof(struct wheel));
+    wh = (struct wheel *) bu_calloc(num_wheels,sizeof(struct wheel), "wh wheel");
 
     /*read original wheel positions*/
     for (i=0;i<NW;i++){
@@ -367,8 +359,8 @@ main(int argc, char **argv)
 	}
 	if (last_frame) break;
     }
-    free(x);
-    free(wh);
+    bu_free(x, "x all");
+    bu_free(wh, "wh wheel");
     return( 0 );
 }
 

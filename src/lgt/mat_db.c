@@ -31,8 +31,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -41,6 +39,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
+
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
@@ -187,7 +186,7 @@ mat_Save_Db(char *file)
 		register FILE		*fp;
 	if( (fp = fopen( file, "w" )) == NULL )
 		return	0;
-	setbuf( fp, malloc( BUFSIZ ) );
+	setbuf( fp, bu_malloc( BUFSIZ, "buffer" ) );
 	for(	entry = mat_db_table;
 		entry < &mat_db_table[mat_db_size]
 	     && put_Mat_Entry( entry, fp );

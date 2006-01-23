@@ -38,9 +38,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <fcntl.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <assert.h>
 
@@ -320,22 +320,14 @@ render_Model(int frame)
 				MAX_HL_SIZE, MAX_HL_SIZE );
 			return;
 			}
-		if( (hl_normap = (RGBpixel *)
-		       malloc( (unsigned)(a_gridsz*a_gridsz)*sizeof(RGBpixel) ))
-			== NULL
-			)
-			bu_log( "Warning, no memory for normal map.\n" );
-		if( (hl_regmap = (short *)
-			malloc( (unsigned)(a_gridsz*a_gridsz)*sizeof(short) ))
-			== NULL
-			)
-			bu_log( "Warning, no memory for region map.\n" );
-		if( (hl_dstmap = (unsigned short *)
-			malloc( (unsigned)
-				(a_gridsz*a_gridsz)*sizeof(unsigned short) ))
-			== NULL
-			)
-			bu_log( "Warning, no memory for distance map.\n" );
+
+		hl_normap = (RGBpixel *)
+		    bu_malloc( (unsigned)(a_gridsz*a_gridsz)*sizeof(RGBpixel), "hl_normap" );
+		hl_regmap = (short *)
+		    bu_malloc( (unsigned)(a_gridsz*a_gridsz)*sizeof(short), "hl_regmap" );
+		hl_dstmap = (unsigned short *)
+		    bu_malloc( (unsigned)(a_gridsz*a_gridsz)*sizeof(unsigned short), "hl_dstmap");
+
 		ag.a_hit = f_HL_Hit;
 		ag.a_miss = f_HL_Miss;
 		ag.a_logoverlap =rt_silent_logoverlap;
