@@ -35,8 +35,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 
 #include "machine.h"
@@ -102,13 +100,8 @@ tone_floyd(int pix, int x, int y, int nx, int ny, int new)
  *	is this the first time through?
  */
 	if (!error) {
-		register int i;
-		error = (int *) malloc(width*sizeof(int));
-		thisline = (int *) malloc(width*sizeof(int));
-		for (i=0; i<width; i++) {
-			error[i] = 0;
-			thisline[i] = 0;
-		}
+		error = (int *) bu_calloc(width, sizeof(int), "error");
+		thisline = (int *) bu_calloc(width, sizeof(int), "thisline");
 	}
 /*
  *	if this is a new line then trade error for thisline.

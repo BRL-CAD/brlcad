@@ -65,18 +65,19 @@
  *	Christopher T. Johnson	- 90/03/21
  *
  */
-
 #ifndef lint
 static const char RCSid[] = "$Header$";
 #endif
+
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "vmath.h"
@@ -198,8 +199,8 @@ setup(int argc, char **argv)
 				fprintf(stderr,"Missing Y coordent for tone map.\n");
 				exit(1);
 			}
-			Xlist = (int *) malloc((c+2)*sizeof(int));
-			Ylist = (int *) malloc((c+2)*sizeof(int));
+			Xlist = (int *) bu_malloc((c+2)*sizeof(int), "Xlist");
+			Ylist = (int *) bu_malloc((c+2)*sizeof(int), "Ylist");
 
 			for (j=0;optind < i; ) {
 				Xlist[j] = atoi(argv[optind++]);
@@ -210,8 +211,8 @@ setup(int argc, char **argv)
 			Ylist[j] = 1024;
 			if (Debug>6) fprintf(stderr,"Number points=%d\n",j+1);
 			(void) cubic_init(j+1,Xlist,Ylist);
-			free(Xlist);
-			free(Ylist);
+			bu_free(Xlist, "Xlist");
+			bu_free(Ylist, "Ylist");
 		break;
 /*
  * Debug is not well used at this point a value of 9 will get all
@@ -295,8 +296,8 @@ main(int argc, char **argv)
 		fprintf(stderr,"\n");
 	}
 
-	Line = (unsigned char *) malloc(width);
-	Out = (unsigned char *) malloc(width);
+	Line = (unsigned char *) bu_malloc(width, "Line");
+	Out = (unsigned char *) bu_malloc(width, "Out");
 /*
  * should be a test here to make sure we got the memory requested.
  */
@@ -353,6 +354,8 @@ main(int argc, char **argv)
 		}
 		fwrite(Out,1,width,stdout);
 	}
+	bu_free(Line, "Line");
+	bu_free(Out, "Out");
 	return 0;
 }
 
