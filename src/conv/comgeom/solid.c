@@ -47,9 +47,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <ctype.h>
 #include <math.h>
@@ -59,6 +59,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "bu.h"
 
 /* defined in read.c */
 extern int get_line(register char *cp, int buflen, char *title);
@@ -303,19 +304,12 @@ getsolid(void)
 		pts_per_curve = getint( scard, 20, 10 );
 
 		/* Allocate curves pointer array */
-		if( (curve = (double **)malloc((ncurves+1)*sizeof(double *))) == ((double **)0) )  {
-			printf("malloc failure for ARS %d\n", sol_work);
-			return(-1);
-		}
+		curve = (double **)bu_malloc((ncurves+1)*sizeof(double *), "curve");
+
 		/* Allocate space for a curve, and read it in */
 		for( i=0; i<ncurves; i++ )  {
-			if( (curve[i] = (double *)malloc(
-			    (pts_per_curve+1)*3*sizeof(double) )) ==
-			    ((double *)0) )  {
-				printf("malloc failure for ARS %d curve %d\n",
-					sol_work, i);
-				return(-1);
-			}
+			curve[i] = (double *)bu_malloc((pts_per_curve+1)*3*sizeof(double), "curve[i]" );
+
 			/* Get data for this curve */
 			if( getxsoldata( curve[i], pts_per_curve*3, sol_work ) < 0 )  {
 				printf("ARS %d: getxsoldata failed, curve %d\n",
@@ -329,9 +323,9 @@ getsolid(void)
 		}
 
 		for( i=0; i<ncurves; i++ )  {
-			free( (char *)curve[i] );
+			bu_free( (char *)curve[i], "curve[i]" );
 		}
-		free( (char *)curve);
+		bu_free( (char *)curve, "curve" );
 		bu_free( name, "name" );
 		return(ret);
 	}
@@ -565,10 +559,7 @@ getsolid(void)
 		num = numpts * 3 + 1;			/* 3 entries per pt */
 
 		/* allocate space for the points array */
-		if( (pts = ( double *)malloc(num * sizeof( double)) ) == NULL )  {
-			printf("malloc failure for WIR %d\n", sol_work);
-			return(-1);
-		}
+		pts = ( double *)bu_malloc(num * sizeof( double), "pts" );
 
 		if( getsoldata( pts, num, sol_work ) < 0 )  {
 			return(-1);
@@ -581,11 +572,8 @@ getsolid(void)
 		RT_LIST_INIT( &head );
 		for( i = 0; i < numpts; i++ )  {
 			/* malloc a new structure */
-			if( (ps = (struct wdb_pipept *)malloc(
-			 sizeof( struct wdb_pipept)) ) == (struct wdb_pipept *)NULL )  {
-			   	printf("malloc failure for WIR %d\n", sol_work);
-			   	return(-1);
-			 }
+			ps = (struct wdb_pipept *)bu_malloc(sizeof( struct wdb_pipept), "ps");
+
 			ps->l.magic = WDB_PIPESEG_MAGIC;
 			VMOVE( ps->pp_coord, &pts[i*3]);	/* 3 pts at a time */
 			ps->pp_id = 0;				/* solid */
@@ -792,22 +780,15 @@ bad:
 	}
 
 	/* Allocate storage for plane equations */
-	if( (eqn = (plane_t *)malloc(nface*sizeof(plane_t))) == (plane_t *)0 )  {
-		printf("arbn plane equation malloc failure\n");
-		goto bad;
-	}
+	eqn = (plane_t *)bu_malloc(nface*sizeof(plane_t), "eqn");
+
 	/* Allocate storage for per-plane use count */
-	if( (used = (int *)malloc(nface*sizeof(int))) == (int *)0 )  {
-		printf("arbn use count malloc failure\n");
-		goto bad;
-	}
+	used = (int *)bu_malloc(nface*sizeof(int), "used");
 
 	if( npt >= 1 )  {
 		/* Obtain vertex input_points */
-		if( (input_points = (double *)malloc(npt*3*sizeof(double))) == (double *)0 )  {
-			printf("arbn point malloc failure\n");
-			goto bad;
-		}
+		input_points = (double *)bu_malloc(npt*3*sizeof(double), "input_points");
+
 		if( getxsoldata( input_points, npt*3, sol_work ) < 0 )
 			goto bad;
 	}
@@ -954,7 +935,7 @@ bad:
 	}
 
 	/* Release storage for input points */
-	free( (char *)input_points );
+	bu_free( (char *)input_points, "input_points" );
 	input_points = (double *)0;
 
 
@@ -1004,14 +985,10 @@ bad:
 				if( last_vertex >= max_vertex )  {
 					if( max_vertex == 0 )   {
 						max_vertex = 3;
-						vertex = (double *)malloc( max_vertex*3*sizeof(double) );
+						vertex = (double *)bu_malloc( max_vertex*3*sizeof(double), "vertex" );
 					} else {
 						max_vertex *= 10;
-						vertex = (double *)realloc( (char *)vertex, max_vertex*3*sizeof(double) );
-					}
-					if( vertex == (double *)0 )  {
-						printf("arbn vertex realloc fail\n");
-						goto bad;
+						vertex = (double *)bu_realloc( (char *)vertex, max_vertex*3*sizeof(double), "vertex" );
 					}
 				}
 
@@ -1041,10 +1018,10 @@ next_k:				;
 	/* Write out the solid ! */
 	i = mk_arbn( outfp, name, nface, eqn );
 
-	if( input_points )  free( (char *)input_points );
-	if( vertex )  free( (char *)vertex );
-	if( eqn )  free( (char *)eqn );
-	if( used )  free( (char *)used );
+	if( input_points )  bu_free( (char *)input_points, "input_points" );
+	if( vertex )  bu_free( (char *)vertex, "vertex" );
+	if( eqn )  bu_free( (char *)eqn, "eqn" );
+	if( used )  bu_free( (char *)used, "used" );
 
 	return(i);
 }
