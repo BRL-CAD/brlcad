@@ -38,18 +38,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <math.h>
-#include "tk.h"
 #include <X11/Xutil.h>
-
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
+#include "tk.h"
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -126,7 +124,7 @@ X_fb_open(void)
 	}
 
 	*fbp = X24_interface; /* struct copy */
-	fbp->if_name = malloc((unsigned)strlen(X_name) + 1);
+	fbp->if_name = bu_malloc((unsigned)strlen(X_name) + 1, "if_name");
 	(void)strcpy(fbp->if_name, X_name);
 
 	/* Mark OK by filling in magic number */

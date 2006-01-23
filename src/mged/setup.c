@@ -31,6 +31,7 @@
 #include "common.h"
 
 /* system headers */
+#include <stdlib.h>
 #include <tcl.h>
 #include <itcl.h>
 #include <string.h>

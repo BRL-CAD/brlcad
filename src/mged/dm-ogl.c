@@ -38,15 +38,13 @@ static const char RCSid[] = "@(#)$Header";
 
 #include "common.h"
 
+#include <stdlib.h>
+#include <math.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
 #  include <strings.h>
 #endif
-
-#include <math.h>
-#include "tk.h"
-
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
 #endif
@@ -57,6 +55,7 @@ static const char RCSid[] = "@(#)$Header";
 #  include <gl/device.h>
 #endif
 
+#include "tk.h"
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -149,7 +148,7 @@ Ogl_fb_open()
 	}
 
 	*fbp = ogl_interface; /* struct copy */
-	fbp->if_name = malloc((unsigned)strlen(ogl_name) + 1);
+	fbp->if_name = bu_malloc((unsigned)strlen(ogl_name) + 1, "if_name");
 	(void)strcpy(fbp->if_name, ogl_name);
 
 	/* Mark OK by filling in magic number */
