@@ -268,8 +268,8 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
 	s = BU_LIST_FIRST( shell , &r->s_hd );
 
 	sprintf(id, "%d", reg_id);
-	rname = malloc(sizeof(id) + 3);	/* Region name. */
-	sname = malloc(sizeof(id) + 3);	/* Solid name. */
+	rname = bu_malloc(sizeof(id) + 3, "rname");	/* Region name. */
+	sname = bu_malloc(sizeof(id) + 3, "sname");	/* Solid name. */
 
 	sprintf(sname, "%s.s", id);
 	if( polysolids )

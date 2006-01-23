@@ -731,7 +731,7 @@ nmgbld(void)
 	/* mk_nmg() frees the intern.idp_ptr pointer */
 	RT_INIT_DB_INTERNAL(&intern);
 
-	free( name );
+	bu_free( name, "name" );
 }
 
 /*		S O L B L D
@@ -1519,10 +1519,7 @@ bsurfbld(void)
 
 	/* Malloc and clear memory for the KNOT DATA and read it */
 	nbytes = record.d.d_nknots * sizeof(union record);
-	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
-		bu_log( "asc2g: spline knot malloc error\n");
-		exit(1);
-	}
+	vp = (float *)bu_malloc(nbytes, "vp");
 	fp = vp;
 	(void)bzero( (char *)vp, nbytes );
 	/* Read the knot vector information */
@@ -1535,14 +1532,11 @@ bsurfbld(void)
 	(void)fwrite( (char *)fp, nbytes, 1, ofp );
 
 	/* Free the knot data memory */
-	(void)free( (char *)fp );
+	(void)bu_free( (char *)fp, "knot data" );
 
 	/* Malloc and clear memory for the CONTROL MESH data and read it */
 	nbytes = record.d.d_nctls * sizeof(union record);
-	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
-		bu_log( "asc2g: control mesh malloc error\n");
-		exit(1);
-	}
+	vp = (float *)bu_malloc(nbytes, "vp");
 	fp = vp;
 	(void)bzero( (char *)vp, nbytes );
 	/* Read the control mesh information */
@@ -1556,7 +1550,7 @@ bsurfbld(void)
 	(void)fwrite( (char *)fp, nbytes, 1, ofp );
 
 	/* Free the control mesh memory */
-	(void)free( (char *)fp );
+	(void)bu_free( (char *)fp, "mesh data" );
 #else
 	bu_bomb("bsrfbld() needs to be upgraded to v5\n");
 #endif
@@ -1745,11 +1739,7 @@ pipebld(void)
 	{
 		double id,od,x,y,z,bendradius;
 
-		if( (sp = (struct wdb_pipept *)malloc(sizeof(struct wdb_pipept)) ) == NULL)
-		{
-				fprintf(stderr,"asc2g: malloc failure for pipe\n");
-				exit(-1);
-		}
+		sp = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "pipe");
 
 		(void)sscanf( buf, "%le %le %le %le %le %le",
 				&id, &od,
@@ -1849,10 +1839,7 @@ arbnbld(void)
 /*bu_log("mallocing space for eqns\n");
  */
 	/* Malloc space for the in-coming plane equations */
-	if( (eqn = (plane_t *)malloc( sizeof( plane_t ) * neqn ) ) == NULL)  {
-		bu_log("asc2g: malloc failure for arbn\n");
-		exit(-1);
-	}
+	eqn = (plane_t *)bu_malloc( sizeof( plane_t ) * neqn, "eqn" );
 
 	/* Now, read the plane equations and put in appropriate place */
 

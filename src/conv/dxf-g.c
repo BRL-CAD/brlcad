@@ -600,8 +600,8 @@ add_triangle( int v1, int v2, int v3, int layer )
 	if( layers[layer]->curr_tri >= layers[layer]->max_tri ) {
 		/* allocate more memory for triangles */
 		layers[layer]->max_tri += TRI_BLOCK;
-		layers[layer]->part_tris = (int *)realloc( layers[layer]->part_tris,
-							  sizeof( int ) * layers[layer]->max_tri * 3 );
+		layers[layer]->part_tris = (int *)bu_realloc( layers[layer]->part_tris,
+							  sizeof( int ) * layers[layer]->max_tri * 3, "layers[layer]->part_tris" );
 		if( !layers[layer]->part_tris ) {
 			bu_log( "ERROR: Failed to allocate memory for part triangles on layer %s\n",
 				 layers[layer]->name);

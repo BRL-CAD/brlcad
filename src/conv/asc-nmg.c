@@ -40,6 +40,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -112,8 +113,8 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
 
 	mk_id(fpout, "Ascii NMG");
 
-	rname = malloc(sizeof(reg_name) + 3);	/* Region name. */
-	sname = malloc(sizeof(reg_name) + 3);	/* Solid name. */
+	rname = bu_malloc(sizeof(reg_name) + 3, "rname");	/* Region name. */
+	sname = bu_malloc(sizeof(reg_name) + 3, "sname");	/* Solid name. */
 
 	sprintf(sname, "s.%s", reg_name);
 	mk_nmg(fpout, sname,  m);		/* Make nmg object. */

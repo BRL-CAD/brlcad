@@ -185,7 +185,7 @@ static int reg_start_func(struct db_tree_state *tsp,
   }
 
   if(!found) {
-    prop_list = (property_t *)realloc(prop_list, sizeof(property_t) * (prop_num + 1));
+    prop_list = (property_t *)bu_realloc(prop_list, sizeof(property_t) * (prop_num + 1), "prop_list");
     strcpy(prop_list[prop_num].name, name);
     prop_list[prop_num].color[0] = color[0] / 255.0;
     prop_list[prop_num].color[1] = color[1] / 255.0;
@@ -335,7 +335,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     fwrite(&c, 1, 1, adrt_fh);
     fwrite(mesh_name, 1, c, adrt_fh);
 
-    mesh_map = (mesh_map_t *)realloc(mesh_map, sizeof(mesh_map_t) * (mesh_map_ind + 1));
+    mesh_map = (mesh_map_t *)bu_realloc(mesh_map, sizeof(mesh_map_t) * (mesh_map_ind + 1), "mesh_map");
 
     strcpy(mesh_map[mesh_map_ind].mesh, mesh_name);
     strcpy(mesh_map[mesh_map_ind].prop, prop_name);
@@ -499,14 +499,14 @@ void load_regmap(char *filename) {
         /* insert an entry for the whole range */
         for(i = 0; i <= hi-lo; i++) {
           /* Insert one entry into the regmap_list */
-          regmap_list = (regmap_t *)realloc(regmap_list, sizeof(regmap_t) * (regmap_num + 1));
+          regmap_list = (regmap_t *)bu_realloc(regmap_list, sizeof(regmap_t) * (regmap_num + 1), "regmap_list");
           strcpy(regmap_list[regmap_num].name, name);
           regmap_list[regmap_num].id = lo + i;
           regmap_num++;
         }
       } else {
         /* insert one entry into the regmap_list */
-        regmap_list = (regmap_t *)realloc(regmap_list, sizeof(regmap_t) * (regmap_num + 1));
+        regmap_list = (regmap_t *)bu_realloc(regmap_list, sizeof(regmap_t) * (regmap_num + 1), "regmap_list");
         strcpy(regmap_list[regmap_num].name, name);
         regmap_list[regmap_num].id = atoi(idstr);
         regmap_num++;
