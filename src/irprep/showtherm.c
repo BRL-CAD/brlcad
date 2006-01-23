@@ -69,11 +69,6 @@
 
 
 #define MAXFIL 26	/*  Maximum number of char in file name.  */
-#define TOL 1e-10	/*  Tolerance, if two numbers are w/in this  */
-			/*  tolerance they are equal.  */
-#if !defined(PI)
-#  define PI 3.14159265358979323846264	/*  Pi.  */
-#endif
 
 
 struct table		/*  Table for region name & temperature.  */
@@ -208,7 +203,7 @@ int main(int argc, char **argv)
       (void)fflush(stdout);
 
       /*  Malloc arrays.  */
-      info = (struct table *)malloc( numreg * sizeof (struct table) );
+      info = (struct table *)bu_malloc( numreg * sizeof (struct table), "info" );
 
       /*  Zero all arrays.  */
       for(i=0; i<numreg; i++)
@@ -252,7 +247,7 @@ int main(int argc, char **argv)
 	  /*
 	   *	while ( eltim_read != eltim)
 	   */
-	  while ( (eltim_read < (eltim - TOL)) || ((eltim + TOL) < eltim_read) )
+	  while ( (eltim_read < (eltim - VUNITIZE_TOL)) || ((eltim + VUNITIZE_TOL) < eltim_read) )
 	    /*  Page through to end of data.  */
 	    {
 	      for(i=0; i<(full_line + 1); i++)
@@ -499,8 +494,8 @@ int main(int argc, char **argv)
       /*  User enters azimuth & elevation for viewing.  */
       (void)fprintf(stderr,"Enter azimuth & elevation.\n\t");
       (void)scanf("%lf %lf",&az,&el);
-      alpha = az * PI / 180.;
-      beta = (-el) * PI / 180.;
+      alpha = az * M_PI / 180.;
+      beta = (-el) * M_PI / 180.;
       calpha = cos(alpha);
       salpha = sin(alpha);
       cbeta = cos(beta);
