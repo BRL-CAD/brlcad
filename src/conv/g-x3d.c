@@ -40,6 +40,7 @@ static const char RCSid[] = "$Header$";
 #include "common.h"
 
 /* system headers */
+#include <stddef.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -110,7 +111,7 @@ struct vrml_mat {
 	int	tx_n;
 };
 
-#define PL_O(_m)	offsetof(struct vrml_mat, _m)
+#define PL_O(_m)	bu_offsetof(struct vrml_mat, _m)
 #define PL_OA(_m)	bu_offsetofarray(struct vrml_mat, _m)
 
 struct bu_structparse vrml_mat_parse[]={
