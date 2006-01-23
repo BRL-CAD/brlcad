@@ -36,20 +36,19 @@
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "tcl.h"
 #include "machine.h"
 #include "cmd.h"                  /* includes bu.h */
 #include "fb.h"
+#include "bu.h"
 
 #define FB_TCL_CKMAG(_ptr, _magic, _str){ \
 	struct bu_vls _fb_vls; \
@@ -153,7 +152,7 @@ fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
     if(strcasecmp(argv[1], X_device_name) == 0) {
 	*ifp = X24_interface; /* struct copy */
 
-	ifp->if_name = malloc((unsigned)strlen(X_device_name) + 1);
+	ifp->if_name = bu_malloc((unsigned)strlen(X_device_name) + 1, "if_name");
 	(void)strcpy(ifp->if_name, X_device_name);
 
 	/* Mark OK by filling in magic number */
@@ -161,7 +160,7 @@ fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 
 	if((X24_open_existing(ifp, argc - 1, argv + 1)) <= -1){
 	    ifp->if_magic = 0; /* sanity */
-	    free((void *) ifp->if_name);
+	    bu_free((void *) ifp->if_name, "if_name");
 	    free((void *) ifp);
 	    Tcl_AppendResult(interp, "fb_open_existing: failed to open X framebuffer\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -173,7 +172,7 @@ fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
     if(strcasecmp(argv[1], ogl_device_name) == 0) {
 	*ifp = ogl_interface; /* struct copy */
 
-	ifp->if_name = malloc((unsigned)strlen(ogl_device_name) + 1);
+	ifp->if_name = (char *)bu_malloc((unsigned)strlen(ogl_device_name) + 1, "if_name");
 	(void)strcpy(ifp->if_name, ogl_device_name);
 
 	/* Mark OK by filling in magic number */
@@ -181,7 +180,7 @@ fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 
 	if((ogl_open_existing(ifp, argc - 1, argv + 1)) <= -1){
 	    ifp->if_magic = 0; /* sanity */
-	    free((void *) ifp->if_name);
+	    bu_free((void *) ifp->if_name, "if_name");
 	    free((void *) ifp);
 	    Tcl_AppendResult(interp, "fb_open_existing: failed to open ogl framebuffer\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -190,7 +189,7 @@ fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 #endif  /* IF_OGL */
 
     ifp->if_magic = 0; /* sanity */
-    free((void *) ifp->if_name);
+    bu_free((void *) ifp->if_name, "if_name");
     free((void *) ifp);
 
     bu_vls_init(&vls);
@@ -250,7 +249,7 @@ fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 	}
 	if(ifp->if_pbase != PIXEL_NULL)
 	    free((void *)ifp->if_pbase);
-	free((void *)ifp->if_name);
+	bu_free((void *)ifp->if_name, "if_name");
 	free((void *)ifp);
 	return TCL_OK;
     }
@@ -269,7 +268,7 @@ fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 	}
 	if(ifp->if_pbase != PIXEL_NULL)
 	    free((void *)ifp->if_pbase);
-	free((void *)ifp->if_name);
+	bu_free((void *)ifp->if_name, "if_name");
 	free((void *)ifp);
 	return TCL_OK;
     }
