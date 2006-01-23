@@ -56,12 +56,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "msr.h"
 
 
-#if !defined(PI)
-#  define PI 3.14159265358979323846262    /*  Pi.  */
-#endif
-#define ZTOL 1.e-20	/*  Zero tolerance.  */
-
-
 extern int hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp);       /*  User supplied hit function.  */
 extern int miss(struct application *ap);      /*  User supplied miss function.  */
 extern int overlap(void);   /*  User supplied overlap function.  */
@@ -201,11 +195,11 @@ int main(int argc, char **argv)
         (void)fflush(stderr);
 
 	/*  Malloc everything now that the number of regions is known.  */
-	info = (struct table *)malloc(numreg * sizeof(*info));
+	info = (struct table *)bu_malloc(numreg * sizeof(*info), "info");
 	for(i=0; i<numreg; i++)
 	{
-	   info[i].intrays = (double *)malloc(numreg * sizeof(double));
-	   info[i].sf = (double *)malloc(numreg * sizeof(double));
+	   info[i].intrays = (double *)bu_malloc(numreg * sizeof(double), "info[i].intrays");
+	   info[i].sf = (double *)bu_malloc(numreg * sizeof(double), "info[i].sf");
 	}
 
 	/*  Zero all arrays.  */
@@ -248,7 +242,7 @@ int main(int argc, char **argv)
 	radall = sqrt(radall) / 2. + .5;
 
 	/*  Find surface area of bounding sphere.  */
-	areaall = 4 * PI * radall * radall;
+	areaall = 4 * M_PI * radall * radall;
 
 	/*  Print info on min, max, center, radius, & surface area  */
 	/*  of entire model.  */
@@ -364,7 +358,7 @@ int main(int argc, char **argv)
 #		else
 		   q = drand48();
 #		endif
-		theta = q * 2. * PI;
+		theta = q * 2. * M_PI;
 
 #		ifdef MSRMAXTBL
 		   q = MSR_UNIF_DOUBLE(msr) + 0.5;
@@ -381,7 +375,7 @@ int main(int argc, char **argv)
 		strtdir[Z] = rho * cos(phi);
 
 		/*  Elevation & azimuth for finding a vector in a plane.  */
-		elev = PI / 2. - phi;
+		elev = M_PI / 2. - phi;
 		az = theta;
 
 		/*  Find vector in yz-plane.  */
@@ -390,7 +384,7 @@ int main(int argc, char **argv)
 #		else
 		   q = drand48();
 #		endif
-		theta = q * 2. * PI;
+		theta = q * 2. * M_PI;
 
 #		ifdef MSRMAXTBL
 		   q = MSR_UNIF_DOUBLE(msr) + 0.5;
@@ -535,6 +529,15 @@ int main(int argc, char **argv)
 		(void)fflush(fpw2);
 	   }						/*  END # 1090  */
 
+
+	/* free memory */
+	for(i=0; i<numreg; i++)
+	{
+	   bu_free(info[i].intrays, "info[i].intrays");
+	   bu_free(info[i].sf, "info[i].sf");
+	}
+	bu_free(info, "info");
+
 	/*  Close files.  */
 	(void)fclose(fpw);
 	(void)fclose(fpw1);
@@ -637,7 +640,7 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	   if(tol[Y] < 0.) tol[Y] = (-tol[Y]);
 	   if(tol[Z] < 0.) tol[Z] = (-tol[Z]);
 
-	   if( (tol[X] < ZTOL) && (tol[Y] < ZTOL) && (tol[Z] < ZTOL) )
+	   if( (tol[X] < VDIVIDE_TOL) && (tol[Y] < VDIVIDE_TOL) && (tol[Z] < VDIVIDE_TOL) )
 	   {
 		/*  Nothing happens since the points are the same.  */
 	   }
