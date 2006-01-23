@@ -230,14 +230,6 @@ FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
 /* vers.c (created by libfb/Cakefile) */
 FB_EXPORT extern char fb_version[];
 
-/* server.c */
-FB_EXPORT extern FBIO	*fb_server_fbp;
-FB_EXPORT extern fd_set	*fb_server_select_list;
-FB_EXPORT extern int	*fb_server_max_fd;
-FB_EXPORT extern int	fb_server_got_fb_free;       /* !0 => we have received an fb_free */
-FB_EXPORT extern int	fb_server_refuse_fb_free;    /* !0 => don't accept fb_free() */
-FB_EXPORT extern int	fb_server_retain_on_close;   /* !0 => we are holding a reusable FB open */
-
 #endif /* FB_H */
 
 /*
