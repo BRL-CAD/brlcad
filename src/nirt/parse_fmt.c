@@ -27,17 +27,14 @@ static const char RCSid[] = "$Header$";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
-
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
-
 #include <ctype.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -232,9 +229,9 @@ void parse_fmt(char *uoutspec, int outcom_type)
     outitem	*prev_oip = OUTITEM_NULL;
     outval	*vtp;
 
-    /* N.B. rt_malloc() only returns upon successful allocation */
+    /* N.B. bu_malloc() only returns upon successful allocation */
 
-    mycopy = uos = rt_malloc(strlen(uoutspec) + 1, "uos");
+    mycopy = uos = bu_malloc(strlen(uoutspec) + 1, "uos");
     strcpy(uos, uoutspec);
     /* Break up the format specification into pieces,
      * one per conversion specification (and, hopefully)
@@ -253,7 +250,7 @@ void parse_fmt(char *uoutspec, int outcom_type)
     {
 	nm_cs = 0;
 	/* Allocate storage for the next item in the output list */
-	oip = (outitem *) rt_malloc(sizeof(outitem), "output item");
+	oip = (outitem *) bu_malloc(sizeof(outitem), "output item");
 	oip -> next = OUTITEM_NULL;
 
 	for (up = uos; *uos != '"'; ++uos)
@@ -277,7 +274,7 @@ void parse_fmt(char *uoutspec, int outcom_type)
 	 * needs an output item or not (i.e. whether it
 	 * contains 1 conversion spec vs. none)
 	 */
-    	oip->format = rt_malloc(uos - up + 1, "format");
+    	oip->format = bu_malloc(uos - up + 1, "format");
 	of = oip -> format;
 	while (up != uos)
 	{
@@ -534,7 +531,7 @@ FILE *fopenrc(void)
     {
 	if ((home = getenv("HOME")) != NULL)
 	{
-	    rc_file_name = rt_malloc(strlen(home) + strlen(DEF_RCF_NAME) + 2,
+	    rc_file_name = bu_malloc(strlen(home) + strlen(DEF_RCF_NAME) + 2,
 	    			"rc_file_name");
 	    sprintf(rc_file_name, "%s/%s", home, DEF_RCF_NAME);
 	    fPtr = fopen(rc_file_name, "r");
@@ -673,7 +670,7 @@ void direct_output(char *buffer, com_table *ctp)
 	} else
 	    openfunc=fopen;
 
-	new_dest = rt_malloc(strlen(buffer + i)+1,"new_dest");
+	new_dest = bu_malloc(strlen(buffer + i)+1,"new_dest");
 
 	sprintf(new_dest, "%s", buffer + i);
 	if ((newf = (*openfunc)(new_dest, "w")) == NULL) {
@@ -723,7 +720,7 @@ void state_file(char *buffer, com_table *ctp)
 	new_name = def_sf_name;
     else
     {
-	new_name = rt_malloc(strlen(buffer + i)+1, "new_state_filename");
+	new_name = bu_malloc(strlen(buffer + i)+1, "new_state_filename");
 	sprintf(new_name, "%s", buffer + i);
     }
 
