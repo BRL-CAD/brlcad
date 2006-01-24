@@ -444,11 +444,9 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 	 * lists contained in the database instance and send
 	 * everything.
 	 */
-	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-		send_to_server(dbip, dp, (genptr_t)&stash);
-	    }
-	}
+	FOR_ALL_DIRECTORY_START(dp, dbip) {
+	    send_to_server(dbip, dp, (genptr_t)&stash);
+	} FOR_ALL_DIRECTORY_END;
     }
 
     /* let the server know we're done.  not necessary, but polite. */
