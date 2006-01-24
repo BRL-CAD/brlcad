@@ -775,142 +775,133 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	bu_vls_init( &vls );
 
 	/* look at all objects in this database */
-	for( i = 0; i < RT_DBNHASH; i++)
-	{
-		for( dp1 = dbip1->dbi_Head[i]; dp1 != DIR_NULL; dp1 = dp1->d_forw )
+	FOR_ALL_DIRECTORY_START(dp1, dbip1) {
+		char *str1, *str2;
+		Tcl_Obj *obj1, *obj2;
+
+		/* check if this object exists in the other database */
+		if( (dp2 = db_lookup( dbip2, dp1->d_namep, 0 )) == DIR_NULL )
 		{
-			char *str1, *str2;
-			Tcl_Obj *obj1, *obj2;
-
-			/* check if this object exists in the other database */
-			if( (dp2 = db_lookup( dbip2, dp1->d_namep, 0 )) == DIR_NULL )
-			{
-				kill_obj( dp1->d_namep );
-				continue;
-			}
-
-			/* skip the _GLOBAL object */
-			if( dp1->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY )
-				continue;
-
-			/* try to get the TCL version of this object */
-			bu_vls_trunc( &vls, 0 );
-			bu_vls_printf( &vls, "db1 get %s", dp1->d_namep );
-			if( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK )
-			{
-				/* cannot get TCL version, use bu_external */
-				Tcl_ResetResult( interp );
-				compare_external( dp1, dp2 );
-				continue;
-			}
-
-			obj1 = Tcl_NewListObj( 0, NULL );
-			Tcl_AppendObjToObj( obj1, Tcl_GetObjResult( interp ) );
-
-			bu_vls_trunc( &s1_tcl, 0 );
-			bu_vls_trunc( &s2_tcl, 0 );
-
-			bu_vls_strcpy( &s1_tcl, Tcl_GetStringResult( interp ) );
-			str1 = bu_vls_addr( &s1_tcl );
-			Tcl_ResetResult( interp );
-
-			/* try to get TCL version of object from the other database */
-			bu_vls_trunc( &vls, 0 );
-			bu_vls_printf( &vls, "db2 get %s", dp1->d_namep );
-			if( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK )
-			{
-				Tcl_ResetResult( interp );
-
-				/* cannot get it, they MUST be different */
-				if( mode == HUMAN )
-					printf( "Replace %s with the same object from %s\n",
-						dp1->d_namep, dbip2->dbi_filename );
-				else
-					printf( "kill %s\n# IMPORT %s from %s\n",
-						dp1->d_namep, dp2->d_namep, dbip2->dbi_filename );
-				continue;
-			}
-
-			obj2 = Tcl_NewListObj( 0, NULL );
-			Tcl_AppendObjToObj( obj2, Tcl_GetObjResult( interp ) );
-
-			bu_vls_strcpy( &s2_tcl , Tcl_GetStringResult( interp ) );
-			str2 = bu_vls_addr( &s2_tcl );
-			Tcl_ResetResult( interp );
-
-			/* got TCL versions of both */
-			if( (dp1->d_flags & DIR_SOLID) && (dp2->d_flags & DIR_SOLID) )
-			{
-				/* both are solids */
-				compare_tcl_solids( str1, obj1, dp1, str2, obj2, dp2 );
-				if( pre_5_vers != 2 )
-					compare_attrs( dp1, dp2 );
-				continue;
-			}
-
-			if( (dp1->d_flags & DIR_COMB) && (dp2->d_flags & DIR_COMB ) )
-			{
-				/* both are combinations */
-				compare_tcl_combs( obj1, dp1, obj2, dp2 );
-				if( !pre_5_vers != 2 )
-					compare_attrs( dp1, dp2 );
-				continue;
-			}
-
-			/* the two objects are different types */
-			if( strcmp( str1, str2 ) )
-			{
-				if( mode == HUMAN )
-					printf( "%s:\n\twas: %s\n\tis now: %s\n\n",
-						dp1->d_namep, str1, str2 );
-				else
-					printf( "kill %s\ndb put %s %s\n",
-						dp1->d_namep, dp2->d_namep, str2 );
-			}
+			kill_obj( dp1->d_namep );
+			continue;
 		}
-	}
+
+		/* skip the _GLOBAL object */
+		if( dp1->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY )
+			continue;
+
+		/* try to get the TCL version of this object */
+		bu_vls_trunc( &vls, 0 );
+		bu_vls_printf( &vls, "db1 get %s", dp1->d_namep );
+		if( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK )
+		{
+			/* cannot get TCL version, use bu_external */
+			Tcl_ResetResult( interp );
+			compare_external( dp1, dp2 );
+			continue;
+		}
+
+		obj1 = Tcl_NewListObj( 0, NULL );
+		Tcl_AppendObjToObj( obj1, Tcl_GetObjResult( interp ) );
+
+		bu_vls_trunc( &s1_tcl, 0 );
+		bu_vls_trunc( &s2_tcl, 0 );
+
+		bu_vls_strcpy( &s1_tcl, Tcl_GetStringResult( interp ) );
+		str1 = bu_vls_addr( &s1_tcl );
+		Tcl_ResetResult( interp );
+
+		/* try to get TCL version of object from the other database */
+		bu_vls_trunc( &vls, 0 );
+		bu_vls_printf( &vls, "db2 get %s", dp1->d_namep );
+		if( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK )
+		{
+			Tcl_ResetResult( interp );
+
+			/* cannot get it, they MUST be different */
+			if( mode == HUMAN )
+				printf( "Replace %s with the same object from %s\n",
+					dp1->d_namep, dbip2->dbi_filename );
+			else
+				printf( "kill %s\n# IMPORT %s from %s\n",
+					dp1->d_namep, dp2->d_namep, dbip2->dbi_filename );
+			continue;
+		}
+
+		obj2 = Tcl_NewListObj( 0, NULL );
+		Tcl_AppendObjToObj( obj2, Tcl_GetObjResult( interp ) );
+
+		bu_vls_strcpy( &s2_tcl , Tcl_GetStringResult( interp ) );
+		str2 = bu_vls_addr( &s2_tcl );
+		Tcl_ResetResult( interp );
+
+		/* got TCL versions of both */
+		if( (dp1->d_flags & DIR_SOLID) && (dp2->d_flags & DIR_SOLID) )
+		{
+			/* both are solids */
+			compare_tcl_solids( str1, obj1, dp1, str2, obj2, dp2 );
+			if( pre_5_vers != 2 )
+				compare_attrs( dp1, dp2 );
+			continue;
+		}
+
+		if( (dp1->d_flags & DIR_COMB) && (dp2->d_flags & DIR_COMB ) )
+		{
+			/* both are combinations */
+			compare_tcl_combs( obj1, dp1, obj2, dp2 );
+			if( !pre_5_vers != 2 )
+				compare_attrs( dp1, dp2 );
+			continue;
+		}
+
+		/* the two objects are different types */
+		if( strcmp( str1, str2 ) )
+		{
+			if( mode == HUMAN )
+				printf( "%s:\n\twas: %s\n\tis now: %s\n\n",
+					dp1->d_namep, str1, str2 );
+			else
+				printf( "kill %s\ndb put %s %s\n",
+					dp1->d_namep, dp2->d_namep, str2 );
+		}
+	} FOR_ALL_DIRECTORY_END;
 
 	bu_vls_free( &s1_tcl );
 	bu_vls_free( &s2_tcl );
 
 	/* now look for objects in the other database that aren't here */
-	for( i = 0; i < RT_DBNHASH; i++)
-	{
-		for( dp2 = dbip2->dbi_Head[i]; dp2 != DIR_NULL; dp2 = dp2->d_forw )
+	FOR_ALL_DIRECTORY_START(dp2, dbip2) {
+		/* skip the _GLOBAL object */
+		if( dp2->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY )
+			continue;
+
+		/* check if this object exists in the other database */
+		if( (dp1 = db_lookup( dbip1, dp2->d_namep, 0 )) == DIR_NULL )
 		{
-			/* skip the _GLOBAL object */
-			if( dp2->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY )
-				continue;
-
-			/* check if this object exists in the other database */
-			if( (dp1 = db_lookup( dbip1, dp2->d_namep, 0 )) == DIR_NULL )
+			/* need to add this object */
+			argv[2] = dp2->d_namep;
+			if( wdb_get_tcl( (ClientData)(wdb2), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
 			{
-				/* need to add this object */
-				argv[2] = dp2->d_namep;
-				if( wdb_get_tcl( (ClientData)(wdb2), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
-				{
-					/* could not get TCL version */
-					if( mode == HUMAN )
-						printf( "Import %s from %s\n",
-							dp2->d_namep, dbip2->dbi_filename );
-					else
-						printf( "# IMPORT %s from %s\n",
-							dp2->d_namep, dbip2->dbi_filename );
-				}
+				/* could not get TCL version */
+				if( mode == HUMAN )
+					printf( "Import %s from %s\n",
+						dp2->d_namep, dbip2->dbi_filename );
 				else
-				{
-					if( mode == HUMAN )
-						printf( "%s does not exist in %s\n",
-							dp2->d_namep, dbip1->dbi_filename );
-					else
-						printf( "db put %s %s\n",
-							dp2->d_namep, Tcl_GetStringResult( interp ) );
-				}
-				Tcl_ResetResult( interp );
-
+					printf( "# IMPORT %s from %s\n",
+						dp2->d_namep, dbip2->dbi_filename );
 			}
+			else
+			{
+				if( mode == HUMAN )
+					printf( "%s does not exist in %s\n",
+						dp2->d_namep, dbip1->dbi_filename );
+				else
+					printf( "db put %s %s\n",
+						dp2->d_namep, Tcl_GetStringResult( interp ) );
+			}
+			Tcl_ResetResult( interp );
 		}
-	}
+	} FOR_ALL_DIRECTORY_END;
 }
 
 int
