@@ -2892,6 +2892,10 @@ RT_EXPORT BU_EXTERN(int db5_import_attributes,
 		    (struct bu_attribute_value_set *avs,
 		     const struct bu_external *ap));
 
+RT_EXPORT BU_EXTERN(void db5_export_attributes,
+		    (const struct bu_external *ap,
+		     struct bu_attribute_value_set *avs));
+
 RT_EXPORT BU_EXTERN(int db5_get_raw_internal_fp,
 		    (struct db5_raw_internal	*rip,
 		     FILE			*fp));
