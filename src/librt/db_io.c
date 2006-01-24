@@ -257,9 +257,7 @@ db_write(struct db_i *dbip, const genptr_t addr, long int count, long int offset
 #else
 	(void)fseek( dbip->dbi_fp, offset, 0 );
 	got = fwrite( addr, 1, count, dbip->dbi_fp );
-#ifdef USE_SURVICE_MODS
 	fflush(dbip->dbi_fp);
-#endif
 #endif
 	bu_semaphore_release( BU_SEM_SYSCALL );
 	if( got != count )  {
