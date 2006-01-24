@@ -59,9 +59,6 @@
 #include "raytrace.h"
 
 
-extern void
-db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_set *avs);
-
 #define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
 
 /**
