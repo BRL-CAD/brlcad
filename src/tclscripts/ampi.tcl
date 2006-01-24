@@ -26,7 +26,7 @@
 exit
 
 foreach arg $argv {
-    catch {pkg_mkIndex $arg *.tcl *.itcl *.itk *.sh}
+    catch {pkg_mkIndex -verbose $arg *.tcl *.itcl *.itk *.sh}
     puts $arg
 }
 
