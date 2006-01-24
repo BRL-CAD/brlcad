@@ -94,32 +94,28 @@ f_eac(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		if( item < 1 )
 			continue;
 
-		for( i = 0; i < RT_DBNHASH; i++ )
-		{
-			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )
+		FOR_ALL_DIRECTORY_START(dp, dbip) {
+			struct rt_db_internal intern;
+			struct rt_comb_internal *comb;
+
+			if( !(dp->d_flags & DIR_REGION) )
+				continue;
+
+			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
+				TCL_READ_ERR_return;
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+			if( comb->region_id != 0 ||
+				comb->aircode != item )
 			{
-				struct rt_db_internal intern;
-				struct rt_comb_internal *comb;
-
-				if( !(dp->d_flags & DIR_REGION) )
-					continue;
-
-				if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
-					TCL_READ_ERR_return;
-				comb = (struct rt_comb_internal *)intern.idb_ptr;
-				if( comb->region_id != 0 ||
-					comb->aircode != item )
-				{
-					rt_comb_ifree( &intern, &rt_uniresource );
-					continue;
-				}
 				rt_comb_ifree( &intern, &rt_uniresource );
-
-				bu_vls_strcat( &v, " " );
-				bu_vls_strcat( &v, dp->d_namep );
-				lim++;
+				continue;
 			}
-		}
+			rt_comb_ifree( &intern, &rt_uniresource );
+
+			bu_vls_strcat( &v, " " );
+			bu_vls_strcat( &v, dp->d_namep );
+			lim++;
+		} FOR_ALL_DIRECTORY_END;
 	}
 
 	if( lim > 1 )

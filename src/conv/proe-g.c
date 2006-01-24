@@ -1046,6 +1046,7 @@ Rm_nulls(void)
 {
 	struct db_i *dbip;
 	int i;
+	struct directory *dp;
 
 	dbip = fd_out->dbip;
 
@@ -1061,109 +1062,102 @@ Rm_nulls(void)
 		}
 	}
 
-	for( i=0 ; i<RT_DBNHASH ; i++ )
-	{
-		struct directory *dp;
+	FOR_ALL_DIRECTORY_START(dp, dbip) {
+		struct rt_tree_array	*tree_list;
+		struct rt_db_internal	intern;
+		struct rt_comb_internal	*comb;
+		int j;
+		int node_count,actual_count;
+		int changed=0;
 
-		for( dp=dbip->dbi_Head[i] ; dp!=DIR_NULL ; dp=dp->d_forw )
+		/* skip solids */
+		if( dp->d_flags & DIR_SOLID )
+			continue;
+
+		/* skip non-geometry */
+		if( !(dp->d_flags & ( DIR_SOLID | DIR_COMB ) ) )
+			continue;
+
+		if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource ) < 1 )
 		{
-			struct rt_tree_array	*tree_list;
-			struct rt_db_internal	intern;
-			struct rt_comb_internal	*comb;
-			int j;
-			int node_count,actual_count;
-			int changed=0;
-
-			/* skip solids */
-			if( dp->d_flags & DIR_SOLID )
-				continue;
-
-			/* skip non-geometry */
-			if( !(dp->d_flags & ( DIR_SOLID | DIR_COMB ) ) )
-				continue;
-
-			if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource ) < 1 )
-			{
-				bu_log( "Cannot get internal form of combination %s\n", dp->d_namep );
-				continue;
-			}
-			comb = (struct rt_comb_internal *)intern.idb_ptr;
-			RT_CK_COMB( comb );
-			if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
-			{
-				db_non_union_push( comb->tree , &rt_uniresource);
-				if( db_ck_v4gift_tree( comb->tree ) < 0 )
-				{
-					bu_log( "Cannot flatten tree (%s) for editing\n", dp->d_namep );
-					continue;
-				}
-			}
-			node_count = db_tree_nleaves( comb->tree );
-			if( node_count > 0 )
-			{
-				tree_list = (struct rt_tree_array *)bu_calloc( node_count,
-					sizeof( struct rt_tree_array ), "tree list" );
-				actual_count = (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION, 0, &rt_uniresource ) - tree_list;
-				BU_ASSERT_LONG( actual_count, ==, node_count );
-			}
-			else
-			{
-				tree_list = (struct rt_tree_array *)NULL;
-				actual_count = 0;
-			}
-
-
-			for( j=0; j<actual_count; j++ )
-			{
-				int k;
-				int found=0;
-
-				for( k=0 ; k<BU_PTBL_END( &null_parts ) ; k++ )
-				{
-					char *save_name;
-
-					save_name = (char *)BU_PTBL_GET( &null_parts, k );
-					if( !strcmp( save_name, tree_list[j].tl_tree->tr_l.tl_name ) )
-					{
-						found = 1;
-						break;
-					}
-				}
-				if( found )
-				{
-					/* This is a NULL part, delete the reference */
-/*					if( debug ) */
-						bu_log( "Deleting reference to null part (%s) from combination %s\n",
-							tree_list[j].tl_tree->tr_l.tl_name, dp->d_namep );
-
-					db_free_tree( tree_list[j].tl_tree , &rt_uniresource);
-
-					for( k=j+1 ; k<actual_count ; k++ )
-						tree_list[k-1] = tree_list[k]; /* struct copy */
-
-					actual_count--;
-					j--;
-					changed = 1;
-				}
-			}
-
-			if( changed )
-			{
-				if( actual_count )
-					comb->tree = (union tree *)db_mkgift_tree( tree_list, actual_count, &rt_uniresource );
-				else
-					comb->tree = (union tree *)NULL;
-
-				if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
-				{
-					bu_log( "Unable to write modified combination '%s' to database\n", dp->d_namep );
-					rt_comb_ifree( &intern , &rt_uniresource);
-					continue;
-				}
-			}
-			bu_free( (char *)tree_list, "tree_list" );
+			bu_log( "Cannot get internal form of combination %s\n", dp->d_namep );
+			continue;
 		}
-	}
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		RT_CK_COMB( comb );
+		if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
+		{
+			db_non_union_push( comb->tree , &rt_uniresource);
+			if( db_ck_v4gift_tree( comb->tree ) < 0 )
+			{
+				bu_log( "Cannot flatten tree (%s) for editing\n", dp->d_namep );
+				continue;
+			}
+		}
+		node_count = db_tree_nleaves( comb->tree );
+		if( node_count > 0 )
+		{
+			tree_list = (struct rt_tree_array *)bu_calloc( node_count,
+				sizeof( struct rt_tree_array ), "tree list" );
+			actual_count = (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION, 0, &rt_uniresource ) - tree_list;
+			BU_ASSERT_LONG( actual_count, ==, node_count );
+		}
+		else
+		{
+			tree_list = (struct rt_tree_array *)NULL;
+			actual_count = 0;
+		}
+
+		for( j=0; j<actual_count; j++ )
+		{
+			int k;
+			int found=0;
+
+			for( k=0 ; k<BU_PTBL_END( &null_parts ) ; k++ )
+			{
+				char *save_name;
+
+				save_name = (char *)BU_PTBL_GET( &null_parts, k );
+				if( !strcmp( save_name, tree_list[j].tl_tree->tr_l.tl_name ) )
+				{
+					found = 1;
+					break;
+				}
+			}
+			if( found )
+			{
+				/* This is a NULL part, delete the reference */
+/*				if( debug ) */
+					bu_log( "Deleting reference to null part (%s) from combination %s\n",
+						tree_list[j].tl_tree->tr_l.tl_name, dp->d_namep );
+
+				db_free_tree( tree_list[j].tl_tree , &rt_uniresource);
+
+				for( k=j+1 ; k<actual_count ; k++ )
+					tree_list[k-1] = tree_list[k]; /* struct copy */
+
+				actual_count--;
+				j--;
+				changed = 1;
+			}
+		}
+
+		if( changed )
+		{
+			if( actual_count )
+				comb->tree = (union tree *)db_mkgift_tree( tree_list, actual_count, &rt_uniresource );
+			else
+				comb->tree = (union tree *)NULL;
+
+			if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
+			{
+				bu_log( "Unable to write modified combination '%s' to database\n", dp->d_namep );
+				rt_comb_ifree( &intern , &rt_uniresource);
+				continue;
+			}
+		}
+		bu_free( (char *)tree_list, "tree_list" );
+	} FOR_ALL_DIRECTORY_END;
 }
 
 /*

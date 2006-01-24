@@ -191,43 +191,35 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		Free_muves_comp( &muves_comp_head.l );
 
 	/* count the number of regions in the model */
-	for( i = 0; i < RT_DBNHASH; i++ )
-	{
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )
-		{
-			if( !(dp->d_flags & DIR_REGION) )
-				continue;
-			reg_count++;
-		}
-	}
+	FOR_ALL_DIRECTORY_START(dp, dbip) {
+		if( !(dp->d_flags & DIR_REGION) )
+			continue;
+		reg_count++;
+	} FOR_ALL_DIRECTORY_END;
 
 	/* allocate an array to contain info for every region */
 	regions = (struct region_array *)bu_calloc( reg_count, sizeof( struct region_array ), "regions" );
 
 	/* fill in the regions array */
 	reg_count =  0;
-	for( i = 0; i < RT_DBNHASH; i++ )
-	{
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )
+
+	FOR_ALL_DIRECTORY_START(dp, dbip) {
+		if( !(dp->d_flags & DIR_REGION) )
+			continue;
+
+		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 		{
-			if( !(dp->d_flags & DIR_REGION) )
-				continue;
-
-			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
-			{
-				(void)signal( SIGINT, SIG_IGN );
-				TCL_READ_ERR_return;
-			}
-			comb = (struct rt_comb_internal *)intern.idb_ptr;
-
-			regions[reg_count].dp = dp;
-			regions[reg_count].region_id = comb->region_id;
-
-			rt_db_free_internal( &intern, &rt_uniresource );
-			reg_count++;
+			(void)signal( SIGINT, SIG_IGN );
+			TCL_READ_ERR_return;
 		}
-	}
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
 
+		regions[reg_count].dp = dp;
+		regions[reg_count].region_id = comb->region_id;
+
+		rt_db_free_internal( &intern, &rt_uniresource );
+		reg_count++;
+	} FOR_ALL_DIRECTORY_END;
 
 	/* read lines of region map file */
 	new_comp = (struct muves_comp *)NULL;

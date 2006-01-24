@@ -1484,11 +1484,9 @@ toc()
 
 	/* Determine necessary table size */
 	count = 0;
-	for( i = 0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp=dp->d_forw )  {
-			count++;
-		}
-	}
+	FOR_ALL_DIRECTORY_START(dp, dbip) {
+	    count++;
+	} FOR_ALL_DIRECTORY_END;
 	count += 1;		/* Safety */
 
 	/* Allocate tables */
@@ -1498,11 +1496,9 @@ toc()
 	ndir = 0;
 
 	/* Fill in toc_list[] */
-	for( i = 0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp=dp->d_forw )  {
-			toc_list[ndir++] = dp->d_namep;
-		}
-	}
+	FOR_ALL_DIRECTORY_START(dp, dbip) {
+	    toc_list[ndir++] = dp->d_namep;
+	} FOR_ALL_DIRECTORY_END;
 }
 
 /*

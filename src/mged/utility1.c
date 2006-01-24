@@ -591,28 +591,26 @@ f_which_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				   ":\n", (char *)NULL);
 
 		/* Examine all COMB nodes */
-		for( i = 0; i < RT_DBNHASH; i++ )  {
-			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-				if( !(dp->d_flags & DIR_COMB) )
-					continue;
+		FOR_ALL_DIRECTORY_START(dp, dbip) {
+			if( !(dp->d_flags & DIR_COMB) )
+				continue;
 
-				if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
-					(void)signal( SIGINT, SIG_IGN );
-					TCL_READ_ERR_return;
-				}
-				comb = (struct rt_comb_internal *)intern.idb_ptr;
-
-				if( !strstr( bu_vls_addr( &comb->shader ), myArgv[j] ) )
-					continue;
-
-				if(sflag)
-				  Tcl_AppendElement(interp, dp->d_namep);
-				else
-				  Tcl_AppendResult(interp, "   ", dp->d_namep,
-						   "\n", (char *)NULL);
-				rt_comb_ifree( &intern, &rt_uniresource );
+			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+				(void)signal( SIGINT, SIG_IGN );
+				TCL_READ_ERR_return;
 			}
-		}
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+			if( !strstr( bu_vls_addr( &comb->shader ), myArgv[j] ) )
+				continue;
+
+			if(sflag)
+			  Tcl_AppendElement(interp, dp->d_namep);
+			else
+			  Tcl_AppendResult(interp, "   ", dp->d_namep,
+					   "\n", (char *)NULL);
+			rt_comb_ifree( &intern, &rt_uniresource );
+		} FOR_ALL_DIRECTORY_END;
 	}
 
 	(void)signal( SIGINT, SIG_IGN );

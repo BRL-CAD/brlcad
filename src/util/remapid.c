@@ -804,24 +804,20 @@ void db_init(char *db_name)
     }
     db_dirbuild(dbip);
 
-    for (i = 0; i < RT_DBNHASH; ++i)
-	for (dp = dbip -> dbi_Head[i]; dp != DIR_NULL; dp = dp -> d_forw)
-	{
-	    if (!(dp -> d_flags & DIR_REGION))
-		continue;
-	    ip = (struct rt_db_internal *)
-		bu_malloc(sizeof(struct rt_db_internal), "rt_db_internal");
-	    if (rt_db_get_internal(ip, dp, dbip, (fastf_t *) NULL, &rt_uniresource) < 0)
-	    {
-		bu_log("remapid: rt_db_get_internal(%s) failed.  ",
-		    dp -> d_namep);
-		bu_log("This shouldn't happen\n");
-		exit (1);
-	    }
-	    comb = (struct rt_comb_internal *) (ip -> idb_ptr);
-	    RT_CK_COMB(comb);
-	    record_region(dp -> d_namep, comb -> region_id, dp, ip);
+    FOR_ALL_DIRECTORY_START(dp, dbip) {
+	if (!(dp -> d_flags & DIR_REGION))
+	    continue;
+	ip = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "rt_db_internal");
+	if (rt_db_get_internal(ip, dp, dbip, (fastf_t *) NULL, &rt_uniresource) < 0) {
+	    bu_log("remapid: rt_db_get_internal(%s) failed.  ",
+		   dp -> d_namep);
+	    bu_log("This shouldn't happen\n");
+	    exit (1);
 	}
+	comb = (struct rt_comb_internal *) (ip -> idb_ptr);
+	RT_CK_COMB(comb);
+	record_region(dp -> d_namep, comb -> region_id, dp, ip);
+    } FOR_ALL_DIRECTORY_END;
 }
 
 /*

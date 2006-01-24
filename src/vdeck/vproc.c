@@ -247,11 +247,9 @@ toc()
 	(void) printf( "Making the Table of Contents.\n" );
 	(void) fflush( stdout );
 
-	for( i = 0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp=dp->d_forw )  {
-			toc_list[ndir++] = dp->d_namep;
-		}
-	}
+	FOR_ALL_DIRECTORY_START(dp, dbip) {
+	    toc_list[ndir++] = dp->d_namep;
+	} FOR_ALL_DIRECTORY_END;
 }
 
 /*

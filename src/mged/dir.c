@@ -164,24 +164,22 @@ cmd_glob(int *argcp, char **argv, int maxargs)
 	 * to do escape crunching.
 	 */
 
-	for( i = 0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			if( !db_regexp_match( word, dp->d_namep ) )
-				continue;
-			/* Successful match */
-			/* See if already over the limit */
-			if( *argcp >= maxargs )  {
-				bu_log("%s: expansion stopped after %d matches (%d args)\n",
-					word, *argcp-orig_numargs, maxargs);
-				break;
-			}
-			argv[(*argcp)++] = dp->d_namep;
+	FOR_ALL_DIRECTORY_START(dp, dbip) {
+		if( !db_regexp_match( word, dp->d_namep ) )
+			continue;
+		/* Successful match */
+		/* See if already over the limit */
+		if( *argcp >= maxargs )  {
+			bu_log("%s: expansion stopped after %d matches (%d args)\n",
+				word, *argcp-orig_numargs, maxargs);
+			break;
 		}
-	}
+		argv[(*argcp)++] = dp->d_namep;
+	} FOR_ALL_DIRECTORY_END;
+
 	/* If one or matches occurred, decrement final argc,
 	 * otherwise, do escape processing if needed.
 	 */
-
 	if( *argcp > orig_numargs )  {
 		(*argcp)--;
 		return(1);
@@ -315,22 +313,20 @@ f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_free( &tempstring_v5 );
 
 	/* Examine all COMB nodes */
-	for( i = 0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			if( !(dp->d_flags & DIR_COMB) )
-				continue;
+	FOR_ALL_DIRECTORY_START(dp, dbip) {
+		if( !(dp->d_flags & DIR_COMB) )
+			continue;
 
-			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
-				TCL_READ_ERR_return;
-			comb = (struct rt_comb_internal *)intern.idb_ptr;
+		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
+			TCL_READ_ERR_return;
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-			for( k=2; k<argc; k++ )
-				db_tree_funcleaf( dbip, comb, comb->tree, Do_prefix,
-					(genptr_t)argv[1], (genptr_t)argv[k], (genptr_t)NULL );
-			if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) )
-				TCL_WRITE_ERR_return;
-		}
-	}
+		for( k=2; k<argc; k++ )
+			db_tree_funcleaf( dbip, comb, comb->tree, Do_prefix,
+				(genptr_t)argv[1], (genptr_t)argv[k], (genptr_t)NULL );
+		if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) )
+			TCL_WRITE_ERR_return;
+	} FOR_ALL_DIRECTORY_END;
 	return TCL_OK;
 }
 
@@ -399,45 +395,43 @@ cmd_killall(ClientData	clientData,
 	ret = TCL_OK;
 
 	/* Examine all COMB nodes */
-	for( i = 0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			if( !(dp->d_flags & DIR_COMB) )
-				continue;
+	FOR_ALL_DIRECTORY_START(dp, dbip) {
+		if( !(dp->d_flags & DIR_COMB) )
+			continue;
 
-			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
-				Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
-					") failure", (char *)NULL );
+		if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+			Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
+				") failure", (char *)NULL );
+			ret = TCL_ERROR;
+			continue;
+		}
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		RT_CK_COMB(comb);
+
+		for( k=1; k<argc; k++ )  {
+			int	code;
+
+			code = db_tree_del_dbleaf( &(comb->tree), argv[k], &rt_uniresource );
+			if( code == -1 )  continue;	/* not found */
+			if( code == -2 )  continue;	/* empty tree */
+			if( code < 0 )  {
+				Tcl_AppendResult(interp, "  ERROR_deleting ",
+					dp->d_namep, "/", argv[k],
+					"\n", (char *)NULL);
 				ret = TCL_ERROR;
-				continue;
-			}
-			comb = (struct rt_comb_internal *)intern.idb_ptr;
-			RT_CK_COMB(comb);
-
-			for( k=1; k<argc; k++ )  {
-				int	code;
-
-				code = db_tree_del_dbleaf( &(comb->tree), argv[k], &rt_uniresource );
-				if( code == -1 )  continue;	/* not found */
-				if( code == -2 )  continue;	/* empty tree */
-				if( code < 0 )  {
-					Tcl_AppendResult(interp, "  ERROR_deleting ",
-						dp->d_namep, "/", argv[k],
-						"\n", (char *)NULL);
-					ret = TCL_ERROR;
-				} else {
-					Tcl_AppendResult(interp, "deleted ",
-						dp->d_namep, "/", argv[k],
-						"\n", (char *)NULL);
-				}
-			}
-
-			if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
-				Tcl_AppendResult(interp, "ERROR: Unable to write new combination into database.\n", (char *)NULL);
-				ret = TCL_ERROR;
-				continue;
+			} else {
+				Tcl_AppendResult(interp, "deleted ",
+					dp->d_namep, "/", argv[k],
+					"\n", (char *)NULL);
 			}
 		}
-	}
+
+		if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
+			Tcl_AppendResult(interp, "ERROR: Unable to write new combination into database.\n", (char *)NULL);
+			ret = TCL_ERROR;
+			continue;
+		}
+	} FOR_ALL_DIRECTORY_END;
 
 	if( ret != TCL_OK )  {
 		Tcl_AppendResult(interp, "KILL skipped because of earlier errors.\n", (char *)NULL);
