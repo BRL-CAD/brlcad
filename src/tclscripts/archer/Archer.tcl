@@ -20,7 +20,7 @@ if {![info exists env(ARCHER_HOME)]} {
   }
 }
 
-if {![info exists env(ARCHER_HOME)]} {
+if {[info exists env(ARCHER_HOME)]} {
   LoadArcherLibs $env(ARCHER_HOME)
 } else {
   LoadArcherLibs .
@@ -212,7 +212,11 @@ namespace eval Archer {
 	    set SystemHighlightText \#ececec
 	    set SystemButtonFace \#d9d9d9
 	} else {
+	  if {[info exists env(ARCHER_HOME)]} {
 	    set brlcadDataPath $env(ARCHER_HOME)
+	  } else {
+	    set brlcadDataPath [bu_brlcad_data ""]
+	  }
 	    set SystemWindowFont SystemWindowText
 	    set SystemWindowText SystemWindowText
 	    set SystemWindow SystemWindow
