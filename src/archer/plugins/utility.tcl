@@ -11,6 +11,8 @@
 #	 This is a script for loading Archer's wizards.
 #
 
-cd Utility
-Archer::pluginLoadCWDFiles
-cd ..
+if [ file exists Utility ] {
+  cd Utility
+  Archer::pluginLoadCWDFiles
+  cd ..
+}
