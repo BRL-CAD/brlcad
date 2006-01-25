@@ -39,11 +39,12 @@ proc LoadArcherLibs {dir} {
     } else {
 	if {[info exists $Archer::debug] && $Archer::debug} {
 	} else {
-	    load [file join $dir lib libblt2.4.so]
+	  set dir [bu_brlcad_root "lib"]
+	    load [file join $dir libblt2.4.so]
 
 	    # Load Brlcad libraries
 	    #load [file join $dir lib libpng.so]
-	    load [file join $dir lib tkimg.so]
+	    load [file join $dir tkimg.so]
 	}
     }
 
