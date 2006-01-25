@@ -18,6 +18,11 @@
 #***
 ##############################################################
 
+package require blt
+
+# avoid a pkg_index error about ::blt:: being unknown
+namespace eval blt {}
+
 if {![info exists ::blt::cursorWaitCount]} {
     set ::blt::cursorWaitCount 0
 }
