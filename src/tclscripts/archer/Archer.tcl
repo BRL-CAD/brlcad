@@ -15,10 +15,16 @@
 #
 
 if {![info exists env(ARCHER_HOME)]} {
+  catch {
     set env(ARCHER_HOME) [file normalize [file join [file dir $argv0] ..]]
+  }
 }
 
-LoadArcherLibs $env(ARCHER_HOME)
+if {![info exists env(ARCHER_HOME)]} {
+  LoadArcherLibs $env(ARCHER_HOME)
+} else {
+  LoadArcherLibs .
+}
 
 package provide Archer 1.0
 
