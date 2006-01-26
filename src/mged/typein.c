@@ -2164,13 +2164,11 @@ rpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 	point_t		min, max;
 	char *p;
 	int i;
+	char errbuf[128];
 
 	CHECK_DBI_NULL;
 
 	intern->idb_ptr = NULL;
-
-	for (i=0 ; cmd_argvs[i] ; i++)
-	    bu_log("%d %s\n", i, cmd_argvs[i]);
 
 	min[X] = atof(cmd_argvs[3+0]) * local2base;
 	max[X] = atof(cmd_argvs[3+1]) * local2base;
@@ -2179,22 +2177,20 @@ rpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 	min[Z] = atof(cmd_argvs[3+4]) * local2base;
 	max[Z] = atof(cmd_argvs[3+5]) * local2base;
 
-	bu_log("l2b %g\n", local2base);
-	VPRINT("min", min);
-	VPRINT("max", max);
-
-	bu_log("atof %g", atof(cmd_argvs[3+0]));
 	if (min[X] >= max[X]) {
-	  Tcl_AppendResult(interp, "ERROR, XMIN greater than XMAX!\n", (char *)NULL);
+	    sprintf(errbuf, "ERROR, XMIN:(%lg) greater than XMAX:(%lg) !\n", min[X], max[X]);
+	    Tcl_AppendResult(interp, errbuf, (char *)NULL);
 	  return(1);	/* failure */
 	}
 	if (min[Y] >= max[Y]) {
-	  Tcl_AppendResult(interp, "ERROR, YMIN greater than YMAX!\n", (char *)NULL);
+	    sprintf(errbuf, "ERROR, YMIN:(%lg) greater than YMAX:(%lg) !\n", min[Y], max[Y]);
+	  Tcl_AppendResult(interp, errbuf, (char *)NULL);
 	  return(1);	/* failure */
 	}
 	if (min[Z] >= max[Z]) {
-	  Tcl_AppendResult(interp, "ERROR, ZMIN greater than ZMAX!\n", (char *)NULL);
-	  return(1);	/* failure */
+	    sprintf(errbuf, "ERROR, ZMIN:(%lg) greater than ZMAX:(%lg)!\n", min[Z], max[Z]);
+	    Tcl_AppendResult(interp, errbuf, (char *)NULL);
+	    return(1);	/* failure */
 	}
 
 	if( mk_rpp( wdbp, name, min, max ) < 0 )
