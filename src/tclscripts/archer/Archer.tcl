@@ -9218,6 +9218,13 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(vpane) fraction $mVPaneFraction1 $mVPaneFraction2
     update
     after idle $itk_component(vpane) fraction  $mVPaneFraction1 $mVPaneFraction2
+
+    if {$mTarget != "" &&
+	$mBindingMode == 0 &&
+	$CENTER_MODE < $mDefaultBindingMode} {
+	set mDefaultBindingMode $ROTATE_MODE
+	beginViewRotate
+    }
 }
 
 ::itcl::body Archer::_set_intermediate_mode {} {
@@ -9238,6 +9245,14 @@ Popup Menu    Right or Ctrl-Left
 
     _update_wizard_menu
     _update_view_toolbar_for_edit
+
+    if {$mTarget != "" &&
+	$mBindingMode == 0} {
+	$itk_component(viewToolbar) itemconfigure edit_rotate -state normal
+	$itk_component(viewToolbar) itemconfigure edit_translate -state normal
+	$itk_component(viewToolbar) itemconfigure edit_scale -state normal
+	$itk_component(viewToolbar) itemconfigure edit_center -state normal
+    }
 
     $itk_component(hpane) hide bottomView
     $itk_component(vpane) show attrView
@@ -9281,6 +9296,14 @@ Popup Menu    Right or Ctrl-Left
 
     _update_wizard_menu
     _update_view_toolbar_for_edit
+
+    if {$mTarget != "" &&
+	$mBindingMode == 0} {
+	$itk_component(viewToolbar) itemconfigure edit_rotate -state normal
+	$itk_component(viewToolbar) itemconfigure edit_translate -state normal
+	$itk_component(viewToolbar) itemconfigure edit_scale -state normal
+	$itk_component(viewToolbar) itemconfigure edit_center -state normal
+    }
 
     $itk_component(hpane) show bottomView
     $itk_component(hpane) fraction $mHPaneFraction1 $mHPaneFraction2
