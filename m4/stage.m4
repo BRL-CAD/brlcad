@@ -47,15 +47,23 @@
 ###
 
 AC_DEFUN([BC_BOLD], [
-if test -f "${srcdir}/sh/shtool" ; then
-    ${srcdir}/sh/shtool echo -n -e %B
+if test -t 1 ; then
+	if test -f "${srcdir}/sh/shtool" ; then
+		${srcdir}/sh/shtool echo -n -e %B
+	elif test -f "${srcdir}/misc/shtool" ; then
+		${srcdir}/misc/shtool echo -n -e %B
+	fi
 fi
 ])
 
 
 AC_DEFUN([BC_UNBOLD], [
-if test -f "${srcdir}/sh/shtool" ; then
-    ${srcdir}/sh/shtool echo -n -e %b
+if test -t 1 ; then
+	if test -f "${srcdir}/sh/shtool" ; then
+		${srcdir}/sh/shtool echo -n -e %b
+	elif test -f "${srcdir}/misc/shtool" ; then
+		${srcdir}/misc/shtool echo -n -e %b
+	fi
 fi
 ])
 
