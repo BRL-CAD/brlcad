@@ -24,11 +24,12 @@ dnl ******************************************************************
 dnl ***                  BRL-CAD's configure.ac                    ***
 dnl ******************************************************************
 dnl
-dnl Herein lies the venerable GNU Autotools configure template for
+dnl Herein lies the venerable GNU Build System configure template for
 dnl BRL-CAD.  As best is reasonably possible, proper ordering and
 dnl separation of tests and settings should be maintained per the
 dnl recommended standard layout.  The tests should be added to the
-dnl rather clearly labeled sections below so that they are as follows:
+dnl rather clearly labeled sections below so that they are as
+dnl follows:
 dnl
 dnl     0) information on the package
 dnl     1) check command-line arguments
@@ -69,7 +70,6 @@ AC_INIT(BRL-CAD, 7.7.0, [http://brlcad.org], brlcad)
 AC_REVISION($Revision$)
 
 AC_CONFIG_AUX_DIR(misc)
-#AM_CONFIG_HEADER([config.h])
 
 dnl See HACKING for details on how to properly update the version
 MAJOR_VERSION=7
@@ -849,7 +849,7 @@ AC_SUBST(LIBTOOL_DEPS)
 # XXX tests for ranlib may be required.  "ar ts" was used in cake for
 # sgi and aix so more compensation may be required still.
 
-dnl May need AR so try to find it
+dnl Libtool may need AR so try to find it
 AC_PATH_PROG(AR, ar, [], $PATH:/usr/bin:/usr/local/bin:/usr/ccs/bin)
 AC_SUBST(AR)
 
@@ -1582,8 +1582,8 @@ if test "x$bc_use_warnings" != "xno" ; then
 fi
 
 AC_C_CONST
-AC_C_VOLATILE
 AC_C_INLINE
+AC_C_VOLATILE
 AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique),
 	       AC_DEFINE(REVERSE_IEEE,,64b floating point storage technique),
 	       AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
