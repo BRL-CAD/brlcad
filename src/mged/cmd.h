@@ -68,6 +68,7 @@ MGED_EXTERN(int cmd_get_comb, (ClientData clientData, Tcl_Interp *interp, int ar
 MGED_EXTERN(int cmd_get_more_default, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_get_ptr, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_group, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int cmd_has_embedded_fb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_hide, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_hist, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_import_body, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

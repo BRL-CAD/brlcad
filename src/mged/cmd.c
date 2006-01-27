@@ -292,6 +292,7 @@ static struct cmdtab cmdtab[] = {
 #ifdef HIDELINE
 	{"H", f_hideline},
 #endif
+	{"has_embedded_fb", cmd_has_embedded_fb},
 	{"hide", cmd_hide },
 	{"hist", cmd_hist},
 	{"history", f_history},
@@ -3531,6 +3532,25 @@ cmd_parse_points(ClientData	clientData,
     }
     return parse_point_file(clientData, interp, argc-1, &(argv[1]));
 #endif
+}
+
+int
+cmd_has_embedded_fb(ClientData	clientData,
+		    Tcl_Interp	*interp,
+		    int     	argc,
+		    char    	**argv)
+{
+    Tcl_DString ds;
+
+    Tcl_DStringInit(&ds);
+#ifdef USE_FBSERV
+    Tcl_DStringAppend(&ds, "1", -1);
+#else
+    Tcl_DStringAppend(&ds, "0", -1);
+#endif
+    Tcl_DStringResult(interp, &ds);
+
+    return TCL_OK;
 }
 
 /*
