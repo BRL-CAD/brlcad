@@ -29,6 +29,8 @@
 
 check_externs "_mged_opendb _mged_rt"
 
+set rt_control(has_embedded_fb) [_mged_has_embedded_fb]
+
 proc init_Raytrace { id } {
     global mged_gui
     global fb
@@ -73,24 +75,32 @@ proc init_Raytrace { id } {
     $top.menubar add cascade -label "Framebuffer" -underline 0 -menu $top.menubar.fb
     $top.menubar add cascade -label "Objects" -underline 0 -menu $top.menubar.obj
 
+    if {$rt_control(has_embedded_fb)} {
+	set dest_state normal
+    } else {
+	set dest_state disabled
+    }
     menu $top.menubar.fb -title "Framebuffer" -tearoff 0
     $top.menubar.fb add checkbutton -offvalue 0 -onvalue 1\
 	    -variable rt_control($id,fb)\
 	    -label "Active" -underline 0 \
-	    -command "rt_set_fb $id"
+	    -command "rt_set_fb $id" \
+	    -state $dest_state
     hoc_register_menu_data "Framebuffer" "Active" "Destination Framebuffer Active"\
 	    { { summary "This activates/deactivates the destination framebuffer.
 Note - this pertains only to MGED's framebuffers." } }
     $top.menubar.fb add separator
     $top.menubar.fb add radiobutton -value 1 -variable rt_control($id,fb_all)\
 	    -label "All" -underline 0\
-	    -command "rt_set_fb_all $id"
+	    -command "rt_set_fb_all $id" \
+	    -state $dest_state
     hoc_register_menu_data "Framebuffer" "All" "Destination Framebuffer - All"\
 	    { { summary "Use the entire pane as a framebuffer.
 Note - this pertains only to MGED's framebuffers." } }
     $top.menubar.fb add radiobutton -value 0 -variable rt_control($id,fb_all)\
 	    -label "Rectangle Area" -underline 0\
-	    -command "rt_set_fb_all $id"
+	    -command "rt_set_fb_all $id" \
+	    -state $dest_state
     hoc_register_menu_data "Framebuffer" "Rectangle Area" "Destination Framebuffer - Rectangle Area"\
 	    { { summary "Use only the rectangular area, as defined by the
 sweep rectangle, for the framebuffer. Note - this
@@ -98,21 +108,24 @@ pertains only to MGED's framebuffers." } }
     $top.menubar.fb add separator
     $top.menubar.fb add radiobutton -value 2 -variable rt_control($id,fb_overlay)\
 	    -label "Overlay" -underline 0\
-	    -command "rt_set_fb_overlay $id"
+	    -command "rt_set_fb_overlay $id" \
+	    -state $dest_state
     hoc_register_menu_data "Framebuffer" "Overlay" "Destination Framebuffer - Overlay"\
 	    { { summary "Draw the framebuffer above everything (i.e. above the
 geometry and faceplate). Note - this pertains only to
 MGED's framebuffers." } }
     $top.menubar.fb add radiobutton -value 1 -variable rt_control($id,fb_overlay)\
 	    -label "Interlay" -underline 0\
-	    -command "rt_set_fb_overlay $id"
+	    -command "rt_set_fb_overlay $id" \
+	    -state $dest_state
     hoc_register_menu_data "Framebuffer" "Interlay" "Destination Framebuffer - Interlay"\
 	    { { summary "Draw the framebuffer above the geometry and below
 the faceplate. Note - this pertains only to MGED's
 framebuffers." } }
     $top.menubar.fb add radiobutton -value 0 -variable rt_control($id,fb_overlay)\
 	    -label "Underlay" -underline 0\
-	    -command "rt_set_fb_overlay $id"
+	    -command "rt_set_fb_overlay $id" \
+	    -state $dest_state
     hoc_register_menu_data "Framebuffer" "Underlay" "Destination Framebuffer - Underlay"\
 	    { { summary "Draw the framebuffer below everything (i.e. below the
 geometry and faceplate). Note - this pertains only to
@@ -226,26 +239,31 @@ the machine fbhost and listening on port 0." } }
 	    { { summary "Pop up a menu of likely destinations." } }
     menu $top.destMB.menu -title "Destination" -tearoff 0
     $top.destMB.menu add command -label "Active Pane"\
-	    -command "rt_force_cook_dest $id \$mged_gui($id,active_dm)"
+	    -command "rt_force_cook_dest $id \$mged_gui($id,active_dm)" \
+	    -state $dest_state
     hoc_register_menu_data "Destination" "Active Pane" "Destination - Active Pane"\
 	    { { summary "Set the destination to the active pane.
 The active pane is the pane currently
 tied to the GUI." } }
     $top.destMB.menu add separator
     $top.destMB.menu add command -label "Upper Left"\
-	    -command "rt_force_cook_dest $id $mged_gui($id,top).ul"
+	    -command "rt_force_cook_dest $id $mged_gui($id,top).ul" \
+	    -state $dest_state
     hoc_register_menu_data "Destination" "Upper Left" "Destination - Upper Left"\
 	    { { summary "Set the destination to \"Upper Left\" pane." } }
     $top.destMB.menu add command -label "Upper Right"\
-	    -command "rt_force_cook_dest $id $mged_gui($id,top).ur"
+	    -command "rt_force_cook_dest $id $mged_gui($id,top).ur" \
+	    -state $dest_state
     hoc_register_menu_data "Destination" "Upper Right" "Destination - Upper Right"\
 	    { { summary "Set the destination to \"Upper Right\" pane." } }
     $top.destMB.menu add command -label "Lower Left"\
-	    -command "rt_force_cook_dest $id $mged_gui($id,top).ll"
+	    -command "rt_force_cook_dest $id $mged_gui($id,top).ll" \
+	    -state $dest_state
     hoc_register_menu_data "Destination" "Lower Left" "Destination - Lower Left"\
 	    { { summary "Set the destination to \"Lower Left\" pane." } }
     $top.destMB.menu add command -label "Lower Right"\
-	    -command "rt_force_cook_dest $id $mged_gui($id,top).lr"
+	    -command "rt_force_cook_dest $id $mged_gui($id,top).lr" \
+	    -state $dest_state
     hoc_register_menu_data "Destination" "Lower Right" "Destination - Lower Right"\
 	    { { summary "Set the destination to \"Lower Right\" pane." } }
     $top.destMB.menu add separator
@@ -1346,6 +1364,23 @@ proc rt_init_vars { id win } {
     # initialize everytime
     rt_cook_src $id $win
     rt_cook_dest $id $win
+    rt_check_dest $id $win
+}
+
+proc rt_check_dest {id win} {
+    global rt_control
+    global env
+
+    if {[winfo exists $win] &&
+	!$rt_control(has_embedded_fb)} {
+	if {[info exists env(FB_FILE)] && $env(FB_FILE) != ""} {
+	    # Assume the user knows what he/she is doing
+	    rt_force_cook_dest $id $env(FB_FILE)
+	} else {
+	    # This should be everywhere by now
+	    rt_force_cook_dest $id "/dev/ogll"
+	}
+    }
 }
 
 proc rt_force_cook_src { id win } {
