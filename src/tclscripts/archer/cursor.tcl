@@ -18,7 +18,13 @@
 #***
 ##############################################################
 
-package require blt
+if {$tcl_platform(os) == "Windows NT"} {
+    package require BLT
+} else {
+    # For the moment, leave it this way for
+    # all other platforms.
+    package require blt
+}
 
 # avoid a pkg_index error about ::blt:: being unknown
 namespace eval blt {}
