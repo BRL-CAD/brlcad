@@ -188,6 +188,18 @@ namespace eval Archer {
 	common showWindow 0
 	common plugins ""
 
+	common ROTATE_MODE 0
+	common TRANSLATE_MODE 1
+	common SCALE_MODE 2
+	common CENTER_MODE 3
+	common OBJECT_ROTATE_MODE 4
+	common OBJECT_SCALE_MODE 5
+	common OBJECT_TRANSLATE_MODE 6
+	common OBJECT_CENTER_MODE 7
+
+	common OBJ_EDIT_VIEW_MODE 0
+	common OBJ_ATTR_VIEW_MODE 1
+
 	common pluginMajorTypeCore "Core"
 	common pluginMajorTypeWizard "Wizard"
 	common pluginMajorTypeUtility "Utility"
@@ -349,17 +361,6 @@ namespace eval Archer {
 	variable mModelAxesTickMajorColorPref ""
 
 	variable mDefaultBindingMode 0
-	variable ROTATE_MODE 0
-	variable TRANSLATE_MODE 1
-	variable SCALE_MODE 2
-	variable CENTER_MODE 3
-	variable OBJECT_ROTATE_MODE 4
-	variable OBJECT_SCALE_MODE 5
-	variable OBJECT_TRANSLATE_MODE 6
-	variable OBJECT_CENTER_MODE 7
-
-	variable OBJ_EDIT_VIEW_MODE 0
-	variable OBJ_ATTR_VIEW_MODE 1
 	variable mPrevObjViewMode 0
 	variable mObjViewMode 0
 
