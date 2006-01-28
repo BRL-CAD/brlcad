@@ -38,16 +38,15 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
 #ifdef HAVE_UNIX_IO
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <fcntl.h>
+#  include <sys/types.h>
+#  include <sys/stat.h>
+#  include <fcntl.h>
 #endif
 
 #include "machine.h"

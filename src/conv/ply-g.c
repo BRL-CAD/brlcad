@@ -26,6 +26,7 @@
 #include "common.h"
 
 /* system headers */
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H

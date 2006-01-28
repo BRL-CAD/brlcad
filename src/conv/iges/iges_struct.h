@@ -24,14 +24,13 @@
 
 #include "common.h"
 
-extern char	version[];
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -43,6 +42,9 @@ extern char	version[];
 #include "nurb.h"
 #include "rtgeom.h"
 #include "wdb.h"
+
+
+extern char	version[];
 
 extern fastf_t brlabs();
 

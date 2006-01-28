@@ -40,6 +40,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 /* system headers */
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -47,9 +48,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #if defined(HAVE_UNISTD_H)
 #  include <unistd.h>

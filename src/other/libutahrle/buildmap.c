@@ -25,6 +25,7 @@
  * Copyright (c) 1987, University of Utah
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include "rle.h"
 #include <math.h>

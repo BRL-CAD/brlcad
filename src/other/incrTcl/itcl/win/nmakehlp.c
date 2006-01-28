@@ -15,6 +15,7 @@
 #include <windows.h>
 #pragma comment (lib, "user32.lib")
 #pragma comment (lib, "kernel32.lib")
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 

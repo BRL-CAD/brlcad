@@ -100,8 +100,10 @@ Acknowledgements:
 
 ********************************************************************/
 /*@}*/
+
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
@@ -111,9 +113,6 @@ Acknowledgements:
 #include <math.h>
 #include <signal.h>
 #include "tcl.h"
-#if 0
-#include "tk.h"
-#endif
 
 #include "machine.h"
 #include "cmd.h"

@@ -43,17 +43,17 @@
 
 #include "common.h"
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/time.h>
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#include <sys/time.h>
-#include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
 #  include <strings.h>
 #endif
-#include <stdlib.h>
 
 #include "machine.h"
 #include "bu.h"

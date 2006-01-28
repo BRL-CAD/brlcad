@@ -45,9 +45,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdlib.h>
 #include <ctype.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <math.h>
 #if defined(HAVE_FCNTL_H)
@@ -63,6 +63,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #if defined(HAVE_UNISTD_H)
 #  include <unistd.h>
 #endif
+
 #include "tcl.h"
 #include "machine.h"
 #include "cmd.h"		/* this includes bu.h */

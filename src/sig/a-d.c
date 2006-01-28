@@ -25,18 +25,20 @@
 
 #include "common.h"
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <ctype.h>
+#include <unistd.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
 #  include <strings.h>
 #endif
 
-#include <stdio.h>
-#include <math.h>
-#include <ctype.h>
-#include <unistd.h>
 #include "machine.h"
 #include "bu.h"
+
 
 #define	COMMENT_CHAR	'#'
 

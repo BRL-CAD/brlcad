@@ -36,16 +36,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#include <stdio.h>
-#include <math.h>	/* for atof() */
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h> /* for atof() */
+#include <stdio.h>
+#include <math.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
 #endif
-
 #include <time.h>	/* for ctime() */
 
 #include "machine.h"

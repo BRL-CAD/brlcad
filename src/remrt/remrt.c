@@ -40,17 +40,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-#include <stddef.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #include <stdlib.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
 #include <math.h>
 #include <netdb.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else

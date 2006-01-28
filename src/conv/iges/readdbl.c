@@ -51,7 +51,6 @@ double *inum;
 {
 	int i=(-1),done=0,lencard;
 	char num[80];
-	double atof();
 
 	if( card[counter] == eof ) /* This is an empty field */
 	{

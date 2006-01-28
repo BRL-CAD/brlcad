@@ -30,9 +30,12 @@
 static const char RCScos[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include <stdio.h>
+#include "common.h"
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <sys.h>
+
 static float cpu0;
 
 extern long time();

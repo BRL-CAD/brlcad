@@ -25,22 +25,16 @@
  */
 #include "common.h"
 
-
-
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
-
 #include <stdio.h>
+#include <stdlib.h> /* for atof() */
 #include <math.h>
 
 #include "machine.h"
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h> /* for atof() */
-#endif
-
 
 /*
  * Buffering stuff

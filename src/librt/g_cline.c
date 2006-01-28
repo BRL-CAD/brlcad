@@ -42,9 +42,11 @@ static const char RCScline[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "tcl.h"
 #include "machine.h"
 #include "vmath.h"

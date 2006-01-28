@@ -39,8 +39,11 @@
  *	o	offset
  */
 #include <stdio.h>
-#include <unistd.h>
 #include <math.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"

@@ -31,6 +31,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
 
+#include <stdlib.h>
 #include <math.h>
 #include <string.h>
 #include <wchar.h>

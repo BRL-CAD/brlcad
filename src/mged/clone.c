@@ -35,6 +35,7 @@
 
 #include "common.h"
   
+#include <stdlib.h>
 #include <signal.h>
 #include <stdio.h>
 #include <math.h>

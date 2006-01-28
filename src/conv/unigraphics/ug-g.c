@@ -22,21 +22,22 @@
  *
  */
 
+#include "common.h"
+
 #define DO_SUPPRESSIONS 0
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <signal.h>
 #include <time.h>
 #include <libexc.h>
-
-#include "common.h"
-
-#include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
+
 #include "machine.h"
 #include "db.h"
 #include "vmath.h"

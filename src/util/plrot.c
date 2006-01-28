@@ -37,19 +37,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-
-#include <stdio.h>
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h> /* atof() */
-#endif
+#include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
 #endif
 #include <ctype.h>
 #include <math.h>

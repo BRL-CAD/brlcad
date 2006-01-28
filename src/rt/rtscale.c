@@ -59,6 +59,7 @@ static const char RCSscale[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
@@ -66,6 +67,7 @@ static const char RCSscale[] = "@(#)$Header$ (BRL)";
 #  include <strings.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"

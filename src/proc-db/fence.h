@@ -37,8 +37,8 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
 #include <string.h>

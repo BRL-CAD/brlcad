@@ -31,20 +31,15 @@
  */
 #include "common.h"
 
-
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
+#include <stdlib.h> /* for atof() */
 #include <stdio.h>
 #include <math.h>
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h> /* for atof() */
-#endif
 
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
 
 #include "machine.h"
 

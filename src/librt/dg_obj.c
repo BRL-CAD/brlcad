@@ -40,8 +40,10 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /*@}*/
+
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
@@ -51,7 +53,6 @@
 #include <fcntl.h>
 #include <math.h>
 #include <signal.h>
-#include "common.h"
 
 #include "tcl.h"
 #include "machine.h"
