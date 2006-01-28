@@ -24,10 +24,11 @@ static const char RCSid[] = "@(#)$Header$";
 
 #include "common.h"
 
+#include <stdlib.h>
+#include <stdio.h>
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else

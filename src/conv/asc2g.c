@@ -44,13 +44,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
+#include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
 #  include <strings.h>
 #endif
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 
-#include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
@@ -61,9 +65,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 #include "mater.h"
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
+
 
 #define BUFSIZE			(8*1024)	/* input line buffer size */
 #define TYPELEN			10
