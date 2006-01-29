@@ -8,14 +8,15 @@
 #include "common.h"
 
 #ifdef _GNU_SOURCE
-#undef _GNU_SOURCE
+#  undef _GNU_SOURCE
 #endif
 
 /* jove.h header file to be included by EVERYONE */
+#include <stdlib.h>
 #include <stdio.h>
 
 #ifdef SYSV
-# define SYS5	1
+#  define SYS5	1
 #endif
 /*
  *  Some very common BSD --> SYSV conversion aids
@@ -184,7 +185,7 @@ typedef	short	disk_line;
 #define	SetReadOnly(b)	((b)->b_status |= B_READONLY);
 #define	ClrReadOnly(b)	((b)->b_status &= ~B_READONLY);
 
-#define DoTimes(f, n)	exp_p = 1, exp = (n), f()
+#define DoTimes(f, n)	jove_exp_p = 1, jove_exp = (n), f()
 
 extern int	BufSize;
 extern int	CheckTime,
@@ -253,8 +254,8 @@ extern	int	RingBell;
 extern char	genbuf[LBSIZE];		/* Scatch pad */
 extern int	peekc,
 	io,		/* File descriptor for reading and writing files */
-	exp,
-	exp_p,
+	jove_exp,
+	jove_exp_p,
 	this_cmd,
 	last_cmd,
 	RecDepth;
@@ -474,11 +475,9 @@ extern char
 	*RunEdit(),
 	*getline(),
 	*getblock(),
-	*malloc(),
 	*emalloc(),
 	*mktemp(),
 	*place(),
-	*realloc(),
 	*getright(),
 	*getcptr(),
 #if !defined(__sp3__)
