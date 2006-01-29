@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 14.1  2004/11/16 19:42:20  morrison
+ * dawn of a new revision.  it shall be numbered 14 to match release 7.  begin the convergence by adding emacs/vi local variable footer blocks to encourage consistent formatting.
+ *
  * Revision 1.1  2004/05/20 14:49:59  morrison
  * Sources that are external to BRL-CAD are moved from the top level to src/other/.
  *
@@ -275,8 +278,8 @@ BUFFER	*cb;		/* Current Buffer.	*/
 void
 RedrawDisplay()
 {
-	LINE	*newtop = prev_line(curwind->w_line, exp_p ?
-				exp : HALF(curwind));
+	LINE	*newtop = prev_line(curwind->w_line, jove_exp_p ?
+				jove_exp : HALF(curwind));
 
 	if (newtop == curwind->w_top)
 		v_clear(FLine(curwind), FLine(curwind) + SIZE(curwind));
@@ -308,7 +311,7 @@ NextPage()
 {
 	LINE	*newline;
 
-	if (exp_p)
+	if (jove_exp_p)
 		UpScroll();
 	else {
 		newline = next_line(curwind->w_top, max(1, SIZE(curwind) - 1));
@@ -324,7 +327,7 @@ PrevPage()
 {
 	LINE	*newline;
 
-	if (exp_p)
+	if (jove_exp_p)
 		DownScroll();
 	else {
 		newline = prev_line(curwind->w_top, max(1, SIZE(curwind) - 1));
@@ -399,7 +402,7 @@ DoTell(string)
 char	*string;
 {
 	if (WhichKind == WITHBUFFER) {
-		exp = 1;
+		jove_exp = 1;
 		ins_str(string);
 		LineInsert();
 		return OKAY;

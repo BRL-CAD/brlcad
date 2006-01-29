@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 14.1  2004/11/16 19:42:20  morrison
+ * dawn of a new revision.  it shall be numbered 14 to match release 7.  begin the convergence by adding emacs/vi local variable footer blocks to encourage consistent formatting.
+ *
  * Revision 1.1  2004/05/20 14:50:00  morrison
  * Sources that are external to BRL-CAD are moved from the top level to src/other/.
  *
@@ -95,6 +98,7 @@ static const char RCSid[] = "@(#)$Header$";
 #include "./jove.h"
 
 #include <signal.h>
+#include <stdlib.h>
 
 extern	char cerrfmt[];
 extern	char lerrfmt[];
@@ -211,11 +215,11 @@ SpellCom()
 	char	command[LBSIZE];
 
 	savewind = curwind;
-	exp_p = 1;
+	jove_exp_p = 1;
 	if (IsModified(curbuf))
 		SaveFile();
 	ignore(sprintf(command, "spell %s", curbuf->b_fname));
-	ignore(UnixToBuf("Spell", 1, !exp_p, "/bin/sh", "sh", "-c",
+	ignore(UnixToBuf("Spell", 1, !jove_exp_p, "/bin/sh", "sh", "-c",
 			command, (char *)0));
 	NotModified();
 	Bof();		/* Beginning of (error messages) file */
@@ -315,7 +319,7 @@ ErrFree()
 void
 NextError()
 {
-	register int	i = exp;
+	register int	i = jove_exp;
 
 	while (--i >= 0)
 		DoNextErr();
@@ -467,8 +471,8 @@ char	*bufname,
 	WINDOW	*savewp = curwind;
 	int	status;
 
-	exp = 1;
-	status = UnixToBuf(bufname, 1, !exp_p, StdShell, "shell", "-c",
+	jove_exp = 1;
+	status = UnixToBuf(bufname, 1, !jove_exp_p, StdShell, "shell", "-c",
 			command, (char *)0);
 	com_finish(status, command);
 	SetWind(savewp);
@@ -537,7 +541,7 @@ UnixToBuf(VA_T(char *bufname) VA_T(int disp) VA_T(int clobber)
 		redisplay();
 	if (clobber)
 		SetScratch(curbuf);
-	exp = 1;
+	jove_exp = 1;
 
 	ttyset(0);
 	dopipe(p);
@@ -555,7 +559,7 @@ UnixToBuf(VA_T(char *bufname) VA_T(int disp) VA_T(int clobber)
 		PipeClose(p);
 		execvp(func, args);
 		ignore(write(1, "Execvp failed", 12));
-		_exit(1);
+		exit(1);
 	} else {
 		int	status;
 		char	*mess;
@@ -590,9 +594,9 @@ RegToShell()
 	MARK	*m = CurMark();
 
 	strcpy(com, ask((char *) 0, FuncName()));
-	if (!exp_p) {
-		exp_p = 1;	/* So it doesn't delete the region */
-		exp = 0;
+	if (!jove_exp_p) {
+		jove_exp_p = 1;	/* So it doesn't delete the region */
+		jove_exp = 0;
 	}
 	if (inorder(m->m_line, m->m_char, curline, curchar))
 		RegToUnix(curbuf->b_name, 1, m->m_line, m->m_char,

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 14.1  2004/11/16 19:42:20  morrison
+ * dawn of a new revision.  it shall be numbered 14 to match release 7.  begin the convergence by adding emacs/vi local variable footer blocks to encourage consistent formatting.
+ *
  * Revision 1.1  2004/05/20 14:50:00  morrison
  * Sources that are external to BRL-CAD are moved from the top level to src/other/.
  *
@@ -151,7 +154,7 @@ PopMark()
 void
 SetMark()
 {
-	if (exp_p)
+	if (jove_exp_p)
 		PopMark();
 	else {
 		curbuf->b_themark = (curbuf->b_themark + 1) % NMARKS;

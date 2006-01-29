@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 14.1  2004/11/16 19:42:20  morrison
+ * dawn of a new revision.  it shall be numbered 14 to match release 7.  begin the convergence by adding emacs/vi local variable footer blocks to encourage consistent formatting.
+ *
  * Revision 1.1  2004/05/20 14:50:01  morrison
  * Sources that are external to BRL-CAD are moved from the top level to src/other/.
  *
@@ -385,13 +388,13 @@ char	*name;
 void
 GrowWindow()
 {
-	WindSize(curwind, abs(exp));
+	WindSize(curwind, abs(jove_exp));
 }
 
 void
 ShrWindow()
 {
-	WindSize(curwind, -abs(exp));
+	WindSize(curwind, -abs(jove_exp));
 }
 
 /* Change the size of the window by inc.  First arg is the window,

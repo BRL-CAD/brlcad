@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 14.1  2004/11/16 19:42:20  morrison
+ * dawn of a new revision.  it shall be numbered 14 to match release 7.  begin the convergence by adding emacs/vi local variable footer blocks to encourage consistent formatting.
+ *
  * Revision 1.2  2004/06/07 17:05:49  morrison
  * fix irix gcc compilation problem -- convert HAVE_TERMIOS_H checks to be defined or not defined
  *
@@ -160,21 +163,24 @@ static const char RCSid[] = "@(#)$Header$";
 #include "./termcap.h"
 
 #include <signal.h>
+#include <errno.h>
 #if defined(HAVE_TERMIOS_H)
 #  if !defined(_XOPEN_SOURCE)
-#	define _XOPEN_SOURCE 1	/* to get TAB3, etc */
+#    define _XOPEN_SOURCE 1	/* to get TAB3, etc */
 #  endif
-# include <termios.h>
-# include <fcntl.h>
-#else
-# ifndef SYS5
-#  include <sgtty.h>
-# else
-#  include <termio.h>
+#  include <termios.h>
 #  include <fcntl.h>
-# endif
+#else
+#  ifndef SYS5
+#    include <sgtty.h>
+#  else
+#    include <termio.h>
+#    include <fcntl.h>
+#  endif
 #endif
-#include <errno.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 extern char	version[];
 extern char	BinShell[];
@@ -207,8 +213,8 @@ int	origflags[NFLAGS],
 char	genbuf[LBSIZE];		/* Scatch pad */
 int	peekc,
 	io,		/* File descriptor for reading and writing files */
-	exp,
-	exp_p,
+	jove_exp,
+	jove_exp_p,
 	this_cmd,
 	last_cmd,
 	RecDepth;
@@ -259,7 +265,7 @@ finish(code)
 		if (!Crashing) {
 			putstr("Writing modified JOVE buffers...");
 			Crashing++;
-			exp_p = 0;
+			jove_exp_p = 0;
 			WtModBuf();
 		} else
 			putstr("Complete lossage!");
@@ -713,8 +719,8 @@ register int	c;
 	fp = mainmap[c];
 	if (fp == 0) {
 		rbell();
-		exp = 1;
-		exp_p = errormsg = 0;
+		jove_exp = 1;
+		jove_exp_p = errormsg = 0;
 		message("");
 		return;
 	}
@@ -759,7 +765,7 @@ register char	*argv[];
 			if (argv[1][1] == 't') {
 				++argv;
 				--argc;
-				exp_p = 1;
+				jove_exp_p = 1;
 				find_tag(argv[1]);
 			}
 		} else if (argv[1][0] == '+' &&
@@ -929,8 +935,8 @@ DoKeys(first)
 	this_cmd = last_cmd = 0;
 
 	for (;;) {
-		exp = 1;
-		exp_p = 0;
+		jove_exp = 1;
+		jove_exp_p = 0;
 		last_cmd = this_cmd;
 cont:
 		this_cmd = 0;

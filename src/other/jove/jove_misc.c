@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 14.1  2004/11/16 19:42:20  morrison
+ * dawn of a new revision.  it shall be numbered 14 to match release 7.  begin the convergence by adding emacs/vi local variable footer blocks to encourage consistent formatting.
+ *
  * Revision 1.1  2004/05/20 14:50:00  morrison
  * Sources that are external to BRL-CAD are moved from the top level to src/other/.
  *
@@ -123,8 +126,8 @@ register int	c;
 void
 FourTime()
 {
-	exp_p = 1;
-	exp *= 4;
+	jove_exp_p = 1;
+	jove_exp *= 4;
 	this_cmd = ARG_CMD;
 }
 
@@ -189,8 +192,8 @@ EscPrefix()
 			if (c >= '0' && c <= '9')
 				i = i * 10 + (c - '0');
 			else {
-				exp_p = 1;
-				exp = i * sign;
+				jove_exp_p = 1;
+				jove_exp = i * sign;
 				peekc = c;
 				this_cmd = ARG_CMD;
 				return;
@@ -294,9 +297,9 @@ ToIndent()
 void
 GoLine()
 {
-	if (exp_p == 0)
+	if (jove_exp_p == 0)
 		return;
-	SetLine(next_line(curbuf->b_zero, exp - 1));
+	SetLine(next_line(curbuf->b_zero, jove_exp - 1));
 }
 
 int	RMargin = RMARGIN;
@@ -519,7 +522,7 @@ TransChar()
 	if (curchar == 0)
 		complain((char *) 0);	/* BEEP */
 	c = linebuf[curchar - 1];
-	exp = 1;
+	jove_exp = 1;
 	DelPChar();
 	if (eolp()) {
 		BackChar();
@@ -542,7 +545,7 @@ register LINE	*line;
 void
 UpScroll()
 {
-	SetTop(curwind, next_line(curwind->w_top, exp));
+	SetTop(curwind, next_line(curwind->w_top, jove_exp));
 	if (in_window(curwind, curline) == -1)
 		SetLine(next_line(curwind->w_top, HALF(curwind)));
 }
@@ -550,7 +553,7 @@ UpScroll()
 void
 DownScroll()
 {
-	SetTop(curwind, prev_line(curwind->w_top, exp));
+	SetTop(curwind, prev_line(curwind->w_top, jove_exp));
 	if (in_window(curwind, curline) == -1)
 		SetLine(next_line(curwind->w_top, HALF(curwind)));
 }
@@ -575,8 +578,8 @@ KillEOL()
 	LINE	*line2;
 	int	char2;
 
-	if (exp_p) {
-		line2 = next_line(curline, exp);
+	if (jove_exp_p) {
+		line2 = next_line(curline, jove_exp);
 		if (line2 == curline)
 			char2 = length(curline);
 		else
@@ -906,7 +909,7 @@ YankPop()
 void
 WtModBuf()
 {
-	int	askp = exp_p;
+	int	askp = jove_exp_p;
 	BUFFER	*oldb = curbuf,
 		*bp;
 	char	*yorn,
@@ -966,7 +969,7 @@ register char	*buf;
 void
 DelBlnkLines()
 {
-	exp = 1;
+	jove_exp = 1;
 	if (!blnkp(linebuf) && !eolp())
 		return;
 	while (blnkp(linebuf) && curline->l_prev)
@@ -1015,9 +1018,9 @@ register int	num;
 void
 ForChar()
 {
-	register int	num = exp;
+	register int	num = jove_exp;
 
-	exp = 1;
+	jove_exp = 1;
 	while (num--) {
 		if (eolp()) {			/* Go to the next line */
 			if (curline->l_next == 0)
@@ -1031,9 +1034,9 @@ ForChar()
 void
 BackChar()
 {
-	register int	num = exp;
+	register int	num = jove_exp;
 
-	exp = 1;
+	jove_exp = 1;
 	while (num--) {
 		if (bolp()) {
 			if (curline->l_prev == 0)
@@ -1073,7 +1076,7 @@ down_line(down)
 	LINE	*(*func)() = down ? next_line : prev_line;
 	LINE	*line;
 
-	line = (*func)(curline, exp);
+	line = (*func)(curline, jove_exp);
 
 	this_cmd = LINE_CMD;
 
@@ -1178,11 +1181,11 @@ char	REsent[] = "[?.!]\"  *\\|[.?!]  *\\|[.?!][\"]*$";
 void
 Bos()
 {
-	int	num = exp;
+	int	num = jove_exp;
 	BUFLOC	*bp,
 		save;
 
-	exp = 1;
+	jove_exp = 1;
 	while (num--) {
 onceagain:
 		bp = dosearch(REsent, -1, 1);
@@ -1203,10 +1206,10 @@ onceagain:
 void
 Eos()
 {
-	int	num = exp;
+	int	num = jove_exp;
 	BUFLOC	*bp;
 
-	exp = 1;
+	jove_exp = 1;
 	while (num-- && (bp = dosearch(REsent, 1, 1)))
 		SetDot(bp);
 	if (bp == 0)
@@ -1268,9 +1271,9 @@ void
 ForWord()
 {
 	register char	c;
-	register int	num = exp;
+	register int	num = jove_exp;
 
-	exp = 1;
+	jove_exp = 1;
 	while (--num >= 0) {
 		to_word(1);
 		while ((c = linebuf[curchar]) != 0 && isword(c))
@@ -1284,10 +1287,10 @@ ForWord()
 void
 BackWord()
 {
-	register int	num = exp;
+	register int	num = jove_exp;
 	register char	c;
 
-	exp = 1;
+	jove_exp = 1;
 	while (--num >= 0) {
 		to_word(-1);
 		while (!bolp() && (c = linebuf[curchar - 1], isword(c)))
@@ -1304,8 +1307,8 @@ void
 Eow()
 {
 	SetLine(next_line(curwind->w_top, SIZE(curwind) - 1 -
-			min(SIZE(curwind) - 1, exp - 1)));
-	if (!exp_p)
+			min(SIZE(curwind) - 1, jove_exp - 1)));
+	if (!jove_exp_p)
 		Eol();
 }
 
@@ -1314,7 +1317,7 @@ Eow()
 void
 Bow()
 {
-	SetLine(next_line(curwind->w_top, min(SIZE(curwind) - 1, exp - 1)));
+	SetLine(next_line(curwind->w_top, min(SIZE(curwind) - 1, jove_exp - 1)));
 }
 
 /*
@@ -1335,9 +1338,9 @@ BUFLOC *buf;
 void
 CapChar()
 {
-	register int	num = exp;
+	register int	num = jove_exp;
 
-	exp = 1;
+	jove_exp = 1;
 	while (num--) {
 		upper(&linebuf[curchar]);	/* Cap this word. */
 		SetModified(curbuf);	/* Or else lsave won't do anything */
@@ -1354,9 +1357,9 @@ CapChar()
 void
 CapWord()
 {
-	int num = exp;
+	int num = jove_exp;
 
-	exp = 1;	/* So all the commands are done once */
+	jove_exp = 1;	/* So all the commands are done once */
 
 	while (num--) {
 		to_word(1);	/* Go to the beginning of the next word. */

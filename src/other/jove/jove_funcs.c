@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 14.1  2004/11/16 19:42:20  morrison
+ * dawn of a new revision.  it shall be numbered 14 to match release 7.  begin the convergence by adding emacs/vi local variable footer blocks to encourage consistent formatting.
+ *
  * Revision 1.1  2004/05/20 14:49:59  morrison
  * Sources that are external to BRL-CAD are moved from the top level to src/other/.
  *
@@ -720,7 +723,7 @@ struct macro	*mac;
 		complain("The impossible with macros just happened");
 	macstack[stackp] = mac;
 	mac->Offset = 0;
-	mac->Ntimes = exp;
+	mac->Ntimes = jove_exp;
 	mac->Flags |= EXECUTE;
 }
 

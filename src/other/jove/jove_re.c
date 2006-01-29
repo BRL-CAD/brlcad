@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 14.1  2004/11/16 19:42:20  morrison
+ * dawn of a new revision.  it shall be numbered 14 to match release 7.  begin the convergence by adding emacs/vi local variable footer blocks to encourage consistent formatting.
+ *
  * Revision 1.1  2004/05/20 14:50:00  morrison
  * Sources that are external to BRL-CAD are moved from the top level to src/other/.
  *
@@ -344,7 +347,7 @@ message("<SP> => yes, <DEL> => no, <CR> => stop, 'r' => recursive edit, 'p' => p
 			numdone++;
 			SetModified(curbuf);
 			fromchar = curchar = loc2 - genbuf;
-			exp = 1;
+			jove_exp = 1;
 			makedirty(curline);
 			if (query) {
 				message(mesgbuf);	/* No blinking ... */

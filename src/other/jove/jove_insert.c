@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 14.1  2004/11/16 19:42:20  morrison
+ * dawn of a new revision.  it shall be numbered 14 to match release 7.  begin the convergence by adding emacs/vi local variable footer blocks to encourage consistent formatting.
+ *
  * Revision 1.1  2004/05/20 14:49:59  morrison
  * Sources that are external to BRL-CAD are moved from the top level to src/other/.
  *
@@ -84,14 +87,14 @@ LINE	*after;
 void
 LineInsert()
 {
-	register int	num = exp;
+	register int	num = jove_exp;
 	char	newline[LBSIZE];
 	LINE	*newdot,
 		*olddot = curline;
 	int	oldchar = curchar;
 	int	atbegin = (!firstp(curline) && bolp());
 
-	exp = 1;
+	jove_exp = 1;
 	if (atbegin)	/* This is mostly to make redisplay seem smart
 			   but it also decreases the amount of copying
 			   from one buffer to another */
@@ -183,7 +186,7 @@ OverWrite()
 {
 	int	i, num;
 
-	for (i = 0, num = exp, exp = 1; i < num; i++) {
+	for (i = 0, num = jove_exp, jove_exp = 1; i < num; i++) {
 		if (!eolp())
 			DelNChar();
 		Insert(LastKeyStruck);
@@ -201,9 +204,9 @@ Insert(c)
 {
 	SetModified(curbuf);
 	makedirty(curline);
-	insert(c, linebuf, curchar, exp, LBSIZE);
-	IFixMarks(curline, curchar, curline, curchar + exp);
-	curchar += exp;
+	insert(c, linebuf, curchar, jove_exp, LBSIZE);
+	IFixMarks(curline, curchar, curline, curchar + jove_exp);
+	curchar += jove_exp;
 }
 
 /*
@@ -302,7 +305,7 @@ AtMargin()
 {
 	int	open_kludge = 0;
 
-	exp = 1;
+	jove_exp = 1;
 
 	if (curline->l_next == 0) {
 		OpenLine();
@@ -328,7 +331,7 @@ Newline()
 	/* If there is more than 2 blank lines in a row then don't make
 	   a newline, just move down one. */
 
-	if (exp == 1 && eolp() && TwoBlank()) {
+	if (jove_exp == 1 && eolp() && TwoBlank()) {
 		SetLine(curline->l_next);
 		return;
 	}
@@ -376,7 +379,7 @@ register int	atchar;
 void
 OpenLine()
 {
-	int	num = exp;
+	int	num = jove_exp;
 
 	LineInsert();	/* Open the lines... */
 	DoTimes(BackChar, num);
