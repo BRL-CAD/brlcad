@@ -44,6 +44,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
@@ -62,6 +63,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtlist.h"
 #include "raytrace.h"
 #include "fb.h"
+#include "bu.h"
 #include "spectrum.h"
 #include "shadefuncs.h"
 #include "shadework.h"
@@ -657,11 +659,11 @@ free_scanlines(void)
 
 	for( y=0; y<height; y++ )  {
 		if( scanline[y].sl_buf )  {
-			rt_free( scanline[y].sl_buf, "sl_buf scanline buffer" );
+			bu_free( scanline[y].sl_buf, "sl_buf scanline buffer" );
 			scanline[y].sl_buf = (char *)0;
 		}
 	}
-	rt_free( (char *)scanline, "struct scanline[height]" );
+	bu_free( (char *)scanline, "struct scanline[height]" );
 	scanline = (struct scanline *)0;
 }
 
@@ -723,7 +725,7 @@ view_2init(register struct application *ap, char *framename)
 	if( !incr_mode || !scanline )
 	{
 		if( scanline )  free_scanlines();
-		scanline = (struct scanline *)rt_calloc(
+		scanline = (struct scanline *)bu_calloc(
 			height, sizeof(struct scanline),
 			"struct scanline[height]" );
 	}

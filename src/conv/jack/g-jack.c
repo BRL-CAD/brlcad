@@ -458,7 +458,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 	int			*map;	/* map from v->index to Jack vert # */
 	struct nmg_ptbl		vtab;	/* vertex table */
 
-	map = (int *)rt_calloc(r->m_p->maxindex, sizeof(int *), "Jack vert map");
+	map = (int *)bu_calloc(r->m_p->maxindex, sizeof(int *), "Jack vert map");
 
 	/* Built list of vertex structs */
 	nmg_vertex_tabulate( &vtab, &r->l.magic );

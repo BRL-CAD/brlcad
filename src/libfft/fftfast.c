@@ -156,6 +156,7 @@ init_sintab(int size)
 	/* Get some buffer space */
 	if( sintab != NULL ) free( sintab );
 	if( costab != NULL ) free( costab );
+	/* should not use bu_calloc() as libfft is not dependant upon libbu */
 	sintab = (double *)calloc( sizeof(*sintab), size );
 	costab = (double *)calloc( sizeof(*costab), size );
 

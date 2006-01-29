@@ -82,7 +82,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include	<stdlib.h>
 #include	<stdio.h>
 #include	<assert.h>
@@ -497,20 +496,6 @@ main(int argc, char **argv)
 		register int	top_x, top_y;	/* source rect. upper bounds */
 		register int	bot_x, bot_y;	/* source rect. lower bounds */
 
-#if 0	/* (already done by calloc()!) */
-		/* Clear end of output scan line buffer to background. */
-
-		for ( dst_x = src_width * y_scale + EPSILON;
-		      dst_x < dst_width;
-		      ++dst_x
-		    )	{
-			assert(dst_x >= 0);
-			Dst( dst_x, 0 )[RED] = 0;
-			Dst( dst_x, 0 )[GRN] = 0;
-			Dst( dst_x, 0 )[BLU] = 0;
-			}
-#endif
-
 		/* Compute coords. of source rectangle and destination pixel. */
 
 		dst_y = 0;
@@ -638,23 +623,6 @@ main(int argc, char **argv)
 		register int	dst_x, dst_y;	/* dest. rect. pixel coords. */
 		register int	bot_x, top_x;	/* source rectangle bounds */
 		register int	bot_y, top_y;	/* destination rect. bounds */
-
-#if 0	/* (already done by calloc()!) */
-		/* Clear end of output scan line buffer to background. */
-
-		for ( dst_x = src_width * y_scale + EPSILON;
-		      dst_x < dst_width;
-		      ++dst_x
-		    )
-			for ( dst_y = (int)(y_scale + 1 - EPSILON);
-			      --dst_y >= 0;
-			    )	{
-				assert(dst_x >= 0 && dst_y < dst_height);
-				Dst( dst_x, dst_y )[RED] = 0;
-				Dst( dst_x, dst_y )[GRN] = 0;
-				Dst( dst_x, dst_y )[BLU] = 0;
-				}
-#endif
 
 		/* Compute coords. of source and destination rectangles. */
 

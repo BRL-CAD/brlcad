@@ -40,15 +40,18 @@
  */
 #include "common.h"
 
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
+
+#include "machine.h"
+#include "bu.h"
+
 
 #define MAXLEN 40
 
@@ -87,13 +90,13 @@ main(int argc, char **argv)
 	    maxlength = (++j>maxlength) ? j : maxlength;
     }
 
-    y = (struct unit *) calloc(icount+ocount,sizeof(struct unit));
+    y = (struct unit *) bu_calloc(icount+ocount,sizeof(struct unit), "struct unit");
     x = y - 1;
     for(i=1;i<argc;i++){
 	if( !strncmp(argv[i],"-",1) ){
 	    j=0;
 	    x++;
-	    x->list = (short *) calloc(maxlength,sizeof(short));
+	    x->list = (short *) bu_calloc(maxlength,sizeof(short), "short array");
 	    if (argv[i][1] == 'i'){
 		i++;
 		(x)->i_o = 1;
@@ -120,7 +123,7 @@ main(int argc, char **argv)
 	    x->channels++;
 	}
     }
-    arrayd = (Word *) calloc(argc,sizeof(Word));/*may use more memory than absolutely necessary*/
+    arrayd = (Word *) bu_calloc(argc,sizeof(Word), "Word"); /*may use more memory than absolutely necessary*/
     num_done = 0;
     while(num_done < icount ){ /* go until all in files are done */
 	num_done = 0;
@@ -141,12 +144,15 @@ main(int argc, char **argv)
 	    }
 	}
     }
-    free(arrayd);
+
+    /* release memory */
+    bu_free(arrayd, "Word");
     for (x=y;x<y+ocount+icount;x++){
-	free(x->list);
+	bu_free(x->list, "short array");
     }
-    free(y);
-    exit(0);
+    bu_free(y, "struct unit");
+
+    return 0;
 }
 
 int max(int *m, int n) /*return greatest of n integers, unless one is greater than n*/

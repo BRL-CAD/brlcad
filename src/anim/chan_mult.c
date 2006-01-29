@@ -29,10 +29,15 @@
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+#include "common.h"
 
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+
+#include "machine.h"
+#include "bu.h"
+
 
 int
 main(int argc, char **argv)
@@ -47,7 +52,7 @@ main(int argc, char **argv)
 
     sscanf(*(argv+1),"%lf",&factor);
     sscanf(*(argv+2),"%d",&of);
-    col_list = (int *) calloc(argc-2,sizeof(int));
+    col_list = (int *) bu_calloc(argc-2,sizeof(int), "int array");
     for (i=3;i<argc;i++){
 	sscanf(*(argv+i),"%d",col_list+(i-3));
     }
@@ -72,6 +77,8 @@ main(int argc, char **argv)
 	    printf("\n");
 	count = (count+1)%of;
     }
+
+    bu_free(col_list, "int array");
     return( 0 );
 }
 

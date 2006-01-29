@@ -27,19 +27,19 @@
  */
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
 #include <stdlib.h>
 #include <stdio.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 
 /* declarations to support use of getopt() system call */
@@ -88,17 +88,11 @@ void comp_stats(FILE *fd)
 	int i;
 
 
-	buffer = (unsigned short *)calloc(10240, sizeof(short));
-	if (buffer == (unsigned short *)NULL) {
-		(void)fprintf(stderr, "%s: cannot allocate buffer\n",
-			progname);
-		exit(-1);
-	}
+	buffer = (unsigned short *)bu_calloc(10240, sizeof(short), "buffer");
 
 	stdev = sum = sum_sq = count = num = 0.0;
 	min = 65535;
 	max = 0;
-
 
 	while ( (count=fread((void *)buffer, sizeof(short), 10240, fd)) ) {
 		for (i=0 ; i < count ; ++i) {
@@ -115,6 +109,7 @@ void comp_stats(FILE *fd)
 	(void)printf("   Num: %g\n   Min: %u\n   Max: %u\n   Sum: %g\n  Mean: %g\nSStdev: %g\n",
 		num, min, max, sum, sum/num, stdev);
 
+	bu_free(buffer, "buffer");
 }
 
 

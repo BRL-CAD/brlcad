@@ -70,9 +70,9 @@ int read_faces(struct model *m, FILE *fgeom)
 	if (fscanf(fgeom, "%d %d %d", &nverts, &nfaces, &nedges) != 3)
 		rt_bomb("Cannot read number of vertices, faces, edges.\n");
 
-	pts = (fastf_t *) rt_malloc(sizeof(fastf_t) * 3 * nverts, "points list");
-	verts = (struct vertex **) rt_malloc(sizeof(struct vertex *) * nverts, "vertices");
-	outfaceuses = (struct faceuse **) rt_malloc(sizeof(struct faceuse *) * nfaces, "faceuses");
+	pts = (fastf_t *) bu_malloc(sizeof(fastf_t) * 3 * nverts, "points list");
+	verts = (struct vertex **) bu_malloc(sizeof(struct vertex *) * nverts, "vertices");
+	outfaceuses = (struct faceuse **) bu_malloc(sizeof(struct faceuse *) * nfaces, "faceuses");
 
 		/* Read in vertex geometry, store in geometry list */
 	for (i = 0; i < nverts; i++) {
@@ -96,8 +96,8 @@ int read_faces(struct model *m, FILE *fgeom)
 			exit(1);
 		}
 					/* Grab memory for list for this face. */
-		vlist = (struct vertex **) rt_malloc(sizeof(struct vertex *) * nedges, "vertex list");
-		pinds = (int *) rt_malloc(sizeof(int) * nedges, "point indicies");
+		vlist = (struct vertex **) bu_malloc(sizeof(struct vertex *) * nedges, "vertex list");
+		pinds = (int *) bu_malloc(sizeof(int) * nedges, "point indicies");
 
 		for (j = 0; j < nedges; j++) {			/* Read list of point indicies. */
 			if (fscanf(fgeom, "%d", &pinds[j]) != 1) {

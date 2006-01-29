@@ -909,10 +909,7 @@ int	width, height;
 	 *  Allocate extension memory section,
 	 *  addressed by SGI(ifp)->mi_xxx
 	 */
-	if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
-		fb_log("sgi_open:  sgiinfo malloc failed\n");
-		return(-1);
-	}
+	SGIL(ifp) = (char *)bu_calloc( 1, sizeof(struct sgiinfo), "struct sgiinfo" );
 	SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
 
 	/* the Silicon Graphics Library Window management routines
@@ -1309,7 +1306,7 @@ FBIO	*ifp;
 			(void)free( ifp->if_mem );
 		}
 		/* free state information */
-		(void)free( (char *)SGIL(ifp) );
+		(void)bu_free( (char *)SGIL(ifp), "struct sgiinfo" );
 		SGIL(ifp) = NULL;
 	}
 

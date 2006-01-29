@@ -28,19 +28,20 @@
  */
 #include "common.h"
 
-
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
+
 #include "machine.h"
+#include "bu.h"
 
 double	*data;			/* Input buffer */
 double	*r;			/* autocor output */
@@ -60,9 +61,9 @@ int main(int argc, char **argv)
 	}
 
 	L = (argc > 1) ? atoi(argv[1]) : 512;
-	data = (double *)calloc( L, sizeof(double) );
-	r = (double *)calloc( L, sizeof(double) );
-	weight = (double *)calloc( L, sizeof(double) );
+	data = (double *)bu_calloc( L, sizeof(double), "data" );
+	r = (double *)bu_calloc( L, sizeof(double), "r" );
+	weight = (double *)bu_calloc( L, sizeof(double), "weight" );
 
 	for( i = 0; i < L; i++ ) {
 		weight[i] = 1.0 / (double)(L-i);
@@ -91,6 +92,10 @@ int main(int argc, char **argv)
 
 		fwrite( r, sizeof(*r), L, stdout );
 	}
+
+	bu_free(data, "data");
+	bu_free(r, "r");
+	bu_free(weight, "weight");
 
 	return 0;
 }

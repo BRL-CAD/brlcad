@@ -437,7 +437,7 @@ copy_geometry( int dest, int src )
 	for( i=0 ; i < rts_geometry[dest]->rts_number_of_rtis ; i++ ) {
 		struct rt_i *rtip;
 
-		/* the "calloc" call initializes the xform pointers to NULL */
+		/* the allocation call initializes the xform pointers to NULL */
 		rts_geometry[dest]->rts_rtis[i] = (struct rtserver_rti *)bu_calloc( 1,
 						    sizeof( struct rtserver_rti ),
 						    "rtserver_rti" );

@@ -166,15 +166,15 @@ main(int argc, char **argv)
 	/* Allocate 5 integer arrays for each color */
 	/* each width+2 elements wide */
 	for( i=0; i<5; i++ )  {
-		rlines[i] = (int *)calloc( (file_width+4)+1, sizeof(long) );
-		glines[i] = (int *)calloc( (file_width+4)+1, sizeof(long) );
-		blines[i] = (int *)calloc( (file_width+4)+1, sizeof(long) );
+		rlines[i] = (int *)bu_calloc( (file_width+4)+1, sizeof(long), "rlines" );
+		glines[i] = (int *)bu_calloc( (file_width+4)+1, sizeof(long), "glines" );
+		blines[i] = (int *)bu_calloc( (file_width+4)+1, sizeof(long), "blines" );
 	}
 
 	/* Allocate an integer array for each color, for output */
-	rout = (int *)malloc( out_width * sizeof(long) + 8 );
-	gout = (int *)malloc( out_width * sizeof(long) + 8 );
-	bout = (int *)malloc( out_width * sizeof(long) + 8 );
+	rout = (int *)bu_malloc( out_width * sizeof(long) + 8, "rout" );
+	gout = (int *)bu_malloc( out_width * sizeof(long) + 8, "gout" );
+	bout = (int *)bu_malloc( out_width * sizeof(long) + 8, "bout" );
 
 	/*
 	 *  Prime the pumps with 5 lines of image.
@@ -235,7 +235,13 @@ main(int argc, char **argv)
 		separate( &rlines[4][2], &glines[4][2], &blines[4][2],
 			inbuf, file_width );
 	}
-	exit(0);
+
+	bu_free(rlines, "rlines");
+	bu_free(glines, "glines");
+	bu_free(blines, "blines");
+	bu_free(rout, "rout");
+	bu_free(gout, "gout");
+	bu_free(bout, "bout");
 }
 
 /*

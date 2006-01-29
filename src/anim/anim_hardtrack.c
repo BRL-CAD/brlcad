@@ -33,29 +33,22 @@
 
 #include "common.h"
 
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <math.h>
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
 #include "anim.h"
 
-#ifndef M_PI
-#define M_PI	3.14159265358979323846
-#endif
-
-#ifndef M_PI_2
-#define M_PI_2	(M_PI*0.5)
-#endif
 
 #define NW	num_wheels
 #define NEXT(i)	(i+1)%NW
@@ -184,7 +177,7 @@ main(int argc, char **argv)
     rewind(stream);
 
     /*allocate memory for track information*/
-    x = (struct all *) calloc(num_wheels,sizeof(struct all));
+    x = (struct all *) bu_calloc(num_wheels,sizeof(struct all), "struct all");
     /*read rest of track info */
     for (i=0;i<NW;i++){
 	fscanf(stream,"%lf %lf %lf", temp, temp+1, temp+2);
@@ -315,6 +308,13 @@ main(int argc, char **argv)
 	}
 	if (last_frame) break;
     }
+
+    if (x) {
+	bu_free(x, "struct all");
+    }
+    if (r) {
+	bu_free(r, "struct rlink");
+    }
     return( 0 );
 }
 
@@ -375,7 +375,7 @@ int track_prep(void)/*run once at the beginning to establish important track inf
     }
 
     /* for a track with links already placed, get initial positions*/
-    r = (struct rlink *) calloc(num_links, sizeof(struct rlink));
+    r = (struct rlink *) bu_calloc(num_links, sizeof(struct rlink), "struct rlink");
     if (links_placed)
 	for (i=0;i<num_links;i++){
 	    get_link(link_cent,&link_angle,init_dist + tracklen*i/num_links);
@@ -403,7 +403,7 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	}
 	if ((dist -= x[i].w.rad*x[i].w.arc) < 0){
 	    *angle_p = dist/x[i].w.rad;
-	    *angle_p = x[i].w.ang1 - *angle_p;/*from x-axis to link*/
+	    *angle_p = x[i].w.ang1 - *angle_p; /*from x-axis to link*/
 	    pos[0] = x[i].w.pos[0] + x[i].w.rad*cos(*angle_p);
 	    pos[1] = x[i].w.pos[1];
 	    pos[2] = x[i].w.pos[2] + x[i].w.rad*sin(*angle_p);

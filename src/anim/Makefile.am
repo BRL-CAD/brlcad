@@ -54,10 +54,13 @@ anim_turn_SOURCES = anim_turn.c
 anim_turn_LDADD = ${BN}
 
 chan_add_SOURCES = chan_add.c
+chan_add_LDADD = ${BU}
 
 chan_mult_SOURCES = chan_mult.c
+chan_mult_LDADD = ${BU}
 
 chan_permute_SOURCES = chan_permute.c
+chan_permute_LDADD = ${BU}
 
 man_MANS = \
 	anim_cascade.1 \

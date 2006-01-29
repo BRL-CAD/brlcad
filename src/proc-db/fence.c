@@ -273,12 +273,7 @@ int parseArguments(int argc, char **argv)
   char *progname;
   int color[3];
 
-  if ((progname = (char *) calloc(DEFAULT_MAXNAMELENGTH,sizeof(char))) == NULL) {
-    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "parseArguments:(char *)progname calloc FAILED\n");
-    exit(1);
-  }
-
-  fflush(stdout);
+  progname = (char *) bu_calloc(DEFAULT_MAXNAMELENGTH,sizeof(char), "progname");
 
   if (argc > 1) {
     strncpy(progname, argv[0], (strlen(argv[0])>DEFAULT_MAXNAMELENGTH?DEFAULT_MAXNAMELENGTH:strlen(argv[0])));
@@ -649,6 +644,8 @@ int parseArguments(int argc, char **argv)
     }
   }
   fflush(stdout);
+
+  bu_free(progname, "progname");
 
   return(optind);
 }
@@ -1880,7 +1877,7 @@ int main(int argc, char **argv)
   char *verboseinput;
   int colorinput[3];
 
-  verboseinput = (char *) calloc(DEFAULT_MAXNAMELENGTH * 3, sizeof(char));
+  verboseinput = (char *) bu_calloc(DEFAULT_MAXNAMELENGTH * 3, sizeof(char), "verboseinput");
 
   (void) parseArguments(argc, argv);
 
@@ -2508,6 +2505,8 @@ int main(int argc, char **argv)
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\n...Fence [%s] Generated.\n", fenceName);
     }
   }
+
+  bu_free(verboseinput, "verboseinput");
 
   wdb_close(fp);
   return errors;

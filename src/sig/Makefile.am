@@ -66,6 +66,7 @@ dwin_SOURCES = dwin.c coswin.c hamwin.c
 dwin_LDADD = ${LIBM}
 
 dauto_SOURCES = dauto.c
+dauto_LDADD = ${BU}
 
 dmod_SOURCES = dmod.c
 dmod_LDADD = ${LIBM}
@@ -93,11 +94,14 @@ umod_LDADD = ${LIBM}
 
 dstat_SOURCES = dstat.c
 dstat_LDADD = ${LIBM}
+
 dsel_SOURCES = dsel.c
+
 istat_SOURCES = istat.c
-istat_LDADD = ${LIBM}
+istat_LDADD = ${BU} ${LIBM}
+
 ustat_SOURCES = ustat.c
-ustat_LDADD = ${LIBM}
+ustat_LDADD = ${BU} ${LIBM}
 
 
 #  Experimental
