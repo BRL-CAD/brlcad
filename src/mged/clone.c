@@ -291,7 +291,7 @@ copy_comb(struct directory *proto, struct clone_state state)
 	    return NULL;
 	}
 
-	rt_free((char *)rp, "copy_comb record[]");
+	bu_free((char *)rp, "copy_comb record[]");
     }
 
     return dp;
@@ -376,7 +376,7 @@ copy_solid(struct directory *proto, struct clone_state state)
 	    return NULL;
 	}
 
-	rt_free((char *)rp, "copy_solid record[]");
+	bu_free((char *)rp, "copy_solid record[]");
     }
 
     return dp;
@@ -416,7 +416,7 @@ copy_tree(ClientData clientData, Tcl_Interp *interp, struct clone_state state, s
     } else {
 	Tcl_AppendResult(interp, "clone:  ", dp->d_namep, " is neither COMB nor SOLID?\n", (char *)NULL);
     }
-    rt_free((char *)rp, "copy_tree record[]");
+    bu_free((char *)rp, "copy_tree record[]");
     return copy;
 }
 

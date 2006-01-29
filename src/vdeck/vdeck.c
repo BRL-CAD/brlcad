@@ -249,7 +249,7 @@ int
 main( argc, argv )
 char	*argv[];
 {
-	setbuf( stdout, rt_malloc( BUFSIZ, "stdout buffer" ) );
+	setbuf( stdout, bu_malloc( BUFSIZ, "stdout buffer" ) );
 	RT_LIST_INIT( &(sol_hd.l) );
 
 	bu_vls_init( &rt_vls );
@@ -294,7 +294,7 @@ char	*argv[];
 			break;
 		case ERASE :
 			while( curr_ct > 0 )
-				rt_free( curr_list[--curr_ct], "curr_list[ct]" );
+				bu_free( curr_list[--curr_ct], "curr_list[ct]" );
 			break;
 		case INSERT :
 			if( arg_list[1] == 0 )
@@ -569,7 +569,7 @@ genptr_t		client_data;
 	rt_vls_free( &ident );
 	rt_vls_free( &reg );
 	rt_vls_free( &flat );
-	rt_free( fullname, "fullname" );
+	bu_free( fullname, "fullname" );
 
 	/*
 	 *  Returned tree will be freed by caller.
@@ -660,7 +660,7 @@ next_one:
 	stp->st_id = ip->idb_type;
 	stp->st_dp = dp;
 	if( mat )  {
-		stp->st_matp = (matp_t)rt_malloc( sizeof(mat_t), "st_matp" );
+		stp->st_matp = (matp_t)bu_malloc( sizeof(mat_t), "st_matp" );
 		MAT_COPY( stp->st_matp, mat );
 	} else {
 		stp->st_matp = mat;
@@ -1490,9 +1490,9 @@ toc()
 	count += 1;		/* Safety */
 
 	/* Allocate tables */
-	toc_list = (char **)rt_malloc( count * sizeof(char *), "toc_list[]" );
-	tmp_list = (char **)rt_malloc( count * sizeof(char *), "tmp_list[]" );
-	curr_list = (char **)rt_malloc( count * sizeof(char *), "curr_list[]" );
+	toc_list = (char **)bu_malloc( count * sizeof(char *), "toc_list[]" );
+	tmp_list = (char **)bu_malloc( count * sizeof(char *), "tmp_list[]" );
+	curr_list = (char **)bu_malloc( count * sizeof(char *), "curr_list[]" );
 	ndir = 0;
 
 	/* Fill in toc_list[] */
@@ -1597,7 +1597,7 @@ register int	ct;
 			{
 				nomatch = NO;
 				/* Allocate storage for string.			*/
-				curr_list[curr_ct++] = rt_strdup(toc_list[j]);
+				curr_list[curr_ct++] = bu_strdup(toc_list[j]);
 			}
 		}
 		if( nomatch )
@@ -1632,7 +1632,7 @@ char	*args[];
 				register int	k;
 
 				nomatch = NO;
-				rt_free( curr_list[j], "curr_list" );
+				bu_free( curr_list[j], "curr_list" );
 				--curr_ct;
 				/* starting from bottom of list,
 				 * pull all entries up to fill up space
@@ -1870,10 +1870,10 @@ register int	ct;
 	/* Get arguments.						 */
 	if( ct == 0 )
 		while( --arg_ct >= 0 )
-			rt_free( args[arg_ct], "args[arg_ct]" );
+			bu_free( args[arg_ct], "args[arg_ct]" );
 	for( arg_ct = ct; arg_ct < MAXARG - 1; ++arg_ct )
 	{
-		args[arg_ct] = rt_malloc( MAXLN, "getcmd buffer" );
+		args[arg_ct] = bu_malloc( MAXLN, "getcmd buffer" );
 		if( ! getarg( args[arg_ct] ) )
 			break;
 	}

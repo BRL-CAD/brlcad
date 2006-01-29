@@ -293,8 +293,8 @@ if_overlap(register struct application *ap, register struct partition *pp, struc
 {
     overlap	*new_ovlp;
 
-    /* N. B. rt_malloc() only returns on successful allocation */
-    new_ovlp = (overlap *) rt_malloc(sizeof(overlap), "new_ovlp");
+    /* N. B. bu_malloc() only returns on successful allocation */
+    new_ovlp = (overlap *) bu_malloc(sizeof(overlap), "new_ovlp");
 
     new_ovlp -> ap = ap;
     new_ovlp -> pp = pp;
@@ -421,7 +421,7 @@ void del_ovlp (overlap *op)
 {
     op -> forw -> backw = op -> backw;
     op -> backw -> forw = op -> forw;
-    rt_free((char *)op, "free op in del_ovlp");
+    bu_free((char *)op, "free op in del_ovlp");
 }
 
 void init_ovlp(void)

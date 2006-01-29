@@ -40,7 +40,7 @@ void free_whatsit (struct whatsit *wp, char *s)
 {
     RT_CKMAG(wp, WHATSIT_MAGIC, "whatsit");
 
-    rt_free((char *) wp, "a whatsit");
+    bu_free((char *) wp, "a whatsit");
 }
 
 main (void)
@@ -48,7 +48,7 @@ main (void)
     struct whatsit	*wp;
 
     rt_log("allocating a whatsit...\n");
-    wp = (struct whatsit *) rt_malloc(sizeof(struct whatsit), "the whatsit");
+    wp = (struct whatsit *) bu_malloc(sizeof(struct whatsit), "the whatsit");
 
     rt_log("Before initializing, the whatsit = <%x> (%x, %g)\n",
 	    wp, wp -> w_magic, wp -> w_d);

@@ -1105,7 +1105,7 @@ eat_script(FILE *fp)
 
 		bu_vls_strcat( &prelude, buf );
 		bu_vls_strcat( &prelude, ";" );
-		rt_free( buf, "prelude line" );
+		bu_free( buf, "prelude line" );
 	}
 	if( buf == (char *)0 )  {
 		bu_log("unexpected EOF while reading script for first frame 'start'\n");
@@ -1120,7 +1120,7 @@ eat_script(FILE *fp)
 		/* Gobble until "end" keyword seen */
 		while( (ebuf = rt_read_cmd( fp )) != (char *)0 )  {
 			if( strncmp( ebuf, "end", 3 ) == 0 )  {
-				rt_free( ebuf, "end line" );
+				bu_free( ebuf, "end line" );
 				break;
 			}
 			if( strncmp( ebuf, "clean", 5 ) == 0 ) {
@@ -1131,7 +1131,7 @@ eat_script(FILE *fp)
 			}
 			bu_vls_strcat( &body, ebuf );
 			bu_vls_strcat( &body, ";" );
-			rt_free( ebuf, "script body line" );
+			bu_free( ebuf, "script body line" );
 		}
 		if( ebuf == (char *)0 )  {
 			bu_log("unexpected EOF while reading script for frame %d\n", frame);
@@ -1145,14 +1145,14 @@ eat_script(FILE *fp)
 			}
 			bu_vls_strcat( &finish, nsbuf );
 			bu_vls_strcat( &finish, ";" );
-			rt_free( nsbuf, "script trailer line" );
+			bu_free( nsbuf, "script trailer line" );
 		}
 
 		/* buf[] has saved "start" line in it */
 		argc = rt_split_cmd( argv, 64, buf );
 		if( argc < 2 )  {
 			bu_log("bad 'start' line\n");
-			rt_free( buf, "bad start line" );
+			bu_free( buf, "bad start line" );
 			goto out;
 		}
 		frame = atoi( argv[1] );
@@ -1178,7 +1178,7 @@ eat_script(FILE *fp)
 			APPEND_FRAME( fr, FrameHead.fr_back );
 		}
 bad:
-		rt_free( buf, "command line" );
+		bu_free( buf, "command line" );
 		buf = nsbuf;
 		nsbuf = (char *)0;
 	}
@@ -1587,7 +1587,7 @@ destroy_frame(register struct frame *fr)
 	}
 
 	if( fr->fr_filename )  {
-		rt_free( fr->fr_filename, "filename" );
+		bu_free( fr->fr_filename, "filename" );
 		fr->fr_filename = (char *)0;
 	}
 	for (sp = &servers[0]; sp<&servers[MAXSERVERS]; sp++) {
@@ -2580,10 +2580,10 @@ repaint_fb(register struct frame *fr)
 
 	/* Draw the accumulated image */
 	nby = 3*fr->fr_width;
-	line = (unsigned char *)rt_malloc( nby, "scanline" );
+	line = (unsigned char *)bu_malloc( nby, "scanline" );
 	if( (fp = fopen( fr->fr_filename, "r" )) == NULL )  {
 		perror( fr->fr_filename );
-		rt_free( (char *)line, "scanline" );
+		bu_free( (char *)line, "scanline" );
 		return;
 	}
 	w = fr->fr_width;
@@ -2595,7 +2595,7 @@ repaint_fb(register struct frame *fr)
 		fb_write( fbp, 0, y, line, w );
 		if( cnt != 1 )  break;
 	}
-	rt_free( (char *)line, "scanline" );
+	bu_free( (char *)line, "scanline" );
 }
 
 /*
@@ -3204,7 +3204,7 @@ cd_detach(int argc, char **argv)
 int
 cd_file(int argc, char **argv)
 {
-	if(outputfile)  rt_free(outputfile, "outputfile");
+	if(outputfile)  bu_free(outputfile, "outputfile");
 	outputfile = bu_strdup( argv[1] );
 	return 0;
 }

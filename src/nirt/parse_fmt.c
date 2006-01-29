@@ -222,7 +222,7 @@ void parse_fmt(char *uoutspec, int outcom_type)
 {
     char	*of;		/* Format for current output item */
     char	*up;
-    char	*mycopy;	/* Solely for handing to rt_free() */
+    char	*mycopy;	/* Solely for handing to bu_free() */
     char	*uos;
     int		nm_cs;		/* Number of conversion specifications */
     outitem	*oil = OUTITEM_NULL;
@@ -243,7 +243,7 @@ void parse_fmt(char *uoutspec, int outcom_type)
 	fprintf(stderr,
 	    "parse_fmt sees first character `%c`.  Shouldn't happen.\n",
 	    *uos);
-	rt_free(mycopy, "Copy of user's output spec");
+	bu_free(mycopy, "Copy of user's output spec");
 	return;
     }
     ++uos;
@@ -332,7 +332,7 @@ void parse_fmt(char *uoutspec, int outcom_type)
 	{
 	    fprintf(stderr,
 		"Error: Fewer output items than conversion specs\n");
-	    rt_free(mycopy, "Copy of user's output spec");
+	    bu_free(mycopy, "Copy of user's output spec");
 	    return;
 	}
 	for (up = uos; (! isspace(*uos)) && (*uos != '\0'); ++uos)
@@ -352,7 +352,7 @@ void parse_fmt(char *uoutspec, int outcom_type)
 	if (vtp -> name == '\0')
 	{
 	    fprintf(stderr, "Error: Invalid output item '%s'\n", up);
-	    rt_free(mycopy, "Copy of user's output spec");
+	    bu_free(mycopy, "Copy of user's output spec");
 	    return;
 	}
     }
@@ -363,7 +363,7 @@ void parse_fmt(char *uoutspec, int outcom_type)
     {
 	fprintf(stderr, "Error: More output items than conversion specs\n");
 	fprintf( stderr, "Offending spec:\n\t%s\n", mycopy );
-	rt_free(mycopy, "Copy of user's output spec");
+	bu_free(mycopy, "Copy of user's output spec");
 	return;
     }
 
@@ -375,7 +375,7 @@ void parse_fmt(char *uoutspec, int outcom_type)
     free_ospec(oi_list[outcom_type]);
     oi_list[outcom_type] = oil;
 
-    rt_free(mycopy, "Copy of user's output spec");
+    bu_free(mycopy, "Copy of user's output spec");
 }
 
 void default_ospec (void)
@@ -679,7 +679,7 @@ void direct_output(char *buffer, com_table *ctp)
 		(openfunc == popen) ? "pipe" : "file", new_dest);
 	    fprintf(stderr, "Destination remains = '%s'\n", dest_string);
 
-	    rt_free(new_dest, "new(now old)dest");
+	    bu_free(new_dest, "new(now old)dest");
 	    return;
 	}
 
@@ -691,7 +691,7 @@ void direct_output(char *buffer, com_table *ctp)
 	fclose(outf);
 
     if (dest_string != def_dest_string)
-	rt_free(dest_string, "free dest_string");
+	bu_free(dest_string, "free dest_string");
 
     /* Establish the new destination */
     outf = newf;
@@ -727,7 +727,7 @@ void state_file(char *buffer, com_table *ctp)
 
     /* Clean up from previous output destination */
     if (sf_name != def_sf_name)
-	rt_free(sf_name, "new(now old)statefile");
+	bu_free(sf_name, "new(now old)statefile");
 
     /* Establish the new destination */
     sf_name = new_name;
@@ -808,9 +808,9 @@ void free_ospec (outitem *oil)
     {
 	oip = next;
 	next = oip -> next;
-	rt_free(oip -> format, "outitem.format");
+	bu_free(oip -> format, "outitem.format");
 	if (oip != oil)
-	    rt_free((char *) oip, "outitem");
+	    bu_free((char *) oip, "outitem");
     }
 }
 

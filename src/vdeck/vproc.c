@@ -347,7 +347,7 @@ register int	ct;
 			{
 				nomatch = NO;
 				/* Allocate storage for string.			*/
-				curr_list[curr_ct++] = rt_strdup(toc_list[j]);
+				curr_list[curr_ct++] = bu_strdup(toc_list[j]);
 			}
 		}
 		if( nomatch )
@@ -382,7 +382,7 @@ char	*args[];
 				register int	k;
 
 				nomatch = NO;
-				rt_free( curr_list[j], "curr_list" );
+				bu_free( curr_list[j], "curr_list" );
 				--curr_ct;
 				/* starting from bottom of list,
 				 * pull all entries up to fill up space
@@ -613,10 +613,10 @@ register int	ct;
 	/* Get arguments.						 */
 	if( ct == 0 )
 		while( --arg_ct >= 0 )
-			rt_free( args[arg_ct], "args[arg_ct]" );
+			bu_free( args[arg_ct], "args[arg_ct]" );
 	for( arg_ct = ct; arg_ct < MAXARG - 1; ++arg_ct )
 	{
-		args[arg_ct] = rt_malloc( MAXLN, "getcmd buffer" );
+		args[arg_ct] = bu_malloc( MAXLN, "getcmd buffer" );
 		if( ! getarg( args[arg_ct] ) )
 			break;
 	}

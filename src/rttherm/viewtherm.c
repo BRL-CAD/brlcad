@@ -304,7 +304,7 @@ double lo = INFINITY, hi = -INFINITY;
 		BU_ASSERT( npix >= 1 );
 	}
 #endif /* MSWISS */
-	rt_free( scanline[ap->a_y].sl_buf, "sl_buf scanline buffer" );
+	bu_free( scanline[ap->a_y].sl_buf, "sl_buf scanline buffer" );
 	scanline[ap->a_y].sl_buf = (char *)0;
 }
 
@@ -395,7 +395,7 @@ view_cleanup(struct rt_i *rtip)
 		mlib_free( regp );
 	}
 	if( env_region.reg_mfuncs )  {
-		rt_free( (char *)env_region.reg_name, "env_region.reg_name" );
+		bu_free( (char *)env_region.reg_name, "env_region.reg_name" );
 		env_region.reg_name = (char *)0;
 		mlib_free( &env_region );
 	}
