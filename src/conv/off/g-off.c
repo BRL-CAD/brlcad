@@ -68,9 +68,9 @@ static int	ncpu = 1;	/* Number of processors */
 static char	*prefix = NULL;	/* output filename prefix. */
 static FILE	*fp_fig;	/* Jack Figure file. */
 static struct db_i		*dbip;
-static struct rt_vls		base_seg;
+static struct bu_vls		base_seg;
 static struct rt_tess_tol	ttol;
-static struct rt_tol		tol;
+static struct bn_tol		tol;
 static struct model		*the_model;
 
 static struct db_tree_state	jack_tree_state;	/* includes tol & model */
@@ -105,7 +105,7 @@ main(int argc, char **argv)
 	ttol.norm = 0.0;
 
 	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
@@ -114,7 +114,7 @@ main(int argc, char **argv)
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	the_model = nmg_mm();
-	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
 	while ((c = getopt(argc, argv, "a:dn:p:r:vx:P:X:")) != EOF) {
@@ -170,7 +170,7 @@ main(int argc, char **argv)
 	db_dirbuild(dbip);
 
 	/* Create .fig file name and open it. */
-	fig_file = rt_malloc(sizeof(prefix) + sizeof(argv[0] + 4), "st");
+	fig_file = bu_malloc(sizeof(prefix) + sizeof(argv[0] + 4), "st");
 	/* Ignore leading path name. */
 	if ((dot = strrchr(argv[0], '/')) != (char *)NULL) {
 		if (prefix)
@@ -192,7 +192,7 @@ main(int argc, char **argv)
 	if ((fp_fig = fopen(fig_file, "w")) == NULL)
 		perror(fig_file);
 	fprintf(fp_fig, "figure {\n");
-	rt_vls_init(&base_seg);		/* .fig figure file's main segment. */
+	bu_vls_init(&base_seg);		/* .fig figure file's main segment. */
 
 	/* Walk indicated tree(s).  Each region will be output separately */
 	(void)db_walk_tree(dbip, argc-1, (const char **)(argv+1),
@@ -203,11 +203,11 @@ main(int argc, char **argv)
 		nmg_booltree_leaf_tess,
 		(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
-	fprintf(fp_fig, "\troot=%s_seg.base;\n", rt_vls_addr(&base_seg));
+	fprintf(fp_fig, "\troot=%s_seg.base;\n", bu_vls_addr(&base_seg));
 	fprintf(fp_fig, "}\n");
 	fclose(fp_fig);
-	rt_free(fig_file, "st");
-	rt_vls_free(&base_seg);
+	bu_free(fig_file, "st");
+	bu_vls_free(&base_seg);
 
 	percent = 0;
 	if(regions_tried>0)  percent = ((double)regions_done * 100) / regions_tried;
@@ -228,21 +228,21 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 {
 	union tree		*ret_tree;
 	struct nmgregion	*r;
-	struct rt_list		vhead;
+	struct bu_list		vhead;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
-	RT_CK_TOL(tsp->ts_tol);
+	BN_CK_TOL(tsp->ts_tol);
 	NMG_CK_MODEL(*tsp->ts_m);
 
-	RT_LIST_INIT(&vhead);
+	BU_LIST_INIT(&vhead);
 
 	if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("\ndo_region_end(%d %d%%) %s\n",
+		bu_log("\ndo_region_end(%d %d%%) %s\n",
 			regions_tried,
 			regions_tried>0 ? (regions_done * 100) / regions_tried : 0,
 			sofar);
-		rt_free(sofar, "path string");
+		bu_free(sofar, "path string");
 	}
 
 	if (curtree->tr_op == OP_NOP)
@@ -251,9 +251,9 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	regions_tried++;
 	/* Begin rt_bomb() protection */
 	if( ncpu == 1 ) {
-		if( RT_SETJUMP )  {
+		if( BU_SETJUMP )  {
 			/* Error, bail out */
-			RT_UNSETJUMP;		/* Relinquish the protection */
+			BU_UNSETJUMP;		/* Relinquish the protection */
 
 			/* Sometimes the NMG library adds debugging bits when
 			 * it detects an internal error, before rt_bomb().
@@ -274,7 +274,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	}
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
-	RT_UNSETJUMP;		/* Relinquish the protection */
+	BU_UNSETJUMP;		/* Relinquish the protection */
 	if( ret_tree )
 		r = ret_tree->tr_d.td_r;
 	else
@@ -283,13 +283,13 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	if (r != 0) {
 		FILE	*fp_psurf;
 		int	i;
-		struct rt_vls	file_base;
-		struct rt_vls	file;
+		struct bu_vls	file_base;
+		struct bu_vls	file;
 
-		rt_vls_init(&file_base);
-		rt_vls_init(&file);
-		rt_vls_strcpy(&file_base, prefix);
-		rt_vls_strcat(&file_base, DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+		bu_vls_init(&file_base);
+		bu_vls_init(&file);
+		bu_vls_strcpy(&file_base, prefix);
+		bu_vls_strcat(&file_base, DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
 		/* Dots confuse Jack's Peabody language.  Change to '_'. */
 		for (i = 0; i < file_base.vls_len; i++)
 			if (file_base.vls_str[i] == '.')
@@ -298,7 +298,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		/* Write color attribute to .fig figure file. */
 		if (tsp->ts_mater.ma_color_valid != 0) {
 			fprintf(fp_fig, "\tattribute %s {\n",
-				rt_vls_addr(&file_base));
+				bu_vls_addr(&file_base));
 			fprintf(fp_fig, "\t\trgb = (%f, %f, %f);\n",
 				V3ARGS(tsp->ts_mater.ma_color));
 			fprintf(fp_fig, "\t\tambient = 0.18;\n");
@@ -307,61 +307,61 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		}
 
 		/* Write segment attributes to .fig figure file. */
-		fprintf(fp_fig, "\tsegment %s_seg {\n", rt_vls_addr(&file_base));
-		fprintf(fp_fig, "\t\tpsurf=\"%s.pss\";\n", rt_vls_addr(&file_base));
+		fprintf(fp_fig, "\tsegment %s_seg {\n", bu_vls_addr(&file_base));
+		fprintf(fp_fig, "\t\tpsurf=\"%s.pss\";\n", bu_vls_addr(&file_base));
 		if (tsp->ts_mater.ma_color_valid != 0)
 			fprintf(fp_fig,
-				"\t\tattribute=%s;\n", rt_vls_addr(&file_base));
+				"\t\tattribute=%s;\n", bu_vls_addr(&file_base));
 		fprintf(fp_fig, "\t\tsite base->location=trans(0,0,0);\n");
 		fprintf(fp_fig, "\t}\n");
 
-		if( rt_vls_strlen(&base_seg) <= 0 )  {
-			rt_vls_vlscat( &base_seg, &file_base );
+		if( bu_vls_strlen(&base_seg) <= 0 )  {
+			bu_vls_vlscat( &base_seg, &file_base );
 		} else {
 			fprintf(fp_fig, "\tjoint %s_jt {\n",
-				rt_vls_addr(&file_base));
+				bu_vls_addr(&file_base));
 			fprintf(fp_fig,
 				"\t\tconnect %s_seg.base to %s_seg.base;\n",
-				rt_vls_addr(&file_base),
-				rt_vls_addr(&base_seg) );
+				bu_vls_addr(&file_base),
+				bu_vls_addr(&base_seg) );
 			fprintf(fp_fig, "\t}\n");
 		}
 
-		rt_vls_vlscat(&file, &file_base);
-		rt_vls_strcat(&file, ".pss");	/* Required Jack suffix. */
+		bu_vls_vlscat(&file, &file_base);
+		bu_vls_strcat(&file, ".pss");	/* Required Jack suffix. */
 
 		/* Write psurf to .pss file. */
-		if ((fp_psurf = fopen(rt_vls_addr(&file), "w")) == NULL)
-			perror(rt_vls_addr(&file));
+		if ((fp_psurf = fopen(bu_vls_addr(&file), "w")) == NULL)
+			perror(bu_vls_addr(&file));
 		else {
 			nmg_to_psurf(r, fp_psurf);
 			fclose(fp_psurf);
-			if(verbose) rt_log("*** Wrote %s\n", rt_vls_addr(&file));
+			if(verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
 		}
-		rt_vls_free(&file);
+		bu_vls_free(&file);
 
 		/* Also write as UNIX-plot file, if desired */
 		if( debug_plots )  {
 			FILE	*fp;
-			rt_vls_vlscat(&file, &file_base);
-			rt_vls_strcat(&file, ".pl");
+			bu_vls_vlscat(&file, &file_base);
+			bu_vls_strcat(&file, ".pl");
 
-			if ((fp = fopen(rt_vls_addr(&file), "w")) == NULL)
-				perror(rt_vls_addr(&file));
+			if ((fp = fopen(bu_vls_addr(&file), "w")) == NULL)
+				perror(bu_vls_addr(&file));
 			else {
-				struct rt_list	vhead;
+				struct bu_list	vhead;
 				pl_color( fp,
 					(int)(tsp->ts_mater.ma_color[0] * 255),
 					(int)(tsp->ts_mater.ma_color[1] * 255),
 					(int)(tsp->ts_mater.ma_color[2] * 255) );
 				/* nmg_pl_r( fp, r ); */
-				RT_LIST_INIT( &vhead );
+				BU_LIST_INIT( &vhead );
 				nmg_r_to_vlist( &vhead, r, 0 );
 				rt_vlist_to_uplot( fp, &vhead );
 				fclose(fp);
-				if(verbose) rt_log("*** Wrote %s\n", rt_vls_addr(&file));
+				if(verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
 			}
-			rt_vls_free(&file);
+			bu_vls_free(&file);
 		}
 
 		/* NMG region is no longer necessary */
@@ -377,7 +377,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 out:
-	GETUNION(curtree, tree);
+	BU_GETUNION(curtree, tree);
 	curtree->tr_op = OP_NOP;
 	return(curtree);
 }
@@ -398,9 +398,9 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 {
 	int			i;
 	int			*map;	/* map from v->index to Jack vert # */
-	struct nmg_ptbl		vtab;	/* vertex table */
+	struct bu_ptbl		vtab;	/* vertex table */
 
-	map = (int *)rt_calloc(r->m_p->maxindex, sizeof(int *), "Jack vert map");
+	map = (int *)bu_calloc(r->m_p->maxindex, sizeof(int *), "Jack vert map");
 
 	/* Built list of vertex structs */
 	nmg_vertex_tabulate( &vtab, &r->l.magic );
@@ -408,10 +408,10 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 	/* XXX What to do if 0 vertices?  */
 
 	/* Print list of unique vertices and convert from mm to cm. */
-	for (i = 0; i < NMG_TBL_END(&vtab); i++)  {
+	for (i = 0; i < BU_PTBL_END(&vtab); i++)  {
 		struct vertex			*v;
 		register struct vertex_g	*vg;
-		v = (struct vertex *)NMG_TBL_GET(&vtab,i);
+		v = (struct vertex *)BU_PTBL_GET(&vtab,i);
 		NMG_CK_VERTEX(v);
 		vg = v->vg_p;
 		NMG_CK_VERTEX_G(vg);
@@ -425,8 +425,8 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 
 	jack_faces(r, fp_psurf, map);
 
-	nmg_tbl( &vtab, TBL_FREE, 0 );
-	rt_free( (char *)map, "Jack vert map" );
+	bu_ptbl( &vtab, BU_PTBL_FREE, 0 );
+	bu_free( (char *)map, "Jack vert map" );
 }
 
 
@@ -450,16 +450,16 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
 	struct shell		*s;
 	struct vertex		*v;
 
-	for (RT_LIST_FOR(s, shell, &r->s_hd)) {
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 		/* Shell is made of faces. */
-		for (RT_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+		for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 			NMG_CK_FACEUSE(fu);
 			if (fu->orientation != OT_SAME)
 				continue;
-			for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+			for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 				NMG_CK_LOOPUSE(lu);
-				if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-					for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+				if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+					for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 						NMG_CK_EDGEUSE(eu);
 						NMG_CK_EDGE(eu->e_p);
 						NMG_CK_VERTEXUSE(eu->vu_p);
@@ -467,23 +467,23 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
 						NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
 		    				fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,eu->vu_p->v_p));
 					}
-				} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd)
+				} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd)
 		  			== NMG_VERTEXUSE_MAGIC) {
-		  			v = RT_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
+		  			v = BU_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
 					NMG_CK_VERTEX(v);
 					NMG_CK_VERTEX_G(v->vg_p);
 		  			fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,v));
 				} else
-					rt_log("jack_faces: loopuse mess up! (1)\n");
+					bu_log("jack_faces: loopuse mess up! (1)\n");
 				fprintf(fp_psurf, ";\n");
 			}
 		}
 
 		/* Shell contains loops. */
-		for (RT_LIST_FOR(lu, loopuse, &s->lu_hd)) {
+		for (BU_LIST_FOR(lu, loopuse, &s->lu_hd)) {
 			NMG_CK_LOOPUSE(lu);
-			if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-				for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+				for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 					NMG_CK_EDGEUSE(eu);
 					NMG_CK_EDGE(eu->e_p);
 					NMG_CK_VERTEXUSE(eu->vu_p);
@@ -491,19 +491,19 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
 					NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
 		  			fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,eu->vu_p->v_p));
 				}
-			} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd)
+			} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd)
 				== NMG_VERTEXUSE_MAGIC) {
-				v = RT_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
+				v = BU_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
 				NMG_CK_VERTEX(v);
 				NMG_CK_VERTEX_G(v->vg_p);
 				fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,v));
 			} else
-				rt_log("jack_faces: loopuse mess up! (1)\n");
+				bu_log("jack_faces: loopuse mess up! (1)\n");
 			fprintf(fp_psurf, ";\n");
 		}
 
 		/* Shell contains edges. */
-		for (RT_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
+		for (BU_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
 			NMG_CK_EDGEUSE(eu);
 			NMG_CK_EDGE(eu->e_p);
 			NMG_CK_VERTEXUSE(eu->vu_p);
@@ -511,7 +511,7 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
 			NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
 			fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,eu->vu_p->v_p));
 		}
-		if (RT_LIST_FIRST_MAGIC(&s->eu_hd) == NMG_EDGEUSE_MAGIC)
+		if (BU_LIST_FIRST_MAGIC(&s->eu_hd) == NMG_EDGEUSE_MAGIC)
 			fprintf(fp_psurf, ";\n");
 
 		/* Shell contains a single vertex. */
@@ -522,10 +522,10 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
 			fprintf(fp_psurf, "%d;\n", NMG_INDEX_GET(map,s->vu_p->v_p));
 		}
 
-		if (RT_LIST_IS_EMPTY(&s->fu_hd) &&
-			RT_LIST_IS_EMPTY(&s->lu_hd) &&
-			RT_LIST_IS_EMPTY(&s->eu_hd) && !s->vu_p) {
-			rt_log("WARNING jack_faces: empty shell\n");
+		if (BU_LIST_IS_EMPTY(&s->fu_hd) &&
+			BU_LIST_IS_EMPTY(&s->lu_hd) &&
+			BU_LIST_IS_EMPTY(&s->eu_hd) && !s->vu_p) {
+			bu_log("WARNING jack_faces: empty shell\n");
 		}
 
 	}

@@ -67,7 +67,7 @@ struct vlist {
 	struct vertex	*vt[MAX_NUM_PTS];
 };
 
-static struct rt_tol	tol;
+static struct bn_tol	tol;
 
 static char	usage[] = "Usage: %s [-r region] [-g group] [jack_db] [brlcad_db]\n";
 
@@ -213,7 +213,7 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
 
 	if( bomb )
 	{
-		rt_log( "Dataset contains %d data points, code is dimensioned for %d\n", i, MAX_NUM_PTS );
+		bu_log( "Dataset contains %d data points, code is dimensioned for %d\n", i, MAX_NUM_PTS );
 		rt_bomb( "jack-g\n" );
 	}
 
@@ -254,7 +254,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 	struct vlist	vert;
 
 	/* Copied from proc-db/nmgmodel.c */
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.01;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 0.001;
@@ -262,7 +262,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 
 	face = 0;
 	r = nmg_mrsv(m);	/* Make region, empty shell, vertex. */
-	s = RT_LIST_FIRST(shell, &r->s_hd);
+	s = BU_LIST_FIRST(shell, &r->s_hd);
 
 	while ( (nv = read_psurf_vertices(fp, &vert)) != 0 ) {
 		while ( (nf = read_psurf_face(fp, lst)) != 0 ) {
@@ -296,7 +296,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 		struct loopuse *lu;
 		plane_t pl;
 
-		lu = RT_LIST_FIRST( loopuse , &outfaceuses[i]->lu_hd );
+		lu = BU_LIST_FIRST( loopuse , &outfaceuses[i]->lu_hd );
 		if( nmg_loop_plane_area( lu , pl ) < 0.0 )
 		{
 			fail = 1;

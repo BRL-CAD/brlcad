@@ -84,7 +84,7 @@ int read_faces(struct model *m, FILE *fgeom)
 	}
 
 	r = nmg_mrsv(m);		/* Make region, empty shell, vertex. */
-	s = RT_LIST_FIRST(shell, &r->s_hd);
+	s = BU_LIST_FIRST(shell, &r->s_hd);
 
 
 	for (i = 0; i < nfaces; i++) {		/* Read in each of the faces */
@@ -115,8 +115,8 @@ int read_faces(struct model *m, FILE *fgeom)
 
 		fscanf(fgeom, "%*[^\n]");
 
-		rt_free((char *)vlist, "vertext list");
-		rt_free((char *)pinds, "point indicies");
+		bu_free((char *)vlist, "vertext list");
+		bu_free((char *)pinds, "point indicies");
 	}
 
 	for (i = 0; i < nverts; i++)
@@ -129,7 +129,7 @@ int read_faces(struct model *m, FILE *fgeom)
 		plane_t pl;
 
 		fprintf(stderr, "planeeqning face %d.\n", i);
-		if( nmg_loop_plane_area( RT_LIST_FIRST( loopuse , &outfaceuses[i]->lu_hd ) , pl ) < 0.0 )
+		if( nmg_loop_plane_area( BU_LIST_FIRST( loopuse , &outfaceuses[i]->lu_hd ) , pl ) < 0.0 )
 			fail = 1;
 		else
 			nmg_face_g( outfaceuses[i] , pl );
@@ -141,7 +141,7 @@ int read_faces(struct model *m, FILE *fgeom)
 	nmg_gluefaces(outfaceuses, nfaces, &tol);
 	nmg_region_a(r, &tol);
 
-	rt_free((char *)pts, "points list");
+	bu_free((char *)pts, "points list");
 	return (0);
 }
 
@@ -208,7 +208,7 @@ int main(int argc, char **argv)
 	FILE *fpin;
 	struct rt_wdb *fpout;
 
-	tol.magic = RT_TOL_MAGIC;	/* Copied from proc-db/nmgmodel.c */
+	tol.magic = BN_TOL_MAGIC;	/* Copied from proc-db/nmgmodel.c */
 	tol.dist = 0.01;
 	tol.dist_sq = 0.01 * 0.01;
 	tol.perp = 0.001;
