@@ -2,6 +2,8 @@
 
 lib_LTLIBRARIES = libpkg.la
 
+noinst_PROGRAMS = tpkg
+
 SRCS = \
 	pkg.c \
 	tcl.c
@@ -12,10 +14,16 @@ libpkg_la_SOURCES = \
 
 libpkg_la_LDFLAGS = -version-info 19:1
 
+tpkg_SOURCES = tpkg.c
+tpkg_LDADD = ${PKG} ${BU}
+
 BUILT_SOURCES = vers.c
 
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh pkg_version "The BRL-CAD Network Package (PKG) Library" > $@
+
+sample_applicationsdir=$(SAMPLE_APPLICATIONS_DIR)
+sample_applications_DATA = tpkg.c
 
 EXTRA_DIST = \
 	libpkg.dsp \
