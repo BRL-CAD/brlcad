@@ -19,7 +19,6 @@
 # information.
 #
 ###
-#			C A D . T C L
 #
 # Author -
 #	Glenn Durfee
