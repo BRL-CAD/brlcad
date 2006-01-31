@@ -12,15 +12,13 @@
 # This library is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Library General Public License for more details.
+# Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with this file; see the file named COPYING for more
 # information.
 #
 ###
-#
-# PictureTypeC.itcl
 #
 # This class defines the process necessary to build a BRL-CAD
 # picture of Type "C". This is a full-color image with a line
