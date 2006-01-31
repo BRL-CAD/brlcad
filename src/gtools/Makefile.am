@@ -4,9 +4,11 @@ bin_PROGRAMS = \
 	g_diff \
 	g_lint \
 	g_qa \
-	g_transfer \
 	solshoot \
 	testfree
+
+noinst_PROGRAMS = \
+	g_transfer
 
 g_diff_SOURCES = g_diff.c
 g_diff_LDADD = ${LIBRT} ${TCL}
@@ -33,6 +35,9 @@ man_MANS = \
 
 EXTRA_DIST = $(man_MANS)
 
+sample_applicationsdir=$(SAMPLE_APPLICATIONS_DIR)
+sample_applications_DATA = g_transfer.c
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
@@ -40,4 +45,5 @@ FAST_OBJECTS = \
 	$(g_diff_OBJECTS) \
 	$(solshoot_OBJECTS) \
 	$(testfree_OBJECTS) \
+	$(noinst_PROGRAMS) \
 	$(bin_PROGRAMS)
