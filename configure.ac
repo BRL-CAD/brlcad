@@ -1409,6 +1409,7 @@ AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
+AC_CHECK_TYPE(socklen_t, size_t)
 
 dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped.
 AC_MSG_CHECKING([union wait])
@@ -1584,12 +1585,17 @@ fi
 AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
-AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique),
-	       AC_DEFINE(REVERSE_IEEE,,64b floating point storage technique),
-	       AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	       AC_MSG_ERROR([*** Don't know the endian of this machine! ***]) )
-dnl conditionally define WORDS_BIGENDIAN for blt
 AC_C_BIGENDIAN
+if test "x$ac_cv_c_bigendian" = "xyes" ; then
+	AC_DEFINE(NATURAL_IEEE, , [64-bit floating point storage technique is big endian])
+else
+	if test "x$ac_cv_c_bigendian" = "xno" ; then
+	       AC_DEFINE(REVERSE_IEEE, , [64-bit floating point storage technique is little endian])
+	else
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_ERROR([*** Don't know the endian of this machine! ***])
+	fi
+fi
 
 dnl AC_C_PROTOTYPES
 AM_C_PROTOTYPES
