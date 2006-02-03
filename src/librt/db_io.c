@@ -51,6 +51,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
@@ -108,7 +111,7 @@ db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
 		return(0);
 	}
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-#ifdef HAVE_UNIX_IO
+#ifdef HAVE_LSEEK
 	if ((s=(long)lseek( dbip->dbi_fd, (off_t)offset, 0 )) != offset) {
 		bu_log("db_read: lseek returns %d not %d\n", s, offset);
 		bu_bomb("db_read: Goodbye");
