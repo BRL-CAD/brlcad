@@ -1674,7 +1674,8 @@ BU_EXPORT BU_EXTERN(void bu_printfile,
 BU_EXPORT BU_EXTERN(int	bu_file_exists, (const char *path));
 
 /* brlcad_path.c */
-BU_EXPORT BU_EXTERN(const char *bu_argv0, (const char *path));
+BU_EXPORT BU_EXTERN(const char *bu_getprogname, (void));
+BU_EXPORT BU_EXTERN(void bu_setprogname, (const char *path));
 BU_EXPORT BU_EXTERN(char *bu_brlcad_path, /* deprecated call */
 		    (const char *rhs, int fail_quietly));
 BU_EXPORT BU_EXTERN(char *bu_brlcad_root,
