@@ -1675,6 +1675,7 @@ AC_CHECK_FUNCS(\
 	getopt \
 	getpagesize \
 	getpass \
+	getprogname \
 	gettimeofday \
 	inet_ntoa \
 	isascii \
@@ -1700,8 +1701,9 @@ AC_CHECK_FUNCS(\
 	sbrk \
 	select \
 	setenv \
-	setlocale \
+	setlocale \	
 	setpgid \
+	setprogname \
 	socket \
 	sqrt \
 	srand48 \
