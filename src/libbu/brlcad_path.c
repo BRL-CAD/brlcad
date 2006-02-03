@@ -359,7 +359,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     }
 
     /* run-time path identification */
-    lhs = bu_argv0(NULL);
+    lhs = bu_getprogname();
     if (lhs) {
 	char argv0[MAXPATHLEN + 64] = {0};
 	int len = strlen(lhs);

@@ -113,7 +113,7 @@ mged_setup(void)
 	Tcl_FindExecutable("mged");
 #endif
 #else
-    Tcl_FindExecutable(bu_argv0(NULL));
+    Tcl_FindExecutable(bu_getprogname());
 #endif
 
     /* Create the interpreter */
