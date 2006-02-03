@@ -805,7 +805,7 @@ BC_CONFIGURE_STAGE([programs], [2 of 9])
 AC_LANG(C)
 
 dnl added in autoconf 2.54 to define _GNU_SOURCE
-AC_GNU_SOURCE
+dnl AC_GNU_SOURCE
 
 AC_AIX
 AC_MINIX
@@ -1393,7 +1393,7 @@ dnl **********************************
 BC_CONFIGURE_STAGE([types], [5 of 9])
 
 dnl added in autoconf 2.55
-AC_HEADER_STDBOOL
+dnl AC_HEADER_STDBOOL
 
 AC_C_CHAR_UNSIGNED
 AC_HEADER_STAT
@@ -1409,7 +1409,7 @@ AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
-AC_CHECK_TYPE(socklen_t, size_t)
+AC_CHECK_TYPE(socklen_t, int)
 
 dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped.
 AC_MSG_CHECKING([union wait])
