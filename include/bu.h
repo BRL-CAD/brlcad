@@ -1682,8 +1682,6 @@ BU_EXPORT BU_EXTERN(char *bu_brlcad_root,
 		    (const char *rhs, int fail_quietly));
 BU_EXPORT BU_EXTERN(char *bu_brlcad_data,
 		    (const char *rhs, int fail_quietly));
-BU_EXPORT BU_EXTERN(const char *bu_argv0,
-		    (const char *path));
 
 /* fopen_uniq */
 BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq,
