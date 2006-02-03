@@ -1681,6 +1681,7 @@ AC_CHECK_FUNCS(\
 	isascii \
 	isfinite \
 	localtime_r \
+	lseek \
 	memchr \
 	memmove \
 	memset \
