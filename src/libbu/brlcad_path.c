@@ -34,19 +34,13 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-
 /*@}*/
-
-
 static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
-
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_STDLIB_H
-#  include <stdlib.h>
-#endif
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
@@ -63,7 +57,7 @@ static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 /** b u _ i p w d
  *
  * set/return the path to the initial working directory.
- * bu_set_argv0() must be called on app startup for the correct pwd to
+ * bu_setprogname() must be called on app startup for the correct pwd to
  * be acquired/set.
  */
 static const char *
@@ -78,7 +72,7 @@ bu_ipwd()
 #ifdef HAVE_GETENV
     pwd = getenv("PWD");
 #else
-    pwd = ".";
+    pwd = (char *)NULL;
 #endif
 
     return pwd;
@@ -91,27 +85,61 @@ bu_ipwd()
  * routines when attempting to locate binaries, libraries, and
  * resources.  this routine may only be called once to set argv0.
  */
-const char *
+static const char *
 bu_argv0(const char *path)
 {
     static const char *argv0 = NULL;
+
+    /* set our initial pwd if we have not already */
+    (void)bu_ipwd();
+
+    if (path) {
+	argv0 = path;
+    }
 
     if (argv0) {
 	return (argv0);
     }
 
-    if (path) {
-	argv0 = path;
-	(void)bu_ipwd();
-    }
+    /* we were called without a bu_setprogname() so fallback to
+     * getprogname() before returning NULL.
+     */
+#ifdef HAVE_GETPROGNAME
+    argv0 = getprogname();
+#endif
 
     return argv0;
 }
 
-void prtarg() {
-    bu_log("argv0 is %s\n", bu_argv0(NULL));
-    bu_log("pwd is %s\n", bu_ipwd());
+
+/** b u _ g e t p r o g n a m e
+ *
+ * get the name of the running application if they ran
+ * bu_setprogname() first or if we know what it's supposed to be
+ * anyways.
+ */
+const char *
+bu_getprogname(void) {
+    return bu_argv0(NULL);
 }
+
+
+
+/** b u _ s e t p r o g n a m e
+ *
+ * set the name of the running application.  this isn't necessary on
+ * modern systems that support getprogname() and call setprogname()
+ * before main() for you, but necessary otherwise for portability.
+ */
+void
+bu_setprogname(const char *progname) {
+#ifdef HAVE_SETPROGNAME
+    setprogname(progname);
+#endif
+    (void)bu_argv0(progname);
+    return;
+}
+
 
 /** b u _ r o o t _ m i s s i n g
  *
@@ -526,12 +554,12 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 /*
  *	B U _ B R L C A D _ P A T H
  *
- *  Locate where the BRL-CAD programs and libraries are located,
- *  contatenate on the rest of the string provided by the caller,
- *  and return a pointer to a STATIC buffer with the full path.
- *  It is the caller's responsibility to call bu_strdup() or make
- *  other provisions to save the returned string, before calling again.
- *  bu_bomb() if unable to find the base path.
+ *  DEPRECATED, do not use.  Locate where the BRL-CAD programs and
+ *  libraries are located, contatenate on the rest of the string
+ *  provided by the caller, and return a pointer to a STATIC buffer
+ *  with the full path.  It is the caller's responsibility to call
+ *  bu_strdup() or make other provisions to save the returned string,
+ *  before calling again.  bu_bomb() if unable to find the base path.
  *
  */
 char *
