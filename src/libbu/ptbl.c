@@ -48,26 +48,25 @@ static const char libbu_ptbl_RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
-#include "machine.h"
-#include "bu.h"
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
-/*
+#include "machine.h"
+#include "bu.h"
+
+
+/**
  *			B U _ P T B L _ I N I T
  *
- *  Initialize struct & get storage for table
+ *  Initialize struct & get storage for table.
+ *  Recommend 8 or 64 for initial len.
  */
 void
 bu_ptbl_init(struct bu_ptbl *b, int len, const char *str)
-
-   		    		/* initial len.  Recommend 8 or 64 */
-
 {
 	if (bu_debug & BU_DEBUG_PTBL)
 		bu_log("bu_ptbl_init(%8x, len=%d, %s)\n", b, len, str);
@@ -79,7 +78,8 @@ bu_ptbl_init(struct bu_ptbl *b, int len, const char *str)
 	b->end = 0;
 }
 
-/*
+
+/**
  *			B U _ P T B L _ R E S E T
  *
  *  Reset the table to have no elements, but retain any existing storage.
@@ -88,40 +88,42 @@ void
 bu_ptbl_reset(struct bu_ptbl *b)
 {
 	BU_CK_PTBL(b);
-	b->end = 0;
 	if (bu_debug & BU_DEBUG_PTBL)
 		bu_log("bu_ptbl_reset(%8x)\n", b);
+	b->end = 0;
 	memset( (char *)b->buffer, 0, b->blen*sizeof(long *) );	/* no peeking */
 }
 
-/*
+
+/**
  *			B U _ P T B L _ I N S
  *
- *  Append a (long *) item to the table.
- *  Called "insert", for unknown reasons.
+ *  Append/Insert a (long *) item to/into the table.
  */
 int
 bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 {
 	register int i;
 
+	BU_CK_PTBL(b);
+
 	if (bu_debug & BU_DEBUG_PTBL)
 		bu_log("bu_ptbl_ins(%8x, %8x)\n", b, p);
 
-	BU_CK_PTBL(b);
-
-	if (b->blen == 0) bu_ptbl_init(b, 8, "bu_ptbl_ins() buffer");
+	if (b->blen == 0) bu_ptbl_init(b, 64, "bu_ptbl_ins() buffer");
 	if (b->end >= b->blen)  {
 		b->buffer = (long **)bu_realloc( (char *)b->buffer,
 		    sizeof(p)*(b->blen *= 4),
 		    "bu_ptbl.buffer[] (ins)" );
 	}
 
-	b->buffer[i=b->end++] = p;
+	i=b->end++;
+	b->buffer[i] = p;
 	return(i);
 }
 
-/*
+
+/**
  *			B U _ P T B L _ L O C A T E
  *
  *  locate a (long *) in an existing table
@@ -149,7 +151,8 @@ bu_ptbl_locate(const struct bu_ptbl *b, const long int *p)
 	return(-1);
 }
 
-/*
+
+/**
  *			B U _ P T B L _ Z E R O
  *
  *  Set all occurrences of "p" in the table to zero.
@@ -168,7 +171,8 @@ bu_ptbl_zero(struct bu_ptbl *b, const long int *p)
 		if (pp[k] == p) pp[k] = (long *)0;
 }
 
-/*
+
+/**
  *			B U _ P T B L _ I N S _ U N I Q U E
  *
  *  Append item to table, if not already present.  Unique insert.
@@ -191,6 +195,7 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 
 #	include "noalias.h"
 
+	/* search for existing */
 	for( k = b->end-1; k >= 0; k-- )
 		if (pp[k] == p) return(k);
 
@@ -207,7 +212,8 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 	return(-1);		/* To signal that it was added */
 }
 
-/*
+
+/**
  *			B U _ P T B L _ R M
  *
  *  Remove all occurrences of an item from a table
@@ -251,7 +257,8 @@ bu_ptbl_rm(struct bu_ptbl *b, const long int *p)
 	return ndel;
 }
 
-/*
+
+/**
  *			B U _ P T B L _ C A T
  *
  *  Catenate one table onto end of another.
@@ -276,7 +283,8 @@ bu_ptbl_cat(struct bu_ptbl *dest, const struct bu_ptbl *src)
 	dest->end += src->end;
 }
 
-/*
+
+/**
  *			B U _ P T B L _ C A T _ U N I Q
  *
  *  Catenate one table onto end of another,
@@ -305,7 +313,8 @@ bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
 	}
 }
 
-/*
+
+/**
  *			B U _ P T B L _ F R E E
  *
  *  Deallocate dynamic buffer associated with a table,
@@ -324,8 +333,7 @@ bu_ptbl_free(struct bu_ptbl *b)
 }
 
 
-
-/*
+/**
  *			B U _ P T B L
  *
  *  This version maintained for source compatibility with existing NMG code.
@@ -364,7 +372,8 @@ bu_ptbl(struct bu_ptbl *b, int func, long int *p)
 	return(-1);/* this is here to keep lint happy */
 }
 
-/*
+
+/**
  *			B U _ P R _ P T B L
  *
  *  Print a bu_ptbl array for inspection.
@@ -392,7 +401,9 @@ bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 	}
 }
 
-/*			B U _ P T B L _ T R U N C
+
+/**
+ *			B U _ P T B L _ T R U N C
  *
  *	truncate a bu_ptbl
  */
