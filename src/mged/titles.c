@@ -253,13 +253,22 @@ dotitles(struct bu_vls *overlay_vls)
 
     if (illump != SOLID_NULL) {
 	struct bu_vls path_lhs, path_rhs;
+	register struct directory *dp;
 
 	bu_vls_init(&path_lhs);
 	bu_vls_init(&path_rhs);
-	for (i = 0; i < ipathpos; i++)
-	    bu_vls_printf(&path_lhs, "/%s", DB_FULL_PATH_GET(&illump->s_fullpath,i)->d_namep);
-	for (; i < illump->s_fullpath.fp_len; i++)
-	    bu_vls_printf(&path_rhs, "/%s", DB_FULL_PATH_GET(&illump->s_fullpath,i)->d_namep);
+	for (i = 0; i < ipathpos; i++) {
+	    dp = DB_FULL_PATH_GET(&illump->s_fullpath,i);
+	    if (dp) {
+		bu_vls_printf(&path_lhs, "/%s", dp->d_namep);
+	    }
+	}
+	for (; i < illump->s_fullpath.fp_len; i++) {
+	    dp = DB_FULL_PATH_GET(&illump->s_fullpath,i);
+	    if (dp) {
+		bu_vls_printf(&path_rhs, "/%s", dp->d_namep);
+	    }
+	}
 
 	bu_vls_printf(&vls, "%s(path_lhs)", MGED_DISPLAY_VAR);
 	Tcl_SetVar(interp, bu_vls_addr(&vls), bu_vls_addr(&path_lhs), TCL_GLOBAL_ONLY);
