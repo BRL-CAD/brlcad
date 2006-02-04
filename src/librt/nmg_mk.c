@@ -1147,18 +1147,26 @@ nmg_kvu(register struct vertexuse *vu)
 	}
 
 	/* erase existence of this vertexuse from parent */
-	if (*vu->up.magic_p == NMG_SHELL_MAGIC)  {
-		vu->up.s_p->vu_p = (struct vertexuse *)NULL;
-		ret = nmg_shell_is_empty(vu->up.s_p);
-	} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-		/* Reset the hack */
-		BU_LIST_INIT( &vu->up.lu_p->down_hd );
-		ret = 1;
-	} else if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC)  {
-		vu->up.eu_p->vu_p = (struct vertexuse *)NULL;
-		ret = 1;
-	} else
+	if (vu->up.magic_p != (long *)NULL) {
+	    if (*vu->up.magic_p == NMG_SHELL_MAGIC)  {
+		if (vu->up.s_p) {
+		    vu->up.s_p->vu_p = (struct vertexuse *)NULL;
+		    ret = nmg_shell_is_empty(vu->up.s_p);
+		}
+	    } else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+		if (vu->up.lu_p) {
+		    /* Reset the hack */
+		    BU_LIST_INIT( &vu->up.lu_p->down_hd );
+		    ret = 1;
+		}
+	    } else if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC)  {
+		if (vu->up.eu_p) {
+		    vu->up.eu_p->vu_p = (struct vertexuse *)NULL;
+		    ret = 1;
+		}
+	    } else
 		rt_bomb("nmg_kvu() killing vertexuse of unknown parent?\n");
+	}
 
 	FREE_VERTEXUSE(vu);
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
