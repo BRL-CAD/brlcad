@@ -75,7 +75,7 @@ struct {
 
 static int output_colormap = FALSE;
 
-void
+int
 main(argc,argv)
 int	argc;
 char	**argv;
@@ -102,7 +102,8 @@ char	**argv;
 
     while ( nfname-- > 0 )
 	(void)ReadGIF( *infname++ );
-    exit( 0 );
+
+    return 0;
 }
 
 int
@@ -209,7 +210,7 @@ FILE	*fd;
 	    EasyFail("EOF in extention\n",TRUE);
 	if (c == 0)
 	    return FALSE;
-	if (read(fd,buf,(int) c)!=(int) c) 
+	if (read(fileno(fd),buf,(int) c)!=(int) c) 
 	    EasyFail("EOF in extention\n",TRUE);
     }
 }
