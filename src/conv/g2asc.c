@@ -1049,12 +1049,8 @@ bsurfdump(void)	/* Print d-spline surface description record information */
 
 	/* Malloc and clear memory for the KNOT DATA and read it */
 	nbytes = record.d.d_nknots * sizeof(union record);
-	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
-		(void)fprintf(stderr, "g2asc: spline knot malloc error\n");
-		exit(1);
-	}
+	vp = (float *)bu_calloc(nbytes, 1, "KNOT DATA");
 	fp = vp;
-	(void)bzero( (char *)fp, nbytes );
 	count = fread( (char *)fp, 1, nbytes, ifp );
 	if( count != nbytes )  {
 		(void)fprintf(stderr, "g2asc: spline knot read failure\n");
@@ -1066,16 +1062,12 @@ bsurfdump(void)	/* Print d-spline surface description record information */
 		(void)fprintf(ofp, "%.12e\n", *vp++);
 	}
 	/* Free the knot data memory */
-	(void)free( (char *)fp );
+	(void)bu_free( (char *)fp, "KNOT DATA" );
 
 	/* Malloc and clear memory for the CONTROL MESH data and read it */
 	nbytes = record.d.d_nctls * sizeof(union record);
-	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
-		(void)fprintf(stderr, "g2asc: control mesh malloc error\n");
-		exit(1);
-	}
+	vp = (float *)bu_calloc(nbytes, 1, "CONTROL MESH");
 	fp = vp;
-	(void)bzero( (char *)fp, nbytes );
 	count = fread( (char *)fp, 1, nbytes, ifp );
 	if( count != nbytes )  {
 		(void)fprintf(stderr, "g2asc: control mesh read failure\n");
@@ -1088,7 +1080,7 @@ bsurfdump(void)	/* Print d-spline surface description record information */
 		(void)fprintf(ofp, "%.12e\n", *vp++);
 	}
 	/* Free the control mesh memory */
-	(void)free( (char *)fp );
+	(void)bu_free( (char *)fp, "CONTROL MESH" );
 }
 
 /*
