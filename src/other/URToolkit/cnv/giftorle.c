@@ -21,9 +21,14 @@
 /* |   don't try to make money off it, or pretend that you wrote it.  | */
 /* +------------------------------------------------------------------+ */
 
+#include	"rle.h"
+
 #include	<stdlib.h>
 #include	<stdio.h>
-#include	"rle.h"
+#ifdef HAVE_UNISTD_H
+#  include	<unistd.h>
+#endif
+
 
 #ifndef lint
 static char rcsid[] = "$Id$";
