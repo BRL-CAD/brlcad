@@ -75,7 +75,6 @@ CLEANFILES = \
 	lights.pix \
 	lights_diff.pix \
 	lights_ref.pix \
-	mged_shaders.log \
 	mged_solids.log \
 	moss-diff.log \
 	moss-png.log \
@@ -89,6 +88,7 @@ CLEANFILES = \
 	moss_png.diff \
 	moss_ref.pix \
 	overlaps.pl \
+	shaders.log \
 	shaders.pix \
 	shaders.pix.diff \
 	shaders_ref.pix \
@@ -116,11 +116,11 @@ CLEANFILES = \
 MOSTLYCLEANFILES = \
 	gqa.log \
 	lights.log \
-	mged_shaders.log \
 	mged_solids.log \
 	moss-png.log \
 	moss.asc \
 	moss.log \
+	shaders.log \
 	solids.log \
 	spdi.log \
 	weight.log

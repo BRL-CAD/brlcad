@@ -224272,7 +224272,7 @@ ln -s eagleCAD-w512-n438.pix eagle.pix
 export ITCL_LIBRARY=$TOP_SRCDIR/src/other/incrTcl/itcl/library/
 export TCL_LIBRARY=$TOP_SRCDIR/src/other/libtcl/library/
 export BRLCAD_DATA=$TOP_SRCDIR/src
-../src/mged/mged -c > mged_shaders.log 2>&1 << EOF
+../src/mged/mged -c > shaders.log 2>&1 << EOF
 opendb shaders.g y
 
 
