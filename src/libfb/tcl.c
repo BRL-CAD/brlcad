@@ -36,6 +36,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #ifdef HAVE_STRING_H
@@ -143,10 +144,7 @@ fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 	return TCL_ERROR;
     }
 
-    if((ifp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL){
-	Tcl_AppendResult(interp, "fb_open_existing: failed to allocate ifp memory\n", (char *)NULL);
-	return TCL_ERROR;
-    }
+    ifp = (FBIO *)bu_calloc(sizeof(FBIO), 1, "FBIO: fb_open_existing");
 
 #ifndef _WIN32
     if(strcasecmp(argv[1], X_device_name) == 0) {
@@ -250,7 +248,7 @@ fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 	if(ifp->if_pbase != PIXEL_NULL)
 	    free((void *)ifp->if_pbase);
 	bu_free((void *)ifp->if_name, "if_name");
-	free((void *)ifp);
+	bu_free((void *)ifp, "FBIO: fb_tcl_close_existing");
 	return TCL_OK;
     }
 #endif  /* _WIN32 */
@@ -269,7 +267,7 @@ fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 	if(ifp->if_pbase != PIXEL_NULL)
 	    free((void *)ifp->if_pbase);
 	bu_free((void *)ifp->if_name, "if_name");
-	free((void *)ifp);
+	bu_free((void *)ifp, "FBIO: fb_tcl_close_existing");
 	return TCL_OK;
     }
 #endif  /* IF_OGL */
