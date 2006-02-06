@@ -15,7 +15,9 @@ libpkg_la_SOURCES = \
 libpkg_la_LDFLAGS = -version-info 19:1
 
 tpkg_SOURCES = tpkg.c
-tpkg_LDADD = ${PKG} ${BU}
+tpkg_LDADD = \
+	libpkg.la \
+	${BU}
 
 BUILT_SOURCES = vers.c
 
