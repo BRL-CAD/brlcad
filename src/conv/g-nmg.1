@@ -27,12 +27,12 @@ g-nmg \- Perform Boolean evaluations to produce NMG objects
 .SH SYNOPSIS
 .B g-nmg
 [-v] [-b] [-t calc_dist_tol] [-a abs_tess_tol] [-n norm_tess_tol] [-r rel_tess_tol]
-[-x librt_debug_flag] [-X NMG_debug_flag] [-o outfile.g] infile.g object(s)
+[-o outfile.g] infile.g object(s)
 .SH DESCRIPTION
 .I g-nmg
-performs the Boolean operations specified in any regions in the specified
+performs the Boolean operations in the specified
 .I object(s)
-and writes the resulting NMG objects (or BOT primitives, if the
+and writes the resulting NMG primitives (or BOT primitives, if the
 .I
 -b
 option is specified) to
@@ -41,42 +41,56 @@ or to
 .I stdout
 if the
 .I -o
-option is not used. The
-.I -v
-option requests additional logging output. The
-.I -t
-option specifies a calculational distance tolerance (in millimeters). This
-tolerance is used to distinguish neighboring vertices. Any two vertices less than
-this tolerance distance apart will be considered the same vertex. The default value
-is 0.005mm.
-Prior to performing the Boolean operations for each region, the involved primitive solids
-are converted to a planar facetted approximation and stored as NMG solids. This tessellation
-can be controlled using the tessellation tolerances. The
-.I -a
-option may be used to specify an absolute tessellation tolerance (in millimeters). This
-requires that the maximum absolute error from the tessellated surface to the actual
+option is not used.
+
+The following options are available:
+.TP
+.B \-a abs_tess_tol
+Specify an absolute tessellation tolerance (in millimeters). 
+This requires that the maximum absolute error from the tessellated surface to the actual
 surface must not be greater than
 .I abs_tess_tol.
-The
-.I -n
-option specifies a surface normal error tolerance (in degrees) for the tessellation.
-The
-.I -r
-option may be used to set a relative error tolerance. This effectively
+.TP
+.B \-b
+Convert the results to a BOT primitive (triangle representation) instead of leaving it as an NMG.
+.TP
+.B \-n norm_tess_tol
+Specify a surface normal error tolerance (in degrees) for the tessellation.
+.TP
+.B \-o outfile.g
+Specify the name of the file to be created.  This should not be the same as the input file.
+.TP
+.B \-r rel_tess_tol
+Specify a relative error tolerance. This effectively
 sets an absolute tolerance for each primitive solid by multiplying the
 overall size of the solid by
 .I rel_tess_tol.
-The
-.I -x
-and
-.I -X
-options are used to set debug flags for
-.I librt
-and the
-.I NMG
-routines respectively. The definitions of these flags may be found in
+This allows small objects to be tessellated with small tolerances, while large objects are tessellated with large tolerances.
+For example, specifying 
+.I \-r 0.1
+when tesselating an object 2m in size, will result in a tolerance of .2m (2.0 * 0.1).  
+The same option will cause a 5cm object to be tesselated with a tolerance of 0.5cm.
+.TP
+.B \-t calc_dist_tol
+Specify a calculational distance tolerance (in millimeters). 
+This tolerance is used to distinguish neighboring vertices. 
+Any two vertices less than this tolerance distance apart will be considered the same vertex. 
+The default value is 0.005mm.
+Prior to performing the Boolean operations for each region, the involved primitive solids
+are converted to a planar facetted approximation and stored as NMG solids. This tessellation
+can be controlled using the tessellation tolerances. 
+.TP
+.B \-v
+Produce copious progress information.
+.TP
+.B \-x
+Set librt debug flags.
+The definitions of these flags may be found in
 .I librt/debug.h
-and
+.TP
+.B \-X
+Set NMG routines debug flags.
+The definitions of these flags may be found in
 .I h/nmg.h.
 .SH EXAMPLE
 .RS
@@ -84,6 +98,8 @@ $ \|\fIg-nmg \|-o shell.g \|sample.g \|sample_object\fP
 .RE
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.
+.SH BUGS
+Boolean operations under finite precision arithmetic are not guaranteed to be solvable.  As a result this command can fail.  Scaling geometry adjusting tolerance values, and restructuring the boolean tree will often result in a successful tesselation.
 .SH AUTHOR
 John Anderson
 .SH SOURCE
