@@ -6,7 +6,7 @@ if [ ! -f ebm.bw ] ; then
 	../src/util/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1
 fi
 
-rm -f shaders.rt shaders.g shaders.pix shaders shaders.log shaders.txt shaders.dat eagleCAD-w512-n438.pix eagle.pix
+rm -f shaders.rt shaders.g shaders.rt.pix shaders.pixdiff.log shaders.rt.log shaders.log shaders.txt shaders.dat eagleCAD-w512-n438.pix eagle.pix
 
 
 ../src/conv/asc2pix > eagleCAD-w512-n438.pix << EOF
@@ -224401,40 +224401,44 @@ ae 310 60
 set perspective 30
 size 16000
 
-saveview shaders
+saveview shaders.rt
 q
 EOF
 
-if [ ! -f shaders ] ; then
+if [ ! -f shaders.rt ] ; then
 	echo 'mged failed'
 	exit 1
 fi
-mv shaders shaders.orig
-sed "s,^rt,../src/rt/rt -P 1 -B -U 1," < shaders.orig > shaders
-rm shaders.orig
-chmod 775 shaders
+mv shaders.rt shaders.rt.orig
+sed "s,^rt,../src/rt/rt -P 1 -B -U 1," < shaders.rt.orig > shaders.rt
+rm shaders.rt.orig
+chmod 775 shaders.rt
 echo 'rendering shaders...'
-# the script 'shaders' creates shaders.log
-./shaders
+# the script 'shaders' creates shaders.rt.log
+./shaders.rt
+
+# determine the behavior of tail
+case "x`echo 'tail' | tail -n 1 2>&1`" in
+    *xtail*) TAIL_N="n " ;;
+    *) TAIL_N="" ;;
+esac
+
 NUMBER_WRONG=1
-if [ ! -f shaders.pix ] ; then
+if [ ! -f shaders.rt.pix ] ; then
 	echo shaders raytrace failed
 	exit 1
 else
 	if [ ! -f $TOP_SRCDIR/regress/shaderspix.asc ] ; then
-		echo No reference file for $TOP_SRCDIR/regress/ref/shaders.pix
+		echo No reference file for $TOP_SRCDIR/regress/shaders.rt.pix
 	else
 		../src/conv/asc2pix < $TOP_SRCDIR/regress/shaderspix.asc > shaders_ref.pix
-		../src/util/pixdiff shaders.pix shaders_ref.pix \
-		> shaders.pix.diff \
-		2>> shaders.log
+		../src/util/pixdiff shaders.rt.pix shaders_ref.pix > shaders.rt.diff.pix 2> shaders.rt.pixdiff.log
 
-		NUMBER_WRONG=`tr , '\012' < shaders.log | awk '/many/ {print $1}'`
+		NUMBER_WRONG=`tr , '\012' < shaders.rt.pixdiff.log | awk '/many/ {print $1}' | tail -${TAIL_N}1`
 		export NUMBER_WRONG
-		/bin/echo shaders.pix $NUMBER_WRONG off by many
+		/bin/echo shaders.rt.pix $NUMBER_WRONG off by many
 	fi
 fi
-rm -f   ebm.bw ebm.bw shaders.rt shaders.g shaders shaders.log shaders.txt shaders.dat eagleCAD-w512-n438.pix eagle.pix
 
 exit $NUMBER_WRONG
 # Local Variables:
