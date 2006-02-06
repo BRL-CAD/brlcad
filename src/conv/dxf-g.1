@@ -34,31 +34,57 @@ converts the specified
 to a BRL-CAD
 .I database.g
 file.
-The
-.I -c
-option specifies that only the first color seen for a layer should be used. Without this option,
+
+The following options are available:
+
+.TP
+.B \-c
+Only the first color seen for a layer should be used. Without this option,
 layers may be broken into seperate BOT primitives according to color assigned.
-The
-.I -d
-option sets a debug flag. The only effect is to cause a core dump on failure.
+
+.TP
+.B \-d
+Sets a debug flag. The only effect is to cause a core dump on failure.
 This is probably not useful except for developers.
-The
-.I -v
-option produces very verbose output on stderr.
-The
-.I -s
-option provides a scale factor to be applied to the DXF input. This can be used for DXF files
+.TP
+.B \-v
+Produces very verbose output on stderr.
+.TP
+.B \-s \fIscale_factor\fR
+Provides a scale factor to be applied to the DXF input. This can be used for DXF files
 that do not provide units information.
-The
-.I -t
-option specifies the maximum distance (in mm) between two vertices at which the two vertices
+.TP
+.B -t \fItolerance\fR
+Specifies the maximum distance (in mm) between two vertices at which the two vertices
 will be considered to be the same vertex.
+
+.P
 The
-.I file.dxf
+.B file.dxf
 file is expected to be in the Autodesk DXF format as defined in the
-Autocad 2000 manuals. This converter handles entities of type POLYLINE, VERTEX, LINE, CIRCLE, ARC, and 3DFACE.
+Autocad 2000 manuals. This converter handles entities of types:
+.IP
+POLYLINE
+.br
+VERTEX
+.br
+LINE
+.br
+CIRCLE
+.br
+ARC
+.br
+3DFACE
+.P
 The POLYLINE entities in AUTOCAD are actually a container for numerous different entity types. The types
-of POLYLINE entities converted include 3D polylines, 3D polygon meshes, and polyface meshes.
+of POLYLINE entities converted include:
+.IP
+3D polylines
+.br
+3D polygon meshes
+.br
+polyface meshes.
+.P
 Each layer is converted to a seperate object. Colors are also converted.
 .SH EXAMPLE
 .RS
