@@ -82,6 +82,11 @@ static float t_start, t_stop, t_decode, t_encode, t_misc;
 #include <time.h>
 #endif
 
+/* protect against jmpbuf define in IBM SP4 headers */
+#ifdef jmpbuf
+#  undef jmpbuf
+#endif
+
 /* Define png_jmpbuf() in case we are using a pre-1.0.6 version of libpng */
 #ifndef png_jmpbuf
 #  define png_jmpbuf(png_ptr) png_ptr->jmpbuf
