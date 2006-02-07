@@ -422,11 +422,11 @@ int
 Nread(int fd, char *buf, int count )
 {
 	struct sockaddr_in from;
-	int len = sizeof(from);
+	int len = (int)sizeof(from);
 	register int cnt;
 
 	if( udp )  {
-		cnt = recvfrom( fd, (void *)buf, (size_t)count, 0, (struct sockaddr *)&from, (socklen_t *)&len );
+		cnt = recvfrom( fd, (void *)buf, (size_t)count, 0, (struct sockaddr *)&from, &len );
 	} else {
 		if( b_flag )
 			cnt = mread( fd, buf, count );	/* fill buf */
@@ -591,7 +591,7 @@ main(int argc, char **argv)
 		}
 		fromlen = sizeof(frominet);
 		domain = AF_INET;
-		if((fd=accept(fd, (struct sockaddr *)&frominet, (socklen_t *)&fromlen) ) < 0)
+		if((fd=accept(fd, (struct sockaddr *)&frominet, &fromlen) ) < 0)
 			err("accept");
 		mes("accept");
 	    }
