@@ -9,7 +9,6 @@ same as the UNIX, BSD, and Linux platforms.
 
 X11 Window Server
 -----------------
-
 You'll need to install an X11 server if you would like to build Tk and
 have a graphical user interface.  Apple's X11 is the recommended X
 Window Server, though XDarwin should work suitably as well.  Be sure
@@ -19,20 +18,30 @@ package.
 
 Supported Versions
 ------------------
+BRL-CAD is generally only "extensively" tested by the developers on
+the latest released version of Mac OS X only.  That is to say that
+although the BRL-CAD package should build on prior versions of the Mac
+OS X operating system, they are generally and eventually not
+maintained and will require additional effort to obtain a build.
+Compiling on 10.3 or 10.4 should complete successfully.  Due to a
+variety of significant application programming interface issues in
+early releases of Mac OS X, versions prior to 10.2 are unsupported.
 
-BRL-CAD is generally extensively tested by the developers on the
-latest released version of Mac OS X only.  That is to say that
-although the package should build on prior versions of the operating
-system, they are generally unmaintained.  Due to a variety of
-significant application programming interface issues in early releases
-of Mac OS X, versions prior to 10.2 are unsupported.
-
-Compiling on Mac OS X 10.2 directly is a known issue and will likely
-fail due to various minor build issues.
+Mac OS X 10.2
+-------------
+Compiling directly on Mac OS X 10.2 requires additional effort.  When
+compiling from source, a libtool script is generated after running
+autogen.sh that gets used during compilation.  The version of
+glibtoolize shipped with 10.2 is non-functional with respect to
+convenience libraries, a feature that BRL-CAD requires.  That means
+that you will need to obtain the generated libtool script from other
+means.  You can either run autogen.sh on a different machine that has
+a newer version of libtool installed or you can download a source
+disribution where autogen.sh has already been run for you on a
+relatively new system.
 
 Parallel Builds
 ---------------
-
 As many workstation and server systems shipped by Apple are
 multiprocessor systems, you can enjoy the benefits of decreased
 compile times by utilizing the "-j" option to make.  After running
@@ -40,7 +49,6 @@ configure, run "make -j2" to build on a 2-processor system.
 
 Bugs
 ----
-
 The only known bugs specific to Mac OS X are limitations of Tk or the
 X11 event handler that our generally outside of BRL-CAD's domain.
 Refer to BUGS for more general details on known bugs and reporting
