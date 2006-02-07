@@ -5,7 +5,12 @@ lib_LTLIBRARIES = libmultispectral.la
 AM_CFLAGS = -DRT_MULTISPECTRAL
 
 libmultispectral_la_LDFLAGS = -version-info 19:1
-libmultispectral_la_LIBADD = $(top_builddir)/src/liboptical/librtms.la ${BU} ${TCL} ${LIBRT}
+libmultispectral_la_LIBADD = \
+	${top_builddir}/src/liboptical/librtms.la \
+	${LIBRT} \
+	${BN} \
+	${BU} \
+	${TCL}
 libmultispectral_la_SOURCES = \
 	init.c \
 	sh_temp.c \
