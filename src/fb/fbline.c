@@ -85,7 +85,7 @@ static int	clear = 0;
 
 RGBpixel	pixcolor = { 255, 255, 255 };
 
-static int	x1, y1, x2, y2;
+static int	fbx1, fby1, fbx2, fby2;
 
 void		edgelimit(register struct coords *ppos);
 void		BuildStr(struct coords *pt1, struct coords *pt2);
@@ -141,10 +141,10 @@ get_args(int argc, register char **argv)
 
 	if( bu_optind+4 > argc )
 		return(0);		/* BAD */
-	x1 = atoi( argv[bu_optind++]);
-	y1 = atoi( argv[bu_optind++]);
-	x2 = atoi( argv[bu_optind++]);
-	y2 = atoi( argv[bu_optind++]);
+	fbx1 = atoi( argv[bu_optind++]);
+	fby1 = atoi( argv[bu_optind++]);
+	fbx2 = atoi( argv[bu_optind++]);
+	fby2 = atoi( argv[bu_optind++]);
 
 	if ( argc > bu_optind )
 		(void)fprintf( stderr, "fbline: excess argument(s) ignored\n" );
@@ -174,10 +174,10 @@ main(int argc, char **argv)
 	screen_width = fb_getwidth(fbp);
 	screen_height = fb_getheight(fbp);
 
-	start.x = x1;
-	start.y = y1;
-	end.x = x2;
-	end.y = y2;
+	start.x = fbx1;
+	start.y = fby1;
+	end.x = fbx2;
+	end.y = fby2;
 	edgelimit( &start );
 	edgelimit( &end );
 	BuildStr( &start, &end );	/* pixels */
