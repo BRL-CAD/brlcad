@@ -178,8 +178,14 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	BU_UNSETJUMP;		/* Relinquish the protection */
 	regions_converted++;
 
-	shader = strtok( tsp->ts_mater.ma_shader, tok_sep );
-	matparm = strtok( (char *)NULL, tok_sep );
+	if (tsp->ts_mater.ma_shader) {
+	    shader = strtok( tsp->ts_mater.ma_shader, tok_sep );
+	    matparm = strtok( (char *)NULL, tok_sep );
+	} else {
+	    shader = NULL;
+	    matparm = NULL;
+	}
+	
 	bu_vls_init( &shader_params );
 	if( matparm ) {
 		bu_vls_strcpy( &shader_params, matparm );
