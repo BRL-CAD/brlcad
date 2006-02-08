@@ -1132,31 +1132,36 @@ mged <B>db form tgc</B> <BR>
 -- Display the format used by the <I>get</I> and <I>put</I> commands for the </FONT><A HREF="#TGC"><FONT SIZE=2>TGC</FONT></A><FONT SIZE=2> shape type. </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="db_glob"><A NAME="dbbinary"></A></A>dbbinary </B><I>[-i|-o] -u type dest source </DT>
-</I><DD>The &quot;dbbinary&quot; command is used to create or retrieve binary opaque objects.  Currently, only uniform binary objects (arrays of values) are supported.  One of <I>-i </I>or</DD>
-<I><DD>-o</I> must be specified.  The <I>-i</I> is for &quot;input,&quot; or creating a binary object, and the <I>-o</I> option is used for &quot;output," or retrieving a binary object.  The <I>-u</I> type argument must be supplied when <I>-i</I> is used, to indicate the type of uniform binary object to be created.  On input, the <I>dest</I> is the name of the object to be created, and the <I>source</I> is the path to a file containing the values in the local host format.  On output, <I>dest</I> is the path to a file to receive the contents of the binary object whose name appears in source.  The <I>type</I> may be one of:</DD>
-<I><DD>f </I>-&gt; float</DD>
-<I><DD>d </I>-&gt; double</DD>
-<I><DD>c </I>-&gt; char (8 bit)</DD>
-<I><DD>s </I>-&gt; short (16 bit)</DD>
-<I><DD>i </I>-&gt; int (32 bit)</DD>
-<I><DD>l </I>-&gt; long (64 bit)</DD>
-<I><DD>C </I>-&gt; unsigned char (8 bit)</DD>
-<I><DD>S </I>-&gt; unsigned short (16 bit)</DD>
-<I><DD>I </I>-&gt; unsigned int (32 bit)</DD>
-<I><DD>L </I>-&gt; unsigned long (64 bit)</DD>
+
+</FONT> <B>
+<DL>
+<DT><A NAME="db_glob"></a>
+
+
+<A NAME="dbbinary"></A>dbbinary </B><I>[-o|-i pattern type] dest source</I> </DT>
+<DD>The &quot;dbbinary&quot; command is used to create or retrieve binary opaque objects.  One of <I>-i</I> or <I>-o</I> must be specified.</DD>
+<dd>The <i>-o</i> option &quot;outputs&quot; or extracts a binary object from the database object <i>source</i> to a file called <i>dest</i>.</dd>
+<dd>The <i>-i</i> option &quot;inputs&quot; or imports a file called <i>source</i> into a binary object called <i>dest</i> in the database.  There are two additional arguments that must be specified with the <i>-i</i> option:  pattern and type.  Currently, only uniform binary objects (arrays of values) are supported.  As a result, the <i>pattern</i> is always <i>u</i> for &quot;uniform&quot; pattern.  The <i>type</i> can be one of the following:
+<DD><i>f </I>-&gt; float</DD>
+<DD><I>d </I>-&gt; double</DD>
+<DD><I>c </I>-&gt; char (8 bit)</DD>
+<DD><I>s </I>-&gt; short (16 bit)</DD>
+<DD><I>i </I>-&gt; int (32 bit)</DD>
+<DD><I>l </I>-&gt; long (64 bit)</DD>
+<DD><I>C </I>-&gt; unsigned char (8 bit)</DD>
+<DD><I>S </I>-&gt; unsigned short (16 bit)</DD>
+<DD><I>I </I>-&gt; unsigned int (32 bit)</DD>
+<DD><I>L </I>-&gt; unsigned long (64 bit)</DD>
+<DD> </DD>
+
+<DT><FONT SIZE=4>Examples: </DT></FONT>
+<DD> <TT>mged&gt;</TT> <B>dbbinary -i -u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html</B></DD>
+<DD>-- Create an opaque uniform binary object of characters with the name <I>cmds</I> that contains the contents of the file <I>/usr/brlcad/html/manuals/mged/mged_cmds.html.</I></DD>
 <DD></DD>
-<FONT SIZE=4><DD>Examples: </DD>
-</FONT><DD></DD>
-<TT><DD>mged&gt;</TT> <B>dbbinary -i -u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html</DD>
-</B><DD>-- Create an opaque uniform binary object of characters with the name <I>cmds</I> that</DD>
-<DD>contains the contents of the file <I>/usr/brlcad/html/manuals/mged/mged_cmds.html.</DD>
-</I><DD></DD>
-<TT><DD>mged&gt;</TT> <B>dbbinary -o /home/jim/cmds.html cmds</DD>
-</B><DD>-- Copy the contents of the binary object named <I>cmds</I> into the file named</DD>
-<I><DD>/home/jim/cmds.html.</DD>
-</I><DT><HR ALIGN="RIGHT"></DT>
+<DD><TT>mged&gt;</TT> <B>dbbinary -o /home/jim/cmds.html cmds</B></DD>
+<DD>-- Copy the contents of the binary object named <I>cmds</I> into the file named <i>/home/jim/cmds.html.</i></DD>
+</dl>
+<DT><HR ALIGN="RIGHT"></DT>
 <B><DT>db_glob</B> <I>cmd_string</DT>
 </I><DD>Globs <I>cmd_string</I> against the MGED database resulting in an expanded command string.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
@@ -1171,9 +1176,9 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </FONT>
 <B>
 <DL>
-  <DT><A NAME="dbconcat"></A>dbconcat</B> <I>database_file</I> [<I>prefix</I>]</DT>
-  <DT><A NAME="dbconcat"></A><B>dbconcat</B> <I>-s/p database_file</I></DT>
-  <DD><p>The &quot;dbconcat&quot; command concatenates an existing <I>BRL-CAD</I> database to the database currently being edited.  If a <I>prefix</I> is supplied, then all objects from the <I>database_file</I> will have <I>prefix</I> added to the beginning of their names.  Note that each <I>BRL-CAD</I> object must have a unique name, so care must be taken not to &quot;dbconcat&quot; a database that has objects with names the same as objects in the current database.  The <A HREF="#dup">dup</A> command may be used to check for duplicate names.  If the <I>dup</I> command finds duplicate names, use the <I>prefix</I> option to both the <I>dup</I> and <I>dbconcat</I> commands to find a <I>prefix</I> that produces no duplicates.  If duplicate names are encountered during the &quot;dbconcat&quot; process, computer-generated prefixes will be added to the object names coming from the <I>database_file</I> (but member names appearing in combinations will not be modified, so this is a dangerous practice and should be avoided).</p></DD>
+<DT><A NAME="dbconcat"></A>dbconcat</B> <I>database_file</I> [<I>prefix</I>]</DT>
+<DT><A NAME="dbconcat"></A><B>dbconcat</B> <I>-s/p database_file</I></DT>
+<DD><p>The &quot;dbconcat&quot; command concatenates an existing <I>BRL-CAD</I> database to the database currently being edited.  If a <I>prefix</I> is supplied, then all objects from the <I>database_file</I> will have <I>prefix</I> added to the beginning of their names.  Note that each <I>BRL-CAD</I> object must have a unique name, so care must be taken not to &quot;dbconcat&quot; a database that has objects with names the same as objects in the current database.  The <A HREF="#dup">dup</A> command may be used to check for duplicate names.  If the <I>dup</I> command finds duplicate names, use the <I>prefix</I> option to both the <I>dup</I> and <I>dbconcat</I> commands to find a <I>prefix</I> that produces no duplicates.  If duplicate names are encountered during the &quot;dbconcat&quot; process, computer-generated prefixes will be added to the object names coming from the <I>database_file</I> (but member names appearing in combinations will not be modified, so this is a dangerous practice and should be avoided).</p></DD>
 
   <DD><p>The second form also concatenates an existing <I>BRL-CAD</I> database to the database currently being edited; however, no prefix is required.  If the <I>-s</I> option is specified,then a computer-generated suffix is added wherever required to ensure unique object names.  Similarly, the <I>-p</I> option will create computer-generated prefixes where needed.  If a name in the existing database does not conflict with names in the database currently being edited, that name will not be changed.  Member names appearing in combinations in the existing database will be modified if needed.</p></DD>
 
