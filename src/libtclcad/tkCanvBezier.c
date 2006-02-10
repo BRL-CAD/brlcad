@@ -18,7 +18,7 @@
 #include "tkPort.h"
 #include "tkCanvas.h"
 
-#define NUM_BEZIER_POINTS	50
+#define NUM_BEZIER_POINTS	500
 
 /*
  * The structure below defines the record for each bezier item.
