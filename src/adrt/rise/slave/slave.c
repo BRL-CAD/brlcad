@@ -12,7 +12,7 @@
 void rise_slave(int port, char *host, int threads);
 void rise_slave_init(tie_t *tie, int socknum);
 void rise_slave_free(void);
-void rise_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_len);
+void rise_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, unsigned int *res_len);
 void rise_slave_mesg(void *mesg, int mesg_len);
 
 int rise_slave_threads;
@@ -44,11 +44,11 @@ void rise_slave_init(tie_t *tie, int socknum) {
 
 void rise_slave_free() {
   util_camera_free(&camera);
-  common_unpack_free();
+  common_unpack_free(&db);
 }
 
 
-void rise_slave_work(tie_t *tie, void *data, int size, void **res_buf, int *res_len) {
+void rise_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, unsigned int *res_len) {
   util_camera_render(&camera, &db, tie, data, size, res_buf, res_len);
 
 #if 0
