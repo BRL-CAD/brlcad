@@ -15,6 +15,7 @@ This release marks the one year anniversary of BRL-CAD being released
 as Open Source software.  Thank you to everyone for your support and
 contributions.
 
+* smoother sketch primitive spline drawing - Sean Morrison
 * fixed read bug in giftorle - Sean Morrison
 * fixed multiply referenced object illumination bug - Sean Morrison
 * improved nmg tesselation support reliability - Sean Morrison
