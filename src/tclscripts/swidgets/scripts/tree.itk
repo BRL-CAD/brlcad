@@ -138,6 +138,7 @@ itcl::class swidgets::Tree {
     itk_option define -linestipple lineStipple LineStipple ""
     itk_option define -selectfill selectFill Boolean 0
     itk_option define -background background Background "white"
+    itk_option define -sortmode sortMode SortMode "none"
 
     itk_option define -openimage openImage Image ""
     itk_option define -closeimage closeImage Image ""
@@ -301,6 +302,16 @@ proc ::swidgets::tree {args} {
 ::itcl::configbody swidgets::Tree::background {
     [$itk_component(frame) component canvas] configure -background $itk_option(-background)
     $itk_component(canvas) configure -background $itk_option(-background)
+}
+::itcl::configbody swidgets::Tree::sortmode {
+    switch -- $itk_option(-sortmode) {
+	"windows" -
+	"mac"     -
+	"none"    {}
+	default   {
+	    error "Tree::sortmode option must be 'windows', 'mac' or 'none'."
+	}
+    }
 }
 ::itcl::configbody swidgets::Tree::openimage {}
 ::itcl::configbody swidgets::Tree::closeimage {}
@@ -544,11 +555,47 @@ proc ::swidgets::tree {args} {
     set children [$node get -children]
     if {$children == ""} {return ""}
 
+    # put children into ordered list
+    set childlist ""
+    switch -- $itk_option(-sortmode) {
+	"windows" {
+	    foreach kid $children {
+		if {[$kid get -type] == "leaf"} {
+		    set leafarray([$kid get -text]) $kid
+		} else {
+		    set brancharray([$kid get -text]) $kid
+		}
+	    }
+
+	    if [info exists brancharray] {
+		foreach kid [lsort -dictionary [array names brancharray]] {
+		    lappend childlist $brancharray($kid)
+		}
+	    }
+	    if [info exists leafarray] {
+		foreach kid [lsort -dictionary [array names leafarray]] {
+		    lappend childlist $leafarray($kid)
+		}
+	    }
+	}
+	"mac"     {
+	    foreach kid $children {
+		set childarray([$kid get -text]) $kid
+	    }
+	    foreach kid [lsort -dictionary [array names childarray]] {
+		lappend childlist $childarray($kid)
+	    }
+	}
+	"none"    {
+	    set childlist $children
+	}
+    }
+
     # set node height plus padding
     set nodeheight [expr $itk_option(-nodeheight) + $itk_option(-nodepad)]
 
     set y1 $y
-    foreach kid $children {
+    foreach kid $childlist {
 	set yp $y1
 	set y1 [_draw_node $kid $x [expr $y1+$nodeheight]]
     }
