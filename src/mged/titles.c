@@ -259,13 +259,13 @@ dotitles(struct bu_vls *overlay_vls)
 	bu_vls_init(&path_rhs);
 	for (i = 0; i < ipathpos; i++) {
 	    dp = DB_FULL_PATH_GET(&illump->s_fullpath,i);
-	    if (dp) {
+	    if (dp && dp->d_namep) {
 		bu_vls_printf(&path_lhs, "/%s", dp->d_namep);
 	    }
 	}
 	for (; i < illump->s_fullpath.fp_len; i++) {
 	    dp = DB_FULL_PATH_GET(&illump->s_fullpath,i);
-	    if (dp) {
+	    if (dp && dp->d_namep) {
 		bu_vls_printf(&path_rhs, "/%s", dp->d_namep);
 	    }
 	}
