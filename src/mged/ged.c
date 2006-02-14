@@ -1735,24 +1735,27 @@ refresh(void)
   double elapsed_time;
   int do_time = 0;
 
+  bu_vls_init(&overlay_vls);
   bu_vls_init(&tmp_vls);
   rt_prep_timer();
 
-  FOR_ALL_DISPLAYS(p, &head_dm_list.l)
-	  if (update_views || p->dml_view_state->vs_flag)
-		  p->dml_dirty = 1;
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+      if (update_views || p->dml_view_state->vs_flag)
+	  p->dml_dirty = 1;
+  }
 
   /*
    * This needs to be done separately
    * because dml_view_state may be shared.
    */
-  FOR_ALL_DISPLAYS(p, &head_dm_list.l)
-	  p->dml_view_state->vs_flag = 0;
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+      p->dml_view_state->vs_flag = 0;
+  }
 
   update_views = 0;
 
   save_dm_list = curr_dm_list;
-  FOR_ALL_DISPLAYS(p, &head_dm_list.l){
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
     /*
      * if something has changed, then go update the display.
      * Otherwise, we are happy with the view we have
@@ -1765,9 +1768,9 @@ refresh(void)
 
       if(dbip != DBI_NULL){
 	if(do_overlay){
-	  bu_vls_init(&overlay_vls);
-	  create_text_overlay(&overlay_vls);
-	  do_overlay = 0;
+	    bu_vls_trunc(&overlay_vls, 0);
+	    create_text_overlay(&overlay_vls);
+	    do_overlay = 0;
 	}
 
 	/* XXX VR hack */
@@ -1931,9 +1934,7 @@ refresh(void)
 
   curr_dm_list = save_dm_list;
 
-  if (!do_overlay)
-      bu_vls_free(&overlay_vls);
-
+  bu_vls_free(&overlay_vls);
   bu_vls_free(&tmp_vls);
 }
 
