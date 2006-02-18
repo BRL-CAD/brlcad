@@ -189,10 +189,15 @@ case $FILE in
 	wrap=0
 	commentprefix="REM "
 	;;
+    *.vim)
+	echo "$FILE is a VIM syntax file"
+	wrap=0
+	commentprefix="\""
+	;;
     *.[0-9])
 	echo "$FILE is a manual page"
 	wrap=0
-	commentprefix="./\""
+	commentprefix=".\\\""
 	;;
     *)
 	echo "ERROR: $FILE has an unknown filetype"

@@ -188,6 +188,22 @@ case $FILE in
 	wrap=0
 	commentchar="REM"
 	;;
+    *.vim)
+	echo "$FILE is a VIM syntax file"
+	mode="tcl"
+	mode_vars="c-basic-offset tcl-indent-level"
+	wrap=0
+	commentchar="\""
+	;;
+    *.[0-9])
+	echo "$FILE is a manual page"
+	mode="nroff"
+	wrap=0
+	commentchar=".\\\""
+	# override any indent since 8 is required
+	indentation=8
+	tab_width=8
+	;;
     *)
 	echo "ERROR: $FILE has an unknown filetype"
 	exit 0
