@@ -2786,14 +2786,17 @@ wdb_killtree_cmd(struct rt_wdb	*wdbp,
 		/* ignore phony objects */
 		if (dp->d_addr == RT_DIR_PHONY_ADDR)
 			continue;
-
+#if 0
 		if (i == argc-1)
 		  ktd.notify = 1;
+#endif
 
 		db_functree(wdbp->dbip, dp,
 			    wdb_killtree_callback, wdb_killtree_callback,
 			    wdbp->wdb_resp, (genptr_t)&ktd);
 	}
+
+	dgo_notifyWdb(wdbp, interp);
 
 	return TCL_OK;
 }
@@ -2832,7 +2835,7 @@ wdb_killtree_callback(struct db_i		*dbip,
 			 ":  ", dp->d_namep, "\n", (char *)NULL);
 
 	/* notify drawable geometry objects associated with this database object */
-	dgo_eraseobjall_callback(interp, dbip, dp, ktdp->notify);
+	dgo_eraseobjall_callback(dbip, interp, dp, ktdp->notify);
 
 	if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
 		Tcl_AppendResult(interp,
