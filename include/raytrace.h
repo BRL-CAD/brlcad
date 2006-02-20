@@ -6512,7 +6512,10 @@ RT_EXPORT BU_EXTERN(void dgo_color_soltab,
 RT_EXPORT BU_EXTERN(void dgo_drawH_part2,
 		    ());
 RT_EXPORT BU_EXTERN(void dgo_eraseobjall_callback,
-		    ());
+		    (struct db_i	*dbip,
+		     Tcl_Interp		*interp,
+		     struct directory	*dp,
+		     int		notify));
 RT_EXPORT BU_EXTERN(void dgo_eraseobjpath,
 		    ());
 RT_EXPORT BU_EXTERN(void dgo_impending_wdb_close,
@@ -6520,7 +6523,11 @@ RT_EXPORT BU_EXTERN(void dgo_impending_wdb_close,
 RT_EXPORT BU_EXTERN(int dgo_invent_solid,
 		    ());
 RT_EXPORT BU_EXTERN(void dgo_notify,
-		    ());
+		    (struct dg_obj	*dgop,
+		     Tcl_Interp		*interp));
+RT_EXPORT BU_EXTERN(void dgo_notifyWdb,
+		    (struct rt_wdb *wdbp,
+		     Tcl_Interp    *interp));
 RT_EXPORT BU_EXTERN(void dgo_zapall,
 		    ());
 
