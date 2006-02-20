@@ -3774,7 +3774,10 @@ dgo_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp,
  * object is not phony.
  */
 void
-dgo_eraseobjall_callback(struct db_i *dbip, Tcl_Interp *interp, struct directory *dp)
+dgo_eraseobjall_callback(struct db_i		*dbip,
+			 Tcl_Interp		*interp,
+			 struct directory	*dp,
+			 int			notify)
 {
 	struct dg_obj		*dgop;
 	struct directory	*dpp[2] = {DIR_NULL, DIR_NULL};
@@ -3784,7 +3787,9 @@ dgo_eraseobjall_callback(struct db_i *dbip, Tcl_Interp *interp, struct directory
 		/* drawable geometry objects associated database matches */
 		if (dgop->dgo_wdbp->dbip == dbip) {
 			dgo_eraseobjall(dgop, interp, dpp);
-			dgo_notify(dgop, interp);
+
+			if (notify)
+			    dgo_notify(dgop, interp);
 		}
 }
 
@@ -4576,6 +4581,17 @@ dgo_notify(struct dg_obj	*dgop,
 	   Tcl_Interp		*interp)
 {
 	bu_observer_notify(interp, &dgop->dgo_observers, bu_vls_addr(&dgop->dgo_name));
+}
+
+void
+dgo_notifyWdb(struct rt_wdb *wdbp,
+	      Tcl_Interp    *interp)
+{
+    struct dg_obj *dgop;
+
+    for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
+	if (dgop->dgo_wdbp == wdbp)
+	    dgo_notify(dgop, interp);
 }
 
 void
