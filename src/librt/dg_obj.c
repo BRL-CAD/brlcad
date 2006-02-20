@@ -176,7 +176,6 @@ static void dgo_bound_solid(Tcl_Interp *interp, register struct solid *sp);
 void dgo_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct dg_client_data *dgcdp);
 void dgo_eraseobjpath(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv, int noisy, int all);
 static void dgo_eraseobjall(struct dg_obj *dgop, Tcl_Interp *interp, register struct directory **dpp);
-void dgo_eraseobjall_callback(struct db_i *dbip, Tcl_Interp *interp, struct directory *dp);
 static void dgo_eraseobj(struct dg_obj *dgop, Tcl_Interp *interp, register struct directory **dpp);
 void dgo_color_soltab(struct solid *hsp);
 static int dgo_run_rt(struct dg_obj *dgop, struct view_obj *vop);
@@ -186,7 +185,6 @@ void dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct b
 int dgo_build_tops(Tcl_Interp *interp, struct solid *hsp, char **start, register char **end);
 void dgo_pr_wait_status(Tcl_Interp *interp, int status);
 
-void dgo_notify(struct dg_obj *dgop, Tcl_Interp *interp);
 static void dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl);
 static void dgo_print_schain_vlcmds(struct dg_obj *dgop, Tcl_Interp *interp);
 
