@@ -164,10 +164,7 @@ main(int argc, char **argv)
 
 	/* Allocate storage for one output line */
 	scanlen = 3*xout;
-	if( (obuf = (unsigned char *)malloc( scanlen )) == (unsigned char *)0 )  {
-		fprintf( stderr, "pixembed: malloc failure\n");
-		exit(4);
-	}
+	obuf = (unsigned char *)bu_malloc( scanlen, "obuf" );
 
 	/* Pre-fetch the first line (after skipping) */
 	for( i= -1; i<border_inset; i++ )  load_buffer();
@@ -184,6 +181,8 @@ main(int argc, char **argv)
 
 	/* Write out duplicates at the top, until all done */
 	for( ; y < yout; y++ )  write_buffer();
+
+	bu_free(obuf, "obuf");
 
 	return 0;
 }

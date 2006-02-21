@@ -49,6 +49,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #include "machine.h"
+#include "bu.h"
 
 
 static char usage[] = "\
@@ -104,17 +105,8 @@ main(int argc, char **argv)
 
 	wpad = owidth - ( iwidth / (discard+1) );
 
-	iline = (unsigned char *)malloc( (iwidth+1) * nbytes );
-	oline = (unsigned char *)malloc( (owidth+1) * nbytes );
-	if( !iline || !oline )  {
-		fprintf(stderr,"malloc failure\n");
-		exit(2);
-
-	}
-	/* Zero output buf, for when last elements are unused (wpad>0) */
-	for( i = 0; i < owidth*nbytes; i++ )  {
-		oline[i] = '\0';
-	}
+	iline = (unsigned char *)bu_calloc( (iwidth+1), nbytes, "iline" );
+	oline = (unsigned char *)bu_calloc( (owidth+1),  nbytes, "oline" );
 
 	todo = iwidth / (discard+1) * (discard+1);
 	if( owidth < todo )  todo = owidth;
@@ -139,17 +131,22 @@ main(int argc, char **argv)
 		}
 		if( fwrite( oline, nbytes, owidth, stdout ) != owidth )  {
 			perror("fwrite");
-			exit(1);
+			goto out;
 		}
 
 		/* Discard extra scanlines of input data */
 		for( i=0; i < discard; i++ )  {
 			if( fread( iline, nbytes, iwidth, stdin ) != iwidth )  {
-				exit(0);
+			    goto out;
 			}
 		}
 	}
-	exit(0);
+
+ out:
+	bu_free(iline, "iline");
+	bu_free(oline, "oline");
+
+	return 0;
 }
 
 /*
