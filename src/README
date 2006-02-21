@@ -1,0 +1,45 @@
+adrt - Advanced Distributed Ray-Tracer, high-performance triangle ray-trace tools
+anim - animation tools
+archer - Archer, a geometry modeler implemented in Tcl
+brlman - a 'man' tool that knows where to look for BRL-CAD manual pages
+burst - tool for simulation of burst effects
+bwish - BRL-CAD's version of 'tclsh' and 'wish' Tcl/Tk interpreters
+canon - tool to spool/queue image data to Canon printers via MDQS
+fb - tools for displaying images to and reading from a framebuffer
+fbed - a framebuffer editor
+fbserv - the framebuffer server
+gtools - geometry processing tools (validation, transferring, comparing)
+halftone - tool for producing halftoned images from B&W images
+irprep - Infrared processing tools
+java - Java interface code for a Java-based BRL-CAD geometry server
+lgt - an interactive geometry rendering tool
+libbn - the BRL-CAD numerics library
+libbu - the BRL-CAD utility library
+libcursor - a 2D cursor manipulation library
+libdm - a 3D display manager library
+libfb - a 2D framebuffer library
+libfft - a fast Fourier transform library
+libmultispectral - a multispectral ray-tracing optics library
+liboptical - an optics library for raster image ray-tracing
+liborle - an "old" run-length image encoding library
+libpkg - a network package transport library
+librt - the BRL-CAD ray-trace library
+librtserver - the JNI interface to librt providing raytrace services to Java
+libsysv - a System V compatibility library (deprecated)
+libtclcad - a library for Tcl routines related to CAD
+libtermio - a terminal I/O library
+libwdb - the write database library, for creating BRL-CAD geometry models
+mged - the Multi-device Geometry Editor, a CSG solid modeler
+mk - tools for creating various common geometry objects (bolts, handles, windows, etc)
+nirt - Natalie's Interactive Ray-Tracer, an interactive ray-trace tool
+other - 3rd party code optionally utilized by BRL-CAD
+proc-db - tools for procedurally creating geometry models
+remrt - remote distributed ray-trace tools, a client and server
+rt - the BRL-CAD ray-tracers, various analytic and visual ray-trace-based tools
+rttherm - a thermal energy (heat) ray-tracer
+sig - signal processing tools, data conversion and manipulation of raw data
+tab - table processing tools, used primarily in conjunction with animation tools
+tclscripts - a library of Tcl routines used by mged, rtwizard, and archer
+util - various image processing and conversion utilities
+vas4 - tool for driving a Lyon Lamb Video Animation System (VAS4) to record videotape
+vdeck - tool for generating COM-GEOM decks from a BRL-CAD geometry file
