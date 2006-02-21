@@ -250,8 +250,10 @@ system declarations and preprocessor defines.
 FILESYSTEM ORGANIZATION
 -----------------------
 
-Here is a sample (not comprehensive) of how some of the sources are
-organized in the source distribution:
+Included below is a sample (not comprehensive) of how some of the
+sources are organized in the source distribution.  For the directories
+under src/, see the src/README file for more details on subdirectories
+not covered here.
 
 bench/
 	The BRL-CAD Benchmark Suite
@@ -262,57 +264,53 @@ doc/
 include/
 	Public headers
 m4/
-	Compilation resource files
+	Autoconf compilation resource files
 misc/
-	Anything not categorized or sufficently en masse
+	Anything not categorized or is sufficently en masse
 pix/
-	Sample raytrace images
+	Sample raytrace images, includes benchmark reference images
 regress/
-	Test suite
+	Scripts and resources for regression testing
 sh/
-	Utility scripts
+	Utility scripts, used primarily by the build system
 src/
-	Sources
-src/anim/
-	Animation utilities
+	Sources, see src/README for more details
 src/conv/
-	Geometry converters (most, but not all)
+	Various geometry converters
 src/conv/iges/
 	IGES converter
 src/fb/
-	Framebuffer services
+	Tools for displaying data to or reading from framebuffers
 src/fbserv/
 	Framebuffer server
 src/java/
-	Java raytrace interface to librt
-src/lib*
-	BRL-CAD libraries
+	Java geometry server interface to librt
 src/libbn/
-	Basic numerics library
+	BRL-CAD numerics library
 src/libbu
-	Basic utility library
+	BRL-CAD utility library
 src/libfb/
-	Framebuffer library
+	BRL-CAD Framebuffer library
 src/libfft/
 	Fast Fourier transform library
 src/libpkg/
 	Network "package" library
-src/librt
-	Raytrace library
+src/librt/
+	BRL-CAD Ray-trace library
 src/libwdb/
-	Write-only database library
+	Write database library
 src/mged/
-	Geometry editor
+	Multi-device geometry editor
 src/other/
 	External frameworks (Tcl/Tk, libpng, zlib, etc)
 src/proc-db/
-	Procedural geometry generators
+	Procedural geometry tools, create models programmatically
 src/remrt/
 	Distributed raytrace support
 src/rt/
-	Raytracers
+	Raytracers, various
 src/util/
-	Various data processing utilities
+	Various image processing utilities
 
 
 CODING STYLE
