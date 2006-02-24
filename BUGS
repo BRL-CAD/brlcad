@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* wavelet isn't working correctly on a simple image decomposition &
+  reconstruction.
+
 * query_ray can't find nirt if not installed
 
 * fbed is looking for /usr/lib/vfont/nonie.r.12
