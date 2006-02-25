@@ -657,6 +657,7 @@ float color[3];
 		nmg_triangulate_model( m, &tol );
 
 		/* Count triangles */
+		tri_count = 0;
 		for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
 			struct faceuse *fu;
 
@@ -772,6 +773,29 @@ float color[3];
 				}
 				else if( vert_count < 3 )
 					continue;
+				else
+				{
+				    if( !polyface_mesh ) {
+					vert_count++;
+					if( inches ) {
+					    fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+						     10 + vert_count - 1,
+						     v->vg_p->coord[X] / 25.4,
+						     20 + vert_count - 1,
+						     v->vg_p->coord[Y] / 25.4,
+						     30 + vert_count -1,
+						     v->vg_p->coord[Z] / 25.4 );
+					} else {
+					    fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+						     10 + vert_count - 1,
+						     v->vg_p->coord[X],
+						     20 + vert_count - 1,
+						     v->vg_p->coord[Y],
+						     30 + vert_count -1,
+						     v->vg_p->coord[Z] );
+					}
+				    }
+				}
 
 				tot_polygons++;
 				region_polys++;
