@@ -46,6 +46,9 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* write an introduction to brl-cad document that overviews the primary
+  tools and how they can be used together.
+
 * test out -Wfloat-equal
 
 * geometry viewing commands/visualizations of exploded levels
