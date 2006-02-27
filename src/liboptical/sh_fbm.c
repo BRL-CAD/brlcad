@@ -32,6 +32,7 @@ static char RCSsh_fbm[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <math.h>
@@ -41,9 +42,6 @@ static char RCSsh_fbm[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "rtprivate.h"
 
-#if !defined(M_PI)
-#define M_PI            3.14159265358979323846
-#endif
 
 struct fbm_specific {
 	double	lacunarity;
