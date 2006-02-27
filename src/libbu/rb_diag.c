@@ -39,15 +39,16 @@ static const char libbu_rb_diag_RCSid[] = "@(#) $Header$";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "rtlist.h"
 #include "bu.h"
 #include "compat4.h"
 #include "./rb_internals.h"
+
 
 static int d_order;	/* Used by describe_node() */
 

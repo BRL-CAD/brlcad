@@ -40,15 +40,16 @@ static const char libbu_rb_extreme_RCSid[] = "@(#) $Header$";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "rtlist.h"
 #include "bu.h"
 #include "compat4.h"
 #include "./rb_internals.h"
+
 
 /*		        _ R B _ E X T R E M E ( )
  *
@@ -106,7 +107,7 @@ void *bu_rb_extreme (bu_rb_tree *tree, int order, int sense)
     {
 	bu_log("FATAL: bu_rb_extreme(): invalid sense %d, file %s, line %s\n",
 	    sense, __FILE__, __LINE__);
-	exit (0);
+	bu_bomb("");
     }
 
     /* Wade throught the tree */
@@ -182,7 +183,7 @@ void *bu_rb_neighbor (bu_rb_tree *tree, int order, int sense)
     {
 	bu_log("FATAL: bu_rb_neighbor(): invalid sense %d, file %s, line %s\n",
 	    sense, __FILE__, __LINE__);
-	exit (0);
+	bu_bomb("");
     }
 
     /* Wade through the tree */

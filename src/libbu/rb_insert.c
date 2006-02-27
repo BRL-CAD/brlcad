@@ -39,13 +39,14 @@ static const char libbu_rb_insert_RCSid[] = "@(#) $Header$";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "./rb_internals.h"
+
 
 /*			_ R B _ I N S E R T ( )
  *

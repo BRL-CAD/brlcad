@@ -60,15 +60,16 @@ static const char libbu_rb_walk_RCSid[] = "@(#) $Header$";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "rtlist.h"
 #include "bu.h"
 #include "compat4.h"
 #include "./rb_internals.h"
+
 
 /*		        P R E W A L K N O D E S ( )
  *
@@ -204,13 +205,13 @@ void _rb_walk (bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_
 		default:
 		    bu_log("FATAL: _rb_walk(): Illegal visitation object: %d\n",
 			what_to_visit);
-		    exit (1);
+		    bu_bomb("");
 	    }
 	    break;
 	default:
 	    bu_log("FATAL: _rb_walk(): Illegal traversal type: %d\n",
 		trav_type);
-	    exit (1);
+	    bu_bomb("");
     }
 }
 

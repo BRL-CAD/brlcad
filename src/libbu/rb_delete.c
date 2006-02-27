@@ -38,13 +38,14 @@ static char const libbu_rb_delete_RCSid[] = "@(#) $Header$";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "./rb_internals.h"
+
 
 /*			B U _ R B _ F I X U P ( )
  *
@@ -193,7 +194,7 @@ void bu_rb_delete (bu_rb_tree *tree, int order)
     {
 	bu_log("Error: Attempt to delete from tree with %d nodes\n",
 		tree -> rbt_nm_nodes);
-	exit (0);
+	bu_bomb("");
     }
     if (bu_rb_current(tree) == bu_rb_null(tree))
     {

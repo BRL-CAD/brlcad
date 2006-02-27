@@ -55,15 +55,14 @@ static const char RCSparse[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-# include <string.h>
+#  include <string.h>
 #else
-# include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -1385,7 +1384,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 			break;
 		default:
 			bu_log( " %s=%s??\n", sdp->sp_name, sdp->sp_fmt );
-			abort();
+			bu_bomb("unexpected case encountered in bu_vls_struct_print\n");
 			break;
 		}
 	}

@@ -43,12 +43,12 @@
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "bu.h"
+
 
 void
 bu_hook_list_init(struct bu_hook_list *hlp)
@@ -91,7 +91,9 @@ bu_call_hook(struct bu_hook_list *hlp, genptr_t buf)
 	struct bu_hook_list	*call_hook;
 
 	for (BU_LIST_FOR(call_hook, bu_hook_list, &hlp->l)) {
-		if( !(call_hook->hookfunc) )  abort();	/* don't call through 0! */
+		if( !(call_hook->hookfunc) ) {
+		    exit(EXIT_FAILURE);	/* don't call through 0! */
+		}
 		call_hook->hookfunc(call_hook->clientdata, buf);
 	}
 }
