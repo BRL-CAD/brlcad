@@ -210,7 +210,7 @@ is_socket(int fd)
 {
 	struct sockaddr saddr;
 	/* Should be: socklen_t namelen but SGI's are complaining... */
-        socklent_t namelen;
+        socklen_t namelen;
 
 	if( getsockname(fd,&saddr,&namelen) == 0 )
 		return	1;
