@@ -47,16 +47,19 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <assert.h>
 
 #if defined( CRAY )
-#include <sys/category.h>
-#include <sys/resource.h>
-#include <sys/types.h>
-# if defined( CRAY1 )
-#  include <sys/machd.h>	/* For HZ */
-# endif
-#if defined( CRAY2 )
-#  undef MAXINT
-#  include <sys/param.h>
-#endif
+#  include <sys/category.h>
+#  include <sys/resource.h>
+#  include <sys/types.h>
+#  if defined( CRAY1 )
+#    include <sys/machd.h>	/* For HZ */
+#  endif
+#  if defined( CRAY2 )
+#    undef MAXINT
+#    include <sys/param.h>
+#  endif
+#  define MAX_CPU_TICKS	(200000*HZ) /* Max ticks = seconds * ticks/sec.	*/
+#  define NICENESS	-6 /* should bring it down from 16 to 10 */
+#endif	/* Cray */
 
 #include "machine.h"
 #include "vmath.h"
@@ -69,10 +72,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./vecmath.h"
 #include "./screen.h"
 
-
-#define MAX_CPU_TICKS	(200000*HZ) /* Max ticks = seconds * ticks/sec.	*/
-#define NICENESS	-6 /* should bring it down from 16 to 10 */
-#endif	/* Cray */
 
 #if !defined(NSIG)
 # define NSIG	64		/* conservative */
@@ -89,10 +88,10 @@ static int
 substr(char *str, char *pattern)
 {
 	if( *str == '\0' )
-		return	FALSE;
+		return	0;
 	if( *str != *pattern || strncmp( str, pattern, strlen( pattern ) ) )
 		return	substr( str+1, pattern );
-	return	TRUE;
+	return	1;
 	}
 
 /*	m a i n ( )							*/
@@ -217,7 +216,7 @@ int
 interpolate_Frame(int frame)
 {	fastf_t	rel_frame = (fastf_t) frame / movie.m_noframes;
 	if( movie.m_noframes == 1 )
-		return	TRUE;
+		return	1;
 	if( ! movie.m_fullscreen )
 		{	register int	frames_across;
 			register int	size;
@@ -228,7 +227,7 @@ interpolate_Frame(int frame)
 		}
 	bu_log( "Frame %d:\n", frame );
 	if( movie.m_keys )
-		return	key_Frame() == -1 ? FALSE : TRUE;
+		return	key_Frame() == -1 ? 0 : 1;
 	lgts[0].azim = movie.m_azim_beg +
 			rel_frame * (movie.m_azim_end - movie.m_azim_beg);
 	lgts[0].elev = movie.m_elev_beg +
@@ -240,7 +239,7 @@ interpolate_Frame(int frame)
 	bu_log( "\tview roll\t%g\n", grid_roll*DEGRAD );
 	if( movie.m_over )
 		{
-		lgts[0].over = TRUE;
+		lgts[0].over = 1;
 		lgts[0].dist = movie.m_dist_beg +
 			rel_frame * (movie.m_dist_end - movie.m_dist_beg);
 		grid_dist = movie.m_grid_beg +
@@ -250,7 +249,7 @@ interpolate_Frame(int frame)
 		}
 	else
 		{
-		lgts[0].over = FALSE;
+		lgts[0].over = 0;
 		if( movie.m_pers_beg == 0.0 && movie.m_pers_end == 0.0 )
 			{
 			rel_perspective = 0.0;
@@ -264,7 +263,7 @@ interpolate_Frame(int frame)
 			rel_frame * (movie.m_pers_end - movie.m_pers_beg);
 		bu_log( "\tperspective\t%g\n", rel_perspective );
 		}
-	return	TRUE;
+	return	1;
 	}
 
 /*	e x i t _ N e a t l y ( )					*/
@@ -344,8 +343,8 @@ init_Lgts(void)
 {
 	/* Ambient lighting.						*/
 	(void) strcpy( lgts[0].name, "EYE" );
-	lgts[0].beam = FALSE;
-	lgts[0].over = FALSE;
+	lgts[0].beam = 0;
+	lgts[0].over = 0;
 	lgts[0].rgb[0] = 255;
 	lgts[0].rgb[1] = 255;
 	lgts[0].rgb[2] = 255;
@@ -357,8 +356,8 @@ init_Lgts(void)
 
 	/* Primary lighting.						*/
 	(void) strcpy( lgts[1].name, "LIGHT" );
-	lgts[1].beam = FALSE;
-	lgts[1].over = TRUE;
+	lgts[1].beam = 0;
+	lgts[1].over = 1;
 	lgts[1].rgb[0] = 255;
 	lgts[1].rgb[1] = 255;
 	lgts[1].rgb[2] = 255;
