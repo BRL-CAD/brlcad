@@ -38,30 +38,19 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "plot3.h"
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 /* macros for comparing 2D points in scanline order */
-#if 0
-#define P_GT_V(_p, _v) \
-	(((_p)->coord[Y] > (_v)->coord[Y]) || ((_p)->coord[Y] == (_v)->coord[Y] && (_p)->coord[X] < (_v)->coord[X]))
-#define P_LT_V(_p, _v) \
-	(((_p)->coord[Y] < (_v)->coord[Y]) || ((_p)->coord[Y] == (_v)->coord[Y] && (_p)->coord[X] > (_v)->coord[X]))
-#define P_GE_V(_p, _v) \
-	(((_p)->coord[Y] > (_v)->coord[Y]) || ((_p)->coord[Y] == (_v)->coord[Y] && (_p)->coord[X] <= (_v)->coord[X]))
-#define P_LE_V(_p, _v) \
-	(((_p)->coord[Y] < (_v)->coord[Y]) || ((_p)->coord[Y] == (_v)->coord[Y] && (_p)->coord[X] >= (_v)->coord[X]))
-#else
+/* XXX maybe should use near zero tolerance instead */
 #define TOL_2D	1.0e-10
 #define P_GT_V(_p, _v) \
 	(((_p)->coord[Y] - (_v)->coord[Y]) > TOL_2D || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] < (_v)->coord[X]))
@@ -71,7 +60,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 	(((_p)->coord[Y] - (_v)->coord[Y]) > TOL_2D || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] <= (_v)->coord[X]))
 #define P_LE_V(_p, _v) \
 	(((_p)->coord[Y] - (_v)->coord[Y]) < (-TOL_2D) || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] >= (_v)->coord[X]))
-#endif
 
 #define NMG_PT2D_MAGIC	0x2d2d2d2d
 #define NMG_TRAP_MAGIC  0x1ab1ab

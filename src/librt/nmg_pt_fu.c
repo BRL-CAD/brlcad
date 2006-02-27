@@ -35,6 +35,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -281,7 +282,7 @@ struct edge_info *ei;
 	sprintf(name, "pt_e%02d.pl", plot_file_number++);
 	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
 		perror(name);
-		abort();
+		bu_bomb("unable to open file for writing");
 	}
 
 	bu_log("\toverlay %s\n", name);
@@ -935,7 +936,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 	sprintf(name, "pt_lu%02d.pl", plot_file_number++);
 	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
 		perror(name);
-		abort();
+		bu_bomb("unable to open file for writing");
 	}
 
 	bu_log("\toverlay %s\n", name);

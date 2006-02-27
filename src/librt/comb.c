@@ -40,9 +40,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -51,6 +53,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "../librt/debug.h"
+
 
 /* --- Begin John's pretty-printer --- */
 
@@ -85,7 +88,7 @@ main(int argc, char *argv[])
 	if( argc < 3 )
 	{
 		fprintf( stderr , "Usage:\n\t%s db_file object1 object2 ...\n" , argv[0] );
-		exit( 1 );
+		return 1;
 	}
 
 	MAT_IDN( identity_mat );
@@ -95,7 +98,7 @@ main(int argc, char *argv[])
 	{
 		fprintf( stderr , "Cannot open %s\n" , argv[1] );
 		perror( "test" );
-		exit( 1 );
+		return 1;
 	}
 
 	rt_init_resource( &rt_uniresource, 0, NULL );

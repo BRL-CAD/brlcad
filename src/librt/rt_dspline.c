@@ -64,6 +64,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -72,6 +73,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"
+
 
 static void
 GetBeta(fastf_t *m, const double bias, const double tension)
@@ -250,7 +252,7 @@ rt_dspline_n(double *r, const fastf_t *m, const double *knots, const int nknots,
 	/* validate args */
 	if (nspans < 1 || depth < 1 || alpha < 0.0 || alpha > 1.0 ||
 	    !r || !knots)
-		abort();
+	    bu_bomb("invalid args given to rt_dspline_r");
 
 
 	/* compute which knots (span) we're going to interpolate */

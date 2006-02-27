@@ -43,14 +43,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
+
 
 /**
  *			N M G _ M E R G E _ R E G I O N S
@@ -2460,7 +2462,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 			bu_log("nmg_cut_loop() plotting %s\n", name);
 			if ((fd = fopen(name, "w")) == (FILE *)NULL) {
 				(void)perror(name);
-				exit(-1);
+				bu_bomb("unable to open file for writing");
 			}
 
 			nmg_pl_fu(fd, oldlu->up.fu_p, tab, 100, 100, 100);
@@ -2532,7 +2534,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 		bu_log("nmg_cut_loop() plotting %s\n", name);
 		if ((fd = fopen(name, "w")) == (FILE *)NULL) {
 			(void)perror(name);
-			exit(-1);
+			bu_bomb("unable to open file for writing");
 		}
 
 		nmg_pl_fu(fd, oldlu->up.fu_p, tab, 100, 100, 100);

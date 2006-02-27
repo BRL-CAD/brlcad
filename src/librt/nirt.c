@@ -51,6 +51,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
@@ -63,7 +64,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <sys/time.h>		/* For struct timeval */
 #endif
 #include <sys/stat.h>		/* for chmod() */
-
 #ifdef HAVE_FCNTL_H
 #  include <fcntl.h>
 #endif
@@ -75,6 +75,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "solid.h"
 #include "./qray.h"
+
 
 /* defined in qray.c */
 extern void dgo_qray_data_to_vlist(struct dg_obj *dgop, struct bn_vlblock *vbp, struct dg_qray_dataList *headp, fastf_t *dir, int do_overlaps);

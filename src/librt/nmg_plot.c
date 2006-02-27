@@ -55,17 +55,19 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
 #include <signal.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
 #include "plot3.h"
+
 
 #define US_DELAY	10	/* Additional delay between frames */
 
@@ -1379,7 +1381,7 @@ nmg_pl_isect(const char *filename, const struct shell *s, const struct bn_tol *t
 
 	if ((fp=fopen(filename, "w")) == (FILE *)NULL) {
 		(void)perror(filename);
-		exit(-1);
+		bu_bomb("unable to open file for writing");
 	}
 
 	b = (long *)bu_calloc( s->r_p->m_p->maxindex+1, sizeof(long),

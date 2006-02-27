@@ -40,17 +40,20 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
 #include "plot3.h"
+
 
 static void 	vertex_neighborhood BU_ARGS((struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss *myhit));
 
@@ -148,7 +151,7 @@ nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt)
 	sprintf(name, "ray%02d.pl", plot_file_number++);
 	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
 		perror(name);
-		abort();
+		bu_bomb("unable to open file for writing");
 	}
 
 	bu_log("overlay %s\n", name);
@@ -186,7 +189,7 @@ pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
         sprintf(name, "ray%02d.pl", plot_file_number++);
         if ((fd=fopen(name, "w")) == (FILE *)NULL) {
         	perror(name);
-        	abort();
+		bu_bomb("unable to open file for writing");
         }
 
 	bu_log("overlay %s\n", name);

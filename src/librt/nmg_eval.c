@@ -43,8 +43,10 @@ static const char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -261,7 +263,7 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, long int **clas
 
 		if ((fp=fopen("bool_ans.pl", "w")) == (FILE *)NULL) {
 			(void)perror("bool_ans.pl");
-			exit(-1);
+			bu_bomb("unable to open bool_ans.pl for writing");
 		}
     		bu_log("plotting bool_ans.pl\n");
 		nmg_pl_s( fp, sA );

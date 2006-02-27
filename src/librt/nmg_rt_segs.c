@@ -38,15 +38,18 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "plot3.h"
+
 
 /*	EDGE-FACE correlation data
  * 	used in edge_hit() for 3manifold case
@@ -148,9 +151,10 @@ pl_ray(struct ray_data *rd)
 	sprintf(name, "nmg_ray%02d.pl", plot_file_number++);
 	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
 		perror(name);
-		abort();
-	} else
+		bu_bomb("unable to open file for writing");
+	} else {
 		bu_log("overlay %s\n", name);
+	}
 
 	VMOVE(old_point, rd->rp->r_pt);
 

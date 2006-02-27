@@ -47,15 +47,17 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "./debug.h"
+
 
 extern int nmg_class_nothing_broken;
 
@@ -664,7 +666,7 @@ nmg_s_radial_check( sB, tol );
 	if (rt_g.NMG_debug & DEBUG_BOOL && rt_g.NMG_debug & DEBUG_PLOTEM) {
 		if ((fp=fopen("shellA.pl", "w")) == (FILE*)NULL) {
 			(void)perror("shellA.pl");
-			exit(-1);
+			bu_bomb("unable to open shellA.pl for writing");
 		}
 		bu_log("plotting shellA.pl\n");
 		nmg_pl_s(fp, sA);
@@ -672,7 +674,7 @@ nmg_s_radial_check( sB, tol );
 
 		if ((fp=fopen("shellB.pl", "w")) == (FILE*)NULL) {
 			(void)perror("shellB.pl");
-			exit(-1);
+			bu_bomb("unable to open shellB.pl for writing");
 		}
 		bu_log("plotting shellB.pl\n");
 		nmg_pl_s(fp, sB);
@@ -878,7 +880,7 @@ nmg_s_radial_check( sB, tol );
 		if (rt_g.NMG_debug & DEBUG_PLOTEM) {
 			if ((fd = fopen("Cracked_Shells.pl", "w")) == (FILE *)NULL) {
 				(void)perror("Cracked_Shells");
-				exit(-1);
+				bu_bomb("unable to open Cracked_Shells.pl for writing");
 			}
 			bu_log("plotting Cracked_Shells.pl\n");
 
