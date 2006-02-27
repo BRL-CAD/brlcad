@@ -42,6 +42,7 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
@@ -208,7 +209,7 @@ int main(int argc, char **argv)
 	/* Process command line options */
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit(1);
+		return 1;
 	}
 	/* Identify the versions of the libraries we are using. */
 	if (rt_verbosity & VERBOSE_LIBVERSIONS) {
@@ -243,7 +244,7 @@ int main(int argc, char **argv)
 	if( bu_optind >= argc )  {
 		fprintf(stderr,"rt:  MGED database not specified\n");
 		(void)fputs(usage, stderr);
-		exit(1);
+		return 1;
 	}
 
 	if (rpt_overlap)
@@ -271,7 +272,7 @@ int main(int argc, char **argv)
 				 sub_xmin, sub_ymin, sub_xmax, sub_ymax );
 			fprintf( stderr, "\tFor a %d X %d image, the subgrid must be within 0,0,%d,%d\n",
 				 width, height, width-1, height-1 );
-			exit( 1 );
+			return 1;
 		}
 	}
 
@@ -338,7 +339,7 @@ int main(int argc, char **argv)
 
 	if( nobjs <= 0 )  {
 		bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
-		exit(1);
+		return 1;
 	}
 
 	/* Echo back the command line arugments as given, in 3 Tcl commands */
@@ -365,7 +366,7 @@ int main(int argc, char **argv)
 	rt_prep_timer();
 	if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
 		bu_log("rt:  rt_dirbuild(%s) failure\n", title_file);
-		exit(2);
+		return 2;
 	}
 	ap.a_rt_i = rtip;
 	(void)rt_get_timer( &times, NULL );
@@ -422,7 +423,7 @@ int main(int argc, char **argv)
 		if( fbp == FBIO_NULL )  {
 			fprintf(stderr,"rt:  can't open frame buffer\n");
 			pkg_terminate();
-			exit(12);
+			return 12;
 		}
 
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -449,7 +450,7 @@ int main(int argc, char **argv)
 		if( output_is_binary && isatty(fileno(outfp)) )  {
 			fprintf(stderr,"rt:  attempting to send binary output to terminal, aborting\n");
 			pkg_terminate();
-			exit(14);
+			return 14;
 		}
 	}
 
