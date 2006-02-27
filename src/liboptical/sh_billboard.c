@@ -55,8 +55,8 @@ struct bbd_img {
     double	img_xlen;	/* length of image in u direction */
     vect_t	img_y;		/* v direction in image plane */
     double	img_ylen;	/* length of image in v direction */
-    long int	img_width;	/* dimension of image */
-    long int 	img_height;
+    unsigned long int	img_width;	/* dimension of image */
+    unsigned long int 	img_height;
     struct bu_mapped_file *img_mf; /* image data */
 };
 
