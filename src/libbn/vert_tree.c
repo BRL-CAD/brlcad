@@ -41,14 +41,13 @@ static const char bn_RCSvert_tree[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <ctype.h>
 #include <errno.h>
@@ -313,12 +312,12 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
 		prev = ptr;
 		if( vertex[prev->vnode.coord] >= prev->vnode.cut_val ) {
 			if( prev->vnode.higher ) {
-				exit(1);
+			    bu_bomb("higher vertex node already exists in Add_vert()?\n");
 			}
 			prev->vnode.higher = new_leaf;
 		} else {
 			if( prev->vnode.lower ) {
-				exit(1);
+			    bu_bomb("lower vertex node already exists in Add_vert()?\n");
 			}
 			prev->vnode.lower = new_leaf;
 		}
@@ -455,12 +454,12 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
 		prev = ptr;
 		if( vertex[prev->vnode.coord] >= prev->vnode.cut_val ) {
 			if( prev->vnode.higher ) {
-				exit(1);
+			    bu_bomb("higher vertex node already exists in Add_vert_and_norm()?\n");
 			}
 			prev->vnode.higher = new_leaf;
 		} else {
 			if( prev->vnode.lower ) {
-				exit(1);
+			    bu_bomb("lower vertex node already exists in Add_vert_and_norm()?\n");
 			}
 			prev->vnode.lower = new_leaf;
 		}
