@@ -675,7 +675,7 @@ static struct math_func_link {
 int
 bn_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    long int width, height;
+    unsigned long int width, height;
     int pixel_size = 3;
 
     if (argc != 2 && argc != 3) {
