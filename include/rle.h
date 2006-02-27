@@ -33,6 +33,7 @@
 #include "rle_config.h"		/* Configuration parameters. */
 
 #include <stdio.h>		/* Declare FILE. */
+#include <stdlib.h>
 
 #ifdef c_plusplus
 #define USE_PROTOTYPES
