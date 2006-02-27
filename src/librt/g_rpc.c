@@ -171,6 +171,7 @@ static const char RCSrpc[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
@@ -187,6 +188,7 @@ static const char RCSrpc[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "./debug.h"
+
 
 struct rpc_specific {
 	point_t	rpc_V;		/* vector to rpc origin */
@@ -904,10 +906,6 @@ rt_ptalloc(void)
 	struct rt_pt_node *mem;
 
 	mem = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-	if (!mem) {
-		fprintf(stderr, "rt_ptalloc: no more memory!\n");
-		exit(-1);
-	}
 	return(mem);
 }
 
@@ -1029,12 +1027,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	vfront = (struct vertex **)bu_malloc((n+1) * sizeof(struct vertex *), "vertex *");
 	vback = (struct vertex **)bu_malloc((n+1) * sizeof(struct vertex *), "vertex *");
 	vtemp = (struct vertex **)bu_malloc((n+1) * sizeof(struct vertex *), "vertex *");
-	outfaceuses =
-		(struct faceuse **)bu_malloc((n+2) * sizeof(struct faceuse *), "faceuse *");
-	if (!front || !back || !vfront || !vback || !vtemp || !outfaceuses) {
-		fprintf(stderr, "rt_rpc_tess: no memory!\n");
-		exit(-1);
-	}
+	outfaceuses = (struct faceuse **)bu_malloc((n+2) * sizeof(struct faceuse *), "faceuse *");
 
 	/* generate front & back plates in world coordinates */
 	r_sq_over_b = rh * rh / b;
