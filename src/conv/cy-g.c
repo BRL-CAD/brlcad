@@ -27,14 +27,16 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <errno.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -42,6 +44,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "../librt/debug.h"
+
 
 #define LINE_LEN 256
 
@@ -70,21 +73,21 @@ main(int argc, char **argv)
 	if( argc != 3 )
 	{
 		bu_log( "%s", usage );
-		exit( 1 );
+		return 1;
 	}
 
 	if( (infp=fopen( argv[1], "r" )) == NULL )
 	{
 		bu_log( "Cannot open input file (%s)\n", argv[1] );
 		bu_log( "%s", usage );
-		exit( 1 );
+		return 1;
 	}
 
 	if( (outfp = wdb_fopen( argv[2] )) == NULL )
 	{
 		bu_log( "Cannot open output file (%s)\n", argv[2] );
 		bu_log( "%s", usage );
-		exit( 1 );
+		return 1;
 	}
 
 
@@ -94,7 +97,7 @@ main(int argc, char **argv)
 		if( fgets( line, LINE_LEN, infp ) == NULL )
 		{
 			bu_log( "Unexpected EOF while loking for data\n" );
-			exit( 1 );
+			return 1;
 		}
 		printf( "%s", line );
 		if( !strncmp( "DATA", line, 4 ) )
@@ -107,7 +110,7 @@ main(int argc, char **argv)
 			if( !strstr( line, "CYLINDRICAL" ) )
 			{
 				bu_log( "Can only handle cylindrical scans right now!\n" );
-				exit( 1 );
+				return 1;
 			}
 		}
 		else if( !strncmp( "NLG", line, 3 ) )
@@ -116,7 +119,7 @@ main(int argc, char **argv)
 			if( !cptr )
 			{
 				bu_log( "Error in setting NLG\n" );
-				exit( 1 );
+				return 1;
 			}
 			nlg = atoi( ++cptr );
 		}
@@ -126,7 +129,7 @@ main(int argc, char **argv)
 			if( !cptr )
 			{
 				bu_log( "Error in setting NLT\n" );
-				exit( 1 );
+				return 1;
 			}
 			nlt = atoi( ++cptr );
 		}
@@ -138,7 +141,7 @@ main(int argc, char **argv)
 			if( !cptr )
 			{
 				bu_log( "Error in setting LTINCR\n" );
-				exit( 1 );
+				return 1;
 			}
 			tmp = atoi( ++cptr );
 			delta_z = (fastf_t)(tmp)/1000.0;
@@ -149,7 +152,7 @@ main(int argc, char **argv)
 			if( !cptr )
 			{
 				bu_log( "Error in setting RSHIFT\n" );
-				exit( 1 );
+				return 1;
 			}
 			rshift = atoi( ++cptr );
 		}

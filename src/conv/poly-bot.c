@@ -38,14 +38,13 @@ static const char RCSid[] = "$Header$";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -57,6 +56,7 @@ static const char RCSid[] = "$Header$";
 #include "wdb.h"
 #include "../librt/plane.h"
 #include "../librt/debug.h"
+
 
 #define POLY_BLOCK	512
 
@@ -100,12 +100,12 @@ main(int argc, char **argv)
 		if( !ofp )  perror(argv[2]);
 		if (ifp == NULL || ofp == NULL) {
 			(void)fprintf(stderr, "poly-bot: can't open files.");
-			exit(1);
+			return 1;
 		}
 	}
 	if (isatty(fileno(ifp))) {
 		(void)fprintf(stderr, usage);
-		exit(1);
+		return 1;
 	}
 
 	poly = (union record *)bu_malloc( POLY_BLOCK * sizeof( union record ), "poly" );
@@ -286,7 +286,7 @@ top:
 				{
 					if( record.u_id != ID_IDENT ) {
 						bu_log( "This is not a BRL-CAD 'v4' database, aborting.\n" );
-						exit( 1 );
+						return 1;
 					}
 					first = 0;
 				}

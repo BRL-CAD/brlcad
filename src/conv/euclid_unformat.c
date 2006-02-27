@@ -31,14 +31,13 @@ static const char RCSid[] = "$Header$";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -83,7 +82,7 @@ main(void)
 			if( i >= MAX_PTS )
 			{
 				fprintf( stderr , "Too many points, MAX is %d\n" , MAX_PTS );
-				exit( 1 );
+				return 1;
 			}
 			if( !fgets( str, sizeof(str), stdin ) )
 			{

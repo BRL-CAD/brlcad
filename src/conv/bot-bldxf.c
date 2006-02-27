@@ -25,6 +25,7 @@
  */
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -536,14 +537,14 @@ int main(int ac, char *av[])
 
     if ((ac - arg_count) < 1) {
 	fprintf(stderr, "usage: %s geom.g [file.dxf] [bot1 bot2 bot3...]\n", progname);
-	exit(-1);
+	return 1;
     }
 
     RT_INIT_DB_INTERNAL(&intern);
 
     if ((rtip=rt_dirbuild(av[arg_count], idbuf, sizeof(idbuf)))==RTI_NULL){
 	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
-	exit(2);
+	return 2;
     }
 
     arg_count++;

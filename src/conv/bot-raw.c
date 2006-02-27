@@ -22,9 +22,12 @@
 /** @file bot-raw.c
  *
  */
+#include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -88,7 +91,7 @@ int main(int ac, char *av[])
 
     if (ac < 2) {
 	fprintf(stderr, "usage: bot-raw geom.g [file.raw]\n");
-	exit(-1);
+	return 1;
     }
 
     RT_INIT_DB_INTERNAL(&intern);
@@ -99,7 +102,7 @@ int main(int ac, char *av[])
 
     if ((rtip=rt_dirbuild(av[1], idbuf, sizeof(idbuf)))==RTI_NULL){
 	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
-	exit(2);
+	return 2;
     }
 
 

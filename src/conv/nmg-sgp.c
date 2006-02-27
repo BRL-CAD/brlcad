@@ -33,6 +33,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
@@ -183,14 +184,14 @@ char	*argv[];
 			break;
 		default:
 			fprintf(stderr, usage, argv[0]);
-			exit(1);
+			return 1;
 			break;
 		}
 	}
 
 	if (optind+1 >= argc) {
 		fprintf(stderr, usage, argv[0]);
-		exit(1);
+		return 1;
 	}
 
 	/* Open BRL-CAD database */
@@ -198,7 +199,7 @@ char	*argv[];
 	{
 		bu_log( "Cannot open %s\n" , argv[optind] );
 		perror(argv[0]);
-		exit(1);
+		return 1;
 	}
 #if 0
 	if( stats )
@@ -216,7 +217,7 @@ char	*argv[];
 		{
 			bu_log( "Cannot open %s\n" , out_file );
 			perror( argv[0] );
-			exit( 1 );
+			return 1;
 		}
 	}
 
@@ -254,6 +255,8 @@ char	*argv[];
 	fprintf( fp_out, "end_object\n" );
 
 	bu_log( "\t%d polygons\n", polygons );
+	
+	return 0;
 }
 
 /*
