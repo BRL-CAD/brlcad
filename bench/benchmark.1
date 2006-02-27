@@ -1,0 +1,130 @@
+.TH BENCHMARK 1 BRL-CAD
+.\"                     B E N C H M A R K . 1
+.\" BRL-CAD
+.\"
+.\" Copyright (c) 2006 United States Government as represented by
+.\" the U.S. Army Research Laboratory.
+.\"
+.\" This document is made available under the terms of the GNU Free
+.\" Documentation License or, at your option, under the terms of the
+.\" GNU General Public License as published by the Free Software
+.\" Foundation.  Permission is granted to copy, distribute and/or
+.\" modify this document under the terms of the GNU Free Documentation
+.\" License, Version 1.2 or any later version published by the Free
+.\" Software Foundation; with no Invariant Sections, no Front-Cover
+.\" Texts, and no Back-Cover Texts.  Permission is also granted to
+.\" redistribute this document under the terms of the GNU General
+.\" Public License; either version 2 of the License, or (at your
+.\" option) any later version.
+.\"
+.\" You should have received a copy of the GNU Free Documentation
+.\" License and/or the GNU General Public License along with this
+.\" document; see the file named COPYING for more information.
+.\"
+.\".\".\"
+.SH NAME
+benchmark \- runs the BRL-CAD benchmark
+.SH SYNOPSIS
+.B benchmark
+.SH DESCRIPTION
+.PP
+The benchmark suite will test the performance of a given system by
+iteratively rendering several well-known datasets into 512x512 images
+where performance metrics are documented and fairly well understood.
+The local machine's performance is compared to the base system (called
+VGR) and a numeric "VGR" mulitplier of performance is computed.  This
+number is a simplified metric from which one may qualitatively compare
+cpu and cache performance, versions of BRL-CAD, and different compiler
+characteristics.
+.PP
+There are several environment variables that will modify how the
+BRL-CAD benchmark behaves so that it may be run in a stand-alone
+environment:
+.PP
+\&
+.B RT
+\- the rt binary (e.g. ../src/rt/rt or /usr/brlcad/bin/rt)
+.br
+\&
+.B DB
+\- the directory containing the reference geometry (e.g. ../db)
+.br
+\&
+.B PIX
+\- the directory containing the reference images (e.g. ../pix)
+.br
+\&
+.B LOG
+\- the directory containing the reference logs (e.g. ../pix)
+.br
+\&
+.B CMP
+\- the name of a pixcmp tool (e.g. ./pixcmp)
+.br
+\&
+.B ELP
+\- the name of an elapsed time tool (e.g. ../sh/elapsed.sh)
+.br
+\&
+.B TIMEFRAME
+\- the minimum number of seconds each trace needs to take
+.br
+\&
+.B MAXTIME
+\- the maximum number of seconds to spend on any test
+.br
+\&
+.B DEVIATION
+\- the minimum sufficient % deviation from the average
+.br
+\&
+.B AVERAGE
+\- how many frames to average together
+.br
+\&
+.B DEBUG
+\- turn on extra debug output for testing/development
+.PP
+The \fITIMEFRAME\fR, \fIMAXTIME\fR, \fIDEVIATION\fR, and \fIAVERAGE\fR options control how the
+benchmark will proceed including how long it should take.  Each
+individual benchmark run will consume at least a minimum \fITIMEFRAME\fR of
+wallclock time so that the results can stabilize.  After consuming at
+least the minimum \fITIMEFRAME\fR, additional frames may be computed until
+the standard deviation from the last \fIAVERAGE\fR count of frames is below
+the specified \fIDEVIATION\fR.  When a test is run and it completes in less
+than \fITIMEFRAME\fR, the raytrace is restarted using double the number of
+rays from the previous run.  If the machine is fast enough, the
+benchmark may accelerate the number or rays being fired.  These
+additional rays are hypersampled but without any jitter, so it's
+effectively performing a multiplier amount of work over the initial
+frame.
+.PP
+Plese send your BRL-CAD Benchmark results to the developers along with
+detailed system information to <devs@brlcad.org>.  Include at least:
+.PP
+   0) Operating system type and version (e.g. uname -a)
+   1) Compiler name and version (e.g. gcc --version)
+   2) CPU configuration (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
+   3) Cache (data and/or instruction) details for L1/L2/L3 and system
+      (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
+   4) Output from this script (e.g. ./run.sh > run.sh.log 2>&1)
+   5) All generated log files (e.g. *.log* after running run.sh)
+   6) Anything else you think might be relevant to performance
+.SH "SEE ALSO"
+brlcad(1), rt(1), pix-fb(1), librt(3), pix(5).
+.SH AUTHOR
+Michael John Muuss
+.br
+Susan Muuss
+.br
+Christopher Sean Morrison
+.SH SOURCE
+BRL-CAD Open Source
+.SH COPYRIGHT
+This software is Copyright (c) 2006 United States Government as
+represented by the U.S. Army Research Laboratory. All rights reserved.
+.SH BUGS
+None known.
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <devs@brlcad.org>.
