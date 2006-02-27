@@ -38,6 +38,9 @@
  *	c	toggle host-net conversion
  *	o	offset
  */
+#include "common.h"
+
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_UNISTD_H
@@ -48,6 +51,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+
 
 /* declarations to support use of bu_getopt() system call */
 char *options = "w:n:s:L:H:O:S:V:D:f:co:v";
@@ -674,7 +678,7 @@ main(int ac, char **av)
 
 	if (! terrain_func) {
 		if (debug) bu_log("terrain func not specified\n");
-		exit(-1);
+		return 10;
 	}
 
 	terrain_func(buf);

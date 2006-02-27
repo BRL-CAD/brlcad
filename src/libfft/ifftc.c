@@ -36,8 +36,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -56,7 +55,7 @@ main(int argc, char **argv)
 
 	if( argc != 2 ) {
 		fprintf( stderr, usage );
-		exit( 1 );
+		return 1;
 	}
 
 	n = atoi(argv[1]);

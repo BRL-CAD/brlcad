@@ -37,11 +37,12 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
 #ifdef HAVE_UNISTD_H
-# include "unistd.h"
+#  include "unistd.h"
 #endif
 
 #include "machine.h"
@@ -50,6 +51,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bn.h"
 #include "raytrace.h"
 #include "spectrum.h"
+
 
 int	verbose = 0;
 
@@ -162,7 +164,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		return 1;
 	}
 
 	if(verbose)	bu_debug = BU_DEBUG_COREDUMP;

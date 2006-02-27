@@ -27,13 +27,15 @@
 static const char RCSid[] = "$Header$";
 #endif
 
-/*	INCLUDES	*/
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
+#else
+#  include <strings.h>
 #endif
 #ifdef HAVE_LIBGEN_H
 #  include <libgen.h>

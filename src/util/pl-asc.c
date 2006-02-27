@@ -38,21 +38,18 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <unistd.h>
 
-#include "common.h"
-
-
 #include "machine.h"
 #include "bu.h"
+
 
 #define	TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
@@ -159,13 +156,13 @@ main(int argc, char **argv)
 	if( argc == 2 ) {
 		if( (fp = fopen(argv[1],"r")) == NULL ) {
 			perror( "pl-asc" );
-			exit( 1 );
+			return 1;
 		}
 	} else {
 		fp = stdin;
 		if( argc > 1 || isatty(fileno(stdin)) ) {
 			fprintf( stderr, usage );
-			exit( 1 );
+			return 1;
 		}
 	}
 

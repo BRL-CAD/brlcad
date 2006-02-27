@@ -97,7 +97,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	fp = fopen(name, "r");
 	if( fp == NULL )  {
 		perror(name);
-		exit(-1);
+		bu_bomb("unable to open file for reading");
 	}
 
 	/* Set all flags to ready state.  */

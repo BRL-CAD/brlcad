@@ -42,19 +42,18 @@ static const char RCSid[] = "$Header$";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <math.h>
 #if HAVE_STRING_H
 #  include <string.h>
 #else
 #  include <strings.h>
 #endif
-#include <math.h>
-
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-
 #ifdef HAVE_FCNTL_H
 #  include <fcntl.h>
 #endif
@@ -71,6 +70,23 @@ extern char	version[];		/* from vers.c */
 extern void	cm_libdebug();
 extern void	cm_debug();
 extern void	cm_attr();
+
+
+char	usage[] = "\
+Usage: 'nirt [options] model.g objects...'\n\
+Options:\n\
+ -b        back out of geometry before first shot\n\
+ -B n      set rt_bot_minpieces=n\n\
+ -e script run script before interacting\n\
+ -f sfile  run script sfile before interacting\n\
+ -M        read matrix, cmds on stdin\n\
+ -O action handle overlap claims via action\n\
+ -s        run in short (non-verbose) mode\n\
+ -u n      set use_air=n (default 0)\n\
+ -v        run in verbose mode\n\
+ -x v      set librt(3) diagnostic flag=v\n\
+ -X v      set nirt diagnostic flag=v\n\
+";
 
 char		*db_name;	/* the name of the BRL-CAD geometry file */
 com_table	ComTab[] =
@@ -130,9 +146,15 @@ struct resource		res_tab;
 
 struct application	ap;
 
-
 int need_prep = 1;
 attr_table a_tab;
+
+
+void printusage(void)
+{
+    (void) fputs(usage, stderr);
+}
+
 
 void
 attrib_print(void)
@@ -329,7 +351,6 @@ main (int argc, char **argv)
     int             	   if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs);        /* routine if you hit target      */
     int             	   if_miss(struct application *ap);       /* routine if you miss target     */
     void                   do_rt_gettrees(struct rt_i *rtip, char **object_name, int nm_objects);
-    void                   printusage(void);
     void		   grid2targ(void);
     void		   targ2grid(void);
     void		   ae2dir(void);
@@ -424,7 +445,7 @@ main (int argc, char **argv)
                 {
                     (void) fprintf(stderr,
                         "Illegal use-air specification: '%s'\n", bu_optarg);
-                    exit (1);
+		    return 1;
                 }
                 break;
             case '?':
@@ -435,7 +456,7 @@ main (int argc, char **argv)
     if (argc - bu_optind < 2)
     {
 	printusage();
-	exit (1);
+	return 1;
     }
     if (isatty(0))
     {
@@ -472,7 +493,7 @@ main (int argc, char **argv)
 	    {
 		(void) fprintf(stderr,
 		    "Illegal overlap_claims specification: '%s'\n", ocastring);
-		exit (1);
+		return 1;
 	    }
 	    break;
 	case 'r':
@@ -488,13 +509,13 @@ main (int argc, char **argv)
 	    {
 		(void) fprintf(stderr,
 		    "Illegal overlap_claims specification: '%s'\n", ocastring);
-		exit (1);
+		return 1;
 	    }
 	    break;
 	default:
 	    (void) fprintf(stderr,
 		"Illegal overlap_claims specification: '%s'\n", ocastring);
-	    exit (1);
+	    return 1;
     }
 
     db_name = argv[bu_optind];
@@ -509,7 +530,7 @@ main (int argc, char **argv)
     {
 	fflush(stdout);
 	fprintf(stderr, "Could not load file %s\n", db_name);
-	exit(1);
+	return 1;
     }
     rti_tab[use_of_air] = rtip;
     rti_tab[1 - use_of_air] = RTI_NULL;
@@ -585,35 +606,14 @@ main (int argc, char **argv)
     run_scripts(&script_list);
 
     /* Perform the user interface */
-    if (mat_flag)
-    {
+    if (mat_flag) {
 	read_mat();
-	exit (0);
-    }
-    else
+	return 0;
+    } else {
 	interact(READING_FILE, stdin);
+    }
+
     return 0;
-}
-
-char	usage[] = "\
-Usage: 'nirt [options] model.g objects...'\n\
-Options:\n\
- -b        back out of geometry before first shot\n\
- -B n      set rt_bot_minpieces=n\n\
- -e script run script before interacting\n\
- -f sfile  run script sfile before interacting\n\
- -M        read matrix, cmds on stdin\n\
- -O action handle overlap claims via action\n\
- -s        run in short (non-verbose) mode\n\
- -u n      set use_air=n (default 0)\n\
- -v        run in verbose mode\n\
- -x v      set librt(3) diagnostic flag=v\n\
- -X v      set nirt diagnostic flag=v\n\
-";
-
-void printusage(void)
-{
-    (void) fputs(usage, stderr);
 }
 
 void

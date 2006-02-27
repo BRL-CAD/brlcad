@@ -38,26 +38,24 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <time.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "bu.h"
 #include "fb.h"
 
+
 /* Macros without arguments */
-#ifndef STATIC
-#define STATIC static
-#endif
 
 #ifndef true
 #define false	0
@@ -252,17 +250,17 @@ static const char   *mon_nam[] =
                           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 #endif
 
-STATIC struct locrec	gp_locs;
+static struct locrec	gp_locs;
 
-STATIC bool	get_OK(void);
-STATIC bool	pars_Argv(register int argc, register char **argv);
-STATIC long	read_Cell_Data(void);
-STATIC void	init_Globs(void);
-STATIC void	prnt_Usage(void);
-STATIC void	val_To_RGB(cell_val cv, unsigned char *rgb);
-STATIC void	log_Run(void);
-STATIC bool	display_Cells(long int ncells);
-STATIC void	fill_colortbl(unsigned char *lo_rgb, unsigned char *hi_rgb);
+static bool	get_OK(void);
+static bool	pars_Argv(register int argc, register char **argv);
+static long	read_Cell_Data(void);
+static void	init_Globs(void);
+static void	prnt_Usage(void);
+static void	val_To_RGB(cell_val cv, unsigned char *rgb);
+static void	log_Run(void);
+static bool	display_Cells(long int ncells);
+static void	fill_colortbl(unsigned char *lo_rgb, unsigned char *hi_rgb);
 
 int
 main (int argc, char **argv)
@@ -276,7 +274,7 @@ main (int argc, char **argv)
     if (! pars_Argv(argc, argv))
     {
 	prnt_Usage();
-	exit (1);
+	return 1;
     }
     grid = (Cell *) bu_malloc(sizeof(Cell) * maxcells, "grid");
     if (debug_flag & CFB_DBG_MEM)
@@ -290,7 +288,7 @@ main (int argc, char **argv)
 	if ((ncells = read_Cell_Data()) == 0)
 	{
 	    bu_log("cell-fb: failed to read view\n");
-	    exit (1);
+	    return 1;
 	}
 	if (RT_LIST_NON_EMPTY(&(gp_locs.l)))
 	    while (RT_LIST_WHILE(lrp, locrec, (&(gp_locs.l))))
@@ -306,7 +304,7 @@ main (int argc, char **argv)
 	    if (! display_Cells(ncells))
 	    {
 		bu_log("cell-fb: failed to display %ld cells\n", ncells);
-		exit (1);
+		return 1;
 	    }
 	    if (log_flag)
 		log_Run();
@@ -321,7 +319,7 @@ main (int argc, char **argv)
 #define	STATE_IN_DATA		2
 #define	STATE_BEYOND_DATA	3
 
-STATIC long read_Cell_Data(void)
+static long read_Cell_Data(void)
 {
     static char		linebuf[MAX_LINE];
     static char		*lbp = NULL;
@@ -433,7 +431,7 @@ STATIC long read_Cell_Data(void)
     return (gp - grid);
 }
 
-STATIC bool get_OK(void)
+static bool get_OK(void)
 {
     int		c;
     FILE	*infp;
@@ -458,7 +456,7 @@ STATIC bool get_OK(void)
 	return (false);
     return (true);
 }
-STATIC void init_Globs(void)
+static void init_Globs(void)
 {
     xmin = POS_INFINITY;
     ymin = POS_INFINITY;
@@ -467,7 +465,7 @@ STATIC void init_Globs(void)
     return;
 }
 
-STATIC bool display_Cells (long int ncells)
+static bool display_Cells (long int ncells)
 {
     register Cell	*gp, *ep = &grid[ncells];
     static int		zoom;
@@ -656,7 +654,7 @@ STATIC bool display_Cells (long int ncells)
     return (true);
 }
 
-STATIC void val_To_RGB (cell_val cv, unsigned char *rgb)
+static void val_To_RGB (cell_val cv, unsigned char *rgb)
 {
     double	val;
 
@@ -709,7 +707,7 @@ STATIC void val_To_RGB (cell_val cv, unsigned char *rgb)
     return;
 }
 
-STATIC struct locrec *mk_locrec (fastf_t h, fastf_t v)
+static struct locrec *mk_locrec (fastf_t h, fastf_t v)
 {
     struct locrec	*lrp;
 
@@ -721,7 +719,7 @@ STATIC struct locrec *mk_locrec (fastf_t h, fastf_t v)
     return (lrp);
 }
 
-STATIC bool pars_Argv (register int argc, register char **argv)
+static bool pars_Argv (register int argc, register char **argv)
 {
     register int	c;
     extern int		bu_optind;
@@ -984,7 +982,7 @@ STATIC bool pars_Argv (register int argc, register char **argv)
     return (true);
 }
 /*	prnt_Usage() --	Print usage message. */
-STATIC void prnt_Usage(void)
+static void prnt_Usage(void)
 {
     register char	**p = usage;
 
@@ -993,7 +991,7 @@ STATIC void prnt_Usage(void)
     return;
 }
 
-STATIC void log_Run(void)
+static void log_Run(void)
 {
     time_t              clock;
     mat_t		model2hv;		/* model to h,v matrix */
@@ -1063,7 +1061,7 @@ STATIC void log_Run(void)
 	printf("Size: %.6f\n", m_viewsize);
 }
 
-STATIC void
+static void
 fill_colortbl (unsigned char *lo_rgb, unsigned char *hi_rgb)
 {
     int		i;

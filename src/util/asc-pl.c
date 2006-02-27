@@ -37,20 +37,21 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <ctype.h>
-
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "machine.h"
 #include "plot3.h"
+
 
 #define		BUF_LEN		512
 #define		FP_IN		0
@@ -79,7 +80,7 @@ main (int argc, char **argv)
     if (argc > 3)
     {
 	printusage();
-	exit (1);
+	return 1;
     }
     fp[0] = stdin;
     fp[1] = stdout;
@@ -91,13 +92,13 @@ main (int argc, char **argv)
 	{
 	    (void) fprintf(stderr, "Cannot open file '%s'\n", *argv);
 	    printusage();
-	    exit (1);
+	    return 1;
 	}
     }
     if (isatty(fileno(fp[FP_OUT])))
     {
 	(void) fputs("asc-pl: Will not write to a TTY\n", stderr);
-	exit (1);
+	return 1;
     }
 
     for (line_nm = 1; fgets(buf, BUF_LEN - 1, fp[FP_IN]) != NULL; ++line_nm)
@@ -247,7 +248,7 @@ main (int argc, char **argv)
 		(void) fprintf(stderr,
 		    "Unknown PLOT3 command: '%c' (o%o) on line %d\n",
 		    *bp, *bp, line_nm);
-		exit (1);
+		return 1;
 	}
     }
     return 0;

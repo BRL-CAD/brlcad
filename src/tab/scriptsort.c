@@ -21,13 +21,12 @@ static const char RCSid[] = "$Id$";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -36,6 +35,7 @@ static const char RCSid[] = "$Id$";
 #include "compat4.h"
 
 #include "./tokens.h"
+
 
 struct  frame {
 	struct bu_list	l;
@@ -273,7 +273,7 @@ main(int argc, char **argv)
 	int base, count;
 
 	if (!get_args(argc,argv)) {
-		exit(1);
+	    return 1;
 	}
 	if (verbose) fprintf(stderr,"scriptsort: starting.\n");
 

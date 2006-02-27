@@ -72,14 +72,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  */
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
 #include <math.h>
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
 
 #include "machine.h"
 #include "vmath.h"
@@ -90,6 +91,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./vextern.h"
 
 #include "../librt/debug.h"
+
 
 int	debug = 0;
 
@@ -259,7 +261,7 @@ char	*argv[];
 	if( ! parsArg( argc, argv ) )
 	{
 		menu( usage );
-		exit( 1 );
+		return 1;
 	}
 
 	rt_init_resource( &rt_uniresource, 0, NULL );
@@ -267,7 +269,7 @@ char	*argv[];
 	/* Build directory from object file.	 	*/
 	if( db_dirbuild(dbip) < 0 )  {
 		fprintf(stderr,"db_dirbuild() failure\n");
-		exit(1);
+		return 1;
 	}
 
 	toc();		/* Build table of contents from directory.	*/
@@ -373,7 +375,7 @@ char	*argv[];
 		prompt( CMD_PROMPT );
 	}
 out:
-	exit( 0 );
+	return 0;
 }
 
 /*

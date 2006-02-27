@@ -27,20 +27,21 @@
  */
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "rtlist.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 
 static struct model *m;
 static struct nmgregion *r;

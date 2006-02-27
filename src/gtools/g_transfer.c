@@ -197,7 +197,7 @@ server_geom(struct pkg_conn *connection, char *buf)
 	DBIP = db_open_inmem();
     }
 
-    if (db5_get_raw_internal_ptr(&raw, buf) == NULL) {
+    if (db5_get_raw_internal_ptr(&raw, (const unsigned char *)buf) == NULL) {
 	bu_log("Corrupted serialized geometry?  Could not deserialize.\n");
 	free(buf);
 	return;

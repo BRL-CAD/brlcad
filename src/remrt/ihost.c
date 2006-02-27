@@ -36,22 +36,18 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-
-# include <string.h>
+#  include <string.h>
 #else
-# include <strings.h>
+#  include <strings.h>
 #endif
-
 #include <netdb.h>
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -65,6 +61,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 
 #include "./ihost.h"
+
 
 struct bu_list	HostHead;
 
@@ -244,7 +241,7 @@ host_lookup_by_name(char *name, int enter)
 struct ihost *
 host_lookup_of_fd(int fd)
 {
-	auto int	fromlen;
+	auto socklen_t	fromlen;
 	struct sockaddr_in from;
 
 	fromlen = sizeof (from);

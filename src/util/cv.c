@@ -34,17 +34,19 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+
 
 char usage[] = "\
 Usage: cv in_pat out_pat [[infile] outfile]\n\
@@ -76,7 +78,7 @@ main(int argc, char **argv)
 
 	if( argc < 3 || argc > 5 )  {
 		fputs( usage, stderr );
-		exit(1);
+		return 1;
 	}
 
 	in_cookie = bu_cv_cookie( argv[1] );
@@ -85,7 +87,7 @@ main(int argc, char **argv)
 	if( argc >= 5 )  {
 		if( (outfp = fopen( argv[4], "w" )) == NULL )  {
 			perror(argv[4]);
-			exit(2);
+			return 2;
 		}
 	} else {
 		outfp = stdout;
@@ -94,7 +96,7 @@ main(int argc, char **argv)
 	if( argc >= 4 )  {
 		if( (infp = fopen( argv[3], "r" )) == NULL )  {
 			perror(argv[3]);
-			exit(3);
+			return 3;
 		}
 	} else {
 		infp = stdin;
@@ -102,7 +104,7 @@ main(int argc, char **argv)
 
 	if( isatty(fileno(outfp)) )  {
 		fprintf(stderr, "cv: trying to send binary output to terminal\n");
-		exit(5);
+		return 5;
 	}
 
 	iitem = bu_cv_itemlen( in_cookie );
@@ -120,13 +122,13 @@ main(int argc, char **argv)
 		m = bu_cv_w_cookie( obuf, out_cookie, outbytes, ibuf, in_cookie, n );
 		if( m != n )  {
 			fprintf(stderr, "cv: bu_cv_w_cookie() ret=%d, count=%d\n", m, n );
-			exit(4);
+			return 4;
 		}
 		m = fwrite( obuf, oitem, n, outfp );
 		if( m != n )  {
 			perror("fwrite");
 			fprintf(stderr, "cv: fwrite() ret=%d, count=%d\n", m, n );
-			exit(5);
+			return 5;
 		}
 	}
 	fclose(infp);

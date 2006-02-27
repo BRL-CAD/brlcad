@@ -41,11 +41,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "machine.h"
@@ -55,6 +55,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "db.h"
 #include "raytrace.h"
 #include "redblack.h"
+
 
 /*
  * ******************** Hack

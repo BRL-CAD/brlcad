@@ -27,17 +27,15 @@
 static const char RCSid[] = "$Header$";
 #endif
 
-/*	INCLUDES	*/
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #if HAVE_STRING_H
-# include <string.h>
+#  include <string.h>
 #else
-# include <strings.h>
+#  include <strings.h>
 #endif
 #include <math.h>
 
@@ -46,6 +44,7 @@ static const char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "./nirt.h"
 #include "./usrfmt.h"
+
 
 #define			RMAT_SAW_EYE	0x01
 #define			RMAT_SAW_ORI	0x02

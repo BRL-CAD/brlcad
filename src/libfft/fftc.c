@@ -36,14 +36,14 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
-extern int rfft_adds, rfft_mults;
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
 #include "./fft.h"
+
+
+extern int rfft_adds, rfft_mults;
 
 static char usage[] = "\
 Usage: fftc length > fftlength.c\n";
@@ -56,7 +56,7 @@ main(int argc, char **argv)
 
 	if( argc != 2 ) {
 		fprintf( stderr, usage );
-		exit( 1 );
+		return 1;
 	}
 
 	n = atoi(argv[1]);

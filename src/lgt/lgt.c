@@ -31,19 +31,32 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 #include <stdio.h>
+#include <stdlib.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <fcntl.h>
 #include <math.h>
 #include <signal.h>
 #include <assert.h>
+
+#if defined( CRAY )
+#include <sys/category.h>
+#include <sys/resource.h>
+#include <sys/types.h>
+# if defined( CRAY1 )
+#  include <sys/machd.h>	/* For HZ */
+# endif
+#if defined( CRAY2 )
+#  undef MAXINT
+#  include <sys/param.h>
+#endif
 
 #include "machine.h"
 #include "vmath.h"
@@ -56,17 +69,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./vecmath.h"
 #include "./screen.h"
 
-#if defined( CRAY )
-#include <sys/category.h>
-#include <sys/resource.h>
-#include <sys/types.h>
-# if defined( CRAY1 )
-#  include <sys/machd.h>	/* For HZ */
-# endif
-#if defined( CRAY2 )
-#undef MAXINT
-#include <sys/param.h>
-#endif
+
 #define MAX_CPU_TICKS	(200000*HZ) /* Max ticks = seconds * ticks/sec.	*/
 #define NICENESS	-6 /* should bring it down from 16 to 10 */
 #endif	/* Cray */
@@ -270,7 +273,7 @@ exit_Neatly(int status)
 {
 	prnt_Event( "Quitting...\n" );
 	exit( status );
-	}
+}
 
 /*	r e a d y _ O u t p u t _ D e v i c e ( )			*/
 int

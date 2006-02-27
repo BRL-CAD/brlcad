@@ -40,15 +40,13 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "anim.h"
 
-#ifndef M_PI
-#define M_PI	3.14159265358979323846
-#endif
 
 #define MAXN	100
 
@@ -109,7 +107,7 @@ main(int argc, char **argv)
 	fprintf(stderr,"Anim_fly: Not enough lines in input table.\n");
 	fprintf(stderr,"Increase number of lines or reduce the minimum stepsize with -s.\n");
 	fprintf(stderr,"Currently the minumum step size is %g seconds.\n",desired_step);
-	exit(0);
+	return 0;
     }
 
     max_cross = 0;

@@ -41,6 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
@@ -99,12 +100,12 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) || bytes_per_sample <= 0 )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		return 1;
 	}
 
 	if ( !file_name && file_length <= 0 )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		return 1;
 	}
 
 	if( file_name ) {

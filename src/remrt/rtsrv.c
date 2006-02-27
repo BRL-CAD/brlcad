@@ -35,10 +35,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
@@ -78,6 +79,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtprivate.h"
 
 #include "./protocol.h"
+
 
 struct bu_list	WorkHead;
 
@@ -180,7 +182,7 @@ main(int argc, char **argv)
 
 	if( argc < 2 )  {
 		fprintf(stderr, srv_usage);
-		exit(1);
+		return 1;
 	}
 	while( argv[1][0] == '-' )  {
 		if( strcmp( argv[1], "-d" ) == 0 )  {
@@ -193,13 +195,13 @@ main(int argc, char **argv)
 			argc--; argv++;
 		} else {
 			fprintf(stderr, srv_usage);
-			exit(3);
+			return 3;
 		}
 		argc--; argv++;
 	}
 	if( argc != 3 && argc != 4 )  {
 		fprintf(stderr, srv_usage);
-		exit(2);
+		return 2;
 	}
 
 	control_host = argv[1];
@@ -216,7 +218,7 @@ main(int argc, char **argv)
 	if( pcsrv == PKC_ERROR )  {
 		fprintf(stderr, "rtsrv: unable to contact %s, port %s\n",
 			control_host, tcp_port);
-		exit(1);
+		return 1;
 	}
 
 	if( argc == 4 )  {
@@ -227,7 +229,7 @@ main(int argc, char **argv)
 		sleep(1);
 
 		pkg_close( pcsrv );
-		exit(0);
+		return 0;
 	}
 
 #if BSD == 43
@@ -242,7 +244,7 @@ main(int argc, char **argv)
 	if( !debug )  {
 		/* A fresh process */
 		if (fork())
-			exit(0);
+		    return 0;
 
 		/* Go into our own process group */
 		n = getpid();
@@ -302,7 +304,7 @@ main(int argc, char **argv)
 	if( pkg_send( MSG_VERSION,
 	    PROTOCOL_VERSION, strlen(PROTOCOL_VERSION)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send MSG_VERSION error\n");
-		exit(1);
+		return 1;
 	}
 	if( debug )  fprintf(stderr, "PROTOCOL_VERSION='%s'\n", PROTOCOL_VERSION );
 
@@ -328,7 +330,7 @@ main(int argc, char **argv)
 		npsw, avail_cpus );
 	if( max_cpus <= 0 )  {
 		pkg_close(pcsrv);
-		exit(0);
+		return 0;
 	}
 
 	/*
@@ -396,7 +398,7 @@ main(int argc, char **argv)
 				break;
 			default:
 				bu_log("bad list element, type=%d\n", lp->type );
-				exit(33);
+				return 33;
 			}
 			bu_free( (char *)lp, "struct pkg_queue" );
 		}

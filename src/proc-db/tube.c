@@ -38,21 +38,22 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
 #include <math.h>
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "nurb.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 
 mat_t	identity;
 double	degtorad = 0.0174532925199433;
@@ -244,7 +245,8 @@ main(int argc, char **argv)
 	wdb_close(outfp);
 	fflush(stderr);
 	system("cat ke.g");	/* XXX need library routine */
-	exit(0);
+
+	return 0;
 }
 #undef build_spline
 

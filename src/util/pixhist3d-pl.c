@@ -39,16 +39,18 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include <stdio.h>
-#include <unistd.h>
 #include "common.h"
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "plot3.h"
+
 
 FILE	*fp;
 
@@ -71,14 +73,14 @@ main(int argc, char **argv)
 		if( (fp = fopen(argv[1], "r")) == NULL ) {
 			fprintf( stderr, "pixhist3d-pl: can't open \"%s\"\n", argv[1] );
 			fprintf( stderr, Usage );
-			exit( 1 );
+			return 1;
 		}
 	} else
 		fp = stdin;
 
 	if( argc > 2 || isatty(fileno(fp)) ) {
 		fputs( Usage, stderr );
-		exit( 2 );
+		return 2;
 	}
 
 	/* Initialize plot */

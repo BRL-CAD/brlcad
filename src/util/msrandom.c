@@ -32,17 +32,19 @@
  */
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
+
 
 struct bn_gauss *gp;
 struct bn_unif *up;

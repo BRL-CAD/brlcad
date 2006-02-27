@@ -38,11 +38,12 @@ static const char RCSid[] = "@(#)$Header";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -52,6 +53,7 @@ static const char RCSid[] = "@(#)$Header";
 #include "wdb.h"
 #include "rtgeom.h"
 #include "tcl.h"
+
 
 extern const char bu_version[];
 extern const char bn_version[];

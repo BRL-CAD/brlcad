@@ -48,6 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
@@ -62,6 +63,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "fb.h"
 #include "vfont-if.h"
+
 
 #define NFONTS			25	/* # of font+psize combos in cache */
 #define SPECIALFONT		3
@@ -467,14 +469,14 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		return 1;
 	}
 
 	if( output_pix && !overlay_from_stdin )
 		clear = 1;
 	if( !output_pix )  {
 		if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )
-			exit(1);
+		    return 1;
 		scr_width = fb_getwidth(fbp);
 		scr_height = fb_getheight(fbp);
 	}

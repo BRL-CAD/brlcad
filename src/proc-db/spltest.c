@@ -29,6 +29,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -58,7 +59,7 @@ main(int argc, char **argv)
 	if ((fp = wdb_fopen(argv[1])) == NULL) {
 	  bu_log("unable to open new database [%s]\n", argv[1]);
 	  perror("unable to open database file");
-	  exit(1);
+	  return 1;
 	}
 
 	mk_id( fp, "Mike's Spline Test" );

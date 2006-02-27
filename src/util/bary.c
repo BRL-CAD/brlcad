@@ -33,14 +33,16 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtlist.h"
+
 
 struct site
 {

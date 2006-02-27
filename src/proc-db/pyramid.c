@@ -37,16 +37,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 
 void	do_leaf(char *name), do_pleaf(), pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts), do_tree(char *name, char *lname, int level);
 
@@ -61,7 +62,7 @@ main(int argc, char **argv)
 
 	if( argc != 2 )  {
 		fprintf(stderr, "Usage:  pyramid recursion\n");
-		exit(1);
+		return 1;
 	}
 	depth = atoi( argv[1] );
 	sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);

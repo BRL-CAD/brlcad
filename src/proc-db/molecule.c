@@ -31,15 +31,15 @@ static const char rcs_ident[] = "$Header$";
 
 #include "common.h"
 
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -84,7 +84,7 @@ main(int argc, char **argv)
 
 	if( argc != 2 )  {
 		fputs( usage, stderr );
-		exit(1);
+		return 1;
 	}
 
 	BU_LIST_INIT( &head.l );

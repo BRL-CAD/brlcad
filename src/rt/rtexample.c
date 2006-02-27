@@ -33,6 +33,7 @@
  */
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -61,7 +62,7 @@ main(int argc, char **argv)
 
     if( argc < 3 )  {
 	(void)fputs(usage, stderr);
-	exit(1);
+	return 1;
     }
 
     /*
@@ -72,7 +73,7 @@ main(int argc, char **argv)
      */
     if( (rtip=rt_dirbuild(argv[1], idbuf, sizeof(idbuf))) == RTI_NULL ) {
 	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
-	exit(2);
+	return 2;
     }
 
     /* intialize the application structure to all zeros */

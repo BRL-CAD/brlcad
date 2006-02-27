@@ -35,17 +35,18 @@
 
 #include "common.h"
 
-
+#include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"
 
+
 extern int bu_optind;
 extern char *bu_optarg;
-
 
 #define MAXLEN		64
 #define DIVIDE_TOL	(1.0e-10)
@@ -110,8 +111,10 @@ main(int argc, char **argv)
 
     plen = 0;
 
-    if (!get_args(argc,argv))
+    if (!get_args(argc,argv)) {
 	fprintf(stderr,"Usage: anim_time [-s#] [-e#] [-d] < in.table\n");
+	return 1;
+    }
 
     if (!domem) {
 	maxlines = MAXLEN;
@@ -158,11 +161,11 @@ main(int argc, char **argv)
 
     if (time < DIVIDE_TOL){
 	fprintf(stderr,"anim_time: time too small. Only %f s.\n",time);
-	exit(-1);
+	return 10;
     }
     if (dist < DIVIDE_TOL){
 	fprintf(stderr,"anim_time: pathlength too small. Only %f\n",dist);
-	exit(-1);
+	return 10;
     }
     slope = dist/time;
 
@@ -193,19 +196,19 @@ main(int argc, char **argv)
     }
     if (v0<0.0) {
 	fprintf(stderr,"anim_time: Start velocity must be non-negative.\n");
-	exit(-1);
+	return 1;
     }
     if (v1<0.0) {
 	fprintf(stderr,"anim_time: End velocity must be non-negative.\n");
-	exit(-1);
+	return 1;
     }
     if (v0>3*slope) {
 	fprintf(stderr,"anim_time: Start velocity must be not be greater than %f units/s for this path.\n", 3.0*slope);
-	exit (-1);
+	return 1;
     }
     if (v1>3*slope) {
 	fprintf(stderr,"anim_time: End velocity must not be greater than %f for this path.\n", 3.0*slope);
-	exit(-1);
+	return 1;
     }
 
     a = ((v1+v0) - 2.0*slope)/(time*time);
@@ -257,7 +260,7 @@ int get_args(int argc, char **argv)
 	    v0_set = TIME_RELATIVE;
 	    if ((inv0>3.0)||(inv0<0.0)) {
 		fprintf(stderr,"anim_time: -i argument must lie between 0.0 and 3.0\n");
-		exit(-1);
+		return 0;
 	    }
 	    break;
 	case 'f':
@@ -265,7 +268,7 @@ int get_args(int argc, char **argv)
 	    v1_set = TIME_RELATIVE;
 	    if ((inv1>3.0)||(inv1<0.0)) {
 		fprintf(stderr,"anim_time: -f argument must lie between 0.0 and 3.0\n");
-		exit(-1);
+		return 0;
 	    }
 	    break;
 	case 'q':
@@ -283,10 +286,10 @@ int get_args(int argc, char **argv)
 	    break;
 	default:
 	    fprintf(stderr,"Unknown option: -%c\n",c);
-	    return(0);
+	    return 0;
 	}
     }
-    return(1);
+    return 1;
 }
 
 /*

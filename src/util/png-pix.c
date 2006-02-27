@@ -34,14 +34,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "png.h"
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "zlib.h"
+
 
 static png_color_16 def_backgrd={ 0,0,0,0,0 };
 static int verbose=0;
@@ -92,7 +95,7 @@ main(int argc, char **argv)
 			(void)fprintf( stderr,
 				"png-pix: cannot open \"%s\" for reading\n",
 				argv[bu_optind] );
-			exit(1);
+			return 1;
 		}
 	}
 

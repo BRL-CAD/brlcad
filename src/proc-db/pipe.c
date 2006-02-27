@@ -55,6 +55,7 @@ static const char RCSid[] = "$Header$";
 #  undef VERSION
 #endif
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
@@ -698,7 +699,7 @@ main(int argc, char **argv)
 			case '?':
 				fprintf( stderr , "Illegal option %c\n" , optc );
 				Usage();
-				exit( 1 );
+				return 1;
 				break;
 
 		}
@@ -708,7 +709,7 @@ main(int argc, char **argv)
 	{
 		Usage();
 		fprintf( stderr , "Options t,s,m,n are mutually exclusive\n" );
-		exit( 1 );
+		return 1;
 	}
 	else if( (torus + sphere + mitre + nothing) == 0 ) {
 		torus = 1;		/* default */
@@ -716,7 +717,7 @@ main(int argc, char **argv)
 
 	if( (argc - optind) != 2 ) {
 		Usage();
-		exit( 1 );
+		return 1;
 	}
 
 	strcpy( name , argv[optind++] ); /* Base name for objects */
@@ -727,7 +728,7 @@ main(int argc, char **argv)
 		fprintf( stderr , "Cannot open %s\n" , argv[optind] );
 		perror( "Pipe" );
 		Usage();
-		exit( 1 );
+		return 1;
 	}
 
 	MAT_IDN(identity);	/* Identity matrix for all objects */
@@ -779,7 +780,7 @@ main(int argc, char **argv)
 		if( !cable ) {
 			printf( "radius and wall thickness: ");
 			if (scanf("%lf %lf", &radius,&wall) == EOF )
-				exit( 1 );
+			    return 1;
 			if (radius > wall)
 				done = 1;
 			else
@@ -792,7 +793,7 @@ main(int argc, char **argv)
 		else {
 			printf( "radius: ");
 			if( scanf("%lf", &radius ) == EOF )
-				exit( 1 );
+			    return 1;
 			done=1;
 		}
 	}

@@ -37,6 +37,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
@@ -168,7 +169,7 @@ main(int argc, char **argv)
 	}
 	if( isatty(fileno(stdin)) ) {
 		fprintf( stderr, usage );
-		exit( 1 );
+		return 1;
 	}
 
 	/* Assume default space, in case one is not provided */

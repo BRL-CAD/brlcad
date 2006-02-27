@@ -23,14 +23,18 @@
  *
  *  12 Oct 84
  */
+#include "common.h"
+
+#include <stdio.h>
+#include <math.h>
+
 #include "fft.h"
+
 
 typedef struct {
 	double	re;	/* Real Part */
 	double	im;	/* Imaginary Part */
 } COMPLEX;
-
-extern double cos(double), sin(double);
 
 /***** TEST ROUTINES *****/
 COMPLEX data[64];

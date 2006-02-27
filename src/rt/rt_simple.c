@@ -54,6 +54,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
@@ -108,7 +109,7 @@ int main(int argc, char **argv)
      */
     if( (rtip=rt_dirbuild(argv[1], (char *)NULL, 0)) == RTI_NULL ) {
 	fprintf(stderr,"rt_dirbuild failure\n");
-	exit(2);
+	return 2;
     }
 
     /* skip over the program name, and database name, leaving only the
@@ -123,7 +124,7 @@ int main(int argc, char **argv)
     if( rt_gettrees_and_attrs( rtip, (const char **)NULL,
 			       argc, (const char **)argv, 1 ) ) {
 	fprintf(stderr,"rt_gettrees FAILED\n");
-	exit( 1 );
+	return 1;
     }
 
     /* prepare objects for ray-tracing */

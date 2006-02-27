@@ -38,11 +38,15 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <signal.h>
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
 
 #include "tcl.h"
 #include "machine.h"
@@ -53,6 +57,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
+
 
 #define	ORDER_BY_NAME		 0
 #define	ORDER_BY_DISTANCE	 1

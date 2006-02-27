@@ -35,19 +35,19 @@ static const char RCSray_bot_faces[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-
 #ifdef HAVE_UNIX_IO
 #  include <sys/types.h>
 #  include <sys/stat.h>
 #endif
-
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
 #  include <strings.h>
 #endif
+#include <ctype.h>
 
 #include "machine.h"
 #include "vmath.h"
@@ -57,7 +57,6 @@ static const char RCSray_bot_faces[] = "@(#)$Header$ (BRL)";
 #include "plot3.h"
 #include "rtprivate.h"
 
-#include <ctype.h>
 
 extern char	*outputfile;		/* output file name */
 #define MAX_LINE_LEN	1024		/* max line length in output file */
@@ -166,7 +165,7 @@ view_2init( struct application *ap, char *framename )
 				while( line[i] != '\0' && isspace( line[i] ) ) i++;
 				if( line[i] == '\0' ) {
 					bu_log( "Unexpected EOF found in partial results (%s)\n", outputfile );
-					exit( 1 );
+					bu_bomb("Unexpected EOF");
 				}
 				j = i;
 				while( line[j] != '\0' && !isspace( line[j] ) ) j++;
@@ -189,8 +188,7 @@ view_2init( struct application *ap, char *framename )
 				long int face_num;
 
 				if( !faces ) {
-					bu_log( "No faces structure while reading partial data!!!\n" );
-					exit( 1 );
+					bu_bomb( "No faces structure while reading partial data!!!\n" );
 				}
 				face_num = atoi( line );
 				bu_ptbl_ins_unique( faces, (long *)face_num );

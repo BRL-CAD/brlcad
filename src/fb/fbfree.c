@@ -39,15 +39,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
+#include <stdio.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
-#include <stdio.h>
-
 #include "machine.h"
 #include "bu.h"
 #include "fb.h"
+
 
 static char	*framebuffer = NULL;
 
@@ -67,7 +68,7 @@ main(int argc, char **argv)
 			break;
 		default:		/* '?' */
 			(void)fputs(usage, stderr);
-			exit( 1 );
+			return 1;
 		}
 	}
 	if ( argc > ++bu_optind ) {

@@ -31,8 +31,10 @@
 static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -40,6 +42,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtlist.h"
 #include "raytrace.h"
 #include "../librt/debug.h"
+
 
 #define	TITLE_LEN		80
 #define	ORDER_BY_NAME		 0
@@ -243,7 +246,7 @@ main (int argc, char **argv)
     if (--argc < 2)
     {
 	bu_log("Usage: 'solshoot model.g obj [obj...]'\n");
-	exit (1);
+	return 1;
     }
 
     /* Read in the geometry model */
@@ -252,14 +255,14 @@ main (int argc, char **argv)
     if ((rtip = rt_dirbuild(*argv , db_title, TITLE_LEN)) == RTI_NULL)
     {
 	bu_log("Could not build directory for file '%s'\n", *argv);
-	exit(1);
+	return 1;
     }
     rtip -> useair = 1;
     bu_log("\nPreprocessing the geometry... ");
     while (--argc > 0)
     {
 	if (rt_gettree(rtip, *++argv) == -1)
-	    exit (1);
+	    return 1;
 	bu_log("\nObject '%s' processed", *argv);
     }
     bu_log("\nPrepping the geometry... ");

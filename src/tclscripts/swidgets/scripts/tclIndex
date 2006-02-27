@@ -105,6 +105,7 @@ set auto_index(::swidgets::Tree::selectcmd) [list source [file join $dir tree.it
 set auto_index(::swidgets::Tree::dblselectcmd) [list source [file join $dir tree.itk]]
 set auto_index(::swidgets::Tree::textmenuloadcommand) [list source [file join $dir tree.itk]]
 set auto_index(::swidgets::Tree::background) [list source [file join $dir tree.itk]]
+set auto_index(::swidgets::Tree::sortmode) [list source [file join $dir tree.itk]]
 set auto_index(::swidgets::Tree::openimage) [list source [file join $dir tree.itk]]
 set auto_index(::swidgets::Tree::closeimage) [list source [file join $dir tree.itk]]
 set auto_index(::swidgets::Tree::nodeimage) [list source [file join $dir tree.itk]]

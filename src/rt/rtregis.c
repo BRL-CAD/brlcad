@@ -60,19 +60,20 @@ static const char RCSregis[] = "@(#)$Header$";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
-
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
 #  include <strings.h>
 #endif
-
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"
+
 
 #define NAMELEN 40
 #define BUFF_LEN 256
@@ -117,7 +118,7 @@ main(int argc, char **argv)
 
 	if(argc != 3)  {
 		fputs(usage, stderr);
-		exit(-1);
+		return 1;
 	}
 
 	/* Now process the arguments from main: i.e. open the log files
@@ -130,24 +131,24 @@ main(int argc, char **argv)
 	fp = fopen(argv[1], "r");
 	if( fp == NULL )  {
 		perror(argv[1]);
-		exit(-1);
+		return 1;
 	}
 
 	ret = read_rt_file(fp, argv[1], mod2view1);
 	if(ret < 0)  {
-		exit(-1);
+	    return 2;
 	}
 	fclose(fp);		/* clean up */
 
 	fp = fopen(argv[2], "r");
 	if( fp == NULL )  {
 		perror(argv[2]);
-		exit(-1);
+		return 2;
 	}
 
 	ret = read_rt_file(fp, argv[2], mod2view2);
 	if(ret < 0)  {
-		exit(-1);
+	    return 2;
 	}
 
 	fclose(fp);
@@ -165,11 +166,11 @@ main(int argc, char **argv)
 	ret = mat_build(mod2view1, mod2view2, regismat);
 	if(ret == FALSE)  {
 		fprintf(stderr, "regis: can't build registration matrix!\n");
-		exit(-1);
+		return 3;
 	}
 	print_info(regismat);
-	exit(0);
 
+	return 0;
 }
 
 

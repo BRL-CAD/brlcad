@@ -35,6 +35,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "brlcad_config.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -42,9 +43,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <fcntl.h>
 #include <math.h>
 #include <errno.h>
-
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "machine.h"
@@ -115,7 +115,7 @@ main (int argc, char *argv[])
 		    bu_log("Invalid pixel-size specification: '%s'\n",
 			bu_optarg);
 		    print_usage();
-		    exit (1);
+		    return 1;
 		}
 		break;
 	    case '?':
@@ -127,12 +127,12 @@ main (int argc, char *argv[])
 	if (c_per_p <= 0)
 	{
 	    bu_log("Illegal number of color bytes per pixel: %d\n", c_per_p);
-	    exit (1);
+	    return 1;
 	}
 	if (d_per_p <= 0)
 	{
 	    bu_log("Illegal number of doubles per pixel: %d\n", d_per_p);
-	    exit (1);
+	    return 1;
 	}
 
     /*
@@ -149,12 +149,12 @@ main (int argc, char *argv[])
 	    if ((infd = open(inf_name, O_RDONLY)) == -1)
 	    {
 		bu_log ("Cannot open file '%s'\n", inf_name);
-		exit (1);
+		return 1;
 	    }
 	    break;
 	default:
 	    print_usage();
-	    exit (1);
+	    return 1;
     }
     /*
      *	Establish the output stream for chars
@@ -171,7 +171,7 @@ main (int argc, char *argv[])
     else if ((cfd = open(cf_name, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1)
     {
 	bu_log ("Cannot open file '%s'\n", cf_name);
-	exit (1);
+	return 1;
     }
     /*
      *	Establish the output stream for doubles
@@ -188,7 +188,7 @@ main (int argc, char *argv[])
     else if ((dfd = open(df_name, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1)
     {
 	bu_log ("Cannot open file '%s'\n", df_name);
-	exit (1);
+	return 1;
     }
 
     cwidth = c_per_p * 1;
@@ -231,7 +231,7 @@ main (int argc, char *argv[])
     if (num < 0)
     {
 	perror("pixdsplit");
-	exit (1);
+	return 1;
     }
     return 0;
 }
