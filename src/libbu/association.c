@@ -39,15 +39,16 @@ static const char libbu_association_RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #if HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #endif
+
 #include "machine.h"
 #include "bu.h"
+
 
 /*
  *			 B U _ A S S O C I A T I O N
@@ -74,8 +75,7 @@ bu_association (const char *fname,
 
 	/* XXX NONPARALLEL */
 	/* I'd prefer using "bu_open_mapped_file()" here instead, I think  -Mike */
-    if ((fp = fopen(fname, "r")) == NULL)
-    {
+    if ((fp = fopen(fname, "r")) == NULL) {
 	/*	XXX
 	 *	Should we be exiting here?
 	 *	I don't want to just return 0,
@@ -90,18 +90,16 @@ bu_association (const char *fname,
     bu_vls_init(&buffer);
     len = strlen(value);
 
-    do
-    {
+    do {
 	bu_vls_trunc(&buffer, 0);
 	if (bu_vls_gets(&buffer, fp) == -1)
 	    goto wrap_up;
 	cp = bu_vls_addr(&buffer);
 
     } while ((*cp != *value) || (*(cp + len) != field_sep)
-	  || (strncmp(cp, value, len) != 0));
+	     || (strncmp(cp, value, len) != 0));
 
-    vp = (struct bu_vls *)
-	    bu_malloc(sizeof(struct bu_vls), "value of bu_association");
+    vp = (struct bu_vls *) bu_malloc(sizeof(struct bu_vls), "value of bu_association");
     bu_vls_init(vp);
     bu_vls_strcpy(vp, cp + len + 1);
 
