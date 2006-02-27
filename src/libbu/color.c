@@ -38,21 +38,23 @@ static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #if defined(HAVE_STDARG_H)
-# include <stdarg.h>
+#  include <stdarg.h>
 #endif
 
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+
 
 /*
  *		Convert between RGB and HSV color models
@@ -193,7 +195,7 @@ int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 	    default:
 		bu_log("%s:%d: This shouldn't happen\n",
 		    __FILE__, __LINE__);
-		exit (1);
+		bu_bomb("unexpected condition encountered in bu_hsv_to_rgb\n");
 	}
     }
 
