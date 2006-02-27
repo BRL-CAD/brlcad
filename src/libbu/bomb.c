@@ -44,22 +44,21 @@ static const char RCSbomb[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#  include <unistd.h>
 #endif
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #endif
+#ifdef HAVE_UNIX_IO
+#  include <fcntl.h>
+#endif
+
 #include "machine.h"
 #include "bu.h"
-
-#ifdef HAVE_UNIX_IO
-#include <fcntl.h>
-#endif
 
 #if 1
 struct bu_hook_list bu_bomb_hook_list = {
@@ -137,7 +136,9 @@ bu_bomb(const char *str)
 
 	if( bu_debug & BU_DEBUG_COREDUMP )  {
 		fprintf(stderr,"bu_bomb causing intentional core dump due to debug flag\n");
-		abort();	/* should dump */
+		fflush(stdout);
+		fflush(stderr);
+		abort();	/* should dump if ulimit is non-zero */
 	}
 
 	exit(12);
