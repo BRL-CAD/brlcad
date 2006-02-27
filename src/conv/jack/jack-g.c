@@ -39,7 +39,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
@@ -102,7 +102,7 @@ main(int argc, char **argv)
 			break;
 		default:
 			fprintf(stderr, usage, argv[0]);
-			exit(1);
+			return 1;
 			break;
 		}
 	}
@@ -117,7 +117,7 @@ main(int argc, char **argv)
 			fprintf(stderr,
 				"%s: cannot open %s for reading\n",
 				argv[0], jfile);
-			exit(1);
+			return 1;
 		}
 	}
 
@@ -126,14 +126,14 @@ main(int argc, char **argv)
 	if (optind >= argc) {
 		bfile = "-";
 		fprintf(stderr, usage, argv[0]);
-		exit(1);
+		return 1;
 	} else {
 		bfile = argv[optind];
 		if ((fpout = wdb_fopen(bfile)) == NULL) {
 			fprintf(stderr,
 				"%s: cannot open %s for writing\n",
 				argv[0], bfile);
-			exit(1);
+			return 1;
 		}
 	}
 

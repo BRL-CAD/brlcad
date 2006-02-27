@@ -38,17 +38,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
-
+#include <stdlib.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
-
 #include <ctype.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -57,6 +55,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "wdb.h"
+
 
 static struct db_i *dbip;
 static int verbose=0;
@@ -101,7 +100,7 @@ main(int argc, char **argv)
 	if( argc != 3 && argc != 4 )
 	{
 		bu_log( "Usage:\n\t%s [-v] input.g output.g\n", argv[0] );
-		exit( 1 );
+		return 1;
 	}
 
 	if( argc == 4 )
@@ -112,7 +111,7 @@ main(int argc, char **argv)
 		{
 			bu_log( "Illegal option: %s\n", argv[1] );
 			bu_log( "Usage:\n\t%s [-v] input.g output.g\n", argv[0] );
-			exit( 1 );
+			return 1;
 		}
 	}
 

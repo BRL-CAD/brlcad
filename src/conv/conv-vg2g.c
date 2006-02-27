@@ -40,19 +40,19 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #include <stdio.h>
-
+#include <stdlib.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
-
 #if HAVE_SYS_TYPES_H
-# include <sys/types.h>
+#  include <sys/types.h>
 #endif
 
 #include "machine.h"
 #include "db.h"
+
 
 void	mat_pr(char *title, float *mp);
 
@@ -71,15 +71,15 @@ main(int argc, char **argv)
 
 	if( argc != 3 )  {
 		printf("Usage: conv-vg2g file.vg file.g\n");
-		exit(11);
+		return 11;
 	}
 	if( (ifd = open( argv[1], 0 )) < 0 )  {
 		perror(argv[1]);
-		exit(12);
+		return 12;
 	}
 	if( (ofd = creat(argv[2], 0664)) < 0 )  {
 		perror(argv[2]);
-		exit(13);
+		return 13;
 	}
 
 	/* check for conversion from version 3 to version 4 */
@@ -89,7 +89,7 @@ main(int argc, char **argv)
 		if( strcmp(rec.i.i_version, ID_VERSION) == 0 ) {
 			(void)printf("%s: NO conversion necessary\n", argv[1]);
 			(void)putchar(7);
-			exit(0);
+			return 0;
 		}
 
 		else {
@@ -214,7 +214,7 @@ after_read:
 
 		default:
 			printf("Garbage record in database\n");
-			exit(42);
+			return 42;
 		case ID_MEMB:
 			/* flip translation to other side */
 #define m rec.M.m_mat
