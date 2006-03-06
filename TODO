@@ -46,6 +46,11 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* short introductory documentation on using various BRL-CAD command
+  line tools such as rt, mged, nirt, fbserv, converters, etc.
+
+* short introductory documentation on using mged, covering a majority
+  of the various commands.
 
 * reference sheet of useful BRL-CAD command-line tools grouped
   categorically.
