@@ -46,6 +46,9 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* support to the raytracers for multiple image file formats,
+  recognizing an option and/or the file suffix of the -o filename.
+
 * libfb + font rendering (perhaps through libbn's plot interface) for
   a posix terminal.
 
