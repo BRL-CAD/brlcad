@@ -46,6 +46,9 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* libfb + font rendering (perhaps through libbn's plot interface) for
+  a posix terminal.
+
 * gpgpu for enhanced performance boolweave sorting
 
 * getexecname, "/proc/self/cmdline", program_invocation_short_name.
