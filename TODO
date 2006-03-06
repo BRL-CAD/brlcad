@@ -46,11 +46,12 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
-* cheat sheet of useful BRL-CAD command-line tools grouped
+
+* reference sheet of useful BRL-CAD command-line tools grouped
   categorically.
 
-* cheat sheet of common mged commands, keybindings, gui elements and
-  scripting facilities.
+* reference sheet of common mged commands, keybindings, gui elements
+  and scripting facilities.
 
 * support to the raytracers for multiple image file formats,
   recognizing an option and/or the file suffix of the -o filename.
