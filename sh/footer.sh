@@ -172,6 +172,33 @@ case $FILE in
 	indentation=8
 	tab_width=8
 	;;
+    *.ac)
+	echo "$FILE is an Autoconf template file"
+	mode="Makefile"
+	wrap=0
+	commentchar="#"
+	# override any indent since 8 is required
+	indentation=8
+	tab_width=8
+	;;
+    *.in)
+	echo "$FILE is an Autoconf template file"
+	mode="Makefile"
+	wrap=0
+	commentchar="#"
+	# override any indent since 8 is required
+	indentation=8
+	tab_width=8
+	;;
+    *.m4)
+	echo "$FILE is an m4 macro file"
+	mode="m4"
+	wrap=0
+	commentchar="#"
+	# override any indent since 8 is required
+	indentation=8
+	tab_width=8
+	;;
     *.mk)
 	echo "$FILE is a make file"
 	mode="Makefile"
