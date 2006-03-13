@@ -905,21 +905,47 @@ rt_nurb_export(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	return(0);
 }
 
+int 
+rt_nurb_knotvector_bytes(struct knot_vector* kv)
+{
+    return SIZEOF_NETWORK_LONG + (kv->k_size * SIZEOF_NETWORK_FLOAT);
+}
+
+int
+rt_nurb_curve_bytes(struct edge_g_cnurb* crv)
+{
+    int totalBytes = 0;
+    totalBytes = 
+	SIZEOF_NETWORK_LONG + /* order */
+	rt_nurb_knotvector_bytes(crv->k) +
+	SIZEOF_NETWORK_LONG + /* pt count */
+	SIZEOF_NETWORK_LONG + /* point type (size of coordinate) */
+	SIZEOF_NETWORK_FLOAT * crv->c_size * RT_NURB_EXTRACT_COORDS(crv->pt_type); /* control points */
+    return totalBytes;
+}
+
 int
 rt_nurb_bytes(struct face_g_snurb *srf)
 {
-	int	total_bytes=0;
+    struct edge_g_cnurb* pcurve;
+    int total_bytes=0, i;
+    
+    total_bytes = 3 * SIZEOF_NETWORK_LONG		/* num_coords and order */
+	+ 2 * SIZEOF_NETWORK_LONG		/* k_size in both knot vectors */
+	+ srf->u.k_size * SIZEOF_NETWORK_DOUBLE	/* u knot vector knots */
+	+ srf->v.k_size * SIZEOF_NETWORK_DOUBLE	/* v knot vector knots */
+	+ 2 * SIZEOF_NETWORK_LONG		/* mesh size */
+	+ RT_NURB_EXTRACT_COORDS(srf->pt_type) *
+	(srf->s_size[0] * srf->s_size[1]) * SIZEOF_NETWORK_DOUBLE;	/* control point mesh */
+    
+    /* add the size of the trimming curves (if there are any) */
+    for ( BU_LIST_FOR(pcurve,edge_g_cnurb,srf->trims_hd) ) {
+	total_bytes += rt_nurb_curve_bytes(pcurve);
+    }
 
-	total_bytes = 3 * SIZEOF_NETWORK_LONG		/* num_coords and order */
-		+ 2 * SIZEOF_NETWORK_LONG		/* k_size in both knot vectors */
-		+ srf->u.k_size * SIZEOF_NETWORK_DOUBLE	/* u knot vector knots */
-		+ srf->v.k_size * SIZEOF_NETWORK_DOUBLE	/* v knot vector knots */
-		+ 2 * SIZEOF_NETWORK_LONG		/* mesh size */
-		+ RT_NURB_EXTRACT_COORDS(srf->pt_type) *
-			(srf->s_size[0] * srf->s_size[1]) * SIZEOF_NETWORK_DOUBLE;	/* control point mesh */
-
-	return total_bytes;
+    return total_bytes;
 }
+
 
 /**
  *			R T _ N U R B _ E X P O R T 5
@@ -927,66 +953,88 @@ rt_nurb_bytes(struct face_g_snurb *srf)
 int
 rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-	struct rt_nurb_internal	* sip;
-	int			s;
-	unsigned char		*cp;
-	int			coords;
-
-	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_BSPLINE) return(-1);
-	sip = (struct rt_nurb_internal *) ip->idb_ptr;
-	RT_NURB_CK_MAGIC(sip);
-
-	/* Figure out how many bytes are needed by
-	 * walking through the surfaces and
-	 * calculating the number of bytes
-	 * needed for storage and add it to the total
-	 */
-	BU_INIT_EXTERNAL(ep);
-	ep->ext_nbytes = SIZEOF_NETWORK_LONG;	/* number of surfaces */
-	for( s = 0; s < sip->nsrf; s++)
-	{
-		ep->ext_nbytes += rt_nurb_bytes(sip->srfs[s]);
-	}
-
-	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes,"nurb external");
-	cp = (unsigned char *)ep->ext_buf;
-
-	(void)bu_plong( cp, sip->nsrf );
+    struct rt_nurb_internal* sip;
+    int			s;
+    unsigned char      	*cp;
+    int			coords;
+	
+    RT_CK_DB_INTERNAL(ip);
+    if( ip->idb_type != ID_BSPLINE) return(-1);
+    sip = (struct rt_nurb_internal *) ip->idb_ptr;
+    RT_NURB_CK_MAGIC(sip);
+    
+    /* Figure out how many bytes are needed by
+     * walking through the surfaces and
+     * calculating the number of bytes
+     * needed for storage and add it to the total
+     */
+    BU_INIT_EXTERNAL(ep);
+    ep->ext_nbytes = SIZEOF_NETWORK_LONG;	/* number of surfaces */
+    for( s = 0; s < sip->nsrf; s++) {
+	ep->ext_nbytes += rt_nurb_bytes(sip->srfs[s]);
+    }
+    
+    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes,"nurb external");
+    cp = (unsigned char *)ep->ext_buf;
+    
+    (void)bu_plong( cp, sip->nsrf );
+    cp += SIZEOF_NETWORK_LONG;
+    
+    for( s = 0; s < sip->nsrf; s++) {
+	register struct face_g_snurb	*srf = sip->srfs[s];
+	
+	NMG_CK_SNURB(srf);
+	
+	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+	(void)bu_plong( cp, coords );
 	cp += SIZEOF_NETWORK_LONG;
-
-	for( s = 0; s < sip->nsrf; s++)
-	{
-		register struct face_g_snurb	*srf = sip->srfs[s];
-
-		NMG_CK_SNURB(srf);
-
-		coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
-		(void)bu_plong( cp, coords );
+	(void)bu_plong( cp, srf->order[0] );
+	cp += SIZEOF_NETWORK_LONG;
+	(void)bu_plong( cp, srf->order[1] );
+	cp += SIZEOF_NETWORK_LONG;
+	(void)bu_plong( cp, srf->u.k_size );
+	cp += SIZEOF_NETWORK_LONG;
+	(void)bu_plong( cp, srf->v.k_size );
+	cp += SIZEOF_NETWORK_LONG;
+	(void)bu_plong( cp, srf->s_size[0] );
+	cp += SIZEOF_NETWORK_LONG;
+	(void)bu_plong( cp, srf->s_size[1] );
+	cp += SIZEOF_NETWORK_LONG;
+	htond( cp, (unsigned char *)srf->u.knots, srf->u.k_size );
+	cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
+	htond( cp, (unsigned char *)srf->v.knots, srf->v.k_size );
+	cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
+	
+	htond( cp, (unsigned char *)srf->ctl_points,
+	       coords * srf->s_size[0] * srf->s_size[1] );
+	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
+	
+	/* write out the trims if we have any */
+	if (srf->trims_count) {
+	    struct edge_g_cnurb* crv;
+	    for (BU_LIST_FOR(crv, edge_g_cnurb, &src->trims_hd)) {
+		/* order */
+		bu_plong(cp, crv->order);
 		cp += SIZEOF_NETWORK_LONG;
-		(void)bu_plong( cp, srf->order[0] );
+		
+		/* knot vector */
+		bu_plong(cp, crv->k.k_size);
 		cp += SIZEOF_NETWORK_LONG;
-		(void)bu_plong( cp, srf->order[1] );
+		htond(cp, (unsigned char *)crv->k, crv->k.k_size);
+		cp += SIZEOF_NETWORK_DOUBLE * crv->k.k_size;
+		
+		/* coords */
+		int coords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
+		bu_plong(cp, coords);
 		cp += SIZEOF_NETWORK_LONG;
-		(void)bu_plong( cp, srf->u.k_size );
+		bu_plong(cp, crv->c_size);
 		cp += SIZEOF_NETWORK_LONG;
-		(void)bu_plong( cp, srf->v.k_size );
-		cp += SIZEOF_NETWORK_LONG;
-		(void)bu_plong( cp, srf->s_size[0] );
-		cp += SIZEOF_NETWORK_LONG;
-		(void)bu_plong( cp, srf->s_size[1] );
-		cp += SIZEOF_NETWORK_LONG;
-		htond( cp, (unsigned char *)srf->u.knots, srf->u.k_size );
-		cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
-		htond( cp, (unsigned char *)srf->v.knots, srf->v.k_size );
-		cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
-
-		htond( cp, (unsigned char *)srf->ctl_points,
-			coords * srf->s_size[0] * srf->s_size[1] );
-		cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
+		htond(cp, (unsigned char*)crv->ctl_points, coords * crv->c_size);
+	    }
 	}
+    }   
 
-	return(0);
+    return(0);
 }
 
 
