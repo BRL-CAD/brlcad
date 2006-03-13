@@ -135,17 +135,20 @@ struct knot_vector {
  *  and the k.knots and ctl_points pointers will be NULL.
  *  In this case, the vertexuse_a_cnurb's at both ends of the edgeuse define
  *  the path through parameter space.
+ *
+ *  TODO: remove NMG-related stuff. Recreate an NMG edge structure
+ *        *using* this curve structure.
  */
 struct edge_g_cnurb {
-	struct bu_list		l;	/* NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
-	struct bu_list		eu_hd2;	/* heads l2 list of edgeuses on this curve */
-	int			order;	/* Curve Order */
-	struct knot_vector	k;	/* curve knot vector */
-	/* curve control polygon */
-	int			c_size;	/* number of ctl points */
-	int			pt_type;/* curve point type */
-	fastf_t			*ctl_points; /* array [c_size] */
-	long			index;	/* struct # in this model */
+    struct bu_list     	l;	/* NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
+    struct bu_list     	eu_hd2;	/* heads l2 list of edgeuses on this curve */
+    int			order;	/* Curve Order */
+    struct knot_vector	k;	/* curve knot vector */
+    /* curve control polygon */
+    int			c_size;	/* number of ctl points */
+    int			pt_type;/* curve point type */
+    fastf_t	       	*ctl_points; /* array [c_size] */
+    long	       	index;	/* struct # in this model */
 };
 
 
@@ -160,31 +163,36 @@ struct edge_g_cnurb {
  *       *using* the nurb patch structure.
  */
 struct face_g_snurb {
-	/* NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
-	struct bu_list		l;
-	struct bu_list		f_hd;	/* list of faces sharing this surface */
-	int			order[2]; /* surface order [0] = u, [1] = v */
-	struct knot_vector	u;	/* surface knot vectors */
-	struct knot_vector	v;	/* surface knot vectors */
-	/* surface control points */
-	int			s_size[2]; /* mesh size, u,v */
-	int			pt_type; /* surface point type */
-	fastf_t			*ctl_points; /* array [size[0]*size[1]] */
-	/* START OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
-	int			dir;	/* direction of last refinement */
-	point_t			min_pt;	/* min corner of bounding box */
-	point_t			max_pt;	/* max corner of bounding box */
-	/*   END OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
-	long			index;	/* struct # in this model */
+    /* NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
+    struct bu_list	l;
+    struct bu_list    	f_hd;	/* list of faces sharing this surface */
+    int			order[2]; /* surface order [0] = u, [1] = v */
+    struct knot_vector	u;	/* surface knot vectors */
+    struct knot_vector	v;	/* surface knot vectors */
+    /* surface control points */
+    int			s_size[2]; /* mesh size, u,v */
+    int			pt_type; /* surface point type */
+    fastf_t	       	*ctl_points; /* array [size[0]*size[1]] */
+    
+    /* a list of trimming curves contained on this face */
+    int                 trims_count;
+    struct bu_list      trims_hd; /* contains: struct edge_g_cnurb */
+    
+    /* START OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
+    int			dir;	/* direction of last refinement */
+    point_t	       	min_pt;	/* min corner of bounding box */
+    point_t	       	max_pt;	/* max corner of bounding box */
+    /*   END OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
+    long	       	index;	/* struct # in this model */
 };
 
 
 /* ----- Internal structures ----- */
 
 struct rt_nurb_poly {
-	struct rt_nurb_poly * next;
-	point_t		ply[3];		/* Vertices */
-	fastf_t		uv[3][2];	/* U,V parametric values */
+    struct rt_nurb_poly * next;
+    point_t		ply[3];		/* Vertices */
+    fastf_t		uv[3][2];	/* U,V parametric values */
 };
 
 struct rt_nurb_uv_hit {
