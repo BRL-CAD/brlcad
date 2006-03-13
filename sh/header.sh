@@ -179,8 +179,18 @@ case $FILE in
 	wrap=0
 	commentprefix="#"
 	;;
+    *.ac)
+	echo "$FILE is an Autoconf template file"
+	wrap=0
+	commentprefix="#"
+	;;
+    *.m4)
+	echo "$FILE is an m4 macro file"
+	wrap=0
+	commentprefix="#"
+	;;
     *.mk)
-	echo "$FILE is a make file"
+	echo "$FILE is a make resource file"
 	wrap=0
 	commentprefix="#"
 	;;
