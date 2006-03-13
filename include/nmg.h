@@ -75,6 +75,10 @@
 #include "bu.h"
 #endif
 
+#ifndef NURB_H
+#include "nurb.h"
+#endif
+
 #ifndef NULL
 #define NULL 0
 #endif
@@ -176,7 +180,7 @@
 #define NMG_VERTEXUSE_MAGIC	0x12341234
 #define NMG_VERTEXUSE_A_PLANE_MAGIC	0x69676874
 #define NMG_VERTEXUSE_A_CNURB_MAGIC	0x20416e64
-#define NMG_KNOT_VECTOR_MAGIC	0x6b6e6f74	/* aka RT_KNOT_VECTOR_MAGIC */
+#define NMG_KNOT_VECTOR_MAGIC	RT_KNOT_VECTOR_MAGIC	/* aka RT_KNOT_VECTOR_MAGIC */
 
 /* macros to check/validate a structure pointer
  */
@@ -225,19 +229,6 @@
 	    	bu_log("in %s at %d edgeuse lost vertexuse\n",\
 	    		 __FILE__, __LINE__); rt_bomb("bye");}
 
-/*
- *			K N O T _ V E C T O R
- *
- *  Definition of a knot vector.
- *  Not found independently, but used in the cnurb and snurb structures.
- *  (Exactly the same as the definition in nurb.h)
- */
-struct knot_vector {
-	int		magic;
-	int		k_size;		/* knot vector size */
-	fastf_t		* knots;	/* pointer to knot vector  */
-};
-#define RT_KNOT_VECTOR_MAGIC	NMG_KNOT_VECTOR_MAGIC	/* nurb.h compat */
 
 /*
  *	N O T I C E !
@@ -349,25 +340,6 @@ struct face_g_plane {
 	long			magic;
 	struct bu_list		f_hd;	/* list of faces sharing this surface */
 	plane_t			N;	/* Plane equation (incl normal) */
-	long			index;	/* struct # in this model */
-};
-
-struct face_g_snurb {
-	/* NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
-	struct bu_list		l;
-	struct bu_list		f_hd;	/* list of faces sharing this surface */
-	int			order[2]; /* surface order [0] = u, [1] = v */
-	struct knot_vector	u;	/* surface knot vectors */
-	struct knot_vector	v;	/* surface knot vectors */
-	/* surface control points */
-	int			s_size[2]; /* mesh size, u,v */
-	int			pt_type; /* surface point type */
-	fastf_t			*ctl_points; /* array [size[0]*size[1]] */
-	/* START OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
-	int			dir;	/* direction of last refinement */
-	point_t			min_pt;	/* min corner of bounding box */
-	point_t			max_pt;	/* max corner of bounding box */
-	/*   END OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
 	long			index;	/* struct # in this model */
 };
 
@@ -505,25 +477,6 @@ struct edge_g_lseg {
 	long			index;	/* struct # in this model */
 };
 
-/*
- *  The ctl_points on this curve are (u,v) values on the face's surface.
- *  As a storage and performance efficiency measure, if order <= 0,
- *  then the cnurb is a straight line segment in parameter space,
- *  and the k.knots and ctl_points pointers will be NULL.
- *  In this case, the vertexuse_a_cnurb's at both ends of the edgeuse define
- *  the path through parameter space.
- */
-struct edge_g_cnurb {
-	struct bu_list		l;	/* NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
-	struct bu_list		eu_hd2;	/* heads l2 list of edgeuses on this curve */
-	int			order;	/* Curve Order */
-	struct knot_vector	k;	/* curve knot vector */
-	/* curve control polygon */
-	int			c_size;	/* number of ctl points */
-	int			pt_type;/* curve point type */
-	fastf_t			*ctl_points; /* array [c_size] */
-	long			index;	/* struct # in this model */
-};
 
 struct edgeuse {
 	struct bu_list		l;	/* cw/ccw edges in loop or wire edges in shell */
