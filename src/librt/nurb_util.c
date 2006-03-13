@@ -53,55 +53,67 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 struct face_g_snurb *
 rt_nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_cols, int pt_type, struct resource *res)
 {
-	register struct face_g_snurb * srf;
-	int pnum;
-
-	GET_SNURB(srf);
-	srf->order[0] = u_order;
-	srf->order[1] = v_order;
-	srf->dir = RT_NURB_SPLIT_ROW;
-
-	srf->u.k_size = n_u;
-	srf->v.k_size = n_v;
-	srf->s_size[0] = n_rows;
-	srf->s_size[1] = n_cols;
-	srf->pt_type = pt_type;
-
-	pnum = sizeof (fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
-
-	srf->u.knots = (fastf_t *) bu_malloc (
-			n_u * sizeof (fastf_t ), "rt_nurb_new_snurb: u kv knot values");
-	srf->v.knots = (fastf_t *) bu_malloc (
-			n_v * sizeof (fastf_t ), "rt_nurb_new_snurb: v kv knot values");
-	srf->ctl_points = ( fastf_t *) bu_malloc(
-			pnum, "rt_nurb_new_snurb: control mesh points");
-
-	return srf;
+    register struct face_g_snurb * srf;
+    int pnum;
+    
+    GET_SNURB(srf);
+    srf->order[0] = u_order;
+    srf->order[1] = v_order;
+    srf->dir = RT_NURB_SPLIT_ROW;
+    
+    srf->u.k_size = n_u;
+    srf->v.k_size = n_v;
+    srf->s_size[0] = n_rows;
+    srf->s_size[1] = n_cols;
+    srf->pt_type = pt_type;
+    
+    pnum = sizeof (fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
+    
+    srf->u.knots = (fastf_t *) bu_malloc (n_u * sizeof (fastf_t ), "rt_nurb_new_snurb: u kv knot values");
+    srf->v.knots = (fastf_t *) bu_malloc (n_v * sizeof (fastf_t ), "rt_nurb_new_snurb: v kv knot values");
+    srf->ctl_points = ( fastf_t *) bu_malloc(pnum, "rt_nurb_new_snurb: control mesh points");
+    
+    /* initialize the trims list */
+    BU_LIST_INIT(&srf->trims_hd);
+    srf->trims_count = 0;
+    
+    return srf;
 }
 
 /* Create a place holder for a new nurb curve. */
 struct edge_g_cnurb *
 rt_nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
 {
-	register struct edge_g_cnurb * crv;
+    register struct edge_g_cnurb * crv;
+    
+    GET_CNURB(crv);
+    crv->order = order;
+    
+    crv->k.k_size = n_knots;
+    crv->k.knots = (fastf_t *)
+	bu_malloc(n_knots * sizeof(fastf_t),
+		  "rt_nurb_new_cnurb: knot values");
+    
+    crv->c_size = n_pts;
+    crv->pt_type = pt_type;
+    
+    crv->ctl_points = (fastf_t *)
+	bu_malloc( sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(pt_type) *
+		   n_pts,
+		   "rt_nurb_new_cnurb: mesh point values");
+    
+    return crv;
+}
 
-	GET_CNURB(crv);
-	crv->order = order;
-
-	crv->k.k_size = n_knots;
-	crv->k.knots = (fastf_t *)
-		bu_malloc(n_knots * sizeof(fastf_t),
-			"rt_nurb_new_cnurb: knot values");
-
-	crv->c_size = n_pts;
-	crv->pt_type = pt_type;
-
-	crv->ctl_points = (fastf_t *)
-		bu_malloc( sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(pt_type) *
-			n_pts,
-			"rt_nurb_new_cnurb: mesh point values");
-
-	return crv;
+/*
+ * Add a trimming curve to a nurb surface
+ *
+ */
+void
+rt_nurb_add_trimming_curve(struct face_g_snurb* surf, struct edge_g_cnurb* edge)
+{
+    surf->trims_count += 1;
+    BU_LIST_APPEND(&surf->trims_hd, &(edge->l));
 }
 
 /*
