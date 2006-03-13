@@ -257,7 +257,112 @@ nmg_rt_print_hitlist(struct hitmiss *hl)
 	}
 }
 
+/*
+ *               N M G _ U V _ I N _ L U
+ *
+ * Moved from nurb_trim.c to here.
+ */
+int
+nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
+{
+	struct edgeuse *eu;
+	int crossings=0;
 
+	NMG_CK_LOOPUSE( lu );
+
+	if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return( 0 );
+
+	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct edge_g_cnurb *eg;
+
+		if( !eu->g.magic_p )
+		{
+			bu_log( "nmg_uv_in_lu: eu (x%x) has no geometry!!!\n", eu );
+			bu_bomb( "nmg_uv_in_lu: eu has no geometry!!!\n" );
+		}
+
+		if( *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC )
+		{
+			bu_log( "nmg_uv_in_lu: Called with lu (x%x) containing eu (x%x) that is not CNURB!!!!\n",
+				lu, eu );
+			bu_bomb( "nmg_uv_in_lu: Called with lu containing eu that is not CNURB!!!\n" );
+		}
+
+		eg = eu->g.cnurb_p;
+
+		if( eg->order <= 0 )
+		{
+			struct vertexuse *vu1, *vu2;
+			struct vertexuse_a_cnurb *vua1, *vua2;
+			point_t uv1, uv2;
+			fastf_t slope, intersept;
+			fastf_t u_on_curve;
+
+			vu1 = eu->vu_p;
+			vu2 = eu->eumate_p->vu_p;
+
+			if( !vu1->a.magic_p || !vu2->a.magic_p )
+			{
+				bu_log( "nmg_uv_in_lu: Called with lu (x%x) containing vu with no attribute!!!!\n",
+					lu );
+				bu_bomb( "nmg_uv_in_lu: Called with lu containing vu with no attribute!!!\n" );
+			}
+
+			if( *vu1->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC ||
+			    *vu2->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
+			{
+				bu_log( "nmg_uv_in_lu: Called with lu (x%x) containing vu that is not CNURB!!!!\n",
+					lu );
+				bu_bomb( "nmg_uv_in_lu: Called with lu containing vu that is not CNURB!!!\n" );
+			}
+
+			vua1 = vu1->a.cnurb_p;
+			vua2 = vu2->a.cnurb_p;
+
+			VMOVE( uv1, vua1->param );
+			VMOVE( uv2, vua2->param );
+
+			if( RT_NURB_IS_PT_RATIONAL( eg->pt_type ) )
+			{
+				uv1[0] /= uv1[2];
+				uv1[1] /= uv1[2];
+				uv2[0] /= uv2[2];
+				uv2[1] /= uv2[2];
+			}
+
+			if( uv1[1] < v && uv2[1] < v )
+				continue;
+			if( uv1[1] > v && uv2[1] > v )
+				continue;
+			if( uv1[0] <= u && uv2[0] <= u )
+				continue;
+			if( uv1[0] == uv2[0] )
+			{
+				if( (uv1[1] <= v && uv2[1] >= v) ||
+				    (uv2[1] <= v && uv1[1] >= v) )
+					crossings++;
+
+				continue;
+			}
+
+			/* need to calculate intersection */
+			slope = (uv1[1] - uv2[1])/(uv1[0] - uv2[0]);
+			intersept = uv1[1] - slope * uv1[0];
+			u_on_curve = (v - intersept)/slope;
+			if( u_on_curve > u )
+				crossings++;
+		}
+		else
+			crossings += rt_uv_in_trim( eg, u, v );
+	}
+
+	if( crossings & 01 )
+		return( 1 );
+	else
+		return( 0 );
+}
 
 
 /**
