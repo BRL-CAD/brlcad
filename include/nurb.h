@@ -95,41 +95,45 @@
 #define RT_NURB_IS_PT_RATIONAL(pt)		(pt & 0x1)
 #define RT_NURB_STRIDE(pt)		(RT_NURB_EXTRACT_COORDS(pt) * sizeof( fastf_t))
 
+
+/* 
+ * MAGIC 
+ */
+#define RT_CNURB_MAGIC	           0x636e7262
+#define RT_SNURB_MAGIC	           0x736e7262
+#define RT_NURB_TRIM_CONTOUR_MAGIC 0x836e7262
+#define RT_KNOT_VECTOR_MAGIC	   0x6b6e6f74	/* aka RT_KNOT_VECTOR_MAGIC */
+
 /* macros to check/validate a structure pointer
  */
-#define NURB_CK_KNOT(_p)		BU_CKMAG(_p, RT_KNOT_VECTOR_MAGIC, "knot_vector")
+#define NURB_CK_KNOT(_p)	BU_CKMAG(_p, RT_KNOT_VECTOR_MAGIC, "knot_vector")
 #define NMG_CK_CNURB(_p)	BU_CKMAG(_p, RT_CNURB_MAGIC, "cnurb")
 #define NMG_CK_SNURB(_p)	BU_CKMAG(_p, RT_SNURB_MAGIC, "snurb")
-
-#define GET_CNURB(p/*,m*/) 		{BU_GETSTRUCT(p, edge_g_cnurb); \
-	/* NMG_INCR_INDEX(p,m); */ \
-	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_EDGE_G_CNURB_MAGIC; }
-#define GET_SNURB(p/*,m*/) 		{BU_GETSTRUCT(p, face_g_snurb); \
-	/* NMG_INCR_INDEX(p,m); */ \
-	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_FACE_G_SNURB_MAGIC; }
-
-#define RT_CNURB_MAGIC	0x636e7262
-#define RT_SNURB_MAGIC	0x736e7262
 
 /*
  *			K N O T _ V E C T O R
  *
  *  Definition of a knot vector.
  *  Not found independently, but used in the cnurb and snurb structures.
- *  (Exactly the same as the definition in nurb.h)
  */
 struct knot_vector {
 	int		magic;
 	int		k_size;		/* knot vector size */
 	fastf_t		* knots;	/* pointer to knot vector  */
 };
-#define RT_KNOT_VECTOR_MAGIC	0x6b6e6f74	/* aka RT_KNOT_VECTOR_MAGIC */
 
 
 /* 
  * 		       E D G E _ G _ C N U R B
  *   
  *  The ctl_points on this curve are (u,v) values on the face's surface.
+ *  
+ *  When used as nurbs curve: 
+ *  If order <= 0, then the cnurb is a line,
+ *  and the first two control points define the end points of the
+ *  line. The knot vector will be empty. 
+ * 
+ *  When used as NMG edge (TO BE REMOVED):
  *  As a storage and performance efficiency measure, if order <= 0,
  *  then the cnurb is a straight line segment in parameter space,
  *  and the k.knots and ctl_points pointers will be NULL.
@@ -142,6 +146,7 @@ struct knot_vector {
 struct edge_g_cnurb {
     struct bu_list     	l;	/* NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
     struct bu_list     	eu_hd2;	/* heads l2 list of edgeuses on this curve */
+    
     int			order;	/* Curve Order */
     struct knot_vector	k;	/* curve knot vector */
     /* curve control polygon */
@@ -151,9 +156,30 @@ struct edge_g_cnurb {
     long	       	index;	/* struct # in this model */
 };
 
+#define GET_CNURB(p/*,m*/) 		{BU_GETSTRUCT(p, edge_g_cnurb); \
+	/* NMG_INCR_INDEX(p,m); */ \
+	BU_LIST_INIT( &(p)->l ); (p)->l.magic = RT_CNURB_MAGIC; }
+
 
 /*
- *                    F A C E _ G _ S N U R B
+ *                     T R I M _ C O N T O U R
+ *
+ * To make it easier to represent a complex trimming shape, a trim
+ * contour is actually represented as a list of curve segments which
+ * may be composed of different types of curves (i.e. b-splines,
+ * lines, etc...)
+ */
+struct trim_contour {
+    struct bu_list l;
+    int curve_count;
+    struct bu_list curve_hd; /* contains: struct edge_g_cnurb */
+};
+#define GET_TRIM_CONTOUR(p) { BU_GETSTRUCT(p, trim_contour); \
+        BU_LIST_INIT( &(p)->l; ); (p)->l.magic = RT_NURB_TRIM_CONTOUR_MAGIC; }
+
+
+/*
+ *                     F A C E _ G _ S N U R B
  *
  * Definition of a single NURBS patch. Pulled back into nurb.h from
  * nmg.h. Contains detritus from having inappropriately participated
@@ -174,9 +200,9 @@ struct face_g_snurb {
     int			pt_type; /* surface point type */
     fastf_t	       	*ctl_points; /* array [size[0]*size[1]] */
     
-    /* a list of trimming curves contained on this face */
+    /* a list of trimming contours contained on this face */
     int                 trims_count;
-    struct bu_list      trims_hd; /* contains: struct edge_g_cnurb */
+    struct bu_list      trims_hd; /* type: struct trim_contour */
     
     /* START OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
     int			dir;	/* direction of last refinement */
@@ -185,6 +211,9 @@ struct face_g_snurb {
     /*   END OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
     long	       	index;	/* struct # in this model */
 };
+#define GET_SNURB(p/*,m*/) 		{BU_GETSTRUCT(p, face_g_snurb); \
+	/* NMG_INCR_INDEX(p,m); */ \
+	BU_LIST_INIT( &(p)->l ); (p)->l.magic = RT_SNURB_MAGIC; }
 
 
 /* ----- Internal structures ----- */
