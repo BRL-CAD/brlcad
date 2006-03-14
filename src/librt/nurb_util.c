@@ -89,10 +89,14 @@ rt_nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
     GET_CNURB(crv);
     crv->order = order;
     
-    crv->k.k_size = n_knots;
-    crv->k.knots = (fastf_t *)
-	bu_malloc(n_knots * sizeof(fastf_t),
-		  "rt_nurb_new_cnurb: knot values");
+    if (n_knots) {
+	crv->k.k_size = n_knots;
+	crv->k.knots = (fastf_t *)
+	    bu_malloc(n_knots * sizeof(fastf_t),
+		      "rt_nurb_new_cnurb: knot values");
+    } else {
+	crv->k.k_size = crv->k.knots = 0;
+    }
     
     crv->c_size = n_pts;
     crv->pt_type = pt_type;
@@ -105,16 +109,48 @@ rt_nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
     return crv;
 }
 
+/* 
+ * Create a place holder for a new line curve 
+ */
+struct edge_g_cnurb* 
+rt_nurb_new_cnurb_line()
+{
+    int pt_type  = RT_NURB_MAKE_PT_TYPE(2,RT_NURB_PT_UV,RT_NURB_PT_NONRAT);
+    return rt_nurb_new_cnurb(0, 0, 2, pt_type);
+}
+
 /*
- * Add a trimming curve to a nurb surface
- *
+ * Create a place holder for a new trim contour
+ */
+struct trim_contour*
+rt_nurb_new_trim_contour()
+{
+    register struct trim_contour* contour;
+    GET_TRIM_CONTOUR(contour);    
+    BU_LIST_INIT(&contour->curve_hd);
+    return contour;
+}
+
+/*
+ * Add a trimming curve to a trim contour
  */
 void
-rt_nurb_add_trimming_curve(struct face_g_snurb* surf, struct edge_g_cnurb* edge)
+rt_nurb_add_trimming_curve(struct trim_contour* trim, struct edge_g_cnurb* edge)
+{
+    trim->curve_count += 1;
+    BU_LIST_APPEND(&trim->curve_hd, &(edge->l));
+}
+
+/*
+ * Add a trim contour to a nurb surface
+ */
+void
+rt_nurb_add_trim_contour(struct face_g_snurb* surf, struct trim_contour* trim)
 {
     surf->trims_count += 1;
-    BU_LIST_APPEND(&surf->trims_hd, &(edge->l));
+    BU_LIST_APPEND(&surf->trims_hd, &(trim->l));
 }
+
 
 /*
  *			R T _ N U R B _ C L E A N _ S N U R B
