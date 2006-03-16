@@ -494,6 +494,14 @@ itcl::body iwidgets::Entryfield::_keyPress {char sym state} {
     # A Return key invokes the optionally specified command option.
     #
     if {$sym == "Return"} {
+        if {$itk_option(-command) == ""} {
+            #
+            # Allow <Return> to propagate to parent if the -command option
+            # isn't defined.
+            #
+            return -code continue 1
+        }
+
 	uplevel #0 $itk_option(-command)
 	return -code break 1
     } 

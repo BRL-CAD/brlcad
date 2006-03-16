@@ -303,7 +303,8 @@ BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit]
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
 
 # force enable/disable building of Tcl
-BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [auto])
+# XXX - set to yes due to auto_path issues when system Tcl is loaded
+BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [yes])
 
 # force enable/disable building of Tk
 # XXX - set to yes due to the bezier canvas tk patch that was moved to
