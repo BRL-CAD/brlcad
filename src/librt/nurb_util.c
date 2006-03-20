@@ -95,7 +95,8 @@ rt_nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
 	    bu_malloc(n_knots * sizeof(fastf_t),
 		      "rt_nurb_new_cnurb: knot values");
     } else {
-	crv->k.k_size = crv->k.knots = 0;
+	crv->k.k_size = 0;
+	crv->k.knots = NULL;
     }
     
     crv->c_size = n_pts;
@@ -126,6 +127,7 @@ struct trim_contour*
 rt_nurb_new_trim_contour()
 {
     register struct trim_contour* contour;
+
     GET_TRIM_CONTOUR(contour);    
     BU_LIST_INIT(&contour->curve_hd);
     return contour;
@@ -135,7 +137,7 @@ rt_nurb_new_trim_contour()
  * Add a trimming curve to a trim contour
  */
 void
-rt_nurb_add_trimming_curve(struct trim_contour* trim, struct edge_g_cnurb* edge)
+rt_nurb_add_trim_curve(struct trim_contour* trim, struct edge_g_cnurb* edge)
 {
     trim->curve_count += 1;
     BU_LIST_APPEND(&trim->curve_hd, &(edge->l));
