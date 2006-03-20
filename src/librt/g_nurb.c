@@ -1178,10 +1178,10 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 		    cp += SIZEOF_NETWORK_DOUBLE * crv->k.k_size;
 		    ntohd((unsigned char *)crv->ctl_points, cp, crv->c_size * coords);
 		    cp += SIZEOF_NETWORK_DOUBLE * crv->c_size * coords;
-		    rt_nurb_add_trimming_curve(cont, crv);
+		    rt_nurb_add_trim_curve(cont, crv);
 		}	       		
 		
-		rt_add_trimming_curve(srf, cont);
+		rt_nurb_add_trim_contour(srf, cont);
 	    }
 	}
     }
