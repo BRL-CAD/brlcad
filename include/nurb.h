@@ -175,7 +175,7 @@ struct trim_contour {
     struct bu_list curve_hd; /* contains: struct edge_g_cnurb */
 };
 #define GET_TRIM_CONTOUR(p) { BU_GETSTRUCT(p, trim_contour); \
-        BU_LIST_INIT( &(p)->l; ); (p)->l.magic = RT_NURB_TRIM_CONTOUR_MAGIC; }
+        BU_LIST_INIT( &(p)->l ); (p)->l.magic = RT_NURB_TRIM_CONTOUR_MAGIC; }
 
 
 /*
@@ -385,6 +385,11 @@ NURB_EXPORT BU_EXTERN(struct face_g_snurb *rt_nurb_new_snurb, (int u_order, int 
 			int n_rows, int n_cols, int pt_type, struct resource *res));
 NURB_EXPORT BU_EXTERN(struct edge_g_cnurb *rt_nurb_new_cnurb, (int order, int n_knots,
 			int n_pts, int pt_type));
+NURB_EXPORT BU_EXTERN(struct edge_g_cnurb* rt_nurb_new_cnurb_line, ());
+NURB_EXPORT BU_EXTERN(struct trim_contour* rt_nurb_new_trim_contour, ());
+NURB_EXPORT BU_EXTERN(void rt_nurb_add_trim_curve, (struct trim_contour* trim, struct edge_g_cnurb* edge));
+NURB_EXPORT BU_EXTERN(void rt_nurb_add_trim_contour, (struct face_g_snurb* surf, struct trim_contour* trim));
+NURB_EXPORT BU_EXTERN(void rt_nurb_free_trim_contour, (struct trim_contour* trim));
 NURB_EXPORT BU_EXTERN(void rt_nurb_free_snurb, (struct face_g_snurb *srf, struct resource *res));
 NURB_EXPORT BU_EXTERN(void rt_nurb_free_cnurb, (struct edge_g_cnurb * crv));
 NURB_EXPORT BU_EXTERN(void rt_nurb_c_print, (const struct edge_g_cnurb *crv));
