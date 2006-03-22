@@ -126,7 +126,7 @@ rt_nurb_new_cnurb_line()
 struct trim_contour*
 rt_nurb_new_trim_contour()
 {
-    register struct trim_contour* contour;
+    struct trim_contour* contour;
 
     GET_TRIM_CONTOUR(contour);    
     BU_LIST_INIT(&contour->curve_hd);
@@ -151,6 +151,23 @@ rt_nurb_add_trim_contour(struct face_g_snurb* surf, struct trim_contour* trim)
 {
     surf->trims_count += 1;
     BU_LIST_APPEND(&surf->trims_hd, &(trim->l));
+}
+
+
+/*
+ *                    R T _ N U R B _ F R E E _ T R I M _ C O N T O U R
+ */
+void
+rt_nurb_free_trim_contour(struct trim_contour* trim)
+{
+    RT_CK_TRIMCONTOUR(trim);
+    
+    struct edge_g_cnurb* curve;
+    while (BU_LIST_WHILE(curve, edge_g_cnurb, &trim->curve_hd)) {
+	BU_LIST_DEQUEUE( &(curve->l) );
+	rt_nurb_free_cnurb(curve);
+    }
+    bu_free((char*)trim, "rt_nurb_free_trim_contour() trim");
 }
 
 
