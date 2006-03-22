@@ -11,6 +11,7 @@ brlcadinclude_required = \
 	common.h \
 	config_win.h \
 	raytrace.h \
+	rt.h \
 	rtgeom.h \
 	rtlist.h \
 	rtprivate.h \
