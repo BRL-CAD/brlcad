@@ -176,6 +176,7 @@ struct trim_contour {
 };
 #define GET_TRIM_CONTOUR(p) { BU_GETSTRUCT(p, trim_contour); \
         BU_LIST_INIT( &(p)->l ); (p)->l.magic = RT_NURB_TRIM_CONTOUR_MAGIC; }
+#define RT_CK_TRIMCONTOUR(_p)  BU_CKMAG(_p, RT_NURB_TRIM_CONTOUR_MAGIC, "trim_contour")
 
 
 /*
