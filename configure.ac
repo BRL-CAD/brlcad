@@ -65,13 +65,8 @@ dnl minimum version of autoconf required.  should coincide with
 dnl setting in autogen.sh script.
 AC_PREREQ(2.52)
 
-<<<<<<< configure.ac
-AC_INIT(BRL-CAD, 7.6.4, [http://brlcad.org], brlcad)
-AC_REVISION($Revision$)
-=======
 AC_INIT(BRL-CAD, 7.6.6, [http://brlcad.org], brlcad)
 AC_REVISION($Revision$)
->>>>>>> 14.204
 
 AC_CONFIG_AUX_DIR(misc)
 #AM_CONFIG_HEADER([config.h])
@@ -79,11 +74,7 @@ AC_CONFIG_AUX_DIR(misc)
 dnl See HACKING for details on how to properly update the version
 MAJOR_VERSION=7
 MINOR_VERSION=6
-<<<<<<< configure.ac
-PATCH_VERSION=4
-=======
 PATCH_VERSION=7
->>>>>>> 14.204
 AC_SUBST(MAJOR_VERSION)
 AC_SUBST(MINOR_VERSION)
 AC_SUBST(PATCH_VERSION)
@@ -278,18 +269,12 @@ BC_CONFIGURE_STAGE([arguments], [1 of 9])
 
 dnl *** enable options ***
 
-<<<<<<< configure.ac
-# automatic flag updates
-BC_ARG_ENABLE([auto_flags], [automatic-flags], [Automatically configure build flags], [yes])
-
-=======
 # enable everything 
 BC_ARG_ENABLE([everything], [everything], [Turn on compilation of everything], [auto])
 
 # automatic flag updates
 BC_ARG_ENABLE([auto_flags], [automatic-flags], [Automatically configure build flags], [yes])
 
->>>>>>> 14.204
 # only build benchmark
 BC_ARG_ENABLE([only_benchmark], [only-benchmark], [Only build the components necessary for the benchmark], [no])
 
@@ -384,15 +369,6 @@ BC_ARG_WITH([with_python], [python], [Specify use of or path to python], [auto])
 # blank line that it inserts to exactly one line in the right place
 ###
 
-<<<<<<< configure.ac
-# aliases for allowing configure to modify the flags automatically (help uses automatic-flags)
-BC_ARG_ALIAS([auto_flags], [auto-flags])
-BC_ARG_ALIAS([auto_flags], [auto-flag])
-BC_ARG_ALIAS([auto_flags], [automatic-flag])
-AC_MSG_CHECKING(whether to automatically set build flags)
-AC_MSG_RESULT($bc_auto_flags)
-
-=======
 # aliases for enabling configuration of everything (help uses everything)
 BC_ARG_ALIAS([everything], [all])
 BC_ARG_ALIAS([everything], [everything-build])
@@ -403,7 +379,6 @@ BC_ARG_ALIAS([auto_flags], [auto-flags])
 BC_ARG_ALIAS([auto_flags], [auto-flag])
 BC_ARG_ALIAS([auto_flags], [automatic-flag])
 
->>>>>>> 14.204
 # aliases for building only the benchmark (help uses only-benchmark)
 BC_ARG_ALIAS([only_benchmark], [only-bench])
 BC_ARG_ALIAS([only_benchmark], [only-benchmarks])
@@ -1350,10 +1325,6 @@ if test ! "x$bc_auto_flags" = "xno" ; then
     dnl check for -fno-strict-aliasing
     BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-strict-aliasing])
 
-<<<<<<< configure.ac
-    dnl check for -fno-common (libtcl needs it on darwin)
-    BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-common])
-=======
     dnl check for -fno-common (libtcl needs it on darwin)
     BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-common])
 
@@ -1363,22 +1334,8 @@ if test ! "x$bc_auto_flags" = "xno" ; then
     dnl this flag allows dylibs and archives to be found based on a
     dnl library path search order, not biasing a preference for dylibs.
     BC_LINKER_RECOGNIZES([-Wl,-search_paths_first -Wnewline-eof])
->>>>>>> 14.204
-
-<<<<<<< configure.ac
-    dnl check for -search_paths_first linker flag.
-    dnl prevent a false-positive where it can be treated as a -s and-e
-    dnl linker option by adding a benign flag that should succeed.
-    dnl this flag allows dylibs and archives to be found based on a
-    dnl library path search order, not biasing a preference for dylibs.
-    BC_LINKER_RECOGNIZES([-Wl,-search_paths_first -Wnewline-eof])
-
     dnl 64bit compilation flags
     if test "x$bc_build_64bit" = "xyes" ; then
-=======
-    dnl 64bit compilation flags
-    if test "x$bc_build_64bit" = "xyes" ; then
->>>>>>> 14.204
 	found_64bit_flag=no
 
 	AC_MSG_CHECKING([if configure snuck on a 32bit flag to ld])
@@ -2354,33 +2311,6 @@ if test "x$found_jni_h" = "xno" ; then
 		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
 		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
 	fi
-<<<<<<< configure.ac
-	if test "x$bc_with_java" = "xyes" ; then
-		AC_MSG_RESULT(no)
-		BC_RETRY_CONFIGURE([$0])
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_ERROR([Failed to locate a functioning jni.h for Java])
-	fi
-
-	if test "x$bc_with_java" != "xauto" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([Unable to locate a functioning Java])
-		AC_MSG_WARN([Compilation of librtserver will be disabled])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	fi
-	AC_MSG_RESULT(no)
-else
-	if test "x$bc_with_java" != "xno" ; then
-		if test "x$bc_with_java" = "xauto" ; then
-			build_against_java=yes
-		else
-			build_against_java="yes ($bc_with_java_val)"
-		fi
-		AC_MSG_RESULT(yes)
-	else
-		AC_MSG_RESULT(no)
-	fi
-=======
 	if test "x$bc_with_java" = "xyes" ; then
 		AC_MSG_RESULT(no)
 		BC_RETRY_CONFIGURE([$this], [$args])
@@ -2406,7 +2336,6 @@ else
 	else
 		AC_MSG_RESULT(no)
 	fi
->>>>>>> 14.204
 fi
 
 
