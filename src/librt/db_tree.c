@@ -1321,7 +1321,12 @@ region_end:
 		return(curtree);
 	}
 out:
-	rt_db_free_internal( &intern, tsp->ts_resp );
+	/* rt_db_get_internal() may not have been called yet, so do not try to free intern unless
+	 * we know there is something to free
+	 */
+	if( intern.idb_ptr != NULL ) {
+	    rt_db_free_internal( &intern, tsp->ts_resp );
+	}
 	if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("db_recurse() return curtree=x%x, pathp='%s', *statepp=x%x\n",
