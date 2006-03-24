@@ -174,7 +174,7 @@ bu_structparse_get_terse_form(Tcl_Interp			*interp,
 		    strcmp(sp->sp_fmt, "%S") == 0) {
 			if (sp->sp_count > 1) {
 				/* Make them all look like %###s */
-				bu_vls_printf(&str, "%%%ds", sp->sp_count);
+				bu_vls_printf(&str, "%%%lds", sp->sp_count);
 			} else {
 				/* Singletons are specified by their actual character */
 				bu_vls_printf(&str, "%%c");
@@ -286,7 +286,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 				if (argc < 1) {
 					bu_vls_trunc(&str, 0);
 					bu_vls_printf(&str,
-						      "not enough values for \"%s\" argument: should be %d",
+						      "not enough values for \"%s\" argument: should be %ld",
 						      sdp->sp_name,
 						      sdp->sp_count);
 					Tcl_AppendResult(interp,
@@ -340,7 +340,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 				if( argc < 1 ) { /* XXX - when was ii defined */
 					bu_vls_trunc( &str, 0 );
 					bu_vls_printf( &str,
-      "not enough values for \"%s\" argument: should have %d",
+      "not enough values for \"%s\" argument: should have %ld",
 						       sdp->sp_name,
 						       sdp->sp_count);
 					Tcl_AppendResult( interp,
@@ -369,7 +369,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 					if( *cp == '\0' ) {
 						bu_vls_trunc( &str, 0 );
 						bu_vls_printf( &str,
-		      "not enough values for \"%s\" argument: should have %d",
+		      "not enough values for \"%s\" argument: should have %ld",
 							       sdp->sp_name,
 							       sdp->sp_count );
 						Tcl_AppendResult( interp,
@@ -396,7 +396,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 						bu_vls_trunc( &str, 0 );
 						bu_vls_printf( &str,
 			       "value \"%s\" to argument %s isn't an integer",
-							       argv,
+							       argv[0],
 							       sdp->sp_name );
 						Tcl_AppendResult( interp,
 							    bu_vls_addr(&str),
@@ -424,7 +424,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 				if( argc < 1 ) { /* XXX - when was ii defined */
 					bu_vls_trunc( &str, 0 );
 					bu_vls_printf( &str,
-      "not enough values for \"%s\" argument: should have %d",
+      "not enough values for \"%s\" argument: should have %ld",
 						       sdp->sp_name,
 						       sdp->sp_count);
 					Tcl_AppendResult( interp,
@@ -453,7 +453,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 					if( *cp == '\0' ) {
 						bu_vls_trunc( &str, 0 );
 						bu_vls_printf( &str,
-		      "not enough values for \"%s\" argument: should have %d",
+		      "not enough values for \"%s\" argument: should have %ld",
 							       sdp->sp_name,
 							       sdp->sp_count );
 						Tcl_AppendResult( interp,
@@ -480,7 +480,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 						bu_vls_trunc( &str, 0 );
 						bu_vls_printf( &str,
 			       "value \"%s\" to argument %s isn't an integer",
-							       argv,
+							       argv[0],
 							       sdp->sp_name );
 						Tcl_AppendResult( interp,
 							    bu_vls_addr(&str),
@@ -509,7 +509,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 				if( argc < 1 ) {
 					bu_vls_trunc( &str, 0 );
 					bu_vls_printf( &str,
-       "not enough values for \"%s\" argument: should have %d, only %d given",
+       "not enough values for \"%s\" argument: should have %ld, only %d given",
 						       sdp->sp_name,
 						       sdp->sp_count, argc );
 					Tcl_AppendResult( interp,
@@ -527,7 +527,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 					if( *cp == '\0' ) {
 						bu_vls_trunc( &str, 0 );
 						bu_vls_printf( &str,
-       "not enough values for \"%s\" argument: should have %d, only %d given",
+       "not enough values for \"%s\" argument: should have %ld, only %d given",
 							       sdp->sp_name,
 							       sdp->sp_count,
 							       ii );
