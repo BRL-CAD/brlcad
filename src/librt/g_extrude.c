@@ -63,17 +63,17 @@ static const char RCSextrude[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
-#include "tcl.h"
+
 #include "machine.h"
+#include "tcl.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"

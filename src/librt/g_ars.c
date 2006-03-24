@@ -42,16 +42,16 @@ static const char RCSars[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #endif
 #include <math.h>
 #include <ctype.h>
-#include "tcl.h"
+
 #include "machine.h"
+#include "tcl.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
@@ -60,6 +60,8 @@ static const char RCSars[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 #include "./plane.h"
 #include "./bot.h"
+
+
 #define TRI_NULL	((struct tri_specific *)0)
 
 /* Describe algorithm here */

@@ -41,6 +41,7 @@ static const char RCSell[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>

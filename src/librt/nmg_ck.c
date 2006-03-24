@@ -1588,11 +1588,11 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
 	if( !found1 || !found2 )
 	{
 		bu_vls_init( &str );
-		bu_vls_printf( &str , "nmg_ck_v_in_2fus: vertex x%x not used in" , vp );
+		bu_vls_printf( &str , "nmg_ck_v_in_2fus: vertex x%lx not used in" , (long)vp );
 		if( !found1 )
-			bu_vls_printf( &str , " faceuse x%x" , fu1 );
+			bu_vls_printf( &str , " faceuse x%lx" , (long)fu1 );
 		if( !found2 )
-			bu_vls_printf( &str , " faceuse x%x" , fu2 );
+			bu_vls_printf( &str , " faceuse x%lx" , (long)fu2 );
 		rt_bomb( bu_vls_addr( &str ) );
 	}
 
@@ -1605,12 +1605,12 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
 	if( !NEAR_ZERO( dist1 , tol->dist ) || !NEAR_ZERO( dist2 , tol->dist ) )
 	{
 		bu_vls_init( &str );
-		bu_vls_printf( &str , "nmg_ck_v_in_2fus: vertex x%x ( %g %g %g ) not in plane of" ,
-				vp , V3ARGS( vp->vg_p->coord ) );
+		bu_vls_printf( &str , "nmg_ck_v_in_2fus: vertex x%lx ( %g %g %g ) not in plane of" ,
+				(long)vp , V3ARGS( vp->vg_p->coord ) );
 		if( !NEAR_ZERO( dist1 , tol->dist ) )
-			bu_vls_printf( &str , " faceuse x%x (off by %g)" , fu1 , dist1 );
+			bu_vls_printf( &str , " faceuse x%lx (off by %g)" , (long)fu1 , dist1 );
 		if( !NEAR_ZERO( dist2 , tol->dist ) )
-			bu_vls_printf( &str , " faceuse x%x (off by %g)" , fu2 , dist2 );
+			bu_vls_printf( &str , " faceuse x%lx (off by %g)" , (long)fu2 , dist2 );
 		rt_bomb( bu_vls_addr( &str ) );
 	}
 

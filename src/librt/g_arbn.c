@@ -43,22 +43,23 @@ static const char RCSarbn[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #endif
 #include <math.h>
 #include <ctype.h>
-#include "tcl.h"
+
 #include "machine.h"
+#include "tcl.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "db.h"
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "./debug.h"
+
 
 BU_EXTERN(void rt_arbn_print, (const struct soltab *stp) );
 BU_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );

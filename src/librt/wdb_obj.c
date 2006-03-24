@@ -9388,8 +9388,8 @@ wdb_vls_long_dpp(struct bu_vls		*vls,
 			bu_vls_spaces(vls, max_nam_len - strlen( dp->d_namep ) );
 			bu_vls_printf(vls, " %s", type );
 			bu_vls_spaces(vls, max_type_len - strlen( type ) );
-			bu_vls_printf(vls,  " %2d %2d %d\n",
-				      dp->d_major_type, dp->d_minor_type, dp->d_len);
+			bu_vls_printf(vls,  " %2d %2d %ld\n",
+				      dp->d_major_type, dp->d_minor_type, (long)(dp->d_len));
 		}
 	}
 }

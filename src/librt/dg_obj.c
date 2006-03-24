@@ -53,9 +53,18 @@
 #include <fcntl.h>
 #include <math.h>
 #include <signal.h>
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_WAIT_H
+#  include <sys/wait.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
-#include "tcl.h"
 #include "machine.h"
+#include "tcl.h"
 #include "cmd.h"			/* includes bu.h */
 #include "vmath.h"
 #include "bn.h"
