@@ -72,9 +72,9 @@ bu_vls_printb(struct bu_vls *vls, const char *s, register long unsigned int v, r
 	register char c;
 
 	if (*bits++ == 8)
-		bu_vls_printf( vls, "%s=0%o <", s, v);
+		bu_vls_printf( vls, "%s=0%lo <", s, v);
 	else
-		bu_vls_printf( vls, "%s=x%x <", s, v);
+		bu_vls_printf( vls, "%s=x%lx <", s, v);
 	while ((i = *bits++)) {
 		if (v & (1L << (i-1))) {
 			if (any)

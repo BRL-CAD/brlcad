@@ -1456,7 +1456,7 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 					(struct bu_vls *)loc;
 
 				bu_log_indent_delta(delta);
-				bu_vls_printf(vls_out, " %s=(vls_magic)%d (vls_offset)%d (vls_len)%d (vls_max)%d\n",
+				bu_vls_printf(vls_out, " %s=(vls_magic)%ld (vls_offset)%d (vls_len)%d (vls_max)%d\n",
 					sdp->sp_name, vls->vls_magic,
 					vls->vls_offset,
 					vls->vls_len, vls->vls_max);
