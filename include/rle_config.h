@@ -29,6 +29,7 @@
 #define SYS_V_SETPGRP SYS_V_SETPGRP
 #define USE_SHARED_LIB USE_SHARED_LIB
 #define USE_STRING_H USE_STRING_H
+#define USE_TIME_H USE_TIME_H
 #define VOID_STAR VOID_STAR
 /* -*-C-*- */
 /***************** From rle_config.tlr *****************/
