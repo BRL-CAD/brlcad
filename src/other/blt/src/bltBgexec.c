@@ -37,6 +37,7 @@
 #include <sys/param.h>
 #endif
 #include <sys/types.h>
+#include <ctype.h>
 
 #include "bltWait.h"
 #include "bltSwitch.h"

@@ -24,6 +24,7 @@
  */
 
 #include "bltInt.h"
+#include <ctype.h>
 
 #ifndef NO_BLTDEBUG
 

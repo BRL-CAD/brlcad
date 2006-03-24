@@ -42,6 +42,7 @@
  */
 
 #include "bltVecInt.h"
+#include <ctype.h>
 
 #if (TCL_MAJOR_VERSION > 7) 
 

@@ -27,6 +27,7 @@
  */
 
 #include "bltVecInt.h"
+#include <ctype.h>
 
 /*
  * Three types of math functions:

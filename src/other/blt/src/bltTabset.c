@@ -34,6 +34,7 @@
 #include "bltChain.h"
 #include "bltHash.h"
 #include "bltTile.h"
+#include <ctype.h>
 
 #if (TK_MAJOR_VERSION == 4)
 #define TK_REPARENTED           0x2000

@@ -47,6 +47,7 @@
 #include "bltInt.h"
 
 #include "bltTable.h"
+#include <ctype.h>
 
 #define TABLE_THREAD_KEY	"BLT Table Data"
 #define TABLE_DEF_PAD		0

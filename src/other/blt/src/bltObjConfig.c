@@ -21,6 +21,7 @@
 #else
 #include <varargs.h>
 #endif
+#include <ctype.h>
 #include "bltObjConfig.h"
 #include "bltTile.h"
 

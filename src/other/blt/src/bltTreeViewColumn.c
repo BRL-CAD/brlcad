@@ -42,6 +42,7 @@
 
 #include "bltTreeView.h"
 #include <X11/Xutil.h>
+#include <ctype.h>
 
 #define RULE_AREA		(8)
 

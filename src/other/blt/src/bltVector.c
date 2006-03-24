@@ -42,6 +42,7 @@
 
 #include "bltVecInt.h"
 #include <bltMath.h>
+#include <ctype.h>
 
 #ifdef TIME_WITH_SYS_TIME
 #include <sys/time.h>

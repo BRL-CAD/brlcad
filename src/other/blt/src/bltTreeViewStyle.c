@@ -35,6 +35,7 @@
 #include "bltList.h"
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
+#include <ctype.h>
 
 #define STYLE_GAP		2
 

@@ -403,9 +403,9 @@ EXPORT int
 Blt_Init(interp)
     Tcl_Interp *interp;		/* Interpreter to add extra commands */
 {
-    int flags;
+    long int flags;
 
-    flags = (int)Tcl_GetAssocData(interp, BLT_THREAD_KEY, NULL);
+    flags = Tcl_GetAssocData(interp, BLT_THREAD_KEY, NULL);
     if ((flags & BLT_TCL_CMDS) == 0) {
 	register Tcl_AppInitProc **p;
 	Tcl_Namespace *nsPtr;
@@ -503,9 +503,9 @@ EXPORT int
 Blt_Init(interp)
     Tcl_Interp *interp;		/* Interpreter to add extra commands */
 {
-    int flags;
+    long int flags;
 
-    flags = (int)Tcl_GetAssocData(interp, BLT_THREAD_KEY, NULL);
+    flags = Tcl_GetAssocData(interp, BLT_THREAD_KEY, NULL);
     if ((flags & BLT_TCL_CMDS) == 0) {
 	register Tcl_AppInitProc **p;
 	Tcl_ValueType args[2];
