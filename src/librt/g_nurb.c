@@ -41,6 +41,7 @@ static const char RCSnurb[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
@@ -48,6 +49,7 @@ static const char RCSnurb[] = "@(#)$Header$ (BRL)";
 #  include <strings.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -56,6 +58,7 @@ static const char RCSnurb[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "rtgeom.h"
 #include "./debug.h"
+
 
 #ifndef M_SQRT1_2
 #	define M_SQRT1_2       0.70710678118654752440
@@ -1240,11 +1243,11 @@ rt_nurb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 			bu_vls_printf( &vls, " { O {%d %d} s {%d %d} T %d u {",
 				       srf->order[0], srf->order[1],
 				       srf->s_size[0], srf->s_size[1],
-				       srf->pt_type, srf->u.k_size );
+				       srf->pt_type/* !!! -- export this?, srf->u.k_size */ );
 			for( j=0 ; j<srf->u.k_size ; j++ ) {
 				bu_vls_printf( &vls, " %.25G", srf->u.knots[j] );
 			}
-			bu_vls_printf( &vls, "} v {", srf->v.k_size );
+			bu_vls_printf( &vls, "} v {"/* !!! -- export this?, srf->v.k_size */ );
 			for( j=0 ; j<srf->v.k_size ; j++ ) {
 				bu_vls_printf( &vls, " %.25G", srf->v.knots[j] );
 			}
