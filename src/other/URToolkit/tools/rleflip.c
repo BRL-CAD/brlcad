@@ -44,7 +44,7 @@
 #define LEFT_FLAG  0x04
 #define RIGHT_FLAG 0x08
 
-void
+int
 main(argc, argv)
 int  argc;
 char *argv[];

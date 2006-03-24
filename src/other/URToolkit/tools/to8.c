@@ -74,7 +74,7 @@ double img_gam = 1.0;
  *	[None]
  */
 
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

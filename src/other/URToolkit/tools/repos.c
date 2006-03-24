@@ -35,7 +35,7 @@ static char rcs_ident[] = "$Header$";
 
 char buffer[4096];
 
-void
+int
 main(argc, argv)
 int	argc;
 char	*argv[];

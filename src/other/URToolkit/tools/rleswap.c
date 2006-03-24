@@ -100,7 +100,7 @@ void setup_map(), print_map();
  * Algorithm:
  *	[None]
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

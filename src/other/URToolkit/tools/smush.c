@@ -19,7 +19,7 @@ static char rcs_ident[] = "$Header$";
 
 char *progname;
 
-void
+int
 main(argc, argv)
 int  argc;
 char *argv[];

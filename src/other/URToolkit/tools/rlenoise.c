@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "rle.h"
 
 /* Change this according the value on your system.  This is a crock. */
@@ -28,7 +29,7 @@
 
 #define MALLOC_ERR RLE_CHECK_ALLOC( cmd_name( argv ), 0, 0 )
 
-void
+int
 main( argc, argv )
 int argc;
 char ** argv;

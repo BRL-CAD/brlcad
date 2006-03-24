@@ -23,7 +23,7 @@
 #include "rle_raw.h"
 #include <math.h>
 
-void
+int
 main( argc, argv )
 int argc;
 char ** argv;

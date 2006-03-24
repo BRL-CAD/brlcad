@@ -31,7 +31,7 @@ static char rcs_ident[] = "$Id$";
 
 #define MAXCHAN 10
 
-void
+int
 main(argc, argv)
 int	argc;
 char	*argv[];

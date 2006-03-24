@@ -118,7 +118,7 @@ rle_hdr the_hdr;
  *      [None]
  */
 
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

@@ -57,7 +57,7 @@ rlesplit()			Tag the file.
  *	[None]
  */
 
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

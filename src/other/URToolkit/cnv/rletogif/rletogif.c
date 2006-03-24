@@ -45,7 +45,7 @@ int get_scanlines();
 int get_color_bits();
 void GIFEncode();
 
-void
+int
 main(argc, argv)
 int argc;
 char *argv[];
@@ -93,6 +93,7 @@ char *argv[];
     rle_row_free(&in_hdr, scan);
     for (i = 0; i <= in_hdr.ymax - in_hdr.ymin; i++ ) free(scanbuf[i]);
     free(scanbuf);
+    return 0;
 }
 
 /*

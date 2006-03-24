@@ -43,6 +43,7 @@ rletoabA62()				Tag the file.
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #ifndef TRUE
 #define TRUE 1

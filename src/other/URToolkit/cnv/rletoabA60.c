@@ -53,7 +53,7 @@ rle_pixel scanred[FRAME_LENGTH][LINE_LENGTH];
 rle_pixel scanblu[FRAME_LENGTH][LINE_LENGTH];
 rle_pixel scangrn[FRAME_LENGTH][LINE_LENGTH];
 
-void
+int
 main(argc,argv)
 int argc;
 char **argv;

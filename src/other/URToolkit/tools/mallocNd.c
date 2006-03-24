@@ -8,6 +8,9 @@
 ** $Date$
 ** $Locker$
 ** $Log$
+** Revision 1.1  2005/01/24 05:12:41  brlcad
+** update of urt from 3.0 to 3.1b1; this includes keeping directory structure and moving tools to src/other/URToolkit/tools
+**
 ** Revision 3.0.1.1  1992/04/30  14:10:24  spencer
 ** patch3: remove lint
 **
@@ -67,6 +70,7 @@
 
 /* Imports */
 #include <stdio.h>
+#include <unistd.h>
 extern char *malloc();
 
 /* Forward declarations */

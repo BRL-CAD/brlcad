@@ -27,6 +27,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "rle.h"
 #include <sys/types.h>
 #include <sys/param.h>			/* for MAXPATHLEN */
@@ -61,7 +62,7 @@ static char buf[MAXPATHLEN+1];
  * Algorithm:
  *	[None]
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

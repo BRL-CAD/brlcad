@@ -33,12 +33,14 @@
 #include <stdio.h>
 #include <rle.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 int comp_hdr ();
 
 extern char *optarg;
 extern int optind;
 
+int
 main( argc, argv )
 int argc;
 char **argv;

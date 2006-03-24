@@ -57,7 +57,7 @@ void copy_raw();
  * 	Then "rerun" the input, mapping the pixel values and writing
  * 	them to the output file.
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

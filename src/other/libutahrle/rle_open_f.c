@@ -10,6 +10,8 @@
 
 #include "rle_config.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #ifndef NO_OPEN_PIPES
 /* Need to have a SIGCLD signal catcher. */

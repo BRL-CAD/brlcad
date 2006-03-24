@@ -66,7 +66,7 @@ void print_hdr(), print_map(), print_codes(), print_brief_hdr();
  *	[None]
  */
 
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

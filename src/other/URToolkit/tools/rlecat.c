@@ -16,6 +16,7 @@ rlecat()		Make a tag.
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "rle.h"
 #include "rle_raw.h"
 
@@ -63,7 +64,7 @@ static void rep_file();
  *  	repeat count.  If the collation flag (-c) is specified, then
  *  	all images will be read before starting to repeat.
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;
