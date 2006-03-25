@@ -64,8 +64,8 @@
 		return TCL_ERROR; \
 	}else if(*((long *)(_ptr)) != (_magic)){ \
 		bu_vls_init(&_fb_vls); \
-		bu_vls_printf(&_fb_vls, "ERROR: bad %s ptr x%x, s/b x%x, was x%x, file %s, line %d\n", \
-		_str, _ptr, _magic, *((long *)(_ptr)), __FILE__, __LINE__); \
+		bu_vls_printf(&_fb_vls, "ERROR: bad %s ptr x%lx, s/b x%x, was x%lx, file %s, line %d\n", \
+		_str, (long)_ptr, _magic, (long)*((long *)(_ptr)), __FILE__, __LINE__); \
 		Tcl_AppendResult(interp, bu_vls_addr(&_fb_vls), (char *)NULL); \
 		bu_vls_free(&_fb_vls); \
 \

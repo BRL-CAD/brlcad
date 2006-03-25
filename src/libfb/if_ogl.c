@@ -73,6 +73,13 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_WAIT_H
+#  include <sys/wait.h>
+#endif
+
 #undef RED
 
 #include "machine.h"
