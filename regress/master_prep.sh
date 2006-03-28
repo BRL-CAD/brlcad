@@ -40,13 +40,23 @@ sed -e "s/$OLD_MAJOR\.$OLD_MINOR\.$OLD_PATCH/$MAJOR\.$MINOR\.$PATCH/" \
     -e "s/^PATCH_VERSION=$OLD_PATCH/PATCH_VERSION=$PATCH/" \
     < configure.ac.orig > configure.ac
 
+
+# check to make sure it worked.
+NEW_MAJOR=`grep '^MAJOR_VERSION=' configure.ac | awk -F \= '{print $2}'`
+NEW_MINOR=`grep '^MINOR_VERSION=' configure.ac | awk -F \= '{print $2}'`
+NEW_PATCH=`grep '^PATCH_VERSION=' configure.ac | awk -F \= '{print $2}'`
+
+/bin/echo "$OLD_MAJOR $OLD_MINOR $OLD_PATCH"
+/bin/echo "$NEW_MAJOR $NEW_MINOR $NEW_PATCH"
+/bin/echo "$MAJOR $MINOR $PATCH"
+
 # get a build environment so we can "make dist"
 /bin/echo autogen
 /bin/echo autogen >> $LOG_FILE 2>&1
 /bin/sh ./autogen.sh >> $LOG_FILE 2>&1
 
 /bin/echo configure
-./configure >> $LOG_FILE 2>&1
+./configure --enable-everything >> $LOG_FILE 2>&1
 
 # Prepare a source distribution
 /bin/echo making dist
