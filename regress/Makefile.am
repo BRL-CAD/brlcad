@@ -9,35 +9,35 @@ regress: regression
 test: regression
 
 moss: $(top_srcdir)/regress/moss.sh
-	${SH} $(top_srcdir)/regress/moss.sh $(top_srcdir)
+	- ${SH} $(top_srcdir)/regress/moss.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
 lights: $(top_srcdir)/regress/lights.sh
-	${SH} $(top_srcdir)/regress/lights.sh $(top_srcdir)
+	- ${SH} $(top_srcdir)/regress/lights.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
 solids: $(top_srcdir)/regress/solids.sh
-	${SH} $(top_srcdir)/regress/solids.sh $(top_srcdir)
+	- ${SH} $(top_srcdir)/regress/solids.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
 shaders: $(top_srcdir)/regress/shaders.sh
-	${SH} $(top_srcdir)/regress/shaders.sh $(top_srcdir)
+	- ${SH} $(top_srcdir)/regress/shaders.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
 spdi: $(top_srcdir)/regress/spdi.sh
-	${SH} $(top_srcdir)/regress/spdi.sh $(top_srcdir)
+	- ${SH} $(top_srcdir)/regress/spdi.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
 iges: $(top_srcdir)/regress/iges.sh
-	${SH} $(top_srcdir)/regress/iges.sh $(top_srcdir)
+	- ${SH} $(top_srcdir)/regress/iges.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
 weight: $(top_srcdir)/regress/weight.sh
-	${SH} $(top_srcdir)/regress/weight.sh $(top_srcdir)
+	- ${SH} $(top_srcdir)/regress/weight.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
 gqa: $(top_srcdir)/regress/gqa.sh
-	${SH} $(top_srcdir)/regress/gqa.sh
+	- ${SH} $(top_srcdir)/regress/gqa.sh
 	@${ECHO} +++ $@ test complete.
 
 # these are here because they go in the distribution but are not installed
