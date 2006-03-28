@@ -6417,7 +6417,8 @@ Popup Menu    Right or Ctrl-Left
 	-thickness 2 \
 	-buttonboxpady 0
     $itk_component(preferencesDialog) buttonconfigure 0 \
-	-defaultring no \
+	-defaultring yes \
+	-defaultringpad 3 \
 	-borderwidth 1 \
 	-pady 0
     $itk_component(preferencesDialog) buttonconfigure 1 \
