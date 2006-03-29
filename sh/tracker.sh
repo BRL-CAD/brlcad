@@ -40,6 +40,11 @@
 # a comma separate value file suitable for import into a spreadsheet
 # application.
 #
+# Example use that provides progress status, includes no closed
+# tracker items, and saves the data to a file named trackers.csv:
+#
+#   ./tracker.sh -v -o trackers.csv -c 0 brlcad
+#
 # Author -
 #   Christopher Sean Morrison
 #
