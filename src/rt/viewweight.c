@@ -393,11 +393,11 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segp)
 	part_count++;
 	/* add the datapoint structure in and then calculate it
 	   in parallel, the region structures are a shared resource */
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
 #if 0
 	bu_log( "\nhit: partition %d\n", part_count );
 #endif
 	dp = (struct datapoint *) bu_malloc( sizeof(struct datapoint), "dp");
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	addp = reg->reg_udata;
 	reg->reg_udata = (genptr_t) dp;
 	dp->next = (struct datapoint *) addp;
