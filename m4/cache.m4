@@ -46,34 +46,52 @@ if test "x$cache_file" = "x/dev/null" ; then
 	configure_cache=ifelse([$1], , [config.cache.${host_os}], [$1])
 	CONFIG_CACHE=""
 	if test -f "$configure_cache"; then
-		# if the configure script has been modified since
-		# the last caching, assume it to be invalid.
-		last_modified="`ls -Lt $configure_cache configure`"
-		case "x$last_modified" in
-			xconfigure*)
-				AC_MSG_RESULT([found but out of date])
-				rm -f $configure_cache
-				;;
-			*)
-				AC_MSG_RESULT([found $configure_cache])
+		if test "x`cat $configure_cache | grep ac_cv_env_CC_value" != "xac_cv_env_CC_value=$CC" ; then
+			dnl if the compiler we're using now doesn't
+			dnl match the compiler used in the previous
+			dnl cached results, invalidate it.
+			AC_MSG_RESULT([found but compiler differs])
+			rm -f "$configure_cache"
+		elif test "x`cat $configure_cache | grep ac_cv_env_CPPFLAGS_value" != "xac_cv_env_CPPFLAGS_value=$CPPFLAGS" ; then
+			dnl if the preprocessor flags we're using now
+			dnl doesn't match the flags used in the
+			dnl previous cached results, invalidate it.
+			AC_MSG_RESULT([found but preprocessor flags differ])
+			rm -f "$configure_cache"
+		else
+			dnl if the configure script has been modified
+			dnl since the last caching, assume it to be
+			dnl invalid.
+			last_modified="`ls -Lt $configure_cache configure`"
+			case "x$last_modified" in
+				xconfigure*)
+					AC_MSG_RESULT([found but out of date])
+					rm -f $configure_cache
+					;;
+			esac
+		fi
 
-				dnl go ahead and load our cache
-				case $configure_cache in
-					[\\/]* | ?:[\\/]* )
-						. $configure_cache
-						;;
-					*)
-						. ./$configure_cache
-						;;
-				esac
-		esac
+		dnl if the cache still exists, load it
+		if test -f "$configure_cache" ; then
+			dnl go ahead and load the cache
+			AC_MSG_RESULT([found $configure_cache])
+			case $configure_cache in
+				[\\/]* | ?:[\\/]* )
+					. $configure_cache
+					;;
+				*)
+					. ./$configure_cache
+					;;
+			esac
+		fi
 	else
 		AC_MSG_RESULT([not found])
 	fi
 
-	dnl if we are on sgi, bash may choke on sed syntax in the cache
+	dnl if we are on sgi, bash may choke on bad sed syntax in the cache
 	if test "x$host_os" != "xirix6.5" ; then
 		AC_MSG_NOTICE([*** Automatically caching to $configure_cache ***])
+		echo "bc_cv_CC=$CC"
 		>$configure_cache
 		cache_file="$configure_cache"
 		CONFIG_CACHE="$cache_file"
