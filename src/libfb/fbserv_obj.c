@@ -429,11 +429,11 @@ fbs_rfbread(struct pkg_conn *pcp, char *buf)
 
 	if( num*sizeof(RGBpixel) > buflen ) {
 		if( scanbuf != NULL )
-			bu_free( (char *)scanbuf, "scanbuf" );
+			free( (char *)scanbuf );
 		buflen = num*sizeof(RGBpixel);
 		if( buflen < 1024*sizeof(RGBpixel) )
 			buflen = 1024*sizeof(RGBpixel);
-		if( (scanbuf = (unsigned char *)bu_malloc( buflen, "scanbuf" )) == NULL ) {
+		if( (scanbuf = (unsigned char *)malloc( buflen )) == NULL ) {
 			fb_log("fb_read: malloc failed!");
 			if( buf ) (void)free(buf);
 			buflen = 0;
@@ -490,11 +490,11 @@ fbs_rfbreadrect(struct pkg_conn *pcp, char *buf)
 
 	if( num*sizeof(RGBpixel) > buflen ) {
 		if( scanbuf != NULL )
-			bu_free( (char *)scanbuf, "scanbuf" );
+			free( (char *)scanbuf );
 		buflen = num*sizeof(RGBpixel);
 		if( buflen < 1024*sizeof(RGBpixel) )
 			buflen = 1024*sizeof(RGBpixel);
-		if( (scanbuf = (unsigned char *)bu_malloc( buflen, "scanbuf" )) == NULL ) {
+		if( (scanbuf = (unsigned char *)malloc( buflen )) == NULL ) {
 			fb_log("fb_read: malloc failed!");
 			if( buf ) (void)free(buf);
 			buflen = 0;
@@ -558,11 +558,11 @@ fbs_rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 
 	if( num > buflen ) {
 		if( scanbuf != NULL )
-			bu_free( (char *)scanbuf, "scanbuf" );
+			free( (char *)scanbuf );
 		buflen = num;
 		if( buflen < 1024 )
 			buflen = 1024;
-		if( (scanbuf = (unsigned char *)bu_malloc( buflen, "scanbuf" )) == NULL ) {
+		if( (scanbuf = (unsigned char *)malloc( buflen )) == NULL ) {
 			fb_log("fbs_rfbbwreadrect: malloc failed!");
 			if( buf ) (void)free(buf);
 			buflen = 0;
