@@ -39,6 +39,7 @@ int comp_hdr ();
 
 extern char *optarg;
 extern int optind;
+extern void scan_usage( char **, const char * );
 
 int
 main( argc, argv )
