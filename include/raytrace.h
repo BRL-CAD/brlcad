@@ -6765,7 +6765,8 @@ RT_EXPORT BU_EXTERN(int rt_mk_binunif,
 		     unsigned int minor_type,
 		     long max_count));
 
-#ifdef _WIN32
+/* XXX do not rely on *_ifree() functions */
+#if 1
 /* defined in g_dsp.c */
 RT_EXPORT BU_EXTERN(void rt_dsp_ifree,
 		    (struct rt_db_internal *ip));
