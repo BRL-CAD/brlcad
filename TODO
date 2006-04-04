@@ -48,6 +48,10 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* have libbu report memory allocation statistics so the exact amount
+  of memory requirements for a geometry database can be computed on
+  the fly via a pre-prep phase.
+
 * center of presented area
 
 * short introductory documentation on using various BRL-CAD command
