@@ -37,9 +37,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
+
+#include "machine.h"
+#include "bu.h"
+#include "plot3.h"
+
 
 int	x,y,z;
 int	npts;

@@ -38,16 +38,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 
 mat_t	identity;
 double degtorad = 0.0174532925199433;
