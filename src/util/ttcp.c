@@ -40,9 +40,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /* #define BSD42 */
 /* #define BSD41a */
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+/* does not include common.h so it may remain stand-alone */
+
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
