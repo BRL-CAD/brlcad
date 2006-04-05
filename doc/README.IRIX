@@ -15,11 +15,27 @@ is known to cause a build failure.  On the other hand, the following:
 
 resulted in a successful build.
 
+Certain versions of the gcc compiler are known to crash with internal
+error messages, for example on src/mged/animedit.c, when using
+--enable-optimized (i.e. -O3).  The simple workaround for the problem
+is to compile whatever directory is failing with -O2 instead:
+	cd src/mged
+	make CFLAGS="-O2 -DIRIX=6"
+	cd ../..
+	make
 
-For IRIX 64bit build:
+For IRIX 32-bit unoptimized /usr/brlcad build:
+	export SGI_ABI=-n32
+	./configure CC=cc
+
+For IRIX 64-bit unoptimized /usr/brlcad build:
 	export SGI_ABI=-64
 	./configure CC=cc CFLAGS=-64 LDFLAGS=-64 --enable-64bit-build
 
-For IRIX 32bit build:
-	export SGI_ABI=-n32
-	./configure CC=cc
+For IRIX 32-bit optimized production release build:
+	export SGI_API=-n32
+	./configure CC=cc --enable-optimized --enable-everything --disable-blt-build --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH/mips32
+
+For IRIX 64-bit optimized production release build:
+	export SGI_API=-64
+	./configure CC=cc CFLAGS=-64 LDFLAGS=-64 --enable-64bit-build --enable-optimized --enable-everything --disable-blt-build --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH/mips64
