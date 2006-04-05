@@ -17,11 +17,14 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* restore functionality to tests and benchmark
+* good to go.
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
+
+* fix potential buffer overflows and security issues detected by
+  Pedro's run of FlawFinder
 
 * get archer working
 
@@ -40,13 +43,14 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * use environ for run-time path tracing lookups
 
-* add support to restore the backups when an autogen.sh step aborts
-
-* support variable overrides for autogen.sh
-
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
+
+* recursive configure and variable overrides for autogen.sh
+
+* optimize configure testing so that when options are enabled, the
+  corresponding library and functionality tests are not performed.
 
 * have libbu report memory allocation statistics so the exact amount
   of memory requirements for a geometry database can be computed on
