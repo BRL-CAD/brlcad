@@ -44,6 +44,9 @@ rletoabA62()				Tag the file.
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #ifndef TRUE
 #define TRUE 1

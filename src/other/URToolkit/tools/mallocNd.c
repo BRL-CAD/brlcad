@@ -8,6 +8,9 @@
 ** $Date$
 ** $Locker$
 ** $Log$
+** Revision 1.2  2006/03/24 19:36:13  brlcad
+** quell compiler warnings
+**
 ** Revision 1.1  2005/01/24 05:12:41  brlcad
 ** update of urt from 3.0 to 3.1b1; this includes keeping directory structure and moving tools to src/other/URToolkit/tools
 **
@@ -69,6 +72,7 @@
  */
 
 /* Imports */
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 extern char *malloc();
