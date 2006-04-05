@@ -61,6 +61,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
 #endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_WAIT_H
+#  include <sys/wait.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#  include <sys/fcntl.h>
+#endif
 
 #ifdef VMIN
 #  undef VMIN
