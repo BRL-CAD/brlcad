@@ -43,6 +43,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 long	matching;
 long	off1;
