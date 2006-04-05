@@ -48,6 +48,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #  include <sys/types.h>
 #  include <sys/stat.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "vmath.h"
