@@ -55,6 +55,9 @@ static const char RCSview[] = "@(#)$Header";
 #include "light.h"
 #include "plot3.h"
 
+#ifdef RT_MULTISPECTRAL
+#  include "spectrum.h"
+#endif
 
 
 /*

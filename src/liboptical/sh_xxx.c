@@ -61,6 +61,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
 #include "machine.h"
 #include "vmath.h"
@@ -258,6 +259,7 @@ xxx_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	register struct xxx_specific *xxx_sp =
 		(struct xxx_specific *)dp;
 	point_t pt;
+	VSETALL(pt, 0);
 
 	/* check the validity of the arguments we got */
 	RT_AP_CHECK(ap);
