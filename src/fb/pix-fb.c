@@ -38,25 +38,29 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+#ifdef _WIN32
+#  include <winsock.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"
 #include "fb.h"
 
 #include "pkg.h"
-
-#ifdef _WIN32
-#  include <winsock.h>
-#  include <fcntl.h>
-#endif
 
 /* defined in libbn/asize.c */
 extern int bn_common_file_size(int *, int *, const char *, int);
