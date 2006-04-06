@@ -47,6 +47,9 @@ static const char RCSid[] = "$Header$";
 #endif
 #include <ctype.h>
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "db.h"

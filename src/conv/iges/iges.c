@@ -477,7 +477,7 @@ write_attribute_definition( fp_dir , fp_param )
 	dir_entry[i] = DEFAULT;
 
     /* start with parameter data */
-    bu_vls_printf( &str , "322,%dH%s,5001,9" , strlen( att_string ) , att_string );
+    bu_vls_printf( &str , "322,%ldH%s,5001,9" , strlen( att_string ) , att_string );
     bu_vls_printf( &str , ",1,3,1" ); /* material name */
     bu_vls_printf( &str , ",2,3,1" ); /* material parameters */
     bu_vls_printf( &str , ",3,6,1" ); /* region flag (logical value) */
@@ -816,14 +816,14 @@ w_start_global(
     bu_vls_free( &str );
 
     /* Write Global Section */
-    bu_vls_printf( &str , ",,%dH%s" , strlen( db_name ), db_name);
+    bu_vls_printf( &str , ",,%ldH%s" , strlen( db_name ), db_name);
 
     if( output_file == NULL )
 	bu_vls_printf( &str , ",7Hstd_out" );
     else
-	bu_vls_printf( &str , ",%dH%s" , strlen( output_file ) , output_file );
+	bu_vls_printf( &str , ",%ldH%s" , strlen( output_file ) , output_file );
 
-    bu_vls_printf( &str , ",%dH%s,%dH%s,32,38,6,308,15,%dH%s,1.0,2,2HMM,,1.0" ,
+    bu_vls_printf( &str , ",%ldH%s,%ldH%s,32,38,6,308,15,%ldH%s,1.0,2,2HMM,,1.0" ,
 		   strlen( version ) , version ,
 		   strlen( id ) , id,
 		   strlen( db_name ) , db_name );
@@ -2126,7 +2126,7 @@ write_name_entity( name , fp_dir , fp_param )
     if( name_len >= NAMESIZE )
 	bu_vls_printf( &str , "406,1,16H%16.16s;" , name );
     else
-	bu_vls_printf( &str , "406,1,%dH%s;" , strlen( name ) , name );
+	bu_vls_printf( &str , "406,1,%ldH%s;" , strlen( name ) , name );
 
     /* remember where parameter data is going */
     dir_entry[2] = param_seq + 1;
