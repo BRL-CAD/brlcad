@@ -46,13 +46,13 @@ if test "x$cache_file" = "x/dev/null" ; then
 	configure_cache=ifelse([$1], , [config.cache.${host_os}], [$1])
 	CONFIG_CACHE=""
 	if test -f "$configure_cache"; then
-		if test "x`cat $configure_cache | grep ac_cv_env_CC_value" != "xac_cv_env_CC_value=$CC" ; then
+		if test "x`cat $configure_cache | grep ac_cv_env_CC_value`" != "xac_cv_env_CC_value=$CC" ; then
 			dnl if the compiler we're using now doesn't
 			dnl match the compiler used in the previous
 			dnl cached results, invalidate it.
 			AC_MSG_RESULT([found but compiler differs])
 			rm -f "$configure_cache"
-		elif test "x`cat $configure_cache | grep ac_cv_env_CPPFLAGS_value" != "xac_cv_env_CPPFLAGS_value=$CPPFLAGS" ; then
+		elif test "x`cat $configure_cache | grep ac_cv_env_CPPFLAGS_value`" != "xac_cv_env_CPPFLAGS_value=$CPPFLAGS" ; then
 			dnl if the preprocessor flags we're using now
 			dnl doesn't match the flags used in the
 			dnl previous cached results, invalidate it.
