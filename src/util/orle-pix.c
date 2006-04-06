@@ -35,18 +35,18 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <unistd.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
+
 #include "machine.h"
 #include "fb.h"		/* For Pixel typedef */
 #include "orle.h"
+#include "bu.h"
 
 static char	*usage[] =
 	{

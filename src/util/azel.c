@@ -68,6 +68,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
+
 
 #define		DEG2RAD		0.01745329	/* Convert degrees to radians */
 #define		OPT_STRING	"a:c:e:ipr?"	/* For bu_getopt(3) */
