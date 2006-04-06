@@ -7065,8 +7065,7 @@ wdb_get_obj_bounds2(struct rt_wdb		*wdbp,
     VMOVE(rpp_min, stp->st_min);
     VMOVE(rpp_max, stp->st_max);
 
-    rt_clean(rtip);
-    bu_free((genptr_t)rtip, "wdb_get_obj_bounds2: rtip");
+    rt_free_rti(rtip);
     rt_db_free_internal(&intern, &rt_uniresource);
     bu_free( (char *)stp, "struct soltab" );
 
@@ -7106,8 +7105,7 @@ wdb_get_obj_bounds(struct rt_wdb	*wdbp,
 	if (db_string_to_path(&path,  rtip->rti_dbip, argv[i])) {
 	    Tcl_AppendResult(interp, "db_string_to_path failed for ",
 			     argv[i], "\n", (char *)NULL );
-	    rt_clean(rtip);
-	    bu_free((genptr_t)rtip, "wdb_get_obj_bounds: rtip");
+	    rt_free_rti(rtip);
 	    return TCL_ERROR;
 	}
 
@@ -7120,8 +7118,7 @@ wdb_get_obj_bounds(struct rt_wdb	*wdbp,
 	    if (db_string_to_path(&tmp_path, rtip->rti_dbip, regp->reg_name)) {
 		Tcl_AppendResult(interp, "db_string_to_path failed for ",
 				 regp->reg_name, "\n", (char *)NULL);
-		rt_clean(rtip);
-		bu_free((genptr_t)rtip, "wdb_get_obj_bounds: rtip");
+		rt_free_rti(rtip);
 		return TCL_ERROR;
 	    }
 	    if (path.fp_names[0] == tmp_path.fp_names[0])
@@ -7135,8 +7132,7 @@ wdb_get_obj_bounds(struct rt_wdb	*wdbp,
 	if (!gottree && rt_gettree(rtip, path.fp_names[0]->d_namep)) {
 	    Tcl_AppendResult(interp, "rt_gettree failed for ",
 			     argv[i], "\n", (char *)NULL );
-	    rt_clean(rtip);
-	    bu_free((genptr_t)rtip, "wdb_get_obj_bounds: rtip");
+	    rt_free_rti(rtip);
 	    return TCL_ERROR;
 	}
 	db_free_full_path(&path);
@@ -7170,8 +7166,7 @@ found:
 	    if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
 		Tcl_AppendResult(interp, "rt_bound_tree failed for ",
 				 regp->reg_name, "\n", (char *)NULL);
-		rt_clean(rtip);
-		bu_free((genptr_t)rtip, "wdb_get_obj_bounds: rtip");
+		rt_free_rti(rtip);
 		return TCL_ERROR;
 	    }
 	    VMINMAX(rpp_min, rpp_max, reg_min);
@@ -7196,8 +7191,7 @@ not_found:
 		if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
 		    Tcl_AppendResult(interp, "rt_bound_tree failed for ",
 				     regp->reg_name, "\n", (char *)NULL);
-		    rt_clean(rtip);
-		    bu_free((genptr_t)rtip, "wdb_get_obj_bounds: rtip");
+		    rt_free_rti(rtip);
 		    return TCL_ERROR;
 		}
 		VMINMAX(rpp_min, rpp_max, reg_min);
@@ -7206,8 +7200,7 @@ not_found:
 	}
     }
 
-    rt_clean(rtip);
-    bu_free((genptr_t)rtip, "wdb_get_obj_bounds: rtip");
+    rt_free_rti(rtip);
 
     return TCL_OK;
 }
@@ -8850,7 +8843,11 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 			return TCL_ERROR;
 		}
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+		if( (fd=fopen( file_name, "w+b")) == NULL ) {
+#else
 		if( (fd=fopen( file_name, "w+")) == NULL ) {
+#endif
 			Tcl_AppendResult(interp, "Error: cannot open file ", file_name,
 					 " for writing", (char *)NULL );
 			return TCL_ERROR;
