@@ -214,6 +214,7 @@
     }
 
     set db $_db
+    set sharedDb 1
 }
 
 ::itcl::body Db::shells {args} {
