@@ -33,6 +33,7 @@
 /* system headers */
 #include <stdlib.h>
 #include <tcl.h>
+#include <tclInt.h>
 #include <itcl.h>
 #include <string.h>
 
@@ -42,6 +43,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "vmath.h"
+#include "tclcad.h"
 
 /* local headers */
 #include "./ged.h"

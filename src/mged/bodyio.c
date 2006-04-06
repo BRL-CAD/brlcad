@@ -249,7 +249,7 @@ cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     int				fd;
     void			*bufp;
     size_t			nbytes = 0;
-    int				written;
+    long int			written;
     struct bu_external		ext;
     struct db5_raw_internal	raw;
     struct rt_db_internal	intern;

@@ -30,15 +30,14 @@
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <signal.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -49,10 +48,12 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 #include "./ged.h"
 #include "./sedit.h"
 #include "./cmd.h"
 #include "../librt/debug.h"	/* XXX */
+
 
 int
 f_eac(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)

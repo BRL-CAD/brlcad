@@ -1285,8 +1285,8 @@ nmg_ed(int arg)
 		  struct bu_vls tmp_vls;
 
 		  bu_vls_init(&tmp_vls);
-		  bu_vls_printf(&tmp_vls, "edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n",
-				es_eu, V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
+		  bu_vls_printf(&tmp_vls, "edgeuse selected=x%lx (%g %g %g) <-> (%g %g %g)\n",
+				(long)es_eu, V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
 				V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
 		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		  bu_vls_free(&tmp_vls);
@@ -1306,8 +1306,8 @@ nmg_ed(int arg)
 		  struct bu_vls tmp_vls;
 
 		  bu_vls_init(&tmp_vls);
-		  bu_vls_printf(&tmp_vls, "edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n",
-				es_eu, V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
+		  bu_vls_printf(&tmp_vls, "edgeuse selected=x%lx (%g %g %g) <-> (%g %g %g)\n",
+				(long)es_eu, V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
 				V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
 		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		  bu_vls_free(&tmp_vls);
@@ -1327,8 +1327,8 @@ nmg_ed(int arg)
 		  struct bu_vls tmp_vls;
 
 		  bu_vls_init(&tmp_vls);
-		  bu_vls_printf(&tmp_vls, "edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n",
-				es_eu, V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
+		  bu_vls_printf(&tmp_vls, "edgeuse selected=x%lx (%g %g %g) <-> (%g %g %g)\n",
+				(long)es_eu, V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
 				V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
 		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		  bu_vls_free(&tmp_vls);
