@@ -45,6 +45,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include <signal.h>
+#include <time.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
@@ -53,7 +54,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
-#include <time.h>
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_WAIT_H
+#  include <sys/wait.h>
+#endif
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
@@ -1988,7 +1994,7 @@ f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct rt_bot_internal **bots;
 	struct rt_bot_internal *bot;
 	int bot_count = 256;
-	int i, edge, e, f ;
+	int edge, e, f ;
 	int * edges;
 	int face;
 
@@ -2009,13 +2015,13 @@ f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	if( rt_db_get_internal( &intern, dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
-	    Tcl_AppendResult(interp, "rt_db_get_internal(", argv[i], ") error\n", (char *)NULL);
+	    Tcl_AppendResult(interp, "rt_db_get_internal(", argv[1], ") error\n", (char *)NULL);
 	    return TCL_ERROR;
 
 	}
 
 	if( intern.idb_type != ID_BOT ) 	{
-	    Tcl_AppendResult(interp, argv[i], " is not a BOT solid!!!  skipping\n", (char *)NULL );
+	    Tcl_AppendResult(interp, argv[1], " is not a BOT solid!!!  skipping\n", (char *)NULL );
 	    return TCL_ERROR;
 	}
 

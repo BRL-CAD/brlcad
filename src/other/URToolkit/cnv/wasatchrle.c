@@ -52,7 +52,7 @@ struct was_op {			/* A wasatch "opcode" */
     rle_pixel count, data;
 } was_op;
 
-void
+int
 main(argc, argv)
 int argc;
 char **argv;

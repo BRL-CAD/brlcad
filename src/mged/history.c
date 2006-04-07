@@ -34,6 +34,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
 #ifdef HAVE_STRING_H
@@ -294,8 +295,8 @@ f_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	hp_prev = BU_LIST_PREV(mged_hist, &(hp->l));
 	if (with_delays && BU_LIST_NOT_HEAD(hp_prev, &(mged_hist_head.l))) {
 	    if (timediff(&tvdiff, &(hp_prev->mh_finish), &(hp->mh_start)) >= 0)
-		bu_vls_printf(&str, "delay %d %d\n", tvdiff.tv_sec,
-			      tvdiff.tv_usec);
+		bu_vls_printf(&str, "delay %ld %ld\n", (long)tvdiff.tv_sec,
+			      (long)tvdiff.tv_usec);
 	}
 
 	if (hp->mh_status == CMD_BAD)

@@ -67,7 +67,7 @@ static int ReadBitmapFile();
  * 	Reads the bitmap, then builds an RLE image with one pixel per
  * 	bit in the input.
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

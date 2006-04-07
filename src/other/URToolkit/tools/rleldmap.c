@@ -136,7 +136,7 @@ void applymap(), shiftmap();
  *	the input file to the output file.  If stdin is empty (no input at
  *	all, an output RLE file with just a color map will be generated).
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

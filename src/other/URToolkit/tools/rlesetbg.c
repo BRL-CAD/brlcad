@@ -35,7 +35,7 @@ static char rcs_ident[] = "$Id$";
 
 char buffer[4096];
 
-void
+int
 main(argc, argv)
 int	argc;
 char	*argv[];
@@ -74,7 +74,7 @@ char	*argv[];
     {
 	if ( backcolor_flag && nback < in_hdr.ncolors )
 	{
-	    fprintf( stderr, "%s: Need %d colors, only %d supplied.\n",
+	    fprintf( stderr, "%s: Need %ld colors, only %ld supplied.\n",
 		     in_hdr.ncolors, nback );
 	    exit(-1);
 	}

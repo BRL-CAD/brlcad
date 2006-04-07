@@ -40,7 +40,7 @@ typedef FILE	*FILPTR;
  *    -a		Uses first input file as alpha channel.
  */
 
-void
+int
 main(argc, argv)
 int  argc;
 char *argv[];

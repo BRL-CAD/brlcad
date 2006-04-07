@@ -39,15 +39,14 @@ static const char RCSnmg[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -57,6 +56,7 @@ static const char RCSnmg[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "nurb.h"
 #include "./debug.h"
+
 
 /* rt_nmg_internal is just "model", from nmg.h */
 
@@ -2718,8 +2718,8 @@ rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		(struct model *)ip->idb_ptr;
 
 	NMG_CK_MODEL(m);
-	bu_vls_printf( str, "n-Manifold Geometry solid (NMG) maxindex=%d\n",
-		m->maxindex);
+	bu_vls_printf( str, "n-Manifold Geometry solid (NMG) maxindex=%ld\n",
+		(long)m->maxindex);
 
 	if( !verbose )  return(0);
 

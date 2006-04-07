@@ -109,7 +109,7 @@ static char *Malloc();
  *      [None]
  */
 
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

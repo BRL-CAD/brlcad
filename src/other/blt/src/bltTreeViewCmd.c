@@ -44,6 +44,7 @@
 #include "bltList.h"
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
+#include <ctype.h>
 
 #define CLAMP(val,low,hi)	\
 	(((val) < (low)) ? (low) : ((val) > (hi)) ? (hi) : (val))

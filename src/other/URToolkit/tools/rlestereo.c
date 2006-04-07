@@ -80,7 +80,7 @@ int get_rle_setup();
  *	-r scale	Scale factor for right-eye image (default 1.0).
  */
 
-void
+int
 main(argc, argv)
 int argc;
 char **argv;

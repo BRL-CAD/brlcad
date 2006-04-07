@@ -61,6 +61,9 @@ static const char RCSmalloc[] = "@(#)$Header$ (ARL)";
 #else
 #  include <strings.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"
@@ -282,7 +285,7 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 	}
 
 	if( ptr==(char *)0 || bu_debug&BU_DEBUG_MEM_LOG )  {
-		fprintf(stderr, "%8lx malloc%7d %s\n", (long)ptr, size, str);
+		fprintf(stderr, "%8lx malloc%7ld %s\n", (long)ptr, size, str);
 	}
 #if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_release( BU_SEM_SYSCALL );
@@ -596,7 +599,7 @@ bu_strdupm(register const char *cp, const char *label)
 
 	if(bu_debug&BU_DEBUG_MEM_LOG) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		fprintf(stderr, "%8lx strdup%7d \"%s\"\n", (long)base, len, cp );
+		fprintf(stderr, "%8lx strdup%7ld \"%s\"\n", (long)base, (long)len, cp );
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 

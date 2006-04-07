@@ -539,24 +539,24 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    }
 
 	    if (bn_decode_vect(pt, argv[1]) < 3) {
-		bu_vls_printf(&result, "bn_isect_line3_line3 no pt", argv[0]);
+		bu_vls_printf(&result, "bn_isect_line3_line3 no pt: %s\n", argv[0]);
 		goto error;
 	    }
 	    if (bn_decode_vect(dir, argv[2]) < 3) {
-		bu_vls_printf(&result, "bn_isect_line3_line3 no dir", argv[0]);
+		bu_vls_printf(&result, "bn_isect_line3_line3 no dir: %s\n", argv[0]);
 		goto error;
 	    }
 	    if (bn_decode_vect(a, argv[3]) < 3) {
-		bu_vls_printf(&result, "bn_isect_line3_line3 no a pt", argv[0]);
+		bu_vls_printf(&result, "bn_isect_line3_line3 no a pt: %s\n", argv[0]);
 		goto error;
 	    }
 	    if (bn_decode_vect(c, argv[4]) < 3) {
-		bu_vls_printf(&result, "bn_isect_line3_line3 no c dir", argv[0]);
+		bu_vls_printf(&result, "bn_isect_line3_line3 no c dir: %s\n", argv[0]);
 		goto error;
 	    }
 	    i = bn_isect_line3_line3(&t, &u, pt, dir, a, c, &tol);
 	    if (i != 1) {
-		bu_vls_printf(&result, "bn_isect_line3_line3 no intersection", argv[0]);
+		bu_vls_printf(&result, "bn_isect_line3_line3 no intersection: %s\n", argv[0]);
 		goto error;
 	    }
 
@@ -587,24 +587,24 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    VSETALL(c, 0.0);
 
 	    if (bn_decode_vect(pt, argv[1]) < 2) {
-		bu_vls_printf(&result, "bn_isect_line2_line2 no pt", argv[0]);
+		bu_vls_printf(&result, "bn_isect_line2_line2 no pt: %s\n", argv[0]);
 		goto error;
 	    }
 	    if (bn_decode_vect(dir, argv[2]) < 2) {
-		bu_vls_printf(&result, "bn_isect_line2_line2 no dir", argv[0]);
+		bu_vls_printf(&result, "bn_isect_line2_line2 no dir: %s\n", argv[0]);
 		goto error;
 	    }
 	    if (bn_decode_vect(a, argv[3]) < 2) {
-		bu_vls_printf(&result, "bn_isect_line2_line2 no a pt", argv[0]);
+		bu_vls_printf(&result, "bn_isect_line2_line2 no a pt: %s\n", argv[0]);
 		goto error;
 	    }
 	    if (bn_decode_vect(c, argv[4]) < 2) {
-		bu_vls_printf(&result, "bn_isect_line2_line2 no c dir", argv[0]);
+		bu_vls_printf(&result, "bn_isect_line2_line2 no c dir: %s\n", argv[0]);
 		goto error;
 	    }
 	    i = bn_isect_line2_line2(dist, pt, dir, a, c, &tol);
 	    if (i != 1) {
-		bu_vls_printf(&result, "bn_isect_line2_line2 no intersection", argv[0]);
+		bu_vls_printf(&result, "bn_isect_line2_line2 no intersection: %s\n", argv[0]);
 		goto error;
 	    }
 
@@ -612,7 +612,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    bu_vls_printf(&result, "%g %g", a[0], a[1]);
 
 	} else {
-		bu_vls_printf(&result, "libbn/bn_tcl.c: math function %s not supported yet", argv[0]);
+		bu_vls_printf(&result, "libbn/bn_tcl.c: math function %s not supported yet\n", argv[0]);
 		goto error;
 	}
 
@@ -687,7 +687,7 @@ bn_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, cha
     if( argc >= 3 )  pixel_size = atoi(argv[2]);
 
     if (bn_common_file_size(&width, &height, argv[1], pixel_size) > 0) {
-	sprintf(interp->result, "%d %d", width, height);
+	sprintf(interp->result, "%lu %lu", width, height);
 	return TCL_OK;
     }
 

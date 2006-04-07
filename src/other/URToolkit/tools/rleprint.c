@@ -31,7 +31,7 @@
 
 #define MALLOC_ERR RLE_CHECK_ALLOC( cmd_name( argv ), 0, 0 )
 
-void
+int
 main(argc, argv)
 int	argc;
 char	*argv[];

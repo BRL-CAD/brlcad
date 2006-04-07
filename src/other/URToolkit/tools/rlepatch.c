@@ -34,7 +34,7 @@
 
 #define IN_WINDOW(y,wind) ((y >= wind.ymin) && (y <= wind.ymax))
 
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

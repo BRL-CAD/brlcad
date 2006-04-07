@@ -134,7 +134,7 @@ extern int Base[];
  */
 
 #ifdef USE_PROTOTYPES
-void main(int argc, char *argv[]);
+int main(int argc, char *argv[]);
 void ifImageSet(int i, int j, int value, color_t *color);
 void drawHand(double place, double scale, double radius, int mask, int edge);
 void rasterAddBits(int mask, int match, int value);
@@ -157,7 +157,7 @@ void areaFlood(int firstX, int firstY, int mask, int match, int value);
 void stackPush(int x, int y, int dir);
 int stackPop(void);
 #else
-void main();
+int main();
 void ifImageSet();
 void drawHand();
 void rasterAddBits();
@@ -182,7 +182,7 @@ int stackPop();
 #endif
 char **gargv;
 
-void
+int
 main (argc, argv)
 int	argc;
 char	*argv[];

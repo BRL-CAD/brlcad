@@ -20,7 +20,7 @@
 
 #define RLE_END 32768		/* This should be in rle.h */
 
-void
+int
 main( argc, argv )
 int argc;
 char ** argv;

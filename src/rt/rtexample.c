@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
 #include "machine.h"		/* machine specific definitions */
 #include "vmath.h"		/* vector math macros */
@@ -133,6 +134,7 @@ main(int argc, char **argv)
  *  (see raytrace.h), and a circular linked list of partitions,
  *  each one describing one in and out segment of one region.
  */
+int
 hit(register struct application *ap, struct partition *PartHeadp, struct seg *segs)
 {
     /* see raytrace.h for all of these guys */
@@ -203,6 +205,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 /*
  * rt_shootray() was told to call this on a miss.
  */
+int
 miss(register struct application *ap)
 {
     bu_log("missed\n");

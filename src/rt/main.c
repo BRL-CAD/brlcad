@@ -242,7 +242,7 @@ int main(int argc, char **argv)
 	}
 
 	if( bu_optind >= argc )  {
-		fprintf(stderr,"rt:  MGED database not specified\n");
+		fprintf(stderr,"%s:  MGED database not specified\n", argv[0]);
 		(void)fputs(usage, stderr);
 		return 1;
 	}

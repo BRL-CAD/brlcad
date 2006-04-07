@@ -738,8 +738,8 @@ f_copymat(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		struct bu_vls tmp_vls;
 
 		bu_vls_init(&tmp_vls);
-		bu_vls_printf(&tmp_vls, "Non-combination directory <x%x> '%s' for combination rt_db_internal <x%x>\nThis should not happen\n",
-		    dp, dp -> d_namep, intern);
+		bu_vls_printf(&tmp_vls, "Non-combination directory <x%lx> '%s' for combination rt_db_internal <x%lx>\nThis should not happen\n",
+		    (long)dp, dp -> d_namep, &intern);
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *) NULL);
 	    }
 	    /* Fall through this case */

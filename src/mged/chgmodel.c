@@ -2506,7 +2506,7 @@ f_fracture(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "%d = %d digits\n", tf+tw+tp, maxdigits);
+	  bu_vls_printf(&tmp_vls, "%ld = %d digits\n", (long)(tf+tw+tp), maxdigits);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 	}

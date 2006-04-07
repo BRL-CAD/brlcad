@@ -33,6 +33,9 @@
 #include <stdio.h>
 #include <stdlib.h> /* for atof() */
 #include <math.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 

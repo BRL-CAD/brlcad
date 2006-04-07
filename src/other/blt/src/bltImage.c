@@ -33,6 +33,7 @@
 #ifndef WIN32
 #include <X11/Xproto.h>
 #endif
+#include <ctype.h>
 
 #define CLAMP(c)	((((c) < 0.0) ? 0.0 : ((c) > 255.0) ? 255.0 : (c)))
 

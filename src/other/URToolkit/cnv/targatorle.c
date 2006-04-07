@@ -120,7 +120,7 @@ void targa_getrow();
 void init_comp();
 unsigned char getbyte();
 
-void
+int
 main(argc,argv) 
 int argc;
 char *argv[];

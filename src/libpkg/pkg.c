@@ -91,8 +91,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #  include <strings.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
+
 
 /* Not all systems with "BSD Networking" include UNIX Domain sockets */
 #ifdef HAVE_UNIX_DOMAIN_SOCKETS
@@ -114,6 +118,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <errno.h>
 #include "pkg.h"
+
 
 #if defined(__stardent)
 /* <sys/byteorder.h> seems to be wrong, and this is a LITTLE_ENDIAN machine */
@@ -376,7 +381,10 @@ pkg_open(char *host, char *service, char *protocol, char *uname, char *passwd, c
 	addr = (struct sockaddr *) &sinhim;
 	addrlen = sizeof(struct sockaddr_in);
 
+#ifdef HAVE_UNIX_DOMAIN_SOCKETS
 ready:
+#endif
+
 	if( (netfd = socket(addr->sa_family, SOCK_STREAM, 0)) < 0 )  {
 		pkg_perror( errlog, "pkg_open:  client socket" );
 		return(PKC_ERROR);
@@ -548,7 +556,10 @@ pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (/* ??
 	addr = (struct sockaddr *) &sinme;
 	addrlen = sizeof(struct sockaddr_in);
 
+#ifdef HAVE_UNIX_DOMAIN_SOCKETS
 ready:
+#endif
+
 	if( (pkg_listenfd = socket(addr->sa_family, SOCK_STREAM, 0)) < 0 )  {
 		pkg_perror( errlog, "pkg_permserver:  socket" );
 		return(-1);

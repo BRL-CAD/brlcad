@@ -44,6 +44,7 @@ static char rt_hf_RcSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <math.h>
@@ -61,6 +62,7 @@ static char rt_hf_RcSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "./debug.h"
+
 
 /*
  *  Description of the external string description of the HF.

@@ -47,7 +47,7 @@ int invert_flag = 0, oflag = 0;
 
 void init(), read_scan(), write_scan();
 
-void
+int
 main(argc,argv) 
 int argc;
 char *argv[];

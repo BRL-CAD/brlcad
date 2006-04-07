@@ -331,7 +331,7 @@ char *argv[];
     /* !!! Will have to be modified when we handle NB>1. !!! */
     nread = fread( VICARImage, 1, NS*NL, fd );
     if ( nread < NS*NL )
-	fprintf( stderr, "%s: Short read from %s (%d bytes missing)\n",
+	fprintf( stderr, "%s: Short read from %s (%ld bytes missing)\n",
 		 the_hdr.cmd, the_hdr.file_name, NS*NL - nread );
     for(y=(NL-1);y>=0;y--)	/* flip in y */
     {

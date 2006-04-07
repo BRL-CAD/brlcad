@@ -59,7 +59,7 @@ void prologue(), puthexpix(), epilogue();
 
 static int gencps = 0;		/* generate color PostScript? */
 
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

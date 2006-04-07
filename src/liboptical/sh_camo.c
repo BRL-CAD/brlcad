@@ -47,15 +47,17 @@
 #include "raytrace.h"
 #include "rtprivate.h"
 
+#ifdef RT_MULTISPECTRAL
+#  include "spectrum.h"
+extern const struct bn_table	*spectrum;
+#endif
+
 #if !defined(M_PI)
-#define M_PI            3.14159265358979323846
+#  define M_PI            3.14159265358979323846
 #endif
 
 #define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
 
-#ifdef RT_MULTISPECTRAL
-extern const struct bn_table	*spectrum;
-#endif
 
 #define camo_MAGIC 0x18364	/* XXX change this number for each shader */
 struct camo_specific {

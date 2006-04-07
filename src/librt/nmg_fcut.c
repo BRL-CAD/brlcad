@@ -36,7 +36,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -4088,8 +4088,8 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 
 		bu_log("nmg_face_state_transition: got action=ERROR\n");
 	    	bu_vls_init(&str);
-		bu_vls_printf(&str,"nmg_face_state_transition(vu x%x, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
-			vu, pos,
+		bu_vls_printf(&str,"nmg_face_state_transition(vu x%lx, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
+			(long)vu, pos,
 			nmg_state_names[old_state], nmg_v_assessment_names[assessment],
 			nmg_state_names[new_state], action_names[action] );
 	     if( RT_G_DEBUG || rt_g.NMG_debug )  {

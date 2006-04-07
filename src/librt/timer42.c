@@ -150,12 +150,12 @@ prusage(register struct rusage *r0, register struct rusage *r1, struct timeval *
 
 		case 'U':
 			tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
-			bu_vls_printf(vp, "%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
+			bu_vls_printf(vp, "%ld.%01ld", (long)tdiff.tv_sec, (long)(tdiff.tv_usec/100000));
 			break;
 
 		case 'S':
 			tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
-			bu_vls_printf(vp, "%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
+			bu_vls_printf(vp, "%ld.%01ld", (long)tdiff.tv_sec, (long)(tdiff.tv_usec/100000));
 			break;
 
 		case 'E':
@@ -172,42 +172,38 @@ prusage(register struct rusage *r0, register struct rusage *r1, struct timeval *
 			break;
 
 		case 'X':
-			bu_vls_printf(vp, "%d", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
+			bu_vls_printf(vp, "%ld", (long)(t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t));
 			break;
 
 		case 'D':
-			bu_vls_printf(vp, "%d", t == 0 ? 0 :
-			    (r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t);
+			bu_vls_printf(vp, "%ld", (long)(t == 0 ? 0 : (r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t));
 			break;
 
 		case 'K':
-			bu_vls_printf(vp, "%d", t == 0 ? 0 :
-			    ((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
-			    (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t);
+			bu_vls_printf(vp, "%ld", (long)(t == 0 ? 0 :  ((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) - (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t));
 			break;
 
 		case 'M':
-			bu_vls_printf(vp, "%d", r1->ru_maxrss/2);
+			bu_vls_printf(vp, "%ld", (long)(r1->ru_maxrss/2));
 			break;
 
 		case 'F':
-			bu_vls_printf(vp, "%d", r1->ru_majflt-r0->ru_majflt);
+			bu_vls_printf(vp, "%ld", (long)(r1->ru_majflt-r0->ru_majflt));
 			break;
 
 		case 'R':
-			bu_vls_printf(vp, "%d", r1->ru_minflt-r0->ru_minflt);
+			bu_vls_printf(vp, "%ld", (long)(r1->ru_minflt-r0->ru_minflt));
 			break;
 
 		case 'I':
-			bu_vls_printf(vp, "%d", r1->ru_inblock-r0->ru_inblock);
+			bu_vls_printf(vp, "%ld", (long)(r1->ru_inblock-r0->ru_inblock));
 			break;
 
 		case 'O':
-			bu_vls_printf(vp, "%d", r1->ru_oublock-r0->ru_oublock);
+			bu_vls_printf(vp, "%ld", (long)(r1->ru_oublock-r0->ru_oublock));
 			break;
 		case 'C':
-			bu_vls_printf(vp, "%d+%d", r1->ru_nvcsw-r0->ru_nvcsw,
-				r1->ru_nivcsw-r0->ru_nivcsw );
+			bu_vls_printf(vp, "%ld+%ld", (long)(r1->ru_nvcsw-r0->ru_nvcsw), (long)(r1->ru_nivcsw-r0->ru_nivcsw) );
 			break;
 		}
 	}

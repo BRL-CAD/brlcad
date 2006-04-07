@@ -33,12 +33,15 @@
 #include <stdio.h>
 #include <rle.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 int comp_hdr ();
 
 extern char *optarg;
 extern int optind;
+extern void scan_usage( char **, const char * );
 
+int
 main( argc, argv )
 int argc;
 char **argv;

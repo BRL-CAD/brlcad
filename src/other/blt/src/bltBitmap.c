@@ -52,6 +52,7 @@
 #ifndef NO_BITMAP
 #include "bltHash.h"
 #include <X11/Xutil.h>
+#include <ctype.h>
 
 #define BITMAP_THREAD_KEY	"BLT Bitmap Data"
 

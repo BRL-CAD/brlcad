@@ -42,6 +42,7 @@
 #include "tiff.h"
 #endif
 #include <fcntl.h>
+#include <ctype.h>
 
 #if defined(_MSC_VER) || defined(__BORLANDC__) 
 #include <io.h>

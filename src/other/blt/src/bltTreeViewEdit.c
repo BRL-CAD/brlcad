@@ -47,6 +47,7 @@
 #include "bltTreeView.h"
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
+#include <ctype.h>
 
 #define TEXTBOX_FOCUS	(1<<0)
 #define TEXTBOX_REDRAW	(1<<1)

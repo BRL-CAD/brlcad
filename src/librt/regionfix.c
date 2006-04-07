@@ -43,6 +43,7 @@ static const char RCSregionfix[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -52,9 +53,9 @@ static const char RCSregionfix[] = "@(#)$Header$ (BRL)";
 #  include <regex.h>
 #endif
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -62,6 +63,7 @@ static const char RCSregionfix[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 #include "./debug.h"
+
 
 /*
  *			R T_ R E G I O N F I X

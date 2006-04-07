@@ -36,7 +36,7 @@ static char rcs_ident[] = "$Header$";
 extern void rle_box();
 int pos_box_vals();
 
-void
+int
 main(argc, argv)
 int	argc;
 char	*argv[];

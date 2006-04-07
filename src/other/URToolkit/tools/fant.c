@@ -117,7 +117,7 @@ void interp_row(), fast_interp_row(), general_interp_row();
 void getraster(), xform_image(), putraster(), clear_raster(), xform_points();
 
 
-void
+int
 main(argc,argv)
 int argc;
 char *argv[];

@@ -42,6 +42,8 @@
 
 #include "common.h"
 
+#include <stdlib.h>
+
 #include "tcl.h"
 #include "machine.h"
 #include "cmd.h"                  /* includes bu.h */
@@ -638,14 +640,14 @@ fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_ERROR;
 	}
 
-	pp = (unsigned char *)bu_calloc(width*height, sizeof(RGBpixel), "pixel array");
+	pp = (unsigned char *)calloc(width*height, sizeof(RGBpixel));
 	for (i = 0; i < width*height*sizeof(RGBpixel); i+=sizeof(RGBpixel)) {
 		pp[i] = pixel[0];
 		pp[i+1] = pixel[1];
 		pp[i+2] = pixel[2];
 	}
 	fb_writerect(fbop->fbo_fbs.fbs_fbp, xmin, ymin, width, height, pp);
-	bu_free((void *)pp, "pixel array");
+	free((void *)pp);
 
 	return TCL_OK;
 }

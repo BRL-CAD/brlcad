@@ -32,6 +32,7 @@
 #include <varargs.h>
 #endif
 #include <bltHash.h>
+#include <ctype.h>
 
 #ifndef HAVE_STRTOLOWER
 void

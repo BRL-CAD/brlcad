@@ -31,6 +31,7 @@
 #else
 #include <varargs.h>
 #endif
+#include <ctype.h>
 
 #include "bltTile.h"
 

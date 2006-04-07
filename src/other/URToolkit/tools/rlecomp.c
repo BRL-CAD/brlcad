@@ -31,6 +31,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "rle.h"
 #include "rle_raw.h"
 
@@ -64,7 +65,7 @@ rle_op ** Araw, **Braw;
 int * Anraw, *Bnraw;
 rle_pixel * non_zero_pixels;
 
-void
+int
 main(argc, argv)
 int	argc;
 char	*argv[];

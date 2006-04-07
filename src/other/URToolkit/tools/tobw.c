@@ -65,7 +65,7 @@ extern void free();
  * Algorithm:
  *	[None]
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

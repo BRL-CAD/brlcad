@@ -51,21 +51,22 @@ static const char RCScut[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "nmg.h"
 #include "plot3.h"
 #include "./debug.h"
+
 
 HIDDEN int		rt_ck_overlap BU_ARGS((const vect_t min,
 					       const vect_t max,

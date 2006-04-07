@@ -52,7 +52,7 @@ char default_ctl_file[] = "unslice.ctl";
 char *progname;
 char **gargv;
 
-void
+int
 main (argc, argv)
 int argc;
 char **argv;

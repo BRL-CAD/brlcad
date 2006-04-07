@@ -37,7 +37,7 @@ static char rcs_ident[] = "$Header$";
 static int bit_count[16] = {0, 63, 63, 127, 63, 127, 127,
     192, 63, 127, 127, 192, 127, 192, 192, 255};
 
-void
+int
 main(argc, argv)
 int	argc;
 char	*argv[];

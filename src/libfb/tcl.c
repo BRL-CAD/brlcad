@@ -64,8 +64,8 @@
 		return TCL_ERROR; \
 	}else if(*((long *)(_ptr)) != (_magic)){ \
 		bu_vls_init(&_fb_vls); \
-		bu_vls_printf(&_fb_vls, "ERROR: bad %s ptr x%x, s/b x%x, was x%x, file %s, line %d\n", \
-		_str, _ptr, _magic, *((long *)(_ptr)), __FILE__, __LINE__); \
+		bu_vls_printf(&_fb_vls, "ERROR: bad %s ptr x%lx, s/b x%x, was x%lx, file %s, line %d\n", \
+		_str, (long)_ptr, _magic, (long)*((long *)(_ptr)), __FILE__, __LINE__); \
 		Tcl_AppendResult(interp, bu_vls_addr(&_fb_vls), (char *)NULL); \
 		bu_vls_free(&_fb_vls); \
 \
@@ -144,13 +144,16 @@ fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 	return TCL_ERROR;
     }
 
-    ifp = (FBIO *)bu_calloc(sizeof(FBIO), 1, "FBIO: fb_open_existing");
+    if((ifp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL){
+	Tcl_AppendResult(interp, "fb_open_existing: failed to allocate ifp memory\n", (char *)NULL);
+	return TCL_ERROR;
+    }
 
 #ifndef _WIN32
     if(strcasecmp(argv[1], X_device_name) == 0) {
 	*ifp = X24_interface; /* struct copy */
 
-	ifp->if_name = bu_malloc((unsigned)strlen(X_device_name) + 1, "if_name");
+	ifp->if_name = malloc((unsigned)strlen(X_device_name) + 1);
 	(void)strcpy(ifp->if_name, X_device_name);
 
 	/* Mark OK by filling in magic number */
@@ -158,7 +161,7 @@ fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 
 	if((X24_open_existing(ifp, argc - 1, argv + 1)) <= -1){
 	    ifp->if_magic = 0; /* sanity */
-	    bu_free((void *) ifp->if_name, "if_name");
+	    free((void *) ifp->if_name);
 	    free((void *) ifp);
 	    Tcl_AppendResult(interp, "fb_open_existing: failed to open X framebuffer\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -170,7 +173,7 @@ fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
     if(strcasecmp(argv[1], ogl_device_name) == 0) {
 	*ifp = ogl_interface; /* struct copy */
 
-	ifp->if_name = (char *)bu_malloc((unsigned)strlen(ogl_device_name) + 1, "if_name");
+	ifp->if_name = malloc((unsigned)strlen(ogl_device_name) + 1);
 	(void)strcpy(ifp->if_name, ogl_device_name);
 
 	/* Mark OK by filling in magic number */
@@ -178,7 +181,7 @@ fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 
 	if((ogl_open_existing(ifp, argc - 1, argv + 1)) <= -1){
 	    ifp->if_magic = 0; /* sanity */
-	    bu_free((void *) ifp->if_name, "if_name");
+	    free((void *) ifp->if_name);
 	    free((void *) ifp);
 	    Tcl_AppendResult(interp, "fb_open_existing: failed to open ogl framebuffer\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -187,7 +190,7 @@ fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 #endif  /* IF_OGL */
 
     ifp->if_magic = 0; /* sanity */
-    bu_free((void *) ifp->if_name, "if_name");
+    free((void *) ifp->if_name);
     free((void *) ifp);
 
     bu_vls_init(&vls);
@@ -247,8 +250,8 @@ fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 	}
 	if(ifp->if_pbase != PIXEL_NULL)
 	    free((void *)ifp->if_pbase);
-	bu_free((void *)ifp->if_name, "if_name");
-	bu_free((void *)ifp, "FBIO: fb_tcl_close_existing");
+	free((void *)ifp->if_name);
+	free((void *)ifp);
 	return TCL_OK;
     }
 #endif  /* _WIN32 */
@@ -266,8 +269,8 @@ fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 	}
 	if(ifp->if_pbase != PIXEL_NULL)
 	    free((void *)ifp->if_pbase);
-	bu_free((void *)ifp->if_name, "if_name");
-	bu_free((void *)ifp, "FBIO: fb_tcl_close_existing");
+	free((void *)ifp->if_name);
+	free((void *)ifp);
 	return TCL_OK;
     }
 #endif  /* IF_OGL */

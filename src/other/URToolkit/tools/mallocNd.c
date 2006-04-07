@@ -8,6 +8,18 @@
 ** $Date$
 ** $Locker$
 ** $Log$
+** Revision 1.4  2006/04/07 08:23:57  brlcad
+** dont use the k&r-style malloc extern now that the file correctly includes/presumes stdlib.h for it
+**
+** Revision 1.3  2006/04/05 19:21:56  brlcad
+** more header/warning cleanup from Intel compiler warnings on Altix
+**
+** Revision 1.2  2006/03/24 19:36:13  brlcad
+** quell compiler warnings
+**
+** Revision 1.1  2005/01/24 05:12:41  brlcad
+** update of urt from 3.0 to 3.1b1; this includes keeping directory structure and moving tools to src/other/URToolkit/tools
+**
 ** Revision 3.0.1.1  1992/04/30  14:10:24  spencer
 ** patch3: remove lint
 **
@@ -66,8 +78,9 @@
  */
 
 /* Imports */
+#include <stdlib.h>
 #include <stdio.h>
-extern char *malloc();
+#include <unistd.h>
 
 /* Forward declarations */
 char *BuildIndirectionTable();

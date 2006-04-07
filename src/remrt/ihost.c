@@ -47,6 +47,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #else
 #  include <strings.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/stat.h>

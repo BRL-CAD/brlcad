@@ -48,7 +48,7 @@ void fsdither(), find_closest();
 
 char *progname;
 
-void
+int
 main(argc, argv)
 int	argc;
 char	*argv[];

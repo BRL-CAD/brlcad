@@ -53,6 +53,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "photonmap.h"
 
 #ifdef RT_MULTISPECTRAL
+#  include "spectrum.h"
 extern const struct bn_table	*spectrum;
 #endif
 

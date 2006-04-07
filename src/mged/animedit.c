@@ -3189,8 +3189,8 @@ joint_move(struct joint *jp)
 
 		  bu_vls_init(&tmp_vls);
 		  sofar = db_path_to_string(&jp->anim->an_path);
-		  bu_vls_printf(&tmp_vls, "joint move: %s added animate %s to %s(0x%x)\n",
-				jp->name, sofar, dp->d_namep, dp);
+		  bu_vls_printf(&tmp_vls, "joint move: %s added animate %s to %s(0x%lx)\n",
+				jp->name, sofar, dp->d_namep, (long)dp);
 		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		  bu_vls_free(&tmp_vls);
 		}

@@ -40,7 +40,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-
+#include <string.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif

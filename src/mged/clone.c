@@ -51,6 +51,8 @@
 
 #define CLONE_VERSION "Clone ver 3.0\n2005-12-12\n"
 
+extern int is_dm_null(void);
+
 
 /** state structure used to keep track of what actions the user
  *  requested and values necessary to perform the cloning operation.

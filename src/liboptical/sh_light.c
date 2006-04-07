@@ -54,6 +54,7 @@ static const char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include "photonmap.h"
 
 #ifdef RT_MULTISPECTRAL
+#  include "spectrum.h"
 extern const struct bn_table	*spectrum;
 #endif
 

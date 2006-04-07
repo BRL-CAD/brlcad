@@ -62,7 +62,7 @@ static int advance_fp();
  *      into runs.  Write each line a number of times equal to the Y
  *      factor. 
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

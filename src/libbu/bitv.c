@@ -48,12 +48,12 @@ static const char libbu_bitv_RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
+#include <stdlib.h>
 #ifdef HAVE_STRING_H
-#include <string.h>		/* for bzero() */
+#  include <string.h>		/* for bzero() */
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <ctype.h>
 #include "machine.h"
@@ -232,7 +232,7 @@ bu_bitv_to_hex(struct bu_vls *v, register const struct bu_bitv *bv)
 	{
 		while( byte_no-- )
 		{
-			bu_vls_printf( v, "%02x",
+			bu_vls_printf( v, "%02lx",
 				       ((bv->bits[word_count] & (((bitv_t)0xff)<<(byte_no*8))) >> (byte_no*8)) & (bitv_t)0xff );
 		}
 		byte_no = sizeof( bitv_t );

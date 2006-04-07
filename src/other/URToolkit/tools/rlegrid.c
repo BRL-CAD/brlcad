@@ -52,7 +52,7 @@ rlegrid()			Tag the file.
  *	[None]
  * Algorithm:
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

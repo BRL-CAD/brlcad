@@ -42,6 +42,7 @@
 
 #include "rle_config.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #ifndef USE_STDARG
 #include <varargs.h>

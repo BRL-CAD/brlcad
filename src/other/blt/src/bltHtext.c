@@ -49,6 +49,7 @@
  
 #include <sys/stat.h>
 #include <X11/Xatom.h>
+#include <ctype.h>
 
 #define DEF_LINES_ALLOC 512	/* Default block of lines allocated */
 #define CLAMP(val,low,hi)	\

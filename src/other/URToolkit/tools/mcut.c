@@ -233,7 +233,7 @@ char		  *cmd_nm;	/* Command name for error messages */
  * has a slot for a color map index, so the back pointer it followed
  * only once.
  */
-void
+int
 main ( argc, argv )
 int argc;
 char ** argv;

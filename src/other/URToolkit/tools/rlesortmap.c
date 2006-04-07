@@ -21,7 +21,7 @@ static rle_map ** cmap = NULL;
 static int ncolor;
 
 /* pcompar compares two colormap entries using the Peano ordering. */
-extern pcompar();
+extern int pcompar();
 
 /*****************************************************************
  * TAG( main )
@@ -43,7 +43,7 @@ extern pcompar();
  * 	sense for pseudo-color input files, but the program will work
  * 	on any input file.
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;
@@ -258,7 +258,7 @@ pcompar( ap, bp )
 int *ap, *bp;
 {
     int a = *ap, b = *bp;
-    unsigned long int ai, bi;
+    long int ai, bi;
     int c[4];
 
     switch( ncolor )

@@ -137,7 +137,7 @@ static CONST_DECL char *MY_NAME = "rlequant";
  * 	images.  Because of this, the input cannot be coming from a
  * 	pipe.
  */
-void
+int
 main( argc, argv )
 int argc;
 char **argv;

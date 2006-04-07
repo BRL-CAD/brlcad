@@ -63,7 +63,7 @@ struct targafile {
                       image_descriptor;       /* Image Descriptor Byte */
       };
 
-void
+int
 main(argc,argv) 
 int argc;
 char *argv[];
