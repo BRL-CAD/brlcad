@@ -39,8 +39,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
+#include <pthread.h>
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -74,7 +73,7 @@ rt_nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_
     srf->ctl_points = ( fastf_t *) bu_malloc(pnum, "rt_nurb_new_snurb: control mesh points");
     
     /* initialize the trims list */
-    BU_LIST_INIT(&srf->trims_hd);
+    BU_LIST_INIT(&(srf->trims_hd.l));
     srf->trims_count = 0;
     
     return srf;
@@ -129,7 +128,7 @@ rt_nurb_new_trim_contour()
     struct trim_contour* contour;
 
     GET_TRIM_CONTOUR(contour);    
-    BU_LIST_INIT(&contour->curve_hd);
+    BU_LIST_INIT(&(contour->curve_hd.l));
     return contour;
 }
 
@@ -140,7 +139,7 @@ void
 rt_nurb_add_trim_curve(struct trim_contour* trim, struct edge_g_cnurb* edge)
 {
     trim->curve_count += 1;
-    BU_LIST_APPEND(&trim->curve_hd, &(edge->l));
+    BU_LIST_APPEND(&(trim->curve_hd.l), &(edge->l));
 }
 
 /*
@@ -150,9 +149,83 @@ void
 rt_nurb_add_trim_contour(struct face_g_snurb* surf, struct trim_contour* trim)
 {
     surf->trims_count += 1;
-    BU_LIST_APPEND(&surf->trims_hd, &(trim->l));
+    BU_LIST_APPEND(&(surf->trims_hd.l), &(trim->l));
 }
 
+static pthread_mutex_t omp_mutex = PTHREAD_MUTEX_INITIALIZER;
+static struct oslo_mat_pool* g_pool = NULL;
+
+void grow_oslo_mat_pool(struct oslo_mat_pool* pool)
+{
+    /* grow the pool */
+    int i;
+    struct oslo_mat* mat;
+    struct oslo_mat* mats = bu_calloc(OSLO_MAT_POOL_GROWSIZE, sizeof(struct oslo_mat), "growing oslo_mat pool");
+    pool->available = mat = &(mats[0]); /* the head */
+    for (i = 1; i < OSLO_MAT_POOL_GROWSIZE; i++) {
+	mat->next = &(mats[i]);
+	mat = mat->next;
+    }
+    mat->next = NULL; /* end of the list */
+    pool->available_size = OSLO_MAT_POOL_GROWSIZE;
+    pool->size += OSLO_MAT_POOL_GROWSIZE;
+}
+
+struct oslo_mat_pool* get_oslo_mat_pool()
+{
+    pthread_mutex_lock(&omp_mutex);
+    {
+	if (!g_pool) {
+	    BU_GETSTRUCT(g_pool, oslo_mat_pool);
+	    g_pool->size = g_pool->available_size = 0;
+	    g_pool->available = NULL;
+	    grow_oslo_mat_pool(g_pool);
+	}	
+    }
+    pthread_mutex_unlock(&omp_mutex);
+    return g_pool;
+}
+
+struct oslo_mat* rt_nurb_new_oslo()
+{
+    int i;
+    struct oslo_mat* mat;
+    struct oslo_mat_pool* pool = get_oslo_mat_pool();
+    
+    pthread_mutex_lock(&omp_mutex);
+    {
+	if (pool->available_size <= 0) {
+	    grow_oslo_mat_pool(pool);
+	}       
+	pool->available_size--;
+	mat = pool->available;
+	pool->available = mat->next;
+	mat->next = NULL;
+    }
+    pthread_mutex_unlock(&omp_mutex);
+    
+    return mat;
+}
+
+void rt_nurb_free_oslo(struct oslo_mat* mat)
+{
+    int count = 0;
+    struct oslo_mat_pool* pool = get_oslo_mat_pool();
+    struct oslo_mat* curr = mat;
+    if (!curr) return;
+    while (curr->next) {
+	count++;
+	curr = curr->next; /* get the last element */
+    }
+    pthread_mutex_lock(&omp_mutex);
+    {
+	/* attach this list back to available stack */
+	curr->next = pool->available;
+	pool->available = mat;
+	pool->available_size += count;
+    }
+    pthread_mutex_unlock(&omp_mutex);
+}
 
 /*
  *                    R T _ N U R B _ F R E E _ T R I M _ C O N T O U R
@@ -163,7 +236,7 @@ rt_nurb_free_trim_contour(struct trim_contour* trim)
     RT_CK_TRIMCONTOUR(trim);
     
     struct edge_g_cnurb* curve;
-    while (BU_LIST_WHILE(curve, edge_g_cnurb, &trim->curve_hd)) {
+    while (BU_LIST_WHILE(curve, edge_g_cnurb, &(trim->curve_hd.l))) {
 	BU_LIST_DEQUEUE( &(curve->l) );
 	rt_nurb_free_cnurb(curve);
     }
@@ -193,6 +266,8 @@ rt_nurb_clean_snurb(struct face_g_snurb *srf, struct resource *res)
 	srf->ctl_points = (fastf_t *)NULL;
 	srf->order[0] = srf->order[1] = -1;
 	srf->l.magic = 0;
+
+	/* TODO: clean the list of trims */
 }
 
 /*
@@ -211,6 +286,8 @@ rt_nurb_free_snurb(struct face_g_snurb *srf, struct resource *res)
 
 	srf->l.magic = 0;
 	bu_free( (char *)srf, "rt_nurb_free_snurb: snurb struct" );
+
+	/* TODO: free the list of trims */
 }
 
 
