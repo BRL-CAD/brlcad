@@ -78,6 +78,72 @@ int quad_table[16]  = {		/* A = 0, B = 2, C = 3 */
 0,0,0,0,0,3,0,3,0,2,3,3,0,3,3,3
 };
 
+
+/*                     R T _ N U R B _ U V _ T R I M M E D
+ *
+ * Determine whether the given UV coordinate actually intersects the
+ * surface, or has been trimmed by a trimming contour.
+ */
+int
+rt_nurb_uv_trimmed(struct face_g_snurb* srf, fastf_t u, fastf_t v)
+{
+    int crossings = 0;
+    /* return false if there are no trimming contours */
+    if (!srf->trims_count) {
+	return 0;
+    } else {
+	struct trim_contour* contour = NULL;
+	for (BU_LIST_FOR(contour, trim_contour, &(srf->trims_hd.l))) {
+	    struct edge_g_cnurb* curve = NULL;
+
+	    /* adapted from nmg_uv_in_lu() */
+	    for (BU_LIST_FOR(curve, edge_g_cnurb, &(contour->curve_hd.l))) {
+		if (curve->order <= 0) {
+		    /* the curve is a line */
+		    fastf_t slope, intercept, u_on_curve;
+		    point_t uv1, uv2;
+		    VMOVE(uv1, curve->ctl_points);
+		    VMOVE(uv2, &(curve->ctl_points[2]));
+		    
+		    if (uv1[Y] < v && uv2[Y] < v)
+			continue;
+		    if (uv1[Y] > v && uv2[Y] > v)
+			continue;
+		    if (uv1[X] <= u && uv2[X] <= u)
+			continue;
+		    if (uv1[X] == uv2[X]) {
+			if ((uv1[Y] <= v && uv2[Y] >= v) || 
+			    (uv2[Y] <= v && uv1[Y] >= v))
+			    crossings++;
+			continue;
+		    }
+		    
+		    /* calculate the intersection */
+		    slope = (uv1[Y] - uv2[Y])/(uv1[X] - uv2[X]);
+		    intercept = uv1[Y] - slope * uv1[X];
+		    u_on_curve = (v - intercept)/slope;
+		    if (u_on_curve > u)
+			crossings++;
+		} else {
+		    /* the curve is a bspline, delegate to function */
+		    crossings += rt_uv_in_trim(curve, u, v);
+		}
+	    }
+	}
+    }
+
+    /* Even: the uv point was inside a trim
+     * Odd: the uv point was outside a trim
+     * 
+     * 
+     */
+    if (crossings & 1)
+	return 0;
+    else
+	return 1;
+}
+
+
 /* This routine determines what quadrants the trimming curves lies
  * in,  It then uses a table look up to determine the whether its
  * CASE{A,B,C}, One difference from the paper is the fact that
