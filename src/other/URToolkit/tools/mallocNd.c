@@ -8,6 +8,9 @@
 ** $Date$
 ** $Locker$
 ** $Log$
+** Revision 1.3  2006/04/05 19:21:56  brlcad
+** more header/warning cleanup from Intel compiler warnings on Altix
+**
 ** Revision 1.2  2006/03/24 19:36:13  brlcad
 ** quell compiler warnings
 **
@@ -75,7 +78,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-extern char *malloc();
 
 /* Forward declarations */
 char *BuildIndirectionTable();
