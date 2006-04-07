@@ -41,6 +41,7 @@ static const char RCSnurb[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
@@ -48,6 +49,7 @@ static const char RCSnurb[] = "@(#)$Header$ (BRL)";
 #  include <strings.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -57,14 +59,15 @@ static const char RCSnurb[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
+
 #ifndef M_SQRT1_2
 #	define M_SQRT1_2       0.70710678118654752440
 #endif /* M_SQRT1_2 */
 
 struct nurb_specific {
-	struct nurb_specific *  next;	/* next surface in the the solid */
-	struct face_g_snurb *	srf;	/* Original surface description */
-	struct bu_list		bez_hd;	/* List of Bezier face_g_snurbs */
+    struct nurb_specific *  next;	/* next surface in the the solid */
+    struct face_g_snurb *	srf;	/* Original surface description */
+    struct bu_list		bez_hd;	/* List of Bezier face_g_snurbs */
 };
 
 struct nurb_hit {
@@ -192,139 +195,143 @@ rt_nurb_print(register const struct soltab *stp)
 int
 rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-	register struct nurb_specific * nurb =
-		(struct nurb_specific *)stp->st_specific;
-	register struct seg *segp;
-	const struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
-	point_t p1, p2, p3, p4;
-	vect_t dir1, dir2;
-	plane_t	plane1, plane2;
-	struct nurb_hit * hit;
-	struct nurb_hit hit_list;
-	vect_t invdir;
-	int hit_num;
+    register struct nurb_specific * nurb =
+	(struct nurb_specific *)stp->st_specific;
+    register struct seg *segp;
+    const struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
+    point_t p1, p2, p3, p4;
+    vect_t dir1, dir2;
+    plane_t	plane1, plane2;
+    struct nurb_hit * hit;
+    struct nurb_hit hit_list;
+    vect_t invdir;
+    int hit_num;
+    
+    invdir[0] = invdir[1] = invdir[2] = INFINITY;
+    if(!NEAR_ZERO(rp->r_dir[0], SQRT_SMALL_FASTF))
+	invdir[0] = 1.0 / rp->r_dir[0];
+    if(!NEAR_ZERO(rp->r_dir[1], SQRT_SMALL_FASTF))
+	invdir[1] = 1.0 / rp->r_dir[1];
+    if(!NEAR_ZERO(rp->r_dir[2], SQRT_SMALL_FASTF))
+	invdir[2] = 1.0 / rp->r_dir[2];
+    
+    /* Create two orthogonal Planes their intersection contains the ray
+     * so we can project the surface into a 2 dimensional problem
+     */
+    
+    bn_vec_ortho(dir1, rp->r_dir);
+    VCROSS( dir2, rp->r_dir, dir1);
+    
+    VMOVE(p1, rp->r_pt);
+    VADD2(p2, rp->r_pt, rp->r_dir);
+    VADD2(p3, rp->r_pt, dir1);
+    VADD2(p4, rp->r_pt, dir2);
+    
+    /* Note: the equation of the plane in BRL-CAD is
+     * Ax + By + Cz = D represented by [A B C D]
+     */
+    bn_mk_plane_3pts( plane1, p1, p3, p2, tol );
+    bn_mk_plane_3pts( plane2, p1, p2, p4, tol );
+    
+    /* make sure that the hit_list is zero */
+    
+    hit_list.next = (struct nurb_hit *)0;
+    hit_list.prev = (struct nurb_hit *)0;
+    hit_list.hit_dist = 0;
+    VSET(hit_list.hit_point, 0.0, 0.0, 0.0);
+    VSET(hit_list.hit_normal, 0.0, 0.0, 0.0);
+    hit_list.hit_uv[0] = 	hit_list.hit_uv[1] = 0.0;
+    hit_list.hit_private = (char *)0;
+    
 
-	invdir[0] = invdir[1] = invdir[2] = INFINITY;
-	if(!NEAR_ZERO(rp->r_dir[0], SQRT_SMALL_FASTF))
-		invdir[0] = 1.0 / rp->r_dir[0];
-	if(!NEAR_ZERO(rp->r_dir[1], SQRT_SMALL_FASTF))
-		invdir[1] = 1.0 / rp->r_dir[1];
-	if(!NEAR_ZERO(rp->r_dir[2], SQRT_SMALL_FASTF))
-		invdir[2] = 1.0 / rp->r_dir[2];
-
-	/* Create two orthogonal Planes their intersection contains the ray
-	 * so we can project the surface into a 2 dimensional problem
-	 */
-
-	bn_vec_ortho(dir1, rp->r_dir);
-	VCROSS( dir2, rp->r_dir, dir1);
-
-	VMOVE(p1, rp->r_pt);
-	VADD2(p2, rp->r_pt, rp->r_dir);
-	VADD2(p3, rp->r_pt, dir1);
-	VADD2(p4, rp->r_pt, dir2);
-
-	/* Note: the equation of the plane in BRL-CAD is
-	 * Ax + By + Cz = D represented by [A B C D]
-	 */
-	bn_mk_plane_3pts( plane1, p1, p3, p2, tol );
-	bn_mk_plane_3pts( plane2, p1, p2, p4, tol );
-
-	/* make sure that the hit_list is zero */
-
-	hit_list.next = (struct nurb_hit *)0;
-	hit_list.prev = (struct nurb_hit *)0;
-	hit_list.hit_dist = 0;
-	VSET(hit_list.hit_point, 0.0, 0.0, 0.0);
-	VSET(hit_list.hit_normal, 0.0, 0.0, 0.0);
-	hit_list.hit_uv[0] = 	hit_list.hit_uv[1] = 0.0;
-	hit_list.hit_private = (char *)0;
-
-	while( nurb != (struct nurb_specific *) 0 )
-	{
-		struct face_g_snurb * s;
-		struct rt_nurb_uv_hit *hp;
-
-		for( BU_LIST_FOR( s, face_g_snurb, &nurb->bez_hd ) )  {
-			if( !rt_in_rpp( rp, invdir, s->min_pt, s->max_pt))
-				continue;
-
+    while( nurb != (struct nurb_specific *) 0 ) {
+	struct face_g_snurb * s;
+	struct rt_nurb_uv_hit *hp;
+	
+	for( BU_LIST_FOR( s, face_g_snurb, &nurb->bez_hd ) )  {
+	    point_t min = {s->u.knots[0],             s->v.knots[0]};
+	    point_t max = {s->u.knots[s->u.k_size-1], s->v.knots[s->v.k_size-1]};
+	    
+	    if( !rt_in_rpp( rp, invdir, s->min_pt, s->max_pt))
+		continue;
+	    
 #define UV_TOL	1.0e-6	/* Paper says 1.0e-4 is reasonable for 1k images, not close up */
-			hp = rt_nurb_intersect(
-				s, plane1, plane2, UV_TOL, (struct resource *)ap->a_resource );
-			while( hp != (struct rt_nurb_uv_hit *)0)
-			{
-				struct rt_nurb_uv_hit * o;
+	    hp = rt_nurb_intersect(s, plane1, plane2, UV_TOL, (struct resource *)ap->a_resource );
+	    while( hp != (struct rt_nurb_uv_hit *)0) {
+		struct rt_nurb_uv_hit * o;
+		
+		if( RT_G_DEBUG & DEBUG_SPLINE )
+		    bu_log("hit at %d %d sub = %d u = %f v = %f\n",
+			   ap->a_x, ap->a_y, hp->sub, hp->u, hp->v);
+		
+		hit = (struct nurb_hit *)rt_conv_uv(nurb, rp, hp);
+		
+		o = hp;
+		hp = hp->next;
+		bu_free( (char *)o, "rt_nurb_shot:rt_nurb_uv_hit structure");		
 
-				if( RT_G_DEBUG & DEBUG_SPLINE )
-					bu_log("hit at %d %d sub = %d u = %f v = %f\n",
-						ap->a_x, ap->a_y, hp->sub, hp->u, hp->v);
-
-				hit = (struct nurb_hit *)
-					rt_conv_uv(nurb, rp, hp);
-
-				o = hp;
-				hp = hp->next;
-				bu_free( (char *)o,
-					"rt_nurb_shot:rt_nurb_uv_hit structure");
-
-				rt_nurb_add_hit( &hit_list, hit, tol );
-			}
-		}
-		nurb = nurb->next;
-		/* Insert Trimming routines here */
-	}
-
-	/* Convert hits to segments for rt */
-
-	hit_num = 0;
-
-	while( hit_list.next != NULL_HIT )
-	{
-		struct nurb_hit * h1, * h2;
-
-		RT_GET_SEG( segp, ap->a_resource);
-
-		h1 = (struct nurb_hit *) rt_return_nurb_hit( &hit_list );
-		h2 = (struct nurb_hit *) rt_return_nurb_hit( &hit_list );
-
-		segp->seg_stp = stp;
-		segp->seg_in.hit_dist = h1->hit_dist;
-		VMOVE(segp->seg_in.hit_point, h1->hit_point);
-		segp->seg_in.hit_vpriv[0] = h1->hit_uv[0];
-		segp->seg_in.hit_vpriv[1] = h1->hit_uv[1];
-		segp->seg_in.hit_private = h1->hit_private;
-		segp->seg_in.hit_vpriv[2] = 0;
-		hit_num++;
-
-
-		if( h2 != NULL_HIT)
+		/* trim the nurb (scale the uv to guarantee [0,1] bounds) */
 		{
-			segp->seg_out.hit_dist = h2->hit_dist;
-			VMOVE(segp->seg_out.hit_point, h2->hit_point);
-			segp->seg_out.hit_vpriv[0] = h2->hit_uv[0];
-			segp->seg_out.hit_vpriv[1] = h2->hit_uv[1];
-			segp->seg_out.hit_private = h2->hit_private;
-			bu_free( (char *)h2,"rt_nurb_shot: nurb hit");
-			hit_num++;
+		    fastf_t u = hit->hit_uv[X];
+		    fastf_t v = hit->hit_uv[Y];
+		    u = (u - min[X]) / (max[X] - min[X]);
+		    v = (v - min[Y]) / (max[Y] - min[Y]);
+		    if (!rt_nurb_uv_trimmed(s, u, v)) {
+			rt_nurb_add_hit( &hit_list, hit, tol );
+		    }
 		}
-		else
-		{
-			segp->seg_out.hit_dist = h1->hit_dist + .01;
-			VJOIN1(segp->seg_out.hit_point,
-				rp->r_pt, segp->seg_out.hit_dist, rp->r_dir);
-			segp->seg_out.hit_vpriv[0] = h1->hit_uv[0];
-			segp->seg_out.hit_vpriv[1] = h1->hit_uv[1];
-			segp->seg_out.hit_vpriv[2] = 1;
-			segp->seg_out.hit_private = h1->hit_private;
-		}
-
-		bu_free( (char *)h1, "rt_nurb_shot:nurb hit");
-
-		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+	    }
 	}
+	nurb = nurb->next;
+	/* Insert Trimming routines here */
+    }
+    
+    /* Convert hits to segments for rt */
+    
+    hit_num = 0;
+    
+    while( hit_list.next != NULL_HIT ) {
+	struct nurb_hit * h1, * h2;
+	
+	RT_GET_SEG( segp, ap->a_resource);
+	
+	h1 = (struct nurb_hit *) rt_return_nurb_hit( &hit_list );
+	h2 = (struct nurb_hit *) rt_return_nurb_hit( &hit_list );
+	
+	segp->seg_stp = stp;
+	segp->seg_in.hit_dist = h1->hit_dist;
+	VMOVE(segp->seg_in.hit_point, h1->hit_point);
+	segp->seg_in.hit_vpriv[0] = h1->hit_uv[0];
+	segp->seg_in.hit_vpriv[1] = h1->hit_uv[1];
+	segp->seg_in.hit_private = h1->hit_private;
+	segp->seg_in.hit_vpriv[2] = 0;
+	hit_num++;
+	
+	
+	if( h2 != NULL_HIT) {
+	    segp->seg_out.hit_dist = h2->hit_dist;
+	    VMOVE(segp->seg_out.hit_point, h2->hit_point);
+	    segp->seg_out.hit_vpriv[0] = h2->hit_uv[0];
+	    segp->seg_out.hit_vpriv[1] = h2->hit_uv[1];
+	    segp->seg_out.hit_private = h2->hit_private;
+	    bu_free( (char *)h2,"rt_nurb_shot: nurb hit");
+	    hit_num++;
+	} else {
+	    segp->seg_out.hit_dist = h1->hit_dist + .01;
+	    VJOIN1(segp->seg_out.hit_point,
+		   rp->r_pt, segp->seg_out.hit_dist, rp->r_dir);
+	    segp->seg_out.hit_vpriv[0] = h1->hit_uv[0];
+	    segp->seg_out.hit_vpriv[1] = h1->hit_uv[1];
+	    segp->seg_out.hit_vpriv[2] = 1;
+	    segp->seg_out.hit_private = h1->hit_private;
+	}
+	
+	bu_free( (char *)h1, "rt_nurb_shot:nurb hit");
+	
+	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+    }
 
-	return(hit_num);	/* not hit */
+    return(hit_num);	/* not hit */
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
@@ -727,8 +734,10 @@ rt_conv_uv(struct nurb_specific *n, struct xray *r, struct rt_nurb_uv_hit *h)
 
 	VSUB2( vecsub, hit->hit_point, r->r_pt);
 	hit->hit_dist = VDOT( vecsub, r->r_dir);
+
 	hit->hit_uv[0] = h->u;
 	hit->hit_uv[1] = h->v;
+
 	hit->hit_private = (char *) n->srf;
 
 	return (struct nurb_hit *) hit;
@@ -927,6 +936,7 @@ rt_nurb_curve_bytes(struct edge_g_cnurb* crv)
 int
 rt_nurb_bytes(struct face_g_snurb *srf)
 {
+    struct trim_contour* pcontour;
     struct edge_g_cnurb* pcurve;
     int total_bytes=0, i;
     
@@ -939,8 +949,12 @@ rt_nurb_bytes(struct face_g_snurb *srf)
 	(srf->s_size[0] * srf->s_size[1]) * SIZEOF_NETWORK_DOUBLE;	/* control point mesh */
     
     /* add the size of the trimming curves (if there are any) */
-    for ( BU_LIST_FOR(pcurve,edge_g_cnurb,&srf->trims_hd) ) {
-	total_bytes += rt_nurb_curve_bytes(pcurve);
+    total_bytes += SIZEOF_NETWORK_LONG; /* for size of contour list */
+    for ( BU_LIST_FOR(pcontour,trim_contour,&(srf->trims_hd.l)) ) {
+	total_bytes += SIZEOF_NETWORK_LONG; /* for size of trim list */
+	for ( BU_LIST_FOR(pcurve,edge_g_cnurb,&(pcontour->curve_hd.l)) ) {
+	    total_bytes += rt_nurb_curve_bytes(pcurve);
+	}
     }
 
     return total_bytes;
@@ -1010,19 +1024,19 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
 	
 	/* write out the trims if we have any */
+	bu_plong(cp, srf->trims_count);
+	cp += SIZEOF_NETWORK_LONG;
 	if (srf->trims_count) {
-	    bu_plong(cp, srf->trims_count);
-	    cp += SIZEOF_NETWORK_LONG;
 	    
 	    struct trim_contour* cont;
-	    for (BU_LIST_FOR(cont, trim_contour, &srf->trims_hd)) {	    
+	    for (BU_LIST_FOR(cont, trim_contour, &(srf->trims_hd.l))) {
 
+		bu_plong(cp, cont->curve_count);
+		cp += SIZEOF_NETWORK_LONG;
 		if (cont->curve_count) {
-		    bu_plong(cp, cont->curve_count);
-		    cp += SIZEOF_NETWORK_LONG;
 		    
 		    struct edge_g_cnurb* crv;
-		    for (BU_LIST_FOR(crv, edge_g_cnurb, &srf->trims_hd)) {
+		    for (BU_LIST_FOR(crv, edge_g_cnurb, &(cont->curve_hd.l))) {
 			/* order */
 			bu_plong(cp, crv->order);
 			cp += SIZEOF_NETWORK_LONG;
@@ -1333,11 +1347,11 @@ rt_nurb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 			bu_vls_printf( &vls, " { O {%d %d} s {%d %d} T %d u {",
 				       srf->order[0], srf->order[1],
 				       srf->s_size[0], srf->s_size[1],
-				       srf->pt_type, srf->u.k_size );
+				       srf->pt_type/* !!! -- export this?, srf->u.k_size */ );
 			for( j=0 ; j<srf->u.k_size ; j++ ) {
 				bu_vls_printf( &vls, " %.25G", srf->u.knots[j] );
 			}
-			bu_vls_printf( &vls, "} v {", srf->v.k_size );
+			bu_vls_printf( &vls, "} v {"/* !!! -- export this?, srf->v.k_size */ );
 			for( j=0 ; j<srf->v.k_size ; j++ ) {
 				bu_vls_printf( &vls, " %.25G", srf->v.knots[j] );
 			}
