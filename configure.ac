@@ -2914,6 +2914,7 @@ AC_SUBST(CURSOR)
 
 DM='${top_builddir}/src/libdm/libdm.la'
 AC_SUBST(DM)
+AC_DEFINE_UNQUOTED([USE_FBSERV], [1], [Required for libdm/mged to allow direct fbserv render connections])
 
 FB='${top_builddir}/src/libfb/libfb.la'
 AC_SUBST(FB)
