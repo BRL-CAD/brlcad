@@ -107,7 +107,7 @@ rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv
 				nurb_srf->pt_type);
 		}
 
-		rt_nurb_free_oslo(oslo, res);
+		rt_nurb_free_oslo(oslo);
 
 	} else 	{		/* Col (v) direction */
 		GET_SNURB(nurb_srf);
@@ -148,7 +148,7 @@ rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv
 				0, kv->k_size - nurb_srf->order[1],
 				nurb_srf->pt_type);
 		}
-		rt_nurb_free_oslo( oslo, res );
+		rt_nurb_free_oslo( oslo );
 	}
 	return nurb_srf;
 }
@@ -182,7 +182,7 @@ rt_nurb_c_refine(const struct edge_g_cnurb *crv, struct knot_vector *kv)
 	for( i = 0; i < kv->k_size; i++)
 		new_crv->k.knots[i] = kv->knots[i];
 
-	rt_nurb_free_oslo( oslo, (struct resource *)NULL );
+	rt_nurb_free_oslo( oslo );
 
 	return new_crv;
 }

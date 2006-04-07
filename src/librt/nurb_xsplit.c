@@ -218,7 +218,7 @@ rt_nurb_s_xsplit(struct face_g_snurb *srf, fastf_t param, int dir)
 
 	bu_free( (char *) new_kv.knots, "rt_nurb_s_xsplit: new_kv.knots");
 
-	rt_nurb_free_oslo(oslo, (struct resource *)NULL);
+	rt_nurb_free_oslo(oslo);
 
 	return srf1;
 }
@@ -279,7 +279,7 @@ rt_nurb_c_xsplit(struct edge_g_cnurb *crv, fastf_t param)
 		coords, coords, k_index, new_kv.k_size - crv2->order,
 		crv2->pt_type );
 
-	rt_nurb_free_oslo( oslo, (struct resource *)NULL );
+	rt_nurb_free_oslo( oslo );
 
 	bu_free( (char *) new_kv.knots, "rt_nurb_c_xsplit: new_kv.knots");
 

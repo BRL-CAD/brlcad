@@ -249,7 +249,7 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 	BU_LIST_APPEND( split_hd, &srf2->l );
 	BU_LIST_APPEND( split_hd, &srf1->l );
 
-	rt_nurb_free_oslo(oslo, res);
+	rt_nurb_free_oslo(oslo);
 	bu_free( (char *)new_kv.knots, "rt_nurb_s_split: new kv knots");
 
 }
@@ -334,7 +334,7 @@ rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
 		coords, coords, k_index, new_kv.k_size - crv2->order,
 		crv2->pt_type );
 
-	rt_nurb_free_oslo( oslo, (struct resource *)NULL );
+	rt_nurb_free_oslo( oslo );
 
 	bu_free( (char *) new_kv.knots, "rt_nurb_c_split; new_kv.knots" );
 
