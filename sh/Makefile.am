@@ -10,7 +10,8 @@ bin_SCRIPTS = \
 	pixread.sh \
 	pixwrite.sh \
 	sgisnap.sh \
-	show.sh
+	show.sh \
+	tracker.sh
 
 EXTRA_DIST = \
 	$(bin_SCRIPTS) \

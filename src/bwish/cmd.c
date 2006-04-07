@@ -40,6 +40,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
@@ -373,8 +374,8 @@ cmd_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	hp_prev = BU_LIST_PREV(bu_cmdhist, &(hp->l));
 	if (with_delays && BU_LIST_NOT_HEAD(hp_prev, &(histHead.l))) {
 	    if (timediff(&tvdiff, &(hp_prev->h_finish), &(hp->h_start)) >= 0)
-		bu_vls_printf(&str, "delay %d %d\n", tvdiff.tv_sec,
-			      tvdiff.tv_usec);
+		bu_vls_printf(&str, "delay %ld %ld\n", (long)tvdiff.tv_sec,
+			      (long)tvdiff.tv_usec);
 	}
 
 	if (hp->h_status == TCL_ERROR)

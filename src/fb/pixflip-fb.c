@@ -42,21 +42,31 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <stdlib.h>
 #include <stdio.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <sys/time.h>		/* For struct timeval */
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
+#ifdef HAVE_SYS_FCNTL_H
+#  include <sys/fcntl.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"
 #include "fb.h"
+
 
 int	file_width = 512;	/* width of input sub-images in pixels */
 int	file_height = 512;	/* height of input sub-images in scanlines */

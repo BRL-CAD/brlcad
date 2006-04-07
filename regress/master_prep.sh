@@ -22,11 +22,6 @@ cd brlcad
 eval `awk '/Release/ {print $2}' < README | \
 	awk -F. '{print "export MAJOR=" $1  "\nexport MINOR=" $2 "\nexport PATCH=" $3}'`
 
-# Extract old release numbers from configure.ac
-OLD_MAJOR=`awk -F\= '/^MAJOR_VERSION/ {print $2}' < configure.ac`
-OLD_MINOR=`awk -F\= '/^MINOR_VERSION/ {print $2}' < configure.ac`
-OLD_PATCH=`awk -F\= '/^PATCH_VERSION/ {print $2}' < configure.ac`
-
 
 # Update configure.ac with the release we found in README
 /bin/echo configure
@@ -34,11 +29,34 @@ if [ ! -f configure.ac.orig ] ; then
     mv configure.ac configure.ac.orig
 fi
 
+# Extract old release numbers from configure.ac.orig
+OLD_MAJOR=`awk -F\= '/^MAJOR_VERSION/ {print $2}' < configure.ac.orig`
+OLD_MINOR=`awk -F\= '/^MINOR_VERSION/ {print $2}' < configure.ac.orig`
+OLD_PATCH=`awk -F\= '/^PATCH_VERSION/ {print $2}' < configure.ac.orig`
+
+
 sed -e "s/$OLD_MAJOR\.$OLD_MINOR\.$OLD_PATCH/$MAJOR\.$MINOR\.$PATCH/" \
     -e "s/MAJOR_VERSION=$OLD_MAJOR/MAJOR_VERSION=$MAJOR/" \
     -e "s/MINOR_VERSION=$OLD_MINOR/MINOR_VERSION=$MINOR/" \
     -e "s/^PATCH_VERSION=$OLD_PATCH/PATCH_VERSION=$PATCH/" \
     < configure.ac.orig > configure.ac
+
+
+# check to make sure it worked.
+NEW_MAJOR=`grep '^MAJOR_VERSION=' configure.ac | awk -F \= '{print $2}'`
+NEW_MINOR=`grep '^MINOR_VERSION=' configure.ac | awk -F \= '{print $2}'`
+NEW_PATCH=`grep '^PATCH_VERSION=' configure.ac | awk -F \= '{print $2}'`
+
+/bin/echo "checkout configure.ac version $OLD_MAJOR $OLD_MINOR $OLD_PATCH"
+/bin/echo "Version from README           $MAJOR $MINOR $PATCH"
+/bin/echo "New configure version         $NEW_MAJOR $NEW_MINOR $NEW_PATCH"
+
+if [ X$NEW_PATCH != X$PATCH -o \
+      X$NEW_MINOR != X$MINOR -o \
+      X$NEW_MAJOR != X$MAJOR ] ; then
+    /bin/echo "did not set new version number properly"
+    exit -1
+fi
 
 # get a build environment so we can "make dist"
 /bin/echo autogen
@@ -46,7 +64,7 @@ sed -e "s/$OLD_MAJOR\.$OLD_MINOR\.$OLD_PATCH/$MAJOR\.$MINOR\.$PATCH/" \
 /bin/sh ./autogen.sh >> $LOG_FILE 2>&1
 
 /bin/echo configure
-./configure >> $LOG_FILE 2>&1
+./configure --enable-everything >> $LOG_FILE 2>&1
 
 # Prepare a source distribution
 /bin/echo making dist

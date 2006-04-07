@@ -33,10 +33,13 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#if defined HAVE_STRING_H
+#ifdef HAVE_STRING_H
 #  include <string.h>
 #else
 #  include <strings.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
 #endif
 
 #ifndef lint
