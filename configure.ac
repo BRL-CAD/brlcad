@@ -313,7 +313,7 @@ BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [yes])
 BC_ARG_ENABLE([build_tk], [tk-build], [Build the included Tk], [yes])
 
 # force enable/disable building of incrTcl
-BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [auto])
+BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [yes])
 
 # force enable/disable building of iwidgets
 BC_ARG_ENABLE([build_iwidgets], [iwidgets-build], [Install the included iwidgets], [auto])
@@ -2914,6 +2914,7 @@ AC_SUBST(CURSOR)
 
 DM='${top_builddir}/src/libdm/libdm.la'
 AC_SUBST(DM)
+AC_DEFINE_UNQUOTED([USE_FBSERV], [1], [Required for libdm/mged to allow direct fbserv render connections])
 
 FB='${top_builddir}/src/libfb/libfb.la'
 AC_SUBST(FB)
