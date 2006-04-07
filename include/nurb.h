@@ -170,9 +170,9 @@ struct edge_g_cnurb {
  * lines, etc...)
  */
 struct trim_contour {
-    struct bu_list l;
-    int curve_count;
-    struct bu_list curve_hd; /* contains: struct edge_g_cnurb */
+    struct bu_list      l;
+    int                 curve_count;
+    struct edge_g_cnurb curve_hd; /* contains: struct edge_g_cnurb */
 };
 #define GET_TRIM_CONTOUR(p) { BU_GETSTRUCT(p, trim_contour); \
         BU_LIST_INIT( &(p)->l ); (p)->l.magic = RT_NURB_TRIM_CONTOUR_MAGIC; }
@@ -203,7 +203,7 @@ struct face_g_snurb {
     
     /* a list of trimming contours contained on this face */
     int                 trims_count;
-    struct bu_list      trims_hd; /* type: struct trim_contour */
+    struct trim_contour trims_hd; /* type: struct trim_contour */
     
     /* START OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
     int			dir;	/* direction of last refinement */
@@ -226,18 +226,29 @@ struct rt_nurb_poly {
 };
 
 struct rt_nurb_uv_hit {
-	struct rt_nurb_uv_hit * next;
-	int		sub;
-	fastf_t		u;
-	fastf_t		v;
+    struct rt_nurb_uv_hit * next;
+    int		sub;
+    fastf_t		u;
+    fastf_t		v;
 };
 
-
+#define MAX_OSLO_VEC_SIZE 128 /* TODO: look at some heuristics for this size */
 struct oslo_mat {
-	struct oslo_mat * next;
-	int		offset;
-	int		osize;
-	fastf_t		* o_vec;
+    struct oslo_mat * next;
+    int	    offset;
+    int	    osize;
+    fastf_t o_vec[MAX_OSLO_VEC_SIZE]; 
+};
+
+/*
+ * instead of dynamically allocating/releasing oslo_mat structures
+ * for each hit per ray, keep a pool per processor
+ */
+#define OSLO_MAT_POOL_GROWSIZE 32
+struct oslo_mat_pool {
+    struct oslo_mat* available; /* head of dynamically sized available list */
+    int size;                   /* the size of the pool; sized in blocks of 32 */
+    int available_size;         /* the available mats */
 };
 
 #if !defined(MAX)
@@ -399,6 +410,8 @@ NURB_EXPORT BU_EXTERN(void rt_nurb_pr_kv, (const struct knot_vector *kv));
 NURB_EXPORT BU_EXTERN(void rt_nurb_pr_mesh, (const struct face_g_snurb *m));
 NURB_EXPORT BU_EXTERN(void rt_nurb_print_pt_type, (int c));
 NURB_EXPORT BU_EXTERN(void rt_nurb_clean_cnurb, (struct edge_g_cnurb * crv));
+NURB_EXPORT BU_EXTERN(struct oslo_mat* rt_nurb_new_oslo, ());
+NURB_EXPORT BU_EXTERN(void rt_nurb_free_oslo, (struct oslo_mat* mat));
 
 /* nurb_xsplit.c */
 NURB_EXPORT BU_EXTERN(struct face_g_snurb *rt_nurb_s_xsplit, (struct face_g_snurb *srf,
@@ -410,7 +423,6 @@ NURB_EXPORT BU_EXTERN(struct oslo_mat *rt_nurb_calc_oslo, (int order,
 			const struct knot_vector *tau_kv,
 			struct knot_vector *t_kv, struct resource *res));
 NURB_EXPORT BU_EXTERN(void rt_nurb_pr_oslo, (struct oslo_mat *om));
-NURB_EXPORT BU_EXTERN(void rt_nurb_free_oslo, (struct oslo_mat *om, struct resource *res));
 
 /* oslo_map.c */
 NURB_EXPORT BU_EXTERN(void rt_nurb_map_oslo, (struct oslo_mat *oslo,
@@ -429,6 +441,11 @@ NURB_EXPORT BU_EXTERN( int FindRoots, (point2d_t *w, int degree, point2d_t **int
 			   int depth, fastf_t epsilon) );
 NURB_EXPORT BU_EXTERN( struct bezier_2d_list *subdivide_bezier, (struct bezier_2d_list *bezier_hd, int degree,
 							fastf_t epsilon, int depth) );
+
+/* nurb_trim.c */
+NURB_EXPORT BU_EXTERN( int rt_nurb_uv_trimmed, (struct face_g_snurb* srf, fastf_t u, fastf_t v) );
+
+
 #endif
 
 
