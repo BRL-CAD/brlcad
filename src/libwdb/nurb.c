@@ -63,6 +63,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *
  *  Output an array of B-spline (NURBS) surfaces which comprise a solid.
  *  The surface is freed when it is written.
+ *  
+ *  surfs is a NULL-terminated array of struct face_g_snurbs!
  */
 int
 mk_bspline( struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs )
