@@ -48,30 +48,42 @@
 struct face_g_snurb *
 rt_nurb_scopy(const struct face_g_snurb *srf, struct resource *res)
 {
-	register struct face_g_snurb * n;
-	int i;
+    register struct face_g_snurb * n;
+    int i;
+    
+    NMG_CK_SNURB(srf);
+    
+    n = (struct face_g_snurb *) rt_nurb_new_snurb( srf->order[0], srf->order[1],
+						   srf->u.k_size, srf->v.k_size,
+						   srf->s_size[0],srf->s_size[1],
+						   srf->pt_type, res);
 
-	NMG_CK_SNURB(srf);
-
-	n = (struct face_g_snurb *) rt_nurb_new_snurb( srf->order[0], srf->order[1],
-		srf->u.k_size, srf->v.k_size,
-		srf->s_size[0],srf->s_size[1],
-		srf->pt_type, res);
-
-	for( i = 0; i < srf->u.k_size; i++)
-		n->u.knots[i] =  srf->u.knots[i];
-
-	for( i = 0; i < srf->v.k_size; i++)
-		n->v.knots[i] =  srf->v.knots[i];
-
-	for ( i = 0; i <  srf->s_size[0] * srf->s_size[1] *
-		RT_NURB_EXTRACT_COORDS(srf->pt_type); i++)
-	{
-
-		n->ctl_points[i] = srf->ctl_points[i];
+    for( i = 0; i < srf->u.k_size; i++)
+	n->u.knots[i] =  srf->u.knots[i];
+    
+    for( i = 0; i < srf->v.k_size; i++)
+	n->v.knots[i] =  srf->v.knots[i];
+    
+    for ( i = 0; i <  srf->s_size[0] * srf->s_size[1] *
+	      RT_NURB_EXTRACT_COORDS(srf->pt_type); i++) {	
+	n->ctl_points[i] = srf->ctl_points[i];
+    }
+    
+    /* copy the trim contours */
+    {    
+	struct trim_contour* contour;
+	struct edge_g_cnurb* curve;
+	for (BU_LIST_FOR(contour, trim_contour, &(srf->trims_hd.l))) {
+	    struct trim_contour* contour_copy = rt_nurb_new_trim_contour();
+	    for (BU_LIST_FOR(curve, edge_g_cnurb, &(contour->curve_hd.l))) {
+		struct edge_g_cnurb* curve_copy = rt_nurb_crv_copy(curve);
+		rt_nurb_add_trim_curve(contour_copy, curve_copy);
+	    }
+	    rt_nurb_add_trim_contour(n, contour_copy);
 	}
+    }
 
-	return (struct face_g_snurb *) n;
+    return (struct face_g_snurb *) n;
 }
 
 struct edge_g_cnurb *
