@@ -92,9 +92,7 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 
 	mu = 0;				/* initialize mu */
 
-	head = (struct oslo_mat *) bu_malloc (
-		    sizeof( struct oslo_mat),
-		    "rt_nurb_calc_oslo: oslo mat head" );
+	head = rt_nurb_new_oslo();
 
 	o_ptr = head;
 
@@ -103,12 +101,10 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 
 		if ( j != 0 )
 		{
-			new_o = (struct oslo_mat *) bu_malloc (
-				    sizeof( struct oslo_mat),
-				    "rt_nurb_calc_oslo: oslo mat struct" );
-
-			o_ptr->next = new_o;
-			o_ptr = new_o;
+		    new_o = rt_nurb_new_oslo();
+		    
+		    o_ptr->next = new_o;
+		    o_ptr = new_o;
 		}
 
 		/* find the bounding mu */
@@ -181,8 +177,10 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 			}
 		}
 
-		o_ptr->o_vec = (fastf_t *) bu_malloc ( sizeof( fastf_t) * (v+1),
-			    "rt_nurb_calc_oslo: oslo vector");
+		if ((v+1) > MAX_OSLO_VEC_SIZE) 
+		    bu_bomb("found a max oslo_mat->o_vec with size > MAX_OSLO_VEC_SIZE");
+/* 		o_ptr->o_vec = (fastf_t *) bu_malloc ( sizeof( fastf_t) * (v+1), */
+/* 			    "rt_nurb_calc_oslo: oslo vector"); */
 
 		o_ptr->offset = AMAX(muprim -v,0);
 		o_ptr->osize = v;
@@ -223,19 +221,19 @@ rt_nurb_pr_oslo(struct oslo_mat *om)
  * Free up the structures and links for the oslo matrix.
  */
 
-void
-rt_nurb_free_oslo(struct oslo_mat *om, struct resource *res)
-{
-	register struct oslo_mat * omp;
+/* void */
+/* rt_nurb_free_oslo(struct oslo_mat *om, struct resource *res) */
+/* { */
+/* 	register struct oslo_mat * omp; */
 
-	while( om != (struct oslo_mat *) 0 )
-	{
-		omp = om;
-		om = om->next;
-		bu_free( (char *)omp->o_vec, "rt_nurb_free_oslo: ovec");
-		bu_free( (char *)omp, "rt_nurb_free_oslo: struct oslo");
-	}
-}
+/* 	while( om != (struct oslo_mat *) 0 ) */
+/* 	{ */
+/* 		omp = om; */
+/* 		om = om->next; */
+/* 		bu_free( (char *)omp->o_vec, "rt_nurb_free_oslo: ovec"); */
+/* 		bu_free( (char *)omp, "rt_nurb_free_oslo: struct oslo"); */
+/* 	} */
+/* } */
 
 /*
  * Local Variables:
