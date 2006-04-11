@@ -2578,6 +2578,8 @@ dnl *** Jove compilation ***
 build_brlcad_jove=no
 if test "x$bc_build_jove" = "xyes" ; then
 	build_brlcad_jove=yes
+elif test "x$bc_build_jove" = "xno" ; then
+	build_brlcad_jove=no	# body for the sake of body
 else
 	# enable jove if no suitable system emacs/jove was found
 	if test "x$BCEDITOR" = "x" ; then
