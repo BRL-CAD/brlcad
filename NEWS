@@ -8,12 +8,34 @@ see that file and the CVS log for more historic information.  The
 entire history of the project is available through CVS.
 
 ----------------------------------------------------------------------
---- 2006-02-XX  Release 7.7.0                                      ---
+--- 2006-04-11  Release 7.8.0                                      ---
 ----------------------------------------------------------------------
 
-This release marks the one year anniversary of BRL-CAD being released
-as Open Source software.  Thank you to everyone for your support and
-contributions.
+This release marks a major milestone in the massive effort by the
+BRL-CAD developers and the open source community to provide a complete
+port of BRL-CAD to the Microsoft Windows platform.  This effort
+includes particular support and contributions from SURVICE
+Engineering, Inc., TNO Prins Maurits Laboratory, the U.S. Army
+Research Library (ARL), and others.  The Windows port effort was
+started several years ago, primarily through efforts of friends at the
+U.S. Army Aviation and Missile Research Development and Engineering
+Center (AMRDEC) and CG2, Inc.  Over the past year, the development
+effort was accelerated to a stable status through the work of SURVICE
+working for ARL.
+
+This release also includes another major contribution by SURVICE
+Engineering, Inc., a new modeling tool called Archer.  A more detailed
+announcement and overview of Archer will be given in the near future
+after the new tool is more fully integrated into the build system and
+tested further.
+
+Other noteworthy enhancements provided in this release include new
+sample applications that demonstrate the capabilities of the libpkg
+networking library, in-memory geometry database processing, reshooting
+of rays from analysis codes for testing pursposes, and the librt root
+solver.  For analysts and modelers alike, the mged modeler also
+acquires a few new commands including reid and remat that respectively
+assist with the assignment of region and material identifiers.
 
 * fixed mged B command bad geometry resource bug - John Anderson
 * new tracker tool for extracting sf.net tracker data - Sean Morrison
@@ -35,6 +57,21 @@ contributions.
 * get_regions mged command, list assembly regions - Sean Morrison
 * extensive Windows build support enhancements - Bob Parker
 * new Archer modeling and visualization tool - Bob Parker, Doug Howard
+
+
+----------------------------------------------------------------------
+--- 2005-02-28  Release 7.6.8                                      ---
+----------------------------------------------------------------------
+
+This release marks the one year anniversary of BRL-CAD being released
+as Open Source software.  Thank you to everyone for your support and
+contributions.  This update includes modifications to the BRL-CAD
+raytracers that greatly improves performance for large image
+renderings.  Work continues in support of porting BRL-CAD to the
+Microsoft Windows platform, albeit still undergoing development and
+testing.  Thank you to the selected beta testers for your feedback and
+reports.
+
 * raytracers use image size for default aspect ratio - Sean Morrison
 * fixed benchmark sqrt of negative numbers error - Sean Morrison
 * raytracer performance enhancements - Sean Morrison
