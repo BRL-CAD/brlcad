@@ -91,7 +91,6 @@ if test "x$cache_file" = "x/dev/null" ; then
 	dnl if we are on sgi, bash may choke on bad sed syntax in the cache
 	if test "x$host_os" != "xirix6.5" ; then
 		AC_MSG_NOTICE([*** Automatically caching to $configure_cache ***])
-		echo "bc_cv_CC=$CC"
 		>$configure_cache
 		cache_file="$configure_cache"
 		CONFIG_CACHE="$cache_file"
