@@ -11,7 +11,11 @@ CD ..
 SET BRLCAD_DATA=%CD%
 CD %SAVE_CD%
 
-START /B mged.exe 2>&1 nul
+IF "%1"=="-g" (
+    START /B mged.exe %2
+) ELSE (
+    START /B mged.exe 2>&1 nul
+)
 
 CLS
 EXIT
