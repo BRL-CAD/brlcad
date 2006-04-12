@@ -47,13 +47,18 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "nurb.h"
 
-/* Create a place holder for a nurb surface. */
+static void init_oslo_mat_pool();
 
+/* Create a place holder for a nurb surface. */
 struct face_g_snurb *
 rt_nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_cols, int pt_type, struct resource *res)
 {
     register struct face_g_snurb * srf;
     int pnum;
+    
+    /* initialize the oslo_mat pool, since this is the first place
+       nurbs come into being... */
+    init_oslo_mat_pool();
     
     GET_SNURB(srf);
     srf->order[0] = u_order;
@@ -152,10 +157,23 @@ rt_nurb_add_trim_contour(struct face_g_snurb* surf, struct trim_contour* trim)
     BU_LIST_APPEND(&(surf->trims_hd.l), &(trim->l));
 }
 
-static pthread_mutex_t omp_mutex = PTHREAD_MUTEX_INITIALIZER;
-static struct oslo_mat_pool* g_pool = NULL;
 
-void grow_oslo_mat_pool(struct oslo_mat_pool* pool)
+/*
+ *
+ * O S L O _ M A T _ P O O L   S T U F F 
+ *
+ */
+static pthread_mutex_t omp_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_key_t omp_key = 0;
+
+#define VERIFY_POOL(p) { \
+  if (!p) { \
+    p = create_oslo_mat_pool(); \
+    pthread_setspecific(omp_key, p); \
+  } \
+}
+
+static void grow_oslo_mat_pool(struct oslo_mat_pool* pool)
 {
     /* grow the pool */
     int i;
@@ -169,62 +187,65 @@ void grow_oslo_mat_pool(struct oslo_mat_pool* pool)
     mat->next = NULL; /* end of the list */
     pool->available_size = OSLO_MAT_POOL_GROWSIZE;
     pool->size += OSLO_MAT_POOL_GROWSIZE;
+    bu_log("grow_oslo_mat_pool: newsize = %d, thread_id = %d\n", pool->size, pthread_self());
 }
 
-struct oslo_mat_pool* get_oslo_mat_pool()
+static void init_oslo_mat_pool()
 {
     pthread_mutex_lock(&omp_mutex);
     {
-	if (!g_pool) {
-	    BU_GETSTRUCT(g_pool, oslo_mat_pool);
-	    g_pool->size = g_pool->available_size = 0;
-	    g_pool->available = NULL;
-	    grow_oslo_mat_pool(g_pool);
-	}	
+	if (omp_key == 0) {
+	    int rc = pthread_key_create(&omp_key, NULL);
+	    if (rc) bu_bomb("rt_nurb_new_oslo(): pthread key create failed");
+	}
     }
     pthread_mutex_unlock(&omp_mutex);
-    return g_pool;
+}
+
+static struct oslo_mat_pool* create_oslo_mat_pool()
+{
+    struct oslo_mat_pool* pool;
+    BU_GETSTRUCT(pool, oslo_mat_pool);
+    pool->size = pool->available_size = 0;
+    pool->available = NULL;
+    grow_oslo_mat_pool(pool);
+    return pool;
 }
 
 struct oslo_mat* rt_nurb_new_oslo()
 {
     int i;
-    struct oslo_mat* mat;
-    struct oslo_mat_pool* pool = get_oslo_mat_pool();
-    
-    pthread_mutex_lock(&omp_mutex);
-    {
-	if (pool->available_size <= 0) {
-	    grow_oslo_mat_pool(pool);
-	}       
-	pool->available_size--;
-	mat = pool->available;
-	pool->available = mat->next;
-	mat->next = NULL;
-    }
-    pthread_mutex_unlock(&omp_mutex);
+    struct oslo_mat* mat = NULL;
+    struct oslo_mat_pool* pool = (struct oslo_mat_pool*)pthread_getspecific(omp_key);
+    VERIFY_POOL(pool);
+
+    if (pool->available_size <= 0) {
+	grow_oslo_mat_pool(pool);
+    }       
+    pool->available_size--;
+    mat = pool->available;
+    pool->available = mat->next;
+    mat->next = NULL;
     
     return mat;
 }
 
 void rt_nurb_free_oslo(struct oslo_mat* mat)
 {
-    int count = 0;
-    struct oslo_mat_pool* pool = get_oslo_mat_pool();
+    int count = 1;
     struct oslo_mat* curr = mat;
+    struct oslo_mat_pool* pool = (struct oslo_mat_pool*)pthread_getspecific(omp_key);
+
     if (!curr) return;
     while (curr->next) {
 	count++;
 	curr = curr->next; /* get the last element */
     }
-    pthread_mutex_lock(&omp_mutex);
-    {
-	/* attach this list back to available stack */
-	curr->next = pool->available;
-	pool->available = mat;
-	pool->available_size += count;
-    }
-    pthread_mutex_unlock(&omp_mutex);
+
+    /* attach this list back to available stack */
+    curr->next = pool->available;
+    pool->available = mat;
+    pool->available_size += count;
 }
 
 /*
