@@ -131,7 +131,13 @@ static int curr_layer;
 #define	ARC_ENTITY_STATE		8
 #define DIMENSION_ENTITY_STATE		9
 #define TEXT_ENTITY_STATE		10
-#define NUM_ENTITY_STATES		11
+#define	SOLID_ENTITY_STATE		11
+#define LWPOLYLINE_ENTITY_STATE		12
+#define MTEXT_ENTITY_STATE		13
+#define LEADER_ENTITY_STATE		14
+#define ATTRIB_ENTITY_STATE		15
+#define ATTDEF_ENTITY_STATE		16
+#define NUM_ENTITY_STATES		17
 
 /* POLYLINE flags */
 static int polyline_flag=0;
@@ -857,7 +863,7 @@ process_blocks_code( int code )
 		}
 		break;
 	case 2:		/* block name */
-		if( curr_block ) {
+		if( curr_block && curr_block->block_name == NULL ) {
 			curr_block->block_name = bu_strdup( line );
 			if( verbose ) {
 				bu_log( "BLOCK %s begins at %ld\n",
@@ -867,7 +873,7 @@ process_blocks_code( int code )
 		}
 		break;
 	case 5:		/* block handle */
-		if( curr_block ) {
+		if( curr_block && curr_block->handle == NULL ) {
 			len = strlen( line );
 			if( len > 16 ) {
 				len = 16;
@@ -887,11 +893,6 @@ process_blocks_code( int code )
 	}
 
 	return( 0 );
-}
-
-void
-add_polyface_mesh_triangle( int v1, int v2, int v3 )
-{
 }
 
 void
@@ -918,6 +919,7 @@ static int
 process_point_entities_code( int code )
 {
 	static point_t pt;
+	point_t tmp_pt;
 	int coord;
 
 	switch( code ) {
@@ -939,8 +941,9 @@ process_point_entities_code( int code )
 	case 0:
 		get_layer();
 		layers[curr_layer]->point_count++;
+		MAT4X3PNT( tmp_pt, curr_state->xform, pt );
 		sprintf( tmp_name, "point.%d", layers[curr_layer]->point_count );
-		(void)mk_sph( out_fp, tmp_name, pt, 0.1 );
+		(void)mk_sph( out_fp, tmp_name, tmp_pt, 0.1 );
 		(void)bu_ptbl_ins( &(layers[curr_layer]->solids), (long *)bu_strdup( tmp_name ) );
 		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		process_entities_code[curr_state->sub_state]( code );
@@ -996,13 +999,16 @@ process_entities_polyline_vertex_code( int code )
 				      curr_layer );
 			}
 		} else if( vertex_flag & POLY_VERTEX_3D_M) {
+			point_t tmp_pt1, tmp_pt2;
 			if( polyline_vert_indices_count >= polyline_vert_indices_max ) {
 				polyline_vert_indices_max += POLYLINE_VERTEX_BLOCK;
 				polyline_vert_indices = (int *)bu_realloc( polyline_vert_indices,
 									   polyline_vert_indices_max * sizeof( int ),
 									   "polyline_vert_indices" );
 			}
-			polyline_vert_indices[polyline_vert_indices_count++] = Add_vert( x, y, z,
+			VSET( tmp_pt1, x, y, z );
+			MAT4X3PNT( tmp_pt2, curr_state->xform, tmp_pt1 );
+			polyline_vert_indices[polyline_vert_indices_count++] = Add_vert( tmp_pt2[X], tmp_pt2[Y], tmp_pt2[Z],
 									     layers[curr_layer]->vert_tree_root,
 									     tol_sq );
 			if( verbose) {
@@ -1218,6 +1224,14 @@ process_entities_unknown_code( int code )
 				bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 			}
 			break;
+		} else if( !strncmp( line, "LWPOLYLINE", 10 ) ) {
+			if( verbose)
+				bu_log( "Found a LWPOLYLINE\n" );
+			curr_state->sub_state = LWPOLYLINE_ENTITY_STATE;
+			if( verbose ) {
+				bu_log( "sub_state changed to %d\n", curr_state->sub_state );
+			}
+			break;
 		} else if( !strncmp( line, "3DFACE", 6 ) ) {
 			curr_state->sub_state = FACE3D_ENTITY_STATE;
 			if( verbose ) {
@@ -1254,11 +1268,42 @@ process_entities_unknown_code( int code )
 				bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 			}
 			break;
+		} else if( !strcmp( line, "LEADER" ) ) {
+			curr_state->sub_state = LEADER_ENTITY_STATE;
+			if( verbose ) {
+			    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
+			}
+			break;
+		} else if( !strcmp( line, "MTEXT" ) ) {
+			curr_state->sub_state = MTEXT_ENTITY_STATE;
+			if( verbose ) {
+			    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
+			}
+			break;
 		} else if( !strcmp( line, "TEXT" ) ) {
 			curr_state->sub_state = TEXT_ENTITY_STATE;
 			if( verbose ) {
 			    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 			}
+			break;
+		} else if( !strcmp( line, "ATTRIB" ) ) {
+			curr_state->sub_state = ATTRIB_ENTITY_STATE;
+			if( verbose ) {
+			    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
+			}
+			break;
+		} else if( !strcmp( line, "ATTDEF" ) ) {
+			curr_state->sub_state = ATTDEF_ENTITY_STATE;
+			if( verbose ) {
+			    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
+			}
+			break;
+		} else if( !strcmp( line, "SOLID" ) ) {
+		        curr_state->sub_state = SOLID_ENTITY_STATE;
+			if( verbose ) {
+			    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
+			}
+			break;
 		} else if( !strncmp( line, "INSERT", 6 ) ) {
 			curr_state->sub_state = INSERT_ENTITY_STATE;
 			if( verbose ) {
@@ -1282,10 +1327,8 @@ process_entities_unknown_code( int code )
 			}
 			break;
 		} else {
-			if( verbose ) {
-				bu_log( "Unrecognized text string while in unknown entities state: %s\n",
+		    bu_log( "Unrecognized entity type encountered (ignoring): %s\n",
 					line );
-			}
 			break;
 		}
 	}
@@ -1377,6 +1420,15 @@ process_insert_entities_code( int code )
 		break;
 	case 0:		/* end of this insert */
 		if( new_state->curr_block ) {
+		    mat_t xlate, scale, rot, tmp1, tmp2;
+		    MAT_IDN( xlate );
+		    MAT_IDN( scale );
+		    MAT_SCALE_VEC( scale, ins.scale );
+		    MAT_DELTAS_VEC( xlate, ins.insert_pt );
+		    bn_mat_angles( rot, 0.0, 0.0, ins.rotation );
+		    bn_mat_mul( tmp1, rot, scale );
+		    bn_mat_mul( tmp2, xlate, tmp1 );
+		    bn_mat_mul( new_state->xform, tmp2, curr_state->xform );
 			BU_LIST_PUSH( &state_stack, &(curr_state->l) );
 			curr_state = new_state;
 			new_state = NULL;
@@ -1386,8 +1438,202 @@ process_insert_entities_code( int code )
 			if( verbose ) {
 				bu_log( "Changing state for INSERT\n" );
 				bu_log( "seeked to %ld\n", curr_state->curr_block->offset );
+				bn_mat_print( "state xform", curr_state->xform );
 			}
 		}
+		break;
+	}
+
+	return( 0 );
+}
+
+static int
+process_solid_entities_code( int code )
+{
+    int vert_no;
+    int coord;
+    point_t tmp_pt;
+    struct vertex *v1;
+    static int last_vert_no = -1;
+    static point_t solid_pt[4];
+
+    switch( code ) {
+	case 8:
+		if( curr_layer_name ) {
+			bu_free( curr_layer_name, "curr_layer_name" );
+		}
+		curr_layer_name = make_brlcad_name( line );
+		if( verbose ) {
+		    bu_log( "LINE is in layer: %s\n", curr_layer_name );
+		}
+		break;
+	case 10:
+	case 20:
+	case 30:
+	case 11:
+	case 21:
+	case 31:
+	case 12:
+	case 22:
+	case 32:
+	case 13:
+	case 23:
+	case 33:
+		vert_no = code % 10;
+		if( vert_no > last_vert_no ) last_vert_no = vert_no;
+		coord = code / 10 - 1;
+		solid_pt[vert_no][coord] = atof( line ) * units_conv[units] * scale_factor;
+		if( verbose ) {
+			bu_log( "SOLID vertex #%d coord #%d = %g\n", vert_no, coord, solid_pt[vert_no][coord] );
+		}
+		break;
+	case 62:	/* color number */
+		curr_color = atoi( line );
+		break;
+	case 0:
+		/* end of this solid */
+		get_layer();
+		if( verbose ) {
+			bu_log( "Found end of SOLID\n" );
+		}
+
+		layers[curr_layer]->line_count++;
+
+		if( !layers[curr_layer]->m ) {
+			create_nmg();
+		}
+
+		v1 = NULL;
+		for( vert_no = 0 ; vert_no <= last_vert_no ; vert_no ++ ) {
+		    MAT4X3PNT( tmp_pt, curr_state->xform, solid_pt[vert_no] );
+		    VMOVE( solid_pt[vert_no], tmp_pt );
+
+		    if( vert_no > 0 ) {
+			struct edgeuse *eu;
+			/* create a wire edge in the NMG */
+			eu = nmg_me( v1, NULL, layers[curr_layer]->s );
+			if( v1 == NULL ) {
+			    nmg_vertex_gv( eu->vu_p->v_p, solid_pt[vert_no - 1] );
+			}
+			nmg_vertex_gv( eu->eumate_p->vu_p->v_p, solid_pt[vert_no] );
+			v1 = eu->eumate_p->vu_p->v_p;
+			if( verbose ) {
+			    bu_log( "Wire edge (solid): (%g %g %g) <-> (%g %g %g)\n",
+				    V3ARGS(eu->vu_p->v_p->vg_p->coord ),
+				    V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+			}
+		    }
+		}
+
+		last_vert_no = -1;
+		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
+		process_entities_code[curr_state->sub_state]( code );
+		break;
+	}
+
+	return( 0 );
+}
+
+static int
+process_lwpolyline_entities_code( int code )
+{
+    point_t tmp_pt;
+    static int num_verts = 0;
+    static int vert_no = 0;
+    static fastf_t x, y;
+    
+	switch( code ) {
+	case 8:
+		if( curr_layer_name ) {
+			bu_free( curr_layer_name, "curr_layer_name" );
+		}
+		curr_layer_name = make_brlcad_name( line );
+		if( verbose ) {
+		    bu_log( "LINE is in layer: %s\n", curr_layer_name );
+		}
+		break;
+	case 90:
+	    num_verts = code;
+	    break;
+	case 10:
+		x = atof( line ) * units_conv[units] * scale_factor;
+		if( verbose ) {
+			bu_log( "LWPolyLine vertex #%d (x) = %g\n", vert_no, x );
+		}
+		break;
+	case 20:
+		y = atof( line ) * units_conv[units] * scale_factor;
+		if( verbose ) {
+			bu_log( "LWPolyLine vertex #%d (y) = %g\n", vert_no, y );
+		}
+		add_polyline_vertex( x, y, 0.0 );
+		break;
+	case 62:	/* color number */
+		curr_color = atoi( line );
+		break;
+	case 70:
+	    polyline_flag = atoi( line );
+	    break;
+	case 0:
+		/* end of this line */
+		get_layer();
+		if( verbose ) {
+			bu_log( "Found end of LWPOLYLINE\n" );
+		}
+
+		layers[curr_layer]->line_count++;
+
+		if( !layers[curr_layer]->m ) {
+			create_nmg();
+		}
+
+		if( polyline_vertex_count > 1 ) {
+		    struct vertex *v0=NULL, *v1=NULL, *v2=NULL;
+		    int i;
+
+		    if( !layers[curr_layer]->m ) {
+			create_nmg();
+		    }
+
+		    for( i=0 ; i<polyline_vertex_count ; i++ ) {
+			MAT4X3PNT( tmp_pt, curr_state->xform, &polyline_verts[i*3] );
+			VMOVE( &polyline_verts[i*3], tmp_pt );
+		    }
+		    
+		    for( i=0 ; i<polyline_vertex_count-1 ; i++ ) {
+			struct edgeuse *eu;
+
+			eu = nmg_me( v1, v2, layers[curr_layer]->s );
+			if( i == 0 ) {
+			    v1 = eu->vu_p->v_p;
+			    nmg_vertex_gv( v1, polyline_verts );
+			    v0 = v1;
+			}
+			v2 = eu->eumate_p->vu_p->v_p;
+			nmg_vertex_gv( v2, &polyline_verts[(i+1)*3] );
+			if( verbose ) {
+			    bu_log( "Wire edge (lwpolyline): (%g %g %g) <-> (%g %g %g)\n",
+				    V3ARGS( v1->vg_p->coord ),
+				    V3ARGS( v2->vg_p->coord ) );
+			}
+			v1 = v2;
+			v2 = NULL;
+		    }
+
+		    if( polyline_flag & POLY_CLOSED ) {
+			v2 = v0;
+			(void)nmg_me( v1, v2, layers[curr_layer]->s );
+			if( verbose ) {
+			    bu_log( "Wire edge (closing lwpolyline): (%g %g %g) <-> (%g %g %g)\n",
+				    V3ARGS( v1->vg_p->coord ),
+				    V3ARGS( v2->vg_p->coord ) );
+			}
+		    }
+		}
+		polyline_vert_indices_count=0;
+		polyline_vertex_count = 0;
+		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
+		process_entities_code[curr_state->sub_state]( code );
 		break;
 	}
 
@@ -1401,6 +1647,7 @@ process_line_entities_code( int code )
 	int coord;
 	static point_t line_pt[2];
 	struct edgeuse *eu;
+	point_t tmp_pt;
 
 	switch( code ) {
 	case 8:
@@ -1440,6 +1687,11 @@ process_line_entities_code( int code )
 		if( !layers[curr_layer]->m ) {
 			create_nmg();
 		}
+
+		MAT4X3PNT( tmp_pt, curr_state->xform, line_pt[0] );
+		VMOVE( line_pt[0], tmp_pt );
+		MAT4X3PNT( tmp_pt, curr_state->xform, line_pt[1] );
+		VMOVE( line_pt[1], tmp_pt );
 
 		/* create a wire edge in the NMG */
 		eu = nmg_me( NULL, NULL, layers[curr_layer]->s );
@@ -1513,7 +1765,12 @@ process_circle_entities_code( int code )
 
 		/* move everything to the specified center */
 		for( i=0 ; i<segs_per_circle ; i++ ) {
-			VADD2( circle_pts[i], circle_pts[i], center );
+		    point_t tmp_pt;
+		    VADD2( circle_pts[i], circle_pts[i], center );
+
+		    /* apply transformation */
+		    MAT4X3PNT( tmp_pt, curr_state->xform, circle_pts[i] );
+		    VMOVE( circle_pts[i], tmp_pt );
 		}
 
 		/* make nmg wire edges */
@@ -1562,25 +1819,35 @@ process_circle_entities_code( int code )
 #define VMIDDLE 2
 #define TOP 3
 
-void
-drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentPoint,
-	    double textHeight, double textScale, double textRotation, int horizAlignment, int vertAlignment, int textFlag )
+/* attachment point codes */
+#define TOPLEFT 1
+#define TOPCENTER 2
+#define TOPRIGHT 3
+#define MIDDLELEFT 4
+#define MIDDLECENTER 5
+#define MIDDLERIGHT 6
+#define BOTTOMLEFT 7
+#define BOTTOMCENTER 8
+#define BOTTOMRIGHT 9
+
+/* secret codes for MTEXT entries
+ * \P - new paragraph (line)
+ * \X - new line (everthing before is above the dimension line, everything after is below)
+ * \~ - blank space
+ * \f - TrueType font
+ * \F - .SHX font
+ * 	    ex:
+ *		Hello \fArial;World
+ *	    or:
+ *		Hello {\fArial;World}
+ */
+
+int
+convertSecretCodes( char *c, char *cp, int *maxLineLen )
 {
-    double stringLength=0.0;
-    char *copyOfText;
-    char *c, *cp;
-    vect_t diff;
-    double allowedLength;
-    double xScale=1.0;
-    double yScale=1.0;
-    double scale;
-    struct bu_list vhead;
+    int lineCount = 0;
+    int lineLen = 0;
 
-    BU_LIST_INIT( &vhead );
-
-    copyOfText = bu_calloc( strlen( theText )+1, 1, "copyOfText" );
-    c = theText;
-    cp = copyOfText;
     while( *c ) {
 	if( *c == '%' && *(c+1) == '%' ) {
 		switch( *(c+2) ) {
@@ -1618,10 +1885,71 @@ drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentP
 			c++;
 			break;
 		}
+		lineLen++;
+	} else if( *c == '\\' ) {
+	    switch( *(c+1) ) {
+	        case 'P':
+	        case 'X':
+		    *cp++ = '\n';
+		    c += 2;
+		    lineCount++;
+		    if( lineLen > *maxLineLen ) {
+			*maxLineLen = lineLen;
+		    }
+		    lineLen = 0;
+		    break;
+	        case 'A':
+		    while( *c != ';' && *c != '\0' ) c++;
+		    c++;
+		    break;
+	        case '~':
+		    *cp++ = ' ';
+		    c += 2;
+		    lineLen++;
+		    break;
+	        default:
+		    *cp++ = *c++;
+		    lineLen++;
+		    break;
+	    }
 	} else {
 	    *cp++ = *c++;
+	    lineLen++;
 	}
     }
+    if( *(c-1) != '\n' ) {
+	lineCount++;
+    }
+
+    if( lineLen > *maxLineLen ) {
+	*maxLineLen = lineLen;
+    }
+
+    return lineCount;
+}
+
+
+void
+drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentPoint,
+	    double textHeight, double textScale, double textRotation, int horizAlignment, int vertAlignment, int textFlag )
+{
+    double stringLength=0.0;
+    char *copyOfText;
+    char *c, *cp;
+    vect_t diff;
+    double allowedLength;
+    double xScale=1.0;
+    double yScale=1.0;
+    double scale;
+    struct bu_list vhead;
+    int maxLineLen=0;
+
+    BU_LIST_INIT( &vhead );
+
+    copyOfText = bu_calloc( strlen( theText )+1, 1, "copyOfText" );
+    c = theText;
+    cp = copyOfText;
+    (void)convertSecretCodes( c, cp, &maxLineLen );
 
     bu_free( theText, "theText" );
     stringLength = strlen( copyOfText );
@@ -1679,6 +2007,478 @@ drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentP
     bu_free( copyOfText, "copyOfText" );
 }
 
+void
+drawMtext( char *text, int attachPoint, int drawingDirection, double textHeight, double entityHeight,
+	   double charWidth, double rectWidth, double rotationAngle, double insertionPoint[3] )
+{
+    char *copyOfText = bu_calloc( strlen( text )+1, 1, "copyOfText" );
+    char *c;
+    char *cp;
+    int lineCount;
+    int maxLineLen=0;
+    double scale;
+    double lineSpace;
+    double totalHeight;
+    double xdel, ydel;
+    double startx, starty;
+    double radians = rotationAngle * M_PI / 180.0;
+    vect_t xdir, ydir;
+    struct bu_list vhead;
+    int done;
+
+    BU_LIST_INIT( &vhead );
+
+    c = text;
+    cp = copyOfText;
+    lineCount = convertSecretCodes( c, cp, &maxLineLen );
+
+    if( textHeight > 0.0 ) {
+	scale = textHeight;
+    } else if( charWidth > 0.0 ) {
+	scale = charWidth;
+    } else if( entityHeight > 0.0 ) {
+	scale = (entityHeight / (double)lineCount) * 0.9;
+    }
+
+    lineSpace = 1.25 * scale;
+    totalHeight = (double)lineCount * lineSpace;
+
+    VSET( xdir, cos( radians ), sin( radians ), 0.0 );
+    VSET( ydir, -sin( radians ), cos( radians ), 0.0 );
+
+    switch( attachPoint ) {
+    case TOPLEFT:
+	xdel = 0.0;
+	ydel =  -scale;
+	break;
+    case TOPCENTER:
+	xdel = -((double)maxLineLen * scale) / 2.0;
+	ydel = -scale;
+	break;
+    case TOPRIGHT:
+	xdel = -(double)maxLineLen * scale;
+	ydel = -scale;
+	break;
+    case MIDDLELEFT:
+	xdel = 0.0;
+	ydel = -((double)lineCount * lineSpace) / 2.0;
+	break;
+    case MIDDLECENTER:
+	xdel = -((double)maxLineLen * scale) / 2.0;
+	ydel = -((double)lineCount * lineSpace) / 2.0;
+	break;
+    case MIDDLERIGHT:
+	xdel = -(double)maxLineLen * scale;
+	ydel = -((double)lineCount * lineSpace) / 2.0;
+	break;
+    case BOTTOMLEFT:
+	xdel = 0.0;
+	ydel = (double)lineCount * lineSpace - scale;
+	break;
+    case BOTTOMCENTER:
+	xdel = -((double)maxLineLen * scale) / 2.0;
+	ydel = (double)lineCount * lineSpace - scale;
+	break;
+    case BOTTOMRIGHT:
+	xdel = -(double)maxLineLen * scale;
+	ydel = (double)lineCount * lineSpace - scale;
+	break;
+    }
+
+    startx = insertionPoint[X] + xdel * xdir[X] + ydel * ydir[X];
+    starty = insertionPoint[Y] + xdel * xdir[Y] + ydel * ydir[Y];
+
+    cp = copyOfText;
+    c = copyOfText;
+    done = 0;
+    while( !done ) {
+	if( *cp == '\n' || *cp == '\0' ) {
+	    if( *cp == '\0' ) {
+		done = 1;
+	    }
+	    *cp = '\0';
+	    bn_vlist_2string( &vhead, &free_hd, c,
+			      startx,starty,
+			      scale, rotationAngle );
+	    nmg_vlist_to_eu( &vhead,layers[curr_layer]->s );
+	    BN_FREE_VLIST( &free_hd, &vhead );
+	    c = ++cp;
+	    startx -= lineSpace * ydir[X];
+	    starty -= lineSpace * ydir[Y];
+	} else {
+	    cp++;
+	}
+    }
+
+    
+    bu_free( copyOfText, "copyOfText" );
+}
+
+static int
+process_leader_entities_code( int code )
+{
+    static int arrowHeadFlag=0;
+    static int pathType=0;
+    static int creationFlag=3;
+    static int hooklineDirection;
+    static int hooklineFlag=0;
+    static double textHeight=0.0;
+    static double textWidth=0.0;
+    static int numVerts=0;
+    static int vertNo=0;
+    static vect_t normal={0, 0, 0};
+    static vect_t horizDir={1, 0, 0};
+    static point_t offset={0, 0, 0};
+    static point_t offsetB={0, 0, 0};
+    static point_t pt;
+    point_t tmp_pt;
+    int i;
+    struct edgeuse *eu;
+    struct vertex *v0=NULL, *v1=NULL, *v2=NULL;
+
+    switch( code ) {
+        case 8:
+	    if( curr_layer_name ) {
+		bu_free( curr_layer_name, "curr_layer_name" );
+	    }
+	    curr_layer_name = make_brlcad_name( line );
+	    if( verbose ) {
+		bu_log( "LINE is in layer: %s\n", curr_layer_name );
+	    }
+	    break;
+       case 62:	/* color number */
+	   curr_color = atoi( line );
+	   break;
+        case 71:
+	    arrowHeadFlag = atoi( line );
+	    break;
+        case 72:
+	    pathType = atoi( line );
+	    break;
+        case 73:
+	    creationFlag = atoi( line );
+	    break;
+        case 74:
+	    hooklineDirection = atoi( line );
+	    break;
+        case 75:
+	    hooklineFlag = atoi( line );
+	    break;
+        case 40:
+	    textHeight = atof( line );
+	    break;
+        case 41:
+	    textWidth = atof( line );
+	    break;
+        case 76:
+	    numVerts = atoi( line );
+	    break;
+        case 210:
+	    normal[X] = atof( line );
+	    break;
+        case 220:
+	    normal[Y] = atof( line );
+	    break;
+        case 230:
+	    normal[Z] = atof( line );
+	    break;
+        case 211:
+	    horizDir[X] = atof( line );
+	    break;
+        case 221:
+	    horizDir[Y] = atof( line );
+	    break;
+        case 231:
+	    horizDir[Z] = atof( line );
+	    break;
+        case 212:
+	    offsetB[X] = atof( line );
+	    break;
+        case 222:
+	    offsetB[Y] = atof( line );
+	    break;
+        case 232:
+	    offsetB[Z] = atof( line );
+	    break;
+        case 213:
+	    offset[X] = atof( line );
+	    break;
+        case 223:
+	    offset[Y] = atof( line );
+	    break;
+        case 233:
+	    offset[Z] = atof( line );
+	    break;
+	case 10:
+	    pt[X] = atof( line );
+	    break;
+	case 20:
+	    pt[Y] = atof( line );
+	    break;
+	case 30:
+	    pt[Z] = atof( line );
+	    if( verbose ) {
+		bu_log( "LEADER vertex #%d = (%g %g %g)\n", vertNo, V3ARGS( pt ) );
+	    }
+	    MAT4X3PNT( tmp_pt, curr_state->xform, pt );
+	    add_polyline_vertex( V3ARGS( tmp_pt ) );
+	    break;
+	case 0:
+	    /* end of this line */
+	    get_layer();
+	    if( verbose ) {
+		bu_log( "Found end of LEADER\n" );
+	    }
+	    
+	    layers[curr_layer]->line_count++;
+	    
+	    if( polyline_vertex_count > 1 ) {
+		if( !layers[curr_layer]->m ) {
+		    create_nmg();
+		}
+
+		for( i=0 ; i<polyline_vertex_count-1 ; i++ ) {
+		    eu = nmg_me( v1, v2, layers[curr_layer]->s );
+		    if( i == 0 ) {
+			v1 = eu->vu_p->v_p;
+			nmg_vertex_gv( v1, polyline_verts );
+			v0 = v1;
+		    }
+		    v2 = eu->eumate_p->vu_p->v_p;
+		    nmg_vertex_gv( v2, &polyline_verts[(i+1)*3] );
+		    if( verbose ) {
+			bu_log( "Wire edge (LEADER): (%g %g %g) <-> (%g %g %g)\n",
+				V3ARGS( v1->vg_p->coord ),
+				V3ARGS( v2->vg_p->coord ) );
+		    }
+		    v1 = v2;
+		    v2 = NULL;
+		}
+	    }
+	    polyline_vert_indices_count=0;
+	    polyline_vertex_count = 0;
+	    arrowHeadFlag = 0;
+	    pathType = 0;
+	    creationFlag = 3;
+	    hooklineFlag = 0;
+	    textHeight = 0.0;
+	    textWidth = 0.0;
+	    numVerts = 0;
+	    vertNo = 0;
+	    VSET( normal, 0, 0, 0);
+	    VSET( horizDir, 1, 0, 0);
+	    VSET( offset, 0, 0, 0);
+	    VSET( offsetB, 0, 0, 0);
+
+	    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
+	    process_entities_code[curr_state->sub_state]( code );
+	    break;
+    }
+
+    return( 0 );
+}
+
+static int
+process_mtext_entities_code( int code )
+{
+    static struct bu_vls vls;
+    static int attachPoint=0;
+    static int drawingDirection=0;
+    static double textHeight=0.0;
+    static double entityHeight=0.0;
+    static double charWidth=0.0;
+    static double rectWidth=0.0;
+    static double rotationAngle=0.0;
+    static double insertionPoint[3]={0,0,0};
+    static double xAxisDirection[3]={0,0,0};
+    point_t tmp_pt;
+    int coord;
+
+    switch( code ) {
+        case 3:
+	    bu_vls_init_if_uninit( &vls );
+	    bu_vls_strcat( &vls, line );
+	    break;
+	case 1:
+	    bu_vls_init_if_uninit( &vls );
+	    bu_vls_strcat( &vls, line );
+	    break;
+	case 8:		/* layer name */
+		if( curr_layer_name ) {
+			bu_free( curr_layer_name, "curr_layer_name" );
+		}
+		curr_layer_name = make_brlcad_name( line );
+		break;
+	case 10:
+	case 20:
+	case 30:
+	    coord = (code / 10) - 1;
+	    insertionPoint[coord] = atof( line ) * units_conv[units] * scale_factor;
+	    break;
+	case 11:
+	case 21:
+	case 31:
+	    coord = (code / 10) - 1;
+	    xAxisDirection[coord] = atof( line );
+	    if( code == 31 ) {
+		rotationAngle = atan2( xAxisDirection[Y], xAxisDirection[X] ) * 180.0 / M_PI;
+	    }
+	    break;
+	case 40:
+	    textHeight = atof( line );
+	    break;
+	case 41:
+	    rectWidth = atof( line );
+	    break;
+	case 42:
+	    charWidth = atof( line );
+	    break;
+	case 43:
+	    entityHeight = atof( line );
+	    break;
+	case 50:
+	    rotationAngle = atof( line );
+	    break;
+	case 62:	/* color number */
+		curr_color = atoi( line );
+		break;
+	case 71:
+	    attachPoint = atoi( line );
+	    break;
+	case 72:
+	    drawingDirection = atoi( line );
+	    break;
+	case 0:
+	    if( verbose ) {
+		bu_log( "MTEXT (%s), height = %g, entityHeight = %g, rectWidth = %g\n", bu_vls_addr( &vls ), textHeight, entityHeight, rectWidth );
+		bu_log( "\tattachPoint = %d, charWidth = %g, insertPt = (%g %g %g)\n", attachPoint, charWidth, V3ARGS( insertionPoint ) );
+	    }
+	    /* draw the text */
+	    get_layer();
+
+	    if( !layers[curr_layer]->m ) {
+		create_nmg();
+	    }
+
+	    /* apply transformation */
+	    MAT4X3PNT( tmp_pt, curr_state->xform, insertionPoint );
+	    VMOVE( insertionPoint, tmp_pt );
+
+	    drawMtext( bu_vls_addr( &vls ), attachPoint, drawingDirection, textHeight, entityHeight,
+		       charWidth, rectWidth, rotationAngle, insertionPoint );
+
+	    layers[curr_layer]->string_count++;
+	    bu_vls_free( &vls );
+	    attachPoint = 0;
+	    textHeight = 0.0;
+	    entityHeight = 0.0;
+	    charWidth = 0.0;
+	    rectWidth = 0.0;
+	    rotationAngle = 0.0;
+	    VSET( insertionPoint, 0, 0, 0 );
+	    VSET( xAxisDirection, 0, 0, 0 );
+	    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
+	    process_entities_code[curr_state->sub_state]( code );
+	   break;
+    }
+
+    return( 0 );
+}
+
+static int
+process_attrib_entities_code( int code )
+{
+    static char *theText=NULL;
+    static int horizAlignment=0;
+    static int vertAlignment=0;
+    static int textFlag=0;
+    static point_t firstAlignmentPoint = {0.0, 0.0, 0.0 };
+    static point_t secondAlignmentPoint = {0.0, 0.0, 0.0 };
+    static double textScale=1.0;
+    static double textHeight;
+    static double textRotation=0.0;
+    point_t tmp_pt;
+    int coord;
+
+    switch( code ) {
+	case 1:
+	    theText = bu_strdup( line );
+	    break;
+	case 8:		/* layer name */
+		if( curr_layer_name ) {
+			bu_free( curr_layer_name, "curr_layer_name" );
+		}
+		curr_layer_name = make_brlcad_name( line );
+		break;
+	case 10:
+	case 20:
+	case 30:
+	    coord = (code / 10) - 1;
+	    firstAlignmentPoint[coord] = atof( line ) * units_conv[units] * scale_factor;
+	    break;
+	case 11:
+	case 21:
+	case 31:
+	    coord = (code / 10) - 1;
+	    secondAlignmentPoint[coord] = atof( line ) * units_conv[units] * scale_factor;
+	    break;
+	case 40:
+	    textHeight = atof( line );
+	    break;
+	case 41:
+	    textScale = atof( line );
+	    break;
+	case 50:
+	    textRotation = atof( line );
+	    break;
+	case 62:	/* color number */
+		curr_color = atoi( line );
+		break;
+	case 71:
+	    textFlag = atoi( line );
+	    break;
+	case 72:
+	    horizAlignment = atoi( line );
+	    break;
+	case 74:
+	    vertAlignment = atoi( line );
+	    break;
+	case 0:
+	    if( theText != NULL ) {
+		if( verbose ) {
+		    bu_log( "TEXT (%s), height = %g, scale = %g\n", theText, textHeight, textScale );
+		}
+		/* draw the text */
+		get_layer();
+
+		if( !layers[curr_layer]->m ) {
+			create_nmg();
+		}
+
+		/* apply transformation */
+		MAT4X3PNT( tmp_pt, curr_state->xform, firstAlignmentPoint );
+		VMOVE( firstAlignmentPoint, tmp_pt );
+		MAT4X3PNT( tmp_pt, curr_state->xform, secondAlignmentPoint );
+		VMOVE( secondAlignmentPoint, tmp_pt );
+
+		drawString( theText, firstAlignmentPoint, secondAlignmentPoint,
+			    textHeight, textScale, textRotation, horizAlignment, vertAlignment, textFlag );
+		layers[curr_layer]->string_count++;
+	    }
+	    horizAlignment=0;
+	    vertAlignment=0;
+	    textFlag=0;
+	    VSET( firstAlignmentPoint, 0.0, 0.0, 0.0 );
+	    VSET( secondAlignmentPoint, 0.0, 0.0, 0.0 );
+	    textScale=1.0;
+	    textRotation=0.0;
+	    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
+	    process_entities_code[curr_state->sub_state]( code );
+	   break;
+    }
+    return 0;
+}
+
 static int
 process_text_entities_code( int code )
 {
@@ -1701,6 +2501,7 @@ process_text_entities_code( int code )
     static double textScale=1.0;
     static double textHeight;
     static double textRotation=0.0;
+    point_t tmp_pt;
     int coord;
 
     switch( code ) {
@@ -1757,6 +2558,13 @@ process_text_entities_code( int code )
 		if( !layers[curr_layer]->m ) {
 			create_nmg();
 		}
+
+		/* apply transformation */
+		MAT4X3PNT( tmp_pt, curr_state->xform, firstAlignmentPoint );
+		VMOVE( firstAlignmentPoint, tmp_pt );
+		MAT4X3PNT( tmp_pt, curr_state->xform, secondAlignmentPoint );
+		VMOVE( secondAlignmentPoint, tmp_pt );
+
 		drawString( theText, firstAlignmentPoint, secondAlignmentPoint,
 			    textHeight, textScale, textRotation, horizAlignment, vertAlignment, textFlag );
 		layers[curr_layer]->string_count++;
@@ -1950,7 +2758,13 @@ process_arc_entities_code( int code )
 
 		/* move everything to the specified center */
 		for( i=0 ; i<num_segs ; i++ ) {
-			VADD2( circle_pts[i], circle_pts[i], center );
+		    point_t tmp_pt;
+
+		    VADD2( circle_pts[i], circle_pts[i], center );
+
+		    /* apply transformation */
+		    MAT4X3PNT( tmp_pt, curr_state->xform, circle_pts[i] );
+		    VMOVE( circle_pts[i], tmp_pt );
 		}
 
 		if( verbose ) {
@@ -2046,6 +2860,9 @@ process_3dface_entities_code( int code )
 			bu_log( "\tmaking two triangles\n" );
 		}
 		for( vert_no=0 ; vert_no<4; vert_no++ ) {
+		    point_t tmp_pt1;
+		    MAT4X3PNT( tmp_pt1, curr_state->xform, pts[vert_no] );
+		    VMOVE( pts[vert_no], tmp_pt1 );
 			face[vert_no] = Add_vert( V3ARGS( pts[vert_no]),
 						  layers[curr_layer]->vert_tree_root,
 						  tol_sq );
@@ -2264,6 +3081,12 @@ main( int argc, char *argv[] )
 	process_entities_code[ARC_ENTITY_STATE] = process_arc_entities_code;
 	process_entities_code[DIMENSION_ENTITY_STATE] = process_dimension_entities_code;
 	process_entities_code[TEXT_ENTITY_STATE] = process_text_entities_code;
+	process_entities_code[SOLID_ENTITY_STATE] = process_solid_entities_code;
+	process_entities_code[LWPOLYLINE_ENTITY_STATE] = process_lwpolyline_entities_code;
+	process_entities_code[MTEXT_ENTITY_STATE] = process_mtext_entities_code;
+	process_entities_code[ATTRIB_ENTITY_STATE] = process_attrib_entities_code;
+	process_entities_code[ATTDEF_ENTITY_STATE] = process_attrib_entities_code;
+	process_entities_code[LEADER_ENTITY_STATE] = process_leader_entities_code;
 
 	process_tables_sub_code[UNKNOWN_TABLE_STATE] = process_tables_unknown_code;
 	process_tables_sub_code[LAYER_TABLE_STATE] = process_tables_layer_code;
