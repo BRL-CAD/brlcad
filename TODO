@@ -47,6 +47,8 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* test for USE_FORKED_THREADS in configure
+
 * optimize CSG structures automatically, automatic simplification.
 
 * analyze command doesn't print values with enough precision.
