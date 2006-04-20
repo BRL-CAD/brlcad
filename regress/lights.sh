@@ -41,11 +41,11 @@ EOF
 NUMBER_WRONG=`tr , '\012' < lights.log | awk '/many/ {print $1}'`
 /bin/echo lights.pix $NUMBER_WRONG off by many
 
-if [ $NUMBER_WRONG == 0 ] ; then
+if [ X$NUMBER_WRONG = X0 ] ; then
     /bin/echo '-> lights.sh succeeded'
 else
     /bin/echo '-> lights.sh failed'
-endif
+fi
 
 exit $NUMBER_WRONG
 

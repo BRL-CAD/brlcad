@@ -224440,11 +224440,11 @@ else
 	fi
 fi
 
-if [ $NUMBER_WRONG == 0 ] ; then
+if [ X$NUMBER_WRONG = X0 ] ; then
     /bin/echo '-> shaders.sh succeeded'
 else
     /bin/echo '-> shaders.sh failed'
-endif
+fi
 
 exit $NUMBER_WRONG
 # Local Variables:

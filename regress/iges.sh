@@ -40,11 +40,11 @@ else
 fi
 
 
-if [ $STATUS == 0 ] ; then
+if [ X$STATUS = X0 ] ; then
     /bin/echo '-> iges.sh succeeded'
 else
     /bin/echo '-> iges.sh failed'
-endif
+fi
 
 
 exit $STATUS

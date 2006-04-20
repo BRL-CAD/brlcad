@@ -72,11 +72,11 @@ fi
 NUMBER_WRONG=`tr , '\012' < moss-png.log | awk '/many/ {print $1}'`
 echo moss.pix $NUMBER_WRONG off by many
 
-if [ $NUMBER_WRONG == 0 ] ; then
+if [ X$NUMBER_WRONG = X0 ] ; then
     /bin/echo '-> moss.sh succeeded'
 else
     /bin/echo '-> moss.sh failed'
-endif
+fi
 
 exit $NUMBER_WRONG
 

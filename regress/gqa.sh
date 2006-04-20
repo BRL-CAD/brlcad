@@ -141,8 +141,8 @@ echo $CMD >> gqa.log 2>&1
 $CMD >> gqa.log 2>&1
 
 
-if [ $STATUS == 0 ] ; then
-    /bin/echo '-> iges.sh succeeded'
+if [ $STATUS = 0 ] ; then
+    /bin/echo '-> gqa.sh succeeded'
 else
-    /bin/echo '-> iges.sh failed'
-endif
+    /bin/echo '-> gqa.sh failed'
+fi

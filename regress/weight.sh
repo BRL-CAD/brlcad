@@ -64,11 +64,11 @@ fi
 
 rm -f wgt.out_ns weight.ref_ns
 
-if [ $STATUS == 0 ] ; then
+if [ X$STATUS = X0 ] ; then
     /bin/echo '-> weight.sh succeeded'
 else
     /bin/echo '-> weight.sh failed'
-endif
+fi
 
 
 exit $STATUS

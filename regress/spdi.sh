@@ -57,11 +57,11 @@ EOF
 NUMBER_WRONG=`tr , '\012' < spdi.log | awk '/many/ {print $1}'`
 /bin/echo spdi.pix $NUMBER_WRONG off by many
 
-if [ $NUMBER_WRONG == 0 ] ; then
+if [ X$NUMBER_WRONG == X0 ] ; then
     /bin/echo '-> spdi.sh succeeded'
 else
     /bin/echo '-> spdi.sh failed'
-endif
+fi
 
 exit $NUMBER_WRONG
 # Local Variables:
