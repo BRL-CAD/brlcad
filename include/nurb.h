@@ -274,6 +274,7 @@ NURB_EXPORT BU_EXTERN(fastf_t rt_nurb_basis_eval, (struct knot_vector *knts, int
 /* nurb_bezier.c */
 NURB_EXPORT BU_EXTERN(int rt_nurb_bezier, (struct bu_list *bezier_hd,
 			const struct face_g_snurb * srf, struct resource *res));
+NURB_EXPORT BU_EXTERN(void rt_nurb_trims_to_bezier, (struct bu_list* trims, struct face_g_snurb* srf));
 NURB_EXPORT BU_EXTERN(int rt_bez_check, (const struct face_g_snurb * srf));
 NURB_EXPORT BU_EXTERN(int nurb_crv_is_bezier,
 		    (const struct edge_g_cnurb *crv));
@@ -443,7 +444,7 @@ NURB_EXPORT BU_EXTERN( struct bezier_2d_list *subdivide_bezier, (struct bezier_2
 							fastf_t epsilon, int depth) );
 
 /* nurb_trim.c */
-NURB_EXPORT BU_EXTERN( int rt_nurb_uv_trimmed, (struct face_g_snurb* srf, fastf_t u, fastf_t v) );
+NURB_EXPORT BU_EXTERN( int rt_nurb_uv_trimmed, (struct bu_list* trims, fastf_t u, fastf_t v) );
 
 
 #endif
