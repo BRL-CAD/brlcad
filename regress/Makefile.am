@@ -2,7 +2,7 @@
 
 regression: clean solids shaders spdi moss lights Makefile iges weight gqa
 	@${ECHO} ---
-	@${ECHO} Regression testing completed successfully.
+	@${ECHO} Regression testing completed.
 
 regress: regression
 
