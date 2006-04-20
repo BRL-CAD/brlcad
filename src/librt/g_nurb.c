@@ -68,6 +68,7 @@ struct nurb_specific {
     struct nurb_specific *  next;	/* next surface in the the solid */
     struct face_g_snurb *	srf;	/* Original surface description */
     struct bu_list		bez_hd;	/* List of Bezier face_g_snurbs */
+    struct bu_list              trim_hd;/* list of Bezier trims */ 
 };
 
 struct nurb_hit {
@@ -124,9 +125,14 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 		n->srf = s;
 		BU_LIST_INIT( &n->bez_hd );
+		BU_LIST_INIT( &n->trim_hd );
 
 		/* Grind up the original surf into a list of Bezier face_g_snurbs */
 		(void)rt_nurb_bezier( &n->bez_hd, sip->srfs[i], (struct resource *)NULL );
+			       
+		/* Grind up the trimming curves into Bezier curves (they may be B-Splines) */
+		rt_nurb_trims_to_bezier( &n->trim_hd, sip->srfs[i] );
+		/* TODO: where is this cleaned up??? */
 
 		/* Compute bounds of each Bezier face_g_snurb */
 		for( BU_LIST_FOR( s, face_g_snurb, &n->bez_hd ) )  {
@@ -276,7 +282,7 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		    fastf_t v = hit->hit_uv[Y];
 		    u = (u - min[X]) / (max[X] - min[X]);
 		    v = (v - min[Y]) / (max[Y] - min[Y]);
-		    if (!rt_nurb_uv_trimmed(s, u, v)) {
+		    if (!rt_nurb_uv_trimmed(&(nurb->trim_hd), u, v)) {
 			rt_nurb_add_hit( &hit_list, hit, tol );
 		    }
 		}
