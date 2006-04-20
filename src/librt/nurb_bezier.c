@@ -108,6 +108,39 @@ rt_bez_check(const struct face_g_snurb *srf)
 	return -1;
 }
 
+
+/*
+ *                     R T _ N U R B _ T R I M _ T O _ B E Z I E R
+ *
+ * Convert the trims on this surface (srf) to bezier curves (if they
+ * aren't already!) Fills the list represented by the (trims)
+ * parameter.
+ *
+ */
+void
+rt_nurb_trims_to_bezier(struct bu_list* trims, struct face_g_snurb* srf)
+{  
+    if (!srf->trims_count) {
+	return;
+    } else {
+	struct trim_contour* contour = NULL;
+	for (BU_LIST_FOR(contour, trim_contour, &(srf->trims_hd.l))) {
+	    struct edge_g_cnurb* curve = NULL;	    
+	    for (BU_LIST_FOR(curve, edge_g_cnurb, &(contour->curve_hd.l))) {
+		if (!nurb_crv_is_bezier(curve)) {
+		    /* convert it! */
+		    nurb_c_to_bezier(trims, curve);
+		} else {
+		    struct edge_g_cnurb* copy = rt_nurb_crv_copy(curve);
+		    BU_LIST_APPEND(trims, &copy->l);
+		}
+	    }
+	}
+    }
+}
+
+
+
 /*		N U R B _ C R V _ I S _ B E Z I E R
  *
  * Check if a NURB curve is in Bezier form.
@@ -123,6 +156,10 @@ nurb_crv_is_bezier(const struct edge_g_cnurb *crv)
 	int i;
 	fastf_t knot_min, knot_max;
 	int bezier=1;
+
+	/* HACK */
+	/* If curve is a line, then say it's Bezier! */
+	if (crv->order <= 0) return 1;
 
 	knot_min = crv->k.knots[0];
 	knot_max = crv->k.knots[crv->k.k_size-1];
