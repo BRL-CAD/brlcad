@@ -39,4 +39,12 @@ else
     /bin/echo g-iges/iges-g completed successfully
 fi
 
+
+if [ $STATUS == 0 ] ; then
+    /bin/echo '-> iges.sh succeeded'
+else
+    /bin/echo '-> iges.sh failed'
+endif
+
+
 exit $STATUS

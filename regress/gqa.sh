@@ -71,8 +71,12 @@ EOF
 GQA="../src/gtools/g_qa -u m,m^3,kg -g 0.25m-0.5mm -p"
 export GQA
 
+STATUS=0
+export STATUS
 
-
+#
+# somehow need to check results of these
+#
 CMD="$GQA -Ao gqa.g overlaps"
 echo $CMD
 echo $CMD >> gqa.log
@@ -135,3 +139,10 @@ CMD="$GQA -g 50mm -Ao gqa.g closed_box.r"
 echo $CMD
 echo $CMD >> gqa.log 2>&1
 $CMD >> gqa.log 2>&1
+
+
+if [ $STATUS == 0 ] ; then
+    /bin/echo '-> iges.sh succeeded'
+else
+    /bin/echo '-> iges.sh failed'
+endif

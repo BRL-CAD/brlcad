@@ -71,7 +71,15 @@ fi
 ../src/util/pixdiff moss.pix moss2.pix > moss_png.diff 2> moss-png.log
 NUMBER_WRONG=`tr , '\012' < moss-png.log | awk '/many/ {print $1}'`
 echo moss.pix $NUMBER_WRONG off by many
+
+if [ $NUMBER_WRONG == 0 ] ; then
+    /bin/echo '-> moss.sh succeeded'
+else
+    /bin/echo '-> moss.sh failed'
+endif
+
 exit $NUMBER_WRONG
+
 # Local Variables:
 # mode: sh
 # tab-width: 8

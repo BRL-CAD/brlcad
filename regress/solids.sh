@@ -902,6 +902,12 @@ tr , '\012' < solids-diff.log | awk '/many/ {print $0}'
 NUMBER_WRONG=`tr , '\012' < solids-diff.log | awk '/many/ {print $1}'`
 /bin/echo solids.pix $NUMBER_WRONG off by many
 
+if [ $NUMBER_WRONG == 0 ] ; then
+    /bin/echo '-> solids.sh succeeded'
+else
+    /bin/echo '-> solids.sh failed'
+endif
+
 exit $NUMBER_WRONG
 
 # Local Variables:

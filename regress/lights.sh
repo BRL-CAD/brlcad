@@ -39,7 +39,13 @@ EOF
 ../src/conv/asc2pix < $1/regress/lights_ref.asc  > lights_ref.pix
 ../src/util/pixdiff lights.pix lights_ref.pix > lights_diff.pix 2>> lights.log
 NUMBER_WRONG=`tr , '\012' < lights.log | awk '/many/ {print $1}'`
-/bin/echo -n lights.pix $NUMBER_WRONG off by many
+/bin/echo lights.pix $NUMBER_WRONG off by many
+
+if [ $NUMBER_WRONG == 0 ] ; then
+    /bin/echo '-> lights.sh succeeded'
+else
+    /bin/echo '-> lights.sh failed'
+endif
 
 exit $NUMBER_WRONG
 

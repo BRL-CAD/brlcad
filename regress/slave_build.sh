@@ -53,22 +53,22 @@ rm $MYNAME
 #
 case $MYNAME in
 wopr)
-    export CONF_FLAGS="" ;
+    export CONF_FLAGS="--enable-everything" ;
     export MAKE_CMD="make" ;
     export MAKE_OPTS="-j11" ;;
 
 liu)
-    export CONF_FLAGS="" ;
+    export CONF_FLAGS="--enable-everything" ;
     export MAKE_CMD="make" ;
     export MAKE_OPTS="-j2" ;;
 
 amdws2)
-    export CONF_FLAGS="" ;
+    export CONF_FLAGS="--enable-everything" ;
     export MAKE_CMD="make" ;
     export MAKE_OPTS="-j2" ;;
 
 vast)
-    export CONF_FLAGS="CC=cc CFLAGS=-64 LDFLAGS=-64 --enable-64bit-build" ;
+    export CONF_FLAGS="CC=cc CFLAGS=-64 LDFLAGS=-64 --enable-everything --enable-64bit-build" ;
     export MAKE_CMD="/usr/gnu/bin/make" ;
     export MAKE_OPTS="-j5" ;;
 
@@ -127,10 +127,16 @@ fi
 #
 # run the regression tests
 #
-if [ -s build.log ] ; then
-    cd regress
-    make test > test.log 2>&1
-else
+if [ ! -s build.log ] ; then
     echo build failed zero length log
     exit 1
 fi
+
+cd regress
+make test > test.log 2>&1
+if [ X`grep failed test.log` != X ] ; then
+    /bin/echo regression test failed
+else
+    /bin/echo regression test succeeded
+fi
+make install
