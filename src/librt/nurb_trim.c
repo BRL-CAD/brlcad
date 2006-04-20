@@ -85,49 +85,46 @@ int quad_table[16]  = {		/* A = 0, B = 2, C = 3 */
  * surface, or has been trimmed by a trimming contour.
  */
 int
-rt_nurb_uv_trimmed(struct face_g_snurb* srf, fastf_t u, fastf_t v)
+rt_nurb_uv_trimmed(struct bu_list* trims, fastf_t u, fastf_t v)
 {
     int crossings = 0;
     /* return false if there are no trimming contours */
-    if (!srf->trims_count) {
+    if (BU_LIST_IS_EMPTY(trims)) {
 	return 0;
     } else {
-	struct trim_contour* contour = NULL;
-	for (BU_LIST_FOR(contour, trim_contour, &(srf->trims_hd.l))) {
-	    struct edge_g_cnurb* curve = NULL;
+	struct edge_g_cnurb* curve = NULL;
 
-	    /* adapted from nmg_uv_in_lu() */
-	    for (BU_LIST_FOR(curve, edge_g_cnurb, &(contour->curve_hd.l))) {
-		if (curve->order <= 0) {
-		    /* the curve is a line */
-		    fastf_t slope, intercept, u_on_curve;
-		    point_t uv1, uv2;
-		    VMOVE(uv1, curve->ctl_points);
-		    VMOVE(uv2, &(curve->ctl_points[2]));
-		    
-		    if (uv1[Y] < v && uv2[Y] < v)
-			continue;
-		    if (uv1[Y] > v && uv2[Y] > v)
-			continue;
-		    if (uv1[X] <= u && uv2[X] <= u)
-			continue;
-		    if (uv1[X] == uv2[X]) {
-			if ((uv1[Y] <= v && uv2[Y] >= v) || 
-			    (uv2[Y] <= v && uv1[Y] >= v))
-			    crossings++;
-			continue;
-		    }
-		    
-		    /* calculate the intersection */
-		    slope = (uv1[Y] - uv2[Y])/(uv1[X] - uv2[X]);
-		    intercept = uv1[Y] - slope * uv1[X];
-		    u_on_curve = (v - intercept)/slope;
-		    if (u_on_curve > u)
+	/* adapted from nmg_uv_in_lu() */
+	for (BU_LIST_FOR(curve, edge_g_cnurb, trims)) {
+	    if (curve->order <= 0) {
+		/* the curve is a line */
+		fastf_t slope, intercept, u_on_curve;
+		point_t uv1, uv2;
+		VMOVE(uv1, curve->ctl_points);
+		VMOVE(uv2, &(curve->ctl_points[2]));
+		
+		if (uv1[Y] < v && uv2[Y] < v)
+		    continue;
+		if (uv1[Y] > v && uv2[Y] > v)
+		    continue;
+		if (uv1[X] <= u && uv2[X] <= u)
+		    continue;
+		if (uv1[X] == uv2[X]) {
+		    if ((uv1[Y] <= v && uv2[Y] >= v) || 
+			(uv2[Y] <= v && uv1[Y] >= v))
 			crossings++;
-		} else {
-		    /* the curve is a bspline, delegate to function */
-		    crossings += rt_uv_in_trim(curve, u, v);
+		    continue;
 		}
+		
+		/* calculate the intersection */
+		slope = (uv1[Y] - uv2[Y])/(uv1[X] - uv2[X]);
+		intercept = uv1[Y] - slope * uv1[X];
+		u_on_curve = (v - intercept)/slope;
+		if (u_on_curve > u)
+		    crossings++;
+	    } else {
+		/* the curve is a bezier, delegate to function */
+		crossings += rt_uv_in_trim(curve, u, v);
 	    }
 	}
     }
@@ -338,9 +335,11 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 	BU_LIST_INIT(&plist);
 
 	if( nurb_crv_is_bezier( trim ) )
-		rt_clip_cnurb(&plist, trim, u, v);
-	else
-		nurb_c_to_bezier( &plist, trim );
+	    rt_clip_cnurb(&plist, trim, u, v);
+	else {
+	    bu_log("WARNING: shouldn't be called!");
+	    nurb_c_to_bezier( &plist, trim );
+	}
 
 	while( BU_LIST_WHILE( clip, edge_g_cnurb, &plist ) )
 	{
