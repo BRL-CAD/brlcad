@@ -85,6 +85,9 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * libfb + font rendering (perhaps through libbn's plot interface) for
   a posix terminal.
 
+* Optional compile-time support for using GMP or CLN for arbitrary
+  precision arithmetic.
+
 * gpgpu for enhanced performance boolweave sorting
 
 * getexecname, "/proc/self/cmdline", program_invocation_short_name.
