@@ -11,8 +11,9 @@ entire history of the project is available through CVS.
 --- 2006-05-XX  Release 7.8.1                                      ---
 ----------------------------------------------------------------------
 
+* fixed libwdb corruption when creating pipes - Daniel Ro§berg
+* fixed crash in release build concerning bot's - Daniel Ro§berg
 * additional dxf-g importer enhancements - John Anderson
-* fixed crash in release build concerning bot's - Daniel Rossberg
 
 
 ----------------------------------------------------------------------
@@ -249,7 +250,7 @@ The rtarea command was added to mged as well, along with rtweight.
 * added rtarea and rtweight commands to mged - Sean Morrison
 * added sorting and hierarchy support to rtarea - Sean Morrison
 * rewrote rtarea for region and assemblies support - Sean Morrison
-* fixed .density file parser bug in rtweight - Daniel Rossberg
+* fixed .density file parser bug in rtweight - Daniel Ro§berg
 * improve detection and handling of cyclic geometry - Sean Morrison
 * added a -noleaf option to the mged pathlist command - Bob Parker
 * fixed potential infinite loop bug in BoT primitive - Bob Parker
