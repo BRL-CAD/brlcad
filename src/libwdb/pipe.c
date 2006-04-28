@@ -97,8 +97,7 @@ mk_particle(struct rt_wdb *fp, const char *name, fastf_t *vertex, fastf_t *heigh
 int
 mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 {
-	struct rt_pipe_internal		*pipe;
-	int				ret;
+	struct rt_pipe_internal *pipe;
 
 	if( rt_pipe_ck( headp ) )
 	{
@@ -109,14 +108,10 @@ mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 	BU_GETSTRUCT( pipe, rt_pipe_internal );
 	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
 	BU_LIST_INIT( &pipe->pipe_segs_head );
-	/* "borrow" linked list from caller */
+	/* linked list from caller */
 	BU_LIST_APPEND_LIST( &pipe->pipe_segs_head, headp );
 
-	ret = wdb_export( fp, name, (genptr_t)pipe, ID_PIPE, mk_conv2mm );
-
-	/* "return" linked list to caller */
-	BU_LIST_APPEND_LIST( headp, &pipe->pipe_segs_head );
-	return ret;
+	return wdb_export( fp, name, (genptr_t)pipe, ID_PIPE, mk_conv2mm );
 }
 
 /*
