@@ -11,8 +11,8 @@ entire history of the project is available through CVS.
 --- 2006-05-XX  Release 7.8.1                                      ---
 ----------------------------------------------------------------------
 
-* fixed libwdb corruption when creating pipes - Daniel Roßberg
-* fixed crash in release build concerning bot's - Daniel Roßberg
+* fixed libwdb corruption when creating pipes - Daniel Ro√überg
+* fixed crash in release build concerning bot's - Daniel Ro√überg
 * additional dxf-g importer enhancements - John Anderson
 
 
@@ -148,7 +148,7 @@ point clouds, and more.
 * improved mged 'tol' command tolerance value checks - Sean Morrison
 * fixed tgc absolute tesselation tolerance issue - Sean Morrison
 * optional build support checks for X11 and OpenGL - Sean Morrison
-* improved Windows build support - Bob Parker, Daniel Roßberg
+* improved Windows build support - Bob Parker, Daniel Ro√überg
 * isst observer 2x screen magnification - Justin Shumaker
 * added los and material name support to librtserver - John Anderson
 * improved 64bit support for ADRT - Justin Shumaker
@@ -250,7 +250,7 @@ The rtarea command was added to mged as well, along with rtweight.
 * added rtarea and rtweight commands to mged - Sean Morrison
 * added sorting and hierarchy support to rtarea - Sean Morrison
 * rewrote rtarea for region and assemblies support - Sean Morrison
-* fixed .density file parser bug in rtweight - Daniel Roßberg
+* fixed .density file parser bug in rtweight - Daniel Ro√überg
 * improve detection and handling of cyclic geometry - Sean Morrison
 * added a -noleaf option to the mged pathlist command - Bob Parker
 * fixed potential infinite loop bug in BoT primitive - Bob Parker
@@ -278,7 +278,7 @@ with; and custom configurations may disable the installation of the
 additional geometry databases if so desired.
 
 * documented the rtcheck -g and -G options - Sean Morrison
-* fixed units bug in mged typein of bot and arbn - Daniel Roßberg
+* fixed units bug in mged typein of bot and arbn - Daniel Ro√überg
 * added -W option to raytracers for white background - Sean Morrison
 * synchronized mged startup message with gui creation - Sean Morrison
 * added -f option to mged to prevent backgrounding - Sean Morrison
