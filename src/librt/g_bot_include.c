@@ -1099,7 +1099,6 @@ XGLUE(rt_bot_piece_shot_,TRI_TYPE)( struct rt_piecestate *psp, struct rt_pieceli
 		LOCAL vect_t	xp;		/* wxb cross ray_dir */
 		LOCAL int	face_array_index;
 		LOCAL int	tris_in_piece;
-		register XGLUE(tri_specific_,TRI_TYPE) *trip;
 
 		piecenum = *sol_piece_subscr_p;
 
@@ -1122,14 +1121,13 @@ XGLUE(rt_bot_piece_shot_,TRI_TYPE)( struct rt_piecestate *psp, struct rt_pieceli
 		 * the piece.
 		 */
 		face_array_index = piecenum*bot->bot_tri_per_piece;
-		trip = bot->bot_facearray[face_array_index];
 		tris_in_piece = bot->bot_ntri - face_array_index;
 		if( tris_in_piece > bot->bot_tri_per_piece ) {
 			tris_in_piece = bot->bot_tri_per_piece;
 		}
-		for( trinum=0 ; trinum<tris_in_piece ;
-		     trinum++, trip=bot->bot_facearray[face_array_index+trinum] ) {
-			fastf_t dN, abs_dN;
+		for( trinum=0; trinum<tris_in_piece; trinum++ ) {
+		    register XGLUE(tri_specific_,TRI_TYPE) *trip = bot->bot_facearray[face_array_index+trinum];
+		    fastf_t                                 dN, abs_dN;
 		    /*
 		     *  Ray Direction dot N.  (N is outward-pointing normal)
 		     *  wn points inwards, and is not unit length.
