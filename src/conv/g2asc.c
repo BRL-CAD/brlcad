@@ -206,6 +206,7 @@ main(int argc, char **argv)
 		Tcl_Interp	*interp;
 		struct db_i	*dbip;
 		struct directory *dp;
+		const char *u;
 
 		if( ifp == stdin || ofp == stdout ) {
 			bu_log( "Cannot use stdin or stdout for Release 6 or later databases\n");
@@ -228,17 +229,22 @@ main(int argc, char **argv)
 		}
 		RT_CK_DBI(dbip);
 		db_dirbuild( dbip );
+
+		/* write out the title and units special */
 		if( dbip->dbi_title[0] ) {
 			fprintf( ofp, "title {%s}\n", tclify_name( dbip->dbi_title ) );
 		} else {
 			fprintf( ofp, "title {Untitled BRL-CAD Database}\n" );
 		}
-		fprintf( ofp, "units %s\n", bu_units_string( dbip->dbi_local2base ) );
+		u = bu_units_string( dbip->dbi_local2base );
+		if (u) {
+		    fprintf( ofp, "units %s\n", u );
+		}
 		FOR_ALL_DIRECTORY_START(dp, dbip)  {
 			struct rt_db_internal	intern;
 			struct bu_attribute_value_set *avs=NULL;
 
-			/* Skip GLOBAL object */
+			/* Process the _GLOBAL object */
 			if( dp->d_major_type == 2 && dp->d_minor_type == 0 ) {
 				const char *value;
 				Tcl_Obj	*list, *obj;
@@ -247,9 +253,24 @@ main(int argc, char **argv)
 
 				/* get region colortable */
 				if( db5_get_attributes( dbip, &g_avs, dp ) ) {
-					bu_log( "Failed to get attributes of _GLOBAL!!\n" );
+					bu_log( "Failed to find any attributes on _GLOBAL\n" );
 					continue;
 				}
+
+				/* save the rest of the associated attributes of _GLOBAL*/
+				if (g_avs.count) {
+				    fprintf(ofp, "attr set {_GLOBAL}");
+				    for (i=0; i < g_avs.count; i++) {
+					if (strncmp(g_avs.avp[i].name, "title", 6) == 0) {
+					    continue;
+					} else if (strncmp(g_avs.avp[i].name, "units", 6) == 0) {
+					    continue;
+					}
+					fprintf(ofp, " {%s} {%s}", g_avs.avp[i].name, g_avs.avp[i].value);
+				    }
+				    fprintf(ofp, "\n");
+				}
+
 				value = bu_avs_get( &g_avs, "regionid_colortable" );
 				if( !value )
 					continue;
