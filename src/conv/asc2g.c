@@ -92,7 +92,7 @@ static int ars_pt=0;
 static char *ars_name;
 static fastf_t **ars_curves=NULL;
 static char *slave_name = "safe_interp";
-static char *db_name = "db";
+static char *db_name = "_db";
 
 static char usage[] = "\
 Usage: asc2g file.asc file.g\n\
@@ -1267,8 +1267,8 @@ identbld(void)
 	  strncpy(unit_str,"mile",4);
 	  break;
 	default:
-	  fprintf(stderr,"asc2g: unknown v4 units code = %d\n", units);
-	  exit(1);
+	  fprintf(stderr,"asc2g: unknown v4 units code = %d, defaulting to millimeters\n", units);
+	  strncpy(unit_str,"mm",4);
 	}
 	local2mm = bu_units_conversion(unit_str);
 	if( local2mm <= 0 )  {
