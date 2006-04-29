@@ -42,6 +42,7 @@ MODELS = \
 	prim.asc \
 	tank_car.asc \
 	terra.asc \
+	toyjeep.asc \
 	truck.asc \
 	wave.asc \
 	woodsman.asc \
