@@ -61,10 +61,16 @@ will be considered to be the same vertex.
 .P
 The
 .B file.dxf
-file is expected to be in the Autodesk DXF format as defined in the
-Autocad 2000 manuals. This converter handles entities of types:
+file is expected to be in the ASCII Autodesk DXF format as defined in the
+Autocad 2006 manuals. This converter handles entities of types:
 .IP
 POLYLINE
+.br
+LWPOLYLINE
+.br
+LEADER
+.br
+DIMENSION
 .br
 VERTEX
 .br
@@ -74,7 +80,17 @@ CIRCLE
 .br
 ARC
 .br
+ELLIPSE
+.br
 3DFACE
+.br
+TEXT
+.br
+MTEXT
+.br
+.ATTRIB
+.br
+SOLID
 .P
 The POLYLINE entities in AUTOCAD are actually a container for numerous different entity types. The types
 of POLYLINE entities converted include:
@@ -85,6 +101,8 @@ of POLYLINE entities converted include:
 .br
 polyface meshes.
 .P
+SOLID entities are 2D shapes with a solid fill, but this converter does not do
+any filling.
 Each layer is converted to a seperate object. Colors are also converted.
 .SH EXAMPLE
 .RS
@@ -92,7 +110,7 @@ $ \|\fIdxf-g \|sample.dxf \|sample.g\fP
 .RE
 .SH "SEE ALSO"
 .I
-http://www.autodesk.com/techpubs/autocad/acad2000/dxf/index.htm
+http://images.autodesk.com/adsk/files/dxf_format.pdf
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.
 .SH AUTHOR

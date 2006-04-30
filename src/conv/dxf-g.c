@@ -85,8 +85,19 @@ struct layer {
 	int max_tri;			/* number of triangles currently malloced */
 	int curr_tri;			/* number of triangles currently being used */
 	int line_count;
+        int solid_count;
+        int polyline_count;
+        int lwpolyline_count;
+        int ellipse_count;
+        int circle_count;
+        int arc_count;
+        int text_count;
+        int mtext_count;
+        int attrib_count;
+        int dimension_count;
+        int leader_count;
+        int face3d_count;
 	int point_count;
-        int string_count;
 	struct bu_ptbl solids;
 	struct model *m;
 	struct shell *s;
@@ -137,7 +148,8 @@ static int curr_layer;
 #define LEADER_ENTITY_STATE		14
 #define ATTRIB_ENTITY_STATE		15
 #define ATTDEF_ENTITY_STATE		16
-#define NUM_ENTITY_STATES		17
+#define ELLIPSE_ENTITY_STATE		17
+#define NUM_ENTITY_STATES		18
 
 /* POLYLINE flags */
 static int polyline_flag=0;
@@ -1154,6 +1166,7 @@ process_entities_polyline_code( int code )
 				polyline_vertex_count = 0;
 			}
 
+			layers[curr_layer]->polyline_count++;
 			curr_state->state = ENTITIES_SECTION;
 			curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 			if( verbose ) {
@@ -1240,6 +1253,12 @@ process_entities_unknown_code( int code )
 			break;
 		} else if( !strcmp( line, "CIRCLE" ) ) {
 			curr_state->sub_state = CIRCLE_ENTITY_STATE;
+			if( verbose ) {
+				bu_log( "sub_state changed to %d\n", curr_state->sub_state );
+			}
+			break;
+		} else if( !strcmp( line, "ELLIPSE" ) ) {
+			curr_state->sub_state = ELLIPSE_ENTITY_STATE;
 			if( verbose ) {
 				bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 			}
@@ -1453,7 +1472,7 @@ process_solid_entities_code( int code )
     int vert_no;
     int coord;
     point_t tmp_pt;
-    struct vertex *v1;
+    struct vertex *v0,*v1;
     static int last_vert_no = -1;
     static point_t solid_pt[4];
 
@@ -1497,12 +1516,13 @@ process_solid_entities_code( int code )
 			bu_log( "Found end of SOLID\n" );
 		}
 
-		layers[curr_layer]->line_count++;
+		layers[curr_layer]->solid_count++;
 
 		if( !layers[curr_layer]->m ) {
 			create_nmg();
 		}
 
+		v0 = NULL;
 		v1 = NULL;
 		for( vert_no = 0 ; vert_no <= last_vert_no ; vert_no ++ ) {
 		    MAT4X3PNT( tmp_pt, curr_state->xform, solid_pt[vert_no] );
@@ -1514,6 +1534,7 @@ process_solid_entities_code( int code )
 			eu = nmg_me( v1, NULL, layers[curr_layer]->s );
 			if( v1 == NULL ) {
 			    nmg_vertex_gv( eu->vu_p->v_p, solid_pt[vert_no - 1] );
+			    v0 = eu->vu_p->v_p;
 			}
 			nmg_vertex_gv( eu->eumate_p->vu_p->v_p, solid_pt[vert_no] );
 			v1 = eu->eumate_p->vu_p->v_p;
@@ -1524,6 +1545,9 @@ process_solid_entities_code( int code )
 			}
 		    }
 		}
+
+		/* close the outline */
+		nmg_me( v1, v0, layers[curr_layer]->s );
 
 		last_vert_no = -1;
 		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
@@ -1581,7 +1605,7 @@ process_lwpolyline_entities_code( int code )
 			bu_log( "Found end of LWPOLYLINE\n" );
 		}
 
-		layers[curr_layer]->line_count++;
+		layers[curr_layer]->lwpolyline_count++;
 
 		if( !layers[curr_layer]->m ) {
 			create_nmg();
@@ -1712,6 +1736,164 @@ process_line_entities_code( int code )
 }
 
 static int
+process_ellipse_entities_code( int code )
+{
+	static point_t center={0, 0, 0};
+	static point_t majorAxis={1.0, 0, 0};
+	static double ratio=1.0;
+	static double startAngle=0.0;
+	static double endAngle=M_PI*2.0;
+	double angle, delta;
+	double majorRadius, minorRadius;
+	point_t tmp_pt;
+	vect_t xdir, ydir, zdir;
+	int numSegs;
+	int coord, i;
+	int fullCircle;
+	int done;
+	struct vertex *v0=NULL, *v1=NULL, *v2=NULL;
+	struct edgeuse *eu;
+
+	switch( code ) {
+	case 8:		/* layer name */
+		if( curr_layer_name ) {
+			bu_free( curr_layer_name, "curr_layer_name" );
+		}
+		curr_layer_name = make_brlcad_name( line );
+		break;
+	case 10:
+	case 20:
+	case 30:
+		coord = code / 10 - 1;
+		center[coord] = atof( line ) * units_conv[units] * scale_factor;
+		break;
+	case 11:
+	case 21:
+	case 31:
+		coord = code / 10 - 1;
+		majorAxis[coord] = atof( line ) * units_conv[units] * scale_factor;
+		break;
+	case 40:
+	        ratio = atof( line );
+		break;
+	case 41:
+	        startAngle = atof( line );
+		break;
+	case 42:
+	        endAngle = atof( line );
+		break;
+	case 62:	/* color number */
+		curr_color = atoi( line );
+		break;
+	case 0:
+		/* end of this ellipse entity
+		 * make a series of wire edges in the NMG to approximate a circle
+		 */
+
+		get_layer();
+		if( verbose ) {
+			bu_log( "Found an ellipse\n" );
+		}
+
+		if( !layers[curr_layer]->m ) {
+			create_nmg();
+		}
+
+		layers[curr_layer]->ellipse_count++;
+
+		MAT4X3PNT( tmp_pt, curr_state->xform, center );
+		VMOVE( center, tmp_pt );
+		MAT4X3PNT( tmp_pt, curr_state->xform, majorAxis );
+		VMOVE( majorAxis, tmp_pt );
+
+		majorRadius = MAGNITUDE( majorAxis );
+		minorRadius = ratio * majorRadius;	
+
+		VMOVE( xdir, majorAxis );
+		VUNITIZE( xdir );
+		VSET( zdir, 0, 0, 1 );
+		VCROSS( ydir, zdir, xdir );
+
+		if( NEAR_ZERO( endAngle - startAngle, 0.001 ) ) {
+		    fullCircle = 1;
+		} else {
+		    fullCircle = 0;
+		}
+
+		if( verbose ) {
+		    bu_log( "Ellipse:\n" );
+		    bu_log( "\tcenter = (%g %g %g)\n", V3ARGS( center ) );
+		    bu_log( "\tmajorAxis = (%g %g %g)\n", V3ARGS( majorAxis ) );
+		    bu_log( "\txdir = (%g %g %g)\n", V3ARGS( xdir ) );
+		    bu_log( "\tydir = (%g %g %g)\n", V3ARGS( ydir ) );
+		    bu_log( "\tradii = %g %g\n", majorRadius, minorRadius );
+		    bu_log( "\tangles = %g %g\n", startAngle, endAngle );
+		    bu_log( "\tfull circle = %d\n", fullCircle );
+		}
+
+		/* make nmg wire edges */
+		angle = startAngle;
+		delta = M_PI / 15.0;
+		if( (endAngle - startAngle)/delta < 4 ) {
+		    delta = (endAngle - startAngle) / 5.0;
+		}
+		done = 0;
+		while( !done ) {
+		        point_t p0, p1, p2;
+			double r1, r2;
+
+			if( angle >= endAngle ) {
+			    angle = endAngle;
+			    done = 1;
+			}
+
+			r1 = majorRadius * cos( angle );
+			r2 = minorRadius * sin( angle );
+			VJOIN2( p2, center, r1, xdir, r2, ydir );
+			if( angle == startAngle ) {
+			    VMOVE( p0, p2 );
+			    angle += delta;
+			    continue;
+			}
+			if( fullCircle && angle == endAngle ) {
+				v2 = v0;
+			}
+			eu = nmg_me( v1, v2, layers[curr_layer]->s );
+			v1 = eu->vu_p->v_p;
+			if( v0 == NULL ) {
+			    v0 = v1;
+			    nmg_vertex_gv( v0, p0 );
+			}
+			v2 = eu->eumate_p->vu_p->v_p;
+			if( v2 != v0 ) {
+			    nmg_vertex_gv( v2, p2 );
+			}
+			if( verbose ) {
+				bu_log( "Wire edge (ellipse): (%g %g %g) <-> (%g %g %g)\n",
+					V3ARGS( v1->vg_p->coord ),
+					V3ARGS( v2->vg_p->coord ) );
+			}
+			v1 = v2;
+			v2 = NULL;
+
+			angle += delta;
+		}
+
+		VSET( center, 0, 0, 0 );
+		VSET( majorAxis, 0, 0, 0 );
+		ratio = 1.0;
+		startAngle = 0.0;
+		endAngle = M_PI * 2.0;
+
+		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
+		process_entities_code[curr_state->sub_state]( code );
+		break;
+	}
+
+	return( 0 );
+}
+
+static int
 process_circle_entities_code( int code )
 {
 	static point_t center;
@@ -1755,6 +1937,8 @@ process_circle_entities_code( int code )
 		if( !layers[curr_layer]->m ) {
 			create_nmg();
 		}
+
+		layers[curr_layer]->circle_count++;
 
 		/* calculate circle at origin first */
 		VSET( circle_pts[0], radius, 0.0, 0.0 );
@@ -2227,10 +2411,10 @@ process_leader_entities_code( int code )
 	    /* end of this line */
 	    get_layer();
 	    if( verbose ) {
-		bu_log( "Found end of LEADER\n" );
+		bu_log( "Found end of LEADER: arrowhead flag = %d\n", arrowHeadFlag );
 	    }
 	    
-	    layers[curr_layer]->line_count++;
+	    layers[curr_layer]->leader_count++;
 	    
 	    if( polyline_vertex_count > 1 ) {
 		if( !layers[curr_layer]->m ) {
@@ -2360,6 +2544,8 @@ process_mtext_entities_code( int code )
 		create_nmg();
 	    }
 
+	    layers[curr_layer]->mtext_count++;
+
 	    /* apply transformation */
 	    MAT4X3PNT( tmp_pt, curr_state->xform, insertionPoint );
 	    VMOVE( insertionPoint, tmp_pt );
@@ -2367,7 +2553,6 @@ process_mtext_entities_code( int code )
 	    drawMtext( bu_vls_addr( &vls ), attachPoint, drawingDirection, textHeight, entityHeight,
 		       charWidth, rectWidth, rotationAngle, insertionPoint );
 
-	    layers[curr_layer]->string_count++;
 	    bu_vls_free( &vls );
 	    attachPoint = 0;
 	    textHeight = 0.0;
@@ -2463,7 +2648,7 @@ process_attrib_entities_code( int code )
 
 		drawString( theText, firstAlignmentPoint, secondAlignmentPoint,
 			    textHeight, textScale, textRotation, horizAlignment, vertAlignment, textFlag );
-		layers[curr_layer]->string_count++;
+		layers[curr_layer]->attrib_count++;
 	    }
 	    horizAlignment=0;
 	    vertAlignment=0;
@@ -2567,7 +2752,7 @@ process_text_entities_code( int code )
 
 		drawString( theText, firstAlignmentPoint, secondAlignmentPoint,
 			    textHeight, textScale, textRotation, horizAlignment, vertAlignment, textFlag );
-		layers[curr_layer]->string_count++;
+		layers[curr_layer]->text_count++;
 	    }
 	    horizAlignment=0;
 	    vertAlignment=0;
@@ -2650,6 +2835,7 @@ process_dimension_entities_code( int code )
 			   bu_log( "Changing state for INSERT\n" );
 			   bu_log( "seeked to %ld\n", curr_state->curr_block->offset );
                        }
+		       layers[curr_layer]->dimension_count++;
 		   }
 	       }
 	       else
@@ -2720,6 +2906,8 @@ process_arc_entities_code( int code )
 		if( verbose ) {
 			bu_log( "Found an arc\n" );
 		}
+
+		layers[curr_layer]->arc_count++;
 
 		if( !layers[curr_layer]->m ) {
 			create_nmg();
@@ -2859,6 +3047,7 @@ process_3dface_entities_code( int code )
 		if( verbose ) {
 			bu_log( "\tmaking two triangles\n" );
 		}
+		layers[curr_layer]->face3d_count++;
 		for( vert_no=0 ; vert_no<4; vert_no++ ) {
 		    point_t tmp_pt1;
 		    MAT4X3PNT( tmp_pt1, curr_state->xform, pts[vert_no] );
@@ -3086,6 +3275,7 @@ main( int argc, char *argv[] )
 	process_entities_code[MTEXT_ENTITY_STATE] = process_mtext_entities_code;
 	process_entities_code[ATTRIB_ENTITY_STATE] = process_attrib_entities_code;
 	process_entities_code[ATTDEF_ENTITY_STATE] = process_attrib_entities_code;
+	process_entities_code[ELLIPSE_ENTITY_STATE] = process_ellipse_entities_code;
 	process_entities_code[LEADER_ENTITY_STATE] = process_leader_entities_code;
 
 	process_tables_sub_code[UNKNOWN_TABLE_STATE] = process_tables_unknown_code;
@@ -3140,7 +3330,6 @@ main( int argc, char *argv[] )
 		}
 
 		if( layers[i]->curr_tri && layers[i]->vert_tree_root->curr_vert > 2 ) {
-			bu_log( "\t%d triangles\n", layers[i]->curr_tri );
 			sprintf( tmp_name, "bot.s%d", i );
 			if( mk_bot( out_fp, tmp_name, RT_BOT_SURFACE, RT_BOT_UNORIENTED,0,
 				    layers[i]->vert_tree_root->curr_vert, layers[i]->curr_tri, layers[i]->vert_tree_root->the_array,
@@ -3149,10 +3338,6 @@ main( int argc, char *argv[] )
 			} else {
 				(void)mk_addmember( tmp_name, &head, NULL, WMOP_UNION );
 			}
-		}
-
-		if( BU_PTBL_END( &layers[i]->solids ) > 0 ) {
-			bu_log( "\t%d points\n", BU_PTBL_END( &layers[i]->solids ) );
 		}
 
 		for( j=0 ; j<BU_PTBL_END( &layers[i]->solids ) ; j++ ) {
@@ -3173,13 +3358,58 @@ main( int argc, char *argv[] )
 			bu_log( "\t%d lines\n", layers[i]->line_count );
 		}
 
+		if( layers[i]->solid_count ) {
+			bu_log( "\t%d solids\n", layers[i]->solid_count );
+		}
+
+		if( layers[i]->polyline_count ) {
+			bu_log( "\t%d polylines\n", layers[i]->polyline_count );
+		}
+
+		if( layers[i]->lwpolyline_count ) {
+			bu_log( "\t%d lwpolylines\n", layers[i]->lwpolyline_count );
+		}
+
+		if( layers[i]->ellipse_count ) {
+			bu_log( "\t%d ellipses\n", layers[i]->ellipse_count );
+		}
+
+		if( layers[i]->circle_count ) {
+			bu_log( "\t%d circles\n", layers[i]->circle_count );
+		}
+
+		if( layers[i]->arc_count ) {
+			bu_log( "\t%d arcs\n", layers[i]->arc_count );
+		}
+
+		if( layers[i]->text_count ) {
+			bu_log( "\t%d texts\n", layers[i]->text_count );
+		}
+
+		if( layers[i]->mtext_count ) {
+			bu_log( "\t%d mtexts\n", layers[i]->mtext_count );
+		}
+
+		if( layers[i]->attrib_count ) {
+			bu_log( "\t%d attribs\n", layers[i]->attrib_count );
+		}
+
+		if( layers[i]->dimension_count ) {
+			bu_log( "\t%d dimensions\n", layers[i]->dimension_count );
+		}
+
+		if( layers[i]->leader_count ) {
+			bu_log( "\t%d leaders\n", layers[i]->leader_count );
+		}
+
+		if( layers[i]->face3d_count ) {
+			bu_log( "\t%d 3d faces\n", layers[i]->face3d_count );
+		}
+
 		if( layers[i]->point_count ) {
 			bu_log( "\t%d points\n", layers[i]->point_count );
 		}
 
-		if( layers[i]->string_count ) {
-		    bu_log( "\t%d text strings\n", layers[i]->string_count );
-		}
 
 		if( BU_LIST_NON_EMPTY( &head ) ) {
 			unsigned char *tmp_rgb;
