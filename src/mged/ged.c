@@ -106,14 +106,18 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-#ifndef _WIN32
-#  ifndef LOGFILE
-#    define LOGFILE	"/vld/lib/gedlog"	/* usage log */
+#ifdef DEBUG
+#  ifndef _WIN32
+#    ifndef LOGFILE
+#      define LOGFILE	"mged.log"	/* usage log */
+#    endif
+#  else
+#    ifndef LOGFILE
+#      define LOGFILE	"C:\\mged.log"		/* usage log */
+#    endif
 #  endif
 #else
-#  ifndef LOGFILE
-#    define LOGFILE	"C:\\gedlog"		/* usage log */
-#  endif
+#  define LOGFILE /dev/null
 #endif
 
 extern void mged_setup(void); /* setup.c */
@@ -888,7 +892,7 @@ stdin_input(ClientData clientData, int mask)
 static void
 mged_process_char(char ch)
 {
-  struct bu_vls *vp;
+  struct bu_vls *vp = (struct bu_vls *)NULL;
   struct bu_vls temp;
   static int escaped = 0;
   static int bracketed = 0;
@@ -1950,48 +1954,57 @@ log_event(char *event, char *arg)
 	time_t now;
 	char *timep;
 	int logfd;
+	char uname[256] = {0};
 
+	/* let the user know that we're logging */
+	static int notified = 0;
+
+#ifndef DEBUG
+	return;
+#endif
+
+	/* get the current time */
 	(void)time( &now );
 	timep = ctime( &now );	/* returns 26 char string */
 	timep[24] = '\0';	/* Chop off \n */
 
+	/* get the user name */
+#ifdef _WIN32
+	DWORD dwNumBytes = 256;
+	GetUserName(uname, &dwNumBytes);
+#else
+	getlogin_r(uname, 256);
+#endif
+
 	bu_vls_init(&line);
-#ifndef _WIN32
-	bu_vls_printf(&line, "%s [%s] time=%ld uid=%d (%s) %s\n",
+	bu_vls_printf(&line, "%s (%ld) %s [%s] %s: %s\n",
+		      timep,
+		      (long)now,
 		      event,
 		      dmp->dm_name,
-		      (long)now,
-		      getuid(),
-		      timep,
+		      uname,
 		      arg
 	);
+
+#ifdef _WIN32
+	logfd = open( LOGFILE, _O_WRONLY|_O_APPEND|O_CREAT, _S_IREAD|_S_IWRITE );
 #else
-	{
-		char uname[256];
-		DWORD dwNumBytes = 256;
-		GetUserName(uname, &dwNumBytes);
-		bu_vls_printf(&line, "%s [%s] time=%ld uid=%d (%s) %s\n",
-		      event,
-		      dmp->dm_name,
-		      (long)now,
-		      uname,
-		      timep,
-		      arg);
-	}
+	logfd = open( LOGFILE, O_WRONLY|O_APPEND|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP );
 #endif
 
-#ifndef _WIN32
-	if( (logfd = open( LOGFILE, O_WRONLY|O_APPEND )) >= 0 )  {
-		(void)write( logfd, bu_vls_addr(&line), (unsigned)bu_vls_strlen(&line) );
-		(void)close( logfd );
+	if (!notified) {
+	    bu_log("Logging mged events to %s\n", LOGFILE);
+	    notified = 1;
 	}
-#else
-	if( (logfd = open( LOGFILE, _O_WRONLY|_O_APPEND )) >= 0 )  {
-		(void)write( logfd, bu_vls_addr(&line), (unsigned)bu_vls_strlen(&line) );
-		(void)close( logfd );
-	}
-#endif
 
+	if (logfd >= 0) {
+	    (void)write( logfd, bu_vls_addr(&line), (unsigned)bu_vls_strlen(&line) );
+	    (void)close( logfd );
+	} else {
+	    if (notified) {
+		perror("Unable to open event log file");
+	    }
+	}
 
 	bu_vls_free(&line);
 }
@@ -2272,8 +2285,8 @@ f_opendb(
 	int	argc,
 	char	**argv)
 {
-	struct db_i		*save_dbip;
-	struct mater		*save_materp;
+	struct db_i		*save_dbip = DBI_NULL;
+	struct mater		*save_materp = MATER_NULL;
 	struct bu_vls		vls;
 	struct bu_vls		msg;	/* use this to hold returned message */
 	int			create_new_db = 0;
@@ -2430,33 +2443,24 @@ f_opendb(
 		(void)db_dirbuild( dbip );
 	}
 
+	/* close out the old dbip */
 	if( save_dbip )  {
-		char *av[2];
 		struct db_i *new_dbip;
 		struct mater *new_materp;
 
-		av[0] = "zap";
-		av[1] = NULL;
-
 		new_dbip = dbip;
-		dbip = save_dbip;
 		new_materp = rt_material_head;
+
+		/* activate the 'saved' values so we can cleanly close the previous db */
+		dbip = save_dbip;
 		rt_material_head = save_materp;
 
-		/* Clear out anything in the display */
-		cmd_zap(clientData, interp, 1, av);
+		/* bye bye db */
+		f_closedb(clientData, interp, 1, NULL);
 
-		/* Close the Tcl database objects */
-#if 0
-		Tcl_Eval(interp, "db close; .inmem close");
-#else
-		Tcl_Eval(interp, "rename db \"\"; rename .inmem \"\"");
-#endif
-
+		/* restore to the new db just opened */
 		dbip = new_dbip;
 		rt_material_head = new_materp;
-
-		log_event( "CEASE", "(close)" );
 	}
 
 	{
@@ -2485,9 +2489,7 @@ f_opendb(
 	dbip->dbi_uses++;
 
 	/* Establish LIBWDB TCL access to both disk and in-memory databases */
-	/* This creates "db" and ".inmem" Tcl objects */
-	if (wdb_init_obj(interp, wdbp, MGED_DB_NAME) != TCL_OK ||
-	    wdb_create_cmd(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
+	if (wdb_init_obj(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
 		bu_vls_printf(&msg, "%s\n%s\n",
 			      interp->result,
 			      Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
@@ -2496,6 +2498,19 @@ f_opendb(
 		bu_vls_free(&msg);
 		return TCL_ERROR;
 	}
+
+	/* This creates a "db" command object */
+	if (wdb_create_cmd(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
+		bu_vls_printf(&msg, "%s\n%s\n",
+			      interp->result,
+			      Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+		Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
+		bu_vls_free(&vls);
+		bu_vls_free(&msg);
+		return TCL_ERROR;
+	}
+
+	/* This creates the ".inmem" in-memory geometry container */
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "wdb_open %s inmem [get_dbip]", MGED_INMEM_NAME);
 	if (Tcl_Eval( interp, bu_vls_addr(&vls) ) != TCL_OK) {
@@ -2508,7 +2523,7 @@ f_opendb(
 		return TCL_ERROR;
 	}
 
-	/* link the drawable geometry object to the database object */
+	/* link the drawable geometry object to the (new) database object */
 	dgop->dgo_wdbp = wdbp;
 
 	/* Perhaps do something special with the GUI */
@@ -2538,7 +2553,7 @@ f_opendb(
 	 * we're not in the process of
 	 * creating a new database.
 	 */
-	if (wdbp->dbip->dbi_version != 5 && !create_new_db) {
+	if (dbip->dbi_version != 5 && !create_new_db) {
 		if (db_upgrade) {
 			if (db_warn)
 				bu_vls_printf(&msg, "Warning:\n\tDatabase version is old.\n\tConverting to the new format.\n");
