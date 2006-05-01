@@ -163,7 +163,7 @@ main(int argc, char **argv)
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	if( fgets( c1, 6, ifp ) == NULL ) {
-		bu_bomb( "Unexpected EOF!!!\n" );
+		bu_bomb( "Unexpected EOF\n" );
 	}
 
 	/* new style ascii database */
@@ -183,7 +183,7 @@ main(int argc, char **argv)
 		interp = Tcl_CreateInterp();
 		if (wdb_init_obj(interp, ofp, db_name) != TCL_OK ||
 		    wdb_create_cmd(interp, ofp, db_name) != TCL_OK) {
-		    bu_bomb( "Failed to initialize wdb_obj!!\n" );
+		    bu_bomb( "Failed to initialize wdb_obj!\n" );
 		}
 
 		/* Create the safe interpreter */
@@ -209,7 +209,7 @@ main(int argc, char **argv)
 		}
 
 		if( Tcl_EvalFile( safe_interp, argv[1] ) != TCL_OK ) {
-			bu_log( "Failed to process input file (%s)!!\n", argv[1] );
+			bu_log( "Failed to process input file (%s)!\n", argv[1] );
 			bu_log( "%s\n", Tcl_GetStringResult(safe_interp) );
 			exit( 1 );
 		}
@@ -485,7 +485,7 @@ sktbld(void)
 	ptr = strtok( buf, " " );
 	if( !ptr )
 	{
-		bu_log( "ERROR: no vertices for sketch (%s)!!!\n", name );
+		bu_log( "ERROR: no vertices for sketch (%s)\n", name );
 		exit( 1 );
 	}
 	for( i=0 ; i<vert_count ; i++ )
@@ -494,14 +494,14 @@ sktbld(void)
 		ptr = strtok( (char *)NULL, " " );
 		if( !ptr )
 		{
-			bu_log( "ERROR: not enough vertices for sketch (%s)!!!\n", name );
+			bu_log( "ERROR: not enough vertices for sketch (%s)\n", name );
 			exit( 1 );
 		}
 		verts[i][1] = atof( ptr );
 		ptr = strtok( (char *)NULL, " " );
 		if( !ptr && i < vert_count-1 )
 		{
-			bu_log( "ERROR: not enough vertices for sketch (%s)!!!\n", name );
+			bu_log( "ERROR: not enough vertices for sketch (%s)\n", name );
 			exit( 1 );
 		}
 	}
@@ -561,7 +561,7 @@ sktbld(void)
 				ptr = strtok( cp, " " );
 				if( !ptr )
 				{
-					bu_log( "ERROR: not enough knots for nurb segment in sketch (%s)!!!\n", name );
+					bu_log( "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
 					exit( 1 );
 				}
 				for( k=0 ; k<nsg->k.k_size ; k++ )
@@ -570,7 +570,7 @@ sktbld(void)
 					ptr = strtok( (char *)NULL, " " );
 					if( !ptr && k<nsg->k.k_size-1 )
 					{
-						bu_log( "ERROR: not enough knots for nurb segment in sketch (%s)!!!\n", name );
+						bu_log( "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
 						exit( 1 );
 					}
 				}
@@ -583,7 +583,7 @@ sktbld(void)
 				ptr = strtok( cp, " " );
 				if( !ptr )
 				{
-					bu_log( "ERROR: not enough control points for nurb segment in sketch (%s)!!!\n", name );
+					bu_log( "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
 					exit( 1 );
 				}
 				for( k=0 ; k<nsg->c_size ; k++ )
@@ -592,7 +592,7 @@ sktbld(void)
 					ptr = strtok( (char *)NULL, " " );
 					if( !ptr && k<nsg->c_size-1 )
 					{
-						bu_log( "ERROR: not enough control points for nurb segment in sketch (%s)!!!\n", name );
+						bu_log( "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
 						exit( 1 );
 					}
 				}
@@ -600,7 +600,7 @@ sktbld(void)
 				crv->segments[j] = nsg;
 				break;
 			default:
-				bu_log( "Unrecognized segment type (%c) in sketch (%s)!!!\n",
+				bu_log( "Unrecognized segment type (%c) in sketch (%s)\n",
 					*cp, name );
 				exit( 1 );
 		}
@@ -1171,8 +1171,8 @@ arsbbld(void)
 
 /*		Z A P _ N L
  *
- * This routine removes newline characters from the buffer and substitutes
- * in NULL.
+ * This routine removes newline and carriage return characters from
+ * the buffer and substitutes in NULL.
  */
 
 void
@@ -1183,9 +1183,10 @@ zap_nl(void)
 	bp = &buf[0];
 
 	while( *bp != '\0' )  {
-		if( *bp == '\n' )
-			*bp = '\0';
-		bp++;
+	    if(( *bp == '\n' ) || ( *bp == '\r' )) {
+		*bp = '\0';
+	    }
+	    bp++;
 	}
 }
 
@@ -1220,7 +1221,7 @@ identbld(void)
 	 */
 
 	np = version;
-	while( *cp != '\n' && *cp != '\0' )  {
+	while( *cp != '\n' && *cp != '\r' && *cp != '\0' )  {
 		*np++ = *cp++;
 	}
 	*np = '\0';
@@ -1577,8 +1578,9 @@ clinebld(void)
 	cp = nxt_spc( cp );
 
 	np = my_name;
-	while( *cp != ' ' && *cp != '\n' )
-		*np++ = *cp++;
+	while( *cp != ' ' && *cp != '\n' && *cp != '\r' ) {
+	    *np++ = *cp++;
+	}
 	*np = '\0';
 
 	cp = nxt_spc( cp );
@@ -1646,7 +1648,7 @@ botbld(void)
 			bu_log( "Vertices out of order in solid %s (expecting %d, found %d)\n",
 				my_name, i, j );
 			bu_free( (char *)vertices, "botbld: vertices" );
-			bu_log( "Skipping this solid!!!\n" );
+			bu_log( "Skipping this solid!\n" );
 			while( buf[0] == '\t' )
 				fgets( buf, BUFSIZE, ifp);
 			return;
@@ -1674,7 +1676,7 @@ botbld(void)
 			bu_free( (char *)faces, "botbld: faces" );
 			if( mode == RT_BOT_PLATE )
 				bu_free( (char *)thick, "botbld thick" );
-			bu_log( "Skipping this solid!!!\n" );
+			bu_log( "Skipping this solid!\n" );
 			while( buf[0] == '\t' )
 				fgets( buf, BUFSIZE, ifp);
 			return;
@@ -1727,7 +1729,7 @@ pipebld(void)
 	cp = nxt_spc( cp );		/* skip spaces */
 
 	np = name;
-	while( *cp != '\n' )  {
+	while( *cp != '\n' && *cp != '\r' && *cp != '\0' )  {
 		*np++ = *cp++;
 	}
 	*np = '\0';			/* null terminate the string */
