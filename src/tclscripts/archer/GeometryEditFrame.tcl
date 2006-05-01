@@ -117,10 +117,22 @@
 	    ::frame $parent.upper
 	} {}
 
+	# Repack parent so it's anchor to the north
+	pack $parent \
+	    -expand yes \
+	    -fill x \
+	    -anchor n
+
 	set parent [$itk_component(pane) childsite lower]
 	itk_component add lower {
 	    ::frame $parent.lower
 	} {}
+
+	# Repack parent so it's anchor to the north
+	pack $parent \
+	    -expand yes \
+	    -fill x \
+	    -anchor n
     } else {
 	set parent [$itk_component(pane) childsite upper]
 	itk_component add upper {

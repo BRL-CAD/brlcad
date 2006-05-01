@@ -443,13 +443,15 @@
 	-row $row \
 	-sticky nsew
     grid columnconfigure $parent 1 -weight 1
-    pack $itk_component(combGeneralF) -expand yes -fill both
+    pack $itk_component(combGeneralF) -expand yes -fill x -anchor n
+#    pack $itk_component(combGeneralF) -expand yes -fill both
 #    pack $parent -expand yes -fill x -anchor n
 #    grid columnconfigure [namespace tail $this] 1 -weight 1
 
     $tabs tab configure $tabIndex \
 	-window $itk_component(combGeneralF) \
-	-fill both
+	-fill x \
+	-anchor n
 
     # Set up bindings
     bind $itk_component(combIdE) <Return> [::itcl::code $this updateGeometryIfMod]
