@@ -48,6 +48,7 @@ itcl::class swidgets::Treenode {
 	variable color "black"
 	variable open 0
 	variable clientData ""
+	variable state "normal"
     }
 }
 
@@ -81,6 +82,7 @@ proc ::swidgets::treenode {parent args} {
 	    return "leaf"
 	}
 	"-clientData"    {return $clientData}
+	"-state"    {return $state}
     }
 }
 
@@ -92,6 +94,22 @@ proc ::swidgets::treenode {parent args} {
 	"-color"    {set color $value}
 	"-type"     {set nodetype $value}
 	"-clientData" {set clientData $value}
+	"-state"    {
+	    switch -- $value {
+		"normal" -
+		"on"     -
+		"true"   -
+		"1"      {
+		    set state "normal"
+		}
+		"disabled" -
+		"off"    -
+		"false"  -
+		"0"      {
+		    set state "disabled"
+		}
+	    }
+	}
     }
 }
 
@@ -141,8 +159,11 @@ itcl::class swidgets::Tree {
     itk_option define -sortmode sortMode SortMode "none"
 
     itk_option define -openimage openImage Image ""
+    itk_option define -disabledopenimage disabledOpenImage Image ""
     itk_option define -closeimage closeImage Image ""
+    itk_option define -disabledcloseimage disabledCloseImage Image ""
     itk_option define -nodeimage nodeImage Image ""
+    itk_option define -disablednodeimage disabledNodeImage Image ""
 
     itk_option define -querycmd queryCmd Command {}
     itk_option define -selectmode selectMode Mode "single"
@@ -185,6 +206,7 @@ itcl::class swidgets::Tree {
 	variable saveFill ""
 	variable idle ""
 	variable inSelectCmd 0
+	variable selectState "single"
 
 	method _cleanup_node {node}
 	method _get_node_name {{item current} {tagindex end-1}}
@@ -314,8 +336,11 @@ proc ::swidgets::tree {args} {
     }
 }
 ::itcl::configbody swidgets::Tree::openimage {}
+::itcl::configbody swidgets::Tree::disabledopenimage {}
 ::itcl::configbody swidgets::Tree::closeimage {}
+::itcl::configbody swidgets::Tree::disabledcloseimage {}
 ::itcl::configbody swidgets::Tree::nodeimage {}
+::itcl::configbody swidgets::Tree::disablednodeimage {}
 
 # ------------------------------------------------------------
 #                        METHODS
@@ -388,6 +413,7 @@ proc ::swidgets::tree {args} {
     }
     set inSelectCmd 1
 
+    set selectState "single"
     selection clear
     selection set $tag
 
@@ -411,6 +437,7 @@ proc ::swidgets::tree {args} {
     }
     set inSelectCmd 1
 
+    set selectState "multiple"
     switch -- $type {
 	"control" {
 	    selection set $tag
@@ -420,6 +447,8 @@ proc ::swidgets::tree {args} {
 	}
     }
 
+    selection show
+    set selectState "single"
     set inSelectCmd 0
 }
 
@@ -486,6 +515,7 @@ proc ::swidgets::tree {args} {
     }
 
     # determine image
+    set dimg ""
     if {$type != "leaf"} {
 	if {$state} {
 	    if {$itk_option(-openimage) != ""} {
@@ -493,11 +523,19 @@ proc ::swidgets::tree {args} {
 	    } else {
 		set img $c_openimg
 	    }
+	    
+	    if {$itk_option(-disabledopenimage) != ""} {
+		set dimg $itk_option(-disabledopenimage)
+	    }
 	} else {
 	    if {$itk_option(-closeimage) != ""} {
 		set img $itk_option(-closeimage)
 	    } else {
 		set img $c_closedimg
+	    }
+	    
+	    if {$itk_option(-disabledcloseimage) != ""} {
+		set dimg $itk_option(-disabledcloseimage)
 	    }
 	}
     } else {
@@ -508,6 +546,10 @@ proc ::swidgets::tree {args} {
 		} else {
 		    set img $c_closedimg
 		}
+	    
+		if {$itk_option(-disabledcloseimage) != ""} {
+		    set dimg $itk_option(-disabledcloseimage)
+		}
 	    }
 	    "leaf"   -
 	    default  {
@@ -516,12 +558,25 @@ proc ::swidgets::tree {args} {
 		} else {
 		    set img $c_leafimg
 		}
+	    
+		if {$itk_option(-disablednodeimage) != ""} {
+		    set dimg $itk_option(-disablednodeimage)
+		}
 	    }
 	}
     }
     # draw image
-    $itk_component(canvas) create image $x1 $y -image $img -anchor w \
-	    -tags [list img i:$node]
+    if {$dimg != ""} {
+	$itk_component(canvas) create image $x1 $y \
+		-image $img \
+		-disabledimage $dimg \
+		-anchor w \
+		-tags [list img i:$node]
+    } else {
+	$itk_component(canvas) create image $x1 $y -image $img \
+		-anchor w \
+		-tags [list img i:$node]
+    }
 
     if {[$node get -type] != "leaf"} {
 	if {$state} {
@@ -547,6 +602,9 @@ proc ::swidgets::tree {args} {
 		-tags [list box b:$node] \
 		-fill {} -outline {}]
     $itk_component(canvas) lower $id
+
+    # set state
+    $itk_component(canvas) itemconfigure "i:$node" -state [$node get -state]
 
     return $y1
 }
@@ -654,7 +712,10 @@ proc ::swidgets::tree {args} {
 }
 
 ::itcl::body swidgets::Tree::_item_popup {node x y} {
-    selection set $node
+    if {[selection includes $node] == 0} {
+	selection set $node
+    }
+
     set rx [expr [winfo rootx $itk_component(canvas)]+$x]
     set ry [expr [winfo rooty $itk_component(canvas)]+$y]
     
@@ -797,7 +858,7 @@ proc ::swidgets::tree {args} {
 	    }
 
 	    # clear selection list if in single select mode
-	    if {$itk_option(-selectmode) == "single"} {
+	    if {$selectState == "single"} {
 		selection clear
 	    }
 
@@ -816,22 +877,9 @@ proc ::swidgets::tree {args} {
 		set selnode $node
 	    }
 
-	    # Create the selection box
-	    set selectBox [$itk_component(canvas) create rectangle -10 -10 -10 -10 \
-		    -tags selectBox_$node \
-		    -fill $itk_option(-foreground) \
-		    -outline $itk_option(-foreground)]
-
-	    # Save the fill color
-	    set snode [lindex [split $node :] 1]
-	    set saveFill [$snode get -color]
-
-	    # Highlight selnode
-	    set coords [$itk_component(canvas) bbox $node]
-	    eval $itk_component(canvas) coords selectBox_$node $coords
-	    $itk_component(canvas) itemconfigure $node \
-		-fill $itk_option(-background)
-	    $itk_component(canvas) lower selectBox_$node
+	    if {$selectState == "single"} {
+		selection show
+	    }
 	}
 	to {
 	    if {$node == ""} {
@@ -879,8 +927,10 @@ proc ::swidgets::tree {args} {
 	    # clear the current selection and select the desired nodes
 	    selection clear
 	    foreach id [eval $itk_component(canvas) find overlapping $coords] {
-		set tnode [lindex [$itk_component(canvas) gettags $id] 1]
-		selection set $tnode
+		set tnode [lindex [split [lindex [$itk_component(canvas) gettags $id] 1] :] 1]
+		if {[selection includes $tnode] == 0} {
+		    selection set $tnode
+		}
 	    }
 	}
 	remove {
@@ -896,15 +946,16 @@ proc ::swidgets::tree {args} {
 	    set idx [lsearch -exact $selnode $node]
 	    if {$idx < 0} {return}
 
+	    set fill [lindex $saveFill $idx]
+
 	    set selnode [lreplace $selnode $idx $idx]
+	    set saveFill [lreplace $saveFill $idx $idx]
 	    if {$selnode == ""} {
 		set selnode {}
 	    }
 
-	    if {$saveFill == ""} {
+	    if {$fill == ""} {
 		set fill $itk_option(-foreground)
-	    } else {
-		set fill $saveFill
 	    }
 	    $itk_component(canvas) itemconfigure $selnode \
 		-fill $fill
@@ -913,8 +964,6 @@ proc ::swidgets::tree {args} {
 	    $itk_component(canvas) delete selectBox_$node
 	    $itk_component(canvas) itemconfigure $node \
 		-fill $fill
-
-	    set saveFill ""
 	}
 	clear {
 	    # Unhighlight selnode
@@ -925,7 +974,11 @@ proc ::swidgets::tree {args} {
 	    }
 	}
 	get {
-	    return $selnode
+	    set sel {}
+	    foreach node $selnode {
+		lappend sel [lindex [split $node :] 1]
+	    }
+	    return $sel
 	}
 	includes {
 	    if {$node == ""} {
@@ -937,6 +990,30 @@ proc ::swidgets::tree {args} {
 	    }
     
 	    return [expr {[lsearch -exact $selnode $node] != -1}]
+	}
+	show {
+	    set saveFill ""
+
+	    foreach node $selnode {
+		catch {$itk_component(canvas) delete selectBox_$node}
+
+		# Create the selection box
+		set selectBox [$itk_component(canvas) create rectangle -10 -10 -10 -10 \
+			-tags selectBox_$node \
+			-fill $itk_option(-foreground) \
+			-outline $itk_option(-foreground)]
+		
+		# Save the fill color
+		set snode [lindex [split $node :] 1]
+		lappend saveFill [$snode get -color]
+		
+		# Highlight selnode
+		set coords [$itk_component(canvas) bbox $node]
+		eval $itk_component(canvas) coords selectBox_$node $coords
+		$itk_component(canvas) itemconfigure $node \
+			-fill $itk_option(-background)
+		$itk_component(canvas) lower selectBox_$node
+	    }
 	}
 	toggle -
 	default {return}
