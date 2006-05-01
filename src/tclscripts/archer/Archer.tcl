@@ -4069,7 +4069,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(filemenu) add command \
 	-label "Save..." \
 	-command [::itcl::code $this _save_db]
-    $itk_component(filemenu) add command \
+#    $itk_component(filemenu) add command \
 	-label "Compact" \
 	-command [::itcl::code $this compact] \
 	-state disabled
@@ -4553,7 +4553,7 @@ Popup Menu    Right or Ctrl-Left
 	command save \
 	    -label "Save..." \
 	    -helpstr "Save target description"
-	command compact \
+#	command compact \
 	    -label "Compact" \
 	    -helpstr "Compact the target description"
 	cascade import \
@@ -4603,7 +4603,7 @@ Popup Menu    Right or Ctrl-Left
 	-command [::itcl::code $this _open_db]
     $itk_component(menubar) menuconfigure .file.save \
 	-command [::itcl::code $this _save_db]
-    $itk_component(menubar) menuconfigure .file.compact \
+#    $itk_component(menubar) menuconfigure .file.compact \
 	-command [::itcl::code $this compact] \
 	-state disabled
     $itk_component(menubar) menuconfigure .file.import \
@@ -4915,7 +4915,8 @@ Popup Menu    Right or Ctrl-Left
 	if {$Archer::inheritFromToplevel} {
 	    #$itk_component(filemenu) entryconfigure "Raytrace Control Panel..." -state normal
 	    #$itk_component(filemenu) entryconfigure "Export Geometry to PNG..." -state normal
-	    $itk_component(filemenu) entryconfigure "Compact" -state disabled
+	    #$itk_component(filemenu) entryconfigure "Compact" -state disabled
+	    catch {$itk_component(filemenu) delete "Compact"}
 	    $itk_component(filemenu) entryconfigure "Import" -state disabled
 	    $itk_component(filemenu) entryconfigure "Export" -state disabled
 	    $itk_component(displaymenu) entryconfigure "Standard Views" -state normal
@@ -4929,7 +4930,8 @@ Popup Menu    Right or Ctrl-Left
 	} else {
 	    #$itk_component(menubar) menuconfigure .file.rt  -state normal
 	    #$itk_component(menubar) menuconfigure .file.png -state normal
-	    $itk_component(menubar) menuconfigure .file.compact -state disabled
+	    #$itk_component(menubar) menuconfigure .file.compact -state disabled
+	    catch {$itk_component(menubar) delete .file.compact}
 	    $itk_component(menubar) menuconfigure .file.import -state disabled
 	    $itk_component(menubar) menuconfigure .file.export -state disabled
 	    $itk_component(menubar) menuconfigure .display.standard -state normal
@@ -5041,7 +5043,10 @@ Popup Menu    Right or Ctrl-Left
 	if {$Archer::inheritFromToplevel} {
 	    #$itk_component(filemenu) entryconfigure "Raytrace Control Panel..." -state normal
 	    #$itk_component(filemenu) entryconfigure "Export Geometry to PNG..." -state normal
-	    $itk_component(filemenu) entryconfigure "Compact" -state normal
+	    #$itk_component(filemenu) entryconfigure "Compact" -state normal
+	    $itk_component(filemenu) insert "Import" command \
+		-label "Compact" \
+		-command [::itcl::code $this compact]
 	    $itk_component(filemenu) entryconfigure "Import" -state normal
 	    $itk_component(filemenu) entryconfigure "Export" -state normal
 	    $itk_component(displaymenu) entryconfigure "Standard Views" -state normal
@@ -5053,13 +5058,20 @@ Popup Menu    Right or Ctrl-Left
 	} else {
 	    #$itk_component(menubar) menuconfigure .file.rt  -state normal
 	    #$itk_component(menubar) menuconfigure .file.png -state normal
-	    $itk_component(menubar) menuconfigure .file.compact -state normal
+	    #$itk_component(menubar) menuconfigure .file.compact -state normal
+	    $itk_component(menubar) insert .file.import command compact \
+		-label "Compact" \
+		-helpstr "Compact the target description"
+		
 	    $itk_component(menubar) menuconfigure .file.import -state normal
 	    $itk_component(menubar) menuconfigure .file.export -state normal
 	    $itk_component(menubar) menuconfigure .display.standard -state normal
 	    $itk_component(menubar) menuconfigure .display.reset -state normal
 	    $itk_component(menubar) menuconfigure .display.autoview -state normal
 	    $itk_component(menubar) menuconfigure .display.center -state normal
+
+	    $itk_component(menubar) menuconfigure .file.compact \
+		-command [::itcl::code $this compact]
 	}
 
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt \
@@ -5389,7 +5401,12 @@ Popup Menu    Right or Ctrl-Left
     dbCmd kill $comp
 
     set select [$itk_component(tree) selection get]
-    set element [lindex [split $select ":"] 1]
+    #set element [lindex [split $select ":"] 1]
+    set element [split $select ":"]
+    if {[llength $element] > 1} {
+	set element [lindex $element 1]
+    }
+
     set node [$itk_component(tree) query -path $element]
     
     set node ""
@@ -8445,7 +8462,11 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body Archer::_update_tree {} {
     # grab selection
     set select [$itk_component(tree) selection get]
-    set element [lindex [split $select ":"] 1]
+    #set element [lindex [split $select ":"] 1]
+    set element [split $select ":"]
+    if {[llength $element] > 1} {
+	set element [lindex $element 1]
+    }
     set path [$itk_component(tree) query -path $element]
 
     # alter color of parentage
@@ -8648,7 +8669,12 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body Archer::_dbl_click {tags} {
     global App
 
-    set element [lindex [split $tags ":"] 1]
+    #set element [lindex [split $tags ":"] 1]
+    set element [split $tags ":"]
+    if {[llength $element] > 1} {
+	set element [lindex $element 1]
+    }
+
     set node [$itk_component(tree) query -path $element]
     set type [$itk_component(tree) query -nodetype $element]
 
@@ -8697,7 +8723,12 @@ Popup Menu    Right or Ctrl-Left
     }
     $menu delete 0 end
 
-    set element [lindex [split $snode ":"] 1]
+    #set element [lindex [split $snode ":"] 1]
+    set element [split $snode ":"]
+    if {[llength $element] > 1} {
+	set element [lindex $element 1]
+    }
+
     set node [$itk_component(tree) query -path $element]
     set nodeType [$itk_component(tree) query -nodetype $element]
 
