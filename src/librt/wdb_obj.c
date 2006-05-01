@@ -480,8 +480,8 @@ wdb_create_cmd(Tcl_Interp	*interp,
 }
 
 /*
- * Create an command/object named "oname" in "interp"
- * using "wdbp" as its state.
+ * Create an command/object named "oname" in "interp" using "wdbp" as
+ * its state.  It is presumed that the wdbp has already been opened.
  */
 int
 wdb_init_obj(Tcl_Interp		*interp,
@@ -489,7 +489,7 @@ wdb_init_obj(Tcl_Interp		*interp,
 	     const char		*oname)	/* object name */
 {
 	if (wdbp == RT_WDB_NULL) {
-		Tcl_AppendResult(interp, "wdb_open ", oname, " failed", NULL);
+		Tcl_AppendResult(interp, "wdb_open ", oname, " failed (wdb_init_obj)", NULL);
 		return TCL_ERROR;
 	}
 
@@ -501,17 +501,17 @@ wdb_init_obj(Tcl_Interp		*interp,
 	/*XXXX already initialize by wdb_dbopen */
 	/* initilize tolerance structures */
 	wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
-	wdbp->wdb_ttol.abs = 0.0;		/* disabled */
+	wdbp->wdb_ttol.abs = 0.0;               /* disabled */
 	wdbp->wdb_ttol.rel = 0.01;
-	wdbp->wdb_ttol.norm = 0.0;		/* disabled */
-
+	wdbp->wdb_ttol.norm = 0.0;              /* disabled */
+	
 	wdbp->wdb_tol.magic = BN_TOL_MAGIC;
 	wdbp->wdb_tol.dist = 0.005;
 	wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
 	wdbp->wdb_tol.perp = 1e-6;
 	wdbp->wdb_tol.para = 1 - wdbp->wdb_tol.perp;
 #endif
-
+ 
 	/* initialize tree state */
 	wdbp->wdb_initial_tree_state = rt_initial_tree_state;  /* struct copy */
 	wdbp->wdb_initial_tree_state.ts_ttol = &wdbp->wdb_ttol;
@@ -531,16 +531,6 @@ wdb_init_obj(Tcl_Interp		*interp,
 
 	/* append to list of rt_wdb's */
 	BU_LIST_APPEND(&rt_g.rtg_headwdb.l,&wdbp->l);
-
-#if 0
-	/* Instantiate the newprocname, with clientData of wdbp */
-	/* Beware, returns a "token", not TCL_OK. */
-	(void)Tcl_CreateCommand(interp, oname, (Tcl_CmdProc *)wdb_cmd,
-				(ClientData)wdbp, wdb_deleteProc);
-
-	/* Return new function name as result */
-	Tcl_AppendResult(interp, oname, (char *)NULL);
-#endif
 
 	return TCL_OK;
 }
