@@ -1,0 +1,75 @@
+.TH DBUPGRADE 1 BRL-CAD
+.\"                     D B U P G R A D E . 1
+.\" BRL-CAD
+.\"
+.\" Copyright (c) 2002-2006 United States Government as represented by
+.\" the U.S. Army Research Laboratory.
+.\"
+.\" This document is made available under the terms of the GNU Free
+.\" Documentation License or, at your option, under the terms of the
+.\" GNU General Public License as published by the Free Software
+.\" Foundation.  Permission is granted to copy, distribute and/or
+.\" modify this document under the terms of the GNU Free Documentation
+.\" License, Version 1.2 or any later version published by the Free
+.\" Software Foundation; with no Invariant Sections, no Front-Cover
+.\" Texts, and no Back-Cover Texts.  Permission is also granted to
+.\" redistribute this document under the terms of the GNU General
+.\" Public License; either version 2 of the License, or (at your
+.\" option) any later version.
+.\"
+.\" You should have received a copy of the GNU Free Documentation
+.\" License and/or the GNU General Public License along with this
+.\" document; see the file named COPYING for more information.
+.\"
+.\".\".\"
+.UC 4
+.SH NAME
+dbupgrade \(em a program to upgrade BRL-CAD \fBmged\fR geometry databases files to the current version.
+.SH SYNOPSIS
+.B dbupgrade
+input.g
+output.g
+.SH DESCRIPTION
+.I dbupgrade
+operates on the indicated input geometry database
+.I input.g
+recognizing the version of the BRL-CAD database provided as input and
+then converting it to the current database version.  Output is then saved to the specified
+.I output.g
+file.
+.LP
+Note that this tool does not automatically ``fix'' an existing (v4
+format) binary database that was transferred from a
+binary-incompatible platform.  However, if you run
+.B dbupgrade
+on the file before transferring from that platform, the upgraded
+output file will be platform independent.
+.PP
+Running
+.B dbupgrade
+removes the need to run
+.IR g2asc (1)
+and
+.IR asc2g (1)
+on a database.  The latest BRL-CAD geometry database format is
+platform independent.
+.SH "SEE ALSO"
+mged(1), g2asc(1), asc2g(1).
+.SH DIAGNOSTICS
+Numerous error conditions are possible, usually due to errors in
+the geometry database.
+Descriptive messages are printed on standard error (file descriptor 2).
+.SH AUTHOR
+John Anderson
+.SH SOURCE
+Advanced Computer Systems Team
+.br
+U.S. Army Research Laboratory
+.br
+Aberdeen Proving Ground, Maryland  21005-5056
+.SH COPYRIGHT
+This software is Copyright (c) 1991-2006 United States Government as
+represented by the U.S. Army Research Laboratory. All rights reserved.
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <devs@brlcad.org>.
