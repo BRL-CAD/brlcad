@@ -177,6 +177,7 @@ dist_man_MANS = \
 	conv-vg2g.1 \
 	cy-g.1 \
 	dbclean.1 \
+	dbupgrade.1 \
 	dxf-g.1 \
 	enf-g.1 \
 	euclid-g.1 \
