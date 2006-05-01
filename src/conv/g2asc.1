@@ -24,32 +24,46 @@
 .\".\".\"
 .SH NAME
 g2asc,
-asc2g \- convert between binary and ASCII \fBmged\fP databases.
+asc2g \- convert between binary and ASCII \fBmged\fP geometry databases.
 .SH SYNOPSIS
 .B g2asc
- file.g  file.asc
+file.g file.asc
 .br
 .B asc2g
- file.asc  file.g
+file.asc file.g
 .SH DESCRIPTION
 The local machine binary representation
 of an
 .IR mged (1)
 database is inherently non-portable.
-.I G2asc
+.I g2asc
 and
 .I asc2g
 are simple filters which convert between
-the binary form and a portable ASCII representation.
+the binary form and an ASCII representation.
 Any warning messages are written to standard error.
 .PP
-.I G2asc
+The ASCII representation of BRL-CAD geometry databases is not a fixed
+format and is allowed to change without deprecation notice.  In
+general, this will not occur any more frequently than the binary
+geometry database format changes, though both are open specifications.
+Regardless, the ASCII representation is subject to change without
+notice and should not be relied upon by external codes.  Currently,
+the ASCII representation is a Tcl script that is parsed by a
+simplified geometry command interpreter.
+.PP
+.I g2asc
 and
 .I asc2g
 are typically used to convert binary
 .IR mged (1)
-files to a portable ASCII format so the files can be transferred
-to another machine.  On the local machine, files are converted to ASCII using
+files to an ASCII format.  This was traditionally performed so the
+files could be transferred to another machine in a portable format.
+Although no longer necessary for the current binary geometry database
+files that are created by mged ("v5" format), the g2asc conversion
+process is still necessary if manipulating older ("v4" format)
+geometry database files.  On the local machine, files are converted to
+ASCII using
 .IR g2asc (1),
 then transferred to the remote machine.  On the remote machine, the files
 are then converted back to the binary representation for that machine using
@@ -58,7 +72,7 @@ are then converted back to the binary representation for that machine using
 .I
 g2asc  file.g  file.asc
 .br
-rcp file.asc remote:file.asc
+scp file.asc remote:file.asc
 .br
 rsh remote "asc2g  file.asc  file.g"
 .SH DIAGNOSTICS
