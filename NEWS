@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2006-05-XX  Release 7.8.1                                      ---
 ----------------------------------------------------------------------
 
+* added newly supported entities to dxf-g manual page - John Anderson
 * fixed asc2g bug reading files with carriage returns - Sean Morrison
 * added dbupgrade manual page - Sean Morrison
 * updated the g2asc manual page with format details - Sean Morrison
@@ -20,7 +21,7 @@ entire history of the project is available through CVS.
 * fixed g2asc export of null units bug - Sean Morrison
 * fixed libwdb corruption when creating pipes - Daniel Roßberg
 * fixed crash in release build concerning bot's - Daniel Roßberg
-* additional dxf-g importer enhancements - John Anderson
+* considerable dxf-g enhancements, more entity support - John Anderson
 
 
 ----------------------------------------------------------------------
