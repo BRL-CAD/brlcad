@@ -8,6 +8,7 @@ dist_tcl_DATA = \
 	bug.png \
 	closeall.png \
 	combination.png \
+	command.png \
 	configure.png \
 	edit_copy.png \
 	edit_cut.png \
@@ -18,14 +19,17 @@ dist_tcl_DATA = \
 	edit_translate.png \
 	file_new.png \
 	file_text_small.png \
+	file_text_small_disabled.png \
 	find.png \
 	folder_closed_small.png \
+	folder_closed_small_disabled.png \
+	folder_open.png \
 	folder_open_small.png \
+	folder_open_small_disabled.png \
 	open.png \
 	option_text.png \
 	option_tree.png \
 	pane_blank.png \
-	pane_collapse.png \
 	pane_collapse.png \
 	pane_expand.png \
 	primitive_arb6.png \
