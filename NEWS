@@ -11,6 +11,18 @@ entire history of the project is available through CVS.
 --- 2006-05-XX  Release 7.8.1                                      ---
 ----------------------------------------------------------------------
 
+This release includes a new example geometry model, a "Toy Barbie
+Jeep" (see note below regarding trademarks) that was modeled in 2005
+over the course of a day by a small group of students attending a free
+hands-on BRL-CAD training class at SURVICE Engineering, Inc.  The
+class involved working in groups to simulate a real-world
+time-constrained modeling experience taking measurements of a real toy
+vehicle, considering what aspects of the vehicle are important for
+analytic purposes, deciding how to best represent complex geometric
+shapes, modeling the parts of the vehicle in MGED, assembling the
+components together, and running geometric processing and rendering
+tools on the final model.
+
 * added newly supported entities to dxf-g manual page - John Anderson
 * fixed asc2g bug reading files with carriage returns - Sean Morrison
 * added dbupgrade manual page - Sean Morrison
@@ -21,8 +33,12 @@ entire history of the project is available through CVS.
 * fixed g2asc export of null units bug - Sean Morrison
 * fixed libwdb corruption when creating pipes - Daniel Roßberg
 * fixed crash in release build concerning bot's - Daniel Roßberg
+* new toy barbie jeep geometry - Various Students
 * considerable dxf-g enhancements, more entity support - John Anderson
 
+Note: Barbie and Jeep are trademarks of Mattel Inc. and the
+Daimler-Chrysler Corporation respectively.  No endorsement is intended
+or implied.
 
 ----------------------------------------------------------------------
 --- 2006-04-11  Release 7.8.0                                      ---
