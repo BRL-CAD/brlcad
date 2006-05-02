@@ -1,0 +1,71 @@
+.TH G-VAR 1 BRL-CAD
+.\"                        G - V A R . 1
+.\" BRL-CAD
+.\"
+.\" Copyright (c) 2005-2006 United States Government as represented by
+.\" the U.S. Army Research Laboratory.
+.\"
+.\" This document is made available under the terms of the GNU Free
+.\" Documentation License or, at your option, under the terms of the
+.\" GNU General Public License as published by the Free Software
+.\" Foundation.  Permission is granted to copy, distribute and/or
+.\" modify this document under the terms of the GNU Free Documentation
+.\" License, Version 1.2 or any later version published by the Free
+.\" Software Foundation; with no Invariant Sections, no Front-Cover
+.\" Texts, and no Back-Cover Texts.  Permission is also granted to
+.\" redistribute this document under the terms of the GNU General
+.\" Public License; either version 2 of the License, or (at your
+.\" option) any later version.
+.\"
+.\" You should have received a copy of the GNU Free Documentation
+.\" License and/or the GNU General Public License along with this
+.\" document; see the file named COPYING for more information.
+.\"
+.\".\".\"
+.SH NAME
+g-var \- Produce (OpenGL) Vertex Arrays from BOT BRLCAD geometry
+.SH SYNOPSIS
+.B g-var
+[-v] [-y] [-s scale] [-f] [-o outfile] infile.g object
+.SH DESCRIPTION
+.I g-var
+writes the bag of triangle (BOT) primitives of the specified
+.I object
+in a binary array format to
+.I outfile
+or to
+.I stdout.
+.SH OPTIONS
+.TP
+.B \-v
+Request verbose output.
+.TP
+.B \-y
+Transform the coordinate system from xyz to xzy.
+.TP 
+.B \-s scale
+Scale the output geometry by factor
+.B scale
+\. By default the scale factor is 0.001 (standard transformation
+from meters to millimeters.)
+.TP
+.B \-f
+Flip face normals. This changes both the vertex order and the output normals.
+.TP
+.B \-o outfile
+The output will be written to
+.B outfile
+\. By default the output is written to stdout.
+.SH FILE FORMAT
+.I TODO
+.SH EXAMPLE
+.RS
+$ \|\fIg-var \|-o sample.mesh \|sample.g \|sample_object\fP
+.RE
+.SH DIAGNOSTICS
+Error messages are intended to be self-explanatory.
+.SH AUTHOR
+Prasad Silva
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <devs@brlcad.org>.

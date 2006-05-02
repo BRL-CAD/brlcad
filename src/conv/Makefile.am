@@ -48,6 +48,7 @@ bin_PROGRAMS = \
 	g-dxf \
 	g-euclid \
 	g-euclid1 \
+	g-var \
 	g-nff \
 	g-nmg \
 	g-obj \
@@ -105,6 +106,7 @@ g_adrt_LDADD = ${WDB} ${LIBRT} ${BN} ${BU}
 g_dxf_LDADD = ${WDB} ${LIBRT} ${BN} ${BU}
 g_euclid1_LDADD = ${LIBRT} ${BN} ${BU}
 g_euclid_LDADD = ${LIBRT} ${BN} ${BU}
+g_var_LDADD = ${LIBRT} ${BN} ${BU}
 g_nff_LDADD = ${WDB} ${LIBRT} ${BN} ${BU}
 g_nmg_LDADD = ${WDB} ${LIBRT} ${BN} ${BU}
 g_obj_LDADD = ${WDB} ${LIBRT} ${BN} ${BU}
@@ -149,6 +151,7 @@ g_adrt_SOURCES = g-adrt.c
 g_dxf_SOURCES = g-dxf.c
 g_euclid1_SOURCES = g-euclid1.c
 g_euclid_SOURCES = g-euclid.c
+g_var_SOURCES = g-var.c
 g_nff_SOURCES = g-nff.c
 g_nmg_SOURCES = g-nmg.c
 g_obj_SOURCES = g-obj.c
@@ -185,6 +188,7 @@ dist_man_MANS = \
 	g-acad.1 \
 	g-dxf.1 \
 	g-euclid.1 \
+	g-var.1 \
 	g-nff.1 \
 	g-nmg.1 \
 	g-obj.1 \
@@ -246,6 +250,7 @@ FAST_OBJECTS = \
 	$(g_dxf_OBJECTS) \
 	$(g_euclid_OBJECTS) \
 	$(g_euclid1_OBJECTS) \
+	$(g_var_OBJECTS) \
 	$(g_nff_OBJECTS) \
 	$(g_nmg_OBJECTS) \
 	$(g_shell.rect_OBJECTS) \
