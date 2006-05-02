@@ -23,6 +23,7 @@ shapes, modeling the parts of the vehicle in MGED, assembling the
 components together, and running geometric processing and rendering
 tools on the final model.
 
+* Archer support for multi-select and cut-n-paste - Doug Howard
 * added newly supported entities to dxf-g manual page - John Anderson
 * fixed asc2g bug reading files with carriage returns - Sean Morrison
 * added dbupgrade manual page - Sean Morrison
