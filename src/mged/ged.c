@@ -83,6 +83,9 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #ifdef HAVE_STDLIB_H
 #  include <stdlib.h>
 #endif
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 
 #ifdef DM_X
 #  include "tk.h"
