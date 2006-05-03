@@ -459,6 +459,13 @@
     bind $itk_component(combLosE) <Return> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(combGiftE) <Return> [::itcl::code $this updateGeometryIfMod]
     bind $itk_component(combRgbE) <Return> [::itcl::code $this updateGeometryIfMod]
+
+    bind $itk_component(combIdE) <Tab> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(combAirE) <Tab> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(combLosE) <Tab> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(combGiftE) <Tab> [::itcl::code $this updateGeometryIfMod]
+    bind $itk_component(combRgbE) <Tab> [::itcl::code $this updateGeometryIfMod]
+
 #    bind $itk_component(combMaterialE) <Return> [::itcl::code $this updateGeometryIfMod]
 #    bind $itk_component(combInheritE) <Return> [::itcl::code $this updateGeometryIfMod]
 }
