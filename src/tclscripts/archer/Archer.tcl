@@ -257,6 +257,8 @@ namespace eval Archer {
 
 	variable wizardXmlCallbacks ""
 
+	variable mArcherVersion "0.8.0"
+
 	variable mFontArrowsName "arrowFont"
 	variable mFontArrows {Wingdings 3}
 	variable mLeftArrow "t"
@@ -6106,6 +6108,24 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(aboutDialogTabs) tab configure $aboutTabIndex \
 	-window $itk_component(ackInfo) \
 	-fill both
+
+    # Version Info
+    itk_component add versionInfo {
+	::label $parent.versionInfo \
+	    -text "Version: $mArcherVersion" \
+	    -pady 0 \
+	    -borderwidth 0 \
+	    -font $mFontText \
+	    -anchor se
+    } {}
+
+    pack $itk_component(versionInfo) \
+	-expand yes \
+	-fill x \
+	-side bottom \
+	-pady 0 \
+	-ipady 0 \
+	-anchor se
 
     pack $itk_component(aboutDialogTabs) -expand yes -fill both
 
