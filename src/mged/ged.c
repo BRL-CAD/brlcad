@@ -120,7 +120,7 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #    endif
 #  endif
 #else
-#  define LOGFILE /dev/null
+#  define LOGFILE "/dev/null"
 #endif
 
 extern void mged_setup(void); /* setup.c */
