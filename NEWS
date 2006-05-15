@@ -23,6 +23,10 @@ shapes, modeling the parts of the vehicle in MGED, assembling the
 components together, and running geometric processing and rendering
 tools on the final model.
 
+The DXF importer received considerable updates this iteration, with
+John Anderson providing additional support for a variety of 2D DXF
+entities.
+
 * added archer version info to bottom of about dialog - Bob Parker
 * added a beta vertex array exporter (g-var) - Prasad Silva
 * archer support for multi-select and cut-n-paste - Doug Howard
@@ -80,10 +84,10 @@ assist with the assignment of region and material identifiers.
 * smoother sketch primitive spline drawing - Sean Morrison
 * fixed read bug in giftorle - Sean Morrison
 * fixed multiply referenced object illumination bug - Sean Morrison
-* improved nmg tesselation support reliability - Sean Morrison
+* improved nmg tessellation support reliability - Sean Morrison
 * new tpkg ttcp-style example application using libpkg - Sean Morrison
 * new roots_example root solving sample application - Sean Morrison
-* prevent several g-nmg segfaults during tesselation - Sean Morrison
+* prevent several g-nmg segfaults during tessellation - Sean Morrison
 * fixed brlman/awf `./"' unsupported or unknown issue - Sean Morrison
 * new g_transfer in-memory geometry example program - Sean Morrison
 * new reshoot program to reshoot rays & compare results - Lee Butler
@@ -173,7 +177,7 @@ point clouds, and more.
 * fixed itcl configuration issue - Stefan Fiedler, Sean Morrison
 * fixed g_qa tolerance option parsing inconsistency - Sean Morrison
 * improved mged 'tol' command tolerance value checks - Sean Morrison
-* fixed tgc absolute tesselation tolerance issue - Sean Morrison
+* fixed tgc absolute tessellation tolerance issue - Sean Morrison
 * optional build support checks for X11 and OpenGL - Sean Morrison
 * improved Windows build support - Bob Parker, Daniel Roßberg
 * isst observer 2x screen magnification - Justin Shumaker
