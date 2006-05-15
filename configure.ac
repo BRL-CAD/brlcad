@@ -1519,7 +1519,7 @@ fi
 dnl profile flags
 if test "x$bc_use_profiling" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-pg], [profile_flag])
-	if test "x$bc_debug_flag_works" = "xno" ; then
+	if test "x$bc_profile_flag_works" = "xno" ; then
 		if test "x$bc_use_profiling" = "xyes" ; then
 			dnl profiling was requested, so abort
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
