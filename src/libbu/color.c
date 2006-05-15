@@ -79,9 +79,6 @@ static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 #define	GRN	1
 #define	BLU	2
 
-#define	RED		0
-#define	GRN		1
-#define	BLU		2
 
 /*
  *			B U _ R G B _ T O _ H S V
