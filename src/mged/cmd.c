@@ -775,12 +775,9 @@ cmd_setup(void)
 	}
 #endif
 
-	bu_vls_strcpy(&temp, "glob_compat_mode");
-	Tcl_LinkVar(interp, bu_vls_addr(&temp), (char *)&glob_compat_mode,
-		    TCL_LINK_BOOLEAN);
-	bu_vls_strcpy(&temp, "output_as_return");
-	Tcl_LinkVar(interp, bu_vls_addr(&temp), (char *)&output_as_return,
-		    TCL_LINK_BOOLEAN);
+	/* link some tcl variables to these corresponding globals */
+	Tcl_LinkVar(interp, "glob_compat_mode", (char *)&glob_compat_mode, TCL_LINK_BOOLEAN);
+	Tcl_LinkVar(interp, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);
 
 	/* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
 #ifdef BRLCAD_DEBUG
