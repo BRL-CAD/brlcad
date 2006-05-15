@@ -1960,27 +1960,14 @@ f_winset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 void
 mged_global_variable_setup(Tcl_Interp *interp)
 {
-	struct bu_vls vls;
+	Tcl_LinkVar(interp, "mged_default(dlist)", (char *)&mged_default_dlist, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "mged_default(db_warn)", (char *)&db_warn, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "mged_default(db_upgrade)", (char *)&db_upgrade, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "mged_default(db_version)", (char *)&db_version, TCL_LINK_INT);
 
-	bu_vls_init(&vls);
-	bu_vls_strcpy(&vls, "mged_default(dlist)");
-	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&mged_default_dlist, TCL_LINK_INT);
-	bu_vls_strcpy(&vls, "mged_default(db_warn)");
-	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&db_warn, TCL_LINK_INT);
-	bu_vls_strcpy(&vls, "mged_default(db_upgrade)");
-	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&db_upgrade, TCL_LINK_INT);
-	bu_vls_strcpy(&vls, "mged_default(db_version)");
-	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&db_version, TCL_LINK_INT);
-
-	bu_vls_strcpy(&vls, "edit_class");
-	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&es_edclass, TCL_LINK_INT);
-	bu_vls_strcpy(&vls, "edit_solid_flag");
-	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&es_edflag, TCL_LINK_INT);
-	bu_vls_strcpy(&vls, "edit_object_flag");
-	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&edobj, TCL_LINK_INT);
-
-	bu_vls_init(&edit_info_vls);
-	bu_vls_strcpy(&edit_info_vls, "edit_info");
+	Tcl_LinkVar(interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "edit_object_flag", (char *)&edobj, TCL_LINK_INT);
 }
 
 int

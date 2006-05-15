@@ -168,7 +168,6 @@ struct dm_list *edit_rate_vr_dm_list;
 struct dm_list *edit_rate_mt_dm_list;
 struct dm_list *edit_rate_vt_dm_list;
 
-struct bu_vls edit_info_vls;
 struct bu_vls edit_rate_model_tran_vls[3];
 struct bu_vls edit_rate_view_tran_vls[3];
 struct bu_vls edit_rate_model_rotate_vls[3];

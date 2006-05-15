@@ -27,6 +27,7 @@ The DXF importer received considerable updates this iteration, with
 John Anderson providing additional support for a variety of 2D DXF
 entities.
 
+* fixed minor mged memory leak - Jim Monte
 * added archer version info to bottom of about dialog - Bob Parker
 * added a beta vertex array exporter (g-var) - Prasad Silva
 * archer support for multi-select and cut-n-paste - Doug Howard

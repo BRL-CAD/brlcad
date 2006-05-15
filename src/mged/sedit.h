@@ -245,7 +245,6 @@ extern struct dm_list *edit_rate_vr_dm_list;
 extern struct dm_list *edit_rate_mt_dm_list;
 extern struct dm_list *edit_rate_vt_dm_list;
 
-extern struct bu_vls edit_info_vls;
 extern struct bu_vls edit_rate_model_tran_vls[3];
 extern struct bu_vls edit_rate_view_tran_vls[3];
 extern struct bu_vls edit_rate_model_rotate_vls[3];

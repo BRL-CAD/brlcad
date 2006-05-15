@@ -177,8 +177,7 @@ create_text_overlay( struct bu_vls *vp )
 	    }
 	}
 
-	Tcl_SetVar(interp, bu_vls_addr(&edit_info_vls),
-		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
+	Tcl_SetVar(interp, "edit_info", bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	bu_vls_free(&vls);
     }
 }
