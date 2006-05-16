@@ -628,6 +628,7 @@ if test "x$set_everything" != "x" ; then
 	fi
 	# ADRT is known to not build right now on most platforms, so
 	# only allow it to be disabled and not enabled.
+	# User must specify --enable-adrt to get ADRT to build
 	if test "x$bc_build_adrt" = "x$bc_build_adrt_default" ; then
 		if test "x$set_everything" = "xno" ; then
 			bc_build_adrt="no"
@@ -2762,7 +2763,7 @@ if test "x$bc_build_adrt" = "xauto" ; then
 	fi
 elif test "x$bc_build_adrt" = "xyes" ; then
 	build_brlcad_adrt="yes"
-	if test "x$sdl_works" = "xyes" ; then
+	if test "x$sdl_works" = "xno" ; then
 		AC_MSG_NOTICE([ADRT requires SDL (and Python)])
 		BC_RETRY_CONFIGURE([$this], [$args])
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
