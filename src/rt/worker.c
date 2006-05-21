@@ -54,7 +54,7 @@ static const char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "fb.h"					/* Added because RGBpixel is now needed in do_pixel() */
 
 /* for fork/pipe linux timing hack */
-#if defined(USE_FORKED_THREADS)
+#ifdef USE_FORKED_THREADS
 #  include <sys/select.h>
 #  include <sys/types.h>
 #  ifdef HAVE_SYS_WAIT_H
@@ -243,11 +243,11 @@ void do_run( int a, int b )
 {
 	int		cpu;
 
-#  if defined(linux)
+#  ifdef USE_FORKED_THREADS
 	int pid, wpid;
 	int waitret;
-	int p[2];
-	void *buffer;
+	void *buffer = (void*)0;
+	int p[2] = {0,0};
 	struct resource *tmp_res;
 
 	if( rt_g.rtg_parallel ) {
@@ -282,7 +282,7 @@ void do_run( int a, int b )
 		 * XXX this should somehow only apply to a build on a 2.4
 		 * linux kernel.
 		 */
-#  if defined(USE_FORKED_THREADS)
+#  ifdef USE_FORKED_THREADS
 		pid = fork();
 		if (pid < 0) {
 			perror("fork failed");
@@ -292,7 +292,7 @@ void do_run( int a, int b )
 
 			bu_parallel( worker, npsw, NULL );
 
-#  if defined(USE_FORKED_THREADS)
+#  ifdef USE_FORKED_THREADS
 			/* send raytrace instance data back to the parent */
 			if (write(p[1], resource, sizeof(resource[0]) * npsw) == -1) {
 				perror("Unable to write to the communication pipe");
@@ -323,7 +323,7 @@ void do_run( int a, int b )
 
 	} /* end parallel case */
 
-#  if defined(USE_FORKED_THREADS)
+#  ifdef USE_FORKED_THREADS
 	if( rt_g.rtg_parallel ) {
 		tmp_res = (struct resource *)buffer;
 	} else {
