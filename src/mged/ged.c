@@ -2032,7 +2032,9 @@ mged_finish(int exitcode)
 	FOR_ALL_DISPLAYS(p, &head_dm_list.l){
 	  curr_dm_list = p;
 
-	  DM_CLOSE(dmp);
+	  if (curr_dm_list && dmp) {
+	      DM_CLOSE(dmp);
+	  }
 	}
 
 	/* Be certain to close the database cleanly before exiting */
