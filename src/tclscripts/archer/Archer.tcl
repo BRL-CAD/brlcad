@@ -6129,7 +6129,7 @@ Popup Menu    Right or Ctrl-Left
 
     pack $itk_component(aboutDialogTabs) -expand yes -fill both
 
-    wm geometry $itk_component(aboutDialog) "570x500"
+    wm geometry $itk_component(aboutDialog) "600x540"
 }
 
 ::itcl::body Archer::_build_mouse_overrides_dialog {} {
@@ -9242,6 +9242,8 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::_set_basic_mode {} {
+    grid forget $itk_component(attr_expand)
+
     #catch {$itk_component(displaymenu) delete "Command Window"}
     set itk_option(-primaryToolbar) 0
     _do_primary_toolbar
@@ -9301,6 +9303,8 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::_set_intermediate_mode {} {
+    grid $itk_component(attr_expand) -row 0 -column 2 -sticky e
+
     #catch {$itk_component(displaymenu) delete "Command Window"}
     set itk_option(-primaryToolbar) 1
     _do_primary_toolbar
@@ -9353,6 +9357,8 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::_set_advanced_mode {} {
+    grid $itk_component(attr_expand) -row 0 -column 2 -sticky e
+
     set itk_option(-primaryToolbar) 1
     _do_primary_toolbar
 
