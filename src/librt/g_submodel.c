@@ -752,10 +752,11 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 			}
 		}
 	} else {
-		/* Make another use of the current database */
+		/* stash a pointer to the current database instance
+		 * (should the dbi be cloned?)
+		 */
 		RT_CK_DBI(sip->dbip);
 		good.dbip = (struct db_i *)sip->dbip;	/* un-const-cast */
-		/* good.dbip->dbi_uses++; */	/* don't close it either */
 	}
 
 	argv[0] = bu_vls_addr( &sip->treetop );
