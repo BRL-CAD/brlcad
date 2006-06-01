@@ -85,14 +85,22 @@ jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
  *			B U _ B O M B
  *
  *  Abort the program with a message.
- *  Only produce a core-dump when that debugging bit is set.
+ *
+ *  Only produce a core-dump when that debugging bit is set.  Note
+ *  that this function is meant to be a last resort graceful abort.
+ *  It should not attempt to allocate anything on the stack or heap.
  */
 void
 bu_bomb(const char *str)
 {
 
-	/* First thing, always always always try to print the string */
-	fprintf(stderr,"\n%s\n", str);
+	/* First thing, always always always try to print the string.
+	 * Avoid passing additional format arguments so as to avoid
+	 * buffer allocations inside fprintf().
+	 */
+	fprintf(stderr, "\n");
+	fprintf(stderr, str);
+	fprintf(stderr, "\n");
 	fflush(stderr);
 
 	/* MGED would like to be able to additional logging, do callbacks. */
