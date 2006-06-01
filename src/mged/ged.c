@@ -2491,7 +2491,7 @@ f_opendb(
 	}
 
 	/* increment use count for this db instance */
-	dbip->dbi_uses++;
+	(void)db_clone_dbi(dbip, NULL);
 
 	/* Establish LIBWDB TCL access to both disk and in-memory databases */
 	if (wdb_init_obj(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
