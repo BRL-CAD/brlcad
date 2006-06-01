@@ -28,7 +28,7 @@
  *	db_open		Open the database
  *	db_create	Create a new database
  *	db_close	Close a database, releasing dynamic memory
- *
+ *	db_clone_dbi	Clone a given database instance
  *
  *  Authors -
  *	Michael John Muuss
@@ -264,13 +264,16 @@ db_create(const char *name,
 /**
  *			D B _ C L O S E _ C L I E N T
  *
- *  De-register a client of this database instance, and close out the instance.
+ *  De-register a client of this database instance, if provided, and
+ *  close out the instance.
  */
 void
 db_close_client(struct db_i *dbip, long int *client)
 {
 	RT_CK_DBI(dbip);
-	(void)bu_ptbl_rm( &dbip->dbi_clients, client );
+	if (client) {
+	    (void)bu_ptbl_rm( &dbip->dbi_clients, client );
+	}
 	db_close(dbip);
 }
 
@@ -420,8 +423,8 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 /**
  *			D B _ C L O N E _ D B I
  *
- *  Obtain an additional instance of this same database.
- *  The new client is registered at the same time.
+ *  Obtain an additional instance of this same database.  A new client
+ *  is registered at the same time if one is specified.
  */
 struct db_i *
 db_clone_dbi(struct db_i *dbip, long int *client)
@@ -429,7 +432,9 @@ db_clone_dbi(struct db_i *dbip, long int *client)
 	RT_CK_DBI(dbip);
 
 	dbip->dbi_uses++;
-	bu_ptbl_ins_unique( &dbip->dbi_clients, client );
+	if (client) {
+	    bu_ptbl_ins_unique( &dbip->dbi_clients, client );
+	}
 	return dbip;
 }
 
