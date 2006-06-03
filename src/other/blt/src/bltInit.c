@@ -405,7 +405,7 @@ Blt_Init(interp)
 {
     long int flags;
 
-    flags = Tcl_GetAssocData(interp, BLT_THREAD_KEY, NULL);
+    flags = (long int)Tcl_GetAssocData(interp, BLT_THREAD_KEY, NULL);
     if ((flags & BLT_TCL_CMDS) == 0) {
 	register Tcl_AppInitProc **p;
 	Tcl_Namespace *nsPtr;
@@ -505,7 +505,7 @@ Blt_Init(interp)
 {
     long int flags;
 
-    flags = Tcl_GetAssocData(interp, BLT_THREAD_KEY, NULL);
+    flags = (long int)Tcl_GetAssocData(interp, BLT_THREAD_KEY, NULL);
     if ((flags & BLT_TCL_CMDS) == 0) {
 	register Tcl_AppInitProc **p;
 	Tcl_ValueType args[2];
