@@ -421,8 +421,8 @@ main(int argc, char **argv)
     /* Here we go */
     i = scale( stdout, inx, iny, outx, outy );
 
-    bu_free( outbuf, buffer );
-    bu_free( buffer, buffer );
+    bu_free( outbuf, (const char *)buffer );
+    bu_free( buffer, (const char *)buffer );
     return(0);
 }
 
