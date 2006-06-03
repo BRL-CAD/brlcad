@@ -171,7 +171,7 @@ void
 view_eol(register struct application *ap)
 {
     int i;
-    char *buf = (char *)0;
+    unsigned char *buf = (char *)0;
 
     if( lightmodel == LGT_BW ) {
 	if( outfp != NULL ) {
@@ -184,7 +184,7 @@ view_eol(register struct application *ap)
 	    }
 	    if( fbp != FBIO_NULL ) {
 		if (!buf) {
-		    buf = (char *)bu_malloc(sizeof(RGBpixel)*width, "allocating temporary buffer in viewxray");
+		    buf = (unsigned char *)bu_malloc(sizeof(RGBpixel)*width, "allocating temporary buffer in viewxray");
 		}
 
 		/* fb_write only accepts RGBpixel arrays, so convert it */
