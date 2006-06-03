@@ -58,7 +58,7 @@
 int
 f_eac(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	int i,j;
+	int j;
 	int item;
 	struct directory *dp;
 	struct bu_vls v;
