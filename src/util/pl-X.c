@@ -42,11 +42,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xutil.h>
 
 #ifdef HAVE_STRING_H
-# include <string.h>
+#  include <string.h>
 #endif
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "machine.h"
@@ -57,6 +57,19 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define	TIEEE	3	/* IEEE 64-bit floating */
 #define	TCHAR	4	/* unsigned chars */
 #define	TSTRING	5	/* linefeed terminated string */
+
+#define	FONT	"vtsingle"
+
+XWMHints xwmh = {
+	(InputHint|StateHint),		/* flags */
+	False,				/* input */
+	NormalState,			/* initial_state */
+	0,				/* icon pixmap */
+	0,				/* icon window */
+	0, 0,				/* icon location */
+	0,				/* icon mask */
+	0				/* Window group */
+};
 
 struct uplot {
 	int	targ;	/* type of args */
@@ -125,7 +138,6 @@ struct uplot letters[] = {
 /*z*/	{ 0, 0, 0 }
 };
 
-double	getieee(void);
 int	verbose;
 double	cx, cy, cz;		/* current x, y, z, point */
 double	arg[6];			/* parsed plot command arguments */
@@ -141,12 +153,201 @@ Window	win;
 GC	gc;
 XFontStruct *fontstruct;
 
+
+void
+getstring(void)
+{
+	int	c;
+	char	*cp;
+
+	cp = strarg;
+	while( (c = getchar()) != '\n' && c != EOF )
+		*cp++ = c;
+	*cp = 0;
+}
+
+long
+getshort(void)
+{
+	register long	v, w;
+
+	v = getchar();
+	v |= (getchar()<<8);	/* order is important! */
+
+	/* worry about sign extension - sigh */
+	if( v <= 0x7FFF )  return(v);
+	w = -1;
+	w &= ~0x7FFF;
+	return( w | v );
+}
+
+double
+getieee(void)
+{
+	char	in[8];
+	double	d;
+
+	fread( in, 8, 1, stdin );
+	ntohd( &d, in, 1 );
+	return	d;
+}
+
+
+void
+getargs(struct uplot *up)
+{
+	int	i;
+
+	for( i = 0; i < up->narg; i++ ) {
+		switch( up->targ ){
+			case TSHORT:
+				arg[i] = getshort();
+				break;
+			case TIEEE:
+				arg[i] = getieee();
+				break;
+			case TSTRING:
+				getstring();
+				break;
+			case TCHAR:
+				arg[i] = getchar();
+				break;
+			case TNONE:
+			default:
+				arg[i] = 0;	/* ? */
+				break;
+		}
+	}
+}
+
+void
+draw(double x1, double y1, double z1, double x2, double y2, double z2)
+      	           	/* from point */
+      	           	/* to point */
+{
+	int	sx1, sy1, sx2, sy2;
+
+	sx1 = (x1 - sp[0]) / (sp[3] - sp[0]) * width;
+	sy1 = height - (y1 - sp[1]) / (sp[4] - sp[1]) * height;
+	sx2 = (x2 - sp[0]) / (sp[3] - sp[0]) * width;
+	sy2 = height - (y2 - sp[1]) / (sp[4] - sp[1]) * height;
+
+	if( sx1 == sx2 && sy1 == sy2 )
+		XDrawPoint( dpy, win, gc, sx1, sy1 );
+	else
+		XDrawLine( dpy, win, gc, sx1, sy1, sx2, sy2 );
+
+	cx = x2;
+	cy = y2;
+	cz = z2;
+}
+
+
+void
+label(double x, double y, char *str)
+{
+	int	sx, sy;
+
+	sx = (x - sp[0]) / (sp[3] - sp[0]) * width;
+	sy = height - (y - sp[1]) / (sp[4] - sp[1]) * height;
+
+	XDrawString( dpy, win, gc, sx, sy, str, strlen(str) );
+}
+
+
+void
+xsetup(int argc, char **argv)
+{
+	char	hostname[80];
+	char	display[80];
+	char	*envp;
+	unsigned long	bd, bg, fg, bw;
+	XSizeHints xsh;
+	XEvent	event;
+	XGCValues gcv;
+
+	width = height = 512;
+
+	if( (envp = getenv("DISPLAY")) == NULL ) {
+		/* Env not set, use local host */
+		gethostname( hostname, 80 );
+		sprintf( display, "%s:0", hostname );
+		envp = display;
+	}
+
+	/* Open the display - XXX see what NULL does now */
+	if( (dpy = XOpenDisplay( envp )) == NULL ) {
+		fprintf( stderr, "pl-X: Can't open X display\n" );
+		exit( 2 );
+	}
+
+	/* Load the font to use */
+	if( (fontstruct = XLoadQueryFont(dpy, FONT)) == NULL ) {
+		fprintf( stderr, "pl-X: Can't open font\n" );
+		exit( 4 );
+	}
+
+	/* Select border, background, foreground colors,
+	 * and border width.
+	 */
+	bd = WhitePixel( dpy, DefaultScreen(dpy) );
+	bg = BlackPixel( dpy, DefaultScreen(dpy) );
+	fg = WhitePixel( dpy, DefaultScreen(dpy) );
+	bw = 1;
+
+	/* Fill in XSizeHints struct to inform window
+	 * manager about initial size and location.
+	 */
+	xsh.flags = (PSize);
+	xsh.height = height + 10;
+	xsh.width = width + 10;
+	xsh.x = xsh.y = 0;
+
+	win = XCreateSimpleWindow( dpy, DefaultRootWindow(dpy),
+		xsh.x, xsh.y, xsh.width, xsh.height,
+		bw, bd, bg );
+	if( win == 0 ) {
+		fprintf( stderr, "pl-X: Can't create window\n" );
+		exit( 3 );
+	}
+
+	/* Set standard properties for Window Managers */
+	XSetStandardProperties( dpy, win, "Unix Plot", "Unix Plot", None, argv, argc, &xsh );
+	XSetWMHints( dpy, win, &xwmh );
+
+	/* Create a Graphics Context for drawing */
+	gcv.font = fontstruct->fid;
+	gcv.foreground = fg;
+	gcv.background = bg;
+	gc = XCreateGC( dpy, win, (GCFont|GCForeground|GCBackground), &gcv );
+
+	XSelectInput( dpy, win, ExposureMask );
+	XMapWindow( dpy, win );
+
+	while( 1 ) {
+		XNextEvent( dpy, &event );
+		if( event.type == Expose && event.xexpose.count == 0 ) {
+			XWindowAttributes xwa;
+
+			/* remove other exposure events */
+			while( XCheckTypedEvent(dpy, Expose, &event) ) ;
+
+			if( XGetWindowAttributes( dpy, win, &xwa ) == 0 )
+				break;
+
+			width = xwa.width;
+			height = xwa.height;
+			break;
+		}
+	}
+}
+
+
 int
 main(int argc, char **argv)
 {
 	register int	c;
 	struct	uplot *up;
-	int	i;
 
 	while( argc > 1 ) {
 		if( strcmp(argv[1], "-v") == 0 ) {
@@ -252,200 +453,6 @@ main(int argc, char **argv)
 	XFlush( dpy );
 	sleep( 1 );
 	return 0;
-}
-
-getargs(struct uplot *up)
-{
-	int	i;
-
-	for( i = 0; i < up->narg; i++ ) {
-		switch( up->targ ){
-			case TSHORT:
-				arg[i] = getshort();
-				break;
-			case TIEEE:
-				arg[i] = getieee();
-				break;
-			case TSTRING:
-				getstring();
-				break;
-			case TCHAR:
-				arg[i] = getchar();
-				break;
-			case TNONE:
-			default:
-				arg[i] = 0;	/* ? */
-				break;
-		}
-	}
-}
-
-getstring(void)
-{
-	int	c;
-	char	*cp;
-
-	cp = strarg;
-	while( (c = getchar()) != '\n' && c != EOF )
-		*cp++ = c;
-	*cp = 0;
-}
-
-getshort(void)
-{
-	register long	v, w;
-
-	v = getchar();
-	v |= (getchar()<<8);	/* order is important! */
-
-	/* worry about sign extension - sigh */
-	if( v <= 0x7FFF )  return(v);
-	w = -1;
-	w &= ~0x7FFF;
-	return( w | v );
-}
-
-double
-getieee(void)
-{
-	char	in[8];
-	double	d;
-
-	fread( in, 8, 1, stdin );
-	ntohd( &d, in, 1 );
-	return	d;
-}
-
-draw(double x1, double y1, double z1, double x2, double y2, double z2)
-      	           	/* from point */
-      	           	/* to point */
-{
-	int	sx1, sy1, sx2, sy2;
-
-	sx1 = (x1 - sp[0]) / (sp[3] - sp[0]) * width;
-	sy1 = height - (y1 - sp[1]) / (sp[4] - sp[1]) * height;
-	sx2 = (x2 - sp[0]) / (sp[3] - sp[0]) * width;
-	sy2 = height - (y2 - sp[1]) / (sp[4] - sp[1]) * height;
-
-	if( sx1 == sx2 && sy1 == sy2 )
-		XDrawPoint( dpy, win, gc, sx1, sy1 );
-	else
-		XDrawLine( dpy, win, gc, sx1, sy1, sx2, sy2 );
-
-	cx = x2;
-	cy = y2;
-	cz = z2;
-}
-
-label(double x, double y, char *str)
-{
-	int	sx, sy;
-
-	sx = (x - sp[0]) / (sp[3] - sp[0]) * width;
-	sy = height - (y - sp[1]) / (sp[4] - sp[1]) * height;
-	/*sy -= fontstruct->height;	/* point is lower left of text XXXXXX*/
-
-	XDrawString( dpy, win, gc, sx, sy, str, strlen(str) );
-}
-
-#define	FONT	"vtsingle"
-
-XWMHints xwmh = {
-	(InputHint|StateHint),		/* flags */
-	False,				/* input */
-	NormalState,			/* initial_state */
-	0,				/* icon pixmap */
-	0,				/* icon window */
-	0, 0,				/* icon location */
-	0,				/* icon mask */
-	0				/* Window group */
-};
-
-xsetup(int argc, char **argv)
-{
-	char	hostname[80];
-	char	display[80];
-	char	*envp;
-	unsigned long	bd, bg, fg, bw;
-	XSizeHints xsh;
-	XEvent	event;
-	XGCValues gcv;
-
-	width = height = 512;
-
-	if( (envp = getenv("DISPLAY")) == NULL ) {
-		/* Env not set, use local host */
-		gethostname( hostname, 80 );
-		sprintf( display, "%s:0", hostname );
-		envp = display;
-	}
-
-	/* Open the display - XXX see what NULL does now */
-	if( (dpy = XOpenDisplay( envp )) == NULL ) {
-		fprintf( stderr, "pl-X: Can't open X display\n" );
-		exit( 2 );
-	}
-
-	/* Load the font to use */
-	if( (fontstruct = XLoadQueryFont(dpy, FONT)) == NULL ) {
-		fprintf( stderr, "pl-X: Can't open font\n" );
-		exit( 4 );
-	}
-
-	/* Select border, background, foreground colors,
-	 * and border width.
-	 */
-	bd = WhitePixel( dpy, DefaultScreen(dpy) );
-	bg = BlackPixel( dpy, DefaultScreen(dpy) );
-	fg = WhitePixel( dpy, DefaultScreen(dpy) );
-	bw = 1;
-
-	/* Fill in XSizeHints struct to inform window
-	 * manager about initial size and location.
-	 */
-	xsh.flags = (PSize);
-	xsh.height = height + 10;
-	xsh.width = width + 10;
-	xsh.x = xsh.y = 0;
-
-	win = XCreateSimpleWindow( dpy, DefaultRootWindow(dpy),
-		xsh.x, xsh.y, xsh.width, xsh.height,
-		bw, bd, bg );
-	if( win == 0 ) {
-		fprintf( stderr, "pl-X: Can't create window\n" );
-		exit( 3 );
-	}
-
-	/* Set standard properties for Window Managers */
-	XSetStandardProperties( dpy, win, "Unix Plot", "Unix Plot", None, argv, argc, &xsh );
-	XSetWMHints( dpy, win, &xwmh );
-
-	/* Create a Graphics Context for drawing */
-	gcv.font = fontstruct->fid;
-	gcv.foreground = fg;
-	gcv.background = bg;
-	gc = XCreateGC( dpy, win, (GCFont|GCForeground|GCBackground), &gcv );
-
-	XSelectInput( dpy, win, ExposureMask );
-	XMapWindow( dpy, win );
-
-	while( 1 ) {
-		XNextEvent( dpy, &event );
-		if( event.type == Expose && event.xexpose.count == 0 ) {
-			XWindowAttributes xwa;
-			int	x, y;
-
-			/* remove other exposure events */
-			while( XCheckTypedEvent(dpy, Expose, &event) ) ;
-
-			if( XGetWindowAttributes( dpy, win, &xwa ) == 0 )
-				break;
-
-			width = xwa.width;
-			height = xwa.height;
-			break;
-		}
-	}
 }
 
 /*

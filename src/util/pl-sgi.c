@@ -46,21 +46,21 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 
 #if HAS_SGIGL
-# include "gl.h"
-# include "device.h"
-#   ifdef mips
-	/* sgi 4-D */
-#	include "gl/addrs.h"
-#	include "gl/cg2vme.h"
-#	include "gl/get.h"
-#   else
-	/* sgi 3-D */
-#	include <get.h>
-#	define XMAX170	645
-#	define YMAX170	484
-#   endif
+#  include "gl.h"
+#  include "device.h"
+#  ifdef mips
+     /* sgi 4-D */
+#    include "gl/addrs.h"
+#    include "gl/cg2vme.h"
+#    include "gl/get.h"
+#  else
+     /* sgi 3-D */
+#    include <get.h>
+#    define XMAX170	645
+#    define YMAX170	484
+#  endif
 #ifdef SPACEBALL
-# include "gl/spaceball.h"
+#  include "gl/spaceball.h"
 #endif
 
 #define	HUGEVAL	1.0e10	/* for near/far clipping */
@@ -254,7 +254,7 @@ main(int argc, char **argv)
 	identmat[3][0] = identmat[3][1] = identmat[3][2] = 0.0;
 
 	/* set up and save the initial rot/trans/scale matrix */
-	loadmatrix( identmat );
+	loadmatrix( (const Matrix)identmat );
 	translate( -(max[0]+min[0])/2.0, -(max[1]+min[1])/2.0,
 		-(max[2]+min[2])/2.0 );
 	getmatrix( centermat );
@@ -318,6 +318,7 @@ float	d_tran[3];	/* Delta Translations */
 
 int	redisplay = 1;
 
+void
 process_input()
 {
 	Device	event;
@@ -342,7 +343,7 @@ process_input()
 	/*printf("event %d: value %d\n", event, val);*/
 	/* Ignore all zero val's? XXX */
 
-	loadmatrix ( identmat );
+	loadmatrix ( (const Matrix)identmat );
 	d_tran[0] = d_tran[1] = d_tran[2] = 0;
 	d_scal[0] = d_scal[1] = d_scal[2] = 1;
 
@@ -486,9 +487,9 @@ process_input()
 	case RESET:
 		if( val ) {
 			/* reset */
-			loadmatrix( centermat );
+			loadmatrix( (const Matrix)centermat );
 			getmatrix( g_rot );
-			loadmatrix( identmat );
+			loadmatrix( (const Matrix)identmat );
 			redisplay = 1;
 		}
 		break;
@@ -551,13 +552,14 @@ process_input()
 	return( done );
 }
 
+void
 view_loop()
 {
 	int	done = 0;
 	int	o = 1;		/* object number */
 
 	/* Initial translate/rotate/scale matrix */
-	loadmatrix( centermat );
+	loadmatrix( (const Matrix)centermat );
 	getmatrix( g_rot );
 	g_scal[0] = g_scal[1] = g_scal[2] = 1;
 
@@ -575,9 +577,9 @@ view_loop()
 
 		if( redisplay ) {
 			/* Setup current view */
-			loadmatrix( *viewmat );
+			loadmatrix( (const Matrix)(*viewmat) );
 			scale( g_scal[0], g_scal[1], g_scal[2] );
-			multmatrix( g_rot );
+			multmatrix( (const Matrix)g_rot );
 
 			/* draw the object(s) */
 			cursoff();
@@ -649,6 +651,7 @@ view_loop()
 #define WIN_B	MARGIN
 #define WIN_T	(WINDIM-BANNER-MARGIN)
 
+void
 init_display()
 {
 	int	i;
@@ -810,7 +813,6 @@ Coord	max[3], min[3];
 	register int	c;
 	int	x, y, z, x1, y1, z1, x2, y2, z2;
 	int	r, g, b;
-	long	l;
 	char	str[180];
 	double	d[8];
 	int 	o;
@@ -1040,6 +1042,7 @@ Coord	max[3], min[3];
 	}
 }
 
+void
 get_string( fp, s )
 FILE	*fp;
 char	*s;
@@ -1051,6 +1054,7 @@ char	*s;
 	*s = NULL;
 }
 
+void
 getieee( fp, out, n )
 FILE	*fp;
 double	out[];
@@ -1058,17 +1062,18 @@ int	n;
 {
 	char	in[8*16];
 	fread( in, 8, n, fp );
-	ntohd( out, in, n );
+	ntohd( (unsigned char * )out, (const unsigned char *)in, n );
 }
 
+void
 setview( m, rx, ry, rz )
 Matrix	m;
 int	rx, ry, rz;
 {
 	/* Hmm... save translation and scale? */
-	loadmatrix( centermat );
+	loadmatrix( (const Matrix)centermat );
 	getmatrix( m );
-	loadmatrix( identmat );
+	loadmatrix( (const Matrix)identmat );
 
 	rotate( (Angle) rx*10, 'x' );
 	rotate( (Angle) ry*10, 'y' );
@@ -1096,6 +1101,7 @@ int	rx, ry, rz;
 #endif
 }
 
+void
 newview( orient, rot, tran, scal, viewmat )
 Matrix	orient, rot, viewmat;
 float	tran[3], scal[3];
@@ -1107,17 +1113,18 @@ float	tran[3], scal[3];
 	g_scal[0] *= scal[0];
 	g_scal[1] *= scal[1];
 	g_scal[2] *= scal[2];
-	loadmatrix( rot );
+	loadmatrix( (const Matrix)rot );
 	translate( tran[0], tran[1], tran[2] );
-	multmatrix( orient );
+	multmatrix( (const Matrix)orient );
 	getmatrix( orient );
 
 	/* set up total viewing transformation */
-	loadmatrix( viewmat );
+	loadmatrix( (const Matrix)viewmat );
 	scale( g_scal[0], g_scal[1], g_scal[2] );
-	multmatrix( orient );
+	multmatrix( (ocnst Matrix)orient );
 }
 
+void
 print_info()
 {
 	double	xrot, yrot, zrot, cosyrot;
@@ -1136,6 +1143,7 @@ print_info()
 	printf( "scale: %f\n", g_scal[0] );
 }
 
+void
 domenu( n )
 int	n;
 {
@@ -1205,6 +1213,7 @@ int	n;
 	}
 }
 
+void
 draw_axis()
 {
 	int	p1, p2;
