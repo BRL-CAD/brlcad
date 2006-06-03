@@ -17,11 +17,12 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* clone and tracker
-
+* tbd
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
+
+* clone and tracker
 
 * Endgame Framework importer plugin
 
@@ -30,8 +31,6 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * get archer working
 
-* Mac OS X SGI dial knobs support
-
 * test pic/nonpic build problems with librtms/libmultispectral
 
 * run-time path identification of mged resources was never completed,
@@ -39,11 +38,13 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * use environ for run-time path lookups
 
-* add geometry example of building 238
-
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
+
+* add geometry example of building 238
+
+* Mac OS X SGI dial knobs support
 
 * merge old and 'new' tops behavior into one, preserving compatibility
   where it makes sense.
