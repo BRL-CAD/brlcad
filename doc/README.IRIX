@@ -34,8 +34,8 @@ For IRIX 64-bit unoptimized /usr/brlcad build:
 
 For IRIX 32-bit optimized production release build:
 	export SGI_API=-n32
-	./configure CC=cc --enable-optimized --enable-everything --disable-blt-build --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH/mips32
+	./configure CC=cc --enable-optimized --enable-everything --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH/mips32
 
 For IRIX 64-bit optimized production release build:
 	export SGI_API=-64
-	./configure CC=cc CFLAGS=-64 LDFLAGS=-64 --enable-64bit-build --enable-optimized --enable-everything --disable-blt-build --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH/mips64
+	./configure CC=cc CFLAGS=-64 LDFLAGS=-64 --enable-64bit-build --enable-optimized --enable-everything --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH/mips64
