@@ -188,11 +188,10 @@ int delete_points(point_line_t **plta, int count, double tolerance) {
     int i;
     point_line_t *plt = NULL;
     point_line_t *previous_plt = NULL;
-    point_line_t average_plt;
+    /*    point_line_t average_plt; */
     int repeats = 0;
     int repeat_counter = 0;
     int removed = 0;
-    int removed_counter = 0;
 
     if (!plta) {
 	printf("WARNING: Unexpected call to delete_points with a NULL point array\n");
@@ -204,7 +203,7 @@ int delete_points(point_line_t **plta, int count, double tolerance) {
 	return 0;
     }
 
-    INITIALIZE_POINT_LINE_T(average_plt);
+    /*    INITIALIZE_POINT_LINE_T(average_plt); */
     previous_plt = &(*plta)[0];
 
     for (i=1; i < count; i++) {
@@ -406,8 +405,6 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
  * call the appropriate handler.
  */
 int process_group(point_line_t **plta, int count) {
-    int i;
-    point_line_t *plt = NULL;
     int valid_count = 0;
 
     if (!plta) {
