@@ -1698,7 +1698,6 @@ pkg_block(register struct pkg_conn *pc)
 static void
 pkg_perror(void (*errlog) (/* ??? */), char *s)
 {
-	long int ret = 0;
 	sprintf( errbuf, "%s: ", s);
 
 	if ( errno >= 0 || strlen(errbuf) >= MAX_ERRBUF_SIZE) {
@@ -1708,8 +1707,7 @@ pkg_perror(void (*errlog) (/* ??? */), char *s)
 	}
 
 #if HAVE_STRERROR_R
-       	ret = (long)strerror_r(errno, errbuf+strlen(errbuf), MAX_ERRBUF_SIZE-strlen(errbuf));
-	if (ret != 0) {
+       	if (strerror_r(errno, errbuf+strlen(errbuf), MAX_ERRBUF_SIZE-strlen(errbuf)) != 0) {
 		sprintf(errbuf, "%s: errno=%d\n", s, errno);
 	}
 #else
