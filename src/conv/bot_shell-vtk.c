@@ -153,7 +153,6 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 	struct partition *p;
 	int surfno;
 	struct soltab *stp;
-	vect_t norm;
 	double x, y, z, nx, ny, nz;
 	int face[3];
 	int i;
@@ -189,7 +188,6 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 			}
 		}
 		if( debug ) {
-			RT_HIT_NORMAL( norm, p->pt_inhit, stp, NULL, p->pt_inflip );
 			bu_log( "\thit at (%g %g %g) on %s surfno = %d\n",
 				V3ARGS( p->pt_inhit->hit_point ), stp->st_dp->d_namep, surfno );
 		}
