@@ -404,7 +404,8 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 /** wrapper func to validate the block of points being processed and to
  * call the appropriate handler.
  */
-int process_group(point_line_t **plta, int count) {
+int
+process_group(point_line_t **plta, int count) {
     int valid_count = 0;
 
     if (!plta) {
