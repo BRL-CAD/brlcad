@@ -236,7 +236,6 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     register struct soltab *stp;
     union tree *curtree;
     struct directory *dp;
-    struct region_pointer *td = (struct region_pointer *)client_data;
     struct bu_vls *vlsp;
     struct rt_i *rtip;
     struct rt_bot_internal *bot;
@@ -244,7 +243,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     vect_t vv;
     vectp_t vp;
     float vec[3];
-    int hash, i, n, size;
+    int hash, i, n;
     char prop_name[256], mesh_name[256];
     unsigned char c;
 
@@ -423,7 +422,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
 void load_regmap(char *filename) {
   FILE *fh;
   char line[256], name[256], idstr[20], *ptr;
-  int i, ind, id;
+  int i, ind;
 
   regmap_num = 0;
   regmap_list = NULL;
@@ -520,10 +519,10 @@ void load_regmap(char *filename) {
 int main(int argc, char *argv[]) {
   int i;
   char idbuf[132], filename[256];
-  char shortopts[] = "r:", c;
+  char shortopts[] = "r:";
+  int c;
   unsigned char len;
   struct db_tree_state ts;
-  struct directory *dp;
   unsigned short s;
 
 
