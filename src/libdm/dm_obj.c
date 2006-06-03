@@ -49,10 +49,6 @@
 
 #ifdef _WIN32
 #  include <tkwinport.h>
-#else
-#  if 1
-#    define USE_FBSERV
-#  endif
 #endif
 
 #include "machine.h"
@@ -1912,8 +1908,8 @@ dmo_drawLabels_cmd(struct dm_obj	*dmop,
 
     dp = DB_FULL_PATH_CUR_DIR(&path);
 
-    if ((id = rt_db_get_internal(&intern, dp, dgop->dgo_wdbp->dbip,
-				 ts.ts_mat, &rt_uniresource)) < 0) {
+    id = rt_db_get_internal(&intern, dp, dgop->dgo_wdbp->dbip, ts.ts_mat, &rt_uniresource);
+    if (id < 0) {
 	Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
 			 ") failure", (char *)NULL );
     }
