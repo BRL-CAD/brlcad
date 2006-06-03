@@ -412,7 +412,6 @@ process_group(point_line_t **plta, int count) {
 	printf("WARNING: Unexpected call to process_multi_group with a NULL point array\n");
 	return 0;
     } 
-    plt = &(*plta)[0]; /* use first for reference */
 
     bu_log("processing a group!\n");
 
