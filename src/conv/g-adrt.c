@@ -239,11 +239,10 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     struct bu_vls *vlsp;
     struct rt_i *rtip;
     struct rt_bot_internal *bot;
-    matp_t mat;
     vect_t vv;
     vectp_t vp;
     float vec[3];
-    int hash, i, n;
+    int i;
     char prop_name[256], mesh_name[256];
     unsigned char c;
 
@@ -377,8 +376,6 @@ static union tree *leaf_func(struct db_tree_state *tsp,
       fwrite(bot->faces, sizeof(int), 3*bot->num_faces, adrt_fh);
     }
 
-    hash = db_dirhash( dp->d_namep );
-
     /* this piece is for db_walk_tree's benefit */
     RT_GET_TREE( curtree, tsp->ts_resp );
     curtree->magic = RT_TREE_MAGIC;
@@ -405,15 +402,6 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     /* fake out, */
     /*    stp->st_meth = &adrt_functab; */
     curtree->tr_a.tu_stp = stp;
-
-/*    ACQUIRE_SEMAPHORE_TREE(hash); */
-#if 0
-    BU_LIST_INSERT( &(rtip->rti_solidheads[hash]), &(stp->l) );
-    BU_LIST_INSERT( &dp->d_use_hd, &(stp->l2) );
-#endif
-/*    RELEASE_SEMAPHORE_TREE(hash); */
-
-    /*    bu_log("tree:0x%08x  stp:0x%08x\n", curtree, stp); */
 
     return( curtree );
 }
