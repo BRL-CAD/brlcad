@@ -191,7 +191,6 @@ void
 server_geom(struct pkg_conn *connection, char *buf)
 {
     struct bu_external ext;
-    struct directory *dp;
     struct db5_raw_internal raw;
     int flags;
 
@@ -385,8 +384,6 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
     my_data stash;
     int i;
     struct directory *dp;
-    struct bu_external ext;
-    struct db_tree_state init_state; /* state table for the heirarchy walker */
     char s_port[MAX_DIGITS] = {0};
     int bytes_sent = 0;
 
