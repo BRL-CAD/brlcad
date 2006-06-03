@@ -40,7 +40,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ascii.h"
 #include "./extern.h"
 
-#define SIGCLD SIGCHLD
+#ifndef SIGCLD
+#  define SIGCLD SIGCHLD
+#endif
 
 #define DEBUG_BURST	0	/* 1 enables debugging for this module */
 
