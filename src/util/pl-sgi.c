@@ -113,13 +113,45 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  define WIN_T	(WINDIM-BANNER-MARGIN)
 
 
-static char usage[] = "\
-Usage: pl-sgi [options] [-t thickness] [-{s|S} shellcmd] [file.plot]\n\
-   -a   Display coordinate axis\n\
-   -f   Full screen window\n\
-   -n   NTSC video mode\n\
-   -1   Single buffer\n\
-";
+/*
+ *	V I E W _ L O O P
+ */
+
+#define	ROTX	DIAL6
+#define	ROTY	DIAL4
+#define	ROTZ	DIAL2
+#define	TRANX	DIAL7
+#define	TRANY	DIAL5
+#define	TRANZ	DIAL3
+#define	ZOOM	DIAL1
+
+#define	ORTHO	SW0
+#define	PERSP	SW1
+#undef RESET
+#define	RESET	SW2
+
+#define	BOTTOM	SW23
+#define	TOP	SW24
+#define	REAR	SW25
+#define	V4545	SW26
+#define	RIGHT	SW28
+#define	FRONT	SW29
+#define	LEFT	SW30
+#define	V3525	SW31
+
+#define	MENU_CENTER	1
+#define	MENU_AXIS	2
+#define	MENU_INFO	3
+#define	MENU_SNAP	4
+#define	MENU_SHELL	5
+#define	MENU_EXIT	6
+char *menustring = "Center|Axis|Info|DunnSnap|ShellCmd|Exit";
+
+/*XXX - global because it is shared with the menu/mouse input function */
+float	d_tran[3];	/* Delta Translations */
+
+int	redisplay = 1;
+
 
 Matrix	*viewmat;	/* current viewing projection */
 Matrix	viewortho;	/* ortho viewing projection */
@@ -144,6 +176,15 @@ int	cmap_mode = 1;	/* !0 if in color map mode, else RGBmode */
 int	onebuffer = 0;	/* !0 if in single buffer mode, else double */
 long	menu;
 char	*menustring;
+
+
+static char usage[] = "\
+Usage: pl-sgi [options] [-t thickness] [-{s|S} shellcmd] [file.plot]\n\
+   -a   Display coordinate axis\n\
+   -f   Full screen window\n\
+   -n   NTSC video mode\n\
+   -1   Single buffer\n\
+";
 
 
 int
@@ -382,46 +423,6 @@ draw_axis()
 	charstr( "z" );
 	movei( 0, 0, 0 );	/* back to origin */
 }
-
-
-/*
- *	V I E W _ L O O P
- */
-
-#define	ROTX	DIAL6
-#define	ROTY	DIAL4
-#define	ROTZ	DIAL2
-#define	TRANX	DIAL7
-#define	TRANY	DIAL5
-#define	TRANZ	DIAL3
-#define	ZOOM	DIAL1
-
-#define	ORTHO	SW0
-#define	PERSP	SW1
-#undef RESET
-#define	RESET	SW2
-
-#define	BOTTOM	SW23
-#define	TOP	SW24
-#define	REAR	SW25
-#define	V4545	SW26
-#define	RIGHT	SW28
-#define	FRONT	SW29
-#define	LEFT	SW30
-#define	V3525	SW31
-
-#define	MENU_CENTER	1
-#define	MENU_AXIS	2
-#define	MENU_INFO	3
-#define	MENU_SNAP	4
-#define	MENU_SHELL	5
-#define	MENU_EXIT	6
-char *menustring = "Center|Axis|Info|DunnSnap|ShellCmd|Exit";
-
-/*XXX - global because it is shared with the menu/mouse input function */
-float	d_tran[3];	/* Delta Translations */
-
-int	redisplay = 1;
 
 
 void
