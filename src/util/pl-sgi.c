@@ -146,8 +146,8 @@ long	menu;
 char	*menustring;
 
 
-get_args( argc, argv )
-register char **argv;
+int
+get_args( int argc, char *argv[] )
 {
 	register int c;
 
@@ -189,7 +189,7 @@ register char **argv;
 }
 
 
-void
+int
 init_display()
 {
 	int	i;
@@ -425,9 +425,7 @@ int	redisplay = 1;
 
 
 void
-setview( m, rx, ry, rz )
-Matrix	m;
-int	rx, ry, rz;
+setview( Matrix m, int rx, int ry, int rz )
 {
 	/* Hmm... save translation and scale? */
 	loadmatrix( centermat );
@@ -462,9 +460,7 @@ int	rx, ry, rz;
 
 
 void
-newview( orient, rot, tran, scal, viewmat )
-Matrix	orient, rot, viewmat;
-float	tran[3], scal[3];
+newview( Matrix orient, Matrix rot, float tran[3], float scal[3], Matrix viewmat )
 {
 	/*
 	 * combine new operations with old
@@ -486,8 +482,7 @@ float	tran[3], scal[3];
 
 
 void
-domenu( n )
-int	n;
+domenu( int n )
 {
 	long	left, bottom, winx_size, winy_size;
 	long	x, y;
@@ -791,9 +786,7 @@ process_input()
 
 
 void
-get_string( fp, s )
-FILE	*fp;
-char	*s;
+get_string( FILE *fp, char *s )
 {
 	int	c;
 
@@ -804,10 +797,7 @@ char	*s;
 
 
 void
-getieee( fp, out, n )
-FILE	*fp;
-double	out[];
-int	n;
+getieee( FILE *fp, double out[], int n )
 {
 	char	in[8*16];
 	fread( in, 8, n, fp );
@@ -824,9 +814,7 @@ int	n;
 #define	getb(fp)	(getc(fp))
 
 void
-uplot( fp, max, min )
-FILE	*fp;
-Coord	max[3], min[3];
+uplot( FILE *fp, Coord max[3], Coord min[3] )
 {
 	register int	c;
 	int	x, y, z, x1, y1, z1, x2, y2, z2;
@@ -1148,7 +1136,7 @@ view_loop()
 
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
 	Coord	max[3], min[3];
 	char	*file;
@@ -1252,7 +1240,7 @@ main(int argc, char **argv)
 #else
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
 	printf( "pl-sgi: this is an SGI Iris specific program\n" );
 	exit( 1 );
