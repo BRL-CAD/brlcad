@@ -42,8 +42,6 @@ main(int argc, char *argv[])
     bn_poly_t equation; /* holds our polynomial equation */
     bn_complex_t roots[4]; /* stash up to four roots */
     int num_roots;
-    int i;
-
 
     /*********************************************
      * Linear polynomial (1st degree equation):
