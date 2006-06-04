@@ -45,7 +45,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"		/* to define "sgi" on ANSI compilers */
 #include "bu.h"
 
-#if HAS_SGIGL
+
+/* if there is no SGIGL, then the entire program is simplified to a
+ * output a statement.
+ */
+#ifdef HAS_SGIGL
+
 #  include "gl.h"
 #  include "device.h"
 #  ifdef mips
@@ -59,17 +64,62 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #    define XMAX170	645
 #    define YMAX170	484
 #  endif
-#ifdef SPACEBALL
-#  include "gl/spaceball.h"
-#endif
+#  ifdef SPACEBALL
+#    include "gl/spaceball.h"
+#  endif
 
-#define	HUGEVAL	1.0e10	/* for near/far clipping */
+#  define	HUGEVAL	1.0e10	/* for near/far clipping */
 
-#define Min( x1, x2 )	((x1) < (x2) ? (x1) : (x2))
-#define Max( x1, x2 )	((x1) > (x2) ? (x1) : (x2))
-#define	PI		3.1415926535898
-#define	DtoR(x)		((x)*PI/180.0)
-#define	RtoD(x)		((x)*180.0/PI)
+#  define Min( x1, x2 )	((x1) < (x2) ? (x1) : (x2))
+#  define Max( x1, x2 )	((x1) > (x2) ? (x1) : (x2))
+#  define	PI		3.1415926535898
+#  define	DtoR(x)		((x)*PI/180.0)
+#  define	RtoD(x)		((x)*180.0/PI)
+
+/*
+ *  Color Map:
+ *  In doublebuffered mode, you only have 12 bits per pixel.
+ *  These get mapped via a 4096 entry colormap [0..4095].
+ *  MEX however steals:
+ *    0 - 15	on the 3030 (first 8 are "known" colors)
+ *    top 256	on the 4D "G" and "B" machines [3840..4095] are used
+ *              to support simultaneous RGB and CMAP windows.
+ *  Note: as of Release 3.1, 4Sight on the 4D's uses the bottom 32 colors.
+ *    To quote makemap, the lowest eight colors are the eight standard
+ *    Graphics Library colors (black, red, green, yellow, blue, magenta,
+ *    cyan and white).  The next 23 [8..30] are a black to white gray ramp.
+ *    The remaining 225 colors [31..255] are mapped as a 5*9*5 color cube.
+ */
+/* Map RGB onto 10x10x10 color cube, giving index in range 0..999 */
+#  ifdef mips
+#    define MAP_RESERVED	(256+8)		/* # slots reserved by MAX */
+#  else
+#    define MAP_RESERVED	16		/* # slots reserved by MEX */
+#  endif
+#  define COLOR_APPROX(r,g,b)	((r/26)+ (g/26)*10 + (b/26)*100 + MAP_RESERVED)
+
+/* Window Location */
+#  ifdef mips
+#    define WINDIM	1024
+#    define WIN_R	(1279-MARGIN)
+#  else
+#    define WINDIM	768
+#    define WIN_R	(1023-MARGIN)
+#  endif
+#  define MARGIN	4			/* # pixels margin to screen edge */
+#  define BANNER	20
+#  define WIN_L	(WIN_R-WINDIM)
+#  define WIN_B	MARGIN
+#  define WIN_T	(WINDIM-BANNER-MARGIN)
+
+
+static char usage[] = "\
+Usage: pl-sgi [options] [-t thickness] [-{s|S} shellcmd] [file.plot]\n\
+   -a   Display coordinate axis\n\
+   -f   Full screen window\n\
+   -n   NTSC video mode\n\
+   -1   Single buffer\n\
+";
 
 Matrix	*viewmat;	/* current viewing projection */
 Matrix	viewortho;	/* ortho viewing projection */
@@ -95,30 +145,6 @@ int	onebuffer = 0;	/* !0 if in single buffer mode, else double */
 long	menu;
 char	*menustring;
 
-void	uplot();
-
-/*
- *  Color Map:
- *  In doublebuffered mode, you only have 12 bits per pixel.
- *  These get mapped via a 4096 entry colormap [0..4095].
- *  MEX however steals:
- *    0 - 15	on the 3030 (first 8 are "known" colors)
- *    top 256	on the 4D "G" and "B" machines [3840..4095] are used
- *              to support simultaneous RGB and CMAP windows.
- *  Note: as of Release 3.1, 4Sight on the 4D's uses the bottom 32 colors.
- *    To quote makemap, the lowest eight colors are the eight standard
- *    Graphics Library colors (black, red, green, yellow, blue, magenta,
- *    cyan and white).  The next 23 [8..30] are a black to white gray ramp.
- *    The remaining 225 colors [31..255] are mapped as a 5*9*5 color cube.
- */
-/* Map RGB onto 10x10x10 color cube, giving index in range 0..999 */
-#ifdef mips
-#define MAP_RESERVED	(256+8)		/* # slots reserved by MAX */
-#else
-#define MAP_RESERVED	16		/* # slots reserved by MEX */
-#endif
-#define COLOR_APPROX(r,g,b)	\
-	((r/26)+ (g/26)*10 + (b/26)*100 + MAP_RESERVED)
 
 get_args( argc, argv )
 register char **argv;
@@ -162,494 +188,6 @@ register char **argv;
 	return(1);		/* OK */
 }
 
-static char usage[] = "\
-Usage: pl-sgi [options] [-t thickness] [-{s|S} shellcmd] [file.plot]\n\
-   -a   Display coordinate axis\n\
-   -f   Full screen window\n\
-   -n   NTSC video mode\n\
-   -1   Single buffer\n\
-";
-#endif /* sgi */
-
-int
-main(int argc, char **argv)
-{
-#if HAS_SGIGL
-	Coord	max[3], min[3];
-	char	*file;
-	FILE	*fp;
-
-	if ( !get_args( argc, argv ) )  {
-		(void)fputs(usage, stderr);
-		exit( 1 );
-	}
-
-	/* In case if there is no space command */
-	min[0] = min[1] = min[2] = -32768.0;
-	max[0] = max[1] = max[2] = 32768.0;
-
-	init_display();
-
-	if( bu_optind >= argc ) {
-		makeobj( maxobj++ );
-		uplot( stdin, max, min );
-		closeobj();
-	}
-	while( bu_optind < argc ) {
-		file = argv[bu_optind];
-		if( (fp = fopen(file,"r")) == NULL ) {
-			fprintf(stderr,"pl-sgi: can't open \"%s\"\n", file);
-			exit( 3 );
-		}
-		file_input = 1;
-
-		makeobj( maxobj++ );
-		uplot( fp, max, min );
-		closeobj();
-
-		fclose( fp );
-		bu_optind++;
-	}
-
-	/* scale to the largest X, Y, or Z interval */
-	viewsize = max[0] - min[0];
-	viewsize = Max( viewsize, max[1] - min[1] );
-	viewsize = Max( viewsize, max[2] - min[2] );
-	viewsize /= 2.0;
-
-	/* set up and save the viewing projection matrix */
-	if( ismex() ) {
-		if( fullscreen ) {
-			/* Compensate for the rectangular display surface */
-#ifdef mips
-			ortho( -1.25*viewsize, 1.25*viewsize,
-				-viewsize, viewsize, -HUGEVAL, HUGEVAL );
-#else
-			ortho( -1.33*viewsize, 1.33*viewsize,
-				-viewsize, viewsize, -HUGEVAL, HUGEVAL );
-#endif
-		} else {
-			ortho( -viewsize, viewsize, -viewsize, viewsize,
-				-HUGEVAL, HUGEVAL );
-		}
-		getmatrix( viewortho );
-		perspective( 900, 1.0, 0.01, 1.0e10 );
-		/*polarview( 1.414, 0, 0, 0 );*/
-		getmatrix( viewpersp );
-	} else {
-		/* Compensate for the rectangular display surface */
-		ortho( -1.33*viewsize, 1.33*viewsize,
-			-viewsize, viewsize, -HUGEVAL, HUGEVAL );
-		getmatrix( viewortho );
-		perspective( 900, 1.0, 0.01, 1.0e10 );
-		/*polarview( 1.414, 0, 0, 0 );*/
-		getmatrix( viewpersp );
-	}
-	viewmat = (Matrix *)viewortho;
-
-	/* Make an identity matrix */
-	identmat[0][0] = identmat[1][1] = identmat[2][2] = identmat[3][3] = 1.0;
-	identmat[1][0] = identmat[1][2] = identmat[1][3] = 0.0;
-	identmat[2][0] = identmat[0][1] = identmat[2][3] = 0.0;
-	identmat[3][0] = identmat[3][1] = identmat[3][2] = 0.0;
-
-	/* set up and save the initial rot/trans/scale matrix */
-	loadmatrix( (const Matrix)identmat );
-	translate( -(max[0]+min[0])/2.0, -(max[1]+min[1])/2.0,
-		-(max[2]+min[2])/2.0 );
-	getmatrix( centermat );
-
-	/* set up the command menu */
-	menu = defpup( menustring );
-
-	/* set up line thickness/styles */
-	if( thickness > 0 )
-		linewidth( thickness );
-	deflinestyle( 1, 0x8888 );	/* dotted */
-	deflinestyle( 2, 0xF8F8 );	/* longdashed */
-	deflinestyle( 3, 0xE0E0 );	/* shortdashed */
-	deflinestyle( 4, 0x4F4F );	/* dotdashed */
-
-	view_loop();
-	exit( 0 );
-#else
-	printf( "pl-sgi: this is an SGI Iris specific program\n" );
-	exit( 1 );
-#endif
-}
-
-#if HAS_SGIGL
-/*
- *	V I E W _ L O O P
- */
-
-#define	ROTX	DIAL6
-#define	ROTY	DIAL4
-#define	ROTZ	DIAL2
-#define	TRANX	DIAL7
-#define	TRANY	DIAL5
-#define	TRANZ	DIAL3
-#define	ZOOM	DIAL1
-
-#define	ORTHO	SW0
-#define	PERSP	SW1
-#undef RESET
-#define	RESET	SW2
-
-#define	BOTTOM	SW23
-#define	TOP	SW24
-#define	REAR	SW25
-#define	V4545	SW26
-#define	RIGHT	SW28
-#define	FRONT	SW29
-#define	LEFT	SW30
-#define	V3525	SW31
-
-#define	MENU_CENTER	1
-#define	MENU_AXIS	2
-#define	MENU_INFO	3
-#define	MENU_SNAP	4
-#define	MENU_SHELL	5
-#define	MENU_EXIT	6
-char *menustring = "Center|Axis|Info|DunnSnap|ShellCmd|Exit";
-
-/*XXX - global because it is shared with the menu/mouse input function */
-float	d_tran[3];	/* Delta Translations */
-
-int	redisplay = 1;
-
-void
-process_input()
-{
-	Device	event;
-	short	val;
-	Coord	fval;
-	long	menuval;
-	Matrix	d_rot;		/* Delta Rotations */
-	float	d_scal[3];	/* Delta Scales */
-	int	done;
-#ifdef SPACEBALL
-	float	sbrx, sbry, sbrz;
-	float	sbtx, sbty, sbtz;
-	float	sbperiod;
-	static float sbtransrate = 0.00001;
-	static float sbrotrate = 0.000001;
-#endif
-
-	done = 0;
-	/*if( qtest() )*/
-	event = qread( &val );
-	fval = val;
-	/*printf("event %d: value %d\n", event, val);*/
-	/* Ignore all zero val's? XXX */
-
-	loadmatrix ( (const Matrix)identmat );
-	d_tran[0] = d_tran[1] = d_tran[2] = 0;
-	d_scal[0] = d_scal[1] = d_scal[2] = 1;
-
-	switch (event) {
-#ifdef SPACEBALL
-	case SBTX:
-		/*printf("SBTX\n");*/
-		sbtx = fval;
-		break;
-	case SBTY:
-		sbty = fval;
-		break;
-	case SBTZ:
-		sbtz = fval;
-		break;
-	case SBRX:
-		sbrx = fval;
-		break;
-	case SBRY:
-		sbry = fval;
-		break;
-	case SBRZ:
-		sbrz = fval;
-		break;
-	case SBPERIOD:
-		sbperiod = fval;
-		d_tran[0] = sbperiod * sbtransrate * sbtx / g_scal[0];
-		d_tran[1] = sbperiod * sbtransrate * sbty / g_scal[1];
-		d_tran[2] = sbperiod * sbtransrate * sbtz / g_scal[2];
-		rotarbaxis( sbperiod*sbrotrate, sbrx, sbry, sbrz, d_rot );
-		loadmatrix( d_rot );
-		redisplay = 1;
-		break;
-	case SBPICK:
-		/* reset - clear out the global rot/trans matrix */
-		loadmatrix( centermat );
-		getmatrix( g_rot );
-		loadmatrix( identmat );
-		redisplay = 1;
-		break;
-#endif
-	case ROTX:
-		if( val ) {
-			fval *= 10.0;
-			rotate( (Angle) fval, 'x' );
-			setvaluator(ROTX, 0, -360, 360);
-			redisplay = 1;
-		}
-		break;
-	case ROTY:
-		if( val ) {
-			fval *= 10.0;
-			rotate( (Angle) fval, 'y' );
-			setvaluator(ROTY, 0, -360, 360);
-			redisplay = 1;
-		}
-		break;
-	case ROTZ:
-		if( val ) {
-			fval *= 10.0;
-			rotate( (Angle) fval, 'z' );
-			setvaluator(ROTZ, 0, -360, 360);
-			redisplay = 1;
-		}
-		break;
-	case TRANX:
-		if( val ) {
-			fval *= viewsize / 300.0;
-			d_tran[0] += fval / g_scal[0];
-			setvaluator(TRANX, 0, -50, 50);
-			redisplay = 1;
-		}
-		break;
-	case TRANY:
-		if( val ) {
-			fval *= viewsize / 300.0;
-			d_tran[1] += fval / g_scal[1];
-			setvaluator(TRANY, 0, -50, 50);
-			redisplay = 1;
-		}
-		break;
-	case TRANZ:
-		if( val ) {
-			fval *= viewsize / 300.0;
-			d_tran[2] += fval / g_scal[2];
-			setvaluator(TRANZ, 0, -50, 50);
-			redisplay = 1;
-		}
-		break;
-	case ZOOM:
-		if( val ) {
-			fval = 1.0 + fval / 1100.0;
-			d_scal[0] *= fval;
-			d_scal[1] *= fval;
-			d_scal[2] *= fval;
-			setvaluator(ZOOM, 1, -1000, 1000);
-			redisplay = 1;
-		}
-		break;
-	case LEFTMOUSE:
-		if( val ) {
-			fval = 0.5;
-			d_scal[0] *= fval;
-			d_scal[1] *= fval;
-			d_scal[2] *= fval;
-			redisplay = 1;
-		}
-		break;
-	case RIGHTMOUSE:
-	/*case MIDDLEMOUSE:*/
-		if( val ) {
-			menuval = dopup( menu );
-			if( menuval == MENU_EXIT )
-				done = 1;
-			else
-				domenu( menuval );
-		}
-		break;
-	case MIDDLEMOUSE:
-	/*case RIGHTMOUSE:*/
-		if( val ) {
-			fval = 2.0;
-			d_scal[0] *= fval;
-			d_scal[1] *= fval;
-			d_scal[2] *= fval;
-			redisplay = 1;
-		}
-		break;
-	case ORTHO:
-		if( val ) {
-			viewmat = (Matrix *)viewortho;
-			redisplay = 1;
-		}
-		break;
-	case PERSP:
-		if( val ) {
-			viewmat = (Matrix *)viewpersp;
-			redisplay = 1;
-		}
-		break;
-	case RESET:
-		if( val ) {
-			/* reset */
-			loadmatrix( (const Matrix)centermat );
-			getmatrix( g_rot );
-			loadmatrix( (const Matrix)identmat );
-			redisplay = 1;
-		}
-		break;
-	case BOTTOM:
-		if( val ) {
-			setview( g_rot, 180, 0, 0 );
-			redisplay = 1;
-		}
-		break;
-	case TOP:
-		if( val ) {
-			setview( g_rot, 0, 0, 0 );
-			redisplay = 1;
-		}
-		break;
-	case REAR:
-		if( val ) {
-			setview( g_rot, 270, 0, 90 );
-			redisplay = 1;
-		}
-		break;
-	case V4545:
-		if( val ) {
-			setview( g_rot, 270+45, 0, 270-45 );
-			redisplay = 1;
-		}
-		break;
-	case RIGHT:
-		if( val ) {
-			setview( g_rot, 270, 0, 0 );
-			redisplay = 1;
-		}
-		break;
-	case FRONT:
-		if( val ) {
-			setview( g_rot, 270, 0, 270 );
-			redisplay = 1;
-		}
-		break;
-	case LEFT:
-		if( val ) {
-			setview( g_rot, 270, 0, 180 );
-			redisplay = 1;
-		}
-		break;
-	case V3525:
-		if( val ) {
-			setview( g_rot, 270+25, 0, 270-35 );
-			redisplay = 1;
-		}
-		break;
-	case ESCKEY:
-		done = 1;
-		break;
-	}
-
-	/*qreset();XXX*/
-	getmatrix( d_rot );
-	newview( g_rot, d_rot, d_tran, d_scal, viewmat );
-	return( done );
-}
-
-void
-view_loop()
-{
-	int	done = 0;
-	int	o = 1;		/* object number */
-
-	/* Initial translate/rotate/scale matrix */
-	loadmatrix( (const Matrix)centermat );
-	getmatrix( g_rot );
-	g_scal[0] = g_scal[1] = g_scal[2] = 1;
-
-	/*depthcue(1);*/
-	/*cursoff();XXX*/
-
-	/*
-	 *  Each time through this loop, g_rot holds the current
-	 *  orientation matrix.  An identity matrix is placed
-	 *  on the stack and acted on by device inputs.
-	 *  After inputs, g_rot = oldm * stack.
-	 *  The stack is then replaced by g_rot*viewmat for drawing.
-	 */
-	while( !done ) {
-
-		if( redisplay ) {
-			/* Setup current view */
-			loadmatrix( (const Matrix)(*viewmat) );
-			scale( g_scal[0], g_scal[1], g_scal[2] );
-			multmatrix( (const Matrix)g_rot );
-
-			/* draw the object(s) */
-			cursoff();
-			if( cmap_mode ) {
-				color(BLACK);
-			} else {
-				RGBcolor(0,0,0);
-			}
-			clear();
-			if( axis )
-				draw_axis();
-			/* draw all objects */
-			for( o = minobj; o < maxobj; o++ ) {
-				/* set the default drawing color to white */
-				if( cmap_mode ) {
-					if( ismex() )
-						color( COLOR_APPROX(255,255,255) );
-					else
-						color( (255&0xf0)<<4 | (255&0xf0) | (255>>4) );
-				} else {
-					RGBcolor(255,255,255);
-				}
-				callobj( o );
-			}
-			if( !onebuffer )
-				swapbuffers();
-			if( shellcmd != NULL && shellexit ) {
-				system(shellcmd);
-				exit(0);
-			}
-			curson();
-			if( info )
-				print_info();
-			redisplay = 0;
-		}
-
-		do {
-			done = process_input();
-		} while(qtest());
-#ifdef SPACEBALL
-		sbprompt();
-#endif
-		/* Check for more objects to be read */
-		if( !file_input && !feof(stdin) /* && select()*/ ) {
-			double	max[3], min[3];
-			makeobj( maxobj++ );
-			uplot( stdin, max, min );
-			closeobj();
-		}
-	}
-	/*depthcue( 0 );*/
-	curson();
-	greset();
-	tpon();
-	gexit();
-}
-
-/* Window Location */
-#ifdef mips
-#define WINDIM	1024
-#define WIN_R	(1279-MARGIN)
-#else
-#define WINDIM	768
-#define WIN_R	(1023-MARGIN)
-#endif
-#define MARGIN	4			/* # pixels margin to screen edge */
-#define BANNER	20
-#define WIN_L	(WIN_R-WINDIM)
-#define WIN_B	MARGIN
-#define WIN_T	(WINDIM-BANNER-MARGIN)
 
 void
 init_display()
@@ -794,6 +332,486 @@ init_display()
 	blanktime( 60 * 60 * 5L );	/* 5 minute blanking */
 
 	return	0;
+}
+
+
+void
+print_info()
+{
+	double	xrot, yrot, zrot, cosyrot;
+
+	/*
+	 * This rotation decomposition fails when yrot is
+	 * ~ +/- 90 degrees. [cos(yrot) ~= 0, divide by zero]
+	 */
+	yrot = asin(g_rot[2][0]);
+	cosyrot = cos(yrot);
+	zrot = asin(g_rot[1][0]/-cosyrot);
+	xrot = asin(g_rot[2][1]/-cosyrot);
+
+	printf( "rot:   %f %f %f\n", RtoD(xrot), RtoD(yrot), RtoD(zrot) );
+	printf( "tran:  %f %f %f\n", g_rot[3][0], g_rot[3][1], g_rot[3][2] );
+	printf( "scale: %f\n", g_scal[0] );
+}
+
+
+void
+draw_axis()
+{
+	int	p1, p2;
+
+	p1 = 0.12 * viewsize / g_scal[0];
+	p2 = 0.14 * viewsize / g_scal[0];
+
+	if( cmap_mode ) {
+		color( MAGENTA );
+	} else {
+		RGBcolor(255, 0, 255);
+	}
+	movei( 0, 0, 0 );
+	drawi( p1, 0, 0 );
+	cmovi( p2, 0, 0 );
+	charstr( "x" );
+	movei( 0, 0, 0 );
+	drawi( 0, p1, 0 );
+	cmovi( 0, p2, 0 );
+	charstr( "y" );
+	movei( 0, 0, 0 );
+	drawi( 0, 0, p1 );
+	cmovi( 0, 0, p2 );
+	charstr( "z" );
+	movei( 0, 0, 0 );	/* back to origin */
+}
+
+
+/*
+ *	V I E W _ L O O P
+ */
+
+#define	ROTX	DIAL6
+#define	ROTY	DIAL4
+#define	ROTZ	DIAL2
+#define	TRANX	DIAL7
+#define	TRANY	DIAL5
+#define	TRANZ	DIAL3
+#define	ZOOM	DIAL1
+
+#define	ORTHO	SW0
+#define	PERSP	SW1
+#undef RESET
+#define	RESET	SW2
+
+#define	BOTTOM	SW23
+#define	TOP	SW24
+#define	REAR	SW25
+#define	V4545	SW26
+#define	RIGHT	SW28
+#define	FRONT	SW29
+#define	LEFT	SW30
+#define	V3525	SW31
+
+#define	MENU_CENTER	1
+#define	MENU_AXIS	2
+#define	MENU_INFO	3
+#define	MENU_SNAP	4
+#define	MENU_SHELL	5
+#define	MENU_EXIT	6
+char *menustring = "Center|Axis|Info|DunnSnap|ShellCmd|Exit";
+
+/*XXX - global because it is shared with the menu/mouse input function */
+float	d_tran[3];	/* Delta Translations */
+
+int	redisplay = 1;
+
+
+void
+setview( m, rx, ry, rz )
+Matrix	m;
+int	rx, ry, rz;
+{
+	/* Hmm... save translation and scale? */
+	loadmatrix( centermat );
+	getmatrix( m );
+	loadmatrix( identmat );
+
+	rotate( (Angle) rx*10, 'x' );
+	rotate( (Angle) ry*10, 'y' );
+	rotate( (Angle) rz*10, 'z' );
+#ifdef never
+	calpha = cos( alpha );
+	cbeta = cos( beta );
+	cgamma = cos( ggamma );
+
+	salpha = sin( alpha );
+	sbeta = sin( beta );
+	sgamma = sin( ggamma );
+
+	mat[0] = cbeta * cgamma;
+	mat[1] = -cbeta * sgamma;
+	mat[2] = sbeta;
+
+	mat[4] = salpha * sbeta * cgamma + calpha * sgamma;
+	mat[5] = -salpha * sbeta * sgamma + calpha * cgamma;
+	mat[6] = -salpha * cbeta;
+
+	mat[8] = -calpha * sbeta * cgamma + salpha * sgamma;
+	mat[9] = calpha * sbeta * sgamma + salpha * cgamma;
+	mat[10] = calpha * cbeta;
+#endif
+}
+
+
+void
+newview( orient, rot, tran, scal, viewmat )
+Matrix	orient, rot, viewmat;
+float	tran[3], scal[3];
+{
+	/*
+	 * combine new operations with old
+	 *  orient = orient * scal * trans * rot * view
+	 */
+	g_scal[0] *= scal[0];
+	g_scal[1] *= scal[1];
+	g_scal[2] *= scal[2];
+	loadmatrix( rot );
+	translate( tran[0], tran[1], tran[2] );
+	multmatrix( orient );
+	getmatrix( orient );
+
+	/* set up total viewing transformation */
+	loadmatrix( viewmat );
+	scale( g_scal[0], g_scal[1], g_scal[2] );
+	multmatrix( orient );
+}
+
+
+void
+domenu( n )
+int	n;
+{
+	long	left, bottom, winx_size, winy_size;
+	long	x, y;
+	double	fx, fy;
+	int	ret;
+#ifdef mips
+	long	video;
+#endif
+
+	switch( n ) {
+	case MENU_CENTER:
+		x = getvaluator(CURSORX);
+		y = getvaluator(CURSORY);
+		getsize( &winx_size, &winy_size);
+		getorigin( &left, &bottom );
+		fx = 0.5 - (x - left) / (double)winx_size;
+		fy = 0.5 - (y - bottom) / (double)winy_size;
+		d_tran[0] += fx * 2.0 * viewsize / g_scal[0];
+		d_tran[1] += fy * 2.0 * viewsize / g_scal[1];
+		redisplay = 1;
+		break;
+	case MENU_AXIS:
+		if( axis == 0 )
+			axis = 1;
+		else
+			axis = 0;
+		redisplay = 1;
+		break;
+	case MENU_INFO:
+		if( info == 0 ) {
+			info = 1;
+			print_info();
+		} else
+			info = 0;
+		break;
+	case MENU_SNAP:
+		cursoff();
+#ifdef mips
+		video = getvideo(DE_R1);
+		setvideo( DE_R1, DER1_30HZ|DER1_UNBLANK );
+#else
+		system("Set30");
+#endif
+		ret = system("dunnsnap");
+#ifdef mips
+		setvideo( DE_R1, video );
+#else
+		system("Set60");
+#endif
+		curson();
+		if( ret ) {
+			fprintf( stderr, "pl-sgi: Snap failed. Out of film?\n" );
+			ringbell();
+		}
+		break;
+	case MENU_SHELL:
+		if (shellcmd != NULL) {
+			cursoff();
+			system(shellcmd);
+			curson();
+		}
+		break;
+	case MENU_EXIT:
+		break;
+	}
+}
+
+
+int
+process_input()
+{
+	Device	event;
+	short	val;
+	Coord	fval;
+	long	menuval;
+	Matrix	d_rot;		/* Delta Rotations */
+	float	d_scal[3];	/* Delta Scales */
+	int	done;
+#ifdef SPACEBALL
+	float	sbrx, sbry, sbrz;
+	float	sbtx, sbty, sbtz;
+	float	sbperiod;
+	static float sbtransrate = 0.00001;
+	static float sbrotrate = 0.000001;
+#endif
+
+	done = 0;
+	/*if( qtest() )*/
+	event = qread( &val );
+	fval = val;
+	/*printf("event %d: value %d\n", event, val);*/
+	/* Ignore all zero val's? XXX */
+
+	loadmatrix ( identmat );
+	d_tran[0] = d_tran[1] = d_tran[2] = 0;
+	d_scal[0] = d_scal[1] = d_scal[2] = 1;
+
+	switch (event) {
+#ifdef SPACEBALL
+	case SBTX:
+		/*printf("SBTX\n");*/
+		sbtx = fval;
+		break;
+	case SBTY:
+		sbty = fval;
+		break;
+	case SBTZ:
+		sbtz = fval;
+		break;
+	case SBRX:
+		sbrx = fval;
+		break;
+	case SBRY:
+		sbry = fval;
+		break;
+	case SBRZ:
+		sbrz = fval;
+		break;
+	case SBPERIOD:
+		sbperiod = fval;
+		d_tran[0] = sbperiod * sbtransrate * sbtx / g_scal[0];
+		d_tran[1] = sbperiod * sbtransrate * sbty / g_scal[1];
+		d_tran[2] = sbperiod * sbtransrate * sbtz / g_scal[2];
+		rotarbaxis( sbperiod*sbrotrate, sbrx, sbry, sbrz, d_rot );
+		loadmatrix( d_rot );
+		redisplay = 1;
+		break;
+	case SBPICK:
+		/* reset - clear out the global rot/trans matrix */
+		loadmatrix( centermat );
+		getmatrix( g_rot );
+		loadmatrix( identmat );
+		redisplay = 1;
+		break;
+#endif
+	case ROTX:
+		if( val ) {
+			fval *= 10.0;
+			rotate( (Angle) fval, 'x' );
+			setvaluator(ROTX, 0, -360, 360);
+			redisplay = 1;
+		}
+		break;
+	case ROTY:
+		if( val ) {
+			fval *= 10.0;
+			rotate( (Angle) fval, 'y' );
+			setvaluator(ROTY, 0, -360, 360);
+			redisplay = 1;
+		}
+		break;
+	case ROTZ:
+		if( val ) {
+			fval *= 10.0;
+			rotate( (Angle) fval, 'z' );
+			setvaluator(ROTZ, 0, -360, 360);
+			redisplay = 1;
+		}
+		break;
+	case TRANX:
+		if( val ) {
+			fval *= viewsize / 300.0;
+			d_tran[0] += fval / g_scal[0];
+			setvaluator(TRANX, 0, -50, 50);
+			redisplay = 1;
+		}
+		break;
+	case TRANY:
+		if( val ) {
+			fval *= viewsize / 300.0;
+			d_tran[1] += fval / g_scal[1];
+			setvaluator(TRANY, 0, -50, 50);
+			redisplay = 1;
+		}
+		break;
+	case TRANZ:
+		if( val ) {
+			fval *= viewsize / 300.0;
+			d_tran[2] += fval / g_scal[2];
+			setvaluator(TRANZ, 0, -50, 50);
+			redisplay = 1;
+		}
+		break;
+	case ZOOM:
+		if( val ) {
+			fval = 1.0 + fval / 1100.0;
+			d_scal[0] *= fval;
+			d_scal[1] *= fval;
+			d_scal[2] *= fval;
+			setvaluator(ZOOM, 1, -1000, 1000);
+			redisplay = 1;
+		}
+		break;
+	case LEFTMOUSE:
+		if( val ) {
+			fval = 0.5;
+			d_scal[0] *= fval;
+			d_scal[1] *= fval;
+			d_scal[2] *= fval;
+			redisplay = 1;
+		}
+		break;
+	case RIGHTMOUSE:
+	/*case MIDDLEMOUSE:*/
+		if( val ) {
+			menuval = dopup( menu );
+			if( menuval == MENU_EXIT )
+				done = 1;
+			else
+				domenu( menuval );
+		}
+		break;
+	case MIDDLEMOUSE:
+	/*case RIGHTMOUSE:*/
+		if( val ) {
+			fval = 2.0;
+			d_scal[0] *= fval;
+			d_scal[1] *= fval;
+			d_scal[2] *= fval;
+			redisplay = 1;
+		}
+		break;
+	case ORTHO:
+		if( val ) {
+			viewmat = (Matrix *)viewortho;
+			redisplay = 1;
+		}
+		break;
+	case PERSP:
+		if( val ) {
+			viewmat = (Matrix *)viewpersp;
+			redisplay = 1;
+		}
+		break;
+	case RESET:
+		if( val ) {
+			/* reset */
+			loadmatrix( centermat );
+			getmatrix( g_rot );
+			loadmatrix( identmat );
+			redisplay = 1;
+		}
+		break;
+	case BOTTOM:
+		if( val ) {
+			setview( g_rot, 180, 0, 0 );
+			redisplay = 1;
+		}
+		break;
+	case TOP:
+		if( val ) {
+			setview( g_rot, 0, 0, 0 );
+			redisplay = 1;
+		}
+		break;
+	case REAR:
+		if( val ) {
+			setview( g_rot, 270, 0, 90 );
+			redisplay = 1;
+		}
+		break;
+	case V4545:
+		if( val ) {
+			setview( g_rot, 270+45, 0, 270-45 );
+			redisplay = 1;
+		}
+		break;
+	case RIGHT:
+		if( val ) {
+			setview( g_rot, 270, 0, 0 );
+			redisplay = 1;
+		}
+		break;
+	case FRONT:
+		if( val ) {
+			setview( g_rot, 270, 0, 270 );
+			redisplay = 1;
+		}
+		break;
+	case LEFT:
+		if( val ) {
+			setview( g_rot, 270, 0, 180 );
+			redisplay = 1;
+		}
+		break;
+	case V3525:
+		if( val ) {
+			setview( g_rot, 270+25, 0, 270-35 );
+			redisplay = 1;
+		}
+		break;
+	case ESCKEY:
+		done = 1;
+		break;
+	}
+
+	getmatrix( d_rot );
+	newview( g_rot, d_rot, d_tran, d_scal, viewmat );
+	return( done );
+}
+
+
+void
+get_string( fp, s )
+FILE	*fp;
+char	*s;
+{
+	int	c;
+
+	while( (c = getc(fp)) != '\n' && c != EOF )
+		*s++ = c;
+	*s = NULL;
+}
+
+
+void
+getieee( fp, out, n )
+FILE	*fp;
+double	out[];
+int	n;
+{
+	char	in[8*16];
+	fread( in, 8, n, fp );
+	ntohd( (unsigned char * )out, (const unsigned char *)in, n );
 }
 
 
@@ -1042,205 +1060,206 @@ Coord	max[3], min[3];
 	}
 }
 
-void
-get_string( fp, s )
-FILE	*fp;
-char	*s;
-{
-	int	c;
-
-	while( (c = getc(fp)) != '\n' && c != EOF )
-		*s++ = c;
-	*s = NULL;
-}
 
 void
-getieee( fp, out, n )
-FILE	*fp;
-double	out[];
-int	n;
+view_loop()
 {
-	char	in[8*16];
-	fread( in, 8, n, fp );
-	ntohd( (unsigned char * )out, (const unsigned char *)in, n );
-}
+	int	done = 0;
+	int	o = 1;		/* object number */
 
-void
-setview( m, rx, ry, rz )
-Matrix	m;
-int	rx, ry, rz;
-{
-	/* Hmm... save translation and scale? */
-	loadmatrix( (const Matrix)centermat );
-	getmatrix( m );
-	loadmatrix( (const Matrix)identmat );
+	/* Initial translate/rotate/scale matrix */
+	loadmatrix( centermat );
+	getmatrix( g_rot );
+	g_scal[0] = g_scal[1] = g_scal[2] = 1;
 
-	rotate( (Angle) rx*10, 'x' );
-	rotate( (Angle) ry*10, 'y' );
-	rotate( (Angle) rz*10, 'z' );
-#ifdef never
-	calpha = cos( alpha );
-	cbeta = cos( beta );
-	cgamma = cos( ggamma );
-
-	salpha = sin( alpha );
-	sbeta = sin( beta );
-	sgamma = sin( ggamma );
-
-	mat[0] = cbeta * cgamma;
-	mat[1] = -cbeta * sgamma;
-	mat[2] = sbeta;
-
-	mat[4] = salpha * sbeta * cgamma + calpha * sgamma;
-	mat[5] = -salpha * sbeta * sgamma + calpha * cgamma;
-	mat[6] = -salpha * cbeta;
-
-	mat[8] = -calpha * sbeta * cgamma + salpha * sgamma;
-	mat[9] = calpha * sbeta * sgamma + salpha * cgamma;
-	mat[10] = calpha * cbeta;
-#endif
-}
-
-void
-newview( orient, rot, tran, scal, viewmat )
-Matrix	orient, rot, viewmat;
-float	tran[3], scal[3];
-{
-	/*
-	 * combine new operations with old
-	 *  orient = orient * scal * trans * rot * view
-	 */
-	g_scal[0] *= scal[0];
-	g_scal[1] *= scal[1];
-	g_scal[2] *= scal[2];
-	loadmatrix( (const Matrix)rot );
-	translate( tran[0], tran[1], tran[2] );
-	multmatrix( (const Matrix)orient );
-	getmatrix( orient );
-
-	/* set up total viewing transformation */
-	loadmatrix( (const Matrix)viewmat );
-	scale( g_scal[0], g_scal[1], g_scal[2] );
-	multmatrix( (ocnst Matrix)orient );
-}
-
-void
-print_info()
-{
-	double	xrot, yrot, zrot, cosyrot;
+	/*depthcue(1);*/
+	/*cursoff();XXX*/
 
 	/*
-	 * This rotation decomposition fails when yrot is
-	 * ~ +/- 90 degrees. [cos(yrot) ~= 0, divide by zero]
+	 *  Each time through this loop, g_rot holds the current
+	 *  orientation matrix.  An identity matrix is placed
+	 *  on the stack and acted on by device inputs.
+	 *  After inputs, g_rot = oldm * stack.
+	 *  The stack is then replaced by g_rot*viewmat for drawing.
 	 */
-	yrot = asin(g_rot[2][0]);
-	cosyrot = cos(yrot);
-	zrot = asin(g_rot[1][0]/-cosyrot);
-	xrot = asin(g_rot[2][1]/-cosyrot);
+	while( !done ) {
 
-	printf( "rot:   %f %f %f\n", RtoD(xrot), RtoD(yrot), RtoD(zrot) );
-	printf( "tran:  %f %f %f\n", g_rot[3][0], g_rot[3][1], g_rot[3][2] );
-	printf( "scale: %f\n", g_scal[0] );
-}
+		if( redisplay ) {
+			/* Setup current view */
+			loadmatrix( (*viewmat) );
+			scale( g_scal[0], g_scal[1], g_scal[2] );
+			multmatrix( g_rot );
 
-void
-domenu( n )
-int	n;
-{
-	long	left, bottom, winx_size, winy_size;
-	long	x, y;
-	double	fx, fy;
-	int	ret;
-#ifdef mips
-	long	video;
-#endif
-
-	switch( n ) {
-	case MENU_CENTER:
-		x = getvaluator(CURSORX);
-		y = getvaluator(CURSORY);
-		getsize( &winx_size, &winy_size);
-		getorigin( &left, &bottom );
-		fx = 0.5 - (x - left) / (double)winx_size;
-		fy = 0.5 - (y - bottom) / (double)winy_size;
-		d_tran[0] += fx * 2.0 * viewsize / g_scal[0];
-		d_tran[1] += fy * 2.0 * viewsize / g_scal[1];
-		redisplay = 1;
-		break;
-	case MENU_AXIS:
-		if( axis == 0 )
-			axis = 1;
-		else
-			axis = 0;
-		redisplay = 1;
-		break;
-	case MENU_INFO:
-		if( info == 0 ) {
-			info = 1;
-			print_info();
-		} else
-			info = 0;
-		break;
-	case MENU_SNAP:
-		cursoff();
-#ifdef mips
-		video = getvideo(DE_R1);
-		setvideo( DE_R1, DER1_30HZ|DER1_UNBLANK );
-#else
-		system("Set30");
-#endif
-		ret = system("dunnsnap");
-#ifdef mips
-		setvideo( DE_R1, video );
-#else
-		system("Set60");
-#endif
-		curson();
-		if( ret ) {
-			fprintf( stderr, "pl-sgi: Snap failed. Out of film?\n" );
-			ringbell();
-		}
-		break;
-	case MENU_SHELL:
-		if (shellcmd != NULL) {
+			/* draw the object(s) */
 			cursoff();
-			system(shellcmd);
+			if( cmap_mode ) {
+				color(BLACK);
+			} else {
+				RGBcolor(0,0,0);
+			}
+			clear();
+			if( axis )
+				draw_axis();
+			/* draw all objects */
+			for( o = minobj; o < maxobj; o++ ) {
+				/* set the default drawing color to white */
+				if( cmap_mode ) {
+					if( ismex() )
+						color( COLOR_APPROX(255,255,255) );
+					else
+						color( (255&0xf0)<<4 | (255&0xf0) | (255>>4) );
+				} else {
+					RGBcolor(255,255,255);
+				}
+				callobj( o );
+			}
+			if( !onebuffer )
+				swapbuffers();
+			if( shellcmd != NULL && shellexit ) {
+				system(shellcmd);
+				exit(0);
+			}
 			curson();
+			if( info )
+				print_info();
+			redisplay = 0;
 		}
-		break;
-	case MENU_EXIT:
-		break;
+
+		do {
+			done = process_input();
+		} while(qtest());
+#ifdef SPACEBALL
+		sbprompt();
+#endif
+		/* Check for more objects to be read */
+		if( !file_input && !feof(stdin) /* && select()*/ ) {
+			double	max[3], min[3];
+			makeobj( maxobj++ );
+			uplot( stdin, max, min );
+			closeobj();
+		}
 	}
+	/*depthcue( 0 );*/
+	curson();
+	greset();
+	tpon();
+	gexit();
 }
 
-void
-draw_axis()
+
+int
+main(int argc, char **argv)
 {
-	int	p1, p2;
+	Coord	max[3], min[3];
+	char	*file;
+	FILE	*fp;
 
-	p1 = 0.12 * viewsize / g_scal[0];
-	p2 = 0.14 * viewsize / g_scal[0];
-
-	if( cmap_mode ) {
-		color( MAGENTA );
-	} else {
-		RGBcolor(255, 0, 255);
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
 	}
-	movei( 0, 0, 0 );
-	drawi( p1, 0, 0 );
-	cmovi( p2, 0, 0 );
-	charstr( "x" );
-	movei( 0, 0, 0 );
-	drawi( 0, p1, 0 );
-	cmovi( 0, p2, 0 );
-	charstr( "y" );
-	movei( 0, 0, 0 );
-	drawi( 0, 0, p1 );
-	cmovi( 0, 0, p2 );
-	charstr( "z" );
-	movei( 0, 0, 0 );	/* back to origin */
+
+	/* In case if there is no space command */
+	min[0] = min[1] = min[2] = -32768.0;
+	max[0] = max[1] = max[2] = 32768.0;
+
+	init_display();
+
+	if( bu_optind >= argc ) {
+		makeobj( maxobj++ );
+		uplot( stdin, max, min );
+		closeobj();
+	}
+	while( bu_optind < argc ) {
+		file = argv[bu_optind];
+		if( (fp = fopen(file,"r")) == NULL ) {
+			fprintf(stderr,"pl-sgi: can't open \"%s\"\n", file);
+			exit( 3 );
+		}
+		file_input = 1;
+
+		makeobj( maxobj++ );
+		uplot( fp, max, min );
+		closeobj();
+
+		fclose( fp );
+		bu_optind++;
+	}
+
+	/* scale to the largest X, Y, or Z interval */
+	viewsize = max[0] - min[0];
+	viewsize = Max( viewsize, max[1] - min[1] );
+	viewsize = Max( viewsize, max[2] - min[2] );
+	viewsize /= 2.0;
+
+	/* set up and save the viewing projection matrix */
+	if( ismex() ) {
+		if( fullscreen ) {
+			/* Compensate for the rectangular display surface */
+#ifdef mips
+			ortho( -1.25*viewsize, 1.25*viewsize,
+				-viewsize, viewsize, -HUGEVAL, HUGEVAL );
+#else
+			ortho( -1.33*viewsize, 1.33*viewsize,
+				-viewsize, viewsize, -HUGEVAL, HUGEVAL );
+#endif
+		} else {
+			ortho( -viewsize, viewsize, -viewsize, viewsize,
+				-HUGEVAL, HUGEVAL );
+		}
+		getmatrix( viewortho );
+		perspective( 900, 1.0, 0.01, 1.0e10 );
+		/*polarview( 1.414, 0, 0, 0 );*/
+		getmatrix( viewpersp );
+	} else {
+		/* Compensate for the rectangular display surface */
+		ortho( -1.33*viewsize, 1.33*viewsize,
+			-viewsize, viewsize, -HUGEVAL, HUGEVAL );
+		getmatrix( viewortho );
+		perspective( 900, 1.0, 0.01, 1.0e10 );
+		/*polarview( 1.414, 0, 0, 0 );*/
+		getmatrix( viewpersp );
+	}
+	viewmat = (Matrix *)viewortho;
+
+	/* Make an identity matrix */
+	identmat[0][0] = identmat[1][1] = identmat[2][2] = identmat[3][3] = 1.0;
+	identmat[1][0] = identmat[1][2] = identmat[1][3] = 0.0;
+	identmat[2][0] = identmat[0][1] = identmat[2][3] = 0.0;
+	identmat[3][0] = identmat[3][1] = identmat[3][2] = 0.0;
+
+	/* set up and save the initial rot/trans/scale matrix */
+	loadmatrix( identmat );
+	translate( -(max[0]+min[0])/2.0, -(max[1]+min[1])/2.0,
+		-(max[2]+min[2])/2.0 );
+	getmatrix( centermat );
+
+	/* set up the command menu */
+	menu = defpup( menustring );
+
+	/* set up line thickness/styles */
+	if( thickness > 0 )
+		linewidth( thickness );
+	deflinestyle( 1, 0x8888 );	/* dotted */
+	deflinestyle( 2, 0xF8F8 );	/* longdashed */
+	deflinestyle( 3, 0xE0E0 );	/* shortdashed */
+	deflinestyle( 4, 0x4F4F );	/* dotdashed */
+
+	view_loop();
+	exit( 0 );
 }
-#endif /* sgi */
+
+#else
+
+int
+main(int argc, char **argv)
+{
+	printf( "pl-sgi: this is an SGI Iris specific program\n" );
+	exit( 1 );
+}
+
+#endif  /* !HAS_SGIGL */
+
 
 /*
  * Local Variables:
