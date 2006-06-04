@@ -205,7 +205,6 @@ savescreen(FILE *ofp, int xorg, int yorg, int xsize, int ysize)
 int
 main(int argc, char *argv[])
 {
-    int i, y, gotfirst;
     int x1, x2, y1, y2;
     int xsize, ysize;
     int xorg, yorg;
