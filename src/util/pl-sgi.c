@@ -49,7 +49,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /* if there is no SGIGL, then the entire program is simplified to a
  * output a statement.
  */
-#ifdef HAS_SGIGL
+#if HAS_SGIGL
 
 #  include "gl.h"
 #  include "device.h"

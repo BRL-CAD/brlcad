@@ -793,7 +793,6 @@ void record_region (char *region_name, int region_id, struct directory *dp, stru
 
 void db_init(char *db_name)
 {
-    int				i;
     struct directory		*dp;
     struct rt_comb_internal	*comb;
     struct rt_db_internal	*ip;

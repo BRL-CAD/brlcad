@@ -89,7 +89,9 @@ char **argv;
 	int xorg, yorg;
 	FILE *ofp;
 	char *fname;
+#ifndef mips
 	int mode, planes;
+#endif
 
 	if(!(argc==1 || argc==2 || argc==5 || argc==6)) {
 		fprintf(stderr,usage);
