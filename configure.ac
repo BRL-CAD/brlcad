@@ -339,14 +339,21 @@ BC_ARG_ENABLE([install_geometry], [models-install], [Enable installation of exam
 # optimized
 BC_ARG_ENABLE([use_optimized], [optimized], [Enable optimized compilation], [no])
 
-# warnings
-BC_ARG_ENABLE([use_warnings], [warnings], [Enable verbose compilation warnings], [no])
-
 # debug
 BC_ARG_ENABLE([use_debug], [debug], [Enable debug symbols], [auto])
 
 # profiling
 BC_ARG_ENABLE([use_profiling], [profiling], [Enable profiling], [no])
+
+# verbosity
+BC_ARG_ENABLE([build_verbose], [verbose], [Enable verbose compilation], [auto])
+
+# warnings
+BC_ARG_ENABLE([build_warnings], [warnings], [Enable verbose compilation warnings], [no])
+
+# build progress status
+BC_ARG_ENABLE([build_progress], [progress], [Enable verbose compilation progress], [no])
+
 
 dnl *** with options ***
 
@@ -532,18 +539,32 @@ BC_ARG_ALIAS([use_optimized], [optimize])
 BC_ARG_ALIAS([use_optimized], [optimization])
 BC_ARG_ALIAS([use_optimized], [optimizations])
 
-# verbose warning aliases (help uses warnings)
-BC_ARG_ALIAS([use_warnings], [verbose])
-BC_ARG_ALIAS([use_warnings], [warning])
-BC_ARG_ALIAS([use_warnings], [verbose-warnings])
-BC_ARG_ALIAS([use_warnings], [warnings-verbose])
-
 # debug aliases (help uses debug)
 BC_ARG_ALIAS([use_debug], [debugging])
 
 # profiling aliases (help uses profiling)
 BC_ARG_ALIAS([use_profiling], [profile])
 BC_ARG_ALIAS([use_profiling], [profiled])
+
+# verbose output (help uses verbose)
+BC_ARG_ALIAS([build_verbose], [verbosity])
+BC_ARG_ALIAS([build_verbose], [output-verbose])
+BC_ARG_ALIAS([build_verbose], [verbose-output])
+BC_ARG_ALIAS([build_verbose], [build-verbose])
+BC_ARG_ALIAS([build_verbose], [verbose-build])
+
+# verbose warning aliases (help uses warnings)
+BC_ARG_ALIAS([build_warnings], [warning])
+BC_ARG_ALIAS([build_warnings], [warnings-verbose])
+BC_ARG_ALIAS([build_warnings], [verbose-warnings])
+BC_ARG_ALIAS([build_warnings], [build-warnings])
+BC_ARG_ALIAS([build_warnings], [warnings-build])
+
+# verbose compilation progress status (help uses progress)
+BC_ARG_ALIAS([build_progress], [verbose-progress])
+BC_ARG_ALIAS([build_progress], [progress-verbose])
+BC_ARG_ALIAS([build_progress], [build-progress])
+BC_ARG_ALIAS([build_progress], [progress-build])
 
 # with java aliases (help uses jdk)
 BC_ARG_WITH_ALIAS([with_java], [java])
@@ -702,6 +723,16 @@ elif test "x$bc_build_adrt" = "xno" ; then
 	bc_with_python=no
 fi
 
+# turning on verbose means turning on progress and warning verbosity
+if test "x$bc_build_verbose" = "xyes" ; then
+	if test "x$bc_build_warnings_set" = "xno" ; then
+		bc_build_warnings=yes
+	fi
+	if test "x$bc_build_progress_set" = "xno" ; then
+		bc_build_progress=yes
+	fi
+fi
+
 
 ###
 # argument summary printing
@@ -773,14 +804,20 @@ AC_MSG_RESULT($bc_install_geometry)
 AC_MSG_CHECKING(whether to enable optimized compilation)
 AC_MSG_RESULT($bc_use_optimized)
 
-AC_MSG_CHECKING(whether to enable verbose compilation warnings)
-AC_MSG_RESULT($bc_use_warnings)
-
 AC_MSG_CHECKING(whether to disable debug mode compilation)
 AC_MSG_RESULT($bc_use_debug)
 
 AC_MSG_CHECKING(whether to enable profile mode compilation)
 AC_MSG_RESULT($bc_use_profiling)
+
+AC_MSG_CHECKING(whether to enable verbose output)
+AC_MSG_RESULT($bc_build_verbose)
+
+AC_MSG_CHECKING(whether to enable verbose compilation warnings)
+AC_MSG_RESULT($bc_build_warnings)
+
+AC_MSG_CHECKING(whether to enable verbose compilation progress)
+AC_MSG_RESULT($bc_build_progress)
 
 AC_MSG_CHECKING(whether to compile with the Java Development Kit)
 AC_MSG_RESULT($bc_with_java)
@@ -842,6 +879,17 @@ fi
 # LT_INIT
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
+
+dnl verbose compilation progress
+if test "x$bc_build_progress" != "xyes" ; then
+	LIBTOOLFLAGS=--silent
+	AC_SUBST(LIBTOOLFLAGS)
+	# LIBTOOLFLAGS isn't often not enough;
+	# tack --silent onto the LIBTOOL command.
+	if test "x$LIBTOOL" != "x" ; then
+		LIBTOOL="$LIBTOOL --silent"
+	fi
+fi
 
 # AN_MAKEVAR([AR], [BC_PROG_AR])
 # AN_PROGRAM([ar], [BC_PROG_AR])
@@ -1583,7 +1631,7 @@ if test "x$bc_use_optimized" != "xno" ; then
 fi
 
 dnl verbose warning flags
-if test "x$bc_use_warnings" != "xno" ; then
+if test "x$bc_build_warnings" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline -Wconversion], [warning])
 	# XXX also of interest
 	# -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -pedantic -ansi -Werror
@@ -3368,7 +3416,8 @@ AC_MSG_RESULT([Build debug release ..................: $bc_use_debug])
 AC_MSG_RESULT([Build profile release ................: $bc_use_profiling])
 AC_MSG_RESULT([Build static libraries ...............: $enable_static])
 AC_MSG_RESULT([Build shared/dynamic libraries .......: $enable_shared])
-AC_MSG_RESULT([Print verbose compilation warnings ...: $bc_use_warnings])
+AC_MSG_RESULT([Print verbose compilation warnings ...: $bc_build_warnings])
+AC_MSG_RESULT([Print verbose compilation progress ...: $bc_build_progress])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Only build benchmark suite ...........: $bc_only_benchmark])
 AC_MSG_RESULT([Only build librtserver ...............: $bc_only_rts])
