@@ -257,7 +257,7 @@ namespace eval Archer {
 
 	variable wizardXmlCallbacks ""
 
-	variable mArcherVersion "0.8.0"
+	variable mArcherVersion "0.8.1"
 
 	variable mFontArrowsName "arrowFont"
 	variable mFontArrows {Wingdings 3}
@@ -10771,13 +10771,25 @@ Popup Menu    Right or Ctrl-Left
     }
 
     $itk_component(sdb) importStl $stlDir $topGroup
-    $itk_component(sdb) categorizeFg4 $topGroup
+    if [catch {$itk_component(sdb) get $topGroup}] {
+	set msg "No STL files were imported."
+
+	if {$importDir} {
+	    append msg "\n\nPlease make sure the directory structure\n" \
+		    "follows the necessary guidlines."
+	}
+	::sdialogs::Stddlgs::warningdlg "STL Warning" \
+		$msg
+    } else {
+	$itk_component(sdb) categorizeFg4 $topGroup
+
+	_refresh_tree
+
+	set mNeedSave 1
+	_update_save_mode
+    }
     cd $savePwd
 
-    _refresh_tree
-
-    set mNeedSave 1
-    _update_save_mode
     SetNormalCursor
 }
 
