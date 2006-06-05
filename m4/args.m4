@@ -86,8 +86,10 @@ dnl)
 # BC_ARG_ENABLE 1:[$1] 2:[$2] 3:[$3] 4:[$4]
 bc_[$1]=[$4]
 bc_[$1]_default=[$4]
+bc_[$1]_set=no
 AC_ARG_ENABLE([$2], AC_HELP_STRING([--enable-$2], [$3 (default=$4)]),
 	[
+	bc_[$1]_set=yes
 	case "x$enableval" in
 		x[[yY]][[eE]][[sS]])
 			bc_[$1]=yes
@@ -113,6 +115,7 @@ AC_DEFUN([BC_ARG_ALIAS], [
 # BC_ARG_ALIAS 1:[$1] 2:[$2]
 AC_ARG_ENABLE([$2],,
 	[
+	bc_[$1]_set=yes
 	case "x$enableval" in
 		x[[yY]][[eE]][[sS]])
 			bc_[$1]=yes
@@ -138,8 +141,10 @@ AC_DEFUN([BC_ARG_WITH], [
 bc_[$1]=[$4]
 bc_[$1]_val=[$5]
 bc_[$1]_default=[$4]
+bc_[$1]_set=no
 AC_ARG_WITH([$2], AC_HELP_STRING([--with-$2], [$3]),
 	[
+	bc_[$1]_set=yes
 	case "x$withval" in
 		x[[yY]][[eE]][[sS]])
 			bc_[$1]=yes
@@ -167,6 +172,7 @@ AC_DEFUN([BC_ARG_WITH_ALIAS], [
 # BC_ARG_WITH_ALIAS 1:[$1] 2:[$2]
 AC_ARG_WITH([$2],,
 	[
+	bc_[$1]_set=yes
 	case "x$withval" in
 		x[[yY]][[eE]][[sS]])
 			bc_[$1]=yes
