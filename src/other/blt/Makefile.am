@@ -6,6 +6,13 @@ SUBDIRS = \
 	library \
 	win
 
+DIST_SUBDIRS = \
+	$(SUBDIRS) \
+	cf \
+	examples \
+	html \
+	man
+
 lib_LTLIBRARIES = \
 	libblt.la \
 	libblt@BLT_VERSION@.la
@@ -96,12 +103,6 @@ AM_CPPFLAGS = \
 	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
 	-DUSE_TCLALLOC=0
-
-EXTRA_DIST = \
-	cf \
-	examples \
-	html \
-	man
 
 MAINTAINERCLEANFILES = Makefile.in
 
