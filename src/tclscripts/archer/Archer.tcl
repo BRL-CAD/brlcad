@@ -229,6 +229,11 @@ namespace eval Archer {
 	common SystemHighlightText
 	common SystemButtonFace
 
+	common ZCLIP_SMALL_CUBE 0
+	common ZCLIP_MEDIUM_CUBE 1
+	common ZCLIP_LARGE_CUBE 2
+	common ZCLIP_NONE 3
+
 	if {$tcl_platform(os) != "Windows NT"} {
 	    set brlcadDataPath [bu_brlcad_data ""]
 	    set SystemWindowFont Helvetica
@@ -316,6 +321,9 @@ namespace eval Archer {
 	variable mShowPrimitiveLabels 0
 
 	# variables for preference state
+	variable mZClipMode 0
+	variable mZClipModePref ""
+
 	variable mBindingMode 0
 	variable mBindingModePref ""
 	variable mBackground "0 0 0"
@@ -608,6 +616,8 @@ Popup Menu    Right or Ctrl-Left
 	method handleObjRotate {obj rx ry rz kx ky kz}
 	method handleObjScale {obj sf kx ky kz}
 	method handleObjTranslate {obj dx dy dz}
+
+	method updateDisplaySettings {}
     }
 
     private {
@@ -724,6 +734,7 @@ Popup Menu    Right or Ctrl-Left
 	method _build_model_axes_position {parent}
 	method _build_view_axes_preferences {}
 	method _build_ground_plane_preferences {}
+	method _build_display_preferences {}
 	method _build_combo_box {parent name1 name2 varName text listOfChoices}
 	method _validateDigit {d}
 	method _validateDouble {d}
@@ -742,10 +753,12 @@ Popup Menu    Right or Ctrl-Left
 	method _apply_view_axes_preferences_if_diff {}
 	method _apply_model_axes_preferences_if_diff {}
 	method _apply_ground_plane_preferences_if_diff {}
+	method _apply_display_preferences_if_diff {}
 	method _read_preferences {}
 	method _write_preferences {}
 	method _apply_preferences {}
 	method _apply_general_preferences {}
+	method _apply_display_preferences {}
 	method _apply_view_axes_preferences {}
 	method _apply_model_axes_preferences {}
 
@@ -5121,7 +5134,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(canvas_menu) menuconfigure .view.35,25 \
 	-state normal
     $itk_component(canvas_menu) menuconfigure .view.45,45 \
-	-state normal    
+	-state normal
 }
 
 ::itcl::body Archer::_close_mged {} {
@@ -6494,6 +6507,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(preferenceTabs) insert end -text "Model Axes" -stipple gray25
     $itk_component(preferenceTabs) insert end -text "View Axes" -stipple gray25
     $itk_component(preferenceTabs) insert end -text "Ground Plane" -stipple gray25
+    $itk_component(preferenceTabs) insert end -text "Display" -stipple gray25
 
     set i 0
     _build_general_preferences
@@ -6514,6 +6528,11 @@ Popup Menu    Right or Ctrl-Left
     _build_ground_plane_preferences
     $itk_component(preferenceTabs) tab configure $i \
 	-window $itk_component(groundPlaneF) -fill both
+
+    incr i
+    _build_display_preferences
+    $itk_component(preferenceTabs) tab configure $i \
+	-window $itk_component(displayLF) -fill both
 
     pack $itk_component(preferenceTabs) -expand yes -fill both
 
@@ -7054,6 +7073,82 @@ Popup Menu    Right or Ctrl-Left
     grid columnconfigure $parent 0 -weight 1
 }
 
+::itcl::body Archer::_build_display_preferences {} {
+    itk_component add displayLF {
+	::iwidgets::Labeledframe $itk_component(preferenceTabs).displayLF \
+	    -labeltext "Display Settings" \
+	    -labelpos nw \
+	    -borderwidth 2 \
+	    -relief groove
+    }
+
+    set oglParent [$itk_component(displayLF) childsite]
+
+    itk_component add displayF {
+	::frame $oglParent.displayF
+    } {}
+
+    set parent $itk_component(displayF)
+
+    itk_component add zclipL {
+	::label $parent.zclipL \
+	    -text "Viewing Cube:"
+    } {}
+
+    set i 0
+    set mZClipMode $i
+    itk_component add smallZClipRB {
+	::radiobutton $parent.smallZClipRB \
+	    -text "Small" \
+	    -value $i \
+	    -variable [::itcl::scope mZClipModePref]
+    } {}
+
+    incr i
+    itk_component add mediumZClipRB {
+	::radiobutton $parent.mediumZClipRB \
+	    -text "Medium" \
+	    -value $i \
+	    -variable [::itcl::scope mZClipModePref]
+    } {}
+
+    incr i
+    itk_component add largeZClipRB {
+	::radiobutton $parent.largeZClipRB \
+	    -text "Large" \
+	    -value $i \
+	    -variable [::itcl::scope mZClipModePref]
+    } {}
+
+    incr i
+    itk_component add infiniteZClipRB {
+	::radiobutton $parent.infiniteZClipRB \
+	    -text "Infinite" \
+	    -value $i \
+	    -variable [::itcl::scope mZClipModePref]
+    } {}
+
+    set i 0
+    grid $itk_component(zclipL) -column 0 -row $i -sticky w
+    grid $itk_component(smallZClipRB) -column 1 -row $i -sticky w
+    incr i
+    grid $itk_component(mediumZClipRB) -column 1 -row $i -sticky w
+    incr i
+    grid $itk_component(largeZClipRB) -column 1 -row $i -sticky w
+    incr i
+    grid $itk_component(infiniteZClipRB) -column 1 -row $i -sticky w
+
+    incr i
+    grid rowconfigure $parent $i -weight 1
+    grid columnconfigure $parent 1 -weight 1
+
+    set i 0
+    grid $parent -column 0 -row $i -sticky nsew
+
+    grid rowconfigure $oglParent 0 -weight 1
+    grid columnconfigure $oglParent 0 -weight 1
+}
+
 ::itcl::body Archer::_build_combo_box {parent name1 name2 varName text listOfChoices} {
     itk_component add $name1\L {
 	::label $parent.$name2\L \
@@ -7183,6 +7278,8 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_do_preferences {} {
     # update preference variables
+    set mZClipModePref $mZClipMode
+
     set mBindingModePref $mBindingMode
     set mBackgroundRedPref [lindex $mBackground 0]
     set mBackgroundGreenPref [lindex $mBackground 1]
@@ -7228,6 +7325,7 @@ Popup Menu    Right or Ctrl-Left
     _apply_view_axes_preferences_if_diff
     _apply_model_axes_preferences_if_diff
     _apply_ground_plane_preferences_if_diff
+    _apply_display_preferences_if_diff
 }
 
 ::itcl::body Archer::_apply_general_preferences_if_diff {} {
@@ -7562,6 +7660,13 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
+::itcl::body Archer::_apply_display_preferences_if_diff {} {
+    if {$mZClipModePref != $mZClipMode} {
+	set mZClipMode $mZClipModePref
+	updateDisplaySettings
+    }
+}
+
 ::itcl::body Archer::_read_preferences {} {
     global env 
 
@@ -7646,6 +7751,7 @@ Popup Menu    Right or Ctrl-Left
 	puts $pfile "set mModelAxesTickColor \"$mModelAxesTickColor\""
 	puts $pfile "set mModelAxesTickMajorColor \"$mModelAxesTickMajorColor\""
 	puts $pfile "set mMode $mMode"
+	puts $pfile "set mZClipMode $mZClipMode"
 	puts $pfile "set mHPaneFraction1 $mHPaneFraction1"
 	puts $pfile "set mHPaneFraction2 $mHPaneFraction2"
 	puts $pfile "set mVPaneFraction1 $mVPaneFraction1"
@@ -7667,6 +7773,7 @@ Popup Menu    Right or Ctrl-Left
     _apply_general_preferences
     _apply_view_axes_preferences
     _apply_model_axes_preferences
+    _apply_display_preferences
 }
 
 ::itcl::body Archer::_apply_general_preferences {} {
@@ -7683,6 +7790,10 @@ Popup Menu    Right or Ctrl-Left
 	    [lindex $mBackground 1] \
 	    [lindex $mBackground 2] 
     _set_color_option dbCmd -primitiveLabelColor $mPrimitiveLabelColor
+}
+
+::itcl::body Archer::_apply_display_preferences {} {
+    updateDisplaySettings
 }
 
 ::itcl::body Archer::_apply_view_axes_preferences {} {
@@ -8292,9 +8403,14 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_do_lighting {} {
     SetWaitCursor
-    dbCmd zclipAll $mLighting
+
+    if {$mZClipMode != $ZCLIP_NONE} {
+	dbCmd zclipAll $mLighting
+    }
+
     dbCmd zbufferAll $mLighting
     dbCmd lightAll $mLighting
+
     SetNormalCursor
 }
 
@@ -11289,6 +11405,33 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::zap {args} {
     eval archerWrapper clear 0 0 0 1 $args
+}
+
+::itcl::body Archer::updateDisplaySettings {} {
+    if {[info exists itk_component(mged)]} {
+	set cadObj $itk_component(mged)
+    } elseif {[info exists itk_component(sdb)]} {
+	set cadObj $itk_component(sdb)
+    } else {
+	return
+    }
+
+    switch -- $mZClipMode \
+	$ZCLIP_SMALL_CUBE { \
+	    $cadObj zclipAll 1; \
+	    $cadObj boundsAll {-4096 4095 -4096 4095 -4096 4095}; \
+	} \
+	$ZCLIP_MEDIUM_CUBE { \
+	    $cadObj zclipAll 1; \
+	    $cadObj boundsAll {-8192 8191 -8192 8191 -8192 8191}; \
+	} \
+	$ZCLIP_LARGE_CUBE { \
+	    $cadObj zclipAll 1; \
+	    $cadObj boundsAll {-16384 16363 -16384 16363 -16384 16363}; \
+	} \
+	$ZCLIP_NONE { \
+	    $cadObj zclipAll 0; \
+	}
 }
 
 
