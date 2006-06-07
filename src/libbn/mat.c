@@ -321,16 +321,39 @@ bn_matXvec(register vect_t ov, register const mat_t im, register const vect_t iv
 /*
  *			B N _ M A T _ I N V
  *
- * The matrix pointed at by "im" is inverted and stored in the area
- * pointed at by "om".
- */
-/*
- * Invert a 4-by-4 matrix using Algorithm 120 from ACM.
- * This is a modified Gauss-Jordan alogorithm
- * Note:  Inversion is done in place, with 3 work vectors
+ * The matrix pointed at by "input" is inverted and stored in the area
+ * pointed at by "output".
+ *
+ * Calls bu_bomb if matrix is singular.
  */
 void
 bn_mat_inv(register mat_t output, const mat_t input)
+{
+	if(bn_mat_inverse(output, input) == 0)  {
+		bu_log("bn_mat_inv:  error!");
+		bn_mat_print("singular matrix", input);
+		bu_bomb("bn_mat_inv: singular matrix\n");
+                /* NOTREACHED */
+        }
+}
+
+
+/*
+ *			B N _ M A T _ I N V E R S E
+ *
+ * The matrix pointed at by "input" is inverted and stored in the area
+ * pointed at by "output".
+ *
+ * Invert a 4-by-4 matrix using Algorithm 120 from ACM.
+ * This is a modified Gauss-Jordan alogorithm
+ * Note:  Inversion is done in place, with 3 work vectors
+ *
+ *  Returns -
+ *	 1	if OK.
+ *	 0	if matrix is singular.
+ */
+int
+bn_mat_inverse(register mat_t output, const mat_t input)
 {
 	register int i, j;			/* Indices */
 	LOCAL int k;				/* Indices */
@@ -361,9 +384,7 @@ bn_mat_inv(register mat_t output, const mat_t input)
 		}
 
 		if( fabs(y) < SQRT_SMALL_FASTF )  {
-			bu_log("bn_mat_inv:  error! fabs(y)=%g\n", fabs(y));
-			bn_mat_print("singular matrix", input);
-			bu_bomb("bn_mat_inv: singular matrix\n");
+			return 0;
 			/* NOTREACHED */
 		}
 		y = 1.0 / y;
@@ -409,6 +430,8 @@ bn_mat_inv(register mat_t output, const mat_t input)
 			z[k] = p;
 		}
 	}
+
+        return 1;
 }
 
 /*

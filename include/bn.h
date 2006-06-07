@@ -432,6 +432,9 @@ BN_EXPORT BU_EXTERN(void bn_matXvec,
 BN_EXPORT BU_EXTERN(void bn_mat_inv,
 		    (register mat_t output,
 		     const mat_t input));
+BN_EXPORT BU_EXTERN(int bn_mat_inverse,
+		    (register mat_t output,
+		     const mat_t input));
 BN_EXPORT BU_EXTERN(void bn_vtoh_move,
 		    (register vect_t h,
 		     register const vect_t v));
