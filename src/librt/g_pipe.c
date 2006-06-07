@@ -149,8 +149,6 @@ rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center
 	LOCAL fastf_t	f;
 
 	pipe = (struct bend_pipe *)bu_malloc( sizeof( struct bend_pipe ), "rt_bend_pipe_prep:pipe" )	 ;
-	BU_LIST_INSERT( head, &pipe->l );
-
 
 	pipe->pipe_is_bend = 1;
 	pipe->bend_or = od * 0.5;
@@ -186,7 +184,13 @@ rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center
 	VMOVE( &R[0], pipe->bend_ra );
 	VMOVE( &R[4], pipe->bend_rb );
 	VMOVE( &R[8], pipe->bend_N );
-	bn_mat_inv( pipe->bend_invR, R );
+
+	if (bn_mat_inverse( pipe->bend_invR, R ) == 0) {
+		bu_free(pipe, "rt_bend_pipe_prep:pipe");
+		return 0; /* there is nothing to bend, that's OK */
+	}
+
+
 	MAT_COPY( pipe->bend_SoR, R );
 	pipe->bend_SoR[15] *= pipe->bend_radius;
 
@@ -214,6 +218,8 @@ rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center
 
 	PIPE_MM( pipe->bend_min );
 	PIPE_MM( pipe->bend_max );
+
+	BU_LIST_INSERT( head, &pipe->l );
 
 	return( 0 );
 
