@@ -1962,6 +1962,9 @@ log_event(char *event, char *arg)
 	/* let the user know that we're logging */
 	static int notified = 0;
 
+	/* XXX unconditionally disable for now */
+	return;
+
 #ifndef DEBUG
 	return;
 #endif
