@@ -822,9 +822,14 @@ outlets with the details of the new release:
       cad-linux@freelists.org
 	with news details
 
-      Freshmeat
+      Freshmeat  (anyone can submit update)
       http://freshmeat.net/projects/BRL-CAD/
-	short without news details
+	short without news details (sentance format)
+
+      Versiontracker  (only 'brlcad' can update)
+      http://www.versiontracker.com/dyn/moreinfo/macosx/26289
+      http://www.versiontracker.com/dyn/moreinfo/win/64903
+	short without news details (list format)
 
       upFront.ezine (if major)
       Ralph Grabowski
