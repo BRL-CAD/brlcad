@@ -9,20 +9,27 @@ continues to be room for involvement and improvement in just about
 every aspect of the package.  As such, contributions to BRL-CAD are
 very welcome and appreciated.
 
-For the sake of code consistency and long-term evolution of BRL-CAD,
-there are guidelines for getting involved.  Developers are strongly
-encouraged to follow these guidelines.  There are simply too many
-religious wars over what usually come down to personal preferences and
-familiarity that are distractions from making productive progress.
+For the sake of code consistency, project coherency, and the long-term
+evolution of BRL-CAD, there are guidelines for getting involved.
+Contributors are strongly encouraged to follow these guidelines and to
+likewise ensure that other contributors similarly follow the
+guidelines.  There are simply too many religious wars over what
+usually come down to personal preferences and familiarity that are
+distractions from making productive progress.
+
+These guidelines apply to all developers, documentation writers,
+testers, porters, graphic designers, web designers, and anyone else
+that is directly contributing to BRL-CAD.  As all contributors are
+also directly assisting in the development of BRL-CAD as a package,
+this guide often simply refers to contributors as developers.
 
 Although BRL-CAD was originally developed and supported primarily by
-the U.S. Army Research Laboratory and its affiliates, it is now a
-true Open Source project with source code contributions coming from
+the U.S. Army Research Laboratory and its affiliates, it is now a true
+Open Source project with contributions coming in to the project from
 around the world.  The U.S. Army Research Laboratory continues to
-support and contribute to BRL-CAD, but now the source code is
-primarily driven by a team of core developers and the BRL-CAD open
-source community.  Contact the BRL-CAD developers for more
-information.
+support and contribute to BRL-CAD, but now the project is primarily
+driven by a team of core developers and the BRL-CAD open source
+community.  Contact the BRL-CAD developers for more information.
 
 
 TABLE OF CONTENTS
@@ -33,13 +40,13 @@ TABLE OF CONTENTS
   How to Contribute
   Source Code Languages
   Filesystem Organization
-  Coding Style
+  Coding Style & Standards
   Documentation
   Testing
   Patch Submission Guidelines
   Bugs & Unexpected Behavior
   Commit Access
-  Developer Responsibilities
+  Contributor Responsibilities
   Version Numbers & Compatibility
   Making a Release
   Getting Help
@@ -49,73 +56,75 @@ GETTING STARTED
 ---------------
 
 As there are many ways to get started with BRL-CAD, one of the most
-important steps for new developers to do is get involved in the
+important steps for new contributors to do is get involved in the
 discussions and communicate with the BRL-CAD developers.  There are
 mailing lists, on-line forums, and an IRC channel dedicated to BRL-CAD
-developer communication.  Developers are encouraged to participate in
-all of them.
+development and project communication.  All contributors are
+encouraged to participate in any of the available communication
+channels:
+
+* Internet Relay Chat
+
+  The primary and generally preferred mechanism for interactive
+  developer discussions is via Internet Relay Chat (IRC).  Several of
+  the core developers and core contributors of BRL-CAD hang out in
+  #brlcad on the Freenode network.  With most any IRC client, you
+  should be able to join #brlcad on irc.freenode.net, port 6667.  See
+  http://freenode.net and http://irchelp.org for more information
 
 * E-mail Mailing Lists
 
-  Go to http://sourceforge.net/mail/?group_id=105292 and join the
-  "brlcad-devel" mailing list.  More involved developers will also
-  want to join the "brlcad-commits" and "brlcad-tracker" lists.
+  There are several mailing lists available for interaction, e.g. the
+  http://sourceforge.net/mail/?group_id=105292 "brlcad-devel" mailing
+  list.  More involved contributors may also be interested in joining
+  the "brlcad-commits" and "brlcad-tracker" mailing lists.
 
 * On-line Forums
 
   Discussion forums are available on the project site at
   http://sourceforge.net/forum/?group_id=105292 for both developers
   and users.  Of particular interest to developers is, of course, the
-  "Developers" forum.
-
-* Internet Relay Chat
-
-  The primary and generally preferred mechanism for interactive
-  developer discussions is via IRC.  Several of the core developers
-  and users of BRL-CAD hang out in #brlcad on the Freenode network.
-  With most any IRC client you should be able to join #brlcad on
-  irc.freenode.net, port 6667.  See http://freenode.net and
-  http://irchelp.org for more information
-
-To contribute source code to BRL-CAD, begin by submitting source code
-patches to the patches section at http://sf.net/projects/brlcad/.
-Patches in the universal diff format (diff -u) are preferred.
+  "Developers" forum where all contributors are incouraged to
+  participate.
 
 
 HOW TO CONTRIBUTE
 -----------------
 
-BRL-CAD's open source developer management structure is best described
-as a meritocracy.  Roughly stated, this basically means that the power
-to make decisions lies directly with the individuals that have ability
-or merit with respect to BRL-CAD.  An individual's ability and merit
-is basically a function of their past and present contributions to the
-project.  Those who constructively contribute and are involved have
-more say than those who don't.
+BRL-CAD's open source management structure is best described as a
+meritocracy.  Roughly stated, this basically means that the power to
+make decisions lies directly with the individuals that have ability or
+merit with respect to BRL-CAD.  An individual's ability and merit is
+basically a function of their past and present contributions to the
+project.  Those who constructively contribute, frequently interact,
+and remain highly involved have more say than those who do not.
 
-As BRL-CAD is comprised of a rather large code base, there are many
-many places where one may begin to get involved.  More than likely,
-there is some new goal you already have in mind, be it a new geometry
-converter, support for a different image type, a fix to some bug, or
-something else entirely.  Regardless of the goal or contribution, it's
-highly encouraged that you interact with the developers and discuss
-your intentions if you would like to see your modification added to
-BRL-CAD.  When in doubt, working on resolving existing bugs, improving
-performance, documentation, and writing tests are perfect places to
-begin.
+As BRL-CAD is comprised of a rather large code base with extensive
+existing documentation and web resources, there are many many places
+where one may begin to get involved with the project.  More than
+likely, there is some new goal you already have in mind, be it a new
+geometry converter, support for a different image type, a fix to some
+bug, an update to existing documentation, a new web page, or something
+else entirely.  Regardless of the goal or contribution, it is highly
+encouraged that you interact with the existing developers and discuss
+your intentions.  This is particularly important if you would like to
+see your modification added to BRL-CAD and you do not yet have
+contributor access.  When in doubt, working on resolving existing
+bugs, improving performance, documentation, and writing tests are
+perfect places to begin.
 
-For many, at first, it can be overwhelming at just how much there is.
-To a certain extent, you will need to familiarize yourself with the
-basic existing facilities before adding a completely new feature.
-There is documentation available at in the source distribution's doc/
-directory, throughout the source hierarchy in manpages, and at
-http://sourceforge.net/docman/?group_id=105292 covering a variety of
-topics.
+For many, it can be overwhelming at just how much there is.  To a
+certain extent, you will need to familiarize yourself with the basic
+existing infrastructure before significantly changing or adding a
+completely new feature.  There is documentation available in the
+source distribution's doc/ directory, throughout the source hierarchy
+in manpages, on the website, and potentially in the documentation
+tracker at http://sourceforge.net/docman/?group_id=105292 covering a
+wide variety of topics.  Consult the existing documentation, sources,
+and developers to become more familiar with what already exists.
 
-It is not uncommon that some particular piece of code that you are
-either working on or thinking about writing is in fact already
-written.  Again, working with the other developers and reading the
-source code itself is a great place to begin.
+See the PATCH SUBMISSION GUIDELINES section below for details on
+preparing and providing contributions.
 
 
 SYSTEM ARCHITECTURE
@@ -126,25 +135,33 @@ executable binaries.  The package has been designed from the ground up
 adopting a UNIX methodology, providing many tools that may often be
 used in harmony in order to complete a task at hand.  These tools
 include geometry and image converters, image and signal processing
-tools, various raytrace applications, and geometry manipulators.
+tools, various raytrace applications, geometry manipulators, and more.
 
-One of the firm designs of the architecture is to be as cross-platform
-as is realistically possible.  As such, BRL-CAD maintains support for
-many very old systems and devices for as long as it is reasonably
-possible (and as long as there are resources to maintain such
-support).
+One of the firm design intents of the architecture is to be as
+cross-platform and portable as is realistically and reasonably
+possible.  As such, BRL-CAD maintains support for many legacy systems
+and devices provided that maintaining such support is not a
+significant burden on developer resources.  Whether it is a burden or
+not is of course a potentially subjective matter.  As a general
+guideline, there needs to be a strong compelling motivation to
+actually remove any functionality.  Code posterity, readability, and
+complexity are generally not sufficient reasons.  This applies to
+sections of code that are no longer being used, might not compile, or
+might even have major issues (bugs).  This applies to bundled 3rd
+party libraries, compilation environments, compiler support, and
+language constructs.
 
 In correlation with a long-standing heritage of support is a design
 intent to maintain verifiable repeatable results throughout the
 package, in particular in the raytrace library.  BRL-CAD includes
 scripts that will compare a given compilation against the performance
 of one of the very first systems to support BRL-CAD: a VAX 11/780
-running BSD.  As the benchmark is a metric of the raytrace application
-itself, the performance results are a very good metric for weighing
-the relative computational strength of a given platform.  The
-mathematically intensive computations exercise the CPU, system memory,
-various levels of data and instruction cache, the operating system,
-and compiler optimization capabilities.
+running BSD.  As the BRL-CAD Benchmark is a metric of the raytrace
+application itself, the performance results are a very useful metric
+for weighing the relative computational strength of a given platform.
+The mathematically intensive computations exercise the processing
+unit, system memory, various levels of data and instruction cache, the
+operating system, and compiler optimization capabilities.
 
 To support what has evolved to be a relatively large software package,
 there are a variety of support libraries and interfaces that have
@@ -155,12 +172,14 @@ disk which includes both binary and text file format representations.
 The raytrace library utilizes a suite of other libraries that provide
 other basic application functionality.
 
-The Libraries
+LIBRARIES
+---------
 
-librt: The Ray-Trace library is a performance and accuracy-oriented
-ray intersection library that supports a wide variety of primitive
-geometry types.  Geometry can be grouped into combinations and regions
-using CSG boolean operations.
+librt: The BRL-CAD Ray-Trace library is a performance and
+accuracy-oriented ray intersection, geometric analysis, and geometry
+representation library that supports a wide variety of geometric
+forms.  Geometry can be grouped into combinations and regions using
+CSG boolean operations.
 
 libbu: The BRL-CAD Utility library contains a wide variety of routines
 for memory allocation, threading, string handling, argument support,
@@ -190,10 +209,10 @@ libfft: The Fast-Fourier Transform library is a signal processing
 library for performing FFTs or inverse FFTs efficiently.
 
 libmultispectral: The multispectral optics library is a separate
-compilation mode of the raytrace library where support for additional
-bands of energy is added.  By providing a defined spectrum of energy,
-the raytrace library will produce different signal analyses for a given
-set of geometry.
+compilation mode of the optics library where support for additional
+bands of energy are added.  By providing a defined spectrum of energy,
+the raytrace library will produce different signal analyses for a
+given set of geometry.
 
 liboptical: The optical library is the basis for BRL-CAD's shaders.
 This includes shaders such as the Phong and Cook-Torrence lighting
@@ -215,9 +234,9 @@ intersection tests against a given set of geometry.  The library
 supports communication with a BRL-CAD geometry repository and
 multithreaded ray dispatch.
 
-libsysv: The System 5 compatibility library exists to support dated
+libsysv: The System 5 compatibility library exists to support legacy
 systems that lack functionality required by BRL-CAD.  This library is
-deprecated and should not be used for new development.
+deprecated and should generally not be used for new development.
 
 libtclcad: The Tcl-CAD library is a thin interface that assists in the
 binding of an image to a Tk graphics context.
@@ -230,22 +249,6 @@ the generation of BRL-CAD geometry files supporting a majority of the
 various primitives available as well as combination/region support.
 The library is a write-only interface (librt is necessary to read &
 write) and is useful for procedural geometry.
-
-
-SOURCE CODE LANGUAGES
----------------------
-
-The vast majority of BRL-CAD is written in C.  A majority of the MGED
-geometry editor is written in a combination of C, Tcl/Tk, and Incr
-Tcl/Tk.  The BRL-CAD Benchmark, build system, and utility scripts are
-written in Bourne Shell Script.  An initial implementation of a
-BRL-CAD Geometry Server is written in PHP.
-
-With release 7.0, BRL-CAD has moved forward and worked toward making
-all of BRL-CAD C code conform with the ANSI/ISO standard for C
-language compilation (ISO/IEC 9899:1990).  Support for older compilers
-and older K&R-based system facilities is being migrated to the build
-system declarations and preprocessor defines.
 
 
 FILESYSTEM ORGANIZATION
@@ -314,16 +317,43 @@ src/util/
 	Various image processing utilities
 
 
-CODING STYLE
-------------
+SOURCE CODE LANGUAGES
+---------------------
+
+The vast majority of BRL-CAD is written in ANSI C with the intent to
+be strictly conformant to the C standard.  A majority of the MGED
+geometry editor is written in a combination of C, Tcl/Tk, and Incr
+Tcl/Tk.  The BRL-CAD Benchmark, build system, and utility scripts are
+written in what should be POSIX-compliant Bourne Shell Script.  An
+initial implementation of a BRL-CAD Geometry Server is written in PHP.
+
+With release 7.0, BRL-CAD has moved forward and worked toward making
+all of BRL-CAD C code conform strictly with the ANSI/ISO standard for
+C language compilation (ISO/IEC 9899:1990).  Support for older
+compilers and older K&R-based system facilities is being migrated to
+the build system declarations and preprocessor defines.
+
+There is currently not a unified C++ interface to any of the libraries
+nor any tools written in C++ in BRL-CAD at this time, though several
+of both have been written over the years for various purposes.  While
+C++ as an implementation language of new tools and new library
+interfaces is not prohibitied, the mixing of C++ semantics and C++
+code (including simple // style comments) in the existing C files is
+not allowed.  As new interfaces are developed, new contributors become
+involved, and C++ code integration becomes more prevalent, the
+contributor guidelines will become reinforced with more details.
+
+
+CODING STYLE & STANDARDS
+------------------------
 
 For anyone who plans on contributing code, the following conventions
 should be followed.  Contributions that do not conform are likely to
-be ridiculed and rejected until they do.
+be ridiculed and rejected until they do.  ;-)
 
 Violations of these rules in the existing code are not excuses to
 follow suit.  If code is seen that doesn't conform, it may and should
-be fixed.  ;-)
+be fixed.
 
 Code Organization:
 
@@ -331,11 +361,23 @@ Code that is potentially useful to another application, or that may be
 abstracted in such a way that it is useful to other applications,
 should be put in a library and not in application directories.
 
-C files use the .c extension.  Header files use the .h extension.
+C files use the .c extension.  Header files use the .h extension.  C++
+files use the .cxx extension.  PHP files use the .php extension.
+Tcl/Tk files use the .tcl/.tk extensions.  POSIX Bourne-style shell
+scripts use the .sh extension.
+
+Source files go into the src/ directory on the top level, into a
+corresponding directory for the category of binary or library that it
+belongs to.  Documentation files go into the doc/ directory on the top
+level, with the exception of manual pages that should be colocated
+with any corresponding source files.
 
 Header files private to a library go into that library's directory.
 Public header files go intp the include/ directory on the top level.
 Public header files should not include any headers that are private.
+Headers should include any other headers that they require for correct
+parsing (this is an on-going clean-up effort).  Public header files
+should not include the common header.
 
 Headers should be included in a particular order.  That order is
 generally as follows:
@@ -347,28 +389,31 @@ generally as follows:
   - private headers
 
 Applications may optionally provide an interface header that defines
-common structures, applicable to most or all files being compiled for
+common structures applicable to most or all files being compiled for
 that application.  That interface header will generally be the first
 file to be included, as it usually includes the common header and
 system headers.  The common header should always be included before
 any system header.  Standard C system headers should be included
 before library system headers.  Headers should be written to be
 self-contained, not requiring other headers to be necessarily included
-before it.  If another header is necessary for a header to function
-correctly, it should include it.
+before they may be used.  If another header is necessary for a header
+to function correctly, it should include it.
 
-Coding Standards:
+Language Compliance:
 
 Features of C that conform to the ISO/IEC 9899-1990 C standard (C90)
-are generally the baseline for strict language conformance.
-Particulars of the usage of the language calls special attention to
-the following:
+are generally the baseline for strict language conformance.  As
+BRL-CAD used to be K&R syntax conformant, there remains on-going
+effort to ensure a full conversion to a standards compliant ISO C
+implementation.
+
+Code Conventions:
 
 Globals variables, global structures, and other public data containers
 are highly discouraged - globals are often the easy way around a hard
 coding problem but more often complicate refactoring and restructuring
 in the future.  Try to find another solution unless there is a very
-good reason for their use.
+compelling and good reason for their use.
 
 Functions should always specify a return type, including functions
 that return int or void.  ANSI C prototypes should be used to declare
@@ -378,7 +423,7 @@ There are several functions whose functionality are either wrapped or
 implemented in a cross-platform manner by libbu.  This includes
 functions related to memory allocation, command option parsing,
 logging routines, and more.  The following functions and global
-variables should be utilized instead of the standard C version:
+variables should be utilized instead of the standard C facility:
 
   bu_malloc() instead of malloc()
   bu_free() instead of free()
@@ -390,15 +435,13 @@ variables should be utilized instead of the standard C version:
   bu_optopt instead of optopt
   bu_optarg instead of optarg
 
-Code Formatting Conventions:
-
 The code should strive to achieve conformance with the GNU coding
-standard with a few exceptions, omissions, and reminders listed below.
-The K&R indentation style (also commonly recognized as the primary
-Java coding style as published by Sun) is utilized for brace placement
-indentation, and most code formatting convention.  The following
-examples should be strictly adhered to, if only for the sake of being
-consistent.
+standard with a few exceptions.  One such exception is NOT utilizing
+the GNU indentation style, but instead utilizing the K&R indentation
+style (also commonly recognized as the primary Java coding style as
+published by Sun) is utilized for brace placement indentation, and
+most code formatting convention.  The following examples should be
+strictly adhered to, if only for the sake of being consistent.
 
 1) Whitespace
 
@@ -435,7 +478,10 @@ Commas and semicolons are followed by whitespace.
 2) Braces
 
 Opening braces should be on the same line as their statement, close
-braces should line up with that same statement.
+braces should line up with that same statement.  This is intently not
+the GNU or BSD indent style, but rather the K&R style (see
+http://en.wikipedia.org/wiki/Indent_style for details).
+
   for (i = 0; i < 100; i++) {
     if (i % 10 == 0) {
       j += 1;
@@ -480,12 +526,14 @@ structures.
 
 5) Comments
 
-"//" style comments are not allowed.  This is mainly to cause fewer
-compilation and portability issues when porting to older systems where
-such support is frequently not available.  Comment blocks should
-utilize an asterisk at the beginning of each new line.
-/* This is
- * a block.
+"//" style comments are not allowed in C source files.  This is mainly
+to cause fewer compilation and portability issues when porting to
+older systems where such support is frequently not available in the C
+compiler.  Comment blocks should utilize an asterisk at the beginning
+of each new line.
+
+/* This is a
+ * comment block.
  */
 
 GNU Build System:
@@ -500,29 +548,43 @@ include/brlcad_config.h file that contains many preprocessor
 directives and type declarations that may be used where needed.
 
 Generic platform checks (e.g. #ifdef unix, #ifdef _WIN32) are highly
-discouraged and should not be used.  Replace those checks with tests
-for the actual facility being utilized instead.
+discouraged and should generally not be used.  Replace those checks
+with tests for the actual facility being utilized instead.
 
 The Windows platform utilizes its own manually-generated configure
 results header (include/config_win.h) that has to be manually updated
 if new tests are added to the configure.ac template.
 
-The BRL-CAD sources as well as packages linking to BRL-CAD should
-include the common.h header.  They should not include brlcad_config.h
-or config_win.h directly.  The common.h header should be listed before
-any other headers.
+Only the BRL-CAD sources should include and utilize the common.h
+header.  They should not include brlcad_config.h or config_win.h
+directly.  If used, the common.h header should be listed before any
+system headers.
 
 
 DOCUMENTATION
 -------------
 
-The code should be reasonably documented, this almost goes without
-saying for any body of code that is to maintain longevity.
-Determining just how much documentation is sufficient and how much is
-too much is generally resolved over time, but it should generally be
-looked at from the perspective of "If I look at this code in a couple
-years from now, what would help me remember or understand it better?"
-and add documentation accordingly.
+BRL-CAD has extensive documentation in various formats and presently
+maintained in various locations.  It is an on-going desire and goal of
+the project to have all documentation located along with the source
+code in CVS.
+
+In line with that goal and where beneficial, a large portion of the
+tutorial documentation is being converted to the Docbook XML format.
+Having the tutorial documentation in the Docbook XML format allows for
+easier maintenances, better export conversion support, and
+representation in a textual format that may be revision controlled and
+tracked.
+
+Documenting Source Code:
+
+The source code should always be reasonably documented, this almost
+goes without saying for any body of code that is to maintain some
+longevity.  Determining just how much documentation is sufficient and
+how much is too much is generally resolved over time, but it should
+generally be looked at from the perspective of "If I look at this code
+in a couple years from now, what would help me remember or understand
+it better?"  and add documentation accordingly.
 
 All public library functions and most private or application functions
 should be appropriately documented using Doxygen/Javadoc style
@@ -572,26 +634,34 @@ make test
 PATCH SUBMISSION GUIDELINES
 ---------------------------
 
-All patches should be submitted in the unified diff format.  This is
-generally the "-u" option to diff, and is supported by the cvs diff
-command:
+To contribute to BRL-CAD, begin by submitting modifications to the
+patches section at http://sf.net/projects/brlcad/.  Patches in the
+universal diff format (diff -u) are generally preferred when modifying
+existing source or other text files.  Otherwise, contributors are
+welcome to submit their changes in full to the patches tracker as
+compressed file attachments.
+
+All text patches should be submitted in the unified diff format where
+it's feasible to create one either using CVS or using the unmodified
+original file.  This is generally the "-u" option to diff, and is also
+supported by the CVS diff command:
 
 cvs diff -u > my_patch.diff
 
 Where possible, diffs should be generated against the latest CVS
-version available to make it easier to review and patch the diff in.
-If a modification involves the addition or removal of files, those
-files should be provided separately with instructions on where they
-belong (or what should be removed).  If CVS cannot be used, please
-provide the complete release and build number of the sources you
+version available to make it easier to review and patch the changes
+in.  If a modification involves the addition or removal of files,
+those files should be provided separately with instructions on where
+they belong (or what should be removed).  If CVS cannot be used,
+please provide the complete release and build number of the files you
 worked with.
 
-Any source code that is provided must not modify or conflict with the
-existing COPYING file distribution requirements.  This means that
-library modifications must be LGPL-compatible and changes to
-applications must be GPL-compatible.  Similarly, GPL libraries may not
-be used or otherwised linked to BRL-CAD.  Contributors are asked to
-only provide patches that may legally be incorporated into BRL-CAD
+ANY MODIFICATIONS THAT ARE PROVIDED MUST NOT MODIFY OR CONFLICT WITH
+THE EXISTING "COPYING" FILE DISTRIBUTION REQUIREMENTS.  This means
+that library modifications must be LGPL-compatible and changes to
+applications must be GPL-compatible.  Similarly, GPL libraries may NOT
+be used or otherwised linked against BRL-CAD.  Contributors are asked
+to only provide patches that may legally be incorporated into BRL-CAD
 under the existing distribution provisions described in the COPYING
 file.
 
@@ -602,18 +672,20 @@ BUGS & UNEXPECTED BEHAVIOR
 --------------------------
 
 When a bug or unexpected behavior is encountered that cannot be
-quickly fixed, it needs to be documented.  If you are already a
-BRL-CAD developer, this means either making a comment in the BUGS file
-or by making a formal report to the SourceForge bug tracker at:
+quickly fixed, it minimally needs to be documented.  If you are
+already a BRL-CAD contributor, this means either making a comment in
+the BUGS file or by making a formal report to the SourceForge bug
+tracker at:
 
 http://sourceforge.net/tracker/?atid=640802&group_id=105292&func=browse
 
-If the bug is complicated, will require discussion, cannot be fixed
-any time soon, or if you do not have CVS commit access, the issue
-should be reported to the SourceForge bug tracker.  The issues listed
-in BUGS are not necessarily listed in bug tracker, and vice-versa.
-The BUGS file is merely maintained as a convenience notepad of long
-and short term issues for the developers only.
+If the bug is complicated, will require significant discussion or
+collaboration, cannot be fixed any time soon, or if you do not have
+commit access, the issue should be reported to the SourceForge bug
+tracker.  The issues listed in BUGS are not necessarily listed in bug
+tracker, and vice-versa.  The BUGS file is merely maintained as a
+convenience notepad of long and short term issues for the developers
+only.
 
 
 COMMIT ACCESS
@@ -624,68 +696,74 @@ in the doc/cvspolicy.txt document.  In brief, BRL-CAD has a STABLE
 branch in CVS that should always compile and run with expected
 behavior on all supported platforms.  On the contrary, while the CVS
 HEAD is generally always expected to compile, more flexibility is
-allowed for resolution of cross-platform build issues.  Read the CVS
-policy document for more details.
+allowed for resolution of cross-platform build issues and on-going
+development.  Read the aforementioned CVS policy document for more
+details.
 
-CVS commit access is evaluated on a person-to-person basis at the
-discretion of the existing developers.  If you'd like to have commit
+Commit access is evaluated on a person-to-person basis at the
+discretion of existing contributors.  If you would like to have commit
 access, there is usually no need to ask.  Getting involved with the
-other developers and making patches will generally result in automatic
-consideration for CVS commit access.  If you have to ask for it, you
-probably won't get it.
+other contributors and making patches will generally result in
+automatic consideration for commit access.  If you have to ask for it,
+you probably won't get it.
 
-Those with CVS commit access have a responsibility to ensure that
-other developers are following the guidelines that have been described
-herein within reason.  A basic rule of thumb is: don't break anything.
+Those with commit access have a responsibility to ensure that other
+developers are following the guidelines that have been described in
+this developer's guide within reasonable expectations.  A basic rule
+of thumb is: don't break anything.
 
 While the testing process will strive to ensure consistent behavior as
 changes are made, the responsibility still remains with the individual
-developer to ensure that everything still compiles and runs as it
+contributors to ensure that everything still compiles and runs as it
 should.  At any given time, BRL-CAD should compile on all of the
 primary platforms and (minimally) pass the BRL-CAD Benchmark
-successfully.  If the changes are unrelated, testing should be
-performed that exercise that particular change.
+successfully.  If changes are made that are not exercised by the
+Benchmark suite, testing should be manually performed in a manner that
+exercises those particular changes.
 
 
-DEVELOPER RESPONSIBILITIES
---------------------------
+CONTRIBUTOR RESPONSIBILITIES
+----------------------------
 
-Developers of BRL-CAD that are granted CVS access are expected to
+Contributors of BRL-CAD that are granted commit access are expected to
 uphold standards of conduct and adhere to conventions and procedures
-outlines in this developer guide.  To summarize some of the expected
-developer responsibilities:
+outlines in this guide.  All contributors are directly supporting the
+on-going development of BRL-CAD by being granted commit access.  As
+such, these individuals are also considered "developers" whether they
+are modifying source code or not, and have similar obligations.  To
+summarize some of the expected responsibilities:
 
 1) Developers are expected to uphold the quality, functionality,
 maintainability, and portability of the source code at all times.
 
-2) Bugs and compilation errors are to be expected as part of the
-process of active software development, but it is ultimately
-unacceptible to allow them to persist.  If it is discovered that a
-recent modification introduces a new bug or causes a compilation
-portability failure, then it is the responsibility of the developer
-that introduced the change to assist in resolving the issue promptly.
-It is the responsibility of all developers to address bugs as they are
-encountered regardless of who introduces the bug or compilation
-errors.
+2) Bugs, typos, and compilation errors are to be expected as part of
+the process of active software development and documentation, but it
+is ultimately unacceptible to allow them to persist.  If it is
+discovered that a recent modification introduces a new problem, such
+as causing a compilation portability failure, then it is the
+responsibility of the contributor that introduced the change to assist
+in resolving the issue promptly.  It is the responsibility of all
+developers to address issues as they are encountered regardless of who
+introduces the problem.
 
-3) Developers making commits to the repository are required to uphold
-the legal conventions and requirements overviewed in the COPYING file.
-This includes the implicit assignment of copyright to the
-U.S. Government on all contributed code unless otherwise explicitly
-arranged and the usage of appropriate license headers in files where
-expected.
+3) Contributors making commits to the repository are required to
+uphold the legal conventions and requirements overviewed in the
+COPYING file.  This includes the implicit assignment of copyright to
+the U.S. Government on all contributed code unless otherwise
+explicitly arranged as well as the usage of appropriate license
+headers in all files where expected.
 
 4) It is expected that developers will adhere to the coding style
-conventions outlined in this developer's guide.  This includes the
-utilization of the K&R/GNU/Java coding style for new code as well as
-the prescribed indentation convention.
+conventions and filesystem organization outlined in this developer's
+guide.  This includes the utilization of the specified coding style as
+well as the prescribed K&R indentation convention.
 
-5) Developers are expected to communicate with other developers and to
-avoid code territorialism.  All developers are expected and encouraged
-to fix bugs as they are found regardless of where in the package they
-are located.  Care should of course be taken to ensure that fixing in
-a bug in a section of code does not introduce other issues, especially
-for unfamiliar code.
+5) Contributors are expected to communicate with other contributors
+and to avoid code or file territorialism.  All contributors are
+expected and encouraged to fix problems as they are found regardless
+of where in the package they are located.  Care should of course be
+taken to ensure that fixing in a bug in a section of code does not
+introduce other issues, especially for unfamiliar code.
 
 
 VERSION NUMBERS & COMPATIBILITY
@@ -731,13 +809,13 @@ MAKING A RELEASE
 ----------------
 
 BRL-CAD uses a monthly iteration development cycle.  If there have
-been significant changes since the previous iteration, the developers
-are expected to "settle down" around the last couple days of the month
-so that the source code may be verified, tested, and released.  Major
-changes to the source code should not occur during these last couple
-days of the iteration, only minor bug and build fixes.  A release
-should then be made within the first couple days of the next month's
-iteration.  Repeat, rinse, recycle.
+been significant changes since the previous iteration, the
+contributors are expected to "settle down" around the last couple days
+of the month so that the source code may be verified, tested, and
+released.  Major changes to the source code and documentation should
+not occur during these last couple days of the iteration, only minor
+bug and build fixes.  A release should then be made within the first
+few days of the next month's iteration.  Repeat, rinse, recycle.
 
 In addition to the monthly iteration release, additional releases may
 be made on an as-needed basis.  This is particularly relevant for
