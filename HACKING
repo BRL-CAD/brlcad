@@ -876,9 +876,9 @@ SourceForge (i.e. upload them via ftp to upload.sf.net's incoming
 directory and select them on the sf.net File Release System).
 
 13) Increment and commit the next BRL-CAD release numbers to CVS;
-update the configure.ac, README, include/config_win.h, and NEWS
-immediately to a developer version (odd minor or patch version number,
-e.g. 7.4.1).
+update the configure.ac, NEWS, and include/config_win.h immediately to
+a developer version (odd minor or patch version number, e.g. 7.4.1).
+Update README version to next expected release number (e.g. 7.4.2).
 
 14) If appropriate, notify and/or update the following information
 outlets with the details of the new release:
