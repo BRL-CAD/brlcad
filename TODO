@@ -17,11 +17,6 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* tbd
-
-THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------
-
 * clone and tracker
 
 * Endgame Framework importer plugin
@@ -37,6 +32,12 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   complete it.
 
 * use environ for run-time path lookups
+
+
+THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------
+
+* tbd
 
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
