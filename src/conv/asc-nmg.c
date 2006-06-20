@@ -174,8 +174,6 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
 
 	create_brlcad_db(fpout, m, reg_name, grp_name);
 
-	nmg_km(m);		/* Destroy the nmg model. */
-
 	return( 0 );
 }
 
