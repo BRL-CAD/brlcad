@@ -27,6 +27,7 @@ The DXF importer received considerable updates this iteration, with
 John Anderson providing additional support for a variety of 2D DXF
 entities.
 
+* fixed asc-nmg bug that caused a crash on exit - John Anderson
 * fixed minor mged memory leak - Jim Monte
 * added archer version info to bottom of about dialog - Bob Parker
 * added a beta vertex array exporter (g-var) - Prasad Silva
