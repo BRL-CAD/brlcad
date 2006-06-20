@@ -1,1707 +1,469 @@
-Tue Apr 11 03:13:39 2006  brlcad  <brlcad@users.sourceforge.net>
+2006-06-20  BRL-CAD  <brlcad@users.sourceforge.net>
 
-	* configure.ac, include/config_win.h:
-	update version to 7.8.0, preparing for release
+	* NEWS, configure.ac, include/config_win.h:
+	prepare for release of 7.8.2
 
-	* NEWS: release note details for 7.6.8 and 7.8.0
+	* NEWS: fixed asc-nmg bug that caused a crash on exit
 
-	* m4/cache.m4: superfluous debug echo removed
+2006-06-20  johnranderson  <johnranderson@users.sourceforge.net>
 
-Fri Apr  7 19:34:24 2006  jlowenz  <jlowenz@users.sourceforge.net>
+	* src/conv/asc-nmg.c: Eliminated a redundant call to nmg_km()
 
-	* src/tclscripts/lib/Db.tcl, src/tclscripts/swidgets/scripts/tclIndex, src/util/azel.c, src/util/bw-png.c, src/util/dbcp.c, src/util/orle-pix.c, src/util/pix-png.c, src/util/png-bw.c, src/util/png-pix.c, src/util/ttcp.c, src/vdeck/parsarg.c, src/vdeck/vdeck.c, src/rt/main.c, src/rt/rtarea.1, src/rt/rtexample.c, src/rt/viewweight.c, src/rttherm/ssampview.c, src/sig/bw-d.c, src/sig/d-bw.c, src/sig/d-f.c, src/sig/d-i.c, src/sig/d-u.c, src/sig/dwin.c, src/sig/f-d.c, src/sig/f-i.c, src/sig/i-d.c, src/sig/i-f.c, src/sig/u-d.c, src/sig/u-f.c, src/tab/script-tab.c, src/tab/scriptsort.c, src/tab/tabinterp.c, src/tab/tabsub.c, src/tclscripts/archer/Archer.tcl, src/tclscripts/archer/tclIndex, src/remrt/ihost.c, src/remrt/remrt.c, src/remrt/rtsrv.c, src/proc-db/contours.c, src/proc-db/pipe.c, src/proc-db/room.c, src/proc-db/tea_nmg.c, src/other/libutahrle/rle_open_f.c, src/other/libutahrle/scanargs.c, src/proc-db/clutter.c, src/other/blt/src/bltUtil.c, src/other/blt/src/bltVecMath.c, src/other/blt/src/bltVecObjCmd.c, src/other/blt/src/bltVector.c, src/other/blt/src/bltTreeViewStyle.c, src/other/blt/src/bltTreeViewColumn.c, src/other/blt/src/bltTreeViewEdit.c, src/other/blt/src/bltTreeViewCmd.c, src/other/blt/src/bltTabnotebook.c, src/other/blt/src/bltTabset.c, src/other/URToolkit/tools/clock/rleClock.c, src/other/blt/src/bltBgexec.c, src/other/blt/src/bltBitmap.c, src/other/blt/src/bltCanvEps.c, src/other/blt/src/bltConfig.c, src/other/blt/src/bltDebug.c, src/other/blt/src/bltHierbox.c, src/other/blt/src/bltHtext.c, src/other/blt/src/bltImage.c, src/other/blt/src/bltInit.c, src/other/blt/src/bltObjConfig.c, src/other/blt/src/bltTable.c, src/other/URToolkit/cnv/rletogif/rletogif.c, src/other/URToolkit/tools/applymap.c, src/other/URToolkit/tools/avg4.c, src/other/URToolkit/tools/crop.c, src/other/URToolkit/tools/fant.c, src/other/URToolkit/tools/into.c, src/other/URToolkit/tools/mallocNd.c, src/other/URToolkit/tools/mcut.c, src/other/URToolkit/tools/mergechan.c, src/other/URToolkit/tools/pyrmask.c, src/other/URToolkit/tools/repos.c, src/other/URToolkit/tools/rleaddcom.c, src/other/URToolkit/tools/rlebg.c, src/other/URToolkit/tools/rlebox.c, src/other/URToolkit/tools/rlecat.c, src/other/URToolkit/tools/rlecomp.c, src/other/URToolkit/tools/rledither.c, src/other/URToolkit/tools/rleflip.c, src/other/URToolkit/tools/rlegrid.c, src/other/URToolkit/tools/rlehdr.c, src/other/URToolkit/tools/rlehisto.c, src/other/URToolkit/tools/rleinterp.c, src/other/URToolkit/tools/rleldmap.c, src/other/URToolkit/tools/rlemandl.c, src/other/URToolkit/tools/rlenoise.c, src/other/URToolkit/tools/rlepatch.c, src/other/URToolkit/tools/rleprint.c, src/other/URToolkit/tools/rlequant.c, src/other/URToolkit/tools/rlescale.c, src/other/URToolkit/tools/rleselect.c, src/other/URToolkit/tools/rlesetbg.c, src/other/URToolkit/tools/rlesortmap.c, src/other/URToolkit/tools/rlespiff.c, src/other/URToolkit/tools/rlesplice.c, src/other/URToolkit/tools/rlesplit.c, src/other/URToolkit/tools/rlestereo.c, src/other/URToolkit/tools/rleswap.c, src/other/URToolkit/tools/rlezoom.c, src/other/URToolkit/tools/smush.c, src/other/URToolkit/tools/to8.c, src/other/URToolkit/tools/tobw.c, src/other/URToolkit/tools/unexp.c, src/other/URToolkit/tools/unslice.c, src/other/URToolkit/cnv/rletoabA62/rletoabA62.c, src/other/URToolkit/cnv/aliastorle.c, src/other/URToolkit/cnv/cubitorle.c, src/other/URToolkit/cnv/graytorle.c, src/other/URToolkit/cnv/painttorle.c, src/other/URToolkit/cnv/rawtorle.c, src/other/URToolkit/cnv/rletoabA60.c, src/other/URToolkit/cnv/rletoalias.c, src/other/URToolkit/cnv/rletoascii.c, src/other/URToolkit/cnv/rletogray.c, src/other/URToolkit/cnv/rletopaint.c, src/other/URToolkit/cnv/rletops.c, src/other/URToolkit/cnv/rletoraw.c, src/other/URToolkit/cnv/rletorla.c, src/other/URToolkit/cnv/rletotarga.c, src/other/URToolkit/cnv/targatorle.c, src/other/URToolkit/cnv/vcrtorle.c, src/other/URToolkit/cnv/wasatchrle.c, src/other/URToolkit/cnv/xbmtorle.c, src/nirt/showshot.c, src/mged/animedit.c, src/mged/bodyio.c, src/mged/chgmodel.c, src/mged/chgtree.c, src/mged/clone.c, src/mged/cmd.c, src/mged/columns.c, src/mged/dm-generic.c, src/mged/doevent.c, src/mged/edsol.c, src/mged/history.c, src/mged/mater.c, src/mged/muves.c, src/mged/plot.c, src/mged/rtif.c, src/mged/setup.c, src/mged/tedit.c, src/mged/usepen.c, src/mged/utility1.c, src/mged/utility2.c, src/mged/vrlink.c, src/librt/g_arbn.c, src/librt/g_ars.c, src/librt/g_extrude.c, src/librt/g_hf.c, src/librt/g_nmg.c, src/librt/g_sketch.c, src/librt/nirt.c, src/librt/nmg_ck.c, src/librt/nmg_fcut.c, src/librt/nmg_index.c, src/librt/nurb_example.c, src/librt/pr.c, src/librt/regionfix.c, src/librt/tcl.c, src/librt/timer42.c, src/librt/wdb_obj.c, src/librt/dg_obj.c, src/libpkg/pkg.c, src/librt/bigE.c, src/librt/cut.c, src/librt/db5_bin.c, src/librt/db5_comb.c, src/librt/db_tree.c, src/liboptical/sh_plastic.c, src/liboptical/sh_treetherm.c, src/liboptical/sh_xxx.c, src/liboptical/shade.c, src/liboptical/sh_camo.c, src/liboptical/sh_light.c, src/libfb/fb_obj.c, src/libfb/fbserv_obj.c, src/libfb/if_4d.c, src/libfb/if_ogl.c, src/libfb/tcl.c, src/libbn/bn_tcl.c, src/libbu/bitv.c, src/libbu/bu_tcl.c, src/libbu/cmdhist.c, src/libbu/ispar.c, src/libbu/malloc.c, src/libbu/parse.c, src/libbu/printb.c, src/libbu/units.c, src/libbu/vls.c, src/libdm/options.c, src/lgt/execshell.c, src/lgt/hmenu.c, src/lgt/reflect.c, src/irprep/all_sf.c, src/irprep/shapefact.c, src/fb/fbcolor.c, src/fb/pix-fb.c, src/fb/pixflip-fb.c, src/fb/pp-fb.c, src/fbed/execshell.c, src/gtools/g_diff.c, src/gtools/g_transfer.c, src/gtools/solshoot.c, src/conv/iges/iges.c, src/conv/iges/iges_struct.h, src/conv/iges/trimsurf.c, src/conv/patch/patch-g.c, src/conv/patch/rpatch.c, src/fb/bw-fb.c, src/fb/fbcmap.c, regress/master_prep.sh, sh/Makefile.am, sh/tracker.sh, src/bwish/cmd.c, src/conv/conv-vg2g.c, src/conv/enf-g.c, src/conv/g2asc.c, src/conv/nastran-g.c, src/conv/ply-g.c, src/conv/poly-bot.c, src/conv/proe-g.c, m4/cache.m4, regress/Makefile.am, include/rle_config.h, include/raytrace.h, include/bu.h, doc/README.IRIX, bench/pixcmp.c, BUGS, NEWS, TODO, configure.ac:
-	update from HEAD
-
-	* src/libwdb/nurb.c: comment detail
-
-	* src/librt/oslo_calc.c:
-	utilize new allocation/free routines for oslo_mat
-
-	* src/librt/nurb_util.c:
-	fix broken BU_LIST manipulations; added functions to support new pool-based oslo_mat allocation, uses accessors: rt_nurb_new_oslo()/rt_nurb_free_oslo()
-
-	* src/librt/nurb_trim.c:
-	added rt_nurb_uv_trimmed() to support calculating whether an intersection is inside/outside a trim contour.
-
-	* src/librt/nurb_split.c, src/librt/nurb_xsplit.c, src/librt/nurb_refine.c:
-	modified call to rt_nurb_free_oslo to support new implementation
-
-	* src/librt/nurb_copy.c:
-	ws; added support to copy trim contours when copying surfaces
-
-	* src/librt/g_nurb.c:
-	ws; fixed trim curve looping constructs in export/import routines; fixed nurb sizing routine
-
-	* include/nurb.h:
-	ws; changed oslo matrix vector to be statically allocated and added support for oslo matrix pools (structure and accessors for struct oslo_mat). dynamic allocation of olso_mats were a serious bottleneck in profiling results.
-
-Fri Apr  7 08:23:57 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/other/URToolkit/tools/mallocNd.c:
-	dont use the k&r-style malloc extern now that the file correctly includes/presumes stdlib.h for it
-
-	* configure.ac:
-	define USE_FBSERV so libdm/mged allow direct fbserv render connections
-
-Thu Apr  6 21:46:04 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* m4/cache.m4: ack, missing trailing ` on the exec command
-
-	* include/raytrace.h:
-	windows needs these or apps won't link.. need to figure out why still
-
-	* src/mged/animedit.c, src/mged/bodyio.c, src/mged/chgmodel.c, src/mged/chgtree.c, src/mged/clone.c, src/mged/cmd.c, src/mged/columns.c, src/mged/dm-generic.c, src/mged/doevent.c, src/mged/edsol.c, src/mged/history.c, src/mged/mater.c, src/mged/muves.c, src/mged/plot.c, src/mged/rtif.c, src/mged/setup.c, src/mged/tedit.c, src/mged/usepen.c, src/mged/utility1.c, src/mged/utility2.c, src/mged/vrlink.c, src/util/azel.c, src/util/bw-png.c, src/util/dbcp.c, src/util/orle-pix.c, src/util/pix-png.c, src/util/png-bw.c, src/util/png-pix.c, src/liboptical/sh_plastic.c, src/liboptical/sh_treetherm.c, src/liboptical/sh_xxx.c, src/liboptical/shade.c, src/liboptical/sh_camo.c, src/liboptical/sh_light.c, src/fb/bw-fb.c, src/fb/fbcmap.c, src/fb/fbcolor.c, src/fb/pix-fb.c, src/fb/pixflip-fb.c, src/fb/pp-fb.c, src/conv/conv-vg2g.c, src/conv/enf-g.c, src/conv/g2asc.c, src/conv/iges/iges.c, src/conv/iges/iges_struct.h, src/conv/nastran-g.c, src/conv/patch/patch-g.c, src/conv/patch/rpatch.c, src/conv/ply-g.c, src/conv/poly-bot.c, src/conv/proe-g.c:
-	quell/fix issues raised by the Intel compiler on Altix
-
-	* src/bwish/cmd.c: quell warnings from intel compiler, use long type
-
-Thu Apr  6 18:46:53 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/archer/Archer.tcl:
-	Minor mods to set the default button on a few dialogs.
-
-	* src/tclscripts/lib/Db.tcl:
-	Modify the shareDb method to set the sharedDb flag.
-
-	* src/librt/wdb_obj.c:
-	Modify wdb_get_obj_bounds() and wdb_get_obj_bounds2() to properly free their rt_i instances. Modify wdb_binary_cmd to call fopen with the 'b' flag if on Windows.
-
-Wed Apr  5 21:13:39 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* TODO: optimize CSG structures automatically, automatic simplification
-
-	* TODO: analyze command doesn't print values with enough precision
-
-	* TODO:
-	option to mged make command or new command that enters solid edit mode.. same for cp command. (suggestions from dwayne)
-
-	* BUGS: boo hiss, Creat 'part'
-
-	* BUGS: xpush sometimes doesn't work
-
-	* src/util/ttcp.c:
-	remove the have_unistd_h check so that ttcp may remain completely stand-alone
-
-	* src/proc-db/clutter.c, src/proc-db/contours.c, src/proc-db/pipe.c, src/proc-db/room.c, src/proc-db/tea_nmg.c, src/rt/rtexample.c, src/other/URToolkit/tools/mallocNd.c, src/other/URToolkit/tools/rlenoise.c, src/other/URToolkit/cnv/rletoabA62/rletoabA62.c, src/nirt/showshot.c, src/lgt/execshell.c, src/lgt/hmenu.c, src/lgt/reflect.c, src/libdm/options.c, src/irprep/all_sf.c, src/irprep/shapefact.c:
-	more header/warning cleanup from Intel compiler warnings on Altix
-
-	* src/tclscripts/archer/tclIndex:
-	meh, silly supposedly static file got reordered
-
-	* src/fbed/execshell.c, src/rttherm/ssampview.c, src/gtools/g_diff.c, src/gtools/g_transfer.c, src/gtools/solshoot.c, src/remrt/ihost.c, src/remrt/remrt.c, src/remrt/rtsrv.c, src/tab/script-tab.c, src/tab/scriptsort.c, src/tab/tabinterp.c, src/tab/tabsub.c, src/sig/bw-d.c, src/sig/d-bw.c, src/sig/d-f.c, src/sig/d-i.c, src/sig/d-u.c, src/sig/dwin.c, src/sig/f-d.c, src/sig/f-i.c, src/sig/i-d.c, src/sig/i-f.c, src/sig/u-d.c, src/sig/u-f.c, src/vdeck/parsarg.c, src/vdeck/vdeck.c:
-	more header/warning cleanup from Intel compiler warnings on Altix
-
-	* src/conv/iges/trimsurf.c:
-	fourth parameter seems to be missing... make a note of it
-
-	* doc/README.IRIX:
-	update the documentation with comments about gcc crashing on -O3.  also provide the actual recommended production release build configure lines for 32-bit and 64-bit if only  for convenience to future releases.
-
-	* bench/pixcmp.c: missing string.h
-
-	* TODO:
-	benchmarks are working again, so we're good to go.  slated for later: fix the laundry list of security issues reported by Pedro, demote some of the next iteration items as well (autogen overrides, configure optimization)
-
-	* include/raytrace.h:
-	in fact, we can't rely on the _ifree() functions as they conflict with declarations in other files.. need to investigate more, but just disable for now
-
-Tue Apr  4 21:55:23 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* TODO: have libbu report memory allocation statistics
-
-Thu Mar 30 07:29:12 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* include/raytrace.h:
-	peculiar ifdef WIN32 commenting on three ifree functions for dsp, ebm, and vol primitives, enable them but recommend nobody rely on them till it gets sorted out
-
-	* src/other/URToolkit/tools/rlecomp.c, src/other/URToolkit/tools/rleinterp.c:
-	quell icc warnings
-
-	* m4/cache.m4:
-	if the compiler or preprocessor flags we're using for the current configure are different from when we last cached values, invalidate the configure cache.
-
-	* src/libfb/tcl.c, src/libfb/fb_obj.c, src/libfb/fbserv_obj.c, src/libfb/if_4d.c:
-	revert the libbu memory management changes to libpkg just to be safe.  if someone happens to call bu_semaphore_acquire on a BU_SEM_SYSCALL semaphore, the call will block since libbu utilizes that semaphore internally (and it's expected that callers know this..).
-
-Thu Mar 30 00:01:05 2006  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/rt/main.c:
-	When complaining about not getting an MGED database, we now accurately report
-	the name of the program (from argv[0]) being run, rather than pretending that
-	all rtuif programs are called "rt".
-
-Wed Mar 29 22:26:53 2006  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/rt/viewweight.c:
-	Since we have moved to calling bu_malloc instead of malloc, we have to be
-	careful not to acquire BU_SEM_SYSCALL prior to calling bu_malloc (since it
-	tries to acquire that semaphore, and the program would hang forever).
-
-	Of course, it would be better not to overload BU_SEM_SYSCALL in this
-	instance, but to allocate an application semaphore.  That is a more sweeping
-	change for later.
-
-Wed Mar 29 20:37:48 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* sh/tracker.sh: provide an example use
-
-Wed Mar 29 20:37:48 2006  jlowenz  <jlowenz@users.sourceforge.net>
-
-	* sh/tracker.sh:
-	file tracker.sh was added on branch trimnurbs-branch on 2006-04-07 19:26:25 +0000
-
-Wed Mar 29 20:02:23 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* include/bu.h:
-	add support for the intel compiler on altix, i.e. for compiling with icc on ia64.. bu_byteoffset so needs to be dynamically detected by configure or even at run-time.
-
-Tue Mar 28 20:11:50 2006  lbutler  <lbutler@users.sourceforge.net>
-
-	* regress/master_prep.sh:
-	Fixed bug where master_prep.sh was being run multiple times and
-	alternating between release numbers.  Now gets consistent release
-	number from README file
-
-Tue Mar 28 20:02:14 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/archer/Archer.tcl:
-	Set the default button for the preferences dialog.
-
-Tue Mar 28 15:53:09 2006  lbutler  <lbutler@users.sourceforge.net>
-
-	* regress/Makefile.am:
-	Now does all the regression tests even if one fails
-
-	* regress/master_prep.sh:
-	Added --enable-everything to the configure line
-	Printing old and new version numbers for confirmation
-
-Sat Mar 25 00:03:48 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/libfb/fb_obj.c, src/libfb/fbserv_obj.c, src/libfb/if_ogl.c, src/libfb/tcl.c:
-	quell intel on altix compiler warnings
-
-Fri Mar 24 23:45:16 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/libpkg/pkg.c: quell intel 9 on altix compiler warnings
-
-	* src/librt/nurb_example.c:
-	quell more intel 9 compiler warnings, reorder interpolate_data() to avoid decl
-
-	* src/librt/bigE.c, src/librt/cut.c, src/librt/db5_bin.c, src/librt/db5_comb.c, src/librt/dg_obj.c, src/librt/g_arbn.c, src/librt/g_ars.c, src/librt/g_extrude.c, src/librt/g_hf.c, src/librt/g_nmg.c, src/librt/g_sketch.c, src/librt/nirt.c, src/librt/nmg_ck.c, src/librt/nmg_fcut.c, src/librt/nmg_index.c, src/librt/pr.c, src/librt/regionfix.c, src/librt/tcl.c, src/librt/timer42.c, src/librt/wdb_obj.c:
-	lots of intel 9 for altix compiler warning quellings
-
-	* src/librt/g_nurb.c:
-	odd arguments that don't have print specifiers.. possible bug that should get looked into for the tclget serialization.
-
-	* src/libbn/bn_tcl.c:
-	ack, missing the %s for a slew of printfings, quell intel compiler warnings
-
-	* src/libbu/vls.c: final touches, missing header
-
-	* src/libbu/cmdhist.c, src/libbu/parse.c, src/libbu/printb.c, src/libbu/units.c, src/libbu/vls.c:
-	quell intel 9 compiler on altix warnings
-
-	* src/libbu/malloc.c: quell some intel compiler warnings
-
-	* src/libbu/cmdhist.c, src/libbu/ispar.c: quell compiler warning
-
-	* src/libbu/bu_tcl.c:
-	argument is incompatible with corresponding format string conversion, quell warnings by using long format specifiers instead
-
-	* src/libbu/bitv.c:
-	argument is incompatible with corresponding format string conversion, go with %lx (might still need a cast on the value now for 32-bit systems), add missing stdlib.h header
-
-	* src/other/blt/src/bltDebug.c, src/other/blt/src/bltHierbox.c, src/other/blt/src/bltHtext.c, src/other/blt/src/bltImage.c, src/other/blt/src/bltInit.c, src/other/blt/src/bltObjConfig.c, src/other/blt/src/bltTable.c, src/other/blt/src/bltTabnotebook.c, src/other/blt/src/bltTabset.c, src/other/blt/src/bltTreeViewCmd.c, src/other/blt/src/bltTreeViewColumn.c, src/other/blt/src/bltTreeViewEdit.c, src/other/blt/src/bltTreeViewStyle.c, src/other/blt/src/bltUtil.c, src/other/blt/src/bltVecMath.c, src/other/blt/src/bltVecObjCmd.c, src/other/blt/src/bltVector.c, src/other/blt/src/bltBitmap.c, src/other/blt/src/bltCanvEps.c, src/other/blt/src/bltConfig.c, src/other/blt/src/bltBgexec.c:
-	quell compiler warnings, missing header
-
-	* src/other/libutahrle/scanargs.c, src/other/URToolkit/cnv/aliastorle.c, src/other/URToolkit/cnv/cubitorle.c, src/other/URToolkit/cnv/graytorle.c, src/other/URToolkit/cnv/painttorle.c, src/other/URToolkit/cnv/rawtorle.c, src/other/URToolkit/cnv/rletoabA60.c, src/other/URToolkit/cnv/rletoabA62/rletoabA62.c, src/other/URToolkit/cnv/rletoalias.c, src/other/URToolkit/cnv/rletoascii.c, src/other/URToolkit/cnv/rletogif/rletogif.c, src/other/URToolkit/cnv/rletogray.c, src/other/URToolkit/cnv/rletopaint.c, src/other/URToolkit/cnv/rletops.c, src/other/URToolkit/cnv/rletoraw.c, src/other/URToolkit/cnv/rletorla.c, src/other/URToolkit/cnv/rletotarga.c, src/other/URToolkit/cnv/targatorle.c, src/other/URToolkit/cnv/vcrtorle.c, src/other/URToolkit/cnv/wasatchrle.c, src/other/URToolkit/cnv/xbmtorle.c, src/other/URToolkit/tools/applymap.c, src/other/URToolkit/tools/avg4.c, src/other/URToolkit/tools/clock/rleClock.c, src/other/URToolkit/tools/crop.c, src/other/URToolkit/tools/fant.c, src/other/URToolkit/tools/into.c, src/other/URToolkit/tools/mallocNd.c, src/other/URToolkit/tools/mcut.c, src/other/URToolkit/tools/mergechan.c, src/other/URToolkit/tools/pyrmask.c, src/other/URToolkit/tools/repos.c, src/other/URToolkit/tools/rleaddcom.c, src/other/URToolkit/tools/rlebg.c, src/other/URToolkit/tools/rlebox.c, src/other/URToolkit/tools/rlecat.c, src/other/URToolkit/tools/rlecomp.c, src/other/URToolkit/tools/rledither.c, src/other/URToolkit/tools/rleflip.c, src/other/URToolkit/tools/rlegrid.c, src/other/URToolkit/tools/rlehdr.c, src/other/URToolkit/tools/rlehisto.c, src/other/URToolkit/tools/rleinterp.c, src/other/URToolkit/tools/rleldmap.c, src/other/URToolkit/tools/rlemandl.c, src/other/URToolkit/tools/rlenoise.c, src/other/URToolkit/tools/rlepatch.c, src/other/URToolkit/tools/rleprint.c, src/other/URToolkit/tools/rlequant.c, src/other/URToolkit/tools/rlescale.c, src/other/URToolkit/tools/rleselect.c, src/other/URToolkit/tools/rlesetbg.c, src/other/URToolkit/tools/rlesortmap.c, src/other/URToolkit/tools/rlespiff.c, src/other/URToolkit/tools/rlesplice.c, src/other/URToolkit/tools/rlesplit.c, src/other/URToolkit/tools/rlestereo.c, src/other/URToolkit/tools/rleswap.c, src/other/URToolkit/tools/rlezoom.c, src/other/URToolkit/tools/smush.c, src/other/URToolkit/tools/to8.c, src/other/URToolkit/tools/tobw.c, src/other/URToolkit/tools/unexp.c, src/other/URToolkit/tools/unslice.c, src/other/libutahrle/rle_open_f.c:
-	quell compiler warnings
-
-	* include/rle_config.h:
-	define USE_TIME_H to quell implicit declaration warnings of time()
-
-	* src/rt/rtarea.1: -v for viewsize is not longer that option
-
-Thu Mar 23 20:42:15 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* configure.ac:
-	itcl/tk needs to match tcl/tk building default of 'on' until the bugs are sorted out
-
-	* NEWS:
-	john fixed the mged crash bug where running the B command on bad geometry would cause the crash.  he reports that This was caused by a bug in db_recurse() where it would try to free an rt_db_internal even when there was nothing to free. The fix was to check that there is actually something there before freeing. This eliminates the crashing, but the bad geometry will still not be drawn. (fixes sf bug 1220146, reported by Karel Kulhavy - clock3)
-
-Thu Mar 23 03:02:44 2006  johnranderson  <johnranderson@users.sourceforge.net>
-
-	* src/librt/db_tree.c:
-	db_recurse() was trying to free an rt_db_internal that might not have
-	anything in it (bug #1220146)
-
-Wed Mar 22 21:06:20 2006  jlowenz  <jlowenz@users.sourceforge.net>
-
-	* src/librt/nurb_util.c:
-	Added function to free trim_contour structure, and the list of curves it contains.
-
-	* include/nurb.h: Added magic check for trim_contour struct.
-
-	* include/Makefile.am: added the rt.h header so it would be installed
-
-Wed Mar 22 17:02:17 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* NEWS: new tracker tool for extracting sf.net tracker data
-
-	* sh/Makefile.am:
-	include the new tracker.sh in the distribution, install it
-
-	* sh/tracker.sh:
-	initial script that interacts with the Sourceforge website and extracts data from the trackers available for a given project.  the tracker data is conglomerated into a CSV file suitable for import into a spreadsheet application.
-
-	* configure.ac:
-	erp, previous commit included a conflicted merge from head .. unconflict
-
-	* configure.ac:
-	more detail on the libtool cc1plus bug, fixed in libtool 1.5.10 but broken in previous versions where a c++ compiler becomes required.. try to bypass the error by aliasing cc1plus to cc1 (untested)
-
-Mon Mar 20 22:33:06 2006  jlowenz  <jlowenz@users.sourceforge.net>
-
-	* src/librt/nurb_util.c:
-	fixed function name to make more sense; fixed compiler warning
-
-	* src/librt/g_nurb.c: fixed function names to make more sense
-
-	* include/nurb.h: added new nurbs function declarations
-
-Thu Mar 16 20:52:33 2006  jlowenz  <jlowenz@users.sourceforge.net>
-
-	* TODO, configure.ac, src/other/iwidgets/generic/entryfield.itk, src/tclscripts/archer/images/aboutArcher.png:
-	merge from HEAD
-
-Thu Mar 16 17:35:37 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/archer/images/aboutArcher.png: Update to 0.7.5
-
-	* src/other/iwidgets/generic/entryfield.itk:
-	Modified the _keyPress method to propagate the <Return> event if the -command option is empty.
-
-Tue Mar 14 22:32:25 2006  jlowenz  <jlowenz@users.sourceforge.net>
-
-	* src/librt/nurb_util.c:
-	added some util functions to create a trim_contour as well as add curves to it, and add it to a nurb surface.
-
-	* src/librt/g_nurb.c:
-	modify import/export5 to support reading and writing the trimming
-	curves from the db. this change makes the nurbs format
-	incompatible with previous versions.
-
-	* include/nurb.h:
-	oops, add support for lists of trim_contours (essentially a list of curves) since any given trim contour may be composed of multiple curves.
-
-Mon Mar 13 22:28:56 2006  jlowenz  <jlowenz@users.sourceforge.net>
-
-	* src/librt/nurb_util.c:
-	ws; initialize trimming curve list and count; added function to add trimming curves to a surface.
-
-	* src/librt/g_nurb.c:
-	ws; added support to export trimming curves along with their nurb surface.
-
-	* include/nurb.h: ws and support for trimming curves on a nurb surface.
-
-Mon Mar 13 21:08:26 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* TODO: center of presented area
-
-Mon Mar 13 18:44:57 2006  jlowenz  <jlowenz@users.sourceforge.net>
-
-	* sh/footer.sh, sh/header.sh: Changes from HEAD merge.
-
-	* src/librt/nurb_trim.c:
-	Removed nmg_uv_in_lu(). Moved to nmg_rt_isect.c.
-
-	* src/librt/nmg_rt_isect.c:
-	Moved nmg_uv_in_lu() to here from nurb_trim.c, since it didn't seem to be a nurbs-only function.
-
-	* include/raytrace.h:
-	remove most (if not all?) core rt functionality (moved to rt.h). remove nurb functionality (moved to nurb.h).
-
-	* include/nurb.h:
-	Added nurb-related structures from nmg.h. removed dependency on raytrace.h, replaced with dependency on rt.h. Added function declarations removed from raytrace.h.
-
-	* include/nmg.h:
-	moved nurbs-related structures back to the nurb.h header. nmg.h now includes nurb.h as a dependency.
-
-	* include/Attic/rt.h:
-	file rt.h was initially added on branch trimnurbs-branch.
-
-	* include/Attic/rt.h:
-	start a new header to encapsulate core rt functionality; raytrace.h now includes rt.h. rt.h should not be used in applications.
-
-Fri Mar 10 19:18:14 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* configure.ac:
-	unable to track down all the tclisms auto_path right now so redefault to build instead of auto
-
-	* sh/footer.sh, sh/header.sh:
-	add support for m4 files and make sure it's consistent on template files between the header and footer scripts
-
-Mon Mar  6 08:22:04 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* TODO: restore functionality to tests and benchmark
-
-	* TODO:
-	short intro documentation for command line tools including a separate one for mged.  generally want a document less than 20 pages but encompassing.
-
-	* TODO:
-	might as well call them by the more tame name of reference sheets
-
-	* TODO:
-	cheat sheet of useful BRL-CAD command-line tools grouped categorically
-
-	* TODO:
-	cheat sheet of common mged commands, keybindings, gui elements and scripting facilities
-
-	* TODO:
-	support to the raytracers for multiple image file formats, recognizing an option and/or the file suffix of the -o filename.
-
-	* TODO:
-	libfb + font rendering (perhaps through libbn's plot interface) for a posix terminal.
-
-	* TODO: gpgpu for enhanced performance boolweave sorting
-
-Mon Feb 27 10:37:29 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/fbserv/fbserv.c: delint the socklent
-
-	* src/lgt/lgt.c:
-	unbreak lgt, #endif left in the wrong place.  nix the TRUE/FALSE stuff while we're in here too
-
-	* src/liboptical/sh_fbm.c: need string.h for memcpy
-
-	* src/liboptical/sh_billboard.c:
-	unsigned long image lengths, quell warnings when passing to sizing funcs
-
-	* src/proc-db/pyramid.c, src/proc-db/spltest.c, src/proc-db/torii.c, src/proc-db/tube.c, src/proc-db/wdb_example.c, src/remrt/ihost.c, src/remrt/rtsrv.c, src/rt/read-rtlog.c, src/rt/rt_simple.c, src/rt/rtexample.c, src/rt/rtregis.c, src/rt/rtwalk.c, src/rt/view_bot_faces.c, src/rttherm/ssamp-bw.c, src/tab/scriptsort.c, src/tclscripts/archer/tclIndex, src/tclscripts/swidgets/scripts/tclIndex, src/util/asc-pl.c, src/util/bary.c, src/util/binfo.c, src/util/cv.c, src/util/dsp_add.c, src/util/imgdims.c, src/util/msrandom.c, src/util/mst.c, src/util/pixclump.c, src/util/pixcount.c, src/util/pixdsplit.c, src/util/pixhist.c, src/util/pixhist3d-pl.c, src/util/pixhist3d.c, src/util/pl-asc.c, src/util/pl-pl.c, src/util/png-pix.c, src/util/remapid.c, src/util/terrain.c, src/util/wavelet.c, src/vdeck/vdeck.c, src/gtools/g_transfer.c, src/gtools/solshoot.c, src/lgt/error.c, src/lgt/lgt.c, src/libfft/fftc.c, src/libfft/fftest.c, src/libfft/ifftc.c, src/mged/cad_parea.c, src/mged/solids_on_ray.c, src/nirt/if.c, src/nirt/nirt.c, src/nirt/read_mat.c, src/proc-db/molecule.c, src/proc-db/nmgmodel.c, src/proc-db/pipe.c, src/anim/anim_time.c, src/fb/cat-fb.c, src/fb/cell-fb.c, src/fb/fbfree.c, src/fb/fbhelp.c, src/fb/pixautosize.c, src/anim/anim_fly.c:
-	stdlib.h and exit()
-
-	* src/fbserv/fbserv.c, src/rt/main.c, src/liboptical/sh_billboard.c, src/liboptical/sh_fbm.c, src/liboptical/sh_xxx.c, src/libfb/if_debug.c, src/libfb/if_null.c, src/libfb/if_remote.c:
-	stdlib.h warning quelling
-
-	* src/librt/comb.c, src/librt/nirt.c, src/librt/nmg_bool.c, src/librt/nmg_eval.c, src/librt/nmg_info.c, src/librt/nmg_mod.c, src/librt/nmg_plot.c, src/librt/nmg_pt_fu.c, src/librt/nmg_rt_isect.c, src/librt/nmg_rt_segs.c, src/librt/nmg_tri.c, src/librt/rt_dspline.c:
-	stdlib.h warning quelling, conversions to bu_bomb instead of aborting
-
-	* src/librt/g_rpc.c:
-	no need to test for null, libbu memory management guarantees non-null -- include stdlib.h anyways
-
-	* src/libbn/vert_tree.c:
-	bomb instead of exiting while processing the vertex nodes
-
-	* src/libbn/bn_tcl.c: common file size is unsigned
-
-	* src/libbu/hook.c, src/libbu/parse.c, src/libbu/rb_delete.c, src/libbu/rb_diag.c, src/libbu/rb_extreme.c, src/libbu/rb_insert.c, src/libbu/rb_order_stats.c, src/libbu/rb_rotate.c, src/libbu/rb_search.c, src/libbu/rb_walk.c:
-	quell warnings, need stdlib.h for exit routines
-
-	* src/libbu/fopen_uniq.c: stdlib.h for exit()
-
-	* src/libbu/color.c:
-	include stdlib.h anyways, but change the exit to a bu_bomb
-
-	* src/libbu/bomb.c:
-	need stdlib.h for exit(), flush streams before abort.
-
-	* src/libbu/association.c: need stdlib.h for exit()
-
-	* include/rle.h:
-	include stdlib.h, quell warnings in libutahrle and elsewhere
-
-	* src/libdm/clip.c:
-	revert the clipping plane modifications for now until they can be tested better
-
-	* src/conv/iges/usage.c, src/conv/jack/jack-g.c, src/conv/off/off-g.c, src/conv/comgeom/cvt.c, src/conv/comgeom/region.c, src/conv/comgeom/solid.c, src/conv/conv-vg2g.c, src/conv/iges/iges.c, src/conv/nmg-bot.c, src/conv/nmg-rib.c:
-	quell warnings, missing stdlib.h, calls to exit with a negative, ws.
-
-	* NEWS: added manpage for benchmark
-
-	* NEWS: jra fixed g-dxf compatibility export issue
-
-	* src/conv/bot-bldxf.c, src/conv/bot-raw.c, src/conv/cy-g.c, src/conv/euclid_unformat.c, src/conv/g-adrt.c, src/conv/g2asc.c, src/conv/nmg-sgp.c, src/conv/poly-bot.c:
-	a variety of warning quellings, missing stdlib, calls to exit with a negative, ws.
-
-	* src/conv/g-dxf.c:
-	add a comment about adding the fourth vertex for 3DFACES, massive ws cleanup/consistency
-
-	* src/mged/setup.c:
-	tried to move the PATH modifying block to after Tcl is initialized, but it still seems to be causing problems for people compiling on ubuntu for some unknown reason.  disable the block for now until it can be investigated more fully, maybe have to resort to a configure test.
-
-	* bench/Makefile.am: install and provide the new benchmark manpage
-
-	* bench/benchmark.1:
-	initial manual page, pulling content from the existing script contents and word-smithing some clean-up
-
-	* bench/run.sh: doesn't test the compiler, tests a system
-
-	* TODO:
-	wrote a manpage for the benchmark tool.  need to add the alternates to bu_getprogname, separate into new file too.
-
-Sun Feb 26 16:59:42 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* TODO:
-	write an introduction to brl-cad document that overviews the primary tools and how they can be used together.
-
-Sat Feb 25 17:43:09 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* TODO: test out float-equal
-
-Sat Feb 25 05:32:12 2006  johnranderson  <johnranderson@users.sourceforge.net>
-
-	* src/conv/g-dxf.c: now always outputs 4 vertices per 3DFACE
-
-Fri Feb 24 12:24:18 2006  d_rossberg  <d_rossberg@users.sourceforge.net>
-
-	* src/librt/wdb_obj.c: allocate memory before RT_APPLICATION_INIT
-
-Fri Feb 24 01:19:23 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* BUGS:
-	wavelet isn't working correctly on a simple image decomposition and reconstruction
-
-Tue Feb 21 20:29:34 2006  brlcad  <brlcad@users.sourceforge.net>
+2006-06-16  BRL-CAD  <brlcad@users.sourceforge.net>
 
 	* HACKING:
-	refer to the new src/README file for entries not listed in HACKING
+	Yet another massive rewrite/modification.  This time expand the document to include details relevant to all contributors, not just developers, so that the file is applicable to anyone with commit access (with particular attention to documentation writers).  Also, finally include some details on where we stand with C++ and clarify a lot of statements throughout with respect to style, conventions, and requirements.
 
-	* src/Makefile.am: include the README in the dist
+2006-06-15  BRL-CAD  <brlcad@users.sourceforge.net>
 
-	* src/README:
-	initial README file that describes what is in each of the various directories in here
+	* db/.cvsignore: add toyjeep.g
 
-	* src/util/decimate.c, src/util/pixembed.c: libbu memory management
+2006-06-15  bob1961  <bob1961@users.sourceforge.net>
 
-Mon Feb 20 13:52:30 2006  bob1961  <bob1961@users.sourceforge.net>
+	* doc/archer_ack.txt: Minor changes
 
-	* misc/win32-msvc7/librt/librt.vcproj:
-	Update the debug version's preprocessor definitions.
+2006-06-13  BRL-CAD  <brlcad@users.sourceforge.net>
 
-	* src/librt/dg_obj.c:
-	Removed declaration of dgo_eraseobjall_callback() and dgo_notify().
+	* HACKING: add versiontracker to the release notification list
 
-	* include/raytrace.h:
-	Flesh out parameter list for the declaration of dgo_eraseobjall_callback() and dgo_notify(). Declare dgo_notifyWdb().
+2006-06-08  BRL-CAD  <brlcad@users.sourceforge.net>
 
-	* src/librt/dg_obj.c:
-	Added missing parameter to dgo_eraseobjall_callback(). Added dgo_notifyWdb().
+	* src/mged/ged.c: unconditionally disable for now
 
-	* src/librt/wdb_obj.c:
-	Modified wdb_killtree_callback()'s call to dgo_eraseobjall_callback (i.e. parameters were out of order). Modified wdb_killtree_cmd() to call dgo_notifyWdb() to reduce the number of times observers are notified.
+	* src/tclscripts/archer/tclIndex: new index entries
 
-Sun Feb 19 03:48:27 2006  brlcad  <brlcad@users.sourceforge.net>
+2006-06-07  d_rossberg  <d_rossberg@users.sourceforge.net>
 
-	* src/util/bwscale.c:
-	add support for '-' as the input file to designate stdin, use libbu memory management, reorder functions, and ws.
+	* src/librt/g_pipe.c:
+	the bending angle may be (still) near 0, this should not be a problem
 
-Sat Feb 18 23:37:27 2006  brlcad  <brlcad@users.sourceforge.net>
+	* include/bn.h, src/libbn/mat.c:
+	provide with bn_mat_inverse a less rigorous function to invert a 4-by-4 matrix,
+	it is almost impossible to decide in advance if a matrix is singular
 
-	* sh/footer.sh, sh/header.sh:
-	add support for .vim files; also manual page comment character to an escaped quote
+2006-06-06  BRL-CAD  <brlcad@users.sourceforge.net>
 
-Wed Feb 15 22:17:21 2006  brlcad  <brlcad@users.sourceforge.net>
+	* doc/README.IRIX: ack, API != ABI.  Genericize the home directory too.
 
-	* TODO:
-	geometry viewing commands/visualizations of exploded levels.  mulled over this years ago, but davisson revitalized some interest/discussion.
-
-Tue Feb 14 20:28:17 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/mged/ged.c:
-	don't attempt to call do_titles() with an overlay_vls that hasn't been initialized.  this 'also' fixes sf bug 1326045 that was fixed by another edit as well
-
-	* src/mged/titles.c:
-	mild sanity check, even if the directory pointer is valid, make sure the name is too before printfing
-
-Tue Feb 14 18:01:04 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/swidgets/scripts/tree.itk:
-	Check-in for Doug Howard. Added a -sortmode option.
-
-Fri Feb 10 15:12:36 2006  twingy  <twingy@users.sourceforge.net>
-
-	* src/adrt/rise/slave/slave.c, src/adrt/bench/bench.c:
-	ADRT compiles happily again.
-
-Fri Feb 10 05:52:57 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* NEWS: smoother sketch primitive spline drawing
-
-	* src/librt/g_sketch.c: clean-up, ws, etc.
-
-	* src/libtclcad/tkCanvBezier.c:
-	smooth out the spline drawing by drawing 500 segments instead of just 50.  no more chunkiness.
-
-Thu Feb  9 05:30:12 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* BUGS: query_ray can't find nirt if not installed
-
-Wed Feb  8 23:40:41 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* BUGS: fbed is looking for something in brlcad_data vfont path
-
-Wed Feb  8 21:35:59 2006  lbutler  <lbutler@users.sourceforge.net>
-
-	* doc/html/manuals/mged/mged_cmd_index.html:
-	better description of dbbinary based upon user feedback.
-
-Tue Feb  7 15:57:26 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* doc/README.MacOSX:
-	comment on how compiling on 10.2 requires additional effort due to the busted libtool script
-
-	* src/libdm/dm-X.c, src/mged/dm-X.c:
-	aix Xutil.h header uses Bool #define which is provided by Xlib.h, which Xutil.h doesn't include for you.  so we need to include Xlib.h first.
-
-	* src/libpkg/.cvsignore: ignore tpkg
-
-	* src/fb/fbline.c: avoid 'y1' since AIX math.h header defines a y1()
-
-	* src/liboptical/Makefile.am, src/libmultispectral/Makefile.am:
-	separate out libs to one-per-line, progress once again towards making the librtms convenience library non-static-only to avoid libtool bugs on various platforms.  it is noted that the version of libtool that ships with mac os x 10.2 will not correctly function here, as it ends up adding librtms multiple times as a static library (regardless of -static) resulting in muliply defined symbol errors.
-
-	* src/util/ttcp.c:
-	OS X 10.2 doesn't have socklen_t so instead of requiring common.h, just leave it as an int and let the warnings slide for now (again?) if there are any.
-
-	* src/other/libpng/pngtest.c:
-	protect against jmpbuf define in IBM SP4 headers
-
-	* NEWS: prevent several g-nmg segfaults
-
-	* src/conv/g-nmg.c:
-	if the shader is null, prevent a crash on strtok'ing it
-
-Mon Feb  6 23:15:48 2006  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/conv/g-nmg.1:
-	formatting of the options, and expounding a little to (hopefully) improve clarity.
-
-Mon Feb  6 20:44:40 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* include/rle_config.h: ws
-
-	* regress/shaders.sh:
-	output raytrace scripts using the .rt suffix convention, fix the pixdiff stderr so that it doesn't append, overwrites.  fix the tr to handle multiple lines anyways.
-
-Mon Feb  6 17:52:24 2006  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/conv/dxf-g.1:
-	reformatted page so that options are called out in a more readable fashion.
-
-Mon Feb  6 15:56:46 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/libpkg/Makefile.am:
-	libtool apparently cannot resolve the dependency on libpkg with the library listed with a full path so provide it a local-dir dependency
-
-Sun Feb  5 19:45:30 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* regress/Makefile.am, regress/shaders.sh:
-	output to shaders.log, not mged_shaders.log
-
-	* NEWS: fixed read bug in giftorle
-
-	* src/other/URToolkit/cnv/giftorle.c:
-	calling a FILE* an fd doesn't make it one.  don't try to read() it either, get the read fd from the fd file pointer
-
-	* src/other/URToolkit/cnv/giftorle.c: need unistd.h for read()
-
-	* src/mged/fbserv.c: need stdlib.h for malloc/free
-
-	* src/conv/g2asc.c: convert to libbu memory management
-
-	* src/libfb/tcl.c:
-	need stdlib for free(), change to libbu memory management in other places
-
-Sat Feb  4 16:13:30 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* NEWS:
-	fixed multiply referenced object illumination bug (sf bug 1218812) where mged fails to properly track the muliply referenced objects causing a bad directory list, causing a crash.  the reported crash is fixed though multiply referenced objects (in a single combination) are still problematic.  also fixed a bug in the nmg code where it was crashing while freeing an nmg object.
-
-	* src/mged/titles.c:
-	prevent crashing if we're unable to print the title of an illuminated path.  this fixes sf bug 1218812 reported by clock3.
-
-	* src/mged/titles.c: ws indent
-
-	* src/librt/nmg_mk.c:
-	prevent crashing in nmg_kvu() when the vertex use structure has a null parent and/or null up pointers for whatever reason.  user reported crash on the *vu->up.magic_p -- this fixes that crash.
-
-	* src/libbu/ptbl.c: cleanup, doxygenify
-
-Fri Feb  3 17:56:51 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* configure.ac:
-	improve the socklen_t check, need to look in sys/socket.h as well as sys/types.h for the type.  still fallback to int.
-
-	* src/librt/db_io.c: lseek's use of off_t requires sys/types.h
-
-	* configure.ac: look for lseek function
-
-	* src/libbu/brlcad_path.c, src/mged/ged.c, src/mged/setup.c:
-	use bu_getprogname/bu_setprogname instead of bu_argv0
-
-	* include/bu.h: er, bu_argv0() was declared twice.  remove it.
-
-	* include/bu.h:
-	bu_argv0 was replaced with bu_setprogname and bu_getprogname rather quickly so no need to deprecate it.  just remove.
-
-	* src/libbu/brlcad_path.c:
-	make bu_argv0() static, it shouldn't be called by programs any longer.  instead, programs should use bu_getprogname() and bu_setprogname() to mimic the stdlib interface functions of similar name.  if the stdlib interface routines are available, they'll get used.
-
-	* configure.ac:
-	check for getprogname and setprogname functions for libbu
-
-	* configure.ac:
-	fallback to int instead of to size_t for the socklen_t check
-
-Thu Feb  2 21:48:29 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* configure.ac:
-	fix build issues on mac os x 10.2.  there's no socklen_t type so pretend it's size_t.  old version of autoconf doesn't do anything with the arguments to AC_C_BIGENDIAN, so just check the result and define NATURAL_IEEE/REVERSE_IEEE conditionally.
-
-Tue Jan 31 03:20:38 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/gtools/Makefile.am:
-	make g_transfer a noinst program and a sample source application
-
-	* TODO:
-	the archer headers are now fixed, reflecting the correct legal header that bob annotated in his commit log message to src/archer/archer and as the COPYING file requires of contributions by devs.
-
-	* src/tclscripts/sdialogs/scripts/entrydialog.itk, src/tclscripts/sdialogs/scripts/listdialog.itk, src/tclscripts/sdialogs/scripts/stddlgs.tcl, src/tclscripts/swidgets/scripts/selectlists.itk, src/tclscripts/swidgets/scripts/tkgetdir.itk, src/tclscripts/swidgets/scripts/togglearrow.itk, src/tclscripts/swidgets/scripts/tooltip.itk, src/tclscripts/swidgets/scripts/tree.itk, src/tclscripts/swidgets/swidgets.tcl, src/tclscripts/archer/Arb4EditFrame.tcl, src/tclscripts/archer/Arb5EditFrame.tcl, src/tclscripts/archer/Arb6EditFrame.tcl, src/tclscripts/archer/Arb7EditFrame.tcl, src/tclscripts/archer/Arb8EditFrame.tcl, src/tclscripts/archer/Archer.tcl, src/tclscripts/archer/BotEditFrame.tcl, src/tclscripts/archer/CombEditFrame.tcl, src/tclscripts/archer/EhyEditFrame.tcl, src/tclscripts/archer/EllEditFrame.tcl, src/tclscripts/archer/EpaEditFrame.tcl, src/tclscripts/archer/EtoEditFrame.tcl, src/tclscripts/archer/ExtrudeEditFrame.tcl, src/tclscripts/archer/GeometryEditFrame.tcl, src/tclscripts/archer/GripEditFrame.tcl, src/tclscripts/archer/HalfEditFrame.tcl, src/tclscripts/archer/LoadArcherLibs.tcl, src/tclscripts/archer/PartEditFrame.tcl, src/tclscripts/archer/PipeEditFrame.tcl, src/tclscripts/archer/Plugin.tcl, src/tclscripts/archer/RhcEditFrame.tcl, src/tclscripts/archer/RpcEditFrame.tcl, src/tclscripts/archer/ShaderEdit.tcl, src/tclscripts/archer/SketchEditFrame.tcl, src/tclscripts/archer/SphereEditFrame.tcl, src/tclscripts/archer/TgcEditFrame.tcl, src/tclscripts/archer/TorusEditFrame.tcl, src/tclscripts/archer/Wizard.tcl, src/tclscripts/archer/bgerror.tcl, src/tclscripts/archer/cursor.tcl, src/tclscripts/archer/tabwindow.itk, src/tclscripts/sdialogs/sdialogs.tcl:
-	to quote Bob's commit to src/archer/archer "All of archer including the tclscripts is assigned to u.s. government and should be under the LGPL" so add the boilerplate legal header.  the COPYING file requires this regardless for all commits whether implicit or explicit.  also add the boilerplate variables footer while we're at it.
-
-	* src/tclscripts/rtwizard/lib/DbPage.itk, src/tclscripts/rtwizard/lib/ExamplePage.itk, src/tclscripts/rtwizard/lib/FbPage.itk, src/tclscripts/rtwizard/lib/FeedbackDialog.itk, src/tclscripts/rtwizard/lib/FrameBufferDialog.itk, src/tclscripts/rtwizard/lib/FullColorPage.itk, src/tclscripts/rtwizard/lib/GhostPage.itk, src/tclscripts/rtwizard/lib/HelpPage.itk, src/tclscripts/rtwizard/lib/HighlightedPage.itk, src/tclscripts/rtwizard/lib/IntroPage.itk, src/tclscripts/rtwizard/lib/LinePage.itk, src/tclscripts/rtwizard/lib/MGEDpage.itk, src/tclscripts/rtwizard/lib/PictureTypeA.itcl, src/tclscripts/rtwizard/lib/PictureTypeB.itcl, src/tclscripts/rtwizard/lib/PictureTypeBase.itcl, src/tclscripts/rtwizard/lib/PictureTypeC.itcl, src/tclscripts/rtwizard/lib/PictureTypeD.itcl, src/tclscripts/rtwizard/lib/PictureTypeE.itcl, src/tclscripts/rtwizard/lib/PictureTypeF.itcl, src/tclscripts/rtwizard/lib/Wizard.itk, src/tclscripts/rtwizard/rtwizard.tcl:
-	legal header changed from Library to Lesser to reflect current 'official' name of the license
-
-	* src/tclscripts/cad_dialog.tcl: title
-
-	* src/tclscripts/mged/points.tcl: footer
-
-	* src/archer/plugins/Wizards/tankwizardIA.tcl, src/archer/plugins/Wizards/tankwizardIA/TankWizardIA.tcl, src/archer/plugins/utility.tcl, src/archer/plugins/wizards.tcl, src/archer/archer, src/archer/archer.bat:
-	to quote Bob's commit to src/archer/archer "All of archer including the tclscripts is assigned to u.s. government and should be under the LGPL" so add the boilerplate legal header and remove the survice claim.  the COPYING file requires this as well.  also add the boilerplate variables footer while we're at it.
-
-Mon Jan 30 23:47:56 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* TODO: add command line help options and manpage to 'benchmark' tool
-
-	* NEWS:
-	new tpkg ttcp-style example application using libpkg.  tpkg is an example file data transfer program, written in a ttcp style, sending a file's data from a client to a server using libpkg for the network communication.  the example sample application is installed for developer reference.
-
-	* src/libpkg/Makefile.am, src/libpkg/tpkg.c:
-	initial add of 'tpkg', an example file data transfer program.  the program is written in a ttcp style, sending a file's data from a client to a server using libpkg for the network communication.
-
-Sun Jan 29 22:20:29 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/other/jove/jove_draw.c, src/other/jove/jove_extend.c, src/other/jove/jove_funcs.c, src/other/jove/jove_insert.c, src/other/jove/jove_io.c, src/other/jove/jove_main.c, src/other/jove/jove_marks.c, src/other/jove/jove_misc.c, src/other/jove/jove_proc.c, src/other/jove/jove_re.c, src/other/jove/jove_wind.c:
-	s/exp/jove_exp/ to avoid conflicting with exp() in math.h
-
-	* src/other/jove/jove.h:
-	fix the malloc/realloc and exp decl conflicts, include stdlib.h
-
-	* src/mged/clone.c, src/nirt/if.c, src/nirt/parse_fmt.c, src/remrt/remrt.c, src/remrt/rtsrv.c, src/rttherm/viewtherm.c, src/vdeck/vdeck.c, src/vdeck/vproc.c, src/gtools/testfree.c:
-	update to api changes from rt_* to bu_* for certain routines.
-
-	* src/conv/jack/g-jack.c, src/conv/jack/jack-g.c, src/conv/off/g-off.c, src/conv/off/off-g.c, src/conv/patch/patch-g.c:
-	update converters to the API changes, avoiding the deprecated calls
-
-	* src/fb/fbstretch.c, src/libfb/fb_generic.c, src/libfb/if_4d.c, src/libfft/fftfast.c, src/librtserver/rtserver.c, src/proc-db/fence.c, src/rttherm/viewtherm.c, src/sig/Makefile.am, src/sig/dauto.c, src/sig/istat.c, src/sig/ustat.c, src/util/pixhalve.c, src/anim/Makefile.am, src/anim/anim_hardtrack.c, src/anim/chan_add.c, src/anim/chan_mult.c, src/anim/chan_permute.c, src/conv/jack/g-jack.c, src/conv/off/off-g.c:
-	more libbu memory management and header cleanup
-
-Sat Jan 28 22:46:19 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/mged/cmd.c, src/util/bw-a.c, src/util/bw-png.c, src/util/double-asc.c, src/util/pix-png.c, src/util/pix-ppm.c, src/util/pix-yuv.c, src/util/pixbgstrip.c, src/util/pixborder.c, src/util/pixcut.c, src/util/pixhalve.c, src/util/pixpaste.c, src/util/texturescale.c, src/util/yuv-pix.c, src/conv/asc2g.c:
-	header cleanup, include stdlib.h for atol(). fixes some 64-bitness
-
-	* src/tclscripts/sdialogs/scripts/tclIndex, src/tclscripts/swidgets/scripts/tclIndex, src/util/bw-ps.c, src/util/bwmod.c, src/util/bwrot.c, src/util/loop.c, src/util/pcd-pix.c, src/util/pix-bw.c, src/util/pix-ps.c, src/util/pixbackgnd.c, src/util/pixblend.c, src/util/pixfade.c, src/util/pixmorph.c, src/util/pl-ps.c, src/util/plline2.c, src/util/plrot.c, src/util/png-bw.c, src/util/terrain.c, src/mged/facedef.c, src/mged/inside.c, src/mged/points/points_scan.l, src/mged/red.c, src/mged/rtif.c, src/mged/track.c, src/other/incrTcl/itcl/win/nmakehlp.c, src/other/incrTcl/itk/win/nmakehlp.c, src/other/libutahrle/buildmap.c, src/proc-db/brickwall.c, src/proc-db/fence.h, src/proc-db/globe.c, src/proc-db/picket_fence.c, src/proc-db/pix2g.c, src/proc-db/rawbot.c, src/proc-db/terrain.c, src/proc-db/vegitation.h, src/proc-db/wall.c, src/remrt/remrt.c, src/rt/do.c, src/rt/opt.c, src/rt/rtscale.c, src/rt/rtshot.c, src/rt/rtwalk.c, src/sig/a-d.c, src/sig/bw-d.c, src/sig/d-bw.c, src/sig/d-f.c, src/sig/d-i.c, src/sig/d-u.c, src/sig/dfft.c, src/sig/dmod.c, src/sig/dwin.c, src/sig/f-d.c, src/sig/f-i.c, src/sig/i-d.c, src/sig/i-f.c, src/sig/imod.c, src/sig/u-d.c, src/sig/u-f.c, src/sig/umod.c, src/tab/script-tab.c, src/tab/tabinterp.c, src/tab/tabsub.c, src/tclscripts/archer/tclIndex, src/conv/iges/iges_struct.h, src/conv/iges/readcnv.c, src/conv/iges/readdbl.c, src/conv/iges/readflt.c, src/conv/jack/g-jack.c, src/conv/off/g-off.c, src/conv/patch/patch-g.c, src/conv/patch/rpatch.c, src/conv/unigraphics/ug-g.c, src/fb/fb-png.c, src/fb/fbcmrot.c, src/fb/fbgamma.c, src/fb/fbgammamod.c, src/fb/fbstretch.c, src/fb/png-fb.c, src/gtools/g_diff.c, src/libbn/bn_tcl.c, src/librt/db_anim.c, src/librt/dg_obj.c, src/librt/g_bot.c, src/librt/g_cline.c, src/librt/g_ebm.c, src/librt/g_pipe.c, src/librt/importFg4Section.c, src/librt/tcl.c, src/librt/timercos.c, src/librt/track.c, src/librt/vdraw.c, src/librt/wdb_obj.c, src/mged/adc.c, src/mged/animedit.c, src/mged/arbs.c, src/mged/chgview.c, src/mged/clone.c, src/mged/edarb.c, src/mged/edsol.c, misc/pro-engineer/proe-brl.c, src/conv/asc-nmg.c, src/conv/bot_shell-vtk.c, src/conv/comgeom/read.c, src/conv/dxf-g.c, src/conv/enf-g.c, src/conv/euclid-g.c, src/conv/fast4-g.c, src/conv/g-acad.c, src/conv/g-dxf.c, src/conv/g-euclid.c, src/conv/g-euclid1.c, src/conv/g-nff.c, src/conv/g-nmg.c, src/conv/g-obj.c, src/conv/g-shell.rect.c, src/conv/g-stl.c, src/conv/g-tankill.c, src/conv/g-vrml.c, src/conv/g-x3d.c, src/conv/g-xxx.c, src/conv/g-xxx_facets.c, src/conv/iges/g-iges.c, src/conv/nastran-g.c, src/conv/ply-g.c, src/conv/proe-g.c, src/conv/stl-g.c, src/conv/tankill-g.c, src/conv/viewpoint-g.c:
-	header cleanup, atof() requires stdlib.h on altix/posix, fix 64-bitness
-
-Fri Jan 27 22:19:07 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/archer/cursor.tcl:
-	The package require's argument needs to be BLT on Windows.
-
-	* src/tclscripts/mged/rt.tcl:
-	Added the rt_check_dest proc. Disable framebuffer related menu items as these are pertinant only to the embedded framebuffer.
-
-	* src/mged/cmd.c, src/mged/cmd.h: Added cmd_has_embedded_fb().
-
-	* misc/win32-msvc7/libdm/libdm.vcproj, misc/win32-msvc7/mged/mged.vcproj:
-	Not using embedded framebuffer in MGED on Windows.
+2006-06-06  bob1961  <bob1961@users.sourceforge.net>
 
 	* src/tclscripts/archer/Archer.tcl:
-	Convert a few instance variables into class variables.
+	Added a "Display" panel to the preferences dialog. At the moment it provides a simple way to set the viewing cube size.
 
-Thu Jan 26 23:35:23 2006  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/mged/typein.c:
-	When making an rpp whose min value is greater than the max value, we now report
-	the values so the user knows which ones were the problem.
-
-Thu Jan 26 21:55:50 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* m4/stage.m4:
-	if stdout has been redirected to a file, don't output ansi control sequences
-
-	* configure.ac: meh, ordering cleanup
-
-Thu Jan 26 20:45:18 2006  bob1961  <bob1961@users.sourceforge.net>
+2006-06-05  bob1961  <bob1961@users.sourceforge.net>
 
 	* src/tclscripts/archer/Archer.tcl:
-	Add code to properly set the state of the edit buttons in the right side toolbar.
+	Check-in mods for Doug. This mod checks for the existence of  before trying to use it. Also change version to 0.8.1
 
-Thu Jan 26 00:46:48 2006  brlcad  <brlcad@users.sourceforge.net>
+2006-06-05  BRL-CAD  <brlcad@users.sourceforge.net>
 
-	* TODO:
-	fix archer file headers (update to indicate the assigned copyright that bob said they needed to be (see commit on src/archer/archer))
+	* src/other/blt/man/Makefile.am, configure.ac, src/other/blt/Makefile.am, src/other/blt/cf/Makefile.am, src/other/blt/examples/Makefile.am, src/other/blt/html/Makefile.am:
+	add initial makefiles for the other blt resource directories, help make distcheck work more prevalently
 
-Wed Jan 25 19:48:42 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/archer/plugins/utility.tcl, src/archer/plugins/wizards.tcl:
-	only traverse into Utility and Wizards if they actually exist
-
-	* src/tclscripts/archer/LoadArcherLibs.tcl:
-	load the blt library by getting lib out of the bu_brlcad_root path.. need to refactor this puppy, but it should work irrespective of the other stuff
-
-	* src/other/blt/Makefile.am:
-	i suppose only one of the tk files wasn't needed due to conflicts.. the others seem rather important due to runtime symbol errors.. ;)
-
-	* src/tclscripts/archer/cursor.tcl:
-	make the other pkg_index error go away regarding: can't set "::blt::cursorWaitCount": parent namespace doesn't exist
-
-	* src/tclscripts/archer/Archer.tcl:
-	more protections to avoid the can't read "env(ARCHER_HOME)": no such variable error when making the package index
-
-	* src/tclscripts/archer/Archer.tcl:
-	argv0 is not available for some reason, so catch the exception and conditionally call LoadArcherLibs
-
-Tue Jan 24 17:19:12 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/tclscripts/ampi.tcl:
-	add the verbose flag so that warnings/errors are apparent
-
-Tue Jan 24 15:44:21 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/librt/db_io.c:
-	Remove USE_SURVICE_MODS ifdef/endif that was guarding a fflush in db_write().
-
-Tue Jan 24 05:00:27 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/vdeck/vdeck.c, src/vdeck/vproc.c, src/conv/proe-g.c, src/mged/dir.c, src/mged/muves.c, src/mged/utility1.c, src/mged/utility2.c, src/util/remapid.c:
-	convert iteration over the array of linked list of directory nodes to FOR_ALL_DIRECTORY_START/FOR_ALL_DIRECTORY_END instead
-
-	* include/raytrace.h:
-	the external isn't const, but the avs is (db5_export_attributes)
-
-	* src/gtools/g_diff.c:
-	convert iteration over the array of linked lists to FOR_ALL_DIRECTORY_START/FOR_ALL_DIRECTORY_END instead
-
-	* src/gtools/g_transfer.c:
-	use the FOR_ALL_DIRECTORY_START/FOR_ALL_DIRECTORY_END macros for iterating over the array of linked list of directory nodes.
-
-	* src/librt/db_inmem.c:
-	don't need the db5_export_attributes extern decl as it's now in raytrace.h like it should have been
-
-	* include/raytrace.h:
-	missing the declaration for db5_export_attributes()
-
-Mon Jan 23 23:38:04 2006  lbutler  <lbutler@users.sourceforge.net>
-
-	* src/mged/typein.c:
-	include stdlib.h so that atof is known to return a double
-
-	* src/lgt/texture.c:
-	call to malloc() had the signature of a call to bu_malloc().  Fixed to call bu_malloc().
-
-Mon Jan 23 18:03:27 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/librt/db_inmem.c: Declare db5_export_attributes().
-
-	* include/fb.h: Removed declaration of variables from server.c
-
-	* src/fbserv/fbserv.c:
-	Provide declarations for variables that live in server.c
-
-	* src/fbserv/fbserv_win.c:
-	Include fbmsg.h instead of libfb/pkgtypes.h. Provide declarations for variables that live in server.c
-
-	* misc/win32-msvc7/libfb/libfb.vcproj: Removed server.c
-
-	* misc/win32-msvc7/fbserv/fbserv.vcproj: Added server.c
-
-	* misc/win32-msvc7/librt/librt.vcproj:
-	Added the following new files: db_flags.c and db_inmem.c
-
-Mon Jan 23 07:54:02 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/rttherm/ssampview.c: use atol instaed of atoi
-
-	* src/util/pix-ppm.c: missing end quote
-
-	* src/util/terrain.c, src/util/texturescale.c, src/util/yuv-pix.c, src/util/pixpaste.c, src/util/pixcut.c, src/util/pixborder.c, src/util/pixbgstrip.c, src/util/pix-yuv.c, src/util/pix-ppm.c:
-	libbu for allocations
-
-	* src/rttherm/ssampview.c: stdlib.h for atoi()
-
-	* src/remrt/remrt.c: add stddef.h for bu_offsetof
-
-	* src/remrt/protocol.h: header protection, use bu_offsetof
-
-	* src/nirt/parse_fmt.c: stdlib.h for getenv
-
-	* src/irprep/firpass.c: missing arg to bu_free
-
-	* src/fb/pl-fb.c: STATIC to static
-
-	* src/anim/anim_track.c: s/nmu/num/ transpose
-
-	* src/librtserver/rtserver.c: quell some warnings
-
-	* src/irprep/all_sf.c:
-	use M_PI instead of PI, VDIVIDE_TOL instead of ZTOL, and libbu memory management
-
-	* src/irprep/firpass.c, src/irprep/secpass.c:
-	libbu memory allocation management
-
-	* src/irprep/showtherm.c:
-	use M_PI instead of PI, VUNITIZE_TOL instead of TOL, and libbu memory management
-
-	* src/lgt/hmenu.c: use bu_malloc
-
-	* src/lgt/execshell.c, src/lgt/ir.c, src/lgt/octree.c: stdlib.h
-
-	* src/lgt/lgt_db.c, src/lgt/mat_db.c, src/lgt/reflect.c, src/lgt/texture.c:
-	libbu for memory management
-
-	* src/lgt/trie.c: stdlib.h
-
-	* src/anim/anim_fly.c, src/anim/anim_track.c:
-	libbu for memory management
-
-	* src/nirt/command.c: stdlib.h
-
-	* src/nirt/if.c: ws
-
-	* src/nirt/parse_fmt.c: s/rt_malloc/bu_malloc
-
-	* src/proc-db/molecule.c, src/proc-db/pipe.c, src/proc-db/rawbot.c, src/proc-db/torii.c, src/proc-db/vegitation.c:
-	use libbu memory allocation management, get rid of null checks
-
-	* src/mged/dm-X.c, src/mged/dm-ogl.c, src/mged/setup.c, src/mged/tedit.c:
-	stdlib.h for alloc/getenv funcs
-
-	* src/mged/Attic/clip.c, src/mged/Makefile.am:
-	clip.c removed, being used from libdm like it should be
-
-	* src/mged/cad_boundp.c: stdlib.h
-
-	* src/libdm/clip.c: update to use GED_MIN and GED_MAX
-
-	* src/halftone/main.c, src/halftone/tone_floyd.c, src/fb/cat-fb.c:
-	convert to libbu memory management
-
-	* src/fb/pl-fb.c:
-	stdlib.h for malloc and friends, not using libbu management as there is failure recovery code
-
-	* src/libmultispectral/sh_temp.c: include stddef.h for bu_offsetof
-
-	* src/libdm/dm_obj.c:
-	convert to bu_malloc for all but one section so that it may fail gracefully
-
-	* src/libdm/dm-X.c, src/libdm/dm-glx.c, src/libdm/dm-ogl.c, src/libdm/dm-ogl_win.c, src/libdm/dm-pex.c:
-	need stdlib.h for getenv()
-
-	* src/libdm/clip.c:
-	don't use INFINITY as it's a publicly defined macro usually, regardless, it's used as a clipping plane distance so call it that.  increase it one order to a billion while we're at it.
-
-	* src/librtserver/rtserver.c, src/rt/rtshot.c, src/rt/sh_tcl.c, src/rt/viewweight.c, src/rt/worker.c:
-	convert to libbu memory management
-
-	* src/conv/g-adrt.c: how in the world did struct "vu_vls" compile?
-
-	* src/conv/asc-nmg.c, src/conv/asc2g.c, src/conv/dxf-g.c, src/conv/euclid-g.c, src/conv/g-adrt.c:
-	convert to libbu memory management
-
-	* src/conv/g-vrml.c, src/conv/g-x3d.c:
-	include stddef.h for bu_offset's usage of offset
-
-	* src/conv/jack/jack-g.c: convert to libbu memory management
-
-	* src/conv/comgeom/solid.c:
-	convert to libbu memory management, removing the need for the memory allocation failure checking/handling
-
-	* src/liboptical/sh_billboard.c, src/liboptical/sh_brdf.c, src/liboptical/sh_camo.c, src/liboptical/sh_cloud.c, src/liboptical/sh_cook.c, src/liboptical/sh_fbm.c, src/liboptical/sh_fire.c, src/liboptical/sh_flat.c, src/liboptical/sh_gauss.c, src/liboptical/sh_grass.c, src/liboptical/sh_light.c, src/liboptical/sh_noise.c, src/liboptical/sh_plastic.c, src/liboptical/sh_points.c, src/liboptical/sh_prj.c, src/liboptical/sh_rtrans.c, src/liboptical/sh_scloud.c, src/liboptical/sh_spm.c, src/liboptical/sh_stack.c, src/liboptical/sh_stxt.c, src/liboptical/sh_tcl.c, src/liboptical/sh_text.c, src/liboptical/sh_toyota.c, src/liboptical/sh_treetherm.c, src/liboptical/sh_wood.c, src/liboptical/sh_xxx.c, src/liboptical/sh_air.c:
-	include stddef.h for bu_offset's usage of offset
-
-	* src/libfb/fb_obj.c: use bu_calloc and bu_free instead of calloc
-
-	* src/libfb/fbserv_obj.c, src/libfb/tcl.c:
-	use bu_malloc and bu_free instead of malloc
-
-Sun Jan 22 23:44:49 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* include/bu.h:
-	remove the need for HAVE_STDLIB_H and need for stdlib.h and stddef.h.  instead, let files that use the offsetof macros include stdlib.h.  don't need decls for malloc,calloc,realloc any more.  provide bu_offsetof() macro
-
-	* include/cmd.h:
-	add header protections, conditionally include sys/time.h correctly
-
-	* src/librt/g_arb.c, src/librt/g_cline.c, src/librt/g_dsp.c, src/librt/g_ebm.c, src/librt/g_ehy.c, src/librt/g_ell.c, src/librt/g_epa.c, src/librt/g_eto.c, src/librt/g_grip.c, src/librt/g_half.c, src/librt/g_hf.c, src/librt/g_part.c, src/librt/g_rhc.c, src/librt/g_rpc.c, src/librt/g_submodel.c, src/librt/g_superell.c, src/librt/g_tgc.c, src/librt/g_torus.c, src/librt/g_vol.c, src/librt/nmg_ck.c, src/librt/nmg_fuse.c, src/librt/nmg_index.c, src/librt/nmg_info.c, src/librt/nmg_inter.c, src/librt/nmg_mk.c, src/librt/nmg_rt_segs.c, src/librt/prep.c, src/librt/tree.c:
-	missing stddef.h for offsetof, convert references to offsetof to bu_offsetof
-
-	* src/librt/wdb_obj.c: missing stdlib.h for atol
-
-	* src/libbu/hash.c:
-	include stdlib.h for malloc (cannot use bu_malloc() as the hash table may be used for MEM_DEBUG)
-
-	* src/libbu/cmd.c: ws
-
-	* src/libbn/bn_tcl.c: common file size uses longs now
-
-	* src/libbu/vfont.c: use bu_malloc instead of malloc
-
-	* src/libbu/malloc.c, src/libbu/semaphore.c:
-	missing stdlib.h for malloc (only a few files that should be using malloc instead of bu_malloc)
-
-	* src/mged/fbserv.c: remove pkgtypes.h
-
-	* src/mged/fbserv.h: add header protection, include fbmsg.h
-
-	* NEWS: ws
-
-	* src/fbserv/Makefile.am:
-	include server.c, moved from src/libfb to there
-
-	* src/fbserv/fbserv.c, src/fbserv/fbserv_win.c:
-	declare the fb_server_pkg_switch server callback switch table provided in server.c
-
-	* src/libfb/Makefile.am:
-	server.c was moved to src/fbserv/.; pkgswitch.c was removed entirely; pkgtypes.h was renamed to fbmsg.h and moved to include/.
-
-	* src/libfb/if_remote.c:
-	use fbmsg.h instead of pkgtypes.h (renamed and moved)
-
-	* src/libfb/Attic/pkgswitch.c:
-	remove used switch file, seems like a dumbed down example of the fbserv switch table with just close and error.  not really useful.
-
-	* include/fb.h:
-	by moving the framebuffer server switch table out of libfb and into fbserv directly, it no longer needs to be in fb.h, removing the fb.h interface coupling to pkg.h
-
-	* include/Makefile.am:
-	add fbmsg.h to the list of headers (but make it noinst)
-
-	* src/fbserv/server.c, src/libfb/Attic/server.c:
-	moved src/libfb/server.c to src/fbserv/server.c; the file contains the fbserv callbacks and the callback table used exclusively by fbserv.
-
-	* src/libfb/fbserv_obj.c, src/libfb/fbserv_obj_win32.c:
-	change from HIDDEN to static, ws, use fbmsg.h
-
-	* include/fbmsg.h, src/libfb/Attic/pkgtypes.h:
-	moved/renamed src/libfb/pkgtypes.h to include/fbmsg.h as it is used both by the library (if_remote) and by the application (fbserv) for communicating; whether it's considered a public header or a private header that fbserv happens to understand is still up for debate
-
-	* src/libpkg/pkg.c, include/pkg.h:
-	there is no need/intent to modify the pkg_switch callback structure, so make it const
-
-Sat Jan 21 21:09:44 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/conv/g-acad.c, src/conv/g-dxf.c, src/conv/g-euclid.c, src/conv/g-euclid1.c, src/conv/g-nff.c, src/conv/g-nmg.c, src/conv/g-stl.c, src/conv/g-tankill.c, src/conv/g-vrml.c, src/conv/g-x3d.c, src/conv/g-xxx_facets.c:
-	a little less excitement about regions that evaluate to nothing, still report it if we're verbose a little more consistently.
-
-	* src/conv/g-nmg.c: ah, r may be null from td_r when traversing
-
-	* src/mged/cmd.c: er, if BC_WITH_PARSERS is NOT defined..
-
-	* configure.ac:
-	add tests to determine whether we successfully found a system bison/flex yacc/lex tool pair for making parsers.  if either isn't found, the parsers that are written to utilize them are disabled to prevent compile errors and a warning is output.  if they are availabe WITH_PARSERS is provided to the makefiles and BC_WITH_PARSERS is defined for code to conditionally test against.
-
-	* src/mged/Makefile.am:
-	conditionally traverse into and link against the points subdirectory based on whether WITH_PARSERS was declared by configure after testing for yacc/lex.
-
-	* src/mged/cmd.c:
-	disable the parse_points command conditionally depending on new configure checks for yacc/lex, output a message if it was disabled
-
-	* configure.ac:
-	use AC_PROG_LEX instead of AM_PROG_LEX since the latter attempts to use the missing script to run flex but fails miserably due to the assumptions by automake that LEX_OUTPUT_ROOT will be set to something.
-
-	* src/libfb/fbserv_obj.c:
-	pkgtypes.h is in current dir, no need to couple to the directory name
-
-	* src/libfb/Attic/pkgswitch.c: pkg.h isn't a local header
-
-	* include/fb.h:
-	framebuffer interface is presently tied to the network package library due to a return type, should decouple that
-
-	* NEWS:
-	Forgot to mention that considerable time was spent profiling and
-	optimizing the raytracer.  in particular, performance enhancements
-	were made in support of reducing large image overhead and some
-	unnecessary pixel processing.  this is particularly important for
-	background pixels, i.e. primary rays that miss the model.  performance
-	observed varies based on number of primary rays and the number that
-	miss, but results show anywhere from 5% (small "full" images) to 300%
-	increase (large "empty" images):
-
-	For example, shooting at a single sphere on a viewsize of 100000 at a
-	10kx10k pixel image, increase shows:
-
-	Before:  about 700,000 rtfms
-	 After:about 2,200,000 rtfms
-
-	Benchmark results increased consistently from about 2120 to 2270 on
-	one machine (mac g5), which seems reasonable given their relatively
-	tiny size and general lack of background.  shark made profiling fun.
-
-	* NEWS:
-	mention the name of the new root solving application, roots_example.
-
-	* Makefile.am:
-	delete any CVS directories from our candidate distribution since we don't want to ship them
-
-	* misc/Makefile.am:
-	scratch that, the test will be moved to the top-level makefile so NO cvs dirs get included
-
-	* misc/Makefile.am:
-	don't include enigma's CVS directory in the distribution
-
-	* NEWS: 7.8 will likely be released in february
-
-	* NEWS: oops, put roots_example into the right release block
-
-	* NEWS: new example root solving sample application
-
-	* src/util/.cvsignore: ignore the roots_example binary
-
-	* src/util/Makefile.am:
-	add roots_example.c as a sample application that uses the root solver
-
-	* src/util/roots_example.c:
-	might as well add a linear root example too, fix type on rt_poly_roots()
-
-	* src/util/roots_example.c:
-	add a simple example application that shows how to use the root solver for solving polynomial roots (up to 4th order shown)
-
-	* src/libbu/mappedfile.c:
-	cast the time_t to a long so we don't need to necessarily stash a time_t in the mappedfile structure any more
-
-	* include/bu.h:
-	remove the unnecessary time_t type from the public header so that the dependency on time.h may be eliminated
-
-Fri Jan 20 22:43:55 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/rt/rtexample.c: main returns an int
-
-	* src/mged/clone.c: check clone args a little more consistently
-
-	* NEWS: prevent g-nmg segfault during tesselation
-
-	* src/conv/g-nmg.c:
-	prevent a sigsegv when the region can't be evaluated successfully
-
-	* src/mged/clone.c:
-	reuse VUNITIZE_TOL from vmath instead of something new
-
-	* BUGS, TODO:
-	add bugs and feature requests observed during the 2005 winter brl-cad user training at survice.
-
-	* doc/README.MacOSX: build failure on os x 10.2 is a known issue
-
-Fri Jan 20 08:53:39 2006  d_rossberg  <d_rossberg@users.sourceforge.net>
-
-	* misc/win32-msvc/Dll/brlcad.rc: update copyright to 2006
-
-	* src/librt/librt.dsp: set HAVE_CONFIG_H to get internal declarations,
-	db_flags.c, db_inmem.c added
-
-	* misc/win32-msvc/Dll/brlcad.dsp, src/libbn/libbn.dsp, src/libbu/libbu.dsp, src/libsysv/libsysv.dsp, src/libwdb/libwdb.dsp:
-	set HAVE_CONFIG_H to get internal declarations
-
-Fri Jan 20 02:05:08 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/liboptical/Makefile.am:
-	heh, fPIC breaks irix compiler (they use DPIC)
-
-	* src/librt/db_inmem.c: unused var
-
-Thu Jan 19 16:00:19 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/archer/Archer.tcl:
-	Minor tweaks to the _invoke_wizard_update and _init_obj_edit_view methods.
-
-Thu Jan 19 15:34:33 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/other/tkimg/base/Makefile.am: missing trailing slash
-
-	* m4/epsilon.m4:
-	while it's bizarre for them to be different, only report a failure to conform if the implementation is epsilon is less than the expected power
-
-	* TODO: justin's idea of a librt-based path tracer is pretty cool
-
-	* TODO:
-	system identifier application with sysctl-style information database
-
-	* TODO:
-	support for features either as primitives or operations or both, e.g. chamfer, fillet, round
-
-	* TODO:
-	mingw is once again delayed a release, archer rises to the list for the current distribution
-
-	* src/archer/archer:
-	have archer search the current directory for tclscripts in case we're not installed
-
-	* src/bwish/main.c:
-	modify the auto_path as soon as we have the tcl interpreter so that even resources like tk.tcl may be found when mixing system/non-system tcl with other system/non-system components
-
-	* configure.ac:
-	search for the tcl/tk stub libraries too, and utilize them accordingly if someone asks for a system tcl or tk.  for now, presume that tcl+tclstub and tk+tkstub always exist together or at least that it'll link regardless.
-
-Wed Jan 18 21:04:51 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* doc/html/manuals/archer/Makefile.am, doc/html/manuals/Makefile.am:
-	include missing stuff in the distribution, add the Makefile.defs for fast builds
-
-	* src/archer/Makefile.am, src/archer/plugins/Makefile.am, src/archer/plugins/Wizards/Makefile.am, src/archer/plugins/Wizards/tankwizardIA/Makefile.am, src/archer/plugins/Wizards/tankwizardIA/images/Makefile.am:
-	include the files in the distribution
-
-	* src/vdeck/vproc.c, src/vdeck/match.c, src/vdeck/parsarg.c, src/vdeck/std.h, src/vdeck/vdeck.1, src/vdeck/vdeck.c, src/vdeck/vextern.h, src/vas4/record_seq.c, src/vas4/status.c, src/vas4/vas4.1, src/vas4/vas4.c, src/vas4/vas4.h, src/vas4/vas_io.c, src/vdeck/cgarbs.c, src/util/pixinterp2x.1, src/util/pixinterp2x.c, src/util/pixmatte.1, src/util/pixmatte.c, src/util/pixmerge.1, src/util/pixmerge.c, src/util/pixmorph.1, src/util/pixmorph.c, src/util/pixrect.1, src/util/pixrect.c, src/util/pixrot.1, src/util/pixrot.c, src/util/pixsaturate.1, src/util/pixsaturate.c, src/util/pixscale.1, src/util/pixscale.c, src/util/pixshrink.1, src/util/pixshrink.c, src/util/pixstat.1, src/util/pixstat.c, src/util/pixsubst.1, src/util/pixsubst.c, src/util/pixt-ik.c, src/util/pixtile.1, src/util/pixtile.c, src/util/pixuntile.1, src/util/pixuntile.c, src/util/pl-X.1, src/util/pl-X.c, src/util/pl-X10.1, src/util/pl-X10.c, src/util/pl-asc.1, src/util/pl-asc.c, src/util/pl-dm.c, src/util/pl-hpgl.1, src/util/pl-hpgl.c, src/util/pl-pl.1, src/util/pl-pl.c, src/util/pl-ps.1, src/util/pl-ps.c, src/util/pl-sgi.1, src/util/pl-sgi.c, src/util/pl-starbase.1, src/util/pl-starbase.c, src/util/pl-tek.1, src/util/pl-tek.c, src/util/plcolor.1, src/util/plcolor.c, src/util/pldebug.1, src/util/pldebug.c, src/util/plgetframe.1, src/util/plgetframe.c, src/util/plline2.1, src/util/plline2.c, src/util/plrot.1, src/util/plrot.c, src/util/plstat.c, src/util/png-bw.1, src/util/png-bw.c, src/util/png-pix.1, src/util/png-pix.c, src/util/png_info.1, src/util/png_info.c, src/util/query.1, src/util/query.c, src/util/remapid.1, src/util/remapid.c, src/util/rle-pix.1, src/util/rle-pix.c, src/util/sgi-pix.c, src/util/sun-pix.1, src/util/sun-pix.c, src/util/terrain.1, src/util/terrain.c, src/util/texturescale.c, src/util/ttcp.c, src/util/wavelet.1, src/util/wavelet.c, src/util/xyz-pl.c, src/util/yuv-pix.c, src/vas4/init_ik.c, src/tclscripts/rtwizard/lib/DbPage.itk, src/tclscripts/rtwizard/lib/ExamplePage.itk, src/tclscripts/rtwizard/lib/FbPage.itk, src/tclscripts/rtwizard/lib/FeedbackDialog.itk, src/tclscripts/rtwizard/lib/FrameBufferDialog.itk, src/tclscripts/rtwizard/lib/FullColorPage.itk, src/tclscripts/rtwizard/lib/GhostPage.itk, src/tclscripts/rtwizard/lib/HelpPage.itk, src/tclscripts/rtwizard/lib/HighlightedPage.itk, src/tclscripts/rtwizard/lib/IntroPage.itk, src/tclscripts/rtwizard/lib/LinePage.itk, src/tclscripts/rtwizard/lib/MGEDpage.itk, src/tclscripts/rtwizard/lib/PictureTypeA.itcl, src/tclscripts/rtwizard/lib/PictureTypeB.itcl, src/tclscripts/rtwizard/lib/PictureTypeBase.itcl, src/tclscripts/rtwizard/lib/PictureTypeC.itcl, src/tclscripts/rtwizard/lib/PictureTypeD.itcl, src/tclscripts/rtwizard/lib/PictureTypeE.itcl, src/tclscripts/rtwizard/lib/PictureTypeF.itcl, src/tclscripts/rtwizard/lib/Wizard.itk, src/tclscripts/util/expand_int_ranges.tcl, src/tclscripts/util/luniq.tcl, src/util/alias-pix.1, src/util/alias-pix.c, src/util/ap-pix.1, src/util/ap-pix.c, src/util/asc-pl.1, src/util/asc-pl.c, src/util/azel.1, src/util/azel.c, src/util/bary.1, src/util/bary.c, src/util/binfo.c, src/util/brlcad.1, src/util/buffer.1, src/util/buffer.c, src/util/bw-a.c, src/util/bw-imp.1, src/util/bw-imp.c, src/util/bw-pix.1, src/util/bw-pix.c, src/util/bw-png.1, src/util/bw-png.c, src/util/bw-ps.1, src/util/bw-ps.c, src/util/bw-rle.1, src/util/bw-rle.c, src/util/bw3-pix.1, src/util/bw3-pix.c, src/util/bwcrop.1, src/util/bwcrop.c, src/util/bwdiff.1, src/util/bwdiff.c, src/util/bwfilter.1, src/util/bwfilter.c, src/util/bwhist.1, src/util/bwhist.c, src/util/bwhisteq.1, src/util/bwhisteq.c, src/util/bwmod.1, src/util/bwmod.c, src/util/bwrect.1, src/util/bwrect.c, src/util/bwrot.1, src/util/bwrot.c, src/util/bwscale.1, src/util/bwscale.c, src/util/bwshrink.1, src/util/bwshrink.c, src/util/bwstat.1, src/util/bwstat.c, src/util/bwthresh.1, src/util/bwthresh.c, src/util/cv.1, src/util/cv.c, src/util/dbcp.1, src/util/dbcp.c, src/util/decimate.1, src/util/decimate.c, src/util/double-asc.c, src/util/dpix-pix.1, src/util/dpix-pix.c, src/util/dsp_add.c, src/util/dunncolor.1, src/util/dunncolor.c, src/util/dunncomm.c, src/util/dunnsnap.1, src/util/dunnsnap.c, src/util/files-tape.c, src/util/fix_polysolids.c, src/util/gencolor.1, src/util/gencolor.c, src/util/hd.1, src/util/hd.c, src/util/imgdims.1, src/util/imgdims.c, src/util/loop.1, src/util/loop.c, src/util/lowp.c, src/util/mac-pix.1, src/util/mac-pix.c, src/util/morphedit.1, src/util/msrandom.c, src/util/mst.c, src/util/op-bw.1, src/util/op-bw.c, src/util/orle-pix.1, src/util/orle-pix.c, src/util/pcd-pix.1, src/util/pix-alias.1, src/util/pix-alias.c, src/util/pix-both-ik.c, src/util/pix-bw.1, src/util/pix-bw.c, src/util/pix-bw3.1, src/util/pix-bw3.c, src/util/pix-ci.c, src/util/pix-filt-ik.c, src/util/pix-ik.c, src/util/pix-ikr.c, src/util/pix-lowp-ik.c, src/util/pix-orle.1, src/util/pix-orle.c, src/util/pix-png.1, src/util/pix-png.c, src/util/pix-ppm.c, src/util/pix-ps.1, src/util/pix-ps.c, src/util/pix-rle.1, src/util/pix-rle.c, src/util/pix-spm.c, src/util/pix-sun.1, src/util/pix-sun.c, src/util/pix-yuv.c, src/util/pix3filter.c, src/util/pixbackgnd.1, src/util/pixbackgnd.c, src/util/pixbgstrip.1, src/util/pixbgstrip.c, src/util/pixblend.1, src/util/pixblend.c, src/util/pixborder.1, src/util/pixborder.c, src/util/pixbustup.1, src/util/pixbustup.c, src/util/pixclump.1, src/util/pixclump.c, src/util/pixcolors.1, src/util/pixcolors.c, src/util/pixcount.c, src/util/pixcut.1, src/util/pixdiff.1, src/util/pixdiff.c, src/util/pixdsplit.1, src/util/pixdsplit.c, src/util/pixelswap.c, src/util/pixembed.c, src/util/pixfade.1, src/util/pixfade.c, src/util/pixfields.c, src/util/pixfieldsep.c, src/util/pixfilter.1, src/util/pixfilter.c, src/util/pixhalve.1, src/util/pixhalve.c, src/util/pixhist.1, src/util/pixhist.c, src/util/pixhist3d-pl.1, src/util/pixhist3d-pl.c, src/util/pixhist3d.1, src/util/pixhist3d.c, src/tclscripts/mged/mouse.tcl, src/tclscripts/mged/muves.tcl, src/tclscripts/mged/mview.tcl, src/tclscripts/mged/openw.tcl, src/tclscripts/mged/overlap.tcl, src/tclscripts/mged/pattern.tcl, src/tclscripts/mged/pattern_gui.tcl, src/tclscripts/mged/plot.tcl, src/tclscripts/mged/prj_add.tcl, src/tclscripts/mged/ps.tcl, src/tclscripts/mged/qray.tcl, src/tclscripts/mged/ray.tcl, src/tclscripts/mged/raypick.tcl, src/tclscripts/mged/reid.tcl, src/tclscripts/mged/remat.tcl, src/tclscripts/mged/rt.tcl, src/tclscripts/mged/rt_script.tcl, src/tclscripts/mged/sample.tcl, src/tclscripts/mged/shaders.tcl, src/tclscripts/mged/skt_ed.tcl, src/tclscripts/mged/solclick.tcl, src/tclscripts/mged/solcreate.tcl, src/tclscripts/mged/solid.tcl, src/tclscripts/mged/text.tcl, src/tclscripts/mged/titles.tcl, src/tclscripts/mged/tree.tcl, src/tclscripts/nirt/prototype.sh, src/tclscripts/pl-dm/bindings.tcl, src/tclscripts/pl-dm/help.tcl, src/tclscripts/pl-dm/menu.tcl, src/tclscripts/rtwizard/rtwizard.tcl, src/tclscripts/lib/CellPlot.tcl, src/tclscripts/lib/ColorEntry.tcl, src/tclscripts/lib/ComboBox.tcl, src/tclscripts/lib/Command.tcl, src/tclscripts/lib/Database.tcl, src/tclscripts/lib/Db.tcl, src/tclscripts/lib/Display.tcl, src/tclscripts/lib/Dm.tcl, src/tclscripts/lib/Drawable.tcl, src/tclscripts/lib/Help.tcl, src/tclscripts/lib/Legend.tcl, src/tclscripts/lib/Mged.tcl, src/tclscripts/lib/ModelAxesControl.tcl, src/tclscripts/lib/QuadDisplay.tcl, src/tclscripts/lib/RtControl.tcl, src/tclscripts/lib/Splash.tcl, src/tclscripts/lib/Table.tcl, src/tclscripts/lib/TableView.tcl, src/tclscripts/lib/View.tcl, src/tclscripts/lib/ViewAxesControl.tcl, src/tclscripts/mged/accel.tcl, src/tclscripts/mged/adc.tcl, src/tclscripts/mged/anim.tcl, src/tclscripts/mged/apply.tcl, src/tclscripts/mged/apply_mat.tcl, src/tclscripts/mged/asc2g.tcl, src/tclscripts/mged/attr_edit.tcl, src/tclscripts/mged/bindings.tcl, src/tclscripts/mged/bot_face_select.tcl, src/tclscripts/mged/build_region.tcl, src/tclscripts/mged/calipers.tcl, src/tclscripts/mged/callbacks.tcl, src/tclscripts/mged/collaborate.tcl, src/tclscripts/mged/color.tcl, src/tclscripts/mged/color_scheme.tcl, src/tclscripts/mged/comb.tcl, src/tclscripts/mged/combmenu.tcl, src/tclscripts/mged/cycle.tcl, src/tclscripts/mged/dbfindtree.tcl, src/tclscripts/mged/dbupgrade.tcl, src/tclscripts/mged/e_id.tcl, src/tclscripts/mged/edit_menu.tcl, src/tclscripts/mged/edit_solid.tcl, src/tclscripts/mged/edit_solid_int.tcl, src/tclscripts/mged/editmenu.tcl, src/tclscripts/mged/editobj.tcl, src/tclscripts/mged/eobjmenu.tcl, src/tclscripts/mged/extract.tcl, src/tclscripts/mged/font.tcl, src/tclscripts/mged/g2asc.tcl, src/tclscripts/mged/garbage_collect.tcl, src/tclscripts/mged/grid.tcl, src/tclscripts/mged/help.tcl, src/tclscripts/mged/helpdevel.tcl, src/tclscripts/mged/icreate.tcl, src/tclscripts/mged/illum.tcl, src/tclscripts/mged/lgt_mat.tcl, src/tclscripts/mged/list.tcl, src/tclscripts/mged/make_solid.tcl, src/tclscripts/mged/menu.tcl, src/tclscripts/mged/mged.tcl, src/tclscripts/mged/mgedrc.tcl, src/tclscripts/mged/mike.tcl, src/rt/view_bot_faces.c, src/rt/viewarea.c, src/rt/viewcell.c, src/rt/viewcheck.c, src/rt/viewdir.c, src/rt/viewdummy.c, src/rt/viewedge.c, src/rt/viewfrac.c, src/rt/viewg3.c, src/rt/viewhide.c, src/rt/viewpp.c, src/rt/viewrad.c, src/rt/viewrange.c, src/rt/viewray.c, src/rt/viewscat.c, src/rt/viewsil.c, src/rt/viewweight.c, src/rt/viewxray.c, src/rt/worker.c, src/rttherm/pixtest.c, src/rttherm/rttherm.1, src/rttherm/spectrum.c, src/rttherm/ssamp-bw.1, src/rttherm/ssamp-bw.c, src/rttherm/ssampview.c, src/rttherm/viewtherm.c, src/sig/a-d.c, src/sig/butter.c, src/sig/bw-d.c, src/sig/c-d.c, src/sig/complex.h, src/sig/coswin.c, src/sig/d-a.c, src/sig/d-bw.c, src/sig/d-f.c, src/sig/d-i.c, src/sig/d-u.c, src/sig/d2-c.c, src/sig/damdf.c, src/sig/dauto.c, src/sig/dauto2.c, src/sig/dconv.c, src/sig/ddisp.c, src/sig/dfft.c, src/sig/dmod.c, src/sig/dpeak.c, src/sig/dsel.c, src/sig/dstat.c, src/sig/dwin.c, src/sig/f-d.c, src/sig/f-i.c, src/sig/fhor.c, src/sig/fhor2.c, src/sig/fhor3.c, src/sig/hamwin.c, src/sig/i-a.c, src/sig/i-d.c, src/sig/i-f.c, src/sig/ihist.c, src/sig/imod.c, src/sig/interp.c, src/sig/istat.c, src/sig/smod.c, src/sig/syn.c, src/sig/u-a.c, src/sig/u-bw.c, src/sig/u-d.c, src/sig/u-f.c, src/sig/umod.c, src/sig/ustat.c, src/tab/script-tab.c, src/tab/tabinterp.1, src/tab/tabinterp.c, src/tab/tabsub.1, src/tab/tabsub.c, src/tab/tokens.h, src/tab/txyz-pl.c, src/tclscripts/ami.tcl, src/tclscripts/ampi.tcl, src/tclscripts/cad_dialog.tcl, src/tclscripts/chkexterns.tcl, src/tclscripts/fs_dialog.tk, src/tclscripts/geometree/GeometryBrowser.tcl, src/tclscripts/geometree/geometree.tcl, src/tclscripts/helpcomm.tcl, src/tclscripts/helplib.tcl, src/tclscripts/hoc.tcl, src/tclscripts/libdm.tcl, src/tclscripts/menu_override.tcl, src/tclscripts/mouse.tcl, src/tclscripts/vmath.tcl, src/mged/dm_old/dm-4d.c, src/mged/dm_old/dm-glx.c, src/mged/dm_old/dm-hp.c, src/mged/dm_old/dm-mer.c, src/mged/dm_old/dm-oglX.c, src/mged/dm_old/dm-pex.c, src/mged/dm_old/dm-sun.c, src/mged/dm_old/dm-tek.c, src/mged/dm_old/dm-tek4109.c, src/mged/points/count.c, src/mged/points/count.h, src/mged/points/points_parse.y, src/mged/points/points_scan.l, src/mged/points/process.c, src/mged/points/process.h, src/mk/mk_bolt.1, src/mk/mk_bolt.c, src/mk/mk_gastank.1, src/mk/mk_gastank.c, src/mk/mk_handle.1, src/mk/mk_handle.c, src/mk/mk_window.1, src/mk/mk_window.c, src/mk/mk_winfrm.1, src/mk/mk_winfrm.c, src/mk/mk_wire.1, src/mk/mk_wire.c, src/nirt/bsphere.c, src/nirt/command.c, src/nirt/conversion.c, src/nirt/dist_def.c, src/nirt/if.c, src/nirt/interact.c, src/nirt/nirt.1, src/nirt/nirt.c, src/nirt/nirt.h, src/nirt/parse_fmt.c, src/nirt/read_mat.c, src/nirt/showshot.1, src/nirt/showshot.c, src/nirt/str_manip.c, src/nirt/usrfmt.h, src/proc-db/apply-mdb.c, src/proc-db/bottest.c, src/proc-db/brickwall.c, src/proc-db/clutter.c, src/proc-db/common.c, src/proc-db/contours.c, src/proc-db/ducks.h, src/proc-db/fence.c, src/proc-db/fence.h, src/proc-db/globe.c, src/proc-db/kurt.c, src/proc-db/molecule.c, src/proc-db/nmgmodel.c, src/proc-db/nmgxplode.c, src/proc-db/patches.h, src/proc-db/picket_fence.1, src/proc-db/picket_fence.c, src/proc-db/pipe.c, src/proc-db/pipetest.c, src/proc-db/pix2g.c, src/proc-db/pyramid.c, src/proc-db/rawbot.c, src/proc-db/room.c, src/proc-db/sketch.c, src/proc-db/sphflake.c, src/proc-db/spltest.c, src/proc-db/tea.c, src/proc-db/tea.h, src/proc-db/tea_nmg.c, src/proc-db/terrain.c, src/proc-db/torii.c, src/proc-db/tube.c, src/proc-db/vegitation.c, src/proc-db/vegitation.h, src/proc-db/wall.c, src/proc-db/wdb_example.c, src/remrt/ihost.c, src/remrt/ihost.h, src/remrt/protocol.h, src/remrt/remrt.1, src/remrt/remrt.c, src/remrt/rtsrv.c, src/rt/do.c, src/rt/ext.h, src/rt/libfb-dummy.c, src/rt/light.h, src/rt/main.c, src/rt/opt.c, src/rt/rad.h, src/rt/read-rtlog.c, src/rt/reshoot.1, src/rt/reshoot.c, src/rt/rt.1, src/rt/rt_bot_faces.1, src/rt/rt_simple.c, src/rt/rtarea.1, src/rt/rtcheck.1, src/rt/rtedge.1, src/rt/rtexample.c, src/rt/rtg3.1, src/rt/rthide.1, src/rt/rtpp.1, src/rt/rtrange.1, src/rt/rtray.1, src/rt/rtregis.1, src/rt/rtregis.c, src/rt/rtscale.1, src/rt/rtscale.c, src/rt/rtshot.1, src/rt/rtshot.c, src/rt/rtwalk.1, src/rt/rtwalk.c, src/rt/rtweight.1, src/rt/rtxray.1, src/rt/scat.h, src/rt/sh_tcl.c, src/rt/view.c, src/mged/Attic/clip.c, src/mged/adc.c, src/mged/anal.c, src/mged/arb.c, src/mged/arbs.c, src/mged/attach.c, src/mged/axes.c, src/mged/bodyio.c, src/mged/bool_rewrite.c, src/mged/buttons.c, src/mged/cad_boundp.1, src/mged/cad_boundp.c, src/mged/cad_parea.1, src/mged/cad_parea.c, src/mged/chgmodel.c, src/mged/chgtree.c, src/mged/chgview.c, src/mged/clone.c, src/mged/cmd.c, src/mged/cmd.h, src/mged/color_scheme.c, src/mged/columns.c, src/mged/comb_bool.h, src/mged/concat.c, src/mged/dir.c, src/mged/dm-X.c, src/mged/dm-generic.c, src/mged/dm-ogl.c, src/mged/dm-plot.c, src/mged/dm-ps.c, src/mged/dodraw.c, src/mged/doevent.c, src/mged/dozoom.c, src/mged/edarb.c, src/mged/edars.c, src/mged/editobjGui.h, src/mged/edpipe.c, src/mged/edsol.c, src/mged/facedef.c, src/mged/fbserv.c, src/mged/fbserv.h, src/mged/fbserv_win32.c, src/mged/ged.c, src/mged/ged.h, src/mged/grid.c, src/mged/hideline.c, src/mged/history.c, src/mged/htmlLibraryUi.h, src/mged/icreateGui.h, src/mged/inside.c, src/mged/joints.h, src/mged/mater.c, src/mged/memalloc.c, src/mged/menu.c, src/mged/mgdev.h, src/mged/mged.1, src/mged/mged_dm.h, src/mged/mged_solid.h, src/mged/mgedtcl.h, src/mged/mover.c, src/mged/muves.c, src/mged/objdir.h, src/mged/overlay.c, src/mged/plot.c, src/mged/polyif.c, src/mged/predictor.c, src/mged/qray.c, src/mged/qray.h, src/mged/rect.c, src/mged/red.c, src/mged/rtif.c, src/mged/scroll.c, src/mged/scroll.h, src/mged/sedit.h, src/mged/set.c, src/mged/setup.c, src/mged/share.c, src/mged/solids_on_ray.c, src/mged/sunicon.h, src/mged/tedit.c, src/mged/titles.c, src/mged/titles.h, src/mged/track.c, src/mged/typein.c, src/mged/update.c, src/mged/usepen.c, src/mged/utility1.c, src/mged/utility2.c, src/mged/vdraw.c, src/mged/vgdev.h, src/mged/vld_std.h, src/mged/vmathUi.h, src/mged/vparse.c, src/mged/vrlink.c, src/librtserver/rtserver.c, src/librtserver/rtserverTest.c, src/libsysv/strdup.c, src/libtclcad/tclcadAutoPath.c, src/libtclcad/tclcadTkSetup.c, src/libtclcad/tkCanvBezier.c, src/libwdb/arbn.c, src/libwdb/ars.c, src/libwdb/bot.c, src/libwdb/cline.c, src/libwdb/dsp.c, src/libwdb/dynamic_geometry.c, src/libwdb/ebm.c, src/libwdb/export.c, src/libwdb/extr.c, src/libwdb/id.c, src/libwdb/libwdb.3, src/libwdb/mater.c, src/libwdb/nmg.c, src/libwdb/nurb.c, src/libwdb/pipe.c, src/libwdb/poly.c, src/libwdb/reg.c, src/libwdb/reg4.c, src/libwdb/skt.c, src/libwdb/spl.c, src/libwdb/strsol.c, src/libwdb/submodel.c, src/libwdb/units.c, src/libwdb/vol.c, src/libwdb/wdb.c, src/liborle/liborle.3, src/liborle/rle.c, src/libpkg/pkg.c, src/libpkg/tcl.c, src/librt/bezier_2d_isect.c, src/librt/bigE.c, src/librt/binary_obj.c, src/librt/bomb.c, src/librt/bool.c, src/librt/bot.h, src/librt/bundle.c, src/librt/cmd.c, src/librt/comb.c, src/librt/cut.c, src/librt/db5_alloc.c, src/librt/db5_bin.c, src/librt/db5_comb.c, src/librt/db5_io.c, src/librt/db5_scan.c, src/librt/db5_types.c, src/librt/db_alloc.c, src/librt/db_anim.c, src/librt/db_comb.c, src/librt/db_flags.c, src/librt/db_inmem.c, src/librt/db_io.c, src/librt/db_lookup.c, src/librt/db_match.c, src/librt/db_open.c, src/librt/db_path.c, src/librt/db_scan.c, src/librt/db_tree.c, src/librt/db_walk.c, src/librt/debug.h, src/librt/dg_obj.c, src/librt/dir.c, src/librt/fixpt.h, src/librt/fortray.c, src/librt/g_arb.c, src/librt/g_arbn.c, src/librt/g_ars.c, src/librt/g_bot.c, src/librt/g_bot_include.c, src/librt/g_cline.c, src/librt/g_ebm.c, src/librt/g_ehy.c, src/librt/g_ell.c, src/librt/g_epa.c, src/librt/g_eto.c, src/librt/g_extrude.c, src/librt/g_half.c, src/librt/g_hf.c, src/librt/g_nmg.c, src/librt/g_nurb.c, src/librt/g_part.c, src/librt/g_pg.c, src/librt/g_pipe.c, src/librt/g_rec.c, src/librt/g_rhc.c, src/librt/g_rpc.c, src/librt/g_sketch.c, src/librt/g_sph.c, src/librt/g_submodel.c, src/librt/g_superell.c, src/librt/g_tgc.c, src/librt/g_torus.c, src/librt/g_vol.c, src/librt/g_xxx.c, src/librt/global.c, src/librt/htbl.c, src/librt/importFg4Section.c, src/librt/librt.3, src/librt/many.c, src/librt/mater.c, src/librt/memalloc.c, src/librt/mkbundle.c, src/librt/nirt.c, src/librt/nmg_bool.c, src/librt/nmg_ck.c, src/librt/nmg_class.c, src/librt/nmg_eval.c, src/librt/nmg_extrude.c, src/librt/nmg_fuse.c, src/librt/nmg_index.c, src/librt/nmg_info.c, src/librt/nmg_inter.c, src/librt/nmg_junk.c, src/librt/nmg_manif.c, src/librt/nmg_mesh.c, src/librt/nmg_misc.c, src/librt/nmg_mk.c, src/librt/nmg_mod.c, src/librt/nmg_plot.c, src/librt/nmg_pr.c, src/librt/nmg_pt_fu.c, src/librt/nmg_rt_isect.c, src/librt/nmg_rt_segs.c, src/librt/nmg_tri.c, src/librt/nmg_visit.c, src/librt/nurb_basis.c, src/librt/nurb_bezier.c, src/librt/nurb_bound.c, src/librt/nurb_c2.c, src/librt/nurb_copy.c, src/librt/nurb_diff.c, src/librt/nurb_eval.c, src/librt/nurb_example.c, src/librt/nurb_flat.c, src/librt/nurb_interp.c, src/librt/nurb_knot.c, src/librt/nurb_norm.c, src/librt/nurb_plot.c, src/librt/nurb_poly.c, src/librt/nurb_ray.c, src/librt/nurb_refine.c, src/librt/nurb_reverse.c, src/librt/nurb_split.c, src/librt/nurb_tess.c, src/librt/nurb_trim.c, src/librt/nurb_trim_util.c, src/librt/nurb_util.c, src/librt/nurb_xsplit.c, src/librt/oslo_calc.c, src/librt/oslo_map.c, src/librt/parse.c, src/librt/plane.h, src/librt/pmalloc.c, src/librt/pr.c, src/librt/prep.c, src/librt/qray.c, src/librt/regionfix.c, src/librt/roots.c, src/librt/rt_dspline.c, src/librt/shoot.c, src/librt/spectrum.c, src/librt/storage.c, src/librt/table.c, src/librt/tcl.c, src/librt/timer-nt.c, src/librt/timer42.c, src/librt/timer52brl.c, src/librt/timercos.c, src/librt/timerhep.c, src/librt/timerunix.c, src/librt/track.c, src/librt/tree.c, src/librt/vdraw.c, src/librt/view_obj.c, src/librt/vlist.c, src/librt/vshoot.c, src/librt/wdb.c, src/librt/wdb_comb_std.c, src/librt/wdb_obj.c, src/libbn/anim.c, src/libbn/asize.c, src/libbn/axis.c, src/libbn/bn_tcl.c, src/libbn/complex.c, src/libbn/const.c, src/libbn/font.c, src/libbn/fortran.c, src/libbn/htester.c, src/libbn/libplot3.3, src/libbn/list.c, src/libbn/marker.c, src/libbn/mat.c, src/libbn/msr.c, src/libbn/noise.c, src/libbn/number.c, src/libbn/plane.c, src/libbn/plot3.c, src/libbn/poly.c, src/libbn/qmath.c, src/libbn/rand.c, src/libbn/scale.c, src/libbn/sphmap.c, src/libbn/symbol.c, src/libbn/tabdata.c, src/libbn/tplot.c, src/libbn/vectfont.c, src/libbn/vector.c, src/libbn/vert_tree.c, src/libbn/wavelet.c, src/libbu/association.c, src/libbu/avs.c, src/libbu/badmagic.c, src/libbu/bitv.c, src/libbu/bomb.c, src/libbu/brlcad_path.c, src/libbu/bu_tcl.c, src/libbu/cmd.c, src/libbu/cmdhist.c, src/libbu/cmdhist_obj.c, src/libbu/color.c, src/libbu/convert.c, src/libbu/fopen_uniq.c, src/libbu/getopt.c, src/libbu/hash.c, src/libbu/hist.c, src/libbu/hook.c, src/libbu/htond.3, src/libbu/htond.c, src/libbu/htonf.c, src/libbu/ispar.c, src/libbu/lex.c, src/libbu/libbu.3, src/libbu/linebuf.c, src/libbu/list.c, src/libbu/log.c, src/libbu/magic.c, src/libbu/malloc.c, src/libbu/mappedfile.c, src/libbu/memset.c, src/libbu/mro.c, src/libbu/observer.c, src/libbu/parallel.c, src/libbu/parse.c, src/libbu/printb.c, src/libbu/ptbl.c, src/libbu/rb_create.c, src/libbu/rb_delete.c, src/libbu/rb_diag.c, src/libbu/rb_extreme.c, src/libbu/rb_free.c, src/libbu/rb_insert.c, src/libbu/rb_internals.h, src/libbu/rb_order_stats.c, src/libbu/rb_rotate.c, src/libbu/rb_search.c, src/libbu/rb_walk.c, src/libbu/redblack.3, src/libbu/semaphore.c, src/libbu/stat.c, src/libbu/units.c, src/libbu/vfont.c, src/libbu/vls.c, src/libbu/whereis.c, src/libbu/which.c, src/libbu/xdr.c, src/libcursor/cursor.c, src/libcursor/libcursor.3, src/libdm/axes.c, src/libdm/clip.c, src/libdm/color.c, src/libdm/dm-Null.c, src/libdm/dm-X.c, src/libdm/dm-generic.c, src/libdm/dm-glx.c, src/libdm/dm-ogl.c, src/libdm/dm-ogl_win.c, src/libdm/dm-pex.c, src/libdm/dm-plot.c, src/libdm/dm-ps.c, src/libdm/dm_obj.c, src/libdm/knob.c, src/libdm/options.c, src/libdm/query.c, src/libdm/tcl.c, src/libfb/Attic/pkgswitch.c, src/libfb/Attic/pkgtypes.h, src/libfb/Attic/server.c, src/libfb/adage.h, src/libfb/adagecursor.h, src/libfb/adageframe.h, src/libfb/asize.c, src/libfb/dmdfb.h, src/libfb/fb_generic.c, src/libfb/fb_log.c, src/libfb/fb_obj.c, src/libfb/fb_paged_io.c, src/libfb/fb_rect.c, src/libfb/fb_util.c, src/libfb/fblocal.h, src/libfb/fbserv_obj.c, src/libfb/fbserv_obj_win32.c, src/libfb/getput.c, src/libfb/if_4d-old.c, src/libfb/if_4d.c, src/libfb/if_TEMPLATE.c, src/libfb/if_X.c, src/libfb/if_ab.c, src/libfb/if_adage.c, src/libfb/if_debug.c, src/libfb/if_disk.c, src/libfb/if_mem.c, src/libfb/if_null.c, src/libfb/if_ogl.c, src/libfb/if_ogl_win32.c, src/libfb/if_ptty.c, src/libfb/if_rat.c, src/libfb/if_remote.c, src/libfb/if_sgi.c, src/libfb/if_sgiw.c, src/libfb/if_stack.c, src/libfb/if_sun.c, src/libfb/if_ts.c, src/libfb/if_ug.c, src/libfb/libfb.3, src/libfb/nilcursor.h, src/libfb/oglcursor.h, src/libfb/sgicursor.h, src/libfb/tcl.c, src/libfft/complex.h, src/libfft/ditsplit.c, src/libfft/ditsplitc.c, src/libfft/fft.h, src/libfft/fftc.c, src/libfft/fftest.c, src/libfft/fftfast.c, src/libfft/ifftc.c, src/libfft/splitdit.c, src/libfft/splitditc.c, src/libmultispectral/init.c, src/libmultispectral/sh_temp.c, src/liboptical/init.c, src/liboptical/material.c, src/liboptical/photonmap.c, src/liboptical/refract.c, src/liboptical/sh_air.c, src/liboptical/sh_billboard.c, src/liboptical/sh_brdf.c, src/liboptical/sh_camo.c, src/liboptical/sh_cloud.c, src/liboptical/sh_cook.c, src/liboptical/sh_fbm.c, src/liboptical/sh_fire.c, src/liboptical/sh_flat.c, src/liboptical/sh_gauss.c, src/liboptical/sh_grass.c, src/liboptical/sh_light.c, src/liboptical/sh_noise.c, src/liboptical/sh_null.c, src/liboptical/sh_plastic.c, src/liboptical/sh_points.c, src/liboptical/sh_prj.c, src/liboptical/sh_rtrans.c, src/liboptical/sh_scloud.c, src/liboptical/sh_spm.c, src/liboptical/sh_stack.c, src/liboptical/sh_stxt.c, src/liboptical/sh_tcl.c, src/liboptical/sh_text.c, src/liboptical/sh_toyota.c, src/liboptical/sh_treetherm.c, src/liboptical/sh_xxx.c, src/liboptical/shade.c, src/liboptical/wray.c, src/fb/bw-fb.1, src/fb/bw-fb.c, src/fb/cat-fb.1, src/fb/cat-fb.c, src/fb/cell-fb.1, src/fb/cell-fb.c, src/fb/cmap-crunch.c, src/fb/cmap-fb.1, src/fb/cmap-fb.c, src/fb/fb-bw.1, src/fb/fb-bw.c, src/fb/fb-cmap.1, src/fb/fb-cmap.c, src/fb/fb-fb.1, src/fb/fb-fb.c, src/fb/fb-orle.1, src/fb/fb-orle.c, src/fb/fb-pix.1, src/fb/fb-pix.c, src/fb/fb-png.1, src/fb/fb-png.c, src/fb/fb-rle.1, src/fb/fb-rle.c, src/fb/fbanim.1, src/fb/fbanim.c, src/fb/fbcbars.1, src/fb/fbcbars.c, src/fb/fbclear.1, src/fb/fbclear.c, src/fb/fbcmap.1, src/fb/fbcmap.c, src/fb/fbcmrot.1, src/fb/fbcmrot.c, src/fb/fbcolor.1, src/fb/fbcolor.c, src/fb/fbfade.1, src/fb/fbfade.c, src/fb/fbframe.1, src/fb/fbframe.c, src/fb/fbfree.1, src/fb/fbfree.c, src/fb/fbgamma.1, src/fb/fbgamma.c, src/fb/fbgammamod.c, src/fb/fbgrid.1, src/fb/fbgrid.c, src/fb/fbhelp.1, src/fb/fbhelp.c, src/fb/fblabel.1, src/fb/fblabel.c, src/fb/fbline.1, src/fb/fbline.c, src/fb/fbpoint.1, src/fb/fbpoint.c, src/fb/fbscanplot.1, src/fb/fbscanplot.c, src/fb/fbstretch.1, src/fb/fbstretch.c, src/fb/fbzoom.1, src/fb/fbzoom.c, src/fb/gif-fb.1, src/fb/gif-fb.c, src/fb/gif2fb.1, src/fb/gif2fb.c, src/fb/orle-fb.1, src/fb/orle-fb.c, src/fb/pix-fb.1, src/fb/pix-fb.c, src/fb/pixautosize.1, src/fb/pixautosize.c, src/fb/pixflip-fb.c, src/fb/pl-fb.1, src/fb/pl-fb.c, src/fb/png-fb.1, src/fb/png-fb.c, src/fb/polar-fb.1, src/fb/polar-fb.c, src/fb/pp-fb.1, src/fb/pp-fb.c, src/fb/rle-fb.1, src/fb/rle-fb.c, src/fb/spm-fb.c, src/fbed/ascii.h, src/fbed/char.c, src/fbed/cursorbits.h, src/fbed/empty.c, src/fbed/execshell.c, src/fbed/extern.h, src/fbed/fb_ik.h, src/fbed/fbed.1, src/fbed/fbed.c, src/fbed/fill_buf.c, src/fbed/font.h, src/fbed/getfont.c, src/fbed/getinput.c, src/fbed/glob.c, src/fbed/loadfont.c, src/fbed/popup.h, src/fbed/pos_pad.c, src/fbed/prnt.c, src/fbed/sgi_dep.c, src/fbed/squash.c, src/fbed/std.h, src/fbed/try.c, src/fbed/try.h, src/fbserv/fbserv.1, src/fbserv/fbserv.c, src/fbserv/fbserv_win.c, src/gtools/g_diff.1, src/gtools/g_diff.c, src/gtools/g_lint.1, src/gtools/g_lint.c, src/gtools/g_qa.1, src/gtools/g_qa.c, src/gtools/solshoot.c, src/gtools/testfree.c, src/halftone/halftone.1, src/halftone/main.c, src/halftone/sharpen.c, src/halftone/tone_classic.c, src/halftone/tone_floyd.c, src/halftone/tone_folly.c, src/halftone/tone_simple.c, src/halftone/tonescale.c, src/irprep/all_sf.1, src/irprep/all_sf.c, src/irprep/firpass.1, src/irprep/firpass.c, src/irprep/ir-X.1, src/irprep/ir-X.c, src/irprep/ir-sgi.1, src/irprep/ir-sgi.c, src/irprep/irdisp.1, src/irprep/irdisp.c, src/irprep/pictsgi.1, src/irprep/pictsgi.c, src/irprep/pictx.1, src/irprep/pictx.c, src/irprep/secpass.1, src/irprep/secpass.c, src/irprep/see.1, src/irprep/see.c, src/irprep/see2.1, src/irprep/see2.c, src/irprep/shapefact.1, src/irprep/shapefact.c, src/irprep/showtherm.1, src/irprep/showtherm.c, src/irprep/subroutines.c, src/java/mil/army/arl/brlcad/BrlcadGeometry.java, src/java/mil/army/arl/brlcad/BrlcadGeometryServer.java, src/java/mil/army/arl/brlcad/Partition.java, src/lgt/ascii.h, src/lgt/char.c, src/lgt/cursors.h, src/lgt/do_options.c, src/lgt/error.c, src/lgt/execshell.c, src/lgt/extern.h, src/lgt/fb.c, src/lgt/font.h, src/lgt/getfont.c, src/lgt/glob.c, src/lgt/grid_rotate.c, src/lgt/hmenu.c, src/lgt/hmenu.h, src/lgt/ir.c, src/lgt/lgt.1, src/lgt/lgt.c, src/lgt/lgt.h, src/lgt/lgt_db.c, src/lgt/mat_db.c, src/lgt/mat_db.h, src/lgt/octree.c, src/lgt/prnt.c, src/lgt/reflect.c, src/lgt/resource.c, src/lgt/screen.h, src/lgt/sgi_dep.c, src/lgt/texture.c, src/lgt/texture.h, src/lgt/tree.h, src/lgt/trie.c, src/lgt/vecmath.h, src/conv/comgeom/f2a.c, src/conv/comgeom/ged_types.h, src/conv/comgeom/mat.c, src/conv/comgeom/read.c, src/conv/comgeom/region.c, src/conv/comgeom/solid.c, src/conv/comgeom/tools.c, src/conv/comgeom/try.sh, src/conv/iges/add_face.c, src/conv/iges/add_inner_shell.c, src/conv/iges/add_loop.c, src/conv/iges/arrange.c, src/conv/iges/b-spline.c, src/conv/iges/block2.c, src/conv/iges/brep.c, src/conv/iges/brlabs.c, src/conv/iges/bubbleup.c, src/conv/iges/check_names.c, src/conv/iges/cone.c, src/conv/iges/conv_drawings.c, src/conv/iges/convassem.c, src/conv/iges/convinst.c, src/conv/iges/convsolids.c, src/conv/iges/convsurf.c, src/conv/iges/convtree.c, src/conv/iges/copytree.c, src/conv/iges/cyl.c, src/conv/iges/do_subfigs.c, src/conv/iges/docolor.c, src/conv/iges/ell.c, src/conv/iges/evalxform.c, src/conv/iges/extrudcirc.c, src/conv/iges/extrudcon.c, src/conv/iges/extrude.c, src/conv/iges/findp.c, src/conv/iges/freetree.c, src/conv/iges/g-iges.1, src/conv/iges/g-iges.c, src/conv/iges/get_att.c, src/conv/iges/get_cnurb_curve.c, src/conv/iges/get_edge_list.c, src/conv/iges/get_iges_vertex.c, src/conv/iges/get_outer_shell.c, src/conv/iges/get_vertex.c, src/conv/iges/get_vertex_list.c, src/conv/iges/getcurve.c, src/conv/iges/iges-g.1, src/conv/iges/iges.c, src/conv/iges/iges.h, src/conv/iges/iges_extern.h, src/conv/iges/iges_struct.h, src/conv/iges/iges_types.c, src/conv/iges/iges_types.h, src/conv/iges/main.c, src/conv/iges/make_face.c, src/conv/iges/make_nurb_face.c, src/conv/iges/makedir.c, src/conv/iges/makegroup.c, src/conv/iges/makemembers.c, src/conv/iges/matmult.c, src/conv/iges/orient_loops.c, src/conv/iges/planar_nurb.c, src/conv/iges/read_att.c, src/conv/iges/read_edge_list.c, src/conv/iges/read_vertex_list.c, src/conv/iges/readcnv.c, src/conv/iges/readcols.c, src/conv/iges/readdbl.c, src/conv/iges/readflt.c, src/conv/iges/readglobal.c, src/conv/iges/readint.c, src/conv/iges/readmatrix.c, src/conv/iges/readname.c, src/conv/iges/readrec.c, src/conv/iges/readstart.c, src/conv/iges/readstrg.c, src/conv/iges/readtime.c, src/conv/iges/readtree.c, src/conv/iges/recsize.c, src/conv/iges/revolve.c, src/conv/iges/showtree.c, src/conv/iges/sphere.c, src/conv/iges/spl.c, src/conv/iges/spline.c, src/conv/iges/splinef.c, src/conv/iges/stack.c, src/conv/iges/summary.c, src/conv/iges/tor.c, src/conv/iges/treecheck.c, src/conv/iges/trimsurf.c, src/conv/iges/usage.c, src/conv/iges/wedge.c, src/conv/jack/g-jack.c, src/conv/jack/jack-g.c, src/conv/off/g-off.c, src/conv/off/off-g.c, src/conv/patch/patch-g.1, src/conv/patch/patch-g.c, src/conv/patch/patch-g.h, src/conv/patch/rpatch.1, src/conv/patch/rpatch.c, src/conv/unigraphics/conv.h, src/conv/unigraphics/log.h, src/conv/unigraphics/ug-g.1, src/conv/unigraphics/ug-g.c, src/conv/unigraphics/ug_misc.c, src/conv/unigraphics/ug_misc.h, src/burst/HmGetc.c, src/burst/HmGlob.c, src/burst/Mm.h, src/burst/Sc.c, src/burst/Sc.h, src/burst/ascii.h, src/burst/burst.c, src/burst/burst.h, src/burst/error.c, src/burst/extern.h, src/burst/fb.c, src/burst/glob.c, src/burst/grid.c, src/burst/gridrotate.c, src/burst/idents.c, src/burst/paint.c, src/burst/plot.c, src/burst/prnt.c, src/burst/trie.c, src/burst/trie.h, src/burst/ui.c, src/burst/vecmath.h, src/bwish/cmd.c, src/bwish/input.c, src/bwish/main.c, src/bwish/tcl.c, src/canon/asize.c, src/canon/canon.h, src/canon/canonize.1, src/canon/canonize.c, src/canon/canonlib.c, src/canon/canonserver.c, src/canon/chore.h, src/canon/ipuscan.c, src/canon/ipustat.c, src/canon/pix-ipu.c, src/canon/png-ipu.c, src/conv/asc-nmg.1, src/conv/asc-nmg.c, src/conv/asc2g.c, src/conv/asc2pix.c, src/conv/bot-bldxf.c, src/conv/bot-raw.c, src/conv/bot_shell-vtk.1, src/conv/bot_shell-vtk.c, src/conv/comgeom/3d.h, src/conv/comgeom/comgeom-g.1, src/conv/comgeom/cvt.c, src/conv/conv-vg2g.1, src/conv/conv-vg2g.c, src/conv/cy-g.1, src/conv/cy-g.c, src/conv/dbclean.1, src/conv/dbclean.sh, src/conv/dbupgrade.c, src/conv/dxf-g.1, src/conv/dxf-g.c, src/conv/enf-g.1, src/conv/enf-g.c, src/conv/euclid-g.1, src/conv/euclid-g.c, src/conv/euclid_format.c, src/conv/euclid_unformat.c, src/conv/example_geom.c, src/conv/fast4-g.1, src/conv/fast4-g.c, src/conv/g-acad.1, src/conv/g-acad.c, src/conv/g-adrt.c, src/conv/g-dxf.1, src/conv/g-dxf.c, src/conv/g-euclid.1, src/conv/g-euclid.c, src/conv/g-euclid1.c, src/conv/g-nff.1, src/conv/g-nff.c, src/conv/g-nmg.1, src/conv/g-nmg.c, src/conv/g-obj.1, src/conv/g-obj.c, src/conv/g-shell.rect.1, src/conv/g-shell.rect.c, src/conv/g-stl.1, src/conv/g-stl.c, src/conv/g-tankill.1, src/conv/g-tankill.c, src/conv/g-vrml.1, src/conv/g-vrml.c, src/conv/g-x3d.1, src/conv/g-x3d.c, src/conv/g-xxx.c, src/conv/g-xxx_facets.c, src/conv/g2asc.1, src/conv/g2asc.c, src/conv/g4-g5.c, src/conv/g5-g4.c, src/conv/nastran-g.1, src/conv/nastran-g.c, src/conv/nmg-bot.1, src/conv/nmg-bot.c, src/conv/nmg-rib.1, src/conv/nmg-rib.c, src/conv/nmg-sgp.c, src/conv/pix2asc.1, src/conv/pix2asc.c, src/conv/ply-g.1, src/conv/ply-g.c, src/conv/poly-bot.1, src/conv/poly-bot.c, src/conv/proe-g.1, src/conv/proe-g.c, src/conv/stl-g.1, src/conv/stl-g.c, src/conv/tankill-g.1, src/conv/tankill-g.c, src/conv/viewpoint-g.1, src/conv/viewpoint-g.c, src/adrt/libtienet/tienet.h, src/adrt/libtienet/tienet_define.h, src/adrt/libtienet/tienet_master.c, src/adrt/libtienet/tienet_master.h, src/adrt/libtienet/tienet_slave.c, src/adrt/libtienet/tienet_slave.h, src/adrt/libtienet/tienet_util.c, src/adrt/libtienet/tienet_util.h, src/adrt/libutil/camera.c, src/adrt/libutil/camera.h, src/adrt/libutil/display.c, src/adrt/libutil/display.h, src/adrt/libutil/font.h, src/adrt/libutil/image.c, src/adrt/libutil/image.h, src/adrt/libutil/rand.h, src/adrt/libutil/umath.c, src/adrt/libutil/umath.h, src/anim/anim_cascade.1, src/anim/anim_cascade.c, src/anim/anim_fly.1, src/anim/anim_fly.c, src/anim/anim_hardtrack.1, src/anim/anim_hardtrack.c, src/anim/anim_keyread.1, src/anim/anim_keyread.c, src/anim/anim_lookat.1, src/anim/anim_lookat.c, src/anim/anim_offset.1, src/anim/anim_offset.c, src/anim/anim_orient.1, src/anim/anim_orient.c, src/anim/anim_script.1, src/anim/anim_script.c, src/anim/anim_sort.1, src/anim/anim_sort.c, src/anim/anim_time.1, src/anim/anim_time.c, src/anim/anim_track.1, src/anim/anim_track.c, src/anim/anim_turn.1, src/anim/anim_turn.c, src/anim/cattrack.c, src/anim/chan_add.c, src/anim/chan_mult.1, src/anim/chan_mult.c, src/anim/chan_permute.1, src/anim/chan_permute.c, src/brlman/awf.in, src/brlman/brlman.1, src/brlman/brlman.in, src/burst/Hm.c, src/burst/Hm.h, sh/any-png.sh, sh/cadbug.sh, sh/cakeinclude.sh, sh/cray.sh, sh/elapsed.sh, sh/footer.sh, sh/header.sh, sh/indent.sh, sh/ldAix.sh, sh/make_bz2.sh, sh/make_deb.sh, sh/make_dmg.sh, sh/make_pkg.sh, sh/make_rpm.sh, sh/make_tar.sh, sh/make_tgz.sh, sh/make_zip.sh, sh/pixinfo.sh, sh/pixread.sh, sh/pixwrite.sh, sh/sgisnap.sh, sh/show.sh, sh/vers.sh, src/adrt/libcommon/adrt_common.h, src/adrt/libcommon/canim.c, src/adrt/libcommon/canim.h, src/adrt/libcommon/cdb.c, src/adrt/libcommon/cdb.h, src/adrt/libcommon/env.c, src/adrt/libcommon/env.h, src/adrt/libcommon/pack.c, src/adrt/libcommon/pack.h, src/adrt/libcommon/unpack.c, src/adrt/libcommon/unpack.h, src/adrt/libtexture/texture.h, src/adrt/libtexture/texture_blend.c, src/adrt/libtexture/texture_blend.h, src/adrt/libtexture/texture_bump.c, src/adrt/libtexture/texture_bump.h, src/adrt/libtexture/texture_camo.c, src/adrt/libtexture/texture_camo.h, src/adrt/libtexture/texture_checker.c, src/adrt/libtexture/texture_checker.h, src/adrt/libtexture/texture_clouds.c, src/adrt/libtexture/texture_clouds.h, src/adrt/libtexture/texture_gradient.c, src/adrt/libtexture/texture_gradient.h, src/adrt/libtexture/texture_image.c, src/adrt/libtexture/texture_image.h, src/adrt/libtexture/texture_internal.h, src/adrt/libtexture/texture_mix.c, src/adrt/libtexture/texture_mix.h, src/adrt/libtexture/texture_perlin.c, src/adrt/libtexture/texture_perlin.h, src/adrt/libtexture/texture_stack.c, src/adrt/libtexture/texture_stack.h, src/adrt/libtie/define.h, src/adrt/libtie/kdtree.c, src/adrt/libtie/kdtree.h, src/adrt/libtie/struct.h, src/adrt/libtie/tie.c, src/adrt/libtie/tie.h, bench/lgt.sh, bench/pixcmp.c, bench/run.sh, bench/try.sh, bench/viewdiff.sh, db/db.php, doc/bw.5, doc/cmap.5, doc/html/manuals/mged/animmate/rt.html, doc/pix.5, doc/plot3.5, include/anim.h, include/bn.h, include/brlcad.h, include/bu.h, include/cmd.h, include/common.h, include/compat4.h, include/conf.h, include/config_win.h, include/db.h, include/db5.h, include/dm-Null.h, include/dm-X.h, include/dm-glx.h, include/dm-ogl.h, include/dm-pex.h, include/dm-plot.h, include/dm-ps.h, include/dm.h, include/dm_color.h, include/dm_xvars.h, include/fb.h, include/fbio.h, include/fbserv_obj.h, include/libtermio.h, include/light.h, include/machine.h, include/mater.h, include/msr.h, include/nmg.h, include/noalias-prag.h, include/noalias.h, include/nurb.h, include/optical.h, include/photonmap.h, include/pkg.h, include/plastic.h, include/plot3.h, include/raytrace.h, include/redblack.h, include/rtgeom.h, include/rtlist.h, include/rtprivate.h, include/rtserver.h, include/rtstring.h, include/shadefuncs.h, include/shadework.h, include/shortvect-pr.h, include/shortvect.h, include/solid.h, include/spectrum.h, include/spm.h, include/tclcad.h, include/vectfont.h, include/vfont-if.h, include/vmath.h, include/wdb.h, m4/args.m4, m4/cache.m4, m4/compiler.m4, m4/epsilon.m4, m4/restore.m4, m4/retry.m4, m4/search.m4, m4/stage.m4, pix/cube.rt, COPYING, Makefile.am, autogen.sh, configure.ac:
-	update copyright to 2006
-
-	* sh/copyright.sh:
-	convert/update the copyright script from a BSD sed using the -E option for extended regular expressions (an option which the GNU sed doesn't recognize).  convert the sed expressions to basic regular expressions instead so it works with either without needing to test sed for option support or limiting to one versus the other.
-
-Tue Jan 17 06:54:03 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/other/libz/Attic/configure, src/other/iwidgets/Attic/configure:
-	don't need configure in cvs
-
-	* src/tclscripts/fs_dialog.tk: revert
-
-	* src/other/libtk/win/Attic/configure: don't need configure in cvs
-
-	* src/other/libtcl/generic/tclIOUtil.c, src/other/libtcl/generic/tclFileName.c:
-	revert
-
-	* src/other/libtk/unix/Attic/configure: don't need configure in cvs
-
-	* src/other/libtcl/tools/Attic/configure:
-	don't need configure, can be generated
-
-	* src/other/libtcl/win/tclWinFCmd.c: revert
-
-	* src/other/libtcl/win/Attic/configure:
-	don't need configure, can be generated
-
-	* src/libtclcad/tclcadAutoPath.c, src/other/libtcl/unix/tclUnixFile.c:
-	revert
-
-	* src/other/tkimg/base/Attic/configure:
-	no need to put configure in cvs, especially if we're not using it
-
-	* src/other/libtcl/library/safe.tcl: revert inadvertent mod
-
-	* misc/cvs2cl.pl: revert inadvertent mod that will break the script
-
-	* src/vas4/vas4.1, src/vdeck/vdeck.1, src/tab/scriptsort.1, src/tab/tabinterp.1, src/tab/tabsub.1, src/tclscripts/fs_dialog.tk, src/util/alias-pix.1, src/util/ap-pix.1, src/util/asc-pl.1, src/util/azel.1, src/util/bary.1, src/util/brlcad.1, src/util/buffer.1, src/util/bw-imp.1, src/util/bw-pix.1, src/util/bw-png.1, src/util/bw-ps.1, src/util/bw-rle.1, src/util/bw3-pix.1, src/util/bwcrop.1, src/util/bwdiff.1, src/util/bwfilter.1, src/util/bwhist.1, src/util/bwhisteq.1, src/util/bwmod.1, src/util/bwrect.1, src/util/bwrot.1, src/util/bwscale.1, src/util/bwshrink.1, src/util/bwstat.1, src/util/bwthresh.1, src/util/cv.1, src/util/dbcp.1, src/util/decimate.1, src/util/dpix-pix.1, src/util/dunncolor.1, src/util/dunnsnap.1, src/util/gencolor.1, src/util/hd.1, src/util/imgdims.1, src/util/loop.1, src/util/mac-pix.1, src/util/morphedit.1, src/util/op-bw.1, src/util/orle-pix.1, src/util/pcd-pix.1, src/util/pix-alias.1, src/util/pix-bw.1, src/util/pix-bw3.1, src/util/pix-orle.1, src/util/pix-png.1, src/util/pix-ps.1, src/util/pix-rle.1, src/util/pix-sun.1, src/util/pixbackgnd.1, src/util/pixbgstrip.1, src/util/pixblend.1, src/util/pixborder.1, src/util/pixbustup.1, src/util/pixclump.1, src/util/pixcolors.1, src/util/pixcut.1, src/util/pixdiff.1, src/util/pixdsplit.1, src/util/pixfade.1, src/util/pixfilter.1, src/util/pixhalve.1, src/util/pixhist.1, src/util/pixhist3d-pl.1, src/util/pixhist3d.1, src/util/pixinterp2x.1, src/util/pixmatte.1, src/util/pixmerge.1, src/util/pixmorph.1, src/util/pixrect.1, src/util/pixrot.1, src/util/pixsaturate.1, src/util/pixscale.1, src/util/pixshrink.1, src/util/pixstat.1, src/util/pixsubst.1, src/util/pixtile.1, src/util/pixuntile.1, src/util/pl-X.1, src/util/pl-X10.1, src/util/pl-asc.1, src/util/pl-hpgl.1, src/util/pl-pl.1, src/util/pl-ps.1, src/util/pl-sgi.1, src/util/pl-starbase.1, src/util/pl-tek.1, src/util/plcolor.1, src/util/pldebug.1, src/util/plgetframe.1, src/util/plline2.1, src/util/plrot.1, src/util/png-bw.1, src/util/png-pix.1, src/util/png_info.1, src/util/query.1, src/util/remapid.1, src/util/rle-pix.1, src/util/sun-pix.1, src/util/terrain.1, src/util/wavelet.1, src/other/libtcl/tools/Attic/configure, src/other/libtcl/unix/tclUnixFile.c, src/other/libtcl/win/Attic/configure, src/other/libtcl/win/tclWinFCmd.c, src/other/libtk/unix/Attic/configure, src/other/libtk/win/Attic/configure, src/other/tkimg/base/Attic/configure, src/proc-db/picket_fence.1, src/remrt/remrt.1, src/rt/reshoot.1, src/rt/rt.1, src/rt/rt_bot_faces.1, src/rt/rtarea.1, src/rt/rtcheck.1, src/rt/rtedge.1, src/rt/rtg3.1, src/rt/rthide.1, src/rt/rtpp.1, src/rt/rtrange.1, src/rt/rtray.1, src/rt/rtregis.1, src/rt/rtscale.1, src/rt/rtshot.1, src/rt/rtwalk.1, src/rt/rtweight.1, src/rt/rtxray.1, src/rttherm/rttherm.1, src/rttherm/ssamp-bw.1, src/libwdb/libwdb.3, src/mged/cad_boundp.1, src/mged/cad_parea.1, src/mged/mged.1, src/mk/mk_bolt.1, src/mk/mk_gastank.1, src/mk/mk_handle.1, src/mk/mk_window.1, src/mk/mk_winfrm.1, src/mk/mk_wire.1, src/nirt/nirt.1, src/nirt/showshot.1, src/other/URToolkit/man/rlezoom.1, src/other/iwidgets/Attic/configure, src/other/libtcl/generic/tclFileName.c, src/other/libtcl/generic/tclIOUtil.c, src/other/libtcl/library/safe.tcl, src/fbed/fbed.1, src/fbserv/fbserv.1, src/gtools/g_diff.1, src/gtools/g_lint.1, src/gtools/g_qa.1, src/halftone/halftone.1, src/irprep/all_sf.1, src/irprep/firpass.1, src/irprep/ir-X.1, src/irprep/ir-sgi.1, src/irprep/irdisp.1, src/irprep/pictsgi.1, src/irprep/pictx.1, src/irprep/secpass.1, src/irprep/see.1, src/irprep/see2.1, src/irprep/shapefact.1, src/irprep/showtherm.1, src/lgt/lgt.1, src/libbn/libplot3.3, src/libbu/htond.3, src/libbu/libbu.3, src/libbu/redblack.3, src/libcursor/libcursor.3, src/libfb/libfb.3, src/liborle/liborle.3, src/librt/librt.3, src/libtclcad/tclcadAutoPath.c, misc/cvs2cl.pl, src/anim/anim_cascade.1, src/anim/anim_fly.1, src/anim/anim_hardtrack.1, src/anim/anim_keyread.1, src/anim/anim_lookat.1, src/anim/anim_offset.1, src/anim/anim_orient.1, src/anim/anim_script.1, src/anim/anim_sort.1, src/anim/anim_time.1, src/anim/anim_track.1, src/anim/anim_turn.1, src/anim/chan_mult.1, src/anim/chan_permute.1, src/brlman/brlman.1, src/canon/canonize.1, src/conv/asc-nmg.1, src/conv/bot_shell-vtk.1, src/conv/comgeom/comgeom-g.1, src/conv/conv-vg2g.1, src/conv/cy-g.1, src/conv/dbclean.1, src/conv/dxf-g.1, src/conv/enf-g.1, src/conv/euclid-g.1, src/conv/fast4-g.1, src/conv/g-acad.1, src/conv/g-dxf.1, src/conv/g-euclid.1, src/conv/g-nff.1, src/conv/g-nmg.1, src/conv/g-obj.1, src/conv/g-shell.rect.1, src/conv/g-stl.1, src/conv/g-tankill.1, src/conv/g-vrml.1, src/conv/g-x3d.1, src/conv/g2asc.1, src/conv/iges/g-iges.1, src/conv/iges/iges-g.1, src/conv/nastran-g.1, src/conv/nmg-bot.1, src/conv/nmg-rib.1, src/conv/patch/patch-g.1, src/conv/patch/rpatch.1, src/conv/pix2asc.1, src/conv/ply-g.1, src/conv/poly-bot.1, src/conv/proe-g.1, src/conv/stl-g.1, src/conv/tankill-g.1, src/conv/unigraphics/ug-g.1, src/conv/viewpoint-g.1, src/fb/bw-fb.1, src/fb/cat-fb.1, src/fb/cell-fb.1, src/fb/cmap-fb.1, src/fb/fb-bw.1, src/fb/fb-cmap.1, src/fb/fb-fb.1, src/fb/fb-orle.1, src/fb/fb-pix.1, src/fb/fb-png.1, src/fb/fb-rle.1, src/fb/fbanim.1, src/fb/fbcbars.1, src/fb/fbclear.1, src/fb/fbcmap.1, src/fb/fbcmrot.1, src/fb/fbcolor.1, src/fb/fbfade.1, src/fb/fbframe.1, src/fb/fbfree.1, src/fb/fbgamma.1, src/fb/fbgrid.1, src/fb/fbhelp.1, src/fb/fblabel.1, src/fb/fbline.1, src/fb/fbpoint.1, src/fb/fbscanplot.1, src/fb/fbstretch.1, src/fb/fbzoom.1, src/fb/gif-fb.1, src/fb/gif2fb.1, src/fb/orle-fb.1, src/fb/pix-fb.1, src/fb/pixautosize.1, src/fb/pl-fb.1, src/fb/png-fb.1, src/fb/polar-fb.1, src/fb/pp-fb.1, src/fb/rle-fb.1, doc/bw.5, doc/cmap.5, doc/pix.5, doc/plot3.5:
-	fix the manpage commments via s/\.\/"/.\\\"/g
-
-Mon Jan 16 23:37:13 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* NEWS: fixed brlman/awf `./"' unsupported or unknown issue
-
-	* BUGS: our awf now supports ./" comments in addition to .\" ones
-
-	* src/other/awf/pass2.base: support ./" and .\" as an awf comment
-
-	* TODO: wrote the .g in-memory transfer example aplication
-
-	* include/raytrace.h:
-	add declarations for the new routines in db_inmem.c and db_flags.c, namely db_open_inmem, db_create_inmem, and db_flags_raw_internal
-
-	* src/gtools/g_transfer.c:
-	switch it back to db_open_inmem() instead of db_create_inmem() since testing is done, either should work fine but for this application, we don't need the _GLOBAL.
-
-	* src/gtools/g_transfer.c:
-	rename the dbip global to DBIP to distinguish it from local function dbip pointers.  move the open/create/flag inmem routines into librt proper into the db_inmem.c and db_flags.c files.
-
-	* src/librt/Makefile.am: add db_flags.c and db_inmem.c
-
-	* src/librt/db_inmem.c, src/librt/db_lookup.c:
-	begin consolidating the in-memory-only database geometry support into one plcae.  move db_inmem() to its own db_inmem.c file, adding two new routines for opening/creating in-memory databases via db_open_inmem() and db_create_inmem().  difference between the two being that create adds a _GLOBAL while open does not.
-
-	* src/librt/db_alloc.c, src/librt/db_flags.c:
-	move the db_flags_internal() to its own db_flags.c file as it has very little to do with allocations. also, add another routine for getting the flags from a db5_raw_internal as well.
-
-	* src/librt/db5_io.c:
-	protect from loosing memory and from otherwise potentially freeing what we are about to dup by stashing the pointer then freeing it.
-
-	* src/gtools/.cvsignore: ignore g_transfer
-
-	* NEWS: new g_transfer in-memory geometry example program
-
-	* src/gtools/g_transfer.c:
-	now fully working, shooting rays at the remote geometry being held in-memory only.  finishing polish fixes that were needed include making the dbi_title memory dynamic so librt doesn't try to free the static string, do the something during the ciao instead of after the server shuts down, and MOST IMPORTANTLY .. don't free the libpkg buf buffer that was used to set the external buffer, that gets stashed into the directory pointer, that must not be free'd when we try to use it...(that took a long time to find)
-
-	* src/librt/prep.c:
-	quell a warning after repeat calls to rt_clean() since the rti_nsol_by_type wasn't getting set to zero when the memory was released.  now it checks for the zero param to bu_free and clears the nsol value.
-
-	* src/librt/tree.c:
-	stash the node into an argv for rt_gettree() so that it may be null-padded.  helps debugging to see the boundary.
-
-Sun Jan 15 23:49:36 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/librt/db5_io.c:
-	missing curlies, so wrong message was getting printed on bad objects.
-
-	* src/librt/db_io.c: ws
-
-	* src/librt/db_open.c:
-	ack, make sure the file pointer isn't null before trying to fclose it
-
-	* src/gtools/g_transfer.c:
-	give the server something to do with the geometry sent to it -- the client can specify objects that should be shot at via MSG_ARGS packets.  the server stashes those object names and then shoots a ray at them when the client disconnects.  since external packets actually include their data lengths inside, we don't need to send that object length as a string.  server now correctly stashes the geometry as in-memory objects.
-
-	* configure.ac:
-	add header checks for ieeefp.h, setjmp.h, and waitflags.h for the blt package, also add function checks for finite() and isfinit() from libm and a sizeof test for long long.
-
-	* src/other/blt/src/bltTree.c:
-	there seem to be two macro names missing for systems where sizeof_void_p is 8 (MAX_LIST_VALUES and START_LOGSIZE) so move their defines outside the #if so everyone gets it.
-
-	* src/other/blt/Makefile.am:
-	their configure indicated they need socket, m, and nsl, so add them
-
-	* autogen.sh:
-	fix a problem where the an aborted autogen.sh would leave a configure.ac.backup and a subsequent failing autoconf would restore the wrong/old backup.  only restore if we made the backup.
-
-	* configure.ac:
-	add the new BC_COMPLIANT_FLOAT and BC_COMPLIANT_DOUBLE tests
-
-	* m4/epsilon.m4:
-	add BC_COMPLIANT_FLOAT and BC_COMPLIANT_DOUBLE for determining whether the floating point implementation seems to be IEEE 754 compliant.  a handful of tests are performed, namely checking that the epsilon tolerance matches the defined power, making sure 0 == -0, and that -0 is actually implemented.
-
-	* configure.ac:
-	run AC_C_BIGENDIAN without overriding the if-true and if-false so that the regular WORDS_BIGENDIAN define is provided (added for blt, which relies on it).  test for size of int and long so that the result is logged for debugging.  add checks to determine the floating point epsilon values too.
-
-	* m4/Makefile.am, m4/epsilon.m4:
-	new m4/epsilon.m4 file.  define macros BC_TRY_RUN_OUTPUT, BC_FLOAT_EPSILON, and BC_DOUBLE_EPSILON.  BC_TRY_RUN_OUTPUT attempts to compile and run the provided program, saving the output in the provided variable.  this makes for really convenient tests that can output a calculated value (like computation tolerances).  The latter two respectively determine the floating point tolerance epsilon value (i.e. smallest value such that 1.0 + value != 1.0).  ANSI defines macros that should be provided, but they are sometimes not.
-
-	* m4/compiler.m4: meh
-
-Sat Jan 14 03:22:09 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/rt/rtshot.c:
-	use rt_gettrees_and_attrs instead of rt_gettrees_muves.  the latter is a special hook routine provided to muves (though why rt_gettrees_and_attrs wasn't sufficient is a mystery to me).  the abstraction does keep them ever so slightly decoupled, but brl-cad code shouldn't be calling it even if rtshot was initially perhaps an example for them.
-
-Fri Jan 13 18:24:29 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/archer/Archer.tcl:
-	Add better support for toggling display of primitive labels when Archer is embedded.
-
-	* src/tclscripts/archer/images/aboutArcher.png: Update to 0.7.3
-
-	* src/tclscripts/archer/ShaderEdit.tcl:
-	Add code to possibly call the (-shaderChangedCallback) from the changedShader method.
-
-	* src/tclscripts/archer/Archer.tcl:
-	Modify the packTree method to ignore malformed lines. Add call to _refresh_tree to _apply_edit and _reset_edit
-
-Thu Jan 12 23:41:52 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* configure.ac:
-	fix AND improve the adrt checks.  some variables had changed (making them wrong) for testing sdl/python; they're now fixed.  add an --enable-adrt option that is coupled to the --with-sdl and --with-python options including all the additional checks for making sure all the various combinations make sense or output messages or abort.  before doing any BC_RETRY_CONFIGURE, output a message as to why we are retrying.  sdl test only needs to check for sdl-config if sdl is actuallly going to be used, same for python.  make the jove test consistent with the other tests.
-
-	* src/other/blt/src/Makefile.am:
-	shouldn't need module or static for this library, move CPPHEADERS to the top, don't install the blt config.h files, install the rest of the headers
-
-	* src/other/blt/Makefile.am:
-	shouldn't need module, don't link the tk sources
-
-	* src/other/blt/src/bltConfig.h:
-	just make blt use brl-cad's common.h for config.h results
-
-	* src/other/libtcl/Makefile.am, src/other/libtcl/generic/Makefile.am, src/other/libtcl/unix/Makefile.am:
-	move the AM_CPPFLAGS up to the top
-
-Thu Jan 12 21:03:17 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/archer/Archer.tcl:
-	Add the ability to toggle display of primitive labels.
-
-Thu Jan 12 21:01:56 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/other/blt/src/bltGrAxis.c, src/other/blt/src/bltGrElem.c, src/other/blt/src/bltGrMarker.c, src/other/blt/src/bltInit.c, src/other/blt/src/bltTreeView.c:
-	apply blt2.4z-patch-2
-
-Thu Jan 12 15:48:07 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/conv/g-stl.c: The -i option doesn't take an argument.
-
-Thu Jan 12 06:01:54 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* TODO: sgi dial knobs should be working release after next
-
-	* TODO:
-	add callback data parameteres to libpkg hook functions so one doesn't have to use global data
-
-	* src/gtools/g_transfer.c:
-	begin initial support for creating an in-memory geometry database (routines will likely move into librt, but here for now for simplicity (db_open_inmem() and db_create_inmem()).  also send the length of each object over the wire as an ascii string for simplicity so we can easily restore the bu_external structure without going through hoops.  add an rt_init_resource() call for convenience until the next release since db_open() is bugged on earlier versions.
-
-	* src/libpkg/pkg.c:
-	quell braindead compiler warning on altix where strerror_r is declared to return a char * (gnu glibc extension) instead of an int (posix, bsd, c89, svid3) like it's supposed to.
-
-Wed Jan 11 22:45:23 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/librt/db_io.c: ws
-
-	* src/librt/db_open.c:
-	clean up db_create()'s logic considerably.  annoyingly, the version check for writing out the ident can't go away since db_fwrite_ident() has no means to determine the version (need some wrapper interface)
-
-	* src/librt/db5_io.c:
-	correctly free our allocated resources in db5_fwrite_ident() even on fatal error by stashing the result.
-
-	* src/librt/db_open.c:
-	remove dead init line, dbi_eof is set to something else two lines after.
-
-	* src/librt/dir.c: heh, wrong line and bad syntax.. never mind
-
-	* src/librt/dir.c: init mat to NULL before checking if it's null.
-
-	* src/librt/db_open.c:
-	prevent a segfault if caller provides a null mode to db_open()
-
-Wed Jan 11 16:36:31 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/archer/Archer.tcl:
-	Modify the _apply_edit method to not call _refresh_tree.
-
-	* src/tclscripts/archer/ShaderEdit.tcl:
-	Arrange to call the shader changed callback when editing the shader form.
-
-	* src/tclscripts/archer/Archer.tcl:
-	The edit panels are no longer using Scrolledframes. Modify _select_node method to always update the edit panel. _reset_edit no longer calls _refresh_tree
-
-Tue Jan 10 22:40:39 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/archer/GeometryEditFrame.tcl:
-	Mods to NOT use Scrolledframe
-
-	* src/tclscripts/archer/tclIndex: Update index
-
-	* src/tclscripts/archer/Archer.tcl:
-	Add the following methods: packTree, unpackTree and unpackTreeGuts
-
-	* src/tclscripts/archer/ShaderEdit.tcl: Initial check-in
-
-	* src/tclscripts/archer/CombEditFrame.tcl:
-	Add better support for boolean editing and shader editing. More mods to follow.
-
-Tue Jan 10 07:29:20 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/gtools/g_transfer.c: free our buffers
-
-	* src/gtools/g_transfer.c:
-	yes, libpkg does rock.  send the geometry to the server properly specifying callbacks for the different packet types.  server gets a simple processing loop to read in the data and handle the packets.
-
-	* src/gtools/g_transfer.c:
-	libpkg is pretty cool.  open a connnection from the client to the server using a really simple handshake protocol.  client sends HELO, server listens for that HELO to distinguish valid clients from bogus connnections.
-
-Mon Jan  9 23:10:50 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/gtools/g_transfer.c:
-	instead of two separate hook funcs, just use send_to_server() for both the specified geometry case and the non-specified geometry case.
-
-	* src/gtools/g_transfer.c:
-	get rid of the db_walk_tree method since db_functree is considerably more simple for this purpose. stash the server details into our data struct.
-
-	* src/gtools/g_transfer.c:
-	commit a version that walks the specified geometry both with db_walk_tree() and db_functree().  db_functree was ultimately considerably more simple for this exercise, but useful to see what was provided with db_walk_tree and the differences. add support to run the client either passing all geometry or just a subset (hence the subtree walking)
-
-Sun Jan  8 19:33:21 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/gtools/g_transfer.c:
-	add an optional geometry argument for specifying what geometry to send (default is all); add a help option and make short options case insensitive
-
-Fri Jan  6 15:55:37 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* HACKING:
-	additional release may be made on an as-needed basis for bug-fix releases and security issues.  December/January time frame is considered a single release iteration in order to accommodate holidays and vacations, and to give the devs a break.
-
-	* TODO: new geometry examples aren't going to happen this iteration
-
-	* src/gtools/Makefile.am:
-	add the new g_transfer.c file to the build including the creation of the g_transfer example database application for transferring portions of a .g over the wire serialized.
-
-	* src/gtools/g_transfer.c:
-	initial stubbed g_transfer example application for transferring portions of a geometry database over a network line serialized.  incomplete, but provides the main organization.
-
-	* src/librt/db5_scan.c:
-	init the rt_uniresource structure if it hasn't been initialized yet so that we can call db_dirbuild() directly without necessarily needing to worry about initializing a resource structure.  this mimicks the behavior and initialization that rt_dirbuild() performas as well.
-
-	* src/fb/fb-bw.c: flubber fubber
-
-Thu Jan  5 22:40:13 2006  lbutler  <lbutler@users.sourceforge.net>
-
-	* NEWS: added reshoot notice.
-
-	* src/rt/reshoot.1, src/rt/reshoot.c:
-	extended documentation, code formatting, modified reporting
-
-	* src/rt/reshoot.c: better output formatting
-
-	* src/rt/reshoot.1:
-	Added a "BUGS" section with suitable caveats for precision loss
-
-	* src/rt/reshoot.1, src/rt/reshoot.c:
-	This is an application for re-shooting rays and comparing the results
-	to previous applicatin runs.  The princiiple use will probably be
-	in the regression test suite.  In that context, it should allow us
-	to shoot all the MUVES test suite rays outside of MUVES.  The one downside
-	is that it relies on the RT_G_DEBUG flag DEBUG_ALLHITS to cause librt
-	to log the original rays.  Since floating point values are logged with %g some
-	precision is lost.
-
-Thu Jan  5 16:48:20 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/archer/archer:
-	All of archer including the tclscripts is assigned to u.s. government and should be under the LGPL
-
-Wed Jan  4 22:04:56 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* sh/footer.sh, sh/header.sh:
-	add support for DOS batch script files, using REM as the comment
-
-Wed Jan  4 21:34:07 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/swidgets/scripts/tree.itk: Check-in for Doug Howard.
-
-	* src/tclscripts/archer/Archer.tcl, src/tclscripts/lib/ComboBox.tcl:
-	Minor cleanup.
-
-	* src/tclscripts/lib/ColorEntry.tcl:
-	Modified to use tk_chooseColor. Other minor cleanup.
-
-	* src/tclscripts/lib/Command.tcl:
-	Add back door for accessing the master interpreter (i.e. the Command widget uses a slave interpreter for interfacing with the user). Other minor mods.
-
-	* src/tclscripts/lib/Db.tcl:
-	Change the help for erotate, escale and etranslate to orotate, oscale and otranslate, respectively.
-
-	* src/fbserv/Makefile.am, src/other/tkimg/base/Makefile.am, src/other/tkimg/png/Makefile.am, src/other/tkimg/pngtcl/Makefile.am, src/other/tkimg/zlibtcl/Makefile.am, src/other/tkimg/Makefile.am:
-	Add to EXTRA_DIST for Windows
-
-Wed Jan  4 16:01:16 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/fb/fb-bw.1: add support for -F framebuffer option to fb-bw
-
-Wed Jan  4 16:00:55 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/other/libpng/Makefile.am: Add scripts to EXTRA_DIST
-
-	* src/other/libtcl/Makefile.am: Add win to EXTRA_DIST
-
-Wed Jan  4 15:59:14 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* NEWS, src/fb/fb-bw.c: add support for -F framebuffer option to fb-bw
-
-Wed Jan  4 15:55:10 2006  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/librt/Makefile.am, src/libsysv/Makefile.am:
-	Add to EXTRA_DIST for Windows
-
-	* src/other/blt/win/Makefile.am, src/other/blt/demos/Makefile.am, src/other/blt/demos/bitmaps/Makefile.am:
-	Initial check-in
-
-	* src/other/blt/src/Makefile.am: Add EXTRA_DIST for Windows
-
-	* src/other/blt/Makefile.am:
-	Add EXTRA_DIST. Also add demos and win to SURDIRS.
-
-	* configure.ac: Add more blt dirs to AC_CONFIG_FILES
-
-Wed Jan  4 05:41:33 2006  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/libfb/if_ogl_win32.c:
-	no sense using saveifp in a function that provides the ifp
-
-	* src/libfb/if_ogl.c: there is no saveifp, should be ifp
+	* src/tclscripts/swidgets/scripts/tclIndex:
+	apparently some new indexed methods
 
 	* src/other/iwidgets/pkgIndex.tcl:
-	meh, shouldn't be in cvs, but update to 7.7.0 anyways
+	commit the right version for iwidgets, 4.0.1
 
-Mon Jan  2 18:16:44 2006  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+	* src/other/iwidgets/pkgIndex.tcl.in:
+	iwidgets needs to use it's own version, not the version of cad
 
 	* configure.ac:
-	add searches for itcl32 and itk32, as FreeBSD removes the dot
+	add a new configure --enable-verbose and --enable-progress option, with the first being a convenience option that enables the progress and warnings verbose options.  the --enable-verbose-progress option (alias) basically adds --silent to LIBTOOLFLAGS and/or to LIBTOOL.
 
-Sat Dec 31 02:19:09 2005  brlcad  <brlcad@users.sourceforge.net>
+	* m4/args.m4:
+	record whether a configure option was set or not since it may be set yet still be the default
 
-	* include/common.h:
-	do not include our config.h header in common.h if common has been installed (our public header files shouldn't be using config defines anyways).  this will undoubtedly require more testing, but it makes it such that 3rd party developers don't necessarily need to include /usr/brlcad/include or use -DHAVE_CONFIG_H to get the header to simply work
+2006-06-04  BRL-CAD  <brlcad@users.sourceforge.net>
 
-	* src/rt/rtexample.c:
-	add more comments on what the file is and its purpose, fix the compile example so that it works on an installed brl-cad too
+	* src/util/sgi-pix.c: few more unused
 
-	* src/rt/Makefile.am:
-	add the rtcheck_vers_win.c rtedge_vers_win.c that were added from the windows port branch so they are included in the dist
+	* src/util/roots_example.c: remove unused var i
+
+	* src/util/sgi-pix.c:
+	sane function ordering, clean up preprocessor logic, quell warnings, ws.
+
+	* src/util/pl-sgi.c, src/util/remapid.c, src/util/sgi-pix.c:
+	quell more warnings
+
+	* src/util/pl-sgi.c: move the other defines and globals to the top too
+
+	* src/util/pl-sgi.c: de-k&r-ify, ansify the functions
+
+	* src/util/pl-sgi.c:
+	reorder functions in proper decl/usage order, get rid of const Matrix casts
+
+2006-06-03  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* src/mged/points/process.c:
+	remove the usage if you're going to remove the decl
+
+	* src/mged/points/process.c: ws
+
+	* src/util/pl-X.c, src/util/pl-sgi.c: quell lots of warnings.
+
+	* src/util/bwscale.c: quell type warnings on bu_free
+
+	* src/nirt/if.c: quell incompatible parammeter type warning
+
+	* src/mged/utility2.c: removed unused variable i
+
+	* src/mged/points/process.c: remove unused variables, quell warnings
+
+	* src/gtools/g_transfer.c: remove unused variables
+
+	* src/burst/burst.c: only define sigcld if signal.h doesn't define it
+
+	* src/conv/g-adrt.c: quell more unused variable warnings
+
+	* src/libdm/dm_obj.c:
+	USE_FBSERV is now defined by configure, quell set but unused warning on id var.
+
+	* src/rt/viewxray.c: quell unsigned type warning
+
+	* src/rt/viewweight.c: quell unused var warning
+
+	* src/conv/g-adrt.c: quell unused variable warnings
+
+	* src/conv/bot_shell-vtk.c: missed a norm
+
+	* src/conv/bot_shell-vtk.c:
+	quell unused variable warning (norm variable)
+
+	* src/libpkg/pkg.c: quell unused variable warning
 
 	* TODO:
-	add support to restore the backups when an autogen.sh step aborts
+	sgi knobs and example geometry are pushed back as (sigh) clone still isn't done and EF plugin and archer are going to require considerably more attention.  prepare for 7.8.2 release, nothing left to do.
 
-	* src/conv/iges/Makefile.am:
-	add the missing g-iges-vers_win.c iges-g-vers_win.c windows vers.c files to the dist
+	* doc/README.IRIX:
+	no longer need to disable blt, build problem fixed (simple cast)
 
-	* TODO:
-	don't have access to intel compiler so reprioritize the benchmark testing to a later release.
+	* src/other/blt/src/bltInit.c:
+	Tcl_GetAssocData returns a Clientdata, so have to cast to long to avoid mipspro type check failure
 
-	* configure.ac:
-	rename --enable-everything to --enable-almost-everything just to keep things more truthful, yet keep the original as an alias.  make jove and the proe-plugin have a -build by default to be consistent with the other provided packages, exand on the proe plugin aliases.
+	* m4/epsilon.m4:
+	so far, only freebsd seems to use doubles for floats .. so revert the leniancy and report when implementations deviate from what should be expected from IEEE compliance.
 
-Fri Dec 30 23:45:14 2005  brlcad  <brlcad@users.sourceforge.net>
+	* sh/shtool:
+	treat screen as vt100, avoid the error message about determining how to do bold
 
-	* configure.ac:
-	consistent case on BLT and tkImg when printing the name of the package, order them after iwidgets for each section.
+2006-06-02  BRL-CAD  <brlcad@users.sourceforge.net>
 
-	* configure.ac:
-	make tcl, itcl, iwidgets and the new blt and tkimg packages all default to 'auto' for determining whether to use/install them; fix the aliases for the two new packages and put their result output in the right place.
+	* src/conv/g-var.c:
+	follow the style guidelines, use K&R/Java style braces/indents not BSD. ws.
 
-	* src/rt/rtarea.1:
-	credit/blame me since rtarea was almost entirely rewritten when adding presented/exposed areas
+	* src/conv/g-var.c:
+	crazy dev trickling variables throughout as if this were c++ code.  add a local var footer and remove reference to non-existant codebase.  fix header inclusion too.
 
-	* configure.ac: misc/win32-msvc7/Makefile listed twice
+	* regress/spdi.sh: using == is not portable
 
-	* src/gtools/g_qa.c: quantitative analysis instead of quality assurance
+2006-06-01  BRL-CAD  <brlcad@users.sourceforge.net>
 
-	* src/gtools/g_qa.c:
-	added standard legalese file header, converted to bu_getopt for portability, increased max title length stored
+	* src/libbu/bomb.c:
+	avoid passing additional format arguments to fprintf() to avoid potential buffer allocations. very nominal benefit, but can conceivably help with certain crashes and implementations of fprintf().
 
-	* NEWS:
-	reid mged command, recursively assign region IDs; remat mged command, recursively assign a material ID; get_regions mged command, list assembly regions
+	* src/libbu/ispar.c:
+	gah, reduce the massive WIN32 block to just the section that mattered so that kill() is not invoked on a bu_bomb().. should eventually contain a WIN32-esque method for killing a parent process gracefully ala kill()
 
-	* src/tclscripts/mged/e_id.tcl, src/tclscripts/mged/openw.tcl: ws
+	* src/mged/ged.c:
+	avoid incrementing the dbi_uses counter directly -- do a clientless clone of the dbip instead
 
-	* src/tclscripts/mged/raypick.tcl, src/tclscripts/mged/solclick.tcl:
-	add the script name to the error message when searching for the commands the script uses
+	* src/librt/db_open.c:
+	allow for clientless cloning and closing of dbip instances where only the uses count is of interest.  no need to stash null clients even though the ptbl will record them, just ignore them.
 
-	* src/tclscripts/mged/Makefile.am:
-	add reid.tcl and remat.tcl, re-add the mysteriously commented pkgIndex.tcl
+	* src/librt/g_submodel.c:
+	remove bad commented-out increment of the dbi_uses.  it might benefit to just clone the dbi, but seems unnecessary for a plot routine
 
-	* src/tclscripts/mged/help.tcl:
-	add help data for reid, get_regions, and remat
+2006-06-01  d_rossberg  <d_rossberg@users.sourceforge.net>
 
-	* src/tclscripts/mged/remat.tcl:
-	add a remat command to mged.  remat assigns material IDs to all regions under some assembly to some given material ID number
+	* src/librt/db_open.c:
+	do not close a mapped file while the database instance is still in use
+	as db_clone_dbi does not increment dbi_mf->uses
 
-	* src/tclscripts/mged/reid.tcl:
-	add a new reid and get_regions command to mged.  reid assigns region IDs to all regions under some assembly starting at some given region ID number.  get_regions is used by reid to obtain the names of regions under a given combination.
+2006-06-01  bob1961  <bob1961@users.sourceforge.net>
 
-Thu Dec 29 23:02:46 2005  brlcad  <brlcad@users.sourceforge.net>
+	* src/tclscripts/archer/Archer.tcl:
+	Mods to remove the expand button when in "Basic" mode. There's also a minor tweak of the aboutDialog's size.
 
-	* TODO:
-	before next release: test intel compiler performance on Altix, add performance options
+2006-05-28  BRL-CAD  <brlcad@users.sourceforge.net>
 
-	* TODO: windows branch is merged
+	* HACKING:
+	add a new section on developer responsibilities outlining what is expected of them.  add details on header organization, usage of the K&R indentation style (aka java/gnu style), and routines in libbu that should be used for portability reasons.  more on the coding style in general.
 
-Thu Dec 29 20:19:47 2005  bob1961  <bob1961@users.sourceforge.net>
+	* COPYING:
+	make it more clear that the package as a unified work is GPL though separate portions of the package are released under different licenses.  refer to the development control structure and refer to HACKING.  provide a point of contact.
 
-	* src/tclscripts/archer/Archer.tcl: Add the "Compact" file menu item.
+2006-05-22  BRL-CAD  <brlcad@users.sourceforge.net>
 
-	* src/tclscripts/lib/Command.tcl:
-	Utilize a slave interpreter for better command/script parsing.
+	* src/mged/attach.c: init curr_dm_list to null
 
-Thu Dec 29 15:16:08 2005  brlcad  <brlcad@users.sourceforge.net>
+2006-05-21  BRL-CAD  <brlcad@users.sourceforge.net>
 
-	* src/tclscripts/sdialogs/.cvsignore, src/tclscripts/swidgets/.cvsignore:
-	ignore generated tclIndex and pkgIndex.tcl scripts
+	* src/mged/ged.c:
+	make sure the curr_dm_list isn't null before trying to close the dm
 
-	* src/libfb/Makefile.am, src/liboptical/Makefile.am, src/libpkg/Makefile.am, src/librt/Makefile.am, src/libsysv/Makefile.am, src/libtclcad/Makefile.am, src/libwdb/Makefile.am, src/mged/Makefile.am, src/nirt/Makefile.am, src/rt/Makefile.am, src/libbn/Makefile.am, src/libbu/Makefile.am, src/libdm/Makefile.am:
-	missing the vers_win.c files for making source distributions that will compile on windows
-
-	* README, configure.ac, include/config_win.h:
-	next release is going to be 7.8.0 given all the major enhancements, so bump revision up to 7.7.0
-
-	* NEWS:
-	these need a LOT more detail, but it's something.  new Archer modeling and visualization tool - Bob Parker, Doug Howard; extensive Windows build support enhancements - Bob Parker.  this isn't close to a patch update, 7.7.0 it becomes
-
-	* configure.ac:
-	generate the Makefiles for all of the new win32_msvc7 project dirs
-
-	* misc/Makefile.am: traverse into the win32-msvc7 dir
-
-	* misc/win32-msvc7/tclstub/Makefile.am, misc/win32-msvc7/tkimg/Makefile.am, misc/win32-msvc7/tkimgpng/Makefile.am, misc/win32-msvc7/tkstub/Makefile.am, misc/win32-msvc7/wish/Makefile.am, misc/win32-msvc7/png2fb/Makefile.am, misc/win32-msvc7/rt/Makefile.am, misc/win32-msvc7/rtcheck/Makefile.am, misc/win32-msvc7/rtedge/Makefile.am, misc/win32-msvc7/stl2g/Makefile.am, misc/win32-msvc7/tclpipe/Makefile.am, misc/win32-msvc7/tclsh/Makefile.am, misc/win32-msvc7/libtcl/Makefile.am, misc/win32-msvc7/libtclcad/Makefile.am, misc/win32-msvc7/libtk/Makefile.am, misc/win32-msvc7/libwdb/Makefile.am, misc/win32-msvc7/libz/Makefile.am, misc/win32-msvc7/mged/Makefile.am, misc/win32-msvc7/nirt/Makefile.am, misc/win32-msvc7/pix2fb/Makefile.am, misc/win32-msvc7/libpkg/Makefile.am, misc/win32-msvc7/libpng/Makefile.am, misc/win32-msvc7/librt/Makefile.am, misc/win32-msvc7/libsysv/Makefile.am, misc/win32-msvc7/itkstub/Makefile.am, misc/win32-msvc7/libBLT/Makefile.am, misc/win32-msvc7/libItcl/Makefile.am, misc/win32-msvc7/libItk/Makefile.am, misc/win32-msvc7/libbn/Makefile.am, misc/win32-msvc7/libbu/Makefile.am, misc/win32-msvc7/libdm/Makefile.am, misc/win32-msvc7/libfb/Makefile.am, misc/win32-msvc7/liboptical/Makefile.am, misc/win32-msvc7/g2asc/Makefile.am, misc/win32-msvc7/g2iges/Makefile.am, misc/win32-msvc7/g2stl/Makefile.am, misc/win32-msvc7/iges2g/Makefile.am, misc/win32-msvc7/itclstub/Makefile.am, misc/win32-msvc7/fb2pix/Makefile.am, misc/win32-msvc7/fb2png/Makefile.am, misc/win32-msvc7/fbclear/Makefile.am, misc/win32-msvc7/fbserv/Makefile.am, misc/win32-msvc7/asc2g/Makefile.am, misc/win32-msvc7/brlcad/Makefile.am, misc/win32-msvc7/dbupgrade/Makefile.am, misc/win32-msvc7/fast42g/Makefile.am, misc/win32-msvc7/all/Makefile.am:
-	add the automake templates for all of the studio projects so that they are included in source distributions.
-
-	* configure.ac, misc/win32-msvc7/Makefile.am:
-	add an automake makefile for the new win32_msvc7 directory so that it will get included in source distributions, traverse through it even
-
-	* src/libfb/if_remote.c:
-	use the HAVE_NETINET_IN_H header define instead of !_WIN32
-
-	* src/libfb/if_ogl.c:
-	copy some of the event/alive checking that was added to if_ogl_win32.c for the if_ogl.c interface too.
-
-	* src/Makefile.am: ws
-
-	* src/archer/Makefile.am, src/archer/plugins/Wizards/Makefile.am, src/archer/plugins/Wizards/tankwizardIA/Makefile.am, src/archer/plugins/Wizards/tankwizardIA/images/Makefile.am:
-	add the maintainercleanfiles sections, an rcs id, and the venerable Makefile.defs for consistency
-
-	* src/archer/plugins/Makefile.am:
-	missing utility.tcl, add maintainercleanfiles and the Makefile.defs include
-
-	* src/archer/archer:
-	add support to archer for running without necesssarily being installed yet
-
-	* include/fb.h:
-	avoid including sys/select.h outright since it conflicts on some systems (e.g. fbsd4).  would be good to decouple fb's interface from the fd_set struct since it's only used in one place
-
-	* configure.ac: finish the sentence
-
-	* configure.ac:
-	add a check to test whether we ended up with POSIX threading if only primarily to have the hint in the config.log output.  the pthread test was found in gd's configure.ac and seems a reasonable fairely comprehensive test.  pthread_cleanup_push is reportedly non-functional stub function on solaris; pthread_create and pthread_join are not necessarily in the same lib on irix (even though we prefer sproc on irix for performance); pthread_attr_init is apparently bonked on dec too.
-
-	* README:
-	remove the outdated warning about libtool 1.5 since autogen.sh works around the problem now
-
-Wed Dec 28 23:32:39 2005  erikgreenwald  <erikgreenwald@users.sourceforge.net>
-
-	* src/liboptical/Makefile.am:
-	libtool on fbsd/amd64 seems to not use fPIC on this, causing breakage due
-	to non-relocatable code in libmultispectral. This seems to fix it, and
-	shouldn't damage other platforms.
-
-Wed Dec 28 17:09:16 2005  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/mged/mged.bat, src/archer/archer.bat:
-	Added code to set the BRLCAD_DATA environment variable.
-
-Tue Dec 27 19:26:46 2005  brlcad  <brlcad@users.sourceforge.net>
-
-	* src/other/tkimg/base/Attic/Makefile.in:
-	don't need Makefile.in files in CVS when there are Makefile.am files
-
-	* src/other/libtcl/unix/dltest/Attic/Makefile.in:
-	got rid of the other tcl Makefile.in files, might as well get rid of this one too
-
-Sat Dec 24 05:05:53 2005  bob1961  <bob1961@users.sourceforge.net>
-
-	* misc/win32-msvc7/libtclcad/libtclcad.vcproj, misc/win32-msvc7/libtk/libtk.vcproj, misc/win32-msvc7/libz/libz.vcproj, misc/win32-msvc7/mged/mged.vcproj, misc/win32-msvc7/libItk/libItk.vcproj, misc/win32-msvc7/libbn/libbn.vcproj, misc/win32-msvc7/libdm/libdm.vcproj, misc/win32-msvc7/libfb/libfb.vcproj, misc/win32-msvc7/liboptical/liboptical.vcproj, misc/win32-msvc7/libpkg/libpkg.vcproj, misc/win32-msvc7/librt/librt.vcproj, misc/win32-msvc7/libsysv/libsysv.vcproj, misc/win32-msvc7/libtcl/libtcl.vcproj, misc/win32-msvc7/brlcad/brlcad.sln, misc/win32-msvc7/g2iges/g2iges.vcproj, misc/win32-msvc7/libBLT/libBLT.vcproj, misc/win32-msvc7/libItcl/libItcl.vcproj:
-	Update the project settings (release only)
-
-	* src/conv/iges/g-iges-vers_win.c, src/conv/iges/iges-g-vers_win.c:
-	This was missed during the merge because the iges directory was moved.
-
-Fri Dec 23 21:26:49 2005  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/mged/openw.tcl, src/tclscripts/sdialogs/Makefile.am, src/tclscripts/sdialogs/pkgIndex.tcl, src/tclscripts/sdialogs/scripts/Makefile.am, src/tclscripts/sdialogs/scripts/entrydialog.itk, src/tclscripts/sdialogs/scripts/listdialog.itk, src/tclscripts/sdialogs/scripts/stddlgs.tcl, src/tclscripts/sdialogs/scripts/tclIndex, src/tclscripts/sdialogs/sdialogs.tcl, src/tclscripts/swidgets/Makefile.am, src/tclscripts/swidgets/images/Makefile.am, src/tclscripts/swidgets/images/closed.gif, src/tclscripts/swidgets/images/leaf.gif, src/tclscripts/swidgets/images/minus.xbm, src/tclscripts/swidgets/images/open.gif, src/tclscripts/swidgets/images/plus.xbm, src/tclscripts/swidgets/images/tip.gif, src/tclscripts/swidgets/pkgIndex.tcl, src/tclscripts/swidgets/scripts/Makefile.am, src/tclscripts/swidgets/scripts/selectlists.itk, src/tclscripts/swidgets/scripts/tclIndex, src/tclscripts/swidgets/scripts/tkgetdir.itk, src/tclscripts/swidgets/scripts/togglearrow.itk, src/tclscripts/swidgets/scripts/tooltip.itk, src/tclscripts/swidgets/scripts/tree.itk, src/tclscripts/swidgets/swidgets.tcl, src/util/bw-png.c, src/tclscripts/archer/images/Themes/Crystal, src/tclscripts/archer/images/Themes/Crystal/Makefile.am, src/tclscripts/archer/images/Themes/Crystal/arrow_back.png, src/tclscripts/archer/images/Themes/Crystal/arrow_forward.png, src/tclscripts/archer/images/Themes/Crystal/blank.png, src/tclscripts/archer/images/Themes/Crystal/bug.png, src/tclscripts/archer/images/Themes/Crystal/closeall.png, src/tclscripts/archer/images/Themes/Crystal/combination.png, src/tclscripts/archer/images/Themes/Crystal/command.png, src/tclscripts/archer/images/Themes/Crystal/configure.png, src/tclscripts/archer/images/Themes/Crystal/edit_copy.png, src/tclscripts/archer/images/Themes/Crystal/edit_cut.png, src/tclscripts/archer/images/Themes/Crystal/edit_paste.png, src/tclscripts/archer/images/Themes/Crystal/edit_rotate.png, src/tclscripts/archer/images/Themes/Crystal/edit_scale.png, src/tclscripts/archer/images/Themes/Crystal/edit_select.png, src/tclscripts/archer/images/Themes/Crystal/edit_translate.png, src/tclscripts/archer/images/Themes/Crystal/file_new.png, src/tclscripts/archer/images/Themes/Crystal/file_text_small.png, src/tclscripts/archer/images/Themes/Crystal/find.png, src/tclscripts/archer/images/Themes/Crystal/folder_closed_small.png, src/tclscripts/archer/images/Themes/Crystal/folder_open.png, src/tclscripts/archer/images/Themes/Crystal/folder_open_small.png, src/tclscripts/archer/images/Themes/Crystal/open.png, src/tclscripts/archer/images/Themes/Crystal/option_text.png, src/tclscripts/archer/images/Themes/Crystal/option_tree.png, src/tclscripts/archer/images/Themes/Crystal/pane_blank.png, src/tclscripts/archer/images/Themes/Crystal/pane_collapse.png, src/tclscripts/archer/images/Themes/Crystal/pane_expand.png, src/tclscripts/archer/images/Themes/Crystal/primitive_arb6.png, src/tclscripts/archer/images/Themes/Crystal/primitive_arb8.png, src/tclscripts/archer/images/Themes/Crystal/primitive_bot.png, src/tclscripts/archer/images/Themes/Crystal/primitive_cone.png, src/tclscripts/archer/images/Themes/Crystal/primitive_ehy.png, src/tclscripts/archer/images/Themes/Crystal/primitive_ell.png, src/tclscripts/archer/images/Themes/Crystal/primitive_epa.png, src/tclscripts/archer/images/Themes/Crystal/primitive_eto.png, src/tclscripts/archer/images/Themes/Crystal/primitive_extrude.png, src/tclscripts/archer/images/Themes/Crystal/primitive_grip.png, src/tclscripts/archer/images/Themes/Crystal/primitive_half.png, src/tclscripts/archer/images/Themes/Crystal/primitive_list.png, src/tclscripts/archer/images/Themes/Crystal/primitive_other.png, src/tclscripts/archer/images/Themes/Crystal/primitive_part.png, src/tclscripts/archer/images/Themes/Crystal/primitive_pipe.png, src/tclscripts/archer/images/Themes/Crystal/primitive_rhc.png, src/tclscripts/archer/images/Themes/Crystal/primitive_rpc.png, src/tclscripts/archer/images/Themes/Crystal/primitive_sketch.png, src/tclscripts/archer/images/Themes/Crystal/primitive_sph.png, src/tclscripts/archer/images/Themes/Crystal/primitive_tor.png, src/tclscripts/archer/images/Themes/Crystal/refresh.png, src/tclscripts/archer/images/Themes/Crystal/run.png, src/tclscripts/archer/images/Themes/Crystal/save.png, src/tclscripts/archer/images/Themes/Crystal/view_left_right_small.png, src/tclscripts/archer/images/Themes/Crystal/view_rotate.png, src/tclscripts/archer/images/Themes/Crystal/view_scale.png, src/tclscripts/archer/images/Themes/Crystal/view_select.png, src/tclscripts/archer/images/Themes/Crystal/view_top_bottom_small.png, src/tclscripts/archer/images/Themes/Crystal/view_translate.png, src/tclscripts/archer/images/Themes/Crystal/wizard.png, src/tclscripts/archer/images/Themes/Crystal_Large/Makefile.am, src/tclscripts/archer/images/Themes/Crystal_Large/arrow_back.png, src/tclscripts/archer/images/Themes/Crystal_Large/arrow_forward.png, src/tclscripts/archer/images/Themes/Crystal_Large/blank.png, src/tclscripts/archer/images/Themes/Crystal_Large/bug.png, src/tclscripts/archer/images/Themes/Crystal_Large/closeall.png, src/tclscripts/archer/images/Themes/Crystal_Large/combination.png, src/tclscripts/archer/images/Themes/Crystal_Large/command.png, src/tclscripts/archer/images/Themes/Crystal_Large/configure.png, src/tclscripts/archer/images/Themes/Crystal_Large/edit_copy.png, src/tclscripts/archer/images/Themes/Crystal_Large/edit_cut.png, src/tclscripts/archer/images/Themes/Crystal_Large/edit_paste.png, src/tclscripts/archer/images/Themes/Crystal_Large/edit_rotate.png, src/tclscripts/archer/images/Themes/Crystal_Large/edit_scale.png, src/tclscripts/archer/images/Themes/Crystal_Large/edit_select.png, src/tclscripts/archer/images/Themes/Crystal_Large/edit_translate.png, src/tclscripts/archer/images/Themes/Crystal_Large/file_new.png, src/tclscripts/archer/images/Themes/Crystal_Large/file_text_small.png, src/tclscripts/archer/images/Themes/Crystal_Large/find.png, src/tclscripts/archer/images/Themes/Crystal_Large/folder_closed_small.png, src/tclscripts/archer/images/Themes/Crystal_Large/folder_open_small.png, src/tclscripts/archer/images/Themes/Crystal_Large/open.png, src/tclscripts/archer/images/Themes/Crystal_Large/option_text.png, src/tclscripts/archer/images/Themes/Crystal_Large/option_tree.png, src/tclscripts/archer/images/Themes/Crystal_Large/pane_blank.png, src/tclscripts/archer/images/Themes/Crystal_Large/pane_collapse.png, src/tclscripts/archer/images/Themes/Crystal_Large/pane_expand.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_arb6.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_arb8.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_bot.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_cone.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_ehy.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_ell.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_epa.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_eto.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_extrude.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_grip.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_half.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_list.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_other.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_part.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_pipe.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_rhc.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_rpc.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_sketch.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_sph.png, src/tclscripts/archer/images/Themes/Crystal_Large/primitive_tor.png, src/tclscripts/archer/images/Themes/Crystal_Large/refresh.png, src/tclscripts/archer/images/Themes/Crystal_Large/run.png, src/tclscripts/archer/images/Themes/Crystal_Large/save.png, src/tclscripts/archer/images/Themes/Crystal_Large/view_left_right_small.png, src/tclscripts/archer/images/Themes/Crystal_Large/view_rotate.png, src/tclscripts/archer/images/Themes/Crystal_Large/view_scale.png, src/tclscripts/archer/images/Themes/Crystal_Large/view_select.png, src/tclscripts/archer/images/Themes/Crystal_Large/view_top_bottom_small.png, src/tclscripts/archer/images/Themes/Crystal_Large/view_translate.png, src/tclscripts/archer/images/Themes/Crystal_Large/wizard.png, src/tclscripts/archer/images/Themes/Windows/Makefile.am, src/tclscripts/archer/images/Themes/Windows/arrow_back.png, src/tclscripts/archer/images/Themes/Windows/arrow_forward.png, src/tclscripts/archer/images/Themes/Windows/blank.png, src/tclscripts/archer/images/Themes/Windows/bug.png, src/tclscripts/archer/images/Themes/Windows/closeall.png, src/tclscripts/archer/images/Themes/Windows/combination.png, src/tclscripts/archer/images/Themes/Windows/command.png, src/tclscripts/archer/images/Themes/Windows/configure.png, src/tclscripts/archer/images/Themes/Windows/edit_copy.png, src/tclscripts/archer/images/Themes/Windows/edit_cut.png, src/tclscripts/archer/images/Themes/Windows/edit_paste.png, src/tclscripts/archer/images/Themes/Windows/edit_rotate.png, src/tclscripts/archer/images/Themes/Windows/edit_scale.png, src/tclscripts/archer/images/Themes/Windows/edit_select.png, src/tclscripts/archer/images/Themes/Windows/edit_translate.png, src/tclscripts/archer/images/Themes/Windows/file_new.png, src/tclscripts/archer/images/Themes/Windows/file_text_small.png, src/tclscripts/archer/images/Themes/Windows/find.png, src/tclscripts/archer/images/Themes/Windows/folder_closed_small.png, src/tclscripts/archer/images/Themes/Windows/folder_open_small.png, src/tclscripts/archer/images/Themes/Windows/open.png, src/tclscripts/archer/images/Themes/Windows/option_text.png, src/tclscripts/archer/images/Themes/Windows/option_tree.png, src/tclscripts/archer/images/Themes/Windows/pane_blank.png, src/tclscripts/archer/images/Themes/Windows/pane_collapse.png, src/tclscripts/archer/images/Themes/Windows/pane_expand.png, src/tclscripts/archer/images/Themes/Windows/primitive_arb6.png, src/tclscripts/archer/images/Themes/Windows/primitive_arb8.png, src/tclscripts/archer/images/Themes/Windows/primitive_bot.png, src/tclscripts/archer/images/Themes/Windows/primitive_cone.png, src/tclscripts/archer/images/Themes/Windows/primitive_ehy.png, src/tclscripts/archer/images/Themes/Windows/primitive_ell.png, src/tclscripts/archer/images/Themes/Windows/primitive_epa.png, src/tclscripts/archer/images/Themes/Windows/primitive_eto.png, src/tclscripts/archer/images/Themes/Windows/primitive_extrude.png, src/tclscripts/archer/images/Themes/Windows/primitive_grip.png, src/tclscripts/archer/images/Themes/Windows/primitive_half.png, src/tclscripts/archer/images/Themes/Windows/primitive_list.png, src/tclscripts/archer/images/Themes/Windows/primitive_other.png, src/tclscripts/archer/images/Themes/Windows/primitive_part.png, src/tclscripts/archer/images/Themes/Windows/primitive_pipe.png, src/tclscripts/archer/images/Themes/Windows/primitive_rhc.png, src/tclscripts/archer/images/Themes/Windows/primitive_rpc.png, src/tclscripts/archer/images/Themes/Windows/primitive_sketch.png, src/tclscripts/archer/images/Themes/Windows/primitive_sph.png, src/tclscripts/archer/images/Themes/Windows/primitive_tor.png, src/tclscripts/archer/images/Themes/Windows/refresh.png, src/tclscripts/archer/images/Themes/Windows/run.png, src/tclscripts/archer/images/Themes/Windows/save.png, src/tclscripts/archer/images/Themes/Windows/view_left_right_small.png, src/tclscripts/archer/images/Themes/Windows/view_rotate.png, src/tclscripts/archer/images/Themes/Windows/view_scale.png, src/tclscripts/archer/images/Themes/Windows/view_select.png, src/tclscripts/archer/images/Themes/Windows/view_top_bottom_small.png, src/tclscripts/archer/images/Themes/Windows/view_translate.png, src/tclscripts/archer/images/Themes/Windows/wizard.png, src/tclscripts/lib/Database.tcl, src/tclscripts/lib/Db.tcl, src/tclscripts/lib/Display.tcl, src/tclscripts/lib/Drawable.tcl, src/tclscripts/lib/Mged.tcl, src/tclscripts/lib/QuadDisplay.tcl, src/tclscripts/lib/TableView.tcl, src/tclscripts/lib/View.tcl, src/tclscripts/mged/mged.tcl, src/tclscripts/archer/ExtrudeEditFrame.tcl, src/tclscripts/archer/GeometryEditFrame.tcl, src/tclscripts/archer/GripEditFrame.tcl, src/tclscripts/archer/HalfEditFrame.tcl, src/tclscripts/archer/LoadArcherLibs.tcl, src/tclscripts/archer/Makefile.am, src/tclscripts/archer/PartEditFrame.tcl, src/tclscripts/archer/PipeEditFrame.tcl, src/tclscripts/archer/Plugin.tcl, src/tclscripts/archer/RhcEditFrame.tcl, src/tclscripts/archer/RpcEditFrame.tcl, src/tclscripts/archer/SketchEditFrame.tcl, src/tclscripts/archer/SphereEditFrame.tcl, src/tclscripts/archer/TgcEditFrame.tcl, src/tclscripts/archer/TorusEditFrame.tcl, src/tclscripts/archer/Wizard.tcl, src/tclscripts/archer/bgerror.tcl, src/tclscripts/archer/cursor.tcl, src/tclscripts/archer/images/Makefile.am, src/tclscripts/archer/images/Themes/Makefile.am, src/tclscripts/archer/images/aboutArcher.png, src/tclscripts/archer/images/archer.bmp, src/tclscripts/archer/images/closedf.gif, src/tclscripts/archer/images/node.gif, src/tclscripts/archer/images/openf.gif, src/tclscripts/archer/pkgIndex.tcl, src/tclscripts/archer/tabwindow.itk, src/tclscripts/archer/tclIndex, src/rt/main.c, src/rt/opt.c, src/rt/rtcheck_vers_win.c, src/rt/rtedge_vers_win.c, src/rt/vers_win.c, src/rt/worker.c, src/tclscripts/Makefile.am, src/tclscripts/archer/Arb4EditFrame.tcl, src/tclscripts/archer/Arb5EditFrame.tcl, src/tclscripts/archer/Arb6EditFrame.tcl, src/tclscripts/archer/Arb7EditFrame.tcl, src/tclscripts/archer/Arb8EditFrame.tcl, src/tclscripts/archer/Archer.tcl, src/tclscripts/archer/BotEditFrame.tcl, src/tclscripts/archer/CombEditFrame.tcl, src/tclscripts/archer/EhyEditFrame.tcl, src/tclscripts/archer/EllEditFrame.tcl, src/tclscripts/archer/EpaEditFrame.tcl, src/tclscripts/archer/EtoEditFrame.tcl, src/other/tkimg/base/configure.in, src/other/tkimg/base/pkgIndex.tcl.in, src/other/tkimg/base/tclconfig/README.txt, src/other/tkimg/base/tclconfig/install-sh, src/other/tkimg/base/tclconfig/tcl.m4, src/other/tkimg/base/tkimg.c, src/other/tkimg/base/tkimg.decls, src/other/tkimg/base/tkimg.h, src/other/tkimg/base/tkimgConfig.sh.in, src/other/tkimg/base/tkimgDecls.h, src/other/tkimg/base/tkimgIO.c, src/other/tkimg/base/tkimgPPB.c, src/other/tkimg/base/tkimgStubInit.c, src/other/tkimg/base/tkimgStubLib.c, src/other/tkimg/base/tkimgUtils.c, src/other/tkimg/base/tools/genStubs.tcl, src/other/tkimg/png/ChangeLog, src/other/tkimg/png/Makefile.am, src/other/tkimg/png/README, src/other/tkimg/png/aclocal.m4, src/other/tkimg/png/init.c, src/other/tkimg/png/pkgIndex.tcl.in, src/other/tkimg/png/png.c, src/other/tkimg/png/tests/all.tcl, src/other/tkimg/png/tests/folder.png, src/other/tkimg/png/tests/png.test, src/other/tkimg/pngtcl/Makefile.am, src/other/tkimg/pngtcl/pkgIndex.tcl.in, src/other/tkimg/pngtcl/pngtcl.c, src/other/tkimg/pngtcl/pngtcl.h, src/other/tkimg/pngtcl/pngtclDecls.h, src/other/tkimg/pngtcl/pngtclDeclsMask.h, src/other/tkimg/pngtcl/pngtclDeclsUnmask.h, src/other/tkimg/pngtcl/pngtclStubInit.c, src/other/tkimg/pngtcl/pngtclStubLib.c, src/other/tkimg/zlibtcl/Makefile.am, src/other/tkimg/zlibtcl/pkgIndex.tcl.in, src/other/tkimg/zlibtcl/zlibtcl.c, src/other/tkimg/zlibtcl/zlibtcl.h, src/other/tkimg/zlibtcl/zlibtclDecls.h, src/other/tkimg/zlibtcl/zlibtclDeclsMask.h, src/other/tkimg/zlibtcl/zlibtclDeclsUnmask.h, src/other/tkimg/zlibtcl/zlibtclStubInit.c, src/other/tkimg/zlibtcl/zlibtclStubLib.c, src/other/tkimg/Makefile.am, src/other/tkimg/README, src/other/tkimg/base/Attic/Makefile.in, src/other/tkimg/base/Attic/configure, src/other/tkimg/base/ChangeLog, src/other/tkimg/base/Makefile.am, src/other/tkimg/base/README, src/other/tkimg/base/aclocal.m4, src/other/tkimg/init.c, src/other/tkimg/license.terms, src/other/libtk/unix/tkUnixMenubu.c, src/other/libtk/win/tkWinButton.c, src/other/libtk/win/tkWinMenu.c, src/other/libtk/win/winMain.c, src/other/incrTcl/itcl/library/pkgIndex.tcl, src/other/incrTcl/itk/generic/itk_cmds.c, src/other/incrTcl/itk/library/pkgIndex.tcl, src/other/iwidgets/generic/panedwindow.itk, src/other/iwidgets/generic/toolbar.itk, src/other/iwidgets/pkgIndex.tcl, src/other/libpng/png.h, src/other/libtcl/generic/tcl.h, src/other/libtk/generic/tkFileFilter.c, src/other/libtk/library/panedwindow.tcl, src/other/blt/man/BLT.mann, src/other/blt/man/Blt_Tree.man3, src/other/blt/man/Blt_TreeCreate.man3, src/other/blt/man/Blt_TreeCreateNode.man3, src/other/blt/man/Blt_TreeDeleteNode.man3, src/other/blt/man/Blt_TreeExists.man3, src/other/blt/man/Blt_TreeGetNode.man3, src/other/blt/man/Blt_TreeGetToken.man3, src/other/blt/man/Blt_TreeName.man3, src/other/blt/man/Blt_TreeNodeId.man3, src/other/blt/man/Blt_TreeReleaseToken.man3, src/other/blt/man/barchart.mann, src/other/blt/man/beep.mann, src/other/blt/man/bgexec.mann, src/other/blt/man/bitmap.mann, src/other/blt/man/bltdebug.mann, src/other/blt/man/busy.mann, src/other/blt/man/container.mann, src/other/blt/man/cutbuffer.mann, src/other/blt/man/dragdrop.mann, src/other/blt/man/eps.mann, src/other/blt/man/graph.mann, src/other/blt/man/hierbox.mann, src/other/blt/man/hiertable.mann, src/other/blt/man/htext.mann, src/other/blt/man/spline.mann, src/other/blt/man/stripchart.mann, src/other/blt/man/table.mann, src/other/blt/man/tabset.mann, src/other/blt/man/tile.mann, src/other/blt/man/tree.mann, src/other/blt/man/treeview.mann, src/other/blt/man/vector.mann, src/other/blt/man/watch.mann, src/other/blt/man/winop.mann, src/other/blt/src/Makefile-cyg.in, src/other/blt/src/Makefile.am, src/other/blt/src/Makefile.bc, src/other/blt/src/Makefile.vc, src/other/blt/src/TODO, src/other/blt/src/blt.h, src/other/blt/src/blt.mak, src/other/blt/src/bltAlloc.c, src/other/blt/src/bltArrayObj.c, src/other/blt/src/bltBeep.c, src/other/blt/src/bltBgexec.c, src/other/blt/src/bltBind.c, src/other/blt/src/bltBind.h, src/other/blt/src/bltBitmap.c, src/other/blt/src/bltBusy.c, src/other/blt/src/bltCanvEps.c, src/other/blt/src/bltChain.c, src/other/blt/src/bltChain.h, src/other/blt/src/bltColor.c, src/other/blt/src/bltConfig.c, src/other/blt/src/bltConfig.h, src/other/blt/src/bltContainer.c, src/other/blt/src/bltCutbuffer.c, src/other/blt/src/bltDebug.c, src/other/blt/src/bltDragdrop.c, src/other/blt/src/bltGrAxis.c, src/other/blt/src/bltGrAxis.h, src/other/blt/src/bltGrBar.c, src/other/blt/src/bltGrElem.c, src/other/blt/src/bltGrElem.h, src/other/blt/src/bltGrGrid.c, src/other/blt/src/bltGrHairs.c, src/other/blt/src/bltGrLegd.c, src/other/blt/src/bltGrLegd.h, src/other/blt/src/bltGrLine.c, src/other/blt/src/bltGrMarker.c, src/other/blt/src/bltGrMisc.c, src/other/blt/src/bltGrPen.c, src/other/blt/src/bltGrPs.c, src/other/blt/src/bltGraph.c, src/other/blt/src/bltGraph.h, src/other/blt/src/bltHash.c, src/other/blt/src/bltHash.h, src/other/blt/src/bltHierbox.c, src/other/blt/src/bltHtext.c, src/other/blt/src/bltImage.c, src/other/blt/src/bltImage.h, src/other/blt/src/bltInit.c, src/other/blt/src/bltInt.h, src/other/blt/src/bltInterp.h, src/other/blt/src/bltList.c, src/other/blt/src/bltList.h, src/other/blt/src/bltMath.h, src/other/blt/src/bltNsUtil.c, src/other/blt/src/bltNsUtil.h, src/other/blt/src/bltObjConfig.c, src/other/blt/src/bltObjConfig.h, src/other/blt/src/bltParse.c, src/other/blt/src/bltPool.c, src/other/blt/src/bltPool.h, src/other/blt/src/bltPs.c, src/other/blt/src/bltPs.h, src/other/blt/src/bltScrollbar.c, src/other/blt/src/bltSpline.c, src/other/blt/src/bltSwitch.c, src/other/blt/src/bltSwitch.h, src/other/blt/src/bltTable.c, src/other/blt/src/bltTable.h, src/other/blt/src/bltTabnotebook.c, src/other/blt/src/bltTabset.c, src/other/blt/src/bltTed.c, src/other/blt/src/bltText.c, src/other/blt/src/bltText.h, src/other/blt/src/bltTile.c, src/other/blt/src/bltTile.h, src/other/blt/src/bltTkInt.h, src/other/blt/src/bltTree.c, src/other/blt/src/bltTree.h, src/other/blt/src/bltTreeCmd.c, src/other/blt/src/bltTreeView.c, src/other/blt/src/bltTreeView.h, src/other/blt/src/bltTreeViewCmd.c, src/other/blt/src/bltTreeViewColumn.c, src/other/blt/src/bltTreeViewEdit.c, src/other/blt/src/bltTreeViewStyle.c, src/other/blt/src/bltTuple.c, src/other/blt/src/bltTuple.h, src/other/blt/src/bltTupleCmd.c, src/other/blt/src/bltUnixDnd.c, src/other/blt/src/bltUnixImage.c, src/other/blt/src/bltUnixMain.c, src/other/blt/src/bltUnixPipe.c, src/other/blt/src/bltUtil.c, src/other/blt/src/bltVecCmd.c, src/other/blt/src/bltVecInt.h, src/other/blt/src/bltVecMath.c, src/other/blt/src/bltVecObjCmd.c, src/other/blt/src/bltVector.c, src/other/blt/src/bltVector.h, src/other/blt/src/bltWait.h, src/other/blt/src/bltWatch.c, src/other/blt/src/bltWin.h, src/other/blt/src/bltWinConfig.h, src/other/blt/src/bltWinDde.c, src/other/blt/src/bltWinDraw.c, src/other/blt/src/bltWinImage.c, src/other/blt/src/bltWinMain.c, src/other/blt/src/bltWinPipe.c, src/other/blt/src/bltWinPrnt.c, src/other/blt/src/bltWinUtil.c, src/other/blt/src/bltWindow.c, src/other/blt/src/bltWinop.c, src/other/blt/src/missing.h, src/other/blt/src/pure_api.c, src/other/blt/src/tkButton.c, src/other/blt/src/tkConsole.c, src/other/blt/src/tkFrame.c, src/other/blt/src/tkMenubutton.c, src/other/blt/src/tkScrollbar.c, src/other/blt/win/README, src/other/blt/win/X11/X.h, src/other/blt/win/X11/Xatom.h, src/other/blt/win/X11/Xfuncproto.h, src/other/blt/win/X11/Xlib.h, src/other/blt/win/X11/Xutil.h, src/other/blt/win/X11/cursorfont.h, src/other/blt/win/X11/keysym.h, src/other/blt/win/X11/keysymdef.h, src/other/blt/win/install.tcl, src/other/blt/win/makedefs, src/other/incrTcl/itcl/generic/itcl_cmds.c, src/other/blt/demos/scripts/page.tcl, src/other/blt/demos/scripts/patterns.tcl, src/other/blt/demos/scripts/ps.tcl, src/other/blt/demos/scripts/send.tcl, src/other/blt/demos/scripts/stipples.tcl, src/other/blt/demos/scripts/xcolors.tcl, src/other/blt/examples/calendar.tcl, src/other/blt/examples/form.tcl, src/other/blt/examples/pareto.tcl, src/other/blt/html/BLT.html, src/other/blt/html/Makefile.vc, src/other/blt/html/barchart.html, src/other/blt/html/beep.html, src/other/blt/html/bgexec.html, src/other/blt/html/bitmap.html, src/other/blt/html/bltdebug.html, src/other/blt/html/busy.html, src/other/blt/html/container.html, src/other/blt/html/cutbuffer.html, src/other/blt/html/dragdrop.html, src/other/blt/html/eps.html, src/other/blt/html/graph.html, src/other/blt/html/hierbox.html, src/other/blt/html/hiertable.html, src/other/blt/html/htext.html, src/other/blt/html/spline.html, src/other/blt/html/stripchart.html, src/other/blt/html/table.html, src/other/blt/html/tabset.html, src/other/blt/html/tile.html, src/other/blt/html/tree.html, src/other/blt/html/treeview.html, src/other/blt/html/vector.html, src/other/blt/html/watch.html, src/other/blt/html/winop.html, src/other/blt/library/Makefile.am, src/other/blt/library/Makefile.vc, src/other/blt/library/ZoomStack.itcl, src/other/blt/library/bltCanvEps.pro, src/other/blt/library/bltGraph.pro, src/other/blt/library/dd_protocols/Makefile.am, src/other/blt/library/dd_protocols/dd-color.tcl, src/other/blt/library/dd_protocols/dd-file.tcl, src/other/blt/library/dd_protocols/dd-number.tcl, src/other/blt/library/dd_protocols/dd-text.tcl, src/other/blt/library/dd_protocols/tclIndex, src/other/blt/library/dnd.tcl, src/other/blt/library/dragdrop.tcl, src/other/blt/library/graph.tcl, src/other/blt/library/hierbox.tcl, src/other/blt/library/hiertable.tcl, src/other/blt/library/pkgIndex.tcl, src/other/blt/library/tabnotebook.tcl, src/other/blt/library/tabset.tcl, src/other/blt/library/tclIndex, src/other/blt/library/treeview.tcl, src/other/blt/library/treeview.xbm, src/other/blt/library/treeview_m.xbm, src/other/blt/demos/bitmaps/face.xbm, src/other/blt/demos/bitmaps/fish/left.xbm, src/other/blt/demos/bitmaps/fish/left1.xbm, src/other/blt/demos/bitmaps/fish/left1m.xbm, src/other/blt/demos/bitmaps/fish/leftm.xbm, src/other/blt/demos/bitmaps/fish/mid.xbm, src/other/blt/demos/bitmaps/fish/midm.xbm, src/other/blt/demos/bitmaps/fish/right.xbm, src/other/blt/demos/bitmaps/fish/right1.xbm, src/other/blt/demos/bitmaps/fish/right1m.xbm, src/other/blt/demos/bitmaps/fish/rightm.xbm, src/other/blt/demos/bitmaps/greenback.xbm, src/other/blt/demos/bitmaps/hand/hand01.xbm, src/other/blt/demos/bitmaps/hand/hand01m.xbm, src/other/blt/demos/bitmaps/hand/hand02.xbm, src/other/blt/demos/bitmaps/hand/hand02m.xbm, src/other/blt/demos/bitmaps/hand/hand03.xbm, src/other/blt/demos/bitmaps/hand/hand03m.xbm, src/other/blt/demos/bitmaps/hand/hand04.xbm, src/other/blt/demos/bitmaps/hand/hand04m.xbm, src/other/blt/demos/bitmaps/hand/hand05.xbm, src/other/blt/demos/bitmaps/hand/hand05m.xbm, src/other/blt/demos/bitmaps/hand/hand06.xbm, src/other/blt/demos/bitmaps/hand/hand06m.xbm, src/other/blt/demos/bitmaps/hand/hand07.xbm, src/other/blt/demos/bitmaps/hand/hand07m.xbm, src/other/blt/demos/bitmaps/hand/hand08.xbm, src/other/blt/demos/bitmaps/hand/hand08m.xbm, src/other/blt/demos/bitmaps/hand/hand09.xbm, src/other/blt/demos/bitmaps/hand/hand09m.xbm, src/other/blt/demos/bitmaps/hand/hand10.xbm, src/other/blt/demos/bitmaps/hand/hand10m.xbm, src/other/blt/demos/bitmaps/hand/hand11.xbm, src/other/blt/demos/bitmaps/hand/hand11m.xbm, src/other/blt/demos/bitmaps/hand/hand12.xbm, src/other/blt/demos/bitmaps/hand/hand12m.xbm, src/other/blt/demos/bitmaps/hand/hand13.xbm, src/other/blt/demos/bitmaps/hand/hand13m.xbm, src/other/blt/demos/bitmaps/hand/hand14.xbm, src/other/blt/demos/bitmaps/hand/hand14m.xbm, src/other/blt/demos/bitmaps/hobbes.xbm, src/other/blt/demos/bitmaps/hobbes_mask.xbm, src/other/blt/demos/bitmaps/sharky.xbm, src/other/blt/demos/bitmaps/xbob.xbm, src/other/blt/demos/images/blt98.gif, src/other/blt/demos/images/buckskin.gif, src/other/blt/demos/images/chalk.gif, src/other/blt/demos/images/close.gif, src/other/blt/demos/images/close2.gif, src/other/blt/demos/images/clouds.gif, src/other/blt/demos/images/corrugated_metal.gif, src/other/blt/demos/images/folder.gif, src/other/blt/demos/images/jan25_palm3x_L.jpg, src/other/blt/demos/images/mini-book1.gif, src/other/blt/demos/images/mini-book2.gif, src/other/blt/demos/images/mini-display.gif, src/other/blt/demos/images/mini-doc.gif, src/other/blt/demos/images/mini-filemgr.gif, src/other/blt/demos/images/mini-ofolder.gif, src/other/blt/demos/images/mini-windows.gif, src/other/blt/demos/images/ofolder.gif, src/other/blt/demos/images/open.gif, src/other/blt/demos/images/open2.gif, src/other/blt/demos/images/out.ps, src/other/blt/demos/images/qv100.t.gif, src/other/blt/demos/images/rain.gif, src/other/blt/demos/images/sample.gif, src/other/blt/demos/images/smblue_rock.gif, src/other/blt/demos/images/stopsign.gif, src/other/blt/demos/images/tan_paper.gif, src/other/blt/demos/images/tan_paper2.gif, src/other/blt/demos/images/txtrflag.gif, src/other/blt/demos/scripts/barchart2.tcl, src/other/blt/demos/scripts/bgtest.tcl, src/other/blt/demos/scripts/clone.tcl, src/other/blt/demos/scripts/demo.tcl, src/other/blt/demos/scripts/globe.tcl, src/other/blt/demos/scripts/graph1.tcl, src/other/blt/demos/scripts/graph2.tcl, src/other/blt/demos/scripts/graph3.tcl, src/other/blt/demos/scripts/graph5.tcl, src/other/blt/demos/scripts/graph8.tcl, src/other/blt/cf/config.guess, src/other/blt/cf/config.sub, src/other/blt/cf/install-sh, src/other/blt/cf/install.sh, src/other/blt/cf/ldAix, src/other/blt/demos/Makefile.vc, src/other/blt/demos/barchart1.tcl, src/other/blt/demos/barchart2.tcl, src/other/blt/demos/barchart3.tcl, src/other/blt/demos/barchart4.tcl, src/other/blt/demos/barchart5.tcl, src/other/blt/demos/bgexec1.tcl, src/other/blt/demos/bgexec2.tcl, src/other/blt/demos/bgexec3.tcl, src/other/blt/demos/bgexec4.tcl, src/other/blt/demos/bgexec5.tcl, src/other/blt/demos/bitmap.tcl, src/other/blt/demos/bitmap2.tcl, src/other/blt/demos/busy1.tcl, src/other/blt/demos/busy2.tcl, src/other/blt/demos/container.tcl, src/other/blt/demos/container3.tcl, src/other/blt/demos/dnd1.tcl, src/other/blt/demos/dnd2.tcl, src/other/blt/demos/dragdrop1.tcl, src/other/blt/demos/dragdrop2.tcl, src/other/blt/demos/eps.tcl, src/other/blt/demos/graph1.tcl, src/other/blt/demos/graph2.tcl, src/other/blt/demos/graph3.tcl, src/other/blt/demos/graph4.tcl, src/other/blt/demos/graph5.tcl, src/other/blt/demos/graph6.tcl, src/other/blt/demos/graph7.tcl, src/other/blt/demos/hierbox1.tcl, src/other/blt/demos/hierbox2.tcl, src/other/blt/demos/hierbox3.tcl, src/other/blt/demos/hierbox4.tcl, src/other/blt/demos/hiertable1.tcl, src/other/blt/demos/hiertable2.tcl, src/other/blt/demos/hiertable3.tcl, src/other/blt/demos/htext.txt, src/other/blt/demos/htext1.tcl, src/other/blt/demos/spline.tcl, src/other/blt/demos/stripchart1.tcl, src/other/blt/demos/tabnotebook1.tcl, src/other/blt/demos/tabnotebook2.tcl, src/other/blt/demos/tabnotebook3.tcl, src/other/blt/demos/tabset1.tcl, src/other/blt/demos/tabset2.tcl, src/other/blt/demos/tabset3.tcl, src/other/blt/demos/tabset4.tcl, src/other/blt/demos/tour.tcl, src/other/blt/demos/treeview1.tcl, src/other/blt/demos/winop1.tcl, src/other/blt/demos/winop2.tcl, src/other/blt/INSTALL, src/other/blt/MANIFEST, src/other/blt/Makefile.am, src/other/blt/Makefile.vc, src/other/blt/NEWS, src/other/blt/PROBLEMS, src/other/blt/README, src/other/blt/blt.mak, src/librt/db5_bin.c, src/librt/dg_obj.c, src/librt/g_arb.c, src/librt/g_bot.c, src/librt/g_tgc.c, src/librt/importFg4Section.c, src/librt/nirt.c, src/librt/vers_win.c, src/librt/view_obj.c, src/librt/wdb_obj.c, src/libsysv/vers_win.c, src/libtclcad/tclcadAutoPath.c, src/libtclcad/tclcadTkSetup.c, src/libtclcad/vers_win.c, src/libwdb/vers_win.c, src/mged/Attic/clip.c, src/mged/Makefile.am, src/mged/anal.c, src/mged/attach.c, src/mged/bodyio.c, src/mged/clone.c, src/mged/cmd.c, src/mged/dm-ogl.c, src/mged/dodraw.c, src/mged/edarb.c, src/mged/edsol.c, src/mged/facedef.c, src/mged/fbserv.c, src/mged/ged.c, src/mged/ged.h, src/mged/inside.c, src/mged/mater.c, src/mged/mged.bat, src/mged/mged_dm.h, src/mged/rect.c, src/mged/rtif.c, src/mged/setup.c, src/mged/utility1.c, src/mged/vers_win.c, src/nirt/vers_win.c, src/other/Makefile.am, src/fbserv/fbserv.c, src/fbserv/fbserv_win.c, src/libbn/vers_win.c, src/libbu/brlcad_path.c, src/libbu/color.c, src/libbu/vers_win.c, src/libdm/Makefile.am, src/libdm/clip.c, src/libdm/dm-ogl_win.c, src/libdm/dm_obj.c, src/libdm/vers_win.c, src/libfb/fb_generic.c, src/libfb/fb_log.c, src/libfb/if_ogl_win32.c, src/libfb/if_remote.c, src/libfb/tcl.c, src/libfb/vers_win.c, src/liboptical/vers_win.c, src/libpkg/pkg.c, src/libpkg/vers_win.c, src/Makefile.am, src/archer/Makefile.am, src/archer/archer, src/archer/archer.bat, src/archer/plugins/Makefile.am, src/archer/plugins/Wizards/Makefile.am, src/archer/plugins/Wizards/tankwizardIA.tcl, src/archer/plugins/Wizards/tankwizardIA/Makefile.am, src/archer/plugins/Wizards/tankwizardIA/TankWizardIA.tcl, src/archer/plugins/Wizards/tankwizardIA/images/Makefile.am, src/archer/plugins/Wizards/tankwizardIA/images/tank.png, src/archer/plugins/utility.tcl, src/archer/plugins/wizards.tcl, src/burst/fb.c, src/conv/asc2g.c, src/conv/fast4-g.c, src/conv/g-stl.c, src/conv/g2asc.c, src/conv/iges/g-iges.c, src/conv/iges/iges_extern.h, src/conv/iges/iges_struct.h, src/conv/iges/main.c, src/conv/iges/make_face.c, src/conv/stl-g.c, src/fb/fb-pix.c, src/fb/fb-png.c, src/fb/fbclear.c, src/fb/pix-fb.c, src/fb/png-fb.c, misc/win32-msvc7/libtclcad/.cvsignore, misc/win32-msvc7/libtclcad/libtclcad.vcproj, misc/win32-msvc7/libtk/.cvsignore, misc/win32-msvc7/libtk/libtk.vcproj, misc/win32-msvc7/libwdb/.cvsignore, misc/win32-msvc7/libwdb/libwdb.vcproj, misc/win32-msvc7/libz/.cvsignore, misc/win32-msvc7/libz/libz.vcproj, misc/win32-msvc7/mged/.cvsignore, misc/win32-msvc7/mged/mged.vcproj, misc/win32-msvc7/nirt/.cvsignore, misc/win32-msvc7/nirt/nirt.vcproj, misc/win32-msvc7/pix2fb/.cvsignore, misc/win32-msvc7/pix2fb/pix2fb.vcproj, misc/win32-msvc7/png2fb/.cvsignore, misc/win32-msvc7/png2fb/png2fb.vcproj, misc/win32-msvc7/rt/.cvsignore, misc/win32-msvc7/rt/rt.vcproj, misc/win32-msvc7/rtcheck/.cvsignore, misc/win32-msvc7/rtcheck/rtcheck.vcproj, misc/win32-msvc7/rtedge/.cvsignore, misc/win32-msvc7/rtedge/rtedge.vcproj, misc/win32-msvc7/stl2g/.cvsignore, misc/win32-msvc7/stl2g/stl2g.vcproj, misc/win32-msvc7/tclpipe/.cvsignore, misc/win32-msvc7/tclpipe/tclpipe.vcproj, misc/win32-msvc7/tclsh/.cvsignore, misc/win32-msvc7/tclsh/tclsh.vcproj, misc/win32-msvc7/tclstub/.cvsignore, misc/win32-msvc7/tclstub/tclstub.vcproj, misc/win32-msvc7/tkimg/.cvsignore, misc/win32-msvc7/tkimg/tkimg.vcproj, misc/win32-msvc7/tkimgpng/.cvsignore, misc/win32-msvc7/tkimgpng/tkimgpng.vcproj, misc/win32-msvc7/tkstub/.cvsignore, misc/win32-msvc7/tkstub/tkstub.vcproj, misc/win32-msvc7/wish/.cvsignore, misc/win32-msvc7/wish/wish.vcproj, misc/win32-msvc7/g2iges/.cvsignore, misc/win32-msvc7/g2iges/g2iges.vcproj, misc/win32-msvc7/g2stl/.cvsignore, misc/win32-msvc7/g2stl/g2stl.vcproj, misc/win32-msvc7/iges2g/.cvsignore, misc/win32-msvc7/iges2g/iges2g.vcproj, misc/win32-msvc7/itclstub/.cvsignore, misc/win32-msvc7/itclstub/itclstub.vcproj, misc/win32-msvc7/itkstub/.cvsignore, misc/win32-msvc7/itkstub/itkstub.vcproj, misc/win32-msvc7/libBLT/.cvsignore, misc/win32-msvc7/libBLT/libBLT.vcproj, misc/win32-msvc7/libItcl/.cvsignore, misc/win32-msvc7/libItcl/libItcl.vcproj, misc/win32-msvc7/libItk/.cvsignore, misc/win32-msvc7/libItk/libItk.vcproj, misc/win32-msvc7/libbn/.cvsignore, misc/win32-msvc7/libbn/libbn.vcproj, misc/win32-msvc7/libbu/.cvsignore, misc/win32-msvc7/libbu/libbu.vcproj, misc/win32-msvc7/libdm/.cvsignore, misc/win32-msvc7/libdm/libdm.vcproj, misc/win32-msvc7/libfb/.cvsignore, misc/win32-msvc7/libfb/libfb.vcproj, misc/win32-msvc7/liboptical/.cvsignore, misc/win32-msvc7/liboptical/liboptical.vcproj, misc/win32-msvc7/libpkg/.cvsignore, misc/win32-msvc7/libpkg/libpkg.vcproj, misc/win32-msvc7/libpng/.cvsignore, misc/win32-msvc7/libpng/libpng.vcproj, misc/win32-msvc7/librt/.cvsignore, misc/win32-msvc7/librt/librt.vcproj, misc/win32-msvc7/libsysv/.cvsignore, misc/win32-msvc7/libsysv/libsysv.vcproj, misc/win32-msvc7/libtcl/.cvsignore, misc/win32-msvc7/libtcl/libtcl.vcproj, include/raytrace.h, misc/win32-msvc7/all/.cvsignore, misc/win32-msvc7/all/all.vcproj, misc/win32-msvc7/asc2g/.cvsignore, misc/win32-msvc7/asc2g/asc2g.vcproj, misc/win32-msvc7/brlcad/.cvsignore, misc/win32-msvc7/brlcad/brlcad.sln, misc/win32-msvc7/dbupgrade/.cvsignore, misc/win32-msvc7/dbupgrade/dbupgrade.vcproj, misc/win32-msvc7/fast42g/.cvsignore, misc/win32-msvc7/fast42g/fast42g.vcproj, misc/win32-msvc7/fb2pix/.cvsignore, misc/win32-msvc7/fb2pix/fb2pix.vcproj, misc/win32-msvc7/fb2png/.cvsignore, misc/win32-msvc7/fb2png/fb2png.vcproj, misc/win32-msvc7/fbclear/.cvsignore, misc/win32-msvc7/fbclear/fbclear.vcproj, misc/win32-msvc7/fbserv/.cvsignore, misc/win32-msvc7/fbserv/fbserv.vcproj, misc/win32-msvc7/g2asc/.cvsignore, misc/win32-msvc7/g2asc/g2asc.vcproj, configure.ac, doc/Makefile.am, doc/archer_ack.txt, doc/html/manuals/Makefile.am, doc/html/manuals/archer/Archer_Documentation.chm, doc/html/manuals/archer/Makefile.am, doc/html/manuals/archer/archer.ico, doc/html/manuals/eagleCAD.bmp, include/bu.h, include/config_win.h, include/db5.h, include/dm.h, include/fb.h, include/fbio.h, include/fbserv_obj.h, include/pkg.h, include/png.h, include/pngconf.h:
-	Merge of bobWinPort
-
-Thu Dec 22 21:31:12 2005  brlcad  <brlcad@users.sourceforge.net>
-
-	* TODO: pix-png should make sure output is not to a terminal
+	* TODO: merge old and new tops behavior
 
 	* src/rt/worker.c:
-	rewrite do_pixel() for a 30% performance enhancement on an model-less scene. this results in a savings of 5-30% time depending on model complexity/size.  the performance is gained by removing some rediculous memory copying into temporaries and optimizing away several divisions and modulos.  the main loop is also unrolled one iteration since the default case does not involve hypersampling. also rework the logic on testing whether a pixmap (previous results render) is being used since considerable time was spent testing each pixel even when a pixmap wasn't being used.  most of these optimizations were performed based on Shark profiler results on OS X of rendering a large empty image. there are still a plethora of cpu stalls that should be fixable with compiler alignment directives
+	get rid of the ifdef linux, init some vars used by USE_FORKED_THREADS
 
-	* src/rt/do.c:
-	make sure pixmap is null before wiping it out.  instead of setting all the elements to zero, save cpu cycles and just request a bu_calloc...
+2006-05-16  lbutler  <lbutler@users.sourceforge.net>
 
-	* src/librt/shoot.c:
-	only test the debug flags extensively if something in run-time debug is enabled
+	* configure.ac: misc changes to get ADRT to build
+
+2006-05-15  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* NEWS, src/mged/chgview.c, src/mged/cmd.c, src/mged/sedit.h, src/mged/titles.c:
+	ugh, removed horrible usage of vls strings for things that can just be string constants.  also takes care of a memory leak as the vls was never released.  thanks to jim monte for noticing the problem.
+
+	* src/mged/cmd.c:
+	jim monte noticed that using a vls here was unnecessary for the Tcl_LinkVar'ing of glob_compat_mode and output_as_return
+
+	* configure.ac:
+	typo, should have been profile not debug -- logic is still wrong though, needs to be redone for --enable-profile
+
+	* src/libbu/color.c: duplicate defines for RED/GRN/BLU
+
+	* NEWS:
+	s/tesselation/tessellation/ typo.  add emphasis to the extent of John's dxf importer enhancements
+
+2006-05-12  twingy  <twingy@users.sourceforge.net>
+
+	* src/mged/ged.c:
+	/dev/null should be in quotes, compiling with --disable-debug.
+
+2006-05-08  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* TODO: geometry example of building 238 is pushed back
+
+2006-05-03  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* NEWS: moved archer version info to bottom of about dialog
+
+	* src/mged/ged.c:
+	john noticed that sys/stat.h is needed for S_IRUSR and a few other mode flags now being used if DEBUG is enabled
+
+2006-05-03  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/tclscripts/archer/images/aboutArcher.png: Removed version info.
+
+	* src/tclscripts/archer/Archer.tcl:
+	Added version info to the bottom of the "About" dialog.
+
+	* src/tclscripts/archer/CombEditFrame.tcl:
+	Added code to potentially activate the "Accept" button etc. when tabbing to another entry.
+
+2006-05-02  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* AUTHORS:
+	prasad silva (arl) makes his first contribution with a new g-var tool
+
+2006-05-02  prasad_silva  <prasad_silva@users.sourceforge.net>
+
+	* NEWS: g-var news
+
+	* src/conv/.cvsignore: Added g-var executable to ignore list
+
+	* src/conv/Makefile.am, src/conv/g-var.1, src/conv/g-var.c:
+	Added a vertex array exporter
+
+2006-05-02  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* src/tclscripts/archer/images/Themes/Crystal_Large/Makefile.am, src/tclscripts/archer/images/Themes/Crystal/Makefile.am:
+	missing a handful of new files
+
+	* AUTHORS: utf-8 version of Daniel's last name..
+
+	* NEWS:
+	archer gets support for multi-select and cut-n-paste from doug howard
+
+	* NEWS:
+	a new toy barbie jeep model was added, include a nice write-up of where the model comes from, the training class that produced it, and general overview of what was involved.
+
+	* db/toyjeep.asc: they are trademarks of mattel and daimler-crysler
+
+2006-05-01  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/tclscripts/archer/images/Themes/Crystal_Large/file_text_small_disabled.png, src/tclscripts/archer/images/Themes/Crystal_Large/folder_closed_small_disabled.png, src/tclscripts/archer/images/Themes/Crystal_Large/folder_open_small_disabled.png, src/tclscripts/archer/images/Themes/Windows/file_text_small_disabled.png, src/tclscripts/archer/images/Themes/Windows/folder_closed_small_disabled.png, src/tclscripts/archer/images/Themes/Windows/folder_open_small_disabled.png, src/tclscripts/archer/images/Themes/Crystal/file_text_small_disabled.png, src/tclscripts/archer/images/Themes/Crystal/folder_closed_small_disabled.png, src/tclscripts/archer/images/Themes/Crystal/folder_open_small_disabled.png:
+	Add images to support future functionality (i.e. multi-select and cut-n-paste)
+
+	* src/tclscripts/swidgets/scripts/tree.itk:
+	Check-in for Doug Howard. Mods to support multi-select and cut-n-paste.
+
+	* src/tclscripts/archer/Archer.tcl:
+	Temporarily (i.e. until this functionality is available) removing the "Compact" menu item when viewing BRL-CAD geometry. Minor mods to reflect change in the tree widget.
+
+	* src/tclscripts/archer/CombEditFrame.tcl, src/tclscripts/archer/GeometryEditFrame.tcl:
+	Minor tweek to anchor the edit panel north
+
+2006-05-01  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* NEWS:
+	john continues on his dxf-g rampage with manpage enhancements and additional support to dxf-g for ELLIPSE entities.  earlier he added support for LWPOLYLINE, MTEXT, LEADER, ATTRIB, SOLID, and ATTDEF entity states -- all grouped into one news entry for dxf-g enhancements.
+
+	* NEWS:
+	fixed asc2g bug reading files with carriage returns.  if you attempted to run asc2g on a .asc file that came directly from the windows platform and had embedded carriage returns ('\r'), it would incorrectly parse the v4 I units version string dumping out a wierd undecipherable overlapping error (printing the carriage return), now it handles them correctly.
+
+	* NEWS: added dbupgrade manual page.  one didn't exist
+
+	* NEWS:
+	updated the g2asc manual page with format details.  the manpage still talked about it being necessary for platform independent conversions, language and details were updated to note that this is no longer the case (that the binary will work just fine).  also mentions that binary and ascii are open specs, though ascii is subject to deprecation change without notice whereas the binary is not. also that the ascii should not be relied upon by external developers but that it is currently a tcl command script.
+
+	* NEWS:
+	fixed g_diff attribute comparison issue.  when doing a g_diff, attributes were not being compared in order if the db command fails to tclify the exported version resulting in a binary 'these objects seem to differ' when they did not.  the tclification was improved so it can perform a proper ordered attribute comparison under more cases.
+
+	* NEWS:
+	g_diff reports more detail whether differences exist.  if the external forms are being compared, it will report whether the lengths differ or the contents (previously was an unknown either/or difference).  also g_diff will summarize and actually say that it found no differences instead of just ending a statement like there is something more like the following:
+
+	* NEWS:
+	g2asc now saves additional _GLOBAL attribute values.  previously, only the units and title were exported so that if a user had manually added additional attributes they were not being saved, now they are saved as attr commands in the ascii format.  (a situation where this was important was where a 'disclaimer' and 'description' attribute were added in addition to the title.
+
+	* NEWS:
+	fixed g2asc export of null units bug.  there was a situation where the current units could not be determined and a (null) was export to the ascii file.  this would halt an asc2g.  if the units cannot be determined, they are not output (i.e. no (null)) now.
+
+	* src/conv/Makefile.am: add new dbupgrade.1 manpage
+
+	* src/conv/dbupgrade.c: ws, indent
+
+	* src/conv/asc2g.c:
+	add support for carriage returns so old ascii files copied from windows parse correctly.  use a little less emphatic emphasis on error (!!!)
+
+	* src/conv/dbupgrade.1:
+	initial manual page for the dbupgrade command, basic usage info
+
+	* src/conv/g2asc.1:
+	update the manpage with more up-to-date information and details.  mention that current format is a tcl script, that the conversion to ascii isn't strictly necessary any longer since v5 format is portable, and that the ascii format should not be used by external codes.
+
+	* src/librt/wdb_obj.c:
+	comments, remove dead new proc creation code (there's a func for that creating a wdbp function object)
+
+2006-04-30  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* src/conv/dxf-g.1, src/conv/dxf-g.c:
+	Added support for ELLIPSE entities, added a bit more logging, updated
+	man page.
+
+2006-04-30  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* src/mged/ged.c:
+	fix the mged logging so that it actually works now and consistently writes events.  clean up the whitespace while refactoring the closure of a db to f_closedb() consistently.
+
+2006-04-29  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* src/gtools/g_diff.c:
+	let the user know if there are no differences and be more specific on difference when external representations differ.
+
+	* src/conv/g2asc.c:
+	if the _GLOBAL object has attributes set other than units and title, write them out.  also make sure the units are not (null) before writing them out.
+
+	* src/conv/asc2g.c:
+	default units to millimeters instead of aborting if the units specified are unknown
+
+	* db/Makefile.am, db/toyjeep.asc:
+	add an toy barbie (tm) jeep (tm) modeled in 2005 over the course of a day by a group of students attending a BRL-CAD (tm) training course at SURVICE
+
+2006-04-28  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* TODO:
+	working on clone/tracker; EF importer plugin is on the asap list; mingw is delayed; added toy jeep; unpush idea for later.
+
+2006-04-28  d_rossberg  <d_rossberg@users.sourceforge.net>
+
+	* NEWS: Rossberg with utf-8 character
+
+2006-04-28  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* NEWS: it's a stack, most recent go on top
+
+2006-04-28  d_rossberg  <d_rossberg@users.sourceforge.net>
+
+	* NEWS: forgot to add my name
+
+	* NEWS: fixed crash in release build
+
+2006-04-28  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* TODO:
+	Optional compile-time support for using GMP or CLN for arbitrary precision arithmetic
+
+2006-04-28  d_rossberg  <d_rossberg@users.sourceforge.net>
+
+	* src/librt/g_bot_include.c:
+	crash with MSVC 6.0 release build because of an access behind bot->bot_facearray boundaries
+
+	* src/libwdb/pipe.c:
+	wdb_export frees the pipe structure; consequently, do not touch it afterwards
+
+2006-04-24  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* NEWS:
+	need to quantify exactly what sort of dxf-g enhancements john added, but it's a something so as not to forget
+
+2006-04-20  lbutler  <lbutler@users.sourceforge.net>
+
+	* regress/gqa.sh, regress/iges.sh, regress/lights.sh, regress/moss.sh, regress/shaders.sh, regress/solids.sh, regress/spdi.sh, regress/weight.sh:
+	Fixed various sh/csh syntax errrors.
+
+	* regress/gqa.sh, regress/iges.sh, regress/lights.sh, regress/moss.sh, regress/shaders.sh, regress/slave_build.sh, regress/solids.sh, regress/spdi.sh, regress/weight.sh:
+	Updates to make it easier to check the status of a regression test.  Each test
+	now reports its notion of whether it succeeded or failed.
+
+	* regress/Makefile.am, regress/slave_build.sh:
+	Make sure directory has been created (slave_build.sh) or wait for it.
+
+	Indicate that the regression test is done, but not whether it was successful or not. (Makefile.am)
+
+2006-04-20  jlowenz  <jlowenz@users.sourceforge.net>
+
+	* src/librt/nurb_trim.c:
+	modified rt_nurb_uv_trimmed to support a list of trims instead of a surface (to support the preprocessing)
+
+	* src/librt/nurb_knot.c: logging updates
+
+	* src/librt/nurb_bezier.c:
+	support for preprocessing non-bezier trims to bezier trims
+
+	* src/librt/g_nurb.c:
+	added support for preprocessing trims into beziers.
+
+	* include/nurb.h:
+	Added declaration for trim-to-bezier curve conversion routine, and updated uv in trim test function to accept a list of trims instead of a surface (since the trims are preprocessed.
+
+2006-04-18  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* TODO: test for USE_FORKED_THREADS in configure
+
+2006-04-17  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* AUTHORS:
+	special thanks to Mark Butkiewicz of SURVICE for his considerable input regarding the look and feel of archer as well as prioritizing what features to add in the allotted time.  he has also remained actively involved in the windows port effort as well as general collaboration, support, and suggestions for the package as a whole.
+
+	* AUTHORS:
+	special thanks to doug howard for his work during the very beginning stages of archer development.
+
+2006-04-13  BRL-CAD  <brlcad@users.sourceforge.net>
+
+	* BUGS:
+	raytracers report the wrong amount of cumulative time on amd64, benchmark reports wrong numbers unless using -P1
+
+2006-04-13  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* src/conv/dxf-g.c: Added support for a couple more entity types
+
+2006-04-12  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/mged/mged.bat: Update for handling an argument (i.e. file.g)
+
+2006-04-12  jlowenz  <jlowenz@users.sourceforge.net>
+
+	* src/librt/nurb_util.c:
+	Removed shared pool, went to thread-specific pools. Better solution, but only temporary since bu_parallel doesn't support thread-locals.
+
+	* src/librt/nurb_refine.c: ws; comment change
+
+2006-04-11  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* configure.ac:
+	fix an over-zealous conditional so --disable-jove works (some of us use vi)
 
