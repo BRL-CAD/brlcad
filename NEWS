@@ -106,21 +106,6 @@ assist with the assignment of region and material identifiers.
 * get_regions mged command, list assembly regions - Sean Morrison
 * extensive Windows build support enhancements - Bob Parker
 * new Archer modeling and visualization tool - Bob Parker, Doug Howard
-
-
-----------------------------------------------------------------------
---- 2005-02-28  Release 7.6.8                                      ---
-----------------------------------------------------------------------
-
-This release marks the one year anniversary of BRL-CAD being released
-as Open Source software.  Thank you to everyone for your support and
-contributions.  This update includes modifications to the BRL-CAD
-raytracers that greatly improves performance for large image
-renderings.  Work continues in support of porting BRL-CAD to the
-Microsoft Windows platform, albeit still undergoing development and
-testing.  Thank you to the selected beta testers for your feedback and
-reports.
-
 * raytracers use image size for default aspect ratio - Sean Morrison
 * fixed benchmark sqrt of negative numbers error - Sean Morrison
 * raytracer performance enhancements - Sean Morrison
