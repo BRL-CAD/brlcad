@@ -61,6 +61,8 @@ CLEANFILES = \
 	adj_air.pl \
 	density_table.txt \
 	dsp.dat \
+	eagleCAD-w512-n438.pix \
+	ebm.bw \
 	exp_air.pl \
 	gaps.pl \
 	gqa.g \
@@ -88,9 +90,17 @@ CLEANFILES = \
 	moss_png.diff \
 	moss_ref.pix \
 	overlaps.pl \
+	shaders.dat \
+	shaders.g \
 	shaders.log \
 	shaders.pix \
 	shaders.pix.diff \
+	shaders.rt \
+	shaders.rt.diff.pix \
+	shaders.rt.log \
+	shaders.rt.pix \
+	shaders.rt.pixdiff.log \
+	shaders.txt \
 	shaders_ref.pix \
 	solids \
 	solids-diff.log \
