@@ -762,8 +762,7 @@ pr_beep(void)
  * by setting up the multi_line_sig routine as the SIGINT handler.
  */
 
-extern struct bu_vls *history_prev(const char *);
-extern struct bu_vls *history_next(const char *);
+extern struct bu_vls *history_prev(void), *history_cur(void), *history_next(void);
 
 /*
  * stdin_input
@@ -900,6 +899,7 @@ mged_process_char(char ch)
   struct bu_vls temp;
   static int escaped = 0;
   static int bracketed = 0;
+  static int tilded = 0;
   static int freshline = 1;
 
 #define CTRL_A      1
@@ -919,13 +919,23 @@ mged_process_char(char ch)
 #define DELETE      127
 
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
-  /* ANSI arrow keys */
+  /* bu_log("KEY: %d (esc=%d, brk=%d)\n", ch, escaped, bracketed); */
 
+  /* ANSI sequence */
   if (escaped && bracketed) {
+
+    /* arrow keys */
     if (ch == 'A') ch = CTRL_P;
     if (ch == 'B') ch = CTRL_N;
     if (ch == 'C') ch = CTRL_F;
     if (ch == 'D') ch = CTRL_B;
+
+    /* Mac forward delete key */
+    if (ch == '3') {
+	tilded = 1;
+	ch = CTRL_D;
+    }
+
     escaped = bracketed = 0;
   }
 
@@ -1009,8 +1019,8 @@ mged_process_char(char ch)
     freshline = 1;
     escaped = bracketed = 0;
     break;
-  case BACKSPACE:
   case DELETE:
+  case BACKSPACE:
     if (input_str_index <= 0) {
       pr_beep();
       break;
@@ -1126,7 +1136,7 @@ mged_process_char(char ch)
     curr_cmd_list = &head_cmd_list;
     if (freshline) {
       if (ch == CTRL_P) {
-	vp = history_prev((char*)NULL);
+	vp = history_prev();
 	if (vp == NULL) {
 	  pr_beep();
 	  break;
@@ -1140,13 +1150,13 @@ mged_process_char(char ch)
       }
     } else {
       if (ch == CTRL_P) {
-	vp = history_prev((char *)NULL);
+	vp = history_prev();
 	if (vp == NULL) {
 	  pr_beep();
 	  break;
 	}
       } else {
-	vp = history_next((char *)NULL);
+	vp = history_next();
 	if (vp == NULL) {
 	  vp = &scratchline;
 	  freshline = 1;
@@ -1299,6 +1309,12 @@ mged_process_char(char ch)
     if (escaped) {
       bracketed = 1;
       break;
+    }
+  case '~':
+    if (tilded) {
+	/* we were in an escape sequence (Mac delete key), just ignore the trailing tilde */
+	tilded = 0;
+	break;
     }
     /* Fall through if not escaped! */
   default:
@@ -1962,9 +1978,6 @@ log_event(char *event, char *arg)
 
 	/* let the user know that we're logging */
 	static int notified = 0;
-
-	/* XXX unconditionally disable for now */
-	return;
 
 #ifndef DEBUG
 	return;
