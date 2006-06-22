@@ -57,13 +57,13 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "../librt/debug.h"
 
 int		rpt_dist = 0;		/* report distance to each pixel */
-int		width = 0;			/* # of pixels in X */
-int		height = 0;			/* # of lines in Y */
+int		width = 0;		/* # of pixels in X */
+int		height = 0;		/* # of lines in Y */
 
 
 /***** Variables shared with viewing model *** */
 int		doubles_out = 0;	/* u_char or double .pix output file */
-double		azimuth, elevation;
+double		azimuth = 0.0, elevation = 0.0;
 int		lightmodel = 0;		/* Select lighting model */
 int		rpt_overlap = 1;	/* report overlapping region names */
 int		default_background = 1; /* Default is black */
@@ -71,32 +71,35 @@ int		rt_text_mode = 0;       /* Currently used by rtcheck and nirt */
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/
-int		query_x;
-int		query_y;
-int		Query_one_pixel;
-int		query_rdebug;
-int		query_debug;
+int		query_x = 0;
+int		query_y = 0;
+int		Query_one_pixel = 0;
+int		query_rdebug  = 0;
+int		query_debug = 0;
 int		stereo = 0;		/* stereo viewing */
-int		hypersample=0;		/* number of extra rays to fire */
-unsigned int	jitter=0;		/* ray jitter control variable */
-fastf_t		rt_perspective=0;	/* presp (degrees X) 0 => ortho */
+int		hypersample = 0;		/* number of extra rays to fire */
+unsigned int	jitter = 0;		/* ray jitter control variable */
+fastf_t		rt_perspective = (fastf_t)0.0;	/* presp (degrees X) 0 => ortho */
 fastf_t		aspect = (fastf_t)0.0;	/* view aspect ratio X/Y */
 vect_t		dx_model;		/* view delta-X as model-space vect */
 vect_t		dy_model;		/* view delta-Y as model-space vect */
 vect_t		dx_unit;		/* view delta-X as unit-len vect */
 vect_t		dy_unit;		/* view delta-Y as unit-len vect */
-fastf_t		cell_width=0.0;		/* model space grid cell width */
-fastf_t		cell_height=0.0;	/* model space grid cell height */
-int		cell_newsize=0;		/* new grid cell size */
-point_t		eye_model;		/* model-space location of eye */
-fastf_t         eye_backoff = 1.414;	/* dist from eye to center */
+fastf_t		cell_width = (fastf_t)0.0;		/* model space grid cell width */
+fastf_t		cell_height = (fastf_t)0.0;	/* model space grid cell height */
+int		cell_newsize = 0;		/* new grid cell size */
+point_t		eye_model = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};		/* model-space location of eye */
+fastf_t         eye_backoff = (fastf_t)1.414;	/* dist from eye to center */
 extern int		width;			/* # of pixels in X */
 extern int		height;			/* # of lines in Y */
-mat_t		Viewrotscale;
-fastf_t		viewsize=0;
+mat_t		Viewrotscale = { (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
+				 (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
+				 (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
+				 (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};
+fastf_t		viewsize = (fastf_t)0.0;
 int		incr_mode = 0;		/* !0 for incremental resolution */
-int		incr_level;		/* current incremental level */
-int		incr_nlevel;		/* number of levels */
+int		incr_level = 0;		/* current incremental level */
+int		incr_nlevel = 0;	/* number of levels */
 int		npsw = 1;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 int		transpose_grid = 0;     /* reverse the order of grid traversal */
@@ -108,18 +111,18 @@ char		pmfile[255];
 /***** ************************ *****/
 
 /***** variables shared with do.c *****/
-char		*string_pix_start;	/* string spec of starting pixel */
-char		*string_pix_end;	/* string spec of ending pixel */
+char		*string_pix_start = (char *)NULL;	/* string spec of starting pixel */
+char		*string_pix_end = (char *)NULL;	/* string spec of ending pixel */
 int		pix_start = -1;		/* pixel to start at */
-int		pix_end;		/* pixel to end at */
-int		nobjs;			/* Number of cmd-line treetops */
-char		**objtab;		/* array of treetop strings */
+int		pix_end = 0;		/* pixel to end at */
+int		nobjs = 0;		/* Number of cmd-line treetops */
+char		**objtab = (char **)NULL;	/* array of treetop strings */
 int		matflag = 0;		/* read matrix from stdin */
 int		desiredframe = 0;	/* frame to start at */
 int		finalframe = -1;	/* frame to halt at */
 int		curframe = 0;		/* current frame number,
 					 * also shared with view.c */
-char		*outputfile = (char *)0;/* name of base of output file */
+char		*outputfile = (char *)NULL;	/* name of base of output file */
 int		interactive = 0;	/* human is watching results */
 int		benchmark = 0;		/* No random numbers:  benchmark */
 
@@ -132,17 +135,17 @@ int		sub_ymax = 0;
 
 
 /***** variables shared with view.c *****/
-fastf_t		frame_delta_t = 1./30.; /* 1.0 / frames_per_second_playback */
+fastf_t		frame_delta_t = (fastf_t)(1.0/30.0); /* 1.0 / frames_per_second_playback */
 double		airdensity;    /* is the scene hazy (we shade the void space */
 double		haze[3] = { 0.8, 0.9, 0.99 };	      /* color of the haze */
 
 /***** end variables shared with view.c *****/
 
 /* temporary kludge to get rt to use a tighter tolerance for raytracing */
-fastf_t		rt_dist_tol = 0.0005;	/* Value for rti_tol.dist */
+fastf_t		rt_dist_tol = (fastf_t)0.0005;	/* Value for rti_tol.dist */
 
-fastf_t		rt_perp_tol = 0;	/* Value for rti_tol.perp */
-char		*framebuffer;		/* desired framebuffer */
+fastf_t		rt_perp_tol = (fastf_t)0.0;	/* Value for rti_tol.perp */
+char		*framebuffer = (char *)NULL;		/* desired framebuffer */
 
 int		space_partition = 	/*space partitioning algorithm to use*/
 			RT_PART_NUBSPT;
