@@ -2132,9 +2132,17 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 	frame .$id.tf
 	if {$comb} {
 		text .$id.t -height $mged_gui($id,num_lines) \
-				-relief sunken -bd 2 -yscrollcommand ".$id.s set"
+			    -relief sunken \
+			    -bd 2 \
+			    -yscrollcommand ".$id.s set" \
+			    -undo 1 \
+			    -autoseparators 0
 	} else {
-		text .$id.t -relief sunken -bd 2 -yscrollcommand ".$id.s set"
+		text .$id.t -relief sunken \
+			    -bd 2 \
+			    -yscrollcommand ".$id.s set" \
+			    -undo 1 \
+			    -autoseparators 0
 	}
 	scrollbar .$id.s -relief flat -command ".$id.t yview"
 
@@ -2192,15 +2200,31 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 	mged_print_prompt .$id.t "mged> "
 	.$id.t insert insert " "
 	beginning_of_line .$id.t
+	.$id.t  edit reset
 	set mged_gui(.$id.t,moveView) 0
 	set mged_gui(.$id.t,freshline) 1
 	set mged_gui(.$id.t,scratchline) ""
 	set vi_state(.$id.t,overwrite_flag) 0
-	set vi_state(.$id.t,change_flag) 0
+	set vi_state(.$id.t,yank_flag) 0
 	set vi_state(.$id.t,delete_flag) 0
-	set vi_state(.$id.t,search_flag) 0
+	set vi_state(.$id.t,change_flag) 0
+	set vi_state(.$id.t,search_flag) ""
+	set vi_state(.$id.t,hsrch_flag) 0
+	set vi_state(.$id.t,count_flag) 0
+	set vi_state(.$id.t,warn_flag) 0
+	set vi_state(.$id.t,dot_flag) 0
+	set vi_state(.$id.t,cmd_count) 1
+	set vi_state(.$id.t,pos_count) 1
+	set vi_state(.$id.t,tmp_count) 1
+	set vi_state(.$id.t,cmd_list) [list]
+	set vi_state(.$id.t,dot_list) [list]
+	set vi_state(.$id.t,cut_buf) ""
+	set vi_state(.$id.t,reset_buf) ""
+	set vi_state(.$id.t,insert_buf) ""
+	set vi_state(.$id.t,hsrch_buf) ""
+	set vi_state(.$id.t,hsrch_type) ""
 	set vi_state(.$id.t,search_char) ""
-	set vi_state(.$id.t,search_dir) ""
+	set vi_state(.$id.t,search_type) ""
 
 	.$id.t tag configure sel -background #fefe8e
 	.$id.t tag configure result -foreground blue3

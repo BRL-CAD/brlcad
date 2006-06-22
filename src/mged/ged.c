@@ -762,7 +762,8 @@ pr_beep(void)
  * by setting up the multi_line_sig routine as the SIGINT handler.
  */
 
-extern struct bu_vls *history_prev(void), *history_cur(void), *history_next(void);
+extern struct bu_vls *history_prev(const char *);
+extern struct bu_vls *history_next(const char *);
 
 /*
  * stdin_input
@@ -1125,7 +1126,7 @@ mged_process_char(char ch)
     curr_cmd_list = &head_cmd_list;
     if (freshline) {
       if (ch == CTRL_P) {
-	vp = history_prev();
+	vp = history_prev((char*)NULL);
 	if (vp == NULL) {
 	  pr_beep();
 	  break;
@@ -1139,13 +1140,13 @@ mged_process_char(char ch)
       }
     } else {
       if (ch == CTRL_P) {
-	vp = history_prev();
+	vp = history_prev((char *)NULL);
 	if (vp == NULL) {
 	  pr_beep();
 	  break;
 	}
       } else {
-	vp = history_next();
+	vp = history_next((char *)NULL);
 	if (vp == NULL) {
 	  vp = &scratchline;
 	  freshline = 1;

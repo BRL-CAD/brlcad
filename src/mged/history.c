@@ -56,16 +56,7 @@
 #include "./ged.h"
 #include "./mgedtcl.h"
 
-#if 0
-struct mged_hist {
-    struct bu_list l;
-    struct bu_vls command;
-    struct timeval start, finish;
-    int status;
-} mged_hist_head, *cur_hist;
-#else
 struct mged_hist mged_hist_head;
-#endif
 
 FILE *journalfp;
 int firstjournal;
@@ -318,11 +309,17 @@ f_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 /*      H I S T O R Y _ P R E V
  */
 struct bu_vls *
-history_prev(void)
+history_prev(char *pat)
 {
     struct mged_hist *hp;
 
-    hp = BU_LIST_PREV(mged_hist, &(curr_cmd_list->cl_cur_hist->l));
+    hp = curr_cmd_list->cl_cur_hist;
+    do {
+	hp = BU_LIST_PREV(mged_hist, &(hp->l));
+    } while (   !BU_LIST_IS_HEAD(hp, &(mged_hist_head.l))
+	     && pat
+	     && !strstr(bu_vls_addr(&(hp->mh_command)), pat));
+
     if (BU_LIST_IS_HEAD(hp, &(mged_hist_head.l)))
 	return NULL;
     else {
@@ -345,18 +342,24 @@ history_cur(void)
 /*      H I S T O R Y _ N E X T
  */
 struct bu_vls *
-history_next(void)
+history_next(char *pat)
 {
     struct mged_hist *hp;
 
     if (BU_LIST_IS_HEAD(curr_cmd_list->cl_cur_hist, &(mged_hist_head.l))) {
-	return 0;
+	return NULL;
     }
 
-    hp = BU_LIST_NEXT(mged_hist, &(curr_cmd_list->cl_cur_hist->l));
+    hp = curr_cmd_list->cl_cur_hist;
+    do {
+	hp = BU_LIST_NEXT(mged_hist, &(hp->l));
+    } while (   !BU_LIST_IS_HEAD(hp, &(mged_hist_head.l))
+	     && pat
+	     && !strstr(bu_vls_addr(&(hp->mh_command)), pat));
+
     if (BU_LIST_IS_HEAD(hp, &(mged_hist_head.l))) {
 	curr_cmd_list->cl_cur_hist = hp;
-	return 0;
+	return NULL;
     } else {
 	curr_cmd_list->cl_cur_hist = hp;
 	return &(hp->mh_command);
@@ -403,16 +406,20 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   }
 
   if(strcmp(argv[1], "next") == 0){
-    if(argc != 2){
+    if(argc == 2){
+      vp = history_next((char *)NULL);
+      if (vp == NULL)
+        return TCL_ERROR;
+    } else if(argc == 3){
+      vp = history_next(argv[2]);
+      if (vp == NULL)
+	return TCL_ERROR;
+    } else {
       bu_vls_printf(&vls, "helpdevel hist");
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
       return TCL_ERROR;
     }
-
-    vp = history_next();
-    if (vp == NULL)
-      return TCL_ERROR;
 
     Tcl_AppendResult(interp, bu_vls_addr(vp), (char *)NULL);
     bu_vls_free(&vls);
@@ -420,16 +427,38 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   }
 
   if(strcmp(argv[1], "prev") == 0){
-    if(argc != 2){
+    if(argc == 2){
+      vp = history_prev((char *)NULL);
+      if (vp == NULL)
+	return TCL_ERROR;
+    } else if(argc == 3){
+      vp = history_prev(argv[2]);
+    if (vp == NULL)
+      return TCL_ERROR;
+    } else {
       bu_vls_printf(&vls, "helpdevel hist");
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
       return TCL_ERROR;
     }
 
-    vp = history_prev();
+
+    Tcl_AppendResult(interp, bu_vls_addr(vp), (char *)NULL);
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  if(strcmp(argv[1], "cur") == 0){
+    if(argc != 2){
+      bu_vls_printf(&vls, "helpdevel hist");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
+      return TCL_ERROR;
+    } else {
+      vp = history_cur();
     if (vp == NULL)
       return TCL_ERROR;
+    }
 
     Tcl_AppendResult(interp, bu_vls_addr(vp), (char *)NULL);
     bu_vls_free(&vls);
