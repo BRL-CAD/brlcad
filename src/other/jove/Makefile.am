@@ -58,7 +58,7 @@ teach-jove:	$(top_srcdir)/src/other/jove/teach-jove.sh
 	sed -e 's;BinDir;BINDIR;' -e 's;LibDir;LIBDIR;' < $(top_srcdir)/src/other/jove/teach-jove.sh > teach-jove
 
 install-data-local:
-	$(INSTALL_DATA) $(srcdir)/describe.com.1 $(DESTIR)$(libdir)/describe.com
+	$(INSTALL_DATA) $(srcdir)/describe.com.1 $(DESTDIR)$(libdir)/describe.com
 	$(INSTALL_DATA) $(srcdir)/teach-jove.1 $(DESTDIR)$(libdir)/teach-jove
 
 EXTRA_DIST = \
