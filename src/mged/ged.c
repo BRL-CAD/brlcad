@@ -1396,7 +1396,7 @@ std_out_or_err(ClientData clientData, int mask)
   /* Get data from stdout or stderr */
 
 #ifndef _WIN32
-  if((count = read((int)fd, line, MAXLINE)) == 0)
+  if((count = read((int)fd, line, MAXLINE)) <= 0)
 #else
   if((!ReadFile(fd, line, MAXLINE,&count,0)))
 #endif
