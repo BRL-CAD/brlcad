@@ -18,18 +18,20 @@ static const char RCSid[] = "@(#)$Header$";
 
 #include "./jove.h"
 
-#if HAVE_TERMIOS_H
+#ifdef HAVE_TERMIOS_H
 #  if !defined(_XOPEN_SOURCE)
 #	define _XOPEN_SOURCE 1	/* to get TAB3, etc */
 #  endif
-# include <termios.h>
+#  include <termios.h>
 #else
-# ifndef SYS5
-#  include <sgtty.h>
-# else
-#  include <termio.h>
-# endif
+#  ifndef HAVE_TERMIO_H
+#    include <sgtty.h>
+#  else
+#    include <termio.h>
+#  endif
 #endif
+
+extern char *tgetstr(char *id, char **area);
 
 /* Termcap definitions */
 
@@ -188,7 +190,7 @@ getTERM()
 		str[0] = ts[0];
 		str[1] = ts[1];
 		str[2] = '\0';
-		*(meas[i]) = (char *)tgetstr(str, &termp);
+		*(meas[i]) = tgetstr(str, &termp);
 		ts += 2;
 	}
 
