@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2006-07-XX  Release 7.8.3                                      ---
 ----------------------------------------------------------------------
 
+* increase default mged scrollback to 10k lines - Sean Morrison
 * improved support for Mac "delete" keys in mged - Sean Morrison
 * mged vi-mode command edit history searching - James (swcto)
 * bigger, better vi command line editing in mged - James (swcto)
