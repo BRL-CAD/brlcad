@@ -26,14 +26,14 @@
 asc-nmg \- ascii-to-NMG converter
 .SH SYNOPSIS
 .B asc-nmg
-< ascii_file > database.g
+ascii_file nmg.g
 .SH DESCRIPTION
 .I asc-nmg\^
 converts the specified
 .I ascii_file
-to a BRL-CAD
-.I database.g
-file. The
+(not a .asc geometry database) to a binary BRL-CAD
+.I nmg.g
+geometry database file containing NMG objects. The
 .I ascii_file
 is expected to contain lines of the following forms:
 .nf
@@ -76,9 +76,9 @@ l
 Then, the command:
 .fi
 .RS
-$ \|\fIasc-nmg < ascii_file > \|sample.g\fP
+$ \|\fIasc-nmg ascii_file \|sample.g\fP
 .RE
-will produce an 'L'-shaped solid.
+will produce an 'L'-shaped NMG solid to the sample.g database file.
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.
 .SH AUTHORS
