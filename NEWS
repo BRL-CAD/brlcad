@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2006-07-XX  Release 7.8.3                                      ---
 ----------------------------------------------------------------------
 
+* rt command script 'ae' no longer resets view scale - Sean Morrison
 * fixed asc-nmg manual page usage examples - Sean Morrison
 
 
