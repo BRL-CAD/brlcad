@@ -190,7 +190,7 @@ if {![info exists mged_default(perspective_mode)]} {
 }
 
 if {![info exists mged_default(max_text_lines)]} {
-	set mged_default(max_text_lines) 1000
+	set mged_default(max_text_lines) 10000
 }
 
 if {![info exists mged_default(doubleClickTol)]} {
