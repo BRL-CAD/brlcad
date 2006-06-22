@@ -77,7 +77,7 @@ extern fastf_t  eye_backoff;		/* dist of eye from center */
 extern fastf_t	rt_perspective;		/* persp (degrees X) 0 => ortho */
 extern int	width;			/* # of pixels in X */
 extern int	height;			/* # of lines in Y */
-extern mat_t	Viewrotscale;
+extern mat_t	Viewrotscale;		/* view orientation quaternion */
 extern fastf_t	viewsize;
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern int	incr_level;		/* current incremental level */
@@ -254,6 +254,7 @@ int cm_lookat_pt(int argc, char **argv)
 	point_t	pt;
 	vect_t	dir;
 	int	yflip = 0;
+	quat_t quat;
 
 	if( argc < 4 )
 		return(-1);
@@ -264,11 +265,19 @@ int cm_lookat_pt(int argc, char **argv)
 		yflip = atoi(argv[4]);
 
 	/*
-	 *  eye_pt must have been specified before here (for now)
+	 *  eye_pt should have been specified before here and
+	 *  different from the lookat point or the lookat point will
+	 *  be from the "front"
 	 */
-	VSUB2( dir, pt, eye_model );
-	VUNITIZE( dir );
-	bn_mat_lookat( Viewrotscale, dir, yflip );
+	if (VAPPROXEQUAL(pt, eye_model, VDIVIDE_TOL)) {
+	    VSETALLN(quat, 0.5, 4);
+	    quat_quat2mat(Viewrotscale, quat); /* front */
+	} else {
+	    VSUB2( dir, pt, eye_model );
+	    VUNITIZE( dir );
+	    bn_mat_lookat( Viewrotscale, dir, yflip );
+	}
+
 	return(0);
 }
 
@@ -296,7 +305,7 @@ int cm_end(int argc, char **argv)
 {
 	struct rt_i *rtip = ap.a_rt_i;
 
-	if( BU_LIST_IS_EMPTY( &rtip->HeadRegion ) )  {
+	if( rtip && BU_LIST_IS_EMPTY( &rtip->HeadRegion ) )  {
 		def_tree( rtip );		/* Load the default trees */
 	}
 
@@ -345,7 +354,7 @@ int cm_multiview( int argc, char **argv)
 		60, 60, 60, 60, 60, 60, 60
 	};
 
-	if( BU_LIST_IS_EMPTY( &rtip->HeadRegion ) )  {
+	if( rtip && BU_LIST_IS_EMPTY( &rtip->HeadRegion ) )  {
 		def_tree( rtip );		/* Load the default trees */
 	}
 	for( i=0; i<(sizeof(a)/sizeof(a[0])); i++ )  {
@@ -993,9 +1002,9 @@ do_ae(double azim, double elev)
 
 	/* Look at the center of the model */
 	MAT_IDN( toEye );
-	toEye[MDX] = -(rtip->mdl_max[X]+rtip->mdl_min[X])/2;
-	toEye[MDY] = -(rtip->mdl_max[Y]+rtip->mdl_min[Y])/2;
-	toEye[MDZ] = -(rtip->mdl_max[Z]+rtip->mdl_min[Z])/2;
+	toEye[MDX] = -((rtip->mdl_max[X]+rtip->mdl_min[X])/2.0);
+	toEye[MDY] = -((rtip->mdl_max[Y]+rtip->mdl_min[Y])/2.0);
+	toEye[MDZ] = -((rtip->mdl_max[Z]+rtip->mdl_min[Z])/2.0);
 
 	/* Fit a sphere to the model RPP, diameter is viewsize,
 	 * unless viewsize command used to override.
