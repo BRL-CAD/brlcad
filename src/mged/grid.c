@@ -183,7 +183,7 @@ draw_grid(void)
 		npixels = dmp->dm_width * dmp->dm_height;
 		ngridpoints = (nh_dots * nh_lines + nv_dots * nv_lines) * 2;
 
-		if (ngridpoints > npixels)
+		if ( ngridpoints <= 0 || ngridpoints > npixels)
 			return;
 	}
 
