@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* usage of lt says "lt object", yet if you actually type exactly that,
+  you get a bus error.  Nice.
+
 * raytracers report the wrong amount of cumulative time (reports as
   0.0 seconds elapsed) on amd64 linux; most likely the same pthread
   accounting bug visited a couple years ago.
