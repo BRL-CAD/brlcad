@@ -465,11 +465,14 @@ A similar block can be used on source and script files in other
 languages (such as Tcl, Shell, Perl, etc).  See the local variable
 footer script in sh/footer.sh to automatically set/update files.
 
-Space around operators.
+Space around operators and before multiple statements.
   a = (b + c) * d;  /* ok */
+  b = 2; c = 3;     /* ok */
 
-No space around parentheses.
+No space immediately inside parentheses.
   while (1) { ...   /* ok */
+  for (i = 0; i < max; i++) { ...   /* ok */
+  while ( max ) { ... /* discouraged */
 
 Commas and semicolons are followed by whitespace.
   int main(int argc, char *argv[]); /* ok */
