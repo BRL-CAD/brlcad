@@ -165,28 +165,20 @@ draw_grid(void)
 	inv_grid_res_v= 1.0 / grid_state->gr_res_v;
 
 	sf = view_state->vs_vop->vo_scale*base2local;
+
+	/* sanity - don't draw the grid if it would fill the screen */
+	{
+		fastf_t pixel_size = 2.0 * sf / dmp->dm_width;
+
+		if( grid_state->gr_res_h < pixel_size || grid_state->gr_res_v < pixel_size )
+		    return;
+	}
+
 	inv_sf = 1.0 / sf;
 	inv_aspect = 1.0 / dmp->dm_aspect;
 
 	nv_dots = 2.0 * inv_aspect * sf * inv_grid_res_v + (2 * grid_state->gr_res_major_v);
 	nh_dots = 2.0 * sf * inv_grid_res_h + (2 * grid_state->gr_res_major_h);
-
-	/* sanity - don't draw the grid if it would fill the screen */
-	{
-		int	nh_lines;
-		int	nv_lines;
-		int	ngridpoints;
-		int	npixels;
-
-		nh_lines = nv_dots / grid_state->gr_res_major_v + 1;
-		nv_lines = nh_dots / grid_state->gr_res_major_h + 1;
-		npixels = dmp->dm_width * dmp->dm_height;
-		ngridpoints = (nh_dots * nh_lines + nv_dots * nv_lines) * 2;
-
-		if ( ngridpoints <= 0 || ngridpoints > npixels)
-			return;
-	}
-
 
 	VSCALE(model_grid_anchor, grid_state->gr_anchor, local2base);
 	MAT4X3PNT(view_grid_anchor, view_state->vs_vop->vo_model2view, model_grid_anchor);
