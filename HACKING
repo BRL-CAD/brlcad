@@ -730,8 +730,11 @@ uphold standards of conduct and adhere to conventions and procedures
 outlines in this guide.  All contributors are directly supporting the
 on-going development of BRL-CAD by being granted commit access.  As
 such, these individuals are also considered "developers" whether they
-are modifying source code or not, and have similar obligations.  To
-summarize some of the expected responsibilities:
+are modifying source code or not, and have similar obligations and
+expectations.  To summarize some of the expected responsibilities:
+
+0) Primum non nocere.  All contributors are expected in good faith to
+help, or at least to do no harm.
 
 1) Developers are expected to uphold the quality, functionality,
 maintainability, and portability of the source code at all times.
