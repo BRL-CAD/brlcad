@@ -43,6 +43,8 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* testing suite for all binaries: for cmd2 in $(for cmd in `find . -name Makefile.am | xargs cat | perl -pi -e 's/\\\\\n//g'| grep -E "PROGRAMS ?=" | sed 's/.*=//g'` ; do echo $cmd ; done | sort | uniq ) ; do echo command: $cmd2 ; done
+
 * add geometry example of building 238
 
 * Mac OS X SGI dial knobs support
