@@ -1,42 +1,68 @@
-                             BRL-CAD
+                            BRL-CAD
                          Release 7.8.4
                        http://brlcad.org/
 
-BRL-CAD is a powerful Combinatorial/Constructive Solid Geometry (CSG)
-solid modeling system that includes an interactive geometry editor,
-ray-tracing support for rendering and geometric analysis,
-network-distributed framebuffer support, image and signal-processing
-tools, realistic image synthesis path-tracing, a benchmark performance
-analysis suite, and an embedded scripting language.
+BRL-CAD is a powerful and comprehensive Combinatorial/Constructive
+Solid Geometry (CSG) solid modeling system that includes an
+interactive 3D solid geometry editor, a network-distributed symmetric
+multiprocessing high-performance ray-tracer, network-distributed
+framebuffer support, image and signal-processing tools, ray-tracing
+support for rendering and geometric analysis, path-tracing and photon
+mapping support for realistic image synthesis, animation capabilities,
+ray-tracing and numerical processing libraries, a system performance
+analysis benchmark suite, an embedded scripting interface, and a
+robust high-performance geometric representation and analysis library.
 
-The package is a collection of over 400 tools and utilities across
-over 750,000 lines of source code.  Included is support for various
-geometric data format conversions, image and signal processing
-capabilities, sophisticated ray-tracing based lighting models, network
-distributed ray-tracing, massively parallel ray-tracing,
-high-performance path-tracing, animation capabilities, data
-compression, image handling, and interactive 3-D geometric editing.
-Included is an implementation of Weiler's n-Manifold Geometry (NMG)
-data structures for surface-based solid models and photon mapping.
+BRL-CAD is the primary tri-service solid modeling CAD system used by
+the U.S. military to model weapons systems for vulnerability and
+lethality analyses.  The solid modeling system is frequently used in a
+wide range of military and industrial application including in the
+design and analysis of vehicles, mechanical parts, and architecture.
+The package has also been used in radiation dose planning, medical
+visualization, computer graphics education, CSG concepts and modeling
+education, and system performance benchmark testing among other
+purposes.
 
-Since 1979, the U.S. Army Research Laboratory has been developing and
-distributing the BRL-CAD solid modeling package for a wide range of
-military and industrial applications.  The package is primarily used
-for the design and analysis of vehicles, mechanical parts,
-architecture, and various signature analysis work.  BRL-CAD is also used in
-radiation dose planning and education where it's used to to aid
-teaching fundamental computer graphics and CSG modeling concepts to
-primary, secondary, and higher education students.
+Actively developed since 1979, BRL-CAD is a collection of more than
+400 tools, utilities, and applications comprising more than 750,000
+lines of source code.  BRL-CAD supports a great variety of geometric
+representations including an extensive set of traditional CSG
+primitive implicit solids such as boxes, ellipsoids, cones, and tori,
+as well as explicit solids made from closed collections of Uniform
+B-Spline Surfaces, Non-Uniform Rational B-Spline (NURBS) surfaces,
+n-Manifold Geometry (NMG), and purely faceted mesh geometry.  All
+geometric objects may be combined using boolean set-theoretic CSG
+operations such as union, intersection, and difference.
 
-BRL-CAD was released as open source in December 2004 with portions
-licensed under the GPL, LGPL, GFDL, and BSD license.  See the COPYING
-file for more details.
+BRL-CAD has been under active development for more than 20 years with
+a portability heritage that includes systems such as a DEC VAX-11/780
+running 4.3 BSD; DECStations running ULTRIX; Silicon Graphics 3030, 4D
+"IRIS", O2, Onyx, and Origin systems running various versions of IRIX;
+Sun Microsystems Sun-3 and Sun-4 Sparcs running SunOS; the Cray 1,
+Cray X-MP, Cray Y-MP, and Cray 2 running UNICOS; DEC Alpha AXP running
+OSF/1; Apple Macintosh II running A/UX; iPSC/860 Hypercube running
+NX/2; the Alliant FX/8, FX/80, and FX/2800; Gould/Encore SEL PowerNode
+6000/9000 and NP1; NeXT workstations; IBM RS/6000; HPPA 9000/700
+running HPUX; Ardent/Stardent; Encore Multi-Max; and much much more.
+BRL-CAD's extensive portability of course also includes a plethora of
+common desktop and server versions of BSD, IRIX, Solaris, Mac OS X,
+Linux, and Windows.
+
+The BRL-CAD package is intentionally designed to be extensively
+cross-platform and is actively developed on and maintained for many
+common operating system environments including for BSD, IRIX, Linux,
+Solaris, Mac OS X, and Windows among others.  The entire package is
+distributed in binary and source code from as free open source
+software, provided under Open Source Initiative (OSI) approved license
+terms.  BRL-CAD was released as open source in December 2004 with
+portions licensed under the GPL, LGPL, GFDL, and BSD licenses.  See
+the COPYING file for more details.
 
 
-CONTENTS
---------
+TABLE OF CONTENTS
+-----------------
   Introduction
-  Contents
+  Table of Contents
   Getting Started
   Compile and Install
   Benchmark
