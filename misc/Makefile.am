@@ -11,8 +11,10 @@ EXTRA_DIST = \
 	Makefile.defs \
 	batch-indent-region.el \
 	brlcad.spec.in \
+	cvs2cl.pl \
 	enigma \
-	libtool.m4
+	libtool.m4 \
+	rcs2log
 
 if BUILD_PROE
 PROE_DIR = pro-engineer
