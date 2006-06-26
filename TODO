@@ -19,6 +19,10 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * clone and tracker
 
+
+THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------
+
 * Endgame Framework importer plugin
 
 * fix potential buffer overflows and security issues detected by
@@ -32,12 +36,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
   complete it.
 
 * use environ for run-time path lookups
-
-
-THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------
-
-* tbd
 
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
