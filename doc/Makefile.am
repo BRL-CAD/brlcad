@@ -43,7 +43,11 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(documentation_DATA) \
-	$(man_MANS)
+	$(man_MANS) \
+	pad_file.xml.in
+
+DISTCLEANFILES = \
+	pad_file.xml
 
 MAINTAINERCLEANFILES = Makefile.in
 
