@@ -110,6 +110,7 @@ namespace eval Archer {
 
 	# Commands exposed to the user via the command line.
 	# More to be added later...
+	method abort               {args}
 	method adjust              {args}
 	method adjustNormals       {args}
 	method blast               {args}
@@ -400,7 +401,7 @@ namespace eval Archer {
 	    make_bb mvall push put r report track unhide vdraw
 	}
 	variable sdbCommands { \
-	    adjustNormals compact decimate decimate2 \
+	    abort adjustNormals compact decimate decimate2 \
 	    decimateAttr decimateAttr2 erase exportFg4 \
 	    exportStl exportVrml  importFg4 importStl \
 	    reverseNormals
@@ -4082,7 +4083,7 @@ Popup Menu    Right or Ctrl-Left
 	-label "Open..." \
 	-command [::itcl::code $this _open_db]
     $itk_component(filemenu) add command \
-	-label "Save..." \
+	-label "Save" \
 	-command [::itcl::code $this _save_db]
 #    $itk_component(filemenu) add command \
 	-label "Compact" \
@@ -4566,7 +4567,7 @@ Popup Menu    Right or Ctrl-Left
 	    -label "Open..." \
 	    -helpstr "Open target description"
 	command save \
-	    -label "Save..." \
+	    -label "Save" \
 	    -helpstr "Save target description"
 #	command compact \
 	    -label "Compact" \
@@ -5695,7 +5696,11 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {[info exists itk_component(sdb)]} {
+	set savePwd [pwd]
+	cd /
 	set center [ocenter $obj]
+	cd $savePwd
+
 	set x [lindex $center 0]
 	set y [lindex $center 1]
 	set z [lindex $center 2]
@@ -5743,7 +5748,11 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {[info exists itk_component(sdb)]} {
+	set savePwd [pwd]
+	cd /
 	set center [ocenter $obj]
+	cd $savePwd
+
 	set x [lindex $center 0]
 	set y [lindex $center 1]
 	set z [lindex $center 2]
@@ -5838,14 +5847,16 @@ Popup Menu    Right or Ctrl-Left
     $dsp idle_mode
 
     if {[info exists itk_component(mged)]} {
-	set _comp $itk_component(mged)
+	set center [$itk_component(mged) ocenter $obj]
     } elseif {[info exists itk_component(sdb)]} {
-	set _comp $itk_component(sdb)
+	set savePwd [pwd]
+	cd /
+	set center [$itk_component(sdb) ocenter $obj]
+	cd $savePwd
     } else {	
 	return
     }
 
-    set center [$_comp ocenter $obj]
     _add_history "ocenter $center"
 }
 
@@ -7099,7 +7110,7 @@ Popup Menu    Right or Ctrl-Left
     set mZClipMode $i
     itk_component add smallZClipRB {
 	::radiobutton $parent.smallZClipRB \
-	    -text "Small" \
+	    -text "Small (Default)" \
 	    -value $i \
 	    -variable [::itcl::scope mZClipModePref]
     } {}
@@ -8138,7 +8149,6 @@ Popup Menu    Right or Ctrl-Left
 	}
     }
 
-
     if {[catch {$itk_component(sdb) attr get $node $mShowNormalsTag} mShowNormals]} {
 	set mShowNormals 0
     }
@@ -9019,6 +9029,11 @@ Popup Menu    Right or Ctrl-Left
 	$menu add separator
 	$menu add command -label "Decimate" \
 	    -command [::itcl::code $this decimate2 $node]
+	if {[$itk_component(sdb) busy]} {
+	    $menu add separator
+	    $menu add command -label "Abort" \
+		-command [::itcl::code $this abort]
+	}
     }
 
     # set up bindings for status
@@ -9208,7 +9223,7 @@ Popup Menu    Right or Ctrl-Left
 	    "Open..." {
 		set mStatusStr "Open a target description"
 	    }
-	    "Save..." {
+	    "Save" {
 		set mStatusStr "Save the current target description"
 	    }
 	    "Basic" {
@@ -9704,7 +9719,7 @@ Popup Menu    Right or Ctrl-Left
 
     if {!$mDbNoCopy && !$mDbReadOnly && $mNeedSave} {
 	if {$Archer::inheritFromToplevel} {
-	    $itk_component(filemenu) entryconfigure "Save..." \
+	    $itk_component(filemenu) entryconfigure "Save" \
 		-state normal
 	} else {
 	    $itk_component(menubar) menuconfigure .file.save \
@@ -9715,7 +9730,7 @@ Popup Menu    Right or Ctrl-Left
 	    -state normal
     } else {
 	if {$Archer::inheritFromToplevel} {
-	    $itk_component(filemenu) entryconfigure "Save..." \
+	    $itk_component(filemenu) entryconfigure "Save" \
 		-state disabled
 	} else {
 	    $itk_component(menubar) menuconfigure .file.save \
@@ -10236,18 +10251,36 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::adjustCompNormals {comp} {
-    set mNeedSave 1
-    _update_save_mode	
+    if {[$itk_component(sdb) busy]} {
+	return
+    }
+
+    #SetWaitCursor
 
     set savePwd [pwd]
     cd /
-    eval sdbWrapper adjustNormals 0 1 1 0 $comp
+
+    $itk_component(sdb) normalCallback [::itcl::code $this pluginUpdateProgressBar]
+
+    if {[catch {$itk_component(sdb) adjustNormals 0 1 1 0 $comp}]} {
+	#SetNormalCursor
+	pluginUpdateProgressBar 0
+	return
+    }
+
+    set mNeedSave 1
+    _update_save_mode	
+
+    pluginUpdateProgressBar 0
+
     set renderMode [dbCmd how -b $comp]
     cd $savePwd
 
     if {[llength $renderMode] == 2} {
 	eval _render $comp $renderMode 1
     }
+
+    #SetNormalCursor
 }
 
 ::itcl::body Archer::reverseCompNormals {comp} {
@@ -10275,6 +10308,9 @@ Popup Menu    Right or Ctrl-Left
 	    $itk_component(sdb) attr set $comp $mShowNormalsTag 1
 	}
     }
+
+    set mNeedSave 1
+    _update_save_mode
 
     _redraw_obj $comp
 }
@@ -10325,6 +10361,10 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ##################################### Archer Commands #####################################
+::itcl::body Archer::abort {args} {
+    eval sdbWrapper abort 0 1 0 0 $args
+}
+
 ::itcl::body Archer::adjust {args} {
     eval mgedWrapper adjust 0 1 1 1 $args
 }
@@ -10972,6 +11012,7 @@ Popup Menu    Right or Ctrl-Left
 		$itk_component(mged) units $savedUnits
 		error "importFg4Sections: $ret"
 	    }
+
 	    eval $itk_component(mged) otranslate $solidName $delta
 
 	    # Add to the region
@@ -11055,13 +11096,13 @@ Popup Menu    Right or Ctrl-Left
 	}
 
 	_refresh_tree
-	if {$firstName != ""} {
-	    if {$firstName == $lastName} {
-		_select_node [$itk_component(tree) find $regionName] 0
-	    } else {
-		_select_node [$itk_component(tree) find $firstName] 0
-	    }
-	}
+#	if {$firstName != ""} {
+#	    if {$firstName == $lastName} {
+#		after idle [::itcl::code $this _select_node [$itk_component(tree) find $regionName] 0]
+#	    } else {
+#		after idle [::itcl::code $this _select_node [$itk_component(tree) find $firstName] 0]
+#	    }
+#	}
 
 	set mNeedSave 1
 	_update_save_mode
@@ -11177,14 +11218,15 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
-::itcl::body Archer::handleObjTranslate {obj dx dy dz} {
-    eval archerWrapper otranslate 0 0 1 0 $obj $dx $dy $dz
-    _redraw_obj $mSelectedObjPath 0
-}
-
 ::itcl::body Archer::handleObjCenter {obj x y} {
     set vcenter [dbCmd screen2view $x $y]
-    set ocenter [dbCmd ocenter $obj]
+    if {[info exists itk_component(mged)]} {
+	set ocenter [dbCmd ocenter $obj]
+    } else {
+	set savePwd [pwd]
+	cd /
+	set ocenter [dbCmd ocenter $obj]
+    }
     set ovcenter [eval dbCmd m2vPoint $ocenter]
 
     # This is the update view center (i.e. we keep the original view Z)
@@ -11192,7 +11234,13 @@ Popup Menu    Right or Ctrl-Left
 
     set ocenter [eval dbCmd v2mPoint $vcenter]
 
-    eval archerWrapper ocenter 0 0 1 0 $obj $ocenter
+    if {[info exists itk_component(mged)]} {
+	eval archerWrapper ocenter 0 0 1 0 $obj $ocenter
+    } else {
+	eval archerWrapper ocenter 0 0 1 0 $obj $ocenter
+	cd $savePwd
+    }
+
     _redraw_obj $mSelectedObjPath 0
 }
 
@@ -11200,7 +11248,10 @@ Popup Menu    Right or Ctrl-Left
     if {[info exists itk_component(mged)]} {
 	eval archerWrapper orotate 0 0 1 0 $obj $rx $ry $rz
     } else {
+	set savePwd [pwd]
+	cd /
 	eval archerWrapper orotate 0 0 1 0 $obj $rx $ry $rz $kx $ky $kz
+	cd $savePwd
     }
 
     _redraw_obj $mSelectedObjPath 0
@@ -11210,14 +11261,25 @@ Popup Menu    Right or Ctrl-Left
     if {[info exists itk_component(mged)]} {
 	eval archerWrapper oscale 0 0 1 0 $obj $sf
     } else {
+	set savePwd [pwd]
+	cd /
 	eval archerWrapper oscale 0 0 1 0 $obj $sf $kx $ky $kz
+	cd $savePwd
     }
 
     _redraw_obj $mSelectedObjPath 0
 }
 
 ::itcl::body Archer::handleObjTranslate {obj dx dy dz} {
-    eval archerWrapper otranslate 0 0 1 0 $obj $dx $dy $dz
+    if {[info exists itk_component(mged)]} {
+	eval archerWrapper otranslate 0 0 1 0 $obj $dx $dy $dz
+    } else {
+	set savePwd [pwd]
+	cd /
+	eval archerWrapper otranslate 0 0 1 0 $obj $dx $dy $dz
+	cd $savePwd
+    }
+
     _redraw_obj $mSelectedObjPath 0
 }
 
