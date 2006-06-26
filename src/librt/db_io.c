@@ -81,8 +81,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /* should be HIDDEN */
 int
 db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
-
-
     		      		/* byte count */
     		       		/* byte offset from start of file */
 {
@@ -139,6 +137,9 @@ db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
  *  Retrieve all records in the database pertaining to an object,
  *  and place them in malloc()'ed storage, which the caller is
  *  responsible for free()'ing.
+ *
+ *  This loads the combination into a local record buffer.
+ *  This is in external v4 format.
  *
  *  Returns -
  *	union record *		OK
