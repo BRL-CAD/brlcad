@@ -179,7 +179,8 @@ double frametime;		/* time needed to draw last frame */
 
 int             cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 void		(*cur_sigint)();	/* Current SIGINT status */
-void		sig2(int), sig3(int);
+void		sig2(int);
+void		sig3(int);
 void		reset_input_strings(void);
 void		new_mats(void);
 void		usejoy(double xangle, double yangle, double zangle);
@@ -2078,6 +2079,7 @@ mged_finish(int exitcode)
 	exit( exitcode );
 }
 
+
 /*
  *			Q U I T
  *
@@ -2090,10 +2092,10 @@ quit(void)
 	/* NOTREACHED */
 }
 
+
 /*
  *  			S I G 2
  */
-#ifndef _WIN32
 void
 sig2(int sig)
 {
@@ -2101,6 +2103,7 @@ sig2(int sig)
 
   (void)signal( SIGINT, SIG_IGN );
 }
+
 
 /*
  *  			S I G 3
@@ -2111,22 +2114,6 @@ sig3(int sig)
   (void)signal( SIGINT, SIG_IGN );
   longjmp( jmp_env, 1 );
 }
-#else
-void
-sig2(int sig)
-{
-  reset_input_strings();
-
-  (void)signal( SIGINT, SIG_IGN );
-}
-
-void
-sig3(int sig)
-{
-  (void)signal( SIGINT, SIG_IGN );
-  longjmp( jmp_env, 1 );
-}
-#endif
 
 
 void
