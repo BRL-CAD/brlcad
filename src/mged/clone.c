@@ -58,6 +58,7 @@ extern int is_dm_null(void);
  *  requested and values necessary to perform the cloning operation.
  */
 struct clone_state {
+    Tcl_Interp *interp;                 /* Stash a pointer to the tcl interpreter for output */
     struct directory	*src;		/* Source object */
     int			incr;		/* Amount to increment between copies */
     int			n_copies;	/* Number of copies to make */
@@ -68,6 +69,7 @@ struct clone_state {
     int			miraxis;	/* Axis to mirror copy */
     fastf_t		mirpos;		/* Point on axis to mirror copy */
 };
+#define INTERP state.interp
 
 /* XXX change from NAMESIZE to bu_vls */
 struct name {
@@ -231,7 +233,7 @@ get_name(struct directory *dp, struct clone_state state, int iter)
 /** make a copy of a combination by adding it to our book-keeping list,
  *  adding it to the db directory, then writing it out to the db.
  */
-struct directory *
+static struct directory *
 copy_comb(struct directory *proto, struct clone_state state)
 {
     register struct directory *dp = (struct directory *)NULL;
@@ -303,7 +305,7 @@ copy_comb(struct directory *proto, struct clone_state state)
 /** make a copy of a solid by adding it to our book-keeping list,
  *  adding it to the db directory, and writing it out to disk.
  */
-struct directory *
+static struct directory *
 copy_solid(struct directory *proto, struct clone_state state)
 {
     register struct directory *dp = (struct directory *)NULL;
@@ -388,8 +390,8 @@ copy_solid(struct directory *proto, struct clone_state state)
 
 
 /** recursively copy a tree of geometry */
-struct directory *
-copy_tree(Tcl_Interp *interp, struct clone_state state, struct directory *dp)
+static struct directory *
+copy_tree(struct directory *dp, struct resource *resp, struct clone_state state)
 {
     register int i;
     register union record   *rp = (union record *)NULL;
@@ -399,8 +401,9 @@ copy_tree(Tcl_Interp *interp, struct clone_state state, struct directory *dp)
     /* copy the object */
     if (dp->d_flags & DIR_COMB) {
 	
-	/* A v4 method of getting the geometry */
 	if (dbip->dbi_version < 5) {
+	    /* A v4 method of getting the geometry */
+
 	    /* get an in-memory record of this object */
 	    if ((rp = db_getmrec(dbip, dp)) == (union record *)0) {
 		TCL_READ_ERR;
@@ -412,12 +415,22 @@ copy_tree(Tcl_Interp *interp, struct clone_state state, struct directory *dp)
 		if ((mdp = db_lookup(dbip, rp[i].M.m_instname, LOOKUP_NOISY)) == DIR_NULL) {
 		    continue;
 		}
-		copy = copy_tree(interp, state, mdp);
+		copy = copy_tree(mdp, resp, state);
 	    }
 	    
 	} else {
 	    /* A v5 method of getting the geometry */
-	    Tcl_AppendResult(interp, "clone: command currently unimplemented for v5 geometry databases\n");
+	    struct rt_db_internal in;
+	    struct rt_comb_internal *comb = (struct rt_comb_internal *)NULL;
+
+	    if (rt_db_get_internal5( &in, dp, dbip, NULL, NULL) < 0) {
+		TCL_READ_ERR;
+		return NULL;
+	    }
+	    comb = (struct rt_comb_internal *)in.idb_ptr; /* got a copy of the combination */
+	    Tcl_AppendResult(INTERP, "clone: command currently unimplemented for v5 geometry databases....proceeding by the seat of our pants\n");
+	    //	    db_functree_subtree(dbip, comb->tree, NULL /*comb_func*/, NULL /*leaf_func*/, (struct resource *)NULL, (ClientData)state);
+	    rt_db_free_internal(&in, (struct resource *)NULL);
 	}
 
 	/* copy the combination itself */
@@ -426,7 +439,7 @@ copy_tree(Tcl_Interp *interp, struct clone_state state, struct directory *dp)
 	/* leaf node -- make a copy the object */
 	copy = copy_solid(dp, state);
     } else {
-	Tcl_AppendResult(interp, "clone:  ", dp->d_namep, " is neither COMB nor SOLID?\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "clone:  ", dp->d_namep, " is neither COMB nor SOLID?\n", (char *)NULL);
     }
 
     if (rp) {
@@ -439,8 +452,8 @@ copy_tree(Tcl_Interp *interp, struct clone_state state, struct directory *dp)
 /** copy an object, recursivley copying all of the object's contents
  *  if it's a combination/region.
  */
-struct directory *
-copy_object(Tcl_Interp *interp, struct clone_state state)
+static struct directory *
+copy_object(struct resource *resp, struct clone_state state)
 {
     struct directory *copy = (struct directory *)NULL;
     struct nametbl *curr = (struct nametbl *)NULL;
@@ -449,7 +462,7 @@ copy_object(Tcl_Interp *interp, struct clone_state state)
     init_list(&obj_list, state.n_copies);
 
     /* do the actual copying */
-    copy = copy_tree(interp, state, state.src);
+    copy = copy_tree(state.src, resp, state);
 
     /* make sure it made what we hope/think it made */
     if (!copy || !is_in_list(obj_list, state.src->d_namep)) {
@@ -465,7 +478,7 @@ copy_object(Tcl_Interp *interp, struct clone_state state)
 	for (i = 0; i < (state.n_copies > obj_list.names_used ? obj_list.names_used : state.n_copies) ; i++) {
 	    av[1] = obj_list.names[idx].dest[i];
 	    /* draw does not use clientdata */
-	    cmd_draw( (ClientData)NULL, interp, 2, av );
+	    cmd_draw( (ClientData)NULL, INTERP, 2, av );
 	}
     }
 
@@ -516,6 +529,7 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
 
     bu_optind = 1;
 
+    state->interp = interp;
     state->incr = 100;
     state->n_copies = 1;
     state->draw_obj = 1;
@@ -638,7 +652,7 @@ f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* do it */
-    (void)copy_object(interp, state);
+    (void)copy_object(&rt_uniresource, state);
 
     (void)signal( SIGINT, SIG_IGN );
     return TCL_OK;
@@ -885,6 +899,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	strcpy(vargs[1], links[j].name);
 	vargs[2] = NULL;
 
+	state.interp = interp;
 	state.incr = inc;
 	state.n_copies = 1;
 	state.draw_obj = 0;
@@ -915,7 +930,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 					
 		state.src = dps[j];
-		dps[j] = copy_object(interp, state);
+		dps[j] = copy_object(&rt_uniresource, state);
 		strcpy(vargs[1], dps[j]->d_namep);
 		/*				strcpy(vargs[1], obj_list.names[index_in_list(obj_list, links[j].name)].dest[0]);*/
 
