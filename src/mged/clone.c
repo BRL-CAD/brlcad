@@ -234,8 +234,8 @@ get_name(struct directory *dp, struct clone_state state, int iter)
 struct directory *
 copy_comb(struct directory *proto, struct clone_state state)
 {
-    register struct directory *dp;
-    union record *rp;
+    register struct directory *dp = (struct directory *)NULL;
+    union record *rp = (union record *)NULL;
     int i, j, idx;
 
     if (is_in_list(obj_list, proto->d_namep)) {
@@ -254,7 +254,7 @@ copy_comb(struct directory *proto, struct clone_state state)
     /* make n copies */
     for (i = 0; i < state.n_copies; i++) {
 
-	/* get an in-memory reference to the object being copied */
+	/* get a v4 in-memory reference to the object being copied */
 	if ((rp = db_getmrec(dbip, proto)) == (union record *)0) {
 	    TCL_READ_ERR;
 	    return NULL;
@@ -306,8 +306,8 @@ copy_comb(struct directory *proto, struct clone_state state)
 struct directory *
 copy_solid(struct directory *proto, struct clone_state state)
 {
-    register struct directory *dp;
-    union record *rp;
+    register struct directory *dp = (struct directory *)NULL;
+    union record *rp = (union record *)NULL;
     int i, j, idx;
 
     if (is_in_list(obj_list, proto->d_namep)) {
@@ -378,6 +378,8 @@ copy_solid(struct directory *proto, struct clone_state state)
 	    return NULL;
 	}
 
+    }
+    if (rp) {
 	bu_free((char *)rp, "copy_solid record[]");
     }
 
@@ -387,27 +389,35 @@ copy_solid(struct directory *proto, struct clone_state state)
 
 /** recursively copy a tree of geometry */
 struct directory *
-copy_tree(ClientData clientData, Tcl_Interp *interp, struct clone_state state, struct directory *dp)
+copy_tree(Tcl_Interp *interp, struct clone_state state, struct directory *dp)
 {
-    register union record   *rp;
-    register int            i;
-    register struct directory *mdp, *copy;
-
-    /* get an in-memory record of this object */
-    if ((rp = db_getmrec(dbip, dp)) == (union record *)0) {
-	TCL_READ_ERR;
-	return NULL;
-    }
+    register int i;
+    register union record   *rp = (union record *)NULL;
+    register struct directory *mdp = (struct directory *)NULL;
+    register struct directory *copy = (struct directory *)NULL;
 
     /* copy the object */
     if (dp->d_flags & DIR_COMB) {
-	/* if it is a combination/region, recursively copy the objects
-	   that make up the object */
-	for (i = 1; i < dp->d_len; i++ ) {
-	    if ((mdp = db_lookup(dbip, rp[i].M.m_instname, LOOKUP_NOISY)) == DIR_NULL) {
-		continue;
+	
+	/* A v4 method of getting the geometry */
+	if (dbip->dbi_version < 5) {
+	    /* get an in-memory record of this object */
+	    if ((rp = db_getmrec(dbip, dp)) == (union record *)0) {
+		TCL_READ_ERR;
+		return NULL;
 	    }
-	    copy = copy_tree(clientData, interp, state, mdp);
+	    /* if it is a combination/region, recursively copy the objects
+	       that make up the object */
+	    for (i = 1; i < dp->d_len; i++ ) {
+		if ((mdp = db_lookup(dbip, rp[i].M.m_instname, LOOKUP_NOISY)) == DIR_NULL) {
+		    continue;
+		}
+		copy = copy_tree(interp, state, mdp);
+	    }
+	    
+	} else {
+	    /* A v5 method of getting the geometry */
+	    Tcl_AppendResult(interp, "clone: command currently unimplemented for v5 geometry databases\n");
 	}
 
 	/* copy the combination itself */
@@ -418,7 +428,10 @@ copy_tree(ClientData clientData, Tcl_Interp *interp, struct clone_state state, s
     } else {
 	Tcl_AppendResult(interp, "clone:  ", dp->d_namep, " is neither COMB nor SOLID?\n", (char *)NULL);
     }
-    bu_free((char *)rp, "copy_tree record[]");
+
+    if (rp) {
+	bu_free((char *)rp, "copy_tree record[]");
+    }
     return copy;
 }
 
@@ -427,16 +440,16 @@ copy_tree(ClientData clientData, Tcl_Interp *interp, struct clone_state state, s
  *  if it's a combination/region.
  */
 struct directory *
-copy_object(ClientData clientData, Tcl_Interp *interp, struct clone_state state)
+copy_object(Tcl_Interp *interp, struct clone_state state)
 {
-    struct directory *copy;
-    struct nametbl *curr;
+    struct directory *copy = (struct directory *)NULL;
+    struct nametbl *curr = (struct nametbl *)NULL;
     int i, j, idx;
 
     init_list(&obj_list, state.n_copies);
 
     /* do the actual copying */
-    copy = copy_tree(clientData, interp, state, state.src);
+    copy = copy_tree(interp, state, state.src);
 
     /* make sure it made what we hope/think it made */
     if (!copy || !is_in_list(obj_list, state.src->d_namep)) {
@@ -451,7 +464,8 @@ copy_object(ClientData clientData, Tcl_Interp *interp, struct clone_state state)
 	idx = index_in_list(obj_list, state.src->d_namep);
 	for (i = 0; i < (state.n_copies > obj_list.names_used ? obj_list.names_used : state.n_copies) ; i++) {
 	    av[1] = obj_list.names[idx].dest[i];
-	    cmd_draw( clientData, interp, 2, av );
+	    /* draw does not use clientdata */
+	    cmd_draw( (ClientData)NULL, interp, 2, av );
 	}
     }
 
@@ -474,7 +488,7 @@ copy_object(ClientData clientData, Tcl_Interp *interp, struct clone_state state)
 
 /** how to use clone.  blissfully simple interface. */
 void
-print_usage(ClientData clientData, Tcl_Interp *interp)
+print_usage(Tcl_Interp *interp)
 {
     Tcl_AppendResult(interp, "Usage: clone [-abfhimnprtv] <object>\n\n", (char *)NULL);
     Tcl_AppendResult(interp, "-a <n> <x> <y> <z>\t- Specifies a translation split between n copies.\n", (char*)NULL);
@@ -496,7 +510,7 @@ print_usage(ClientData clientData, Tcl_Interp *interp)
  *  our state structure.
  */
 int
-get_args(ClientData clientData, Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
+get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
 {
     int i, k;
 
@@ -529,7 +543,7 @@ get_args(ClientData clientData, Tcl_Interp *interp, int argc, char **argv, struc
 		state->draw_obj = 0;
 		break;
 	    case 'h':
-		print_usage(clientData, interp);
+		print_usage(interp);
 		return TCL_ERROR;
 		break;
 	    case 'i':
@@ -564,7 +578,7 @@ get_args(ClientData clientData, Tcl_Interp *interp, int argc, char **argv, struc
 		return TCL_ERROR;
 		break;
 	    default:
-		print_usage(clientData, interp);
+		print_usage(interp);
 		return TCL_ERROR;
 	}
     }
@@ -572,11 +586,11 @@ get_args(ClientData clientData, Tcl_Interp *interp, int argc, char **argv, struc
     /* make sure not too few/many args */
     if ((argc - bu_optind) == 0) {
 	Tcl_AppendResult(interp, "clone:  Need to specify an <object> to be cloned.\n", (char*)NULL);
-	print_usage(clientData, interp);
+	print_usage(interp);
 	return TCL_ERROR;
     } else if (bu_optind + 1 < argc) {
 	Tcl_AppendResult(interp, "clone:  Can only clone exactly one <object> at a time right now.\n", (char*)NULL);
-	print_usage(clientData, interp);
+	print_usage(interp);
 	return TCL_ERROR;
     }
 
@@ -619,12 +633,12 @@ f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* validate user options */
-    if (get_args(clientData, interp, argc, argv, &state) == TCL_ERROR) {
+    if (get_args(interp, argc, argv, &state) == TCL_ERROR) {
 	return TCL_ERROR;
     }
 
     /* do it */
-    (void)copy_object(clientData, interp, state);
+    (void)copy_object(interp, state);
 
     (void)signal( SIGINT, SIG_IGN );
     return TCL_OK;
@@ -666,18 +680,14 @@ interp_spl(fastf_t t, struct spline spl, vect_t pt)
  *  copies of objects along a spline path.
  */
 int
-f_tracker(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     struct spline s;
-    vect_t *verts;
-    struct link *links;
+    vect_t *verts  = (vect_t *)NULL;
+    struct link *links = (struct link *)NULL;
     int i, j, k, inc;
     int n_verts, n_links, arg = 1;
-    FILE *points;
+    FILE *points = (FILE *)NULL;
     char tok[81] = {0}, line[81] = {0};
     char ch;
     fastf_t totlen = 0.0;
@@ -862,7 +872,7 @@ f_tracker(clientData, interp, argc, argv)
     fscanf(stdin, "%c", &ch);
     if (ch == 'y') {
 	struct clone_state state;
-	struct directory **dps;
+	struct directory **dps = (struct directory **)NULL;
 	fastf_t units[6] = {1, 1, 10, 1000, 25.4, 304.8};
 	char *vargs[3];
 	vect_t *rots;
@@ -905,7 +915,7 @@ f_tracker(clientData, interp, argc, argv)
 
 					
 		state.src = dps[j];
-		dps[j] = copy_object(clientData, interp, state);
+		dps[j] = copy_object(interp, state);
 		strcpy(vargs[1], dps[j]->d_namep);
 		/*				strcpy(vargs[1], obj_list.names[index_in_list(obj_list, links[j].name)].dest[0]);*/
 
