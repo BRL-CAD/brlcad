@@ -90,10 +90,16 @@ LC_ALL=C
 this="$0"
 args="$*"
 
-CONFIG_DATE=`date +%Y%m%d`
+CONFIG_DAY=`date +%d`
+CONFIG_MONTH=`date +%m`
+CONFIG_YEAR=`date +%Y`
+CONFIG_DATE="${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}"
 CONFIG_TIME="`date '+%H %M %S'`"
 BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
 AC_DEFINE_UNQUOTED([BRLCAD_VERSION], "$BRLCAD_VERSION", "Version of BRL-CAD")
+AC_SUBST(CONFIG_DAY)
+AC_SUBST(CONFIG_MONTH)
+AC_SUBST(CONFIG_YEAR)
 AC_SUBST(CONFIG_DATE)
 AC_SUBST(CONFIG_TIME)
 AC_SUBST(BRLCAD_VERSION)
@@ -3100,6 +3106,7 @@ AC_CONFIG_FILES([
 	doc/html/manuals/mged/animmate/Makefile
 	doc/html/manuals/shaders/Makefile
 	doc/legal/Makefile
+	doc/pad_file.xml
 	include/Makefile
 	m4/Makefile
 	misc/Makefile
@@ -3351,7 +3358,7 @@ AC_CONFIG_FILES([
 
 AC_OUTPUT
 
-
+v
 dnl
 dnl Expand the variables for summary reporting
 dnl
