@@ -1991,8 +1991,10 @@ log_event(char *event, char *arg)
 
 	/* get the user name */
 #ifdef _WIN32
-	DWORD dwNumBytes = 256;
-	GetUserName(uname, &dwNumBytes);
+	{
+	    DWORD dwNumBytes = 256;
+	    GetUserName(uname, &dwNumBytes);
+	}
 #else
 	getlogin_r(uname, 256);
 #endif
