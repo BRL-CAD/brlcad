@@ -320,6 +320,7 @@ namespace eval Archer {
 	variable mShowModelAxesTicks 1
 	variable mShowGroundPlane 0
 	variable mShowPrimitiveLabels 0
+	variable mShowViewingParams 1
 
 	# variables for preference state
 	variable mZClipMode 0
@@ -333,6 +334,8 @@ namespace eval Archer {
 	variable mBackgroundBluePref 
 	variable mPrimitiveLabelColor Yellow
 	variable mPrimitiveLabelColorPref
+	variable mViewingParamsColor Yellow
+	variable mViewingParamsColorPref
 	variable mTheme "Crystal_Large"
 	variable mThemePref ""
 	variable mSdbTopGroup all
@@ -348,7 +351,7 @@ namespace eval Archer {
 
 	variable mViewAxesSize Small
 	variable mViewAxesSizePref ""
-	variable mViewAxesPosition "Lower Left"
+	variable mViewAxesPosition "Lower Right"
 	variable mViewAxesPositionPref ""
 	variable mViewAxesLineWidth 1
 	variable mViewAxesLineWidthPref ""
@@ -591,6 +594,7 @@ Popup Menu    Right or Ctrl-Left
 	method _build_ground_plane {}
 	method _show_ground_plane {}
 	method _show_primitive_labels {}
+	method _show_view_params {}
 
 	# pane commands
 	method _toggle_tree_view {state}
@@ -4373,6 +4377,12 @@ Popup Menu    Right or Ctrl-Left
 	    -onvalue 1 \
 	    -variable [::itcl::scope mShowPrimitiveLabels] \
 	    -command [::itcl::code $this _show_primitive_labels]
+	$itk_component(modesmenu) add checkbutton \
+	    -label "Viewing Parameters" \
+	    -offvalue 0 \
+	    -onvalue 1 \
+	    -variable [::itcl::scope mShowViewingParams] \
+	    -command [::itcl::code $this _show_view_params]
 
 	if {![info exists itk_component(mged)] &&
 	    ![info exists itk_component(sdb)]} {
@@ -4424,6 +4434,8 @@ Popup Menu    Right or Ctrl-Left
 			-helpstr "Hide/Show ground plane"
 		    checkbutton primitiveLabels -label "Primitive Labels" \
 			-helpstr "Hide/Show primitive labels"
+		    checkbutton viewingParams -label "Viewing Parameters" \
+			-helpstr "Hide/Show viewing parameters"
 		}
 	} else {
 	    $itk_component(menubar) menuconfigure .modes \
@@ -4450,6 +4462,8 @@ Popup Menu    Right or Ctrl-Left
 			-helpstr "Hide/Show ground plane"
 		    checkbutton primitiveLabels -label "Primitive Labels" \
 			-helpstr "Hide/Show primitive labels"
+		    checkbutton viewingParams -label "Viewing Parameters" \
+			-helpstr "Hide/Show viewing parameters"
 		}
 	}
 
@@ -4535,6 +4549,11 @@ Popup Menu    Right or Ctrl-Left
 	    -onvalue 1 \
 	    -variable [::itcl::scope mShowPrimitiveLabels] \
 	    -command [::itcl::code $this _show_primitive_labels]
+	$itk_component(menubar) menuconfigure .modes.viewingParams \
+	    -offvalue 0 \
+	    -onvalue 1 \
+	    -variable [::itcl::scope mShowViewingParams] \
+	    -command [::itcl::code $this _show_view_params]
     }
 }
 
@@ -4854,7 +4873,8 @@ Popup Menu    Right or Ctrl-Left
 	    -type $mDisplayType \
 	    -showhandle 0 \
 	    -sashcursor sb_v_double_arrow \
-	    -hsashcursor sb_h_double_arrow
+	    -hsashcursor sb_h_double_arrow \
+	    -showViewingParams $mShowViewingParams
     } {
 	keep -sashwidth -sashheight -sashborderwidth
 	keep -sashindent -thickness
@@ -5015,10 +5035,11 @@ Popup Menu    Right or Ctrl-Left
 	}
 	
 	SdbBrlView $itk_component(canvasF).sdb $_target \
-		-type $mDisplayType \
-		-showhandle 0 \
-		-sashcursor sb_v_double_arrow \
-		-hsashcursor sb_h_double_arrow
+	    -type $mDisplayType \
+	    -showhandle 0 \
+	    -sashcursor sb_v_double_arrow \
+	    -hsashcursor sb_h_double_arrow \
+	    -showViewingParams $mShowViewingParams
     } {
 	keep -sashwidth -sashheight -sashborderwidth
 	keep -sashindent -thickness
@@ -6600,6 +6621,13 @@ Popup Menu    Right or Ctrl-Left
 	"Primitive Label Color:" \
 	$colorListNoTriple
 
+    _build_combo_box $itk_component(generalF) \
+	viewingParamsColor \
+	vcolor \
+	mViewingParamsColorPref \
+	"Viewing Parameters Color:" \
+	$colorListNoTriple
+
     set tmp_themes [glob [file join $_imgdir Themes *]]
     set themes {}
     foreach theme $tmp_themes {
@@ -6629,6 +6657,9 @@ Popup Menu    Right or Ctrl-Left
     incr i
     grid $itk_component(primitiveLabelColorL) -column 0 -row $i -sticky e
     grid $itk_component(primitiveLabelColorF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(viewingParamsColorL) -column 0 -row $i -sticky e
+    grid $itk_component(viewingParamsColorF) -column 1 -row $i -sticky ew
     incr i
     grid $itk_component(themesL) -column 0 -row $i -sticky ne
     grid $itk_component(themesF) -column 1 -row $i -sticky w
@@ -7296,6 +7327,7 @@ Popup Menu    Right or Ctrl-Left
     set mBackgroundGreenPref [lindex $mBackground 1]
     set mBackgroundBluePref [lindex $mBackground 2]
     set mPrimitiveLabelColorPref $mPrimitiveLabelColor
+    set mViewingParamsColorPref $mViewingParamsColor
     set mThemePref $mTheme
 
     set mGroundPlaneSizePref $mGroundPlaneSize
@@ -7374,10 +7406,12 @@ Popup Menu    Right or Ctrl-Left
 
     if {$mPrimitiveLabelColor != $mPrimitiveLabelColorPref} {
 	set mPrimitiveLabelColor $mPrimitiveLabelColorPref
+	_set_color_option dbCmd -primitiveLabelColor $mPrimitiveLabelColor
+    }
 
-	if {[info exists itk_component(mged)]} {
-	    _set_color_option dbCmd -primitiveLabelColor $mPrimitiveLabelColor
-	}
+    if {$mViewingParamsColor != $mViewingParamsColorPref} {
+	set mViewingParamsColor $mViewingParamsColorPref
+	_set_color_option dbCmd -viewingParamsColor $mViewingParamsColor
     }
 
     if {$mTheme != $mThemePref} {
@@ -7709,6 +7743,8 @@ Popup Menu    Right or Ctrl-Left
     _background_color [lindex $mBackground 0] \
 	    [lindex $mBackground 1] \
 	    [lindex $mBackground 2]
+    _set_color_option dbCmd -primitiveLabelColor $mPrimitiveLabelColor
+    _set_color_option dbCmd -viewingParamsColor $mViewingParamsColor
 
     update
     _set_mode
@@ -7743,6 +7779,8 @@ Popup Menu    Right or Ctrl-Left
 	puts $pfile "#"
 	puts $pfile "set mBindingMode $mBindingMode"
 	puts $pfile "set mBackground \"$mBackground\""
+	puts $pfile "set mPrimitiveLabelColor \"$mPrimitiveLabelColor\""
+	puts $pfile "set mViewingParamsColor \"$mViewingParamsColor\""
 	puts $pfile "set mTheme \"$mTheme\""
 	puts $pfile "set mViewAxesSize \"$mViewAxesSize\""
 	puts $pfile "set mViewAxesPosition \"$mViewAxesPosition\""
@@ -7801,6 +7839,7 @@ Popup Menu    Right or Ctrl-Left
 	    [lindex $mBackground 1] \
 	    [lindex $mBackground 2] 
     _set_color_option dbCmd -primitiveLabelColor $mPrimitiveLabelColor
+    _set_color_option dbCmd -viewingParamsColor $mViewingParamsColor
 }
 
 ::itcl::body Archer::_apply_display_preferences {} {
@@ -9164,6 +9203,9 @@ Popup Menu    Right or Ctrl-Left
 	}
     }
 
+    _set_color_option dbCmd -primitiveLabelColor $mPrimitiveLabelColor
+    _set_color_option dbCmd -viewingParamsColor $mViewingParamsColor
+
     if {!$mViewOnly} {
 	_init_db_attr_view $mTarget
 	_apply_preferences
@@ -9961,6 +10003,18 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body Archer::_show_primitive_labels {} {
     if {![info exists itk_component(mged)] &&
 	![info exists itk_component(sdb)]} {
+	return
+    }
+
+    _redraw_obj $mSelectedObjPath
+}
+
+::itcl::body Archer::_show_view_params {} {
+    if {[info exists itk_component(mged)]} {
+	$itk_component(mged) configure -showViewingParams $mShowViewingParams
+    } elseif {[info exists itk_component(sdb)]} {
+	$itk_component(sdb) configure -showViewingParams $mShowViewingParams
+    } else {
 	return
     }
 
