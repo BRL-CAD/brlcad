@@ -144,12 +144,13 @@
 ::itcl::body View::ae {args} {
     # get ae
     if {$args == ""} {
-	return $ae
+	return [$view ae]
     }
 
     # set ae
     eval $view ae $args
     set ae $args
+
     return
 }
 
