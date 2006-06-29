@@ -77,6 +77,9 @@
     keep -viewAxesColor
     keep -viewAxesLabelColor
     keep -viewAxesTripleColor
+
+    keep -showViewingParams
+    keep -viewingParamsColor
 }
 
 ::itcl::class Display {
@@ -117,6 +120,9 @@
     itk_option define -viewAxesColor viewAxesColor AxesColor {255 255 255}
     itk_option define -viewAxesLabelColor viewAxesLabelColor AxesLabelColor {255 255 0}
     itk_option define -viewAxesTripleColor viewAxesTripleColor AxesTripleColor 1
+
+    itk_option define -showViewingParams showViewingParams ShowViewingParams 0
+    itk_option define -viewingParamsColor viewingParamsColor ViewingParamsColor {255 255 0}
 
     constructor {args} {
 	Dm::constructor
@@ -292,6 +298,29 @@
     set r [lindex $itk_option(-primitiveLabelColor) 0]
     set g [lindex $itk_option(-primitiveLabelColor) 1]
     set b [lindex $itk_option(-primitiveLabelColor) 2]
+
+    # validate color
+    if {![string is digit $r] ||
+	![string is digit $g] ||
+        ![string is digit $b] ||
+        $r < 0 || 255 < $r ||
+        $g < 0 || 255 < $g ||
+        $b < 0 || 255 < $b} {
+
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    refresh
+}
+
+::itcl::configbody Display::viewingParamsColor {
+    if {[llength $itk_option(-viewingParamsColor)] != 3} {
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    set r [lindex $itk_option(-viewingParamsColor) 0]
+    set g [lindex $itk_option(-viewingParamsColor) 1]
+    set b [lindex $itk_option(-viewingParamsColor) 2]
 
     # validate color
     if {![string is digit $r] ||
@@ -656,6 +685,23 @@
 	}
 
 	Dm::normal
+
+	if {$itk_option(-showViewingParams)} {
+	    #set ae [View::ae]
+	    set azel [View::ae]
+	    set cent [View::center]
+	    #set vstr [format "units:%s  size:%g  center:(%g %g %g)  az:%g  el:%g  tw::%g"
+	    set vstr [format "units:%s  size:%.2f  center:(%.2f, %.2f, %.2f)  az:%.2f  el:%.2f  tw::%.2f" \
+			  [View::units] \
+			  [View::size] \
+			  [lindex $cent 0] [lindex $cent 1] [lindex $cent 2] \
+			  [lindex $azel 0] \
+			  [lindex $azel 1] \
+			  [lindex $azel 2]]
+	    #Dm::drawString $vstr 0.0 -0.965 10 0
+	    eval Dm::fg $itk_option(-viewingParamsColor)
+	    Dm::drawString $vstr -0.98 -0.965 10 0
+	}
 
 	if {$itk_option(-primitiveLabels) != {}} {
 	    ####
