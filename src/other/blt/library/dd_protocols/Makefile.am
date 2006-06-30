@@ -6,7 +6,8 @@ brlcadscript_SCRIPTS = \
 	dd-color.tcl \
 	dd-file.tcl \
 	dd-number.tcl \
-	dd-text.tcl
+	dd-text.tcl \
+	tclIndex
 
 EXTRA_DIST = \
 	$(brlcadscript_SCRIPTS)
