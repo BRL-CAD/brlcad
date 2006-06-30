@@ -29,6 +29,7 @@ scripts = \
 	Plugin.tcl \
 	RhcEditFrame.tcl \
 	RpcEditFrame.tcl \
+	ShaderEdit.tcl \
 	SketchEditFrame.tcl \
 	SphereEditFrame.tcl \
 	tabwindow.itk \
