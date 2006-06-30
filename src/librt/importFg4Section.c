@@ -539,7 +539,6 @@ make_bot_object(char		*name,
     else \
 	*(_cp) = '\0';
 
-#ifdef IMPORT_FASTGEN4_SECTION
 int
 wdb_importFg4Section_cmd(struct rt_wdb	*wdbp,
 			 Tcl_Interp	*interp,
@@ -619,4 +618,3 @@ wdb_importFg4Section_cmd(struct rt_wdb	*wdbp,
 
     return TCL_OK;
 }
-#endif
