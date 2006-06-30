@@ -11,6 +11,8 @@ entire history of the project is available through CVS.
 --- 2006-07-XX  Release 7.8.3                                      ---
 ----------------------------------------------------------------------
 
+* updated archer splash screen - Bob Parker
+* archer enhancements for displaying view parameters - Bob Parker
 * improved mged grid zooming using pixel size - John Anderson
 * fixed mged hang caused by extreme grid zooming bug - John Anderson
 * ported jove to SGI Altix platform, fixed crash bug - Sean Morrison
