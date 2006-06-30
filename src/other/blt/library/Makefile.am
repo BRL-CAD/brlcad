@@ -16,7 +16,9 @@ brlcadscript_SCRIPTS = \
 	treeview.tcl \
 	ZoomStack.itcl \
 	treeview_m.xbm \
-	treeview.xbm
+	treeview.xbm \
+	pkgIndex.tcl \
+	tclIndex
 
 EXTRA_DIST = \
 	$(brlcadscript_SCRIPTS)
