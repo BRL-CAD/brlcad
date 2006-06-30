@@ -282,9 +282,7 @@ static int wdb_move_arb_edge_tcl(ClientData clientData, Tcl_Interp *interp, int 
 static int wdb_move_arb_face_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_rotate_arb_face_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_rmap_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-#ifdef IMPORT_FASTGEN4_SECTION
 static int wdb_importFg4Section_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-#endif
 static int wdb_orotate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_oscale_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_otranslate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -341,9 +339,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"get_type",	wdb_get_type_tcl},
 	{"hide",	wdb_hide_tcl},
 	{"i",		wdb_instance_tcl},
-#ifdef IMPORT_FASTGEN4_SECTION
 	{"importFg4Section",		wdb_importFg4Section_tcl},
-#endif
 	{"keep",	wdb_keep_tcl},
 	{"kill",	wdb_kill_tcl},
 	{"killall",	wdb_killall_tcl},
@@ -7517,6 +7513,8 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 			if( isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 				char line[80];
 
+/*XXX Ditto on the message below. Besides, it screws with the cadwidgets. */
+#if 0
 				/* classic interactive MGED */
 				while( 1 ) {
 					bu_log( "Hiding BRL-CAD geometry (%s) is generaly a bad idea.\n", dp->d_namep );
@@ -7529,6 +7527,7 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 						break;
 					}
 				}
+#endif
 			} else if( Tcl_GetVar2Ex( interp, "tk_version", NULL, TCL_GLOBAL_ONLY ) ) {
 #if 0
 				struct bu_vls vls;
@@ -9010,7 +9009,6 @@ wdb_bot_face_sort_tcl(ClientData	clientData,
 }
 
 
-#ifdef IMPORT_FASTGEN4_SECTION
 /*
  * Usage:
  *        importFg4Section name sdata
@@ -9025,7 +9023,6 @@ wdb_importFg4Section_tcl(ClientData	clientData,
 
     return wdb_importFg4Section_cmd(wdbp, interp, argc-1, argv+1);
 }
-#endif
 
 #if 0
 /* skeleton functions for wdb_obj methods */
