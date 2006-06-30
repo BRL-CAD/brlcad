@@ -35,7 +35,8 @@ if {$tcl_platform(os) == "Windows NT"} {
 } else {
     # For the moment, leave it this way for
     # all other platforms.
-    package require blt
+    #package require blt
+    package require BLT
 }
 
 # avoid a pkg_index error about ::blt:: being unknown
