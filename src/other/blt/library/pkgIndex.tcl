@@ -23,8 +23,8 @@ proc LoadBLT { version dir } {
 	    set library [file join [file dirname $dir] $name]
 	}
 	if { ![file exists $library] } {
-	    # Default to the path generated at compilation.
-	    set library [file join "c:/cygwin/home/bob/src/Archer/brlcadWin/lib/blt2.4z" $name]
+	    # Fall back to default path.
+	    set library [file join "/usr/brlcad/lib/blt2.4" $name]
 	}
     } else {
 	set library $name
