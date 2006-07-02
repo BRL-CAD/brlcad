@@ -2,7 +2,6 @@
 
 bin_PROGRAMS = \
 	canonize \
-	canonserver \
 	pix-ipu \
 	png-ipu \
 	ipuscan \
@@ -18,13 +17,14 @@ man_MANS = canonize.1
 canonize_SOURCES = canonize.c canonlib.c asize.c
 canonize_LDADD = ${LIBM}
 
-canonserver_SOURCES = canonserver.c
+pix_ipu_SOURCES = pix-ipu.c canonlib.c asize.c mread.c
+pix_ipu_LDADD = ${LIBM}
 
-pix_ipu_SOURCES = pix-ipu.c canonlib.c asize.c
-
-png_ipu_SOURCES = png-ipu.c canonlib.c asize.c
+png_ipu_SOURCES = png-ipu.c canonlib.c asize.c mread.c
+png_ipu_LDADD = ${LIBM}
 
 ipuscan_SOURCES = ipuscan.c canonlib.c asize.c
+ipuscan_LDADD = ${LIBM}
 
 ipustat_SOURCES = ipustat.c canonlib.c
 
