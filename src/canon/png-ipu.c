@@ -69,42 +69,23 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
+
 #include "machine.h"
 #include "bu.h"
 #include "png.h"
-
-static int
-mread(fd, bufp, n)
-     int	fd;
-     register char	*bufp;
-     int	n;
-{
-    register int	count = 0;
-    register int	nread;
-
-    do {
-	nread = read(fd, bufp, (unsigned)n-count);
-	if(nread < 0)  {
-	    return nread;
-	}
-	if(nread == 0)
-	    return((int)count);
-	count += (unsigned)nread;
-	bufp += nread;
-    } while(count < n);
-
-    return((int)count);
-}
 
 #if defined(IRIX) && (IRIX == 4 || IRIX == 5 || IRIX == 6)
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include "./canon.h"
+
+extern int mread(int fd, char *bufp, int n);
+
 
 static png_color_16 def_backgrd={ 255,255,255,255,255 };	/* white */
 static double	def_screen_gamma=1.0;	/* Don't add more gamma, by default */

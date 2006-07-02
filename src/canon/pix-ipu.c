@@ -68,36 +68,12 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
-
-/* Read multiple times until quantity is obtained.  Necessary for pipes */
-static int
-mread(fd, bufp, n)
-     int	fd;
-     register char	*bufp;
-     int	n;
-{
-    register int	count = 0;
-    register int	nread;
-
-    do {
-	nread = read(fd, bufp, (unsigned)n-count);
-	if(nread < 0)  {
-	    return nread;
-	}
-	if(nread == 0)
-	    return((int)count);
-	count += (unsigned)nread;
-	bufp += nread;
-    } while(count < n);
-
-    return((int)count);
-}
 
 #if defined(IRIX) && (IRIX == 4 || IRIX == 5 || IRIX == 6)
 #include "./canon.h"
@@ -116,6 +92,9 @@ mread(fd, bufp, n)
 
 #include "./chore.h"
 
+extern int mread(int fd, char *bufp, int n);
+
+
 static 	struct dsreq *dsp;
 static	int	fd;
 
@@ -124,6 +103,7 @@ struct chore	chores[3];
 struct chore	*await1;
 struct chore	*await2;
 struct chore	*await3;
+
 
 /*
  *  While this step looks innocuous, if the file is located on a slow
