@@ -32,6 +32,7 @@ kitchensink_dirs = \
 	brlman \
 	burst \
 	bwish \
+	canon \
 	fb \
 	fbed \
 	gtools \
@@ -107,8 +108,7 @@ DIST_SUBDIRS= \
 	$(bench_dirs) \
 	$(rts_dirs) \
 	$(kitchensink_dirs) \
-	adrt \
-	canon
+	adrt
 
 MAINTAINERCLEANFILES = \
 	Makefile.in
