@@ -1240,8 +1240,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 
 	if( !extrude_ip->skt )
 	{
-		bu_log( "rt_extrude_plot: ERROR: no sketch for extrusion!!!!\n" );
-
+		bu_log( "ERROR: no sketch to extrude!\n" );
 		RT_ADD_VLIST( vhead, extrude_ip->V, BN_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vhead, extrude_ip->V, BN_VLIST_LINE_DRAW );
 		return( 0 );
@@ -1252,12 +1251,25 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 
 	crv = &sketch_ip->skt_curve;
 
+	/* empty sketch, nothing to do */
+	if (crv->seg_count == 0)
+	{
+	    if (extrude_ip->sketch_name) {
+		bu_log("Sketch [%s] is empty, nothing to draw\n", extrude_ip->sketch_name);
+	    } else {
+		bu_log("Unnamed sketch is empty, nothing to draw\n");
+	    }
+	    RT_ADD_VLIST( vhead, extrude_ip->V, BN_VLIST_LINE_MOVE );
+	    RT_ADD_VLIST( vhead, extrude_ip->V, BN_VLIST_LINE_DRAW );
+	    return( 0 );
+	}
+
 	/* plot bottom curve */
 	vp1 = BU_LIST_LAST( bn_vlist, vhead );
 	nused1 = vp1->nused;
 	if( curve_to_vlist( vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, crv ) )
 	{
-		bu_log( "Error: sketch (%s) references non-existent vertices!!!\n",
+		bu_log( "ERROR: sketch (%s) references non-existent vertices!\n",
 			extrude_ip->sketch_name );
 		return( -1 );
 	}
@@ -1270,20 +1282,13 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 
 	/* plot connecting lines */
 	vp2_start = vp2;
-	i1 = nused1;
-	if( i1 >= vp1->nused )
-	{
-		i1 = 0;
-		vp1 = BU_LIST_NEXT( bn_vlist, &vp1->l );
-	}
-	i2 = nused2;
-	if( i2 >= vp2->nused )
-	{
-		i2 = 0;
-		vp2 = BU_LIST_NEXT( bn_vlist, &vp2->l );
-		nused2--;
-	}
-	while( vp1 != vp2_start || i1 != nused2 )
+	i1 = 0;
+	vp1 = BU_LIST_NEXT( bn_vlist, &vp1->l );
+	i2 = 0;
+	vp2 = BU_LIST_NEXT( bn_vlist, &vp2->l );
+	nused2--;
+
+	while( vp1 != vp2_start || (nused2 >= 0 && i1 != nused2) )
 	{
 		RT_ADD_VLIST( vhead, vp1->pt[i1], BN_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vhead, vp2->pt[i2], BN_VLIST_LINE_DRAW );
