@@ -852,7 +852,7 @@ repository.
 the updated ChangeLog.  Use the YYYY-MM-DD of the previous release.
 Get the date from the NEWS file.
 
-    rcs2log -h users.sourceforge.net -r "-d>YYYY-MM-DD" > ChangeLog
+    rcs2log -h users.sourceforge.net -r "-d>YYYY-MM-DD" | fold -s > ChangeLog
 
 5) A "./configure && make" completes successfully on all platforms.
 
