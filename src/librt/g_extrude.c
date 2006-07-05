@@ -1252,7 +1252,6 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	crv = &sketch_ip->skt_curve;
 
 	/* empty sketch, nothing to do */
-#if 0
 	if (crv->seg_count == 0)
 	{
 	    if (extrude_ip->sketch_name) {
@@ -1264,7 +1263,6 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	    RT_ADD_VLIST( vhead, extrude_ip->V, BN_VLIST_LINE_DRAW );
 	    return( 0 );
 	}
-#endif
 
 	/* plot bottom curve */
 	vp1 = BU_LIST_LAST( bn_vlist, vhead );
