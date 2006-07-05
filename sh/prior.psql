@@ -1,0 +1,1 @@
+select project_task_id,summary,priority,status_id from project_task where group_project_id=21 and status_id=1;
