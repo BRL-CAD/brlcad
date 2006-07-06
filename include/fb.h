@@ -227,7 +227,7 @@ FB_EXPORT extern int Fb_Init();
 #endif
 FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
 
-/* vers.c (created by libfb/Cakefile) */
+/* vers.c */
 FB_EXPORT extern char fb_version[];
 
 #endif /* FB_H */

@@ -29,7 +29,7 @@
  *  eight bits of overlay planes.
  *
  *  To use this module you must have the GDSLIB library and header
- *  files installed, and add -lgds to the LIBFB_LIBS in Cakefile.defs.
+ *  files installed, and add -lgds to the LIBS during compile.
  *
  *  Authors -
  *	Phillip Dykstra

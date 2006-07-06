@@ -38,7 +38,7 @@
  *   to fb_sim_writerect, if not implemented.
  *  Make DEVNAME_free call DEVNAME_close if not implemented.
  *  Go add an "ifdef IF_DEVNAME" to fb_generic.c (two places).
- *  Add defines to ../Cakefile.defs.
+ *  Add defines to Makefile.am
  *  Replace this header.
  */
 /*@}*/

@@ -2231,7 +2231,7 @@ BU_EXPORT BU_EXTERN(void bu_vls_prepend,
 		     char *str));
 
 
-/* vers.c (created by the Cakefile) */
+/* vers.c */
 BU_EXPORT extern const char		bu_version[];
 
 /* units.c */

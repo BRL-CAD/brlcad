@@ -6800,7 +6800,7 @@ RT_EXPORT extern int rt_bot_tri_per_piece;
 RT_EXPORT extern const struct db_tree_state rt_initial_tree_state;
 RT_EXPORT extern const char *rt_vlist_cmd_descriptions[];
 
-/* vers.c (created by librt/Cakefile) */
+/* vers.c */
 RT_EXPORT extern const char rt_version[];
 
 __END_DECLS

@@ -326,7 +326,7 @@ DM_EXPORT BU_EXTERN(int Nu_int0,
 DM_EXPORT BU_EXTERN(unsigned Nu_unsign,
 		    ());
 
-/* vers.c (created by libdm/Cakefile) */
+/* vers.c */
 DM_EXPORT extern char dm_version[];
 
 /* clip.c */

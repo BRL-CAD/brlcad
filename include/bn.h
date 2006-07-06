@@ -1750,7 +1750,7 @@ BN_EXPORT BU_EXTERN(void tp_setup,
 
 
 /*----------------------------------------------------------------------*/
-/* vers.c (created by the Cakefile) */
+/* vers.c */
 BN_EXPORT extern const char		bn_version[];
 /*----------------------------------------------------------------------*/
 
