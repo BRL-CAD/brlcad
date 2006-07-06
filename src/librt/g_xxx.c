@@ -41,7 +41,7 @@
  *		rt_id_solid()
  *	edit raytrace.h to make ID_XXX, increment ID_MAXIMUM
  *	edit db_scan.c to add the new solid to db_scan()
- *	edit Cakefile to add g_xxx.c to compile
+ *	edit Makefile.am to add g_xxx.c to compile
  *
  *	Then:
  *	go to /cad/libwdb and create mk_xxx() routine

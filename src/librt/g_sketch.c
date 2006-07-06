@@ -41,7 +41,7 @@
  *		rt_id_solid()
  *	edit raytrace.h to make ID_SKETCH, increment ID_MAXIMUM
  *	edit db_scan.c to add support for new solid type
- *	edit Cakefile to add g_sketch.c to compile
+ *	edit Makefile.am to add g_sketch.c to compile
  *
  *	Then:
  *	go to /cad/libwdb and create mk_sketch() routine
