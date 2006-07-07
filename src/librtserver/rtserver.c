@@ -1558,7 +1558,7 @@ get_muves_components()
 		long index;
 
 		name = Tcl_GetHashKey( &name_tbl, name_entry );
-		index = Tcl_GetHashValue( name_entry );
+		index = (int)Tcl_GetHashValue( name_entry );
 		names[index] = bu_strdup( name );
 
 		name_entry = Tcl_NextHashEntry( &search );
