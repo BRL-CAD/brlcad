@@ -2472,6 +2472,10 @@ BU_EXPORT BU_EXTERN(int bu_lex,
 		     struct bu_lex_key *symbols));
 
 
+/* mread.c */
+BU_EXPORT BU_EXTERN(void bu_mread,
+		    (int fd, char *bufp, int n));
+
 /* mro.c */
 BU_EXPORT BU_EXTERN(void bu_mro_init_with_string,
 		    (struct bu_mro *mrop, const char *string));
