@@ -1746,6 +1746,7 @@ AC_CHECK_FUNCS(\
 	isascii \
 	isfinite \
 	localtime_r \
+	lrand48 \
 	lseek \
 	memchr \
 	memmove \
@@ -1767,9 +1768,11 @@ AC_CHECK_FUNCS(\
 	sbrk \
 	select \
 	setenv \
+	setlinebuf \
 	setlocale \	
 	setpgid \
 	setprogname \
+	setvbuf \
 	socket \
 	sqrt \
 	srand48 \
