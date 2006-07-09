@@ -84,8 +84,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 #include "./canon.h"
 
-extern int mread(int fd, char *bufp, int n);
-
 
 static png_color_16 def_backgrd={ 255,255,255,255,255 };	/* white */
 static double	def_screen_gamma=1.0;	/* Don't add more gamma, by default */
