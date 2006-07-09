@@ -40,6 +40,7 @@ bin_PROGRAMS = \
 	hd \
 	imgdims \
 	loop \
+	lowp \
 	mac-pix \
 	msrandom \
 	mst \
@@ -220,6 +221,8 @@ imgdims_LDADD = ${BN}
 imgdims_SOURCES = imgdims.c
 loop_LDADD = ${BU}
 loop_SOURCES = loop.c
+lowp_LDADD = ${BU}
+lowp_SOURCES = lowp.c
 mac_pix_LDADD = ${BU}
 mac_pix_SOURCES = mac-pix.c
 msrandom_LDADD = ${BN}
@@ -499,7 +502,6 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
 	fix_polysolids.c \
-	lowp.c \
 	pix-both-ik.c \
 	pix-ci.c \
 	pix-filt-ik.c \
