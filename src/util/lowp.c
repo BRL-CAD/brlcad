@@ -25,15 +25,21 @@
  *
  *  $Revision$
  */
+#include "common.h"
+
 #include <stdio.h>
 
-#define MAX_LINE	1024		/* Max pixels/line */
+#include "machine.h"
+#include "bu.h"
+
+
+#define MAX_LINE	10000		/* Max pixels/line */
 static int scanbytes;			/* # of bytes of scanline */
 
 unsigned char *in1, *in2, *in3;
 
 /* Output line */
-unsigned char out1[MAX_LINE*3];
+unsigned char out1[MAX_LINE*3] = {0};
 
 static int nlines;		/* Number of input lines */
 static int pix_line;		/* Number of pixels/line */
@@ -45,7 +51,8 @@ int infd1, infd2, infd3;		/* input fd's */
 int
 main(int argc, char **argv)
 {
-	static int x,y;
+	int x,y;
+	int readval;
 
 	if( argc < 2 )  {
 		fprintf(stderr,"%s", usage);
@@ -65,20 +72,37 @@ main(int argc, char **argv)
 		perror( argv[3] );
 		exit(3);
 	}
-	if( argc == 5 )
+	if( argc == 5 ) {
 		nlines = atoi(argv[4] );
+	}
 
 	pix_line = nlines;	/* Square pictures */
 	scanbytes = nlines * pix_line * 3;
-	in1 = (unsigned char  *) malloc( scanbytes );
-	in2 = (unsigned char  *) malloc( scanbytes );
-	in3 = (unsigned char  *) malloc( scanbytes );
-	if( read( infd1, in1, scanbytes ) != scanbytes )
-		exit(0);
-	if( read( infd2, in2, scanbytes ) != scanbytes )
-		exit(0);
-	if( read( infd3, in3, scanbytes ) != scanbytes )
-		exit(0);
+	in1 = (unsigned char  *) bu_malloc( scanbytes, "lowp in1" );
+	in2 = (unsigned char  *) bu_malloc( scanbytes, "lowp in2" );
+	in3 = (unsigned char  *) bu_malloc( scanbytes, "lowp in3" );
+
+	readval = read(infd1, in1, scanbytes);
+	if (readval != scanbytes ) {
+	    if (readval < 0) {
+		perror("lowp READ ERROR");
+	    }
+	    exit(0);
+	}
+	readval = read(infd3, in3, scanbytes);
+	if (readval != scanbytes ) {
+	    if (readval < 0) {
+		perror("lowp READ ERROR");
+	    }
+	    exit(0);
+	}
+	readval = read(infd3, in3, scanbytes);
+	if (readval != scanbytes ) {
+	    if (readval < 0) {
+		perror("lowp READ ERROR");
+	    }
+	    exit(0);
+	}
 
 	/* First and last are black */
 	bzero( out1, pix_line*3 );
@@ -119,6 +143,8 @@ c[ i-3]    + c[ i  ]*3  + c[ i+3]
 	/* First and last are black */
 	bzero( out1, pix_line*3 );
 	write( 1, out1, pix_line*3 );
+
+	return 0;
 }
 
 /*
