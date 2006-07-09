@@ -98,7 +98,7 @@ main(int argc, char **argv)
 		int rwval = read( 0, in1, scanbytes );
 
 		if( rwval != scanbytes ) {
-		    if (readval < 0) {
+		    if (rwval < 0) {
 			perror("pixbustup READ ERROR");
 		    }
 		    break;
