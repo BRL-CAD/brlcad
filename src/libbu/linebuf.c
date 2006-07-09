@@ -26,8 +26,9 @@
  *	A portable way of doing setlinebuf().
  *
  *  Author -
- *	D. A. Gwyn
+ *	Doug A. Gwyn
  *	Michael John Muuss
+ *	Christopher Sean Morrison
  *
  *  Source -
  *	The U. S. Army Research Laboratory
@@ -47,6 +48,7 @@ static const char libbu_linebuf_RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "bu.h"
 
+
 /** deprecated call for compatibility
  */
 void
@@ -62,21 +64,14 @@ future release of BRL-CAD.  Use bu_setlinebuf instead.\n");
 void
 bu_setlinebuf(FILE *fp)
 {
-#ifdef _WIN32
-	(void) setvbuf( fp, (char *) NULL, _IOLBF, BUFSIZ );
+#ifdef HAVE_SETLINEBUF
+    if (setlinebuf( fp ) != 0) {
+	perror("setlinebuf ERROR");
+    }
+#elif HAVE_SETVBUF
+    (void) setvbuf( fp, (char *) NULL, _IOLBF, BUFSIZ );
 #else
-#ifdef BSD
-	setlinebuf( fp );
-#else
-#	if defined( SYSV ) && !defined( sgi ) && !defined(CRAY2) && \
-	 !defined(n16)
-		(void) setvbuf( fp, (char *) NULL, _IOLBF, BUFSIZ );
-#	endif
-#	if defined(sgi) && defined(mips)
-		if( setlinebuf( fp ) != 0 )
-			perror("setlinebuf(fp)");
-#	endif
-#endif
+#  error "Do not know how to set line buffered mode for this platform"
 #endif
 }
 
