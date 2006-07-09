@@ -17,11 +17,11 @@ man_MANS = canonize.1
 canonize_SOURCES = canonize.c canonlib.c asize.c
 canonize_LDADD = ${LIBM}
 
-pix_ipu_SOURCES = pix-ipu.c canonlib.c asize.c mread.c
-pix_ipu_LDADD = ${LIBM}
+pix_ipu_SOURCES = pix-ipu.c canonlib.c asize.c
+pix_ipu_LDADD = ${BU} ${LIBM}
 
-png_ipu_SOURCES = png-ipu.c canonlib.c asize.c mread.c
-png_ipu_LDADD = ${LIBM}
+png_ipu_SOURCES = png-ipu.c canonlib.c asize.c
+png_ipu_LDADD = ${BU} ${LIBM}
 
 ipuscan_SOURCES = ipuscan.c canonlib.c asize.c
 ipuscan_LDADD = ${LIBM}

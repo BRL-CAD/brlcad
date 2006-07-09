@@ -92,8 +92,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./chore.h"
 
-extern int mread(int fd, char *bufp, int n);
-
 
 static 	struct dsreq *dsp;
 static	int	fd;
@@ -141,7 +139,7 @@ void step1(aa)
 	if( height - pix_y < chorep->todo )  chorep->todo = height - pix_y;
 	chorep->buflen = chorep->todo * ipu_bytes_per_pixel * width;
 
-	if( mread( fd, chorep->obuf, chorep->buflen ) != chorep->buflen )  {
+	if( bu_mread( fd, chorep->obuf, chorep->buflen ) != chorep->buflen )  {
 	    perror("pix-ipu mread");
 	    fprintf(stderr, "buffer read error, line %d\n", chorep->pix_y);
 	    exit(2);
