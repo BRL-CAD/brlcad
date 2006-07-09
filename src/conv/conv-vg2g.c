@@ -92,7 +92,12 @@ main(int argc, char **argv)
 	}
 
 	/* check for conversion from version 3 to version 4 */
-	read(ifd, &rec, sizeof rec);
+	i = read(ifd, &rec, sizeof rec);
+	if (i < 0) {
+	    perror("READ ERROR");
+	    return 14;
+	}
+
 	if(rec.u_id == ID_IDENT) {
 		/* have an mged type file - check its version */
 		if( strcmp(rec.i.i_version, ID_VERSION) == 0 ) {
@@ -194,7 +199,10 @@ after_read:
 				/* This is an old-style flag for a deleted combination */
 				/* Skip any folowing member records */
 				do  {
-					(void)read( ifd, &rec, sizeof(rec) );
+				    if (read( ifd, &rec, sizeof(rec) ) == -1) {
+					perror("READ ERROR");
+					break;
+				    }
 				} while( rec.u_id == ID_MEMB );
 				goto after_read;
 			}

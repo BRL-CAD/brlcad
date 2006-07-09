@@ -150,8 +150,12 @@ inputHandler(ClientData clientData, int mask)
 
     count = read((int)fd, (void *)buf, 4096);
 
-    if (count <= 0 && feof(stdin))
+    if (count < 0) {
+	perror("READ ERROR");
+    }
+    if (count <= 0 && feof(stdin)) {
 	Cad_Exit(TCL_OK);
+    }
 
     /* Process everything in buf */
     for (index = 0, ch = buf[index]; index < count; ch = buf[++index])

@@ -407,7 +407,7 @@ main(int argc, char **argv)
 	{
 		nread = read(fd,buf,sizeof(buf));     /* read one line of file into a buffer  */
 
-		if(nread != 0){         /*  For valid reads, assign values to the input array  */
+		if(nread > 0){         /*  For valid reads, assign values to the input array  */
 
 			sscanf(buf,"%lf %lf %lf %c %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
 			    &in[i].x,&in[i].y,&in[i].z,&in[i].surf_mode,&in[i].surf_type,
@@ -447,10 +447,12 @@ main(int argc, char **argv)
 				done = 1;
 				in[i].cc = -1;
 			}
-		}
-		else{     	/*  Read hit EOF, set flag and process one last time.    */
-			done = 1;
-			in[i].cc = -1;
+		} else {     	/*  Read hit EOF, set flag and process one last time.    */
+		    if (nread < 0) {
+			perror("READ ERROR");
+		    }
+		    done = 1;
+		    in[i].cc = -1;
 		}
 
 		/* Process a component code number series when the structure

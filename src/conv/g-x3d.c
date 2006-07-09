@@ -746,14 +746,21 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 					while( bytes_read < tex_len )
 					{
 						long bytes_to_go=tex_len;
+						long readval;
 
 						bytes_to_go = tex_len - bytes_read;
 						if( bytes_to_go > TXT_BUF_LEN*3 )
 							bytes_to_go = TXT_BUF_LEN*3;
 						nbytes = 0;
-						while( nbytes < bytes_to_go )
-							nbytes += read( tex_fd, &tex_buf[nbytes],
-								bytes_to_go-nbytes );
+						while( nbytes < bytes_to_go ) {
+						    readval = read( tex_fd, &tex_buf[nbytes], bytes_to_go-nbytes );
+						    if (readval < 0) {
+							perror("READ ERROR");
+							break;
+						    } else {
+							nbytes += readval;
+						    }
+						}
 
 						bytes_read += nbytes;
 						for( i=0 ; i<nbytes ; i += 3 )
