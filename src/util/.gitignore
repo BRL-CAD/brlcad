@@ -41,6 +41,7 @@ gencolor
 hd
 imgdims
 loop
+lowp
 mac-pix
 msrandom
 mst
