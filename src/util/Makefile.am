@@ -208,7 +208,7 @@ dsp_add_LDADD = ${BU}
 dsp_add_SOURCES = dsp_add.c
 dunncolor_LDADD = ${BU}
 dunncolor_SOURCES = dunncolor.c dunncomm.c
-dunnsnap_LDADD = ${FB}
+dunnsnap_LDADD = ${FB} ${BU}
 dunnsnap_SOURCES = dunnsnap.c dunncomm.c
 files_tape_LDADD = ${BU}
 files_tape_SOURCES = files-tape.c
@@ -380,7 +380,7 @@ wavelet_LDADD = ${BN} ${FB}
 wavelet_SOURCES = wavelet.c
 xyz_pl_LDADD = ${BN}
 xyz_pl_SOURCES = xyz-pl.c
-yuv_pix_LDADD = ${BN}
+yuv_pix_LDADD = ${BN} ${BU}
 yuv_pix_SOURCES = yuv-pix.c
 
 .PHONY : vers.c
