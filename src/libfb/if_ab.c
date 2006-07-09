@@ -893,7 +893,7 @@ ab_yuvio(int output, char *host, char *buf, int len, int frame, int to_network)
 
 		/* Read data */
 		if( (got = bu_mread( netfd, buf, len )) != len )  {
-			fb_log("mread len=%d, got %d\n", len, got );
+			fb_log("bu_mread len=%d, got %d\n", len, got );
 			goto err;
 		}
 

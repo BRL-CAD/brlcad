@@ -140,7 +140,7 @@ void step1(aa)
 	chorep->buflen = chorep->todo * ipu_bytes_per_pixel * width;
 
 	if( bu_mread( fd, chorep->obuf, chorep->buflen ) != chorep->buflen )  {
-	    perror("pix-ipu mread");
+	    perror("pix-ipu READ ERROR");
 	    fprintf(stderr, "buffer read error, line %d\n", chorep->pix_y);
 	    exit(2);
 	}

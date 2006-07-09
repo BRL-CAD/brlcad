@@ -757,8 +757,9 @@ pkg_close(register struct pkg_conn *pc)
 /*
  *			P K G _ I N G E T
  *
- *  A functional replacement for mread(), through the
- *  first level input buffer.
+ *  A functional replacement for bu_mread() through the first level
+ *  input buffer.
+ *
  *  This will block if the required number of bytes are not available.
  *  The number of bytes actually transferred is returned.
  */
