@@ -1,4 +1,4 @@
-/*                       P N G - I P U . C
+/*                          M R E A D . C
  * BRL-CAD
  *
  * Copyright (c) 1992-2006 United States Government as represented by
