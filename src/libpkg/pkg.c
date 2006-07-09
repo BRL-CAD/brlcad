@@ -150,7 +150,6 @@ static void	pkg_ck_debug(void);
 static void	pkg_timestamp(void);
 static void	pkg_checkin(register struct pkg_conn *pc, int nodelay);
 
-int pkg_inget(register struct pkg_conn *, char *, int);
 
 #define PKG_CK(p)	{if(p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) {\
 			sprintf(errbuf,"%s: bad pointer x%lx line %d\n",__FILE__, (long)(p), __LINE__);\
@@ -754,46 +753,38 @@ pkg_close(register struct pkg_conn *pc)
 	(void)free( (char *)pc );
 }
 
-#if 0
+
 /*
- *			P K G _ M R E A D
+ *			P K G _ I N G E T
  *
- * Internal.
- * This function performs the function of a read(II) but will
- * call read(II) multiple times in order to get the requested
- * number of characters.  This can be necessary because pipes
- * and network connections don't deliver data with the same
- * grouping as it is written with.  Written by Robert S. Miles, BRL.
- *
- *  Superceeded by pkg_inget() in this version.
- *  This code is retained because of it's general usefulness.
+ *  A functional replacement for mread(), through the
+ *  first level input buffer.
+ *  This will block if the required number of bytes are not available.
+ *  The number of bytes actually transferred is returned.
  */
-static int
-pkg_mread(pc, bufp, n)
-struct pkg_conn *pc;
-register char	*bufp;
-int	n;
+int
+pkg_inget(register struct pkg_conn *pc, char *buf, int count)
 {
-	int fd;
-	register int	count = 0;
-	register int	nread;
+	register int	len;
+	register int	todo = count;
 
-	fd = pc->pkc_fd;
-	do {
-		nread = read(fd, bufp, (unsigned)n-count);
-		if(nread < 0)  {
-			pkg_perror(pc->pkc_errlog, "pkg_mread");
-			return(-1);
+	while( todo > 0 )  {
+
+		while( (len = pc->pkc_inend - pc->pkc_incur) <= 0 )  {
+			/* This can block */
+			if( pkg_suckin( pc ) < 1 )
+				return( count - todo );
 		}
-		if(nread == 0)
-			return((int)count);
-		count += (unsigned)nread;
-		bufp += nread;
-	 } while(count < n);
-
-	return((int)count);
+		/* Input Buffer has some data in it, move to caller's buffer */
+		if( len > todo )  len = todo;
+		bcopy( &pc->pkc_inbuf[pc->pkc_incur], buf, len );
+		pc->pkc_incur += len;
+		buf += len;
+		todo -= len;
+	}
+	return( count );
 }
-#endif
+
 
 /*
  *  			P K G _ S E N D
@@ -1974,37 +1965,6 @@ pkg_checkin(register struct pkg_conn *pc, int nodelay)
 		if( errno != EINTR && errno != EBADF )
 			pkg_perror(pc->pkc_errlog, "pkg_checkin: select");
 	}
-}
-
-/*
- *			P K G _ I N G E T
- *
- *  A functional replacement for mread(), through the
- *  first level input buffer.
- *  This will block if the required number of bytes are not available.
- *  The number of bytes actually transferred is returned.
- */
-int
-pkg_inget(register struct pkg_conn *pc, char *buf, int count)
-{
-	register int	len;
-	register int	todo = count;
-
-	while( todo > 0 )  {
-
-		while( (len = pc->pkc_inend - pc->pkc_incur) <= 0 )  {
-			/* This can block */
-			if( pkg_suckin( pc ) < 1 )
-				return( count - todo );
-		}
-		/* Input Buffer has some data in it, move to caller's buffer */
-		if( len > todo )  len = todo;
-		bcopy( &pc->pkc_inbuf[pc->pkc_incur], buf, len );
-		pc->pkc_incur += len;
-		buf += len;
-		todo -= len;
-	}
-	return( count );
 }
 
 /*
