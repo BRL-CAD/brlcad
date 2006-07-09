@@ -1301,6 +1301,7 @@ AC_CHECK_HEADERS( \
 	sys/machd.h \
 	sys/mman.h \
 	sys/param.h \
+	sys/resource.h \
 	sys/select.h \
 	sys/socket.h \
 	sys/stat.h \
@@ -3361,7 +3362,7 @@ AC_CONFIG_FILES([
 
 AC_OUTPUT
 
-v
+
 dnl
 dnl Expand the variables for summary reporting
 dnl
