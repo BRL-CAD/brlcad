@@ -65,7 +65,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /* defined in libbn/asize.c */
 extern int bn_common_file_size(int *, int *, const char *, int);
 
-int mread(int fd, register char *bp, register int num);
 int skipbytes(int fd, off_t num);
 
 static unsigned char *scanline;		/* 1 scanline pixel buffer */
@@ -309,7 +308,7 @@ main(int argc, char **argv)
 		/* Bottom to top with multi-line reads & writes */
 		int	height;
 		for( y = scr_yoff; y < scr_yoff + yout; y += multiple_lines )  {
-			n = mread( infd, (char *)scanline, scanbytes );
+			n = bu_mread( infd, (char *)scanline, scanbytes );
 			if( n <= 0 ) break;
 			height = multiple_lines;
 			if( n != scanbytes )  {
@@ -340,7 +339,7 @@ main(int argc, char **argv)
 			}
 			if( file_xoff+xskip != 0 )
 				skipbytes( infd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel) );
-			n = mread( infd, (char *)scanline, scanbytes );
+			n = bu_mread( infd, (char *)scanline, scanbytes );
 			if( n <= 0 ) break;
 			m = fb_write( fbp, xstart, y, scanline, xout );
 			if( m != xout )  {
@@ -363,7 +362,7 @@ main(int argc, char **argv)
 			}
 			if( file_xoff+xskip != 0 )
 				skipbytes( infd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel) );
-			n = mread( infd, (char *)scanline, scanbytes );
+			n = bu_mread( infd, (char *)scanline, scanbytes );
 			if( n <= 0 ) break;
 			m = fb_write( fbp, xstart, y, scanline, xout );
 			if( m != xout )  {
@@ -407,33 +406,6 @@ skipbytes(int fd, off_t num)
 		num -= n;
 	}
 	return	0;
-}
-
-/*
- * "Multiple try" read.
- *  Will keep reading until either an error occurs
- *  or the requested number of bytes is read.  This
- *  is important for pipes.
- */
-int
-mread(int fd, register char *bp, register int num)
-{
-	register int	n;
-	int	count;
-
-	count = 0;
-
-	while( num > 0 ) {
-		n = read( fd, bp, num );
-		if( n < 0 )
-			return	-1;
-		if( n == 0 )
-			return count;
-		bp += n;
-		count += n;
-		num -= n;
-	}
-	return count;
 }
 
 /*

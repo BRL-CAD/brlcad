@@ -60,7 +60,7 @@ fb_png_SOURCES = fb-png.c cmap-crunch.c
 fb_png_LDADD = ${FB} ${PNG}
 
 pix_fb_SOURCES = pix-fb.c
-pix_fb_LDADD = ${FB} ${BN}
+pix_fb_LDADD = ${FB} ${BN} ${BU}
 
 fb_pix_SOURCES = fb-pix.c cmap-crunch.c
 fb_pix_LDADD = ${FB}
@@ -141,7 +141,7 @@ fbframe_SOURCES = fbframe.c
 fbframe_LDADD = ${FB}
 
 bw_fb_SOURCES = bw-fb.c
-bw_fb_LDADD = ${FB} ${BN}
+bw_fb_LDADD = ${FB} ${BN} ${BU}
 
 fb_bw_SOURCES = fb-bw.c
 fb_bw_LDADD = ${FB}

@@ -66,7 +66,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /* defined in libbn/asize.c */
 extern int bn_common_file_size(int *, int *, const char *, int);
 
-int mread(int fd, register char *bp, register int num);
 int skipbytes(int fd, off_t num);
 
 #define	MAX_LINE	(16*1024)	/* Largest output scan line length */
@@ -293,7 +292,7 @@ main(int argc, char **argv)
 			perror("bw-fb malloc");
 			goto general;
 		}
-		n = mread( infd, (char *)buf, npix );
+		n = bu_mread( infd, (char *)buf, npix );
 		if( n != npix )  {
 			fprintf(stderr, "bw-fb: read got %d, s/b %d\n", n, npix );
 			if( n <= 0 )  exit(7);
@@ -321,7 +320,7 @@ general:
 		}
 		if( file_xoff+xskip != 0 )
 			skipbytes( infd, file_xoff+xskip );
-		n = mread( infd, &ibuf[0], xout );
+		n = bu_mread( infd, &ibuf[0], xout );
 		if( n <= 0 ) break;
 		/*
 		 * If we are not loading all color planes, we have
@@ -380,33 +379,6 @@ skipbytes(int fd, off_t num)
 		num -= n;
 	}
 	return	0;
-}
-
-/*
- * "Multiple try" read.
- *  Will keep reading until either an error occurs
- *  or the requested number of bytes is read.  This
- *  is important for pipes.
- */
-int
-mread(int fd, register char *bp, register int num)
-{
-	register int	n;
-	int	count;
-
-	count = 0;
-
-	while( num > 0 ) {
-		n = read( fd, bp, num );
-		if( n < 0 )
-			return	-1;
-		if( n == 0 )
-			return count;
-		bp += n;
-		count += n;
-		num -= n;
-	}
-	return count;
 }
 
 /*

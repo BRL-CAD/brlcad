@@ -79,7 +79,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 static void	ab_log(FBIO *ifp, char *str);
 static int	ab_get_reply(int fd);
-static int	ab_mread(int fd, register char *bufp, int n);
 static void	ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, int len);
 static void	ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len);
 static int	ab_yuvio(int, char *, char *, int, int, int);
@@ -729,7 +728,7 @@ ab_yuvio(int output, char *host, char *buf, int len, int frame, int to_network)
 		if( output )
 			got = write( netfd, buf, len );
 		else
-			got = ab_mread( netfd, buf, len );
+			got = bu_mread( netfd, buf, len );
 		if( got != len )  {
 			perror("read/write");
 			fb_log("ab_yuvio file read/write error, len=%d, got=%d\n", len, got );
@@ -893,8 +892,8 @@ ab_yuvio(int output, char *host, char *buf, int len, int frame, int to_network)
 		}
 
 		/* Read data */
-		if( (got = ab_mread( netfd, buf, len )) != len )  {
-			fb_log("ab_mread len=%d, got %d\n", len, got );
+		if( (got = bu_mread( netfd, buf, len )) != len )  {
+			fb_log("mread len=%d, got %d\n", len, got );
 			goto err;
 		}
 
@@ -943,36 +942,6 @@ ab_get_reply(int fd)
 	return(-4);
 }
 
-/*
- *			M R E A D
- *
- * Internal.
- * This function performs the function of a read(II) but will
- * call read(II) multiple times in order to get the requested
- * number of characters.  This can be necessary because pipes
- * and network connections don't deliver data with the same
- * grouping as it is written with.  Written by Robert S. Miles, BRL.
- */
-static int
-ab_mread(int fd, register char *bufp, int n)
-{
-	register int	count = 0;
-	register int	nread;
-
-	do {
-		nread = read(fd, bufp, (unsigned)n-count);
-		if(nread < 0)  {
-			perror("ab_mread");
-			return(-1);
-		}
-		if(nread == 0)
-			return((int)count);
-		count += (unsigned)nread;
-		bufp += nread;
-	 } while(count < n);
-
-	return((int)count);
-}
 
 /*************************************************************************
  *************************************************************************
