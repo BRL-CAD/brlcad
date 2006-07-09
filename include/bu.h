@@ -2473,8 +2473,8 @@ BU_EXPORT BU_EXTERN(int bu_lex,
 
 
 /* mread.c */
-BU_EXPORT BU_EXTERN(void bu_mread,
-		    (int fd, char *bufp, int n));
+BU_EXPORT BU_EXTERN(long int bu_mread,
+		    (int fd, void *bufp, long int n));
 
 /* mro.c */
 BU_EXPORT BU_EXTERN(void bu_mro_init_with_string,
