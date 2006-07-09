@@ -615,10 +615,7 @@ struct vertexuse_a_cnurb {
 	  bu_free((char *)(ptr), "freestruct str"); }
 #endif
 
-#if defined(SYSV) && !defined(bzero) && !defined(HAVE_BZERO)
-#	define bzero(str,n)		memset( str, '\0', n )
-#	define bcopy(from,to,count)	memcpy( to, from, count )
-#endif
+
 /*
  *  Macros to create and destroy storage for the NMG data structures.
  *  Since nmg_mk.c and g_nmg.c are the only source file which should perform
