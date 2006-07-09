@@ -31,6 +31,7 @@ SRCS = \
 	malloc.c \
 	mappedfile.c \
 	memset.c \
+	mread.c \
 	mro.c \
 	observer.c \
 	parallel.c \
