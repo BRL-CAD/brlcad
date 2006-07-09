@@ -32,28 +32,26 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h>
 #include "rlb_header.h"
 #include "rle.h"
 
 #ifdef USE_STDLIB_H
-#include <stdlib.h>
+#  include <stdlib.h>
 #else
-
-#ifdef USE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#define strrchr rindex
-#define strchr index
-#endif
-
-#ifdef VOID_STAR
+#  ifdef USE_STRING_H
+#    include <string.h>
+#  else
+#    include <strings.h>
+#    define strrchr rindex
+#    define strchr index
+#  endif
+#  ifdef VOID_STAR
 extern void *malloc();
-#else
+#  else
 extern char *malloc();
-#endif
+#  endif
 extern void free();
-
 #endif /* USE_STDLIB_H */
 
 #define VPRINTF if (verbose || header) fprintf
@@ -179,7 +177,6 @@ int	minx, maxx, miny, maxy, frame_number;
    char		*ctime();
    char		*d_str;
    long		second;
-   long		time();
 
    bzero(&rlb_head, 740);
    rlb_head.window.left   = minx;
