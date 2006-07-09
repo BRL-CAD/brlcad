@@ -123,10 +123,12 @@ db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if( got != count )  {
-		perror("db_read");
-		bu_log("db_read(%s):  read error.  Wanted %d, got %d bytes\n",
-			dbip->dbi_filename, count, got );
-		return(-1);
+	    if (got < 0) {
+		perror(dbip->dbi_filename);
+	    }
+	    bu_log("db_read(%s):  read error.  Wanted %d, got %d bytes\n",
+		   dbip->dbi_filename, count, got );
+	    return(-1);
 	}
 	return(0);			/* OK */
 }

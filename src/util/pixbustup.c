@@ -95,16 +95,24 @@ main(int argc, char **argv)
 
 	for( ; ; framenumber++ )  {
 		int fd;
+		int rwval = read( 0, in1, scanbytes );
 
-		if( read( 0, in1, scanbytes ) != scanbytes )
-			break;
+		if( rwval != scanbytes ) {
+		    if (readval < 0) {
+			perror("pixbustup READ ERROR");
+		    }
+		    break;
+		}
 		sprintf(name, "%s.%d", base_name, framenumber);
 		if( (fd=creat(name,0444))<0 )  {
 			perror(name);
 			continue;
 		}
-		if( write( fd, in1, scanbytes ) != scanbytes ) {
-			perror("write");
+		rwval = write( fd, in1, scanbytes );
+		if (rwval != scanbytes ) {
+		    if (rwval < 0) {
+			perror("pixbustup WRITE ERROR");
+		    }
 		}
 		(void)close(fd);
 		printf("wrote %s\n", name);

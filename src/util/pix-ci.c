@@ -48,6 +48,7 @@ char **argv;
 	IMAGE *image;
 	int y, xsize, ysize;
 	short val;
+	int readval;
 
 	xsize = ysize = 128;
 	if( argc<2 ) {
@@ -66,7 +67,13 @@ char **argv;
 	for(y=0; y<ysize; y++) {
 		register short x;
 		register unsigned char *cp = rgb;
-		read( 0, rgb, xsize*3);
+		readval = read( 0, rgb, xsize*3);
+		if (readval <= 0) {
+		    if (readval < 0) {
+			perror("pix-ci READ ERROR");
+		    }
+		    break;
+		}
 		for( x=0; x<xsize; x++ ) {
 			rs[x] = *cp++;
 			gs[x] = *cp++;

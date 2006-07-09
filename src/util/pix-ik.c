@@ -89,8 +89,9 @@ main(int argc, char **argv)
 			register char *in, *out;
 			register int i;
 
-			if( read( infd, (char *)scanline, scanbytes ) != scanbytes )
-				exit(0);
+			if( read( infd, (char *)scanline, scanbytes ) != scanbytes ) {
+			    exit(0);
+			}
 
 			in = scanline;
 			out = outline;

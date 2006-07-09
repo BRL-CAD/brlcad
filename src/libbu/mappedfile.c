@@ -109,7 +109,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 	struct stat		sb;
 	int			fd;	/* unix file descriptor */
 #else
-	FILE			*fp;	/* stdio file pointer */
+	FILE			*fp = (FILE *)NULL;	/* stdio file pointer */
 #endif
 	int			ret;
 
@@ -205,12 +205,10 @@ dont_reuse:
 
 	/* Attempt to access as memory-mapped file */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	mp->buf = mmap(
-		(caddr_t)0, (size_t)sb.st_size, PROT_READ, MAP_PRIVATE,
-		fd, (off_t)0 );
+	mp->buf = mmap((caddr_t)0, (size_t)sb.st_size, PROT_READ, MAP_PRIVATE, fd, (off_t)0 );
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	if( mp->buf == MAP_FAILED )  perror(mp->name);
+	if( mp->buf == MAP_FAILED )  perror(name);
 	if( mp->buf != MAP_FAILED )  {
 	    	/* OK, it's memory mapped in! */
 	    	mp->is_mapped = 1;
@@ -219,21 +217,24 @@ dont_reuse:
 #  endif /* HAVE_SYS_MMAN_H */
 	{
 		/* Allocate a local buffer, and slurp it in */
-		mp->buf = bu_malloc( (size_t)sb.st_size, mp->name );
+		mp->buf = bu_malloc( (size_t)sb.st_size, name );
 
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		ret = read( fd, mp->buf, (size_t)sb.st_size );
 		bu_semaphore_release(BU_SEM_SYSCALL);
 
 		if( ret != sb.st_size )  {
-			perror("read");
-			bu_free( mp->buf, mp->name );
+			perror(name);
+			bu_free( mp->buf, name );
+			bu_semaphore_acquire(BU_SEM_SYSCALL);
+			(void)close(fd);
+			bu_semaphore_release(BU_SEM_SYSCALL);
 			goto fail;
 		}
 	}
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	close(fd);
+	(void)close(fd);
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
 #else /* !HAVE_UNIX_IO */
@@ -253,7 +254,7 @@ dont_reuse:
 	}
 	/* Read it once to see how large it is */
 	{
-		char	buf[32768];
+		char	buf[32768] = {0};
 		int	got;
 		mp->buflen = 0;
 
@@ -265,7 +266,7 @@ dont_reuse:
 
 	}
 	/* Malloc the necessary buffer */
-	mp->buf = bu_malloc( mp->buflen, mp->name );
+	mp->buf = bu_malloc( mp->buflen, name );
 
 	/* Read it again into the buffer */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);

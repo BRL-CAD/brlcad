@@ -426,13 +426,18 @@ rt_output_handler(ClientData clientData, int mask)
 {
 	struct run_rt *run_rtp = (struct run_rt *)clientData;
 	int count;
-	char line[RT_MAXLINE+1];
+	char line[RT_MAXLINE+1] = {0};
 
 	/* Get data from rt */
-	if ((count = read((int)run_rtp->fd, line, RT_MAXLINE)) == 0) {
+	count = read((int)run_rtp->fd, line, RT_MAXLINE);
+	if (count <= 0) {
 		int retcode;
 		int rpid;
 		int aborted;
+		
+		if (count < 0) {
+		    perror("READ ERROR");
+		}
 
 		Tcl_DeleteFileHandler(run_rtp->fd);
 		close(run_rtp->fd);
@@ -884,19 +889,18 @@ ClientData clientData;
 int mask;
 {
   int count;
-  char line[RT_MAXLINE];
+  char line[RT_MAXLINE] = {0};
   int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
 
   /* Get textual output from rtcheck */
-#if 0
-  if((count = read((int)fd, line, RT_MAXLINE)) == 0){
-#else
-  if((count = read((int)fd, line, 5120)) == 0){
-#endif
-    Tcl_DeleteFileHandler(fd);
-    close(fd);
-
-    return;
+  count = read((int)fd, line, RT_MAXLINE-1);
+  if (count <= 0) {
+      if (count < 0) {
+	  perror("READ ERROR");
+      }
+      Tcl_DeleteFileHandler(fd);
+      close(fd);
+      return;
   }
 
   line[count] = '\0';

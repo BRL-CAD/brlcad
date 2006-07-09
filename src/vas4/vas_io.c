@@ -277,12 +277,16 @@ int
 vas_getc(void)
 {
 	char c;
+	int readval = read(vas_fd, &c, 1);
 
-	if (read(vas_fd, &c, 1) > 0)  {
-		if(debug)fprintf(stderr,"vas_getc: 0%o %c\n", c&0377, c&0377);
-		return(c & 0377);
-	}  else
-		return(EOF);
+	if (readval > 0)  {
+	    if(debug)fprintf(stderr,"vas_getc: 0%o %c\n", c&0377, c&0377);
+	    return(c & 0377);
+	}
+	if (readval < 0) {
+	    perror("READ ERROR");
+	}
+	return(EOF);
 }
 
 /*

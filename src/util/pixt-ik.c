@@ -92,8 +92,14 @@ main(int argc, char **argv)
 		/* Normal mode */
 		for( y = nlines-1; y >= 0; )  {
 			register char *in;
-			if( read( infd, (char *)scanline, BLOCKSIZE ) != BLOCKSIZE )
-				exit(0);
+			int readval = read( infd, (char *)scanline, BLOCKSIZE );
+			if (readval != BLOCKSIZE) {
+			    if (readval < 0) {
+				perror("pixt-ik READ ERROR");
+			    }
+			    (void)close(infd);
+			    exit(1);
+			}
 
 			in = scanline;
 			for( j=0; j<lines_per_block; j++ )  {
@@ -114,9 +120,15 @@ main(int argc, char **argv)
 		/* Rotate 180 degrees, for Dunn camera */
 		for( y=0; y < nlines; )  {
 			register char *in;
+			int readval = read( infd, (char *)scanline, BLOCKSIZE );
 
-			if( read( infd, (char *)scanline, BLOCKSIZE ) != BLOCKSIZE )
-				exit(0);
+			if( readval != BLOCKSIZE ) {
+			    if (readval < 0) {
+				perror("pixt-ik READ ERROR");
+			    }
+			    (void)close(infd);
+			    exit(1);
+			}
 
 			in = scanline;
 			for( j=0; j<lines_per_block; j++ )  {
@@ -134,8 +146,11 @@ main(int argc, char **argv)
 			}
 		}
 	}
-	if( read( infd, (char *)scanline, BLOCKSIZE ) > 0 )
-		printf("EOF missing?\n");
+	if( read( infd, (char *)scanline, BLOCKSIZE ) > 0 ) {
+	    printf("EOF missing?\n");
+	}
+	(void)close(infd);
+
 	exit(0);
 }
 

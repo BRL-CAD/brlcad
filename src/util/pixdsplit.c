@@ -210,13 +210,8 @@ main (int argc, char *argv[])
 	dbp = dbuf;
 	for (i = 0; i < num / pwidth; ++i)
 	{
-#	    if BSD
-		bcopy(    inbp,      cbp, cwidth);
-		bcopy(inbp + cwidth, dbp, dwidth);
-#	    else
-		memcpy(cbp,     inbp,      cwidth);
-		memcpy(dbp, inbp + cwidth, cwidth);
-#	    endif
+	    memcpy(cbp,     inbp,      cwidth);
+	    memcpy(dbp, inbp + cwidth, cwidth);
 	    inbp += pwidth;
 	    cbp += cwidth;
 	    dbp += dwidth;

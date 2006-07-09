@@ -90,15 +90,17 @@ main(int argc, char **argv)
 		a2 = avg2;
 		l2 = out2;
 
-		if( read( infd, (char *)scanline, scanbytes ) != scanbytes )
-			exit(0);
+		if( read( infd, (char *)scanline, scanbytes ) != scanbytes ) {
+		    exit(0);
+		}
 		/* avg1 is same as l1 to prime things */
 		doline( a1 );
 		doline( l1 );
 
 		for( y=nlines; y > 0; y-- )  {
-			if( read( infd, (char *)scanline, scanbytes ) != scanbytes )
-				exit(0);
+		    if( read( infd, (char *)scanline, scanbytes ) != scanbytes ) {
+			exit(0);
+		    }
 			doline( l2 );
 			avgline( a2, l1, l2 );
 

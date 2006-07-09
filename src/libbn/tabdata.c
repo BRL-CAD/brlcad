@@ -1122,12 +1122,12 @@ bn_tabdata_binary_read(const char *filename, int num, const struct bn_table *tab
 	fd = open(filename, 0);
 	bu_semaphore_release( BU_SEM_SYSCALL );
 	if( fd <= 0 )  {
-		perror(filename);
-		bu_log("bn_tabdata_binary_read(%s): %m\n", filename);
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
-		close(fd);
-		bu_semaphore_release( BU_SEM_SYSCALL );
-		return (struct bn_tabdata *)NULL;
+	    perror(filename);
+	    bu_log("bn_tabdata_binary_read open failed on \"%s\"\n", filename);
+	    bu_semaphore_acquire( BU_SEM_SYSCALL );
+	    close(fd);
+	    bu_semaphore_release( BU_SEM_SYSCALL );
+	    return (struct bn_tabdata *)NULL;
 	}
 
 	/* Get a big array of structures for reading all at once */
@@ -1137,13 +1137,17 @@ bn_tabdata_binary_read(const char *filename, int num, const struct bn_table *tab
 	got = read( fd, (char *)data, len );
 	bu_semaphore_release( BU_SEM_SYSCALL );
 	if( got != len )  {
-		bu_log("bn_tabdata_binary_read(%s) expected %d got %d\n",
-			filename, len, got);
-		bu_free( data, "bn_tabdata[]" );
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
-		close(fd);
-		bu_semaphore_release( BU_SEM_SYSCALL );
-		return (struct bn_tabdata *)NULL;
+	    if (got < 0) {
+		perror(filename);		
+		bu_log("bn_tabdata_binary_read read error on \"%s\"\n", filename);
+	    } else {
+		bu_log("bn_tabdata_binary_read(%s) expected %d got %d\n", filename, len, got);
+	    }
+	    bu_free( data, "bn_tabdata[]" );
+	    bu_semaphore_acquire( BU_SEM_SYSCALL );
+	    close(fd);
+	    bu_semaphore_release( BU_SEM_SYSCALL );
+	    return (struct bn_tabdata *)NULL;
 	}
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	close(fd);
@@ -1152,11 +1156,10 @@ bn_tabdata_binary_read(const char *filename, int num, const struct bn_table *tab
 	/* Connect data[i].table pointer to tabp */
 	cp = (char *)data;
 	for( i = num-1; i >= 0; i--, cp += nbytes )  {
-		register struct bn_tabdata	*sp;
-
-		sp = (struct bn_tabdata *)cp;
-		BN_CK_TABDATA(sp);
-		sp->table = tabp;
+	    register struct bn_tabdata *sp;
+	    sp = (struct bn_tabdata *)cp;
+	    BN_CK_TABDATA(sp);
+	    sp->table = tabp;
 	}
 
 	return data;

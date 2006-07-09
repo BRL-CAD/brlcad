@@ -190,12 +190,20 @@ doit()
 
 	for( i = 0; i < nlines; i++ ) {
 		if( (n = read( 0, buf, width )) != width ) {
+		    if (n < 0) {
+			perror("op-bw READ ERROR");
+		    } else {
 			fprintf( stderr, "op-bw: read returned %d\n", n );
-			return 1;
+		    }
+		    return 1;
 		}
 		if( (n = write( 1, buf, width )) != width ) {
+		    if (n < 0) {
+			perror("op-bw WRITE ERROR");
+		    } else {
 			fprintf( stderr, "op-bw: write returned %d\n", n );
-			return 1;
+		    }
+		    return 1;
 		}
 	}
 

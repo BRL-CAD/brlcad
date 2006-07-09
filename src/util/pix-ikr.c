@@ -88,8 +88,9 @@ main(int argc, char **argv)
 		for( y=0; y < nlines; y++ )  {
 			register char *in, *out;
 
-			if( read( infd, (char *)scanline, scanbytes ) != scanbytes )
-				exit(0);
+			if( read( infd, (char *)scanline, scanbytes ) != scanbytes ) {
+			    exit(0);
+			}
 
 			in = scanline;
 			out = outline+(4*nlines)-1;

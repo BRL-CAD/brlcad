@@ -438,7 +438,7 @@ f_rcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
-HIDDEN void
+static void
 Do_printnode(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
 {
 	FILE *fp;
@@ -808,11 +808,12 @@ f_decompose(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
 }
 
-HIDDEN int
+static int
 sol_number(matp_t matrix, char *name, int *old)
 {
 	int i;
 	struct identt idbuf1, idbuf2;
+	int readval;
 
 	bzero( &idbuf1, sizeof( struct identt ) );
 	(void)strncpy(idbuf1.i_name, name, NAMESIZE);
@@ -821,7 +822,11 @@ sol_number(matp_t matrix, char *name, int *old)
 	for( i=0 ; i<numsol ; i++ )
 	{
 		(void)lseek(rd_idfd, i*(long)sizeof identt, 0);
-		(void)read(rd_idfd, &idbuf2, sizeof identt);
+		readval = read(rd_idfd, &idbuf2, sizeof identt);
+
+		if (readval < 0) {
+		    perror("READ ERROR");
+		}
 
 		idbuf1.i_index = i + 1;
 
@@ -841,7 +846,7 @@ sol_number(matp_t matrix, char *name, int *old)
 	return( idbuf1.i_index );
 }
 
-HIDDEN void
+static void
 new_tables(struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int flag)
 {
 	struct rt_db_internal intern;

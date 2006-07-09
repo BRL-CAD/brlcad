@@ -37,7 +37,6 @@ static const char RCSid[] = "@(#) pos_pad.c 2.1, modified 12/9/86 at 15:54:52, a
 
 #include "common.h"
 
-
 #include <stdio.h>
 #ifdef HAVE_TERMIO_H
 #  include <termio.h>
@@ -71,64 +70,73 @@ static	int npoints;
 int
 pad_open(int n)
 {
-	if( (pfd = open(padfile, 2)) < 0 )
-		{
-		perror( padfile );
-		return -1;
-		}
-	save_Tty( pfd );
-	set_HUPCL( pfd );
-	set_Raw( pfd );
-	npoints = n;
-	return pfd;
-	}
+    if( (pfd = open(padfile, 2)) < 0 ) {
+	perror( padfile );
+	return -1;
+    }
+    save_Tty( pfd );
+    set_HUPCL( pfd );
+    set_Raw( pfd );
+    npoints = n;
+    return pfd;
+}
 
 void
 pad_close(void)
 {
-	reset_Tty( pfd );
-	(void) close( pfd );
-	return;
-	}
+    reset_Tty( pfd );
+    (void)close( pfd );
+    return;
+}
 
 int
 getpos(Point *pos)
-{	static char str[1024];
-		int buttons = -1;
-		static int nread = 0;
-		register int just_read = 0;
-		register char *cp;
-		register char *cend;
-		char *last = NULL;
-	while( nread < 9 )
-		{
-		if(	empty( pfd )
-		     ||	(just_read = read(pfd, str+nread, (sizeof str) - nread))
-		     ==	0
-			)
-			return -1; /* no input available */
-		nread += just_read;
-		}
-	cend = str + nread - 4;
-	nread = 0;
-	for( cp = str; cp < cend; cp++ )
-		{
-		if (!(cp[0] & P_FLAG))
-			continue;
-		last = cp;
-		if ( (buttons = ((cp[0]&P_BUTTONS) >> 2)))
-			break;
-		}
-	if( last == NULL )
-		return buttons;	/* no position parsed */
-	last++;
-	pos->p_x = (int)(((long)((last[0]&P_DATA) | ((last[1]&P_DATA)<<6)
-			) * (long)npoints) / PADSIZE);
-	pos->p_y = npoints -
-			(int)(((long)((last[2]&P_DATA) | ((last[3]&P_DATA)<<6)
-			) * (long)npoints) / PADSIZE);
-	return buttons;
+{	
+    static char str[1024] = {0};
+    int buttons = -1;
+    static int nread = 0;
+    register int just_read = 0;
+    register char *cp = (char *)NULL;
+    register char *cend = (char *)NULL;
+    char *last = (char *)NULL;
+
+    while( nread < 9 ) {
+	if (empty(pfd)) {
+	    return -1;
 	}
+	just_read = read(pfd, str+nread, (sizeof str) - nread);
+	if (just_read == 0) {
+	    /* no input available */
+	    return -1;
+	} else if (just_read < 0) {
+	    perror("READ ERROR");
+	    return -1;
+	}
+	nread += just_read;
+    }
+
+    cend = str + nread - 4;
+    nread = 0;
+    for( cp = str; cp < cend; cp++ ) {
+	if (!(cp[0] & P_FLAG)) {
+	    continue;
+	}
+	last = cp;
+	if ( (buttons = ((cp[0]&P_BUTTONS) >> 2))) {
+	    break;
+	}
+    }
+
+    if( last == NULL ) {
+	return buttons;	/* no position parsed */
+    }
+    last++;
+
+    pos->p_x = (int)(((long)((last[0]&P_DATA) | ((last[1]&P_DATA)<<6)) * (long)npoints) / PADSIZE);
+    pos->p_y = npoints - (int)(((long)((last[2]&P_DATA) | ((last[3]&P_DATA)<<6)) * (long)npoints) / PADSIZE);
+
+    return buttons;
+}
 
 /*
  * Local Variables:

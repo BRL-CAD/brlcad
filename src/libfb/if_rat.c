@@ -210,6 +210,7 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 	register int	load;
 	register u_char	*p;
 	static u_char	pix_buf[MAX_RAT_BUFF];
+	int readval;
 
 	/* If first scanline is a partial, input it seperately.		*/
 	if( x > 0 || x + count <= _fbsize )
@@ -226,20 +227,20 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 		for(	bytes = i * 3, p = pix_buf;
 			bytes > 0;
 			bytes -= load, p += load
-			)
-			{
-			if( bytes > MAX_RAT_READ )
-				load = MAX_RAT_READ;
-			else
-				load = bytes;
-			if( read( ifp->if_fd, p, load ) < load )
-				{
-				(void) fprintf( stderr,
-						"_rat_read() read failed\n"
-						);
-				return	-1;
-				}
+			) {
+		    if( bytes > MAX_RAT_READ )
+			load = MAX_RAT_READ;
+		    else
+			load = bytes;
+		    readval = read( ifp->if_fd, p, load );
+		    if( readval < load ) {
+			if (readval < 0) {
+			    perror("READ ERROR");
 			}
+			(void) fprintf( stderr, "_rat_read() read failed\n" );
+			return -1;
+		    }
+		}
 		for( p = pix_buf; i > 0; i--, pixelp++, count-- )
 			{
 			(*pixelp)[RED] = *p++;
@@ -261,8 +262,7 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 		for(	bytes = i * 3, p = pix_buf;
 			bytes > 0;
 			bytes -= load, p += load
-			)
-			{
+			) {
 			if( bytes > MAX_RAT_READ )
 				load = MAX_RAT_READ;
 			else
@@ -271,14 +271,15 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 			for( ii = 0; ii < load; ii++ )
 				p[ii] = 100;
 			}
-			if( read( ifp->if_fd, p, load ) < load )
-				{
-				(void) fprintf( stderr,
-						"_rat_read() read failed\n"
-						);
-				return	-1;
-				}
+			readval = read( ifp->if_fd, p, load );
+			if( readval < load ) {
+			    if (readval < 0) {
+				perror("READ ERROR");
+			    }
+			    (void) fprintf( stderr, "_rat_read() read failed\n" );
+			    return -1;
 			}
+		}
 		for(	p = pix_buf;
 			i > 0;
 			i--, pixelp++, count--
@@ -302,20 +303,21 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 		for(	bytes = count * 3, p = pix_buf;
 			bytes > 0;
 			bytes -= load, p += load
-			)
-			{
-			if( bytes > MAX_RAT_READ )
-				load = MAX_RAT_READ;
-			else
-				load = bytes;
-			if( read( ifp->if_fd, p, load ) < load )
-				{
-				(void) fprintf( stderr,
-						"_rat_read() read failed\n"
-						);
-				return	-1;
-				}
+			) {
+		    if( bytes > MAX_RAT_READ ) {
+			load = MAX_RAT_READ;
+		    } else {
+			load = bytes;
+		    }
+		    readval = read( ifp->if_fd, p, load );
+		    if( readval < load ) {
+			if (readval < 0) {
+			    perror("READ ERROR");
 			}
+			(void) fprintf( stderr, "_rat_read() read failed\n");
+			return -1;
+		    }
+		}
 		for( p = pix_buf; count > 0; pixelp++, count-- )
 			{
 			(*pixelp)[RED] = *p++;

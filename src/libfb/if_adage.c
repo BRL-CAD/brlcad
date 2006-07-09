@@ -494,8 +494,10 @@ adage_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 		IKSEEK( 0, topiky );
 		topiky++;
 		if( read( ifp->if_fd, _pixbuf, tailfrag*sizeof(IKONASpixel) )
-		    != tailfrag*sizeof(IKONASpixel) )
-			return	-1;
+		    != tailfrag*sizeof(IKONASpixel) ) {
+		    perror("READ_ERROR");
+		    return -1;
+		}
 		out = (char *) &(pixelp[count-tailfrag][RED]);
 		in = _pixbuf;
 		for( i = tailfrag; i > 0; i-- ) {
@@ -517,8 +519,10 @@ adage_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 			in = _pixbuf;
 			doscans = fullscans > maxikscans ? maxikscans : fullscans;
 			if( read( ifp->if_fd, _pixbuf, doscans*width*sizeof(IKONASpixel) )
-			    != doscans*width*sizeof(IKONASpixel) )
-				return	-1;
+			    != doscans*width*sizeof(IKONASpixel) ) {
+			    perror("READ ERROR");
+			    return -1;
+			}
 			for( scan = doscans; scan > 0; scan-- ) {
 				for( i = width; i > 0; i-- ) {
 					/* VAX subscripting faster than ++ */
@@ -539,8 +543,10 @@ adage_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 			in = _pixbuf;
 			/* Read a single scan line */
 			if( read( ifp->if_fd, _pixbuf, width*sizeof(IKONASpixel) )
-			    != width*sizeof(IKONASpixel) )
-				return	-1;
+			    != width*sizeof(IKONASpixel) ) {
+			    perror("READ ERROR");
+			    return -1;
+			}
 			for( i = width; i > 0; i-- ) {
 				/* VAX subscripting faster than ++ */
 				*out++ = *in;
@@ -559,8 +565,10 @@ headin:
 		out = (char *) pixelp;
 		in = _pixbuf;
 		if( read( ifp->if_fd, _pixbuf, headfrag*sizeof(IKONASpixel) )
-		    != headfrag*sizeof(IKONASpixel) )
-			return	-1;
+		    != headfrag*sizeof(IKONASpixel) ) {
+		    perror("READ ERROR");
+		    return -1;
+		}
 		for( i = headfrag; i > 0; i-- ) {
 			/* VAX subscripting faster than ++ */
 			*out++ = *in;
@@ -1162,8 +1170,9 @@ adage_rmap(FBIO *ifp, register ColorMap *cp)
 		return	-1;
 	}
 	if( read( ifp->if_fd, cmap, 1024*4 ) != 1024*4 ) {
-		fb_log( "adage_rmap : read failed.\n" );
-		return	-1;
+	    perror("READ ERROR");
+	    fb_log( "adage_rmap : read failed.\n" );
+	    return -1;
 	}
 	for( i=0; i < 256; i++ ) {
 		cp->cm_red[i] = (cmap[i]<<(6+0))  & 0xFFC0;

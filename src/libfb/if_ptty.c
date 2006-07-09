@@ -184,10 +184,8 @@ ptty_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct)
 {
 /*	y = ifp->if_width-1-y;		/* 1st quadrant */
 #if 0 /* Not yet implemented. */
-	if( read( ifp->if_fd, (char *) pixelp, (int)(sizeof(RGBpixel)*ct) )
-		< sizeof(RGBpixel)*ct
-		)
-		return	-1;
+	if( read( ifp->if_fd, (char *) pixelp, (int)(sizeof(RGBpixel)*ct) ) < sizeof(RGBpixel)*ct)
+	    return -1;
 #endif
 	return	0;
 }

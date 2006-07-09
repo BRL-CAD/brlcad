@@ -228,11 +228,16 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	while( bytes > 0 ) {
 		todo = bytes;
 		if( (got = read( fd, (char *) pixelp, todo )) != todo )  {
-			if( got == 0 )  {
-				if( bytes_read <= 0 )
-					return -1;	/* error */
-				/* early EOF -- indicate what we got */
-				return bytes_read/sizeof(RGBpixel);
+			if( got <= 0 )  {
+			    if (got < 0) {
+				perror("READ ERROR");
+			    }
+
+			    if( bytes_read <= 0 )
+				return -1;	/* error */
+
+			    /* early EOF -- indicate what we got */
+			    return bytes_read/sizeof(RGBpixel);
 			}
 			if( fd != 0 )  {
 				/* This happens all the time reading from pipes */
@@ -291,13 +296,12 @@ dsk_rmap(FBIO *ifp, ColorMap *cmap)
 				FILE_CMAP_ADDR );
 	   	return	-1;
 	}
-	if( read( fd, (char *) cmap, sizeof(ColorMap) )
-		!= sizeof(ColorMap) ) {
-		/* Not necessarily an error.  It is not required
-		 * that a color map be saved and the standard
-		 * map is not generally saved.
-		 */
-		return	-1;
+	if(read( fd, (char *) cmap, sizeof(ColorMap) ) != sizeof(ColorMap) ) {
+	    /* Not necessarily an error.  It is not required that a
+	     * color map be saved and the standard map is not
+	     * generally saved.
+	     */
+	    return -1;
 	}
 	return	0;
 }

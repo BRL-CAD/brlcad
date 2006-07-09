@@ -697,17 +697,13 @@ ab_help(FBIO *ifp)
 int
 ab_yuvio(int output, char *host, char *buf, int len, int frame, int to_network)
    	       		/* 0=read(input), 1=write(output) */
-
-
-
    	      		/* frame number */
-
 {
 	struct sockaddr_in	sinme;		/* Client */
 	struct sockaddr_in	sinhim;		/* Server */
 	struct servent		*rlogin_service;
 	struct hostent		*hp;
-	char			xmit_buf[128];
+	char			xmit_buf[128] = {0};
 	int			n;
 	int			netfd;
 	int			got;

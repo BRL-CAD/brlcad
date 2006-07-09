@@ -70,18 +70,31 @@ static void setup_socket(int fd);
 /*
  * Package Handlers.
  */
-void	fbs_pkgfoo(struct pkg_conn *pcp, char *buf);	/* foobar message handler */
-void	fbs_rfbopen(struct pkg_conn *pcp, char *buf), fbs_rfbclose(struct pkg_conn *pcp, char *buf), fbs_rfbclear(struct pkg_conn *pcp, char *buf), fbs_rfbread(struct pkg_conn *pcp, char *buf), fbs_rfbwrite(struct pkg_conn *pcp, char *buf);
-void	fbs_rfbcursor(struct pkg_conn *pcp, char *buf), fbs_rfbgetcursor(struct pkg_conn *pcp, char *buf);
-void	fbs_rfbrmap(struct pkg_conn *pcp, char *buf), fbs_rfbwmap(struct pkg_conn *pcp, char *buf);
-void	fbs_rfbhelp(struct pkg_conn *pcp, char *buf);
-void	fbs_rfbreadrect(struct pkg_conn *pcp, char *buf), fbs_rfbwriterect(struct pkg_conn *pcp, char *buf);
-void	fbs_rfbbwreadrect(struct pkg_conn *pcp, char *buf), fbs_rfbbwwriterect(struct pkg_conn *pcp, char *buf);
-void	fbs_rfbpoll(struct pkg_conn *pcp, char *buf), fbs_rfbflush(struct pkg_conn *pcp, char *buf), fbs_rfbfree(struct pkg_conn *pcp, char *buf);
-void	fbs_rfbview(struct pkg_conn *pcp, char *buf), fbs_rfbgetview(struct pkg_conn *pcp, char *buf);
-void	fbs_rfbsetcursor(struct pkg_conn *pcp, char *buf);
+void fbs_pkgfoo(struct pkg_conn *pcp, char *buf);	/* foobar message handler */
+void fbs_rfbopen(struct pkg_conn *pcp, char *buf);
+void fbs_rfbclose(struct pkg_conn *pcp, char *buf);
+void fbs_rfbclear(struct pkg_conn *pcp, char *buf);
+void fbs_rfbread(struct pkg_conn *pcp, char *buf);
+void fbs_rfbwrite(struct pkg_conn *pcp, char *buf);
+void fbs_rfbcursor(struct pkg_conn *pcp, char *buf);
+void fbs_rfbgetcursor(struct pkg_conn *pcp, char *buf);
+void fbs_rfbrmap(struct pkg_conn *pcp, char *buf);
+void fbs_rfbwmap(struct pkg_conn *pcp, char *buf);
+void fbs_rfbhelp(struct pkg_conn *pcp, char *buf);
+void fbs_rfbreadrect(struct pkg_conn *pcp, char *buf);
+void fbs_rfbwriterect(struct pkg_conn *pcp, char *buf);
+void fbs_rfbbwreadrect(struct pkg_conn *pcp, char *buf);
+void fbs_rfbbwwriterect(struct pkg_conn *pcp, char *buf);
+void fbs_rfbpoll(struct pkg_conn *pcp, char *buf);
+void fbs_rfbflush(struct pkg_conn *pcp, char *buf);
+void fbs_rfbfree(struct pkg_conn *pcp, char *buf);
+void fbs_rfbview(struct pkg_conn *pcp, char *buf);
+void fbs_rfbgetview(struct pkg_conn *pcp, char *buf);
+void fbs_rfbsetcursor(struct pkg_conn *pcp, char *buf);
 /* Old Routines */
-void	fbs_rfbscursor(struct pkg_conn *pcp, char *buf), fbs_rfbwindow(struct pkg_conn *pcp, char *buf), fbs_rfbzoom(struct pkg_conn *pcp, char *buf);
+void fbs_rfbscursor(struct pkg_conn *pcp, char *buf);
+void fbs_rfbwindow(struct pkg_conn *pcp, char *buf);
+void fbs_rfbzoom(struct pkg_conn *pcp, char *buf);
 
 static struct pkg_switch pkg_switch[] = {
 	{ MSG_FBOPEN,		fbs_rfbopen,	"Open Framebuffer" },

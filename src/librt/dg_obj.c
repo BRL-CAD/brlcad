@@ -1938,11 +1938,15 @@ static void
 dgo_rtcheck_output_handler(ClientData clientData, int mask)
 {
     int count;
-    char line[RT_MAXLINE];
+    char line[RT_MAXLINE] = {0};
     struct rtcheck_output *rtcop = (struct rtcheck_output *)clientData;
 
     /* Get textual output from rtcheck */
-    if((count = read((int)rtcop->fd, line, RT_MAXLINE)) == 0){
+    count = read((int)rtcop->fd, line, RT_MAXLINE);
+    if (count <= 0) {
+	if (count < 0) {
+	    perror("READ ERROR");
+	}
 	Tcl_DeleteFileHandler(rtcop->fd);
 	close(rtcop->fd);
 
@@ -4207,10 +4211,15 @@ dgo_rt_output_handler(ClientData	clientData,
     run_rtp = drcdp->rrtp;
 
     /* Get data from rt */
-    if ((count = read((int)run_rtp->fd, line, RT_MAXLINE)) == 0) {
+    count = read((int)run_rtp->fd, line, RT_MAXLINE);
+    if (count <= 0) {
 	int retcode;
 	int rpid;
 	int aborted;
+
+	if (count < 0) {
+	    perror("READ ERROR");
+	}
 
 	Tcl_DeleteFileHandler(run_rtp->fd);
 	close(run_rtp->fd);

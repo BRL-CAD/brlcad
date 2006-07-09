@@ -138,8 +138,10 @@ get_proto(char **buffer, char *file)
     *buffer = bu_malloc( (size_t)(sb.st_size+4), "prototype document");
     bytes_read = read( fd, *buffer, (size_t)sb.st_size );
     if ( bytes_read != sb.st_size )  {
+	if (bytes_read < 0) {
+	    perror(file);
+	}
 	printf("only read %d bytes (expecting %ld)\n", bytes_read, (long)sb.st_size);
-	perror(file);
 	exit(2);
     }
     (*buffer)[sb.st_size] = '\0';

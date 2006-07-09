@@ -35,7 +35,7 @@
 extern int ikfd;
 extern int ikhires;
 
-#define MAX_LINE	1024		/* Max pixels/line */
+#define MAX_LINE	10000		/* Max pixels/line */
 static char scanline[MAX_LINE*3];	/* 1 scanline pixel buffer */
 static int scanbytes;			/* # of bytes of scanline */
 

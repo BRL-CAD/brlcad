@@ -362,10 +362,14 @@ X_open(FBIO *ifp, char *file, int width, int height)
 	/* Init our internal, and possibly X's, colormap */
 	/* ColorMap File HACK */
 	if( (fd = open( TMP_FILE, 0 )) >= 0 ) {
-		/* restore it from a file */
-		read( fd, &(XI(ifp)->rgb_cmap), sizeof(XI(ifp)->rgb_cmap) );
-		close(fd);
-		X_wmap( ifp, &(XI(ifp)->rgb_cmap) );
+	    int readval;
+	    /* restore it from a file */
+	    readval = read( fd, &(XI(ifp)->rgb_cmap), sizeof(XI(ifp)->rgb_cmap) );
+	    if (readval < 0) {
+		perror(TMP_FILE);
+	    }
+	    close(fd);
+	    X_wmap( ifp, &(XI(ifp)->rgb_cmap) );
 	} else {
 		/* use linear map */
 		X_wmap( ifp, (ColorMap *)NULL );

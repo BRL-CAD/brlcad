@@ -80,7 +80,10 @@ int tienet_recv(int socket, void *data, int size, int flip) {
   do {
     select(socket+1, &set, NULL, NULL, NULL);
     ind += r = read(socket, &((char*)data)[ind], size-ind);
-    if(r <= 0) return(1);	/* Error, socket is probably dead */
+    if(r <= 0) {
+      perror("READ_ERROR");
+      return(1);	/* Error, socket is probably dead */
+    }
   } while(ind < size);
 
   if(flip)

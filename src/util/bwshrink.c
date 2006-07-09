@@ -212,8 +212,9 @@ int main(int ac, char **av)
 	}
 
 	/* read in entire image */
-	for (t=0 ; t < size && (c=read(0, (char *)&buffer[t], size-t)) >= 0 ;
-		t += c);
+	for (t=0; t < size && (c=read(0, (char *)&buffer[t], size-t)) >= 0; t += c) {
+	    /* do nothing */;
+	}
 
 	if (c < 0) {
 		perror (filename);

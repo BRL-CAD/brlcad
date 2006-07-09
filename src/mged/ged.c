@@ -862,7 +862,7 @@ stdin_input(ClientData clientData, int mask)
       char buf[4096];
       int index;
 #  ifdef _WIN32
-      ReadFile(fd,buf,4096,&count,NULL);
+      ReadFile(fd, buf, 4096, &count, NULL);
 #  else
       count = read((int)fd, (void *)buf, 4096);
 #  endif
@@ -871,6 +871,10 @@ stdin_input(ClientData clientData, int mask)
     /* Grab single character from stdin */
     count = read((int)fd, (void *)&ch, 1);
 #endif
+
+    if (count < 0) {
+	perror("READ ERROR");
+    }
 
     if (count <= 0 && feof(stdin)) {
       char *av[2];
@@ -1391,17 +1395,23 @@ std_out_or_err(ClientData clientData, int mask)
 #endif
   int count;
   struct bu_vls vls;
-  char line[MAXLINE];
+  char line[MAXLINE] = {0};
   Tcl_Obj *save_result;
 
   /* Get data from stdout or stderr */
 
 #ifndef _WIN32
-  if((count = read((int)fd, line, MAXLINE)) <= 0)
+  count = read((int)fd, line, MAXLINE);
 #else
-  if((!ReadFile(fd, line, MAXLINE,&count,0)))
+  ReadFile(fd, line, MAXLINE,&count,0);
 #endif
-    return;
+
+  if(count <= 0) {
+      if (count < 0) {
+	  perror("READ ERROR");
+      }
+      return;
+  }
 
   line[count] = '\0';
 

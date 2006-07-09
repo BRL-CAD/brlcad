@@ -273,6 +273,9 @@ int main(int argc, char **argv)
 			exit(-1);
 		}
 	}
+	if (n < 0) {
+	    perror("READ ERROR");
+	}
 
 	if( clip_high != 0 || clip_low != 0 ) {
 		(void)fprintf( stderr, "bwmod: clipped %lu high, %lu low\n",

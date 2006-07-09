@@ -310,18 +310,33 @@ ready(int nsecs)
 	do {
 		i = read(fd, &status[0], 1);
 		if( i != 1 )  {
-			printf("dunnsnap:  unexpected EOF %d\n", i);
-			return(0);
+		    if (i < 0) {
+			perror("dunnsnap READ ERROR");
+		    } else {
+			printf("dunnsnap: unexpected EOF\n");
+		    }
+		    return 0;
 		}
 	} while( status[0] == '\0' );
-	(void)read(fd, &status[1], 1);
 
-	if((status[0]&0x7f) == 'R' && (status[1]&0x7f) == '\r')
-		return 1;	/* camera is ready */
+	i = read(fd, &status[1], 1);
+	if (i != 1) {
+	    if (i < 0) {
+		perror("dunnsnap READ ERROR");
+	    } else {
+		printf("dunnsnap: unexpected EOF\n");
+	    }
+	    return 0;
+	}
 
-	printf("dunnsnap/ready():  unexpected camera status 0%o 0%o\n",
-		status[0]&0x7f, status[1]&0x7f);
-	return 0;	/* camera is not ready */
+	if((status[0]&0x7f) == 'R' && (status[1]&0x7f) == '\r') {
+	    /* camera is ready */
+	    return 1;
+	}
+
+	/* camera is not ready */
+	printf("dunnsnap/ready():  unexpected camera status 0%o 0%o\n", status[0]&0x7f, status[1]&0x7f);
+	return 0;
 }
 
 /*

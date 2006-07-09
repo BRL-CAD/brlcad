@@ -99,8 +99,12 @@ main(int argc, char **argv)
 
 		while(1)  {
 			got = read( fd, (char *)&doub[0], NUM*sizeof(doub[0]) );
-			if( got <= 0 )
-				break;
+			if( got <= 0 ) {
+			    if (got < 0) {
+				perror("dpix-pix READ ERROR");
+			    }
+			    break;
+			}
 			count = got / sizeof(doub[0]);
 			ep = &doub[count];
 			for(dp = &doub[0]; dp < ep;)  {
@@ -138,8 +142,12 @@ main(int argc, char **argv)
 		bb = b;
 
 		got = read( fd, (char *)&doub[0], NUM*sizeof(doub[0]) );
-		if (got <=  0 )
-			break;
+		if (got <=  0 ) {
+		    if (got < 0) {
+			perror("dpix-pix READ ERROR");
+		    }
+		    break;
+		}
 		count = got / sizeof(doub[0]);
 		ep = &doub[count];
 		cp = (char *)&cha[0];
