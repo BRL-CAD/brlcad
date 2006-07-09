@@ -953,15 +953,16 @@ writelines(int nlines, register char *buf)
 				fb_close(fbp);
 			exit(0);
 		}
-		if( clear )
+		if( clear ) {
 			bzero( (char *)scanline, scr_width*3 );
-		else if( overlay_from_stdin )  {
+		} else if( overlay_from_stdin )  {
 			if( fread( (char *)scanline, scr_width*3, 1, stdin ) != 1 )  {
 				clear = 1;
 				overlay_from_stdin = 0;
 			}
-		} else
-			fb_read( fbp, 0, cur_fb_line, scanline, scr_width );
+		} else {
+			(void)fb_read( fbp, 0, cur_fb_line, scanline, scr_width );
+		}
 		pp = scanline;
 		for( lpos = 0; lpos < bytes_per_line; lpos++)  {
 			if( (bufval = *buf) == 0 )  {

@@ -161,10 +161,11 @@ main(int argc, char **argv)
 	if( yin > height ) yin = height;
 
 	for( y = scr_yoff; y < scr_yoff + yin; y++ )  {
-		if( inverse )
-			fb_read( fbp, scr_xoff, fb_getheight(fbp)-1-y, inbuf, xin );
-		else
-			fb_read( fbp, scr_xoff, y, inbuf, xin );
+	    if( inverse ) {
+			(void)fb_read( fbp, scr_xoff, fb_getheight(fbp)-1-y, inbuf, xin );
+	    } else {
+			(void)fb_read( fbp, scr_xoff, y, inbuf, xin );
+	    }
 		for( x = 0; x < xin; x++ ) {
 			obuf[x] = (((int)inbuf[3*x+RED]) + ((int)inbuf[3*x+GRN])
 				+ ((int)inbuf[3*x+BLU])) / 3;

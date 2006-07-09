@@ -97,61 +97,63 @@ main(int argc, char **argv)
 
 	/* Read color map, see if it's linear */
 	cmflag = 1;		/* Need to save colormap */
-	if( fb_rmap( fbp, &cmap ) == -1 )
-		cmflag = 0;
-	if( cmflag && fb_is_linear_cmap( &cmap ) )
-		cmflag = 0;
-	if( crunch && (cmflag == 0) )
-		crunch = 0;
+	if (fb_rmap( fbp, &cmap ) == -1) {
+	    cmflag = 0;
+	}
+	if (cmflag && fb_is_linear_cmap( &cmap )) {
+	    cmflag = 0;
+	}
+	if (crunch && (cmflag == 0)) {
+	    crunch = 0;
+	}
 
 	/* Acquire "background" pixel from special location */
-	if(	bgflag
-	    &&	fb_read( fbp, 1, 1, bgpixel, 1 ) == -1
-	    )
-	{
-		(void) fprintf( stderr, "Couldn't read background!\n" );
-		return	1;
+	if (bgflag && fb_read( fbp, 1, 1, bgpixel, 1 ) == -1) {
+	    fprintf(stderr, "Couldn't read background!\n");
+	    return 1;
 	}
-	if( bgflag && rle_verbose )
-		(void) fprintf( stderr,
-		"Background saved as %d %d %d\n",
-		bgpixel[RED], bgpixel[GRN], bgpixel[BLU]
-		    );
+	if (bgflag && rle_verbose) {
+	    fprintf(stderr, "Background saved as %d %d %d\n", bgpixel[RED], bgpixel[GRN], bgpixel[BLU]);
+	}
 
 	/* Write RLE header */
-	if( rle_whdr( fp, ncolors, bgflag, cmflag, bgpixel ) == -1 )
-		return	1;
+	if( rle_whdr( fp, ncolors, bgflag, cmflag, bgpixel ) == -1 ) {
+	    return 1;
+	}
 
 	/* Follow RLE header with colormap */
 	if( cmflag )  {
-		if( rle_wmap( fp, &cmap ) == -1 )
-			return	1;
-		if( rle_debug )
-			(void) fprintf( stderr,
-			"Color map saved.\n"
-			    );
+	    if( rle_wmap( fp, &cmap ) == -1 ) {
+		return 1;
+	    }
+	    if( rle_debug ) {
+		fprintf(stderr, "Color map saved.\n");
+	    }
 	}
 
-	if( ncolors == 0 )
-		/* Only save colormap, so we are finished.		*/
-		return	0;
+	if( ncolors == 0 ) {
+	    /* Only save colormap, so we are finished. */
+	    return 0;
+	}
 
 	/* Get image from framebuffer and encode it */
 	y_end = ypos + ylen;
 
 	for( y = ypos; y < y_end; y++ )  {
-		if(rle_debug)fprintf(stderr,"line %d\n", y);
-		if( fb_read( fbp, xpos, y, (unsigned char *)scan_buf, xlen ) == -1)  {
-			(void) fprintf(	stderr,
-				"read of %d pixels from (%d,%d) failed!\n",
-				xlen, xpos, y );
-				return	1;
+		if (rle_debug) {
+		    fprintf(stderr,"line %d\n", y);
 		}
-		if( crunch )
-			cmap_crunch( scan_buf, xlen, &cmap );
+		if (fb_read( fbp, xpos, y, (unsigned char *)scan_buf, xlen ) == -1)  {
+		    fprintf(stderr, "read of %d pixels from (%d,%d) failed!\n", xlen, xpos, y );
+		    return 1;
+		}
+		if (crunch) {
+		    cmap_crunch(scan_buf, xlen, &cmap);
+		}
 
-		if( rle_encode_ln( fp, scan_buf ) == -1 )
-			return	1;
+		if (rle_encode_ln(fp, scan_buf) == -1) {
+		    return 1;
+		}
 	}
 	fb_close( fbp );
 	return	0;
