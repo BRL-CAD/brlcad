@@ -48,14 +48,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #ifdef HAVE_FCNTL_H
-# include <fcntl.h>
+#  include <fcntl.h>
 #endif
 
-int mread(int fd, char *bufp, int n );
 
 char	template[] = "/usr/tmp/bufferXXXXXX";
 
@@ -69,7 +68,7 @@ main(void)
 	register int	count;
 	register int	tfd;
 
-	if( (count = mread(0, buf, sizeof(buf))) < sizeof(buf) )  {
+	if( (count = bu_mread(0, buf, sizeof(buf))) < sizeof(buf) )  {
 		if( count < 0 )  {
 			perror("buffer: mem read");
 			exit(1);
@@ -101,7 +100,7 @@ main(void)
 	}
 
 	/* Continue reading and writing additional buffer loads to temp file */
-	while( (count = mread(0, buf, sizeof(buf))) > 0 )  {
+	while( (count = bu_mread(0, buf, sizeof(buf))) > 0 )  {
 		if( write(tfd, buf, count) != count )  {
 			perror("buffer: tmp write2");
 			goto err;
@@ -117,7 +116,7 @@ main(void)
 		perror("buffer: lseek");
 		goto err;
 	}
-	while( (count = mread(tfd, buf, sizeof(buf))) > 0 )  {
+	while( (count = bu_mread(tfd, buf, sizeof(buf))) > 0 )  {
 		if( write(1, buf, count) != count )  {
 			perror("buffer: stdout write 2");
 			goto err;
@@ -133,36 +132,6 @@ main(void)
 err:
 	(void)unlink(template);
 	exit(1);
-}
-
-/*
- *			M R E A D
- *
- * This function performs the function of a read(II) but will
- * call read(II) multiple times in order to get the requested
- * number of characters.  This can be necessary because pipes
- * and network connections don't deliver data with the same
- * grouping as it is written with.  Written by Robert S. Miles, BRL.
- */
-int
-mread(int fd, register char *bufp, int n)
-{
-	register int	count = 0;
-	register int	nread;
-
-	do {
-		nread = read(fd, bufp, (unsigned)n-count);
-		if(nread < 0)  {
-			perror("buffer: mread");
-			return(-1);
-		}
-		if(nread == 0)
-			return((int)count);
-		count += (unsigned)nread;
-		bufp += nread;
-	 } while(count < n);
-
-	return((int)count);
 }
 
 /*

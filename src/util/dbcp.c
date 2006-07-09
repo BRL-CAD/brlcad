@@ -57,8 +57,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 
 
-int mread(int fd, char *bufp, int n );
-
 #define	STOP	0170
 #define	GO	0017
 
@@ -159,7 +157,7 @@ char	**argv;
 	exitval = 0;
 	count = 0L;
 	while (1) {
-		if ((nread = mread (0, buffer, size)) != size) {
+		if ((nread = bu_mread (0, buffer, size)) != size) {
 			saverrno = errno;
 			msgchar = STOP;
 		} else
@@ -241,39 +239,6 @@ char	*fmt, *a, *b, *c;
 	fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
 	fprintf(stderr, fmt, a, b, c);
 	fflush(stderr);
-}
-
-/*
- *			M R E A D
- *
- * This function performs the function of a read(II) but will
- * call read(II) multiple times in order to get the requested
- * number of characters.  This can be necessary because pipes
- * and network connections don't deliver data with the same
- * grouping as it is written with.  Written by Robert S. Miles, BRL.
- */
-int
-mread(fd, bufp, n)
-int	fd;
-register char	*bufp;
-int	n;
-{
-	register int	count = 0;
-	register int	nread;
-
-	do {
-		nread = read(fd, bufp, (unsigned)n-count);
-		if(nread < 0)  {
-			perror("dbcp: mread");
-			return(-1);
-		}
-		if(nread == 0)
-			return((int)count);
-		count += (unsigned)nread;
-		bufp += nread;
-	 } while(count < n);
-
-	return((int)count);
 }
 
 /*

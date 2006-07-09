@@ -210,33 +210,6 @@ dunnopen(void)
 	(void)signal( SIGALRM, unsnooze );
 }
 
-/*
- *			M R E A D
- *
- * This function performs the function of a read(II) but will
- * call read(II) multiple times in order to get the requested
- * number of characters.  This can be necessary because pipes
- * and network connections don't deliver data with the same
- * grouping as it is written with.
- */
-static int
-mread(int fd, register unsigned char *bufp, unsigned int n)
-{
-	register unsigned	count = 0;
-	register int		nread;
-
-	do {
-		nread = read(fd, bufp, n-count);
-		if(nread == -1)
-			return(nread);
-		if(nread == 0)
-			return((int)count);
-		count += (unsigned)nread;
-		bufp += nread;
-	 } while(count < n);
-
-	return((int)count);
-}
 
 /*
  *			G O O D S T A T U S
@@ -249,6 +222,7 @@ int
 goodstatus(void)
 {
 	struct timeval waittime, *timeout;
+	int readval;
 
 	timeout = &waittime;
 	timeout->tv_sec = 10;
@@ -264,7 +238,10 @@ goodstatus(void)
 		return(0);
 	}
 
-	(void)mread(fd, status, 4);
+	readval = bu_mread(fd, status, 4);
+	if (readval < 0) {
+	    perror("READ ERROR");
+	}
 	alarm(0);
 
 	if (status[0]&0x1)  printf("No vertical sync\n");
@@ -356,6 +333,7 @@ void
 getexposure(char *title)
 {
 	struct timeval waittime;
+	int readval;
 
 	waittime.tv_sec = 20;
 	waittime.tv_usec = 0;
@@ -378,7 +356,10 @@ getexposure(char *title)
 		exit(40);
 	}
 
-	(void)mread(fd, values, 20);
+	readval = bu_mread(fd, values, 20);
+	if (readval < 0) {
+	    perror("READ ERROR");
+	}
 
 	values[20] = '\0';
 	printf("dunncolor: %s = %s\n", title, values);

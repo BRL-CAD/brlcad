@@ -73,7 +73,6 @@ static int	autosize = 0;		/* !0 to autosize input */
 static long int	file_width = 720L;	/* default input width */
 static long int	file_height = 485L;	/* default input height */
 
-static long int	mread(int fd, register unsigned char *bufp, long int n);
 void ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len);
 void ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len);
 
@@ -168,9 +167,10 @@ main(int argc, char **argv)
 	inbuf = bu_malloc( 2*file_width*file_height+8, "inbuf" );
 	outbuf = bu_malloc( 3*file_width*file_height+8, "outbuf" );
 
-	if( mread( infd, inbuf, 2*file_width*file_height ) < 2*file_width*file_height )  {
-		fprintf(stderr, "yuv-pix: short input file, aborting\n");
-		exit(1);
+	if( bu_mread( infd, inbuf, 2*file_width*file_height ) < 2*file_width*file_height )  {
+	    perror("READ ERROR");
+	    fprintf(stderr, "yuv-pix: short input file, aborting\n");
+	    exit(1);
 	}
 
 	for( y = 0; y < file_height; y++ )  {
@@ -192,36 +192,6 @@ main(int argc, char **argv)
 	return 0;
 }
 
-/*
- *			M R E A D
- *
- * Internal.
- * This function performs the function of a read(II) but will
- * call read(II) multiple times in order to get the requested
- * number of characters.  This can be necessary because pipes
- * and network connections don't deliver data with the same
- * grouping as it is written with.  Written by Robert S. Miles, BRL.
- */
-static long int
-mread(int fd, register unsigned char *bufp, long int n)
-{
-	register long int	count = 0;
-	register long int	nread;
-
-	do {
-		nread = read(fd, (void *)bufp, (size_t)n-count);
-		if(nread < 0)  {
-			perror("mread");
-			return(-1);
-		}
-		if(nread == 0)
-			return((long int)count);
-		count += (unsigned long)nread;
-		bufp += nread;
-	 } while(count < n);
-
-	return((long int)count);
-}
 
 /*************************************************************************
  *************************************************************************

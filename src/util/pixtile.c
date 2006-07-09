@@ -71,35 +71,6 @@ Usage: pixtile [-h] [-s squareinsize] [-w file_width] [-n file_height]\n\
 	[-S squareoutsize] [-W out_width] [-N out_height]\n\
 	[-o startframe] basename [file2 ... fileN] >file.pix\n";
 
-/*
- *			M R E A D
- *
- * This function performs the function of a read(II) but will
- * call read(II) multiple times in order to get the requested
- * number of characters.  This can be necessary because pipes
- * and network connections don't deliver data with the same
- * grouping as it is written with.  Written by Robert S. Miles, BRL.
- */
-int
-mread(int fd, register char *bufp, int n)
-{
-	register int	count = 0;
-	register int	nread;
-
-	do {
-		nread = read(fd, bufp, (unsigned)n-count);
-		if(nread < 0)  {
-			perror("buffer: mread");
-			return(-1);
-		}
-		if(nread == 0)
-			return((int)count);
-		count += (unsigned)nread;
-		bufp += nread;
-	 } while(count < n);
-
-	return((int)count);
-}
 
 /*
  *			G E T _ A R G S
@@ -248,8 +219,10 @@ main(int argc, char **argv)
 				/* select proper scanline within image */
 				j += i*scr_width;
 
-				if( mread( fd, &obuf[j*3], scanbytes ) != scanbytes )
-					break;
+				if( bu_mread( fd, &obuf[j*3], scanbytes ) != scanbytes ) {
+				    perror("READ ERROR");
+				    break;
+				}
 			}
 			if( fd > 0 )  close(fd);
 		}

@@ -29,7 +29,7 @@
  *  1)	Multiple files may be written to tape in a single operation,
  *	ie, with a single open() of the output device.
  *  2)	Files are padded to full length records.
- *  3)  Input files are read using mread(), so operation will
+ *  3)  Input files are read using bu_mread(), so operation will
  *	proceed even with pipe input (where DD can read and write
  *	short records on a random basis).
  *
@@ -91,7 +91,6 @@ char	*buf;
 
 void	fileout(register int fd, char *name);
 
-int mread(int fd, char *bufp, int n );
 
 static char usage[] = "\
 Usage: files-tape [-b bytes] [-k Kbytes] [files]\n";
@@ -175,7 +174,7 @@ fileout(register int fd, char *name)
 {
 	register int	count, out;
 
-	while( (count = mread( fd, buf, bufsize )) > 0 )  {
+	while( (count = bu_mread( fd, buf, bufsize )) > 0 )  {
 		if( count < bufsize )  {
 			/* Short read, zero rest of buffer */
 			bzero( buf+count, bufsize-count );
@@ -190,40 +189,11 @@ fileout(register int fd, char *name)
 		byteswritten += bufsize;
 	}
 	if( count == 0 )
-		return;
+	    return;
 
-	/* mread() logged the error, die */
+	perror("READ ERROR");
+
 	exit(1);
-}
-
-/*
- *			M R E A D
- *
- * This function performs the function of a read(II) but will
- * call read(II) multiple times in order to get the requested
- * number of characters.  This can be necessary because pipes
- * and network connections don't deliver data with the same
- * grouping as it is written with.  Written by Robert S. Miles, BRL.
- */
-int
-mread(int fd, register char *bufp, int n)
-{
-	register int	count = 0;
-	register int	nread;
-
-	do {
-		nread = read(fd, bufp, (unsigned)n-count);
-		if(nread < 0)  {
-			perror("files-tape: mread");
-			return(-1);
-		}
-		if(nread == 0)
-			return((int)count);
-		count += (unsigned)nread;
-		bufp += nread;
-	 } while(count < n);
-
-	return((int)count);
 }
 
 /*
