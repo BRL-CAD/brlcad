@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <math.h>
 
-double	buf[1024];
+double	buf[4096] = {0};
 
 static char usage[] = "\
 Usage: dsel num\n\

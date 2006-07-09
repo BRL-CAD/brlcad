@@ -35,12 +35,10 @@
  */
 #include "common.h"
 
-
-
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include <unistd.h>
@@ -48,10 +46,12 @@
 #include <stdio.h>
 #include <math.h>
 
+
 #define	IBUFSIZE 1024		/* Max read size */
 double	buf[IBUFSIZE];		/* Input buffer */
 
 int	verbose = 0;
+
 
 static char usage[] = "\
 Usage: dstat [-v] [file.doubles]\n";

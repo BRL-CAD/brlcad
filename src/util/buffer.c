@@ -60,7 +60,7 @@ char	template[] = "/usr/tmp/bufferXXXXXX";
 
 #define	SIZE	(1024*1024)
 
-char	buf[SIZE];
+char	buf[SIZE] = {0};
 
 int
 main(void)

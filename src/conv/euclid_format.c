@@ -31,14 +31,12 @@ static const char RCSid[] = "$Header$";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -51,8 +49,7 @@ static const char RCSid[] = "$Header$";
 int
 main(void)
 {
-	char str[1024];
-	point_t *pts=NULL;
+	point_t *pts = (point_t *)NULL;
 	int ident,face_type,npts,face_no;
 	plane_t pl;
 	int tmp_i;
@@ -60,9 +57,6 @@ main(void)
 	float a,b,c,d;
 	int old_id=(-1);
 	int face_count=0;
-
-	if( scanf( "%s" , str ) == EOF )
-		rt_bomb( "Unexpected EOF\n" );
 
 	while( scanf( "%d %d %f %d %d" , &ident , &face_type , &tmp_a , &tmp_i , &npts ) != EOF )
 	{

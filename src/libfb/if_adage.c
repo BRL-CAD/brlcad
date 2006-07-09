@@ -1119,7 +1119,7 @@ long	page, offset;
 _LOCAL_ int
 adage_wmap(FBIO *ifp, register ColorMap *cp)
 {
-	long cmap[1024];
+	long cmap[1024] = {0};
 	register int i, j;
 
 	/* Note that RGB10(r,g,b) flips to cmap order (b,g,r). */
@@ -1163,7 +1163,7 @@ _LOCAL_ int
 adage_rmap(FBIO *ifp, register ColorMap *cp)
 {
 	register int i;
-	long cmap[1024];
+	long cmap[1024] = {0};
 
 	if( lseek( ifp->if_fd, (off_t)LUVO*4L, 0) == -1 ) {
 		fb_log( "adage_rmap : lseek failed.\n" );

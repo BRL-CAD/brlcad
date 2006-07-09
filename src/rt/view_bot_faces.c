@@ -59,7 +59,6 @@ static const char RCSray_bot_faces[] = "@(#)$Header$ (BRL)";
 
 
 extern char	*outputfile;		/* output file name */
-#define MAX_LINE_LEN	1024		/* max line length in output file */
 
 extern point_t	viewbase_model;
 
@@ -140,7 +139,7 @@ view_2init( struct application *ap, char *framename )
 {
 #ifdef HAVE_UNIX_IO
 	struct stat sb;
-	char line[MAX_LINE_LEN];
+	char line[RT_MAXLINE];
 #endif
 
 	if( outfp == NULL )
@@ -156,7 +155,7 @@ view_2init( struct application *ap, char *framename )
 		int i, j;
 
 		/* File exists, with partial results */
-		while( fgets( line, MAX_LINE_LEN, outfp ) ) {
+		while( fgets( line, RT_MAXLINE, outfp ) ) {
 			if( !strncmp( line, "BOT:", 4 ) ) {
 				struct directory *dp;
 

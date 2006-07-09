@@ -140,9 +140,9 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "toggle_perspective",MV_O(mv_toggle_perspective),toggle_perspective },
 	{"%f",  1, "nmg_eu_dist",	MV_O(mv_nmg_eu_dist),	nmg_eu_dist_set },
 	{"%f",  1, "eye_sep_dist",	MV_O(mv_eye_sep_dist),	set_dirty_flag },
-	{"%s",  MAXLINE, "union_op",	MV_O(mv_union_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%s",  MAXLINE, "intersection_op",MV_O(mv_intersection_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%s",  MAXLINE, "difference_op",	MV_O(mv_difference_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%s",  RT_MAXLINE, "union_op",	MV_O(mv_union_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%s",  RT_MAXLINE, "intersection_op",MV_O(mv_intersection_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%s",  RT_MAXLINE, "difference_op",	MV_O(mv_difference_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 

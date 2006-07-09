@@ -1155,7 +1155,7 @@ char *name(char *str)
  */
 char *strchop(char *str, int len)
 {
-	static char buf[1024];
+	static char buf[10000] = {0};
 	register char *ip = str;
 	register char *op = buf;
 	register int warn = 0;

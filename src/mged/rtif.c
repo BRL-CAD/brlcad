@@ -660,8 +660,8 @@ run_rt()
    STARTUPINFO si = {0};
    PROCESS_INFORMATION pi = {0};
    SECURITY_ATTRIBUTES sa          = {0};
-   char line[2048];
-   char name[256];
+   char line[RT_MAXLINE+1] = {0};
+   char name[2048] = {0};
 
     sa.nLength = sizeof(sa);
     sa.bInheritHandle = TRUE;
@@ -889,7 +889,7 @@ ClientData clientData;
 int mask;
 {
   int count;
-  char line[RT_MAXLINE] = {0};
+  char line[RT_MAXLINE+1] = {0};
   int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
 
   /* Get textual output from rtcheck */
@@ -1145,8 +1145,9 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 
 	/* data pulled from script file */
 	int perspective=-1;
-	char dbName[512];
-	char objects[1024];
+#define MAX_DBNAME	2048
+	char dbName[MAX_DBNAME] = {0};
+	char objects[10000] = {0};
 	char *editArgv[3];
 
 	/* save previous interactive state */
@@ -1215,7 +1216,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 		   * after that
 		   */
 
-		  memset(dbName, 0, 1024);
+		  memset(dbName, 0, MAX_DBNAME);
 		  fscanf(fp, "%s", dbName);
 		  /* if the last character is a line termination,
 		   * remove it (it should always be unless the user
@@ -1832,9 +1833,9 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	int rpid;
 	int retcode;
 #ifndef _WIN32
-	int pipe_in[2];
-	int pipe_out[2];
-	int pipe_err[2];
+	int pipe_in[2] = {0, 0};
+	int pipe_out[2] = {0, 0};
+	int pipe_err[2] = {0, 0};
 #else
 	HANDLE pipe_in[2],hSaveStdin,pipe_inDup;
 	HANDLE pipe_out[2],hSaveStdout,pipe_outDup;
@@ -1842,8 +1843,8 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	STARTUPINFO si = {0};
 	PROCESS_INFORMATION pi = {0};
 	SECURITY_ATTRIBUTES sa          = {0};
-	char name[1024];
-	char line1[2048];
+	char name[1024] = {0};
+	char line1[2048] = {0};
 #endif
 	int use_input_orig = 0;
 	vect_t	center_model;
@@ -1851,7 +1852,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	vect_t cml;
 	register int i;
 	register struct solid *sp;
-	char line[MAXLINE];
+	char line[RT_MAXLINE] = {0};
 	char *val;
 	struct bu_vls vls;
 	struct bu_vls o_vls;
@@ -1860,7 +1861,8 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct bn_vlblock *vbp;
 	struct qray_dataList *ndlp;
 	struct qray_dataList HeadQRayData;
-	char *ptr, buf[256] = {0};
+	char *ptr = (char *)NULL;
+	char *buf[256];
 
 	CHECK_DBI_NULL;
 
@@ -2232,7 +2234,7 @@ done:
 	  BU_LIST_INIT(&HeadQRayData.l);
 
 	  /* handle partitions */
-	  while(fgets(line, MAXLINE, fp_out) != (char *)NULL){
+	  while(fgets(line, RT_MAXLINE, fp_out) != (char *)NULL){
 	    if(line[0] == '\n'){
 	      Tcl_AppendResult(interp, line+1, (char *)NULL);
 	      break;
@@ -2253,7 +2255,7 @@ done:
 	  rt_vlblock_free(vbp);
 
 	  /* handle overlaps */
-	  while(fgets(line, MAXLINE, fp_out) != (char *)NULL){
+	  while(fgets(line, RT_MAXLINE, fp_out) != (char *)NULL){
 	    if(line[0] == '\n'){
 	      Tcl_AppendResult(interp, line+1, (char *)NULL);
 	      break;
@@ -2278,13 +2280,13 @@ done:
 	if(QRAY_TEXT){
 	  bu_vls_free(&t_vls);
 
-	  while(fgets(line, MAXLINE, fp_out) != (char *)NULL)
+	  while(fgets(line, RT_MAXLINE, fp_out) != (char *)NULL)
 	    Tcl_AppendResult(interp, line, (char *)NULL);
 	}
 
 	(void)fclose(fp_out);
 
-	while(fgets(line, MAXLINE, fp_err) != (char *)NULL)
+	while(fgets(line, RT_MAXLINE, fp_err) != (char *)NULL)
 	  Tcl_AppendResult(interp, line, (char *)NULL);
 	(void)fclose(fp_err);
 

@@ -145,7 +145,7 @@ re_comp(s)
 const char *s;
 {
 	int i;
-	static char errbuf[1024];
+	static char errbuf[2048] = {0};
 	i = regcomp(&reg, s, REG_BASIC|REG_NOSUB);
 
 	if (i) {

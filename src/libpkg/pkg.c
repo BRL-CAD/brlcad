@@ -874,7 +874,7 @@ pkg_send(int type, char *buf, int len, register struct pkg_conn *pc)
 	 *  merge it all into one buffer here, unless size is enormous.
 	 */
 	if( len + sizeof(hdr) <= 16*1024 )  {
-		char	tbuf[16*1024];
+		char	tbuf[16*1024] = {0};
 
 		bcopy( (char *)&hdr, tbuf, sizeof(hdr) );
 		if( len > 0 )
@@ -1009,7 +1009,7 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 	 *  merge it all into one buffer here, unless size is enormous.
 	 */
 	if( len1 + len2 + sizeof(hdr) <= 16*1024 )  {
-		char	tbuf[16*1024];
+		char	tbuf[16*1024] = {0};
 
 		bcopy( (char *)&hdr, tbuf, sizeof(hdr) );
 		if( len1 > 0 )
@@ -1735,7 +1735,7 @@ static void
 pkg_ck_debug(void)
 {
 	char	*place;
-	char	buf[128];
+	char	buf[128] = {0};
 
 	if( pkg_debug )  return;
 	if( (place = (char *)getenv("LIBPKG_DEBUG")) == (char *)0 )  {

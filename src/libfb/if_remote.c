@@ -131,8 +131,8 @@ FBIO remote_interface = {
 	rem_free,
 	rem_help,
 	"Remote Device Interface",	/* should be filled in	*/
-	1024,				/* " */
-	1024,				/* " */
+	32*1024,				/* " */
+	32*1024,				/* " */
 	"host:[dev]",
 	512,
 	512,

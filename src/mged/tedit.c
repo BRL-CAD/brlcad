@@ -847,7 +847,7 @@ const char *file;
 {
    STARTUPINFO si = {0};
    PROCESS_INFORMATION pi = {0};
-   char line[1024];
+   char line[RT_MAXLINE] = {0};
 
    sprintf(line,"notepad %s",file);
 

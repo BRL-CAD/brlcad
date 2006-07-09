@@ -309,7 +309,6 @@ extern char *state_str[];		/* identifying strings */
 #define ST_S_VPICK	7		/* Vertex Pick */
 #define ST_S_NO_EDIT	8		/* Solid edit without Rotate, translate, or scale */
 
-#define	MAXLINE		RT_MAXLINE	/* Maximum number of chars per line */
 
 /* Cloned mged macros for use in Tcl/Tk */
 #define TCL_READ_ERR {\

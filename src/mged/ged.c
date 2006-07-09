@@ -1395,15 +1395,15 @@ std_out_or_err(ClientData clientData, int mask)
 #endif
   int count;
   struct bu_vls vls;
-  char line[MAXLINE] = {0};
+  char line[RT_MAXLINE] = {0};
   Tcl_Obj *save_result;
 
   /* Get data from stdout or stderr */
 
 #ifndef _WIN32
-  count = read((int)fd, line, MAXLINE);
+  count = read((int)fd, line, RT_MAXLINE);
 #else
-  ReadFile(fd, line, MAXLINE,&count,0);
+  ReadFile(fd, line, RT_MAXLINE, &count, 0);
 #endif
 
   if(count <= 0) {

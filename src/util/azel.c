@@ -84,8 +84,8 @@ main (int argc, char **argv)
     char            *inFname = "stdin"; /* Name of input source */
     char            *outFname = "stdout";  /* Name of output destination */
     char            *Label;             /* Names of input coordinates */
-    char            Tail[1024];         /* Rest of input line beyond coords */
-    extern char     *bu_optarg;            /* argument from bu_getopt(3C) */
+    char            Tail[4096] = {0};   /* Rest of input line beyond coords */
+    extern char     *bu_optarg;         /* argument from bu_getopt(3C) */
     FILE            *inPtr = stdin;     /* Pointer to input */
     FILE            *outPtr = stdout;   /* Pointer to output */
     double          Azim = 0.0;         /* Azimuth angle (in degrees) */

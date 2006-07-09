@@ -1149,7 +1149,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_log("After collection...\n");
     for (i = 0; i < 8 ; i++ )
     {
-	char	string[1024];
+	char	string[1024] = {0};
 
 	sprintf(string, "vertex %d", i + 1);
 	VPRINT(string, tarb.pt[i]);

@@ -189,25 +189,28 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
     		    	/* File pointer for ascii nmg file. */
       		    	/* Extrusion vector. */
 {
-#define MAXV	1024
+#define MAXV	10000
 
-	char	token[80];	/* Token read from ascii nmg file. */
+	char	token[80] = {0};	/* Token read from ascii nmg file. */
 	fastf_t	x, y, z;	/* Coordinates of a vertex. */
 	int	dir = OT_NONE;	/* Direction of face. */
 	int	i,
-		lu_verts[MAXV],	/* Vertex names making up loop. */
+		lu_verts[MAXV] = {0},	/* Vertex names making up loop. */
 		n,		/* Number of vertices so far in loop. */
 		stat,		/* Set to EOF when finished ascii file. */
 		vert_num;	/* Current vertex in ascii file. */
-	fastf_t	pts[3*MAXV];	/* Points in current loop. */
+	fastf_t	pts[3*MAXV] = {(fastf_t)0};	/* Points in current loop. */
 	struct faceuse *fu;	/* Face created. */
 	struct vertex	*cur_loop[MAXV],/* Vertices in current loop. */
 			*verts[MAXV];	/* Vertices in all loops. */
 
 	n = 0;			/* No vertices read in yet. */
 	fu = NULL;		/* Face to be created elsewhere. */
-	for (i = 0; i < MAXV; i++)
-		verts[i] = NULL;
+	for (i = 0; i < MAXV; i++) {
+	    cur_loop[i] = NULL;
+	    verts[i] = NULL;
+	}
+
 	stat = fscanf(fp, "%s", token);	/* Get 1st token. */
 	do {
 		switch (token[0]) {

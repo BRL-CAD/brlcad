@@ -94,8 +94,8 @@ typedef genptr_t pointer;			/* generic pointer */
 #define TIMER_Y		1
 
 /* buffer sizes */
-#define LNBUFSZ		133	/* buffer for one-line messages */
-#define MAXDEVWID	1024	/* maximum width of frame buffer */
+#define LNBUFSZ		1330	/* buffer for one-line messages */
+#define MAXDEVWID	10000	/* maximum width of frame buffer */
 
 #define CHAR_COMMENT	'#'
 #define CMD_COMMENT	"comment"

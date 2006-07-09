@@ -4281,7 +4281,7 @@ dgo_rt_output_handler(ClientData	clientData,
     struct dg_rt_client_data *drcdp = (struct dg_rt_client_data *)clientData;
     struct run_rt *run_rtp;
     int count;
-    char line[10240+1];
+    char line[10240+1] = {0};
 
     if (drcdp == (struct dg_rt_client_data *)NULL ||
 	drcdp->dgop == (struct dg_obj *)NULL ||

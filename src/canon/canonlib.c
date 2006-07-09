@@ -1196,7 +1196,7 @@ int mosaic = 0;
 union ipu_prsc_param param;
 
 #define MAX_ARGS	64
-static char arg_buf[1024];
+static char arg_buf[10000] = {0};
 static int  len;
 char	*arg_v[MAX_ARGS];
 int	arg_c;

@@ -56,12 +56,12 @@ Usage: dmod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [doubles]\n";
 #define	ABS	3
 #define	POW	4
 
-#define	BUFLEN	1024
+#define	BUFLEN	4096
 
 int	numop = 0;		/* number of operations */
-int	op[256];		/* operations */
-double	val[256];		/* arguments to operations */
-double	buf[BUFLEN];		/* working buffer */
+int	op[256] = {0};		/* operations */
+double	val[256] = {0.0};		/* arguments to operations */
+double	buf[BUFLEN] = {0.0};		/* working buffer */
 
 int
 get_args(int argc, register char **argv)

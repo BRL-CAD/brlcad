@@ -26,18 +26,18 @@
  */
 #include "common.h"
 
-
-
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include <stdio.h>
 #include <math.h>		/* XXX - temp debug */
+
 #include "machine.h"
 #include "fb.h"
+
 
 #define	MYMETHOD	on
 

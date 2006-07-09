@@ -21,10 +21,12 @@
 /** @file i-a.c
  *
  */
+#include "common.h"
 
 #include <stdio.h>
 
-short ibuf[1024];
+
+short ibuf[16*1024];
 
 int main(void)
 {

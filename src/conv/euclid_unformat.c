@@ -52,11 +52,11 @@ static const char RCSid[] = "$Header$";
 int
 main(void)
 {
-	char str[1024];
-	int ident,face_type,npts,face_no;
+	char str[10000] = {0};
+	int ident, face_type, npts, face_no;
 	plane_t pl;
 	int i;
-	float a,b,c,d;
+	float a, b, c, d;
 	int old_id=(-1),e;
 
 	printf( "$03" );

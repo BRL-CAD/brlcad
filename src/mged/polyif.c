@@ -109,7 +109,7 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	FILE	*fp;
 	int	pno = 1;
 	struct polygon_header ph;
-#define MAX_VERTS	1024
+#define MAX_VERTS	10000
 	vect_t	verts[MAX_VERTS];
 	int	need_normal = 0;
 	struct	bu_external	obuf;

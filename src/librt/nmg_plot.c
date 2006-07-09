@@ -2194,7 +2194,7 @@ nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const stru
 	long *b;
 	point_t pp;
 	static int i=0;
-	char name[1024];
+	char name[1024] = {0};
 
 	if ( ! (rt_g.NMG_debug & DEBUG_NMGRT) )
 		return;

@@ -342,7 +342,7 @@ main (int argc, char **argv)
     int			Ch;		/* Option name */
     int			mat_flag = 0;	/* Read matrix from stdin? */
     int			use_of_air = 0;
-    char		ocastring[1024];
+    char		ocastring[1024] = {0};
     struct bu_list	script_list;	/* For -e and -f options */
     struct script_rec	*srp;
     extern outval	ValTab[];

@@ -1004,8 +1004,8 @@ checkcomb(void)
 	char name_v4[NAMESIZE+1];
 	char *name_v5=NULL;
 	char *name=NULL;
-	char line[MAXLINE];
-	char *ptr;
+	char line[RT_MAXLINE] = {0};
+	char *ptr = (char *)NULL;
 	int region=(-1);
 	int id=0,air=0;
 	int rgb_valid;
@@ -1024,7 +1024,7 @@ checkcomb(void)
 		/* Read a line */
 		i = (-1);
 
-		while( (ch=getc( fp )) != EOF && ch != '\n' && i<MAXLINE )
+		while( (ch=getc( fp )) != EOF && ch != '\n' && i < RT_MAXLINE )
 			line[++i] = ch;
 
 		if( ch == EOF )	/* We must be done */
@@ -1033,7 +1033,7 @@ checkcomb(void)
 			if( i < 0 )
 				break;
 		}
-		if( i == MAXLINE )
+		if( i == RT_MAXLINE )
 		{
 		  Tcl_AppendResult(interp, "Line too long in edited file\n", (char *)NULL);
 		  return( 1 );
@@ -1363,7 +1363,7 @@ int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_cou
 	char *name=NULL, *new_name;
 	char name_v4[NAMESIZE+1];
 	char new_name_v4[NAMESIZE+1];
-	char line[MAXLINE];
+	char line[RT_MAXLINE] = {0};
 	char *ptr;
 	int ch;
 	int i;
@@ -1432,7 +1432,7 @@ int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_cou
 		/* Read a line */
 		i = (-1);
 
-		while( (ch=getc( fp )) != EOF && ch != '\n' && i<MAXLINE )
+		while( (ch=getc( fp )) != EOF && ch != '\n' && i < RT_MAXLINE )
 			line[++i] = ch;
 
 		if( ch == EOF )	/* We must be done */

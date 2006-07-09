@@ -37,10 +37,10 @@
 #include <stdio.h>
 #include <math.h>
 
-long	bits[16];
-long	values[65536];
+long	bits[16] = {0};
+long	values[65536] = {0};
 long	*zerop;
-short	ibuf[1024];
+short	ibuf[1024] = {0};
 
 int	verbose = 0;
 

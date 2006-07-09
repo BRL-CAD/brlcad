@@ -106,8 +106,8 @@ FBIO disk_interface = {
 	dsk_free,
 	dsk_help,
 	"Disk File Interface",
-	16*1024,		/* the sky's really the limit here */
-	16*1024,
+	32*1024,		/* the sky's really the limit here */
+	32*1024,
 	"filename",		/* not in list so name is safe */
 	512,
 	512,

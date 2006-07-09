@@ -30,16 +30,19 @@
  *
  *  Sure this is ugly.... I'll be happy if it works at all.
  */
+#include "common.h"
+
 #include <math.h>
 
-#define	MAX	1024
+
+#define	MAXBUF	16*1024
 
 void
 LintoLog(double *in, double *out, int num)
 {
 	int	i;
 	double	place, step;
-	double	linpt[MAX];
+	double	linpt[MAXBUF] = {0.0};
 	double	x, y, x1, x2, x3, x4;
 
 	/*

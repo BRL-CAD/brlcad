@@ -71,7 +71,7 @@ static const char RCSrev[] = "$Revision$";
 
 extern char	version[];
 
-#define	CP_BUF_SIZE	1024	/* size of buffer for file copy */
+#define	CP_BUF_SIZE	4096	/* size of buffer for file copy */
 #define SUFFIX_LEN	10	/* max size of suffix for 'part' files (-m option) */
 
 BU_EXTERN( union tree *do_nmg_region_end , (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
@@ -198,14 +198,12 @@ int		do_nurbs=0;
  *			M A I N
  */
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char *argv[])
 {
 	int			i, ret;
 	register int		c;
 	double			percent;
-	char			copy_buffer[CP_BUF_SIZE];
+	char			copy_buffer[CP_BUF_SIZE] = {0};
 	struct directory	*dp;
 
 	bu_setlinebuf( stderr );
@@ -669,7 +667,7 @@ genptr_t		client_data;
 
 		if( multi_file )
 		{
-			char copy_buffer[CP_BUF_SIZE];
+			char copy_buffer[CP_BUF_SIZE] = {0};
 
 			/* Copy the parameter section from the temporary file to the output file */
 			if( (fseek( fp_param , (long) 0 , 0 )) ) {

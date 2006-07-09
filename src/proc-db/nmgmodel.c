@@ -63,8 +63,8 @@ extern char *optarg;
 extern int optind, opterr, getopt(int, char *const *, const char *);
 
 char *progname = "(noname)";
-char plotfilename[1024];
-char mfilename[1024];
+char plotfilename[1024] = {0};
+char mfilename[1024] = {0};
 
 int manifold[4] = { 1, 1, 1, 1 };
 

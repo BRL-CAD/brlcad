@@ -67,9 +67,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "mater.h"
 
 
-#define BUFSIZE			(8*1024)	/* input line buffer size */
-#define TYPELEN			10
-#define NAME_LEN			20
+#define BUFSIZE			(16*1024)	/* input line buffer size */
+#define TYPELEN			100
+#define NAME_LEN			200
 
 void		identbld(void), polyhbld(void), pipebld(void), particlebld(void);
 void		solbld(void), arbnbld(void), clinebld(void), botbld(void), extrbld(void), sktbld(void);
@@ -1810,8 +1810,8 @@ void
 arbnbld(void)
 {
 
-	char		name[NAME_LEN];
-	char		type[TYPELEN];
+	char		name[NAME_LEN] = {0};
+	char		type[TYPELEN] = {0};
 	int		i;
 	int		neqn;			/* number of eqn expected */
 	plane_t		*eqn;			/* pointer to plane equations for faces */

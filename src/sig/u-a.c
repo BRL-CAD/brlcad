@@ -21,16 +21,19 @@
 /** @file u-a.c
  *
  */
+#include "common.h"
 
 #include <stdio.h>
 
-unsigned short ibuf[1024];
+
+#define MAXBUF 16*1024
+unsigned short ibuf[MAXBUF];
 
 int main(void)
 {
 	int n, i;
 
-	while ((n=fread(ibuf, sizeof(*ibuf), 1024, stdin)) > 0) {
+	while ((n=fread(ibuf, sizeof(*ibuf), MAXBUF, stdin)) > 0) {
 		for (i=0 ; i < n ; ++i)
 			printf("%hd\n", ibuf[i]);
 	}

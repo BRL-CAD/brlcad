@@ -100,8 +100,8 @@ FBIO stk_interface =  {
 	stk_free,		/* free resources	*/
 	stk_help,		/* help function	*/
 	"Multiple Device Stacker", /* device description */
-	1024*32,		/* max width		*/
-	1024*32,		/* max height		*/
+	32*1024,		/* max width		*/
+	32*1024,		/* max height		*/
 	"/dev/stack",		/* short device name	*/
 	4,			/* default/current width  */
 	4,			/* default/current height */
