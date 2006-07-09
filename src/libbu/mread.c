@@ -23,10 +23,17 @@
  *
  * Provide a general means to a read some count of items from a file
  * descriptor reading multiple times until the quantity desired is
- * obtained.  This is useful for pipes.
+ * obtained.  This is useful for pipes and network connections that
+ * don't necessarily deliver data with the same grouping as it is
+ * written with.
  *
  * If a read error occurs, a negative value will be returns and errno
  * should be set (by read()).
+ *
+ * Authors -
+ *   Robert S. Miles
+ *   Christopher Sean Morrison
+ *
  */
 
 #include "common.h"
