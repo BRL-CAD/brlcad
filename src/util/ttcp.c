@@ -54,21 +54,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <arpa/inet.h>
 #include <sys/time.h>		/* struct timeval */
 
-#ifdef BSD
-#  define __BSDbackup BSD
-#  undef BSD
-#endif
 #include <netdb.h>
-#ifdef __BSDbackup
-#  define BSD __BSDbackup
-#  undef __BSDbackup
-#endif
 
 #ifdef SYSV
-#include <sys/times.h>
-#include <sys/param.h>
+#  include <sys/times.h>
+#  include <sys/param.h>
 #else
-#include <sys/resource.h>
+#  include <sys/resource.h>
 #endif
 
 #if defined (IRIX) && IRIX == 5
