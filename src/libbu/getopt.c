@@ -39,17 +39,16 @@ static const char libbu_getopt_RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
 #include "bu.h"
+
 
 int	bu_opterr = 1;		/* set to zero to suppress errors */
 int	bu_optind = 1;		/* index into parent argv vector */
@@ -72,51 +71,51 @@ char	*bu_optarg = NULL;	/* argument associated with option */
 int
 bu_getopt(int nargc, char *const *nargv, const char *ostr)
 {
-	static char	*place = EMSG;	/* option letter processing */
-	register char	*oli;		/* option letter list index */
+    static char	*place = EMSG;	/* option letter processing */
+    register char	*oli;		/* option letter list index */
 
-	if(*place=='\0') {			/* update scanning pointer */
-		if(bu_optind >= nargc || *(place = nargv[bu_optind]) != '-' ||
-		   !*++place)  {
-		   	place = EMSG;
-			return(EOF);
-		}
-		if (*place == '-') {	/* found "--" */
-			place = EMSG;
-			++bu_optind;
-			return(EOF);
-		}
-	}				/* option letter okay? */
-	if ((bu_optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr,bu_optopt))) {
+    if(*place=='\0') {			/* update scanning pointer */
+	if(bu_optind >= nargc || *(place = nargv[bu_optind]) != '-' ||
+	   !*++place)  {
+	    place = EMSG;
+	    return(EOF);
+	}
+	if (*place == '-') {	/* found "--" */
+	    place = EMSG;
+	    ++bu_optind;
+	    return(EOF);
+	}
+    }				/* option letter okay? */
+    if ((bu_optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr,bu_optopt))) {
 #if 0
-		if(*place == '\0') {
-			++bu_optind;
-			place = EMSG;
-		}
+	if(*place == '\0') {
+	    ++bu_optind;
+	    place = EMSG;
+	}
 #else
-		++bu_optind;
-		place = EMSG;
+	++bu_optind;
+	place = EMSG;
 #endif
-		tell(": illegal option -- ");
+	tell(": illegal option -- ");
+    }
+    if (*++oli != ':') {		/* don't need argument */
+	bu_optarg = NULL;
+	if (*place == '\0') {
+	    ++bu_optind;
+	    place = EMSG;
 	}
-	if (*++oli != ':') {		/* don't need argument */
-		bu_optarg = NULL;
-		if (*place == '\0') {
-			++bu_optind;
-			place = EMSG;
-		}
+    }
+    else {				/* need an argument */
+	if (*place) bu_optarg = place;	/* no white space */
+	else if (nargc <= ++bu_optind) {	/* no arg */
+	    place = EMSG;
+	    tell(": option requires an argument -- ");
 	}
-	else {				/* need an argument */
-		if (*place) bu_optarg = place;	/* no white space */
-		else if (nargc <= ++bu_optind) {	/* no arg */
-			place = EMSG;
-			tell(": option requires an argument -- ");
-		}
-	 	else bu_optarg = nargv[bu_optind];	/* white space */
-		place = EMSG;
-		++bu_optind;
-	}
-	return(bu_optopt);			/* dump back option letter */
+	else bu_optarg = nargv[bu_optind];	/* white space */
+	place = EMSG;
+	++bu_optind;
+    }
+    return(bu_optopt);			/* dump back option letter */
 }
 
 /*
