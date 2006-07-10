@@ -540,30 +540,6 @@ rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
 			PRNT_A1_DEBUG( "Byte-Data", n );
 			if( ! _bw_flag )
 				{
-#if 0
-				/*
-				 * This is the most common region of code.
-				 * The STDIO getc() macro is actually quite
-				 * expensive.  We utilize our knowledge of
-				 * the bulk nature of this copy and the
-				 * STDIO internals (sorry) to improve speed.
-				 */
-				if( fp->_cnt >= n )
-					{ register unsigned char *cp = (unsigned char *)fp->_ptr;
-					fp->_cnt -= n;
-					while( n-- > 0 )
-						{
-						*pp = *cp++;
-						pp += STRIDE;
-						}
-#if defined(BSD) && ! defined(sun)
-					fp->_ptr = (char *)cp;
-#else
-					fp->_ptr = cp;
-#endif
-					}
-				else
-#endif
 				while( n-- > 0 )
 					{
 					*pp = getc(fp);
