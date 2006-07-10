@@ -38,16 +38,20 @@ static const char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#  include <sys/param.h>
+#  include <dlfcn.h>
 #endif
 
 #include "machine.h"
@@ -55,12 +59,6 @@ static const char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"
-
-#ifdef HAVE_DLOPEN
-# undef BSD
-# include <sys/param.h>
-# include <dlfcn.h>
-#endif
 
 
 static const char *mdefault = "default"; /* Name of default material */

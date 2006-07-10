@@ -241,11 +241,13 @@ main(int argc, char **argv)
 		return 0;
 	}
 
-#if BSD == 43
+#ifdef SO_SNDBUF
+	/* increase the default send buffer size to 32k since we're
+	 * sending pixels more than likely.
+	 */
 	{
-		int	val = 32767;
-		n = setsockopt( pcsrv->pkc_fd, SOL_SOCKET,
-			SO_SNDBUF, (char *)&val, sizeof(val) );
+		int val = 32767;
+		n = setsockopt( pcsrv->pkc_fd, SOL_SOCKET, SO_SNDBUF, (const void *)&val, sizeof(val) );
 		if( n < 0 )  perror("setsockopt: SO_SNDBUF");
 	}
 #endif
@@ -819,7 +821,7 @@ bu_log_indent_vls(struct bu_vls *v)
  *  Log an error.
  *  This version buffers a full line, to save network traffic.
  */
-#if (__STDC__ && !apollo)
+#ifdef HAVE_STDARG_H
 void
 bu_log( char *fmt, ... )
 {
@@ -844,13 +846,9 @@ bu_log( char *fmt, ... )
 out:
 	bu_semaphore_release( BU_SEM_SYSCALL );
 }
-#else /* __STDC__ */
+#else /* !HAVE_STDARG_H */
 
-#if defined(sgi) && !defined(mips)
-# define _sgi3d	1
-#endif
-
-#if (defined(BSD) && !defined(_sgi3d)) || defined(mips) || defined(CRAY2)
+#  ifdef HAVE_VARARGS_H
 /*
  *  			B U _ L O G
  *
@@ -907,8 +905,7 @@ va_dcl
 out:
 	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 }
-#else
-/* VARARGS */
+#  else  /* !HAVE_VARARGS_H */
 void
 bu_log( str, a, b, c, d, e, f, g, h )
 char	*str;
@@ -932,8 +929,8 @@ int	a, b, c, d, e, f, g, h;
 out:
 	bu_semaphore_release( BU_SEM_SYSCALL );
 }
-#endif /* not BSD */
-#endif /* not __STDC__ */
+#  endif /* end !HAVE_VARARGS_H */
+#endif /* end !HAVE_STDARG_H */
 
 
 /*

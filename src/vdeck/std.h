@@ -81,16 +81,11 @@ typedef char *pointer;		/* generic pointer (void *) */
 
 /* integer (or character) arguments and value: */
 #ifndef	unix
-#define	toascii( c )	((c) & 0177)	/* map host char set to ASCII */
+#  define	toascii( c )	((c) & 0177)	/* map host char set to ASCII */
 #endif
 #define tohostc( c )	(c)		/* map ASCII to host char set */
 #define tonumber( c )	((c) - '0')	/* convt digit char to number */
 #define todigit( n )	((n) + '0')	/* convt digit number to char */
-
-/* other kludges for deficient C implementations etc.: */
-/*#define	strchr	index		/* 7th Edition UNIX, 4.2BSD */
-/*#define	strrchr	rindex		/* 7th Edition UNIX, 4.2BSD */
-/*#define	void int /* K&R Appendix A followers */
 
 #endif	/* _VLD_STD_H_ */
 

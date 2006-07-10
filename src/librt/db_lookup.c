@@ -142,7 +142,7 @@ db_dirhash(const char *str)
     register int i;
 
     sum = 0;
-    /* BSD namei hashing starts i=0, discarding first char.  why? */
+    /* BSD name hashing starts i=0, discarding first char.  why? */
     for( i=1; *s; )
 	sum += *s++ * i++;
 

@@ -107,12 +107,12 @@
  *	bzero(ptr,n) -
  *		Defined to be the fasted system-specific method for
  *		zeroing a block of 'n' bytes, where the pointer has
- *		arbitrary byte alignment.  BSD semantics.
+ *		arbitrary byte alignment.
  *
  *	bcopy(from,to,n) -
  *		Defined to be the fastest system-specific method for
  *		copying a block of 'n' bytes, where both the "from" and
- *		"to" pointers have arbitrary byte alignment.  BSD semantics.
+ *		"to" pointers have arbitrary byte alignment.
  *
  *	bitv_t -
  *		The widest fast integer type available, used to implement bit
@@ -746,22 +746,15 @@ typedef long	bitv_t;		/* largest integer type */
 #  define GENPTR_NULL	((genptr_t)0)
 #endif
 
-/* A portable way of handling pre-ANSI C: remove const and signed keyword */
-#if !defined(__STDC__)
-#  define	const	/**/
-#  define	signed	/**/
-#endif
 
 /* Even in C++ not all compilers know the "bool" keyword yet */
 #if !defined(BOOL_T)
-# define BOOL_T	int
+#  define BOOL_T int
 #endif
 
 
-/*
- *  Some very common BSD --> SYSV conversion aids
- */
-#if defined(SYSV) && !defined(bzero) && !defined(HAVE_BZERO)
+/** provide bzero and bcopy */
+#if !defined(bzero) && !defined(HAVE_BZERO)
 #  include <string.h>
 #  define bzero(str,n)		memset( str, 0, n )
 #  define bcopy(from,to,count)	memcpy( to, from, count )

@@ -151,10 +151,9 @@ dunnopen(void)
 
 	/* set up the camera device */
 
-#ifdef BSD
 	tty.sg_ispeed = tty.sg_ospeed = B9600;
 	tty.sg_flags = RAW | EVENP | ODDP | XTABS;
-#endif
+
 #if defined(HAVE_SYS_IOCTL_H) || defined(HAVE_TERMIOS_H)
 	tty.c_cflag = B9600 | CS8;	/* Character size = 8 bits */
 	tty.c_cflag &= ~CSTOPB;		/* One stop bit */

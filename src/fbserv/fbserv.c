@@ -467,13 +467,11 @@ static void
 init_syslog(void)
 {
 	use_syslog = 1;
-#if defined(BSD) && !defined(CRAY2)
-#   ifdef LOG_DAEMON
+#if defined(LOG_NOWAIT) && defined(LOG_DAEMON)
 	openlog( "fbserv", LOG_PID|LOG_NOWAIT, LOG_DAEMON );	/* 4.3 style */
-#   else
+#else
 	openlog( "fbserv", LOG_PID );				/* 4.2 style */
-#   endif
-#endif /* BSD && !CRAY2 */
+#endif
 }
 
 static void
@@ -483,9 +481,9 @@ setup_socket(int fd)
 
 #if defined(SO_KEEPALIVE)
 	if( setsockopt( fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0 ) {
-#if		defined(BSD) && !defined(CRAY2)
+#  if defined(HAVE_SYSLOG_H) && defined(HAVE_STRERROR)
 		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %s", strerror(errno) );
-#		endif
+#  endif
 	}
 #endif
 #if defined(SO_RCVBUF)
@@ -521,15 +519,18 @@ setup_socket(int fd)
 static void
 comm_error(char *str)
 {
-#if defined(BSD) && !defined(CRAY2)
-	if( use_syslog )
-		syslog( LOG_ERR, str );
-	else
-		fprintf( stderr, "%s", str );
-#else
+#if defined(HAVE_SYSLOG_H)
+    if( use_syslog ) {
+	syslog( LOG_ERR, str );
+    } else {
 	fprintf( stderr, "%s", str );
+    }
+#else
+    fprintf( stderr, "%s", str );
 #endif
-	if(verbose) fprintf( stderr, "%s", str );
+    if(verbose) {
+	fprintf( stderr, "%s", str );
+    }
 }
 
 /*

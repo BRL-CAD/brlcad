@@ -190,9 +190,8 @@ readBatchInput( FILE *fp )
 int
 main( int argc, char *argv[] )
 {
-#if ! defined( BSD ) && ! defined( sgi )
-    setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
-#endif
+    bu_setlinebuf(stderr);
+
     if(	tmpnam( tmpfname ) == NULL
 	||	(tmpfp = fopen( tmpfname, "w" )) == (FILE *) NULL
 	)

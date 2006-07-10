@@ -152,21 +152,14 @@ struct ik_fbc  {
 #define IKHIRES		1	/* Image is in hi-res mode */
 #define IK_IO_INHIBIT	0200	/* Set invisible I/O.			*/
 /* GSM : /usr/5include/sys/types.h uses 'ushort'.			*/
-#if ! defined( _VLD_STD_H_ )
-#if ! defined( BSD )
-typedef unsigned short	u_short;
-#else
-#define u_short	unsigned short
-#endif
-#endif
 struct ikdevice {
 	short  ubwcount;	/* unibus word count (two's complement) */
-	u_short ubaddr;		/* unibus address register (must be even) */
-	u_short ubcomreg;	/* unibus status & command register */
-	u_short datareg;		/* data i/o register */
-	u_short ikloaddr;	/* ikonas lower address register */
-	u_short ikhiaddr;	/* ikonas upper address register */
-	u_short ikcomreg;	/* ikonas status & command register */
+	unsigned short ubaddr;		/* unibus address register (must be even) */
+	unsigned short ubcomreg;	/* unibus status & command register */
+	unsigned short datareg;		/* data i/o register */
+	unsigned short ikloaddr;	/* ikonas lower address register */
+	unsigned short ikhiaddr;	/* ikonas upper address register */
+	unsigned short ikcomreg;	/* ikonas status & command register */
 };
 #define IKREADY 0000200
 #define IKERROR	0100000

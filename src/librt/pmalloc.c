@@ -701,11 +701,7 @@ register struct rt_pm_res *pmem;
 
 	size *= num;
 	if ( (p = rt_pmalloc((long)size, pmem)) )  {
-#ifdef BSD
-		bzero(p, size);
-#else
-		memset( p, '\0', size );
-#endif
+	    memset( p, 0, size );
 	}
 	return (p);
 }

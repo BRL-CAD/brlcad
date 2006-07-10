@@ -87,13 +87,7 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #    include <sys/wait.h>
 #  endif
 #  include <sys/stat.h>
-#  ifdef BSD
-#    define __BSDbackup BSD
-#    undef BSD
-#    include <sys/param.h>
-#    undef BSD
-#    define BSD __BSDbackup
-#  endif
+#  include <sys/param.h>
 #  include <sys/sysctl.h>
 #endif
 

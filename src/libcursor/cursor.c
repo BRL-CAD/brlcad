@@ -74,10 +74,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define MAX_TERM_LEN	80
 
 
-#if ! defined( BSD )
-extern void	clr_Tabs(), save_Tty();
-#endif
-
 static FILE	*out_fp;		/* Output stream.	*/
 static char	termCapBuf[TBUFSIZ];  	/* Termcap entry.	*/
 static char	tstrings[TBUFSIZ];    	/* Individual TCS.	*/

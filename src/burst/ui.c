@@ -931,13 +931,8 @@ HmItem *itemp;
 	else
 		(void) strncpy( errfile, "/dev/tty", LNBUFSZ );
         /* insure that error log is truncated */
-        if(     (errfd =
-#ifdef BSD
-                creat( errfile, 0644 )) == -1
-#else
-                open( errfile, O_TRUNC|O_CREAT|O_WRONLY, 0644 )) == -1
-#endif
-                )
+	errfd = open( errfile, O_TRUNC|O_CREAT|O_WRONLY, 0644 );
+        if (errfd == -1)
                 {
                 locPerror( errfile );
                 return;

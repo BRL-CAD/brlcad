@@ -30,15 +30,19 @@
 			Maryland 21005-5066
 			(301)278-6647 or AV-298-6647
 */
+
+#ifndef __FB_IK_H__
+#define __FB_IK_H__
+
 #ifdef vax
 /* GSM : '' needed for Sys V emulation.					*/
-#ifdef BSD
-#define IKIOGETADDR	_IOR(I,13,caddr_t)/* addr of mapped UNIBUS regs */
+#  ifdef BSD
+#    define IKIOGETADDR	_IOR(I,13,caddr_t)/* addr of mapped UNIBUS regs */
+#  else
+#    define IKIOGETADDR	_IOR('I',13,caddr_t)/* addr of mapped UNIBUS regs */
+#  endif
 #else
-#define IKIOGETADDR	_IOR('I',13,caddr_t)/* addr of mapped UNIBUS regs */
-#endif
-#else
-#define IKIOGETADDR	0	/**** Bogus for now ****/
+#  define IKIOGETADDR	0	/**** Bogus for now ****/
 #endif
 
 /* useful macros for forming multibit values from smaller operands */
@@ -142,40 +146,35 @@ struct ik_fbc  {
 
 #ifdef vax
 /* some CSR bits */
-#define IKPIX		2	/* Pixel transfer mode */
-#define IKINCR		0400	/* increment Ikonas address (Icsr) */
-#define IKHIRES		1	/* Image is in hi-res mode */
-#define IK_IO_INHIBIT	0200	/* Set invisible I/O.			*/
+#  define IKPIX		2	/* Pixel transfer mode */
+#  define IKINCR		0400	/* increment Ikonas address (Icsr) */
+#  define IKHIRES		1	/* Image is in hi-res mode */
+#  define IK_IO_INHIBIT	0200	/* Set invisible I/O.			*/
 /* GSM : /usr/5include/sys/types.h uses 'ushort'.			*/
-#if ! defined( _VLD_STD_H_ )
-#if ! defined( BSD )
-typedef unsigned short	u_short;
-#else
-#define u_short	unsigned short
-#endif
-#endif
 struct ikdevice {
 	short  ubwcount;	/* unibus word count (two's complement) */
-	u_short ubaddr;		/* unibus address register (must be even) */
-	u_short ubcomreg;	/* unibus status & command register */
-	u_short datareg;		/* data i/o register */
-	u_short ikloaddr;	/* ikonas lower address register */
-	u_short ikhiaddr;	/* ikonas upper address register */
-	u_short ikcomreg;	/* ikonas status & command register */
+	unsigned short ubaddr;		/* unibus address register (must be even) */
+	unsigned short ubcomreg;	/* unibus status & command register */
+	unsigned short datareg;		/* data i/o register */
+	unsigned short ikloaddr;	/* ikonas lower address register */
+	unsigned short ikhiaddr;	/* ikonas upper address register */
+	unsigned short ikcomreg;	/* ikonas status & command register */
 };
-#define IKREADY 0000200
-#define IKERROR	0100000
+#  define IKREADY 0000200
+#  define IKERROR	0100000
 #endif vax
 
 #ifdef vax
-#define MAX_IK_DMA (64*1024L)		/* max # of bytes/dma */
+#  define MAX_IK_DMA (64*1024L)		/* max # of bytes/dma */
 #else
-#define MAX_IK_DMA (16*1024L)
+#  define MAX_IK_DMA (16*1024L)
 #endif
 #define MAX_IK_PIX_DMA (MAX_IK_DMA/4L)
 
 #define X_CURSOR_OFFSET		(-15)
 #define Y_CURSOR_OFFSET		15
+
+#endif  /* __FB_IK_H__ */
 
 /*
  * Local Variables:

@@ -56,6 +56,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define DFL_SHELL	"/bin/sh"
 
+#if !defined(SIGCLD) && defined(SIGCHLD)
+#  define SIGCLD SIGCHLD  /* POSIX name */
+#endif
+
+
 /*	e x e c _ S h e l l ( )
 	If args[0] is NULL, spawn a shell, otherwise execute the specified
 	command line.
@@ -91,9 +96,6 @@ exec_Shell(char **args)
 			{	register int pid;
 				int stat_loc;
 				register void (*istat)(), (*qstat)(), (*cstat)();
-#if !defined(SIGCLD) && defined(SIGCHLD)
-#	define SIGCLD	SIGCHLD		/* BSD and POSIX name */
-#endif
 			istat = signal(SIGINT, SIG_IGN);
 			qstat = signal(SIGQUIT, SIG_IGN);
 			cstat = signal(SIGCLD, SIG_DFL);

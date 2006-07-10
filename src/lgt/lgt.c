@@ -105,9 +105,9 @@ int
 main(int argc, char **argv)
 {
     register int	i;
-#if ! defined( BSD ) && ! defined( sgi ) && ! defined( CRAY2 )
-    (void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
-#endif
+
+    bu_setlinebuf(stderr);
+
     beginptr = (char *) sbrk(0);
 
     bu_log( "\n\nThis program is deprecated and will not be supported in future releases\n" );

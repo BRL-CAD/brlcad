@@ -51,31 +51,22 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <time.h>
 #include <fcntl.h>
 
-#ifdef BSD
-#  define __BSDbackup BSD
-#  undef BSD
-#endif
-
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifdef __BSDbackup
-#  undef BSD
-#  define BSD __BSDbackup
-#endif
-
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
 #include "fb.h"
 #include "./fblocal.h"
+
 
 static void	ab_log(FBIO *ifp, char *str);
 static int	ab_get_reply(int fd);

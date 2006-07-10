@@ -42,13 +42,8 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>	/* for strerror() */
-#ifndef _WIN32
-#  ifdef BSD
-#    undef BSD
-#    include <sys/param.h>
-#  else
-#    include <sys/param.h>
-#  endif
+#ifdef HAVE_SYS_PARAM_H
+#  include <sys/param.h>
 #endif
 #include <ctype.h>
 #include <math.h>
