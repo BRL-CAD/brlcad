@@ -77,7 +77,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -87,10 +86,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "raytrace.h"
 
-#ifdef SYSV
-#define bzero(str,n)		memset( str, '\0', n )
-#define bcopy(from,to,count)	memcpy( to, from, count )
-#endif /* SYSV */
 
 /*
  * the following items may need to be configured for a particular machine

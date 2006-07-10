@@ -232,7 +232,7 @@ sigalarm(int code)
 	if( fb_server_fbp != FBIO_NULL )
 		fb_poll(fb_server_fbp);
 #ifndef _WIN32
-	(void)signal( SIGALRM, sigalarm );	/* SYSV removes handler */
+	(void)signal( SIGALRM, sigalarm );	/* some systems remove handler */
 #endif
 	alarm(1);
 }

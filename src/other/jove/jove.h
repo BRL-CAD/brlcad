@@ -14,40 +14,17 @@
 /* jove.h header file to be included by EVERYONE */
 #include <stdlib.h>
 #include <stdio.h>
+#include <setjmp.h>
+#ifdef HAVE_STRINGS_H
+#  include <strings.h>
+#else
+#  include <string.h>
+#endif
 
 #ifdef SYSV
 #  define SYS5	1
 #endif
-/*
- *  Some very common BSD --> SYSV conversion aids
- */
-#if defined(SYS5) && !defined(bcopy)
-/* IMPORTANT -- bcopy macro must not be invoked with overlapping source and destination! */
-#	define bcopy(from,to,count)	memcpy( to, from, count )
-#endif
 
-#if defined(BSD) && !defined(SYS5) && (BSD <= 43)
-#	define strchr(sp,c)	index(sp,c)
-#	define strrchr(sp,c)	rindex(sp,c)
-	extern char *index();
-	extern char *rindex();
-#endif
-
-#ifndef HAVE_TERMIOS_H
-#if (defined(BSD) && BSD >= 44) || defined(_POSIX_SOURCE)
-#	define HAVE_TERMIOS_H	1
-#else
-/* undef HAVE_TERMIOS_H */
-#endif
-#endif
-
-#include <setjmp.h>
-
-#if defined(BSD) && !defined(SYS5) && (BSD <= 43)
-#include <strings.h>
-#else
-#include <string.h>
-#endif
 
 /*
  *  DAG's portable support for functions taking variable number of arguments
@@ -74,42 +51,42 @@
  *		return status;
  *	}
  */
-#ifdef __STDC__
-#include <stdarg.h>
-#define	VA_T(t)		t,
-#define	VA_DOTS		...
-#define	VA_ALIST	...
-#define	VA_D(d)         /* nothing */
-#define	VA_DCL		/* nothing */
-#define	VA_LIST(ap)	va_list ap;
-#define	VA_START(ap,A0)	va_start(ap,A0);
-#define	VA_I(ap,T,Ai)	/* nothing */
-#define	VA_ARG(ap,T)	va_arg(ap,T)
-#define	VA_END(ap)	va_end(ap);
+#ifdef HAVE_STDARG_H
+#  include <stdarg.h>
+#  define	VA_T(t)		t,
+#  define	VA_DOTS		...
+#  define	VA_ALIST	...
+#  define	VA_D(d)         /* nothing */
+#  define	VA_DCL		/* nothing */
+#  define	VA_LIST(ap)	va_list ap;
+#  define	VA_START(ap,A0)	va_start(ap,A0);
+#  define	VA_I(ap,T,Ai)	/* nothing */
+#  define	VA_ARG(ap,T)	va_arg(ap,T)
+#  define	VA_END(ap)	va_end(ap);
 #else
-#include <varargs.h>
-#define	VA_T(t)		/* nothing */
-#define	VA_DOTS		/* nothing */
-#define	VA_ALIST	va_alist
-#define	VA_D(d)		d;
-#define	VA_DCL		va_dcl
-#define	VA_LIST(ap)	va_list ap;
-#define	VA_START(ap,A0)	va_start(ap);
-#define	VA_I(ap,T,Ai)	Ai = va_arg(ap,T);
-#define	VA_ARG(ap,T)	va_arg(ap,T)
-#define	VA_END(ap)	va_end(ap);
+#  include <varargs.h>
+#  define	VA_T(t)		/* nothing */
+#  define	VA_DOTS		/* nothing */
+#  define	VA_ALIST	va_alist
+#  define	VA_D(d)		d;
+#  define	VA_DCL		va_dcl
+#  define	VA_LIST(ap)	va_list ap;
+#  define	VA_START(ap,A0)	va_start(ap);
+#  define	VA_I(ap,T,Ai)	Ai = va_arg(ap,T);
+#  define	VA_ARG(ap,T)	va_arg(ap,T)
+#  define	VA_END(ap)	va_end(ap);
 #endif
 
 #ifdef __convex__
-#define	HAS_TEMPNAM	0	/* No tempnam()! */
+#  define	HAS_TEMPNAM	0	/* No tempnam()! */
 #endif
 
 #ifndef	HAS_TEMPNAM
-#ifdef	L_tmpnam		/* From modern stdio.h */
-#define	HAS_TEMPNAM	1
-#else
-#define	HAS_TEMPNAM	0
-#endif
+#  ifdef	L_tmpnam		/* From modern stdio.h */
+#    define	HAS_TEMPNAM	1
+#  else
+#    define	HAS_TEMPNAM	0
+#  endif
 #endif
 
 #if HAS_TEMPNAM
@@ -130,7 +107,7 @@ typedef	short	disk_line;
 #endif
 
 #ifndef NULL
-# define NULL	0
+#  define NULL	0
 #endif
 
 #define OKAY	0		/* Return codes for when telling */
@@ -606,26 +583,25 @@ extern void b_format(),
 
 #ifdef CRAY2
 /* Common SYSV definitions not supported on the CRAY2 */
-#define SIGBUS  SIGPRE
-#define SIGSEGV SIGORE
+#  define SIGBUS  SIGPRE
+#  define SIGSEGV SIGORE
 
-#define VQUIT   1
-#define VERASE  2
-#define VKILL   3
-#define VMIN    4
-#define VTIME   5
-#define	INLCR	0000100
-#define ICRNL   0000400
-#define IUCLC   0001000
-#define	OLCUC	0000002
-#define	ONLCR	0000004
-#define	OCRNL	0000010
-#define	ONOCR	0000020
-#define	ONLRET	0000040
-#define	OFILL	0000100
-#define TABDLY  0014000
-#define TAB3    0014000
-#define CBAUD   0000017
-
-#define	ISIG	0000001		/* line disc. 0 modes */
+#  define VQUIT   1
+#  define VERASE  2
+#  define VKILL   3
+#  define VMIN    4
+#  define VTIME   5
+#  define INLCR	0000100
+#  define ICRNL 0000400
+#  define IUCLC 0001000
+#  define OLCUC	0000002
+#  define ONLCR	0000004
+#  define OCRNL	0000010
+#  define ONOCR	0000020
+#  define ONLRET	0000040
+#  define OFILL	0000100
+#  define TABDLY  0014000
+#  define TAB3  0014000
+#  define CBAUD 0000017
+#  define ISIG	0000001		/* line disc. 0 modes */
 #endif

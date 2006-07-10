@@ -42,23 +42,23 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <fcntl.h>
 #include <signal.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include <sys/time.h>
 #ifdef __NetBSD__
-#	define USE_OLD_TTY
-#	include <sys/ioctl_compat.h>
+#  define USE_OLD_TTY
+#  include <sys/ioctl_compat.h>
 #endif
 #if defined(__bsdi__)
-#	include <sys/ioctl_compat.h>
-#	define OCRNL   0000010
+#  include <sys/ioctl_compat.h>
+#  define OCRNL   0000010
 #endif
 
 #include "machine.h"
@@ -66,55 +66,43 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /*
  *  This file will work IFF one of these three flags is set:
  *	HAVE_TERMIOS_H	use POSIX termios and tcsetattr() call with XOPEN flags
- *	SYSV		use SysV Rel3 termio and TCSETA ioctl
  *	BSD		use Version 7 / BSD sgttyb and TIOCSETP ioctl
  */
 
-#if defined(HAVE_TERMIOS_H)
-#  undef SYSV
-#  undef BSD
+#ifdef HAVE_TERMIOS_H
 #  include <termios.h>
-
-	static struct termios	tty;
+static struct termios	tty;
 
 #else	/* !defined(HAVE_TERMIOS_H) */
 
-#  ifdef BSD
+#  ifdef HAVE_SYS_IOCTL_H
 #    include <sys/ioctl.h>
-     struct	sgttyb	tty;
+struct	sgttyb	tty;
 #    define TCSETA	TIOCSETP
 #    define TCGETA	TIOCGETP
-#  endif	/* BSD */
+#  endif
 
-#  ifdef SYSV
-#if 0
-#	if !defined(__sparc) && !defined(CRAY)
-		struct timeval {
-			int	tv_sec;
-			int	tv_usec;
-	};
-#	endif
-#endif
-#   include <termio.h>
-    struct	termio	tty;
-#  endif /* SYSV */
+#  ifdef HAVE_TERMIO_H
+#    include <termio.h>
+struct	termio	tty;
+#  endif
 
 #endif /* _POSIX_SOURCE */
 
 #ifndef OCRNL
-#define OCRNL 0x00000008
+#  define OCRNL 0x00000008
 #endif
 
 #ifndef TAB1
-#define TAB1 0x00000400
+#  define TAB1 0x00000400
 #endif
 
 #ifndef TAB2
-#define TAB2 0x00000800
+#  define TAB2 0x00000800
 #endif
 
 #ifndef	XTABS
-#	define	XTABS	(TAB1 | TAB2)
+#  define XTABS (TAB1 | TAB2)
 #endif /* XTABS */
 
 int fd;
@@ -167,7 +155,7 @@ dunnopen(void)
 	tty.sg_ispeed = tty.sg_ospeed = B9600;
 	tty.sg_flags = RAW | EVENP | ODDP | XTABS;
 #endif
-#if defined(SYSV) || defined(HAVE_TERMIOS_H)
+#if defined(HAVE_SYS_IOCTL_H) || defined(HAVE_TERMIOS_H)
 	tty.c_cflag = B9600 | CS8;	/* Character size = 8 bits */
 	tty.c_cflag &= ~CSTOPB;		/* One stop bit */
 	tty.c_cflag |= CREAD;		/* Enable the reader */

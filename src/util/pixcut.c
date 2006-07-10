@@ -53,12 +53,9 @@ static long int	num_bytes = 3L;
 #define SIZEBACK	256
 static unsigned char background[SIZEBACK];	/* Holds the fill background color */
 
-#if defined(SYSV)
-static char	stdiobuf[4*1024*1024];
-#endif
-
-static FILE	*input;
-static char	*in_name;
+static char	stdiobuf[4*1024*1024] = {0};
+static FILE	*input = (FILE *)NULL;
+static char	*in_name = (char *)NULL;
 static int	autosize = 0;
 static int	isfile = 0;
 
@@ -194,13 +191,14 @@ main(int argc, char **argv)
 		}
 	}
 
-/*
- * On the assumption that there will be lots more input to paw through
- * than there will be output to write, give STDIO a big input buffer
- * to allow decent sized transfers from the filesystem.
- */
-#if defined( SYSV )
-	(void) setvbuf( input, stdiobuf, _IOFBF, sizeof(stdiobuf) );
+	/*
+	 * On the assumption that there will be lots more input to paw
+	 * through than there will be output to write, give STDIO a
+	 * big input buffer to allow decent sized transfers from the
+	 * filesystem.
+	 */
+#ifdef HAVE_SETVBUF
+	(void)setvbuf( input, stdiobuf, _IOFBF, sizeof(stdiobuf) );
 #endif
 
 /*

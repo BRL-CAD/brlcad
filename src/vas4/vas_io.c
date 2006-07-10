@@ -40,39 +40,34 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #if HAVE_UNISTD_H
-#include <unistd.h>
+#  include <unistd.h>
 #endif
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
 
 #if defined(HAVE_XOPEN)
-#  undef SYSV
-#  undef BSD
 #  include <termios.h>
 
 static struct termios	vtty;
 
-#if defined(__bsdi__)
-#	include <sys/ioctl_compat.h>
-#	define TAB3 (TAB1|TAB2)
-#	define OCRNL   0000010
-#endif
+#  if defined(__bsdi__)
+#    include <sys/ioctl_compat.h>
+#    define TAB3 (TAB1|TAB2)
+#    define OCRNL   0000010
+#  endif
 
 #else	/* !defined(HAVE_XOPEN) */
 
-#ifdef SYSV
-#  include <termio.h>
+#  ifdef HAVE_TERMIO_H
+#    include <termio.h>
 struct termio vtty;
-#endif
-#ifdef BSD
-#  include <sgtty.h>
+#  endif
+#  ifdef HAVE_SGTTY_H
+#    include <sgtty.h>
 struct sgttyb vtty;
-#endif
+#  endif
 
 #endif /* _POSIX_SOURCE */
 
@@ -102,14 +97,14 @@ vas_open(void)
 	}
 
 	/* Setup VAS line */
-#ifdef BSD
+#ifdef HAVE_SGTTY_H
 	vtty.sg_ispeed = BAUD;
 	vtty.sg_ospeed = BAUD;
 	vtty.sg_flags = RAW|EVENP|ODDP;
 	ioctl(vas_fd,TIOCSETP,&vtty);
 	ioctl(vas_fd,TIOCEXCL,&vtty);	/* exclusive use */
 #endif
-#ifdef SYSV
+#ifdef HAVE_TERMIO_H
 	vtty.c_cflag = BAUD | CS8;      /* Character size = 8 bits */
 	vtty.c_cflag &= ~CSTOPB;         /* One stop bit */
 	vtty.c_cflag |= CREAD;           /* Enable the reader */

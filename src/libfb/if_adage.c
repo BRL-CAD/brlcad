@@ -54,26 +54,20 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-/*
- */
 #include "common.h"
-
-
 
 #include <stdio.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <ctype.h>
-#if defined( VLDSYSV )
-#	include	<sys/_ioctl.h> /* GSM : _ needed for Sys V emulation */
-#else
-#	include	<sys/ioctl.h>
-#endif
+#include <sys/ioctl.h>
 
 #include "machine.h"
 #include "fb.h"
+
 #include "./fblocal.h"
 #include "./adage.h"
+
 
 _LOCAL_ int	adage_open(FBIO *ifp, char *file, int width, int height),
 		adage_close(FBIO *ifp),

@@ -49,11 +49,11 @@ static long int	base_x = 0L;		/* Default to lower left corner */
 static long int	base_y = 0L;
 static int	Verbose = 0;
 
-#if defined(SYSV)
-static char	stdiobuf[4*1024*1024];
-#endif
-static FILE	*orig, *paste;
-static char	*orig_name, *paste_name;
+static char	stdiobuf[4*1024*1024] = {0};
+static FILE	*orig = (FILE *)NULL;
+static FILE	*paste = (FILE *)NULL;
+static char	*orig_name = (char *)NULL;
+static char	*paste_name = (char *)NULL;
 static int	paste_autosize = 0;
 static int	orig_autosize = 0;
 static int	paste_isfile = 0;
@@ -209,9 +209,10 @@ main(int argc, char **argv)
 		}
 	}
 
-#if defined( SYSV )
+#ifdef HAVE_SETVBUF
 	(void) setvbuf(orig, stdiobuf, _IOFBF, sizeof(stdiobuf) );
 #endif
+
 /*
  * Spew some interesting info at the people...
  */

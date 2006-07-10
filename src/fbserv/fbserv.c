@@ -224,7 +224,7 @@ sigalarm(int code)
 	printf("alarm %s\n", fb_server_fbp ? "FBP" : "NULL");
 	if( fb_server_fbp != FBIO_NULL )
 		fb_poll(fb_server_fbp);
-	(void)signal( SIGALRM, sigalarm );	/* SYSV removes handler */
+	(void)signal( SIGALRM, sigalarm );	/* some systems remove handler */
 	alarm(1);
 }
 
