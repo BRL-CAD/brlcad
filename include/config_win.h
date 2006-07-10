@@ -99,6 +99,7 @@
 #define HAVE_VARARGS_H	1
 #define HAVE_VFORK	1
 #define HAVE_VPRINTF	1
+#define HAVE_WINSOCK_H	1
 #define REVERSE_IEEE	yes
 #define USE_PROTOTYPES	1
 
