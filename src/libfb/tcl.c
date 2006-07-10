@@ -226,7 +226,7 @@ fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
     int status;
 
     if(argc != 2){
-	/*XXX need help message */
+	/* XXX need help message */
 	return TCL_ERROR;
     }
 
@@ -248,8 +248,9 @@ fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 
 	    return TCL_ERROR;
 	}
-	if(ifp->if_pbase != PIXEL_NULL)
+	if(ifp->if_pbase != PIXEL_NULL) {
 	    free((void *)ifp->if_pbase);
+	}
 	free((void *)ifp->if_name);
 	free((void *)ifp);
 	return TCL_OK;
@@ -290,12 +291,14 @@ fb_configureWindow(FBIO *ifp, int width, int height)
 #ifdef IF_X
 
 #ifndef _WIN32
-    if (!strncmp(ifp->if_name, X_device_name, strlen(X_device_name)))
+    if (!strncmp(ifp->if_name, X_device_name, strlen(X_device_name))) {
 	X24_configureWindow(ifp, width, height);
+    }
 #endif
 #ifdef IF_OGL
-    if (!strncmp(ifp->if_name, ogl_device_name, strlen(ogl_device_name)))
+    if (!strncmp(ifp->if_name, ogl_device_name, strlen(ogl_device_name))) {
 	ogl_configureWindow(ifp, width, height);
+    }
 #endif  /* IF_OGL */
 #endif  /* IF_X */
 }
@@ -304,24 +307,36 @@ int
 fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 {
 #ifdef IF_X
-	int status=-1;
+    int status=-1;
+
+    if (w <= 0 || h <= 0) {
+	/* nothing to refresh */
+	return TCL_OK;
+    }
+
+    if (!ifp || !ifp->if_name) {
+	/* unset/unknown framebuffer */
+	return TCL_OK;
+    }
+
 #  ifndef _WIN32
-	if(!strncmp(ifp->if_name, X_device_name, strlen( X_device_name))) {
-		status = X24_refresh(ifp, x, y, w, h);
-	}
+    if(!strncmp(ifp->if_name, X_device_name, strlen( X_device_name))) {
+	status = X24_refresh(ifp, x, y, w, h);
+    }
 #  endif
 #  ifdef IF_OGL
-	if(!strncmp(ifp->if_name, ogl_device_name, strlen( ogl_device_name))) {
-		status = ogl_refresh(ifp, x, y, w, h);
-	}
+    if(!strncmp(ifp->if_name, ogl_device_name, strlen( ogl_device_name))) {
+	status = ogl_refresh(ifp, x, y, w, h);
+    }
 #  endif  /* IF_OGL */
 
-	if(status < 0)
-		return TCL_ERROR;
+    if(status < 0) {
+	return TCL_ERROR;
+    }
 
 #endif  /* IF_X */
 
-	return TCL_OK;
+    return TCL_OK;
 }
 
 /*
