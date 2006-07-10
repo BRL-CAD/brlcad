@@ -30,7 +30,6 @@ SRCS = \
 	magic.c \
 	malloc.c \
 	mappedfile.c \
-	memset.c \
 	mread.c \
 	mro.c \
 	observer.c \
