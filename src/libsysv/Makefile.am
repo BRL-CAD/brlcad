@@ -5,7 +5,6 @@ lib_LTLIBRARIES = libsysv.la
 # XXX this library needs to move into src/other at some point
 libsysv_la_LDFLAGS = -version-info 19:1
 libsysv_la_SOURCES = \
-	getopt.c \
 	memset.c \
 	redata.c \
 	regex.c \
