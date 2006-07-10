@@ -807,24 +807,6 @@ _put_Data(register FILE *fp, register unsigned char *cp, int n)
 {	register int	count = n;
 	RByteData(n-1);
 
-#if 0
-	/* More STDIO optimization, watch out...			*/
-	if( fp->_cnt >= count )
-		{ register unsigned char *op = (unsigned char *)fp->_ptr;
-		fp->_cnt -= count;
-		while( count-- > 0 )
-			{
-			*op++ = *cp;
-			cp += STRIDE;
-			}
-#if defined(BSD) && ! defined(sun)
-		fp->_ptr = (char *)op;
-#else
-		fp->_ptr = op;
-#endif
-		}
-	else
-#endif
 	while( count-- > 0 )
 		{
 		(void) putc( (int) *cp, fp );
