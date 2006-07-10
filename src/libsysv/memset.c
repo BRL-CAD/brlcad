@@ -1,17 +1,36 @@
-/*
- *			M E M S E T
+/*                        M E M S E T . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2004-2006 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+
+/** \addtogroup libsysv */
+/*@{*/
+
+/** @file memset.c
  *
  *  Author - Lee A. Butler
  *
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
- *
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
+/*@}*/
 
 #include "common.h"
 
@@ -26,13 +45,15 @@ static const int unused = 0;
 char *
 memset(char *s, register char c, register int n)
 {
-	register char *p=s;
+    register char *p=s;
+    
+    if (p) {
+	while (n-- > 0) {
+	    *p++ = c;
+	}
+    }
 
-	if (p)
-		while (n-- > 0)
-			*p++ = c;
-
-	return s;
+    return s;
 }
 
 #endif
