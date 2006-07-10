@@ -62,17 +62,22 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
 
-#ifndef _WIN32
-#  undef BSD	/* /usr/include/sys/param.h redefines this */
+#ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
 
-#if !defined(vax)
+#ifdef HAVE_TIME_H
 #  include <time.h>
 #endif
 
-#ifndef _WIN32
+#ifdef HAVE_WINSOCK_H
+#  include <process.h>
+#  include <winsock.h>
+#  include <fcntl.h>
+#else
 #  include <sys/socket.h>
 #  include <sys/ioctl.h>		/* for FIONBIO */
 #  include <netinet/in.h>		/* for htons(), etc */
@@ -80,10 +85,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <netinet/tcp.h>	/* for TCP_NODELAY sockopt */
 #  include <arpa/inet.h>		/* for inet_addr() */
 #  undef LITTLE_ENDIAN		/* defined in netinet/{ip.h,tcp.h} */
-#else
-#  include <process.h>
-#  include <winsock.h>
-#  include <fcntl.h>
 #endif
 
 #ifdef HAVE_STRING_H
