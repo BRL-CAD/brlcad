@@ -1331,6 +1331,7 @@ AC_CHECK_HEADERS( \
 	varargs.h \
 	waitflags.h \
 	wchar.h \
+	winsock.h \
 	xosdefs.h \
 )
 
