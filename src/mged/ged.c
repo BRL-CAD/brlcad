@@ -139,10 +139,6 @@ extern void paint_rect_area(void);
 /* defined in predictor.c */
 extern void predictor_init(void);
 
-/* defined in attach.c */
-extern int mged_link_vars(struct dm_list *p);
-extern int is_dm_null(void);
-
 /* defined in chgmodel.c */
 extern void set_localunit_TclVar(void);
 
