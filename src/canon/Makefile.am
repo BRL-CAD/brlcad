@@ -13,20 +13,20 @@ noinst_HEADERS = \
 
 man_MANS = canonize.1
 
-
 canonize_SOURCES = canonize.c canonlib.c asize.c
-canonize_LDADD = ${LIBM}
+canonize_LDADD = ${LIBM} ${LIBDS}
 
 pix_ipu_SOURCES = pix-ipu.c canonlib.c asize.c
-pix_ipu_LDADD = ${BU} ${LIBM}
+pix_ipu_LDADD = ${BU} ${LIBM} ${LIBDS}
 
 png_ipu_SOURCES = png-ipu.c canonlib.c asize.c
-png_ipu_LDADD = ${BU} ${LIBM}
+png_ipu_LDADD = ${BU} ${LIBM} ${LIBDS}
 
 ipuscan_SOURCES = ipuscan.c canonlib.c asize.c
-ipuscan_LDADD = ${LIBM}
+ipuscan_LDADD = ${LIBM} ${LIBDS}
 
 ipustat_SOURCES = ipustat.c canonlib.c
+ipustat_LDADD = ${LIBDS}
 
 EXTRA_DIST = $(man_MANS)
 
