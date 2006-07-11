@@ -45,13 +45,12 @@
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+
 #include "./ged.h"
 #include "./cmd.h"
 
 
-#define CLONE_VERSION "Clone ver 3.0\n2005-12-12\n"
-
-extern int is_dm_null(void);
+#define CLONE_VERSION "Clone ver 4.0\n2006-08-08\n"
 
 
 /* NOTE: in order to not shadow the global "dbip" pointer used
