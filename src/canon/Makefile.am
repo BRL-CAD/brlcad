@@ -20,7 +20,7 @@ pix_ipu_SOURCES = pix-ipu.c canonlib.c asize.c
 pix_ipu_LDADD = ${BU} ${LIBM} ${LIBDS}
 
 png_ipu_SOURCES = png-ipu.c canonlib.c asize.c
-png_ipu_LDADD = ${BU} ${LIBM} ${LIBDS}
+png_ipu_LDADD = ${BU} ${LIBM} ${LIBDS} ${LIBPNG}
 
 ipuscan_SOURCES = ipuscan.c canonlib.c asize.c
 ipuscan_LDADD = ${LIBM} ${LIBDS}
