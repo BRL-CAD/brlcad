@@ -1216,7 +1216,7 @@ AC_CHECK_LIB(dl, dlopen, dl_link_works=yes ; LIBDL="-ldl")
 dnl check if the SGI generic SCSI library links
 ds_link_works=no
 LIBDS=""
-AC_CHECK_LIB(ds, dsopen, ds_link_works=yes ; LIBDL="-lds")
+AC_CHECK_LIB(ds, dsopen, ds_link_works=yes ; LIBDS="-lds")
 
 dnl check if a graphics library links
 gl_link_works=no
