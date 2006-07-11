@@ -151,9 +151,6 @@ dunnopen(void)
 
 	/* set up the camera device */
 
-	tty.sg_ispeed = tty.sg_ospeed = B9600;
-	tty.sg_flags = RAW | EVENP | ODDP | XTABS;
-
 #if defined(HAVE_SYS_IOCTL_H) || defined(HAVE_TERMIOS_H)
 	tty.c_cflag = B9600 | CS8;	/* Character size = 8 bits */
 	tty.c_cflag &= ~CSTOPB;		/* One stop bit */
@@ -166,15 +163,18 @@ dunnopen(void)
 	tty.c_iflag |= IGNBRK|IGNPAR;
 
 	tty.c_oflag &= ~(OPOST|ONLCR|OCRNL);	/* Turn off all post-processing */
-#if defined(XTABS)
+#  if defined(XTABS)
 	tty.c_oflag |= XTABS;		/* output tab expansion ON */
-#endif
+#  endif
 	tty.c_cc[VMIN] = 1;
 	tty.c_cc[VTIME] = 0;
 
 	tty.c_lflag &= ~ICANON;		/* Raw mode */
 	tty.c_lflag &= ~ISIG;		/* Signals OFF */
 	tty.c_lflag &= ~(ECHO|ECHOE|ECHOK);	/* Echo mode OFF */
+#else
+	tty.sg_ispeed = tty.sg_ospeed = B9600;
+	tty.sg_flags = RAW | EVENP | ODDP | XTABS;
 #endif
 
 #if HAVE_TERMIOS_H
