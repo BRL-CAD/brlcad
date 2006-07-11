@@ -1213,6 +1213,11 @@ dl_link_works=no
 LIBDL=""
 AC_CHECK_LIB(dl, dlopen, dl_link_works=yes ; LIBDL="-ldl")
 
+dnl check if the SGI generic SCSI library links
+ds_link_works=no
+LIBDS=""
+AC_CHECK_LIB(ds, dsopen, ds_link_works=yes ; LIBDL="-lds")
+
 dnl check if a graphics library links
 gl_link_works=no
 LIBGL=""
@@ -1259,6 +1264,7 @@ AC_CHECK_HEADERS( \
 	X11/Xlib.h \
 	arpa/inet.h \
 	curses.h \
+	dslib.h \
 	errno.h \
 	fcntl.h \
 	float.h \
@@ -2555,20 +2561,6 @@ fi
 AC_SUBST(TERMLIB)
 
 
-dnl *** libgl ***
-AC_MSG_CHECKING(whether to link with the OpenGL library)
-AC_MSG_RESULT($gl_link_works)
-AC_SUBST(LIBGL)
-
-dnl *** sgigl ***
-AC_MSG_CHECKING(whether to link with the SGI graphics library)
-AC_MSG_RESULT($sgigl_link_works)
-AC_SUBST(LIBSGIGL)
-dnl XXX the HAS_SGIGL define should go away eventually
-if test "x$sgigl_link_works" = "xyes" ; then
-	AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.)
-fi
-
 dnl *** libm ***
 AC_MSG_CHECKING(whether to link with the math library)
 AC_MSG_RESULT($m_link_works)
@@ -2598,6 +2590,25 @@ dnl *** libdl ***
 AC_MSG_CHECKING(for dynamic linker library availability)
 AC_MSG_RESULT([$dl_link_works])
 AC_SUBST(LIBDL)
+
+dnl *** libds ***
+AC_MSG_CHECKING(for SGI /dev/scsi library availability)
+AC_MSG_RESULT([$ds_link_works])
+AC_SUBST(LIBDS)
+
+dnl *** libgl ***
+AC_MSG_CHECKING(whether to link with the OpenGL library)
+AC_MSG_RESULT($gl_link_works)
+AC_SUBST(LIBGL)
+
+dnl *** sgigl ***
+AC_MSG_CHECKING(whether to link with the SGI graphics library)
+AC_MSG_RESULT($sgigl_link_works)
+AC_SUBST(LIBSGIGL)
+dnl XXX the HAS_SGIGL define should go away eventually
+if test "x$sgigl_link_works" = "xyes" ; then
+	AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.)
+fi
 
 
 dnl *** 64-bit compilation ***
