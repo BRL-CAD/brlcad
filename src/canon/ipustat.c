@@ -28,30 +28,33 @@
  */
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
 #endif
 
-#if defined(IRIX) && (IRIX == 4 || IRIX == 5 || IRIX == 6)
-#include <sys/types.h>
-#include <fcntl.h>
-#include <stdlib.h>
 #include "./canon.h"
-#endif
+
 /*
  *	M A I N
  *
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
-int main(ac,av)
-     int ac;
-     char *av[];
+int main(int ac, char *av[])
 {
-#if defined(IRIX) && (IRIX == 4 || IRIX == 5)
+
+#ifdef IPU_FULL_LIB
+
     struct dsreq *dsp;
     char *p;
 
@@ -80,12 +83,16 @@ int main(ac,av)
     dsclose(dsp);
 
     return(0);
-#else
+
+#else /* !IPU_FULL_LIB */
+
     fprintf(stderr,
 	    "%s only works on SGI(tm) systems with dslib support\n",
 	    *av);
     return(-1);
-#endif
+
+#endif /* IPU_FULL_LIB */
+
 }
 
 /*

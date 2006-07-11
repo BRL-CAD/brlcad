@@ -52,8 +52,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "machine.h"
 
-#if defined(IRIX) && (IRIX == 4 || IRIX == 5 || IRIX == 6)
 #include "./canon.h"
+
+#ifdef IPU_FULL_LIB
 
 # define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */
 # define _BSD_TYPES	1	/* IRIX 5.0.1 botch in sys/prctl.h */
@@ -208,9 +209,7 @@ void step3(aa)
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
-int main(ac,av)
-     int ac;
-     char *av[];
+int main(int ac, char *av[])
 {
     int arg_index;
     int i;
@@ -293,17 +292,17 @@ int main(ac,av)
     (void)chmod(av[arg_index], 0444);
     return(0);
 }
-#else
+
+#else /* !IPU_FULL_LIB */
+
 int
-main(ac, av)
-     int ac;
-     char *av[];
+main(int ac, char *av[])
 {
     fprintf(stderr,
 	    "%s only works on SGI(tm) systems with dslib support\n", *av);
     return(-1);
 }
-#endif
+#endif /* IPU_FULL_LIB */
 
 /*
  * Local Variables:

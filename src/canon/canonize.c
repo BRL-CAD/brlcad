@@ -39,9 +39,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "./canon.h"
@@ -112,9 +112,7 @@ queue(fd)
 
 
 int
-main(ac, av)
-     int ac;
-     char *av[];
+main(int ac, char *av[])
 {
     int arg_ind;
     FILE *fd;

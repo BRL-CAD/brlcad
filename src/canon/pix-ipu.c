@@ -75,17 +75,18 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "machine.h"
 
-#if defined(IRIX) && (IRIX == 4 || IRIX == 5 || IRIX == 6)
 #include "./canon.h"
 
-# define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */
-# define _BSD_TYPES	1	/* IRIX 5.0.1 botch in sys/prctl.h */
+#ifdef IPU_FULL_LIB
+
+#define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */
+#define _BSD_TYPES	1	/* IRIX 5.0.1 botch in sys/prctl.h */
 #include <sys/types.h>
-# include <ulocks.h>
+#include <ulocks.h>
 /* ulocks.h #include's <limits.h> and <malloc.h> */
 /* ulocks.h #include's <task.h> for getpid stuff */
 /* task.h #include's <sys/prctl.h> */
-# include <malloc.h>
+#include <malloc.h>
 /* <malloc.h> #include's <stddef.h> */
 #include <fcntl.h>
 #include <stdlib.h>
@@ -236,9 +237,8 @@ void step3(aa)
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
-int main(ac,av)
-     int ac;
-     char *av[];
+int
+main(int ac, char *av[])
 {
     int arg_index;
     int i;
@@ -339,17 +339,17 @@ int main(ac,av)
     return(0);
 }
 
-#else
+#else /* !IPU_FULL_LIB */
+
 int
-main(ac, av)
-     int ac;
-     char *av[];
+main(int ac, char *av[])
 {
     fprintf(stderr,
 	    "%s only works on SGI(tm) systems with dslib (direct SCSI library) support\n", *av);
     return(-1);
 }
-#endif
+
+#endif /* IPU_FULL_LIB */
 
 /*
  * Local Variables:

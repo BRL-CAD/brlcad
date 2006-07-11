@@ -32,6 +32,11 @@
  *  $Header$
  */
 
+#ifndef __CANON_H__
+#define __CANON_H__
+
+#include "common.h"
+
 #define	IPU_LUN_SCANNER		0x0
 #define	IPU_LUN_FILM_SCANNER	0x1
 #define	IPU_LUN_ANALOG_INPUT	0x2
@@ -68,16 +73,16 @@ union ipu_prsc_param {
 
 extern int	ipu_debug;
 
-#if defined(__sgi) || defined(sgi)
-#define IPU_FULL_LIB
-#include <dslib.h>
+#ifdef HAVE_DSLIB_H
+#  define IPU_FULL_LIB
+#  include <dslib.h>
 #endif
 
 
 #ifdef USE_PROTOTYPES
-#	define	FUNC_EXTERN(type_and_name,args)	extern type_and_name args
+#  define	FUNC_EXTERN(type_and_name,args)	extern type_and_name args
 #else
-#	define	FUNC_EXTERN(type_and_name,args)	extern type_and_name()
+#  define	FUNC_EXTERN(type_and_name,args)	extern type_and_name()
 #endif
 
 #ifdef IPU_FULL_LIB
@@ -123,6 +128,8 @@ extern union ipu_prsc_param param;
 extern char *arg_v[];
 extern int arg_c;
 extern char *print_queue;
+
+#endif  /* __CANON_H__ */
 
 /*
  * Local Variables:

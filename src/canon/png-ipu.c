@@ -78,12 +78,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "png.h"
 
-#if defined(IRIX) && (IRIX == 4 || IRIX == 5 || IRIX == 6)
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include "./canon.h"
 
+#ifdef IPU_FULL_LIB
 
 static png_color_16 def_backgrd={ 255,255,255,255,255 };	/* white */
 static double	def_screen_gamma=1.0;	/* Don't add more gamma, by default */
@@ -97,9 +97,8 @@ static unsigned char **scanline;	/* 1 scanline pixel buffer */
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
-int main(ac,av)
-     int ac;
-     char *av[];
+int
+main(int ac, char *av[])
 {
     int arg_index;
     struct dsreq *dsp;
@@ -298,17 +297,17 @@ int main(ac,av)
     return(0);
 }
 
-#else
+#else /* !IPU_FULL_LIB */
+
 int
-main(ac, av)
-     int ac;
-     char *av[];
+main(int ac, char *av[])
 {
     fprintf(stderr,
 	    "%s only works on SGI(tm) systems with dslib support\n", *av);
     return(-1);
 }
-#endif
+
+#endif /* IPU_FULL_LIB */
 
 /*
  * Local Variables:
