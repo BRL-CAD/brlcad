@@ -472,21 +472,13 @@ extern struct run_rt head_run_rt;
 
 
 /* adc.c */
-int f_adc (
-	ClientData clientData,
-	Tcl_Interp *interpreter,
-	int	argc,
-	char	**argv);
+int f_adc (ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
 
 /* attach.c */
-#if defined(SEEN_MGED_DM_H)
-int mged_attach(
-	struct w_dm *wp,
-	int argc,
-	char *argv[]);
-#else
+int is_dm_null(void);
 int mged_attach(struct w_dm *wp, int argc, char **argv);
-#endif
+int mged_link_vars(struct dm_list *p);
+
 
 /* buttons.c */
 int bv_zoomin(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
