@@ -2,16 +2,17 @@
                          Release 7.8.4
                        http://brlcad.org/
 
-BRL-CAD is a powerful and comprehensive Combinatorial/Constructive
-Solid Geometry (CSG) solid modeling system that includes an
-interactive 3D solid geometry editor, a network-distributed symmetric
-multiprocessing high-performance ray-tracer, network-distributed
-framebuffer support, image and signal-processing tools, ray-tracing
-support for rendering and geometric analysis, path-tracing and photon
-mapping support for realistic image synthesis, animation capabilities,
-ray-tracing and numerical processing libraries, a system performance
-analysis benchmark suite, an embedded scripting interface, and a
-robust high-performance geometric representation and analysis library.
+BRL-CAD is a powerful cross-platform open source combinatorial
+Constructive Solid Geometry (CSG) solid modeling system that includes
+an interactive 3D solid geometry editor, a network-distributed
+symmetric multiprocessing high-performance ray-tracer,
+network-distributed framebuffer support, image and signal-processing
+tools, ray-tracing support for rendering and geometric analysis,
+path-tracing and photon mapping support for realistic image synthesis,
+animation capabilities, ray-tracing and numerical processing
+libraries, a system performance analysis benchmark suite, an embedded
+scripting interface, and a robust high-performance geometric
+representation and analysis library.
 
 BRL-CAD is the primary tri-service solid modeling CAD system used by
 the U.S. military to model weapons systems for vulnerability and
@@ -32,7 +33,7 @@ as well as explicit solids made from closed collections of Uniform
 B-Spline Surfaces, Non-Uniform Rational B-Spline (NURBS) surfaces,
 n-Manifold Geometry (NMG), and purely faceted mesh geometry.  All
 geometric objects may be combined using boolean set-theoretic CSG
-operations such as union, intersection, and difference.
+operations including union, intersection, and difference.
 
 BRL-CAD has been under active development for more than 20 years with
 a portability heritage that includes systems such as a DEC VAX-11/780
@@ -53,10 +54,10 @@ cross-platform and is actively developed on and maintained for many
 common operating system environments including for BSD, IRIX, Linux,
 Solaris, Mac OS X, and Windows among others.  The entire package is
 distributed in binary and source code from as free open source
-software, provided under Open Source Initiative (OSI) approved license
-terms.  BRL-CAD was released as open source in December 2004 with
-portions licensed under the GPL, LGPL, GFDL, and BSD licenses.  See
-the COPYING file for more details.
+software (FOSS), provided under Open Source Initiative (OSI) approved
+license terms.  BRL-CAD was released as open source in December 2004
+with portions licensed under the GPL, LGPL, GFDL, and BSD licenses.
+See the COPYING file for more details.
 
 
 TABLE OF CONTENTS
