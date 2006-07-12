@@ -63,13 +63,14 @@ static struct termios	vtty;
 #  ifdef HAVE_TERMIO_H
 #    include <termio.h>
 struct termio vtty;
-#  endif
-#  ifdef HAVE_SGTTY_H
-#    include <sgtty.h>
+#  else /* !HAVE_TERMIO_H */
+#    ifdef HAVE_SGTTY_H
+#      include <sgtty.h>
 struct sgttyb vtty;
-#  endif
+#    endif
+#  endif /* HAVE_TERMIO_H */
 
-#endif /* _POSIX_SOURCE */
+#endif /* HAVE_XOPEN */
 
 #include "./vas4.h"
 
@@ -97,14 +98,9 @@ vas_open(void)
 	}
 
 	/* Setup VAS line */
-#ifdef HAVE_SGTTY_H
-	vtty.sg_ispeed = BAUD;
-	vtty.sg_ospeed = BAUD;
-	vtty.sg_flags = RAW|EVENP|ODDP;
-	ioctl(vas_fd,TIOCSETP,&vtty);
-	ioctl(vas_fd,TIOCEXCL,&vtty);	/* exclusive use */
-#endif
+
 #ifdef HAVE_TERMIO_H
+
 	vtty.c_cflag = BAUD | CS8;      /* Character size = 8 bits */
 	vtty.c_cflag &= ~CSTOPB;         /* One stop bit */
 	vtty.c_cflag |= CREAD;           /* Enable the reader */
@@ -134,7 +130,19 @@ vas_open(void)
 		perror(VAS_PORT);
 		exit(2);
 	}
-#endif
+
+#else /* !HAVE_TERMIO_H */
+#  ifdef HAVE_SGTTY_H
+
+	vtty.sg_ispeed = BAUD;
+	vtty.sg_ospeed = BAUD;
+	vtty.sg_flags = RAW|EVENP|ODDP;
+	ioctl(vas_fd,TIOCSETP,&vtty);
+	ioctl(vas_fd,TIOCEXCL,&vtty);	/* exclusive use */
+
+#  endif /* HAVE_SGTTY_H */
+#endif /* HAVE_TERMIO_H */
+
 #ifdef HAVE_XOPEN
 	vtty.c_cflag = BAUD | CS8;      /* Character size = 8 bits */
 	vtty.c_cflag &= ~CSTOPB;         /* One stop bit */
