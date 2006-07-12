@@ -156,7 +156,7 @@ The BRL-CAD package is intentionally designed to be extensively
 cross-platform and is actively developed on and maintained for many
 common operating system environments including for BSD, IRIX, Linux,
 Solaris, Mac OS X, and Windows among others.  The entire package is
-distributed in binary and source code from as free open source
+distributed in binary and source code form as free open source
 software (FOSS), provided under Open Source Initiative (OSI) approved
 license terms.  BRL-CAD was released as open source in December 2004
 with portions licensed under the GPL, LGPL, GFDL, and BSD licenses.
