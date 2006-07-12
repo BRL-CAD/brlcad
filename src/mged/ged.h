@@ -477,7 +477,7 @@ int f_adc (ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv
 /* attach.c */
 int is_dm_null(void);
 int mged_attach(struct w_dm *wp, int argc, char **argv);
-int mged_link_vars(struct dm_list *p);
+void mged_link_vars(struct dm_list *p);
 
 
 /* buttons.c */

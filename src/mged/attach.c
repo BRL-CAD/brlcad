@@ -81,15 +81,15 @@ extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
 extern int PS_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
 
 #ifdef DM_X
-#ifndef _WIN32
+#  ifndef _WIN32
 extern int X_dm_init();
 extern void X_fb_open();
-#endif
+#  endif
 
-#ifdef DM_OGL
+#  ifdef DM_OGL
 extern int Ogl_dm_init();
 extern void Ogl_fb_open();
-#endif
+#  endif
 #endif /* DM_X */
 
 #ifdef DM_GLX
@@ -112,13 +112,11 @@ extern void Tk_CreateCanvasBezierType();
 extern struct _color_scheme default_color_scheme;
 
 int gui_setup(char *dstr);
-int mged_attach(struct w_dm *wp, int argc, char **argv);
 void get_attached(void);
 void print_valid_dm(void);
 void dm_var_init(struct dm_list *initial_dm_list);
 void mged_slider_init_vls(struct dm_list *p);
 void mged_slider_free_vls(struct dm_list *p);
-void mged_link_vars(struct dm_list *p);
 
 #if 0
 static int do_2nd_attach_prompt();
