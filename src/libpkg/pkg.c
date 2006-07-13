@@ -100,7 +100,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 
 /* Not all systems with "BSD Networking" include UNIX Domain sockets */
-#ifdef HAVE_UNIX_DOMAIN_SOCKETS
+#ifdef HAVE_SYS_UN_H
 #  include <sys/un.h>		/* UNIX Domain sockets */
 #endif
 
@@ -272,7 +272,7 @@ pkg_open(char *host, char *service, char *protocol, char *uname, char *passwd, c
 #else
 	struct sockaddr_in sinme;		/* Client */
 	struct sockaddr_in sinhim;		/* Server */
-#ifdef HAVE_UNIX_DOMAIN_SOCKETS
+#ifdef HAVE_SYS_UN_H
 	struct sockaddr_un sunhim;		/* Server, UNIX Domain */
 #endif
 	register struct hostent *hp;
@@ -338,7 +338,7 @@ pkg_open(char *host, char *service, char *protocol, char *uname, char *passwd, c
 	bzero((char *)&sinhim, sizeof(sinhim));
 	bzero((char *)&sinme, sizeof(sinme));
 
-#ifdef HAVE_UNIX_DOMAIN_SOCKETS
+#ifdef HAVE_SYS_UN_H
 	if( host == NULL || strlen(host) == 0 || strcmp(host,"unix") == 0 ) {
 		/* UNIX Domain socket, port = pathname */
 		sunhim.sun_family = AF_UNIX;
@@ -381,7 +381,7 @@ pkg_open(char *host, char *service, char *protocol, char *uname, char *passwd, c
 	addr = (struct sockaddr *) &sinhim;
 	addrlen = sizeof(struct sockaddr_in);
 
-#ifdef HAVE_UNIX_DOMAIN_SOCKETS
+#ifdef HAVE_SYS_UN_H
 ready:
 #endif
 
@@ -458,7 +458,7 @@ pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (/* ??
 	SOCKADDR_IN saServer;
 #else
 	struct sockaddr_in sinme;
-#ifdef HAVE_UNIX_DOMAIN_SOCKETS
+#ifdef HAVE_SYS_UN_H
 	struct sockaddr_un sunme;		/* UNIX Domain */
 #endif
 	struct	sockaddr *addr;			/* UNIX or INET addr */
@@ -528,7 +528,7 @@ pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (/* ??
 #else
 	bzero((char *)&sinme, sizeof(sinme));
 
-#ifdef HAVE_UNIX_DOMAIN_SOCKETS
+#ifdef HAVE_SYS_UN_H
 	if( service != NULL && service[0] == '/' ) {
 		/* UNIX Domain socket */
 		strncpy( sunme.sun_path, service, sizeof(sunme.sun_path) );
@@ -556,7 +556,7 @@ pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (/* ??
 	addr = (struct sockaddr *) &sinme;
 	addrlen = sizeof(struct sockaddr_in);
 
-#ifdef HAVE_UNIX_DOMAIN_SOCKETS
+#ifdef HAVE_SYS_UN_H
 ready:
 #endif
 
