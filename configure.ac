@@ -1318,6 +1318,7 @@ AC_CHECK_HEADERS( \
 	sys/time.h \
 	sys/timeb.h \
 	sys/types.h \
+	sys/un.h \
 	sys/unistd.h \
 	sys/wait.h \
 	syslog.h \
