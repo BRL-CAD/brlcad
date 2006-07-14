@@ -18,6 +18,7 @@
  * along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file typein.c
  *
  * This module contains functions which allow solid parameters to
@@ -47,7 +48,8 @@
  *	part_in		reads particle params from keyboard
  *	binunif_in	creates a binary object from a datafile
  *	extrude_in	reads extrude params from keyboard
- *	superell_in		reads params for all SUPERELLs
+ *	superell_in	reads params for all SUPERELLs
+ *	metaball_in	reads params for a metaball grouping
  *	checkv		checks for zero vector from keyboard
  *
  * Authors -
@@ -55,6 +57,7 @@
  *	Keith A. Applin
  *	Michael J. Muuss
  *	Michael J. Markowski
+ *	Erik Greenwald
  *
  * Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -111,7 +114,6 @@ char *p_dsp_v4[] = {
 	"Cell size: ",
 	"Unit elevation: "
 };
-
 
 char *p_dsp_v5[] = {
 	"Take data from file or database binary object [f|o]:",
@@ -531,6 +533,15 @@ char *p_superell[] = {
 	"Enter e: "
 };
 
+char *p_metaball[] = {
+	"Enter threshhold: ",
+	"Enter number of points: ",
+	"Enter X, Y, Z, field strength: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter field strength: "
+};
+
 /*	F _ I N ( ) :  	decides which solid reader to call
  *			Used for manual entry of solids.
  */
@@ -551,7 +562,8 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				sph_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), tec_in(char **cmd_argvs, struct rt_db_internal *intern), tgc_in(char **cmd_argvs, struct rt_db_internal *intern), tor_in(char **cmd_argvs, struct rt_db_internal *intern), ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp),
 				trc_in(char **cmd_argvs, struct rt_db_internal *intern), ebm_in(char **cmd_argvs, struct rt_db_internal *intern), vol_in(char **cmd_argvs, struct rt_db_internal *intern), hf_in(char **cmd_argvs, struct rt_db_internal *intern), bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
 				dsp_in_v4(char **cmd_argvs, struct rt_db_internal *intern),dsp_in_v5(char **cmd_argvs, struct rt_db_internal *intern), submodel_in(char **cmd_argvs, struct rt_db_internal *intern), part_in(char **cmd_argvs, struct rt_db_internal *intern), pipe_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
-				binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt), extrude_in(char **cmd_argvs, struct rt_db_internal *intern), grip_in(char **cmd_argvs, struct rt_db_internal *intern), superell_in(char **cmd_argvs, struct rt_db_internal *intern);
+				binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt), extrude_in(char **cmd_argvs, struct rt_db_internal *intern), grip_in(char **cmd_argvs, struct rt_db_internal *intern), superell_in(char **cmd_argvs, struct rt_db_internal *intern),
+				metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt);
 
 	CHECK_DBI_NULL;
 
@@ -690,6 +702,16 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		switch( pipe_in(argc, argv, &internal, &p_pipe[0]) ) {
 		case CMD_BAD:
 		  Tcl_AppendResult(interp, "ERROR, pipe not made!\n", (char *)NULL);
+		  rt_db_free_internal( &internal, &rt_uniresource );
+		  return TCL_ERROR;
+		case CMD_MORE:
+		  return TCL_ERROR;
+		}
+		goto do_new_update;
+	} else if( strcmp( argv[2], "metaball" ) == 0 ) {
+		switch( metaball_in(argc, argv, &internal, &p_metaball[0]) ) {
+		case CMD_BAD:
+		  Tcl_AppendResult(interp, "ERROR, metaball not made!\n", (char *)NULL);
 		  rt_db_free_internal( &internal, &rt_uniresource );
 		  return TCL_ERROR;
 		case CMD_MORE:
@@ -1345,7 +1367,8 @@ bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 /*
  *			A R B N _ I N
  */
-int arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
+int 
+arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 {
 	struct rt_arbn_internal *arbn;
 	int num_planes=0;
@@ -2573,9 +2596,7 @@ grip_in(char **cmd_argvs, struct rt_db_internal *intern)
  *					1 if unsuccessful read
  */
 int
-superell_in(cmd_argvs, intern)
-char			*cmd_argvs[];
-struct rt_db_internal	*intern;
+superell_in(char *cmd_argvs[], struct rt_db_internal *intern)
 {
 	fastf_t			vals[14];
 	int			i, n;
@@ -2607,6 +2628,85 @@ struct rt_db_internal	*intern;
 	eip->n = vals[12];
 	eip->e = vals[13];
 	return(0);
+}
+
+/*
+ *			M E T A B A L L _ I N
+ */
+int
+metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
+{
+	struct rt_metaball_internal *metaball;
+	int i,num_points;
+	fastf_t threshhold = -1.0;
+
+	CHECK_DBI_NULL;
+
+	if( argc < 4 ) {
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
+	  return CMD_MORE;
+	}
+
+	threshhold = atof( argv[3] );
+	if(threshhold < 0.0) {
+		Tcl_AppendResult(interp, "Threshhold may not be negative.\n",(char *)NULL);
+		return CMD_BAD;
+	}
+
+	if( argc < 5 ) {
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
+	  return CMD_MORE;
+	}
+
+	num_points = atoi( argv[4] );
+	if( num_points < 1 )
+	{
+		Tcl_AppendResult(interp, "Invalid number of points (must be at least 1)\n", (char *)NULL);
+		return CMD_BAD;
+	}
+
+	if( argc < 9 )
+	{
+		Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
+		return CMD_MORE;
+	}
+
+	if( argc < 5 + num_points*4 )
+	{
+		struct bu_vls tmp_vls;
+
+		bu_vls_init( &tmp_vls );
+		bu_vls_printf( &tmp_vls, "%s for point %d : ", prompt[7+(argc-10)%6], 1+(argc-4)/6 );
+
+		Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+
+		return CMD_MORE;
+	}
+
+
+	intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern->idb_type = ID_METABALL;
+	intern->idb_meth = &rt_functab[ID_METABALL];
+	intern->idb_ptr = (genptr_t)bu_malloc( sizeof( struct rt_metaball_internal ), "rt_metaball_internal" );
+	metaball = (struct rt_metaball_internal *)intern->idb_ptr;
+	metaball->magic = RT_METABALL_INTERNAL_MAGIC;
+	BU_LIST_INIT( &metaball->metaball_pt_head );
+
+	for( i=5 ; i<argc ; i+= 4 )
+	{
+		struct wdb_metaballpt *metaballpt;
+
+		metaballpt = (struct wdb_metaballpt *)bu_malloc( sizeof( struct wdb_metaballpt ), "wdb_metaballpt" );
+		metaballpt->coord[0] = atof( argv[i] ) * local2base;
+		metaballpt->coord[1] = atof( argv[i+1] ) * local2base;
+		metaballpt->coord[2] = atof( argv[i+2] ) * local2base;
+		metaballpt->fldstr = atof( argv[i+3] ) * local2base;
+
+		BU_LIST_INSERT( &metaball->metaball_pt_head, &metaballpt->l );
+	}
+
+	return CMD_OK;
 }
 
 /*
