@@ -128,6 +128,14 @@ struct wdb_pipept {
 #define WDB_PIPESEG_NULL	((struct wdb_pipeseg *)0)
 #define WDB_PIPESEG_MAGIC	0x9723ffef
 
+struct wdb_metaballpt {
+	struct bu_list	l;
+	point_t		coord;
+	fastf_t		fldstr;		/* field strength */
+};
+#define WDB_METABALLPT_NULL	((struct wdb_metaballpt *)0)
+#define WDB_METABALLPT_MAGIC	0x6D627074	/* mbpt */
+
 
 WDB_EXPORT WDB_EXTERN(int mk_id, (struct rt_wdb *fp, const char *title) );
 WDB_EXPORT WDB_EXTERN(int mk_id_units, (struct rt_wdb *fp, const char *title, const char *units) );

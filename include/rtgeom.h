@@ -128,9 +128,8 @@ struct rt_superell_internal {
  */
 struct rt_metaball_internal {
 	long    magic;
-	int	npoints;
 	fastf_t	threshhold;
-	hvect_t *points;	/* [x,y,z,w] where w is the effectors value */
+	struct bu_list	metaball_pt_head;
 };
 #define RT_METABALL_INTERNAL_MAGIC      0x6D62616C6C	/* mbal */
 #define RT_METABALL_CK_MAGIC(_p)        BU_CKMAG(_p,RT_METABALL_INTERNAL_MAGIC,"rt_metaball_internal")
