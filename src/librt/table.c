@@ -290,6 +290,9 @@ RT_DECLARE_INTERFACE(bot)
 #define rt_superell_xform rt_generic_xform
 RT_DECLARE_INTERFACE(superell)
 
+#define rt_metaball_xform rt_generic_xform
+RT_DECLARE_INTERFACE(metaball)
+
 /* from db5_comb.c */
 int rt_comb_export5(
 	struct bu_external		*ep,
@@ -1041,6 +1044,20 @@ const struct rt_functab rt_functab[] = {
 		rt_superell_describe,rt_superell_xform,	rt_superell_parse,
 		sizeof(struct rt_superell_internal), RT_SUPERELL_INTERNAL_MAGIC,
 		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
+	},
+
+	{RT_FUNCTAB_MAGIC, "ID_METABALL", "metaball",
+		1,		/* 36 but "should" be 32 Metaball  */
+		rt_metaball_prep,	rt_metaball_shot,	rt_metaball_print,	rt_metaball_norm,
+		rt_nul_piece_shot,	rt_nul_piece_hitsegs,
+		rt_metaball_uv,		rt_metaball_curve,	rt_metaball_class,	rt_metaball_free,
+		rt_metaball_plot,	rt_nul_vshot,		rt_metaball_tess,	rt_metaball_tnurb,
+		rt_nul_import5,		rt_nul_export5,
+		rt_metaball_import,	rt_metaball_export,	rt_metaball_ifree,
+		rt_metaball_describe,	rt_metaball_xform,	rt_nul_parse,
+		sizeof(struct rt_metaball_internal),		RT_METABALL_INTERNAL_MAGIC,
+		rt_parsetab_tclget,	rt_parsetab_tcladjust,	rt_parsetab_tclform,
 		NULL,
 	},
 

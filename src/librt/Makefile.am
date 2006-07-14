@@ -48,6 +48,7 @@ SRCS = \
 	g_grip.c \
 	g_half.c \
 	g_hf.c \
+	g_metaball.c \
 	g_nmg.c \
 	g_nurb.c \
 	g_part.c \
