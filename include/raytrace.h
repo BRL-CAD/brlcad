@@ -537,7 +537,7 @@ struct soltab {
   /* Add a new primitive id above here (this is will break v5 format)
    * XXX must update the non-geometric object id's below XXX
    */
-#define	ID_MAX_SOLID	36	/* Maximum defined ID_xxx for solids */
+#define	ID_MAX_SOLID	37	/* Maximum defined ID_xxx for solids */
 
 /*
  *	Non-geometric objects
@@ -549,8 +549,9 @@ struct soltab {
 
 /* XXX - superellipsoid should be 31, but is not v5 compatible */
 #define ID_SUPERELL	35	/* Superquadratic ellipsoid */
+#define ID_METABALL	36	/* Metaball */
 
-#define ID_MAXIMUM	36	/* Maximum defined ID_xxx value */
+#define ID_MAXIMUM	37	/* Maximum defined ID_xxx value */
 
 /*
  *			M A T E R _ I N F O

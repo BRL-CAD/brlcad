@@ -18,6 +18,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file rtgeom.h
  *
  *  Details of the internal forms used by the LIBRT geometry routines
@@ -122,6 +123,17 @@ struct rt_superell_internal {
 #define RT_SUPERELL_INTERNAL_MAGIC      0xff93bb23
 #define RT_SUPERELL_CK_MAGIC(_p)        BU_CKMAG(_p,RT_SUPERELL_INTERNAL_MAGIC,"rt_superell_internal")
 
+/*
+ *      ID_METABALL
+ */
+struct rt_metaball_internal {
+	long    magic;
+	int	npoints;
+	fastf_t	threshhold;
+	hvect_t *points;	/* [x,y,z,w] where w is the effectors value */
+};
+#define RT_METABALL_INTERNAL_MAGIC      0x6D62616C6C	/* mbal */
+#define RT_METABALL_CK_MAGIC(_p)        BU_CKMAG(_p,RT_METABALL_INTERNAL_MAGIC,"rt_metaball_internal")
 
 /*
  *	ID_ARB8
