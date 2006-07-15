@@ -539,7 +539,11 @@ char *p_metaball[] = {
 	"Enter X, Y, Z, field strength: ",
 	"Enter Y: ",
 	"Enter Z: ",
-	"Enter field strength: "
+	"Enter field strength: ",
+	"Enter X, Y, Z, field strength",
+	"Enter Y",
+	"Enter Z",
+	"Enter field strength"
 };
 
 /*	F _ I N ( ) :  	decides which solid reader to call
@@ -2676,8 +2680,7 @@ metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 		struct bu_vls tmp_vls;
 
 		bu_vls_init( &tmp_vls );
-		bu_vls_printf( &tmp_vls, "%s for point %d : ", prompt[7+(argc-10)%6], 1+(argc-4)/6 );
-
+		bu_vls_printf( &tmp_vls, "%s for point %d : ", prompt[6+(argc-9)%4], 1+(argc-5)/4 );
 		Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 
