@@ -29,6 +29,7 @@ documentation_DATA = \
 	mk.tr \
 	movie.txt \
 	old-mged.tr \
+	pad_file.xml \
 	pkg.tr \
 	regions.txt \
 	rounding.txt \
