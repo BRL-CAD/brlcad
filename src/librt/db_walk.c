@@ -26,7 +26,7 @@
  *
  * Functions -
  *	db_functree	No-frills tree-walk
- *	comb_functree	No-frills combination-walk
+ *	comb_functree	No-frills combination-walk (deprecated)
  *
  *
  *  Authors -
@@ -62,6 +62,121 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 #include "./debug.h"
+
+/*
+ *          D B _ T R A V E R S E _ S U B T R E E
+ *
+ *  A generic traversal function.
+ *
+ */
+void
+db_traverse_subtree(union tree *tp,
+	            void (*traverse_func) ( struct directory *, struct db_traverse * ),
+	            struct db_traverse *dtp)
+{
+    struct directory *dp;
+
+    if( !tp )
+	return;
+
+    RT_CK_DBTR( dtp );
+    RT_CHECK_DBI( dtp->dbip );
+    RT_CK_TREE( tp );
+    RT_CK_RESOURCE( dtp->resp );
+
+    switch( tp->tr_op )  {
+
+	case OP_DB_LEAF:
+	    if( (dp=db_lookup( dtp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
+		return;
+	    traverse_func( dp, dtp );
+	    break;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    db_traverse_subtree( tp->tr_b.tb_left, traverse_func, dtp );
+	    db_traverse_subtree( tp->tr_b.tb_right, traverse_func, dtp );
+	    break;
+	default:
+	    bu_log( "db_functree_subtree: unrecognized operator %d\n", tp->tr_op );
+	    bu_bomb( "db_functree_subtree: unrecognized operator\n" );
+    }
+}
+
+/*
+ *     D B _ P R E O R D E R _ T R A V E R S E
+ *
+ *  This subroutine is called for a no-frills tree-walk,
+ *  with the provided subroutines being called when entering and 
+ *  exiting combinations and at leaf (solid) nodes.
+ *
+ *  This routine is recursive, so no variables may be declared static.
+ *
+ */
+void
+db_preorder_traverse( struct directory *dp,
+                      struct db_traverse *dtp )
+{
+    register int i;
+    RT_CK_DBTR(dtp);
+    RT_CK_DBI(dtp->dbip);
+
+    if (RT_G_DEBUG & DEBUG_DB)
+	bu_log("db_preorder_traverse(%s) x%x, x%x, comb_enter=x%x, comb_exit=x%x, leaf=x%x, client_data=x%x\n",
+		dp->d_namep, dtp->dbip, dp, dtp->comb_enter_func, dtp->comb_exit_func, dtp->leaf_func, dtp->client_data );
+
+    if ( dp->d_flags & DIR_COMB )  {
+	/* entering region */
+	if( dtp->comb_enter_func )
+	    dtp->comb_enter_func( dtp->dbip, dp, dtp->client_data );
+	if ( dtp->dbip->dbi_version < 5 ) {
+	    register union record   *rp;
+	    register struct directory *mdp;
+	    /*
+	     * Load the combination into local record buffer
+	     * This is in external v4 format.
+	     */
+	    if( (rp = db_getmrec( dtp->dbip, dp )) == (union record *)0 )
+		return;
+	    /* recurse */
+	    for( i=1; i < dp->d_len; i++ )  {
+		if( (mdp = db_lookup( dtp->dbip, rp[i].M.m_instname,
+				LOOKUP_NOISY )) == DIR_NULL )
+		    continue;
+		db_preorder_traverse( mdp, dtp );
+	    }
+	    bu_free( (char *)rp, "db_preorder_traverse[]" );
+	} else {
+	    struct rt_db_internal in;
+	    struct rt_comb_internal *comb;
+	    struct directory *ndp;
+
+	    if( rt_db_get_internal5( &in, dp, dtp->dbip, NULL, dtp->resp ) < 0 )
+		return;
+
+	    comb = (struct rt_comb_internal *)in.idb_ptr;
+
+	    db_traverse_subtree( comb->tree, db_preorder_traverse, dtp );
+
+	    rt_db_free_internal( &in, dtp->resp );
+	}
+	/* exiting region */
+	if( dtp->comb_exit_func )
+	    dtp->comb_exit_func( dtp->dbip, dp, dtp->client_data );
+    } else if( dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK )  {
+	/* at leaf */
+	if( dtp->leaf_func )
+	    dtp->leaf_func( dtp->dbip, dp, dtp->client_data );
+    } else {
+	bu_log("db_preorder_traverse:  %s is neither COMB nor SOLID?\n",
+		dp->d_namep );
+    }
+}
+
+ 
+
 
 /*	D B _ F U N C T R E E _ S U B T R E E
  *

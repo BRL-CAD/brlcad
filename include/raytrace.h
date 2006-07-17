@@ -1022,6 +1022,37 @@ struct db_tree_state {
 #define RT_CK_DBTS(_p)	BU_CKMAG(_p, RT_DBTS_MAGIC, "db_tree_state")
 
 /*
+ *                          D B _ T R A V E R S E
+ *
+ *  State for database traversal functions.
+ */
+struct db_traverse
+{
+    	long	magic;
+    	struct db_i 	*dbip;
+	void 	(*comb_enter_func) (
+			struct db_i *, 
+			struct directory *, 
+			genptr_t);
+	void 	(*comb_exit_func) (
+			struct db_i *, 
+			struct directory *, 
+			genptr_t);
+	void 	(*leaf_func) (
+			struct db_i *, 
+			struct directory *, 
+			genptr_t);
+	struct resource *resp;
+	genptr_t 	client_data;
+};
+#define RT_DBTR_MAGIC 0x64627472  /* "dbtr" */
+#define RT_INIT_DBTR(_p) {(_p)->magic = RT_DBTR_MAGIC; \
+	(_p)->dbip = GENPTR_NULL; (_p)->comb_enter_func = GENPTR_NULL; \
+	(_p)->comb_exit_func = GENPTR_NULL; (_p)->leaf_func = GENPTR_NULL; \
+	(_p)->resp = GENPTR_NULL; (_p)->client_data = GENPTR_NULL;}
+#define RT_CK_DBTR(_p) BU_CKMAG(_p, RT_DBTR_MAGIC, "db_traverse")
+
+/*
  *			C O M B I N E D _ T R E E _ S T A T E
  */
 struct combined_tree_state {
@@ -3465,6 +3496,12 @@ RT_EXPORT BU_EXTERN(void db_functree,
 				       genptr_t),
 		     struct resource *resp,
 		     genptr_t client_data));
+
+/*
+RT_EXPORT BU_EXTERN(void db_preorder_traverse,
+		    (struct directory *dp,
+		    struct db_traverse *dtp));
+*/
 
 /* g_arb.c */
 RT_EXPORT BU_EXTERN(int rt_arb_get_cgtype,
