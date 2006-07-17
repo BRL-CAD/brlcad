@@ -77,6 +77,7 @@ CLEANFILES = \
 	lights.pix \
 	lights_diff.pix \
 	lights_ref.pix \
+	mged_shaders.log \
 	mged_solids.log \
 	moss-diff.log \
 	moss-png.log \
