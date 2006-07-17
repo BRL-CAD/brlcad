@@ -1,7 +1,7 @@
 # BRL-CAD
 #
-# Copyright (C) 2004-2005 United States Government as represented by
-# the U.S. Army Research Laboratory.
+# Copyright (c) 2004 United States Government as represented by the
+# U.S. Army Research Laboratory.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -21,16 +21,16 @@
 
 # $Id$
 
-Summary: BRLCAD
+Summary: @PACKAGE_NAME@
 Name: @PACKAGE@
-Version: @VERSION@
-Release: 1
-Copyright: ...
-Vendor: AMSRD-ARL-SL-BE (ACST)
+Version: @MAJOR_VERSION@.@MINOR_VERSION@
+Release: @PATCH_VERSION@
+Copyright: GPL, LGPL, BSD
+Vendor: BRL-CAD Open Source
 Url: http://brlcad.org
 Group: Productivity/Graphics/CAD
-Source0: http://download.sourceforge.net/brlcad/@PACKAGE@-@VERSION@.tar.gz
-Buildroot: /var/tmp/redhat/BUILD/@PACKAGE@-@VERSION@
+Source0: http://prdownloads.sourceforge.net/@PACKAGE@/@PACKAGE@-@BRLCAD_VERSION@.tar.gz
+Buildroot: /var/tmp/redhat/BUILD/@PACKAGE@-@BRLCAD_VERSION@
 
 %description
 
