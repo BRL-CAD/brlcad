@@ -52,7 +52,7 @@ proc init_plotTool { id } {
     }
 
     if ![info exists pl_control($id,file)] {
-	regsub \.g$ [_mged_opendb] .plot default_file
+	regsub \.g$ [_mged_opendb] .pl default_file
 	set pl_control($id,file) $default_file
     }
 

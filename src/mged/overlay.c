@@ -52,7 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 
-/* Usage:  overlay file.plot [name] */
+/* Usage:  overlay file.pl [name] */
 int
 cmd_overlay(ClientData	clientData,
 	    Tcl_Interp	*interp,
