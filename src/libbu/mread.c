@@ -45,6 +45,9 @@
 #  include <unistd.h>
 #endif
 
+#include "machine.h"
+#include "bu.h"
+
 
 /** "Multiple try" read.  Read multiple times until quantity is
  *  obtained or an error occurs.  This is useful for pipes.
@@ -64,7 +67,7 @@ bu_mread(int fd, void *bufp, long int n)
 	    return count;
 	}
 	count += nread;
-	bufp += nread;
+	(char*)bufp += nread;
     }
     return count;
 }
