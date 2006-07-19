@@ -115,7 +115,6 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
   return;
 }
 
-
 /**
  *			R T _ M E T A B A L L _ C U R V E
  *
@@ -150,6 +149,7 @@ rt_metaball_uv(struct application *ap, struct soltab *stp, register struct hit *
 void
 rt_metaball_free(register struct soltab *stp)
 {
+	/* seems to be unused? */
 	bu_log("rt_metaball_free called\n");
 	return;
 }
@@ -201,9 +201,8 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 /**
  *			R T _ M E T A B A L L _ I M P O R T 5
  *
- *  Import an metaball/sphere from the database format to
- *  the internal structure.
- *  Apply modeling transformations as wmetaball.
+ *  Import an metaball/sphere from the database format to the internal 
+ *  structure. Apply modeling transformations as well.
  */
 int
 rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
@@ -222,8 +221,9 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_METABALL;
 	ip->idb_meth = &rt_functab[ID_METABALL];
-	ip->idb_ptr = bu_malloc( sizeof(struct rt_pipe_internal), "rt_metaball_internal");
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_metaball_internal), "rt_metaball_internal");
 	mb = (struct rt_metaball_internal *)ip->idb_ptr;
+	mb->magic = RT_METABALL_INTERNAL_MAGIC;
 	mb->threshhold = buf[0];
 	BU_LIST_INIT( &mb->metaball_pt_head );
 	for(i=0 ; i<metaball_count*4 ; i+=4) {
@@ -241,6 +241,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 
 /**
  *			R T _ M E T A B A L L _ E X P O R T 5
+ *
  * storage is something like
  * long		numpoints
  * fastf_t	threshhold
@@ -290,14 +291,32 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 /**
  *			R T _ M E T A B A L L _ D E S C R I B E
  *
- *  Make human-readable formatted presentation of this solid.
- *  First line describes type of solid.
- *  Additional lines are indented one tab, and give parameter values.
+ *  Make human-readable formatted presentation of this solid. First line 
+ *  describes type of solid. Additional lines are indented one tab, and give 
+ *  parameter values.
  */
 int
 rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-	bu_log("rt_metaball_describe called\n");
+	int metaball_count = 0;
+	char buf[BUFSIZ];
+	struct rt_metaball_internal *mb;
+	struct wdb_metaballpt *mbpt;
+
+	RT_CK_DB_INTERNAL(ip);
+	mb = (struct rt_metaball_internal *)ip->idb_ptr;
+	RT_METABALL_CK_MAGIC(mb);
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)) metaball_count++;
+
+	snprintf(buf, BUFSIZ, "Metaball with %d points and a threshhold of %g\n", metaball_count, mb->threshhold);
+	bu_vls_strcat(str,buf);
+	if(!verbose)return 0;
+	metaball_count=0;
+	for( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_pt_head)){
+	    snprintf(buf,BUFSIZ,"\t%d: %g field strength at (%g, %g, %g)\n",
+		    ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord));
+	    bu_vls_strcat(str,buf);
+	}
 	return 0;
 }
 
@@ -305,11 +324,25 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
  *			R T _ M E T A B A L L _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.
+ *  This only effects the in-memory copy.
  */
 void
 rt_metaball_ifree(struct rt_db_internal *ip)
 {
-	bu_log("rt_metaball_ifree called\n");
+	register struct rt_metaball_internal	*metaball;
+	register struct wdb_metaballpt	*mbpt;
+
+	RT_CK_DB_INTERNAL(ip);
+	metaball = (struct rt_metaball_internal*)ip->idb_ptr;
+	RT_METABALL_CK_MAGIC(metaball);
+
+	if (metaball->metaball_pt_head.magic != 0)
+	    while(BU_LIST_WHILE(mbpt, wdb_metaballpt, &metaball->metaball_pt_head))  {
+		BU_LIST_DEQUEUE(&(mbpt->l));
+		bu_free((char *)mbpt, "wdb_metaballpt");
+	    }
+	bu_free( ip->idb_ptr, "metaball ifree" );
+	ip->idb_ptr = GENPTR_NULL;
 }
 
 /**
