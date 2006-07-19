@@ -63,6 +63,7 @@ static const char RCSmetaball[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "nurb.h"
 #include "rtgeom.h"
+#include "wdb.h"
 #include "./debug.h"
 
 
@@ -78,6 +79,7 @@ static const char RCSmetaball[] = "@(#)$Header$ (BRL)";
 int
 rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
+	bu_log("rt_metaball_prep called\n");
   return 0;			/* OK */
 }
 
@@ -87,6 +89,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 void
 rt_metaball_print(register const struct soltab *stp)
 {
+	bu_log("rt_metaball_print called\n");
     return;
 }
 
@@ -96,6 +99,7 @@ rt_metaball_print(register const struct soltab *stp)
 int
 rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+	bu_log("rt_metaball_shot called\n");
   return 1;
 }
 
@@ -107,6 +111,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 void
 rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+	bu_log("rt_metaball_norm called\n");
   return;
 }
 
@@ -145,13 +150,15 @@ rt_metaball_uv(struct application *ap, struct soltab *stp, register struct hit *
 void
 rt_metaball_free(register struct soltab *stp)
 {
-    return;
+	bu_log("rt_metaball_free called\n");
+	return;
 }
 
 
 int
 rt_metaball_class(void)
 {
+	bu_log("rt_metaball_class called\n");
 	return 0;
 }
 
@@ -165,6 +172,7 @@ rt_metaball_class(void)
 void
 rt_metaball_16pts(register fastf_t *ov, register fastf_t *V, fastf_t *A, fastf_t *B)
 {
+	bu_log("rt_metaball_16pts called\n");
 	return;
 }
 
@@ -174,6 +182,7 @@ rt_metaball_16pts(register fastf_t *ov, register fastf_t *V, fastf_t *A, fastf_t
 int
 rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
+	bu_log("rt_metaball_plot called\n");
 	return 0;
 }
 
@@ -190,28 +199,6 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 }
 
 /**
- *			R T _ M E T A B A L L _ I M P O R T
- *
- *  Import an metaball/sphere from the database format to
- *  the internal structure.
- *  Apply modeling transformations as wmetaball.
- */
-int
-rt_metaball_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
-{
-	return 0;		/* OK */
-}
-
-/**
- *			R T _ M E T A B A L L _ E X P O R T
- */
-int
-rt_metaball_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
-{
-	return 0;
-}
-
-/**
  *			R T _ M E T A B A L L _ I M P O R T 5
  *
  *  Import an metaball/sphere from the database format to
@@ -221,21 +208,82 @@ rt_metaball_export(struct bu_external *ep, const struct rt_db_internal *ip, doub
 int
 rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
+	struct wdb_metaballpt *mbpt;
+	struct rt_metaball_internal *mb;
+	fastf_t *buf, threshhold;
+	int metaball_count = 0, i;
+
+	BU_CK_EXTERNAL( ep );
+	metaball_count = bu_glong((unsigned char *)ep->ext_buf);
+	buf = (fastf_t *)bu_malloc((metaball_count*4+1)*SIZEOF_NETWORK_DOUBLE,"rt_metaball_import5: buf");
+	ntohd((unsigned char *)buf, (unsigned char *)ep->ext_buf+SIZEOF_NETWORK_LONG, metaball_count*4+1);
+
+	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	ip->idb_type = ID_METABALL;
+	ip->idb_meth = &rt_functab[ID_METABALL];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_pipe_internal), "rt_metaball_internal");
+	mb = (struct rt_metaball_internal *)ip->idb_ptr;
+	mb->threshhold = buf[0];
+	BU_LIST_INIT( &mb->metaball_pt_head );
+	for(i=0 ; i<metaball_count*4 ; i+=4) {
+			/* Apply modeling transformations */
+		BU_GETSTRUCT( mbpt, wdb_metaballpt );
+		mbpt->l.magic = WDB_METABALLPT_MAGIC;
+		MAT4X3PNT( mbpt->coord, mat, &buf[i] );
+		mbpt->fldstr = buf[i+3] / mat[15];
+		BU_LIST_INSERT( &mb->metaball_pt_head, &mbpt->l );
+	}
+
+	bu_free((genptr_t)buf, "rt_metaball_import5: buf");
 	return 0;		/* OK */
 }
 
 /**
  *			R T _ M E T A B A L L _ E X P O R T 5
- *
- *  The external format is:
- *	V point
- *	A vector
- *	B vector
- *	C vector
+ * storage is something like
+ * long		numpoints
+ * fastf_t	threshhold
+ *	fastf_t	X1	(start point)
+ *	fastf_t	Y1
+ *	fastf_t	Z1
+ *	fastf_t	fldstr1 (end point)
+ *	fastf_t	X2	(start point)
+ *	...
  */
 int
 rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
+	struct rt_metaball_internal *mb;
+	struct wdb_metaballpt *mbpt;
+	int metaball_count = 0, i = 1;
+	fastf_t *buf;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_METABALL )  
+	    return(-1);
+	mb = (struct rt_metaball_internal *)ip->idb_ptr;
+	RT_METABALL_CK_MAGIC(mb);
+	if (mb->metaball_pt_head.magic == 0) return -1;
+
+	/* Count number of points */
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)) metaball_count++;
+
+	BU_CK_EXTERNAL(ep);
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE*(1+4*metaball_count) + SIZEOF_NETWORK_LONG;
+	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "metaball external");
+	bu_plong((unsigned char *)ep->ext_buf, metaball_count);
+
+	/* pack the point data */
+	buf = (fastf_t *)bu_malloc((metaball_count*4+1)*SIZEOF_NETWORK_DOUBLE,"rt_metaball_export5: buf");
+	buf[0] = mb->threshhold;
+	for(BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_pt_head), i+=4){
+		VSCALE(&buf[i], mbpt->coord, local2mm);
+		buf[i+3] = mbpt->fldstr * local2mm;
+	}
+	htond((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG, (unsigned char *)buf, 1 + 4 * metaball_count);
+	bu_free(buf,"rt_metaball_export5: buf");
+
 	return 0;
 }
 
@@ -249,6 +297,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 int
 rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
+	bu_log("rt_metaball_describe called\n");
 	return 0;
 }
 
@@ -260,6 +309,7 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 void
 rt_metaball_ifree(struct rt_db_internal *ip)
 {
+	bu_log("rt_metaball_ifree called\n");
 }
 
 /**
@@ -268,7 +318,7 @@ rt_metaball_ifree(struct rt_db_internal *ip)
 int
 rt_metaball_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-  bu_log("rt_metaball_tnurb called!\n");
+	bu_log("rt_metaball_tnurb called!\n");
 	return 0;
 }
 
