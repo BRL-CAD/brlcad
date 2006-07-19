@@ -2636,13 +2636,16 @@ superell_in(char *cmd_argvs[], struct rt_db_internal *intern)
 
 /*
  *			M E T A B A L L _ I N
+ *
+ * This is very much not reentrant, and probably a good deal uglier than it
+ * should be.
  */
 int
 metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 {
 	struct rt_metaball_internal *metaball;
-	int i,num_points;
-	fastf_t threshhold = -1.0;
+	static int i,num_points;
+	static fastf_t threshhold = -1.0;
 
 	CHECK_DBI_NULL;
 
@@ -2687,13 +2690,13 @@ metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 		return CMD_MORE;
 	}
 
-
 	intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern->idb_type = ID_METABALL;
 	intern->idb_meth = &rt_functab[ID_METABALL];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof( struct rt_metaball_internal ), "rt_metaball_internal" );
 	metaball = (struct rt_metaball_internal *)intern->idb_ptr;
 	metaball->magic = RT_METABALL_INTERNAL_MAGIC;
+	metaball->threshhold = threshhold;
 	BU_LIST_INIT( &metaball->metaball_pt_head );
 
 	for( i=5 ; i<argc ; i+= 4 )
