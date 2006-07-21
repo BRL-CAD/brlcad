@@ -6417,13 +6417,11 @@ RT_EXPORT BU_EXTERN(int	wdb_smooth_bot_cmd,
 		     Tcl_Interp *interp,
 		     int argc,
 		     char **argv));
-#ifdef IMPORT_FASTGEN4_SECTION
 RT_EXPORT BU_EXTERN(int	wdb_importFg4Section_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
 		     char **argv));
-#endif
 
 /* defined in dg_obj.c */
 RT_EXPORT BU_EXTERN(int dgo_set_outputHandler_cmd,
