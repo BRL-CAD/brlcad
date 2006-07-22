@@ -442,13 +442,26 @@ fi
 
 _aux_dir=.
 if test "x$HAVE_SED" = "xyes" ; then
-    _aux_dir="`cat $_configure_file | grep AC_CONFIG_AUX_DIR | tail -${TAIL_N}1 | sed 's/^[ ]*AC_CONFIG_AUX_DIR(\(.*\)).*/\1/'`"
+    _aux_dir="`grep AC_CONFIG_AUX_DIR $_configure_file | grep -v '.*#.*AC_CONFIG_AUX_DIR' | tail -${TAIL_N}1 | sed 's/^[ 	]*AC_CONFIG_AUX_DIR(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
     if test ! -d "$_aux_dir" ; then
 	_aux_dir=.
     else
 	$VERBOSE_ECHO "Detected auxillary directory: $_aux_dir"
     fi
 fi
+
+
+################################
+# detect a recursive configure #
+################################
+_det_config_subdirs="`grep AC_CONFIG_SUBDIRS $_configure_file | grep -v '.*#.*AC_CONFIG_SUBDIRS' | sed 's/^[ 	]*AC_CONFIG_SUBDIRS(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
+CONFIG_SUBDIRS=""
+for dir in $_det_config_subdirs ; do
+    if test -d "$dir" ; then
+	$VERBOSE_ECHO "Detected recursive configure directory: $dir"
+	CONFIG_SUBDIRS="$CONFIG_SUBDIRS $dir"
+    fi
+done
 
 
 ##########################################
@@ -545,6 +558,24 @@ fi
 #  automake -a -c -f
 ####
 if [ "x$reconfigure_manually" = "xyes" ] ; then
+    
+    # XXX if this is a recursive configure, manual steps don't work
+    # yet .. assume it's the libtool/glibtool problem.
+    if [ ! "x$CONFIG_SUBDIRS" = "x" ] ; then
+	$ECHO "Running the configuration steps individually does not yet work"
+	$ECHO "well with a recursive configure."
+	if [ ! "x$HAVE_ALT_LIBTOOLIZE" = "xyes" ] ; then
+	    exit 3
+	fi
+	$ECHO "Assuming this is a libtoolize problem..."
+	export LIBTOOLIZE
+	$ECHO
+	$ECHO "Restarting the configuration steps with LIBTOOLIZE set to $LIBTOOLIZE"
+	$VERBOSE_ECHO sh $0 "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+	sh "$0" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+	exit $?
+    fi
+    
     $ECHO
     $ECHO $ECHO_N "Preparing build ... $ECHO_C"
 
