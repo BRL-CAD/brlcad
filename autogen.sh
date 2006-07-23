@@ -77,6 +77,30 @@ LIBTOOL_PATCH_VERSION=2
 
 
 ##################
+# USAGE FUNCTION #
+##################
+usage ( ) {
+    $ECHO "Usage: $AUTOGEN_SH [-h|--help] [-v|--verbose] [-q|--quiet] [--version]"
+    $ECHO "    --help     Help on $NAME_OF_AUTOGEN usage"
+    $ECHO "    --verbose  Verbose progress output"
+    $ECHO "    --quiet    Quiet suppressed progress output"
+    $ECHO "    --version  Only perform GNU Build System version checks"
+    $ECHO
+    $ECHO "Description: This script will validate that minimum versions of the"
+    $ECHO "GNU Build System tools are installed and then run autoreconf for you."
+    $ECHO "Should autoreconf fail, manual preparation steps will be run"
+    $ECHO "potentially accounting for several common configuration issues.  The"
+    $ECHO "AUTORECONF, AUTOCONF, AUTOMAKE, LIBTOOLIZE, ACLOCAL, AUTOHEADER"
+    $ECHO "environment variables and corresponding _OPTIONS variables"
+    $ECHO "(e.g. AUTORECONF_OPTIONS) may be used to override the default"
+    $ECHO "automatic detection behavior."
+    $ECHO
+    $ECHO "autogen.sh build preparation script by Christopher Sean Morrison"
+    $ECHO "POSIX shell script, BSD style license, copyright 2005-2006"
+}
+
+
+##################
 # argument check #
 ##################
 ARGS="$*"
@@ -98,6 +122,26 @@ fi
 if [ "x$VERSION_ONLY" = "x" ] ; then
     VERSION_ONLY=no
 fi
+if [ "x$AUTORECONF_OPTIONS" = "x" ] ; then
+    AUTORECONF_OPTIONS="-i -f"
+fi
+if [ "x$AUTOCONF_OPTIONS" = "x" ] ; then
+    AUTOCONF_OPTIONS="-f"
+fi
+if [ "x$AUTOMAKE_OPTIONS" = "x" ] ; then
+    AUTOMAKE_OPTIONS="-a -c -f"
+fi
+ALT_AUTOMAKE_OPTIONS="-a -c"
+if [ "x$LIBTOOLIZE_OPTIONS" = "x" ] ; then
+    LIBTOOLIZE_OPTIONS="--automake -c -f"
+fi
+ALT_LIBTOOLIZE_OPTIONS="--automake --copy --force"
+if [ "x$ACLOCAL_OPTIONS" = "x" ] ; then
+    ACLOCAL_OPTIONS=""
+fi
+if [ "x$AUTOHEADER_OPTIONS" = "x" ] ; then
+    AUTOHEADER_OPTIONS=""
+fi
 for arg in $ARGS ; do
     case "x$arg" in
 	x--help) HELP=yes ;;
@@ -109,6 +153,8 @@ for arg in $ARGS ; do
 	x--version) VERSION_ONLY=yes ;;
 	*)
 	    echo "Unknown option: $arg"
+	    echo
+	    usage
 	    exit 1
 	    ;;
     esac
@@ -121,7 +167,7 @@ done
 
 # sanity check before recursions potentially begin
 if [ ! "x$0" = "x$AUTOGEN_SH" ] ; then
-    echo "ERROR: Internal dirname/basename inconsistency: $0 != $AUTOGEN_SH"
+    echo "INTERNAL ERROR: dirname/basename inconsistency: $0 != $AUTOGEN_SH"
     exit 1
 fi
 
@@ -132,7 +178,7 @@ LC_ALL=C
 for __cmd in echo head tail ; do
     echo "test" | $__cmd > /dev/null 2>&1
     if [ $? != 0 ] ; then
-	echo "ERROR: '${__cmd}' command is required"
+	echo "INTERNAL ERROR: '${__cmd}' command is required"
 	exit 2
     fi
 done
@@ -184,6 +230,22 @@ fi
 # allow a recursive run to disable further recursions
 if [ "x$RUN_RECURSIVE" = "x" ] ; then
     RUN_RECURSIVE=yes
+fi
+
+
+################################################
+# check for help arg and bypass version checks #
+################################################
+if [ "x$HAVE_SED" = "xyes" ] ; then
+    if [ "x`echo $ARGS | sed 's/.*[hH][eE][lL][pP].*/help/'`" = "xhelp" ] ; then
+	HELP=yes
+    fi
+fi
+if [ "x$HELP" = "xyes" ] ; then
+    usage
+    $ECHO "---"
+    $ECHO "Help was requested.  No preparation or configuration will be performed."
+    exit 0
 fi
 
 
@@ -403,6 +465,10 @@ else
     $ECHO "Using LIBTOOLIZE environment variable override: $LIBTOOLIZE"
 fi
 
+
+############################
+# libtoolize version check #
+############################
 _report_error=no
 if [ ! "x$_ltfound" = "xyes" ] ; then
     $ECHO
@@ -487,14 +553,10 @@ fi
 #########################
 $VERBOSE_ECHO "Checking whether to only output version information"
 if [ "x$VERSION_ONLY" = "xyes" ] ; then
+    $ECHO "---"
+    $ECHO "Version info requested.  No preparation or configuration will be performed."
     exit 0
 fi
-
-
-##############
-# stash path #
-##############
-_prev_path="`pwd`"
 
 
 #######################
@@ -597,6 +659,10 @@ initialize ( ) {
 ##############
 # initialize #
 ##############
+
+# stash path
+_prev_path="`pwd`"
+
 # Before running autoreconf or manual steps, some prep detection work
 # is necessary or useful.  Only needs to occur once per directory.
 initialize
@@ -610,8 +676,8 @@ if [ "x$HAVE_AUTORECONF" = "xyes" ] ; then
     $ECHO
     $ECHO $ECHO_N "Automatically preparing build ... $ECHO_C"
 
-    $VERBOSE_ECHO "$AUTORECONF $SEARCH_DIRS -i -f"
-    autoreconf_output="`$AUTORECONF $SEARCH_DIRS -i -f 2>&1`"
+    $VERBOSE_ECHO "$AUTORECONF $SEARCH_DIRS $AUTORECONF_OPTIONS"
+    autoreconf_output="`$AUTORECONF $SEARCH_DIRS $AUTORECONF_OPTIONS 2>&1`"
     ret=$?
     $VERBOSE_ECHO "$autoreconf_output"
 
@@ -680,23 +746,23 @@ manual_autogen ( ) {
     $ECHO
     $ECHO $ECHO_N "Preparing build ... $ECHO_C"
 
-    $VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS"
-    aclocal_output="`$ACLOCAL $SEARCH_DIRS 2>&1`"
+    $VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS $ACLOCAL_OPTIONS"
+    aclocal_output="`$ACLOCAL $SEARCH_DIRS $ACLOCAL_OPTIONS 2>&1`"
     ret=$?
     $VERBOSE_ECHO "$aclocal_output"
 
     if [ ! $ret = 0 ] ; then $ECHO "ERROR: $ACLOCAL failed" && exit 2 ; fi
     if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
-	$VERBOSE_ECHO "$LIBTOOLIZE --automake -c -f"
-	libtoolize_output="`$LIBTOOLIZE --automake -c -f 2>&1`"
+	$VERBOSE_ECHO "$LIBTOOLIZE $LIBTOOLIZE_OPTIONS"
+	libtoolize_output="`$LIBTOOLIZE $LIBTOOLIZE_OPTIONS 2>&1`"
 	ret=$?
 	$VERBOSE_ECHO "$libtoolize_output"
 
 	if [ ! $ret = 0 ] ; then $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2 ; fi
     else
 	if [ "x$HAVE_ALT_LIBTOOLIZE" = "xyes" ] ; then
-	    $VERBOSE_ECHO "$LIBTOOLIZE --automake --copy --force"
-	    libtoolize_output="`$LIBTOOLIZE --automake --copy --force 2>&1`"
+	    $VERBOSE_ECHO "$LIBTOOLIZE $ALT_LIBTOOLIZE_OPTIONS"
+	    libtoolize_output="`$LIBTOOLIZE $ALT_LIBTOOLIZE_OPTIONS 2>&1`"
 	    ret=$?
 	    $VERBOSE_ECHO "$libtoolize_output"
 
@@ -705,8 +771,8 @@ manual_autogen ( ) {
     fi
 
     # re-run again as instructed by libtoolize
-    $VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS"
-    aclocal_output="`$ACLOCAL $SEARCH_DIRS 2>&1`"
+    $VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS $ACLOCAL_OPTIONS"
+    aclocal_output="`$ACLOCAL $SEARCH_DIRS $ACLOCAL_OPTIONS 2>&1`"
     ret=$?
     $VERBOSE_ECHO "$aclocal_output"
 
@@ -726,8 +792,8 @@ manual_autogen ( ) {
     fi
 
     $VERBOSE_ECHO
-    $VERBOSE_ECHO "$AUTOCONF -f"
-    autoconf_output="`$AUTOCONF -f 2>&1`"
+    $VERBOSE_ECHO "$AUTOCONF $AUTOCONF_OPTIONS"
+    autoconf_output="`$AUTOCONF $AUTOCONF_OPTIONS 2>&1`"
     ret=$?
     $VERBOSE_ECHO "$autoconf_output"
 
@@ -826,23 +892,23 @@ EOF
 	fi
     fi
 
-    $VERBOSE_ECHO "$AUTOHEADER"
-    autoheader_output="`$AUTOHEADER 2>&1`"
+    $VERBOSE_ECHO "$AUTOHEADER $AUTOHEADER_OPTIONS"
+    autoheader_output="`$AUTOHEADER $AUTOHEADER_OPTIONS 2>&1`"
     ret=$?
     $VERBOSE_ECHO "$autoheader_output"
 
     if [ ! $ret = 0 ] ; then $ECHO "ERROR: $AUTOHEADER failed" && exit 2 ; fi
 
-    $VERBOSE_ECHO "$AUTOMAKE -a -c -f"
-    automake_output="`$AUTOMAKE -a -c -f 2>&1`"
+    $VERBOSE_ECHO "$AUTOMAKE $AUTOMAKE_OPTIONS"
+    automake_output="`$AUTOMAKE $AUTOMAKE_OPTIONS 2>&1`"
     ret=$?
     $VERBOSE_ECHO "$automake_output"
 
     if [ ! $ret = 0 ] ; then
 	# retry without the -f
 	$VERBOSE_ECHO
-	$VERBOSE_ECHO "$AUTOMAKE -a -c"
-	automake_output="`$AUTOMAKE -a -c 2>&1`"
+	$VERBOSE_ECHO "$AUTOMAKE $ALT_AUTOMAKE_OPTIONS"
+	automake_output="`$AUTOMAKE $ALT_AUTOMAKE_OPTIONS 2>&1`"
 	ret=$?
 	$VERBOSE_ECHO "$automake_output"
 
@@ -930,35 +996,13 @@ for file in COPYING INSTALL ; do
 done
 
 
-################
-# restore path #
-################
+#########################
+# restore and summarize #
+#########################
 cd "$_prev_path"
 $ECHO "done"
 $ECHO
-
-
-###############################################
-# check for help arg, and bypass running make #
-###############################################
-if [ "x$HAVE_SED" = "xyes" ] ; then
-    if [ "x`echo $ARGS | sed 's/.*[hH][eE][lL][pP].*/help/'`" = "xhelp" ] ; then
-	HELP=yes
-    fi
-fi
-if [ "x$HELP" = "xyes" ] ; then
-    echo "Help was requested.  No configuration and compilation will be done."
-    echo "Running: $PATH_TO_AUTOGEN/configure $ARGS"
-    $VERBOSE_ECHO "$PATH_TO_AUTOGEN/configure $ARGS"
-    $PATH_TO_AUTOGEN/configure $ARGS
-    exit 0
-fi
-
-
-#############
-# summarize #
-#############
-$ECHO "The ${SUITE} build system is now prepared.  To build here, run:"
+$ECHO "The $SUITE build system is now prepared.  To build here, run:"
 $ECHO "  $PATH_TO_AUTOGEN/configure"
 $ECHO "  make"
 
