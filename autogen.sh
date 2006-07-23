@@ -591,6 +591,11 @@ fi
 ############################
 libtool_failure ( ) {
     _autoconf_output="$1"
+
+    if [ "x$RUN_RECURSIVE" = "xno" ] ; then
+	exit 5
+    fi
+
     if test -f "$LIBTOOL_M4" ; then
 	found_libtool="`$ECHO $_autoconf_output | grep AC_PROG_LIBTOOL`"
 	if test ! "x$found_libtool" = "x" ; then
@@ -602,6 +607,11 @@ libtool_failure ( ) {
 	    fi
 	    $VERBOSE_ECHO cat "$LIBTOOL_M4" >> acinclude.m4
 	    cat "$LIBTOOL_M4" >> acinclude.m4
+
+	    # don't keep doing this
+	    RUN_RECURSIVE=no
+	    export RUN_RECURSIVE
+
 	    $ECHO
 	    $ECHO "Restarting the configuration steps with a local libtool.m4"
 	    $VERBOSE_ECHO sh $AUTOGEN_SH "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
@@ -633,6 +643,8 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
 	fi
 	$ECHO "Assuming this is a libtoolize problem..."
 	export LIBTOOLIZE
+	RUN_RECURSIVE=no
+	export RUN_RECURSIVE
 	$ECHO
 	$ECHO "Restarting the configuration steps with LIBTOOLIZE set to $LIBTOOLIZE"
 	$VERBOSE_ECHO sh $AUTOGEN_SH "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
