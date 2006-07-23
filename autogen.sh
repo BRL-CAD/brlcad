@@ -45,6 +45,8 @@
 
 ARGS="$*"
 PATH_TO_AUTOGEN="`dirname $0`"
+NAME_OF_AUTOGEN="`basename $0`"
+AUTOGEN_SH="$PATH_TO_AUTOGEN/$NAME_OF_AUTOGEN"
 
 SUITE="BRL-CAD"
 
@@ -61,7 +63,6 @@ LIBTOOL_MINOR_VERSION=4
 LIBTOOL_PATCH_VERSION=2
 
 LIBTOOL_M4="${PATH_TO_AUTOGEN}/misc/libtool.m4"
-
 
 ##################
 # argument check #
@@ -90,6 +91,12 @@ done
 #####################
 # environment check #
 #####################
+
+# sanity check before recursions potentially begin
+if [ ! "x$0" = "x$AUTOGEN_SH" ] ; then
+    echo "ERROR: Internal dirname/basename inconsistency: $0 != $AUTOGEN_SH"
+    exit 1
+fi
 
 # force locale setting to C so things like date output as expected
 LC_ALL=C
@@ -147,6 +154,11 @@ if [ "x$HAVE_SED" = "xno" ] ; then
     $ECHO "GNU Autotools version checks are disabled."
 fi
 
+# allow a recursive run to disable further recursions
+if [ "x$RUN_RECURSIVE" = "x" ] ; then
+    RUN_RECURSIVE=yes
+fi
+
 
 ##########################
 # autoconf version check #
@@ -191,9 +203,9 @@ if [ "x$_report_error" = "xyes" ] ; then
     $ECHO "ERROR:  To prepare the ${SUITE} build system from scratch,"
     $ECHO "        at least version $AUTOCONF_MAJOR_VERSION.$AUTOCONF_MINOR_VERSION.$AUTOCONF_PATCH_VERSION of GNU Autoconf must be installed."
     $ECHO
-    $ECHO "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
+    $ECHO "$NAME_OF_AUTOGEN_SH does not need to be run on the same machine that will"
     $ECHO "run configure or make.  Either the GNU Autotools will need to be installed"
-    $ECHO "or upgraded on this system, or $PATH_TO_AUTOGEN/autogen.sh must be run on the source"
+    $ECHO "or upgraded on this system, or $NAME_OF_AUTOGEN_SH must be run on the source"
     $ECHO "code on another system and then transferred to here. -- Cheers!"
     exit 1
 fi
@@ -250,9 +262,9 @@ if [ "x$_report_error" = "xyes" ] ; then
     $ECHO "ERROR:  To prepare the ${SUITE} build system from scratch,"
     $ECHO "        at least version $AUTOMAKE_MAJOR_VERSION.$AUTOMAKE_MINOR_VERSION.$AUTOMAKE_PATCH_VERSION of GNU Automake must be installed."
     $ECHO
-    $ECHO "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
+    $ECHO "$NAME_OF_AUTOGEN_SH does not need to be run on the same machine that will"
     $ECHO "run configure or make.  Either the GNU Autotools will need to be installed"
-    $ECHO "or upgraded on this system, or $PATH_TO_AUTOGEN/autogen.sh must be run on the source"
+    $ECHO "or upgraded on this system, or $NAME_OF_AUTOGEN_SH must be run on the source"
     $ECHO "code on another system and then transferred to here. -- Cheers!"
     exit 1
 fi
@@ -382,9 +394,9 @@ if [ "x$_report_error" = "xyes" ] ; then
     $ECHO "ERROR:  To prepare the ${SUITE} build system from scratch,"
     $ECHO "        at least version $LIBTOOL_MAJOR_VERSION.$LIBTOOL_MINOR_VERSION.$LIBTOOL_PATCH_VERSION of GNU Libtool must be installed."
     $ECHO
-    $ECHO "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
+    $ECHO "$NAME_OF_AUTOGEN_SH does not need to be run on the same machine that will"
     $ECHO "run configure or make.  Either the GNU Autotools will need to be installed"
-    $ECHO "or upgraded on this system, or $PATH_TO_AUTOGEN/autogen.sh must be run on the source"
+    $ECHO "or upgraded on this system, or $NAME_OF_AUTOGEN_SH must be run on the source"
     $ECHO "code on another system and then transferred to here. -- Cheers!"
     exit 1
 fi
@@ -427,98 +439,111 @@ fi
 # stash path #
 ##############
 _prev_path="`pwd`"
-cd "$PATH_TO_AUTOGEN"
 
 
-#####################
-# detect an aux dir #
-#####################
-_configure_file=/dev/null
-if test -f configure.ac ; then
-    _configure_file=configure.ac
-elif test -f configure.in ; then
-    _configure_file=configure.in
-fi
+#######################
+# INITIALIZE FUNCTION #
+#######################
+initialize ( ) {
 
-_aux_dir=.
-if test "x$HAVE_SED" = "xyes" ; then
-    _aux_dir="`grep AC_CONFIG_AUX_DIR $_configure_file | grep -v '.*#.*AC_CONFIG_AUX_DIR' | tail -${TAIL_N}1 | sed 's/^[ 	]*AC_CONFIG_AUX_DIR(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
-    if test ! -d "$_aux_dir" ; then
-	_aux_dir=.
-    else
-	$VERBOSE_ECHO "Detected auxillary directory: $_aux_dir"
+    #####################
+    # detect an aux dir #
+    #####################
+    _configure_file=/dev/null
+    if test -f configure.ac ; then
+	_configure_file=configure.ac
+    elif test -f configure.in ; then
+	_configure_file=configure.in
     fi
-fi
 
-
-################################
-# detect a recursive configure #
-################################
-_det_config_subdirs="`grep AC_CONFIG_SUBDIRS $_configure_file | grep -v '.*#.*AC_CONFIG_SUBDIRS' | sed 's/^[ 	]*AC_CONFIG_SUBDIRS(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
-CONFIG_SUBDIRS=""
-for dir in $_det_config_subdirs ; do
-    if test -d "$dir" ; then
-	$VERBOSE_ECHO "Detected recursive configure directory: $dir"
-	CONFIG_SUBDIRS="$CONFIG_SUBDIRS $dir"
+    _aux_dir=.
+    if test "x$HAVE_SED" = "xyes" ; then
+	_aux_dir="`grep AC_CONFIG_AUX_DIR $_configure_file | grep -v '.*#.*AC_CONFIG_AUX_DIR' | tail -${TAIL_N}1 | sed 's/^[ 	]*AC_CONFIG_AUX_DIR(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
+	if test ! -d "$_aux_dir" ; then
+	    _aux_dir=.
+	else
+	    $VERBOSE_ECHO "Detected auxillary directory: $_aux_dir"
+	fi
     fi
-done
 
 
-##########################################
-# make sure certain required files exist #
-##########################################
+    ################################
+    # detect a recursive configure #
+    ################################
+    _det_config_subdirs="`grep AC_CONFIG_SUBDIRS $_configure_file | grep -v '.*#.*AC_CONFIG_SUBDIRS' | sed 's/^[ 	]*AC_CONFIG_SUBDIRS(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
+    CONFIG_SUBDIRS=""
+    for dir in $_det_config_subdirs ; do
+	if test -d "$dir" ; then
+	    $VERBOSE_ECHO "Detected recursive configure directory: $dir"
+	    CONFIG_SUBDIRS="$CONFIG_SUBDIRS $dir"
+	fi
+    done
 
-for file in AUTHORS COPYING ChangeLog INSTALL NEWS README ; do
-    if test ! -f $file ; then
-	$VERBOSE_ECHO "Touching ${file} since it does not exist"
-	touch $file
+
+    ##########################################
+    # make sure certain required files exist #
+    ##########################################
+    for file in AUTHORS COPYING ChangeLog INSTALL NEWS README ; do
+	if test ! -f $file ; then
+	    $VERBOSE_ECHO "Touching ${file} since it does not exist"
+	    touch $file
+	fi
+    done
+
+
+    ########################################################
+    # protect COPYING & INSTALL from overwrite by automake #
+    ########################################################
+    for file in COPYING INSTALL ; do
+	if test ! -f $file ; then
+	    continue
+	fi
+	$VERBOSE_ECHO "cp -pf ${file} \"${_aux_dir}/${file}.backup\""
+	cp -pf ${file} "${_aux_dir}/${file}.backup"
+    done
+
+
+    ##################################################
+    # make sure certain generated files do not exist #
+    ##################################################
+    for file in config.guess config.sub ltmain.sh ; do
+	if test -f "${_aux_dir}/${file}" ; then
+	    $VERBOSE_ECHO "mv -f \"${_aux_dir}/${file}\" \"${_aux_dir}/${file}.backup\""
+	    mv -f "${_aux_dir}/${file}" "${_aux_dir}/${file}.backup"
+	fi
+    done
+
+
+    ############################
+    # search alternate m4 dirs #
+    ############################
+    SEARCH_DIRS=""
+    for dir in m4 ; do
+	if [ -d $dir ] ; then
+	    $VERBOSE_ECHO "Found extra aclocal search directory: $dir"
+	    SEARCH_DIRS="$SEARCH_DIRS -I $dir"
+	fi
+    done
+
+
+    #######################################
+    # remove the autom4te.cache directory #
+    #######################################
+    if test -d autom4te.cache ; then
+	$VERBOSE_ECHO "Found an autom4te.cache directory, deleting it"
+	$VERBOSE_ECHO "rm -rf autom4te.cache"
+	rm -rf autom4te.cache
     fi
-done
+    
+} # end of initialize()
 
 
-########################################################
-# protect COPYING & INSTALL from overwrite by automake #
-########################################################
-for file in COPYING INSTALL ; do
-    if test ! -f $file ; then
-	continue
-    fi
-    $VERBOSE_ECHO "cp -pf ${file} \"${_aux_dir}/${file}.backup\""
-    cp -pf ${file} "${_aux_dir}/${file}.backup"
-done
-
-
-##################################################
-# make sure certain generated files do not exist #
-##################################################
-for file in config.guess config.sub ltmain.sh ; do
-    if test -f "${_aux_dir}/${file}" ; then
-	$VERBOSE_ECHO "mv -f \"${_aux_dir}/${file}\" \"${_aux_dir}/${file}.backup\""
-	mv -f "${_aux_dir}/${file}" "${_aux_dir}/${file}.backup"
-    fi
-done
-
-
-############################
-# search alternate m4 dirs #
-############################
-SEARCH_DIRS=""
-for dir in m4 ; do
-    if [ -d $dir ] ; then
-	$VERBOSE_ECHO "Found extra aclocal search directory: $dir"
-	SEARCH_DIRS="$SEARCH_DIRS -I $dir"
-    fi
-done
-
-
-#######################################
-# remove the autom4te.cache directory #
-#######################################
-if test -d autom4te.cache ; then
-    $VERBOSE_ECHO "Found an autom4te.cache directory, deleting it"
-    $VERBOSE_ECHO "rm -rf autom4te.cache"
-    rm -rf autom4te.cache
-fi
+##############
+# initialize #
+##############
+# Before running autoreconf or manual steps, some prep detection work
+# is necessary or useful.  Only needs to occur once per directory.
+initialize
 
 
 ############################################
@@ -548,8 +573,34 @@ else
     reconfigure_manually=yes
 fi
 
+############################
+# LIBTOOL_FAILURE FUNCTION #
+############################
+libtool_failure ( ) {
+    _autoconf_output="$1"
+    if test -f "$LIBTOOL_M4" ; then
+	found_libtool="`$ECHO $_autoconf_output | grep AC_PROG_LIBTOOL`"
+	if test ! "x$found_libtool" = "x" ; then
+	    if test -f acinclude.m4 ; then
+		if test ! -f acinclude.m4.backup ; then
+		    $VERBOSE_ECHO cp acinclude.m4 acinclude.m4.backup
+		    cp acinclude.m4 acinclude.m4.backup
+		fi
+	    fi
+	    $VERBOSE_ECHO cat "$LIBTOOL_M4" >> acinclude.m4
+	    cat "$LIBTOOL_M4" >> acinclude.m4
+	    $ECHO
+	    $ECHO "Restarting the configuration steps with a local libtool.m4"
+	    $VERBOSE_ECHO sh $AUTOGEN_SH "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+	    sh "$AUTOGEN_SH" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+	    exit $?
+	fi
+    fi
+}
+
+
 ###
-# Steps taken are as follows:
+# Manual configuration steps taken are as follows:
 #  aclocal [-I m4]
 #  libtoolize --automake -c -f
 #  aclocal [-I m4]
@@ -571,8 +622,8 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
 	export LIBTOOLIZE
 	$ECHO
 	$ECHO "Restarting the configuration steps with LIBTOOLIZE set to $LIBTOOLIZE"
-	$VERBOSE_ECHO sh $0 "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
-	sh "$0" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+	$VERBOSE_ECHO sh $AUTOGEN_SH "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+	sh "$AUTOGEN_SH" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
 	exit $?
     fi
     
@@ -695,26 +746,9 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
 	    fi
 
 	    # test if libtool is busted
-	    if test -f "$LIBTOOL_M4" ; then
-		found_libtool="`$ECHO $autoconf_output | grep AC_PROG_LIBTOOL`"
-		if test ! "x$found_libtool" = "x" ; then
-		    if test -f acinclude.m4 ; then
-			if test ! -f acinclude.m4.backup ; then
-			    $VERBOSE_ECHO cp acinclude.m4 acinclude.m4.backup
-			    cp acinclude.m4 acinclude.m4.backup
-			fi
-		    fi
-		    $VERBOSE_ECHO cat "$LIBTOOL_M4" >> acinclude.m4
-		    cat "$LIBTOOL_M4" >> acinclude.m4
+	    libtool_failure "$autoconf_output"
 
-		    $ECHO
-		    $ECHO "Restarting the configuration steps with a local libtool.m4"
-
-		    $VERBOSE_ECHO sh $0 "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
-		    sh "$0" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
-		    exit $?
-		fi
-	    fi
+	    # let the user know what went wrong
 	    cat <<EOF
 $autoconf_output
 EOF
@@ -763,26 +797,11 @@ EOF
 	$VERBOSE_ECHO "$automake_output"
 
 	if [ ! $ret = 0 ] ; then
-	    if test -f "$LIBTOOL_M4" ; then
-		found_libtool="`$ECHO $automake_output | grep AC_PROG_LIBTOOL`"
-		if test ! "x$found_libtool" = "x" ; then
-		    if test -f acinclude.m4 ; then
-			if test ! -f acinclude.m4.backup ; then
-			    $VERBOSE_ECHO cp acinclude.m4 acinclude.m4.backup
-			    cp acinclude.m4 acinclude.m4.backup
-			fi
-		    fi
-		    $VERBOSE_ECHO cat "$LIBTOOL_M4" >> acinclude.m4
-		    cat "$LIBTOOL_M4" >> acinclude.m4
 
-		    $ECHO
-		    $ECHO "Restarting the configuration steps with a local libtool.m4"
+	    # test if libtool is busted
+	    libtool_failure "$automake_output"
 
-		    $VERBOSE_ECHO sh $0 "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
-		    sh "$0" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
-		    exit $?
-		fi
-	    fi
+	    # let the user know what went wrong
 	    cat <<EOF
 $automake_output
 EOF
