@@ -43,34 +43,47 @@
 #
 ######################################################################
 
+# set to the name of this project
+SUITE="BRL-CAD"
+
+# set to minimum acceptible version of autoconf
+AUTOCONF_MAJOR_VERSION=2
+AUTOCONF_MINOR_VERSION=52
+AUTOCONF_PATCH_VERSION=0
+
+# set to minimum acceptible version of automake
+AUTOMAKE_MAJOR_VERSION=1
+AUTOMAKE_MINOR_VERSION=6
+AUTOMAKE_PATCH_VERSION=0
+
+# set to minimum acceptible version of libtool
+LIBTOOL_MAJOR_VERSION=1
+LIBTOOL_MINOR_VERSION=4
+LIBTOOL_PATCH_VERSION=2
+
+
+##################
+# argument check #
+##################
 ARGS="$*"
 PATH_TO_AUTOGEN="`dirname $0`"
 NAME_OF_AUTOGEN="`basename $0`"
 AUTOGEN_SH="$PATH_TO_AUTOGEN/$NAME_OF_AUTOGEN"
 
-SUITE="BRL-CAD"
-
-AUTOCONF_MAJOR_VERSION=2
-AUTOCONF_MINOR_VERSION=52
-AUTOCONF_PATCH_VERSION=0
-
-AUTOMAKE_MAJOR_VERSION=1
-AUTOMAKE_MINOR_VERSION=6
-AUTOMAKE_PATCH_VERSION=0
-
-LIBTOOL_MAJOR_VERSION=1
-LIBTOOL_MINOR_VERSION=4
-LIBTOOL_PATCH_VERSION=2
-
 LIBTOOL_M4="${PATH_TO_AUTOGEN}/misc/libtool.m4"
 
-##################
-# argument check #
-##################
-HELP=no
-QUIET=no
-VERBOSE=no
-VERSION_ONLY=no
+if [ "x$HELP" = "x" ] ; then
+    HELP=no
+fi
+if [ "x$QUIET" = "x" ] ; then
+    QUIET=no
+fi
+if [ "x$VERBOSE" = "x" ] ; then
+    VERBOSE=no
+fi
+if [ "x$VERSION_ONLY" = "x" ] ; then
+    VERSION_ONLY=no
+fi
 for arg in $ARGS ; do
     case "x$arg" in
 	x--help) HELP=yes ;;
