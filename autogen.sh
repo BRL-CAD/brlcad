@@ -622,7 +622,9 @@ libtool_failure ( ) {
 }
 
 
-###
+###########################
+# MANUAL_AUTOGEN FUNCTION #
+###########################
 # Manual configuration steps taken are as follows:
 #  aclocal [-I m4]
 #  libtoolize --automake -c -f
@@ -631,27 +633,7 @@ libtool_failure ( ) {
 #  autoheader
 #  automake -a -c -f
 ####
-if [ "x$reconfigure_manually" = "xyes" ] ; then
-    
-    # XXX if this is a recursive configure, manual steps don't work
-    # yet .. assume it's the libtool/glibtool problem.
-    if [ ! "x$CONFIG_SUBDIRS" = "x" ] ; then
-	$ECHO "Running the configuration steps individually does not yet work"
-	$ECHO "well with a recursive configure."
-	if [ ! "x$HAVE_ALT_LIBTOOLIZE" = "xyes" ] ; then
-	    exit 3
-	fi
-	$ECHO "Assuming this is a libtoolize problem..."
-	export LIBTOOLIZE
-	RUN_RECURSIVE=no
-	export RUN_RECURSIVE
-	$ECHO
-	$ECHO "Restarting the configuration steps with LIBTOOLIZE set to $LIBTOOLIZE"
-	$VERBOSE_ECHO sh $AUTOGEN_SH "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
-	sh "$AUTOGEN_SH" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
-	exit $?
-    fi
-    
+manual_autogen ( ) {
     $ECHO
     $ECHO $ECHO_N "Preparing build ... $ECHO_C"
 
@@ -834,6 +816,44 @@ EOF
 	$ECHO "ERROR: $AUTOMAKE failed"
 	exit 2
     fi
+}
+
+
+##################################
+# run manual configuration steps #
+##################################
+if [ "x$reconfigure_manually" = "xyes" ] ; then
+    
+    # XXX if this is a recursive configure, manual steps don't work
+    # yet .. assume it's the libtool/glibtool problem.
+    if [ ! "x$CONFIG_SUBDIRS" = "x" ] ; then
+	$ECHO "Running the configuration steps individually does not yet work"
+	$ECHO "well with a recursive configure."
+	if [ ! "x$HAVE_ALT_LIBTOOLIZE" = "xyes" ] ; then
+	    exit 3
+	fi
+	$ECHO "Assuming this is a libtoolize problem..."
+	export LIBTOOLIZE
+	RUN_RECURSIVE=no
+	export RUN_RECURSIVE
+	$ECHO
+	$ECHO "Restarting the configuration steps with LIBTOOLIZE set to $LIBTOOLIZE"
+	$VERBOSE_ECHO sh $AUTOGEN_SH "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+	sh "$AUTOGEN_SH" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+	exit $?
+    fi
+
+    # run the build configuration steps manually for this directory
+    manual_autogen
+
+    # for projects using recursive configure, run the build
+    # configuration steps for the subdirectories.
+    for dir in $CONFIG_SUBDIRS ; do
+	$VERBOSE_ECHO "Processing recursive configure in $dir"
+	cd "$_prev_path"
+	cd "$dir"
+	manual_autogen
+    done
 fi
 
 
