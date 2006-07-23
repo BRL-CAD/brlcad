@@ -39,6 +39,20 @@
 # detect proper version support, and outputs warnings about particular
 # systems that have autotool peculiarities.
 #
+# Basically, if everything is set up and installed correctly, the
+# script will validate that minimum versions of the GNU Build System
+# tools are installed, account for several common configuration
+# issues, and then simply run autoreconf for you.
+#
+# If autoreconf fails, which can happen for many valid configurations,
+# this script proceeds to run manual configuration steps effectively
+# providing a POSIX shell script (mostly complete) reimplementation of
+# autoreconf.
+#
+# The AUTORECONF, AUTOCONF, AUTOMAKE, LIBTOOLIZE, ACLOCAL, AUTOHEADER
+# environment variables may be used to override the default detected
+# applications.
+#
 # Author: Christopher Sean Morrison
 #
 ######################################################################
@@ -177,14 +191,19 @@ fi
 # autoconf version check #
 ##########################
 _acfound=no
-for AUTOCONF in autoconf ; do
-    $VERBOSE_ECHO "Checking autoconf version: $AUTOCONF --version"
-    $AUTOCONF --version > /dev/null 2>&1
-    if [ $? = 0 ] ; then
-	_acfound=yes
-	break
-    fi
-done
+if [ "x$AUTOCONF" = "x" ] ; then
+    for AUTOCONF in autoconf ; do
+	$VERBOSE_ECHO "Checking autoconf version: $AUTOCONF --version"
+	$AUTOCONF --version > /dev/null 2>&1
+	if [ $? = 0 ] ; then
+	    _acfound=yes
+	    break
+	fi
+    done
+else
+    _acfound=yes
+    $ECHO "Using AUTOCONF environment variable override: $AUTOCONF"
+fi
 
 _report_error=no
 if [ ! "x$_acfound" = "xyes" ] ; then
@@ -228,14 +247,20 @@ fi
 # automake version check #
 ##########################
 _amfound=no
-for AUTOMAKE in automake ; do
-    $VERBOSE_ECHO "Checking automake version: $AUTOMAKE --version"
-    $AUTOMAKE --version > /dev/null 2>&1
-    if [ $? = 0 ] ; then
-	_amfound=yes
-	break
-    fi
-done
+if [ "x$AUTOMAKE" = "x" ] ; then
+    for AUTOMAKE in automake ; do
+	$VERBOSE_ECHO "Checking automake version: $AUTOMAKE --version"
+	$AUTOMAKE --version > /dev/null 2>&1
+	if [ $? = 0 ] ; then
+	    _amfound=yes
+	    break
+	fi
+    done
+else
+    _amfound=yes
+    $ECHO "Using AUTOMAKE environment variable override: $AUTOMAKE"
+fi
+
 
 _report_error=no
 if [ ! "x$_amfound" = "xyes" ] ; then
@@ -287,14 +312,19 @@ fi
 # check for autoreconf #
 ########################
 HAVE_AUTORECONF=no
-for AUTORECONF in autoreconf ; do
-    $VERBOSE_ECHO "Checking autoreconf version: $AUTORECONF --version"
-    $AUTORECONF --version > /dev/null 2>&1
-    if [ $? = 0 ] ; then
-	HAVE_AUTORECONF=yes
-	break
-    fi
-done
+if [ "x$AUTORECONF" = "x" ] ; then
+    for AUTORECONF in autoreconf ; do
+	$VERBOSE_ECHO "Checking autoreconf version: $AUTORECONF --version"
+	$AUTORECONF --version > /dev/null 2>&1
+	if [ $? = 0 ] ; then
+	    HAVE_AUTORECONF=yes
+	    break
+	fi
+    done
+else
+    HAVE_AUTORECONF=yes
+    $ECHO "Using AUTORECONF environment variable override: $AUTORECONF"
+fi
 
 
 ########################
@@ -302,70 +332,75 @@ done
 ########################
 HAVE_LIBTOOLIZE=yes
 HAVE_ALT_LIBTOOLIZE=no
-LIBTOOLIZE=libtoolize
 _ltfound=no
-$VERBOSE_ECHO "Checking libtoolize version: $LIBTOOLIZE --version"
-$LIBTOOLIZE --version > /dev/null 2>&1
-if [ ! $? = 0 ] ; then
-    HAVE_LIBTOOLIZE=no
-    $ECHO
-    if [ "x$HAVE_AUTORECONF" = "xno" ] ; then
-	$ECHO "Warning:  libtoolize does not appear to be available."
-    else
-	$ECHO "Warning:  libtoolize does not appear to be available.  This means that"
-	$ECHO "the automatic build preparation via autoreconf will probably not work."
-	$ECHO "Preparing the build by running each step individually, however, should"
-	$ECHO "work and will be done automatically for you if autoreconf fails."
-    fi
-
-    # look for some alternates
-    for tool in glibtoolize libtoolize15 libtoolize14 libtoolize13 ; do
-	$VERBOSE_ECHO "Checking libtoolize alternate: $tool --version"
-	_glibtoolize="`$tool --version > /dev/null 2>&1`"
-	if [ $? = 0 ] ; then
-	    $VERBOSE_ECHO "Found $tool --version"
-	    _glti="`which $tool`"
-	    if [ "x$_glti" = "x" ] ; then
-		$VERBOSE_ECHO "Cannot find $tool with which"
-		continue;
-	    fi
-	    if test ! -f "$_glti" ; then
-		$VERBOSE_ECHO "Cannot use $tool, $_glti is not a file"
-		continue;
-	    fi
-	    _gltidir="`dirname $_glti`"
-	    if [ "x$_gltidir" = "x" ] ; then
-		$VERBOSE_ECHO "Cannot find $tool path with dirname of $_glti"
-		continue;
-	    fi
-	    if test ! -d "$_gltidir" ; then
-		$VERBOSE_ECHO "Cannot use $tool, $_gltidir is not a directory"
-		continue;
-	    fi
-	    HAVE_ALT_LIBTOOLIZE=yes
-	    LIBTOOLIZE="$tool"
-	    $ECHO
-	    $ECHO "Fortunately, $tool was found which means that your system may simply"
-	    $ECHO "have a non-standard or incomplete GNU Autotools install.  If you have"
-	    $ECHO "sufficient system access, it may be possible to quell this warning by"
-	    $ECHO "running:"
-	    $ECHO
-	    sudo -V > /dev/null 2>&1
-	    if [ $? = 0 ] ; then
-		$ECHO "   sudo ln -s $_glti $_gltidir/libtoolize"
-		$ECHO
-	    else
-		$ECHO "   ln -s $_glti $_gltidir/libtoolize"
-		$ECHO
-		$ECHO "Run that as root or with proper permissions to the $_gltidir directory"
-		$ECHO
-	    fi
-	    _ltfound=yes
-	    break
+if [ "x$LIBTOOLIZE" = "x" ] ; then
+    LIBTOOLIZE=libtoolize
+    $VERBOSE_ECHO "Checking libtoolize version: $LIBTOOLIZE --version"
+    $LIBTOOLIZE --version > /dev/null 2>&1
+    if [ ! $? = 0 ] ; then
+	HAVE_LIBTOOLIZE=no
+	$ECHO
+	if [ "x$HAVE_AUTORECONF" = "xno" ] ; then
+	    $ECHO "Warning:  libtoolize does not appear to be available."
+	else
+	    $ECHO "Warning:  libtoolize does not appear to be available.  This means that"
+	    $ECHO "the automatic build preparation via autoreconf will probably not work."
+	    $ECHO "Preparing the build by running each step individually, however, should"
+	    $ECHO "work and will be done automatically for you if autoreconf fails."
 	fi
-    done
+
+        # look for some alternates
+	for tool in glibtoolize libtoolize15 libtoolize14 libtoolize13 ; do
+	    $VERBOSE_ECHO "Checking libtoolize alternate: $tool --version"
+	    _glibtoolize="`$tool --version > /dev/null 2>&1`"
+	    if [ $? = 0 ] ; then
+		$VERBOSE_ECHO "Found $tool --version"
+		_glti="`which $tool`"
+		if [ "x$_glti" = "x" ] ; then
+		    $VERBOSE_ECHO "Cannot find $tool with which"
+		    continue;
+		fi
+		if test ! -f "$_glti" ; then
+		    $VERBOSE_ECHO "Cannot use $tool, $_glti is not a file"
+		    continue;
+		fi
+		_gltidir="`dirname $_glti`"
+		if [ "x$_gltidir" = "x" ] ; then
+		    $VERBOSE_ECHO "Cannot find $tool path with dirname of $_glti"
+		    continue;
+		fi
+		if test ! -d "$_gltidir" ; then
+		    $VERBOSE_ECHO "Cannot use $tool, $_gltidir is not a directory"
+		    continue;
+		fi
+		HAVE_ALT_LIBTOOLIZE=yes
+		LIBTOOLIZE="$tool"
+		$ECHO
+		$ECHO "Fortunately, $tool was found which means that your system may simply"
+		$ECHO "have a non-standard or incomplete GNU Autotools install.  If you have"
+		$ECHO "sufficient system access, it may be possible to quell this warning by"
+		$ECHO "running:"
+		$ECHO
+		sudo -V > /dev/null 2>&1
+		if [ $? = 0 ] ; then
+		    $ECHO "   sudo ln -s $_glti $_gltidir/libtoolize"
+		    $ECHO
+		else
+		    $ECHO "   ln -s $_glti $_gltidir/libtoolize"
+		    $ECHO
+		    $ECHO "Run that as root or with proper permissions to the $_gltidir directory"
+		    $ECHO
+		fi
+		_ltfound=yes
+		break
+	    fi
+	done
+    else
+	_ltfound=yes
+    fi
 else
     _ltfound=yes
+    $ECHO "Using LIBTOOLIZE environment variable override: $LIBTOOLIZE"
 fi
 
 _report_error=no
@@ -418,25 +453,33 @@ fi
 #####################
 # check for aclocal #
 #####################
-for ACLOCAL in aclocal ; do
-    $VERBOSE_ECHO "Checking aclocal version: $ACLOCAL --version"
-    $ACLOCAL --version > /dev/null 2>&1
-    if [ $? = 0 ] ; then
-	break
-    fi
-done
+if [ "x$ACLOCAL" = "x" ] ; then
+    for ACLOCAL in aclocal ; do
+	$VERBOSE_ECHO "Checking aclocal version: $ACLOCAL --version"
+	$ACLOCAL --version > /dev/null 2>&1
+	if [ $? = 0 ] ; then
+	    break
+	fi
+    done
+else
+    $ECHO "Using ACLOCAL environment variable override: $ACLOCAL"
+fi
 
 
 ########################
 # check for autoheader #
 ########################
-for AUTOHEADER in autoheader ; do
-    $VERBOSE_ECHO "Checking autoheader version: $AUTOHEADER --version"
-    $AUTOHEADER --version > /dev/null 2>&1
-    if [ $? = 0 ] ; then
-	break
-    fi
-done
+if [ "x$AUTOHEADER" = "x" ] ; then
+    for AUTOHEADER in autoheader ; do
+	$VERBOSE_ECHO "Checking autoheader version: $AUTOHEADER --version"
+	$AUTOHEADER --version > /dev/null 2>&1
+	if [ $? = 0 ] ; then
+	    break
+	fi
+    done
+else
+    $ECHO "Using AUTOHEADER environment variable override: $AUTOHEADER"
+fi
 
 
 #########################
@@ -900,7 +943,7 @@ $ECHO
 ###############################################
 if [ "x$HAVE_SED" = "xyes" ] ; then
     if [ "x`echo $ARGS | sed 's/.*[hH][eE][lL][pP].*/help/'`" = "xhelp" ] ; then
-	_help=yes
+	HELP=yes
     fi
 fi
 if [ "x$HELP" = "xyes" ] ; then
