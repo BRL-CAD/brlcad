@@ -1040,4 +1040,4 @@ See doc/history.txt for more historic information on BRL-CAD.  There
 is contained information on releases that predate 1999 and the 5.0
 release.
 
-NEWS items should be formated to column 70 (M-q in emacs), no tabs
+NEWS items should be formatted to column 70 (M-q in Emacs), no tabs.
