@@ -80,23 +80,24 @@ LIBTOOL_PATCH_VERSION=2
 # USAGE FUNCTION #
 ##################
 usage ( ) {
-    $ECHO "Usage: $AUTOGEN_SH [-h|--help] [-v|--verbose] [-q|--quiet] [--version]"
-    $ECHO "    --help     Help on $NAME_OF_AUTOGEN usage"
-    $ECHO "    --verbose  Verbose progress output"
-    $ECHO "    --quiet    Quiet suppressed progress output"
-    $ECHO "    --version  Only perform GNU Build System version checks"
-    $ECHO
-    $ECHO "Description: This script will validate that minimum versions of the"
-    $ECHO "GNU Build System tools are installed and then run autoreconf for you."
-    $ECHO "Should autoreconf fail, manual preparation steps will be run"
-    $ECHO "potentially accounting for several common configuration issues.  The"
-    $ECHO "AUTORECONF, AUTOCONF, AUTOMAKE, LIBTOOLIZE, ACLOCAL, AUTOHEADER"
-    $ECHO "environment variables and corresponding _OPTIONS variables"
-    $ECHO "(e.g. AUTORECONF_OPTIONS) may be used to override the default"
-    $ECHO "automatic detection behavior."
-    $ECHO
-    $ECHO "autogen.sh build preparation script by Christopher Sean Morrison"
-    $ECHO "POSIX shell script, BSD style license, copyright 2005-2006"
+    echo "Usage: $AUTOGEN_SH [-h|--help] [-v|--verbose] [-q|--quiet] [--version]"
+    echo "    --help     Help on $NAME_OF_AUTOGEN usage"
+    echo "    --verbose  Verbose progress output"
+    echo "    --quiet    Quiet suppressed progress output"
+    echo "    --version  Only perform GNU Build System version checks"
+    echo
+    echo "Description: This script will validate that minimum versions of the"
+    echo "GNU Build System tools are installed and then run autoreconf for you."
+    echo "Should autoreconf fail, manual preparation steps will be run"
+    echo "potentially accounting for several common configuration issues.  The"
+    echo "AUTORECONF, AUTOCONF, AUTOMAKE, LIBTOOLIZE, ACLOCAL, AUTOHEADER"
+    echo "environment variables and corresponding _OPTIONS variables"
+    echo "(e.g. AUTORECONF_OPTIONS) may be used to override the default"
+    echo "automatic detection behavior."
+    echo
+    echo "autogen.sh build preparation script by Christopher Sean Morrison"
+    echo "POSIX shell script, BSD style license, copyright 2005-2006"
+    return 0
 }
 
 
