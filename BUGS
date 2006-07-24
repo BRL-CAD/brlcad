@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged View menu says I and O are keybindings for zoom in/out -- they
+  are apparently not.
+
 * usage of lt says "lt object", yet if you actually type exactly that,
   you get a bus error.  Nice.
 
