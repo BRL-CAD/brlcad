@@ -46,7 +46,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <limits.h>			/* home of INT_MAX aka MAXINT */
-#include <ctype.h>			/* for isblank */
 
 #include "machine.h"
 #include "bu.h"
@@ -750,7 +749,7 @@ parse_densities_buffer(char *buf, unsigned long len)
 	    bu_bomb("");
 	}
 
-	while (isblank(*p)) p++;
+	while ((*p == '\t') || (*p == ' ')) p++;
 
 	if ((q = strchr(p, '\n'))) {
 	    *q++ = '\0';
