@@ -44,6 +44,7 @@ y  e
 1  2  Write a BRL-CAD tutorial
 2  2  Write a new manual page
 3  4  Write a system information tool for the benchmark
+4  4  Modify Kaleido to output BRL-CAD geometry
 
 *  *  Fix one of the bugs listed in the BUGS file
 *  *  Fix one of the bugs listed in the bug tracker
