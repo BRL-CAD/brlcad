@@ -79,8 +79,27 @@ static const char RCSmetaball[] = "@(#)$Header$ (BRL)";
 int
 rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-	bu_log("rt_metaball_prep called\n");
-  return 0;			/* OK */
+	struct rt_metaball_internal *mb, *nmb;
+	struct wdb_metaballpt *mbpt, *nmbpt;
+	
+	mb = ip->idb_ptr;
+	RT_METABALL_CK_MAGIC(mb);
+	VSET(stp->st_min, -4, -4, -4);
+	VSET(stp->st_max, 4, 4, 4);
+	VSET(stp->st_center, 0, 0, 0);
+	stp->st_aradius = 4;
+	stp->st_bradius = 4;
+	nmb = bu_malloc(sizeof(struct rt_metaball_internal), "rt_metaball_prep: nmb");
+	BU_LIST_INIT( &nmb->metaball_pt_head );
+	nmb->threshhold = mb->threshhold;
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)){
+		nmbpt = (struct wdb_metaballpt *)bu_malloc(sizeof(struct wdb_metaballpt), "rt_metaball_prep: nmbpt");
+		nmbpt->fldstr = mbpt->fldstr;
+		VMOVE(nmbpt->coord,mbpt->coord);
+		BU_LIST_INSERT( &nmb->metaball_pt_head, &nmbpt->l );
+	}
+	stp->st_specific = (void *)nmb;
+	return 0;
 }
 
 /**
@@ -93,14 +112,59 @@ rt_metaball_print(register const struct soltab *stp)
     return;
 }
 
+inline HIDDEN fastf_t
+rt_metaball_point_value(point_t *p, struct bu_list *points)
+{
+	struct wdb_metaballpt *mbpt;
+	struct rt_metaball_internal *mb;
+	fastf_t ret = 0.0;
+	point_t v;
+	int metaball_count = 0;
+
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, points)) {
+		VSUB2(v, mbpt->coord, *p);
+		ret += mbpt->fldstr / MAGSQ(v);
+	}
+	return ret;
+}
+
 /*
  *  			R T _ M E T A B A L L _ S H O T
  */
 int
 rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-	bu_log("rt_metaball_shot called\n");
-  return 1;
+	struct rt_metaball_internal *mb;
+	point_t p, inc;
+#define STEP .05
+	fastf_t i = (rp->r_max-rp->r_min)/STEP;
+	int stat=0;
+	struct wdb_metaballpt *mbpt;
+	register struct seg *segp = NULL;
+
+	mb = (struct rt_metaball_internal *)stp->st_specific;
+	VMOVE(p, rp->r_pt);
+	VSCALE(inc, rp->r_dir, STEP); /* assume it's normalized and we want to creep at STEP */
+
+	while( (i-=STEP) > 0.0 ) {
+		VADD2(p, p, inc);
+		if(stat) {
+			if(rt_metaball_point_value(&p, &mb->metaball_pt_head) < mb->threshhold ) {
+				segp->seg_out.hit_dist = (rp->r_max-rp->r_min)/STEP - i;
+				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+				return 2;		/* hit */
+			}
+		} else {
+			if(rt_metaball_point_value(&p, &mb->metaball_pt_head) > mb->threshhold ) {
+				RT_GET_SEG(segp, ap->a_resource);
+				segp->seg_stp = stp;
+				segp->seg_in.hit_dist = (rp->r_max-rp->r_min)/STEP - i;
+				++stat;
+			}
+		}
+	}
+#undef STEP
+	return 0; /* miss */
 }
 
 /**
@@ -111,8 +175,19 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 void
 rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
-	bu_log("rt_metaball_norm called\n");
-  return;
+	struct rt_metaball_internal *mb = stp->st_specific;
+	struct wdb_metaballpt *mbpt;
+	vect_t v;
+	fastf_t f;
+
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)){
+		VSUB2(v, mbpt->coord, hitp->hit_point);
+		f = mbpt->fldstr / MAGSQ(v);
+		VUNITIZE(v);
+		VJOIN1(hitp->hit_normal, hitp->hit_normal, f, v);
+	}
+	VUNITIZE(hitp->hit_normal);
+	return;
 }
 
 /**
@@ -226,7 +301,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 	mb->magic = RT_METABALL_INTERNAL_MAGIC;
 	mb->threshhold = buf[0];
 	BU_LIST_INIT( &mb->metaball_pt_head );
-	for(i=0 ; i<metaball_count*4 ; i+=4) {
+	for(i=1 ; i<=metaball_count*4 ; i+=4) {
 			/* Apply modeling transformations */
 		BU_GETSTRUCT( mbpt, wdb_metaballpt );
 		mbpt->l.magic = WDB_METABALLPT_MAGIC;
