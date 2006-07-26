@@ -80,6 +80,9 @@
 
     keep -showViewingParams
     keep -viewingParamsColor
+
+    keep -scaleEnable
+    keep -scaleColor
 }
 
 ::itcl::class Display {
@@ -92,6 +95,9 @@
 
     itk_option define -centerDotEnable centerDotEnable CenterDotEnable 1
     itk_option define -centerDotColor centerDotColor CenterDotColor {255 255 0}
+
+    itk_option define -scaleEnable scaleEnable ScaleEnable 0
+    itk_option define -scaleColor scaleColor ScaleColor {255 255 0}
 
     itk_option define -primitiveLabels primitiveLabels PrimitiveLabels {}
     itk_option define -primitiveLabelColor primitiveLabelColor PrimitiveLabelColor {255 255 0}
@@ -173,6 +179,7 @@
     public method toggle_modelAxesTickEnable {}
     public method toggle_viewAxesEnable {}
     public method toggle_centerDotEnable {}
+    public method toggle_scaleEnable {}
 
     public method ? {}
     public method apropos {key}
@@ -275,6 +282,47 @@
     set r [lindex $itk_option(-centerDotColor) 0]
     set g [lindex $itk_option(-centerDotColor) 1]
     set b [lindex $itk_option(-centerDotColor) 2]
+
+    # validate color
+    if {![string is digit $r] ||
+	![string is digit $g] ||
+        ![string is digit $b] ||
+        $r < 0 || 255 < $r ||
+        $g < 0 || 255 < $g ||
+        $b < 0 || 255 < $b} {
+
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    refresh
+}
+
+#::itcl::configbody Display::showViewingParams {
+#    if {$itk_option(-showViewingParams) != 0 &&
+#        $itk_option(-showViewingParams) != 1} {
+#	error "value must be 0, 1"
+#    }
+#
+#    refresh
+#}
+#
+#::itcl::configbody Display::scaleEnable {
+#    if {$itk_option(-scaleEnable) != 0 &&
+#        $itk_option(-scaleEnable) != 1} {
+#	error "value must be 0, 1"
+#    }
+#
+#    refresh
+#}
+
+::itcl::configbody Display::scaleColor {
+    if {[llength $itk_option(-scaleColor)] != 3} {
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    set r [lindex $itk_option(-scaleColor) 0]
+    set g [lindex $itk_option(-scaleColor) 1]
+    set b [lindex $itk_option(-scaleColor) 2]
 
     # validate color
     if {![string is digit $r] ||
@@ -701,6 +749,10 @@
 	    #Dm::drawString $vstr 0.0 -0.965 10 0
 	    eval Dm::fg $itk_option(-viewingParamsColor)
 	    Dm::drawString $vstr -0.98 -0.965 10 0
+	}
+
+	if {$itk_option(-scaleEnable)} {
+	    Dm::drawScale [View::size] $itk_option(-scaleColor)
 	}
 
 	if {$itk_option(-primitiveLabels) != {}} {
@@ -1161,6 +1213,16 @@ if {$tcl_platform(os) != "Windows NT"} {
 	set itk_option(-centerDotEnable) 0
     } else {
 	set itk_option(-centerDotEnable) 1
+    }
+
+    refresh
+}
+
+::itcl::body Display::toggle_scaleEnable {} {
+    if {$itk_option(-scaleEnable)} {
+	set itk_option(-scaleEnable) 0
+    } else {
+	set itk_option(-scaleEnable) 1
     }
 
     refresh

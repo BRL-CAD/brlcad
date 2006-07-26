@@ -74,6 +74,7 @@
     public method drawModelAxes {args}
     public method drawViewAxes {args}
     public method drawCenterDot {args}
+    public method drawScale {args}
     public method fg {args}
     public method flush {}
     public method get_aspect {}
@@ -325,6 +326,10 @@ if {$tcl_platform(os) != "Windows NT"} {
 
 ::itcl::body Dm::drawCenterDot {args} {
     eval $itk_component(dm) drawCenterDot $args
+}
+
+::itcl::body Dm::drawScale {args} {
+    eval $itk_component(dm) drawScale $args
 }
 
 # Get/set the background color
