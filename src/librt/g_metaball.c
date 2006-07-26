@@ -162,11 +162,12 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 {
 	struct rt_metaball_internal *mb;
 	point_t p, inc;
-	const static fastf_t step = .05;
-	fastf_t i = (rp->r_max-rp->r_min)/step;
 	int stat=0;
 	struct wdb_metaballpt *mbpt;
 	register struct seg *segp = NULL;
+#if 0
+	const static fastf_t step = .01;
+	fastf_t i = (rp->r_max-rp->r_min)/step;
 
 	mb = (struct rt_metaball_internal *)stp->st_specific;
 	VMOVE(p, rp->r_pt);
@@ -176,19 +177,67 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		VADD2(p, p, inc);
 		if(stat) {
 			if(rt_metaball_point_value(&p, &mb->metaball_pt_head) < mb->threshhold ) {
-				segp->seg_out.hit_dist = (rp->r_max-rp->r_min)/step - i;
+				point_t delta;
+				VSUB2(delta, p, rp->r_pt);
+				segp->seg_out.hit_dist = sqrt(MAGSQ(delta));
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 				return 2;		/* hit */
 			}
 		} else {
 			if(rt_metaball_point_value(&p, &mb->metaball_pt_head) > mb->threshhold ) {
+				point_t delta;
+				VSUB2(delta, p, rp->r_pt);
 				RT_GET_SEG(segp, ap->a_resource);
 				segp->seg_stp = stp;
-				segp->seg_in.hit_dist = (rp->r_max-rp->r_min)/step - i;
+				segp->seg_in.hit_dist = sqrt(MAGSQ(delta));
 				++stat;
 			}
 		}
 	}
+#else
+	const static fastf_t initstep = .2, finalstep = .01;
+	fastf_t step = initstep;
+	fastf_t i = (rp->r_max-rp->r_min)/step;
+
+	mb = (struct rt_metaball_internal *)stp->st_specific;
+	VMOVE(p, rp->r_pt);
+	VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
+
+	while( (i -= step) > 0.0 ) {
+		VADD2(p, p, inc);
+		if(stat) {
+			if(rt_metaball_point_value(&p, &mb->metaball_pt_head) < mb->threshhold ) {
+				point_t delta;
+				VSUB2(delta, p, rp->r_pt);
+				segp->seg_out.hit_dist = sqrt(MAGSQ(delta));
+				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+				return 2;		/* hit */
+			}
+		} else {
+			if(rt_metaball_point_value(&p, &mb->metaball_pt_head) > mb->threshhold ) {
+				if(step<=finalstep) {
+					point_t delta;
+					VSUB2(delta, p, rp->r_pt);
+					RT_GET_SEG(segp, ap->a_resource);
+					segp->seg_stp = stp;
+					segp->seg_in.hit_dist = sqrt(MAGSQ(delta));
+					++stat;
+				} else {
+					/* we hit, but not as fine-grained as we
+					 * want. So back up one step, cut the step
+					 * size in half and start over... Note that
+					 * once we're happily inside, we do NOT
+					 * change the step size back! */
+					i += step;
+					VSUB2(p, p, inc); 
+					step *= .5;
+					VSCALE(inc,inc,.5);
+				}
+				    
+			}
+		}
+	}
+#endif
 	return 0; /* miss */
 }
 
