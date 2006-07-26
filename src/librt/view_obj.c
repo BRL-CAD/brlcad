@@ -95,6 +95,7 @@ static int vo_mrot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char
 static int vo_mrotPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int vo_m2vPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int vo_v2mPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_viewDir_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static int vo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 void vo_update(struct view_obj *vop, Tcl_Interp *interp, int oflag);
@@ -111,6 +112,7 @@ static struct bu_cmdtab vo_cmds[] =
 	{"base2local",		vo_base2local_tcl},
 	{"center",		vo_center_tcl},
 	{"coord",		vo_coord_tcl},
+	{"viewDir",		vo_viewDir_tcl},
 	{"eye",			vo_eye_tcl},
 	{"eye_pos",		vo_eye_pos_tcl},
 	{"invSize",		vo_invSize_tcl},
@@ -2569,13 +2571,74 @@ vo_sca_cmd(struct view_obj	*vop,
  */
 static int
 vo_sca_tcl(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char		**argv)
+	   Tcl_Interp	*interp,
+	   int		argc,
+	   char		**argv)
 {
 	struct view_obj *vop = (struct view_obj *)clientData;
 
 	return vo_sca_cmd(vop, interp, argc-1, argv+1, (int (*)())0);
+}
+
+int
+vo_viewDir_cmd(struct view_obj	*vop,
+	      Tcl_Interp	*interp,
+	      int		argc,
+	      char 		**argv)
+{
+    vect_t view;
+    vect_t model;
+    mat_t invRot;
+    struct bu_vls vls;
+    int iflag = 0;
+
+    if (2 < argc) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias vo_viewDir %s", argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    /* Look for -i option */
+    if (argc == 2 &&
+	argv[1][0] == '-' &&
+	argv[1][1] == 'i' &&
+	argv[1][2] == '\0')
+	iflag = 1;
+
+    if (iflag) {
+	VSET(view, 0.0, 0.0, -1.0);
+    } else {
+	VSET(view, 0.0, 0.0, 1.0);
+    }
+
+    bn_mat_inv(invRot, vop->vo_rotation);
+    MAT4X3PNT(model, invRot, view);
+    
+    bu_vls_init(&vls);
+    bn_encode_vect(&vls, model);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+
+    return TCL_OK;
+}
+
+/*
+ * Usage:
+ *        procname viewDir
+ */
+static int
+vo_viewDir_tcl(ClientData	clientData,
+	      Tcl_Interp	*interp,
+	      int		argc,
+	      char		**argv)
+{
+	struct view_obj *vop = (struct view_obj *)clientData;
+
+	return vo_viewDir_cmd(vop, interp, argc-1, argv+1);
 }
 
 #if 0
