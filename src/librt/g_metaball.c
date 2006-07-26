@@ -1,4 +1,4 @@
-/*                    G _ M E T A B A L L . C
+/*			G _ M E T A B A L L . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2006 United States Government as represented by
@@ -25,15 +25,13 @@
 /** @file g_metaball.c
  * Intersect a ray with a metaball implicit surface.
  *
- *      NOTICE: this primitive is incomplete and should beconsidered
- *              experimental.  this primitive will exhibit several
- *              instabilities in the existing root solver method.
+ * NOTICE: this primitive is incomplete and should be considered
+ *	  experimental.
  *
+ * Authors -
+ *	Erik Greenwald <erikg@arl.army.mil>
  *
- *  Authors -
- *      Erik Greenwald <erikg@arl.army.mil>
- *
- *  Source -
+ * Source -
  *	ARL/SLAD/SDB Bldg 238
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
@@ -104,20 +102,20 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	VSCALE(p,p,-cnt);
 	VMOVE(stp->st_center, p);
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)){
-	    point_t d;
-	    fastf_t dist;
+		point_t d;
+		fastf_t dist;
 
-	    VSUB2(d,mbpt->coord,p);
-	    dist = MAGSQ(d) + mb->threshhold/mbpt->fldstr;
-	    for(BU_LIST_FOR(mbpt2, wdb_metaballpt, &mb->metaball_pt_head))
+		VSUB2(d,mbpt->coord,p);
+		dist = MAGSQ(d) + mb->threshhold/mbpt->fldstr;
+		for(BU_LIST_FOR(mbpt2, wdb_metaballpt, &mb->metaball_pt_head))
 		if(mbpt2 != mbpt){
-		    fastf_t mag;
+			fastf_t mag;
 
-		    VSUB2(d, mbpt2->coord, mbpt->coord);
-		    mag = MAGSQ(d);
-		    dist += mbpt2->fldstr / (mag>.00001?mag:1.0);
+			VSUB2(d, mbpt2->coord, mbpt->coord);
+			mag = MAGSQ(d);
+			dist += mbpt2->fldstr / (mag>.00001?mag:1.0);
 		}
-	    if(dist > r)
+		if(dist > r)
 		r = dist;
 	}
 	stp->st_aradius = r;
@@ -135,7 +133,7 @@ void
 rt_metaball_print(register const struct soltab *stp)
 {
 	bu_log("rt_metaball_print called\n");
-    return;
+	return;
 }
 
 inline HIDDEN fastf_t
@@ -233,7 +231,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 					step *= .5;
 					VSCALE(inc,inc,.5);
 				}
-				    
+					
 			}
 		}
 	}
@@ -272,8 +270,8 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
 void
 rt_metaball_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
-  bu_log("called rt_metaball_curve!\n");
-  return;
+	bu_log("called rt_metaball_curve!\n");
+	return;
 }
 
 
@@ -288,8 +286,8 @@ rt_metaball_curve(register struct curvature *cvp, register struct hit *hitp, str
 void
 rt_metaball_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
-  bu_log("called rt_metaball_uv!\n");
-  return;
+	bu_log("called rt_metaball_uv!\n");
+	return;
 }
 
 /**
@@ -311,27 +309,48 @@ rt_metaball_class(void)
 	return 0;
 }
 
-
-/**
- *			R T _ M E T A B A L L _ 1 6 P T S
- *
- * Also used by the TGC code
- */
-#define METABALLOUT(n)	ov+(n-1)*3
-void
-rt_metaball_16pts(register fastf_t *ov, register fastf_t *V, fastf_t *A, fastf_t *B)
-{
-	bu_log("rt_metaball_16pts called\n");
-	return;
-}
-
 /**
  *			R T _ M E T A B A L L _ P L O T
  */
 int
 rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	bu_log("rt_metaball_plot called\n");
+	struct rt_metaball_internal *mb;
+	struct wdb_metaballpt *mbpt;
+	fastf_t top[16*3];
+	fastf_t middle[16*3];
+	fastf_t bottom[16*3];
+	point_t a, b, c;
+	int i;
+
+	RT_CK_DB_INTERNAL(ip);
+	mb = (struct rt_metaball_internal *)ip->idb_ptr;
+	RT_METABALL_CK_MAGIC(mb);
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)) {
+		/* the fldstr may need to be amped up to better approximate? */
+		VSET(a, mbpt->fldstr, 0, 0);
+		VSET(b, 0, mbpt->fldstr, 0);
+		VSET(c, 0, 0, mbpt->fldstr);
+		rt_ell_16pts( top,    mbpt->coord, a, b );
+		rt_ell_16pts( bottom, mbpt->coord, b, c );
+		rt_ell_16pts( middle, mbpt->coord, a, c );
+
+		RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+		for( i=0; i<16; i++ )  {
+			RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+		}
+
+		RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+		for( i=0; i<16; i++ )  {
+			RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+		}
+
+		RT_ADD_VLIST( vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+		for( i=0; i<16; i++ )  {
+			RT_ADD_VLIST( vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+		}
+	}
+
 	return 0;
 }
 
@@ -343,8 +362,8 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 int
 rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-  bu_log("rt_metaball_tess called!\n");
-  return -1;
+	bu_log("rt_metaball_tess called!\n");
+	return -1;
 }
 
 /**
@@ -411,7 +430,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_METABALL )  
-	    return(-1);
+		return(-1);
 	mb = (struct rt_metaball_internal *)ip->idb_ptr;
 	RT_METABALL_CK_MAGIC(mb);
 	if (mb->metaball_pt_head.magic == 0) return -1;
@@ -462,9 +481,9 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 	if(!verbose)return 0;
 	metaball_count=0;
 	for( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_pt_head)){
-	    snprintf(buf,BUFSIZ,"\t%d: %g field strength at (%g, %g, %g)\n",
-		    ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord));
-	    bu_vls_strcat(str,buf);
+		snprintf(buf,BUFSIZ,"\t%d: %g field strength at (%g, %g, %g)\n",
+			++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord));
+		bu_vls_strcat(str,buf);
 	}
 	return 0;
 }
@@ -486,10 +505,10 @@ rt_metaball_ifree(struct rt_db_internal *ip)
 	RT_METABALL_CK_MAGIC(metaball);
 
 	if (metaball->metaball_pt_head.magic != 0)
-	    while(BU_LIST_WHILE(mbpt, wdb_metaballpt, &metaball->metaball_pt_head))  {
-		BU_LIST_DEQUEUE(&(mbpt->l));
-		bu_free((char *)mbpt, "wdb_metaballpt");
-	    }
+		while(BU_LIST_WHILE(mbpt, wdb_metaballpt, &metaball->metaball_pt_head)) {
+			BU_LIST_DEQUEUE(&(mbpt->l));
+			bu_free((char *)mbpt, "wdb_metaballpt");
+		}
 	bu_free( ip->idb_ptr, "metaball ifree" );
 	ip->idb_ptr = GENPTR_NULL;
 }
