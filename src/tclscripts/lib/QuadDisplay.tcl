@@ -64,6 +64,7 @@ option add *QuadDisplay.height 400 widgetDefault
     public method base2local {}
     public method center {args}
     public method coord {args}
+    public method viewDir {args}
     public method eye {args}
     public method eye_pos {args}
     public method invSize {args}
@@ -142,6 +143,8 @@ option add *QuadDisplay.height 400 widgetDefault
     public method toggle_modelAxesEnableAll {}
     public method toggle_modelAxesTickEnable {args}
     public method toggle_modelAxesTickEnableAll {}
+    public method toggle_scaleEnable {args}
+    public method toggle_scaleEnableAll {}
 
     public method resetAll {}
     public method default_views {}
@@ -167,6 +170,7 @@ option add *QuadDisplay.height 400 widgetDefault
     public method setModelAxesPosition {args}
     public method setModelAxesTickInterval {args}
     public method setModelAxesTicksPerMajor {args}
+    public method setScaleEnable {args}
 
     public method idle_mode {}
     public method rotate_mode {x y}
@@ -461,6 +465,10 @@ option add *QuadDisplay.height 400 widgetDefault
     eval $itk_component($itk_option(-pane)) coord $args
 }
 
+::itcl::body QuadDisplay::viewDir {args} {
+    eval $itk_component($itk_option(-pane)) viewDir $args
+}
+
 ::itcl::body QuadDisplay::eye {args} {
     eval $itk_component($itk_option(-pane)) eye $args
 }
@@ -718,6 +726,27 @@ option add *QuadDisplay.height 400 widgetDefault
     eval $itk_component(lr) toggle_centerDotEnable
 }
 
+::itcl::body QuadDisplay::toggle_scaleEnable {args} {
+    switch -- $args {
+	ul -
+	ur -
+	ll -
+	lr {
+	    eval $itk_component($args) toggle_scaleEnable
+	}
+	default {
+	    eval $itk_component($itk_option(-pane)) toggle_scaleEnable
+	}
+    }
+}
+
+::itcl::body QuadDisplay::toggle_scaleEnableAll {} {
+    eval $itk_component(ul) toggle_scaleEnable
+    eval $itk_component(ur) toggle_scaleEnable
+    eval $itk_component(ll) toggle_scaleEnable
+    eval $itk_component(lr) toggle_scaleEnable
+}
+
 ::itcl::body QuadDisplay::zclipAll {args} {
     eval $itk_component(ul) zclip $args
     eval $itk_component(ur) zclip $args
@@ -727,6 +756,15 @@ option add *QuadDisplay.height 400 widgetDefault
 
 ::itcl::body QuadDisplay::setCenterDotEnable {args} {
     set ve [eval $itk_component($itk_option(-pane)) configure -centerDotEnable $args]
+
+    # we must be doing a "get"
+    if {$ve != ""} {
+	return [lindex $ve 4]
+    }
+}
+
+::itcl::body QuadDisplay::setScaleEnable {args} {
+    set ve [eval $itk_component($itk_option(-pane)) configure -scaleEnable $args]
 
     # we must be doing a "get"
     if {$ve != ""} {
