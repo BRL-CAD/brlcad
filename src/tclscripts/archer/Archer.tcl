@@ -60,6 +60,35 @@ namespace eval Archer {
     if {![info exists haveSdb]} {
 	set haveSdb 0
     }
+
+    set methodDecls ""
+    set methodImpls ""
+    set extraMgedCommands ""
+    if {[file exists [file join $env(ARCHER_HOME) plugins archer Command]]} {
+	set savePwd [pwd]
+	cd [file join $env(ARCHER_HOME) plugins archer Command]
+	catch {
+	    foreach filename [lsort [glob -nocomplain *]] {
+		if [file isfile $filename] {
+		    set ext [file extension $filename]
+		    switch -exact -- $ext {
+			".tcl" -
+			".itk" -
+			".itcl" {
+			    source $filename
+			}
+			".sh" {
+			    # silently ignore
+			}
+			default {
+			    # silently ignore
+			}
+		    }
+		}
+	    }
+	}
+	cd $savePwd
+    }
 }
 
 ::itcl::class Archer {
@@ -74,6 +103,14 @@ namespace eval Archer {
 
     constructor {{viewOnly 0} {noCopy 0} args} {}
     destructor {}
+
+
+    # Dynamically load methods
+    if {$Archer::methodDecls != ""} {
+	foreach meth $::Archer::methodDecls {
+	    eval $meth
+	}
+    }
 
     public {
 	proc packTree              {data}
@@ -321,6 +358,7 @@ namespace eval Archer {
 	variable mShowGroundPlane 0
 	variable mShowPrimitiveLabels 0
 	variable mShowViewingParams 1
+	variable mShowScale 0
 
 	# variables for preference state
 	variable mZClipMode 0
@@ -339,6 +377,8 @@ namespace eval Archer {
 	variable mTheme "Crystal_Large"
 	variable mThemePref ""
 	variable mSdbTopGroup all
+	variable mScaleColor Yellow
+	variable mScaleColorPref
 
 	variable mGroundPlaneSize 20000
 	variable mGroundPlaneSizePref ""
@@ -399,6 +439,7 @@ namespace eval Archer {
 	    unpackTree Z zap
 	}
 	variable mgedCommands { \
+	    bot2pipe \
 	    adjust blast c comb concat copyeval E erase_all \
 	    ev find hide importFg4Sections killall killtree \
 	    make_bb mvall push put r report track unhide vdraw
@@ -595,6 +636,7 @@ Popup Menu    Right or Ctrl-Left
 	method _show_ground_plane {}
 	method _show_primitive_labels {}
 	method _show_view_params {}
+	method _show_scale {}
 
 	# pane commands
 	method _toggle_tree_view {state}
@@ -782,6 +824,10 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body Archer::constructor {{viewOnly 0} {noCopy 0} args} {
     global env
     global tcl_platform
+
+    if {$Archer::extraMgedCommands != ""} {
+	eval lappend mgedCommands $Archer::extraMgedCommands
+    }
 
     set mFontText [list $SystemWindowFont 8]
     set mFontTextBold [list $SystemWindowFont 8 bold]
@@ -4383,6 +4429,12 @@ Popup Menu    Right or Ctrl-Left
 	    -onvalue 1 \
 	    -variable [::itcl::scope mShowViewingParams] \
 	    -command [::itcl::code $this _show_view_params]
+	$itk_component(modesmenu) add checkbutton \
+	    -label "Scale" \
+	    -offvalue 0 \
+	    -onvalue 1 \
+	    -variable [::itcl::scope mShowScale] \
+	    -command [::itcl::code $this _show_scale]
 
 	if {![info exists itk_component(mged)] &&
 	    ![info exists itk_component(sdb)]} {
@@ -4436,6 +4488,8 @@ Popup Menu    Right or Ctrl-Left
 			-helpstr "Hide/Show primitive labels"
 		    checkbutton viewingParams -label "Viewing Parameters" \
 			-helpstr "Hide/Show viewing parameters"
+		    checkbutton scale -label "Scale" \
+			-helpstr "Hide/Show scale"
 		}
 	} else {
 	    $itk_component(menubar) menuconfigure .modes \
@@ -4464,6 +4518,8 @@ Popup Menu    Right or Ctrl-Left
 			-helpstr "Hide/Show primitive labels"
 		    checkbutton viewingParams -label "Viewing Parameters" \
 			-helpstr "Hide/Show viewing parameters"
+		    checkbutton scale -label "Scale" \
+			-helpstr "Hide/Show scale"
 		}
 	}
 
@@ -4554,6 +4610,11 @@ Popup Menu    Right or Ctrl-Left
 	    -onvalue 1 \
 	    -variable [::itcl::scope mShowViewingParams] \
 	    -command [::itcl::code $this _show_view_params]
+	$itk_component(menubar) menuconfigure .modes.scale \
+	    -offvalue 0 \
+	    -onvalue 1 \
+	    -variable [::itcl::scope mShowScale] \
+	    -command [::itcl::code $this _show_scale]
     }
 }
 
@@ -5990,7 +6051,12 @@ Popup Menu    Right or Ctrl-Left
     }
 
     $itk_component(viewToolbar) configure -state disabled
-    $itk_component(mged) resetBindingsAll
+
+    if {[info exists itk_component(mged)]} {
+	$itk_component(mged) resetBindingsAll
+    } else {
+	$itk_component(sdb) resetBindingsAll
+    }
 }
 
 ::itcl::body Archer::_build_about_dialog {} {
@@ -6622,6 +6688,13 @@ Popup Menu    Right or Ctrl-Left
 	$colorListNoTriple
 
     _build_combo_box $itk_component(generalF) \
+	scaleColor \
+	scolor \
+	mScaleColorPref \
+	"Scale Color:" \
+	$colorListNoTriple
+
+    _build_combo_box $itk_component(generalF) \
 	viewingParamsColor \
 	vcolor \
 	mViewingParamsColorPref \
@@ -6657,6 +6730,9 @@ Popup Menu    Right or Ctrl-Left
     incr i
     grid $itk_component(primitiveLabelColorL) -column 0 -row $i -sticky e
     grid $itk_component(primitiveLabelColorF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(scaleColorL) -column 0 -row $i -sticky e
+    grid $itk_component(scaleColorF) -column 1 -row $i -sticky ew
     incr i
     grid $itk_component(viewingParamsColorL) -column 0 -row $i -sticky e
     grid $itk_component(viewingParamsColorF) -column 1 -row $i -sticky ew
@@ -7327,6 +7403,7 @@ Popup Menu    Right or Ctrl-Left
     set mBackgroundGreenPref [lindex $mBackground 1]
     set mBackgroundBluePref [lindex $mBackground 2]
     set mPrimitiveLabelColorPref $mPrimitiveLabelColor
+    set mScaleColorPref $mScaleColor
     set mViewingParamsColorPref $mViewingParamsColor
     set mThemePref $mTheme
 
@@ -7412,6 +7489,11 @@ Popup Menu    Right or Ctrl-Left
     if {$mViewingParamsColor != $mViewingParamsColorPref} {
 	set mViewingParamsColor $mViewingParamsColorPref
 	_set_color_option dbCmd -viewingParamsColor $mViewingParamsColor
+    }
+
+    if {$mScaleColor != $mScaleColorPref} {
+	set mScaleColor $mScaleColorPref
+	_set_color_option dbCmd -scaleColor $mScaleColor
     }
 
     if {$mTheme != $mThemePref} {
@@ -7745,6 +7827,7 @@ Popup Menu    Right or Ctrl-Left
 	    [lindex $mBackground 2]
     _set_color_option dbCmd -primitiveLabelColor $mPrimitiveLabelColor
     _set_color_option dbCmd -viewingParamsColor $mViewingParamsColor
+    _set_color_option dbCmd -scaleColor $mScaleColor
 
     update
     _set_mode
@@ -7780,6 +7863,7 @@ Popup Menu    Right or Ctrl-Left
 	puts $pfile "set mBindingMode $mBindingMode"
 	puts $pfile "set mBackground \"$mBackground\""
 	puts $pfile "set mPrimitiveLabelColor \"$mPrimitiveLabelColor\""
+	puts $pfile "set mScaleColor \"$mScaleColor\""
 	puts $pfile "set mViewingParamsColor \"$mViewingParamsColor\""
 	puts $pfile "set mTheme \"$mTheme\""
 	puts $pfile "set mViewAxesSize \"$mViewAxesSize\""
@@ -7839,6 +7923,7 @@ Popup Menu    Right or Ctrl-Left
 	    [lindex $mBackground 1] \
 	    [lindex $mBackground 2] 
     _set_color_option dbCmd -primitiveLabelColor $mPrimitiveLabelColor
+    _set_color_option dbCmd -scaleColor $mScaleColor
     _set_color_option dbCmd -viewingParamsColor $mViewingParamsColor
 }
 
@@ -9204,6 +9289,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     _set_color_option dbCmd -primitiveLabelColor $mPrimitiveLabelColor
+    _set_color_option dbCmd -scaleColor $mScaleColor
     _set_color_option dbCmd -viewingParamsColor $mViewingParamsColor
 
     if {!$mViewOnly} {
@@ -9224,8 +9310,10 @@ Popup Menu    Right or Ctrl-Left
 	_do_lighting
     }
 
-    set mDefaultBindingMode $ROTATE_MODE
-    beginViewRotate
+    if {$mBindingMode == 0} {
+	set mDefaultBindingMode $ROTATE_MODE
+	beginViewRotate
+    }
 }
 
 ::itcl::body Archer::GetUserCmds {} {
@@ -10014,6 +10102,18 @@ Popup Menu    Right or Ctrl-Left
 	$itk_component(mged) configure -showViewingParams $mShowViewingParams
     } elseif {[info exists itk_component(sdb)]} {
 	$itk_component(sdb) configure -showViewingParams $mShowViewingParams
+    } else {
+	return
+    }
+
+    _redraw_obj $mSelectedObjPath
+}
+
+::itcl::body Archer::_show_scale {} {
+    if {[info exists itk_component(mged)]} {
+	$itk_component(mged) configure -scaleEnable $mShowScale
+    } elseif {[info exists itk_component(sdb)]} {
+	$itk_component(sdb) configure -scaleEnable $mShowScale
     } else {
 	return
     }
@@ -11266,7 +11366,8 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body Archer::ocenter {args} {
     if {[llength $args] == 4} {
 	eval archerWrapper ocenter 0 0 1 0 $args
-	_redraw_obj $mSelectedObjPath 0
+	#_redraw_obj $mSelectedObjPath 0
+	_redraw_obj [lindex $args 0] 0
     } else {
 	eval archerWrapper ocenter 0 0 0 0 $args
     }
@@ -11339,17 +11440,20 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::orotate {obj rx ry rz kx ky kz} {
     eval archerWrapper orotate 0 0 1 0 $obj $rx $ry $rz $kx $ky $kz
-    _redraw_obj $mSelectedObjPath 0
+    #_redraw_obj $mSelectedObjPath 0
+    _redraw_obj $obj 0
 }
 
 ::itcl::body Archer::oscale {obj sf kx ky kz} {
     eval archerWrapper oscale 0 0 1 0 $obj $sf $kx $ky $kz
-    _redraw_obj $mSelectedObjPath 0
+    #_redraw_obj $mSelectedObjPath 0
+    _redraw_obj $obj 0
 }
 
 ::itcl::body Archer::otranslate {obj dx dy dz} {
     eval archerWrapper otranslate 0 0 1 0 $obj $dx $dy $dz
-    _redraw_obj $mSelectedObjPath 0
+    #_redraw_obj $mSelectedObjPath 0
+    _redraw_obj $obj 0
 }
 
 ::itcl::body Archer::push {args} {
@@ -11815,6 +11919,11 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
+if {$Archer::methodImpls != ""} {
+    foreach impl $::Archer::methodImpls {
+	eval $impl
+    }
+}
 Archer::initArcher
 
 # Local Variables:
