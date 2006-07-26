@@ -180,6 +180,7 @@ set helplib_data(vo_slew)		{{x y [z]} {move view center}}
 set helplib_data(vo_tra)		{{dx dy dz} {translate by (dx,dy,dz)}}
 set helplib_data(vo_units)		{{unit_spec} {set/get units}}
 set helplib_data(vo_view2model)		{{} {get the view2model matrix}}
+set helplib_data(vo_viewDir)		{{[-i]} {return the view direction}}
 set helplib_data(vo_vrot)		{{xdeg ydeg zdeg} {rotate viewpoint}}
 set helplib_data(vo_zoom)		{{sf} {zoom view by specified scale factor}}
 
