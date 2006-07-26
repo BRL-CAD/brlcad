@@ -1,6 +1,8 @@
 # $Id$
 
 SUBDIRS = \
+	Command \
+	Utility \
 	Wizards
 
 documentationdir = $(BRLCAD_DATA)/plugins/archer
