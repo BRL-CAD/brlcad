@@ -50,6 +50,7 @@
     public method base2local {args}
     public method center {args}
     public method coord {args}
+    public method viewDir {args}
     public method eye {args}
     public method eye_pos {args}
     public method get_viewname {}
@@ -187,6 +188,10 @@
     eval $view coord $args
     set coord $args
     return
+}
+
+::itcl::body View::viewDir {args} {
+    eval $view viewDir $args
 }
 
 ::itcl::body View::eye {args} {
@@ -463,6 +468,7 @@
     $help add slew		{{"x y"} {slew the view}}
     $help add tra		{{[-v|-m] "x y z"} {translate the view}}
     $help add units		{{[unit]} {get/set the local units}}
+    $help add viewDir		{{[-1]} {return the view direction}}
     $help add vrot		{{xdeg ydeg zdeg} {rotate viewpoint}}
     $help add vtra		{{"x y z"} {translate the view}}
     $help add zoom		{{sf} {zoom view by specified scale factor}}
