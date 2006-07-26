@@ -10614,6 +10614,7 @@ wdb_orotate_cmd(struct rt_wdb	*wdbp,
 	VSCALE(keypoint, keypoint, 0.5);
     } else {
 	/* The user has provided the keypoint. */
+	MAT_IDN(wtd.wtd_xform);
 
 	if (sscanf(argv[5], "%lf", &keypoint[X]) != 1) {
 	    Tcl_DStringInit(&ds);
@@ -10776,6 +10777,9 @@ wdb_oscale_cmd(struct rt_wdb	*wdbp,
 	VADD2(keypoint, rpp_min, rpp_max);
 	VSCALE(keypoint, keypoint, 0.5);
     } else {
+	/* The user has provided the keypoint. */
+	MAT_IDN(wtd.wtd_xform);
+
 	if (sscanf(argv[3], "%lf", &keypoint[X]) != 1) {
 	    Tcl_DStringInit(&ds);
 	    Tcl_DStringAppend(&ds, argv[0], -1);
@@ -10865,7 +10869,7 @@ wdb_oscale_cmd(struct rt_wdb	*wdbp,
  * Scale obj about the keypoint by sf.
  *
  * Usage:
- *        procname oscale obj sf kx ky kz
+ *        procname oscale obj sf [kx ky kz]
  */
 static int
 wdb_oscale_tcl(ClientData	clientData,
