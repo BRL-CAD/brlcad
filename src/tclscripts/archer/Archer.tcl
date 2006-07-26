@@ -301,6 +301,7 @@ namespace eval Archer {
 	variable wizardXmlCallbacks ""
 
 	variable mArcherVersion "0.8.1"
+	variable mLastSelectedDir ""
 
 	variable mFontArrowsName "arrowFont"
 	variable mFontArrows {Wingdings 3}
@@ -828,6 +829,8 @@ Popup Menu    Right or Ctrl-Left
     if {$Archer::extraMgedCommands != ""} {
 	eval lappend mgedCommands $Archer::extraMgedCommands
     }
+
+    set mLastSelectedDir [pwd]
 
     set mFontText [list $SystemWindowFont 8]
     set mFontTextBold [list $SystemWindowFont 8 bold]
@@ -5265,10 +5268,14 @@ Popup Menu    Right or Ctrl-Left
     #XXX This is not quite right, but it gets us
     #    enough of the behavior we want (for the moment).
     set target [tk_getSaveFile -parent $itk_interior \
-	    -title "Create a New Database" -filetypes $typelist]
+	    -initialdir $mLastSelectedDir \
+	    -title "Create a New Database" \
+	    -filetypes $typelist]
     
     if {$target == ""} {
 	return
+    } else {
+	set mLastSelectedDir [file dirname $target]
     }
 
     if {[file exists $target]} {
@@ -5322,10 +5329,14 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set target [tk_getOpenFile -parent $itk_interior \
-	    -title "Open Database" -filetypes $typelist]
+	    -initialdir $mLastSelectedDir \
+	    -title "Open Database" \
+	    -filetypes $typelist]
     
     if {$target == ""} {
 	return
+    } else {
+	set mLastSelectedDir [file dirname $target]
     }
 
     set type ""
@@ -7860,6 +7871,7 @@ Popup Menu    Right or Ctrl-Left
 	puts $pfile "#"
 	puts $pfile "# This file is created and updated by Archer."
 	puts $pfile "#"
+	puts $pfile "set mLastSelectedDir $mLastSelectedDir"
 	puts $pfile "set mBindingMode $mBindingMode"
 	puts $pfile "set mBackground \"$mBackground\""
 	puts $pfile "set mPrimitiveLabelColor \"$mPrimitiveLabelColor\""
@@ -8497,9 +8509,11 @@ Popup Menu    Right or Ctrl-Left
     }
     set filename [tk_getSaveFile -parent $itk_interior \
 	    -title "Export Geometry to PNG" \
-	    -initialdir [pwd] -filetypes $typelist]
+	    -initialdir $mLastSelectedDir -filetypes $typelist]
 
     if {$filename != ""} {
+	set mLastSelectedDir [file dirname $finename]
+	
 	#XXX Hack! Hack! Hack!
 	raise .
 
@@ -9122,12 +9136,30 @@ Popup Menu    Right or Ctrl-Left
 
 	$trans add command -label "0%" \
 		-command [::itcl::code $this setTransparency $node 1.0]
-	$trans add command -label "25%" \
-		-command [::itcl::code $this setTransparency $node 0.75]
+	#$trans add command -label "25%" \
+	#	-command [::itcl::code $this setTransparency $node 0.75]
+	#$trans add command -label "50%" \
+	#	-command [::itcl::code $this setTransparency $node 0.5]
+	#$trans add command -label "75%" \
+	#	-command [::itcl::code $this setTransparency $node 0.25]
+	$trans add command -label "10%" \
+		-command [::itcl::code $this setTransparency $node 0.9]
+	$trans add command -label "20%" \
+		-command [::itcl::code $this setTransparency $node 0.8]
+	$trans add command -label "30%" \
+		-command [::itcl::code $this setTransparency $node 0.7]
+	$trans add command -label "40%" \
+		-command [::itcl::code $this setTransparency $node 0.6]
 	$trans add command -label "50%" \
 		-command [::itcl::code $this setTransparency $node 0.5]
-	$trans add command -label "75%" \
-		-command [::itcl::code $this setTransparency $node 0.25]
+	$trans add command -label "60%" \
+		-command [::itcl::code $this setTransparency $node 0.4]
+	$trans add command -label "70%" \
+		-command [::itcl::code $this setTransparency $node 0.3]
+	$trans add command -label "80%" \
+		-command [::itcl::code $this setTransparency $node 0.2]
+	$trans add command -label "90%" \
+		-command [::itcl::code $this setTransparency $node 0.1]
     }
 
     if {[info exists itk_component(sdb)] && $nodeType == "leaf"} {
@@ -10863,10 +10895,14 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set target [tk_getSaveFile -parent $itk_interior \
-	    -title "Open Fastgen 4" -filetypes $typelist]
-
+	    -initialdir $mLastSelectedDir \
+	    -title "Open Fastgen 4" \
+	    -filetypes $typelist]
+    
     if {$target == ""} {
 	return
+    } else {
+	set mLastSelectedDir [file dirname $target]
     }
 
     SetWaitCursor
@@ -10887,7 +10923,8 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set stlDir [tk_chooseDirectory -parent $itk_interior \
-		    -title "Open STL Directory"]
+	    -title "Open STL Directory" \
+	    -initialdir $mLastSelectedDir]
 
     if {$stlDir == ""} {
 	return
@@ -10901,6 +10938,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
+    set mLastSelectedDir $stlDir
     SetWaitCursor
 
     # Make sure we're in the root directory/group
@@ -10924,10 +10962,14 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set target [tk_getSaveFile -parent $itk_interior \
-	    -title "Open VRML" -filetypes $typelist]
-
+	    -initialdir $mLastSelectedDir \
+	    -title "Open VRML" \
+	    -filetypes $typelist]
+    
     if {$target == ""} {
 	return
+    } else {
+	set mLastSelectedDir [file dirname $target]
     }
 
     SetWaitCursor
@@ -10989,10 +11031,14 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set target [tk_getOpenFile -parent $itk_interior \
-	    -title "Import Fastgen 4" -filetypes $typelist]
-
+	    -initialdir $mLastSelectedDir \
+	    -title "Import Fastgen 4" \
+	    -filetypes $typelist]
+    
     if {$target == ""} {
 	return
+    } else {
+	set mLastSelectedDir [file dirname $target]
     }
 
     SetWaitCursor
@@ -11028,7 +11074,8 @@ Popup Menu    Right or Ctrl-Left
 
     if {$importDir} {
 	set stlDir [tk_chooseDirectory -parent $itk_interior \
-			-title "Import STL Directory"]
+		-title "Import STL Directory" \
+		-initialdir $mLastSelectedDir]
 
 	if {$stlDir == ""} {
 	    return
@@ -11045,6 +11092,8 @@ Popup Menu    Right or Ctrl-Left
 		"$stlDir must be a directory"
 	    return
 	}
+
+	set mLastSelectedDir $stlDir
     } else {
 	set typelist {
 	    {"STL" {".stl"}}
@@ -11052,10 +11101,14 @@ Popup Menu    Right or Ctrl-Left
 	}
 
 	set stlDir [tk_getOpenFile -parent $itk_interior \
-			-title "Import STL" -filetypes $typelist]
+			-title "Import STL" \
+			-initialdir $mLastSelectedDir \
+			-filetypes $typelist]
 
 	if {$stlDir == ""} {
 	    return
+	} else {
+	    set mLastSelectedDir [file dirname $stlDir]
 	}
 
 	if {![file exists $stlDir]} {
