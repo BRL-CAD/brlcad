@@ -870,7 +870,7 @@ dgo_how_cmd(struct dg_obj	*dgop,
 
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 	  for (i = 0, tmp_dpp = dpp;
-	       i <= sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
+	       i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
 	       ++i, ++tmp_dpp) {
 	    if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
 	      break;
@@ -2799,7 +2799,7 @@ dgo_set_transparency_cmd(struct dg_obj	*dgop,
 
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 	  for (i = 0, tmp_dpp = dpp;
-	       i <= sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
+	       i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
 	       ++i, ++tmp_dpp) {
 	    if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
 	      break;
@@ -3988,7 +3988,7 @@ dgo_eraseobj(struct dg_obj		*dgop,
 	while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
 		nsp = BU_LIST_PNEXT(solid, sp);
 		for (i = 0, tmp_dpp = dpp;
-		     i <= sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
+		     i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
 		     ++i, ++tmp_dpp)
 			if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
 				goto end;
