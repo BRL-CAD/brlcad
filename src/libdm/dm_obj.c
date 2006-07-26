@@ -104,6 +104,7 @@ static int dmo_drawVList_tcl(ClientData clientData, Tcl_Interp *interp, int argc
 static int dmo_drawSList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_drawGeom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_drawLabels_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_drawScale_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_fg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_bg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_lineWidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -155,6 +156,7 @@ static struct bu_cmdtab dmo_cmds[] = {
 	{"drawLabels",		dmo_drawLabels_tcl},
 	{"drawLine",		dmo_drawLine_tcl},
 	{"drawPoint",		dmo_drawPoint_tcl},
+	{"drawScale",		dmo_drawScale_tcl},
 	{"drawSList",		dmo_drawSList_tcl},
 	{"drawString",		dmo_drawString_tcl},
 	{"drawVList",		dmo_drawVList_tcl},
@@ -1166,6 +1168,110 @@ dmo_drawSolid(struct dm_obj	*dmop,
 	DM_DRAW_VLIST(dmop->dmo_dmp, (struct rt_vlist *)&sp->s_vlist);
 }
 
+/*
+ * Draw a scale.
+ *
+ * Usage:
+ *       drawScale vsize color
+ *
+ */
+int
+dmo_drawScale_cmd(struct dm_obj	*dmop,
+		  Tcl_Interp	*interp,
+		  int		argc,
+		  char 		**argv)
+{
+    int color[3];
+    int soffset;
+    fastf_t viewSize;
+    fastf_t x1, x2;
+    fastf_t y1, y2;
+    struct bu_vls vls;
+
+    if (argc != 3) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias dm_drawScale %s", argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[1], "%lf", &viewSize) != 1) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "drawScale: bad view size - %s\n", argv[1]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[2], "%d %d %d",
+	       &color[0],
+	       &color[1],
+	       &color[2]) != 3) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "drawScale: bad color - %s\n", argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    /* validate color */
+    if (color[0] < 0 || 255 < color[0] ||
+	color[1] < 0 || 255 < color[1] ||
+	color[2] < 0 || 255 < color[2]) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "drawScale: bad color - %s\n", argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+    }
+
+    DM_SET_FGCOLOR(dmop->dmo_dmp,
+		   (unsigned char)color[0],
+		   (unsigned char)color[1],
+		   (unsigned char)color[2], 1, 1.0);
+
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "%g", viewSize*0.5);
+    soffset = (int)(strlen(bu_vls_addr(&vls)) * 0.5);
+
+    x1 = -0.5;
+    x2 = 0.5;
+    y1 = -0.8;
+    y2 = -0.8;
+    DM_DRAW_LINE_2D(dmop->dmo_dmp,x1,y1,x2,y2);
+    DM_DRAW_LINE_2D(dmop->dmo_dmp,x1,y1+0.01,x1,y1-0.01);
+    DM_DRAW_LINE_2D(dmop->dmo_dmp,x2,y1+0.01,x2,y1-0.01);
+    DM_DRAW_STRING_2D(dmop->dmo_dmp, "0", x1-0.005, y1 + 0.02, 1, 0);
+    DM_DRAW_STRING_2D(dmop->dmo_dmp, bu_vls_addr(&vls),
+		      x2-(soffset * 0.015),
+		      y1 + 0.02, 1, 0);
+
+    bu_vls_free(&vls);
+
+    return TCL_OK;
+}
+
+/*
+ * Usage:
+ *	  objname drawScale vsize color
+ */
+static int
+dmo_drawScale_tcl(ClientData clientData,
+		  Tcl_Interp *interp,
+		  int	     argc,
+		  char	     **argv)
+{
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+
+    return dmo_drawScale_cmd(dmop, interp, argc-1, argv+1);
+}
 
 /*
  * Usage:
