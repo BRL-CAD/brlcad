@@ -3210,7 +3210,10 @@ AC_CONFIG_FILES([
 	src/adrt/misc/Makefile
 	src/anim/Makefile
 	src/archer/Makefile
+	src/archer/plugins/Commands/Makefile
+	src/archer/plugins/Core/Makefile
 	src/archer/plugins/Makefile
+	src/archer/plugins/Utility/Makefile
 	src/archer/plugins/Wizards/Makefile
 	src/archer/plugins/Wizards/tankwizardIA/Makefile
 	src/archer/plugins/Wizards/tankwizardIA/images/Makefile
