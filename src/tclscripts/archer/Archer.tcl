@@ -64,6 +64,32 @@ namespace eval Archer {
     set methodDecls ""
     set methodImpls ""
     set extraMgedCommands ""
+    set corePluginInit ""
+    if {[file exists [file join $env(ARCHER_HOME) plugins archer Core]]} {
+	set savePwd [pwd]
+	cd [file join $env(ARCHER_HOME) plugins archer Core]
+	catch {
+	    foreach filename [lsort [glob -nocomplain *]] {
+		if [file isfile $filename] {
+		    set ext [file extension $filename]
+		    switch -exact -- $ext {
+			".tcl" -
+			".itk" -
+			".itcl" {
+			    source $filename
+			}
+			".sh" {
+			    # silently ignore
+			}
+			default {
+			    # silently ignore
+			}
+		    }
+		}
+	    }
+	}
+	cd $savePwd
+    }
     if {[file exists [file join $env(ARCHER_HOME) plugins archer Command]]} {
 	set savePwd [pwd]
 	cd [file join $env(ARCHER_HOME) plugins archer Command]
@@ -253,6 +279,7 @@ namespace eval Archer {
 	common OBJ_ATTR_VIEW_MODE 1
 
 	common pluginMajorTypeCore "Core"
+	common pluginMajorTypeCommand "Command"
 	common pluginMajorTypeWizard "Wizard"
 	common pluginMajorTypeUtility "Utility"
 	common pluginMinorTypeMged "Mged"
@@ -11977,7 +12004,14 @@ if {$Archer::methodImpls != ""} {
 	eval $impl
     }
 }
+
 Archer::initArcher
+
+if {$Archer::corePluginInit != ""} {
+    foreach cpi $::Archer::corePluginInit {
+	eval $cpi
+    }
+}
 
 # Local Variables:
 # mode: Tcl
