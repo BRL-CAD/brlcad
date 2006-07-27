@@ -2,17 +2,18 @@
 
 SUBDIRS = \
 	Command \
+	Core \
 	Utility \
 	Wizards
 
-documentationdir = $(BRLCAD_DATA)/plugins/archer
+pluginsdir = $(BRLCAD_DATA)/plugins/archer
 
-documentation_DATA = \
+plugins_DATA = \
 	utility.tcl \
 	wizards.tcl
 
 EXTRA_DIST = \
-	$(documentation_DATA)
+	$(plugins_DATA)
 
 MAINTAINERCLEANFILES = Makefile.in
 
