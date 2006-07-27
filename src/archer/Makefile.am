@@ -1,6 +1,9 @@
 # $Id$
 
 SUBDIRS = \
+	Commands \
+	Core \
+	Utility \
 	plugins
 
 bin_SCRIPTS = \
