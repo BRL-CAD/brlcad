@@ -1,7 +1,7 @@
 # $Id$
 
 SUBDIRS = \
-	Command \
+	Commands \
 	Core \
 	Utility \
 	Wizards
