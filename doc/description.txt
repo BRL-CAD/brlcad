@@ -36,9 +36,23 @@ official name of the project wherever possible unless technical
 limitations prohibit it.
 
 Unacceptible variations of the project name include BRLCAD, BrlCAD,
-BrlCad, Brlcad, BRLcad, BrlCAD, etc.
+BrlCad, Brlcad, BRLcad, BrlCAD, Brl-CAD, Brl-Cad, Brl-cad, etc.
+
+Incorrect albeit perhaps humorous mispronunciations overheard include
+"burl cad", "burly cad", "brill cad", "brail cad", just "be are el"
+and other variations without the "cad" designation, and of course
+"brazilian real canadian dollars".
 
 BRL-CAD is generally pronounced as "be are el cad".
+
+The origins of the project name "BRL-CAD" comes from the
+computer-aided design (CAD) software package's origins at the
+U.S. Army Ballistics Research Laboratory (BRL).  BRL was later renamed
+and reorganized into the U.S. Army Research Laboratory to reflect the
+diverse technological and scientific research being conducted at the
+laboratory.  The project name continues to this day with the BRL
+designation as a matter of historic heritage and associated trademark
+name recognition.
 
 
 INTERNET RESOURCES
