@@ -306,8 +306,7 @@ fb_configureWindow(FBIO *ifp, int width, int height)
 int
 fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 {
-#ifdef IF_X
-    int status=-1;
+    int status=0;
 
     if (w <= 0 || h <= 0) {
 	/* nothing to refresh */
@@ -319,22 +318,24 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 	return TCL_OK;
     }
 
+#ifdef IF_X
 #  ifndef _WIN32
+    status = -1;
     if(!strncmp(ifp->if_name, X_device_name, strlen( X_device_name))) {
 	status = X24_refresh(ifp, x, y, w, h);
     }
 #  endif
 #  ifdef IF_OGL
+    status = -1;
     if(!strncmp(ifp->if_name, ogl_device_name, strlen( ogl_device_name))) {
 	status = ogl_refresh(ifp, x, y, w, h);
     }
 #  endif  /* IF_OGL */
+#endif
 
     if(status < 0) {
 	return TCL_ERROR;
     }
-
-#endif  /* IF_X */
 
     return TCL_OK;
 }
