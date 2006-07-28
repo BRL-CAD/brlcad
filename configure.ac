@@ -336,6 +336,9 @@ BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove], [auto])
 # pro/e plugin
 BC_ARG_ENABLE([build_proe], [proe-plugin-build], [Enable compilation of Pro/Engineer plugin], [no])
 
+# unigraphics plugin
+BC_ARG_ENABLE([build_ug], [unigraphics-build], [Enable compilation of Unigraphics importer], [no])
+
 # ADRT (enables SDL and Python with options if they're not enabled)
 BC_ARG_ENABLE([build_adrt], [adrt-build], [Enable compilation of ADRT], [auto])
 
@@ -528,6 +531,18 @@ BC_ARG_ALIAS([build_proe], [proengineer-plugin-build])
 BC_ARG_ALIAS([build_proe], [pro-engineer-build])
 BC_ARG_ALIAS([build_proe], [pro-engineer-plugin-build])
 
+# unigraphics (NX) importer aliases (help uses unigraphics-build)
+BC_ARG_ALIAS([build_ug], [ug])
+BC_ARG_ALIAS([build_ug], [ug-build])
+BC_ARG_ALIAS([build_ug], [unigraphics])
+BC_ARG_ALIAS([build_ug], [unigraphics-importer-build])
+BC_ARG_ALIAS([build_ug], [ug-importer])
+BC_ARG_ALIAS([build_ug], [ug-importer-build])
+BC_ARG_ALIAS([build_ug], [nx])
+BC_ARG_ALIAS([build_ug], [nx-build])
+BC_ARG_ALIAS([build_ug], [nx-importer])
+BC_ARG_ALIAS([build_ug], [nx-importer-build])
+
 # ADRT (help uses adrt-build)
 BC_ARG_ALIAS([build_adrt], [adrt])
 
@@ -654,7 +669,15 @@ if test "x$set_everything" != "x" ; then
 	# requesting everything.  fine to disable, though.
 	if test "x$bc_build_proe" = "x$bc_build_proe_default" ; then
 		if test "x$set_everything" = "xno" ; then
-			bc_build_proe="$set_everything"
+			bc_build_proe=no
+		fi
+	fi
+	# Since the Unigraphics importer is primarily tested on only one
+	# platform and requires UGOPEN, don't enable it even if
+	# requesting everything.  fine to disable, though.
+	if test "x$bc_build_ug" = "x$bc_build_ug_default" ; then
+		if test "x$set_everything" = "xno" ; then
+			bc_build_ug=no
 		fi
 	fi
 	# ADRT is known to not build right now on most platforms, so
@@ -804,6 +827,9 @@ AC_MSG_RESULT($bc_build_jove)
 
 AC_MSG_CHECKING(whether to compile the Pro-Engineer plugin)
 AC_MSG_RESULT($bc_build_proe)
+
+AC_MSG_CHECKING(whether to compile the Unigraphics importer)
+AC_MSG_RESULT($bc_build_ug)
 
 AC_MSG_CHECKING(whether to compile ADRT)
 AC_MSG_RESULT($bc_build_adrt)
@@ -2923,6 +2949,7 @@ AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$build_brlcad_jove" = "xyes"])
 AM_CONDITIONAL(BUILD_PROE, [test "x$bc_build_proe" = "xyes"])
+AM_CONDITIONAL(BUILD_UG, [test "x$bc_build_ug" = "xyes"])
 AM_CONDITIONAL(BUILD_ADRT, [test "x$build_brlcad_adrt" = "xyes"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 
