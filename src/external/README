@@ -1,0 +1,17 @@
+Contained in this directory are codes that are written to work with
+and/or link against external packages.  These codes are often written
+as plugins, modules, or libraries to to some external package and
+generally may not even attempt to compile if the optional codes are
+not enabled during configure.  Even after being enabled, some manual
+setup may be required so that these codes may find requisite external
+headers or libraries that are needed for compilation.
+
+Contents
+--------
+
+ProEngineer
+	This code is a Pro/Engineer exporter plugin module intended to
+be used directly within the Pro/Engineer environment (e.g. Wildfire).
+Compilation of this code requires Pro/Toolkit, a separately licensed
+module from PTC.
+
