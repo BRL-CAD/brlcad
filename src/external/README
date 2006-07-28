@@ -15,3 +15,8 @@ be used directly within the Pro/Engineer environment (e.g. Wildfire).
 Compilation of this code requires Pro/Toolkit, a separately licensed
 module from PTC.
 
+Unigraphics
+	This code is a Unigraphics (now called NX) importer that will
+parse a given Unigraphics geometry file and convert the included 3D
+geometry to a BRL-CAD representation.  This code utilizes the UGOPEN
+API and must be linked against the UGOPEN libraries.
