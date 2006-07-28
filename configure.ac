@@ -3132,9 +3132,6 @@ AC_CONFIG_FILES([
 	misc/macosx/Resources/Makefile
 	misc/macosx/Resources/ReadMe.rtfd/Makefile
 	misc/macosx/Resources/Welcome.rtfd/Makefile
-	misc/pro-engineer/Makefile
-	misc/pro-engineer/mk
-	misc/pro-engineer/protk.dat
 	misc/vfont/Makefile
 	misc/win32-msvc/Makefile
 	misc/win32-msvc/Dll/Makefile
@@ -3230,6 +3227,10 @@ AC_CONFIG_FILES([
 	src/conv/off/Makefile
 	src/conv/patch/Makefile
 	src/conv/unigraphics/Makefile
+	src/external/Makefile
+	src/external/ProEngineer/Makefile
+	src/external/ProEngineer/mk
+	src/external/ProEngineer/protk.dat
 	src/fb/Makefile
 	src/fbed/Makefile
 	src/fbserv/Makefile
