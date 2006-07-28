@@ -24,8 +24,7 @@ SUBDIRS = \
 	iges \
 	jack \
 	off \
-	patch \
-	unigraphics
+	patch
 
 bin_PROGRAMS = \
 	asc-nmg \
