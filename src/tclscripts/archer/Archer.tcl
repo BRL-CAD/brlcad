@@ -90,9 +90,9 @@ namespace eval Archer {
 	}
 	cd $savePwd
     }
-    if {[file exists [file join $env(ARCHER_HOME) plugins archer Command]]} {
+    if {[file exists [file join $env(ARCHER_HOME) plugins archer Commands]]} {
 	set savePwd [pwd]
-	cd [file join $env(ARCHER_HOME) plugins archer Command]
+	cd [file join $env(ARCHER_HOME) plugins archer Commands]
 	catch {
 	    foreach filename [lsort [glob -nocomplain *]] {
 		if [file isfile $filename] {
