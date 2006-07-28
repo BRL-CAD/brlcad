@@ -3230,11 +3230,11 @@ AC_CONFIG_FILES([
 	src/conv/jack/Makefile
 	src/conv/off/Makefile
 	src/conv/patch/Makefile
-	src/conv/unigraphics/Makefile
 	src/external/Makefile
 	src/external/ProEngineer/Makefile
 	src/external/ProEngineer/mk
 	src/external/ProEngineer/protk.dat
+	src/external/Unigraphics/Makefile
 	src/fb/Makefile
 	src/fbed/Makefile
 	src/fbserv/Makefile
