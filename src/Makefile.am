@@ -4,7 +4,8 @@ required_dirs = \
 	other \
 	libbu \
 	libbn \
-	librt
+	librt \
+	external
 
 rts_dirs = librtserver
 
