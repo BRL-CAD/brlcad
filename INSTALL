@@ -1,229 +1,326 @@
-Copyright 1994, 1995, 1996, 1999, 2000, 2001, 2002 Free Software
-Foundation, Inc.
+The Installation Guide to BRL-CAD
+=================================
 
-   This file is free documentation; the Free Software Foundation gives
-unlimited permission to copy, distribute and modify it.
+Please read this document if you are interested in installing BRL-CAD.
 
-Basic Installation
-==================
+This document covers the basics of installing BRL-CAD from either a
+source or binary distribution.  Please see the 'Reporting Problems'
+section if you run into any trouble installing BRL-CAD.
 
-   These are generic installation instructions.
+Some platforms have additional platform-specific documentation
+provided in the doc/ directory of the source distribution that should
+be consulted if that is the platform you are installing on.  This
+presently includes the following:
 
-   The `configure' shell script attempts to guess correct values for
-various system-dependent variables used during compilation.  It uses
-those values to create a `Makefile' in each directory of the package.
-It may also create one or more `.h' files containing system-dependent
-definitions.  Finally, it creates a shell script `config.status' that
-you can run in the future to recreate the current configuration, and a
-file `config.log' containing compiler output (useful mainly for
-debugging `configure').
+  doc/README.MacOSX	-- Apple Mac OS X
+  doc/README.IRIX	-- SGI IRIX and IRIX64
 
-   It can also use an optional file (typically called `config.cache'
-and enabled with `--cache-file=config.cache' or simply `-C') that saves
-the results of its tests to speed up reconfiguring.  (Caching is
-disabled by default to prevent problems with accidental use of stale
-cache files.)
 
-   If you need to do unusual things to compile the package, please try
-to figure out how `configure' could check whether to do them, and mail
-diffs or instructions to the address given in the `README' so they can
-be considered for the next release.  If you are using the cache, and at
-some point `config.cache' contains results you don't want to keep, you
-may remove or edit it.
+TABLE OF CONTENTS
+-----------------
+  Introduction
+  Table of Contents
+  Quick Installation
+  Installing from Binary
+  Installing from Source
+  Configuration Options
+  Compilation Options
+  Installation Options
+  Post-Installation
+  Testing an Install
+  Reporting Problems
 
-   The file `configure.ac' (or `configure.in') is used to create
-`configure' by a program called `autoconf'.  You only need
-`configure.ac' if you want to change it or regenerate `configure' using
-a newer version of `autoconf'.
 
-The simplest way to compile this package is:
+QUICK INSTALLATION
+------------------
 
-  1. `cd' to the directory containing the package's source code and type
-     `./configure' to configure the package for your system.  If you're
-     using `csh' on an old version of System V, you might need to type
-     `sh ./configure' instead to prevent `csh' from trying to execute
-     `configure' itself.
+If you downloaded a binary distribution of BRL-CAD for your system,
+please read the INSTALLING FROM BINARY section of this document down
+below.  The rest of this quick installation section is only relevant
+to source code distributions of BRL-CAD.
 
-     Running `configure' takes awhile.  While running, it prints some
-     messages telling which features it is checking for.
+For the impatient or simplistic, the following should compile, test,
+and install BRL-CAD quickly into the /usr/brlcad directory.  If you
+have a configure script, run the following:
 
-  2. Type `make' to compile the package.
+  ./configure
+  make
+  make benchmark
+  make install   # as root, e.g. sudo make install
+  make test
 
-  3. Optionally, type `make check' to run any self-tests that come with
-     the package.
+If you don't have a configure script, run the following to generate
+the script then proceed with the steps above:
 
-  4. Type `make install' to install the programs and any data files and
-     documentation.
+  sh autogen.sh
 
-  5. You can remove the program binaries and object files from the
-     source code directory by typing `make clean'.  To also remove the
-     files that `configure' created (so you can compile the package for
-     a different kind of computer), type `make distclean'.  There is
-     also a `make maintainer-clean' target, but that is intended mainly
-     for the package's developers.  If you use it, you may have to get
-     all sorts of other programs in order to regenerate files that came
-     with the distribution.
+If any of the listed steps fail, then something unexpected happened.
+See the reporting problems section of this document to report the
+problem.
 
-Compilers and Options
-=====================
+Once installed, add /usr/brlcad/bin to your path, and you should be
+able to run one of the 400+ applications that constitute BRL-CAD.  For
+example, to run the MGED solid modeler:
 
-   Some systems require unusual options for compilation or linking that
-the `configure' script does not know about.  Run `./configure --help'
-for details on some of the pertinent environment variables.
+PATH=/usr/brlcad/bin:$PATH ; export PATH
+mged
 
-   You can give `configure' initial values for configuration parameters
-by setting variables in the command line or in the environment.  Here
-is an example:
+If you use tcsh or another C-shell based command shell, use this
+instead:
 
-     ./configure CC=c89 CFLAGS=-O2 LIBS=-lposix
+set path=( /usr/brlcad/bin $path ) ; rehash
+mged
 
-   *Note Defining Variables::, for more details.
 
-Compiling For Multiple Architectures
-====================================
+INSTALLING FROM BINARY
+----------------------
 
-   You can compile the package for more than one kind of computer at the
-same time, by placing the object files for each architecture in their
-own directory.  To do this, you must use a version of `make' that
-supports the `VPATH' variable, such as GNU `make'.  `cd' to the
-directory where you want the object files and executables to go and run
-the `configure' script.  `configure' automatically checks for the
-source code in the directory that `configure' is in and in `..'.
+There are a variety of different kinds of binary distributions of
+BRL-CAD.  Some of the binary disributions are sufficiently generic and
+are simply a binary commpressed tarball distribution.  Others are
+specific to a particular platform such as Debian, Mac OS X, FreeBSD,
+and Windows etc.
 
-   If you have to use a `make' that does not support the `VPATH'
-variable, you have to compile the package for one architecture at a
-time in the source code directory.  After you have installed the
-package for one architecture, use `make distclean' before reconfiguring
-for another architecture.
 
-Installation Names
-==================
+Generic Binary Distributions:
 
-   By default, `make install' will install the package's files in
-`/usr/local/bin', `/usr/local/man', etc.  You can specify an
-installation prefix other than `/usr/local' by giving `configure' the
+For the unspecialized binary distributions that are basically
+compressed tarballs of the installation root, they should contain the
+entire hierarchy of the distribution.  That is to say that they
+contain /usr/brlcad in it's entirety so that if you decompress, you
+will have a `usr' directory that contains a single `brlcad' directory:
+
+gunzip brlcad-7.2.4_linux_ia64.tar.gz
+tar -xvf brlcad-7.2.4_linux_ia64.tar
+sudo mv usr/brlcad /usr/.
+
+Of course, there are other compression options possible including zip
+and bzip2.  By default, BRL-CAD expects to be installed into
+/usr/brlcad and MGED is not relocateable by default.  It's recommended
+that you start from a source distribution if you would like to install
+into an alternate installation location.
+
+However, if you do desire to install and run BRL-CAD from a different
+location, give it a try.. ;) The only problems encountered should be
+with running the MGED solid modeler where you will need to set the
+BRLCAD_ROOT environment variable to your different install location
+(e.g. /usr/local).  If this doesn't work (some platforms are more
+problematic than others), you will need to compile and install from a
+source distribution.
+
+
+Mac OS X Disk Mounting Image:
+
+Mount the .dmg and run the Installer .pkg contained therein.  This
+will install into /usr/brlcad and will only require confirming that
+your environment is set up properly (i.e. add /usr/brlcad/bin to your
+path) as described in this document's Installation Options section.
+
+
+INSTALLING FROM SOURCE
+----------------------
+
+There are a couple means to obtain the BRL-CAD sources, via either a
+CVS checkout/export or a source distribution tarball.  Using the
+latest CVS sources is recommended where possible, since it will have
+the latest changes.
+
+
+Starting From a CVS Checkout/Export:
+
+If you have obtained the BRL-CAD sources from the CVS revision control
+system, you will need to prepare the build for configuration:
+
+  sh autogen.sh
+
+This step requires that you have the GNU Build System (GBS) installed,
+which includes a sufficiently recent version of Autoconf, Automake,
+and Libtool.  Running autogen.sh will verify that the versions of each
+are sufficient and will generate the `configure' script.  If you do
+not have sufficient versions of the GBS components installed, you will
+either need to install/ugrade them, run autogen.sh on another system
+and them copy the files over, or start with a source tarball
+distribution (where autogen.sh is automatically run for you).
+
+Once autogen.sh is sucessfully run somewhere, you can continue with
+the steps shown next for starting from a source distribution.
+
+
+Starting From a Source Distribution:
+
+There are many different ways to build BRL-CAD and depending on what
+you need/want will determine which configuration options you should
+use.  See the Configuration Options section below for details on how
+to go about selecting which options are appropriate for you.
+
+By default, the default configuration will prepare the build system
+for installation into the /usr/brlcad directory (the --prefix option
+may be used to change that).  This tradition goes back a couple
+decades and is a convenient means to isolate the BRL-CAD solid
+modeling system from your system, resolves conflicts, facilitates
+uninstalls, and simplifies upgrades.  The default configuration is
+performed by running the `configure' script:
+
+  ./configure
+
+By default, an unoptimized debug build of BRL-CAD will be configured
+for compilation.  To obtain an optimized build (for example, for
+BRL-CAD Benchmark performance testing), use the --enable-optimized
+configure option:
+
+  ./configure --enable-optimized
+
+By default, all components and functionality will be built except
+jove.  However, BRL-CAD does require and include several 3rd party
+components.  If your system does not include a sufficient version of
+those required 3rd party components, they will be automatically
+configured for compilation.  You can force any one of those components
+on or off via --enable-FEATURE and --disable-FEATURE arguments to
+configure:
+
+  ./configure --enable-termlib --disable-png
+
+See the Configuration Options below for more details on all of the
+possible settings.
+
+Once configured, you should be able to succesfully build BRL-CAD via
+make:
+
+  make
+
+See the Compilation Options section in this document for more details
+on compile-time options including options for parallel build support.
+
+
+Testing a Compilation:
+
+Once the compilation is complete, you can test it before and after
+installation.  To test a compilation of BRL-CAD before installation,
+you can run the BRL-CAD benchmark.  The benchmark will report if the
+results are correct, testing a majority of the core functionality of
+BRL-CAD in addition to testing your system's performance:
+
+  make benchmark
+
+See the Testing An Install section of this document for more details
+on testing your BRL-CAD distribution.
+
+
+Installing a Compilation:
+
+After the build successfully completes and assuming the benchmark also
+produces correct results, installation may begin.  Like any package,
+you must have sufficient filesystem permissions to install.  To
+install into a system location, you can generally either become a
+super user via the su or sudo commands:
+
+  sudo make install
+
+See the Installation Options section of this document for more details
+on BRL-CAD installation options and post-install environment
+preparations.
+
+
+CONFIGURATION OPTIONS
+---------------------
+
+By default, BRL-CAD is configured to build the entire package and will
+install completely isolated into the /usr/brlcad directory.
+Configuration will prepare the build for an unoptimized compilation by
+default and will attempt to utilize required system libraries if they
+are available, otherwise compiling the required library dependencies
+as needed.  Run `./configure --help' for a list of all of the possible
+configuration options.
+
+Variables can be set in the environment passed to `configure'.
+However, the build may run configure again during the build, and the
+customized values of these variables may be lost.  In order to avoid
+this problem, you should set them in the `configure' command line,
+using `VAR=value'.  For example:
+
+     ./configure CC=/usr/ucb/bin/cc
+
+will cause the specified executable program to be used as the C
+compiler.
+
+
+COMPILATION OPTIONS
+-------------------
+
+If you are on a multiprocessor machine, you can compile in parallel
+depending on the version of `make' being used.  For the GNU and BSD
+make, you can use the -j argument.  For example, to use 4 CPUs:
+
+  make -j4
+
+With the IRIX compiler, the -P option enables parallel build mode and
+the PARALLEL environment variable sets the number of CPUs (default is
+two):
+
+  PARALLEL=4 make -P
+
+
+INSTALLATION OPTIONS
+--------------------
+
+By default, `make install' will install BRL-CAD's files into
+`/usr/brlcad/bin', `/usr/brlcad/man', etc.  You can specify an
+installation prefix other than `/usr/brlcad' by giving `configure' the
 option `--prefix=PATH'.
 
-   You can specify separate installation prefixes for
-architecture-specific files and architecture-independent files.  If you
-give `configure' the option `--exec-prefix=PATH', the package will use
-PATH as the prefix for installing programs and libraries.
-Documentation and other data files will still use the regular prefix.
 
-   In addition, if you use an unusual directory layout you can give
-options like `--bindir=PATH' to specify different values for particular
-kinds of files.  Run `configure --help' for a list of the directories
-you can set and what kinds of files go in them.
+Setting Up the Path:
 
-   If the package supports it, you can cause programs to be installed
-with an extra prefix or suffix on their names by giving `configure' the
-option `--program-prefix=PREFIX' or `--program-suffix=SUFFIX'.
+Once installed, you will need to add /usr/brlcad/bin to your system
+PATH.  For Bourne shell users, you can run the following:
 
-Optional Features
-=================
+  PATH=/usr/brlcad/bin:$PATH ; export PATH
 
-   Some packages pay attention to `--enable-FEATURE' options to
-`configure', where FEATURE indicates an optional part of the package.
-They may also pay attention to `--with-PACKAGE' options, where PACKAGE
-is something like `gnu-as' or `x' (for the X Window System).  The
-`README' should mention any `--enable-' and `--with-' options that the
-package recognizes.
+For C shell users, this should do the same thing:
 
-   For packages that use the X Window System, `configure' can usually
-find the X include and library files automatically, but if it doesn't,
-you can use the `configure' options `--x-includes=DIR' and
-`--x-libraries=DIR' to specify their locations.
+  set path=( /usr/brlcad/bin $path ) ; rehash
 
-Specifying the System Type
-==========================
+If you would like to provide BRL-CAD to multiple users, your shell
+environment scripts should be edited so that /usr/brlcad/bin is added
+to the system path.  This usually entails editing /etc/profile,
+/etc/csh.login, /etc/bashrc, and possibly other files depending on
+your platform.
 
-   There may be some features `configure' cannot figure out
-automatically, but needs to determine by the type of machine the package
-will run on.  Usually, assuming the package is built to be run on the
-_same_ architectures, `configure' can figure that out, but if it prints
-a message saying it cannot guess the machine type, give it the
-`--build=TYPE' option.  TYPE can either be a short name for the system
-type, such as `sun4', or a canonical name which has the form:
 
-     CPU-COMPANY-SYSTEM
+Setting Up the Manual Pages Path:
 
-where SYSTEM can have one of these forms:
+It may be useful to add /usr/brlcad/man to your MANPATH in the same
+manner as shown above for PATH.  Conversely, you could use the
+`brlman' command that is already preconfigured to locate the BRL-CAD
+manpages.
 
-     OS KERNEL-OS
 
-   See the file `config.sub' for the possible values of each field.  If
-`config.sub' isn't included in this package, then this package doesn't
-need to know the machine type.
+TESTING AN INSTALL
+------------------
 
-   If you are _building_ compiler tools for cross-compiling, you should
-use the `--target=TYPE' option to select the type of system they will
-produce code for.
+After BRL-CAD is installed, you can test the installation via:
 
-   If you want to _use_ a cross compiler, that generates code for a
-platform different from the build platform, you should specify the
-"host" platform (i.e., that on which the generated programs will
-eventually be run) with `--host=TYPE'.
+  make test
 
-Sharing Defaults
-================
+This will run a series of tests on the installed sources to make sure
+that they behave as they should.  Similarly, simply running `rt'
+and/or `mged' are good tests of basic functionality.  Running `rt'
+without any options should display version information and a usage
+message.  Running `mged' without any options will start the GUI-based
+solid modeler applicaation.
 
-   If you want to set default values for `configure' scripts to share,
-you can create a site shell script called `config.site' that gives
-default values for variables like `CC', `cache_file', and `prefix'.
-`configure' looks for `PREFIX/share/config.site' if it exists, then
-`PREFIX/etc/config.site' if it exists.  Or, you can set the
-`CONFIG_SITE' environment variable to the location of the site script.
-A warning: not all `configure' scripts look for a site script.
 
-Defining Variables
-==================
+REPORTING PROBLEMS
+------------------
 
-   Variables not defined in a site shell script can be set in the
-environment passed to `configure'.  However, some packages may run
-configure again during the build, and the customized values of these
-variables may be lost.  In order to avoid this problem, you should set
-them in the `configure' command line, using `VAR=value'.  For example:
+Please report any bugs encountered to the project bug tracker at
+http://sourceforge.net/tracker/?group_id=105292&atid=640802
 
-     ./configure CC=/usr/local2/bin/gcc
+Similarly, please post any request for feature enhancements or support
+to http://sourceforge.net/tracker/?group_id=105292&atid=640805 and
+http://sourceforge.net/tracker/?group_id=105292&atid=640803
+respectively.
 
-will cause the specified gcc to be used as the C compiler (unless it is
-overridden in the site shell script).
 
-`configure' Invocation
-======================
-
-   `configure' recognizes the following options to control how it
-operates.
-
-`--help'
-`-h'
-     Print a summary of the options to `configure', and exit.
-
-`--version'
-`-V'
-     Print the version of Autoconf used to generate the `configure'
-     script, and exit.
-
-`--cache-file=FILE'
-     Enable the cache: use and save the results of the tests in FILE,
-     traditionally `config.cache'.  FILE defaults to `/dev/null' to
-     disable caching.
-
-`--config-cache'
-`-C'
-     Alias for `--cache-file=config.cache'.
-
-`--quiet'
-`--silent'
-`-q'
-     Do not print messages saying which checks are being made.  To
-     suppress all normal output, redirect it to `/dev/null' (any error
-     messages will still be shown).
-
-`--srcdir=DIR'
-     Look for the package's source code in directory DIR.  Usually
-     `configure' can determine that directory automatically.
-
-`configure' also accepts some other, not widely useful, options.  Run
-`configure --help' for more details.
-
+---
+$Revision$
