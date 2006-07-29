@@ -79,7 +79,7 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #  include <sys/stat.h>
 #endif
 
-#ifdef __ppc__
+#ifdef __APPLE__
 #  include <sys/types.h>
 #  include <sys/time.h>
 #  include <sys/resource.h>

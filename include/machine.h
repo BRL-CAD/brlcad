@@ -530,6 +530,7 @@ typedef long	bitv_t;		/* largest integer type */
 
 #endif
 
+#ifdef __APPLE__
 #ifdef __ppc__
 /********************************
  *                              *
@@ -546,6 +547,19 @@ typedef long    bitv_t;         /* could use long long */
 #define DEFAULT_PSW     bu_avail_cpus()	/* use as many as we can */
 #define PARALLEL        1
 /* #define MALLOC_NOT_MP_SAFE 1 -- not confirmed */
+#endif
+#ifdef __i686__
+#define IEEE_FLOAT      1      /* Uses IEEE style floating point */
+typedef double  fastf_t;        /* double|float, "Fastest" float type */
+#define LOCAL   auto            /* static|auto, for serial|parallel cpu */
+#define FAST    register        /* LOCAL|register, for fastest floats */
+typedef long    bitv_t;         /* could use long long */
+#define BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
+#define MAX_PSW         512       /* Unused, but useful for thread debugging */
+#define DEFAULT_PSW     bu_avail_cpus()	/* use as many as we can */
+#define PARALLEL        1
+#endif
+
 #endif
 
 #ifdef __sp3__
