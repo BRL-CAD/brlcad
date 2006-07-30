@@ -20,6 +20,7 @@ EXTRA_DIST = \
 	footer.sh \
 	header.sh \
 	ldAix.sh \
+	lines.sh \
 	make_deb.sh \
 	make_dmg.sh \
 	make_pkg.sh \
