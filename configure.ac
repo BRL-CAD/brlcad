@@ -2741,7 +2741,10 @@ AC_TRY_RUN([
 #  include <GL/gl.h>
 #endif
 main() {
-       return GL_FALSE;
+   if (GL_TRUE) {
+	glClear(GL_COLOR_BUFFER_BIT);
+   }
+   return 0;
 }
 	],
 	[opengl_works=yes]
