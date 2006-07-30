@@ -3,14 +3,7 @@
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 sample_applications_DATA = fortran_example.f
 
-if BUILD_PROE
-PROE_DIR = pro-engineer
-else !BUILD_PROE
-PROE_DIR =
-endif
-
 SUBDIRS = \
-	$(PROE_DIR) \
 	macosx \
 	vfont \
 	win32-msvc \
