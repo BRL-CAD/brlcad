@@ -1,3 +1,20 @@
+Contained in this directory are the sources to BRL-CAD.  This
+presently includes over 400+ tools and more than two dozen libraries
+across more than a million lines of source code.  The contents of the
+individual directories are briefly described below.
+	It is part of BRL-CAD's intentional build infrastructure
+design consideration to not require the installation of minor 3rd
+party external codes in order for the package to compile or operate
+correctly.  As part of this philosophy, the majority of BRL-CAD's
+required and optional dependencies are preconfigured and bundled with
+the package in the "other" directory.  For those components of BRL-CAD
+that have library dependencies that are not easily bundled in a
+cross-platform sustainable manner, such as linkages to commercial
+libraries, said components are included in the "external" directory.
+
+Contents
+--------
+
 adrt - Advanced Distributed Ray-Tracer, high-performance triangle ray-trace tools
 anim - animation tools
 archer - Archer, a geometry modeler implemented in Tcl
@@ -5,6 +22,7 @@ brlman - a 'man' tool that knows where to look for BRL-CAD manual pages
 burst - tool for simulation of burst effects
 bwish - BRL-CAD's version of 'tclsh' and 'wish' Tcl/Tk interpreters
 canon - tool to spool/queue image data to Canon printers via MDQS
+external - codes that require non-bundled external functionality
 fb - tools for displaying images to and reading from a framebuffer
 fbed - a framebuffer editor
 fbserv - the framebuffer server
