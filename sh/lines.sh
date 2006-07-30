@@ -55,6 +55,20 @@ BASE="`dirname $0`/.."
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
+# convenience for computing a sum of a list of integers without
+# relying on wc or awk to behave consistently
+sum() {
+    if [ "x$2" = "x" ]; then
+	echo $1
+    else
+	_total=0
+	for _num in $* ; do
+	    _total="`expr $_total \+ $_num`"
+	done
+   fi
+    echo $_total
+}
+
 
 # compute documentation counts
 dc1="`find \"$BASE\" -type f \( -name \*.[123456789n] \) | grep -v '/other/'`"
@@ -62,7 +76,9 @@ dc2="`find \"$BASE\" -type f \( -name README\* -or -name AUTHORS -or -name BUGS 
 dc="$dc1
 $dc2"
 dc_lc="`echo \"$dc\" | sort | xargs wc -l`"
-dc_lc_total="`echo \"$dc_lc\" | tail -1 | awk '{print $1}'`"
+dc_lc_lines="`echo \"$dc_lc\" | grep -v 'total$' | awk '{print $1}'`"
+dc_lc_total="`sum $dc_lc_lines`"
+
 
 # compute build infrastructure counts
 bic1="`find \"$BASE\" -type f \( -name \*.am -or -name configure.ac -or -name autogen.sh \)`"
@@ -70,32 +86,38 @@ bic2="`find \"$BASE/sh\" -type f \( -name \*.sh \)`"
 bic="$bic1
 $bic2"
 bic_lc="`echo \"$bic\" | sort | xargs wc -l`"
-bic_lc_total="`echo \"$bic_lc\" | tail -1 | awk '{print $1}'`"
+bic_lc_lines="`echo \"$bic_lc\" | grep -v 'total$' | awk '{print $1}'`"
+bic_lc_total="`sum $bic_lc_lines`"
 
 # compute header code counts
 header="`find \"$BASE\" -type f \( -name \*.h \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc`"
 header_lc="`echo \"$header\" | sort | xargs wc -l`"
-header_lc_total="`echo \"$header_lc\" | tail -1 | awk '{print $1}'`"
+header_lc_lines="`echo \"$header_lc\" | grep -v 'total$' | awk '{print $1}'`"
+header_lc_total="`sum $header_lc_lines`"
 
 # compute non-header library code counts
 sourcelib="`find \"$BASE\" -type f \( -name \*.c \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc | grep lib`"
 sourcelib_lc="`echo \"$sourcelib\" | sort | xargs wc -l`"
-sourcelib_lc_total="`echo \"$sourcelib_lc\" | tail -1 | awk '{print $1}'`"
+sourcelib_lc_lines="`echo \"$sourcelib_lc\" | grep -v 'total$' | awk '{print $1}'`"
+sourcelib_lc_total="`sum $sourcelib_lc_lines`"
 
 # compute non-header application code counts
 sourcebin="`find \"$BASE\" -type f \( -name \*.c \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc | grep -v lib`"
 sourcebin_lc="`echo \"$sourcebin\" | sort | xargs wc -l`"
-sourcebin_lc_total="`echo \"$sourcebin_lc\" | tail -1 | awk '{print $1}'`"
+sourcebin_lc_lines="`echo \"$sourcebin_lc\" | grep -v 'total$' | awk '{print $1}'`"
+sourcebin_lc_total="`sum $sourcebin_lc_lines`"
 
 # compute script code counts
 scripts="`find \"$BASE\" -type f \( -name \*.sh -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk \) | grep -v '/other/' | grep -v '/sh/' | grep -v misc`"
 scripts_lc="`echo \"$scripts\" | sort | xargs wc -l`"
-scripts_lc_total="`echo \"$scripts_lc\" | tail -1 | awk '{print $1}'`"
+scripts_lc_lines="`echo \"$scripts_lc\" | grep -v 'total$' | awk '{print $1}'`"
+scripts_lc_total="`sum $scripts_lc_lines`"
 
 # compute 3rd party code counts
 other="`find \"$BASE\" -type f \( -name \*.c -or -name \*.h -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk -or -name \*.sh \) | grep '/other/'`"
 other_lc="`echo \"$other\" | sort | xargs wc -l`"
-other_lc_total="`echo \"$other_lc\" | tail -1 | awk '{print $1}'`"
+other_lc_lines="`echo \"$other_lc\" | grep -v 'total$' | awk '{print $1}'`"
+other_lc_total="`sum $other_lc_lines`"
 
 # compute totals
 sc_lc_total="`echo \"$sourcelib_lc_total $sourcebin_lc_total $scripts_lc_total + + p\" | dc`"
