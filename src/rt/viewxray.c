@@ -171,7 +171,7 @@ void
 view_eol(register struct application *ap)
 {
     int i;
-    unsigned char *buf = (char *)0;
+    unsigned char *buf = (unsigned char *)NULL;
 
     if( lightmodel == LGT_BW ) {
 	if( outfp != NULL ) {
