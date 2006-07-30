@@ -131,7 +131,7 @@ struct rt_metaball_internal {
 	fastf_t	threshhold;
 	struct bu_list	metaball_pt_head;
 };
-#define RT_METABALL_INTERNAL_MAGIC      0x6D62616C6C	/* mbal */
+#define RT_METABALL_INTERNAL_MAGIC      0x62616c6c	/* ball */
 #define RT_METABALL_CK_MAGIC(_p)        BU_CKMAG(_p,RT_METABALL_INTERNAL_MAGIC,"rt_metaball_internal")
 
 /*
