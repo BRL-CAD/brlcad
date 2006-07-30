@@ -129,7 +129,7 @@ code (fastf_t x, fastf_t y)
 #define CLIP_DISTANCE 1000000000.0
 */
 #define EPSILON 0.0001
-#define INFINITY 100000000.0
+#define CLIP_DISTANCE 100000000.0
 
 /*
  *			V C L I P
@@ -155,8 +155,8 @@ int vclip( vect_t a, vect_t b, register fastf_t *min, register fastf_t *max )
 	register fastf_t *dir = &diff[0];
 	register int i;
 
-	mindist = -INFINITY;
-	maxdist = INFINITY;
+	mindist = -CLIP_DISTANCE;
+	maxdist = CLIP_DISTANCE;
 	VSUB2( diff, b, a );
 
 	for( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
