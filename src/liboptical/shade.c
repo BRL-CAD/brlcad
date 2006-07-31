@@ -241,7 +241,7 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 				ap->a_x, ap->a_y );
 #ifdef RT_MULTISPECTRAL
 		    	{
-		    		static const vect_t green = {0,9,0};
+		    		static const float green[3] = {0.0f,9.0f,0.0f};
 				rt_spect_reflectance_rgb( swp->msw_color, green );
 		    	}
 #else
