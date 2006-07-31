@@ -97,6 +97,7 @@ int main(int argc, char *argv[])
   fastf_t ps;
   long numposts;
   fastf_t zstep;
+  unsigned char matcolor[3] = {0,0,0};
 
   int round = 0;
 
@@ -183,13 +184,19 @@ int main(int argc, char *argv[])
       mk_addmember(name, &swm.l, NULL, WMOP_UNION);
 
       sprintf(pname, "%sp-%ld.c", prefix, j);
-      mk_lcomb(fp_db, pname, &wm, 0, "plastic", "", "50 30 10", 0);
+      matcolor[0] = 50;
+      matcolor[1] = 30;
+      matcolor[2] = 10;
+      mk_lcomb(fp_db, pname, &wm, 0, "plastic", "", matcolor, 0);
 
       for (i = 0; i < numposts; i++)
 	{
 	  sprintf(name, "%sp%ld-%ld.r", prefix, j, i);
 	  mk_addmember(pname, &wm2.l, NULL, WMOP_UNION);
-	  mk_lcomb(fp_db, name, &wm2, 0, "plastic", "", "50 50 20", 0);
+	  matcolor[0] = 50;
+	  matcolor[1] = 50;
+	  matcolor[2] = 20;
+	  mk_lcomb(fp_db, name, &wm2, 0, "plastic", "", matcolor, 0);
 	  nwm = mk_addmember(name, &swm.l, NULL, WMOP_UNION);
 	  for (k = 0; k < 16; k++)
 	    nwm->wm_mat[k] = 0;
@@ -202,7 +209,10 @@ int main(int argc, char *argv[])
 	}
 
       sprintf(name, "%ssec%ld.c", prefix, j);
-      mk_lcomb(fp_db, name, &swm, 0, "plastic", "", "50 50 20", 0);
+      matcolor[0] = 50;
+      matcolor[1] = 50;
+      matcolor[2] = 20;
+      mk_lcomb(fp_db, name, &swm, 0, "plastic", "", matcolor, 0);
       nwm = mk_addmember(name, &fwm.l, NULL, WMOP_SUBTRACT);
       xt = x1 - x0;
       yt = y1 - y0;
@@ -242,7 +252,10 @@ int main(int argc, char *argv[])
   for (l = 0; l < 16; l++)
     nwm->wm_mat[l] = first_mat[l];
   sprintf(name, "%sfence.c", prefix);
-  mk_lcomb(fp_db, name, &fwm, 0, "plastic", "", "50 50 20", 0);
+  matcolor[0] = 50;
+  matcolor[1] = 50;
+  matcolor[2] = 20;
+  mk_lcomb(fp_db, name, &fwm, 0, "plastic", "", matcolor, 0);
 }
 
 /*
