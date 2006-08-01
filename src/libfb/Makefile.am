@@ -8,6 +8,12 @@ else
 IF_OGL_CFLAGS =
 endif
 
+if WITH_WGL
+IF_WGL_CFLAGS = -DIF_WGL
+else
+IF_WGL_CFLAGS =
+endif
+
 if WITH_X11
 IF_X_CFLAGS = -DIF_X
 else
@@ -41,7 +47,7 @@ libfb_la_SOURCES = \
 	vers.c
 
 libfb_la_LDFLAGS = -version-info 19:1
-libfb_la_CFLAGS = ${X_CFLAGS} -DIF_REMOTE -DIF_AB $(IF_X_CFLAGS) $(IF_OGL_CFLAGS)
+libfb_la_CFLAGS = ${X_CFLAGS} -DIF_REMOTE -DIF_AB $(IF_X_CFLAGS)  $(IF_OGL_CFLAGS) $(IF_WGL_CFLAGS)
 libfb_la_LIBADD = \
 	${BU} \
 	${PKG} \
