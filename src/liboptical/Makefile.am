@@ -44,6 +44,7 @@ liboptical_la_LIBADD = \
 	${RT} \
 	${BN} \
 	${BU} \
+	${FB} \
 	${TCL}
 liboptical_la_SOURCES = \
 	$(SRCS) \
