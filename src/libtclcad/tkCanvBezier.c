@@ -13,12 +13,20 @@
  * Author
  *   John Anderson
  */
-#include <stdio.h>
-#include "tkInt.h"
-#include "tkPort.h"
-#include "tkCanvas.h"
+#include "common.h"
 
-#define NUM_BEZIER_POINTS	500
+#include <stdio.h>
+#include <math.h>
+
+#ifdef ACT_LIKE_TK_MOD
+
+#  include "tkInt.h"
+#  include "tkPort.h"
+#  include "tkCanvas.h"
+
+#else  /* !ACT_LIKE_TK_MOD */
+
+#  include <tk.h>
 
 /*
  * The structure below defines the record for each bezier item.
@@ -29,6 +37,248 @@ typedef struct BezierItem {
 	int num_points;
 	double *coords;
 } BezierItem;
+extern int		TkCanvasDashParseProc _ANSI_ARGS_((
+			    ClientData clientData, Tcl_Interp *interp,
+			    Tk_Window tkwin, CONST char *value, char *widgRec,
+			    int offset));
+extern char *		TkCanvasDashPrintProc _ANSI_ARGS_((
+			    ClientData clientData, Tk_Window tkwin,
+			    char *widgRec, int offset,
+			    Tcl_FreeProc **freeProcPtr));
+extern int		TkPixelParseProc _ANSI_ARGS_((
+			    ClientData clientData, Tcl_Interp *interp,
+			    Tk_Window tkwin, CONST char *value, char *widgRec,
+			    int offset));
+extern char *		TkPixelPrintProc _ANSI_ARGS_((
+			    ClientData clientData, Tk_Window tkwin,
+			    char *widgRec, int offset,
+			    Tcl_FreeProc **freeProcPtr));
+extern int		TkOffsetParseProc _ANSI_ARGS_((
+			    ClientData clientData, Tcl_Interp *interp,
+			    Tk_Window tkwin, CONST char *value, char *widgRec,
+			    int offset));
+extern char *		TkOffsetPrintProc _ANSI_ARGS_((
+			    ClientData clientData, Tk_Window tkwin,
+			    char *widgRec, int offset,
+			    Tcl_FreeProc **freeProcPtr));
+extern int		TkStateParseProc _ANSI_ARGS_((
+			    ClientData clientData, Tcl_Interp *interp,
+			    Tk_Window tkwin, CONST char *value,
+			    char *widgRec, int offset));
+extern char *		TkStatePrintProc _ANSI_ARGS_((
+			    ClientData clientData, Tk_Window tkwin,
+			    char *widgRec, int offset,
+			    Tcl_FreeProc **freeProcPtr));
+
+#  ifndef USE_OLD_TAG_SEARCH
+typedef struct TagSearchExpr_s TagSearchExpr;
+
+struct TagSearchExpr_s {
+    TagSearchExpr *next;        /* for linked lists of expressions - used in bindings */
+    Tk_Uid uid;                 /* the uid of the whole expression */
+    Tk_Uid *uids;               /* expresion compiled to an array of uids */
+    int allocated;              /* available space for array of uids */
+    int length;                 /* length of expression */
+    int index;                  /* current position in expression evaluation */
+    int match;                  /* this expression matches event's item's tags*/
+};
+#  endif /* not USE_OLD_TAG_SEARCH */
+
+typedef struct TkCanvas {
+    Tk_Window tkwin;		/* Window that embodies the canvas.  NULL
+				 * means that the window has been destroyed
+				 * but the data structures haven't yet been
+				 * cleaned up.*/
+    Display *display;		/* Display containing widget;  needed, among
+				 * other things, to release resources after
+				 * tkwin has already gone away. */
+    Tcl_Interp *interp;		/* Interpreter associated with canvas. */
+    Tcl_Command widgetCmd;	/* Token for canvas's widget command. */
+    Tk_Item *firstItemPtr;	/* First in list of all items in canvas,
+				 * or NULL if canvas empty. */
+    Tk_Item *lastItemPtr;	/* Last in list of all items in canvas,
+				 * or NULL if canvas empty. */
+
+    /*
+     * Information used when displaying widget:
+     */
+
+    int borderWidth;		/* Width of 3-D border around window. */
+    Tk_3DBorder bgBorder;	/* Used for canvas background. */
+    int relief;			/* Indicates whether window as a whole is
+				 * raised, sunken, or flat. */
+    int highlightWidth;		/* Width in pixels of highlight to draw
+				 * around widget when it has the focus.
+				 * <= 0 means don't draw a highlight. */
+    XColor *highlightBgColorPtr;
+				/* Color for drawing traversal highlight
+				 * area when highlight is off. */
+    XColor *highlightColorPtr;	/* Color for drawing traversal highlight. */
+    int inset;			/* Total width of all borders, including
+				 * traversal highlight and 3-D border.
+				 * Indicates how much interior stuff must
+				 * be offset from outside edges to leave
+				 * room for borders. */
+    GC pixmapGC;		/* Used to copy bits from a pixmap to the
+				 * screen and also to clear the pixmap. */
+    int width, height;		/* Dimensions to request for canvas window,
+				 * specified in pixels. */
+    int redrawX1, redrawY1;	/* Upper left corner of area to redraw,
+				 * in pixel coordinates.  Border pixels
+				 * are included.  Only valid if
+				 * REDRAW_PENDING flag is set. */
+    int redrawX2, redrawY2;	/* Lower right corner of area to redraw,
+				 * in integer canvas coordinates.  Border
+				 * pixels will *not* be redrawn. */
+    int confine;		/* Non-zero means constrain view to keep
+				 * as much of canvas visible as possible. */
+
+    /*
+     * Information used to manage the selection and insertion cursor:
+     */
+
+    Tk_CanvasTextInfo textInfo; /* Contains lots of fields;  see tk.h for
+				 * details.  This structure is shared with
+				 * the code that implements individual items. */
+    int insertOnTime;		/* Number of milliseconds cursor should spend
+				 * in "on" state for each blink. */
+    int insertOffTime;		/* Number of milliseconds cursor should spend
+				 * in "off" state for each blink. */
+    Tcl_TimerToken insertBlinkHandler;
+				/* Timer handler used to blink cursor on and
+				 * off. */
+
+    /*
+     * Transformation applied to canvas as a whole:  to compute screen
+     * coordinates (X,Y) from canvas coordinates (x,y), do the following:
+     *
+     * X = x - xOrigin;
+     * Y = y - yOrigin;
+     */
+
+    int xOrigin, yOrigin;	/* Canvas coordinates corresponding to
+				 * upper-left corner of window, given in
+				 * canvas pixel units. */
+    int drawableXOrigin, drawableYOrigin;
+				/* During redisplay, these fields give the
+				 * canvas coordinates corresponding to
+				 * the upper-left corner of the drawable
+				 * where items are actually being drawn
+				 * (typically a pixmap smaller than the
+				 * whole window). */
+
+    /*
+     * Information used for event bindings associated with items.
+     */
+
+    Tk_BindingTable bindingTable;
+				/* Table of all bindings currently defined
+				 * for this canvas.  NULL means that no
+				 * bindings exist, so the table hasn't been
+				 * created.  Each "object" used for this
+				 * table is either a Tk_Uid for a tag or
+				 * the address of an item named by id. */
+    Tk_Item *currentItemPtr;	/* The item currently containing the mouse
+				 * pointer, or NULL if none. */
+    Tk_Item *newCurrentPtr;	/* The item that is about to become the
+				 * current one, or NULL.  This field is
+				 * used to detect deletions  of the new
+				 * current item pointer that occur during
+				 * Leave processing of the previous current
+				 * item.  */
+    double closeEnough;		/* The mouse is assumed to be inside an
+				 * item if it is this close to it. */
+    XEvent pickEvent;		/* The event upon which the current choice
+				 * of currentItem is based.  Must be saved
+				 * so that if the currentItem is deleted,
+				 * can pick another. */
+    int state;			/* Last known modifier state.  Used to
+				 * defer picking a new current object
+				 * while buttons are down. */
+
+    /*
+     * Information used for managing scrollbars:
+     */
+
+    char *xScrollCmd;		/* Command prefix for communicating with
+				 * horizontal scrollbar.  NULL means no
+				 * horizontal scrollbar.  Malloc'ed*/
+    char *yScrollCmd;		/* Command prefix for communicating with
+				 * vertical scrollbar.  NULL means no
+				 * vertical scrollbar.  Malloc'ed*/
+    int scrollX1, scrollY1, scrollX2, scrollY2;
+				/* These four coordinates define the region
+				 * that is the 100% area for scrolling (i.e.
+				 * these numbers determine the size and
+				 * location of the sliders on scrollbars).
+				 * Units are pixels in canvas coords. */
+    char *regionString;		/* The option string from which scrollX1
+				 * etc. are derived.  Malloc'ed. */
+    int xScrollIncrement;	/* If >0, defines a grid for horizontal
+				 * scrolling.  This is the size of the "unit",
+				 * and the left edge of the screen will always
+				 * lie on an even unit boundary. */
+    int yScrollIncrement;	/* If >0, defines a grid for horizontal
+				 * scrolling.  This is the size of the "unit",
+				 * and the left edge of the screen will always
+				 * lie on an even unit boundary. */
+
+    /*
+     * Information used for scanning:
+     */
+
+    int scanX;			/* X-position at which scan started (e.g.
+				 * button was pressed here). */
+    int scanXOrigin;		/* Value of xOrigin field when scan started. */
+    int scanY;			/* Y-position at which scan started (e.g.
+				 * button was pressed here). */
+    int scanYOrigin;		/* Value of yOrigin field when scan started. */
+
+    /*
+     * Information used to speed up searches by remembering the last item
+     * created or found with an item id search.
+     */
+
+    Tk_Item *hotPtr;		/* Pointer to "hot" item (one that's been
+				 * recently used.  NULL means there's no
+				 * hot item. */
+    Tk_Item *hotPrevPtr;	/* Pointer to predecessor to hotPtr (NULL
+				 * means item is first in list).  This is
+				 * only a hint and may not really be hotPtr's
+				 * predecessor. */
+
+    /*
+     * Miscellaneous information:
+     */
+
+    Tk_Cursor cursor;		/* Current cursor for window, or None. */
+    char *takeFocus;		/* Value of -takefocus option;  not used in
+				 * the C code, but used by keyboard traversal
+				 * scripts.  Malloc'ed, but may be NULL. */
+    double pixelsPerMM;		/* Scale factor between MM and pixels;
+				 * used when converting coordinates. */
+    int flags;			/* Various flags;  see below for
+				 * definitions. */
+    int nextId;			/* Number to use as id for next item
+				 * created in widget. */
+    Tk_PostscriptInfo psInfo;
+				/* Pointer to information used for generating
+				 * Postscript for the canvas.  NULL means
+				 * no Postscript is currently being
+				 * generated. */
+    Tcl_HashTable idTable;	/* Table of integer indices. */
+    /*
+     * Additional information, added by the 'dash'-patch
+     */
+    VOID *reserved1;
+    Tk_State canvas_state;	/* state of canvas */
+    VOID *reserved2;
+    VOID *reserved3;
+    Tk_TSOffset tsoffset;
+#  ifndef USE_OLD_TAG_SEARCH
+    TagSearchExpr *bindTagExprs; /* linked list of tag expressions used in bindings */
+#  endif
+} TkCanvas;
 
 /*
  * Information used for parsing configuration specs:
@@ -54,6 +304,11 @@ static Tk_CustomOption stateOption = {
     (Tk_OptionParseProc *) TkStateParseProc,
     TkStatePrintProc, (ClientData) 2
 };
+
+#endif  /* ACT_LIKE_TK_MOD */
+
+
+#define NUM_BEZIER_POINTS	1000
 
 /*
  * Prototypes for procedures defined in this file:
