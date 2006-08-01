@@ -140,14 +140,12 @@ rt_metaball_print(register const struct soltab *stp)
 	return;
 }
 
-inline HIDDEN fastf_t
+fastf_t
 rt_metaball_point_value(point_t *p, struct bu_list *points)
 {
 	struct wdb_metaballpt *mbpt;
-	struct rt_metaball_internal *mb;
 	fastf_t ret = 0.0;
 	point_t v;
-	int metaball_count = 0;
 
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, points)) {
 		VSUB2(v, mbpt->coord, *p);
@@ -164,14 +162,12 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 {
 	struct rt_metaball_internal *mb;
 	point_t p, inc;
-	int stat=0;
-	struct wdb_metaballpt *mbpt;
+	int stat=0, retval = 0;
 	register struct seg *segp = NULL;
-	fastf_t initstep = stp->st_bradius / 20, finalstep = stp->st_bradius / 1000000.0;
+	fastf_t initstep = stp->st_bradius / 20, finalstep = stp->st_bradius / 10000000000.0;
 	fastf_t step = initstep;
 	fastf_t i = (rp->r_max-rp->r_min)/step;
 	
-
 	mb = (struct rt_metaball_internal *)stp->st_specific;
 	VMOVE(p, rp->r_pt);
 	VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
@@ -180,11 +176,19 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		VADD2(p, p, inc);
 		if(stat) {
 			if(rt_metaball_point_value(&p, &mb->metaball_pt_head) < mb->threshhold ) {
+				if(step<=finalstep) {
 					point_t delta;
 					VSUB2(delta, p, rp->r_pt);
 					segp->seg_out.hit_dist = sqrt(MAGSQ(delta));
 					BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-					return 2;		/* hit */
+					retval = 2;
+					continue;
+				} else {
+					i += step;
+					VSUB2(p, p, inc); 
+					step *= .5;
+					VSCALE(inc,inc,.5);
+				}
 			}
 		} else {
 			if(rt_metaball_point_value(&p, &mb->metaball_pt_head) > mb->threshhold ) {
@@ -194,11 +198,15 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 					RT_GET_SEG(segp, ap->a_resource);
 					segp->seg_stp = stp;
 					segp->seg_in.hit_dist = sqrt(MAGSQ(delta));
-					++stat;
-					if(ap->a_onehit){
+					if(ap->a_onehit){	/* exit now if we're one-hit (like visual rendering) */
 						BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 						return 2;
 					}
+					/* reset the ray-walk shtuff */
+					++stat;
+					VSUB2(p, p, inc); 
+					VSCALE(inc, rp->r_dir, step);
+					step = initstep;
 				} else {
 					/* we hit, but not as fine-grained as we
 					 * want. So back up one step, cut the step
@@ -213,7 +221,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 			}
 		}
 	}
-	return 0; /* miss */
+	return retval;
 }
 
 /**
@@ -355,7 +363,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 {
 	struct wdb_metaballpt *mbpt;
 	struct rt_metaball_internal *mb;
-	fastf_t *buf, threshhold;
+	fastf_t *buf;
 	int metaball_count = 0, i;
 
 	BU_CK_EXTERNAL( ep );
