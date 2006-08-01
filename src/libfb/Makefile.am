@@ -40,6 +40,7 @@ SRCS = \
 	if_ogl.c \
 	if_remote.c \
 	if_stack.c \
+	if_wgl.c \
 	tcl.c
 
 libfb_la_SOURCES = \
@@ -83,7 +84,6 @@ EXTRA_DIST = \
 	if_sun.c \
 	if_ts.c \
 	if_ug.c \
-	if_wgl.c \
 	libfb.dsp \
 	sgiselect.s \
 	vers_win.c
