@@ -77,6 +77,7 @@ EXTRA_DIST = \
 	if_sun.c \
 	if_ts.c \
 	if_ug.c \
+	if_wgl.c \
 	libfb.dsp \
 	sgiselect.s \
 	vers_win.c
