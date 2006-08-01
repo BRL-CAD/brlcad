@@ -10,8 +10,7 @@ fbserv_SOURCES = \
 
 man_MANS = fbserv.1
 EXTRA_DIST = \
-	$(man_MANS) \
-	fbserv_win.c
+	$(man_MANS)
 
 include $(top_srcdir)/misc/Makefile.defs
 

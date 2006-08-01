@@ -67,7 +67,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
@@ -83,8 +85,17 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #  include <syslog.h>
 #endif
 
-#include <sys/socket.h>
-#include <netinet/in.h>		/* For htonl(), etc */
+#ifdef HAVE_SYS_SOCKET_H
+#  include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#  include <netinet/in.h>		/* For htonl(), etc */
+#endif
+#ifdef HAVE_WINSOCK_H
+#  include <process.h>
+#  include <winsock.h>
+#endif
+
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
@@ -94,12 +105,16 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #  include <sys/wait.h>
 #endif
 
-#include <sys/time.h>		/* For struct timeval */
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>		/* For struct timeval */
+#endif
+#include <time.h>
 
 #include "machine.h"
 #include "fb.h"
-#include "fbmsg.h"
 #include "pkg.h"
+#include "bu.h"
+#include "fbmsg.h"
 
 
 fd_set	select_list;			/* master copy */
@@ -150,7 +165,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hvF:s:w:n:S:W:N:p:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "hvF:s:w:n:S:W:N:p:" )) != EOF )  {
 		switch( c )  {
 		case 'v':
 			verbose = 1;
@@ -160,22 +175,22 @@ get_args(int argc, register char **argv)
 			height = width = 1024;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 's':
 		case 'S':
-			height = width = atoi(optarg);
+			height = width = atoi(bu_optarg);
 			break;
 		case 'w':
 		case 'W':
-			width = atoi(optarg);
+			width = atoi(bu_optarg);
 			break;
 		case 'n':
 		case 'N':
-			height = atoi(optarg);
+			height = atoi(bu_optarg);
 			break;
 		case 'p':
-			port = atoi(optarg);
+			port = atoi(bu_optarg);
 			port_set = 1;
 			break;
 
@@ -184,15 +199,15 @@ get_args(int argc, register char **argv)
 		}
 	}
 	/* If no "-p port", port comes from 1st extra */
-	if( (optind < argc) && (port_set == 0) ) {
-		port = atoi(argv[optind++]);
+	if( (bu_optind < argc) && (port_set == 0) ) {
+		port = atoi(argv[bu_optind++]);
 		port_set = 1;
 	}
 	/* If no "-F framebuffer", fb comes from 2nd extra */
-	if( (optind < argc) && (framebuffer == NULL) ) {
-		framebuffer = argv[optind++];
+	if( (bu_optind < argc) && (framebuffer == NULL) ) {
+		framebuffer = argv[bu_optind++];
 	}
-	if( argc > optind )
+	if( argc > bu_optind )
 		return(0);	/* print usage */
 
 	return(1);		/* OK */
@@ -209,22 +224,24 @@ int
 is_socket(int fd)
 {
 	struct sockaddr saddr;
-	/* Should be: socklen_t namelen but SGI's are complaining... */
         socklen_t namelen;
 
-	if( getsockname(fd,&saddr,&namelen) == 0 )
+	if( getsockname(fd,&saddr,&namelen) == 0 ) {
 		return	1;
-	else
-		return	0;
+	}
+	return	0;
 }
 
 static void
 sigalarm(int code)
 {
 	printf("alarm %s\n", fb_server_fbp ? "FBP" : "NULL");
-	if( fb_server_fbp != FBIO_NULL )
+	if( fb_server_fbp != FBIO_NULL ) {
 		fb_poll(fb_server_fbp);
+	}
+#ifdef HAVE_SIGNAL
 	(void)signal( SIGALRM, sigalarm );	/* some systems remove handler */
+#endif
 	alarm(1);
 }
 
@@ -276,18 +293,23 @@ main(int argc, char **argv)
 {
 	char	portname[32];
 
+	max_fd = 0;
+
 	/* No disk files on remote machine */
 	_fb_disk_enable = 0;
 	memset((void *)clients, 0, sizeof(struct pkg_conn *) * MAX_CLIENTS);
 
+#ifdef HAVE_SIGNAL
 	(void)signal( SIGPIPE, SIG_IGN );
 	(void)signal( SIGALRM, sigalarm );
+#endif
 	/*alarm(1)*/
 
 	FD_ZERO(&select_list);
 	fb_server_select_list = &select_list;
 	fb_server_max_fd = &max_fd;
 
+#ifndef _WIN32
 	/*
 	 * Inetd Daemon.
 	 * Check to see if we were invoked by /etc/inetd.  If so
@@ -303,6 +325,7 @@ main(int argc, char **argv)
 		main_loop();
 		exit(0);
 	}
+#endif
 
 	/* for now, make them set a port_num, for usage message */
 	if ( !get_args( argc, argv ) || !port_set ) {
@@ -312,6 +335,9 @@ main(int argc, char **argv)
 
 	/* Single-Frame-Buffer Server */
 	if( framebuffer != NULL ) {
+	    if (pkg_init() != 0) {
+		exit(1);
+	    }
 		fb_server_retain_on_close = 1;	/* don't ever close the frame buffer */
 
 		/* open a frame buffer */
@@ -341,6 +367,8 @@ main(int argc, char **argv)
 		main_loop();
 		exit(0);
 	}
+
+#ifndef _WIN32
 	/*
 	 * Stand-Alone Daemon
 	 */
@@ -394,6 +422,8 @@ main(int argc, char **argv)
 			(void)wait( &stat );
 		}
 	}
+#endif  /* _WIN32 */
+
 	exit(2);	/* ERROR exit */
 }
 
@@ -417,34 +447,43 @@ main_loop(void)
 
 		infds = select_list;	/* struct copy */
 
+#ifdef _WIN32
+		tv.tv_sec = 0L;
+		tv.tv_usec = 250L;
+#else
 		tv.tv_sec = 60L;
 		tv.tv_usec = 0L;
-		if( (select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0,
-			     (void *)&tv )) == 0 ) {
+#endif
+		if ((select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, (void *)&tv ) == 0)) {
 			/* Process fb events while waiting for client */
 			/*printf("select timeout waiting for client\n");*/
-			if(fb_server_fbp) fb_poll(fb_server_fbp);
+			if(fb_server_fbp) {
+			    if (fb_poll(fb_server_fbp)) {
+				return;
+			    }
+			}
 			continue;
 		}
 		/* Handle any events from the framebuffer */
-		if (fb_server_fbp && fb_server_fbp->if_selfd > 0 && FD_ISSET(fb_server_fbp->if_selfd, &infds))
+		if (fb_server_fbp && fb_server_fbp->if_selfd > 0 && FD_ISSET(fb_server_fbp->if_selfd, &infds)) {
 			fb_poll(fb_server_fbp);
+		}
 
 		/* Accept any new client connections */
-		if( netfd > 0 && FD_ISSET(netfd, &infds))  {
+		if (netfd > 0 && FD_ISSET(netfd, &infds)) {
 			new_client( pkg_getclient( netfd, fb_server_pkg_switch, comm_error, 0 ) );
 			nopens++;
 		}
 
 		/* Process arrivals from existing clients */
 		/* First, pull the data out of the kernel buffers */
-		for( i = MAX_CLIENTS-1; i >= 0; i-- )  {
-			if( clients[i] == NULL )  continue;
-			if( pkg_process( clients[i] ) < 0 ) {
+		for (i = MAX_CLIENTS-1; i >= 0; i--) {
+			if (clients[i] == NULL )  continue;
+			if (pkg_process( clients[i] ) < 0) {
 				fprintf(stderr,"pkg_process error encountered (1)\n");
 			}
-			if( ! FD_ISSET( clients[i]->pkc_fd, &infds ) )  continue;
-			if( pkg_suckin( clients[i] ) <= 0 )  {
+			if (! FD_ISSET( clients[i]->pkc_fd, &infds )) continue;
+			if (pkg_suckin( clients[i] ) <= 0) {
 				/* Probably EOF */
 				drop_client( i );
 				ncloses++;
@@ -452,13 +491,13 @@ main_loop(void)
 			}
 		}
 		/* Second, process all the finished ones that we just got */
-		for( i = MAX_CLIENTS-1; i >= 0; i-- )  {
-			if( clients[i] == NULL )  continue;
-			if( pkg_process( clients[i] ) < 0 ) {
+		for (i = MAX_CLIENTS-1; i >= 0; i--) {
+			if (clients[i] == NULL )  continue;
+			if (pkg_process( clients[i] ) < 0) {
 				fprintf(stderr,"pkg_process error encountered (2)\n");
 			}
 		}
-		if( once_only && nopens > 1 && ncloses > 1 )
+		if (once_only && nopens > 1 && ncloses > 1)
 			return;
 	}
 }
@@ -533,6 +572,7 @@ comm_error(char *str)
     }
 }
 
+#ifndef _WIN32
 /*
  *			F B _ L O G
  *
@@ -701,6 +741,7 @@ va_dcl
 #error /* no stdarg and no vararg */
 
 #endif /* !have_stdarg_h */
+#endif /* !_WIN32 */
 
 /*
  * Local Variables:
