@@ -15,6 +15,7 @@ IF_X_CFLAGS =
 endif
 
 SRCS = \
+	asize.c \
 	fb_generic.c \
 	fb_log.c \
 	fb_obj.c \
@@ -62,8 +63,6 @@ dist_man_MANS = libfb.3
 
 # XXX lots of work is needed here to make the other if_ interfaces available.
 EXTRA_DIST = \
-	asize.c \
-	compress.c \
 	fbserv_obj_win32.c \
 	if_4d-old.c \
 	if_4d.c \
