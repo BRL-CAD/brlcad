@@ -5,7 +5,7 @@ bin_PROGRAMS = \
 	rpatch
 
 patch_g_SOURCES = patch-g.c
-patch_g_LDADD = ${LIBRT} ${WDB}
+patch_g_LDADD = ${RT} ${WDB}
 
 rpatch_SOURCES = rpatch.c
 
