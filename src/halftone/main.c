@@ -250,7 +250,7 @@ setup(int argc, char **argv)
 			exit(1);
 		}
 		if (autosize) {
-			if ( !bn_common_file_size((unsigned long int *)&width, (unsigned long int *)&height, argv[optind], 1)) {
+			if ( !fb_common_file_size((unsigned long int *)&width, (unsigned long int *)&height, argv[optind], 1)) {
 				(void) fprintf(stderr,"halftone: unable to autosize.\n");
 			}
 		}

@@ -183,7 +183,7 @@ main(int argc, char **argv)
 	/* Should we autosize the input? */
 	if (isfile && autosize) {
 		unsigned long int w,h;
-		if (bn_common_file_size(&w, &h, in_name, num_bytes)) {
+		if (fb_common_file_size(&w, &h, in_name, num_bytes)) {
 			org_width = (long)w;
 			org_height = (long)h;
 		} else {

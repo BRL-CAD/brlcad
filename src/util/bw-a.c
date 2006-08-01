@@ -131,7 +131,7 @@ main(int argc, char **argv)
 	/* autosize the input? */
 	if (fileinput && autosize) {
 		unsigned long int	w, h;
-		if ( bn_common_file_size(&w, &h, file_name, 1) ) {
+		if ( fb_common_file_size(&w, &h, file_name, 1) ) {
 			file_width = (long)w;
 		} else {
 			fprintf(stderr, "bw-a: unable to autosize\n");

@@ -137,21 +137,6 @@ struct bn_tol {
 
 #define BN_APPROXEQUAL(_a, _b, _tol) (fabs( (_a) - (_b) ) <= _tol->dist)
 
-/* asize.c */
-BN_EXPORT BU_EXTERN(int bn_common_file_size,
-		    (unsigned long int *width,
-		     unsigned long int *height,
-		     const char *filename,
-		     int pixel_size));
-BN_EXPORT BU_EXTERN(int bn_common_name_size,
-		    (unsigned long int *width,
-		     unsigned long int *height,
-		     const char *name));
-BN_EXPORT BU_EXTERN(int bn_common_image_size,
-		    (unsigned long int *width,
-		     unsigned long int *height,
-		     unsigned long int num_pixels));
-
 /*----------------------------------------------------------------------*/
 /* anim.c */
 /* XXX These should all have bn_ prefixes */

@@ -95,12 +95,14 @@ extern int X24_close_existing();
 extern FBIO X24_interface;
 #endif
 
-int fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int fb_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static struct bu_cmdtab cmdtab[] = {
-	{"fb_open_existing",	 fb_tcl_open_existing},
-	{"fb_close_existing",	 fb_tcl_close_existing},
+	{"fb_open_existing",	 fb_cmd_open_existing},
+	{"fb_close_existing",	 fb_cmd_close_existing},
+	{"fb_common_file_size",	 fb_cmd_common_file_size},
 	{(char *)0, (int (*)())0}
 };
 
@@ -110,30 +112,7 @@ static const char *ogl_device_name = "/dev/ogl";
 
 
 int
-#ifdef BRLCAD_DEBUG
-Fb_d_Init(Tcl_Interp *interp)
-#else
-Fb_Init(Tcl_Interp *interp)
-#endif
-{
-	const char *version_number;
-
-	/* register commands */
-	bu_register_cmds(interp, cmdtab);
-
-	/* initialize framebuffer object code */
-	Fbo_Init(interp);
-
-	Tcl_SetVar(interp, "fb_version", (char *)fb_version+5, TCL_GLOBAL_ONLY);
-	Tcl_Eval(interp, "lindex $fb_version 2");
-	version_number = Tcl_GetStringResult(interp);
-	Tcl_PkgProvide(interp,  "Fb", version_number);
-
-	return TCL_OK;
-}
-
-int
-fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 #ifdef IF_X
     register FBIO *ifp;
@@ -218,7 +197,7 @@ fb_tcl_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 }
 
 int
-fb_tcl_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 #ifdef IF_X
     FBIO *ifp;
@@ -339,6 +318,70 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 
     return TCL_OK;
 }
+
+
+/** fb_cmd_common_file_size
+ *
+ * Hook function wrapper to the fb_common_file_size Tcl command
+ */
+int
+fb_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+    unsigned long int width, height;
+    int pixel_size = 3;
+
+    if (argc != 2 && argc != 3) {
+	Tcl_AppendResult(interp, "wrong #args: should be \"", argv[0], " fileName [#bytes/pixel]\"", NULL);
+	return TCL_ERROR;
+    }
+
+    if (argc >= 3) {
+	pixel_size = atoi(argv[2]);
+    }
+
+    if (fb_common_file_size(&width, &height, argv[1], pixel_size) > 0) {
+	sprintf(interp->result, "%lu %lu", width, height);
+	return TCL_OK;
+    }
+
+    /* Signal error */
+    Tcl_SetResult(interp, "0 0", TCL_STATIC);
+    return TCL_OK;
+}
+
+
+/*
+ *			F B _ I N I T
+ *
+ *  Allows LIBFB to be dynamically loade to a vanilla tclsh/wish with
+ *  "load /usr/brlcad/lib/libfb.so"
+ *
+ *  The name of this function is specified by TCL.
+ */
+int
+#ifdef BRLCAD_DEBUG
+Fb_d_Init(Tcl_Interp *interp)
+#else
+Fb_Init(Tcl_Interp *interp)
+#endif
+{
+	const char *version_number;
+
+	/* register commands */
+	bu_register_cmds(interp, cmdtab);
+
+	/* initialize framebuffer object code */
+	Fbo_Init(interp);
+
+
+	Tcl_SetVar(interp, "fb_version", (char *)fb_version+5, TCL_GLOBAL_ONLY);
+	Tcl_Eval(interp, "lindex $fb_version 2");
+	version_number = Tcl_GetStringResult(interp);
+	Tcl_PkgProvide(interp,  "Fb", version_number);
+
+	return TCL_OK;
+}
+
 
 /*
  * Local Variables:

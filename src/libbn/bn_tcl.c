@@ -669,33 +669,6 @@ static struct math_func_link {
 	{0, 0}
 };
 
-/*
- *			B N _ C M D _ C O M M O N _ F I L E _ S I Z E
- */
-int
-bn_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-    unsigned long int width, height;
-    int pixel_size = 3;
-
-    if (argc != 2 && argc != 3) {
-	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-			 " fileName [#bytes/pixel]\"", NULL);
-	return TCL_ERROR;
-    }
-
-    if( argc >= 3 )  pixel_size = atoi(argv[2]);
-
-    if (bn_common_file_size(&width, &height, argv[1], pixel_size) > 0) {
-	sprintf(interp->result, "%lu %lu", width, height);
-	return TCL_OK;
-    }
-
-    /* Signal error */
-    Tcl_SetResult(interp, "0 0", TCL_STATIC);
-    return TCL_OK;
-}
-
 int
 bn_cmd_noise_perlin(ClientData clientData,
 		  Tcl_Interp *interp,
@@ -956,10 +929,6 @@ bn_tcl_setup(Tcl_Interp *interp)
 
 	(void)Tcl_CreateCommand(interp, "bn_noise_slice",
 		(Tcl_CmdProc *)bn_cmd_noise_slice, (ClientData)NULL,
-		(Tcl_CmdDeleteProc *)NULL);
-
-	(void)Tcl_CreateCommand(interp, "bn_common_file_size",
-		(Tcl_CmdProc *)bn_cmd_common_file_size, (ClientData)NULL,
 		(Tcl_CmdDeleteProc *)NULL);
 
 	(void)Tcl_CreateCommand(interp, "bn_random",

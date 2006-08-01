@@ -171,7 +171,7 @@ main (int argc, char **argv)
      */
     if (nm_bytes == -1) {
 	if ((how == BELIEVE_NAME)
-	 && bn_common_name_size(&width, &height, argument))
+	 && fb_common_name_size(&width, &height, argument))
 	    goto done;
 	else
 	{
@@ -191,7 +191,7 @@ main (int argc, char **argv)
 	exit (1);
     }
 
-    if (!bn_common_image_size(&width, &height, nm_pixels))
+    if (!fb_common_image_size(&width, &height, nm_pixels))
 	exit (0);
 
 done:

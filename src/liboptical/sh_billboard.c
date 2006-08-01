@@ -164,7 +164,7 @@ void new_image(register const struct bu_structparse	*sdp,	/*struct desc*/
     bbdi->img_width = bbd_sp->img_width;
     bbdi->img_width = bbd_sp->img_height;
 
-    if (!bn_common_name_size(&(bbdi->img_width), &(bbdi->img_height),
+    if (!fb_common_name_size(&(bbdi->img_width), &(bbdi->img_height),
 			     bu_vls_addr(&bbd_sp->img_filename))) {
 	bu_log("---- Warning:  Assuming %ldx%ld dimension for \"%s\" ----\n",
 	       bbdi->img_width,

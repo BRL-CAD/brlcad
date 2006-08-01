@@ -62,8 +62,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "pkg.h"
 
-/* defined in libbn/asize.c */
-extern int bn_common_file_size(int *, int *, const char *, int);
 
 int skipbytes(int fd, off_t num);
 
@@ -80,8 +78,8 @@ static int	infd;
 static int	fileinput = 0;		/* file of pipe on input? */
 static int	autosize = 0;		/* !0 to autosize input */
 
-static int	file_width = 512;	/* default input width */
-static int	file_height = 512;	/* default input height */
+static unsigned long int	file_width = 512;	/* default input width */
+static unsigned long int	file_height = 512;	/* default input height */
 static int	scr_width = 0;		/* screen tracks file if not given */
 static int	scr_height = 0;
 static int	file_xoff, file_yoff;
@@ -214,8 +212,8 @@ main(int argc, char **argv)
 
 	/* autosize input? */
 	if( fileinput && autosize ) {
-		int	w, h;
-		if( bn_common_file_size(&w, &h, file_name, 3) ) {
+		unsigned long int	w, h;
+		if( fb_common_file_size(&w, &h, file_name, 3) ) {
 			file_width = w;
 			file_height = h;
 		} else {

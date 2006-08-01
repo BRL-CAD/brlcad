@@ -162,7 +162,7 @@ gif_fb_SOURCES = gif-fb.c
 gif_fb_LDADD = ${FB}
 
 spm_fb_SOURCES = spm-fb.c
-spm_fb_LDADD = ${FB} ${BN} ${LIBRT}
+spm_fb_LDADD = ${RT} ${FB} ${BN}
 
 polar_fb_SOURCES = polar-fb.c
 polar_fb_LDADD = ${FB}

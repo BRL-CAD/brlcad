@@ -155,7 +155,7 @@ main(int argc, char **argv)
 	/* autosize input? */
 	if( fileinput && autosize ) {
 		unsigned long int	w, h;
-		if( bn_common_file_size(&w, &h, file_name, 2) ) {
+		if( fb_common_file_size(&w, &h, file_name, 2) ) {
 			file_width = (long)w;
 			file_height = (long)h;
 		} else {

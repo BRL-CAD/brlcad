@@ -18,7 +18,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** \addtogroup libfb */
 /*@{*/
 /** @file ./libfb/asize.c
@@ -36,7 +35,7 @@
 /*@}*/
 
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "common.h"
@@ -49,7 +48,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #  include <strings.h>
 #endif
+
+#include "machine.h"
+#include "vmath.h"
+#include "bu.h"
 #include "fb.h"
+
 
 /* This table does not need to include any square sizes */
 struct sizes {
@@ -76,6 +80,8 @@ struct sizes fb_common_sizes[] = {
 	{ 1280,	1024 },		/* SGI-4D screen size */
 	{ 1440,  972 },		/* double Abekas video format */
 	{ 1536, 1024 },		/* Kodak Photo-CD, level 4, 4*Base */
+	{ 1600, 1200 },		/* Digital camera */
+	{ 1600, 1280 },		/* Large monitor */
 	{ 3072, 2048 },		/* Kodak Photo-CD, level 5, 16*Base */
 	{ 3200, 4000 },		/* 8x10 inches, 400 dpi */
 	{ 3400, 4400 },		/* 8.5x11 inches, 400 dpi */
@@ -84,7 +90,7 @@ struct sizes fb_common_sizes[] = {
 };
 
 /*
- *			F B _ C O M M O N _ F I L E _ S I Z E
+ *		       F B _ C O M M O N _ F I L E _ S I Z E
  *
  *  If the file name contains size information encoded in it,
  *  then that size is returned, even if it differs from the actual
@@ -97,15 +103,15 @@ struct sizes fb_common_sizes[] = {
  *	1	width and height returned
  */
 int
-fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, char *filename, int pixel_size)
+fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const char *filename, int pixel_size)
    	        		/* pointer to returned width */
    	         		/* pointer to returned height */
-    	          		/* image file to stat */
+          	          	/* image file to stat */
    	           		/* bytes per pixel */
 {
 	struct	stat	sbuf;
-	size_t	size;
-	register char	*cp;
+	unsigned long int	size;
+	register const char	*cp;
 
 	*widthp = *heightp = 0;		/* sanity */
 
@@ -119,27 +125,57 @@ fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, char 
 
 	/* Skip over directory names, if any */
 	cp = strchr( filename, '/' );
-	if( cp )
-		cp++;			/* skip over slash */
-	else
-		cp = filename;		/* no slash */
-	/* File name may have several minus signs in it.  Try repeatedly */
-	while( *cp )  {
-		cp = strchr( cp, '-' );		/* Find a minus sign */
-		if( cp == NULL )  break;
-		if( sscanf(cp, "-w%lu-n%lu", widthp, heightp ) == 2 )
-			return 1;
-		cp++;				/* skip over the minus */
+	if( cp ) {
+	    cp++;			/* skip over slash */
+	} else {
+	    cp = filename;		/* no slash */
 	}
 
-	if( stat( filename, &sbuf ) < 0 ) {
-	    return 0;
-	}
+	if( fb_common_name_size( widthp, heightp, cp ) )
+	        return 1;
 
-	size = (size_t)(sbuf.st_size / pixel_size);
+	if( stat( filename, &sbuf ) < 0 )
+		return	0;
 
-	return fb_common_image_size( widthp, heightp, (unsigned long int)size );
+	size = (unsigned long int)(sbuf.st_size / pixel_size);
+
+	return fb_common_image_size( widthp, heightp, size );
 }
+
+
+/*                      F B _ C O M M O N _ N A M E _ S I Z E
+ *
+ *  Given the number of pixels in an image file, along with a name for the
+ *  image (possibly the filename), attempt to determine the
+ *  the width and height of the image.
+ *
+ *  Returns -
+ *	0	size unknown
+ *	1	width and height returned
+ */
+
+int
+fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const char *name)
+   	        		/* pointer to returned width */
+   	         		/* pointer to returned height */
+          	      		        /* name to parse */
+{
+    register const char *cp = name;
+
+    /* File name may have several minus signs in it.  Try repeatedly */
+    while( *cp )  {
+	cp = strchr( cp, '-' );		/* Find a minus sign */
+	if( cp == NULL )  break;
+	if( sscanf(cp, "-w%lu-n%lu", widthp, heightp ) == 2 )
+	    return 1;
+	cp++;				/* skip over the minus */
+    }
+
+    /* If we got here, we didn't see the answer in the name. */
+    return 0;
+}
+
+
 
 /*
  *			F B _ C O M M O N _ I M A G E _ S I Z E

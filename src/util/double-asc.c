@@ -192,7 +192,7 @@ main (int argc, char **argv)
     {
 	unsigned long int	w, h;
 
-	if (bn_common_file_size(&w, &h, file_name, d_per_l * 8))
+	if (fb_common_file_size(&w, &h, file_name, d_per_l * 8))
 	{
 	    file_width = (long)w;
 	    file_height = (long)h;
