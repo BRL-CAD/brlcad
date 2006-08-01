@@ -61,7 +61,9 @@ struct light_pt {
 	vect_t	lp_norm;
 };
 #define LPT_MAGIC 0x327649
-#define MAX_LIGHT_SAMPLES 128
+
+/* allocate light_pt structs in bunches this size */
+#define SOME_LIGHT_POINTS 128
 
 struct light_specific {
 	struct bu_list	l;	/* doubly linked list */
@@ -89,8 +91,8 @@ struct light_specific {
 	vect_t	lt_aim;		/* Unit vector - light beam direction */
 	char	*lt_name;	/* identifying string */
 	struct	region *lt_rp;	/* our region of origin */
-	int	lt_pt_count;
-	struct light_pt lt_sample_pts[MAX_LIGHT_SAMPLES];
+	int	lt_pt_count;    /* count of how many lt_sample_pts have been set */
+	struct light_pt *lt_sample_pts; /* dynamically allocated list of light sample points */
 	fastf_t lt_parse_pt[6];
 };
 #define LIGHT_NULL	((struct light_specific *)0)

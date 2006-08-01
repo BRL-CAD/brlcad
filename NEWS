@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2006-07-XX  Release 7.8.3                                      ---
 ----------------------------------------------------------------------
 
+* allow unlimited light samples during ray tracing - Sean Morrison
 * new script for computing BRL-CAD file line counts - Sean Morrison
 * fixed mged extrude of empty sketch display crash - Sean Morrison
 * re-enabled png-ipu, pix-ipu, ipustat, ipuscan - Sean Morrison
