@@ -2,7 +2,7 @@
 
 bin_PROGRAMS = vdeck
 
-vdeck_LDADD = ${LIBRT}
+vdeck_LDADD = ${RT}
 vdeck_SOURCES = \
 	cgarbs.c \
 	match.c \

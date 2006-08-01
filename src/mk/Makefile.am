@@ -10,7 +10,7 @@ bin_PROGRAMS = \
 	mk_gastank \
 	mk_wire
 
-LDADD = ${WDB} ${LIBRT}
+LDADD = ${WDB} ${RT}
 
 mk_bolt_SOURCES = mk_bolt.c
 mk_gastank_SOURCES = mk_gastank.c

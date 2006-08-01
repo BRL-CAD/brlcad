@@ -14,7 +14,7 @@ LIBRTSERVER_VERSION = ${MAJOR_VERSION}:${MINOR_VERSION}:${PATCH_VERSION}
 
 librtserver_la_LDFLAGS = -version-info ${LIBRTSERVER_VERSION} ${JAVA_LDFLAGS}
 
-librtserver_la_LIBADD = ${LIBRT} ${BN} ${BU} ${TCL}
+librtserver_la_LIBADD = ${RT} ${BN} ${BU} ${TCL}
 
 EXTRA_PROGRAMS = rtserverTest
 

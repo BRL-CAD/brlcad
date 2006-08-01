@@ -15,7 +15,7 @@ nirt_srcs = \
 	str_manip.c \
 	parse_fmt.c
 
-nirt_LDADD = ${LIBRT} ${BN} ${FB}
+nirt_LDADD = ${RT} ${BN} ${FB}
 nirt_CFLAGS = -DDFLT_SHELL=\"/bin/sh\"
 nirt_SOURCES = \
 	$(nirt_srcs) \

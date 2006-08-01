@@ -26,7 +26,7 @@ SRCS = \
 	wdb.c
 
 libwdb_la_LDFLAGS = -version-info 19:1
-libwdb_la_LIBADD = ${BN} ${BU} ${LIBRT}
+libwdb_la_LIBADD = ${RT} ${BN} ${BU}
 libwdb_la_SOURCES = \
 	$(SRCS) \
 	vers.c

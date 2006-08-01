@@ -19,7 +19,7 @@ bwish_SOURCES = \
 
 blib_LIBS = \
 	${TCLCAD} \
-	${LIBRT} \
+	${RT} \
 	${DM} \
 	${FB} \
 	${BN} \

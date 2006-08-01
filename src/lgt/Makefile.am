@@ -37,7 +37,7 @@ noinst_HEADERS = \
 	vecmath.h
 
 lgt_LDADD = \
-	${LIBRT} \
+	${RT} \
 	${FB} \
 	${TERMIO} \
 	${CURSOR} \

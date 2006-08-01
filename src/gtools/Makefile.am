@@ -11,22 +11,22 @@ noinst_PROGRAMS = \
 	g_transfer
 
 g_diff_SOURCES = g_diff.c
-g_diff_LDADD = ${LIBRT} ${TCL}
+g_diff_LDADD = ${RT} ${TCL}
 
 g_transfer_SOURCES = g_transfer.c
-g_transfer_LDADD = ${LIBRT} ${BU} ${PKG}
+g_transfer_LDADD = ${RT} ${BU} ${PKG}
 
 g_lint_SOURCES = g_lint.c
-g_lint_LDADD = ${LIBRT}
+g_lint_LDADD = ${RT}
 
 g_qa_SOURCES = g_qa.c
-g_qa_LDADD = ${LIBRT} ${SYSV}
+g_qa_LDADD = ${RT} ${SYSV}
 
 solshoot_SOURCES = solshoot.c
-solshoot_LDADD = ${LIBRT}
+solshoot_LDADD = ${RT}
 
 testfree_SOURCES = testfree.c
-testfree_LDADD = ${LIBRT}
+testfree_LDADD = ${RT}
 
 man_MANS = \
 	g_diff.1 \

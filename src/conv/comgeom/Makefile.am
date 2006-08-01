@@ -13,7 +13,7 @@ comgeom_g_SOURCES = \
 
 noinst_HEADERS = 3d.h ged_types.h
 
-comgeom_g_LDADD = ${LIBRT} ${WDB}
+comgeom_g_LDADD = ${RT} ${WDB}
 
 man_MANS = comgeom-g.1
 

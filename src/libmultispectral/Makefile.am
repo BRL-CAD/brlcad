@@ -7,7 +7,7 @@ AM_CFLAGS = -DRT_MULTISPECTRAL
 libmultispectral_la_LDFLAGS = -version-info 19:1
 libmultispectral_la_LIBADD = \
 	${top_builddir}/src/liboptical/librtms.la \
-	${LIBRT} \
+	${RT} \
 	${BN} \
 	${BU} \
 	${TCL}

@@ -84,11 +84,11 @@ iges_g_srcs = \
 	wedge.c
 
 iges_g_SOURCES = $(iges_g_srcs) iges-g-vers.c
-iges_g_LDADD = ${LIBRT} ${WDB}
+iges_g_LDADD = ${RT} ${WDB}
 
 g_iges_srcs = g-iges.c iges.c
 g_iges_SOURCES = $(g_iges_srcs) g-iges-vers.c
-g_iges_LDADD = ${LIBRT}
+g_iges_LDADD = ${RT}
 
 BUILT_SOURCES = \
 	iges-g-vers.c \

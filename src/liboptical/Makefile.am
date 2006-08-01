@@ -41,7 +41,7 @@ SRCS = \
 
 liboptical_la_LDFLAGS = -version-info 19:1
 liboptical_la_LIBADD = \
-	${LIBRT} \
+	${RT} \
 	${BN} \
 	${BU} \
 	${TCL}
@@ -54,7 +54,7 @@ noinst_LTLIBRARIES = librtms.la
 
 librtms_la_CFLAGS = -DRT_MULTISPECTRAL
 librtms_la_LIBADD = \
-	${LIBRT} \
+	${RT} \
 	${BN} \
 	${BU} \
 	${TCL}

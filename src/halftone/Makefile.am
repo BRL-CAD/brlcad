@@ -11,7 +11,7 @@ halftone_SOURCES = \
 	tone_simple.c \
 	tonescale.c
 
-halftone_LDADD = ${LIBRT} ${FB}
+halftone_LDADD = ${RT} ${FB}
 
 man_MANS = halftone.1
 

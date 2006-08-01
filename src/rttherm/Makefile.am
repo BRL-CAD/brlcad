@@ -37,7 +37,7 @@ ssampview_SOURCES = \
 ssampview_CFLAGS = @X_CFLAGS@
 ssampview_LDADD = \
 	${FB} \
-	${LIBRT} \
+	${RT} \
 	${OPTICAL} \
 	$(TK) \
 	${TCL}
