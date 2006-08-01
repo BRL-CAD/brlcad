@@ -20,7 +20,7 @@
  */
 /** @file dm-ogl.c
  *
- *  An X/ogl Display Manager.
+ *  An X11 OpenGL Display Manager.
  *
  *  Authors -
  *	Carl Nuzman
@@ -41,12 +41,12 @@
 #undef VMIN		/* is used in vmath.h, too */
 
 #ifdef HAVE_XOSDEFS_H
-#include <X11/Xfuncproto.h>
-#include <X11/Xosdefs.h>
+#  include <X11/Xfuncproto.h>
+#  include <X11/Xosdefs.h>
 #endif
-#if defined(linux)
-#	undef   X_NOT_STDC_ENV
-#	undef   X_NOT_POSIX
+#ifdef linux
+#  undef   X_NOT_STDC_ENV
+#  undef   X_NOT_POSIX
 #endif
 
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
@@ -58,11 +58,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
