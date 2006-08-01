@@ -69,9 +69,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "shadework.h"
 #include "rtprivate.h"
 #include "plot3.h"
+#include "light.h"
 
 #include "../rt/ext.h"
-#include "../rt/light.h"
 
 
 extern int viewshade(struct application *ap,
