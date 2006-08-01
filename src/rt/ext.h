@@ -125,9 +125,6 @@ extern int		interactive;		/* human is watching results */
 extern int		benchmark;		/* No random numbers:  benchmark */
 /***** end variables shared with do.c *****/
 
-
-extern void		worker(int cpu, genptr_t arg);
-
 /*
  * Local Variables:
  * mode: C
