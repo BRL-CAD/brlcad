@@ -43,7 +43,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"
-#include "../rt/ext.h"
 #include "plot3.h"
 
 
