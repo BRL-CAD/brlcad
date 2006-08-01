@@ -17,6 +17,7 @@ remrt_SOURCES = \
 rtsrv_CFLAGS = -DRTSRV
 rtsrv_LDADD = \
 	$(top_builddir)/src/rt/libremrt.a \
+	${FB} \
 	${OPTICAL} \
 	${PKG} \
 	${RT}
