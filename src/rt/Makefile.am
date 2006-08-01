@@ -1,6 +1,6 @@
 # $Id$
 
-LDADD = ${LIBRT} ${FB} ${OPTICAL} ${TCL}
+LDADD = ${RT} ${FB} ${OPTICAL} ${TCL}
 
 if ONLY_BENCHMARK
 bin_PROGRAMS = \
@@ -207,7 +207,6 @@ rtxray_SOURCES = \
 
 noinst_HEADERS = \
 	ext.h \
-	light.h \
 	rad.h \
 	scat.h
 
