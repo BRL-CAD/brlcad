@@ -178,6 +178,7 @@
 #undef complex
 #undef rad1
 #undef rad2
+#define socklen_t int
 
 #endif /* if defined(_WIN32) */
 #endif /* ifndef IGNORE_CONFIG_H */
