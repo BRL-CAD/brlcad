@@ -309,17 +309,13 @@ BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit]
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
 
 # force enable/disable building of Tcl
-# XXX - set to yes due to auto_path issues when system Tcl is loaded
-BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [yes])
+BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [auto])
 
 # force enable/disable building of Tk
-# XXX - set to yes due to the bezier canvas tk patch that was moved to
-# libtclcad yet still uses tk internal headers that don't get
-# installed.
-BC_ARG_ENABLE([build_tk], [tk-build], [Build the included Tk], [yes])
+BC_ARG_ENABLE([build_tk], [tk-build], [Build the included Tk], [auto])
 
 # force enable/disable building of incrTcl
-BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [yes])
+BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [auto])
 
 # force enable/disable building of iwidgets
 BC_ARG_ENABLE([build_iwidgets], [iwidgets-build], [Install the included iwidgets], [auto])
@@ -381,6 +377,9 @@ AC_PATH_XTRA
 
 # use opengl
 BC_ARG_WITH([with_opengl], [opengl], [Specify use of or path to OpenGL], [auto])
+
+# use wgl
+BC_ARG_WITH([with_wgl], [wgl], [Specify use of or path to WindowsGL], [auto])
 
 # use sdl
 BC_ARG_WITH([with_sdl], [sdl], [Specify use of or path to SDL], [auto])
@@ -600,6 +599,9 @@ BC_ARG_WITH_ALIAS([with_x11], [x])
 # with opengl aliases (help uses opengl)
 BC_ARG_WITH_ALIAS([with_opengl], [ogl])
 BC_ARG_WITH_ALIAS([with_opengl], [gl])
+
+# with wgl aliases (help uses wgl)
+BC_ARG_WITH_ALIAS([with_wgl], [windowsgl])
 
 # with sdl aliases (help uses sdl)
 BC_ARG_WITH_ALIAS([with_sdl], [libsdl])
@@ -863,6 +865,9 @@ AC_MSG_RESULT($bc_with_x11)
 
 AC_MSG_CHECKING(whether to compile the OpenGL interfaces)
 AC_MSG_RESULT($bc_with_opengl)
+
+AC_MSG_CHECKING(whether to compile the WindowsGL interfaces)
+AC_MSG_RESULT($bc_with_wgl)
 
 AC_MSG_CHECKING(whether to compile against SDL for ADRT)
 AC_MSG_RESULT($bc_with_sdl)
@@ -1248,14 +1253,19 @@ ds_link_works=no
 LIBDS=""
 AC_CHECK_LIB(ds, dsopen, ds_link_works=yes ; LIBDS="-lds")
 
-dnl check if a graphics library links
+dnl check if an OpenGL graphics library links
 gl_link_works=no
 LIBGL=""
 AC_CHECK_LIB(GL, glEnable, gl_link_works=yes ; LIBGL="-lGL",
-    [AC_CHECK_LIB(GL2, glEnable, gl_link_works=yes ; LIBGL="-lGL2")]
+    [AC_CHECK_LIB(GL2, glEnable, gl_link_works=yes ; LIBGL="-lGL2",
 )
 
-dnl check if the sgigl library links
+dnl check if the Windows WGL graphics library links
+wgl_link_works=no
+LIBWGL=""
+AC_CHECK_LIB(opengl32, glEnable, gl_link_works=yes ; LIBWGL="-lopengl32")
+
+dnl check if the SGI graphics library links
 sgigl_link_works=no
 LIBSGIGL=""
 AC_CHECK_LIB(gl, getvideo, sgigl_link_works=yes ; LIBSGIGL="-lgl")
@@ -2632,11 +2642,15 @@ AC_MSG_CHECKING(whether to link with the OpenGL library)
 AC_MSG_RESULT($gl_link_works)
 AC_SUBST(LIBGL)
 
+dnl *** libopengl32 ***
+AC_MSG_CHECKING(whether to link with the WindowsGL library)
+AC_MSG_RESULT($wgl_link_works)
+AC_SUBST(LIBWGL)
+
 dnl *** sgigl ***
 AC_MSG_CHECKING(whether to link with the SGI graphics library)
 AC_MSG_RESULT($sgigl_link_works)
 AC_SUBST(LIBSGIGL)
-dnl XXX the HAS_SGIGL define should go away eventually
 if test "x$sgigl_link_works" = "xyes" ; then
 	AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.)
 fi
@@ -2771,6 +2785,48 @@ if test "x$bc_with_opengl" != "xno" ; then
 fi
 AC_MSG_CHECKING(whether to build against OpenGL)
 AC_MSG_RESULT($build_against_opengl)
+
+
+dnl *** WindowsGL interface compilation ***
+wgl_works=no
+AC_MSG_CHECKING(for WindowsGL functionality)
+PRELDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $LIBWGL"
+AC_TRY_RUN([
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
+main() {
+   if (GL_TRUE) {
+	glClear(GL_COLOR_BUFFER_BIT);
+   }
+   return 0;
+}
+	],
+	[wgl_works=yes]
+)
+LDFLAGS="$PRELDFLAGS"
+AC_MSG_RESULT($wgl_works)
+
+dnl figure out whether we need to build against wgl
+build_against_wgl="no"
+if test "x$bc_with_wgl" != "xno" ; then
+	if test "x$wgl_works" = "xyes" ; then
+		build_against_wgl="yes"
+	else
+		if test "x$bc_with_wgl" = "xyes" ; then
+			AC_MSG_NOTICE([WindowsGL was requested, but no system WGL OpenGL libraries were found])
+			BC_RETRY_CONFIGURE([$this], [$args])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_NOTICE([Try adding --without-wgl])
+			AC_MSG_ERROR([*** Using WindowsGL was requested, yet no system WGL OpenGL was found ***])
+		else
+			AC_MSG_NOTICE([WindowsGL does not appear to be functionally available])
+		fi
+	fi
+fi
+AC_MSG_CHECKING(whether to build against WindowsGL)
+AC_MSG_RESULT($build_against_wgl)
 
 
 dnl *** X11 interface compilation ***
@@ -2959,6 +3015,7 @@ AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_X11, [test "x$build_against_x11" != "xno"])
 AM_CONDITIONAL(WITH_OPENGL, [test "x$build_against_opengl" != "xno"])
+AM_CONDITIONAL(WITH_WGL, [test "x$build_against_wgl" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
 
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
@@ -3011,21 +3068,33 @@ else
 	AC_DEFINE(NDEBUG, 1, [Define to indicate non-debug code (assert utilizes)])
 fi
 
+BU='${top_builddir}/src/libbu/libbu.la'
+AC_SUBST(BU)
+
 BN='${top_builddir}/src/libbn/libbn.la'
 AC_SUBST(BN)
 
-BU='${top_builddir}/src/libbu/libbu.la'
-AC_SUBST(BU)
+RT='${top_builddir}/src/librt/librt.la'
+AC_SUBST(RT)
+
+WDB='${top_builddir}/src/libwdb/libwdb.la'
+AC_SUBST(WDB)
+
+PKG='${top_builddir}/src/libpkg/libpkg.la'
+AC_SUBST(PKG)
+
+SYSV='${top_builddir}/src/libsysv/libsysv.la'
+AC_SUBST(SYSV)
 
 CURSOR='${top_builddir}/src/libcursor/libcursor.la'
 AC_SUBST(CURSOR)
 
+FB='${top_builddir}/src/libfb/libfb.la'
+AC_SUBST(FB)
+
 DM='${top_builddir}/src/libdm/libdm.la'
 AC_SUBST(DM)
 AC_DEFINE_UNQUOTED([USE_FBSERV], [1], [Required for libdm/mged to allow direct fbserv render connections])
-
-FB='${top_builddir}/src/libfb/libfb.la'
-AC_SUBST(FB)
 
 FFT='${top_builddir}/src/libfft/libfft.la'
 AC_SUBST(FFT)
@@ -3039,23 +3108,11 @@ AC_SUBST(OPTICAL)
 ORLE='${top_builddir}/src/liborle/liborle.la'
 AC_SUBST(ORLE)
 
-PKG='${top_builddir}/src/libpkg/libpkg.la'
-AC_SUBST(PKG)
-
-LIBRT='${top_builddir}/src/librt/librt.la'
-AC_SUBST(LIBRT)
-
-SYSV='${top_builddir}/src/libsysv/libsysv.la'
-AC_SUBST(SYSV)
-
 TCLCAD='${top_builddir}/src/libtclcad/libtclcad.la'
 AC_SUBST(TCLCAD)
 
 TERMIO='${top_builddir}/src/libtermio/libtermio.la'
 AC_SUBST(TERMIO)
-
-WDB='${top_builddir}/src/libwdb/libwdb.la'
-AC_SUBST(WDB)
 
 dnl tcl
 
