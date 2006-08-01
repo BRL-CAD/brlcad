@@ -1263,7 +1263,7 @@ AC_CHECK_LIB(GL, glEnable, gl_link_works=yes ; LIBGL="-lGL",
 dnl check if the Windows WGL graphics library links
 wgl_link_works=no
 LIBWGL=""
-AC_CHECK_LIB(opengl32, glEnable, gl_link_works=yes ; LIBWGL="-lopengl32")
+AC_CHECK_LIB(opengl32, glEnable, wgl_link_works=yes ; LIBWGL="-lopengl32")
 
 dnl check if the SGI graphics library links
 sgigl_link_works=no
