@@ -1252,11 +1252,12 @@ genptr_t	arg;
 #  endif
 	bu_pid_of_initiating_thread = 0;	/* No threads any more */
 #else	/* PARALLEL */
-	bu_log("bu_parallel( x%lx, %d., x%lx ):  Not compiled for PARALLEL machine\n",
-		(long)func, ncpu, (long)arg );
+	bu_log("bu_parallel( x%lx, %d., x%lx ):  Not compiled for PARALLEL machine, running single-threaded\n", (long)func, ncpu, (long)arg );
+	/* do the work anyways */
+	(*func)(0,arg);
 #endif	/* PARALLEL */
 
-
+	return;
 }
 
 #if defined(sgi) && !defined(mips)
