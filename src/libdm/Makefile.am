@@ -8,6 +8,12 @@ else
 DM_OGL_CFLAGS =
 endif
 
+if WITH_WGL
+DM_WGL_CFLAGS = -DDM_WGL -DIF_WGL
+else
+DM_WGL_CFLAGS =
+endif
+
 if WITH_X11
 DM_X_CFLAGS = -DDM_X -DIF_X
 else
@@ -25,6 +31,7 @@ SRCS = \
 	dm-plot.c \
 	dm-ps.c \
 	dm_obj.c \
+	dm-wgl.c \
 	knob.c \
 	options.c \
 	query.c \
@@ -35,17 +42,15 @@ libdm_la_SOURCES = \
 	vers.c
 
 libdm_la_LDFLAGS = -version-info 19:1
-libdm_la_CFLAGS = ${X_CFLAGS} ${DM_X_CFLAGS} ${DM_OGL_CFLAGS}
+libdm_la_CFLAGS = ${X_CFLAGS} ${DM_X_CFLAGS} ${DM_OGL_CFLAGS} ${DM_WGL_CFLAGS}
 libdm_la_LIBADD = \
 	${TCL} \
-	${LIBRT} \
+	${RT} \
 	${PNG} \
 	${X_LIBS}
 
-# need to test dm-ogl_win.c as a dm-ogl.c replacement
 EXTRA_DIST = \
 	dm-glx.c \
-	dm-ogl_win.c \
 	dm-pex.c \
 	libdm.dsp \
 	vers_win.c
