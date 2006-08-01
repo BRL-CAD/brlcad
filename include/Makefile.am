@@ -80,6 +80,7 @@ brlcadinclude_wanted = \
 	dm-X.h \
 	dm-glx.h \
 	dm-ogl.h \
+	dm-wgl.h \
 	dm-pex.h \
 	dm-plot.h \
 	dm-ps.h \
