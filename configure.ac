@@ -1257,7 +1257,7 @@ dnl check if an OpenGL graphics library links
 gl_link_works=no
 LIBGL=""
 AC_CHECK_LIB(GL, glEnable, gl_link_works=yes ; LIBGL="-lGL",
-    [AC_CHECK_LIB(GL2, glEnable, gl_link_works=yes ; LIBGL="-lGL2",
+    [AC_CHECK_LIB(GL2, glEnable, gl_link_works=yes ; LIBGL="-lGL2")]
 )
 
 dnl check if the Windows WGL graphics library links
