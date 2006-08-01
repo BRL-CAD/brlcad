@@ -63,6 +63,17 @@ static const char RCSworker[] = "@(#)$Header$ (BRL)";
 #  include <unistd.h>
 #endif
 
+#define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
+#define NTSC_BLEND(v)	(0.30*(v)[X] + 0.59*(v)[Y] + 0.11*(v)[Z])
+
+extern int		query_x;
+extern int		query_y;
+extern int		Query_one_pixel;
+extern int		query_rdebug;
+extern int		query_debug;
+
+extern unsigned	char	*pixmap;		/* pixmap for rerendering of black pixels */
+
 
 int		per_processor_chunk = 0;	/* how many pixels to do at once */
 
@@ -81,277 +92,6 @@ int		reproj_max;	/* out of total number of pixels */
 int cur_pixel;			/* current pixel number, 0..last_pixel */
 int last_pixel;			/* last pixel number */
 
-extern int		query_x;
-extern int		query_y;
-extern int		Query_one_pixel;
-extern int		query_rdebug;
-extern int		query_debug;
-
-extern unsigned	char	*pixmap;		/* pixmap for rerendering of black pixels */
-
-/*
- *			G R I D _ S E T U P
- *
- *  In theory, the grid can be specified by providing any two of
- *  these sets of parameters:
- *	number of pixels (width, height)
- *	viewsize (in model units, mm)
- *	number of grid cells (cell_width, cell_height)
- *  however, for now, it is required that the view size always be specified,
- *  and one or the other parameter be provided.
- */
-void
-grid_setup(void)
-{
-	vect_t temp;
-	mat_t toEye;
-
-	if( viewsize <= 0.0 )
-		rt_bomb("viewsize <= 0");
-	/* model2view takes us to eye_model location & orientation */
-	MAT_IDN( toEye );
-	MAT_DELTAS_VEC_NEG( toEye, eye_model );
-	Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
-	bn_mat_mul( model2view, Viewrotscale, toEye );
-	bn_mat_inv( view2model, model2view );
-
-	/* Determine grid cell size and number of pixels */
-	if( cell_newsize ) {
-		if( cell_width <= 0.0 ) cell_width = cell_height;
-		if( cell_height <= 0.0 ) cell_height = cell_width;
-		width = (viewsize / cell_width) + 0.99;
-		height = (viewsize / (cell_height*aspect)) + 0.99;
-		cell_newsize = 0;
-	} else {
-		/* Chop -1.0..+1.0 range into parts */
-		cell_width = viewsize / width;
-		cell_height = viewsize / (height*aspect);
-	}
-
-	/*
-	 *  Optional GIFT compatabilty, mostly for RTG3.
-	 *  Round coordinates of lower left corner to fall on integer-
-	 *  valued coordinates, in "gift_grid_rounding" units.
-	 */
-	if( gift_grid_rounding > 0.0 )  {
-		point_t		v_ll;		/* view, lower left */
-		point_t		m_ll;		/* model, lower left */
-		point_t		hv_ll;		/* hv, lower left*/
-		point_t		hv_wanted;
-		vect_t		hv_delta;
-		vect_t		m_delta;
-		mat_t		model2hv;
-		mat_t		hv2model;
-
-		/* Build model2hv matrix, including mm2inches conversion */
-		MAT_COPY( model2hv, Viewrotscale );
-		model2hv[15] = gift_grid_rounding;
-		bn_mat_inv( hv2model, model2hv );
-
-		VSET( v_ll, -1, -1, 0 );
-		MAT4X3PNT( m_ll, view2model, v_ll );
-		MAT4X3PNT( hv_ll, model2hv, m_ll );
-		VSET( hv_wanted, floor(hv_ll[X]), floor(hv_ll[Y]),floor(hv_ll[Z]) );
-		VSUB2( hv_delta, hv_ll, hv_wanted );
-
-		MAT4X3PNT( m_delta, hv2model, hv_delta );
-		VSUB2( eye_model, eye_model, m_delta );
-		MAT_DELTAS_VEC_NEG( toEye, eye_model );
-		bn_mat_mul( model2view, Viewrotscale, toEye );
-		bn_mat_inv( view2model, model2view );
-	}
-
-	/* Create basis vectors dx and dy for emanation plane (grid) */
-	VSET( temp, 1, 0, 0 );
-	MAT3X3VEC( dx_unit, view2model, temp );	/* rotate only */
-	VSCALE( dx_model, dx_unit, cell_width );
-
-	VSET( temp, 0, 1, 0 );
-	MAT3X3VEC( dy_unit, view2model, temp );	/* rotate only */
-	VSCALE( dy_model, dy_unit, cell_height );
-
-	if( stereo )  {
-		/* Move left 2.5 inches (63.5mm) */
-		VSET( temp, -63.5*2.0/viewsize, 0, 0 );
-		bu_log("red eye: moving %f relative screen (left)\n", temp[X]);
-		MAT4X3VEC( left_eye_delta, view2model, temp );
-		VPRINT("left_eye_delta", left_eye_delta);
-	}
-
-	/* "Lower left" corner of viewing plane */
-	if( rt_perspective > 0.0 )  {
-		fastf_t	zoomout;
-		zoomout = 1.0 / tan( bn_degtorad * rt_perspective / 2.0 );
-		VSET( temp, -1, -1/aspect, -zoomout );	/* viewing plane */
-		/*
-		 * divergence is perspective angle divided by the number
-		 * of pixels in that angle. Extra factor of 0.5 is because
-		 * perspective is a full angle while divergence is the tangent
-		 * (slope) of a half angle.
-		 */
-		ap.a_diverge = tan( bn_degtorad * rt_perspective * 0.5 / width );
-		ap.a_rbeam = 0;
-	}  else  {
-		/* all rays go this direction */
-		VSET( temp, 0, 0, -1 );
-		MAT4X3VEC( ap.a_ray.r_dir, view2model, temp );
-		VUNITIZE( ap.a_ray.r_dir );
-
-		VSET( temp, -1, -1/aspect, 0 );	/* eye plane */
-		ap.a_rbeam = 0.5 * viewsize / width;
-		ap.a_diverge = 0;
-	}
-	if( NEAR_ZERO(ap.a_rbeam, SMALL) && NEAR_ZERO(ap.a_diverge, SMALL) )
-		rt_bomb("zero-radius beam");
-	MAT4X3PNT( viewbase_model, view2model, temp );
-
-	if( jitter & JITTER_FRAME )  {
-		/* Move the frame in a smooth circular rotation in the plane */
-		fastf_t		ang;	/* radians */
-		fastf_t		dx, dy;
-
-		ang = curframe * frame_delta_t * bn_twopi / 10;	/* 10 sec period */
-		dx = cos(ang) * 0.5;	/* +/- 1/4 pixel width in amplitude */
-		dy = sin(ang) * 0.5;
-		VJOIN2( viewbase_model, viewbase_model,
-			dx, dx_model,
-			dy, dy_model );
-	}
-
-	if( cell_width <= 0 || cell_width >= INFINITY ||
-	    cell_height <= 0 || cell_height >= INFINITY )  {
-		bu_log("grid_setup: cell size ERROR (%g, %g) mm\n",
-			cell_width, cell_height );
-	    	rt_bomb("cell size");
-	}
-	if( width <= 0 || height <= 0 )  {
-		bu_log("grid_setup: ERROR bad image size (%d, %d)\n",
-			width, height );
-		rt_bomb("bad size");
-	}
-}
-
-
-/*
- *			D O _ R U N
- *
- *  Compute a run of pixels, in parallel if the hardware permits it.
- *
- *  For a general-purpose version, see LIBRT rt_shoot_many_rays()
- */
-void do_run( int a, int b )
-{
-	int		cpu;
-
-#  ifdef USE_FORKED_THREADS
-	int pid, wpid;
-	int waitret;
-	void *buffer = (void*)0;
-	int p[2] = {0,0};
-	struct resource *tmp_res;
-
-	if( rt_g.rtg_parallel ) {
-		buffer = bu_calloc(npsw, sizeof(resource[0]), "buffer");
-		if (pipe(p) == -1) {
-			perror("pipe failed");
-		}
-	}
-#  endif
-
-	cur_pixel = a;
-	last_pixel = b;
-
-	if( !rt_g.rtg_parallel )  {
-		/*
-		 * SERIAL case -- one CPU does all the work.
-		 */
-		npsw = 1;
-		worker(0, NULL);
-	} else {
-		/*
-		 *  Parallel case.
-		 */
-
-		/* hack to bypass a bug in the Linux 2.4 kernel pthreads
-		 * implementation. cpu statistics are only traceable on a
-		 * process level and the timers will report effectively no
-		 * elapsed cpu time.  this allows the stats of all threads
-		 * to be gathered up by an encompassing process that may
-		 * be timed.
-		 *
-		 * XXX this should somehow only apply to a build on a 2.4
-		 * linux kernel.
-		 */
-#  ifdef USE_FORKED_THREADS
-		pid = fork();
-		if (pid < 0) {
-			perror("fork failed");
-			exit(1);
-		} else if (pid == 0) {
-#  endif
-
-			bu_parallel( worker, npsw, NULL );
-
-#  ifdef USE_FORKED_THREADS
-			/* send raytrace instance data back to the parent */
-			if (write(p[1], resource, sizeof(resource[0]) * npsw) == -1) {
-				perror("Unable to write to the communication pipe");
-				exit(1);
-			}
-			/* flush the pipe */
-			if (close(p[1]) == -1) {
-			  	perror("Unable to close the communication pipe");
-			  	sleep(1); /* give the parent time to read */
-			}
-			exit(0);
-		} else {
-			if (read(p[0], buffer, sizeof(resource[0]) * npsw) == -1) {
-				perror("Unable to read from the communication pipe");
-			}
-
-			/* do not use the just read info to overwrite the resource structures.
-			 * doing so will hose the resources completely
-			 */
-
-			/* parent ends up waiting on his child (and his child's threads) to
-			 * terminate.  we can get valid usage statistics on a child process.
-			 */
-			while ((wpid = wait(&waitret)) != pid && wpid != -1)
-				; /* do nothing */
-		} /* end fork() */
-#  endif
-
-	} /* end parallel case */
-
-#  ifdef USE_FORKED_THREADS
-	if( rt_g.rtg_parallel ) {
-		tmp_res = (struct resource *)buffer;
-	} else {
-		tmp_res = resource;
-	}
-	for( cpu=0; cpu < npsw; cpu++ ) {
-		if ( tmp_res[cpu].re_magic != RESOURCE_MAGIC )  {
-			bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
-			continue;
-		}
-		rt_add_res_stats( ap.a_rt_i, &tmp_res[cpu] );
-		rt_zero_res_stats( &resource[cpu] );
-	}
-#  else
-	/* Tally up the statistics */
-	for ( cpu=0; cpu < npsw; cpu++ ) {
-		if ( resource[cpu].re_magic != RESOURCE_MAGIC )  {
-			bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
-			continue;
-		}
-		rt_add_res_stats( ap.a_rt_i, &resource[cpu] );
-	}
-#endif
-	return;
-}
-
-#define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
-#define NTSC_BLEND(v)	(0.30*(v)[X] + 0.59*(v)[Y] + 0.11*(v)[Z])
 int	stop_worker = 0;
 
 /*
@@ -394,6 +134,7 @@ static struct jitter_pattern pt_pats[] = {
 	{ 0, {0.0, 0.0}, {0.0} } /* must be here to stop search */
 };
 
+
 /***********************************************************************
  *
  *  compute_point
@@ -422,6 +163,7 @@ jitter_start_pt(vect_t point, struct application *a, int samplenum, int pat_num)
 	}
 	VJOIN2( point, viewbase_model, dx, dx_model, dy, dy_model );
 }
+
 
 void do_pixel(int cpu,
 	      int pat_num,
@@ -693,6 +435,7 @@ void do_pixel(int cpu,
     return;
 }
 
+
 /*
  *  			W O R K E R
  *
@@ -779,6 +522,269 @@ worker(int cpu, genptr_t arg)
 	  }
 	}
 }
+
+
+/*
+ *			G R I D _ S E T U P
+ *
+ *  In theory, the grid can be specified by providing any two of
+ *  these sets of parameters:
+ *	number of pixels (width, height)
+ *	viewsize (in model units, mm)
+ *	number of grid cells (cell_width, cell_height)
+ *  however, for now, it is required that the view size always be specified,
+ *  and one or the other parameter be provided.
+ */
+void
+grid_setup(void)
+{
+	vect_t temp;
+	mat_t toEye;
+
+	if( viewsize <= 0.0 )
+		rt_bomb("viewsize <= 0");
+	/* model2view takes us to eye_model location & orientation */
+	MAT_IDN( toEye );
+	MAT_DELTAS_VEC_NEG( toEye, eye_model );
+	Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
+	bn_mat_mul( model2view, Viewrotscale, toEye );
+	bn_mat_inv( view2model, model2view );
+
+	/* Determine grid cell size and number of pixels */
+	if( cell_newsize ) {
+		if( cell_width <= 0.0 ) cell_width = cell_height;
+		if( cell_height <= 0.0 ) cell_height = cell_width;
+		width = (viewsize / cell_width) + 0.99;
+		height = (viewsize / (cell_height*aspect)) + 0.99;
+		cell_newsize = 0;
+	} else {
+		/* Chop -1.0..+1.0 range into parts */
+		cell_width = viewsize / width;
+		cell_height = viewsize / (height*aspect);
+	}
+
+	/*
+	 *  Optional GIFT compatabilty, mostly for RTG3.
+	 *  Round coordinates of lower left corner to fall on integer-
+	 *  valued coordinates, in "gift_grid_rounding" units.
+	 */
+	if( gift_grid_rounding > 0.0 )  {
+		point_t		v_ll;		/* view, lower left */
+		point_t		m_ll;		/* model, lower left */
+		point_t		hv_ll;		/* hv, lower left*/
+		point_t		hv_wanted;
+		vect_t		hv_delta;
+		vect_t		m_delta;
+		mat_t		model2hv;
+		mat_t		hv2model;
+
+		/* Build model2hv matrix, including mm2inches conversion */
+		MAT_COPY( model2hv, Viewrotscale );
+		model2hv[15] = gift_grid_rounding;
+		bn_mat_inv( hv2model, model2hv );
+
+		VSET( v_ll, -1, -1, 0 );
+		MAT4X3PNT( m_ll, view2model, v_ll );
+		MAT4X3PNT( hv_ll, model2hv, m_ll );
+		VSET( hv_wanted, floor(hv_ll[X]), floor(hv_ll[Y]),floor(hv_ll[Z]) );
+		VSUB2( hv_delta, hv_ll, hv_wanted );
+
+		MAT4X3PNT( m_delta, hv2model, hv_delta );
+		VSUB2( eye_model, eye_model, m_delta );
+		MAT_DELTAS_VEC_NEG( toEye, eye_model );
+		bn_mat_mul( model2view, Viewrotscale, toEye );
+		bn_mat_inv( view2model, model2view );
+	}
+
+	/* Create basis vectors dx and dy for emanation plane (grid) */
+	VSET( temp, 1, 0, 0 );
+	MAT3X3VEC( dx_unit, view2model, temp );	/* rotate only */
+	VSCALE( dx_model, dx_unit, cell_width );
+
+	VSET( temp, 0, 1, 0 );
+	MAT3X3VEC( dy_unit, view2model, temp );	/* rotate only */
+	VSCALE( dy_model, dy_unit, cell_height );
+
+	if( stereo )  {
+		/* Move left 2.5 inches (63.5mm) */
+		VSET( temp, -63.5*2.0/viewsize, 0, 0 );
+		bu_log("red eye: moving %f relative screen (left)\n", temp[X]);
+		MAT4X3VEC( left_eye_delta, view2model, temp );
+		VPRINT("left_eye_delta", left_eye_delta);
+	}
+
+	/* "Lower left" corner of viewing plane */
+	if( rt_perspective > 0.0 )  {
+		fastf_t	zoomout;
+		zoomout = 1.0 / tan( bn_degtorad * rt_perspective / 2.0 );
+		VSET( temp, -1, -1/aspect, -zoomout );	/* viewing plane */
+		/*
+		 * divergence is perspective angle divided by the number
+		 * of pixels in that angle. Extra factor of 0.5 is because
+		 * perspective is a full angle while divergence is the tangent
+		 * (slope) of a half angle.
+		 */
+		ap.a_diverge = tan( bn_degtorad * rt_perspective * 0.5 / width );
+		ap.a_rbeam = 0;
+	}  else  {
+		/* all rays go this direction */
+		VSET( temp, 0, 0, -1 );
+		MAT4X3VEC( ap.a_ray.r_dir, view2model, temp );
+		VUNITIZE( ap.a_ray.r_dir );
+
+		VSET( temp, -1, -1/aspect, 0 );	/* eye plane */
+		ap.a_rbeam = 0.5 * viewsize / width;
+		ap.a_diverge = 0;
+	}
+	if( NEAR_ZERO(ap.a_rbeam, SMALL) && NEAR_ZERO(ap.a_diverge, SMALL) )
+		rt_bomb("zero-radius beam");
+	MAT4X3PNT( viewbase_model, view2model, temp );
+
+	if( jitter & JITTER_FRAME )  {
+		/* Move the frame in a smooth circular rotation in the plane */
+		fastf_t		ang;	/* radians */
+		fastf_t		dx, dy;
+
+		ang = curframe * frame_delta_t * bn_twopi / 10;	/* 10 sec period */
+		dx = cos(ang) * 0.5;	/* +/- 1/4 pixel width in amplitude */
+		dy = sin(ang) * 0.5;
+		VJOIN2( viewbase_model, viewbase_model,
+			dx, dx_model,
+			dy, dy_model );
+	}
+
+	if( cell_width <= 0 || cell_width >= INFINITY ||
+	    cell_height <= 0 || cell_height >= INFINITY )  {
+		bu_log("grid_setup: cell size ERROR (%g, %g) mm\n",
+			cell_width, cell_height );
+	    	rt_bomb("cell size");
+	}
+	if( width <= 0 || height <= 0 )  {
+		bu_log("grid_setup: ERROR bad image size (%d, %d)\n",
+			width, height );
+		rt_bomb("bad size");
+	}
+}
+
+
+/*
+ *			D O _ R U N
+ *
+ *  Compute a run of pixels, in parallel if the hardware permits it.
+ *
+ *  For a general-purpose version, see LIBRT rt_shoot_many_rays()
+ */
+void do_run( int a, int b )
+{
+	int		cpu;
+
+#  ifdef USE_FORKED_THREADS
+	int pid, wpid;
+	int waitret;
+	void *buffer = (void*)0;
+	int p[2] = {0,0};
+	struct resource *tmp_res;
+
+	if( rt_g.rtg_parallel ) {
+		buffer = bu_calloc(npsw, sizeof(resource[0]), "buffer");
+		if (pipe(p) == -1) {
+			perror("pipe failed");
+		}
+	}
+#  endif
+
+	cur_pixel = a;
+	last_pixel = b;
+
+	if( !rt_g.rtg_parallel )  {
+		/*
+		 * SERIAL case -- one CPU does all the work.
+		 */
+		npsw = 1;
+		worker(0, NULL);
+	} else {
+		/*
+		 *  Parallel case.
+		 */
+
+		/* hack to bypass a bug in the Linux 2.4 kernel pthreads
+		 * implementation. cpu statistics are only traceable on a
+		 * process level and the timers will report effectively no
+		 * elapsed cpu time.  this allows the stats of all threads
+		 * to be gathered up by an encompassing process that may
+		 * be timed.
+		 *
+		 * XXX this should somehow only apply to a build on a 2.4
+		 * linux kernel.
+		 */
+#  ifdef USE_FORKED_THREADS
+		pid = fork();
+		if (pid < 0) {
+			perror("fork failed");
+			exit(1);
+		} else if (pid == 0) {
+#  endif
+
+			bu_parallel( worker, npsw, NULL );
+
+#  ifdef USE_FORKED_THREADS
+			/* send raytrace instance data back to the parent */
+			if (write(p[1], resource, sizeof(resource[0]) * npsw) == -1) {
+				perror("Unable to write to the communication pipe");
+				exit(1);
+			}
+			/* flush the pipe */
+			if (close(p[1]) == -1) {
+			  	perror("Unable to close the communication pipe");
+			  	sleep(1); /* give the parent time to read */
+			}
+			exit(0);
+		} else {
+			if (read(p[0], buffer, sizeof(resource[0]) * npsw) == -1) {
+				perror("Unable to read from the communication pipe");
+			}
+
+			/* do not use the just read info to overwrite the resource structures.
+			 * doing so will hose the resources completely
+			 */
+
+			/* parent ends up waiting on his child (and his child's threads) to
+			 * terminate.  we can get valid usage statistics on a child process.
+			 */
+			while ((wpid = wait(&waitret)) != pid && wpid != -1)
+				; /* do nothing */
+		} /* end fork() */
+#  endif
+
+	} /* end parallel case */
+
+#  ifdef USE_FORKED_THREADS
+	if( rt_g.rtg_parallel ) {
+		tmp_res = (struct resource *)buffer;
+	} else {
+		tmp_res = resource;
+	}
+	for( cpu=0; cpu < npsw; cpu++ ) {
+		if ( tmp_res[cpu].re_magic != RESOURCE_MAGIC )  {
+			bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
+			continue;
+		}
+		rt_add_res_stats( ap.a_rt_i, &tmp_res[cpu] );
+		rt_zero_res_stats( &resource[cpu] );
+	}
+#  else
+	/* Tally up the statistics */
+	for ( cpu=0; cpu < npsw; cpu++ ) {
+		if ( resource[cpu].re_magic != RESOURCE_MAGIC )  {
+			bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
+			continue;
+		}
+		rt_add_res_stats( ap.a_rt_i, &resource[cpu] );
+	}
+#endif
+	return;
+}
+
 
 /*
  * Local Variables:
