@@ -50,11 +50,7 @@ struct modifiable_ogl_vars {
 };
 
 struct ogl_vars {
-#ifndef _WIN32
   GLXContext glxc;
-#else
-  HGLRC glxc;
-#endif
   GLdouble faceplate_mat[16];
   int face_flag;
   int *perspective_mode;
