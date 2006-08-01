@@ -6,7 +6,6 @@ man_MANS = libplot3.3
 
 SRCS = \
 	anim.c \
-	asize.c \
 	axis.c \
 	bn_tcl.c \
 	complex.c \
