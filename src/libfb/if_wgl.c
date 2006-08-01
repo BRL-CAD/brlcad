@@ -1,4 +1,4 @@
-/*                  I F _ O G L _ W I N 3 2 . C
+/*                       I F _ W G L . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2006 United States Government as represented by
@@ -21,15 +21,16 @@
 
 /** \addtogroup if */
 /*@{*/
-/** @file if_ogl_win32.c
- *  Frame Buffer Library interface for OpenGL.
+/** @file if_wgl.c
+ *
+ *  Frame Buffer Library interface for Windows OpenGL.
  *
  *  There are several different Frame Buffer modes supported.
  *  Set your environment FB_FILE to the appropriate type.
  *  Note that some of the /dev/sgi modes are not supported, and there are
  *  some new modes.
  *  (see the modeflag definitions below).
- *	/dev/ogl[options]
+ *	/dev/wgl[options]
  *
  *  This code is basically a port of if_4d.c from IRIS GL to OpenGL.
  *
@@ -49,6 +50,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "common.h"
+
+#ifdef IF_WGL
 
 #include <signal.h>
 #include <stdio.h>
@@ -85,82 +88,82 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 /* Internal callbacks etc.*/
 _LOCAL_ void		do_event();
 _LOCAL_ void		expose_callback();
-void ogl_configureWindow FB_ARGS((FBIO *ifp, int width, int height));
+void wgl_configureWindow FB_ARGS((FBIO *ifp, int width, int height));
 
 /* Other Internal routines */
-_LOCAL_ void		ogl_clipper();
-_LOCAL_ int		ogl_getmem();
+_LOCAL_ void		wgl_clipper();
+_LOCAL_ int		wgl_getmem();
 _LOCAL_ void		backbuffer_to_screen();
-_LOCAL_ void		ogl_cminit();
+_LOCAL_ void		wgl_cminit();
 #if 0
 _LOCAL_ void		reorder_cursor();
 #endif
-_LOCAL_ PIXELFORMATDESCRIPTOR *	ogl_choose_visual();
+_LOCAL_ PIXELFORMATDESCRIPTOR *	wgl_choose_visual();
 _LOCAL_ int		is_linear_cmap();
 
-_LOCAL_ int	ogl_nwindows = 0; 	/* number of open windows */
+_LOCAL_ int	wgl_nwindows = 0; 	/* number of open windows */
 _LOCAL_ int	multiple_windows = 0;	/* someone wants to be ready
 					 * for multiple windows, at the
 					 * expense of speed.
 					 */
 /*_LOCAL_	XColor	color_cell[256];*/		/* used to set colormap */
 
-int ogl_refresh();
-int ogl_open_existing();
-int ogl_close_existing();
-int _ogl_open_existing();
+int wgl_refresh();
+int wgl_open_existing();
+int wgl_close_existing();
+int _wgl_open_existing();
 
-_LOCAL_ int	ogl_open(),
-		ogl_close(),
-		ogl_clear(),
-		ogl_read(),
-		ogl_write(),
-		ogl_rmap(),
-		ogl_wmap(),
-		ogl_view(),
-		ogl_getview(),
-		ogl_setcursor(),
-		ogl_cursor(),
+_LOCAL_ int	wgl_open(),
+		wgl_close(),
+		wgl_clear(),
+		wgl_read(),
+		wgl_write(),
+		wgl_rmap(),
+		wgl_wmap(),
+		wgl_view(),
+		wgl_getview(),
+		wgl_setcursor(),
+		wgl_cursor(),
 #if 0
-		ogl_getcursor(),
-		ogl_readrect(),
+		wgl_getcursor(),
+		wgl_readrect(),
 		fb_cnull(),
 #endif
-		ogl_writerect(),
-		ogl_bwwriterect(),
-		ogl_poll(),
-		ogl_flush(),
-		ogl_free(),
-		ogl_help();
+		wgl_writerect(),
+		wgl_bwwriterect(),
+		wgl_poll(),
+		wgl_flush(),
+		wgl_free(),
+		wgl_help();
 
 /* This is the ONLY thing that we normally "export" */
-FBIO ogl_interface =
+FBIO wgl_interface =
 	{
 	0,			/* magic number slot	*/
-	ogl_open,		/* open device		*/
-	ogl_close,		/* close device		*/
-	ogl_clear,		/* clear device		*/
-	ogl_read,		/* read	pixels		*/
-	ogl_write,		/* write pixels		*/
-	ogl_rmap,		/* read colormap	*/
-	ogl_wmap,		/* write colormap	*/
-	ogl_view,		/* set view		*/
-	ogl_getview,		/* get view		*/
-	ogl_setcursor,		/* define cursor	*/
-	ogl_cursor,		/* set cursor		*/
+	wgl_open,		/* open device		*/
+	wgl_close,		/* close device		*/
+	wgl_clear,		/* clear device		*/
+	wgl_read,		/* read	pixels		*/
+	wgl_write,		/* write pixels		*/
+	wgl_rmap,		/* read colormap	*/
+	wgl_wmap,		/* write colormap	*/
+	wgl_view,		/* set view		*/
+	wgl_getview,		/* get view		*/
+	wgl_setcursor,		/* define cursor	*/
+	wgl_cursor,		/* set cursor		*/
 	fb_sim_getcursor,	/* get cursor		*/
 	fb_sim_readrect,	/* read rectangle	*/
-	ogl_writerect,		/* write rectangle	*/
+	wgl_writerect,		/* write rectangle	*/
 	fb_sim_bwreadrect,
-	ogl_bwwriterect,	/* write rectangle	*/
-	ogl_poll,		/* process events	*/
-	ogl_flush,		/* flush output		*/
-	ogl_free,		/* free resources	*/
-	ogl_help,		/* help message		*/
+	wgl_bwwriterect,	/* write rectangle	*/
+	wgl_poll,		/* process events	*/
+	wgl_flush,		/* flush output		*/
+	wgl_free,		/* free resources	*/
+	wgl_help,		/* help message		*/
 	"Microsoft Windows OpenGL",	/* device description	*/
 	XMAXSCREEN+1,			/* max width		*/
 	YMAXSCREEN+1,			/* max height		*/
-	"/dev/ogl",		/* short device name	*/
+	"/dev/wgl",		/* short device name	*/
 	512,			/* default/current width  */
 	512,			/* default/current height */
 	-1,			/* select file desc	*/
@@ -185,7 +188,7 @@ FBIO	*saveifp;
  *  Has exactly the same format as the SGI hardware "gammaramp" map
  *  Note that only the lower 8 bits are significant.
  */
-struct ogl_cmap {
+struct wgl_cmap {
 	short	cmr[256];
 	short	cmg[256];
 	short	cmb[256];
@@ -196,7 +199,7 @@ struct ogl_cmap {
  *  The alpha component and reverse order are maintained for
  *  compatibility with /dev/sgi
  */
-struct ogl_pixel {
+struct wgl_pixel {
 	unsigned char blue;
 	unsigned char green;
 	unsigned char red;
@@ -205,7 +208,7 @@ struct ogl_pixel {
 };
 
 /* Clipping structure for zoom/pan operations */
-struct ogl_clip {
+struct wgl_clip {
 	int	xpixmin;	/* view clipping planes clipped to pixel memory space*/
 	int	xpixmax;
 	int	ypixmin;
@@ -235,13 +238,13 @@ struct sgiinfo {
 	int	mi_pid;			/* for multi-cpu check */
 	int	mi_parent;		/* PID of linger-mode process */
 	int	mi_doublebuffer;	/* 0=singlebuffer 1=doublebuffer */
-	struct ogl_pixel mi_scanline[XMAXSCREEN+1];	/* one scanline */
+	struct wgl_pixel mi_scanline[XMAXSCREEN+1];	/* one scanline */
 };
 
 /*
  *  Per window state information particular to the OpenGL interface
  */
-struct oglinfo {
+struct wglinfo {
 	HGLRC	glxc;
 	Display	       *dispp;		/* pointer to X display connection */
 	Window		wind;		/* Window identifier */
@@ -256,11 +259,11 @@ struct oglinfo {
 	int		win_height;	/* actual window height */
 	int		vp_width;	/* actual viewport width */
 	int		vp_height;	/* actual viewport height */
-	struct ogl_clip	clip;		/* current view clipping */
+	struct wgl_clip	clip;		/* current view clipping */
 	Window		cursor;
 	PIXELFORMATDESCRIPTOR    *vip;		/* pointer to info on current visual */
 	Colormap	xcmap;		/* xstyle color map */
-	int		use_ext_ctrl;	/* for controlling the Ogl graphics engine externally */
+	int		use_ext_ctrl;	/* for controlling the Wgl graphics engine externally */
 	HDC		hdc;
 	HWND	hwnd;
 
@@ -268,13 +271,13 @@ struct oglinfo {
 
 #define	SGI(ptr)	((struct sgiinfo *)((ptr)->u1.p))
 #define	SGIL(ptr)	((ptr)->u1.p)		/* left hand side version */
-#define	OGL(ptr)	((struct oglinfo *)((ptr)->u6.p))
-#define	OGLL(ptr)	((ptr)->u6.p)		/* left hand side version */
+#define	WGL(ptr)	((struct wglinfo *)((ptr)->u6.p))
+#define	WGLL(ptr)	((ptr)->u6.p)		/* left hand side version */
 #define if_mem		u2.p			/* shared memory pointer */
 #define if_cmap		u3.p			/* color map in shared memory */
-#define CMR(x)		((struct ogl_cmap *)((x)->if_cmap))->cmr
-#define CMG(x)		((struct ogl_cmap *)((x)->if_cmap))->cmg
-#define CMB(x)		((struct ogl_cmap *)((x)->if_cmap))->cmb
+#define CMR(x)		((struct wgl_cmap *)((x)->if_cmap))->cmr
+#define CMG(x)		((struct wgl_cmap *)((x)->if_cmap))->cmg
+#define CMB(x)		((struct wgl_cmap *)((x)->if_cmap))->cmb
 #define if_zoomflag	u4.l			/* zoom > 1 */
 #define if_mode		u5.l			/* see MODE_* defines */
 
@@ -373,7 +376,7 @@ _LOCAL_ struct modeflags {
 /************************************************************************/
 
 /*
- *			O G L _ G E T M E M
+ *			W G L _ G E T M E M
  *
  *			not changed from
  *
@@ -404,7 +407,7 @@ _LOCAL_ struct modeflags {
  *  might need to be increased.
  */
 _LOCAL_ int
-ogl_getmem( ifp )
+wgl_getmem( ifp )
 FBIO	*ifp;
 {
 	int	pixsize;
@@ -420,12 +423,12 @@ FBIO	*ifp;
 		 *  In this mode, only malloc as much memory as is needed.
 		 */
 		SGI(ifp)->mi_memwidth = ifp->if_width;
-		pixsize = ifp->if_height * ifp->if_width * sizeof(struct ogl_pixel);
-		size = pixsize + sizeof(struct ogl_cmap);
+		pixsize = ifp->if_height * ifp->if_width * sizeof(struct wgl_pixel);
+		size = pixsize + sizeof(struct wgl_cmap);
 
 		sp = calloc( 1, size );
 		if( sp == 0 )  {
-			fb_log("ogl_getmem: frame buffer memory malloc failed\n");
+			fb_log("wgl_getmem: frame buffer memory malloc failed\n");
 			goto fail;
 		}
 		new = 1;
@@ -440,12 +443,12 @@ success:
 
 	/* Provide non-black colormap on creation of new shared mem */
 	if(new)
-		ogl_cminit( ifp );
+		wgl_cminit( ifp );
 	return(0);
 fail:
-	fb_log("ogl_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_4d.c for details\n");
+	fb_log("wgl_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_4d.c for details\n");
 	if( (sp = calloc( 1, size )) == NULL )  {
-		fb_log("ogl_getmem:  malloc failure\n");
+		fb_log("wgl_getmem:  malloc failure\n");
 		return(-1);
 	}
 	new = 1;
@@ -453,10 +456,10 @@ fail:
 }
 
 /*
- *			O G L _ Z A P M E M
+ *			W G L _ Z A P M E M
  */
 void
-ogl_zapmem()
+wgl_zapmem()
 {
 }
 
@@ -476,13 +479,13 @@ sigkid()
 
 
 
-/* 			O G L _ X M I T _ S C A N L I N E S
+/* 			W G L _ X M I T _ S C A N L I N E S
  *
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
  * rectangle of the frame buffer
  */
 _LOCAL_ void
-ogl_xmit_scanlines( ifp, ybase, nlines, xbase, npix )
+wgl_xmit_scanlines( ifp, ybase, nlines, xbase, npix )
 register FBIO	*ifp;
 int		ybase;
 int		nlines;
@@ -492,13 +495,13 @@ int		npix;
 	register int	y;
 	register int	n;
 	int		sw_cmap;	/* !0 => needs software color map */
-	struct ogl_clip	*clp;
+	struct wgl_clip	*clp;
 
 	/* Caller is expected to handle attaching context, etc. */
 
-	clp = &(OGL(ifp)->clip);
+	clp = &(WGL(ifp)->clip);
 
-	if( OGL(ifp)->soft_cmap_flag  && SGI(ifp)->mi_cmap_flag )  {
+	if( WGL(ifp)->soft_cmap_flag  && SGI(ifp)->mi_cmap_flag )  {
 	    	sw_cmap = 1;
 	} else {
 		sw_cmap = 0;
@@ -516,8 +519,8 @@ int		npix;
 	if((ybase + nlines - 1) > clp->ypixmax)
 		nlines = clp->ypixmax - ybase + 1;
 
-	if(!OGL(ifp)->use_ext_ctrl){
-	if (!OGL(ifp)->copy_flag){
+	if(!WGL(ifp)->use_ext_ctrl){
+	if (!WGL(ifp)->copy_flag){
 		/*
 		 * Blank out areas of the screen around the image, if exposed.
 		 * In COPY mode, this is done in backbuffer_to_screen().
@@ -552,17 +555,17 @@ int		npix;
 			clp->xscrmax + CLIP_XTRA,
 			clp->yscrmax + CLIP_XTRA);
 
-	} else if (OGL(ifp)->front_flag) {
+	} else if (WGL(ifp)->front_flag) {
 		/* in COPY mode, always draw full sized image into backbuffer.
 		 * backbuffer_to_screen() is used to update the front buffer
 		 */
 		glDrawBuffer(GL_BACK);
-		OGL(ifp)->front_flag = 0;
+		WGL(ifp)->front_flag = 0;
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();	/* store current view clipping matrix*/
 		glLoadIdentity();
-		glOrtho( -0.25, ((GLdouble) OGL(ifp)->vp_width)-0.25,
-			-0.25, ((GLdouble) OGL(ifp)->vp_height)-0.25,
+		glOrtho( -0.25, ((GLdouble) WGL(ifp)->vp_width)-0.25,
+			-0.25, ((GLdouble) WGL(ifp)->vp_height)-0.25,
 			-1.0, 1.0);
 		glPixelZoom( 1.0, 1.0);
 	}
@@ -571,21 +574,21 @@ int		npix;
 	if( sw_cmap ) {
 		/* Software colormap each line as it's transmitted */
 		register int	x;
-		register struct ogl_pixel	*oglp;
-		register struct ogl_pixel	*op;
+		register struct wgl_pixel	*wglp;
+		register struct wgl_pixel	*op;
 
 		y = ybase;
 		if(CJDEBUG) printf("Doing sw colormap xmit\n");
 		/* Perform software color mapping into temp scanline */
 		op = SGI(ifp)->mi_scanline;
 		for( n=nlines; n>0; n--, y++ )  {
-			oglp = (struct ogl_pixel *)&ifp->if_mem[
+			wglp = (struct wgl_pixel *)&ifp->if_mem[
 				(y*SGI(ifp)->mi_memwidth)*
-				sizeof(struct ogl_pixel) ];
+				sizeof(struct wgl_pixel) ];
 			for( x=xbase+npix-1; x>=xbase; x-- )  {
-				op[x].red   = CMR(ifp)[oglp[x].red];
-				op[x].green = CMG(ifp)[oglp[x].green];
-				op[x].blue  = CMB(ifp)[oglp[x].blue];
+				op[x].red   = CMR(ifp)[wglp[x].red];
+				op[x].green = CMG(ifp)[wglp[x].green];
+				op[x].blue  = CMB(ifp)[wglp[x].blue];
 			}
 
 			glPixelStorei(GL_UNPACK_SKIP_PIXELS,xbase);
@@ -619,7 +622,7 @@ LONG WINAPI MainWndProc (
 #if 0
 	fprintf(stderr, "XXXMainWndProc: msg - WM_PAINT\n");
 #endif
-	if(!OGL(saveifp)->use_ext_ctrl)
+	if(!WGL(saveifp)->use_ext_ctrl)
 	    expose_callback(saveifp,0);
 	break;
     case WM_LBUTTONDOWN:
@@ -632,16 +635,16 @@ LONG WINAPI MainWndProc (
 #if 0
 	fprintf(stderr, "XXXMainWndProc: msg - WM_CLOSE\n");
 #endif
-	OGL(saveifp)->alive = -1;
+	WGL(saveifp)->alive = -1;
 	break;
     case WM_LBUTTONUP:
-	OGL(saveifp)->alive = 0;
+	WGL(saveifp)->alive = 0;
 	break;
     case WM_RBUTTONUP:
-	OGL(saveifp)->alive = 0;
+	WGL(saveifp)->alive = 0;
 	break;
     case WM_MBUTTONUP:
-	OGL(saveifp)->alive = 0;
+	WGL(saveifp)->alive = 0;
 	break;
     case WM_KEYDOWN:
 	break;
@@ -649,16 +652,16 @@ LONG WINAPI MainWndProc (
 #if 0
 	fprintf(stderr, "XXXMainWndProc: msg - WM_KEYUP\n");
 #endif
-	OGL(saveifp)->alive = 0;
+	WGL(saveifp)->alive = 0;
 	break;
     case WM_SIZE:
 	{
 #if 0
-	    if(conf->width == OGL(ifp)->win_width &&
-	       conf->height == OGL(ifp)->win_height)
+	    if(conf->width == WGL(ifp)->win_width &&
+	       conf->height == WGL(ifp)->win_height)
 		return;
 
-	    ogl_configureWindow(ifp, conf->width, conf->height);
+	    wgl_configureWindow(ifp, conf->width, conf->height);
 #endif
 	}
     default:
@@ -668,7 +671,7 @@ LONG WINAPI MainWndProc (
     return 1;
 }
 _LOCAL_ int
-ogl_open( ifp, file, width, height )
+wgl_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
@@ -690,7 +693,7 @@ int	width, height;
 	/*
 	 *  First, attempt to determine operating mode for this open,
 	 *  based upon the "unit number" or flags.
-	 *  file = "/dev/ogl###"
+	 *  file = "/dev/wgl###"
 	 *  The default mode is zero.
 	 */
 	mode = 0;
@@ -702,7 +705,7 @@ int	width, height;
 		int	alpha;
 		struct	modeflags *mfp;
 
-		if( strncmp(file, "/dev/ogl", 8) ) {
+		if( strncmp(file, "/dev/wgl", 8) ) {
 			/* How did this happen?? */
 			mode = 0;
 		} else {
@@ -735,7 +738,7 @@ int	width, height;
 
 		if( (mode & MODE_15MASK) == MODE_15ZAP ) {
 			/* Only task: Attempt to release shared memory segment */
-			ogl_zapmem();
+			wgl_zapmem();
 			return(-1);
 		}
 	}
@@ -743,22 +746,22 @@ int	width, height;
 
 	/*
 	 *  Allocate extension memory sections,
-	 *  addressed by SGI(ifp)->mi_xxx and OGL(ifp)->xxx
+	 *  addressed by SGI(ifp)->mi_xxx and WGL(ifp)->xxx
 	 */
 
 	if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
-		fb_log("ogl_open:  sgiinfo malloc failed\n");
+		fb_log("wgl_open:  sgiinfo malloc failed\n");
 		return(-1);
 	}
-	if( (OGLL(ifp) = (char *)calloc( 1, sizeof(struct oglinfo) )) == NULL )  {
-		fb_log("ogl_open:  oglinfo malloc failed\n");
+	if( (WGLL(ifp) = (char *)calloc( 1, sizeof(struct wglinfo) )) == NULL )  {
+		fb_log("wgl_open:  wglinfo malloc failed\n");
 		return(-1);
 	}
 
 	SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
 
-	if (ogl_nwindows && !multiple_windows){
-		fb_log("Warning - ogl_open: Multiple windows opened. Use /dev/oglm for first window!");
+	if (wgl_nwindows && !multiple_windows){
+		fb_log("Warning - wgl_open: Multiple windows opened. Use /dev/wglm for first window!");
 	}
 
 	/* Anyone can turn this on; no one can turn it off */
@@ -805,7 +808,7 @@ int	width, height;
 	}
 
 	/* Build a descriptive window title bar */
-	(void)sprintf( title, "BRL-CAD /dev/ogl %s, %s",
+	(void)sprintf( title, "BRL-CAD /dev/wgl %s, %s",
 		((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
 			"Transient Win":
 			"Lingering Win",
@@ -814,7 +817,7 @@ int	width, height;
 			"Shared Mem" );
 
 
-	/* initialize window state variables before calling ogl_getmem */
+	/* initialize window state variables before calling wgl_getmem */
 	ifp->if_zoomflag = 0;
 	ifp->if_xzoom = 1;	/* for zoom fakeout */
 	ifp->if_yzoom = 1;	/* for zoom fakeout */
@@ -823,7 +826,7 @@ int	width, height;
 	/* SGI(ifp)->mi_pid = getpid(); */
 
 	/* Attach to shared memory, potentially with a screen repaint */
-	if( ogl_getmem(ifp) < 0 )
+	if( wgl_getmem(ifp) < 0 )
 		return(-1);
 
 	/* Register the frame class */
@@ -840,7 +843,7 @@ int	width, height;
 
 	ret = RegisterClass (&wndclass);
 
-	OGL(ifp)->hwnd =  CreateWindow(
+	WGL(ifp)->hwnd =  CreateWindow(
   "Win OpenGL",  /* pointer to registered class name */
   title, /* pointer to window name */
   WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,        /* window style */
@@ -857,33 +860,33 @@ int	width, height;
 	Dword = GetLastError();
 
 	hinstance=Tk_GetHINSTANCE();
-	hwnd = OGL(ifp)->hwnd;
-	OGL(ifp)->hdc = GetDC(OGL(ifp)->hwnd);
-	hdc = OGL(ifp)->hdc;
+	hwnd = WGL(ifp)->hwnd;
+	WGL(ifp)->hdc = GetDC(WGL(ifp)->hwnd);
+	hdc = WGL(ifp)->hdc;
 
 
 
 	/* Choose an appropriate visual. */
-	if( (OGL(ifp)->vip = ogl_choose_visual(ifp)) == NULL ) {
-		fb_log("ogl_open: Couldn't find an appropriate visual.  Exiting.\n");
+	if( (WGL(ifp)->vip = wgl_choose_visual(ifp)) == NULL ) {
+		fb_log("wgl_open: Couldn't find an appropriate visual.  Exiting.\n");
 		return (-1);
 	}
 
-	OGL(ifp)->glxc = wglCreateContext(OGL(ifp)->hdc);
-	glxc = OGL(ifp)->glxc;
+	WGL(ifp)->glxc = wglCreateContext(WGL(ifp)->hdc);
+	glxc = WGL(ifp)->glxc;
 
 	/* count windows */
-	ogl_nwindows++;
+	wgl_nwindows++;
 
-	OGL(ifp)->alive = 1;
-	OGL(ifp)->firstTime = 1;
+	WGL(ifp)->alive = 1;
+	WGL(ifp)->firstTime = 1;
 
-	ShowWindow(OGL(ifp)->hwnd,SW_SHOW);
-	UpdateWindow(OGL(ifp)->hwnd);
+	ShowWindow(WGL(ifp)->hwnd,SW_SHOW);
+	UpdateWindow(WGL(ifp)->hwnd);
 
 
 	/* Loop through events until first exposure event is processed */
-	/*	while (OGL(ifp)->firstTime == 1)
+	/*	while (WGL(ifp)->firstTime == 1)
 		do_event(ifp);
 	*/
 
@@ -893,7 +896,7 @@ int	width, height;
 
 
 int
-ogl_open_existing(ifp, argc, argv)
+wgl_open_existing(ifp, argc, argv)
 FBIO *ifp;
 int argc;
 char **argv;
@@ -938,7 +941,7 @@ char **argv;
   if(sscanf(argv[9], "%d", &soft_cmap) != 1)
     return -1;
 
-  return _ogl_open_existing(ifp, dpy, win, cmap, vip, width, height,
+  return _wgl_open_existing(ifp, dpy, win, cmap, vip, width, height,
 			    glxc, double_buffer, soft_cmap);
 }
 
@@ -956,7 +959,7 @@ int soft_cmap;
 #endif
 
 int
-_ogl_open_existing(FBIO *ifp,
+_wgl_open_existing(FBIO *ifp,
 		   Display *dpy,
 		   Window win,
 		   Colormap cmap,
@@ -973,31 +976,31 @@ _ogl_open_existing(FBIO *ifp,
 
   /*
    *  Allocate extension memory sections,
-   *  addressed by SGI(ifp)->mi_xxx and OGL(ifp)->xxx
+   *  addressed by SGI(ifp)->mi_xxx and WGL(ifp)->xxx
    */
 
   if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
-    fb_log("ogl_open:  sgiinfo malloc failed\n");
+    fb_log("wgl_open:  sgiinfo malloc failed\n");
     return -1;
   }
-  if( (OGLL(ifp) = (char *)calloc( 1, sizeof(struct oglinfo) )) == NULL )  {
-    fb_log("ogl_open:  oglinfo malloc failed\n");
+  if( (WGLL(ifp) = (char *)calloc( 1, sizeof(struct wglinfo) )) == NULL )  {
+    fb_log("wgl_open:  wglinfo malloc failed\n");
     return -1;
   }
 
-  OGL(ifp)->use_ext_ctrl = 1;
+  WGL(ifp)->use_ext_ctrl = 1;
 
   SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
   multiple_windows = 1;
   ifp->if_width = ifp->if_max_width = width;
   ifp->if_height = ifp->if_max_height = height;
 
-  OGL(ifp)->win_width = OGL(ifp)->vp_width = width;
-  OGL(ifp)->win_height = OGL(ifp)->vp_height = height;
+  WGL(ifp)->win_width = WGL(ifp)->vp_width = width;
+  WGL(ifp)->win_height = WGL(ifp)->vp_height = height;
 
   SGI(ifp)->mi_curs_on = 1;
 
-  /* initialize window state variables before calling ogl_getmem */
+  /* initialize window state variables before calling wgl_getmem */
   ifp->if_zoomflag = 0;
   ifp->if_xzoom = 1;	/* for zoom fakeout */
   ifp->if_yzoom = 1;	/* for zoom fakeout */
@@ -1006,52 +1009,52 @@ _ogl_open_existing(FBIO *ifp,
   /* SGI(ifp)->mi_pid = getpid(); */
 
   /* Attach to shared memory, potentially with a screen repaint */
-  if(ogl_getmem(ifp) < 0)
+  if(wgl_getmem(ifp) < 0)
     return -1;
 
-  OGL(ifp)->dispp = dpy;
-  /* ifp->if_selfd = ConnectionNumber(OGL(ifp)->dispp); */
+  WGL(ifp)->dispp = dpy;
+  /* ifp->if_selfd = ConnectionNumber(WGL(ifp)->dispp); */
 
-  OGL(ifp)->vip = vip;
-  OGL(ifp)->glxc = glxc;
+  WGL(ifp)->vip = vip;
+  WGL(ifp)->glxc = glxc;
   SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
-  OGL(ifp)->soft_cmap_flag = soft_cmap;
+  WGL(ifp)->soft_cmap_flag = soft_cmap;
   SGI(ifp)->mi_doublebuffer = double_buffer;
-  OGL(ifp)->xcmap = cmap;
+  WGL(ifp)->xcmap = cmap;
 
-  OGL(ifp)->wind = win;
-  ++ogl_nwindows;
+  WGL(ifp)->wind = win;
+  ++wgl_nwindows;
 
-  OGL(ifp)->alive = 1;
-  OGL(ifp)->firstTime = 1;
+  WGL(ifp)->alive = 1;
+  WGL(ifp)->firstTime = 1;
 
-  ogl_clipper(ifp);
+  wgl_clipper(ifp);
 
   return 0;
 }
 
 _LOCAL_ int
-ogl_final_close( ifp )
+wgl_final_close( ifp )
 FBIO	*ifp;
 {
 
   if( CJDEBUG ) {
-    printf("ogl_final_close: All done...goodbye!\n");
+    printf("wgl_final_close: All done...goodbye!\n");
   }
 
-  /* if(OGL(ifp)->cursor)
-     XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
+  /* if(WGL(ifp)->cursor)
+     XDestroyWindow(WGL(ifp)->dispp, WGL(ifp)->cursor);
   */
 
-  /* XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->wind);
-     XFreeColormap(OGL(ifp)->dispp, OGL(ifp)->xcmap);
+  /* XDestroyWindow(WGL(ifp)->dispp, WGL(ifp)->wind);
+     XFreeColormap(WGL(ifp)->dispp, WGL(ifp)->xcmap);
   */
 
-  if (OGL(ifp)->glxc)
-	  wglDeleteContext(OGL(ifp)->glxc);
-  if (OGL(ifp)->hdc)
-	  ReleaseDC(OGL(ifp)->hwnd, OGL(ifp)->hdc);
-	DestroyWindow(OGL(ifp)->hwnd);
+  if (WGL(ifp)->glxc)
+	  wglDeleteContext(WGL(ifp)->glxc);
+  if (WGL(ifp)->hdc)
+	  ReleaseDC(WGL(ifp)->hwnd, WGL(ifp)->hdc);
+	DestroyWindow(WGL(ifp)->hwnd);
 
 
   if( SGIL(ifp) != NULL ) {
@@ -1064,32 +1067,32 @@ FBIO	*ifp;
     SGIL(ifp) = NULL;
   }
 
-  if( OGLL(ifp) != NULL) {
-    (void) free( (char *)OGLL(ifp) );
-    OGLL(ifp) = NULL;
+  if( WGLL(ifp) != NULL) {
+    (void) free( (char *)WGLL(ifp) );
+    WGLL(ifp) = NULL;
   }
 
-  ogl_nwindows--;
+  wgl_nwindows--;
   return(0);
 }
 
 
 _LOCAL_ int
-ogl_close( ifp )
+wgl_close( ifp )
 FBIO	*ifp;
 {
 
-	ogl_flush( ifp );
+	wgl_flush( ifp );
 
 	/* only the last open window can linger -
 	 * call final_close if not lingering
 	 */
-	if( ogl_nwindows > 1 ||
+	if( wgl_nwindows > 1 ||
 	    (ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT )
-		return ogl_final_close( ifp );
+		return wgl_final_close( ifp );
 
 	if( CJDEBUG )
-		printf("ogl_close: remaining open to linger awhile.\n");
+		printf("wgl_close: remaining open to linger awhile.\n");
 
 	/*
 	 *  else:
@@ -1124,18 +1127,18 @@ FBIO	*ifp;
 	  (void)signal( SIGALRM, SIG_IGN );
 	*/
 
-	while (0 < OGL(ifp)->alive)
+	while (0 < WGL(ifp)->alive)
 	    do_event(ifp);
 
 	return 0;
 }
 
 int
-ogl_close_existing(FBIO *ifp)
+wgl_close_existing(FBIO *ifp)
 {
     /*
-      if(OGL(ifp)->cursor)
-          XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
+      if(WGL(ifp)->cursor)
+          XDestroyWindow(WGL(ifp)->dispp, WGL(ifp)->cursor);
     */
 
   if( SGIL(ifp) != NULL ) {
@@ -1147,69 +1150,69 @@ ogl_close_existing(FBIO *ifp)
     SGIL(ifp) = NULL;
   }
 
-  if( OGLL(ifp) != NULL) {
-    (void) free( (char *)OGLL(ifp) );
-    OGLL(ifp) = NULL;
+  if( WGLL(ifp) != NULL) {
+    (void) free( (char *)WGLL(ifp) );
+    WGLL(ifp) = NULL;
   }
 
   return 0;
 }
 
 /*
- *			O G L _ P O L L
+ *			W G L _ P O L L
  *
  *	Handle any pending input events
  */
 _LOCAL_ int
-ogl_poll(ifp)
+wgl_poll(ifp)
 FBIO	*ifp;
 {
 	do_event(ifp);
 
-	if (OGL(ifp)->alive < 0)
+	if (WGL(ifp)->alive < 0)
 	    return(1);
 	else
 	    return(0);
 }
 
 /*
- *			O G L _ F R E E
+ *			W G L _ F R E E
  *
  *  Free shared memory resources, and close.
  */
 _LOCAL_ int
-ogl_free( ifp )
+wgl_free( ifp )
 FBIO	*ifp;
 {
 	int	ret;
 
-	if(CJDEBUG) printf("entering  ogl_free\n");
+	if(CJDEBUG) printf("entering  wgl_free\n");
 	/* Close the framebuffer */
-	ret = ogl_final_close( ifp );
+	ret = wgl_final_close( ifp );
 
 	if( (ifp->if_mode & MODE_1MASK) == MODE_1SHARED ) {
 		/* If shared mem, release the shared memory segment */
-		ogl_zapmem();
+		wgl_zapmem();
 	}
 	return ret;
 }
 
 
 _LOCAL_ int
-ogl_clear( ifp, pp )
+wgl_clear( ifp, pp )
 FBIO	*ifp;
 unsigned char	*pp;		/* pointer to beginning of memory segment*/
 {
-	struct ogl_pixel		bg;
-	register struct ogl_pixel      *oglp;
+	struct wgl_pixel		bg;
+	register struct wgl_pixel      *wglp;
 	register int			cnt;
 	register int			y;
 
-	if( CJDEBUG ) printf("entering ogl_clear\n");
+	if( CJDEBUG ) printf("entering wgl_clear\n");
 
 	if (multiple_windows) {
-		if (wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc)==False){
-		fb_log("Warning, ogl_clear: wglMakeCurrent unsuccessful.\n");
+		if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
+		fb_log("Warning, wgl_clear: wglMakeCurrent unsuccessful.\n");
 		}
 	}
 
@@ -1230,21 +1233,21 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 
 	/* Flood rectangle in shared memory */
 	for( y=0; y < ifp->if_height; y++ )  {
-		oglp = (struct ogl_pixel *)&ifp->if_mem[
-		    (y*SGI(ifp)->mi_memwidth+0)*sizeof(struct ogl_pixel) ];
+		wglp = (struct wgl_pixel *)&ifp->if_mem[
+		    (y*SGI(ifp)->mi_memwidth+0)*sizeof(struct wgl_pixel) ];
 		for( cnt=ifp->if_width-1; cnt >= 0; cnt-- )  {
-			*oglp++ = bg;	/* struct copy */
+			*wglp++ = bg;	/* struct copy */
 		}
 	}
 
 
 	/* Update screen */
-	if(OGL(ifp)->use_ext_ctrl){
+	if(WGL(ifp)->use_ext_ctrl){
 		glClear(GL_COLOR_BUFFER_BIT);
 	}else{
-	if ( OGL(ifp)->copy_flag){
+	if ( WGL(ifp)->copy_flag){
 		/* COPY mode: clear both buffers */
-		if (OGL(ifp)->front_flag){
+		if (WGL(ifp)->front_flag){
 			glDrawBuffer(GL_BACK);
 			glClear(GL_COLOR_BUFFER_BIT);
 			glDrawBuffer(GL_FRONT);
@@ -1258,13 +1261,13 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 	} else {
 		glClear(GL_COLOR_BUFFER_BIT);
 		if(SGI(ifp)->mi_doublebuffer){
-			SwapBuffers( OGL(ifp)->hdc);
+			SwapBuffers( WGL(ifp)->hdc);
 		}
 	}
 
 	if (multiple_windows) {
 		/* unattach context for other threads to use */
-		wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc);
+		wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
 	}
 	}
 
@@ -1273,17 +1276,17 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 
 
 /*
- *			O G L _ V I E W
+ *			W G L _ V I E W
  */
 _LOCAL_ int
-ogl_view( ifp, xcenter, ycenter, xzoom, yzoom )
+wgl_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
 int	xcenter, ycenter;
 int	xzoom, yzoom;
 {
-	struct ogl_clip *clp;
+	struct wgl_clip *clp;
 
-	if(CJDEBUG) printf("entering ogl_view\n");
+	if(CJDEBUG) printf("entering wgl_view\n");
 
 	if( xzoom < 1 ) xzoom = 1;
 	if( yzoom < 1 ) yzoom = 1;
@@ -1308,44 +1311,44 @@ int	xzoom, yzoom;
 	else	ifp->if_zoomflag = 0;
 
 
-	if(OGL(ifp)->use_ext_ctrl){
-		ogl_clipper(ifp);
+	if(WGL(ifp)->use_ext_ctrl){
+		wgl_clipper(ifp);
 	}else{
 	if (multiple_windows) {
-		if (wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc)==False){
-			fb_log("Warning, ogl_view: wglMakeCurrent unsuccessful.\n");
+		if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
+			fb_log("Warning, wgl_view: wglMakeCurrent unsuccessful.\n");
 		}
 	}
 
 	/* Set clipping matrix  and zoom level */
 	glMatrixMode(GL_PROJECTION);
-	if (OGL(ifp)->copy_flag && !OGL(ifp)->front_flag){
+	if (WGL(ifp)->copy_flag && !WGL(ifp)->front_flag){
 		/* COPY mode - no changes to backbuffer copy - just
 		 * need to update front buffer
 		 */
 		glPopMatrix();
 		glDrawBuffer(GL_FRONT);
-		OGL(ifp)->front_flag = 1;
+		WGL(ifp)->front_flag = 1;
 	}
 	glLoadIdentity();
 
-	ogl_clipper(ifp);
-	clp = &(OGL(ifp)->clip);
+	wgl_clipper(ifp);
+	clp = &(WGL(ifp)->clip);
 	glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
 	glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
 
-	if (OGL(ifp)->copy_flag){
+	if (WGL(ifp)->copy_flag){
 		backbuffer_to_screen(ifp,-1);
 	} else {
-		ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
+		wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 		if(SGI(ifp)->mi_doublebuffer){
-			SwapBuffers( OGL(ifp)->hdc);
+			SwapBuffers( WGL(ifp)->hdc);
 		}
 	}
 
 	if (multiple_windows) {
 		/* unattach context for other threads to use */
-		wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc);
+		wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
 	}
 	}
 
@@ -1353,15 +1356,15 @@ int	xzoom, yzoom;
 }
 
 /*
- *			O G L _ G E T V I E W
+ *			W G L _ G E T V I E W
  */
 _LOCAL_ int
-ogl_getview( ifp, xcenter, ycenter, xzoom, yzoom )
+wgl_getview( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
 int	*xcenter, *ycenter;
 int	*xzoom, *yzoom;
 {
-	if(CJDEBUG) printf("entering ogl_getview\n");
+	if(CJDEBUG) printf("entering wgl_getview\n");
 
 	*xcenter = ifp->if_xcenter;
 	*ycenter = ifp->if_ycenter;
@@ -1373,7 +1376,7 @@ int	*xzoom, *yzoom;
 
 
 _LOCAL_ int
-ogl_read( ifp, x, y, pixelp, count ) /*read count pixels into pixelp starting at x,y*/
+wgl_read( ifp, x, y, pixelp, count ) /*read count pixels into pixelp starting at x,y*/
 FBIO	*ifp;
 int	x, y;
 unsigned char	*pixelp;
@@ -1383,9 +1386,9 @@ int	count;
 	register unsigned char	*cp;
 	int			ret;
 	register unsigned int	n;
-	register struct ogl_pixel	*oglp;
+	register struct wgl_pixel	*wglp;
 
-	if(CJDEBUG) printf("entering ogl_read\n");
+	if(CJDEBUG) printf("entering wgl_read\n");
 
 	if( x < 0 || x >= ifp->if_width ||
 	    y < 0 || y >= ifp->if_height)
@@ -1403,15 +1406,15 @@ int	count;
 		else
 			scan_count = count;
 
-		oglp = (struct ogl_pixel *)&ifp->if_mem[
-		    (y*SGI(ifp)->mi_memwidth+x)*sizeof(struct ogl_pixel) ];
+		wglp = (struct wgl_pixel *)&ifp->if_mem[
+		    (y*SGI(ifp)->mi_memwidth+x)*sizeof(struct wgl_pixel) ];
 
 		n = scan_count;
 		while( n )  {
-			cp[RED] = oglp->red;
-			cp[GRN] = oglp->green;
-			cp[BLU] = oglp->blue;
-			oglp++;
+			cp[RED] = wglp->red;
+			cp[GRN] = wglp->green;
+			cp[BLU] = wglp->blue;
+			wglp++;
 			cp += 3;
 			n--;
 		}
@@ -1428,7 +1431,7 @@ int	count;
 
 
 _LOCAL_ int
-ogl_write( ifp, xstart, ystart, pixelp, count ) /*write count pixels from pixelp starting at xstart,ystart*/
+wgl_write( ifp, xstart, ystart, pixelp, count ) /*write count pixels from pixelp starting at xstart,ystart*/
 FBIO	*ifp;
 int	xstart, ystart;
 const unsigned char	*pixelp;
@@ -1442,7 +1445,7 @@ int	count;
 	register int		x;
 	register int		y;
 
-	if(CJDEBUG) printf("entering ogl_write\n");
+	if(CJDEBUG) printf("entering wgl_write\n");
 
 	/* fast exit cases */
 	if( (pix_count = count) == 0 )
@@ -1462,7 +1465,7 @@ int	count;
 
 	while( pix_count )  {
 		register unsigned int n;
-		register struct ogl_pixel	*oglp;
+		register struct wgl_pixel	*wglp;
 
 		if( y >= ifp->if_height )
 			break;
@@ -1472,37 +1475,37 @@ int	count;
 		else
 			scan_count = pix_count;
 
-		oglp = (struct ogl_pixel *)&ifp->if_mem[
-		    (y*SGI(ifp)->mi_memwidth+x)*sizeof(struct ogl_pixel) ];
+		wglp = (struct wgl_pixel *)&ifp->if_mem[
+		    (y*SGI(ifp)->mi_memwidth+x)*sizeof(struct wgl_pixel) ];
 
 		n = scan_count;
 		if( (n & 3) != 0 )  {
 			/* This code uses 60% of all CPU time */
 			while( n )  {
 				/* alpha channel is always zero */
-				oglp->red   = cp[RED];
-				oglp->green = cp[GRN];
-				oglp->blue  = cp[BLU];
-				oglp++;
+				wglp->red   = cp[RED];
+				wglp->green = cp[GRN];
+				wglp->blue  = cp[BLU];
+				wglp++;
 				cp += 3;
 				n--;
 			}
 		} else {
 			while( n )  {
 				/* alpha channel is always zero */
-				oglp[0].red   = cp[RED+0*3];
-				oglp[0].green = cp[GRN+0*3];
-				oglp[0].blue  = cp[BLU+0*3];
-				oglp[1].red   = cp[RED+1*3];
-				oglp[1].green = cp[GRN+1*3];
-				oglp[1].blue  = cp[BLU+1*3];
-				oglp[2].red   = cp[RED+2*3];
-				oglp[2].green = cp[GRN+2*3];
-				oglp[2].blue  = cp[BLU+2*3];
-				oglp[3].red   = cp[RED+3*3];
-				oglp[3].green = cp[GRN+3*3];
-				oglp[3].blue  = cp[BLU+3*3];
-				oglp += 4;
+				wglp[0].red   = cp[RED+0*3];
+				wglp[0].green = cp[GRN+0*3];
+				wglp[0].blue  = cp[BLU+0*3];
+				wglp[1].red   = cp[RED+1*3];
+				wglp[1].green = cp[GRN+1*3];
+				wglp[1].blue  = cp[BLU+1*3];
+				wglp[2].red   = cp[RED+2*3];
+				wglp[2].green = cp[GRN+2*3];
+				wglp[2].blue  = cp[BLU+2*3];
+				wglp[3].red   = cp[RED+3*3];
+				wglp[3].green = cp[GRN+3*3];
+				wglp[3].blue  = cp[BLU+3*3];
+				wglp += 4;
 				cp += 3*4;
 				n -= 4;
 			}
@@ -1518,12 +1521,12 @@ int	count;
 		return ret;
 
 	if (multiple_windows) {
-		if (wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc)==False){
-			fb_log("Warning, ogl_write: wglMakeCurrent unsuccessful.\n");
+		if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
+			fb_log("Warning, wgl_write: wglMakeCurrent unsuccessful.\n");
 		}
 	}
 
-	if(!OGL(ifp)->use_ext_ctrl){
+	if(!WGL(ifp)->use_ext_ctrl){
 	if( xstart + count <= ifp->if_width  )  {
 		/* "Fast path" case for writes of less than one scanline.
 		 * The assumption is that there will be a lot of short
@@ -1536,20 +1539,20 @@ int	count;
 			glDrawBuffer(GL_FRONT);
 		}
 #endif
-		ogl_xmit_scanlines( ifp, ybase, 1, xstart, count );
-		if (OGL(ifp)->copy_flag){
+		wgl_xmit_scanlines( ifp, ybase, 1, xstart, count );
+		if (WGL(ifp)->copy_flag){
 			/* repaint one scanline from backbuffer */
 			backbuffer_to_screen(ifp,ybase);
 		}
 	} else {
 		/* Normal case -- multi-pixel write */
 		if ( SGI(ifp)->mi_doublebuffer) { /* refresh whole screen */
-			ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
-			SwapBuffers( OGL(ifp)->hdc);
+			wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
+			SwapBuffers( WGL(ifp)->hdc);
 		}
 		else { /* just write rectangle */
-			ogl_xmit_scanlines( ifp, ybase, y-ybase, 0, ifp->if_width );
-			if (OGL(ifp)->copy_flag){
+			wgl_xmit_scanlines( ifp, ybase, y-ybase, 0, ifp->if_width );
+			if (WGL(ifp)->copy_flag){
 				backbuffer_to_screen(ifp,-1);
 			}
 		}
@@ -1557,7 +1560,7 @@ int	count;
 
 	if (multiple_windows) {
 		/* unattach context for other threads to use */
-		wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc);
+		wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
 	}
 	}
 
@@ -1566,14 +1569,14 @@ int	count;
 }
 
 /*
- *			O G L _ W R I T E R E C T
+ *			W G L _ W R I T E R E C T
  *
  *  The task of this routine is to reformat the pixels into
  *  SGI internal form, and then arrange to have them sent to
  *  the screen separately.
  */
 _LOCAL_ int
-ogl_writerect(FBIO *ifp,
+wgl_writerect(FBIO *ifp,
 	      int xmin,
 	      int ymin,
 	      int width,
@@ -1583,9 +1586,9 @@ ogl_writerect(FBIO *ifp,
 	register int		x;
 	register int		y;
 	register unsigned char	*cp;
-	register struct ogl_pixel	*oglp;
+	register struct wgl_pixel	*wglp;
 
-	if(CJDEBUG) printf("entering ogl_writerect\n");
+	if(CJDEBUG) printf("entering wgl_writerect\n");
 
 
 	if( width <= 0 || height <= 0 )
@@ -1596,14 +1599,14 @@ ogl_writerect(FBIO *ifp,
 
 	cp = (unsigned char *)(pp);
 	for( y = ymin; y < ymin+height; y++ )  {
-		oglp = (struct ogl_pixel *)&ifp->if_mem[
-		    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct ogl_pixel) ];
+		wglp = (struct wgl_pixel *)&ifp->if_mem[
+		    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct wgl_pixel) ];
 		for( x = xmin; x < xmin+width; x++ )  {
 			/* alpha channel is always zero */
-			oglp->red   = cp[RED];
-			oglp->green = cp[GRN];
-			oglp->blue  = cp[BLU];
-			oglp++;
+			wglp->red   = cp[RED];
+			wglp->green = cp[GRN];
+			wglp->blue  = cp[BLU];
+			wglp++;
 			cp += 3;
 		}
 	}
@@ -1611,27 +1614,27 @@ ogl_writerect(FBIO *ifp,
 	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
 		return width*height;
 
-	if(!OGL(ifp)->use_ext_ctrl){
+	if(!WGL(ifp)->use_ext_ctrl){
 	if (multiple_windows) {
-	if (wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc)==False){
-		fb_log("Warning, ogl_writerect: wglMakeCurrent unsuccessful.\n");
+	if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
+		fb_log("Warning, wgl_writerect: wglMakeCurrent unsuccessful.\n");
 	}
 	}
 
 	if ( SGI(ifp)->mi_doublebuffer) { /* refresh whole screen */
-		ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
-		SwapBuffers( OGL(ifp)->hdc);
+		wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
+		SwapBuffers( WGL(ifp)->hdc);
 	}
 	else { /* just write rectangle*/
-		ogl_xmit_scanlines( ifp, ymin, height, xmin, width );
-		if (OGL(ifp)->copy_flag){
+		wgl_xmit_scanlines( ifp, ymin, height, xmin, width );
+		if (WGL(ifp)->copy_flag){
 			backbuffer_to_screen(ifp,-1);
 		}
 	}
 
 	if (multiple_windows) {
 	/* unattach context for other threads to use */
-	wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc);
+	wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
 	}
 	}
 
@@ -1640,14 +1643,14 @@ ogl_writerect(FBIO *ifp,
 
 
 /*
- *			O G L _ B W W R I T E R E C T
+ *			W G L _ B W W R I T E R E C T
  *
  *  The task of this routine is to reformat the pixels into
  *  SGI internal form, and then arrange to have them sent to
  *  the screen separately.
  */
 _LOCAL_ int
-ogl_bwwriterect(FBIO *ifp,
+wgl_bwwriterect(FBIO *ifp,
 		int xmin,
 		int ymin,
 		int width,
@@ -1657,9 +1660,9 @@ ogl_bwwriterect(FBIO *ifp,
 	register int		x;
 	register int		y;
 	register unsigned char	*cp;
-	register struct ogl_pixel	*oglp;
+	register struct wgl_pixel	*wglp;
 
-	if(CJDEBUG) printf("entering ogl_bwwriterect\n");
+	if(CJDEBUG) printf("entering wgl_bwwriterect\n");
 
 
 	if( width <= 0 || height <= 0 )
@@ -1670,42 +1673,42 @@ ogl_bwwriterect(FBIO *ifp,
 
 	cp = (unsigned char *)(pp);
 	for( y = ymin; y < ymin+height; y++ )  {
-		oglp = (struct ogl_pixel *)&ifp->if_mem[
-		    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct ogl_pixel) ];
+		wglp = (struct wgl_pixel *)&ifp->if_mem[
+		    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct wgl_pixel) ];
 		for( x = xmin; x < xmin+width; x++ )  {
 			register int	val;
 			/* alpha channel is always zero */
-			oglp->red   = (val = *cp++);
-			oglp->green = val;
-			oglp->blue  = val;
-			oglp++;
+			wglp->red   = (val = *cp++);
+			wglp->green = val;
+			wglp->blue  = val;
+			wglp++;
 		}
 	}
 
 	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
 		return width*height;
 
-	if(!OGL(ifp)->use_ext_ctrl){
+	if(!WGL(ifp)->use_ext_ctrl){
 	if (multiple_windows) {
-	if (wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc)==False){
-		fb_log("Warning, ogl_writerect: wglMakeCurrent unsuccessful.\n");
+	if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
+		fb_log("Warning, wgl_writerect: wglMakeCurrent unsuccessful.\n");
 	}
 	}
 
 	if ( SGI(ifp)->mi_doublebuffer) { /* refresh whole screen */
-		ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
-		SwapBuffers( OGL(ifp)->hdc);
+		wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
+		SwapBuffers( WGL(ifp)->hdc);
 	}
 	else { /* just write rectangle*/
-		ogl_xmit_scanlines( ifp, ymin, height, xmin, width );
-		if (OGL(ifp)->copy_flag){
+		wgl_xmit_scanlines( ifp, ymin, height, xmin, width );
+		if (WGL(ifp)->copy_flag){
 			backbuffer_to_screen(ifp,-1);
 		}
 	}
 
 	if (multiple_windows) {
 	/* unattach context for other threads to use */
-	wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc);
+	wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
 	}
 	}
 
@@ -1715,12 +1718,12 @@ ogl_bwwriterect(FBIO *ifp,
 
 
 _LOCAL_ int
-ogl_rmap(register FBIO *ifp,
+wgl_rmap(register FBIO *ifp,
 	 register ColorMap *cmp)
 {
 	register int i;
 
-	if(CJDEBUG) printf("entering ogl_rmap\n");
+	if(CJDEBUG) printf("entering wgl_rmap\n");
 
 	/* Just parrot back the stored colormap */
 	for( i = 0; i < 256; i++)  {
@@ -1752,10 +1755,10 @@ is_linear_cmap(register FBIO *ifp)
 }
 
 /*
- *			O G L _ C M I N I T
+ *			W G L _ C M I N I T
  */
 _LOCAL_ void
-ogl_cminit(register FBIO *ifp)
+wgl_cminit(register FBIO *ifp)
 {
 	register int	i;
 
@@ -1767,20 +1770,20 @@ ogl_cminit(register FBIO *ifp)
 }
 
 /*
- *			 O G L _ W M A P
+ *			 W G L _ W M A P
  */
 _LOCAL_ int
-ogl_wmap(register FBIO *ifp,
+wgl_wmap(register FBIO *ifp,
 	 register const ColorMap *cmp)
 {
 	register int	i;
 	int		prev;	/* !0 = previous cmap was non-linear */
 
-	if(CJDEBUG) printf("entering ogl_wmap\n");
+	if(CJDEBUG) printf("entering wgl_wmap\n");
 
 	prev = SGI(ifp)->mi_cmap_flag;
 	if ( cmp == COLORMAP_NULL)  {
-		ogl_cminit( ifp );
+		wgl_cminit( ifp );
 	} else {
 		for(i = 0; i < 256; i++)  {
 			CMR(ifp)[i] = cmp-> cm_red[i]>>8;
@@ -1791,28 +1794,28 @@ ogl_wmap(register FBIO *ifp,
 	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
 
 
-	if(!OGL(ifp)->use_ext_ctrl){
-	if( OGL(ifp)->soft_cmap_flag )  {
+	if(!WGL(ifp)->use_ext_ctrl){
+	if( WGL(ifp)->soft_cmap_flag )  {
 		/* if current and previous maps are linear, return */
 		if( SGI(ifp)->mi_cmap_flag == 0 && prev == 0 )  return(0);
 
 		/* Software color mapping, trigger a repaint */
 
 		if (multiple_windows) {
-		if (wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc)==False){
-			fb_log("Warning, ogl_wmap: wglMakeCurrent unsuccessful.\n");
+		if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
+			fb_log("Warning, wgl_wmap: wglMakeCurrent unsuccessful.\n");
 		}
 		}
 
-		ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
+		wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 		if(SGI(ifp)->mi_doublebuffer){
-			SwapBuffers( OGL(ifp)->hdc);
-		} else if (OGL(ifp)->copy_flag) {
+			SwapBuffers( WGL(ifp)->hdc);
+		} else if (WGL(ifp)->copy_flag) {
 			backbuffer_to_screen(ifp,-1);
 		}
 		if (multiple_windows) {
 		/* unattach context for other threads to use, also flushes */
-		wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc);
+		wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
 		}
 	} else {
 		/* Send color map to hardware */
@@ -1825,7 +1828,7 @@ ogl_wmap(register FBIO *ifp,
 	    		color_cell[i].blue = CMB(ifp)[i];
 	    		color_cell[i].flags = DoRed | DoGreen | DoBlue;
 	    	}
-    		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);*/
+    		XStoreColors(WGL(ifp)->dispp, WGL(ifp)->xcmap, color_cell, 256);*/
 	}
 	}
 
@@ -1833,13 +1836,13 @@ ogl_wmap(register FBIO *ifp,
 }
 
 /*
- *			O G L _ H E L P
+ *			W G L _ H E L P
  */
 _LOCAL_ int
-ogl_help(FBIO *ifp)
+wgl_help(FBIO *ifp)
 {
 	struct	modeflags *mfp;
-	PIXELFORMATDESCRIPTOR *visual = OGL(ifp)->vip;
+	PIXELFORMATDESCRIPTOR *visual = WGL(ifp)->vip;
 
 	fb_log( "Description: %s\n", ifp->if_type );
 	fb_log( "Device: %s\n", ifp->if_name );
@@ -1849,7 +1852,7 @@ ogl_help(FBIO *ifp)
 	fb_log( "Default width height: %d %d\n",
 		ifp->if_width,
 		ifp->if_height );
-	fb_log( "Usage: /dev/ogl[option letters]\n" );
+	fb_log( "Usage: /dev/wgl[option letters]\n" );
 	for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
 		fb_log( "   %c   %s\n", mfp->c, mfp->help );
 	}
@@ -1857,7 +1860,7 @@ ogl_help(FBIO *ifp)
 	fb_log( "\nCurrent internal state:\n");
 	fb_log( "	mi_doublebuffer=%d\n", SGI(ifp)->mi_doublebuffer );
 	fb_log( "	mi_cmap_flag=%d\n", SGI(ifp)->mi_cmap_flag );
-	fb_log( "	ogl_nwindows=%d\n", ogl_nwindows );
+	fb_log( "	wgl_nwindows=%d\n", wgl_nwindows );
 	fb_log( "	multiple_windows=%d\n", multiple_windows );
 
 	fb_log("X11 Visual:\n");
@@ -1902,7 +1905,7 @@ ogl_help(FBIO *ifp)
 
 
 _LOCAL_ int
-ogl_setcursor(FBIO *ifp,
+wgl_setcursor(FBIO *ifp,
 	      const unsigned char *bits,
 	      int xbits,
 	      int ybits,
@@ -1914,7 +1917,7 @@ ogl_setcursor(FBIO *ifp,
 
 
 _LOCAL_ int
-ogl_cursor(FBIO *ifp, int mode, int x, int y)
+wgl_cursor(FBIO *ifp, int mode, int x, int y)
 {
 return 0;
 }
@@ -1922,25 +1925,25 @@ return 0;
 
 
 _LOCAL_ int
-ogl_flush(FBIO *ifp)
+wgl_flush(FBIO *ifp)
 {
 	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )  {
 		if (multiple_windows) {
-			if (wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc)==False){
-				fb_log("Warning, ogl_flush: wglMakeCurrent unsuccessful.\n");
+			if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
+				fb_log("Warning, wgl_flush: wglMakeCurrent unsuccessful.\n");
 			}
 		}
 		/* Send entire in-memory buffer to the screen, all at once */
-		ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
+		wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 		if ( SGI(ifp)->mi_doublebuffer) {
-			SwapBuffers( OGL(ifp)->hdc);
+			SwapBuffers( WGL(ifp)->hdc);
 		} else {
-			if (OGL(ifp)->copy_flag){
+			if (WGL(ifp)->copy_flag){
 				backbuffer_to_screen(ifp,-1);
 			}
 		}
 	}
-	/* XFlush(OGL(ifp)->dispp); */
+	/* XFlush(WGL(ifp)->dispp); */
 	glFlush();
 	return(0);
 }
@@ -1954,7 +1957,7 @@ fb_cnull(FBIO *ifp)
 #endif
 
 /*
- * O G L _ C L I P P E R ( )
+ * W G L _ C L I P P E R ( )
  *
  * Given:- the size of the viewport in pixels (vp_width, vp_height)
  *	 - the size of the framebuffer image (if_width, if_height)
@@ -1967,28 +1970,28 @@ fb_cnull(FBIO *ifp)
  *		(xpixmin,xpixmax,ypixmin,ypixmax)
  */
 void
-ogl_clipper(register FBIO *ifp)
+wgl_clipper(register FBIO *ifp)
 {
-	register struct ogl_clip *clp;
+	register struct wgl_clip *clp;
 	register int	i;
 	double pixels;
 
-	clp = &(OGL(ifp)->clip);
+	clp = &(WGL(ifp)->clip);
 
-	i = OGL(ifp)->vp_width/(2*ifp->if_xzoom);
+	i = WGL(ifp)->vp_width/(2*ifp->if_xzoom);
 	clp->xscrmin = ifp->if_xcenter - i;
-	i = OGL(ifp)->vp_width/ifp->if_xzoom;
+	i = WGL(ifp)->vp_width/ifp->if_xzoom;
 	clp->xscrmax = clp->xscrmin + i;
 	pixels = (double) i;
-	clp->oleft = ((double) clp->xscrmin) - 0.25*pixels/((double) OGL(ifp)->vp_width);
+	clp->oleft = ((double) clp->xscrmin) - 0.25*pixels/((double) WGL(ifp)->vp_width);
 	clp->oright = clp->oleft + pixels;
 
-	i = OGL(ifp)->vp_height/(2*ifp->if_yzoom);
+	i = WGL(ifp)->vp_height/(2*ifp->if_yzoom);
 	clp->yscrmin = ifp->if_ycenter - i;
-	i = OGL(ifp)->vp_height/ifp->if_yzoom;
+	i = WGL(ifp)->vp_height/ifp->if_yzoom;
 	clp->yscrmax = clp->yscrmin + i;
 	pixels = (double) i;
-	clp->obottom = ((double) clp->yscrmin) - 0.25*pixels/((double) OGL(ifp)->vp_height);
+	clp->obottom = ((double) clp->yscrmin) - 0.25*pixels/((double) WGL(ifp)->vp_height);
 	clp->otop = clp->obottom + pixels;
 
 	clp->xpixmin = clp->xscrmin;
@@ -2008,12 +2011,12 @@ ogl_clipper(register FBIO *ifp)
 	 * to the viewport size; use that for clipping.
 	 * Otherwise, use size of framebuffer memory segment
 	 */
-	if (OGL(ifp)->copy_flag) {
-		if( clp->xpixmax > OGL(ifp)->vp_width-1 )  {
-			clp->xpixmax = OGL(ifp)->vp_width-1;
+	if (WGL(ifp)->copy_flag) {
+		if( clp->xpixmax > WGL(ifp)->vp_width-1 )  {
+			clp->xpixmax = WGL(ifp)->vp_width-1;
 		}
-		if( clp->ypixmax > OGL(ifp)->vp_height-1 )  {
-			clp->ypixmax = OGL(ifp)->vp_height-1;
+		if( clp->ypixmax > WGL(ifp)->vp_height-1 )  {
+			clp->ypixmax = WGL(ifp)->vp_height-1;
 		}
 	} else {
 		if( clp->xpixmax > ifp->if_width-1 )  {
@@ -2061,19 +2064,19 @@ expose_callback(FBIO *ifp,
 		int eventPtr)
 {
     /*	XWindowAttributes xwa; */
-	struct ogl_clip *clp;
+	struct wgl_clip *clp;
 
 	if( CJDEBUG ) fb_log("entering expose_callback()\n");
 
 
-	if( multiple_windows || OGL(ifp)->firstTime ) {
-		if( wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc) == False) {
+	if( multiple_windows || WGL(ifp)->firstTime ) {
+		if( wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc) == False) {
 			fb_log("Warning, libfb/expose_callback: wglMakeCurrent unsuccessful.\n");
 		}
 	}
 
-	if( OGL(ifp)->firstTime ) {
-		OGL(ifp)->firstTime = 0;
+	if( WGL(ifp)->firstTime ) {
+		WGL(ifp)->firstTime = 0;
 
 		/* just in case the configuration is double buffered but
 		 * we want to pretend it's not
@@ -2094,75 +2097,75 @@ expose_callback(FBIO *ifp,
 			 * buffers to use. It conflicts with
 			 * double buffering
 			 */
-			OGL(ifp)->copy_flag = 1;
+			WGL(ifp)->copy_flag = 1;
 			SGI(ifp)->mi_doublebuffer = 0;
-			OGL(ifp)->front_flag = 1;
+			WGL(ifp)->front_flag = 1;
 			glDrawBuffer(GL_FRONT);
 		} else {
-			OGL(ifp)->copy_flag = 0;
+			WGL(ifp)->copy_flag = 0;
 		}
 
-		OGL(ifp)->win_width=ifp->if_width;
-		OGL(ifp)->win_height=ifp->if_height;
+		WGL(ifp)->win_width=ifp->if_width;
+		WGL(ifp)->win_height=ifp->if_height;
 
 		/* clear entire window */
-		glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);
+		glViewport(0, 0, WGL(ifp)->win_width, WGL(ifp)->win_height);
 		glClearColor(0,0,0,0);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		/* Set normal viewport size to minimum of actual window
 		 * size and requested framebuffer size
 		 */
-		OGL(ifp)->vp_width = (OGL(ifp)->win_width < ifp->if_width) ?
-				OGL(ifp)->win_width : ifp->if_width;
-		OGL(ifp)->vp_height = (OGL(ifp)->win_height < ifp->if_height) ?
-				OGL(ifp)->win_height : ifp->if_height;
-		ifp->if_xcenter = OGL(ifp)->vp_width/2;
-		ifp->if_ycenter = OGL(ifp)->vp_height/2;
+		WGL(ifp)->vp_width = (WGL(ifp)->win_width < ifp->if_width) ?
+				WGL(ifp)->win_width : ifp->if_width;
+		WGL(ifp)->vp_height = (WGL(ifp)->win_height < ifp->if_height) ?
+				WGL(ifp)->win_height : ifp->if_height;
+		ifp->if_xcenter = WGL(ifp)->vp_width/2;
+		ifp->if_ycenter = WGL(ifp)->vp_height/2;
 
 		/* center viewport in window */
-		SGI(ifp)->mi_xoff=(OGL(ifp)->win_width-OGL(ifp)->vp_width)/2;
-		SGI(ifp)->mi_yoff=(OGL(ifp)->win_height-OGL(ifp)->vp_height)/2;
+		SGI(ifp)->mi_xoff=(WGL(ifp)->win_width-WGL(ifp)->vp_width)/2;
+		SGI(ifp)->mi_yoff=(WGL(ifp)->win_height-WGL(ifp)->vp_height)/2;
 		glViewport(SGI(ifp)->mi_xoff,
 			   SGI(ifp)->mi_yoff,
-			   OGL(ifp)->vp_width,
-			   OGL(ifp)->vp_height);
+			   WGL(ifp)->vp_width,
+			   WGL(ifp)->vp_height);
 		/* initialize clipping planes and zoom */
-		ogl_clipper(ifp);
-		clp = &(OGL(ifp)->clip);
+		wgl_clipper(ifp);
+		clp = &(WGL(ifp)->clip);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop,
 				-1.0,1.0);
 		glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
-	} else if( (OGL(ifp)->win_width > ifp->if_width) ||
-		   (OGL(ifp)->win_height > ifp->if_height) ) {
+	} else if( (WGL(ifp)->win_width > ifp->if_width) ||
+		   (WGL(ifp)->win_height > ifp->if_height) ) {
 		/* clear whole buffer if window larger than framebuffer */
-	 	if( OGL(ifp)->copy_flag && !OGL(ifp)->front_flag ) {
+	 	if( WGL(ifp)->copy_flag && !WGL(ifp)->front_flag ) {
 	 		glDrawBuffer(GL_FRONT);
-			glViewport(0, 0, OGL(ifp)->win_width,
-				   OGL(ifp)->win_height);
+			glViewport(0, 0, WGL(ifp)->win_width,
+				   WGL(ifp)->win_height);
 			glClearColor(0,0,0,0);
 			glClear(GL_COLOR_BUFFER_BIT);
 	 		glDrawBuffer(GL_BACK);
 	 	} else {
-			glViewport(0, 0, OGL(ifp)->win_width,
-				   OGL(ifp)->win_height);
+			glViewport(0, 0, WGL(ifp)->win_width,
+				   WGL(ifp)->win_height);
 			glClearColor(0,0,0,0);
 			glClear(GL_COLOR_BUFFER_BIT);
 	 	}
 	 	/* center viewport */
 		glViewport(SGI(ifp)->mi_xoff,
 			   SGI(ifp)->mi_yoff,
-			   OGL(ifp)->vp_width,
-			   OGL(ifp)->vp_height);
+			   WGL(ifp)->vp_width,
+			   WGL(ifp)->vp_height);
 	}
 
 	/* repaint entire image */
-	ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
+	wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	if( SGI(ifp)->mi_doublebuffer ) {
-		SwapBuffers( OGL(ifp)->hdc);
-	} else if( OGL(ifp)->copy_flag ) {
+		SwapBuffers( WGL(ifp)->hdc);
+	} else if( WGL(ifp)->copy_flag ) {
 		backbuffer_to_screen(ifp,-1);
 	}
 
@@ -2182,29 +2185,29 @@ expose_callback(FBIO *ifp,
 
 	if( multiple_windows ) {
 		/* unattach context for other threads to use */
-		wglMakeCurrent(OGL(ifp)->hdc,OGL(ifp)->glxc);
+		wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
 	}
 
 #if 0
-	XFlush(OGL(ifp)->dispp);
+	XFlush(WGL(ifp)->dispp);
 	glFlush();
 #endif
 }
 
 void
-ogl_configureWindow(FBIO *ifp,
+wgl_configureWindow(FBIO *ifp,
 		    int width,
 		    int height)
 {
-  if(width == OGL(ifp)->win_width &&
-     height == OGL(ifp)->win_height)
+  if(width == WGL(ifp)->win_width &&
+     height == WGL(ifp)->win_height)
     return;
 
   ifp->if_width = ifp->if_max_width = width;
   ifp->if_height = ifp->if_max_height = height;
 
-  OGL(ifp)->win_width = OGL(ifp)->vp_width = width;
-  OGL(ifp)->win_height = OGL(ifp)->vp_height = height;
+  WGL(ifp)->win_width = WGL(ifp)->vp_width = width;
+  WGL(ifp)->win_height = WGL(ifp)->vp_height = height;
 
   ifp->if_zoomflag = 0;
   ifp->if_xzoom = 1;
@@ -2212,8 +2215,8 @@ ogl_configureWindow(FBIO *ifp,
   ifp->if_xcenter = width/2;
   ifp->if_ycenter = height/2;
 
-  ogl_getmem(ifp);
-  ogl_clipper(ifp);
+  wgl_getmem(ifp);
+  wgl_clipper(ifp);
 }
 
 #if 0
@@ -2251,17 +2254,17 @@ _LOCAL_ void
 backbuffer_to_screen(register FBIO *ifp,
 		     int one_y)
 {
-	struct ogl_clip *clp;
+	struct wgl_clip *clp;
 
-	if (!(OGL(ifp)->front_flag)){
-		OGL(ifp)->front_flag = 1;
+	if (!(WGL(ifp)->front_flag)){
+		WGL(ifp)->front_flag = 1;
 		glDrawBuffer(GL_FRONT);
 		glMatrixMode(GL_PROJECTION);
 		glPopMatrix();
 		glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
 	}
 
-	clp = &(OGL(ifp)->clip);
+	clp = &(WGL(ifp)->clip);
 
 	if (one_y > clp->ypixmax) {
 		return;
@@ -2286,16 +2289,16 @@ backbuffer_to_screen(register FBIO *ifp,
 		 * than if_width
 		 */
 		/* Blank out area right of image */
-		if( clp->xscrmax >= OGL(ifp)->vp_width )  glRecti(
+		if( clp->xscrmax >= WGL(ifp)->vp_width )  glRecti(
 			ifp->if_width - CLIP_XTRA,
 			clp->yscrmin - CLIP_XTRA,
 			clp->xscrmax + CLIP_XTRA,
 			clp->yscrmax + CLIP_XTRA);
 
 		/* Blank out area above image */
-		if( clp->yscrmax >= OGL(ifp)->vp_height )  glRecti(
+		if( clp->yscrmax >= WGL(ifp)->vp_height )  glRecti(
 			clp->xscrmin - CLIP_XTRA,
-			OGL(ifp)->vp_height - CLIP_XTRA,
+			WGL(ifp)->vp_height - CLIP_XTRA,
 			clp->xscrmax + CLIP_XTRA,
 			clp->yscrmax + CLIP_XTRA);
 
@@ -2320,7 +2323,7 @@ backbuffer_to_screen(register FBIO *ifp,
 	}
 }
 
-/* 		O G L _ C H O O S E _ V I S U A L
+/* 		W G L _ C H O O S E _ V I S U A L
  *
  * Select an appropriate visual, and set flags.
  *
@@ -2339,12 +2342,12 @@ backbuffer_to_screen(register FBIO *ifp,
  *
  * The following flags are set:
  * 	SGI(ifp)->mi_doublebuffer
- *	OGL(ifp)->soft_cmap_flag
+ *	WGL(ifp)->soft_cmap_flag
  *
  * Return NULL on failure.
  */
 _LOCAL_ PIXELFORMATDESCRIPTOR *
-ogl_choose_visual(FBIO *ifp)
+wgl_choose_visual(FBIO *ifp)
 {
 	int iPixelFormat ;
     PIXELFORMATDESCRIPTOR pfd, *ppfd;
@@ -2353,7 +2356,7 @@ ogl_choose_visual(FBIO *ifp)
 	ppfd = &pfd;
 
 /*  ppfd = (PIXELFORMATDESCRIPTOR *)malloc(sizeof(PIXELFORMATDESCRIPTOR)); */
-  iPixelFormat  = GetPixelFormat(OGL(ifp)->hdc);
+  iPixelFormat  = GetPixelFormat(WGL(ifp)->hdc);
   ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
   ppfd->nVersion = 1;
   ppfd->dwFlags =  PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_TYPE_RGBA | PFD_STEREO;
@@ -2381,26 +2384,26 @@ ogl_choose_visual(FBIO *ifp)
   ppfd->dwVisibleMask = 0;
   ppfd->dwDamageMask = 0;
 
-  iPixelFormat = ChoosePixelFormat(OGL(ifp)->hdc, ppfd);
-  good = SetPixelFormat(OGL(ifp)->hdc, iPixelFormat, ppfd);
+  iPixelFormat = ChoosePixelFormat(WGL(ifp)->hdc, ppfd);
+  good = SetPixelFormat(WGL(ifp)->hdc, iPixelFormat, ppfd);
 
 
   SGI(ifp)->mi_doublebuffer = 1;
-  OGL(ifp)->soft_cmap_flag = 0;
+  WGL(ifp)->soft_cmap_flag = 0;
 
   if(good) return ppfd;
   else return (PIXELFORMATDESCRIPTOR *)NULL;
 }
 
 int
-ogl_refresh(FBIO *ifp,
+wgl_refresh(FBIO *ifp,
 	    int x,
 	    int y,
 	    int w,
 	    int h)
 {
   int mm;
-  struct ogl_clip *clp;
+  struct wgl_clip *clp;
 
   if(w < 0){
     w = -w;
@@ -2425,10 +2428,10 @@ ogl_refresh(FBIO *ifp,
   glLoadIdentity();
 
 #if 0
-  glOrtho(0.0, OGL(ifp)->win_width, 0.0, OGL(ifp)->win_height, -1.0, 1.0);
+  glOrtho(0.0, WGL(ifp)->win_width, 0.0, WGL(ifp)->win_height, -1.0, 1.0);
 #else
-  ogl_clipper(ifp);
-  clp = &(OGL(ifp)->clip);
+  wgl_clipper(ifp);
+  clp = &(WGL(ifp)->clip);
   glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
   glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
 #endif
@@ -2438,8 +2441,8 @@ ogl_refresh(FBIO *ifp,
 #if 0
   glTranslatef(0.0, 0.0, -1.0);
 #endif
-  glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);
-  ogl_xmit_scanlines(ifp, y, h, x, w);
+  glViewport(0, 0, WGL(ifp)->win_width, WGL(ifp)->win_height);
+  wgl_xmit_scanlines(ifp, y, h, x, w);
   glMatrixMode(GL_PROJECTION);
   glPopMatrix();
   glMatrixMode(GL_MODELVIEW);
@@ -2454,6 +2457,8 @@ ogl_refresh(FBIO *ifp,
   glFlush();
   return 0;
 }
+
+#endif /* IF_WGL */
 
 /*
  * Local Variables:
