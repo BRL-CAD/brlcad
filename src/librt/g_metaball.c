@@ -162,7 +162,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 {
 	struct rt_metaball_internal *mb;
 	point_t p, inc;
-	int stat=0, retval = 0;
+	int stat=0, retval = 0, segsleft = abs(ap->a_onehit);
 	register struct seg *segp = NULL;
 	fastf_t initstep = stp->st_bradius / 20, finalstep = stp->st_bradius / 10000000000.0;
 	fastf_t step = initstep;
@@ -181,6 +181,9 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 					VSUB2(delta, p, rp->r_pt);
 					segp->seg_out.hit_dist = sqrt(MAGSQ(delta));
 					BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+					--segsleft;
+					if(!segsleft)
+					    break;
 					retval = 2;
 					continue;
 				} else {
@@ -194,11 +197,14 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 			if(rt_metaball_point_value(&p, &mb->metaball_pt_head) > mb->threshhold ) {
 				if(step<=finalstep) {
 					point_t delta;
+
+					--segsleft;
 					VSUB2(delta, p, rp->r_pt);
 					RT_GET_SEG(segp, ap->a_resource);
 					segp->seg_stp = stp;
 					segp->seg_in.hit_dist = sqrt(MAGSQ(delta));
-					if(ap->a_onehit){	/* exit now if we're one-hit (like visual rendering) */
+					if(!segsleft){	/* exit now if we're one-hit (like visual rendering) */
+						segp->seg_out.hit_dist = segp->seg_in.hit_dist + .1; /* cope with silliness */
 						BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 						return 2;
 					}
@@ -288,11 +294,11 @@ rt_metaball_free(register struct soltab *stp)
 }
 
 
+/* I have no clue what this function is supposed to do */
 int
 rt_metaball_class(void)
 {
-	bu_log("rt_metaball_class called\n");
-	return 0;
+	return RT_CLASSIFY_UNIMPLEMENTED;	/* "assume the worst" */
 }
 
 /**
