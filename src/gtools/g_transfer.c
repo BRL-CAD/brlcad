@@ -30,7 +30,7 @@
  * is designed in a simple ttcp fashion using libpkg.
  *
  * To compile from an install:
- * gcc -I/usr/brlcad/include -L/usr/brlcad/lib -o g_transfer g_transfer.c -lrt -lbu
+ * gcc -I/usr/brlcad/include/brlcad -L/usr/brlcad/lib -o g_transfer g_transfer.c -lpkg -lrt -lbu
  *
  */
 
