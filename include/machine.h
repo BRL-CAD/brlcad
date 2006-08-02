@@ -687,6 +687,33 @@ typedef long bitv_t;          /* could use long long */
 # endif
 #endif /* linux */
 
+
+/********************************
+ *                              *
+ *    FreeBSD/NetBSD/OpenBSD    *
+ *                              *
+ ********************************/
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) 
+typedef double		fastf_t;	/* double|float, "Fastest" float type */
+typedef long		bitv_t;		/* largest integer type */
+# define IEEE_FLOAT	1		/* Uses IEEE style floating point */
+# define FAST		register	/* LOCAL|register, for fastest floats */
+# define DEFAULT_PSW	bu_avail_cpus()
+# define	PARALLEL	1
+# define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
+# define LOCAL		auto		/* static|auto, for serial|parallel cpu */
+
+/* amd64 */
+# if defined(__x86_64__)
+#  define BITV_SHIFT	6
+#  define MAX_PSW		256
+/* ia32 */
+# elif !defined(__ia64__) && !defined(__x86_64__) && !defined(__sparc64__)
+#  define BITV_SHIFT	5
+#  define MAX_PSW	16
+# endif
+#endif /* BSD */
+
 #ifndef LOCAL
 /********************************
  *				*
