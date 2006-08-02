@@ -757,7 +757,9 @@ uphold the legal conventions and requirements overviewed in the
 COPYING file.  This includes the implicit assignment of copyright to
 the U.S. Government on all contributed code unless otherwise
 explicitly arranged as well as the usage of appropriate license
-headers in all files where expected.
+headers in all files where expected.  Contributors are also expected
+to denote appropriate credits into the AUTHORS file when applying
+contributed code and patches.
 
 4) It is expected that developers will adhere to the coding style
 conventions and filesystem organization outlined in this developer's
@@ -769,7 +771,11 @@ and to avoid code or file territorialism.  All contributors are
 expected and encouraged to fix problems as they are found regardless
 of where in the package they are located.  Care should of course be
 taken to ensure that fixing in a bug in a section of code does not
-introduce other issues, especially for unfamiliar code.
+introduce other issues, especially for unfamiliar code.  All
+contributors are expect to communicate their changes publicly by
+keeping documentation up-to-date, including making note of
+user-visible changes in the NEWS file following the inscribed format
+convention.
 
 
 VERSION NUMBERS & COMPATIBILITY
