@@ -79,6 +79,14 @@
 extern int Fbo_Init(Tcl_Interp *interp);
 
 /* XXX -- At some point these routines should be moved to FBIO */
+#ifdef IF_WGL
+extern int wgl_open_existing();
+extern int wgl_close_existing();
+extern FBIO wgl_interface;
+extern void wgl_configureWindow();
+extern int wgl_refresh();
+#endif
+
 #ifdef IF_OGL
 extern int ogl_open_existing();
 extern int ogl_close_existing();
@@ -148,6 +156,26 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
     }
 #endif  /* _WIN32 */
 
+#ifdef IF_WGL
+    if(strcasecmp(argv[1], wgl_device_name) == 0) {
+	*ifp = wgl_interface; /* struct copy */
+
+	ifp->if_name = malloc((unsigned)strlen(wgl_device_name) + 1);
+	(void)strcpy(ifp->if_name, wgl_device_name);
+
+	/* Mark OK by filling in magic number */
+	ifp->if_magic = FB_MAGIC;
+
+	if((wgl_open_existing(ifp, argc - 1, argv + 1)) <= -1){
+	    ifp->if_magic = 0; /* sanity */
+	    free((void *) ifp->if_name);
+	    free((void *) ifp);
+	    Tcl_AppendResult(interp, "fb_open_existing: failed to open wgl framebuffer\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+    }
+#endif  /* IF_WGL */
+
 #ifdef IF_OGL
     if(strcasecmp(argv[1], ogl_device_name) == 0) {
 	*ifp = ogl_interface; /* struct copy */
@@ -178,6 +206,10 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
     bu_vls_strcat(&vls, X_device_name);
     bu_vls_strcat( &vls, "\n" );
 #endif  /* !_WIN32 */
+#ifdef IF_WGL
+    bu_vls_strcat(&vls, wgl_device_name);
+    bu_vls_strcat( &vls, "\n" );
+#endif  /* IF_WGL */
 #ifdef IF_OGL
     bu_vls_strcat(&vls, ogl_device_name);
     bu_vls_strcat( &vls, "\n" );
@@ -236,6 +268,25 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
     }
 #endif  /* _WIN32 */
 
+#ifdef IF_WGL
+    if(strcasecmp(ifp->if_name, wgl_device_name) == 0) {
+	if((status = wgl_close_existing(ifp)) <= -1){
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
+			  ifp->if_name, status);
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	    bu_vls_free(&vls);
+
+	    return TCL_ERROR;
+	}
+	if(ifp->if_pbase != PIXEL_NULL)
+	    free((void *)ifp->if_pbase);
+	free((void *)ifp->if_name);
+	free((void *)ifp);
+	return TCL_OK;
+    }
+#endif  /* IF_WGL */
+
 #ifdef IF_OGL
     if(strcasecmp(ifp->if_name, ogl_device_name) == 0) {
 	if((status = ogl_close_existing(ifp)) <= -1){
@@ -254,6 +305,7 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 	return TCL_OK;
     }
 #endif  /* IF_OGL */
+
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "fb_close_existing: can not close device\nifp: %s    device name: %s\n",
 		  argv[1], ifp->if_name);
@@ -274,6 +326,11 @@ fb_configureWindow(FBIO *ifp, int width, int height)
 	X24_configureWindow(ifp, width, height);
     }
 #endif
+#ifdef IF_WGL
+    if (!strncmp(ifp->if_name, wgl_device_name, strlen(wgl_device_name))) {
+	wgl_configureWindow(ifp, width, height);
+    }
+#endif  /* IF_WGL */
 #ifdef IF_OGL
     if (!strncmp(ifp->if_name, ogl_device_name, strlen(ogl_device_name))) {
 	ogl_configureWindow(ifp, width, height);
@@ -304,6 +361,12 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 	status = X24_refresh(ifp, x, y, w, h);
     }
 #  endif
+#  ifdef IF_WGL
+    status = -1;
+    if(!strncmp(ifp->if_name, wgl_device_name, strlen( wgl_device_name))) {
+	status = wgl_refresh(ifp, x, y, w, h);
+    }
+#  endif  /* IF_WGL */
 #  ifdef IF_OGL
     status = -1;
     if(!strncmp(ifp->if_name, ogl_device_name, strlen( ogl_device_name))) {

@@ -8,6 +8,15 @@ OGL_SRCS =
 OGL_CFLAGS =
 endif
 
+
+if WITH_WGL
+WGL_SRCS = dm-wgl.c
+WGL_CFLAGS = -DDM_WGL -DIF_WGL
+else
+WGL_SRCS =
+WGL_CFLAGS =
+endif
+
 if WITH_X11
 X11_SRCS = dm-X.c
 X11_CFLAGS = -DDM_X -DIF_X
@@ -88,10 +97,12 @@ mged_SOURCES = \
 	concat.c \
 	dir.c \
 	$(OGL_SRCS) \
+	$(WGL_SRCS) \
 	$(X11_SRCS) \
 	dm-generic.c \
 	dm-plot.c \
 	dm-ps.c \
+	dm-tk.c \
 	dodraw.c \
 	doevent.c \
 	dozoom.c \
@@ -135,7 +146,7 @@ mged_SOURCES = \
 	vparse.c \
 	vrlink.c
 
-mged_CFLAGS = $(OGL_CFLAGS) $(X11_CFLAGS) $(POINTS_CFLAGS)
+mged_CFLAGS = $(OGL_CFLAGS)  $(WGL_CFLAGS) $(X11_CFLAGS) $(POINTS_CFLAGS)
 mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
 mged_LDADD = \
 	${POINTS_LDADD} \
