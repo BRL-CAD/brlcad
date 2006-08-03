@@ -67,9 +67,55 @@ static const char RCSmetaball[] = "@(#)$Header$ (BRL)";
 
 /*
  *  Algorithm:
- *
+ *	completely punted at the moment :D
  */
 
+/* compute the bounding sphere for a metaball cluster. center is filled, and the
+ * radius is returned. */
+fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshhold, struct bu_list *points)
+{
+	struct wdb_metaballpt *mbpt, *mbpt2;
+	point_t min, max, d;
+	fastf_t r = 0.0, dist, mag;
+	int i, cnt = 0;
+
+	/* find a bounding box for the POINTS (NOT the surface) */
+	VSETALL(min,+INFINITY);
+	VSETALL(max,-INFINITY);
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, points))
+		for(i=0;i<3;i++) {
+			if(mbpt->coord[i] < min[i])
+				min[i] = mbpt->coord[i];
+			if (mbpt->coord[i] > max[i])
+				max[i] = mbpt->coord[i];
+		}
+
+	/* compute the center of the generated box, call that the center */
+	VADD2(*center, min, max);
+	VSCALE(*center, *center, 0.5);
+
+	/* start looking for the radius... */
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, points)){
+		cnt++;
+		VSUB2(d,mbpt->coord,*center);
+		/* since the surface is where threshhold=fldstr/mag,
+		   mag=fldstr/threshhold, so make that the initial value */
+		dist = MAGNITUDE(d) + mbpt->fldstr/threshhold;
+		/* and add all the contribution */
+		for(BU_LIST_FOR(mbpt2, wdb_metaballpt, points))
+			if(mbpt2 != mbpt){
+				fastf_t additive;
+				VSUB2(d, mbpt2->coord, mbpt->coord);
+				mag = MAGNITUDE(d) + dist;
+				additive = mbpt2->fldstr / mag;
+				dist += additive;
+			}
+		/* then see if this is a 'defining' point */
+		if(dist > r)
+			r = dist;
+	}
+	return r;
+}
 
 /**
  *  			R T _ M E T A B A L L _ P R E P
@@ -81,51 +127,38 @@ int
 rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	struct rt_metaball_internal *mb, *nmb;
-	struct wdb_metaballpt *mbpt, *mbpt2, *nmbpt;
-	point_t p, max, min;
-	fastf_t r = 0.0;
+	struct wdb_metaballpt *mbpt, *nmbpt;
 	int i;
 
-	VSETALL(p,0);
 	mb = ip->idb_ptr;
 	RT_METABALL_CK_MAGIC(mb);
+
+	/* generate a copy of the metaball */
 	nmb = bu_malloc(sizeof(struct rt_metaball_internal), "rt_metaball_prep: nmb");
 	BU_LIST_INIT( &nmb->metaball_pt_head );
 	nmb->threshhold = mb->threshhold;
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)){
+
+	/* and copy the list of control points */
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)) {
 		nmbpt = (struct wdb_metaballpt *)bu_malloc(sizeof(struct wdb_metaballpt), "rt_metaball_prep: nmbpt");
 		nmbpt->fldstr = mbpt->fldstr;
 		VMOVE(nmbpt->coord,mbpt->coord);
 		BU_LIST_INSERT( &nmb->metaball_pt_head, &nmbpt->l );
-		for(i=0;i<3;i++)
-			if(mbpt->coord[i] < min[i])
-				min[i] = mbpt->coord[i];
-			else if (mbpt->coord[i] > max[i])
-				max[i] = mbpt->coord[i];
 	}
-	VADD2(stp->st_center,min,max);
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)){
-		point_t d;
-		fastf_t dist;
 
-		VSUB2(d,mbpt->coord,p);
-		dist = MAGSQ(d) + mb->threshhold/mbpt->fldstr;
-		for(BU_LIST_FOR(mbpt2, wdb_metaballpt, &mb->metaball_pt_head))
-			if(mbpt2 != mbpt){
-				fastf_t mag;
+	/* find the bounding sphere */
+	stp->st_aradius = stp->st_bradius = rt_metaball_get_bounding_sphere(&stp->st_center, mb->threshhold, &mb->metaball_pt_head);
 
-				VSUB2(d, mbpt2->coord, mbpt->coord);
-				mag = MAGSQ(d);
-				dist += mbpt2->fldstr / (mag>.001?mag:1.0);
-			}
-		if(dist > r)
-			r = dist;
-	}
-	r = sqrt(r);
-	stp->st_aradius = r;
-	stp->st_bradius = r;
-	VSET(stp->st_min, p[X]-r, p[Y]-r, p[Z]-r);
-	VSET(stp->st_max, p[X]+r, p[Y]+r, p[Z]+r);
+	/* generate a bounding box around the sphere... 
+	 * XXX this can be optimized greatly to reduce the BSP presense... */
+	VSET(stp->st_min, 
+		stp->st_center[X] - stp->st_aradius, 
+		stp->st_center[Y] - stp->st_aradius, 
+		stp->st_center[Z] - stp->st_aradius);
+	VSET(stp->st_max, 
+		stp->st_center[X] + stp->st_aradius, 
+		stp->st_center[Y] + stp->st_aradius, 
+		stp->st_center[Z] + stp->st_aradius);
 	stp->st_specific = (void *)nmb;
 	return 0;
 }
@@ -301,6 +334,29 @@ rt_metaball_class(void)
 	return RT_CLASSIFY_UNIMPLEMENTED;	/* "assume the worst" */
 }
 
+
+void
+rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
+{
+	fastf_t top[16*3], middle[16*3], bottom[16*3];
+	point_t a, b, c;
+	int i;
+
+	VSET(a, radius, 0, 0);
+	VSET(b, 0, radius, 0);
+	VSET(c, 0, 0, radius);
+	rt_ell_16pts( top, *center, a, b );
+	rt_ell_16pts( bottom, *center, b, c );
+	rt_ell_16pts( middle, *center, a, c );
+
+	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+	for( i=0; i<16; i++ ) RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+	for( i=0; i<16; i++ ) RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+	for( i=0; i<16; i++ ) RT_ADD_VLIST( vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+}
+
 /**
  *			R T _ M E T A B A L L _ P L O T
  */
@@ -309,40 +365,16 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 {
 	struct rt_metaball_internal *mb;
 	struct wdb_metaballpt *mbpt;
-	fastf_t top[16*3];
-	fastf_t middle[16*3];
-	fastf_t bottom[16*3];
-	point_t a, b, c;
-	int i;
+	point_t bsc;
+	fastf_t rad;
 
 	RT_CK_DB_INTERNAL(ip);
 	mb = (struct rt_metaball_internal *)ip->idb_ptr;
 	RT_METABALL_CK_MAGIC(mb);
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)) {
-		/* the fldstr may need to be amped up to better approximate? */
-		VSET(a, mbpt->fldstr, 0, 0);
-		VSET(b, 0, mbpt->fldstr, 0);
-		VSET(c, 0, 0, mbpt->fldstr);
-		rt_ell_16pts( top, mbpt->coord, a, b );
-		rt_ell_16pts( bottom, mbpt->coord, b, c );
-		rt_ell_16pts( middle, mbpt->coord, a, c );
-
-		RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-		for( i=0; i<16; i++ )  {
-			RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
-		}
-
-		RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-		for( i=0; i<16; i++ )  {
-			RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
-		}
-
-		RT_ADD_VLIST( vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-		for( i=0; i<16; i++ )  {
-			RT_ADD_VLIST( vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
-		}
-	}
-
+	rad = rt_metaball_get_bounding_sphere(&bsc, mb->threshhold, &mb->metaball_pt_head);
+	rt_metaball_plot_sph(vhead, &bsc, rad);
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head))
+		rt_metaball_plot_sph(vhead, &mbpt->coord, mbpt->fldstr);
 	return 0;
 }
 
