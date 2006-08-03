@@ -88,8 +88,8 @@ void
 Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *interp)
 {
     char *filename = NULL;
-    char *args;
-    char buf[TCL_INTEGER_SPACE];
+    char *args = NULL;
+    char buf[TCL_INTEGER_SPACE] = {0};
     int status;
     Tcl_DString argString;
 
