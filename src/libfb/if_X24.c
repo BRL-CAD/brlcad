@@ -2205,10 +2205,14 @@ int width, height;
 {
   struct xinfo *xi = XI(ifp);
   XRectangle rect;
+  
+  if (!xi) {
+      return;
+  }
 
-  if(width == xi->xi_xwidth &&
-     height == xi->xi_xheight)
+  if(width == xi->xi_xwidth && height == xi->xi_xheight) {
     return;
+  }
 
   ifp->if_width = ifp->if_max_width = width;
   ifp->if_height = ifp->if_max_height = height;
