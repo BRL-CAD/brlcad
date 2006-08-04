@@ -77,7 +77,7 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshhold, str
 	struct wdb_metaballpt *mbpt, *mbpt2;
 	point_t min, max, d;
 	fastf_t r = 0.0, dist, mag;
-	int i, cnt = 0;
+	int i;
 
 	/* find a bounding box for the POINTS (NOT the surface) */
 	VSETALL(min,+INFINITY);
@@ -96,7 +96,6 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshhold, str
 
 	/* start looking for the radius... */
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, points)){
-		cnt++;
 		VSUB2(d,mbpt->coord,*center);
 		/* since the surface is where threshhold=fldstr/mag,
 		   mag=fldstr/threshhold, so make that the initial value */
@@ -147,8 +146,8 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	}
 
 	/* find the bounding sphere */
-	stp->st_aradius = stp->st_bradius = rt_metaball_get_bounding_sphere(&stp->st_center, mb->threshhold, &mb->metaball_pt_head);
-
+	stp->st_aradius = rt_metaball_get_bounding_sphere(&stp->st_center, mb->threshhold, &mb->metaball_pt_head);
+	stp->st_bradius = stp->st_aradius * 1.01;
 	/* generate a bounding box around the sphere... 
 	 * XXX this can be optimized greatly to reduce the BSP presense... */
 	VSET(stp->st_min, 
@@ -182,7 +181,7 @@ rt_metaball_point_value(point_t *p, struct bu_list *points)
 
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, points)) {
 		VSUB2(v, mbpt->coord, *p);
-		ret += mbpt->fldstr / MAGSQ(v);
+		ret += (mbpt->fldstr*mbpt->fldstr) / MAGSQ(v);	/* f^2/r^2 */
 	}
 	return ret;
 }
@@ -197,15 +196,15 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	point_t p, inc;
 	int stat=0, retval = 0, segsleft = abs(ap->a_onehit);
 	register struct seg *segp = NULL;
-	fastf_t initstep = stp->st_bradius / 20, finalstep = stp->st_bradius / 10000000000.0;
+	fastf_t initstep = stp->st_aradius / 20.0, finalstep = stp->st_aradius / 1e8;
 	fastf_t step = initstep;
-	fastf_t i = (rp->r_max-rp->r_min)/step;
+	fastf_t distleft = (rp->r_max-rp->r_min);
 	
 	mb = (struct rt_metaball_internal *)stp->st_specific;
-	VMOVE(p, rp->r_pt);
+	VJOIN1(p, rp->r_pt, rp->r_min, rp->r_dir);
 	VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
 
-	while( (i -= step) > 0.0 ) {
+	while( (distleft -= step) > 0.0 ) {
 		VADD2(p, p, inc);
 		if(stat) {
 			if(rt_metaball_point_value(&p, &mb->metaball_pt_head) < mb->threshhold ) {
@@ -220,7 +219,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 					retval = 2;
 					continue;
 				} else {
-					i += step;
+					distleft += step;
 					VSUB2(p, p, inc); 
 					step *= .5;
 					VSCALE(inc,inc,.5);
@@ -252,7 +251,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 					 * size in half and start over... Note that
 					 * once we're happily inside, we do NOT
 					 * change the step size back! */
-					i += step;
+					distleft += step;
 					VSUB2(p, p, inc); 
 					step *= .5;
 					VSCALE(inc,inc,.5);
