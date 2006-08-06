@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 14.1  2004/11/16 19:42:20  morrison
+ * dawn of a new revision.  it shall be numbered 14 to match release 7.  begin the convergence by adding emacs/vi local variable footer blocks to encourage consistent formatting.
+ *
  * Revision 1.1  2004/05/20 14:49:59  morrison
  * Sources that are external to BRL-CAD are moved from the top level to src/other/.
  *
@@ -36,7 +39,9 @@
 static const char RCSid[] = "@(#)$Header$";
 #endif
 
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 extern char	Describe[];
 
