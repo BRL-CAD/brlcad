@@ -1,7 +1,7 @@
 BRL-CAD Common Projects
 =======================
 
-BRL-CAD is comprised of several isolatable projects that have specific
+BRL-CAD is comprised of several projects that have specific
 distinguishing qualities of utility that make them interesting
 STAND-ALONE projects applicable to a generally WIDE AUDIENCE of users.
 In some cases, these projects may be independently maintained and are
@@ -26,9 +26,9 @@ fields, pipe/cabling construction, and more.  The geometry modeling
 kernel is comprised of libbu, libbn, librt, libwdb, liboptical,
 libmultispectral, and the ray-trace interface application back-end.
 
-Network Package Library (libpkg)
-	The Network Package Library (PKG) interface implements a
-client-server network connection that multiplexes synchronous and
+Network Package Library
+	The libpkg Network Package Library (PKG) interface implements
+a client-server network connection that multiplexes synchronous and
 asynchronous messages across stream connections.  PKG provides a
 simple interface for managing client/server connections in a
 distributed environment, providing a non-blocking interface that
@@ -57,7 +57,7 @@ providing a high-performance triangle-ray evaluation engine that
 leverages much computer graphics research on maintaining ray coherency
 and fast KD-Tree traversal.  In all, the system is capable of
 evaluation several million rays per second allowing for real-time
-interactive ray-tracing of facetized models.
+interactive ray-tracing of faceted models.
 
 Benchmark Suite
 	The BRL-CAD Benchmark Suite is a system performance analysis
@@ -96,8 +96,8 @@ STL, TANKILL, and VIEWPOINT.  BRL-CAD also provides a Unigraphics/NX
 exporter application as well as a Pro/Engineer export plug-in.
 
 Raytracers
-	Included are a variety of ray-tracers for analysing geometry
-for either visualization or goemetric purposes.  This includes the
+	Included are a variety of ray-tracers for analyzing geometry
+for either visualization or geometric purposes.  This includes the
 "rt" ray-tracer, the "rtedge" and "rthide" hidden-line edge
 ray-tracers, "rtarea" for computing exposed and presented surface
 areas, "rtshot" for single-query ray analysis, the "rtxray" X-Ray
@@ -143,7 +143,7 @@ tools installed.
 
 Example Geometry
 	BRL-CAD geometry database files are platform independent files
-that are used to store solid geometriy models.  There are several
+that are used to store solid geometry models.  There are several
 example database models that have been made openly available (db/*.g)
 that cover a wide range of example solid model geometry including
 basic parts, buildings, procedural geometry, and military vehicles.
