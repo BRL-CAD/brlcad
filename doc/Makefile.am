@@ -7,6 +7,8 @@ SUBDIRS = \
 documentationdir = $(BRLCAD_DATA)/doc
 
 documentation_DATA = \
+	IDEAS \
+	PROJECTS \
 	README.AIX \
 	README.BSD \
 	README.IRIX \
