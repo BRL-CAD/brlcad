@@ -2,13 +2,13 @@ BRL-CAD Common Projects
 =======================
 
 BRL-CAD is comprised of several isolatable projects that have specific
-distinguishing qualities of utility that make them as interesting
-STAND-ALONE projects applicable to a WIDE AUDIENCE of users.  In some
-cases, these projects may be independently maintained and are
-sometimes independently distributed.  In general, each of these
-projects could exist solely as an independent project but is included
-with BRL-CAD as part of the collective solid modeling toolset.  These
-projects are described below:
+distinguishing qualities of utility that make them interesting
+STAND-ALONE projects applicable to a generally WIDE AUDIENCE of users.
+In some cases, these projects may be independently maintained and are
+sometimes even independently distributed.  In general, each of these
+common projects could exist solely as an independent project but they
+are included with BRL-CAD as part of the collective solid modeling and
+processing toolset.  These projects are described below:
 
 Geometry Modeling Kernel
 	When combined together, several of the core libraries form
