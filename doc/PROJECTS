@@ -1,0 +1,166 @@
+BRL-CAD Common Projects
+=======================
+
+BRL-CAD is comprised of several isolatable projects that have specific
+distinguishing qualities of utility that make them as interesting
+STAND-ALONE projects applicable to a WIDE AUDIENCE of users.  In some
+cases, these projects may be independently maintained and are
+sometimes independently distributed.  In general, each of these
+projects could exist solely as an independent project but is included
+with BRL-CAD as part of the collective solid modeling toolset.  These
+projects are described below:
+
+Geometry Modeling Kernel
+	When combined together, several of the core libraries form
+BRL-CAD's geometry modeling kernel.  This modeling kernel provides
+fundamental geometric representation, ray-trace analysis, and
+geometric processing capabilities via a high-performance procedural C
+API designed for multithreaded processing and fast ray-intersection
+evaluation.  The geometry engine directly supports the representation
+and evaluation of implicit and explicit form primitive objects
+including arbitrary polyhedron, toroids, generalized conics,
+ellipsoids, NURBS, meshes, parabolics, hyperbolics, and more.  Also
+supported are Constructive Solid Geometry (CSG) expressions, boundary
+representation (BREP) objects, 2D sketches, 3D extrusions, height
+fields, pipe/cabling construction, and more.  The geometry modeling
+kernel is comprised of libbu, libbn, librt, libwdb, liboptical,
+libmultispectral, and the ray-trace interface application back-end.
+
+Network Package Library (libpkg)
+	The Network Package Library (PKG) interface implements a
+client-server network connection that multiplexes synchronous and
+asynchronous messages across stream connections.  PKG provides a
+simple interface for managing client/server connections in a
+distributed environment, providing a non-blocking interface that
+accepts arbitrary data messages of arbitrary length.
+
+MGED
+	The Multiple-device Geometry EDitor (MGED) is an interactive
+solid modeler that provides a graphical user interface as well as a
+robust text-based command interface.  MGED heavily utilizes
+Constructive Solid Geometry (CSG) solid modeling techniques for
+geometric construction and supports various display manager interfaces
+for extensive cross-platform support.
+
+Archer
+	Containing the majority of the command functionality provided
+by MGED, Archer is a new GUI-based solid model viewer and editing
+tool.  Archer is based on MGED in many respects while providing an
+improved GUI.
+	
+ADRT
+	The Advanced Distributed Ray-Tracer (ADRT) includes a high
+performance triangle intersection engine (libtie), a real-time
+ray-tracer (ISST), and a path-tracer for realistic image synthesis
+(RISE).  ADRT deals only with a triangle mesh representation,
+providing a high-performance triangle-ray evaluation engine that
+leverages much computer graphics research on maintaining ray coherency
+and fast KD-Tree traversal.  In all, the system is capable of
+evaluation several million rays per second allowing for real-time
+interactive ray-tracing of facetized models.
+
+Benchmark Suite
+	The BRL-CAD Benchmark Suite is a system performance analysis
+benchmark that tests the performance of a given system's CPU, memory,
+cache coherency, kernel context switching, and compiler optimization
+capabilities.  The benchmark provides a linearly comparable metric of
+overall system performance that may be used to quantitatively evaluate
+the relative performance of a given system, particular compilers,
+compilation options, and hardware architecture designs.  This
+performance test is based on a real-world CPU intensive application of
+ray-tracing, providing a reliable metric of actual system performance
+that may be compared across more than two decades of computing.
+
+Image Processing Tools
+	There are many image converters (e.g. pix-*, bw-*, *-pix,
+*-bw, pix*, bw*), image processing, and image manipulation tools in
+the package that provide basic image management.  The processing tools
+support several common formats including PNG, RLE, PPM, PS, and SUN
+images as well as a variety of image processing tools that work on raw
+image data.
+
+Signal processing 
+	There are a variety of signal processing utilities (e.g. *mod,
+ifft, dfft, s-i, i-d, cv, wavelet) in the package that categorically
+manipulate raw data streams according to specified criteria.  These
+manipulations include data conversion and filtering capabilities as
+well as various transformations including discrete and non-discrete
+Fast Fourier transforms (FFT) and wavelet decomposition.
+
+Geometry converters
+	Included are a variety of importers and exporters for various
+geometry file formats (e.g. g-* and *-g).  Exporters include DXF,
+EUCLID, NFF, OBJ, STL, TANKILL, VRML, X3D, and OpenGL vertex array
+buffers.  Importers include CY, DXF, ENF, EUCLID, FAST4, NASTRAN, PLY,
+STL, TANKILL, and VIEWPOINT.  BRL-CAD also provides a Unigraphics/NX
+exporter application as well as a Pro/Engineer export plug-in.
+
+Raytracers
+	Included are a variety of ray-tracers for analysing geometry
+for either visualization or goemetric purposes.  This includes the
+"rt" ray-tracer, the "rtedge" and "rthide" hidden-line edge
+ray-tracers, "rtarea" for computing exposed and presented surface
+areas, "rtshot" for single-query ray analysis, the "rtxray" X-Ray
+transport ray-tracer, the "nirt" interactive ray-evaluation
+ray-tracer, the "lgt" interactive shaded image ray-tracer, as well as
+"rtweight" and "g_qa" for computing mass, volume,
+overlaps/interferences, and more.
+
+ttcp
+	The "Test Transmission Control Protocol" tool is a network
+throughput performance benchmark tool used to evaluate the performance
+of TCP and UDP network connections.  TTCP may also be used as an
+excellent tool for bootstrapping hosts onto the network by forming a
+communication pipe between two machines.  This communication pipe may
+be used to transfer files to a remote system that does not otherwise
+have a means available to receive files as well as for the evaluation
+of raw throughput performance of the network connection between the
+two systems.  TTCP includes support for sourcing to/from memory,
+variable packet sizes, and loading metrics.  TTCP is described as a
+standard testing tool for TCP implementors via Network Working Group
+RFC 2398.
+
+JOVE
+	"Jonathan's Own Version [of] Emacs" (JOVE) is a simple
+lightweight Emacs-like text editor.  JOVE provides common Emacs
+keyboard bindings as well as an assortment of useful editing features
+including interactive shell windows and language-specific modes while
+using minimal CPU, memory, and disk requirements comparable to the vi
+editor.
+
+autogen.sh
+	Part of the build system, autogen.sh is a bootstrap script
+that effectively implements the majority of autoreconf in POSIX shell
+script format while accounting for a variety of common system
+configuration issues, common project configuration issues, and common
+GNU Build System (GBS, i.e. autoconf, automake, and libtool) bugs.
+The autogen.sh bootstrap script automatically works around many of
+those common issues for the user and/or reports the problems in what
+is generally a considerably more human-readable form than that
+normally provided by the GBS toolset output.  Additionally, the script
+will ensure that users have minimum and consistent versions of the GBS
+tools installed.
+
+Example Geometry
+	BRL-CAD geometry database files are platform independent files
+that are used to store solid geometriy models.  There are several
+example database models that have been made openly available (db/*.g)
+that cover a wide range of example solid model geometry including
+basic parts, buildings, procedural geometry, and military vehicles.
+
+Documentation
+	Over the years, extensive documentation has been written for
+BRL-CAD including many manual pages, quick reference sheets, and a
+detailed tutorial series.  The tutorial series covers an introduction
+to the package, details on the modeling philosophies, an introduction
+to the MGED solid modeler, a more advanced geometry modeling
+techniques guide, and provides principles of effective modeling.  The
+tutorials take a user through many guided exercises that build upon
+each other working towards more complex exercise examples the show
+some of the basic modeling and processing capabilities possible.
+
+Image Conversion Library
+	Does not currently exist.
+
+Geometry Conversion Library
+	Does not currently exist.
