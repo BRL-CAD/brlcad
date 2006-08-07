@@ -39,16 +39,13 @@
 #  include <string.h>
 #endif
 #include <math.h>
+#include "tcl.h"
 
-#if defined(DM_X) || defined(_WIN32)
-#  include "tk.h"
-#  include <X11/Xutil.h>
-#else
-#  include "tcl.h"
+#ifdef HAVE_GL_GLX_H
+#  include <GL/glx.h>
 #endif
-
-#ifdef _WIN32
-#  include <tkwinport.h>
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
 #endif
 
 #include "machine.h"
@@ -65,26 +62,20 @@
 #include "dm.h"
 #include "png.h"
 #include "zlib.h"
+#include "dm_xvars.h"
 
-#if defined(DM_X) || defined(_WIN32)
+#ifdef DM_X
+#  include "tk.h"
+#  include <X11/Xutil.h>
 #  include "dm-X.h"
-#  include "dm_xvars.h"
-#endif /* DM_X || _WIN32 */
+#endif /* DM_X */
 
-#if defined(DM_OGL)
-#  ifdef HAVE_GL_GLX_H
-#    include <GL/glx.h>
-#  endif
-#  ifdef HAVE_GL_GL_H
-#    include <GL/gl.h>
-#  endif
+#ifdef DM_OGL
 #  include "dm-ogl.h"
 #endif /* DM_OGL */
 
-#if defined(DM_WGL)
-#  ifdef HAVE_GL_GL_H
-#    include <GL/gl.h>
-#  endif
+#ifdef DM_WGL
+#  include <tkwinport.h>
 #  include "dm-wgl.h"
 #endif /* DM_WGL */
 
