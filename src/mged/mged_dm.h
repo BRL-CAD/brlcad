@@ -599,15 +599,6 @@ extern struct w_dm which_dm[];  /* defined in attach.c */
 #define DM_PLOT_INDEX 0
 #define DM_PS_INDEX 1
 
-
-/* Flags indicating whether the ogl and sgi display managers have been
- * attached. Defined in dm-ogl.c.
- * These are necessary to decide whether or not to use direct rendering
- * with ogl.
- */
-extern	char	ogl_ogl_used;
-extern	char	ogl_sgi_used;
-
 #endif /* SEEN_MGED_DM_H */
 
 /*
