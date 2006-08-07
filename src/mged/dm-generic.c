@@ -38,30 +38,33 @@
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
-#include <sys/types.h>
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
 
 #ifdef DM_X
 #  include "tk.h"
 #  include <X11/Xutil.h>
-#  include "dm_xvars.h"
-#else
-#  include "tcl.h"
 #endif
 
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
+#include "tcl.h"
+#include "dm_xvars.h"
 
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
+
 #include "./ged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
+
 
 extern point_t e_axes_pos;
 extern point_t curr_e_axes_pos;
