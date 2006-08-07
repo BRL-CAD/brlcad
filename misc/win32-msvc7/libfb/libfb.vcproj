@@ -403,7 +403,7 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libfb\if_ogl_win32.c">
+				RelativePath="..\..\..\src\libfb\if_wgl.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool

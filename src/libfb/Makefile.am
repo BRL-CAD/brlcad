@@ -76,7 +76,6 @@ EXTRA_DIST = \
 	if_TEMPLATE.c \
 	if_adage.c \
 	if_ap.c \
-	if_ogl_win32.c \
 	if_ptty.c \
 	if_rat.c \
 	if_sgi.c \

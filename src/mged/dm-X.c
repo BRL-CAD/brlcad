@@ -60,7 +60,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-extern int _X24_open_existing();	/* defined in libfb/if_ogl.c */
+extern int _X24_open_existing();	/* defined in libfb */
 extern int common_dm();			/* defined in dm-generic.c */
 extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 
