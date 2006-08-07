@@ -1103,7 +1103,7 @@ struct dm *dmp;
     Tcl_AppendResult(interp, "glx_zbuffer()\n", (char *)NULL);
 
   if( ((struct glx_vars *)dmp->dm_vars)->mvars.zbuf == 0 )  {
-    Tcl_AppendResult(interp, "dm-4d: This machine has no Zbuffer to enable\n",
+    Tcl_AppendResult(interp, "dm-glx: This machine has no Zbuffer to enable\n",
 		     (char *)NULL);
     ((struct glx_vars *)dmp->dm_vars)->mvars.zbuffer_on = 0;
   }

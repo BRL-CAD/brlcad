@@ -23,7 +23,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../../../src/other/libtcl/generic,../../../src/other/libtcl/win,../../../src/other/libtk/generic,../../../src/other/libtk/win,../../../src/other/libtk/xlib,../../../include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DM_EXPORT_DLL;DM_WGL;IF_X;IF_WGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DM_EXPORT_DLL;DM_WGL;IF_WGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"

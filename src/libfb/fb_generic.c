@@ -110,10 +110,8 @@ FBIO *_if_list[] = {
 	&ug_interface,
 #endif
 #ifdef IF_X
-#  ifndef _WIN32
 	&X24_interface,
 	&X_interface,
-#  endif
 #endif
 
 	&debug_interface,
