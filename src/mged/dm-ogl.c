@@ -170,22 +170,13 @@ static int
 Ogl_doevent(ClientData	clientData,
 	    XEvent	*eventPtr)
 {
-#ifndef _WIN32
 	if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc))
 		/* allow further processing of this event */
 		return TCL_OK;
-#else
-	  if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc))
-		return TCL_OK;
-#endif
 
 	if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-#if 0
-		glClearColor(0.0, 0.0, 0.0, 0.0);
-#endif
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		dirty = 1;
