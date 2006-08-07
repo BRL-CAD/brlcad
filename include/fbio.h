@@ -166,7 +166,7 @@ typedef struct FBIO_ {
   FB_EXPORT extern FBIO sun_interface;
 #endif
 
-#if defined(IF_SGI) || defined(IF_4D) || defined(IF_5D)
+#if defined(IF_SGI)
   FB_EXPORT extern FBIO sgi_interface;
 #endif
 

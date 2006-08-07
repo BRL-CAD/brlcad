@@ -370,12 +370,13 @@ rem_close(FBIO *ifp)
 	if( pkg_send( MSG_FBCLOSE, (char *)0, 0, PCP(ifp) ) < 0 )
 		return	-2;
 	/*
-	 *  When if_4d with a "linger mode" window gets it's fb_close()
-	 *  call here, it closes down the network file descriptor,
-	 *  and so the PKG connection is terminated at this point.
-	 *  If there was no transmission error noted in the pkg_send() above,
-	 *  but the pkg_waitfor() here gets an error, clean up and
-	 *  declare this a successful close() operation.
+	 *  When some libfb interfaces with a "linger mode" window
+	 *  gets it's fb_close() call here, it closes down the network
+	 *  file descriptor, and so the PKG connection is terminated
+	 *  at this point.  If there was no transmission error noted
+	 *  in the pkg_send() above, but the pkg_waitfor() here gets
+	 *  an error, clean up and declare this a successful close()
+	 *  operation.
 	 */
 	if( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )  {
 		pkg_close( PCP(ifp) );

@@ -232,7 +232,6 @@ struct ogl_clip {
 
 /*
  *  Per window state information, overflow area.
- *  Structure members have the same meaning as in the if_4d.c code.
  */
 struct sgiinfo {
     short	mi_curs_on;
@@ -734,7 +733,7 @@ ogl_open(FBIO *ifp, char *file, int width, int height)
 		    }
 		}
 		if( mfp->c == '\0' && *cp != '-' ) {
-		    fb_log( "if_4d: unknown option '%c' ignored\n", *cp );
+		    fb_log( "if_ogl: unknown option '%c' ignored\n", *cp );
 		}
 		cp++;
 	    }

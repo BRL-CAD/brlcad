@@ -32,10 +32,9 @@
  *  (see the modeflag definitions below).
  *	/dev/wgl[options]
  *
- *  This code is basically a port of if_4d.c from IRIS GL to OpenGL.
+ *  This code is basically a port of if_ogl.c from OpenGL to Windows GL
  *
  *  Authors -
- *	Carl Nuzman
  *	Bob Parker
  *
  *  Source -
@@ -226,7 +225,6 @@ struct wgl_clip {
 
 /*
  *  Per window state information, overflow area.
- *  Structure members have the same meaning as in the if_4d.c code.
  */
 struct sgiinfo {
 	short	mi_curs_on;
@@ -446,7 +444,7 @@ success:
 		wgl_cminit( ifp );
 	return(0);
 fail:
-	fb_log("wgl_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_4d.c for details\n");
+	fb_log("wgl_getmem:  Unable to attach to shared memory.\n");
 	if( (sp = calloc( 1, size )) == NULL )  {
 		fb_log("wgl_getmem:  malloc failure\n");
 		return(-1);
@@ -727,7 +725,7 @@ int	width, height;
 					}
 				}
 				if( mfp->c == '\0' && *cp != '-' ) {
-					fb_log( "if_4d: unknown option '%c' ignored\n", *cp );
+					fb_log( "if_wgl: unknown option '%c' ignored\n", *cp );
 				}
 				cp++;
 			}
