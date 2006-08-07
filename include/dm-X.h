@@ -21,10 +21,15 @@
 /** @file dm-X.h
  *
  */
-#ifndef SEEN_DM_X
-#define SEEN_DM_X
+
+#ifndef __DM_X__
+#define __DM_X__
+
+#include "common.h"
 
 #include "dm_color.h"
+
+
 #define CMAP_BASE 40
 #define CUBE_DIMENSION 6
 #define NUM_PIXELS 216    /* CUBE_DIMENSION * CUBE_DIMENSION * CUBE_DIMENSION */
@@ -38,7 +43,8 @@ struct x_vars {
   unsigned long bd, bg, fg;   /* color of border, background, foreground */
   unsigned long pixels[NUM_PIXELS];
 };
-#endif /* SEEN_DM_X */
+
+#endif /* __DM_X__ */
 
 /*
  * Local Variables:
