@@ -98,8 +98,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern Tk_Window tkwin;
 extern inventory_t	*getinvent();
-extern char ogl_ogl_used;
-extern char ogl_sgi_used;
 
 /* Display Manager package interface */
 
@@ -266,22 +264,6 @@ char *argv[];
   ((struct glx_vars *)dmp->dm_vars)->mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
 
   BU_LIST_APPEND(&head_glx_vars.l, &((struct glx_vars *)dmp->dm_vars)->l);
-
-#ifdef DM_OGL
-  /* This is a hack to handle the fact that the sgi attach crashes
-   * if a direct OpenGL context has been previously opened in the
-   * current mged session. This stops the attach before it crashes.
-   */
-  if (ogl_ogl_used){
-    Tcl_AppendResult(interp, "Can't attach sgi, because a direct OpenGL context has\n",
-		     "previously been opened in this session. To use sgi,\n",
-		     "quit this session and reopen it.\n", (char *)NULL);
-    bu_vls_free(&init_proc_vls);
-    (void)glx_close(dmp);
-    return DM_NULL;
-  }
-  ogl_sgi_used = 1;
-#endif /* DM_OGL */
 
   if(dmp->dm_top){
     ((struct glx_vars *)dmp->dm_vars)->xtkwin =
