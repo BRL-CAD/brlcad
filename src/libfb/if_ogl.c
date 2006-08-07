@@ -31,7 +31,8 @@
  *  (see the modeflag definitions below).
  *	/dev/ogl[options]
  *
- *  This code is basically a port of if_4d.c from IRIS GL to OpenGL.
+ *  This code is basically a port of the 4d Framebuffer interface from
+ *  IRIS GL to OpenGL.
  *
  *  Authors -
  *	Carl Nuzman
