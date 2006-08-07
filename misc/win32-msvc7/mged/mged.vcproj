@@ -489,7 +489,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\mged\dm-ogl.c">
+				RelativePath="..\..\..\src\mged\dm-wgl.c">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
