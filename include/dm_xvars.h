@@ -21,8 +21,8 @@
 /** @file dm_xvars.h
  *
  */
-#ifndef SEEN_DM_XVARS
-#define SEEN_DM_XVARS
+#ifndef __DM_XVARS__
+#define __DM_XVARS__
 
 #include "common.h"
 
@@ -35,37 +35,30 @@
 
 #define XVARS_MV_O(_m) offsetof(struct dm_xvars, _m)
 
-#ifdef _WIN32
+/* XXX - this really should not be variable-width and does not allow
+ * multiple interfaces to be simultaneously compiled.
+ */
 struct dm_xvars {
-  HDC  hdc;      // device context of device that OpenGL calls are to be drawn on
   Display *dpy;
   Window win;
   Tk_Window top;
   Tk_Window xtkwin;
   int depth;
   Colormap cmap;
+#ifdef IF_WGL
   PIXELFORMATDESCRIPTOR *vip;
   HFONT fontstruct;
-  int devmotionnotify;
-  int devbuttonpress;
-  int devbuttonrelease;
-};
+  HDC  hdc;      // device context of device that OpenGL calls are to be drawn on
 #else
-struct dm_xvars {
-  Display *dpy;
-  Window win;
-  Tk_Window top;
-  Tk_Window xtkwin;
-  int depth;
-  Colormap cmap;
   XVisualInfo *vip;
   XFontStruct *fontstruct;
+#endif
   int devmotionnotify;
   int devbuttonpress;
   int devbuttonrelease;
 };
-#endif
-#endif /* SEEN_DM_XVARS */
+
+#endif /* __DM_XVARS__ */
 
 /*
  * Local Variables:
