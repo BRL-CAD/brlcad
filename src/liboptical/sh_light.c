@@ -115,28 +115,23 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
     struct light_specific *lsp = (struct light_specific *)base;
     fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
 
-    if ( lsp->lt_pt_count == 0 || !lsp->lt_sample_pts) {
-	lsp->lt_pt_count = 0;
-	lsp->lt_sample_pts = (struct light_pt *)bu_malloc(sizeof(struct light_pt) * SOME_LIGHT_POINTS, "allocate some light points");
-    } else if ( lsp->lt_pt_count % SOME_LIGHT_POINTS == 0 ) {
-	lsp->lt_sample_pts = (struct light_pt *)bu_realloc(lsp->lt_sample_pts, sizeof(struct light_pt) * (lsp->lt_pt_count + SOME_LIGHT_POINTS), "reallocate some light points");
-    }
+    if ( lsp->lt_pt_count >= MAX_LIGHT_SAMPLES ) return;
 
     if (! strcmp("pt", name) ) {
 	/* user just specified point, set normal to zeros */
 	p[3] = p[4] = p[5] = 0.0;
     } else if ( strcmp("pn", name) ) {
-	bu_log("*********** unknown option in light_pt_set %s:%d\n", __FILE__, __LINE__);
+	bu_log("*********** unknown option in light_pt_set %s:%d\n",
+	       __FILE__, __LINE__);
 	return;
     }
 
-    memcpy( &lsp->lt_sample_pts[ lsp->lt_pt_count++ ], p, sizeof( struct light_pt ) );
-    
-    if (rdebug & RDEBUG_LIGHT ) {
-	bu_log("set light point %g %g %g   N %g %g %g\n", p[0], p[1], p[2], p[3], p[4], p[5]);
-    }
+    memcpy( &lsp->lt_sample_pts[ lsp->lt_pt_count++ ], p,
+	    sizeof( struct light_pt ) );
 
-    return;
+    if (rdebug & RDEBUG_LIGHT )
+	bu_log("set light point %g %g %g   N %g %g %g\n", p[0], p[1], p[2], p[3], p[4], p[5]);
+
 }
 
 struct bu_structparse light_print_tab[] = {
@@ -339,12 +334,7 @@ gen_hit(register struct application *ap,
 	RT_HIT_NORMAL( lpt->lp_norm, pp->pt_inhit, stp,
 		       &(ap->a_ray), pp->pt_inflip );
 
-	if ( lsp->lt_pt_count == 0 || !lsp->lt_sample_pts) {
-	    lsp->lt_pt_count = 0;
-	    lsp->lt_sample_pts = (struct light_pt *)bu_malloc(sizeof(struct light_pt) * SOME_LIGHT_POINTS, "allocate some light points");
-	} else if ( lsp->lt_pt_count % SOME_LIGHT_POINTS == 0 ) {
-	    lsp->lt_sample_pts = (struct light_pt *)bu_realloc(lsp->lt_sample_pts, sizeof(struct light_pt) * (lsp->lt_pt_count + SOME_LIGHT_POINTS), "reallocate some light points");
-	}
+	if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES) return 1;
 
 	/* check to make sure the light out hit point isn't against
 	 * some other object
@@ -375,12 +365,8 @@ gen_hit(register struct application *ap,
 	RT_HIT_NORMAL( lpt->lp_norm, pp->pt_outhit, stp,
 		       &(ap->a_ray), pp->pt_outflip );
 
-	if ( lsp->lt_pt_count == 0 || !lsp->lt_sample_pts) {
-	    lsp->lt_pt_count = 0;
-	    lsp->lt_sample_pts = (struct light_pt *)bu_malloc(sizeof(struct light_pt) * SOME_LIGHT_POINTS, "allocate some light points");
-	} else if ( lsp->lt_pt_count % SOME_LIGHT_POINTS == 0 ) {
-	    lsp->lt_sample_pts = (struct light_pt *)bu_realloc(lsp->lt_sample_pts, sizeof(struct light_pt) * (lsp->lt_pt_count + SOME_LIGHT_POINTS), "reallocate some light points");
-	}
+	if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES) return 1;
+
     }
     return 1;
 }
@@ -394,7 +380,6 @@ gen_miss(register struct application *ap)
 {
     return 0;
 }
-
 
 #if 0
 /*
@@ -423,19 +408,16 @@ shoot_grids(struct application *ap,
 	VSET(ap->a_ray.r_dir, 0.0, 0.0, 1.0);
 	z = tree_min[Z];
 
-	for (y = tree_min[Y] + step[Y] * 0.5; y < tree_max[Y]; y += step[Y]) {
-	    for (x = tree_min[X] + step[X] * 0.5; x < tree_max[X]; x += step[X]) {
+	for (y = tree_min[Y] + step[Y] * 0.5;
+	     y < tree_max[Y] ; y += step[Y])
+
+	    for (x = tree_min[X] + step[X] * 0.5;
+		 x < tree_max[X] ; x += step[X]) {
 		VSET(ap->a_ray.r_pt, x, y, z);
 		(void)rt_shootray( ap );
-		
-		if ( lsp->lt_pt_count == 0 || !lsp->lt_sample_pts) {
-		    lsp->lt_pt_count = 0;
-		    lsp->lt_sample_pts = (struct light_pt *)bu_malloc(sizeof(struct light_pt) * SOME_LIGHT_POINTS, "allocate some light points");
-		} else if ( lsp->lt_pt_count % SOME_LIGHT_POINTS == 0 ) {
-		    lsp->lt_sample_pts = (struct light_pt *)bu_realloc(lsp->lt_sample_pts, sizeof(struct light_pt) * (lsp->lt_pt_count + SOME_LIGHT_POINTS), "reallocate some light points");
-		}
+		if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES)
+		    return;
 	    }
-	}
     }
 
     if (rdebug & RDEBUG_LIGHT )
@@ -448,18 +430,16 @@ shoot_grids(struct application *ap,
 	VSET(ap->a_ray.r_dir, 0.0, 1.0, 0.0);
 	z = tree_min[Z];
 
-	for (z = tree_min[Z] + step[Z] * 0.5; z < tree_max[Z]; z += step[Z]) {
-	    for (x = tree_min[X] + step[X] * 0.5; x < tree_max[X]; x += step[X]) {
+	for (z = tree_min[Z] + step[Z] * 0.5;
+	     z < tree_max[Z] ; z += step[Z])
+
+	    for (x = tree_min[X] + step[X] * 0.5;
+		 x < tree_max[X] ; x += step[X]) {
 		VSET(ap->a_ray.r_pt, x, y, z);
 		(void)rt_shootray( ap );
-		if ( lsp->lt_pt_count == 0 || !lsp->lt_sample_pts) {
-		    lsp->lt_pt_count = 0;
-		    lsp->lt_sample_pts = (struct light_pt *)bu_malloc(sizeof(struct light_pt) * SOME_LIGHT_POINTS, "allocate some light points");
-		} else if ( lsp->lt_pt_count % SOME_LIGHT_POINTS == 0 ) {
-		    lsp->lt_sample_pts = (struct light_pt *)bu_realloc(lsp->lt_sample_pts, sizeof(struct light_pt) * (lsp->lt_pt_count + SOME_LIGHT_POINTS), "reallocate some light points");
-		}
+		if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES)
+		    return;
 	    }
-	}
     }
 
     /* shoot through the Y, Z plane */
@@ -469,18 +449,16 @@ shoot_grids(struct application *ap,
 	VSET(ap->a_ray.r_dir, 1.0, 0.0, 0.0);
 	x = tree_min[X];
 
-	for (z = tree_min[Z] + step[Z] * 0.5; z < tree_max[Z]; z += step[Z]) {
-	    for (y = tree_min[Y] + step[Y] * 0.5; y < tree_max[Y]; y += step[Y]) {
+	for (z = tree_min[Z] + step[Z] * 0.5;
+	     z < tree_max[Z] ; z += step[Z])
+
+	    for (y = tree_min[Y] + step[Y] * 0.5;
+		 y < tree_max[Y] ; y += step[Y]) {
 		VSET(ap->a_ray.r_pt, x, y, z);
 		(void)rt_shootray( ap );
-		if ( lsp->lt_pt_count == 0 || !lsp->lt_sample_pts) {
-		    lsp->lt_pt_count = 0;
-		    lsp->lt_sample_pts = (struct light_pt *)bu_malloc(sizeof(struct light_pt) * SOME_LIGHT_POINTS, "allocate some light points");
-		} else if ( lsp->lt_pt_count % SOME_LIGHT_POINTS == 0 ) {
-		    lsp->lt_sample_pts = (struct light_pt *)bu_realloc(lsp->lt_sample_pts, sizeof(struct light_pt) * (lsp->lt_pt_count + SOME_LIGHT_POINTS), "reallocate some light points");
-		}
+		if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES)
+		    return;
 	    }
-	}
     }
 
 }
@@ -595,12 +573,11 @@ light_gen_sample_pts(struct application    *upap,
 	return;
     }
 
-    /* take a few samples treating as an area light */
-    while ( lsp->lt_pt_count < SOME_LIGHT_POINTS ) {
+    while ( lsp->lt_pt_count < MAX_LIGHT_SAMPLES ) {
+
 	ray_setup(&ap, tree_min, tree_max, span);
 	(void)rt_shootray( &ap );
     }
-
 #if 0
     if (rdebug & RDEBUG_LIGHT ) {
 	int l;
@@ -618,7 +595,6 @@ light_gen_sample_pts(struct application    *upap,
 	}
     }
 #endif
-
 }
 
 /*
@@ -652,7 +628,7 @@ light_setup(register struct region *rp,
     lsp->lt_infinite = 0;
     lsp->lt_rp = rp;
     lsp->lt_pt_count = 0;
-    lsp->lt_sample_pts = (struct light_pt *)NULL;
+    memset(lsp->lt_sample_pts, 0, sizeof(lsp->lt_sample_pts));
     lsp->lt_name = bu_strdup( rp->reg_name );
 
     if (bu_struct_parse( matparm, light_parse, (char *)lsp ) < 0 )  {
@@ -792,12 +768,6 @@ light_free(char *cp)
 	bu_free( lsp->lt_name, "light name" );
 	lsp->lt_name = (char *)0;
     }
-
-    /* done with the light points */
-    if ((lsp->lt_pt_count > 0) && lsp->lt_sample_pts) {
-	bu_free(lsp->lt_sample_pts, "free sample points");
-    }
-
     lsp->l.magic = 0;	/* sanity */
     bu_free( (char *)lsp, "light_specific" );
 }
@@ -1442,7 +1412,7 @@ light_miss(register struct application *ap)
  *
  */
 static int
-light_vis(struct light_obs_stuff *los)
+light_vis(struct light_obs_stuff *los, char *flags)
 {
     struct application sub_ap;
     double radius = 0.0;
@@ -1458,17 +1428,8 @@ light_vis(struct light_obs_stuff *los)
     int tryagain = 0;
     double VisRayvsLightN;
     double VisRayvsSurfN;
-    char *flags = (char *)NULL;
 
     if (rdebug & RDEBUG_LIGHT ) bu_log("light_vis\n");
-
-    /* allocate our flags array based on the number of points */
-    if (los->lsp->lt_pt_count > 0) {
-	flags = (char *)bu_calloc(los->lsp->lt_pt_count, sizeof(char *), "allocating flags");
-    } else {
-	/* just so free code works */
-	flags = (char *)bu_calloc(SOME_LIGHT_POINTS, sizeof(char *), "allocating flags");
-    }
 
  retry:
 
@@ -1593,9 +1554,7 @@ light_vis(struct light_obs_stuff *los)
 	if (rdebug & RDEBUG_LIGHT ) {
 	    bu_log("can't find point to shoot at\n");
 	}
-	bu_free(flags, "free of flags array");
 	return 0;
-
     done:
 	/* we've got a point on the surface of the light to shoot at */
 	VMOVE(shoot_pt, lpt->lp_pt);
@@ -1675,20 +1634,18 @@ light_vis(struct light_obs_stuff *los)
      */
     if (-VDOT(shoot_dir, los->lsp->lt_aim) < los->lsp->lt_cosangle )  {
 	/* dark (outside of light beam) */
-	if (rdebug & RDEBUG_LIGHT) {
-	    bu_log("point outside beam, obscured: %s\n", los->lsp->lt_name);
-	}
-	bu_free(flags, "free of flags array");
+	if (rdebug & RDEBUG_LIGHT)
+	    bu_log("point outside beam, obscured: %s\n",
+		   los->lsp->lt_name);
 	return 0;
     }
 
 
     if (!(los->lsp->lt_shadows) )  {
 	/* "fill light" in beam, don't care about shadows */
-	if (rdebug & RDEBUG_LIGHT) {
-	    bu_log("fill light, no shadow, visible: %s\n", los->lsp->lt_name);
-	}
-
+	if (rdebug & RDEBUG_LIGHT)
+	    bu_log("fill light, no shadow, visible: %s\n",
+		   los->lsp->lt_name);
 #ifdef RT_MULTISPECTRAL
 	/* XXX Need a power level for this! */
 	bn_tabdata_constval( ((struct bn_tabdata *)los->inten), 1.0);
@@ -1696,7 +1653,6 @@ light_vis(struct light_obs_stuff *los)
 	VSETALL( ((vectp_t)los->inten), 1 );
 #endif
 
-	bu_free(flags, "free of flags array");
 	return -1;
     }
 
@@ -1763,11 +1719,6 @@ light_vis(struct light_obs_stuff *los)
 	}
     }
 
-    /* conceivably, we are done with the flags array now.  no more
-     * potential jumps back up to the top.
-     */
-    bu_free(flags, "free of flags array");
-
     if (shot_status > 0 )  {
 	/* light visible */
 	if (rdebug & RDEBUG_LIGHT)
@@ -1828,6 +1779,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
     int visibility;
     struct light_obs_stuff los;
     static int rand_idx;
+    char flags[MAX_LIGHT_SAMPLES] = {0};
 
     if (rdebug & RDEBUG_LIGHT )
 	bu_log("computing Light obscuration: start\n");
@@ -1892,6 +1844,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	}
 
 	visibility = 0;
+	memset(flags, 0, sizeof(flags));
 	for (vis_ray = 0 ; vis_ray < tot_vis_rays ; vis_ray ++) {
 	    int lv;
 	    los.iter = vis_ray;
@@ -1900,7 +1853,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 		bu_log("----------vis_ray %d---------\n",
 		       vis_ray);
 
-	    switch (lv = light_vis(&los)) {
+	    switch (lv = light_vis(&los, flags)) {
 	    case 1:
 		/* remember the last ray that hit */
 		VMOVE(tl_p, los.to_light_center);
