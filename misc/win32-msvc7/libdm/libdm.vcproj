@@ -232,7 +232,7 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libdm\dm-ogl_win.c">
+				RelativePath="..\..\..\src\libdm\dm-wgl.c">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
