@@ -102,7 +102,6 @@ mged_SOURCES = \
 	dm-generic.c \
 	dm-plot.c \
 	dm-ps.c \
-	dm-tk.c \
 	dodraw.c \
 	doevent.c \
 	dozoom.c \
