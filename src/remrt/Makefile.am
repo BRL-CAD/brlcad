@@ -7,6 +7,7 @@ dist_man_MANS = remrt.1
 remrt_LDADD = \
 	$(top_builddir)/src/rt/libremrt.a \
 	${OPTICAL} \
+	${FB} \
 	${RT}
 remrt_SOURCES = \
 	ihost.c \
