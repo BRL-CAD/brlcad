@@ -94,7 +94,6 @@
 #define DM_TYPE_OGL	4
 #define DM_TYPE_GLX	5
 #define DM_TYPE_PEX	6
-#define DM_TYPE_TK	7
 
 /* Line Styles */
 #define DM_SOLID_LINE 0
@@ -104,7 +103,6 @@
 #define IS_DM_TYPE_PLOT(_t) ((_t) == DM_TYPE_PLOT)
 #define IS_DM_TYPE_PS(_t) ((_t) == DM_TYPE_PS)
 #define IS_DM_TYPE_X(_t) ((_t) == DM_TYPE_X)
-#define IS_DM_TYPE_TK(_t) ((_t) == DM_TYPE_TK)
 #define IS_DM_TYPE_OGL(_t) ((_t) == DM_TYPE_OGL)
 #define IS_DM_TYPE_GLX(_t) ((_t) == DM_TYPE_GLX)
 #define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)
