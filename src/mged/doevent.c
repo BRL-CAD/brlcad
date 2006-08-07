@@ -61,9 +61,11 @@
 #include "mater.h"
 #include "raytrace.h"
 #include "dm_xvars.h"
+
 #include "./ged.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
+
 
 extern int doMotion;			/* defined in dm-generic.c */
 extern void rect_view2image();		/* defined in rect.c */

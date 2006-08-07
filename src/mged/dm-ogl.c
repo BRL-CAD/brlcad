@@ -63,9 +63,11 @@ static const char RCSid[] = "@(#)$Header";
 #include "raytrace.h"
 #include "dm_xvars.h"
 #include "dm-ogl.h"
+
 #include "./ged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
+
 
 extern int common_dm();			/* defined in dm-generic.c */
 extern void dm_var_init();		/* defined in attach.c */
