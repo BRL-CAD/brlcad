@@ -53,9 +53,17 @@
 #include "dm.h"
 #include "dm-X.h"
 
-#ifdef DM_OGL
+#ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
+#endif
+#ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
+#endif
+
+#ifdef DM_WGL
+#  include "dm-wgl.h"
+#endif
+#ifdef DM_OGL
 #  include "dm-ogl.h"
 #endif
 
@@ -86,9 +94,20 @@ static int cmd_vrot();
 static int cmd_zoom();
 static void cmd_setup();
 
+#ifdef DM_X
 static int X_dmInit();
 static int X_doEvent();
 static int X_dm();
+#endif
+
+#ifdef DM_WGL
+static int Wgl_dmInit();
+static int Wgl_doEvent();
+static int Wgl_dm();
+static void Wgl_colorchange();
+static void Wgl_establish_zbuffer();
+static void Wgl_establish_lighting();
+#endif
 
 #ifdef DM_OGL
 static int Ogl_dmInit();
@@ -161,13 +180,25 @@ struct plot_list{
 
 struct plot_list HeadPlot;
 
-#ifdef DM_OGL
+#ifdef DM_WGL
+int dm_type = DM_TYPE_WGL;
+#elif DM_OGL
 int dm_type = DM_TYPE_OGL;
 #else
 int dm_type = DM_TYPE_X;
 #endif
 
-#ifdef DM_OGL
+#ifdef DM_WGL
+struct bu_structparse Wgl_vparse[] = {
+  {"%d",  1, "depthcue",	Wgl_MV_O(cueing_on),	Wgl_colorchange },
+  {"%d",  1, "zclip",		Wgl_MV_O(zclipping_on),	refresh },
+  {"%d",  1, "zbuffer",		Wgl_MV_O(zbuffer_on),	Wgl_establish_zbuffer },
+  {"%d",  1, "lighting",	Wgl_MV_O(lighting_on),	Wgl_establish_lighting },
+  {"%d",  1, "debug",		Wgl_MV_O(debug),	BU_STRUCTPARSE_FUNC_NULL },
+  {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+};
+
+#elif DM_OGL
 struct bu_structparse Ogl_vparse[] = {
   {"%d",  1, "depthcue",	Ogl_MV_O(cueing_on),	Ogl_colorchange },
   {"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	refresh },
@@ -177,7 +208,7 @@ struct bu_structparse Ogl_vparse[] = {
   {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-#else  /* !DM_OGL */
+#else  /* !DM_WGL && !DM_OGL */
 
 struct bu_structparse X_vparse[] = {
   {"%d",  1, "zclip",             X_MV_O(zclip),        refresh},
@@ -185,7 +216,7 @@ struct bu_structparse X_vparse[] = {
   {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-#endif  /* DM_OGL */
+#endif  /* DM_WGL */
 
 static char usage[] = "Usage: pl-dm [-t o|X] plot_file(s)\n";
 
@@ -245,16 +276,18 @@ register char **argv;
     switch (c) {
     case 't':
       switch (*bu_optarg) {
-      case 'x':
-      case 'X':
-	dm_type = DM_TYPE_X;
+      case 'w':
+      case 'W':
+	dm_type = DM_TYPE_WGL;
 	break;
-#ifdef DM_OGL
       case 'o':
       case 'O':
 	dm_type = DM_TYPE_OGL;
 	break;
-#endif
+      case 'x':
+      case 'X':
+	dm_type = DM_TYPE_X;
+	break;
       default:
 	dm_type = DM_TYPE_X;
 	break;
@@ -318,6 +351,11 @@ Tcl_Interp *_interp;
   interp = _interp;
 
   switch(dm_type){
+#ifdef DM_WGL
+  case DM_TYPE_WGL:
+    cmd_hook = Wgl_dm;
+    break;
+#endif
 #ifdef DM_OGL
   case DM_TYPE_OGL:
     cmd_hook = Ogl_dm;
@@ -366,6 +404,10 @@ Tcl_Interp *_interp;
 
   /* open display manager */
   switch(dm_type){
+#ifdef DM_WGL
+  case DM_TYPE_WGL:
+    return Wgl_dmInit();
+#endif
 #ifdef DM_OGL
   case DM_TYPE_OGL:
     return Ogl_dmInit();
@@ -1584,6 +1626,252 @@ Ogl_establish_lighting()
 {
   dm_lighting(dmp,
 	      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
+  refresh();
+}
+#endif
+
+
+#ifdef DM_WGL
+/*
+ * wgl Display Manager Specific Stuff
+ */
+
+/*
+ * Open an wgl display manager.
+ */
+static int
+Wgl_dmInit()
+{
+  char *av[4];
+  GLdouble lw_range[2];       /* line width range */
+  GLdouble lw_gran;    /* line width granularity */
+
+  av[0] = "wgl_open";
+  av[1] = "-i";
+  av[2] = "sampler_bind_dm";
+  av[3] = (char *)NULL;
+
+  if((dmp = DM_OPEN(DM_TYPE_WGL, 3, av)) == DM_NULL){
+    Tcl_AppendResult(interp, "Failed to open a display manager\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  dmp->dm_vp = &Viewscale;
+  ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on = 0;
+  Tk_CreateGenericHandler(Wgl_doEvent, (ClientData)DM_TYPE_WGL);
+  dm_configureWindowShape(dmp);
+  DM_SET_WIN_BOUNDS(dmp, windowbounds);
+
+  return TCL_OK;
+}
+
+/*
+ * Event handler for the wgl display manager.
+ */
+static int
+Wgl_doEvent(clientData, eventPtr)
+ClientData clientData;
+XEvent *eventPtr;
+{
+  if (eventPtr->type == Expose && eventPtr->xexpose.count == 0){
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    refresh();
+  }else if(eventPtr->type == ConfigureNotify){
+    dm_configureWindowShape(dmp);
+    refresh();
+  }else if( eventPtr->type == MotionNotify ) {
+    int mx, my;
+
+    mx = eventPtr->xmotion.x;
+    my = eventPtr->xmotion.y;
+
+    switch(mouse_mode){
+    case MOUSE_MODE_ROTATE:
+      vrot((my - omy) * app_scale,
+	   (mx - omx) * app_scale,
+	   0.0);
+      new_mats();
+      refresh();
+
+      break;
+    case MOUSE_MODE_TRANSLATE:
+      {
+	vect_t vdiff;
+
+	vdiff[X] = (mx - omx) /
+	  (fastf_t)dmp->dm_width * 2.0;
+	vdiff[Y] = (omy - my) /
+	  (fastf_t)dmp->dm_height * 2.0;
+	vdiff[Z] = 0.0;
+
+	(void)islewview(vdiff);
+	new_mats();
+	refresh();
+      }
+
+      break;
+    case MOUSE_MODE_ZOOM:
+      {
+	double val;
+
+	val = 1.0 + (omy - my) /
+	  (fastf_t)dmp->dm_height;
+
+	zoom(interp, val);
+	new_mats();
+	refresh();
+      }
+
+      break;
+    case MOUSE_MODE_IDLE:
+    default:
+      break;
+    }
+
+    omx = mx;
+    omy = my;
+  }
+
+  return TCL_OK;
+}
+
+/*
+ * Handle wgl display manager specific commands.
+ */
+static int
+Wgl_dm(argc, argv)
+int argc;
+char *argv[];
+{
+  int status;
+
+  if( !strcmp( argv[0], "set" ) )  {
+    struct bu_vls tmp_vls;
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_init(&tmp_vls);
+    start_catching_output(&tmp_vls);
+
+    if( argc < 2 )  {
+      /* Bare set command, print out current settings */
+      bu_struct_print("dm_wgl internal variables", Wgl_vparse, (const char *)&((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars );
+    } else if( argc == 2 ) {
+      bu_vls_struct_item_named( &vls, Wgl_vparse, argv[1], (const char *)&((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars, ',');
+      bu_log( "%S\n", &vls );
+    } else {
+      bu_vls_printf( &vls, "%s=\"", argv[1] );
+      bu_vls_from_argv( &vls, argc-2, argv+2 );
+      bu_vls_putc( &vls, '\"' );
+      bu_struct_parse( &vls, Wgl_vparse, (char *)&((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars );
+    }
+
+    bu_vls_free(&vls);
+
+    stop_catching_output(&tmp_vls);
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_free(&tmp_vls);
+    return TCL_OK;
+  }
+
+  if( !strcmp( argv[0], "m")){
+    vect_t view_pos;
+
+    if( argc < 4){
+      Tcl_AppendResult(interp, "dm m: need more parameters\n",
+		       "dm m button 1|0 xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+#if 0
+    /* This assumes a 3-button mouse */
+    switch(*argv[1]){
+    case '1':
+      ((struct wgl_vars *)dmp->dm_vars)->mb_mask = Button1Mask;
+      break;
+    case '2':
+      ((struct wgl_vars *)dmp->dm_vars)->mb_mask = Button2Mask;
+      break;
+    case '3':
+      ((struct wgl_vars *)dmp->dm_vars)->mb_mask = Button3Mask;
+      break;
+    default:
+      return TCL_ERROR;
+    }
+#endif
+
+    view_pos[X] = dm_Xx2Normal(dmp, atoi(argv[3]));
+    view_pos[Y] = dm_Xy2Normal(dmp, atoi(argv[4]), 0);
+    view_pos[Z] = 0.0;
+    status = slewview(view_pos);
+    new_mats();
+    refresh();
+
+    return status;
+  }
+
+  if( !strcmp( argv[0], "am" )){
+    int buttonpress;
+
+    if( argc < 5){
+      Tcl_AppendResult(interp, "dm am: need more parameters\n",
+		       "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    buttonpress = atoi(argv[2]);
+    omx = atoi(argv[3]);
+    omy = atoi(argv[4]);
+
+    if(buttonpress){
+      switch(*argv[1]){
+      case 'r':
+	mouse_mode = MOUSE_MODE_ROTATE;
+	break;
+      case 't':
+	mouse_mode = MOUSE_MODE_TRANSLATE;
+	break;
+      case 'z':
+	mouse_mode = MOUSE_MODE_ZOOM;
+	break;
+      default:
+	mouse_mode = MOUSE_MODE_IDLE;
+	break;
+      }
+    }else
+      mouse_mode = MOUSE_MODE_IDLE;
+  }
+
+  return TCL_OK;
+}
+
+static void
+Wgl_colorchange()
+{
+  if(((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
+    glEnable(GL_FOG);
+  }else{
+    glDisable(GL_FOG);
+  }
+
+  refresh();
+}
+
+static void
+Wgl_establish_zbuffer()
+{
+  dm_zbuffer(dmp,
+	     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
+  refresh();
+}
+
+static void
+Wgl_establish_lighting()
+{
+  dm_lighting(dmp,
+	      ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
   refresh();
 }
 #endif

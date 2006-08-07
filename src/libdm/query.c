@@ -73,6 +73,10 @@ dm_validXType(char	*dpy_string,
 
 #else /* HAVE_XOPENDISPLAY */
 
+#  ifdef DM_WGL
+	if (!strcmp(name, "wgl"))
+		return 1;
+#  endif
 #  ifdef DM_OGL
 	if (!strcmp(name, "ogl"))
 		return 1;
@@ -121,6 +125,9 @@ dm_bestXType(char *dpy_string)
 
 #else /* HAVE_XOPENDISPLAY */
 
+#  ifdef DM_WGL
+	return "wgl";
+#  endif
 #  ifdef DM_OGL
 	return "ogl";
 #  endif

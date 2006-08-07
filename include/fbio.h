@@ -174,6 +174,10 @@ typedef struct FBIO_ {
   FB_EXPORT extern FBIO ogl_interface;
 #endif
 
+#ifdef IF_WGL
+  FB_EXPORT extern FBIO wgl_interface;
+#endif
+
 #ifdef IF_RAT
   FB_EXPORT extern FBIO rat_interface;
 #endif

@@ -839,6 +839,7 @@ readsolid(void)
 }
 
 
+/* XXX should merge with editit() below */
 #ifdef _WIN32
 
 /* Run $EDITOR on temp file */
@@ -874,8 +875,7 @@ const char *file;
 	return 1;
 }
 
-#else
-/* else win32 is not defined */
+#else /* !_WIN32 */
 
 /* Run $EDITOR on temp file
  *
@@ -945,8 +945,7 @@ editit(const char *file)
 
 	return (!stat);
 }
-#endif
-/* end check if win32 defined */
+#endif /* _WIN32 */
 
 /*
  * Local Variables:

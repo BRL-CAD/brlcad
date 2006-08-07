@@ -97,6 +97,9 @@ FBIO *_if_list[] = {
 	&sgi_interface,
 #endif
 
+#ifdef IF_WGL
+	&wgl_interface,
+#endif
 #ifdef IF_OGL
 	&ogl_interface,
 #endif

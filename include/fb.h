@@ -190,6 +190,11 @@ FB_EXPORT extern int	fb_sim_getcursor();
   FB_EXPORT extern int ogl_close_existing();
 #endif
 
+#ifdef IF_WGL
+  FB_EXPORT extern int _wgl_open_existing();
+  FB_EXPORT extern int wgl_close_existing();
+#endif
+
 /*
  * Copy one RGB pixel to another.
  */

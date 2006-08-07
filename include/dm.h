@@ -40,12 +40,9 @@
 #  include <bu.h>
 #endif
 
-#ifdef DM_OGL
-#  ifndef IF_OGL
-#    define IF_OGL 1
-#  endif
+#ifdef USE_FBSERV
+#  include "fbserv_obj.h"
 #endif
-#include "fbserv_obj.h"
 
 #define DM_NULL (struct dm *)NULL
 #define DM_MIN (-2048)
@@ -94,6 +91,7 @@
 #define DM_TYPE_OGL	4
 #define DM_TYPE_GLX	5
 #define DM_TYPE_PEX	6
+#define DM_TYPE_WGL     7
 
 /* Line Styles */
 #define DM_SOLID_LINE 0
@@ -106,6 +104,7 @@
 #define IS_DM_TYPE_OGL(_t) ((_t) == DM_TYPE_OGL)
 #define IS_DM_TYPE_GLX(_t) ((_t) == DM_TYPE_GLX)
 #define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)
+#define IS_DM_TYPE_WGL(_t) ((_t) == DM_TYPE_WGL)
 
 #define GET_DM(p,structure,w,hp) { \
 	register struct structure *tp; \

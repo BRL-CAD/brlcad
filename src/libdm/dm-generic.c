@@ -60,11 +60,11 @@ extern int ogl_share_dlist();
 #endif /* DM_OGL */
 #endif /* DM_X */
 
-#ifdef _WIN32
-extern struct dm *ogl_open();
-extern void ogl_fogHint();
-extern int ogl_share_dlist();
-#endif
+#ifdef DM_WGL
+extern struct dm *wgl_open();
+extern void wgl_fogHint();
+extern int wgl_share_dlist();
+#endif /* DM_WGL */ 
 
 
 struct dm *
@@ -86,6 +86,10 @@ dm_open(Tcl_Interp *interp, int type, int argc, char **argv)
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
 		return ogl_open(interp, argc, argv);
+#endif
+#ifdef DM_WGL
+	case DM_TYPE_WGL:
+		return wgl_open(interp, argc, argv);
 #endif
   default:
     break;
@@ -119,6 +123,10 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
 #ifdef DM_OGL
   case DM_TYPE_OGL:
     return ogl_share_dlist(dmp1, dmp2);
+#endif
+#ifdef DM_WGL
+  case DM_TYPE_WGL:
+    return wgl_share_dlist(dmp1, dmp2);
 #endif
   default:
     return TCL_ERROR;
@@ -162,6 +170,11 @@ dm_fogHint(struct dm *dmp, int fastfog)
 #ifdef DM_OGL
   case DM_TYPE_OGL:
     ogl_fogHint(dmp, fastfog);
+    return;
+#endif
+#ifdef DM_WGL
+  case DM_TYPE_WGL:
+    wgl_fogHint(dmp, fastfog);
     return;
 #endif
   default:

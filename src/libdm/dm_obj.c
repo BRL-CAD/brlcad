@@ -71,7 +71,7 @@
 #  include "dm_xvars.h"
 #endif /* DM_X || _WIN32 */
 
-#ifdef DM_OGL
+#if defined(DM_OGL)
 #  ifdef HAVE_GL_GLX_H
 #    include <GL/glx.h>
 #  endif
@@ -80,6 +80,13 @@
 #  endif
 #  include "dm-ogl.h"
 #endif /* DM_OGL */
+
+#if defined(DM_WGL)
+#  ifdef HAVE_GL_GL_H
+#    include <GL/gl.h>
+#  endif
+#  include "dm-wgl.h"
+#endif /* DM_WGL */
 
 #ifdef USE_FBSERV
 #  include "fb.h"
@@ -346,15 +353,21 @@ dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		Tcl_SetObjResult(interp, obj);
 		return TCL_ERROR;
 	}
-#else
+#else /* !DM_X */
 	Tcl_AppendStringsToObj(obj, "dmo_open: no supported display types", (char *)NULL);
 	Tcl_SetObjResult(interp, obj);
 	return TCL_ERROR;
 #endif /* DM_X */
-#else
-    if (!strcmp(argv[2], "ogl"))
-	type = DM_TYPE_OGL;
-#endif
+
+#else /* _WIN32 */
+#ifdef DM_WGL
+	if (!strcmp(argv[2], "wgl"))
+	    type = DM_TYPE_WGL;
+#else /* DM_WGL */
+	if (!strcmp(argv[2], "ogl"))
+	    type = DM_TYPE_OGL;
+#endif /* DM_WGL */
+#endif /* _WIN32 */ 
 
 	{
 		int i;
@@ -3252,10 +3265,6 @@ dmo_openFb(dmop, interp)
      struct dm_obj	*dmop;
      Tcl_Interp		*interp;
 {
-	char	*X_name = "/dev/X";
-#ifdef DM_OGL
-	char	*ogl_name = "/dev/ogl";
-#endif
 
 	/* already open */
 	if (dmop->dmo_fbs.fbs_fbp != FBIO_NULL)
@@ -3281,8 +3290,8 @@ dmo_openFb(dmop, interp)
 	case DM_TYPE_X:
 		*dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
 
-		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen(X_name) + 1, "if_name");
-		(void)strcpy(dmop->dmo_fbs.fbs_fbp->if_name, X_name);
+		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/X") + 1, "if_name");
+		(void)strcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/X");
 
 		/* Mark OK by filling in magic number */
 		dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
@@ -3302,8 +3311,8 @@ dmo_openFb(dmop, interp)
 	case DM_TYPE_OGL:
 		*dmop->dmo_fbs.fbs_fbp = ogl_interface; /* struct copy */
 
-		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen(ogl_name) + 1, "if_name");
-		(void)strcpy(dmop->dmo_fbs.fbs_fbp->if_name, ogl_name);
+		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/ogl") + 1, "if_name");
+		(void)strcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/ogl");
 
 		/* Mark OK by filling in magic number */
 		dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
@@ -3317,6 +3326,28 @@ dmo_openFb(dmop, interp)
 				   dmop->dmo_dmp->dm_height,
 				   ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
 				   ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
+				   0);
+		break;
+#endif
+#ifdef DM_WGL
+	case DM_TYPE_WGL:
+		*dmop->dmo_fbs.fbs_fbp = wgl_interface; /* struct copy */
+
+		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/wgl") + 1, "if_name");
+		(void)strcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/wgl");
+
+		/* Mark OK by filling in magic number */
+		dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
+
+		_wgl_open_existing(dmop->dmo_fbs.fbs_fbp,
+				   ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
+				   ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
+				   ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
+				   ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
+				   dmop->dmo_dmp->dm_width,
+				   dmop->dmo_dmp->dm_height,
+				   ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
+				   ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
 				   0);
 		break;
 #endif
@@ -3350,6 +3381,11 @@ dmo_closeFb(dmop)
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
 		ogl_close_existing(dmop->dmo_fbs.fbs_fbp);
+		break;
+#endif
+#ifdef DM_WGL
+	case DM_TYPE_WGL:
+		wgl_close_existing(dmop->dmo_fbs.fbs_fbp);
 		break;
 #endif
 	}

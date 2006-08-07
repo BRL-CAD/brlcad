@@ -71,6 +71,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 
 #define NEED_GUI(_type) ( \
+	IS_DM_TYPE_WGL(_type) || \
 	IS_DM_TYPE_OGL(_type) || \
 	IS_DM_TYPE_GLX(_type) || \
 	IS_DM_TYPE_PEX(_type) || \
@@ -84,7 +85,12 @@ extern int PS_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
 #  ifndef _WIN32
 extern int X_dm_init();
 extern void X_fb_open();
-#  endif
+#  endif /* DM_X && !_WIN32 */
+
+#  ifdef DM_WGL
+extern int Wgl_dm_init();
+extern void Wgl_fb_open();
+#  endif /* DM_WGL */
 
 #  ifdef DM_OGL
 extern int Ogl_dm_init();
@@ -136,6 +142,9 @@ struct w_dm which_dm[] = {
 #ifdef DM_X
 #ifndef _WIN32
   { DM_TYPE_X, "X", X_dm_init },
+#endif
+#ifdef DM_WGL
+  { DM_TYPE_WGL, "wgl", Wgl_dm_init },
 #endif
 #ifdef DM_OGL
   { DM_TYPE_OGL, "ogl", Ogl_dm_init },
@@ -321,11 +330,14 @@ print_valid_dm(void)
 #ifdef DM_X
 #ifndef _WIN32
     Tcl_AppendResult(interp, "X  ", (char *)NULL);
-#endif
-#ifdef DM_OGL
+#  endif /* !_WIN32 */
+#  ifdef DM_WGL
+    Tcl_AppendResult(interp, "wgl  ", (char *)NULL);
+#  endif /* DM_WGL */
+#  ifdef DM_OGL
     Tcl_AppendResult(interp, "ogl  ", (char *)NULL);
-#endif
-#endif
+#  endif /* DM_OGL */
+#endif /* DM_X */
 #ifdef DM_GLX
     Tcl_AppendResult(interp, "glx", (char *)NULL);
 #endif
@@ -735,17 +747,18 @@ void
 mged_fb_open(void)
 {
 #ifdef DM_X
-#ifndef _WIN32
+#  ifndef _WIN32
   if(dmp->dm_type == DM_TYPE_X)
     X_fb_open();
-#endif
-#ifdef DM_OGL
-#ifndef _WIN32
-  else
-#endif
-if(dmp->dm_type == DM_TYPE_OGL)
-    Ogl_fb_open();
-#endif
+#  endif
+#  ifdef DM_WGL
+  if(dmp->dm_type == DM_TYPE_WGL)
+      Wgl_fb_open();
+#  endif
+#  ifdef DM_OGL
+  if(dmp->dm_type == DM_TYPE_OGL)
+      Ogl_fb_open();
+#  endif
 #endif
 }
 
