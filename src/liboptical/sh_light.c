@@ -115,23 +115,32 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
     struct light_specific *lsp = (struct light_specific *)base;
     fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
 
-    if ( lsp->lt_pt_count >= SOME_LIGHT_SAMPLES ) return;
+    /* make sure we have enough room, allocate in batches of SOME_LIGHT_SAMPLES */
+    if ( lsp->lt_pt_count % SOME_LIGHT_SAMPLES == 0) {
+	if (lsp->lt_pt_count == 0) {
+	    /* assumes initialized to NULL */
+	    if (lsp->lt_sample_pts) {
+		bu_free(lsp->lt_sample_pts, "free light samples array");
+	    }
+	    lsp->lt_sample_pts = (struct light_pt *)bu_calloc(lsp->lt_pt_count + SOME_LIGHT_SAMPLES, sizeof(struct light_pt), "callocate light sample points");
+	} else {
+	    lsp->lt_sample_pts = (struct light_pt *)bu_realloc(lsp->lt_sample_pts, (lsp->lt_pt_count + SOME_LIGHT_SAMPLES) * sizeof(struct light_pt), "reallocate light sample points");
+	}
+    }
 
     if (! strcmp("pt", name) ) {
 	/* user just specified point, set normal to zeros */
 	p[3] = p[4] = p[5] = 0.0;
     } else if ( strcmp("pn", name) ) {
-	bu_log("*********** unknown option in light_pt_set %s:%d\n",
-	       __FILE__, __LINE__);
+	bu_log("*********** unknown option in light_pt_set %s:%d\n", __FILE__, __LINE__);
 	return;
     }
 
-    memcpy( &lsp->lt_sample_pts[ lsp->lt_pt_count++ ], p,
-	    sizeof( struct light_pt ) );
+    memcpy( &lsp->lt_sample_pts[ lsp->lt_pt_count++ ], p, sizeof( struct light_pt ) );
 
-    if (rdebug & RDEBUG_LIGHT )
+    if (rdebug & RDEBUG_LIGHT ) {
 	bu_log("set light point %g %g %g   N %g %g %g\n", p[0], p[1], p[2], p[3], p[4], p[5]);
-
+    }
 }
 
 struct bu_structparse light_print_tab[] = {
@@ -334,8 +343,6 @@ gen_hit(register struct application *ap,
 	RT_HIT_NORMAL( lpt->lp_norm, pp->pt_inhit, stp,
 		       &(ap->a_ray), pp->pt_inflip );
 
-	if (lsp->lt_pt_count >= SOME_LIGHT_SAMPLES) return 1;
-
 	/* check to make sure the light out hit point isn't against
 	 * some other object
 	 */
@@ -364,9 +371,6 @@ gen_hit(register struct application *ap,
 
 	RT_HIT_NORMAL( lpt->lp_norm, pp->pt_outhit, stp,
 		       &(ap->a_ray), pp->pt_outflip );
-
-	if (lsp->lt_pt_count >= SOME_LIGHT_SAMPLES) return 1;
-
     }
     return 1;
 }
@@ -415,8 +419,6 @@ shoot_grids(struct application *ap,
 		 x < tree_max[X] ; x += step[X]) {
 		VSET(ap->a_ray.r_pt, x, y, z);
 		(void)rt_shootray( ap );
-		if (lsp->lt_pt_count >= SOME_LIGHT_SAMPLES)
-		    return;
 	    }
     }
 
@@ -437,8 +439,6 @@ shoot_grids(struct application *ap,
 		 x < tree_max[X] ; x += step[X]) {
 		VSET(ap->a_ray.r_pt, x, y, z);
 		(void)rt_shootray( ap );
-		if (lsp->lt_pt_count >= SOME_LIGHT_SAMPLES)
-		    return;
 	    }
     }
 
@@ -456,8 +456,6 @@ shoot_grids(struct application *ap,
 		 y < tree_max[Y] ; y += step[Y]) {
 		VSET(ap->a_ray.r_pt, x, y, z);
 		(void)rt_shootray( ap );
-		if (lsp->lt_pt_count >= SOME_LIGHT_SAMPLES)
-		    return;
 	    }
     }
 
@@ -628,7 +626,7 @@ light_setup(register struct region *rp,
     lsp->lt_infinite = 0;
     lsp->lt_rp = rp;
     lsp->lt_pt_count = 0;
-    lsp->lt_sample_pts = (struct light_pt *)bu_calloc(SOME_LIGHT_SAMPLES, sizeof(struct light_pt), "callocate light samples array");
+    lsp->lt_sample_pts = (struct light_pt *)NULL;
     lsp->lt_name = bu_strdup( rp->reg_name );
 
     if (bu_struct_parse( matparm, light_parse, (char *)lsp ) < 0 )  {
@@ -1782,15 +1780,30 @@ light_obs(struct application *ap, struct shadework *swp, int have)
     int visibility;
     struct light_obs_stuff los;
     static int rand_idx;
-    char flags[SOME_LIGHT_SAMPLES] = {0};
+    int flag_size = 0;
 
-    if (rdebug & RDEBUG_LIGHT )
+    /* use a constant buffer to minimize number of malloc/free calls per ray */
+    char static_flags[SOME_LIGHT_SAMPLES] = {0};
+    char *flags = static_flags;
+
+    if (rdebug & RDEBUG_LIGHT ) {
 	bu_log("computing Light obscuration: start\n");
+    }
 
     RT_CK_AP(ap);
     los.rand_idx = &rand_idx;
     los.ap = ap;
     los.swp = swp;
+
+    /* find largest sampled light */
+    for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
+	if (lsp->lt_pt_count > flag_size) {
+	    flag_size = lsp->lt_pt_count;
+	}
+    }
+    if (flag_size > SOME_LIGHT_SAMPLES) {
+	flags = (char *)bu_calloc(flag_size, sizeof(char), "callocate flags array");
+    }
 
     /*
      *  Determine light visibility
@@ -1847,7 +1860,9 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	}
 
 	visibility = 0;
-	memset(flags, 0, sizeof(flags));
+	if (flag_size > 0) {
+	    memset(flags, 0, flag_size * sizeof(char));
+	}
 	for (vis_ray = 0 ; vis_ray < tot_vis_rays ; vis_ray ++) {
 	    int lv;
 	    los.iter = vis_ray;
@@ -1888,6 +1903,9 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	/* Advance to next light */
 	tl_p += 3;
 	i++;
+    }
+    if (flags && flags != static_flags) {
+	bu_free(flags, "free flags array");
     }
 
     if (rdebug & RDEBUG_LIGHT ) bu_log("computing Light obscruration: end\n");
