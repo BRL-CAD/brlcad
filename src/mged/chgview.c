@@ -5025,6 +5025,26 @@ cmd_sca(ClientData	clientData,
 	}
 }
 
+/**
+ *		      C M D _ P O V
+ *
+ *  Process the "pov" command to change the point of view.
+ */
+int
+cmd_pov(ClientData	clientData,
+	Tcl_Interp	*interp,
+	int		argc,
+	char		*argv[])
+{
+	int	ret;
+
+	if ((ret = vo_pov_cmd(view_state->vs_vop, interp, argc, argv)) != TCL_OK)
+		return ret;
+
+	mged_variables->mv_perspective = view_state->vs_vop->vo_perspective;
+	return TCL_OK;
+}
+
 /*
  * Local Variables:
  * mode: C

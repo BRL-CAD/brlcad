@@ -359,9 +359,7 @@ static struct cmdtab cmdtab[] = {
 	{"pl", f_pl},
 	{"plot", f_plot},
 	{"polybinout", f_polybinout},
-#ifdef TCP_FILES
 	{"pov", cmd_pov},
-#endif
 	{"prcolor", cmd_prcolor},
 	{"prefix", f_prefix},
 	{"press", f_press},

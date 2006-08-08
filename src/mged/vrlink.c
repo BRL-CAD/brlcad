@@ -195,26 +195,6 @@ vr_viewpoint_hook(void)
 	bu_vls_free( &str );
 }
 
-/*
- *			F _ P O V
- *
- *  Process the "pov" command generated above.
- *  XXX this should move to chgview.c when finished.
- */
-int
-cmd_pov(ClientData	clientData,
-	Tcl_Interp	*interp,
-	int		argc,
-	char		*argv[])
-{
-	int	ret;
-
-	if ((ret = vo_pov_cmd(view_state->vs_vop, interp, argc, argv)) != TCL_OK)
-		return ret;
-
-	mged_variables->mv_perspective = view_state->vs_vop->vo_perspective;
-	return TCL_OK;
-}
 
 /*
  *			F _ V R M G R
