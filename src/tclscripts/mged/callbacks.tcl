@@ -70,6 +70,10 @@ proc begin_edit_callback {path} {
 	return
     }
 
+    if ![info exists mged_display] {
+	return
+    }
+
     # remove leading /
     if {[string index $path 0] == "/"} {
 	set path [string range $path 1 end]
@@ -120,6 +124,10 @@ proc begin_edit_callback {path} {
 proc active_edit_callback {} {
     global mged_display
     global in_begin_edit_callback
+
+    if ![info exists mged_display] {
+	return
+    }
 
     if {$in_begin_edit_callback} {
 	return
