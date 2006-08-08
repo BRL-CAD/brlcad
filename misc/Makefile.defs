@@ -24,12 +24,12 @@ noprod: prodclean
 prodclean: prodclean-recursive
 	@list='$(bin_PROGRAMS)'; for p in $$list; do \
 	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  echo " rm -f $$p $$f"; \
+	  echo "rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
 	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
 	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  echo " rm -f $$p $$f"; \
+	  echo "rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
 	@test -z "$(lib_LTLIBRARIES)" || echo rm -f $(lib_LTLIBRARIES) && rm -f $(lib_LTLIBRARIES)
@@ -46,6 +46,8 @@ prodclean: prodclean-recursive
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
+	@test -z "$(lib_LIBRARIES)" || echo rm -f $(lib_LIBRARIES) && rm -f $(lib_LIBRARIES)
+	@test -z "$(noinst_LIBRARIES)" || echo rm -f $(noinst_LIBRARIES) && rm -f $(noinst_LIBRARIES)
 
 prodclean-recursive:
 	@list='$(SUBDIRS)'; for subdir in $$list; do \
