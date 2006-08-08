@@ -67,6 +67,22 @@ Package=<4>
 
 ###############################################################################
 
+Project: "libtclcad"="..\..\src\libtclcad\libtclcad.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    libtclcad
+    ..\..\src\libtclcad
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "libwdb"="..\..\src\libwdb\libwdb.dsp" - Package Owner=<4>
 
 Package=<5>
@@ -106,6 +122,9 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name libsysv
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libtclcad
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name libwdb
