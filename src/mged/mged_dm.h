@@ -582,11 +582,13 @@ struct dm_list {
 	}
 
 extern double frametime;		/* defined in ged.c */
-extern int doEvent();			/* defined in doevent.c */
 extern int dm_pipe[];			/* defined in ged.c */
 extern int update_views;		/* defined in ged.c */
 extern struct dm_list head_dm_list;	/* defined in attach.c */
 extern struct dm_list *curr_dm_list;	/* defined in attach.c */
+
+extern int doEvent();			/* defined in doevent.c */
+extern int common_dm();			/* defined in dm-generic.c */
 
 struct w_dm {
   int	type;

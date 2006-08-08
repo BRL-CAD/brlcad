@@ -56,14 +56,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "dm_xvars.h"
 #include "dm-X.h"
+#include "fb.h"
 
 #include "./ged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 
 
-extern int _X24_open_existing();	/* defined in libfb */
-extern int common_dm();			/* defined in dm-generic.c */
 extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 
 static int X_dm(int argc, char **argv);
