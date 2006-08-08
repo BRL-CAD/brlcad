@@ -48,16 +48,18 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtprivate.h"
 
-HIDDEN int	stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp), stk_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	stk_print(register struct region *rp, char *dp), stk_free(char *cp);
+HIDDEN int	sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp);
+HIDDEN int	sh_stk_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void	sh_stk_print(register struct region *rp, char *dp);
+HIDDEN void 	sh_stk_free(char *cp);
 HIDDEN int	ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp);
 
 struct mfuncs stk_mfuncs[] = {
 	{MF_MAGIC,	"stack",	0,		0,	0,
-	stk_setup,	stk_render,	stk_print,	stk_free},
+	sh_stk_setup,	sh_stk_render,	sh_stk_print,	sh_stk_free},
 
 	{MF_MAGIC,	"extern",	0,		0,	0,
-	ext_setup,	stk_render,	stk_print,	stk_free},
+	ext_setup,	sh_stk_render,	sh_stk_print,	sh_stk_free},
 
 	{0,		(char *)0,	0,		0,	0,
 	0,		0,		0,		0}
@@ -115,7 +117,7 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
 	bu_close_mapped_file( parameter_file );
 
-	status = stk_setup(rp, &parameter_data, dpp, mf_p, rtip, headp);
+	status = sh_stk_setup(rp, &parameter_data, dpp, mf_p, rtip, headp);
 
 	bu_vls_free( &parameter_data );
 
@@ -125,7 +127,7 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 /*
  *			S T K _ D O S E T U P
  */
-static int stk_dosetup(char *cp, struct region *rp, char **dpp, char **mpp, struct rt_i *rtip, struct mfuncs **headp)
+static int sh_stk_dosetup(char *cp, struct region *rp, char **dpp, char **mpp, struct rt_i *rtip, struct mfuncs **headp)
 
 
     	      		/* udata pointer address */
@@ -220,7 +222,7 @@ out:
  *  Returns 0 on failure, 1 on success.
  */
 HIDDEN int
-stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp)
+sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp)
 
              	         	/* parameter string */
     		      		/* pointer to user data pointer */
@@ -240,10 +242,10 @@ stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	BU_GETSTRUCT( sp, stk_specific );
 	*dpp = (char *)sp;
 
-	/*bu_struct_parse( matparm, stk_parse, (char *)sp );*/
+	/*bu_struct_parse( matparm, sh_stk_parse, (char *)sp );*/
 
 	if(rdebug&RDEBUG_MATERIAL || rdebug&RDEBUG_SHADE)
-		bu_log( "stk_setup called with \"%s\"\n", bu_vls_addr(matparm) );
+		bu_log( "sh_stk_setup called with \"%s\"\n", bu_vls_addr(matparm) );
 
 	i = 0;
 	start = cp = bu_vls_addr(matparm);
@@ -251,11 +253,11 @@ stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 		if (*cp == ';' ) {
 			*cp = '\0';
 			if (i >= 16 ) {
-				bu_log( "stk_setup: max levels exceeded\n" );
+				bu_log( "sh_stk_setup: max levels exceeded\n" );
 				return( 0 );
 			}
 			/* add one */
-			if (stk_dosetup(start, rp, &sp->udata[i],
+			if (sh_stk_dosetup(start, rp, &sp->udata[i],
 				(char **)&sp->mfuncs[i], rtip, headp) == 0 )  {
 					inputs |= sp->mfuncs[i]->mf_inputs;
 					i++;
@@ -270,11 +272,11 @@ stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	}
 	if (start != cp ) {
 		if (i >= 16 ) {
-			bu_log( "stk_setup: max levels exceeded\n" );
+			bu_log( "sh_stk_setup: max levels exceeded\n" );
 			return( 0 );
 		}
 		/* add one */
-		if (stk_dosetup(start, rp, &sp->udata[i], (char **)&sp->mfuncs[i],
+		if (sh_stk_dosetup(start, rp, &sp->udata[i], (char **)&sp->mfuncs[i],
 		    rtip, headp ) == 0 )  {
 			inputs |= sp->mfuncs[i]->mf_inputs;
 			i++;
@@ -301,7 +303,7 @@ stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
  *	1	stack processed to completion
  */
 HIDDEN int
-stk_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+sh_stk_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
 	register struct stk_specific *sp =
 		(struct stk_specific *)dp;
@@ -333,7 +335,7 @@ stk_render(struct application *ap, struct partition *pp, struct shadework *swp, 
  *			S T K _ P R I N T
  */
 HIDDEN void
-stk_print(register struct region *rp, char *dp)
+sh_stk_print(register struct region *rp, char *dp)
 {
 	register struct stk_specific *sp =
 		(struct stk_specific *)dp;
@@ -353,7 +355,7 @@ stk_print(register struct region *rp, char *dp)
  *			S T K _ F R E E
  */
 HIDDEN void
-stk_free(char *cp)
+sh_stk_free(char *cp)
 {
 	register struct stk_specific *sp =
 		(struct stk_specific *)cp;
