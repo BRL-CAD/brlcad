@@ -822,8 +822,8 @@ int
 not_state(int desired, char *str)
 {
   if( state != desired ) {
-    Tcl_AppendResult(interp, "Unable to do <", str, "> from ",
-		     state_str[state], " state.\n", (char *)NULL);
+    Tcl_AppendResult(interp, "Unable to do <", str, "> from ", state_str[state], " state.\n", (char *)NULL);
+    Tcl_AppendResult(interp, "Expecting ", state_str[desired], " state.\n", (char *)NULL);
     return -1;
   }
 
