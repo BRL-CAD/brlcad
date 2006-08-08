@@ -1,7 +1,6 @@
-#!/m/cad/.tk.6d/wish raydebug.tcl
 #!/bin/sh
 # The next line restarts the shell script using best WISH in $PATH
-# exec wish "$0" "$@"
+# exec bwish "$0" "$@"
 # demo.tcl
 #	setenv LD_LIBRARY_PATH /usr/lib/X11:/usr/X11/lib
 #

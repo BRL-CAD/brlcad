@@ -326,7 +326,7 @@ success:
 		sgi_wmap( ifp, COLORMAP_NULL );
 	return(0);
 fail:
-	fb_log("sgi_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_sgi.c for details\n");
+	fb_log("sgi_getmem:  Unable to attach to shared memory.\n");
 	if( (sp = malloc( size )) == NULL )  {
 		fb_log("sgi_getmem:  malloc failure\n");
 		return(-1);

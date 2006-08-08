@@ -25,30 +25,6 @@
 /** @file g_sketch.c
  *	Provide support for 2D sketches.
  *
- * Adding a new solid type:
- *	Design disk record
- *
- *	define rt_sketch_internal --- parameters for solid
- *	define sketch_specific --- raytracing form, possibly w/precomuted terms
- *
- *	code import/export/describe/print/ifree/plot/prep/shot/curve/uv/tess
- *
- *	edit db.h add solidrec s_type define
- *	edit rtgeom.h to add rt_sketch_internal
- *	edit table.c:
- *		RT_DECLARE_INTERFACE()
- *		struct rt_functab entry
- *		rt_id_solid()
- *	edit raytrace.h to make ID_SKETCH, increment ID_MAXIMUM
- *	edit db_scan.c to add support for new solid type
- *	edit Makefile.am to add g_sketch.c to compile
- *
- *	Then:
- *	go to /cad/libwdb and create mk_sketch() routine
- *	go to /cad/mged and create the edit support
- *
- *  Authors -
- *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory

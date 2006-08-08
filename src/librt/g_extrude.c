@@ -25,28 +25,6 @@
 /** @file g_extrude.c
  *	Provide support for solids of extrusion.
  *
- * Adding a new solid type:
- *	Design disk record
- *
- *	define rt_extrude_internal --- parameters for solid
- *	define extrude_specific --- raytracing form, possibly w/precomuted terms
- *
- *	code import/export/describe/print/ifree/plot/prep/shot/curve/uv/tess
- *
- *	edit db.h add solidrec s_type define
- *	edit rtgeom.h to add rt_extrude_internal
- *	edit table.c:
- *		RT_DECLARE_INTERFACE()
- *		struct rt_functab entry
- *		rt_id_solid()
- *	edit raytrace.h to make ID_EXTRUDE, increment ID_MAXIMUM
- *	edit db_scan.c to add support for new solid type
- *	edit Makefile.am to add g_extrude.c to compile
- *
- *	Then:
- *	go to /cad/libwdb and create mk_extrude() routine
- *	go to /cad/mged and create the edit support
- *
  *  Authors -
  *  	John R. Anderson
  *  Source -

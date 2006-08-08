@@ -101,7 +101,7 @@ static char *proe_usage="%s [-darS] [-t tolerance] [-i initial_ident] [-I consta
 		previously converted Pro/E assemblies.\n\
 	The -S option indicates that the input file is raw STL (STereoLithography) format.\n\
 	The -t option specifies the minumim distance between two distinct vertices (mm).\n\
-	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n";
+	The -x option specifies an RT debug flags (see debug.h).\n";
 static char *stl_usage="%s [-da] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-u reg_exp] [-x rt_debug_flag] input.stl output.g\n\
 	where input.stl is a STereoLithography file\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
@@ -115,7 +115,7 @@ static char *stl_usage="%s [-da] [-t tolerance] [-N forced_name] [-i initial_ide
 		'reg_exp' should be ignored.\n\
 	The -a option creates BRL-CAD 'air' regions from everything in the model.\n\
 	The -t option specifies the minumim distance between two distinct vertices (mm).\n\
-	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n";
+	The -x option specifies an RT debug flags (see debug.h).\n";
 static char *usage;
 static FILE *fd_in;		/* input file (from Pro/E) */
 static struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */

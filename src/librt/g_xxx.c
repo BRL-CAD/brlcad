@@ -44,12 +44,12 @@
  *	edit Makefile.am to add g_xxx.c to compile
  *
  *	Then:
- *	go to /cad/libwdb and create mk_xxx() routine
- *	go to /cad/conv and edit g2asc.c and asc2g.c to support the new solid
- *	go to /cad/librt and edit tcl.c to add the new solid to
+ *	go to src/libwdb and create mk_xxx() routine
+ *	go to src/conv and edit g2asc.c and asc2g.c to support the new solid
+ *	go to src/librt and edit tcl.c to add the new solid to
  *		rt_solid_type_lookup[]
  *		also add the interface table and to rt_id_solid() in table.c
- *	go to /cad/mged and create the edit support
+ *	go to src/mged and create the edit support
  *
  *  Authors -
  *

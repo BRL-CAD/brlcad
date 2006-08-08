@@ -82,7 +82,7 @@ static char *usage="%s [-db] [-t tolerance] [-N forced_name] [-i initial_ident] 
 	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n\
 	The -m option sets the integer material code for all the parts (default is 1).\n\
 	The -t option specifies the minumim distance between two distinct vertices (mm).\n\
-	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n";
+	The -x option specifies an RT debug flags (see debug.h).\n";
 static FILE *fd_in;		/* input file */
 static struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
 static float conv_factor=1.0;	/* conversion factor from model units to mm */

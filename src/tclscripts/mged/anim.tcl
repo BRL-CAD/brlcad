@@ -61,8 +61,8 @@ proc sketch_init_main {} {
 #	set version "developement"
         set version ""
 	if { $version == "developement" } {
-		uplevel #0 {set mged_sketch_anim_path "/m/cad/.anim.6d/"}
-		uplevel #0 {set mged_sketch_tab_path "/m/cad/.tab.6d/"}
+		uplevel #0 {set mged_sketch_anim_path "/tmp/.anim.6d/"}
+		uplevel #0 {set mged_sketch_tab_path "/tmp/.tab.6d/"}
 	} else {
 		uplevel #0 {set mged_sketch_anim_path ""}
 		uplevel #0 {set mged_sketch_tab_path ""}

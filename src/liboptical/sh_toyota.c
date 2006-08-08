@@ -209,15 +209,7 @@ toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, str
 	}
 
 	/* Read in reflectance data. */
-	if (tp->material[0] == '/') {
-		/* Do nothing, user has his own reflectance data. */
-		strcpy(mfile, tp->material);
-	} else {
-		/* Look for reflectance data in usual place. */
-		strcpy(mfile, "/m/cad/material/");
-		strcat(mfile, tp->material);
-		strcat(mfile, "/reflectance");
-	}
+	strcpy(mfile, tp->material);
 	if ((fp = fopen(mfile, "r")) == NULL) {
 		perror(mfile);
 		bu_log("reflectance: cannot open %s for reading.", mfile);
@@ -1859,15 +1851,8 @@ absorp_coeff(fastf_t lambda, char *material)
 	FILE	*fp;
 	int	n;
 
-	if (material[0] == '/') {
-		/* Do nothing, user has his own absorption data. */
-		strcpy(mfile, material);
-	} else {
-		/* Look for absorption data in usual place. */
-		strcpy(mfile, "/m/cad/material/");
-		strcat(mfile, material);
-		strcat(mfile, "/absorption");
-	}
+	/* Do nothing, user has his own absorption data. */
+	strcpy(mfile, material);
 	if ((fp = fopen(mfile, "r")) == NULL) {
 		fprintf(stderr,
 			"absorp_coeff: cannot open %s for reading.", mfile);

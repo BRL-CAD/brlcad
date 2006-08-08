@@ -862,7 +862,6 @@ FBIO	*ifp;
 		goto	common;
 fail:
 		fb_log("sun_getmem:  Unable to attach to shared memory, using private.\n");
-		fb_log("Consult comment in cad/libfb/if_sun.c for details.\n");
 		/* Change it to local */
 		SUN(ifp)->su_mode = (SUN(ifp)->su_mode & ~MODE_1MASK)
 			| MODE_1MALLOC;

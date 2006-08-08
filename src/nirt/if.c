@@ -286,9 +286,9 @@ int if_miss(void)
  *	 0	to eliminate partition with overlap entirely
  *	!0	to retain partition in output list
  *
- *	Stolen out of:	spark.brl.mil:/m/cad/librt/bool.c
- *	Stolen by:	Paul Tanenbaum
- *	Date stolen:	29 March 1990
+ *	Taken out of:	src/librt/bool.c
+ *	Taken by:	Paul Tanenbaum
+ *	Date taken:	29 March 1990
  */
 int
 if_overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp)

@@ -179,7 +179,6 @@ struct edgeuse *eu;
  *  XXX This is a horrible way to do this.  Lee violates his own rules
  *  about not creating fundamental structures on his own...  :-)
  *  Retired in favor of more modern tessellation strategies.
- *  For a better example, look in cad/jack/jack-g.c
  */
 struct shell *
 nmg_polytonmg(fp, r, tol)
