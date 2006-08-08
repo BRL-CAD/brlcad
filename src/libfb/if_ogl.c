@@ -96,7 +96,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #define YMAXSCREEN	1023
 
 /* Internal callbacks etc.*/
-HIDDEN void		do_event(FBIO *ifp);
+HIDDEN void		ogl_do_event(FBIO *ifp);
 HIDDEN void		expose_callback(FBIO *ifp, XEvent *eventPtr);
 void ogl_configureWindow FB_ARGS((FBIO *ifp, int width, int height));
 
@@ -1004,7 +1004,7 @@ ogl_open(FBIO *ifp, char *file, int width, int height)
 
     /* Loop through events until first exposure event is processed */
     while (OGL(ifp)->firstTime == 1)
-	do_event(ifp);
+	ogl_do_event(ifp);
 
     return 0;
 }
@@ -1214,7 +1214,7 @@ ogl_close(FBIO *ifp)
     (void)signal( SIGALRM, SIG_IGN );
 
     while( 0 < OGL(ifp)->alive ) {
-	do_event(ifp);
+	ogl_do_event(ifp);
     }
 
     return 0;
@@ -1261,7 +1261,7 @@ ogl_close_existing(FBIO *ifp)
 HIDDEN int
 ogl_poll(FBIO *ifp)
 {
-    do_event(ifp);
+    ogl_do_event(ifp);
 
     if (OGL(ifp)->alive < 0)
 	return(1);
@@ -2156,7 +2156,7 @@ ogl_clipper(register FBIO *ifp)
  */
 
 HIDDEN void
-do_event(FBIO *ifp)
+ogl_do_event(FBIO *ifp)
 {
     XEvent event;
 

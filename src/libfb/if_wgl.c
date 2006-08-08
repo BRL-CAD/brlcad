@@ -85,7 +85,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 
 /* Internal callbacks etc.*/
-HIDDEN void		do_event();
+HIDDEN void		wgl_do_event();
 HIDDEN void		expose_callback();
 void wgl_configureWindow FB_ARGS((FBIO *ifp, int width, int height));
 
@@ -885,7 +885,7 @@ int	width, height;
 
 	/* Loop through events until first exposure event is processed */
 	/*	while (WGL(ifp)->firstTime == 1)
-		do_event(ifp);
+		wgl_do_event(ifp);
 	*/
 
 	return 0;
@@ -1126,7 +1126,7 @@ FBIO	*ifp;
 	*/
 
 	while (0 < WGL(ifp)->alive)
-	    do_event(ifp);
+	    wgl_do_event(ifp);
 
 	return 0;
 }
@@ -1165,7 +1165,7 @@ HIDDEN int
 wgl_poll(ifp)
 FBIO	*ifp;
 {
-	do_event(ifp);
+	wgl_do_event(ifp);
 
 	if (WGL(ifp)->alive < 0)
 	    return(1);
@@ -2034,7 +2034,7 @@ wgl_clipper(register FBIO *ifp)
  */
 
 HIDDEN void
-do_event(FBIO *ifp)
+wgl_do_event(FBIO *ifp)
 {
 	MSG msg;
 	BOOL bRet;

@@ -106,10 +106,10 @@ HIDDEN int	X_open(FBIO *ifp, char *file, int width, int height),
 
 #ifdef USE_PROTOTYPES
 HIDDEN void	Monochrome( unsigned char *bitbuf, unsigned char *bytebuf, int width, int height, int method);
-HIDDEN int	do_event( FBIO	*ifp );
+HIDDEN int	X_do_event( FBIO	*ifp );
 #else
 HIDDEN void	Monochrome();
-HIDDEN int	do_event();
+HIDDEN int	X_do_event();
 #endif
 
 /* This is the ONLY thing that we normally "export" */
@@ -1079,13 +1079,13 @@ x_linger(FBIO *ifp)
 		ExposureMask|ButtonPressMask );
 
 	while( alive ) {
-		do_event(ifp);
+		X_do_event(ifp);
 	}
 	return 0;
 }
 
 HIDDEN int
-do_event(FBIO *ifp)
+X_do_event(FBIO *ifp)
 {
 	XEvent	event;
 	XExposeEvent	*expose;
@@ -1243,7 +1243,7 @@ X_poll(FBIO *ifp)
 {
 	XFlush( XI(ifp)->dpy );
 	while( XPending(XI(ifp)->dpy) > 0 )
-		do_event(ifp);
+		X_do_event(ifp);
 
 	return(0);
 }
@@ -1253,7 +1253,7 @@ X_flush(FBIO *ifp)
 {
 	XFlush( XI(ifp)->dpy );
 	while( XPending(XI(ifp)->dpy) > 0 )
-		do_event(ifp);
+		X_do_event(ifp);
 
 	return(0);
 }
