@@ -2328,7 +2328,7 @@ init_sedit(void)
 	register int		type;
 	int			id;
 
-	if(dbip == DBI_NULL)
+	if(dbip == DBI_NULL || !illump)
 	  return;
 
 	/*
@@ -2462,7 +2462,13 @@ replot_editing_solid(void)
 {
   mat_t mat;
   register struct solid *sp;
-  struct directory *illdp = LAST_SOLID(illump);
+  struct directory *illdp;
+
+  if (!illump) {
+      return;
+  }
+
+  illdp = LAST_SOLID(illump);
 
   FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
     if(LAST_SOLID(sp) == illdp )  {
@@ -7524,8 +7530,9 @@ init_oedit_guts(void)
 	es_edflag = -1;
 	MAT_IDN(es_mat);
 
-	if (dbip == DBI_NULL)
+	if (dbip == DBI_NULL || !illump) {
 		return;
+	}
 
 	/*
 	 * Check for a processed region
@@ -7798,16 +7805,27 @@ sedit_apply(int accept_flag)
 	bot_verts[1] = -1;
 	bot_verts[2] = -1;
 
+	/* make sure we are in solid edit mode */
+	if (!illump) {
+	    return TCL_OK;
+	}
+
 	if (lu_copy) {
 		struct model *m;
 
 		m = nmg_find_model(&lu_copy->l.magic);
-		nmg_km(m);
+		if (m) {
+		    nmg_km(m);
+		}
 		lu_copy = (struct loopuse *)NULL;
 	}
 
 	/* write editing changes out to disc */
 	dp = LAST_SOLID(illump);
+	if (!dp) {
+	    /* sanity check, unexpected error */
+	    return TCL_ERROR;
+	}
 
 	/* make sure that any BOT solid is minimally legal */
 	if (es_int.idb_type == ID_BOT) {
@@ -7894,7 +7912,9 @@ sedit_accept(void)
 void
 sedit_reject(void)
 {
-	if( not_state( ST_S_EDIT, "Solid edit reject" ) )  return;
+	if( not_state( ST_S_EDIT, "Solid edit reject" ) || !illump ) {
+	    return;
+	}
 
 	if( sedraw > 0)
 	  sedit();
@@ -9222,7 +9242,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  if(state != ST_S_EDIT){
+  if(state != ST_S_EDIT || !illump){
     Tcl_AppendResult(interp, "get_sed: must be in solid edit state", (char *)0);
     return TCL_ERROR;
   }
@@ -9363,7 +9383,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   struct bu_vls vls;
 
-  if(state != ST_S_EDIT)
+  if(state != ST_S_EDIT || !illump)
     return TCL_ERROR;
 
   if(argc != 1){
@@ -9437,7 +9457,7 @@ f_sedit_apply(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	CHECK_DBI_NULL;
 
 	if (not_state(ST_S_EDIT, "Primitive edit accept")) {
-		Tcl_AppendResult(interp, "Must be in solid edit state!\n");
+		bu_log("Must be in solid edit state!\n");
 		return TCL_ERROR;
 	}
 
