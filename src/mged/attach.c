@@ -121,10 +121,6 @@ void dm_var_init(struct dm_list *initial_dm_list);
 void mged_slider_init_vls(struct dm_list *p);
 void mged_slider_free_vls(struct dm_list *p);
 
-#if 0
-static int do_2nd_attach_prompt();
-#endif
-
 void mged_fb_open(void);
 void mged_fb_close(void);
 
@@ -258,35 +254,6 @@ f_release(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return release((char *)NULL, 1);
 }
 
-#if 0
-static int
-do_2nd_attach_prompt()
-{
-  char *dm_default;
-  char  hostname[80];
-  char  display[82];
-  struct bu_vls prompt;
-
-
-  bu_vls_init(&prompt);
-
-  /* get or create the default display */
-  if( (dm_default = getenv("DISPLAY")) == NULL ) {
-    /* Env not set, use local host */
-    gethostname( hostname, 80 );
-    hostname[79] = '\0';
-    (void)sprintf( display, "%s:0", hostname );
-    dm_default = display;
-  }
-
-  bu_vls_printf(&prompt, "Display [%s]? ", dm_default);
-
-  Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&prompt), (char *)NULL);
-  bu_vls_printf(&curr_cmd_list->cl_more_default, "%s", dm_default);
-
-  return TCL_ERROR;
-}
-#endif
 
 int
 f_attach(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
