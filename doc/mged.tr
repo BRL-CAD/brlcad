@@ -3888,7 +3888,7 @@ For this exercise, obtain a copy of the {\em axis.g} database,
 and run MGED, eg:
 
 \noindent{\tt
-\$ cp cad/db/axis.g . \\
+\$ cp db/axis.g . \\
 \$ mged axis.g \\
 BRL-CAD Release 3.0 Graphics Editor (MGED) Compilation 82 \\
     Thu Sep 22 08:08:39 EDT 1988 \\
@@ -5763,7 +5763,7 @@ MGED does not display a set of XYZ co-ordinate axes on the
 screen.
 When you are in the 35,25 (isometric) viewing state the axes are
 positioned as in Figure \ref{axis-3525}.
-This database can be found in cad/db/axis.g.
+This database can be found in db/axis.g.
 
 If you would like a set of coordinate axes to assist in model building,
 the easiest thing to do is to
