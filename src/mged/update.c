@@ -36,20 +36,16 @@
 #include "common.h"
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
-
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xlib.h>
 #endif
 
-#ifdef DM_X
-#  include "tk.h"
-#else
-#  include "tcl.h"
-#endif
+#include "tcl.h"
+#include "tk.h"
 
 #include "machine.h"
 #include "bu.h"

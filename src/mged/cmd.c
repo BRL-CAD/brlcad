@@ -64,11 +64,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <unistd.h>
 #endif
 
-#ifdef DM_X
-#  include "tk.h"
-#else
-#  include "tcl.h"
-#endif
+#include "tcl.h"
+#include "tk.h"
 
 #include "tclInt.h"
 #include "itcl.h"
@@ -157,22 +154,15 @@ extern struct bn_tol	      mged_tol; /* ged.c */
 
 int glob_compat_mode = 1;
 int output_as_return = 1;
-
+Tk_Window tkwin = NULL;
 
 /* The following is for GUI output hooks: contains name of function to
  * run with output.
  */
 static struct bu_vls tcl_output_hook;
 
-#if DM_X
-Tk_Window tkwin = NULL;
-#endif
 
 int mged_cmd(int argc, char **argv, struct funtab *in_functions);
-
-#ifdef _WIN32
-void gettimeofday(struct timeval *tp, struct timezone *tzp);
-#endif
 
 
 struct cmdtab {
@@ -202,9 +192,7 @@ static struct cmdtab cmdtab[] = {
 	{"arced", f_arced},
 	{"area", f_area},
 	{"arot", cmd_arot},
-#ifdef DM_X
 	{"attach", f_attach},
-#endif
 	{"attr",	cmd_attr},
 	{"autoview", cmd_autoview},
 	{"B", cmd_blast},
@@ -251,14 +239,10 @@ static struct cmdtab cmdtab[] = {
 	{"decompose", f_decompose},
 	{"delay", f_delay},
 	{"dump",	cmd_dump},
-#ifdef DM_X
 	{"dm", f_dm},
-#endif
 	{"draw", cmd_draw},
 	{"dup", cmd_dup},
-#ifdef DM_X
 	{"E", cmd_E},
-#endif
 	{"e", cmd_draw},
 	{"eac", f_eac},
 	{"echo", cmd_echo},
@@ -270,9 +254,7 @@ static struct cmdtab cmdtab[] = {
 	{"em", cmd_emuves},
 	{"erase", cmd_erase},
 	{"erase_all", cmd_erase_all},
-#ifdef DM_X
 	{"ev", cmd_ev},
-#endif
 	{"e_muves", f_e_muves},
 	{"eqn", f_eqn},
 	{"exit", f_quit},
@@ -323,9 +305,7 @@ static struct cmdtab cmdtab[] = {
 	{"left",		bv_left},
 	{"lm", cmd_lm},
 	{"lt", cmd_lt},
-#ifdef DM_X
 	{"loadtk", cmd_tk},
-#endif
 	{"listeval", cmd_pathsum},
 	{"loadview", f_loadview},
 	{"lookat", cmd_lookat},
@@ -338,16 +318,12 @@ static struct cmdtab cmdtab[] = {
 	{"mater", f_mater},
 	{"matpick", f_matpick},
 	{"memprint", f_memprint},
-#ifdef DM_X
 	{"mged_update", f_update},
 	{"mged_wait", f_wait},
-#endif
 	{"mirface", f_mirface},
 	{"mirror", f_mirror},
-#ifdef DM_X
 	{"mmenu_get", cmd_mmenu_get},
 	{"mmenu_set", cmd_nop},
-#endif
 	{"model2grid_lu", f_model2grid_lu},
 	{"model2view", f_model2view},
 	{"model2view_lu", f_model2view_lu},
@@ -362,9 +338,7 @@ static struct cmdtab cmdtab[] = {
 	{"oed", cmd_oed},
 	{"oed_apply", f_oedit_apply},
 	{"oed_reset", f_oedit_reset},
-#ifdef DM_X
 	{"oill",		be_o_illuminate},
-#endif
 	{"opendb", f_opendb},
 	{"orientation", cmd_orientation},
 	{"orot", f_rot_obj},
@@ -411,9 +385,7 @@ static struct cmdtab cmdtab[] = {
 	{"rear",	bv_rear},
 	{"red", f_red},
 	{"redraw_vlist", cmd_redraw_vlist},
-#ifdef DM_X
 	{"refresh", f_refresh},
-#endif
 	{"regdebug", f_regdebug},
 	{"regdef", f_regdef},
 	{"regions", f_tables},

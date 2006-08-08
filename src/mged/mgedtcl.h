@@ -26,10 +26,8 @@
 
 #include "common.h"
 
-#ifdef DM_X
 #include "tk.h"
 extern Tk_Window tkwin; /* in cmd.c */
-#endif
 
 #endif  /* __MGEDTCL_H__ */
 

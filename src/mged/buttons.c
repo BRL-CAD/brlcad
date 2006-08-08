@@ -39,27 +39,24 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
 
-#ifdef DM_X
-extern void stateChange();		/* defined in dm-generic.c */
-#endif
+
 extern int mged_svbase(void);
 extern void set_e_axes_pos(int both);
 extern int mged_zoom(double val);
@@ -853,9 +850,7 @@ chg_state(int from, int to, char *str)
 
   state = to;
 
-#ifdef DM_X
   stateChange(from, to);
-#endif
 
   save_dm_list = curr_dm_list;
   FOR_ALL_DISPLAYS(p, &head_dm_list.l){

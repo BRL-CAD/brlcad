@@ -46,13 +46,12 @@
 #else
 #  include <strings.h>
 #endif
-
-#ifdef DM_X
-#  include "tk.h"
+#ifdef HAVE_X11_XLIB_H
 #  include <X11/Xutil.h>
 #endif
 
 #include "tcl.h"
+#include "tk.h"
 #include "dm_xvars.h"
 
 #include "machine.h"
@@ -75,7 +74,6 @@ extern void rb_set_dirty_flag();
 
 int doMotion = 0;
 
-#ifdef DM_X
 struct bu_structparse dm_xvars_vparse[] = {
 	{"%x",	1,	"dpy",			XVARS_MV_O(dpy),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%x",	1,	"win",			XVARS_MV_O(win),	BU_STRUCTPARSE_FUNC_NULL },
@@ -90,7 +88,7 @@ struct bu_structparse dm_xvars_vparse[] = {
 	{"%d",	1,	"devbuttonrelease",	XVARS_MV_O(devbuttonrelease),	BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0,	(char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
-#endif
+
 
 /*
  *  Based upon new state, possibly do extra stuff,
@@ -101,8 +99,7 @@ struct bu_structparse dm_xvars_vparse[] = {
  *  that was written by Phil Dykstra.
  */
 void
-stateChange(a, b)
-int a, b;
+stateChange(int a, int b)
 {
   switch( b )  {
   case ST_VIEW:
@@ -130,9 +127,7 @@ int a, b;
 }
 
 int
-common_dm(argc, argv)
-int argc;
-char **argv;
+common_dm(int argc, char **argv)
 {
   int status;
   struct bu_vls vls;
@@ -612,7 +607,7 @@ end:
       width = atoi( argv[1] );
       height = atoi( argv[2] );
 
-#ifdef DM_X
+#if defined(DM_X) || defined(DM_OGL) || defined(DM_WGL)
 #  if 0
       Tk_ResizeWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
 #  else
@@ -627,7 +622,7 @@ end:
     return TCL_ERROR;
   }
 
-#ifdef DM_X
+#if defined(DM_X) || defined(DM_OGL) || defined(DM_WGL)
   if(!strcmp(argv[0], "getx")){
     if(argc == 1){
       struct bu_vls tmp_vls;

@@ -87,11 +87,8 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #  include <sys/stat.h>
 #endif
 
-#ifdef DM_X
-#  include "tk.h"
-#else
-#  include "tcl.h"
-#endif
+#include "tcl.h"
+#include "tk.h"
 
 #include "machine.h"
 #include "bu.h"
@@ -183,12 +180,11 @@ void		usejoy(double xangle, double yangle, double zangle);
 void            slewview(fastf_t *view_pos);
 int		interactive = 0;	/* >0 means interactive */
 int             cbreak_mode = 0;        /* >0 means in cbreak_mode */
-#ifdef DM_X
+#if defined(DM_X) || defined(DM_OGL) || defined(DM_WGL)
 int		classic_mged=0;
 #else
 int		classic_mged=1;
 #endif
-int		run_in_foreground=0;
 char		*dpy_string = (char *)NULL;
 static int	mged_init_flag = 1;	/* >0 means in initialization stage */
 
@@ -268,6 +264,7 @@ main(int argc, char **argv)
 #endif
     int	parent_pipe[2];
     int	use_pipe = 0;
+    int run_in_foreground=0;
 
 #ifdef _WIN32
     Tcl_Channel chan;
@@ -276,6 +273,7 @@ main(int argc, char **argv)
 
 #ifdef _WIN32
     _fmode = _O_BINARY;
+    run_in_foreground=1;
 #endif
 
     bu_setprogname(argv[0]);
@@ -331,7 +329,7 @@ main(int argc, char **argv)
 
 	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 #ifndef COMMAND_LINE_EDITING
-#define COMMAND_LINE_EDITING 1
+#  define COMMAND_LINE_EDITING 1
 #endif
 #ifndef _WIN32
 		/* Set up for character-at-a-time terminal IO. */
@@ -342,7 +340,7 @@ main(int argc, char **argv)
 	}
     }
 
-#ifndef _WIN32
+#ifdef HAVE_SIGNAL
     (void)signal( SIGPIPE, SIG_IGN );
 
     /*
@@ -353,7 +351,9 @@ main(int argc, char **argv)
      */
     cur_sigint = signal( SIGINT, SIG_IGN );		/* sample */
     (void)signal( SIGINT, cur_sigint );		/* restore */
+#endif /* HAVE_SIGNAL */
 
+#ifdef HAVE_PIPE
     if( !classic_mged && !run_in_foreground ) {
 	fprintf( stdout, "Initializing and backgrounding, please wait..." );
 	fflush( stdout );
@@ -401,7 +401,7 @@ main(int argc, char **argv)
 	    exit( 0 );
 	}
     }
-#endif
+#endif /* HAVE_PIPE */
 
     /* If multiple processors might be used, initialize for it.
      * Do not run any commands before here.
@@ -552,11 +552,9 @@ main(int argc, char **argv)
 	}
 
 	if (status != TCL_OK) {
-#ifndef _WIN32
 	    if( !run_in_foreground && use_pipe ) {
 		notify_parent_done(parent_pipe[1]);
 	    }
-#endif
 	    bu_log("%s\nMGED Aborted.\n", bu_vls_addr(&error));
 	    mged_finish(1);
 	}
@@ -593,14 +591,12 @@ main(int argc, char **argv)
 	 */
 
 	if (classic_mged) {
-#ifdef DM_X
 	    get_attached();
-#endif
 	} else {
 	    struct bu_vls vls;
 	    int status;
 
-#ifndef _WIN32
+#ifdef HAVE_SETPGID
 	    /* make this a process group leader */
 	    setpgid(0, 0);
 #endif
@@ -614,11 +610,9 @@ main(int argc, char **argv)
 	     * parent process know that we are done initializing so
 	     * that it may exit.
 	     */
-#ifndef _WIN32
 	    if( !run_in_foreground && use_pipe ) {
 		notify_parent_done(parent_pipe[1]);
 	    }
-#endif
 
 	    if (status != TCL_OK) {
 		bu_log("%s\nMGED Aborted.\n", interp->result);
@@ -626,7 +620,7 @@ main(int argc, char **argv)
 		mged_finish(1);
 	    }
 
-#ifndef _WIN32
+#ifdef HAVE_PIPE
 	    (void)pipe(pipe_out);
 	    (void)pipe(pipe_err);
 
@@ -639,12 +633,7 @@ main(int argc, char **argv)
 	    (void)close(2);
 	    (void)dup(pipe_err[1]);
 	    (void)close(pipe_err[1]);
-
-#  if 0
-	    /* close stdin */
-	    (void)close(0);
-#  endif
-#endif  /* _WIN32 */
+#endif  /* HAVE_PIPE */
 
 	    bu_add_hook(&bu_bomb_hook_list, mged_bomb_hook, GENPTR_NULL);
 	}
@@ -673,8 +662,8 @@ main(int argc, char **argv)
 	/* NOTREACHED */
     }
 
-#ifndef _WIN32
     if(classic_mged || !interactive){
+
 #ifndef _WIN32
 	Tcl_CreateFileHandler(STDIN_FILENO, TCL_READABLE,
 			      stdin_input, (ClientData)STDIN_FILENO);
@@ -683,40 +672,43 @@ main(int argc, char **argv)
 	Tcl_CreateChannelHandler(chan,TCL_READABLE,
 				 stdin_input, (ClientData)GetStdHandle(STD_INPUT_HANDLE));
 #endif
+
+#ifdef HAVE_SIGNAL
 	(void)signal( SIGINT, SIG_IGN );
+#endif
 
 	bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
 	pr_prompt();
 
+#ifndef _WIN32
 	if (cbreak_mode) {
 	    set_Cbreak(fileno(stdin));
 	    clr_Echo(fileno(stdin));
 	}
-    } else
 #endif
-	{
-	    struct bu_vls vls;
-
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "output_hook output_callback");
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-
+    } else {
+	struct bu_vls vls;
+	
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "output_hook output_callback");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	
 #ifndef _WIN32
-	    /* to catch output from routines that do not use bu_log */
-	    Tcl_CreateFileHandler(pipe_out[0], TCL_READABLE,
-				  std_out_or_err, (ClientData)pipe_out[0]);
-	    Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE,
-				  std_out_or_err, (ClientData)pipe_err[0]);
+	/* to catch output from routines that do not use bu_log */
+	Tcl_CreateFileHandler(pipe_out[0], TCL_READABLE,
+			      std_out_or_err, (ClientData)pipe_out[0]);
+	Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE,
+			      std_out_or_err, (ClientData)pipe_err[0]);
 #else
-	    chan = Tcl_MakeFileChannel(GetStdHandle(STD_OUTPUT_HANDLE),TCL_READABLE);
-	    Tcl_CreateChannelHandler(chan,TCL_READABLE,
-				     std_out_or_err, (ClientData)GetStdHandle(STD_OUTPUT_HANDLE));
-	    chan = Tcl_MakeFileChannel(GetStdHandle(STD_ERROR_HANDLE),TCL_READABLE);
-	    Tcl_CreateChannelHandler(chan,TCL_READABLE,
-				     std_out_or_err, (ClientData)GetStdHandle(STD_ERROR_HANDLE));
+	chan = Tcl_MakeFileChannel(GetStdHandle(STD_OUTPUT_HANDLE),TCL_READABLE);
+	Tcl_CreateChannelHandler(chan,TCL_READABLE,
+				 std_out_or_err, (ClientData)GetStdHandle(STD_OUTPUT_HANDLE));
+	chan = Tcl_MakeFileChannel(GetStdHandle(STD_ERROR_HANDLE),TCL_READABLE);
+	Tcl_CreateChannelHandler(chan,TCL_READABLE,
+				 std_out_or_err, (ClientData)GetStdHandle(STD_ERROR_HANDLE));
 #endif
-	}
+    }
 
     mged_init_flag = 0;	/* all done with initialization */
 
@@ -776,15 +768,9 @@ stdin_input(ClientData clientData, int mask)
     char ch;
     struct bu_vls temp;
 #ifndef _WIN32
-    long fd;
+    long fd = (long)clientData;
 #else
-    HANDLE fd;
-#endif
-
-#ifndef _WIN32
-    fd = (long)clientData;
-#else
-    fd = (HANDLE)clientData;
+    HANDLE fd = (HANDLE)clientData;
 #endif
 
     /* When not in cbreak mode, just process an entire line of input, and
@@ -2355,17 +2341,10 @@ f_opendb(
 	/*
 	 * Check to see if we can access the database
 	 */
-#ifndef _WIN32
-	if (access(argv[1], R_OK|W_OK) != 0 && errno != ENOENT) {
-	    perror(argv[1]);
-	    return TCL_ERROR;
-	}
-#else
 	if ((access(argv[1], R_OK) != 0 || access(argv[1], W_OK) != 0)  && errno != ENOENT) {
 	    perror(argv[1]);
 	    return TCL_ERROR;
 	}
-#endif
 
 	/* File does not exist */
 	if (interactive) {

@@ -57,20 +57,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <strings.h>
 #endif
 
-#ifdef DM_X
-#  include "tk.h"
-#else
-#  include "tcl.h"
-#endif
+#include "tcl.h"
 
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "./sedit.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "rtgeom.h"
+
+#include "./sedit.h"
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
