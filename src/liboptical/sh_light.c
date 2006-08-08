@@ -115,7 +115,7 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
     struct light_specific *lsp = (struct light_specific *)base;
     fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
 
-    if ( lsp->lt_pt_count >= MAX_LIGHT_SAMPLES ) return;
+    if ( lsp->lt_pt_count >= SOME_LIGHT_SAMPLES ) return;
 
     if (! strcmp("pt", name) ) {
 	/* user just specified point, set normal to zeros */
@@ -334,7 +334,7 @@ gen_hit(register struct application *ap,
 	RT_HIT_NORMAL( lpt->lp_norm, pp->pt_inhit, stp,
 		       &(ap->a_ray), pp->pt_inflip );
 
-	if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES) return 1;
+	if (lsp->lt_pt_count >= SOME_LIGHT_SAMPLES) return 1;
 
 	/* check to make sure the light out hit point isn't against
 	 * some other object
@@ -365,7 +365,7 @@ gen_hit(register struct application *ap,
 	RT_HIT_NORMAL( lpt->lp_norm, pp->pt_outhit, stp,
 		       &(ap->a_ray), pp->pt_outflip );
 
-	if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES) return 1;
+	if (lsp->lt_pt_count >= SOME_LIGHT_SAMPLES) return 1;
 
     }
     return 1;
@@ -415,7 +415,7 @@ shoot_grids(struct application *ap,
 		 x < tree_max[X] ; x += step[X]) {
 		VSET(ap->a_ray.r_pt, x, y, z);
 		(void)rt_shootray( ap );
-		if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES)
+		if (lsp->lt_pt_count >= SOME_LIGHT_SAMPLES)
 		    return;
 	    }
     }
@@ -437,7 +437,7 @@ shoot_grids(struct application *ap,
 		 x < tree_max[X] ; x += step[X]) {
 		VSET(ap->a_ray.r_pt, x, y, z);
 		(void)rt_shootray( ap );
-		if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES)
+		if (lsp->lt_pt_count >= SOME_LIGHT_SAMPLES)
 		    return;
 	    }
     }
@@ -456,7 +456,7 @@ shoot_grids(struct application *ap,
 		 y < tree_max[Y] ; y += step[Y]) {
 		VSET(ap->a_ray.r_pt, x, y, z);
 		(void)rt_shootray( ap );
-		if (lsp->lt_pt_count >= MAX_LIGHT_SAMPLES)
+		if (lsp->lt_pt_count >= SOME_LIGHT_SAMPLES)
 		    return;
 	    }
     }
@@ -573,7 +573,7 @@ light_gen_sample_pts(struct application    *upap,
 	return;
     }
 
-    while ( lsp->lt_pt_count < MAX_LIGHT_SAMPLES ) {
+    while ( lsp->lt_pt_count < SOME_LIGHT_SAMPLES ) {
 
 	ray_setup(&ap, tree_min, tree_max, span);
 	(void)rt_shootray( &ap );
@@ -1779,7 +1779,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
     int visibility;
     struct light_obs_stuff los;
     static int rand_idx;
-    char flags[MAX_LIGHT_SAMPLES] = {0};
+    char flags[SOME_LIGHT_SAMPLES] = {0};
 
     if (rdebug & RDEBUG_LIGHT )
 	bu_log("computing Light obscuration: start\n");

@@ -61,7 +61,7 @@ struct light_pt {
 	vect_t	lp_norm;
 };
 #define LPT_MAGIC 0x327649
-#define MAX_LIGHT_SAMPLES 128
+#define SOME_LIGHT_SAMPLES 128
 
 struct light_specific {
 	struct bu_list	l;	/* doubly linked list */
@@ -90,7 +90,7 @@ struct light_specific {
 	char	*lt_name;	/* identifying string */
 	struct	region *lt_rp;	/* our region of origin */
 	int	lt_pt_count;
-	struct light_pt lt_sample_pts[MAX_LIGHT_SAMPLES];
+	struct light_pt lt_sample_pts[SOME_LIGHT_SAMPLES];
 	fastf_t lt_parse_pt[6];
 };
 #define LIGHT_NULL	((struct light_specific *)0)
