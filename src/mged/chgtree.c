@@ -468,7 +468,6 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	if( not_state( ST_VIEW, "Object Illuminate" ) )  {
-		Tcl_AppendResult(interp, "MGED state is not VIEW", (char *)NULL);
 		return TCL_ERROR;
 	}
 	if(BU_LIST_IS_EMPTY(&dgop->dgo_headSolid)) {
