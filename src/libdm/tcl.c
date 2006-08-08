@@ -41,11 +41,9 @@
 #include "dm.h"
 #include "cmd.h"
 
-#if defined(DM_X) || defined(_WIN32)
 /* from libdm/query.c */
 extern int dm_validXType();
 extern char *dm_bestXType();
-#endif
 
 /* from libdm/dm_obj.c */
 extern int Dmo_Init(Tcl_Interp *interp);
@@ -56,10 +54,8 @@ HIDDEN int dm_bestXType_tcl();
 int vectorThreshold = 100000;
 
 HIDDEN struct bu_cmdtab cmdtab[] = {
-#if defined(DM_X) || defined(_WIN32)
 	{"dm_validXType",	dm_validXType_tcl},
 	{"dm_bestXType",	dm_bestXType_tcl},
-#endif
 	{(char *)0,		(int (*)())0}
 };
 
@@ -93,13 +89,8 @@ Dm_Init(Tcl_Interp *interp)
 	return TCL_OK;
 }
 
-#if defined(DM_X) || defined(_WIN32)
 HIDDEN int
-dm_validXType_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int     argc;
-     char    **argv;
+dm_validXType_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct bu_vls	vls;
 	Tcl_Obj		*obj;
@@ -125,11 +116,7 @@ dm_validXType_tcl(clientData, interp, argc, argv)
 }
 
 HIDDEN int
-dm_bestXType_tcl(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+dm_bestXType_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	Tcl_Obj		*obj;
 
@@ -151,7 +138,6 @@ char    **argv;
 	Tcl_SetObjResult(interp, obj);
 	return TCL_OK;
 }
-#endif
 
 /*
  * Local Variables:

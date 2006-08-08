@@ -43,101 +43,87 @@ int dm_validXType(char *dpy_string, char *name);
 char *dm_bestXType(char *dpy_string);
 
 int
-dm_validXType(char	*dpy_string,
-	      char	*name)
+dm_validXType(char *dpy_string, char *name)
 {
 	int val = 0;
 
 #ifdef HAVE_XOPENDISPLAY
 	/* Here we assume the X server supports OpenGL */
 	Display *dpy;
-	int return_val;
 
 	if ((dpy = XOpenDisplay(dpy_string)) == NULL) {
-		bu_log("dm_validXType: failed to open display - %s\n", dpy_string);
-		return val;
+	    bu_log("dm_validXType: failed to open display - %s\n", dpy_string);
+	    return 0;
 	}
 
 #  ifdef DM_OGL
-	if (!strcmp(name, "ogl") &&
-	    XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val))
+	if (!strcmp(name, "ogl")) {
+	    int return_val;
+	    if (dpy && XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
 		val = 1;
-	else
-#  endif
-#  ifdef DM_X
-		if (!strcmp(name, "X"))
-			val = 1;
-#  endif
+	    }
+	}
+#  endif /* DM_OGL */
 
 	XCloseDisplay(dpy);
-
-#else /* HAVE_XOPENDISPLAY */
-
-#  ifdef DM_WGL
-	if (!strcmp(name, "wgl"))
-		return 1;
-#  endif
-#  ifdef DM_OGL
-	if (!strcmp(name, "ogl"))
-		return 1;
-#  endif
-#  ifdef DM_X
-	if (!strcmp(name, "X"))
-		return 1;
-#  endif
-
 #endif /* HAVE_XOPENDISPLAY */
 
-  return val;
+#ifdef DM_X
+	if (!strcmp(name, "X"))
+	    val = 1;
+#endif /* DM_X */
+
+#ifdef DM_OGL
+	if (!strcmp(name, "ogl")) {
+	    val = 1;
+	}
+#endif /* DM_OGL */
+
+#ifdef DM_WGL
+	if (!strcmp(name, "wgl"))
+	    return 1;
+#endif /* DM_WGL */
+
+	return val;
 }
 
 char *
 dm_bestXType(char *dpy_string)
 {
-	char *name = (char *)NULL;
+    char *name = (char *)NULL;
 
 #ifdef HAVE_XOPENDISPLAY
-	/* Here we assume the X server supports OpenGL */
-	Display *dpy;
-	int return_val;
+    /* Here we assume the X server supports OpenGL */
+    Display *dpy;
+    int return_val;
 
-	if ((dpy = XOpenDisplay(dpy_string)) == NULL) {
-		bu_log("dm_bestXType: failed to open display - %s\n", dpy_string);
-		return name;
-	}
+    if ((dpy = XOpenDisplay(dpy_string)) == NULL) {
+	bu_log("dm_bestXType: failed to open display - %s\n", dpy_string);
+	return NULL;
+    }
 
 #  ifdef DM_OGL
-	if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
-		name = "ogl";
-	}
-#    ifdef DM_X
-	else {
-	    name = "X";
-	}
-#    endif /* DM_X */
+    if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
+	name = "ogl";
+    }
 #  endif  /* DM_OGL */
 
-#ifdef DM_X
-		name = "X";
-#endif
-
-	XCloseDisplay(dpy);
-
-#else /* HAVE_XOPENDISPLAY */
-
-#  ifdef DM_WGL
-	return "wgl";
-#  endif
-#  ifdef DM_OGL
-	return "ogl";
-#  endif
-#  ifdef DM_X
-	return "X";
-#  endif
-
+    XCloseDisplay(dpy);
 #endif /* HAVE_XOPENDISPLAY */
 
-	return name;
+#ifdef DM_WGL
+    return "wgl";
+#endif
+
+#ifdef DM_OGL
+    return "ogl";
+#endif
+
+#ifdef DM_X
+    return "X";
+#endif
+
+    return name;
 }
 
 /*

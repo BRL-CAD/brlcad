@@ -52,13 +52,13 @@ extern struct dm *ps_open(Tcl_Interp *interp, int argc, char **argv);
 
 #ifdef DM_X
 extern struct dm *X_open();
+#endif /* DM_X */
 
 #ifdef DM_OGL
 extern struct dm *ogl_open();
 extern void ogl_fogHint();
 extern int ogl_share_dlist();
 #endif /* DM_OGL */
-#endif /* DM_X */
 
 #ifdef DM_WGL
 extern struct dm *wgl_open();
@@ -77,11 +77,9 @@ dm_open(Tcl_Interp *interp, int type, int argc, char **argv)
 		return plot_open(interp, argc, argv);
 	case DM_TYPE_PS:
 		return ps_open(interp, argc, argv);
-#ifndef _WIN32
 #ifdef DM_X
 	case DM_TYPE_X:
 		return X_open(interp, argc, argv);
-#endif
 #endif
 #ifdef DM_OGL
 	case DM_TYPE_OGL:

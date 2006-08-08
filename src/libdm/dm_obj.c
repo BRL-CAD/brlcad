@@ -283,7 +283,7 @@ dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct dm		*dmp;
 	struct bu_vls		vls;
 	int			name_index = 1;
-	int			type;
+	int			type = DM_TYPE_BAD;
 	Tcl_Obj			*obj;
 
 	obj = Tcl_GetObjResult(interp);
@@ -317,48 +317,31 @@ dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 	}
 
-#ifndef _WIN32
-#ifdef DM_X
 	/* find display manager type */
+#ifdef DM_X
 	if (argv[2][0] == 'X' || argv[2][0] == 'x')
-		type = DM_TYPE_X;
+	    type = DM_TYPE_X;
+#endif /* DM_X */
+
 #ifdef DM_OGL
-	else if (!strcmp(argv[2], "ogl"))
-		type = DM_TYPE_OGL;
+	if (!strcmp(argv[2], "ogl"))
+	    type = DM_TYPE_OGL;
 #endif /* DM_OGL */
-#if 0
-	/* XXX - not yet ready to handle these display types */
-	else if (!strcmp(argv[2], "ps"))
-		type = DM_TYPE_PS;
-	else if (!strcmp(argv[2], "plot"))
-		type = DM_TYPE_PLOT;
-	else if (!strcmp(argv[2], "nu"))
-		type = DM_TYPE_NULL;
-#endif
-	else {
+
+#ifdef DM_WGL
+	if (!strcmp(argv[2], "wgl"))
+	    type = DM_TYPE_WGL;
+#endif /* DM_WGL */
+
+	if (type == DM_TYPE_BAD) {
 		Tcl_AppendStringsToObj(obj,
 				       "Unsupported display manager type - ",
 				       argv[2], "\n",
-				       "The supported types are: X, ogl, ps, plot and nu",
+				       "The supported types are: X, ogl, wgl, and nu",
 				       (char *)NULL);
 		Tcl_SetObjResult(interp, obj);
 		return TCL_ERROR;
 	}
-#else /* !DM_X */
-	Tcl_AppendStringsToObj(obj, "dmo_open: no supported display types", (char *)NULL);
-	Tcl_SetObjResult(interp, obj);
-	return TCL_ERROR;
-#endif /* DM_X */
-
-#else /* _WIN32 */
-#ifdef DM_WGL
-	if (!strcmp(argv[2], "wgl"))
-	    type = DM_TYPE_WGL;
-#else /* DM_WGL */
-	if (!strcmp(argv[2], "ogl"))
-	    type = DM_TYPE_OGL;
-#endif /* DM_WGL */
-#endif /* _WIN32 */ 
 
 	{
 		int i;
@@ -3592,7 +3575,6 @@ dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_OK;
 	}
 
-#ifdef DM_X
 	if (argc == 3 || argc == 4) {
 		int width, height;
 
@@ -3623,10 +3605,6 @@ dmo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
-#else
-	/* do nothing for now */
-	return TCL_OK;
-#endif
 }
 
 /*
