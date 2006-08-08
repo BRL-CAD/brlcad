@@ -23,11 +23,13 @@ libtclcad_la_SOURCES = \
 	$(SRCS) \
 	vers.c
 
+EXTRA_DIST = \
+	libtclcad.dsp \
+	vers_win.c
+
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh tclcad_version "BRL-CAD Routines for Tcl/Tk" > $@
-
-EXTRA_DIST = vers_win.c
 
 CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
