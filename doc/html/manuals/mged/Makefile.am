@@ -14,7 +14,6 @@ htmldocs_DATA = \
 	bool.gif \
 	brlcad_glossary.html \
 	brlcad_solids.html \
-	bugs \
 	build_def_index.sh \
 	cmd_line_ed.html \
 	concl.html \
