@@ -628,11 +628,11 @@ light_setup(register struct region *rp,
     lsp->lt_infinite = 0;
     lsp->lt_rp = rp;
     lsp->lt_pt_count = 0;
-    memset(lsp->lt_sample_pts, 0, sizeof(lsp->lt_sample_pts));
+    lsp->lt_sample_pts = (struct light_pt *)bu_calloc(SOME_LIGHT_SAMPLES, sizeof(struct light_pt), "callocate light samples array");
     lsp->lt_name = bu_strdup( rp->reg_name );
 
     if (bu_struct_parse( matparm, light_parse, (char *)lsp ) < 0 )  {
-	bu_free( (char *)lsp, "light_specific" );
+	light_free((char *)lsp);
 	return(-1);
     }
 
@@ -767,6 +767,9 @@ light_free(char *cp)
     if (lsp->lt_name )  {
 	bu_free( lsp->lt_name, "light name" );
 	lsp->lt_name = (char *)0;
+    }
+    if (lsp->lt_sample_pts) {
+	bu_free(lsp->lt_sample_pts, "free light samples array");
     }
     lsp->l.magic = 0;	/* sanity */
     bu_free( (char *)lsp, "light_specific" );

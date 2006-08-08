@@ -89,8 +89,8 @@ struct light_specific {
 	vect_t	lt_aim;		/* Unit vector - light beam direction */
 	char	*lt_name;	/* identifying string */
 	struct	region *lt_rp;	/* our region of origin */
-	int	lt_pt_count;
-	struct light_pt lt_sample_pts[SOME_LIGHT_SAMPLES];
+	int	lt_pt_count;	/* count of how many lt_sample_pts have been set */
+	struct light_pt *lt_sample_pts; /* dynamically allocated list of light sample points */
 	fastf_t lt_parse_pt[6];
 };
 #define LIGHT_NULL	((struct light_specific *)0)
