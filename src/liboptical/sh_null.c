@@ -46,8 +46,10 @@
 
 extern int rr_render(struct application *ap, struct partition *pp, struct shadework *swp);
 
-HIDDEN int	null_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), null_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	null_print(register struct region *rp, char *dp), null_free(char *cp);
+HIDDEN int	sh_null_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int	sh_null_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void	sh_null_print(register struct region *rp, char *dp);
+HIDDEN void	sh_null_free(char *cp);
 
 /* The "mfuncs" table describes what the user interface may call this shader.
  * The null shader may be referred to as null or invisible.  Note that the
@@ -55,10 +57,10 @@ HIDDEN void	null_print(register struct region *rp, char *dp), null_free(char *cp
  */
 struct mfuncs null_mfuncs[] = {
 	{MF_MAGIC,	"null",		0,		MFI_HIT,	0,
-	null_setup,	null_render,	null_print,	null_free },
+	sh_null_setup,	sh_null_render,	sh_null_print,	sh_null_free },
 
 	{MF_MAGIC,	"invisible",		0,		MFI_HIT,	0,
-	null_setup,	null_render,	null_print,	null_free },
+	sh_null_setup,	sh_null_render,	sh_null_print,	sh_null_free },
 
 	{0,		(char *)0,	0,		0,		0,
 	0,		0,		0,		0 }
@@ -75,11 +77,11 @@ struct mfuncs null_mfuncs[] = {
  *
  *  The null shader has nothing to do during setup since it doesn't actually
  *  have anything to do during render0.  It's setup returns 0 since there's no
- *  need to keep any region info.  This means that null_render will not even
+ *  need to keep any region info.  This means that sh_null_render will not even
  *  get called.
  */
 HIDDEN int
-null_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip ) {
+sh_null_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip ) {
 
 	/* no point to check the arguments since we do nothing with them.  we leave the error
 	 * checking to elsewhere when used.
@@ -104,7 +106,7 @@ null_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, stru
  *  though, since it shouldn't normally be called.
  */
 HIDDEN int
-null_render( struct application *ap, struct partition *pp, struct shadework *swp, char *dp ) {
+sh_null_render( struct application *ap, struct partition *pp, struct shadework *swp, char *dp ) {
 
 	/* check the validity of the arguments we got */
 	RT_AP_CHECK(ap);
@@ -113,7 +115,7 @@ null_render( struct application *ap, struct partition *pp, struct shadework *swp
 	 * their validity
 	 */
 
-	bu_log("Who called null_render explicitly?");
+	bu_log("Who called sh_null_render explicitly?");
 
 	/* here is what actually makes the object invisible/null instead of being a
 	 * black void (if render ever is called).
@@ -130,7 +132,7 @@ null_render( struct application *ap, struct partition *pp, struct shadework *swp
  * This routine is called if setup fails (which it never should).
  */
 HIDDEN void
-null_print( register struct region *rp, char *dp ) {
+sh_null_print( register struct region *rp, char *dp ) {
 	bu_log("%S uses the null shader\n", rp->reg_name);
 }
 
@@ -145,7 +147,7 @@ null_print( register struct region *rp, char *dp ) {
  *  The null shader allocates nothing.  Therefore it releases nothing.
  */
 HIDDEN void
-null_free( char *cp ) {
+sh_null_free( char *cp ) {
 }
 
 /*
