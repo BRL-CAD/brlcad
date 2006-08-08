@@ -7893,7 +7893,7 @@ sedit_accept(void)
 	if (dbip == DBI_NULL)
 		return;
 
-	if (not_state(ST_S_EDIT, "Primitive edit accept"))
+	if (not_state(ST_S_EDIT, "Solid edit accept"))
 		return;
 
 	if (dbip->dbi_read_only) {
@@ -9456,8 +9456,7 @@ f_sedit_apply(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	CHECK_DBI_NULL;
 
-	if (not_state(ST_S_EDIT, "Primitive edit accept")) {
-		bu_log("Must be in solid edit state!\n");
+	if (not_state(ST_S_EDIT, "Solid edit apply")) {
 		return TCL_ERROR;
 	}
 
