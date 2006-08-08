@@ -1806,6 +1806,7 @@ AC_CHECK_FUNCS(\
 	munmap \
 	nl_langinfo \
 	panic \
+	pipe \
 	pow \
 	prtcl \
 	putenv \
