@@ -98,7 +98,7 @@ static Cursor	cursor =
 	{
 #include "./sgicursor.h"
 	};
-_LOCAL_ int	sgw_dopen(),
+HIDDEN int	sgw_dopen(),
 		sgw_dclose(),
 		sgw_dreset(),
 		sgw_dclear(),
@@ -148,9 +148,9 @@ FBIO sgiw_interface =
 		};
 
 
-_LOCAL_ int _sgw_cmap_flag;
+HIDDEN int _sgw_cmap_flag;
 
-_LOCAL_ ColorMap _sgw_cmap;
+HIDDEN ColorMap _sgw_cmap;
 
 static RGBpixel	rgb_table[MAP_SIZE];
 static int	rgb_ct = MAP_RESERVED;
@@ -222,7 +222,7 @@ register RGBpixel	*pixelp;
 
 #define if_mode		u1.l		/* Local flag for mode */
 
-_LOCAL_ int
+HIDDEN int
 sgw_dopen( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
@@ -293,7 +293,7 @@ int	width, height;
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 sgw_dclose( ifp )
 FBIO	*ifp;
 {
@@ -308,7 +308,7 @@ FBIO	*ifp;
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 sgw_dreset( ifp )
 FBIO	*ifp;
 {
@@ -321,7 +321,7 @@ FBIO	*ifp;
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 sgw_dclear( ifp, pp )
 FBIO	*ifp;
 RGBpixel	*pp;
@@ -335,7 +335,7 @@ RGBpixel	*pp;
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 sgw_bread( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 register int	x, y;
@@ -397,7 +397,7 @@ int	count;
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 sgw_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 register int	x, y;
@@ -470,7 +470,7 @@ int	count;
 	return	0;
 	}
 
-_LOCAL_ int
+HIDDEN int
 sgw_viewport_set( ifp, left, top, right, bottom )
 FBIO	*ifp;
 int	left, top, right, bottom;
@@ -485,7 +485,7 @@ int	left, top, right, bottom;
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 sgw_cmread( ifp, cmp )
 FBIO	*ifp;
 register ColorMap	*cmp;
@@ -502,7 +502,7 @@ register ColorMap	*cmp;
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 sgw_cmwrite( ifp, cmp )
 FBIO	*ifp;
 register ColorMap	*cmp;
@@ -529,7 +529,7 @@ register ColorMap	*cmp;
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 sgw_zoom_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
@@ -548,7 +548,7 @@ int	x, y;
 	return	0;
 	}
 
-_LOCAL_ int
+HIDDEN int
 sgw_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char	*bits;
@@ -579,7 +579,7 @@ int		xorig, yorig;
 	return	0;
 	}
 
-_LOCAL_ int
+HIDDEN int
 sgw_cmemory_addr( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;

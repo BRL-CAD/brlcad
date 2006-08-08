@@ -85,34 +85,34 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 
 /* Internal callbacks etc.*/
-_LOCAL_ void		do_event();
-_LOCAL_ void		expose_callback();
+HIDDEN void		do_event();
+HIDDEN void		expose_callback();
 void wgl_configureWindow FB_ARGS((FBIO *ifp, int width, int height));
 
 /* Other Internal routines */
-_LOCAL_ void		wgl_clipper();
-_LOCAL_ int		wgl_getmem();
-_LOCAL_ void		backbuffer_to_screen();
-_LOCAL_ void		wgl_cminit();
+HIDDEN void		wgl_clipper();
+HIDDEN int		wgl_getmem();
+HIDDEN void		backbuffer_to_screen();
+HIDDEN void		wgl_cminit();
 #if 0
-_LOCAL_ void		reorder_cursor();
+HIDDEN void		reorder_cursor();
 #endif
-_LOCAL_ PIXELFORMATDESCRIPTOR *	wgl_choose_visual();
-_LOCAL_ int		is_linear_cmap();
+HIDDEN PIXELFORMATDESCRIPTOR *	wgl_choose_visual();
+HIDDEN int		is_linear_cmap();
 
-_LOCAL_ int	wgl_nwindows = 0; 	/* number of open windows */
-_LOCAL_ int	multiple_windows = 0;	/* someone wants to be ready
+HIDDEN int	wgl_nwindows = 0; 	/* number of open windows */
+HIDDEN int	multiple_windows = 0;	/* someone wants to be ready
 					 * for multiple windows, at the
 					 * expense of speed.
 					 */
-/*_LOCAL_	XColor	color_cell[256];*/		/* used to set colormap */
+/*HIDDEN	XColor	color_cell[256];*/		/* used to set colormap */
 
 int wgl_refresh();
 int wgl_open_existing();
 int wgl_close_existing();
 int _wgl_open_existing();
 
-_LOCAL_ int	wgl_open(),
+HIDDEN int	wgl_open(),
 		wgl_close(),
 		wgl_clear(),
 		wgl_read(),
@@ -335,7 +335,7 @@ struct wglinfo {
 #define MODE_15NORMAL	(0<<14)
 #define MODE_15ZAP	(1<<14)		/* zap the shared memory segment */
 
-_LOCAL_ struct modeflags {
+HIDDEN struct modeflags {
 	char	c;
 	long	mask;
 	long	value;
@@ -404,7 +404,7 @@ _LOCAL_ struct modeflags {
  *  memory to be satisfied.  In special cases, the values used here
  *  might need to be increased.
  */
-_LOCAL_ int
+HIDDEN int
 wgl_getmem( ifp )
 FBIO	*ifp;
 {
@@ -464,7 +464,7 @@ wgl_zapmem()
 /*
  *			S I G K I D
  */
-static void
+HIDDEN void
 #if _XOPEN_SOURCE
 sigkid( pid )
 int pid;
@@ -482,7 +482,7 @@ sigkid()
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
  * rectangle of the frame buffer
  */
-_LOCAL_ void
+HIDDEN void
 wgl_xmit_scanlines( ifp, ybase, nlines, xbase, npix )
 register FBIO	*ifp;
 int		ybase;
@@ -668,7 +668,7 @@ LONG WINAPI MainWndProc (
 
     return 1;
 }
-_LOCAL_ int
+HIDDEN int
 wgl_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
@@ -1031,7 +1031,7 @@ _wgl_open_existing(FBIO *ifp,
   return 0;
 }
 
-_LOCAL_ int
+HIDDEN int
 wgl_final_close( ifp )
 FBIO	*ifp;
 {
@@ -1075,7 +1075,7 @@ FBIO	*ifp;
 }
 
 
-_LOCAL_ int
+HIDDEN int
 wgl_close( ifp )
 FBIO	*ifp;
 {
@@ -1161,7 +1161,7 @@ wgl_close_existing(FBIO *ifp)
  *
  *	Handle any pending input events
  */
-_LOCAL_ int
+HIDDEN int
 wgl_poll(ifp)
 FBIO	*ifp;
 {
@@ -1178,7 +1178,7 @@ FBIO	*ifp;
  *
  *  Free shared memory resources, and close.
  */
-_LOCAL_ int
+HIDDEN int
 wgl_free( ifp )
 FBIO	*ifp;
 {
@@ -1196,7 +1196,7 @@ FBIO	*ifp;
 }
 
 
-_LOCAL_ int
+HIDDEN int
 wgl_clear( ifp, pp )
 FBIO	*ifp;
 unsigned char	*pp;		/* pointer to beginning of memory segment*/
@@ -1276,7 +1276,7 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 /*
  *			W G L _ V I E W
  */
-_LOCAL_ int
+HIDDEN int
 wgl_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
 int	xcenter, ycenter;
@@ -1356,7 +1356,7 @@ int	xzoom, yzoom;
 /*
  *			W G L _ G E T V I E W
  */
-_LOCAL_ int
+HIDDEN int
 wgl_getview( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
 int	*xcenter, *ycenter;
@@ -1373,7 +1373,7 @@ int	*xzoom, *yzoom;
 }
 
 
-_LOCAL_ int
+HIDDEN int
 wgl_read( ifp, x, y, pixelp, count ) /*read count pixels into pixelp starting at x,y*/
 FBIO	*ifp;
 int	x, y;
@@ -1428,7 +1428,7 @@ int	count;
 
 
 
-_LOCAL_ int
+HIDDEN int
 wgl_write( ifp, xstart, ystart, pixelp, count ) /*write count pixels from pixelp starting at xstart,ystart*/
 FBIO	*ifp;
 int	xstart, ystart;
@@ -1573,7 +1573,7 @@ int	count;
  *  SGI internal form, and then arrange to have them sent to
  *  the screen separately.
  */
-_LOCAL_ int
+HIDDEN int
 wgl_writerect(FBIO *ifp,
 	      int xmin,
 	      int ymin,
@@ -1647,7 +1647,7 @@ wgl_writerect(FBIO *ifp,
  *  SGI internal form, and then arrange to have them sent to
  *  the screen separately.
  */
-_LOCAL_ int
+HIDDEN int
 wgl_bwwriterect(FBIO *ifp,
 		int xmin,
 		int ymin,
@@ -1715,7 +1715,7 @@ wgl_bwwriterect(FBIO *ifp,
 
 
 
-_LOCAL_ int
+HIDDEN int
 wgl_rmap(register FBIO *ifp,
 	 register ColorMap *cmp)
 {
@@ -1739,7 +1739,7 @@ wgl_rmap(register FBIO *ifp,
  *  Returns 1 for linear map, 0 for non-linear map
  *  (ie, non-identity map).
  */
-_LOCAL_ int
+HIDDEN int
 is_linear_cmap(register FBIO *ifp)
 {
 	register int i;
@@ -1755,7 +1755,7 @@ is_linear_cmap(register FBIO *ifp)
 /*
  *			W G L _ C M I N I T
  */
-_LOCAL_ void
+HIDDEN void
 wgl_cminit(register FBIO *ifp)
 {
 	register int	i;
@@ -1770,7 +1770,7 @@ wgl_cminit(register FBIO *ifp)
 /*
  *			 W G L _ W M A P
  */
-_LOCAL_ int
+HIDDEN int
 wgl_wmap(register FBIO *ifp,
 	 register const ColorMap *cmp)
 {
@@ -1836,7 +1836,7 @@ wgl_wmap(register FBIO *ifp,
 /*
  *			W G L _ H E L P
  */
-_LOCAL_ int
+HIDDEN int
 wgl_help(FBIO *ifp)
 {
 	struct	modeflags *mfp;
@@ -1902,7 +1902,7 @@ wgl_help(FBIO *ifp)
 }
 
 
-_LOCAL_ int
+HIDDEN int
 wgl_setcursor(FBIO *ifp,
 	      const unsigned char *bits,
 	      int xbits,
@@ -1914,7 +1914,7 @@ wgl_setcursor(FBIO *ifp,
 }
 
 
-_LOCAL_ int
+HIDDEN int
 wgl_cursor(FBIO *ifp, int mode, int x, int y)
 {
 return 0;
@@ -1922,7 +1922,7 @@ return 0;
 
 
 
-_LOCAL_ int
+HIDDEN int
 wgl_flush(FBIO *ifp)
 {
 	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )  {
@@ -1947,7 +1947,7 @@ wgl_flush(FBIO *ifp)
 }
 
 #if 0
-_LOCAL_ int
+HIDDEN int
 fb_cnull(FBIO *ifp)
 {
 	return(0);
@@ -2033,7 +2033,7 @@ wgl_clipper(register FBIO *ifp)
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  */
 
-_LOCAL_ void
+HIDDEN void
 do_event(FBIO *ifp)
 {
 	MSG msg;
@@ -2057,7 +2057,7 @@ do_event(FBIO *ifp)
     Sleep( 250 );
 }
 
-_LOCAL_ void
+HIDDEN void
 expose_callback(FBIO *ifp,
 		int eventPtr)
 {
@@ -2223,7 +2223,7 @@ wgl_configureWindow(FBIO *ifp,
  * by ybits bits in size.
  *
  */
-_LOCAL_ void
+HIDDEN void
 reorder_cursor(char *dst,
 	       char *src,
 	       int xbits,
@@ -2248,7 +2248,7 @@ reorder_cursor(char *dst,
  * to the front buffer. Do one scanline specified by one_y, or whole
  * screen if one_y equals -1.
  */
-_LOCAL_ void
+HIDDEN void
 backbuffer_to_screen(register FBIO *ifp,
 		     int one_y)
 {
@@ -2344,7 +2344,7 @@ backbuffer_to_screen(register FBIO *ifp,
  *
  * Return NULL on failure.
  */
-_LOCAL_ PIXELFORMATDESCRIPTOR *
+HIDDEN PIXELFORMATDESCRIPTOR *
 wgl_choose_visual(FBIO *ifp)
 {
 	int iPixelFormat ;

@@ -115,7 +115,7 @@ static Cursor	cursor =
 #include "./sgicursor.h"
 	};
 
-_LOCAL_ int	sgi_open(),
+HIDDEN int	sgi_open(),
 		sgi_close(),
 		sgi_clear(),
 		sgi_read(),
@@ -177,9 +177,9 @@ FBIO sgi_interface =
 /* Interface to the 12-bit window version */
 int		sgw_dopen();
 
-_LOCAL_ Colorindex get_Color_Index();
-_LOCAL_ void	sgw_inqueue();
-_LOCAL_ void	sgi_rectf_pix();
+HIDDEN Colorindex get_Color_Index();
+HIDDEN void	sgw_inqueue();
+HIDDEN void	sgi_rectf_pix();
 static int	is_linear_cmap();
 
 struct sgi_cmap {
@@ -265,7 +265,7 @@ static RGBpixel	rgb_table[4096];
  *  memory to be satisfied.  In special cases, the values used here
  *  might need to be increased.
  */
-_LOCAL_ int
+HIDDEN int
 sgi_getmem( ifp )
 FBIO	*ifp;
 {
@@ -364,7 +364,7 @@ sgi_zapmem()
  *  repaint the screen from the shared memory buffer,
  *  which stores RGB pixels.
  */
-_LOCAL_ int
+HIDDEN int
 sgi_repaint( ifp )
 register FBIO	*ifp;
 {
@@ -654,7 +654,7 @@ register FBIO	*ifp;
 /*
  *			S G I _ D O P E N
  */
-_LOCAL_ int
+HIDDEN int
 sgi_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
@@ -758,7 +758,7 @@ int	width, height;
  *  means that images can be created AND READ BACK from
  *  separate programs, just like we do on the real framebuffers.
  */
-_LOCAL_ int
+HIDDEN int
 sgi_close( ifp )
 FBIO	*ifp;
 {
@@ -804,7 +804,7 @@ FBIO	*ifp;
 /*
  *			S G I _ C L E A R
  */
-_LOCAL_ int
+HIDDEN int
 sgi_clear( ifp, pp )
 FBIO	*ifp;
 register RGBpixel	*pp;
@@ -853,7 +853,7 @@ register RGBpixel	*pp;
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 sgi_poll(ifp)
 FBIO	*ifp;
 {
@@ -861,7 +861,7 @@ FBIO	*ifp;
 		sgw_inqueue(ifp);
 }
 
-_LOCAL_ int
+HIDDEN int
 sgi_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
 int	xcenter, ycenter;
@@ -899,7 +899,7 @@ int	xzoom, yzoom;
 /*
  *			S G I _ R E A D
  */
-_LOCAL_ int
+HIDDEN int
 sgi_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
@@ -945,7 +945,7 @@ int	count;
 /*
  *			S G I _ B W R I T E
  */
-_LOCAL_ int
+HIDDEN int
 sgi_write( ifp, xmem, ymem, pixelp, count )
 FBIO	*ifp;
 int	xmem, ymem;
@@ -1207,7 +1207,7 @@ int	count;
 /*
  *			S G I _ C M R E A D
  */
-_LOCAL_ int
+HIDDEN int
 sgi_rmap( ifp, cmp )
 register FBIO	*ifp;
 register ColorMap	*cmp;
@@ -1234,7 +1234,7 @@ register ColorMap	*cmp;
  *  Returns 1 for linear map, 0 for non-linear map
  *  (ie, non-identity map).
  */
-static int
+HIDDEN int
 is_linear_cmap(ifp)
 register FBIO	*ifp;
 {
@@ -1251,7 +1251,7 @@ register FBIO	*ifp;
 /*
  *			 S G I _ C M W R I T E
  */
-_LOCAL_ int
+HIDDEN int
 sgi_wmap( ifp, cmp )
 register FBIO	*ifp;
 register ColorMap	*cmp;
@@ -1289,7 +1289,7 @@ register ColorMap	*cmp;
 /*
  *			S G I _ C U R S _ S E T
  */
-_LOCAL_ int
+HIDDEN int
 sgi_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char	*bits;
@@ -1327,7 +1327,7 @@ int		xorig, yorig;
 /*
  *			S G I _ C M E M O R Y _ A D D R
  */
-_LOCAL_ int
+HIDDEN int
 sgi_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
@@ -1381,7 +1381,7 @@ int	x, y;
 /*
  *			g e t _ C o l o r _ I n d e x
  */
-_LOCAL_ Colorindex
+HIDDEN Colorindex
 get_Color_Index( ifp, pixelp )
 register FBIO		*ifp;
 register RGBpixel	*pixelp;
@@ -1578,7 +1578,7 @@ int	width, height;
  *  Called when a qtest() indicates that there is a window event.
  *  Process all events, so that we don't loop on recursion to sgw_bwrite.
  */
-_LOCAL_ void
+HIDDEN void
 sgw_inqueue(ifp)
 register FBIO *ifp;
 {
@@ -1617,7 +1617,7 @@ register FBIO *ifp;
 	}
 }
 
-_LOCAL_ void
+HIDDEN void
 sgi_rectf_pix( ifp, l, b, r, t, pixelp )
 FBIO		*ifp;
 Scoord		l, b, r, t;
@@ -1658,7 +1658,7 @@ RGBpixel	*pixelp;
 	return;
 }
 
-_LOCAL_ int
+HIDDEN int
 sgi_help( ifp )
 FBIO	*ifp;
 {

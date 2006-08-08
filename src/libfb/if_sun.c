@@ -95,7 +95,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern char *shmat();
 
-static int	linger();
+HIDDEN int	linger();
 
 /* CONFIGURATION NOTES:
 
@@ -124,7 +124,7 @@ static int	linger();
  ((x)*ifp->if_xzoom-(ifp->if_xcenter*ifp->if_xzoom-ifp->if_width/2))
 #define YIMAGE2SCR( y ) \
  ((ifp->if_height-1)-((y)*ifp->if_yzoom-(ifp->if_ycenter*ifp->if_yzoom - ifp->if_height/2)))
-_LOCAL_ int	sun_open(),
+HIDDEN int	sun_open(),
 		sun_close(),
 		sun_clear(),
 		sun_read(),
@@ -183,7 +183,7 @@ FBIO sun_interface = {
 		0		/* debug */
 };
 
-static int	is_linear_cmap();
+HIDDEN int	is_linear_cmap();
 
 /*
  * Our image (window) pixwin
@@ -315,7 +315,7 @@ static double *noise_ptr = table, *end_table = &table[10];
  *	Convert a single RGBpixel to its corresponding entry in the Sun
  *	colormap, dithering as we go.
  */
-_LOCAL_ unsigned char convDITHERGB(v)
+HIDDEN unsigned char convDITHERGB(v)
 register RGBpixel *v;
 {
 	register int r, g, b;
@@ -477,14 +477,14 @@ static struct modeflags {
 	{ '\0', 0, 0, "" }
 };
 
-_LOCAL_ int
+HIDDEN int
 sun_sigwinch( sig )
 {
 	sun_damaged = TRUE;
 	return	sig;
 }
 
-_LOCAL_ int
+HIDDEN int
 sun_sigalarm( sig )
 {
 	if( imagepw == (Pixwin *) NULL )
@@ -501,7 +501,7 @@ sun_sigalarm( sig )
 }
 
 #ifdef INEFFICIENT
-_LOCAL_ void
+HIDDEN void
 sun_storepixel( ifp, x, y, p, count )
 FBIO			*ifp;
 int			x, y;
@@ -521,7 +521,7 @@ register int		count;
 }
 #endif
 
-_LOCAL_ void
+HIDDEN void
 sun_storebackground( ifp, x, y, p, count )
 FBIO			*ifp;
 int			x, y;
@@ -553,7 +553,7 @@ register int		count;
 speedup when bracketing raster op routines.  This may pan out
 differently when other processes are actively competing for raster ops.
 */
-_LOCAL_ void sun_lock( ifp ) FBIO *ifp;
+HIDDEN void sun_lock( ifp ) FBIO *ifp;
 {
 	if( sun_pixwin ) {
 		 /* Lock the display and get the cursor out of the way. */
@@ -562,7 +562,7 @@ _LOCAL_ void sun_lock( ifp ) FBIO *ifp;
 	return;
 }
 
-_LOCAL_ void
+HIDDEN void
 sun_unlock( ifp )
 FBIO	*ifp;
 {
@@ -581,7 +581,7 @@ mpr_static( dither_mpr, DITHERSZ, DITHERSZ, 1, (short *)dither_mpr_buf );
 static char	pixel_mpr_buf[1];
 mpr_static( pixel_mpr, 1, 1, 8, (short *)pixel_mpr_buf );
 
-_LOCAL_ void
+HIDDEN void
 sun_rectclear( ifp, xlft, ytop, width, height, pp )
 FBIO		*ifp;
 int		xlft, ytop, width, height;
@@ -643,7 +643,7 @@ mpr_static( scan8_mpr, XMAXWINDOW, DITHERSZ, 8, (short *)scan_mpr_buf );
  * XXX - 512 calls to scanwrite consumed 10.8 seconds or 78% of
  * the runtime of pix-fb dragon.pix on a monochrome Sun.
  */
-_LOCAL_ void
+HIDDEN void
 sun_scanwrite( ifp, xlft, ybtm, xrgt, pp )
 FBIO		*ifp;
 int		xlft;
@@ -730,7 +730,7 @@ RGBpixel	*pp;
 	return;
 }
 
-_LOCAL_ void
+HIDDEN void
 sun_rectwrite( ifp, xmin, ymin, xmax, ymax, buf, offset )
 register FBIO		*ifp;
 int			xmin, ymin;
@@ -749,7 +749,7 @@ register int		offset;
 	return;
 }
 
-_LOCAL_ void
+HIDDEN void
 sun_repaint( ifp )
 register FBIO	*ifp;
 {
@@ -825,7 +825,7 @@ register FBIO	*ifp;
  *  previous contents of the frame buffer still exist, and can be again
  *  accessed, even though the windows are transient, per-process.
  */
-_LOCAL_ int
+HIDDEN int
 sun_getmem( ifp )
 FBIO	*ifp;
 {
@@ -887,7 +887,7 @@ common:
 /*
  *			S U N _ Z A P M E M
  */
-_LOCAL_ void
+HIDDEN void
 sun_zapmem()
 {
  	int	shmid;
@@ -909,7 +909,7 @@ sun_zapmem()
 /*
  *			S U N _ O P E N
  */
-_LOCAL_ int
+HIDDEN int
 sun_open(ifp, file, width, height)
 FBIO	*ifp;
 char	*file;
@@ -1139,7 +1139,7 @@ int	width, height;
 /*
  *			S U N _ C L O S E
  */
-_LOCAL_ int
+HIDDEN int
 sun_close(ifp)
 FBIO	*ifp;
 {
@@ -1193,7 +1193,7 @@ FBIO	*ifp;
 /*
  *			S U N _ P O L L
  */
-_LOCAL_ int
+HIDDEN int
 sun_poll(ifp)
 FBIO	*ifp;
 {
@@ -1206,7 +1206,7 @@ FBIO	*ifp;
  *
  *  Like close, but also releases shared memory if any.
  */
-_LOCAL_ int
+HIDDEN int
 sun_free(ifp)
 FBIO	*ifp;
 {
@@ -1253,7 +1253,7 @@ FBIO	*ifp;
 /*
  *			S U N _ C L E A R
  */
-_LOCAL_ int
+HIDDEN int
 sun_clear(ifp, pp)
 FBIO			*ifp;
 register RGBpixel	*pp;
@@ -1272,7 +1272,7 @@ register RGBpixel	*pp;
 /*
  *			S U N _ V I E W
  */
-_LOCAL_ int
+HIDDEN int
 sun_view(ifp, xcenter, ycenter, xzoom, yzoom)
 FBIO	*ifp;
 int     xcenter, ycenter;
@@ -1302,7 +1302,7 @@ int	xzoom, yzoom;
 /*
  *			S U N _ S E T C U R S O R
  */
-_LOCAL_ int
+HIDDEN int
 sun_setcursor(ifp, bits, xbits, ybits, xorig, yorig )
 FBIO		*ifp;
 unsigned char	*bits;
@@ -1336,7 +1336,7 @@ int		xorig, yorig;
 /*
  *			S U N _ C U R S O R
  */
-_LOCAL_ int
+HIDDEN int
 sun_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
@@ -1381,7 +1381,7 @@ int	x, y;
 /*
  *			S U N _ G E T C U R S O R
  */
-_LOCAL_ int
+HIDDEN int
 sun_getcursor(ifp, mode, x, y)
 FBIO	*ifp;
 int	*mode;
@@ -1394,7 +1394,7 @@ int	*x, *y;
 /*
  *			S U N _ R E A D
  */
-_LOCAL_ int
+HIDDEN int
 sun_read(ifp, x, y, p, count)
 FBIO			*ifp;
 int			x, y;
@@ -1417,7 +1417,7 @@ register int		count;
 /*
  *			S U N _ W R I T E
  */
-_LOCAL_ int
+HIDDEN int
 sun_write(ifp, x, y, p, count)
 register FBIO	*ifp;
 int		x, y;
@@ -1444,7 +1444,7 @@ register int	count;
 /*
  *			S U N _ R M A P
  */
-_LOCAL_ int
+HIDDEN int
 sun_rmap( ifp, cmp )
 register FBIO		*ifp;
 register ColorMap	*cmp;
@@ -1468,7 +1468,7 @@ register ColorMap	*cmp;
  *  Returns 1 for linear map, 0 for non-linear map
  *  (ie, non-identity map).
  */
-static int
+HIDDEN int
 is_linear_cmap(ifp)
 register FBIO	*ifp;
 {
@@ -1485,7 +1485,7 @@ register FBIO	*ifp;
 /*
  *			S U N _ W M A P
  */
-_LOCAL_ int
+HIDDEN int
 sun_wmap(ifp, cmp)
 register FBIO		*ifp;
 register ColorMap	*cmp;
@@ -1515,7 +1515,7 @@ register ColorMap	*cmp;
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 sun_help( ifp )
 FBIO	*ifp;
 {
@@ -1560,7 +1560,7 @@ Destroy_status	status;
  *  as soon as the PID changes.  Until we figure out how to get around
  *  this the parent will have to keep hanging on.
  */
-static int
+HIDDEN int
 linger( ifp )
 FBIO	*ifp;
 {

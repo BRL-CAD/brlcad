@@ -36,19 +36,14 @@
  */
 /*@}*/
 
-#ifndef INCL_FBLOCAL
-#define INCL_FBLOCAL
+#ifndef __FBLOCAL_H__
+#define __FBLOCAL_H__
 
 #define Malloc_Bomb( _bytes_ ) \
 		fb_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \
 				__FILE__, __LINE__, _bytes_ )
 
-#ifndef _LOCAL_
-/* Useful for ADB when debugging, set to nothing */
-#define _LOCAL_ static
-#endif
-
-#endif /* INCL_FBLOCAL */
+#endif /* __FBLOCAL_H__ */
 
 /*
  * Local Variables:

@@ -58,7 +58,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 #include <gdslib.h>
 
-_LOCAL_ int	ts_open(),
+HIDDEN int	ts_open(),
 		ts_close(),
 		ts_clear(),
 		ts_read(),
@@ -162,7 +162,7 @@ static struct modeflags {
  */
 static int unit = 4;
 
-_LOCAL_ int
+HIDDEN int
 ts_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
@@ -275,7 +275,7 @@ printf("Overlay Off\n");
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ts_close( ifp )
 FBIO	*ifp;
 {
@@ -283,7 +283,7 @@ FBIO	*ifp;
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ts_clear( ifp, pp )
 FBIO	*ifp;
 RGBpixel	*pp;
@@ -309,7 +309,7 @@ RGBpixel	*pp;
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ts_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
@@ -328,7 +328,7 @@ int	count;
 	return(count);
 }
 
-_LOCAL_ int
+HIDDEN int
 ts_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
@@ -375,7 +375,7 @@ int	count;
 	return(count);
 }
 
-_LOCAL_ int
+HIDDEN int
 ts_rmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
@@ -396,7 +396,7 @@ ColorMap	*cmp;
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ts_wmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
@@ -429,7 +429,7 @@ ColorMap	*cmp;
  * (having learned from the cursor routine).  But, that would mess up.
  * The two flush version is working again.  Strange....
  */
-_LOCAL_ int
+HIDDEN int
 ts_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
 int	xcenter, ycenter;
@@ -461,7 +461,7 @@ int	xzoom, yzoom;
 }
 
 /* return base^pow */
-_LOCAL_ int
+HIDDEN int
 ipow(base,pow)
 int base;
 int pow;
@@ -482,7 +482,7 @@ int pow;
  *  Note: A bug in the GDSLIB causes the yzoom factor to be read
  *  back as a power of two, rather than as a pixel replication count.
  */
-_LOCAL_ int
+HIDDEN int
 ts_getview( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
 int	*xcenter, *ycenter;
@@ -512,7 +512,7 @@ int	*xzoom, *yzoom;
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ts_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char *bits;
@@ -522,7 +522,7 @@ int	xorig, yorig;
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ts_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
@@ -568,7 +568,7 @@ int	x, y;
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ts_getcursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	*mode;
@@ -591,7 +591,7 @@ int	*x, *y;
 	printf("getcursor: %d %d %d\n", *mode, *x, *y);
 }
 
-_LOCAL_ int
+HIDDEN int
 ts_readrect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
@@ -615,7 +615,7 @@ RGBpixel	*pp;
 #endif
 }
 
-_LOCAL_ int
+HIDDEN int
 ts_writerect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
@@ -639,7 +639,7 @@ RGBpixel	*pp;
 #endif
 }
 
-_LOCAL_ int
+HIDDEN int
 ts_flush( ifp )
 FBIO	*ifp;
 {
@@ -647,7 +647,7 @@ FBIO	*ifp;
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ts_free( ifp )
 FBIO	*ifp;
 {
@@ -655,7 +655,7 @@ FBIO	*ifp;
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ts_help( ifp )
 FBIO	*ifp;
 {

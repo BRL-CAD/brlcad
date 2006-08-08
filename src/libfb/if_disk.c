@@ -73,7 +73,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define	DISK_DMA_BYTES	(16*1024/sizeof(RGBpixel)*sizeof(RGBpixel))
 #define	DISK_DMA_PIXELS	(DISK_DMA_BYTES/sizeof(RGBpixel))
 
-_LOCAL_ int	dsk_open(FBIO *ifp, char *file, int width, int height),
+HIDDEN int	dsk_open(FBIO *ifp, char *file, int width, int height),
 		dsk_close(FBIO *ifp),
 		dsk_clear(FBIO *ifp, unsigned char *bgpp),
 		dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
@@ -128,9 +128,9 @@ FBIO disk_interface = {
 
 #define if_seekpos	u5.l	/* stored seek position */
 
-_LOCAL_ int	disk_color_clear(FBIO *ifp, register unsigned char *bpp);
+HIDDEN int	disk_color_clear(FBIO *ifp, register unsigned char *bpp);
 
-_LOCAL_ int
+HIDDEN int
 dsk_open(FBIO *ifp, char *file, int width, int height)
 {
 	static char zero = 0;
@@ -181,20 +181,20 @@ dsk_open(FBIO *ifp, char *file, int width, int height)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 dsk_close(FBIO *ifp)
 {
 	return	close( ifp->if_fd );
 }
 
-_LOCAL_ int
+HIDDEN int
 dsk_free(FBIO *ifp)
 {
 	close( ifp->if_fd );
 	return unlink(ifp->if_name);
 }
 
-_LOCAL_ int
+HIDDEN int
 dsk_clear(FBIO *ifp, unsigned char *bgpp)
 {
 	static RGBpixel	black = { 0, 0, 0 };
@@ -205,7 +205,7 @@ dsk_clear(FBIO *ifp, unsigned char *bgpp)
 	return	disk_color_clear( ifp, bgpp );
 }
 
-_LOCAL_ int
+HIDDEN int
 dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
 	register long bytes = count * (long) sizeof(RGBpixel);
@@ -253,7 +253,7 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	return	bytes_read/sizeof(RGBpixel);
 }
 
-_LOCAL_ int
+HIDDEN int
 dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
 	register long	bytes = count * (long) sizeof(RGBpixel);
@@ -282,7 +282,7 @@ dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	return	count;
 }
 
-_LOCAL_ int
+HIDDEN int
 dsk_rmap(FBIO *ifp, ColorMap *cmap)
 {
 	int		fd = ifp->if_fd;
@@ -306,7 +306,7 @@ dsk_rmap(FBIO *ifp, ColorMap *cmap)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 dsk_wmap(FBIO *ifp, const ColorMap *cmap)
 {
 	if( cmap == (ColorMap *) NULL )
@@ -332,7 +332,7 @@ dsk_wmap(FBIO *ifp, const ColorMap *cmap)
  *
  *  Clear the disk file to the given color.
  */
-_LOCAL_ int
+HIDDEN int
 disk_color_clear(FBIO *ifp, register unsigned char *bpp)
 {
 	static unsigned char	*pix_buf = NULL;
@@ -372,7 +372,7 @@ disk_color_clear(FBIO *ifp, register unsigned char *bpp)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 dsk_help(FBIO *ifp)
 {
 	fb_log( "Description: %s\n", disk_interface.if_type );

@@ -60,12 +60,12 @@
 int fbs_open(Tcl_Interp *interp, struct fbserv_obj *fbsp, int port);
 int fbs_close(Tcl_Interp *interp, struct fbserv_obj *fbsp);
 
-static void new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp);
-static void drop_client(struct fbserv_obj *fbsp, int sub);
-static void new_client_handler(ClientData clientData, int mask);
-static void existing_client_handler(ClientData clientData, int mask);
-static void comm_error(char *str);
-static void setup_socket(int fd);
+HIDDEN void new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp);
+HIDDEN void drop_client(struct fbserv_obj *fbsp, int sub);
+HIDDEN void new_client_handler(ClientData clientData, int mask);
+HIDDEN void existing_client_handler(ClientData clientData, int mask);
+HIDDEN void comm_error(char *str);
+HIDDEN void setup_socket(int fd);
 
 /*
  * Package Handlers.
@@ -200,7 +200,7 @@ fbs_close(Tcl_Interp *interp, struct fbserv_obj *fbsp)
 /*
  *			N E W _ C L I E N T
  */
-static void
+HIDDEN void
 new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp)
 {
   register int	i;
@@ -232,7 +232,7 @@ new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp)
 /*
  *			D R O P _ C L I E N T
  */
-static void
+HIDDEN void
 drop_client(struct fbserv_obj *fbsp, int sub)
 {
   if(fbsp->fbs_clients[sub].fbsc_pkg != PKC_NULL)  {
@@ -250,7 +250,7 @@ drop_client(struct fbserv_obj *fbsp, int sub)
 /*
  * Accept any new client connections.
  */
-static void
+HIDDEN void
 new_client_handler(ClientData clientData, int mask)
 {
   struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
@@ -263,7 +263,7 @@ new_client_handler(ClientData clientData, int mask)
 /*
  * Process arrivals from existing clients.
  */
-static void
+HIDDEN void
 existing_client_handler(ClientData clientData, int mask)
 {
   register int i;
@@ -298,7 +298,7 @@ existing_client_handler(ClientData clientData, int mask)
     fbsp->fbs_callback(fbsp->fbs_clientData);
 }
 
-static void
+HIDDEN void
 setup_socket(int fd)
 {
   int on = 1;
@@ -337,7 +337,7 @@ setup_socket(int fd)
  *
  *  Communication error.  An error occured on the PKG link.
  */
-static void
+HIDDEN void
 comm_error(char *str)
 {
   bu_log(str);

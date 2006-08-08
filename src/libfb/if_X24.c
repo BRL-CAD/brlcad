@@ -65,16 +65,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/types.h>
-
-#if defined(USE_SYS_TIME_H)
-# include <sys/time.h>
-#endif
 #include <time.h>
+#include <sys/types.h>
+#if defined(USE_SYS_TIME_H)
+#  include <sys/time.h>
+#endif
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -112,12 +111,13 @@
 
 #define SHMEM_KEY	42
 
+
 int X24_refresh();
 int X24_close_existing();
 int X24_open_existing();
 int _X24_open_existing();
 
-static int	X24_open(),
+HIDDEN int	X24_open(),
 		X24_close(),
 		X24_clear(),
 		X24_read(),
@@ -136,20 +136,20 @@ static int	X24_open(),
 		X24_free(),
 		X24_help();
 
-static int	X24_getmem();
-static void	X24_zapmem();
-static void	X24_destroy();
-static void	X24_blit();
-static void	X24_updstate();
+HIDDEN int	X24_getmem();
+HIDDEN void	X24_zapmem();
+HIDDEN void	X24_destroy();
+HIDDEN void	X24_blit();
+HIDDEN void	X24_updstate();
 
-static	int	linger();
-static	int	xsetup();
-static	void	print_display_info();	/* debug */
-static	void	X24_createColorCube();
-static	void	X24_createColorTables();
+HIDDEN	int	x24_linger();
+HIDDEN	int	x24_setup();
+HIDDEN	void	print_display_info();	/* debug */
+HIDDEN	void	X24_createColorCube();
+HIDDEN	void	X24_createColorTables();
 
 
-static void X24_handle_event FB_ARGS((FBIO *ifp, XEvent *event));
+HIDDEN void X24_handle_event FB_ARGS((FBIO *ifp, XEvent *event));
 void X24_configureWindow FB_ARGS((FBIO *ifp, int width, int height));
 
 /* This is the ONLY thing that we normally "export" */
@@ -401,7 +401,7 @@ static float dmsk883[] = {
 0.705882, 0.956863, 0.235294, 0.486275, 0.737255, 0.988235, 0.203922, 0.454902
 };
 
-/* Luminance factor tables (filled in in xsetup()) */
+/* Luminance factor tables (filled in in x24_setup()) */
 
 static int lumdone = 0;		/* Nonzero if tables valid */
 static unsigned long rlumtbl[256];
@@ -412,7 +412,7 @@ static unsigned long blumtbl[256];
 /*
  *			X 2 4 _ O P E N
  */
-static int
+HIDDEN int
 X24_open(ifp, file, width, height)
 FBIO	*ifp;
 char	*file;
@@ -521,7 +521,7 @@ printf("X24_open(ifp:0x%x, file:%s width:%d, height:%d): entered.\n",
 
 	/* Set up an X window, graphics context, etc. */
 
-	if (xsetup(ifp, width, height) < 0) {
+	if (x24_setup(ifp, width, height) < 0) {
 		X24_destroy(xi);
 		return(-1);
 	}
@@ -785,7 +785,7 @@ GC gc;
   return 0;
 }
 
-static int
+HIDDEN int
 X24_close(ifp)
 FBIO	*ifp;
 {
@@ -793,7 +793,7 @@ FBIO	*ifp;
 
 	XFlush(xi->xi_dpy);
 	if ((xi->xi_mode & MODE1_MASK) == MODE1_LINGERING) {
-		if (linger(ifp))
+		if (x24_linger(ifp))
 			return(0);	/* parent leaves the display */
 	}
 
@@ -826,7 +826,7 @@ FBIO    *ifp;
   return (0);
 }
 
-static void
+HIDDEN void
 X24_destroy(xi)
 struct xinfo *xi;
 {
@@ -872,7 +872,7 @@ struct xinfo *xi;
 	}
 }
 
-static int
+HIDDEN int
 X24_clear(ifp, pp)
 FBIO	*ifp;
 unsigned char	*pp;
@@ -919,7 +919,7 @@ unsigned char	*pp;
 }
 
 
-static int
+HIDDEN int
 X24_read(ifp, x, y, pixelp, count)
 FBIO	*ifp;
 int	x, y;
@@ -944,7 +944,7 @@ int	count;
 }
 
 
-static int
+HIDDEN int
 X24_write(ifp, x, y, pixelp, count)
 FBIO	*ifp;
 int	x, y;
@@ -991,7 +991,7 @@ printf("X24_write(ifp:0x%x, x:%d, y:%d, pixelp:0x%x, count:%d) entered.\n",
 	return(count);
 }
 
-static int
+HIDDEN int
 X24_rmap(ifp, cmp)
 FBIO	*ifp;
 ColorMap	*cmp;
@@ -1008,7 +1008,7 @@ printf("X24_rmap(ifp:0x%x, cmp:0x%x) entered.\n",
 	return(0);
 }
 
-static int
+HIDDEN int
 X24_wmap(ifp, cmp)
 FBIO	*ifp;
 const ColorMap	*cmp;
@@ -1107,7 +1107,7 @@ printf("X24_wmap(ifp:0x%x, cmp:0x%x) entered.\n",
 	return(0);
 }
 
-static int
+HIDDEN int
 X24_view(ifp, xcenter, ycenter, xzoom, yzoom)
 FBIO	*ifp;
 int	xcenter, ycenter;
@@ -1145,7 +1145,7 @@ printf("X24_view(ifp:0x%x, xcenter:%d, ycenter:%d, xzoom:%d, yzoom:%d) entered.\
 	return	0;
 }
 
-static int
+HIDDEN int
 X24_getview(ifp, xcenter, ycenter, xzoom, yzoom)
 FBIO	*ifp;
 int	*xcenter, *ycenter;
@@ -1166,7 +1166,7 @@ printf("X24_getview(ifp:0x%x, xcenter:0x%x, ycenter:0x%x, xzoom:0x%x, yzoom:0x%x
 }
 
 /*ARGSUSED*/
-static int
+HIDDEN int
 X24_setcursor(ifp, bits, xbits, ybits, xorig, yorig)
 FBIO	*ifp;
 const unsigned char *bits;
@@ -1182,7 +1182,7 @@ printf("X24_setcursor(ifp:0x%x, bits:%u, xbits:%d, ybits:%d, xorig:%d, yorig:%d)
 	return(0);
 }
 
-static int
+HIDDEN int
 X24_cursor(ifp, mode, x, y)
 FBIO	*ifp;
 int	mode;
@@ -1247,7 +1247,7 @@ int	x, y;
   return(0);
 }
 
-static int
+HIDDEN int
 X24_getcursor(ifp, mode, x, y)
 FBIO	*ifp;
 int	*mode;
@@ -1264,7 +1264,7 @@ printf("X24_getcursor(ifp:0x%x, mode:%d, x:0x%x, y:0x%x) entered.\n",
 	return(0);
 }
 
-static int
+HIDDEN int
 X24_readrect(ifp, xmin, ymin, width, height, pp)
 FBIO	*ifp;
 int	xmin, ymin;
@@ -1314,7 +1314,7 @@ printf("X24_readrect(ifp:0x%x, xmin:%d, ymin:%d, width:%d, height:%d, pp:0x%x) e
 	return (width * height);
 }
 
-static int
+HIDDEN int
 X24_writerect(ifp, xmin, ymin, width, height, pp)
 FBIO	*ifp;
 int	xmin, ymin;
@@ -1367,7 +1367,7 @@ printf("X24_writerect(ifp:0x%x, xmin:%d, ymin:%d, width:%d, height:%d, pp:0x%x) 
 	return (width * height);
 }
 
-static int
+HIDDEN int
 X24_poll(ifp)
 FBIO	*ifp;
 {
@@ -1386,7 +1386,7 @@ printf("X24_poll(ifp:0x%x) entered\n", ifp);
 	return(0);
 }
 
-static int
+HIDDEN int
 X24_flush(ifp)
 FBIO	*ifp;
 {
@@ -1401,7 +1401,7 @@ printf("X24_flush(ifp:0x%x) entered\n", ifp);
 	return(0);
 }
 
-static int
+HIDDEN int
 X24_free(ifp)
 FBIO	*ifp;
 {
@@ -1413,7 +1413,7 @@ printf("X24_free(ifp:0x%x) entered\n", ifp);
 	return(0);
 }
 
-static int
+HIDDEN int
 X24_help(ifp)
 FBIO	*ifp;
 {
@@ -1488,7 +1488,7 @@ printf("X24_help(ifp:0x%x) entered\n", ifp);
 /*
   Create 6x9x4 color cube.
 */
-static void
+HIDDEN void
 X24_createColorCube(xi)
 struct xinfo *xi;
 {
@@ -1525,7 +1525,7 @@ struct xinfo *xi;
 /*
   Create fast lookup tables for dithering
 */
-static void
+HIDDEN void
 X24_createColorTables(xi)
 struct xinfo *xi;
 {
@@ -1584,9 +1584,9 @@ struct xinfo *xi;
   }
 }
 
-static
+HIDDEN
 int
-xsetup(ifp, width, height)
+x24_setup(ifp, width, height)
 FBIO	*ifp;
 int	width, height;
 {
@@ -1600,7 +1600,7 @@ int	width, height;
 	char		*xname;
 
 #if X_DBG
-printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
+printf("x24_setup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 #endif
 
 	/* Save these in state structure */
@@ -2044,8 +2044,8 @@ printf("Creating window\n");
 
 static int alive = 1;
 
-static int
-linger(ifp)
+HIDDEN int
+x24_linger(ifp)
 FBIO	*ifp;
 {
 	struct xinfo *xi = XI(ifp);
@@ -2062,7 +2062,7 @@ FBIO	*ifp;
 }
 
 
-static void
+HIDDEN void
 X24_handle_event(ifp, event)
 FBIO *ifp;
 XEvent *event;
@@ -2319,7 +2319,7 @@ int width, height;
  *  unix:0.1.2 => host:display.screen.visual
  *  Typically the screen and visual default to 0 by being omitted.
  */
-static void
+HIDDEN void
 print_display_info(dpy)
 Display *dpy;
 {
@@ -2454,7 +2454,7 @@ Display *dpy;
  * buffer still exist, and can be accessed again, even though the
  * windows are transient, per-process.
  */
-static int
+HIDDEN int
 X24_getmem(ifp)
 FBIO	*ifp;
 {
@@ -2556,7 +2556,7 @@ store\n  Run shell command 'limit datasize unlmited' and try again.\n", size);
 /*
  *			X 2 4 _ Z A P M E M
  */
-static void
+HIDDEN void
 X24_zapmem()
 {
 #ifndef HAVE_SYS_MMAN_H
@@ -2585,7 +2585,7 @@ X24_zapmem()
 	return;
 }
 
-static void
+HIDDEN void
 X24_updstate(ifp)
 FBIO	*ifp;
 {
@@ -2890,7 +2890,7 @@ printf("upd: off (%d, %d) 1 (%d, %d) 2 (%d, %d) wd (%d, %d) ht (%d, %d)\n",
  * is then clocked out as bytes in the correct ordering.
  */
 
-static void
+HIDDEN void
 X24_blit(ifp, x1, y1, w, h, flags)
 FBIO	*ifp;
 int x1, y1, w, h;	/* Rectangle of changed bits (image space coord.) */

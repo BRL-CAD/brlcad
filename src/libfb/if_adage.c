@@ -69,7 +69,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./adage.h"
 
 
-_LOCAL_ int	adage_open(FBIO *ifp, char *file, int width, int height),
+HIDDEN int	adage_open(FBIO *ifp, char *file, int width, int height),
 		adage_close(FBIO *ifp),
 		adage_clear(FBIO *ifp, RGBpixel (*bgpp)),
 		adage_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count),
@@ -234,7 +234,7 @@ typedef unsigned char IKONASpixel[4];
  * the generic name of the device as defined in the FBIO
  * structure.
  */
-_LOCAL_ int
+HIDDEN int
 adage_open(FBIO *ifp, char *file, int width, int height)
 {
 	register int	i;
@@ -387,7 +387,7 @@ adage_open(FBIO *ifp, char *file, int width, int height)
 	return	ifp->if_fd;
 }
 
-_LOCAL_ int
+HIDDEN int
 adage_close(FBIO *ifp)
 {
 	/* free ikinfo struct */
@@ -397,7 +397,7 @@ adage_close(FBIO *ifp)
 	return	close( ifp->if_fd );
 }
 
-_LOCAL_ int
+HIDDEN int
 adage_clear(FBIO *ifp, RGBpixel (*bgpp))
 {
 
@@ -451,7 +451,7 @@ adage_clear(FBIO *ifp, RGBpixel (*bgpp))
 #define	IKSEEK(x,y)	if(lseek(ifp->if_fd,(off_t)((y)*ifp->if_width+(x))\
 	    		*sizeof(IKONASpixel),0) == -1) return -1;
 
-_LOCAL_ int
+HIDDEN int
 adage_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 {
 	register int i;
@@ -574,7 +574,7 @@ headin:
 	return	count;
 }
 
-_LOCAL_ int
+HIDDEN int
 adage_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
 {
 	register int i;
@@ -690,7 +690,7 @@ headout:
 }
 
 /* Write 1 Ikonas pixel using PIO rather than DMA */
-_LOCAL_ int
+HIDDEN int
 adage_write_pio_pixel(FBIO *ifp, int x, int y, RGBpixel (*datap))
 {
 	register int i;
@@ -729,7 +729,7 @@ adage_write_pio_pixel(FBIO *ifp, int x, int y, RGBpixel (*datap))
 }
 
 /* Read 1 Ikonas pixel using PIO rather than DMA */
-_LOCAL_ int
+HIDDEN int
 adage_read_pio_pixel(FBIO *ifp, int x, int y, RGBpixel (*datap))
 {
 	register int i;
@@ -773,7 +773,7 @@ adage_read_pio_pixel(FBIO *ifp, int x, int y, RGBpixel (*datap))
 	return	1;
 }
 
-_LOCAL_ int
+HIDDEN int
 adage_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	adage_window_set(ifp, xcenter, ycenter);
@@ -785,7 +785,7 @@ adage_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 /*	a d a g e _ z o o m _ s e t ( )
 	Update fbc_[xy]zoom registers in FBC
  */
-_LOCAL_ int
+HIDDEN int
 adage_zoom_set(FBIO *ifp, register int x, register int y)
 {
 
@@ -857,7 +857,7 @@ adage_zoom_set(FBIO *ifp, register int x, register int y)
 	return	0;
 }
 
-static int
+HIDDEN int
 imax(int a, int b)
 {
 	if( a > b )
@@ -870,7 +870,7 @@ imax(int a, int b)
  *	Set FBC window location to specified values so that <x,y> are
  *	at screen center given current zoom.
  */
-_LOCAL_ int
+HIDDEN int
 adage_window_set(register FBIO *ifp, int x, int y)
 {
 	int ikx, iky;		/* upper left corner of view rectangle */
@@ -956,7 +956,7 @@ adage_window_set(register FBIO *ifp, int x, int y)
  *	IMPORTANT : Adage cursor addressing is in screen space,
  *	so backwards correction must be applied.
  */
-_LOCAL_ int
+HIDDEN int
 adage_cursor(FBIO *ifp, int mode, int x, int y)
 {
 	fb_sim_cursor( ifp, mode, x, y );
@@ -1001,7 +1001,7 @@ adage_cursor(FBIO *ifp, int mode, int x, int y)
 /*	a d a g e _ c u r s o r _ m o v e _ s c r e e n _ a d d r ( )
 	Place cursor at SCREEN coordinates x and y.
  */
-_LOCAL_ int
+HIDDEN int
 adage_cscreen_addr(FBIO *ifp, int mode, int x, int y)
 {
 	y = ifp->if_width-1-y;		/* 1st quadrant */
@@ -1025,7 +1025,7 @@ adage_cscreen_addr(FBIO *ifp, int mode, int x, int y)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 adage_setcursor(FBIO *ifp, unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
 	int	x, y, xbytes;
@@ -1092,7 +1092,7 @@ adage_setcursor(FBIO *ifp, unsigned char *bits, int xbits, int ybits, int xorig,
 	Page selects the color map; 0, 1, 2, or  3.
 	Offset indexes into the map.
  */
-_LOCAL_ int
+HIDDEN int
 adage_wmap_entry( ifp, cp, page, offset )
 FBIO	*ifp;
 register RGBpixel	*cp;
@@ -1110,7 +1110,7 @@ long	page, offset;
 }
 #endif
 
-_LOCAL_ int
+HIDDEN int
 adage_wmap(FBIO *ifp, register ColorMap *cp)
 {
 	long cmap[1024] = {0};
@@ -1153,7 +1153,7 @@ adage_wmap(FBIO *ifp, register ColorMap *cp)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 adage_rmap(FBIO *ifp, register ColorMap *cp)
 {
 	register int i;
@@ -1182,7 +1182,7 @@ adage_rmap(FBIO *ifp, register ColorMap *cp)
  *  Clear the frame buffer to the given color.  There is no hardware
  *  Support for this so we do it via large DMA's.
  */
-_LOCAL_ int
+HIDDEN int
 adage_color_clear(register FBIO *ifp, register RGBpixel (*bpp))
 {
 	register IKONASpixel *pix_to;
@@ -1215,7 +1215,7 @@ adage_color_clear(register FBIO *ifp, register RGBpixel (*bpp))
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 adage_help(FBIO *ifp)
 {
 	fb_log( "Description: %s\n", adage_interface.if_type );

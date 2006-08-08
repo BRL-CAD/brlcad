@@ -47,10 +47,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "fb.h"
+
 #include "./fblocal.h"
 
 
-_LOCAL_ int	null_open(FBIO *ifp, char *file, int width, int height),
+HIDDEN int	null_open(FBIO *ifp, char *file, int width, int height),
 		null_close(FBIO *ifp),
 		null_clear(FBIO *ifp, unsigned char *pp),
 		null_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
@@ -114,7 +115,7 @@ FBIO null_interface =  {
 };
 
 
-_LOCAL_ int
+HIDDEN int
 null_open(FBIO *ifp, char *file, int width, int height)
 {
 	FB_CK_FBIO(ifp);
@@ -126,107 +127,107 @@ null_open(FBIO *ifp, char *file, int width, int height)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_close(FBIO *ifp)
 {
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_clear(FBIO *ifp, unsigned char *pp)
 {
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
 	return(count);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
 	return(count);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_rmap(FBIO *ifp, ColorMap *cmp)
 {
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_wmap(FBIO *ifp, const ColorMap *cmp)
 {
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	/*fb_sim_view( ifp, xcenter, ycenter, xzoom, yzoom );*/
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 	/*fb_sim_getview( ifp, xcenter, ycenter, xzoom, yzoom );*/
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_cursor(FBIO *ifp, int mode, int x, int y)
 {
 	/*fb_sim_cursor(ifp, mode, x, y);*/
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
 	/*fb_sim_getcursor(ifp, mode, x, y);*/
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
 	return( width*height );
 }
 
-_LOCAL_ int
+HIDDEN int
 null_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	return( width*height );
 }
 
-_LOCAL_ int
+HIDDEN int
 null_poll(FBIO *ifp)
 {
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_flush(FBIO *ifp)
 {
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_free(FBIO *ifp)
 {
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 null_help(FBIO *ifp)
 {
 	fb_log( "Description: %s\n", null_interface.if_type );

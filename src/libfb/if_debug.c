@@ -41,7 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./fblocal.h"
 
 
-_LOCAL_ int	deb_open(FBIO *ifp, char *file, int width, int height),
+HIDDEN int	deb_open(FBIO *ifp, char *file, int width, int height),
 		deb_close(FBIO *ifp),
 		deb_clear(FBIO *ifp, unsigned char *pp),
 		deb_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
@@ -107,7 +107,7 @@ FBIO debug_interface = {
 };
 
 
-_LOCAL_ int
+HIDDEN int
 deb_open(FBIO *ifp, char *file, int width, int height)
 {
 	FB_CK_FBIO(ifp);
@@ -140,7 +140,7 @@ deb_open(FBIO *ifp, char *file, int width, int height)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_close(FBIO *ifp)
 {
 	FB_CK_FBIO(ifp);
@@ -148,7 +148,7 @@ deb_close(FBIO *ifp)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_clear(FBIO *ifp, unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
@@ -162,7 +162,7 @@ deb_clear(FBIO *ifp, unsigned char *pp)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
 	FB_CK_FBIO(ifp);
@@ -172,7 +172,7 @@ deb_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	return	count;
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
 	int	i;
@@ -199,7 +199,7 @@ deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	return	count;
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_rmap(FBIO *ifp, ColorMap *cmp)
 {
 	FB_CK_FBIO(ifp);
@@ -208,7 +208,7 @@ deb_rmap(FBIO *ifp, ColorMap *cmp)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_wmap(FBIO *ifp, const ColorMap *cmp)
 {
 	int	i;
@@ -234,7 +234,7 @@ deb_wmap(FBIO *ifp, const ColorMap *cmp)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	FB_CK_FBIO(ifp);
@@ -244,7 +244,7 @@ deb_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 	FB_CK_FBIO(ifp);
@@ -256,7 +256,7 @@ deb_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
 	FB_CK_FBIO(ifp);
@@ -265,7 +265,7 @@ deb_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xo
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_cursor(FBIO *ifp, int mode, int x, int y)
 {
 	fb_log( "fb_cursor( 0x%lx, %d,%4d,%4d )\n",
@@ -274,7 +274,7 @@ deb_cursor(FBIO *ifp, int mode, int x, int y)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
 	FB_CK_FBIO(ifp);
@@ -285,7 +285,7 @@ deb_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
@@ -295,7 +295,7 @@ deb_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char
 	return( width*height );
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
@@ -305,7 +305,7 @@ deb_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 	return( width*height );
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
@@ -315,7 +315,7 @@ deb_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned ch
 	return( width*height );
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
@@ -325,7 +325,7 @@ deb_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 	return( width*height );
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_poll(FBIO *ifp)
 {
 	FB_CK_FBIO(ifp);
@@ -333,7 +333,7 @@ deb_poll(FBIO *ifp)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_flush(FBIO *ifp)
 {
 	FB_CK_FBIO(ifp);
@@ -341,7 +341,7 @@ deb_flush(FBIO *ifp)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 deb_free(FBIO *ifp)
 {
 	FB_CK_FBIO(ifp);
@@ -350,7 +350,7 @@ deb_free(FBIO *ifp)
 }
 
 /*ARGSUSED*/
-_LOCAL_ int
+HIDDEN int
 deb_help(FBIO *ifp)
 {
 	FB_CK_FBIO(ifp);

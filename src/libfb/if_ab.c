@@ -68,13 +68,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./fblocal.h"
 
 
-static void	ab_log(FBIO *ifp, char *str);
-static int	ab_get_reply(int fd);
-static void	ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, int len);
-static void	ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len);
-static int	ab_yuvio(int, char *, char *, int, int, int);
+HIDDEN void	ab_log(FBIO *ifp, char *str);
+HIDDEN int	ab_get_reply(int fd);
+HIDDEN void	ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, int len);
+HIDDEN void	ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len);
+HIDDEN int	ab_yuvio(int, char *, char *, int, int, int);
 
-_LOCAL_ int	ab_open(register FBIO *ifp, register char *file, int width, int height),
+HIDDEN int	ab_open(register FBIO *ifp, register char *file, int width, int height),
 		ab_close(FBIO *ifp),
 		ab_clear(FBIO *ifp, unsigned char *bgpp),
 		ab_read(register FBIO *ifp, int x, register int y, unsigned char *pixelp, int count),
@@ -197,7 +197,7 @@ static struct modeflags {
  *  this should make changing it easier with tcsh, etc.
  *
  */
-_LOCAL_ int
+HIDDEN int
 ab_open(register FBIO *ifp, register char *file, int width, int height)
 {
 	register char	*cp;
@@ -346,7 +346,7 @@ ab_open(register FBIO *ifp, register char *file, int width, int height)
  *
  *  If verbose mode is enabled, print the time and a message
  */
-static void ab_log(FBIO *ifp, char *str)
+HIDDEN void ab_log(FBIO *ifp, char *str)
 {
 	time_t		now;
 	struct tm	*tmp;
@@ -369,7 +369,7 @@ static void ab_log(FBIO *ifp, char *str)
 /*
  *			A B _ R E A D F R A M E
  */
-static int
+HIDDEN int
 ab_readframe(FBIO *ifp)
 {
 	register int	y;
@@ -401,7 +401,7 @@ ab_readframe(FBIO *ifp)
 /*
  *			A B _ C L O S E
  */
-_LOCAL_ int
+HIDDEN int
 ab_close(FBIO *ifp)
 {
 	int	ret = 0;
@@ -443,7 +443,7 @@ ab_close(FBIO *ifp)
 /*
  *			A B _ C L E A R
  */
-_LOCAL_ int
+HIDDEN int
 ab_clear(FBIO *ifp, unsigned char *bgpp)
 {
 	register int	r,g,b;
@@ -473,7 +473,7 @@ ab_clear(FBIO *ifp, unsigned char *bgpp)
 /*
  *			A B _ R E A D
  */
-_LOCAL_ int
+HIDDEN int
 ab_read(register FBIO *ifp, int x, register int y, unsigned char *pixelp, int count)
 {
 	register short		scan_count;	/* # pix on this scanline */
@@ -530,7 +530,7 @@ ab_read(register FBIO *ifp, int x, register int y, unsigned char *pixelp, int co
 /*
  *			A B _ W R I T E
  */
-_LOCAL_ int
+HIDDEN int
 ab_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
 	register short		scan_count;	/* # pix on this scanline */
@@ -586,7 +586,7 @@ ab_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int coun
 
 /*
  */
-_LOCAL_ int
+HIDDEN int
 ab_cursor(FBIO *ifp, int mode, int x, int y)
 {
 	fb_sim_cursor(ifp, mode, x, y);
@@ -596,7 +596,7 @@ ab_cursor(FBIO *ifp, int mode, int x, int y)
 
 /*
  */
-_LOCAL_ int
+HIDDEN int
 ab_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
 	fb_sim_getcursor(ifp, mode, x, y);
@@ -606,7 +606,7 @@ ab_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 
 /*
  */
-_LOCAL_ int
+HIDDEN int
 ab_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
@@ -616,7 +616,7 @@ ab_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 /*
  */
-_LOCAL_ int
+HIDDEN int
 ab_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 	fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);
@@ -624,7 +624,7 @@ ab_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 	return(-1);
 }
 
-_LOCAL_ int
+HIDDEN int
 ab_rmap(register FBIO *ifp, register ColorMap *cmap)
 {
 	register int	i;
@@ -637,7 +637,7 @@ ab_rmap(register FBIO *ifp, register ColorMap *cmap)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ab_wmap(register FBIO *ifp, const ColorMap *cmap)
 {
 	/* Just pretend it worked OK */
@@ -647,7 +647,7 @@ ab_wmap(register FBIO *ifp, const ColorMap *cmap)
 /*
  *			A B _ H E L P
  */
-_LOCAL_ int
+HIDDEN int
 ab_help(FBIO *ifp)
 {
 	struct	modeflags *mfp;
@@ -898,7 +898,7 @@ err:
 	return(-1);
 }
 
-static int
+HIDDEN int
 ab_get_reply(int fd)
 {
 	char	rep_buf[128];
@@ -969,7 +969,7 @@ static double	ubuf[724];
 static double	vbuf[724];
 
 /* RGB to YUV */
-static void
+HIDDEN void
 ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len)
 {
 	register unsigned char *cp;
@@ -1017,7 +1017,7 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len)
 }
 
 /* YUV to RGB */
-static void
+HIDDEN void
 ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, int len)
 {
 	register unsigned char *rgbp;

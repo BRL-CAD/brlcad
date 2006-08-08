@@ -42,15 +42,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <fcntl.h>
 
 #include "machine.h"
 #include "fb.h"
+
 #include "./dmdfb.h"
 #include "./fblocal.h"
+
 
 #define MAX_DIMENSION	256
 #define CVT2DMD( _i )		((_i)/(ifp->if_width/MAX_DIMENSION)*3)
@@ -60,7 +60,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define B_NTSC			(0.10*INTENSITY_FACTOR)
 static int	over_sampl;
 
-_LOCAL_ int	ptty_open(FBIO *ifp, char *ptty_name, int width, int height),
+HIDDEN int	ptty_open(FBIO *ifp, char *ptty_name, int width, int height),
 		ptty_close(FBIO *ifp),
 		ptty_clear(FBIO *ifp, RGBpixel (*bgpp)),
 		ptty_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct),
@@ -117,12 +117,12 @@ FBIO ptty_interface = {
 	0
 };
 
-_LOCAL_	int	output_Scan(FBIO *ifp, register RGBpixel (*pixels), int ct);
-_LOCAL_ int	put_Run(register FBIO *ifp, register int ct, int val);
-_LOCAL_ int	rgb_To_Dither_Val(register RGBpixel (*pixel));
+HIDDEN	int	output_Scan(FBIO *ifp, register RGBpixel (*pixels), int ct);
+HIDDEN int	put_Run(register FBIO *ifp, register int ct, int val);
+HIDDEN int	rgb_To_Dither_Val(register RGBpixel (*pixel));
 
 /*ARGSUSED*/
-_LOCAL_ int
+HIDDEN int
 ptty_open(FBIO *ifp, char *ptty_name, int width, int height)
 {
 	FB_CK_FBIO(ifp);
@@ -142,13 +142,13 @@ ptty_open(FBIO *ifp, char *ptty_name, int width, int height)
 	return	ifp->if_fd;
 }
 
-_LOCAL_ int
+HIDDEN int
 ptty_close(FBIO *ifp)
 {
 	return	close( ifp->if_fd ) == -1 ? -1 : 0;
 }
 
-_LOCAL_ int
+HIDDEN int
 ptty_clear(FBIO *ifp, RGBpixel (*bgpp))
 {
 	static char	ptty_buf[2] = { PT_CLEAR, NULL };
@@ -156,7 +156,7 @@ ptty_clear(FBIO *ifp, RGBpixel (*bgpp))
 	return	write( ifp->if_fd, ptty_buf, 1 ) < 1 ? -1 : 0;
 }
 
-_LOCAL_ int
+HIDDEN int
 ptty_write(register FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct)
 {
 	static char	ptty_buf[10];
@@ -179,7 +179,7 @@ ptty_write(register FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 ptty_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct)
 {
 /*	y = ifp->if_width-1-y;		/* 1st quadrant */
@@ -190,7 +190,7 @@ ptty_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int ct)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 ptty_setsize(FBIO *ifp, int width, int height)
 {
 	static char	ptty_buf[10];
@@ -201,7 +201,7 @@ ptty_setsize(FBIO *ifp, int width, int height)
 	return	write( ifp->if_fd, ptty_buf, 9 ) == 9 ? 0 : -1;
 }
 
-_LOCAL_ int
+HIDDEN int
 ptty_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
@@ -210,7 +210,7 @@ ptty_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 ptty_window_set(FBIO *ifp, int x, int y)
 {
 	static char	ptty_buf[10];
@@ -220,7 +220,7 @@ ptty_window_set(FBIO *ifp, int x, int y)
 	return	write( ifp->if_fd, ptty_buf, 9 ) == 9 ? 0 : -1;
 }
 
-_LOCAL_ int
+HIDDEN int
 ptty_zoom_set(FBIO *ifp, int x, int y)
 {
 	static char	ptty_buf[10];
@@ -231,7 +231,7 @@ ptty_zoom_set(FBIO *ifp, int x, int y)
 	return	write( ifp->if_fd, ptty_buf, 9 ) == 9 ? 0 : -1;
 }
 
-_LOCAL_ int
+HIDDEN int
 ptty_cursor(FBIO *ifp, int mode, int x, int y)
 {
 	static char	ptty_buf[11];
@@ -246,7 +246,7 @@ ptty_cursor(FBIO *ifp, int mode, int x, int y)
 }
 
 #ifdef never
-_LOCAL_ int
+HIDDEN int
 ptty_animate( ifp, nframes, framesz, fps )
 FBIO	*ifp;
 int	nframes, framesz, fps;
@@ -265,7 +265,7 @@ int	nframes, framesz, fps;
 	of 1 scan line of 'ct' pixels.
 	Output to stdout.
  */
-_LOCAL_ int
+HIDDEN int
 output_Scan(FBIO *ifp, register RGBpixel (*pixels), int ct)
 {
 	register int	i, j;
@@ -312,7 +312,7 @@ output_Scan(FBIO *ifp, register RGBpixel (*pixels), int ct)
 	return	write( ifp->if_fd, "\n", 1 );
 }
 
-_LOCAL_ int
+HIDDEN int
 put_Run(register FBIO *ifp, register int ct, int val)
 {
 	static char	ptty_buf[4];
@@ -330,14 +330,14 @@ put_Run(register FBIO *ifp, register int ct, int val)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 rgb_To_Dither_Val(register RGBpixel (*pixel))
 {
 	return	(R_NTSC * (*pixel)[RED] + G_NTSC * (*pixel)[GRN]
 		+ B_NTSC * (*pixel)[BLU]);
 }
 
-_LOCAL_ int
+HIDDEN int
 ptty_help(FBIO *ifp)
 {
 	fb_log( "Description: %s\n", ptty_interface.if_type );

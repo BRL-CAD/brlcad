@@ -65,7 +65,7 @@ static char	*ugbuf, *ugbuf2, *ugcurs;
 static int	x_zoom, y_zoom;
 static int	x_window, y_window;	/* upper left of window (4th quad) */
 
-_LOCAL_ int	ug_open(),
+HIDDEN int	ug_open(),
 		ug_close(),
 		ug_clear(),
 		ug_read(),
@@ -147,7 +147,7 @@ register struct UG_PARAM *pp;
 	}
 }
 
-_LOCAL_ int
+HIDDEN int
 ug_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
@@ -210,7 +210,7 @@ int	width, height;
 	return(1);			/* OK */
 }
 
-_LOCAL_ int
+HIDDEN int
 ug_close( ifp )
 FBIO	*ifp;
 {
@@ -242,7 +242,7 @@ FBIO	*ifp;
 	return;
 }
 
-_LOCAL_ int
+HIDDEN int
 ug_clear( ifp, pp )
 FBIO	*ifp;
 RGBpixel	*pp;
@@ -275,7 +275,7 @@ RGBpixel	*pp;
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ug_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
@@ -284,7 +284,7 @@ int	count;
 {
 }
 
-static write_ug (str)
+HIDDEN write_ug (str)
 char *str;
 {
 	int	status;
@@ -312,7 +312,7 @@ char *str;
 #endif
 }
 
-_LOCAL_ int
+HIDDEN int
 ug_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 register int	x, y;
@@ -356,21 +356,21 @@ int	count;
 	return(count);
 }
 
-_LOCAL_ int
+HIDDEN int
 ug_rmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
 }
 
-_LOCAL_ int
+HIDDEN int
 ug_wmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
 }
 
-_LOCAL_ int
+HIDDEN int
 ug_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
 int	xcenter, ycenter;
@@ -409,7 +409,7 @@ int	xzoom, yzoom;
 	zandw( ifp );
 }
 
-_LOCAL_ int
+HIDDEN int
 ug_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char *bits;
@@ -418,7 +418,7 @@ int	xorig, yorig;
 {
 }
 
-_LOCAL_ int
+HIDDEN int
 ug_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
@@ -510,7 +510,7 @@ fprintf( stderr, "numx,y= %d, %d; zoomx,y= %d, %d; windowx,y= %d, %d\n", numx, n
 	write_ug();
 }
 
-_LOCAL_ int
+HIDDEN int
 ug_help( ifp )
 FBIO	*ifp;
 {

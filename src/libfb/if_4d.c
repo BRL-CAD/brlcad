@@ -101,17 +101,17 @@ static Cursor	cursor =  {
 static int	sgi_nwindows = 0;
 
 /* Internal routines */
-_LOCAL_ void	sgi_cminit();
+HIDDEN void	sgi_cminit();
 #ifdef USE_PROTOTYPES
-_LOCAL_ void	gt_zbuf_to_screen(FBIO	*ifp, int one_y);
+HIDDEN void	gt_zbuf_to_screen(FBIO	*ifp, int one_y);
 #else
-_LOCAL_ void	gt_zbuf_to_screen();
+HIDDEN void	gt_zbuf_to_screen();
 #endif
-_LOCAL_ void	fake_rectwrite();
-_LOCAL_ void	sgi_clipper();
+HIDDEN void	fake_rectwrite();
+HIDDEN void	sgi_clipper();
 
 /* Exported routines */
-_LOCAL_ int	sgi_open(),
+HIDDEN int	sgi_open(),
 		sgi_close(),
 		sgi_clear(),
 		sgi_read(),
@@ -174,7 +174,7 @@ FBIO sgi_interface =
 		};
 
 
-_LOCAL_ void	sgi_inqueue();
+HIDDEN void	sgi_inqueue();
 static int	is_linear_cmap();
 
 /*
@@ -370,7 +370,7 @@ struct sgi_clip {
  *  memory to be satisfied.  In special cases, the values used here
  *  might need to be increased.
  */
-_LOCAL_ int
+HIDDEN int
 sgi_getmem( ifp )
 FBIO	*ifp;
 {
@@ -529,7 +529,7 @@ sgi_zapmem()
  *  Normally, xbase=0 and npix = if_width.  For transmissions of
  *  less than one scanline, these may be different.
  */
-_LOCAL_ void
+HIDDEN void
 sgi_xmit_scanlines( ifp, ybase, nlines, xbase, npix )
 register FBIO	*ifp;
 int		ybase;
@@ -821,7 +821,7 @@ int		npix;
 /*
  *			S I G K I D
  */
-static void sigkid()
+HIDDEN void sigkid()
 {
 	exit(0);
 }
@@ -837,7 +837,7 @@ static void sigkid()
 /*
  *			S G I _ O P E N
  */
-_LOCAL_ int
+HIDDEN int
 sgi_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
@@ -1252,7 +1252,7 @@ int	width, height;
  *  Handle the real work of restoring the state of the hardware and
  *  closing the window.
  */
-_LOCAL_ int
+HIDDEN int
 sgi_final_close( ifp )
 FBIO	*ifp;
 {
@@ -1322,7 +1322,7 @@ FBIO	*ifp;
  *
  *  Handle input events.
  */
-_LOCAL_ int
+HIDDEN int
 sgi_poll( ifp )
 FBIO	*ifp;
 {
@@ -1336,7 +1336,7 @@ FBIO	*ifp;
  *
  *  Free shared memory resources, and close.
  */
-_LOCAL_ int
+HIDDEN int
 sgi_free( ifp )
 FBIO	*ifp;
 {
@@ -1356,7 +1356,7 @@ FBIO	*ifp;
  *			S G I _ C L O S E
  *
  */
-_LOCAL_ int
+HIDDEN int
 sgi_close( ifp )
 FBIO	*ifp;
 {
@@ -1469,7 +1469,7 @@ out:
 /*
  *			S G I _ C L E A R
  */
-_LOCAL_ int
+HIDDEN int
 sgi_clear( ifp, pp )
 FBIO	*ifp;
 register unsigned char	*pp;
@@ -1520,7 +1520,7 @@ register unsigned char	*pp;
 /*
  *			S G I _ V I E W
  */
-_LOCAL_ int
+HIDDEN int
 sgi_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
 int	xcenter, ycenter;
@@ -1566,7 +1566,7 @@ int	xzoom, yzoom;
 /*
  *			S G I _ G E T V I E W
  */
-_LOCAL_ int
+HIDDEN int
 sgi_getview( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
 int	*xcenter, *ycenter;
@@ -1592,7 +1592,7 @@ int	*xzoom, *yzoom;
  *  Makes no reference to the graphics library at all.
  *  Data is copied from the memory segment.
  */
-_LOCAL_ int
+HIDDEN int
 sgi_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
@@ -1650,7 +1650,7 @@ int	count;
  *  SGI internal form, and then arrange to have them sent to
  *  the screen separately.
  */
-_LOCAL_ int
+HIDDEN int
 sgi_write( ifp, xstart, ystart, pixelp, count )
 register FBIO	*ifp;
 int		xstart;
@@ -1778,7 +1778,7 @@ int		count;
  *  SGI internal form, and then arrange to have them sent to
  *  the screen separately.
  */
-_LOCAL_ int
+HIDDEN int
 sgi_writerect( ifp, xmin, ymin, width, height, pp )
 FBIO		*ifp;
 int		xmin, ymin;
@@ -1834,7 +1834,7 @@ const unsigned char	*pp;
  *
  *  Make no access to the graphics system at all.
  */
-_LOCAL_ int
+HIDDEN int
 sgi_rmap( ifp, cmp )
 register FBIO	*ifp;
 register ColorMap	*cmp;
@@ -1857,7 +1857,7 @@ register ColorMap	*cmp;
  *  Returns 1 for linear map, 0 for non-linear map
  *  (ie, non-identity map).
  */
-static int
+HIDDEN int
 is_linear_cmap(ifp)
 register FBIO	*ifp;
 {
@@ -1874,7 +1874,7 @@ register FBIO	*ifp;
 /*
  *			S G I _ C M I N I T
  */
-_LOCAL_ void
+HIDDEN void
 sgi_cminit( ifp )
 register FBIO	*ifp;
 {
@@ -1890,7 +1890,7 @@ register FBIO	*ifp;
 /*
  *			 S G I _ W M A P
  */
-_LOCAL_ int
+HIDDEN int
 sgi_wmap( ifp, cmp )
 register FBIO	*ifp;
 register const ColorMap	*cmp;
@@ -1932,7 +1932,7 @@ register const ColorMap	*cmp;
 /*
  *			S G I _ S E T C U R S O R
  */
-_LOCAL_ int
+HIDDEN int
 sgi_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 const unsigned char	*bits;
@@ -1973,7 +1973,7 @@ int		xorig, yorig;
 /*
  *			S G I _ C U R S O R
  */
-_LOCAL_ int
+HIDDEN int
 sgi_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
@@ -2025,7 +2025,7 @@ int	x, y;
  *  Called when a qtest() indicates that there is a window event.
  *  Process all events, so that we don't loop on recursion to sgw_bwrite.
  */
-_LOCAL_ void
+HIDDEN void
 sgi_inqueue(ifp)
 register FBIO *ifp;
 {
@@ -2074,7 +2074,7 @@ register FBIO *ifp;
 /*
  *			S G I _ H E L P
  */
-_LOCAL_ int
+HIDDEN int
 sgi_help( ifp )
 FBIO	*ifp;
 {
@@ -2109,7 +2109,7 @@ FBIO	*ifp;
  *  When simulating a double-buffered display, don't send any updated
  *  pixels to the screen until explicitly flushed.
  */
-_LOCAL_ int
+HIDDEN int
 sgi_flush( ifp )
 FBIO	*ifp;
 {
@@ -2141,7 +2141,7 @@ FBIO	*ifp;
  *  The parameter "one_y" is set to -1 to repaint the entire screen,
  *  or to the Y coordinate of the single scanline to be repainted.
  */
-_LOCAL_ void
+HIDDEN void
 gt_zbuf_to_screen( ifp, one_y )
 register FBIO	*ifp;
 int		one_y;
@@ -2211,7 +2211,7 @@ int		one_y;
  *  The screen coordinates of the lower left pixle in view are:
  *	(xscroff, yscroff)
  */
-_LOCAL_ void
+HIDDEN void
 sgi_clipper( ifp, clp )
 register FBIO	*ifp;
 register struct sgi_clip	*clp;
@@ -2268,7 +2268,7 @@ register struct sgi_clip	*clp;
  * is more inefficient than is necessary.  However, this required the
  * calling sequences to be somewhat altered -vs- the lrectwrite() replaced.
  */
-_LOCAL_ void
+HIDDEN void
 fake_rectwrite( x1, y1, x2, y2, pixels)
 short	x1, y1;
 short	x2, y2;

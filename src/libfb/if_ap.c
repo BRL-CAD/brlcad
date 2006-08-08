@@ -26,8 +26,6 @@
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <time.h>
 
@@ -37,7 +35,8 @@
 #include "fb.h"
 #include "./fblocal.h"
 
-_LOCAL_ int	ap_open(),
+
+HIDDEN int	ap_open(),
 		ap_close(),
 		ap_clear(),
 		ap_read(),
@@ -101,7 +100,7 @@ gpr_$position_t		position;
 char			unobs;
 char			delete_display=false;
 
-_LOCAL_ void
+HIDDEN void
 ap_storepixel( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
@@ -119,7 +118,7 @@ int	count;
 	return(count);
 }
 
-_LOCAL_ int
+HIDDEN int
 ap_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
@@ -155,7 +154,7 @@ int	width, height;
     return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ap_close( ifp )
 FBIO	*ifp;
 {
@@ -164,7 +163,7 @@ FBIO	*ifp;
     return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ap_clear( ifp, pp )
 FBIO	*ifp;
 RGBpixel	*pp;
@@ -177,7 +176,7 @@ RGBpixel	*pp;
     return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ap_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
@@ -195,7 +194,7 @@ int	count;
 	return(count);
 }
 
-_LOCAL_ int
+HIDDEN int
 ap_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
@@ -205,7 +204,7 @@ int	count;
 	return(count);
 }
 
-_LOCAL_ int
+HIDDEN int
 ap_rmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
@@ -213,7 +212,7 @@ ColorMap	*cmp;
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ap_wmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
@@ -221,7 +220,7 @@ ColorMap	*cmp;
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ap_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char *bits;
@@ -231,7 +230,7 @@ int	xorig, yorig;
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ap_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
@@ -241,7 +240,7 @@ int	x, y;
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 ap_help( ifp )
 FBIO	*ifp;
 {

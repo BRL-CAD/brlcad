@@ -49,7 +49,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -57,12 +56,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
+
 #define PAGE_BYTES	(63*1024L)		/* Max # of bytes/dma. */
-#define PAGE_PIXELS	(((PAGE_BYTES/sizeof(RGBpixel))/ifp->if_width)\
-			 *ifp->if_width)
+#define PAGE_PIXELS	(((PAGE_BYTES/sizeof(RGBpixel))/ifp->if_width) *ifp->if_width)
 #define PAGE_SCANS	(ifp->if_ppixels/ifp->if_width)
 
-/*_LOCAL_ int	_fb_pgin(), _fb_pgout();*/
 
 /*
  *		F B _ I O I N I T

@@ -53,7 +53,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
-_LOCAL_ int	stk_open(FBIO *ifp, char *file, int width, int height),
+HIDDEN int	stk_open(FBIO *ifp, char *file, int width, int height),
 		stk_close(FBIO *ifp),
 		stk_clear(FBIO *ifp, unsigned char *pp),
 		stk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
@@ -128,7 +128,7 @@ struct	stkinfo {
 #define	SI(ptr) ((struct stkinfo *)((ptr)->u1.p))
 #define	SIL(ptr) ((ptr)->u1.p)		/* left hand side version */
 
-_LOCAL_ int
+HIDDEN int
 stk_open(FBIO *ifp, char *file, int width, int height)
 {
 	int	i;
@@ -194,7 +194,7 @@ stk_open(FBIO *ifp, char *file, int width, int height)
 		return(-1);
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_close(FBIO *ifp)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -209,7 +209,7 @@ stk_close(FBIO *ifp)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_clear(FBIO *ifp, unsigned char *pp)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -222,7 +222,7 @@ stk_clear(FBIO *ifp, unsigned char *pp)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -234,7 +234,7 @@ stk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	return(count);
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -252,7 +252,7 @@ stk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
  *
  *  Read only from the first source on the stack.
  */
-_LOCAL_ int
+HIDDEN int
 stk_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -269,7 +269,7 @@ stk_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char
  *
  *  Write to all destinations on the stack
  */
-_LOCAL_ int
+HIDDEN int
 stk_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -287,7 +287,7 @@ stk_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
  *
  *  Read only from the first source on the stack.
  */
-_LOCAL_ int
+HIDDEN int
 stk_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -304,7 +304,7 @@ stk_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned ch
  *
  *  Write to all destinations on the stack
  */
-_LOCAL_ int
+HIDDEN int
 stk_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -317,7 +317,7 @@ stk_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 	return width*height;
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_rmap(FBIO *ifp, ColorMap *cmp)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -329,7 +329,7 @@ stk_rmap(FBIO *ifp, ColorMap *cmp)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_wmap(FBIO *ifp, const ColorMap *cmp)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -342,7 +342,7 @@ stk_wmap(FBIO *ifp, const ColorMap *cmp)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -355,7 +355,7 @@ stk_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -367,7 +367,7 @@ stk_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -380,7 +380,7 @@ stk_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xo
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_cursor(FBIO *ifp, int mode, int x, int y)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -393,7 +393,7 @@ stk_cursor(FBIO *ifp, int mode, int x, int y)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -405,7 +405,7 @@ stk_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_poll(FBIO *ifp)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -418,7 +418,7 @@ stk_poll(FBIO *ifp)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_flush(FBIO *ifp)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -431,7 +431,7 @@ stk_flush(FBIO *ifp)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_free(FBIO *ifp)
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -444,7 +444,7 @@ stk_free(FBIO *ifp)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 stk_help(FBIO *ifp)
 {
 	register FBIO **ip = SI(ifp)->if_list;

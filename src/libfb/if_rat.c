@@ -77,14 +77,14 @@ int	_fbsize = 512;
 int		rat_debug = 0;
 static int	zoom_factor = 1;
 
-static int	cload(int creg, int x, int y),
+HIDDEN int	cload(int creg, int x, int y),
 		debug(int flag), entergraphics(void), flood(void), lutrmp(int code, int sind, int eind, int sval, int eval), lut8(int index, u_char r, u_char g, u_char b),
 		memsel(int unit), movabs(register int x, register int y), pixels(int rows, int cols, register u_char *pix_buf, int bytes, FBIO *ifp), quit(void),
 		rdmask(int bitm), rdmode(int flag), rdpixr(int vreg), readf(int func), readw(int rows, int cols, int bf), readvr(int vreg),
 		rgbtru(int flag), scrorg(int x, int y), value(u_char red, u_char green, u_char blue), vidform(int mode, int flag),
 		warm(void), wrmask(int bitm, int bankm), xhair(int num, int flag), zoom(int factor);
 
-_LOCAL_ int	rat_open(FBIO *ifp, char *file, int width, int height),
+HIDDEN int	rat_open(FBIO *ifp, char *file, int width, int height),
 		rat_close(FBIO *ifp),
 		rat_clear(FBIO *ifp, RGBpixel (*pp)),
 		rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count),
@@ -143,7 +143,7 @@ FBIO rat_interface =  {
 	0				/* debug		*/
 };
 
-_LOCAL_ int
+HIDDEN int
 rat_open(FBIO *ifp, char *file, int width, int height)
 {
 	FB_CK_FBIO(ifp);
@@ -160,7 +160,7 @@ rat_open(FBIO *ifp, char *file, int width, int height)
 	return ifp->if_fd;
 }
 
-_LOCAL_ int
+HIDDEN int
 rat_close(FBIO *ifp)
 
 /*	_ r a t _ c l o s e ( )
@@ -178,7 +178,7 @@ rat_close(FBIO *ifp)
 }
 
 
-_LOCAL_ int
+HIDDEN int
 rat_clear(FBIO *ifp, RGBpixel (*pp))
 
 
@@ -196,7 +196,7 @@ rat_clear(FBIO *ifp, RGBpixel (*pp))
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 
 
@@ -328,7 +328,7 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 rat_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 
 
@@ -403,13 +403,13 @@ rat_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 rat_rmap(FBIO *ifp, ColorMap *cmp)
 {
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 rat_wmap(FBIO *ifp, ColorMap *cmp)
 
 
@@ -442,7 +442,7 @@ rat_wmap(FBIO *ifp, ColorMap *cmp)
 	}
 }
 
-_LOCAL_ int
+HIDDEN int
 rat_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	rat_window_set(ifp, xcenter, ycenter);
@@ -451,7 +451,7 @@ rat_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 rat_window_set(FBIO *ifp, int x, int y)
 
 
@@ -465,7 +465,7 @@ rat_window_set(FBIO *ifp, int x, int y)
 	return	scrorg( x, y ) ? 0 : -1;
 }
 
-_LOCAL_ int
+HIDDEN int
 rat_zoom_set(FBIO *ifp, int x, int y)
 
 
@@ -484,13 +484,13 @@ rat_zoom_set(FBIO *ifp, int x, int y)
 			) ? 0 : -1;
 }
 
-_LOCAL_ int
+HIDDEN int
 rat_setcursor(FBIO *ifp, unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 rat_cursor(FBIO *ifp, int mode, int x, int y)
 /*	Place cursor at image (pixel) coordinates x & y
  */
@@ -541,7 +541,7 @@ _rat_init(FBIO *ifp)
 
 
 
-static int
+HIDDEN int
 cload(int creg, int x, int y)
 {
 	u_char	buff[8];
@@ -559,7 +559,7 @@ cload(int creg, int x, int y)
 	return	1;
 	}
 
-static int
+HIDDEN int
 debug(int flag)
 {
 	u_char	buff[2];
@@ -570,7 +570,7 @@ debug(int flag)
 	return	1;
 	}
 
-static int
+HIDDEN int
 entergraphics(void)
 {
 	u_char	buff[2];
@@ -582,7 +582,7 @@ entergraphics(void)
 	return	1;
 	}
 
-static int
+HIDDEN int
 flood(void)
 {
 	u_char	buff[2];
@@ -593,7 +593,7 @@ flood(void)
 	return	1;
 	}
 
-static int
+HIDDEN int
 lutrmp(int code, int sind, int eind, int sval, int eval)
 {
 	u_char	buff[6];
@@ -608,7 +608,7 @@ lutrmp(int code, int sind, int eind, int sval, int eval)
 	return	1;
 	}
 
-static int
+HIDDEN int
 lut8(int index, u_char r, u_char g, u_char b)
 {
 	u_char	buff[6];
@@ -628,7 +628,7 @@ lut8(int index, u_char r, u_char g, u_char b)
 	Since the RLE format splits up the colors running in RGBTRU OFF
 	and selecting the unit for each color is the easiest way to go.
  */
-static int
+HIDDEN int
 memsel(int unit)
 {
 	u_char	buff[2];
@@ -669,7 +669,7 @@ memsel(int unit)
 	.                                                 .
 	(-_fbsize/2, -_fbsize/2).....(_fbsize/2, -_fbsize/2)
  */
-static int
+HIDDEN int
 movabs(register int x, register int y)
 {
 	u_char	buff[8];
@@ -687,7 +687,7 @@ movabs(register int x, register int y)
 	return	1;
 	}
 
-static int
+HIDDEN int
 pixels(int rows, int cols, register u_char *pix_buf, int bytes, FBIO *ifp)
 {
 	static u_char	buff[MAX_RAT_BUFF+6];
@@ -715,7 +715,7 @@ pixels(int rows, int cols, register u_char *pix_buf, int bytes, FBIO *ifp)
 	return	1;
 	}
 
-static int
+HIDDEN int
 quit(void)
 {
 	u_char	buff[2];
@@ -729,7 +729,7 @@ quit(void)
 /*	r d m a s k ( )
 	Set read mask.
  */
-static int
+HIDDEN int
 rdmask(int bitm)
 {
 	u_char	buff[2];
@@ -742,7 +742,7 @@ rdmask(int bitm)
 
 /*	r d m o d e ( )
  */
-static int
+HIDDEN int
 rdmode(int flag)
 {
 	u_char	buff[2];
@@ -753,7 +753,7 @@ rdmode(int flag)
 	return	1;
 	}
 
-static int
+HIDDEN int
 rdpixr(int vreg)
 {
 	u_char	buff[2];
@@ -764,7 +764,7 @@ rdpixr(int vreg)
 	return	1;
 	}
 
-static int
+HIDDEN int
 readf(int func)
 {
 	u_char	buff[2];
@@ -775,7 +775,7 @@ readf(int func)
 	return	1;
 	}
 
-static int
+HIDDEN int
 readvr(int vreg)
 {
 	u_char	buff[2];
@@ -786,7 +786,7 @@ readvr(int vreg)
 	return	1;
 	}
 
-static int
+HIDDEN int
 readw(int rows, int cols, int bf)
 {
 	u_char	buff[6];
@@ -801,7 +801,7 @@ readw(int rows, int cols, int bf)
 	return	1;
 	}
 
-static int
+HIDDEN int
 rgbtru(int flag)
 {
 	u_char	buff[2];
@@ -816,7 +816,7 @@ rgbtru(int flag)
 /*	s c r o r g ( )
 	Set the screen-center coordinate (CREG 4) to (x, y).
  */
-static int
+HIDDEN int
 scrorg(int x, int y)
 {
 	u_char	buff[6];
@@ -831,7 +831,7 @@ scrorg(int x, int y)
 	return	1;
 	}
 
-static int
+HIDDEN int
 value(u_char red, u_char green, u_char blue)
 {
 	char	buff[4];
@@ -844,7 +844,7 @@ value(u_char red, u_char green, u_char blue)
 	return	1;
 	}
 
-static int
+HIDDEN int
 vidform(int mode, int flag)
 {
 	u_char	buff[4];
@@ -857,7 +857,7 @@ vidform(int mode, int flag)
 	return	1;
 	}
 
-static int
+HIDDEN int
 warm(void)
 {
 	u_char	buff[2];
@@ -871,7 +871,7 @@ warm(void)
 /*	w r m a s k ( )
 	Set write mask.
  */
-static int
+HIDDEN int
 wrmask(int bitm, int bankm)
 {
 	u_char	buff[4];
@@ -884,7 +884,7 @@ wrmask(int bitm, int bankm)
 	return	1;
 	}
 
-static int
+HIDDEN int
 cursor(int num, int flag)
 {
 	u_char	buff[4];
@@ -898,7 +898,7 @@ cursor(int num, int flag)
 	}
 
 
-static int
+HIDDEN int
 xhair(int num, int flag)
 {
 	u_char	buff[4];
@@ -911,7 +911,7 @@ xhair(int num, int flag)
 	return	1;
 	}
 
-static int
+HIDDEN int
 zoom(int factor)
 {
 	u_char	buff[2];
@@ -922,7 +922,7 @@ zoom(int factor)
 	return	1;
 	}
 
-_LOCAL_ int
+HIDDEN int
 rat_help(FBIO *ifp)
 {
 	fb_log( "Description: %s\n", rat_interface.if_type );

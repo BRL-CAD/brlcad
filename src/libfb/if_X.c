@@ -76,19 +76,19 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
 
-static	void	slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax);
-static	int	linger(FBIO *ifp);
-static	int	xsetup(FBIO *ifp, int width, int height);
+HIDDEN	void	slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax);
+HIDDEN	int	x_linger(FBIO *ifp);
+HIDDEN	int	x_setup(FBIO *ifp, int width, int height);
 void		x_print_display_info(Display *dpy);
-static	int	x_make_colormap(FBIO *ifp);	/*XXX*/
-static	int	x_make_cursor(FBIO *ifp);	/*XXX*/
-static void	repaint(FBIO *ifp);
+HIDDEN	int	x_make_colormap(FBIO *ifp);	/*XXX*/
+HIDDEN	int	x_make_cursor(FBIO *ifp);	/*XXX*/
+HIDDEN void	repaint(FBIO *ifp);
 
 #define TMP_FILE	"/tmp/x.cmap"
 
-_LOCAL_ int	X_scanwrite(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count, int save);
+HIDDEN int	X_scanwrite(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count, int save);
 
-_LOCAL_ int	X_open(FBIO *ifp, char *file, int width, int height),
+HIDDEN int	X_open(FBIO *ifp, char *file, int width, int height),
 		X_close(FBIO *ifp),
 		X_clear(FBIO *ifp, unsigned char *pp),
 		X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
@@ -105,11 +105,11 @@ _LOCAL_ int	X_open(FBIO *ifp, char *file, int width, int height),
 		X_help(FBIO *ifp);
 
 #ifdef USE_PROTOTYPES
-static void	Monochrome( unsigned char *bitbuf, unsigned char *bytebuf, int width, int height, int method);
-static int	do_event( FBIO	*ifp );
+HIDDEN void	Monochrome( unsigned char *bitbuf, unsigned char *bytebuf, int width, int height, int method);
+HIDDEN int	do_event( FBIO	*ifp );
 #else
-static void	Monochrome();
-static int	do_event();
+HIDDEN void	Monochrome();
+HIDDEN int	do_event();
 #endif
 
 /* This is the ONLY thing that we normally "export" */
@@ -261,11 +261,11 @@ static unsigned short greyvec[16] = {
 0, 246, 247, 43, 248, 249, 86, 250, 251, 129, 252, 253, 172, 254, 255, 215
 };
 
-static unsigned char convRGB(register const unsigned char *v);
+HIDDEN unsigned char convRGB(register const unsigned char *v);
 unsigned long 	*x_pixel_table;
 XColor 		*color_defs;
 
-_LOCAL_ int
+HIDDEN int
 X_open(FBIO *ifp, char *file, int width, int height)
 {
 	int	fd;
@@ -351,7 +351,7 @@ X_open(FBIO *ifp, char *file, int width, int height)
 	XI(ifp)->mode = mode;
 
 	/* set up an X window, graphics context, etc. */
-	if( xsetup( ifp, width, height ) < 0 ) {
+	if( x_setup( ifp, width, height ) < 0 ) {
 		return(-1);
 	}
 
@@ -435,12 +435,12 @@ X_open(FBIO *ifp, char *file, int width, int height)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 X_close(FBIO *ifp)
 {
 	XFlush( XI(ifp)->dpy );
 	if( (XI(ifp)->mode & MODE_1MASK) == MODE_1LINGERING ) {
-		if( linger(ifp) )
+		if( x_linger(ifp) )
 			return(0);	/* parent leaves the display */
 	}
 	if( XIL(ifp) != NULL ) {
@@ -450,7 +450,7 @@ X_close(FBIO *ifp)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 X_clear(FBIO *ifp, unsigned char *pp)
 {
 	unsigned char *bitbuf = XI(ifp)->bitbuf;
@@ -489,7 +489,7 @@ X_clear(FBIO *ifp, unsigned char *pp)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
 	unsigned char *bytebuf = XI(ifp)->bytebuf;
@@ -620,7 +620,7 @@ mfs_bw(unsigned int pixel, register int count, register int line)
  * Decompose a write of more than one scanline into multiple single
  * scanline writes.
  */
-_LOCAL_ int
+HIDDEN int
 X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
 	int	maxcount;
@@ -665,7 +665,7 @@ X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
  * buffer for later repaints/redisplay or it will put it into a single
  * scanline temporary buffer for immediate display.
  */
-_LOCAL_ int
+HIDDEN int
 X_scanwrite(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count, int save)
 {
 	unsigned char *bitbuf = XI(ifp)->bitbuf;
@@ -792,14 +792,14 @@ done:
     	return	count;
 }
 
-_LOCAL_ int
+HIDDEN int
 X_rmap(FBIO *ifp, ColorMap *cmp)
 {
 	*cmp = XI(ifp)->rgb_cmap;	/* struct copy */
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 X_wmap(FBIO *ifp, const ColorMap *cmp)
 {
 	register int i;
@@ -848,7 +848,7 @@ X_wmap(FBIO *ifp, const ColorMap *cmp)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 X_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	/* bypass if no change */
@@ -873,7 +873,7 @@ X_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 X_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 	*xcenter = ifp->if_xcenter;
@@ -884,13 +884,13 @@ X_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 X_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 X_cursor(FBIO *ifp, int mode, int x, int y)
 {
 	fb_sim_cursor(ifp, mode, x, y);
@@ -916,15 +916,15 @@ X_cursor(FBIO *ifp, int mode, int x, int y)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 X_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
 	return fb_sim_getcursor(ifp, mode, x, y);
 }
 
-static
+HIDDEN
 int
-xsetup(FBIO *ifp, int width, int height)
+x_setup(FBIO *ifp, int width, int height)
 {
 	Display	*dpy;			/* local copy */
 	int	screen;			/* local copy */
@@ -1069,8 +1069,8 @@ printf("Making graphics context\n");
 
 static int alive = 1;
 
-static int
-linger(FBIO *ifp)
+HIDDEN
+x_linger(FBIO *ifp)
 {
 	if( fork() != 0 )
 		return 1;	/* release the parent */
@@ -1084,7 +1084,7 @@ linger(FBIO *ifp)
 	return 0;
 }
 
-static int
+HIDDEN int
 do_event(FBIO *ifp)
 {
 	XEvent	event;
@@ -1187,7 +1187,7 @@ do_event(FBIO *ifp)
  * Convert width x height 8bit grey scale bytes in bytebuf to
  * a bitmap in bitbuf, using the selected "method"
  */
-static void
+HIDDEN void
 Monochrome(unsigned char *bitbuf, unsigned char *bytebuf, int width, int height, int method)
 {
 	register unsigned char *mbuffer, mvalue;   /* monochrome bitmap buffer */
@@ -1238,7 +1238,7 @@ Monochrome(unsigned char *bitbuf, unsigned char *bytebuf, int width, int height,
 	free((char *)error2);
 }
 
-_LOCAL_ int
+HIDDEN int
 X_poll(FBIO *ifp)
 {
 	XFlush( XI(ifp)->dpy );
@@ -1248,7 +1248,7 @@ X_poll(FBIO *ifp)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 X_flush(FBIO *ifp)
 {
 	XFlush( XI(ifp)->dpy );
@@ -1258,7 +1258,7 @@ X_flush(FBIO *ifp)
 	return(0);
 }
 
-_LOCAL_ int
+HIDDEN int
 X_help(FBIO *ifp)
 {
 	struct	modeflags *mfp;
@@ -1284,7 +1284,7 @@ X_help(FBIO *ifp)
  *	convert a single RGBpixel to its corresponding entry in the Sun
  *	colormap.
  */
-static unsigned char convRGB(register const unsigned char *v)
+HIDDEN unsigned char convRGB(register const unsigned char *v)
 {
 	register int r, g, b;
 
@@ -1322,7 +1322,7 @@ static unsigned char convRGB(register const unsigned char *v)
  *
  *	initialize the Sun harware colormap
  */
-static void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap)
+HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap)
 {
 	register int r, g, b;
 
@@ -1357,7 +1357,7 @@ static void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap
 	}
 }
 
-static int
+HIDDEN int
 x_make_colormap(FBIO *ifp)
 {
 	int 		tot_levels;
@@ -1435,7 +1435,7 @@ x_make_colormap(FBIO *ifp)
 	return 0;
 }
 
-static int
+HIDDEN int
 x_make_cursor(FBIO *ifp)
 {
 	XSetWindowAttributes	xswa;
@@ -1572,7 +1572,7 @@ x_print_display_info(Display *dpy)
  * We do all of our computation here in the first quadrant form and
  * only switch to fourth for Xlib commands.
  */
-static void
+HIDDEN void
 repaint(FBIO *ifp)
 {
 	/* 1st and last image pixel coordinates *within* the window */
@@ -1693,7 +1693,7 @@ repaint(FBIO *ifp)
 /*
  * Repaint a (pre clipped) rectangle from the image onto the screen.
  */
-static void
+HIDDEN void
 slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax)
 
                	/* image bounds */
