@@ -113,9 +113,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * add command line help options to 'benchmark' tool
 
-* default mged text editor invokes ed, should invoke jove or system
-  gui editor like TextEdit on OS X if it's known.
-
 * mirror around an arbitrary plane (maybe point+vector) in mged
 
 * mirror around point/distance along axis operation in mged

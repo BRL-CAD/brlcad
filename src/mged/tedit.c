@@ -71,10 +71,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 
 
-#define LINELEN		256	/* max length of input line */
-#define	DEFEDITOR	"/bin/ed"
 #define V3BASE2LOCAL( _pt )	(_pt)[X]*base2local , (_pt)[Y]*base2local , (_pt)[Z]*base2local
 #define V4BASE2LOCAL( _pt )	(_pt)[X]*base2local , (_pt)[Y]*base2local , (_pt)[Z]*base2local , (_pt)[W]*base2local
+
+#define	ED_EDITOR "/bin/ed"
+#define	VI_EDITOR "/usr/bin/vi"
+#define	EMACS_EDITOR "/usr/bin/emacs"
+#define XTERM_EDITOR "/usr/X11R6/bin/xterm"
+#define WIN_EDITOR "notepad"
+#define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
 
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
@@ -285,7 +290,7 @@ writesolid(void)
 static char *
 Get_next_line(FILE *fp)
 {
-	static char line[LINELEN];
+	static char line[RT_MAXLINE];
 	int i;
 	int len;
 
@@ -839,113 +844,167 @@ readsolid(void)
 }
 
 
-/* XXX should merge with editit() below */
-#ifdef _WIN32
-
-/* Run $EDITOR on temp file */
-editit( file )
-const char *file;
-{
-   STARTUPINFO si = {0};
-   PROCESS_INFORMATION pi = {0};
-   char line[RT_MAXLINE] = {0};
-
-   sprintf(line,"notepad %s",file);
-
-
-      si.cb = sizeof(STARTUPINFO);
-      si.lpReserved = NULL;
-      si.lpReserved2 = NULL;
-      si.cbReserved2 = 0;
-      si.lpDesktop = NULL;
-      si.dwFlags = 0;
-
-      CreateProcess( NULL,
-                     line,
-                     NULL,
-                     NULL,
-                     TRUE,
-                     NORMAL_PRIORITY_CLASS,
-                     NULL,
-                     NULL,
-                     &si,
-                     &pi );
-      WaitForSingleObject( pi.hProcess, INFINITE );
-
-	return 1;
-}
-
-#else /* !_WIN32 */
-
-/* Run $EDITOR on temp file
+/* Run $EDITOR on temp file, defaulting to various system-specific
+ * editors otherwise if unset.
  *
- * BUGS -- right now we only check at compile time whether or not to pop up an
- *         X window to display into (for editors that do not open their own
- *         window like vi or jove).  If we have X support, we automatically use
- *         xterm (regardless of whether the user is running mged in console
- *         mode!)
+ * BUGS -- right now we only check at compile time whether or not to
+ * pop up an X window to display into (for editors that do not open
+ * their own window like vi or jove).  If we have X support, we
+ * automatically use xterm (regardless of whether the user is running
+ * mged in console mode!)
  */
 int
 editit(const char *file)
 {
-	register int pid, xpid;
-	register char *ed;
-	int stat;
-	void (*s2)(), (*s3)();
+	register int pid = 0;
+	register int xpid = 0;
+	char buffer[RT_MAXLINE] = {0};
+	char *editor = (char *)NULL;
+	int stat = 0;
+	void (*s2)();
+	void (*s3)();
 
-	if ((ed = getenv("EDITOR")) == (char *)0)
-		ed = DEFEDITOR;
-	bu_log("Invoking %s %s\n", ed, file);
+#ifdef HAVE_GETENV
+	editor = getenv("EDITOR");
+#endif
+	
+	/* still unset? try windows */
+	if (!editor || editor[0] == '\0') {
+#ifdef DM_WGL
+	    editor = WIN_EDITOR;
+#else
+	    editor = (char *)NULL;
+#endif
+	}
 
+	/* still unset? try mac os x */
+	if (!editor || editor[0] == '\0') {
+#ifdef __APPLE__
+	    if (bu_file_exists(MAC_EDITOR)) {
+		editor = MAC_EDITOR;
+	    }
+#else
+	    editor = (char *)NULL;
+#endif
+	}
+
+	/* still unset? try emacs */
+	if (!editor || editor[0] == '\0') {
+	    if (bu_file_exists(EMACS_EDITOR)) {
+		editor = EMACS_EDITOR;
+	    }
+	}
+
+	/* still unset? try vi */
+	if (!editor || editor[0] == '\0') {
+	    if (bu_file_exists(VI_EDITOR)) {
+		editor = VI_EDITOR;
+	    }
+	}
+
+	/* still unset? try ed */
+	if (!editor || editor[0] == '\0') {
+	    if (bu_file_exists(ED_EDITOR)) {
+		editor = ED_EDITOR;
+	    }
+	}
+
+	/* still unset? default to jove */
+	if (!editor || editor[0] == '\0') {
+	    const char *binpath = bu_brlcad_root("bin", 1);
+	    editor = "jove";
+	    if (!binpath) {
+		sprintf(buffer, "%s/%s", binpath, editor);
+		if (bu_file_exists(buffer)) {
+		    editor = buffer;
+		} else {
+		    const char *dirn = bu_dirname(bu_getprogname());
+		    if (dirn) {
+			sprintf(buffer, "%s/%s", dirn, editor);
+			if (bu_file_exists(buffer)) {
+			    editor = buffer;
+			}
+		    }
+		}
+	    }
+	}
+
+	bu_log("Invoking %s on %s\n", editor, file);
+	bu_log("NOTE: YOU MUST QUIT %s BEFORE MGED WILL RESPOND AND CONTINUE\n", editor);
+
+#ifdef HAVE_SIGNAL_H
 	s2 = signal( SIGINT, SIG_IGN );
 	s3 = signal( SIGQUIT, SIG_IGN );
+#endif
+
+#ifdef HAVE_UNISTD_H
 	if ((pid = fork()) < 0) {
 		perror("fork");
 		return (0);
 	}
+#endif
+
 	if (pid == 0) {
 		register int i;
 		/* Don't call bu_log() here in the child! */
 
-		/* XXX do not want to close all io if we are in console mode
-		 * and the editor needs to use stdout...
-		 */
-#	if defined(DM_X) || defined(DM_OGL)
-		/* close all stdout/stderr (XXX except do not close 0==stdin) */
-		for( i=1; i < 20; i++ )
-			(void)close(i);
-#	else
-		/* leave stdin/out/err alone */
-		for( i=3; i < 20; i++ )
-			(void)close(i);
-#	endif
-
+#ifdef HAVE_SIGNAL_H
+		/* deja vu */
 		(void)signal( SIGINT, SIG_DFL );
 		(void)signal( SIGQUIT, SIG_DFL );
+#endif
 
-		/* if we have x support, we pop open the editor in an xterm.
-		 * otherwise, we use whatever the user gave as EDITOR
-		 */
-#	if defined(DM_X) || defined(DM_OGL)
-		(void)execlp("xterm", "xterm", "-e", ed, file, (char *)0);
-#	else
-		(void)execlp(ed, ed, file, 0);
-#	endif
-		perror(ed);
-		exit(1);
+		{
+#if defined(DM_WGL)
+		    STARTUPINFO si = {0};
+		    PROCESS_INFORMATION pi = {0};
+		    si.cb = sizeof(STARTUPINFO);
+		    si.lpReserved = NULL;
+		    si.lpReserved2 = NULL;
+		    si.cbReserved2 = 0;
+		    si.lpDesktop = NULL;
+		    si.dwFlags = 0;
+		    
+		    sprintf(buffer, "%s %s", editor, file);
+
+		    CreateProcess(NULL, buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+		    WaitForSingleObject( pi.hProcess, INFINITE );
+		    return 0;
+#else /* !DM_WGL */
+
+#  if defined(DM_X) || defined(DM_OGL)
+		    /* if we have x support, pop open the editor in an
+		     * xterm.  otherwise, use whatever the user gave.
+		     */
+		    if (bu_file_exists(XTERM_EDITOR)) {
+			(void)execlp(XTERM_EDITOR, XTERM_EDITOR, "-e", editor, file, (char *)0);
+		    }
+#  endif /* DM_X || DM_OGL */
+		    (void)execlp(editor, editor, file, 0);
+
+#endif /* DM_WGL */
+		    /* should not reach */
+		    perror(editor);
+		    exit(1);
+		}
 	}
 
+#ifdef HAVE_UNISTD_H
+	/* wait for the editor to terminate */
+	while ((xpid = wait(&stat)) >= 0) {
+	    if (xpid == pid) {
+		break;
+	    }
+	}
+#endif
 
-	while ((xpid = wait(&stat)) >= 0)
-		if (xpid == pid)
-			break;
-
+#ifdef HAVE_SIGNAL_H
 	(void)signal(SIGINT, s2);
 	(void)signal(SIGQUIT, s3);
+#endif
 
 	return (!stat);
 }
-#endif /* _WIN32 */
 
 /*
  * Local Variables:

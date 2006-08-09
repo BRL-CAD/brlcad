@@ -11,6 +11,8 @@ entire history of the project is available through CVS.
 --- 2006-08-XX  Release 7.8.3                                      ---
 ----------------------------------------------------------------------
 
+* improved 'ted' mged command text editor support - Sean Morrison
+* support mged EDITOR environment override on Windows - Sean Morrison
 * fixed mged crash on P binding when not in edit mode - Sean Morrison
 * improved FreeBSD 64bit support, fixes AMD64 crash - Erik Greenwald
 * allow unlimited light samples during ray tracing - Sean Morrison
