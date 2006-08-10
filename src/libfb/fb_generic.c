@@ -87,6 +87,9 @@ int fb_null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits
 /* First element of list is default device when no name given */
 static
 FBIO *_if_list[] = {
+#ifdef IF_TK
+	&tk_interface,
+#endif
 #ifdef IF_ADAGE
 	&adage_interface,
 #endif
