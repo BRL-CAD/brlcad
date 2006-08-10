@@ -84,6 +84,7 @@ brlcadinclude_wanted = \
 	dm-pex.h \
 	dm-plot.h \
 	dm-ps.h \
+	dm-tk.h \
 	dm.h \
 	dm_color.h \
 	dm_xvars.h \
