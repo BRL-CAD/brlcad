@@ -60,7 +60,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libbn.lib libbu.lib librt.lib libsysv.lib libwdb.lib /nologo /dll /machine:I386 /libpath:"../Release"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libbn.lib libbu.lib libregex.lib librt.lib libsysv.lib libwdb.lib /nologo /dll /machine:I386 /libpath:"../Release"
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "brlcad - Win32 Release Multithreaded"
@@ -89,7 +89,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libbn.lib libbu.lib librt.lib libsysv.lib libwdb.lib /nologo /dll /machine:I386 /libpath:"../ReleaseMt"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libbn.lib libbu.lib libregex.lib librt.lib libsysv.lib libwdb.lib /nologo /dll /machine:I386 /libpath:"../ReleaseMt"
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "brlcad - Win32 Release Multithreaded DLL"
@@ -118,7 +118,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libbn.lib libbu.lib librt.lib libsysv.lib libwdb.lib /nologo /dll /machine:I386 /libpath:"../ReleaseMtDll"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libbn.lib libbu.lib libregex.lib librt.lib libsysv.lib libwdb.lib /nologo /dll /machine:I386 /libpath:"../ReleaseMtDll"
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "brlcad - Win32 Debug"
@@ -147,7 +147,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libbn.lib libbu.lib librt.lib libsysv.lib libwdb.lib /nologo /dll /debug /machine:I386 /pdbtype:sept /libpath:"../Debug"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libbn.lib libbu.lib libregex.lib librt.lib libsysv.lib libwdb.lib /nologo /dll /debug /machine:I386 /pdbtype:sept /libpath:"../Debug"
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "brlcad - Win32 Debug Multithreaded"
@@ -176,7 +176,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libbn.lib libbu.lib librt.lib libsysv.lib libwdb.lib /nologo /dll /debug /machine:I386 /pdbtype:sept /libpath:"../DebugMt"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libbn.lib libbu.lib libregex.lib librt.lib libsysv.lib libwdb.lib /nologo /dll /debug /machine:I386 /pdbtype:sept /libpath:"../DebugMt"
 # SUBTRACT LINK32 /pdb:none
 
 !ELSEIF  "$(CFG)" == "brlcad - Win32 Debug Multithreaded DLL"
@@ -205,7 +205,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libbn.lib libbu.lib librt.lib libsysv.lib libwdb.lib /nologo /dll /debug /machine:I386 /pdbtype:sept /libpath:"../DebugMtDll"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libbn.lib libbu.lib libregex.lib librt.lib libsysv.lib libwdb.lib /nologo /dll /debug /machine:I386 /pdbtype:sept /libpath:"../DebugMtDll"
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 

@@ -190,19 +190,7 @@ SOURCE=.\redata.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\regcomp.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\regex.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\regexec.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\regfree.c
 # End Source File
 # Begin Source File
 

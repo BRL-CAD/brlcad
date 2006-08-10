@@ -15,7 +15,8 @@ noinst_HEADERS = \
 	utils.h
 
 EXTRA_DIST =		\
-	engine.c
+	engine.c	\
+	libregex.dsp
 
 MAINTAINERCLEANFILES = \
 	Makefile.in
