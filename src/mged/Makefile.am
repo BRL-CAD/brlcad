@@ -183,6 +183,7 @@ EXTRA_DIST = \
 	bool_rewrite.c \
 	comb_bool_parse.y \
 	comb_bool_scan.l \
+	dm-tk.c \
 	fbserv_win32.c \
 	hideline.c \
 	memalloc.c \
