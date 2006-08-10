@@ -80,6 +80,7 @@ EXTRA_DIST = \
 	if_sgi.c \
 	if_sgiw.c \
 	if_sun.c \
+	if_tk.c \
 	if_ts.c \
 	if_ug.c \
 	libfb.dsp \
