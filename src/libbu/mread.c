@@ -57,9 +57,10 @@ bu_mread(int fd, void *bufp, long int n)
 {
     register long int count = 0;
     register long int nread;
+    char *cbufp = (char *)bufp;
 
     while (count < n) {
-	nread = read(fd, bufp, (size_t)n-count);
+	nread = read(fd, cbufp, (size_t)n-count);
 	if (nread < 0)  {
 	    return nread;
 	}
@@ -67,7 +68,7 @@ bu_mread(int fd, void *bufp, long int n)
 	    return count;
 	}
 	count += nread;
-	(char*)bufp += nread;
+	cbufp += nread;
     }
     return count;
 }
