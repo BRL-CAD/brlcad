@@ -892,8 +892,11 @@ update the configure.ac, NEWS, and include/config_win.h immediately to
 a developer version (odd minor or patch version number, e.g. 7.4.1).
 Update README version to next expected release number (e.g. 7.4.2).
 
-14) If appropriate, notify and/or update the following information
-outlets with the details of the new release:
+14) Announce the new release.  The NEWS file should generally be used
+as a basis for making release announcements though the announcements
+almost always require modification and customization tailored to the
+particular forum or audience.  If appropriate, notify and/or update
+the following information outlets with the details of the new release:
 
       News on the BRL-CAD website
       http://brlcad.org/
