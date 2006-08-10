@@ -43,6 +43,22 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* full/exact precision computation support
+
+* c++ geometry engine/api using librt/libbn/libbu
+
+* inside/outside point and voxel testing capability in librt
+
+* automatic geometry voxelizer (perhaps using arbs or vol primitive)
+
+* turn geometry converters and image converters into libraries
+
+* add support for querying geometry properties to library including
+  computing surface area and weight/mass.
+
+* add verification and validation tests confirming behavior of the
+  ray-tracer and computations of area, mass, volume, etc.
+
 * testing suite for all binaries: for cmd2 in $(for cmd in `find . -name Makefile.am | xargs cat | perl -pi -e 's/\\\\\n//g'| grep -E "PROGRAMS ?=" | sed 's/.*=//g'` ; do echo $cmd ; done | sort | uniq ) ; do echo command: $cmd2 ; done
 
 * add geometry example of building 238
