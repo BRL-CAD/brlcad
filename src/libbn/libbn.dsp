@@ -190,10 +190,6 @@ SOURCE=.\anim.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\asize.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\axis.c
 # End Source File
 # Begin Source File
