@@ -30,8 +30,8 @@ SRCS = \
 	dm-ogl.c \
 	dm-plot.c \
 	dm-ps.c \
-	dm_obj.c \
 	dm-wgl.c \
+	dm_obj.c \
 	knob.c \
 	options.c \
 	query.c \
@@ -52,6 +52,7 @@ libdm_la_LIBADD = \
 EXTRA_DIST = \
 	dm-glx.c \
 	dm-pex.c \
+	dm-tk.c \
 	libdm.dsp \
 	vers_win.c
 
