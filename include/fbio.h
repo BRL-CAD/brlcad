@@ -203,6 +203,10 @@ typedef struct FBIO_ {
   FB_EXPORT extern FBIO ts_interface;
 #endif
 
+#ifdef IF_TK
+  FB_EXPORT extern FBIO tk_interface;
+#endif
+
 
 /* Always included */
 FB_EXPORT extern FBIO debug_interface, disk_interface, stk_interface;
