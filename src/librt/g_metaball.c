@@ -192,73 +192,57 @@ rt_metaball_point_value(point_t *p, struct bu_list *points)
 int
 rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-	struct rt_metaball_internal *mb;
-	point_t p, inc;
 	int stat=0, retval = 0, segsleft = abs(ap->a_onehit);
-	register struct seg *segp = NULL;
-	fastf_t initstep = stp->st_aradius / 20.0, finalstep = stp->st_aradius / 1e8;
-	fastf_t step = initstep;
-	fastf_t distleft = (rp->r_max-rp->r_min);
+	struct rt_metaball_internal *mb = (struct rt_metaball_internal *)stp->st_specific;
+	struct seg *segp = NULL;
+	point_t p, inc, delta;
+	fastf_t initstep = stp->st_aradius / 20.0, finalstep = stp->st_aradius / 1e8, step = initstep, distleft = (rp->r_max-rp->r_min);
 	
-	mb = (struct rt_metaball_internal *)stp->st_specific;
 	VJOIN1(p, rp->r_pt, rp->r_min, rp->r_dir);
 	VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
 
-	while( (distleft -= step) > 0.0 ) {
+/* we hit, but not as fine-grained as we want. So back up one step, cut the 
+ * step size in half and start over... Note that once we're happily inside, we
+ * do NOT change the step size back! */
+#define STEPBACK { distleft += step; VSUB2(p, p, inc); step *= .5; VSCALE(inc,inc,.5); }
+#define STEPIN(x) { --segsleft; ++retval; VSUB2(delta, p, rp->r_pt); segp->seg_##x.hit_dist = MAGNITUDE(delta); }
+	while( distleft >= 0.0 ) {
+		distleft -= step; 
 		VADD2(p, p, inc);
-		if(stat) {
+		if(stat == 1) {
 			if(rt_metaball_point_value(&p, &mb->metaball_pt_head) < mb->threshhold ) {
 				if(step<=finalstep) {
-					point_t delta;
-					VSUB2(delta, p, rp->r_pt);
-					segp->seg_out.hit_dist = sqrt(MAGSQ(delta));
-					BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-					--segsleft;
-					if(!segsleft)
-					    break;
-					retval = 2;
-					continue;
-				} else {
-					distleft += step;
-					VSUB2(p, p, inc); 
-					step *= .5;
-					VSCALE(inc,inc,.5);
-				}
+					STEPIN(out);
+					stat = 0;
+					if(segsleft <= 0) {
+					    return retval;
+					}
+				} else
+					STEPBACK
 			}
 		} else {
 			if(rt_metaball_point_value(&p, &mb->metaball_pt_head) > mb->threshhold ) {
 				if(step<=finalstep) {
-					point_t delta;
-
-					--segsleft;
-					VSUB2(delta, p, rp->r_pt);
 					RT_GET_SEG(segp, ap->a_resource);
 					segp->seg_stp = stp;
-					segp->seg_in.hit_dist = sqrt(MAGSQ(delta));
-					if(!segsleft){	/* exit now if we're one-hit (like visual rendering) */
-						segp->seg_out.hit_dist = segp->seg_in.hit_dist + .1; /* cope with silliness */
-						BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-						return 2;
+					STEPIN(in);
+					segp->seg_out.hit_dist = segp->seg_in.hit_dist + .1; /* cope with silliness */
+					BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+					if(segsleft <= 0){	/* exit now if we're one-hit (like visual rendering) */
+						return retval;
 					}
 					/* reset the ray-walk shtuff */
-					++stat;
+					stat = 1;
 					VSUB2(p, p, inc); 
 					VSCALE(inc, rp->r_dir, step);
 					step = initstep;
-				} else {
-					/* we hit, but not as fine-grained as we
-					 * want. So back up one step, cut the step
-					 * size in half and start over... Note that
-					 * once we're happily inside, we do NOT
-					 * change the step size back! */
-					distleft += step;
-					VSUB2(p, p, inc); 
-					step *= .5;
-					VSCALE(inc,inc,.5);
-				}
+				} else
+					STEPBACK
 			}
 		}
 	}
+#undef STEPBACK
+#undef STEPIN
 	return retval;
 }
 
