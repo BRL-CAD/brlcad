@@ -143,7 +143,7 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * add callback data parameters to libpkg hook functions
 
-* test intel compiler performance on Altix, add performance options
+* add performance options for the intel compiler on Altix
 
 * pix-png should make sure output is not to a terminal
 
@@ -179,7 +179,7 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * write up the history of brlcad
 
-* obliterate compilation warnings
+* obliterate verbose compilation warnings
 
 * add support for subgeometry support to the geometry syndicator
 
