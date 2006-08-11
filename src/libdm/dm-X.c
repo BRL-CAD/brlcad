@@ -239,7 +239,7 @@ X_open(Tcl_Interp *interp, int argc, char **argv)
     Tk_Window tkwin;
 
     struct dm_xvars *pubvars = NULL;
-    struct dm_xvars *privars = NULL;
+    struct x_vars *privars = NULL;
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
@@ -265,7 +265,7 @@ X_open(Tcl_Interp *interp, int argc, char **argv)
 	bu_free((genptr_t)dmp, "X_open: dmp");
 	return DM_NULL;
     }
-    privars = (struct dm_xvars *)dmp->dm_vars.priv_vars;
+    privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);
@@ -534,7 +534,7 @@ HIDDEN int
 X_close(struct dm *dmp)
 {
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct dm_xvars *privars = (struct dm_xvars *)dmp->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     if(pubvars->dpy){
 	if(privars->gc)
@@ -576,7 +576,7 @@ X_drawBegin(struct dm *dmp)
 {
     XGCValues       gcv;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct dm_xvars *privars = (struct dm_xvars *)dmp->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     if (dmp->dm_debugLevel)
 	bu_log("X_drawBegin()\n");
@@ -608,7 +608,7 @@ HIDDEN int
 X_drawEnd(struct dm *dmp)
 {
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct dm_xvars *privars = (struct dm_xvars *)dmp->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     if (dmp->dm_debugLevel)
 	bu_log("X_drawEnd()\n");
@@ -636,7 +636,7 @@ X_drawEnd(struct dm *dmp)
 HIDDEN int
 X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
-    struct dm_xvars *privars = (struct dm_xvars *)dmp->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     if(dmp->dm_debugLevel){
 	bu_log("X_loadMatrix()\n");
@@ -678,7 +678,7 @@ X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     fastf_t				dist_prev=1.0;
     static int			nvectors = 0;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct dm_xvars *privars = (struct dm_xvars *)dmp->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
 
     if (dmp->dm_debugLevel) {
@@ -924,7 +924,7 @@ X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int siz
 {
     int sx, sy;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct dm_xvars *privars = (struct dm_xvars *)dmp->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     if (dmp->dm_debugLevel){
 	bu_log("X_drawString2D():\n");
@@ -954,7 +954,7 @@ X_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
     int	sx1, sy1, sx2, sy2;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct dm_xvars *privars = (struct dm_xvars *)dmp->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     sx1 = dm_Normal2Xx(dmp, x1);
     sx2 = dm_Normal2Xx(dmp, x2);
@@ -982,7 +982,7 @@ X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     int   sx, sy;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct dm_xvars *privars = (struct dm_xvars *)dmp->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     sx = dm_Normal2Xx(dmp, x);
     sy = dm_Normal2Xy(dmp, y, 0);
@@ -1005,7 +1005,7 @@ X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, 
 {
     XGCValues gcv;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct dm_xvars *privars = (struct dm_xvars *)dmp->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     if (dmp->dm_debugLevel)
 	bu_log("X_setFGColor()\n");
@@ -1044,7 +1044,7 @@ HIDDEN int
 X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct dm_xvars *privars = (struct dm_xvars *)dmp->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     if (dmp->dm_debugLevel)
 	bu_log("X_setBGColor()\n");
@@ -1078,7 +1078,7 @@ X_setLineAttr(struct dm *dmp, int width, int style)
 {
     int linestyle;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct dm_xvars *privars = (struct dm_xvars *)dmp->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     if (dmp->dm_debugLevel)
 	bu_log("X_setLineAttr()\n");
@@ -1133,7 +1133,7 @@ X_configureWin_guts(struct dm *dmp, int force)
     XFontStruct     *newfontstruct;
     XGCValues       gcv;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct dm_xvars *privars = (struct dm_xvars *)dmp->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     XGetWindowAttributes( pubvars->dpy,
 			  pubvars->win, &xwa );
@@ -1286,7 +1286,7 @@ X_choose_visual(struct dm *dmp)
     int desire_trueColor = 1;
     int min_depth = 8;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct dm_xvars *privars = (struct dm_xvars *)dmp->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     vibase = XGetVisualInfo(pubvars->dpy,
 			    0, &vitemp, &num);
