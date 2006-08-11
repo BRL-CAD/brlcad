@@ -283,6 +283,7 @@ HIDDEN union tree *rt_gettree_region_end(register struct db_tree_state *tsp, str
 
 	if( tbl && bu_avs_get( &tsp->ts_attrs, "ORCA_Comp" ) ) {
 		int newentry;
+		long int reg_bit = rp->reg_bit;
 
 		inv_mat = (matp_t)bu_calloc( 16, sizeof( fastf_t ), "inv_mat" );
 		if( tsp->ts_mat )
@@ -292,7 +293,7 @@ HIDDEN union tree *rt_gettree_region_end(register struct db_tree_state *tsp, str
 
 		bu_semaphore_acquire( RT_SEM_RESULTS );	/* enter critical section */
 
-		entry = Tcl_CreateHashEntry(tbl, (char *)rp->reg_bit, &newentry);
+		entry = Tcl_CreateHashEntry(tbl, (char *)reg_bit, &newentry);
 		Tcl_SetHashValue( entry, (ClientData)inv_mat );
 
 		bu_semaphore_release( RT_SEM_RESULTS );	/* leave critical section */
