@@ -109,9 +109,6 @@ Recent Bugs
   line (infinite loop).  also gives infinite areas when presented with
   an empty .density file.
 
-* libfb and libdm have hardcoded XMAXSCREEN and YMAXSCREEN values that
-  are easily being surpassed on certain systems..
-
 * setting src/librt/db5_io.c's AVS_ADD off in db5_import_attributes
   causes bad things to happen and it really shouldn't.
 
