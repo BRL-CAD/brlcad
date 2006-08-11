@@ -56,7 +56,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define USE_DIALS_AND_BUTTONS 0
 
-#ifdef HAVE_XOSDEFS_H
+#ifdef HAVE_X11_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
 #  include <X11/Xosdefs.h>
 #endif

@@ -39,15 +39,7 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#define DO_XSELECTINPUT 0
-#define SET_COLOR( r, g, b, c ) { \
-	(c).rgb.red = (r); \
-	(c).rgb.green = (g); \
-	(c).rgb.blue = (b);}
-
 #include "common.h"
-
-#include "tk.h"
 
 #include <stdlib.h>
 #ifdef HAVE_XOSDEFS_H
@@ -63,12 +55,21 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/PEX5/PEXlib.h>
 #include <X11/Xutil.h>
 
+#include "tk.h"
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-pex.h"
+
+
+#define DO_XSELECTINPUT 0
+#define SET_COLOR( r, g, b, c ) { \
+	(c).rgb.red = (r); \
+	(c).rgb.green = (g); \
+	(c).rgb.blue = (b);}
 
 #define IMMED_MODE_SPT(info) (((info)->subset_info & 0xffff) ==\
 			      PEXCompleteImplementation ||\

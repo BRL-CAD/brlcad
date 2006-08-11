@@ -48,13 +48,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #  include <strings.h>
 #endif
-#include "tk.h"
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
+
+#ifdef HAVE_X11_XLIB_H
+#  include <X11/Xlib.h>
+#  include <X11/Xutil.h>
+#endif
 
 #define USE_DIALS_AND_BUTTONS 1
 
-#ifdef HAVE_XOSDEFS_H
+#ifdef HAVE_X11_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
 #  include <X11/Xosdefs.h>
 #endif
@@ -66,6 +68,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  undef   X_NOT_POSIX
 #endif
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
+
+#include "tk.h"
 
 #include "machine.h"
 #include "bu.h"

@@ -36,11 +36,16 @@
 
 #ifdef DM_OGL
 
-#include "tk.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
 
-#undef VMIN		/* is used in vmath.h, too */
-
-#ifdef HAVE_XOSDEFS_H
+#ifdef HAVE_X11_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
 #  include <X11/Xosdefs.h>
 #endif
@@ -55,14 +60,9 @@
 #include <GL/glx.h>
 #include <GL/gl.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
-#include <math.h>
+#include "tk.h"
+
+#undef VMIN		/* is used in vmath.h, too */
 
 #include "machine.h"
 #include "bu.h"
@@ -73,6 +73,7 @@
 #include "dm-ogl.h"
 #include "dm_xvars.h"
 #include "solid.h"
+
 
 #define VIEWFACTOR      (1.0/(*dmp->dm_vp))
 #define VIEWSIZE        (2.0*(*dmp->dm_vp))

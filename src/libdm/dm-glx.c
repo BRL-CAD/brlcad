@@ -62,9 +62,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-#include "tk.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
 
-#ifdef HAVE_XOSDEFS_H
+#ifdef HAVE_X11_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
 #  include <X11/Xosdefs.h>
 #endif
@@ -74,14 +81,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xutil.h>
 #include <sys/invent.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
-#include <math.h>
+#include "tk.h"
 
 #include "machine.h"
 #include "bu.h"
