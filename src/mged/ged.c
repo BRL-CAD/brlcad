@@ -1972,9 +1972,8 @@ log_event(char *event, char *arg)
     /* let the user know that we're logging */
     static int notified = 0;
 
-#ifndef DEBUG
+    /* disable for now until it can be tied to OPTIMIZED too */
     return;
-#endif
 
     /* get the current time */
     (void)time( &now );
