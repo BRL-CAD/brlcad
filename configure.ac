@@ -1302,6 +1302,7 @@ AC_CHECK_HEADERS( \
 	GL/gl.h \
 	GL/glx.h \
 	X11/Xlib.h \
+	X11/Xosdefs.h \
 	arpa/inet.h \
 	curses.h \
 	dslib.h \
@@ -1378,8 +1379,7 @@ AC_CHECK_HEADERS( \
 	varargs.h \
 	waitflags.h \
 	wchar.h \
-	winsock.h \
-	xosdefs.h \
+	winsock.h
 )
 
 AC_CHECK_HEADER(sys/sched.h,
