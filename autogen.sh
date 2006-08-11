@@ -167,8 +167,11 @@ done
 #####################
 
 # sanity check before recursions potentially begin
-if [ ! "x$0" = "x$AUTOGEN_SH" ] ; then
-    echo "INTERNAL ERROR: dirname/basename inconsistency: $0 != $AUTOGEN_SH"
+if [ ! -f "$AUTOGEN_SH" ] ; then
+    echo "INTERNAL ERROR: $AUTOGEN_SH does not exist"
+    if [ ! "x$0" = "x$AUTOGEN_SH" ] ; then
+	echo "INTERNAL ERROR: dirname/basename inconsistency: $0 != $AUTOGEN_SH"
+    fi
     exit 1
 fi
 
