@@ -73,9 +73,15 @@ union ipu_prsc_param {
 
 extern int	ipu_debug;
 
-#ifdef HAVE_DSLIB_H
-#  define IPU_FULL_LIB
-#  include <dslib.h>
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#if defined(HAVE_SYS_PRCTL_H) 
+#  include <sys/prctl.h>
+#endif
+#if defined(HAVE_DSLIB_H) && defined(PR_SALL) && defined(PR_SFDS)
+#    define IPU_FULL_LIB 1
+#    include <dslib.h>
 #endif
 
 
