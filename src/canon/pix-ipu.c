@@ -81,7 +81,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */
 #define _BSD_TYPES	1	/* IRIX 5.0.1 botch in sys/prctl.h */
-#include <sys/types.h>
 #include <ulocks.h>
 /* ulocks.h #include's <limits.h> and <malloc.h> */
 /* ulocks.h #include's <task.h> for getpid stuff */

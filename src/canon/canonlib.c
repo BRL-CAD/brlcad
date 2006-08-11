@@ -36,17 +36,16 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 #include <stdio.h>
-#include <sys/types.h>
 #include <sys/time.h>
 #include <fcntl.h>
 #ifdef HAVE_STDLIB_H
-#include <stdlib.h>
+#  include <stdlib.h>
 #endif
 #include <ctype.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 

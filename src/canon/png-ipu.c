@@ -78,12 +78,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "png.h"
 
-#include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>
+
 #include "./canon.h"
 
 #ifdef IPU_FULL_LIB
+
 
 static png_color_16 def_backgrd={ 255,255,255,255,255 };	/* white */
 static double	def_screen_gamma=1.0;	/* Don't add more gamma, by default */

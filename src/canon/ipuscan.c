@@ -40,14 +40,15 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -58,13 +59,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 # define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */
 # define _BSD_TYPES	1	/* IRIX 5.0.1 botch in sys/prctl.h */
-# include <sys/types.h>
 # include <ulocks.h>
-/* ulocks.h #include's <limits.h> and <malloc.h> */
-/* ulocks.h #include's <task.h> for getpid stuff */
-/* task.h #include's <sys/prctl.h> */
-# include <malloc.h>
-/* <malloc.h> #include's <stddef.h> */
 
 #include "./chore.h"
 

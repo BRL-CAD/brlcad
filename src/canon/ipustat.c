@@ -35,9 +35,6 @@
 #else
 #  include <strings.h>
 #endif
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
 #ifdef HAVE_FCNTL_H
 #  include <fcntl.h>
 #endif
