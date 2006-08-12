@@ -43,6 +43,8 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* display the current mode in mged graphics window
+
 * full/exact precision computation support
 
 * c++ geometry engine/api using librt/libbn/libbu
