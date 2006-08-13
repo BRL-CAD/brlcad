@@ -58,11 +58,10 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
 #include <stdio.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
@@ -138,6 +137,11 @@ extern void predictor_init(void);
 
 /* defined in chgmodel.c */
 extern void set_localunit_TclVar(void);
+
+/* defined in history.c */
+extern struct bu_vls *history_prev(const char *);
+extern struct bu_vls *history_cur(const char *);
+extern struct bu_vls *history_next(const char *);
 
 /* defined in dodraw.c */
 extern unsigned char geometry_default_color[];
@@ -751,8 +755,6 @@ pr_beep(void)
  * by setting up the multi_line_sig routine as the SIGINT handler.
  */
 
-extern struct bu_vls *history_prev(char *), *history_cur(char *), *history_next(char *);
-
 /*
  * stdin_input
  *
@@ -1123,7 +1125,7 @@ mged_process_char(char ch)
 	    curr_cmd_list = &head_cmd_list;
 	    if (freshline) {
 		if (ch == CTRL_P) {
-		    vp = history_prev((char *)NULL);
+		    vp = history_prev((const char *)NULL);
 		    if (vp == NULL) {
 			pr_beep();
 			break;
@@ -1137,13 +1139,13 @@ mged_process_char(char ch)
 		}
 	    } else {
 		if (ch == CTRL_P) {
-		    vp = history_prev((char *)NULL);
+		    vp = history_prev((const char *)NULL);
 		    if (vp == NULL) {
 			pr_beep();
 			break;
 		    }
 		} else {
-		    vp = history_next((char *)NULL);
+		    vp = history_next((const char *)NULL);
 		    if (vp == NULL) {
 			vp = &scratchline;
 			freshline = 1;

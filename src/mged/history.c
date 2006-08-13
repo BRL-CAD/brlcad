@@ -309,7 +309,7 @@ f_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 /*      H I S T O R Y _ P R E V
  */
 struct bu_vls *
-history_prev(char *pat)
+history_prev(const char *pat)
 {
     struct mged_hist *hp;
 
@@ -342,7 +342,7 @@ history_cur(void)
 /*      H I S T O R Y _ N E X T
  */
 struct bu_vls *
-history_next(char *pat)
+history_next(const char *pat)
 {
     struct mged_hist *hp;
 
@@ -407,7 +407,7 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
   if(strcmp(argv[1], "next") == 0){
     if(argc == 2){
-      vp = history_next((char *)NULL);
+      vp = history_next((const char *)NULL);
       if (vp == NULL)
         return TCL_ERROR;
     } else if(argc == 3){
@@ -428,7 +428,7 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
   if(strcmp(argv[1], "prev") == 0){
     if(argc == 2){
-      vp = history_prev((char *)NULL);
+      vp = history_prev((const char *)NULL);
       if (vp == NULL)
 	return TCL_ERROR;
     } else if(argc == 3){
