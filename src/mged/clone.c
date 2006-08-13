@@ -27,10 +27,15 @@
  *			spacing the copies along a spline
  *
  * Author -
- *	Adam Ross
+ *	Adam Ross (v4)
+ *      Christopher Sean Morrison (v5)
  *
  * Source -
  *      Geometric Solutions, Inc.
+ *
+ * TODO:
+ *   use bu_vls strings
+ *   use bu_list lists
  */
 
 #include "common.h"
@@ -76,7 +81,7 @@ struct clone_state {
     int			miraxis;	/* Axis to mirror copy */
     fastf_t		mirpos;		/* Point on axis to mirror copy */
 };
-#define INTERP state.interp
+#define INTERP state->interp
 
 /* XXX change from NAMESIZE to bu_vls */
 struct name {
@@ -193,42 +198,45 @@ index_in_list(struct nametbl l, char name[NAMESIZE])
     return -1;
 }
 
-/** returns the next available/unused name, using a naming convention
- *  that increments a trailing or first embedded number.  state.incr
- *  is used for each number level increase.
+
+/** returns the next available/unused name, using a consistent naming
+ * convention specific to combinations/regions and solids.
+ * state->incr is used for each number level increase.
  */
 static const char *
-get_name(struct db_i *_dbip, struct directory *dp, struct clone_state state, int iter)
+get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, int iter)
 {
-    static char *newname = NULL;
-    char tag[NAMESIZE] = {0}, post[NAMESIZE] = {0}, buf[NAMESIZE] = {0};
+    char *newname = NULL;
+    char prefix[NAMESIZE] = {0}, suffix[NAMESIZE] = {0}, buf[NAMESIZE] = {0};
     int num = 0, i, j;
 
     if (!newname) {
 	newname = (char *)bu_calloc(NAMESIZE, sizeof(char), "alloc newname");
     }
-    sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]", &tag, &num, &post);
+    sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num, &suffix);
 
     i = 1;
     if ((dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION)) {
+	/* primitives and regions */
 	do {
-	    if (post[0] == '.') {
+	    if (suffix[0] == '.') {
 		
 		if ((i == 1) && is_in_list(obj_list, buf)) {
 		    j = index_in_list(obj_list, buf);
-		    snprintf(buf, NAMESIZE, "%s%d", tag, num);
-		    snprintf(newname, NAMESIZE, "%s%s", obj_list.names[j].dest[iter], post);
+		    snprintf(buf, NAMESIZE, "%s%d", prefix, num);
+		    snprintf(newname, NAMESIZE, "%s%s", obj_list.names[j].dest[iter], suffix);
 		} else {
-		    snprintf(newname, NAMESIZE, "%s%d%s", tag, num+i*state.incr, post);
+		    snprintf(newname, NAMESIZE, "%s%d%s", prefix, num+i*state->incr, suffix);
 		}
 	    } else {
-		snprintf(newname, NAMESIZE, "%s%d", tag, num+i*state.incr);
+		snprintf(newname, NAMESIZE, "%s%d", prefix, num+i*state->incr);
 	    }
 	    i++;
 	} while (db_lookup(_dbip, newname, LOOKUP_QUIET) != NULL);
     } else {
+	/* non-region combinations */
 	do {
-	    snprintf(newname, NAMESIZE, "%s%d", tag, (num==0)?2:num+i);
+	    snprintf(newname, NAMESIZE, "%s%d", prefix, (num==0)?2:num+i);
 	    i++;
 	} while (db_lookup(_dbip, newname, LOOKUP_QUIET) != NULL);
     }
@@ -236,20 +244,110 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state state, int
 }
 
 
-/** make a copy of a combination by adding it to our book-keeping list,
- *  adding it to the db directory, then writing it out to the db.
+/** make a copy of a solid by adding it to our book-keeping list,
+ *  adding it to the db directory, and writing it out to disk.
+ */
+static void
+copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t genstate)
+{
+    register struct directory *dp = (struct directory *)NULL;
+    union record *rp = (union record *)NULL;
+    int i, j, idx;
+    struct clone_state *state = (struct clone_state *)genstate;
+
+    if (is_in_list(obj_list, proto->d_namep)) {
+	bu_log("Primitive solid %s already cloned?\n", proto->d_namep);
+	return;
+    }
+    idx = add_to_list(&obj_list, proto->d_namep);
+
+    /* sanity check that the item was really added */
+    if ((idx < 0) || !is_in_list(obj_list, proto->d_namep)) {
+	bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
+	return;
+    }
+
+    /* make n copies */
+    for (i = 0; i < state->n_copies; i++) {
+	const char *name = (const char *)NULL;
+
+	/* get an in-memory reference to the object being copied */
+	if ((rp = db_getmrec(_dbip, proto)) == (union record *)0) {
+	    TCL_READ_ERR;
+	    return;
+	}
+
+	if (i==0) {
+	    name = get_name(_dbip, proto, state, i);
+	} else {
+	    name = get_name(_dbip, db_lookup(_dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET), state, i);
+	}
+	strncpy(obj_list.names[idx].dest[i], name, NAMESIZE);
+	bu_free((char *)name, "free get_name() name");
+
+	/* add the object to the directory */
+	dp = db_diradd(_dbip, obj_list.names[idx].dest[i], RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
+	if ((dp == DIR_NULL) || (db_alloc(_dbip, dp, proto->d_len) < 0)) {
+	    TCL_ALLOC_ERR;
+	    return;
+	}
+	if (rp->u_id == ID_SOLID) {
+	    strncpy(rp->s.s_name, dp->d_namep, NAMESIZE);
+	    if (state->miraxis != W) {
+		rp->s.s_values[state->miraxis] += 2 * (state->mirpos - rp->s.s_values[state->miraxis]);
+		for (j = 3+state->miraxis; i < 24; i++) {
+		    rp->s.s_values[j] = -rp->s.s_values[j];
+		}
+	    }
+	    if (state->trans[W]) {
+		VADD2(rp->s.s_values, rp->s.s_values, state->trans);
+	    }
+	    if (state->rot[W]) {
+		mat_t r;
+		vect_t vec, ovec;
+
+		if (state->rpnt[W]) {
+		    VSUB2(rp->s.s_values, rp->s.s_values, state->rpnt);
+		}
+		mat_idn(r);
+		mat_angles(r, state->rot[X], state->rot[Y], state->rot[Z]);
+		for (i = 0; i < 24; i+=3) {
+		    VMOVE(vec, rp->s.s_values+i);
+		    MAT4X3VEC(ovec, r, vec);
+		    VMOVE(rp->s.s_values+i, ovec);
+		}
+		if (state->rpnt[W]) {
+		    VADD2(rp->s.s_values, rp->s.s_values, state->rpnt);
+		}
+	    }
+	} else {
+	    bu_log("mods not available on %s\n", proto->d_namep);
+	}
+
+	/* write the object to disk */
+	if (db_put(_dbip, dp, rp, 0, dp->d_len) < 0) {
+	    bu_log("ERROR: clone internal error writing to the database\n");
+	    return;
+	}
+
+    }
+    if (rp) {
+	bu_free((char *)rp, "copy_solid record[]");
+    }
+
+    return;
+}
+
+
+/** make n copies of a v4 combination.
  */
 static struct directory *
-copy_comb(struct db_i *_dbip, struct directory *proto, struct clone_state state)
+copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *state)
 {
     register struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
     int i, j, idx;
 
-    if (is_in_list(obj_list, proto->d_namep)) {
-	bu_log("Combination %s already cloned?\n", proto->d_namep);
-	return NULL;
-    }
     idx = add_to_list(&obj_list, proto->d_namep);
 
     /* sanity check that the item was really added */
@@ -258,9 +356,8 @@ copy_comb(struct db_i *_dbip, struct directory *proto, struct clone_state state)
 	return NULL;
     }
 
-
     /* make n copies */
-    for (i = 0; i < state.n_copies; i++) {
+    for (i = 0; i < state->n_copies; i++) {
 
 	/* get a v4 in-memory reference to the object being copied */
 	if ((rp = db_getmrec(_dbip, proto)) == (union record *)0) {
@@ -283,6 +380,7 @@ copy_comb(struct db_i *_dbip, struct directory *proto, struct clone_state state)
 		name = get_name(_dbip, db_lookup(_dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET), state, i);
 	    }
 	    strncpy(obj_list.names[idx].dest[i], name, NAMESIZE);
+	    bu_free((char *)name, "free get_name() name");
 	}
 	strncpy(rp[0].c.c_name, obj_list.names[idx].dest[i], NAMESIZE);
 
@@ -307,25 +405,24 @@ copy_comb(struct db_i *_dbip, struct directory *proto, struct clone_state state)
 	    return NULL;
 	}
 
-	bu_free((char *)rp, "copy_comb record[]");
+	/* our responsibility to free the record */
+	bu_free((char *)rp, "deallocate copy_v4_comb() db_getmrec() record");
     }
 
     return dp;
 }
 
-
-/** make a copy of a solid by adding it to our book-keeping list,
- *  adding it to the db directory, and writing it out to disk.
+/** make n copies of a v5 combination.
  */
 static struct directory *
-copy_solid(struct db_i *_dbip, struct directory *proto, struct clone_state state)
+copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *state)
 {
     register struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
     int i, j, idx;
 
     if (is_in_list(obj_list, proto->d_namep)) {
-	bu_log("Primitive solid %s already cloned?\n", proto->d_namep);
+	bu_log("Combination %s already cloned?\n", proto->d_namep);
 	return NULL;
     }
     idx = add_to_list(&obj_list, proto->d_namep);
@@ -337,132 +434,130 @@ copy_solid(struct db_i *_dbip, struct directory *proto, struct clone_state state
     }
 
     /* make n copies */
-    for (i = 0; i < state.n_copies; i++) {
-	const char *name = (const char *)NULL;
-
-	/* get an in-memory reference to the object being copied */
-	if ((rp = db_getmrec(_dbip, proto)) == (union record *)0) {
-	    TCL_READ_ERR;
-	    return NULL;
-	}
-
-	if (i==0) {
-	    name = get_name(_dbip, proto, state, i);
-	} else {
-	    name = get_name(_dbip, db_lookup(_dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET), state, i);
-	}
-	strncpy(obj_list.names[idx].dest[i], name, NAMESIZE);
-
-	/* add the object to the directory */
-	dp = db_diradd(_dbip, obj_list.names[idx].dest[i], RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
-	if ((dp == DIR_NULL) || (db_alloc(_dbip, dp, proto->d_len) < 0)) {
-	    TCL_ALLOC_ERR;
-	    return NULL;
-	}
-	if (rp->u_id == ID_SOLID) {
-	    strncpy(rp->s.s_name, dp->d_namep, NAMESIZE);
-	    if (state.miraxis != W) {
-		rp->s.s_values[state.miraxis] += 2 * (state.mirpos - rp->s.s_values[state.miraxis]);
-		for (j = 3+state.miraxis; i < 24; i++) {
-		    rp->s.s_values[j] = -rp->s.s_values[j];
-		}
-	    }
-	    if (state.trans[W]) {
-		VADD2(rp->s.s_values, rp->s.s_values, state.trans);
-	    }
-	    if (state.rot[W]) {
-		mat_t r;
-		vect_t vec, ovec;
-
-		if (state.rpnt[W]) {
-		    VSUB2(rp->s.s_values, rp->s.s_values, state.rpnt);
-		}
-		mat_idn(r);
-		mat_angles(r, state.rot[X], state.rot[Y], state.rot[Z]);
-		for (i = 0; i < 24; i+=3) {
-		    VMOVE(vec, rp->s.s_values+i);
-		    MAT4X3VEC(ovec, r, vec);
-		    VMOVE(rp->s.s_values+i, ovec);
-		}
-		if (state.rpnt[W]) {
-		    VADD2(rp->s.s_values, rp->s.s_values, state.rpnt);
-		}
-	    }
-	} else {
-	    bu_log("mods not available on %s\n", proto->d_namep);
-	}
-
-	/* write the object to disk */
-	if (db_put(_dbip, dp, rp, 0, dp->d_len) < 0) {
-	    bu_log("ERROR: clone internal error writing to the database\n");
-	    return NULL;
-	}
-
-    }
-    if (rp) {
-	bu_free((char *)rp, "copy_solid record[]");
+    for (i = 0; i < state->n_copies; i++) {
+	/* !!! */
     }
 
     return dp;
 }
 
 
+/** make n copies of a database combination by adding it to our
+ *  book-keeping list, adding it to the directory, then writing it out
+ *  to the db.
+ */
+static void
+copy_comb(struct db_i *_dbip, struct directory *proto, genptr_t state)
+{
+    register struct directory *dp = (struct directory *)NULL;
+
+    if (is_in_list(obj_list, proto->d_namep)) {
+	bu_log("Combination %s already cloned?\n", proto->d_namep);
+	return;
+    }
+
+    if (_dbip->dbi_version < 5) {
+	(void)copy_v4_comb(_dbip, proto, (struct clone_state *)state);
+    } else {
+	(void)copy_v5_comb(_dbip, proto, (struct clone_state *)state);
+    }
+
+    return;
+}
+
+
 /** recursively copy a tree of geometry */
 static struct directory *
-copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struct clone_state state)
+copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struct clone_state *state)
 {
     register int i;
     register union record   *rp = (union record *)NULL;
     register struct directory *mdp = (struct directory *)NULL;
     register struct directory *copy = (struct directory *)NULL;
 
+    const char *copyname = (const char *)NULL;
+    const char *nextname = (const char *)NULL;
+
+    /* get the name of what the object "should" get cloned to */
+    copyname = get_name(_dbip, dp, state, 0);
+
     /* copy the object */
     if (dp->d_flags & DIR_COMB) {
 	
 	if (_dbip->dbi_version < 5) {
-	    /* A v4 method of getting the geometry */
+	    /* A v4 method of peeking into a combination */
+
+	    int errors = 0;
 
 	    /* get an in-memory record of this object */
 	    if ((rp = db_getmrec(_dbip, dp)) == (union record *)0) {
 		TCL_READ_ERR;
-		return NULL;
+		goto done_copy_tree;
 	    }
-	    /* if it is a combination/region, recursively copy the objects
-	       that make up the object */
+	    /* if it is a combination/region, copy the objects that
+	     * make up the object.
+	     */
 	    for (i = 1; i < dp->d_len; i++ ) {
 		if ((mdp = db_lookup(_dbip, rp[i].M.m_instname, LOOKUP_NOISY)) == DIR_NULL) {
+		    errors++;
+		    bu_log("WARNING: failed to locate \"%s\"\n", rp[i].M.m_instname);
 		    continue;
 		}
 		copy = copy_tree(_dbip, mdp, resp, state);
+		if (!copy) {
+		    errors++;
+		    bu_log("WARNING: unable to fully clone \"%s\"\n", rp[i].M.m_instname);
+		}
 	    }
-	    
+
+	    if (errors) {
+		bu_log("WARNING: some elements of \"%s\" could not be cloned\n", dp->d_namep);
+	    } 
+
+	    /* copy this combination itself */
+	    copy_comb(_dbip, dp, (genptr_t)state);
 	} else {
-	    /* A v5 method of getting the geometry */
+#if 0
+	    /* A v5 method of peeking into a combination */
 	    struct rt_db_internal in;
 	    struct rt_comb_internal *comb = (struct rt_comb_internal *)NULL;
 
 	    if (rt_db_get_internal5( &in, dp, _dbip, NULL, NULL) < 0) {
 		TCL_READ_ERR;
-		return NULL;
+		goto done_copy_tree;
 	    }
 	    comb = (struct rt_comb_internal *)in.idb_ptr; /* got a copy of the combination */
-	    Tcl_AppendResult(INTERP, "clone: command currently unimplemented for v5 geometry databases....proceeding by the seat of our pants\n");
-	    //	    db_functree_subtree(_dbip, comb->tree, NULL /*comb_func*/, NULL /*leaf_func*/, (struct resource *)NULL, (ClientData)state);
-	    rt_db_free_internal(&in, (struct resource *)NULL);
+#endif
+	    db_functree(_dbip, dp, copy_comb, copy_solid, resp, (genptr_t)state);
+	    //	    rt_db_free_internal(&in, (struct resource *)NULL);
 	}
 
-	/* copy the combination itself */
-	copy = copy_comb(_dbip, dp, state);
     } else if (dp->d_flags & DIR_SOLID) {
 	/* leaf node -- make a copy the object */
-	copy = copy_solid(_dbip, dp, state);
+	copy_solid(_dbip, dp, (genptr_t)state);
     } else {
-	Tcl_AppendResult(INTERP, "clone:  ", dp->d_namep, " is neither COMB nor SOLID?\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "clone:  ", dp->d_namep, " is neither a combination or a primitive?\n", (char *)NULL);
+	goto done_copy_tree;
     }
 
+    nextname = get_name(_dbip, dp, state, 0);
+    if (strcmp(copyname, nextname) == 0) {
+	bu_log("ERROR: unable to successfully clone \"%s\" to \"%s\"\n", dp->d_namep, copyname);
+    } else {
+	copy = db_lookup(_dbip, copyname, LOOKUP_QUIET);
+    }
+
+ done_copy_tree:
     if (rp) {
 	bu_free((char *)rp, "copy_tree record[]");
     }
+    if (copyname) {
+	bu_free((char *)copyname, "free get_name() copyname");
+    }
+    if (nextname) {
+	bu_free((char *)nextname, "free get_name() copyname");
+    }
+
     return copy;
 }
 
@@ -471,29 +566,29 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
  *  if it's a combination/region.
  */
 static struct directory *
-copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state state)
+copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state)
 {
     struct directory *copy = (struct directory *)NULL;
     struct nametbl *curr = (struct nametbl *)NULL;
     int i, j, idx;
 
-    init_list(&obj_list, state.n_copies);
+    init_list(&obj_list, state->n_copies);
 
     /* do the actual copying */
-    copy = copy_tree(_dbip, state.src, resp, state);
+    copy = copy_tree(_dbip, state->src, resp, state);
 
     /* make sure it made what we hope/think it made */
-    if (!copy || !is_in_list(obj_list, state.src->d_namep)) {
-	bu_log("ERROR: clone internal error, cannot find %s for editing\n", state.src->d_namep);
+    if (!copy || !is_in_list(obj_list, state->src->d_namep)) {
+	bu_log("ERROR: clone internal error, cannot find %s for editing\n", state->src->d_namep);
 	return copy;
     }
 
     /* display the cloned object(s) */
-    if (state.draw_obj) {
+    if (state->draw_obj) {
 	char *av[3] = {"e", NULL, NULL};
 
-	idx = index_in_list(obj_list, state.src->d_namep);
-	for (i = 0; i < (state.n_copies > obj_list.names_used ? obj_list.names_used : state.n_copies) ; i++) {
+	idx = index_in_list(obj_list, state->src->d_namep);
+	for (i = 0; i < (state->n_copies > obj_list.names_used ? obj_list.names_used : state->n_copies) ; i++) {
 	    av[1] = obj_list.names[idx].dest[i];
 	    /* draw does not use clientdata */
 	    cmd_draw( (ClientData)NULL, INTERP, 2, av );
@@ -670,7 +765,7 @@ f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* do it, use global dbip */
-    (void)copy_object(dbip, &rt_uniresource, state);
+    (void)copy_object(dbip, &rt_uniresource, &state);
 
     (void)signal( SIGINT, SIG_IGN );
     return TCL_OK;
@@ -950,7 +1045,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 					
 		state.src = dps[j];
 		/* global dbip */
-		dps[j] = copy_object(dbip, &rt_uniresource, state);
+		dps[j] = copy_object(dbip, &rt_uniresource, &state);
 		strcpy(vargs[1], dps[j]->d_namep);
 		/*				strcpy(vargs[1], obj_list.names[index_in_list(obj_list, links[j].name)].dest[0]);*/
 
