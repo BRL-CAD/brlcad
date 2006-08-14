@@ -106,7 +106,7 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshhold, str
 				fastf_t additive;
 				VSUB2(d, mbpt2->coord, mbpt->coord);
 				mag = MAGNITUDE(d) + dist;
-				additive = mbpt2->fldstr / mag;
+				additive = (mbpt2->fldstr*mbpt2->fldstr) / mag;
 				dist += additive;
 			}
 		/* then see if this is a 'defining' point */
@@ -257,16 +257,18 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
 	struct rt_metaball_internal *mb = stp->st_specific;
 	struct wdb_metaballpt *mbpt;
 	vect_t v;
-	fastf_t f;
+	fastf_t f, a;
 
 	VSETALL(hitp->hit_normal, 0);
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)){
-		VSUB2(v, mbpt->coord, hitp->hit_point);
-		f = mbpt->fldstr / MAGSQ(v);
-		VUNITIZE(v);
-		VJOIN1(hitp->hit_normal, hitp->hit_normal, f, v);
+		VSUB2(v, hitp->hit_point, mbpt->coord);
+		f = mbpt->fldstr * mbpt->fldstr;	/* f^2 */
+		a = MAGNITUDE(v);
+		f /= (a*a*a);				/* f^2 / r^3 */
+		VUNITIZE(v);						
+		VJOIN1(hitp->hit_normal, hitp->hit_normal, f, v);	
 	}
-	VUNITIZE(hitp->hit_normal);
+	VUNITIZE(hitp->hit_normal);					
 	return;
 }
 
