@@ -3161,6 +3161,7 @@ struct concat_data {
 #define ADD_PREFIX 1
 #define ADD_SUFFIX 2
 #define OLD_PREFIX 3
+#define V4_MAXNAME 16
 
 static char *
 get_new_name(
@@ -3205,7 +3206,7 @@ get_new_name(
 		bu_vls_vlscat( &new_name, &cc_data->prestr );
 		bu_vls_strcat( &new_name, name );
 		if( cc_data->old_dbip->dbi_version < 5 ) {
-			bu_vls_trunc( &new_name, RT_NAMESIZE );
+			bu_vls_trunc( &new_name, V4_MAXNAME );
 		}
 	}
 
@@ -3650,9 +3651,9 @@ wdb_dir_check5(register struct db_i		*input_dbip,
 			bu_vls_strncpy( &local, bu_vls_addr( &dcsp->wdbp->wdb_prestr ), dcsp->wdbp->wdb_ncharadd );
 			bu_vls_strcat( &local, name );
 		} else {
-			bu_vls_strncpy( &local, name, RT_NAMESIZE );
+			bu_vls_strncpy( &local, name, V4_MAXNAME );
 		}
-		bu_vls_trunc( &local, RT_NAMESIZE );
+		bu_vls_trunc( &local, V4_MAXNAME );
 	} else {
 		if (dcsp->wdbp->wdb_ncharadd > 0) {
 			(void)bu_vls_vlscat( &local, &dcsp->wdbp->wdb_prestr );
@@ -3695,9 +3696,9 @@ wdb_dir_check(register struct db_i *input_dbip, register const char *name, long 
 			bu_vls_strncpy( &local, bu_vls_addr( &dcsp->wdbp->wdb_prestr ), dcsp->wdbp->wdb_ncharadd );
 			bu_vls_strcat( &local, name );
 		} else {
-			bu_vls_strncpy( &local, name, RT_NAMESIZE );
+			bu_vls_strncpy( &local, name, V4_MAXNAME );
 		}
-		bu_vls_trunc( &local, RT_NAMESIZE );
+		bu_vls_trunc( &local, V4_MAXNAME );
 	} else {
 		if (dcsp->wdbp->wdb_ncharadd > 0) {
 			bu_vls_vlscat( &local, &dcsp->wdbp->wdb_prestr );
@@ -9071,7 +9072,7 @@ wdb_cmpdirname(const genptr_t a,
 }
 
 #define RT_TERMINAL_WIDTH 80
-#define RT_COLUMNS ((RT_TERMINAL_WIDTH + RT_NAMESIZE - 1) / RT_NAMESIZE)
+#define RT_COLUMNS ((RT_TERMINAL_WIDTH + V4_MAXNAME - 1) / V4_MAXNAME)
 
 /*
  *			V L S _ C O L _ I T E M
@@ -9083,7 +9084,7 @@ wdb_vls_col_item(struct bu_vls	*str,
 		 int		*clp)		/* column length pointer */
 {
 	/* Output newline if last column printed. */
-	if (*ccp >= RT_COLUMNS || (*clp+RT_NAMESIZE-1) >= RT_TERMINAL_WIDTH) {
+	if (*ccp >= RT_COLUMNS || (*clp+V4_MAXNAME-1) >= RT_TERMINAL_WIDTH) {
 		/* line now full */
 		bu_vls_putc(str, '\n');
 		*ccp = 0;
@@ -9092,7 +9093,7 @@ wdb_vls_col_item(struct bu_vls	*str,
 		do {
 			bu_vls_putc(str, ' ');
 			++*clp;
-		}  while ((*clp % RT_NAMESIZE) != 0);
+		}  while ((*clp % V4_MAXNAME) != 0);
 	}
 	/* Output string and save length for next tab. */
 	*clp = 0;

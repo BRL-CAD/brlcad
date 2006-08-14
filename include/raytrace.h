@@ -1145,7 +1145,6 @@ struct rt_tree_array
 /* Some dubious defines, to support the wdb_obj.c evolution */
 #define RT_MAXARGS		9000
 #define RT_MAXLINE		10240
-#define RT_NAMESIZE		16
 
 /*
  *			R T _ W D B
