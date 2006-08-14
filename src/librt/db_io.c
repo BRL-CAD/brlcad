@@ -154,6 +154,12 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
+
+	if( dbip->dbi_version >= 5 ) {
+	    /* can't get an mrec on a v5 */
+	    return (union record *)NULL;
+	}
+
 	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_getmrec(%s) x%x, x%x\n",
 		dp->d_namep, dbip, dp );
 
