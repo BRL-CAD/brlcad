@@ -90,8 +90,8 @@ HIDDEN XVisualInfo *X_choose_visual(struct dm *dmp);
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-struct dm	*X_open(Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int	X_close(struct dm *dmp);
+struct dm	*X_open_dm(Tcl_Interp *interp, int argc, char **argv);
+HIDDEN int	X_close_dm(struct dm *dmp);
 HIDDEN int	X_drawBegin(struct dm *dmp), X_drawEnd(struct dm *dmp);
 HIDDEN int	X_normal(struct dm *dmp), X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
 HIDDEN int      X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
@@ -108,7 +108,7 @@ HIDDEN int	X_setZBuffer(struct dm *dmp, int zbuffer_on);
 HIDDEN int	X_setWinBounds(struct dm *dmp, register int *w), X_debug(struct dm *dmp, int lvl);
 
 struct dm dm_X = {
-    X_close,
+    X_close_dm,
     X_drawBegin,
     X_drawEnd,
     X_normal,
@@ -218,7 +218,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
  *
  */
 struct dm *
-X_open(Tcl_Interp *interp, int argc, char **argv)
+X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
     int make_square = -1;
@@ -252,17 +252,17 @@ X_open(Tcl_Interp *interp, int argc, char **argv)
     *dmp = dm_X; /* struct copy */
     dmp->dm_interp = interp;
 
-    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "X_open: dm_xvars");
+    dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "X_open_dm: dm_xvars");
     if(dmp->dm_vars.pub_vars == (genptr_t)NULL){
-	bu_free((genptr_t)dmp, "X_open: dmp");
+	bu_free((genptr_t)dmp, "X_open_dm: dmp");
 	return DM_NULL;
     }
     pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
 
-    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct x_vars), "X_open: x_vars");
+    dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct x_vars), "X_open_dm: x_vars");
     if(dmp->dm_vars.priv_vars == (genptr_t)NULL){
-	bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_open: dmp->dm_vars.pub_vars");
-	bu_free((genptr_t)dmp, "X_open: dmp");
+	bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_open_dm: dmp->dm_vars.pub_vars");
+	bu_free((genptr_t)dmp, "X_open_dm: dmp");
 	return DM_NULL;
     }
     privars = (struct x_vars *)dmp->dm_vars.priv_vars;
@@ -328,8 +328,8 @@ X_open(Tcl_Interp *interp, int argc, char **argv)
     }
 
     if(pubvars->xtkwin == NULL){
-	bu_log("X_open: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)X_close(dmp);
+	bu_log("X_open_dm: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
+	(void)X_close_dm(dmp);
 	return DM_NULL;
     }
 
@@ -343,7 +343,7 @@ X_open(Tcl_Interp *interp, int argc, char **argv)
 
     if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
 	bu_vls_free(&str);
-	(void)X_close(dmp);
+	(void)X_close_dm(dmp);
 
 	return DM_NULL;
     }
@@ -388,8 +388,8 @@ X_open(Tcl_Interp *interp, int argc, char **argv)
 
     /* must do this before MakeExist */
     if((pubvars->vip = X_choose_visual(dmp)) == NULL){
-	bu_log("X_open: Can't get an appropriate visual.\n");
-	(void)X_close(dmp);
+	bu_log("X_open_dm: Can't get an appropriate visual.\n");
+	(void)X_close_dm(dmp);
 	return DM_NULL;
     }
 
@@ -472,7 +472,7 @@ X_open(Tcl_Interp *interp, int argc, char **argv)
 	    if(!strcmp(list->name, "dial+buttons")){
 		if((dev = XOpenDevice(pubvars->dpy,
 				      list->id)) == (XDevice *)NULL){
-		    bu_log("X_open: Couldn't open the dials+buttons\n");
+		    bu_log("X_open_dm: Couldn't open the dials+buttons\n");
 		    goto Done;
 		}
 
@@ -531,7 +531,7 @@ X_open(Tcl_Interp *interp, int argc, char **argv)
  *  Gracefully release the display.
  */
 HIDDEN int
-X_close(struct dm *dmp)
+X_close_dm(struct dm *dmp)
 {
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
@@ -561,9 +561,9 @@ X_close(struct dm *dmp)
     bu_vls_free(&dmp->dm_pathName);
     bu_vls_free(&dmp->dm_tkName);
     bu_vls_free(&dmp->dm_dName);
-    bu_free((genptr_t)dmp->dm_vars.priv_vars, "X_close: x_vars");
-    bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_close: dm_xvars");
-    bu_free((genptr_t)dmp, "X_close: dmp");
+    bu_free((genptr_t)dmp->dm_vars.priv_vars, "X_close_dm: x_vars");
+    bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_close_dm: dm_xvars");
+    bu_free((genptr_t)dmp, "X_close_dm: dmp");
 
     return TCL_OK;
 }

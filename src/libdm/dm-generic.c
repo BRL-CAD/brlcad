@@ -51,7 +51,7 @@ extern struct dm *plot_open(Tcl_Interp *interp, int argc, char **argv);
 extern struct dm *ps_open(Tcl_Interp *interp, int argc, char **argv);
 
 #ifdef DM_X
-extern struct dm *X_open();
+extern struct dm *X_open_dm();
 #endif /* DM_X */
 
 #ifdef DM_OGL
@@ -79,7 +79,7 @@ dm_open(Tcl_Interp *interp, int type, int argc, char **argv)
 		return ps_open(interp, argc, argv);
 #ifdef DM_X
 	case DM_TYPE_X:
-		return X_open(interp, argc, argv);
+		return X_open_dm(interp, argc, argv);
 #endif
 #ifdef DM_OGL
 	case DM_TYPE_OGL:

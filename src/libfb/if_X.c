@@ -88,8 +88,8 @@ HIDDEN void	repaint(FBIO *ifp);
 
 HIDDEN int	X_scanwrite(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count, int save);
 
-HIDDEN int	X_open(FBIO *ifp, char *file, int width, int height),
-		X_close(FBIO *ifp),
+HIDDEN int	X_open_fb(FBIO *ifp, char *file, int width, int height),
+		X_close_fb(FBIO *ifp),
 		X_clear(FBIO *ifp, unsigned char *pp),
 		X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
 		X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
@@ -115,8 +115,8 @@ HIDDEN int	X_do_event();
 /* This is the ONLY thing that we normally "export" */
 FBIO X_interface = {
 	0,
-	X_open,			/* device_open		*/
-	X_close,		/* device_close		*/
+	X_open_fb,			/* device_open		*/
+	X_close_fb,		/* device_close		*/
 	X_clear,		/* device_clear		*/
 	X_read,			/* buffer_read		*/
 	X_write,		/* buffer_write		*/
@@ -133,7 +133,7 @@ FBIO X_interface = {
 	fb_sim_bwwriterect,
 	X_poll,			/* handle events	*/
 	X_flush,		/* flush		*/
-	X_close,		/* free			*/
+	X_close_fb,		/* free			*/
 	X_help,			/* help message		*/
 	"X Window System (X11) 8-bit and 1-bit visuals only",
 	2048,			/* max width		*/
@@ -266,7 +266,7 @@ unsigned long 	*x_pixel_table;
 XColor 		*color_defs;
 
 HIDDEN int
-X_open(FBIO *ifp, char *file, int width, int height)
+X_open_fb(FBIO *ifp, char *file, int width, int height)
 {
 	int	fd;
 	int	mode;
@@ -341,7 +341,7 @@ X_open(FBIO *ifp, char *file, int width, int height)
 
 	/* create a struct of state information */
 	if( (XIL(ifp) = (char *)calloc( 1, sizeof(struct xinfo) )) == NULL ) {
-		fb_log("X_open: xinfo malloc failed\n");
+		fb_log("X_open_fb: xinfo malloc failed\n");
 		return(-1);
 	}
 	ifp->if_xzoom = 1;
@@ -377,15 +377,15 @@ X_open(FBIO *ifp, char *file, int width, int height)
 
 	/* Allocate all of our working pixel/bit buffers */
 	if( (bytebuf = (unsigned char *)calloc( 1, width*height )) == NULL ) {
-		fb_log("X_open: bytebuf malloc failed\n");
+		fb_log("X_open_fb: bytebuf malloc failed\n");
 		return(-1);
 	}
 	if( (bitbuf = (unsigned char *)calloc( 1, (width*height)/8 )) == NULL ) {
-		fb_log("X_open: bitbuf malloc failed\n");
+		fb_log("X_open_fb: bitbuf malloc failed\n");
 		return(-1);
 	}
 	if( (scanbuf = (unsigned char *)calloc( 1, width )) == NULL ) {
-		fb_log("X_open: scanbuf malloc failed\n");
+		fb_log("X_open_fb: scanbuf malloc failed\n");
 		return(-1);
 	}
 	XI(ifp)->bytebuf = bytebuf;
@@ -396,7 +396,7 @@ X_open(FBIO *ifp, char *file, int width, int height)
 		/* allocate a full 24-bit deep buffer */
 		XI(ifp)->mem = (unsigned char *)calloc( 3, width*height );
 		if( XI(ifp)->mem == NULL ) {
-			fb_log("X_open: 24-bit buffer malloc failed\n");
+			fb_log("X_open_fb: 24-bit buffer malloc failed\n");
 		}
 	}
 
@@ -436,7 +436,7 @@ X_open(FBIO *ifp, char *file, int width, int height)
 }
 
 HIDDEN int
-X_close(FBIO *ifp)
+X_close_fb(FBIO *ifp)
 {
 	XFlush( XI(ifp)->dpy );
 	if( (XI(ifp)->mode & MODE_1MASK) == MODE_1LINGERING ) {
