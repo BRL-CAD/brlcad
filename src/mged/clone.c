@@ -333,9 +333,61 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 static void
 copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
 {
-    /* not ready for v5 yet */
-    bu_log("ERROR: UNIMPLEMENTED !!!\n");
+    register struct directory *dp = (struct directory *)NULL;
+    int i, ret;
+    char *argv[4] = {"wdb_copy", (char *)NULL, (char *)NULL, (char *)NULL};
 
+    /* make n copies */
+    for (i = 0; i < state->n_copies; i++) {
+	const char *name = (const char *)NULL;
+
+	if (i==0) {
+	    name = get_name(_dbip, proto, state, i);
+	} else {
+	    name = get_name(_dbip, db_lookup(_dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET), state, i);
+	}
+	strncpy(obj_list.names[idx].dest[i], name, NAMESIZE);
+
+	argv[1] = proto->d_namep;
+	argv[2] = (char *)name;
+	ret = wdb_copy_cmd(_dbip->dbi_wdbp, state->interp, 3, argv);
+	if (ret != TCL_OK) {
+	    bu_log("WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, name);
+	}
+	bu_free((char *)name, "free get_name() name");
+
+	/* !!! still need to apply transformation matrix */
+#if 0
+	if (state->miraxis != W) {
+	    rp->s.s_values[state->miraxis] += 2 * (state->mirpos - rp->s.s_values[state->miraxis]);
+	    for (j = 3+state->miraxis; i < 24; i++) {
+		rp->s.s_values[j] = -rp->s.s_values[j];
+	    }
+	}
+	if (state->trans[W]) {
+	    VADD2(rp->s.s_values, rp->s.s_values, state->trans);
+	}
+	if (state->rot[W]) {
+	    mat_t r;
+	    vect_t vec, ovec;
+	    
+	    if (state->rpnt[W]) {
+		VSUB2(rp->s.s_values, rp->s.s_values, state->rpnt);
+	    }
+	    mat_idn(r);
+	    mat_angles(r, state->rot[X], state->rot[Y], state->rot[Z]);
+	    for (i = 0; i < 24; i+=3) {
+		VMOVE(vec, rp->s.s_values+i);
+		MAT4X3VEC(ovec, r, vec);
+		VMOVE(rp->s.s_values+i, ovec);
+	    }
+	    if (state->rpnt[W]) {
+		VADD2(rp->s.s_values, rp->s.s_values, state->rpnt);
+	    }
+	}
+#endif
+    }
+    
     return;
 }
 
