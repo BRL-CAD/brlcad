@@ -248,23 +248,11 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
  *  adding it to the db directory, and writing it out to disk.
  */
 static void
-copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *state)
+copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
 {
     register struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
-    int i, j, idx;
-
-    if (is_in_list(obj_list, proto->d_namep)) {
-	bu_log("Primitive solid %s already cloned?\n", proto->d_namep);
-	return;
-    }
-    idx = add_to_list(&obj_list, proto->d_namep);
-
-    /* sanity check that the item was really added */
-    if ((idx < 0) || !is_in_list(obj_list, proto->d_namep)) {
-	bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
-	return;
-    }
+    int i, j;
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
@@ -343,7 +331,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
  *  adding it to the db directory, and writing it out to disk.
  */
 static void
-copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *state)
+copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
 {
     /* not ready for v5 yet */
     bu_log("ERROR: UNIMPLEMENTED !!!\n");
@@ -359,15 +347,25 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 static void
 copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t state)
 {
+    int idx;
+
     if (is_in_list(obj_list, proto->d_namep)) {
 	bu_log("Solid primitive %s already cloned?\n", proto->d_namep);
 	return;
     }
 
+    idx = add_to_list(&obj_list, proto->d_namep);
+
+    /* sanity check that the item was really added */
+    if ((idx < 0) || !is_in_list(obj_list, proto->d_namep)) {
+	bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
+	return;
+    }
+
     if (_dbip->dbi_version < 5) {
-	(void)copy_v4_solid(_dbip, proto, (struct clone_state *)state);
+	(void)copy_v4_solid(_dbip, proto, (struct clone_state *)state, idx);
     } else {
-	(void)copy_v5_solid(_dbip, proto, (struct clone_state *)state);
+	(void)copy_v5_solid(_dbip, proto, (struct clone_state *)state, idx);
     }
 
     return;
@@ -378,19 +376,11 @@ copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t state)
 /** make n copies of a v4 combination.
  */
 static struct directory *
-copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *state)
+copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
 {
     register struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
-    int i, j, idx;
-
-    idx = add_to_list(&obj_list, proto->d_namep);
-
-    /* sanity check that the item was really added */
-    if ((idx < 0) || !is_in_list(obj_list, proto->d_namep)) {
-	bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
-	return NULL;
-    }
+    int i, j;
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
@@ -451,23 +441,11 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 /** make n copies of a v5 combination.
  */
 static struct directory *
-copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *state)
+copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
 {
     register struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
-    int i, j, idx;
-
-    if (is_in_list(obj_list, proto->d_namep)) {
-	bu_log("Combination %s already cloned?\n", proto->d_namep);
-	return NULL;
-    }
-    idx = add_to_list(&obj_list, proto->d_namep);
-
-    /* sanity check that the item was really added */
-    if ((idx < 0) || !is_in_list(obj_list, proto->d_namep)) {
-	bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
-	return NULL;
-    }
+    int i, j;
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
@@ -487,15 +465,25 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 static void
 copy_comb(struct db_i *_dbip, struct directory *proto, genptr_t state)
 {
+    int idx;
+
     if (is_in_list(obj_list, proto->d_namep)) {
 	bu_log("Combination %s already cloned?\n", proto->d_namep);
 	return;
     }
 
+    idx = add_to_list(&obj_list, proto->d_namep);
+
+    /* sanity check that the item was really added to our bookkeeping */
+    if ((idx < 0) || !is_in_list(obj_list, proto->d_namep)) {
+	bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
+	return;
+    }
+
     if (_dbip->dbi_version < 5) {
-	(void)copy_v4_comb(_dbip, proto, (struct clone_state *)state);
+	(void)copy_v4_comb(_dbip, proto, (struct clone_state *)state, idx);
     } else {
-	(void)copy_v5_comb(_dbip, proto, (struct clone_state *)state);
+	(void)copy_v5_comb(_dbip, proto, (struct clone_state *)state, idx);
     }
 
     return;
