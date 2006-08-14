@@ -1169,12 +1169,12 @@ do_groups(void)
 
 	for( group_no=0 ; group_no < 11 ; group_no++ )
 	{
-		char name[20];
+		char name[LINELEN] = {0};
 
 		if( BU_LIST_IS_EMPTY( &group_head[group_no].l ) )
 			continue;
 
-		sprintf( name , "%dxxx_series" , group_no );
+		snprintf( name , LINELEN, "%dxxx_series" , group_no );
 		mk_lfcomb( fdout , name , &group_head[group_no] , 0 );
 
 		if( mk_addmember( name , &head_all.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
@@ -1194,8 +1194,8 @@ do_name(void)
 	int i,j;
 	int g_id;
 	int c_id;
-	char comp_name[25];
-	char tmp_name[25];
+	char comp_name[LINELEN] = {0}; /* should only use 25 chars */
+	char tmp_name[LINELEN] = {0}; /* should only use 25 chars */
 
 	if( pass )
 		return;
@@ -1267,7 +1267,7 @@ void
 make_region_name(int g_id, int c_id)
 {
 	int r_id;
-	char *tmp_name;
+	const char *tmp_name;
 	char *name;
 
 	r_id = g_id * 1000 + c_id;
@@ -1280,8 +1280,8 @@ make_region_name(int g_id, int c_id)
 		return;
 
 	/* create a new name */
-	name = (char *)bu_malloc( 12, "make_region_name" );
-	sprintf( name , "comp_%04d.r" , r_id );
+	name = (char *)bu_malloc( LINELEN, "make_region_name" );
+	snprintf( name , LINELEN, "comp_%04d.r" , r_id );
 
 	make_unique_name( name );
 
@@ -1366,7 +1366,7 @@ do_sphere(void)
 	fastf_t thick;
 	fastf_t radius;
 	fastf_t inner_radius;
-	char *name;
+	char *name = (char *)NULL;
 	struct wmember sphere_group;
 
 	if( !pass )
@@ -1452,7 +1452,7 @@ do_vehicle(void)
 	if( pass )
 		return;
 
-	strncpy( vehicle , &line[8] , 16 );
+	strncpy( vehicle , &line[8] , 16 ); /* why 16? */
 	mk_id_units( fdout , vehicle , "in" );
 }
 
@@ -1528,7 +1528,7 @@ do_ccone1(void)
 	fastf_t r1,r2;
 	char *outer_name;
 	char *inner_name;
-	char *name;
+	char *name = (char *)NULL;
 	struct wmember r_head;
 
 	strncpy( field , &line[8] , 8 );
@@ -1754,7 +1754,7 @@ do_ccone2(void)
 	int c1,c2;
 	fastf_t ro1,ro2,ri1,ri2;
 	vect_t height;
-	char *name;
+	char *name = (char *)NULL;
 	struct wmember r_head;
 
 	strncpy( field , &line[8] , 8 );
@@ -2107,8 +2107,9 @@ do_ccone3(void)
 void
 Add_holes( int type, int gr, int comp, struct hole_list *ptr )
 {
-	struct holes *hole_ptr, *prev;
-	struct hole_list *hptr;
+	struct holes *hole_ptr = (struct holes *)NULL;
+	struct holes *prev = (struct holes *)NULL;
+	struct hole_list *hptr= (struct hole_list *)NULL;
 
 	if( debug )
 	{
@@ -2514,12 +2515,13 @@ void
 make_bot_object(void)
 {
 	int i;
-	int max_pt=0, min_pt=999999;
+	int max_pt = 0;
+	int min_pt = 999999;
 	int num_vertices;
-	struct bu_bitv *bv=NULL;
+	struct bu_bitv *bv = (struct bu_bitv *)NULL;
 	int bot_mode;
-	char *name;
-	int element_id=bot;
+	char *name = (char *)NULL;
+	int element_id = bot;
 	int count;
 	struct rt_bot_internal bot_ip;
 
@@ -2810,7 +2812,7 @@ do_hex2(void)
 	int i;
 	int cont1,cont2;
 	point_t points[8];
-	char *name;
+	char *name = (char *)NULL;
 
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
@@ -3050,10 +3052,13 @@ Process_input(int pass_number)
 void
 fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 {
-	struct directory	*dp2;
-	struct rt_db_internal   internal, internal2;
-	struct rt_comb_internal *comb, *comb2;
-	union tree		*tree, *tree2;
+	struct rt_db_internal   internal;
+	struct rt_db_internal	internal2;
+	struct directory	*dp2 = (struct directory *)NULL;
+	struct rt_comb_internal *comb = (struct rt_comb_internal *)NULL;
+	struct rt_comb_internal *comb2 = (struct rt_comb_internal *)NULL;
+	union tree		*tree = (union tree *)NULL;
+	union tree		*tree2 = (union tree *)NULL;
 
 	/* only process regions */
 	if( !(dp->d_flags & DIR_REGION) )
@@ -3134,8 +3139,8 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 void
 Post_process(char *output_file)
 {
-	struct db_i *dbip;
-	struct directory *dp;
+	struct db_i *dbip = (struct db_i *)NULL;
+	struct directory *dp = (struct directory *)NULL;
 
 	bu_log( "Cleaning up please wait.....\n" );
 
@@ -3227,10 +3232,10 @@ void make_regions(void)
 	struct wmember region;
 	struct wmember solids;
 	struct wmember holes;
-	char reg_name[16];
-	char solids_name[16];
-	char hole_name[16];
-	char splt_name[16];
+	char reg_name[LINELEN] = {0};
+	char solids_name[LINELEN] = {0};
+	char hole_name[LINELEN] = {0};
+	char splt_name[LINELEN] = {0};
 
 	BU_LIST_INIT( &holes.l );
 
@@ -3279,7 +3284,7 @@ void make_regions(void)
 		if( BU_LIST_IS_EMPTY( &solids.l ) )
 			goto cont1;
 
-		sprintf( solids_name, "solids_%d", ptr1->region_id );
+		snprintf( solids_name, LINELEN, "solids_%d.s", ptr1->region_id );
 		if( mk_comb( fdout, solids_name, &solids.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1) )
 			bu_log("Failed to make combination of solids (%s)!!!!\n\tRegion %s is in ERROR!!!\n",
 				solids_name, ptr1->name );
@@ -3317,7 +3322,7 @@ void make_regions(void)
 
 			/* make a halfspace */
 			VSET( norm, 0.0, 0.0, 1.0 );
-			sprintf( splt_name, "splt_%d.s", ptr1->region_id );
+			snprintf( splt_name, LINELEN, "splt_%d.s", ptr1->region_id );
 			mk_half( fdout, splt_name, norm, splt->z );
 
 			/* intersect halfspace with current region */
@@ -3330,7 +3335,7 @@ void make_regions(void)
 
 			while( lptr )
 			{
-				sprintf( hole_name, "solids_%d", (lptr->group * 1000 + lptr->component) );
+				snprintf( hole_name, LINELEN, "solids_%d.s", (lptr->group * 1000 + lptr->component) );
 				if( mk_addmember( hole_name, &region.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 					bu_log( "make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name );
 				lptr = lptr->next;
@@ -3347,7 +3352,7 @@ void make_regions(void)
 
 			while( lptr )
 			{
-				sprintf( hole_name, "solids_%d", (lptr->group * 1000 + lptr->component) );
+				snprintf( hole_name, LINELEN, "solids_%d.s", (lptr->group * 1000 + lptr->component) );
 				if( mk_addmember( hole_name, &region.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 					bu_log( "make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name );
 				lptr = lptr->next;
@@ -3368,7 +3373,7 @@ void make_regions(void)
 
 			while( lptr )
 			{
-				sprintf( hole_name, "solids_%d", (lptr->group * 1000 + lptr->component) );
+				snprintf( hole_name, LINELEN, "solids_%d.s", (lptr->group * 1000 + lptr->component) );
 				if( mk_addmember( hole_name, &region.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 					bu_log( "make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name );
 				lptr = lptr->next;
@@ -3391,7 +3396,7 @@ cont1:
 
 void read_fast4_colors(char *color_file) {
   FILE *fp;
-  char line[COLOR_LINE_LEN];
+  char line[COLOR_LINE_LEN] = {0};
   int low, high;
   int r, g, b;
   struct fast4_color *color;
