@@ -244,16 +244,15 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 }
 
 
-/** make a copy of a solid by adding it to our book-keeping list,
+/** make a copy of a v4 solid by adding it to our book-keeping list,
  *  adding it to the db directory, and writing it out to disk.
  */
 static void
-copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t genstate)
+copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *state)
 {
     register struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
     int i, j, idx;
-    struct clone_state *state = (struct clone_state *)genstate;
 
     if (is_in_list(obj_list, proto->d_namep)) {
 	bu_log("Primitive solid %s already cloned?\n", proto->d_namep);
@@ -271,12 +270,6 @@ copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t genstate)
     for (i = 0; i < state->n_copies; i++) {
 	const char *name = (const char *)NULL;
 
-	/* get an in-memory reference to the object being copied */
-	if ((rp = db_getmrec(_dbip, proto)) == (union record *)0) {
-	    TCL_READ_ERR;
-	    return;
-	}
-
 	if (i==0) {
 	    name = get_name(_dbip, proto, state, i);
 	} else {
@@ -291,6 +284,13 @@ copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t genstate)
 	    TCL_ALLOC_ERR;
 	    return;
 	}
+
+	/* get an in-memory reference to the object being copied */
+	if ((rp = db_getmrec(_dbip, proto)) == (union record *)0) {
+	    TCL_READ_ERR;
+	    return;
+	}
+
 	if (rp->u_id == ID_SOLID) {
 	    strncpy(rp->s.s_name, dp->d_namep, NAMESIZE);
 	    if (state->miraxis != W) {
@@ -337,6 +337,42 @@ copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t genstate)
 
     return;
 }
+
+
+/** make a copy of a v5 solid by adding it to our book-keeping list,
+ *  adding it to the db directory, and writing it out to disk.
+ */
+static void
+copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *state)
+{
+    /* not ready for v5 yet */
+    bu_log("ERROR: UNIMPLEMENTED !!!\n");
+
+    return;
+}
+
+
+/** make n copies of a database combination by adding it to our
+ *  book-keeping list, adding it to the directory, then writing it out
+ *  to the db.
+ */
+static void
+copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t state)
+{
+    if (is_in_list(obj_list, proto->d_namep)) {
+	bu_log("Solid primitive %s already cloned?\n", proto->d_namep);
+	return;
+    }
+
+    if (_dbip->dbi_version < 5) {
+	(void)copy_v4_solid(_dbip, proto, (struct clone_state *)state);
+    } else {
+	(void)copy_v5_solid(_dbip, proto, (struct clone_state *)state);
+    }
+
+    return;
+}
+
 
 
 /** make n copies of a v4 combination.
@@ -435,7 +471,9 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
-	/* !!! */
+	/* not ready for v5 yet */
+	bu_log("ERROR: UNIMPLEMENTED !!!\n");
+	return (struct directory *)NULL;
     }
 
     return dp;
@@ -449,8 +487,6 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 static void
 copy_comb(struct db_i *_dbip, struct directory *proto, genptr_t state)
 {
-    register struct directory *dp = (struct directory *)NULL;
-
     if (is_in_list(obj_list, proto->d_namep)) {
 	bu_log("Combination %s already cloned?\n", proto->d_namep);
 	return;
@@ -517,19 +553,9 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 	    /* copy this combination itself */
 	    copy_comb(_dbip, dp, (genptr_t)state);
 	} else {
-#if 0
 	    /* A v5 method of peeking into a combination */
-	    struct rt_db_internal in;
-	    struct rt_comb_internal *comb = (struct rt_comb_internal *)NULL;
 
-	    if (rt_db_get_internal5( &in, dp, _dbip, NULL, NULL) < 0) {
-		TCL_READ_ERR;
-		goto done_copy_tree;
-	    }
-	    comb = (struct rt_comb_internal *)in.idb_ptr; /* got a copy of the combination */
-#endif
 	    db_functree(_dbip, dp, copy_comb, copy_solid, resp, (genptr_t)state);
-	    //	    rt_db_free_internal(&in, (struct resource *)NULL);
 	}
 
     } else if (dp->d_flags & DIR_SOLID) {
@@ -579,7 +605,6 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
 
     /* make sure it made what we hope/think it made */
     if (!copy || !is_in_list(obj_list, state->src->d_namep)) {
-	bu_log("ERROR: clone internal error, cannot find %s for editing\n", state->src->d_namep);
 	return copy;
     }
 
