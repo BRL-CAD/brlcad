@@ -17,10 +17,10 @@ EXTRA_DIST = \
 	$(bin_SCRIPTS) \
 	cakeinclude.sh \
 	copyright.sh \
+	enumerate.sh \
 	footer.sh \
 	header.sh \
 	ldAix.sh \
-	lines.sh \
 	make_deb.sh \
 	make_dmg.sh \
 	make_pkg.sh \
