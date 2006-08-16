@@ -1353,6 +1353,7 @@ f_make(ClientData	clientData,
 	struct rt_bot_internal *bot_ip;
 	struct rt_arbn_internal *arbn_ip;
 	struct rt_superell_internal	*superell_ip;
+	struct rt_metaball_internal	*metaball_ip;
 
 	if(argc == 2){
 	  struct bu_vls vls;
@@ -1389,6 +1390,7 @@ f_make(ClientData	clientData,
 	    Tcl_AppendElement(interp, "tor");
 	    Tcl_AppendElement(interp, "trc");
 	    Tcl_AppendElement(interp, "superell");
+	    Tcl_AppendElement(interp, "metaball");
 
 	    return TCL_OK;
 	  }
@@ -2039,12 +2041,34 @@ f_make(ClientData	clientData,
 		   strcmp(argv[2], "vol") == 0) {
 		Tcl_AppendResult(interp, "make: the ", argv[2], " primitive is not supported by this command.\n", (char *)NULL);
 		return TCL_ERROR;
+	} else if (strcmp(argv[2], "metaball") == 0) {
+		struct wdb_metaballpt *mbpt;
+		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		internal.idb_type = ID_METABALL;
+		internal.idb_meth = &rt_functab[ID_METABALL];
+		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_metaball_internal) , "rt_metaball_internal" );
+		metaball_ip = (struct rt_metaball_internal *)internal.idb_ptr;
+		metaball_ip->magic = RT_METABALL_INTERNAL_MAGIC;
+		metaball_ip->threshhold = 1.0;
+		BU_LIST_INIT( &metaball_ip->metaball_pt_head );
+
+		mbpt = (struct wdb_metaballpt *)malloc(sizeof(struct wdb_metaballpt));
+		mbpt->fldstr = 1.0;
+		VSET(mbpt->coord, -view_state->vs_vop->vo_center[MDX] - 1.0, -view_state->vs_vop->vo_center[MDY] , -view_state->vs_vop->vo_center[MDZ] );
+		BU_LIST_INSERT(&metaball_ip->metaball_pt_head, &mbpt->l);
+
+		mbpt = (struct wdb_metaballpt *)malloc(sizeof(struct wdb_metaballpt));
+		mbpt->fldstr = 1.0;
+		VSET(mbpt->coord, -view_state->vs_vop->vo_center[MDX] + 1.0, -view_state->vs_vop->vo_center[MDY] , -view_state->vs_vop->vo_center[MDZ] );
+		BU_LIST_INSERT(&metaball_ip->metaball_pt_head, &mbpt->l);
+
+		fprintf(stdout, "metaball being made with %f threshhold and two points\n", metaball_ip->threshhold);
 	} else {
 	  Tcl_AppendResult(interp, "make:  ", argv[2], " is not a known primitive\n",
 			   "\tchoices are: arb8, arb7, arb6, arb5, arb4, arbn, ars, bot,\n",
-			   "\t\tehy, ell, ell1, epa, eto, extrude, grip, half, nmg,\n",
-			   "\t\tpart, pipe, rcc, rec, rhc, rpc, sketch, sph, tec,\n",
-			   "\t\ttgc, tor, trc\n",  /* , superell\n", */
+			   "\t\tehy, ell, ell1, epa, eto, extrude, grip, half,\n",
+			   "\t\tmetaball, nmg, part, pipe, rcc, rec, rhc, rpc,\n",
+			   "\t\tsketch, sph, superell, tec, tgc, tor, trc\n",
 			   (char *)NULL);
 	  return TCL_ERROR;
 	}
