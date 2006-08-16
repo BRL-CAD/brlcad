@@ -44,8 +44,7 @@
 #  Optional args:
 #	variable name to put version string in (default="version")
 #	title
-#
-# @(#)$Header$ (BRL)
+###
 
 path_to_vers_sh="`dirname $0`"
 
@@ -80,7 +79,7 @@ esac
 # Obtain RELEASE number
 if test -r $path_to_vers_sh/../configure.ac ; then
 	for i in 1 2 3 4 ; do
-	    eval "`grep "^[MP][AI][JNT][OC][RH]_VERSION=" ${path_to_vers_sh}/../configure.ac`"
+	    eval "`grep \"^[MP][AI][JNT][OC][RH]_VERSION=\" ${path_to_vers_sh}/../configure.ac`"
 	    BRLCAD_VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
 	done
 	if test ! "x$BRLCAD_VERSION" = "x" ; then
