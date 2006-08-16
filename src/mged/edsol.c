@@ -2489,8 +2489,7 @@ transform_editing_solid(
 	struct rt_db_internal	*is,		/* input solid */
 	int			free)
 {
-	RT_CK_DB_INTERNAL( is );
-	if( rt_functab[is->idb_type].ft_xform( os, mat, is, free, dbip, &rt_uniresource ) < 0 )
+	if( rt_matrix_transform( os, mat, is, free, dbip, &rt_uniresource ) < 0 )
 		bu_bomb("transform_editing_solid");
 }
 
