@@ -2540,6 +2540,10 @@ RT_EXPORT BU_EXTERN(void rt_ck,
 		    (struct rt_i *rtip));
 RT_EXPORT BU_EXTERN(void rt_pr_library_version,
 		    ());
+/* apply a matrix transformation */
+RT_EXPORT BU_EXTERN(int rt_matrix_transform,
+		    (struct rt_db_internal *output, const mat_t matrix, struct rt_db_internal *input, int free, struct db_i *dbip, struct resource *resource));
+
 
 /*****************************************************************
  *                                                               *
