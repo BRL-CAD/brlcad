@@ -80,8 +80,8 @@ esac
 # Obtain RELEASE number
 if test -r $path_to_vers_sh/../configure.ac ; then
 	for i in 1 2 3 4 ; do
-		version_script="`grep VERSION $path_to_vers_sh/../configure.ac | grep -v SUBST | head -${HEAD_N}$i | tail -${TAIL_N}1`"
-		eval "$version_script"
+	    eval "`grep "^[MP][AI][JNT][OC][RH]_VERSION=" ${path_to_vers_sh}/../configure.ac`"
+	    BRLCAD_VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
 	done
 	if test ! "x$BRLCAD_VERSION" = "x" ; then
 		RELEASE="$BRLCAD_VERSION"
