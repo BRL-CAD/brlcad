@@ -54,7 +54,8 @@ SELF="$0"
 ARGS="$*"
 BASE="`dirname $0`/.."
 
-eval "`grep "^[MP][AI][JNT][OC][RH]_VERSION" ${BASE}/configure.ac`"
+# obtain the version of BRL-CAD from configure.ac
+eval "`grep "^[MP][AI][JNT][OC][RH]_VERSION=" ${BASE}/configure.ac`"
 BRLCAD_VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
 
 # force locale setting to C so things like date output as expected
