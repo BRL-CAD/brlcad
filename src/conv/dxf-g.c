@@ -3127,13 +3127,13 @@ readcodes()
 
 	curr_state->file_offset = ftell( dxf );
 
-	if( fgets( line, LINELEN, dxf ) == NULL ) {
+	if( bu_fgets( line, LINELEN, dxf ) == NULL ) {
 		return( ERROR_FLAG );
 	} else {
 		code = atoi( line );
 	}
 
-	if( fgets( line, LINELEN, dxf ) == NULL ) {
+	if( bu_fgets( line, LINELEN, dxf ) == NULL ) {
 		return( ERROR_FLAG );
 	}
 
