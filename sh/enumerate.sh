@@ -54,6 +54,9 @@ SELF="$0"
 ARGS="$*"
 BASE="`dirname $0`/.."
 
+eval "`grep "^[MP][AI][JNT][OC][RH]_VERSION" ${BASE}/configure.ac`"
+BRLCAD_VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
+
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
@@ -76,6 +79,8 @@ sum() {
 printf -- "*****************************************\n"
 printf    "** BRL-CAD PROJECT ENUMERATION SUMMARY **\n"
 printf -- "*****************************************\n"
+printf "BRL-CAD Version: $BRLCAD_VERSION\n"
+printf "Enumeration Run: `date`\n"
 printf "\n"
 printf "Included below are various project enumeration statistics for BRL-CAD.\n"
 printf "The format/output of this script is subject to change without notice.\n"
