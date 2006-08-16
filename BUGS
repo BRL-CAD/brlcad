@@ -17,9 +17,6 @@ Recent Bugs
 
 * fbhelp sends some of the output to stdout and some to stderr...
 
-* several of the converters (e.g. dxf-g) assume newlines and do not
-  take carriage returns into account.
-
 * debugbu 2 immediately reports a bu_vls_free() error.. apparently
   been a problem since 4.5 days.
 
