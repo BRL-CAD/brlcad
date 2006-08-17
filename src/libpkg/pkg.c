@@ -171,7 +171,7 @@ pkg_init() {
 #ifdef _WIN32
     WORD wVersionRequested;
     WSADATA wsaData;
-
+    
     wVersionRequested = MAKEWORD(1, 1);
     if (WSAStartup(wVersionRequested, &wsaData) != 0) {
 	fprintf(stderr, "pkg_startup:  could not find a usable WinSock DLL" );
@@ -441,102 +441,100 @@ pkg_transerver(const struct pkg_switch *switchp, void (*errlog) (/* ??? */))
 }
 
 /*
- *  			P K G _ P E R M S E R V E R
  *
- *  We are now going to be a server for the indicated service.
- *  Hang a LISTEN, and return the fd to select() on waiting for
- *  new connections.
+ * Private implementation
  *
- *  Returns fd to listen on (>=0), -1 on error.
  */
 int
-pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (/* ??? */))
+_pkg_permserver_impl(struct in_addr iface, char* service, char* protocol, int backlog, void (*errlog)(char *msg))
 {
-	register struct servent *sp;
-	int	pkg_listenfd;
+    register struct servent *sp;
+    int	pkg_listenfd;
 #ifdef _WIN32
-	SOCKADDR_IN saServer;
+    SOCKADDR_IN saServer;
 #else
-	struct sockaddr_in sinme;
+    struct sockaddr_in sinme;
 #ifdef HAVE_SYS_UN_H
-	struct sockaddr_un sunme;		/* UNIX Domain */
+    struct sockaddr_un sunme;		/* UNIX Domain */
 #endif
-	struct	sockaddr *addr;			/* UNIX or INET addr */
-	int	addrlen;			/* length of address */
-	int	on = 1;
+    struct sockaddr *addr;			/* UNIX or INET addr */
+    int	addrlen;			/* length of address */
+    int	on = 1;
 #endif
-
-	pkg_ck_debug();
-	if( pkg_debug )  {
-		pkg_timestamp();
-		fprintf( pkg_debug,
-			"pkg_permserver(%s, %s, backlog=%d, errlog=x%lx\n",
-			service, protocol, backlog, (long)errlog );
-		fflush(pkg_debug);
-	}
-
-	/* Check for default error handler */
-	if( errlog == NULL )
-		errlog = pkg_errlog;
-
+    
+    pkg_ck_debug();
+    if( pkg_debug )  {
+	pkg_timestamp();
+	fprintf( pkg_debug,
+		 "pkg_permserver(%s, %s, backlog=%d, errlog=x%lx\n",
+		 service, protocol, backlog, (long)errlog );
+	fflush(pkg_debug);
+    }
+    
+    /* Check for default error handler */
+    if( errlog == NULL )
+	errlog = pkg_errlog;
+    
+    /* WIN32 STUFF ========================= */
 #ifdef _WIN32
-	bzero((char *)&saServer, sizeof(saServer));
-
-	if (atoi(service) > 0) {
-	    saServer.sin_port = htons((unsigned short)atoi(service));
-	} else {
-	    if ((sp = getservbyname(service, "tcp")) == NULL) {
-		sprintf(errbuf,
-			"pkg_permserver(%s,%d): unknown service\n",
-			service, backlog );
-		errlog(errbuf);
-		return(-1);
-	    }
-	    saServer.sin_port = sp->s_port;
-	}
-
-	if ((pkg_listenfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
-	    pkg_perror(errlog, "pkg_permserver:  socket");
+    bzero((char *)&saServer, sizeof(saServer));
+    
+    if (atoi(service) > 0) {
+	saServer.sin_port = htons((unsigned short)atoi(service));
+    } else {
+	if ((sp = getservbyname(service, "tcp")) == NULL) {
+	    sprintf(errbuf,
+		    "pkg_permserver(%s,%d): unknown service\n",
+		    service, backlog );
+	    errlog(errbuf);
 	    return(-1);
 	}
+	saServer.sin_port = sp->s_port;
+    }
+
+    if ((pkg_listenfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
+	pkg_perror(errlog, "pkg_permserver:  socket");
+	return(-1);
+    }
 
 #if 0
-	_setmode(pkg_listenfd, _O_BINARY);
+    _setmode(pkg_listenfd, _O_BINARY);
 #endif
-
-	saServer.sin_family = AF_INET;
-	saServer.sin_addr.s_addr = INADDR_ANY;
-
-	if (bind(pkg_listenfd, (LPSOCKADDR)&saServer, sizeof(struct sockaddr)) == SOCKET_ERROR) {
-	    pkg_perror(errlog, "pkg_permserver: bind");
-	    closesocket(pkg_listenfd);
-
-	    return(-1);
-	}
-
-	if (backlog > 5)
-	    backlog = 5;
-
-	if (listen(pkg_listenfd, backlog) == SOCKET_ERROR) {
-	    pkg_perror(errlog, "pkg_permserver:  listen");
-	    closesocket(pkg_listenfd);
-
-	    return(-1);
-	}
-
-	return(pkg_listenfd);
-#else
-	bzero((char *)&sinme, sizeof(sinme));
-
+    
+    saServer.sin_family = AF_INET;
+    saServer.sin_addr.s_addr = iface;
+    
+    if (bind(pkg_listenfd, (LPSOCKADDR)&saServer, sizeof(struct sockaddr)) == SOCKET_ERROR) {
+	pkg_perror(errlog, "pkg_permserver: bind");
+	closesocket(pkg_listenfd);
+	
+	return(-1);
+    }
+    
+    if (backlog > 5)
+	backlog = 5;
+    
+    if (listen(pkg_listenfd, backlog) == SOCKET_ERROR) {
+	pkg_perror(errlog, "pkg_permserver:  listen");
+	closesocket(pkg_listenfd);
+	
+	return(-1);
+    }
+    
+    return(pkg_listenfd);
+    /* END WIN32 STUFF ========================= */
+#else 
+    bzero((char *)&sinme, sizeof(sinme));
+	
 #ifdef HAVE_SYS_UN_H
-	if( service != NULL && service[0] == '/' ) {
-		/* UNIX Domain socket */
-		strncpy( sunme.sun_path, service, sizeof(sunme.sun_path) );
-		sunme.sun_family = AF_UNIX;
-		addr = (struct sockaddr *) &sunme;
-		addrlen = strlen(sunme.sun_path) + 2;
-		goto ready;
-	}
+    if( service != NULL && service[0] == '/' ) {
+	/* UNIX Domain socket */
+	strncpy( sunme.sun_path, service, sizeof(sunme.sun_path) );
+	sunme.sun_family = AF_UNIX;
+	addr = (struct sockaddr *) &sunme;
+	addrlen = strlen(sunme.sun_path) + 2;
+	goto ready;
+    }
 #endif
 	/* Determine port for service */
 	if( atoi(service) > 0 )  {
@@ -553,6 +551,7 @@ pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (/* ??
 	}
 	pkg_permport = sinme.sin_port;		/* XXX -- needs formal I/F */
 	sinme.sin_family = AF_INET;
+	sinme.sin_addr = iface;
 	addr = (struct sockaddr *) &sinme;
 	addrlen = sizeof(struct sockaddr_in);
 
@@ -594,6 +593,54 @@ ready:
 	return(pkg_listenfd);
 #endif
 }
+
+/*
+ *  			P K G _ P E R M S E R V E R
+ *
+ *  We are now going to be a server for the indicated service.
+ *  Hang a LISTEN, and return the fd to select() on waiting for
+ *  new connections.
+ *
+ *  Returns fd to listen on (>=0), -1 on error.
+ */
+int
+pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (/* ??? */))
+{
+    struct in_addr iface;
+    iface.s_addr = INADDR_ANY;
+    return _pkg_permserver_impl(iface, service, protocol, backlog, errlog);
+}
+
+/*
+ *  			P K G _ P E R M S E R V E R _ I P
+ *
+ *  We are now going to be a server for the indicated service.
+ *  Hang a LISTEN, and return the fd to select() on waiting for
+ *  new connections.
+ *
+ *  Returns fd to listen on (>=0), -1 on error.
+ */
+int 
+pkg_permserver_ip(char* ipOrHostname, char* service, char* protocol, int backlog, void (*errlog)(char* buf))
+{
+    struct hostent* host;
+    struct in_addr iface;
+    /* if ipOrHostname starts with a number, it's an IP */
+    if (ipOrHostname) {
+	if (ipOrHostname[0] >= '0' && ipOrHostname[0] <= '9') {
+	    iface.s_addr = inet_addr(ipOrHostname);
+	} else {
+	    /* XXX gethostbyname is deprecated on Windows */
+	    host = gethostbyname(ipOrHostname);
+	    iface = *(struct in_addr*)host->h_addr;
+	    return _pkg_permserver_impl(iface, service, protocol, backlog, errlog);
+	}
+    } else {
+	pkg_perror(errlog, "pkg: ipOrHostname cannot be NULL");
+	return -1;
+    }
+}
+
 
 /*
  *			P K G _ G E T C L I E N T
