@@ -1105,6 +1105,8 @@ replot_modified_solid(
 	struct rt_db_internal	intern;
 	struct bu_list		vhead;
 
+	RT_INIT_DB_INTERNAL(&intern);
+
 	BU_LIST_INIT( &vhead );
 
 	if( sp == SOLID_NULL )  {
