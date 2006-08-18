@@ -19,16 +19,16 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * clone and tracker
 
+* Endgame Framework importer plugin
+
+* get archer working
+
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
 
-* Endgame Framework importer plugin
-
 * fix potential buffer overflows and security issues detected by
   Pedro's run of FlawFinder
-
-* get archer working
 
 * test pic/nonpic build problems with librtms/libmultispectral
 
