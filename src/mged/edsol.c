@@ -9236,6 +9236,9 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     case ID_PIPE:
       mip = pipe_menu;
       break;
+    case ID_METABALL:
+      mip = metaball_menu;
+      break;
     case ID_VOL:
       mip = vol_menu;
       break;
