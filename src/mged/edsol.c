@@ -9269,8 +9269,8 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  RT_INIT_DB_INTERNAL(&ces_int);
   /* apply matrices along the path */
+  RT_INIT_DB_INTERNAL(&ces_int);
   transform_editing_solid(&ces_int, es_mat, &es_int, 0);
 
   /* get solid type and parameters */
