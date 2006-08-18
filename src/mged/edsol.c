@@ -82,7 +82,7 @@ extern struct bn_tol		mged_tol;	/* from ged.c */
 static void	arb8_edge(int arg), ars_ed(int arg), ell_ed(int arg), tgc_ed(int arg), tor_ed(int arg), spline_ed(int arg);
 static void	nmg_ed(int arg), pipe_ed(int arg), vol_ed(int arg), ebm_ed(int arg), dsp_ed(int arg), cline_ed(int arg), bot_ed(int arg), extr_ed(int arg);
 static void	rpc_ed(int arg), rhc_ed(int arg), part_ed(int arg), epa_ed(int arg), ehy_ed(int arg), eto_ed(int arg);
-static void	superell_ed(int arg);
+static void	superell_ed(int arg), metaball_ed(int arg);
 
 static void	arb7_edge(int arg), arb6_edge(int arg), arb5_edge(int arg), arb4_point(int arg);
 static void	arb8_mv_face(int arg), arb7_mv_face(int arg), arb6_mv_face(int arg);
@@ -242,7 +242,14 @@ int	es_menu;		/* item selected from menu */
 #define MENU_SUPERELL_SCALE_B	114
 #define MENU_SUPERELL_SCALE_C	115
 #define MENU_SUPERELL_SCALE_ABC	116
-
+#define MENU_METABALL_SET_THRESHHOLD	117
+#define MENU_METABALL_SELECT	118
+#define MENU_METABALL_NEXT_PT	119
+#define MENU_METABALL_PREV_PT	120
+#define MENU_METABALL_MOV_PT	121
+#define MENU_METABALL_PT_FLDSTR	122
+#define MENU_METABALL_DEL_PT	123
+#define MENU_METABALL_ADD_PT	124
 
 struct menu_item cline_menu[] = {
 	{ "CLINE MENU",		(void (*)())NULL, 0 },
@@ -654,6 +661,19 @@ struct menu_item  superell_menu[] = {
 	{ "Set B", superell_ed, MENU_SUPERELL_SCALE_B },
 	{ "Set C", superell_ed, MENU_SUPERELL_SCALE_C },
 	{ "Set A,B,C", superell_ed, MENU_SUPERELL_SCALE_ABC },
+	{ "", (void (*)())NULL, 0 }
+};
+
+struct menu_item metaball_menu[] = {
+	{ "METABALL MENU", (void (*)())NULL, 0 },
+	{ "Set Threshhold", metaball_ed, MENU_METABALL_SET_THRESHHOLD },
+	{ "Select Point", metaball_ed, MENU_METABALL_SELECT },
+	{ "Next Point", metaball_ed, MENU_METABALL_NEXT_PT },
+	{ "Previous Point", metaball_ed, MENU_METABALL_PREV_PT },
+	{ "Move Point", metaball_ed, MENU_METABALL_MOV_PT },
+	{ "Set Point fldstr", metaball_ed, MENU_METABALL_PT_FLDSTR },
+	{ "Delete Point", metaball_ed, MENU_METABALL_DEL_PT },
+	{ "Add Point", metaball_ed, MENU_METABALL_ADD_PT },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -1200,6 +1220,35 @@ static void superell_ed(int arg) {
   es_edflag = PSCALE;
   set_e_axes_pos(1);
   return;
+}
+
+static void
+metaball_ed(int arg)
+{
+	bu_log("Woop: %d\n", arg); fflush(stdout);
+	if(dbip == DBI_NULL)
+		return;
+
+	switch( arg )
+	{
+		case MENU_METABALL_SET_THRESHHOLD:
+			break;
+		case MENU_METABALL_SELECT:
+			break;
+		case MENU_METABALL_NEXT_PT:
+			break;
+		case MENU_METABALL_PREV_PT:
+			break;
+		case MENU_METABALL_MOV_PT:
+			break;
+		case MENU_METABALL_PT_FLDSTR:
+			break;
+		case MENU_METABALL_DEL_PT:
+			break;
+		case MENU_METABALL_ADD_PT:
+			break;
+	}
+	return;
 }
 
 /*ARGSUSED*/
@@ -2550,6 +2599,9 @@ sedit_menu(void) {
 		break;
 	case ID_PIPE:
 		mmenu_set_all( MENU_L1, pipe_menu );
+		break;
+	case ID_METABALL:
+		mmenu_set_all( MENU_L1, metaball_menu );
 		break;
 	case ID_VOL:
 		mmenu_set_all( MENU_L1, vol_menu );
