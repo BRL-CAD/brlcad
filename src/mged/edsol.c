@@ -2490,7 +2490,7 @@ transform_editing_solid(
 	int			free)
 {
 	if( rt_matrix_transform( os, mat, is, free, dbip, &rt_uniresource ) < 0 )
-		bu_bomb("transform_editing_solid");
+		bu_bomb("transform_editing_solid failed to apply a matrix transform, aborting");
 }
 
 /*
@@ -6537,6 +6537,8 @@ vls_solid( struct bu_vls *vp, const struct rt_db_internal *ip, const mat_t mat )
 {
 	struct rt_db_internal	intern;
 	int			id;
+
+	RT_INIT_DB_INTERNAL(&intern);
 
 	if(dbip == DBI_NULL)
 	  return;

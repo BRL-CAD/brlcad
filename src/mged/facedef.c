@@ -98,6 +98,8 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	plane_t		planes[6];
 	int status = TCL_OK;
 
+	RT_INIT_DB_INTERNAL(&intern);
+
 	if(argc < 2){
 	  struct bu_vls vls;
 

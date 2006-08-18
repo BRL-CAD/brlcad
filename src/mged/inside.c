@@ -177,6 +177,8 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	int arg = 1;
 	int status = TCL_OK;
 
+	RT_INIT_DB_INTERNAL(&intern);
+
 	CHECK_DBI_NULL;
 
 	if(argc < 1){
