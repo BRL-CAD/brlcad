@@ -921,6 +921,33 @@ proc init_solid_edit_menu_hoc { stype } {
 		    "Prim Edit - scale pipe bend" \
 		    {{summary "scale pipe bend"}}
 	}
+	metaball {
+	    # METABALL
+	    hoc_register_menu_data "Edit" "set threshhold" \
+		    "Prim Edit - set threshhold" \
+		    {{summary "set threshhold"}}
+	    hoc_register_menu_data "Edit" "set threshhold" \
+		    "Prim Edit - select point" \
+		    {{summary "select point"}}
+	    hoc_register_menu_data "Edit" "next point" \
+		    "Prim Edit - next point" \
+		    {{summary "next point"}}
+	    hoc_register_menu_data "Edit" "previous point" \
+		    "Prim Edit - previous point" \
+		    {{summary "previous point"}}
+	    hoc_register_menu_data "Edit" "move point" \
+		    "Prim Edit - move point" \
+		    {{summary "move point"}}
+	    hoc_register_menu_data "Edit" "set point field strength" \
+		    "Prim Edit - set point field strength" \
+		    {{summary "set point field strength"}}
+	    hoc_register_menu_data "Edit" "delete point" \
+		    "Prim Edit - delete point" \
+		    {{summary "delete point"}}
+	    hoc_register_menu_data "Edit" "add point" \
+		    "Prim Edit - add point" \
+		    {{summary "add point"}}
+	}
 	vol {
 	    # VOL
 	    hoc_register_menu_data "Edit" "file name" \

@@ -38,7 +38,7 @@ set mged_Priv(ellipsoids) {ehy ell ell1 epa sph}
 
 # grip is purposely not a part of the other_prims list or any
 # other prim list because it's not considered geometry
-set mged_Priv(other_prims) {ars dsp eto extrude half part pipe sketch tor}
+set mged_Priv(other_prims) {ars dsp eto extrude half metaball part pipe sketch tor}
 
 # weak edit support for these primitives
 set mged_Priv(weak_prims) {bot nmg}
