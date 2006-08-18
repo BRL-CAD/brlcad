@@ -597,7 +597,11 @@ Convert_input()
 		Convert_part_binary();
 	} else {
 		while( fgets( line, MAX_LINE_LEN, fd_in ) != NULL ) {
-			if( !strncmp( line , "solid" , 5 ) || !strncmp( line , "SOLID" , 5 ) )
+		    int start = 0;
+		    while( line[start] != '\0' && isspace( line[start] ) ) {
+			start++;
+		    }
+			if( !strncmp( &line[start] , "solid" , 5 ) || !strncmp( &line[start] , "SOLID" , 5 ) )
 				Convert_part_ascii( line );
 			else
 				bu_log( "Unrecognized line:\n%s\n" , line );
