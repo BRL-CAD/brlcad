@@ -746,6 +746,7 @@ CreateBezier(
 {
     BezierItem *bezierPtr = (BezierItem *)itemPtr;
     int i;
+    Display *dpy;
 
     Tk_CreateOutline(&(bezierPtr->outline));
 
@@ -772,7 +773,10 @@ CreateBezier(
     }
 
     error:
-    DeleteBezier(canvas, itemPtr, Tk_Display(Tk_CanvasTkwin(canvas)));
+    dpy = Tk_Display(Tk_CanvasTkwin(canvas));
+    if (dpy) {
+      DeleteBezier(canvas, itemPtr, dpy);
+    }
     return TCL_ERROR;
 }
 
@@ -926,6 +930,7 @@ ConfigureBezier(interp, canvas, itemPtr, argc, argv, flags)
     unsigned long mask;
     Tk_Window tkwin;
     Tk_State state;
+    Display *dpy;
 
     tkwin = Tk_CanvasTkwin(canvas);
     if (Tk_ConfigureWidget(interp, tkwin, configSpecs, argc, (CONST char **) argv,
@@ -956,7 +961,10 @@ ConfigureBezier(interp, canvas, itemPtr, argc, argv, flags)
 	    &(bezierPtr->outline));
 
     if (bezierPtr->outline.gc != None) {
-	Tk_FreeGC(Tk_Display(tkwin), bezierPtr->outline.gc);
+	dpy = Tk_Display(tkwin);
+	if (dpy) {
+	    Tk_FreeGC(dpy, bezierPtr->outline.gc);
+	}
     }
     bezierPtr->outline.gc = Tk_GetGC(tkwin, mask, &gcValues);
     ComputeBezierBbox(canvas, bezierPtr);
@@ -1553,3 +1561,13 @@ static Vector2 V2ScaleII(v, s)
     result.x = v->x * s; result.y = v->y * s;
     return (result);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
