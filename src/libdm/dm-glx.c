@@ -305,13 +305,20 @@ char *argv[];
 
   {
     int return_val;
+    Display *dpy= Tk_Display(((struct glx_vars *)dmp->dm_vars)->top);
 
-    if(!XQueryExtension(Tk_Display(((struct glx_vars *)dmp->dm_vars)->top), "SGI-GLX",
-			&return_val, &return_val, &return_val)){
+    /* make sure there really is a display before proceeding. */
+    if (!dpy || !Tk_IsMapped(dpy)) {
+	return DM_NULL;
+    }
+
+    if (!XQueryExtension(dis, "SGI-GLX", &return_val, &return_val, &return_val)) {
       bu_vls_free(&init_proc_vls);
       (void)glx_close(dmp);
       return DM_NULL;
     }
+
+
   }
 
   bu_vls_printf(&dmp->dm_tkName, "%s",
@@ -335,6 +342,12 @@ char *argv[];
 
   ((struct glx_vars *)dmp->dm_vars)->dpy =
     Tk_Display(((struct glx_vars *)dmp->dm_vars)->top);
+
+  /* make sure there really is a display before proceeding. */
+  if (!((struct glx_vars *)dmp->dm_vars)->dpy || !Tk_IsMapped(((struct glx_vars *)dmp->dm_vars)->dpy)) {
+      (void)glx_close(dmp);
+      return DM_NULL;
+  }
 
   if(dmp->dm_width == 0){
     dmp->dm_width =

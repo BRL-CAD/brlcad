@@ -228,6 +228,7 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
   struct bu_vls init_proc_vls;
   struct dm *dmp;
   Tk_Window tkwin;
+  Display *dpy;
 
   if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	  return DM_NULL;
@@ -260,8 +261,9 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
 
   dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
-  if(bu_vls_strlen(&dmp->dm_pathName) == 0)
-    bu_vls_printf(&dmp->dm_pathName, ".dm_Tk%d", count);
+  if(bu_vls_strlen(&dmp->dm_pathName) == 0) {
+      bu_vls_printf(&dmp->dm_pathName, ".dm_Tk%d", count);
+  }
 
   ++count;
   if(bu_vls_strlen(&dmp->dm_dName) == 0){
@@ -340,6 +342,13 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
 
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy =
     Tk_Display(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
+  dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
+
+  /* make sure there really is a display before proceeding. */
+  if (!dpy || !Tk_IsMapped(dpy)) {
+      (void)Tk_close(dmp);
+      return DM_NULL;
+  }
 
   if(dmp->dm_width == 0){
     dmp->dm_width =

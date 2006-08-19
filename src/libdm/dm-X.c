@@ -354,6 +354,11 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     pubvars->dpy =
 	Tk_Display(pubvars->top);
 
+    /* make sure there really is a display before proceeding. */
+    if (!pubvars->dpy || !Tk_IsMapped(pubvars->dpy)) {
+	return DM_NULL;
+    }
+
     if(dmp->dm_width == 0){
 	dmp->dm_width =
 	    DisplayWidth(pubvars->dpy,

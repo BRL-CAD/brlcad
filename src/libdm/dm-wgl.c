@@ -358,6 +358,12 @@ wgl_open(interp, argc, argv)
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy =
     Tk_Display(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
 
+  /* make sure there really is a display before proceeding. */
+  if (!((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy || !Tk_IsMapped(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy)) {
+      (void)wgl_close(dmp);
+      return DM_NULL;
+  }
+
   Tk_GeometryRequest(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
 		     dmp->dm_width,
 		     dmp->dm_height);

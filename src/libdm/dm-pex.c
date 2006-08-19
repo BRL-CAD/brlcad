@@ -219,6 +219,14 @@ struct dm *dmp;
 
   bu_vls_free(&str);
   ((struct pex_vars *)dmp->dmr_vars)->dpy = Tk_Display(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
+
+  /* make sure there really is a display before proceeding. */
+  if (!((struct pex_vars *)dmp->dm_vars)->dpy || !Tk_IsMapped(((struct pex_vars *)dmp->dm_vars)->dpy)) {
+      bu_vls_free(&str);
+      (void)pex_close(dmp);
+      return TCL_ERROR;
+  }
+
   ((struct pex_vars *)dmp->dmr_vars)->width =
     DisplayWidth(((struct pex_vars *)dmp->dmr_vars)->dpy,
 		 DefaultScreen(((struct pex_vars *)dmp->dmr_vars)->dpy)) - 20;
