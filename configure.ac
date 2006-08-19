@@ -2757,8 +2757,9 @@ AC_TRY_RUN([
 #  include <GL/gl.h>
 #endif
 main() {
+   GLboolean values;
    if (GL_TRUE) {
-	glClear(GL_COLOR_BUFFER_BIT);
+	glGetBooleanv(GL_CURRENT_COLOR, &values);
    }
    return 0;
 }
@@ -2799,8 +2800,9 @@ AC_TRY_RUN([
 #  include <GL/gl.h>
 #endif
 main() {
+   GLboolean values;
    if (GL_TRUE) {
-	glClear(GL_COLOR_BUFFER_BIT);
+	glGetBooleanv(GL_CURRENT_COLOR, &values);
    }
    return 0;
 }
