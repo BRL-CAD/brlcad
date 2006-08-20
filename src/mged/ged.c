@@ -619,29 +619,40 @@ main(int argc, char **argv)
 	    }
 
 	    if (status != TCL_OK) {
-		bu_log("%s\nMGED Aborted.\n", interp->result);
-		pkg_terminate();
-		mged_finish(1);
-	    }
+		if (use_pipe) {
+		    /* too late to fall back to classic, we forked and detached already */
+		    bu_log("Unable to initialize an MGED gui.  Try using foreground (-f) or classic-mode (-c) options.\n");
+		    bu_log("%s\nMGED aborted.\n", interp->result);
+		    pkg_terminate();
+		    mged_finish(1);
+		}
+		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", interp->result);
+		classic_mged=1;
+		cbreak_mode = COMMAND_LINE_EDITING;
+		save_Tty(fileno(stdin));
+		get_attached();
+	    } else {
 
+		/* close out stdout/stderr as we're proceeding in GUI mode */
 #ifdef HAVE_PIPE
-	    (void)pipe(pipe_out);
-	    (void)pipe(pipe_err);
-
-	    /* Redirect stdout */
-	    (void)close(1);
-	    (void)dup(pipe_out[1]);
-	    (void)close(pipe_out[1]);
-
-	    /* Redirect stderr */
-	    (void)close(2);
-	    (void)dup(pipe_err[1]);
-	    (void)close(pipe_err[1]);
+		(void)pipe(pipe_out);
+		(void)pipe(pipe_err);
+		
+		/* Redirect stdout */
+		(void)close(1);
+		(void)dup(pipe_out[1]);
+		(void)close(pipe_out[1]);
+		
+		/* Redirect stderr */
+		(void)close(2);
+		(void)dup(pipe_err[1]);
+		(void)close(pipe_err[1]);
 #endif  /* HAVE_PIPE */
 
-	    bu_add_hook(&bu_bomb_hook_list, mged_bomb_hook, GENPTR_NULL);
-	}
-    }
+		bu_add_hook(&bu_bomb_hook_list, mged_bomb_hook, GENPTR_NULL);
+	    } /* status -- gui initialized */
+	} /* classic */
+    } /* interactive */
 
     /* --- Now safe to process geometry. --- */
 
