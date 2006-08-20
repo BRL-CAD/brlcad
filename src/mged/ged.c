@@ -621,7 +621,7 @@ main(int argc, char **argv)
 	    if (status != TCL_OK) {
 		if (use_pipe) {
 		    /* too late to fall back to classic, we forked and detached already */
-		    bu_log("Unable to initialize an MGED gui.  Try using foreground (-f) or classic-mode (-c) options.\n");
+		    bu_log("Unable to initialize an MGED graphical user interface.\nTry using foreground (-f) or classic-mode (-c) options to MGED.\n");
 		    bu_log("%s\nMGED aborted.\n", interp->result);
 		    pkg_terminate();
 		    mged_finish(1);
