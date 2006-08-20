@@ -119,6 +119,8 @@ HIDDEN int
 dm_bestXType_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	Tcl_Obj		*obj;
+	const char *best_dm;
+	char buffer[256] = {0};
 
 	if (argc != 2) {
 		struct bu_vls vls;
@@ -133,10 +135,14 @@ dm_bestXType_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	obj = Tcl_GetObjResult(interp);
 	if (Tcl_IsShared(obj))
 		obj = Tcl_DuplicateObj(obj);
-	Tcl_AppendStringsToObj(obj, dm_bestXType(argv[1]), (char *)NULL);
-
-	Tcl_SetObjResult(interp, obj);
-	return TCL_OK;
+	snprintf(buffer, 256, argv[1]);
+	best_dm = dm_bestXType(buffer);
+	if (best_dm) {
+	    Tcl_AppendStringsToObj(obj, best_dm, (char *)NULL);
+	    Tcl_SetObjResult(interp, obj);
+	    return TCL_OK;
+	}
+	return TCL_ERROR;
 }
 
 /*
