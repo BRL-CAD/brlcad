@@ -119,7 +119,7 @@ rt_shootray( struct application *ap )
 		ap->a_resource = &rt_uniresource;
 		rt_uniresource.re_magic = RESOURCE_MAGIC;
 	}
-	RT_RESOURCE_CHECK(ap->a_resource);
+	RT_CK_RESOURCE(ap->a_resource);
 
 	if(RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
 		rt_g.rtg_logindent += 2;

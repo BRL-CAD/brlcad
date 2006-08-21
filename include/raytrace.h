@@ -1506,7 +1506,6 @@ struct resource {
 RT_EXPORT extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 #define RESOURCE_NULL	((struct resource *)0)
 #define RESOURCE_MAGIC	0x83651835
-#define RT_RESOURCE_CHECK(_p)	BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 #define RT_CK_RESOURCE(_p)	BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 
 /* More malloc-efficient replacement for BU_GETUNION(tp, tree) */

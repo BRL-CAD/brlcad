@@ -834,7 +834,7 @@ rt_shootray(register struct application *ap)
 	rtip = ap->a_rt_i;
 	RT_CK_RTI( rtip );
 	resp = ap->a_resource;
-	RT_RESOURCE_CHECK(resp);
+	RT_CK_RESOURCE(resp);
 	ss.resp = resp;
 
 	if(RT_G_DEBUG) {
@@ -1493,7 +1493,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 	rtip = ap->a_rt_i;
 	RT_CK_RTI( rtip );
 	resp = ap->a_resource;
-	RT_RESOURCE_CHECK(resp);
+	RT_CK_RESOURCE(resp);
 	ss.resp = resp;
 
 	if(RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {

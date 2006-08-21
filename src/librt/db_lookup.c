@@ -514,7 +514,7 @@ db_get_directory(register struct resource *resp)
     register struct directory	*dp;
     register int		bytes;
 
-    RT_RESOURCE_CHECK(resp);
+    RT_CK_RESOURCE(resp);
     BU_CK_PTBL( &resp->re_directory_blocks );
 
     BU_ASSERT_PTR( resp->re_directory_hd, ==, NULL );

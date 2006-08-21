@@ -138,7 +138,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	rtip = ap->a_rt_i;
 	RT_CK_RTI( rtip );
 	resp = ap->a_resource;
-	RT_RESOURCE_CHECK(resp);
+	RT_CK_RESOURCE(resp);
 	ss.resp = resp;
 
 	if(RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {

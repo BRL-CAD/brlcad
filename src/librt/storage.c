@@ -73,7 +73,7 @@ rt_get_seg(register struct resource *res)
 	register struct seg	*sp;
 	register int		bytes;
 
-	RT_RESOURCE_CHECK(res);
+	RT_CK_RESOURCE(res);
 
 	if( BU_LIST_UNINITIALIZED( &res->re_seg ) )  {
 		BU_LIST_INIT( &(res->re_seg) );
