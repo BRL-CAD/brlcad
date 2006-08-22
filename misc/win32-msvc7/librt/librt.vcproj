@@ -999,6 +999,9 @@ copy &quot;$(TargetDir)&quot;librt_d.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\g_metaball.c">
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\g_nmg.c">
 				<FileConfiguration
 					Name="Release|Win32">
