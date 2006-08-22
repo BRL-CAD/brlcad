@@ -230,7 +230,7 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
   Tk_Window tkwin;
   Display *dpy;
 
-  if ((tkwin = Tk_MainWindow(interp)) == NULL) {
+  if (((tkwin = Tk_MainWindow(interp)) == NULL) || !Tk_IsMapped(tkwin)) {
 	  return DM_NULL;
   }
 
@@ -345,7 +345,7 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
   dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
 
   /* make sure there really is a display before proceeding. */
-  if (!dpy || !Tk_IsMapped(dpy)) {
+  if (!dpy || !Tk_IsMapped(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) {
       (void)Tk_close(dmp);
       return DM_NULL;
   }

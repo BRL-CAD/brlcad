@@ -227,13 +227,14 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
   struct dm *dmp;
   Tk_Window tkwin;
 
-  if((tkwin = Tk_MainWindow(interp)) == NULL){
-	  return DM_NULL;
+  if (((tkwin = Tk_MainWindow(interp)) == NULL) || !Tk_IsMapped(tkwin)) {
+      return DM_NULL;
   }
 
   BU_GETSTRUCT(dmp, dm);
-  if(dmp == DM_NULL)
-    return DM_NULL;
+  if(dmp == DM_NULL) {
+      return DM_NULL;
+  }
 
   *dmp = dm_ogl; /* struct copy */
   dmp->dm_interp = interp;
@@ -398,7 +399,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     Tk_Display(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
 
   /* make sure there really is a display before proceeding. */
-  if (!((struct dm_xvars *)dmp->dm_vars)->dpy || !Tk_IsMapped(((struct dm_xvars *)dmp->dm_vars)->dpy)) {
+  if (!((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy || !Tk_IsMapped(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) {
       bu_vls_free(&init_proc_vls);
       bu_vls_free(&str);
       (void)ogl_close(dmp);

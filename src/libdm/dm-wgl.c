@@ -209,13 +209,14 @@ wgl_open(interp, argc, argv)
   HWND hwnd;
   HDC hdc;
 
-  if((tkwin = Tk_MainWindow(interp)) == NULL){
-	  return DM_NULL;
+  if (((tkwin = Tk_MainWindow(interp)) == NULL) || !Tk_IsMapped(tkwin)) {
+      return DM_NULL;
   }
 
   BU_GETSTRUCT(dmp, dm);
-  if(dmp == DM_NULL)
-    return DM_NULL;
+  if(dmp == DM_NULL) {
+      return DM_NULL;
+  }
 
   *dmp = dm_wgl; /* struct copy */
   dmp->dm_interp = interp;
@@ -360,11 +361,7 @@ wgl_open(interp, argc, argv)
     Tk_Display(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
 
   /* make sure there really is a display before proceeding. */
-#if 1
-  if (!((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
-#else
-  if (!((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy || !Tk_IsMapped(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy)) {
-#endif
+  if (!((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy || !Tk_IsMapped(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) {
       (void)wgl_close(dmp);
       return DM_NULL;
   }

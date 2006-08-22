@@ -241,13 +241,14 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     struct dm_xvars *pubvars = NULL;
     struct x_vars *privars = NULL;
 
-    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
+    if (((tkwin = Tk_MainWindow(interp)) == NULL) || !Tk_IsMapped(tkwin)) {
 	return DM_NULL;
     }
 
     BU_GETSTRUCT(dmp, dm);
-    if(dmp == DM_NULL)
+    if(dmp == DM_NULL) {
 	return DM_NULL;
+    }
 
     *dmp = dm_X; /* struct copy */
     dmp->dm_interp = interp;
@@ -355,7 +356,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	Tk_Display(pubvars->top);
 
     /* make sure there really is a display before proceeding. */
-    if (!pubvars->dpy || !Tk_IsMapped(pubvars->dpy)) {
+    if (!pubvars->dpy || !Tk_IsMapped(pubvars->xtkwin)) {
 	return DM_NULL;
     }
 
