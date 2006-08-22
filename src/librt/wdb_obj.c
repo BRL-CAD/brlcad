@@ -5087,6 +5087,7 @@ wdb_print_node(struct rt_wdb		*wdbp,
 	       Tcl_Interp		*interp,
 	       register struct directory *dp,
 	       int			pathpos,
+	       int			indentSize,
 	       char			prefix,
 	       int			cflag)
 {
@@ -5099,7 +5100,14 @@ wdb_print_node(struct rt_wdb		*wdbp,
 		return;
 
 	for (i=0; i<pathpos; i++)
+	    if( indentSize < 0 ) {
 		Tcl_AppendResult(interp, "\t", (char *)NULL);
+	    } else {
+		int j;
+		for( j=0 ; j<indentSize ; j++ ) {
+		    Tcl_AppendResult(interp, " ", (char *)NULL);
+		}
+	    }
 
 	if (prefix) {
 		struct bu_vls tmp_vls;
@@ -5191,7 +5199,7 @@ wdb_print_node(struct rt_wdb		*wdbp,
 
 				Tcl_AppendResult(interp, rt_tree_array[i].tl_tree->tr_l.tl_name, "\n", (char *)NULL);
 			} else
-				wdb_print_node(wdbp, interp, nextdp, pathpos+1, op, cflag);
+				wdb_print_node(wdbp, interp, nextdp, pathpos+1, indentSize, op, cflag);
 			db_free_tree( rt_tree_array[i].tl_tree, &rt_uniresource );
 		}
 		if(rt_tree_array) bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
@@ -5222,9 +5230,12 @@ wdb_tree_cmd(struct rt_wdb	*wdbp,
 	register struct directory	*dp;
 	register int			j;
 	int				cflag = 0;
+	int				indentSize = -1;
+	int				c;
+	struct bu_vls			vls;
+	FILE				*fdout = NULL;
 
 	if (argc < 2 || MAXARGS < argc) {
-		struct bu_vls vls;
 
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib_alias wdb_tree %s", argv[0]);
@@ -5233,18 +5244,50 @@ wdb_tree_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-	if (argv[1][0] == '-' && argv[1][1] == 'c') {
-		cflag = 1;
-		--argc;
-		++argv;
+	/* Parse options */
+	bu_optind = 1;	/* re-init bu_getopt() */
+	while ((c=bu_getopt(argc, argv, "i:o:c")) != EOF) {
+		switch (c) {
+		case 'i':
+			indentSize = atoi(bu_optarg);
+			break;
+		case 'c':
+		    cflag = 1;
+			break;
+		case 'o':
+		    if( (fdout = fopen( bu_optarg, "w+" )) == NULL ) {
+			Tcl_SetErrno( errno );
+			Tcl_AppendResult( interp, "Failed to open output file, ",
+					  strerror( errno ), (char *)NULL );
+			return TCL_ERROR;
+		    }
+		    break;
+		case '?':
+		default:
+		    bu_vls_init(&vls);
+		    bu_vls_printf(&vls, "helplib_alias wdb_tree %s", argv[0]);
+		    Tcl_Eval(interp, bu_vls_addr(&vls));
+		    bu_vls_free(&vls);
+		    return TCL_ERROR;
+		    break;
+		}
 	}
+
+	argc -= (bu_optind - 1);
+	argv += (bu_optind - 1);
 
 	for (j = 1; j < argc; j++) {
 		if (j > 1)
 			Tcl_AppendResult(interp, "\n", (char *)NULL);
 		if ((dp = db_lookup(wdbp->dbip, argv[j], LOOKUP_NOISY)) == DIR_NULL)
 			continue;
-		wdb_print_node(wdbp, interp, dp, 0, 0, cflag);
+		wdb_print_node(wdbp, interp, dp, 0, indentSize, 0, cflag);
+	}
+
+	if( fdout != NULL ) {
+	    fprintf( fdout, "%s", Tcl_GetStringResult( interp ) );
+	    Tcl_ResetResult( interp );
+	    fclose( fdout );
 	}
 
 	return TCL_OK;

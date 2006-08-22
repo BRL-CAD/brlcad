@@ -142,7 +142,7 @@ set helplib_data(wdb_title)		{{description} {Set/get database title}}
 set helplib_data(wdb_tol)		{{[abs|rel|norm|dist|perp [#]} {Set/get tessellation and calculation tolerances}}
 set helplib_data(wdb_tops)		{{[-n] [-u] [-g]}	{find all top level objects}}
 set helplib_data(wdb_track)		{{args} {create a track}}
-set helplib_data(wdb_tree)		{{object(s)} {print out a tree of all members of an object}}
+set helplib_data(wdb_tree)		{{[-c] [-o outfile] [-i indentSize] object(s)} {print out a tree of all members of an object}}
 set helplib_data(wdb_unhide)            {{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
 set helplib_data(wdb_units)		{{[mm|cm|m|in|ft|...]}	{change units}}
 set helplib_data(wdb_version)		{{} {returns the database version}}
