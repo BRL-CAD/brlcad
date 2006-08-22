@@ -53,6 +53,7 @@ dm_validXType(char *dpy_string, char *name)
 
 #ifdef DM_OGL
     if (!strcmp(name, "ogl")) {
+	Display *dpy;
 	int return_val;
 	if ((dpy = XOpenDisplay(dpy_string)) == NULL) {
 	    bu_log("dm_validXType: failed to open display - %s\n", dpy_string?dpy_string:"(DISPLAY unspecified)");
