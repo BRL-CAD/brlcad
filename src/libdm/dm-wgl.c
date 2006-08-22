@@ -175,6 +175,7 @@ HIDDEN float wireColor[4];
 HIDDEN float ambientColor[4];
 HIDDEN float specularColor[4];
 HIDDEN float diffuseColor[4];
+HIDDEN float backColor[] = {0.1, 0.1, 0.1, 1.0}; /* dark gray */
 
 void
 wgl_fogHint(dmp, fastfog)
@@ -359,7 +360,11 @@ wgl_open(interp, argc, argv)
     Tk_Display(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
 
   /* make sure there really is a display before proceeding. */
+#if 1
+  if (!((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
+#else
   if (!((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy || !Tk_IsMapped(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy)) {
+#endif
       (void)wgl_close(dmp);
       return DM_NULL;
   }
@@ -975,7 +980,16 @@ wgl_drawVList(dmp, vp)
 				    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
 				    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 				    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
+#if 0
 				    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
+#else
+				    if (1 < dmp->dm_light)
+					glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
+				    else {
+					glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
+					glMaterialfv(GL_BACK, GL_DIFFUSE, backColor);
+				    }
+#endif
 
 				    if (dmp->dm_transparency)
 					glEnable(GL_BLEND);
