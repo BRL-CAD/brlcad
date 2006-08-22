@@ -132,7 +132,7 @@
     if {$tcl_platform(os) != "Windows NT"} {
 	private variable priv_type X
     } else {
-	private variable priv_type ogl
+	private variable priv_type wgl
     }
 
     private variable help
@@ -145,7 +145,7 @@
 	if {$tcl_platform(os) != "Windows NT"} {
 	    set priv_type X
 	} else {
-	    set priv_type ogl
+	    set priv_type wgl
 	}
     }
 
@@ -258,7 +258,8 @@ if {$tcl_platform(os) != "Windows NT"} {
 ::itcl::configbody Dm::type {
     switch $itk_option(-type) {
 	X -
-	ogl {
+	ogl -
+	wgl {
 	    if {$initializing} {
 		set priv_type $itk_option(-type)
 	    } else {
