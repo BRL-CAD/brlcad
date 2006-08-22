@@ -17,6 +17,7 @@ libtclcad_la_LIBADD = \
 	${TK} \
 	${BN} \
 	${BU} \
+	${FB} \
 	${TCL}
 
 libtclcad_la_SOURCES = \
