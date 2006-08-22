@@ -33,7 +33,7 @@ CD ..
 SET BRLCAD_DATA=%CD%
 CD %SAVE_CD%
 
-START /B wish "%ARCHER%"
+START /B wish "%ARCHER%" %1
 
 CLS
 EXIT
@@ -46,4 +46,3 @@ REM sh-basic-offset: 4
 REM indent-tabs-mode: t
 REM End:
 REM ex: shiftwidth=4 tabstop=8
-

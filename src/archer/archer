@@ -241,6 +241,7 @@ proc main {} {
     global env
     global brlcadDataPath
     global tcl_platform
+    global argv
 
     if {$::Archer::inheritFromToplevel} {
 	set ::Archer::archer [Archer .\#auto]
@@ -267,6 +268,16 @@ proc main {} {
 	pack $::Archer::archer -expand yes -fill both
 	wm geometry . "$width\x$height+0+0"
 	wm protocol . WM_DELETE_WINDOW [list exitArcher $::Archer::archer]
+    }
+
+    if {$argv != ""} {
+	set target [lindex $argv 0]
+	set ext [file extension $target]
+	if {$ext == ".g"} {
+	    $::Archer::archer Load "BRL-CAD" $target
+	} elseif {$ext == ".xg" || $ext == ".sdb"} {
+	    $::Archer::archer Load "IVAVIEW" $target
+	}
     }
 
     $::Archer::archer configure -quitcmd [list exitArcher $::Archer::archer]
