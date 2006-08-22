@@ -12,6 +12,7 @@ entire history of the project is available through CVS.
 ----------------------------------------------------------------------
 
 * added archer geometry/view loading via command-line arg - Bob Parker
+* mged tree command now supports -o/-i, matches docs - John Anderson
 * improved beginning-of-line input processing in stl-g - John Anderson
 * improved end-of-line input processing in dxf-g - John Anderson
 * support for longer Fastgen object names in fast4-g - Sean Morrison
