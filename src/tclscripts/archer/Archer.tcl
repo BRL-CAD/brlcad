@@ -342,7 +342,7 @@ namespace eval Archer {
 	variable mTargetCopy ""
 	variable mTargetOldCopy ""
 	variable mDisplayType
-	variable mLighting 1
+	variable mLighting 2
 	variable mRenderMode -1
 	variable mShowNormals 0
 	variable mShowNormalsTag "ShowNormals"
@@ -2965,7 +2965,7 @@ Popup Menu    Right or Ctrl-Left
     set mNeedSave 1
     _update_save_mode	
 
-    # Disable the apply and reset buttons
+    # Disable the "apply" and "reset" buttons
     $itk_component(objEditToolbar) itemconfigure apply \
 	-state disabled
     $itk_component(objEditToolbar) itemconfigure reset \
@@ -4465,6 +4465,12 @@ Popup Menu    Right or Ctrl-Left
 	    -onvalue 1 \
 	    -variable [::itcl::scope mShowScale] \
 	    -command [::itcl::code $this _show_scale]
+	$itk_component(modesmenu) add checkbutton \
+	    -label "Two Sided Lighting" \
+	    -offvalue 1 \
+	    -onvalue 2 \
+	    -variable [::itcl::scope mLighting] \
+	    -command [::itcl::code $this _do_lighting]
 
 	if {![info exists itk_component(mged)] &&
 	    ![info exists itk_component(sdb)]} {
@@ -4520,6 +4526,8 @@ Popup Menu    Right or Ctrl-Left
 			-helpstr "Hide/Show viewing parameters"
 		    checkbutton scale -label "Scale" \
 			-helpstr "Hide/Show scale"
+		    checkbutton lighting -label "Two Sided Lighting" \
+			-helpstr "Light front and back of polygons"
 		}
 	} else {
 	    $itk_component(menubar) menuconfigure .modes \
@@ -4550,6 +4558,8 @@ Popup Menu    Right or Ctrl-Left
 			-helpstr "Hide/Show viewing parameters"
 		    checkbutton scale -label "Scale" \
 			-helpstr "Hide/Show scale"
+		    checkbutton lighting -label "Two Sided Lighting" \
+			-helpstr "Light front and back of polygons"
 		}
 	}
 
@@ -4645,6 +4655,11 @@ Popup Menu    Right or Ctrl-Left
 	    -onvalue 1 \
 	    -variable [::itcl::scope mShowScale] \
 	    -command [::itcl::code $this _show_scale]
+	$itk_component(menubar) menuconfigure .modes.lighting \
+	    -offvalue 1 \
+	    -onvalue 2 \
+	    -variable [::itcl::scope mLighting] \
+	    -command [::itcl::code $this _do_lighting]
     }
 }
 
@@ -10776,7 +10791,17 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    SetWaitCursor
+    set i [lsearch $args "-noWaitCursor"]
+    if {$i == -1} {
+	set wflag 1
+    } else {
+	set wflag 0
+	set args [lreplace $args $i $i]
+    }
+
+    if {$wflag} {
+	SetWaitCursor
+    }
 
     set optionsAndArgs [eval dbExpand $args]
     set options [lindex $optionsAndArgs 0]
@@ -10840,7 +10865,9 @@ Popup Menu    Right or Ctrl-Left
 
     dbCmd configure -primitiveLabels {}
     _refresh_tree
-    SetNormalCursor
+    if {$wflag} {
+	SetNormalCursor
+    }
 
     return $ret
 }
@@ -11083,6 +11110,7 @@ Popup Menu    Right or Ctrl-Left
 	set topGroup $mSdbTopGroup$i
     }
 
+    group $topGroup
     $itk_component(sdb) importFg4 $target $topGroup
     $itk_component(sdb) categorizeFg4 $topGroup
     cd $savePwd
@@ -11160,6 +11188,7 @@ Popup Menu    Right or Ctrl-Left
 	set topGroup $mSdbTopGroup$i
     }
 
+    group $topGroup
     $itk_component(sdb) importStl $stlDir $topGroup
     if [catch {$itk_component(sdb) get $topGroup}] {
 	set msg "No STL files were imported."
