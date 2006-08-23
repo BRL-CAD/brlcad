@@ -524,9 +524,12 @@ bu_prmem(const char *str)
     if( (bu_debug&(BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_QCHECK)) == 0 )  {
 	fprintf(stderr,"\tMemory debugging is now OFF\n");
     }
-    fprintf(stderr,"\t%ld elements in memdebug table\n Address Length Purpose\n",
+#if 0
+    fprintf(stderr,"\t%ld slots in memdebug table (not # of allocs)\n Address Length Purpose\n",
 	    (long)bu_memdebug_len);
-
+#else
+    fprintf(stderr," Address Length Purpose\n");
+#endif
     if( bu_memdebug_len > 0 )  {
 	mp = &bu_memdebug[bu_memdebug_len-1];
 	for( ; mp >= bu_memdebug; mp-- )  {
