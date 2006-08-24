@@ -263,7 +263,7 @@ pkg_plong(unsigned char *msgp, long unsigned int l)
  *  Returns PKC_ERROR on error.
  */
 struct pkg_conn *
-pkg_open(char *host, char *service, char *protocol, char *uname, char *passwd, const struct pkg_switch *switchp, void (*errlog) (/* ??? */))
+pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *passwd, const struct pkg_switch *switchp, void (*errlog) (/* ??? */))
 {
 #ifdef _WIN32
 	LPHOSTENT lpHostEntry;
@@ -629,6 +629,7 @@ pkg_permserver_ip(char* ipOrHostname, char* service, char* protocol, int backlog
     if (ipOrHostname) {
 	if (ipOrHostname[0] >= '0' && ipOrHostname[0] <= '9') {
 	    iface.s_addr = inet_addr(ipOrHostname);
+	    return _pkg_permserver_impl(iface, service, protocol, backlog, errlog);
 	} else {
 	    /* XXX gethostbyname is deprecated on Windows */
 	    host = gethostbyname(ipOrHostname);
