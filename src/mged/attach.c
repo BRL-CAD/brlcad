@@ -320,6 +320,10 @@ mged_attach(
 {
   register struct dm_list *o_dm_list;
 
+  if (!wp) {
+      return TCL_ERROR;
+  }
+
   o_dm_list = curr_dm_list;
   BU_GETSTRUCT(curr_dm_list, dm_list);
 
@@ -366,8 +370,13 @@ mged_attach(
 
   BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
 
-  if(wp->init(o_dm_list, argc, argv) == TCL_ERROR)
+  if (!wp->name || !wp->init) {
+      return TCL_ERROR;
+  }
+
+  if(wp->init(o_dm_list, argc, argv) == TCL_ERROR) {
     goto Bad;
+  }
 
   /* initialize the background color */
   cs_set_bg();
@@ -410,8 +419,11 @@ get_attached(void)
   char *argv[3];
   char line[80];
   register struct w_dm *wp;
+  int inflimit = 1000;
 
-  while(1){
+  while(inflimit > 0){
+    memset(line, 0, 80);
+
     bu_log("attach (nu");
     /* skip plot and ps */
     wp = &which_dm[2];
@@ -433,6 +445,10 @@ get_attached(void)
       break;
 
     /* Not a valid choice, loop. */
+    inflimit--;
+  }
+  if (inflimit <= 0) {
+      bu_log("\nInfinite Loop protection, attach aborted!\n");
   }
 
   argc = 2;
