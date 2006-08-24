@@ -279,6 +279,13 @@ done:
 	return( 0 );
 }
 
+HIDDEN void
+rem_log(char *msg)
+{
+    fb_log(msg);
+}
+
+
 /*
  * Open a connection to the remotefb.
  * We send NET_LONG_LEN bytes of mode, NET_LONG_LEN bytes of size, then the
@@ -311,14 +318,14 @@ rem_open(register FBIO *ifp, register char *file, int width, int height)
 
 	if( port != 5558 ) {
 		sprintf(portname, "%d", port);
-		if( (pc = pkg_open( hostname, portname, 0, 0, 0, pkgswitch, fb_log )) == PKC_ERROR ) {
+		if( (pc = pkg_open( hostname, portname, 0, 0, 0, pkgswitch, rem_log )) == PKC_ERROR ) {
 			fb_log(	"rem_open: can't connect to fb server on host \"%s\", port \"%s\".\n",
 				hostname, portname );
 			return	-3;
 		}
 	} else
-	if( (pc = pkg_open( hostname, "remotefb", 0, 0, 0, pkgswitch, fb_log )) == PKC_ERROR &&
-	    (pc = pkg_open( hostname, "5558", 0, 0, 0, pkgswitch, fb_log )) == PKC_ERROR ) {
+	if( (pc = pkg_open( hostname, "remotefb", 0, 0, 0, pkgswitch, rem_log )) == PKC_ERROR &&
+	    (pc = pkg_open( hostname, "5558", 0, 0, 0, pkgswitch, rem_log )) == PKC_ERROR ) {
 		fb_log(	"rem_open: can't connect to remotefb server on host \"%s\".\n",
 			hostname );
 		return	-4;
