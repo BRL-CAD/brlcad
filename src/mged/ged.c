@@ -1775,6 +1775,8 @@ refresh(void)
     rt_prep_timer();
 
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+	if (!p->dml_view_state)
+	    continue;
 	if (update_views || p->dml_view_state->vs_flag)
 	    p->dml_dirty = 1;
     }
@@ -1784,6 +1786,8 @@ refresh(void)
      * because dml_view_state may be shared.
      */
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+	if (!p->dml_view_state)
+	    continue;
 	p->dml_view_state->vs_flag = 0;
     }
 
