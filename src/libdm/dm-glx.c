@@ -308,7 +308,9 @@ char *argv[];
     Display *dpy= Tk_Display(((struct glx_vars *)dmp->dm_vars)->top);
 
     /* make sure there really is a display before proceeding. */
-    if (!dpy || !Tk_IsMapped(((struct glx_vars *)dmp->dm_vars)->xtkwin)) {
+    if (!dpy) {
+	bu_vls_free(&init_proc_vls);
+	(void)glx_close(dmp);
 	return DM_NULL;
     }
 
@@ -344,7 +346,7 @@ char *argv[];
     Tk_Display(((struct glx_vars *)dmp->dm_vars)->top);
 
   /* make sure there really is a display before proceeding. */
-  if (!((struct glx_vars *)dmp->dm_vars)->dpy || !Tk_IsMapped(((struct glx_vars *)dmp->dm_vars)->xtkwin)) {
+  if (!((struct glx_vars *)dmp->dm_vars)->dpy) {
       (void)glx_close(dmp);
       return DM_NULL;
   }

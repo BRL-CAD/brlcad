@@ -193,10 +193,7 @@ int fastfog;
  *
  */
 struct dm *
-wgl_open(interp, argc, argv)
-     Tcl_Interp *interp;
-     int argc;
-     char *argv[];
+wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 {
   static int count = 0;
   GLfloat backgnd[4];
@@ -204,12 +201,12 @@ wgl_open(interp, argc, argv)
   int nclass = 0;
   struct bu_vls str;
   struct bu_vls init_proc_vls;
-  struct dm *dmp;
+  struct dm *dmp = (struct dm *)NULL;
   Tk_Window tkwin;
   HWND hwnd;
   HDC hdc;
 
-  if (((tkwin = Tk_MainWindow(interp)) == NULL) || !Tk_IsMapped(tkwin)) {
+  if ((tkwin = Tk_MainWindow(interp)) == NULL) {
       return DM_NULL;
   }
 
@@ -361,7 +358,7 @@ wgl_open(interp, argc, argv)
     Tk_Display(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
 
   /* make sure there really is a display before proceeding. */
-  if (!((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy || !Tk_IsMapped(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) {
+  if (!((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
       (void)wgl_close(dmp);
       return DM_NULL;
   }

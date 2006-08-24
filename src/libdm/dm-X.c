@@ -229,19 +229,19 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     int nclass = 0;
     int unused;
     XDeviceInfoPtr olist = NULL, list = NULL;
-    XDevice *dev;
+    XDevice *dev = NULL;
     XEventClass e_class[15];
-    XInputClassInfo *cip;
+    XInputClassInfo *cip = NULL;
 #endif
     struct bu_vls str;
     struct bu_vls init_proc_vls;
-    struct dm *dmp;
+    struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin;
 
     struct dm_xvars *pubvars = NULL;
     struct x_vars *privars = NULL;
 
-    if (((tkwin = Tk_MainWindow(interp)) == NULL) || !Tk_IsMapped(tkwin)) {
+    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
     }
 
@@ -345,18 +345,17 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
 	bu_vls_free(&str);
 	(void)X_close_dm(dmp);
-
 	return DM_NULL;
     }
 
     bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
 
-    pubvars->dpy =
-	Tk_Display(pubvars->top);
+    pubvars->dpy = Tk_Display(pubvars->top);
 
     /* make sure there really is a display before proceeding. */
-    if (!pubvars->dpy || !Tk_IsMapped(pubvars->xtkwin)) {
+    if (!pubvars->dpy) {
+	(void)X_close_dm(dmp);
 	return DM_NULL;
     }
 

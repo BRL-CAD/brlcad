@@ -226,12 +226,12 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
 
   struct bu_vls str;
   struct bu_vls init_proc_vls;
-  struct dm *dmp;
+  struct dm *dmp = (struct dm *)NULL;
   Tk_Window tkwin;
-  Display *dpy;
+  Display *dpy = (Display *)NULL;
 
-  if (((tkwin = Tk_MainWindow(interp)) == NULL) || !Tk_IsMapped(tkwin)) {
-	  return DM_NULL;
+  if ((tkwin = Tk_MainWindow(interp)) == NULL) {
+      return DM_NULL;
   }
 
   BU_GETSTRUCT(dmp, dm);
@@ -345,7 +345,7 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
   dpy = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy;
 
   /* make sure there really is a display before proceeding. */
-  if (!dpy || !Tk_IsMapped(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) {
+  if (!dpy) {
       (void)Tk_close(dmp);
       return DM_NULL;
   }

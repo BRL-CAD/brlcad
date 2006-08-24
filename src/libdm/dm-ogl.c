@@ -218,16 +218,16 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
   int nclass = 0;
   int unused;
   XDeviceInfoPtr olist = NULL, list = NULL;
-  XDevice *dev;
+  XDevice *dev = NULL;
   XEventClass e_class[15];
   XInputClassInfo *cip;
   struct bu_vls str;
   struct bu_vls init_proc_vls;
   Display *tmp_dpy;
-  struct dm *dmp;
+  struct dm *dmp = (struct dm *)NULL;
   Tk_Window tkwin;
 
-  if (((tkwin = Tk_MainWindow(interp)) == NULL) || !Tk_IsMapped(tkwin)) {
+  if ((tkwin = Tk_MainWindow(interp)) == NULL) {
       return DM_NULL;
   }
 
@@ -399,7 +399,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     Tk_Display(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
 
   /* make sure there really is a display before proceeding. */
-  if (!((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy || !Tk_IsMapped(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) {
+  if (!((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
       bu_vls_free(&init_proc_vls);
       bu_vls_free(&str);
       (void)ogl_close(dmp);

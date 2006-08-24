@@ -182,8 +182,7 @@ char *argv[];
  *
  */
 static int
-Pex_open(dmp)
-struct dm *dmp;
+Pex_open(struct dm *dmp)
 {
   int first_event, first_error;
   char *cp;
@@ -214,6 +213,7 @@ struct dm *dmp;
 
   if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
     bu_vls_free(&str);
+    (void)pex_close(dmp);
     return TCL_ERROR;
   }
 
@@ -221,7 +221,7 @@ struct dm *dmp;
   ((struct pex_vars *)dmp->dmr_vars)->dpy = Tk_Display(((struct pex_vars *)dmp->dmr_vars)->xtkwin);
 
   /* make sure there really is a display before proceeding. */
-  if (!((struct pex_vars *)dmp->dm_vars)->dpy || !Tk_IsMapped(((struct pex_vars *)dmp->dm_vars)->xtkwin)) {
+  if (!((struct pex_vars *)dmp->dm_vars)->dpy) {
       bu_vls_free(&str);
       (void)pex_close(dmp);
       return TCL_ERROR;
