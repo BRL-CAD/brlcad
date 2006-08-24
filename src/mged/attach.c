@@ -417,38 +417,54 @@ get_attached(void)
 {
   int argc;
   char *argv[3];
-  char line[80];
-  register struct w_dm *wp;
+  char line[80] = {0};
+  struct w_dm *wp = (struct w_dm *)NULL;
   int inflimit = 1000;
+  char *ret = (char *)NULL;
 
   while(inflimit > 0){
     memset(line, 0, 80);
 
     bu_log("attach (nu");
-    /* skip plot and ps */
-    wp = &which_dm[2];
-    for( ; wp->type != -1; wp++ )
-      bu_log("|%s", wp->name);
-    bu_log(")[nu]? ");
-    (void)fgets(line, sizeof(line), stdin); /* \n, Null terminated */
 
-    if(line[0] == '\n' || strncmp(line, "nu", 2) == 0)
-      return;  /* Nothing more to do. */
+    /* print all the available display manager types, skipping plot and ps */
+    wp = &which_dm[2];
+    for( ; wp->type != -1; wp++ ) {
+	bu_log("|%s", wp->name);
+    }
+    bu_log(")[nu]? ");
+
+    ret = fgets(line, sizeof(line), stdin); /* \n, Null terminated */
+
+    /* handle EOF */
+    if (!ret) {
+	bu_log("\n");
+	return;
+    }
+
+    if(line[0] == '\n' || strncmp(line, "nu", 2) == 0) {
+	return;  /* Nothing more to do. */
+    }
 
     line[strlen(line)-1] = '\0';        /* remove newline */
 
-    for( wp = &which_dm[2]; wp->type != -1; wp++ )
-      if( strcmp( line, wp->name ) == 0 )
-	break;
+    for( wp = &which_dm[2]; wp->type != -1; wp++ ) {
+	if( strcmp( line, wp->name ) == 0 ) {
+	    break;
+	}
+    }
 
-    if( wp->type != -1 )
-      break;
+    if( wp->type != -1 ) {
+	break;
+    }
 
     /* Not a valid choice, loop. */
     inflimit--;
   }
+
   if (inflimit <= 0) {
       bu_log("\nInfinite Loop protection, attach aborted!\n");
+      return;
   }
 
   argc = 2;

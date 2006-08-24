@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2006-08-XX  Release 7.8.3                                      ---
 ----------------------------------------------------------------------
 
+* prevent infinite loop on classic mged attach prompt - Sean Morrison
 * ctrl-d on empty shell line now quits mged - Sean Morrison
 * added archer geometry/view loading via command-line arg - Bob Parker
 * mged tree command now supports -o/-i, matches docs - John Anderson
