@@ -50,10 +50,16 @@
 #   endif
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct pkg_conn;
+
 struct pkg_switch {
-	unsigned short	pks_type;	/* Type code */
-	void	(*pks_handler)();	/* Message Handler */
-	char	*pks_title;		/* Description of message type */
+    unsigned short	pks_type;	/* Type code */
+    void	(*pks_handler)(struct pkg_conn*, char*);  /* Message Handler */
+    char	*pks_title;		/* Description of message type */
 };
 
 /*
@@ -105,26 +111,30 @@ PKG_EXPORT extern int pkg_init();
 PKG_EXPORT extern void pkg_terminate();
 PKG_EXPORT extern int pkg_process(register struct pkg_conn *);
 PKG_EXPORT extern int pkg_suckin(register struct pkg_conn *);
-PKG_EXPORT extern struct pkg_conn *pkg_open();
-PKG_EXPORT extern struct pkg_conn *pkg_transerver();
+PKG_EXPORT extern struct pkg_conn *pkg_open(const char* host, const char* service, const char* protocol, const char* uname, const char* passwd, const struct pkg_switch* switchp, void (*errlog)(char* msg));
+PKG_EXPORT extern struct pkg_conn *pkg_transerver(const struct pkg_switch* switchp, void (*errlog)(char* msg));
 PKG_EXPORT extern int pkg_permserver(char* service, char* protocol, int backlog, void (*errlog)(char* buf));
 PKG_EXPORT extern int pkg_permserver_ip(char* ipOrHostname, char* service, char* protocol, int backlog, void (*errlog)(char* buf));
-PKG_EXPORT extern struct pkg_conn *pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (/* ??? */), int nodelay);
-PKG_EXPORT extern void pkg_close();
-PKG_EXPORT extern int pkg_send();
-PKG_EXPORT extern int pkg_2send();
-PKG_EXPORT extern int pkg_stream();
-PKG_EXPORT extern int pkg_flush();
-PKG_EXPORT extern int pkg_waitfor();
-PKG_EXPORT extern char *pkg_bwaitfor();
-PKG_EXPORT extern int pkg_get();
-PKG_EXPORT extern int pkg_block();
+PKG_EXPORT extern struct pkg_conn *pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(char* msg), int nodelay);
+PKG_EXPORT extern void pkg_close(struct pkg_conn* pc);
+PKG_EXPORT extern int pkg_send(int type, char* buf, int len, struct pkg_conn* pc);
+PKG_EXPORT extern int pkg_2send(int type, char* buf1, int len1, char* buf2, int len2, struct pkg_conn* pc);
+PKG_EXPORT extern int pkg_stream(int type, char* buf, int len, struct pkg_conn* pc);
+PKG_EXPORT extern int pkg_flush(struct pkg_conn* pc);
+PKG_EXPORT extern int pkg_waitfor(int type, char* buf, int len, struct pkg_conn* pc);
+PKG_EXPORT extern char *pkg_bwaitfor(int type, struct pkg_conn* pc);
+/* PKG_EXPORT extern int pkg_get(); Doesn't exist in pkg.c ?? */ 
+PKG_EXPORT extern int pkg_block(struct pkg_conn* pc);
 
 /* Data conversion routines */
-PKG_EXPORT extern unsigned short pkg_gshort();
-PKG_EXPORT extern unsigned long pkg_glong();
+PKG_EXPORT extern unsigned short pkg_gshort(unsigned char* msgp);
+PKG_EXPORT extern unsigned long pkg_glong(unsigned char* msgp);
 PKG_EXPORT extern char *pkg_pshort(unsigned char *msgp, short unsigned int s);
-PKG_EXPORT extern char *pkg_plong();
+PKG_EXPORT extern char *pkg_plong(unsigned char* msgp, long unsigned int l);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PKG_H_SEENYET */
 
