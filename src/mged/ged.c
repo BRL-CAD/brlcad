@@ -1055,9 +1055,14 @@ mged_process_char(char ch)
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_D:                    /* Delete character at cursor */
-	    if (input_str_index == bu_vls_strlen(&input_str)) {
+	    if (input_str_index == bu_vls_strlen(&input_str) && input_str_index != 0) {
 		pr_beep(); /* Beep if at end of input string */
 		break;
+	    }
+	    if (input_str_index == bu_vls_strlen(&input_str) && input_str_index == 0) {
+		/* act like a usual shell, quit if the command prompt is empty */
+		bu_log("exit\n");
+		quit();
 	    }
 	    bu_vls_init(&temp);
 	    bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index+1);
