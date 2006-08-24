@@ -506,10 +506,10 @@ rt_comb_export4(
 	rp[0].u_id = ID_COMB;
 	/* c_name[] filled in by db_wrap_v4_external() */
 	if( comb->region_flag )  {
-		rp[0].c.c_regionid = comb->region_id;
-		rp[0].c.c_aircode = comb->aircode;
-		rp[0].c.c_material = comb->GIFTmater;
-		rp[0].c.c_los = comb->los;
+		rp[0].c.c_regionid = (short)comb->region_id;
+		rp[0].c.c_aircode = (short)comb->aircode;
+		rp[0].c.c_material = (short)comb->GIFTmater;
+		rp[0].c.c_los = (short)comb->los;
 		switch( comb->is_fastgen )  {
 		case REGION_FASTGEN_PLATE:
 			rp[0].c.c_flags = DBV4_REGION_FASTGEN_PLATE;

@@ -1090,7 +1090,7 @@ rt_comb_tcladjust(
 			{
 				if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
 					return TCL_ERROR;
-				comb->region_id = (short)i;
+				comb->region_id = i;
 			}
 		} else if( strcmp(buf, "air")==0 ) {
 			if( !comb->region_flag ) goto not_region;
@@ -1100,7 +1100,7 @@ rt_comb_tcladjust(
 			{
 				if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK)
 					return TCL_ERROR;
-				comb->aircode = (short)i;
+				comb->aircode = i;
 			}
 		} else if( strcmp(buf, "los")==0 ) {
 			if( !comb->region_flag ) goto not_region;
@@ -1110,7 +1110,7 @@ rt_comb_tcladjust(
 			{
 				if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
 					return TCL_ERROR;
-				comb->los = (short)i;
+				comb->los = i;
 			}
 		} else if( strcmp(buf, "giftmater")==0 ) {
 			if( !comb->region_flag ) goto not_region;
@@ -1120,7 +1120,7 @@ rt_comb_tcladjust(
 			{
 				if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
 					return TCL_ERROR;
-				comb->GIFTmater = (short)i;
+				comb->GIFTmater = i;
 			}
 		} else if( strcmp(buf, "rgb")==0 ) {
 			if( strcmp(argv[1], "invalid")==0 || strcmp( argv[1], "none" ) == 0 ) {
