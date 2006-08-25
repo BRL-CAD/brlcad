@@ -526,6 +526,7 @@ for _item in $_itemURLS ; do
 
     # extract the tracker title from the individual tracker data
     _itemTitle="`echo \"$_itemData\" | grep '<title>' | sed 's/.*<title>SourceForge.net: Detail: \(.*\)<\/title>.*/\1/'`"
+    _itemTitle="`decode \"$_itemTitle\"`"
     [ $VERBOSE -gt 0 ] && echo "Processing $count of $_totalItemCount: $_itemTitle"
 
     # extract the type
