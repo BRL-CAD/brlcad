@@ -59,6 +59,7 @@ set mged_help_data(bot_condense) {{new_bot_solid old_bot_solid} {remove unrefere
 set mged_help_data(bot_decimate)  $helplib_data(wdb_bot_decimate)
 set mged_help_data(bot_face_fuse) {{new_bot_solid old_bot_solid} {eliminate duplicate faces in a BOT solid}}
 set mged_help_data(bot_face_sort) $helplib_data(wdb_bot_face_sort)
+set mged_help_data(bot_smooth)  $helplib_data(wdb_smooth_bot)
 set mged_help_data(bot_vertex_fuse) {{new_bot_solid old_bot_solid} {fuse duplicate vertices in a BOT solid}}
 set mged_help_data(build_region) {{[-a region_number] tag start end} {build a region from solids matching RE "tag.s*"}}
 set mged_help_data(c)		$helplib_data(wdb_comb_std)
@@ -240,7 +241,6 @@ set mged_help_data(shaded_mode)	{{[-a |-auto] [0|1|2]}	{get/set shaded mode}}
 set mged_help_data(shells)	$helplib_data(wdb_shells)
 set mged_help_data(showmats)	$helplib_data(wdb_showmats)
 set mged_help_data(size)	$helplib_data(vo_size)
-set mged_help_data(smooth_bot)  $helplib_data(wdb_smooth_bot)
 set mged_help_data(solids)	{{file object(s)}	{make ascii summary of solid parameters}}
 set mged_help_data(sph-part)	{{sph1name sph2name newname}	{create a part from two sph's}}
 set mged_help_data(status)	{{[state|Viewscale|base2local|local2base|
