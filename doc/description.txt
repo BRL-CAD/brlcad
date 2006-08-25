@@ -2,15 +2,16 @@ BRL-CAD Description Information
 ===============================
 
 Included below are descriptions of and information about BRL-CAD that
-may be useful when preparing materials for informational websites,
-software distribution sites, package management systems, release
-announcement materials, and more.
+may be useful as a broad overview to the project or for when preparing
+materials for informational websites, software distribution sites,
+package management systems, release announcement materials, and more.
 
 
 TABLE OF CONTENTS
 -----------------
   Introduction
   Table of Contents
+  History
   Project Name
   Internet Resources
   Keywords & Categories
@@ -18,6 +19,27 @@ TABLE OF CONTENTS
   Short Description (255 characters or less)
   Brief Description (512 characters or less)
   Whole Description
+
+
+HISTORY
+-------
+
+"The future exists first in the imagination,
+then in the will, then in reality."
+                - Mike Muuss
+
+BRL-CAD was originally conceived and written for the most part by the
+late Michael John Muuss.  He is the original primary architect and
+author.  The package was improved upon over the years by Mike and the
+Advanced Computer Systems Team at the U.S. Army Research Laboratory,
+as well as by many other collaborators around the world.  Today, the
+package continues to be developed as an internationally distributed
+open source project.
+
+The initial architecture and design of BRL-CAD began in 1979.
+Development as a unified package began in 1983.  The first public
+release was made in 1984.  BRL-CAD became an open source project on
+December 21, 2004.
 
 
 PROJECT NAME
@@ -43,7 +65,7 @@ Incorrect albeit perhaps humorous mispronunciations overheard include
 and other variations without the "cad" designation, and of course
 "brazilian real canadian dollars".
 
-BRL-CAD is generally pronounced as "be are el cad".
+BRL-CAD is correctly pronounced as "be are el cad".
 
 The origins of the project name "BRL-CAD" comes from the
 computer-aided design (CAD) software package's origins at the
@@ -85,7 +107,12 @@ scientific computing, engineering analysis, visualization,
 high-performance computing, benchmark, framebuffer, signal-processing,
 symmetric multiprocessing
 
-Languages: C, C++, PHP, Tcl, POSIX UNIX Shell Actively Maintained
+Languages: C, Tcl, and POSIX UNIX Shell
+
+Predominantly an ISO/ANSI C code heavily utilizing Tcl/Tk for the
+predominant interactive solid modeler.  Includes C++ and Java native
+interface bindings to a subset of the provided ray-trace and geometry
+representation facilities.  Includes a PHP geometry server interface.
 
 
 TERSE DESCRIPTION
@@ -142,7 +169,7 @@ education, and system performance benchmark testing among other
 purposes.
 
 Actively developed since 1979, BRL-CAD is a collection of more than
-400 tools, utilities, and applications comprising more than 750,000
+400 tools, utilities, and applications comprising more than a million
 lines of source code.  BRL-CAD supports a great variety of geometric
 representations including an extensive set of traditional CSG
 primitive implicit solids such as boxes, ellipsoids, cones, and tori,
