@@ -25,9 +25,9 @@ TABLE OF CONTENTS
   Installing from Source
   Configuration Options
   Compilation Options
+  Testing Functionality
   Installation Options
   Post-Installation
-  Testing an Install
   Reporting Problems
 
 
@@ -40,14 +40,14 @@ below.  The rest of this quick installation section is only relevant
 to source code distributions of BRL-CAD.
 
 For the impatient or simplistic, the following should compile, test,
-and install BRL-CAD quickly into the /usr/brlcad directory.  If you
-have a configure script, run the following:
+and install an optimized BRL-CAD quickly into the /usr/brlcad
+directory.  If you have a configure script, run the following:
 
-  ./configure
+  ./configure --enable-optimized
   make
   make benchmark
-  make install   # as root, e.g. sudo make install
   make test
+  make install   # as root, e.g. sudo make install
 
 If you don't have a configure script, run the following to generate
 the script then proceed with the steps above:
@@ -55,8 +55,9 @@ the script then proceed with the steps above:
   sh autogen.sh
 
 If any of the listed steps fail, then something unexpected happened.
-See the reporting problems section of this document to report the
-problem.
+See the REPORTING PROBLEMS section of this document to report the
+problem or the INSTALLING FROM SOURCE section for more comprehensive
+instructions.
 
 Once installed, add /usr/brlcad/bin to your path, and you should be
 able to run one of the 400+ applications that constitute BRL-CAD.  For
@@ -120,10 +121,15 @@ path) as described in this document's Installation Options section.
 INSTALLING FROM SOURCE
 ----------------------
 
-There are a couple means to obtain the BRL-CAD sources, via either a
-CVS checkout/export or a source distribution tarball.  Using the
-latest CVS sources is recommended where possible, since it will have
-the latest changes.
+There are a couple means to obtain the BRL-CAD sources, usually via
+one of the following starting points:
+
+  1) from a CVS checkout/export, or
+  2) from a source distribution tarball
+
+Using the latest CVS sources is recommended where possible, since it
+will have the latest changes.  See the corresponding section below for
+details on how to install from either starting point.
 
 
 Starting From a CVS Checkout/Export:
@@ -150,7 +156,7 @@ Starting From a Source Distribution:
 
 There are many different ways to build BRL-CAD and depending on what
 you need/want will determine which configuration options you should
-use.  See the Configuration Options section below for details on how
+use.  See the CONFIGURATION OPTIONS section below for details on how
 to go about selecting which options are appropriate for you.
 
 By default, the default configuration will prepare the build system
@@ -165,7 +171,7 @@ performed by running the `configure' script:
 
 By default, an unoptimized debug build of BRL-CAD will be configured
 for compilation.  To obtain an optimized build (for example, for
-BRL-CAD Benchmark performance testing), use the --enable-optimized
+BRL-CAD Benchmark performance evaluation), use the --enable-optimized
 configure option:
 
   ./configure --enable-optimized
@@ -180,7 +186,7 @@ configure:
 
   ./configure --enable-termlib --disable-png
 
-See the Configuration Options below for more details on all of the
+See the CONFIGURATION OPTIONS below for more details on all of the
 possible settings.
 
 Once configured, you should be able to succesfully build BRL-CAD via
@@ -188,11 +194,11 @@ make:
 
   make
 
-See the Compilation Options section in this document for more details
+See the COMPILATION OPTIONS section in this document for more details
 on compile-time options including options for parallel build support.
 
 
-Testing a Compilation:
+Testing the Compilation:
 
 Once the compilation is complete, you can test it before and after
 installation.  To test a compilation of BRL-CAD before installation,
@@ -202,11 +208,12 @@ BRL-CAD in addition to testing your system's performance:
 
   make benchmark
 
-See the Testing An Install section of this document for more details
-on testing your BRL-CAD distribution.
+See the TESTING FUNCTIONALITY section of this document for more
+details on how to ensure that the build completed successfully and
+additional tests that may be run.
 
 
-Installing a Compilation:
+Installing the Compilation:
 
 After the build successfully completes and assuming the benchmark also
 produces correct results, installation may begin.  Like any package,
@@ -216,7 +223,7 @@ super user via the su or sudo commands:
 
   sudo make install
 
-See the Installation Options section of this document for more details
+See the INSTALLATION OPTIONS section of this document for more details
 on BRL-CAD installation options and post-install environment
 preparations.
 
@@ -259,6 +266,20 @@ two):
 
   PARALLEL=4 make -P
 
+If you would like to pass custom compiler or linker options, there are
+several ways this may be achieved both during 'configure' and/or
+during 'make'.  These flags include CFLAGS, CPPFLAGS, LDFLAGS, and
+LIBS.  Configure supports these as either variables or as --with
+options:
+
+./configure CFLAGS="-O3" LDFLAGS="-pthread"
+./configure --with-cppflags="-I/opt/include" --with-libs="-lz"
+
+GNU and BSD make support the same flags as overrides of the default
+provided flags as well:
+
+make CFLAGS="-O0 -g -pg" LDFLAGS="-L/opt/malloc" LIBS="-lmalloc"
+
 
 INSTALLATION OPTIONS
 --------------------
@@ -290,24 +311,42 @@ your platform.
 Setting Up the Manual Pages Path:
 
 It may be useful to add /usr/brlcad/man to your MANPATH in the same
-manner as shown above for PATH.  Conversely, you could use the
-`brlman' command that is already preconfigured to locate the BRL-CAD
-manpages.
+manner as shown above for PATH.  Conversely, you can use the `brlman'
+command that is already preconfigured to locate the BRL-CAD manpages.
 
 
-TESTING AN INSTALL
-------------------
+TESTING FUNCTIONALITY 
+---------------------
 
-After BRL-CAD is installed, you can test the installation via:
+Testing a Compilation:
+
+After BRL-CAD is compiled, you can test the build via:
 
   make test
 
-This will run a series of tests on the installed sources to make sure
-that they behave as they should.  Similarly, simply running `rt'
-and/or `mged' are good tests of basic functionality.  Running `rt'
-without any options should display version information and a usage
-message.  Running `mged' without any options will start the GUI-based
-solid modeler applicaation.
+This will run a series of tests on the compiled sources to make sure
+that they behave as they should.  If those tests succeed, another
+useful test is to ensure that the geometric library computations are
+correct by running the BRL-CAD Benchmark:
+
+  make benchmark
+
+The benchmark will run for several minutes computing frames of
+well-known ray-trace images, and comparing the validity of the results
+as well as overall performance metrics.  The benchmark should report
+CORRECT after each section of output and a overal VGR metric of
+performance.
+
+
+Testing an Installation:
+
+After BRL-CAD is installed, simply running `rt' and/or `mged' are good
+tests of basic functionality.  Running `rt' without any options should
+display version information and a usage message.  Running `mged'
+without any options will start the GUI-based solid modeler
+applicaation.  Running "benchmark" should invoke the BRL-CAD Benchmark
+and test the performance of the binaries as installed on a given
+system.
 
 
 REPORTING PROBLEMS
