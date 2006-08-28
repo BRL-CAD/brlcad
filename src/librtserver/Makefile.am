@@ -12,9 +12,13 @@ AM_CFLAGS = ${JAVA_CFLAGS}
 
 LIBRTSERVER_VERSION = ${MAJOR_VERSION}:${MINOR_VERSION}:${PATCH_VERSION}
 
-librtserver_la_LDFLAGS = -version-info ${LIBRTSERVER_VERSION} ${JAVA_LDFLAGS}
+librtserver_la_LDFLAGS = -version-info ${LIBRTSERVER_VERSION} ${JAVA_LDFLAGS} -module
 
-librtserver_la_LIBADD = ${RT} ${BN} ${BU} ${TCL}
+librtserver_la_LIBADD = \
+	$(top_builddir)/src/librt/librt_nil.la \
+	$(top_builddir)/src/libbn/libbn_nil.la \
+	$(top_builddir)/src/libbu/libbu_nil.la \
+	${TCL}
 
 EXTRA_PROGRAMS = rtserverTest
 
