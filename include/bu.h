@@ -2540,6 +2540,8 @@ BU_EXPORT BU_EXTERN(void bu_set_hash_value,
 		     unsigned char *value));
 BU_EXPORT BU_EXTERN(unsigned char *bu_get_hash_value,
 		    (struct bu_hash_entry *hsh_entry));
+BU_EXPORT BU_EXTERN(unsigned char *bu_get_hash_key,
+		    (struct bu_hash_entry *hsh_entry));
 BU_EXPORT BU_EXTERN(struct bu_hash_entry *bu_hash_add_entry,
 		    (struct bu_hash_tbl *hsh_tbl,
 		     unsigned char *key,
