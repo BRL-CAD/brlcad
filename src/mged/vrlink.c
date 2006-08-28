@@ -72,7 +72,7 @@ static char		*tcp_port = "5555";	/* "gedd", remote mged */
 #define VRMSG_CMD_REPLY	6	/* from MGED: reply to VRMSG_CMD */
 
 void	ph_cmd(register struct pkg_conn *pc, char *buf);
-void	ph_vlist(register struct pkg_conn *pc, unsigned char *buf);
+void	ph_vlist(register struct pkg_conn *pc, char *buf);
 static struct pkg_switch pkgswitch[] = {
 	{ VRMSG_CMD,		ph_cmd,		"Command" },
 	{ VRMSG_VLIST,		ph_vlist,	"Import vlist" },
@@ -306,7 +306,7 @@ ph_cmd(register struct pkg_conn *pc, char *buf)
  *  Install whatever phantom solids he wants.
  */
 void
-ph_vlist(register struct pkg_conn *pc, unsigned char *buf)
+ph_vlist(register struct pkg_conn *pc, char *buf)
 {
 	struct bu_list	vhead;
 	struct bu_vls	name;
@@ -315,7 +315,7 @@ ph_vlist(register struct pkg_conn *pc, unsigned char *buf)
 
 	BU_LIST_INIT( &vhead );
 
-	rt_vlist_import( &vhead, &name, buf );
+	rt_vlist_import( &vhead, &name, (unsigned char *)buf );
 
 	invent_solid( bu_vls_addr(&name), &vhead, 0x0000FF00L, 0 );
 

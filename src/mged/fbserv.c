@@ -487,7 +487,7 @@ rfbread(struct pkg_conn *pcp, char *buf)
 	ret = fb_read( fbp, x, y, scanbuf, num );
 	if( ret < 0 )  ret = 0;		/* map error indications */
 	/* sending a 0-length package indicates error */
-	pkg_send( MSG_RETURN, scanbuf, ret*sizeof(RGBpixel), pcp );
+	pkg_send( MSG_RETURN, (char *)scanbuf, ret*sizeof(RGBpixel), pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -548,7 +548,7 @@ rfbreadrect(struct pkg_conn *pcp, char *buf)
 	ret = fb_readrect( fbp, xmin, ymin, width, height, scanbuf );
 	if( ret < 0 )  ret = 0;		/* map error indications */
 	/* sending a 0-length package indicates error */
-	pkg_send( MSG_RETURN, scanbuf, ret*sizeof(RGBpixel), pcp );
+	pkg_send( MSG_RETURN, (char *)scanbuf, ret*sizeof(RGBpixel), pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -616,7 +616,7 @@ rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 	ret = fb_bwreadrect( fbp, xmin, ymin, width, height, scanbuf );
 	if( ret < 0 )  ret = 0;		/* map error indications */
 	/* sending a 0-length package indicates error */
-	pkg_send( MSG_RETURN, scanbuf, ret, pcp );
+	pkg_send( MSG_RETURN, (char *)scanbuf, ret, pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -793,11 +793,11 @@ rfbrmap(struct pkg_conn *pcp, char *buf)
 
 	(void)pkg_plong( &rbuf[0*NET_LONG_LEN], fb_rmap( fbp, &map ) );
 	for( i = 0; i < 256; i++ ) {
-		(void)pkg_pshort( cm+2*(0+i), map.cm_red[i] );
-		(void)pkg_pshort( cm+2*(256+i), map.cm_green[i] );
-		(void)pkg_pshort( cm+2*(512+i), map.cm_blue[i] );
+		(void)pkg_pshort( (char *)(cm+2*(0+i)), map.cm_red[i] );
+		(void)pkg_pshort( (char *)(cm+2*(256+i)), map.cm_green[i] );
+		(void)pkg_pshort( (char *)(cm+2*(512+i)), map.cm_blue[i] );
 	}
-	pkg_send( MSG_DATA, cm, sizeof(cm), pcp );
+	pkg_send( MSG_DATA, (char *)cm, sizeof(cm), pcp );
 	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 }
