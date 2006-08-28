@@ -18,7 +18,7 @@ librtserver_la_LIBADD = \
 	$(top_builddir)/src/librt/librt_nil.la \
 	$(top_builddir)/src/libbn/libbn_nil.la \
 	$(top_builddir)/src/libbu/libbu_nil.la \
-	${TCL}
+	$(top_builddir)/src/other/libtcl/libtcl_nil.la
 
 EXTRA_PROGRAMS = rtserverTest
 

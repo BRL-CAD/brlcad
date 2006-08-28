@@ -16,10 +16,16 @@ AM_CPPFLAGS = \
 lib_LTLIBRARIES = \
 	libtcl.la \
 	libtcl@TCL_VERSION@.la
+noinst_LTLIBRARIES = \
+	libtcl_nil.la
 
 libtcl_la_SOURCES =
 libtcl_la_LDFLAGS = -version-info 19:1
 libtcl_la_LIBADD = \
+	libtcl_nil.la
+
+libtcl_nil_la_SOURCES =
+libtcl_nil_la_LIBADD = \
 	generic/regcomp.lo \
 	generic/regerror.lo \
 	generic/regexec.lo \
