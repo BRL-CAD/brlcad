@@ -138,15 +138,15 @@ int pkg_nochecking = 0;	/* set to disable extra checking for input */
 int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
 
 /* Internal Functions */
-static struct pkg_conn *pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (/* ??? */));
-static void pkg_errlog(char *s);
-static void pkg_perror(void (*errlog) (/* ??? */), char *s);
+static struct pkg_conn *pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg));
+static void pkg_errlog(char *msg);
+static void pkg_perror(void (*errlog) (char *msg), char *s);
 static int pkg_dispatch(register struct pkg_conn *pc);
 static int pkg_gethdr(register struct pkg_conn *pc, char *buf);
 
 #define MAX_ERRBUF_SIZE 80
-static char errbuf[MAX_ERRBUF_SIZE];
-static FILE	*pkg_debug;
+static char errbuf[MAX_ERRBUF_SIZE] = {0};
+static FILE	*pkg_debug = (FILE*)NULL;
 static void	pkg_ck_debug(void);
 static void	pkg_timestamp(void);
 static void	pkg_checkin(register struct pkg_conn *pc, int nodelay);
@@ -159,11 +159,10 @@ static void	pkg_checkin(register struct pkg_conn *pc, int nodelay);
 #define	MAXQLEN	512	/* largest packet we will queue on stream */
 
 /* A macro for logging a string message when the debug file is open */
-#if 1
-#define DMSG(s) if(pkg_debug) { \
-	pkg_timestamp(); fprintf(pkg_debug,s); fflush(pkg_debug);}
+#ifndef NO_DEBUG_CHECKING
+#  define DMSG(s) if(pkg_debug) {pkg_timestamp(); fprintf(pkg_debug,s); fflush(pkg_debug);}
 #else
-#define DMSG(s)	/**/
+#  define DMSG(s) /**/
 #endif
 
 int
@@ -198,17 +197,10 @@ pkg_terminate() {
  *			P K G _ G S H O R T
  */
 unsigned short
-pkg_gshort(unsigned char *msgp)
+pkg_gshort(char *buf)
 {
-	register unsigned char *p = (unsigned char *) msgp;
-#ifdef vax
-	/*
-	 * vax compiler doesn't put shorts in registers
-	 */
-	register unsigned long u;
-#else
+	register unsigned char *p = (unsigned char *)buf;
 	register unsigned short u;
-#endif
 
 	u = *p++ << 8;
 	return ((unsigned short)(u | *p));
@@ -218,9 +210,9 @@ pkg_gshort(unsigned char *msgp)
  *			P K G _ G L O N G
  */
 unsigned long
-pkg_glong(unsigned char *msgp)
+pkg_glong(char *buf)
 {
-	register unsigned char *p = (unsigned char *) msgp;
+	register unsigned char *p = (unsigned char *)buf;
 	register unsigned long u;
 
 	u = *p++; u <<= 8;
@@ -233,26 +225,24 @@ pkg_glong(unsigned char *msgp)
  *			P K G _ P S H O R T
  */
 char *
-pkg_pshort(unsigned char *msgp, short unsigned int s)
+pkg_pshort(char *buf, short unsigned int s)
 {
-
-	msgp[1] = s;
-	msgp[0] = s >> 8;
-	return((char *)msgp+2);
+	buf[1] = s;
+	buf[0] = s >> 8;
+	return((char *)buf+2);
 }
 
 /*
  *			P K G _ P L O N G
  */
 char *
-pkg_plong(unsigned char *msgp, long unsigned int l)
+pkg_plong(char *buf, long unsigned int l)
 {
-
-	msgp[3] = l;
-	msgp[2] = (l >>= 8);
-	msgp[1] = (l >>= 8);
-	msgp[0] = l >> 8;
-	return((char *)msgp+4);
+	buf[3] = l;
+	buf[2] = (l >>= 8);
+	buf[1] = (l >>= 8);
+	buf[0] = l >> 8;
+	return((char *)buf+4);
 }
 
 /*
@@ -263,7 +253,7 @@ pkg_plong(unsigned char *msgp, long unsigned int l)
  *  Returns PKC_ERROR on error.
  */
 struct pkg_conn *
-pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *passwd, const struct pkg_switch *switchp, void (*errlog) (/* ??? */))
+pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *passwd, const struct pkg_switch *switchp, void (*errlog) (char *msg))
 {
 #ifdef _WIN32
 	LPHOSTENT lpHostEntry;
@@ -446,7 +436,7 @@ pkg_transerver(const struct pkg_switch *switchp, void (*errlog) (/* ??? */))
  *
  */
 int
-_pkg_permserver_impl(struct in_addr iface, char* service, char* protocol, int backlog, void (*errlog)(char *msg))
+_pkg_permserver_impl(struct in_addr iface, char *service, char *protocol, int backlog, void (*errlog)(char *msg))
 {
     register struct servent *sp;
     int	pkg_listenfd;
@@ -604,7 +594,7 @@ ready:
  *  Returns fd to listen on (>=0), -1 on error.
  */
 int
-pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (/* ??? */))
+pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (char *msg))
 {
     struct in_addr iface;
     iface.s_addr = INADDR_ANY;
@@ -621,7 +611,7 @@ pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (/* ??
  *  Returns fd to listen on (>=0), -1 on error.
  */
 int 
-pkg_permserver_ip(char* ipOrHostname, char* service, char* protocol, int backlog, void (*errlog)(char* buf))
+pkg_permserver_ip(char *ipOrHostname, char *service, char *protocol, int backlog, void (*errlog)(char *msg))
 {
     struct hostent* host;
     struct in_addr iface;
@@ -656,7 +646,7 @@ pkg_permserver_ip(char* ipOrHostname, char* service, char* protocol, int backlog
  *	PKC_ERROR	fatal error
  */
 struct pkg_conn *
-pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (/* ??? */), int nodelay)
+pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg), int nodelay)
 {
 	struct sockaddr_in from;
 	register int s2;
@@ -729,7 +719,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (/* ??? *
  */
 static
 struct pkg_conn *
-pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (/* ??? */))
+pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg))
 {
 	register struct pkg_conn *pc;
 
@@ -890,9 +880,9 @@ pkg_send(int type, char *buf, int len, register struct pkg_conn *pc)
 			return(-1);	/* assumes 2nd write would fail too */
 	}
 
-	pkg_pshort( hdr.pkh_magic, PKG_MAGIC );
-	pkg_pshort( hdr.pkh_type, type );	/* should see if valid type */
-	pkg_plong( hdr.pkh_len, (unsigned long)len );
+	pkg_pshort( (char *)hdr.pkh_magic, PKG_MAGIC );
+	pkg_pshort( (char *)hdr.pkh_type, type );	/* should see if valid type */
+	pkg_plong( (char *)hdr.pkh_len, (unsigned long)len );
 
 #ifdef HAVE_WRITEV
 	cmdvec[0].iov_base = (caddr_t)&hdr;
@@ -1018,9 +1008,9 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 			return(-1);	/* assumes 2nd write would fail too */
 	}
 
-	pkg_pshort( hdr.pkh_magic, PKG_MAGIC );
-	pkg_pshort( hdr.pkh_type, type );	/* should see if valid type */
-	pkg_plong( hdr.pkh_len, (unsigned long)(len1+len2) );
+	pkg_pshort( (char *)hdr.pkh_magic, PKG_MAGIC );
+	pkg_pshort( (char *)hdr.pkh_type, type );	/* should see if valid type */
+	pkg_plong( (char *)hdr.pkh_len, (unsigned long)(len1+len2) );
 
 #ifdef HAVE_WRITEV
 	cmdvec[0].iov_base = (caddr_t)&hdr;
@@ -1174,9 +1164,9 @@ pkg_stream(int type, char *buf, int len, register struct pkg_conn *pc)
 		pkg_flush( pc );
 
 	/* Queue it */
-	pkg_pshort( hdr.pkh_magic, PKG_MAGIC );
-	pkg_pshort( hdr.pkh_type, type );	/* should see if valid type */
-	pkg_plong( hdr.pkh_len, (unsigned long)len );
+	pkg_pshort( (char *)hdr.pkh_magic, PKG_MAGIC );
+	pkg_pshort( (char *)hdr.pkh_type, type );	/* should see if valid type */
+	pkg_plong( (char *)hdr.pkh_len, (unsigned long)len );
 
 	bcopy( (char *)&hdr, &(pc->pkc_stream[pc->pkc_strpos]),
 		sizeof(struct pkg_header) );
@@ -1640,7 +1630,7 @@ pkg_gethdr(register struct pkg_conn *pc, char *buf)
 		}
 		return(-1);
 	}
-	while( pkg_gshort(pc->pkc_hdr.pkh_magic) != PKG_MAGIC )  {
+	while( pkg_gshort((char *)pc->pkc_hdr.pkh_magic) != PKG_MAGIC )  {
 		int	c;
 		c = *((unsigned char *)&pc->pkc_hdr);
 		if( isascii(c) && isprint(c) )  {
@@ -1663,8 +1653,8 @@ pkg_gethdr(register struct pkg_conn *pc, char *buf)
 			return(-1);
 		}
 	}
-	pc->pkc_type = pkg_gshort(pc->pkc_hdr.pkh_type);	/* host order */
-	pc->pkc_len = pkg_glong(pc->pkc_hdr.pkh_len);
+	pc->pkc_type = pkg_gshort((char *)pc->pkc_hdr.pkh_type);	/* host order */
+	pc->pkc_len = pkg_glong((char *)pc->pkc_hdr.pkh_len);
 	if( pc->pkc_len < 0 )  pc->pkc_len = 0;
 	pc->pkc_buf = (char *)0;
 	pc->pkc_left = pc->pkc_len;
@@ -1737,7 +1727,7 @@ pkg_block(register struct pkg_conn *pc)
  *  Produce a perror on the error logging output.
  */
 static void
-pkg_perror(void (*errlog) (/* ??? */), char *s)
+pkg_perror(void (*errlog) (char *msg), char *s)
 {
 	sprintf( errbuf, "%s: ", s);
 
