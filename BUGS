@@ -18,7 +18,11 @@ Recent Bugs
 * fbhelp sends some of the output to stdout and some to stderr...
 
 * debugbu 2 immediately reports a bu_vls_free() error.. apparently
-  been a problem since 4.5 days.
+  been a problem since 4.5 days.  this occurs because
+  bu_memdebug_add() is not called unless memory checking is enabled
+  via bu_debug.  so when bu_debug is set to 2 or 3, it ends up
+  reporting errors during bu_free() for items that were allocated and
+  were not yet being tracked.
 
 * mged View menu says I and O are keybindings for zoom in/out -- they
   are apparently not.
