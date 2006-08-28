@@ -1,6 +1,7 @@
 # $Id$
 
 lib_LTLIBRARIES = libwdb.la
+noinst_LTLIBRARIES = libwdb_nil.la
 
 SRCS = \
 	arbn.c \
@@ -25,11 +26,17 @@ SRCS = \
 	vol.c \
 	wdb.c
 
-libwdb_la_LDFLAGS = -version-info 19:1
-libwdb_la_LIBADD = ${RT} ${BN} ${BU}
-libwdb_la_SOURCES = \
+libwdb_nil_la_SOURCES = \
 	$(SRCS) \
 	vers.c
+
+libwdb_la_SOURCES =
+libwdb_la_LDFLAGS = -version-info 19:1
+libwdb_la_LIBADD = \
+	libwdb_nil.la \
+	${RT} \
+	${BN} \
+	${BU}
 
 man_MANS = libwdb.3
 
