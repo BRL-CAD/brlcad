@@ -83,22 +83,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "libtclcad"="..\..\src\libtclcad\libtclcad.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-    begin source code control
-    libtclcad
-    ..\..\src\libtclcad
-    end source code control
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
 Project: "libwdb"="..\..\src\libwdb\libwdb.dsp" - Package Owner=<4>
 
 Package=<5>
@@ -133,7 +117,7 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name libbu
     End Project Dependency
-	Begin Project Dependency
+    Begin Project Dependency
     Project_Dep_Name libregex
     End Project Dependency
     Begin Project Dependency
