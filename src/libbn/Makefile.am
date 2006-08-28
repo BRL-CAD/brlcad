@@ -1,6 +1,7 @@
 # $Id$
 
 lib_LTLIBRARIES = libbn.la
+noinst_LTLIBRARIES = libbn_nil.la
 
 man_MANS = libplot3.3
 
@@ -33,12 +34,14 @@ SRCS = \
 	vert_tree.c \
 	wavelet.c
 
-libbn_la_LDFLAGS = -version-info 19:1
-libbn_la_SOURCES = \
+libbn_nil_la_SOURCES = \
 	$(SRCS) \
 	vers.c
 
+libbn_la_SOURCES =
+libbn_la_LDFLAGS = -version-info 19:1
 libbn_la_LIBADD = \
+	libbn_nil.la \
 	${BU} \
 	${TCL} \
 	${LIBM}

@@ -1,6 +1,7 @@
 # $Id$
 
 lib_LTLIBRARIES = libbu.la
+noinst_LTLIBRARIES = libbu_nil.la
 
 SRCS = \
 	association.c \
@@ -57,15 +58,17 @@ SRCS = \
 	which.c \
 	xdr.c
 
+libbu_nil_la_SOURCES = \
+	$(SRCS) \
+	vers.c
+
+libbu_la_SOURCES = 
 libbu_la_LDFLAGS = -version-info 19:1
 libbu_la_LIBADD = \
+	libbu_nil.la \
 	${LIBMALLOC} \
 	${LIBTHREAD} \
 	${TCL}
-
-libbu_la_SOURCES = \
-	$(SRCS) \
-	vers.c
 
 include_HEADERS = rb_internals.h
 

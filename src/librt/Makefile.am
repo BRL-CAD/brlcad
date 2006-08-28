@@ -1,6 +1,7 @@
 # $Id$
 
 lib_LTLIBRARIES = librt.la
+noinst_LTLIBRARIES = librt_nil.la
 
 SRCS = \
 	bezier_2d_isect.c \
@@ -141,12 +142,14 @@ SRCS = \
 	wdb_comb_std.c \
 	wdb_obj.c
 
-librt_la_SOURCES = \
+librt_nil_la_SOURCES = \
 	$(SRCS) \
 	vers.c
 
+librt_la_SOURCES =
 librt_la_LDFLAGS = -version-info 19:1
 librt_la_LIBADD = \
+	librt_nil.la \
 	${BN} \
 	${BU} \
 	${TCL} \
