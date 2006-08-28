@@ -1727,7 +1727,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 	struct ray_hit *ahit;
 
 	/* get the JAVA Ray class */
-	if( (ray_class=(*env)->FindClass( env, "mil/army/arl/muves/math/Ray" )) == NULL ) {
+	if( (ray_class=(*env)->FindClass( env, "mil/army/arl/math/Ray" )) == NULL ) {
 		fprintf( stderr, "Failed to find Ray class\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -1735,7 +1735,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 
 	/* get the JAVA method id for the Ray class constructor */
 	if( (ray_constructor_id=(*env)->GetMethodID( env, ray_class, "<init>",
-	    "(Lmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Vector3;)V" )) == NULL ) {
+	    "(Lmil/army/arl/math/Point;Lmil/army/arl/math/Vector3;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for ray constructor\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -1753,7 +1753,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 
 	/* get the JAVA RayResult class */
 	if( (rayResult_class=(*env)->FindClass( env,
-	    "mil/army/arl/muves/rtserver/RayResult" )) == NULL ) {
+	    "mil/army/arl/geometryservice/datatypes/RayResult" )) == NULL ) {
 		fprintf( stderr, "Failed to get class for RayResult\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -1761,7 +1761,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 
 	/* get the JAVA method id for the RayResult constructor */
 	if( (rayResult_constructor_id=(*env)->GetMethodID( env, rayResult_class, "<init>",
-					   "(Lmil/army/arl/muves/math/Ray;)V" )) == NULL ) {
+					   "(Lmil/army/arl/math/Ray;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for rayResult constructor\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -1790,7 +1790,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 
 	/* Get the JAVA class for Partition */
 	if( (partition_class=(*env)->FindClass( env,
-	    "mil/army/arl/muves/rtserver/Partition" )) == NULL ) {
+	    "mil/army/arl/geometryservice/datatypes/Partition" )) == NULL ) {
 		fprintf( stderr, "Failed to get class for Partition\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -1798,7 +1798,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 
 	/* Get the JAVA constructor for a Partition */
 	if( (partition_constructor_id=(*env)->GetMethodID( env, partition_class, "<init>",
-	     "(DFFLmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Point;Ljava/lang/String;)V" )) == NULL ) {
+	     "(DFFLmil/army/arl/math/Point;Lmil/army/arl/math/Point;Ljava/lang/String;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for Partition constructor\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -1806,7 +1806,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 
 	/* Get the JAVA method id for the RayResult's "addPartition" method */
 	if( (add_partition_id=(*env)->GetMethodID( env, rayResult_class, "addPartition",
-				"(Lmil/army/arl/muves/rtserver/Partition;)Z" )) == NULL ) {
+				"(Lmil/army/arl/geometryservice/datatypes/Partition;)Z" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for rayResult addPartition method\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -2127,7 +2127,7 @@ fillItemTree( jobject parent_node,
  */
 
 JNIEXPORT jobject JNICALL
-Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint sessionId )
+Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env, jobject obj, jint sessionId )
 {
 	jclass itemTree_class;
 	jmethodID itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id, itemTree_setIdentNumber_id,
@@ -2144,7 +2144,7 @@ Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint 
 	}
 
 	/* get the JAVA ItemTree class */
-	if( (itemTree_class=(*env)->FindClass( env, "mil/army/arl/muves/rtserver/ItemTree" )) == NULL ) {
+	if( (itemTree_class=(*env)->FindClass( env, "mil/army/arl/geometryservice/datatypes/ItemTree" )) == NULL ) {
 		fprintf( stderr, "Failed to find ItemTree class\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -2160,7 +2160,7 @@ Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint 
 
 	/* get the JAVA method id for the ItemTree addSubcomponent method */
 	if( (itemTree_addcomponent_id=(*env)->GetMethodID( env, itemTree_class, "addSubComponent",
-	    "(Lmil/army/arl/muves/rtserver/ItemTree;)V" )) == NULL ) {
+	    "(Lmil/army/arl/geometryservice/datatypes/ItemTree;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for ItemTree addSubComponent method\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -2250,7 +2250,7 @@ Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint 
  *	JNI_TRUE - something went wrong
  */
 JNIEXPORT jint JNICALL
-Java_mil_army_arl_services_RtService_rtsInit(JNIEnv *env, jobject obj, jobjectArray args)
+Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_rtsInit(JNIEnv *env, jobject obj, jobjectArray args)
 {
 	jsize len=(*env)->GetArrayLength(env, args);
 	jstring jfile_name, *jobj_name;
@@ -2332,14 +2332,14 @@ Java_mil_army_arl_services_RtService_rtsInit(JNIEnv *env, jobject obj, jobjectAr
 
 /* JAVA openSession method */
 JNIEXPORT jint JNICALL
-Java_mil_army_arl_services_RtService_openSession(JNIEnv *env, jobject jobj)
+Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_openSession(JNIEnv *env, jobject jobj)
 {
 	return( (jint)rts_open_session() );
 }
 
 /* JAVA closeSession method */
 JNIEXPORT void JNICALL
-Java_mil_army_arl_services_RtService_closeSession(JNIEnv *env, jobject jobj,
+Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_closeSession(JNIEnv *env, jobject jobj,
 							   jint sessionId)
 {
 	rts_close_session( (int)sessionId );
@@ -2347,14 +2347,14 @@ Java_mil_army_arl_services_RtService_closeSession(JNIEnv *env, jobject jobj,
 
 /* JAVA getDbTitle method */
 JNIEXPORT jstring JNICALL
-Java_mil_army_arl_services_RtService_getDbTitle(JNIEnv *env, jobject jobj )
+Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getDbTitle(JNIEnv *env, jobject jobj )
 {
 	return( (*env)->NewStringUTF(env, title) );
 }
 
 /* JAVA getLibraryVersion method */
 JNIEXPORT jstring JNICALL
-Java_mil_army_arl_services_RtService_getLibraryVersion(JNIEnv *env, jobject jobj )
+Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getLibraryVersion(JNIEnv *env, jobject jobj )
 {
 	return( (*env)->NewStringUTF(env, RCSid) );
 }
@@ -2373,7 +2373,7 @@ Java_mil_army_arl_services_RtService_getLibraryVersion(JNIEnv *env, jobject jobj
  * sessionId - identifies the session that this job is part of (must have come from rts_load_geometry() or rts_open_session())
  */
 JNIEXPORT jobject JNICALL
-Java_mil_army_arl_services_RtService_shootArray( JNIEnv *env, jobject jobj,
+Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootArray( JNIEnv *env, jobject jobj,
          jobject jstart_pt, jobject jdir, jobject jrow_diff, jobject jcol_diff, jint num_rows, jint num_cols, jint oneHit, jint sessionId )
 {
    	jclass point_class, vect_class, rayResult_class, arrayClass;
@@ -2535,7 +2535,7 @@ Java_mil_army_arl_services_RtService_shootArray( JNIEnv *env, jobject jobj,
 
 	/* throw an exception if we are asked to build an impossible array */
 	if( num_rows < 1 || num_cols < 1 ) {
-	    jclass rtServerUsageException = (*env)->FindClass( env, "mil/army/arl/muves/rtserver/RtServerUsageException" );
+	    jclass rtServerUsageException = (*env)->FindClass( env, "mil/army/arl/geometryservice/GeometryServiceException" );
 	    if( rtServerUsageException == 0 ) {
 		return( (jobject)NULL );
 	    }
@@ -2576,7 +2576,7 @@ Java_mil_army_arl_services_RtService_shootArray( JNIEnv *env, jobject jobj,
 	}
 
 	/* create Java array to hold results */
-	if( (rayResult_class = (*env)->FindClass( env, "mil/army/arl/muves/rtserver/RayResult" )) == NULL ) {
+	if( (rayResult_class = (*env)->FindClass( env, "mil/army/arl/geometryservice/datatypes/RayResult" )) == NULL ) {
 	    fprintf( stderr, "Failed to find RayResult class\n" );
 	    (*env)->ExceptionDescribe(env);
 	    return( (jobject)NULL );
@@ -2647,7 +2647,7 @@ Java_mil_army_arl_services_RtService_shootArray( JNIEnv *env, jobject jobj,
  * sessionId - the identifier for this session (must have come from rts_load_geometry() or rts_open_session() )
  */
 JNIEXPORT jobject JNICALL
-Java_mil_army_arl_services_RtService_shootRay( JNIEnv *env, jobject jobj,
+Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, jobject jobj,
 	jobject jstart_pt, jobject jdir, jint sessionId )
 {
 	jclass point_class, vect_class;
@@ -2790,13 +2790,13 @@ Java_mil_army_arl_services_RtService_shootRay( JNIEnv *env, jobject jobj,
 }
 
 JNIEXPORT void JNICALL
-Java_mil_army_arl_services_RtService_shutdownNative(JNIEnv *env, jobject obj )
+Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shutdownNative(JNIEnv *env, jobject obj )
 {
 	rts_shutdown();
 }
 
 JNIEXPORT jobject JNICALL
-Java_mil_army_arl_services_RtService_getBoundingBox(JNIEnv *env, jobject obj, jint sessionId )
+Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getBoundingBox(JNIEnv *env, jobject obj, jint sessionId )
 {
 	jclass boundingBox_class, point_class;
 	jmethodID boundingBox_constructor_id, point_constructor_id;
@@ -2812,7 +2812,7 @@ Java_mil_army_arl_services_RtService_getBoundingBox(JNIEnv *env, jobject obj, ji
 	max_pt = rts_geometry[sessionId]->rts_mdl_max;
 
 	/* get the BoundingBox class */
-	if( (boundingBox_class=(*env)->FindClass( env, "mil/army/arl/muves/math/BoundingBox" ) ) == NULL ) {
+	if( (boundingBox_class=(*env)->FindClass( env, "mil/army/arl/math/BoundingBox" ) ) == NULL ) {
 		fprintf( stderr, "Failed to find BoundingBox class\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -2820,14 +2820,14 @@ Java_mil_army_arl_services_RtService_getBoundingBox(JNIEnv *env, jobject obj, ji
 
 	/* get the BoundingBox constructor id */
 	if( (boundingBox_constructor_id=(*env)->GetMethodID( env, boundingBox_class, "<init>",
-	     "(Lmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Point;)V" ) ) == NULL ) {
+	     "(Lmil/army/arl/math/Point;Lmil/army/arl/math/Point;)V" ) ) == NULL ) {
 		fprintf( stderr, "Failed to find BoundingBox constructor method id\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
 	/* get the Point class */
-	if( (point_class=(*env)->FindClass( env, "mil/army/arl/muves/math/Point" ) ) == NULL ) {
+	if( (point_class=(*env)->FindClass( env, "mil/army/arl/math/Point" ) ) == NULL ) {
 		fprintf( stderr, "Failed to find Point class\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -2872,49 +2872,49 @@ Java_mil_army_arl_services_RtService_getBoundingBox(JNIEnv *env, jobject obj, ji
 JNIEXPORT jobject JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_getItemTree(JNIEnv *env, jobject obj, jint sessionId )
 {
-	return Java_mil_army_arl_services_RtService_getItemTree(env, obj, sessionId );
+	return Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(env, obj, sessionId );
 }
 
 JNIEXPORT jint JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, jobjectArray args)
 {
-	return Java_mil_army_arl_services_RtService_rtsInit(env, obj, args);
+	return Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_rtsInit(env, obj, args);
 }
 
 JNIEXPORT jint JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_openSession(JNIEnv *env, jobject jobj)
 {
-	return Java_mil_army_arl_services_RtService_openSession(env, jobj);
+	return Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_openSession(env, jobj);
 }
 
 JNIEXPORT void JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_closeSession(JNIEnv *env, jobject jobj, jint sessionId)
 {
-	return Java_mil_army_arl_services_RtService_closeSession(env, jobj, sessionId);
+	return Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_closeSession(env, jobj, sessionId);
 }
 
 JNIEXPORT jstring JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_getDbTitle(JNIEnv *env, jobject jobj )
 {
-	return Java_mil_army_arl_services_RtService_getDbTitle(env, jobj );
+	return Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getDbTitle(env, jobj );
 }
 
 JNIEXPORT jobject JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay( JNIEnv *env, jobject jobj, jobject jstart_pt, jobject jdir, jint sessionId )
 {
-	return Java_mil_army_arl_services_RtService_shootRay( env, jobj, jstart_pt, jdir, sessionId );
+	return Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootRay( env, jobj, jstart_pt, jdir, sessionId );
 }
 
 JNIEXPORT void JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_shutdownNative(JNIEnv *env, jobject obj )
 {
-	Java_mil_army_arl_services_RtService_shutdownNative(env, obj );
+	Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shutdownNative(env, obj );
 }
 
 JNIEXPORT jobject JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_getBoundingBox(JNIEnv *env, jobject obj, jint sessionId )
 {
-	return Java_mil_army_arl_services_RtService_getBoundingBox(env, obj, sessionId );
+	return Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getBoundingBox(env, obj, sessionId );
 }
 
 void
