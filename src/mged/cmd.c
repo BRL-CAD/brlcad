@@ -1198,10 +1198,11 @@ cmdline( struct bu_vls *vp, int record )
 	   could happen.
 	*/
 
-	if (glob_compat_mode)
-		mged_compat(&globbed, vp, 0);
-	else
-		bu_vls_vlscat(&globbed, vp);
+	if (glob_compat_mode) {
+	    mged_compat(&globbed, vp, 0);
+	} else {
+	    bu_vls_vlscat(&globbed, vp);
+	}
 
 	gettimeofday(&start, (struct timezone *)NULL);
 	status = Tcl_Eval(interp, bu_vls_addr(&globbed));
