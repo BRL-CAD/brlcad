@@ -1,5 +1,21 @@
 # $Id$
 
+# XXX uncomment after 7.8.4
+# lib_LTLIBRARIES = libbrlcad.la
+noinst_LTLIBRARIES = libbrlcad_nil.la
+
+# libbrlcad_la_SOURCES =
+# libbrlcad_la_LDFLAGS = -version-info 19:1
+# libbrlcad_la_LIBADD = \
+#	libbrlcad_nil.la
+
+libbrlcad_nil_la_SOURCES =
+libbrlcad_nil_la_LIBADD = \
+	$(top_builddir)/src/libbu/libbu_nil.la \
+	$(top_builddir)/src/libbn/libbn_nil.la \
+	$(top_builddir)/src/librt/librt_nil.la \
+	$(top_builddir)/src/libwdb/libwdb_nil.la
+
 required_dirs = \
 	other \
 	libbu \
