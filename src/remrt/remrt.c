@@ -529,6 +529,14 @@ statechange(register struct servers *sp, int newstate)
 	sp->sr_state = newstate;
 }
 
+
+static void
+remrt_log(char *msg)
+{
+    bu_log(msg);
+}
+
+
 /*
  *			M A I N
  */
@@ -556,13 +564,13 @@ main(int argc, char **argv)
 	}
 
 	/* Listen for our PKG connections */
-	if( (tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, bu_log)) < 0 )  {
+	if( (tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, remrt_log)) < 0 )  {
 		int	i;
 		char	num[8];
 		/* Do it by the numbers */
 		for(i=0; i<10; i++ )  {
 			sprintf( num, "%d", 4446+i );
-			if( (tcp_listen_fd = pkg_permserver(num, "tcp", 8, bu_log)) < 0 )
+			if( (tcp_listen_fd = pkg_permserver(num, "tcp", 8, remrt_log)) < 0 )
 				continue;
 			break;
 		}
