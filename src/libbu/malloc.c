@@ -368,24 +368,20 @@ bu_free(genptr_t ptr, const char *str)
 	if( bu_debug&BU_DEBUG_MEM_CHECK )  {
 		struct memdebug	*mp;
 		if( (mp = bu_memdebug_check( ptr, str )) == MEMDEBUG_NULL )  {
-			fprintf(stderr,"ERROR bu_free(x%lx, %s) pointer bad, or not allocated with bu_malloc!  Ignored.\n",
-				(long)ptr, str);
-			return;
+		    fprintf(stderr,"ERROR bu_free(x%lx, %s) pointer bad, or not allocated with bu_malloc!  Ignored.\n", (long)ptr, str);
 		} else {
-			mp->mdb_len = 0;	/* successful delete */
+		    mp->mdb_len = 0;	/* successful delete */
 		}
 	} else if (bu_debug&BU_DEBUG_MEM_QCHECK ) {
 		struct memqdebug *mp = ((struct memqdebug *)ptr)-1;
 		if (BU_LIST_MAGIC_WRONG(&(mp->q),MDB_MAGIC)) {
-			fprintf(stderr,"ERROR bu_free(x%lx, %s) pointer bad, "
-				"or not allocated with bu_malloc!  Ignored.\n",
-				(long)ptr, str);
-			return;
+		    fprintf(stderr,"ERROR bu_free(x%lx, %s) pointer bad, or not allocated with bu_malloc!  Ignored.\n", (long)ptr, str);
+		} else {
+		    ptr = (genptr_t)mp;
+		    bu_semaphore_acquire(BU_SEM_SYSCALL);
+		    BU_LIST_DEQUEUE(&(mp->q));
+		    bu_semaphore_release(BU_SEM_SYSCALL);
 		}
-		ptr = (genptr_t)mp;
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		BU_LIST_DEQUEUE(&(mp->q));
-		bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 
 #if defined(MALLOC_NOT_MP_SAFE)
