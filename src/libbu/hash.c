@@ -220,6 +220,19 @@ bu_get_hash_value( struct bu_hash_entry *hsh_entry )
 	return( hsh_entry->value );
 }
 
+/*			B U _ G E T _ H A S H _ K E Y
+ *
+ *	get the key pointer stored for the specified hash table entry
+ */
+unsigned char *
+bu_get_hash_key( struct bu_hash_entry *hsh_entry )
+{
+	BU_CK_HASH_ENTRY( hsh_entry );
+
+	return( hsh_entry->key );
+}
+
+
 /*			B U _ H A S H _ A D D _ E N T R Y
  *
  *	Add an new entry to a hash table
