@@ -127,14 +127,9 @@ int f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **
 int f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
-
 extern int f_hide();
 extern int f_unhide();
 
-
-#ifndef HAVE_UNISTD_H
-extern void sync();
-#endif
 extern void update_grids(fastf_t sf);			/* in grid.c */
 extern void set_localunit_TclVar(void);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
@@ -496,12 +491,11 @@ static struct cmdtab cmdtab[] = {
 };
 
 
-/*
+/**
  *                        O U T P U T _ C A T C H
  *
  * Gets the output from bu_log and appends it to clientdata vls.
  */
-
 HIDDEN int
 output_catch(genptr_t clientdata, genptr_t str)
 {
@@ -516,39 +510,36 @@ output_catch(genptr_t clientdata, genptr_t str)
 	return len;
 }
 
-/*
+/**
  *                 S T A R T _ C A T C H I N G _ O U T P U T
  *
  * Sets up hooks to bu_log so that all output is caught in the given vls.
  *
  */
-
 void
 start_catching_output(struct bu_vls *vp)
 {
 	bu_log_add_hook(output_catch, (genptr_t)vp);
 }
 
-/*
+/**
  *                 S T O P _ C A T C H I N G _ O U T P U T
  *
  * Turns off the output catch hook.
  */
-
 void
 stop_catching_output(struct bu_vls *vp)
 {
 	bu_log_delete_hook(output_catch, (genptr_t)vp);
 }
 
-/*
+/**
  *                            G U I _ O U T P U T
  *
  * Used as a hook for bu_log output.  Sends output to the Tcl procedure whose
  * name is contained in the vls "tcl_output_hook".  Useful for user interface
  * building.
  */
-
 int
 gui_output(genptr_t clientData, genptr_t str)
 {
@@ -579,7 +570,7 @@ gui_output(genptr_t clientData, genptr_t str)
 	return strlen(str);
 }
 
-/*
+/**
  *                     C M D _ T K
  *
  *  Command for initializing the Tk window and defaults.
@@ -609,13 +600,12 @@ cmd_tk(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return status;
 }
 
-/*
+/**
  *   C M D _ O U T P U T _ H O O K
  *
  *   Hooks the output to the given output hook.
  *   Removes the existing output hook!
  */
-
 int
 cmd_output_hook(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -667,7 +657,7 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 }
 
 
-/*
+/**
  *			C M D _ N O P
  */
 int
@@ -677,13 +667,12 @@ cmd_nop(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-/*
+/**
  *			C M D _ G E T _ P T R
  *
  *  Returns an appropriately-formatted string that can later be reinterpreted
  *  (using atol() and a cast) as a a pointer.
  */
-
 int
 cmd_get_ptr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -694,7 +683,8 @@ cmd_get_ptr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
 }
 
-/* 			C M D _ S E T U P
+/**
+ * 			C M D _ S E T U P
  * Register all the MGED commands.
  */
 void
@@ -1020,11 +1010,10 @@ cmd_mged_glob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-/*
+/**
  * debackslash, backslash_specials, mged_compat: routines for original
  *   mged emulation mode
  */
-
 void
 debackslash(struct bu_vls *dest, struct bu_vls *src)
 {
@@ -1067,12 +1056,13 @@ backslash_specials(struct bu_vls *dest, struct bu_vls *src)
 	}
 }
 
-/*                    M G E D _ C O M P A T
+
+/**
+ *                    M G E D _ C O M P A T
  *
  * This routine is called to perform wildcard expansion and character quoting
  * on the given vls (typically input from the keyboard.)
  */
-
 void
 mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
 {
@@ -1171,7 +1161,8 @@ void gettimeofday(struct timeval *tp, struct timezone *tzp)
 }
 #endif
 
-/*
+
+/**
  *			C M D L I N E
  *
  *  This routine is called to process a vls full of commands.
@@ -1182,7 +1173,6 @@ void gettimeofday(struct timeval *tp, struct timezone *tzp)
  *	!0	when a prompt needs to be printed.
  *	 0	no prompt needed.
  */
-
 int
 cmdline( struct bu_vls *vp, int record )
 {
@@ -1356,14 +1346,13 @@ mged_print_result(int status)
 	Tcl_ResetResult(interp);
 }
 
-/*
+/**
  *			M G E D _ C M D
  *
  *  Check a table for the command, check for the correct minimum and maximum
  *  number of arguments, and pass control to the proper function.  If the
  *  number of arguments is incorrect, print out a short help message.
  */
-
 int
 mged_cmd(
 	int argc,
@@ -1421,9 +1410,10 @@ mged_cmd(
 	return CMD_BAD;
 }
 
-/* Let the user temporarily escape from the editor */
-/* Format: %	*/
-
+/**
+ * Let the user temporarily escape from the editor
+ * Format: %
+ */
 int
 f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -1460,9 +1450,10 @@ f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
 }
 
-/* Quit and exit gracefully */
-/* Format: q	*/
-
+/**
+ * Quit and exit gracefully
+ * Format: q
+ */
 int
 f_quit(
 	ClientData clientData,
@@ -1488,8 +1479,9 @@ f_quit(
 	return TCL_OK;
 }
 
-/* wrapper for sync() */
-
+/**
+ * sync the database to disk
+ */
 int
 f_sync(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -1498,25 +1490,26 @@ f_sync(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help sync");
+		bu_vls_printf(&vls, "help %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
-/* XXXXXXXXXXXXXXX FIX LATER XXXXXXXXXXXXXXXXX */
-#ifndef _WIN32
-	sync();
+
+#ifdef HAVE_FSYNC
+	if (dbip) {
+	    fsync(dbip->dbi_fd);
+	}
 #endif
 
 	return TCL_OK;
 }
 
-/*
+/**
  *			H E L P C O M M
  *
  *  Common code for help commands
  */
-
 static int
 helpcomm(int argc, char **argv, struct funtab *functions)
 {
@@ -1546,13 +1539,12 @@ helpcomm(int argc, char **argv, struct funtab *functions)
 	return bad ? TCL_ERROR : TCL_OK;
 }
 
-/*
+/**
  *			F _ H E L P
  *
  *  Print a help message, two lines for each command.
  *  Or, help with the indicated commands.
  */
-
 int
 f_help2(int argc, char **argv, struct funtab *functions)
 {
@@ -1598,12 +1590,11 @@ cmd_summary(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return wdb_summary_cmd(wdbp, interp, argc, argv);
 }
 
-/*
+/**
  *                          C M D _ E C H O
  *
  * Concatenates its arguments and "bu_log"s the resulting string.
  */
-
 int
 cmd_echo(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -1667,7 +1658,7 @@ f_savedit(argc, argv)
 }
 #endif
 
-/*
+/**
  * SYNOPSIS
  *	tie [cw [dm]]
  *	tie -u cw
@@ -1852,7 +1843,7 @@ f_ps(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return status;
 }
 
-/*
+/**
  * Experimental - like f_plot except we attach to dm-plot, passing along
  *                any arguments.
  */
@@ -2472,7 +2463,7 @@ cmd_dbversion(ClientData	clientData,
 	return wdb_version_cmd(wdbp, interp, argc, argv);
 }
 
-/*
+/**
  *		    C M D _ C O M B _ S T D
  *
  *	Input a combination in standard set-theoetic notation
@@ -2507,7 +2498,8 @@ cmd_nmg_collapse(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	return cmd_draw(clientData, interp, 2, av);
 }
 
-/*			F _ M A K E _ N A M E
+/**
+ *			F _ M A K E _ N A M E
  *
  * Generate an identifier that is guaranteed not to be the name
  * of any object currently in the database.
@@ -2532,7 +2524,8 @@ cmd_shells(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return wdb_shells_cmd(wdbp, interp, argc, argv);
 }
 
-/*  	F _ P A T H S U M :   does the following
+/**
+ *  	F _ P A T H S U M :   does the following
  *		1.  produces path for purposes of matching
  *      	2.  gives all paths matching the input path OR
  *		3.  gives a summary of all paths matching the input path
@@ -2568,9 +2561,9 @@ cmd_pathsum(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return ret;
 }
 
-/*   	F _ C O P Y E V A L : copys an evaluated solid
+/**
+ *   	F _ C O P Y E V A L : copys an evaluated solid
  */
-
 int
 cmd_copyeval(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -2597,7 +2590,8 @@ cmd_copyeval(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-/*			F _ P U S H
+/**
+ *			F _ P U S H
  *
  * The push command is used to move matrices from combinations
  * down to the solids. At some point, it is worth while thinking
@@ -2658,11 +2652,11 @@ cmd_nmg_simplify(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	return wdb_nmg_simplify_cmd(wdbp, interp, argc, argv);
 }
 
-/*			F _ M A K E _ B B
+/**
+ *			F _ M A K E _ B B
  *
  *	Build an RPP bounding box for the list of objects and/or paths passed to this routine
  */
-
 int
 cmd_make_bb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -2679,7 +2673,7 @@ cmd_whatid(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return wdb_whatid_cmd(wdbp, interp, argc, argv);
 }
 
-/*
+/**
  *      C M D _ W H I C H
  *
  *	Finds all regions with given region ids or air codes.
@@ -2702,7 +2696,7 @@ cmd_which(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return ret;
 }
 
-/*
+/**
  *  			C M D _ T O P S
  *
  *  Find all top level objects.
@@ -2726,7 +2720,7 @@ cmd_tops(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return ret;
 }
 
-/*
+/**
  *			C M D _ T R E E
  *
  *	Print out a list of all members and submembers of an object.
@@ -2761,7 +2755,8 @@ cmd_tree(ClientData	clientData,
 	return ret;
 }
 
-/*	C M D _ M V A L L
+/**
+ *	C M D _ M V A L L
  *
  *	rename all occurences of an object
  *	format:	mvall oldname newname
@@ -2778,8 +2773,7 @@ cmd_mvall(ClientData	clientData,
 	return wdb_move_all_cmd(wdbp, interp, argc, argv);
 }
 
-/*
- *
+/**
  *			C M D _ D U P
  *
  *  Check for duplicate names in preparation for cat'ing of files
@@ -2795,7 +2789,7 @@ cmd_dup(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return wdb_dup_cmd(wdbp, interp, argc, argv);
 }
 
-/*
+/**
  *			C M D _ C O N C A T
  *
  *  Concatenate another GED file into the current file.
@@ -2835,8 +2829,10 @@ cmd_concat(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return wdb_concat_cmd(wdbp, interp, argc, argv);
 }
 
-/* Rename an object */
-/* Format: mv oldname newname	*/
+/**
+ * Rename an object
+ * Format: mv oldname newname
+ */
 int
 cmd_name(ClientData	clientData,
 	 Tcl_Interp	*interp,
@@ -2848,9 +2844,11 @@ cmd_name(ClientData	clientData,
 	return wdb_move_cmd(wdbp, interp, argc, argv);
 }
 
-/* add solids to a region or create the region */
-/* and then add solids */
-/* Format: r regionname opr1 sol1 opr2 sol2 ... oprn soln */
+/**
+ * add solids to a region or create the region
+ * and then add solids
+ * Format: r regionname opr1 sol1 opr2 sol2 ... oprn soln
+ */
 int
 cmd_region(ClientData	clientData,
 	   Tcl_Interp	*interp,
@@ -2862,8 +2860,10 @@ cmd_region(ClientData	clientData,
 	return wdb_region_cmd(wdbp, interp, argc, argv);
 }
 
-/* Delete members of a combination */
-/* Format: rm comb memb1 memb2 .... membn	*/
+/**
+ * Delete members of a combination
+ * Format: rm comb memb1 memb2 .... membn
+ */
 int
 cmd_remove(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -2872,7 +2872,7 @@ cmd_remove(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return wdb_remove_cmd(wdbp, interp, argc, argv);
 }
 
-/*
+/**
  *			C M D _ U N I T S
  *
  * Change the local units of the description.
@@ -2907,7 +2907,7 @@ cmd_units(ClientData	clientData,
 	return ret;
 }
 
-/*
+/**
  *	Change the current title of the description
  */
 int
@@ -2926,7 +2926,7 @@ cmd_title(ClientData	clientData,
 	return ret;
 }
 
-/*
+/**
  *  			C M D _ P R C O L O R
  */
 int
@@ -2938,8 +2938,9 @@ cmd_prcolor(ClientData	clientData,
 	return wdb_prcolor_cmd(wdbp, interp, argc, argv);
 }
 
-/* List object information, briefly */
-/* Format: cat object	*/
+/** List object information, briefly
+ * Format: cat object
+ */
 int
 cmd_cat(ClientData	clientData,
 	Tcl_Interp	*interp,
@@ -2965,7 +2966,7 @@ cmd_cat(ClientData	clientData,
 	return ret;
 }
 
-/*
+/**
  *  			C M D _ C O L O R
  *
  *  Add a color table entry.
@@ -2986,7 +2987,7 @@ cmd_color(ClientData	clientData,
 	return ret;
 }
 
-/*
+/**
  *			C M D _ C O M B
  *
  *  Create or add to the end of a combination, with one or more solids,
@@ -3002,8 +3003,9 @@ cmd_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return wdb_comb_cmd(wdbp, interp, argc, argv);
 }
 
-/* Copy an object */
-/* Format: cp oldname newname	*/
+/** Copy an object
+ * Format: cp oldname newname
+ */
 int
 cmd_copy(ClientData	clientData,
 	 Tcl_Interp	*interp,
@@ -3026,7 +3028,7 @@ cmd_copy(ClientData	clientData,
 	return cmd_draw(clientData, interp, 2, av);
 }
 
-/*
+/**
  *                C M D _ E X P A N D
  *
  * Performs wildcard expansion (matched to the database elements)
@@ -3040,7 +3042,7 @@ cmd_expand(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return wdb_expand_cmd(wdbp, interp, argc, argv);
 }
 
-/*
+/**
  *			C M D _ L S
  *
  * This routine lists the names of all the objects accessible
@@ -3057,7 +3059,7 @@ cmd_ls(ClientData	clientData,
 	return wdb_ls_cmd(wdbp, interp, argc, argv);
 }
 
-/*
+/**
  *  			C M D _ F I N D
  *
  *  Find all references to the named objects.
@@ -3073,8 +3075,9 @@ cmd_find(ClientData	clientData,
 	return wdb_find_cmd(wdbp, interp, argc, argv);
 }
 
-/* Grouping command */
-/* Format: g groupname object1 object2 .... objectn	*/
+/** Grouping command
+ * Format: g groupname object1 object2 .... objectn
+ */
 int
 cmd_group(ClientData	clientData,
 	  Tcl_Interp	*interp,
@@ -3086,8 +3089,9 @@ cmd_group(ClientData	clientData,
 	return wdb_group_cmd(wdbp, interp, argc, argv);
 }
 
-/* Create an instance of something */
-/* Format: i object combname [op]	*/
+/** Create an instance of something
+ * Format: i object combname [op]
+ */
 int
 cmd_instance(ClientData	clientData,
 	     Tcl_Interp *interp,
@@ -3110,7 +3114,7 @@ cmd_keep(ClientData	clientData,
 	return wdb_keep_cmd(wdbp, interp, argc, argv);
 }
 
-/*
+/**
  *			C M D _ L I S T
  *
  *  List object information, verbose, in GIFT-compatible format.
@@ -3172,7 +3176,7 @@ cmd_list(ClientData	clientData,
 	}
 }
 
-/*
+/**
  *			C M D _ L M
  *
  *	List regions based on values of their MUVES_Component attribute
@@ -3253,7 +3257,7 @@ cmd_lm(ClientData	clientData,
 }
 
 
-/*
+/**
  *			C M D _ L T
  *
  *  List object information in a tcl list. The
@@ -3268,7 +3272,7 @@ cmd_lt(ClientData	clientData,
 	return wdb_lt_cmd(wdbp, interp, argc, argv);
 }
 
-/*
+/**
  *			F _ T O L
  *
  *  "tol"	displays current settings
@@ -3303,8 +3307,10 @@ cmd_tol(ClientData	clientData,
 /* defined in chgview.c */
 extern int edit_com(int argc, char **argv, int kind, int catch_sigint);
 
-/* ZAP the display -- then edit anew */
-/* Format: B object	*/
+/**
+ * ZAP the display -- then edit anew
+ * Format: B object
+ */
 int
 cmd_blast(ClientData	clientData,
 	  Tcl_Interp	*interp,
@@ -3322,8 +3328,10 @@ cmd_blast(ClientData	clientData,
 	return edit_com(argc, argv, 1, 1);
 }
 
-/* Edit something (add to visible display) */
-/* Format: e object	*/
+/** 
+ * Edit something (add to visible display)
+ * Format: e object
+ */
 int
 cmd_draw(ClientData	clientData,
 	 Tcl_Interp	*interp,
@@ -3335,8 +3343,10 @@ cmd_draw(ClientData	clientData,
 
 extern int emuves_com( int argc, char **argv );	/* from chgview.c */
 
-/* Add regions with attribute MUVES_Component haveing the specified values */
-/* Format: em value [value value ...]	*/
+/**
+ * Add regions with attribute MUVES_Component haveing the specified values
+ * Format: em value [value value ...]
+ */
 int
 cmd_emuves(ClientData	clientData,
 	 Tcl_Interp	*interp,
@@ -3346,7 +3356,9 @@ cmd_emuves(ClientData	clientData,
 	return emuves_com(argc, argv);
 }
 
-/* Format: ev objects	*/
+/**
+ * Format: ev objects
+ */
 int
 cmd_ev(ClientData	clientData,
        Tcl_Interp *interp,
@@ -3356,7 +3368,7 @@ cmd_ev(ClientData	clientData,
 	return edit_com(argc, argv, 3, 1);
 }
 
-/*
+/**
  *			C M D _ V D R A W
  */
 int
@@ -3370,7 +3382,7 @@ cmd_vdraw(ClientData	clientData,
 	return dgo_vdraw_cmd(dgop, interp, argc, argv);
 }
 
-/*
+/**
  *			C M D _ E
  *
  *  The "Big E" command.
