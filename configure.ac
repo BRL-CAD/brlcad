@@ -1780,6 +1780,7 @@ AC_CHECK_FUNCS(\
 	fabs  \
 	finite \
 	floor \
+	fsync \
 	ftime \
 	ftruncate \
 	getcwd \
