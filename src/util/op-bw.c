@@ -18,6 +18,13 @@
  * along with this file; see the file named COPYING for more
  * information.
  */
+
+/***
+ *** THIS PROGRAM IS MARKED OBSOLETE AND WILL BE REMOVED IN A FUTURE
+ *** RELEASE. PLEASE CONTACT ONE OF THE PROJECT DEVELOPERS IF YOU ARE
+ *** USING THIS CODE OR THE PROGRAM IT GENERATES.
+ ***/
+
 /** @file op-bw.c
  *
  *  Read 8-bit (.bw) images from an Optronics Scanner
@@ -39,18 +46,21 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-# include <stdio.h>
+#include "common.h"
+
+#include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #ifdef vax
 # include <vaxuba/opio.h>
 # include <sys/ioctl.h>
-
-char	*malloc();
 
 int	step = 4;	/* 12.5 micron steps per scanline */
 int	offset = 0;	/* pixels in "left margin" */
