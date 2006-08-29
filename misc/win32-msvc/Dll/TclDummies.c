@@ -94,3 +94,4 @@ void                 Tcl_DeleteChannelHandler() {}
 int                  Tcl_Eof() {return 0;}
 void                 Tcl_CreateChannelHandler() {}
 Tcl_Channel          Tcl_MakeFileChannel() {return 0;}
+void                 Tcl_SetErrno() {}
