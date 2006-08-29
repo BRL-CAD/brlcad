@@ -72,7 +72,7 @@ static const char RCSmetaball[] = "@(#)$Header$ (BRL)";
 
 /* compute the bounding sphere for a metaball cluster. center is filled, and the
  * radius is returned. */
-fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshhold, struct bu_list *points)
+fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct bu_list *points)
 {
 	struct wdb_metaballpt *mbpt, *mbpt2;
 	point_t min, max, d;
@@ -97,9 +97,9 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshhold, str
 	/* start looking for the radius... */
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, points)){
 		VSUB2(d,mbpt->coord,*center);
-		/* since the surface is where threshhold=fldstr/mag,
-		   mag=fldstr/threshhold, so make that the initial value */
-		dist = MAGNITUDE(d) + mbpt->fldstr/threshhold;
+		/* since the surface is where threshold=fldstr/mag,
+		   mag=fldstr/threshold, so make that the initial value */
+		dist = MAGNITUDE(d) + mbpt->fldstr/threshold;
 		/* and add all the contribution */
 		for(BU_LIST_FOR(mbpt2, wdb_metaballpt, points))
 			if(mbpt2 != mbpt){
@@ -134,19 +134,19 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
 	/* generate a copy of the metaball */
 	nmb = bu_malloc(sizeof(struct rt_metaball_internal), "rt_metaball_prep: nmb");
-	BU_LIST_INIT( &nmb->metaball_pt_head );
-	nmb->threshhold = mb->threshhold;
+	BU_LIST_INIT( &nmb->metaball_ctrl_head );
+	nmb->threshold = mb->threshold;
 
 	/* and copy the list of control points */
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)) {
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
 		nmbpt = (struct wdb_metaballpt *)bu_malloc(sizeof(struct wdb_metaballpt), "rt_metaball_prep: nmbpt");
 		nmbpt->fldstr = mbpt->fldstr;
 		VMOVE(nmbpt->coord,mbpt->coord);
-		BU_LIST_INSERT( &nmb->metaball_pt_head, &nmbpt->l );
+		BU_LIST_INSERT( &nmb->metaball_ctrl_head, &nmbpt->l );
 	}
 
 	/* find the bounding sphere */
-	stp->st_aradius = rt_metaball_get_bounding_sphere(&stp->st_center, mb->threshhold, &mb->metaball_pt_head);
+	stp->st_aradius = rt_metaball_get_bounding_sphere(&stp->st_center, mb->threshold, &mb->metaball_ctrl_head);
 	stp->st_bradius = stp->st_aradius * 1.01;
 	/* generate a bounding box around the sphere... 
 	 * XXX this can be optimized greatly to reduce the BSP presense... */
@@ -210,7 +210,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		distleft -= step; 
 		VADD2(p, p, inc);
 		if(stat == 1) {
-			if(rt_metaball_point_value(&p, &mb->metaball_pt_head) < mb->threshhold ) {
+			if(rt_metaball_point_value(&p, &mb->metaball_ctrl_head) < mb->threshold ) {
 				if(step<=finalstep) {
 					STEPIN(out);
 					stat = 0;
@@ -221,7 +221,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 					STEPBACK
 			}
 		} else {
-			if(rt_metaball_point_value(&p, &mb->metaball_pt_head) > mb->threshhold ) {
+			if(rt_metaball_point_value(&p, &mb->metaball_ctrl_head) > mb->threshold ) {
 				if(step<=finalstep) {
 					RT_GET_SEG(segp, ap->a_resource);
 					segp->seg_stp = stp;
@@ -260,7 +260,7 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
 	fastf_t f, a;
 
 	VSETALL(hitp->hit_normal, 0);
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)){
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)){
 		VSUB2(v, hitp->hit_point, mbpt->coord);
 		f = mbpt->fldstr * mbpt->fldstr;	/* f^2 */
 		a = MAGNITUDE(v);
@@ -356,9 +356,9 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	RT_CK_DB_INTERNAL(ip);
 	mb = (struct rt_metaball_internal *)ip->idb_ptr;
 	RT_METABALL_CK_MAGIC(mb);
-	rad = rt_metaball_get_bounding_sphere(&bsc, mb->threshhold, &mb->metaball_pt_head);
+	rad = rt_metaball_get_bounding_sphere(&bsc, mb->threshold, &mb->metaball_ctrl_head);
 	rt_metaball_plot_sph(vhead, &bsc, rad);
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head))
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
 		rt_metaball_plot_sph(vhead, &mbpt->coord, mbpt->fldstr);
 	return 0;
 }
@@ -391,8 +391,8 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 
 	BU_CK_EXTERNAL( ep );
 	metaball_count = bu_glong((unsigned char *)ep->ext_buf);
-	buf = (fastf_t *)bu_malloc((metaball_count*4+1)*SIZEOF_NETWORK_DOUBLE,"rt_metaball_import5: buf");
-	ntohd((unsigned char *)buf, (unsigned char *)ep->ext_buf+SIZEOF_NETWORK_LONG, metaball_count*4+1);
+	buf = (fastf_t *)bu_malloc((metaball_count*4+2)*SIZEOF_NETWORK_DOUBLE,"rt_metaball_import5: buf");
+	ntohd((unsigned char *)buf, (unsigned char *)ep->ext_buf+SIZEOF_NETWORK_LONG, metaball_count*4+2);
 
 	RT_CK_DB_INTERNAL( ip );
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -401,15 +401,16 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_metaball_internal), "rt_metaball_internal");
 	mb = (struct rt_metaball_internal *)ip->idb_ptr;
 	mb->magic = RT_METABALL_INTERNAL_MAGIC;
-	mb->threshhold = buf[0];
-	BU_LIST_INIT( &mb->metaball_pt_head );
-	for(i=1 ; i<=metaball_count*4 ; i+=4) {
+	mb->threshold = buf[0];
+	mb->method = ((long *)buf)[1];
+	BU_LIST_INIT( &mb->metaball_ctrl_head );
+	for(i=2 ; i<=metaball_count*4 ; i+=4) {
 			/* Apply modeling transformations */
 		BU_GETSTRUCT( mbpt, wdb_metaballpt );
 		mbpt->l.magic = WDB_METABALLPT_MAGIC;
 		MAT4X3PNT( mbpt->coord, mat, &buf[i] );
 		mbpt->fldstr = buf[i+3] / mat[15];
-		BU_LIST_INSERT( &mb->metaball_pt_head, &mbpt->l );
+		BU_LIST_INSERT( &mb->metaball_ctrl_head, &mbpt->l );
 	}
 
 	bu_free((genptr_t)buf, "rt_metaball_import5: buf");
@@ -421,7 +422,8 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
  *
  * storage is something like
  * long		numpoints
- * fastf_t	threshhold
+ * fastf_t	threshold
+ * long		method
  *	fastf_t	X1	(start point)
  *	fastf_t	Y1
  *	fastf_t	Z1
@@ -434,7 +436,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 {
 	struct rt_metaball_internal *mb;
 	struct wdb_metaballpt *mbpt;
-	int metaball_count = 0, i = 1;
+	int metaball_count = 0, i = 2;
 	fastf_t *buf;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -442,24 +444,25 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 		return(-1);
 	mb = (struct rt_metaball_internal *)ip->idb_ptr;
 	RT_METABALL_CK_MAGIC(mb);
-	if (mb->metaball_pt_head.magic == 0) return -1;
+	if (mb->metaball_ctrl_head.magic == 0) return -1;
 
 	/* Count number of points */
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)) metaball_count++;
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) metaball_count++;
 
 	BU_CK_EXTERNAL(ep);
-	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE*(1+4*metaball_count) + SIZEOF_NETWORK_LONG;
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE*(2+4*metaball_count) + SIZEOF_NETWORK_LONG;
 	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "metaball external");
 	bu_plong((unsigned char *)ep->ext_buf, metaball_count);
 
 	/* pack the point data */
-	buf = (fastf_t *)bu_malloc((metaball_count*4+1)*SIZEOF_NETWORK_DOUBLE,"rt_metaball_export5: buf");
-	buf[0] = mb->threshhold;
-	for(BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_pt_head), i+=4){
+	buf = (fastf_t *)bu_malloc((metaball_count*4+2)*SIZEOF_NETWORK_DOUBLE,"rt_metaball_export5: buf");
+	buf[0] = mb->threshold;
+	((long *)buf)[1] = mb->method;
+	for(BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head), i+=4){
 		VSCALE(&buf[i], mbpt->coord, local2mm);
 		buf[i+3] = mbpt->fldstr * local2mm;
 	}
-	htond((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG, (unsigned char *)buf, 1 + 4 * metaball_count);
+	htond((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG, (unsigned char *)buf, 2 + 4 * metaball_count);
 	bu_free(buf,"rt_metaball_export5: buf");
 
 	return 0;
@@ -483,13 +486,13 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 	RT_CK_DB_INTERNAL(ip);
 	mb = (struct rt_metaball_internal *)ip->idb_ptr;
 	RT_METABALL_CK_MAGIC(mb);
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_pt_head)) metaball_count++;
+	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) metaball_count++;
 
-	snprintf(buf, BUFSIZ, "Metaball with %d points and a threshhold of %g\n", metaball_count, mb->threshhold);
+	snprintf(buf, BUFSIZ, "Metaball with %d points and a threshold of %g\n", metaball_count, mb->threshold);
 	bu_vls_strcat(str,buf);
 	if(!verbose)return 0;
 	metaball_count=0;
-	for( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_pt_head)){
+	for( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)){
 		snprintf(buf,BUFSIZ,"\t%d: %g field strength at (%g, %g, %g)\n",
 			++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord));
 		bu_vls_strcat(str,buf);
@@ -513,8 +516,8 @@ rt_metaball_ifree(struct rt_db_internal *ip)
 	metaball = (struct rt_metaball_internal*)ip->idb_ptr;
 	RT_METABALL_CK_MAGIC(metaball);
 
-	if (metaball->metaball_pt_head.magic != 0)
-		while(BU_LIST_WHILE(mbpt, wdb_metaballpt, &metaball->metaball_pt_head)) {
+	if (metaball->metaball_ctrl_head.magic != 0)
+		while(BU_LIST_WHILE(mbpt, wdb_metaballpt, &metaball->metaball_ctrl_head)) {
 			BU_LIST_DEQUEUE(&(mbpt->l));
 			bu_free((char *)mbpt, "wdb_metaballpt");
 		}
