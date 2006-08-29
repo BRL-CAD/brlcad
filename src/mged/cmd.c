@@ -127,6 +127,11 @@ int f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **
 int f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
+#ifdef _WIN32
+  /* limited to seconds only */
+  void gettimeofday(struct timeval *tp, struct timezone *tzp);
+#endif
+
 extern int f_hide();
 extern int f_unhide();
 

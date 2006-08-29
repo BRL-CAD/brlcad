@@ -628,8 +628,10 @@ main(int argc, char **argv)
 		}
 		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", interp->result);
 		classic_mged=1;
+#ifndef _WIN32
 		cbreak_mode = COMMAND_LINE_EDITING;
 		save_Tty(fileno(stdin));
+#endif
 		get_attached();
 	    } else {
 
@@ -677,6 +679,7 @@ main(int argc, char **argv)
 	/* NOTREACHED */
     }
 
+#ifndef _WIN32
     if(classic_mged || !interactive){
 
 #ifndef _WIN32
@@ -702,6 +705,9 @@ main(int argc, char **argv)
 	}
 #endif
     } else {
+#else
+    {
+#endif
 	struct bu_vls vls;
 	
 	bu_vls_init(&vls);
