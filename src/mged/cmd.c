@@ -127,10 +127,6 @@ int f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **
 int f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
-#ifdef _WIN32
-  /* limited to seconds only */
-  void gettimeofday(struct timeval *tp, struct timezone *tzp);
-#endif
 
 extern int f_hide();
 extern int f_unhide();
@@ -1159,6 +1155,21 @@ mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
 	bu_vls_free( &temp );
 	bu_vls_free( &word );
 }
+
+#ifdef _WIN32
+/* limited to seconds only */
+void gettimeofday(struct timeval *tp, struct timezone *tzp)
+{
+
+	time_t ltime;
+
+	time( &ltime );
+
+	tp->tv_sec = ltime;
+	tp->tv_usec = 0;
+
+}
+#endif
 
 /*
  *			C M D L I N E
@@ -3434,21 +3445,6 @@ cmd_bot_decimate( ClientData	clientData,
 	CHECK_DBI_NULL;
 	return wdb_bot_decimate_cmd( wdbp, interp, argc, argv );
 }
-
-#ifdef _WIN32
-/* limited to seconds only */
-void gettimeofday(struct timeval *tp, struct timezone *tzp)
-{
-
-	time_t ltime;
-
-	time( &ltime );
-
-	tp->tv_sec = ltime;
-	tp->tv_usec = 0;
-
-}
-#endif
 
 
 int
