@@ -125,11 +125,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  * compatibility macros should take care of this.
  */
 #ifdef HAVE_WINSOCK_H
-#  define PKG_READ(d, buf, nbytes) recv(d, buf, nbytes, 0)
-#  define PKG_SEND(d, buf, nbytes) send(d, buf, nbytes, 0)
+#  define PKG_READ(d, buf, nbytes) recv((d), (buf), (nbytes), 0)
+#  define PKG_SEND(d, buf, nbytes) send((d), (buf), (nbytes), 0)
 #else
-#  define PKG_READ(d, buf, nbytes) read(d, buf, nbytes)
-#  define PKG_SEND(d, buf, nbytes) write(d, buf, nbytes)
+#  define PKG_READ(d, buf, nbytes) read((d), (buf), (nbytes))
+#  define PKG_SEND(d, buf, nbytes) write((d), (buf), (nbytes))
 #endif
 
 #if defined(__stardent)
