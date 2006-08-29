@@ -181,9 +181,6 @@ Mer_open()
 	char *fullpath;
 	char line[64], line2[64];
 
-	/* Protect ourselves. */
-	sync();
-
 	(void)printf("Output MERLIN ? ");
 	(void)gets( line );		/* Null terminated */
 	if( feof(stdin) )  return(1);		/* BAD */
