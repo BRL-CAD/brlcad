@@ -242,14 +242,15 @@ int	es_menu;		/* item selected from menu */
 #define MENU_SUPERELL_SCALE_B	114
 #define MENU_SUPERELL_SCALE_C	115
 #define MENU_SUPERELL_SCALE_ABC	116
-#define MENU_METABALL_SET_THRESHHOLD	117
-#define MENU_METABALL_SELECT	118
-#define MENU_METABALL_NEXT_PT	119
-#define MENU_METABALL_PREV_PT	120
-#define MENU_METABALL_MOV_PT	121
-#define MENU_METABALL_PT_FLDSTR	122
-#define MENU_METABALL_DEL_PT	123
-#define MENU_METABALL_ADD_PT	124
+#define MENU_METABALL_SET_THRESHOLD	117
+#define MENU_METABALL_SET_METHOD	118
+#define MENU_METABALL_SELECT	119
+#define MENU_METABALL_NEXT_PT	120
+#define MENU_METABALL_PREV_PT	121
+#define MENU_METABALL_MOV_PT	122
+#define MENU_METABALL_PT_FLDSTR	123
+#define MENU_METABALL_DEL_PT	124
+#define MENU_METABALL_ADD_PT	125
 
 struct menu_item cline_menu[] = {
 	{ "CLINE MENU",		(void (*)())NULL, 0 },
@@ -666,7 +667,8 @@ struct menu_item  superell_menu[] = {
 
 struct menu_item metaball_menu[] = {
 	{ "METABALL MENU", (void (*)())NULL, 0 },
-	{ "Set Threshhold", metaball_ed, MENU_METABALL_SET_THRESHHOLD },
+	{ "Set Threshold", metaball_ed, MENU_METABALL_SET_THRESHOLD },
+	{ "Set Render Method", metaball_ed, MENU_METABALL_SET_METHOD },
 	{ "Select Point", metaball_ed, MENU_METABALL_SELECT },
 	{ "Next Point", metaball_ed, MENU_METABALL_NEXT_PT },
 	{ "Previous Point", metaball_ed, MENU_METABALL_PREV_PT },
@@ -1225,29 +1227,39 @@ static void superell_ed(int arg) {
 static void
 metaball_ed(int arg)
 {
-	bu_log("Woop: %d\n", arg); fflush(stdout);
 	if(dbip == DBI_NULL)
 		return;
 
 	switch( arg )
 	{
-		case MENU_METABALL_SET_THRESHHOLD:
+		case MENU_METABALL_SET_THRESHOLD:
+			es_menu = arg;
+			es_edflag = PSCALE;
+			break;
+		case MENU_METABALL_SET_METHOD:
 			break;
 		case MENU_METABALL_SELECT:
+			es_edflag = ECMD_METABALL_PT_PICK;
 			break;
 		case MENU_METABALL_NEXT_PT:
 			break;
 		case MENU_METABALL_PREV_PT:
 			break;
 		case MENU_METABALL_MOV_PT:
+			es_edflag = ECMD_METABALL_PT_MOV;
 			break;
 		case MENU_METABALL_PT_FLDSTR:
+			es_menu = arg;
+			es_edflag = PSCALE;
 			break;
 		case MENU_METABALL_DEL_PT:
+			es_edflag = ECMD_METABALL_PT_DEL;
 			break;
 		case MENU_METABALL_ADD_PT:
+			es_edflag = ECMD_METABALL_PT_ADD;
 			break;
 	}
+	set_e_axes_pos(1);
 	return;
 }
 
@@ -5681,6 +5693,33 @@ sedit(void)
 	case ECMD_BOT_PICKE:
 	case ECMD_BOT_PICKT:
 		break;
+
+	case ECMD_METABALL_SET_THRESHOLD:
+		bu_log("\nsedit:set threshold:inpara: %d\n", inpara);
+		if(inpara == 1) {
+		    bu_log("Aw yeah: %f\n", es_para[0]);
+		}
+		bu_log("Set threshold\n");
+		break;
+	case ECMD_METABALL_PT_PICK:
+		bu_log("point pick");
+		break;
+	case ECMD_METABALL_PT_MOV:
+		bu_log("point move");
+		break;
+	case ECMD_METABALL_PT_FLDSTR:
+		bu_log("point strength");
+		break;
+	case ECMD_METABALL_PT_DEL:
+		bu_log("point del");
+		break;
+	case ECMD_METABALL_PT_ADD:
+		bu_log("point add");
+		break;
+	case ECMD_METABALL_RMET:
+		bu_log("metaball render method");
+		break;
+
 	default:
 	  {
 	    struct bu_vls tmp_vls;
@@ -7564,7 +7603,14 @@ pscale(void)
 			part->part_hrad *= es_scale;
 		}
 		break;
-
+	case MENU_METABALL_SET_THRESHOLD:
+		{
+			struct rt_metaball_internal *ball =
+				(struct rt_metaball_internal *)es_int.idb_ptr;
+			RT_METABALL_CK_MAGIC(ball);
+			ball->threshold = es_para[0];
+		}
+		break;
 	}
 }
 
@@ -8044,7 +8090,8 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 	    return TCL_ERROR;
     }
 
-    if( es_menu == MENU_PIPE_PT_OD || es_menu == MENU_PIPE_PT_ID || es_menu == MENU_PIPE_SCALE_ID )
+    if( es_menu == MENU_PIPE_PT_OD || es_menu == MENU_PIPE_PT_ID || es_menu == MENU_PIPE_SCALE_ID 
+	    || es_menu == MENU_METABALL_SET_THRESHOLD)
       {
 	if( es_para[0] < 0.0 )
 	  {

@@ -140,6 +140,15 @@
 #define ECMD_TGC_MV_H_CD	81	/* move end of tgc, while scaling CD */
 #define ECMD_TGC_MV_H_V_AB	82	/* move vertex end of tgc, while scaling AB */
 
+#define ECMD_METABALL_SET_THRESHOLD	83	/* overall metaball threshold value */
+#define ECMD_METABALL_SET_METHOD	84	/* set the rendering method */
+#define ECMD_METABALL_PT_PICK	85	/* pick a metaball control point */
+#define ECMD_METABALL_PT_MOV	86	/* move a metaball control point */
+#define ECMD_METABALL_PT_FLDSTR	87	/* set a metaball control point field strength */
+#define ECMD_METABALL_PT_DEL	88	/* delete a metaball control point */
+#define ECMD_METABALL_PT_ADD	89	/* add a metaball control point */
+#define ECMD_METABALL_RMET	90	/* set the metaball render method */
+
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \
 		       es_edflag == ECMD_TGC_ROT_H || \
