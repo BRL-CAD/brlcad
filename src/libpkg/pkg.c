@@ -492,7 +492,7 @@ _pkg_permserver_impl(struct in_addr iface, char *service, char *protocol, int ba
 #endif
     
     saServer.sin_family = AF_INET;
-    saServer.sin_addr.s_addr = iface;
+    saServer.sin_addr = iface;
     
     if (bind(pkg_listenfd, (LPSOCKADDR)&saServer, sizeof(struct sockaddr)) == SOCKET_ERROR) {
 	pkg_perror(errlog, "pkg_permserver: bind");
