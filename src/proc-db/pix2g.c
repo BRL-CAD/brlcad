@@ -78,7 +78,7 @@ void computeScanline( int pid, genptr_t arg ) {
 
 	/*	struct wmember *allScanlineList = (struct wmember *)arg;*/
 	fflush(stdout);
-	sync();
+	db_sync(db_fp->dbip);
 
 	while (i < height) {
 		int j;
