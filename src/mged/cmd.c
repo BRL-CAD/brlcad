@@ -1496,11 +1496,9 @@ f_sync(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_ERROR;
 	}
 
-#ifdef HAVE_FSYNC
-	if (dbip) {
-	    fsync(dbip->dbi_fd);
+	if(dbip != DBI_NULL){
+	    db_sync(dbip);
 	}
-#endif
 
 	return TCL_OK;
 }
