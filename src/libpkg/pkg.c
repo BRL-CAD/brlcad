@@ -619,13 +619,12 @@ pkg_permserver_ip(char *ipOrHostname, char *service, char *protocol, int backlog
     if (ipOrHostname) {
 	if (ipOrHostname[0] >= '0' && ipOrHostname[0] <= '9') {
 	    iface.s_addr = inet_addr(ipOrHostname);
-	    return _pkg_permserver_impl(iface, service, protocol, backlog, errlog);
 	} else {
 	    /* XXX gethostbyname is deprecated on Windows */
 	    host = gethostbyname(ipOrHostname);
 	    iface = *(struct in_addr*)host->h_addr;
-	    return _pkg_permserver_impl(iface, service, protocol, backlog, errlog);
 	}
+	return _pkg_permserver_impl(iface, service, protocol, backlog, errlog);
     } else {
 	pkg_perror(errlog, "pkg: ipOrHostname cannot be NULL");
 	return -1;
