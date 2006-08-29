@@ -320,8 +320,10 @@ db_close(register struct db_i *dbip)
 		dbip->dbi_mf = (struct bu_mapped_file *)NULL;
 	}
 
+	/* try to ensure/encourage that the file is written out */
+	db_sync(dbip);
+
 #ifdef HAVE_UNIX_IO
-	(void)fsync(dbip->dbi_fd);
 	(void)close( dbip->dbi_fd );
 #endif
 	if (dbip->dbi_fp) {
@@ -453,11 +455,11 @@ db_sync(struct db_i *dbip)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 
 	/* flush the file */
-	fflush(dbip->dbi_fp);
+	(void)fflush(dbip->dbi_fp);
 
 #ifdef HAVE_FSYNC
 	/* make sure it's written out */
-	fsync(dbip->dbi_fd);
+	(void)fsync(dbip->dbi_fd);
 #else
 #  ifndef _WIN32
 	/* try the whole filesystem if sans fsync() */
