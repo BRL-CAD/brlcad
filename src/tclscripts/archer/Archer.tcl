@@ -223,6 +223,7 @@ namespace eval Archer {
 	method oscale		   {obj sf kx ky kz}
 	method otranslate	   {obj dx dy dz}
 	method push                {args}
+	method purgeHistory        {}
 	method put                 {args}
 	method pwd                 {}
 	method r                   {args}
@@ -327,7 +328,7 @@ namespace eval Archer {
 
 	variable wizardXmlCallbacks ""
 
-	variable mArcherVersion "0.8.1"
+	variable mArcherVersion "0.9"
 	variable mLastSelectedDir ""
 
 	variable mFontArrowsName "arrowFont"
@@ -337,6 +338,7 @@ namespace eval Archer {
 	variable mFontText
 	variable mFontTextBold
 
+	variable mRestoringTree 0
 	variable mViewOnly 0
 	variable mTarget ""
 	variable mTargetCopy ""
@@ -470,7 +472,8 @@ namespace eval Archer {
 	    bot2pipe \
 	    adjust blast c comb concat copyeval E erase_all \
 	    ev find hide importFg4Sections killall killtree \
-	    make_bb mvall push put r report track unhide vdraw
+	    make_bb mvall push purgeHistory put r report track \
+	    unhide vdraw
 	}
 	variable sdbCommands { \
 	    abort adjustNormals compact decimate decimate2 \
@@ -489,7 +492,7 @@ namespace eval Archer {
 	}
 
 	variable mAboutInfo "
-     Archer Version 0.6.3 (Prototype)
+     Archer Version 0.9 (Prototype)
 
 Archer is a geometry editor/viewer
 developed by SURVICE Engineering.
@@ -531,6 +534,7 @@ Popup Menu    Right or Ctrl-Left
 	method archerWrapper {cmd eflag hflag sflag tflag args}
 	method mgedWrapper {cmd eflag hflag sflag tflag args}
 	method sdbWrapper {cmd eflag hflag sflag tflag args}
+	method purgeObjHistory {obj}
 
 	method _build_canvas_menubar {}
 
@@ -726,6 +730,7 @@ Popup Menu    Right or Ctrl-Left
 	# tree commands
 	method _alter_treenode_children {node option value}
 	method _refresh_tree       {{restore 1}}
+	method _toggle_tree_path   {_path}
 	method _update_tree        {}
 	method _fill_tree          {{node ""}}
 	method _select_node        {tags {rflag 1}}
@@ -1627,18 +1632,23 @@ Popup Menu    Right or Ctrl-Left
 	set expandedArgs $args
     }
 
+    if {$hflag} {
+	set obj [lindex $expandedArgs 0]
+	if {$obj != ""} {
+	    # First, apply the command to hobj if necessary.
+	    # Note - we're making the (ass)umption that the object
+	    #        name is the first item in the "expandedArgs" list.
+	    if {![catch {dbCmd attr get $obj history} hobj] &&
+		$obj != $hobj} {
+		set tmpArgs [lreplace $expandedArgs 0 0 $hobj]
+		catch {eval dbCmd $cmd $options $tmpArgs}
+	    }
+	}
+    }
+
     if {[catch {eval dbCmd $cmd $options $expandedArgs} ret]} {
 	SetNormalCursor
 	return $ret
-    }
-
-    # Apply the same command to hobj.
-    # Note - we're making the (ass)umption that the object
-    #        name is the first item in the "expandedArgs" list.
-    if {$hflag &&
-	![catch {dbCmd attr get [lindex $expandedArgs 0] history} hobj]} {
-	set expandedArgs [lreplace $expandedArgs 0 0 $hobj]
-	catch {eval dbCmd $cmd $options $expandedArgs}
     }
 
     if {$sflag} {
@@ -1648,7 +1658,7 @@ Popup Menu    Right or Ctrl-Left
 
     dbCmd configure -primitiveLabels {}
     if {$tflag} {
-	_refresh_tree
+	catch {_refresh_tree}
     }
     SetNormalCursor
 
@@ -2537,12 +2547,13 @@ Popup Menu    Right or Ctrl-Left
 	[catch {dbCmd get $hname} stuff]} {
 	dbCmd make_name -s 1
 	set hname [dbCmd make_name $obj.version]
-	dbCmd attr set $obj history $hname
+	#dbCmd attr set $obj history $hname
 
 	dbCmd cp $obj $hname
 	dbCmd hide $hname
 	dbCmd attr set $hname previous ""
 	dbCmd attr set $hname next ""
+	dbCmd attr set $obj history $hname
     }
 }
 
@@ -2734,7 +2745,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     _update_obj_edit $hname 1 0
-    _refresh_tree
+    #_refresh_tree
 
     # Disable the apply and reset buttons
     $itk_component(objEditToolbar) itemconfigure apply \
@@ -2890,6 +2901,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::_apply_edit {} {
+    set doRefreshTree 0
     switch -- $mSelectedObjType {
 	"arb4" {
 	    $itk_component(arb4View) updateGeometry
@@ -2911,6 +2923,7 @@ Popup Menu    Right or Ctrl-Left
 	}
 	"comb" {
 	    $itk_component(combView) updateGeometry
+	    set doRefreshTree 1
 	}
 	"ell" {
 	    $itk_component(ellView) updateGeometry
@@ -2960,7 +2973,9 @@ Popup Menu    Right or Ctrl-Left
     }
 
     _update_obj_history $mSelectedObj
-    _refresh_tree
+    if {$doRefreshTree} {
+	_refresh_tree
+    }
 
     set mNeedSave 1
     _update_save_mode	
@@ -3092,7 +3107,10 @@ Popup Menu    Right or Ctrl-Left
     _update_obj_edit $previous 1 1
     _update_prev_obj_button $obj
     _update_next_obj_button $obj
-    _refresh_tree
+
+    if {$mSelectedObjType == "comb"} {
+	_refresh_tree
+    }
 }
 
 ::itcl::body Archer::_goto_next_obj {} {
@@ -3124,7 +3142,10 @@ Popup Menu    Right or Ctrl-Left
     _update_obj_edit $next 1 1
     _update_prev_obj_button $obj
     _update_next_obj_button $obj
-    _refresh_tree
+
+    if {$mSelectedObjType == "comb"} {
+	_refresh_tree
+    }
 }
 
 ::itcl::body Archer::_update_obj_history {obj} {
@@ -5059,6 +5080,11 @@ Popup Menu    Right or Ctrl-Left
 	    #$itk_component(filemenu) entryconfigure "Export Geometry to PNG..." -state normal
 	    #$itk_component(filemenu) entryconfigure "Compact" -state disabled
 	    catch {$itk_component(filemenu) delete "Compact"}
+
+	    $itk_component(filemenu) insert "Import" command \
+		-label "Purge History" \
+		-command [::itcl::code $this purgeHistory]
+
 	    $itk_component(filemenu) entryconfigure "Import" -state disabled
 	    $itk_component(filemenu) entryconfigure "Export" -state disabled
 	    $itk_component(displaymenu) entryconfigure "Standard Views" -state normal
@@ -5074,6 +5100,11 @@ Popup Menu    Right or Ctrl-Left
 	    #$itk_component(menubar) menuconfigure .file.png -state normal
 	    #$itk_component(menubar) menuconfigure .file.compact -state disabled
 	    catch {$itk_component(menubar) delete .file.compact}
+
+	    $itk_component(menubar) insert .file.import command purgeHist \
+		-label "Purge History" \
+		-helpstr "Remove all object history"
+
 	    $itk_component(menubar) menuconfigure .file.import -state disabled
 	    $itk_component(menubar) menuconfigure .file.export -state disabled
 	    $itk_component(menubar) menuconfigure .display.standard -state normal
@@ -5082,6 +5113,9 @@ Popup Menu    Right or Ctrl-Left
 	    $itk_component(menubar) menuconfigure .display.center -state normal
 	    $itk_component(menubar) menuconfigure .display.clear -state normal
 	    $itk_component(menubar) menuconfigure .display.refresh -state normal
+
+	    $itk_component(menubar) menuconfigure .file.purgeHist \
+		-command [::itcl::code $this purgeHistory]
 	}
 
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt \
@@ -5187,9 +5221,12 @@ Popup Menu    Right or Ctrl-Left
 	    #$itk_component(filemenu) entryconfigure "Raytrace Control Panel..." -state normal
 	    #$itk_component(filemenu) entryconfigure "Export Geometry to PNG..." -state normal
 	    #$itk_component(filemenu) entryconfigure "Compact" -state normal
+	    catch {$itk_component(filemenu) delete "Purge History"}
+
 	    $itk_component(filemenu) insert "Import" command \
 		-label "Compact" \
 		-command [::itcl::code $this compact]
+
 	    $itk_component(filemenu) entryconfigure "Import" -state normal
 	    $itk_component(filemenu) entryconfigure "Export" -state normal
 	    $itk_component(displaymenu) entryconfigure "Standard Views" -state normal
@@ -5202,6 +5239,8 @@ Popup Menu    Right or Ctrl-Left
 	    #$itk_component(menubar) menuconfigure .file.rt  -state normal
 	    #$itk_component(menubar) menuconfigure .file.png -state normal
 	    #$itk_component(menubar) menuconfigure .file.compact -state normal
+	    catch {$itk_component(menubar) delete .file.purgeHist}
+
 	    $itk_component(menubar) insert .file.import command compact \
 		-label "Compact" \
 		-helpstr "Compact the target description"
@@ -8743,6 +8782,14 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_refresh_tree {{restore 1}} {
     if {$restore == 1} {
+	# get selected node
+	set selNode [$itk_component(tree) query -selected]
+	if {$selNode != ""} {
+	    set selNodePath [$itk_component(tree) query -path $selNode]
+	} else {
+	    set selNodePath ""
+	}
+
 	# get current open state
 	set opennodes [$itk_component(tree) opennodes "root"]
 	
@@ -8759,30 +8806,39 @@ Popup Menu    Right or Ctrl-Left
     _fill_tree
 
     if {$restore == 1} {
+	set mRestoringTree 1
 	# set the open state of nodes
-	set prev ""
 	foreach path $paths {
-	    set path [file split $path]
-	    if {[llength $path] < 2} {
-		set prev ""
-		set parent "root"
-		set nname $path
-	    } else {
-		set parent [lindex $path [expr [llength $path] -2]]
-		set nname  [lindex $path [expr [llength $path] -1]]
-	    }
-	    
-	    set pnode [$itk_component(tree) find $parent]
-	    
-	    set node [$itk_component(tree) find $nname $pnode]
-	    $itk_component(tree) toggle $node
-	    
-	    set prev $nname
+	    _toggle_tree_path $path
 	}
+
+	if {$selNodePath != ""} {
+	    _toggle_tree_path $selNodePath
+	}
+	set mRestoringTree 0
     }
 
     # force redraw of tree
     $itk_component(tree) redraw
+}
+
+::itcl::body Archer::_toggle_tree_path {_path} {
+    set _path [file split $_path]
+    if {[llength $_path] < 2} {
+	#set prev ""
+	set parent "root"
+	set nname $_path
+    } else {
+	set parent [lindex $_path [expr [llength $_path] -2]]
+	set nname  [lindex $_path [expr [llength $_path] -1]]
+    }
+	    
+    set pnode [$itk_component(tree) find $parent]
+	    
+    set node [$itk_component(tree) find $nname $pnode]
+    $itk_component(tree) toggle $node
+	    
+    #set prev $nname
 }
 
 ::itcl::body Archer::_update_tree {} {
@@ -8944,6 +9000,7 @@ Popup Menu    Right or Ctrl-Left
 	if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {
 	    _init_obj_attr_view
 	} else {
+	    if {!$mRestoringTree} {
 	    _init_obj_edit_view
 
 	    switch -- $mDefaultBindingMode \
@@ -8959,6 +9016,7 @@ Popup Menu    Right or Ctrl-Left
 		    $OBJECT_CENTER_MODE { \
 		        beginObjCenter
 	            }
+	    }
 	}
     }
 
@@ -9167,7 +9225,7 @@ Popup Menu    Right or Ctrl-Left
     $color add command -label "Select..." \
 	-command [::itcl::code $this selectDisplayColor $node]
 
-    if {$mDisplayType == "ogl" && ($nodeType != "leaf" || 0 < $mRenderMode)} {
+    if {($mDisplayType == "wgl" || $mDisplayType == "ogl") && ($nodeType != "leaf" || 0 < $mRenderMode)} {
 	# Build transparency menu
 	$menu add cascade -label "Transparency" \
 	    -menu $menu.trans
@@ -10467,7 +10525,7 @@ Popup Menu    Right or Ctrl-Left
 	set size [winfo width $itk_component(mged)]
     }
 
-    $itk_component(mged) $app -s $size -F /dev/ogll
+    $itk_component(mged) $app -s $size -F /dev/wgll
 }
 
 ::itcl::body Archer::refreshDisplay {} {
@@ -10590,7 +10648,7 @@ Popup Menu    Right or Ctrl-Left
 
 ##################################### Archer Commands #####################################
 ::itcl::body Archer::abort {args} {
-    eval sdbWrapper abort 0 1 0 0 $args
+    eval sdbWrapper abort 0 0 0 0 $args
 }
 
 ::itcl::body Archer::adjust {args} {
@@ -10598,7 +10656,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::adjustNormals {args} {
-    eval sdbWrapper adjustNormals 0 1 1 1 $args
+    eval sdbWrapper adjustNormals 0 0 1 1 $args
 }
 
 ::itcl::body Archer::blast {args} {
@@ -10630,7 +10688,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::compact {args} {
-    eval sdbWrapper compact 0 1 1 0 $args
+    eval sdbWrapper compact 0 0 1 0 $args
 }
 
 ::itcl::body Archer::concat {args} {
@@ -11071,7 +11129,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::hide {args} {
-    eval mgedWrapper hide 0 1 1 1 $args
+    eval mgedWrapper hide 0 0 1 1 $args
 }
 
 ::itcl::body Archer::importFg4 {} {
@@ -11569,6 +11627,65 @@ Popup Menu    Right or Ctrl-Left
     eval mgedWrapper push 0 1 1 0 $args
 }
 
+::itcl::body Archer::purgeObjHistory {obj} {
+    # Nothing to do
+    if {[catch {dbCmd attr get $obj history} hobj]} {
+	return
+    }
+
+    # Remove obj's history attribute
+    $itk_component(mged) attr rm $obj history
+
+    # March backwards in the list removing obj's history
+    if {![catch {dbCmd attr get $hobj previous} prev]} {
+	while {$prev != ""} {
+	    if {[catch {dbCmd attr get $prev previous} pprev]} {
+		set pprev ""
+	    }
+
+	    $itk_component(mged) kill $prev
+	    set prev $pprev
+	}
+    }
+
+    # March forward in the list removing obj's history
+    if {![catch {dbCmd attr get $hobj next} next]} {
+	while {$next != ""} {
+	    if {[catch {dbCmd attr get $next next} nnext]} {
+		set nnext ""
+	    }
+
+	    $itk_component(mged) kill $next
+	    set next $nnext
+	}
+    }
+
+    $itk_component(mged) kill $hobj
+}
+
+::itcl::body Archer::purgeHistory {} {
+    if {![info exists itk_component(mged)]} {
+	return
+    }
+
+    foreach obj [$itk_component(mged) ls] {
+	set obj [regsub {(/)|(/R)} $obj ""]
+	purgeObjHistory $obj
+    }
+
+    _update_prev_obj_button ""
+    _update_next_obj_button ""
+
+    set selNode [$itk_component(tree) query -selected]
+    if {$selNode != ""} {
+	set selNodePath [$itk_component(tree) query -path $selNode]
+	_toggle_tree_path $selNodePath
+    }
+
+    set mNeedSave 1
+    _update_save_mode
+}
+
 ::itcl::body Archer::put {args} {
     eval mgedWrapper put 0 0 1 1 $args
 }
@@ -11590,7 +11707,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::reverseNormals {args} {
-    eval sdbWrapper reverseNormals 0 1 1 1 $args
+    eval sdbWrapper reverseNormals 0 0 1 1 $args
 }
 
 ::itcl::body Archer::rm {args} {
@@ -11606,7 +11723,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::unhide {args} {
-    eval mgedWrapper unhide 0 1 1 1 $args
+    eval mgedWrapper unhide 0 0 1 1 $args
 }
 
 ::itcl::body Archer::units {args} {
