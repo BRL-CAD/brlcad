@@ -452,13 +452,18 @@ db_sync(struct db_i *dbip)
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 
-#ifdef _WIN32
+	/* flush the file */
 	fflush(dbip->dbi_fp);
-#elif defined(HAVE_UNIX_IO)
+
+#ifdef HAVE_FSYNC
+	/* make sure it's written out */
 	fsync(dbip->dbi_fd);
 #else
+#  ifndef _WIN32
+	/* try the whole filesystem if sans fsync() */
 	sync();
-#endif /* _WIN32 */
+#  endif /* _WIN32 */
+#endif
 
 	bu_semaphore_release(BU_SEM_SYSCALL);
 }
