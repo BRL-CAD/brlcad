@@ -450,12 +450,12 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) metaball_count++;
 
 	BU_CK_EXTERNAL(ep);
-	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE*(2+4*metaball_count) + SIZEOF_NETWORK_LONG;
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE*(1+4*metaball_count) + 2*SIZEOF_NETWORK_LONG;
 	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "metaball external");
 	bu_plong((unsigned char *)ep->ext_buf, metaball_count);
 
 	/* pack the point data */
-	buf = (fastf_t *)bu_malloc((metaball_count*4+2)*SIZEOF_NETWORK_DOUBLE,"rt_metaball_export5: buf");
+	buf = (fastf_t *)bu_malloc((metaball_count*4+1)*SIZEOF_NETWORK_DOUBLE,"rt_metaball_export5: buf");
 	buf[0] = mb->threshold;
 	((long *)buf)[1] = mb->method;
 	for(BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head), i+=4){
