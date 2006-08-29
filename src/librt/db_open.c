@@ -245,7 +245,7 @@ db_create(const char *name,
 	    bu_log("WARNING: db_create() was provided an unrecognized version number: %d\n", version);
 	    result = db5_fwrite_ident(fp, DEFAULT_DB_TITLE, 1.0);
 	}
-	    
+
 	(void)fclose(fp);
 
 	if (result < 0)
@@ -321,6 +321,7 @@ db_close(register struct db_i *dbip)
 	}
 
 #ifdef HAVE_UNIX_IO
+	(void)fsync(dbip->dbi_fd);
 	(void)close( dbip->dbi_fd );
 #endif
 	if (dbip->dbi_fp) {
