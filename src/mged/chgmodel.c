@@ -2049,20 +2049,21 @@ f_make(ClientData	clientData,
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_metaball_internal) , "rt_metaball_internal" );
 		metaball_ip = (struct rt_metaball_internal *)internal.idb_ptr;
 		metaball_ip->magic = RT_METABALL_INTERNAL_MAGIC;
-		metaball_ip->threshhold = 1.0;
-		BU_LIST_INIT( &metaball_ip->metaball_pt_head );
+		metaball_ip->threshold = 1.0;
+		metaball_ip->method = 0;
+		BU_LIST_INIT( &metaball_ip->metaball_ctrl_head );
 
 		mbpt = (struct wdb_metaballpt *)malloc(sizeof(struct wdb_metaballpt));
 		mbpt->fldstr = 1.0;
 		VSET(mbpt->coord, -view_state->vs_vop->vo_center[MDX] - 1.0, -view_state->vs_vop->vo_center[MDY] , -view_state->vs_vop->vo_center[MDZ] );
-		BU_LIST_INSERT(&metaball_ip->metaball_pt_head, &mbpt->l);
+		BU_LIST_INSERT(&metaball_ip->metaball_ctrl_head, &mbpt->l);
 
 		mbpt = (struct wdb_metaballpt *)malloc(sizeof(struct wdb_metaballpt));
 		mbpt->fldstr = 1.0;
 		VSET(mbpt->coord, -view_state->vs_vop->vo_center[MDX] + 1.0, -view_state->vs_vop->vo_center[MDY] , -view_state->vs_vop->vo_center[MDZ] );
-		BU_LIST_INSERT(&metaball_ip->metaball_pt_head, &mbpt->l);
+		BU_LIST_INSERT(&metaball_ip->metaball_ctrl_head, &mbpt->l);
 
-		fprintf(stdout, "metaball being made with %f threshhold and two points\n", metaball_ip->threshhold);
+		fprintf(stdout, "metaball being made with %f threshold and two points using method %d\n", metaball_ip->threshold, metaball_ip->method);
 	} else {
 	  Tcl_AppendResult(interp, "make:  ", argv[2], " is not a known primitive\n",
 			   "\tchoices are: arb8, arb7, arb6, arb5, arb4, arbn, ars, bot,\n",

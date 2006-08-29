@@ -534,7 +534,8 @@ char *p_superell[] = {
 };
 
 char *p_metaball[] = {
-	"Enter threshhold: ",
+	"Enter render method: ",
+	"Enter threshold: ",
 	"Enter number of points: ",
 	"Enter X, Y, Z, field strength: ",
 	"Enter Y: ",
@@ -2644,8 +2645,9 @@ int
 metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 {
 	struct rt_metaball_internal *metaball;
-	static int i,num_points;
-	static fastf_t threshhold = -1.0;
+	static int i, num_points;
+	static fastf_t threshold = -1.0;
+	static long method = 0;
 
 	CHECK_DBI_NULL;
 
@@ -2653,37 +2655,43 @@ metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
 	  return CMD_MORE;
 	}
-
-	threshhold = atof( argv[3] );
-	if(threshhold < 0.0) {
-		Tcl_AppendResult(interp, "Threshhold may not be negative.\n",(char *)NULL);
-		return CMD_BAD;
-	}
+	method = atof( argv[3] );
 
 	if( argc < 5 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
 	  return CMD_MORE;
 	}
+	threshold = atof( argv[4] );
 
-	num_points = atoi( argv[4] );
+	if(threshold < 0.0) {
+		Tcl_AppendResult(interp, "Threshold may not be negative.\n",(char *)NULL);
+		return CMD_BAD;
+	}
+
+	if( argc < 6 ) {
+		Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
+		return CMD_MORE;
+	}
+
+	num_points = atoi( argv[5] );
 	if( num_points < 1 )
 	{
 		Tcl_AppendResult(interp, "Invalid number of points (must be at least 1)\n", (char *)NULL);
 		return CMD_BAD;
 	}
 
-	if( argc < 9 )
+	if( argc < 10 )
 	{
 		Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
 		return CMD_MORE;
 	}
 
-	if( argc < 5 + num_points*4 )
+	if( argc < 6 + num_points*4 )
 	{
 		struct bu_vls tmp_vls;
 
 		bu_vls_init( &tmp_vls );
-		bu_vls_printf( &tmp_vls, "%s for point %d : ", prompt[6+(argc-9)%4], 1+(argc-5)/4 );
+		bu_vls_printf( &tmp_vls, "%s for point %d : ", prompt[7+(argc-9)%4], 1+(argc-5)/4 );
 		Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 
@@ -2696,10 +2704,11 @@ metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof( struct rt_metaball_internal ), "rt_metaball_internal" );
 	metaball = (struct rt_metaball_internal *)intern->idb_ptr;
 	metaball->magic = RT_METABALL_INTERNAL_MAGIC;
-	metaball->threshhold = threshhold;
-	BU_LIST_INIT( &metaball->metaball_pt_head );
+	metaball->threshold = threshold;
+	metaball->method = method;
+	BU_LIST_INIT( &metaball->metaball_ctrl_head );
 
-	for( i=5 ; i<argc ; i+= 4 )
+	for( i=6 ; i<argc ; i+= 4 )
 	{
 		struct wdb_metaballpt *metaballpt;
 
@@ -2709,7 +2718,7 @@ metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 		metaballpt->coord[2] = atof( argv[i+2] ) * local2base;
 		metaballpt->fldstr = atof( argv[i+3] ) * local2base;
 
-		BU_LIST_INSERT( &metaball->metaball_pt_head, &metaballpt->l );
+		BU_LIST_INSERT( &metaball->metaball_ctrl_head, &metaballpt->l );
 	}
 
 	return CMD_OK;
