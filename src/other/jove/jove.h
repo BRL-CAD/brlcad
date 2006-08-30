@@ -21,10 +21,6 @@
 #  include <string.h>
 #endif
 
-#ifdef SYSV
-#  define SYS5	1
-#endif
-
 
 /*
  *  DAG's portable support for functions taking variable number of arguments

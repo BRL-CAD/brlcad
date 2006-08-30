@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 14.2  2006/01/29 22:20:29  brlcad
+ * s/exp/jove_exp/ to avoid conflicting with exp() in math.h
+ *
  * Revision 14.1  2004/11/16 19:42:20  morrison
  * dawn of a new revision.  it shall be numbered 14 to match release 7.  begin the convergence by adding emacs/vi local variable footer blocks to encourage consistent formatting.
  *
@@ -171,11 +174,11 @@ static const char RCSid[] = "@(#)$Header$";
 #  include <termios.h>
 #  include <fcntl.h>
 #else
-#  ifndef SYS5
-#    include <sgtty.h>
-#  else
+#  ifdef HAVE_TERMIO_H
 #    include <termio.h>
 #    include <fcntl.h>
+#  else
+#    include <sgtty.h>
 #  endif
 #endif
 #ifdef HAVE_UNISTD_H
@@ -191,11 +194,11 @@ extern int	errno;
 
 void		DoKeys();
 
-#if defined(TIOCSLTC) && !defined(SYS5)
+#if defined(TIOCSLTC) && !defined(HAVE_TERMIOS_H) && defined(HAVE_TERMIO_H)
 struct ltchars	ls1, ls2;
 #endif
 
-#if defined(TIOCSETC) && !defined(SYS5)
+#if defined(TIOCSETC) && !defined(HAVE_TERMIOS_H) && defined(HAVE_TERMIO_H)
 struct tchars	tc1, tc2;	/* only on old-style BSD */
 #endif
 
@@ -303,17 +306,15 @@ jgetchar()
 {
 	if (nchars <= 0) {
 		/*
-		 *  This loop will retry the read if it is interrupted
-		 *  by an alarm signal.  (Like VMUNIX...)
+		 * This loop will retry the read if it is interrupted
+		 * by an alarm signal.  (Like VMUNIX...)
+		 *
+		 * Allow EOF to abort the read.
 		 */
 		do {
 			nchars = read(Input, smbuf, sizeof smbuf);
-#ifdef SYS5
-		} while ((nchars == 0 && Input == 0)
-			 || (nchars < 0 && errno == EINTR));
-#else
 		} while (nchars < 0 && errno == EINTR);
-#endif
+
 		if(nchars <= 0) {
 			if (Input)
 				return EOF;
@@ -342,13 +343,12 @@ charp()
 		else
 			return( 0 );
 #else
-#ifdef FIONREAD
+#  ifdef FIONREAD
 		int c = 0;
 
 		if (ioctl(0, FIONREAD, (char *) &c) == -1)
 			c = 0;
-#else
-#if defined(SYS5) || defined(HAVE_TERMIOS_H)
+#  else
 		int c, flags;
 
 		/* Since VMIN=1, we need to be able to poll for input
@@ -358,24 +358,18 @@ charp()
 		 * characters here, to see if there are any.
 		 */
 		flags = fcntl( Input, F_GETFL, 0);
-#  if defined(HAVE_TERMIOS_H)
+#    if defined(HAVE_TERMIOS_H)
 		(void)fcntl( Input, F_SETFL, flags|O_NONBLOCK );
-#  else
+#    else
 		(void)fcntl( Input, F_SETFL, flags|O_NDELAY );
-#  endif
+#    endif
 		c = &smbuf[NTOBUF] - bp - nchars;	/* space left */
 		if( c < 0 )  c = 0;
 		c = read(Input, bp+nchars, c );
 		if (c > 0)
 			nchars += c;
 		(void)fcntl( Input, F_SETFL, flags );
-#else
-		int c;
-
-		if (ioctl(0, TIOCEMPTY, (char *) &c) == -1)
-			c = 0;
-#endif
-#endif
+#  endif
 		return (c > 0);
 #endif
 	}
@@ -478,7 +472,7 @@ int	OKXonXoff = 0;		/* ^S and ^Q initially DON'T work */
 # if defined(HAVE_TERMIOS_H)
 struct termios	oldtty, newtty;
 # else
-#  if defined(SYS5)
+#  if defined(HAVE_TERMIO_H)
 struct termio	oldtty, newtty;
 #  else
 struct sgttyb	oldtty, newtty;
@@ -494,7 +488,7 @@ ttsetup() {
 #  if defined(HAVE_TERMIOS_H)
 	if (tcgetattr( 0, &oldtty ) < 0) {
 #  else
-#    if defined(SYS5)
+#    if defined(HAVE_TERMIO_H)
 	if (ioctl (0, TCGETA, &oldtty) < 0) {
 #    else
 	if (ioctl(0, TIOCGETP, (char *) &oldtty) == -1) {
@@ -510,7 +504,7 @@ ttsetup() {
 	/* One time setup of "raw mode" stty struct */
 	newtty = oldtty;
 #ifndef BRLUNIX
-#if !defined(SYS5) && !defined(HAVE_TERMIOS_H)
+#if !defined(HAVE_TERMIO_H) && !defined(HAVE_TERMIOS_H)
 	newtty.sg_flags &= ~(ECHO | CRMOD);
 	newtty.sg_flags |= CBREAK;
 #else
@@ -597,7 +591,7 @@ ttsize()
 void
 ttinit()
 {
-#if defined(TIOCSLTC) && !defined(SYS5)
+#if defined(TIOCSLTC) && !defined(HAVE_TERMIO_H) && !defined(HAVE_TERMIOS_H)
 	ioctl(0, TIOCGLTC, (char *) &ls1);
 	ls2 = ls1;
 	ls2.t_suspc = (char) -1;
@@ -607,7 +601,7 @@ ttinit()
 #endif
 
 	/* Change interrupt and quit. */
-#if defined(TIOCSETC) && !defined(SYS5)
+#if defined(TIOCSETC) && !defined(HAVE_TERMIO_H) && !defined(HAVE_TERMIOS_H)
 	ioctl(0, TIOCGETC, (char *) &tc1);
 	tc2 = tc1;
 	tc2.t_intrc = (char) -1;
@@ -640,11 +634,11 @@ ttyset(n)
 #if defined(HAVE_TERMIOS_H)
 	struct termios	tty;
 #else
-# if defined(SYS5)
+#  if defined(HAVE_TERMIO_H)
 	struct termio	tty;
-# else
+#  else
 	struct sgttyb	tty;
-# endif
+#  endif
 #endif
 
 	if (n)
@@ -655,7 +649,7 @@ ttyset(n)
 #if defined(HAVE_TERMIOS_H)
 	if (tcsetattr( 0, TCSANOW, &tty) == -1)
 #else
-#  if !defined(SYS5)
+#  if !defined(HAVE_TERMIO_H)
 	if (ioctl(0, TIOCSETN, (char *) &tty) == -1)
 #  else
 	if (ioctl (0, TCSETAW, (char *) &tty) == -1)
@@ -665,10 +659,10 @@ ttyset(n)
 		putstr("ioctl error?");
 		byebye(1);
 	}
-#if defined(TIOCSETC) && !defined(SYS5)
+#if defined(TIOCSETC) && !defined(HAVE_TERMIO_H) && !defined(HAVE_TERMIOS_H)
 	ioctl(0, TIOCSETC, n == 0 ? (char *) &tc1 : (char *) &tc2);
 #endif
-#if defined(TIOCSLTC) && !defined(SYS5)
+#if defined(TIOCSLTC) && !defined(HAVE_TERMIO_H) && !defined(HAVE_TERMIOS_H)
 	ioctl(0, TIOCSLTC, n == 0 ? (char *) &ls1 : (char *) &ls2);
 #endif
 }

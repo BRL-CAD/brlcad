@@ -105,10 +105,10 @@ void
 getTERM()
 {
 	char	*getenv();
-#if HAVE_TERMIOS_H
+#ifdef HAVE_TERMIOS_H
 	struct termios	tty;
 #else
-# ifndef SYS5
+# ifndef HAVE_TERMIO_H
 	struct sgttyb tty;
 # else
 	struct termio tty;
@@ -120,10 +120,10 @@ getTERM()
 		tbuff[1024];
 	int	i;
 
-#if HAVE_TERMIOS_H
+#ifdef HAVE_TERMIOS_H
 	if (tcgetattr( 0, &tty ) < 0 )
 #else
-# ifdef SYS5
+# ifdef HAVE_TERMIO_H
 	if (ioctl (0, TCGETA, &tty))
 # else
 	if (gtty(0, &tty))
@@ -131,7 +131,7 @@ getTERM()
 #endif	/* HAVE_TERMIOS_H */
 		TermError("ioctl fails");
 
-#if HAVE_TERMIOS_H
+#ifdef HAVE_TERMIOS_H
 #	if defined(TAB3)
 		TABS = !((tty.c_oflag & TAB3) == TAB3);
 #	else
@@ -139,7 +139,7 @@ getTERM()
 #	endif
 	jove_ospeed = cfgetospeed( &tty );
 #else
-# ifdef SYS5
+# ifdef HAVE_TERMIO_H
 #	if defined(TAB3)
 		TABS = !((tty.c_oflag & TAB3) == TAB3);
 #	else
