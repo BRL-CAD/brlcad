@@ -29,7 +29,7 @@ points_dir = points
 if WITH_PARSERS
 POINTS = ${points_dir}
 POINTS_CFLAGS = -DENABLE_POINTS
-POINTS_LDADD = $(top_builddir)/src/mged/points/libpoints.la
+POINTS_LDADD = ${LIBL} $(top_builddir)/src/mged/points/libpoints.la
 else
 POINTS_DIR =
 POINTS_CFLAGS =

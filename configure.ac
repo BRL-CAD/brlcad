@@ -1270,6 +1270,11 @@ sgigl_link_works=no
 LIBSGIGL=""
 AC_CHECK_LIB(gl, getvideo, sgigl_link_works=yes ; LIBSGIGL="-lgl")
 
+dnl check if the Solaris lexer library links
+l_link_works=no
+LIBL=""
+AC_CHECK_LIB(l, yyless, l_link_works=yes ; LIBL="-ll")
+
 dnl check for java
 JAVA_CFLAGS=
 JAVA_LDFLAGS=
@@ -2657,6 +2662,11 @@ AC_SUBST(LIBSGIGL)
 if test "x$sgigl_link_works" = "xyes" ; then
 	AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.)
 fi
+
+dnl *** libl Solaris lexer library ***
+AC_MSG_CHECKING(whether to link with the Solaris lexer library)
+AC_MSG_RESULT($l_link_works)
+AC_SUBST(LIBL)
 
 
 dnl *** 64-bit compilation ***
