@@ -31,10 +31,10 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  *  Include Sequencing -
- *	#include "common.h"
- *	#include <stdio.h>
- *	#include "termio.h"
- *
+@code	#include "common.h"
+	#include <stdio.h>
+	#include "termio.h"
+@endcode
  *  $Header$
  */
 

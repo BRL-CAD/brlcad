@@ -36,22 +36,24 @@
  *	Aberdeen Proving Ground, Maryland  21005 USA
  *
  *  Include Sequencing -
- *	#include "common.h"	/_* Must come before system <> includes *_/
- *	#ifdef HAVE_STRING_H	/_* OPTIONAL, for strcmp() etc. *_/
- *	#  include <string.h>
- *	#else
- *	#  include <strings.h>
- *	#endif
- *	#include <stdio.h>
- *	#include <math.h>
- *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
- *	#include "bu.h"
- *	#include "vmath.h"	/_* For vect_t definition *_/
- *	#include "bn.h"
- *	#include "db.h"		/_* OPTIONAL, precedes raytrace.h when used *_/
- *	#include "nmg.h"	/_* OPTIONAL, precedes raytrace.h when used *_/
- *	#include "raytrace.h"
- *	#include "nurb.h"	/_* OPTIONAL, follows raytrace.h when used *_/
+@code
+	# include "common.h"	/_* Must come before system <> includes *_/
+	#ifdef HAVE_STRING_H	/_* OPTIONAL, for strcmp() etc. *_/
+	#  include <string.h>
+	#else
+	#  include <strings.h>
+	#endif
+	# include <stdio.h>
+	# include <math.h>
+	# include "machine.h"	/_* For fastf_t definition on this machine *_/
+	# include "bu.h"
+	# include "vmath.h"	/_* For vect_t definition *_/
+	# include "bn.h"
+	# include "db.h"		/_* OPTIONAL, precedes raytrace.h when used *_/
+	# include "nmg.h"	/_* OPTIONAL, precedes raytrace.h when used *_/
+	# include "raytrace.h"
+	# include "nurb.h"	/_* OPTIONAL, follows raytrace.h when used *_/
+@endcode
  *
  *  Libraries Used -
  *	LIBRT LIBRT_LIBES -lm -lc

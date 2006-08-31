@@ -18,7 +18,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file plasitc.h
+/** @file plastic.h
  *
  */
 #ifndef plastic_h

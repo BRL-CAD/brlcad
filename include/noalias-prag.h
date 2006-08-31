@@ -18,11 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file noalias-prag.h
  *
- *  This header file is intended to be #include'ed by "noalis.h",
+ *  This header file is intended to be included by "noalis.h",
  *  and may contain vendor-specific vectorization directives which
- *  use #pragma and other ANSI-C constructions.
+ *  use the C preprocessor pragma directive and other ANSI-C constructions.
  *
  *  This file will never be included when the compilation is not being
  *  processed by an ANSI-C compiler.

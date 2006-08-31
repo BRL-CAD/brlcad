@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file bu.h
- *
+ * @addtogroup libbu
+ * @brief
  *  Header file for the BRL-CAD Utility Library, LIBBU.
  *
  *  This library provides several layers of low-level utility routines,
@@ -36,26 +38,27 @@
  *  in other BRL-CAD header files, such as vmath.h.
  *  Look for those routines in LIBBN.
  *
- *  Author -
- *	Michael John Muuss
+ *  @Author Michael John Muuss
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @par Source
+ *	The U. S. Army Research Laboratory 			@n 
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA	@n
  *
- *  Include Sequencing -
- *	#include "common.h"
- *	#include <stdio.h>
- *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
- *	#include "rtlist.h"	/_* OPTIONAL, auto-included by bu.h *_/
- *	#include "bu.h"
+ *  Proper include Sequencing -
+@code
+ 	#include "common.h"
+ 	#include <stdio.h>
+ 	#include "machine.h"	/_* For fastf_t definition on this machine *_/
+ 	#include "rtlist.h"	/_* OPTIONAL, auto-included by bu.h *_/
+ 	#include "bu.h"
+@endcode
  *
- *  Libraries Used -
+ *  @par Libraries Used -
  *	-lm -lc
  *
  *  $Header$
  */
-
+/*@{*/
 #ifndef __BU_H__
 #define __BU_H__
 
@@ -83,7 +86,8 @@ __BEGIN_DECLS
 #define BU_H_VERSION	"@(#)$Header$ (BRL)"
 
 
-/** define BU_DIR_SEPARATOR to the directory separator character
+/** @def BU_DIR_SEPARATOR
+ * define BU_DIR_SEPARATOR to the directory separator character
  */
 #ifdef DIR_SEPARATOR
 #  define BU_DIR_SEPARATOR DIR_SEPARATOR
@@ -99,11 +103,16 @@ __BEGIN_DECLS
 #  endif  /* DIR_SEPARATOR_2 */
 #endif  /* DIR_SEPARATOR */
 
+/** @def MAXPATHLEN
+ * Maximum length of a filesystem path.  Typically defined in a system file
+ * but if it isn't set, we create it.
+ */
 #ifndef MAXPATHLEN
 #  define MAXPATHLEN 1024
 #endif
 
-/** define BU_PATH_SEPARATOR to the path list separator character
+/** @def BU_PATH_SEPARATOR 
+ * set to the path list separator character
  */
 #if defined(PATH_SEPARATOR)
 #  define BU_PATH_SEPARATOR PATH_SEPARATOR
@@ -116,8 +125,9 @@ __BEGIN_DECLS
 #endif  /* PATH_SEPARATOR */
 
 
-/*
- * BU_FLSTR   Macro for getting a concatenated string of the current
+/** @def BU_FLSTR
+ *
+ * Macro for getting a concatenated string of the current
  * file and line number.  Produces something of the form:
  *   "filename.c"":""1234"
  */
@@ -143,8 +153,9 @@ __BEGIN_DECLS
 #	define	BU_ARGS(args)			()
 #endif
 
-/*
+/**
  *			B U _ F O R T R A N
+ * @def BU_FORTRAN
  *
  *  This macro is used to take the 'C' function name,
  *  and convert it at compile time to the
@@ -169,25 +180,32 @@ __BEGIN_DECLS
 #	define	BU_FORTRAN(lc,uc)	lc
 #endif
 
-/*
+/**
  * Handy memory allocator macro
- */
-
+ *
+ * @def BU_GETSTRUCT(ptr,struct_type)
+ * Allocate storage for a structure
+ *
+ * @def BU_GETUNION(ptr,union_type)
+ * Allocate storage for a union
+*/
 /* Acquire storage for a given struct, eg, BU_GETSTRUCT(ptr,structname); */
 #if __STDC__
 #  define BU_GETSTRUCT(_p,_str) \
-	_p = (struct _str *)bu_calloc(1,sizeof(struct _str), #_str " (getstruct)" )
+	_p = (struct _str *)bu_calloc(1,sizeof(struct _str), #_str " (getstruct)" BU_FLSTR)
 #  define BU_GETUNION(_p,_unn) \
-	_p = (union _unn *)bu_calloc(1,sizeof(union _unn), #_unn " (getunion)")
+	_p = (union _unn *)bu_calloc(1,sizeof(union _unn), #_unn " (getunion)" BU_FLSTR)
 #else
 #  define BU_GETSTRUCT(_p,_str) \
-	_p = (struct _str *)bu_calloc(1,sizeof(struct _str), "_str (getstruct)")
+	_p = (struct _str *)bu_calloc(1,sizeof(struct _str), "_str (getstruct)" )
 #  define BU_GETUNION(_p,_unn) \
-	_p = (union _unn *)bu_calloc(1,sizeof(union _unn), "_unn (getunion)")
+	_p = (union _unn *)bu_calloc(1,sizeof(union _unn), "_unn (getunion)" )
 #endif
 
-/*
+/**
  *                B U _ G E T T Y P E
+ *
+ * @def BU_GETTYPE(ptr,typename)
  *
  * Acquire storage for a given TYPE, eg, BU_GETTYPE(ptr, typename);
  * Equivalent to BU_GETSTRUCT, except without the 'struct' Useful
@@ -203,8 +221,9 @@ __BEGIN_DECLS
 
 
 
-/*
- *			B U _ C K M A G
+/*			B U _ C K M A G
+ *
+ * @def BU_CKMAG(ptr,magic,string)
  *
  *  Macros to check and validate a structure pointer, given that
  *  the first entry in the structure is a magic number.
@@ -226,9 +245,18 @@ __BEGIN_DECLS
 	}
 #endif
 
-/*
- *			B U _ A S S E R T
+/**			B U _ A S S E R T
  *
+ * @def BU_ASSERT(eqn)
+ *  Quick and easy macros to generate an informative error message and
+ *  abort execution if the specified condition does not hold true.
+ * @def BU_ASSERT_PTR(eqn)
+ *  Quick and easy macros to generate an informative error message and
+ *  abort execution if the specified condition does not hold true.
+ * @def BU_ASSERT_LONG(eqn)
+ *  Quick and easy macros to generate an informative error message and
+ *  abort execution if the specified condition does not hold true.
+ * @def BU_ASSERT_DOUBLE(eqn)
  *  Quick and easy macros to generate an informative error message and
  *  abort execution if the specified condition does not hold true.
  *
@@ -321,23 +349,34 @@ __BEGIN_DECLS
 	}
 #  endif
 #endif
+/*@}*/
 
 /*----------------------------------------------------------------------*/
-/*
+/** @addtogroup hton */
+/*@{*/
+/**
  *  Sizes of "network" format data.
  *  We use the same convention as the TCP/IP specification,
  *  namely, big-Endian, IEEE format, twos compliment.
  *  This is the BRL-CAD external data representation (XDR).
  *  See also the support routines in libbu/xdr.c
+ *
+ * @def SIZEOF_NETWORK_SHORT
+ * @def SIZEOF_NETWORK_LONG
+ * @def SIZEOF_NETWORK_FLOAT
+ * @def SIZEOF_NETWORK_DOUBLE
  */
 #define SIZEOF_NETWORK_SHORT	2	/* htons(), bu_gshort(), bu_pshort() */
 #define SIZEOF_NETWORK_LONG	4	/* htonl(), bu_glong(), bu_plong() */
 #define SIZEOF_NETWORK_FLOAT	4	/* htonf() */
 #define SIZEOF_NETWORK_DOUBLE	8	/* htond() */
+/*@}*/
 
 /*----------------------------------------------------------------------*/
 /* convert.c
  */
+/** @addtogroup conv */
+/**@{*/
 /*
  * Forward declarations.
  */
@@ -423,67 +462,70 @@ BU_EXPORT BU_EXTERN(int bu_cv_htonul,
 #define IND_LITTLE	2
 #define IND_ILL		3		/* PDP-11 */
 #define IND_CRAY	4
+/**@}*/
 
 /*----------------------------------------------------------------------*/
 /* list.c */
-/*
- *									*
- *			     B U _ L I S T				*
- *									*
- *			Doubly-linked list support			*
- *									*
- *  These macros assume that all user-provided structures will have	*
- *  a "struct bu_list" as their first element (often named "l" [ell]).	*
- *  Thus, a pointer to the bu_list struct is a "pun" for the		*
- *  user-provided structure as well, and the pointers can be converted	*
- *  back and forth safely with type casts.				*
- *									*
- *  Furthermore, the head of the linked list could be			*
- *  a full instance of the user-provided structure			*
- *  (although the storage-conscious programmer could make the head	*
- *  just an bu_list structure, with careful type casting).		*
- *  This results in a doubly-linked circular list, with the head	*
- *  having the same shape as all the list members.			*
- *  The application is free to make use of this symmetry and store	*
- *  data values in the head, or the extra storage in the head can	*
- *  be ignored.								*
- *									*
- *  Where a macro expects an argument "p", it should be a pointer to	*
- *  a user-provided structure.						*
- *									*
- *  Where a macro expects an argument "hp", it should be a pointer to	*
- *  a "struct bu_list" located in the list head, e.g., &(head.l).	*
- *									*
- *  Where a macro expects an argument "old", "new", or "cur", it should	*
- *  be a pointer to the "struct bu_list" located either			*
- *  in a user-provided structure, e.g. &((p)->l),			*
- *  or for the case of "old" it may also be in the list head, e.g.	*
- *	BU_LIST_INSERT( &(head.l), &((p)->l) );				*
- *									*
- *  Dequeueing the head of a list is a valid and			*
- *  well defined operation which should be performed with caution.	*
- *  Unless a pointer to some other element of the list is retained	*
- *  by the application, the rest of the linked list can no longer be	*
- *  referred to.							*
- *									*
- *  The "magic" field of the list header _must_ be set to the constant	*
- *  BU_LIST_HEAD_MAGIC, but the "magic" field of all list members	*
- *  should be established by user code, to identify the type of		*
- *  structure that the bu_list structure is embedded in.		*
- *  It is permissible for one list to contain an arbitrarily mixed	*
- *  set of user "magic" numbers, as long as the head is properly marked.*
- *									*
- *  There is a dual set of terminology used in some of the macros:	*
- *	FIRST / LAST	from the point of view of the list head		*
- *	NEXT / PREV	from the point of view of a list member		*
- *	forw / back	the actual pointer names			*
- *									*
+
+/** @addtogroup bu_list
+ *									
+ *			     B U _ L I S T				
+ *
+ *			Doubly-linked list support			
+ *									
+ *  These macros assume that all user-provided structures will have	
+ *  a "struct bu_list" as their first element (often named "l" [ell]).	
+ *  Thus, a pointer to the bu_list struct is a "pun" for the		
+ *  user-provided structure as well, and the pointers can be converted	
+ *  back and forth safely with type casts.				
+ *									
+ *  Furthermore, the head of the linked list could be			
+ *  a full instance of the user-provided structure			
+ *  (although the storage-conscious programmer could make the head	
+ *  just an bu_list structure, with careful type casting).		
+ *  This results in a doubly-linked circular list, with the head	
+ *  having the same shape as all the list members.			
+ *  The application is free to make use of this symmetry and store	
+ *  data values in the head, or the extra storage in the head can	
+ *  be ignored.								
+ *									
+ *  Where a macro expects an argument "p", it should be a pointer to	
+ *  a user-provided structure.						
+ *									
+ *  Where a macro expects an argument "hp", it should be a pointer to	
+ *  a "struct bu_list" located in the list head, e.g., &(head.l).	
+ *									
+ *  Where a macro expects an argument "old", "new", or "cur", it should	
+ *  be a pointer to the "struct bu_list" located either			
+ *  in a user-provided structure, e.g. &((p)->l),			
+ *  or for the case of "old" it may also be in the list head, e.g.	
+ *	BU_LIST_INSERT( &(head.l), &((p)->l) );				
+ *									
+ *  Dequeueing the head of a list is a valid and			
+ *  well defined operation which should be performed with caution.	
+ *  Unless a pointer to some other element of the list is retained	
+ *  by the application, the rest of the linked list can no longer be	
+ *  referred to.							
+ *									
+ *  The "magic" field of the list header _must_ be set to the constant	
+ *  BU_LIST_HEAD_MAGIC, but the "magic" field of all list members	
+ *  should be established by user code, to identify the type of		
+ *  structure that the bu_list structure is embedded in.		
+ *  It is permissible for one list to contain an arbitrarily mixed	
+ *  set of user "magic" numbers, as long as the head is properly marked.
+ *									
+ *  There is a dual set of terminology used in some of the macros:	
+ *	FIRST / LAST	from the point of view of the list head		
+ *	NEXT / PREV	from the point of view of a list member		
+ *	forw / back	the actual pointer names			
+ *									
  ************************************************************************/
+/**@{*/
 
 struct bu_list {
-	long		magic;
-	struct bu_list	*forw;		/* "forward", "next" */
-	struct bu_list	*back;		/* "back", "last" */
+    long		magic;		/**< @brief Magic # for mem id/check */
+    struct bu_list	*forw;		/**< @brief "forward", "next" */
+    struct bu_list	*back;		/**< @brief "back", "last" */
 };
 #define BU_LIST_HEAD_MAGIC	0x01016580	/* Magic num for list head */
 #define BU_LIST_NULL	((struct bu_list *)0)
@@ -774,12 +816,17 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
  */
 #define BU_LIST_MAIN_PTR(_type, _ptr2, _name2)	\
 	((struct _type *)(((char *)(_ptr2)) - offsetof(struct _type, _name2.magic)))
-
+/*@}*/
 /*----------------------------------------------------------------------*/
 /* bitv.c */
 /*
  *			B U _ B I T V
- *
+ */
+/** @addtogroup bitv */
+/**@{*/
+/**
+ * @struct bu_bitv bu.h
+ * @brief
  *  Bit vector data structure.
  *
  *  bu_bitv uses a little-endian encoding, placing bit 0 on the
@@ -796,9 +843,9 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
  *  Note that MUVES does it differently
  */
 struct bu_bitv {
-	struct bu_list	l;		/* linked list for caller's use */
-	unsigned int	nbits;		/* actual size of bits[], in bits */
-	bitv_t		bits[2];	/* variable size array */
+    struct bu_list	l;		/**< @brief linked list for caller's use  */
+    unsigned int	nbits;		/**< @brief actual size of bits[], in bits  */
+    bitv_t		bits[2];	/**< @brief variable size array  */
 };
 
 #define BU_BITV_MAGIC		0x62697476	/* 'bitv' */
@@ -890,21 +937,27 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 		} /* end for(_b) */ \
 	} /* end for(_wd) */ \
 } /* end block */
+/*@}*/
 
 /*----------------------------------------------------------------------*/
 /* hist.c */
 
-/*
+/** @addtogroup bu_hist */
+/*@{*/
+/**
  *			B U _ H I S T
+ *
+ * @struct bu_hist bu.h
+ * @brief histogram support
  */
 struct bu_hist  {
-	long		magic;
-	fastf_t		hg_min;		/* minimum value */
-	fastf_t		hg_max;		/* maximum value */
-	fastf_t		hg_clumpsize;	/* (max-min+1)/nbins+1 */
-	long		hg_nsamples;	/* total number of samples spread into histogram */
-	long		hg_nbins;	/* # of bins in hg_bins[] */
-	long		*hg_bins;	/* array of counters */
+    long		magic;		/**< @brief magic # for id/check  */
+    fastf_t		hg_min;		/**< @brief minimum value  */
+    fastf_t		hg_max;		/**< @brief maximum value  */
+    fastf_t		hg_clumpsize;	/**< @brief (max-min+1)/nbins+1  */
+    long		hg_nsamples;	/**< @brief total number of samples spread into histogram  */
+    long		hg_nbins;	/**< @brief # of bins in hg_bins[]  */
+    long		*hg_bins;	/**< @brief array of counters  */
 };
 #define BU_HIST_MAGIC	0x48697374	/* Hist */
 #define BU_CK_HIST(_p)	BU_CKMAG(_p, BU_HIST_MAGIC, "struct bu_hist")
@@ -930,12 +983,26 @@ struct bu_hist  {
 	} \
 	(_hp)->hg_nsamples += __count;  }
 
-
+/*@}*/
 /*----------------------------------------------------------------------*/
 /* ptbl.c */
-/*
+/**
+ * @addtogroup ptbl
+ * @struct bu_ptbl
+ * @brief
  *  Support for generalized "pointer tables".
  */
+/*@{*/
+
+struct bu_ptbl {
+    struct bu_list	l;	/**< @brief linked list for caller's use  */
+    int		end;	/**< @brief index into buffer of first available location  */
+    int		blen;	/**< @brief # of (long *)'s worth of storage at *buffer  */
+    long 		**buffer; /**< @brief data storage area  */
+};
+#define BU_PTBL_MAGIC		0x7074626c		/* "ptbl" */
+#define BU_CK_PTBL(_p)		BU_CKMAG(_p, BU_PTBL_MAGIC, "bu_ptbl")
+
 #define BU_PTBL_INIT	0	/* initialize table pointer struct & get storage */
 #define BU_PTBL_INS	1	/* insert an item (long *) into a table */
 #define BU_PTBL_LOC 	2	/* locate a (long *) in an existing table */
@@ -945,16 +1012,6 @@ struct bu_hist  {
 #define BU_PTBL_RM	6	/* remove all occurrences of an item from a table */
 #define BU_PTBL_INS_UNIQUE 7	/* insert item into table, if not present */
 #define BU_PTBL_ZERO	8	/* replace all occurrences of an item by 0 */
-
-struct bu_ptbl {
-	struct bu_list	l;	/* linked list for caller's use */
-	int		end;	/* index into buffer of first available location */
-	int		blen;	/* # of (long *)'s worth of storage at *buffer */
-	long 		**buffer; /* data storage area */
-};
-#define BU_PTBL_MAGIC		0x7074626c		/* "ptbl" */
-#define BU_CK_PTBL(_p)		BU_CKMAG(_p, BU_PTBL_MAGIC, "bu_ptbl")
-
 /*
  *  For those routines that have to "peek" into the ptbl a little bit.
  */
@@ -985,12 +1042,15 @@ struct bu_ptbl {
 
 
 /* vlist, vlblock?  But they use vmath.h... */
+/*@}*/
 
 /*----------------------------------------------------------------------*/
 /* mappedfile.c */
-/*
+/**
  *			B U _ M A P P E D _ F I L E
- *
+ * @addtogroup mf
+ * @struct bu_mapped_file bu.h
+ * @brief
  *  Structure for opening a mapped file.
  *  Each file is opened and mapped only once (per application,
  *  as tagged by the string in "appl" field).
@@ -1007,31 +1067,33 @@ struct bu_ptbl {
  *
  *  For appl == "db_i", file is a ".g" database & apbuf is (struct db_i *).
  */
+/*@{*/
 struct bu_mapped_file {
 	struct bu_list	l;
-	char		*name;		/* bu_strdup() of file name */
-	genptr_t	buf;		/* In-memory copy of file (may be mmapped) */
-	long		buflen;		/* # bytes in 'buf' */
-	int		is_mapped;	/* 1=mmap() used, 0=bu_malloc/fread */
-	char		*appl;		/* bu_strdup() of tag for application using 'apbuf' */
-	genptr_t	apbuf;		/* opt: application-specific buffer */
-	long		apbuflen;	/* opt: application-specific buflen */
-	long		modtime;	/* date stamp, in case file is modified */
-	int		uses;		/* # ptrs to this struct handed out */
-	int		dont_restat;	/* 1=on subsequent opens, don't re-stat() */
+    char		*name;		/**< @brief bu_strdup() of file name  */
+    genptr_t	buf;		/**< @brief In-memory copy of file (may be mmapped)  */
+    long		buflen;		/**< @brief # bytes in 'buf'  */
+    int		is_mapped;	/**< @brief 1=mmap() used, 0=bu_malloc/fread  */
+    char		*appl;		/**< @brief bu_strdup() of tag for application using 'apbuf'  */
+    genptr_t	apbuf;		/**< @brief opt: application-specific buffer  */
+    long		apbuflen;	/**< @brief opt: application-specific buflen  */
+    long		modtime;	/**< @brief date stamp, in case file is modified  */
+    int		uses;		/**< @brief # ptrs to this struct handed out  */
+    int		dont_restat;	/**< @brief 1=on subsequent opens, don't re-stat()  */
 };
 #define BU_MAPPED_FILE_MAGIC	0x4d617066	/* Mapf */
 #define BU_CK_MAPPED_FILE(_p)	BU_CKMAG(_p, BU_MAPPED_FILE_MAGIC, "bu_mapped_file")
 
+/*@}*/
 /*----------------------------------------------------------------------*/
 
 /* formerly rt_g.rtg_logindent, now use bu_log_indent_delta() */
 typedef int (*bu_hook_t)BU_ARGS((genptr_t, genptr_t));
 
 struct bu_hook_list {
-	struct bu_list	l;
-	bu_hook_t	hookfunc;
-	genptr_t 	clientdata;
+    struct bu_list	l; /**< @brief linked list  */
+    bu_hook_t	hookfunc; /**< @brief function to call  */
+    genptr_t 	clientdata; /**< @brief data for caller  */
 };
 
 #define BUHOOK_NULL 0
@@ -1043,6 +1105,8 @@ BU_EXPORT extern struct bu_hook_list bu_bomb_hook_list;
 
 /*----------------------------------------------------------------------*/
 /* avs.c */
+/** @addtogroup avs */
+/*@{*/
 /*
  *  Attribute/value sets
  */
@@ -1054,8 +1118,8 @@ BU_EXPORT extern struct bu_hook_list bu_bomb_hook_list;
  *  it depends on usage.
  */
 struct bu_attribute_value_pair {
-	const char	*name;
-	const char	*value;
+    const char	*name;	/**< @brief attribute name  */
+    const char	*value; /**< @brief attribute value  */
 };
 
 /*
@@ -1076,11 +1140,11 @@ struct bu_attribute_value_pair {
  */
 struct bu_attribute_value_set {
 	long				magic;
-	int				count;	/* # valid entries in avp */
-	int				max;	/* # allocated slots in avp */
+    int				count;	/**< @brief # valid entries in avp  */
+    int				max;	/**< @brief # allocated slots in avp  */
 	genptr_t			readonly_min;
 	genptr_t			readonly_max;
-	struct bu_attribute_value_pair	*avp;	/* array[max] */
+    struct bu_attribute_value_pair	*avp;	/**< @brief array[max]  */
 };
 #define BU_AVS_MAGIC		0x41765321	/* AvS! */
 #define BU_CK_AVS(_avp)		BU_CKMAG(_avp, BU_AVS_MAGIC, "bu_attribute_value_set")
@@ -1098,16 +1162,19 @@ struct bu_attribute_value_set {
 	( (_avsp)->readonly_max == NULL || \
 	    ((genptr_t)(_p) < (genptr_t)(_avsp)->readonly_min || (genptr_t)(_p) > (genptr_t)(_avsp)->readonly_max) )
 
+/*@}*/
 /*----------------------------------------------------------------------*/
 /* vls.c */
+/** @addtogroup vls */
+/*@{*/
 /*
  *  Variable Length Strings: bu_vls support (formerly rt_vls in rtstring.h)
  */
 struct bu_vls  {
 	long	vls_magic;
-	char	*vls_str;	/* Dynamic memory for buffer */
-	int	vls_offset;	/* Offset into vls_str where data is good */
-	int	vls_len;	/* Length, not counting the null */
+    char	*vls_str;	/**< @brief Dynamic memory for buffer  */
+    int	vls_offset;	/**< @brief Offset into vls_str where data is good  */
+    int	vls_len;	/**< @brief Length, not counting the null  */
 	int	vls_max;
 };
 #define BU_VLS_MAGIC		0x89333bbb
@@ -1135,8 +1202,10 @@ struct bu_vls  {
 /* These are global because BU_SETJUMP must be macro.  Please don't touch. */
 BU_EXPORT extern int	bu_setjmp_valid;		/* !0 = bu_jmpbuf is valid */
 BU_EXPORT extern jmp_buf	bu_jmpbuf;			/* for BU_SETJMP() */
-
+/*@}*/
 /*-------------------------------------------------------------------------*/
+/** @addtogroup mro */
+/*@{*/
 /* 			B U _ M R O
  *
  *	Support for Multiply Represented Objects
@@ -1170,8 +1239,13 @@ struct bu_mro {
 #define BU_MRO_GETSTRING( _p ) bu_vls_addr( &_p->string_rep )
 
 #define BU_MRO_STRLEN( _p ) bu_vls_strlen( &_p->string_rep )
+/*@}*/
 
 /*----------------------------------------------------------------------*/
+/** @addtogroup bu_debug Debugging 
+ * @ingroup libbu
+ */
+/*@{*/
 /*
  * Section for BU_DEBUG values
  *
@@ -1205,8 +1279,11 @@ BU_EXPORT extern int	bu_debug;
 \014MAPPED_FILE\013AVS\012PTBL\011MATH\010?\7?\6MEM_QCHECK\5PARALLEL\
 \4?\3MEM_LOG\2MEM_CHECK\1COREDUMP"
 
+/*@}*/
 /*----------------------------------------------------------------------*/
 /* parse.c */
+/** @addtogroup parse */
+/*@{*/
 /*
  *	Structure parse/print
  *
@@ -1333,13 +1410,13 @@ BU_EXPORT extern int	bu_debug;
  *	use this technique.
  */
 struct bu_structparse {
-	char		sp_fmt[4];		/* "i" or "%f", etc */
-	long		sp_count;		/* number of elements */
-	char		*sp_name;		/* Element's symbolic name */
-	long		sp_offset;		/* Byte offset in struct */
-	void		(*sp_hook)();		/* Optional hooked function, or indir ptr */
-	char		*sp_desc;		/* description of element */
-	void		*sp_default;		/* ptr to default value */
+    char		sp_fmt[4];		/**< @brief "i" or "%f", etc  */
+    long		sp_count;		/**< @brief number of elements  */
+    char		*sp_name;		/**< @brief Element's symbolic name  */
+    long		sp_offset;		/**< @brief Byte offset in struct  */
+    void		(*sp_hook)();		/**< @brief Optional hooked function, or indir ptr  */
+    char		*sp_desc;		/**< @brief description of element  */
+    void		*sp_default;		/**< @brief ptr to default value  */
 };
 #define BU_STRUCTPARSE_FUNC_NULL	((void (*)())0)
 
@@ -1366,6 +1443,7 @@ struct bu_external  {
 	(_p)->ext_buf = (genptr_t)NULL; (_p)->ext_nbytes = 0;}
 #define BU_CK_EXTERNAL(_p)	BU_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
 
+/*@}*/
 /*----------------------------------------------------------------------*/
 /* color.c */
 #define	HUE		0
@@ -1384,6 +1462,8 @@ struct bu_color
 
 /*----------------------------------------------------------------------*/
 /* red-black tree support */
+/** @addtogroup rb */
+/*@{*/
 /*
  *	The data structures and constants for red-black trees.
  *
@@ -1482,10 +1562,10 @@ typedef struct
  */
 struct bu_rb_package
 {
-    long		rbp_magic;	/* Magic no. for integrity check */
-    struct bu_rb_node	**rbp_node;	/* Containing nodes */
-    struct bu_rb_list	*rbp_list_pos;	/* Place in the list of all pkgs. */
-    void		*rbp_data;	/* Application data */
+    long		rbp_magic;	/**< @brief Magic no. for integrity check  */
+    struct bu_rb_node	**rbp_node;	/**< @brief Containing nodes  */
+    struct bu_rb_list	*rbp_list_pos;	/**< @brief Place in the list of all pkgs.  */
+    void		*rbp_data;	/**< @brief Application data  */
 };
 #define	BU_RB_PKG_NULL	((struct bu_rb_package *) 0)
 
@@ -1501,16 +1581,16 @@ struct bu_rb_package
  */
 struct bu_rb_node
 {
-    long		rbn_magic;	/* Magic no. for integrity check */
-    bu_rb_tree		*rbn_tree;	/* Tree containing this node */
-    struct bu_rb_node	**rbn_parent;	/* Parents */
-    struct bu_rb_node	**rbn_left;	/* Left subtrees */
-    struct bu_rb_node	**rbn_right;	/* Right subtrees */
-    char		*rbn_color;	/* Colors of this node */
-    int			*rbn_size;	/* Sizes of subtrees rooted here */
-    struct bu_rb_package **rbn_package;	/* Contents of this node */
-    int			rbn_pkg_refs;	/* How many orders are being used? */
-    struct bu_rb_list	*rbn_list_pos;	/* Place in the list of all nodes */
+    long		rbn_magic;	/**< @brief Magic no. for integrity check  */
+    bu_rb_tree		*rbn_tree;	/**< @brief Tree containing this node  */
+    struct bu_rb_node	**rbn_parent;	/**< @brief Parents  */
+    struct bu_rb_node	**rbn_left;	/**< @brief Left subtrees  */
+    struct bu_rb_node	**rbn_right;	/**< @brief Right subtrees  */
+    char		*rbn_color;	/**< @brief Colors of this node  */
+    int			*rbn_size;	/**< @brief Sizes of subtrees rooted here  */
+    struct bu_rb_package **rbn_package;	/**< @brief Contents of this node  */
+    int			rbn_pkg_refs;	/**< @brief How many orders are being used?  */
+    struct bu_rb_list	*rbn_list_pos;	/**< @brief Place in the list of all nodes  */
 };
 #define	BU_RB_NODE_NULL	((struct bu_rb_node *) 0)
 
@@ -1530,6 +1610,7 @@ struct bu_rb_node
 #define	PREORDER	0
 #define	INORDER		1
 #define	POSTORDER	2
+
 
 /*
  *			B U _ O B S E R V E R
@@ -1558,7 +1639,10 @@ struct bu_cmdtab {
  *  Declarations of external functions in LIBBU.
  *  Source file names listed alphabetically.
  */
+/**@}*/
 
+/** @addtogroup avs */
+/*@{*/
 /* avs.c */
 BU_EXPORT BU_EXTERN(void bu_avs_init,
 		    (struct bu_attribute_value_set *avp,
@@ -1595,6 +1679,7 @@ BU_EXPORT BU_EXTERN(void bu_avs_add_nonunique,
 		    (struct bu_attribute_value_set *avsp,
 		     char *attribute,
 		     char *value));
+/*@}*/
 
 /* badmagic.c */
 BU_EXPORT BU_EXTERN(void bu_badmagic,
@@ -1848,8 +1933,12 @@ BU_EXPORT BU_EXTERN(void bu_prmem,
 		    (const char *str));
 BU_EXPORT BU_EXTERN(char *bu_strdupm,
 		    (const char *cp, const char *label));
+
+#define bu_strdup(s) bu_strdupm(s, "bu_srtdup " BU_FLSTR)
+#if 0
 BU_EXPORT BU_EXTERN(char *bu_strdup,
 		    (const char *cp));
+#endif
 BU_EXPORT BU_EXTERN(char *bu_dirname,
 		    (const char *cp));
 BU_EXPORT BU_EXTERN(int bu_malloc_len_roundup,

@@ -67,10 +67,12 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  *  Include Sequencing -
- *	#include <stdio.h>
- *	#include <math.h>
- *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
- *	#include "vmath.h"
+@code
+	#include <stdio.h>
+	#include <math.h>
+	#include "machine.h"	/_* For fastf_t definition on this machine *_/
+	#include "vmath.h"
+@endcode
  *
  *  Libraries Used -
  *	-lm -lc

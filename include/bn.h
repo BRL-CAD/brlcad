@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** 
+
 /** @file bn.h
- *
+ *@addtogroup libbn
  *  Header file for the BRL-CAD Numerical Computation Library, LIBBN.
  *
  *  The library provides a broad assortment of numerical algorithms
@@ -49,19 +51,20 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  *  Include Sequencing -
- *	#include "common.h"
- *	#include <stdio.h>
- *	#include <math.h>
- *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
- *	#include "bu.h"
- *	#include "vmath.h"
- *	#include "bn.h"
+ *	# include "common.h"
+ *	# include <stdio.h>
+ *	# include <math.h>
+ *	# include "machine.h"	/_* For fastf_t definition on this machine *_/
+ *	# include "bu.h"
+ *	# include "vmath.h"
+ *	# include "bn.h"
  *
  *  Libraries Used -
  *	-lm -lc
  *
  *  $Header$
  */
+/*@{*/
 
 #ifndef __BN_H__
 #define __BN_H__
@@ -88,7 +91,10 @@ __BEGIN_DECLS
 #define BN_AZIMUTH 0
 #define BN_ELEVATION 1
 #define BN_TWIST 2
+/*@}*/
 
+/** @addtogroup tol */
+/*@{*/
 /*			B N _ T O L
  *
  *  A handy way of passing around the tolerance information needed to
@@ -136,9 +142,11 @@ struct bn_tol {
 	(((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
 
 #define BN_APPROXEQUAL(_a, _b, _tol) (fabs( (_a) - (_b) ) <= _tol->dist)
-
+/*@}*/
 /*----------------------------------------------------------------------*/
 /* anim.c */
+/** @addtogroup anim */
+/*@{*/
 /* XXX These should all have bn_ prefixes */
 BN_EXPORT BU_EXTERN(void anim_v_permute,
 		    (mat_t m));
@@ -274,10 +282,12 @@ BN_EXPORT BU_EXTERN(int Bn_Init,
 #endif
 BN_EXPORT BU_EXTERN(void bn_tcl_mat_print,
 		    ());
-
+/*@}*/
 
 /*----------------------------------------------------------------------*/
 /* complex.c */
+/** @addtogroup complex */
+/*@{*/
 /*
  *  Complex numbers
  */
@@ -320,7 +330,7 @@ BN_EXPORT BU_EXTERN(void bn_cx_div,
 BN_EXPORT BU_EXTERN(void bn_cx_sqrt,
 		    (bn_complex_t *op,
 		     const bn_complex_t *ip));
-
+/*@}*/
 /*----------------------------------------------------------------------*/
 /* mat.c */
 /*
@@ -523,18 +533,14 @@ BN_EXPORT BU_EXTERN(int bn_mat_is_non_unif,
 		    (const mat_t m));
 /*----------------------------------------------------------------------*/
 /* msr.c */
+/** @addtogroup rnd */
+/*@{*/
 /*
  * Define data structures and constants for the "MSR" random number package.
  *
  * Also define a set of macros to access the random number tables
  * and to limit the area/volume that a set of random numbers inhabit.
  */
-
-#define BN_UNIF_MAGIC	12481632
-#define BN_GAUSS_MAGIC 512256128
-
-#define BN_CK_UNIF(_p) BU_CKMAG(_p, BN_UNIF_MAGIC, "bn_unif")
-#define BN_CK_GAUSS(_p) BU_CKMAG(_p, BN_GAUSS_MAGIC, "bn_gauss")
 
 struct bn_unif {
 	long	magic;
@@ -544,6 +550,15 @@ struct bn_unif {
 	int	msr_long_ptr;
 	long	*msr_longs;
 };
+
+#define BN_UNIF_MAGIC	12481632
+#define BN_GAUSS_MAGIC 512256128
+
+#define BN_CK_UNIF(_p) BU_CKMAG(_p, BN_UNIF_MAGIC, "bn_unif")
+#define BN_CK_GAUSS(_p) BU_CKMAG(_p, BN_GAUSS_MAGIC, "bn_gauss")
+
+
+
 /*
  * NOTE!!! The order of msr_gauss and msr_unif MUST match in the
  * first three entries as msr_gauss is passed as a msr_unif in
@@ -604,9 +619,11 @@ BN_EXPORT BU_EXTERN(double bn_gauss_fill,
 		(_p)->msr_gausses[--(_p)->msr_gauss_ptr] : \
 		bn_gauss_fill(_p))
 
-
+/*@}*/
 /*----------------------------------------------------------------------*/
 /* noise.c */
+/* @addtogroup noise */
+/*@{*/
 /*
  * fractal noise support
  */
@@ -641,7 +658,7 @@ BN_EXPORT BU_EXTERN(double bn_noise_ridged,
 		     double lacunarity,
 		     double octaves,
 		     double offset));
-
+/*@}*/
 /*----------------------------------------------------------------------*/
 /* plane.c */
 /*
@@ -863,6 +880,8 @@ BN_EXPORT BU_EXTERN(int bn_isect_planes,
 
 /*----------------------------------------------------------------------*/
 /* poly.c */
+/** @addtogroup poly */
+/*@{*/
 /*
  *  Polynomial data type
  */
@@ -914,9 +933,11 @@ BN_EXPORT BU_EXTERN(void bn_pr_roots,
 		    (const char *title,
 		     const struct bn_complex roots[],
 		     int n));
-
+/*@}*/
 /*----------------------------------------------------------------------*/
 /* qmath.c */
+/** @addtogroup quat */
+/*@{*/
 /*
  * Quaternion support
  */
@@ -962,9 +983,11 @@ BN_EXPORT BU_EXTERN(void quat_exp,
 BN_EXPORT BU_EXTERN(void quat_log,
 		    (quat_t out,
 		     const quat_t in));
+/*@}*/
 /*----------------------------------------------------------------------*/
 /* rand.c */
-
+/** @addtogroup rnd */
+/*@{*/
 /*  A supply of fast pseudo-random numbers from table in bn/rand.c.
  *  The values are in the range 0..1
  *
@@ -1030,7 +1053,7 @@ BN_EXPORT extern const float bn_sin_table[BN_SINTABSIZE];
 
 BN_EXPORT extern void bn_mathtab_constant();
 
-
+/*@}*/
 
 /*----------------------------------------------------------------------*/
 /* wavelet.c */
@@ -1742,7 +1765,7 @@ BN_EXPORT extern const char		bn_version[];
 __END_DECLS
 
 #endif /* SEEN_BN_H */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

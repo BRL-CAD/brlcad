@@ -21,9 +21,9 @@
 /** @file shortvect-pr.h
  *			S H O R T V E C T - P R A G . H
  *
- *  This header file is intended to be #include'ed by "shortvect.h",
+ *  This header file is intended to be include'ed by "shortvect.h",
  *  and may contain vendor-specific vectorization directives which
- *  use #pragma and other ANSI-C constructions.
+ *  use pragma and other ANSI-C constructions.
  *
  *  This file will never be included when the compilation is not being
  *  processed by an ANSI-C compiler.

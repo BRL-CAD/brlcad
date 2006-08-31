@@ -31,15 +31,15 @@
  *  Depends on having machine.h, bu.h, vmath.h, and bn.h included first.
  *
  *  The proper order for including them all is:
- *	#include <stdio.h>
- *	#include <math.h>
- *	#include "machine.h"
- *	#include "bu.h"
- *	#include "vmath.h"
- *	#include "nmg.h"
- *	#include "raytrace.h"
- *	#include "nurb.h"
- *	#include "rtgeom.h"
+ *	# include <stdio.h>
+ *	# include <math.h>
+ *	# include "machine.h"
+ *	# include "bu.h"
+ *	# include "vmath.h"
+ *	# include "nmg.h"
+ *	# include "raytrace.h"
+ *	# include "nurb.h"
+ *	# include "rtgeom.h"
  *
  *  Author -
  *	Michael John Muuss

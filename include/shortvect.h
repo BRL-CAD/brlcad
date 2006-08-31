@@ -20,7 +20,7 @@
  */
 /** @file shortvect.h
  *
- *  This header file is intended to be #include'ed in front of any
+ *  This header file is intended to be include'ed in front of any
  *  loop which is known to never involve more than 32,
  *  to permit vectorizing compilers to omit extra overhead.
  *
@@ -33,12 +33,12 @@
  *
  *  This file contains various definitions which can be safely seen
  *  by both ANSI and non-ANSI compilers and preprocessors.
- *  Absolutely NO #pragma's can go in this file;  they spoil backwards
+ *  Absolutely NO pragma's can go in this file;  they spoil backwards
  *  compatability with non-ANSI compilers.
  *  If this file determines that it is being processed by an ANSI
- *  compiler, or one that is known to accept #pragma, then it will #include
+ *  compiler, or one that is known to accept pragma, then it will include
  *  the file "noalias-prag.h", which will contain the various
- *  vendor-specific #pragma's.
+ *  vendor-specific pragma's.
  *
  *  Authors -
  *	David Becker		Cray

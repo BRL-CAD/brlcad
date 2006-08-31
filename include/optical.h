@@ -18,7 +18,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bu.h
+/** @file optical.h
  *
  *  Header file for the BRL-CAD Optical Library, LIBOPTICAL.
  *

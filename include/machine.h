@@ -170,8 +170,8 @@
  *
  *
  *  Include Sequencing -
- *	#include "machine.h"
- *	#include "bu.h"
+ *	# include "machine.h"
+ *	# include "bu.h"
  *
  *  Libraries Used -
  *	LIBBU LIBBU_LIBES -lm -lc
