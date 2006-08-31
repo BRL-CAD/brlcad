@@ -24,6 +24,14 @@
  * @ingroup libbu
  */
 
+/** @defgroup getopt getopt
+ * @ingroup libbu
+ */
+
+/** @defgroup bu_hash Hashing
+ * @ingroup libbu
+ */
+
 /** @defgroup bu_hist Histogram Support
  * @ingroup libbu
  */
