@@ -1,0 +1,174 @@
+/** @defgroup libbu libbu (utility functions) */
+
+/** @defgroup avs Attribute/Value Sets
+ * @ingroup libbu
+ */
+
+/** @defgroup bitv Bit Vectors
+ * @ingroup libbu
+ */
+
+/** @defgroup color Color
+ * @ingroup libbu
+ */
+
+/** @defgroup conv Data Conversion
+ * @ingroup libbu
+ */
+
+/** @addtogroup bu_debug Debugging 
+ * @ingroup libbu
+ */
+
+/** @defgroup hton Endian Support
+ * @ingroup libbu
+ */
+
+/** @defgroup bu_hist Histogram Support
+ * @ingroup libbu
+ */
+
+/** @defgroup bu_list Linked Lists
+ * @ingroup libbu
+ */
+
+/** @defgroup mf Mapped Files
+ * @ingroup libbu
+ */
+
+/** @defgroup magic Magic Numbers
+ * @ingroup libbu
+ */
+
+/** @defgroup mro Multiply Represented Objects
+ * @ingroup libbu
+ */
+
+/** @defgroup thread Parallel processing, semaphores
+ * @ingroup libbu
+ */
+
+/** @defgroup ptbl Pointer Tables
+ * @ingroup libbu
+ */
+
+/** @defgroup bu_log File I/O
+ * @ingroup libbu
+ */
+
+/** @defgroup rb RedBlack trees
+ * @ingroup libbu
+ */
+
+/** @defgroup parse Structure Parse/Print/read/write
+ * @ingroup libbu
+ */
+
+/** @defgroup butcl Tcl
+ * @ingroup libbu
+ */
+
+/** @defgroup vls Variable Length Strings
+ * @ingroup libbu
+ */
+
+
+
+/** @defgroup libbn libbn (numerical functions) */
+
+/** @defgroup anim Animation
+ * @ingroup libbn
+ */
+
+/** @defgroup complex Complex Numbers
+ * @ingroup libbn
+ */
+
+/** @defgroup const Constants
+ * @ingroup libbn
+ */
+
+/** @defgroup vlist Display Lists
+ * @ingroup libbn
+ */
+
+/** @defgroup noise Fractal Noise
+ * @ingroup libbn
+ */
+
+/** @defgroup mat Matrix Math
+ * @ingroup libbn
+ */
+
+/** @defgroup plane Point/Line/Plane Geometry Math
+ * @ingroup libbn
+ */
+
+/** @defgroup poly Polynomials
+ * @ingroup libbn
+ */
+
+/** @defgroup quat Quaternions
+ * @ingroup libbn
+ */
+
+/** @defgroup rand Random Numbers
+ * @ingroup libbn
+ */
+
+/** @defgroup msr Minimal Standard Random Numbers 
+ * @ingroup rand
+ */
+
+/** @defgroup rnd Random Number Tables
+ * @ingroup rand
+ */
+
+/** @defgroup tol Tolerances
+ * @ingroup libbn
+ */
+
+/** @defgroup vtree Vertex Trees
+ * @ingroup libbn
+ */
+
+/** @defgroup wave Wavelets
+ * @ingroup libbn
+ */
+
+
+
+
+/** @defgroup libfb libfb (framebuffer) */
+
+
+/** @defgroup librt librt geometry, raytracing */
+/** @defgroup dbio Database IO 
+ * @ingroup librt
+ */
+
+/** @defgroup g_ Primitives
+ * @ingroup librt
+ */
+
+/** @defgroup nmg N-Manifold Geometry
+ * @ingroup g_
+ */
+
+/** @defgroup nurb NURBS
+ * @ingroup g_
+ */
+
+
+/** @defgroup ray Ray Tracing
+ * @ingroup librt
+ */
+
+/** @defgroup timer Timer
+ * @ingroup librt
+ */
+
+/** @defgroup fort Fortran
+ * @ingroup librt
+ */
+
