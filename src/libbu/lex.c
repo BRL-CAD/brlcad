@@ -19,15 +19,14 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup bu_log */
 /*@{*/
 /** @file lex.c
- *  Author -
+ *  @author
  *	Christopher T. Johnson
  *
- *  Source -
+ *  @par Source
  *	Geometric Solutions, Inc.
- *
  */
 /*@}*/
 
@@ -47,7 +46,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 static int bu_lex_reading_comment = 0;
 
-/*
+/**
  *			B U _ L E X _ G E T O N E
  */
 static char *
@@ -164,7 +163,7 @@ top:
 	return unit;
 }
 
-/*
+/**
  *			B U _ L E X
  */
 int
@@ -296,6 +295,8 @@ bu_lex(
 	token->t_id.value = unit;
 	return used;
 }
+
+/*@}*/
 
 /*
  * Local Variables:

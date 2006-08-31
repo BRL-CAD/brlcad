@@ -24,12 +24,12 @@
 /** @file rb_order_stats.c
  *	Routines to support order-statistic operations for a red-black tree
  *
- *  Author -
+ *  @author
  *	Paul J. Tanenbaum
  *
- *  Source -
+ * @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /*@}*/
 
@@ -50,7 +50,7 @@ static const char libbu_rb_order_stats_RCSid[] = "@(#) $Header$";
 #include "./rb_internals.h"
 
 
-/*		        _ R B _ S E L E C T ( )
+/**		        _ R B _ S E L E C T ( )
  *
  *	Retrieve the element of rank k in one order of a red-black tree
  *
@@ -78,7 +78,7 @@ static struct bu_rb_node *_rb_select (struct bu_rb_node *root, int order, int k)
 	return (_rb_select(bu_rb_right_child(root, order), order, k - rank));
 }
 
-/*		        B U _ R B _ S E L E C T ( )
+/**		        B U _ R B _ S E L E C T ( )
  *
  *		Applications interface to _rb_select()
  *
@@ -111,7 +111,7 @@ void *bu_rb_select (bu_rb_tree *tree, int order, int k)
     return (bu_rb_data(node, order));
 }
 
-/*		        B U _ R B _ R A N K ( )
+/**		        B U _ R B _ R A N K ( )
  *
  *	Determines the rank of a node in one order of a red-black tree
  *
@@ -146,7 +146,7 @@ int bu_rb_rank (bu_rb_tree *tree, int order)
 
     return (rank);
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

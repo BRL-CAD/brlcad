@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup mf */
 /*@{*/
 
 /** @file mappedfile.c
@@ -38,15 +38,14 @@
  *  an EBM and a height field, they will be assigned different mapped file
  *  structures, so that the "apbuf" pointers are distinct.
  *
- *  Author -
- *	Michael John Muuss
  *
- *  Source -
+ *  @author	Michael John Muuss
+ *
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char libbu_mappedfile_RCSid[] = "@(#)$Header$ (ARL)";
@@ -89,7 +88,7 @@ static struct bu_list	bu_mapped_file_list = {
 	(struct bu_list *)NULL
 };	/* list of currently open mapped files */
 
-/*
+/**
  *			B U _ O P E N _ M A P P E D _ F I L E
  *
  *  If the file can not be opened, as descriptive an error message as
@@ -319,7 +318,7 @@ fail:
 	return (struct bu_mapped_file *)NULL;
 }
 
-/*
+/**
  *			B U _ C L O S E _ M A P P E D _ F I L E
  *
  *  Release a use of a mapped file.
@@ -349,7 +348,7 @@ bu_close_mapped_file(struct bu_mapped_file *mp)
 	bu_semaphore_release(BU_SEM_MAPPEDFILE);
 }
 
-/*
+/**
  *			B U _ P R _ M A P P E D _ F I L E
  */
 void
@@ -363,7 +362,7 @@ bu_pr_mapped_file(const char *title, const struct bu_mapped_file *mp)
 		title );
 }
 
-/*
+/**
  *			B U _ F R E E _ M A P P E D _ F I L E S
  *
  *  Release storage being used by mapped files with no remaining users.
@@ -422,7 +421,7 @@ bu_free_mapped_files(int verbose)
 	bu_semaphore_release(BU_SEM_MAPPEDFILE);
 }
 
-/*
+/**
  *	B U _ O P E N _ M A P P E D _ F I L E _ W I T H _ P A T H
  *
  *  A wrapper for bu_open_mapped_file() which uses a search path
@@ -468,6 +467,7 @@ bu_open_mapped_file_with_path(char *const *path, const char *name, const char *a
 	return (struct bu_mapped_file *)NULL;
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

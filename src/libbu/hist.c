@@ -19,25 +19,25 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup bu_hist */
 /*@{*/
 /** @file hist.c
+ *
+ *@brief
  *  General purpose histogram handling routines.
  *
  *  The macro RT_HISTOGRAM_TALLY is used to record items that
  *  live in a single "bin", while the subroutine rt_hist_range()
  *  is used to record items that may extend across multiple "bin"s.
  *
- *  Author -
- *	Michael John Muuss
+ *  @author  Michael John Muuss
  *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  @par Source -
+ *  @n	SECAD/VLD Computing Consortium, Bldg 394
+ *  @n	The U. S. Army Ballistic Research Laboratory
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCShist[] = "@(#)$Header$ (BRL)";
@@ -55,7 +55,7 @@ static const char RCShist[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 
-/*
+/**
  *			B U _ H I S T _ F R E E
  */
 void
@@ -71,7 +71,7 @@ bu_hist_free(struct bu_hist *histp)
 	histp->magic = -1;	/* sanity */
 }
 
-/*
+/**
  *			B U _ H I S T _ I N I T
  *
  *  Initialize a bu_hist structure.
@@ -100,7 +100,7 @@ bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, unsigned int nbins
 	histp->magic = BU_HIST_MAGIC;
 }
 
-/*
+/**
  *			B U _ H I S T _ R A N G E
  */
 void
@@ -127,7 +127,7 @@ bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
 	hp->hg_nsamples++;
 }
 
-/*
+/**
  *			B U _ H I S T _ P R _ S U P P R E S S
  *
  *  Allows caller control over zero-suppression feature.
@@ -200,7 +200,7 @@ bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int
 	}
 }
 
-/*
+/**
  *			B U _ H I S T _ P R
  *
  *  The original interface.
@@ -210,6 +210,8 @@ bu_hist_pr(register const struct bu_hist *histp, const char *title)
 {
 	bu_hist_pr_suppress( histp, title, 1 );
 }
+
+/*@}*/
 
 /*
  * Local Variables:

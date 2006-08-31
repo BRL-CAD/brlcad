@@ -19,20 +19,19 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup mro */
 /*@{*/
 
 /** @file mro.c
  *  The Multiply Represented Object package.
  *
- *  Author -
- *	John R. Anderson
  *
- *  Source -
+ *  @author	John R. Anderson
+ *
+ * @par  Source -
  *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
+ * @n      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 
@@ -59,6 +58,9 @@ static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 
+/**
+ *
+ */
 void
 bu_mro_init( struct bu_mro *mrop )
 {
@@ -67,6 +69,10 @@ bu_mro_init( struct bu_mro *mrop )
 	BU_MRO_INVALIDATE( mrop );
 }
 
+
+/**
+ *
+ */
 void
 bu_mro_free( struct bu_mro *mrop )
 {
@@ -76,6 +82,10 @@ bu_mro_free( struct bu_mro *mrop )
 	BU_MRO_INVALIDATE( mrop );
 }
 
+
+/**
+ *
+ */
 void
 bu_mro_set( struct bu_mro *mrop, const char *string )
 {
@@ -86,6 +96,10 @@ bu_mro_set( struct bu_mro *mrop, const char *string )
 	BU_MRO_INVALIDATE( mrop );
 }
 
+
+/**
+ *
+ */
 void
 bu_mro_init_with_string( struct bu_mro *mrop, const char *string )
 {
@@ -95,6 +109,7 @@ bu_mro_init_with_string( struct bu_mro *mrop, const char *string )
 	BU_MRO_INVALIDATE( mrop );
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

@@ -18,19 +18,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup rb 
- * \ingroup libbu
- */
+/** \addtogroup rb  */
 /*@{*/
 /** @file rb_delete.c
  *	    Routines to delete a node from a red-black tree
  *
- *  Author -
- *	Paul J. Tanenbaum
  *
- *  Source -
+ *  @author	Paul J. Tanenbaum
+ *
+ * @par  Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /*@}*/
 
@@ -49,7 +47,7 @@ static char const libbu_rb_delete_RCSid[] = "@(#) $Header$";
 #include "./rb_internals.h"
 
 
-/*			B U _ R B _ F I X U P ( )
+/**			B U _ R B _ F I X U P ( )
  *
  *	    Restore the red-black properties of a red-black tree
  *		    after the splicing out of a node
@@ -117,7 +115,7 @@ static void bu_rb_fixup (bu_rb_tree *tree, struct bu_rb_node *node, int order)
     bu_rb_set_color(node, order, BU_RB_BLACK);
 }
 
-/*		        _ R B _ D E L E T E ( )
+/**		        _ R B _ D E L E T E ( )
  *
  *	        Delete a node from one order of a red-black tree
  *
@@ -174,7 +172,7 @@ static void _rb_delete (bu_rb_tree *tree, struct bu_rb_node *node, int order)
 	bu_rb_free_node(y);
 }
 
-/*		        B U _ R B _ D E L E T E ( )
+/**		        B U _ R B _ D E L E T E ( )
  *
  *	        Applications interface to _rb_delete()
  *
@@ -223,7 +221,7 @@ void bu_rb_delete (bu_rb_tree *tree, int order)
     bu_rb_free_package(package);
     bu_free((genptr_t) node, "node list");
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

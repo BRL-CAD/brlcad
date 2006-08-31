@@ -19,22 +19,28 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup hton */
 /*@{*/
 /** @file xdr.c
  *  Routines to implement an external data representation (XDR)
  *  compatible with the usual InterNet standards, e.g.:
  *  big-endian, twos-compliment fixed point, and IEEE floating point.
  *
- *  Author -
+ *  Routines to insert/extract short/long's into char arrays,
+ *  independend of machine byte order and word-alignment.
+ *  Uses encoding compatible with routines found in libpkg,
+ *  and BSD system routines ntohl(), ntons(), ntohl(), ntohs().
+ *
+ *
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char libbu_xdr_RCSid[] = "@(#)$Header$ (ARL)";
@@ -55,14 +61,8 @@ static const char libbu_xdr_RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 
 
-/*
- *  Routines to insert/extract short/long's into char arrays,
- *  independend of machine byte order and word-alignment.
- *  Uses encoding compatible with routines found in libpkg,
- *  and BSD system routines ntohl(), ntons(), ntohl(), ntohs().
- */
 
-/*
+/**
  *			B U _ G S H O R T
  */
 unsigned short
@@ -82,7 +82,7 @@ bu_gshort(const unsigned char *msgp)
     return ((unsigned short)(u | *p));
 }
 
-/*
+/**
  *			B U _ G L O N G
  */
 unsigned long
@@ -97,7 +97,7 @@ bu_glong(const unsigned char *msgp)
     return (u | *p);
 }
 
-/*
+/**
  *			B U _ P S H O R T
  */
 unsigned char *
@@ -109,7 +109,7 @@ bu_pshort(register unsigned char *msgp, register int s)
     return(msgp+2);
 }
 
-/*
+/**
  *			B U _ P L O N G
  */
 unsigned char *
@@ -125,7 +125,7 @@ bu_plong(register unsigned char *msgp, register long unsigned int l)
 
 #if 0
 /* XXX How do we get "struct timeval" declared for all of bu.h? */
-/*
+/**
  *			B U _ G T I M E V A L
  *
  *  Get a timeval structure from an external representation
@@ -157,6 +157,7 @@ bu_ptimeval( msgp, tvp )
 }
 #endif
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

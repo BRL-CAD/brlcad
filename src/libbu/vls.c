@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup vls */
 /*@{*/
 /** @file vls.c
  *  The variable length string package.
@@ -27,16 +27,15 @@
  *  Assumption:  libc-provided sprintf() function is safe to use in parallel,
  *  on parallel systems.
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *@n	The U. S. Army Ballistic Research Laboratory
+ *@n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 
@@ -1191,6 +1190,7 @@ bu_vls_prepend(struct bu_vls *vp, char *str)
     /* insert the data at the head of the string */
     memcpy( vp->vls_str+vp->vls_offset, str, len);
 }
+/*@}*/
 
 /*
  * Local Variables:

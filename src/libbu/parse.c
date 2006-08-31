@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup parse */
 /*@{*/
 
 /** @file ./libbu/parse.c
@@ -30,24 +30,23 @@
  *  a pointer to an optional "hooked" function that is called whenever
  *  that structure element is changed.
  *
- *  There are four basic operations supported:
- *	print	struct elements to ASCII
- *	parse	ASCII to struct elements
- *	export	struct elements to machine-independent binary
- *	import	machine-independent binary to struct elements
+ *  @par There are four basic operations supported:
+ *  @arg	print	struct elements to ASCII
+ *  @arg	parse	ASCII to struct elements
+ *  @arg	export	struct elements to machine-independent binary
+ *  @arg	import	machine-independent binary to struct elements
  *
  *
- *  Authors -
- *	Michael John Muuss
- *	Lee A. Butler
  *
- *  Source -
+ *  @authors	Michael John Muuss
+ *  @authors	Lee A. Butler
+ *
+ *  @par Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ * @n	The U. S. Army Ballistic Research Laboratory
+ * @n	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSparse[] = "@(#)$Header$ (BRL)";
@@ -138,7 +137,7 @@ static const char RCSparse[] = "@(#)$Header$ (BRL)";
 	} \
 }
 
-/*
+/**
  *			B U _ S T R U C T _ E X P O R T
  */
 int
@@ -290,7 +289,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 	return( 1 );
 }
 
-/*
+/**
  *			B U _ S T R U C T _ I M P O R T
  */
 int
@@ -423,7 +422,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 	return( bytes_used );
 }
 
-/*
+/**
  *			B U _ S T R U C T _ P U T
  *
  *  Put a structure in external form to a stdio file.
@@ -437,7 +436,7 @@ bu_struct_put(FILE *fp, const struct bu_external *ext)
 	return(fwrite(ext->ext_buf, 1, ext->ext_nbytes, fp));
 }
 
-/*
+/**
  *			B U _ S T R U C T _ G E T
  *
  *  Obtain the next structure in external form from a stdio file.
@@ -494,7 +493,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 	return(1);
 }
 
-/*
+/**
  *			B U _ S T R U C T _ B U F
  *
  *  Given a buffer with an external representation of a structure
@@ -542,7 +541,7 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 
 
 
-/*
+/**
  *			B U _ P A R S E _ D O U B L E
  *
  *  Parse an array of one or more doubles.
@@ -607,13 +606,13 @@ bu_parse_double(const char *str, long int count, double *loc)
 	return 0;
 }
 
-/*
+/**
  *			B U _ S T R U C T _ L O O K U P
  *
- *  Returns -
- *      -2      parse error
- *	-1	not found
- *	 0	entry found and processed
+ *
+ *  @return     -2      parse error
+ *  @return	-1	not found
+ *  @return	 0	entry found and processed
  */
 HIDDEN int
 bu_struct_lookup(register const struct bu_structparse *sdp, register const char *name, const char *base, const char *const value)
@@ -779,15 +778,15 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 	return(-1);			/* Not found */
 }
 
-/*
+/**
  *			B U _ S T R U C T P A R S E
  *
  *	Parse the structure element description in the vls string "vls"
  *	according to the structure description in "parsetab"
  *
- *  Returns -
- *	<0	failure
- *	 0	OK
+ *
+ *  @return	<0	failure
+ *  @return	 0	OK
  */
 int
 bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, const char *base)
@@ -880,7 +879,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 }
 
 
-/*
+/**
  *			B U _ M A T P R I N T
  *
  *	XXX Should this be here, or could it be with the matrix support?
@@ -909,6 +908,9 @@ bu_matprint(const char *name, register const double *mat)
 		mat[12], mat[13], mat[14], mat[15]);
 }
 
+/**
+ *
+ */
 HIDDEN void
 bu_vls_matprint(struct bu_vls		*vls,
 		const char		*name,
@@ -937,7 +939,7 @@ bu_vls_matprint(struct bu_vls		*vls,
 		      mat[12], mat[13], mat[14], mat[15]);
 }
 
-/*
+/**
  *
  *	Convert a structure element (indicated by sdp) to its ASCII
  *	representation in a VLS
@@ -1023,7 +1025,7 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 
 
 
-/*
+/**
  *	B U _ V L S _ S T R U C T _ I T E M _ N A M E D
  *
  *	Convert a structure element called "name" to an ASCII representation
@@ -1044,7 +1046,7 @@ bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parseta
 }
 
 
-/*
+/**
  *			B U _ S T R U C T P R I N T
  */
 void
@@ -1188,7 +1190,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 	}
 }
 
-/*
+/**
  *			B U _ V L S _ P R I N T _ D O U B L E
  */
 HIDDEN void
@@ -1212,7 +1214,7 @@ bu_vls_print_double(struct bu_vls *vls, const char *name, register long int coun
 	}
 }
 
-/*
+/**
  *			B U _ V L S _ S T R U C T P R I N T
  *
  *	This differs from bu_struct_print in that this output is less readable
@@ -1391,7 +1393,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 }
 
 
-/*
+/**
  *			B U _ V L S _ S T R U C T P R I N T 2
  *
  *	This differs from bu_struct_print in that it prints to a vls.
@@ -1540,7 +1542,8 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 }
 
 
-/* This allows us to specify the "size" parameter as values like ".5m"
+/**
+ * This allows us to specify the "size" parameter as values like ".5m"
  * or "27in" rather than using mm all the time.
  */
 void
@@ -1561,6 +1564,9 @@ bu_parse_mm(register const struct bu_structparse *sdp, register const char *name
 #define STATE_IN_VALUE		2
 #define STATE_IN_QUOTED_VALUE	3
 
+/**
+ *
+ */
 int
 bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
 {
@@ -1675,7 +1681,7 @@ bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
 	return( 0 );
 }
 
-/*
+/**
  *			B U _ S H A D E R _ T O _ T C L _ L I S T
  *
  *  Take an old v4 shader specification of the form
@@ -1691,9 +1697,9 @@ bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
  *  Note -- the v5 version is used everywhere internally, and in v5
  *  databases.
  *
- *  Returns -
- *	1	error
- *	0	OK
+ *
+ *  @return	1	error
+ *  @return	0	OK
  */
 int
 bu_shader_to_tcl_list(char *in, struct bu_vls *vls)
@@ -1804,7 +1810,7 @@ bu_shader_to_tcl_list(char *in, struct bu_vls *vls)
 	return( 0 );
 }
 
-/*
+/**
  *			B U _ L I S T _ E L E M
  *
  *  Given a Tcl list, return a copy of the 'index'th entry,
@@ -1912,7 +1918,7 @@ bu_list_elem( const char *in, int index )
 	return( out );
 }
 
-/*
+/**
  *			B U _ T C L _ L I S T _ L E N G T H
  *
  *  Return number of items in a string, interpreted as a Tcl list.
@@ -1970,6 +1976,9 @@ bu_tcl_list_length( const char *in )
 	return( count );
 }
 
+/**
+ *
+ */
 int
 bu_key_val_to_vls(struct bu_vls *vls, char *params)
 {
@@ -2018,7 +2027,7 @@ bu_key_val_to_vls(struct bu_vls *vls, char *params)
 	return( 0 );
 }
 
-/*
+/**
  *			B U _ S H A D E R _ T O _ K E Y _ E Q
  */
 int
@@ -2105,7 +2114,7 @@ bu_shader_to_key_eq(char *in, struct bu_vls *vls)
 	return( ret );
 }
 
-/*
+/**
  *
  *			B U _ F W R I T E _ E X T E R N A L
  *
@@ -2114,9 +2123,9 @@ bu_shader_to_key_eq(char *in, struct bu_vls *vls)
  *  Caller is responsible for freeing memory of external representation,
  *  using bu_free_external().
  *
- *  Returns -
- *	<0	error
- *	0	OK
+ *
+ *  @return	<0	error
+ *  @return	0	OK
  */
 int
 bu_fwrite_external( FILE *fp, const struct bu_external *ep )
@@ -2133,7 +2142,7 @@ bu_fwrite_external( FILE *fp, const struct bu_external *ep )
 	return 0;
 }
 
-/*
+/**
  *			B U _ H E X D U M P _ E X T E R N A L
  */
 void
@@ -2176,7 +2185,7 @@ bu_hexdump_external( FILE *fp, const struct bu_external *ep, const char *str)
 	}
 }
 
-/*
+/**
  *			B U _ F R E E _ E X T E R N A L
  */
 void
@@ -2189,7 +2198,7 @@ bu_free_external( register struct bu_external *ep)
 	}
 }
 
-/*
+/**
  *			B U _ C O P Y _ E X T E R N A L
  */
 void
@@ -2205,7 +2214,7 @@ bu_copy_external(struct bu_external *op, const struct bu_external *ip)
 	bcopy( ip->ext_buf, op->ext_buf, ip->ext_nbytes );
 }
 
-/*
+/**
  *			B U _ N E X T _ T O K E N
  *
  *  Advance pointer through string over current token,
@@ -2224,7 +2233,7 @@ bu_next_token( char *str )
 
   return( ret );
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

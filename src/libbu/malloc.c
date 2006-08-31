@@ -19,34 +19,36 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup malloc */
 /*@{*/
-/** @file malloc.c
+/** 
+ * @file malloc.c
+ *
+ *@brief
  *  Parallel-protected debugging-enhanced wrapper around system malloc().
  *
  *  The bu_malloc() routines can't use bu_log() because that uses
  *  the bu_vls() routines which depend on bu_malloc().  So it goes direct
  *  to stderr, semaphore protected.
  *
- *  Functions -
+ * @par  Functions
  *	bu_malloc	Allocate storage, with visibility & checking
- *	bu_free		Similarly, free storage
- *	bu_realloc	Reallocate storage, with visibility & checking
- *	bu_calloc	Allocate zero'ed storage
- *	bu_prmem	When debugging, print memory map
- *	bu_strdup_body	Duplicate a string in dynamic memory
- *	bu_malloc_len_roundup	Optimize sizing of malloc() requests
- *      bu_free_array	free elements of an array
+ * @n	bu_free		Similarly, free storage
+ * @n	bu_realloc	Reallocate storage, with visibility & checking
+ * @n	bu_calloc	Allocate zero'ed storage
+ * @n	bu_prmem	When debugging, print memory map
+ * @n	bu_strdup_body	Duplicate a string in dynamic memory
+ * @n	bu_malloc_len_roundup	Optimize sizing of malloc() requests
+ * @n	bu_free_array	free elements of an array
  *
- *  Author -
- *	Michael John Muuss
- *      Christopher Sean Morrison
  *
- *  Source -
+ *  @author	Michael John Muuss
+ *  @author      Christopher Sean Morrison
+ *
+ * @par  Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSmalloc[] = "@(#)$Header$ (ARL)";
@@ -120,7 +122,7 @@ char *sbrk(i)
 #endif
 
 
-/*
+/**
  *			B U _ M E M D E B U G _ A D D
  *
  *  Add another entry to the memory debug table
@@ -182,7 +184,7 @@ again:
 	goto top;
 }
 
-/*
+/**
  *			B U _ M E M D E B U G _ C H E C K
  *
  *  Check an entry against the memory debug table, based upon it's address.
@@ -322,7 +324,7 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 	return(ptr);
 }
 
-/*
+/**
  *			B U _ M A L L O C
  *
  *  This routine only returns on successful allocation.
@@ -336,7 +338,7 @@ bu_malloc(unsigned int size, const char *str)
 }
 
 
-/*
+/**
  *			B U _ C A L L O C
  *
  *  This routine only returns on successful allocation.
@@ -398,7 +400,7 @@ bu_free(genptr_t ptr, const char *str)
 	bu_n_free++;
 }
 
-/*
+/**
  *			B U _ R E A L L O C
  *
  *  bu_malloc()/bu_free() compatible wrapper for realloc().
@@ -504,7 +506,7 @@ bu_realloc(register genptr_t ptr, unsigned int cnt, const char *str)
 }
 
 
-/*
+/**
  *			B U _ P R M E M
  *
  *  Print map of memory currently in use.
@@ -584,7 +586,7 @@ bu_prmem(const char *str)
 
 }
 
-/*
+/**
  *			B U _ S T R D U P
  *
  * Given a string, allocate enough memory to hold it using bu_malloc(),
@@ -616,24 +618,24 @@ bu_strdupm(register const char *cp, const char *label)
 	return(base);
 }
 
-/*
+/**
  *			B U _ D I R N A M E
  *
  *  Given a filesystem pathname, return a pointer to a dynamic string
  *  which is the parent directory of that file/directory.
  *
  *	/usr/dir/file	/usr/dir
- *	/usr/dir/	/usr
- *	/usr/file	/usr
- *	/usr/		/
- *	/usr		/
- *	/		/
- *	.		.
- *	..		.
- *	usr		.
- *	a/b		a
- *	a/		.
- *	../a/b		../a
+ * @n	/usr/dir/	/usr
+ * @n	/usr/file	/usr
+ * @n	/usr/		/
+ * @n	/usr		/
+ * @n	/		/
+ * @n	.		.
+ * @n	..		.
+ * @n	usr		.
+ * @n	a/b		a
+ * @n	a/		.
+ * @n	../a/b		../a
  */
 char *
 bu_dirname(const char *cp)
@@ -673,7 +675,7 @@ bu_dirname(const char *cp)
 	return ret;
 }
 
-/*
+/**
  *  			B U _ M A L L O C _ L E N _ R O U N D U P
  *
  *  On systems with the CalTech malloc(), the amount of storage
@@ -718,7 +720,7 @@ bu_malloc_len_roundup(register int nbytes)
 #endif
 }
 
-/*
+/**
  *			B U _ C K _ M A L L O C _ P T R
  *
  *	For a given pointer allocated by bu_malloc(),
@@ -776,7 +778,7 @@ bu_ck_malloc_ptr(genptr_t ptr, const char *str)
 	}
 }
 
-/*
+/**
  *			B U _ M E M _ B A R R I E R C H E C K
  *
  *  Check *all* entries in the memory debug table for barrier word
@@ -847,6 +849,7 @@ void bu_free_array(int argc, char *argv[], const char *str)
   return;
 }
 
+/*@}*/
 
 /*
  * Local Variables:

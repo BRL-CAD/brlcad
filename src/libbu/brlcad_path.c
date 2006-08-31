@@ -19,7 +19,7 @@
  * information.
  */
 
-/** @addtogroup libbu */
+/** @addtogroup bu_log */
 /*@{*/
 /**  @file brlcad_path.c
  * @brief

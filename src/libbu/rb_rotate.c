@@ -24,12 +24,12 @@
 /** @file rb_rotate.c
  *	    Routines to perform rotations on a red-black tree
  *
- *  Author -
+ *  @author
  *	Paul J. Tanenbaum
  *
- *  Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /*@}*/
 
@@ -50,7 +50,7 @@ static const char libbu_rb_rotate_RCSid[] = "@(#) $Header$";
 #include "./rb_internals.h"
 
 
-/*		    _ R B _ R O T _ L E F T ( )
+/**		    _ R B _ R O T _ L E F T ( )
  *
  *		Perfrom left rotation on a red-black tree
  *
@@ -99,7 +99,7 @@ void _rb_rot_left (struct bu_rb_node *x, int order)
 	    x, order, bu_rb_size(x, order), y, order, bu_rb_size(y, order));
 }
 
-/*		    _ R B _ R O T _ R I G H T ( )
+/**		    _ R B _ R O T _ R I G H T ( )
  *
  *		Perfrom right rotation on a red-black tree
  *
@@ -146,7 +146,7 @@ void _rb_rot_right (struct bu_rb_node *y, int order)
 	bu_log("After rotation, size(%x, %d)=%d, size(%x, %d)=%d\n",
 	    x, order, bu_rb_size(x, order), y, order, bu_rb_size(y, order));
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

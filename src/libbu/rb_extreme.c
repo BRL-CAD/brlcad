@@ -25,12 +25,12 @@
  *	Routines to extract mins, maxes, adjacent, and current nodes
  *			from a red-black tree
  *
- *  Author -
+ *  @author
  *	Paul J. Tanenbaum
  *
- *  Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /*@}*/
 
@@ -51,7 +51,7 @@ static const char libbu_rb_extreme_RCSid[] = "@(#) $Header$";
 #include "./rb_internals.h"
 
 
-/*		        _ R B _ E X T R E M E ( )
+/**		        _ R B _ E X T R E M E ( )
  *
  *	Find the minimum or maximum node in one order of a red-black tree
  *
@@ -87,7 +87,7 @@ static struct bu_rb_node *_rb_extreme (struct bu_rb_node *root, int order, int s
     return (root);
 }
 
-/*		        B U _ R B _ E X T R E M E ( )
+/**		        B U _ R B _ E X T R E M E ( )
  *
  *		Applications interface to _rb_extreme()
  *
@@ -120,7 +120,7 @@ void *bu_rb_extreme (bu_rb_tree *tree, int order, int sense)
 	return (bu_rb_data(node, order));
 }
 
-/*		    _ R B _ N E I G H B O R ( )
+/**		    _ R B _ N E I G H B O R ( )
  *
  *	    Return a node adjacent to a given red-black node
  *
@@ -161,7 +161,7 @@ struct bu_rb_node *_rb_neighbor (struct bu_rb_node *node, int order, int sense)
     return (parent);
 }
 
-/*		        B U _ R B _ N E I G H B O R ( )
+/**		        B U _ R B _ N E I G H B O R ( )
  *
  *	    Return a node adjacent to the current red-black node
  *
@@ -199,7 +199,7 @@ void *bu_rb_neighbor (bu_rb_tree *tree, int order, int sense)
     }
 }
 
-/*		            B U _ R B _ C U R R ( )
+/**		            B U _ R B _ C U R R ( )
  *
  *	    Return the current red-black node
  *
@@ -218,7 +218,7 @@ void *bu_rb_curr (bu_rb_tree *tree, int order)
     else
 	return (bu_rb_data(bu_rb_current(tree), order));
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

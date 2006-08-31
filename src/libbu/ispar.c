@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup thread */
 /*@{*/
 /** @file ispar.c
  *  This subroutine is separated off from parallel.c so that
@@ -28,15 +28,13 @@
  *  the loader to drag in all the parallel processing stuff from
  *  the vendor library.
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
+ *  @par Source -
+ *  @n	The U. S. Army Research Laboratory
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSispar[] = "@(#)$Header$ (ARL)";
@@ -58,9 +56,9 @@ static const char RCSispar[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 
 
-int	bu_pid_of_initiating_thread = 0;	/* don't declare in include/bu.h */
+int	bu_pid_of_initiating_thread = 0; /**< don't declare in include/bu.h */
 
-/*
+/**
  *			B U _ I S _ P A R A L L E L
  *
  *  A clean way for bu_bomb() to tell if this is a parallel application.
@@ -73,7 +71,7 @@ bu_is_parallel(void)
     return 0;
 }
 
-/*
+/**
  *			B U _ K I L L _ P A R A L L E L
  *
  *  Used by bu_bomb() to help terminate parallel threads,
@@ -89,7 +87,7 @@ bu_kill_parallel(void)
 #endif
     return;
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

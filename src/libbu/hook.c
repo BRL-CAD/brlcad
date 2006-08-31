@@ -19,22 +19,24 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup bu_log */
 /*@{*/
 /** @file hook.c
+ *
+ * @brief
  * BRL-CAD support library's hook utility.
  *
- *  Authors -
- *	Robert G. Parker
- *	Michael John Muuss
- *	Glenn Durfee
+ *  @author
+ *  @n	Robert G. Parker
+ *  @n	Michael John Muuss
+ *  @n	Glenn Durfee
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @par Source
+ *  @n	The U. S. Army Research Laboratory
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  *
- * Acknowledgements -
+ * @par Acknowledgements
  *	This builds on the work in libbu/log.c.
  *
  */

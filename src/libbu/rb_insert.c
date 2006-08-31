@@ -24,14 +24,13 @@
 /** @file rb_insert.c
  *		Routines to insert into a red-black tree
  *
- *  Author -
+ *  @author
  *	Paul J. Tanenbaum
  *
- *  Source -
+ * @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #ifndef lint
 static const char libbu_rb_insert_RCSid[] = "@(#) $Header$";
@@ -48,7 +47,7 @@ static const char libbu_rb_insert_RCSid[] = "@(#) $Header$";
 #include "./rb_internals.h"
 
 
-/*			_ R B _ I N S E R T ( )
+/**			_ R B _ I N S E R T ( )
  *
  *	    Insert a node into one linear order of a red-black tree
  *
@@ -173,7 +172,7 @@ static int _rb_insert (bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     return (result);
 }
 
-/*			B U _ R B _ I N S E R T ( )
+/**			B U _ R B _ I N S E R T ( )
  *
  *		Applications interface to _rb_insert()
  *
@@ -314,7 +313,7 @@ int bu_rb_insert (bu_rb_tree *tree, void *data)
     return (result);
 }
 
-/*		        _ R B _ S E T _ U N I Q ( )
+/**		        _ R B _ S E T _ U N I Q ( )
  *
  *	    Raise or lower the uniqueness flag for one linear order
  *			    of a red-black tree
@@ -357,7 +356,7 @@ int bu_rb_uniq_off (bu_rb_tree *tree, int order)
     return (_rb_set_uniq(tree, order, 0));
 }
 
-/*		         B U _ R B _ I S _ U N I Q ( )
+/**		         B U _ R B _ I S _ U N I Q ( )
  *
  *	  Query the uniqueness flag for one order of a red-black tree
  *
@@ -372,7 +371,7 @@ int bu_rb_is_uniq (bu_rb_tree *tree, int order)
     return(bu_rb_get_uniqueness(tree, order));
 }
 
-/*		        B U _ R B _ S E T _ U N I Q V ( )
+/**		        B U _ R B _ S E T _ U N I Q V ( )
  *
  *	    Set the uniqueness flags for all the linear orders
  *			    of a red-black tree
@@ -405,7 +404,7 @@ void bu_rb_set_uniqv (bu_rb_tree *tree, bitv_t flag_rep)
 	    nm_orders);
 }
 
-/*		    _ R B _ S E T _ U N I Q _ A L L ( )
+/**		    _ R B _ S E T _ U N I Q _ A L L ( )
  *
  *	    Raise or lower the uniqueness flags for all the linear orders
  *			    of a red-black tree
@@ -426,7 +425,7 @@ static void _rb_set_uniq_all (bu_rb_tree *tree, int new_value)
 	bu_rb_set_uniqueness(tree, order, new_value);
 }
 
-/*		     B U _ R B _ U N I Q _ A L L _ O N ( )
+/**		     B U _ R B _ U N I Q _ A L L _ O N ( )
  *		    B U _ R B _ U N I Q _ A L L _ O F F ( )
  *
  *	      Applications interface to _rb_set_uniq_all()
@@ -443,6 +442,7 @@ void bu_rb_uniq_all_off (bu_rb_tree *tree)
 {
     _rb_set_uniq_all(tree, 0);
 }
+/*@}*/
 
 /*
  * Local Variables:

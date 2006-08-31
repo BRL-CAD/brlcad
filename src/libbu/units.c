@@ -19,19 +19,19 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup bu_log */
 /*@{*/
 
 /** @file units.c
  *  Module of libbu to handle units conversion between strings and mm.
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ * @n	The U. S. Army Ballistic Research Laboratory
+ * @n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
 /*@}*/
@@ -99,7 +99,7 @@ static const struct cvt_tab {
 };
 #define BU_UNITS_TABLE_SIZE (sizeof(bu_units_tab) / sizeof(struct cvt_tab) - 1)
 
-/*
+/**
  *			B U _ U N I T S _ C O N V E R S I O N
  *
  *  Given a string representation of a unit of distance (eg, "feet"),
@@ -145,7 +145,7 @@ bu_units_conversion(const char *str)
 	return(0.0);		/* Unable to find it */
 }
 
-/*
+/**
  *			B U _ U N I T S _ S T R I N G
  *
  *  Given a conversion factor to mm, search the table to find
@@ -187,7 +187,7 @@ bu_units_string(register const double mm)
 	return (char *)NULL;
 }
 
-/*
+/**
  *			B U _ M M _ V A L U E
  *
  * Given a string of the form "25cm" or "5.2ft" returns the
@@ -228,7 +228,7 @@ bu_mm_value(const char *s)
 	return -1;
 }
 
-/*	B U _ M M _ C V T
+/**	B U _ M M _ C V T
  *
  *  Used primarily as a hooked function for bu_structparse tables
  *  to allow input of floating point values in other units.
@@ -245,7 +245,7 @@ bu_mm_cvt(register const struct bu_structparse *sdp, register const char *name, 
 	/* reconvert with optional units */
 	*p = bu_mm_value(value);
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

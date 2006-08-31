@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup thread */
 /*@{*/
 /** @file semaphore.c
  *  Machine-specific routines for parallel processing.
@@ -34,15 +34,15 @@
  *
  *  For code conversion hints, see "h/compat4.h"
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char RCSsemaphore[] = "@(#)$Header$ (ARL)";
@@ -186,7 +186,7 @@ struct bu_semaphores {
 #define	BU_SEMAPHORE_MAGIC		0x62757365
 
 #if defined(SGI_4D)
-/*
+/**
  *			 B U _ S E M A P H O R E _ S G I _ I N I T
  */
 static void
@@ -235,7 +235,7 @@ bu_semaphore_sgi_init()
 #endif
 
 #if defined(convex) || defined(__convex__)
-/*
+/**
  *			B U _ C O N V E X _ A C Q U I R E
  */
 static void
@@ -253,7 +253,7 @@ static unsigned int		bu_nsemaphores = 0;
 static struct bu_semaphores	*bu_semaphores = (struct bu_semaphores *)NULL;
 #endif
 
-/*
+/**
  *			B U _ S E M A P H O R E _ I N I T
  *
  *  Prepare 'nsemaphores' independent critical section semaphores.
@@ -368,7 +368,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 #endif	/* PARALLEL */
 }
 
-/*
+/**
  *			B U _ S E M A P H O R E _ A C Q U I R E
  */
 void
@@ -439,7 +439,7 @@ bu_semaphore_acquire(unsigned int i)
 #endif
 }
 
-/*
+/**
  *			B U _ S E M A P H O R E _ R E L E A S E
  */
 void
@@ -505,7 +505,7 @@ bu_semaphore_release(unsigned int i)
 #	endif
 #endif
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

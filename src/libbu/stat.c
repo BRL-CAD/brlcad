@@ -18,17 +18,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup bu_log */
+/*@{*/
 /** @file stat.c
  *
  *  Support routine for identifying whether files and directories
  *  exist or not.
  *
- *  Author -
+ *  @author
  *	Christopher Sean Morrison
  *
- *  Source -
+ * @par  Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
 static const char RCS_stat[] = "@(#)$Header$";
@@ -48,12 +50,11 @@ static const char RCS_stat[] = "@(#)$Header$";
 #include "bu.h"
 
 
-/*
+/**
  *			B U _ F I L E _ E X I S T S
  *
- *  Returns boolean -
- *	1	The given filename exists.
- *	0	The given filename does not exist.
+ *  @return	1	The given filename exists.
+ *  @return	0	The given filename does not exist.
  */
 int
 bu_file_exists(const char *path)
@@ -97,7 +98,7 @@ bu_file_exists(const char *path)
     }
     return 0;					/* FAIL */
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

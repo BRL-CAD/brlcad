@@ -19,23 +19,22 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup bu_log */
 /*@{*/
 
 /** @file linebuf.c
  *	A portable way of doing setlinebuf().
  *
- *  Author -
- *	Doug A. Gwyn
- *	Michael John Muuss
- *	Christopher Sean Morrison
+ *  @author	Doug A. Gwyn
+ *  @author	Michael John Muuss
+ *  @author	Christopher Sean Morrison
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @par Source -
+ *  @n	The U. S. Army Research Laboratory
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char libbu_linebuf_RCSid[] = "@(#)$Header$ (ARL)";
@@ -76,7 +75,7 @@ bu_setlinebuf(FILE *fp)
 #  error "Do not know how to set line buffered mode for this platform"
 #endif
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

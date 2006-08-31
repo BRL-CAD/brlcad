@@ -24,14 +24,13 @@
 /** @file rb_diag.c
  *	Diagnostic routines for red-black tree maintenance
  *
- *  Author -
+ *  @author
  *	Paul J. Tanenbaum
  *
- *  Source -
+ *  @par Source
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #ifndef lint
 static const char libbu_rb_diag_RCSid[] = "@(#) $Header$";
@@ -52,7 +51,7 @@ static const char libbu_rb_diag_RCSid[] = "@(#) $Header$";
 
 static int d_order;	/* Used by describe_node() */
 
-/*		    D E S C R I B E _ N O D E ( )
+/*@		    D E S C R I B E _ N O D E ( )
  *
  *		Print out the contents of a red-black node
  *
@@ -93,7 +92,7 @@ static void describe_node (struct bu_rb_node *node, int depth)
 	bu_log("\n");
 }
 
-/*		    B U _ R B _ D I A G N O S E _ T R E E ( )
+/**		    B U _ R B _ D I A G N O S E _ T R E E ( )
  *
  *	    Produce a diagnostic printout of a red-black tree
  *
@@ -117,7 +116,7 @@ void bu_rb_diagnose_tree (bu_rb_tree *tree, int order, int trav_type)
     bu_log("--------------------------------------------------\n");
 }
 
-/*		B U _ R B _ S U M M A R I Z E _ T R E E ( )
+/**		B U _ R B _ S U M M A R I Z E _ T R E E ( )
  *
  *		    Describe a red-black tree
  *
@@ -156,7 +155,7 @@ void bu_rb_summarize_tree (bu_rb_tree *tree)
     }
     bu_log("-------------------------------------------------\n");
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

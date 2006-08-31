@@ -19,22 +19,18 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup bu_list */
 /*@{*/
-
 /** @file ./libbu/list.c
  *  Generic bu_list routines.
  *
- *  Authors -
- *	Michael John Muuss
- *	Lee A. Butler
+ *  @author	Michael John Muuss
+ *  @author	Lee A. Butler
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
+ *  @par Source -
+ *  @n	The U. S. Army Research Laboratory
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #ifndef lint
 static const char libbu_list_RCSid[] = "@(#)$Header$ (ARL)";
@@ -49,7 +45,7 @@ static const char libbu_list_RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <assert.h>
 
-/*
+/**
  *			B U _ L I S T _ N E W
  *
  *	Creates and initializes a bu_list head structure
@@ -65,7 +61,7 @@ bu_list_new(void)
 	return( new );
 }
 
-/*
+/**
  *			B U _ L I S T _ P O P
  *
  *	Returns the results of BU_LIST_POP
@@ -80,7 +76,7 @@ bu_list_pop( struct bu_list *hp )
 	return( p );
 }
 
-/*
+/**
  *			B U _ L I S T _ L E N
  *
  *  Returns the number of elements on a bu_list brand linked list.
@@ -97,7 +93,7 @@ bu_list_len(register const struct bu_list *hd)
 	return count;
 }
 
-/*
+/**
  *			B U _ L I S T _ R E V E R S E
  *
  *	Reverses the order of elements in a bu_list linked list.
@@ -119,7 +115,7 @@ bu_list_reverse(register struct bu_list *hd)
 	}
 }
 
-/*
+/**
  *			B U _ L I S T _ F R E E
  *
  *  Given a list of structures allocated with bu_malloc() enrolled
@@ -138,14 +134,14 @@ bu_list_free(struct bu_list *hd)
 	}
 }
 
-/*
+/**
  *			B U _ L I S T _ P A R A L L E L _ A P P E N D
  *
  *  Simple parallel-safe routine for appending a data structure to the end
  *  of a bu_list doubly-linked list.
- *  Issues:
- *	Only one semaphore shared by all list heads.
- *	No portable way to notify waiting thread(s) that are sleeping
+ *  @par Issues:
+ *  	Only one semaphore shared by all list heads.
+ *  @n	No portable way to notify waiting thread(s) that are sleeping
  */
 void
 bu_list_parallel_append(struct bu_list *headp, struct bu_list *itemp)
@@ -155,7 +151,7 @@ bu_list_parallel_append(struct bu_list *headp, struct bu_list *itemp)
 	bu_semaphore_release(BU_SEM_LISTS);
 }
 
-/*
+/**
  *			B U _ L I S T _ P A R A L L E L _ D E Q U E U E
  *
  *  Simple parallel-safe routine for dequeueing one data structure from
@@ -163,9 +159,9 @@ bu_list_parallel_append(struct bu_list *headp, struct bu_list *itemp)
  *  If the list is empty, wait until some other thread puts something on
  *  the list.
  *
- *  Issues:
+ *  @par Issues:
  *	No portable way to not spin and burn CPU time while waiting
- *	for something to show up on the list.
+ *  @n	for something to show up on the list.
  */
 struct bu_list *
 bu_list_parallel_dequeue(struct bu_list *headp)
@@ -190,7 +186,7 @@ bu_list_parallel_dequeue(struct bu_list *headp)
 	/* NOTREACHED */
 }
 
-/*
+/**
  *			B U _ C K _ L I S T
  *
  *  Generic bu_list doubly-linked list checker.
@@ -233,7 +229,7 @@ bu_ck_list(const struct bu_list *hd, const char *str)
 	}
 }
 
-/*
+/**
  *			B U _ C K _ L I S T _ M A G I C
  *
  *  bu_list doubly-linked list checker which checks the magic number for
@@ -305,6 +301,8 @@ bu_list_dequeue_next( struct bu_list *hp, struct bu_list *p )
 
 	return( p2 );
 }
+
+/*@}*/
 
 /*
  * Local Variables:

@@ -24,12 +24,12 @@
 /** @file rb_free.c
  *		Routine to free a red-black tree
  *
- *  Author -
+ * @author
  *	Paul J. Tanenbaum
  *
- *  Source -
+ * @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /*@}*/
 
@@ -47,7 +47,7 @@ static const char libbu_rb_free_RCSid[] = "@(#) $Header$";
 #include "bu.h"
 #include "./rb_internals.h"
 
-/*			B U _ R B _ F R E E ( )
+/**			B U _ R B _ F R E E ( )
  *
  *		      Free a red-black tree
  *
@@ -107,7 +107,7 @@ void bu_rb_free (bu_rb_tree *tree, void (*free_data) (/* ??? */))
     bu_free((genptr_t) tree, "red-black tree");
 }
 
-/*		    B U _ R B _ F R E E _ N O D E ( )
+/**		    B U _ R B _ F R E E _ N O D E ( )
  *
  *	    Relinquish memory occupied by a red-black node
  *
@@ -141,7 +141,7 @@ void bu_rb_free_node (struct bu_rb_node *node)
     bu_free((genptr_t) node, "red-black node");
 }
 
-/*		    B U _ R B _ F R E E _ P A C K A G E ( )
+/**		    B U _ R B _ F R E E _ P A C K A G E ( )
  *
  *	    Relinquish memory occupied by a red-black package
  *
@@ -165,7 +165,7 @@ void bu_rb_free_package (struct bu_rb_package *package)
     bu_free((genptr_t) package -> rbp_list_pos, "red-black list element");
     bu_free((genptr_t) package, "red-black package");
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

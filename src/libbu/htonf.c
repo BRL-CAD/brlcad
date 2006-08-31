@@ -18,7 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup libbu */
+
+/** \addtogroup hton */
 /*@{*/
 /** @file htonf.c
  * Host to Network Floats  +  Network to Host Floats.
@@ -30,10 +31,7 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
-/*@}*/
 
-/** \addtogroup hton Endian Support */
-/*@{*/
 
 #ifndef lint
 static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
@@ -51,7 +49,7 @@ static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include <stdio.h>
 
-/*
+/**
  *			H T O N F
  *
  *  Host to Network Floats
@@ -96,7 +94,7 @@ htonf(register unsigned char *out, register const unsigned char *in, int count)
 }
 
 
-/*
+/**
  *			N T O H F
  *
  *  Network to Host Floats

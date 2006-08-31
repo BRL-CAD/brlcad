@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup magic */
 /*@{*/
 /** @file magic.c
  *  Routines involved with handling "magic numbers" used to identify
@@ -30,17 +30,15 @@
  *  XXX What is needed is an extension mechanism.
  *  It is a shame that C does not provide a wextern (weak extern) declaration.
  *
- *  Authors -
- *	Lee A. Butler
- *	Michael John Muuss
  *
- *  Source -
+ *  @author	Lee A. Butler
+ *  @author	Michael John Muuss
+ *
+ *  @par Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
- *
+ * @n	The U. S. Army Ballistic Research Laboratory
+ * @n	Aberdeen Proving Ground, Maryland  21005-5066
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSmagic[] = "@(#)$Header$ (BRL)";
@@ -61,7 +59,7 @@ static const char RCSmagic[] = "@(#)$Header$ (BRL)";
 #include "spm.h"
 #include "../libbu/rb_internals.h"
 
-/*
+/**
  *			B U _ I D E N T I F Y _ M A G I C
  *
  *  Given a number which has been found in the magic number field of
@@ -279,6 +277,7 @@ bu_identify_magic(register long int magic)
 
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

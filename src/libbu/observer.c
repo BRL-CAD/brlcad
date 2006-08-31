@@ -19,21 +19,21 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup butcl */
 /*@{*/
 
 /** @file observer.c
  * Routines for implementing the observer pattern.
  *
- * Source -
+ * @par Source
  *	SLAD CAD Team
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ * @n	The U. S. Army Research Laboratory
+ * @n	Aberdeen Proving Ground, Maryland  21005
  *
- * Author -
+ * @author
  *	Robert G. Parker
  */
-/*@}*/
+
 
 #include "common.h"
 
@@ -57,7 +57,7 @@ struct bu_cmdtab bu_observer_cmds[] = {
 	{(char *)0,	(int (*)())0}
 };
 
-/*
+/**
  * Attach observer.
  *
  * Usage:
@@ -110,7 +110,7 @@ bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char
 	return TCL_OK;
 }
 
-/*
+/**
  * Detach observer.
  *
  * Usage:
@@ -148,7 +148,7 @@ bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char
 	return TCL_ERROR;
 }
 
-/*
+/**
  * Show/list observers.
  *
  * Usage:
@@ -169,7 +169,7 @@ bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *
 	return TCL_OK;
 }
 
-/*
+/**
  * Notify observers.
  */
 void
@@ -194,7 +194,7 @@ bu_observer_notify(Tcl_Interp *interp, struct bu_observer *headp, char *this)
 	bu_vls_free(&vls);
 }
 
-/*
+/**
  * Free observers.
  */
 void
@@ -214,6 +214,7 @@ bu_observer_free(struct bu_observer *headp)
 	}
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

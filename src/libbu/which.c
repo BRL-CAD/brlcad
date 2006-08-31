@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup bu_log */
+/*@{*/
 /** @file which.c
  *
  * Routine to provide BSD "which" functionality, locating binaries of
@@ -208,3 +210,13 @@ int bu_which(char *argv[], int lim, const char *cmd)
 
   return found_count;
 }
+/*@}*/
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

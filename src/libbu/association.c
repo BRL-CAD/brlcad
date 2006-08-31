@@ -19,17 +19,17 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup bu_log */
 /*@{*/
 /** @file association.c
  * Look up the association for a specified value.
  *
- *  Author -
+ *  @author -
  *	Paul Tanenbaum
  *
- *  Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /*@}*/
 
@@ -50,7 +50,7 @@ static const char libbu_association_RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 
 
-/*
+/**
  *			 B U _ A S S O C I A T I O N
  *
  *	    Look up the association for a specified value
@@ -58,7 +58,9 @@ static const char libbu_association_RCSid[] = "@(#)$Header$ (ARL)";
  *	This function reads the specified file, searches for the
  *	first line of the form
  *
- *		    <value><field_sep>...
+@code
+		    <value><field_sep>...
+@endcode
  *
  *	and returns the rest of the line beyond the field separator.
  */
@@ -108,7 +110,7 @@ wrap_up:
     fclose(fp);
     return (vp);
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

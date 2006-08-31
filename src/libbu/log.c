@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup bu_log */
 /*@{*/
 /** @file log.c
  *  BRL-CAD support library, error logging routine.
@@ -27,26 +27,24 @@
  *  by replacing these functions.  That is why this is in file of it's own.
  *  For example, LGT and RTSRV take advantage of this.
  *
- *  Primary Functions (replacements MUST implement all these) -
- *	bu_log			Called to log library events.
- *	bu_log_indent_delta	Change global indentation level
- *	bu_log_indent_vls	Apply indentation level (used by librt/pr.c)
+ * @par  Primary Functions (replacements MUST implement all these) -
+ * @n	bu_log			Called to log library events.
+ * @n	bu_log_indent_delta	Change global indentation level
+ * @n	bu_log_indent_vls	Apply indentation level (used by librt/pr.c)
  *
- *  Specialty Functions -
+ * @par Specialty Functions -
  *	bu_log_add_hook		Start catching log events (used by mged/cmd.c)
- *	bu_log_delete_hook
- *	bu_putchar
+ * @n	bu_log_delete_hook
+ * @n	bu_putchar
  *
- *  Authors -
- *	Michael John Muuss
- *	Glenn Durfee
  *
- *  Source -
+ *  @author	Michael John Muuss
+ *  @author	Glenn Durfee
+ *
+ * @par  Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
+ * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSlog[] = "@(#)$Header$ (ARL)";
@@ -75,7 +73,7 @@ BU_EXTERN(void	bu_vls_vprintf, (struct bu_vls *vls, const char *fmt, va_list ap)
 #endif
 
 static int	bu_log_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
-/*
+/**
  *			B U _ L O G _ I N D E N T _ D E L T A
  *
  *  Change indentation level by indicated number of characters.
@@ -88,7 +86,7 @@ bu_log_indent_delta(int delta)
 		bu_log_indent_cur_level = 0;
 }
 
-/*
+/**
  *			B U _ L O G _ I N D E N T _ V L S
  *
  *  For multi-line vls generators, honor logindent level like bu_log() does,
@@ -117,7 +115,7 @@ struct bu_hook_list bu_log_hook_list;
 static int bu_log_first_time = 1;
 static int bu_log_hooks_called = 0;
 
-/*
+/**
  *			B U _ L O G _ A D D _ H O O K
  *
  *  Adds a hook to the list of bu_log hooks.  The top (newest) one of these
@@ -149,7 +147,7 @@ bu_log_add_hook(bu_hook_t func, genptr_t clientdata)
 }
 
 
-/*
+/**
  *			B U _ L O G _ D E L E T E _ H O O K
  *
  *  Removes the hook matching the function and clientdata parameters from
@@ -198,7 +196,7 @@ bu_log_call_hooks(genptr_t buf)
 }
 #endif
 
-/*
+/**
  *			B U _ L O G _ D O _ I N D E N T _ L E V E L
  *
  *  This subroutine is used to append bu_log_indent_cur_level spaces
@@ -225,7 +223,7 @@ bu_log_do_indent_level(struct bu_vls *new, register char *old)
     }
 }
 
-/*
+/**
  *			B U _ P U T C H A R
  *
  * Log a single character with no flushing.
@@ -256,7 +254,7 @@ bu_putchar(int c)
     }
 }
 
-/*
+/**
  *  			B U _ L O G
  *
  *  Log a library event in the Standard way.
@@ -371,7 +369,7 @@ char *fmt;
     bu_vls_free(&output);
 }
 
-/*
+/**
  *  			B U _ F L O G
  *
  *  Log a library event in the Standard way, to a specified file.
@@ -468,6 +466,8 @@ char *fmt;
 
     bu_vls_free(&output);
 }
+
+/*@}*/
 
 /*
  * Local Variables:

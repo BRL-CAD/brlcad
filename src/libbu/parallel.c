@@ -19,22 +19,21 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup thread */
 /*@{*/
 
 /** @file parallel.c
  *  Machine-specific routines for parallel processing.
  *  Primarily calling functions in multiple threads on multiple CPUs.
  *
- *  Author -
- *	Michael John Muuss
+ *  @author  Michael John Muuss
+ *	
  *
- *  Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSparallel[] = "@(#)$Header$ (ARL)";
@@ -199,7 +198,7 @@ struct taskcontrol {
 } bu_taskcontrol[MAX_PSW];
 #endif
 
-/*
+/**
  *			B U _ N I C E _ S E T
  *
  *  Without knowing what the current UNIX "nice" value is,
@@ -246,7 +245,7 @@ bu_nice_set(int newnice)
 }
 
 
-/*
+/**
  *			B U _ C P U L I M I T _ G E T
  *
  *  Return the current CPU limit, in seconds.
@@ -270,7 +269,7 @@ bu_cpulimit_get(void)
 #endif
 }
 
-/*
+/**
  *			B U _ C P U L I M I T _ S E T
  *
  *  Set CPU time limit, in seconds.
@@ -307,7 +306,7 @@ bu_cpulimit_set(int sec)
 
 
 
-/*
+/**
  *			B U _ A V A I L _ C P U S
  *
  *  Return the maximum number of physical CPUs that are considered to be
@@ -518,7 +517,7 @@ DONE_NCPU:  ; /* allows debug and final validity check */
 }
 
 
-/*
+/**
  *			B U _ G E T _ L O A D _ A V E R A G E
  *
  *  A generally portable method for obtaining the 1-minute load average.
@@ -547,7 +546,7 @@ bu_get_load_average(void)
 	return load;
 }
 
-/*
+/**
  *			B U _ G E T _ P U B L I C _ C P U S
  *
  *  A general mechanism for non-privleged users of a server system to control
@@ -594,7 +593,7 @@ bu_get_public_cpus(void)
 	return avail_cpus;
 }
 
-/*
+/**
  *			B U _ S E T _ R E A L T I M E
  *
  *  If possible, mark this process for real-time scheduler priority.
@@ -644,7 +643,7 @@ bu_set_realtime(void)
 /* bu_worker_tbl_not_empty and bu_kill_workers are only used by the sgi arch */
 #  ifdef SGI_4D
 
-/*
+/**
  *			B U _ W O R K E R _ T B L _ N O T _ E M P T Y
  */
 static int
@@ -660,7 +659,7 @@ int tbl[MAX_PSW];
 	return(children);
 }
 
-/*
+/**
  *			B U _ K I L L _ W O R K E R S
  */
 static void
@@ -691,7 +690,7 @@ static int	bu_nthreads_finished = 0;	/* # threads properly finished */
 static void	(*bu_parallel_func) BU_ARGS((int,genptr_t));	/* user function to run in parallel */
 static genptr_t	bu_parallel_arg;		/* User's arg to his threads */
 
-/*
+/**
  *			B U _ P A R A L L E L _ I N T E R F A C E
  *
  *  Interface layer between bu_parallel and the user's function.
@@ -743,7 +742,7 @@ bu_parallel_interface(void)
 #endif /* PARALLEL */
 
 #ifdef SGI_4D
-/*
+/**
  *			B U _ P R _ F I L E
  *
  *  SGI-specific.  Formatted printing of stdio's FILE struct.
@@ -764,7 +763,7 @@ FILE	*fp;
 }
 #endif
 
-/*
+/**
  *			B U _ P A R A L L E L
  *
  *  Create 'ncpu' copies of function 'func' all running in parallel,
@@ -1269,6 +1268,8 @@ double a,b;
 	return(sqrt(a*a+b*b));
 }
 #endif /* sgi */
+
+/*@}*/
 
 /*
  * Local Variables:

@@ -24,10 +24,10 @@
 /** @file rb_walk.c
  *	    Routines for traversal of red-black trees
  *
- *  Author -
+ *  @author -
  *	Paul J. Tanenbaum
  *
- *  Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
@@ -38,12 +38,12 @@
  *	The function bu_rb_walk() is defined in terms of the function
  *	_rb_walk(), which, in turn, calls any of the six functions
  *
- *		- static void prewalknodes()
- *		- static void inwalknodes()
- *		- static void postwalknodes()
- *		- static void prewalkdata()
- *		- static void inwalkdata()
- *		- static void postwalkdata()
+ * @arg		- static void prewalknodes()
+ * @arg		- static void inwalknodes()
+ * @arg		- static void postwalknodes()
+ * @arg		- static void prewalkdata()
+ * @arg		- static void inwalkdata()
+ * @arg		- static void postwalkdata()
  *
  *	depending on the type of traversal desired and the objects
  *	to be visited (nodes themselves, or merely the data stored
@@ -71,7 +71,7 @@ static const char libbu_rb_walk_RCSid[] = "@(#) $Header$";
 #include "./rb_internals.h"
 
 
-/*		        P R E W A L K N O D E S ( )
+/**		        P R E W A L K N O D E S ( )
  *
  *	    Perform a preorder traversal of a red-black tree
  */
@@ -87,7 +87,7 @@ static void prewalknodes (struct bu_rb_node *root, int order, void (*visit) (/* 
     prewalknodes (bu_rb_right_child(root, order), order, visit, depth + 1);
 }
 
-/*		        I N W A L K N O D E S ( )
+/**		        I N W A L K N O D E S ( )
  *
  *	    Perform an inorder traversal of a red-black tree
  */
@@ -103,7 +103,7 @@ static void inwalknodes (struct bu_rb_node *root, int order, void (*visit) (/* ?
     inwalknodes (bu_rb_right_child(root, order), order, visit, depth + 1);
 }
 
-/*		        P O S T W A L K N O D E S ( )
+/**		        P O S T W A L K N O D E S ( )
  *
  *	    Perform a postorder traversal of a red-black tree
  */
@@ -119,7 +119,7 @@ static void postwalknodes (struct bu_rb_node *root, int order, void (*visit) (/*
     visit(root, depth);
 }
 
-/*		        P R E W A L K D A T A ( )
+/**		        P R E W A L K D A T A ( )
  *
  *	    Perform a preorder traversal of a red-black tree
  */
@@ -135,7 +135,7 @@ static void prewalkdata (struct bu_rb_node *root, int order, void (*visit) (/* ?
     prewalkdata (bu_rb_right_child(root, order), order, visit, depth + 1);
 }
 
-/*		        I N W A L K D A T A ( )
+/**		        I N W A L K D A T A ( )
  *
  *	    Perform an inorder traversal of a red-black tree
  */
@@ -151,7 +151,7 @@ static void inwalkdata (struct bu_rb_node *root, int order, void (*visit) (/* ??
     inwalkdata (bu_rb_right_child(root, order), order, visit, depth + 1);
 }
 
-/*		        P O S T W A L K D A T A ( )
+/**		        P O S T W A L K D A T A ( )
  *
  *	    Perform a postorder traversal of a red-black tree
  */
@@ -167,7 +167,7 @@ static void postwalkdata (struct bu_rb_node *root, int order, void (*visit) (/* 
     visit(bu_rb_data(root, order), depth);
 }
 
-/*		        _ R B _ W A L K ( )
+/**		        _ R B _ W A L K ( )
  *
  *		    Traverse a red-black tree
  *
@@ -215,7 +215,7 @@ void _rb_walk (bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_
     }
 }
 
-/*		        B U _ R B _ W A L K ( )
+/**		        B U _ R B _ W A L K ( )
  *
  *		Applications interface to _rb_walk()
  *
@@ -232,6 +232,7 @@ void bu_rb_walk (bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int tra
     _rb_walk(tree, order, visit, WALK_DATA, trav_type);
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

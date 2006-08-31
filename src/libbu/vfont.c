@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup vfont */
 /*@{*/
 /** @file vfont.c
  *	Provide a machine-independent interface to files containing
@@ -35,7 +35,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char libbu_vfont_RCSid[] = "@(#)$Header$ (BRL)";
@@ -57,7 +57,7 @@ static const char libbu_vfont_RCSid[] = "@(#)$Header$ (BRL)";
  */
 static int vax_gshort(unsigned char *);
 
-/*
+/**
  *			V F O N T _ G E T
  *
  *  Fetch the named font, and return a struct vfont pointer.
@@ -160,7 +160,7 @@ vfont_get(char *font)
 	return(vfp);
 }
 
-/*
+/**
  *			V A X _ G S H O R T
  *
  *  Obtain a 16-bit signed integer from two adjacent characters,
@@ -177,7 +177,7 @@ vax_gshort(unsigned char *msgp)
 	return(i);
 }
 
-/*
+/**
  *			V F O N T _ F R E E
  *
  *  Return the storage associated with a struct vfont
@@ -188,7 +188,7 @@ vfont_free(register struct vfont *vfp)
 	bu_free( vfp->vf_bits, "vfont bits" );
 	bu_free( (char *)vfp, "vfont" );
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

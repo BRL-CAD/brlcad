@@ -24,12 +24,12 @@
 /** @file rb_search.c
  *	Routines to search for a node in a red-black tree
  *
- *  Author -
+ *  @author
  *	Paul J. Tanenbaum
  *
- *  Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /*@}*/
 
@@ -50,7 +50,7 @@ static const char libbu_rb_search_RCSid[] = "@(#) $Header$";
 #include "./rb_internals.h"
 
 
-/*		        _ R B _ S E A R C H ( )
+/**		        _ R B _ S E A R C H ( )
  *
  *	   	Search for a node in a red-black tree
  *
@@ -85,7 +85,7 @@ static struct bu_rb_node *_rb_search (struct bu_rb_node *root, int order_nm, int
     return (root);
 }
 
-/*		        B U _ R B _ S E A R C H ( )
+/**		        B U _ R B _ S E A R C H ( )
  *
  *	        Applications interface to _rb_search()
  *
@@ -111,7 +111,7 @@ void *bu_rb_search (bu_rb_tree *tree, int order, void *data)
     else
 	return (bu_rb_data(node, order));
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

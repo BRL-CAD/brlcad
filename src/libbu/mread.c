@@ -19,6 +19,8 @@
  * information.
  *
  */
+/** @addtogroup bu_log */
+/*@{*/
 /** @file mread.c
  *
  * Provide a general means to a read some count of items from a file
@@ -30,9 +32,8 @@
  * If a read error occurs, a negative value will be returns and errno
  * should be set (by read()).
  *
- * Authors -
- *   Robert S. Miles
- *   Christopher Sean Morrison
+ * @authors   Robert S. Miles
+ * @authors   Christopher Sean Morrison
  *
  */
 
@@ -49,7 +50,8 @@
 #include "bu.h"
 
 
-/** "Multiple try" read.  Read multiple times until quantity is
+/** 
+ * "Multiple try" read.  Read multiple times until quantity is
  *  obtained or an error occurs.  This is useful for pipes.
  */
 long int
@@ -72,9 +74,9 @@ bu_mread(int fd, void *bufp, long int n)
     }
     return count;
 }
+/*@}*/
 
-/*
- * Local Variables:
+/* Local Variables:
  * mode: C
  * tab-width: 8
  * c-basic-offset: 4

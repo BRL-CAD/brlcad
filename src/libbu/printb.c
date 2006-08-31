@@ -19,20 +19,19 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** @addtogroup bitv */
 /*@{*/
 
 /** @file printb.c
  *
- *  Author -
- *	Michael John Muuss
  *
- *  Source -
+ * @author	Michael John Muuss
+ *
+ *  @par  Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char libbu_printb_RCSid[] = "@(#)$Header$ (ARL)";
@@ -47,16 +46,16 @@ static const char libbu_printb_RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 
 
-/*
+/**
  *			B U _ V L S _ P R I N T B
  *
  *  Format a value a la the %b format of the kernel's printf
  *
- *    vls	variable length string to put output in
- *    s		title string
- *    v		the integer with the bits in it
- *    bits	a string which starts with the desired base (8 or 16)
- *		as \010 or \020, followed by
+ * @param   vls	variable length string to put output in
+ * @param    s		title string
+ * @param   v		the integer with the bits in it
+ * @param   bits	a string which starts with the desired base (8 or 16)
+ *		as \\010 or \\020, followed by
  *		words preceeded with embedded low-value bytes indicating
  *		bit number plus one,
  *		in little-endian order, eg:
@@ -86,7 +85,7 @@ bu_vls_printb(struct bu_vls *vls, const char *s, register long unsigned int v, r
 	bu_vls_strcat( vls, ">");
 }
 
-/*
+/**
  *			B U _ P R I N T B
  *
  *  Format and print, like bu_vls_printb().
@@ -101,7 +100,7 @@ bu_printb(const char *s, register long unsigned int v, register const char *bits
 	bu_log("%s", bu_vls_addr(&str) );
 	bu_vls_free(&str);
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

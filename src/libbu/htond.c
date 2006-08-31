@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup hton */
 /*@{*/
 /** @file htond.c
  *  Library routines for conversion between the local host
@@ -58,9 +58,6 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
-/*@}*/
-/** \addtogroup hton Endian Support */
-/*@{*/
 
 #ifndef lint
 static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";

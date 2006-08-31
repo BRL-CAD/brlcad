@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup ptbl */
 /*@{*/
 
 /** @file ptbl.c
@@ -31,16 +31,16 @@
  *  Pointers to be operated on (inserted, deleted,
  *  searched for) are passed as a "pointer to long".
  *
- *  Authors -
- *	Lee A. Butler
- *	Michael John Muuss
  *
- *  Source -
+ *  @authors	Lee A. Butler
+ *  @authors	Michael John Muuss
+ *
+ * @par  Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char libbu_ptbl_RCSid[] = "@(#)$Header$ (ARL)";
@@ -128,9 +128,9 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
  *
  *  locate a (long *) in an existing table
  *
- *  Returns -
- *	index of first matching element in array, if found
- *	-1	if not found
+ *  
+ * @return	index of first matching element in array, if found
+ * @return	-1	if not found
  *
  * We do this a great deal, so make it go as fast as possible.
  * this is the biggest argument I can make for changing to an
@@ -177,9 +177,9 @@ bu_ptbl_zero(struct bu_ptbl *b, const long int *p)
  *
  *  Append item to table, if not already present.  Unique insert.
  *
- *  Returns -
- *	index of first matchine element in array, if found.  (table unchanged)
- *	-1	if table extended to hold new element
+ *
+ *  @return	index of first matchine element in array, if found.  (table unchanged)
+ *  @return	-1	if table extended to hold new element
  *
  * We do this a great deal, so make it go as fast as possible.
  * this is the biggest argument I can make for changing to an
@@ -218,9 +218,9 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
  *
  *  Remove all occurrences of an item from a table
  *
- *  Returns -
- *	Number of copies of 'p' that were removed from the table.
- *	0 if none found.
+ *
+ *  @return	Number of copies of 'p' that were removed from the table.
+ *  @return	0 if none found.
  *
  * we go backwards down the table looking for occurrences
  * of p to delete.  We do it backwards to reduce the amount
@@ -418,7 +418,7 @@ bu_ptbl_trunc(struct bu_ptbl *tbl, int end)
 	tbl->end = end;
 	return;
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

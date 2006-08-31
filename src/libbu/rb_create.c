@@ -20,21 +20,20 @@
  */
 
 /** \addtogroup rb */
-
-
 /*@{*/
+
 /** @file rb_create.c
  *		Routines to create a red-black tree
  *
- *  Author -
- *	Paul J. Tanenbaum
  *
- *  Source -
+ *  @author	Paul J. Tanenbaum
+ *
+ * @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char libbu_rb_create_RCSid[] = "@(#) $Header$";
@@ -50,7 +49,7 @@ static const char libbu_rb_create_RCSid[] = "@(#) $Header$";
 #include "bu.h"
 #include "./rb_internals.h"
 
-/*		    B U _ R B _ C R E A T E ( )
+/**		    B U _ R B _ C R E A T E ( )
  *
  *		    Create a red-black tree
  *
@@ -130,7 +129,7 @@ bu_rb_tree *bu_rb_create (char *description, int nm_orders, int (**order_funcs)(
     return (tree);
 }
 
-/*		    B U _ R B _ C R E A T E 1 ( )
+/**		    B U _ R B _ C R E A T E 1 ( )
  *
  *		Create a single-order red-black tree
  *
@@ -154,6 +153,7 @@ bu_rb_tree *bu_rb_create1 (char *description, int (*order_func) (/* ??? */))
     return (bu_rb_create(description, 1, ofp));
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C
