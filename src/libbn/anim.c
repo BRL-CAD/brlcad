@@ -18,7 +18,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \defgroup libbn libbn */
+/** \addtogroup libbn */
 /*@{*/
 /** @file anim.c
  *	Routines useful in animation programs.
