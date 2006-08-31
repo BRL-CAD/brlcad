@@ -521,7 +521,7 @@ db_get_directory(register struct resource *resp)
 
     /* Get a BIG block */
     bytes = bu_malloc_len_roundup(1024*sizeof(struct directory));
-    dp = (struct directory *)bu_malloc(bytes, "db_get_directory()");
+    dp = (struct directory *)bu_malloc(bytes, "re_directory_blocks from db_get_directory() " BU_FLSTR);
 
     /* Record storage for later */
     bu_ptbl_ins( &resp->re_directory_blocks, (long *)dp );
