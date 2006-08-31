@@ -249,6 +249,9 @@ bench: benchmark
 regression: all
 	@cd regress && make regression
 
+dox : misc/Doxyfile misc/doxygen_structure
+	doxygen misc/Doxyfile
+
 regress: regression
 
 test: regression
