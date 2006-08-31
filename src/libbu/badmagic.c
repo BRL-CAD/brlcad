@@ -19,22 +19,19 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup magic */
 /*@{*/
 /** @file badmagic.c
  *  Routines involved with handling "magic numbers" used to identify
  *  various in-memory data structures.
  *
- *  Authors -
- *	Lee A. Butler
- *	Michael John Muuss
+ *  @author Lee A. Butler
+ *  @author Michael John Muuss
  *
- *  Source -
- *	The U. S. Army Research Laboratory
+ *  @par Source -
+ *	The U. S. Army Research Laboratory			@n
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSbadmagic[] = "@(#)$Header$ (ARL)";
@@ -48,9 +45,9 @@ static const char RCSbadmagic[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "bu.h"
 
-/*
+/**
  *			B U _ B A D M A G I C
- *
+ *@brief
  *  Support routine for BU_CKMAG macro
  */
 void
@@ -77,7 +74,7 @@ bu_badmagic(const long int *ptr, unsigned long int magic, const char *str, const
 		bu_bomb(buf);
 	}
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

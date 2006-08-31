@@ -19,22 +19,20 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** @addtogroup libbu */
 /*@{*/
-/** @file brlcad_path.c
+/**  @file brlcad_path.c
+ * @brief
  *  A support routine to provide the executable code with the path
  *  to where the BRL-CAD programs and libraries are installed.
  *
- *  Author -
- *	Christopher Sean Morrison
- *	Michael John Muuss
+ *  @author	Christopher Sean Morrison
+ *  @author	Michael John Muuss
  *
- *  Source -
- *	The U. S. Army Research Laboratory
+ *  @par Source
+ *	The U. S. Army Research Laboratory			@n
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
-/*@}*/
 static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
@@ -54,8 +52,9 @@ static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 
 
-/** b u _ i p w d
- *
+/** 
+ *	b u _ i p w d
+ * @brief
  * set/return the path to the initial working directory.
  * bu_setprogname() must be called on app startup for the correct pwd to
  * be acquired/set.
@@ -79,11 +78,12 @@ bu_ipwd()
 }
 
 
-/** b u _ a r g v 0
+/** 
+ *		b u _ a r g v 0
  *
  * set the location of argv[0], used by the brlcad-path-finding
  * routines when attempting to locate binaries, libraries, and
- * resources.  this routine may only be called once to set argv0.
+ * resources.  This routine may only be called once to set argv0.
  */
 static const char *
 bu_argv0(const char *path)
@@ -127,7 +127,7 @@ bu_getprogname(void) {
 
 /** b u _ s e t p r o g n a m e
  *
- * set the name of the running application.  this isn't necessary on
+ * Set the name of the running application.  This isn't necessary on
  * modern systems that support getprogname() and call setprogname()
  * before main() for you, but necessary otherwise for portability.
  */
@@ -200,8 +200,11 @@ for sh/bash users:\n\
 }
 
 
-/* put a left-hand and right-hand path together and test whether they
- * exist or not.  returns boolean on whether a match was found.
+/**
+ * put a left-hand and right-hand path together and test whether they
+ * exist or not.  
+ *
+ * @return boolean on whether a match was found.
  */
 static int
 bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_vls *searched, const char *where)
@@ -294,8 +297,8 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
 }
 
 
-/*	B U _ B R L C A D _ R O O T
- *
+/**	B U _ B R L C A D _ R O O T
+ *@brief
  * Locate where the BRL-CAD applications and libraries are installed.
  *
  * The BRL-CAD root is searched for in the following order of
@@ -308,6 +311,7 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
  *   /usr/brlcad static path
  *   current directory
  *
+ * @return
  * A STATIC buffer is returned.
  * It is the caller's responsibility to call bu_strdup() or make
  * other provisions to save the returned string, before calling again.
@@ -418,8 +422,10 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 }
 
 
-/*	B U _ B R L C A D _ D A T A
+/**
+ *	B U _ B R L C A D _ D A T A
  *
+ * @brief
  * Locate where the BRL-CAD data resources are installed.
  *
  * The BRL-CAD data resources are searched for in the following order
@@ -551,10 +557,11 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     return NULL;
 }
 
-/*
+/**
  *	B U _ B R L C A D _ P A T H
  *
- *  DEPRECATED, do not use.  Locate where the BRL-CAD programs and
+ *  @deprecated
+ *  Do not use.  Locate where the BRL-CAD programs and
  *  libraries are located, contatenate on the rest of the string
  *  provided by the caller, and return a pointer to a STATIC buffer
  *  with the full path.  It is the caller's responsibility to call
@@ -575,7 +582,7 @@ Use bu_brlcad_data for the path to the data resources.\n\n");
 
 	return bu_brlcad_root(rhs, fail_quietly);
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

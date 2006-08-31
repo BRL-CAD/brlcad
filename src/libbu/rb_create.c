@@ -19,8 +19,8 @@
  * information.
  */
 
-/** \defgroup rb RedBlack
- * \ingroup libbu */
+/** \addtogroup rb */
+
 
 /*@{*/
 /** @file rb_create.c

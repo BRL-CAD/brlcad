@@ -59,6 +59,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
 /*@}*/
+/** \addtogroup hton Endian Support */
+/*@{*/
 
 #ifndef lint
 static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
@@ -98,10 +100,10 @@ static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
 	*out++ = 0xAD; \
 	continue; } \
 
-/*
+/**
  *			H T O N D
  *
- *  Host to Network Doubles
+ *  @brief Host to Network Doubles
  */
 void
 htond(register unsigned char *out, register const unsigned char *in, int count)
@@ -420,10 +422,10 @@ ibm_normalized:
 #endif
 }
 
-/*
+/**
  *			N T O H D
  *
- *  Network to Host Doubles
+ *  @brief Network to Host Doubles
  */
 void
 ntohd(register unsigned char *out, register const unsigned char *in, int count)
@@ -730,7 +732,7 @@ convex_out:
 # include "ntohd.c:  ERROR, no NtoHD conversion for this machine type"
 #endif
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

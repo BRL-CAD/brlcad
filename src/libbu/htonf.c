@@ -32,6 +32,9 @@
  */
 /*@}*/
 
+/** \addtogroup hton Endian Support */
+/*@{*/
+
 #ifndef lint
 static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -135,7 +138,7 @@ ntohf(register unsigned char *out, register const unsigned char *in, int count)
 # include "ntohf.c:  ERROR, no NtoHD conversion for this machine type"
 #endif
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

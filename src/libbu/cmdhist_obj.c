@@ -19,22 +19,23 @@
  * information.
  */
 
-/** \addtogroup cmd */
+/** \addtogroup butcl */
 /*@{*/
 /** @file cmdhist_obj.c
+ *
  * A cmdhist object contains the attributes and
  * methods for maintaining command history.
  *
  *
- *  Author -
+ *  @author
  *	  Robert G. Parker
  *
- *  Source -
- *	The U. S. Army Research Laboratory
+ *  @par Source -
+ *	The U. S. Army Research Laboratory			@n
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
+
 
 #include "common.h"
 
@@ -66,12 +67,19 @@ static struct bu_cmdtab ch_cmds[] =
 	{(char *)NULL,	CMD_NULL}
 };
 
+/**
+ *
+ */
 int
 cho_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	return bu_cmd(clientData, interp, argc, argv, ch_cmds, 1);
 }
 
+
+/**
+ *
+ */
 static struct bu_cmdtab cho_cmds[] =
 {
 	{"add",		bu_cmdhist_add},
@@ -82,12 +90,20 @@ static struct bu_cmdtab cho_cmds[] =
 	{(char *)NULL,	CMD_NULL}
 };
 
+
+/**
+ *
+ */
 static int
 cho_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	return bu_cmd(clientData, interp, argc, argv, cho_cmds, 1);
 }
 
+
+/**
+ *
+ */
 int
 Cho_Init(Tcl_Interp *interp)
 {
@@ -98,6 +114,10 @@ Cho_Init(Tcl_Interp *interp)
 	return TCL_OK;
 }
 
+
+/**
+ *
+ */
 static void
 cho_deleteProc(ClientData clientData)
 {
@@ -156,6 +176,10 @@ cho_close_tcl(clientData, interp, argc, argv)
 }
 #endif
 
+
+/**
+ *
+ */
 static struct bu_cmdhist_obj *
 cho_open(ClientData clientData, Tcl_Interp *interp, char *name)
 {
@@ -184,7 +208,8 @@ cho_open(ClientData clientData, Tcl_Interp *interp, char *name)
 	return chop;
 }
 
-/*
+/**
+ * @brief
  * Open a command history object.
  *
  * USAGE:
@@ -226,7 +251,7 @@ cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_free(&vls);
 	return TCL_ERROR;
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

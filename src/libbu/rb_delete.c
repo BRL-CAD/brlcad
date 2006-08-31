@@ -18,7 +18,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup rb */
+/** \addtogroup rb 
+ * \ingroup libbu
+ */
 /*@{*/
 /** @file rb_delete.c
  *	    Routines to delete a node from a red-black tree

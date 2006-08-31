@@ -18,22 +18,20 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \defgroup cmd command
- * \ingroup libbu */
+/** @addtogroup butcl */
 /*@{*/
-/** @file ./librt/cmd.c
+/** @file cmd.c
+ * @brief
  *	Utility routines for handling commands.
  *
- * Author -
- *	Robert G. Parker
+ * @author	Robert G. Parker
  *
- * Source -
- *	SLAD CAD Team
- *	The U. S. Army Research Laboratory
+ * @par Source -
+ *	SLAD CAD Team					@n
+ *	The U. S. Army Research Laboratory		@n
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
 #include "common.h"
 
 #ifdef HAVE_STRING_H
@@ -46,28 +44,24 @@
 #include "machine.h"
 #include "cmd.h"			/* includes bu.h */
 
-/****** libbu/cmd.c
+/**
  *
- * NAME
  *	bu_cmd
  *
- * SYNOPSIS
  *	This function is intended to be used for parsing subcommands.
  *	If the command is found in the array of commands, the associated
  *	function is called. Otherwise, an error message is created and
  *	added to interp.
  *
- * PARAMETERS
- *	clientData	- data/state associated with the command
- *	interp		- tcl interpreter wherein this command is registered
+ *	@param clientData	- data/state associated with the command
+ *	@param interp		- tcl interpreter wherein this command is registered
  *			  (Note - the result of the command is also stored here)
- *	argc		- number of arguments in argv
- *	argv		- command to execute and its arguments
- *	cmds		- commands and related function pointers
- *	cmd_index	- indicates which argv element holds the subcommand
+ *	@param argc		- number of arguments in argv
+ *	@param argv		- command to execute and its arguments
+ *	@param cmds		- commands and related function pointers
+ *	@param cmd_index	- indicates which argv element holds the subcommand
  *
- * RETURN
- *	Returns TCL_OK if successful, otherwise, TCL_ERROR.
+ *	@return TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
 bu_cmd(ClientData	clientData,
@@ -109,21 +103,18 @@ missing_cmd:
 	return TCL_ERROR;
 }
 
-/*****f* libbu/cmd.c
+/**
  *
- * NAME
  *	bu_register_cmds
  *
- * SYNOPSIS
  *	This is a convenience routine for registering an array of commands
  *	with a Tcl interpreter. Note - this is not intended for use by
  *	commands with associated state (i.e. ClientData).
  *
- * PARAMETERS
- *	interp		- Tcl interpreter wherein to register the commands
- *	cmds		- commands and related function pointers
+ *	@param interp		- Tcl interpreter wherein to register the commands
+ *	@param cmds		- commands and related function pointers
  *
- * RETURN
+ * @return
  *	void
  */
 void
@@ -136,7 +127,7 @@ bu_register_cmds(Tcl_Interp		*interp,
 		(void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
 					(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

@@ -19,20 +19,32 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup color */
 /*@{*/
 /** @file color.c
  *  Routines to convert between various color models.
  *
- *  Author -
+ *  @author
  *	Paul Tanenbaum
  *
- *  Source -
- *	The U. S. Army Research Laboratory
+ *  @par Source
+ *	The U. S. Army Research Laboratory			@n
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *
+ *
+ *		Convert between RGB and HSV color models
+ *
+ *	R, G, and B are in {0, 1, ..., 255},
+ *
+ *	H is in [0.0, 360.0), and S and V are in [0.0, 1.0],
+ *
+ *	unless S = 0.0, in which case H = ACHROMATIC.
+ *
+ *	These two routines are adapted from:
+ *	pp. 592-3 of J.D. Foley, A. van Dam, S.K. Feiner, and J.F. Hughes,
+ *	_Computer graphics: principles and practice_, 2nd ed., Addison-Wesley,
+ *	Reading, MA, 1990.
  */
-/*@}*/
-
 
 static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 
@@ -56,18 +68,6 @@ static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 
 
-/*
- *		Convert between RGB and HSV color models
- *
- *	R, G, and B are in {0, 1, ..., 255},
- *	H is in [0.0, 360.0), and S and V are in [0.0, 1.0],
- *	unless S = 0.0, in which case H = ACHROMATIC.
- *
- *	These two routines are adapted from
- *	pp. 592-3 of J.D. Foley, A. van Dam, S.K. Feiner, and J.F. Hughes,
- *	_Computer graphics: principles and practice_, 2nd ed., Addison-Wesley,
- *	Reading, MA, 1990.
- */
 
 #define	ACHROMATIC	-1.0
 
@@ -80,7 +80,7 @@ static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 #define	BLU	2
 
 
-/*
+/**
  *			B U _ R G B _ T O _ H S V
  *
  */
@@ -144,7 +144,7 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
     }
 }
 
-/*
+/**
  *			B U _ H S V _ T O _ R G B
  *
  */
@@ -203,7 +203,7 @@ int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
     return (1);
 }
 
-/*
+/**
  *			B U _ S T R _ T O _ R G B
  *
  */
@@ -250,7 +250,7 @@ int bu_str_to_rgb (char *str, unsigned char *rgb)
     VSET(rgb, r, g, b);
     return 1;
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

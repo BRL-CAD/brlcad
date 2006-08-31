@@ -19,25 +19,28 @@
  * information.
  */
 
-/** \addtogroup cmd */
+/** \addtogroup butcl */
 /*@{*/
 /** @file cmdhist.c
+ *
+ *@brief
+ * Routines for maintaining a command history
+ *
  * The history routines were borrowed from mged/history.c
  * and modified to work with command history objects.
  *
- *  Author -
+ *  @author   Robert G. Parker
+ *
+ *  @par Authors of mged/history.c
+ *	   Glenn Durfee 				@n
  *	   Robert G. Parker
  *
- *  Authors of mged/history.c -
- *	   Glenn Durfee
- *	   Robert G. Parker
- *
- *  Source -
- *	The U. S. Army Research Laboratory
+ *  @par Source -
+ *	The U. S. Army Research Laboratory			@n
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
+
 
 #include "common.h"
 
@@ -99,7 +102,8 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 	return 0;
 }
 
-/*
+/**
+ * @brief
  * Prints out the command history.
  *
  * USAGE:
@@ -181,7 +185,8 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, char **a
 	return TCL_OK;
 }
 
-/*
+/**
+ * @brief
  * Add a command to the history list.
  *
  * USAGE:
@@ -217,7 +222,7 @@ bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
 }
 
-/*
+/**
  * Set the current command to the previous command.
  *
  * USAGE:
@@ -247,7 +252,7 @@ bu_cmdhist_prev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	return TCL_OK;
 }
 
-/*
+/**
  * Return the current command.
  *
  * USAGE:
@@ -274,7 +279,7 @@ bu_cmdhist_curr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	return TCL_OK;
 }
 
-/*
+/**
  * Set the current command to the next command.
  *
  * USAGE:
@@ -307,7 +312,7 @@ bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 }
 
 #if 0
-/*
+/**
  *	F _ D E L A Y
  *
  * 	Uses select to delay for the specified amount of seconds and
@@ -340,7 +345,7 @@ f_delay(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 #endif
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

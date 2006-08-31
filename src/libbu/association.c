@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \defgroup libbu libbu */
+/** \addtogroup libbu */
 /*@{*/
 /** @file association.c
  * Look up the association for a specified value.

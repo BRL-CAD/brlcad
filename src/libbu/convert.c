@@ -19,29 +19,28 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup conv */
 /*@{*/
 /** @file convert.c
+ * 
+ * @brief
  * Routines to translate data formats.  The data formats are:
  *
- *	- Host/Network		is the data in host format or local format
- *	- signed/unsigned		Is the data signed?
- *	- char/short/int/long/double
+ * \li Host/Network		is the data in host format or local format
+ * \li  signed/unsigned		Is the data signed?
+ * \li char/short/int/long/double
  *				Is the data 8bits, 16bits, 32bits, 64bits
  *				or a double?
  *
  * The method of conversion is to convert up to double then back down the
  * the expected output format.
  *
- * Author -
- *	Christopher T. Johnson
+ * @author Christopher T. Johnson
  *
- *  Source -
- *	The U. S. Army Research Laboratory
+ *  @par Source
+ *	The U. S. Army Research Laboratory			@n
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
-/*@}*/
 
 #ifndef lint
 static const char libbu_convert_RCSid[] = "@(#)$Header$ (ARL)";
@@ -63,24 +62,25 @@ static const char libbu_convert_RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 
 
-/* bu_cv_cookie	Set's a bit vector after parsing an input string.
+/* bu_cv_cookie	
+ *
+ * @brief
+ * Set's a bit vector after parsing an input string.
  *
  * Set up the conversion tables/flags for vert.
- *
- * Entry:
- *	in	format description.
- *
- * Exit:
- *	returns a 32 bit vector.
+ * 
+ * @param in	format description.
+ * 
+ * @return a 32 bit vector.
  *
  * Format description:
  *	[channels][h|n][s|u] c|s|i|l|d|8|16|32|64 [N|C|L]
  *
- * channels must be null or 1
- * Host | Network
- * signed | unsigned
- * char | short | integer | long | double | number of bits of integer
- * Normalize | Clip | low-order
+ * @n channels must be null or 1
+ * @n Host | Network
+ * @n signed | unsigned
+ * @n char | short | integer | long | double | number of bits of integer
+ * @n Normalize | Clip | low-order
  */
 int
 bu_cv_cookie(char *in)			/* input format */
@@ -171,6 +171,9 @@ bu_cv_cookie(char *in)			/* input format */
 	return(result);
 }
 
+/**
+ *
+ */
 void
 bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
 {
@@ -280,6 +283,10 @@ bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
 	*cp = '\0';
 }
 
+/**
+ *
+ *
+ */
 void
 bu_cv_pr_cookie( char *title, int cookie )
 {
@@ -289,15 +296,17 @@ bu_cv_pr_cookie( char *title, int cookie )
 	fprintf( stderr, "%s cookie '%s' (x%x)\n", title, buf, cookie );
 }
 
-/* cv - convert from one format to another.
+/**		c v
+ * @brief
+ * convert from one format to another.
  *
- * Entry:
- *	in	input pointer
- *	out	output pointer
- *	count	number of entries to convert.
- *	size	size of output buffer.
- *	infmt	input format
- *	outfmt	output format
+ * 
+ * @param in	input pointer
+ * @param out	output pointer
+ * @param count	number of entries to convert.
+ * @param size	size of output buffer.
+ * @param infmt	input format
+ * @param outfmt	output format
  *
  */
 int
@@ -309,7 +318,7 @@ cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count)
 	return(bu_cv_w_cookie(out, outcookie, size, in, incookie, count));
 }
 
-/*
+/**
  *			C V _ O P T I M I Z E
  *
  *  It is always more efficient to handle host data, rather than network.
@@ -374,7 +383,7 @@ bu_cv_optimize(register int cookie)
 	return 0;			/* ERROR */
 }
 
-/*
+/**
  *			C V _ I T E M L E N
  *
  *  Returns the number of bytes each "item" of type "cookie" occupies.
@@ -394,26 +403,23 @@ bu_cv_itemlen(register int cookie)
 }
 
 
-/*	bu_cv_ntohss	Network TO Host Signed Short
+/**	bu_cv_ntohss
+ *
+ * @brief
+ * Network TO Host Signed Short
  *
  * It is assumed that this routine will only be called if there is
  * real work to do.  Ntohs does no checking to see if it is reasonable
  * to do any conversions.
  *
- * Entry:
- *	in	generic pointer for input.
- *	count	number of shorts to be generated.
- *	out	short pointer for output
- *	size	number of bytes of space reserved for out.
  *
- * Exit:
- *	returns	number of conversions done.
+ * @param in	generic pointer for input.
+ * @param count	number of shorts to be generated.
+ * @param out	short pointer for output
+ * @param size	number of bytes of space reserved for out.
  *
- * Calls:
- *	none.
  *
- * Method:
- *	Straight-forward.
+ * @return	number of conversions done.
  */
 int
 bu_cv_ntohss(register short int *out, size_t size, register genptr_t in, int count)
@@ -435,6 +441,11 @@ bu_cv_ntohss(register short int *out, size_t size, register genptr_t in, int cou
 	}
 	return(count);
 }
+
+/**
+ *
+ *
+ */
 int
 bu_cv_ntohus(register short unsigned int *out, size_t size, register genptr_t in, int count)
 {
@@ -451,6 +462,10 @@ bu_cv_ntohus(register short unsigned int *out, size_t size, register genptr_t in
 	}
 	return(count);
 }
+/**
+ *
+ *
+ */
 int
 bu_cv_ntohsl(register long int *out, size_t size, register genptr_t in, int count)
 {
@@ -471,6 +486,10 @@ bu_cv_ntohsl(register long int *out, size_t size, register genptr_t in, int coun
 
 	return(count);
 }
+/**
+ *
+ *
+ */
 int
 bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in, int count)
 {
@@ -491,6 +510,10 @@ bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in,
 }
 
 /*****/
+/**
+ *
+ *
+ */
 int
 bu_cv_htonss(genptr_t out, size_t size, register short int *in, int count)
 {
@@ -508,6 +531,10 @@ bu_cv_htonss(genptr_t out, size_t size, register short int *in, int count)
 	}
 	return(count);
 }
+/**
+ *
+ *
+ */
 int
 bu_cv_htonus(genptr_t out, size_t size, register short unsigned int *in, int count)
 {
@@ -525,6 +552,10 @@ bu_cv_htonus(genptr_t out, size_t size, register short unsigned int *in, int cou
 	}
 	return(count);
 }
+/**
+ *
+ *
+ */
 int
 bu_cv_htonsl(genptr_t out, size_t size, register long int *in, int count)
 {
@@ -544,6 +575,10 @@ bu_cv_htonsl(genptr_t out, size_t size, register long int *in, int count)
 	}
 	return(count);
 }
+/**
+ *
+ *
+ */
 int
 bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int count)
 {
@@ -567,27 +602,32 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int coun
 }
 
 
-/* bu_cv_w_cookie - convert with cookie
+/** bu_cv_w_cookie
  *
- * Entry:
- *	in		input pointer
- *	incookie	input format cookie.
- *	count		number of entries to convert.
- *	out		output pointer.
- *	outcookie	output format cookie.
- *	size		size of output buffer in bytes;
+ * @brief
+ * convert with cookie
+ *
+ * @param in		input pointer
+ * @param incookie	input format cookie.
+ * @param count		number of entries to convert.
+ * @param out		output pointer.
+ * @param outcookie	output format cookie.
+ * @param size		size of output buffer in bytes;
  *
  *
  * A worst case would be:	ns16 on vax to ns32
+@code
  *	ns16 	-> hs16
  *		-> hd
  *		-> hs32
  *		-> ns32
+@endcode 
  * The worst case is probably the easiest to deal with because all steps are
  * done.  The more difficult cases are when only a subset of steps need to
  * be done.
  *
- * Method:
+ * @par Method:
+@code
  *	HOSTDBL defined as true or false
  *	if ! hostother then
  *		hostother = (Indian == IND_BIG) ? SAME : DIFFERENT;
@@ -652,6 +692,7 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int coun
  *			fi
  *		fi
  *	done
+@endcode
  */
 int
 bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incookie,  int	count)
@@ -1051,7 +1092,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	bu_free(t3, "vert.c: t3");
 	return(number_done);
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

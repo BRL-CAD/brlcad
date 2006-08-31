@@ -19,20 +19,18 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** @addtogroup avs */
 /*@{*/
 /** @file avs.c
+ *  @brief
  *  Routines to manage attribute/value sets.
  *
- *  Author -
- *	Michael John Muuss
+ *  @Author Michael John Muuss
  *
- *  Source -
- *	The U. S. Army Research Laboratory
+ *  @par Source -
+ *	The U. S. Army Research Laboratory			@n
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -51,8 +49,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 
 
-/*
+/**
  *			B U _ A V S _ I N I T _ E M P T Y
+ *
+ * @brief 
+ *	initialize an empty avs
  */
 void
 bu_avs_init_empty( struct bu_attribute_value_set *avsp )
@@ -64,8 +65,11 @@ bu_avs_init_empty( struct bu_attribute_value_set *avsp )
 	avsp->readonly_min = avsp->readonly_max = NULL;
 }
 
-/*
+/**
  *			B U _ A V S _ I N I T
+ *
+ * @brief 
+ *	initialize avs with storage for len entries
  */
 void
 bu_avs_init(struct bu_attribute_value_set *avsp, int len, const char *str)
@@ -82,11 +86,11 @@ bu_avs_init(struct bu_attribute_value_set *avsp, int len, const char *str)
 	avsp->readonly_min = avsp->readonly_max = NULL;
 }
 
-/*
- *			B U _ A V S _ N E W
+/**			B U _ A V S _ N E W
  *
- *  Allocate storage for a new attribute/value set, with at least
- *  'len' slots pre-allocated.
+ *  @brief 
+ *	Allocate storage for a new attribute/value set, with at least
+ *	'len' slots pre-allocated.
  */
 struct bu_attribute_value_set	*
 bu_avs_new(int len, const char *str)
@@ -102,7 +106,7 @@ bu_avs_new(int len, const char *str)
 	return avsp;
 }
 
-/*
+/**
  *			B U _ A V S _ A D D
  *
  *  If the given attribute exists it will recieve the new value,
@@ -167,10 +171,11 @@ bu_avs_add_vls(struct bu_attribute_value_set *avsp, const char *attribute, const
 	return bu_avs_add( avsp, attribute, bu_vls_addr(value_vls) );
 }
 
-/*
+/**
  *			B U _ A V S _ M E R G E
  *
- *  Take all the attributes from 'src' and merge them into 'dest'.
+ *  @brief 
+ *	Take all the attributes from 'src' and merge them into 'dest'.
  */
 void
 bu_avs_merge( struct bu_attribute_value_set *dest, const struct bu_attribute_value_set *src )
@@ -207,11 +212,15 @@ bu_avs_get( const struct bu_attribute_value_set *avsp, const char *attribute )
 	return NULL;
 }
 
-/*
+/**
  *			B U _ A V S _ R E M O V E
  *
- *  Returns -
+ * @brief
+ *	Remove the given attribute from the set
+ *
+ * @Return
  *	-1	attribute not found in set
+ * @Return
  *	 0	OK
  */
 int
@@ -297,9 +306,10 @@ bu_avs_print( const struct bu_attribute_value_set *avsp, const char *title )
 	}
 }
 
-/*
+/**
  *			B U _ A V S _ A D D _ N O N U N I Q U E
  *
+ * @brief
  *	Add a name/value pair even if the name already exists in this AVS
  */
 void
@@ -330,7 +340,7 @@ bu_avs_add_nonunique( struct bu_attribute_value_set *avsp, char *attribute, char
 	else
 		app->value = (char *)NULL;
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

@@ -19,21 +19,20 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup bu_log */
 /*@{*/
 /** @file fopen_uniq.c
  *  Routine to open a unique filename.
  *
- *  Authors -
+ *  @author
  *	Lee A. Butler
  *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
+ *  @par Source
+ *	SECAD/VLD Computing Consortium, Bldg 394	@n
+ *	The U. S. Army Ballistic Research Laboratory	@n
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
 
 #include "common.h"
 
@@ -56,11 +55,13 @@
 #include "machine.h"
 #include "bu.h"
 
-/*  B U _ F O P E N _ U N I Q
- *
+/**
+ *  B U _ F O P E N _ U N I Q
+ *@brief
  *  Open a file for output.  Assures that the file did not previously exist.
  *
  *  Typical Usages:
+@code
  *	static int n = 0;
  *	FILE *fp;
  *
@@ -72,6 +73,7 @@
  *	fp = bu_fopen_uniq((char *)NULL, "output%d.pl", n++);
  *	...
  *	fclose(fp);
+@endcode
  */
 FILE *
 bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
@@ -101,6 +103,7 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
 
     return fp;
 }
+/*@}*/
 
 /*
  * Local Variables:

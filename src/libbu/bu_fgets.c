@@ -19,19 +19,18 @@
  * information.
  */
 
-/** \defgroup libbu libbu */
+/** \addtogroup bu_log */
 /*@{*/
 /** @file bu_fgets.c
+ *
  * fgets replacement function that also handles CR as an EOL marker
  *
- *  Author -
- *	John Anderson
+ *  @Author John Anderson
  *
- *  Source -
- *	The U. S. Army Research Laboratory
+ *  @par Source
+ *	The U. S. Army Research Laboratory			@n
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #ifndef lint
 static const char libbu_fgets_RCSid[] = "@(#)$Header$ (ARL)";
@@ -50,17 +49,16 @@ static const char libbu_fgets_RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 
 
-/*
+/**
  *			 B U _ F G E T S
  *
  *	    Reads in at most one less than size characters from stream and
  *      stores them into the buffer pointed to by s. Reading stops after an
  *      EOF, CR, LF, or a CR/LF combination. If a LF or CR is read,
  *	it is stored into the buffer. If a CR/LF is read, just a CR is
- *	stored into the buffer. A '\0' is stored after the last
+ *	stored into the buffer. A '\\0' is stored after the last
  *	character in the buffer. Returns s on success, and NULL on error or
  *	when end of file occurs while no characters have been read.
- *
  */
 
 char *
@@ -127,7 +125,7 @@ bu_fgets(char *s, int size, FILE *stream)
   else
     return s;
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

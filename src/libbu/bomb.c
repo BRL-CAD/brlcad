@@ -19,24 +19,23 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup bu_log */
 /*@{*/
-/** @file ./libbu/bomb.c
+/**  @file ./libbu/bomb.c
+ *
  *  This routine is called on a fatal
  *  error, where no recovery is possible.
  *
- *  Functions -
+ *  @par Functions -
  *	bu_bomb		Called upon fatal error.
  *
- *  Author -
- *	Michael John Muuss
+ *  @author	Michael John Muuss
  *
- *  Source -
- *	The U. S. Army Research Laboratory
+ *  @par Source -
+ *	The U. S. Army Research Laboratory			@n
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSbomb[] = "@(#)$Header$ (ARL)";
@@ -78,12 +77,12 @@ struct bu_hook_list bu_bomb_hook_list;
  * If you replace this version of bu_bomb() with one of your own,
  * you must also provide these variables, even if you don't use them.
  */
-int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */
-jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
+int		bu_setjmp_valid = 0;	/**< @brief !0 = bu_jmpbuf is valid */
+jmp_buf		bu_jmpbuf;		/**< @brief for BU_SETJMP() */
 
-/*
+/**
  *			B U _ B O M B
- *
+ *@brief
  *  Abort the program with a message.
  *
  *  Only produce a core-dump when that debugging bit is set.  Note
@@ -151,7 +150,7 @@ bu_bomb(const char *str)
 
 	exit(12);
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

@@ -19,19 +19,20 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup getopt */
 /*@{*/
 /** @file getopt.c
+ * @brief
  *  Special re-entrant version of getopt.
+ *
  *  Everything is prefixed with bu_, to distinguish it from the various
  *  getopt() routines found in libc.
  *
  *  Important note -
  *	If bu_getopt() it going to be used more than once, it is necessary
  *	to reinitialize bu_optind=1 before beginning on the next argument list.
- *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char libbu_getopt_RCSid[] = "@(#)$Header$ (BRL)";
@@ -50,10 +51,10 @@ static const char libbu_getopt_RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 
 
-int	bu_opterr = 1;		/* set to zero to suppress errors */
-int	bu_optind = 1;		/* index into parent argv vector */
-int	bu_optopt = 0;		/* character checked for validity */
-char	*bu_optarg = NULL;	/* argument associated with option */
+int	bu_opterr = 1;		/**< set to zero to suppress errors */
+int	bu_optind = 1;		/**< index into parent argv vector */
+int	bu_optopt = 0;		/**< character checked for validity */
+char	*bu_optarg = NULL;	/**< argument associated with option */
 
 #define BADCH	(int)'?'
 #define EMSG	""
@@ -63,7 +64,7 @@ char	*bu_optarg = NULL;	/* argument associated with option */
 	} return(BADCH);
 
 
-/*
+/**
  *			B U _ G E T O P T
  *
  * get option letter from argument vector
@@ -117,7 +118,7 @@ bu_getopt(int nargc, char *const *nargv, const char *ostr)
     }
     return(bu_optopt);			/* dump back option letter */
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

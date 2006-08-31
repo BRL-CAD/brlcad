@@ -19,12 +19,13 @@
  * information.
  */
 
-/** \addtogroup libbu */
+/** \addtogroup bu_hash */
 /*@{*/
 /** @file hash.c
+ *
+ * @brief
  *	An implimentation of hash tables.
  */
-/*@}*/
 
 #ifndef lint
 static const char libbu_hash_RCSid[] = "@(#) $Header$";
@@ -44,7 +45,7 @@ static const char libbu_hash_RCSid[] = "@(#) $Header$";
 #include "bu.h"
 
 
-/*		B U _ H A S H
+/**		B U _ H A S H
  * the hashing function
  */
 unsigned long
@@ -63,8 +64,8 @@ bu_hash(unsigned char *str, int len)
         return hash;
 }
 
-/*			B U _ C R E A T E _ H A S H _ T B L
- *
+/**			B U _ C R E A T E _ H A S H _ T B L
+ *@brief
  *	Create an empty hash table
  *	The input is the number of desired hash bins.
  *	This number will be rounded up to the nearest power of two.
@@ -112,20 +113,21 @@ bu_create_hash_tbl( unsigned long tbl_size )
 	return( hsh_tbl );
 }
 
-/*			B U _ F I N D _ H A S H _ E N T R Y
+/**			B U _ F I N D _ H A S H _ E N T R Y
  *
+ * @brief
  *	Find the hash table entry corresponding to the provided key
  *
- * Input:
- *	hsh_tbl - The hash table to look in
- *	key - the key to look for
- *	key_len - the length of the key in bytes
+ * 
+ * @param[in] hsh_tbl - The hash table to look in
+ * @param[in] key - the key to look for
+ * @param[in] key_len - the length of the key in bytes
  *
  * Output:
- *	prev - the previous hash table entry (non-null for entries that not the first in hash bin)
- *	index - the index of the hash bin for this key
+ * @param[out] prev - the previous hash table entry (non-null for entries that not the first in hash bin)
+ * @param[out] index - the index of the hash bin for this key
  *
- * Return:
+ * @return
  *	the hash table entry corresponding to the provided key, or NULL if not found
  */
 struct bu_hash_entry *
@@ -193,9 +195,10 @@ bu_find_hash_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len
 }
 
 
-/*			B U _ S E T _ H A S H _ V A L U E
- *
+/**			B U _ S E T _ H A S H _ V A L U E
+ *@brief
  *	Set the value for a hash table entry
+ *
  *	Note that this is just a pointer copy, the hash table does not maintain its own copy
  *	of this value.
  */
@@ -208,7 +211,7 @@ bu_set_hash_value( struct bu_hash_entry *hsh_entry, unsigned char *value )
 	hsh_entry->value = value;
 }
 
-/*			B U _ G E T _ H A S H _ V A L U E
+/**			B U _ G E T _ H A S H _ V A L U E
  *
  *	get the value pointer stored for the specified hash table entry
  */
@@ -220,7 +223,7 @@ bu_get_hash_value( struct bu_hash_entry *hsh_entry )
 	return( hsh_entry->value );
 }
 
-/*			B U _ G E T _ H A S H _ K E Y
+/**			B U _ G E T _ H A S H _ K E Y
  *
  *	get the key pointer stored for the specified hash table entry
  */
@@ -233,20 +236,19 @@ bu_get_hash_key( struct bu_hash_entry *hsh_entry )
 }
 
 
-/*			B U _ H A S H _ A D D _ E N T R Y
+/**			B U _ H A S H _ A D D _ E N T R Y
  *
  *	Add an new entry to a hash table
  *
- * input:
- *	hsh_tbl - the hash table to accept thye new entry
- *	key - the key (any byte string)
- *	key_len - the number of bytes in the key
+ * 
+ * @param[in] hsh_tbl - the hash table to accept thye new entry
+ * @param[in] key - the key (any byte string)
+ * @param[in] key_len - the number of bytes in the key
  *
- * output:
- *	new - a flag, non-zero indicates that a new entry was created.
+ * @param[out] new - a flag, non-zero indicates that a new entry was created.
  *	              zero indicates that an entry already exists with the specified key and key length
  *
- * return:
+ * @return
  *	a hash table entry. If "new" is non-zero, a new, empty entry is returned.
  *	if "new" is zero, the returned entry is the one matching the specified key and key_len
  */
@@ -297,9 +299,9 @@ bu_hash_add_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len,
 	return( hsh_entry );
 }
 
-/*			B U _ H A S H _ T B L _ P R
- *
- *	Print the specified hash table to stderr
+/**			B U _ H A S H _ T B L _ P R
+ *@brief
+ *	Print the specified hash table to stderr.
  *	(Note that the keys and values are printed as pointers)
  */
 void
@@ -324,8 +326,8 @@ bu_hash_tbl_pr( struct bu_hash_tbl *hsh_tbl, char *str )
 	}
 }
 
-/*			B U _ H A S H _ T B L _ F R E E
- *
+/**			B U _ H A S H _ T B L _ F R E E
+ *@brief
  *	Free all the memory associated with the specified hash table.
  *	Note that the keys are freed (they are copies), but the "values" are not freed.
  *	(The values are merely pointers)
@@ -363,15 +365,15 @@ bu_hash_tbl_free( struct bu_hash_tbl *hsh_tbl )
 }
 
 
-/*			B U _ H A S H _ T B L _ F I R S T
- *
+/**			B U _ H A S H _ T B L _ F I R S T
+ *@brief
  *	get the "first" entry in a hash table
  *
- * input:
- *	hsh_tbl - the hash table of interest
- *	rec - an empty "bu_hash_record" structure for use by this routine and "bu_hash_tbl_next"
  *
- * return:
+ * @param[in] hsh_tbl - the hash table of interest
+ * @param[in] rec - an empty "bu_hash_record" structure for use by this routine and "bu_hash_tbl_next"
+ *
+ * @return
  *	the first non-null entry in the hash table, or NULL if there are no entries
  *	(Note that the order of enties is not likely to have any significance)
  */
@@ -403,7 +405,7 @@ bu_hash_tbl_first( struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec )
 	return( (struct bu_hash_entry *)NULL );
 }
 
-/*			B U _ H A S H _ T B L _ N E X T
+/**			B U _ H A S H _ T B L _ N E X T
  *
  *	get the "next" entry in a hash table
  *
@@ -443,7 +445,7 @@ bu_hash_tbl_next( struct bu_hash_record *rec )
 	/* no more entries, return NULL */
 	return( (struct bu_hash_entry *)NULL );
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

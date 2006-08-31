@@ -34,7 +34,7 @@
  *	bu_realloc	Reallocate storage, with visibility & checking
  *	bu_calloc	Allocate zero'ed storage
  *	bu_prmem	When debugging, print memory map
- *	bu_strdup	Duplicate a string in dynamic memory
+ *	bu_strdup_body	Duplicate a string in dynamic memory
  *	bu_malloc_len_roundup	Optimize sizing of malloc() requests
  *      bu_free_array	free elements of an array
  *
@@ -515,6 +515,7 @@ bu_prmem(const char *str)
     register struct memdebug *mp;
     register struct memqdebug *mqp;
     register long *ip;
+    register size_t count = 0;
 
     fprintf(stderr,"\nbu_prmem(): dynamic memory use (%s)\n", str);
     if( (bu_debug&(BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_QCHECK)) == 0 )  {
@@ -532,6 +533,8 @@ bu_prmem(const char *str)
 	    if( !mp->magic )  continue;
 	    if( mp->magic != MDB_MAGIC )  bu_bomb("bu_memdebug_check() malloc tracing table corrupted!\n");
 	    if( mp->mdb_len <= 0 )  continue;
+
+	    count++;
 	    ip = (long *)(((char *)mp->mdb_addr)+mp->mdb_len-sizeof(long));
 	    if( mp->mdb_str == bu_strdup_message )  {
 		fprintf(stderr,"%8lx %6d bu_strdup: \"%s\"\n",
@@ -552,6 +555,7 @@ bu_prmem(const char *str)
 	    }
 	}
     }
+
 
     if (bu_memq != BU_LIST_NULL)  {
 	fprintf(stderr,"memdebug queue\n Address Length Purpose\n");
@@ -574,6 +578,10 @@ bu_prmem(const char *str)
 	    }
 	}
     }
+
+    fprintf(stderr, "%lu allocation entries\n", count);
+
+
 }
 
 /*
@@ -582,11 +590,13 @@ bu_prmem(const char *str)
  * Given a string, allocate enough memory to hold it using bu_malloc(),
  * duplicate the strings, returns a pointer to the new string.
  */
+#if 0
 char *
 bu_strdup(register const char *cp)
 {
 	return bu_strdupm(cp, bu_strdup_message);
 }
+#endif
 char *
 bu_strdupm(register const char *cp, const char *label)
 {
