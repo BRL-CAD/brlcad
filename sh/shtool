@@ -498,7 +498,7 @@ echo )
                 ;;
         esac
         if [ ".$term_bold" = . ] || [ ".$term_norm" = . ]; then
-            echo "$msgprefix:Warning: unable to determine terminal sequence for bold mode" 1>&2
+#            echo "$msgprefix:Warning: unable to determine terminal sequence for bold mode" 1>&2
             term_bold=''
             term_norm=''
         fi
