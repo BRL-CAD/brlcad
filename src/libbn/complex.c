@@ -19,22 +19,21 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup complex */
 /*@{*/
 /** @file complex.c
- *  Functions:
- *  - bn_cx_div		Complex Division
- *  - bn_cx_sqrt	Complex Square Root
+ *  @par Functions:
+ *  @li bn_cx_div		Complex Division
+ *  @li  bn_cx_sqrt	Complex Square Root
  *
- *  Authors -
- *	Douglas A Gwyn		(Original Version)
- *	Michael John Muuss	(Macro Version)
+ *  
+ * @author	Douglas A Gwyn		(Original Version)
+ * @author	Michael John Muuss	(Macro Version)
  *
- *  Source -
+ * @par Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
+ *@n	The U. S. Army Ballistic Research Laboratory
+ *@n	Aberdeen Proving Ground, Maryland  21005
  */
 /*@}*/
 
@@ -57,9 +56,9 @@ static const char RCScomplex[] = "@(#)$Header$ (BRL)";
 #define	SIGN( x )	((x) == 0 ? 0 : (x) > 0 ? 1 : -1)
 #define	ABS( a )	((a) >= 0 ? (a) : -(a))
 
-/*
+/**
  *			B N _ C X _ D I V
- *
+ *@brief
  *	Divide one complex by another
  *
  *	bn_cx_div( &a, &b )	divides  a  by  b .  Zero divisor fails.
@@ -99,9 +98,9 @@ err:
 	ap->re = ap->im = 1.0e20;		/* "INFINITY" */
 }
 
-/*
+/**
  *			B N _ C X _ S Q R T
- *
+ *@brief
  *  Compute square root of complex number
  *
  *	bn_cx_sqrt( &out, &c )	replaces  out  by  sqrt(c)
@@ -158,7 +157,7 @@ bn_cx_sqrt(bn_complex_t *op, register const bn_complex_t *ip)
 		}
 	}
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

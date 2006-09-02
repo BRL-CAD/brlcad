@@ -19,22 +19,24 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup hton */
 /*@{*/
 
 /** @file htester.c
+ * @brief
  *  Test network float conversion.
+ * 
+ * XXX This probably belongs in libbu with htonf.c
  *  Expected to be used in pipes, or with TTCP links to other machines,
  *  or with files RCP'ed between machines.
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
- *
+ *@n	The U. S. Army Ballistic Research Laboratory
+ *@n	Aberdeen Proving Ground, Maryland  21005-5066
  */
 /*@}*/
 
@@ -43,13 +45,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "common.h"
-
-
-
-#include "common.h"
-
-
-
 #include <stdio.h>
 
 #define	NUM	3000
@@ -148,7 +143,7 @@ ckbytes(register unsigned char *a, register unsigned char *b, register int n)
 	return(0);			/* OK */
 #endif
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

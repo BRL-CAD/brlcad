@@ -19,9 +19,12 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup fort */
 /*@{*/
 /** @file fortran.c
+ * @brief
+ *  A FORTRAN-callable interface to libplot3.
+ *
  *  A FORTRAN-callable interface to libplot3, which is
  *  a public-domain UNIX plot library, for 2-D and 3-D plotting in
  *  16-bit signed integer spaces, and in floating point.
@@ -48,27 +51,27 @@
  *  implemented;  the first character or two giving a clue as to
  *  the purpose of the subroutine:
  *
- *	I	General routines, and integer-parameter routines
- *	I2	Routines with enumerated 2-D integer parameters
- *	I3	Routines with enumerated 3-D integer parameters
- *	F2	Routines with enumerated 2-D float parameters
- *	F3	Routines with enumerated 3-D float parameters
- *	A3	Routines with arrays of 3-D float parameters
+ *@li	I	General routines, and integer-parameter routines
+ *@li	I2	Routines with enumerated 2-D integer parameters
+ *@li	I3	Routines with enumerated 3-D integer parameters
+ *@li	F2	Routines with enumerated 2-D float parameters
+ *@li	F3	Routines with enumerated 3-D float parameters
+ *@li	A3	Routines with arrays of 3-D float parameters
  *
  *  This name space leaves the door open for a double-precision
  *  family of routines, D, D2, and D3.
  *
  *
- *  Author -
+ *  @author
  *	Mike Muuss
  *
- *  Source -
+ *  @par Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *@n	The U. S. Army Ballistic Research Laboratory
+ *@n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -82,7 +85,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "plot3.h"
-/*
+/**
  *			P L _ S T R N C P Y
  *
  *  Make null-terminated copy of a string in output buffer,
@@ -101,7 +104,7 @@ pl_strncpy(register char *out, register char *in, register int sz)
 	*out++ = '\0';
 }
 
-/*
+/**
  *  Macro 'F' is used to take the 'C' function name,
  *  and convert it to the convention used for a particular system.
  *  Both lower-case and upper-case alternatives have to be provided
@@ -128,7 +131,7 @@ pl_strncpy(register char *out, register char *in, register int sz)
  *  from the FORTRAN environment
  */
 
-/*
+/**
  *			I F D O P E
  *
  *  Open a file descriptor for plotting.
@@ -142,7 +145,7 @@ int	*fd;
 		perror("IFDOPN/fdopen");
 }
 
-/*
+/**
  *			I F O P E N
  *
  *  Open a file (by name) for plotting.
@@ -493,6 +496,7 @@ float	*x1, *y1, *z1, *x2, *y2, *z2;
 	pd_3box( *plotfp, *x1, *y1, *z1, *x2, *y2, *z2 );
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

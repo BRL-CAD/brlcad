@@ -19,17 +19,17 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup vlist */
 /*@{*/
 /** @file font.c
  *
- *  Author -
- *	Michael John Muuss
- *	John Anderson
  *
- *  Source -
+ *  @author	Michael John Muuss
+ *  @author	John Anderson
+ *
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
 /*@}*/
@@ -56,19 +56,29 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 /* References tp_xxx symbols from libbn/vectfont.c */
 
-/*
+/**
  *			B N _ V L I S T _ 3 S T R I N G
- *
+ *@brief
+ * Convert a string to a vlist.
+ * 
  *  'scale' is the width, in mm, of one character.
+ *
+ * @param free_hd source of free vlists
+ * @param string  string of chars to be plotted
+ * @param origin	 lower left corner of 1st char
+ * @param rot	 Transform matrix (WARNING: may xlate)
+ * @param scale    scale factor to change 1x1 char sz
+ *
  */
 void
-bn_vlist_3string(struct bu_list *vhead, struct bu_list *free_hd, const char *string, const vect_t origin, const mat_t rot, double scale)
+bn_vlist_3string(struct bu_list *vhead,  
+		 struct bu_list *free_hd,/* source of free vlists */ 
+		 const char *string,    /* string of chars to be plotted */
+		 const vect_t origin,	/* lower left corner of 1st char */
+		 const mat_t rot,	/* Transform matrix (WARNING: may xlate) */
+		 double scale)    	/* scale factor to change 1x1 char sz */
 
-              	         	/* source of free vlists */
-          	        	/* string of chars to be plotted */
-             	       		/* lower left corner of 1st char */
-           	    		/* Transform matrix (WARNING: may xlate) */
-      		      		/* scale factor to change 1x1 char sz */
+
 {
 	register unsigned char *cp;
 	double	offset;			/* offset of char from given x,y */
@@ -138,21 +148,30 @@ bn_vlist_3string(struct bu_list *vhead, struct bu_list *free_hd, const char *str
 }
 
 
-/*
+/**
  *			B N _ V L I S T _ 2 S T R I N G
+ * @brief
+ * Convert string to vlist in 2D
  *
  *  A simpler interface, for those cases where the text lies
  *  in the X-Y plane.
+ * 
+ * @param free_hd	source of free vlists
+ * @param string	string of chars to be plotted
+ * @param x		lower left corner of 1st char
+ * @param y		lower left corner of 1st char
+ * @param scale		scale factor to change 1x1 char sz
+ * @param theta 	degrees ccw from X-axis
+ *
  */
 void
-bn_vlist_2string(struct bu_list *vhead, struct bu_list *free_hd, const char *string, double x, double y, double scale, double theta)
-
-              	         	/* source of free vlists */
-          	        	/* string of chars to be plotted */
-      	  			/* x,y of lower left corner of 1st char */
-
-      	      			/* scale factor to change 1x1 char sz */
-      	      			/* degrees ccw from X-axis */
+bn_vlist_2string(struct bu_list *vhead,
+		 struct bu_list *free_hd,
+		 const char *string,
+		 double x,
+		 double y,
+		 double scale,
+		 double theta)
 {
 	mat_t	mat;
 	vect_t	p;
@@ -161,7 +180,7 @@ bn_vlist_2string(struct bu_list *vhead, struct bu_list *free_hd, const char *str
 	VSET( p, x, y, 0 );
 	bn_vlist_3string( vhead, free_hd, string, p, mat, scale );
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

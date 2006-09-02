@@ -19,15 +19,16 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup const */
 /*@{*/
 /** @file const.c
+ * @brief
  *  Constants used by the ray tracing library.
  *
- *  Source -
+ * @par Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *@n	The U. S. Army Ballistic Research Laboratory
+ *@n	Aberdeen Proving Ground, Maryland  21005
  *
  */
 /*@}*/
@@ -47,19 +48,19 @@ static const char RCSmat[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 
 
-const double bn_pi	= 3.14159265358979323846;	/* pi */
-const double bn_twopi	= 6.28318530717958647692;	/* pi*2 */
-const double bn_halfpi	= 1.57079632679489661923;	/* pi/2 */
-const double bn_quarterpi=0.78539816339744830961;	/* pi/4 */
-const double bn_invpi	= 0.318309886183790671538;	/* 1/pi */
-const double bn_inv2pi	= 0.159154943091895335769;	/* 1/(pi*2) */
-const double bn_inv4pi	= 0.07957747154594766788;	/* 1/(pi*4) */
+const double bn_pi	= 3.14159265358979323846;	/**< @brief pi */
+const double bn_twopi	= 6.28318530717958647692;	/**< @brief pi*2 */
+const double bn_halfpi	= 1.57079632679489661923;	/**< @brief pi/2 */
+const double bn_quarterpi=0.78539816339744830961;	/**< @brief  pi/4 */
+const double bn_invpi	= 0.318309886183790671538;	/**< @brief  1/pi */
+const double bn_inv2pi	= 0.159154943091895335769;	/**< @brief  1/(pi*2) */
+const double bn_inv4pi	= 0.07957747154594766788;	/**< @brief  1/(pi*4) */
 
 const double bn_inv255 = 1.0/255.0;
 
-const double bn_degtorad =  0.0174532925199433;		/* (pi*2)/360 */
-const double bn_radtodeg = 57.29577951308230698802;	/* 360/(pi*2) */
-
+const double bn_degtorad =  0.0174532925199433;		/**< @brief  (pi*2)/360 */
+const double bn_radtodeg = 57.29577951308230698802;	/**< @brief  360/(pi*2) */
+/*@}*/{
 /*
  * Local Variables:
  * mode: C

@@ -19,51 +19,52 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** @addtogroup mat */
 /*@{*/
 
 /** @file mat.c
+ * @brief
  * 4 x 4 Matrix manipulation functions...
  *
- *  - bn_atan2()			Wrapper for library atan2()
- *  - (deprecated) bn_mat_zero( &m )		Fill matrix m with zeros
- *  - (deprecated) bn_mat_idn( &m )		Fill matrix m with identity matrix
- *  - (deprecated) bn_mat_copy( &o, &i )		Copy matrix i to matrix o
- *  - bn_mat_mul( &o, &i1, &i2 )	Multiply i1 by i2 and store in o
- *	- bn_mat_mul2( &i, &o )
- *	- bn_matXvec( &ov, &m, &iv )	Multiply m by vector iv, store in ov
- *	- bn_mat_inv( &om, &im )		Invert matrix im, store result in om
- *	- bn_mat_print( &title, &m )	Print matrix (with title) on stderr.
- *	- bn_mat_trn( &o, &i )		Transpose matrix i into matrix o
- *	- bn_mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
- *	- bn_ae_vec( &az, &el, v )	Find az/elev from dir vector
- *	- bn_aet_vec( &az, &el, &twist, v1, v2 ) Find az,el,twist from two vectors
- *	- bn_mat_angles( &o, alpha, beta, gama )	Make rot matrix from angles
- *	- bn_eigen2x2()			Eigen values and vectors
- *	- bn_mat_lookat			Make rot mat:  xform from D to -Z
- *	- bn_mat_fromto			Make rot mat:  xform from A to
- *	- bn_mat_arb_rot( &m, pt, dir, ang)	Make rot mat about axis (pt,dir), through ang
- *	- bn_mat_is_equal()		Is mat a equal to mat b?
+ * @li bn_atan2()			Wrapper for library atan2()
+ * @li (deprecated) bn_mat_zero( &m )		Fill matrix m with zeros
+ * @li (deprecated) bn_mat_idn( &m )		Fill matrix m with identity matrix
+ * @li (deprecated) bn_mat_copy( &o, &i )		Copy matrix i to matrix o
+ * @li bn_mat_mul( &o, &i1, &i2 )	Multiply i1 by i2 and store in o
+ * @li bn_mat_mul2( &i, &o )
+ * @li bn_matXvec( &ov, &m, &iv )	Multiply m by vector iv, store in ov
+ * @li bn_mat_inv( &om, &im )		Invert matrix im, store result in om
+ * @li bn_mat_print( &title, &m )	Print matrix (with title) on stderr.
+ * @li bn_mat_trn( &o, &i )		Transpose matrix i into matrix o
+ * @li bn_mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
+ * @li bn_ae_vec( &az, &el, v )	Find az/elev from dir vector
+ * @li bn_aet_vec( &az, &el, &twist, v1, v2 ) Find az,el,twist from two vectors
+ * @li bn_mat_angles( &o, alpha, beta, gama )	Make rot matrix from angles
+ * @li bn_eigen2x2()			Eigen values and vectors
+ * @li bn_mat_lookat			Make rot mat:  xform from D to -Z
+ * @li bn_mat_fromto			Make rot mat:  xform from A to
+ * @li bn_mat_arb_rot( &m, pt, dir, ang)	Make rot mat about axis (pt,dir), through ang
+ * @li bn_mat_is_equal()		Is mat a equal to mat b?
  *
  *
  * Matrix array elements have the following positions in the matrix:
- *
- *				|  0  1  2  3 |		| 0 |
- *	  [ 0 1 2 3 ]		|  4  5  6  7 |		| 1 |
- *				|  8  9 10 11 |		| 2 |
- *				| 12 13 14 15 |		| 3 |
- *
+@code
+ 				|  0  1  2  3 |		| 0 |
+ 	  [ 0 1 2 3 ]		|  4  5  6  7 |		| 1 |
+ 				|  8  9 10 11 |		| 2 |
+ 				| 12 13 14 15 |		| 3 |
+@endcode
  *
  *     preVector (vect_t)	 Matrix (mat_t)    postVector (vect_t)
  *
- *  Authors -
- *	Robert S. Miles
- *	Michael John Muuss
- *	Lee A. Butler
  *
- *  Source -
+ * @author	Robert S. Miles
+ * @author	Michael John Muuss
+ * @author	Lee A. Butler
+ *
+ * @par Source
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 /*@}*/
@@ -97,6 +98,9 @@ const mat_t	bn_mat_identity = {
 		0.0, 0.0, 0.0, 1.0
 };
 
+/**
+ *
+ */
 void
 bn_mat_print_guts(const char	*title,
 		  const mat_t	m,
@@ -125,7 +129,7 @@ bn_mat_print_guts(const char	*title,
 	}
 }
 
-/*
+/**
  *			B N _ M A T _ P R I N T
  */
 void
@@ -138,9 +142,9 @@ bn_mat_print(const char		*title,
 	bu_log("%s\n", obuf);
 }
 
-/*
+/**
  *			B N _ A T A N 2
- *
+ * @brief
  *  A wrapper for the system atan2().  On the Silicon Graphics,
  *  and perhaps on others, x==0 incorrectly returns infinity.
  */
@@ -158,7 +162,7 @@ bn_atan2(double y, double x)
 
 #if 0  /********* Deprecated for macros that call memcpy() *********/
 
-/*
+/**
  *			B N _ M A T _ Z E R O
  *
  * Fill in the matrix "m" with zeros.
@@ -211,9 +215,9 @@ register const mat_t	src;
 
 #endif	/******************* deprecated *******************/
 
-/*
+/**
  *			B N _ M A T _ M U L
- *
+ *@brief
  * Multiply matrix "a" by "b" and store the result in "o".
  * NOTE:  This is different from multiplying "b" by "a"
  * (most of the time!)
@@ -243,11 +247,12 @@ bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
 	o[15] = a[12]*b[ 3] + a[13]*b[ 7] + a[14]*b[11] + a[15]*b[15];
 }
 
-/*
+/**
  *			B N _ M A T _ M U L 2
  *
  *  o = i * o
  *
+ *@brief
  *  A convenience wrapper for bn_mat_mul() to update a matrix in place.
  *  The arugment ordering is confusing either way.
  */
@@ -260,7 +265,7 @@ bn_mat_mul2(register const mat_t i, register mat_t o)
 	MAT_COPY( o, temp );
 }
 
-/*
+/**
  *			B N _ M A T _ M U L 3
  *
  *  o = a * b * c
@@ -276,7 +281,7 @@ bn_mat_mul3(mat_t o, const mat_t a, const mat_t b, const mat_t c)
 	bn_mat_mul( o, a, t );
 }
 
-/*
+/**
  *			B N _ M A T _ M U L 4
  *
  *  o = a * b * c * d
@@ -293,9 +298,9 @@ bn_mat_mul4(mat_t ao, const mat_t a, const mat_t b, const mat_t c, const mat_t d
 	bn_mat_mul( ao, t, u );
 }
 
-/*
+/**
  *			B N _ M A T X V E C
- *
+ *@brief
  * Multiply the matrix "im" by the vector "iv" and store the result
  * in the vector "ov".  Note this is post-multiply, and
  * operates on 4-tuples.  Use MAT4X3VEC() to operate on 3-tuples.
@@ -318,7 +323,7 @@ bn_matXvec(register vect_t ov, register const mat_t im, register const vect_t iv
 }
 
 
-/*
+/**
  *			B N _ M A T _ I N V
  *
  * The matrix pointed at by "input" is inverted and stored in the area
@@ -338,7 +343,7 @@ bn_mat_inv(register mat_t output, const mat_t input)
 }
 
 
-/*
+/**
  *			B N _ M A T _ I N V E R S E
  *
  * The matrix pointed at by "input" is inverted and stored in the area
@@ -348,9 +353,9 @@ bn_mat_inv(register mat_t output, const mat_t input)
  * This is a modified Gauss-Jordan alogorithm
  * Note:  Inversion is done in place, with 3 work vectors
  *
- *  Returns -
- *	 1	if OK.
- *	 0	if matrix is singular.
+ *
+ *  @return	 1	if OK.
+ *  @return	 0	if matrix is singular.
  */
 int
 bn_mat_inverse(register mat_t output, const mat_t input)
@@ -450,7 +455,7 @@ bn_vtoh_move(register vert_t h2, register const vert_t v2)
 }
  */
 
-/*
+/**
  *			B N _ H T O V _ M O V E
  *
  * Takes a pointer to [x,y,z,w], and converts it to
@@ -479,7 +484,7 @@ bn_htov_move(register vect_t v, register const vect_t h)
 }
 
 
-/*
+/**
  *			B N _ M A T _ T R N
  */
 void
@@ -508,7 +513,7 @@ bn_mat_trn(mat_t om, register const mat_t im)
 	*op++ = im[15];
 }
 
-/*
+/**
  *			B N _ M A T _ A E
  *
  *  Compute a 4x4 rotation matrix given Azimuth and Elevation.
@@ -550,7 +555,7 @@ bn_mat_ae(register fastf_t *m, double azimuth, double elev)
 	m[15] = 1.0;
 }
 
-/*
+/**
  *			B N _ A E _ V E C
  *
  *  Find the azimuth and elevation angles that correspond to the
@@ -571,8 +576,8 @@ bn_ae_vec(fastf_t *azp, fastf_t *elp, const vect_t v)
 	*elp = bn_atan2( v[Z], hypot( v[X], v[Y] ) ) * bn_radtodeg;
 }
 
-/*			B N _ A E T _ V E C
- *
+/**			B N _ A E T _ V E C
+ *@brief
  * Find the azimuth, elevation, and twist from two vectors.
  * Vec_ae is in the direction of view (+z in mged view)
  * and vec_twist points to the viewers right (+x in mged view).
@@ -618,7 +623,7 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 }
 
 
-/*
+/**
  *			B N _ M A T _ A N G L E S
  *
  * This routine builds a Homogeneous rotation matrix, given
@@ -686,9 +691,9 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
 	mat[15] = 1.0;
 }
 
-/*
+/**
  *			B N _ M A T _ A N G L E S _ R A D
- *
+ *@brief
  * This routine builds a Homogeneous rotation matrix, given
  * alpha, beta, and gamma as angles of rotation, in radians.
  *
@@ -736,7 +741,7 @@ bn_mat_angles_rad(register mat_t	mat,
 	mat[15] = 1.0;
 }
 
-/*
+/**
  *			B N _ E I G E N 2 X 2
  *
  *  Find the eigenvalues and eigenvectors of a
@@ -790,9 +795,9 @@ bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t 
 	VSET( vec2, -vec1[Y], vec1[X], 0.0 );	/* vec1 X vec2 = +Z */
 }
 
-/*
+/**
  *			B N _ V E C _ P E R P
- *
+ *@brief
  *  Given a vector, create another vector which is perpendicular to it.
  *  The output vector will have unit length only if the input vector did.
  */
@@ -814,9 +819,9 @@ bn_vec_perp(vect_t new, const vect_t old)
 	}
 }
 
-/*
+/**
  *			B N _ M A T _ F R O M T O
- *
+ *@brief
  *  Given two vectors, compute a rotation matrix that will transform
  *  space by the angle between the two.  There are many
  *  candidate matricies.
@@ -898,7 +903,7 @@ bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
 	}
 }
 
-/*
+/**
  *			B N _ M A T _ X R O T
  *
  *  Given the sin and cos of an X rotation angle, produce the rotation matrix.
@@ -925,9 +930,9 @@ bn_mat_xrot(fastf_t *m, double sinx, double cosx)
 	m[15] = 1.0;
 }
 
-/*
+/**
  *			B N _ M A T _ Y R O T
- *
+ *@brief
  *  Given the sin and cos of a Y rotation angle, produce the rotation matrix.
  */
 void
@@ -952,9 +957,9 @@ bn_mat_yrot(fastf_t *m, double siny, double cosy)
 	m[15] = 1.0;
 }
 
-/*
+/**
  *			B N _ M A T _ Z R O T
- *
+ *@brief
  *  Given the sin and cos of a Z rotation angle, produce the rotation matrix.
  */
 void
@@ -980,7 +985,7 @@ bn_mat_zrot(fastf_t *m, double sinz, double cosz)
 }
 
 
-/*
+/**
  *			B N _ M A T _ L O O K A T
  *
  *  Given a direction vector D of unit length,
@@ -991,13 +996,15 @@ bn_mat_zrot(fastf_t *m, double sinz, double cosz)
  *  with the Z axis.
  *
  *  This is done in several steps.
- *	1)  Rotate D about Z to match +X axis.  Azimuth adjustment.
- *	2)  Rotate D about Y to match -Y axis.  Elevation adjustment.
- *	3)  Rotate D about Z to make projection of X axis again point
- *	    in the +X direction.  Twist adjustment.
- *	4)  Optionally, flip sign on Y axis if original Z becomes inverted.
- *	    This can be nice for static frames, but is astonishing when
- *	    used in animation.
+@code
+ 	1)  Rotate D about Z to match +X axis.  Azimuth adjustment.
+ 	2)  Rotate D about Y to match -Y axis.  Elevation adjustment.
+ 	3)  Rotate D about Z to make projection of X axis again point
+ 	    in the +X direction.  Twist adjustment.
+ 	4)  Optionally, flip sign on Y axis if original Z becomes inverted.
+ 	    This can be nice for static frames, but is astonishing when
+ 	    used in animation.
+@endcode
  */
 void
 bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
@@ -1053,9 +1060,9 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
 	}
 }
 
-/*
+/**
  *			B N _ V E C _ O R T H O
- *
+ *@brief
  *  Given a vector, create another vector which is perpendicular to it,
  *  and with unit length.  This algorithm taken from Gift's arvec.f;
  *  a faster algorithm may be possible.
@@ -1103,14 +1110,14 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
 }
 
 
-/*
+/**
  *			B N _ M A T _ S C A L E _ A B O U T _ P T
- *
+ *@brief
  *  Build a matrix to scale uniformly around a given point.
  *
- *  Returns -
- *	-1	if scale is too small.
- *	 0	if OK.
+ *
+ *  @return	-1	if scale is too small.
+ *  @return	 0	if OK.
  */
 int
 bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
@@ -1136,9 +1143,9 @@ bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
 	return 0;				/* OK */
 }
 
-/*
+/**
  *			B N _ M A T _ X F O R M _ A B O U T _ P T
- *
+ *@brief
  *  Build a matrix to apply arbitary 4x4 transformation around a given point.
  */
 void
@@ -1156,12 +1163,12 @@ bn_mat_xform_about_pt(mat_t mat, const mat_t xform, const point_t pt)
 	bn_mat_mul( mat, xlate, tmp );
 }
 
-/*
+/**
  *			B N _ M A T _ I S _ E Q U A L
  *
- *  Returns -
- *	0	When matrices are not equal
- *	1	When matricies are equal
+ *
+ *  @Return	0	When matrices are not equal
+ *  @Return	1	When matricies are equal
  */
 int
 bn_mat_is_equal(const mat_t a, const mat_t b, const struct bn_tol *tol)
@@ -1210,7 +1217,7 @@ bn_mat_is_equal(const mat_t a, const mat_t b, const struct bn_tol *tol)
 }
 
 
-/*
+/**
  *			B N _ M A T _ I S _ I D E N T I T Y
  *
  *  This routine is intended for detecting identity matricies read in
@@ -1219,9 +1226,9 @@ bn_mat_is_equal(const mat_t a, const mat_t b, const struct bn_tol *tol)
  *  comparisons; as such, it shouldn't be used on matrices which are
  *  the result of calculation.
  *
- *  Returns -
- *	0	non-identity
- *	1	a perfect identity matrix
+ *
+ *  @return	0	non-identity
+ *  @return	1	a perfect identity matrix
  */
 int
 bn_mat_is_identity(const mat_t m)
@@ -1229,8 +1236,9 @@ bn_mat_is_identity(const mat_t m)
 	return (! memcmp(m, bn_mat_identity, sizeof(mat_t)));
 }
 
-/*	B N _ M A T _ A R B _ R O T
+/**	B N _ M A T _ A R B _ R O T
  *
+ *@brief
  * Construct a transformation matrix for rotation about an arbitrary axis
  *
  *	The axis is defined by a point (pt) and a unit direction vector (dir).
@@ -1292,7 +1300,7 @@ bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
 }
 
 
-/*
+/**
  *			B N _ M A T _ D U P
  *
  *  Return a pointer to a copy of the matrix in dynamically allocated memory.
@@ -1307,15 +1315,15 @@ bn_mat_dup(const mat_t in)
 	return out;
 }
 
-/*
+/**
  *			B N _ M A T _ C K
  *
  *  Check to ensure that a rotation matrix preserves axis perpendicularily.
  *  Note that not all matricies are rotation matricies.
  *
- *  Returns -
- *	-1	FAIL
- *	 0	OK
+ *
+ *  @return	-1	FAIL
+ *  @return	 0	OK
  */
 int
 bn_mat_ck(const char *title, const mat_t m)
@@ -1360,7 +1368,7 @@ bn_mat_ck(const char *title, const mat_t m)
 	return 0;		/* OK */
 }
 
-/*
+/**
  *		B N _ M A T _ D E T 3
  *
  *	Calculates the determinant of the 3X3 "rotation"
@@ -1379,7 +1387,7 @@ bn_mat_det3(const mat_t m)
 }
 
 
-/*
+/**
  *		B N _ M A T _ D E T E R M I N A N T
  *
  *	Calculates the determinant of the 4X4 matrix
@@ -1412,6 +1420,9 @@ bn_mat_determinant(const mat_t m)
 
 }
 
+/**
+ *
+ */
 int
 bn_mat_is_non_unif(const mat_t m)
 {
@@ -1432,7 +1443,7 @@ bn_mat_is_non_unif(const mat_t m)
 
     return 0;
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
