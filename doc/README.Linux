@@ -1,3 +1,45 @@
+Below are installation and platform notes of relevance to particular
+Linux distributions.
+
+Table of Contents
+-----------------
+Ubuntu
+PPC64 Linux
+
+
+Ubuntu
+------
+
+Users of Ubuntu and other similar packaging distributions of Linux
+will need to ensure that a few essentials are in place before you will
+be able to compile BRL-CAD.
+
+Following the build instructions in the INSTALL file, if you are
+starting from configure then you will need:
+
+gcc (3+, e.g. 4.0.3)
+make (e.g. gnu make 3.8.0)
+
+If you are starting from autogen.sh you will need a few additional
+tools that comprise the GNU Autotool toolset:
+
+autoconf (2.50+, e.g. 2.59)
+automake (1.6+, e.g. 1.9)
+libtool (1.4+, e.g. 1.5)
+
+All three of those have implicit dependencies on things like m4, perl,
+cpp, and more.
+
+If you installed automake version 1.4, you will need to install 1.9
+and update the alternatives entry for automake so that it refers to
+version 1.9 and not version 1.4:
+
+sudo update-alternatives automake /usr/bin/automake-1.9
+
+
+PPC64 Linux
+-----------
+
 If you happen to be installing on a ppc64 Linux system, the binaries
 will not correctly resolve without being installed first.  Be sure to
 install before testing applications.
