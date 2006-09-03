@@ -50,6 +50,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "nurb.h"
 
 static int overstrikemode = 0;
 static int underscoremode = 0;
@@ -69,6 +70,8 @@ struct state_data {
 	int sub_state;
 	mat_t xform;
 };
+
+
 
 static struct bu_list state_stack;
 static struct state_data *curr_state;
@@ -90,6 +93,7 @@ struct layer {
         int lwpolyline_count;
         int ellipse_count;
         int circle_count;
+        int spline_count;
         int arc_count;
         int text_count;
         int mtext_count;
@@ -149,7 +153,8 @@ static int curr_layer;
 #define ATTRIB_ENTITY_STATE		15
 #define ATTDEF_ENTITY_STATE		16
 #define ELLIPSE_ENTITY_STATE		17
-#define NUM_ENTITY_STATES		18
+#define SPLINE_ENTITY_STATE		18
+#define NUM_ENTITY_STATES		19
 
 /* POLYLINE flags */
 static int polyline_flag=0;
@@ -170,6 +175,13 @@ static int polyline_flag=0;
 #define POLY_VERTEX_3D_V	32
 #define POLY_VERTEX_3D_M	64
 #define POLY_VERTEX_FACE	128
+
+/* SPLINE flags */
+#define SPLINE_CLOSED		1
+#define SPLINE_PERIODIC		2
+#define SPLINE_RATIONAL		4
+#define SPLINE_PLANAR		8
+#define SPLINE_LINEAR		16
 
 /* states for the TABLES section */
 #define UNKNOWN_TABLE_STATE	0
@@ -213,6 +225,7 @@ static fastf_t tol_sq;
 static char *base_name;
 static char tmp_name[256];
 static int segs_per_circle=32;
+static int splineSegs=16;
 static fastf_t sin_delta, cos_delta;
 static fastf_t delta_angle;
 static point_t *circle_pts;
@@ -728,6 +741,8 @@ process_header_code( int code )
 			int_ptr = &units;
 		} else if( !strcmp( line, "$CECOLOR" ) ) {
 			int_ptr = &color_by_layer;
+		} else if( !strcmp( line, "$SPLINESEGS" ) ) {
+		    int_ptr = &splineSegs;
 		}
 		break;
 	case 70:
@@ -1263,6 +1278,12 @@ process_entities_unknown_code( int code )
 				bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 			}
 			break;
+		} else if( !strcmp( line, "SPLINE" ) ) {
+			curr_state->sub_state = SPLINE_ENTITY_STATE;
+			if( verbose ) {
+				bu_log( "sub_state changed to %d\n", curr_state->sub_state );
+			}
+			break;
 		} else if( !strcmp( line, "ARC" ) ) {
 			curr_state->sub_state = ARC_ENTITY_STATE;
 			if( verbose ) {
@@ -1323,6 +1344,9 @@ process_entities_unknown_code( int code )
 			    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 			}
 			break;
+		} else if( !strncmp( line, "VIEWPORT", 8 ) ) {
+		    /* not a useful entity, just ignore it */
+		    break;
 		} else if( !strncmp( line, "INSERT", 6 ) ) {
 			curr_state->sub_state = INSERT_ENTITY_STATE;
 			if( verbose ) {
@@ -3000,6 +3024,217 @@ process_arc_entities_code( int code )
 }
 
 static int
+process_spline_entities_code( int code )
+{
+    static vect_t normal;
+    static vect_t startTangent;
+    static vect_t endTangent;
+    static int flag=0;
+    static int degree=0;
+    static int numKnots=0;
+    static int numCtlPts=0;
+    static int numFitPts=0;
+    static fastf_t knotTol=0.0000001;
+    static fastf_t ctlPtTol=0.0000001;
+    static fastf_t fitPtTol=0.0000000001;
+    static fastf_t *knots=NULL;
+    static fastf_t *weights=NULL;
+    static fastf_t *ctlPts=NULL;
+    static fastf_t *fitPts=NULL;
+    static int knotCount=0;
+    static int weightCount=0;
+    static int ctlPtCount=0;
+    static int fitPtCount=0;
+    static int subCounter=0;
+    static int subCounter2=0;
+    int i;
+    int coord;
+    struct edge_g_cnurb *crv;
+    int pt_type;
+    int ncoords;
+    struct vertex *v1=NULL;
+    struct vertex *v2=NULL;
+    struct edgeuse *eu;
+    fastf_t startParam;
+    fastf_t stopParam;
+    fastf_t paramDelta;
+    point_t pt;
+
+    switch( code ) {
+    case 8:
+	if( curr_layer_name ) {
+	    bu_free( curr_layer_name, "curr_layer_name" );
+	}
+	curr_layer_name = make_brlcad_name( line );
+	break;
+    case 210:
+    case 220:
+    case 230:
+	coord = code / 10 - 21;
+	normal[coord] = atof( line ) * units_conv[units] * scale_factor;
+	break;
+    case 70:
+	flag = atoi( line );
+	break;
+    case 71:
+	degree = atoi( line );
+	break;
+    case 72:
+	numKnots = atoi( line );
+	if( numKnots > 0 ) {
+	    knots = (fastf_t *)bu_malloc( numKnots*sizeof(fastf_t),
+					  "spline knots" );
+	}
+	break;
+    case 73:
+	numCtlPts = atoi( line );
+	if( numCtlPts > 0 ) {
+	    ctlPts = (fastf_t *)bu_malloc( numCtlPts*3*sizeof(fastf_t),
+					   "spline control points" );
+	    weights = (fastf_t *)bu_malloc( numCtlPts*sizeof(fastf_t),
+						"spline weights" );
+	}
+	for( i=0 ; i<numCtlPts ; i++ ) {
+	    weights[i] = 1.0;
+	}
+	break;
+    case 74:
+	numFitPts = atoi( line );
+	if( numFitPts > 0 ) {
+	    fitPts = (fastf_t *)bu_malloc( numFitPts*3*sizeof(fastf_t),
+					   "fit control points" );
+	}
+	break;
+    case 42:
+	knotTol = atof( line ) * units_conv[units] * scale_factor;
+	break;
+    case 43:
+	ctlPtTol = atof( line ) * units_conv[units] * scale_factor;
+	break;
+    case 44:
+	fitPtTol = atof( line ) * units_conv[units] * scale_factor;
+	break;
+    case 12:
+    case 22:
+    case 32:
+	coord = code / 10 - 1;
+	startTangent[coord] = atof( line );
+	break;
+    case 13:
+    case 23:
+    case 33:
+	coord = code / 10 - 1;
+	endTangent[coord] = atof( line );
+	break;
+    case 40:
+	knots[knotCount++] = atof( line );
+	break;
+    case 41:
+	weights[weightCount++] = atof( line );
+	break;
+    case 10:
+    case 20:
+    case 30:
+	coord = (code / 10) - 1 + ctlPtCount*3;
+	ctlPts[coord] = atof( line ) * units_conv[units] * scale_factor;
+	subCounter++;
+	if( subCounter > 2 ) {
+	    ctlPtCount++;
+	    subCounter = 0;
+	}
+	break;
+    case 11:
+    case 21:
+    case 31:
+	coord = (code / 10) - 1 + fitPtCount*3;
+	fitPts[coord] = atof( line ) * units_conv[units] * scale_factor;
+	subCounter2++;
+	if( subCounter2 > 2 ) {
+	    fitPtCount++;
+	    subCounter2 = 0;
+	}
+	break;
+    case 62:	/* color number */
+	curr_color = atoi( line );
+	break;
+    case 0:
+	/* draw the spline */
+	get_layer();
+	layers[curr_layer]->spline_count++;
+
+	if( flag & SPLINE_RATIONAL ) {
+	    ncoords = 4;
+	    pt_type = RT_NURB_MAKE_PT_TYPE( ncoords, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL );
+	} else {
+	    ncoords = 3;
+	    pt_type = RT_NURB_MAKE_PT_TYPE( ncoords, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT );
+	}
+	crv = rt_nurb_new_cnurb( degree+1, numCtlPts+degree+1, numCtlPts, pt_type );
+
+	for( i=0 ; i<numKnots ; i++ ) {
+	    crv->k.knots[i] = knots[i];
+	}
+	for( i=0 ; i<numCtlPts ; i++ ) {
+	    crv->ctl_points[i*ncoords + 0] = ctlPts[i*3+0];
+	    crv->ctl_points[i*ncoords + 1] = ctlPts[i*3+1];
+	    crv->ctl_points[i*ncoords + 2] = ctlPts[i*3+2];
+	    if( flag & SPLINE_RATIONAL ) {
+		crv->ctl_points[i*ncoords + 3] = weights[i];
+	    }
+	}
+	if( !layers[curr_layer]->m ) {
+	    create_nmg();
+	}
+	startParam = knots[0];
+	stopParam = knots[numKnots-1];
+	paramDelta = (stopParam - startParam) / (double)splineSegs;
+	rt_nurb_c_eval( crv, startParam, pt );
+	for( i=0 ; i<splineSegs ; i++ ) {
+	    fastf_t param = startParam + paramDelta * (i+1);
+	    eu = nmg_me( v1, v2, layers[curr_layer]->s );
+	    v1 = eu->vu_p->v_p;
+	    if( i == 0 ) {
+		nmg_vertex_gv( v1, pt );
+	    }
+	    rt_nurb_c_eval( crv, param, pt );
+	    v2 = eu->eumate_p->vu_p->v_p;
+	    nmg_vertex_gv( v2, pt );
+
+	    v1 = v2;
+	    v2 = NULL;
+	}
+
+	rt_nurb_free_cnurb( crv );
+
+	if( knots != NULL ) bu_free( knots, "spline knots" );
+	if( weights != NULL ) bu_free( weights, "spline weights" );
+	if( ctlPts != NULL ) bu_free( ctlPts, "spline control points" );
+	if( fitPts != NULL ) bu_free( fitPts, "spline fit points" );
+	flag = 0;
+	degree = 0;
+	numKnots = 0;
+	numCtlPts = 0;
+	numFitPts = 0;
+	knotTol = 0.0000001;
+	ctlPtTol = 0.0000001;
+	fitPtTol = 0.0000000001;
+	knotCount = 0;
+	weightCount = 0;
+	ctlPtCount = 0;
+	fitPtCount = 0;
+	subCounter = 0;
+	subCounter2 = 0;
+	knots = NULL;
+	weights = NULL;
+	ctlPts = NULL;
+	fitPts = NULL;
+
+	curr_state->sub_state = UNKNOWN_ENTITY_STATE;
+	process_entities_code[curr_state->sub_state]( code );
+	break;
+    }
+}
+static int
 process_3dface_entities_code( int code )
 {
 	int vert_no;
@@ -3277,6 +3512,7 @@ main( int argc, char *argv[] )
 	process_entities_code[ATTDEF_ENTITY_STATE] = process_attrib_entities_code;
 	process_entities_code[ELLIPSE_ENTITY_STATE] = process_ellipse_entities_code;
 	process_entities_code[LEADER_ENTITY_STATE] = process_leader_entities_code;
+	process_entities_code[SPLINE_ENTITY_STATE] = process_spline_entities_code;
 
 	process_tables_sub_code[UNKNOWN_TABLE_STATE] = process_tables_unknown_code;
 	process_tables_sub_code[LAYER_TABLE_STATE] = process_tables_layer_code;
@@ -3408,6 +3644,9 @@ main( int argc, char *argv[] )
 
 		if( layers[i]->point_count ) {
 			bu_log( "\t%d points\n", layers[i]->point_count );
+		}
+		if( layers[i]->spline_count ) {
+			bu_log( "\t%d splines\n", layers[i]->spline_count );
 		}
 
 
