@@ -22,10 +22,10 @@
 /** \addtogroup bu_log */
 /*@{*/
 /** @file fopen_uniq.c
- *  Routine to open a unique filename.
  *
- *  @author
- *	Lee A. Butler
+ * @brief Routine to open a unique filename.
+ *
+ *  @author Lee A. Butler
  *
  *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394	@n

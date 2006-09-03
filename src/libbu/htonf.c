@@ -22,6 +22,9 @@
 /** \addtogroup hton */
 /*@{*/
 /** @file htonf.c
+ *
+ *@brief convert floats to host/network format
+ *
  * Host to Network Floats  +  Network to Host Floats.
  *  Author -
  *	Michael John Muuss

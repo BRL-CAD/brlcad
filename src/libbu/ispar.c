@@ -22,6 +22,8 @@
 /** \addtogroup thread */
 /*@{*/
 /** @file ispar.c
+ * @brief subroutine to determine if we are multi-threaded
+ *
  *  This subroutine is separated off from parallel.c so that
  *  bu_bomb() and others can call it, without causing either
  *  parallel.c or semaphore.c to get referenced and thus causing

@@ -22,6 +22,8 @@
 /** \addtogroup hton */
 /*@{*/
 /** @file htond.c
+ *@brief convert doubles to host/network format
+ *
  *  Library routines for conversion between the local host
  *  64-bit ("double precision") representation, and
  *  64-bit IEEE double precision representation, in "network order",

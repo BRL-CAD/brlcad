@@ -23,6 +23,9 @@
 /*@{*/
 
 /** @file parallel.c
+ *
+ * @brief routines for parallel processing
+ *
  *  Machine-specific routines for parallel processing.
  *  Primarily calling functions in multiple threads on multiple CPUs.
  *

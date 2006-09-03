@@ -23,7 +23,7 @@
 /*@{*/
 
 /** @file mro.c
- *  The Multiply Represented Object package.
+ * @brief  The Multiply Represented Object package.
  *
  *
  *  @author	John R. Anderson

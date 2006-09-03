@@ -23,6 +23,9 @@
 /*@{*/
 
 /** @file linebuf.c
+ *
+ * @brief A portable way of doing setlinebuf().
+ *
  *	A portable way of doing setlinebuf().
  *
  *  @author	Doug A. Gwyn

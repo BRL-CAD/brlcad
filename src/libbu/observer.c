@@ -23,7 +23,7 @@
 /*@{*/
 
 /** @file observer.c
- * Routines for implementing the observer pattern.
+ * @brief Routines for implementing the observer pattern.
  *
  * @par Source
  *	SLAD CAD Team

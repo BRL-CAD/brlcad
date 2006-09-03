@@ -23,6 +23,7 @@
 /*@{*/
 
 /** @file printb.c
+ * @brief print bitfields
  *
  *
  * @author	Michael John Muuss

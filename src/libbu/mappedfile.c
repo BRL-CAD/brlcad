@@ -23,6 +23,8 @@
 /*@{*/
 
 /** @file mappedfile.c
+ * @brief Routines for sharing large read-only data files.
+ *
  *  Routines for sharing large read-only data files
  *  like height fields, bit map solids, texture maps, etc.
  *  Uses memory mapped files where available.

@@ -22,6 +22,9 @@
 /** \addtogroup bu_list */
 /*@{*/
 /** @file ./libbu/list.c
+ *
+ * @brief Support routines for linked lists.
+ *
  *  Generic bu_list routines.
  *
  *  @author	Michael John Muuss

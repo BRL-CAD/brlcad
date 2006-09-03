@@ -23,6 +23,8 @@
 /*@{*/
 /** @file mread.c
  *
+ * @brief multiple-read to fill a buffer
+ *
  * Provide a general means to a read some count of items from a file
  * descriptor reading multiple times until the quantity desired is
  * obtained.  This is useful for pipes and network connections that

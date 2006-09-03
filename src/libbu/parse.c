@@ -23,6 +23,9 @@
 /*@{*/
 
 /** @file ./libbu/parse.c
+ *
+ * @brief routines for parsing arbitrary structures
+ *
  *  Routines to assign values to elements of arbitrary structures.
  *  The layout of a structure to be processed is described by
  *  a structure of type "bu_structparse", giving element names, element

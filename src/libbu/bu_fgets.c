@@ -22,7 +22,7 @@
 /** \addtogroup bu_log */
 /*@{*/
 /** @file bu_fgets.c
- *
+ *@brief
  * fgets replacement function that also handles CR as an EOL marker
  *
  *  @Author John Anderson

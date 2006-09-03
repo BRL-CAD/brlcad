@@ -19,25 +19,26 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup msr */
 /*@{*/
 
 /** @file msr.c
+ * @brief
  * Minimal Standard RANdom number generator
  *
- * From:
+ * @par From:
  *	Stephen K. Park and Keith W. Miller
- *	"Random number generators: good ones are hard to find"
- *	CACM vol 31 no 10, Oct 88
+ *@n	"Random number generators: good ones are hard to find"
+ *@n	CACM vol 31 no 10, Oct 88
  *
- *  Author -
+ *  @author
  *	Christopher T. Johnson - 90/04/20
  *
- *  Source -
+ * @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -54,7 +55,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "bn.h"
 
-/*
+/**
  * Note: BN_MSR_MAXTBL must be an even number.
  */
 #define	BN_MSR_MAXTBL	4096	/* Size of random number tables. */
@@ -62,26 +63,27 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 /*	bn_unif_init	Initialize a random number structure.
  *
- * Entry:
+ * @par Entry
  *	setseed	seed to use
  *	method  method to use to generate numbers;
  *
- * Exit:
+ * @par Exit
  *	returns	a pointer to a bn_unif structure.
  *	returns 0 on error.
  *
- * Uses:
+ * @par Uses
  *	None.
  *
- * Calls:
+ * @par Calls
  *	bu_malloc
  *
- * Method:
+ * @par Method @code
  *	malloc up a structure with pointers to the numbers
  *	get space for the integer table.
  *	get space for the floating table.
  *	set pointer counters
  *	set seed if one was given and setseed != 1
+@endcode
  *
  */
 #define	A	16807
@@ -112,25 +114,26 @@ bn_unif_init(long int setseed, int method)
  * the random number table via high speed macros and bn_unif_long_fill called
  * when the table is exauseted.
  *
- * Entry:
+ * @par Entry
  *	p	pointer to a bn_unif structure.
  *
- * Exit:
+ * @par Exit
  *	if (!p) returns 1 else returns a value between 1 and 2^31-1
  *
- * Calls:
+ * @par Calls
  *	None.  msran is inlined for speed reasons.
  *
- * Uses:
+ * @par Uses
  *	None.
  *
- * Method:
+ * @par Method @code
  *	if (!p) return(1);
  *	if p->msr_longs != NULL
  *		msr_longs is reloaded with random numbers;
  *		msr_long_ptr is set to BN_MSR_MAXTBL
  *	endif
  *	msr_seed is updated.
+@endcode
  */
 long
 bn_unif_long_fill(struct bn_unif *p)
@@ -173,25 +176,26 @@ bn_unif_long_fill(struct bn_unif *p)
  * the random number table via high speed macros and bn_unif_double_fill
  * called when the table is exauseted.
  *
- * Entry:
+ * @par Entry
  *	p	pointer to a bn_unif structure.
  *
- * Exit:
+ * @par Exit
  *	if (!p) returns 0.0 else returns a value between -0.5 and 0.5
  *
- * Calls:
+ * @par Calls
  *	None.  msran is inlined for speed reasons.
  *
- * Uses:
+ * @par Uses
  *	None.
  *
- * Method:
+ * @par Method @code
  *	if (!p) return (0.0)
  *	if p->msr_longs != NULL
  *		msr_longs is reloaded with random numbers;
  *		msr_long_ptr is set to BN_MSR_MAXTBL
  *	endif
  *	msr_seed is updated.
+@endcode
  */
 double
 bn_unif_double_fill(struct bn_unif *p)
@@ -244,25 +248,26 @@ bn_unif_free(struct bn_unif *p)
 /*	bn_gauss_init	Initialize a random number struct for gaussian
  *	numbers.
  *
- * Entry:
+ * @par Entry
  *	setseed		Seed to use.
  *	method		method to use to generate numbers (not used)
  *
- * Exit:
+ * @par Exit
  *	Returns a pointer toa bn_msr_guass structure.
  *	returns 0 on error.
  *
- * Calls:
+ * @par Calls
  *	bu_malloc
  *
- * Uses:
+ * @par Uses
  *	None.
  *
- * Method:
+ * @par Method @code
  *	malloc up a structure
  *	get table space
  *	set seed and pointer.
  *	if setseed != 0 then seed = setseed
+@endcode
  */
 struct bn_gauss *
 bn_gauss_init(long int setseed, int method)
@@ -287,28 +292,29 @@ bn_gauss_init(long int setseed, int method)
  * the random number table via high speed macros and bn_msr_guass_fill
  * called when the table is exauseted.
  *
- * Entry:
+ * @par Entry
  *	p	pointer to a bn_msr_guass structure.
  *
- * Exit:
+ * @par Exit
  *	if (!p) returns 0.0 else returns a value with a mean of 0 and
  *	    a variance of 1.0.
  *
- * Calls:
+ * @par Calls
  *	BN_UNIF_CIRCLE to get to uniform random number whos radius is
  *	<= 1.0. I.e. sqrt(v1*v1 + v2*v2) <= 1.0
  *	BN_UNIF_CIRCLE is a macro which can call bn_unif_double_fill.
  *
- * Uses:
+ * @par Uses
  *	None.
  *
- * Method:
+ * @par Method @code
  *	if (!p) return (0.0)
  *	if p->msr_longs != NULL
  *		msr_longs is reloaded with random numbers;
  *		msr_long_ptr is set to BN_MSR_MAXTBL
  *	endif
  *	msr_seed is updated.
+@endcode
  */
 double
 bn_gauss_fill(struct bn_gauss *p)
@@ -353,6 +359,7 @@ bn_gauss_free(struct bn_gauss *p)
 #undef Q
 #undef R
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

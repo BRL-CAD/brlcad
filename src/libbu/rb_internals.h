@@ -25,16 +25,15 @@
  *	The constants, macro functions, etc. need within LIBBU(3)
  *	to handle the red-black tree utilities.
  *
- *  Author -
+ *  @author
  *	Paul J. Tanenbaum
  *
- *  Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  *  $Header$
  */
-/*@}*/
 
 #include "compat4.h"
 
@@ -45,7 +44,7 @@
 #ifndef BU_RB_INTERNALS_H
 #define BU_RB_INTERNALS_H seen
 
-/*			B U _ R B _ C K M A G ( )
+/**			B U _ R B _ C K M A G ( )
  *	    Check and validate a structure pointer
  *
  *	This macro has three parameters: a pointer, the magic number
@@ -57,7 +56,7 @@
 #define	BU_RB_PKG_MAGIC		0x7262706b
 #define	BU_RB_LIST_MAGIC	0x72626c73
 
-/*			B U _ R B _ C K O R D E R ( )
+/**			B U _ R B _ C K O R D E R ( )
  *
  *	This macro has two parameters: a tree and an order number.
  *	It ensures that the order number is valid for the tree.
@@ -123,14 +122,14 @@
 #define	BU_RB_BLACK		1
 #define	bu_rb_data(n, o)	(((n) -> rbn_package)[o] -> rbp_data)
 
-/*
+/**
  *	Interface to _rb_walk()
  *	(Valid values for the parameter what_to_walk)
  */
 #define	WALK_NODES		0
 #define	WALK_DATA		1
 
-/*		    B U _ R B _ R O T A T E ( )
+/**		    B U _ R B _ R O T A T E ( )
  *			    and
  *		B U _ R B _ O T H E R _ R O T A T E ( )
  *
@@ -169,6 +168,7 @@ BU_EXTERN(void bu_rb_free_node,		(struct bu_rb_node *node));
 BU_EXTERN(void bu_rb_free_package,	(struct bu_rb_package *package));
 
 #endif /* BU_RB_INTERNALS_H */
+/*@}*/
 
 /*
  * Local Variables:

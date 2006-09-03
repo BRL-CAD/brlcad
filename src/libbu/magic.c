@@ -22,6 +22,9 @@
 /** \addtogroup magic */
 /*@{*/
 /** @file magic.c
+ *
+ *@brief routines for looking up magic numbers
+ *
  *  Routines involved with handling "magic numbers" used to identify
  *  various in-memory data structures.
  *

@@ -18,9 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
+/** @addtogroup libbu */
+/*@{*/
 /** @file bu.h
- * @addtogroup libbu
+ * 
  * @brief
  *  Header file for the BRL-CAD Utility Library, LIBBU.
  *
@@ -58,7 +59,7 @@
  *
  *  $Header$
  */
-/*@{*/
+
 #ifndef __BU_H__
 #define __BU_H__
 
@@ -103,7 +104,7 @@ __BEGIN_DECLS
 #  endif  /* DIR_SEPARATOR_2 */
 #endif  /* DIR_SEPARATOR */
 
-/** @def MAXPATHLEN
+/** 
  * Maximum length of a filesystem path.  Typically defined in a system file
  * but if it isn't set, we create it.
  */
@@ -111,7 +112,7 @@ __BEGIN_DECLS
 #  define MAXPATHLEN 1024
 #endif
 
-/** @def BU_PATH_SEPARATOR 
+/**
  * set to the path list separator character
  */
 #if defined(PATH_SEPARATOR)
@@ -205,7 +206,6 @@ __BEGIN_DECLS
 /**
  *                B U _ G E T T Y P E
  *
- * @def BU_GETTYPE(ptr,typename)
  *
  * Acquire storage for a given TYPE, eg, BU_GETTYPE(ptr, typename);
  * Equivalent to BU_GETSTRUCT, except without the 'struct' Useful
@@ -361,10 +361,6 @@ __BEGIN_DECLS
  *  This is the BRL-CAD external data representation (XDR).
  *  See also the support routines in libbu/xdr.c
  *
- * @def SIZEOF_NETWORK_SHORT
- * @def SIZEOF_NETWORK_LONG
- * @def SIZEOF_NETWORK_FLOAT
- * @def SIZEOF_NETWORK_DOUBLE
  */
 #define SIZEOF_NETWORK_SHORT	2	/* htons(), bu_gshort(), bu_pshort() */
 #define SIZEOF_NETWORK_LONG	4	/* htonl(), bu_glong(), bu_plong() */
@@ -825,7 +821,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 /** @addtogroup bitv */
 /**@{*/
 /**
- * @struct bu_bitv bu.h
+ * 
  * @brief
  *  Bit vector data structure.
  *
@@ -1681,6 +1677,8 @@ BU_EXPORT BU_EXTERN(void bu_avs_add_nonunique,
 		     char *value));
 /*@}*/
 
+/** @addtogroup magic */
+/*@{*/
 /* badmagic.c */
 BU_EXPORT BU_EXTERN(void bu_badmagic,
 		    (const long *ptr,
@@ -1688,7 +1686,10 @@ BU_EXPORT BU_EXTERN(void bu_badmagic,
 		     const char *str,
 		     const char *file,
 		     int line));
+/*@}*/
 
+/** @addtogroup bitv */
+/*@{*/
 /* bitv.c */
 BU_EXPORT BU_EXTERN(struct bu_bitv *bu_bitv_new,
 		    (unsigned int nbits));
@@ -1716,6 +1717,10 @@ BU_EXPORT BU_EXTERN(struct bu_bitv *bu_bitv_dup,
 BU_EXPORT BU_EXTERN(void bu_bitv_free,
 		    (struct bu_bitv *bv));
 
+/*@}*/
+/** @addtogroup bu_log */
+/*@{*/
+
 /* bomb.c */
 BU_EXPORT BU_EXTERN(void bu_bomb,
 		    (const char *str));
@@ -1723,6 +1728,9 @@ BU_EXPORT BU_EXTERN(void bu_bomb,
 /* bu_fgets.c */
 BU_EXPORT BU_EXTERN(char *bu_fgets,
 		    ( char *s, int size, FILE *stream));
+/*@}*/
+/** @addtogroup color */
+/*@{*/
 
 
 /* color.c */
@@ -1753,6 +1761,10 @@ BU_EXPORT BU_EXTERN(int bu_color_of_hsv_floats,
 BU_EXPORT BU_EXTERN(int bu_color_to_hsv_floats,
 		    (struct bu_color *cp,
 		     fastf_t *hsv));
+/*@}*/
+/** @addtogroup bu_log */
+/*@{*/
+
 /* file.c */
 BU_EXPORT BU_EXTERN(struct bu_file *bu_fopen,
 		    (char *fname, char *type));
@@ -1792,6 +1804,10 @@ BU_EXPORT BU_EXTERN(int bu_fgetc,
 BU_EXPORT BU_EXTERN(void bu_printfile,
 		    (struct bu_file *bfp));
 
+/*@}*/
+/** @addtogroup getopt */
+/*@{*/
+
 /* getopt.c */
 BU_EXPORT extern int			bu_opterr;
 BU_EXPORT extern int			bu_optind;
@@ -1800,6 +1816,10 @@ BU_EXPORT extern char *			bu_optarg;
 BU_EXPORT BU_EXTERN(int	bu_getopt,
 		    (int nargc, char * const nargv[],
 		     const char *ostr));
+
+/*@}*/
+/** @addtogroup bu_hist */
+/*@{*/
 
 /* hist.c */
 BU_EXPORT BU_EXTERN(void bu_hist_free,
@@ -1816,6 +1836,10 @@ BU_EXPORT BU_EXTERN(void bu_hist_range,
 BU_EXPORT BU_EXTERN(void bu_hist_pr,
 		    (const struct bu_hist *histp,
 		     const char *title));
+
+/*@}*/
+/** @addtogroup hton */
+/*@{*/
 
 /* htond.c */
 BU_EXPORT BU_EXTERN(void htond,
@@ -1837,15 +1861,27 @@ BU_EXPORT BU_EXTERN(void ntohf,
 		     const unsigned char *in,
 		     int count));
 
+/*@}*/
+/** @addtogroup thread */
+/*@{*/
+
 /* ispar.c */
 BU_EXPORT BU_EXTERN(int	bu_is_parallel,
 		    ());
 BU_EXPORT BU_EXTERN(void bu_kill_parallel,
 		    ());
 
+/*@}*/
+/** @addtogroup bu_log */
+/*@{*/
+
 /* linebuf.c */
 BU_EXPORT BU_EXTERN(void bu_setlinebuf,
 		    (FILE *fp));
+
+/*@}*/
+/** @addtogroup bu_list */
+/*@{*/
 
 /* list.c */
 BU_EXPORT BU_EXTERN(int bu_list_len,
@@ -1867,6 +1903,9 @@ BU_EXPORT BU_EXTERN(void bu_ck_list_magic,
 		     const char *str,
 		     const long magic));
 
+/*@}*/
+/** @addtogroup bu_log */
+/*@{*/
 /* hook.c */
 BU_EXPORT BU_EXTERN(void bu_hook_list_init,
 		    (struct bu_hook_list *hlp));
@@ -1882,6 +1921,9 @@ BU_EXPORT BU_EXTERN(void bu_call_hook,
 		    (struct bu_hook_list *hlp,
 		     genptr_t buf));
 
+/*@}*/
+/** @addtogroup bu_log */
+/*@{*/
 /* log.c */
 BU_EXPORT BU_EXTERN(void bu_log_indent_delta,
 		    (int delta));
@@ -1907,9 +1949,17 @@ BU_EXPORT BU_EXTERN(void bu_flog,
 		    ());
 #endif
 
+/*@}*/
+/** @addtogroup magic */
+/*@{*/
+
 /* magic.c */
 BU_EXPORT BU_EXTERN(const char *bu_identify_magic,
 		    (long magic));
+
+/*@}*/
+/** @addtogroup malloc */
+/*@{*/
 
 /* malloc.c */
 BU_EXPORT extern long		bu_n_malloc;
@@ -1948,6 +1998,10 @@ BU_EXPORT BU_EXTERN(void bu_ck_malloc_ptr,
 BU_EXPORT BU_EXTERN(int	bu_mem_barriercheck,
 		    ());
 
+/*@}*/
+/** @addtogroup mf */
+/*@{*/
+
 /* mappedfile.c */
 BU_EXPORT BU_EXTERN(struct bu_mapped_file *bu_open_mapped_file,
 		    (const char *name,
@@ -1963,6 +2017,11 @@ BU_EXPORT BU_EXTERN(struct bu_mapped_file *bu_open_mapped_file_with_path,
 		    (char * const *path,
 		     const char *name,
 		     const char *appl));
+
+
+/*@}*/
+/** @addtogroup thread */
+/*@{*/
 
 /* parallel.c */
 BU_EXPORT BU_EXTERN(void bu_nice_set,
@@ -1983,6 +2042,10 @@ BU_EXPORT BU_EXTERN(void bu_parallel,
 		    (void (*func)BU_ARGS((int ncpu, genptr_t arg)),
 		     int ncpu,
 		     genptr_t arg));
+
+/*@}*/
+/** @addtogroup parse */
+/*@{*/
 
 /* parse.c */
 BU_EXPORT BU_EXTERN(int bu_struct_export,
@@ -2060,6 +2123,10 @@ BU_EXPORT BU_EXTERN(void bu_copy_external,
 BU_EXPORT BU_EXTERN(char *bu_next_token,
 		    (char *str));
 
+/*@}*/
+/** @addtogroup bitv */
+/*@{*/
+
 /* printb.c */
 BU_EXPORT BU_EXTERN(void bu_vls_printb,
 		    (struct bu_vls *vls,
@@ -2109,6 +2176,10 @@ BU_EXPORT BU_EXTERN(void bu_pr_ptbl,
 BU_EXPORT BU_EXTERN(void bu_ptbl_trunc,
 		    (struct bu_ptbl *tbl,
 		     int end));
+
+/*@}*/
+/** @addtogroup rb */
+/*@{*/
 
 /* rb_create.c */
 BU_EXPORT BU_EXTERN(bu_rb_tree *bu_rb_create,
@@ -2206,6 +2277,10 @@ BU_EXPORT BU_EXTERN(void bu_rb_walk,
 		     int	trav_type));
 #define		bu_rb_walk1(t,v,d)	bu_rb_walk((t), 0, (v), (d))
 
+/*@}*/
+/** @addtogroup thread */
+/*@{*/
+
 /* semaphore.c */
 BU_EXPORT BU_EXTERN(void bu_semaphore_init,
 		    (unsigned int nsemaphores));
@@ -2213,6 +2288,10 @@ BU_EXPORT BU_EXTERN(void bu_semaphore_acquire,
 		    (unsigned int i));
 BU_EXPORT BU_EXTERN(void bu_semaphore_release,
 		    (unsigned int i));
+
+/*@}*/
+/** @addtogroup vls */
+/*@{*/
 
 /* vls.c */
 BU_EXPORT BU_EXTERN(void bu_vls_init,
@@ -2324,10 +2403,14 @@ BU_EXPORT BU_EXTERN(void bu_vls_prepend,
 		    (struct bu_vls *vp,
 		     char *str));
 
+/*@}*/
+
 
 /* vers.c */
 BU_EXPORT extern const char		bu_version[];
 
+/** @addtogroup bu_log */
+/*@{*/
 /* units.c */
 BU_EXPORT BU_EXTERN(double bu_units_conversion,
 		    (const char *str));
@@ -2340,6 +2423,12 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 		     register const char *name,
 		     char *base,
 		     const char *value));
+
+
+
+/*@}*/
+/** @addtogroup hton */
+/*@{*/
 
 /* xdr.c */
 /* Macro version of library routine bu_glong() */
@@ -2374,11 +2463,21 @@ BU_EXPORT BU_EXTERN(unsigned char *bu_plong,
 		     register unsigned long l));
 
 
+
+/*@}*/
+/** @addtogroup bu_log */
+/*@{*/
+
 /* association.c */
 BU_EXPORT BU_EXTERN(struct bu_vls *bu_association,
 		    (const char *fname,
 		     const char *value,
 		     int field_sep));
+
+
+/*@}*/
+/** @addtogroup butcl */
+/*@{*/
 
 /* Things that live in libbu/observer.c */
 BU_EXPORT extern struct bu_cmdtab bu_observer_cmds[];
@@ -2522,6 +2621,11 @@ BU_EXPORT BU_EXTERN(int Bu_Init,
 		    (Tcl_Interp *interp));
 #endif
 
+
+/*@}*/
+/** @addtogroup bu_log */
+/*@{*/
+
 /* lex.c */
 #define BU_LEX_ANY	0	/* pseudo type */
 struct bu_lex_t_int {
@@ -2580,6 +2684,11 @@ BU_EXPORT BU_EXTERN(void bu_mro_init,
 		    (struct bu_mro *mrop));
 BU_EXPORT BU_EXTERN(void bu_mro_free,
 		    (struct bu_mro *mrop));
+
+
+/*@}*/
+/** @addtogroup bu_hash */
+/*@{*/
 
 
 /* hash.c */
@@ -2650,7 +2759,7 @@ BU_EXPORT BU_EXTERN(struct bu_hash_entry *bu_hash_tbl_next,
 __END_DECLS
 
 #endif  /* __BU_H__ */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

@@ -123,6 +123,14 @@
  * @ingroup libbn
  */
 
+/** @defgroup bn_list List
+ * @ingroup libbn
+ */
+
+/** @defgroup plot Plot/Draw
+ * @ingroup libbn
+ */
+
 /** @defgroup noise Fractal Noise
  * @ingroup libbn
  */

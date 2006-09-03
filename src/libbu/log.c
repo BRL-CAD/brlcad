@@ -22,6 +22,8 @@
 /** \addtogroup bu_log */
 /*@{*/
 /** @file log.c
+ * @brief parallel safe version of fprintf for logging
+ *
  *  BRL-CAD support library, error logging routine.
  *  Note that the user may provide his own logging routine,
  *  by replacing these functions.  That is why this is in file of it's own.
@@ -34,9 +36,7 @@
  *
  * @par Specialty Functions -
  *	bu_log_add_hook		Start catching log events (used by mged/cmd.c)
- * @n	bu_log_delete_hook
  * @n	bu_putchar
- *
  *
  *  @author	Michael John Muuss
  *  @author	Glenn Durfee

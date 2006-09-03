@@ -22,6 +22,10 @@
 /** \addtogroup magic */
 /*@{*/
 /** @file badmagic.c
+ *
+ * @brief
+ * Routines to check magic numbers
+ *
  *  Routines involved with handling "magic numbers" used to identify
  *  various in-memory data structures.
  *

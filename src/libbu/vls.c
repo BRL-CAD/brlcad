@@ -22,6 +22,9 @@
 /** \addtogroup vls */
 /*@{*/
 /** @file vls.c
+ *
+ *  @brief The variable length string package.
+ *
  *  The variable length string package.
  *
  *  Assumption:  libc-provided sprintf() function is safe to use in parallel,

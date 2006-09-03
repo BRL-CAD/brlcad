@@ -22,6 +22,8 @@
 /** \addtogroup thread */
 /*@{*/
 /** @file semaphore.c
+ *@brief semaphore implementation
+ *
  *  Machine-specific routines for parallel processing.
  *  Primarily for handling semaphores for critical sections.
  *

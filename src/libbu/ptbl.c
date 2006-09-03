@@ -23,6 +23,9 @@
 /*@{*/
 
 /** @file ptbl.c
+ *
+ * @brief Support for generalized "pointer tables"
+ *
  *  Support for generalized "pointer tables",
  *  kept compactly in a dynamic array.
  *

@@ -18,10 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** 
+/** @addtogroup libbn */
+/*@{*/
 
 /** @file bn.h
- *@addtogroup libbn
+ *
  *  Header file for the BRL-CAD Numerical Computation Library, LIBBN.
  *
  *  The library provides a broad assortment of numerical algorithms
@@ -29,42 +30,44 @@
  *  vector math, matrix math, quaternion math, complex math,
  *  synthetic division, root finding, etc.
  *
- *  This header file depends on vmath.h
- *  This header file depends on bu.h and LIBBU;  it is safe to use
- *  bu.h macros (e.g. BU_EXTERN) here.
+ * @li This header file depends on vmath.h
+ * @li This header file depends on bu.h and LIBBU;  it is safe to use
+ *      bu.h macros (e.g. BU_EXTERN) here.
  *
  *  ??Should complex.h and plane.h and polyno.h get absorbed in here??
  *	??absorbed/included??
  *
  *
- *  Authors -
- *	Michael John Muuss
- *	Lee A Butler
- *	Douglas A Gwyn
- *	Jeff Hanes
  *
- *  Modifications & Additions -
+ *  @author	Michael John Muuss
+ *  @author	Lee A Butler
+ *  @author	Douglas A Gwyn
+ *  @author	Jeff Hanes
+ *
+ *  @par Modifications & Additions
  *      Christopher Sean Morrison
  *
- *  Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  *  Include Sequencing -
- *	# include "common.h"
- *	# include <stdio.h>
- *	# include <math.h>
- *	# include "machine.h"	/_* For fastf_t definition on this machine *_/
- *	# include "bu.h"
- *	# include "vmath.h"
- *	# include "bn.h"
+@code
+ 	# include "common.h"
+ 	# include <stdio.h>
+ 	# include <math.h>
+ 	# include "machine.h"	/_* For fastf_t definition on this machine *_/
+ 	# include "bu.h"
+ 	# include "vmath.h"
+ 	# include "bn.h"
+@endcode
  *
- *  Libraries Used -
+ *  @par Libraries Used -
  *	-lm -lc
  *
  *  $Header$
  */
-/*@{*/
+
 
 #ifndef __BN_H__
 #define __BN_H__
@@ -95,7 +98,9 @@ __BEGIN_DECLS
 
 /** @addtogroup tol */
 /*@{*/
-/*			B N _ T O L
+/**			B N _ T O L
+ *
+ * @brief Support for uniform tolerances
  *
  *  A handy way of passing around the tolerance information needed to
  *  perform approximate floating-point calculations on geometry.
@@ -105,33 +110,36 @@ __BEGIN_DECLS
  *	If two points are closer together than dist, then they are to
  *	be considered the same point.
  *	For example:
- *		point_t	a,b;
- *		vect_t	diff;
- *		VSUB2( diff, a, b );
- *		if( MAGNITUDE(diff) < tol->dist )	a & b are the same.
- *	or, more efficiently:
- *		if( MAQSQ(diff) < tol->dist_sq )
- *
+@code
+ 		point_t	a,b;
+ 		vect_t	diff;
+ 		VSUB2( diff, a, b );
+ 		if( MAGNITUDE(diff) < tol->dist )	a & b are the same.
+ 	or, more efficiently:
+ 		if( MAQSQ(diff) < tol->dist_sq )
+@endcode 
  *  perp & para establish the angular tolerance.
  *
  *	If two rays emanate from the same point, and their dot product
  *	is nearly one, then the two rays are the same, while if their
  *	dot product is nearly zero, then they are perpendicular.
  *	For example:
- *		vect_t	a,b;
- *		if( fabs(VDOT(a,b)) >= tol->para )	a & b are parallel
- *		if( fabs(VDOT(a,b)) <= tol->perp )	a & b are perpendicular
+@code
+ 		vect_t	a,b;
+ 		if( fabs(VDOT(a,b)) >= tol->para )	a & b are parallel
+ 		if( fabs(VDOT(a,b)) <= tol->perp )	a & b are perpendicular
+@endcode
  *
- *  Note:
+ *  @note
  *	tol->dist_sq = tol->dist * tol->dist;
- *	tol->para = 1 - tol->perp;
+ *@n	tol->para = 1 - tol->perp;
  */
 struct bn_tol {
 	unsigned long	magic;
-	double		dist;			/* >= 0 */
-	double		dist_sq;		/* dist * dist */
-	double		perp;			/* nearly 0 */
-	double		para;			/* nearly 1 */
+	double		dist;			/**< @brief >= 0 */
+	double		dist_sq;		/**< @brief dist * dist */
+	double		perp;			/**< @brief nearly 0 */
+	double		para;			/**< @brief nearly 1 */
 };
 #define BN_TOL_MAGIC	0x98c734bb
 #define BN_CK_TOL(_p)	BU_CKMAG(_p, BN_TOL_MAGIC, "bn_tol")
@@ -294,8 +302,8 @@ BN_EXPORT BU_EXTERN(void bn_tcl_mat_print,
 
 /* "complex number" data type: */
 typedef struct bn_complex {
-	double		re;		/* real part */
-	double		im;		/* imaginary part */
+	double		re;		/**< @brief real part */
+	double		im;		/**< @brief imaginary part */
 }  bn_complex_t;
 
 /* functions that are efficiently done as macros: */
@@ -1388,7 +1396,7 @@ BN_EXPORT extern const double bn_radtodeg;
 struct bn_table {
 	long		magic;
 	int		nx;
-	fastf_t		x[1];	/* array of nx+1 wavelengths, dynamically sized */
+	fastf_t		x[1];	/**< @brief array of nx+1 wavelengths, dynamically sized */
 };
 #define BN_TABLE_MAGIC	0x53706374
 #define BN_CK_TABLE(_p)	BU_CKMAG(_p, BN_TABLE_MAGIC, "bn_table")
@@ -1415,8 +1423,8 @@ struct bn_table {
 struct bn_tabdata {
 	long		magic;
 	int		ny;
-	const struct bn_table *table;	/* Up pointer to definition of X axis */
-	fastf_t		y[1];		/* array of ny samples, dynamically sized */
+	const struct bn_table *table;	/**< @brief Up pointer to definition of X axis */
+	fastf_t		y[1];		/**< @brief array of ny samples, dynamically sized */
 };
 #define BN_TABDATA_MAGIC	0x53736d70
 #define BN_CK_TABDATA(_p)	BU_CKMAG(_p, BN_TABDATA_MAGIC, "bn_tabdata")

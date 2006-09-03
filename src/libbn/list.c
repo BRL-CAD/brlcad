@@ -19,23 +19,24 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup bn_list */
 /*@{*/
-/** @file ./libbn/list.c
+/** @file libbn/list.c
+ *
  *  NOTE that tp_2list() and tp_3list() are good candidates to become
  *  intrinsic parts of plot3.c, for efficiency reasons.
  *
- *  Author -
- *	Michael John Muuss
- *	August 04, 1978
+ *  
+ * @author Michael John Muuss
+ * @n	August 04, 1978
  *
- *  Source -
+ *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *@n	The U. S. Army Ballistic Research Laboratory
+ *@n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -54,7 +55,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define	TP_MARK		1		/* Draw marks */
 #define	TP_LINE		2		/* Draw lines */
 
-/*
+/**
  *			T P _ I 2 L I S T
  *
  *  Take a set of x,y coordinates, and plot them as a
@@ -77,7 +78,7 @@ tp_i2list(register FILE *fp, register int *x, register int *y, register int npoi
 		pl_cont( fp, *x++, *y++ );
 }
 
-/*
+/**
  *			T P _ 2 L I S T
  *
  *  Take a set of x,y coordinates, and plot them as a
@@ -151,7 +152,7 @@ int		*n;
 		pd_3cont( fp, *x++, *y++, *z++ );
 }
 
-/*
+/**
  *			T P _ 2 M L I S T
  *
  *  Take a set of x,y co-ordinates and plots them,
@@ -168,10 +169,10 @@ int		*n;
  *  In addition, the value of the 'flag' variable determines the type
  *  of line to be drawn, as follows:
  *
- *	0	Draw nothing (rather silly)
- *	1	Marks only, no connecting lines.  Suggested interval=1.
- *	2	Draw connecting lines only.
- *	3	Draw line and marks
+ *@li	0	Draw nothing (rather silly)
+ *@li	1	Marks only, no connecting lines.  Suggested interval=1.
+ *@li	2	Draw connecting lines only.
+ *@li	3	Draw line and marks
  */
 void
 tp_2mlist(FILE *fp, register double *x, register double *y, int npoints, int flag, int mark, int interval, double size)
@@ -206,7 +207,7 @@ tp_2mlist(FILE *fp, register double *x, register double *y, int npoints, int fla
 	}
 }
 
-/*
+/**
  *  This FORTRAN interface expects arrays of REALs (single precision).
  */
 void
@@ -242,7 +243,7 @@ float	*size;
 		}
 	}
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
