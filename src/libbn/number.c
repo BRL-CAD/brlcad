@@ -22,11 +22,12 @@
 /** \addtogroup libbn */
 /*@{*/
 /** @file number.c
+ *
  *	This routine is used to convert a floating point number into
  * a string of ASCII characters, and then call tp_symbol().
  *
- *  Author -
- *	Mike Muuss
+ *  
+ * @author	Mike Muuss
  *	August 01, 1978
  *
  *  Source -
@@ -35,30 +36,37 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "common.h"
-
-
-
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
 #include "plot3.h"
 
+/**
+ *	This routine is used to convert a floating point number into
+ * a string of ASCII characters, and then call tp_symbol().
+ *
+ * @param input		number to be plotted
+ * @param x		first char position
+ * @param y		first char position
+ * @param cscale 	char scale
+ * @param theta		degrees ccw from X-axis 
+ * @param digits	# digits wide
+ */
 void
-tp_2number(FILE *fp, double input, int x, int y, int cscale, double theta, int digits)
-
-      	      		/* number to be plotted */
-   	  		/* first char position */
-
-   	       		/* char scale */
-      	      		/* degrees ccw from X-axis */
-   	       		/* # digits wide */
+tp_2number(FILE *fp,
+	   double input,
+	   int x,
+	   int y,
+	   int cscale,
+	   double theta,
+	   int digits)
 {
 	char	fmt[32];
 	char	buf[32];
@@ -87,6 +95,7 @@ int     *digits;
 	tp_2number( *fp, *input, *x, *y, *cscale, *theta, *digits);
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C
