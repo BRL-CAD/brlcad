@@ -18,7 +18,6 @@ SRCS = \
 	mat.c \
 	msr.c \
 	noise.c \
-	number.c \
 	plane.c \
 	plot3.c \
 	poly.c \
