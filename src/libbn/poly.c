@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup poly */
 /*@{*/
 /** @file poly.c
  *	Library for dealing with polynomials.
@@ -32,7 +32,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char RCSpoly[] = "@(#)$Header$ (ARL)";
@@ -60,8 +60,10 @@ static const char RCSpoly[] = "@(#)$Header$ (ARL)";
 
 static const struct bn_poly	bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 
-/*
- *	bn_poly_mul -- multiply two polynomials
+/**
+ *	bn_poly_mul 
+ *
+ * @brief multiply two polynomials
  */
 struct bn_poly *
 bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1, register const struct bn_poly *m2)
@@ -112,8 +114,10 @@ bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1,
 }
 
 
-/*
- *	bn_poly_scale -- scale a polynomial
+/**
+ *	bn_poly_scale 
+ * @brief
+ * scale a polynomial
  */
 struct bn_poly *
 bn_poly_scale(register struct bn_poly *eqn, double factor)
@@ -127,8 +131,10 @@ bn_poly_scale(register struct bn_poly *eqn, double factor)
 }
 
 
-/*
- *	bn_poly_add -- add two polynomials
+/**
+ *	bn_poly_add 
+ * @brief
+ * add two polynomials
  */
 struct bn_poly *
 bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, register const struct bn_poly *poly2)
@@ -159,8 +165,10 @@ bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, 
 }
 
 
-/*
- *	bn_poly_sub -- subtract two polynomials
+/**
+ *	bn_poly_sub 
+ * @brief
+ * subtract two polynomials
  */
 struct bn_poly *
 bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1, register const struct bn_poly *poly2)
@@ -193,7 +201,8 @@ bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1,
 }
 
 
-/*	s y n D i v ( )
+/**	s y n D i v ( )
+ * @brief
  *	Divides any polynomial into any other polynomial using synthetic
  *	division.  Both polynomials must have real coefficients.
  */
@@ -224,8 +233,8 @@ bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly
 }
 
 
-/*	q u a d r a t i c ( )
- *
+/**	q u a d r a t i c ( )
+ *@brief
  *	Uses the quadratic formula to find the roots (in `complex' form)
  *	of any quadratic equation with real coefficients.
  */
@@ -268,8 +277,8 @@ bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct
 #define INV_TWENTYSEVEN		0.037037037037037037037037037
 #define	CUBEROOT( a )	(( (a) >= 0.0 ) ? pow( a, THIRD ) : -pow( -(a), THIRD ))
 
-/*	c u b i c ( )
- *
+/**	c u b i c ( )
+ *@brief
  *	Uses the cubic formula to find the roots ( in `complex' form )
  *	of any cubic equation with real coefficients.
  *
@@ -409,13 +418,14 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 }
 
 
-/*
+/**
  *			B N _ P O L Y _ Q U A R T I C _ R O O T S
- *
+ *@brief
  *	Uses the quartic formula to find the roots ( in `complex' form )
  *	of any quartic equation with real coefficients.
  *
- *	Returns 1 for success, 0 for fail.
+ *	@return 1 for success
+ *	@return 0 for fail.
  */
 int
 bn_poly_quartic_roots(register struct bn_complex *roots, register const struct bn_poly *eqn)
@@ -492,7 +502,7 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
 }
 
 
-/*
+/**
  *			B N _ P R _ P O L Y
  */
 void
@@ -548,7 +558,7 @@ bn_pr_roots(const char *title, const struct bn_complex *roots, int n)
 		bu_log("%4d %e + i * %e\n", i, roots[i].re, roots[i].im );
 	}
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

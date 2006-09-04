@@ -541,7 +541,7 @@ BN_EXPORT BU_EXTERN(int bn_mat_is_non_unif,
 		    (const mat_t m));
 /*----------------------------------------------------------------------*/
 /* msr.c */
-/** @addtogroup rnd */
+/** @addtogroup msr */
 /*@{*/
 /*
  * Define data structures and constants for the "MSR" random number package.

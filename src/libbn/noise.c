@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup noise */
 /*@{*/
 /** @file noise.c
  *  Signed noise functions
@@ -36,17 +36,17 @@
  *  points.  The functions should be evaluated at non-integer locations for
  *  their nature to be realized.
  *
- *  Author -
- *	Lee A. Butler
+ *
+ *  @author	Lee A. Butler
+ *  @par Contributed code from
  *	F. Kenton Musgrave
- *	Robert Skinner
+ *@n  	Robert Skinner
  *
- *  Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
+ *@	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -66,7 +66,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 
 
-/* SMOOTHSTEP() takes a value in the range [0:1] and provides a number
+/**
+ * @brief interpolate smoothly from 0 .. 1
+ *  SMOOTHSTEP() takes a value in the range [0:1] and provides a number
  * in the same range indicating the amount of (a) present in a smooth
  * interpolation transition between (a) and (b)
  */
@@ -74,55 +76,22 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 
 
-/* FILTER_ARGS() folds space to extend the domain over which we can take
+
+#define FLOOR(x)	(  (int)(x) - (  (x) < 0 && (x) != (int)(x)  )  )
+
+/**
+ *@brief fold space to extend the domain over which we can take
  * noise values.
  *
- * x, y, z are set to the noise space location for the source point.
- * ix, iy, iz are the integer lattice point (integer portion of x,y,z)
- * fx, fy, fz are the fractional lattice distance above ix,iy,iz
+ *@n x, y, z are set to the noise space location for the source point.
+ *@n ix, iy, iz are the integer lattice point (integer portion of x,y,z)
+ *@n fx, fy, fz are the fractional lattice distance above ix,iy,iz
  *
  * The noise function has a finite domain, which can be exceeded when
  * using fractal textures with very high frequencies.  This routine is
  * designed to extend the effective domain of the function, albeit by
  * introducing periodicity.	-FKM 4/93
  */
-
-#define FLOOR(x)	(  (int)(x) - (  (x) < 0 && (x) != (int)(x)  )  )
-
-#if 0
-#define MAXVAL  	2147483647.  /* (2^31)-1 max val for noise integers */
-#define TWICE_MAXVAL 	4294967294.
-
-/* XXX Do we need this for 64bit integer architectures?
- *
- * #define MAXVAL	  	 9223372036854775807.
- * #define TWICE_MAXVAL 	18446744073709551615.
- * #endif
- */
-
-
-#define FILTER_ARGS( src) {\
-	register int i; \
-	point_t dst; \
- \
-	for (i=0 ; i < 3 ; i++) { \
-		/* assure values are positive */ \
-		if (src[i] < 0) dst[i] = -src[i]; \
-		else dst[i] = src[i]; \
- \
-		/* fold space */ \
-		while (dst[i] > MAXVAL || dst[i]<0) \
-			if (dst[i] > MAXVAL) \
-				dst[i] = TWICE_MAXVAL - dst[i]; \
-			else \
-				dst[i] = -dst[i]; \
-	} \
-\
-	x = dst[0];	ix = FLOOR(x);	fx = x - ix; \
-	y = dst[1];	iy = FLOOR(y);	fy = y - iy; \
-	z = dst[2];	iz = FLOOR(z);	fz = z - iz; \
-}
-#endif
 static void
 filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
 {
@@ -154,10 +123,11 @@ filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
 }
 
 
-/*
+#define MAXSIZE 267	/* 255 + 3 * (4 values) */
+
+/**
  * The RTable maps numbers into the range [-1..1]
  */
-#define MAXSIZE 267	/* 255 + 3 * (4 values) */
 static double	RTable[MAXSIZE];
 
 #define INCRSUM(m,s,x,y,z)	((s)*(RTable[m]*0.5		\
@@ -167,13 +137,12 @@ static double	RTable[MAXSIZE];
 
 
 
-/*
+/**
  *  A heavily magic-number protected version of the hashtable.
  *
  *  This table is used to convert integers into repeatable random results
  *  for indicies into RTable.
  */
-
 struct str_ht {
 	long	magic;
 	char	hashTableValid;
@@ -200,7 +169,7 @@ static struct str_ht ht;
 		bu_bomb("ht.hashTable changed rel ht.hashTableMagic2"); \
 }
 
-/*
+/**
  * Map integer point into repeatable random number [0..4095]
  * We actually only use the first 8 bits of the final value extracted from
  * this table.  It's not quite clear that we really need this big a table.
@@ -268,7 +237,8 @@ bn_noise_init(void)
 
 
 
-/*
+/**
+ *@brief
  * Robert Skinner's Perlin-style "Noise" function
  *
  * Results are in the range [-0.5 .. 0.5].  Unlike many implementations,
@@ -357,7 +327,7 @@ bn_noise_perlin(fastf_t *point)
 
 }
 
-/*
+/**
  * Vector-valued "Noise"
  */
 void
@@ -463,16 +433,17 @@ bn_noise_vec(fastf_t *point, fastf_t *result)
 	result[2] += INCRSUM(m+8,s,px,py,pz);
 }
 /*************************************************************
- *
+ *@brief
  *	Spectral Noise functions
  *
  *************************************************************
  *
  *	The Spectral Noise functions cache the values of the
  *	term:
- *		    (-h_val)
- *		freq
- *
+ *@code
+ 		    (-h_val)
+ 		freq
+ *@endcode
  *	Which on some systems is rather expensive to compute.
  *
  *************************************************************/
@@ -542,7 +513,8 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
 	return ep;
 }
 
-/* The first order of business is to see if we have pre-computed
+/**
+ * The first order of business is to see if we have pre-computed
  * the spectral weights table for these parameters in a previous
  * invocation.  If not, the we compute them and save them for
  * possible future use
@@ -584,13 +556,14 @@ find_spec_wgt(double h, double l, double o)
 
 	return (ep);
 }
-/*
+/**
+ * @brief
  * Procedural fBm evaluated at "point"; returns value stored in "value".
  *
- * Parameters:
- *    ``h_val''		fractal increment parameter
- *    ``lacunarity''	gap between successive frequencies
- *    ``octaves''  	number of frequencies in the fBm
+ * @param   point		location to sample noise
+ * @param   ``h_val''		fractal increment parameter
+ * @param   ``lacunarity''	gap between successive frequencies
+ * @param   ``octaves''  	number of frequencies in the fBm
  *
  * The spectral properties of the result are in the APPROXIMATE range [-1..1]
  * Depending upon the number of octaves computed, this range may be exceeded.
@@ -598,13 +571,11 @@ find_spec_wgt(double h, double l, double o)
  * The results have a more-or-less gaussian distribution.  Typical
  * results for 1M samples include:
  *
- * Min           -1.15246
- * Max            1.23146
- * Mean        -0.0138744
- * s.d.          0.306642
- * Var          0.0940295
- *
- *
+ * @li  Min           -1.15246
+ * @li  Max            1.23146
+ * @li  Mean        -0.0138744
+ * @li  s.d.          0.306642
+ * @li  Var          0.0940295
  *
  * The function call pow() is relatively expensive.  Therfore, this function
  * pre-computes and saves the spectral weights in a table for re-use in
@@ -654,27 +625,28 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 } /* bn_noise_fbm() */
 
 
-/*
+/**
+ * @brief
  * Procedural turbulence evaluated at "point";
  *
- * returns value stored in "value".
+ * @return  turbulence value for point
  *
- * Parameters:
- *    ``h_val''		fractal increment parameter
- *    ``lacunarity''	gap between successive frequencies
- *    ``octaves''  	number of frequencies in the fBm
+ * @param	point		location to sample noise at
+ * @param   ``h_val''		fractal increment parameter
+ * @param   ``lacunarity''	gap between successive frequencies
+ * @param   ``octaves''  	number of frequencies in the fBm
  *
  * The result is characterized by sharp, narrow trenches in low values and
  * a more fbm-like quality in the mid-high values.  Values are in the
  * APPROXIMATE range [0 .. 1] depending upon the number of octaves evaluated.
  * Typical results:
- *
+@code
  * Min         0.00857137
  * Max            1.26712
  * Mean          0.395122
  * s.d.          0.174796
  * Var          0.0305536
- *
+@endcode
  * The function call pow() is relatively expensive.  Therfore, this function
  * pre-computes and saves the spectral weights in a table for re-use in
  * successive invocations.
@@ -748,7 +720,9 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 
 } /* bn_noise_turb() */
 
-/***********************************************************************
+/**
+ *@brief
+ * A ridged noise pattern
  *
  *	From "Texturing and Modeling, A Procedural Approach" 2nd ed p338
  */
@@ -806,10 +780,9 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
 	return result;
 }
 
-/***********************************************************************
+/**
  *
  *	From "Texturing and Modeling, A Procedural Approach" 2nd ed
- *
  */
 
 double
@@ -853,11 +826,7 @@ bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, dou
 	return result;
 }
 
-
-
-
-
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

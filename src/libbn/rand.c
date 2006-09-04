@@ -19,13 +19,14 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup rnd */
 /*@{*/
 
 /** @file rand.c
- * This is our table of random numbers.
+ * @brief
+ * These are our tables of random numbers.
  */
-/*@}*/
+
 
 #include "common.h"
 
@@ -35,7 +36,7 @@
 #include "vmath.h"
 #include "bn.h"
 
-/*
+/**
  * This is our table of random numbers.  Rather than calling drand48() or
  * random() or rand() we just pick numbers out of this table.  This table
  * has 4096 unique entries.  Macros for accessing are in "bn.h"
@@ -728,9 +729,13 @@ const float bn_rand_table[BN_RAND_TABSIZE] = {
 
 
 
-/* from rt/mathtab.c */
+double bn_sin_scale = 325.949323452232;	/**< @briefSINTABSIZE / TWOPI */
+/**
+ * @brief table of sine values.
+ *
+ *  from rt/mathtab.c 
+ */
 
-double bn_sin_scale = 325.949323452232;	/* SINTABSIZE / TWOPI */
 const float bn_sin_table[BN_SINTABSIZE] = {
 0.0f,		0.00306796f,	0.00613588f,	0.00920375f,
 0.0122715f,	0.0153392f,	0.0184067f,	0.0214741f,
@@ -772,7 +777,7 @@ const float bn_sin_table[BN_SINTABSIZE] = {
 0.438616f,	0.441371f,	0.444122f,	0.446869f,
 0.449611f,	0.45235f,	0.455084f,	0.457813f,
 0.460539f,	0.46326f,	0.465976f,	0.468689f,
-0.471397f,	0.4741f,		0.476799f,	0.479494f,
+0.471397f,	0.4741f,	0.476799f,	0.479494f,
 0.482184f,	0.484869f,	0.48755f,	0.490226f,
 0.492898f,	0.495565f,	0.498228f,	0.500885f,
 0.503538f,	0.506187f,	0.50883f,	0.511469f,
@@ -1023,7 +1028,7 @@ const float bn_sin_table[BN_SINTABSIZE] = {
 -0.382683f,	-0.385516f,	-0.388345f,	-0.39117f,
 -0.393992f,	-0.39681f,	-0.399624f,	-0.402435f,
 -0.405241f,	-0.408044f,	-0.410843f,	-0.413638f,
--0.41643f,	-0.419217f,	-0.422f,		-0.42478f,
+-0.41643f,	-0.419217f,	-0.422f,	-0.42478f,
 -0.427555f,	-0.430326f,	-0.433094f,	-0.435857f,
 -0.438616f,	-0.441371f,	-0.444122f,	-0.446869f,
 -0.449611f,	-0.45235f,	-0.455084f,	-0.457813f,
@@ -1047,7 +1052,7 @@ const float bn_sin_table[BN_SINTABSIZE] = {
 -0.634393f,	-0.636762f,	-0.639124f,	-0.641481f,
 -0.643832f,	-0.646176f,	-0.648514f,	-0.650847f,
 -0.653173f,	-0.655493f,	-0.657807f,	-0.660114f,
--0.662416f,	-0.664711f,	-0.667f,		-0.669283f,
+-0.662416f,	-0.664711f,	-0.667f,	-0.669283f,
 -0.671559f,	-0.673829f,	-0.676093f,	-0.67835f,
 -0.680601f,	-0.682846f,	-0.685084f,	-0.687315f,
 -0.689541f,	-0.691759f,	-0.693971f,	-0.696177f,
@@ -1246,13 +1251,13 @@ const float bn_sin_table[BN_SINTABSIZE] = {
 -0.0122715f,	-0.00920375f,	-0.00613588f,	-0.00306796f
 };
 
-/*
- *  The actual table of random numbersf, range -0.5 to +0.5
- *
- *  For benchmarking purposesf, this table is zeroed.
- */
 int bn_randhalftabsize = BN_RANDHALFTABSIZE;
 
+/**
+ *  The actual table of random numbers, range -0.5 to +0.5
+ *
+ *  For benchmarking purposes, this table is zeroed.
+ */
 float bn_rand_halftab[BN_RANDHALFTABSIZE] = {
 -0.500000f, -0.499015f, -0.458369f, -0.323357f, -0.135398f, -0.408669f, -0.407702f,
 -0.012783f,  0.026750f, -0.045567f, -0.266822f,  0.331292f,  0.431731f,  0.068060f,
@@ -3619,7 +3624,7 @@ float bn_rand_halftab[BN_RANDHALFTABSIZE] = {
  0.013068f
 };
 
-/*
+/**
  * Immediately after the random number table,
  * some "poison" floating point numbers,
  * intended to cause noticable difficulties if these are used.
@@ -3631,9 +3636,9 @@ float	bn_rand_poison_[] = {
 	9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f
 };
 
-/*
+/**
  *			M A T H T A B _ C O N S T A N T
- *
+ *@brief
  *  For benchmarking purposes, make the random number table predictable.
  *  Setting to all zeros keeps dithered values at their original values.
  */
@@ -3646,7 +3651,7 @@ bn_mathtab_constant(void)
 		bn_rand_halftab[i] = 0.0;
 }
 
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

@@ -19,9 +19,10 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup plot */
 /*@{*/
 /** @file plot3.c
+ * @brief
  *  A public-domain UNIX plot library, for 2-D and 3-D plotting in
  *  16-bit VAX signed integer spaces, or 64-bit IEEE floating point.
  *
@@ -46,7 +47,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -84,6 +85,10 @@ pl_setOutputMode(int mode) {
     pl_outputMode = mode;
 }
 
+/**
+ * @brief
+ * plot a point
+ */
 void
 pl_point(register FILE *plotfp, int x, int y)
 {
@@ -736,7 +741,7 @@ pd_3box(register FILE *plotfp, double x1, double y1, double z1, double x2, doubl
 	pd_3cont( plotfp, x2, y2, z2 );
 }
 
-/*
+/**
  *  Draw a ray
  */
 void
@@ -749,6 +754,7 @@ pdv_3ray(FILE *fp, const fastf_t *pt, const fastf_t *dir, double t)
 	pdv_3cont( fp, tip );
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C
