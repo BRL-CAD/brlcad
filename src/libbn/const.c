@@ -60,7 +60,7 @@ const double bn_inv255 = 1.0/255.0;
 
 const double bn_degtorad =  0.0174532925199433;		/**< @brief  (pi*2)/360 */
 const double bn_radtodeg = 57.29577951308230698802;	/**< @brief  360/(pi*2) */
-/*@}*/{
+/*@}*/
 /*
  * Local Variables:
  * mode: C
