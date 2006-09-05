@@ -3260,7 +3260,7 @@ dmo_openFb(dmop, interp)
 	}
 
 	switch (dmop->dmo_dmp->dm_type) {
-#ifndef _WIN32
+#ifdef DM_X
 	case DM_TYPE_X:
 		*dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
 
@@ -3347,7 +3347,7 @@ dmo_closeFb(dmop)
 	_fb_pgflush(dmop->dmo_fbs.fbs_fbp);
 
 	switch (dmop->dmo_dmp->dm_type) {
-#ifndef _WIN32
+#ifdef DM_X
 	case DM_TYPE_X:
 		X24_close_existing(dmop->dmo_fbs.fbs_fbp);
 		break;
