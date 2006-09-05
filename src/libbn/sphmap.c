@@ -23,15 +23,16 @@
 /*@{*/
 
 /** @file sphmap.c
+ * @brief
  *  Common Subroutines for Spherical Data Structures/Texture Maps Subroutines
  *
- *  Author -
+ *  @author
  *	Phillip Dykstra
  *
- *  Source -
+ *  @par Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *@n	The U. S. Army Ballistic Research Laboratory
+ *@n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
 /*@}*/
@@ -57,11 +58,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "spm.h"
 
-/*
+/**
  *		S P M _ I N I T
- *
+ *@brief
  *  Return a sphere map structure initialized for N points around
- *  the equator.  Malloc the storage and fill in the pointers.
+ *  the equator.  
+ *
+ * Malloc the storage and fill in the pointers.
  *  This code leaves a ring of "triangular" pixels at the poles.
  *  An alternative would be to have the pole region map to a
  *  single pixel.
@@ -117,9 +120,9 @@ spm_init(int N, int elsize)
 	return( mapp );
 }
 
-/*
+/**
  *		S P M _ F R E E
- *
+ *@brief
  *  Free the storage associated with a sphere structure.
  */
 void
@@ -149,12 +152,12 @@ spm_free(spm_map_t *mp)
 
 /*
  *		S P M _ R E A D
- *
+ *@brief
  *  Read the value of the pixel at the given normalized (u,v)
  *  coordinates.  It does NOT check the sanity of the coords.
  *
- *  0.0 <= u < 1.0	Left to Right
- *  0.0 <= v < 1.0	Bottom to Top
+ *@n  0.0 <= u < 1.0	Left to Right
+ *@n  0.0 <= v < 1.0	Bottom to Top
  */
 void
 spm_read(register spm_map_t *mapp, register unsigned char *valp, double u, double v)
@@ -177,12 +180,12 @@ spm_read(register spm_map_t *mapp, register unsigned char *valp, double u, doubl
 
 /*
  *		S P M _ W R I T E
- *
+ *@breif
  *  Write the value of the pixel at the given normalized (u,v)
  *  coordinates.  It does NOT check the sanity of the coords.
  *
- *  0.0 <= u < 1.0	Left to Right
- *  0.0 <= v < 1.0	Bottom to Top
+ *@n  0.0 <= u < 1.0	Left to Right
+ *@n  0.0 <= v < 1.0	Bottom to Top
  */
 void
 spm_write(register spm_map_t *mapp, register unsigned char *valp, double u, double v)
@@ -205,12 +208,12 @@ spm_write(register spm_map_t *mapp, register unsigned char *valp, double u, doub
 
 /*
  *		S P M _ G E T
- *
+ *@brief
  *  Return a pointer to the storage element indexed by (u,v)
  *  coordinates.  It does NOT check the sanity of the coords.
  *
- *  0.0 <= u < 1.0	Left to Right
- *  0.0 <= v < 1.0	Bottom to Top
+ *@n  0.0 <= u < 1.0	Left to Right
+ *@n  0.0 <= v < 1.0	Bottom to Top
  */
 char *
 spm_get(register spm_map_t *mapp, double u, double v)
@@ -229,11 +232,12 @@ spm_get(register spm_map_t *mapp, double u, double v)
 
 /*
  *		S P M _ L O A D
- *
+ *@brief
  *  Read a saved sphere map from a file ("-" for stdin) into
  *  the given map structure.
  *  This does not check for conformity of size, etc.
- *  Returns -1 on error, else 0.
+ *
+ *  @return -1 on error, else 0.
  */
 int
 spm_load(spm_map_t *mapp, char *filename)
@@ -270,7 +274,7 @@ spm_load(spm_map_t *mapp, char *filename)
 
 /*
  *		S P M _ S A V E
- *
+ *@brief
  *  Write a loaded sphere map to the given file ("-" for stdout).
  *  Returns -1 on error, else 0.
  */
@@ -316,10 +320,10 @@ spm_save(spm_map_t *mapp, char *filename)
 
 /*
  *		S P M _ P I X _ L O A D
- *
+ *@brief
  *  Load an 'nx' by 'ny' pix file and filter it into the
  *  given sphere structure.
- *  Returns -1 on error, else 0.
+ *  @return -1 on error, else 0.
  */
 int
 spm_px_load(spm_map_t *mapp, char *filename, int nx, int ny)
@@ -390,9 +394,9 @@ spm_px_load(spm_map_t *mapp, char *filename, int nx, int ny)
 
 /*
  *		S P M _ P I X _ S A V E
- *
+ *@brief
  *  Save a sphere structure as an 'nx' by 'ny' pix file.
- *  Returns -1 on error, else 0.
+ *  @return -1 on error, else 0.
  */
 int
 spm_px_save(spm_map_t *mapp, char *filename, int nx, int ny)
@@ -439,7 +443,7 @@ spm_px_save(spm_map_t *mapp, char *filename, int nx, int ny)
 
 /*
  * 		S P M _ D U M P
- *
+ *@brief
  *  Display a sphere structure on stderr.
  *  Used for debugging.
  */
@@ -459,7 +463,7 @@ spm_dump(spm_map_t *mp, int verbose)
 			i, mp->nx[i], i, mp->xbin[i] );
 	}
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

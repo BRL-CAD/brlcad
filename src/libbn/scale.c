@@ -19,75 +19,25 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup plot */
 /*@{*/
 /** @file scale.c
- *	This routine is intended to take an array of
- * data points as input (either integer, floating, or
- * double), and scale it to fit in a space of LENGTH units.
- * An output array is returned
- * which contains the scaled information stored in 16-bit integers.  The input
- * and output arrays may overlap, as the input will never
- * occupy more space than the output.  Also output are
- * the minimum value encountered (MIN), and a delta
- * factor showing the increase in value each XXXX.
- * This DX factor is rounded to 1,2,4,5,8,or 10 to
- * produce nicer looking axes.
+ * @brief scale geometry points.
  *
- * where
  *
- *	int *idata	INPUT	This pointer contains the address
- *				of the input array to be scaled.
- *				Actual type of array is determined
- *				by MODE parameter.
- *
- *	int elements	INPUT	Number of elements in IDATA to be used.
- *
- *	int mode	INPUT	Specifies type of data that IDATA points
- *				to;  should be one of:
- *					'd' - double precision
- *					'f' - float (single precision)
- *					'i' - integer
- *
- *	int length	INPUT	Contains the length (in 1/1000ths of an
- *				inch) of the region in which the data is
- *				to be scaled into.  Note that the actual
- *				amount of space needed may be this value
- *				rounded up to the next inch.
- *
- *	int *odata	OUTPUT	This pointer contains the address of the
- *				output array, which will always be of
- *				integer type.
- *
- *	double *min	OUTPUT	This pointer contains the address of the
- *				location for minimum point found to be
- *				placed in.
- *
- *	double *dx	OUTPUT	This pointer addresses the delta value
- *				of the data which corresponds to the width
- *				of EACH tick.
- *				This implies that:
- *				  1)	This is exactly the number to divide
- *					raw data by to scale it to this scale
- *					(ex:  2 graphs with one scale factor)
- *				  2)	When this value is fed to the AXIS
- *					routine, it must be multiplied
- *					by 1000.0 first (to specify increment
- *					between one INCH ticks).
- *
- * The fact that this routine returns variables of type DOUBLE has
- * important implications for FORTRAN users.  These variables must
- * be declared of type DOUBLE PRECISION to reserve enough space.
- *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *
+ *	@note
+ *	This file is a candidate for deletion.  
+ *	Nothing else in BRL-CAD uses this.
  *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -103,8 +53,73 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "plot3.h"
 
+/**
+ * @brief
+ *	This routine is intended to take an array of
+ * data points as input (either integer, floating, or
+ * double), and scale it to fit in a space of LENGTH units.
+ *
+ * An output array is returned
+ * which contains the scaled information stored in 16-bit integers.  The input
+ * and output arrays may overlap, as the input will never
+ * occupy more space than the output.  Also output are
+ * the minimum value encountered (MIN), and a delta
+ * factor showing the increase in value each XXXX.
+ * This DX factor is rounded to 1,2,4,5,8,or 10 to
+ * produce nicer looking axes.
+ *
+ *
+ *	@param[in] idata	This pointer contains the address
+ *				of the input array to be scaled.
+ *				Actual type of array is determined
+ *				by MODE parameter.
+ *
+ *	@param[in] elements	Number of elements in IDATA to be used.
+ *
+ *	@param[in] mode		Specifies type of data that IDATA points
+ *				to;  should be one of:
+ *					'd' - double precision
+ *					'f' - float (single precision)
+ *					'i' - integer
+ *
+ *	@param[in] length		Contains the length (in 1/1000ths of an
+ *				inch) of the region in which the data is
+ *				to be scaled into.  Note that the actual
+ *				amount of space needed may be this value
+ *				rounded up to the next inch.
+ *
+ *	@param[out] odata	This pointer contains the address of the
+ *				output array, which will always be of
+ *				integer type.
+ *
+ *	@param[out] min		This pointer contains the address of the
+ *				location for minimum point found to be
+ *				placed in.
+ *
+ *	@param dx		This pointer addresses the delta value
+ *				of the data which corresponds to the width
+ *				of EACH tick.
+ *				This implies that:
+ *				 -#	This is exactly the number to divide
+ *					raw data by to scale it to this scale
+ *					(ex:  2 graphs with one scale factor)
+ *				 -#	When this value is fed to the AXIS
+ *					routine, it must be multiplied
+ *					by 1000.0 first (to specify increment
+ *					between one INCH ticks).
+ *
+ * The fact that this routine returns variables of type DOUBLE has
+ * important implications for FORTRAN users.  These variables must
+ * be declared of type DOUBLE PRECISION to reserve enough space.
+ */
 void
-tp_scale(int *idata, int elements, register int mode, int length, int *odata, double *min, double *dx)
+tp_scale(int *idata,
+	 int elements,
+	 register int mode,
+	 int length,
+	 int *odata,	
+	 double *min,
+	 double *dx)
 {
 	double xmax, xmin, x, workdx;
 	register int i;			/* Index variable */
@@ -211,6 +226,7 @@ double	*dx;
 	tp_scale( idata, *elements, *mode, *length, odata, min, dx );
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

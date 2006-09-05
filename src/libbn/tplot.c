@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup libbn */
+/** \addtogroup plot */
 /*@{*/
 /** @file tplot.c
- *
+ *@brief
  *	This routine is designed to simplify the creation of
  *  X,Y plots for user.
  *
@@ -38,11 +38,11 @@
  * data, centering of the titles and positioning on the page.
  *
  * where
- *	int xp,yp	page point corresponding to (0,0) of the data
- *	int xl,yl	lengths of the x and y axis, respectively
- *	char xtitle[], ytitle[]	titles for the axis
- *	float x[], y[]	the floating point data arrays
- *	int n		the number of points in the data arrays
+ * -	int xp,yp	page point corresponding to (0,0) of the data
+ * -	int xl,yl	lengths of the x and y axis, respectively
+ * -	char xtitle[], ytitle[]	titles for the axis
+ * -	float x[], y[]	the floating point data arrays
+ * -	int n		the number of points in the data arrays
  *
  *		R E V I S I O N  H I S T O R Y
  *
@@ -55,7 +55,7 @@
  *				fact that fortran arrays start at one
  *				and not zero as with c.
  */
-/*@}*/
+
 
 #include "common.h"
 
@@ -86,15 +86,30 @@ double tp_ipow(double x, int n);
 
 
 /**
- * xp is the x page point desired to be (0,0) for plot
- * yp is the y page point desired to be (0,0) for plot
- * xl is the length of the x axis
- * yl is the length of the y axis
- * n is the number of points
- * cscale is the character scale factor
+ * @param fp file pointer
+ * @param xtitle title for the x axis
+ * @param ytitle title for the y axis
+ * @param xp is the x page point desired to be (0,0) for plot
+ * @param yp is the y page point desired to be (0,0) for plot
+ * @param xl is the length of the x axis
+ * @param yl is the length of the y axis
+ * @param n is the number of points
+ * @param cscale is the character scale factor
+ * @param x the x data
+ * @param y the y data
  */
 void
-tp_plot(FILE *fp, int xp, int yp, int xl, int yl, char *xtitle, char *ytitle, float *x, float *y, int n, double cscale)
+tp_plot(FILE *fp,
+	int xp,
+	int yp,
+	int xl,
+	int yl,
+	char *xtitle,
+	char *ytitle,
+	float *x,
+	float *y,
+	int n,
+	double cscale)
 {
     int  ddx, ddy, xend, yend, xpen, ypen;
     float fxl, fyl, xs, ys, xmin, xmax, ymin, ymax, dx, dy;
@@ -207,7 +222,7 @@ tp_plot(FILE *fp, int xp, int yp, int xl, int yl, char *xtitle, char *ytitle, fl
 
 
 /**			T P _ F T O A
- *
+ * @brief
  * This routine converts a floating point number into a string
  * of ascii characters of the form "sX.XXXesXX". The string is
  * null terminated.
@@ -300,21 +315,27 @@ tp_ftoa(float x, char *s)
  *   tp_fixsc(x, npts, size, xs, xmin, xmax, dx)
  *   where
  *
- *	float x[]	the data array to be scaled
- *	int npts	the number of elements in x[]
- *	float size	the length into which x[] is supposed to be fitted
- *			(in inches)
- *	float *xs	the returned scale facter to integer space
- *	float *xmin	the new minimum value for the data array (a returned
+ * @param	x[]	the data array to be scaled
+ * @param	npts	the number of elements in x[]
+ * @param	size	the length into which x[] is supposed to be fitted
+ * 			(in inches)
+ * @param	xs	the returned scale facter to integer space
+ * @param	xmin	the new minimum value for the data array (a returned
  *			value)
- *	float *xmax	the new maximum value for the data array (a returned
+ * @param	xmax	the new maximum value for the data array (a returned
  *			value)
- *	float *dx	the value in data units between tic marks (a returned
+ * @param	dx	the value in data units between tic marks (a returned
  *			value)
  *
  */
 void
-tp_fixsc(float *x, int npts, float size, float *xs, float *xmin, float *xmax, float *dx)
+tp_fixsc(float *x,
+	 int npts,
+	 float size,
+	 float *xs,
+	 float *xmin,
+	 float *xmax,
+	 float *dx)
 {
     float txmi, txma, coef, delta, diff;
     int i, ex;
@@ -368,7 +389,7 @@ tp_fixsc(float *x, int npts, float size, float *xs, float *xmin, float *xmax, fl
 
 
 /**			T P _ S E P
- *
+ *@brief
  *  tp_sep() divides a floating point number into a coefficient
  *  and an exponent. works in base ten.
  */
@@ -419,7 +440,7 @@ tp_sep(float x, float *coef, int *ex)
 
 
 /**			T P _ I P O W
- *
+ *@brief
  *  tp_ipow() raises a floating point number to a positve integer
  *  power.
  *  XXX Horribly inefficient!
@@ -439,6 +460,7 @@ PL_FORTRAN(fplot, FPLOT)(FILE **fp, int *xp, int *yp, int *xl, int *yl, char *xt
     tp_plot(*fp, *xp, *yp, *xl, *yl, xtitle, ytitle, x, y, *n, *cscale);
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

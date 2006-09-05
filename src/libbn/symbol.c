@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup plot */
 /*@{*/
 
 /** @file symbol.c
@@ -36,15 +36,15 @@
  *  parameter allows this to be changed as desired, although scale
  *  factors less than 10.0 are unlikely to be legible.
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -183,7 +183,7 @@ float	*theta;
 	buf[sizeof(buf)-1] = '\0';
 	tp_2symbol( *fp, buf, *x, *y, *scale, *theta );
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

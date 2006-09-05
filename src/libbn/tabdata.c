@@ -19,9 +19,10 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup anim */
 /*@{*/
 /** @file tabdata.c
+ * @brief
  *  Routines for processing tables (curves) of data with one independent
  *  parameter which is common to many sets of dependent data values.
  *
@@ -30,18 +31,18 @@
  *
  *  One application is for storing spectral curves, see spectrum.c
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  *
- *  Inspired by -
+ *  @par Inspired by -
  *	Roy Hall and his book "Illumination and Color in Computer
- *	Generated Imagery", Springer Verlag, New York, 1989.
- *	ISBN 0-387-96774-5
+ *@n	Generated Imagery", Springer Verlag, New York, 1989.
+ *@n	ISBN 0-387-96774-5
  *
  *  With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
  */
@@ -122,7 +123,7 @@ bn_ck_table(const struct bn_table *tabp)
 
 /*
  *			B N _ T A B L E _ M A K E _ U N I F O R M
- *
+ *@brief
  *  Set up an independent "table margin" from 'first' to 'last',
  *  inclusive, using 'num' uniformly spaced samples.  Num >= 1.
  */
@@ -154,7 +155,7 @@ bn_table_make_uniform(int num, double first, double last)
 
 /*
  *			B N _ T A B D A T A _ A D D
- *
+ *@brief
  *  Sum the values from two data tables.
  */
 void
@@ -185,7 +186,7 @@ bn_tabdata_add(struct bn_tabdata *out, const struct bn_tabdata *in1, const struc
 
 /*
  *			B N _ T A B D A T A _ M U L
- *
+ *@brief
  *  Element-by-element multiply the values from two data tables.
  */
 void
@@ -216,7 +217,7 @@ bn_tabdata_mul(struct bn_tabdata *out, const struct bn_tabdata *in1, const struc
 
 /*
  *			B N _ T A B D A T A _ M U L 3
- *
+ *@brief
  *  Element-by-element multiply the values from three data tables.
  */
 void
@@ -249,7 +250,7 @@ bn_tabdata_mul3(struct bn_tabdata *out, const struct bn_tabdata *in1, const stru
 
 /*
  *			B N _ T A B D A T A _ I N C R _ M U L 3 _ S C A L E
- *
+ *@brief
  *  Element-by-element multiply the values from three data tables and a scalor.
  *
  *	out += in1 * in2 * in3 * scale
@@ -283,7 +284,7 @@ bn_tabdata_incr_mul3_scale(struct bn_tabdata *out, const struct bn_tabdata *in1,
 
 /*
  *			B N _ T A B D A T A _ I N C R _ M U L 2 _ S C A L E
- *
+ *@brief
  *  Element-by-element multiply the values from two data tables and a scalor.
  *
  *	out += in1 * in2 * scale
@@ -315,7 +316,7 @@ bn_tabdata_incr_mul2_scale(struct bn_tabdata *out, const struct bn_tabdata *in1,
 
 /*
  *			B N _ T A B D A T A _ S C A L E
- *
+ *@brief
  *  Multiply every element in a data table by a scalar value 'scale'.
  */
 void
@@ -344,7 +345,7 @@ bn_tabdata_scale(struct bn_tabdata *out, const struct bn_tabdata *in1, register 
 
 /*
  *			B N _ T A B L E _ S C A L E
- *
+ *@brief
  *  Scale the indepentent axis of a table by 'scale'.
  */
 void
@@ -365,7 +366,7 @@ bn_table_scale(struct bn_table *tabp, register double scale)
 
 /*
  *			B N _ T A B D A T A _ J O I N 1
- *
+ *@brief
  *  Multiply every element in data table in2 by a scalar value 'scale',
  *  add it to the element in in1, and store in 'out'.
  *  'out' may overlap in1 or in2.
@@ -400,7 +401,7 @@ bn_tabdata_join1(struct bn_tabdata *out, const struct bn_tabdata *in1, register 
 
 /*
  *			B N _ T A B D A T A _ J O I N 2
- *
+ *@brief
  *  Multiply every element in data table in2 by a scalar value 'scale2',
  *  plus in3 * scale3, and
  *  add it to the element in in1, and store in 'out'.
@@ -505,7 +506,7 @@ bn_tabdata_blend3(struct bn_tabdata *out, register double scale1, const struct b
 
 /*
  *			B N _ T A B D A T A _ A R E A 1
- *
+ *@brief
  *  Following interpretation #1, where y[j] stores the total (integral
  *  or area) value within the interval, return the area under the whole curve.
  *  This is simply totaling up the areas from each of the intervals.
@@ -531,7 +532,7 @@ bn_tabdata_area1(const struct bn_tabdata *in)
 
 /*
  *			B N _ T A B D A T A _ A R E A 2
- *
+ *@brief
  *  Following interpretation #2, where y[j] stores the average
  *  value for the interval, return the area under
  *  the whole curve.  Since the iterval spacing need not be uniform,
@@ -561,7 +562,7 @@ bn_tabdata_area2(const struct bn_tabdata *in)
 
 /*
  *			B N _ T A B D A T A _ M U L _ A R E A 1
- *
+ *@brief
  *  Following interpretation #1, where y[j] stores the total (integral
  *  or area) value within the interval, return the area under the whole curve.
  *  This is simply totaling up the areas from each of the intervals.
@@ -590,7 +591,7 @@ bn_tabdata_mul_area1(const struct bn_tabdata *in1, const struct bn_tabdata *in2)
 
 /*
  *			B N _ T A B D A T A _ M U L _ A R E A 2
- *
+ *@brief
  *  Following interpretation #2,
  *  return the area under the whole curve.
  *  The curve value is found by multiplying corresponding entries from
@@ -621,14 +622,14 @@ bn_tabdata_mul_area2(const struct bn_tabdata *in1, const struct bn_tabdata *in2)
 
 /*
  *			B N _ T A B L E _ F I N D _ X
- *
+ *@brief
  *  Return the index in the table's x[] array of the interval which
  *  contains 'xval'.
  *
- *  Returns -
- *	-1	if less than start value
- *	-2	if greater than end value.
- *	0..nx-1	otherwise.
+ *
+ * @return	-1	if less than start value
+ * @return	-2	if greater than end value.
+ * @return	0..nx-1	otherwise.
  *		Never returns a value of nx.
  *
  *  A binary search would be more efficient, as the wavelengths (x values)
@@ -655,7 +656,7 @@ bn_table_find_x(const struct bn_table *tabp, double xval)
 
 /*
  *			B N _ T A B L E _ L I N _ I N T E R P
- *
+ *@brief
  *  Return the value of the curve at independent parameter value 'wl'.
  *  Linearly interpolate between values in the input table.
  *  Zero is returned for values outside the sampled range.
@@ -701,7 +702,7 @@ bn_table_lin_interp(const struct bn_tabdata *samp, register double wl)
 
 /*
  *			B N _ T A B D A T A _ R E S A M P L E _ M A X
- *
+ *@brief
  *  Given a set of sampled data 'olddata', resample it for different
  *  spacing, by linearly interpolating the values when an output span
  *  is entirely contained within an input span, and by taking the
@@ -782,7 +783,7 @@ bn_tabdata_resample_max(const struct bn_table *newtable, const struct bn_tabdata
 
 /*
  *			B N _ T A B D A T A _ R E S A M P L E _ A V G
- *
+ *@brief
  *  Given a set of sampled data 'olddata', resample it for different
  *  spacing, by linearly interpolating the values when an output span
  *  is entirely contained within an input span, and by taking the
@@ -869,7 +870,7 @@ bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata
 
 /*
  *			B N _ T A B L E _ W R I T E
- *
+ *@brief
  *  Write out the table structure in an ASCII file,
  *  giving the number of values (minus 1), and the
  *  actual values.
@@ -906,7 +907,7 @@ bn_table_write(const char *filename, const struct bn_table *tabp)
 
 /*
  *			B N _ T A B L E _ R E A D
- *
+ *@brief
  *  Allocate and read in the independent variable values from an ASCII file,
  *  giving the number of samples (minus 1), and the
  *  actual values.
@@ -990,9 +991,10 @@ bn_pr_tabdata(const char *title, const struct bn_tabdata *data)
 
 /*
  *			B N _ P R I N T _ T A B L E _ A N D _ T A B D A T A
- *
+ *@brief
  *  Write out a given data table into an ASCII file,
  *  suitable for input to GNUPLOT.
+ *
  *	(set term postscript)
  *	(set output "|print-postscript")
  *	(plot "filename" with lines)
@@ -1032,10 +1034,11 @@ bn_print_table_and_tabdata(const char *filename, const struct bn_tabdata *data)
 
 /*
  *			B N _ R E A D _ T A B L E _ A N D _ T A B D A T A
- *
+ *@brief
  *  Read in a file which contains two columns of numbers, the first
  *  column being the waveength, the second column being the sample value
  *  at that wavelength.
+ *
  *  A new bn_table structure and one bn_tabdata structure
  *  are created, a pointer to the bn_tabdata structure is returned.
  *  The final wavelength is guessed at.
@@ -1167,7 +1170,7 @@ bn_tabdata_binary_read(const char *filename, int num, const struct bn_table *tab
 
 /*
  *			B N _ T A B D A T A _ M A L L O C _ A R R A Y
- *
+ *@brief
  *  Allocate storage for, and initialize, an array of 'num' data table
  *  structures.
  *  This subroutine is provided because the bn_tabdata structures
@@ -1242,7 +1245,7 @@ bn_tabdata_dup(const struct bn_tabdata *in)
 
 /*
  *			B N _ T A B D A T A _ G E T _ C O N S T V A L
- *
+ *@brief
  *  For a given table, allocate and return a tabdata structure
  *  with all elements initialized to 'val'.
  */
@@ -1267,7 +1270,7 @@ bn_tabdata_get_constval(double val, const struct bn_table *tabp)
 
 /*
  *			B N _ T A B D A T A _ C O N S T V A L
- *
+ *@brief
  *  Set all the tabdata elements to 'val'
  */
 void
@@ -1287,7 +1290,7 @@ bn_tabdata_constval(struct bn_tabdata *data, double val)
 
 /*
  *			B N _ T A B D A T A _ T O _ T C L
- *
+ *@brief
  *  Convert an bn_tabdata/bn_table pair into a Tcl compatible string
  *  appended to a VLS.  It will have form:
  *	x {...} y {...} nx # ymin # ymax #
@@ -1323,9 +1326,10 @@ bn_tabdata_to_tcl(struct bu_vls *vp, const struct bn_tabdata *data)
 
 /*
  *			B N _ T A B D A T A _ F R O M _ A R R A Y
- *
+ *@brief
  *  Given an array of (x,y) pairs, build the relevant bn_table and
  *  bn_tabdata structures.
+ *
  *  The table is terminated by an x value <= 0.
  *  Consistent with the interpretation of the spans,
  *  invent a final span ending x value.
@@ -1362,7 +1366,7 @@ bn_tabdata_from_array(const double *array)
 
 /*
  *			B N _ T A B D A T A _ F R E Q _ S H I F T
- *
+ *@brief
  *  Shift the data by a constant offset in the independent variable
  *  (often frequency), interpolating new sample values.
  */
@@ -1390,7 +1394,7 @@ bn_tabdata_freq_shift(struct bn_tabdata *out, const struct bn_tabdata *in, doubl
 
 /*
  *			B N _ T A B L E _ I N T E R V A L _ N U M _ S A M P L E S
- *
+ *@brief
  *  Returns number of sample points between 'low' and 'hi', inclusive.
  */
 int
@@ -1411,7 +1415,7 @@ bn_table_interval_num_samples(const struct bn_table *tabp, double low, double hi
 
 /*
  *			B N _ T A B L E _ D E L E T E _ S A M P L E _ P T S
- *
+ *@brief
  *  Remove all sampling points between subscripts i and j, inclusive.
  *  Don't bother freeing the tiny bit of storage at the end of the array.
  *  Returns number of points removed.
@@ -1443,7 +1447,7 @@ bn_table_delete_sample_pts(struct bn_table *tabp, int i, int j)
 
 /*
  *			B N _ T A B L E _ M E R G E 2
- *
+ *@brief
  *  A new table is returned which has sample points at places from
  *  each of the input tables.
  */
@@ -1492,15 +1496,15 @@ bn_table_merge2(const struct bn_table *a, const struct bn_table *b)
 
 /*
  *		B N _ T A B D A T A _ M K _ L I N E A R _ F I L T E R
- *
+ *@brief
  *  Create a filter to accept power in a given band.
  *  The first and last filter values will be in the range 0..1,
  *  while all the internal filter values will be 1.0,
  *  and all samples outside the given band will be 0.0.
  *
- *  Returns -
- *	NULL	if given band does not overlap input spectrum
- *	tabdata*
+ *
+ *  @return	NULL	if given band does not overlap input spectrum
+ *  @return	tabdata*
  */
 struct bn_tabdata *
 bn_tabdata_mk_linear_filter(const struct bn_table *spectrum, double lower_wavelen, double upper_wavelen)
@@ -1583,7 +1587,7 @@ bn_tabdata_mk_linear_filter(const struct bn_table *spectrum, double lower_wavele
 
 	return filt;
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

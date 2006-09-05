@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup bn_list */
+/** \addtogroup plot */
 /*@{*/
 /** @file libbn/list.c
  *

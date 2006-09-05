@@ -729,7 +729,7 @@ const float bn_rand_table[BN_RAND_TABSIZE] = {
 
 
 
-double bn_sin_scale = 325.949323452232;	/**< @briefSINTABSIZE / TWOPI */
+double bn_sin_scale = 325.949323452232;	/**< @brief SINTABSIZE / TWOPI */
 /**
  * @brief table of sine values.
  *

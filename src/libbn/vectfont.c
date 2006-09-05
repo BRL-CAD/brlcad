@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup plot */
 /*@{*/
 
 /** @file vectfont.c
