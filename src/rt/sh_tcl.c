@@ -75,7 +75,6 @@ sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, const c
 	struct region	*regp;
 	struct directory *dp;
 	float		r,g,b;
-	char		buf[64];
 
 	if( argc != 6 )  {
 		Tcl_AppendResult(interp, "Usage: sh_directchange_rgb $rtip comb r g b\n", NULL);
@@ -139,7 +138,6 @@ sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, cons
 	struct region	*regp;
 	struct directory *dp;
 	struct bu_vls	shader;
-	char		buf[64];
 
 	if( argc < 4 )  {
 		Tcl_AppendResult(interp, "Usage: sh_directchange_shader $rtip comb shader_arg(s)\n", NULL);
@@ -198,12 +196,6 @@ sh_directchange_shader(ClientData clientData, Tcl_Interp *interp, int argc, cons
  */
 sh_opt(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-	struct rt_i	*rtip;
-	struct region	*regp;
-	struct directory *dp;
-	float		r,g,b;
-	char		buf[64];
-
 	if( argc < 2 )  {
 		Tcl_AppendResult(interp, "Usage: sh_opt command_line_option(s)\n", NULL);
 		return TCL_ERROR;
