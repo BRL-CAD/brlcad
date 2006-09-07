@@ -74,7 +74,8 @@ static const char tp_RCSid[] = "@(#)$Header$ (ARL)";
 
 TINY		*tp_cindex[256];	/* index to stroke tokens */
 
-/*
+/**
+ * @brief
  *  Once-only setup routine
  *  Used by libplot3/symbol.c, so it can't be static.
  */

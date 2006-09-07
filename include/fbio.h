@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** \addtogroup libfb */
+/*@{*/
 /** @file fbio.h
- *
+ *@brief
  *  BRL-CAD Framebuffer Library I/O Interfaces
  *
  *  Source -
@@ -50,7 +52,7 @@
 #endif
 
 
-/*
+/**
  *			R G B p i x e l
  *
  *  Format of disk pixels is .pix raw image files.
@@ -67,7 +69,7 @@ typedef unsigned char RGBpixel[3];
 #define	GRN	1
 #define	BLU	2
 
-/*
+/**
  *			C o l o r M a p
  *
  *  These generic color maps have up to 16 bits of significance,
@@ -90,10 +92,11 @@ typedef struct  {
 #define FB_CK_FBIO(_p)	FB_CKMAG(_p, FB_MAGIC, "FBIO" )
 
 
-/*
+/**
  *			F B I O
- *
+ *@brief
  *  A frame-buffer IO structure.
+ *
  *  One of these is allocated for each active framebuffer.
  *  A pointer to this structure is the first argument to all
  *  the library routines.
@@ -213,7 +216,7 @@ FB_EXPORT extern FBIO debug_interface, disk_interface, stk_interface;
 FB_EXPORT extern FBIO memory_interface, null_interface;
 
 #endif  /* __FBIO_H__ */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

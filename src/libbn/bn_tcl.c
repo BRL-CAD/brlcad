@@ -18,19 +18,20 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup libbn */
+/** \addtogroup bntcl */
 /*@{*/
 /** @file bn_tcl.c
+ * @brief
  *  Tcl interfaces to all the LIBBN math routines.
  *
- *  Author -
+ *  @author
  *	Glenn Durfee
  *
- *  Source -
+ *  @par Source
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -170,9 +171,9 @@ static void bn_vblend(mat_t a, fastf_t b, mat_t c, fastf_t d, mat_t e)
 	VBLEND2( a, b, c, d, e );
 }
 
-/*
+/**
  *			B N _ M A T H _ C M D
- *
+ *@brief
  * Tcl wrappers for the math functions.
  *
  * This is where you should put clauses, in the below "if" statement, to add
@@ -743,7 +744,8 @@ bn_cmd_noise(ClientData clientData,
 }
 
 
-/*
+/**
+ * @brief
  *	usage: noise_slice xdim ydim inv h_val lac octaves dX dY dZ sX [sY sZ]
  *
  *	The idea here is to get a whole slice of noise at once, thereby
@@ -883,7 +885,7 @@ bn_cmd_random(ClientData clientData,
 	return TCL_OK;
 }
 
-/*
+/**
  *			B N _ M A T _ P R I N T
  */
 void
@@ -897,9 +899,9 @@ bn_tcl_mat_print(Tcl_Interp		*interp,
 	Tcl_AppendResult(interp, obuf, "\n", (char *)NULL);
 }
 
-/*
+/**
  *			B N _ T C L _ S E T U P
- *
+ *@brief
  *  Add all the supported Tcl interfaces to LIBBN routines to
  *  the list of commands known by the given interpreter.
  */
@@ -939,9 +941,9 @@ bn_tcl_setup(Tcl_Interp *interp)
 	Tcl_SetVar(interp, "bn_version", (char *)bn_version+5, TCL_GLOBAL_ONLY);
 }
 
-/*
+/**
  *			B N _ I N I T
- *
+ *@brief
  *  Allows LIBBN to be dynamically loade to a vanilla tclsh/wish with
  *  "load /usr/brlcad/lib/libbn.so"
  *
@@ -961,7 +963,7 @@ Bn_Init(Tcl_Interp *interp)
 
 double bn_noise_fbm(point_t point,double h_val,double lacunarity,double octaves);
 double bn_noise_turb(point_t point,double h_val,double lacunarity,double octaves);
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

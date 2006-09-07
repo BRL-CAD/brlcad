@@ -19,12 +19,15 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup wavelet */
 /*@{*/
 
 /** @file wavelet.c
+ * @brief
  *  This is a standard wavelet library that takes a given data buffer of some data
- *  type and then performs a wavelet transform on that data.  The transform
+ *  type and then performs a wavelet transform on that data.  
+ *
+ * The transform
  *  operations available are to either decompose or reconstruct a signal into it's
  *  corresponding wavelet form based on the haar wavelet.
  *
@@ -89,7 +92,7 @@
  *
  *
  *  bn_wlt_haar_1d_*_decompose(tbuffer, buffer, dimen, channels, limit)
- *  Parameters:
+ *  @par Parameters:
  *	- tbuffer     a temporary data buffer 1/2 as large as "buffer". See (1) below.
  *	- buffer      pointer to the data to be decomposed
  *	- dimen    the number of samples in the data buffer
@@ -111,17 +114,21 @@
  *  it is a pointer to a temporary buffer.  If the pointer is NULL, then a
  *  local temporary buffer will be allocated (and freed).
  *
- *  Examples:
- *	double dbuffer[512], cbuffer[256];
- *	...
- *	bn_wlt_haar_1d_double_decompose(cbuffer, dbuffer, 512, 1, 1);
+ *  @par Examples:
+@code
+	double dbuffer[512], cbuffer[256];
+	...
+	bn_wlt_haar_1d_double_decompose(cbuffer, dbuffer, 512, 1, 1);
+@endcode
  *
  *    performs complete decomposition on the data in array "dbuffer".
  *
- *	double buffer[3][512];	 /_* 512 samples, 3 values/sample (e.g. RGB?)*_/
- *	double tbuffer[3][256];	 /_* the temporary buffer *_/
- *	...
- *	bn_wlt_haar_1d_double_decompose(tbuffer, buffer, 512, 3, 1);
+@code
+	double buffer[3][512];	 /_* 512 samples, 3 values/sample (e.g. RGB?)*_/
+	double tbuffer[3][256];	 /_* the temporary buffer *_/
+	...
+	bn_wlt_haar_1d_double_decompose(tbuffer, buffer, 512, 3, 1);
+@endcode
  *
  *    This will completely decompose the data in buffer.  The first sample will
  *    be the average of all the samples.  Alternatively:
@@ -130,27 +137,23 @@
  *
  *    decomposes buffer into a 64-sample "average image" and 3 "detail" sets.
  *
- *
- *
  *  bn_wlt_haar_1d_*_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
  *
  *
- *  Author -
+ *  @author
  *	Lee A. Butler
  *
- *  Modifications -
+ *  @par Modifications
  *      Christopher Sean Morrison
  *
- *  Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
 /*@}*/
 
 #include "common.h"
-
-
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
@@ -681,6 +684,7 @@ make_wlt_haar_2d_decompose2(char)
 make_wlt_haar_2d_decompose2(int)
 make_wlt_haar_2d_decompose2(short)
 make_wlt_haar_2d_decompose2(long)
+
 
 
 /*

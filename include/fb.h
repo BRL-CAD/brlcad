@@ -18,14 +18,18 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** \addtogroup libfb */
+/*@{*/
 /** @file fb.h
- *
+ * @brief
  *  BRL "Generic" Framebuffer Library Interface Defines.
  *
- *  Source -
+ * This is the file that application programs should include for framebuffer support
+ *
+ *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *@n	The U. S. Army Ballistic Research Laboratory
+ *@n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  *  $Header$
  */
@@ -35,7 +39,8 @@
 
 #include "fbio.h"
 
-/* Needed for fd_set, avoid including sys/select.h outright since it
+/*
+ * Needed for fd_set, avoid including sys/select.h outright since it
  * conflicts on some systems (e.g. freebsd4).
  *
  * XXX would be nice to decouple this interface from fd_set as it's
@@ -244,7 +249,7 @@ FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
 FB_EXPORT extern char fb_version[];
 
 #endif /* FB_H */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

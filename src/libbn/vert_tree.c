@@ -19,21 +19,24 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup vtree */
 /*@{*/
 /** @file vert_tree.c
- * Routines to manage a binary search tree of vertices. The actual vertices are stored in an array
- * for convenient use by routines such as "mk_bot". The binary search tree stores indices into
- * the array.
+ * @brief
+ * Routines to manage a binary search tree of vertices. 
  *
- *  Author -
+ * The actual vertices are stored in an array
+ * for convenient use by routines such as "mk_bot". 
+ * The binary search tree stores indices into the array.
+ *
+ *  @author
  *	John R. Anderson
  *
- *  Source -
+ * @par  Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+
 
 #ifndef lint
 static const char bn_RCSvert_tree[] = "@(#)$Header$ (ARL)";
@@ -57,9 +60,15 @@ static const char bn_RCSvert_tree[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 
 
-/* structure to make vertex searching fast
- * Each leaf represents a vertex, and has an index into the vertices array ("the_array")
- * Each node is a cutting plane at the "cut_val" on the "coord" (0, 1, or 2) axis.
+/**
+ * Structure to make vertex searching fast.
+ *
+ * Each leaf represents a vertex, and has an index into 
+ *   the vertices array ("the_array")
+ *
+ * Each node is a cutting plane at the "cut_val" on 
+ *   the "coord" (0, 1, or 2) axis.
+ *
  * All vertices with "coord" value less than the "cut_val" are in the "lower"
  * subtree, others are in the "higher".
  */
@@ -82,9 +91,10 @@ union vert_tree {
 #define VERT_NODE	'n'
 
 
-/*		C R E A T E _ V E R T _ T R E E
- *
+/**		C R E A T E _ V E R T _ T R E E
+ *@brief
  *	routine to create a vertex tree.
+ *
  *	Possible refinements include specifying an initial size
  */
 struct vert_root *
@@ -103,9 +113,10 @@ create_vert_tree()
 	return( tree );
 }
 
-/*		C R E A T E _ V E R T _ T R E E _ W _ N O R M S
- *
+/**		C R E A T E _ V E R T _ T R E E _ W _ N O R M S
+ *@brief
  *	routine to create a vertex tree.
+ *
  *	Possible refinements include specifying an initial size
  */
 struct vert_root *
@@ -124,8 +135,8 @@ create_vert_tree_w_norms()
 	return( tree );
 }
 
-/*		C L E A N _ V E R T_ T R E E _ R E C U R S E
- *
+/**		C L E A N _ V E R T_ T R E E _ R E C U R S E
+ *@brief
  *	static recursion routine used by "clean_vert_tree"
  */
 static void
@@ -140,8 +151,8 @@ clean_vert_tree_recurse( union vert_tree *ptr )
 
 }
 
-/*		C L E A N _ V E R T _ T R E E
- *
+/**		C L E A N _ V E R T _ T R E E
+ *@brief
  *	Routine to free the binary search tree and reset the current number of vertices.
  *	The vertex array is left untouched, for re-use later.
  */
@@ -158,8 +169,8 @@ clean_vert_tree( struct vert_root *tree_root )
 }
 
 
-/*		F R E E _ V E R T_ T R E E_ R E C U R S E
- *
+/**		F R E E _ V E R T_ T R E E_ R E C U R S E
+ *@brief
  *	Static recursive routine used by "free_vert_tree"
  */
 static void
@@ -174,8 +185,8 @@ free_vert_tree_recurse( union vert_tree *ptr )
 
 }
 
-/*		F R E E _ V E R T_ T R E E
- *
+/**		F R E E _ V E R T_ T R E E
+ *@brief
  *	Routine to free a vertex tree and all associated dynamic memory
  */
 void
@@ -204,8 +215,8 @@ free_vert_tree( struct vert_root *vert_root )
 	vert_root->max_vert = 0;
 }
 
-/*		A D D _ V E R T
- *
+/**		A D D _ V E R T
+ *@brief
  *	Routine to add a vertex to the current list of part vertices.
  *	The array is re-alloc'd if needed.
  *	Returns index into the array of vertices where this vertex is stored
@@ -329,8 +340,8 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
 	return( new_leaf->vleaf.index );
 }
 
-/*		A D D _ V E R T _ A N D _ N O R M
- *
+/**		A D D _ V E R T _ A N D _ N O R M
+ *@brief
  *	Routine to add a vertex and a normal to the current list of part vertices.
  *	The array is re-alloc'd if needed.
  *	Returns index into the array of vertices where this vertex and normal is stored
@@ -470,7 +481,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
 	/* return the index into the vertex array */
 	return( new_leaf->vleaf.index );
 }
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

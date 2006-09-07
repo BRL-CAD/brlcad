@@ -19,10 +19,11 @@
  * information.
  */
 
-/** \addtogroup libbn */
+/** \addtogroup mat */
 /*@{*/
 
 /** @file qmath.c
+ * @brief
  *  Quaternion math routines.
  *
  *  Unit Quaternions:

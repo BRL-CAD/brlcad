@@ -944,7 +944,7 @@ BN_EXPORT BU_EXTERN(void bn_pr_roots,
 /*@}*/
 /*----------------------------------------------------------------------*/
 /* qmath.c */
-/** @addtogroup quat */
+/** @addtogroup mat */
 /*@{*/
 /*
  * Quaternion support

@@ -23,16 +23,16 @@
 /*@{*/
 /** @file vector.c
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *@n	The U. S. Army Ballistic Research Laboratory
+ *@n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -51,11 +51,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "bn.h"
 
-/*
+/**
  *			T P _ 3 V E C T O R
- *
+ *@brief
  *  Draw a vector between points "from" and "to", with the option
  *  of having an arrowhead on either or both ends.
+ *
  *  The fromheadfract and toheadfract values indicate the length
  *  of the arrowheads relative to the length of the vector to-from.
  *  A typical value is 0.1, making the head 10% of the size of the vector.
@@ -134,6 +135,7 @@ float	*tl;
 	tp_3vector( *fp, from, to, *fl, *tl );
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C
