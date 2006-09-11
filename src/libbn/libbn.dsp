@@ -234,10 +234,6 @@ SOURCE=.\noise.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\number.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\plane.c
 # End Source File
 # Begin Source File
