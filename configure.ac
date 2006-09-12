@@ -2767,12 +2767,15 @@ AC_TRY_RUN([
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
-main() {
-   GLboolean values;
-   if (GL_TRUE) {
-	glGetBooleanv(GL_CURRENT_COLOR, &values);
-   }
-   return 0;
+main(int argc, char *argv[]) {
+  GLboolean values;
+  void (*func)() = glBegin;
+  if (GL_FALSE || argc > 1) {
+    func(GL_POINTS);
+    glGetBooleanv(GL_DEPTH_TEST, &values);
+    glEnd();
+  }
+  return 0;
 }
 	],
 	[opengl_works=yes]
@@ -2810,12 +2813,15 @@ AC_TRY_RUN([
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
-main() {
-   GLboolean values;
-   if (GL_TRUE) {
-	glGetBooleanv(GL_CURRENT_COLOR, &values);
-   }
-   return 0;
+main(int argc, char *argv[]) {
+  GLboolean values;
+  void (*func)() = glBegin;
+  if (GL_FALSE || argc > 1) {
+    func(GL_POINTS);
+    glGetBooleanv(GL_DEPTH_TEST, &values);
+    glEnd();
+  }
+  return 0;
 }
 	],
 	[wgl_works=yes]
