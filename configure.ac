@@ -1188,6 +1188,8 @@ AC_CHECK_LIB(tk8.6, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.6",
 dnl check if libtkstub library links
 tkstub_link_works=no
 LIBTKSTUB=""
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBTCLSTUB"
 AC_CHECK_LIB(tkstub8.6, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.6",
     [AC_CHECK_LIB(tkstub8.5, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.5",
 	[AC_CHECK_LIB(tkstub8.4, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.4",
@@ -1197,7 +1199,7 @@ AC_CHECK_LIB(tkstub8.6, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstu
 	)]
     )]
 )
-
+LIBS="$PRELIBS"
 
 dnl check if libitcl library links
 itcl_link_works=no
