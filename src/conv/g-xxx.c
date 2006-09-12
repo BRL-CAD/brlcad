@@ -57,35 +57,61 @@ static const char RCSid[] = "$Header$";
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "../librt/debug.h"
 
+/*
+extern char *optarg;
+extern int optind, opterr, getopt();
+*/
 
-BU_EXTERN( void comb_func , ( struct db_i *dbip , struct directory *dp, genptr_t data ) );
-BU_EXTERN( void primitive_func , ( struct db_i *dbip , struct directory *dp, genptr_t data ) );
+#define NUM_OF_CPUS_TO_USE 1
 
-static int	verbose;
+#define DEBUG_NAMES 1
+#define DEBUG_STATS 2
+
+long debug = 0;
+int verbose = 0;
+
 static struct db_i		*dbip;
 static struct bn_tol		tol;
 
-
 static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
+
+
+int region_start (struct db_tree_state *tsp, struct db_full_path *pathp,
+                  const struct rt_comb_internal * combp, genptr_t client_data );
+union tree *region_end (struct db_tree_state *tsp, struct db_full_path *pathp,
+                        union tree *curtree, genptr_t client_data );
+union tree *primitive_func( struct db_tree_state *tsp, struct db_full_path *pathp,
+                            struct rt_db_internal *ip, genptr_t client_data);
+void describe_tree( union tree *tree, struct bu_vls *str);
+
 
 /*
  *			M A I N
  */
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char *argv[])
 {
+        struct user_data {
+           int info;
+        } user_data;
+
 	int		i;
 	register int	c;
+        char idbuf[132];
 
 	bu_setlinebuf( stderr );
-
+/*
 	rt_init_resource(&rt_uniresource, 0, NULL);
+        struct rt_db_internal intern;
+        struct directory *dp;
+*/
+        struct rt_i *rtip;
+        struct db_tree_state init_state;
 
 	/* calculational tolerances
 	 * mostly used by NMG routines
@@ -93,7 +119,7 @@ char	*argv[];
 	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
+	tol.perp =1e-6;
 	tol.para = 1 - tol.perp;
 
 	/* Get command line arguments. */
@@ -131,17 +157,15 @@ char	*argv[];
 	}
 
 	/* Open BRL-CAD database */
-	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL)
-	{
-		bu_log( "Cannot open %s\n" , argv[optind] );
-		perror(argv[0]);
-		exit(1);
-	}
+	/* Scan all the records in the database and build a directory */
+        /* rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf)); */
+        rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf));
+        if ( rtip == RTI_NULL) {
+           fprintf(stderr,"g-xxx: rt_dirbuild failure\n");
+           exit(1);
+        }
 
-	/* scan all the records in the database and build a directory */
-	db_dirbuild( dbip );
-
-	/* open output file */
+        init_state = rt_initial_tree_state;
 
 	optind++;
 
@@ -150,31 +174,102 @@ char	*argv[];
 	 */
 	for( i=optind ; i<argc ; i++ )
 	{
-		struct directory *dp;
-
-		dp = db_lookup( dbip , argv[i] , 0 );
-		if( dp == DIR_NULL )
-		{
-			bu_log( "WARNING!!! Could not find %s, skipping\n", argv[i] );
-			continue;
-		}
-		db_functree( dbip, dp, comb_func, primitive_func, &rt_uniresource, NULL );
+            db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], NUM_OF_CPUS_TO_USE,
+                         &init_state ,region_start, region_end, primitive_func, (genptr_t) &user_data);
 	}
-
-	db_close(dbip);
 
 	return 0;
 }
+
+
+/**
+ *      R E G I O N _ S T A R T
+ *
+ * \brief This routine is called when a region is first encountered in the
+ * heirarchy when processing a tree
+ *
+ *      \param tsp tree state (for parsing the tree)
+ *      \param pathp A listing of all the nodes traversed to get to this node in the database
+ *      \param combp the combination record for this region
+ *      \param client_data pointer that was passed as last argument to db_walk_tree()
+ *
+ */
+int
+region_start (struct db_tree_state *tsp,
+              struct db_full_path *pathp,
+              const struct rt_comb_internal *combp,
+              genptr_t client_data )
+{
+    struct rt_comb_internal *comb;
+    struct directory *dp;
+    struct bu_vls str;
+
+    if (debug&DEBUG_NAMES) {
+        char *name = db_path_to_string(pathp);
+        bu_log("region_start %s\n", name);
+        bu_free(name, "reg_start name");
+    }
+
+    dp = DB_FULL_PATH_CUR_DIR(pathp);
+
+    /* here is where the conversion should be done */
+    if( combp->region_flag )
+	    printf( "Write this region (name=%s) as a part in your format:\n", dp->d_namep );
+    else
+	    printf( "Write this combination (name=%s) as an assembly in your format:\n", dp->d_namep );
+
+    bu_vls_init( &str );
+
+    describe_tree( combp->tree, &str );
+
+    printf( "\t%s\n\n", bu_vls_addr( &str ) );
+
+    bu_vls_free( &str );
+
+    return 0;
+}
+
+
+/**
+ *      R E G I O N _ E N D
+ *
+ *
+ * \brief This is called when all sub-elements of a region have been processed by leaf_func.
+ *
+ *      \param tsp
+ *      \param pathp
+ *      \param curtree
+ *      \param client_data
+ *
+ *      \return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
+ *      clean up the dta in the union tree * that is returned
+ *
+ * If it wants to retain the data in curtree it can by returning TREE_NULL.  Otherwise
+ * db_walk_tree will clean up the data in the union tree * that is returned.
+ *
+ */
+union tree *
+region_end (struct db_tree_state *tsp,
+            struct db_full_path *pathp,
+            union tree *curtree,
+            genptr_t client_data )
+{
+    if (debug&DEBUG_NAMES) {
+        char *name = db_path_to_string(pathp);
+        bu_log("region_end   %s\n", name);
+        bu_free(name, "region_end name");
+    }
+
+    return curtree;
+}
+
 
 /* This routine just produces an ascii description of the Boolean tree.
  * In a real converter, this would output the tree in the desired format.
  */
 void
-describe_tree( dbip, comb, tree, str )
-struct db_i             *dbip;
-struct rt_comb_internal *comb;
-union tree              *tree;
-struct bu_vls		*str;
+describe_tree( union tree *tree,
+               struct bu_vls *str)
 {
 	struct bu_vls left, right;
 	char *unionn=" u ";
@@ -220,8 +315,8 @@ struct bu_vls		*str;
 binary:				/* common for all binary nodes */
 			bu_vls_init( &left );
 			bu_vls_init( &right );
-			describe_tree( dbip, comb, tree->tr_b.tb_left, &left );
-			describe_tree( dbip, comb, tree->tr_b.tb_right, &right );
+			describe_tree( tree->tr_b.tb_left, &left );
+			describe_tree( tree->tr_b.tb_right, &right );
 			bu_vls_putc( str, '(' );
 			bu_vls_vlscatzap( str, &left );
 			bu_vls_strcat( str, op );
@@ -230,17 +325,17 @@ binary:				/* common for all binary nodes */
 			break;
 		case OP_NOT:
 			bu_vls_strcat( str, "(!" );
-			describe_tree( dbip, comb, tree->tr_b.tb_left, str );
+			describe_tree( tree->tr_b.tb_left, str );
 			bu_vls_putc( str, ')' );
 			break;
 		case OP_GUARD:
 			bu_vls_strcat( str, "(G" );
-			describe_tree( dbip, comb, tree->tr_b.tb_left, str );
+			describe_tree( tree->tr_b.tb_left, str );
 			bu_vls_putc( str, ')' );
 			break;
 		case OP_XNOP:
 			bu_vls_strcat( str, "(X" );
-			describe_tree( dbip, comb, tree->tr_b.tb_left, str );
+			describe_tree( tree->tr_b.tb_left, str );
 			bu_vls_putc( str, ')' );
 			break;
 		case OP_NOP:
@@ -252,92 +347,35 @@ binary:				/* common for all binary nodes */
 	}
 }
 
-/* This function is called by the tree walker "db_functree" for each
- * combination encountered. This should either call a routine
- * to output the combination in your format, or do it itself.
- */
-void
-comb_func( dbip, dp, ptr )
-struct db_i *dbip;
-struct directory *dp;
-genptr_t	ptr;
-{
-	struct rt_db_internal itrn;
-	struct rt_comb_internal *comb;
-	int id;
-	struct bu_vls str;
 
-	/* check if we already output this object */
-	if( dp->d_uses )
-		return;
 
-	/* get the internal format of this combination */
-	if( (id=rt_db_get_internal( &itrn, dp, dbip, bn_mat_identity, &rt_uniresource ) ) < 0 )
-	{
-		bu_log( "rt_db_get_internal failed for %s\n", dp->d_namep );
-		return;
-	}
-
-	RT_CK_DB_INTERNAL( &itrn );
-
-	if( id != ID_COMBINATION )
-	{
-		bu_log( "ERROR: comb_func called for a non-combination (%s)\n", dp->d_namep );
-		exit( 1 );
-	}
-
-	/* get the combination structure */
-	comb = (struct rt_comb_internal *)itrn.idb_ptr;
-
-	/* here is where the conversion should be done */
-	if( comb->region_flag )
-		printf( "Write this region (name=%s) as a part in your format:\n", dp->d_namep );
-	else
-		printf( "Write this combination (name=%s) as an assembly in your format:\n", dp->d_namep );
-
-	bu_vls_init( &str );
-
-	describe_tree( dbip, comb, comb->tree, &str );
-
-	printf( "\t%s\n\n", bu_vls_addr( &str ) );
-
-	bu_vls_free( &str );
-
-	/* mark this object as converted */
-	dp->d_uses++;
-}
-
-/* This routine is called by the tree walker (db_functree)
+/* This routine is called by the tree walker (db_walk_tree)
  * for every primitive encountered in the trees specified on the command line */
-void
-primitive_func( dbip, dp, ptr )
-struct db_i *dbip;
-struct directory *dp;
-genptr_t	ptr;
+union tree *
+primitive_func( struct db_tree_state *tsp,
+                struct db_full_path *pathp,
+                struct rt_db_internal *ip,
+                genptr_t client_data)
 {
-	struct rt_db_internal itrn;
+        int i;
 
-	/* check if we already converted this primitive */
-	if( dp->d_uses )
-		return;
+        struct directory *dp;
+        dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-	/* get the internal form of the primitive */
-	if( rt_db_get_internal( &itrn, dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
-	{
-		bu_log( "rt_db_get_internal failed for %s\n", dp->d_namep );
-		return;
-	}
-
-	RT_CK_DB_INTERNAL( &itrn );
+        if (debug&DEBUG_NAMES) {
+            char *name = db_path_to_string(pathp);
+            bu_log("leaf_func    %s\n", name);
+            bu_free(name, "region_end name");
+        }
 
 	/* handle each type of primitive (see h/rtgeom.h) */
-	if( itrn.idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
-		switch( itrn.idb_type )
+	if( ip->idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
+		switch( ip->idb_type )
 			{
 				/* most commonly used primitives */
 			case ID_TOR:	/* torus */
 				{
-					struct rt_tor_internal *tor = (struct rt_tor_internal *)itrn.idb_ptr;
+					struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
 
 					printf( "Write this torus (name=%s) in your format:\n", dp->d_namep );
 					printf( "\tV=(%g %g %g)\n", V3ARGS( tor->v ) );
@@ -352,7 +390,7 @@ genptr_t	ptr;
 					/* This primitive includes circular cross-section
 					 * cones and cylinders
 					 */
-					struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)itrn.idb_ptr;
+					struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
 
 					printf( "Write this TGC (name=%s) in your format:\n", dp->d_namep );
 					printf( "\tV=(%g %g %g)\n", V3ARGS( tgc->v ) );
@@ -367,7 +405,7 @@ genptr_t	ptr;
 			case ID_SPH:
 				{
 					/* spheres and ellipsoids */
-					struct rt_ell_internal *ell = (struct rt_ell_internal *)itrn.idb_ptr;
+					struct rt_ell_internal *ell = (struct rt_ell_internal *)ip->idb_ptr;
 
 					printf( "Write this ellipsoid (name=%s) in your format:\n", dp->d_namep );
 					printf( "\tV=(%g %g %g)\n", V3ARGS( ell->v ) );
@@ -382,8 +420,7 @@ genptr_t	ptr;
 					 * faces are: 0123, 7654, 0347, 1562, 0451, 3267
 					 * (points listed above in counter-clockwise order)
 					 */
-					struct rt_arb_internal *arb = (struct rt_arb_internal *)itrn.idb_ptr;
-					int i;
+					struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
 
 					printf( "Write this ARB (name=%s) in your format:\n", dp->d_namep );
 					for( i=0 ; i<8 ; i++ )
@@ -392,7 +429,7 @@ genptr_t	ptr;
 				}
 			case ID_BOT:	/* Bag O' Triangles */
 				{
-					struct rt_bot_internal *bot = (struct rt_bot_internal *)itrn.idb_ptr;
+					struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 					break;
 				}
 
@@ -402,36 +439,36 @@ genptr_t	ptr;
 					/* series of curves
 					 * each with the same number of points
 					 */
-					struct rt_ars_internal *ars = (struct rt_ars_internal *)itrn.idb_ptr;
+					struct rt_ars_internal *ars = (struct rt_ars_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_HALF:
 				{
 					/* half universe defined by a plane */
-					struct rt_half_internal *half = (struct rt_half_internal *)itrn.idb_ptr;
+					struct rt_half_internal *half = (struct rt_half_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_POLY:
 				{
 					/* polygons (up to 5 vertices per) */
-					struct rt_pg_internal *pg = (struct rt_pg_internal *)itrn.idb_ptr;
+					struct rt_pg_internal *pg = (struct rt_pg_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_BSPLINE:
 				{
 					/* NURB surfaces */
-					struct rt_nurb_internal *nurb = (struct rt_nurb_internal *)itrn.idb_ptr;
+					struct rt_nurb_internal *nurb = (struct rt_nurb_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_NMG:
 				{
 					/* N-manifold geometry */
-					struct model *m = (struct model *)itrn.idb_ptr;
+					struct model *m = (struct model *)ip->idb_ptr;
 					break;
 				}
 			case ID_ARBN:
 				{
-					struct rt_arbn_internal *arbn = (struct rt_arbn_internal *)itrn.idb_ptr;
+					struct rt_arbn_internal *arbn = (struct rt_arbn_internal *)ip->idb_ptr;
 					break;
 				}
 
@@ -440,14 +477,14 @@ genptr_t	ptr;
 					/* Displacement map (terrain primitive) */
 					/* normally used for terrain only */
 					/* the DSP primitive may reference an external file */
-					struct rt_dsp_internal *dsp = (struct rt_dsp_internal *)itrn.idb_ptr;
+					struct rt_dsp_internal *dsp = (struct rt_dsp_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_HF:
 				{
 					/* height field (terrain primitive) */
 					/* the HF primitive references an external file */
-					struct rt_hf_internal *hf = (struct rt_hf_internal *)itrn.idb_ptr;
+					struct rt_hf_internal *hf = (struct rt_hf_internal *)ip->idb_ptr;
 					break;
 				}
 
@@ -456,59 +493,59 @@ genptr_t	ptr;
 				{
 					/* extruded bit-map */
 					/* the EBM primitive references an external file */
-					struct rt_ebm_internal *ebm = (struct rt_ebm_internal *)itrn.idb_ptr;
+					struct rt_ebm_internal *ebm = (struct rt_ebm_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_VOL:
 				{
 					/* the VOL primitive references an external file */
-					struct rt_vol_internal *vol = (struct rt_vol_internal *)itrn.idb_ptr;
+					struct rt_vol_internal *vol = (struct rt_vol_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_PIPE:
 				{
-					struct rt_pipe_internal *pipe = (struct rt_pipe_internal *)itrn.idb_ptr;
+					struct rt_pipe_internal *pipe = (struct rt_pipe_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_PARTICLE:
 				{
-					struct rt_part_internal *part = (struct rt_part_internal *)itrn.idb_ptr;
+					struct rt_part_internal *part = (struct rt_part_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_RPC:
 				{
-					struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)itrn.idb_ptr;
+					struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_RHC:
 				{
-					struct rt_rhc_internal *rhc = (struct rt_rhc_internal *)itrn.idb_ptr;
+					struct rt_rhc_internal *rhc = (struct rt_rhc_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_EPA:
 				{
-					struct rt_epa_internal *epa = (struct rt_epa_internal *)itrn.idb_ptr;
+					struct rt_epa_internal *epa = (struct rt_epa_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_EHY:
 				{
-					struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)itrn.idb_ptr;
+					struct rt_ehy_internal *ehy = (struct rt_ehy_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_ETO:
 				{
-					struct rt_eto_internal *eto = (struct rt_eto_internal *)itrn.idb_ptr;
+					struct rt_eto_internal *eto = (struct rt_eto_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_GRIP:
 				{
-					struct rt_grip_internal *grip = (struct rt_grip_internal *)itrn.idb_ptr;
+					struct rt_grip_internal *grip = (struct rt_grip_internal *)ip->idb_ptr;
 					break;
 				}
 
 			case ID_SKETCH:
 				{
-					struct rt_sketch_internal *sketch = (struct rt_sketch_internal *)itrn.idb_ptr;
+					struct rt_sketch_internal *sketch = (struct rt_sketch_internal *)ip->idb_ptr;
 					break;
 				}
 			case ID_EXTRUDE:
@@ -516,34 +553,34 @@ genptr_t	ptr;
 					/* note that an extrusion references a sketch, make sure you convert
 					 * the sketch also
 					 */
-					struct rt_extrude_internal *extrude = (struct rt_extrude_internal *)itrn.idb_ptr;
+					struct rt_extrude_internal *extrude = (struct rt_extrude_internal *)ip->idb_ptr;
 					break;
 				}
 
 			default:
-				bu_log( "Primitive %s is unrecognized type (%d)\n", dp->d_namep, itrn.idb_type );
-				break;
-			}
-	} else {
-		switch( itrn.idb_major_type ) {
+			          	bu_log( "Primitive %s is unrecognized type (%d)\n", dp->d_namep, ip->idb_type );
+                                        break;
+	         }
+	}
+        else {
+		switch( ip->idb_major_type ) {
 			case DB5_MAJORTYPE_BINARY_UNIF:
 				{
 					/* not actually a primitive, just a block of storage for data
 					 * a uniform array of chars, ints, floats, doubles, ...
 					 */
-					struct rt_binunif_internal *bin = (struct rt_binunif_internal *)itrn.idb_ptr;
+					struct rt_binunif_internal *bin = (struct rt_binunif_internal *)ip->idb_ptr;
 
 					printf( "Found a binary object (%s)\n\n", dp->d_namep );
 					break;
 				}
 			default:
-				bu_log( "Major type of %s is unrecognized type (%d)\n", dp->d_namep, itrn.idb_major_type );
+				bu_log( "Major type of %s is unrecognized type (%d)\n", dp->d_namep, ip->idb_major_type );
 				break;
 		}
 	}
 
-	/* mark this primitive as converted */
-	dp->d_uses++;
+        return (union tree *) NULL;
 }
 
 /*
