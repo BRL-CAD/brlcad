@@ -47,7 +47,6 @@ libbn_la_LIBADD = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	htester.c \
 	libbn.dsp \
 	plot3.doc \
 	vers_win.c

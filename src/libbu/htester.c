@@ -26,7 +26,6 @@
  * @brief
  *  Test network float conversion.
  * 
- * XXX This probably belongs in libbu with htonf.c
  *  Expected to be used in pipes, or with TTCP links to other machines,
  *  or with files RCP'ed between machines.
  *
@@ -45,7 +44,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "common.h"
+
+#include <stdlib.h>
 #include <stdio.h>
+
 
 #define	NUM	3000
 double	orig[NUM], after[NUM];

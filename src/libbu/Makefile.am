@@ -79,6 +79,7 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	htester.c \
 	libbu.dsp \
 	vers_win.c
 
