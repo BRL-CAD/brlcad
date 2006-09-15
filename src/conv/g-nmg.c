@@ -58,10 +58,12 @@ static const char RCSid[] = "$Header$";
 /* interface headers */
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "mater.h"
 
 /* local headers */
 #include "../librt/debug.h"
@@ -88,6 +90,8 @@ static struct db_tree_state	tree_state;	/* includes tol & model */
 
 static int	regions_tried = 0;
 static int	regions_converted = 0;
+
+//extern struct mater* rt_material_head;
 
 /*
 *			D O _ R E G I O N _ E N D
@@ -538,6 +542,9 @@ main(int argc, char **argv)
 		}
 		db_functree( dbip , dp , csg_comb_func , 0 , &rt_uniresource , NULL );
 	}
+
+	/* write the current color table */
+	mk_write_color_table(fp_out);
 
 	rt_vlist_cleanup();
 	db_close(dbip);
