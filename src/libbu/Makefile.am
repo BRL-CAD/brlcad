@@ -3,6 +3,8 @@
 lib_LTLIBRARIES = libbu.la
 noinst_LTLIBRARIES = libbu_nil.la
 
+noinst_PROGRAMS = htester
+
 SRCS = \
 	association.c \
 	avs.c \
@@ -70,6 +72,10 @@ libbu_la_LIBADD = \
 	${LIBTHREAD} \
 	${TCL}
 
+htester_SOURCES = htester.c
+htester_LDADD = \
+	${BU}
+
 include_HEADERS = rb_internals.h
 
 man_MANS = \
@@ -79,7 +85,6 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	htester.c \
 	libbu.dsp \
 	vers_win.c
 
