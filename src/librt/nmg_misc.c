@@ -12004,7 +12004,7 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
 	nmg_face_tabulate( &nmg_faces, &s->l.magic );
 
 	/* now build the BOT */
-	bot = (struct rt_bot_internal *)bu_malloc( sizeof( struct rt_bot_internal ), "BOT from NMG" );
+	bot = (struct rt_bot_internal *)bu_calloc(1, sizeof( struct rt_bot_internal ), "BOT from NMG" );
 
 	bot->magic = RT_BOT_INTERNAL_MAGIC;
 	bot->mode = RT_BOT_SOLID;
