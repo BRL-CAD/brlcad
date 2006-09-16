@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup librt */
 /*@{*/
 /** @file qray.c
  * Routines to set and get "Query Ray" variables.
@@ -33,7 +33,6 @@
  *      Robert G. Parker
  *
  */
-/*@}*/
 
 #include "common.h"
 
@@ -547,6 +546,7 @@ dgo_qray_data_to_vlist(struct dg_obj		*dgop,
 	}
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

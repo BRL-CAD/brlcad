@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup fort */
 /*@{*/
 /** @file fortray.c
  *  A general-purpose set of FORTRAN-callable interface routines to
@@ -36,7 +36,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$";
 #endif
@@ -388,6 +387,7 @@ BU_FORTRAN(frname,FRNAME)(char		*fbuf,
 	fr_string_c2f( fbuf, buf, fbuflen );
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

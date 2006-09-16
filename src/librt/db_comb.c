@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup db */
+/** @addtogroup db4 */
 
 /*@{*/
 /** @file db_comb.c
@@ -42,7 +42,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -1161,6 +1160,7 @@ db_mkgift_tree(
 	return( curtree );
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

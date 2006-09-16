@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup nurb */
+/** @addtogroup nurb */
 
 /*@{*/
 /** @file nurb_example.c

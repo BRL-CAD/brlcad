@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup wdb */
+/** @addtogroup wdb */
 /*@{*/
 /** @file wdb.c
  *  Routines to allow libwdb to use librt's import/export interface,

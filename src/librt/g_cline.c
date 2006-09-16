@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup g */
+/** @addtogroup g_  */
 
 /*@{*/
 /** @file g_cline.c
@@ -34,7 +34,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCScline[] = "@(#)$Header$ (BRL)";
@@ -1143,6 +1142,7 @@ rt_cline_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
 
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

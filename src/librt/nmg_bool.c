@@ -19,10 +19,7 @@
  * information.
  */
 
-/** \defgroup nmg NonManifoldGeometry
- * \ingroup librt
- */
-
+/** @addgroup nmg */
 /*@{*/
 /** @file nmg_bool.c
  *	Support for boolean operations on NMG objects.  Most of the routines
@@ -39,7 +36,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -1470,6 +1466,7 @@ out:
 	}
 	return ret;
 }
+/*@}*/
 
 /*
  * Local Variables:

@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup librt */
 
 /*@{*/
 /** @file nirt.c

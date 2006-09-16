@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup wdb */
+/** @addtogroup wdb */
 /*@{*/
 /** @file wdb_obj.c
  *  A database object contains the attributes and

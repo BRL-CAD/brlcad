@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup db */
+/** @addtogroup db4 */
 
 /*@{*/
 /** @file db_flags.c
@@ -43,7 +43,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #include "common.h"
 
@@ -117,6 +116,7 @@ db_flags_raw_internal(const struct db5_raw_internal *raw)
     return DIR_SOLID;
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

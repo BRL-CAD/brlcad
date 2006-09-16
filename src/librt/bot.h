@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** \addtogroup g_ */
 /*@{*/
 /** @file bot.h
  *  Header file for the "bot" specific structure.  This is shared between

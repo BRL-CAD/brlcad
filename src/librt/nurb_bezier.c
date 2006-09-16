@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup nurb */
+/** @addtogroup nurb */
 /*@{*/
 /** @file nurb_bezier.c
  * Convert a NURB surface or curve into Bezier form, with no internal knots.

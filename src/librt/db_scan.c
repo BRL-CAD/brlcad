@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup db */
+/** @addtogroup db4 */
 
 /*@{*/
 /** @file db_scan.c
@@ -37,7 +37,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -572,6 +571,7 @@ db_v4_get_units_code( const char *str )
 	return -1;		/* error */
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

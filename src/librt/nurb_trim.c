@@ -18,7 +18,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup */
+/** @addtogroup */
 /*@{*/
 /** @file nurb_trim.c
  * Trimming curve routines.

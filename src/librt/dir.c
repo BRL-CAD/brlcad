@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup dbio */
 /*@{*/
 /** @file dir.c
  * Ray Tracing program, GED database directory manager.
@@ -36,7 +36,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSdir[] = "@(#)$Header$";
@@ -315,6 +314,7 @@ rt_db_lookup_internal (
     return (ip -> idb_type);
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

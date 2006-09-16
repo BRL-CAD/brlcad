@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup nurb */
+/** @addtogroup nurb */
 /*@{*/
 /** @file nurb_eval.c
  *	Evaluate a Non Uniform Rational B-spline curve or at the

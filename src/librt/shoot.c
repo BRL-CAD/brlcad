@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup ray */
 /*@{*/
 
 /** @file shoot.c
@@ -49,7 +49,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSshoot[] = "@(#)$Header$ (BRL)";
@@ -2111,6 +2110,7 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 	bu_log("wrote %s\n", buf);
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

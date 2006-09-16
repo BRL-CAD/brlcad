@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt  */
+/** @addtogroup db5  */
 /*@{*/
 /** @file binary_obj.c
  *  Routines for writing binary objects to a BRL-CAD database

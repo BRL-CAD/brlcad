@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup nmg */
+/** @addtogroup nmg */
 /*@{*/
 /** @file nmg_pt_fu.c
  *  Routines for classifying a point with respect to a faceuse.

@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup librt */
 /*@{*/
 /** @file dg_obj.c
  * A drawable geometry object contains methods and attributes
@@ -39,7 +39,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #include "common.h"
 
@@ -4925,6 +4924,7 @@ dgo_bot_check_leaf(struct db_tree_state		*tsp,
     return curtree;
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

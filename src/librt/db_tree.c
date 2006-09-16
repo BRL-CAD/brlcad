@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup db */
+/** @addtogroup dbio */
 
 /*@{*/
 /** @file db_tree.c
@@ -38,7 +38,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -1455,6 +1454,9 @@ db_free_tree( register union tree *tp, struct resource *resp )
 	tp->magic = -3;		/* special bad flag */
 
 	switch( tp->tr_op )  {
+	case OP_FREE :
+	    tp->tr_op = 0;		/* sanity */
+	    return;
 	case OP_NOP:
 		break;
 
@@ -2257,7 +2259,11 @@ db_walk_dispatcher(int cpu, genptr_t arg)
  *	 0	OK
  */
 int
-db_walk_tree(struct db_i *dbip, int argc, const char **argv, int ncpu, const struct db_tree_state *init_state,
+db_walk_tree(struct db_i *dbip,
+	     int argc,
+	     const char **argv,
+	     int ncpu,
+	     const struct db_tree_state *init_state,
 	     int (*reg_start_func) (struct db_tree_state *, struct db_full_path *, const struct rt_comb_internal *, genptr_t),
 	     union tree *(*reg_end_func) (struct db_tree_state *, struct db_full_path *, union tree *, genptr_t),
 	     union tree *(*leaf_func) (struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, genptr_t),
@@ -2696,6 +2702,7 @@ db_shader_mat(
 	return 0;
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

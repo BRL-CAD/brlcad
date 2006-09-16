@@ -19,13 +19,12 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup timer */
 /*@{*/
 /** @file timercos.c
  *	To provide timing information for RT.
  *	THIS VERSION FOR Cray COS "C"
  */
-/*@}*/
 #ifndef lint
 static const char RCScos[] = "@(#)$Header$ (BRL)";
 #endif
@@ -320,6 +319,7 @@ register char *p;
 	return (neg_val ? -fl_val : fl_val); /* apply sign */
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

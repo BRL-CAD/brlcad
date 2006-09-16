@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup nurb */
+/** @addtogroup nurb */
 /*@{*/
 /** @file nurb_trim_util.c
  * Trimming curve Utilities.

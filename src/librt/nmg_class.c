@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup nmg */
+/** @addtogroup nmg */
 
 /*@{*/
 /** @file nmg_class.c

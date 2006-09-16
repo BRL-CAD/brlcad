@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup g_ */
 /*@{*/
 /** @file table.c
  *  Tables for the BRL-CAD Package ray-tracing library "librt".

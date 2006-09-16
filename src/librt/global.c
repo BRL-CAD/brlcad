@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup librt */
 /*@{*/
 /** @file global.c
  *  All global state for the BRL-CAD Package ray-tracing library "librt".

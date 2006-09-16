@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup db */
+/** @addtogroup db4 */
 
 /*@{*/
 /** @file db_io.c
@@ -39,7 +39,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -500,6 +499,7 @@ db_free_external(register struct bu_external *ep)
 	bu_free_external(ep);
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

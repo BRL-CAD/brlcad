@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup db */
+/** @addtogroup dbio */
 
 /*@{*/
 /** @file db_lookup.c
@@ -42,7 +42,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -614,6 +613,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 	return( tbl );
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

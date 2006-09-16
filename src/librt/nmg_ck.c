@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup nmg */
+/** @addtogroup nmg */
 
 /*@{*/
 /** @file nmg_ck.c
@@ -1238,7 +1238,7 @@ void nmg_ck_lueu(const struct loopuse *cklu, const char *s)
  *
  *  XXX I think that if dangling faces are to be processed correctly,
  *  XXX the caller should pass in a table of dangling faces.  -Mike
- *  XXX I've #if'ed that check out, for now.
+ *  XXX I've # if'ed that check out, for now.
  *
  *	Return
  *	0	OK

@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup ray */
 /*@{*/
 /** @file cut.c
  *  Cut space into lots of small boxes (RPPs actually).

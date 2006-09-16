@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup ray */
 /*@{*/
 /** @file bigE.c
  * This module implements the 'E' command.

@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup nurb */
+/** @addtogroup nurb */
 /*@{*/
 /** @file nurb_tess.c
  *	Given Epsilon, compute the number of internal knots to

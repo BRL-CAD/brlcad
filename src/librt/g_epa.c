@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup ellipsoids */
+/** @addtogroup g_  */
 
 /*@{*/
 /** @file g_epa.c
@@ -153,7 +153,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSepa[] = "@(#)$Header$ (BRL)";
@@ -1721,6 +1720,7 @@ rt_epa_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

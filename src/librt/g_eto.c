@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup g */
+/** @addtogroup g_  */
 /*@{*/
 /** @file g_eto.c
  *	Intersect a ray with an Elliptical Torus.
@@ -34,7 +34,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSeto[] = "@(#)$Header$ (BRL)";
@@ -1449,6 +1448,7 @@ rt_eto_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

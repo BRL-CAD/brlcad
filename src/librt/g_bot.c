@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup g */
+/** @addtogroup g_  */
 
 /*@{*/
 /** @file g_bot.c
@@ -32,7 +32,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSbot[] = "@(#)$Header$ (BRL)";
@@ -148,7 +147,7 @@ rt_botface_w_normals(struct soltab	*stp,
  *
  * Return -
  *	0	if the 3 points didn't form a plane (eg, colinear, etc).
- *	#pts	(3) if a valid plane resulted.
+ *	# pts	(3) if a valid plane resulted.
  */
 int
 rt_botface_w_normals(struct soltab	*stp,
@@ -3893,6 +3892,7 @@ rt_smooth_bot( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, f
 	return( 0 );
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

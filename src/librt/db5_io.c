@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup db5 */
+/** @addtogroup db5 */
 
 /*@{*/
 /** @file db5_io.c
@@ -33,7 +33,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -1683,6 +1682,7 @@ db5_get_attributes( const struct db_i *dbip, struct bu_attribute_value_set *avs,
 	return 0;
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

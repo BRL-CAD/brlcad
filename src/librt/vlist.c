@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup librt */
 /*@{*/
 /** @file vlist.c
  *  Routines for the import and export of vlist chains as:

@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup g */
+/** @addtogroup g_  */
 
 /*@{*/
 /** @file g_hf.c
@@ -36,7 +36,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #ifndef lint
 static char rt_hf_RcSid[] = "@(#)$Header$ (ARL)";
@@ -2220,6 +2219,7 @@ rt_hf_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

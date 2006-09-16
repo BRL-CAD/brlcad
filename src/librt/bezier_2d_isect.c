@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \defgroup librt librt */
+/** @addtogroup ray */
 /*@{*/
 /** @file bezier_2d_isect.c
  *	The following routines are for 2D Bezier curves
@@ -33,7 +33,6 @@
  *		to generalize the codes for finding intersections with any 2D line
  *		rather than just the X-axis.
  */
-/*@}*/
 
 #include "common.h"
 
@@ -511,6 +510,7 @@ subdivide_bezier( struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon,
 	return( new_head );
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

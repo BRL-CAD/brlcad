@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup ray */
 /*@{*/
 
 /** @file vshoot.c
@@ -35,7 +35,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSshoot[] = "@(#)$Header$ (BRL)";
@@ -551,6 +550,7 @@ rt_get_bitv(struct rt_i *rtip, struct resource *res)
 	}
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

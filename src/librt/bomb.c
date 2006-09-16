@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup librt */
 /*@{*/
 /** @file ./librt/bomb.c
  *  Checks LIBRT-specific error flags, then

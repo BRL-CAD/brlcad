@@ -19,12 +19,11 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup timer */
 /*@{*/
 /** @file timer-nt.c
  * To provide timing information on Microsoft Windows NT.
  */
-/*@}*/
 
 #ifndef lint
 static const char RCStimer_nt[] = "@(#)$Header$ (BRL)";
@@ -116,6 +115,7 @@ rt_read_timer(char *str, int len)
 	return cpu;
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

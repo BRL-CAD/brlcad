@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup ellipsoids */
+/** @addtogroup g_ */
 
 /*@{*/
 /** @file g_sph.c

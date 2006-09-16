@@ -18,7 +18,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup nmg */
+/** @addtogroup nmg */
 
 /*@{*/
 /** @file nmg_info.c

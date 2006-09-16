@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup db5 */
+/** @addtogroup db5 */
 
 /*@{*/
 /** @file db5_types.c
@@ -33,7 +33,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 #ifndef lint
 static const char RCSell[] = "@(#)$Header$ (BRL)";
 #endif
@@ -380,6 +379,7 @@ db5_type_sizeof_n_binu( const int minor ) {
     return 0;
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

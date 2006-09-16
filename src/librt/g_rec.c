@@ -19,10 +19,7 @@
  * information.
  */
 
-/** \defgroup cc ConesAndCylinders
- * \ingroup g */
-
-/** \addtogroup cc */
+/** @addtogroup g_  */
 /*@{*/
 /** @file g_rec.c
  *	Intersect a ray with a Right Eliptical Cylinder.
@@ -142,7 +139,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSrec[] = "@(#)$Header$ (BRL)";
@@ -864,6 +860,7 @@ rt_rec_class(void)
 /* plot and tess are handled by g_tgc.c */
 /* import, export, ifree, and describe are also handled by g_tgc.c */
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

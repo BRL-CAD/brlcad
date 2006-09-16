@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup g */
+/** @addtogroup g_  */
 
 /*@{*/
 /** @file g_pg.c
@@ -138,7 +138,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  *
  * Return -
  *	0	if the 3 points didn't form a plane (eg, colinear, etc).
- *	#pts	(3) if a valid plane resulted.
+ *	# pts	(3) if a valid plane resulted.
  */
 HIDDEN int
 rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struct bn_tol *tol)

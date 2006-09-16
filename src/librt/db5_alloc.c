@@ -19,23 +19,20 @@
  * information.
  */
 
-/** \defgroup db5 Database5
- * \ingroup librt
- */
+/** @addtogroup db5 */
 
 /*@{*/
 /** @file db5_alloc.c
  *  Handle disk space allocation in the BRL-CAD v5 database.
  *
- *  Author -
+ *  @Author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -67,13 +64,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  and place it at the indicated location in the database.
  *
  *  There are two interesting cases:
- *	1)  The free object is "small".  Just write it all at once.
- *	2)  The free object is "large".  Write header and trailer
+ *	-  The free object is "small".  Just write it all at once.
+ *	-  The free object is "large".  Write header and trailer
  *	    separately
  *
- *  Returns -
- *	0	OK
- *	-1	Fail.  This is a horrible error.
+ *
+ *  @return	0	OK
+ *  @return	-1	Fail.  This is a horrible error.
  */
 int
 db5_write_free( struct db_i *dbip, struct directory *dp, long length )
@@ -277,6 +274,7 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 	return 0;
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

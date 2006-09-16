@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup g */
+/** @addtogroup g_  */
 
 /*@{*/
 /** @file g_bot_include.c
@@ -38,7 +38,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char XGLUE(RCSbot_inc_,TRI_TYPE)[] = "@(#)$Header$ (BRL)";
@@ -53,7 +52,7 @@ static const char XGLUE(RCSbot_inc_,TRI_TYPE)[] = "@(#)$Header$ (BRL)";
  *
  * Return -
  *	0	if the 3 points didn't form a plane (eg, colinear, etc).
- *	#pts	(3) if a valid plane resulted.
+ *	# pts	(3) if a valid plane resulted.
  */
 int
 XGLUE(rt_botface_w_normals_,TRI_TYPE)(struct soltab	*stp,
@@ -1303,6 +1302,7 @@ register struct bot_specific *bot;
 	bu_free( (char *)bot, "bot_specific" );
 }
 
+/*@}*/
 
 /*
  * Local Variables:

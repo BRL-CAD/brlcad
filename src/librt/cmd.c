@@ -19,9 +19,9 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup ray */
 /*@{*/
-/** @file ./librt/cmd.c
+/** @file librt/cmd.c
  *  Read and parse a viewpoint-control command stream.
  *  This module is intended to be common to all programs which
  *  read this type of command stream;  the routines to handle

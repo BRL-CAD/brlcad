@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup db */
+/** @addtogroup dbio */
 
 /*@{*/
 /** @file db_walk.c
@@ -39,7 +39,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -288,6 +287,7 @@ db_functree(struct db_i *dbip,
     }
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

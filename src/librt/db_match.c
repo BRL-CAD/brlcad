@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup db*/
+/** @addtogroup dbio */
 
 /*@{*/
 /** @file db_match.c
@@ -39,7 +39,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -255,6 +254,7 @@ db_update_nref( struct db_i *dbip, struct resource *resp )
 	}
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

@@ -1,6 +1,6 @@
-/** \addtogroup g */
+/** @addtogroup g_  */
 /*@{*/
-/** \file g_grip.c
+/** @file g_grip.c
  *  Intersect a ray with a "grip" and return nothing.
  *
  *
@@ -20,7 +20,6 @@
  *	This software is Copyright (C) 1993 by Geometric Solutions, Inc.
  *	All rights reserved.
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSgrip[] = "@(#)$Header$ (BRL)";
@@ -470,6 +469,7 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	return(-1);
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

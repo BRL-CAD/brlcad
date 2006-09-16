@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup cc */
+/** @addtogroup g_ */
 
 /*@{*/
 /** @file g_tgc.c

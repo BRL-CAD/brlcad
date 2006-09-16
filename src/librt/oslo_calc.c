@@ -19,9 +19,7 @@
  * information.
  */
 
-/** \defgroup oslo oslo
- * \ingroup librt */
-
+/** @addtogroup librt
 /*@{*/
 /** @file oslo_calc.c
  * Calculate the Oslo refinement matrix.
@@ -45,7 +43,6 @@
  * Since we only want the last row of the alpha's as outlined in the
  * paper we can use a one dimensional array for the ah.
  */
-/*@}*/
 
 #include "common.h"
 
@@ -237,6 +234,7 @@ rt_nurb_free_oslo(struct oslo_mat *om, struct resource *res)
 	}
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

@@ -19,9 +19,7 @@
  * information.
  */
 
-/** \defgroup db Database
- * \ingroup librt
- */
+/** @addtogroup db4 */
 
 /*@{*/
 /** @file db_alloc.c
@@ -42,7 +40,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -234,6 +231,7 @@ db_zapper(struct db_i *dbip, struct directory *dp, int start)
 	bu_free( (char *)rp, "db_zapper buf" );
 	return i;
 }
+/*@}*/
 
 /*
  * Local Variables:

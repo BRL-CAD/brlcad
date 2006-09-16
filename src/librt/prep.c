@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup ray */
 /*@{*/
 /** @file prep.c
  *  Manage one-time preparations to be done before actual

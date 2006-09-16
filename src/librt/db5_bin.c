@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup db5 */
+/** @addtogroup db5 */
 
 /*@{*/
 /** @file db5_bin.c

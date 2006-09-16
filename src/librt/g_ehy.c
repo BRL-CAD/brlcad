@@ -19,10 +19,7 @@
  * information.
  */
 
-/** \defgroup ellipsoids Ellipsoids
- * \ingroup g */
-
-/** \addtogroup ellipsoids */
+/** @addtogroup g_  */
 /*@{*/
 /** @file g_ehy.c
  *	Intersect a ray with a Right Hyperbolic Cylinder.
@@ -157,7 +154,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSehy[] = "@(#)$Header$ (BRL)";
@@ -1688,6 +1684,7 @@ rt_ehy_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup timer */
 
 /*@{*/
 
@@ -27,7 +27,6 @@
  * To provide timing information for RT.
  *	THIS VERSION FOR Denelcor HEP/UPX (System III-like)
  */
-/*@}*/
 
 #ifndef lint
 static const char RCShep[] = "@(#)$Header$ (BRL)";
@@ -74,6 +73,7 @@ rt_read_timer(char *str, int len)
 	return( usert );
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

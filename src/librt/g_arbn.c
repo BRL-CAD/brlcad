@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup g */
+/** @addtogroup g_  */
 
 /*@{*/
 /** @file g_arbn.c
@@ -35,7 +35,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSarbn[] = "@(#)$Header$ (BRL)";
@@ -1247,6 +1246,7 @@ rt_arbn_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 	return( TCL_OK );
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

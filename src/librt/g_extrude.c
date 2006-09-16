@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup g */
+/** @addtogroup g_  */
 
 /*@{*/
 /** @file g_extrude.c
@@ -33,7 +33,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSextrude[] = "@(#)$Header$ (BRL)";
@@ -2649,6 +2648,7 @@ rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc
 
 
 
+/*@}*/
 
 /*
  * Local Variables:

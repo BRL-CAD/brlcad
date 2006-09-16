@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup nmg */
+/** @addtogroup nmg */
 /*@{*/
 /** @file nmg_junk.c
  *  This module is a resting place for unfinished subroutines

@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup oslo */
+/** @addtogroup nurb */
 /*@{*/
 /** @file oslo_map.c
  * Map the olso matrix with the old curve resulting in a new one.
@@ -33,7 +33,6 @@
  *     Aberdeen Proving Ground, Maryland 21005
  *
  */
-/*@}*/
 
 #include "common.h"
 
@@ -101,6 +100,7 @@ rt_nurb_map_oslo(struct oslo_mat *oslo, fastf_t *old_pts, fastf_t *new_pts, int 
 	}
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

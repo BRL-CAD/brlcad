@@ -19,9 +19,7 @@
  * information.
  */
 
-/** \defgroup wdb WriteDatabase
- * \ingroup librt */
-
+/** @addtogroup wdb */
 /*@{*/
 /** @file wdb_comb_std.c
  *	Code to implement the database objects "c" command.
@@ -33,7 +31,6 @@
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -783,6 +780,7 @@ wdb_comb_std_tcl(ClientData	clientData,
 
 	return wdb_comb_std_cmd(wdbp, interp, argc-1, argv+1);
 }
+/*@}*/
 
 /*
  * Local Variables:

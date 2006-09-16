@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup nmg */
+/** @addtogroup nmg */
 /*@{*/
 /** @file nmg_mesh.c
  *	Meshing routines for n-Manifold Geometry.

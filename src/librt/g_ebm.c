@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup g */
+/** @addtogroup g_  */
 
 /*@{*/
 /** @file g_ebm.c
@@ -35,7 +35,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSebm[] = "@(#)$Header$ (BRL)";
@@ -2081,6 +2080,7 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
 	ebm->tallness = 1.0;
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

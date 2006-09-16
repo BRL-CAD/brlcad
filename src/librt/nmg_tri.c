@@ -18,7 +18,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup nmg */
+/** @addtogroup nmg */
 /*@{*/
 /** @file nmg_tri.c
  *  Triangulate the faces of a polygonal NMG.
@@ -1658,7 +1658,7 @@ pick_pt2d_for_cutjoin(struct bu_list *tbl2d, struct pt2d **p1, struct pt2d **p2,
 
 }
 
-
+static void join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const int *color, const struct bn_tol *tol);
 
 /**
  *
@@ -1667,7 +1667,6 @@ pick_pt2d_for_cutjoin(struct bu_list *tbl2d, struct pt2d **p1, struct pt2d **p2,
  *  vertexuses.
  *
  */
-static void join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const int *color, const struct bn_tol *tol);
 static struct pt2d *
 cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const int *color, const struct bn_tol *tol, int void_ok)
 {

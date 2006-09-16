@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup g */
+/** @addtogroup g_  */
 
 /*@{*/
 /** @file g_half.c
@@ -51,7 +51,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCShalf[] = "@(#)$Header$ (BRL)";
@@ -779,6 +778,7 @@ rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	return(-1);
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

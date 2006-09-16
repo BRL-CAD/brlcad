@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup dbio */
 /*@{*/
 /** @file comb.c
  * XXX Move to db_tree.c when complete.

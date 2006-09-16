@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup ray */
 /*@{*/
 /** @file bool.c
  * Ray Tracing program, Boolean region evaluator.

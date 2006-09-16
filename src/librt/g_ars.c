@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup g */
+/** @addtogroup g_  */
 
 /*@{*/
 /** @file g_ars.c
@@ -34,7 +34,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSars[] = "@(#)$Header$ (BRL)";
@@ -1415,6 +1414,7 @@ rt_ars_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, ch
 	return( TCL_OK );
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

@@ -19,16 +19,12 @@
  * information.
  */
 
-/** \defgroup nurb nurb_
- * \ingroup librt
- */
-
+/** @addtogroup nurb */
 /*@{*/
 /** @file nurb_basis.c
  * Evaluate the B-Spline Basis Functions.
  *
  */
-/*@}*/
 
 /*
  *	N U R B _ B A S I S . C
@@ -126,6 +122,7 @@ rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, f
 
 	return (b1 + b2);
 }
+/*@}*/
 
 /*
  * Local Variables:

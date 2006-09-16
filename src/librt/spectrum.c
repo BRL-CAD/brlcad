@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup librt */
 /*@{*/
 /** @file spectrum.c
  *  An application of the 'tabdata' package to spectral data.

@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup db */
+/** @addtogroup dbio */
 
 /*@{*/
 /** @file db_anim.c
@@ -34,7 +34,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSanim[] = "@(#)$Header$ (BRL)";
@@ -543,6 +542,7 @@ db_write_anim(FILE *fop, struct animate *anp)
 	return;
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

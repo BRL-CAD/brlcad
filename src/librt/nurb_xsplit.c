@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup nurb */
+/** @addtogroup nurb */
 /*@{*/
 /** @file nurb_xsplit.c
  * 	Subdivide a nurb surface by inserting a multiple knot of

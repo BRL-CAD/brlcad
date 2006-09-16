@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup db5 */
+/** @addtogroup db5 */
 /*@{*/
 /** @file db5_scan.c
  *  Scan a v5 database, sending each object off to a handler.
@@ -32,7 +32,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -474,6 +473,7 @@ db_get_version(struct db_i *dbip)
 
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

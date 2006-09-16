@@ -1,10 +1,10 @@
 #define PLOT_BOTH_FACES	1
 
 
-/** \addtogroup  nmg */
+/** @addtogroup  nmg */
 
 /*@{*/
-/** \file nmg_fcut.c
+/** @file nmg_fcut.c
  *  After two faces have been intersected, cut or join loops crossed
  *  by the line of intersection.  (Formerly nmg_comb.c)
  *

@@ -19,12 +19,7 @@
  * information.
  */
 
-/** \defgroup g Geometry
- * \ingroup librt
- */
-
-/** \defgroup arb arb
- * \ingroup g */
+/** @addtogroup g_  */
 /*@{*/
 /** @file g_arb.c
  *  Intersect a ray with an Arbitrary Regular Polyhedron with as many as 8 vertices.
@@ -57,7 +52,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
 #ifndef lint
 static const char RCSarb[] = "@(#)$Header$ (BRL)";
 #endif
@@ -2220,6 +2214,7 @@ err:
 
     return(1);		/* BAD */
 }
+/*@}*/
 
 /*
  * Local Variables:

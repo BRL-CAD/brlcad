@@ -1,6 +1,6 @@
-/** \addtogroup librt */
+/** @addtogroup librt */
 /*@{*/
-/** \file importFg4Section.
+/** @file importFg4Section.c
  *      Some of this code was taken from conv/fast4-g.c and libwdb/bot.c
  *      and modified to behave as a method of the BRL-CAD database object
  *      that imports a Fastgen4 section from a string. This section can
@@ -22,7 +22,6 @@
  *	This software is Copyright (c) 1994-2006 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSid[] = "$Header$";
@@ -618,3 +617,4 @@ wdb_importFg4Section_cmd(struct rt_wdb	*wdbp,
 
     return TCL_OK;
 }
+/*@}*/

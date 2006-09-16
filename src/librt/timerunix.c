@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup timer */
 /*@{*/
 /** @file timerunix.c
  * To provide timing information for RT.
@@ -37,7 +37,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCStimer[] = "@(#)$Header$ (BRL)";
@@ -157,6 +156,7 @@ rt_read_timer(char *str, int len)
 	return cpu;
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

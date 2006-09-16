@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup db */
+/** @addtogroup dbio */
 
 /*@{*/
 /** @file db_inmem.c
@@ -49,7 +49,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #include "common.h"
 
@@ -189,6 +188,7 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
     ext->ext_nbytes = 0;
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

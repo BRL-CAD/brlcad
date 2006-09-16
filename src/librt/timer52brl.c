@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup timer */
 
 /*@{*/
 
@@ -34,7 +34,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCStimer[] = "@(#)$Header$ (BRL)";
@@ -54,8 +53,6 @@ static struct	rusage ru0;	/* Resource utilization at the start */
 
 static void prusage();
 static void tvadd();
-static void tvsub();
-static void psecs();
 
 /*
  *			P R E P _ T I M E R
@@ -65,6 +62,17 @@ rt_prep_timer()
 {
 	_gettimeofday(&time0, (struct timezone *)0);
 	_getrusage(RUSAGE_SELF, &ru0);
+}
+
+static void
+tvsub(tdiff, t1, t0)
+	struct timeval *tdiff, *t1, *t0;
+{
+
+	tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
+	tdiff->tv_usec = t1->tv_usec - t0->tv_usec;
+	if (tdiff->tv_usec < 0)
+		tdiff->tv_sec--, tdiff->tv_usec += 1000000;
 }
 
 /*
@@ -89,6 +97,30 @@ char *str;
 	usert = td.tv_sec + ((double)td.tv_usec) / 1000000;
 	if( usert < 0.00001 )  usert = 0.00001;
 	return( usert );
+}
+
+static void
+psecs(l,cp)
+long l;
+register char *cp;
+{
+	register int i;
+
+	i = l / 3600;
+	if (i) {
+		sprintf(cp,"%d:", i);
+		END(cp);
+		i = l % 3600;
+		sprintf(cp,"%d%d", (i/60) / 10, (i/60) % 10);
+		END(cp);
+	} else {
+		i = l;
+		sprintf(cp,"%d", i / 60);
+		END(cp);
+	}
+	i %= 60;
+	*cp++ = ':';
+	sprintf(cp,"%d%d", i / 10, i % 10);
 }
 
 static void
@@ -207,41 +239,8 @@ tvadd(tsum, t0)
 		tsum->tv_sec++, tsum->tv_usec -= 1000000;
 }
 
-static void
-tvsub(tdiff, t1, t0)
-	struct timeval *tdiff, *t1, *t0;
-{
 
-	tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
-	tdiff->tv_usec = t1->tv_usec - t0->tv_usec;
-	if (tdiff->tv_usec < 0)
-		tdiff->tv_sec--, tdiff->tv_usec += 1000000;
-}
-
-static void
-psecs(l,cp)
-long l;
-register char *cp;
-{
-	register int i;
-
-	i = l / 3600;
-	if (i) {
-		sprintf(cp,"%d:", i);
-		END(cp);
-		i = l % 3600;
-		sprintf(cp,"%d%d", (i/60) / 10, (i/60) % 10);
-		END(cp);
-	} else {
-		i = l;
-		sprintf(cp,"%d", i / 60);
-		END(cp);
-	}
-	i %= 60;
-	*cp++ = ':';
-	sprintf(cp,"%d%d", i / 10, i % 10);
-}
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C

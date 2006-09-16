@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup librt */
+/** @addtogroup librt */
 /*@{*/
 /** @file ./librt/tcl.c
  *  Tcl interfaces to LIBRT routines.

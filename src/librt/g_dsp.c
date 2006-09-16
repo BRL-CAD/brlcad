@@ -1,9 +1,9 @@
 #define FULL_DSP_DEBUGGING 1
 
-/** \addtogroup g */
+/** @addtogroup g_  */
 
 /*@{*/
-/** \file g_dsp.c
+/** @file g_dsp.c
  *	Intersect a ray with a displacement map.
  *
  *  The bounding box planes (in dsp coordinates) are numbered 0 .. 5
@@ -37,7 +37,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSdsp[] = "@(#)$Header$ (BRL)";
@@ -4471,6 +4470,7 @@ dsp_pos(point_t out, /* return value */
 #undef XSIZ
 #undef YSIZ
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

@@ -19,7 +19,7 @@
  * information.
  */
 
-/** \addtogroup ellipsoids */
+/** @addtogroup g_  */
 
 /*@{*/
 /** @file g_ell.c
@@ -38,7 +38,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
 
 #ifndef lint
 static const char RCSell[] = "@(#)$Header$ (BRL)";
@@ -1647,6 +1646,7 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 	M(   0     ,   0     , 1.0     , 1.0     );
 }
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C
