@@ -182,8 +182,17 @@
 
 
 /** @defgroup librt librt geometry, raytracing */
+
 /** @defgroup dbio Database IO 
  * @ingroup librt
+ */
+
+/** @defgroup db5 Database5
+ * @ingroup dbio
+ */
+
+/** @defgroup db4 Database4
+ * @ingroup dbio
  */
 
 /** @defgroup g_ Primitives
@@ -209,5 +218,9 @@
 
 /** @defgroup fort Fortran
  * @ingroup librt
+ */
+
+/** @defgroup wdb WriteDatabase
+ * @ingroup dbio
  */
 
