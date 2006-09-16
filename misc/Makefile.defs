@@ -32,22 +32,22 @@ prodclean: prodclean-recursive
 	  echo "rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
-	@test -z "$(lib_LTLIBRARIES)" || echo rm -f $(lib_LTLIBRARIES) && rm -f $(lib_LTLIBRARIES)
+	@if test ! -z "$(lib_LTLIBRARIES)" ; then echo rm -f $(lib_LTLIBRARIES) && rm -f $(lib_LTLIBRARIES) ; fi
 	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
 	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
 	  test -z "$dir" && dir=.; \
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-	@test -z "$(noinst_LTLIBRARIES)" || echo rm -f $(noinst_LTLIBRARIES) && rm -f $(noinst_LTLIBRARIES)
+	@if test ! -z "$(noinst_LTLIBRARIES)" ; then echo rm -f $(noinst_LTLIBRARIES) && rm -f $(noinst_LTLIBRARIES) ; fi
 	@list='$(noinst_LTLIBRARIES)'; for p in $$list; do \
 	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
 	  test -z "$dir" && dir=.; \
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-	@test -z "$(lib_LIBRARIES)" || echo rm -f $(lib_LIBRARIES) && rm -f $(lib_LIBRARIES)
-	@test -z "$(noinst_LIBRARIES)" || echo rm -f $(noinst_LIBRARIES) && rm -f $(noinst_LIBRARIES)
+	@if test ! -z "$(lib_LIBRARIES)" ; then echo rm -f $(lib_LIBRARIES) && rm -f $(lib_LIBRARIES) ; fi
+	@if test ! -z "$(noinst_LIBRARIES)" ; then echo rm -f $(noinst_LIBRARIES) && rm -f $(noinst_LIBRARIES) ; fi
 
 prodclean-recursive:
 	@list='$(SUBDIRS)'; for subdir in $$list; do \
