@@ -232,9 +232,42 @@ case $FILE in
 	tab_width=8
 	;;
     *)
-	echo "ERROR: $FILE has an unknown filetype"
-	exit 0
-	;;
+	# check the first line, see if it is a script
+	filesig="`head -n 1 $FILE`"
+	case $filesig in
+	    */bin/sh)
+		echo "$FILE is a shell script"
+		mode="sh"
+		mode_vars="sh-indentation sh-basic-offset"
+		wrap=0
+		commentchar="#"
+		;;
+	    */bin/tclsh)
+		echo "$FILE is a Tcl script"
+		mode="Tcl"
+		mode_vars="c-basic-offset tcl-indent-level"
+		wrap=0
+		commentchar="#"
+		;;
+	    */bin/wish)
+		echo "$FILE is a Tk script"
+		mode="Tcl"
+		mode_vars="c-basic-offset tcl-indent-level"
+		wrap=0
+		commentchar="#"
+		;;
+	    */bin/perl)
+		echo "$FILE is a Perl script"
+		mode="Perl"
+		mode_vars="c-basic-offset perl-indent-level"
+		wrap=0
+		commentchar="#"
+		;;
+	    *)
+		echo "ERROR: $FILE has an unknown filetype"
+		exit 0
+		;;
+	esac
 esac
 
 

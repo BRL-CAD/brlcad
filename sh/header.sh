@@ -210,9 +210,34 @@ case $FILE in
 	commentprefix=".\\\""
 	;;
     *)
-	echo "ERROR: $FILE has an unknown filetype"
-	exit 0
-	;;
+	# check the first line, see if it is a script
+	filesig="`head -n 1 $FILE`"
+	case $filesig in
+	    */bin/sh)
+		echo "$FILE is a shell script"
+		wrap=0
+		commentprefix="#"
+		;;
+	    */bin/tclsh)
+		echo "$FILE is a Tcl script"
+		wrap=0
+		commentprefix="#"
+		;;
+	    */bin/wish)
+		echo "$FILE is a Tk script"
+		wrap=0
+		commentprefix="#"
+		;;
+	    */bin/perl)
+		echo "$FILE is a Perl script"
+		wrap=0
+		commentprefix="#"
+		;;
+	    *)
+		echo "ERROR: $FILE has an unknown filetype"
+		exit 0
+		;;
+	esac
 esac
 
 
