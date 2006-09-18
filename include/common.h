@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup fixme */
+/*@{*/
 /** @file common.h
- *
+ *@brief
  *  Header file for the BRL-CAD common definitions.
  *
  *  This header wraps the system-specific encapsulation of
@@ -29,10 +31,10 @@
  *  are either detected via configure or hand crafted, as is the case
  *  for the win32 platform.
  *
- *  Author -
+ *  @author
  *	Christopher Sean Morrison
  *
- *  Source -
+ *  @par Source
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
@@ -65,7 +67,7 @@
 #endif
 
 #endif  /* __COMMON_H__ */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -75,3 +77,4 @@
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

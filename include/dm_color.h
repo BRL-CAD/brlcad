@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libdm */
+/*@{*/
 /** @file dm_color.h
  *
  */
@@ -28,7 +30,7 @@ extern unsigned long dm_get_pixel(unsigned char r, unsigned char g, unsigned cha
 extern void dm_copy_default_colors();
 extern void dm_allocate_color_cube();
 #endif /* SEEN_DM_COLOR */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -38,3 +40,4 @@ extern void dm_allocate_color_cube();
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

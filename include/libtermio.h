@@ -18,19 +18,21 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libtermio */
+/*@{*/
 /** @file libtermio.h
  *			T E R M I O . H
  *
  *  Externs for the BRL-CAD library LIBTERMIO
  *
- *  Author -
+ *  @author
  *	Gary S. Moss
  *
- *  Source -
+ *  @par Source
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
- *  Include Sequencing -
+ *  @par Include Sequencing -
 @code	#include "common.h"
 	#include <stdio.h>
 	#include "termio.h"
@@ -55,7 +57,7 @@ int save_Fil_Stat( int fd );
 int reset_Fil_Stat( int	fd );
 int set_O_NDELAY( int fd );
 void prnt_Tio();	/* misc. types of args */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -65,3 +67,4 @@ void prnt_Tio();	/* misc. types of args */
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

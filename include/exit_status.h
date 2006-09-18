@@ -1,3 +1,7 @@
+/** @addtogroup utahrle */
+/*@{*/
+/** @file exit_status.h */
+
 /* for libutahrle */
 
 #ifndef EXIT_STATUS_DEFINED
@@ -20,6 +24,5 @@
 #   endif
 
 #endif
-
-
 #endif
+/*@}*/

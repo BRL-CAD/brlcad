@@ -18,14 +18,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup librt */
+/*@{*/
 /** @file light.h
  *
+ * @brief
  *  Declarations related to light sources
  *
- *  Source -
+ *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *@n	The U. S. Army Ballistic Research Laboratory
+ *@n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  *  @(#)$Header$ (BRL)
  */
@@ -64,33 +67,33 @@ struct light_pt {
 #define SOME_LIGHT_SAMPLES 128
 
 struct light_specific {
-	struct bu_list	l;	/* doubly linked list */
+	struct bu_list	l;	/**< @brief doubly linked list */
 	/* User-specified fields */
-	vect_t	lt_target;	/* explicit coordinate aim point */
-	fastf_t	lt_intensity;	/* Intensity Lumens (cd*sr): total output */
-	fastf_t	lt_angle;	/* beam dispersion angle (degrees) 0..180 */
-	fastf_t	lt_fraction;	/* fraction of total light */
-	int	lt_shadows;	/* !0 if this light casts shadows, # of rays*/
-	int	lt_infinite;	/* !0 if infinitely distant */
-	int	lt_visible;	/* 0 if implicitly modeled or invisible */
-	int	lt_invisible;	/* 0 if implicitly modeled or invisible */
-	int	lt_exaim;	/* !0 if explicit aim in lt_target */
-	fastf_t lt_obscure;	/* percentage obscuration of light */
+	vect_t	lt_target;	/**< @brief explicit coordinate aim point */
+	fastf_t	lt_intensity;	/**< @brief Intensity Lumens (cd*sr): total output */
+	fastf_t	lt_angle;	/**< @brief beam dispersion angle (degrees) 0..180 */
+	fastf_t	lt_fraction;	/**< @brief fraction of total light */
+	int	lt_shadows;	/**< @brief !0 if this light casts shadows, # of rays*/
+	int	lt_infinite;	/**< @brief !0 if infinitely distant */
+	int	lt_visible;	/**< @brief 0 if implicitly modeled or invisible */
+	int	lt_invisible;	/**< @brief 0 if implicitly modeled or invisible */
+	int	lt_exaim;	/**< @brief !0 if explicit aim in lt_target */
+	fastf_t lt_obscure;	/**< @brief percentage obscuration of light */
 	/* Internal fields */
 #if RT_MULTISPECTRAL
-	struct bn_tabdata *lt_spectrum;	/* Units?  mw*sr ? */
+	struct bn_tabdata *lt_spectrum;	/**< @brief Units?  mw*sr ? */
 #else
-	vect_t	lt_color;	/* RGB, as 0..1 */
+	vect_t	lt_color;	/**< @brief RGB, as 0..1 */
 #endif
-	fastf_t	lt_radius;	/* approximate radius of spherical light */
-	fastf_t	lt_cosangle;	/* cos of lt_angle */
-	vect_t	lt_pos;		/* location in space of light */
-	vect_t	lt_vec;		/* Unit vector from origin to light */
-	vect_t	lt_aim;		/* Unit vector - light beam direction */
-	char	*lt_name;	/* identifying string */
-	struct	region *lt_rp;	/* our region of origin */
-	int	lt_pt_count;	/* count of how many lt_sample_pts have been set */
-	struct light_pt *lt_sample_pts; /* dynamically allocated list of light sample points */
+	fastf_t	lt_radius;	/**< @brief approximate radius of spherical light */
+	fastf_t	lt_cosangle;	/**< @brief cos of lt_angle */
+	vect_t	lt_pos;		/**< @brief location in space of light */
+	vect_t	lt_vec;		/**< @brief Unit vector from origin to light */
+	vect_t	lt_aim;		/**< @brief Unit vector - light beam direction */
+	char	*lt_name;	/**< @brief identifying string */
+	struct	region *lt_rp;	/**< @brief our region of origin */
+	int	lt_pt_count;	/**< @brief count of how many lt_sample_pts have been set */
+	struct light_pt *lt_sample_pts; /**< @brief dynamically allocated list of light sample points */
 	fastf_t lt_parse_pt[6];
 };
 #define LIGHT_NULL	((struct light_specific *)0)
@@ -108,7 +111,7 @@ OPTICAL_EXPORT extern void light_obs(struct application *ap, struct shadework *s
 __END_DECLS
 
 #endif /* SEEN_LIGHT_H */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -118,3 +121,4 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

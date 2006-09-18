@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libdm */
+/*@{*/
 /** @file dm-glx.h
  *
  */
@@ -66,7 +68,7 @@ extern void glx_clearToBlack();
 extern struct glx_vars head_glx_vars;
 
 #endif /* SEEN_DM_GLX */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -76,3 +78,4 @@ extern struct glx_vars head_glx_vars;
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

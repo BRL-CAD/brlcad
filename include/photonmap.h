@@ -18,15 +18,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup librt */
+/*@{*/
 /** @file photonmap.h
  *			P H O T O N M A P. H
- *
+ *@brief
  *  Declarations related to Photon Mapping
  *
- *  Source -
+ * @author Justin Shumaker
+ *
+ *  @par Source
  *	Bldg 238
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *@n	The U. S. Army Research Laboratory
+ *@n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  *  @(#)$Header
  */
@@ -63,16 +67,16 @@
 #define	PM_SEM		RT_SEM_LAST-1
 #define	PM_SEM_INIT	RT_SEM_LAST
 
-/*
+/**
  *  Photon Map Data Structure
  */
 struct Photon {
-  int			Axis;		/* Splitting Plane */
-  point_t		Pos;		/* Photon Position */
-  vect_t		Dir;		/* Photon Direction */
-  vect_t		Normal;		/* Normal at Intersection */
-  vect_t		Power;		/* Photon Power */
-  vect_t		Irrad;		/* Irradiance */
+  int			Axis;		/**< @brief Splitting Plane */
+  point_t		Pos;		/**< @brief Photon Position */
+  vect_t		Dir;		/**< @brief Photon Direction */
+  vect_t		Normal;		/**< @brief Normal at Intersection */
+  vect_t		Power;		/**< @brief Photon Power */
+  vect_t		Irrad;		/**< @brief Irradiance */
 };
 
 
@@ -82,26 +86,26 @@ struct PSN {
 };
 
 
-/*
+/**
  *  Photon Search Structure
  */
 struct PhotonSearch {
-  int			Max;		/* Max Number of Photons */
-  int			Found;		/* Number of Photons Found */
-  vect_t		Normal;		/* Normal */
-  fastf_t		RadSq;		/* Search Radius Sq */
-  point_t		Pos;		/* Search Position */
-  struct	PSN	*List;		/* Located Photon List */
+  int			Max;		/**< @brief Max Number of Photons */
+  int			Found;		/**< @brief Number of Photons Found */
+  vect_t		Normal;		/**< @brief Normal */
+  fastf_t		RadSq;		/**< @brief Search Radius Sq */
+  point_t		Pos;		/**< @brief Search Position */
+  struct	PSN	*List;		/**< @brief Located Photon List */
 };
 
 
 struct NearestPhotons {
-  int			Max;		/* Max Number of Photons */
-  int			Found;		/* Number of Photons Found */
-  vect_t		Normal;		/* Normal */
-  fastf_t		RadSq;		/* Search Radius Sq */
-  point_t		Pos;		/* Search Position */
-  struct	Photon	*List;		/* Located Photon List */
+  int			Max;		/**< @brief Max Number of Photons */
+  int			Found;		/**< @brief Number of Photons Found */
+  vect_t		Normal;		/**< @brief Normal */
+  fastf_t		RadSq;		/**< @brief Search Radius Sq */
+  point_t		Pos;		/**< @brief Search Position */
+  struct	Photon	*List;		/**< @brief Located Photon List */
 };
 
 
@@ -109,7 +113,7 @@ struct PNode {
   struct	Photon	P;
   struct	PNode	*L;
   struct	PNode	*R;
-  int			C;		/* For Threading Purposes to see if it's been computed yet */
+  int			C;		/**< @brief For Threading Purposes to see if it's been computed yet */
 };
 
 
@@ -132,8 +136,8 @@ struct IrradCache {
 };
 
 
-OPTICAL_EXPORT extern int PM_Activated;	/* Photon Mapping Activated, 0=off, 1=on */
-OPTICAL_EXPORT extern int PM_Visualize;	/* Photon Mapping Visualization of Irradiance Cache */
+OPTICAL_EXPORT extern int PM_Activated;	/**< @brief Photon Mapping Activated, 0=off, 1=on */
+OPTICAL_EXPORT extern int PM_Visualize;	/**< @brief Photon Mapping Visualization of Irradiance Cache */
 
 OPTICAL_EXPORT BU_EXTERN(void BuildPhotonMap,
 			 (struct application *ap,
@@ -159,7 +163,7 @@ OPTICAL_EXPORT BU_EXTERN(void IrradianceEstimate,
 			  vect_t normal,
 			  fastf_t rad,
 			  int np));
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -169,3 +173,4 @@ OPTICAL_EXPORT BU_EXTERN(void IrradianceEstimate,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

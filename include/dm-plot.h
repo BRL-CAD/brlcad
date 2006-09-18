@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libdm */
+/*@{*/
 /** @file dm-plot.h
  *
  */
@@ -51,7 +53,7 @@ extern struct plot_vars head_plot_vars;
 
 #endif /* SEEN_DM_PLOT */
 
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -61,3 +63,4 @@ extern struct plot_vars head_plot_vars;
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

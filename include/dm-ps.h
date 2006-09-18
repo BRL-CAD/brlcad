@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libdm */
+/*@{*/
 /** @file dm-ps.h
  *
  */
@@ -50,7 +52,7 @@ struct ps_vars {
 extern struct ps_vars head_ps_vars;
 
 #endif /* SEEN_DM_PS */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -60,3 +62,4 @@ extern struct ps_vars head_ps_vars;
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

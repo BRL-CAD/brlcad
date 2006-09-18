@@ -18,14 +18,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup sphmap */
+/*@{*/
 /** @file spm.h
- *
+ *@brief
  *  Sphere data structure and function declarations.
  *
- *  Author -
+ *  @author
  *	Phillip Dykstra
  *
- *  Source -
+ *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -50,11 +52,11 @@
 
 typedef	struct	{
 	long	magic;
-	int	ny;		/* Number of "y" bins */
-	int	*nx;		/* Number of "x" bins per "y" bin */
-	int	elsize;		/* Size of each bin element */
-	unsigned char **xbin;	/* staring addresses of "x" bins */
-	unsigned char *_data;	/* For freeing purposes, start of data */
+	int	ny;		/**< @brief  Number of "y" bins */
+	int	*nx;		/**< @brief  Number of "x" bins per "y" bin */
+	int	elsize;		/**< @brief  Size of each bin element */
+	unsigned char **xbin;	/**< @brief  staring addresses of "x" bins */
+	unsigned char *_data;	/**< @brief  For freeing purposes, start of data */
 } spm_map_t;
 
 #define	SPM_NULL (spm_map_t *)0
@@ -83,7 +85,7 @@ BN_EXPORT extern int spm_px_load( spm_map_t *mapp, char *filename, int nx, int n
 
 #endif /* SEEN_SPM_H */
 
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -93,3 +95,4 @@ BN_EXPORT extern int spm_px_load( spm_map_t *mapp, char *filename, int nx, int n
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

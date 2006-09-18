@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libbu */
+/*@{*/
 /** @file cmd.h
- *
+ *@brief
+ * Command history data structures
  */
 #ifndef __CMD_H__
 #define __CMD_H__
@@ -73,7 +76,7 @@ BU_EXPORT BU_EXTERN(int cho_open_tcl,
 		    ());
 
 #endif  /* __CMD_H__ */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -83,3 +86,4 @@ BU_EXPORT BU_EXTERN(int cho_open_tcl,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

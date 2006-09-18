@@ -18,14 +18,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup librt */
+/*@{*/
 /** @file solid.h
  *
  *	Solids structure definition
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
@@ -37,26 +39,26 @@
 
 struct solid  {
   struct bu_list l;
-  fastf_t s_size;	/* Distance across solid, in model space */
-  fastf_t s_csize;	/* Dist across clipped solid (model space) */
-  vect_t s_center;	/* Center point of solid, in model space */
-  struct bu_list s_vlist;/* Pointer to unclipped vector list */
-  int s_vlen;		/* # of actual cmd[] entries in vlist */
+  fastf_t s_size;	/**< @brief  Distance across solid, in model space */
+  fastf_t s_csize;	/**< @brief  Dist across clipped solid (model space) */
+  vect_t s_center;	/**< @brief  Center point of solid, in model space */
+  struct bu_list s_vlist;/**< @brief  Pointer to unclipped vector list */
+  int s_vlen;		/**< @brief  #  of actual cmd[] entries in vlist */
   struct db_full_path s_fullpath;
-  char s_flag;		/* UP = object visible, DOWN = obj invis */
-  char s_iflag;	        /* UP = illuminated, DOWN = regular */
-  char s_soldash;	/* solid/dashed line flag */
-  char s_Eflag;	        /* flag - not a solid but an "E'd" region */
-  char s_uflag;		/* 1 - the user specified the color */
-  char s_dflag;		/* 1 - s_basecolor is derived from the default */
-  char s_cflag;		/* 1 - use the default color */
-  char s_wflag;		/* work flag */
-  unsigned char	s_basecolor[3];	/* color from containing region */
-  unsigned char	s_color[3];	/* color to draw as */
-  short	s_regionid;	/* region ID */
-  unsigned int s_dlist; /* display list index */
-  fastf_t s_transparency; /* holds a transparency value in the range [0.0, 1.0] */
-  int s_dmode;         	/* draw mode: 0 - wireframe
+  char s_flag;		/**< @brief  UP = object visible, DOWN = obj invis */
+  char s_iflag;	        /**< @brief  UP = illuminated, DOWN = regular */
+  char s_soldash;	/**< @brief  solid/dashed line flag */
+  char s_Eflag;	        /**< @brief  flag - not a solid but an "E'd" region */
+  char s_uflag;		/**< @brief  1 - the user specified the color */
+  char s_dflag;		/**< @brief  1 - s_basecolor is derived from the default */
+  char s_cflag;		/**< @brief  1 - use the default color */
+  char s_wflag;		/**< @brief  work flag */
+  unsigned char	s_basecolor[3];	/**< @brief  color from containing region */
+  unsigned char	s_color[3];	/**< @brief  color to draw as */
+  short	s_regionid;	/**< @brief  region ID */
+  unsigned int s_dlist; /**< @brief  display list index */
+  fastf_t s_transparency; /**< @brief  holds a transparency value in the range [0.0, 1.0] */
+  int s_dmode;         	/**< @brief  draw mode: 0 - wireframe
 			 *	      1 - shaded bots and polysolids only (booleans NOT evaluated)
 			 *	      2 - shaded (booleans NOT evaluated)
 			 *	      3 - shaded (booleans evaluated)
@@ -83,7 +85,7 @@ struct solid  {
 	} \
 	BU_LIST_INIT( &((p)->s_vlist) ); }
 
-/* Obtain the last node (the solid) on the path */
+/** Obtain the last node (the solid) on the path */
 #define LAST_SOLID(_sp)	DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
 #define FIRST_SOLID(_sp)	((_sp)->s_fullpath.fp_names[0])
 
@@ -102,7 +104,7 @@ struct solid  {
 	BU_LIST_NOT_HEAD(p1,hp);\
 	(p1)=BU_LIST_PNEXT(structure,p1)
 #endif
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -112,3 +114,4 @@ struct solid  {
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

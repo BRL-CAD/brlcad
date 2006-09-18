@@ -39,7 +39,7 @@
  *  in other BRL-CAD header files, such as vmath.h.
  *  Look for those routines in LIBBN.
  *
- *  @Author Michael John Muuss
+ *  @@authorMichael John Muuss
  *
  *  @par Source
  *	The U. S. Army Research Laboratory 			@n 
@@ -613,7 +613,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 #define BU_LIST_POP_T(hp, type )				\
 	(type *)bu_list_pop( hp )
 
-/*
+/**
  *  "Bulk transfer" all elements from the list headed by src_hd
  *  onto the list headed by dest_hd, without examining every element
  *  in the list.  src_hd is left with a valid but empty list.
@@ -643,7 +643,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 		(src_hp)->forw = (src_hp)->back = (src_hp); \
 	}
 
-/* Test if a doubly linked list is empty, given head pointer */
+/** Test if a doubly linked list is empty, given head pointer */
 #define BU_LIST_IS_EMPTY(hp)	((hp)->forw == (hp))
 #define BU_LIST_NON_EMPTY(hp)	((hp)->forw != (hp))
 #define BU_LIST_NON_EMPTY_P(p,structure,hp)	\
@@ -712,7 +712,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 	      BU_LIST_NOT_HEAD(p,hp); \
 	      (p)=(type *)BU_LIST_PNEXT(bu_list,(p)) )
 
-/*
+/**
  *  Intended as innards for a for() loop to visit all nodes on list, e.g.:
  *	for( BU_LIST_FOR( p, structure, hp ) )  {
  *		work_on( p );
@@ -728,7 +728,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 	BU_LIST_NOT_HEAD(p,hp); \
 	(p)=BU_LIST_PLAST(structure,p)
 
-/*
+/**
  *  Process all the list members except hp and the actual head.
  *  Useful when starting somewhere besides the head.
  */
@@ -752,28 +752,28 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 		(p1)=BU_LIST_NEXT(structure,(struct bu_list *)(p1)),	\
 		(p2)=BU_LIST_NEXT(structure,(struct bu_list *)(p2))
 
-/*
+/**
  *  Innards for a while() loop that constantly picks off the first element.
  *  Useful mostly for a loop that will dequeue every list element, e.g.:
  *	while( BU_LIST_WHILE(p, structure, hp) )  {
- *		BU_LIST_DEQUEUE( &(p->l) );
- *		free( (char *)p );
- *	}
+ *@n		BU_LIST_DEQUEUE( &(p->l) );
+ *@n		free( (char *)p );
+ *@n	}
  */
 #define BU_LIST_WHILE(p,structure,hp)	\
 	(((p)=(struct structure *)((hp)->forw)) != (struct structure *)(hp))
 
-/* Return the magic number of the first (or last) item on a list */
+/** Return the magic number of the first (or last) item on a list */
 #define BU_LIST_FIRST_MAGIC(hp)		((hp)->forw->magic)
 #define BU_LIST_LAST_MAGIC(hp)		((hp)->back->magic)
 
-/* Return pointer to next (or previous) element, which may be the head */
+/** Return pointer to next (or previous) element, which may be the head */
 #define BU_LIST_PNEXT(structure,p)	\
 	((struct structure *)(((struct bu_list *)(p))->forw))
 #define BU_LIST_PLAST(structure,p)	\
 	((struct structure *)(((struct bu_list *)(p))->back))
 
-/* Return pointer two links away, which may include the head */
+/** Return pointer two links away, which may include the head */
 #define BU_LIST_PNEXT_PNEXT(structure,p)	\
 	((struct structure *)(((struct bu_list *)(p))->forw->forw))
 #define BU_LIST_PNEXT_PLAST(structure,p)	\
@@ -783,19 +783,19 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 #define BU_LIST_PLAST_PLAST(structure,p)	\
 	((struct structure *)(((struct bu_list *)(p))->back->back))
 
-/* Return pointer to circular next element; ie, ignoring the list head */
+/** Return pointer to circular next element; ie, ignoring the list head */
 #define BU_LIST_PNEXT_CIRC(structure,p)	\
 	((BU_LIST_FIRST_MAGIC((struct bu_list *)(p)) == BU_LIST_HEAD_MAGIC) ? \
 		BU_LIST_PNEXT_PNEXT(structure,(struct bu_list *)(p)) : \
 		BU_LIST_PNEXT(structure,p) )
 
-/* Return pointer to circular last element; ie, ignoring the list head */
+/** Return pointer to circular last element; ie, ignoring the list head */
 #define BU_LIST_PPREV_CIRC(structure,p)	\
 	((BU_LIST_LAST_MAGIC((struct bu_list *)(p)) == BU_LIST_HEAD_MAGIC) ? \
 		BU_LIST_PLAST_PLAST(structure,(struct bu_list *)(p)) : \
 		BU_LIST_PLAST(structure,p) )
 
-/*
+/**
  *  Support for membership on multiple linked lists.
  *
  *  When a structure of type '_type' contains more than one bu_list structure
@@ -902,15 +902,18 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #endif
 
 
-/*
+/**
  *  Macros to efficiently find all the ONE bits in a bit vector.
  *  Counts words down, counts bits in words going up, for speed & portability.
  *  It does not matter if the shift causes the sign bit to smear to the right.
  *
- *  Example:
- *	BU_BITV_LOOP_START(bv)  {
- *		fiddle(BU_BITV_LOOP_INDEX);
- *	} BU_BITV_LOOP_END;
+ *  @par Example:
+@code
+ 	BU_BITV_LOOP_START(bv)  {
+ 		fiddle(BU_BITV_LOOP_INDEX);
+ 	} BU_BITV_LOOP_END;
+@endcode
+ *
  */
 #define BU_BITV_LOOP_START(_bv)	\
 { \
@@ -923,7 +926,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 		for(_b=0; _b < BITV_MASK+1; _b++, _val >>= 1 ) { \
 			if( !(_val & 1) )  continue;
 
-/*
+/**
  *  This macro is valid only between a BU_BITV_LOOP_START/LOOP_END pair,
  *  and gives the bit number of the current iteration.
  */
@@ -999,15 +1002,15 @@ struct bu_ptbl {
 #define BU_PTBL_MAGIC		0x7074626c		/* "ptbl" */
 #define BU_CK_PTBL(_p)		BU_CKMAG(_p, BU_PTBL_MAGIC, "bu_ptbl")
 
-#define BU_PTBL_INIT	0	/* initialize table pointer struct & get storage */
-#define BU_PTBL_INS	1	/* insert an item (long *) into a table */
-#define BU_PTBL_LOC 	2	/* locate a (long *) in an existing table */
-#define BU_PTBL_FREE	3	/* deallocate buffer associated with a table */
-#define BU_PTBL_RST	4	/* empty a table, but keep storage on hand */
-#define BU_PTBL_CAT	5	/* catenate one table onto another */
-#define BU_PTBL_RM	6	/* remove all occurrences of an item from a table */
-#define BU_PTBL_INS_UNIQUE 7	/* insert item into table, if not present */
-#define BU_PTBL_ZERO	8	/* replace all occurrences of an item by 0 */
+#define BU_PTBL_INIT	0	/**< @brief  initialize table pointer struct & get storage */
+#define BU_PTBL_INS	1	/**< @brief  insert an item (long *) into a table */
+#define BU_PTBL_LOC 	2	/**< @brief  locate a (long *) in an existing table */
+#define BU_PTBL_FREE	3	/**< @brief  deallocate buffer associated with a table */
+#define BU_PTBL_RST	4	/**< @brief  empty a table, but keep storage on hand */
+#define BU_PTBL_CAT	5	/**< @brief  catenate one table onto another */
+#define BU_PTBL_RM	6	/**< @brief  remove all occurrences of an item from a table */
+#define BU_PTBL_INS_UNIQUE 7	/**< @brief  insert item into table, if not present */
+#define BU_PTBL_ZERO	8	/**< @brief  replace all occurrences of an item by 0 */
 /*
  *  For those routines that have to "peek" into the ptbl a little bit.
  */
@@ -1020,7 +1023,7 @@ struct bu_ptbl {
 #define BU_PTBL_TEST(ptbl)	((ptbl)->l.magic == BU_PTBL_MAGIC)
 #define BU_PTBL_CLEAR_I(_ptbl, _i) ((_ptbl)->buffer[(_i)] = (long *)0)
 
-/*
+/**
  *  A handy way to visit all the elements of the table is:
  *
  *	struct edgeuse **eup;
@@ -1107,7 +1110,7 @@ BU_EXPORT extern struct bu_hook_list bu_bomb_hook_list;
  *  Attribute/value sets
  */
 
-/*
+/**
  *			B U _ A T T R I B U T E _ V A L U E _ P A I R
  *
  *  These strings may or may not be individually allocated,
@@ -1118,7 +1121,7 @@ struct bu_attribute_value_pair {
     const char	*value; /**< @brief attribute value  */
 };
 
-/*
+/**
  *			B U _ A T T R I B U T E _ V A L U E _ S E T
  *
  *  A variable-sized attribute-value-pair array.
@@ -1148,7 +1151,7 @@ struct bu_attribute_value_set {
 #define BU_AVS_FOR(_pp, _avp)	\
 	(_pp) = &(_avp)->avp[(_avp)->count-1]; (_pp) >= (_avp)->avp; (_pp)--
 
-/*
+/**
  *  Some (but not all) attribute name and value string pointers are
  *  taken from an on-disk format bu_external block,
  *  while others have been bu_strdup()ed and need to be freed.
@@ -1202,7 +1205,7 @@ BU_EXPORT extern jmp_buf	bu_jmpbuf;			/* for BU_SETJMP() */
 /*-------------------------------------------------------------------------*/
 /** @addtogroup mro */
 /*@{*/
-/* 			B U _ M R O
+/** 			B U _ M R O
  *
  *	Support for Multiply Represented Objects
  */
@@ -1345,52 +1348,53 @@ BU_EXPORT extern int	bu_debug;
 #  endif
 #endif
 
-/* The "bu_structparse" struct describes one element of a structure.
+/**
+ * The "bu_structparse" struct describes one element of a structure.
  * Collections of these are combined to describe entire structures (or at
  * least those portions for which parse/print/import/export support is
  * desired.  For example:
- *
- * struct data_structure {
- *	char	a_char;
- *	char	str[32];
- *	short	a_short;
- *	int	a_int;
- *	double	a_double;
- * }
- *
- * struct data_structure data_default =
- *	{ 'c', "the default string", 32767, 1, 1.0 };
- *
- * struct data_structure my_values;
- *
- * struct bu_structparse data_sp[] ={
- *
- * {"%c", 1,  "a_char",   bu_offsetof(data_structure, a_char),
- *	BU_STRUCTPARSE_FUNC_NULL,
- *	"a single character",	(void*)&default.a_char },
- *
- * {"%s", 32, "str",      bu_offsetofarray(data_structure, str),
- *	BU_STRUCTPARSE_FUNC_NULL,
- *	"This is a full character string", (void*)default.str }, },
- *
- * {"%i", 1,  "a_short",  bu_offsetof(data_structure, a_short),
- *	BU_STRUCTPARSE_FUNC_NULL,
- *	"A 16bit integer",	(void*)&default.a_short },
- *
- * {"%d", 1,  "a_int",    bu_offsetof(data_structure, a_int),
- *	BU_STRUCTPARSE_FUNC_NULL,
- *	"A full integer",	(void*)&default.a_int },
- *
- * {"%f", 1,  "a_double", bu_offsetof(data_structure, a_double),
- *	BU_STRUCTPARSE_FUNC_NULL,
- *	"A double-precision floating point value",  (void*)&default.a_double },
- *
- * { "", 0, (char *)NULL, 0,
- *	BU_STRUCTPARSE_FUNC_NULL,
- *	(char *)NULL, (void *)NULL }
- *
- * };
- *
+ *@code
+  struct data_structure {
+ 	char	a_char;
+ 	char	str[32];
+ 	short	a_short;
+ 	int	a_int;
+ 	double	a_double;
+  }
+ 
+  struct data_structure data_default =
+ 	{ 'c', "the default string", 32767, 1, 1.0 };
+ 
+  struct data_structure my_values;
+ 
+  struct bu_structparse data_sp[] ={
+ 
+  {"%c", 1,  "a_char",   bu_offsetof(data_structure, a_char),
+ 	BU_STRUCTPARSE_FUNC_NULL,
+ 	"a single character",	(void*)&default.a_char },
+ 
+  {"%s", 32, "str",      bu_offsetofarray(data_structure, str),
+ 	BU_STRUCTPARSE_FUNC_NULL,
+ 	"This is a full character string", (void*)default.str }, },
+ 
+  {"%i", 1,  "a_short",  bu_offsetof(data_structure, a_short),
+ 	BU_STRUCTPARSE_FUNC_NULL,
+ 	"A 16bit integer",	(void*)&default.a_short },
+ 
+  {"%d", 1,  "a_int",    bu_offsetof(data_structure, a_int),
+ 	BU_STRUCTPARSE_FUNC_NULL,
+ 	"A full integer",	(void*)&default.a_int },
+ 
+  {"%f", 1,  "a_double", bu_offsetof(data_structure, a_double),
+ 	BU_STRUCTPARSE_FUNC_NULL,
+ 	"A double-precision floating point value",  (void*)&default.a_double },
+ 
+  { "", 0, (char *)NULL, 0,
+ 	BU_STRUCTPARSE_FUNC_NULL,
+ 	(char *)NULL, (void *)NULL }
+ 
+  };
+ @endcode
  *
  * To parse a string, call:
  *
@@ -1420,7 +1424,7 @@ struct bu_structparse {
 
 
 /*----------------------------------------------------------------------*/
-/*
+/**
  *			B U _ E X T E R N A L
  *
  *  An "opaque" handle for holding onto objects,
@@ -1471,7 +1475,7 @@ struct bu_color
  *
  */
 
-/*
+/**
  *			    B U _ R B _ L I S T
  *
  *		    List of nodes or packages
@@ -1496,7 +1500,7 @@ struct bu_rb_list
 #define	BU_RB_LIST_NULL	((struct bu_rb_list *) 0)
 
 
-/*
+/**
  *			B U _ R B _ T R E E
  *
  *	This is the only data structure used in the red-black tree package
@@ -1515,21 +1519,21 @@ struct bu_rb_list
 typedef struct
 {
     /* CLASS I - Applications may read directly... */
-    long	 	rbt_magic;	  /* Magic no. for integrity check */
-    int			rbt_nm_nodes;	  /* Number of nodes */
+    long	 	rbt_magic;	  /**< @brief  Magic no. for integrity check */
+    int			rbt_nm_nodes;	  /**< @brief  Number of nodes */
     /* CLASS II - Applications may read/write directly... */
-    void		(*rbt_print)();	  /* Data pretty-print function */
-    int			rbt_debug;	  /* Debug bits */
-    char		*rbt_description; /* Comment for diagnostics */
+    void		(*rbt_print)();	  /**< @brief  Data pretty-print function */
+    int			rbt_debug;	  /**< @brief  Debug bits */
+    char		*rbt_description; /**< @brief  Comment for diagnostics */
     /* CLASS III - Applications should not manipulate directly... */
-    int		 	rbt_nm_orders;	  /* Number of simultaneous orders */
-    int			(**rbt_order)();  /* Comparison functions */
-    struct bu_rb_node	**rbt_root;	  /* The actual trees */
-    char		*rbt_unique;	  /* Uniqueness flags */
-    struct bu_rb_node	*rbt_current;	  /* Current node */
-    struct bu_rb_list	rbt_nodes;	  /* All nodes */
-    struct bu_rb_list	rbt_packages;	  /* All packages */
-    struct bu_rb_node	*rbt_empty_node;  /* Sentinel representing nil */
+    int		 	rbt_nm_orders;	  /**< @brief  Number of simultaneous orders */
+    int			(**rbt_order)();  /**< @brief  Comparison functions */
+    struct bu_rb_node	**rbt_root;	  /**< @brief  The actual trees */
+    char		*rbt_unique;	  /**< @brief  Uniqueness flags */
+    struct bu_rb_node	*rbt_current;	  /**< @brief  Current node */
+    struct bu_rb_list	rbt_nodes;	  /**< @brief  All nodes */
+    struct bu_rb_list	rbt_packages;	  /**< @brief  All packages */
+    struct bu_rb_node	*rbt_empty_node;  /**< @brief  Sentinel representing nil */
 }	bu_rb_tree;
 #define	BU_RB_TREE_NULL	((bu_rb_tree *) 0)
 #define	BU_RB_TREE_MAGIC	0x72627472
@@ -1537,13 +1541,13 @@ typedef struct
 /*
  *	Debug bit flags for member rbt_debug
  */
-#define BU_RB_DEBUG_INSERT	0x00000001	/* Insertion process */
-#define BU_RB_DEBUG_UNIQ	0x00000002	/* Uniqueness of inserts */
-#define BU_RB_DEBUG_ROTATE	0x00000004	/* Rotation process */
-#define BU_RB_DEBUG_OS	0x00000008	/* Order-statistic operations */
-#define BU_RB_DEBUG_DELETE	0x00000010	/* Deletion process */
+#define BU_RB_DEBUG_INSERT	0x00000001	/**< @brief  Insertion process */
+#define BU_RB_DEBUG_UNIQ	0x00000002	/**< @brief  Uniqueness of inserts */
+#define BU_RB_DEBUG_ROTATE	0x00000004	/**< @brief  Rotation process */
+#define BU_RB_DEBUG_OS	0x00000008	/**< @brief  Order-statistic operations */
+#define BU_RB_DEBUG_DELETE	0x00000010	/**< @brief  Deletion process */
 
-/*
+/**
  *			B U _ R B _ P A C K A G E
  *
  *		    Wrapper for application data
@@ -1565,7 +1569,7 @@ struct bu_rb_package
 };
 #define	BU_RB_PKG_NULL	((struct bu_rb_package *) 0)
 
-/*
+/**
  *			    B U _ R B _ N O D E
  *
  *	For the most part, there is a one-to-one correspondence
@@ -1608,7 +1612,7 @@ struct bu_rb_node
 #define	POSTORDER	2
 
 
-/*
+/**
  *			B U _ O B S E R V E R
  *
  */
@@ -1619,7 +1623,8 @@ struct bu_observer {
 };
 #define BU_OBSERVER_NULL	((struct bu_observer *)0)
 
-/*			B U _ C M D T A B
+/**
+ *			B U _ C M D T A B
  */
 struct bu_cmdtab {
   char *ct_name;
@@ -2769,3 +2774,4 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

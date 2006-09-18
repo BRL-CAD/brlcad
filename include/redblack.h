@@ -18,15 +18,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup rb */
+/*@{*/
 /** @file redblack.h
+ * @brief
  *	The data structures and constants for red-black trees.
  *
  *	Many of these routines are based on the algorithms in chapter 13
  *	of T. H. Cormen, C. E. Leiserson, and R. L. Rivest,
  *	_Introduction to algorithms_, MIT Press, Cambridge, MA, 1990.
  *
- *	Author:	Paul Tanenbaum
- *
+ *	@author:	Paul Tanenbaum
  */
 
 #include "bu.h"
@@ -256,7 +258,7 @@ BU_EXTERN(void rb_walk,		(rb_tree	*tree,
 #define		rb_walk1(t,v,d)	rb_walk((t), 0, (v), (d))
 
 #endif
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -266,3 +268,4 @@ BU_EXTERN(void rb_walk,		(rb_tree	*tree,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

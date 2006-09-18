@@ -567,7 +567,7 @@ struct bn_unif {
 
 
 
-/*
+/**
  * NOTE!!! The order of msr_gauss and msr_unif MUST match in the
  * first three entries as msr_gauss is passed as a msr_unif in
  * msr_gauss_fill.
@@ -890,12 +890,12 @@ BN_EXPORT BU_EXTERN(int bn_isect_planes,
 /* poly.c */
 /** @addtogroup poly */
 /*@{*/
-/*
- *  Polynomial data type
- */
 
 			/* This could be larger, or even dynamic... */
 #define BN_MAX_POLY_DEGREE	4	/* Maximum Poly Order */
+/**
+ *  Polynomial data type
+ */
 typedef  struct bn_poly {
 	long		magic;
 	int		dgr;
@@ -999,16 +999,17 @@ BN_EXPORT BU_EXTERN(void quat_log,
 /*  A supply of fast pseudo-random numbers from table in bn/rand.c.
  *  The values are in the range 0..1
  *
- * Usage:
- *	unsigned idx;
- *	float f;
- *
- *	BN_RANDSEED( idx, integer_seed );
- *
- *	while (NEED_MORE_RAND_NUMBERS) {
- *		f = BN_RANDOM( idx );
- *	}
- *
+ * @par Usage:
+@code
+	unsigned idx;
+	float f;
+
+	BN_RANDSEED( idx, integer_seed );
+
+	while (NEED_MORE_RAND_NUMBERS) {
+		f = BN_RANDOM( idx );
+	}
+@endcode
  * Note that the values from bn_rand_half() become all 0.0 when the benchmark
  * flag is set (bn_rand_halftab is set to all 0's).  The numbers from
  * bn_rand_table do not change, because the procedural noise would cease to
@@ -1019,15 +1020,15 @@ BN_EXPORT BU_EXTERN(void quat_log,
 #define BN_RANDSEED( _i, _seed )  _i = ((unsigned)_seed) % BN_RAND_TABSIZE
 BN_EXPORT extern const float bn_rand_table[BN_RAND_TABSIZE];
 
-/* BN_RANDOM always gives numbers between 0.0 and 1.0 */
+/** BN_RANDOM always gives numbers between 0.0 and 1.0 */
 #define BN_RANDOM( _i )	bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]
 
-/* BN_RANDHALF always gives numbers between -0.5 and 0.5 */
+/** BN_RANDHALF always gives numbers between -0.5 and 0.5 */
 #define BN_RANDHALF( _i ) (bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]-0.5)
 #define BN_RANDHALF_INIT(_p) _p = bn_rand_table
 
 /* XXX This should move to compat4 */
-/* #define rand_half bn_rand_half */
+/* # define rand_half bn_rand_half */
 /* #define rand_init bn_rand_init */
 /* #define rand0to1  bn_rand0to1 */
 
@@ -1049,7 +1050,7 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 		      (bn_rand_halftab[(_seed)%bn_randhalftabsize] + 0.5) * \
 		      (bn_randhalftabsize-1)) ]
 
-/* random numbers 0..1 except when benchmarking, when this is always 0.5 */
+/** random numbers 0..1 except when benchmarking, when this is always 0.5 */
 #define bn_rand0to1(_q)	(bn_rand_half(_q)+0.5)
 
 #define	BN_SINTABSIZE		2048
@@ -1353,7 +1354,7 @@ BN_EXPORT extern const double bn_radtodeg;
 
 /*----------------------------------------------------------------------*/
 /* tabdata.c */
-/*
+/**
  *			T A B D A T A
  *
  *  Data structures to assist with
@@ -1594,6 +1595,7 @@ BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_mk_linear_filter,
 
 /*----------------------------------------------------------------------*/
 /* vlist.c */
+#define BN_VLIST_CHUNK	35		/**< @brief  32-bit mach => just less than 1k */
 /*
  *			B N _ V L I S T
  *
@@ -1619,12 +1621,11 @@ BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_mk_linear_filter,
  *		}
  *	}
  */
-#define BN_VLIST_CHUNK	35		/* 32-bit mach => just less than 1k */
 struct bn_vlist  {
-	struct bu_list	l;			/* magic, forw, back */
-	int		nused;			/* elements 0..nused active */
-	int		cmd[BN_VLIST_CHUNK];	/* VL_CMD_* */
-	point_t		pt[BN_VLIST_CHUNK];	/* associated 3-point/vect */
+	struct bu_list	l;			/**< @brief  magic, forw, back */
+	int		nused;			/**< @brief  elements 0..nused active */
+	int		cmd[BN_VLIST_CHUNK];	/**< @brief  VL_CMD_* */
+	point_t		pt[BN_VLIST_CHUNK];	/**< @brief  associated 3-point/vect */
 };
 #define BN_VLIST_NULL	((struct bn_vlist *)0)
 #define BN_VLIST_MAGIC	0x98237474
@@ -1634,13 +1635,13 @@ struct bn_vlist  {
 /* Values for cmd[] */
 #define BN_VLIST_LINE_MOVE	0
 #define BN_VLIST_LINE_DRAW	1
-#define BN_VLIST_POLY_START	2	/* pt[] has surface normal */
-#define BN_VLIST_POLY_MOVE	3	/* move to first poly vertex */
-#define BN_VLIST_POLY_DRAW	4	/* subsequent poly vertex */
-#define BN_VLIST_POLY_END	5	/* last vert (repeats 1st), draw poly */
-#define BN_VLIST_POLY_VERTNORM	6	/* per-vertex normal, for interpoloation */
+#define BN_VLIST_POLY_START	2	/**< @brief  pt[] has surface normal */
+#define BN_VLIST_POLY_MOVE	3	/**< @brief  move to first poly vertex */
+#define BN_VLIST_POLY_DRAW	4	/**< @brief  subsequent poly vertex */
+#define BN_VLIST_POLY_END	5	/**< @brief  last vert (repeats 1st), draw poly */
+#define BN_VLIST_POLY_VERTNORM	6	/**< @brief  per-vertex normal, for interpoloation */
 
-/*
+/**
  *  Applications that are going to use BN_ADD_VLIST and BN_GET_VLIST
  *  are required to execute this macro once, on their _free_hd:
  *		BU_LIST_INIT( &_free_hd );
@@ -1658,7 +1659,7 @@ struct bn_vlist  {
 		(p)->nused = 0; \
 	}
 
-/* Place an entire chain of bn_vlist structs on the freelist _free_hd */
+/** Place an entire chain of bn_vlist structs on the freelist _free_hd */
 #define BN_FREE_VLIST(_free_hd,hd)	{ \
 	BU_CK_LIST_HEAD( (hd) ); \
 	BU_LIST_APPEND_LIST( (_free_hd), (hd) ); \
@@ -1676,7 +1677,7 @@ struct bn_vlist  {
 	_vp->cmd[_vp->nused++] = (draw); \
 	}
 
-/*
+/**
  *			B N _ V L B L O C K
  *
  *  For plotting, a way of separating plots into separate color vlists:
@@ -1686,9 +1687,9 @@ struct bn_vlblock {
 	long		magic;
 	int		nused;
 	int		max;
-	long		*rgb;		/* rgb[max] variable size array */
-	struct bu_list	*head;		/* head[max] variable size array */
-	struct bu_list	*free_vlist_hd;	/* where to get/put free vlists */
+	long		*rgb;		/**< @brief  rgb[max] variable size array */
+	struct bu_list	*head;		/**< @brief  head[max] variable size array */
+	struct bu_list	*free_vlist_hd;	/**< @brief  where to get/put free vlists */
 };
 #define BN_VLBLOCK_MAGIC	0x981bd112
 #define BN_CK_VLBLOCK(_p)	BU_CKMAG((_p), BN_VLBLOCK_MAGIC, "bn_vlblock")
@@ -1715,24 +1716,25 @@ BN_EXPORT BU_EXTERN(void bn_vlist_2string,
 /*
  * vertex tree support
  */
-/* packaging structure
+/**
+ *  packaging structure
  * holds all the required info for a single vertex tree
  */
 struct vert_root {
 	long magic;
-	int tree_type;			/* vertices or vertices with normals */
-	union vert_tree *the_tree;	/* the actual vertex tree */
-	fastf_t *the_array;		/* the array of vertices */
-	unsigned long curr_vert;	/* the number of vertices currently in the array */
-	unsigned long max_vert;		/* the current maximum capacity of the array */
+	int tree_type;			/**< @brief  vertices or vertices with normals */
+	union vert_tree *the_tree;	/**< @brief  the actual vertex tree */
+	fastf_t *the_array;		/**< @brief  the array of vertices */
+	unsigned long curr_vert;	/**< @brief  the number of vertices currently in the array */
+	unsigned long max_vert;		/**< @brief  the current maximum capacity of the array */
 };
 
 #define TREE_TYPE_VERTS			1
 #define TREE_TYPE_VERTS_AND_NORMS	2
 
-#define VERT_BLOCK 512			/* number of vertices to malloc per call when building the array */
+#define VERT_BLOCK 512			/**< @brief  number of vertices to malloc per call when building the array */
 
-#define VERT_TREE_MAGIC	0x56455254	/* "VERT" */
+#define VERT_TREE_MAGIC	0x56455254	/**< @brief  "VERT" */
 #define BN_CK_VERT_TREE(_p)	BU_CKMAG(_p, VERT_TREE_MAGIC, "vert_tree")
 
 BN_EXPORT BU_EXTERN(struct vert_root *create_vert_tree,
@@ -1783,3 +1785,4 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

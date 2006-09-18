@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup rt */
+/*@{*/
 /** @file rtprivate.h
  *
+ *@brief
  *	Things to support the "rt" program and the link to liboptical
  *
  */
@@ -79,7 +82,7 @@ extern int view_init();
 #endif
 
 #endif  /* __RTPRIVATE_H__ */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -89,3 +92,4 @@ extern int view_init();
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

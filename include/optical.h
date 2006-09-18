@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup liboptical */
+/*@{*/
 /** @file optical.h
- *
+ *@brief
  *  Header file for the BRL-CAD Optical Library, LIBOPTICAL.
  *
  */
@@ -116,10 +118,10 @@ OPTICAL_EXPORT extern int	rdebug;
  *  These flags follow the "-X" (cap X) option to the RT program.
  *  librt debugging is separately controlled.
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
@@ -167,7 +169,7 @@ OPTICAL_EXPORT extern int	rt_verbosity;
 #define VERBOSE_VIEWDETAIL   0x00000020	/* view specifications */
 #define VERBOSE_LIGHTINFO    0x00000040	/* scene lights */
 #define VERBOSE_INCREMENTAL  0x00000080	/* progressive/incremental state */
-#define VERBOSE_MULTICPU     0x00000100	/* # of CPU's to be used */
+#define VERBOSE_MULTICPU     0x00000100	/* #  of CPU's to be used */
 #define VERBOSE_OUTPUTFILE   0x00000200	/* name of output image */
 
 #define VERBOSE_FORMAT \
@@ -196,11 +198,11 @@ OPTICAL_EXPORT extern int max_ireflect;
 OPTICAL_EXPORT extern const char liboptical_version[];
 
 struct floatpixel {
-	double	ff_dist;		/* range to ff_hitpt[], <-INFINITY for miss */
+	double	ff_dist;		/**< @brief range to ff_hitpt[], <-INFINITY for miss */
 	float	ff_hitpt[3];
 	struct region *ff_regp;
-	int	ff_frame;		/* >= 0 means pixel was reprojected */
-	short	ff_x;			/* screen x,y coords of first location */
+	int	ff_frame;		/**< @brief >= 0 means pixel was reprojected */
+	short	ff_x;			/**< @brief screen x,y coords of first location */
 	short	ff_y;
 	char	ff_color[3];
 };
@@ -208,7 +210,7 @@ struct floatpixel {
 __END_DECLS
 
 #endif /* SEEN_OPTICAL_H */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -218,3 +220,4 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

@@ -15,6 +15,8 @@
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
+/** @addtogroup utahrle */
+/*@{*/
 /* 
  * rle_code.h - Definitions for Run Length Encoding.
  * 
@@ -67,4 +69,5 @@ struct XtndRsetup
 #define	    RLE_MAGIC	((short)0xcc52)	/* RLE file magic number */
 
 #endif /* RLE_MAGIC */
+/*@}*/
 

@@ -18,16 +18,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup fixme */
+/*@{*/
 /** @file machine.h
- *
+ *@brief
  *  This header file defines all the
- *
  *	fundamental data types (lower case names, created with "typedef")
- *
  *  and
- *
  *	fundamental manifest constants (upper case, created with "#define")
- *
  *  used throughout the BRL-CAD Package.  Virtually all other BRL-CAD
  *  header files depend on this header file being included first.
  *
@@ -40,7 +38,7 @@
  *
  *  General Symbols and Types Defined -
  *
- *	genptr_t -
+ *      genptr_t -
  *		A portable way of declaring a "generic" pointer that is
  *		wide enough to point to anything, which can be used on
  *		both ANSI C and K&R C environments.
@@ -161,17 +159,17 @@
  *		safely used in a multi-processor (MP) execution.
  *		If defined, LIBBU will protect with BU_SEM_SYSCALL.
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
  *
  *
  *  Include Sequencing -
  *	# include "machine.h"
- *	# include "bu.h"
+ *@n	# include "bu.h"
  *
  *  Libraries Used -
  *	LIBBU LIBBU_LIBES -lm -lc
@@ -831,7 +829,7 @@ typedef long	bitv_t;		/* largest integer type */
 #endif
 
 #endif  /* MACHINE_H */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -841,3 +839,4 @@ typedef long	bitv_t;		/* largest integer type */
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

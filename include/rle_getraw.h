@@ -15,6 +15,8 @@
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
+/** @addtogroup utahrle */
+/*@{*/
 /* 
  * rle_getraw.h - Definitions for rle_getraw
  * 
@@ -50,6 +52,7 @@ struct rle_op {
 
 #endif
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C

@@ -15,12 +15,17 @@
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+
+/** @addtogroup utahrle */
+/*@{*/
+/** @file colorquant.h
+ *
  * colorquant.h - Definitions for colorquant.
  * 
- * Author:	Spencer W. Thomas
+ * @author	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
+ *
  * Date:	Thu Jan  3 1991
  * Copyright (c) 1991, University of Michigan
  */
@@ -74,3 +79,4 @@ extern int  colorquant( unsigned char *red,
 extern int colorquant();
 #endif
 
+/*@}*/

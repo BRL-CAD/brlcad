@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup fixme */
+/*@{*/
 /** @file config_win.h
  *
  */
@@ -184,7 +186,7 @@
 #endif /* ifndef IGNORE_CONFIG_H */
 
 #endif /* CONFIG_H */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -194,3 +196,4 @@
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

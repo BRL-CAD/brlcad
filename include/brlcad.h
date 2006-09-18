@@ -18,18 +18,20 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup fixme */
+/*@{*/
 /** @file brlcad.h
- *
+ *@brief
  *  Convenience header for the core BRL-CAD libraries
  *
  *  This header includes the headers provided by libbu, libbn, libwdb,
  *  and librt.  It may be used in leu of including all of the
  *  individual headers.
  *
- *  Author -
+ *  @author
  *	Christopher Sean Morrison
  *
- *  Source -
+ *  @par Source
  *	BRL-CAD Open Source
  *
  *  $Header$
@@ -80,7 +82,7 @@
 
 
 #endif  /* __BRLCAD_H__ */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -90,3 +92,4 @@
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

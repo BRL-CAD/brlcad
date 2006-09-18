@@ -18,9 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup db4 */
+/*@{*/
 /** @file db.h
- *
- *		GED Database Format
+ *@brief
+ *		GED Database Format v4
  *
  * All records are rounded up to have a fixed length;  each such
  * database record is also known as a "granule", and is the smallest
@@ -58,13 +60,13 @@
  * machines of dissimilar types.  In time, an external representation
  * for floats might be implemented.
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *@n	The U. S. Army Ballistic Research Laboratory
+ *@n	Aberdeen Proving Ground, Maryland  21005
  *
  *  $Header$
  */
@@ -275,7 +277,7 @@ union record  {
 		char	B_id;		/* = ID_BSOLID */
 		char	B_pad;
 		char	B_name[NAMESIZE];
-		short	B_nsurf;	/* # of surfaces in this solid */
+		short	B_nsurf;	/* #  of surfaces in this solid */
 		dbfloat_t B_resolution;	/* resolution of flatness */
 	} B;
 	struct b_surf {
@@ -468,7 +470,7 @@ void rt_mat_dbmat DB_ARGS( (fastf_t *ff, const dbfloat_t *dbp) );
 void rt_dbmat_mat DB_ARGS( (dbfloat_t *dbp, const fastf_t *ff) );
 
 #endif	/* DB_H */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -478,3 +480,4 @@ void rt_dbmat_mat DB_ARGS( (dbfloat_t *dbp, const fastf_t *ff) );
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

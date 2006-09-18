@@ -15,8 +15,10 @@
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
- * rle_raw.h - Definitions for rle_getraw/rle_putraw.
+/** @addtogroup utahrle */
+/*@{*/
+/**
+ * @file rle_raw.h - Definitions for rle_getraw/rle_putraw.
  * 
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
@@ -49,7 +51,7 @@ struct rle_op {
     int opcode;			/* one of RByteDataOp or RRunDataOp */
     int xloc;			/* X location this op starts at */
     int length;			/* length of run or data */
-    union {
+    union a {
 	rle_pixel * pixels;	/* for ByteData */
 	int run_val;		/* for RunData */
     } u;
@@ -123,3 +125,4 @@ struct rle_op {
 #endif
 
 #endif /* RLE_RAW_H */
+/*@}*/

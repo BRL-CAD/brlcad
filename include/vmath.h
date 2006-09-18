@@ -292,7 +292,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(m)[8] = (m)[9] = (m)[10] = (m)[11] = \
 	(m)[12] = (m)[13] = (m)[14] = (m)[15] = 0.0;}
 
-/* #define MAT_ZERO(m)	{\
+/* # define MAT_ZERO(m)	{\
 	register int _j; \
 	for(_j=0; _j<16; _j++) (m)[_j]=0.0; }
   */
@@ -1237,3 +1237,4 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libdm */
+/*@{*/
 /** @file dm_xvars.h
  *
  */
@@ -59,7 +61,7 @@ struct dm_xvars {
 };
 
 #endif /* __DM_XVARS__ */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -69,3 +71,4 @@ struct dm_xvars {
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

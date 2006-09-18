@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libdm */
+/*@{*/
 /** @file dm-Null.h
  */
 #ifndef SEEN_DM_NULL
@@ -26,7 +28,7 @@
 /* yep, nothing to declare */
 
 #endif  /* SEEN_DM_NULL */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -36,3 +38,4 @@
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

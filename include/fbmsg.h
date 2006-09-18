@@ -25,14 +25,14 @@
  *  communication between libfb/if_remote.c and fbserv/fbserv.c.
  *  This file is shared by those two modules.
  *
- *  Authors -
- *	Phil Dykstra
- *	Michael John Muuss
  *
- *  Source -
+ *  @author	Phil Dykstra
+ *  @author	Michael John Muuss
+ *
+ *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *@n	The U. S. Army Ballistic Research Laboratory
+ *@n	Aberdeen Proving Ground, Maryland  21005
  */
 /*@}*/
 
@@ -41,12 +41,12 @@
 #define	MSG_FBCLEAR	3
 #define	MSG_FBREAD	4
 #define	MSG_FBWRITE	5
-#define	MSG_FBCURSOR	6		/* fb_cursor() */
-#define	MSG_FBWINDOW	7		/* OLD */
-#define	MSG_FBZOOM	8		/* OLD */
-#define	MSG_FBSCURSOR	9		/* OLD */
-#define	MSG_FBVIEW	10		/* NEW */
-#define	MSG_FBGETVIEW	11		/* NEW */
+#define	MSG_FBCURSOR	6		/**< @brief fb_cursor() */
+#define	MSG_FBWINDOW	7		/**< @brief OLD */
+#define	MSG_FBZOOM	8		/**< @brief OLD */
+#define	MSG_FBSCURSOR	9		/**< @brief OLD */
+#define	MSG_FBVIEW	10		/**< @brief NEW */
+#define	MSG_FBGETVIEW	11		/**< @brief NEW */
 #define	MSG_FBRMAP	12
 #define	MSG_FBWMAP	13
 #define	MSG_FBHELP	14
@@ -54,11 +54,11 @@
 #define	MSG_FBWRITERECT	16
 #define	MSG_FBFLUSH	17
 #define	MSG_FBFREE	18
-#define	MSG_FBGETCURSOR	19		/* NEW */
-#define	MSG_FBPOLL	30		/* NEW */
-#define MSG_FBSETCURSOR	31		/* NEW in Release 4.4 */
-#define	MSG_FBBWREADRECT 32		/* NEW in Release 4.6 */
-#define	MSG_FBBWWRITERECT 33		/* NEW in Release 4.6 */
+#define	MSG_FBGETCURSOR	19		/**< @brief NEW */
+#define	MSG_FBPOLL	30		/**< @brief NEW */
+#define MSG_FBSETCURSOR	31		/**< @brief NEW in Release 4.4 */
+#define	MSG_FBBWREADRECT 32		/**< @brief NEW in Release 4.6 */
+#define	MSG_FBBWWRITERECT 33		/**< @brief NEW in Release 4.6 */
 
 #define	MSG_DATA	20
 #define	MSG_RETURN	21
@@ -76,3 +76,4 @@
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

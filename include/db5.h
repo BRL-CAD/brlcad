@@ -18,19 +18,20 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup db5 */
+/*@{*/
 /** @file db5.h
- *
+ *@brief
  *  Definition of the BRL-CAD "v5" database format used for new ".g" files.
+ *  
+ * @author	Michael John Muuss
+ * @author	Lee A. Butler
+ * @author	Paul J. Tanenbaum
+ * @author	John R. Anderson
  *
- *  Authors -
- *	Michael John Muuss
- *	Lee A. Butler
- *	Paul J. Tanenbaum
- *	John R. Anderson
- *
- *  Source -
+ *  @par Source
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  *  $Header$
  */
@@ -51,7 +52,7 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/*
+/**
  * The format of an object's header as it exists on disk,
  * as best we can describe its variable size with a "C" structure.
  */
@@ -181,7 +182,7 @@ struct db5_ondisk_header {
 /* this array depends on the values of the above definitions and is defined in db5_bin.c */
 extern const char *binu_types[];
 
-/*
+/**
  *  The "raw internal" form of one database object.
  *  This is what the low-level database routines will operate on.
  *  Magic number1 has already been checked, and is not stored.
@@ -227,7 +228,7 @@ __END_DECLS
 #endif	/* DB5_H */
 
 
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -237,3 +238,4 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

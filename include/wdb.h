@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup wdb */
+/*@{*/
 /** @file wdb.h
  *
  *  Interface structures and routines for libwdb
@@ -27,16 +29,16 @@
  *	we now use a (struct rt_wdb *) parameter.
  *	Rather than calling fopen(), call wdb_fopen();
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
  *
  *  Include Sequencing -
- *	# include <stdio.h>	/_* For FILE * *_/
+ *	#  include <stdio.h>	/_* For FILE * *_/
  *	# include <math.h>
  *	# include "machine.h"	/_* For fastf_t definition on this machine *_/
  *	# include "bu.h"
@@ -104,8 +106,8 @@ __BEGIN_DECLS
  */
 struct wmember  {
 	struct bu_list	l;
-	int		wm_op;		/* Boolean operation */
-	mat_t		wm_mat;		/* XXX Should be matp_t !!! */
+	int		wm_op;		/**< @brief  Boolean operation */
+	mat_t		wm_mat;		/**< @brief  XXX Should be matp_t !!! */
 	char		*wm_name;
 };
 #define WMEMBER_NULL	((struct wmember *)0)
@@ -118,11 +120,11 @@ struct wmember  {
  */
 
 struct wdb_pipept {
-	struct bu_list	l;		/* doubly linked list support */
-	point_t		pp_coord;	/* "control" point for pipe solid */
-	fastf_t		pp_id;		/* inner diam, <=0 if solid (wire) */
-	fastf_t		pp_od;		/* pipe outer diam */
-	fastf_t		pp_bendradius;	/* bend radius to use for a bend at this point */
+	struct bu_list	l;		/**< @brief  doubly linked list support */
+	point_t		pp_coord;	/**< @brief  "control" point for pipe solid */
+	fastf_t		pp_id;		/**< @brief  inner diam, <=0 if solid (wire) */
+	fastf_t		pp_od;		/**< @brief  pipe outer diam */
+	fastf_t		pp_bendradius;	/**< @brief  bend radius to use for a bend at this point */
 };
 
 #define WDB_PIPESEG_NULL	((struct wdb_pipeseg *)0)
@@ -131,10 +133,10 @@ struct wdb_pipept {
 struct wdb_metaballpt {
 	struct bu_list	l;
 	point_t		coord;
-	fastf_t		fldstr;		/* field strength */
+	fastf_t		fldstr;		/**< @brief  field strength */
 };
 #define WDB_METABALLPT_NULL	((struct wdb_metaballpt *)0)
-#define WDB_METABALLPT_MAGIC	0x6D627074	/* mbpt */
+#define WDB_METABALLPT_MAGIC	0x6D627074	/**< @brief  mbpt */
 
 
 WDB_EXPORT WDB_EXTERN(int mk_id, (struct rt_wdb *fp, const char *title) );
@@ -281,15 +283,15 @@ mk_bot(
 	const char *name,
 	unsigned char	mode,
 	unsigned char	orientation,
-	unsigned char	error_mode,	/* may be used to indicate error handling (ignored for now) */
+	unsigned char	error_mode,	/**<  may be used to indicate error handling (ignored for now) */
 	int		num_vertices,
 	int		num_faces,
-	fastf_t		*vertices,	/* array of floats for vertices [num_vertices*3] */
-	int		*faces,		/* array of ints for faces [num_faces*3] */
-	fastf_t		*thickness,	/* array of plate mode thicknesses (corresponds to array of faces)
+	fastf_t		*vertices,	/**<  array of floats for vertices [num_vertices*3] */
+	int		*faces,		/**<  array of ints for faces [num_faces*3] */
+	fastf_t		*thickness,	/**<  array of plate mode thicknesses (corresponds to array of faces)
 					 * NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID.
 					 */
-	struct bu_bitv	*face_mode );	/* a flag for each face indicating thickness is appended to hit point,
+	struct bu_bitv	*face_mode );	/**<  a flag for each face indicating thickness is appended to hit point,
 					 * otherwise thickness is centered about hit point
 					 */
 WDB_EXPORT int
@@ -301,17 +303,17 @@ mk_bot_w_normals(
 	unsigned char	flags,
 	int		num_vertices,
 	int		num_faces,
-	fastf_t		*vertices,	/* array of floats for vertices [num_vertices*3] */
-	int		*faces,		/* array of ints for faces [num_faces*3] */
-	fastf_t		*thickness,	/* array of plate mode thicknesses (corresponds to array of faces)
+	fastf_t		*vertices,	/**<  array of floats for vertices [num_vertices*3] */
+	int		*faces,		/**<  array of ints for faces [num_faces*3] */
+	fastf_t		*thickness,	/**<  array of plate mode thicknesses (corresponds to array of faces)
 					 * NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID.
 					 */
-	struct bu_bitv	*face_mode,	/* a flag for each face indicating thickness is appended to hit point,
+	struct bu_bitv	*face_mode,	/**<  a flag for each face indicating thickness is appended to hit point,
 					 * otherwise thickness is centered about hit point
 					 */
-	int		num_normals,	/* number of unit normals in normals array */
-	fastf_t		*normals,	/* array of floats for normals [num_normals*3] */
-	int		*face_normals );	/* array of ints (indices into normals array), must have 3*num_faces entries */
+	int		num_normals,	/**<  number of unit normals in normals array */
+	fastf_t		*normals,	/**<  array of floats for normals [num_normals*3] */
+	int		*face_normals );	/**<  array of ints (indices into normals array), must have 3*num_faces entries */
 
 
 /* nurb.c */
@@ -416,20 +418,20 @@ WDB_EXPORT WDB_EXTERN (struct wmember *mk_addmember,
 WDB_EXPORT int mk_comb(
 	struct rt_wdb		*wdbp,
 	const char		*combname,
-	struct bu_list		*headp,		/* Made by mk_addmember() */
-	int			region_kind,	/* 1 => region.  'P' and 'V' for FASTGEN */
-	const char		*shadername,	/* shader name, or NULL */
-	const char		*shaderargs,	/* shader args, or NULL */
-	const unsigned char	*rgb,		/* NULL => no color */
-	int			id,		/* region_id */
-	int			air,		/* aircode */
-	int			material,	/* GIFTmater */
+	struct bu_list		*headp,		/**<  Made by mk_addmember() */
+	int			region_kind,	/**<  1 => region.  'P' and 'V' for FASTGEN */
+	const char		*shadername,	/**<  shader name, or NULL */
+	const char		*shaderargs,	/**<  shader args, or NULL */
+	const unsigned char	*rgb,		/**<  NULL => no color */
+	int			id,		/**<  region_id */
+	int			air,		/**<  aircode */
+	int			material,	/**<  GIFTmater */
 	int			los,
 	int			inherit,
-	int			append_ok,	/* 0 = obj must not exit */
-	int			gift_semantics);	/* 0 = pure, 1 = gift */
+	int			append_ok,	/**<  0 = obj must not exit */
+	int			gift_semantics);	/**<  0 = pure, 1 = gift */
 
-/* Convenience routines for quickly making combinations */
+/** Convenience routines for quickly making combinations */
 WDB_EXPORT int mk_comb1( struct rt_wdb *fp,
 	const char *combname,
 	const char *membname,
@@ -463,17 +465,17 @@ mk_region1(
 WDB_EXPORT WDB_EXTERN(int mk_conversion, (char *units_string) );
 WDB_EXPORT WDB_EXTERN(int mk_set_conversion, (double val) );
 
-/*
+/**
  * This internal variable should not be directly modified;
  * call mk_conversion() or mk_set_conversion() instead.
  */
-WDB_EXPORT extern double	mk_conv2mm;		/* Conversion factor to mm */
+WDB_EXPORT extern double	mk_conv2mm;		/**< @brief Conversion factor to mm */
 
-/*
+/**
  *  Set this variable to either 4 or 5, depending on which version of
  *  the database you wish to write.
  */
-WDB_EXPORT extern int	mk_version;		/* Which version database to write */
+WDB_EXPORT extern int	mk_version;		/**< @brief  Which version database to write */
 
 /*
  *  Internal routines
@@ -504,7 +506,7 @@ WDB_EXPORT WDB_EXTERN( int make_hole_in_prepped_regions, ( struct rt_wdb *wdbp,
 __END_DECLS
 
 #endif /* WDB_H */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -514,3 +516,4 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

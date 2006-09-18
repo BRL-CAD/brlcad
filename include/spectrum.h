@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libmultispectral */
+/*@{*/
 /** @file spectrum.h
  *
  *  A header file containing data structures to assist with
@@ -84,10 +86,10 @@
  *  determine if two wavelengths from different curves were the "same",
  *  without introducing a wavelength "tolerance" notion.  Ugh.
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  $Header$
@@ -119,7 +121,7 @@ RT_EXPORT BU_EXTERN(void			rt_spect_reflectance_rgb,
 		    (struct bn_tabdata		*curve,
 		     const float		rgb[3]));
 
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -129,3 +131,4 @@ RT_EXPORT BU_EXTERN(void			rt_spect_reflectance_rgb,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

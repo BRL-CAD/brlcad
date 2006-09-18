@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup plot */
+/*@{*/
 /** @file plot3.h
  *
  *
@@ -499,7 +501,7 @@ BN_EXPORT BU_EXTERN(void BU_FORTRAN(f3vect, F3VECT),
 #endif /* VMATH_H */
 
 #endif /* PLOT3_H */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -509,3 +511,4 @@ BN_EXPORT BU_EXTERN(void BU_FORTRAN(f3vect, F3VECT),
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

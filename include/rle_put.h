@@ -15,6 +15,8 @@
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
+/** @addtogroup utahrle */
+/*@{*/
 /* 
  * rle_put.h - Definitions and a few global variables for rle_putrow/putraw.
  * 
@@ -98,3 +100,4 @@ extern struct rle_dispatch_tab rle_DTable[];
 #ifdef __cplusplus
 }
 #endif
+/*@}*/

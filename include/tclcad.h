@@ -18,14 +18,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libtclcad */
+/*@{*/
 /** @file tclcad.h
- *
+ *@brief
  *  Header file for the BRL-CAD TclCAD Library, LIBTCLCAD.
  *
  *  This library contains convenience routines for preparing and
  *  initializing Tcl.
  *
- *  Source -
+ *  @par Source
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
@@ -76,7 +78,7 @@ TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_auto_path, (Tcl_Interp *interp));
 __END_DECLS
 
 #endif /* __TCLCAD_H__ */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -86,3 +88,4 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

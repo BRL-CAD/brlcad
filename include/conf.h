@@ -18,8 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup deprecated */
+/*@{*/
 /** @file conf.h
- *
+ * @deprecated
+ * The conf.h header is deprecated -- use common.h instead
  */
 #ifndef CONF_H
 #define CONF_H seen
@@ -28,7 +31,7 @@
 #include "common.h"
 
 #endif /* CONF_H */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -38,3 +41,4 @@
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

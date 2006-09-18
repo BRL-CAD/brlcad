@@ -1,4 +1,7 @@
-/* 
+/** @addotgroup deprecated */
+/*@{*/
+/** @file pyramid.h
+ * @deprecated 
  * pyramid.h - Types, constants, globals, routine decls for pyramids
  * 
  * Author:	Rod Bogart
@@ -29,3 +32,4 @@ typedef struct
 } pyramid;
 
 float * gauss_mask();
+/*@}*/

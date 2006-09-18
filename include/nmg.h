@@ -18,22 +18,25 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup nmg */
+/*@{*/
 /** @file nmg.h
  *
- *  Authors -
- *	Lee A. Butler
- *	Michael John Muuss
  *
- *  Source -
+ *  @author	Lee A. Butler
+ *  @author	Michael John Muuss
+ *
+ *  @par Source
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *@n	Aberdeen Proving Ground, Maryland  21005-5066
  *
+ *@brief
  *  Definition of data structures for "Non-Manifold Geometry Modelling."
  *  Developed from "Non-Manifold Geometric Boundary Modeling" by
  *  Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
  *
  *  Include Sequencing -
- *	# include <stdio.h>
+ *	#  include <stdio.h>
  *	# include <math.h>
  *	# include "machine.h"	/_* For fastf_t definition on this machine *_/
  *	# include "vmath.h"	/_* For vect_t definition *_/
@@ -43,7 +46,7 @@
  *	# include "raytrace.h"
  *	# include "nurb.h"	/_* OPTIONAL, follows raytrace.h when used *_/
  *
- *  Libraries Used -
+ *  @par Libraries Used -
  *	LIBRT LIBRT_LIBES -lm -lc
  *
  *  $Header$
@@ -82,33 +85,33 @@
 #define	NMG_EXTERN(type_and_name,args)	RT_EXTERN(type_and_name,args)
 
 
-#define DEBUG_PL_ANIM	0x00000001	/* 1 mged: animated evaluation */
-#define DEBUG_PL_SLOW	0x00000002	/* 2 mged: add delays to animation */
-#define DEBUG_GRAPHCL	0x00000004	/* 3 mged: graphic classification */
-#define DEBUG_PL_LOOP	0x00000008	/* 4 loop class (needs GRAPHCL) */
-#define DEBUG_PLOTEM	0x00000010	/* 5 make plots in debugged routines (needs other flags set too) */
-#define DEBUG_POLYSECT	0x00000020	/* 6 nmg_inter: face intersection */
-#define DEBUG_VERIFY	0x00000040	/* 7 nmg_vshell() frequently, verify health */
-#define DEBUG_BOOL	0x00000080	/* 8 nmg_bool:  */
-#define DEBUG_CLASSIFY	0x00000100	/* 9 nmg_class: */
-#define DEBUG_BOOLEVAL	0x00000200	/* 10 nmg_eval: what to retain */
-#define DEBUG_BASIC	0x00000400	/* 013 nmg_mk.c and nmg_mod.c routines */
-#define DEBUG_MESH	0x00000800	/* 12 nmg_mesh: describe edge search */
-#define DEBUG_MESH_EU	0x00001000	/* 13 nmg_mesh: list edges meshed */
-#define DEBUG_POLYTO	0x00002000	/* 14 nmg_misc: polytonmg */
-#define DEBUG_LABEL_PTS 0x00004000	/* 15 label points in plot files */
+#define DEBUG_PL_ANIM	0x00000001	/**< @brief 1 mged: animated evaluation */
+#define DEBUG_PL_SLOW	0x00000002	/**< @brief 2 mged: add delays to animation */
+#define DEBUG_GRAPHCL	0x00000004	/**< @brief 3 mged: graphic classification */
+#define DEBUG_PL_LOOP	0x00000008	/**< @brief 4 loop class (needs GRAPHCL) */
+#define DEBUG_PLOTEM	0x00000010	/**< @brief 5 make plots in debugged routines (needs other flags set too) */
+#define DEBUG_POLYSECT	0x00000020	/**< @brief 6 nmg_inter: face intersection */
+#define DEBUG_VERIFY	0x00000040	/**< @brief 7 nmg_vshell() frequently, verify health */
+#define DEBUG_BOOL	0x00000080	/**< @brief 8 nmg_bool:  */
+#define DEBUG_CLASSIFY	0x00000100	/**< @brief 9 nmg_class: */
+#define DEBUG_BOOLEVAL	0x00000200	/**< @brief 10 nmg_eval: what to retain */
+#define DEBUG_BASIC	0x00000400	/**< @brief 013 nmg_mk.c and nmg_mod.c routines */
+#define DEBUG_MESH	0x00000800	/**< @brief 12 nmg_mesh: describe edge search */
+#define DEBUG_MESH_EU	0x00001000	/**< @brief 13 nmg_mesh: list edges meshed */
+#define DEBUG_POLYTO	0x00002000	/**< @brief 14 nmg_misc: polytonmg */
+#define DEBUG_LABEL_PTS 0x00004000	/**< @brief 15 label points in plot files */
 /***#define DEBUG_INS	0x00008000	/_* 16 bu_ptbl table insert */
-#define DEBUG_NMGRT	0x00010000	/* 17 ray tracing */
-#define DEBUG_FINDEU	0x00020000	/* 18 nmg_mod: nmg_findeu() */
-#define DEBUG_CMFACE	0x00040000	/* 19 nmg_mod: nmg_cmface() */
-#define DEBUG_CUTLOOP	0x00080000	/* 024 nmg_mod: nmg_cut_loop */
-#define DEBUG_VU_SORT	0x00100000	/* 025 nmg_fcut: coincident vu sort */
-#define DEBUG_FCUT	0x00200000	/* 026 nmg_fcut: face cutter */
-#define DEBUG_RT_SEGS	0x00400000	/* 027 nmg_rt_segs: */
-#define DEBUG_RT_ISECT	0x00800000	/* 028 nmg_rt_isect: */
-#define DEBUG_TRI	0x01000000	/* 029 nmg_tri */
-#define DEBUG_PT_FU	0x02000000	/* 029 nmg_pt_fu */
-#define DEBUG_MANIF	0x04000000	/* 029 nmg_manif */
+#define DEBUG_NMGRT	0x00010000	/**< @brief 17 ray tracing */
+#define DEBUG_FINDEU	0x00020000	/**< @brief 18 nmg_mod: nmg_findeu() */
+#define DEBUG_CMFACE	0x00040000	/**< @brief 19 nmg_mod: nmg_cmface() */
+#define DEBUG_CUTLOOP	0x00080000	/**< @brief 024 nmg_mod: nmg_cut_loop */
+#define DEBUG_VU_SORT	0x00100000	/**< @brief 025 nmg_fcut: coincident vu sort */
+#define DEBUG_FCUT	0x00200000	/**< @brief 026 nmg_fcut: face cutter */
+#define DEBUG_RT_SEGS	0x00400000	/**< @brief 027 nmg_rt_segs: */
+#define DEBUG_RT_ISECT	0x00800000	/**< @brief 028 nmg_rt_isect: */
+#define DEBUG_TRI	0x01000000	/**< @brief 029 nmg_tri */
+#define DEBUG_PT_FU	0x02000000	/**< @brief 029 nmg_pt_fu */
+#define DEBUG_MANIF	0x04000000	/**< @brief 029 nmg_manif */
 #define NMG_DEBUG_FORMAT \
 "\020\033MANIF\032PTFU\031TRIANG\030RT_ISECT\
 \027RT_SEGS\026FCUT\025VU_SORT\024CUTLOOP\023CMFACE\022FINDEU\021RT_ISECT\020(FREE)\
@@ -129,9 +132,9 @@
 #endif
 
 /* Boolean operations */
-#define NMG_BOOL_SUB 1		/* subtraction */
-#define NMG_BOOL_ADD 2		/* addition/union */
-#define NMG_BOOL_ISECT 4	/* intsersection */
+#define NMG_BOOL_SUB 1		/**< @brief subtraction */
+#define NMG_BOOL_ADD 2		/**< @brief addition/union */
+#define NMG_BOOL_ISECT 4	/**< @brief intsersection */
 
 /* Boolean classifications */
 #define NMG_CLASS_Unknown	-1
@@ -145,11 +148,11 @@
 #define NMG_CLASS_BoutA		7
 
 /* orientations available.  All topological elements are orientable. */
-#define OT_NONE     0    /* no orientation (error) */
-#define OT_SAME     1    /* orientation same */
-#define OT_OPPOSITE 2    /* orientation opposite */
-#define OT_UNSPEC   3    /* orientation unspecified */
-#define OT_BOOLPLACE 4   /* object is intermediate data for boolean ops */
+#define OT_NONE     0    /**< @brief no orientation (error) */
+#define OT_SAME     1    /**< @brief orientation same */
+#define OT_OPPOSITE 2    /**< @brief orientation opposite */
+#define OT_UNSPEC   3    /**< @brief orientation unspecified */
+#define OT_BOOLPLACE 4   /**< @brief object is intermediate data for boolean ops */
 
 /*
  *  Magic Numbers.
@@ -157,28 +160,29 @@
 #define NMG_MODEL_MAGIC 	0x12121212
 #define NMG_REGION_MAGIC	0x23232323
 #define NMG_REGION_A_MAGIC	0x696e6720
-#define NMG_SHELL_MAGIC 	0x71077345	/* shell oil */
+#define NMG_SHELL_MAGIC 	0x71077345	/**< @brief shell oil */
 #define NMG_SHELL_A_MAGIC	0x65207761
 #define NMG_FACE_MAGIC		0x45454545
 #define NMG_FACE_G_PLANE_MAGIC	0x726b6e65
-#define NMG_FACE_G_SNURB_MAGIC	0x736e7262	/* was RT_SNURB_MAGIC */
+#define NMG_FACE_G_SNURB_MAGIC	0x736e7262	/**< @brief was RT_SNURB_MAGIC */
 #define NMG_FACEUSE_MAGIC	0x56565656
 #define NMG_LOOP_MAGIC		0x67676767
 #define NMG_LOOP_G_MAGIC	0x6420224c
 #define NMG_LOOPUSE_MAGIC	0x78787878
 #define NMG_EDGE_MAGIC		0x33333333
 #define NMG_EDGE_G_LSEG_MAGIC	0x6c696768
-#define NMG_EDGE_G_CNURB_MAGIC	0x636e7262	/* was RT_CNURB_MAGIC */
+#define NMG_EDGE_G_CNURB_MAGIC	0x636e7262	/**< @brief was RT_CNURB_MAGIC */
 #define NMG_EDGEUSE_MAGIC	0x90909090
-#define NMG_EDGEUSE2_MAGIC	0x91919191	/* used in eu->l2.magic */
+#define NMG_EDGEUSE2_MAGIC	0x91919191	/**< @brief used in eu->l2.magic */
 #define NMG_VERTEX_MAGIC	0x00123123
 #define NMG_VERTEX_G_MAGIC	0x72737707
 #define NMG_VERTEXUSE_MAGIC	0x12341234
 #define NMG_VERTEXUSE_A_PLANE_MAGIC	0x69676874
 #define NMG_VERTEXUSE_A_CNURB_MAGIC	0x20416e64
-#define NMG_KNOT_VECTOR_MAGIC	0x6b6e6f74	/* aka RT_KNOT_VECTOR_MAGIC */
+#define NMG_KNOT_VECTOR_MAGIC	0x6b6e6f74	/**< @brief aka RT_KNOT_VECTOR_MAGIC */
 
-/* macros to check/validate a structure pointer
+/** 
+ * macros to check/validate a structure pointer
  */
 #define NMG_CKMAG(_ptr, _magic, _str)	BU_CKMAG(_ptr,_magic,_str)
 #define NMG_CK2MAG(_ptr, _magic1, _magic2, _str)	\
@@ -225,19 +229,20 @@
 	    	bu_log("in %s at %d edgeuse lost vertexuse\n",\
 	    		 __FILE__, __LINE__); rt_bomb("bye");}
 
-/*
+/**
  *			K N O T _ V E C T O R
- *
+ * @brief
  *  Definition of a knot vector.
+ *
  *  Not found independently, but used in the cnurb and snurb structures.
  *  (Exactly the same as the definition in nurb.h)
  */
 struct knot_vector {
 	int		magic;
-	int		k_size;		/* knot vector size */
-	fastf_t		* knots;	/* pointer to knot vector  */
+	int		k_size;		/**< @brief knot vector size */
+	fastf_t		* knots;	/**< @brief pointer to knot vector  */
 };
-#define RT_KNOT_VECTOR_MAGIC	NMG_KNOT_VECTOR_MAGIC	/* nurb.h compat */
+#define RT_KNOT_VECTOR_MAGIC	NMG_KNOT_VECTOR_MAGIC	/**< @brief nurb.h compat */
 
 /*
  *	N O T I C E !
@@ -258,35 +263,35 @@ struct knot_vector {
  */
 
 
-/*
+/**
  *			M O D E L
  */
 struct model {
 	long			magic;
-	struct bu_list		r_hd;	/* list of regions */
-	long			index;	/* struct # in this model */
-	long			maxindex; /* # of structs so far */
+	struct bu_list		r_hd;	/**< @brief list of regions */
+	long			index;	/**< @brief struct # in this model */
+	long			maxindex; /**< @brief # of structs so far */
 };
 
-/*
+/**
  *			R E G I O N
  */
 struct nmgregion {
-	struct bu_list		l;	/* regions, in model's r_hd list */
-	struct model   		*m_p;	/* owning model */
-	struct nmgregion_a	*ra_p;	/* attributes */
-	struct bu_list		s_hd;	/* list of shells in region */
-	long			index;	/* struct # in this model */
+	struct bu_list		l;	/**< @brief regions, in model's r_hd list */
+	struct model   		*m_p;	/**< @brief owning model */
+	struct nmgregion_a	*ra_p;	/**< @brief attributes */
+	struct bu_list		s_hd;	/**< @brief list of shells in region */
+	long			index;	/**< @brief struct # in this model */
 };
 
 struct nmgregion_a {
 	long			magic;
-	point_t			min_pt;	/* minimums of bounding box */
-	point_t			max_pt;	/* maximums of bounding box */
-	long			index;	/* struct # in this model */
+	point_t			min_pt;	/**< @brief minimums of bounding box */
+	point_t			max_pt;	/**< @brief maximums of bounding box */
+	long			index;	/**< @brief struct # in this model */
 };
 
-/*
+/**
  *			S H E L L
  *
  *  When a shell encloses volume, it's done entirely by the list of faceuses.
@@ -305,84 +310,84 @@ struct nmgregion_a {
  *  list.
  */
 struct shell {
-	struct bu_list		l;	/* shells, in region's s_hd list */
-	struct nmgregion	*r_p;	/* owning region */
-	struct shell_a		*sa_p;	/* attribs */
+	struct bu_list		l;	/**< @brief shells, in region's s_hd list */
+	struct nmgregion	*r_p;	/**< @brief owning region */
+	struct shell_a		*sa_p;	/**< @brief attribs */
 
-	struct bu_list		fu_hd;	/* list of face uses in shell */
-	struct bu_list		lu_hd;	/* wire loopuses (edge groups) */
-	struct bu_list		eu_hd;	/* wire list (shell has wires) */
-	struct vertexuse	*vu_p;	/* internal ptr to single vertexuse */
-	long			index;	/* struct # in this model */
+	struct bu_list		fu_hd;	/**< @brief list of face uses in shell */
+	struct bu_list		lu_hd;	/**< @brief wire loopuses (edge groups) */
+	struct bu_list		eu_hd;	/**< @brief wire list (shell has wires) */
+	struct vertexuse	*vu_p;	/**< @brief internal ptr to single vertexuse */
+	long			index;	/**< @brief struct # in this model */
 };
 
 struct shell_a {
 	long			magic;
-	point_t			min_pt;	/* minimums of bounding box */
-	point_t			max_pt;	/* maximums of bounding box */
-	long			index;	/* struct # in this model */
+	point_t			min_pt;	/**< @brief minimums of bounding box */
+	point_t			max_pt;	/**< @brief maximums of bounding box */
+	long			index;	/**< @brief struct # in this model */
 };
 
-/*
+/**
  *			F A C E
  *
  *  Note: there will always be exactly two faceuse's using a face.
  *  To find them, go up fu_p for one, then across fumate_p to other.
  */
 struct face {
-	struct bu_list		l;	/* faces in face_g's f_hd list */
-	struct faceuse		*fu_p;	/* Ptr up to one use of this face */
+	struct bu_list		l;	/**< @brief faces in face_g's f_hd list */
+	struct faceuse		*fu_p;	/**< @brief Ptr up to one use of this face */
 	union {
 		long		    *magic_p;
 		struct face_g_plane *plane_p;
 		struct face_g_snurb *snurb_p;
-	} g;				/* geometry */
-	int			flip;	/* !0 ==> flip normal of fg */
+	} g;				/**< @brief geometry */
+	int			flip;	/**< @brief !0 ==> flip normal of fg */
 	/* These might be better stored in a face_a (not faceuse_a!) */
 	/* These are not stored on disk */
-	point_t			min_pt;	/* minimums of bounding box */
-	point_t			max_pt;	/* maximums of bounding box */
-	long			index;	/* struct # in this model */
+	point_t			min_pt;	/**< @brief minimums of bounding box */
+	point_t			max_pt;	/**< @brief maximums of bounding box */
+	long			index;	/**< @brief struct # in this model */
 };
 
 struct face_g_plane {
 	long			magic;
-	struct bu_list		f_hd;	/* list of faces sharing this surface */
-	plane_t			N;	/* Plane equation (incl normal) */
-	long			index;	/* struct # in this model */
+	struct bu_list		f_hd;	/**< @brief list of faces sharing this surface */
+	plane_t			N;	/**< @brief Plane equation (incl normal) */
+	long			index;	/**< @brief struct # in this model */
 };
 
 struct face_g_snurb {
 	/* NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
 	struct bu_list		l;
-	struct bu_list		f_hd;	/* list of faces sharing this surface */
-	int			order[2]; /* surface order [0] = u, [1] = v */
-	struct knot_vector	u;	/* surface knot vectors */
-	struct knot_vector	v;	/* surface knot vectors */
+	struct bu_list		f_hd;	/**< @brief list of faces sharing this surface */
+	int			order[2]; /**< @brief surface order [0] = u, [1] = v */
+	struct knot_vector	u;	/**< @brief surface knot vectors */
+	struct knot_vector	v;	/**< @brief surface knot vectors */
 	/* surface control points */
-	int			s_size[2]; /* mesh size, u,v */
-	int			pt_type; /* surface point type */
-	fastf_t			*ctl_points; /* array [size[0]*size[1]] */
+	int			s_size[2]; /**< @brief mesh size, u,v */
+	int			pt_type; /**< @brief surface point type */
+	fastf_t			*ctl_points; /**< @brief array [size[0]*size[1]] */
 	/* START OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
-	int			dir;	/* direction of last refinement */
-	point_t			min_pt;	/* min corner of bounding box */
-	point_t			max_pt;	/* max corner of bounding box */
+	int			dir;	/**< @brief direction of last refinement */
+	point_t			min_pt;	/**< @brief min corner of bounding box */
+	point_t			max_pt;	/**< @brief max corner of bounding box */
 	/*   END OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
-	long			index;	/* struct # in this model */
+	long			index;	/**< @brief struct # in this model */
 };
 
 struct faceuse {
-	struct bu_list		l;	/* fu's, in shell's fu_hd list */
-	struct shell		*s_p;	/* owning shell */
-	struct faceuse		*fumate_p;    /* opposite side of face */
-	int			orientation;  /* rel to face geom defn */
-	int			outside; /* RESERVED for future:  See Lee Butler */
-	struct face		*f_p;	/* face definition and attributes */
-	struct bu_list		lu_hd;	/* list of loops in face-use */
-	long			index;	/* struct # in this model */
+	struct bu_list		l;	/**< @brief fu's, in shell's fu_hd list */
+	struct shell		*s_p;	/**< @brief owning shell */
+	struct faceuse		*fumate_p;    /**< @brief opposite side of face */
+	int			orientation;  /**< @brief rel to face geom defn */
+	int			outside; /**< @brief RESERVED for future:  See Lee Butler */
+	struct face		*f_p;	/**< @brief face definition and attributes */
+	struct bu_list		lu_hd;	/**< @brief list of loops in face-use */
+	long			index;	/**< @brief struct # in this model */
 };
 
-/* Returns a 3-tuple (vect_t), given faceuse and state of flip flags */
+/** Returns a 3-tuple (vect_t), given faceuse and state of flip flags */
 #define NMG_GET_FU_NORMAL(_N, _fu)	{ \
 	register const struct faceuse	*_fu1 = (_fu); \
 	register const struct face_g_plane	*_fg; \
@@ -396,7 +401,7 @@ struct faceuse {
 		VMOVE( _N, _fg->N ); \
 	} }
 
-/* Returns a 4-tuple (plane_t), given faceuse and state of flip flags */
+/** Returns a 4-tuple (plane_t), given faceuse and state of flip flags */
 #define NMG_GET_FU_PLANE(_N, _fu)	{ \
 	register const struct faceuse	*_fu1 = (_fu); \
 	register const struct face_g_plane	*_fg; \
@@ -410,7 +415,7 @@ struct faceuse {
 		HMOVE( _N, _fg->N ); \
 	} }
 
-/*
+/**
  *			L O O P
  *
  *  To find all the uses of this loop, use lu_p for one loopuse,
@@ -439,33 +444,33 @@ struct faceuse {
 
 struct loop {
 	long			magic;
-	struct loopuse		*lu_p;	/* Ptr to one use of this loop */
-	struct loop_g		*lg_p;  /* Geometry */
-	long			index;	/* struct # in this model */
+	struct loopuse		*lu_p;	/**< @brief Ptr to one use of this loop */
+	struct loop_g		*lg_p;  /**< @brief Geometry */
+	long			index;	/**< @brief struct # in this model */
 };
 
 struct loop_g {
 	long			magic;
-	point_t			min_pt;	/* minimums of bounding box */
-	point_t			max_pt;	/* maximums of bounding box */
-	long			index;	/* struct # in this model */
+	point_t			min_pt;	/**< @brief minimums of bounding box */
+	point_t			max_pt;	/**< @brief maximums of bounding box */
+	long			index;	/**< @brief struct # in this model */
 };
 
 struct loopuse {
-	struct bu_list		l;	/* lu's, in fu's lu_hd, or shell's lu_hd */
+	struct bu_list		l;	/**< @brief lu's, in fu's lu_hd, or shell's lu_hd */
 	union {
-		struct faceuse  *fu_p;	/* owning face-use */
+		struct faceuse  *fu_p;	/**< @brief owning face-use */
 		struct shell	*s_p;
 		long		*magic_p;
 	} up;
-	struct loopuse		*lumate_p; /* loopuse on other side of face */
-	int			orientation;  /* OT_SAME=outside loop */
-	struct loop		*l_p;	/* loop definition and attributes */
-	struct bu_list		down_hd; /* eu list or vu pointer */
-	long			index;	/* struct # in this model */
+	struct loopuse		*lumate_p; /**< @brief loopuse on other side of face */
+	int			orientation;  /**< @brief OT_SAME=outside loop */
+	struct loop		*l_p;	/**< @brief loop definition and attributes */
+	struct bu_list		down_hd; /**< @brief eu list or vu pointer */
+	long			index;	/**< @brief struct # in this model */
 };
 
-/*
+/**
  *			E D G E
  *
  *  To find all edgeuses of an edge, use eu_p to get an arbitrary edgeuse,
@@ -487,22 +492,22 @@ struct loopuse {
  */
 struct edge {
 	long			magic;
-	struct edgeuse		*eu_p;	/* Ptr to one use of this edge */
-	long			is_real;/* artifact or modeled edge (from tessellator) */
-	long			index;	/* struct # in this model */
+	struct edgeuse		*eu_p;	/**< @brief Ptr to one use of this edge */
+	long			is_real;/**< @brief artifact or modeled edge (from tessellator) */
+	long			index;	/**< @brief struct # in this model */
 };
 
-/*
+/**
  *  IMPORTANT:  First two items in edge_g_lseg and edge_g_cnurb must be
  *  identical structure, so pointers are puns for both.
  *  eu_hd2 list must be in same place for both.
  */
 struct edge_g_lseg {
-	struct bu_list		l;	/* NOTICE:  l.forw & l.back *not* stored in database.  For alignment only. */
-	struct bu_list		eu_hd2;	/* heads l2 list of edgeuses on this line */
-	point_t			e_pt;	/* parametric equation of the line */
+	struct bu_list		l;	/**< @brief NOTICE:  l.forw & l.back *not* stored in database.  For alignment only. */
+	struct bu_list		eu_hd2;	/**< @brief heads l2 list of edgeuses on this line */
+	point_t			e_pt;	/**< @brief parametric equation of the line */
 	vect_t			e_dir;
-	long			index;	/* struct # in this model */
+	long			index;	/**< @brief struct # in this model */
 };
 
 /*
@@ -514,40 +519,40 @@ struct edge_g_lseg {
  *  the path through parameter space.
  */
 struct edge_g_cnurb {
-	struct bu_list		l;	/* NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
-	struct bu_list		eu_hd2;	/* heads l2 list of edgeuses on this curve */
-	int			order;	/* Curve Order */
-	struct knot_vector	k;	/* curve knot vector */
+	struct bu_list		l;	/**< @brief NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
+	struct bu_list		eu_hd2;	/**< @brief heads l2 list of edgeuses on this curve */
+	int			order;	/**< @brief Curve Order */
+	struct knot_vector	k;	/**< @brief curve knot vector */
 	/* curve control polygon */
-	int			c_size;	/* number of ctl points */
-	int			pt_type;/* curve point type */
-	fastf_t			*ctl_points; /* array [c_size] */
-	long			index;	/* struct # in this model */
+	int			c_size;	/**< @brief number of ctl points */
+	int			pt_type;/**< @brief curve point type */
+	fastf_t			*ctl_points; /**< @brief array [c_size] */
+	long			index;	/**< @brief struct # in this model */
 };
 
 struct edgeuse {
-	struct bu_list		l;	/* cw/ccw edges in loop or wire edges in shell */
-	struct bu_list		l2;	/* member of edge_g's eu_hd2 list */
+	struct bu_list		l;	/**< @brief cw/ccw edges in loop or wire edges in shell */
+	struct bu_list		l2;	/**< @brief member of edge_g's eu_hd2 list */
 	union {
 		struct loopuse	*lu_p;
 		struct shell	*s_p;
-		long	        *magic_p; /* for those times when we're not sure */
+		long	        *magic_p; /**< @brief for those times when we're not sure */
 	} up;
-	struct edgeuse		*eumate_p;  /* eu on other face or other end of wire*/
-	struct edgeuse		*radial_p;  /* eu on radially adj. fu (null if wire)*/
-	struct edge		*e_p;	    /* edge definition and attributes */
-	int	  		orientation;/* compared to geom (null if wire) */
-	struct vertexuse	*vu_p;	    /* first vu of eu in this orient */
+	struct edgeuse		*eumate_p;  /**< @brief eu on other face or other end of wire*/
+	struct edgeuse		*radial_p;  /**< @brief eu on radially adj. fu (null if wire)*/
+	struct edge		*e_p;	    /**< @brief edge definition and attributes */
+	int	  		orientation;/**< @brief compared to geom (null if wire) */
+	struct vertexuse	*vu_p;	    /**< @brief first vu of eu in this orient */
 	union {
 		long		    *magic_p;
 		struct edge_g_lseg  *lseg_p;
 		struct edge_g_cnurb *cnurb_p;
-	} g;				/* geometry */
+	} g;				/**< @brief geometry */
 	/* (u,v,w) param[] of vu is found in vu_p->vua_p->param */
-	long			index;	/* struct # in this model */
+	long			index;	/**< @brief struct # in this model */
 };
 
-/*
+/**
  *			V E R T E X
  *
  *  The vertex and vertexuse structures are connected in a way different
@@ -557,47 +562,47 @@ struct edgeuse {
  */
 struct vertex {
 	long			magic;
-	struct bu_list		vu_hd;	/* heads list of vu's of this vertex */
-	struct vertex_g		*vg_p;	/* geometry */
-	long			index;	/* struct # in this model */
+	struct bu_list		vu_hd;	/**< @brief heads list of vu's of this vertex */
+	struct vertex_g		*vg_p;	/**< @brief geometry */
+	long			index;	/**< @brief struct # in this model */
 };
 
 struct vertex_g {
 	long			magic;
-	point_t			coord;	/* coordinates of vertex in space */
-	long			index;	/* struct # in this model */
+	point_t			coord;	/**< @brief coordinates of vertex in space */
+	long			index;	/**< @brief struct # in this model */
 };
 
 struct vertexuse {
-	struct bu_list		l;	/* list of all vu's on a vertex */
+	struct bu_list		l;	/**< @brief list of all vu's on a vertex */
 	union {
-		struct shell	*s_p;	/* no fu's or eu's on shell */
-		struct loopuse	*lu_p;	/* loopuse contains single vertex */
-		struct edgeuse	*eu_p;	/* eu causing this vu */
-		long		*magic_p; /* for those times when we're not sure */
+		struct shell	*s_p;	/**< @brief no fu's or eu's on shell */
+		struct loopuse	*lu_p;	/**< @brief loopuse contains single vertex */
+		struct edgeuse	*eu_p;	/**< @brief eu causing this vu */
+		long		*magic_p; /**< @brief for those times when we're not sure */
 	} up;
-	struct vertex		*v_p;	/* vertex definition and attributes */
+	struct vertex		*v_p;	/**< @brief vertex definition and attributes */
 	union {
 		long				*magic_p;
 		struct vertexuse_a_plane	*plane_p;
 		struct vertexuse_a_cnurb	*cnurb_p;
-	} a;				/* Attributes */
-	long			index;	/* struct # in this model */
+	} a;				/**< @brief Attributes */
+	long			index;	/**< @brief struct # in this model */
 };
 
 struct vertexuse_a_plane {
 	long			magic;
-	vect_t			N;	/* (opt) surface Normal at vertexuse */
-	long			index;	/* struct # in this model */
+	vect_t			N;	/**< @brief (opt) surface Normal at vertexuse */
+	long			index;	/**< @brief struct # in this model */
 };
 
 struct vertexuse_a_cnurb {
 	long			magic;
-	fastf_t			param[3]; /* (u,v,w) of vu on eu's cnurb */
-	long			index;	/* struct # in this model */
+	fastf_t			param[3]; /**< @brief (u,v,w) of vu on eu's cnurb */
+	long			index;	/**< @brief struct # in this model */
 };
 
-/*
+/**
  * storage allocation and de-allocation support
  *  Primarily used by nmg_mk.c
  */
@@ -670,37 +675,37 @@ struct vertexuse_a_cnurb {
 #define FREE_VERTEXUSE_A_PLANE(p) NMG_FREESTRUCT(p, vertexuse_a_plane)
 #define FREE_VERTEXUSE_A_CNURB(p) NMG_FREESTRUCT(p, vertexuse_a_cnurb)
 
-/* Do two edgeuses share the same two vertices? If yes, eu's should be joined. */
+/** Do two edgeuses share the same two vertices? If yes, eu's should be joined. */
 #define NMG_ARE_EUS_ADJACENT(_eu1,_eu2)	(  \
 	( (_eu1)->vu_p->v_p == (_eu2)->vu_p->v_p &&   \
 	  (_eu1)->eumate_p->vu_p->v_p == (_eu2)->eumate_p->vu_p->v_p )  ||  \
 	( (_eu1)->vu_p->v_p == (_eu2)->eumate_p->vu_p->v_p &&  \
 	  (_eu1)->eumate_p->vu_p->v_p == (_eu2)->vu_p->v_p ) )
 
-/* Compat: Used in nmg_misc.c and nmg_mod.c */
+/** Compat: Used in nmg_misc.c and nmg_mod.c */
 #define EDGESADJ(_e1, _e2) NMG_ARE_EUS_ADJACENT(_e1,_e2)
 
-/* Print a plane equation. */
+/** Print a plane equation. */
 #define PLPRINT(_s, _pl) bu_log("%s %gx + %gy + %gz = %g\n", (_s), \
 	(_pl)[0], (_pl)[1], (_pl)[2], (_pl)[3])
 
 
-/* values for the "allhits" argument to mg_class_pt_fu_except() */
-#define NMG_FPI_FIRST	0	/* return after finding first touch */
-#define NMG_FPI_PERGEOM	1	/* find all touches,
+/** values for the "allhits" argument to mg_class_pt_fu_except() */
+#define NMG_FPI_FIRST	0	/**< @brief return after finding first touch */
+#define NMG_FPI_PERGEOM	1	/**< @brief find all touches,
 				 *  call user funcs once for each
 				 * geometry element touched
 				 */
-#define NMG_FPI_PERUSE	2	/* find all touches,
+#define NMG_FPI_PERUSE	2	/**< @brief find all touches,
 				 *  call user funcs once for each
 				 * use of geom elements touched
 				 */
 
 
 struct nmg_boolstruct {
-	struct bu_ptbl	ilist;		/* vertexuses on intersection line */
+	struct bu_ptbl	ilist;		/**< @brief vertexuses on intersection line */
 	fastf_t		tol;
-	point_t		pt;		/* line of intersection */
+	point_t		pt;		/**< @brief line of intersection */
 	vect_t		dir;
 	int		coplanar;
 	char		*vertlist;
@@ -805,7 +810,7 @@ struct nmg_struct_counts {
 #define NMG_VLIST_STYLE_USE_VU_NORMALS		4
 #define NMG_VLIST_STYLE_NO_SURFACES		8
 
-/*
+/**
  *  Function table, for use with nmg_visit()
  *  Indended to have same generally the organization as nmg_struct_counts.
  *  The handler's args are long* to allow generic handlers to be written,
@@ -858,7 +863,7 @@ struct nmg_visit_handlers {
 };
 
 #endif
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -868,3 +873,4 @@ struct nmg_visit_handlers {
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

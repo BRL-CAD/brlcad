@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libdm */
+/*@{*/
 /** @file dm-ogl.h
  *
  */
@@ -64,7 +66,7 @@ struct ogl_vars {
 extern void ogl_fogHint();
 
 #endif /* SEEN_DM_OGL */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -74,3 +76,4 @@ extern void ogl_fogHint();
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

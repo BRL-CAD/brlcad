@@ -18,18 +18,20 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup deprecated */
+/*@{*/
 /** @file compat4.h
- *
+ *@deprecated
  *  A compatability header file for LIBBU and LIBBN which provides
  *  BRL-CAD Release 4.4 style rt_xxx() names for the new bu_xxx() routines.
  *  So that users don't have to struggle with upgrading their source code.
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  *  $Header$
  */
@@ -474,7 +476,7 @@ __END_DECLS
 #endif /* SEEN_COMPAT4_H */
 
 #endif /* DONT_USE_COMPAT4_H */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -484,3 +486,4 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

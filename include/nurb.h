@@ -18,20 +18,22 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup nurb */
+/*@{*/
 /** @file nurb.h
  *
- *  Function -
+ * @brief
  *	Define surface and curve structures for
  * 	Non Rational Uniform B-Spline (NURB)
  *	curves and surfaces.
  *
- *  Author -
- *	Paul Randal Stay
  *
- *  Source -
+ *  @author	Paul Randal Stay
+ *
+ *  @par Source
  * 	SECAD/VLD Computing Consortium, Bldg 394
- *	The U.S. Army Ballistic Research Laboratory
- * 	Aberdeen Proving Ground, Maryland 21005
+ *@n	The U.S. Army Ballistic Research Laboratory
+ *@n 	Aberdeen Proving Ground, Maryland 21005
  *
  *  $Header$
  */
@@ -78,11 +80,11 @@
  */
 
 /* point types */
-#define RT_NURB_PT_XY 	1			/* x,y coordintes */
-#define RT_NURB_PT_XYZ	2			/* x,y,z coordinates */
-#define RT_NURB_PT_UV	3			/* trim u,v parameter space */
-#define RT_NURB_PT_DATA 4			/* random data */
-#define RT_NURB_PT_PROJ	5			/* Projected Surface */
+#define RT_NURB_PT_XY 	1			/**< @brief x,y coordintes */
+#define RT_NURB_PT_XYZ	2			/**< @brief x,y,z coordinates */
+#define RT_NURB_PT_UV	3			/**< @brief trim u,v parameter space */
+#define RT_NURB_PT_DATA 4			/**< @brief random data */
+#define RT_NURB_PT_PROJ	5			/**< @brief Projected Surface */
 
 #define RT_NURB_PT_RATIONAL	1
 #define RT_NURB_PT_NONRAT 	0
@@ -114,8 +116,8 @@
 
 struct rt_nurb_poly {
 	struct rt_nurb_poly * next;
-	point_t		ply[3];		/* Vertices */
-	fastf_t		uv[3][2];	/* U,V parametric values */
+	point_t		ply[3];		/**< @brief Vertices */
+	fastf_t		uv[3][2];	/**< @brief U,V parametric values */
 };
 
 struct rt_nurb_uv_hit {
@@ -309,7 +311,7 @@ RT_EXPORT BU_EXTERN( struct bezier_2d_list *subdivide_bezier, (struct bezier_2d_
 							fastf_t epsilon, int depth) );
 #endif
 
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -319,3 +321,4 @@ RT_EXPORT BU_EXTERN( struct bezier_2d_list *subdivide_bezier, (struct bezier_2d_
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

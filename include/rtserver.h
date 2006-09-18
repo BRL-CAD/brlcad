@@ -18,10 +18,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup rtserver */
+/*@{*/
 /** @file rtserver.h
+ * @brief
  *	header file for the rtserver
  *
- *  Author: John R. Anderson
+ *  @author: John R. Anderson
  *
  *  In order to use the rtserver, the BRL-CAD model must include an opaque binary object named "rtserver_data"
  *  This object must contain ASCII data consisting of lines of the form:
@@ -112,7 +115,7 @@ extern struct rtserver_job *rts_get_rtserver_job();
 extern struct xray *rts_get_xray();
 
 extern int get_max_working_threads();
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -122,3 +125,4 @@ extern int get_max_working_threads();
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

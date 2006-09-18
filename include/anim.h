@@ -18,19 +18,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup anim */
+/*@{*/
 /** @file anim.h
  *
- *  Author -
+ *  @author
  *	Carl J. Nuzman
  *
-  Source -
+ * @par Source
  *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *@n      Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *
+ * 	Be sure to include vmath.h before this file.
  */
-
-/*
- 	Be sure to include vmath.h before this file.
-*/
 
 #include "compat4.h"
 
@@ -129,6 +129,7 @@ typedef fastf_t  mat3_t[9];
 
 
 
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -138,3 +139,4 @@ typedef fastf_t  mat3_t[9];
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

@@ -18,12 +18,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup rt */
+/*@{*/
 /** @file shadework.h
  *
- *  Source -
+ *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *@n	The U. S. Army Ballistic Research Laboratory
+ *@n	Aberdeen Proving Ground, Maryland  21005
  *
  *  $Header$
  */
@@ -31,7 +33,7 @@
 #define SHADEWORK_H
 
 /* for light_specific */
-/* #include "light.h" */
+/* # include "light.h" */
 
 #define SW_NLIGHTS	16		/* Max # of light sources */
 
@@ -40,36 +42,36 @@
  */
 struct shadework {
 /* XXX At least the first three of these need to be spectral curves */
-	fastf_t		sw_transmit;	/* 0.0 -> 1.0 */
-	fastf_t		sw_reflect;	/* 0.0 -> 1.0 */
-	fastf_t		sw_extinction;	/* extinction coeff, mm^-1 */
+	fastf_t		sw_transmit;	/**< @brief  0.0 -> 1.0 */
+	fastf_t		sw_reflect;	/**< @brief  0.0 -> 1.0 */
+	fastf_t		sw_extinction;	/**< @brief  extinction coeff, mm^-1 */
 	fastf_t		sw_refrac_index;
 	fastf_t		sw_temperature;
 #if RT_MULTISPECTRAL
 	struct bn_tabdata *msw_color;
 	struct bn_tabdata *msw_basecolor;
 #else
-	fastf_t		sw_color[3];	/* shaded color */
-	fastf_t		sw_basecolor[3]; /* base color */
+	fastf_t		sw_color[3];	/**< @brief  shaded color */
+	fastf_t		sw_basecolor[3]; /**< @brief  base color */
 #endif
-	struct hit	sw_hit;		/* ray hit (dist,point,normal) */
+	struct hit	sw_hit;		/**< @brief  ray hit (dist,point,normal) */
 	struct uvcoord	sw_uv;
 #if RT_MULTISPECTRAL
 	struct bn_tabdata *msw_intensity[SW_NLIGHTS];
 #else
-	fastf_t		sw_intensity[3*SW_NLIGHTS]; /* light intensities */
+	fastf_t		sw_intensity[3*SW_NLIGHTS]; /**< @brief  light intensities */
 #endif
-	fastf_t		sw_tolight[3*SW_NLIGHTS];   /* light directions */
-	struct light_specific	*sw_visible[SW_NLIGHTS]; /* visibility flags/ptrs */
-	fastf_t		sw_lightfract[SW_NLIGHTS];/* % light visible */
-	int		sw_xmitonly;	/* flag: need sw_transmit only */
-					/* sw_xmitonly=1, compute transmission only */
-					/* sw_xmitonly=2, want parameters only, not even transmission */
-	int		sw_inputs;	/* fields from mf_inputs actually filled */
-	int		sw_frame;	/* # of current frame */
-	fastf_t		sw_frametime;	/* frame time delta off 1st frame */
-	fastf_t		sw_pixeltime;	/* pixel time delta off 1st pixel of 1st frame */
-	struct seg	*sw_segs;	/* segs which made partition */
+	fastf_t		sw_tolight[3*SW_NLIGHTS];   /**< @brief  light directions */
+	struct light_specific	*sw_visible[SW_NLIGHTS]; /**< @brief  visibility flags/ptrs */
+	fastf_t		sw_lightfract[SW_NLIGHTS];/**< @brief  % light visible */
+	int		sw_xmitonly;	/**< @brief  flag: need sw_transmit only */
+					/**< @brief  sw_xmitonly=1, compute transmission only */
+					/**< @brief  sw_xmitonly=2, want parameters only, not even transmission */
+	int		sw_inputs;	/**< @brief  fields from mf_inputs actually filled */
+	int		sw_frame;	/**< @brief  # of current frame */
+	fastf_t		sw_frametime;	/**< @brief  frame time delta off 1st frame */
+	fastf_t		sw_pixeltime;	/**< @brief  pixel time delta off 1st pixel of 1st frame */
+	struct seg	*sw_segs;	/**< @brief  segs which made partition */
 /*
  * The following is experimental.  DO NOT USE
  */
@@ -93,7 +95,7 @@ struct shadework {
 
 BU_EXTERN(void		pr_shadework, (const char *str, const struct shadework *swp));
 #endif
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -103,3 +105,4 @@ BU_EXTERN(void		pr_shadework, (const char *str, const struct shadework *swp));
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

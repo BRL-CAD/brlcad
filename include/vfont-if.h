@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup vfont */
+/*@{*/
 /** @file vfont-if.h
  *
  *  This header file describes the in-memory format used by
@@ -56,10 +58,10 @@
  *  left-to-right, top-to-bottom order (most decidedly non-VAX style).
  *  Never seems to be any consistency in data formats.
  *
- *  Author -
+ *  @author
  *	Michael John Muuss
  *
- *  Source -
+ *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -89,7 +91,7 @@ struct vfont {
 
 extern struct vfont	*vfont_get();
 extern void		vfont_free();
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -99,3 +101,4 @@ extern void		vfont_free();
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

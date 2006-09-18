@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libdm */
+/*@{*/
 /** @file dm-wgl.h
  *
  */
@@ -64,7 +66,7 @@ struct wgl_vars {
 extern void wgl_fogHint();
 
 #endif /* SEEN_DM_WGL */
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -74,3 +76,4 @@ extern void wgl_fogHint();
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

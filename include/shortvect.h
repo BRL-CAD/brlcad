@@ -18,8 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libbn */
+/*@{*/
 /** @file shortvect.h
- *
+ *@brief
  *  This header file is intended to be include'ed in front of any
  *  loop which is known to never involve more than 32,
  *  to permit vectorizing compilers to omit extra overhead.
@@ -40,11 +42,11 @@
  *  the file "noalias-prag.h", which will contain the various
  *  vendor-specific pragma's.
  *
- *  Authors -
+ *  @authors -
  *	David Becker		Cray
  *	Michael John Muuss	BRL
  *
- *  Source -
+ *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -56,7 +58,7 @@
 #else
 	/* convex? */
 #endif
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -66,3 +68,4 @@
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

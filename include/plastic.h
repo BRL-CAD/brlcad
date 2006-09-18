@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup liboptical */
+/*@{*/
 /** @file plastic.h
  *
  */
@@ -34,8 +36,8 @@ struct phong_specific {
 	int	shine;
 	double	wgt_specular;
 	double	wgt_diffuse;
-	double	transmit;       /* Moss "transparency" */
-	double	reflect;        /* Moss "transmission" */
+	double	transmit;       /**< @brief Moss "transparency" */
+	double	reflect;        /**< @brief Moss "transmission" */
 	double	refrac_index;
 	double	extinction;
 	double	emission[3];
@@ -44,7 +46,7 @@ struct phong_specific {
 
 extern struct bu_structparse phong_parse[];
 #endif
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -54,3 +56,4 @@ extern struct bu_structparse phong_parse[];
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

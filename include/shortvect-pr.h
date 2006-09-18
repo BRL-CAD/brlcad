@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libbn */
+/*@{*/
 /** @file shortvect-pr.h
  *			S H O R T V E C T - P R A G . H
  *
@@ -28,11 +30,11 @@
  *  This file will never be included when the compilation is not being
  *  processed by an ANSI-C compiler.
  *
- *  Authors -
- *	David Becker		Cray
- *	Michael John Muuss	BRL
  *
- *  Source -
+ *  @author	David Becker		Cray
+ *  @author	Michael John Muuss	BRL
+ *
+ *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -47,7 +49,7 @@
 		/* ??? */
 #	endif
 #endif
-
+/*@}*/
 /*
  * Local Variables:
  * mode: C
@@ -57,3 +59,4 @@
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

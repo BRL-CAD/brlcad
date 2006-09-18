@@ -207,7 +207,7 @@ FB_EXPORT extern int	fb_sim_getcursor();
 			   (to)[GRN]=(from)[GRN];\
 			   (to)[BLU]=(from)[BLU]; }
 
-/*
+/**
  * A fast inline version of fb_wpixel.  This one does NOT check for errors,
  *  nor "return" a value.  For reasons of C syntax it needs the basename
  *  of an RGBpixel rather than a pointer to one.
@@ -259,3 +259,4 @@ FB_EXPORT extern char fb_version[];
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
