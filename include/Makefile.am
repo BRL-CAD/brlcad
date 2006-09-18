@@ -91,7 +91,6 @@ brlcadinclude_wanted = \
 	fb.h \
 	fbio.h \
 	fbserv_obj.h \
-	forms.h \
 	libtermio.h \
 	light.h \
 	machine.h \
