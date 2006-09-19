@@ -1,0 +1,33 @@
+BRL-CAD on VAX README
+=====================
+
+One of the first systems to run BRL-CAD includes the VAX.  In
+particular, a VAX 11/780 named VGR is the baseline reference machine
+for the BRL-CAD Benchmark suite.  Through the 80's and most of the
+90's, BRL-CAD was compiled for and maintained on VGR running 4.3 BSD
+until the hardware was finally decommissioned.
+
+BRL-CAD has been successfuly compiled for and run under the simh
+Computer History Simulation Project's VAX simulator.  Using this
+simulator, it's feasible to install one of the BSD variants
+(e.g. NetBSD) and using the GCC compiler, obtain a compilation of
+BRL-CAD with minimal effort.  As of the last effort involved in
+compiling BRL-CAD under this environment, there were a few steps
+necessary that include the following:
+
+  - Define the preprocessor symbol "vax"
+	./configure CPPFLAGS=-Dvax
+
+  - Disable compilation of libfft and sig.  The FFT library builds
+    convolution kernels that are too large for the usual VAX memory
+    sizes.
+	edit src/Makefile.am and remove libfft and sig lines
+
+  - Compile against libm.a instead of libm.so.  The shared object
+    library (at least under NetBSD) is buggy and will cause run-time
+    bus errors (i.e. rt will crash).
+	make LIBM=/usr/lib/libm.a
+
+After those steps, you should at least be able to perform a benchmark
+compilation (i.e. "make benchmark"), raytrace images, and obtain
+performance metrics.
