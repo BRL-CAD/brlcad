@@ -160,4 +160,4 @@ Annoyances
 Bugs should be reported to the bug tracker on the project website at
 http://sourceforge.net/tracker/?atid=640802&group_id=105292
 
-BUGS items should be formated to column 70 (M-q in emacs), no tabs
+BUGS should be formatted to column 70 (M-q in emacs), no tabs.

@@ -1,4 +1,4 @@
-BRL-CAD to do list
+BRL-CAD To Do List
 ==================
 
 Included below is a list of things that are scheduled or desirable to
@@ -223,4 +223,4 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 See the project task tracker for more to do items and future planning
 efforts.  http://sf.net/pm/?group_id=105292
 
-TODO items should be formated to column 70 (M-q in emacs), no tabs
+TODO items should be formatted to column 70 (M-q in emacs), no tabs.
