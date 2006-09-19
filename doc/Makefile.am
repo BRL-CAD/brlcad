@@ -15,6 +15,7 @@ documentation_DATA = \
 	README.Linux \
 	README.MacOSX \
 	README.Solaris \
+	README.VAX \
 	README.Windows \
 	anim.txt \
 	archer_ack.txt \
