@@ -1,3 +1,6 @@
+BRL-CAD on Solaris README
+=========================
+
 If while compiling you encounter an error "Text relocation remains
 against symbol" along with some number of lines following, it usually
 means that the build has attempted to link a static system library

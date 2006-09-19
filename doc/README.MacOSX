@@ -7,6 +7,17 @@ installation when building from the sources.  Beyond the notes
 provided here, building on Mac OS X can generally be considered the
 same as the UNIX, BSD, and Linux platforms.
 
+Table of Contents
+-----------------
+  Introduction
+  Table of Contents
+  X11 Window Server
+  Supported Versions
+  Mac OS X 10.2
+  Parallel Builds
+  Bugs
+
+
 X11 Window Server
 -----------------
 You'll need to install an X11 server if you would like to build Tk and

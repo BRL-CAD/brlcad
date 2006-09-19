@@ -1,3 +1,6 @@
+BRL-CAD on Windows README
+=========================
+
 The Windows build of MGED does not currently have a functioning
 display manager so raytracing directly into the Graphics Window is not
 possible.  To raytrace, users should either render directly to a
