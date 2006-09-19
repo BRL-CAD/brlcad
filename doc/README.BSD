@@ -1,18 +1,28 @@
-The only issue that comes to mind, is that newer versions of libtool
-have a bug where they do not install the .la files causing libtool to
-report warnings.  If you see messages in the output during install
-such as:
+BRL-CAD on BSD README
+=====================
+
+Included below are details on building under one of the various BSD
+variants.  BRL-CAD is continuously compiled under various variants of
+BSD including FreeBSD, NetBSD, OpenBSD, Darwin, and even the original
+4.3 BSD (though now rare).  See the README.VAX document for additional
+details that pertain to building BRL-CAD on a VAX running BSD.
+
+The only compilation issue worth noting, is that newer versions of
+libtool have a bug where they do not install the .la files causing
+libtool to report warnings.  Examples of such messages in the output
+during install include:
 
 libtool: install: warning: `../../src/libfb/libfb.la' has not been installed in `/usr/brlcad/lib'
 libtool: install: warning: `../../src/libbu/libbu.la' has not been installed in `/usr/brlcad/lib'
 
-Those warnings are not cause for concern.  The install is complete if
-that is all that is being reported.  Regardless, a simple workaround
-to quell the warnings is to manually copy all the .la files in one
-step to the install library directory:
+Those warnings are not cause for concern.  A simple workaround to
+quell the warnings is to manually copy/install all the .la files in
+one step to the install library directory before performing the final
+'sudo make install' step:
 
 find . -name \*.la -exec cp {} /usr/brlcad/lib/. \;
 
 After that, a 'sudo make install' (or whatever means you use to go
 root) should work just fine and the warnings should go away.
 
+BRL-CAD is included in the FreeBSD Ports system.
