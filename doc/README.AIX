@@ -1,0 +1,28 @@
+BRL-CAD on AIX README
+=====================
+
+Building BRL-CAD under AIX is fairly straitforward using a correctly
+installed version on the GCC compiler.  If, however, you are using the
+IBM Visual Age compiler, then there are additional manual compilation
+steps that will be necessary.  In particular, the IBM compiler and
+associated standard C library headers are inconsistent with respect to
+ANSI/POSIX compliance compiler options.
+
+The IBM compiler supports a variety of compliance options, the two of
+particular relevance to building BRL-CAD (in terms of being the close
+to obtaining a functional compile) are the strict compliance
+(-qlanglvl=stdc89) or "extended" compliance (-qlanglvl=extc89) modes.
+Problems encountered in our build environment using strict compliance
+does mostly work though we ran into errors in the standard C library
+headers.
+
+Using the "extended" complaince mode resolved the standard C library
+header issues, but introduces problems in the compilation of BRL-CAD
+as the compiler then disables the provision of the __STDC__
+preprocessor symbol.  BRL-CAD then defaults back to K&R mode, which
+the compiler verbosely refuses to compile.  The "quick fix" that has
+been used in the past is to simply swap the compiler between the two
+modes as when one fails (e.g. strict), the other usually succeeds
+(e.g. extended).  Barring that working, you can use extended mode and
+define __STDC__ manually.
+
