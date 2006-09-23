@@ -9,218 +9,164 @@
  * At this point, only the libbu module has been fully converted to the 
  * new format.  Other modules should follow soon.
  */
-/** @defgroup libbu libbu (utility functions) */
-
-/** @defgroup avs Attribute/Value Sets
+/** @defgroup libbu libbu (utility functions)
+ *
+ * @defgroup avs Attribute/Value Sets
+ * @ingroup libbu
+ *
+ * @defgroup bitv Bit Vectors
+ * @ingroup libbu
+ *
+ * @defgroup color Color
+ * @ingroup libbu
+ *
+ * @defgroup conv Data Conversion
+ * @ingroup libbu
+ *
+ * @addtogroup bu_debug Debugging 
+ * @ingroup libbu
+ *
+ * @defgroup hton Endian Support
+ * @ingroup libbu
+ *
+ * @defgroup getopt getopt
+ * @ingroup libbu
+ *
+ * @defgroup bu_hash Hashing
+ * @ingroup libbu
+ *
+ * @defgroup bu_hist Histogram Support
+ * @ingroup libbu
+ *
+ * @defgroup bu_list Linked Lists
+ * @ingroup libbu
+ *
+ * @defgroup mf Mapped Files
+ * @ingroup libbu
+ *
+ * @defgroup malloc Memory
+ * @ingroup libbu
+ *
+ * @defgroup magic Magic Numbers
+ * @ingroup libbu
+ *
+ * @defgroup mro Multiply Represented Objects
+ * @ingroup libbu
+ *
+ * @defgroup thread Parallel processing, semaphores
+ * @ingroup libbu
+ *
+ * @defgroup ptbl Pointer Tables
+ * @ingroup libbu
+ *
+ * @defgroup bu_log File I/O
+ * @ingroup libbu
+ *
+ * @defgroup rb RedBlack trees
+ * @ingroup libbu
+ *
+ * @defgroup parse Structure Parse/Print/read/write
+ * @ingroup libbu
+ *
+ * @defgroup butcl Tcl
+ * @ingroup libbu
+ *
+ * @defgroup vls Variable Length Strings
+ * @ingroup libbu
+ *
+ * @defgroup vfont vector fonts
  * @ingroup libbu
  */
 
-/** @defgroup bitv Bit Vectors
- * @ingroup libbu
- */
-
-/** @defgroup color Color
- * @ingroup libbu
- */
-
-/** @defgroup conv Data Conversion
- * @ingroup libbu
- */
-
-/** @addtogroup bu_debug Debugging 
- * @ingroup libbu
- */
-
-/** @defgroup hton Endian Support
- * @ingroup libbu
- */
-
-/** @defgroup getopt getopt
- * @ingroup libbu
- */
-
-/** @defgroup bu_hash Hashing
- * @ingroup libbu
- */
-
-/** @defgroup bu_hist Histogram Support
- * @ingroup libbu
- */
-
-/** @defgroup bu_list Linked Lists
- * @ingroup libbu
- */
-
-/** @defgroup mf Mapped Files
- * @ingroup libbu
- */
-
-/** @defgroup malloc Memory
- * @ingroup libbu
- */
-
-/** @defgroup magic Magic Numbers
- * @ingroup libbu
- */
-
-/** @defgroup mro Multiply Represented Objects
- * @ingroup libbu
- */
-
-/** @defgroup thread Parallel processing, semaphores
- * @ingroup libbu
- */
-
-/** @defgroup ptbl Pointer Tables
- * @ingroup libbu
- */
-
-/** @defgroup bu_log File I/O
- * @ingroup libbu
- */
-
-/** @defgroup rb RedBlack trees
- * @ingroup libbu
- */
-
-/** @defgroup parse Structure Parse/Print/read/write
- * @ingroup libbu
- */
-
-/** @defgroup butcl Tcl
- * @ingroup libbu
- */
-
-/** @defgroup vls Variable Length Strings
- * @ingroup libbu
- */
-
-/** @defgroup vfont vector fonts
- * @ingroup libbu
- */
-
-
-
-/** @defgroup libbn libbn (numerical functions) */
-
-/** @defgroup anim Animation
+/** @defgroup libbn libbn (numerical functions)
+ *
+ * @defgroup anim Animation
  * @ingroup libbn
- */
-
-/** @defgroup axis Axis
+ *
+ * @defgroup axis Axis
  * @ingroup libbn
- */
-
-/** @defgroup complex Complex Numbers
+ *
+ * @defgroup complex Complex Numbers
  * @ingroup libbn
- */
-
-/** @defgroup const Constants
+ *
+ * @defgroup const Constants
  * @ingroup libbn
- */
-
-/** @defgroup vlist Display Lists
+ *
+ * @defgroup vlist Display Lists
  * @ingroup libbn
- */
-
-/** @defgroup plot Plot/Draw
+ *
+ * @defgroup plot Plot/Draw
  * @ingroup libbn
- */
-
-/** @defgroup noise Fractal Noise
+ *
+ * @defgroup noise Fractal Noise
  * @ingroup libbn
- */
-
-/** @defgroup mat Matrix/Vector/Quaternion Math
+ *
+ * @defgroup mat Matrix/Vector/Quaternion Math
  * @ingroup libbn
- */
-
-/** @defgroup plane Point/Line/Plane Geometry Math
+ *
+ * @defgroup plane Point/Line/Plane Geometry Math
  * @ingroup libbn
- */
-
-/** @defgroup poly Polynomials
+ *
+ * @defgroup poly Polynomials
  * @ingroup libbn
- */
-
-/** @defgroup rand Random Numbers
+ *
+ * @defgroup rand Random Numbers
  * @ingroup libbn
- */
-
-/** @defgroup msr Minimal Standard Random Numbers 
+ *
+ * @defgroup msr Minimal Standard Random Numbers 
  * @ingroup rand
- */
-
-/** @defgroup bntcl bn Tcl interface
+ *
+ * @defgroup bntcl bn Tcl interface
  * @ingroup libbn
- */
-
-/** @defgroup rnd Random Number Tables
+ *
+ * @defgroup rnd Random Number Tables
  * @ingroup rand
- */
-
-/** @defgroup sphmap spherical maps
+ *
+ * @defgroup sphmap spherical maps
  * @ingroup libbn
- */
-
-/** @defgroup tol Tolerances
+ *
+ * @defgroup tol Tolerances
  * @ingroup libbn
- */
-
-/** @defgroup vtree Vertex Trees
+ *
+ * @defgroup vtree Vertex Trees
  * @ingroup libbn
- */
-
-/** @defgroup wavelet Wavelets
+ *
+ * @defgroup wavelet Wavelets
  * @ingroup libbn
- */
-
-
-
-
+ *
+ 
 /** @defgroup libfb libfb (framebuffer) */
 
 
-/** @defgroup librt librt geometry, raytracing */
-
-/** @defgroup dbio Database IO 
+/** @defgroup librt librt geometry, raytracing
+ *
+ * @defgroup dbio Database IO 
  * @ingroup librt
- */
-
-/** @defgroup db5 Database5
+ *
+ * @defgroup db5 Database5
  * @ingroup dbio
- */
-
-/** @defgroup db4 Database4
+ *
+ * @defgroup db4 Database4
  * @ingroup dbio
- */
-
-/** @defgroup g_ Primitives
+ *
+ * @defgroup g_ Primitives
  * @ingroup librt
- */
-
-/** @defgroup nmg N-Manifold Geometry
+ *
+ * @defgroup nmg N-Manifold Geometry
  * @ingroup g_
- */
-
-/** @defgroup nurb NURBS
+ *
+ * @defgroup nurb NURBS
  * @ingroup g_
- */
-
-
-/** @defgroup ray Ray Tracing
+ *
+ ** @defgroup ray Ray Tracing
  * @ingroup librt
- */
-
-/** @defgroup timer Timer
+ *
+ * @defgroup timer Timer
  * @ingroup librt
- */
-
-/** @defgroup fort Fortran
+ *
+ * @defgroup fort Fortran
  * @ingroup librt
- */
-
-/** @defgroup wdb WriteDatabase
+ *
+ * @defgroup wdb WriteDatabase
  * @ingroup dbio
  */
-
