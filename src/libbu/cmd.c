@@ -20,7 +20,7 @@
  */
 /** @addtogroup butcl */
 /*@{*/
-/** @file cmd.c
+/** @file libbu/cmd.c
  * @brief
  *	Utility routines for handling commands.
  *
