@@ -5,6 +5,7 @@ bin_SCRIPTS = \
 	any-png.sh \
 	cadbug.sh \
 	cray.sh \
+	facetall.sh \
 	indent.sh \
 	pixinfo.sh \
 	pixread.sh \
