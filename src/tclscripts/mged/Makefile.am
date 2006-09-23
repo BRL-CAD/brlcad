@@ -31,6 +31,7 @@ scripties = \
 	editmenu.tcl \
 	editobj.tcl \
 	eobjmenu.tcl \
+	expand_comb_tree.tcl \
 	extract.tcl \
 	font.tcl \
 	g2asc.tcl \
