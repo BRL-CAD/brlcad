@@ -59,17 +59,20 @@
 
 LICE="$1"
 FILE="$2"
+PROJ="$3"
+COPY="$4"
 
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
+USAGE="Usage: $0 LICENSE FILE [ProjectName] [CopyrightHolder]"
 
 ##################
 # validate input #
 ##################
 if [ "x$LICE" = "x" ] ; then
     echo "ERROR: must give a license type (BSD, LGPL, GPL, GFDL)"
-    echo "Usage: $0 LICENSE FILE"
+    echo "$USAGE"
     exit 1
 fi
 case $LICE in
@@ -88,14 +91,14 @@ case $LICE in
     *)
         echo "ERROR: Unknown license type: $LICE"
 	echo "License should be one of BSD, LGPL, GPL, GFDL"
-        echo "Usage: $0 LICENSE FILE"
+	echo "$USAGE"
 	exit 1
 	;;
 esac
 
 if [ "x$FILE" = "x" ] ; then
     echo "ERROR: must give the name/path of a file to check/update"
-    echo "Usage: $0 LICENSE FILE"
+    echo "$USAGE"
     exit 1
 elif [ ! -f "$FILE" ] ; then
     echo "ERROR: unable to find $FILE"
@@ -108,11 +111,20 @@ elif [ ! -w "$FILE" ] ; then
     exit 2
 fi
 
+if [ "x$PROJ" = "x" ] ; then
+    PROJ="BRL-CAD"
+else
+    echo "Outputting header for [$PROJ]"
+fi
 
-if [ "x$3" != "x" ] ; then
-    echo "Usage: $0 LICENSE FILE"
-    echo "LICENSE should be one of BSD, LGPL, GPL, or GFDL"
+if [ "x$COPY" = "x" ] ; then
+    echo "Assuming U.S. Government copyright assignment"
+fi
+
+if [ "x$5" != "x" ] ; then
+    echo "ERROR: LICENSE should be one of BSD, LGPL, GPL, or GFDL"
     echo "No other arguments should follow."
+    echo "$USAGE"
     exit 3
 fi
 
@@ -327,13 +339,20 @@ echo "using copyright of $copyright"
 block=""
 c="$commentprefix"
 block="${block}${titleline}
-$c BRL-CAD
+$c ${PROJ}
 $c"
 
-block="${block}
+if [ "x$COPY" = "x" ] ; then
+    block="${block}
 $c Copyright (c) $copyright United States Government as represented by
 $c the U.S. Army Research Laboratory.
 $c"
+else
+    block="${block}
+$c Copyright (c) $copyright $COPY
+$c"
+fi
+
 
 case $LICE in
     BSD)
