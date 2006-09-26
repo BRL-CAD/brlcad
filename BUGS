@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rendering toyjeep.g on Windows causes a crash on 'all', as well as
+  bl_main_power_line.r or bl_bl.s2. bn_mat_inv() singular matrix error
+
 * fbhelp sends some of the output to stdout and some to stderr...
 
 * debugbu 2 immediately reports a bu_vls_free() error.. apparently
