@@ -67,12 +67,18 @@
  *
  *  $Header$
  */
-
-
 #ifndef __BN_H__
 #define __BN_H__
 
+#include "common.h"
+
 __BEGIN_DECLS
+
+/* interface headers */
+#include "machine.h"	/* required for fastf_t */
+#include "bu.h"		/* required for BU_EXTERN, BU_CKMAG */
+#include "vmath.h"	/* required for mat_t, vect_t */
+
 
 #ifndef BN_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
@@ -88,8 +94,6 @@ __BEGIN_DECLS
 
 #define BN_H_VERSION	"@(#)$Header$ (BRL)"
 
-/* interface headers */
-#include "vmath.h"
 
 #define BN_AZIMUTH 0
 #define BN_ELEVATION 1

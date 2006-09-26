@@ -59,7 +59,6 @@
  *
  *  $Header$
  */
-
 #ifndef __BU_H__
 #define __BU_H__
 
@@ -67,8 +66,11 @@
 
 __BEGIN_DECLS
 
-/* Included for Tcl_Interp definition */
-#include "tcl.h"
+/* interface headers */
+#include <setjmp.h>
+#include "machine.h"	/* required for fastf_t, genptr_t */
+#include "tcl.h"	/* Included for Tcl_Interp definition */
+
 
 #ifndef BU_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
@@ -81,8 +83,6 @@ __BEGIN_DECLS
 #    define BU_EXPORT
 #  endif
 #endif
-
-#include <setjmp.h>
 
 #define BU_H_VERSION	"@(#)$Header$ (BRL)"
 
