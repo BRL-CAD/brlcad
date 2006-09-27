@@ -33,6 +33,7 @@ scripties = \
 	eobjmenu.tcl \
 	expand_comb_tree.tcl \
 	extract.tcl \
+	facetize_all_regions.tcl \
 	font.tcl \
 	g2asc.tcl \
 	garbage_collect.tcl \
