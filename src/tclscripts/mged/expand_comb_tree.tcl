@@ -24,7 +24,7 @@ proc expand_bool_node {name tree s} {
 
     set tree [list [lindex $tree 0] $left $right]
     set cmd "db put $name comb tree [list $tree]"
-    puts "$cmd"
+    # puts "$cmd"
     eval $cmd
 }
 

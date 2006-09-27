@@ -46,12 +46,11 @@ proc facetize_all_regions {} {
     foreach reg $reg_list {
 	puts "------ <$reg> ------"
 
-
 	# check to see if the bot already exists
 	if {[catch {db get $reg.bot} regval]} {
 
 	    # bot does not exist
-
+	    #
 	    # check to see if it previously failed
 	    if { [lsearch $reg_fail $reg] < 0} {
 		# not in the list of previous failures.  Facetize it
@@ -59,6 +58,7 @@ proc facetize_all_regions {} {
 		puts "facetizing $reg"
 
 		# record the region we are about to attempt as failed
+		# if we dump core, it won't be attempted again
 		set pos_fail [tell $fail]
 		set buf " $reg"
 		puts -nonewline $fail $buf
