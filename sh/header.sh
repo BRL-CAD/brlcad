@@ -136,116 +136,136 @@ fi
 # commentprefix is the comment character to prefex each line
 ###
 case $FILE in
-    *.sh)
+    *.sh )
 	echo "$FILE is a shell script"
 	wrap=0
 	commentprefix="#"
 	;;
-    *.c)
+    *.c )
 	echo "$FILE is a C source file"
 	wrap=1
 	commentprefix=" *"
 	;;
-    *.h)
+    *.h )
 	echo "$FILE is a C header"
 	wrap=1
 	commentprefix=" *"
 	;;
-    *.java)
+    *.cc | *.cp | *.cxx | *.cpp | *.cpp | *.CPP | *.c++ | *.C )
+	echo "$FILE is a C source file"
+	wrap=1
+	commentprefix=" *"
+	;;
+    *.hh | *.H )
+	echo "$FILE is a C++ header"
+	wrap=1
+	commentprefix=" *"
+	;;
+    *.m )
+	echo "$FILE is an Objective-C source file"
+	wrap=1
+	commentprefix=" *"
+	;;
+    *.mm | *.M )
+	echo "$FILE is an Objective-C++ source file"
+	wrap=1
+	commentprefix=" *"
+	;;
+    *.java )
 	echo "$FILE is a Java source file"
 	wrap=1
 	commentprefix=" *"
 	;;
-    *.tcl)
+    *.tcl )
 	echo "$FILE is a Tcl source file"
 	wrap=0
 	commentprefix="#"
 	;;
-    *.tk)
+    *.tk )
 	echo "$FILE is a Tk source file"
 	wrap=0
 	commentprefix="#"
 	;;
-    *.itcl)
+    *.itcl )
 	echo "$FILE is a IncrTcl source file"
 	wrap=0
 	commentprefix="#"
 	;;
-    *.itk)
+    *.itk )
 	echo "$FILE is a IncrTk source file"
 	wrap=0
 	commentprefix="#"
 	;;
-    *.pl)
+    *.pl )
 	echo "$FILE is a Perl source file"
 	wrap=0
 	commentprefix="#"
 	;;
-    *.am)
+    *.am )
 	echo "$FILE is an Automake template file"
 	wrap=0
 	commentprefix="#"
 	;;
-    *.in)
+    *.in )
 	echo "$FILE is an Autoconf template file"
 	wrap=0
 	commentprefix="#"
 	;;
-    *.ac)
+    *.ac )
 	echo "$FILE is an Autoconf template file"
 	wrap=0
 	commentprefix="#"
 	;;
-    *.m4)
+    *.m4 )
 	echo "$FILE is an m4 macro file"
 	wrap=0
 	commentprefix="#"
 	;;
-    *.mk)
+    *.mk )
 	echo "$FILE is a make resource file"
 	wrap=0
 	commentprefix="#"
 	;;
-    *.bat)
+    *.bat )
 	echo "$FILE is a batch shell script"
 	wrap=0
 	commentprefix="REM "
 	;;
-    *.vim)
+    *.vim )
 	echo "$FILE is a VIM syntax file"
 	wrap=0
 	commentprefix="\""
 	;;
-    *.[0-9])
+    *.[0-9] )
 	echo "$FILE is a manual page"
 	wrap=0
 	commentprefix=".\\\""
 	;;
-    *)
+    * )
 	# check the first line, see if it is a script
 	filesig="`head -n 1 $FILE`"
 	case $filesig in
-	    */bin/sh)
+	    */bin/sh )
 		echo "$FILE is a shell script"
 		wrap=0
 		commentprefix="#"
 		;;
-	    */bin/tclsh)
+	    */bin/tclsh )
 		echo "$FILE is a Tcl script"
 		wrap=0
 		commentprefix="#"
 		;;
-	    */bin/wish)
+	    */bin/wish )
 		echo "$FILE is a Tk script"
 		wrap=0
 		commentprefix="#"
 		;;
-	    */bin/perl)
+	    */bin/perl )
 		echo "$FILE is a Perl script"
 		wrap=0
 		commentprefix="#"
 		;;
-	    *)
+	    * )
 		echo "ERROR: $FILE has an unknown filetype"
 		exit 0
 		;;

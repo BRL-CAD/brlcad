@@ -100,70 +100,98 @@ wrap=0
 commentchar=""
 
 case $FILE in
-    *.sh)
+    *.sh )
 	echo "$FILE is a shell script"
 	mode="sh"
 	mode_vars="sh-indentation sh-basic-offset"
 	wrap=0
 	commentchar="#"
 	;;
-    *.c)
+    *.c )
 	echo "$FILE is a C source file"
 	mode="C"
 	mode_vars="c-basic-offset"
 	wrap=1
 	commentchar="*"
 	;;
-    *.h)
+    *.h )
 	echo "$FILE is a C header"
 	mode="C"
 	mode_vars="c-basic-offset"
 	wrap=1
 	commentchar="*"
 	;;
-    *.tcl)
+    *.cc | *.cp | *.cxx | *.cpp | *.CPP | *.c++ | *.C )
+	echo "$FILE is a C++ source file"
+	mode="C++"
+	mode_vars="c-basic-offset"
+	wrap=1
+	commentchar="*"
+	;;
+    *.hh | *.H )
+	echo "$FILE is a C++ header"
+	mode="C++"
+	mode_vars="c-basic-offset"
+	wrap=1
+	commentchar="*"
+	;;
+    *.m )
+	echo "$FILE is an Objective C-source file"
+	mode="objc"
+	mode_vars="c-basic-offset"
+	wrap=1
+	commentchar="*"
+	;;
+    *.mm | *.M )
+	echo "$FILE is an Objective-C++ source file"
+	mode="objc"
+	mode_vars="c-basic-offset"
+	wrap=1
+	commentchar="*"
+	;;
+    *.tcl )
 	echo "$FILE is a Tcl source file"
 	mode="Tcl"
 	mode_vars="c-basic-offset tcl-indent-level"
 	wrap=0
 	commentchar="#"
 	;;
-    *.tk)
+    *.tk )
 	echo "$FILE is a Tk source file"
 	mode="Tcl"
 	mode_vars="c-basic-offset tcl-indent-level"
 	wrap=0
 	commentchar="#"
 	;;
-    *.itcl)
+    *.itcl )
 	echo "$FILE is a IncrTcl source file"
 	mode="Tcl"
 	mode_vars="c-basic-offset tcl-indent-level"
 	wrap=0
 	commentchar="#"
 	;;
-    *.itk)
+    *.itk )
 	echo "$FILE is a IncrTk source file"
 	mode="Tcl"
 	mode_vars="c-basic-offset tcl-indent-level"
 	wrap=0
 	commentchar="#"
 	;;
-    *.pl)
+    *.pl )
 	echo "$FILE is a Perl source file"
 	mode="Perl"
 	mode_vars="c-basic-offset perl-indent-level"
 	wrap=0
 	commentchar="#"
 	;;
-    *.m4)
+    *.m4 )
 	echo "$FILE is an M4 source file"
 	mode="m4"
 	mode_vars="standard-indent"
 	wrap=0
 	commentchar="#"
 	;;
-    *.am)
+    *.am )
 	echo "$FILE is an Automake template file"
 	mode="Makefile"
 	wrap=0
@@ -172,7 +200,7 @@ case $FILE in
 	indentation=8
 	tab_width=8
 	;;
-    *.ac)
+    *.ac )
 	echo "$FILE is an Autoconf template file"
 	mode="Makefile"
 	wrap=0
@@ -181,7 +209,7 @@ case $FILE in
 	indentation=8
 	tab_width=8
 	;;
-    *.in)
+    *.in )
 	echo "$FILE is an Autoconf template file"
 	mode="Makefile"
 	wrap=0
@@ -190,7 +218,7 @@ case $FILE in
 	indentation=8
 	tab_width=8
 	;;
-    *.m4)
+    *.m4 )
 	echo "$FILE is an m4 macro file"
 	mode="m4"
 	wrap=0
@@ -199,7 +227,7 @@ case $FILE in
 	indentation=8
 	tab_width=8
 	;;
-    *.mk)
+    *.mk )
 	echo "$FILE is a make file"
 	mode="Makefile"
 	wrap=0
@@ -208,21 +236,21 @@ case $FILE in
 	indentation=8
 	tab_width=8
 	;;
-    *.bat)
+    *.bat )
 	echo "$FILE is a batch shell script"
 	mode="sh"
 	mode_vars="sh-indentation sh-basic-offset"
 	wrap=0
 	commentchar="REM"
 	;;
-    *.vim)
+    *.vim )
 	echo "$FILE is a VIM syntax file"
 	mode="tcl"
 	mode_vars="c-basic-offset tcl-indent-level"
 	wrap=0
 	commentchar="\""
 	;;
-    *.[0-9])
+    *.[0-9] )
 	echo "$FILE is a manual page"
 	mode="nroff"
 	wrap=0
@@ -231,39 +259,39 @@ case $FILE in
 	indentation=8
 	tab_width=8
 	;;
-    *)
+    * )
 	# check the first line, see if it is a script
 	filesig="`head -n 1 $FILE`"
 	case $filesig in
-	    */bin/sh)
+	    */bin/sh )
 		echo "$FILE is a shell script"
 		mode="sh"
 		mode_vars="sh-indentation sh-basic-offset"
 		wrap=0
 		commentchar="#"
 		;;
-	    */bin/tclsh)
+	    */bin/tclsh )
 		echo "$FILE is a Tcl script"
 		mode="Tcl"
 		mode_vars="c-basic-offset tcl-indent-level"
 		wrap=0
 		commentchar="#"
 		;;
-	    */bin/wish)
+	    */bin/wish )
 		echo "$FILE is a Tk script"
 		mode="Tcl"
 		mode_vars="c-basic-offset tcl-indent-level"
 		wrap=0
 		commentchar="#"
 		;;
-	    */bin/perl)
+	    */bin/perl )
 		echo "$FILE is a Perl script"
 		mode="Perl"
 		mode_vars="c-basic-offset perl-indent-level"
 		wrap=0
 		commentchar="#"
 		;;
-	    *)
+	    * )
 		echo "ERROR: $FILE has an unknown filetype"
 		exit 0
 		;;
