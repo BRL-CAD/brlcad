@@ -3218,7 +3218,7 @@ printf("blit: xi_flags & FLG_VMASK = 0x%x\n", xi->xi_flags & FLG_VMASK );
 			 * that one line to N others.
 			 */
 			while (pyht-- > 1) {
-				unsigned char *src;
+				unsigned char *src = NULL;
 
 				/*
 				 * move to the beginning of the next
