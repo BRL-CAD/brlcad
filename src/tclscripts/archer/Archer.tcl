@@ -166,6 +166,8 @@ namespace eval Archer {
 	method getTkColor          {r g b}
 	method getRgbColor         {tkColor}
 	method setSave {}
+	method getLastSelectedDir  {}
+	method refreshDisplay      {}
 
 	# wizard plugin related commands
 	method registerWizardXmlCallback {callback}
@@ -682,7 +684,7 @@ Popup Menu    Right or Ctrl-Left
 
 	method launchNirt {}
 	method launchRtApp {app size}
-	method refreshDisplay {}
+	#method refreshDisplay {}
 
 	method adjustCompNormals {comp}
 	method reverseCompNormals {comp}
@@ -1878,6 +1880,12 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::_update_utility_menu {} {
+    foreach dialog [::itcl::find object -class ::iwidgets::Dialog] {
+	if {[regexp {utility_dialog} $dialog]} {
+	    catch {rename $dialog ""}
+	}
+    }
+
     if {$mMode == 0} {
 	if {$Archer::inheritFromToplevel} {
 	    if {[info exists itk_component(utilityMenu)]} {
@@ -1934,12 +1942,11 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    if {[info exists itk_component(utilityMenu)]} {
-	# We're good to go
-	return
+    if {![info exists itk_component(utilityMenu)]} {
+	_build_utility_menu
     }
 
-    _build_utility_menu
+    $itk_component(utilityMenu) delete 0 end
 
     foreach plugin $uplugins {
 	set class [$plugin get -class]
@@ -1952,11 +1959,18 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::_invoke_utility_dialog {class wname w} {
-    set dialog $itk_interior.utilityDialog
-    ::iwidgets::dialog $dialog \
-	    -modality none \
-	    -title "$wname Dialog" \
-	    -background $SystemButtonFace
+    set instance [::itcl::find object -class $class]
+    if {$instance != ""} {
+	raise [winfo toplevel [namespace tail $instance]]
+	return
+    }
+
+#    set dialog $itk_interior.utilityDialog
+#    ::iwidgets::dialog $dialog
+    set dialog [::iwidgets::dialog $itk_interior.utility_\#auto \
+		    -modality none \
+		    -title "$wname Dialog" \
+		    -background $SystemButtonFace]
 
     $dialog hide 0
     $dialog hide 1
@@ -1964,6 +1978,16 @@ Popup Menu    Right or Ctrl-Left
     $dialog configure \
 	-thickness 2 \
 	-buttonboxpady 0
+
+    # Turn of the default button
+    bind $dialog <Return> {}
+#    $dialog buttonconfigure 0 \
+	-defaultring no
+#    $dialog buttonconfigure 2 \
+	-defaultring yes \
+	-defaultringpad 1 \
+	-borderwidth 1 \
+	-pady 0
 
     # ITCL can be nasty
     set win [$dialog component bbox component OK component hull]
@@ -1984,7 +2008,7 @@ Popup Menu    Right or Ctrl-Left
 	-command "$dialog deactivate; ::itcl::delete object $dialog"
 
     wm protocol $dialog WM_DELETE_WINDOW "$dialog deactivate; ::itcl::delete object $dialog"
-    wm geometry $dialog "400x500"
+    wm geometry $dialog "500x500"
 
     # Event bindings
     bind $dialog <Enter> "raise $dialog"
@@ -2111,7 +2135,7 @@ Popup Menu    Right or Ctrl-Left
 	-command "$dialog deactivate; ::itcl::delete object $dialog"
 
     wm protocol $dialog WM_DELETE_WINDOW "$dialog deactivate; ::itcl::delete object $dialog"
-    wm geometry $dialog "300x400"
+    wm geometry $dialog "400x400"
     $dialog center [namespace tail $this]
     $dialog activate
 }
@@ -10238,7 +10262,8 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    _redraw_obj $mSelectedObjPath
+    #_redraw_obj $mSelectedObjPath
+    refreshDisplay
 }
 
 ::itcl::body Archer::_show_scale {} {
@@ -10250,7 +10275,8 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    _redraw_obj $mSelectedObjPath
+    #_redraw_obj $mSelectedObjPath
+    refreshDisplay
 }
 
 ::itcl::body Archer::_toggle_tree_view {state} {
@@ -10630,6 +10656,10 @@ Popup Menu    Right or Ctrl-Left
 
     set mNeedSave 1
     _update_save_mode	
+}
+
+::itcl::body Archer::getLastSelectedDir {} {
+    return $mLastSelectedDir
 }
 
 ::itcl::body Archer::registerWizardXmlCallback {callback} {
