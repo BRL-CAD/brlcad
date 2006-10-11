@@ -149,7 +149,11 @@ namespace eval Archer {
 	method primary_toolbar_remove_itm  {index}
 	method closeHierarchy {}
 	method openHierarchy {{fraction 30}}
-	method refreshTree       {{restore 1}}
+	method refreshTree {{restore 1}}
+	method mouseRay {_dm _x _y}
+	method shootRay {_start _op _target _prep _no_bool _onehit}
+	method addMouseRayCallback {_callback}
+	method deleteMouseRayCallback {_callback}
 
 	# public database commands
 	method dbCmd               {args}
@@ -273,10 +277,12 @@ namespace eval Archer {
 	common TRANSLATE_MODE 1
 	common SCALE_MODE 2
 	common CENTER_MODE 3
-	common OBJECT_ROTATE_MODE 4
-	common OBJECT_SCALE_MODE 5
-	common OBJECT_TRANSLATE_MODE 6
-	common OBJECT_CENTER_MODE 7
+	common COMP_PICK_MODE 4
+	common MEASURE_MODE 5
+	common OBJECT_ROTATE_MODE 6
+	common OBJECT_SCALE_MODE 7
+	common OBJECT_TRANSLATE_MODE 8
+	common OBJECT_CENTER_MODE 9
 
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
@@ -301,6 +307,8 @@ namespace eval Archer {
 	common ZCLIP_MEDIUM_CUBE 1
 	common ZCLIP_LARGE_CUBE 2
 	common ZCLIP_NONE 3
+
+	common MEASURING_STICK "archer_measuring_stick"
 
 	if {$tcl_platform(os) != "Windows NT"} {
 	    set brlcadDataPath [bu_brlcad_data ""]
@@ -330,7 +338,7 @@ namespace eval Archer {
 
 	variable wizardXmlCallbacks ""
 
-	variable mArcherVersion "0.9"
+	variable mArcherVersion "0.9.1"
 	variable mLastSelectedDir ""
 
 	variable mFontArrowsName "arrowFont"
@@ -410,7 +418,14 @@ namespace eval Archer {
 	variable mThemePref ""
 	variable mSdbTopGroup all
 	variable mScaleColor Yellow
-	variable mScaleColorPref
+	variable mScaleColorPref ""
+	variable mMeasuringStickMode 0
+	variable mMeasuringStickModePref ""
+	variable mMeasuringStickColor Yellow
+	variable mMeasuringStickColorPref ""
+	variable mMeasuringStickColorVDraw ffff00
+	variable mEnableBigE 0
+	variable mEnableBigEPref ""
 
 	variable mGroundPlaneSize 20000
 	variable mGroundPlaneSizePref ""
@@ -494,7 +509,7 @@ namespace eval Archer {
 	}
 
 	variable mAboutInfo "
-     Archer Version 0.9 (Prototype)
+     Archer Version 0.9.1 (Prototype)
 
 Archer is a geometry editor/viewer
 developed by SURVICE Engineering.
@@ -532,6 +547,8 @@ Popup Menu    Right or Ctrl-Left
 	variable mWizardTop ""
 	variable mWizardState ""
 	variable mNoWizardActive 0
+
+	variable mMouseRayCallbacks ""
 
 	method archerWrapper {cmd eflag hflag sflag tflag args}
 	method mgedWrapper {cmd eflag hflag sflag tflag args}
@@ -685,6 +702,7 @@ Popup Menu    Right or Ctrl-Left
 	method launchNirt {}
 	method launchRtApp {app size}
 	#method refreshDisplay {}
+	#method mouseRay {_dm _x _y}
 
 	method adjustCompNormals {comp}
 	method reverseCompNormals {comp}
@@ -708,6 +726,9 @@ Popup Menu    Right or Ctrl-Left
 	variable _centerZ ""
 
 	variable _images
+
+	variable mMeasureStart
+	variable mMeasureEnd
 
 	# init functions
 	method _init_tree          {}
@@ -787,6 +808,13 @@ Popup Menu    Right or Ctrl-Left
 	method endViewTranslate {dm}
 
 	method _init_center_mode {}
+
+	method initCompPick {}
+
+	method initMeasure {}
+	method beginMeasure {_dm _x _y}
+	method handleMeasure {_dm _x _y}
+	method endMeasure {_dm}
 
 	method beginObjRotate {}
 	method endObjRotate {dm obj}
@@ -5704,6 +5732,18 @@ Popup Menu    Right or Ctrl-Left
 	-variable [::itcl::scope mDefaultBindingMode] \
 	-value $CENTER_MODE \
 	-command [::itcl::code $this _init_center_mode]
+    $itk_component(viewToolbar) add radiobutton cpick \
+	-balloonstr "Component Pick" \
+	-helpstr "Component Pick" \
+	-variable [::itcl::scope mDefaultBindingMode] \
+	-value $COMP_PICK_MODE \
+	-command [::itcl::code $this initCompPick]
+    $itk_component(viewToolbar) add radiobutton measure \
+	-balloonstr "Measuring Tool" \
+	-helpstr "Measuring Tool" \
+	-variable [::itcl::scope mDefaultBindingMode] \
+	-value $MEASURE_MODE \
+	-command [::itcl::code $this initMeasure]
 
     pack $itk_component(viewToolbar) -expand yes -fill both
 }
@@ -5874,6 +5914,89 @@ Popup Menu    Right or Ctrl-Left
 	bind $win <1> "$dm slew %x %y; break"
 	bind $win <ButtonRelease-1> "[::itcl::code $this endViewTranslate $dm]; break"
     }
+}
+
+::itcl::body Archer::initCompPick {} {
+    if {![info exists itk_component(mged)]} {
+	return
+    }
+
+    foreach dname {ul ur ll lr} {
+	set dm [$itk_component(mged) component $dname]
+	set win [$dm component dm]
+	bind $win <1> "[::itcl::code $this mouseRay $dm %x %y]; break"
+	bind $win <ButtonRelease-1> ""
+    }
+}
+
+::itcl::body Archer::initMeasure {} {
+    if {[info exists itk_component(mged)]} {
+	set _comp $itk_component(mged)
+    } elseif {[info exists itk_component(sdb)]} {
+	set _comp $itk_component(sdb)
+    } else {	
+	return
+    }
+
+    foreach dname {ul ur ll lr} {
+	set dm [$_comp component $dname]
+	set win [$dm component dm]
+	bind $win <1> "[::itcl::code $this beginMeasure $dm %x %y]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endMeasure $dm]; break"
+    }
+}
+
+::itcl::body Archer::beginMeasure {_dm _x _y} {
+    if {$mMeasuringStickMode == 0} {
+	# Draw on the front face of the viewing cube
+	set view [$_dm screen2view $_x $_y]
+	set bounds [$_dm bounds]
+	set vZ [expr {[lindex $bounds 4] / -2048.0}]
+	set mMeasureStart [$_dm v2mPoint [lindex $view 0] [lindex $view 1] $vZ]
+    } else {
+	# Draw on the center of the viewing cube (i.e. view Z is 0)
+	set mMeasureStart [$_dm screen2model $_x $_y]
+    }
+
+    # start receiving motion events
+    set win [$_dm component dm]
+    bind $win <Motion> "[::itcl::code $this handleMeasure $_dm %x %y]; break"
+
+    set mMeasuringStickColorVDraw [_get_vdraw_color $mMeasuringStickColor]
+}
+
+::itcl::body Archer::handleMeasure {_dm _x _y} {
+    catch {dbCmd vdraw vlist delete $MEASURING_STICK}
+
+    if {$mMeasuringStickMode == 0} {
+	# Draw on the front face of the viewing cube
+	set view [$_dm screen2view $_x $_y]
+	set bounds [$_dm bounds]
+	set vZ [expr {[lindex $bounds 4] / -2048.0}]
+	set mMeasureEnd [$_dm v2mPoint [lindex $view 0] [lindex $view 1] $vZ]
+    } else {
+	# Draw on the center of the viewing cube (i.e. view Z is 0)
+	set mMeasureEnd [$_dm screen2model $_x $_y]
+    }
+
+    set move 0
+    set draw 1
+    dbCmd vdraw open $MEASURING_STICK
+    dbCmd vdraw params color $mMeasuringStickColorVDraw
+    eval dbCmd vdraw write next $move $mMeasureStart
+    eval dbCmd vdraw write next $draw $mMeasureEnd
+    dbCmd vdraw send
+}
+
+::itcl::body Archer::endMeasure {_dm} {
+    $_dm idle_mode
+
+    catch {dbCmd vdraw vlist delete $MEASURING_STICK}
+    dbCmd erase _VDRW$MEASURING_STICK
+
+    set diff [vsub2 $mMeasureEnd $mMeasureStart]
+    set delta [expr {[magnitude $diff] * [dbCmd base2local]}]
+    tk_messageBox -message "Measured distance:  $delta [dbCmd units]"
 }
 
 ::itcl::body Archer::beginObjRotate {} {
@@ -6787,6 +6910,28 @@ Popup Menu    Right or Ctrl-Left
 	    -variable [::itcl::scope mBindingModePref]
     } {}
 
+    itk_component add measuringL {
+	::label $itk_component(generalF).measuringL \
+	    -text "Measuring Stick Mode:"
+    } {}
+
+    set i 0
+    set mMeasuringStickMode $i
+    itk_component add topMeasuringStickRB {
+	::radiobutton $itk_component(generalF).topMeasuringStickRB \
+	    -text "Default (Top)" \
+	    -value $i \
+	    -variable [::itcl::scope mMeasuringStickModePref]
+    } {}
+
+    incr i
+    itk_component add embeddedMeasuringStickRB {
+	::radiobutton $itk_component(generalF).embeddedMeasuringStickRB \
+	    -text "Embedded" \
+	    -value $i \
+	    -variable [::itcl::scope mMeasuringStickModePref]
+    } {}
+
     itk_component add backgroundColorL {
 	::label $itk_component(generalF).backgroundColorL \
 	    -text "Background Color:"
@@ -6808,6 +6953,13 @@ Popup Menu    Right or Ctrl-Left
 	scolor \
 	mScaleColorPref \
 	"Scale Color:" \
+	$colorListNoTriple
+
+    _build_combo_box $itk_component(generalF) \
+	measuringStickColor \
+	mcolor \
+	mMeasuringStickColorPref \
+	"Measuring Stick Color:" \
 	$colorListNoTriple
 
     _build_combo_box $itk_component(generalF) \
@@ -6835,11 +6987,22 @@ Popup Menu    Right or Ctrl-Left
 	"Themes:" \
 	$themes
 
+    itk_component add bigEMenuItemCB {
+	::checkbutton $itk_component(generalF).bigECB \
+	    -text "Enable Evaluate Menu Item (Experimental)" \
+	    -variable [::itcl::scope mEnableBigEPref]
+    } {}
+
     set i 0
     grid $itk_component(bindingL) -column 0 -row $i -sticky e
     grid $itk_component(defaultBindingRB) -column 1 -row $i -sticky w
     incr i
     grid $itk_component(brlcadBindingRB) -column 1 -row $i -sticky w
+    incr i
+    grid $itk_component(measuringL) -column 0 -row $i -sticky e
+    grid $itk_component(topMeasuringStickRB) -column 1 -row $i -sticky w
+    incr i
+    grid $itk_component(embeddedMeasuringStickRB) -column 1 -row $i -sticky w
     incr i
     grid $itk_component(backgroundColorL) -column 0 -row $i -sticky ne
     grid $itk_component(backgroundColorF) -column 1 -row $i -sticky w
@@ -6850,14 +7013,24 @@ Popup Menu    Right or Ctrl-Left
     grid $itk_component(scaleColorL) -column 0 -row $i -sticky e
     grid $itk_component(scaleColorF) -column 1 -row $i -sticky ew
     incr i
+    grid $itk_component(measuringStickColorL) -column 0 -row $i -sticky e
+    grid $itk_component(measuringStickColorF) -column 1 -row $i -sticky ew
+    incr i
     grid $itk_component(viewingParamsColorL) -column 0 -row $i -sticky e
     grid $itk_component(viewingParamsColorF) -column 1 -row $i -sticky ew
     incr i
     grid $itk_component(themesL) -column 0 -row $i -sticky ne
     grid $itk_component(themesF) -column 1 -row $i -sticky w
+    incr i
+    grid $itk_component(bigEMenuItemCB) \
+	-columnspan 2 \
+	-column 0 \
+	-row $i \
+	-sticky sw
+    grid rowconfigure $itk_component(generalF) $i -weight 1
 
     set i 0
-    grid $itk_component(generalF) -column 0 -row $i -sticky nw
+    grid $itk_component(generalF) -column 0 -row $i -sticky nsew
 
     grid rowconfigure $parent 0 -weight 1
     grid columnconfigure $parent 0 -weight 1
@@ -7515,13 +7688,16 @@ Popup Menu    Right or Ctrl-Left
     set mZClipModePref $mZClipMode
 
     set mBindingModePref $mBindingMode
+    set mMeasuringStickModePref $mMeasuringStickMode
     set mBackgroundRedPref [lindex $mBackground 0]
     set mBackgroundGreenPref [lindex $mBackground 1]
     set mBackgroundBluePref [lindex $mBackground 2]
     set mPrimitiveLabelColorPref $mPrimitiveLabelColor
     set mScaleColorPref $mScaleColor
+    set mMeasuringStickColorPref $mMeasuringStickColor
     set mViewingParamsColorPref $mViewingParamsColor
     set mThemePref $mTheme
+    set mEnableBigEPref $mEnableBigE
 
     set mGroundPlaneSizePref $mGroundPlaneSize
     set mGroundPlaneIntervalPref $mGroundPlaneInterval
@@ -7577,6 +7753,10 @@ Popup Menu    Right or Ctrl-Left
 	}
     }
 
+    if {$mMeasuringStickModePref != $mMeasuringStickMode} {
+	set mMeasuringStickMode $mMeasuringStickModePref
+    }
+
     set r [lindex $mBackground 0]
     set g [lindex $mBackground 1]
     set b [lindex $mBackground 2]
@@ -7612,9 +7792,17 @@ Popup Menu    Right or Ctrl-Left
 	_set_color_option dbCmd -scaleColor $mScaleColor
     }
 
+    if {$mMeasuringStickColor != $mMeasuringStickColorPref} {
+	set mMeasuringStickColor $mMeasuringStickColorPref
+    }
+
     if {$mTheme != $mThemePref} {
 	set mTheme $mThemePref
 	_update_theme
+    }
+
+    if {$mEnableBigEPref != $mEnableBigE} {
+	set mEnableBigE $mEnableBigEPref
     }
 }
 
@@ -7976,13 +8164,16 @@ Popup Menu    Right or Ctrl-Left
 	puts $pfile "#"
 	puts $pfile "# This file is created and updated by Archer."
 	puts $pfile "#"
-	puts $pfile "set mLastSelectedDir $mLastSelectedDir"
+	puts $pfile "set mLastSelectedDir \"$mLastSelectedDir\""
 	puts $pfile "set mBindingMode $mBindingMode"
+	puts $pfile "set mMeasuringStickMode $mMeasuringStickMode"
 	puts $pfile "set mBackground \"$mBackground\""
 	puts $pfile "set mPrimitiveLabelColor \"$mPrimitiveLabelColor\""
 	puts $pfile "set mScaleColor \"$mScaleColor\""
+	puts $pfile "set mMeasuringStickColor \"$mMeasuringStickColor\""
 	puts $pfile "set mViewingParamsColor \"$mViewingParamsColor\""
 	puts $pfile "set mTheme \"$mTheme\""
+	puts $pfile "set mEnableBigE $mEnableBigE"
 	puts $pfile "set mViewAxesSize \"$mViewAxesSize\""
 	puts $pfile "set mViewAxesPosition \"$mViewAxesPosition\""
 	puts $pfile "set mViewAxesLineWidth $mViewAxesLineWidth"
@@ -8406,15 +8597,19 @@ Popup Menu    Right or Ctrl-Left
 	    switch -exact -- $state {
 		"0" {
 		    dbCmd configure -primitiveLabels $plnode
-		    dbCmd draw -m0 -n -x $trans $node
+		    dbCmd draw -m0 -n -x$trans $node
 		}
 		"1" {
 		    dbCmd configure -primitiveLabels $plnode
-		    dbCmd draw -m1 -n -x $trans $node
+		    dbCmd draw -m1 -n -x$trans $node
 		}
 		"2" {
 		    dbCmd configure -primitiveLabels $plnode
-		    dbCmd draw -m2 -n -x $trans $node
+		    dbCmd draw -m2 -n -x$trans $node
+		}
+		"3" {
+		    dbCmd configure -primitiveLabels $plnode
+		    dbCmd E $node
 		}
 		"-1" {
 		    dbCmd configure -primitiveLabels {}
@@ -8425,18 +8620,22 @@ Popup Menu    Right or Ctrl-Left
 	    switch -exact -- $state {
 		"0" {
 		    dbCmd configure -primitiveLabels $plnode
-		    dbCmd draw -m0 -n -x $trans \
-			-C $displayColor $node
+		    dbCmd draw -m0 -n -x$trans \
+			-C$displayColor $node
 		}
 		"1" {
 		    dbCmd configure -primitiveLabels $plnode
-		    dbCmd draw -m1 -n -x $trans \
-			-C $displayColor $node
+		    dbCmd draw -m1 -n -x$trans \
+			-C$displayColor $node
 		}
 		"2" {
 		    dbCmd configure -primitiveLabels $plnode
-		    dbCmd draw -m2 -n -x $trans \
-			-C $displayColor $node
+		    dbCmd draw -m2 -n -x$trans \
+			-C$displayColor $node
+		}
+		"3" {
+		    dbCmd configure -primitiveLabels $plnode
+		    dbCmd E -C$displayColor $node
 		}
 		"-1" {
 		    dbCmd configure -primitiveLabels {}
@@ -8450,15 +8649,19 @@ Popup Menu    Right or Ctrl-Left
 	    switch -exact -- $state {
 		"0" {
 		    dbCmd configure -primitiveLabels $plnode
-		    dbCmd draw -m0 -x $trans $node
+		    dbCmd draw -m0 -x$trans $node
 		}
 		"1" {
 		    dbCmd configure -primitiveLabels $plnode
-		    dbCmd draw -m1 -x $trans $node
+		    dbCmd draw -m1 -x$trans $node
 		}
 		"2" {
 		    dbCmd configure -primitiveLabels $plnode
-		    dbCmd draw -m2 -x $trans $node
+		    dbCmd draw -m2 -x$trans $node
+		}
+		"3" {
+		    dbCmd configure -primitiveLabels $plnode
+		    dbCmd E $node
 		}
 		"-1" {
 		    dbCmd configure -primitiveLabels {}
@@ -8469,18 +8672,22 @@ Popup Menu    Right or Ctrl-Left
 	    switch -exact -- $state {
 		"0" {
 		    dbCmd configure -primitiveLabels $plnode
-		    dbCmd draw -m0 -x $trans \
-			-C $displayColor $node
+		    dbCmd draw -m0 -x$trans \
+			-C$displayColor $node
 		}
 		"1" {
 		    dbCmd configure -primitiveLabels $plnode
-		    dbCmd draw -m1 -x $trans \
-			-C $displayColor $node
+		    dbCmd draw -m1 -x$trans \
+			-C$displayColor $node
 		}
 		"2" {
 		    dbCmd configure -primitiveLabels $plnode
-		    dbCmd draw -m2 -x $trans \
-			-C $displayColor $node
+		    dbCmd draw -m2 -x$trans \
+			-C$displayColor $node
+		}
+		"3" {
+		    dbCmd configure -primitiveLabels $plnode
+		    dbCmd E -C$displayColor $node
 		}
 		"-1" {
 		    dbCmd configure -primitiveLabels {}
@@ -9186,6 +9393,15 @@ Popup Menu    Right or Ctrl-Left
 	    $menu add radiobutton -label "Shaded (Mode 2)" \
 		-indicatoron 1 -value 2 -variable [::itcl::scope mRenderMode] \
 		-command [::itcl::code $this _render $node 2 1 1]
+
+	    if {$mEnableBigE} {
+		$menu add radiobutton \
+		    -label "Evaluated" \
+		    -indicatoron 1 \
+		    -value 3 \
+		    -variable [::itcl::scope mRenderMode] \
+		    -command [::itcl::code $this _render $node 3 1 1]
+	    }
 	}
 
 	$menu add radiobutton -label "Off" \
@@ -9203,6 +9419,12 @@ Popup Menu    Right or Ctrl-Left
 		-command [::itcl::code $this _render $node 1 1 1]
 	    $menu add command -label "Shaded (Mode 2)" \
 		-command [::itcl::code $this _render $node 2 1 1]
+
+	    if {$mEnableBigE} {
+		$menu add command \
+		    -label "Evaluated" \
+		    -command [::itcl::code $this _render $node 3 1 1]
+	    }
 	}
 
 	$menu add command -label "Off" \
@@ -9941,6 +10163,12 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(viewToolbar) itemconfigure center \
 	-image [image create photo \
 		    -file [file join $dir view_select.png]]
+    $itk_component(viewToolbar) itemconfigure cpick \
+	-image [image create photo \
+		    -file [file join $dir compSelect.png]]
+    $itk_component(viewToolbar) itemconfigure measure \
+	-image [image create photo \
+		    -file [file join $dir measure.png]]
 
     if {!$mViewOnly} {
     catch {
@@ -10559,6 +10787,51 @@ Popup Menu    Right or Ctrl-Left
 	dbCmd refresh
     } else {
 	$currentDisplay refresh
+    }
+}
+
+::itcl::body Archer::mouseRay {_dm _x _y} {
+    set target [$_dm screen2model $_x $_y]
+    set view [$_dm screen2view $_x $_y]
+
+    set bounds [$_dm bounds]
+    set vZ [expr {[lindex $bounds 4] / -2048.0}]
+    set start [$_dm v2mPoint [lindex $view 0] [lindex $view 1] $vZ]
+
+    set partitions [shootRay $start "at" $target 1 1 0]
+    set partition [lindex $partitions 0]
+
+    if {[llength $mMouseRayCallbacks] == 0} {
+	if {$partition == {}} {
+	    tk_messageBox -message "Nothing hit"
+	} else {
+	    set region [bu_get_value_by_keyword "region" $partition]
+	    tk_messageBox -message [dbCmd l $region]
+	}
+    } else {
+	foreach callback $mMouseRayCallbacks {
+	    catch {$callback $start $target $partitions}
+	}
+    }
+}
+
+::itcl::body Archer::shootRay {_start _op _target _prep _no_bool _onehit} {
+    eval $itk_component(mged) rt_gettrees ray -i -u [$itk_component(mged) who]
+    ray prep $_prep
+    ray no_bool $_no_bool
+    ray onehit $_onehit
+
+    return [ray shootray $_start $_op $_target]
+}
+
+::itcl::body Archer::addMouseRayCallback {_callback} {
+    lappend mMouseRayCallbacks $_callback
+}
+
+::itcl::body Archer::deleteMouseRayCallback {_callback} {
+    set i [lsearch $mMouseRayCallbacks $_callback]
+    if {$i != -1} {
+	set mMouseRayCallbacks [lreplace $mMouseRayCallbacks $i $i]
     }
 }
 
