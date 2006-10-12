@@ -9346,7 +9346,6 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
 	/* should never get here */
 	/* return TCL_ERROR; */
-    }
 }
 
 /**
