@@ -359,7 +359,7 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	rad = rt_metaball_get_bounding_sphere(&bsc, mb->threshold, &mb->metaball_ctrl_head);
 	rt_metaball_plot_sph(vhead, &bsc, rad);
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
-		rt_metaball_plot_sph(vhead, &mbpt->coord, mbpt->fldstr);
+		rt_metaball_plot_sph(vhead, &mbpt->coord, mbpt->fldstr / mb->threshold);
 	return 0;
 }
 
@@ -488,7 +488,7 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 	RT_METABALL_CK_MAGIC(mb);
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) metaball_count++;
 
-	snprintf(buf, BUFSIZ, "Metaball with %d points and a threshold of %g\n", metaball_count, mb->threshold);
+	snprintf(buf, BUFSIZ, "Metaball with %d points and a threshold of %g (method %d)\n", metaball_count, mb->threshold, mb->method);
 	bu_vls_strcat(str,buf);
 	if(!verbose)return 0;
 	metaball_count=0;
