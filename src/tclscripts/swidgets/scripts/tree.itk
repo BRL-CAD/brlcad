@@ -245,33 +245,25 @@ proc ::swidgets::tree {args} {
     $root open "true"
 
     # bounding frame
-    itk_component add frame {
-	iwidgets::scrolledframe $itk_interior.sframe \
-		-relief sunken \
+    set frame [::frame $itk_interior.frame -borderwidth 2 -relief sunken]
+    itk_component add canvas {
+	::iwidgets::scrolledcanvas $frame.canvas \
+		-scrollmargin 0 \
 		-hscrollmode static \
 		-vscrollmode static \
-		-borderwidth 2
-    } {
-	rename -width -framewidth frameWidth Width
-	rename -height -frameheight frameheight Height
-    }
-
-    set childsite [$itk_component(frame) childsite]
-    itk_component add canvas {
-	::canvas $childsite.canvas \
-		-borderwidth 0 \
-		-relief sunken \
-		-highlightthickness 0
+		-autoresize 0 \
+		-borderwidth 0
     } {
 	keep -xscrollincrement
+	keep -xscrollincrement
 	#keep -background
-	keep -highlightbackground -highlightcolor
+	#keep -highlightbackground -highlightcolor
 	keep -selectbackground -selectforeground
 	keep -width -height
     }
-    
+
     pack $itk_component(canvas) -padx 0 -pady 0 -expand yes -fill both
-    pack $itk_component(frame) -padx 0 -pady 0 -expand yes -fill both
+    pack $frame -padx 0 -pady 0 -expand yes -fill both
 
     itk_component add popupmenu {
 	menu $itk_component(canvas).popupmenu -tearoff 0
@@ -322,8 +314,7 @@ proc ::swidgets::tree {args} {
 ::itcl::configbody swidgets::Tree::dblselectcmd {}
 ::itcl::configbody swidgets::Tree::textmenuloadcommand {}
 ::itcl::configbody swidgets::Tree::background {
-    [$itk_component(frame) component canvas] configure -background $itk_option(-background)
-    $itk_component(canvas) configure -background $itk_option(-background)
+    [$itk_component(canvas) component canvas] configure -background $itk_option(-background)
 }
 ::itcl::configbody swidgets::Tree::sortmode {
     switch -- $itk_option(-sortmode) {
@@ -508,7 +499,7 @@ proc ::swidgets::tree {args} {
 	# draw cross
 	$itk_component(canvas) create bitmap $x $y \
 		-bitmap     @$bmp \
-		-background [$itk_component(canvas) cget -background] \
+		-background $itk_option(-background) \
 		-foreground black -anchor c \
 		-tags       [list cross c:$node] 
 	_bind_cross <Button-1> [list eval [::itcl::code $this toggle]]
@@ -516,55 +507,44 @@ proc ::swidgets::tree {args} {
 
     # determine image
     set dimg ""
-    if {$type != "leaf"} {
-	if {$state} {
-	    if {$itk_option(-openimage) != ""} {
-		set img $itk_option(-openimage)
+    switch -- $type {
+	"branch" {
+	    if {$state} {
+		if {$itk_option(-openimage) != ""} {
+		    set img $itk_option(-openimage)
+		} else {
+		    set img $c_openimg
+		}
+		
+		if {$itk_option(-disabledopenimage) != ""} {
+		    set dimg $itk_option(-disabledopenimage)
+		}
 	    } else {
-		set img $c_openimg
-	    }
-	    
-	    if {$itk_option(-disabledopenimage) != ""} {
-		set dimg $itk_option(-disabledopenimage)
-	    }
-	} else {
-	    if {$itk_option(-closeimage) != ""} {
-		set img $itk_option(-closeimage)
-	    } else {
-		set img $c_closedimg
-	    }
-	    
-	    if {$itk_option(-disabledcloseimage) != ""} {
-		set dimg $itk_option(-disabledcloseimage)
-	    }
-	}
-    } else {
-	switch -- $type {
-	    "branch" {
 		if {$itk_option(-closeimage) != ""} {
 		    set img $itk_option(-closeimage)
 		} else {
 		    set img $c_closedimg
 		}
-	    
+		
 		if {$itk_option(-disabledcloseimage) != ""} {
 		    set dimg $itk_option(-disabledcloseimage)
 		}
 	    }
-	    "leaf"   -
-	    default  {
-		if {$itk_option(-nodeimage) != ""} {
-		    set img $itk_option(-nodeimage)
-		} else {
-		    set img $c_leafimg
-		}
+	}
+	"leaf"   -
+	default  {
+	    if {$itk_option(-nodeimage) != ""} {
+		set img $itk_option(-nodeimage)
+	    } else {
+		set img $c_leafimg
+	    }
 	    
-		if {$itk_option(-disablednodeimage) != ""} {
-		    set dimg $itk_option(-disablednodeimage)
-		}
+	    if {$itk_option(-disablednodeimage) != ""} {
+		set dimg $itk_option(-disablednodeimage)
 	    }
 	}
     }
+
     # draw image
     if {$dimg != ""} {
 	$itk_component(canvas) create image $x1 $y \
@@ -588,7 +568,7 @@ proc ::swidgets::tree {args} {
 	# draw cross
 	$itk_component(canvas) create bitmap $x $y \
 		-bitmap     @$bmp \
-		-background [$itk_component(canvas) cget -background] \
+		-background $itk_option(-background) \
 		-foreground black -anchor c \
 		-tags       [list cross c:$node] 
 	_bind_cross <Button-1> [list eval [::itcl::code $this toggle]]
@@ -650,9 +630,11 @@ proc ::swidgets::tree {args} {
     }
 
     # set node height plus padding
+    if {$y < 0} {set y 0}
     set nodeheight [expr $itk_option(-nodeheight) + $itk_option(-nodepad)]
 
     set y1 $y
+    if {$node == $root} {set y1 [expr $y1 - ($nodeheight/2)]}
     foreach kid $childlist {
 	set yp $y1
 	set y1 [_draw_node $kid $x [expr $y1+$nodeheight]]
@@ -683,11 +665,18 @@ proc ::swidgets::tree {args} {
 
     # draw subnodes
     _draw_subnodes $root 8 [expr {$nodeheight/2} * -1]
-
-    $itk_component(canvas) configure -height $treeheight -cursor $cursor
-
+    
+    $itk_component(canvas) configure -cursor $cursor
     set idle ""
     update idletasks
+
+    set bbox [[$itk_component(canvas) component canvas] bbox all]
+    for {set i 0} {$i < [llength $bbox]} {incr i} {
+	if {[lindex $bbox $i] < 0} {
+	    set bbox [lreplace $bbox $i $i 0]
+	}
+    }
+    [$itk_component(canvas) component canvas] configure -scrollregion $bbox
 }
 
 ::itcl::body swidgets::Tree::_redraw_tree {} {
@@ -732,7 +721,6 @@ proc ::swidgets::tree {args} {
 	    # this was put here to keep the itk::Widget destructor from barfing
 	}
 	"canvas"    {return $itk_component(canvas)}
-	"frame"     {return $itk_component(frame)}
 	"popupmenu" {return $itk_component(popupmenu)}
 	default     {
 	    error "bad component name \"$name\""
@@ -1033,7 +1021,7 @@ proc ::swidgets::tree {args} {
 	    if {[$node get -children] == "" && $itk_option(-querycmd) != {}} {
 		set cmd $itk_option(-querycmd)
 		regsub -all {%n} $cmd $node cmd
-		
+
 		uplevel \#0 $cmd
 		#eval $itk_option(-querycmd)
 	    }
@@ -1104,11 +1092,11 @@ proc ::swidgets::tree {args} {
 }
 
 ::itcl::body swidgets::Tree::xview {args} {
-    return [eval [list $itk_component(frame) xview] $args]
+    return [eval [list $itk_component(canvas) xview] $args]
 }
 
 ::itcl::body swidgets::Tree::yview {args} {
-    return [eval [list $itk_component(frame) yview] $args]
+    return [eval [list $itk_component(canvas) yview] $args]
 }
 
 # Local Variables:
