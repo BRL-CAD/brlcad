@@ -31,7 +31,7 @@ scripties = \
 	editmenu.tcl \
 	editobj.tcl \
 	eobjmenu.tcl \
-	expand_comb_tree.tcl \
+	expand_comb.tcl \
 	extract.tcl \
 	facetize_all_regions.tcl \
 	font.tcl \
