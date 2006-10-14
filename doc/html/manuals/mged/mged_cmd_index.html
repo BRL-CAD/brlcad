@@ -177,7 +177,7 @@
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#export_body"><FONT SIZE=2>export_body</FONT></A></TD>
 <TD WIDTH="22%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#expand_comb_tree"><FONT SIZE=2>expand_comb_tree</FONT></A></TD>
+<FONT SIZE=2><P></FONT><A HREF="#expand_comb"><FONT SIZE=2>expand_comb</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#extrude"><FONT SIZE=2>extrude</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
@@ -1544,20 +1544,16 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </FONT><TT><DD>mged&gt;</TT> <B>export_body bin_chars /home/fred/chars</DD>
 </B><DD>-- Copy the contents of &quot;bin_chars&quot; into the file &quot;/home/fred/chars&quot;</DD>
 <DT><HR ALIGN="RIGHT"></DT>
-<DT><b><a name="expand_comb_tree"></a>expand_comb_tree [-c] <i>comb ...</i></DT>
-<DD>The <i>expand_comb_tree</i> will create a combination object for each 
-Boolean node in the tree of a combination.  Each combination
+<DT><b><a name="expand_comb"></a>expand_comb <i>prefix comb ...</i></DT>
+<DD>The <i>expand_comb</i> will create a new combination object <i>prefix</i>.
+For each Boolean node in the original tree of the combination a new
+combination will be created.  Each combination
 constructed will contain a single Boolean operation of two leaf nodes.  The
-leaf nodes will be named <i>comb</i>_xpand_l and <i>comb</i>_xpand_r for the
+leaf nodes will be named <i>prefix</i>l and <i>prefix</i>r for the
 left and right nodes of the tree respectively.  Sub-nodes will have "l" and
 "r" suffixes added based upon whether they are left or right children of the
 node.
 
-If the <b>-c</b> option is specified, then 
-the combination(s) specified are copied to the name 
-<i>comb</i>_xpand and the copy is expanded.
-If the option is not provided, then the original combination(s) are modified
-in place.
 <p>
 Note that regions, combinations and objects created witht the "g" command
 (sometimes colloquially referred to as groups) are all combinations, and 
