@@ -1,4 +1,2723 @@
-2006-06-20  BRL-CAD  <brlcad@users.sourceforge.net>
+2006-10-16  brlcad  <brlcad@users.sourceforge.net>
+
+	* NEWS:
+	prepare for release, numbering it 7.8.4 as planned even though it's 
+borderline 7.10 feature-wise.  last news item, doug howard added (via bob) 
+support for handling larger hierarchies in archer.
+
+2006-10-14  lbutler  <lbutler@users.sourceforge.net>
+
+	* doc/html/manuals/mged/mged_cmd_index.html:
+	updated to match new implementation details for expand_comb
+
+	* src/tclscripts/mged/expand_comb.tcl:
+	This replaces expand_comb_tree.tcl file.
+	Shorter file/proc name for ease of use in mged.
+
+	* src/tclscripts/mged/Makefile.am, 
+src/tclscripts/mged/expand_comb_tree.tcl, 
+src/tclscripts/mged/facetize_all_regions.tcl:
+	updates to support expanding combination record trees.  Serious 
+improvements.
+	changes to facetization of all regions.
+
+2006-10-13  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/tclscripts/swidgets/scripts/tree.itk:
+	Check-in for Doug Howard. These mods are for handling bigger trees.
+
+2006-10-12  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* include/raytrace.h: some functions useful for metaball solid editing
+
+	* src/librt/g_metaball.c:
+	Scale sphere size against threshhold for 'plot'.
+	Print render method in 'describe'.
+
+	* src/librt/wdb_obj.c: brackets need to be balanced...
+
+2006-10-12  lbutler  <lbutler@users.sourceforge.net>
+
+	* src/tclscripts/mged/expand_comb_tree.tcl, 
+src/tclscripts/mged/facetize_all_regions.tcl:
+	expand code moved into facetize_all_regions.tcl for ease of debugging.  
+Some code changes to facetize.
+
+	* src/librt/wdb_obj.c: Doxygen mods
+
+	* sh/facetall.sh: tolerance and EOF ignore
+
+2006-10-12  brlcad  <brlcad@users.sourceforge.net>
+
+	* TODO:
+	add the automated rtarea spreadsheet-producing script to repository
+
+	* NEWS:
+	keep a record of the changes bob just added, namely hte new picking and 
+measuring capabilities added to archer
+
+2006-10-11  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/tclscripts/archer/Archer.tcl:
+	Added component selection and measuring stick options.
+
+	* src/tclscripts/archer/images/Themes/Crystal/compSelect.png, 
+src/tclscripts/archer/images/Themes/Crystal/measure.png, 
+src/tclscripts/archer/images/Themes/Crystal_Large/compSelect.png, 
+src/tclscripts/archer/images/Themes/Crystal_Large/measure.png, 
+src/tclscripts/archer/images/Themes/Windows/compSelect.png, 
+src/tclscripts/archer/images/Themes/Windows/measure.png:
+	Initial check-in.
+
+2006-10-06  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/tclscripts/archer/Archer.tcl:
+	Mods to better accomodate utility plugins.
+
+2006-10-05  brlcad  <brlcad@users.sourceforge.net>
+
+	* NEWS:
+	added new script to extract gforge task items, reworded recent script 
+lines added by lee to fit the formatting.
+
+	* src/libfb/if_X24.c: meh
+
+	* sh/gforge.sh:
+	update the script to include the names of the person(s) that the task 
+item is assigned to.  genericize the script to any gforge project while not 
+requiring HOST/PROJECT to be set for some defaults.  modify the table output a 
+little to change the assigned to field to be blank when nobody is assigned.
+
+2006-09-28  lbutler  <lbutler@users.sourceforge.net>
+
+	* sh/gforge.sh: make script adaptable to host
+
+	* sh/gforge.sh: script for querying a gforge site
+
+2006-09-28  d_rossberg  <d_rossberg@users.sourceforge.net>
+
+	* BUGS:
+	fixed rendering toyjeep.g on Windows bug (on 7/6/2006) by using a less 
+rigorouse function to invert a 4x4 matrix in rt_bend_pipe_prep
+
+2006-09-28  brlcad  <brlcad@users.sourceforge.net>
+
+	* sh/footer.sh, sh/header.sh:
+	add support for C++ and Objective-C/C++ to the mix
+
+2006-09-27  lbutler  <lbutler@users.sourceforge.net>
+
+	* src/tclscripts/mged/Makefile.am:
+	Install the facetize_all_regions.tcl script
+
+	* src/tclscripts/mged/expand_comb_tree.tcl, 
+src/tclscripts/mged/facetize_all_regions.tcl:
+	removed debugging logging.  added code comment.
+
+2006-09-26  brlcad  <brlcad@users.sourceforge.net>
+
+	* BUGS:
+	rendering toyjeep.g on Windows causes a crash on 'all', as well as 
+bl_main_power_line.r or bl_bl.s2. bn_mat_inv() singular matrix error.  bug 
+found and reported by mcarp, thanks
+
+	* include/bu.h, include/bn.h:
+	have the headers include the headers they respectively require
+
+2006-09-25  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libbu/Makefile.am:
+	make the dependency on libbu.la more explicit, otherwise some versions 
+of automake/libtool seem to not detect the dependency causing them to attempt a 
+linking of htester before libbu has finished building.  thx to dan o'neill for 
+reporting this issue (sf bug report 1563466, libbu.la missing)
+
+2006-09-24  brlcad  <brlcad@users.sourceforge.net>
+
+	* sh/header.sh:
+	let header.sh be used with other projects and copyright holders too
+
+2006-09-23  lbutler  <lbutler@users.sourceforge.net>
+
+	* NEWS: Noted Doxygen updates
+
+	* misc/Doxyfile, misc/doxygen_structure:
+	Added librt to the directories processed.  Reformatted doxygen_source 
+to be
+	a little more readable.  Each directory has a single comment that 
+builds all
+	the sub-groups for the directory.
+
+	* src/libbu/cmd.c:
+	To help Doxygen, distinguish the libbu/cmd.c from the cmd.c in other 
+directories
+
+	* NEWS: added expand_comb_tree and facetall additions
+
+	* sh/Makefile.am: added facetall.sh to installed scripts
+
+	* src/tclscripts/mged/facetize_all_regions.tcl:
+	Routines to facetize all regions in a database.  For use in conjunction 
+with the "facetall.sh" script
+
+	* sh/facetall.sh:
+	Driver script for facetizing all regions in a database.  Since mged may
+	abort during some failed facetization attempts, we need a shell script 
+so that we can re-start it and continue facetizing.
+
+	* doc/html/manuals/mged/mged_cmd_index.html:
+	making the example code consistent.  Region id's indicated I didn't 
+type the
+	example in all at once.  Sigh.  Now it looks like I did.
+
+	* doc/html/manuals/mged/mged_cmd_index.html: fixed typos
+
+	* src/tclscripts/mged/Makefile.am, 
+src/tclscripts/mged/expand_comb_tree.tcl:
+	expand_comb_tree tcl script for expanding combination records to 
+minimal tree nodes
+
+	* doc/html/manuals/mged/mged_cmd_index.html:
+	added documentation for expand_comb_tree
+
+2006-09-19  brlcad  <brlcad@users.sourceforge.net>
+
+	* BUGS, TODO: speling
+
+	* src/libbu/.cvsignore: ignore the new noinst htester
+
+	* doc/README.Linux, doc/README.MacOSX, doc/README.Solaris, 
+doc/README.Windows:
+	add title header
+
+	* doc/README.BSD:
+	refer to README.VAX for getting BSD running on the VAX platform, 
+mention that BRL-CAD is in the FreeBSD ports system.
+
+	* doc/README.AIX:
+	add initial details about how much of a pain it is to compiled with the 
+IBM Visual Age compiler on AIX, but that it is possible.
+
+	* doc/Makefile.am: add README.VAX
+
+	* doc/README.VAX:
+	add an initial README for VAX given a compile does seem to still be 
+possible via simh.  provide the details on what has to be done.
+
+2006-09-18  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/archer/archer: file name is just archer, not archer.sh
+
+	* README: case consistency
+
+	* sh/footer.sh, sh/header.sh:
+	automatically detect a slew of script types by looking at the first 
+line of the file -- if the /bin/* is recognizable, then the file doesn't need a 
+suffix after all.
+
+	* include/Makefile.am: forms.h was removed, apparently unused
+
+2006-09-18  lbutler  <lbutler@users.sourceforge.net>
+
+	* include/anim.h, include/bn.h, include/brlcad.h, include/bu.h, 
+include/cmd.h, include/colorquant.h, include/common.h, include/compat4.h, 
+include/conf.h, include/config_win.h, include/db.h, include/db5.h, 
+include/dm-Null.h, include/dm-X.h, include/dm-glx.h, include/dm-ogl.h, 
+include/dm-pex.h, include/dm-plot.h, include/dm-ps.h, include/dm-tk.h, 
+include/dm-wgl.h, include/dm.h, include/dm_color.h, include/dm_xvars.h, 
+include/exit_status.h, include/fb.h, include/fbio.h, include/fbmsg.h, 
+include/fbserv_obj.h, include/libtermio.h, include/light.h, include/machine.h, 
+include/mater.h, include/msr.h, include/nmg.h, include/noalias-prag.h, 
+include/noalias.h, include/nurb.h, include/optical.h, include/orle.h, 
+include/photonmap.h, include/pkg.h, include/plastic.h, include/plot3.h, 
+include/pyramid.h, include/raytrace.h, include/redblack.h, include/rle.h, 
+include/rle_code.h, include/rle_config.h, include/rle_getraw.h, 
+include/rle_put.h, include/rle_raw.h, include/rtgeom.h, include/rtlist.h, 
+include/rtprivate.h, include/rtserver.h, include/rtstring.h, 
+include/shadefuncs.h, include/shadework.h, include/shortvect-pr.h, 
+include/shortvect.h, include/solid.h, include/spectrum.h, include/spm.h, 
+include/tclcad.h, include/vectfont.h, include/vfont-if.h, include/vmath.h, 
+include/wdb.h:
+	Doxygen updates
+
+	* include/forms.h: We no longer use forms
+
+2006-09-16  brlcad  <brlcad@users.sourceforge.net>
+
+	* misc/Makefile.defs:
+	rework the noprod logic for issue encountered on netbsd on vax where 
+the shell is invoking with a different precedence on &&/||, so be more explicit
+
+2006-09-16  lbutler  <lbutler@users.sourceforge.net>
+
+	* misc/doxygen_structure: Doxygen updates for librt
+
+	* src/librt/regionfix.c, src/librt/roots.c, src/librt/rt_dspline.c, 
+src/librt/shoot.c, src/librt/spectrum.c, src/librt/storage.c, 
+src/librt/table.c, src/librt/tcl.c, src/librt/timer-nt.c, src/librt/timer42.c, 
+src/librt/timer52brl.c, src/librt/timercos.c, src/librt/timerhep.c, 
+src/librt/timerunix.c, src/librt/track.c, src/librt/tree.c, src/librt/vdraw.c, 
+src/librt/view_obj.c, src/librt/vlist.c, src/librt/vshoot.c, src/librt/wdb.c, 
+src/librt/wdb_comb_std.c, src/librt/wdb_obj.c, src/librt/g_superell.c, 
+src/librt/g_tgc.c, src/librt/g_torus.c, src/librt/g_vol.c, src/librt/g_xxx.c, 
+src/librt/global.c, src/librt/htbl.c, src/librt/importFg4Section.c, 
+src/librt/many.c, src/librt/mater.c, src/librt/memalloc.c, 
+src/librt/mkbundle.c, src/librt/nirt.c, src/librt/nmg_bool.c, 
+src/librt/nmg_ck.c, src/librt/nmg_class.c, src/librt/nmg_eval.c, 
+src/librt/nmg_extrude.c, src/librt/nmg_fcut.c, src/librt/nmg_fuse.c, 
+src/librt/nmg_index.c, src/librt/nmg_info.c, src/librt/nmg_inter.c, 
+src/librt/nmg_junk.c, src/librt/nmg_manif.c, src/librt/nmg_mesh.c, 
+src/librt/nmg_misc.c, src/librt/nmg_mk.c, src/librt/nmg_mod.c, 
+src/librt/nmg_plot.c, src/librt/nmg_pr.c, src/librt/nmg_pt_fu.c, 
+src/librt/nmg_rt_isect.c, src/librt/nmg_rt_segs.c, src/librt/nmg_tri.c, 
+src/librt/nmg_visit.c, src/librt/nurb_basis.c, src/librt/nurb_bezier.c, 
+src/librt/nurb_bound.c, src/librt/nurb_c2.c, src/librt/nurb_copy.c, 
+src/librt/nurb_diff.c, src/librt/nurb_eval.c, src/librt/nurb_example.c, 
+src/librt/nurb_flat.c, src/librt/nurb_interp.c, src/librt/nurb_knot.c, 
+src/librt/nurb_norm.c, src/librt/nurb_plot.c, src/librt/nurb_poly.c, 
+src/librt/nurb_ray.c, src/librt/nurb_refine.c, src/librt/nurb_reverse.c, 
+src/librt/nurb_solve.c, src/librt/nurb_split.c, src/librt/nurb_tess.c, 
+src/librt/nurb_trim.c, src/librt/nurb_trim_util.c, src/librt/nurb_util.c, 
+src/librt/nurb_xsplit.c, src/librt/oslo_calc.c, src/librt/oslo_map.c, 
+src/librt/parse.c, src/librt/pmalloc.c, src/librt/pr.c, src/librt/prep.c, 
+src/librt/qray.c, src/librt/bezier_2d_isect.c, src/librt/bigE.c, 
+src/librt/binary_obj.c, src/librt/bomb.c, src/librt/bool.c, src/librt/bot.h, 
+src/librt/bundle.c, src/librt/cmd.c, src/librt/comb.c, src/librt/cut.c, 
+src/librt/db5_alloc.c, src/librt/db5_bin.c, src/librt/db5_comb.c, 
+src/librt/db5_io.c, src/librt/db5_scan.c, src/librt/db5_types.c, 
+src/librt/db_alloc.c, src/librt/db_anim.c, src/librt/db_comb.c, 
+src/librt/db_flags.c, src/librt/db_inmem.c, src/librt/db_io.c, 
+src/librt/db_lookup.c, src/librt/db_match.c, src/librt/db_open.c, 
+src/librt/db_path.c, src/librt/db_scan.c, src/librt/db_tree.c, 
+src/librt/db_walk.c, src/librt/dg_obj.c, src/librt/dir.c, src/librt/fortray.c, 
+src/librt/g_arb.c, src/librt/g_arbn.c, src/librt/g_ars.c, src/librt/g_bot.c, 
+src/librt/g_bot_include.c, src/librt/g_cline.c, src/librt/g_dsp.c, 
+src/librt/g_ebm.c, src/librt/g_ehy.c, src/librt/g_ell.c, src/librt/g_epa.c, 
+src/librt/g_eto.c, src/librt/g_extrude.c, src/librt/g_grip.c, 
+src/librt/g_half.c, src/librt/g_hf.c, src/librt/g_metaball.c, 
+src/librt/g_nmg.c, src/librt/g_nurb.c, src/librt/g_part.c, src/librt/g_pg.c, 
+src/librt/g_pipe.c, src/librt/g_rec.c, src/librt/g_rhc.c, src/librt/g_rpc.c, 
+src/librt/g_sketch.c, src/librt/g_sph.c, src/librt/g_submodel.c:
+	Doxygen updates
+
+2006-09-15  jlowenz  <jlowenz@users.sourceforge.net>
+
+	* src/conv/g-nmg.c:
+	copy the color table from input to output, so colors render properly in 
+converted file
+
+	* src/librt/nmg_misc.c:
+	calloc needed to provide initialization of unused/unset bot parameters 
+(i.e. normals)
+
+2006-09-15  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libbu/Makefile.am:
+	enable compilation of htester, not installed though
+
+	* src/libbn/Makefile.am, src/libbn/htester.c, src/libbu/Makefile.am, 
+src/libbu/htester.c:
+	do as the comment suggests and move the htester.c test application that 
+exercises the host to network floating point functions from libbn to libbu
+
+2006-09-12  mjgillich  <mjgillich@users.sourceforge.net>
+
+	* src/conv/g-xxx.c: Modified g-xxx.c to db_walk_tree verses db_fun_tree
+
+2006-09-12  brlcad  <brlcad@users.sourceforge.net>
+
+	* configure.ac:
+	linking against a system tkstub library may require linking against the 
+tclstub library as well, at least that seems to be the case on mac os x's 
+default-provided static tkstub archive
+
+	* src/librtserver/Makefile.am:
+	er, reverse that order.  if we're building tcl, then we have tcl_nil -- 
+otherwise link against TCL
+
+	* configure.ac:
+	so we apparently can't actually call any opengl function (at least on 
+macosx) without a valid context or it will cause a bus error, so instead just 
+link against some useful symbols.
+
+2006-09-11  d_rossberg  <d_rossberg@users.sourceforge.net>
+
+	* src/libbn/libbn.dsp: Removed number.c
+
+2006-09-07  lbutler  <lbutler@users.sourceforge.net>
+
+	* misc/Doxyfile, misc/doxygen_structure, include/bn.h, include/fb.h, 
+include/fbio.h, src/libbn/bn_tcl.c, src/libbn/font.c, src/libbn/qmath.c, 
+src/libbn/sphmap.c, src/libbn/vectfont.c, src/libbn/vector.c, 
+src/libbn/vert_tree.c, src/libbn/wavelet.c:
+	Doxygen updates
+
+2006-09-06  brlcad  <brlcad@users.sourceforge.net>
+
+	* BUGS: more details on the bizarre -s64 bug
+
+2006-09-05  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/rt/rt.1:
+	remove equine excrement statement about there being no maximum size 
+limit
+
+	* src/rt/sh_tcl.c: remove unused buf arrays and other unused vars
+
+	* TODO:
+	add some means to disable/minimize libfft on systems that don't have 
+enough memory to compile the larger filters.
+
+	* src/libdm/dm_obj.c:
+	windows interface is no longer tied to X interface, so use DM_X 
+correspondingly
+
+2006-09-05  lbutler  <lbutler@users.sourceforge.net>
+
+	* misc/doxygen_structure: removed bn_list group
+
+	* src/libbn/list.c, src/libbn/rand.c, src/libbn/scale.c, 
+src/libbn/sphmap.c, src/libbn/symbol.c, src/libbn/tabdata.c, src/libbn/tplot.c, 
+src/libbn/vectfont.c, src/libbn/vector.c:
+	Doxygen comment formatting
+
+2006-09-04  lbutler  <lbutler@users.sourceforge.net>
+
+	* src/libbn/const.c:
+	Deleted gratuitous extra open-brace after doxygen comment
+
+	* include/bn.h, src/libbn/noise.c, src/libbn/plane.c, 
+src/libbn/plot3.c, src/libbn/poly.c, src/libbn/qmath.c, src/libbn/rand.c:
+	Doxygen updates
+
+	* src/libbn/Makefile.am: Removed number.c
+
+	* src/libbn/number.c:
+	Since it wasn't used anywhere, it seemed time for it to go to the attic
+
+	* src/libbn/number.c: doxygen updates
+
+2006-09-03  lbutler  <lbutler@users.sourceforge.net>
+
+	* misc/doxygen_structure, include/bn.h, include/bu.h, include/vmath.h, 
+src/libbn/font.c, src/libbn/list.c, src/libbn/marker.c, src/libbn/msr.c, 
+src/libbu/badmagic.c, src/libbu/bu_fgets.c, src/libbu/fopen_uniq.c, 
+src/libbu/htond.c, src/libbu/htonf.c, src/libbu/ispar.c, src/libbu/linebuf.c, 
+src/libbu/list.c, src/libbu/log.c, src/libbu/magic.c, src/libbu/mappedfile.c, 
+src/libbu/mread.c, src/libbu/mro.c, src/libbu/observer.c, src/libbu/parallel.c, 
+src/libbu/parse.c, src/libbu/printb.c, src/libbu/ptbl.c, 
+src/libbu/rb_internals.h, src/libbu/semaphore.c, src/libbu/vfont.c, 
+src/libbu/vls.c:
+	Doxygen updates
+
+2006-09-03  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* src/conv/dxf-g.1, src/conv/dxf-g.c: Added support for SPLINE entities
+
+2006-09-02  brlcad  <brlcad@users.sourceforge.net>
+
+	* doc/README.Linux: add a section about ubuntu dependencies
+
+	* sh/shtool:
+	go ahead and (re)quell the warning about not being able to determine 
+bold mode
+
+2006-09-02  lbutler  <lbutler@users.sourceforge.net>
+
+	* misc/Doxyfile, misc/doxygen_structure: Doxygen updates for libbn
+
+	* src/libbn/htester.c, src/libbn/mat.c, src/libbn/anim.c, 
+src/libbn/axis.c, src/libbn/complex.c, src/libbn/const.c, src/libbn/font.c, 
+src/libbn/fortran.c:
+	Doxygen comments
+
+2006-09-01  brlcad  <brlcad@users.sourceforge.net>
+
+	* misc/Doxyfile: use 'BRL-CAD' for the project name
+
+2006-08-31  lbutler  <lbutler@users.sourceforge.net>
+
+	* src/libbu/rb_order_stats.c, src/libbu/rb_rotate.c, 
+src/libbu/rb_search.c, src/libbu/rb_walk.c, src/libbu/semaphore.c, 
+src/libbu/stat.c, src/libbu/units.c, src/libbu/vfont.c, src/libbu/vls.c, 
+src/libbu/whereis.c, src/libbu/which.c, src/libbu/xdr.c, 
+src/libbu/association.c, src/libbu/brlcad_path.c, src/libbu/hist.c, 
+src/libbu/hook.c, src/libbu/htond.c, src/libbu/htonf.c, src/libbu/ispar.c, 
+src/libbu/lex.c, src/libbu/linebuf.c, src/libbu/list.c, src/libbu/log.c, 
+src/libbu/magic.c, src/libbu/malloc.c, src/libbu/mappedfile.c, 
+src/libbu/mread.c, src/libbu/mro.c, src/libbu/observer.c, src/libbu/parallel.c, 
+src/libbu/parse.c, src/libbu/printb.c, src/libbu/ptbl.c, src/libbu/rb_create.c, 
+src/libbu/rb_delete.c, src/libbu/rb_diag.c, src/libbu/rb_extreme.c, 
+src/libbu/rb_free.c, src/libbu/rb_insert.c:
+	Doxygen comments
+
+	* src/libbn/anim.c: doxygen patches
+
+	* Makefile.am: added target for producing doxygen run
+
+	* misc/Doxyfile, misc/doxygen_structure:
+	Added to structure.  Changed Doxyfile to put html output in 
+subdirectory of misc instead of in my Mac's Sites directory.
+
+	* src/libbu/htond.c, src/libbu/htonf.c, src/libbu/malloc.c, 
+src/libbu/rb_create.c, src/libbu/rb_delete.c, src/libbu/association.c, 
+src/libbu/avs.c, src/libbu/badmagic.c, src/libbu/bitv.c, src/libbu/bomb.c, 
+src/libbu/brlcad_path.c, src/libbu/bu_fgets.c, src/libbu/bu_tcl.c, 
+src/libbu/cmd.c, src/libbu/cmdhist.c, src/libbu/cmdhist_obj.c, 
+src/libbu/color.c, src/libbu/convert.c, src/libbu/fopen_uniq.c, 
+src/libbu/getopt.c, src/libbu/hash.c:
+	Mostly doxygen formatting.
+
+	* src/librt/db_lookup.c:
+	added BU_FLSTR to malloc/free to help track down memory creation/leaks
+
+	* include/rtgeom.h, include/shortvect-pr.h, include/shortvect.h, 
+include/vmath.h, include/wdb.h, include/bn.h, include/bu.h, 
+include/libtermio.h, include/machine.h, include/nmg.h, include/noalias-prag.h, 
+include/noalias.h, include/optical.h, include/plastic.h, include/plot3.h, 
+include/raytrace.h:
+	miscelaneous changes to support doxygen
+
+	* src/librt/memalloc.c:
+	annotate malloc entries so that we know where the allocation took place
+
+	* misc/Doxyfile, misc/doxygen_structure:
+	New doxygen configuration file Doxyfile.  The doxygen_structure file 
+defines
+	the layout of the heirarchy of the doxygen document
+
+2006-08-30  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/other/jove/jove.h, src/other/jove/jove_main.c, 
+src/other/jove/jove_term.c:
+	obliterate SYSV/SYS5 usage, instead relying on HAVE_ symbols more 
+consistently (hopefully).
+
+	* configure.ac, src/mged/Makefile.am:
+	check for the solaris lexer library (needed for yyless() apparently) 
+and provide LIBL accordingly for Makefile.am usage.
+
+2006-08-29  brlcad  <brlcad@users.sourceforge.net>
+
+	* TODO, src/util/op-bw.c:
+	op-bw had a long run but seeing as it is vax-specific, it is being 
+marked obsolete.  the sources are marked for removal at the next minor update 
+(probably by 7.10).
+
+	* src/proc-db/pix2g.c:
+	stupid sync().. who wrote this? .. changed to db_sync()
+
+	* src/mged/dm_old/dm-mer.c: no protection for you
+
+	* src/mged/cmd.c: sync via db_sync instead of fsync'ing directly.
+
+	* src/librt/db_open.c:
+	sync via db_sync in db_close instead of manually duplicating what is 
+conceptually db_sync's job
+
+	* src/librt/db_open.c:
+	rework db_sync() so that it always flushs and tries fsync() if 
+available and only sync() as last resort.
+
+	* src/mged/cmd.c:
+	remove the sync() call.  instead just fsync() the currently open 
+geometry database file.  doxygenify the comments while we're in here.
+
+	* configure.ac:
+	check for fsync(), bsd func that some older systems don't have
+
+	* src/librt/db_open.c: fsync the file before closing it just to be safe
+
+	* src/mged/cmd.c:
+	no need to forward declare it if we just move the definition up
+
+	* src/libpkg/pkg.c: forgot to enclose macro params in parens
+
+	* src/libpkg/pkg.c:
+	get rid of the _WIN32 sections for recv/send instead of read/write .. 
+this really shouldn't be necessary if the compatibility macros in the 
+config_win.h header are specified correctly, but for now keep it as it is just 
+without all the repetition by using macros that call the corresponding routine. 
+ oh yeah, and M-x indent-region ws too.
+
+	* src/libpkg/pkg.c: minor, consolidate return
+
+2006-08-29  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/mged/cmd.c, src/mged/ged.c:
+	Mods to get things to natively compile on Windows.
+
+	* src/tclscripts/archer/Archer.tcl:
+	Added method to purge edit history. More mods to accomodate ogl being 
+replaced by wgl.
+
+	* src/libpkg/pkg.c:
+	It looks like the intent was to struct copy a "struct in_addr" in the 
+_pkg_permserver_impl function.
+
+2006-08-29  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/mged/edsol.c, src/mged/sedit.h:
+	Added "method" to metaball struct. Begin stubbing out ECMD stuff. 
+Changed some language.
+
+	* src/mged/chgmodel.c, src/mged/typein.c:
+	Added "method" to metaball struct. Changed some language.
+
+	* src/librt/g_metaball.c: fix a crash in the exporter...
+
+	* include/rtgeom.h, src/librt/g_metaball.c:
+	Added "method" to metaball struct. Changed some language.
+
+2006-08-29  d_rossberg  <d_rossberg@users.sourceforge.net>
+
+	* src/librt/librt.dsp: added transform.c
+
+	* src/libbu/libbu.dsp: added bu_fgets.c
+
+	* misc/win32-msvc/Dll/TclDummies.c: Tcl_SetErrno dummy function
+
+2006-08-28  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/Makefile.am:
+	initial functional stubbings for a 'brlcad' library.  use the newly 
+added libbu/libbn/librt/libwdb convenience libraries, mimicking what is already 
+done for the windows dll.  don't enable the actual installable object yet until 
+the next minor release.
+
+2006-08-28  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* src/librtserver/rtserver.c:
+	Changed the JNI wrapper names to agree with the new class names in the 
+MUVES3 brlcadservice
+
+2006-08-28  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libwdb/Makefile.am:
+	make a convenience library for libwdb so that it may be bundled into 
+other libraries
+
+	* src/librtserver/Makefile.am:
+	there may not exist a libtcl_nil.la if building tcl was disabled to act 
+accordingly
+
+	* include/bu.h: added new bu_get_hash_key() decl
+
+	* src/librtserver/Makefile.am, src/other/libtcl/Makefile.am:
+	make/use noinst convenience library for libtcl just like was done for 
+bu, bn, rt so that librtserver can have no dependencies other than guaranteed 
+system ones
+
+	* misc/win32-msvc/brlcad.dsw:
+	on second thought, remove libtclcad.. it really doesn't 'fit' well with 
+the rest without including all of brl-cad's libs
+
+2006-08-28  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* src/libbu/hash.c: Added bu_get_hash_key()
+
+2006-08-28  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/librtserver/Makefile.am:
+	use the new convenience libraries for libbu, libbn, librt instead of 
+using the usual lib_LTLIBRARY so that we don't end up creating a jnilib that 
+has rpath run-time requirements looking up librt, libbn, and libbu.
+
+	* src/librt/Makefile.am, src/libbn/Makefile.am, src/libbu/Makefile.am:
+	create convenience libraries for libbu, libbn, and librt so that they 
+may be used in other libraries to fully resolve symbols (by virtue of full 
+inclusion).
+
+	* src/libbu/printb.c, src/mged/cmd.c: ws
+
+	* src/libbu/malloc.c:
+	even if we're in debug mode, don't abort the requested task (i.e. 
+free'ing memory) else invoke the wrath of corrupted leaky memory
+
+	* BUGS:
+	the debugbu 2 bug occurs because bu_memdebug_add() is not called unless 
+memory checking is enabled via bu_debug.  so when bu_debug is set to 2 or 3, it 
+ends up reporting errors during bu_free() for items that were allocated and 
+were not yet being tracked.
+
+	* src/fbserv/server.c, src/libfb/fbserv_obj.c, src/mged/fbserv.c, 
+src/mged/vrlink.c:
+	quell libpkg warnings now that there are more comprehensive 
+declarations.
+
+	* src/remrt/remrt.c:
+	quell warnings on the errlog callback by defining a remrt_log() that 
+passes through to bu_log().
+
+	* src/libpkg/pkg.c:
+	consistently use char * buffers (instead of unsigned) and be more 
+specific on the errlog callbacks
+
+	* include/pkg.h:
+	add PKG_EXTERN and PKG_ARGS wrappers like the other libs, consistently 
+make all the buffers char *
+
+2006-08-26  brlcad  <brlcad@users.sourceforge.net>
+
+	* INSTALL:
+	more detailed testing section, with details on testing functionality 
+before and after installation.  also, make the quick instructions be an 
+optimized build.  give examples on how to provide custom flags during configure 
+and make too.
+
+2006-08-25  brlcad  <brlcad@users.sourceforge.net>
+
+	* doc/pad_file.xml.in:
+	more than a million lines, squeeze in to 2000 chars
+
+	* README: line counts are more than a million now
+
+	* doc/description.txt:
+	add a history section, credit mike of course.  cover a little more 
+detail on the languages in use.  line count is over a million now.
+
+	* sh/tracker.sh: decode the title before printing it to console too
+
+2006-08-25  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* src/tclscripts/mged/help.tcl:
+	Somewhere along the line "smooth_bot" command got changed to
+	"bot_smooth", but the help never got changed. The help now agrees with
+	the command.
+
+2006-08-24  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libfb/if_remote.c:
+	quell prototype warnings by making the errlog callback function match 
+the signature via a simple passthrough to a rem_log().
+
+	* src/libdm/dm-X.c, src/libdm/dm-glx.c, src/libdm/dm-ogl.c, 
+src/libdm/dm-pex.c, src/libdm/dm-tk.c, src/libdm/dm-wgl.c:
+	according to one of the tcl devs (thx jenglish), Tk_IsMapped() is not 
+what we should be using to determine if the tkwin is 'valid' .. being 'mapped' 
+apparently means that there is a window that has been explicitly mapped via a 
+Tk_MapWindow() call or is otherwise fully drawn/displayed.  fall back to a 
+simple non-null check instead.
+
+2006-08-24  jlowenz  <jlowenz@users.sourceforge.net>
+
+	* src/libpkg/pkg.c:
+	added return from pkg_permserver_ip (oops); made strings const for 
+pkg_open - since they should be...
+
+	* include/pkg.h: added function prototypes, C linkage wrapper
+
+2006-08-24  brlcad  <brlcad@users.sourceforge.net>
+
+	* NEWS, src/mged/attach.c:
+	prevent infinite loop on classic mged attach prompt.  check whether 
+fgets is stuck on EOF so we can cancel the prompt.
+
+	* src/mged/attach.c:
+	simple infinite loop protection on the attach prompt (it can go into an 
+inf loop on unexpected input (e.g. ctrl-d)).  also protect against dereference 
+crashes when there is no display.
+
+	* src/mged/ged.c:
+	prevent dereference crash if there is an uninitialized display
+
+	* NEWS, src/mged/ged.c:
+	ctrl-d on an empty shell line now quits mged like one might expect for 
+an interactive console shell.  this addresses sf bug report 1543495.
+
+	* src/librt/db_comb.c, src/librt/tcl.c, include/raytrace.h:
+	Consistently use integers instead of shorts for the region id, air 
+code, GIFT material code, and los value for the rt_comb_internal structure.  
+region ids are already handled almost entirely as integers throughout the code, 
+but the usage of shorts in the comb structure seems to be a carry-over from 
+prior v4 format support that was never changed.  a review of code seems to 
+indicate that the only negative impact should only be rather unsupported 
+behavior if someone actually reverts a v5 db to v4 that has region idents that 
+overflow short.  (this mod is in support of JTCG/ME and addresses sf bug 
+1532661 "Mismatch In Size of region_id" reported by Tom Browder)
+
+2006-08-23  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/tclscripts/archer/.cvsignore:
+	ignore the auto-generated files so they aren't accidentally committed 
+to cvs
+
+	* src/libdm/dm-pex.c:
+	missed pex interface, use xtkwin insted of dpy with Tk_IsMapped()
+
+2006-08-23  lbutler  <lbutler@users.sourceforge.net>
+
+	* src/libbu/malloc.c:
+	bu_prmem() was printing the number of available slots in the memory 
+debug
+	table.  This was easily mis-interpreted as the number of memory 
+allocations.
+	Since this is a diagnostic for how the memory debug table is being 
+manipulated
+	and not something the average user/programmer wants to see, the value
+	was removed from bu_prmem()'s output.  Minor benefit:  The table now 
+prints
+	one less line, so output is more compact.
+
+2006-08-22  brlcad  <brlcad@users.sourceforge.net>
+
+	* NEWS:
+	john fixed the tree command so that it now matches the documentation, 
+by adding support for -i and -o.  this fixes sf bug 1480522 'Tree cmd not 
+accepting args' as reported by david lowman.
+
+	* src/libdm/dm-X.c, src/libdm/dm-glx.c, src/libdm/dm-ogl.c, 
+src/libdm/dm-tk.c, src/libdm/dm-wgl.c:
+	Tk_IsMapped takes a tkwin, not a Display, so give it what it wants for 
+the sanity check.  add another for the mainwindow too even.
+
+	* src/libdm/query.c: oops, declare dpy as a Display
+
+	* NEWS: added archer geometry/view loading via command-line arg
+
+	* src/libtclcad/Makefile.am:
+	libtclcad depends on libfb for tkImgFmtPIX fb_() image sizing functions
+
+2006-08-22  bob1961  <bob1961@users.sourceforge.net>
+
+	* misc/win32-msvc7/librt/librt.vcproj: Added g_metaball.c to the build.
+
+	* src/libtclcad/tkImgFmtPIX.c: Include fb.h
+
+	* src/archer/archer, src/archer/archer.bat:
+	Added code to handle an argument.
+
+	* src/tclscripts/archer/Archer.tcl:
+	Added the option to effectively toggle two sided lighting. Added a 
+-noWaitCursor option to the draw method.
+
+	* src/libdm/dm-wgl.c:
+	Removed call to Tk_IsMapped (i.e. it was being called with a Display 
+pointer instead of a Tk_Window. Also added code to provide an option to color 
+back facing polgons differently than front facing ones.
+
+	* src/tclscripts/lib/Dm.tcl:
+	If on Windows, change default display manager type to wgl instead of 
+ogl.
+
+2006-08-22  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* src/librt/wdb_obj.c, src/tclscripts/helplib.tcl:
+	Modified wdb_tree_cmd() and wdb_print_node() to provide the capabilities
+	the help command cliams for the "tree" command. Also modified the
+	helplib entry so that it agrees with the help message. This fixes bug
+	#1480522.
+
+2006-08-21  brlcad  <brlcad@users.sourceforge.net>
+
+	* include/raytrace.h, src/librt/bundle.c, src/librt/db_lookup.c, 
+src/librt/shoot.c, src/librt/storage.c, src/librt/vshoot.c:
+	s/RT_RESOURCE_CHECK/RT_CK_RESOURCE/g .. we really don't need two macros 
+that do the exact same check.  consolidate to just one sans a deprecation 
+warning, using the prevalent CK convention instead.
+
+2006-08-20  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/mged/ged.c: break message into two lines on abort.
+
+	* src/mged/ged.c:
+	if mged was started in interactive mode and fails to create a display 
+manager, revert to classic mode.
+
+	* src/libdm/tcl.c:
+	copy the name/port of the x11 server into a temporary buffer.  this 
+avoids some odd stack corruption that is probably related to a bug somewhere 
+else.  this is of course just masking tape over one of the symptoms more than 
+likely.
+
+	* src/libdm/query.c:
+	don't use the HAVE_XOPENDISPLAY define, configure doesn't provide it 
+atm anyways.  instead merge in the logic pertaining to checking for X and/or 
+GLX into their respective sections.
+
+2006-08-19  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libdm/dm-X.c, src/libdm/dm-glx.c, src/libdm/dm-ogl.c, 
+src/libdm/dm-pex.c, src/libdm/dm-tk.c, src/libdm/dm-wgl.c:
+	make sure we actually got a display before proceeding with the display 
+manager initialization.  this prevents the display manager from crashing out 
+quickly upon startup when some condition fails (like there not being an X11 
+server to connect to, then attempting to get the size of that display or a 
+screen, etc)
+
+	* src/libtclcad/tkCanvBezier.c:
+	make sure the display isn't null before proceeding.  really shouldn't 
+ever be if we got this far, but if it is, we avoid a crash. add a localvar 
+footer while we're at it
+
+	* configure.ac:
+	try glGetBooleanv() instead of glClear() to prevent crashing when 
+there's no context
+
+2006-08-18  brlcad  <brlcad@users.sourceforge.net>
+
+	* TODO:
+	EF importer moves forward along with archer for the next iteration, 
+everything else is on hold until they complete
+
+2006-08-18  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/tclscripts/mged/edit_menu.tcl, src/tclscripts/mged/openw.tcl:
+	metaball editing menu
+
+	* src/mged/edsol.c: metaball prim editor hook for "new" mged menu
+
+	* src/mged/edsol.c:
+	stub out metaball editing stuff and wire it into -c mode
+
+2006-08-18  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/mged/edsol.c: meh, reorder
+
+	* src/mged/dodraw.c:
+	missed one.  should always initialize structures that utilize magic 
+number checking prior to any use including being passed around as function 
+arguments.  initialize a variety of struct rt_db_internal that were being 
+passed to transform_editing_solid() uninitialized.
+
+	* src/mged/edsol.c, src/mged/facedef.c, src/mged/inside.c:
+	should always initialize structures that utilize magic number checking 
+prior to any use including being passed around as function arguments.  
+initialize a variety of struct rt_db_internal that were being passed to 
+transform_editing_solid() uninitialized.
+
+	* NEWS: john adds improved beginning-of-line input processing in stl-g
+
+2006-08-18  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* src/conv/stl-g.c:
+	now ignores leading white space on the first line of the STL file
+
+2006-08-17  jlowenz  <jlowenz@users.sourceforge.net>
+
+	* include/pkg.h, src/libpkg/pkg.c:
+	added a new function: pkg_permserver_ip to support connecting to the 
+loopback interface. involved some refactoring. not completely tested yet.
+
+2006-08-16  brlcad  <brlcad@users.sourceforge.net>
+
+	* sh/enumerate.sh, sh/vers.sh:
+	should escape the quotes since they're inside quotes
+
+	* sh/vers.sh:
+	use a somewhat more safe means to extract the version number from 
+configure.ac
+
+	* sh/enumerate.sh:
+	add = in the version string just to minimize the chance it's something 
+that will not evaluate.
+
+	* sh/enumerate.sh: output the date and version of BRL-CAD
+
+2006-08-16  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/mged/chgmodel.c: added metaball to the "make" command
+
+2006-08-16  brlcad  <brlcad@users.sourceforge.net>
+
+	* BUGS:
+	john fixed the bug where the dxf-g converter was improperly handling 
+files encoded with a different line ending style (e.g. CR+NL or CR only).  this 
+was done by implementing bu_fgets() that takes CR's into account.  still need 
+to test more and probably update all of the callers of fgets() but it's there 
+now.
+
+	* NEWS: john improved end-of-line file input processing in dxf-g
+
+	* src/mged/edsol.c:
+	use the rt_matrix_transform() call from librt instead of hooking into 
+the rt_functab directly.
+
+	* src/librt/Makefile.am, src/librt/transform.c:
+	initial implementation of rt_matrix_transform() routine for applying a 
+matrix transformation to a given object.  basically a convenient wrapper to not 
+needlessly expose the rt_functab table to userland code.
+
+	* include/raytrace.h:
+	declare the newly added rt_matrix_transform() routine for applying a 
+matrix transformation to a given object
+
+2006-08-16  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* include/bu.h: Added bu_fgets()
+
+	* src/conv/dxf-g.c:
+	Now uses bu_fgets() so that DXF files that use CR as an EOL marker will 
+be read correctly
+
+	* src/libbu/Makefile.am, src/libbu/bu_fgets.c:
+	Added bu_fgets(). A replacement for fgets() that also recognizes CR as 
+an EOL marker
+
+2006-08-15  brlcad  <brlcad@users.sourceforge.net>
+
+	* sh/Makefile.am, sh/enumerate.sh, sh/lines.sh:
+	renamed lines.sh to enumerate.sh and added more than just line counting 
+to the report summary.  the output now also includes details on the number of 
+files/directories as well as the number of libraries and applications that are 
+compiled/installed.
+
+2006-08-14  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libdm/dm-X.c, src/libdm/dm-generic.c, src/libfb/if_X.c:
+	change function names to avoid debug build name clashing
+
+2006-08-14  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/librt/g_metaball.c: Alter point value to be f^2/r^2.
+	Set normalization routine to use f^2/r^3 to fix flipped normals.
+
+2006-08-14  brlcad  <brlcad@users.sourceforge.net>
+
+	* include/raytrace.h, src/librt/wdb_obj.c:
+	make RT_NAMESIZE obsolete, remove from public interface header.  retain 
+the v4 support for 16 char object names using a local define.
+
+	* NEWS:
+	support for longer Fastgen object names in fast4-g.. should allow for 
+longer length object names when performing a conversion instead of seemingly 
+arbitrarily limiting the names to 16 characters.  this change is made in 
+response to sf feature request 1539998 (FastGen to BRL-CAD converter truncates 
+names) from ashleybomboy.
+
+	* src/conv/fast4-g.c:
+	this should allow for longer length object names when performing a 
+conversion instead of seemingly arbitrarily limiting the names to 16 
+characters.  this change is made in response to sf feature request 1539998 
+(FastGen to BRL-CAD converter truncates names) from ashleybomboy.
+
+	* src/mged/clone.c:
+	now makes n copies of a solid primitive, but does not yet apply a 
+transformation matrix
+
+	* src/mged/clone.c: refactor the index
+
+	* src/mged/clone.c:
+	prepare for making v5 primitives, restore abort on v5 combinations.
+
+	* src/librt/db_io.c: can't get an mrec of a v5 database
+
+2006-08-13  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/mged/clone.c:
+	one step closer towards v5 database support, make function hooks match 
+db_functree interface (last param wasn't genptr_t).  fix a memory leak related 
+to get_name().  keep track of whether objects are correctly cloned via get_name 
+lookups.
+
+	* src/mged/history.c, src/mged/ged.c:
+	make the command history pattern arg const
+
+	* src/mged/ged.c:
+	refix the command-line history bug that was inadvertently undone by the 
+mac delete key patch
+
+2006-08-12  brlcad  <brlcad@users.sourceforge.net>
+
+	* TODO: display the current mode in mged graphics window
+
+2006-08-11  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/librt/tree.c: quell 64bit warning
+
+	* src/canon/canonlib.c, src/canon/ipuscan.c, src/canon/ipustat.c, 
+src/canon/pix-ipu.c, src/canon/png-ipu.c:
+	header cleanup
+
+	* src/canon/canon.h:
+	use the newly added HAVE_SYS_PRCTL_H so we can check whether PR_SALL 
+and PR_SFDS are provided by the sproc interface for working with dslib.
+
+	* configure.ac: check for the sys/prctl.h header .. it declares sproc()
+
+	* autogen.sh:
+	if autogen.sh exists, consider it good enough.  otherwise then print 
+error cruftage.
+
+2006-08-11  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/librt/g_metaball.c:
+	minor clean, and changed some logic in shot to fix a memory leak.
+
+2006-08-11  d_rossberg  <d_rossberg@users.sourceforge.net>
+
+	* misc/win32-msvc/Dll/brlcad.def: expand exported symbols list
+
+2006-08-11  brlcad  <brlcad@users.sourceforge.net>
+
+	* BUGS: fbhelp sends some of the output to stdout and some to stderr
+
+	* src/mged/ged.c:
+	disable logging for now until it can be tied to OPTIMIZED too
+
+	* TODO:
+	intel compiler was tested, it's pretty sweet.  still need to add the 
+configure detection, though.  also most  warnings are quelled finally, time to 
+move on to the verbose warnings soon..
+
+	* BUGS:
+	several of the max screen size values were increased or reworked, 
+revisit bug
+
+	* src/libdm/dm-X.c: oops .. they are x_vars, not dm_xvars
+
+	* src/libdm/dm-X.c, src/libdm/dm-glx.c, src/libdm/dm-ogl.c, 
+src/libdm/dm-pex.c, src/libdm/dm-tk.c:
+	HAVE_XOSDEFS_H was a conf.h fictional, update to new configure check 
+for HAVE_X11_XOSDEFS_H and clean up header foo some.
+
+	* configure.ac:
+	xosdefs.h? how about searching for X11/Xosdefs.h instead
+
+2006-08-10  brlcad  <brlcad@users.sourceforge.net>
+
+	* BUGS:
+	several of the converters (e.g. dxf-g) assume newlines and do not take 
+carriage returns into account
+
+2006-08-10  d_rossberg  <d_rossberg@users.sourceforge.net>
+
+	* src/libsysv/Makefile.am:
+	remove the deleted regular expression implementation files
+
+	* misc/win32-msvc/Dll/brlcad.dsp, misc/win32-msvc/brlcad.dsw, 
+src/libsysv/libsysv.dsp, src/other/libregex/Makefile.am, 
+src/other/libregex/libregex.dsp:
+	remove the obsolete regular expression implementation in src/libsysv,
+	using the more up-to-date in src/other/libregex
+
+	* src/libbn/libbn.dsp:
+	remove asize.c file -- was refactored into src/libfb/asize.c
+
+2006-08-10  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libdm/dm-X.c:
+	cleanup the lengthy repetition of pub_vars and priv_vars using some 
+local vars pointers, ws too
+
+	* src/mged/Makefile.am, src/mged/dm-tk.c:
+	initial DM_TK mged wrapper interface to libdm's interface (written by 
+Tim Myers) disabled from build for now
+
+	* src/liboptical/sh_plastic.c:
+	PM_Visualize is not used if this is RT_MULTISPECTRAL, protect 
+accordingly so we don't end up with undefined symbols
+
+	* src/liboptical/Makefile.am:
+	liboptical is once again no longer dependent upon libfb
+
+	* src/liboptical/sh_billboard.c:
+	decouple from libfb, don't bother trying to autosize the image based on 
+the file name -- use the provided size
+
+	* src/libfb/Makefile.am, src/libfb/if_tk.c:
+	add an initial Tk framebuffer interface (implemented by Tim Myers), 
+disabled from the build for now
+
+	* src/libfb/fb_generic.c:
+	add Tk to the list of known interfaces if IF_TK is defined
+
+	* src/libdm/Makefile.am, src/libdm/dm-tk.c:
+	add initial DM_TK interface (from Tim Myers)
+
+	* include/fbio.h: initial steps for a Tk interface, if IF_TK is defined
+
+	* include/Makefile.am, include/dm-tk.h:
+	add initial DM_TK interface header (from Tim Myers)
+
+	* src/libbu/mread.c: quell warning
+
+	* TODO:
+	lots of new ideas to do.  full precision support, c++ geometry API, 
+geometry voxelizer, geometry/image converter libraries, validation tests 
+confirming various computations.
+
+	* HACKING:
+	when making a release, utilize the NEWS file as appropriate as a basis 
+for making release announcements.  either way, the announcements almost ALWAYS 
+require tailored customization.
+
+2006-08-09  brlcad  <brlcad@users.sourceforge.net>
+
+	* misc/win32-msvc/brlcad.dsw:
+	libtclcad isn't really needed for the library build for most ray-trace 
+purpose applications.  it'd only be useful if someone wanted to manually 
+compile the mged sources and then use this to link against.  since that doesn't 
+currently seem to be a need, going ahead and reverting/removing it.
+
+	* NEWS, TODO, src/mged/tedit.c:
+	fairly comprehensive rewrite of tedit() for the ted command that merges 
+the windows version in with the unix version in what should be a pretty 
+platform independent manner.  this version tries a lot harder to find a usable 
+editor other than /bin/ed including checking EDITOR even on Windows (there was 
+some bug report for this, but can't find it atm).  it'll also kick off TextEdit 
+on Mac OS X now as well as trying emacs and vi, before falling back on jove as 
+the editor if it can find it.  still doesn't do run-time checking of the editor 
+itself, but it should be more consistent.  also removed the closing of 
+descriptors which lets console editors work and allows gui editors to be aborted
+
+2006-08-08  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libfb/if_X.c, src/libfb/if_ogl.c, src/libfb/if_wgl.c:
+	avoid debug mode namespace conflicts when multiple interfaces are 
+compiled and HIDDEN becomes /**/)
+
+	* src/liboptical/sh_null.c:
+	avoid debug mode namespace conflicts with libfb's null interface (where 
+HIDDEN becomes /**/)
+
+	* src/liboptical/sh_stack.c:
+	avoid debug mode namespace conflicts with libfb's stack interface 
+(where HIDDEN becomes /**/)
+
+	* src/liboptical/sh_light.c:
+	final mod to allow for arbitrary counts of light point samples.  the 
+point sample array is allocated in batches of SOME_LIGHT_SAMPLES.
+
+	* include/light.h, src/liboptical/sh_light.c:
+	next step in the incremental update, dynamically allocate the light 
+sample points array instead of using a fixed size.
+
+	* misc/Makefile.defs:
+	be sure to delete static and other 'regular' or noinst libraries during 
+a make noprod
+
+	* include/light.h, src/liboptical/sh_light.c:
+	incremental update this time.. change MAX_LIGHT_SAMPLES to 
+SOME_LIGHT_SAMPLES
+
+	* NEWS:
+	fixed mged crash on P binding when not in edit mode.  this fixes sf bug 
+1375751 (P shuts down mged) reported by bob2.
+
+	* src/mged/edsol.c:
+	not_state now reports the desired state, so no need to print a message. 
+ be consistent with the printing and the command name category (sedit).
+
+	* src/mged/buttons.c:
+	print out the expected/desired state so the user has a clue as to what 
+to do to resolve the problem when not in the right editing mode.
+
+	* src/mged/chgtree.c:
+	not_state() now reports the desired state too, so no need for the extra 
+printing
+
+	* src/mged/edsol.c:
+	add a lot of checks for valid pointers as part of isolating a 'P' 
+binding crash bug (sf bug 1375751: P shuts down mged).  the crash was the 
+result of a bus error inside of Tcl_AppendResult of all places, where the 
+second Tcl_AppendResult() after the one inside not_state() would cause a crash. 
+ this may indicate some other interp initialization problem, but the fix in 
+place does seem to keep things going nicely.
+
+	* src/tclscripts/mged/callbacks.tcl:
+	quell warnings about mged_display not being set, make sure the 
+variables even exist
+
+	* src/libfb/if_stack.c, src/libfb/if_sun.c, src/libfb/if_ts.c, 
+src/libfb/if_ug.c, src/libfb/if_wgl.c, src/libfb/if_4d.c, 
+src/libfb/if_TEMPLATE.c, src/libfb/if_X.c, src/libfb/if_X24.c, 
+src/libfb/if_ab.c, src/libfb/if_adage.c, src/libfb/if_ap.c, 
+src/libfb/if_debug.c, src/libfb/if_disk.c, src/libfb/if_mem.c, 
+src/libfb/if_null.c, src/libfb/if_ogl.c, src/libfb/if_ptty.c, 
+src/libfb/if_rat.c, src/libfb/if_remote.c, src/libfb/if_sgi.c, 
+src/libfb/if_sgiw.c, src/libfb/fb_obj.c, src/libfb/fb_paged_io.c, 
+src/libfb/fblocal.h, src/libfb/fbserv_obj.c:
+	get rid of the libfb-specific _LOCAL_ macro, instead using HIDDEN like 
+everyone else (currently still provided by machine.h)
+
+	* src/mged/chgview.c, src/mged/cmd.c, src/mged/vrlink.c:
+	enable the 'pov' command, getting rid of the peculiar undocumented 
+TCP_FILES define.  move cmd_pov over to chgview.c like the comment suggests. 
+(note that the command guts are over in librt)
+
+	* src/mged/dm-X.c, src/mged/dm-ogl.c, src/mged/dm-wgl.c, 
+src/mged/mged_dm.h:
+	move the common_dm() decl over to mged_dm.h
+
+	* src/mged/attach.c:
+	remove apparently dead code, 'do_2nd_attach_prompt()'
+
+	* src/mged/attach.c:
+	looks like bezier canvas support should now be available for both 
+windows studio build projects. libtclcad should build sans tk sources now, try 
+enabling it.
+
+	* misc/win32-msvc/brlcad.dsw:
+	add libtclcad to the msvc brlcad dll build workspace
+
+	* src/libtclcad/Makefile.am: add the new windows build file to the dist
+
+	* src/libsysv/Makefile.am:
+	make vers.c correctly rebuild if a source file changes
+
+	* src/libtclcad/libtclcad.dsp:
+	take a manual stab at an initial msvc build file for libtclcad (needed 
+for the sketch editor)
+
+	* src/libdm/dm-ogl_win.c:
+	removed the replaced file.  dm-ogl_win.c is no more, replaced by the 
+dm-wgl.c interface file.
+
+	* src/nirt/if.c, src/remrt/remrt.1, src/tclscripts/mged/anim.tcl, 
+src/libfb/if_4d.c, src/libfb/if_sgi.c, src/libfb/if_sun.c, 
+src/liboptical/sh_toyota.c, src/librt/g_extrude.c, src/librt/g_sketch.c, 
+src/librt/g_xxx.c, src/librt/nmg_junk.c, src/librt/raydebug.tcl, 
+src/conv/proe-g.c, src/conv/stl-g.c:
+	get rid of the old 'cad' path references/assumptions
+
+	* doc/mged.tr, doc/html/manuals/mged/mug, 
+doc/html/manuals/mged/mug_camo:
+	get rid of the old path
+
+	* doc/html/manuals/mged/Makefile.am, doc/html/manuals/mged/bugs:
+	get rid of doc/html/manuals/mged/bugs .. the main bug in there was 
+verified to still be a problem and was added to the BUGS file.  either way, we 
+don't need this old 'bugs' file any more.
+
+	* BUGS:
+	debugbu 2 immediately reports a bu_vls_free() error.. apparently been a 
+problem since 4.5 days at least (bug found in doc/html/manuals/mged/bugs)
+
+	* src/mged/buttons.c, src/mged/chgtree.c, src/mged/cmd.c, 
+src/mged/dm-generic.c, src/mged/doevent.c, src/mged/ged.c, src/mged/mged.dsp, 
+src/mged/mgedtcl.h, src/mged/update.c, src/mged/attach.c:
+	decouple DM_X from the other display manager interfaces, clean up the 
+preprocessor logic so Windows does not need to declare DM_X but also to avoid 
+using _WIN32 where possible as well.
+
+	* configure.ac: check for pipe()
+
+	* src/libdm/dm-generic.c, src/libdm/dm_obj.c, src/libdm/libdm.dsp, 
+src/libdm/query.c, src/libdm/tcl.c:
+	decouple DM_X from the other display manager interfaces, clean up the 
+preprocessor logic so Windows does not need to declare it
+
+	* misc/win32-msvc7/mged/mged.vcproj:
+	don't define DM_X, should be only using DM_WGL now on Windows
+
+2006-08-07  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/mged/doevent.c: ws
+
+	* src/mged/dm-generic.c: header cleanup, ws
+
+	* src/mged/dm-X.c, src/mged/dm-ogl.c, src/mged/dm-wgl.c: ws
+
+	* src/libdm/dm_obj.c: header cleanup, get rid of _WIN32
+
+	* include/dm_xvars.h:
+	collapse the two structures into one, even though the structure really 
+should NOT be serving double-duty and be compile-time variable-width..  doesn't 
+allow multiple interfaces to be simultaneously compiled.  should absorb the 
+interface into dm-X.h and friends at some point.
+
+	* include/dm-X.h: cleanup, ws
+
+	* misc/win32-msvc7/libdm/libdm.vcproj, 
+misc/win32-msvc7/libfb/libfb.vcproj, src/libdm/dm-glx.c, 
+src/libfb/fb_generic.c, src/libfb/tcl.c:
+	decouple IF_X from the other framebuffer interfaces (ogl and wgl in 
+particular).  Windows should not define IF_X unless they want the X11 interface.
+
+	* src/libfb/if_ogl.c: reword away if_4d.c
+
+	* src/libfb/Makefile.am, src/libfb/if_4d-old.c:
+	mark the if_4d-old interface as now obsolete, no longer shipping the 
+sources leaving it to cvs history
+
+	* src/libfb/fb_generic.c, src/libfb/if_ogl.c, src/libfb/if_remote.c, 
+src/libfb/if_wgl.c, include/fbio.h:
+	IF_4D interface is not really shipped any more, don't talk about it
+
+	* src/remrt/Makefile.am:
+	remrt does use libfb directly and needs to declare the dependency even 
+if another dependency also uses it.  libtool is supposed to sort it all out
+
+	* src/mged/mged_dm.h: no longer need the ogl_ogl externs..
+
+	* src/mged/dm-ogl.c:
+	no longer need the _WIN32 section, they get their own dm-wgl.c interface
+
+	* src/libdm/dm-glx.c:
+	remove the old DM_OGL hack on the GLX interface.. move towards 
+decoupling the two
+
+	* src/mged/dm-wgl.c:
+	add a new dm-wgl.c interface for windows to use instead of piggypacking 
+off of the ogl interface
+
+	* misc/win32-msvc7/mged/mged.vcproj:
+	compile the new dm-wgl.c interface instead of dm-ogl.c now on Windows
+
+	* misc/win32-msvc7/libdm/libdm.vcproj:
+	windows uses dm-wgl.c now, not dm-ogl_win.c .. the latter exists no more
+
+	* misc/win32-msvc7/libfb/libfb.vcproj, src/libfb/Makefile.am, 
+src/libfb/if_ogl_win32.c, src/mged/dm-X.c:
+	remove the if_ogl_win32.c interface .. Windows platforms should now be 
+using the if_wgl.c interface instead
+
+	* misc/win32-msvc7/fb2pix/fb2pix.vcproj, 
+misc/win32-msvc7/fb2png/fb2png.vcproj, misc/win32-msvc7/fbclear/fbclear.vcproj, 
+misc/win32-msvc7/fbserv/fbserv.vcproj, misc/win32-msvc7/libfb/libfb.vcproj, 
+misc/win32-msvc7/pix2fb/pix2fb.vcproj, misc/win32-msvc7/png2fb/png2fb.vcproj, 
+src/libdm/dm-generic.c, src/libdm/dm_obj.c, src/libdm/libdm.dsp, 
+src/libdm/query.c, src/libfb/fb_generic.c, src/mged/attach.c, 
+src/mged/mged.dsp, src/mged/tedit.c, src/tclscripts/archer/pkgIndex.tcl, 
+src/tclscripts/archer/tclIndex, src/util/pl-dm.c, include/dm.h, include/fb.h, 
+include/fbio.h:
+	add explicit code for DM_WGL and IF_WGL for Windows GL support instead 
+of piggybacking off of the OGL interface
+
+	* include/dm.h:
+	revert, wrong edited dm.h.. not yet ready for the tk interface
+
+	* include/dm.h: unnecesary IF_OGL define
+
+	* include/light.h, src/liboptical/sh_light.c:
+	revert the unlimited lights change briefly until it is determined why 
+they are not working for area light sources
+
+	* src/mged/Makefile.am: dm-tk.c isn't ready yet
+
+	* src/conv/off/Makefile.am: s/LIBRT/RT/
+
+2006-08-06  brlcad  <brlcad@users.sourceforge.net>
+
+	* doc/PROJECTS: spel chek
+
+	* doc/PROJECTS:
+	clean up the introductory description paragraph a little
+
+	* doc/Makefile.am: add PROJECTS and IDEAS to the list of documentation
+
+	* doc/PROJECTS:
+	BRL-CAD is comprised of several isolatable projects that have specific
+	distinguishing qualities of utility that make them useful as
+	stand-alone projects to a wide audience of users.  In some cases,
+	these projects may be independently maintained and are sometimes
+	independently distributed.  These projects are described in this file.
+
+	* src/other/jove/findcom.c: quell warnings about implicit declarations
+
+2006-08-04  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/librt/g_metaball.c:
+	Fixed point value function (f^2/r^2 instead of f/r^2).  Fixed steppers
+	"dist left" concept. (those two fix 'large' object rendering). Renamed
+	and deleted variables for readability.
+
+2006-08-03  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/librt/g_metaball.c: Major fixes to bounding sphere generation.
+	Break bigger functions down a bit for reuse and easier reading.
+	Draw the bounding sphere in rt_metaball_plot (may be backed out later).
+
+2006-08-03  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/mged/Makefile.am, src/libfb/tcl.c:
+	add support for the new 'wgl' WindowsGL interface
+
+	* src/libfb/libfb.dsp:
+	use IF_WGL now instead of IF_OGL, as well as if_wgl.c instead of 
+if_ogl_win32.c
+
+	* src/libfb/if_X24.c:
+	avoid crash -- if the interface is null, just return
+
+	* src/bwish/tcl.c: init array to zero
+
+	* sh/lines.sh:
+	compute how many lines of the source code are actually blank and don't 
+include those numbers in the totals for a slightly better/invariant 
+approximation
+
+2006-08-02  brlcad  <brlcad@users.sourceforge.net>
+
+	* NEWS:
+	forgot to mention that this fixes sf bug #1469502: FreeBSD6/amd64 rt 
+segfault when optimization enabled
+
+2006-08-02  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/librt/g_metaball.c:
+	Implemented rt_metaball_class. Fixed a_onehit handling in 
+rt_metaball_shot.
+
+2006-08-02  brlcad  <brlcad@users.sourceforge.net>
+
+	* HACKING:
+	minor comment about keeping docs up to date, communicating changes
+
+	* NEWS: improved FreeBSD 64bit support, fix AMD64 crash
+
+2006-08-02  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* include/machine.h: adding {free,open,net}bsd to the ugly hackery
+
+2006-08-02  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* src/gtools/g_transfer.c: Corrected the compile instructions
+
+2006-08-01  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/librt/g_metaball.c:
+	Shoot all the way through if ap->a_onehit is not true (opposed to 
+through the first in/out pair).
+	Apply the 'stepping' optimization to walking after the first hit.
+	Minor cleanup for -Wall -Werror -ansi -pedantic.
+
+	* src/remrt/Makefile.am:
+	since liboptical now deplibs libfb, we can remove libfb from the 
+explicit ldadd
+
+	* src/liboptical/Makefile.am:
+	sh_billboard.c requires libfb for fb_common_name_size, so add it to the 
+deplibs
+
+	* src/remrt/Makefile.am: rtsrv needs libfb
+
+	* src/conv/off/Makefile.am: LIBRT moved to RT
+
+	* src/librt/g_metaball.c:
+	Drastically improved bounding sphere computation (better center and 
+fit).
+	Fix for 'garbage' normals resulting in noisy images in some situations.
+	Obey the 'one-hit' flag in the shot routine.
+
+2006-08-01  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/conv/patch/Makefile.am: use RT now instead of LIBRT
+
+	* src/conv/jack/Makefile.am: g-jack needs his libraries too
+
+	* src/libfb/Makefile.am:
+	compile if_wgl.c now that it'll check for IF_WGL being defined
+
+	* src/libfb/if_wgl.c: update names, s/ogl/wgl/
+
+	* configure.ac: bah, another.. wgl_link_works, not gl_link_works
+
+	* configure.ac: oops, typo.. close the macro
+
+	* src/libfb/Makefile.am:
+	check for the WITH_WGL symbol from configure to add the WGL cflags
+
+	* src/rttherm/Makefile.am, src/tab/Makefile.am, src/vdeck/Makefile.am, 
+src/librtserver/Makefile.am, src/libwdb/Makefile.am, src/mk/Makefile.am, 
+src/nirt/Makefile.am, src/remrt/Makefile.am, 
+src/external/Unigraphics/Makefile.am, src/gtools/Makefile.am, 
+src/halftone/Makefile.am, src/irprep/Makefile.am, src/lgt/Makefile.am, 
+src/libmultispectral/Makefile.am, src/liboptical/Makefile.am, 
+src/burst/Makefile.am, src/bwish/Makefile.am, src/conv/comgeom/Makefile.am, 
+src/conv/iges/Makefile.am, src/conv/jack/Makefile.am:
+	update the usage of LIBRT from configure to be RT instead so that it is 
+consistent with the other BU, BN, WDB etc library defines, using the LIB prefix 
+mostly on third party or external libraries instead.
+
+	* src/libfb/Makefile.am: add the new if_wgl.c file, not yet compiled
+
+	* src/libfb/if_wgl.c:
+	initial stub of a libfb IF_WGL 'wgl' interface to replace usage of 
+'ogl' on Windows.  this is done to support the libdm design intent of 
+interfaces for each style of display manager, instead of piggy-backing on top 
+of 'ogl' and complicating the code with preprocessor WIN32 checks everywhere.  
+haven't updated the names/code yet.. just a stub file.
+
+	* src/libdm/dm-wgl.c:
+	add an initial implementation of a WindowsGL 'wgl' libdm interface 
+using the former dm-ogl_win32.c code as a basis.  remove the XGL sections and 
+add boilerplate checks that makes sure this interface can be compiled alongside 
+the 'ogl' interface.  expects DM_OGL to be defined in order to get 
+functionality.
+
+	* src/rttherm/viewtherm.c:
+	use the main light.h header, not the (now gone) private src/rt/light.h 
+header
+
+	* src/libdm/Makefile.am:
+	add dm-wgl.c to the compilation list based on the WITH_WGL automake 
+symbol being defined by configure -- this allows the wgl interface to be 
+simultaneously compiled alongside the ogl interface
+
+	* src/libbn/Makefile.am:
+	remove asize.c file -- was refactored into src/libfb/asize.c
+
+	* src/adrt/libcommon/Makefile.am: removed comment
+
+	* misc/win32-msvc7/libtclcad/libtclcad.vcproj, 
+misc/win32-msvc7/mged/mged.vcproj:
+	use the DM_WGL interface instead of DM_OGL
+
+	* include/Makefile.am: install the new dm-wgl.h header
+
+	* src/libfb/compress.c:
+	remove the obsolete compress.c file .. can be restored from revision 
+history should someone really ever need to revisit compression on such old 
+hardware
+
+	* src/libsysv/engine.c, src/libsysv/regcomp.c, src/libsysv/regerror.c, 
+src/libsysv/regex2.h, src/libsysv/regexec.c, src/libsysv/regfree.c, 
+src/libsysv/utils.h, src/libsysv/cclass.h, src/libsysv/cname.h:
+	remove the obsolete regular expression implementation, there is a 
+src/other/libregex that is more up-to-date.
+
+	* src/rt/Makefile.am, src/rt/light.h:
+	the 'local' light.h header was redundant with include/light.h so remove 
+it
+
+	* src/liboptical/sh_prj.c: unused/unnecessary ../rt/ext.h header
+
+	* src/libfb/Makefile.am:
+	libfb now compiles asize.c as it was updated and refactored with the 
+better libbn version.  compress.c is not really relevant/useful any longer.
+
+	* src/libdm/dm-ogl.c:
+	update comment to note that the ogl interface is specifically an X11 
+OpenGL interface (i.e. it's XGL.. might want to rename it to that someday, but 
+oh well).  ws
+
+	* misc/win32-msvc7/libdm/libdm.vcproj:
+	use the new DM_WGL interface instead of the former DM_OGL interface so 
+that the latter may also be compiled at the same time (e.g. cygwin/mingw 
+environments) but also to allow the ogl interface to consistently imply just 
+one interface.
+
+	* misc/win32-msvc7/fbserv/fbserv.vcproj:
+	fbserv_win.c was consolidated into fbserv.c
+
+	* NEWS, include/light.h, src/liboptical/sh_light.c:
+	allow unlimited light samples during ray-tracing instead of a fixed 
+compile-time count (was 128)
+
+	* include/dm-ogl.h:
+	make the 'ogl' interface be X11 OpenGL only.  windows is being moved to 
+its own 'wgl' interface
+
+	* include/dm-wgl.h:
+	initial dm-wgl.h header for a new 'wgl' interface, separating it from 
+the X11-based ogl interface and cleaning up the code
+
+	* configure.ac:
+	try enabling the automatic detection/compilation of tcl/tk now that 
+tkCanvasBezier is cleaned up to not use internal Tk headers.  probably still 
+need to work on Tcl autopath issues, but give it a shot.  also add a slew of 
+checks for WGL so that a new framebuffer and display manager interface may be 
+defined on Windows that is separate from the ogl interface.  this is important 
+for cygwin/mingw systems where it is possible to use both wgl and ogl style 
+interfaces simultaneously.  also rename LIBRT to RT to be consistent with the 
+other BRL-CAD library AC_SUBST values
+
+	* src/fbserv/Makefile.am, src/fbserv/fbserv.c, src/fbserv/fbserv_win.c:
+	refactor fbserv.c and fbserv_win.c so that there is only one file that 
+supports/contains all of the mods that fbserv_win.c was presuming.  this needs 
+testing but is more functionally clean, relying on configure-style 
+tests/defines instead of WIN32 where easily possible
+
+	* src/util/pixcut.c, src/util/pixhalve.c, src/util/pixmorph.c, 
+src/util/pixpaste.c, src/util/texturescale.c, src/util/yuv-pix.c, 
+src/util/double-asc.c, src/util/imgdims.c, src/util/morphedit.tcl, 
+src/util/pix-png.c, src/util/pix-ppm.c, src/util/pix-yuv.c, 
+src/util/pixbgstrip.c, src/util/pixborder.c, src/fb/Makefile.am, 
+src/fb/bw-fb.c, src/fb/pix-fb.c, src/fb/pixautosize.c, 
+src/liboptical/sh_billboard.c, src/util/Makefile.am, src/util/bw-a.c, 
+src/util/bw-png.c, src/conv/Makefile.am, src/halftone/main.c, 
+src/libbn/asize.c, src/libbn/bn_tcl.c, src/libfb/asize.c, src/libfb/tcl.c, 
+include/bn.h, include/fb.h, src/canon/Makefile.am, src/canon/asize.c:
+	refactor the three asize.c implementations (libbn, libfb, & canon) into 
+just one.  libbn had the most comprehensive and updated version, but the logic 
+belongs in libfb.  so, the bn_common autosizing functions are now consolidated 
+to libfb, refactoring accordingly.
+
+	* src/rt/worker.c:
+	reorder functions so that forward declarations are not needed
+
+	* src/rt/ext.h: don't need to (nor should we) declare worker() here
+
+	* src/libbu/parallel.c:
+	run the provided function single-threaded even if bu_parallel() is 
+called on a system that doesn't have PARALLEL support compiled in
+
+	* include/config_win.h:
+	windows apparently doesn't have socklen_t defined, so make it an int so 
+that WIN32 hacks can be removed
+
+	* src/libtclcad/tkImgFmtPIX.c:
+	removing the asize.c bn_common_* file autosizing functions, 
+consolidating them to libfb.  so update the function names to fb_ now
+
+	* src/libtclcad/tclcadTkSetup.c: remove old comment
+
+	* src/libtclcad/tkCanvBezier.c:
+	finally rewrite tkCanvBezier to NOT use libtk internal headers (as it 
+was written as a proper new libtk Canvas type, but hasn't been pushed through 
+the tcl/tk 'TIP' process).  this change should make it feasible to compile this 
+code without having to have a copy of the Tk sources around .. more testing 
+needed.
+
+2006-07-31  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/proc-db/picket_fence.c:
+	fixed incorrect parameter usage of mk_lcomb .. takes an array of three 
+char values, not a string of colors
+
+	* src/liboptical/shade.c: quell warning, takes floats not fastf_t's
+
+2006-07-30  brlcad  <brlcad@users.sourceforge.net>
+
+	* NEWS:
+	new script for computing BRL-CAD file line counts.  this computes the 
+line counts of the various categories of files in the project including 
+documentation, source code (distinguishing header code from non-header source 
+code), 3rd party code (e.g. tcl/tk, png, urt, etc), and build system files.
+
+	* sh/lines.sh:
+	instead of using the 'total' summary from the wc command, calculate the 
+sum directly ourselves using a simple sum function. this slows things down 
+considerably, but is necessary to avoid the default behavior of xargs on linux 
+that can break up a piped stream into multiple invocations (resulting in 
+multiple total lines).
+
+	* sh/lines.sh: consistent line lengths
+
+	* src/util/lowp.c: missing std headers
+
+	* src/rt/viewxray.c, src/sig/interp.c: quell warning
+
+	* src/libdm/clip.c:
+	quell warning on INFINITY (again), instead renaming the define to 
+CLIP_DISTANCE (just without changing the value this time)
+
+	* src/README:
+	add an introductory header that hopefully better explains the various 
+content in the src/ directory as well as a basic summary of just what it 
+comprises before getting into the individual content dirs
+
+	* sh/Makefile.am: add the new lines.sh script
+
+	* sh/lines.sh:
+	initial revision of a new tool that computes how many lines of code 
+BRL-CAD uses.  this separates the code into various categories such as 
+documentation, build system, non-project code, and the actual source code.
+
+	* misc/Makefile.am:
+	pro/e is no longer in this directory, same logic moved to src/external
+
+	* configure.ac:
+	make the 'whether to build against OpenGL' test actually run a function 
+that it has to link against so that it doesn't erroneously pass and leave 
+OpgnGL enabled when there is no library but headers exist.
+
+	* include/rtgeom.h:
+	can only use 4 bytes, not 5 on the RT_METABALL_INTERNAL_MAGIC .. made 
+it 'ball' instead of 'mball'
+
+2006-07-29  brlcad  <brlcad@users.sourceforge.net>
+
+	* COPYING:
+	revert -- I doubt these changes support the intel mac parallel code.. 
+careful not to commit COPYING as it is often automatically overwritten by 
+automake
+
+	* INSTALL:
+	revert -- I doubt these changes support the intel mac parallel code.. 
+careful not to commit INSTALL as it is often automatically overwritten by 
+automake
+
+2006-07-29  lbutler  <lbutler@users.sourceforge.net>
+
+	* COPYING, INSTALL, include/machine.h, src/libbu/parallel.c:
+	changes to support Intel Mac parallel code
+
+2006-07-28  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/external/ProEngineer/.cvsignore:
+	oop, forgot to add the .cvsignore file moved from misc/pro-engineer.  
+add it.
+
+	* configure.ac:
+	add configuration options supporting the Unigraphics importer, 
+providing the BUILD_UG symbol if it is to be compiled (used in src/external)
+
+	* src/external/README:
+	include a blurb about the Unigraphics/NX importer.
+
+	* configure.ac:
+	src/conv/unigraphics was moved to src/external/Unigraphics, so update 
+the corresponding Makefile generation
+
+	* src/external/Makefile.am:
+	add Unigraphics to the subdirectory list, moved over from 
+src/conv/unigraphics to here since it relies on the external UGOPEN 
+api/libraries
+
+	* src/conv/Makefile.am:
+	the unigraphics directory is no longer stashed here, it moved to 
+src/external/Unigraphics
+
+	* src/external/Unigraphics/Makefile.am, 
+src/external/Unigraphics/conv.h, src/external/Unigraphics/log.h, 
+src/external/Unigraphics/ug-g.1, src/external/Unigraphics/ug-g.c, 
+src/external/Unigraphics/ug_misc.c, src/external/Unigraphics/ug_misc.h:
+	moved the Unigraphics importer from src/conv/unigraphics to 
+src/external/Unigraphics since it requires the external UGOPEN library api.
+
+	* configure.ac: add some additional pro/engineer enable aliases
+
+	* src/external/Makefile.am:
+	distribute the new README as part of the source dist (oh yeah, the 
+README also includes details on the Pro/Engineer plugin for starters)
+
+	* src/external/README:
+	describe the contents of this directory and its intent
+
+	* configure.ac:
+	misc/pro-engineer was moved to src/external so update the output 
+Makefiles accordingly as well as the new src/external/Makefile and the plugin 
+resource files
+
+	* src/Makefile.am:
+	traverse into src/external for all builds since there may be something 
+to build in there if it was enabled
+
+	* src/external/Makefile.am, src/external/ProEngineer/Makefile.am, 
+src/external/ProEngineer/install.doc, src/external/ProEngineer/mk.in, 
+src/external/ProEngineer/proe-brl.c, src/external/ProEngineer/proe_brl.res, 
+src/external/ProEngineer/proe_brl_error.res, 
+src/external/ProEngineer/proe_brl_gen_error.res, 
+src/external/ProEngineer/protk.dat.in, src/external/ProEngineer/usermsg.txt:
+	move the Pro/Engineer plugin from misc/pro-engineer to 
+src/external/ProEngineer.  the new src/external directory is intended for all 
+of the codes that are written to work with and link against external packages 
+(often as a plugin to said external package)
+
+	* src/mged/ged.c: ws
+
+	* src/libfb/tcl.c:
+	go ahead and check for valid parameters to fb_refresh even if this 
+isn't IF_X
+
+	* src/tclscripts/archer/pkgIndex.tcl:
+	revert the inadvertent loss of the Archer package
+
+	* src/tclscripts/archer/Archer.tcl, src/tclscripts/archer/pkgIndex.tcl, 
+src/tclscripts/archer/tclIndex:
+	look for commands in the plugin 'Commands' directory instead of 
+'Command' to be consistent with 'Wizards'
+
+	* doc/description.txt:
+	add a tidbit on some of the humorous incorrect pronounciations that 
+have been overheard as well as an explanation of where the name BRL-CAD comes 
+from
+
+2006-07-27  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/archer/plugins/Makefile.am:
+	directory renamed from Command to Commands
+
+	* src/archer/plugins/Commands/Makefile.am, 
+src/archer/plugins/Commands/README:
+	bah, named the directory incorrectly .. files moved from Command to 
+Commands directory
+
+	* src/archer/Makefile.am:
+	there's the culprit, the files are in plugins, not here..
+
+	* src/archer/Makefile.am:
+	oop, readd Commands, Core, and Utility directories
+
+	* configure.ac:
+	generate Makefiles for the src/archer/plugins/Commands Core and Utility 
+directories
+
+	* src/archer/plugins/Core/Makefile.am, 
+src/archer/plugins/Utility/Makefile.am:
+	initial Makefile.am file to create this directory as part of the 
+install hierarchy, installing the README as a bit of trivial documentation.
+
+	* src/archer/plugins/Core/README, src/archer/plugins/Utility/README:
+	add simple initial README file to describe the intended purpose of this 
+directory (i'm guessing here)
+
+	* src/archer/plugins/Makefile.am:
+	rename the data dir variable from documentation to plugins to reflect 
+usage intent; add Core to the list of traversal dirs
+
+2006-07-27  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/tclscripts/archer/Archer.tcl: Add code for loading Core plugins
+
+2006-07-26  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/tclscripts/archer/Archer.tcl:
+	Check-in for Doug. Mods to remember the last directory searcher for a 
+database. Added more menu entries for transparency.
+
+2006-07-26  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/librt/g_metaball.c: Initial plot impl.
+	Removed the 16pt stub (use ell's instead).
+	Minor indentation cleanup.
+
+2006-07-26  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/archer/plugins/Makefile.am: Add Command and Utility to SUBDIRS.
+
+	* src/libdm/dm_obj.c: Add drawScale command.
+
+	* src/tclscripts/archer/Archer.tcl:
+	Added support for displaying a scale in the geometry window. Added 
+support for dynamically adding methods to the Archer class.
+
+	* src/tclscripts/helplib.tcl: Add help for the viewDir command.
+
+	* src/tclscripts/lib/Display.tcl, src/tclscripts/lib/Dm.tcl:
+	Add support for displaying a scale.
+
+	* src/tclscripts/lib/QuadDisplay.tcl:
+	Add viewDir method. Add methods to support the scale.
+
+	* src/tclscripts/lib/View.tcl:
+	Add method/wrapper for the viewDir command.
+
+	* src/librt/dg_obj.c:
+	Change the conditional from <= to < in a few places to prevent indexing 
+to far.
+
+2006-07-26  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/librt/g_metaball.c:
+	minor shot hack for performance, with a tweaked up "final step", this 
+is about 104x faster on my test case
+
+2006-07-26  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/librt/view_obj.c: Added the viewDir command.
+
+	* src/librt/wdb_obj.c: Minor mods of a few comments.
+
+2006-07-25  brlcad  <brlcad@users.sourceforge.net>
+
+	* doc/IDEAS:
+	Modify Kaleido to output BRL-CAD geometry ( 
+http://www.math.technion.ac.il/~rl/kaleido/ )
+
+	* TODO: modify the new tree traversal code to be generic
+
+2006-07-25  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/librt/g_metaball.c:
+	Fixed the prep so it has 'real' bounding volume generation.
+	Change the STEP define to a step var in preparation for a possible 
+optimization.
+
+2006-07-25  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/gtools/g_qa.c: solaris doesn't have isblank()
+
+2006-07-25  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/librt/g_metaball.c:
+	Prep, render, shot, and normal implemented (but quite slow).
+	Fixed an offset bug in the import5 func.
+
+2006-07-24  brlcad  <brlcad@users.sourceforge.net>
+
+	* autogen.sh:
+	oop,  isn't set until after the environment is checked (and usage is 
+potentially before the env check) so just use echo
+
+	* BUGS:
+	mged View menu says I and O are keybindings for zoom in/out -- they are 
+apparently not
+
+2006-07-23  brlcad  <brlcad@users.sourceforge.net>
+
+	* autogen.sh:
+	woot, this little "script" is in excess of 1000 lines... in 
+celebration, finally break tradition with other autogen.sh convention by adding 
+a more useful --help option instead of passing it on to configure.  also add 
+support to override any of the command (autoreconf, automake, etc) options via 
+a set of _OPTIONS environment variables.
+
+	* AUTHORS: bowers middle is anthony, so sayeth the rtedge manpage
+
+	* autogen.sh:
+	allow environment variable overrides on AUTORECONF, AUTOCONF, AUTOMAKE, 
+LIBTOOLIZE, ACLOCAL, AUTOHEADER.  fix --help so it works again (need to rewrite 
+so it's not just a configure pass-through)
+
+	* NEWS: speling
+
+	* autogen.sh:
+	add a manual_autogen function that runs the manual configuration steps. 
+ this makes it possible to add support for manual recursive configure build 
+support.
+
+2006-07-23  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* src/tclscripts/mged/mike-tux.ppm:
+	The file in the cvs repository was corrupted. Sean, be careful when 
+using scripts to update all files :-)
+
+2006-07-23  brlcad  <brlcad@users.sourceforge.net>
+
+	* autogen.sh:
+	utilize the RUN_RECURSIVE define so that we don't recurse more than 
+once during autogening
+
+	* autogen.sh:
+	allow external overrides on HELP, QUIET, VERBOSE, and VERSION_ONLY.  
+document the settable project defaults
+
+	* autogen.sh:
+	yet another fairly massive rewrite, this time mostly just 
+restructuring.  keep track of the basename for better output messages and 
+refactor the initialization steps into a function.  also refactor the libtool 
+failure check into a function while we're at it as well.  all steps towards 
+being able to cleanly handle manual build steps of projects using recursive 
+configure. oh, and this change removes the directory change to the autogen.sh 
+script, so it must once again be run from the top source dir at least for the 
+time being.
+
+2006-07-22  brlcad  <brlcad@users.sourceforge.net>
+
+	* misc/win32-msvc7/librt/librt.vcproj:
+	no longer need to define IMPORT_FASTGEN4_SECTION
+
+	* autogen.sh:
+	detect a recursive configure, it's not really properly supported yet.. 
+but if the problem is glibtool, we should be able to continue through a restart 
+with LIBTOOLIZE set
+
+2006-07-21  d_rossberg  <d_rossberg@users.sourceforge.net>
+
+	* include/raytrace.h:
+	Always compile the fastgen4 import stuff. (bob1961)
+
+2006-07-19  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/librt/g_metaball.c:
+	minor bugfix, implemented "describe" and "ifree"
+
+	* src/librt/g_metaball.c:
+	v5 import/export implemented. Removed v4 stubs. Made all stubs log.
+
+	* src/mged/typein.c:
+	metaball: minor cleanup, and save threshhold to struct
+
+	* src/librt/table.c: point to the v5 export/import, not v4...
+
+2006-07-17  brlcad  <brlcad@users.sourceforge.net>
+
+	* misc/Makefile.am: simple reorder
+
+	* misc/brlcad.spec.in:
+	update the rpm build spec file using more configure autoconf variables 
+instead of in-lining everything.  use the right url for downloads too.
+
+	* doc/Makefile.am: install the pad_file.xml
+
+	* src/tclscripts/helplib.tcl, src/tclscripts/lib/Drawable.tcl, 
+src/tclscripts/mged/plot.tcl, src/mged/overlay.c:
+	consistently use the .pl extension for plot files, not .plot
+
+2006-07-17  prasad_silva  <prasad_silva@users.sourceforge.net>
+
+	* include/raytrace.h, src/librt/db_walk.c:
+	The beginning of a new database traversal framework.
+
+2006-07-17  brlcad  <brlcad@users.sourceforge.net>
+
+	* regress/Makefile.am: clean up after the mged_shaders.log
+
+	* src/libbu/xdr.c: ws
+
+2006-07-17  d_rossberg  <d_rossberg@users.sourceforge.net>
+
+	* src/libbu/mread.c:
+	+= increments a pointer depending on the size of its basetype but what 
+is the size of void? (MSVC 6.0 error)
+
+	* src/libwdb/libwdb.dsp: do not use precompiled header files
+
+	* src/libsysv/libsysv.dsp:
+	do not use precompiled header files, - getopt.c
+
+	* src/librt/librt.dsp:
+	do not use precompiled header files, + g_metaball.c
+
+	* src/libbu/libbu.dsp:
+	do not use precompiled header files, - memset.c, + mread.c
+
+	* src/libbn/libbn.dsp, misc/win32-msvc/Dll/brlcad.dsp:
+	do not use precompiled header files
+
+2006-07-15  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/mged/typein.c:
+	fixed a minor issue with the metaball interactive prompt
+
+2006-07-14  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/mged/typein.c:
+	Initial metaball parser (heavily based on pipes) and minor cleanup.
+
+	* include/rtgeom.h, include/wdb.h:
+	store metaball control points in a bu_list of structs instead of an 
+array of homogenous vectors
+
+	* src/librt/Makefile.am, src/librt/g_metaball.c, src/librt/table.c:
+	initial metaball support (skeletal)
+
+	* include/db5.h, include/raytrace.h, include/rtgeom.h:
+	claiming a number for metaballs
+
+2006-07-13  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libpkg/pkg.c:
+	s/HAVE_UNIX_DOMAIN_SOCKETS/HAVE_SYS_UN_H/g now that there is a new 
+check in configure.ac
+
+	* configure.ac:
+	check for the sys/un.h header in order to stop using the 
+HAVE_UNIX_DOMAIN_SOCKETS define
+
+	* src/libbu/linebuf.c:
+	make linux less unhappy, setlinebuf() apparently returns void on linux 
+so prefer to use setvbuf() when available so we can catch any error
+
+2006-07-12  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/vas4/vas_io.c:
+	clean up the logic on termio.h vs sgtty.h .. can't use both together
+
+	* src/mged/ged.h, src/mged/attach.c: declare mged_link_vars() correctly
+
+	* doc/description.txt, README: s/from/form/
+
+2006-07-11  brlcad  <brlcad@users.sourceforge.net>
+
+	* README, doc/description.txt, doc/pad_file.xml.in:
+	emphasize cross-platform open source instead of comprehensive 
+(technically not comprehensive CAD to say the least)
+
+	* src/canon/Makefile.am: png-ipu needs LIBPNG
+
+	* configure.ac: gah, set LIBDS, not LIBDL
+
+	* src/mged/clone.c:
+	ged.h declares is_dm_null() now, bump clone version in anticipation of 
+getting it to work here shortly
+
+	* src/mged/ged.c: ged.h now declares the attach.c funcs
+
+	* src/mged/ged.h:
+	declare is_dm_null() and mged_link_vars() so callers don't have to
+
+	* src/canon/canon.h, src/canon/canonize.c, src/canon/ipuscan.c, 
+src/canon/ipustat.c, src/canon/pix-ipu.c, src/canon/png-ipu.c:
+	clean up the code to remove the #if IRIX junk and instead consistently 
+use IPU_FULL_LIB which is declared by the canon.h interface header, and that 
+define is set when dslib.h was detected by configure.
+
+	* src/canon/Makefile.am:
+	add LIBDS to the link list, IRIX systems actually compile in 
+functionality provided by that generic SCSI library
+
+	* configure.ac:
+	add a header check for dslib.h and libds for SDL /dev/scsi library 
+availability.  src/canon needs it.
+
+	* src/util/dunncomm.c:
+	tty.sg_* is not mixable with ioctl/termios so make it a #else
+
+2006-07-10  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libfb/if_ab.c, src/liboptical/material.c, src/librt/db_lookup.c, 
+src/librt/pmalloc.c, src/remrt/rtsrv.c, src/util/dunncomm.c, src/vdeck/std.h, 
+include/machine.h, src/burst/burst.c, src/burst/ui.c, src/fbed/execshell.c, 
+src/fbed/fb_ik.h, src/fbserv/fbserv.c, src/fbserv/fbserv_win.c, src/lgt/lgt.c, 
+src/libbu/fopen_uniq.c, src/libbu/parallel.c, src/libcursor/cursor.c, 
+src/libfb/adage.h:
+	refactor away the old BSD block defines among other simple cleanup
+
+	* src/util/ttcp.c:
+	remove the old BSD hack as the define is no longer necessary nor used 
+by the BRL-CAD build system any longer
+
+	* src/libsysv/bsdselect.c:
+	update to 1990, assume basic bsd/posix conformance and availability of 
+select.  get rid of BSD defines.
+
+	* src/libpkg/pkg.c:
+	get rid of the now unused BSD define hack. use the configure check 
+header symbols instead of platform foo including the new HAVE_WINSOCK_H
+
+	* include/config_win.h:
+	windows generally has the winsock.h header if we're compiling there .. 
+it's a better define than _WIN32 for the windows platform when dealing with 
+network code
+
+	* configure.ac: check for winsock.h header
+
+	* src/liborle/rle.c:
+	also get rid of the old commented out 'speed boost' code that avoided 
+the 'expensive putc() call
+
+	* src/liborle/rle.c:
+	get rid of the old commented out 'speed boost' code that avoided the 
+'expensive' getc() call
+
+	* src/libbu/Makefile.am, src/libbu/memset.c:
+	remove memset.c from libbu.  memset() is provided by libsysv if it's 
+not available.  doesn't make sense as part of libbu unless we plan on making a 
+bu_memset or somesuch.
+
+	* src/libsysv/memset.c:
+	add the license header, intending to get rid of the duplicate 
+src/libbu/memset.c, updating ws while we're at it.
+
+	* src/libsysv/Makefile.am, src/libsysv/getopt.c:
+	remove getopt.c as it is no longer needed. code should be using libbu's 
+bu_getopt.
+
+	* src/libbu/getopt.c: ws
+
+	* HACKING:
+	send news announcements to the new Dutch CAD for Linux portal at 
+http://www.cad4linux.nl
+
+	* src/fbserv/fbserv.c, src/fbserv/fbserv_win.c, src/libfb/if_adage.c, 
+src/librt/pmalloc.c, src/other/jove/jove.h, src/util/dunncomm.c, 
+src/util/pixcut.c, src/util/pixpaste.c, src/vas4/vas_io.c:
+	remove/rewrite a bunch of the old SYSV preprocessor symbol sections
+
+	* src/libfb/tcl.c:
+	add some error checking to fb_refresh in case there is a caller that 
+passes a null or unnamed framebuffer, or nothing left to do with a non-positive 
+width/height rect
+
+2006-07-09  brlcad  <brlcad@users.sourceforge.net>
+
+	* configure.ac: sans stray v
+
+	* src/burst/burst.c, src/burst/grid.c:
+	whitespace, cleanup, bye bye SYSV and STD_C defines
+
+	* src/lgt/lgt.c:
+	do what burst does with the signals, clean up the preprocessor logic 
+slightly, ws
+
+	* src/libbu/linebuf.c:
+	remove the antiquated preprocessor logic for bu_setlinebuf, using a 
+configure check instead allowing the code to be simplified considerably
+
+	* include/config_win.h: win32 reportedly has setvbuf
+
+	* configure.ac: add setvbuf and setlinebuf to the function check list
+
+	* include/nmg.h:
+	bzero define block is a duplicate of said block in machine.h, removed.
+
+	* src/util/pixbustup.c: rwval, now readval
+
+	* src/sig/ihist.c, src/sig/interp.c, src/sig/u-a.c, src/util/azel.c, 
+src/util/buffer.c, src/libfb/if_adage.c, src/libfb/if_disk.c, 
+src/libfb/if_remote.c, src/libfb/if_stack.c, src/libpkg/pkg.c, 
+src/librt/dg_obj.c, src/librt/nmg_plot.c, src/libsysv/regex.c, 
+src/mged/attach.c, src/mged/edarb.c, src/mged/ged.c, src/mged/ged.h, 
+src/mged/plot.c, src/mged/polyif.c, src/mged/red.c, src/mged/rtif.c, 
+src/mged/set.c, src/mged/tedit.c, src/nirt/nirt.c, src/proc-db/nmgmodel.c, 
+src/rt/view_bot_faces.c, src/sig/dmod.c, src/sig/dsel.c, src/sig/dstat.c, 
+src/sig/fhor2.c, src/sig/i-a.c, src/burst/burst.h, src/canon/canonlib.c, 
+src/conv/asc-nmg.c, src/conv/asc2g.c, src/conv/euclid_format.c, 
+src/conv/euclid_unformat.c, src/conv/g2asc.c, src/conv/iges/g-iges.c:
+	increase and initialize some buffer sizes to something larger in order 
+to minimize hitting buffer limits while processing.
+
+	* doc/pix.5, doc/bw.5: what the heck is a hire size
+
+	* src/util/.cvsignore: add lowp to the ignore list
+
+	* src/vas4/vas_io.c, src/libfb/if_adage.c, src/libfb/if_disk.c, 
+src/libfb/if_ptty.c, src/libfb/if_rat.c, src/librt/db_io.c, src/librt/dg_obj.c, 
+src/mged/ged.c, src/mged/rtif.c, src/mged/utility1.c, src/tab/tabsub.c, 
+src/util/bwmod.c, src/util/bwshrink.c, src/util/dpix-pix.c, 
+src/util/dunncomm.c, src/util/op-bw.c, src/util/pix-both-ik.c, 
+src/util/pix-ci.c, src/util/pix-filt-ik.c, src/util/pix-ik.c, 
+src/util/pix-ikr.c, src/util/pix-lowp-ik.c, src/util/pixbustup.c, 
+src/util/pixdsplit.c, src/util/pixt-ik.c, src/fbed/pos_pad.c, 
+src/libbn/tabdata.c, src/libbu/mappedfile.c, src/libfb/fbserv_obj.c, 
+src/libfb/if_X.c, src/libfb/if_ab.c, src/adrt/libtienet/tienet_util.c:
+	add additional error checking to make sure a -1 return value from 
+read() is handled
+
+	* src/util/lowp.c:
+	revive lowp, updating the code to use bu_malloc instead of malloc and 
+adding additional error checking for the read() calls
+
+	* src/util/Makefile.am:
+	revive lowp adding it back to the build, not clear why it was disabled.
+
+	* src/fb/cat-fb.c, src/fb/fb-bw.c, src/fb/fb-orle.c: cleanup
+
+	* src/libfb/if_ab.c, src/libpkg/pkg.c, src/canon/pix-ipu.c:
+	more mread() cleanup.
+
+	* AUTHORS:
+	special thanks to karel kulhavy (clock3) for his contributions to date 
+including numerous bug reports, a source patch, and several example geometric 
+databases relating to his work on Ronja (http://ronja.twibright.com/3d/)
+
+	* src/other/URToolkit/cnv/rletorla.c:
+	apply Karel Kulhavy's (clock3) patch regarding a 'Tiny bug prevents 
+compilation on OpenBSD' (sf patch 1519270)
+
+	* src/util/buffer.c, src/util/dbcp.c, src/util/dunncomm.c, 
+src/util/files-tape.c, src/util/pix-yuv.c, src/util/pixtile.c, 
+src/util/yuv-pix.c:
+	refactor the mread() calls to the new bu_mread() call.  the bu_mread() 
+function doesn't call perror for you, so the caller may need to if they 
+expected it before.
+
+	* src/util/Makefile.am:
+	few more binaries rely on libbu (mread refactoring)
+
+	* src/libbu/mread.c, include/bu.h:
+	change the function signature from using ints to using long ints for 
+the count, take a void* like read(), return a long (fixing the previous bogus 
+void)
+
+	* src/libbu/mread.c: wrong file name in header, use mread.c
+
+	* src/fb/Makefile.am, src/fb/bw-fb.c, src/fb/pix-fb.c, 
+src/libfb/if_ab.c:
+	refactor utilizing bu_mread now from libbu
+
+	* AUTHORS:
+	miles seems to have been a code contributor, not just special thanks 
+(mread() comments)
+
+	* src/libbu/mread.c:
+	attribute kudos to at least one of the apparent original authors (even 
+though it's been reworked some), Robert S. Miles.
+
+	* src/libpkg/pkg.c:
+	remove the useful 'example' mread code that was replaced by pkg_inget 
+since mread is now available in libbu as bu_mread.  reorder pkg_inget so a decl 
+is unnecessary.
+
+	* src/canon/mread.c:
+	remove the refactored mread.c file, moved to libbu/mread.c
+
+	* src/canon/Makefile.am, src/canon/pix-ipu.c:
+	refactored mread to libbu, so use bu_mread now
+
+	* src/canon/png-ipu.c: unnecessary mread declaration
+
+	* src/libbu/Makefile.am: add mread.c to the libbu build
+
+	* include/bu.h:
+	export the new bu_mread() function call so everyone gets to use it
+
+	* src/libbu/mread.c:
+	initial bu_mread() function to refactor the plethora of custom mread() 
+variants throughout the code.  bu_mread() keeps reading until the requested 
+number of bytes are read or an error occurs, an important behavior for pipes.
+
+	* src/bwish/input.c, src/conv/conv-vg2g.c, src/conv/g-vrml.c, 
+src/conv/g-x3d.c, src/conv/patch/patch-g.c:
+	add error checking to various read() calls where a potential -1 result 
+read error was not being taken into account
+
+	* doc/.cvsignore:
+	initial .cvsignore file to ignore the generated pad_file.xml
+
+2006-07-07  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* src/librtserver/rtserver.c:
+	added  (int) cast to eliminate compiler warning
+
+2006-07-06  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/libfb/if_TEMPLATE.c, src/libfb/if_ts.c, 
+src/liboptical/sh_gauss.c, src/liboptical/sh_xxx.c, include/bn.h, include/bu.h, 
+include/dm.h, include/fb.h, include/raytrace.h:
+	follow erik's lead, obliterate the other references to Cakefiles
+
+2006-07-06  erikgreenwald  <erikgreenwald@users.sourceforge.net>
+
+	* src/librt/g_extrude.c, src/librt/g_sketch.c, src/librt/g_xxx.c:
+	we don't use cake anymore (comment fix)
+
+2006-07-05  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/librt/g_extrude.c:
+	oop, remove the ifdef block since testing is done
+
+	* src/librt/g_extrude.c:
+	unbreak the wireframe drawing logic.. something wierd is still going 
+on.  also, try even harder to avoid crashing on a bad index by making sure we 
+don't index past the bn_vlist points array.
+
+	* NEWS:
+	prevent crashing mged when trying to draw extrude primitives that use 
+empty sketch primitives.
+
+	simple statements like 'make x extrude' could cause this as well as 
+using any (default) empty sketch.
+
+	the wireframe drawing routing was getting stuck in an infinite loop 
+allocating memory adding empty vlist items to the mged display list due to the 
+comparison against a negative decrementing index.
+
+	the code now checks for the empty sketch condition and informs the 
+user. thanks to ValarQ for finding this bug.
+
+	* src/librt/g_extrude.c:
+	prevent crashing when trying to draw extrude primitives that use empty 
+sketch primitives.  simple statements like 'make x extrude' could cause this as 
+well as using any (default) empty sketch.  the wireframe drawing routing was 
+getting stuck in an infinite loop allocating memory adding empty vlist items to 
+the mged display list due to the comparison against a negative decrementing 
+index.  the code now checks for the empty sketch condition and informs the 
+user.  clean up the code a bit in the process, e.g. do something about a couple 
+always-true if statements..  thanks ValarQ for finding this bug.
+
+	* HACKING:
+	fold the Changelog to column 80 as part of the release steps to make 
+Sourceforge display less evil
+
+	* HACKING: gah, the horrirs.  spell sentance correctlay
+
+2006-07-05  lbutler  <lbutler@users.sourceforge.net>
+
+	* sh/prior.psql:
+	expanded select so that names of the developers are included with the 
+tasks
+
+	* sh/prior.psql, sh/prior.sh: scripts to collect data from gforge tasks
+
+2006-07-02  brlcad  <brlcad@users.sourceforge.net>
+
+	* NEWS: re-enabled png-ipu, pix-ipu, ipustat, ipuscan
+
+	* src/Makefile.am:
+	finally 'revive' the old canon directory back into enabled-by-default 
+build status.  should now build/install png-ipu, pix-ipu, ipustat, ipuscan.
+
+	* src/canon/.cvsignore: ignore the generated binaries
+
+	* src/canon/canonserver.c:
+	removed the canonserver target, the sources for this binary are 
+dependent upon headers and libraries that are not evidently available; 
+similarly it hasn't been compiled/distributed since at least the new build 
+system has been in place.
+
+	* src/canon/Makefile.am:
+	add mread.c to pix-ipu and png-ipu targets.  disable the hopeless 
+canonserver product that is dependent on headers and libs that aren't evidently 
+available (and the tool has minimal utility in either respect.
+
+	* src/canon/mread.c, src/canon/pix-ipu.c, src/canon/png-ipu.c:
+	break out the common mread() function into its own file from pix-ipu 
+and png-ipu, clean it up a little
+
+2006-06-30  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/librt/wdb_obj.c:
+	Always compile the fastgen4 import stuff. Also, if'out the prompt about 
+hiding objects.
+
+	* src/librt/importFg4Section.c:
+	Always compile the fastgen4 import stuff.
+
+	* src/tclscripts/archer/Makefile.am: Added ShaderEdit.tcl to scripts.
+
+	* src/tclscripts/archer/cursor.tcl:
+	Do a "package require" using BLT instead of blt for all platforms. If 
+this works out, I need to come back and remove the conditional.
+
+	* src/other/blt/library/pkgIndex.tcl: Change default library path.
+
+	* src/other/blt/library/Makefile.am:
+	Add pkgIndex.tcl and tclIndex to brlcadscript_SCRIPTS.
+
+	* src/other/blt/library/dd_protocols/Makefile.am:
+	Add tclIndex to brlcadscript_SCRIPTS.
+
+2006-06-30  brlcad  <brlcad@users.sourceforge.net>
+
+	* misc/win32-msvc/Dll/brlcad.def, misc/win32-msvc/Dll/brlcad.dsp, 
+misc/win32-msvc/Dll/brlcad.rc, misc/win32-msvc/brlcad.dsw:
+	s/\n/\x0D\x0A/g i.e. convert the UNIX line endings to DOS line endings. 
+ this is needed to make the MSVC6 Studio environment happy -- converted per 
+Daniel's insight.
+
+	* misc/win32-msvc/vers.vbs: file didn't exist before 2005
+
+	* NEWS:
+	archer enhancements for displaying view parameters and updated archer 
+splash screen from Bob
+
+2006-06-29  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/tclscripts/lib/Display.tcl:
+	Added code for displaying the viewing parameters.
+
+	* src/tclscripts/lib/View.tcl:
+	Modified the ae method to call the view object's ae command when 
+getting the azel.
+
+	* src/tclscripts/archer/Archer.tcl:
+	Added the option to show viewing parameters in the display window.
+
+2006-06-27  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/mged/ged.c: Minor fix in log_event for _WIN32.
+
+2006-06-26  bob1961  <bob1961@users.sourceforge.net>
+
+	* src/tclscripts/archer/Archer.tcl:
+	Tweaks for IVAVIEW/Sdb mode. Modify the importFg4Sections method (i.e. 
+no longer calling _select_node).
+
+	* src/tclscripts/archer/images/aboutArcher.png:
+	Update with latest BRL-CAD logo.
+
+2006-06-26  brlcad  <brlcad@users.sourceforge.net>
+
+	* src/mged/clone.c:
+	one more restructuring step, this time propagating the dbip so that the 
+copy_ functions have the right signature to be used as a db_functree callback.  
+instead of proliferating the usage of the dbip global pointer even further, 
+only the top-level hook functions use the global then all other routines are 
+using the one passed as an argument (denoted with _dbip instead of dbip to 
+avoid shadowing).
+
+	* src/mged/clone.c:
+	another restructuring step.  propagate a resource pointer for librt and 
+don't pass around the tcl interpreter directly so that we can use thses 
+functions directly as db_functree callbacks (instead stash the interp into our 
+state client data structure).
+
+	* src/librt/db_walk.c: ws
+
+	* src/mged/clone.c:
+	begin efforts to port clone and tracker towards supporting v5 
+databases.  the db_getmrec() function and associated union records are v4 
+specific structures that don't apply to v5 so it basically needs to be 
+reimplemented from scratch..  start by initializing all pointers to NULL and 
+getting rid of the useless propagation of ClientData.
+
+	* src/librt/db_io.c:
+	comment that db_getmrec loads records into a buffer in v4 format
+
+	* src/mged/ged.c:
+	er, unless i'm blind, there's no difference between the _WIN32 and 
+non-_WIN32 section.  collapse into one
+
+	* TODO:
+	clone is a priority for end-of-iteration, anything else is going to be 
+gravy
+
+	* configure.ac:
+	calculate the day, month, year individually so that they may be 
+substituted into autoconf template files.  add doc/pad_file.xml to the list of 
+generated files
+
+	* doc/Makefile.am:
+	add pad_file.xml.in to the dist and clean up after it on a distclean
+
+	* doc/pad_file.xml.in:
+	Add an initial PAD template file for BRL-CAD.  The version and date 
+details are filled in by configure so that the file doesn't have to keep 
+getting updated (needs more work) during release time.  This file is used by a 
+lot of on-line distribution sites (predominantly by shareware distributors, but 
+others including open source too), so that it is easier to add the package to 
+those on-line distribution sites.  PAD is Portable Application Description, an 
+XML data description used by application authors to dissemminate information to 
+anyone interested in their software products.
+
+2006-06-24  brlcad  <brlcad@users.sourceforge.net>
+
+	* misc/Makefile.am:
+	include cvs2cl.pl and rcs2log in source distributions
+
+	* misc/rcs2log:
+	add rcs2log for convenience, pulled from the cvs contrib directory, in 
+case the local system doesn't happen to have rcs2log available.
+
+	* NEWS:
+	john continues to rock, provided improved mged grid zooming using pixel 
+size to grid spacing instead of calculating the number of dots.  this was a 
+follow up to sf bug #1233930.
+
+	* NEWS:
+	john fixed the mged hang caused by extreme grid zooming bug (sf bug 
+#1233930).  Problem was integer overflow, Fix was to check for negative integer.
+
+	* TODO:
+	a quick means to generate a testing suite for all binaries with a 
+little scripting
+
+	* INSTALL:
+	too many impatient folks don't actually read the Installing from Binary 
+section and try to run configure/autogen.sh on a binary distribution so try to 
+make it more clear up-front in the Quick Installation section, and move the 
+binary instructions up higher in the file.
+
+	* README:
+	rewrite the introduction, using the new doc/description.txt details.  
+now includes the portability heritage and portability details, details on the 
+geometry representation types, and expanded details on what is provided 
+tool-wise
+
+	* doc/description.txt:
+	Fill in ALL of the description details about BRL-CAD including 
+different length description formats useful when preparing materials for 
+informational websites, software distribution sites, package management 
+systems, release announcement materials, and more.  includes links to 
+frequently needed materials like the trackers, keywords/categories, and details 
+on how to correctly refer to the project and even how to pronounce BRL-CAD.
+
+2006-06-23  brlcad  <brlcad@users.sourceforge.net>
+
+	* HACKING:
+	heh, around means immediately inside -- go figure.  give a couple more 
+examples while we're at it.
+
+	* HACKING:
+	finish up the list of expectations with a rule zero utilizing a concept 
+from Hippocrates' Epidemics: contributors are expected to help, or at least to 
+do no harm.
+
+	* AUTHORS:
+	add James (swcto - someone who cares) to the list of code contributors 
+for his work on the mged vi mode enhancements
+
+2006-06-23  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* src/mged/grid.c:
+	Improved algorithm for deciding when to not draw the grid. Now compares 
+pixel size to
+	grid spacing instead of calculating number of dots.
+
+2006-06-22  johnranderson  <johnranderson@users.sourceforge.net>
+
+	* src/mged/grid.c: Fix for bug #1233930 (grid zoom out hangs)
+	Problem was integer overflow.
+	Fix was to check for negative integer. A better algorithm for deciding 
+when
+	the grid should not be drawn is needed here.
+
+2006-06-22  brlcad  <brlcad@users.sourceforge.net>
+
+	* regress/Makefile.am:
+	additional testing files that need to get cleaned up
+
+	* src/rt/do.c:
+	check and see if the eye point was set to something different than the 
+look at point, otherwise choose a default 'front' view just to pick a 
+direction.  also, make sure rtip is valid before checking lists
+
+	* src/rt/opt.c:
+	initialize a slew of uninitialized values using proper casts for the 
+fastf_t types.  uninitialized garbage was causing debug and runtime problems on 
+altix
+
+	* NEWS: ported jove to SGI Altix platform, fixed crash bug.
+
+	* src/other/jove/jove_term.c:
+	prevent jove from crashing on SGI Altix due to clamping the tgetstr 
+pointer to 32-bit when it needs to be 64-bit.  this requires actually including 
+the right headers so that tgetstr is properly declared, but declare it to what 
+it should be regardless since.. this is jove.
+
+	* NEWS:
+	increase default mged line scrollback to 10,000 lines instead of the 
+previous 1000.. too many commands and listings fill up the 1000 count.  users 
+can still override that default on the fly in their .mgedrc or on the command 
+line.
+
+	* src/tclscripts/mged/openw.tcl:
+	set the default number of scrollback lines in mged to 10k instead of 1k
+
+	* src/mged/ged.c:
+	prevent a bus error if read() returns -1 when reading from the provided 
+file descriptor
+
+	* NEWS: improved support for Mac 'delete' keys in mged
+
+	* src/mged/ged.c:
+	add support for the Mac delete key (backwards and forwards should work 
+now).  also fix vi command line editing mode history, quell warnings, pass null 
+parameter.
+
+	* NEWS: james made it command edit history searching
+
+	* NEWS, src/mged/ged.c, src/mged/history.c, 
+src/tclscripts/mged/openw.tcl, src/tclscripts/mged/text.tcl:
+	bigger, better vi command line editing in mged provided by james 
+(swcto).  this adds command history searching as well as pretty much full 
+vi-mode command editing.  (sf patch 1377410 - Bigger, Better vi command line 
+editing)
+
+	* NEWS: rt command script 'ae' no longer resets view scale
+
+	* src/rt/do.c:
+	gah, don't reset the view scale.. it might have been specifically set 
+to something else.  instead call do_ae() now instead of waiting for end.  this 
+still doesn't work right as do_ae does its own autoview on the geometry and 
+resizes, but at least ae command doesn't override now
+
+	* src/libbu/bitv.c: ws
+
+	* src/conv/asc-nmg.1:
+	fixed asc-nmg manual page usage examples, it doesn't take stdin and 
+output to stdout, but if you provide both file names it works (it will take 
+stdin, but then you can't specify output file)
+
+	* NEWS: fixed asc-nmg manual page usage examples
+
+	* BUGS:
+	usage of lt says 'lt object'  yet if you actually type that  you get a 
+bus error.. nice.
+
+	* src/other/jove/Makefile.am:
+	ACK, typo.. DESDIR != DESTDIR, fix sandbox error
+
+2006-06-21  brlcad  <brlcad@users.sourceforge.net>
+
+	* NEWS:
+	7.6.8 window of opportunity was lost due to merge complications on the 
+7.6 branch, so cancel it outright.  revert, poof, gone.
+
+	* src/tclscripts/mged/pkgIndex.tcl:
+	commit the empty index like all the others if only to be consistent
+
+2006-06-20  brlcad  <brlcad@users.sourceforge.net>
+
+	* TODO:
+	propagate the next set of changes for this release, next iteration is 
+still tbd
+
+	* NEWS, README, configure.ac, include/config_win.h:
+	release 7.8.2 is tagged as rel-7-8-2, revision numbers are bumped up to 
+7.8.3 expecting 7.8.4 to be the next release number in a few weeks
+
+	* HACKING:
+	README is updated to the next expected release number while the rest 
+are updated to a developer version
+
+	* ChangeLog: update Changelog for 7.8.2 release
 
 	* NEWS, configure.ac, include/config_win.h:
 	prepare for release of 7.8.2
@@ -8,462 +2727,4 @@
 2006-06-20  johnranderson  <johnranderson@users.sourceforge.net>
 
 	* src/conv/asc-nmg.c: Eliminated a redundant call to nmg_km()
-
-2006-06-16  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* HACKING:
-	Yet another massive rewrite/modification.  This time expand the document to include details relevant to all contributors, not just developers, so that the file is applicable to anyone with commit access (with particular attention to documentation writers).  Also, finally include some details on where we stand with C++ and clarify a lot of statements throughout with respect to style, conventions, and requirements.
-
-2006-06-15  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* db/.cvsignore: add toyjeep.g
-
-2006-06-15  bob1961  <bob1961@users.sourceforge.net>
-
-	* doc/archer_ack.txt: Minor changes
-
-2006-06-13  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* HACKING: add versiontracker to the release notification list
-
-2006-06-08  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* src/mged/ged.c: unconditionally disable for now
-
-	* src/tclscripts/archer/tclIndex: new index entries
-
-2006-06-07  d_rossberg  <d_rossberg@users.sourceforge.net>
-
-	* src/librt/g_pipe.c:
-	the bending angle may be (still) near 0, this should not be a problem
-
-	* include/bn.h, src/libbn/mat.c:
-	provide with bn_mat_inverse a less rigorous function to invert a 4-by-4 matrix,
-	it is almost impossible to decide in advance if a matrix is singular
-
-2006-06-06  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* doc/README.IRIX: ack, API != ABI.  Genericize the home directory too.
-
-2006-06-06  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/archer/Archer.tcl:
-	Added a "Display" panel to the preferences dialog. At the moment it provides a simple way to set the viewing cube size.
-
-2006-06-05  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/archer/Archer.tcl:
-	Check-in mods for Doug. This mod checks for the existence of  before trying to use it. Also change version to 0.8.1
-
-2006-06-05  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* src/other/blt/man/Makefile.am, configure.ac, src/other/blt/Makefile.am, src/other/blt/cf/Makefile.am, src/other/blt/examples/Makefile.am, src/other/blt/html/Makefile.am:
-	add initial makefiles for the other blt resource directories, help make distcheck work more prevalently
-
-	* src/tclscripts/swidgets/scripts/tclIndex:
-	apparently some new indexed methods
-
-	* src/other/iwidgets/pkgIndex.tcl:
-	commit the right version for iwidgets, 4.0.1
-
-	* src/other/iwidgets/pkgIndex.tcl.in:
-	iwidgets needs to use it's own version, not the version of cad
-
-	* configure.ac:
-	add a new configure --enable-verbose and --enable-progress option, with the first being a convenience option that enables the progress and warnings verbose options.  the --enable-verbose-progress option (alias) basically adds --silent to LIBTOOLFLAGS and/or to LIBTOOL.
-
-	* m4/args.m4:
-	record whether a configure option was set or not since it may be set yet still be the default
-
-2006-06-04  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* src/util/sgi-pix.c: few more unused
-
-	* src/util/roots_example.c: remove unused var i
-
-	* src/util/sgi-pix.c:
-	sane function ordering, clean up preprocessor logic, quell warnings, ws.
-
-	* src/util/pl-sgi.c, src/util/remapid.c, src/util/sgi-pix.c:
-	quell more warnings
-
-	* src/util/pl-sgi.c: move the other defines and globals to the top too
-
-	* src/util/pl-sgi.c: de-k&r-ify, ansify the functions
-
-	* src/util/pl-sgi.c:
-	reorder functions in proper decl/usage order, get rid of const Matrix casts
-
-2006-06-03  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* src/mged/points/process.c:
-	remove the usage if you're going to remove the decl
-
-	* src/mged/points/process.c: ws
-
-	* src/util/pl-X.c, src/util/pl-sgi.c: quell lots of warnings.
-
-	* src/util/bwscale.c: quell type warnings on bu_free
-
-	* src/nirt/if.c: quell incompatible parammeter type warning
-
-	* src/mged/utility2.c: removed unused variable i
-
-	* src/mged/points/process.c: remove unused variables, quell warnings
-
-	* src/gtools/g_transfer.c: remove unused variables
-
-	* src/burst/burst.c: only define sigcld if signal.h doesn't define it
-
-	* src/conv/g-adrt.c: quell more unused variable warnings
-
-	* src/libdm/dm_obj.c:
-	USE_FBSERV is now defined by configure, quell set but unused warning on id var.
-
-	* src/rt/viewxray.c: quell unsigned type warning
-
-	* src/rt/viewweight.c: quell unused var warning
-
-	* src/conv/g-adrt.c: quell unused variable warnings
-
-	* src/conv/bot_shell-vtk.c: missed a norm
-
-	* src/conv/bot_shell-vtk.c:
-	quell unused variable warning (norm variable)
-
-	* src/libpkg/pkg.c: quell unused variable warning
-
-	* TODO:
-	sgi knobs and example geometry are pushed back as (sigh) clone still isn't done and EF plugin and archer are going to require considerably more attention.  prepare for 7.8.2 release, nothing left to do.
-
-	* doc/README.IRIX:
-	no longer need to disable blt, build problem fixed (simple cast)
-
-	* src/other/blt/src/bltInit.c:
-	Tcl_GetAssocData returns a Clientdata, so have to cast to long to avoid mipspro type check failure
-
-	* m4/epsilon.m4:
-	so far, only freebsd seems to use doubles for floats .. so revert the leniancy and report when implementations deviate from what should be expected from IEEE compliance.
-
-	* sh/shtool:
-	treat screen as vt100, avoid the error message about determining how to do bold
-
-2006-06-02  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* src/conv/g-var.c:
-	follow the style guidelines, use K&R/Java style braces/indents not BSD. ws.
-
-	* src/conv/g-var.c:
-	crazy dev trickling variables throughout as if this were c++ code.  add a local var footer and remove reference to non-existant codebase.  fix header inclusion too.
-
-	* regress/spdi.sh: using == is not portable
-
-2006-06-01  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* src/libbu/bomb.c:
-	avoid passing additional format arguments to fprintf() to avoid potential buffer allocations. very nominal benefit, but can conceivably help with certain crashes and implementations of fprintf().
-
-	* src/libbu/ispar.c:
-	gah, reduce the massive WIN32 block to just the section that mattered so that kill() is not invoked on a bu_bomb().. should eventually contain a WIN32-esque method for killing a parent process gracefully ala kill()
-
-	* src/mged/ged.c:
-	avoid incrementing the dbi_uses counter directly -- do a clientless clone of the dbip instead
-
-	* src/librt/db_open.c:
-	allow for clientless cloning and closing of dbip instances where only the uses count is of interest.  no need to stash null clients even though the ptbl will record them, just ignore them.
-
-	* src/librt/g_submodel.c:
-	remove bad commented-out increment of the dbi_uses.  it might benefit to just clone the dbi, but seems unnecessary for a plot routine
-
-2006-06-01  d_rossberg  <d_rossberg@users.sourceforge.net>
-
-	* src/librt/db_open.c:
-	do not close a mapped file while the database instance is still in use
-	as db_clone_dbi does not increment dbi_mf->uses
-
-2006-06-01  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/archer/Archer.tcl:
-	Mods to remove the expand button when in "Basic" mode. There's also a minor tweak of the aboutDialog's size.
-
-2006-05-28  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* HACKING:
-	add a new section on developer responsibilities outlining what is expected of them.  add details on header organization, usage of the K&R indentation style (aka java/gnu style), and routines in libbu that should be used for portability reasons.  more on the coding style in general.
-
-	* COPYING:
-	make it more clear that the package as a unified work is GPL though separate portions of the package are released under different licenses.  refer to the development control structure and refer to HACKING.  provide a point of contact.
-
-2006-05-22  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* src/mged/attach.c: init curr_dm_list to null
-
-2006-05-21  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* src/mged/ged.c:
-	make sure the curr_dm_list isn't null before trying to close the dm
-
-	* TODO: merge old and new tops behavior
-
-	* src/rt/worker.c:
-	get rid of the ifdef linux, init some vars used by USE_FORKED_THREADS
-
-2006-05-16  lbutler  <lbutler@users.sourceforge.net>
-
-	* configure.ac: misc changes to get ADRT to build
-
-2006-05-15  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* NEWS, src/mged/chgview.c, src/mged/cmd.c, src/mged/sedit.h, src/mged/titles.c:
-	ugh, removed horrible usage of vls strings for things that can just be string constants.  also takes care of a memory leak as the vls was never released.  thanks to jim monte for noticing the problem.
-
-	* src/mged/cmd.c:
-	jim monte noticed that using a vls here was unnecessary for the Tcl_LinkVar'ing of glob_compat_mode and output_as_return
-
-	* configure.ac:
-	typo, should have been profile not debug -- logic is still wrong though, needs to be redone for --enable-profile
-
-	* src/libbu/color.c: duplicate defines for RED/GRN/BLU
-
-	* NEWS:
-	s/tesselation/tessellation/ typo.  add emphasis to the extent of John's dxf importer enhancements
-
-2006-05-12  twingy  <twingy@users.sourceforge.net>
-
-	* src/mged/ged.c:
-	/dev/null should be in quotes, compiling with --disable-debug.
-
-2006-05-08  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* TODO: geometry example of building 238 is pushed back
-
-2006-05-03  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* NEWS: moved archer version info to bottom of about dialog
-
-	* src/mged/ged.c:
-	john noticed that sys/stat.h is needed for S_IRUSR and a few other mode flags now being used if DEBUG is enabled
-
-2006-05-03  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/archer/images/aboutArcher.png: Removed version info.
-
-	* src/tclscripts/archer/Archer.tcl:
-	Added version info to the bottom of the "About" dialog.
-
-	* src/tclscripts/archer/CombEditFrame.tcl:
-	Added code to potentially activate the "Accept" button etc. when tabbing to another entry.
-
-2006-05-02  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* AUTHORS:
-	prasad silva (arl) makes his first contribution with a new g-var tool
-
-2006-05-02  prasad_silva  <prasad_silva@users.sourceforge.net>
-
-	* NEWS: g-var news
-
-	* src/conv/.cvsignore: Added g-var executable to ignore list
-
-	* src/conv/Makefile.am, src/conv/g-var.1, src/conv/g-var.c:
-	Added a vertex array exporter
-
-2006-05-02  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* src/tclscripts/archer/images/Themes/Crystal_Large/Makefile.am, src/tclscripts/archer/images/Themes/Crystal/Makefile.am:
-	missing a handful of new files
-
-	* AUTHORS: utf-8 version of Daniel's last name..
-
-	* NEWS:
-	archer gets support for multi-select and cut-n-paste from doug howard
-
-	* NEWS:
-	a new toy barbie jeep model was added, include a nice write-up of where the model comes from, the training class that produced it, and general overview of what was involved.
-
-	* db/toyjeep.asc: they are trademarks of mattel and daimler-crysler
-
-2006-05-01  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/tclscripts/archer/images/Themes/Crystal_Large/file_text_small_disabled.png, src/tclscripts/archer/images/Themes/Crystal_Large/folder_closed_small_disabled.png, src/tclscripts/archer/images/Themes/Crystal_Large/folder_open_small_disabled.png, src/tclscripts/archer/images/Themes/Windows/file_text_small_disabled.png, src/tclscripts/archer/images/Themes/Windows/folder_closed_small_disabled.png, src/tclscripts/archer/images/Themes/Windows/folder_open_small_disabled.png, src/tclscripts/archer/images/Themes/Crystal/file_text_small_disabled.png, src/tclscripts/archer/images/Themes/Crystal/folder_closed_small_disabled.png, src/tclscripts/archer/images/Themes/Crystal/folder_open_small_disabled.png:
-	Add images to support future functionality (i.e. multi-select and cut-n-paste)
-
-	* src/tclscripts/swidgets/scripts/tree.itk:
-	Check-in for Doug Howard. Mods to support multi-select and cut-n-paste.
-
-	* src/tclscripts/archer/Archer.tcl:
-	Temporarily (i.e. until this functionality is available) removing the "Compact" menu item when viewing BRL-CAD geometry. Minor mods to reflect change in the tree widget.
-
-	* src/tclscripts/archer/CombEditFrame.tcl, src/tclscripts/archer/GeometryEditFrame.tcl:
-	Minor tweek to anchor the edit panel north
-
-2006-05-01  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* NEWS:
-	john continues on his dxf-g rampage with manpage enhancements and additional support to dxf-g for ELLIPSE entities.  earlier he added support for LWPOLYLINE, MTEXT, LEADER, ATTRIB, SOLID, and ATTDEF entity states -- all grouped into one news entry for dxf-g enhancements.
-
-	* NEWS:
-	fixed asc2g bug reading files with carriage returns.  if you attempted to run asc2g on a .asc file that came directly from the windows platform and had embedded carriage returns ('\r'), it would incorrectly parse the v4 I units version string dumping out a wierd undecipherable overlapping error (printing the carriage return), now it handles them correctly.
-
-	* NEWS: added dbupgrade manual page.  one didn't exist
-
-	* NEWS:
-	updated the g2asc manual page with format details.  the manpage still talked about it being necessary for platform independent conversions, language and details were updated to note that this is no longer the case (that the binary will work just fine).  also mentions that binary and ascii are open specs, though ascii is subject to deprecation change without notice whereas the binary is not. also that the ascii should not be relied upon by external developers but that it is currently a tcl command script.
-
-	* NEWS:
-	fixed g_diff attribute comparison issue.  when doing a g_diff, attributes were not being compared in order if the db command fails to tclify the exported version resulting in a binary 'these objects seem to differ' when they did not.  the tclification was improved so it can perform a proper ordered attribute comparison under more cases.
-
-	* NEWS:
-	g_diff reports more detail whether differences exist.  if the external forms are being compared, it will report whether the lengths differ or the contents (previously was an unknown either/or difference).  also g_diff will summarize and actually say that it found no differences instead of just ending a statement like there is something more like the following:
-
-	* NEWS:
-	g2asc now saves additional _GLOBAL attribute values.  previously, only the units and title were exported so that if a user had manually added additional attributes they were not being saved, now they are saved as attr commands in the ascii format.  (a situation where this was important was where a 'disclaimer' and 'description' attribute were added in addition to the title.
-
-	* NEWS:
-	fixed g2asc export of null units bug.  there was a situation where the current units could not be determined and a (null) was export to the ascii file.  this would halt an asc2g.  if the units cannot be determined, they are not output (i.e. no (null)) now.
-
-	* src/conv/Makefile.am: add new dbupgrade.1 manpage
-
-	* src/conv/dbupgrade.c: ws, indent
-
-	* src/conv/asc2g.c:
-	add support for carriage returns so old ascii files copied from windows parse correctly.  use a little less emphatic emphasis on error (!!!)
-
-	* src/conv/dbupgrade.1:
-	initial manual page for the dbupgrade command, basic usage info
-
-	* src/conv/g2asc.1:
-	update the manpage with more up-to-date information and details.  mention that current format is a tcl script, that the conversion to ascii isn't strictly necessary any longer since v5 format is portable, and that the ascii format should not be used by external codes.
-
-	* src/librt/wdb_obj.c:
-	comments, remove dead new proc creation code (there's a func for that creating a wdbp function object)
-
-2006-04-30  johnranderson  <johnranderson@users.sourceforge.net>
-
-	* src/conv/dxf-g.1, src/conv/dxf-g.c:
-	Added support for ELLIPSE entities, added a bit more logging, updated
-	man page.
-
-2006-04-30  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* src/mged/ged.c:
-	fix the mged logging so that it actually works now and consistently writes events.  clean up the whitespace while refactoring the closure of a db to f_closedb() consistently.
-
-2006-04-29  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* src/gtools/g_diff.c:
-	let the user know if there are no differences and be more specific on difference when external representations differ.
-
-	* src/conv/g2asc.c:
-	if the _GLOBAL object has attributes set other than units and title, write them out.  also make sure the units are not (null) before writing them out.
-
-	* src/conv/asc2g.c:
-	default units to millimeters instead of aborting if the units specified are unknown
-
-	* db/Makefile.am, db/toyjeep.asc:
-	add an toy barbie (tm) jeep (tm) modeled in 2005 over the course of a day by a group of students attending a BRL-CAD (tm) training course at SURVICE
-
-2006-04-28  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* TODO:
-	working on clone/tracker; EF importer plugin is on the asap list; mingw is delayed; added toy jeep; unpush idea for later.
-
-2006-04-28  d_rossberg  <d_rossberg@users.sourceforge.net>
-
-	* NEWS: Rossberg with utf-8 character
-
-2006-04-28  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* NEWS: it's a stack, most recent go on top
-
-2006-04-28  d_rossberg  <d_rossberg@users.sourceforge.net>
-
-	* NEWS: forgot to add my name
-
-	* NEWS: fixed crash in release build
-
-2006-04-28  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* TODO:
-	Optional compile-time support for using GMP or CLN for arbitrary precision arithmetic
-
-2006-04-28  d_rossberg  <d_rossberg@users.sourceforge.net>
-
-	* src/librt/g_bot_include.c:
-	crash with MSVC 6.0 release build because of an access behind bot->bot_facearray boundaries
-
-	* src/libwdb/pipe.c:
-	wdb_export frees the pipe structure; consequently, do not touch it afterwards
-
-2006-04-24  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* NEWS:
-	need to quantify exactly what sort of dxf-g enhancements john added, but it's a something so as not to forget
-
-2006-04-20  lbutler  <lbutler@users.sourceforge.net>
-
-	* regress/gqa.sh, regress/iges.sh, regress/lights.sh, regress/moss.sh, regress/shaders.sh, regress/solids.sh, regress/spdi.sh, regress/weight.sh:
-	Fixed various sh/csh syntax errrors.
-
-	* regress/gqa.sh, regress/iges.sh, regress/lights.sh, regress/moss.sh, regress/shaders.sh, regress/slave_build.sh, regress/solids.sh, regress/spdi.sh, regress/weight.sh:
-	Updates to make it easier to check the status of a regression test.  Each test
-	now reports its notion of whether it succeeded or failed.
-
-	* regress/Makefile.am, regress/slave_build.sh:
-	Make sure directory has been created (slave_build.sh) or wait for it.
-
-	Indicate that the regression test is done, but not whether it was successful or not. (Makefile.am)
-
-2006-04-20  jlowenz  <jlowenz@users.sourceforge.net>
-
-	* src/librt/nurb_trim.c:
-	modified rt_nurb_uv_trimmed to support a list of trims instead of a surface (to support the preprocessing)
-
-	* src/librt/nurb_knot.c: logging updates
-
-	* src/librt/nurb_bezier.c:
-	support for preprocessing non-bezier trims to bezier trims
-
-	* src/librt/g_nurb.c:
-	added support for preprocessing trims into beziers.
-
-	* include/nurb.h:
-	Added declaration for trim-to-bezier curve conversion routine, and updated uv in trim test function to accept a list of trims instead of a surface (since the trims are preprocessed.
-
-2006-04-18  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* TODO: test for USE_FORKED_THREADS in configure
-
-2006-04-17  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* AUTHORS:
-	special thanks to Mark Butkiewicz of SURVICE for his considerable input regarding the look and feel of archer as well as prioritizing what features to add in the allotted time.  he has also remained actively involved in the windows port effort as well as general collaboration, support, and suggestions for the package as a whole.
-
-	* AUTHORS:
-	special thanks to doug howard for his work during the very beginning stages of archer development.
-
-2006-04-13  BRL-CAD  <brlcad@users.sourceforge.net>
-
-	* BUGS:
-	raytracers report the wrong amount of cumulative time on amd64, benchmark reports wrong numbers unless using -P1
-
-2006-04-13  johnranderson  <johnranderson@users.sourceforge.net>
-
-	* src/conv/dxf-g.c: Added support for a couple more entity types
-
-2006-04-12  bob1961  <bob1961@users.sourceforge.net>
-
-	* src/mged/mged.bat: Update for handling an argument (i.e. file.g)
-
-2006-04-12  jlowenz  <jlowenz@users.sourceforge.net>
-
-	* src/librt/nurb_util.c:
-	Removed shared pool, went to thread-specific pools. Better solution, but only temporary since bu_parallel doesn't support thread-locals.
-
-	* src/librt/nurb_refine.c: ws; comment change
-
-2006-04-11  erikgreenwald  <erikgreenwald@users.sourceforge.net>
-
-	* configure.ac:
-	fix an over-zealous conditional so --disable-jove works (some of us use vi)
 
