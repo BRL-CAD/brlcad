@@ -3365,7 +3365,6 @@ AC_CONFIG_FILES([
 	src/conv/off/Makefile
 	src/conv/patch/Makefile
 	src/external/Makefile
-	src/external/EndgameFramework/Makefile
 	src/external/ProEngineer/Makefile
 	src/external/ProEngineer/mk
 	src/external/ProEngineer/protk.dat
