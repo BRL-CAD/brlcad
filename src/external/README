@@ -9,6 +9,11 @@ headers or libraries that are needed for compilation.
 Contents
 --------
 
+EndgameFramework
+	This code is a "Simulation Module" for the Endgame Framework
+that provides BRL-CAD import functionality for v4/v5 binary geometry
+database files.
+
 ProEngineer
 	This code is a Pro/Engineer exporter plugin module intended to
 be used directly within the Pro/Engineer environment (e.g. Wildfire).
