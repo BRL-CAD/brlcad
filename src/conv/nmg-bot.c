@@ -72,21 +72,22 @@ nmg_conv(struct rt_db_internal *intern, const char *name )
 	m = (struct model *)intern->idb_ptr;
 	NMG_CK_MODEL( m );
 	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
-	if( BU_LIST_NEXT( nmgregion, &r->l ) !=  (struct nmgregion *)&m->r_hd )
+	if(r && BU_LIST_NEXT( nmgregion, &r->l ) !=  (struct nmgregion *)&m->r_hd )
 		bu_bomb( "ERROR: this code works only for NMG models with one region!!!\n" );
 
 	s = BU_LIST_FIRST( shell, &r->s_hd );
-	if( BU_LIST_NEXT( shell, &s->l) != (struct shell *)&r->s_hd )
+	if(s && BU_LIST_NEXT( shell, &s->l) != (struct shell *)&r->s_hd )
 		bu_bomb( "ERROR: this code works only for NMG models with one shell!!!\n" );
 
-	if( BU_SETJUMP )
-	{
+	if (BU_SETJUMP) {
 		BU_UNSETJUMP;
 		bu_log( "Failed to convert %s\n", name );
 		rt_db_free_internal( intern, &rt_uniresource );
 		return;
 	}
-	mk_bot_from_nmg( fdout, name, s);
+	if (s) {
+	    mk_bot_from_nmg( fdout, name, s);
+	}
 	BU_UNSETJUMP;
 	if(verbose) bu_log("Converted %s to a Bot solid\n", name);
 	rt_db_free_internal( intern, &rt_uniresource );
