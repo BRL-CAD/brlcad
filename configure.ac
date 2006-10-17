@@ -329,6 +329,9 @@ BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
 # jove
 BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove], [auto])
 
+# endgame framework simulation module
+BC_ARG_ENABLE([build_ef], [ef-build], [Enable compilation of Endgame Framework module], [no])
+
 # pro/e plugin
 BC_ARG_ENABLE([build_proe], [proe-plugin-build], [Enable compilation of Pro/Engineer plugin], [no])
 
@@ -517,6 +520,15 @@ BC_ARG_ALIAS([build_termlib], [libtermcap-build])
 # jove aliases (help uses jove-build)
 BC_ARG_ALIAS([build_jove], [jove])
 
+# endgame framework module aliases (help uses ef-build)
+BC_ARG_ALIAS([build_ef], [ef])
+BC_ARG_ALIAS([build_ef], [endgame])
+BC_ARG_ALIAS([build_ef], [endgameframework])
+BC_ARG_ALIAS([build_ef], [endgame-framework])
+BC_ARG_ALIAS([build_ef], [endgame-build])
+BC_ARG_ALIAS([build_ef], [endgameframework-build])
+BC_ARG_ALIAS([build_ef], [endgame-framework-build])
+
 # pro/e plugin aliases (help uses proe-plugin-build)
 BC_ARG_ALIAS([build_proe], [proe])
 BC_ARG_ALIAS([build_proe], [proe-build])
@@ -665,6 +677,14 @@ if test "x$set_everything" != "x" ; then
 	fi
 	if test "x$bc_build_jove" = "x$bc_build_jove_default" ; then
 		bc_build_jove="$set_everything"
+	fi
+	# Singe the Endgame Framework "simulation module" will only
+	# compile if you have it installed, don't enable it even if
+	# requesting everything.  fine to disable, though.
+	if test "x$bc_build_ef" = "x$bc_build_ef_default" ; then
+		if test "x$set_everything" = "xno" ; then
+			bc_build_ef=no
+		fi
 	fi
 	# Since the Pro/E plugin is primarily tested on only one
 	# platform and requires Pro/Toolkit, don't enable it even if
@@ -826,6 +846,9 @@ AC_MSG_RESULT($bc_build_termlib)
 
 AC_MSG_CHECKING(whether to compile jove or not)
 AC_MSG_RESULT($bc_build_jove)
+
+AC_MSG_CHECKING(whether to compile the Endgame Framework module)
+AC_MSG_RESULT($bc_build_ef)
 
 AC_MSG_CHECKING(whether to compile the Pro-Engineer plugin)
 AC_MSG_RESULT($bc_build_proe)
@@ -3030,6 +3053,7 @@ AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$build_brlcad_jove" = "xyes"])
+AM_CONDITIONAL(BUILD_EF, [test "x$bc_build_ef" = "xyes"])
 AM_CONDITIONAL(BUILD_PROE, [test "x$bc_build_proe" = "xyes"])
 AM_CONDITIONAL(BUILD_UG, [test "x$bc_build_ug" = "xyes"])
 AM_CONDITIONAL(BUILD_ADRT, [test "x$build_brlcad_adrt" = "xyes"])
@@ -3341,6 +3365,7 @@ AC_CONFIG_FILES([
 	src/conv/off/Makefile
 	src/conv/patch/Makefile
 	src/external/Makefile
+	src/external/EndgameFramework/Makefile
 	src/external/ProEngineer/Makefile
 	src/external/ProEngineer/mk
 	src/external/ProEngineer/protk.dat
