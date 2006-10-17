@@ -21,8 +21,12 @@
  */
 /** @file g-acad.c
  *
- *  Program to convert a BRL-CAD model (in a .g file) to an ACAD file
- *  by calling on the NMG booleans.
+ *  Program to convert a BRL-CAD model (in a .g file) to the Lockheed
+ *  Martin "Advanced Computer-Aided Design" (ACAD) file format by
+ *  calling on the NMG booleans (formerly from General Dynamics).
+ *
+ *  Note that this converter has nothing to do with the Autodesk
+ *  AutoCAD software.
  *
  *  Authors -
  *	John R. Anderson
