@@ -32,6 +32,7 @@
  *	Keith A. Applin
  *	Bob Suckling
  *	Michael John Muuss
+ *	Erik Greenwald
  *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -143,6 +144,7 @@ static struct shell	*es_s=(struct shell *)NULL;	/* Shell where extrusion is to e
 static point_t		lu_keypoint;	/* keypoint of lu_copy for extrusion */
 
 static struct wdb_pipept *es_pipept=(struct wdb_pipept *)NULL; /* Currently selected PIPE segment */
+static struct wdb_metaballpt *es_metaballpt=(struct wdb_metaballpt *)NULL; /* Currently selected METABALL Point */
 
 /*  These values end up in es_menu, as do ARB vertex numbers */
 int	es_menu;		/* item selected from menu */
@@ -673,7 +675,7 @@ struct menu_item metaball_menu[] = {
 	{ "Next Point", metaball_ed, MENU_METABALL_NEXT_PT },
 	{ "Previous Point", metaball_ed, MENU_METABALL_PREV_PT },
 	{ "Move Point", metaball_ed, MENU_METABALL_MOV_PT },
-	{ "Set Point fldstr", metaball_ed, MENU_METABALL_PT_FLDSTR },
+	{ "Scale Point fldstr", metaball_ed, MENU_METABALL_PT_FLDSTR },
 	{ "Delete Point", metaball_ed, MENU_METABALL_DEL_PT },
 	{ "Add Point", metaball_ed, MENU_METABALL_ADD_PT },
 	{ "", (void (*)())NULL, 0 }
@@ -1227,6 +1229,8 @@ static void superell_ed(int arg) {
 static void
 metaball_ed(int arg)
 {
+		struct wdb_metaballpt *next, *prev;
+
 	if(dbip == DBI_NULL)
 		return;
 
@@ -1237,15 +1241,52 @@ metaball_ed(int arg)
 			es_edflag = PSCALE;
 			break;
 		case MENU_METABALL_SET_METHOD:
+			es_menu = arg;
+			es_edflag = PSCALE;
 			break;
 		case MENU_METABALL_SELECT:
+			es_menu = arg;
 			es_edflag = ECMD_METABALL_PT_PICK;
 			break;
 		case MENU_METABALL_NEXT_PT:
+			if( !es_metaballpt ) {
+			  Tcl_AppendResult(interp, "No Metaball Point selected\n", (char *)NULL);
+			  return;
+			}
+			next = BU_LIST_NEXT( wdb_metaballpt, &es_metaballpt->l );
+			if( next->l.magic == BU_LIST_HEAD_MAGIC ) {
+			  Tcl_AppendResult(interp, "Current point is the last\n", (char *)NULL);
+			  return;
+			}
+			es_metaballpt = next;
+			rt_metaballpt_print( es_metaballpt, base2local );
+			es_menu = arg;
+			es_edflag = IDLE;
+			sedit();
 			break;
 		case MENU_METABALL_PREV_PT:
+			if( !es_metaballpt ) {
+			  Tcl_AppendResult(interp, "No Metaball Point selected\n", (char *)NULL);
+			  return;
+			}
+			prev = BU_LIST_PREV( wdb_metaballpt, &es_metaballpt->l );
+			if( prev->l.magic == BU_LIST_HEAD_MAGIC ) {
+			  Tcl_AppendResult(interp, "Current point is the first\n", (char *)NULL);
+			  return;
+			}
+			es_metaballpt = prev;
+			rt_metaballpt_print( es_metaballpt, base2local );
+			es_menu = arg;
+			es_edflag = IDLE;
+			sedit();
 			break;
 		case MENU_METABALL_MOV_PT:
+			if( !es_metaballpt ) {
+			  Tcl_AppendResult(interp, "No Metaball Point selected\n", (char *)NULL);
+			  es_edflag = IDLE;
+			  return;
+			}
+			es_menu = arg;
 			es_edflag = ECMD_METABALL_PT_MOV;
 			break;
 		case MENU_METABALL_PT_FLDSTR:
@@ -1650,6 +1691,22 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 			} else {
 			  VMOVE( mpt , es_pipept->pp_coord );
 			}
+			*strp = "V";
+			break;
+		}
+	case ID_METABALL:
+		{
+			struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)ip->idb_ptr;
+			struct wdb_metaballpt *metaball_pt;
+
+			RT_METABALL_CK_MAGIC( metaball );
+
+			if (es_metaballpt == (struct wdb_metaballpt *)NULL) {
+				metaball_pt = BU_LIST_FIRST( wdb_metaballpt , &metaball->metaball_ctrl_head );
+				VMOVE( mpt , metaball_pt->coord );
+				es_metaballpt = metaball_pt;
+			} else
+				VMOVE( mpt , es_metaballpt->coord );
 			*strp = "V";
 			break;
 		}
@@ -5696,28 +5753,29 @@ sedit(void)
 
 	case ECMD_METABALL_SET_THRESHOLD:
 		bu_log("\nsedit:set threshold:inpara: %d\n", inpara);
-		if(inpara == 1) {
-		    bu_log("Aw yeah: %f\n", es_para[0]);
-		}
-		bu_log("Set threshold\n");
+		bu_log("%s:%d Set threshold\n", __FUNCTION__, __LINE__);
+		break;
+	case ECMD_METABALL_SET_METHOD:
+		bu_log("\nsedit:set method:inpara: %d\n", inpara);
+		bu_log("%s:%d Set method\n", __FUNCTION__, __LINE__);
 		break;
 	case ECMD_METABALL_PT_PICK:
-		bu_log("point pick");
+		bu_log("%s:%d point pick", __FUNCTION__, __LINE__);
 		break;
 	case ECMD_METABALL_PT_MOV:
-		bu_log("point move");
+		bu_log("%s:%d point move", __FUNCTION__, __LINE__);
 		break;
 	case ECMD_METABALL_PT_FLDSTR:
-		bu_log("point strength");
+		bu_log("%s:%d point strength", __FUNCTION__, __LINE__);
 		break;
 	case ECMD_METABALL_PT_DEL:
-		bu_log("point del");
+		bu_log("%s:%d point del", __FUNCTION__, __LINE__);
 		break;
 	case ECMD_METABALL_PT_ADD:
-		bu_log("point add");
+		bu_log("%s:%d point add", __FUNCTION__, __LINE__);
 		break;
 	case ECMD_METABALL_RMET:
-		bu_log("metaball render method");
+		bu_log("%s:%d metaball render method", __FUNCTION__, __LINE__);
 		break;
 
 	default:
@@ -7610,6 +7668,23 @@ pscale(void)
 			RT_METABALL_CK_MAGIC(ball);
 			ball->threshold = es_para[0];
 		}
+	case MENU_METABALL_SET_METHOD:
+		{
+			struct rt_metaball_internal *ball =
+				(struct rt_metaball_internal *)es_int.idb_ptr;
+			RT_METABALL_CK_MAGIC(ball);
+			ball->method = es_para[0];
+		}
+		break;
+	case MENU_METABALL_PT_FLDSTR:
+		{
+			bu_log("Want to scale %x by %g", es_metaballpt, inpara);
+			if( !es_metaballpt || !inpara) {
+			  Tcl_AppendResult(interp, "pscale: no metaball point selected for scaling\n", (char *)NULL);
+			  return;
+			}
+			es_metaballpt->fldstr *= *es_para * (es_scale?es_scale:1.0);
+		}
 		break;
 	}
 }
@@ -8091,7 +8166,7 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
     }
 
     if( es_menu == MENU_PIPE_PT_OD || es_menu == MENU_PIPE_PT_ID || es_menu == MENU_PIPE_SCALE_ID 
-	    || es_menu == MENU_METABALL_SET_THRESHOLD)
+	    || es_menu == MENU_METABALL_SET_THRESHOLD || es_menu == MENU_METABALL_SET_METHOD)
       {
 	if( es_para[0] < 0.0 )
 	  {
