@@ -134,6 +134,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
 	/* generate a copy of the metaball */
 	nmb = bu_malloc(sizeof(struct rt_metaball_internal), "rt_metaball_prep: nmb");
+	nmb->magic = RT_METABALL_INTERNAL_MAGIC;
 	BU_LIST_INIT( &nmb->metaball_ctrl_head );
 	nmb->threshold = mb->threshold;
 
@@ -168,8 +169,33 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 void
 rt_metaball_print(register const struct soltab *stp)
 {
-	bu_log("rt_metaball_print called\n");
+	int metaball_count = 0;
+	struct rt_metaball_internal *mb;
+	struct wdb_metaballpt *mbpt;
+
+	if(stp==NULL){ bu_log("soltab is null\n"); return; }
+        mb = (struct rt_metaball_internal *)stp->st_specific;
+	RT_METABALL_CK_MAGIC(mb);
+	for( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) ++metaball_count;
+	bu_log("Metaball with %d points and a threshold of %g (method %d)\n", metaball_count, mb->threshold, mb->method);
+	metaball_count=0;
+	for( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
+		bu_log("\t%d: %g field strength at (%g, %g, %g)\n", ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord));
 	return;
+}
+
+/**
+ *			R T _ M E T A B A L L P T _ P R I N T
+ */
+void
+rt_metaballpt_print( const struct wdb_metaballpt *metaball, double mm2local )
+{
+	point_t p1;
+
+	bu_log( "Metaball Point:\n" );
+	VSCALE( p1, metaball->coord, mm2local );
+	bu_log( "\tat (%g %g %g)\n", V3ARGS( p1 ) );
+	bu_log( "\tfield strength = %g\n", metaball->fldstr*mm2local );
 }
 
 fastf_t
