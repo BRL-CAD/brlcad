@@ -89,6 +89,9 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
 			if (mbpt->coord[i] > max[i])
 				max[i] = mbpt->coord[i];
 		}
+	/* return -1 if no points are defined. */
+	if(min[X] == +INFINITY)
+	    return -1;
 
 	/* compute the center of the generated box, call that the center */
 	VADD2(*center, min, max);
@@ -383,6 +386,9 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	mb = (struct rt_metaball_internal *)ip->idb_ptr;
 	RT_METABALL_CK_MAGIC(mb);
 	rad = rt_metaball_get_bounding_sphere(&bsc, mb->threshold, &mb->metaball_ctrl_head);
+	/* cope with the case where 0 points are defined. */
+	if(rad<0) 
+	    return 0;
 	rt_metaball_plot_sph(vhead, &bsc, rad);
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
 		rt_metaball_plot_sph(vhead, &mbpt->coord, mbpt->fldstr / mb->threshold);
