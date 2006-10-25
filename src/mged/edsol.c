@@ -1294,9 +1294,12 @@ metaball_ed(int arg)
 			es_edflag = PSCALE;
 			break;
 		case MENU_METABALL_DEL_PT:
+			es_menu = arg;
 			es_edflag = ECMD_METABALL_PT_DEL;
+			sedit();
 			break;
 		case MENU_METABALL_ADD_PT:
+			es_menu = arg;
 			es_edflag = ECMD_METABALL_PT_ADD;
 			break;
 	}
@@ -1698,16 +1701,17 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		{
 			struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)ip->idb_ptr;
 			struct wdb_metaballpt *metaball_pt;
+			static char buf[BUFSIZ];
 
 			RT_METABALL_CK_MAGIC( metaball );
 
-			if (es_metaballpt == (struct wdb_metaballpt *)NULL) {
-				metaball_pt = BU_LIST_FIRST( wdb_metaballpt , &metaball->metaball_ctrl_head );
-				VMOVE( mpt , metaball_pt->coord );
-				es_metaballpt = metaball_pt;
-			} else
-				VMOVE( mpt , es_metaballpt->coord );
-			*strp = "V";
+			if(es_metaballpt->l.magic == BU_LIST_HEAD_MAGIC)
+			    snprintf(buf, BUFSIZ, "WARNING: Metaball has no points defined! ");
+			else {
+			    VMOVE( mpt , es_metaballpt->coord );
+			    snprintf(buf, BUFSIZ, "V %f", es_metaballpt->fldstr);
+			}
+			*strp = buf;
 			break;
 		}
 	case ID_ARBN:
@@ -2500,6 +2504,12 @@ init_sedit(void)
 		NMG_CK_SNURB(surf);
 		spl_ui = surf->s_size[1]/2;
 		spl_vi = surf->s_size[0]/2;
+	} 
+	else if ( id == ID_METABALL )
+	{
+		struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)es_int.idb_ptr;
+		RT_METABALL_CK_MAGIC(metaball);
+		es_metaballpt = BU_LIST_FIRST( wdb_metaballpt , &metaball->metaball_ctrl_head );
 	}
 
 	/* Save aggregate path matrix */
@@ -5751,31 +5761,39 @@ sedit(void)
 	case ECMD_BOT_PICKT:
 		break;
 
-	case ECMD_METABALL_SET_THRESHOLD:
-		bu_log("\nsedit:set threshold:inpara: %d\n", inpara);
-		bu_log("%s:%d Set threshold\n", __FUNCTION__, __LINE__);
-		break;
-	case ECMD_METABALL_SET_METHOD:
-		bu_log("\nsedit:set method:inpara: %d\n", inpara);
-		bu_log("%s:%d Set method\n", __FUNCTION__, __LINE__);
-		break;
 	case ECMD_METABALL_PT_PICK:
 		bu_log("%s:%d point pick", __FUNCTION__, __LINE__);
 		break;
 	case ECMD_METABALL_PT_MOV:
 		bu_log("%s:%d point move", __FUNCTION__, __LINE__);
 		break;
-	case ECMD_METABALL_PT_FLDSTR:
-		bu_log("%s:%d point strength", __FUNCTION__, __LINE__);
-		break;
 	case ECMD_METABALL_PT_DEL:
-		bu_log("%s:%d point del", __FUNCTION__, __LINE__);
+		{
+		    struct wdb_metaballpt *tmp = es_metaballpt, *p;
+
+		    if (BU_LIST_IS_EMPTY(&es_metaballpt->l)) {
+			bu_log("Cannot delete, this metaball has no point");
+			break;
+		    } 
+		    p = BU_LIST_PREV(wdb_metaballpt, &es_metaballpt->l);
+		    if (p->l.magic == BU_LIST_HEAD_MAGIC) 
+			es_metaballpt = BU_LIST_NEXT( wdb_metaballpt, &es_metaballpt->l );
+		    else 
+			es_metaballpt = p;
+		    BU_LIST_DQ(&tmp->l);
+		    free(tmp);
+		    if (es_metaballpt->l.magic == BU_LIST_HEAD_MAGIC) 
+			bu_log("WARNING: Last point of this metaball has been deleted.");
+		}
 		break;
 	case ECMD_METABALL_PT_ADD:
-		bu_log("%s:%d point add", __FUNCTION__, __LINE__);
-		break;
-	case ECMD_METABALL_RMET:
-		bu_log("%s:%d metaball render method", __FUNCTION__, __LINE__);
+		{
+		    struct wdb_metaballpt *n = (struct wdb_metaballpt *)malloc(sizeof(struct wdb_metaballpt));
+		    VSETALL(n->coord, 0);
+		    n->fldstr = 1.0;
+		    BU_LIST_APPEND(&es_metaballpt->l, &n->l);
+		    es_metaballpt = n;
+		}
 		break;
 
 	default:
