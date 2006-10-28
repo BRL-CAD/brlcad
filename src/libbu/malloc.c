@@ -605,7 +605,7 @@ bu_strdupm(register const char *cp, const char *label)
 	register char	*base;
 	register size_t	len;
 
-	len = strlen( cp )+2;
+	len = strlen( cp )+1;
 	base = bu_malloc( len, label);
 
 	if(bu_debug&BU_DEBUG_MEM_LOG) {
