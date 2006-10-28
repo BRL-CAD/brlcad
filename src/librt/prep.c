@@ -203,6 +203,7 @@ rt_free_rti(struct rt_i *rtip)
 
 	/* Freeing the actual resource structures's memory is the app's job */
 	bu_ptbl_free( &rtip->rti_resources );
+	bu_ptbl_free( &rtip->delete_regs );
 
 	bu_free( (char *)rtip, "struct rt_i" );
 }
