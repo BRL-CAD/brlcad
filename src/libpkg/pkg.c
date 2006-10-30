@@ -447,7 +447,7 @@ pkg_transerver(const struct pkg_switch *switchp, void (*errlog) (/* ??? */))
  *
  */
 int
-_pkg_permserver_impl(struct in_addr iface, char *service, char *protocol, int backlog, void (*errlog)(char *msg))
+_pkg_permserver_impl(struct in_addr iface, const char *service, const char *protocol, int backlog, void (*errlog)(char *msg))
 {
     register struct servent *sp;
     int	pkg_listenfd;
@@ -605,7 +605,7 @@ _pkg_permserver_impl(struct in_addr iface, char *service, char *protocol, int ba
  *  Returns fd to listen on (>=0), -1 on error.
  */
 int
-pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (char *msg))
+pkg_permserver(const char *service, const char *protocol, int backlog, void (*errlog) (char *msg))
 {
     struct in_addr iface;
     iface.s_addr = INADDR_ANY;
@@ -622,7 +622,7 @@ pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (char 
  *  Returns fd to listen on (>=0), -1 on error.
  */
 int 
-pkg_permserver_ip(char *ipOrHostname, char *service, char *protocol, int backlog, void (*errlog)(char *msg))
+pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *protocol, int backlog, void (*errlog)(char *msg))
 {
     struct hostent* host;
     struct in_addr iface;
