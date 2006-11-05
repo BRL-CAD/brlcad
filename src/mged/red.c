@@ -1005,6 +1005,7 @@ checkcomb(void)
 	char *name_v5=NULL;
 	char *name=NULL;
 	char line[RT_MAXLINE] = {0};
+	char lineCopy[RT_MAXLINE] = {0};
 	char *ptr = (char *)NULL;
 	int region=(-1);
 	int id=0,air=0;
@@ -1035,11 +1036,15 @@ checkcomb(void)
 		}
 		if( i == RT_MAXLINE )
 		{
-		  Tcl_AppendResult(interp, "Line too long in edited file\n", (char *)NULL);
-		  return( 1 );
+		  line[RT_MAXLINE-1] = '\0';
+		  Tcl_AppendResult(interp, "Line too long in edited file:\n",
+				   line, "\n", (char *)NULL);
+		  fclose( fp );
+		  return( -1 );
 		}
 
 		line[++i] = '\0';
+		strcpy( lineCopy, line );
 
 		/* skip leading white space */
 		i = (-1);
@@ -1059,9 +1064,17 @@ checkcomb(void)
 						len--;
 				}
 				if( len >= NAMESIZE ) {
-					Tcl_AppendResult(interp, "Name too long for v4 database: ", ptr, "\n", (char *)NULL );
+					Tcl_AppendResult(interp, "Name too long for v4 database: ",
+						ptr, "\n", lineCopy, "\n", (char *)NULL );
+					fclose( fp );
+					return( -1 );
 				}
 			}
+			continue;
+		}
+		else if( (ptr=find_keyword( i, line, "REGION_ID" ) ) )
+		{
+			id = atoi( ptr );
 			continue;
 		}
 		else if( (ptr=find_keyword( i, line, "REGION" ) ) )
@@ -1070,11 +1083,6 @@ checkcomb(void)
 				region = 1;
 			else
 				region = 0;
-			continue;
-		}
-		else if( (ptr=find_keyword( i, line, "REGION_ID" ) ) )
-		{
-			id = atoi( ptr );
 			continue;
 		}
 		else if( (ptr=find_keyword( i, line, "AIRCODE" ) ) )
@@ -1096,25 +1104,22 @@ checkcomb(void)
 
 			rgb_valid = 1;
 			ptr2 = strtok( ptr, delims );
-			if( !ptr2 )
-			{
+			if( !ptr2 ) {
+			    continue;
+			} else {
+			    ptr2 = strtok( (char *)NULL, delims );
+			    if( !ptr2 ) {
 				rgb_valid = 0;
-				continue;
+			    } else {
+				ptr2 = strtok( (char *)NULL, delims );
+				if( !ptr2 ) {
+				    rgb_valid = 0;
+				}
+			    }
 			}
-			ptr2 = strtok( (char *)NULL, delims );
-			if( !ptr2 )
-			{
-				rgb_valid = 0;
-				continue;
+			if( !rgb_valid ) {
+				Tcl_AppendResult(interp, "WARNING: invalid color specification!!! Must be three integers, each 0-255\n", (char *)NULL );
 			}
-			ptr2 = strtok( (char *)NULL, delims );
-			if( !ptr2 )
-			{
-				rgb_valid = 0;
-				continue;
-			}
-			if( !rgb_valid )
-				Tcl_AppendResult(interp, "Invalid color specification!!! Must be three integers, each 0-255\n", (char *)NULL );
 			continue;
 		}
 		else if( (ptr=find_keyword( i, line, "SHADER" ) ) )
@@ -1133,7 +1138,7 @@ checkcomb(void)
 					"\tMust be 'Yes' or 'No'\n", "\tNo Changes made\n",
 					(char *)NULL );
 				fclose( fp );
-				return( 1 );
+				return( -1 );
 			}
 			else if( region )
 			{
@@ -1143,7 +1148,7 @@ checkcomb(void)
 						"\tNo Changes made\n",
 						(char *)NULL );
 					fclose( fp );
-					return( 1 );
+					return( -1 );
 				}
 				if( air < 0 )
 				{
@@ -1151,7 +1156,7 @@ checkcomb(void)
 						"\tNo Changes made\n",
 						(char *)NULL );
 					fclose( fp );
-					return( 1 );
+					return( -1 );
 				}
 				if( air == 0 && id == 0 )
 					Tcl_AppendResult(interp, "Warning: both ID and Air codes are 0!!!\n", (char *)NULL );
@@ -1191,7 +1196,8 @@ checkcomb(void)
 			/* Next must be the member name */
 			ptr = strtok( (char *)NULL, delims );
 			name = NULL;
-			if( dbip->dbi_version < 5 ) {
+			if( ptr != NULL && *ptr != '\0' ) {
+			    if( dbip->dbi_version < 5 ) {
 				strncpy( name_v4 , ptr , NAMESIZE );
 				name_v4[NAMESIZE] = '\0';
 
@@ -1200,7 +1206,7 @@ checkcomb(void)
 				while( isspace( name_v4[--j] ) )
 					name_v4[j] = '\0';
 				name = name_v4;
-			} else {
+			    } else {
 				int len;
 
 				len = strlen( ptr );
@@ -1211,6 +1217,7 @@ checkcomb(void)
 					name_v5[len] = '\0';
 				}
 				name = name_v5;
+			    }
 			}
 
 			if( relation != '+' && relation != 'u' && relation != '-' )
@@ -1219,21 +1226,24 @@ checkcomb(void)
 
 			  bu_vls_init(&tmp_vls);
 			  bu_vls_printf(&tmp_vls, " %c is not a legal operator\n" , relation );
-			  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), lineCopy,
+					   "\n", (char *)NULL);
 			  bu_vls_free(&tmp_vls);
 			  fclose( fp );
-			  if( dbip->dbi_version >= 5 )
+			  if( dbip->dbi_version >= 5 && name_v5 )
 				  bu_free( name_v5, "name_v5" );
 			  return( -1 );
 			}
+
 			if( relation != '-' )
 				nonsubs++;
 
 			if( name == NULL || name[0] == '\0' )
 			{
-				Tcl_AppendResult(interp, " operand name missing\n", (char *)NULL);
+				Tcl_AppendResult(interp, " operand name missing\n",
+						 lineCopy, "\n", (char *)NULL);
 				fclose( fp );
-				if( dbip->dbi_version >= 5 )
+				if( dbip->dbi_version >= 5 && name_v5 )
 					bu_free( name_v5, "name_v5" );
 				return( -1 );
 			}
@@ -1252,9 +1262,10 @@ checkcomb(void)
 					ptr = strtok( (char *)NULL, delims );
 					if( !ptr)
 					{
-						Tcl_AppendResult(interp, "expecting a matrix\n", (char *)NULL);
+						Tcl_AppendResult(interp, "incomplete matrix\n",
+								 lineCopy, "\n", (char *)NULL);
 						fclose( fp );
-						if( dbip->dbi_version >= 5 )
+						if( dbip->dbi_version >= 5 && name_v5 )
 							bu_free( name_v5, "name_v5" );
 						return( -1 );
 					}
