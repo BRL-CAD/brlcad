@@ -750,6 +750,17 @@ manual_autogen ( ) {
     $ECHO
     $ECHO $ECHO_N "Preparing build ... $ECHO_C"
 
+    if ! test -f configure.in -o -f configure.ac ; then
+	$ECHO
+	$ECHO
+	$ECHO "A configure.ac or configure.in file could not be located implying"
+	$ECHO "that the GNU Build System is at least not used in this directory.  In"
+	$ECHO "any case, there is nothing to do here without one of those files."
+	$ECHO
+	$ECHO "ERROR: No configure.in or configure.ac file found."
+	exit 1
+    fi
+
     $VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS $ACLOCAL_OPTIONS"
     aclocal_output="`$ACLOCAL $SEARCH_DIRS $ACLOCAL_OPTIONS 2>&1`"
     ret=$?
