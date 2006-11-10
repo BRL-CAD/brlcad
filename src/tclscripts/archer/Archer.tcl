@@ -2036,7 +2036,7 @@ Popup Menu    Right or Ctrl-Left
 	-command "$dialog deactivate; ::itcl::delete object $dialog"
 
     wm protocol $dialog WM_DELETE_WINDOW "$dialog deactivate; ::itcl::delete object $dialog"
-    wm geometry $dialog "500x500"
+#    wm geometry $dialog "500x500"
 
     # Event bindings
     bind $dialog <Enter> "raise $dialog"
@@ -6274,6 +6274,14 @@ Popup Menu    Right or Ctrl-Left
     }
 
     $itk_component(viewToolbar) configure -state normal
+    if {$mDbType == "BRL-CAD"} {
+	$itk_component(viewToolbar) itemconfigure cpick \
+	    -state normal
+    } else {
+	$itk_component(viewToolbar) itemconfigure cpick \
+	    -state disabled
+    }
+
     if {$mMode != 0} {
 	$itk_component(viewToolbar) itemconfigure edit_rotate -state normal
 	$itk_component(viewToolbar) itemconfigure edit_translate -state normal
