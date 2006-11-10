@@ -47,6 +47,10 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* make target and/or script to update ChangeLog and version
+  information, possibly including checking for consistency, to
+  facilitate release process.
+
 * add the automated rtarea spreadsheet-producing script to repository
 
 * add some means to disable/minimize libfft on systems that don't have
