@@ -1288,8 +1288,14 @@ metaball_ed(int arg)
 			}
 			es_menu = arg;
 			es_edflag = ECMD_METABALL_PT_MOV;
+			sedit();
 			break;
 		case MENU_METABALL_PT_FLDSTR:
+			if( !es_metaballpt ) {
+			  Tcl_AppendResult(interp, "No Metaball Point selected\n", (char *)NULL);
+			  es_edflag = IDLE;
+			  return;
+			}
 			es_menu = arg;
 			es_edflag = PSCALE;
 			break;
@@ -5762,10 +5768,69 @@ sedit(void)
 		break;
 
 	case ECMD_METABALL_PT_PICK:
-		bu_log("%s:%d point pick", __FUNCTION__, __LINE__);
+		{
+			struct rt_metaball_internal *metaball=
+				(struct rt_metaball_internal *)es_int.idb_ptr;
+			point_t new_pt;
+			struct wdb_metaballpt *ps;
+			struct wdb_metaballpt *nearest=(struct wdb_metaballpt *)NULL;
+			struct bn_tol tmp_tol;
+			fastf_t min_dist = MAX_FASTF;
+			vect_t dir,work;
+
+			RT_METABALL_CK_MAGIC( metaball );
+
+			if( es_mvalid )
+			  VMOVE( new_pt , es_mparam )
+			else if( inpara == 3 ){
+			  VMOVE( new_pt , es_para )
+			}
+			else if( inpara && inpara != 3 )
+			{
+			  Tcl_AppendResult(interp, "x y z coordinates required for control point selection\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
+			  break;
+			}
+			else if( !es_mvalid && !inpara )
+				break;
+
+			tmp_tol.magic = BN_TOL_MAGIC;
+			tmp_tol.dist = 0.0;
+			tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+			tmp_tol.perp = 0.0;
+			tmp_tol.para = 1.0 - tmp_tol.perp;
+
+			/* get a direction vector in model space corresponding to z-direction in view */
+			VSET( work, 0.0, 0.0, 1.0 )
+			MAT4X3VEC(dir, view_state->vs_vop->vo_view2model, work)
+
+			for( BU_LIST_FOR( ps, wdb_metaballpt, &metaball->metaball_ctrl_head ))
+			{
+				fastf_t dist;
+
+				dist = bn_dist_line3_pt3( new_pt, dir, ps->coord );
+				if( dist < min_dist )
+				{
+					min_dist = dist;
+					nearest = ps;
+				}
+			}
+
+			es_metaballpt = nearest;
+
+			if( !es_metaballpt )
+			{
+			  Tcl_AppendResult(interp, "No METABALL control point selected\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
+			}
+			else
+				rt_metaballpt_print( es_metaballpt, base2local );
+		}
 		break;
 	case ECMD_METABALL_PT_MOV:
-		bu_log("%s:%d point move", __FUNCTION__, __LINE__);
+		if(!es_metaballpt) { bu_log("Must select a point to move"); break; }
+		if(inpara != 3) { bu_log("Must provide dx dy dz"); break; }
+		VADD2(es_metaballpt->coord, es_metaballpt->coord, es_para);
 		break;
 	case ECMD_METABALL_PT_DEL:
 		{
@@ -6215,6 +6280,9 @@ sedit_mouse( const vect_t mousevec )
   case ECMD_BOT_MOVEV:
   case ECMD_BOT_MOVEE:
   case ECMD_BOT_MOVET:
+  case ECMD_METABALL_PT_PICK:
+  case ECMD_METABALL_PT_MOV:
+  case ECMD_METABALL_PT_ADD:
 
     MAT4X3PNT(pos_view, view_state->vs_vop->vo_model2view, curr_e_axes_pos);
     pos_view[X] = mousevec[X];
@@ -6446,6 +6514,9 @@ sedit_trans(fastf_t *tvec)
   case ECMD_ARS_MOVE_PT:
   case ECMD_ARS_MOVE_CRV:
   case ECMD_ARS_MOVE_COL:
+  case ECMD_METABALL_PT_PICK:
+  case ECMD_METABALL_PT_MOV:
+  case ECMD_METABALL_PT_ADD:
     MAT4X3PNT(temp, view_state->vs_vop->vo_view2model, tvec);
     /* apply inverse of es_mat */
     MAT4X3PNT( es_mparam, es_invmat, temp );
@@ -8247,6 +8318,9 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
   case ECMD_BOT_MOVET:
   case ECMD_BOT_MOVEE:
   case ECMD_BOT_MOVEV:
+  case ECMD_METABALL_PT_PICK:
+  case ECMD_METABALL_PT_MOV:
+  case ECMD_METABALL_PT_ADD:
     /* must convert to base units */
     es_para[0] *= local2base;
     es_para[1] *= local2base;
@@ -8901,6 +8975,24 @@ label_edited_solid(
 				POINT_LABEL_STR( pos_view, "pt" );
 			}
 		}
+		break;
+	case ID_METABALL:
+		{
+#ifndef NO_MAGIC_CHECKING
+			register struct rt_metaball_internal *metaball =
+				(struct rt_metaball_internal *)es_int.idb_ptr;
+
+			RT_METABALL_CK_MAGIC( metaball );
+#endif
+
+			if( es_metaballpt ) {
+				BU_CKMAG( es_metaballpt, WDB_METABALLPT_MAGIC, "wdb_metaballpt" );
+
+				MAT4X3PNT(pos_view, xform, es_metaballpt->coord);
+				POINT_LABEL_STR( pos_view, "pt" );
+			}
+		}
+
 		break;
 	}
 
