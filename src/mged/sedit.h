@@ -216,7 +216,8 @@
 		     es_edflag == ECMD_ARS_PICK || \
 		     es_edflag == ECMD_BOT_PICKV || \
 		     es_edflag == ECMD_BOT_PICKE || \
-		     es_edflag == ECMD_BOT_PICKT))
+		     es_edflag == ECMD_BOT_PICKT || \
+		     es_edflag == ECMD_METABALL_PT_PICK))
 
 extern vect_t edit_absolute_model_rotate;
 extern vect_t edit_absolute_object_rotate;
