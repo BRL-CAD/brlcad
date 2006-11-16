@@ -21,7 +21,7 @@
 /** @file roots_example.c
  *
  *  Simple example of how to use libbn for solving the roots to an
- *  arbitrary polynomail.
+ *  arbitrary polynomial.
  *
  *  Author -
  *	Christopher Sean Morrison
