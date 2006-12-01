@@ -1,6 +1,26 @@
 BRL-CAD on Windows README
 =========================
 
+Compilation of BRL-CAD under Windows is performed in one of three
+ways.  The first and usually most readily attenable build process is
+to install BRL-CAD under the Mingw or Cygwin compatibility
+environments where the build steps are the same as on the other
+platforms (documented in the INSTALL file).
+
+The second approach is to compile using MSVC 6 using the build files
+in the misc/win32-msvc directory.  This approach, however, will ONLY
+currently build all of the libraries and is intended for 3rd party
+applications that link against BRL-CAD as a geometry engine or
+ray-trace library.
+
+The third approach is to compile using MSVC 7 using the build files in
+the misc/win32-msvc7 directory.  This approach will compile the vast
+majority of the package and is the approach utilized when making a
+binary release of BRL-CAD for Windows.  This will compile 'mged',
+'rt', some of the converters, a few of the other geometry analysis
+tools, and more.  In all, it compiles about a third of the utilities
+and all of the libraries.
+
 The Windows build of MGED does not currently have a functioning
 display manager so raytracing directly into the Graphics Window is not
 possible.  To raytrace, users should either render directly to a
@@ -9,3 +29,4 @@ server via 'fbserv' on the command-line.  The framebuffer can be "set
 default" by adding a -F# (e.g. -F0) to the "Other Options" field of
 the "Advanced Settings..." panel of the Raytrace Control Panel,
 selected via File->Raytrace.
+
