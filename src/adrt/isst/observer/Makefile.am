@@ -23,7 +23,9 @@ isst_observer_LDADD = \
 	${LIBM}
 
 isst_observer_LDFLAGS = -static
-noinst_HEADERS = observer.h
+noinst_HEADERS = \
+	observer.h \
+	splash.h
 
 MAINTAINERCLEANFILES = Makefile.in
 
