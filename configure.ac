@@ -375,6 +375,9 @@ BC_ARG_WITH([with_java], [jdk], [Specify use of or path to the Java Development 
 # use x11
 BC_ARG_WITH([with_x11], [x11], [Specify use of or path to X11], [auto])
 dnl *** X11 ***
+if test "x$bc_with_x11_val" != "x" ; then
+	BC_RETRY_DIRECTORY([$bc_with_x11_val])
+fi
 AC_PATH_X
 AC_PATH_XTRA
 
@@ -2878,6 +2881,9 @@ AC_MSG_RESULT($build_against_wgl)
 dnl *** X11 interface compilation ***
 # XXX ugly hack that needs to die
 X_PREFIX=/usr/X11R6
+if test "x$bc_with_x11_val" != "x" ; then
+	X_PREFIX="$bc_with_x11_val"
+fi
 AC_SUBST(X_PREFIX)
 X_CFLAGS="-I${X_PREFIX}/include"
 AC_SUBST(X_CFLAGS)
@@ -2887,7 +2893,7 @@ AC_SUBST(X_LIBS)
 x11_works=no
 AC_MSG_CHECKING(for X11 functionality)
 PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBX11"
+LDFLAGS="$LDFLAGS $X_LIBS"
 AC_TRY_RUN([
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xlib.h>
