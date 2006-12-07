@@ -129,6 +129,11 @@ if test "x$CFLAGS" = "x" ; then
 	# set it to something benign instead like whitespace
 	CFLAGS=" "
 fi
+if test "x$CXXFLAGS" = "x" ; then
+	# an unset CXXFLAGS var is set to "-O2 -g" during AC_PROG_CXX, so
+	# set it to something benign instead like whitespace
+	CXXFLAGS=" "
+fi
 
 # override the default (empty) yflags (yacc) if user has not modified them
 if test "x$YFLAGS" = "x" ; then
@@ -917,6 +922,7 @@ AC_AIX
 AC_MINIX
 
 AC_PROG_CC
+AC_PROG_CXX
 AM_PROG_CC_STDC
 AC_PROG_CPP
 AC_REQUIRE_CPP
