@@ -137,7 +137,7 @@ extern int gui_setup(char *dstr);				/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
 extern int classic_mged;			/* in ged.c */
 extern int bot_vertex_fuse(), bot_condense();
-extern int cmd_smooth_bot();
+extern int cmd_bot_smooth();
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
@@ -202,7 +202,7 @@ static struct cmdtab cmdtab[] = {
 	{"bot_face_fuse", f_bot_face_fuse},
 	{"bot_face_sort", cmd_bot_face_sort},
 	{"bot_merge", f_bot_merge},
-	{"bot_smooth", cmd_smooth_bot },
+	{"bot_smooth", cmd_bot_smooth },
 	{"bot_split", f_bot_split},
 	{"bot_vertex_fuse", f_bot_fuse},
 	{"bottom",	bv_bottom},

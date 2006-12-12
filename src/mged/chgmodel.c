@@ -2743,14 +2743,14 @@ f_binary(ClientData	clientData,
 	return wdb_binary_cmd(wdbp, interp, argc, argv);
 }
 
-int cmd_smooth_bot( ClientData	clientData,
+int cmd_bot_smooth( ClientData	clientData,
 	 Tcl_Interp	*interp,
 	 int		argc,
 	 char 		**argv)
 {
 	CHECK_DBI_NULL;
 
-	return wdb_smooth_bot_cmd( wdbp, interp, argc, argv );
+	return wdb_bot_smooth_cmd( wdbp, interp, argc, argv );
 }
 
 /*
