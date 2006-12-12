@@ -270,7 +270,7 @@ static int wdb_units_tcl(ClientData clientData, Tcl_Interp *interp, int argc, ch
 static int wdb_hide_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_unhide_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_xpush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_smooth_bot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_bot_smooth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_showmats_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_nmg_collapse_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_nmg_simplify_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -378,7 +378,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"rt_gettrees",	wdb_rt_gettrees_tcl},
 	{"shells",	wdb_shells_tcl},
 	{"showmats",	wdb_showmats_tcl},
-	{"smooth_bot",	wdb_smooth_bot_tcl},
+	{"bot_smooth",	wdb_bot_smooth_tcl},
 	{"summary",	wdb_summary_tcl},
 	{"title",	wdb_title_tcl},
 	{"tol",		wdb_tol_tcl},
@@ -8975,7 +8975,7 @@ wdb_pathlist_tcl(ClientData	clientData,
  *
  */
 int
-wdb_smooth_bot_cmd(struct rt_wdb	*wdbp,
+wdb_bot_smooth_cmd(struct rt_wdb	*wdbp,
 	       Tcl_Interp	*interp,
 	       int		argc,
 	       char 		**argv)
@@ -9001,7 +9001,7 @@ wdb_smooth_bot_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib_alias wdb_smooth_bot %s", argv[0]);
+		bu_vls_printf(&vls, "helplib_alias wdb_bot_smooth %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -9016,7 +9016,7 @@ wdb_smooth_bot_cmd(struct rt_wdb	*wdbp,
 			struct bu_vls vls;
 
 			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "helplib_alias wdb_smooth_bot %s", argv[0]);
+			bu_vls_printf(&vls, "helplib_alias wdb_bot_smooth %s", argv[0]);
 			Tcl_Eval(interp, bu_vls_addr(&vls));
 			bu_vls_free(&vls);
 			return TCL_ERROR;
@@ -9028,7 +9028,7 @@ wdb_smooth_bot_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib_alias wdb_smooth_bot %s", argv[0]);
+		bu_vls_printf(&vls, "helplib_alias wdb_bot_smooth %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -9066,7 +9066,7 @@ wdb_smooth_bot_cmd(struct rt_wdb	*wdbp,
 	old_bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC( old_bot );
 
-	if( rt_smooth_bot( old_bot, old_bot_name, wdbp->dbip, tolerance_angle*M_PI/180.0 ) ) {
+	if( rt_bot_smooth( old_bot, old_bot_name, wdbp->dbip, tolerance_angle*M_PI/180.0 ) ) {
 		Tcl_AppendResult(interp, "Failed to smooth ", old_bot_name, "\n", (char *)NULL );
 		rt_db_free_internal( &intern, wdbp->wdb_resp );
 		return TCL_ERROR;
@@ -9097,14 +9097,14 @@ wdb_smooth_bot_cmd(struct rt_wdb	*wdbp,
  *
  */
 static int
-wdb_smooth_bot_tcl(ClientData	clientData,
+wdb_bot_smooth_tcl(ClientData	clientData,
 		 Tcl_Interp	*interp,
 		 int		argc,
 		 char		**argv)
 {
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
-	return wdb_smooth_bot_cmd(wdbp, interp, argc-1, argv+1);
+	return wdb_bot_smooth_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 /**

@@ -3687,13 +3687,13 @@ rt_bot_decimate( struct rt_bot_internal *bot,	/* BOT to be decimated */
 }
 
 static int
-smooth_bot_miss( struct application *ap )
+bot_smooth_miss( struct application *ap )
 {
 	return 0;
 }
 
 static int
-smooth_bot_hit( struct application *ap, struct partition *PartHeadp, struct seg *seg )
+bot_smooth_hit( struct application *ap, struct partition *PartHeadp, struct seg *seg )
 {
 	struct partition *pp;
 	struct soltab *stp;
@@ -3720,7 +3720,7 @@ smooth_bot_hit( struct application *ap, struct partition *PartHeadp, struct seg 
 }
 
 int
-rt_smooth_bot( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fastf_t norm_tol_angle )
+rt_bot_smooth( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fastf_t norm_tol_angle )
 {
 	int vert_no;
 	int i,j,k;
@@ -3766,8 +3766,8 @@ rt_smooth_bot( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, f
 
 		RT_APPLICATION_INIT(&ap);
 		ap.a_rt_i = rtip;
-		ap.a_hit = smooth_bot_hit;
-		ap.a_miss = smooth_bot_miss;
+		ap.a_hit = bot_smooth_hit;
+		ap.a_miss = bot_smooth_miss;
 		ap.a_uptr = (genptr_t)normals;
 		if( rt_gettree( rtip, bot_name ) ) {
 			bu_log( "rt_gettree failed for %s\n", bot_name );
