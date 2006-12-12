@@ -4872,7 +4872,7 @@ RT_EXPORT BU_EXTERN(int rt_bot_face_fuse,
 		    (struct rt_bot_internal *bot));
 RT_EXPORT BU_EXTERN(int rt_bot_condense,
 		    (struct rt_bot_internal *bot));
-RT_EXPORT BU_EXTERN(int rt_smooth_bot,
+RT_EXPORT BU_EXTERN(int rt_bot_smooth,
 		    (struct rt_bot_internal *bot,
 		     char *bot_name,
 		     struct db_i *dbip,
@@ -6430,7 +6430,7 @@ RT_EXPORT BU_EXTERN(int	wdb_track_cmd,
 		     Tcl_Interp *interp,
 		     int argc,
 		     char **argv));
-RT_EXPORT BU_EXTERN(int	wdb_smooth_bot_cmd,
+RT_EXPORT BU_EXTERN(int wdb_bot_smooth_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
