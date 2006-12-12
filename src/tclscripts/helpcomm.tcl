@@ -36,22 +36,22 @@
 #
 
 proc help_comm {data args} {
-	global $data
+    global $data
 
-	if {[llength $args] > 0}	{
-		set cmd [lindex $args 0]
-		if [info exists [subst $data]($cmd)] {
-		    return "Usage: $cmd [lindex [subst $[subst $data]($cmd)] 0]\n\t([lindex [subst $[subst $data]($cmd)] 1])"
-		} else {
-			return "No help found for $cmd"
-		}
-	} else {
-		foreach cmd [lsort [array names [subst $data]]] {
-			append info "$cmd [lindex [subst $[subst $data]($cmd)] 0]\n\t[lindex [subst $[subst $data]($cmd)] 1]\n"
-		}
-
-		return $info
+    if {[llength $args] > 0} {
+	foreach cmd [join $args] {
+	    if [info exists [subst $data]($cmd)] {
+		append info "Usage: $cmd [lindex [subst $[subst $data]($cmd)] 0]\n\t([lindex [subst $[subst $data]($cmd)] 1])\n"
+	    } else {
+		append info "No help found for $cmd\n"
+	    }
 	}
+    } else {
+	foreach cmd [lsort [array names [subst $data]]] {
+	    append info "$cmd [lindex [subst $[subst $data]($cmd)] 0]\n\t[lindex [subst $[subst $data]($cmd)] 1]\n"
+	}
+    }
+    return $info
 }
 
 

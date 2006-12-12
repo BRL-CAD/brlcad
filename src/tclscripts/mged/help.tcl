@@ -123,9 +123,9 @@ set mged_help_data(get_regions)	{{combination}	{returns the names of all regions
 set mged_help_data(gui)	{{[-config b|c|g] [-d display_string]
         [-gd graphics_display_string] [-dt graphics_type]
         [-id name] [-c -h -j -s]}	{create display/command window pair}}
-set mged_help_data(help)	{{[commands]}	{give usage message for given commands}}
-set mged_help_data(helplib)	{{[library commands]}	{give usage message for given library commands}}
-set mged_help_data(helpdevel)	{{[commands]}	{give usage message for given developer commands}}
+set mged_help_data(help)	{{[command(s)]}	{give usage message for given command(s)}}
+set mged_help_data(helplib)	{{[library_command(s)]}	{give usage message for given library command(s)}}
+set mged_help_data(helpdevel)	{{[command(s)]}	{give usage message for given developer command(s)}}
 set mged_help_data(hide)        $helplib_data(wdb_hide)
 set mged_help_data(history)	{{[-delays]}	{list command history}}
 set mged_help_data(i)		$helplib_data(wdb_instance)
