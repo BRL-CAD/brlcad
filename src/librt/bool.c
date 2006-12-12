@@ -1082,14 +1082,17 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 		{
 			int	r1 = rt_tree_max_raynum( lastregion->reg_treetop, pp );
 			int	r2 = rt_tree_max_raynum( regp->reg_treetop, pp );
+
 			/* Only use this algorithm if one is not the main ray */
 			if( r1 > 0 || r2 > 0 )  {
-/* if(RT_G_DEBUG&DEBUG_PARTITION) */
-bu_log("Potential overlay along ray bundle: r1=%d, r2=%d, resolved to %s\n", r1, r2,
-(r1<r2)?lastregion->reg_name:regp->reg_name);
-				if( r1 < r2 )
-					goto code1;	/* keep lastregion */
-				goto code2;		/* keep regp */
+			    if(RT_G_DEBUG&DEBUG_PARTITION) {
+				bu_log("Potential overlay along ray bundle: r1=%d, r2=%d, resolved to %s\n", r1, r2,
+				       (r1<r2)?lastregion->reg_name:regp->reg_name);
+			    }
+			    if( r1 < r2 ) {
+				goto code1;	/* keep lastregion */
+			    }
+			    goto code2;		/* keep regp */
 			}
 		}
 
