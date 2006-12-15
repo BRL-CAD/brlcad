@@ -1,4 +1,5 @@
 EXPORTS
+
 bu_badmagic
 bu_bitv_clear
 bu_bitv_free
@@ -7,6 +8,7 @@ bu_calloc
 bu_free
 bu_jmpbuf
 bu_setjmp_valid
+
 db_ck_v4gift_tree
 db_flatten_tree
 db_free_tree
@@ -14,6 +16,7 @@ db_lookup
 db_non_union_push
 db_tree_nleaves
 db_update_nref
+
 mk_add_pipe_pt
 mk_addmember
 mk_arb8
@@ -28,6 +31,7 @@ mk_rcc
 mk_rpp
 mk_trc_h
 
+rt_bot_smooth
 rt_clean
 rt_db_free_internal
 rt_db_get_internal
@@ -38,7 +42,6 @@ rt_gettree
 rt_init_resource
 rt_prep
 rt_shootray
-rt_smooth_bot
 rt_uniresource
 
 wdb_close
