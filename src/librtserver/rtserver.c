@@ -2660,7 +2660,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, job
 
 	/* get a ray structure */
 	RTS_GET_XRAY( aray );
-	aray->index = 1;
+	aray->index = 0;
 
 	/* extract start point */
 	if( (point_class = (*env)->GetObjectClass( env, jstart_pt ) ) == NULL ) {
