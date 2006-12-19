@@ -2,7 +2,7 @@ BRL-CAD on Windows README
 =========================
 
 Compilation of BRL-CAD under Windows is performed in one of three
-ways.  The first and usually most readily attenable build process is
+ways.  The first and usually most readily attainable build process is
 to install BRL-CAD under the Mingw or Cygwin compatibility
 environments where the build steps are the same as on the other
 platforms (documented in the INSTALL file).

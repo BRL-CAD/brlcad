@@ -1,11 +1,11 @@
 BRL-CAD on VAX README
 =====================
 
-One of the first systems to run BRL-CAD includes the VAX.  In
-particular, a VAX 11/780 named VGR is the baseline reference machine
-for the BRL-CAD Benchmark suite.  Through the 80's and most of the
-90's, BRL-CAD was compiled for and maintained on VGR running 4.3 BSD
-until the hardware was finally decommissioned.
+One of the first systems to run BRL-CAD was the VAX.  In particular, a
+VAX 11/780 named VGR is the baseline reference machine for the BRL-CAD
+Benchmark suite.  Through the 80's and most of the 90's, BRL-CAD was
+compiled for and maintained on VGR running 4.3 BSD until the hardware
+was finally decommissioned.
 
 BRL-CAD has been successfuly compiled for and run under the simh
 Computer History Simulation Project's VAX simulator.  Using this

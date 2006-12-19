@@ -1,7 +1,7 @@
 BRL-CAD on AIX README
 =====================
 
-Building BRL-CAD under AIX is fairly straitforward using a correctly
+Building BRL-CAD under AIX is fairly straightforward using a correctly
 installed version on the GCC compiler.  If, however, you are using the
 IBM Visual Age compiler, then there are additional manual compilation
 steps that will be necessary.  In particular, the IBM compiler and

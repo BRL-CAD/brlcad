@@ -1,11 +1,11 @@
 BRL-CAD on IRIX README
 ======================
 
-Note by setting the compiler flags, configure seems to skip the check
-for maximum shell command line length is skipped.  Be careful not to
-place the source in a directory too deep.  The libtool script wrapper
-which runs bwish builds a command line that is too long for the shell
-to handle.  So for example, placing the source in:
+Note that by setting the compiler flags, configure seems to skip the
+check for maximum shell command line length.  Be careful not to place
+the source in a directory too deep.  The libtool script wrapper which
+runs bwish builds a command line that is too long for the shell to
+handle.  So for example, placing the source in:
 
 	/home/username/BRLCAD/mips64_brlcad-7.2.0
 
