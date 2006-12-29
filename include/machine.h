@@ -546,7 +546,7 @@ typedef long    bitv_t;         /* could use long long */
 #define PARALLEL        1
 /* #define MALLOC_NOT_MP_SAFE 1 -- not confirmed */
 #endif
-#ifdef __i686__
+#if defined(__i686__) || defined(__i386__)
 #define IEEE_FLOAT      1      /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 #define LOCAL   auto            /* static|auto, for serial|parallel cpu */

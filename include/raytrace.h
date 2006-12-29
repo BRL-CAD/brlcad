@@ -1748,6 +1748,10 @@ RT_EXPORT extern struct rt_g rt_g;
 
 /**
  *			R T _ I
+ * @brief
+ *	This structure keeps track of almost everything for
+ *  ray-tracing support:  Regions, primitives, model bounding
+ *  box, statistics.
  *
  *  Definitions for librt which are specific to the
  *  particular model being processed, one copy for each model.

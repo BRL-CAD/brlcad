@@ -39,7 +39,7 @@
  *  in other BRL-CAD header files, such as vmath.h.
  *  Look for those routines in LIBBN.
  *
- *  @@authorMichael John Muuss
+ *  @author Michael John Muuss
  *
  *  @par Source
  *	The U. S. Army Research Laboratory 			@n 
