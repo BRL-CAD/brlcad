@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* tgc reports one hit errors though hit point has 0,0,0 direction
+  implying that maybe the point was supposedly deleted.
+
 * rtedge is not respecting the -c"set" options.  needs to give some
   indication that they were parsed too since it ignores unrecognized
   values apparently.
