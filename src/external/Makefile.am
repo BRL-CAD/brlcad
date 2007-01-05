@@ -12,7 +12,14 @@ else !BUILD_UG
 UG_DIR =
 endif
 
+if BUILD_EF
+EF_DIR = EndgameFramework
+else !BUILD_EF
+EF_DIR =
+endif
+
 SUBDIRS = \
+	$(EF_DIR) \
 	$(PROE_DIR) \
 	$(UG_DIR)
 
