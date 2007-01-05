@@ -990,7 +990,7 @@ compiler=unknown
 
 dnl Determine whether we are using GCC
 if test "x$GCC" = "xyes" ; then
-	compiler=gcc
+	compiler=gnu
 fi
 
 dnl Determine whether we are using the MIPSpro compiler on SGI systems
@@ -1004,7 +1004,7 @@ int main() { return 0; }
 	], [using_mipspro=no], [using_mipspro=yes])
 	AC_MSG_RESULT($using_mipspro)
 	if test "x$using_mipspro" = "xyes" ; then
-		compiler=mipspro
+		compiler=sgi
 	fi
 fi
 
@@ -1022,7 +1022,7 @@ int main() { return 0; }
 		AR="CC -xar"
 		LD="CC -G"
 		export AR LD
-		compiler=sunpro
+		compiler=sun
 	fi
 fi
 
@@ -3178,7 +3178,7 @@ dnl tcl
 # if compiling with the MIPSpro 7.3 compiler, there is a bug when
 # trying to link using an rpath longer than 256 that causes the linker
 # to core dump.
-AM_CONDITIONAL(LINK_STATIC_REQUIRED, [test "x$build_vendor" = "xsgi" -a "x$compiler" = "xmipspro" ])
+AM_CONDITIONAL(LINK_STATIC_REQUIRED, [test "x$build_vendor" = "xsgi" -a "x$compiler" = "xsgi" ])
 
 dnl Need to update version number(s) in src/other/libtcl/Makefile.am
 TCL_LIBRARY='${prefix}/lib/tcl${TCL_VERSION}'
