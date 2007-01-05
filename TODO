@@ -47,6 +47,10 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* review "eclectic" from GSI as a tessellation approach
+
+* review and merge in the rest of the GSI modifications
+
 * make target and/or script to update ChangeLog and version
   information, possibly including checking for consistency, to
   facilitate release process.
