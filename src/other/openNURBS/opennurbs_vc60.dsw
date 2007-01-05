@@ -1,0 +1,182 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "example_brep"=.\example_brep\example_brep_vc60.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name opennurbs_static_vc60
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name zlib_vc60
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "example_dump"=.\example_dump\example_dump_vc60.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name opennurbs_static_vc60
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name zlib_vc60
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "example_gl"=.\example_gl\example_gl_vc60.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name opennurbs_static_vc60
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name zlib_vc60
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "example_read"=.\example_read\example_read_vc60.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name opennurbs_static_vc60
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name zlib_vc60
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "example_roundtrip"=.\example_roundtrip\example_roundtrip_vc60.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name opennurbs_static_vc60
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name zlib_vc60
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "example_userdata"=.\example_userdata\example_userdata_vc60.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name opennurbs_static_vc60
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name zlib_vc60
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "example_write"=.\example_write\example_write_vc60.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name opennurbs_static_vc60
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name zlib_vc60
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "opennurbs_static_vc60"=.\opennurbs_static_vc60.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "opennurbs_vc60"=.\opennurbs_vc60.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name zlib_vc60
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "zlib_vc60"=.\zlib\zlib_vc60.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+
