@@ -39,7 +39,7 @@
 #define MY_ZCALLOC
 #endif
 
-#include "./zlib/zlib.h"
+#include <zlib.h>
 
 ON_BEGIN_EXTERNC
 voidpf zcalloc (voidpf, unsigned, unsigned);
