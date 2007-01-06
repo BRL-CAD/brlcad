@@ -29,7 +29,7 @@ bool ON_IsFinite(double x)
   // you can't find anything, then just set this
   // function to return true.
 
-#if defined(_GNU_SOURCE)
+#if defined(ON_COMPILER_GNU)
   return (finite(x)?true:false);
 #else
   return (_finite(x)?true:false);
