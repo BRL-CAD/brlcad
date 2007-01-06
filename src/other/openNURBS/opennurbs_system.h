@@ -57,7 +57,7 @@
 
 #endif
 
-#if defined(__GNUG_) || defined(__GNUC_) || defined(_GNU_SOURCE)
+#if defined(__GNUC__) || defined(__GNUG_) || defined(__GNUC_) || defined(_GNU_SOURCE)
 /* using Gnu's compiler */
 #if !defined(ON_COMPILER_GNU)
 #define ON_COMPILER_GNU
