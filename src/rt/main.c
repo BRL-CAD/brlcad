@@ -221,7 +221,7 @@ int main(int argc, char **argv)
 		      );	/* +5 to skip @(#) */
 	}
 #if defined(DEBUG)
-	(void)fprintf(stderr, "WARNING: Compile-time debugging is enabled and may limit performance\n");
+	(void)fprintf(stderr, "Compile-time debug symbols are available\n");
 #endif
 #if defined(NO_BOMBING_MACROS) || defined(NO_MAGIC_CHECKING) || defined(NO_BADRAY_CECHKING) || defined(NO_DEBUG_CHECKING)
 	(void)fprintf(stderr, "WARNING: Run-time debugging is disabled and may enhance performance\n");
