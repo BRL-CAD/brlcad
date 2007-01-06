@@ -310,6 +310,9 @@ BC_ARG_ENABLE([build_zlib], [zlib-build], [Build the included zlib compression l
 # force enable/disable building of utah raster toolkit
 BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit], [auto])
 
+# force enable/disable building of openNURBS
+BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
+
 # force enable/disable building of termlib
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
 
@@ -480,6 +483,20 @@ BC_ARG_ALIAS([build_urt], [librle-build])
 BC_ARG_ALIAS([build_urt], [libutahrle-build])
 BC_ARG_ALIAS([build_urt], [utahrastertoolkit-build])
 BC_ARG_ALIAS([build_urt], [utah-raster-toolkit-build])
+
+# aliases to force building openNURBS (help uses opennurbs-build)
+BC_ARG_ALIAS([build_opennurbs], [libopennurbs])
+BC_ARG_ALIAS([build_opennurbs], [libopenurbs])
+BC_ARG_ALIAS([build_opennurbs], [libnurbs])
+BC_ARG_ALIAS([build_opennurbs], [open-nurbs])
+BC_ARG_ALIAS([build_opennurbs], [openurbs])
+BC_ARG_ALIAS([build_opennurbs], [nurbs])
+BC_ARG_ALIAS([build_opennurbs], [libopennurbs-build])
+BC_ARG_ALIAS([build_opennurbs], [libopenurbs-build])
+BC_ARG_ALIAS([build_opennurbs], [libnurbs-build])
+BC_ARG_ALIAS([build_opennurbs], [open-nurbs-build])
+BC_ARG_ALIAS([build_opennurbs], [openurbs-build])
+BC_ARG_ALIAS([build_opennurbs], [nurbs-build])
 
 # aliases to force building tcl (help uses tcl-build)
 BC_ARG_ALIAS([build_tcl], [tcl])
@@ -662,6 +679,9 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_urt" = "x$bc_build_urt_default" ; then
 		bc_build_urt="$set_everything"
 	fi
+	if test "x$bc_build_opennurbs" = "x$bc_build_opennurbs_default" ; then
+		bc_build_opennurbs="$set_everything"
+	fi
 	if test "x$bc_build_termlib" = "x$bc_build_termlib_default" ; then
 		bc_build_termlib="$set_everything"
 	fi
@@ -831,6 +851,9 @@ AC_MSG_RESULT($bc_build_zlib)
 AC_MSG_CHECKING(whether to build the Utah Raster Toolkit)
 AC_MSG_RESULT($bc_build_urt)
 
+AC_MSG_CHECKING(whether to build the openNURBS library)
+AC_MSG_RESULT($bc_build_opennurbs)
+
 AC_MSG_CHECKING(whether to build the Tcl library)
 AC_MSG_RESULT($bc_build_tcl)
 
@@ -922,10 +945,14 @@ AC_AIX
 AC_MINIX
 
 AC_PROG_CC
-AC_PROG_CXX
 AM_PROG_CC_STDC
+
+AC_PROG_CXX
+
+
 AC_PROG_CPP
 AC_REQUIRE_CPP
+
 AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -1148,6 +1175,11 @@ AC_CHECK_LIB(Xt, XtMalloc, xt_link_works=yes)
 xmu_link_works=no
 AC_CHECK_LIB(Xmu, XmuLookupStandardColormap, xmu_link_works=yes)
 
+dnl check if a math library links
+m_link_works=no
+LIBM=""
+AC_CHECK_LIB(m, cos, m_link_works=yes ; LIBM="-lm")
+
 dnl detect a useable system regular expression library
 LIBREGEX=""
 AC_CHECK_LIB(c, regcomp, LIBREGEX="-lc",
@@ -1164,11 +1196,6 @@ dnl check if zlib library links
 LIBZLIB=""
 AC_CHECK_LIB(z, deflate, LIBZLIB="-lz")
 
-dnl check if a math library links
-m_link_works=no
-LIBM=""
-AC_CHECK_LIB(m, cos, m_link_works=yes ; LIBM="-lm")
-
 dnl check if utahrle library links
 utahrle_link_works=no
 UTAHRLE=""
@@ -1179,6 +1206,10 @@ AC_CHECK_LIB(utahrle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lutahrle $L
     [AC_CHECK_LIB(rle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lrle $LIBM")]
 )
 LIBS="$PRELIBS"
+
+dnl check if openNURBS library links
+LIBOPENNURBS=""
+AC_CHECK_LIB(openNURBS, onmalloc, LIBOPENNURBS="-lopenNURBS")
 
 dnl check if libtcl library links
 tcl_link_works=no
@@ -2169,6 +2200,58 @@ fi
 AC_SUBST(RLE)
 
 
+dnl *** openNURBS ***
+dnl See if openNURBS library support works
+opennurbs_works=no
+AC_MSG_CHECKING(for openNURBS functionality)
+PRELDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $LIBOPENNURBS"
+AC_LANG_PUSH([C++])
+AC_TRY_RUN([
+#include <opennurbs.h>
+int main () {
+  int version = ON::Version();
+  return 0;
+}
+	],
+	[opennurbs_works=yes]
+)
+AC_LANG_POP
+LDFLAGS="$PRELDFLAGS"
+AC_MSG_RESULT($opennurbs_works)
+
+dnl figure out whether we need to build openNURBS
+build_brlcad_opennurbs="no (using system)"b
+if test "x$bc_build_opennurbs" = "xyes" ; then
+	build_brlcad_opennurbs_yes
+else
+	if test "x$bc_build_opennurbs" = "xno" ; then
+		if test "x$opennurbs_works" != "xyes" ; then
+			AC_MSG_NOTICE([openNURBS was disabled, but no system openNURBS library was found])
+			BC_RETRY_CONFIGURE([$this], [$args])
+			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+			AC_MSG_NOTICE([Try adding --enable-opennurbs-build and/or --enable-c++])
+			AC_MSG_ERROR([*** Building openNURBS was disabled, yet no system openNURBS library was found ***])
+		fi
+	else
+		dnl automatic detection
+		if test "x$opennurbs_works" = "xno" ; then
+			build_brlcad_opennurbs=yes
+		fi
+	fi
+fi
+AC_MSG_CHECKING(whether to build the included openNURBS library)
+OPENNURBS=""
+if test "x$build_brlcad_opennurbs" = "xyes" ; then
+	OPENNURBS='${top_builddir}/src/other/openNURBS/libopenNURBS.la'
+	AC_MSG_RESULT(yes)
+else
+	OPENNURBS="$LIBOPENNURBS"
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(OPENNURBS)
+
+
 dnl *** Tcl ***
 dnl See if libtcl seems to work
 tcl_works=no
@@ -3063,6 +3146,7 @@ AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
+AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$build_brlcad_jove" = "xyes"])
 AM_CONDITIONAL(BUILD_EF, [test "x$bc_build_ef" = "xyes"])
@@ -3474,6 +3558,7 @@ AC_CONFIG_FILES([
 	src/other/libtkGLX/Makefile
 	src/other/libutahrle/Makefile
 	src/other/libz/Makefile
+	src/other/openNURBS/Makefile
 	src/other/tkimg/Makefile
 	src/other/tkimg/base/Makefile
 	src/other/tkimg/png/Makefile
@@ -3585,6 +3670,7 @@ AC_MSG_RESULT([Build libregex .......................: $build_brlcad_regex])
 AC_MSG_RESULT([Build zlib ...........................: $build_brlcad_zlib])
 AC_MSG_RESULT([Build termlib ........................: $build_brlcad_termlib])
 AC_MSG_RESULT([Build Utah Raster Toolkit.............: $build_brlcad_urt])
+AC_MSG_RESULT([Build openNURBS.......................: $build_brlcad_opennurbs])
 AC_MSG_RESULT([Build jove ...........................: $build_brlcad_jove])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([ADRT support .........................: $build_brlcad_adrt])
