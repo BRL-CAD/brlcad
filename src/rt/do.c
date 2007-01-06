@@ -202,7 +202,7 @@ old_way(FILE *fp)
  */
 int cm_start( int argc, char **argv)
 {
-	char	*buf;
+	char	*buf = (char *)NULL;
 	int	frame;
 
 	frame = atoi(argv[1]);
@@ -224,6 +224,7 @@ int cm_start( int argc, char **argv)
 		while( *cp && isspace(*cp) )  cp++;	/* skip spaces */
 		frame = atoi(cp);
 		bu_free( buf, "rt_read_cmd command buffer (skipping frames)" );
+		buf = (char *)0;
 		if( finalframe >= 0 && frame > finalframe )
 			return(-1);			/* "EOF" */
 		if( frame >= desiredframe )  {
@@ -946,6 +947,7 @@ do_frame(int framenumber)
 
 	bu_log("\n");
         bu_free(pixmap, "pixmap allocate");
+	pixmap = (unsigned char *)NULL;
 	return(0);		/* OK */
 }
 
