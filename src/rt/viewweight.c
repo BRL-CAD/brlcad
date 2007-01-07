@@ -408,7 +408,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segp)
 	    reg->reg_gmater = 0;
 	    bu_semaphore_release( BU_SEM_SYSCALL );
 	}
-	else if( density[ reg->reg_gmater ] > 0 ) {
+	else if( density[ reg->reg_gmater ] >= 0 ) {
 	    VBLEND2( dp->centroid, 0.5, ihitp->hit_point, 0.5, ohitp->hit_point );
 
 	    /* Compute mass in terms of grams */
