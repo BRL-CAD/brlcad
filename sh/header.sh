@@ -236,6 +236,11 @@ case $FILE in
 	wrap=0
 	commentprefix="\""
 	;;
+    *.el )
+	echo "$FILE is an Emacs Lisp file"
+	wrap=0
+	commentprefix=";;"
+	;;
     *.[0-9] )
 	echo "$FILE is a manual page"
 	wrap=0

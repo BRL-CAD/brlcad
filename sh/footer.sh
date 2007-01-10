@@ -250,6 +250,13 @@ case $FILE in
 	wrap=0
 	commentchar="\""
 	;;
+    *.el )
+	echo "$FILE is an Emacs Lisp file"
+	mode="Lisp"
+	mode_vars="lisp-indent-offset"
+	wrap=0
+	commentchar=";;"
+	;;
     *.[0-9] )
 	echo "$FILE is a manual page"
 	mode="nroff"
