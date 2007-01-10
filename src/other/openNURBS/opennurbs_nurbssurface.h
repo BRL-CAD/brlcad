@@ -74,14 +74,14 @@ public:
   Remarks:
     See static ON_Brep* ON_Brep::New() for details.
   */
-  static ON_NurbsSurface* ON_NurbsSurface::New();
-  static ON_NurbsSurface* ON_NurbsSurface::New(
+  static ON_NurbsSurface* New();
+  static ON_NurbsSurface* New(
           const ON_NurbsSurface& nurbs_surface
           );
-  static ON_NurbsSurface* ON_NurbsSurface::New(
+  static ON_NurbsSurface* New(
             const ON_BezierSurface& bezier_surface 
             );
-  static ON_NurbsSurface* ON_NurbsSurface::New(
+  static ON_NurbsSurface* New(
           int dimension,
           BOOL bIsRational,
           int order0,
@@ -1690,7 +1690,7 @@ public:
                    // 0 = south, 1 = east, 2 = north, 3 = west
         ) const;
 
-  double ON_NurbsCage::GrevilleAbcissa(
+  double GrevilleAbcissa(
           int dir,    // dir
           int gindex  // index (0 <= index < CVCount(dir)
           ) const;

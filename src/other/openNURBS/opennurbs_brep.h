@@ -338,7 +338,7 @@ public:
   Remarks:
     Sets m_c3i, calls SetProxyCurve, cleans runtime caches.
   */
-  bool ON_BrepEdge::ChangeEdgeCurve(
+  bool ChangeEdgeCurve(
     int c3i 
     );
 
@@ -1378,7 +1378,7 @@ public:
     that identical classes has the same vtable and makes
     all code run identically.
   */
-  static ON_Brep* ON_Brep::New();
+  static ON_Brep* New();
 
   /*
   Description:
@@ -1389,13 +1389,13 @@ public:
   Remarks:
     See static ON_Brep* ON_Brep::New() for details.
   */
-  static ON_Brep* ON_Brep::New(const ON_Brep&);
+  static ON_Brep* New(const ON_Brep&);
 
 	// Construction
   ON_Brep();
 	~ON_Brep();		
   ON_Brep(const ON_Brep&);
-  ON_Brep& ON_Brep::operator=(const ON_Brep&);
+  ON_Brep& operator=(const ON_Brep&);
 
   // Override of virtual ON_Object::MemoryRelocate
   void MemoryRelocate();
@@ -2399,7 +2399,7 @@ public:
   See Also:
     ON_Brep::SetTrimTypeFlags
   */
-  ON_BrepTrim::TYPE ON_Brep::TrimType( 
+  ON_BrepTrim::TYPE TrimType( 
     const ON_BrepTrim& trim, 
     BOOL bLazy = true
     ) const;
@@ -2651,7 +2651,7 @@ public:
   Returns:
     Number of brep faces that reference the surface.
   */
-  int ON_Brep::SurfaceUseCount( 
+  int SurfaceUseCount( 
               int surface_index,
               int max_count=0 ) 
               const;
@@ -2679,7 +2679,7 @@ public:
   Returns:
     Number of brep edges that reference the 3d curve.
   */
-  int ON_Brep::EdgeCurveUseCount( 
+  int EdgeCurveUseCount( 
               int c3_index,
               int max_count=0 ) 
               const;
@@ -2700,7 +2700,7 @@ public:
   Returns:
     Number of brep trims that reference the 2d curve.
   */
-  int ON_Brep::TrimCurveUseCount( 
+  int TrimCurveUseCount( 
               int c2_index,
               int max_count=0 ) 
               const;
@@ -3702,7 +3702,7 @@ public:
     trim, and vertex information from the brep's m_E[], 
     m_V[], m_T[], m_C2[], and m_C3[] arrays.
   */
-  bool ON_Brep::ChangeVertex( 
+  bool ChangeVertex( 
     int old_vi, 
     int new_vi, 
     bool bClearTolerances 
@@ -3722,7 +3722,7 @@ public:
     the start of trim1.  The trim's m_iso and m_type flags
     need to be correctly set.
   */
-  bool ON_Brep::CloseTrimGap( 
+  bool CloseTrimGap( 
     ON_BrepTrim& trim0, 
     ON_BrepTrim& trim1 
     );

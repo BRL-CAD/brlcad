@@ -37,14 +37,14 @@ public:
   Remarks:
     See static ON_Brep* ON_Brep::New() for details.
   */
-  static ON_NurbsCurve* ON_NurbsCurve::New();
-  static ON_NurbsCurve* ON_NurbsCurve::New(
+  static ON_NurbsCurve* New();
+  static ON_NurbsCurve* New(
             const ON_NurbsCurve& nurbs_curve 
             );
-  static ON_NurbsCurve* ON_NurbsCurve::New(
+  static ON_NurbsCurve* New(
             const ON_BezierCurve& bezier_curve 
             );
-  static ON_NurbsCurve* ON_NurbsCurve::New(
+  static ON_NurbsCurve* New(
             int dimension,
             BOOL bIsRational,
             int order,

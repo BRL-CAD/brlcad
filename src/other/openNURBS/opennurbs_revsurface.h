@@ -68,8 +68,8 @@ public:
   Remarks:
     See static ON_Brep* ON_Brep::New() for details.
   */
-  static ON_RevSurface* ON_RevSurface::New();
-  static ON_RevSurface* ON_RevSurface::New( const ON_RevSurface& rev_surface );
+  static ON_RevSurface* New();
+  static ON_RevSurface* New( const ON_RevSurface& rev_surface );
 
 
   ON_RevSurface();

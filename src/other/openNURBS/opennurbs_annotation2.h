@@ -1164,7 +1164,7 @@ public:
       False    Failure
     See Also:  ON_AnnotationObject::ConvertBack()
   */
-  void ON_AngularDimension2::ConvertBack( ON_AngularDimension2& target);
+  void ConvertBack( ON_AngularDimension2& target);
 
 // 6-23-03 lw Added v2 file writing of annotation
   void GetV2Form( ON_AngularDimension& dim);

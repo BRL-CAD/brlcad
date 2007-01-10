@@ -50,8 +50,8 @@ public:
   Remarks:
     See static ON_Brep* ON_Brep::New() for details.
   */
-  static ON_SumSurface* ON_SumSurface::New();
-  static ON_SumSurface* ON_SumSurface::New( const ON_SumSurface& rev_surface );
+  static ON_SumSurface* New();
+  static ON_SumSurface* New( const ON_SumSurface& rev_surface );
 
   ON_SumSurface();
   ~ON_SumSurface();
