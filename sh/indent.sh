@@ -46,6 +46,17 @@
 ###
 
 # locate ourselves for generating a file list
+if [ "x$1" = "x" ] ; then
+    echo "Usage: $0 ./path/to/some/dir"
+    echo "ERROR: A directory was not provided"
+    exit 1;
+elif [ ! -d "$1" ] ; then
+    echo "Usage: $0 ./path/to/some/dir"
+    echo "ERROR: Provided argument [$1] is not a valid directory"
+    exit 1;
+fi
+
+dir="$1"
 findgen="$1"
 
 if [ ! -d "$findgen" ] ; then
@@ -61,7 +72,7 @@ if [ ! -d "$findgen" ] ; then
 	done
     fi
 
-# sanity check
+    # sanity check
     if [ ! -d "$findgen/sh" ] ; then
 	echo "ERROR: Unable to find our path relative to configure.ac"
 	exit 1
@@ -69,9 +80,15 @@ if [ ! -d "$findgen" ] ; then
 
 fi
 
+# make sure it prepends a './' if it's a relative path
+char1="`echo $dir | sed 's/^\(.\).*/\1/'`"
+if [ ! "x$char1" = "x/" ] ; then
+    dir="./$dir"
+fi
+
 bir="batch-indent-region.el"
 bir_dir="."
-if [ -r "$bir_dir/$bir" ] ; then
+if [ -r "$findgen/misc/$bir" ] ; then
     bir_dir="$findgen/misc"
 elif [ -r "./$bir" ] ; then
     bir_dir="."
@@ -93,26 +110,43 @@ fi
 # not BRL-CAD sources, CVS, or start with a dot among other files.
 # have to take care if including shell scripts; look for mistakes in
 # here/now documents.
-files="`find $findgen -type f -and \( \
-                                     -name '*.c' -or \
-                                     -name '*.h' -or \
-                                     -name '*.tcl' -or \
-                                     -name '*.tk' -or \
-                                     -name '*.itcl' -or \
-                                     -name '*.itk' -or \
-                                     -name '*.pl' -or \
-                                     -name '*.java' -or \
-                                     -name '*.el' -or \
-                                     -name '*.f' -or \
-                                     -name '*.m4' \
-                                   \) | \
-        grep -v 'other/' | \
-        grep -v 'doc/' | \
-        grep -v 'CVS' | \
-        grep -v 'misc/' | \
-        grep -v \"$findgen/\.\" | \
-        grep -v 'autom4te.cache' \
+files="`find $dir -type f -and \( \
+    -name '*.c' -or \
+    -name '*.h' -or \
+    -name '*.tcl' -or \
+    -name '*.tk' -or \
+    -name '*.itcl' -or \
+    -name '*.itk' -or \
+    -name '*.pl' -or \
+    -name '*.java' -or \
+    -name '*.el' -or \
+    -name '*.f' -or \
+    -name '*.m4' -or \
+    -name '*.sh' -or \
+    -name '*.cc' -or \
+    -name '*.cp' -or \
+    -name '*.cxx' -or \
+    -name '*.cpp' -or \
+    -name '*.CPP' -or \
+    -name '*.c++' -or \
+    -name '*.C' -or \
+    -name '*.hh' -or \
+    -name '*.H' -or \
+    -name '*.m' -or \
+    -name '*.mm' -or \
+    -name '*.M' \
+    \) | \
+    grep -v '/other/' | \
+    grep -v '/doc/' | \
+    grep -v '/CVS' | \
+    grep -v '/misc/' | \
+    grep -v 'autom4te.cache' | \
+    grep -v 'aclocal.m4' \
     `"
+
+if [ "x$files" = "x" ] ; then
+    echo "Warning: No files were found in [$dir]"
+fi
 
 for file in $files ; do
     echo "=== BEGIN ===> $file"
