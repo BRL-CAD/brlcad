@@ -129,6 +129,7 @@ noinst_HEADERS = \
 	fbmsg.h
 
 EXTRA_DIST = \
+	on_nurb.h \
 	sed4
 
 if ONLY_BENCHMARK
