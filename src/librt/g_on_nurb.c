@@ -1,3 +1,29 @@
+/*                     G _ O N _ N U R B . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2007 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @addtogroup g_  */
+/*@{*/
+/** @file g_on_nurb.c
+ *
+ */
+
 #include "on_nurb.h"
 
 /**
@@ -10,17 +36,17 @@
 int
 rt_on_nurb_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 {
-  /* This prepares the NURBS specific data structures to be used
-     during intersection... i.e. acceleration data structures and
-     whatever else is needed.
+    /* This prepares the NURBS specific data structures to be used
+       during intersection... i.e. acceleration data structures and
+       whatever else is needed.
      
-     Abert's paper (Direct and Fast Ray Tracing of NURBS Surfaces)
-     suggests using a bounding volume hierarchy (instead of KD-tree)
-     and building it down to a satisfactory flatness criterion (which
-     they do not give information about).
-  */
+       Abert's paper (Direct and Fast Ray Tracing of NURBS Surfaces)
+       suggests using a bounding volume hierarchy (instead of KD-tree)
+       and building it down to a satisfactory flatness criterion (which
+       they do not give information about).
+    */
   
-  return 0;
+    return 0;
 }
 
 
@@ -47,7 +73,7 @@ rt_on_nurb_print(register const struct soltab *stp)
 int
 rt_on_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-  return 0;
+    return 0;
 }
 
 
@@ -101,7 +127,7 @@ rt_on_nurb_free(register struct soltab *stp)
 int
 rt_on_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-  return 0;
+    return 0;
 }
 
 
@@ -111,7 +137,7 @@ rt_on_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 int
 rt_on_nurb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-  return -1;
+    return -1;
 }
 
 
@@ -121,7 +147,7 @@ rt_on_nurb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 int
 rt_on_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-  return 0;
+    return 0;
 }
 
 
@@ -131,7 +157,7 @@ rt_on_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
 int
 rt_on_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-  return 0;
+    return 0;
 }
 
 
@@ -150,7 +176,7 @@ rt_on_nurb_ifree(struct rt_db_internal *ip)
 int
 rt_on_nurb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-  return 0;
+    return 0;
 }
 
 /**
@@ -159,7 +185,7 @@ rt_on_nurb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
 int
 rt_on_nurb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
 {
-  return 0;
+    return 0;
 }
 
 
@@ -169,7 +195,17 @@ rt_on_nurb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const
 int
 rt_on_nurb_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
 {
-  return 0;
+    return 0;
 }
 
+/*@}*/
 
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
