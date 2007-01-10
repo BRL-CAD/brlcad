@@ -318,27 +318,27 @@ main(int argc, char *argv[]) {
     /* process the command-line arguments after the application name */
     while ((c = bu_getopt(argc, argv, "tTrRp:P:hH")) != EOF) {
 	switch (c) {
-	    case 't':
-	    case 'T':
-		/* sending */
-		server = 0;
-		break;
-	    case 'r':
-	    case 'R':
-		/* receiving */
-		server = 1;
-		break;
-	    case 'p':
-	    case 'P':
-		port = atoi(bu_optarg);
-		break;
-	    case 'h':
-	    case 'H':
-		/* help */
-		usage(NULL, argv0);
-		break;
-	    default:
-		usage("ERROR: Unknown argument", argv0);
+	case 't':
+	case 'T':
+	    /* sending */
+	    server = 0;
+	    break;
+	case 'r':
+	case 'R':
+	    /* receiving */
+	    server = 1;
+	    break;
+	case 'p':
+	case 'P':
+	    port = atoi(bu_optarg);
+	    break;
+	case 'h':
+	case 'H':
+	    /* help */
+	    usage(NULL, argv0);
+	    break;
+	default:
+	    usage("ERROR: Unknown argument", argv0);
 	}
     }
 

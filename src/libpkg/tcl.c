@@ -38,7 +38,7 @@
 int
 Pkg_Init(Tcl_Interp *interp)
 {
-	return TCL_OK;
+    return TCL_OK;
 }
 
 /*
