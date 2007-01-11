@@ -16,6 +16,7 @@ EXTRA_DIST = \
 	Doxyfile \
 	Makefile.defs \
 	batch-indent-region.el \
+	brlcad.spec \
 	brlcad.spec.in \
 	cvs2cl.pl \
 	enigma \
