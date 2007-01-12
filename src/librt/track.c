@@ -68,9 +68,13 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 /*XXX The following WDB_ defines need to go inside of a header file */
 #define	WDB_TCL_CHECK_READ_ONLY \
-	if (wdbp->dbip->dbi_read_only) {\
-		Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
-		return TCL_ERROR; \
+	if (interp) { \
+		if (wdbp->dbip->dbi_read_only) { \
+			Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
+			return TCL_ERROR; \
+		} \
+	} else { \
+    		bu_log("Sorry, this database is READ-ONLY\n"); \
 	}
 #define	WDB_TCL_ERROR_RECOVERY_SUGGESTION\
         Tcl_AppendResult(interp, "\
