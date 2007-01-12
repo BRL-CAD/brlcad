@@ -350,7 +350,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
 	argv[1] = proto->d_namep;
 	argv[2] = (char *)name;
-	ret = wdb_copy_cmd(_dbip->dbi_wdbp, state->interp, 3, argv);
+	ret = wdb_copy_cmd(_dbip->dbi_wdbp, INTERP, 3, argv);
 	if (ret != TCL_OK) {
 	    bu_log("WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, name);
 	}
@@ -449,6 +449,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		return NULL;
 	    }
 	    strncpy(obj_list.names[idx].dest[i], obj_list.names[index_in_list(obj_list, rp[1].M.m_instname)].dest[i], NAMESIZE);
+	    /* bleh, odd convention going on here.. prefix regions with an 'r' */
 	    obj_list.names[idx].dest[i][0] = 'r';
 	} else {
 	    const char *name = (const char *)NULL;
@@ -497,13 +498,41 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 {
     register struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
+    const char *name = (const char *)NULL;
     int i, j;
+
+    /* sanity */
+    if (!proto) {
+	bu_log("ERROR: clone internal consistency error\n");
+	return (struct directory *)NULL;
+    }
+
+    /* XXX still non-functional, but closer */
+    bu_log("ERROR: clone v5 IMPLEMENTATION INCOMPLETE, ABORTING\n");
+    return (struct directory *)NULL;
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
-	/* not ready for v5 yet */
-	bu_log("ERROR: UNIMPLEMENTED !!!\n");
-	return (struct directory *)NULL;
+	if (i==0) {
+	    name = get_name(_dbip, proto, state, i);
+	} else {
+	    name = get_name(_dbip, db_lookup(_dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET), state, i);
+	}
+	strncpy(obj_list.names[idx].dest[i], name, NAMESIZE);
+
+	/* we have a before and an after, do the copy */
+	if (proto->d_namep && name) {
+	    const char*fromto[4] = {"wdb_copy", proto->d_namep, name, (const char*)NULL};
+	    j = wdb_copy_cmd(_dbip->dbi_wdbp, NULL, 3, (char**)fromto);
+	    if (j == TCL_ERROR) {
+		bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
+		return (struct directory *)NULL;
+	    }
+	}
+
+	/* done with this name */
+	bu_free((char *)name, "free get_name() name");
+	name = (const char *)NULL;
     }
 
     return dp;
