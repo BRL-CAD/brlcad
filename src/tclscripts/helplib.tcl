@@ -91,7 +91,7 @@ set helplib_data(wdb_bot_decimate)      {{ -c maximum_chord_error -n maximum_nor
 set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}
 set helplib_data(wdb_color)		{{low high r g b} {make color entry}}
 set helplib_data(wdb_comb)		{{comb_name <operation solid>}	{create or extend combination w/booleans}}
-set helplib_data(wdb_comb_std)		{{[-cr] comb_name [boolean_expr]}	{create or extend a combination using standard notation}}
+set helplib_data(wdb_comb_std)		{{[-cr] comb_name <boolean_expr>}	{create or extend a combination using standard notation}}
 set helplib_data(wdb_concat)		{{[-s|-p] file.g [prefix]} {concatenate another GED file into the current database}}
 set helplib_data(wdb_copy)		{{from to} {copy a database object}}
 set helplib_data(wdb_copyeval)		{{new_solid path_to_old_solid}	{copy an 'evaluated' path solid}}

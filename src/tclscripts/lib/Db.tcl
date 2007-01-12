@@ -498,7 +498,7 @@
                  For input, source is a file name and dest is an object name.
                  For output source is an object name and dest is a file name.
                  Only uniform array binary objects (major_type=u) are currently supported}}
-    $help add c		{{[-gr] comb_name [boolean_expr]} {create or extend a combination using standard notation}}
+    $help add c		{{[-gr] comb_name <boolean_expr>} {create or extend a combination using standard notation}}
     $help add cat	{{<objects>} {list attributes (brief)}}
     $help add color	{{low high r g b str} {make color entry}}
     $help add comb	{{comb_name <operation solid>} {create or extend combination w/booleans}}

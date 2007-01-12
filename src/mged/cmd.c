@@ -2466,7 +2466,7 @@ cmd_dbversion(ClientData	clientData,
  *
  *	Input a combination in standard set-theoetic notation
  *
- *	Syntax: c [-gr] comb_name [boolean_expr]
+ *	Syntax: c [-gr] comb_name <boolean_expr>
  */
 int
 cmd_comb_std(ClientData	clientData,
