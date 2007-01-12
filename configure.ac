@@ -2221,9 +2221,9 @@ LDFLAGS="$PRELDFLAGS"
 AC_MSG_RESULT($opennurbs_works)
 
 dnl figure out whether we need to build openNURBS
-build_brlcad_opennurbs="no (using system)"b
+build_brlcad_opennurbs="no (using system)"
 if test "x$bc_build_opennurbs" = "xyes" ; then
-	build_brlcad_opennurbs_yes
+	build_brlcad_opennurbs=yes
 else
 	if test "x$bc_build_opennurbs" = "xno" ; then
 		if test "x$opennurbs_works" != "xyes" ; then
@@ -2243,13 +2243,16 @@ fi
 AC_MSG_CHECKING(whether to build the included openNURBS library)
 OPENNURBS=""
 if test "x$build_brlcad_opennurbs" = "xyes" ; then
-	OPENNURBS='${top_builddir}/src/other/openNURBS/libopenNURBS.la'
+	OPENNURBS='${top_builddir}/src/other/openNURBS/libopenNURBS.la -lstdc++'
+	OPENNURBS_CPPFLAGS='-I${top_builddir}/src/other/openNURBS'
 	AC_MSG_RESULT(yes)
 else
-	OPENNURBS="$LIBOPENNURBS"
+	OPENNURBS="$LIBOPENNURBS -lstdc++"
+	OPENNURBS_CPPFLAGS=''
 	AC_MSG_RESULT(no)
 fi
 AC_SUBST(OPENNURBS)
+AC_SUBST(OPENNURBS_CPPFLAGS)
 
 
 dnl *** Tcl ***
@@ -3160,6 +3163,7 @@ AM_CONDITIONAL(WITH_X11, [test "x$build_against_x11" != "xno"])
 AM_CONDITIONAL(WITH_OPENGL, [test "x$build_against_opengl" != "xno"])
 AM_CONDITIONAL(WITH_WGL, [test "x$build_against_wgl" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
+AM_CONDITIONAL(WITH_OPENNURBS, [test "x$OPENNURBS" != "x"])
 
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
