@@ -142,19 +142,31 @@ SRCS = \
 	wdb_comb_std.c \
 	wdb_obj.c
 
+if WITH_OPENNURBS
+BREP_CPPFLAGS=-DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
+SRCS += g_brep.cc
+endif
+
+
 librt_nil_la_SOURCES = \
 	$(SRCS) \
 	vers.c
 
-librt_la_SOURCES =
+EXTRA_librt_nil_la_SOURCES = \
+	g_brep.cc
+
+INCLUDES = ${BREP_CPPFLAGS}
+librt_la_SOURCES = 
 librt_la_LDFLAGS = -version-info 19:1
+#librt_la_CPPFLAGS = ${BREP_CPPFLAGS}
 librt_la_LIBADD = \
 	librt_nil.la \
 	${BN} \
 	${BU} \
 	${TCL} \
 	${REGEX} \
-	${LIBM}
+	${LIBM} \
+	${OPENNURBS}
 
 include_HEADERS = \
 	bot.h \
@@ -188,7 +200,6 @@ EXTRA_DIST = \
 	g_bot_include.c \
 	librt.dsp \
 	nmg_junk.c \
-	g_on_nurb.c \
 	parse.c \
 	pmalloc.c \
 	sqrt.gould.s \
