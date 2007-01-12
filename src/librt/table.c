@@ -293,6 +293,11 @@ RT_DECLARE_INTERFACE(superell)
 #define rt_metaball_xform rt_generic_xform
 RT_DECLARE_INTERFACE(metaball)
 
+#if OBJ_BREP
+#define rt_brep_xform rt_generic_xform
+RT_DECLARE_INTERFACE(brep)
+#endif
+
 /* from db5_comb.c */
 int rt_comb_export5(
 	struct bu_external		*ep,
@@ -1060,6 +1065,22 @@ const struct rt_functab rt_functab[] = {
 		rt_parsetab_tclget,	rt_parsetab_tcladjust,	rt_parsetab_tclform,
 		NULL,
 	},
+
+#if OBJ_BREP
+	{RT_FUNCTAB_MAGIC, "ID_BREP", "brep",
+	        1,             /* 37 */
+		rt_brep_prep,	rt_brep_shot,	rt_brep_print,	rt_brep_norm,
+		rt_nul_piece_shot,	rt_nul_piece_hitsegs,
+		rt_brep_uv,		rt_brep_curve,	        rt_brep_class,	rt_brep_free,
+	        rt_brep_plot,	        rt_nul_vshot,	        rt_brep_tess,	rt_nul_tnurb,
+		rt_brep_import5,	rt_brep_export5,
+		rt_nul_import,		rt_nul_export,	        rt_brep_ifree,
+		rt_brep_describe,	rt_brep_xform,	        rt_nul_parse,
+		sizeof(struct rt_brep_internal),		RT_BREP_INTERNAL_MAGIC,
+		rt_parsetab_tclget,	rt_parsetab_tcladjust,	rt_parsetab_tclform,
+		NULL,
+	},
+#endif
 
 	{0L, ">ID_MAXIMUM", ">id_max",
 		0,		/* this entry for sanity only */
