@@ -2987,6 +2987,10 @@ wdb_copy_cmd(struct rt_wdb	*wdbp,
 	if (argc != 3) {
 		struct bu_vls vls;
 
+		if (!interp) {
+		    return TCL_ERROR;
+		}
+
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib_alias wdb_copy %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2998,26 +3002,40 @@ wdb_copy_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 
 	if (db_lookup(wdbp->dbip, argv[2], LOOKUP_QUIET) != DIR_NULL) {
+	    if (interp) {
 		Tcl_AppendResult(interp, argv[2], ":  already exists", (char *)NULL);
-		return TCL_ERROR;
+	    } else {
+		bu_log("%s: already exists\n", argv[2]);
+	    }
+	    return TCL_ERROR;
 	}
 
 	if (db_get_external(&external , proto , wdbp->dbip)) {
+	    if (interp) {
 		Tcl_AppendResult(interp, "Database read error, aborting", (char *)NULL);
-		return TCL_ERROR;
+	    } else {
+		bu_log("Database read error, aborting\n");
+	    }
+	    return TCL_ERROR;
 	}
 
 	if ((dp=db_diradd(wdbp->dbip, argv[2], -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
-		Tcl_AppendResult(interp,
-				 "An error has occured while adding a new object to the database.",
-				 (char *)NULL);
-		return TCL_ERROR;
+	    if (interp) {
+		Tcl_AppendResult(interp, "An error has occured while adding a new object to the database.", (char *)NULL);
+	    } else {
+		bu_log("An error has occured while adding a new object to the database.");
+	    }
+	    return TCL_ERROR;
 	}
 
 	if (db_put_external(&external, dp, wdbp->dbip) < 0) {
-		bu_free_external(&external);
+	    bu_free_external(&external);
+	    if (interp) {
 		Tcl_AppendResult(interp, "Database write error, aborting", (char *)NULL);
-		return TCL_ERROR;
+	    } else {
+		bu_log("Database write error, aborting\n");
+	    }
+	    return TCL_ERROR;
 	}
 	bu_free_external(&external);
 
