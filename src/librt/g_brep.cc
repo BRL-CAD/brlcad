@@ -27,6 +27,7 @@
 #include "brep.h"
 #include "raytrace.h"
 #include "rtgeom.h"
+#include <sstream>
 
 #ifdef __cplusplus
 extern "C" {
@@ -205,6 +206,94 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 }
 
 
+/* XXX In order to facilitate exporting the ON_BRep object without a
+ * whole lot of effort, we're going to (for now) extend the
+ * ON_BinaryArchive to support an "in-memory" representation of a
+ * binary archive. Currently, the openNURBS library only supports
+ * file-based archiving operations. This implies the 
+ */
+
+class ON_CLASS RT_MemoryArchive : public ON_BinaryArchive
+{
+public:
+  RT_MemoryArchive();
+  virtual ~RT_MemoryArchive();
+  
+  // ON_BinaryArchive overrides
+  size_t CurrentPosition() const;
+  bool SeekFromCurrentPosition(int);
+  bool SeekFromStart(size_t);
+  bool AtEnd() const;
+  
+protected:
+  size_t Read(size_t, void*);
+  size_t Write(size_t, const void*);
+  bool Flush();
+  
+private:
+  std::stringstream m_buffer;
+};
+
+RT_MemoryArchive::RT_MemoryArchive()
+  : ON_BinaryArchive(ON::write), m_buffer(std::stringstream::out)
+{
+}
+
+RT_MemoryArchive::~RT_MemoryArchive()
+{
+}
+
+size_t 
+RT_MemoryArchive::CurrentPosition() const
+{
+  return 0; // XXX FIX me, because tellg() in std::istream is NOT const!!!! stupidity
+}
+
+bool
+RT_MemoryArchive::SeekFromCurrentPosition(int seek_to)
+{
+  std::streampos p = seek_to;
+  m_buffer.seekg(m_buffer.tellg()+p);
+  m_buffer.seekp(m_buffer.tellp()+p);
+  return m_buffer.good();
+}
+
+bool 
+RT_MemoryArchive::SeekFromStart(size_t seek_to)
+{
+  m_buffer.seekg(seek_to);
+  m_buffer.seekp(seek_to);
+  return m_buffer.good();
+}
+
+bool 
+RT_MemoryArchive::AtEnd() const
+{
+  return m_buffer.eof();
+}
+
+size_t 
+RT_MemoryArchive::Read(size_t amount, void* buf)
+{
+  m_buffer.read((char*)buf, amount);
+  return m_buffer.gcount();
+}
+
+size_t 
+RT_MemoryArchive::Write(size_t amount, const void* buf)
+{
+  m_buffer.write((const char*)buf, amount);
+  return (m_buffer.good()) ? amount : 0;
+}
+
+bool 
+RT_MemoryArchive::Flush()
+{
+  m_buffer.flush();
+  return m_buffer.good();
+}
+ 
+
 /**
  *			R T _ B R E P _ E X P O R T 5
  */
@@ -221,8 +310,12 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     BU_INIT_EXTERNAL(ep);
     ep->ext_nbytes = 0;
     
+    
+
     return 0;
 }
+
+
 
 
 /**
