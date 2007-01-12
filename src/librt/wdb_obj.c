@@ -165,9 +165,13 @@ database.  The on-disk database should still be intact.  For safety,\n\
 you should exit now, and resolve the I/O problem, before continuing.\n"
 
 #define	WDB_TCL_CHECK_READ_ONLY \
-	if (wdbp->dbip->dbi_read_only) {\
-		Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
-		return TCL_ERROR; \
+	if (interp) { \
+		if (wdbp->dbip->dbi_read_only) { \
+			Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
+			return TCL_ERROR; \
+		} \
+	} else { \
+    		bu_log("Sorry, this database is READ-ONLY\n"); \
 	}
 
 #define WDB_MAX_LEVELS 12
@@ -2965,7 +2969,7 @@ wdb_killtree_callback(struct db_i		*dbip,
 }
 
 /**
- *
+ * guts to the 'cp' command, used to shallow-copy an object
  *
  */
 int
