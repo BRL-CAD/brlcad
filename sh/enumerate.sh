@@ -151,7 +151,7 @@ am_count="`find \"$BASE\" -type f \( -name Makefile.am -or -name configure.ac \)
 file_count="`echo $dist_count $data_count $mans_count $srcs_count $am_count ++++ p | dc`"
 
 # count number of directories
-dir_count="`find \"$BASE\" -type d | grep -v '/other/' | wc -l`"
+dir_count="`find \"$BASE\" -type d -not \( -regex '.*/CVS.*' -or -regex '.*/\.libs.*' -or -regex '.*/\.deps.*' -or -regex '.*autom4te.cache.*' -or -regex '.*/other.*' \) | wc -l`"
 
 # count number of 3rd party files
 otherdist_count="`find \"$BASE\" -type f -name Makefile.am | grep '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*DIST\" | sed 's/.*=//g' | wc -l`"
@@ -161,7 +161,7 @@ othersrcs_count="`find \"$BASE\" -type f \( -name \*.c -or -name \*.h -or -name 
 otherfile_count="`echo $otherdist_count $otherdata_count $othermans_count $othersrcs_count +++ p | dc`"
 
 # count number of 3rd party directories
-otherdir_count="`find \"$BASE\" -type d | grep '/other/' | wc -l`"
+otherdir_count="`find \"$BASE\" -type d -regex '.*/other/.*' -not \( -regex '.*/CVS.*' -or -regex '.*/\.libs.*' -or -regex '.*/\.deps.*' -or -regex '.*autom4te.cache.*' \) | wc -l`"
 
 # output summary of filesystem organization
 printf -- "-----------------------------------------\n"
