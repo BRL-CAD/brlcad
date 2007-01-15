@@ -2,8 +2,7 @@
  * This code contains changes by
  *      Gunnar Ritter, Freiburg i. Br., Germany, 2002. All rights reserved.
  *
- * Conditions 1, 2, and 4 and the no-warranty notice below apply
- * to these changes.
+ * The conditions and no-warranty notice below apply to these changes.
  *
  *
  * Copyright (c) 1980, 1993
