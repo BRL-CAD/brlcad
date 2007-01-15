@@ -61,7 +61,7 @@ CLEANFILES = \
 	adj_air.pl \
 	density_table.txt \
 	dsp.dat \
-	eagleCAD-w512-n438.pix \
+	eagleCAD-512x438.pix \
 	ebm.bw \
 	exp_air.pl \
 	gaps.pl \

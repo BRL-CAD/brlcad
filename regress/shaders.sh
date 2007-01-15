@@ -1,15 +1,16 @@
 #!/bin/sh
 
 TOP_SRCDIR=$1
+EAGLECAD=eagleCAD-512x438.pix
 
 if [ ! -f ebm.bw ] ; then
 	../src/util/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1
 fi
 
-rm -f shaders.rt shaders.g shaders.rt.pix shaders.pixdiff.log shaders.rt.log shaders.log shaders.txt shaders.dat eagleCAD-w512-n438.pix eagle.pix
+rm -f shaders.rt shaders.g shaders.rt.pix shaders.pixdiff.log shaders.rt.log shaders.log shaders.txt shaders.dat $EAGLECAD
 
 
-../src/conv/asc2pix > eagleCAD-w512-n438.pix << EOF
+../src/conv/asc2pix > $EAGLECAD << EOF
 FFFFFD
 FEFEFD
 FFFFFD
@@ -224267,7 +224268,6 @@ FEFEFD
 FEFEFD
 FEFEFD
 EOF
-ln -s eagleCAD-w512-n438.pix eagle.pix
 
 export ITCL_LIBRARY=$TOP_SRCDIR/src/other/incrTcl/itcl/library/
 export TCL_LIBRARY=$TOP_SRCDIR/src/other/libtcl/library/
@@ -224283,7 +224283,7 @@ puts "glob_compat_mode \$glob_compat_mode "
 
 in half.s half 0 0 1 -1
 r half.r u half.s
-prj_add shaders.txt eagle.pix 512 438
+prj_add shaders.txt $EAGLECAD 512 438
 mater half.r "stack prj shaders.txt;plastic di=.8 sp=.3"  76 158 113 0
 
 g all.g half.r
@@ -224343,7 +224343,7 @@ mater ell_14.r "stack grunge s=256;plastic" 255 255 255 0
 
 mater ell_6.r "stack bwtexture file=ebm.bw w=32 n=32;plastic" 200 200 200 0
 mater ell_7.r "cloud" 200 200 200 0
-mater ell_6.r "stack texture file=eagle.pix w=512 n=438;plastic" 200 200 200 0
+mater ell_6.r "stack texture file=$EAGLECAD w=512 n=438;plastic" 200 200 200 0
 
 mater ell_11.r "stack wood s=40 p=35;plastic" 80 40 10 0
 mater ell_12.r "stack marble s=256 c2=250,100,100;plastic" 250 240 180 0
@@ -224372,7 +224372,7 @@ mater ell_23.r "cglass" 255 255 255 0
 
 mater ell_17.r "brdf" 255 255 255 0
 
-mater ell_18.r "stack bump file=eagle.pix w=512 n=438;mirror" 255 255 255 0
+mater ell_18.r "stack bump file=$EAGLECAD w=512 n=438;mirror" 255 255 255 0
 
 #
 # Set up a projection shader
@@ -224381,7 +224381,7 @@ press top
 center -640 -1280 100
 size 300
 press top
-prj_add shaders.dat eagle.pix 512 438
+prj_add shaders.dat $EAGLECAD 512 438
 mater ell_2.r "stack prj shaders.dat;plastic di=.9" 200 200 200 0
 
 
