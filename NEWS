@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2006-12-XX  Release 7.9.0                                      ---
 ----------------------------------------------------------------------
 
+* removed advertising clause from BSD code  - Sean Morrison
 * allow material ID of zero in rtweight, fix index bug - Karel Kulhavy
 * fixed multiple frame render bug in raytracers - Karel Kulhavy
 * mged help command now shows help for all args listed - Sean Morrison
