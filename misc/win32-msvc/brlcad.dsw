@@ -99,6 +99,38 @@ Package=<4>
 
 ###############################################################################
 
+Project: "opennurbs"="..\..\src\other\openNURBS\opennurbs.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    opennurbs
+    ..\..\src\other\openNURBS
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libz"="..\..\src\other\libz\libz.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    libz
+    ..\..\src\other\libz
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "brlcad"=".\Dll\brlcad.dsp" - Package Owner=<4>
 
 Package=<5>
@@ -128,6 +160,12 @@ Package=<4>
     End Project Dependency
     Begin Project Dependency
     Project_Dep_Name libwdb
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name opennurbs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libz
     End Project Dependency
 }}}
 

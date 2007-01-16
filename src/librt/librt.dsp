@@ -46,7 +46,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "HAVE_CONFIG_H" /FD /c
+# ADD CPP /nologo /W3 /GX /O2 /I "../../include" /I "../other/openNURBS" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "OBJ_BREP" /D "HAVE_CONFIG_H" /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -69,7 +69,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "ReleaseMt"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "HAVE_CONFIG_H" /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../include" /I "../other/openNURBS" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "OBJ_BREP" /D "HAVE_CONFIG_H" /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -92,7 +92,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "ReleaseMtDll"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "../../include" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "HAVE_CONFIG_H" /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "../../include" /I "../other/openNURBS" /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "OBJ_BREP" /D "HAVE_CONFIG_H" /FD /c
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -115,7 +115,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "HAVE_CONFIG_H" /FD /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "../../include" /I "../other/openNURBS" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "OBJ_BREP" /D "HAVE_CONFIG_H" /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -138,7 +138,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "DebugMt"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "HAVE_CONFIG_H" /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../../include" /I "../other/openNURBS" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "OBJ_BREP" /D "HAVE_CONFIG_H" /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -161,7 +161,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "DebugMtDll"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "HAVE_CONFIG_H" /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "../../include" /I "../other/openNURBS" /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "OBJ_BREP" /D "HAVE_CONFIG_H" /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -319,6 +319,10 @@ SOURCE=.\g_ars.c
 # Begin Source File
 
 SOURCE=.\g_bot.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_brep.cpp
 # End Source File
 # Begin Source File
 
