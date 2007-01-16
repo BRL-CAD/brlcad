@@ -144,7 +144,7 @@ SRCS = \
 
 if WITH_OPENNURBS
 BREP_CPPFLAGS=-DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
-SRCS += g_brep.cc
+SRCS += g_brep.cpp
 endif
 
 
@@ -153,7 +153,7 @@ librt_nil_la_SOURCES = \
 	vers.c
 
 EXTRA_librt_nil_la_SOURCES = \
-	g_brep.cc
+	g_brep.cpp
 
 INCLUDES = ${BREP_CPPFLAGS}
 librt_la_SOURCES = 

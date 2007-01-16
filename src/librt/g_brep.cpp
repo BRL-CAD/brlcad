@@ -1,4 +1,4 @@
-/*                     G _ B R E P . C
+/*                     G _ B R E P . C P P
  * BRL-CAD
  *
  * Copyright (c) 2007 United States Government as represented by
@@ -20,7 +20,7 @@
  */
 /** @addtogroup g_  */
 /*@{*/
-/** @file g_brep.c
+/** @file g_brep.cpp
  *
  */
 
