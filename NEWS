@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2006-12-XX  Release 7.9.0                                      ---
 ----------------------------------------------------------------------
 
+* dxf-g turns 2D entities into sketches instead of nmg - John Anderson
 * removed advertising clause from BSD code  - Sean Morrison
 * allow material ID of zero in rtweight, fix index bug - Karel Kulhavy
 * fixed multiple frame render bug in raytracers - Karel Kulhavy
