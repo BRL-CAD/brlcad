@@ -145,6 +145,9 @@
 #include <sys\stat.h>
 #include <tchar.h>
 
+// alloca
+#include <malloc.h>
+
 // ON_CreateUuid calls Windows's ::UuidCreate() which
 // is declared in Rpcdce.h and defined in Rpcrt4.lib.
 #include <Rpc.h>

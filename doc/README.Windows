@@ -30,3 +30,9 @@ default" by adding a -F# (e.g. -F0) to the "Other Options" field of
 the "Advanced Settings..." panel of the Raytrace Control Panel,
 selected via File->Raytrace.
 
+openNURBS and Microsoft Visual C++ 6.0: If you get a compile bug error
+c2676 binary != not defined for stuct _GUID, then you are not using
+the November 2001 Platform SDK or the platform SDK is not first in
+your includes list. The last SDK that will work with VC 6.0 is the
+February 2003 Edition, you can download it from
+http://www.microsoft.com/msdownload/platformsdk/sdkupdate/psdk-full.htm.

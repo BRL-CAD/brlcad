@@ -204,6 +204,7 @@ EXTRA_DIST = \
 	example_userdata \
 	example_write \
 	faq.txt \
+	opennurbs.dsp \
 	opennurbs_memory_new.cpp \
 	readme.txt
 
