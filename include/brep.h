@@ -43,7 +43,9 @@
 #ifdef __cplusplus
 #include "opennurbs.h"
 #else
-typedef struct _on_brep_placeholder {} ON_Brep;
+typedef struct _on_brep_placeholder {
+    int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
+} ON_Brep;
 #endif 
 
 #ifdef __cplusplus
@@ -68,7 +70,7 @@ typedef struct _brep_hbv { /* b-rep hierarchical bounding volume */
 } brep_hbv;
 
 typedef struct _brep_cdbitem {
-
+    int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
 } brep_cdbitem;
 
 /**
