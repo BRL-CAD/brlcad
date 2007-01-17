@@ -1139,8 +1139,8 @@ struct bu_attribute_value_pair {
  */
 struct bu_attribute_value_set {
 	long				magic;
-    int				count;	/**< @brief # valid entries in avp  */
-    int				max;	/**< @brief # allocated slots in avp  */
+    unsigned int		count;	/**< @brief # valid entries in avp  */
+    unsigned int		max;	/**< @brief # allocated slots in avp  */
 	genptr_t			readonly_min;
 	genptr_t			readonly_max;
     struct bu_attribute_value_pair	*avp;	/**< @brief array[max]  */
@@ -1971,18 +1971,18 @@ BU_EXPORT extern long		bu_n_malloc;
 BU_EXPORT extern long		bu_n_free;
 BU_EXPORT extern long		bu_n_realloc;
 BU_EXPORT BU_EXTERN(genptr_t bu_malloc,
-		    (unsigned int cnt,
+		    (size_t siz,
 		     const char *str));
 BU_EXPORT BU_EXTERN(void bu_free,
 		    (genptr_t ptr,
 		     const char *str));
 BU_EXPORT BU_EXTERN(genptr_t bu_realloc,
 		    (genptr_t ptr,
-		     unsigned int cnt,
+		     size_t cnt,
 		     const char *str));
 BU_EXPORT BU_EXTERN(genptr_t bu_calloc,
 		    (unsigned int nelem,
-		     unsigned int elsize,
+		     size_t elsize,
 		     const char *str));
 BU_EXPORT BU_EXTERN(void bu_prmem,
 		    (const char *str));

@@ -294,7 +294,7 @@ void
 bu_avs_print( const struct bu_attribute_value_set *avsp, const char *title )
 {
 	struct bu_attribute_value_pair	*avpp;
-	int i;
+	unsigned int i;
 
 	BU_CK_AVS(avsp);
 

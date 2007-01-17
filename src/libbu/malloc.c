@@ -332,7 +332,7 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
  *  Failure results in bu_bomb() being called.
 w */
 genptr_t
-bu_malloc(unsigned int size, const char *str)
+bu_malloc(size_t size, const char *str)
 {
   return bu_alloc(MALLOC, 1, size, str);
 }
@@ -346,7 +346,7 @@ bu_malloc(unsigned int size, const char *str)
  *  Failure results in bu_bomb() being called.
  */
 genptr_t
-bu_calloc(unsigned int nelem, unsigned int elsize, const char *str)
+bu_calloc(unsigned int nelem, size_t elsize, const char *str)
 {
   return bu_alloc(CALLOC, nelem, elsize, str);
 }
@@ -410,7 +410,7 @@ bu_free(genptr_t ptr, const char *str)
  *  tracked back to it's original creator.
  */
 genptr_t
-bu_realloc(register genptr_t ptr, unsigned int cnt, const char *str)
+bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 {
 	struct memdebug		*mp=NULL;
 	char	*original_ptr;

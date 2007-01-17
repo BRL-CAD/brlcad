@@ -226,7 +226,7 @@ bu_bitv_to_hex(struct bu_vls *v, register const struct bu_bitv *bv)
     word_count = bv->nbits/8/sizeof( bitv_t );
     byte_no = sizeof( bitv_t );
 
-    bu_vls_extend( v, word_count * sizeof( bitv_t ) * 2 + 1 );
+    bu_vls_extend( v, word_count * (unsigned int)sizeof( bitv_t ) * 2 + 1 );
     while( word_count-- )
 	{
 	    while( byte_no-- )
