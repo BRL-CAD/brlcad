@@ -5,8 +5,8 @@ lib_LTLIBRARIES = libtie.la
 libtie_la_SOURCES = tie.c kdtree.c
 libtie_la_LDFLAGS = -static
 
-include_HEADERS = tie.h
-noinst_HEADERS = define.h struct.h kdtree.h
+tieincludedir = $(includedir)/tie
+tieinclude_HEADERS = tie.h define.h struct.h kdtree.h
 
 AM_CFLAGS=-Wall -pedantic -std=c99 -pipe
 
