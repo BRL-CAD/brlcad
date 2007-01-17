@@ -2244,7 +2244,7 @@ AC_MSG_CHECKING(whether to build the included openNURBS library)
 OPENNURBS=""
 if test "x$build_brlcad_opennurbs" = "xyes" ; then
 	OPENNURBS='${top_builddir}/src/other/openNURBS/libopenNURBS.la -lstdc++'
-	OPENNURBS_CPPFLAGS='-I${top_builddir}/src/other/openNURBS'
+	OPENNURBS_CPPFLAGS='-I${top_srcdir}/src/other/openNURBS'
 	AC_MSG_RESULT(yes)
 else
 	OPENNURBS="$LIBOPENNURBS -lstdc++"
