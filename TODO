@@ -27,9 +27,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
 
-* add configuration checks and build system support to disable C++
-  outright if necessary, e.g. an --enable-c++ option
-
 * remove op-bw
 
 * fix potential buffer overflows and security issues detected by
@@ -49,6 +46,13 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
+
+* add configuration checks and build system support to disable C++
+  outright if necessary, e.g. an --enable-c++ option
+
+* configure support to enable/disable framebuffers, display
+  managers, geometry converters, and image converters.  consider
+  apache's module management as an example.
 
 * libbu routine to make a temp file reliably/consistently
 
