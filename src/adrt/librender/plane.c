@@ -5,7 +5,7 @@
 #include "adrt_common.h"
 #include "hit.h"
 
-#define thickness 0.02
+#define THICKNESS 0.02
 
 void* render_plane_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
 void render_plane(tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
@@ -40,41 +40,41 @@ void render_plane_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
   up.v[1] = 0;
   up.v[2] = 1;
 
-  math_vec_cross(normal, ray_dir, up);
-  math_vec_unitize(normal);
+  MATH_VEC_CROSS(normal, ray_dir, up);
+  MATH_VEC_UNITIZE(normal);
 
   /* Construct the plane */
   d->plane[0] = normal.v[0];
   d->plane[1] = normal.v[1];
   d->plane[2] = normal.v[2];
-  math_vec_dot(plane[3], normal, ray_pos); /* up is really new ray_pos */
+  MATH_VEC_DOT(plane[3], normal, ray_pos); /* up is really new ray_pos */
   d->plane[3] = -plane[3];
 
   /* Triangle 1 */
   list[0].v[0] = ray_pos.v[0];
   list[0].v[1] = ray_pos.v[1];
-  list[0].v[2] = ray_pos.v[2] - thickness;
+  list[0].v[2] = ray_pos.v[2] - THICKNESS;
 
   list[1].v[0] = ray_pos.v[0] + 20*ray_dir.v[0];
   list[1].v[1] = ray_pos.v[1] + 20*ray_dir.v[1];
-  list[1].v[2] = ray_pos.v[2] + 20*ray_dir.v[2] - thickness;
+  list[1].v[2] = ray_pos.v[2] + 20*ray_dir.v[2] - THICKNESS;
 
   list[2].v[0] = ray_pos.v[0] + 20*ray_dir.v[0];
   list[2].v[1] = ray_pos.v[1] + 20*ray_dir.v[1];
-  list[2].v[2] = ray_pos.v[2] + 20*ray_dir.v[2] + thickness;
+  list[2].v[2] = ray_pos.v[2] + 20*ray_dir.v[2] + THICKNESS;
 
   /* Triangle 2 */
   list[3].v[0] = ray_pos.v[0];
   list[3].v[1] = ray_pos.v[1];
-  list[3].v[2] = ray_pos.v[2] - thickness;
+  list[3].v[2] = ray_pos.v[2] - THICKNESS;
 
   list[4].v[0] = ray_pos.v[0] + 20*ray_dir.v[0];
   list[4].v[1] = ray_pos.v[1] + 20*ray_dir.v[1];
-  list[4].v[2] = ray_pos.v[2] + 20*ray_dir.v[2] + thickness;
+  list[4].v[2] = ray_pos.v[2] + 20*ray_dir.v[2] + THICKNESS;
 
   list[5].v[0] = ray_pos.v[0];
   list[5].v[1] = ray_pos.v[1];
-  list[5].v[2] = ray_pos.v[2] + thickness;
+  list[5].v[2] = ray_pos.v[2] + THICKNESS;
 
 
 
@@ -167,7 +167,7 @@ void render_plane_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   * If the point after the splitting plane is an inhit, then just shade as usual.
   */
 
-  math_vec_dot(dot, ray->dir, hit.id.norm);
+  MATH_VEC_DOT(dot, ray->dir, hit.id.norm);
   /* flip normal */
   dot = fabs(dot);
 
@@ -179,12 +179,12 @@ void render_plane_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   } else {
     /* Mix actual color with white 4:1, shade 50% darker */
 #if 0
-    math_vec_set(color, 1.0, 1.0, 1.0);
-    math_vec_mul_scalar(color, color, 3.0);
-    math_vec_add(color, color, hit.mesh->prop->color);
-    math_vec_mul_scalar(color, color, 0.125);
+    MATH_VEC_SET(color, 1.0, 1.0, 1.0);
+    MATH_VEC_MUL_SCALAR(color, color, 3.0);
+    MATH_VEC_ADD(color, color, hit.mesh->prop->color);
+    MATH_VEC_MUL_SCALAR(color, color, 0.125);
 #else
-    math_vec_set(color, 0.8, 0.8, 0.7);
+    MATH_VEC_SET(color, 0.8, 0.8, 0.7);
 #endif
   }
 
@@ -192,14 +192,14 @@ void render_plane_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   if(dot < 0) {
 #endif
     /* Shade using inhit */
-    math_vec_mul_scalar((*pixel), color, (dot*0.90));
+    MATH_VEC_MUL_SCALAR((*pixel), color, (dot*0.90));
 #if 0
   } else {
     /* shade solid */
-    math_vec_sub(vec, ray->pos, hit.id.pos);
-    math_vec_unitize(vec);
+    MATH_VEC_SUB(vec, ray->pos, hit.id.pos);
+    MATH_VEC_UNITIZE(vec);
     angle = vec.v[0]*hit.mod*-hit.plane[0] + vec.v[1]*-hit.mod*hit.plane[1] + vec.v[2]*-hit.mod*hit.plane[2];
-    math_vec_mul_scalar((*pixel), color, (angle*0.90));
+    MATH_VEC_MUL_SCALAR((*pixel), color, (angle*0.90));
   }
 #endif
 

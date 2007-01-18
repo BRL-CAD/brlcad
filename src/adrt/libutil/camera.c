@@ -120,8 +120,8 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
     camera->view_list = (util_camera_view_t *)malloc(sizeof(util_camera_view_t) * camera->view_num);
 
     /* Generate unitized look vector */
-    math_vec_sub(fov_look, camera->focus, camera->pos);
-    math_vec_unitize(fov_look);
+    MATH_VEC_SUB(fov_look, camera->focus, camera->pos);
+    MATH_VEC_UNITIZE(fov_look);
 
     /* Generate standard up vector */
     fov_up.v[0] = 0;
@@ -130,27 +130,27 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
 
     /* Make unitized up vector perpendicular to look vector */
     temp = fov_look;
-    math_vec_dot(angle, fov_up, temp);
-    math_vec_mul_scalar(temp, temp, angle);
-    math_vec_sub(fov_up, fov_up, temp);
-    math_vec_unitize(fov_up);
+    MATH_VEC_DOT(angle, fov_up, temp);
+    MATH_VEC_MUL_SCALAR(temp, temp, angle);
+    MATH_VEC_SUB(fov_up, fov_up, temp);
+    MATH_VEC_UNITIZE(fov_up);
 
     /* Generate a temporary side vector */
-    math_vec_cross(fov_side, fov_up, fov_look);
+    MATH_VEC_CROSS(fov_side, fov_up, fov_look);
 
     /* Apply tilt to up vector - negate angle to make positive angles clockwise */
-    sfov = sin(-camera->tilt * math_pi * math_1div180);
-    cfov = cos(-camera->tilt * math_pi * math_1div180);
-    math_vec_mul_scalar(fov_up, fov_up, cfov);
-    math_vec_mul_scalar(fov_side, fov_side, sfov);
-    math_vec_add(fov_up, fov_up, fov_side);
+    sfov = sin(-camera->tilt * MATH_PI * MATH_1DIV180);
+    cfov = cos(-camera->tilt * MATH_PI * MATH_1DIV180);
+    MATH_VEC_MUL_SCALAR(fov_up, fov_up, cfov);
+    MATH_VEC_MUL_SCALAR(fov_side, fov_side, sfov);
+    MATH_VEC_ADD(fov_up, fov_up, fov_side);
 
     /* Create final side vector */
-    math_vec_cross(fov_side, fov_up, fov_look);
+    MATH_VEC_CROSS(fov_side, fov_up, fov_look);
 
     /* Compute sine and cosine terms for field of view */
-    sfov = sin(camera->fov*math_pi * math_1div180);
-    cfov = cos(camera->fov*math_pi * math_1div180);
+    sfov = sin(camera->fov*MATH_PI * MATH_1DIV180);
+    cfov = cos(camera->fov*MATH_PI * MATH_1DIV180);
 
 
     /* Up, Look, and Side vectors are complete, generate Top Left reference vector */
@@ -166,9 +166,9 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
     fov_botl.v[1] = -sfov*fov_up.v[1] + aspect*sfov*fov_side.v[1] + cfov*fov_look.v[1];
     fov_botl.v[2] = -sfov*fov_up.v[2] + aspect*sfov*fov_side.v[2] + cfov*fov_look.v[2];
 
-    math_vec_unitize(fov_topl);
-    math_vec_unitize(fov_botl);
-    math_vec_unitize(fov_topr);
+    MATH_VEC_UNITIZE(fov_topl);
+    MATH_VEC_UNITIZE(fov_botl);
+    MATH_VEC_UNITIZE(fov_topr);
 
     /* Store Camera Position */
     camera->view_list[0].pos = camera->pos;
@@ -177,12 +177,12 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
     camera->view_list[0].top_l = fov_topl;
 
     /* Generate stepx and stepy vectors for sampling each pixel */
-    math_vec_sub(camera->view_list[0].step_x, fov_topr, fov_topl);
-    math_vec_sub(camera->view_list[0].step_y, fov_botl, fov_topl);
+    MATH_VEC_SUB(camera->view_list[0].step_x, fov_topr, fov_topl);
+    MATH_VEC_SUB(camera->view_list[0].step_y, fov_botl, fov_topl);
 
     /* Divide stepx and stepy by the number of pixels */
-    math_vec_mul_scalar(camera->view_list[0].step_x, camera->view_list[0].step_x, 1.0 / db->env.img_vw);
-    math_vec_mul_scalar(camera->view_list[0].step_y, camera->view_list[0].step_y, 1.0 / db->env.img_vh);
+    MATH_VEC_MUL_SCALAR(camera->view_list[0].step_x, camera->view_list[0].step_x, 1.0 / db->env.img_vw);
+    MATH_VEC_MUL_SCALAR(camera->view_list[0].step_y, camera->view_list[0].step_y, 1.0 / db->env.img_vh);
     return;
   }
 
@@ -191,8 +191,8 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
   */
 
   /* Generate unitized look vector */
-  math_vec_sub(dof_look, camera->focus, camera->pos);
-  math_vec_unitize(dof_look);
+  MATH_VEC_SUB(dof_look, camera->focus, camera->pos);
+  MATH_VEC_UNITIZE(dof_look);
 
   /* Generate standard up vector */
   dof_up.v[0] = 0;
@@ -201,37 +201,37 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
 
   /* Make unitized up vector perpendicular to look vector */
   temp = dof_look;
-  math_vec_dot(angle, dof_up, temp);
-  math_vec_mul_scalar(temp, temp, angle);
-  math_vec_sub(dof_up, dof_up, temp);
-  math_vec_unitize(dof_up);
+  MATH_VEC_DOT(angle, dof_up, temp);
+  MATH_VEC_MUL_SCALAR(temp, temp, angle);
+  MATH_VEC_SUB(dof_up, dof_up, temp);
+  MATH_VEC_UNITIZE(dof_up);
 
   /* Generate a temporary side vector */
-  math_vec_cross(dof_side, dof_up, dof_look);
+  MATH_VEC_CROSS(dof_side, dof_up, dof_look);
 
   /* Apply tilt to up vector - negate angle to make positive angles clockwise */
-  sdof = sin(-camera->tilt * math_pi * math_1div180);
-  cdof = cos(-camera->tilt * math_pi * math_1div180);
-  math_vec_mul_scalar(dof_up, dof_up, cdof);
-  math_vec_mul_scalar(dof_side, dof_side, sdof);
-  math_vec_add(dof_up, dof_up, dof_side);
+  sdof = sin(-camera->tilt * MATH_PI * MATH_1DIV180);
+  cdof = cos(-camera->tilt * MATH_PI * MATH_1DIV180);
+  MATH_VEC_MUL_SCALAR(dof_up, dof_up, cdof);
+  MATH_VEC_MUL_SCALAR(dof_side, dof_side, sdof);
+  MATH_VEC_ADD(dof_up, dof_up, dof_side);
 
   /* Create final side vector */
-  math_vec_cross(dof_side, dof_up, dof_look);
+  MATH_VEC_CROSS(dof_side, dof_up, dof_look);
 
   /*
   * Generage a camera position, top left vector, and step vectors for each DOF sample
   */
 
   /* Obtain magnitude of reverse look vector */
-  math_vec_sub(dof_look, camera->pos, camera->focus);
-  math_vec_mag(mag, dof_look);
-  math_vec_unitize(dof_look);
+  MATH_VEC_SUB(dof_look, camera->pos, camera->focus);
+  MATH_VEC_MAG(mag, dof_look);
+  MATH_VEC_UNITIZE(dof_look);
 
 
   /* Compute sine and cosine terms for field of view */
-  sdof = sin(camera->dof*math_pi * math_1div180);
-  cdof = cos(camera->dof*math_pi * math_1div180);
+  sdof = sin(camera->dof*MATH_PI * MATH_1DIV180);
+  cdof = cos(camera->dof*MATH_PI * MATH_1DIV180);
 
 
   /* Up, Look, and Side vectors are complete, generate Top Left reference vector */
@@ -247,12 +247,12 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
   dof_botl.v[1] = -sdof*dof_up.v[1] + sdof*dof_side.v[1] + cdof*dof_look.v[1];
   dof_botl.v[2] = -sdof*dof_up.v[2] + sdof*dof_side.v[2] + cdof*dof_look.v[2];
 
-  math_vec_unitize(dof_topl);
-  math_vec_unitize(dof_botl);
-  math_vec_unitize(dof_topr);
+  MATH_VEC_UNITIZE(dof_topl);
+  MATH_VEC_UNITIZE(dof_botl);
+  MATH_VEC_UNITIZE(dof_topr);
 
-  math_vec_sub(step_x, dof_topr, dof_topl);
-  math_vec_sub(step_y, dof_botl, dof_topl);
+  MATH_VEC_SUB(step_x, dof_topr, dof_topl);
+  MATH_VEC_SUB(step_y, dof_botl, dof_topl);
 
   /* Generate camera positions for depth of field */
   camera->view_num = UTIL_CAMERA_DOF_SAMPLES*UTIL_CAMERA_DOF_SAMPLES;
@@ -261,17 +261,17 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
   for(i = 0; i < UTIL_CAMERA_DOF_SAMPLES; i++) {
     for(n = 0; n < UTIL_CAMERA_DOF_SAMPLES; n++) {
       /* Generate virtual camera position for this depth of field sample */
-      math_vec_mul_scalar(temp, step_x, ((tfloat)i/(tfloat)(UTIL_CAMERA_DOF_SAMPLES-1)));
-      math_vec_add(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, dof_topl, temp);
-      math_vec_mul_scalar(temp, step_y, ((tfloat)n/(tfloat)(UTIL_CAMERA_DOF_SAMPLES-1)));
-      math_vec_add(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, temp);
-      math_vec_unitize(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos);
-      math_vec_mul_scalar(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, mag);
-      math_vec_add(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, camera->focus);
+      MATH_VEC_MUL_SCALAR(temp, step_x, ((tfloat)i/(tfloat)(UTIL_CAMERA_DOF_SAMPLES-1)));
+      MATH_VEC_ADD(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, dof_topl, temp);
+      MATH_VEC_MUL_SCALAR(temp, step_y, ((tfloat)n/(tfloat)(UTIL_CAMERA_DOF_SAMPLES-1)));
+      MATH_VEC_ADD(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, temp);
+      MATH_VEC_UNITIZE(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos);
+      MATH_VEC_MUL_SCALAR(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, mag);
+      MATH_VEC_ADD(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, camera->focus);
 
       /* Generate unitized look vector */
-      math_vec_sub(fov_look, camera->focus, camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos);
-      math_vec_unitize(fov_look);
+      MATH_VEC_SUB(fov_look, camera->focus, camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos);
+      MATH_VEC_UNITIZE(fov_look);
 
       /* Generate standard up vector */
       fov_up.v[0] = 0;
@@ -280,27 +280,27 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
 
       /* Make unitized up vector perpendicular to look vector */
       temp = fov_look;
-      math_vec_dot(angle, fov_up, temp);
-      math_vec_mul_scalar(temp, temp, angle);
-      math_vec_sub(fov_up, fov_up, temp);
-      math_vec_unitize(fov_up);
+      MATH_VEC_DOT(angle, fov_up, temp);
+      MATH_VEC_MUL_SCALAR(temp, temp, angle);
+      MATH_VEC_SUB(fov_up, fov_up, temp);
+      MATH_VEC_UNITIZE(fov_up);
 
       /* Generate a temporary side vector */
-      math_vec_cross(fov_side, fov_up, fov_look);
+      MATH_VEC_CROSS(fov_side, fov_up, fov_look);
 
       /* Apply tilt to up vector - negate angle to make positive angles clockwise */
-      sfov = sin(-camera->tilt * math_pi * math_1div180);
-      cfov = cos(-camera->tilt * math_pi * math_1div180);
-      math_vec_mul_scalar(fov_up, fov_up, cfov);
-      math_vec_mul_scalar(fov_side, fov_side, sfov);
-      math_vec_add(fov_up, fov_up, fov_side);
+      sfov = sin(-camera->tilt * MATH_PI * MATH_1DIV180);
+      cfov = cos(-camera->tilt * MATH_PI * MATH_1DIV180);
+      MATH_VEC_MUL_SCALAR(fov_up, fov_up, cfov);
+      MATH_VEC_MUL_SCALAR(fov_side, fov_side, sfov);
+      MATH_VEC_ADD(fov_up, fov_up, fov_side);
 
       /* Create final side vector */
-      math_vec_cross(fov_side, fov_up, fov_look);
+      MATH_VEC_CROSS(fov_side, fov_up, fov_look);
 
       /* Compute sine and cosine terms for field of view */
-      sfov = sin(camera->fov*math_pi * math_1div180);
-      cfov = cos(camera->fov*math_pi * math_1div180);
+      sfov = sin(camera->fov*MATH_PI * MATH_1DIV180);
+      cfov = cos(camera->fov*MATH_PI * MATH_1DIV180);
 
 
       /* Up, Look, and Side vectors are complete, generate Top Left reference vector */
@@ -316,20 +316,20 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
       fov_botl.v[1] = -sfov*fov_up.v[1] + aspect*sfov*fov_side.v[1] + cfov*fov_look.v[1];
       fov_botl.v[2] = -sfov*fov_up.v[2] + aspect*sfov*fov_side.v[2] + cfov*fov_look.v[2];
 
-      math_vec_unitize(fov_topl);
-      math_vec_unitize(fov_botl);
-      math_vec_unitize(fov_topr);
+      MATH_VEC_UNITIZE(fov_topl);
+      MATH_VEC_UNITIZE(fov_botl);
+      MATH_VEC_UNITIZE(fov_topr);
 
       /* Store the top left vector */
       camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].top_l = fov_topl;
 
       /* Generate stepx and stepy vectors for sampling each pixel */
-      math_vec_sub(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].step_x, fov_topr, fov_topl);
-      math_vec_sub(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].step_y, fov_botl, fov_topl);
+      MATH_VEC_SUB(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].step_x, fov_topr, fov_topl);
+      MATH_VEC_SUB(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].step_y, fov_botl, fov_topl);
 
       /* Divide stepx and stepy by the number of pixels */
-      math_vec_mul_scalar(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].step_x, camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].step_x, 1.0 / db->env.img_vw);
-      math_vec_mul_scalar(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].step_y, camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].step_y, 1.0 / db->env.img_vh);
+      MATH_VEC_MUL_SCALAR(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].step_x, camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].step_x, 1.0 / db->env.img_vw);
+      MATH_VEC_MUL_SCALAR(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].step_y, camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].step_y, 1.0 / db->env.img_vh);
     }
   }
 }
@@ -371,8 +371,8 @@ void* util_camera_render_thread(void *ptr) {
 
     /* optimization if there is no depth of field being applied */
     if(td->camera->view_num == 1) {
-      math_vec_mul_scalar(v1, td->camera->view_list[0].step_y, v_scanline);
-      math_vec_add(v1, v1, td->camera->view_list[0].top_l);
+      MATH_VEC_MUL_SCALAR(v1, td->camera->view_list[0].step_y, v_scanline);
+      MATH_VEC_ADD(v1, v1, td->camera->view_list[0].top_l);
     }
 
 
@@ -381,37 +381,37 @@ void* util_camera_render_thread(void *ptr) {
 
       /* depth of view samples */
       if(td->camera->view_num > 1) {
-        math_vec_set(accum, 0, 0, 0);
+        MATH_VEC_SET(accum, 0, 0, 0);
 
         for(d = 0; d < td->camera->view_num; d++) {
-          math_vec_mul_scalar(ray.dir, td->camera->view_list[d].step_y, v_scanline);
-          math_vec_add(ray.dir, ray.dir, td->camera->view_list[d].top_l);
-          math_vec_mul_scalar(v1, td->camera->view_list[d].step_x, n);
-          math_vec_add(ray.dir, ray.dir, v1);
+          MATH_VEC_MUL_SCALAR(ray.dir, td->camera->view_list[d].step_y, v_scanline);
+          MATH_VEC_ADD(ray.dir, ray.dir, td->camera->view_list[d].top_l);
+          MATH_VEC_MUL_SCALAR(v1, td->camera->view_list[d].step_x, n);
+          MATH_VEC_ADD(ray.dir, ray.dir, v1);
 
-          math_vec_set(pixel, 0, 0, 0);
+          MATH_VEC_SET(pixel, 0, 0, 0);
 
           ray.pos = td->camera->view_list[d].pos;
           ray.depth = 0;
-          math_vec_unitize(ray.dir);
+          MATH_VEC_UNITIZE(ray.dir);
 
           /* Compute pixel value using this ray */
           td->db->env.render.work(&td->db->env.render, td->tie, &ray, &pixel);
 
-          math_vec_add(accum, accum, pixel);
+          MATH_VEC_ADD(accum, accum, pixel);
         }
 
         /* Find Mean value of all views */
-        math_vec_mul_scalar(pixel, accum, view_inv);
+        MATH_VEC_MUL_SCALAR(pixel, accum, view_inv);
       } else {
-        math_vec_mul_scalar(v2, td->camera->view_list[0].step_x, n);
-        math_vec_add(ray.dir, v1, v2);
+        MATH_VEC_MUL_SCALAR(v2, td->camera->view_list[0].step_x, n);
+        MATH_VEC_ADD(ray.dir, v1, v2);
 
-        math_vec_set(pixel, 0, 0, 0);
+        MATH_VEC_SET(pixel, 0, 0, 0);
 
         ray.pos = td->camera->view_list[0].pos;
         ray.depth = 0;
-        math_vec_unitize(ray.dir);
+        MATH_VEC_UNITIZE(ray.dir);
 
         /* Compute pixel value using this ray */
         td->db->env.render.work(&td->db->env.render, td->tie, &ray, &pixel);

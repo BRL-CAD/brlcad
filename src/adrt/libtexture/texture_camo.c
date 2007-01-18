@@ -81,7 +81,7 @@ void texture_camo_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, 
   td = (texture_camo_t *)texture->data;
 
   /* Transform the Point */
-  math_vec_transform(pt, id->pos, mesh->matinv);
+  MATH_VEC_TRANSFORM(pt, id->pos, mesh->matinv);
   if(td->absolute) {
     p = id->pos;
   } else {

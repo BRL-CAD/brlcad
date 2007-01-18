@@ -79,7 +79,7 @@ void texture_image_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray,
 
 
   /* Transform the Point */
-  math_vec_transform(pt, id->pos, mesh->matinv);
+  MATH_VEC_TRANSFORM(pt, id->pos, mesh->matinv);
   u = mesh->max.v[0] - mesh->min.v[0] > TIE_PREC ? (pt.v[0] - mesh->min.v[0]) / (mesh->max.v[0] - mesh->min.v[0]) : 0.0;
   v = mesh->max.v[1] - mesh->min.v[1] > TIE_PREC ? (pt.v[1] - mesh->min.v[1]) / (mesh->max.v[1] - mesh->min.v[1]) : 0.0;
 

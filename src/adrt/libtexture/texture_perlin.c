@@ -44,10 +44,10 @@
 #define	N	0x1000
 
 
-#define	prand (int)(math_rand()*16384)
-#define	s_curve(t) (t * t * (3.0 - 2.0 * t))
-#define	at3(rx,ry,rz) (rx*q.v[0] + ry*q.v[1] + rz*q.v[2]);
-#define	lerp(t, a, b) (a+t*(b-a))
+#define	PRAND (int)(math_rand()*16384)
+#define	S_CURVE(t) (t * t * (3.0 - 2.0 * t))
+#define	AT3(rx,ry,rz) (rx*q.v[0] + ry*q.v[1] + rz*q.v[2]);
+#define	LERP(t, a, b) (a+t*(b-a))
 
 
 void	texture_perlin_init(texture_perlin_t *P);
@@ -64,17 +64,17 @@ void texture_perlin_init(texture_perlin_t *P) {
 
   /* Generate Random Vectors */
   for (i = 0; i < B; i++) {
-    P->RV[i].v[0] = (tfloat)((prand % (2*B)) - B) / B;
-    P->RV[i].v[1] = (tfloat)((prand % (2*B)) - B) / B;
-    P->RV[i].v[2] = (tfloat)((prand % (2*B)) - B) / B;
-    math_vec_unitize(P->RV[i]);
+    P->RV[i].v[0] = (tfloat)((PRAND % (2*B)) - B) / B;
+    P->RV[i].v[1] = (tfloat)((PRAND % (2*B)) - B) / B;
+    P->RV[i].v[2] = (tfloat)((PRAND % (2*B)) - B) / B;
+    MATH_VEC_UNITIZE(P->RV[i]);
     P->PV[i] = i;
   }
 
   /* Permute Indices into Vector List G */
   for(i = 0; i < B; i++) {
     k = P->PV[i];
-    P->PV[i] = P->PV[j = prand % B];
+    P->PV[i] = P->PV[j = PRAND % B];
     P->PV[j] = k;
   }
 
@@ -98,7 +98,7 @@ tfloat texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, tfloat Size, int Dept
   sum = 0;
   for(i = 0; i < Depth; i++) {
     sum += texture_perlin_omega(P, V);
-    math_vec_mul_scalar(V, V, Size);
+    MATH_VEC_MUL_SCALAR(V, V, Size);
   }
 
   return(sum);
@@ -128,37 +128,37 @@ tfloat texture_perlin_omega(texture_perlin_t *P, TIE_3 V) {
   b01 = P->PV[i + b1[1]];
   b11 = P->PV[j + b1[1]];
 
-  t = s_curve(r0[0]);
-  sy = s_curve(r0[1]);
-  sz = s_curve(r0[2]);
+  t = S_CURVE(r0[0]);
+  sy = S_CURVE(r0[1]);
+  sz = S_CURVE(r0[2]);
 
   q = P->RV[b00 + b0[2]];
-  u = at3(r0[0], r0[1], r0[2]);
+  u = AT3(r0[0], r0[1], r0[2]);
   q = P->RV[b10 + b0[2]];
-  v = at3(r1[0], r0[1], r0[2]);
-  a = lerp(t, u, v);
+  v = AT3(r1[0], r0[1], r0[2]);
+  a = LERP(t, u, v);
 
   q = P->RV[b01 + b0[2]];
-  u = at3(r0[0], r1[1], r0[2]);
+  u = AT3(r0[0], r1[1], r0[2]);
   q = P->RV[b11 + b0[2]];
-  v = at3(r1[0], r1[1], r0[2]);
-  b = lerp(t, u, v);
+  v = AT3(r1[0], r1[1], r0[2]);
+  b = LERP(t, u, v);
 
-  c = lerp(sy, a, b);
+  c = LERP(sy, a, b);
 
   q = P->RV[b00 + b1[2]];
-  u = at3(r0[0], r0[1], r1[2]);
+  u = AT3(r0[0], r0[1], r1[2]);
   q = P->RV[b10 + b1[2]];
-  v = at3(r1[0], r0[1], r1[2]);
-  a = lerp(t, u, v);
+  v = AT3(r1[0], r0[1], r1[2]);
+  a = LERP(t, u, v);
 
   q = P->RV[b01 + b1[2]];
-  u = at3(r0[0], r1[1], r1[2]);
+  u = AT3(r0[0], r1[1], r1[2]);
   q = P->RV[b11 + b1[2]];
-  v = at3(r1[0], r1[1], r1[2]);
-  b = lerp(t, u, v);
+  v = AT3(r1[0], r1[1], r1[2]);
+  b = LERP(t, u, v);
 
-  d = lerp(sy, a, b);
+  d = LERP(sy, a, b);
 
-  return( lerp(sz, c, d) );
+  return( LERP(sz, c, d) );
 }

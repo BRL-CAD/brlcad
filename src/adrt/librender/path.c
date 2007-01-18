@@ -49,7 +49,7 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
           /* Deal with refractive-fu */
         } else if(new_mesh->prop->emission > 0.0) {	/* Emitting Light Source */
           T = new_mesh->prop->color;
-          math_vec_mul_scalar(T, T, new_mesh->prop->emission);
+          MATH_VEC_MUL_SCALAR(T, T, new_mesh->prop->emission);
           propogate = 0;
         } else {	/* Diffuse */
           if(new_mesh->texture) {
@@ -60,14 +60,14 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
         }
 
         if(new_ray.depth) {
-          math_vec_mul(new_pix, new_pix, T);
+          MATH_VEC_MUL(new_pix, new_pix, T);
         } else {
           new_pix = T;
         }
 
         new_ray.depth++;
 
-        math_vec_reflect(ref, new_ray.dir, new_id.norm);
+        MATH_VEC_REFLECT(ref, new_ray.dir, new_id.norm);
 
         new_ray.pos.v[0] = new_id.pos.v[0] + new_id.norm.v[0]*TIE_PREC;
         new_ray.pos.v[1] = new_id.pos.v[1] + new_id.norm.v[1]*TIE_PREC;
@@ -76,13 +76,13 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
         T.v[0] = new_id.norm.v[0] - new_mesh->prop->gloss*ref.v[0];
         T.v[1] = new_id.norm.v[1] - new_mesh->prop->gloss*ref.v[1];
         T.v[2] = new_id.norm.v[2] - new_mesh->prop->gloss*ref.v[2];
-        math_vec_unitize(T);
+        MATH_VEC_UNITIZE(T);
 
         /* Form Basis X */
         bax.v[0] = T.v[0] || T.v[1] ? -T.v[1] : 1.0;
         bax.v[1] = T.v[0];
         bax.v[2] = 0;
-        math_vec_unitize(bax);
+        MATH_VEC_UNITIZE(bax);
 
         /* Form Basis Y, Simplified Cross Product of two unit vectors is a unit vector */
         bay.v[0] = -T.v[2]*bax.v[1];
@@ -93,7 +93,7 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
         sin_theta = sqrt(cos_theta);
         cos_theta = 1-cos_theta;
 
-        cos_phi = math_rand()*math_2_pi;
+        cos_phi = math_rand()*MATH_2_PI;
         sin_phi = sin(cos_phi);
         cos_phi = cos(cos_phi);
 
@@ -103,7 +103,7 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
           new_ray.dir.v[n] = (1.0 - new_mesh->prop->gloss)*T.v[n] + new_mesh->prop->gloss * ref.v[n];
         }
 
-        math_vec_unitize(new_ray.dir);
+        MATH_VEC_UNITIZE(new_ray.dir);
       } else {
         new_pix.v[0] = 0;
         new_pix.v[1] = 0;
@@ -112,8 +112,8 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
       }
     }
 
-    math_vec_add(accum, accum, new_pix);
+    MATH_VEC_ADD(accum, accum, new_pix);
   }
 
-  math_vec_mul_scalar((*pixel), accum, rd->inv_samples);
+  MATH_VEC_MUL_SCALAR((*pixel), accum, rd->inv_samples);
 }

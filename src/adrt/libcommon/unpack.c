@@ -558,7 +558,7 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
     /* Apply Transformation Matrix to Vertices */
     for(i = 0; i < vnum; i++) {
       v[0] = vlist[i];
-      math_vec_transform(vlist[i], v[0], db->mesh_list[db->mesh_num-1]->matrix);
+      MATH_VEC_TRANSFORM(vlist[i], v[0], db->mesh_list[db->mesh_num-1]->matrix);
     }
 
     /* Allocate memory for ADRT triangles */

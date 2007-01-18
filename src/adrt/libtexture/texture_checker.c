@@ -70,7 +70,7 @@ void texture_checker_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ra
   td = (texture_checker_t *)texture->data;
 
   /* Transform the Point */
-  math_vec_transform(pt, id->pos, mesh->matinv);
+  MATH_VEC_TRANSFORM(pt, id->pos, mesh->matinv);
 
   if(pt.v[0]+TIE_PREC > mesh->max.v[0]) pt.v[0] = mesh->max.v[0];
   if(pt.v[1]+TIE_PREC > mesh->max.v[1]) pt.v[1] = mesh->max.v[1];

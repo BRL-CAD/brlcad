@@ -73,7 +73,7 @@ void texture_mix_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, t
 
   td->texture1->work(td->texture1, mesh, ray, id, pixel);
   td->texture2->work(td->texture2, mesh, ray, id, &t);
-  math_vec_mul_scalar((*pixel), (*pixel), td->coef);
-  math_vec_mul_scalar(t, t, (1.0 - td->coef));
-  math_vec_add((*pixel), (*pixel), t);
+  MATH_VEC_MUL_SCALAR((*pixel), (*pixel), td->coef);
+  MATH_VEC_MUL_SCALAR(t, t, (1.0 - td->coef));
+  MATH_VEC_ADD((*pixel), (*pixel), t);
 }

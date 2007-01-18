@@ -84,7 +84,7 @@ void texture_clouds_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray
     p.v[1] = id->pos.v[1] * td->scale.v[1] + td->translate.v[1];
     p.v[2] = id->pos.v[2] * td->scale.v[2] + td->translate.v[2];
   } else {
-    math_vec_transform(pt, id->pos, mesh->matinv);
+    MATH_VEC_TRANSFORM(pt, id->pos, mesh->matinv);
     p.v[0] = (mesh->max.v[0] - mesh->min.v[0] > TIE_PREC ? (pt.v[0] - mesh->min.v[0]) / (mesh->max.v[0] - mesh->min.v[0]) : 0.0) * td->scale.v[0] + td->translate.v[0];
     p.v[1] = (mesh->max.v[1] - mesh->min.v[1] > TIE_PREC ? (pt.v[1] - mesh->min.v[1]) / (mesh->max.v[1] - mesh->min.v[1]) : 0.0) * td->scale.v[1] + td->translate.v[1];
     p.v[2] = (mesh->max.v[2] - mesh->min.v[2] > TIE_PREC ? (pt.v[2] - mesh->min.v[2]) / (mesh->max.v[2] - mesh->min.v[2]) : 0.0) * td->scale.v[2] + td->translate.v[2];

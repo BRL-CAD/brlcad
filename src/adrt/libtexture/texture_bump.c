@@ -73,10 +73,10 @@ void texture_bump_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, 
   n.v[0] = id->norm.v[0] + sd->coef.v[0]*(2*pixel->v[0]-1.0);
   n.v[1] = id->norm.v[1] + sd->coef.v[1]*(2*pixel->v[1]-1.0);
   n.v[2] = id->norm.v[2] + sd->coef.v[2]*(2*pixel->v[2]-1.0);
-  math_vec_unitize(n);
+  MATH_VEC_UNITIZE(n);
 
-  math_vec_dot(d, n, id->norm);
+  MATH_VEC_DOT(d, n, id->norm);
   if(d < 0)
-    math_vec_mul_scalar(n, n, -1.0);
+    MATH_VEC_MUL_SCALAR(n, n, -1.0);
   id->norm = n;
 }

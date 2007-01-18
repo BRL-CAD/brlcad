@@ -42,7 +42,7 @@ void math_math_init(void);
 void math_math_free(void);
 void math_mat_ident(tfloat *M, int S);
 void math_mat_mult(tfloat *A, int Ar, int Ac, tfloat *B, int Br, int Bc, tfloat *C);
-void math_swap_rows(tfloat m[16], int r1, int r2);
+void MATH_SWAP_rows(tfloat m[16], int r1, int r2);
 void math_mat_invert(tfloat *D, tfloat *M, int S);
 
 
@@ -73,7 +73,7 @@ void math_mat_mult(tfloat *A, int Ar, int Ac, tfloat *B, int Br, int Bc, tfloat 
 }
 
 
-void math_swap_rows(tfloat m[16], int r1, int r2) {
+void MATH_SWAP_rows(tfloat m[16], int r1, int r2) {
   tfloat        tmp;
   int           i;
 
@@ -113,8 +113,8 @@ void math_mat_invert(tfloat *D, tfloat *M, int S) {
 
     /* Swap the row with largest value with current row */
     if(maxrow != i) {
-      math_swap_rows(M, i, maxrow);
-      math_swap_rows(D, i, maxrow);
+      MATH_SWAP_rows(M, i, maxrow);
+      MATH_SWAP_rows(D, i, maxrow);
     }
 
     /* Divide the entire current row with maxval to get a 1 on the diagonal */

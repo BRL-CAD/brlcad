@@ -91,10 +91,10 @@ static void tie_tri_prep(tie_t *tie) {
     v2 = tri->data[2];
 
     /* Compute Normal */
-    math_vec_sub(u, tri->data[1], tri->data[0]);
-    math_vec_sub(v, tri->data[2], tri->data[0]);
-    math_vec_cross(tri->data[1], u, v);
-    math_vec_unitize(tri->data[1]);
+    MATH_VEC_SUB(u, tri->data[1], tri->data[0]);
+    MATH_VEC_SUB(v, tri->data[2], tri->data[0]);
+    MATH_VEC_CROSS(tri->data[1], u, v);
+    MATH_VEC_UNITIZE(tri->data[1]);
 
     /* Compute i1 and i2 */
     u.v[0] = fabs(tri->data[1].v[0]);
@@ -125,8 +125,8 @@ static void tie_tri_prep(tie_t *tie) {
     }
 
     /* Compute DotVN */
-    math_vec_mul_scalar(v1, tri->data[0], -1.0);
-    math_vec_dot(tri->data[2].v[0], v1, tri->data[1]);
+    MATH_VEC_MUL_SCALAR(v1, tri->data[0], -1.0);
+    MATH_VEC_DOT(tri->data[2].v[0], v1, tri->data[1]);
   }
 }
 
@@ -320,8 +320,8 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       int i1, i2;
 
       tri = data->tri_list[i];
-      math_vec_dot(u0, tri->data[1], ray->pos);
-      math_vec_dot(v0, tri->data[1], ray->dir);
+      MATH_VEC_DOT(u0, tri->data[1], ray->pos);
+      MATH_VEC_DOT(v0, tri->data[1], ray->dir);
       t.dist = -(tri->data[2].v[0] + u0) / v0;
 
       /*
@@ -334,8 +334,8 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
         continue;
 
       /* Compute Intersection Point (P = O + Dt) */
-      math_vec_mul_scalar(t.pos, ray->dir, t.dist);
-      math_vec_add(t.pos, ray->pos, t.pos);
+      MATH_VEC_MUL_SCALAR(t.pos, ray->dir, t.dist);
+      MATH_VEC_ADD(t.pos, ray->pos, t.pos);
 
       /* Extract i1 and i2 indices from lower bits of the v pointer */
       v = (tfloat *)((intptr_t)(tri->v) & ~0x7L);

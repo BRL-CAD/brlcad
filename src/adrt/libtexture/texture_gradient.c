@@ -69,7 +69,7 @@ void texture_gradient_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *r
   td = (texture_gradient_t *)texture->data;
 
   /* Transform the Point */
-  math_vec_transform(pt, id->pos, mesh->matinv);
+  MATH_VEC_TRANSFORM(pt, id->pos, mesh->matinv);
 
   if(td->axis == 1) {
     pixel->v[0] = pixel->v[1] = pixel->v[2] = mesh->max.v[1] - mesh->min.v[1] > TIE_PREC ? (pt.v[1] - mesh->min.v[1]) / (mesh->max.v[1] - mesh->min.v[1]) : 0.0;

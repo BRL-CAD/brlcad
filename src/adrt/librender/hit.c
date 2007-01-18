@@ -9,7 +9,7 @@ void* render_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
 
   /* Flip normal to face ray origin (via dot product check) */
   if(ray->dir.v[0] * id->norm.v[0] + ray->dir.v[1] * id->norm.v[1] + ray->dir.v[2] * id->norm.v[2] > 0)
-    math_vec_mul_scalar(id->norm, id->norm, -1.0);
+    MATH_VEC_MUL_SCALAR(id->norm, id->norm, -1.0);
 
   if(t->normals) {
     tfloat	dot;
@@ -19,9 +19,9 @@ void* render_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
     norm.v[1] = (1.0 - (id->alpha + id->beta)) * t->normals[1] + id->alpha * t->normals[4] + id->beta * t->normals[7];
     norm.v[2] = (1.0 - (id->alpha + id->beta)) * t->normals[2] + id->alpha * t->normals[5] + id->beta * t->normals[8];
 
-    math_vec_dot(dot, norm, id->norm);
+    MATH_VEC_DOT(dot, norm, id->norm);
     if(dot < 0)
-      math_vec_mul_scalar(norm, norm, -1.0);
+      MATH_VEC_MUL_SCALAR(norm, norm, -1.0);
     id->norm = norm;
   }
 

@@ -44,14 +44,14 @@ void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
   up.v[1] = 0;
   up.v[2] = 1;
 
-  math_vec_cross(normal, ray_dir, up);
-  math_vec_unitize(normal);
+  MATH_VEC_CROSS(normal, ray_dir, up);
+  MATH_VEC_UNITIZE(normal);
 
   /* Construct the plane */
   d->plane[0] = normal.v[0];
   d->plane[1] = normal.v[1];
   d->plane[2] = normal.v[2];
-  math_vec_dot(plane[3], normal, ray_pos); /* up is really new ray_pos */
+  MATH_VEC_DOT(plane[3], normal, ray_pos); /* up is really new ray_pos */
   d->plane[3] = -plane[3];
 
   /******************/
@@ -66,15 +66,15 @@ void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
   for(i = 0; i < TESSELATION; i++) {
     tri_list[3*i+0] = ray_pos;
 
-    math_vec_mul_scalar(tri_list[3*i+1], vec_list[i], SPALL_LEN);
-    math_vec_add(tri_list[3*i+1], tri_list[3*i+1], ray_pos);
+    MATH_VEC_MUL_SCALAR(tri_list[3*i+1], vec_list[i], SPALL_LEN);
+    MATH_VEC_ADD(tri_list[3*i+1], tri_list[3*i+1], ray_pos);
 
     if(i == TESSELATION - 1) {
-      math_vec_mul_scalar(tri_list[3*i+2], vec_list[0], SPALL_LEN);
-      math_vec_add(tri_list[3*i+2], tri_list[3*i+2], ray_pos);
+      MATH_VEC_MUL_SCALAR(tri_list[3*i+2], vec_list[0], SPALL_LEN);
+      MATH_VEC_ADD(tri_list[3*i+2], tri_list[3*i+2], ray_pos);
     } else {
-      math_vec_mul_scalar(tri_list[3*i+2], vec_list[i+1], SPALL_LEN);
-      math_vec_add(tri_list[3*i+2], tri_list[3*i+2], ray_pos);
+      MATH_VEC_MUL_SCALAR(tri_list[3*i+2], vec_list[i+1], SPALL_LEN);
+      MATH_VEC_ADD(tri_list[3*i+2], tri_list[3*i+2], ray_pos);
     }
   }
 
@@ -165,34 +165,34 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   * If the point after the splitting plane is an inhit, then just shade as usual.
   */
 
-  math_vec_dot(dot, ray->dir, hit.id.norm);
+  MATH_VEC_DOT(dot, ray->dir, hit.id.norm);
   /* flip normal */
   dot = fabs(dot);
 
 
   if(hit.mesh->flags == 1) {
-    math_vec_set(color, 0.9, 0.2, 0.2);
+    MATH_VEC_SET(color, 0.9, 0.2, 0.2);
   } else {
     /* Mix actual color with white 4:1, shade 50% darker */
-    math_vec_set(color, 1.0, 1.0, 1.0);
-    math_vec_mul_scalar(color, color, 3.0);
-    math_vec_add(color, color, hit.mesh->prop->color);
-    math_vec_mul_scalar(color, color, 0.125);
+    MATH_VEC_SET(color, 1.0, 1.0, 1.0);
+    MATH_VEC_MUL_SCALAR(color, color, 3.0);
+    MATH_VEC_ADD(color, color, hit.mesh->prop->color);
+    MATH_VEC_MUL_SCALAR(color, color, 0.125);
   }
 
 #if 0
   if(dot < 0) {
 #endif
     /* Shade using inhit */
-    math_vec_mul_scalar(color, color, (dot*0.50));
-    math_vec_add((*pixel), (*pixel), color);
+    MATH_VEC_MUL_SCALAR(color, color, (dot*0.50));
+    MATH_VEC_ADD((*pixel), (*pixel), color);
 #if 0
   } else {
     /* shade solid */
-    math_vec_sub(vec, ray->pos, hit.id.pos);
-    math_vec_unitize(vec);
+    MATH_VEC_SUB(vec, ray->pos, hit.id.pos);
+    MATH_VEC_UNITIZE(vec);
     angle = vec.v[0]*hit.mod*-hit.plane[0] + vec.v[1]*-hit.mod*hit.plane[1] + vec.v[2]*-hit.mod*hit.plane[2];
-    math_vec_mul_scalar((*pixel), color, (angle*0.50));
+    MATH_VEC_MUL_SCALAR((*pixel), color, (angle*0.50));
   }
 #endif
 

@@ -32,16 +32,16 @@ void render_util_spall_vec(TIE_3 dir, tfloat angle, int vec_num, TIE_3 *vec_list
   vec.v[0] /= radius;
   vec.v[1] /= radius;
 
-  vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg;
+  vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*MATH_RAD2DEG : acos(vec.v[0])*MATH_RAD2DEG;
 
   /* triangles to approximate */
   for(i = 0; i < vec_num; i++) {
-    t = angle * sin((i * 360 / vec_num) * math_deg2rad);
-    vec_list[i].v[0] = cos((vec.v[0] + t) * math_deg2rad);
-    vec_list[i].v[1] = sin((vec.v[0] + t) * math_deg2rad);
+    t = angle * sin((i * 360 / vec_num) * MATH_DEG2RAD);
+    vec_list[i].v[0] = cos((vec.v[0] + t) * MATH_DEG2RAD);
+    vec_list[i].v[1] = sin((vec.v[0] + t) * MATH_DEG2RAD);
 
-    t = angle * cos((i * 360 / vec_num) * math_deg2rad);
-    vec_list[i].v[2] = cos(acos(dir.v[2]) + t * math_deg2rad);
+    t = angle * cos((i * 360 / vec_num) * MATH_DEG2RAD);
+    vec_list[i].v[2] = cos(acos(dir.v[2]) + t * MATH_DEG2RAD);
   }
 }
 
@@ -146,8 +146,8 @@ void render_util_spall_list(tie_t *tie, tie_ray_t *ray, tfloat angle, void **dat
   shotline.mesh_list = NULL;
   shotline.mesh_num = 0;
 
-  math_vec_set(shotline.in, 0, 0 ,0);
-  math_vec_set(shotline.out, 0, 0 ,0);
+  MATH_VEC_SET(shotline.in, 0, 0 ,0);
+  MATH_VEC_SET(shotline.out, 0, 0 ,0);
 
   /* Fire the center ray first */
   tie_work(tie, ray, &id, shot_hit, &shotline);

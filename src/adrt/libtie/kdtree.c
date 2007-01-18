@@ -149,7 +149,7 @@ static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, int tri_num) {
     g = ((tie_geom_t *)(tie->kdtree->data));
     g->tri_num = 0;
 
-    math_bbox(tie->min, tie->max, tri_list[0].data[0], tri_list[0].data[1], tri_list[0].data[2]);
+    MATH_BBOX(tie->min, tie->max, tri_list[0].data[0], tri_list[0].data[1], tri_list[0].data[2]);
 
     g->tri_list = (tie_tri_t **)malloc(sizeof(tie_tri_t *) * tri_num);
 
@@ -158,11 +158,11 @@ static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, int tri_num) {
       g->tri_list[i] = &tri_list[i];
 
       /* Get Bounding Box of Triangle */
-      math_bbox(min, max, tri_list[i].data[0], tri_list[i].data[1], tri_list[i].data[2]);
+      MATH_BBOX(min, max, tri_list[i].data[0], tri_list[i].data[1], tri_list[i].data[2]);
 
       /* Check to see if defines a new Max or Min point */
-      math_vec_min(tie->min, min);
-      math_vec_max(tie->max, max);
+      MATH_VEC_MIN(tie->min, min);
+      MATH_VEC_MAX(tie->max, max);
       /* printf("Box: [%.3f, %.3f, %.3f] [%.3f, %.3f, %.3f]\n", tie->min.v[0], tie->min.v[1], tie->min.v[2], tie->max.v[0], tie->max.v[1], tie->max.v[2]); */
     }
 
@@ -185,9 +185,9 @@ static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 tri
   tfloat min, max, d, t, rad;
 
   /* move everything so that the boxcenter is in (0,0,0) */
-  math_vec_sub(v0, triverts[0], (*center));
-  math_vec_sub(v1, triverts[1], (*center));
-  math_vec_sub(v2, triverts[2], (*center));
+  MATH_VEC_SUB(v0, triverts[0], (*center));
+  MATH_VEC_SUB(v1, triverts[1], (*center));
+  MATH_VEC_SUB(v2, triverts[2], (*center));
 
   /*
   * First test overlap in the {x,y,z}-directions
@@ -197,27 +197,27 @@ static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 tri
   */
 
   /* test in X-direction */
-  math_min3(min, v0.v[0], v1.v[0], v2.v[0]);
-  math_max3(max, v0.v[0], v1.v[0], v2.v[0]);
+  MATH_MIN3(min, v0.v[0], v1.v[0], v2.v[0]);
+  MATH_MAX3(max, v0.v[0], v1.v[0], v2.v[0]);
   if(min > half_size->v[0] || max < -half_size->v[0])
     return 0;
 
   /* test in Y-direction */
-  math_min3(min, v0.v[1], v1.v[1], v2.v[1]);
-  math_max3(max, v0.v[1], v1.v[1], v2.v[1]);
+  MATH_MIN3(min, v0.v[1], v1.v[1], v2.v[1]);
+  MATH_MAX3(max, v0.v[1], v1.v[1], v2.v[1]);
   if(min > half_size->v[1] || max < -half_size->v[1])
     return 0;
 
   /* test in Z-direction */
-  math_min3(min, v0.v[2], v1.v[2], v2.v[2]);
-  math_max3(max, v0.v[2], v1.v[2], v2.v[2]);
+  MATH_MIN3(min, v0.v[2], v1.v[2], v2.v[2]);
+  MATH_MAX3(max, v0.v[2], v1.v[2], v2.v[2]);
   if(min > half_size->v[2] || max < -half_size->v[2])
     return 0;
 
   /* compute triangle edges */
-  math_vec_sub(e0, v1, v0); /* tri edge 0 */
-  math_vec_sub(e1, v2, v1); /* tri edge 1 */
-  math_vec_sub(e2, v0, v2); /* tri edge 2 */
+  MATH_VEC_SUB(e0, v1, v0); /* tri edge 0 */
+  MATH_VEC_SUB(e1, v2, v1); /* tri edge 1 */
+  MATH_VEC_SUB(e2, v0, v2); /* tri edge 2 */
 
   /* Perform the 9 tests */
   fe.v[0] = fabs(e0.v[0]);
@@ -248,14 +248,14 @@ static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 tri
   * Test if the box intersects the plane of the triangle
   * compute plane equation of triangle: normal*x+d=0
   */
-  math_vec_cross(normal, e0, e1);
-  math_vec_dot(d, normal, v0);  /* plane eq: normal . x + d = 0 */
+  MATH_VEC_CROSS(normal, e0, e1);
+  MATH_VEC_DOT(d, normal, v0);  /* plane eq: normal . x + d = 0 */
 
   p.v[0] = normal.v[0] > 0 ? half_size->v[0] : -half_size->v[0];
   p.v[1] = normal.v[1] > 0 ? half_size->v[1] : -half_size->v[1];
   p.v[2] = normal.v[2] > 0 ? half_size->v[2] : -half_size->v[2];
 
-  math_vec_dot(t, normal, p);
+  MATH_VEC_DOT(t, normal, p);
   return t >= d ? 1 : 0;
 }
 
@@ -302,11 +302,11 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   cmin[1] = min;
   cmax[1] = max;
 
-  math_vec_add(center[0], max, min);
-  math_vec_mul_scalar(center[0], center[0], 0.5);
+  MATH_VEC_ADD(center[0], max, min);
+  MATH_VEC_MUL_SCALAR(center[0], center[0], 0.5);
 
   /* Split along largest Axis to keep node sizes relatively cube-like (Naive) */
-  math_vec_sub(vec, max, min);
+  MATH_VEC_SUB(vec, max, min);
 
   /* Determine the largest Axis */
   if(vec.v[0] >= vec.v[1] && vec.v[0] >= vec.v[2]) {
@@ -351,8 +351,8 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
     for(i = 0; i < node_gd->tri_num; i++) {
       tri = node_gd->tri_list[i];
       /* Set min anx max */
-      math_min3(tri->v[0], tri->data[0].v[d], tri->data[1].v[d], tri->data[2].v[d]);
-      math_max3(tri->v[1], tri->data[0].v[d], tri->data[1].v[d], tri->data[2].v[d]);
+      MATH_MIN3(tri->v[0], tri->data[0].v[d], tri->data[1].v[d], tri->data[2].v[d]);
+      MATH_MAX3(tri->v[1], tri->data[0].v[d], tri->data[1].v[d], tri->data[2].v[d]);
 
       /* Clamp to node AABB */
       if(tri->v[0] < min.v[d])
@@ -389,10 +389,10 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
         continue;
 
       for(n = 0; n < 2; n++) {
-        math_vec_add(center[n], cmax[n], cmin[n]);
-        math_vec_mul_scalar(center[n], center[n], 0.5);
-        math_vec_sub(half_size[n], cmax[n], cmin[n]);
-        math_vec_mul_scalar(half_size[n], half_size[n], 0.5);
+        MATH_VEC_ADD(center[n], cmax[n], cmin[n]);
+        MATH_VEC_MUL_SCALAR(center[n], center[n], 0.5);
+        MATH_VEC_SUB(half_size[n], cmax[n], cmin[n]);
+        MATH_VEC_MUL_SCALAR(half_size[n], half_size[n], 0.5);
       }
 
       for(i = 0; i < node_gd->tri_num; i++) {
@@ -642,10 +642,10 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   for(n = 0; n < 2; n++) {
     cnt[n] = 0;
 
-    math_vec_add(center[n], cmax[n], cmin[n]);
-    math_vec_mul_scalar(center[n], center[n], 0.5);
-    math_vec_sub(half_size[n], cmax[n], cmin[n]);
-    math_vec_mul_scalar(half_size[n], half_size[n], 0.5);
+    MATH_VEC_ADD(center[n], cmax[n], cmin[n]);
+    MATH_VEC_MUL_SCALAR(center[n], center[n], 0.5);
+    MATH_VEC_SUB(half_size[n], cmax[n], cmin[n]);
+    MATH_VEC_MUL_SCALAR(half_size[n], half_size[n], 0.5);
 
     for(i = 0; i < node_gd->tri_num; i++) {
       /*
@@ -832,14 +832,14 @@ void tie_kdtree_cache_load(tie_t *tie, void *cache) {
   }
 
   /* form bounding box of scene */
-  math_bbox(tie->min, tie->max, tie->tri_list[0].data[0], tie->tri_list[0].data[1], tie->tri_list[0].data[2]);
+  MATH_BBOX(tie->min, tie->max, tie->tri_list[0].data[0], tie->tri_list[0].data[1], tie->tri_list[0].data[2]);
   for(i = 0; i < tie->tri_num; i++) {
     /* Get Bounding Box of Triangle */
-    math_bbox(min, max, tie->tri_list[i].data[0], tie->tri_list[i].data[1], tie->tri_list[i].data[2]);
+    MATH_BBOX(min, max, tie->tri_list[i].data[0], tie->tri_list[i].data[1], tie->tri_list[i].data[2]);
 
     /* Check to see if defines a new Max or Min point */
-    math_vec_min(tie->min, min);
-    math_vec_max(tie->max, max);
+    MATH_VEC_MIN(tie->min, min);
+    MATH_VEC_MAX(tie->max, max);
   }
 }
 
@@ -874,8 +874,8 @@ void tie_kdtree_prep(tie_t *tie) {
   * Compute Floating Fuzz Precision Value
   * For now, take largest dimension as basis for TIE_PREC
   */
-  math_vec_sub(delta, tie->max, tie->min);
-  math_max3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
+  MATH_VEC_SUB(delta, tie->max, tie->min);
+  MATH_MAX3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
 #if TIE_SINGLE_PREC
   TIE_PREC *= 0.000001;
 #else
@@ -883,9 +883,9 @@ void tie_kdtree_prep(tie_t *tie) {
 #endif
 
   /* Grow the head node to avoid floating point fuzz in the building process with edges */
-  math_vec_mul_scalar(delta, delta, 1.0); /* XXX */
-  math_vec_sub(tie->min, tie->min, delta);
-  math_vec_add(tie->max, tie->max, delta);
+  MATH_VEC_MUL_SCALAR(delta, delta, 1.0); /* XXX */
+  MATH_VEC_SUB(tie->min, tie->min, delta);
+  MATH_VEC_ADD(tie->max, tie->max, delta);
 
   /* Compute Max Depth to allow the KD-Tree to grow to */
   tie->max_depth = (int)(TIE_KDTREE_DEPTH_K1 * (log(tie->tri_num) / log(2)) + TIE_KDTREE_DEPTH_K2);

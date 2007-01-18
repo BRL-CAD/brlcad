@@ -90,17 +90,17 @@ static void isst_master_setup() {
   isst_master_mouse_grab = 0;
   isst_master_shift_enabled = 0;
   isst_master_spall_angle = 10;
-  math_vec_set(isst_master_in_hit, 0, 0, 0);
-  math_vec_set(isst_master_out_hit, 0, 0, 0);
+  MATH_VEC_SET(isst_master_in_hit, 0, 0, 0);
+  MATH_VEC_SET(isst_master_out_hit, 0, 0, 0);
 
-  math_vec_set(isst_master_camera_position, 10, 10, 10);
-  math_vec_set(isst_master_shot_position, 0, 0, 0);
+  MATH_VEC_SET(isst_master_camera_position, 10, 10, 10);
+  MATH_VEC_SET(isst_master_shot_position, 0, 0, 0);
   isst_master_camera_focus = isst_master_camera_position;
 
-  celev = cos(35 * math_deg2rad);
-  isst_master_camera_focus.v[0] -= cos(45 * math_deg2rad) * celev;
-  isst_master_camera_focus.v[1] -= sin(45 * math_deg2rad) * celev;
-  isst_master_camera_focus.v[2] -= sin(35 * math_deg2rad);
+  celev = cos(35 * MATH_DEG2RAD);
+  isst_master_camera_focus.v[0] -= cos(45 * MATH_DEG2RAD) * celev;
+  isst_master_camera_focus.v[1] -= sin(45 * MATH_DEG2RAD) * celev;
+  isst_master_camera_focus.v[2] -= sin(35 * MATH_DEG2RAD);
 
   isst_master_camera_azimuth = 45;
   isst_master_camera_elevation = 35;
@@ -253,8 +253,8 @@ void isst_master_result(void *res_buf, int res_len) {
 printf("in_hit: [%f, %f, %f], out_hit: [%f, %f, %f]\n", isst_master_in_hit.v[0], isst_master_in_hit.v[1], isst_master_in_hit.v[2], isst_master_out_hit.v[0], isst_master_out_hit.v[1], isst_master_out_hit.v[2]);
 
     /* Set the Center of of Rotation */
-    math_vec_add(isst_master_cor, isst_master_in_hit, isst_master_out_hit);
-    math_vec_mul_scalar(isst_master_cor, isst_master_cor, 0.5);
+    MATH_VEC_ADD(isst_master_cor, isst_master_in_hit, isst_master_out_hit);
+    MATH_VEC_MUL_SCALAR(isst_master_cor, isst_master_cor, 0.5);
 
     /* number of meshes */
     memcpy(&num, &((unsigned char *)res_buf)[ind], sizeof(int));
@@ -657,33 +657,33 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
 
 
           case SDLK_UP:
-            math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
-            math_vec_mul_scalar(vec, vec, isst_master_scale*10.0);
-            math_vec_add(isst_master_camera_position, isst_master_camera_position, vec);
+            MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
+            MATH_VEC_MUL_SCALAR(vec, vec, isst_master_scale*10.0);
+            MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec);
             break;
 
           case SDLK_DOWN:
-            math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
-            math_vec_mul_scalar(vec, vec, isst_master_scale*10.0);
-            math_vec_sub(isst_master_camera_position, isst_master_camera_position, vec);
+            MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
+            MATH_VEC_MUL_SCALAR(vec, vec, isst_master_scale*10.0);
+            MATH_VEC_SUB(isst_master_camera_position, isst_master_camera_position, vec);
             break;
 
           case SDLK_LEFT:
             /* strafe left */
-            math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
-            math_vec_set(vec2, 0, 0, 1);
-            math_vec_cross(vec3, vec2, vec);
-            math_vec_mul_scalar(vec3, vec3, (isst_master_scale*10.0));
-            math_vec_add(isst_master_camera_position, isst_master_camera_position, vec3);
+            MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
+            MATH_VEC_SET(vec2, 0, 0, 1);
+            MATH_VEC_CROSS(vec3, vec2, vec);
+            MATH_VEC_MUL_SCALAR(vec3, vec3, (isst_master_scale*10.0));
+            MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec3);
             break;
 
           case SDLK_RIGHT:
             /* strafe right */
-            math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
-            math_vec_set(vec2, 0, 0, 1);
-            math_vec_cross(vec3, vec2, vec);
-            math_vec_mul_scalar(vec3, vec3, (isst_master_scale*10.0));
-            math_vec_sub(isst_master_camera_position, isst_master_camera_position, vec3);
+            MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
+            MATH_VEC_SET(vec2, 0, 0, 1);
+            MATH_VEC_CROSS(vec3, vec2, vec);
+            MATH_VEC_MUL_SCALAR(vec3, vec3, (isst_master_scale*10.0));
+            MATH_VEC_SUB(isst_master_camera_position, isst_master_camera_position, vec3);
             break;
 
           case SDLK_F12: /* Server Shutdown and quit*/
@@ -727,8 +727,8 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
               tfloat dist;
 
               /* distance to center of rotation */
-              math_vec_sub(vec, isst_master_camera_position, isst_master_cor);
-              math_vec_dot(dist, vec, vec);
+              MATH_VEC_SUB(vec, isst_master_camera_position, isst_master_cor);
+              MATH_VEC_DOT(dist, vec, vec);
               dist = sqrt(dist);
 
               isst_master_camera_position = isst_master_cor;
@@ -749,8 +749,8 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
               tfloat dist;
 
               /* distance to center of rotation */
-              math_vec_sub(vec, isst_master_camera_position, isst_master_cor);
-              math_vec_dot(dist, vec, vec);
+              MATH_VEC_SUB(vec, isst_master_camera_position, isst_master_cor);
+              MATH_VEC_DOT(dist, vec, vec);
               dist = sqrt(dist);
 
               isst_master_camera_position = isst_master_cor;
@@ -771,8 +771,8 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
               tfloat dist;
 
               /* distance to center of rotation */
-              math_vec_sub(vec, isst_master_camera_position, isst_master_cor);
-              math_vec_dot(dist, vec, vec);
+              MATH_VEC_SUB(vec, isst_master_camera_position, isst_master_cor);
+              MATH_VEC_DOT(dist, vec, vec);
               dist = sqrt(dist);
 
               isst_master_camera_position = isst_master_cor;
@@ -793,10 +793,10 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
             /* project and unitize shot vector onto xy plane */
             vec = isst_master_shot_direction;
             vec.v[2] = 0;
-            math_vec_unitize(vec);
+            MATH_VEC_UNITIZE(vec);
 
-            isst_master_camera_azimuth = fmod(180 + (vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg), 360.0);
-            isst_master_camera_elevation = -asin(isst_master_shot_direction.v[2]) * math_rad2deg;
+            isst_master_camera_azimuth = fmod(180 + (vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*MATH_RAD2DEG : acos(vec.v[0])*MATH_RAD2DEG), 360.0);
+            isst_master_camera_elevation = -asin(isst_master_shot_direction.v[2]) * MATH_RAD2DEG;
             break;
 
 
@@ -829,8 +829,8 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
               memcpy(&((char *)mesg)[dlen], &isst_master_camera_position, sizeof(TIE_3));
               dlen += sizeof(TIE_3);
 
-              math_vec_sub(direction, isst_master_camera_focus, isst_master_camera_position);
-              math_vec_unitize(direction);
+              MATH_VEC_SUB(direction, isst_master_camera_focus, isst_master_camera_position);
+              MATH_VEC_UNITIZE(direction);
 
               /* direction */
               memcpy(&((char *)mesg)[dlen], &direction, sizeof(TIE_3));
@@ -873,8 +873,8 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
               memcpy(&((char *)mesg)[dlen], &isst_master_camera_position, sizeof(TIE_3));
               dlen += sizeof(TIE_3);
 
-              math_vec_sub(direction, isst_master_camera_focus, isst_master_camera_position);
-              math_vec_unitize(direction);
+              MATH_VEC_SUB(direction, isst_master_camera_focus, isst_master_camera_position);
+              MATH_VEC_UNITIZE(direction);
 
               /* direction */
               memcpy(&((char *)mesg)[dlen], &direction, sizeof(TIE_3));
@@ -932,19 +932,19 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
           update = 1;
           if(event_queue[i].button & 1<<(SDL_BUTTON_LEFT-1)) {
             /* backward and forward */
-            math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
-            math_vec_mul_scalar(vec, vec, (isst_master_scale*dy));
-            math_vec_add(isst_master_camera_position, isst_master_camera_position, vec);
+            MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
+            MATH_VEC_MUL_SCALAR(vec, vec, (isst_master_scale*dy));
+            MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec);
 
             /* strafe */
 #if 0
-            math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
+            MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
             vec2.v[0] = 0;
             vec2.v[1] = 0;
             vec2.v[2] = 1;
-            math_vec_cross(vec3, vec2, vec);
-            math_vec_mul_scalar(vec3, vec3, (isst_master_scale*dx));
-            math_vec_add(isst_master_camera_position, isst_master_camera_position, vec3);
+            MATH_VEC_CROSS(vec3, vec2, vec);
+            MATH_VEC_MUL_SCALAR(vec3, vec3, (isst_master_scale*dx));
+            MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec3);
 #endif
           } else if(event_queue[i].button & 1<<(SDL_BUTTON_RIGHT-1)) {
             /* if the shift key is held down then rotate about Center of Rotation */
@@ -957,8 +957,8 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
               vec.v[2] = 0;
 
 #if 0
-              math_vec_unitize(vec);
-              math_vec_magnitude(mag, vec);
+              MATH_VEC_UNITIZE(vec);
+              MATH_VEC_MAGnitude(mag, vec);
 #else
               angle = vec.v[0]*vec.v[0] + vec.v[1]*vec.v[1];
               mag = sqrt(angle);
@@ -966,10 +966,10 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
               vec.v[1] /= mag;
 #endif
 
-              vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*math_rad2deg : acos(vec.v[0])*math_rad2deg;
+              vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*MATH_RAD2DEG : acos(vec.v[0])*MATH_RAD2DEG;
 
               vec.v[0] -= 0.035*dx;
-              vec.v[0] *= math_deg2rad;
+              vec.v[0] *= MATH_DEG2RAD;
 
               isst_master_camera_position.v[0] = -mag*cos(vec.v[0]) + isst_master_cor.v[0];
               isst_master_camera_position.v[1] = -mag*sin(vec.v[0]) + isst_master_cor.v[1];
@@ -982,11 +982,11 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
             isst_master_camera_position.v[2] += isst_master_scale*dy;
 
             /* strafe */
-            math_vec_sub(vec, isst_master_camera_focus, isst_master_camera_position);
-            math_vec_set(vec2, 0, 0, 1);
-            math_vec_cross(vec3, vec2, vec);
-            math_vec_mul_scalar(vec3, vec3, (isst_master_scale*dx));
-            math_vec_add(isst_master_camera_position, isst_master_camera_position, vec3);
+            MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
+            MATH_VEC_SET(vec2, 0, 0, 1);
+            MATH_VEC_CROSS(vec3, vec2, vec);
+            MATH_VEC_MUL_SCALAR(vec3, vec3, (isst_master_scale*dx));
+            MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec3);
           }
 
           /* Keep azimuth position */
@@ -1011,10 +1011,10 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
     if(update) {
       /* Update the camera data based on the current azimuth and elevation */
       isst_master_camera_focus = isst_master_camera_position;
-      celev = cos(isst_master_camera_elevation * math_deg2rad);
-      isst_master_camera_focus.v[0] -= cos(isst_master_camera_azimuth * math_deg2rad) * celev;
-      isst_master_camera_focus.v[1] -= sin(isst_master_camera_azimuth * math_deg2rad) * celev;
-      isst_master_camera_focus.v[2] -= sin(isst_master_camera_elevation * math_deg2rad);
+      celev = cos(isst_master_camera_elevation * MATH_DEG2RAD);
+      isst_master_camera_focus.v[0] -= cos(isst_master_camera_azimuth * MATH_DEG2RAD) * celev;
+      isst_master_camera_focus.v[1] -= sin(isst_master_camera_azimuth * MATH_DEG2RAD) * celev;
+      isst_master_camera_focus.v[2] -= sin(isst_master_camera_elevation * MATH_DEG2RAD);
     }
   }
 }
