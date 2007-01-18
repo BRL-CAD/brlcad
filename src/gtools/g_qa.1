@@ -374,7 +374,17 @@ For example, if the objects specified have a bounding box of 0 0 0 -> 4 3 2 and 
 .B \-S 4
 will cause the initial grid spacing to be adjusted to 0.5 so that 4 samples will be shot across the Z dimension of the bounding box.
 The default is to assure 1 rays per model grid axis.
-
+.TP
+.B \-t \fR\fIoverlap_tolerance\fR
+Sets the tolerance for computing overlaps.  the 
+.I overlap_tolerance
+must be a positive number equal to or greater than 0.0.
+Any overlap smaller than the value specified will be ignored.  
+The default value is 0.0, which causes any overlap to be reported/processed.  
+The value may be specified with a unit specifier such as: 
+.B -t 1.0mm
+or 
+.B -t 0.25in.
 .TP
 .B \-U \fR\fIuse_air\fR
 Specifies the Boolean value (0 or 1) for
