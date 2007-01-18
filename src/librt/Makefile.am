@@ -3,7 +3,16 @@
 lib_LTLIBRARIES = librt.la
 noinst_LTLIBRARIES = librt_nil.la
 
+if WITH_OPENNURBS
+BREP_CPPFLAGS=-DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
+BREP_SRCS = g_brep.cpp
+else
+BREP_CPPFLAGS =
+BREP_SRCS =
+endif
+
 SRCS = \
+	$(BREP_SRCS) \
 	bezier_2d_isect.c \
 	bigE.c \
 	binary_obj.c \
@@ -142,12 +151,6 @@ SRCS = \
 	wdb_comb_std.c \
 	wdb_obj.c
 
-if WITH_OPENNURBS
-BREP_CPPFLAGS=-DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
-SRCS += g_brep.cpp
-endif
-
-
 librt_nil_la_SOURCES = \
 	$(SRCS) \
 	vers.c
@@ -196,6 +199,7 @@ sample_applications_DATA = \
 
 # XXX need to fix these so the timers are selected by configure.ac
 EXTRA_DIST = \
+	$(BREP_SRCS) \
 	$(sample_applications_DATA) \
 	g_bot_include.c \
 	librt.dsp \
