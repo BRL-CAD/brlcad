@@ -671,13 +671,18 @@ initialize ( ) {
     done
 
 
-    #######################################
-    # remove the autom4te.cache directory #
-    #######################################
+    ######################################
+    # remove any previous build products #
+    ######################################
     if test -d autom4te.cache ; then
 	$VERBOSE_ECHO "Found an autom4te.cache directory, deleting it"
 	$VERBOSE_ECHO "rm -rf autom4te.cache"
 	rm -rf autom4te.cache
+    fi
+    if test -f aclocal.m4 ; then
+	$VERBOSE_ECHO "Found an aclocal.m4 file, deleting it"
+	$VERBOSE_ECHO "rm -f aclocal.m4"
+	rm -f aclocal.m4
     fi
     
 } # end of initialize()
