@@ -88,9 +88,6 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	int fd;
 
 	CHECK_DBI_NULL;
-#if 0
-	CHECK_READ_ONLY;
-#endif
 
 	if(argc != 2){
 	  struct bu_vls vls;
@@ -165,6 +162,11 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* Edit the file */
 	if( editit( red_tmpfil ) ){
+
+	        /* specifically avoid CHECK_READ_ONLY; above so that
+		 * we can delay checking if the geometry is read-only
+		 * until here so that red may be used to view objects.
+		 */
 		if (!dbip->dbi_read_only) {
 			if( (node_count = checkcomb()) < 0 ){ /* Do some quick checking on the edited file */
 				Tcl_AppendResult(interp, "Error in edited region, no changes made\n", (char *)NULL);
@@ -249,9 +251,6 @@ print_matrix(FILE *fp, matp_t matrix)
 	fastf_t tmp;
 
 	if( !matrix )
-		return;
-
-	if( bn_mat_is_identity( matrix ) )
 		return;
 
 	for( k=0 ; k<16 ; k++ )
