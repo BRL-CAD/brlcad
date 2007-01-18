@@ -49,7 +49,7 @@
  * config.h if this file has been installed.  (public header files
  * should not use config defines)
  */
-#ifdef HAVE_CONFIG_H
+#if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
 #  ifdef _WIN32
 #    include "config_win.h"
 #  else

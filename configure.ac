@@ -3119,7 +3119,7 @@ fi
 dnl search the BRL-CAD include directory (required for non-srcdir builds).
 dnl should come after the system services checks otherwise or our headers
 dnl may conflict.
-CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/include"
+CPPFLAGS="$CPPFLAGS -DBRLCADBUILD=1 -I\$(top_srcdir)/include"
 
 # make sure ECHO and ECHO_N got defined and substituted
 if test "x$ECHO" = "x" ; then
