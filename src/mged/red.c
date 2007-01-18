@@ -72,141 +72,6 @@ static char	red_tmpcomb[16];
 static char	*red_tmpcomb_init = "red_tmp.aXXXXXX";
 static char	delims[] = " \t/";	/* allowable delimiters */
 
-void put_rgb_into_comb(struct rt_comb_internal *comb, char *str);
-void restore_comb(struct directory *dp);
-int editit(const char *file);
-static int make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name, char *new_name, struct rt_tree_array *rt_tree_array, int tree_index);
-int clear_comb(),build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name),save_comb(struct directory *dpold);
-
-int
-f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-    struct directory *dp;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
-    int node_count;
-    int fd;
-
-    CHECK_DBI_NULL;
-
-    if(argc != 2){
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help red");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    strcpy(red_tmpfil, red_tmpfil_init);
-    strcpy(red_tmpcomb, red_tmpcomb_init);
-
-    dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
-
-    if( dp != DIR_NULL ) {
-	if( !(dp->d_flags & DIR_COMB ) ) {
-	    Tcl_AppendResult(interp, argv[1],
-			     " is not a combination, so cannot be edited this way\n", (char *)NULL);
-	    return TCL_ERROR;
-	}
-
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
-	    TCL_READ_ERR_return;
-
-	comb = (struct rt_comb_internal *)intern.idb_ptr;
-
-	/* Make a file for the text editor */
-#ifdef _WIN32
-	(void)mktemp( red_tmpfil );
-#else
-	if ((fd = mkstemp(red_tmpfil)) < 0) {
-	    perror(red_tmpfil);
-	    return TCL_ERROR;;
-	}
-	(void)close(fd);
-#endif
-
-	/* Write the combination components to the file */
-	if( writecomb( comb, dp->d_namep ) ) {
-	    Tcl_AppendResult(interp, "Unable to edit ", argv[1], "\n", (char *)NULL);
-	    unlink( red_tmpfil );
-	    return TCL_ERROR;
-	}
-    } else {
-	comb = (struct rt_comb_internal *)NULL;
-	/* Make a file for the text editor */
-#ifdef _WIN32
-	(void)mktemp( red_tmpfil );
-#else
-	if ((fd = mkstemp(red_tmpfil)) < 0) {
-	    perror(red_tmpfil);
-	    return TCL_ERROR;;
-	}
-	(void)close(fd);
-#endif
-
-	/* Write the combination components to the file */
-	if( writecomb( comb, argv[1] ) ) {
-	    Tcl_AppendResult(interp, "Unable to edit ", argv[1], "\n", (char *)NULL);
-	    unlink( red_tmpfil );
-	    return TCL_ERROR;
-	}
-    }
-
-    /* Edit the file */
-    if( editit( red_tmpfil ) ){
-
-	/* specifically avoid CHECK_READ_ONLY; above so that
-	 * we can delay checking if the geometry is read-only
-	 * until here so that red may be used to view objects.
-	 */
-	if (!dbip->dbi_read_only) {
-	    if( (node_count = checkcomb()) < 0 ){ /* Do some quick checking on the edited file */
-		Tcl_AppendResult(interp, "Error in edited region, no changes made\n", (char *)NULL);
-		if( comb )
-		    rt_comb_ifree( &intern, &rt_uniresource );
-		(void)unlink( red_tmpfil );
-		return TCL_ERROR;
-	    }
-
-	    if( comb ){
-		if( save_comb( dp ) ){ /* Save combination to a temp name */
-		    Tcl_AppendResult(interp, "No changes made\n", (char *)NULL);
-		    rt_comb_ifree( &intern, &rt_uniresource );
-		    (void)unlink( red_tmpfil );
-		    return TCL_OK;
-		}
-	    }
-
-	    if( build_comb( comb, dp, node_count, argv[1] ) ){
-		Tcl_AppendResult(interp, "Unable to construct new ", dp->d_namep,
-				 (char *)NULL);
-		if( comb ){
-		    restore_comb( dp );
-		    Tcl_AppendResult(interp, "\toriginal restored\n", (char *)NULL );
-		    rt_comb_ifree( &intern, &rt_uniresource );
-		}
-
-		(void)unlink( red_tmpfil );
-		return TCL_ERROR;
-	    }else if( comb ){
-		/* eliminate the temporary combination */
-		char *av[3];
-
-		av[0] = "kill";
-		av[1] = red_tmpcomb;
-		av[2] = NULL;
-		(void)cmd_kill(clientData, interp, 2, av);
-	    }
-	} else {
-	    Tcl_AppendResult(interp, "Because the database is READ-ONLY no changes were made.\n", (char *)NULL);
-	}
-    }
-
-    (void)unlink( red_tmpfil );
-    return TCL_OK;
-}
 
 HIDDEN char *
 find_keyword(int i, char *line, char *word)
@@ -382,6 +247,77 @@ count_nodes(char *line)
 
     return node_count;
 }
+
+static int
+make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name, char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
+{
+    struct rt_db_internal	intern;
+    union tree		*final_tree;
+
+    if (tree_index)
+	final_tree = (union tree *)db_mkgift_tree( rt_tree_array, node_count, &rt_uniresource );
+    else
+	final_tree = (union tree *)NULL;
+
+    RT_INIT_DB_INTERNAL(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_COMBINATION;
+    intern.idb_meth = &rt_functab[ID_COMBINATION];
+    intern.idb_ptr = (genptr_t)comb;
+    comb->tree = final_tree;
+
+    if (strcmp(new_name, old_name)) {
+	int flags;
+
+	if (comb->region_flag)
+	    flags = DIR_COMB | DIR_REGION;
+	else
+	    flags = DIR_COMB;
+
+	if (dp != DIR_NULL) {
+	    if (db_delete(dbip, dp) || db_dirdelete(dbip, dp)) {
+		Tcl_AppendResult(interp, "ERROR: Unable to delete directory entry for ",
+				 old_name, "\n", (char *)NULL);
+		rt_comb_ifree(&intern, &rt_uniresource);
+		return(1);
+	    }
+	}
+
+	if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	    Tcl_AppendResult(interp, "Cannot add ", new_name,
+			     " to directory, no changes made\n", (char *)NULL);
+	    rt_comb_ifree(&intern, &rt_uniresource);
+	    return(1);
+	}
+    } else if( dp == DIR_NULL ) {
+	int flags;
+
+	if (comb->region_flag)
+	    flags = DIR_COMB | DIR_REGION;
+	else
+	    flags = DIR_COMB;
+
+	if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	    Tcl_AppendResult(interp, "Cannot add ", new_name,
+			     " to directory, no changes made\n", (char *)NULL);
+	    rt_comb_ifree( &intern, &rt_uniresource );
+	    return(1);
+	}
+    } else {
+	if (comb->region_flag)
+	    dp->d_flags |= DIR_REGION;
+	else
+	    dp->d_flags &= ~DIR_REGION;
+    }
+
+    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+	Tcl_AppendResult(interp, "ERROR: Unable to write new combination into database.\n", (char *)NULL);
+	return 1;
+    }
+
+    return(0);
+}
+
 
 HIDDEN int
 put_tree_into_comb(struct rt_comb_internal *comb, struct directory *dp, char *old_name, char *new_name, char *str)
@@ -707,148 +643,6 @@ cmd_get_comb(ClientData	clientData,
     }
 }
 
-/*
- *  Usage:  put_comb comb_name is_Region id air material los color
- *			shader inherit boolean_expr
- */
-int
-cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-    struct directory *dp;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal *comb;
-    char new_name_v4[NAMESIZE+1];
-    char *new_name;
-    int offset;
-    int save_comb_flag = 0;
-
-    CHECK_DBI_NULL;
-    CHECK_READ_ONLY;
-
-    if(argc < 7 || 11 < argc){
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helpdevel put_comb");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    strcpy(red_tmpfil, red_tmpfil_init);
-    strcpy(red_tmpcomb, red_tmpcomb_init);
-    dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
-    if(dp != DIR_NULL){
-	if( !(dp->d_flags & DIR_COMB) ){
-	    Tcl_AppendResult(interp, argv[1],
-			     " is not a combination, so cannot be edited this way\n", (char *)NULL);
-	    return TCL_ERROR;
-	}
-
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
-	    TCL_READ_ERR_return;
-
-	comb = (struct rt_comb_internal *)intern.idb_ptr;
-	save_comb(dp); /* Save combination to a temp name */
-	save_comb_flag = 1;
-    }else{
-	comb = (struct rt_comb_internal *)NULL;
-    }
-
-    /* empty the existing combination */
-    if( comb && comb->tree ){
-	db_free_tree( comb->tree, &rt_uniresource );
-	comb->tree = NULL;
-    }else{
-	/* make an empty combination structure */
-	BU_GETSTRUCT( comb, rt_comb_internal );
-	comb->magic = RT_COMB_MAGIC;
-	comb->tree = TREE_NULL;
-	bu_vls_init( &comb->shader );
-	bu_vls_init( &comb->material );
-    }
-
-    if( dbip->dbi_version < 5 )	{
-	new_name = new_name_v4;
-	if(dp == DIR_NULL)
-	    NAMEMOVE(argv[1], new_name_v4);
-	else
-	    NAMEMOVE(dp->d_namep, new_name_v4);
-    } else {
-	if( dp == DIR_NULL )
-	    new_name = argv[1];
-	else
-	    new_name = dp->d_namep;
-    }
-
-    if(*argv[2] == 'y' || *argv[2] == 'Y')
-	comb->region_flag = 1;
-    else
-	comb->region_flag = 0;
-
-    if(comb->region_flag){
-	if(argc != 11){
-	    struct bu_vls vls;
-
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "help put_comb");
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	    return TCL_ERROR;
-	}
-
-	comb->region_id = atoi(argv[3]);
-	comb->aircode = atoi(argv[4]);
-	comb->GIFTmater = atoi(argv[5]);
-	comb->los = atoi(argv[6]);
-
-	/* use the new values for defaults */
-	item_default = comb->region_id + 1;
-	air_default = comb->aircode;
-	mat_default = comb->GIFTmater;
-	los_default = comb->los;
-	offset = 6;
-    }else{
-	if(argc != 7){
-	    struct bu_vls vls;
-
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "help put_comb");
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	    return TCL_ERROR;
-	}
-	offset = 2;
-    }
-
-    put_rgb_into_comb(comb, argv[offset + 1]);
-    bu_vls_strcpy(&comb->shader, argv[offset +2]);
-
-    if(*argv[offset + 3] == 'y' || *argv[offset + 3] == 'Y')
-	comb->inherit = 1;
-    else
-	comb->inherit = 0;
-
-    if(put_tree_into_comb(comb, dp, argv[1], new_name, argv[offset + 4]) == TCL_ERROR){
-	if(comb){
-	    restore_comb(dp);
-	    Tcl_AppendResult(interp, "\toriginal restored\n", (char *)NULL);
-	}
-	(void)unlink(red_tmpfil);
-	return TCL_ERROR;
-    }else if(save_comb_flag){
-	/* eliminate the temporary combination */
-	char *av[3];
-
-	av[0] = "kill";
-	av[1] = red_tmpcomb;
-	av[2] = NULL;
-	(void)cmd_kill(clientData, interp, 2, av);
-    }
-
-    (void)unlink(red_tmpfil);
-    return TCL_OK;
-}
 
 int
 writecomb( const struct rt_comb_internal *comb, const char *name )
@@ -1239,76 +1033,6 @@ checkcomb(void)
 	return( -1 );
     }
     return( node_count );
-}
-
-static int
-make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name, char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
-{
-    struct rt_db_internal	intern;
-    union tree		*final_tree;
-
-    if (tree_index)
-	final_tree = (union tree *)db_mkgift_tree( rt_tree_array, node_count, &rt_uniresource );
-    else
-	final_tree = (union tree *)NULL;
-
-    RT_INIT_DB_INTERNAL(&intern);
-    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    intern.idb_type = ID_COMBINATION;
-    intern.idb_meth = &rt_functab[ID_COMBINATION];
-    intern.idb_ptr = (genptr_t)comb;
-    comb->tree = final_tree;
-
-    if (strcmp(new_name, old_name)) {
-	int flags;
-
-	if (comb->region_flag)
-	    flags = DIR_COMB | DIR_REGION;
-	else
-	    flags = DIR_COMB;
-
-	if (dp != DIR_NULL) {
-	    if (db_delete(dbip, dp) || db_dirdelete(dbip, dp)) {
-		Tcl_AppendResult(interp, "ERROR: Unable to delete directory entry for ",
-				 old_name, "\n", (char *)NULL);
-		rt_comb_ifree(&intern, &rt_uniresource);
-		return(1);
-	    }
-	}
-
-	if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
-	    Tcl_AppendResult(interp, "Cannot add ", new_name,
-			     " to directory, no changes made\n", (char *)NULL);
-	    rt_comb_ifree(&intern, &rt_uniresource);
-	    return(1);
-	}
-    } else if( dp == DIR_NULL ) {
-	int flags;
-
-	if (comb->region_flag)
-	    flags = DIR_COMB | DIR_REGION;
-	else
-	    flags = DIR_COMB;
-
-	if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
-	    Tcl_AppendResult(interp, "Cannot add ", new_name,
-			     " to directory, no changes made\n", (char *)NULL);
-	    rt_comb_ifree( &intern, &rt_uniresource );
-	    return(1);
-	}
-    } else {
-	if (comb->region_flag)
-	    dp->d_flags |= DIR_REGION;
-	else
-	    dp->d_flags &= ~DIR_REGION;
-    }
-
-    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
-	Tcl_AppendResult(interp, "ERROR: Unable to write new combination into database.\n", (char *)NULL);
-	return 1;
-    }
-
-    return(0);
 }
 
 
@@ -1702,6 +1426,282 @@ restore_comb(struct directory *dp)
 
     bu_free( name, "bu_strdup'd name" );
 }
+
+
+/*
+ *  Usage:  put_comb comb_name is_Region id air material los color
+ *			shader inherit boolean_expr
+ */
+int
+cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+    struct directory *dp;
+    struct rt_db_internal	intern;
+    struct rt_comb_internal *comb;
+    char new_name_v4[NAMESIZE+1];
+    char *new_name;
+    int offset;
+    int save_comb_flag = 0;
+
+    CHECK_DBI_NULL;
+    CHECK_READ_ONLY;
+
+    if(argc < 7 || 11 < argc){
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helpdevel put_comb");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    strcpy(red_tmpfil, red_tmpfil_init);
+    strcpy(red_tmpcomb, red_tmpcomb_init);
+    dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
+    if(dp != DIR_NULL){
+	if( !(dp->d_flags & DIR_COMB) ){
+	    Tcl_AppendResult(interp, argv[1],
+			     " is not a combination, so cannot be edited this way\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
+	    TCL_READ_ERR_return;
+
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	save_comb(dp); /* Save combination to a temp name */
+	save_comb_flag = 1;
+    }else{
+	comb = (struct rt_comb_internal *)NULL;
+    }
+
+    /* empty the existing combination */
+    if( comb && comb->tree ){
+	db_free_tree( comb->tree, &rt_uniresource );
+	comb->tree = NULL;
+    }else{
+	/* make an empty combination structure */
+	BU_GETSTRUCT( comb, rt_comb_internal );
+	comb->magic = RT_COMB_MAGIC;
+	comb->tree = TREE_NULL;
+	bu_vls_init( &comb->shader );
+	bu_vls_init( &comb->material );
+    }
+
+    if( dbip->dbi_version < 5 )	{
+	new_name = new_name_v4;
+	if(dp == DIR_NULL)
+	    NAMEMOVE(argv[1], new_name_v4);
+	else
+	    NAMEMOVE(dp->d_namep, new_name_v4);
+    } else {
+	if( dp == DIR_NULL )
+	    new_name = argv[1];
+	else
+	    new_name = dp->d_namep;
+    }
+
+    if(*argv[2] == 'y' || *argv[2] == 'Y')
+	comb->region_flag = 1;
+    else
+	comb->region_flag = 0;
+
+    if(comb->region_flag){
+	if(argc != 11){
+	    struct bu_vls vls;
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "help put_comb");
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
+
+	comb->region_id = atoi(argv[3]);
+	comb->aircode = atoi(argv[4]);
+	comb->GIFTmater = atoi(argv[5]);
+	comb->los = atoi(argv[6]);
+
+	/* use the new values for defaults */
+	item_default = comb->region_id + 1;
+	air_default = comb->aircode;
+	mat_default = comb->GIFTmater;
+	los_default = comb->los;
+	offset = 6;
+    }else{
+	if(argc != 7){
+	    struct bu_vls vls;
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "help put_comb");
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
+	offset = 2;
+    }
+
+    put_rgb_into_comb(comb, argv[offset + 1]);
+    bu_vls_strcpy(&comb->shader, argv[offset +2]);
+
+    if(*argv[offset + 3] == 'y' || *argv[offset + 3] == 'Y')
+	comb->inherit = 1;
+    else
+	comb->inherit = 0;
+
+    if(put_tree_into_comb(comb, dp, argv[1], new_name, argv[offset + 4]) == TCL_ERROR){
+	if(comb){
+	    restore_comb(dp);
+	    Tcl_AppendResult(interp, "\toriginal restored\n", (char *)NULL);
+	}
+	(void)unlink(red_tmpfil);
+	return TCL_ERROR;
+    }else if(save_comb_flag){
+	/* eliminate the temporary combination */
+	char *av[3];
+
+	av[0] = "kill";
+	av[1] = red_tmpcomb;
+	av[2] = NULL;
+	(void)cmd_kill(clientData, interp, 2, av);
+    }
+
+    (void)unlink(red_tmpfil);
+    return TCL_OK;
+}
+
+
+int
+f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+    struct directory *dp;
+    struct rt_db_internal	intern;
+    struct rt_comb_internal	*comb;
+    int node_count;
+    int fd;
+
+    CHECK_DBI_NULL;
+
+    if(argc != 2){
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help red");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    strcpy(red_tmpfil, red_tmpfil_init);
+    strcpy(red_tmpcomb, red_tmpcomb_init);
+
+    dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
+
+    if( dp != DIR_NULL ) {
+	if( !(dp->d_flags & DIR_COMB ) ) {
+	    Tcl_AppendResult(interp, argv[1],
+			     " is not a combination, so cannot be edited this way\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
+	    TCL_READ_ERR_return;
+
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+	/* Make a file for the text editor */
+#ifdef _WIN32
+	(void)mktemp( red_tmpfil );
+#else
+	if ((fd = mkstemp(red_tmpfil)) < 0) {
+	    perror(red_tmpfil);
+	    return TCL_ERROR;;
+	}
+	(void)close(fd);
+#endif
+
+	/* Write the combination components to the file */
+	if( writecomb( comb, dp->d_namep ) ) {
+	    Tcl_AppendResult(interp, "Unable to edit ", argv[1], "\n", (char *)NULL);
+	    unlink( red_tmpfil );
+	    return TCL_ERROR;
+	}
+    } else {
+	comb = (struct rt_comb_internal *)NULL;
+	/* Make a file for the text editor */
+#ifdef _WIN32
+	(void)mktemp( red_tmpfil );
+#else
+	if ((fd = mkstemp(red_tmpfil)) < 0) {
+	    perror(red_tmpfil);
+	    return TCL_ERROR;;
+	}
+	(void)close(fd);
+#endif
+
+	/* Write the combination components to the file */
+	if( writecomb( comb, argv[1] ) ) {
+	    Tcl_AppendResult(interp, "Unable to edit ", argv[1], "\n", (char *)NULL);
+	    unlink( red_tmpfil );
+	    return TCL_ERROR;
+	}
+    }
+
+    /* Edit the file */
+    if( editit( red_tmpfil ) ){
+
+	/* specifically avoid CHECK_READ_ONLY; above so that
+	 * we can delay checking if the geometry is read-only
+	 * until here so that red may be used to view objects.
+	 */
+	if (!dbip->dbi_read_only) {
+	    if( (node_count = checkcomb()) < 0 ){ /* Do some quick checking on the edited file */
+		Tcl_AppendResult(interp, "Error in edited region, no changes made\n", (char *)NULL);
+		if( comb )
+		    rt_comb_ifree( &intern, &rt_uniresource );
+		(void)unlink( red_tmpfil );
+		return TCL_ERROR;
+	    }
+
+	    if( comb ){
+		if( save_comb( dp ) ){ /* Save combination to a temp name */
+		    Tcl_AppendResult(interp, "No changes made\n", (char *)NULL);
+		    rt_comb_ifree( &intern, &rt_uniresource );
+		    (void)unlink( red_tmpfil );
+		    return TCL_OK;
+		}
+	    }
+
+	    if( build_comb( comb, dp, node_count, argv[1] ) ){
+		Tcl_AppendResult(interp, "Unable to construct new ", dp->d_namep,
+				 (char *)NULL);
+		if( comb ){
+		    restore_comb( dp );
+		    Tcl_AppendResult(interp, "\toriginal restored\n", (char *)NULL );
+		    rt_comb_ifree( &intern, &rt_uniresource );
+		}
+
+		(void)unlink( red_tmpfil );
+		return TCL_ERROR;
+	    }else if( comb ){
+		/* eliminate the temporary combination */
+		char *av[3];
+
+		av[0] = "kill";
+		av[1] = red_tmpcomb;
+		av[2] = NULL;
+		(void)cmd_kill(clientData, interp, 2, av);
+	    }
+	} else {
+	    Tcl_AppendResult(interp, "Because the database is READ-ONLY no changes were made.\n", (char *)NULL);
+	}
+    }
+
+    (void)unlink( red_tmpfil );
+    return TCL_OK;
+}
+
 
 /*
  * Local Variables:
