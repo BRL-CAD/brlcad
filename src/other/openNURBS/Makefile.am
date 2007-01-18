@@ -91,8 +91,7 @@ ON_INC = \
 	opennurbs_viewport.h \
 	opennurbs_workspace.h \
 	opennurbs_x.h \
-	opennurbs_xform.h \
-	opennurbs_zlib.h
+	opennurbs_xform.h
 
 ON_SRC = \
 	opennurbs_3dm_attributes.cpp \
@@ -187,8 +186,7 @@ ON_SRC = \
 	opennurbs_workspace.cpp \
 	opennurbs_wstring.cpp \
 	opennurbs_xform.cpp \
-	opennurbs_zlib.cpp \
-	opennurbs_zlib_memory.cpp
+	opennurbs_zlib.cpp
 
 libopenNURBS_la_LIBADD = \
 	$(LIBZ)
@@ -205,7 +203,9 @@ EXTRA_DIST = \
 	example_write \
 	faq.txt \
 	opennurbs.dsp \
+	opennurbs_zlib.h \
 	opennurbs_memory_new.cpp \
+	opennurbs_zlib_memory.cpp \
 	readme.txt
 
 MAINTAINERCLEANFILES = Makefile.in
