@@ -3,7 +3,6 @@
 lib_LTLIBRARIES = libtie.la
 
 libtie_la_SOURCES = tie.c kdtree.c
-libtie_la_LDFLAGS = -static
 
 tieincludedir = $(includedir)/tie
 tieinclude_HEADERS = tie.h define.h struct.h kdtree.h
