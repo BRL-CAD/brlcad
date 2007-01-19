@@ -11,10 +11,14 @@ isst_master_SOURCES = \
 
 isst_master_LDFLAGS = -static
 
-isst_master_CFLAGS = @SDL_CFLAGS@ -D__STRICT_ANSI__ -I.. -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil -I${top_srcdir}/src/adrt/isst -I/usr/local/include/python2.4
+isst_master_CFLAGS = @SDL_CFLAGS@ @PYTHON_CFLAGS@ -D__STRICT_ANSI__ -I.. \
+	-I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet \
+	-I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon \
+	-I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil \
+	-I${top_srcdir}/src/adrt/isst
 
 isst_master_LDADD = \
-	-lpython2.4 \
+	@PYTHON_LIBS@ \
 	@SDL_LIBS@ \
 	${top_builddir}/src/adrt/libcommon/libcommon.la \
 	${top_builddir}/src/adrt/librender/librender.la \

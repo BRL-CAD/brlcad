@@ -1072,15 +1072,10 @@ fi
 # test for python interpreter, auto for with-python is 'no'
 PYTHON=""
 if test "x$bc_with_python" = "xyes" ; then
-	AC_PATH_PROG(PYTHON, python, , $PATH)
-	if test "x$PYTHON" = "x" ; then
-		if test "x$bc_with_python" = "xyes" ; then
-			AC_MSG_NOTICE([Unable to find a python interpreter, searching more extensively])
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_WARN([Unable to find a python interpreter])
-		fi
-	fi
+	AM_PATH_PYTHON(2.0, 
+		       PYTHON_CFLAGS=-I`$PYTHON -c "import distutils.sysconfig;print distutils.sysconfig.get_config_var('INCLUDEPY')"`
+		       PYTHON_LIBS=`$PYTHON -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LIBPL')+'/'+distutils.sysconfig.get_config_var('LIBRARY')+' '+distutils.sysconfig.get_config_var('LIBS')"`
+		       )
 fi
 
 dnl if building jove wasn't specifically requested and wasn't
@@ -3054,6 +3049,8 @@ if test "x$bc_with_python" != "xno" ; then
 		python_works="yes"
 	fi
 fi
+AC_SUBST(PYTHON_CFLAGS)
+AC_SUBST(PYTHON_LIBS)
 AC_MSG_RESULT($python_works)
 
 
