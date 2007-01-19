@@ -51,6 +51,7 @@
 AC_DEFUN([BC_COMPILER_AND_LINKER_RECOGNIZES], [
 __flag="$1"
 bc_[$2]_works=yes
+__keep="$3"
 AC_MSG_CHECKING([if compiler and linker recognize $__flag])
 PRECFLAGS="$CFLAGS"
 PRELDFLAGS="$LDFLAGS"
@@ -65,14 +66,14 @@ AC_TRY_RUN( [
 int main(){exit(0);}
 ], [], [bc_[$2]_works=no])
 AC_MSG_RESULT($bc_[$2]_works)
-if test "x$bc_[$2]_works" = "xno" ; then
+if test "x$bc_[$2]_works" = "xno" -o "x$__keep" != "x" ; then
 	CFLAGS="$PRECFLAGS"
 	LDFLAGS="$PRELDFLAGS"
 fi
 ])
 
 AC_DEFUN([BC_COMPILER_AND_LINKER_RECOGNIZE], [
-BC_COMPILER_AND_LINKER_RECOGNIZES([$1], [$2])
+BC_COMPILER_AND_LINKER_RECOGNIZES([$1], [$2], [$3])
 ])
 
 
@@ -80,6 +81,7 @@ AC_DEFUN([BC_COMPILER_RECOGNIZES], [
 __flag="$1"
 AC_MSG_CHECKING([if compiler recognizes $__flag])
 bc_[$2]_works=yes
+__keep="$3"
 PRECFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $__flag"
 m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
@@ -87,13 +89,13 @@ AC_TRY_COMPILE( [], [int i;], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err
 m4_popdef([AC_TRY_EVAL])
 rm -f conftest.err
 AC_MSG_RESULT($bc_[$2]_works)
-if test "x$bc_[$2]_works" = "xno" ; then
+if test "x$bc_[$2]_works" = "xno" -o "x$__keep" != "x" ; then
 	CFLAGS="$PRECFLAGS"
 fi
 ])
 
 AC_DEFUN([BC_COMPILER_RECOGNIZE], [
-BC_COMPILER_RECOGNIZES([$1], [$2])
+BC_COMPILER_RECOGNIZES([$1], [$2], [$3])
 ])
 
 
@@ -101,6 +103,7 @@ AC_DEFUN([BC_LINKER_RECOGNIZES], [
 __flag="$1"
 AC_MSG_CHECKING([if linker recognizes $__flag])
 bc_[$2]_works=yes
+__keep="$3"
 PRELDFLAGS="$LDFLAGS"
 LDFLAGS="$LDFLAGS $__flag"
 m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
@@ -108,13 +111,13 @@ AC_TRY_LINK( [], [int i;], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/
 m4_popdef([AC_TRY_EVAL])
 rm -f conftest.err
 AC_MSG_RESULT($bc_[$2]_works)
-if test "x$bc_[$2]_works" = "xno" ; then
+if test "x$bc_[$2]_works" = "xno" -o "x$__keep" != "x" ; then
 	LDFLAGS="$PRELDFLAGS"
 fi
 ])
 
 AC_DEFUN([BC_LINKER_RECOGNIZE], [
-BC_LINKER_RECOGNIZES([$1], [$2])
+BC_LINKER_RECOGNIZES([$1], [$2], [$3])
 ])
 
 
@@ -122,6 +125,7 @@ AC_DEFUN([BC_PREPROCESSOR_RECOGNIZES], [
 __flag="$1"
 AC_MSG_CHECKING([if preprocesser recognizes $__flag])
 bc_[$2]_works=yes
+__keep="$3"
 PRECPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $__flag"
 m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
@@ -129,13 +133,13 @@ AC_TRY_COMPILE( [], [int i;], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err
 m4_popdef([AC_TRY_EVAL])
 rm -f conftest.err
 AC_MSG_RESULT($bc_[$2]_works)
-if test "x$bc_[$2]_works" = "xno" ; then
+if test "x$bc_[$2]_works" = "xno" -o "x$__keep" = "x" ; then
 	CPPFLAGS="$PRECPPFLAGS"
 fi
 ])
 
 AC_DEFUN([BC_PREPROCESSOR_RECOGNIZE], [
-BC_PREPROCESSOR_RECOGNIZES([$1], [$2])
+BC_PREPROCESSOR_RECOGNIZES([$1], [$2], [$3])
 ])
 
 # Local Variables:
