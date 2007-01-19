@@ -1639,6 +1639,16 @@ if test ! "x$bc_auto_flags" = "xno" ; then
     dnl check for -fno-common (libtcl needs it on darwin)
     BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-common])
 
+    dnl check for -fexceptions
+    dnl this is needed to resolve __Unwind_Resume when compiling and
+    dnl linking against openNURBS in librt for some binaries, for
+    dnl example rttherm
+    BC_COMPILER_AND_LINKER_RECOGNIZES([-fexceptions], [fexceptions], [nokeep])
+    if test "x$bc_fexceptions_works" = "xyes" ; then
+       EXCEPTIONS="-fexceptions"
+       AC_SUBST(EXCEPTIONS)
+    fi
+
     dnl check for -search_paths_first linker flag.
     dnl prevent a false-positive where it can be treated as a -s and-e
     dnl linker option by adding a benign flag that should succeed.
