@@ -31,6 +31,9 @@ foreach arg $argv {
     puts $arg
 }
 
+lappend tclIndex
+lappend header
+
 # sort the tclIndex
 set fd [open tclIndex]
 while {[gets $fd data] >= 0} {

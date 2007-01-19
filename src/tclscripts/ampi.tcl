@@ -30,6 +30,9 @@ foreach arg $argv {
     puts $arg
 }
 
+lappend pkgIndex
+lappend header
+
 # sort the pkgIndex.tcl
 set fd [open pkgIndex.tcl]
 while {[gets $fd data] >= 0} {
