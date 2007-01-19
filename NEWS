@@ -13,7 +13,7 @@ entire history of the project is available through CVS.
 
 * dxf-g turns 2D entities into sketches instead of nmg - John Anderson
 * removed advertising clause from BSD code  - Sean Morrison
-* allow material ID of zero in rtweight, fix index bug - Karel Kulhavy
+* fix index bug, allow material ID of zero in rtweight - Karel Kulhavy
 * fixed multiple frame render bug in raytracers - Karel Kulhavy
 * mged help command now shows help for all args listed - Sean Morrison
 
