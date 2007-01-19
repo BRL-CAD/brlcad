@@ -30,6 +30,27 @@ foreach arg $argv {
     puts $arg
 }
 
+# sort the pkgIndex.tcl
+set fd [open pkgIndex.tcl]
+while {[gets $fd data] >= 0} {
+    if {[string compare -length 7 $data "package"] == 0} {
+	lappend pkgIndex $data
+    } else {
+	lappend header $data
+    }
+}
+close $fd
+
+# write out the sorted pkgIndex.tcl
+set fd [open pkgIndex.tcl {WRONLY TRUNC CREAT}]
+foreach line $header {
+    puts $fd $line
+}
+foreach line [lsort $pkgIndex] {
+    puts $fd $line
+}
+close $fd
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

@@ -25,10 +25,32 @@
 # This is a comment \
 exit
 
+# make the tclIndex
 foreach arg $argv {
     catch {auto_mkindex $arg *.tcl *.itcl *.itk *.sh}
     puts $arg
 }
+
+# sort the tclIndex
+set fd [open tclIndex]
+while {[gets $fd data] >= 0} {
+    if {[string compare -length 3 $data "set"] == 0} {
+	lappend tclIndex $data
+    } else {
+	lappend header $data
+    }
+}
+close $fd
+
+# write out the sorted tclIndex
+set fd [open tclIndex {WRONLY TRUNC CREAT}]
+foreach line $header {
+    puts $fd $line
+}
+foreach line [lsort $tclIndex] {
+    puts $fd $line
+}
+close $fd
 
 # Local Variables:
 # mode: Tcl
