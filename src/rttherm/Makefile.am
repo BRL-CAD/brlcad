@@ -22,7 +22,7 @@ rttherm_SOURCES = \
 	viewtherm.c
 
 # have to link static due to librttherm.a, the aix linker, and duplicate symbols in optical/multispectral
-rttherm_LDFLAGS = -static
+rttherm_LDFLAGS = -static ${EXCEPTIONS}
 rttherm_CFLAGS = -DRT_MULTISPECTRAL
 rttherm_LDADD = \
 	$(top_builddir)/src/rt/librttherm.a \
