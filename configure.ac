@@ -3619,6 +3619,32 @@ AC_CONFIG_FILES([
 
 AC_OUTPUT
 
+#################
+# patch libtool #
+#################
+case $host_os in
+    darwin*)
+	if test "x$ac_top_builddir" = "x" ; then
+	    libtoolscript="libtool"
+	else
+	    libtoolscript="${ac_top_builddir}/libtool"
+	fi
+	if test -f ${libtoolscript} ; then
+	    if test -w ${libtoolscript} ; then
+		# remove any -all_load option.
+		# provokes libtool linker bug with C++ libraries.
+		sed 's/-all_load[[ 	]]*[\\\]$convenience//g' < $libtoolscript > ${libtoolscript}.sed
+		if test ! "x`cat ${libtoolscript}`" = "x`cat ${libtoolscript}.sed`" ; then
+		    AC_MSG_RESULT([Found -all_load in libtool script, removing])
+		    cp ${libtoolscript}.sed ${libtoolscript}
+		    rm -f ${libtoolscript}.sed
+		fi
+	    else
+		AC_MSG_WARN([libtool script exists but is not writable so not attempting to edit])
+	    fi
+	fi
+	;;
+esac
 
 dnl
 dnl Expand the variables for summary reporting
