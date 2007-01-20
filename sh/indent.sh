@@ -45,22 +45,11 @@
 #   Aberdeen Proving Ground, Maryland 21005-5068  USA
 ###
 
-# locate ourselves for generating a file list
-if [ "x$1" = "x" ] ; then
-    echo "Usage: $0 ./path/to/some/dir"
-    echo "ERROR: A directory was not provided"
-    exit 1;
-elif [ ! -d "$1" ] ; then
-    echo "Usage: $0 ./path/to/some/dir"
-    echo "ERROR: Provided argument [$1] is not a valid directory"
-    exit 1;
-fi
+files="$*"
 
-dir="$1"
-findgen="$1"
-
-if [ ! -d "$findgen" ] ; then
-
+findgen="."
+if [ "x$files" = "x" ] ; then
+    # locate ourselves for generating a file list
     if [ -r "`dirname $0`/../configure.ac" ] ; then
 	findgen="`dirname $0`/.."
     else
@@ -77,30 +66,20 @@ if [ ! -d "$findgen" ] ; then
 	echo "ERROR: Unable to find our path relative to configure.ac"
 	exit 1
     fi
-
 fi
 
-# make sure it prepends a './' if it's a relative path
-char1="`echo $dir | sed 's/^\(.\).*/\1/'`"
-if [ ! "x$char1" = "x/" ] ; then
-    dir="./$dir"
-fi
-
+# locate our requisite lisp helper script
 bir="batch-indent-region.el"
 bir_dir="."
-if [ -r "$findgen/misc/$bir" ] ; then
-    bir_dir="$findgen/misc"
-elif [ -r "./$bir" ] ; then
-    bir_dir="."
-elif [ -r "../$bir" ] ; then
-    bir_dir=".."
-elif [ -r "./misc/$bir" ] ; then
-    bir_dir="./misc"
-elif [ -r "../misc/$bir" ] ; then
-    bir_dir="../misc"
-fi
+for dir in ${findgen}/misc . .. misc ../misc ; do
+    if [ -r "$dir/$bir" ] ; then
+	bir_dir="$dir"
+    fi
+done
+
+# sanity check
 if [ ! -f "$bir_dir/$bir" ] ; then
-    echo "ERROR: Unable to find the batch-indent-region lisp script"
+    echo "ERROR: Unable to find the batch-indent-region.el lisp script"
     echo "       Searched for $bir in:"
     echo "         $findgen/misc:.:..:misc:../misc"
     exit 1
@@ -109,67 +88,88 @@ fi
 # generate a list of files to check, excluding directories that are
 # not BRL-CAD sources, CVS, or start with a dot among other files.
 # have to take care if including shell scripts; look for mistakes in
-# here/now documents.
-files="`find $dir -type f -and \( \
-    -name '*.c' -or \
-    -name '*.h' -or \
-    -name '*.tcl' -or \
-    -name '*.tk' -or \
-    -name '*.itcl' -or \
-    -name '*.itk' -or \
-    -name '*.pl' -or \
-    -name '*.java' -or \
-    -name '*.el' -or \
-    -name '*.f' -or \
-    -name '*.m4' -or \
-    -name '*.sh' -or \
-    -name '*.cc' -or \
-    -name '*.cp' -or \
-    -name '*.cxx' -or \
-    -name '*.cpp' -or \
-    -name '*.CPP' -or \
-    -name '*.c++' -or \
-    -name '*.C' -or \
-    -name '*.hh' -or \
-    -name '*.H' -or \
-    -name '*.m' -or \
-    -name '*.mm' -or \
-    -name '*.M' \
-    \) | \
-    grep -v '/other/' | \
-    grep -v '/doc/' | \
-    grep -v '/CVS' | \
-    grep -v '/misc/' | \
-    grep -v 'autom4te.cache' | \
-    grep -v 'aclocal.m4' \
-    `"
-
+# here/now documents.  this is, if no file arguments were provided.
 if [ "x$files" = "x" ] ; then
-    echo "Warning: No files were found in [$dir]"
+    files="`find $findgen -type f -and \( \
+            -name '*.c' -or \
+            -name '*.h' -or \
+            -name '*.tcl' -or \
+            -name '*.tk' -or \
+            -name '*.itcl' -or \
+            -name '*.itk' -or \
+            -name '*.pl' -or \
+            -name '*.java' -or \
+            -name '*.el' -or \
+            -name '*.f' -or \
+            -name '*.m4' -or \
+            -name '*.sh' -or \
+            -name '*.cc' -or \
+            -name '*.cp' -or \
+            -name '*.cxx' -or \
+            -name '*.cpp' -or \
+            -name '*.CPP' -or \
+            -name '*.c++' -or \
+            -name '*.C' -or \
+            -name '*.hh' -or \
+            -name '*.H' -or \
+            -name '*.m' -or \
+            -name '*.mm' -or \
+            -name '*.M' \
+            \) | \
+            grep -v '/other/' | \
+            grep -v '/doc/' | \
+            grep -v '/CVS' | \
+            grep -v '/misc/enigma/' | \
+            grep -v '/misc/vfont/' | \
+            grep -v 'autom4te.cache' | \
+            grep -v 'aclocal.m4' \
+          `"
 fi
 
 for file in $files ; do
-    echo "=== BEGIN ===> $file"
-
     # sanity checks
-    if [ ! -f "$file" ] ; then
-	echo "."
-	echo "WARNING: $file was lost, skipping"
+    if [ -d "$file" ] ; then
+	echo "WARNING: $file is a directory, skipping"
+	continue
+    elif [ ! -f "$file" ] ; then
+	echo "WARNING: $file does not exist, skipping"
 	continue
     elif [ ! -r "$file" ] ; then
-	echo "."
 	echo "WARNING: $file is not readable"
 	continue
     elif [ ! -w "$file" ] ; then
-	echo "."
 	echo "WARNING: $file is not writeable"
 	continue
     fi
 
-    emacs -batch -l $bir_dir/$bir -f batch-indent-region $file
+    # process a backup until we're sure it makes a change
+    echo "=== BEGIN ===> $file"
+    if [ -f $file.indent.new ] ; then
+	echo "WARNING: $file.indent.new was in the way (overwritten)"
+	rm -f $file.indent.new
+    fi
+    cp $file $file.indent.new
 
-    # done iteration over files
-done
+    # do the work
+    emacs -batch -l $bir_dir/$bir -f batch-indent-region $file.indent.new
+
+    # if the file changed, move it into place
+    filediff="`diff $file $file.indent.new`"
+    if [ "x$filediff" = "x" ] ; then
+	if [ -f $file.indent.old ] ; then
+	    echo "WARNING: $file.indent.old was in the way (overwritten)"
+	    rm -f $file.indent.old
+	fi
+	mv $file $file.indent.old
+	mv $file.indent.new $file
+    else
+	rm -f $file.indent.new
+    fi
+
+done  # iteration over files
+
+echo ""
+echo "Done."
 
 # Local Variables:
 # mode: sh
