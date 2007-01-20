@@ -1,6 +1,6 @@
 /* BRL-CAD	G 5 - G 4 . C
  *
- * Copyright (c) 2004-2006 United States Government as represented by
+ * Copyright (c) 2004-2007 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or

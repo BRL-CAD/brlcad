@@ -1,7 +1,7 @@
 #                  S H A D E R E D I T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2006 United States Government as represented by
+# Copyright (c) 2006-2007 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or

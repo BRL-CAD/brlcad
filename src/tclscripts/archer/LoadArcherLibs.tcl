@@ -1,7 +1,7 @@
 #              L O A D A R C H E R L I B S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2006 United States Government as represented by
+# Copyright (c) 2006-2007 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or

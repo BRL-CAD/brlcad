@@ -1,7 +1,7 @@
 /*                M A K E _ N U R B _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2006 United States Government as represented by
+ * Copyright (c) 1995-2007 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or

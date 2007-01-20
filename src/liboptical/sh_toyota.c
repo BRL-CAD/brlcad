@@ -1,7 +1,7 @@
 /*                     S H _ T O Y O T A . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2006 United States Government as represented by
+ * Copyright (c) 1992-2007 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

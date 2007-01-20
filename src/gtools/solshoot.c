@@ -1,7 +1,7 @@
 /*                      S O L S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2006 United States Government as represented by
+ * Copyright (c) 1995-2007 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or

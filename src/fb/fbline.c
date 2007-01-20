@@ -1,7 +1,7 @@
 /*                        F B L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2006 United States Government as represented by
+ * Copyright (c) 1988-2007 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or

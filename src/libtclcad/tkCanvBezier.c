@@ -1,7 +1,7 @@
 /*                 T K C A N V B E Z I E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2006 United States Government as represented by
+ * Copyright (c) 2004-2007 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Distribution status is public domain, distribution unlimited.

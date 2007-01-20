@@ -1,7 +1,7 @@
 /*                   A N I M _ L O O K A T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2006 United States Government as represented by
+ * Copyright (c) 1993-2007 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
