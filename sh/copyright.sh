@@ -53,6 +53,7 @@ files="$*"
 
 # if provided arguments, assume those will be the files we are to
 # process.  otherwise, locate ourselves for generating a file list.
+findgen="."
 if [ "x$files" = "x" ] ; then
 
     if [ -r "`dirname $0`/../configure.ac" ] ; then
