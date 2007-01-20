@@ -16,7 +16,6 @@ bin_SCRIPTS = \
 
 EXTRA_DIST = \
 	$(bin_SCRIPTS) \
-	cakeinclude.sh \
 	copyright.sh \
 	enumerate.sh \
 	footer.sh \
