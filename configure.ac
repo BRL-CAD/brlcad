@@ -1,7 +1,7 @@
 dnl                   C O N F I G U R E . A C
 dnl BRL-CAD
 dnl
-dnl Copyright (c) 2004-2006 United States Government as represented by
+dnl Copyright (c) 2004-2007 United States Government as represented by
 dnl U.S. Army Research Laboratory.
 dnl
 dnl This program is free software; you can redistribute it and/or
