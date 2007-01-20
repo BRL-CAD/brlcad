@@ -159,14 +159,14 @@ for file in $files ; do
     filediff="`diff $file $file.copyright.new`"
     if [ "x$filediff" = "x" ] ; then
 	echo -n "."
-	rm $file.copyright.new
+	rm -f $file.copyright.new
     elif [ ! "x`echo $filediff | grep \"No newline at end of file\"`" = "x" ] ; then
 	echo ". `basename $file` has no newline -- SKIPPING"
-	rm $file.copyright.new
+	rm -f $file.copyright.new
 	continue
     elif [ ! "x`echo $filediff | grep \"Binary files\"`" = "x" ] ; then
 	echo ". `basename $file` is binary -- SKIPPING"
-	rm $file.copyright.new
+	rm -f $file.copyright.new
 	continue
     else
 	echo -n "."
@@ -183,13 +183,13 @@ for file in $files ; do
 	filediff="`diff $file $file.copyright.new`"
 	if [ "x$filediff" = "x" ] ; then
 	    echo -n "."
-	    rm $file.copyright.new
+	    rm -f $file.copyright.new
 	elif [ ! "x`echo $filediff | grep \"No newline at end of file\"`" = "x" ] ; then
 	    echo -n "."
-	    rm $file.copyright.new
+	    rm -f $file.copyright.new
 	elif [ ! "x`echo $filediff | grep \"Binary files\"`" = "x" ] ; then
 	    echo -n "."
-	    rm $file.copyright.new
+	    rm -f $file.copyright.new
 	else
 	    echo -n "."
 	    modified=no
