@@ -1,2 +1,0 @@
-select project_task.project_task_id,summary,priority,status_id,realname from project_task,users,project_assigned_to where project_assigned_to.project_task_id=project_task.project_task_id and project_assigned_to.assigned_to_id=users.user_id and  group_project_id=21 and status_id=1 order by -priority,project_task.project_task_id;
-
