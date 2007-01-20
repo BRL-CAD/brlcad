@@ -19,8 +19,8 @@ htmldocs_DATA = \
 	concl.html \
 	contents.html \
 	coord-axes.gif \
-	cup \
 	cup.g \
+	cup.sh \
 	cup_and_mug.gif \
 	cup_and_mug_small.gif \
 	cup_out+in.gif \
