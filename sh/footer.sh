@@ -39,7 +39,7 @@
 # the requested indentation settings.
 #
 # The script assumes one file as the argument, so example use might be:
-#   find . -type f -and \( -name \*.sh -or -name \*.c -or -name \*.h -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk -or -name \*.pl \) -not -regex '.*src/other.*' -exec sh/footer.sh {} \;
+#   find . -type f -and \( -name \*.sh -or -name \*.c -or -name \*.h -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk -or -name \*.pl -or -name \*.py \) -not -regex '.*src/other.*' -exec sh/footer.sh {} \;
 #
 # bash arrays are actually used for convenience, hence why bash and
 # not sh.
@@ -184,6 +184,13 @@ case $FILE in
 	wrap=0
 	commentchar="#"
 	;;
+    *.py )
+	echo "$FILE is a Python source file"
+	mode="Python"
+	mode_vars="c-basic-offset python-indent-level"
+	wrap=0
+	commentchar="#"
+	;;
     *.m4 )
 	echo "$FILE is an M4 source file"
 	mode="m4"
@@ -295,6 +302,13 @@ case $FILE in
 		echo "$FILE is a Perl script"
 		mode="Perl"
 		mode_vars="c-basic-offset perl-indent-level"
+		wrap=0
+		commentchar="#"
+		;;
+	    */bin/python )
+		echo "$FILE is a Python script"
+		mode="Python"
+		mode_vars="c-basic-offset python-indent-level"
 		wrap=0
 		commentchar="#"
 		;;

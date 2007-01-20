@@ -201,6 +201,11 @@ case $FILE in
 	wrap=0
 	commentprefix="#"
 	;;
+    *.py )
+	echo "$FILE is a Python source file"
+	wrap=0
+	commentprefix="#"
+	;;
     *.am )
 	echo "$FILE is an Automake template file"
 	wrap=0
@@ -267,6 +272,11 @@ case $FILE in
 		;;
 	    */bin/perl )
 		echo "$FILE is a Perl script"
+		wrap=0
+		commentprefix="#"
+		;;
+	    */bin/python )
+		echo "$FILE is a Python script"
 		wrap=0
 		commentprefix="#"
 		;;
