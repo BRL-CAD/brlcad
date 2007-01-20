@@ -28,7 +28,7 @@ BEGIN
             VALUE "FileDescription", "BRL-CAD for Windows Dynamic-Link Library\0"
             VALUE "FileVersion", BRLCAD_VERSION
             VALUE "InternalName", "brlcad\0"
-            VALUE "LegalCopyright", "Copyright © 2006-2007 United States Government as represented by the U.S. Army Research Laboratory. All Rights Reserved.\0"
+            VALUE "LegalCopyright", "Copyright © 1984-2007 United States Government as represented by the U.S. Army Research Laboratory. All Rights Reserved.\0"
             VALUE "LegalTrademarks", "The word mark ""BRL-CAD"" and the ""BRL-CAD Eagle"" image are registered trademarks of the Department of the Army, United States Government. All rights are reserved.\0"
             VALUE "OriginalFilename", "brlcad.dll\0"
             VALUE "ProductName", "BRL-CAD\0"
