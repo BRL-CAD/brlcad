@@ -79,24 +79,38 @@ LC_ALL=C
 
 # if we weren't already provided with a list of files, generate a list
 # of files to check, excluding directories that are not BRL-CAD source
-# files, CVS foo, known binary files, or stuff that starts with a dot.
+# files, CVS foo, or known binary files.
 if [ "x$files" = "x" ] ; then
     files="`find $findgen -type f | \
-            grep -v 'other/' | \
+	    grep -v '/.#' | \
+	    grep -v '.deps/' | \
+	    grep -v '.libs/' | \
             grep -v 'CVS' | \
+	    grep -v 'Makefile$' |\
+	    grep -v 'Makefile.in$' |\
+            grep -v 'autom4te.cache' | \
+            grep -v 'config.cache' | \
+            grep -v 'config.status' | \
             grep -v 'misc/enigma/' | \
             grep -v 'misc/vfont/' | \
-            grep -v '/\.' | \
-            grep -v 'autom4te.cache' | \
-            grep -v '\.g$' | \
-            grep -v '\.pix$' |\
-            grep -v '\.jpg$' |\
-            grep -v '\.pdf$' |\
-            grep -v '\.dll$' |\
-            grep -v '\.gif$' |\
-            grep -v '\.png$' |\
+            grep -v 'other/' | \
             grep -v '\.bak$' |\
-            grep -v '\.old$' \
+            grep -v '\.bmp$' |\
+            grep -v '\.dll$' |\
+            grep -v '\.g$' | \
+            grep -v '\.gif$' |\
+            grep -v '\.ico$' |\
+            grep -v '\.jpg$' |\
+            grep -v '\.lo$' |\
+            grep -v '\.log' |\
+            grep -v '\.mpg$' |\
+            grep -v '\.o$' |\
+            grep -v '\.old$' |\
+            grep -v '\.pdf$' |\
+            grep -v '\.pix' |\
+            grep -v '\.png$' |\
+            grep -v '#$' |\
+            grep -v '~$' \
           `"
 fi
 
