@@ -8,7 +8,7 @@ fi
 if [ $# -eq 2 ] ; then
     export TOL=$2
 else
-TOL="rel 0.01"
+    TOL="rel 0.01"
 fi
 
 STATUS=1
