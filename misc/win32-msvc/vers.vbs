@@ -1,7 +1,7 @@
 '                         V E R S . V B S
 ' BRL-CAD
 '
-' Copyright (C) 2005-2006 United States Government as represented by
+' Copyright (C) 2005-2007 United States Government as represented by
 ' the U.S. Army Research Laboratory.
 '
 ' Redistribution and use in source and binary forms, with or without
