@@ -18,8 +18,3 @@ To specify the line-drawing elements, use the "Configure Line-Drawing Elements" 
 Use the Options:Occlusion Mode control to specify how the full-color and line-drawing elements are combined. There are three options. The first, the default, draws lines only if they are in the foreground relative to the full-color elements. The second option draws foreground lines, it also draws foreground non-lines (hits) in the non-line color. The third option is like the second, except that the non-line pixels are dithered to make them appear semi-transparent. The best way to understand the occlusion mode behavior is to render the same image under each mode.
 
 To configure the view parameters, use the MGED shift-grips, of the controls under the view menu. Note that because there are two MGED pages, it is necessary for you to select the one from which the view parameters will be retrieved. The default is the "Configure Full-Color Elements" page.
-
-
-
-
-

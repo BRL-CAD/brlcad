@@ -12,8 +12,3 @@ To specify the ghost-view elements, use the "Configure Ghost Elements" page.
 To specify the full-color elements, use the "Configure Full-Color Elements" page. Select the objects you wish to render in full color. Background color selections are ignored, a ghost-view image may only be produced on a white background.
 
 To configure the view parameters, use the MGED shift-grips, of the controls under the view menu. Note that because there are two MGED pages, it is necessary for you to select the one from which the view parameters will be retrieved. The default is the "Configure Ghost Elements" page.
-
-
-
-
-
