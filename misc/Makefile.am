@@ -34,7 +34,8 @@ DISTCLEANFILES = \
 	install-sh \
 	ltmain.sh \
 	ltmain.sh.backup \
-	mkinstalldirs
+	mkinstalldirs \
+	py-compile
 
 MAINTAINERCLEANFILES = Makefile.in
 
