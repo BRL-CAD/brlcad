@@ -415,8 +415,7 @@ $c SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         block="${block}
 $c This library is free software; you can redistribute it and/or
 $c modify it under the terms of the GNU Lesser General Public License
-$c as published by the Free Software Foundation; either version 2 of
-$c the License, or (at your option) any later version.
+$c as published by the Free Software Foundation.
 $c
 $c This library is distributed in the hope that it will be useful, but
 $c WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -432,8 +431,7 @@ $c information.
         block="${block}
 $c This program is free software; you can redistribute it and/or
 $c modify it under the terms of the GNU General Public License as
-$c published by the Free Software Foundation; either version 2 of the
-$c License, or (at your option) any later version.
+$c published by the Free Software Foundation.
 $c
 $c This program is distributed in the hope that it will be useful, but
 $c WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -452,12 +450,10 @@ $c Documentation License or, at your option, under the terms of the
 $c GNU General Public License as published by the Free Software
 $c Foundation.  Permission is granted to copy, distribute and/or
 $c modify this document under the terms of the GNU Free Documentation
-$c License, Version 1.2 or any later version published by the Free
-$c Software Foundation; with no Invariant Sections, no Front-Cover
-$c Texts, and no Back-Cover Texts.  Permission is also granted to
-$c redistribute this document under the terms of the GNU General
-$c Public License; either version 2 of the License, or (at your
-$c option) any later version.
+$c License as published by the Free Software Foundation; with no
+$c Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+$c Permission is also granted to redistribute this document under the
+$c terms of the GNU General Public License.
 $c
 $c You should have received a copy of the GNU Free Documentation
 $c License and/or the GNU General Public License along with this
