@@ -36,7 +36,9 @@
 ###
 #
 # This script updates BRL-CAD Copyright notices to include the current
-# year in the copyright lines.
+# year in the copyright lines.  If provided an argument, the script
+# will process just a single file so that it may be used in
+# conjunction with find or be used to update files manually.
 #
 # Author -
 #   Christopher Sean Morrison
@@ -47,10 +49,11 @@
 #
 ###
 
-# locate ourselves for generating a file list
-findgen="$1"
+files="$*"
 
-if [ ! -d "$findgen" ] ; then
+# if provided arguments, assume those will be the files we are to
+# process.  otherwise, locate ourselves for generating a file list.
+if [ "x$files" = "x" ] ; then
 
   if [ -r "`dirname $0`/../configure.ac" ] ; then
     findgen="`dirname $0`/.."
@@ -63,7 +66,7 @@ if [ ! -d "$findgen" ] ; then
     done
   fi
 
-# sanity check
+  # sanity check
   if [ ! -d "$findgen/sh" ] ; then
     echo "ERROR: Unable to find our path relative to configure.ac"
     exit 1
@@ -74,32 +77,41 @@ fi
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
-# generate a list of files to check, excluding directories that are
-# not BRL-CAD sources, CVS, or start with a dot.
-files="`find $findgen -type f | \
-        grep -v 'other/' | \
-        grep -v 'CVS' | \
-        grep -v 'misc/' | \
-        grep -v \"$findgen/\.\" | \
-        grep -v 'autom4te.cache' | \
-        grep -v '\.g$' | \
-        grep -v '\.pix$' |\
-        grep -v '\.jpg$' |\
-        grep -v '\.pdf$' |\
-        grep -v '\.dll$' |\
-        grep -v '\.gif$' |\
-        grep -v '\.png$' |\
-        grep -v '\.bak$' |\
-        grep -v '\.old$' \
-      `"
+# if we weren't already provided with a list of files, generate a list
+# of files to check, excluding directories that are not BRL-CAD source
+# files, CVS foo, known binary files, or stuff that starts with a dot.
+if [ "x$files" = "x" ] ; then
+    files="`find $findgen -type f | \
+            grep -v 'other/' | \
+            grep -v 'CVS' | \
+            grep -v 'misc/enigma/' | \
+            grep -v 'misc/vfont/' | \
+            grep -v '/\.' | \
+            grep -v 'autom4te.cache' | \
+            grep -v '\.g$' | \
+            grep -v '\.pix$' |\
+            grep -v '\.jpg$' |\
+            grep -v '\.pdf$' |\
+            grep -v '\.dll$' |\
+            grep -v '\.gif$' |\
+            grep -v '\.png$' |\
+            grep -v '\.bak$' |\
+            grep -v '\.old$' \
+          `"
+fi
 
+# process the files
 for file in $files ; do
   echo -n $file
 
   # sanity checks
-  if [ ! -f "$file" ] ; then
+  if [ -d "$file" ] ; then
     echo "."
-    echo "WARNING: $file was lost, skipping"
+    echo "WARNING: $file is a directory, skipping"
+    continue
+  elif [ ! -f "$file" ] ; then
+    echo "."
+    echo "WARNING: $file does not exist, skipping"
     continue
   elif [ ! -r "$file" ] ; then
     echo "."
@@ -123,7 +135,7 @@ for file in $files ; do
   echo -n "."
 
   year=`date +%Y`
-  sed "s/[cC]opyright \{0,1\}([cC]) \{0,1\}\([0-9][0-9][0-9][0-9]\) \{0,1\}-\{0,1\} \{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}\([ .;]\{1,\}\)\(.*United \{1,\}States\)/Copyright (c) \1-$year\2\3/" < $file > $file.copyright.new
+  sed "s/[cC][oO][pP][yY][rR][iI][gG][hH][tT] \{0,1\}(\{0,1\}[cC]\{0,1\})\{0,1\}.\{0,1\} \{0,1\}\([0-9][0-9][0-9][0-9]\) \{0,1\}-\{0,1\} \{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}\([ .;]\{1,\}\)\(.*United \{1,\}States\)/Copyright (c) \1-$year\2\3/" < $file > $file.copyright.new
 
   filediff="`diff $file $file.copyright.new`"
   if [ "x$filediff" = "x" ] ; then
@@ -151,8 +163,7 @@ for file in $files ; do
   elif [ ! "x`echo $filediff | grep \"Binary files\"`" = "x" ] ; then
     rm $file.copyright.new
   else
-    echo "WARNING: $file had Copyright span for the same year"
-    mv $file $file.copyright.2.old
+    mv $file $file.repeat.copyright.old
     mv $file.copyright.new $file
   fi
 
