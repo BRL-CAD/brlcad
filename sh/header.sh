@@ -321,7 +321,7 @@ titleline="${titleline}${title}"
 # figure out the copyright extent #
 ###################################
 copyright=""
-currentyear="`date | awk '{print $6}'`"
+currentyear="`date +%Y`"
 copyrightline="`grep -i copyright $FILE | grep -v -i notice | grep -v -i '\.SH' | head -n 1`"
 if [ "x$copyrightline" = "x" ] ; then
     copyrightline="`grep -i copyright $FILE | grep -v -i united | grep -v -i '\.SH' | head -n 1`"
