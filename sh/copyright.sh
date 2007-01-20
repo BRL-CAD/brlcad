@@ -55,22 +55,22 @@ files="$*"
 # process.  otherwise, locate ourselves for generating a file list.
 if [ "x$files" = "x" ] ; then
 
-  if [ -r "`dirname $0`/../configure.ac" ] ; then
-    findgen="`dirname $0`/.."
-  else
-    for dir in . .. brlcad ; do
-      if [ -r "$dir/configure.ac" ] ; then
-	findgen="$dir"
-	break
-      fi
-    done
-  fi
+    if [ -r "`dirname $0`/../configure.ac" ] ; then
+	findgen="`dirname $0`/.."
+    else
+	for dir in . .. brlcad ; do
+	    if [ -r "$dir/configure.ac" ] ; then
+		findgen="$dir"
+		break
+	    fi
+	done
+    fi
 
   # sanity check
-  if [ ! -d "$findgen/sh" ] ; then
-    echo "ERROR: Unable to find our path relative to configure.ac"
-    exit 1
-  fi
+    if [ ! -d "$findgen/sh" ] ; then
+	echo "ERROR: Unable to find our path relative to configure.ac"
+	exit 1
+    fi
 
 fi
 
@@ -116,73 +116,97 @@ fi
 
 # process the files
 for file in $files ; do
-  echo -n $file
+    echo -n $file
 
   # sanity checks
-  if [ -d "$file" ] ; then
-    echo "."
-    echo "WARNING: $file is a directory, skipping"
-    continue
-  elif [ ! -f "$file" ] ; then
-    echo "."
-    echo "WARNING: $file does not exist, skipping"
-    continue
-  elif [ ! -r "$file" ] ; then
-    echo "."
-    echo "WARNING: $file is not readable"
-    continue
-  elif [ ! -w "$file" ] ; then
-    echo "."
-    echo "WARNING: $file is not writeable"
-    continue
-  fi
-  echo -n "."
-  if [ -f "$file.copyright.new" ] ; then
-    echo "."
-    echo "WARNING: $file.copyright.new is in the way (moving it to .bak)"
-    mv $file.copyright.new $file.copyright.new.bak
-  elif [ -f "$file.copyright.old" ] ; then
-    echo "."
-    echo "WARNING: $file.copyright.old is in the way (moving it to .bak)"
-    mv $file.copyright.old $file.copyright.old.bak
-  fi
-  echo -n "."
+    if [ -d "$file" ] ; then
+	echo ""
+	echo "WARNING: $file is a directory, skipping"
+	continue
+    elif [ ! -f "$file" ] ; then
+	echo ""
+	echo "WARNING: $file does not exist, skipping"
+	continue
+    elif [ ! -r "$file" ] ; then
+	echo ""
+	echo "WARNING: $file is not readable"
+	continue
+    elif [ ! -w "$file" ] ; then
+	echo ""
+	echo "WARNING: $file is not writeable"
+	continue
+    fi
 
-  year=`date +%Y`
-  sed "s/[cC][oO][pP][yY][rR][iI][gG][hH][tT] \{0,1\}(\{0,1\}[cC]\{0,1\})\{0,1\}.\{0,1\} \{0,1\}\([0-9][0-9][0-9][0-9]\) \{0,1\}-\{0,1\} \{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}\([ .;]\{1,\}\)\(.*United \{1,\}States\)/Copyright (c) \1-$year\2\3/" < $file > $file.copyright.new
+    echo -n "."
 
-  filediff="`diff $file $file.copyright.new`"
-  if [ "x$filediff" = "x" ] ; then
-    echo "."
-    rm $file.copyright.new
-  elif [ ! "x`echo $filediff | grep \"No newline at end of file\"`" = "x" ] ; then
-    echo ". `basename $file` has no newline -- SKIPPING"
-    rm $file.copyright.new
-  elif [ ! "x`echo $filediff | grep \"Binary files\"`" = "x" ] ; then
-    echo ". `basename $file` is binary -- SKIPPING"
-    rm $file.copyright.new
-  else
-    echo ". `basename $file` modified"
-    mv $file $file.copyright.old
-    mv $file.copyright.new $file
-  fi
+    if [ -f "$file.copyright.new" ] ; then
+	# echo ""
+	# echo "WARNING: $file.copyright.new is in the way (moving it to .bak)"
+	mv $file.copyright.new $file.copyright.new.bak
+    elif [ -f "$file.copyright.old" ] ; then
+	# echo ""
+	# echo "WARNING: $file.copyright.old is in the way (moving it to .bak)"
+	mv $file.copyright.old $file.copyright.old.bak
+    fi
+    echo -n "."
 
-  sed "s/Copyright ([cC]) $year-$year/Copyright (c) $year/" < $file > $file.copyright.new
+    year=`date +%Y`
+    sed "s/[cC][oO][pP][yY][rR][iI][gG][hH][tT] \{0,1\}(\{0,1\}[cC]\{0,1\})\{0,1\}.\{0,1\} \{0,1\}\([0-9][0-9][0-9][0-9]\) \{0,1\}-\{0,1\} \{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}[0-9]\{0,1\}\([ .;]\{1,\}\)\(.*United \{1,\}States\)/Copyright (c) \1-$year\2\3/" < $file > $file.copyright.new
+    echo -n "."
 
-  filediff="`diff $file $file.copyright.new`"
-  if [ "x$filediff" = "x" ] ; then
-    rm $file.copyright.new
-  elif [ ! "x`echo $filediff | grep \"No newline at end of file\"`" = "x" ] ; then
-    rm $file.copyright.new
-  elif [ ! "x`echo $filediff | grep \"Binary files\"`" = "x" ] ; then
-    rm $file.copyright.new
-  else
-    mv $file $file.repeat.copyright.old
-    mv $file.copyright.new $file
-  fi
+    modified=no
+    filediff="`diff $file $file.copyright.new`"
+    if [ "x$filediff" = "x" ] ; then
+	echo -n "."
+	rm $file.copyright.new
+    elif [ ! "x`echo $filediff | grep \"No newline at end of file\"`" = "x" ] ; then
+	echo ". `basename $file` has no newline -- SKIPPING"
+	rm $file.copyright.new
+	continue
+    elif [ ! "x`echo $filediff | grep \"Binary files\"`" = "x" ] ; then
+	echo ". `basename $file` is binary -- SKIPPING"
+	rm $file.copyright.new
+	continue
+    else
+	echo -n "."
+	modified=yes
+	mv $file $file.copyright.old
+	mv $file.copyright.new $file
+    fi
 
-  # done iteration over files
-done
+    if [ "x$modified" = "xyes" ] ; then
+	# make sure it's not a current year
+	sed "s/Copyright ([cC]) $year-$year/Copyright (c) $year/" < $file > $file.copyright.new
+	echo -n "."
+	
+	filediff="`diff $file $file.copyright.new`"
+	if [ "x$filediff" = "x" ] ; then
+	    echo -n "."
+	    rm $file.copyright.new
+	elif [ ! "x`echo $filediff | grep \"No newline at end of file\"`" = "x" ] ; then
+	    echo -n "."
+	    rm $file.copyright.new
+	elif [ ! "x`echo $filediff | grep \"Binary files\"`" = "x" ] ; then
+	    echo -n "."
+	    rm $file.copyright.new
+	else
+	    echo -n "."
+	    modified=no
+	    mv $file $file.repeat.copyright.old
+	    mv $file.copyright.new $file
+	fi
+
+	if [ "x$modified" = "xyes" ] ; then
+	    echo -n ". `basename $file` is MODIFIED"
+	fi
+    fi
+
+    echo ""
+
+done  # iteration over files
+
+echo ""
+echo "Done."
 
 # Local Variables:
 # mode: sh
