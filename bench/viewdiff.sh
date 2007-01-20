@@ -1,5 +1,5 @@
 #!/bin/sh
-#                      R E C H E C K . S H
+#                    V I E W D I F F . S H
 # BRL-CAD
 #
 # Copyright (c) 2004-2007 United States Government as represented by
