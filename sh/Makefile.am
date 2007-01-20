@@ -28,9 +28,9 @@ EXTRA_DIST = \
 	make_bz2.sh \
 	make_tgz.sh \
 	make_zip.sh \
+	prior.sh \
 	shtool \
 	vers.sh
 
 
 include $(top_srcdir)/misc/Makefile.defs
-
