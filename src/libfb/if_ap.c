@@ -1,28 +1,44 @@
+/*                         I F _ A P . C
+ * BRL-CAD
+ *
+ * Copyright (c) 1989-2007 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
 /** \addtogroup if */
-/*@{*/
-/** \file if_ap.c
-*  Apollo display interface using GPR.  This interface runs under the
-*  display manager(direct mode).
-*
-*  Author-
-*           Dave Barber
-*
-*  Source -
-*           Idaho National Engineering Lab
-*           P.O. Box 1625
-*           Idaho Falls, ID 83415-2408
-*           (208)526-9415
-*
-*  Copyright Notice -
-*           This software is Copyright (C) 1989 by the Department of Energy.
-*           All rights reserved.
-*
-*  BRL NOTE: This is only the scant beginnings of an Apollo interface.
-*   We have no way of testing this, and given the changes in LIBFB this
-*   code may not even compile any longer.  If you make improvements to
-*   this please let us know.
-*/
-/*@}*/
+/** @{ */
+/** @file if_ap.c
+ *
+ *  Apollo display interface using GPR.  This interface runs under the
+ *  display manager(direct mode).
+ *
+ *  Author-
+ *           Dave Barber
+ *
+ *  Source -
+ *           Idaho National Engineering Lab
+ *           P.O. Box 1625
+ *           Idaho Falls, ID 83415-2408
+ *           (208)526-9415
+ *
+ *  BRL NOTE: This is only the scant beginnings of an Apollo interface.
+ *   We have no way of testing this, and given the changes in LIBFB this
+ *   code may not even compile any longer.  If you make improvements to
+ *   this please let us know.
+ */
+/** @} */
 
 #include "common.h"
 
