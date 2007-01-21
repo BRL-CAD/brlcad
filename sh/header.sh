@@ -583,22 +583,7 @@ case "$lineone" in
 	skip=0
 	closeit=1
 	;;
-    "#!/bin/"*)
-        echo "Found script exec line"
-	echo "$lineone" >> $FILE
-	skip=2
-	case "$linetwo" in
-	    "# "*${title})
-	        echo "Found old file header"
-		skip=3
-		;;
-	    "# "*${titlesansext})
-	        echo "Found old file header sans extension"
-		skip=3
-		;;
-	esac
-	;;
-    "# !/bin/"*)
+    "#"*"!"*"/bin/"*)
         echo "Found script exec line"
 	echo "$lineone" >> $FILE
 	skip=2
