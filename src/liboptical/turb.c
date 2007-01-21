@@ -1,5 +1,12 @@
-/*
- *			T U R B . C
+/*                          T U R B . C
+ * BRL-CAD
+ *
+ * Copyright (c) 1994 Gull Island Consultants, Inc.
+ * All rights reserved.
+ *
+ * This software may be freely distributed without prior notice.
+ */
+/** @file turb.c
  *
  *	Larger noise table for turbulence calculations.
  *
@@ -10,20 +17,12 @@
  *	Gull Island Consultants, Inc.
  *	P.O. Box 627
  *	Muskegon, MI  49440
- *
- *  Copyright Notice -
- *	Copyright (c) 1994, Gull Island Consultants, Inc.
- *	All rights reserved.
- *
- *  Distribution Notice -
- *	This software may be freely distributed without prior notice.
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "common.h"
-
 
 #include "machine.h"
 

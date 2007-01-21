@@ -1,4 +1,13 @@
-/*
+/*                       S H _ W O O D . C
+ * BRL-CAD
+ *
+ * Copyright (c) 1994 Gull Island Consultants, Inc.
+ * All rights reserved.
+ *
+ * Permission is granted to freely distribute this software as part of
+ * the BRL-CAD package.
+ */
+/** @file sh_wood.c
  *  			W O O D . C
  *
  *	Simple wood-grain texture
@@ -53,14 +62,6 @@
  *	Gull Island Consultants, Inc.
  *	P.O. Box 627
  *	Muskegon, MI  49440
- *
- *  Copyright Notice -
- *	This Software is Copyright (c) 1994, Gull Island Consultants, Inc.
- *	All rights reserved.
- *
- *  Distribution Notice -
- *	Permission is granted to freely distribute this software as part of
- *	the BRL-CAD package.
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
