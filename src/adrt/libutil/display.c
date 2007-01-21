@@ -1,7 +1,4 @@
 /*                     D I S P L A Y . C
- *
- * @file display.c
- *
  * BRL-CAD
  *
  * Copyright (c) 2002-2007 United States Government as represented by
@@ -20,6 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file display.c
  *
  *  Comments -
  *      Utilities Library - Display (SDL Stuff)
@@ -423,3 +422,13 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
     }
   }
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

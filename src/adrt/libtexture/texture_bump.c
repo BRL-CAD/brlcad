@@ -1,7 +1,4 @@
 /*                     T E X T U R E _ B U M P . C
- *
- * @file texture_bump.c
- *
  * BRL-CAD
  *
  * Copyright (c) 2002-2007 United States Government as represented by
@@ -20,6 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file texture_bump.c
  *
  *  Comments -
  *      Texture Library - Bump Mapping maps R,G,Z to surface normal X,Y,Z
@@ -80,3 +79,13 @@ void texture_bump_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, 
     MATH_VEC_MUL_SCALAR(n, n, -1.0);
   id->norm = n;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -1,7 +1,4 @@
 /*                     D I S P L A Y . H
- *
- * @file display.h
- *
  * BRL-CAD
  *
  * Copyright (c) 2002-2007 United States Government as represented by
@@ -20,6 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file display.h
  *
  *  Comments -
  *      Utilities Library - Display Header
@@ -62,3 +61,13 @@ extern SDL_Surface *util_display_screen;
 extern SDL_Surface *util_display_buffer;
 
 #endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

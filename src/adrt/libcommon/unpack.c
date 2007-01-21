@@ -19,7 +19,6 @@
  * information.
  */
 /** @file unpack.c
- *                     U N P A C K . C
  *
  *  Common Library - Parsing and Packing Header
  *
@@ -669,3 +668,13 @@ void common_unpack_texture_lookup(char *name, texture_t **texture) {
 
   *texture = NULL;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

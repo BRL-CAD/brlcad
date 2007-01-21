@@ -19,7 +19,6 @@
  * information.
  */
 /** @file env.h
- *                     E N V . H
  *
  *  Common Library - Environment Settings Header
  *
@@ -44,3 +43,13 @@ extern	void	common_env_prep(common_env_t *env);
 extern	void	common_env_read(common_env_t *env, char *fpath);
 
 #endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

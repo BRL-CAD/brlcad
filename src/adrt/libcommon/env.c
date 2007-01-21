@@ -19,7 +19,6 @@
  * information.
  */
 /** @file env.c
- *                     E N V . C
  *
  *  Common Library - Environment Settings Parsing
  *
@@ -164,3 +163,13 @@ void common_env_read(common_env_t *env, char *fpath) {
 
   fclose(fh);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

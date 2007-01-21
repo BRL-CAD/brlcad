@@ -1,7 +1,4 @@
 /*                     T E X T U R E _ B L E N D . C
- *
- * @file texture_blend.c
- *
  * BRL-CAD
  *
  * Copyright (c) 2002-2007 United States Government as represented by
@@ -20,6 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file texture_blend.c
  *
  *  Comments -
  *      Texture Library - Uses the R and B channels to blend 2 colors
@@ -72,3 +71,13 @@ void texture_blend_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray,
   pixel->v[1] = (1.0 - coef)*sd->color1.v[1] + coef*sd->color2.v[1];
   pixel->v[2] = (1.0 - coef)*sd->color1.v[2] + coef*sd->color2.v[2];
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

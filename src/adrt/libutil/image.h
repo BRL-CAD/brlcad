@@ -1,7 +1,4 @@
 /*                     I M A G E . H
- *
- * @file image.h
- *
  * BRL-CAD
  *
  * Copyright (c) 2002-2007 United States Government as represented by
@@ -20,6 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file image.h
  *
  *  Comments -
  *      Utilities Library - Image Header
@@ -56,3 +55,13 @@ void	util_image_convert_32to24(void *image24, void *image32, int w, int h, int e
 extern tfloat	*rise_image_raw;
 
 #endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

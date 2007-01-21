@@ -19,7 +19,6 @@
  * information.
  */
 /** @file umath.c
- *                     U M A T H . C
  *
  *  Utilities Library - Extended Math Support
  *
@@ -146,3 +145,13 @@ void math_mat_invert(tfloat *D, tfloat *M, int S) {
 
   memcpy(M, T, 16*sizeof(tfloat));
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

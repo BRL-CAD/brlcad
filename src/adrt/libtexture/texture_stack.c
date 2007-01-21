@@ -1,7 +1,4 @@
 /*                     T E X T U R E _ S T A C K . C
- *
- * @file texture_stack.c
- *
  * BRL-CAD
  *
  * Copyright (c) 2002-2007 United States Government as represented by
@@ -20,6 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file texture_stack.c
  *
  *  Comments -
  *      Texture Library - Stack textures to pipe output of one into another
@@ -85,3 +84,13 @@ void texture_stack_push(texture_t *texture, texture_t *texture_new) {
   td->list = (texture_t **)realloc(td->list, sizeof(texture_t *)*(td->num+1));
   td->list[td->num++] = texture_new;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -1,7 +1,4 @@
 /*                     T E X T U R E _ P E R L I N . H
- *
- * @file texture_perlin.h
- *
  * BRL-CAD
  *
  * Copyright (c) 2002-2007 United States Government as represented by
@@ -20,6 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file texture_perlin.h
  *
  *  Comments -
  *      Texture Library - Perlin Utility Header
@@ -49,3 +48,13 @@ extern	void	texture_perlin_free(texture_perlin_t *P);
 extern	tfloat	texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, tfloat Size, int Depth);
 
 #endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

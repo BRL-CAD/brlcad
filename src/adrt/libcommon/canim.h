@@ -1,7 +1,4 @@
 /*                     C A N I M . H
- *
- * @file canim.h
- *
  * BRL-CAD
  *
  * Copyright (c) 2002-2007 United States Government as represented by
@@ -20,6 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file canim.h
  *
  *  Comments -
  *      Common Library - Animation Header
@@ -43,3 +42,13 @@
 extern int common_anim_read(common_anim_t *anim, char *frames_file);
 
 #endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

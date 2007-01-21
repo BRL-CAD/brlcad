@@ -19,7 +19,6 @@
  * information.
  */
 /** @file pack.c
- *                     P A C K . C
  *
  *  Common Library - Parsing and Packing
  *
@@ -724,3 +723,13 @@ void common_pack_mesh_map(void **app_data, int *app_ind, char *filename) {
   common_pack_write(app_data, &marker, &size, sizeof(unsigned int));
   *app_ind = marker + size;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

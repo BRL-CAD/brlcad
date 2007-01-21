@@ -1,7 +1,4 @@
 /*                     K D T R E E . C
- *
- * @file tie.c
- *
  * BRL-CAD
  *
  * Copyright (c) 2002-2007 United States Government as represented by
@@ -20,6 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file tie.c
  *
  *  @brief support routines for shooting at triangles
  *  Comments -
@@ -902,3 +901,13 @@ void tie_kdtree_prep(tie_t *tie) {
 }
 
 /** @} */
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

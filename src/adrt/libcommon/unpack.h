@@ -19,7 +19,6 @@
  * information.
  */
 /** @file unpack.h
- *                     U N P A C K . H
  *
  *  Common Library - Unpacking Header
  *
@@ -71,3 +70,13 @@ extern	void	common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, in
 extern	void	common_unpack_free(common_db_t *db);
 
 #endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

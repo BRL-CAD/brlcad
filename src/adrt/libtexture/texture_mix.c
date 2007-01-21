@@ -1,7 +1,4 @@
 /*                     T E X T U R E _ M I X . C
- *
- * @file texture_mix.c
- *
  * BRL-CAD
  *
  * Copyright (c) 2002-2007 United States Government as represented by
@@ -20,6 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file texture_mix.c
  *
  *  Comments -
  *      Texture Library - Mix two textures
@@ -77,3 +76,13 @@ void texture_mix_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, t
   MATH_VEC_MUL_SCALAR(t, t, (1.0 - td->coef));
   MATH_VEC_ADD((*pixel), (*pixel), t);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

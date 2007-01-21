@@ -1,7 +1,4 @@
 /*                     A D R T _ C O M M O N . H
- *
- * @file adrt_common.h
- *
  * BRL-CAD
  *
  * Copyright (c) 2002-2007 United States Government as represented by
@@ -20,6 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file adrt_common.h
  *
  *  Comments -
  *      Common Library - Main Include
@@ -142,3 +141,13 @@ typedef struct common_db_s {
 
 
 #endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

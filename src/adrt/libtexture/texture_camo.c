@@ -1,7 +1,4 @@
 /*                     T E X T U R E _ C A M O . C
- *
- * @file texture_camo.h
- *
  * BRL-CAD
  *
  * Copyright (c) 2002-2007 United States Government as represented by
@@ -20,6 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file texture_camo.h
  *
  *  Comments -
  *      Texture Library - Applies a 3 color camoflauge
@@ -102,3 +101,13 @@ void texture_camo_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, 
   if(sum2 < 0.3)
     *pixel = td->color3;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

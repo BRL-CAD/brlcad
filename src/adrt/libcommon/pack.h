@@ -19,7 +19,6 @@
  * information.
  */
 /** @file pack.h
- *                     P A C K . H
  *
  *  Common Library - Parsing and Packing Header
  *
@@ -50,3 +49,13 @@ extern	void	common_pack_write(void **dest, int *ind, void *src, int size);
 extern	int	common_pack_trinum;
 
 #endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

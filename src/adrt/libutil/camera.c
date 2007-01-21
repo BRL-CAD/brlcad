@@ -1,7 +1,4 @@
 /*                     C A M E R A . C
- *
- * @file camera.c
- *
  * BRL-CAD
  *
  * Copyright (c) 2002-2007 United States Government as represented by
@@ -20,6 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file camera.c
  *
  *  Comments -
  *      Utilities Library - Camera
@@ -498,3 +497,13 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
 
   pthread_mutex_destroy(&td.mut);
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
