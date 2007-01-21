@@ -27,21 +27,19 @@
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Wed Mar 23 1983
- * Copyright (c) 1983, University of Utah
- *
  */
 /** @} */
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "nurb.h"
+
 
 /* These Procedures take a set of matrices of the form Ax = b and
  * alows one to solve the system by various means. The rt_nurb_doolittle
