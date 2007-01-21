@@ -1,8 +1,30 @@
-/** \addtogroup if */
-
-/*@{*/
-
-/** \file if_X24.c
+/*                        I F _ X 2 4 . C
+ * BRL-CAD
+ *
+ * Copyright (c) 1994 Sun Microsystems, Inc. - All Rights Reserved.
+ *
+ * Permission is hereby granted, without written agreement and without
+ * license or royalty fees, to use, copy, modify, and distribute this
+ * software and its documentation for any purpose, provided that the
+ * above copyright notice and the following two paragraphs appear in
+ * all copies of this software.
+ *
+ * IN NO EVENT SHALL SUN MICROSYSTEMS INC. BE LIABLE TO ANY PARTY FOR
+ * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING
+ * OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF SUN
+ * MICROSYSTEMS INC. HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * SUN MICROSYSTEMS INC. SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER
+ * IS ON AN "AS IS" BASIS, AND SUN MICROSYSTEMS INC. HAS NO OBLIGATION TO
+ * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+ */
+/** @addtogroup if */
+/** @{*/
+/** @file if_X24.c
+ *
+ *
  *  X Window System (X11) libfb interface, supporting 24-, 8-, and 1-bit
  *  displays.
  *
@@ -16,26 +38,6 @@
  *	Southern Area Special Projects Group
  *	6716 Alexander Bell Drive, Suite 200
  *	Columbia, MD 21046
- *
- *  Copyright Notice -
- *	Copyright (c) 1994 Sun Microsystems, Inc. - All Rights Reserved.
- *
- *	Permission is hereby granted, without written agreement and without
- *	license or royalty fees, to use, copy, modify, and distribute this
- *	software and its documentation for any purpose, provided that the
- *	above copyright notice and the following two paragraphs appear in
- *	all copies of this software.
- *
- *	IN NO EVENT SHALL SUN MICROSYSTEMS INC. BE LIABLE TO ANY PARTY FOR
- *	DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING
- *	OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF SUN
- *	MICROSYSTEMS INC. HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	SUN MICROSYSTEMS INC. SPECIFICALLY DISCLAIMS ANY WARRANTIES,
- *	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- *	AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER
- *	IS ON AN "AS IS" BASIS, AND SUN MICROSYSTEMS INC. HAS NO OBLIGATION TO
- *	PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  *  Acknowledgements -
  *	This software is loosely based on the original if_X.c by
