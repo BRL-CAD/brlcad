@@ -18,23 +18,20 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup plot */
-/*@{*/
+/** @addtogroup plot */
+/** @{ */
 /** @file libbn/list.c
  *
  *  NOTE that tp_2list() and tp_3list() are good candidates to become
  *  intrinsic parts of plot3.c, for efficiency reasons.
  *
- *  
  * @author Michael John Muuss
  * @n	August 04, 1978
  *
- *  @par Source
+ * @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
- *@n	The U. S. Army Ballistic Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5066
- *
+ * @n	The U. S. Army Ballistic Research Laboratory
+ * @n	Aberdeen Proving Ground, Maryland  21005-5066
  */
 
 
@@ -243,7 +240,7 @@ float	*size;
 		}
 	}
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

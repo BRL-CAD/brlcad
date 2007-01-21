@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup hton */
-/*@{*/
+/** @addtogroup hton */
+/** @{ */
 /** @file xdr.c
+ *
  *  Routines to implement an external data representation (XDR)
  *  compatible with the usual InterNet standards, e.g.:
  *  big-endian, twos-compliment fixed point, and IEEE floating point.
@@ -157,7 +157,7 @@ bu_ptimeval( msgp, tvp )
 }
 #endif
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -19,19 +19,20 @@
  * information.
  */
 /** @addtogroup libpkg */
-/*@{*/
+/** @{ */
 /** @file pkg.h
- *@brief
+ *
+ * @brief
  *  Data structures and manifest constants for use with the PKG library.
  *
  *
- *  @author	Michael John Muuss
- *  @author	Charles M. Kennedy
- *  @author	Phillip Dykstra
+ * @author	Michael John Muuss
+ * @author	Charles M. Kennedy
+ * @author	Phillip Dykstra
  *
- *  @par Source
+ * @par Source
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 #ifndef lint
 #define PKG_H_VERSION "@(#)$Header$ (ARL)"
@@ -154,7 +155,7 @@ PKG_EXPORT PKG_EXTERN(char *pkg_plong, (char *buf, long unsigned int l));
 #endif
 
 #endif /* PKG_H_SEENYET */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

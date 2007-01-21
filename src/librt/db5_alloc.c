@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup db5 */
-
-/*@{*/
+/** @{ */
 /** @file db5_alloc.c
+ *
  *  Handle disk space allocation in the BRL-CAD v5 database.
  *
  *  @Author
@@ -30,8 +29,7 @@
  *
  *  @par Source -
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #ifndef lint
@@ -274,7 +272,7 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 	return 0;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

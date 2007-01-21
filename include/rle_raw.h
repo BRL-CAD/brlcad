@@ -16,9 +16,10 @@
  * and the reason for such modification.
  */
 /** @addtogroup utahrle */
-/*@{*/
-/**
- * @file rle_raw.h - Definitions for rle_getraw/rle_putraw.
+/** @{ */
+/** @file rle_raw.h
+ *
+ * Definitions for rle_getraw/rle_putraw.
  * 
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
@@ -125,4 +126,4 @@ struct rle_op {
 #endif
 
 #endif /* RLE_RAW_H */
-/*@}*/
+/** @} */

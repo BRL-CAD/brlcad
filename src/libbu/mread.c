@@ -17,10 +17,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this file; see the file named COPYING for more
  * information.
- *
  */
 /** @addtogroup bu_log */
-/*@{*/
+/** @{ */
 /** @file mread.c
  *
  * @brief multiple-read to fill a buffer
@@ -76,7 +75,7 @@ bu_mread(int fd, void *bufp, long int n)
     }
     return count;
 }
-/*@}*/
+/** @} */
 
 /* Local Variables:
  * mode: C

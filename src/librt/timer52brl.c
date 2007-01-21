@@ -18,12 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup timer */
-
-/*@{*/
-
+/** @{ */
 /** @file timer52brl.c
+ *
  * To provide timing information for RT.
  *	This version for System V, Release TWO, under 4.2 BSD,
  *	using Doug Gwyn's System-V-under-4.2 emulation.
@@ -240,7 +238,7 @@ tvadd(tsum, t0)
 }
 
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -18,9 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup libbn */
-/*@{*/
+/** @{ */
 /** @file noalias-prag.h
  *
  *  This header file is intended to be included by "noalis.h",
@@ -49,7 +48,7 @@
 #		pragma noeqvchk
 #	endif
 #endif
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

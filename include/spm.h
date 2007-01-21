@@ -19,9 +19,10 @@
  * information.
  */
 /** @addtogroup sphmap */
-/*@{*/
+/** @{ */
 /** @file spm.h
- *@brief
+ *
+ * @brief
  *  Sphere data structure and function declarations.
  *
  *  @author
@@ -85,7 +86,7 @@ BN_EXPORT extern int spm_px_load( spm_map_t *mapp, char *filename, int nx, int n
 
 #endif /* SEEN_SPM_H */
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -18,11 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup thread */
-/*@{*/
+/** @addtogroup thread */
+/** @{ */
 /** @file semaphore.c
- *@brief semaphore implementation
+ *
+ *  @brief semaphore implementation
  *
  *  Machine-specific routines for parallel processing.
  *  Primarily for handling semaphores for critical sections.
@@ -507,7 +507,7 @@ bu_semaphore_release(unsigned int i)
 #	endif
 #endif
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

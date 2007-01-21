@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup rt */
-/*@{*/
+/** @{ */
 /** @file shadework.h
  *
  *  @par Source
@@ -95,7 +95,7 @@ struct shadework {
 
 BU_EXTERN(void		pr_shadework, (const char *str, const struct shadework *swp));
 #endif
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -18,18 +18,18 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup bu_log */
-/*@{*/
-/**  @file brlcad_path.c
+/** @{ */
+/** @file brlcad_path.c
+ *
  * @brief
  *  A support routine to provide the executable code with the path
  *  to where the BRL-CAD programs and libraries are installed.
  *
- *  @author	Christopher Sean Morrison
- *  @author	Michael John Muuss
+ * @author	Christopher Sean Morrison
+ * @author	Michael John Muuss
  *
- *  @par Source
+ * @par Source
  *	The U. S. Army Research Laboratory			@n
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
@@ -582,7 +582,7 @@ Use bu_brlcad_data for the path to the data resources.\n\n");
 
 	return bu_brlcad_root(rhs, fail_quietly);
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

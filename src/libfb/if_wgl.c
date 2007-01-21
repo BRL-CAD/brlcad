@@ -18,9 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup if */
-/*@{*/
+/** @addtogroup if */
+/** @{ */
 /** @file if_wgl.c
  *
  *  Frame Buffer Library interface for Windows OpenGL.
@@ -42,7 +41,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (ARL)";

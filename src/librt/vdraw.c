@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup librt */
-/*@{*/
+/** @{ */
 /** @file vdraw.c
+ *
  * Edit vector lists and display them as pseudosolids.
 
 OPEN COMMAND
@@ -99,7 +99,7 @@ Acknowledgements:
 	*- build separate vdraw commands
 
 ********************************************************************/
-/*@}*/
+/** @} */
 
 #include "common.h"
 

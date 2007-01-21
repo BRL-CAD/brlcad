@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup librt */
-/*@{*/
+/** @{ */
 /** @file qray.c
+ *
  * Routines to set and get "Query Ray" variables.
  *
  * Source -
@@ -546,7 +546,7 @@ dgo_qray_data_to_vlist(struct dg_obj		*dgop,
 	}
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -1,10 +1,26 @@
-#define PLOT_BOTH_FACES	1
-
-
+/*                      N M G _ F C U T . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2007 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
 /** @addtogroup  nmg */
-
-/*@{*/
+/** @{ */
 /** @file nmg_fcut.c
+ *
  *  After two faces have been intersected, cut or join loops crossed
  *  by the line of intersection.  (Formerly nmg_comb.c)
  *
@@ -28,11 +44,13 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
+
+#define PLOT_BOTH_FACES	1
 
 #include "common.h"
 

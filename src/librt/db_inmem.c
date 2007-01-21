@@ -18,10 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup dbio */
-
-/*@{*/
+/** @{ */
 /** @file db_inmem.c
  *
  * Routines in support of maintaining geometry in-memory-only.  The
@@ -188,7 +186,7 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
     ext->ext_nbytes = 0;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

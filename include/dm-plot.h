@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libdm */
-/*@{*/
+/** @{ */
 /** @file dm-plot.h
  *
  */
@@ -53,7 +53,7 @@ extern struct plot_vars head_plot_vars;
 
 #endif /* SEEN_DM_PLOT */
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

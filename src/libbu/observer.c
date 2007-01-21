@@ -18,12 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup butcl */
-/*@{*/
-
+/** @addtogroup butcl */
+/** @{ */
 /** @file observer.c
- * @brief Routines for implementing the observer pattern.
+ *
+ * @brief
+ * Routines for implementing the observer pattern.
  *
  * @par Source
  *	SLAD CAD Team
@@ -214,7 +214,7 @@ bu_observer_free(struct bu_observer *headp)
 	}
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

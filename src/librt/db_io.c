@@ -18,10 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup db4 */
-
-/*@{*/
+/** @{ */
 /** @file db_io.c
  *
  * Functions -
@@ -499,7 +497,7 @@ db_free_external(register struct bu_external *ep)
 	bu_free_external(ep);
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -19,10 +19,10 @@
  * information.
  */
 /** @addtogroup mat */
-/*@{*/
+/** @{ */
 /** @file vmath.h
  *
- *@brief vector/matrix math
+ * @brief vector/matrix math
  *
  *  This header file defines many commonly used 3D vector math macros,
  *  and operates on vect_t, point_t, mat_t, and quat_t objects.
@@ -1227,7 +1227,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 __END_DECLS
 
 #endif /* VMATH_H */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -17,6 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** addtogroup libtie */
+/** @{ */
 /** @file kdtree.h
  *
  *  Comments -
@@ -31,7 +33,6 @@
  *
  * $Id$
  */
-/** addtogroup libtie */ /** @{ */
 
 #ifndef _KDTREE_H
 #define _KDTREE_H

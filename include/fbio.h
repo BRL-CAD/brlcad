@@ -18,13 +18,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup libfb */
-/*@{*/
+/** @addtogroup libfb */
+/** @{ */
 /** @file fbio.h
- *@brief
+ *
+ * @brief
  *  BRL-CAD Framebuffer Library I/O Interfaces
  *
- *  @par Source
+ * @par Source
  *	BRL-CAD Open Source
  *
  *  $Header$
@@ -216,7 +217,7 @@ FB_EXPORT extern FBIO debug_interface, disk_interface, stk_interface;
 FB_EXPORT extern FBIO memory_interface, null_interface;
 
 #endif  /* __FBIO_H__ */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

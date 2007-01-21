@@ -19,9 +19,10 @@
  * information.
  */
 /** @addtogroup fixme */
-/*@{*/
+/** @{ */
 /** @file machine.h
- *@brief
+ *
+ * @brief
  *  This header file defines all the
  *	fundamental data types (lower case names, created with "typedef")
  *  and
@@ -830,7 +831,7 @@ typedef long	bitv_t;		/* largest integer type */
 #endif
 
 #endif  /* MACHINE_H */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -18,11 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup hton */
-/*@{*/
+/** @addtogroup hton */
+/** @{ */
 /** @file htond.c
- *@brief convert doubles to host/network format
+ *
+ *  @brief
+ *  convert doubles to host/network format
  *
  *  Library routines for conversion between the local host
  *  64-bit ("double precision") representation, and
@@ -731,7 +732,7 @@ convex_out:
 # include "ntohd.c:  ERROR, no NtoHD conversion for this machine type"
 #endif
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

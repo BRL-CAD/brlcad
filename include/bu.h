@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libbu */
-/*@{*/
+/** @{ */
 /** @file bu.h
  * 
  * @brief
@@ -349,11 +349,11 @@ __BEGIN_DECLS
 	}
 #  endif
 #endif
-/*@}*/
+/** @} */
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup hton */
-/*@{*/
+/** @{ */
 /**
  *  Sizes of "network" format data.
  *  We use the same convention as the TCP/IP specification,
@@ -366,7 +366,7 @@ __BEGIN_DECLS
 #define SIZEOF_NETWORK_LONG	4	/* htonl(), bu_glong(), bu_plong() */
 #define SIZEOF_NETWORK_FLOAT	4	/* htonf() */
 #define SIZEOF_NETWORK_DOUBLE	8	/* htond() */
-/*@}*/
+/** @} */
 
 /*----------------------------------------------------------------------*/
 /* convert.c
@@ -812,7 +812,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
  */
 #define BU_LIST_MAIN_PTR(_type, _ptr2, _name2)	\
 	((struct _type *)(((char *)(_ptr2)) - offsetof(struct _type, _name2.magic)))
-/*@}*/
+/** @} */
 /*----------------------------------------------------------------------*/
 /* bitv.c */
 /*
@@ -936,13 +936,13 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 		} /* end for(_b) */ \
 	} /* end for(_wd) */ \
 } /* end block */
-/*@}*/
+/** @} */
 
 /*----------------------------------------------------------------------*/
 /* hist.c */
 
 /** @addtogroup bu_hist */
-/*@{*/
+/** @{ */
 /**
  *			B U _ H I S T
  *
@@ -982,7 +982,7 @@ struct bu_hist  {
 	} \
 	(_hp)->hg_nsamples += __count;  }
 
-/*@}*/
+/** @} */
 /*----------------------------------------------------------------------*/
 /* ptbl.c */
 /**
@@ -991,7 +991,7 @@ struct bu_hist  {
  * @brief
  *  Support for generalized "pointer tables".
  */
-/*@{*/
+/** @{ */
 
 struct bu_ptbl {
     struct bu_list	l;	/**< @brief linked list for caller's use  */
@@ -1041,7 +1041,7 @@ struct bu_ptbl {
 
 
 /* vlist, vlblock?  But they use vmath.h... */
-/*@}*/
+/** @} */
 
 /*----------------------------------------------------------------------*/
 /* mappedfile.c */
@@ -1066,7 +1066,7 @@ struct bu_ptbl {
  *
  *  For appl == "db_i", file is a ".g" database & apbuf is (struct db_i *).
  */
-/*@{*/
+/** @{ */
 struct bu_mapped_file {
 	struct bu_list	l;
     char		*name;		/**< @brief bu_strdup() of file name  */
@@ -1083,7 +1083,7 @@ struct bu_mapped_file {
 #define BU_MAPPED_FILE_MAGIC	0x4d617066	/* Mapf */
 #define BU_CK_MAPPED_FILE(_p)	BU_CKMAG(_p, BU_MAPPED_FILE_MAGIC, "bu_mapped_file")
 
-/*@}*/
+/** @} */
 /*----------------------------------------------------------------------*/
 
 /* formerly rt_g.rtg_logindent, now use bu_log_indent_delta() */
@@ -1105,7 +1105,7 @@ BU_EXPORT extern struct bu_hook_list bu_bomb_hook_list;
 /*----------------------------------------------------------------------*/
 /* avs.c */
 /** @addtogroup avs */
-/*@{*/
+/** @{ */
 /*
  *  Attribute/value sets
  */
@@ -1161,11 +1161,11 @@ struct bu_attribute_value_set {
 	( (_avsp)->readonly_max == NULL || \
 	    ((genptr_t)(_p) < (genptr_t)(_avsp)->readonly_min || (genptr_t)(_p) > (genptr_t)(_avsp)->readonly_max) )
 
-/*@}*/
+/** @} */
 /*----------------------------------------------------------------------*/
 /* vls.c */
 /** @addtogroup vls */
-/*@{*/
+/** @{ */
 /*
  *  Variable Length Strings: bu_vls support (formerly rt_vls in rtstring.h)
  */
@@ -1201,10 +1201,10 @@ struct bu_vls  {
 /* These are global because BU_SETJUMP must be macro.  Please don't touch. */
 BU_EXPORT extern int	bu_setjmp_valid;		/* !0 = bu_jmpbuf is valid */
 BU_EXPORT extern jmp_buf	bu_jmpbuf;			/* for BU_SETJMP() */
-/*@}*/
+/** @} */
 /*-------------------------------------------------------------------------*/
 /** @addtogroup mro */
-/*@{*/
+/** @{ */
 /** 			B U _ M R O
  *
  *	Support for Multiply Represented Objects
@@ -1238,13 +1238,13 @@ struct bu_mro {
 #define BU_MRO_GETSTRING( _p ) bu_vls_addr( &_p->string_rep )
 
 #define BU_MRO_STRLEN( _p ) bu_vls_strlen( &_p->string_rep )
-/*@}*/
+/** @} */
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup bu_debug Debugging 
  * @ingroup libbu
  */
-/*@{*/
+/** @{ */
 /*
  * Section for BU_DEBUG values
  *
@@ -1278,11 +1278,11 @@ BU_EXPORT extern int	bu_debug;
 \014MAPPED_FILE\013AVS\012PTBL\011MATH\010?\7?\6MEM_QCHECK\5PARALLEL\
 \4?\3MEM_LOG\2MEM_CHECK\1COREDUMP"
 
-/*@}*/
+/** @} */
 /*----------------------------------------------------------------------*/
 /* parse.c */
 /** @addtogroup parse */
-/*@{*/
+/** @{ */
 /*
  *	Structure parse/print
  *
@@ -1443,7 +1443,7 @@ struct bu_external  {
 	(_p)->ext_buf = (genptr_t)NULL; (_p)->ext_nbytes = 0;}
 #define BU_CK_EXTERNAL(_p)	BU_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
 
-/*@}*/
+/** @} */
 /*----------------------------------------------------------------------*/
 /* color.c */
 #define	HUE		0
@@ -1463,7 +1463,7 @@ struct bu_color
 /*----------------------------------------------------------------------*/
 /* red-black tree support */
 /** @addtogroup rb */
-/*@{*/
+/** @{ */
 /*
  *	The data structures and constants for red-black trees.
  *
@@ -1643,7 +1643,7 @@ struct bu_cmdtab {
 /**@}*/
 
 /** @addtogroup avs */
-/*@{*/
+/** @{ */
 /* avs.c */
 BU_EXPORT BU_EXTERN(void bu_avs_init,
 		    (struct bu_attribute_value_set *avp,
@@ -1680,10 +1680,10 @@ BU_EXPORT BU_EXTERN(void bu_avs_add_nonunique,
 		    (struct bu_attribute_value_set *avsp,
 		     char *attribute,
 		     char *value));
-/*@}*/
+/** @} */
 
 /** @addtogroup magic */
-/*@{*/
+/** @{ */
 /* badmagic.c */
 BU_EXPORT BU_EXTERN(void bu_badmagic,
 		    (const long *ptr,
@@ -1691,10 +1691,10 @@ BU_EXPORT BU_EXTERN(void bu_badmagic,
 		     const char *str,
 		     const char *file,
 		     int line));
-/*@}*/
+/** @} */
 
 /** @addtogroup bitv */
-/*@{*/
+/** @{ */
 /* bitv.c */
 BU_EXPORT BU_EXTERN(struct bu_bitv *bu_bitv_new,
 		    (unsigned int nbits));
@@ -1722,9 +1722,9 @@ BU_EXPORT BU_EXTERN(struct bu_bitv *bu_bitv_dup,
 BU_EXPORT BU_EXTERN(void bu_bitv_free,
 		    (struct bu_bitv *bv));
 
-/*@}*/
+/** @} */
 /** @addtogroup bu_log */
-/*@{*/
+/** @{ */
 
 /* bomb.c */
 BU_EXPORT BU_EXTERN(void bu_bomb,
@@ -1733,9 +1733,9 @@ BU_EXPORT BU_EXTERN(void bu_bomb,
 /* bu_fgets.c */
 BU_EXPORT BU_EXTERN(char *bu_fgets,
 		    ( char *s, int size, FILE *stream));
-/*@}*/
+/** @} */
 /** @addtogroup color */
-/*@{*/
+/** @{ */
 
 
 /* color.c */
@@ -1766,9 +1766,9 @@ BU_EXPORT BU_EXTERN(int bu_color_of_hsv_floats,
 BU_EXPORT BU_EXTERN(int bu_color_to_hsv_floats,
 		    (struct bu_color *cp,
 		     fastf_t *hsv));
-/*@}*/
+/** @} */
 /** @addtogroup bu_log */
-/*@{*/
+/** @{ */
 
 /* file.c */
 BU_EXPORT BU_EXTERN(struct bu_file *bu_fopen,
@@ -1809,9 +1809,9 @@ BU_EXPORT BU_EXTERN(int bu_fgetc,
 BU_EXPORT BU_EXTERN(void bu_printfile,
 		    (struct bu_file *bfp));
 
-/*@}*/
+/** @} */
 /** @addtogroup getopt */
-/*@{*/
+/** @{ */
 
 /* getopt.c */
 BU_EXPORT extern int			bu_opterr;
@@ -1822,9 +1822,9 @@ BU_EXPORT BU_EXTERN(int	bu_getopt,
 		    (int nargc, char * const nargv[],
 		     const char *ostr));
 
-/*@}*/
+/** @} */
 /** @addtogroup bu_hist */
-/*@{*/
+/** @{ */
 
 /* hist.c */
 BU_EXPORT BU_EXTERN(void bu_hist_free,
@@ -1842,9 +1842,9 @@ BU_EXPORT BU_EXTERN(void bu_hist_pr,
 		    (const struct bu_hist *histp,
 		     const char *title));
 
-/*@}*/
+/** @} */
 /** @addtogroup hton */
-/*@{*/
+/** @{ */
 
 /* htond.c */
 BU_EXPORT BU_EXTERN(void htond,
@@ -1866,9 +1866,9 @@ BU_EXPORT BU_EXTERN(void ntohf,
 		     const unsigned char *in,
 		     int count));
 
-/*@}*/
+/** @} */
 /** @addtogroup thread */
-/*@{*/
+/** @{ */
 
 /* ispar.c */
 BU_EXPORT BU_EXTERN(int	bu_is_parallel,
@@ -1876,17 +1876,17 @@ BU_EXPORT BU_EXTERN(int	bu_is_parallel,
 BU_EXPORT BU_EXTERN(void bu_kill_parallel,
 		    ());
 
-/*@}*/
+/** @} */
 /** @addtogroup bu_log */
-/*@{*/
+/** @{ */
 
 /* linebuf.c */
 BU_EXPORT BU_EXTERN(void bu_setlinebuf,
 		    (FILE *fp));
 
-/*@}*/
+/** @} */
 /** @addtogroup bu_list */
-/*@{*/
+/** @{ */
 
 /* list.c */
 BU_EXPORT BU_EXTERN(int bu_list_len,
@@ -1908,9 +1908,9 @@ BU_EXPORT BU_EXTERN(void bu_ck_list_magic,
 		     const char *str,
 		     const long magic));
 
-/*@}*/
+/** @} */
 /** @addtogroup bu_log */
-/*@{*/
+/** @{ */
 /* hook.c */
 BU_EXPORT BU_EXTERN(void bu_hook_list_init,
 		    (struct bu_hook_list *hlp));
@@ -1926,9 +1926,9 @@ BU_EXPORT BU_EXTERN(void bu_call_hook,
 		    (struct bu_hook_list *hlp,
 		     genptr_t buf));
 
-/*@}*/
+/** @} */
 /** @addtogroup bu_log */
-/*@{*/
+/** @{ */
 /* log.c */
 BU_EXPORT BU_EXTERN(void bu_log_indent_delta,
 		    (int delta));
@@ -1954,17 +1954,17 @@ BU_EXPORT BU_EXTERN(void bu_flog,
 		    ());
 #endif
 
-/*@}*/
+/** @} */
 /** @addtogroup magic */
-/*@{*/
+/** @{ */
 
 /* magic.c */
 BU_EXPORT BU_EXTERN(const char *bu_identify_magic,
 		    (long magic));
 
-/*@}*/
+/** @} */
 /** @addtogroup malloc */
-/*@{*/
+/** @{ */
 
 /* malloc.c */
 BU_EXPORT extern long		bu_n_malloc;
@@ -2003,9 +2003,9 @@ BU_EXPORT BU_EXTERN(void bu_ck_malloc_ptr,
 BU_EXPORT BU_EXTERN(int	bu_mem_barriercheck,
 		    ());
 
-/*@}*/
+/** @} */
 /** @addtogroup mf */
-/*@{*/
+/** @{ */
 
 /* mappedfile.c */
 BU_EXPORT BU_EXTERN(struct bu_mapped_file *bu_open_mapped_file,
@@ -2024,9 +2024,9 @@ BU_EXPORT BU_EXTERN(struct bu_mapped_file *bu_open_mapped_file_with_path,
 		     const char *appl));
 
 
-/*@}*/
+/** @} */
 /** @addtogroup thread */
-/*@{*/
+/** @{ */
 
 /* parallel.c */
 BU_EXPORT BU_EXTERN(void bu_nice_set,
@@ -2048,9 +2048,9 @@ BU_EXPORT BU_EXTERN(void bu_parallel,
 		     int ncpu,
 		     genptr_t arg));
 
-/*@}*/
+/** @} */
 /** @addtogroup parse */
-/*@{*/
+/** @{ */
 
 /* parse.c */
 BU_EXPORT BU_EXTERN(int bu_struct_export,
@@ -2128,9 +2128,9 @@ BU_EXPORT BU_EXTERN(void bu_copy_external,
 BU_EXPORT BU_EXTERN(char *bu_next_token,
 		    (char *str));
 
-/*@}*/
+/** @} */
 /** @addtogroup bitv */
-/*@{*/
+/** @{ */
 
 /* printb.c */
 BU_EXPORT BU_EXTERN(void bu_vls_printb,
@@ -2182,9 +2182,9 @@ BU_EXPORT BU_EXTERN(void bu_ptbl_trunc,
 		    (struct bu_ptbl *tbl,
 		     int end));
 
-/*@}*/
+/** @} */
 /** @addtogroup rb */
-/*@{*/
+/** @{ */
 
 /* rb_create.c */
 BU_EXPORT BU_EXTERN(bu_rb_tree *bu_rb_create,
@@ -2282,9 +2282,9 @@ BU_EXPORT BU_EXTERN(void bu_rb_walk,
 		     int	trav_type));
 #define		bu_rb_walk1(t,v,d)	bu_rb_walk((t), 0, (v), (d))
 
-/*@}*/
+/** @} */
 /** @addtogroup thread */
-/*@{*/
+/** @{ */
 
 /* semaphore.c */
 BU_EXPORT BU_EXTERN(void bu_semaphore_init,
@@ -2294,9 +2294,9 @@ BU_EXPORT BU_EXTERN(void bu_semaphore_acquire,
 BU_EXPORT BU_EXTERN(void bu_semaphore_release,
 		    (unsigned int i));
 
-/*@}*/
+/** @} */
 /** @addtogroup vls */
-/*@{*/
+/** @{ */
 
 /* vls.c */
 BU_EXPORT BU_EXTERN(void bu_vls_init,
@@ -2408,14 +2408,14 @@ BU_EXPORT BU_EXTERN(void bu_vls_prepend,
 		    (struct bu_vls *vp,
 		     char *str));
 
-/*@}*/
+/** @} */
 
 
 /* vers.c */
 BU_EXPORT extern const char		bu_version[];
 
 /** @addtogroup bu_log */
-/*@{*/
+/** @{ */
 /* units.c */
 BU_EXPORT BU_EXTERN(double bu_units_conversion,
 		    (const char *str));
@@ -2431,9 +2431,9 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 
 
 
-/*@}*/
+/** @} */
 /** @addtogroup hton */
-/*@{*/
+/** @{ */
 
 /* xdr.c */
 /* Macro version of library routine bu_glong() */
@@ -2469,9 +2469,9 @@ BU_EXPORT BU_EXTERN(unsigned char *bu_plong,
 
 
 
-/*@}*/
+/** @} */
 /** @addtogroup bu_log */
-/*@{*/
+/** @{ */
 
 /* association.c */
 BU_EXPORT BU_EXTERN(struct bu_vls *bu_association,
@@ -2480,9 +2480,9 @@ BU_EXPORT BU_EXTERN(struct bu_vls *bu_association,
 		     int field_sep));
 
 
-/*@}*/
+/** @} */
 /** @addtogroup butcl */
-/*@{*/
+/** @{ */
 
 /* Things that live in libbu/observer.c */
 BU_EXPORT extern struct bu_cmdtab bu_observer_cmds[];
@@ -2627,9 +2627,9 @@ BU_EXPORT BU_EXTERN(int Bu_Init,
 #endif
 
 
-/*@}*/
+/** @} */
 /** @addtogroup bu_log */
-/*@{*/
+/** @{ */
 
 /* lex.c */
 #define BU_LEX_ANY	0	/* pseudo type */
@@ -2691,9 +2691,9 @@ BU_EXPORT BU_EXTERN(void bu_mro_free,
 		    (struct bu_mro *mrop));
 
 
-/*@}*/
+/** @} */
 /** @addtogroup bu_hash */
-/*@{*/
+/** @{ */
 
 
 /* hash.c */
@@ -2764,7 +2764,7 @@ BU_EXPORT BU_EXTERN(struct bu_hash_entry *bu_hash_tbl_next,
 __END_DECLS
 
 #endif  /* __BU_H__ */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

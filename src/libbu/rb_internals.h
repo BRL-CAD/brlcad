@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup rb */
-/*@{*/
+/** @addtogroup rb */
+/** @{ */
 /** @file rb_internals.h
+ *
  *	The constants, macro functions, etc. need within LIBBU(3)
  *	to handle the red-black tree utilities.
  *
@@ -30,7 +30,7 @@
  *
  *  @par Source -
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  *  $Header$
  */
@@ -168,7 +168,7 @@ BU_EXTERN(void bu_rb_free_node,		(struct bu_rb_node *node));
 BU_EXTERN(void bu_rb_free_package,	(struct bu_rb_package *package));
 
 #endif /* BU_RB_INTERNALS_H */
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

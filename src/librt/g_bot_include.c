@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_bot_include.c
+ *
  *	This file contains all the routines for "g_bot.c" that contain references to
  *	"tri_specific" structs. This file is included in "g_bot.c" twice. Each time
  *	the macro TRI_TYPE is defined to reflect the desired version of the
@@ -1302,7 +1301,7 @@ register struct bot_specific *bot;
 	bu_free( (char *)bot, "bot_specific" );
 }
 
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

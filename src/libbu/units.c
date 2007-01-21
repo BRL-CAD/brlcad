@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup bu_log */
-/*@{*/
-
+/** @addtogroup bu_log */
+/** @{ */
 /** @file units.c
+ *
  *  Module of libbu to handle units conversion between strings and mm.
  *
  *  @author
@@ -30,11 +29,11 @@
  *
  *  @par Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
- * @n	The U. S. Army Ballistic Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5066
+ *  @n	The U. S. Army Ballistic Research Laboratory
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char libbu_units_RCSid[] = "@(#)$Header$ (BRL)";
@@ -245,7 +244,7 @@ bu_mm_cvt(register const struct bu_structparse *sdp, register const char *name, 
 	/* reconvert with optional units */
 	*p = bu_mm_value(value);
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

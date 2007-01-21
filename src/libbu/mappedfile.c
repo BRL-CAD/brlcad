@@ -18,12 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup mf */
-/*@{*/
-
+/** @addtogroup mf */
+/** @{ */
 /** @file mappedfile.c
- * @brief Routines for sharing large read-only data files.
+ *
+ * @brief
+ *  Routines for sharing large read-only data files.
  *
  *  Routines for sharing large read-only data files
  *  like height fields, bit map solids, texture maps, etc.
@@ -469,7 +469,7 @@ bu_open_mapped_file_with_path(char *const *path, const char *name, const char *a
 	return (struct bu_mapped_file *)NULL;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

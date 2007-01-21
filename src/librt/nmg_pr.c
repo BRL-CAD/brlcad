@@ -19,9 +19,9 @@
  * information.
  */
 /** @addtogroup nmg */
-
-/*@{*/
+/** @{ */
 /** @file nmg_pr.c
+ *
  *	Contains routines to print or describe NMG data structures.
  *	These routines are always available (not conditionally compiled)
  *	so that NMG programmers can always format and print
@@ -35,7 +35,7 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";

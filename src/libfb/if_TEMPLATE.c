@@ -18,9 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup if */
-/*@{*/
+/** @addtogroup if */
+/** @{ */
 /** @file if_TEMPLATE.c
  *
  * How to add a new device interface:
@@ -41,7 +40,7 @@
  *  Add defines to Makefile.am
  *  Replace this header.
  */
-/*@}*/
+/** @} */
 
 #include "common.h"
 

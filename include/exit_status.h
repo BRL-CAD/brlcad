@@ -1,5 +1,5 @@
 /** @addtogroup utahrle */
-/*@{*/
+/** @{ */
 /** @file exit_status.h */
 
 /* for libutahrle */
@@ -25,4 +25,4 @@
 
 #endif
 #endif
-/*@}*/
+/** @} */

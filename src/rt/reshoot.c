@@ -28,7 +28,7 @@
  * to log all calls to the application hit() routine, and print the 
  * contents of the struct partition.  The log is processed to 
  * eliminate extraneous information to produce the input to this 
- * program.  The following awk program, will suffice:  \verbatim
+ * program.  The following awk program, will suffice:  @verbatim
 
 	/Pnt/ { START=index($0,"(") + 1
 	       STR=substr($0, START, index($0,")") - START)
@@ -50,21 +50,21 @@
 	/OutHIT/ { OUTHIT=$2 }
 	/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n",$2,PARTIN,INHIT,PARTOUT,OUTHIT}
 	
-\endverbatim
- * If this awk program is stored in the file p.awk then: \verbatim
+@endverbatim
+ * If this awk program is stored in the file p.awk then: @verbatim
  	awk -f p.awk < logfile > inputfile
-\endverbatim
+@endverbatim
  * will produce a suitable input file for this program.  The form is as 
- * follows: \verbatim
+ * follows: @verbatim
  	Pnt=1,2,3
  	Dir=4,5,6
 		region=/all.g/platform.r in=platform.s indist=10016.8 out=platform.s outdist=10023.8
-\endverbatim
+@endverbatim
  * where the line begining with "region" may be repeated any number of times, representing each
  * region encountered along the ray.
- * now run this program as follows: \verbatim
+ * now run this program as follows: @verbatim
  	reshoot geom.g obj [obj...] < inputfile
-\endverbatim
+@endverbatim
  * and this  will re-shoot all of the rays that the original program
  * shot, and compare the results.
  *
@@ -89,7 +89,7 @@
 char *progname = "(noname)";
 
 /**
- * \struct shot
+ * @struct shot
  * A description of a single shotline, and all the regions that were
  * hit by the shotline.
  */
@@ -100,7 +100,7 @@ struct shot {
 };
 
 /**
- * \struct shot_sp
+ * @struct shot_sp
  * The parse table for a struct shot
  */
 static const struct bu_structparse shot_sp[] = {
@@ -110,7 +110,7 @@ static const struct bu_structparse shot_sp[] = {
 };
 
 /**
- * \struct reg_hit
+ * @struct reg_hit
  *
  * This describes the interaction of the ray with a single region
  */
@@ -155,7 +155,7 @@ usage(char *s)
  *  application structure which describes the state of the world
  *  (see raytrace.h), and a circular linked list of partitions,
  *  each one describing one in and out segment of one region.
- * \return
+ * @return
  *	integer value, typically 1.  This value becomes the return value to rtshootray()
  */
 int
@@ -244,7 +244,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
  * A pointer to this function is stored in the application structure 
  * field a_miss.  rt_shootray() will call this when the ray misses all geometry.
  * it passees the application structure.
- * \return
+ * @return
  *	Typically 0, and becomes the return value from rt_shootray()
  */
 int
@@ -272,9 +272,9 @@ pr_shot(struct shot *sh)
  *	Re-shoot a ray
  *	The ray described by the parametry sh
  *
- *	\param sh  a pointer to a struct shot describing the ray to shoot and expected results
- *	\param ap  a pointer to a struct application
- *	\return
+ *	@param sh  a pointer to a struct shot describing the ray to shoot and expected results
+ *	@param ap  a pointer to a struct application
+ *	@return
  *	integer value indicating if there was a difference
  */
 int
@@ -306,7 +306,7 @@ do_shot(struct shot *sh, struct application *ap)
 
 /**
  *	Load the database, parse the input, and shoot the rays
- * \return
+ * @return
  * integer flag value indicating whether any differences were detected.  0 = none, !0 = different
  */
 int

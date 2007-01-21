@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup nurb */
-/*@{*/
+/** @{ */
 /** @file nurb_norm.c
+ *
  *  	Calulate and return the normal of a surface given the
  *	U,V parametric values.
  *
@@ -34,7 +34,7 @@
  *     Aberdeen Proving Ground, Maryland 21005
  *
  */
-/*@}*/
+/** @} */
 
 #include "common.h"
 

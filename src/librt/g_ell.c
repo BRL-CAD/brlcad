@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_ell.c
+ *
  *	Intersect a ray with a Generalized Ellipsoid.
  *
  *  Authors -
@@ -1646,7 +1645,7 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 	M(   0     ,   0     , 1.0     , 1.0     );
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_part.c
+ *
  *	Intersect a ray with a "particle" solid, which can have
  *	three main forms:  sphere, hemisphere-tipped cylinder (lozenge),
  *	and hemisphere-tipped cone.
@@ -183,7 +182,7 @@
  *  This makes the cone end where it is tangent to the hemisphere.
  *  The calculation for theta come from a diagram drawn by PJT on 18-Nov-99.
  */
-/*@}*/
+/** @} */
 #ifndef lint
 static const char RCSpart[] = "@(#)$Header$ (BRL)";
 #endif

@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libdm */
-/*@{*/
+/** @{ */
 /** @file dm_xvars.h
  *
  */
@@ -61,7 +61,7 @@ struct dm_xvars {
 };
 
 #endif /* __DM_XVARS__ */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

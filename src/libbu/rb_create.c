@@ -18,19 +18,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup rb */
-/*@{*/
-
+/** @addtogroup rb */
+/** @{ */
 /** @file rb_create.c
- *		Routines to create a red-black tree
  *
+ *		Routines to create a red-black tree
  *
  *  @author	Paul J. Tanenbaum
  *
- * @par Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
 
@@ -153,7 +151,7 @@ bu_rb_tree *bu_rb_create1 (char *description, int (*order_func) (/* ??? */))
     return (bu_rb_create(description, 1, ofp));
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

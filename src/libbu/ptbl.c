@@ -18,13 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup ptbl */
-/*@{*/
-
+/** @addtogroup ptbl */
+/** @{ */
 /** @file ptbl.c
  *
- * @brief Support for generalized "pointer tables"
+ *  @brief Support for generalized "pointer tables"
  *
  *  Support for generalized "pointer tables",
  *  kept compactly in a dynamic array.
@@ -421,7 +419,7 @@ bu_ptbl_trunc(struct bu_ptbl *tbl, int end)
 	tbl->end = end;
 	return;
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

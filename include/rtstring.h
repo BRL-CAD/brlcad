@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup deprecated */
-/*@{*/
+/** @{ */
 /** @file rtstring.h
  * @deprecated
  *  RTSTRING.H has been absorbed into BU.H
@@ -28,7 +28,7 @@
  *	-Mike
  */
 #include "compat4.h"
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

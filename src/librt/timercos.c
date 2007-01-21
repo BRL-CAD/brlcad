@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup timer */
-/*@{*/
+/** @{ */
 /** @file timercos.c
+ *
  *	To provide timing information for RT.
  *	THIS VERSION FOR Cray COS "C"
  */
@@ -319,7 +319,7 @@ register char *p;
 	return (neg_val ? -fl_val : fl_val); /* apply sign */
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

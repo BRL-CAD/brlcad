@@ -18,8 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup libfb */
-/*@{*/
+/** @addtogroup libfb */
+/** @{ */
 /** @file fbmsg.h
  *  Types of packages used for the remote frame buffer
  *  communication between libfb/if_remote.c and fbserv/fbserv.c.
@@ -31,10 +31,10 @@
  *
  *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
- *@n	The U. S. Army Ballistic Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005
+ *  @n	The U. S. Army Ballistic Research Laboratory
+ *  @n	Aberdeen Proving Ground, Maryland  21005
  */
-/*@}*/
+/** @} */
 
 #define	MSG_FBOPEN	1
 #define	MSG_FBCLOSE	2

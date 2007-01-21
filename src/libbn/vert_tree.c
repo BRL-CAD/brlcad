@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup vtree */
-/*@{*/
+/** @addtogroup vtree */
+/** @{ */
 /** @file vert_tree.c
+ *
  * @brief
  * Routines to manage a binary search tree of vertices. 
  *
@@ -29,12 +29,12 @@
  * for convenient use by routines such as "mk_bot". 
  * The binary search tree stores indices into the array.
  *
- *  @author
+ * @author
  *	John R. Anderson
  *
  * @par  Source -
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 
@@ -481,7 +481,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
 	/* return the index into the vertex array */
 	return( new_leaf->vleaf.index );
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

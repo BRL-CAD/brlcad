@@ -19,8 +19,9 @@
  * information.
  */
 /** @addtogroup rb */
-/*@{*/
+/** @{ */
 /** @file redblack.h
+ *
  * @brief
  *	The data structures and constants for red-black trees.
  *
@@ -258,7 +259,7 @@ BU_EXTERN(void rb_walk,		(rb_tree	*tree,
 #define		rb_walk1(t,v,d)	rb_walk((t), 0, (v), (d))
 
 #endif
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -18,12 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup magic */
-/*@{*/
+/** @addtogroup magic */
+/** @{ */
 /** @file magic.c
  *
- *@brief routines for looking up magic numbers
+ *  @brief routines for looking up magic numbers
  *
  *  Routines involved with handling "magic numbers" used to identify
  *  various in-memory data structures.
@@ -280,7 +279,7 @@ bu_identify_magic(register long int magic)
 
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

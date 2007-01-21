@@ -19,8 +19,9 @@
  * information.
  */
 /** @addtogroup nmg */
-/*@{*/
+/** @{ */
 /** @file nmg_visit.c
+ *
  *  A generalized, object-oriented subroutine family to
  *  visit all the data structures "below" a given structure.
  *
@@ -40,7 +41,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

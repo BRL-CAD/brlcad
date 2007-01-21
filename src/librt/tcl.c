@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup librt */
-/*@{*/
+/** @{ */
 /** @file ./librt/tcl.c
+ *
  *  Tcl interfaces to LIBRT routines.
  *
  *  LIBRT routines are not for casual command-line use;
@@ -38,7 +38,7 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";

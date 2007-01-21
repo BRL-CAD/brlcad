@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-/*@{*/
+/** @{ */
 /** @file g_eto.c
+ *
  *	Intersect a ray with an Elliptical Torus.
  *
  * Authors -
@@ -1448,7 +1448,7 @@ rt_eto_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

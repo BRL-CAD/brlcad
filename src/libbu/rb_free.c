@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup rb */
-/*@{*/
+/** @addtogroup rb */
+/** @{ */
 /** @file rb_free.c
+ *
  *		Routine to free a red-black tree
  *
  * @author
@@ -29,9 +29,9 @@
  *
  * @par Source -
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char libbu_rb_free_RCSid[] = "@(#) $Header$";
@@ -165,7 +165,7 @@ void bu_rb_free_package (struct bu_rb_package *package)
     bu_free((genptr_t) package -> rbp_list_pos, "red-black list element");
     bu_free((genptr_t) package, "red-black package");
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

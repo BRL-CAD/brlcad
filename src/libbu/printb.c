@@ -18,17 +18,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup bitv */
-/*@{*/
-
+/** @{ */
 /** @file printb.c
- * @brief print bitfields
  *
+ * @brief print bitfields
  *
  * @author	Michael John Muuss
  *
- *  @par  Source -
+ * @par  Source -
  *	The U. S. Army Research Laboratory
  * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
@@ -101,7 +99,7 @@ bu_printb(const char *s, register long unsigned int v, register const char *bits
 	bu_log("%s", bu_vls_addr(&str) );
 	bu_vls_free(&str);
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

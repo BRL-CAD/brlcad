@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup nurb */
-
-/*@{*/
+/** @{ */
 /** @file nurb_plot.c
+ *
  *	Utilities for spline debuging.
  *
  *  Author -
@@ -35,7 +34,7 @@
  * 	Aberdeen Proving Ground, Maryland 21005
  *
  */
-/*@}*/
+/** @} */
 
 #include "common.h"
 

@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup getopt */
-/*@{*/
+/** @addtogroup getopt */
+/** @{ */
 /** @file getopt.c
+ *
  * @brief
  *  Special re-entrant version of getopt.
  *
@@ -118,7 +118,7 @@ bu_getopt(int nargc, char *const *nargv, const char *ostr)
     }
     return(bu_optopt);			/* dump back option letter */
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

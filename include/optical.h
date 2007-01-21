@@ -19,9 +19,10 @@
  * information.
  */
 /** @addtogroup liboptical */
-/*@{*/
+/** @{ */
 /** @file optical.h
- *@brief
+ *
+ * @brief
  *  Header file for the BRL-CAD Optical Library, LIBOPTICAL.
  *
  */
@@ -210,7 +211,7 @@ struct floatpixel {
 __END_DECLS
 
 #endif /* SEEN_OPTICAL_H */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup librt */
-/*@{*/
+/** @{ */
 /** @file roots.c
+ *
  * Find the roots of a polynomial
  *
  *  Author -
@@ -33,7 +33,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSroots[] = "@(#)$Header$ (BRL)";

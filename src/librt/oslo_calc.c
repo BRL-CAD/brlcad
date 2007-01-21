@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup librt
-/*@{*/
+/** @{ */
 /** @file oslo_calc.c
+ *
  * Calculate the Oslo refinement matrix.
  *
  * Author -
@@ -234,7 +234,7 @@ rt_nurb_free_oslo(struct oslo_mat *om, struct resource *res)
 	}
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

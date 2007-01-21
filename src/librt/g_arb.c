@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-/*@{*/
+/** @{ */
 /** @file g_arb.c
+ *
  *  Intersect a ray with an Arbitrary Regular Polyhedron with as many as 8 vertices.
  *
  *  An ARB is a convex volume bounded by 4 (pyramid), 5 (wedge), or 6 (box)
@@ -905,7 +905,7 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
                 segp[i].seg_in.hit_surfno = -1;		/* used as iplane */
                 segp[i].seg_out.hit_dist = INFINITY;    /* used as out */
                 segp[i].seg_out.hit_surfno = -1;	/* used as oplane */
-/**                segp[i].seg_next = SEG_NULL;**/
+/*                segp[i].seg_next = SEG_NULL;*/
 	}
 
 	/* consider each face */
@@ -1824,7 +1824,7 @@ rt_arb_calc_planes(Tcl_Interp			*interp,
 }
 
 
-/**  MV_EDGE:
+/** MV_EDGE:
  *	Moves an arb edge (end1,end2) with bounding
  *	planes bp1 and bp2 through point "thru".
  *	The edge has (non-unit) slope "dir".
@@ -2214,7 +2214,7 @@ err:
 
     return(1);		/* BAD */
 }
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

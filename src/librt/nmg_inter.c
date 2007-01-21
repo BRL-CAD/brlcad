@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup nmg */
-
-/*@{*/
+/** @{ */
 /** @file nmg_inter.c
+ *
  *  Routines to intersect two NMG regions.  When complete, all loops
  *  in each region have a single classification w.r.t. the other region,
  *  i.e. all geometric intersections of the two regions have explicit
@@ -58,7 +57,7 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";

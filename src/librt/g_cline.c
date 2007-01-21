@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_cline.c
+ *
  *	Intersect a ray with a FASTGEN4 CLINE element.
  *
  *  Authors -
@@ -1142,7 +1141,7 @@ rt_cline_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
 
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

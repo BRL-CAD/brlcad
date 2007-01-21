@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup librt */
-/*@{*/
+/** @{ */
 /** @file vlist.c
+ *
  *  Routines for the import and export of vlist chains as:
  *	Network independent binary,
  *	BRL-extended UNIX-Plot files.
@@ -35,7 +35,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

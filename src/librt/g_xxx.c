@@ -19,9 +19,9 @@
  * information.
  */
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_xxx.c
+ *
  *	Intersect a ray with a.
  *
  * Adding a new solid type:
@@ -59,7 +59,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSxxx[] = "@(#)$Header$ (BRL)";

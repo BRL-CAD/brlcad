@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libdm */
-/*@{*/
+/** @{ */
 /** @file dm-pex.h
  *
  */
@@ -77,7 +77,7 @@ extern void Pex_set_perspective();
 extern struct pex_vars head_pex_vars;
 
 #endif /* SEEN_DM_PEX */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

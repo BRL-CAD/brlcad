@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_pipe.c
+ *
  *	Intersect a ray with a pipe solid.
  *
  *  Authors -
@@ -33,7 +32,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSpipe[] = "@(#)$Header$ (BRL)";

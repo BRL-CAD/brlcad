@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup rb */
-/*@{*/
+/** @addtogroup rb */
+/** @{ */
 /** @file rb_extreme.c
+ *
  *	Routines to extract mins, maxes, adjacent, and current nodes
  *			from a red-black tree
  *
@@ -30,9 +30,9 @@
  *
  *  @par Source -
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char libbu_rb_extreme_RCSid[] = "@(#) $Header$";
@@ -218,7 +218,7 @@ void *bu_rb_curr (bu_rb_tree *tree, int order)
     else
 	return (bu_rb_data(bu_rb_current(tree), order));
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

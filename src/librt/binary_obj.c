@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup db5  */
-/*@{*/
+/** @{ */
 /** @file binary_obj.c
+ *
  *  Routines for writing binary objects to a BRL-CAD database
  *  Assumes that some of the structure of such databases are known
  *  by the calling routines.
@@ -34,7 +34,7 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_superell.c
+ *
  * Intersect a ray with a Superquadratic Ellipsoid.
  *
  *      NOTICE: this primitive is incomplete and should beconsidered
@@ -41,7 +40,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSsuperell[] = "@(#)$Header$ (BRL)";

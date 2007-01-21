@@ -147,7 +147,7 @@ stxt_read(register struct stxt_specific *stp)
 	rdd = 0;
 	rd = 0;
 
-	/**  LOOP: through list of basename.n files **/
+	/* LOOP: through list of basename.n files */
 	for( frame=0; frame <= stp->stx_d-1; frame++ )  {
 
 		sprintf(name, "%s.%d", stp->stx_file, frame);

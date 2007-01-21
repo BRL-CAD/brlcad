@@ -18,17 +18,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup bu_log */
-/*@{*/
+/** @addtogroup bu_log */
+/** @{ */
 /** @file lex.c
+ *
  *  @author
  *	Christopher T. Johnson
  *
  *  @par Source
  *	Geometric Solutions, Inc.
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -296,7 +296,7 @@ bu_lex(
 	return used;
 }
 
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

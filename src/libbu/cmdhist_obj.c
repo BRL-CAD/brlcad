@@ -18,14 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup butcl */
-/*@{*/
+/** @addtogroup butcl */
+/** @{ */
 /** @file cmdhist_obj.c
  *
  * A cmdhist object contains the attributes and
  * methods for maintaining command history.
- *
  *
  *  @author
  *	  Robert G. Parker
@@ -33,7 +31,6 @@
  *  @par Source -
  *	The U. S. Army Research Laboratory			@n
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 
@@ -251,7 +248,7 @@ cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_free(&vls);
 	return TCL_ERROR;
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

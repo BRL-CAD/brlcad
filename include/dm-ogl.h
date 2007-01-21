@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libdm */
-/*@{*/
+/** @{ */
 /** @file dm-ogl.h
  *
  */
@@ -66,7 +66,7 @@ struct ogl_vars {
 extern void ogl_fogHint();
 
 #endif /* SEEN_DM_OGL */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

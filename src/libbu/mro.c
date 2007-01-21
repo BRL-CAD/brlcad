@@ -18,19 +18,18 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup mro */
-/*@{*/
-
+/** @addtogroup mro */
+/** @{ */
 /** @file mro.c
- * @brief  The Multiply Represented Object package.
  *
+ * @brief
+ * The Multiply Represented Object package.
  *
- *  @author	John R. Anderson
+ * @author	John R. Anderson
  *
  * @par  Source -
  *      The U. S. Army Research Laboratory
- * @n      Aberdeen Proving Ground, Maryland  21005-5068  USA
+ * @n   Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
@@ -109,7 +108,7 @@ bu_mro_init_with_string( struct bu_mro *mrop, const char *string )
 	BU_MRO_INVALIDATE( mrop );
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

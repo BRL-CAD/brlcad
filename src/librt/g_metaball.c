@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_metaball.c
+ *
  * Intersect a ray with a metaball implicit surface.
  *
  * NOTICE: this primitive is incomplete and should be considered
@@ -37,7 +36,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSmetaball[] = "@(#)$Header$ (BRL)";

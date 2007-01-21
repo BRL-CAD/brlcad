@@ -19,15 +19,17 @@
  * information.
  */
 /** @addtogroup deprecated */
-/*@{*/
+/** @{ */
 /** @file msr.h
  * @deprecated
  *  MSR.H has been absorbed into BN.H
  *  Compatability macros are provided in "compat4.h"
  *	-Mike
  */
+
 #include "compat4.h"
-/*@}*/
+
+/** @} */
 /*
  * Local Variables:
  * mode: C

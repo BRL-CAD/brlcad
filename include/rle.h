@@ -16,9 +16,11 @@
  * and the reason for such modification.
  */
 /** @addtogroup utahrle */
-/*@{*/
-/** 
- * @file rle.h - Global declarations for Utah Raster Toolkit RLE programs.
+/** @{ */
+/** @file rle.h
+ *
+ * @brief
+ *   Global declarations for Utah Raster Toolkit RLE programs.
  * 
  * Author:	Todd W. Fuqua
  * 		Computer Science Dept.
@@ -587,4 +589,4 @@ extern rle_hdr rle_dflt_hdr;
 #endif /* USE_PROTOTYPES */
 
 #endif /* RLE_H */
-/*@}*/
+/** @} */

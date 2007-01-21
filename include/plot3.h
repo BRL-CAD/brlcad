@@ -19,9 +19,8 @@
  * information.
  */
 /** @addtogroup plot */
-/*@{*/
+/** @{ */
 /** @file plot3.h
- *
  *
  * This is a ANSI C header for LIBPLOT3 giving function prototypes.
  * This header file will also work if called by a "traditional" C
@@ -501,7 +500,7 @@ BN_EXPORT BU_EXTERN(void BU_FORTRAN(f3vect, F3VECT),
 #endif /* VMATH_H */
 
 #endif /* PLOT3_H */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -17,6 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libtie */
+/** @{ */
 /** @file struct.h
  *
  *  Triangle Intersection Engine Structures
@@ -30,7 +32,6 @@
  *
  * $Id$
  */
-/** @addtogroup libtie */ /** @{ */
 
 #ifndef	_TIE_STRUCT_H
 #define _TIE_STRUCT_H

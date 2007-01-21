@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup mat */
-/*@{*/
-
+/** @addtogroup mat */
+/** @{ */
 /** @file qmath.c
+ *
  * @brief
  *  Quaternion math routines.
  *
@@ -403,7 +402,7 @@ quat_log(fastf_t *out, const fastf_t *in)
 	out[W] = 0.0;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

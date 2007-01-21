@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup plot */
-/*@{*/
+/** @addtogroup plot */
+/** @{ */
 /** @file plot3.c
+ *
  * @brief
  *  A public-domain UNIX plot library, for 2-D and 3-D plotting in
  *  16-bit VAX signed integer spaces, or 64-bit IEEE floating point.
@@ -754,7 +754,7 @@ pdv_3ray(FILE *fp, const fastf_t *pt, const fastf_t *dir, double t)
 	pdv_3cont( fp, tip );
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

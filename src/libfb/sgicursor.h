@@ -18,14 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup libfb */
-/*@{*/
-
+/** @addtogroup libfb */
+/** @{ */
 /** @file sgicursor.h
  *
  */
-/*@}*/
+/** @} */
 
 0xFFC0,
 0xFF00,

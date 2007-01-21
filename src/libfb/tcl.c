@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup libfb */
-/*@{*/
-
+/** @addtogroup libfb */
+/** @{ */
 /** @file ./libfb/tcl.c
+ *
  *  LIBFB's Tcl interface.
  *
  *  Authors -
@@ -32,7 +31,7 @@
  *		The U. S. Army Research Laboratory
  *		Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #include "common.h"
 

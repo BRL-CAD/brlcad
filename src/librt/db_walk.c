@@ -18,10 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup dbio */
-
-/*@{*/
+/** @{ */
 /** @file db_walk.c
  *
  * Functions -
@@ -287,7 +285,7 @@ db_functree(struct db_i *dbip,
     }
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

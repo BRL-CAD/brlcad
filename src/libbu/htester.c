@@ -18,12 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup hton */
-/*@{*/
-
+/** @addtogroup hton */
+/** @{ */
 /** @file htester.c
- * @brief
+ *
+ *  @brief
  *  Test network float conversion.
  * 
  *  Expected to be used in pipes, or with TTCP links to other machines,
@@ -34,10 +33,10 @@
  *
  *  @par Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
- *@n	The U. S. Army Ballistic Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5066
+ *  @n	The U. S. Army Ballistic Research Laboratory
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5066
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -145,7 +144,7 @@ ckbytes(register unsigned char *a, register unsigned char *b, register int n)
 	return(0);			/* OK */
 #endif
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

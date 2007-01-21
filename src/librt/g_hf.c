@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_hf.c
+ *
  *	Intersect a ray with a height field,
  *	where the heights are imported from an external data file,
  *	and where some (or all) of the parameters of that data file
@@ -2219,7 +2218,7 @@ rt_hf_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

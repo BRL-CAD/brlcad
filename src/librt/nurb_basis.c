@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup nurb */
-/*@{*/
+/** @{ */
 /** @file nurb_basis.c
+ *
  * Evaluate the B-Spline Basis Functions.
  *
  */
@@ -122,7 +122,7 @@ rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, f
 
 	return (b1 + b2);
 }
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_epa.c
+ *
  *	Intersect a ray with an Elliptical Paraboloid.
  *
  *  Algorithm -
@@ -1720,7 +1719,7 @@ rt_epa_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

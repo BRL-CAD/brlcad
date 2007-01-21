@@ -18,16 +18,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup bu_log */
-/*@{*/
+/** @addtogroup bu_log */
+/** @{ */
 /** @file bu_fgets.c
- *@brief
+ *
+ * @brief
  * fgets replacement function that also handles CR as an EOL marker
  *
- *  @Author John Anderson
+ * @Author John Anderson
  *
- *  @par Source
+ * @par Source
  *	The U. S. Army Research Laboratory			@n
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
@@ -125,7 +125,7 @@ bu_fgets(char *s, int size, FILE *stream)
   else
     return s;
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

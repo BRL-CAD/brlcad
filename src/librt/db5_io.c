@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup db5 */
-
-/*@{*/
+/** @{ */
 /** @file db5_io.c
+ *
  *  Handle import/export and IO of v5 database objects.
  *
  *  Author -
@@ -31,7 +30,6 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #ifndef lint
@@ -1682,7 +1680,7 @@ db5_get_attributes( const struct db_i *dbip, struct bu_attribute_value_set *avs,
 	return 0;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

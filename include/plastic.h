@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup liboptical */
-/*@{*/
+/** @{ */
 /** @file plastic.h
  *
  */
@@ -46,7 +46,7 @@ struct phong_specific {
 
 extern struct bu_structparse phong_parse[];
 #endif
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

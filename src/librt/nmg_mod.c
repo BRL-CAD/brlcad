@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup nmg */
-
-/*@{*/
+/** @{ */
 /** @file nmg_mod.c
+ *
  *  Routines for modifying n-Manifold Geometry data structures.
  *
  *  Authors -
@@ -35,7 +34,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

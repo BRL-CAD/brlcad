@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup fb  */
-/*@{*/
+/** @addtogroup fb  */
+/** @{ */
 /** @file fb_paged_io.c
+ *
  *  Buffered frame buffer IO routines:.
  *    fb_ioinit( fbp )
  *    fb_seek( fbp, x, y )
@@ -41,7 +41,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

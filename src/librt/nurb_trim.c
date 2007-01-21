@@ -19,8 +19,9 @@
  * information.
  */
 /** @addtogroup */
-/*@{*/
+/** @{ */
 /** @file nurb_trim.c
+ *
  * Trimming curve routines.
  *
  * Author:  Paul R. Stay
@@ -31,7 +32,7 @@
  *
  * Date: Mon June 1, 1992
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char rcs_ident[] = "$Header$";

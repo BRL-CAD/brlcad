@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-/*@{*/
+/** @{ */
 /** @file g_rec.c
+ *
  *	Intersect a ray with a Right Eliptical Cylinder.
  *	This is a special (but common) case of the TGC,
  *	which is handled separately.
@@ -860,7 +860,7 @@ rt_rec_class(void)
 /* plot and tess are handled by g_tgc.c */
 /* import, export, ifree, and describe are also handled by g_tgc.c */
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

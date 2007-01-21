@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup if */
-/*@{*/
+/** @addtogroup if */
+/** @{ */
 /** @file if_4d.c
+ *
  *  BRL-CAD Frame Buffer Library interface for SGI Iris-4D
  *  running the IRIX32 operating system with the GL graphics library.
  *  Support for the 3030/2400 series ("Iris-3D") is in if_sgi.c
@@ -55,7 +55,7 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";

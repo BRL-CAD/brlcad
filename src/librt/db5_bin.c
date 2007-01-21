@@ -18,10 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup db5 */
-
-/*@{*/
+/** @{ */
 /** @file db5_bin.c
  *	Handle bulk binary objects
  *
@@ -31,9 +29,8 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSell[] = "@(#)$Header$ (BRL)";

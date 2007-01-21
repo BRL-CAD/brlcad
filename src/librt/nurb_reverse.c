@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup nurb */
-/*@{*/
+/** @{ */
 /** @file nurb_reverse.c
+ *
  *  	Reverse the direction of a nurb surface
  *	by transposing the control points
  *
@@ -34,7 +34,7 @@
  *     Aberdeen Proving Ground, Maryland 21005
  *
  */
-/*@}*/
+/** @} */
 
 #include "common.h"
 

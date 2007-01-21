@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup dbio */
-/*@{*/
+/** @{ */
 /** @file dir.c
+ *
  * Ray Tracing program, GED database directory manager.
  *
  *  Functions -
@@ -314,7 +314,7 @@ rt_db_lookup_internal (
     return (ip -> idb_type);
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

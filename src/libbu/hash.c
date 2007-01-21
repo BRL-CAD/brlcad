@@ -18,9 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup bu_hash */
-/*@{*/
+/** @addtogroup bu_hash */
+/** @{ */
 /** @file hash.c
  *
  * @brief
@@ -445,7 +444,7 @@ bu_hash_tbl_next( struct bu_hash_record *rec )
 	/* no more entries, return NULL */
 	return( (struct bu_hash_entry *)NULL );
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

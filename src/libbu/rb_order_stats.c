@@ -18,20 +18,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup rb */
-/*@{*/
+/** @addtogroup rb */
+/** @{ */
 /** @file rb_order_stats.c
  *	Routines to support order-statistic operations for a red-black tree
  *
  *  @author
  *	Paul J. Tanenbaum
  *
- * @par Source -
+ *  @par Source -
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char libbu_rb_order_stats_RCSid[] = "@(#) $Header$";
@@ -146,7 +145,7 @@ int bu_rb_rank (bu_rb_tree *tree, int order)
 
     return (rank);
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

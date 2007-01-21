@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup db5 */
-
-/*@{*/
+/** @{ */
 /** @file db5_comb.c
+ *
  *  Handle import/export of combinations (union tree) in v5 format.
  *
  *  The on-disk record looks like this:
@@ -46,7 +45,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";

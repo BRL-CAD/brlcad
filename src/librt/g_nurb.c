@@ -19,9 +19,9 @@
  * information.
  */
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_nurb.c
+ *
  *	Intersect a ray with a Non Uniform Rational B-Spline.
  *
  *  Authors -
@@ -33,7 +33,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSnurb[] = "@(#)$Header$ (BRL)";

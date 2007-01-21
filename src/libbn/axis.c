@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup axis */
-/*@{*/
+/** @addtogroup axis */
+/** @{ */
 /** @file axis.c
+ *
  * @brief
  *	This routine is used to generate an axis for a graph.
  * It draws an axis with a linear scale, places tic marks every inch,
@@ -45,7 +45,7 @@
  *@n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -215,7 +215,7 @@ float		*char_width;	/* character scale (size) */
 		*ndigits, *label_start, *label_incr,
 		*tick_separation, *char_width );
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

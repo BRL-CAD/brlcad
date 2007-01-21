@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup bu_log */
-/*@{*/
+/** @addtogroup bu_log */
+/** @{ */
 /** @file log.c
+ *
  * @brief parallel safe version of fprintf for logging
  *
  *  BRL-CAD support library, error logging routine.
@@ -467,7 +467,7 @@ char *fmt;
     bu_vls_free(&output);
 }
 
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

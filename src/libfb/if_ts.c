@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup if */
-/*@{*/
+/** @addtogroup if */
+/** @{ */
 /** @file if_ts.c
+ *
  *  Tech-Source GDS-3924L+8 Interface.  This is a single VME board
  *  frame buffer, most likely plugged into a Sun Microsystems computer.
  *  Features include:  1280x1024x24bit display in a 2048x1024 window, or
@@ -40,7 +40,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";

@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup rb */
-/*@{*/
+/** @addtogroup rb */
+/** @{ */
 /** @file rb_diag.c
+ *
  *	Diagnostic routines for red-black tree maintenance
  *
  *  @author
@@ -29,7 +29,7 @@
  *
  *  @par Source
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #ifndef lint
@@ -155,7 +155,7 @@ void bu_rb_summarize_tree (bu_rb_tree *tree)
     }
     bu_log("-------------------------------------------------\n");
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

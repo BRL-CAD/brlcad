@@ -19,9 +19,9 @@
  * information.
  */
 /** @addtogroup db4 */
-/*@{*/
+/** @{ */
 /** @file db.h
- *@brief
+ * @brief
  *		GED Database Format v4
  *
  * All records are rounded up to have a fixed length;  each such
@@ -470,7 +470,7 @@ void rt_mat_dbmat DB_ARGS( (fastf_t *ff, const dbfloat_t *dbp) );
 void rt_dbmat_mat DB_ARGS( (dbfloat_t *dbp, const fastf_t *ff) );
 
 #endif	/* DB_H */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -18,8 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup anim */
-/*@{*/
+/** @addtogroup anim */
+/** @{ */
 /** @file anim.c
  * @brief
  *	Routines useful in animation programs.
@@ -1018,7 +1018,7 @@ void anim_view_rev(mat_t m)
         m[8] = -m[8];
         m[9] = -m[9];
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

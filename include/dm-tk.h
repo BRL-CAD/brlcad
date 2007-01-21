@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libdm */
-/*@{*/
+/** @{ */
 /** @file dm-tk.h
  *
  */
@@ -41,7 +41,7 @@ struct Tk_vars {
   unsigned long pixels[NUM_PIXELS];
 };
 #endif /* SEEN_DM_TK */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

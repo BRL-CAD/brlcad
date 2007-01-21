@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_bot.c
+ *
  *	Intersect a ray with a bag o' triangles.
  *
  *  Authors -
@@ -3892,7 +3891,7 @@ rt_bot_smooth( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, f
 	return( 0 );
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

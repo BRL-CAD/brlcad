@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup plane */
-/*@{*/
+/** @addtogroup plane */
+/** @{ */
 /** @file plane.c
+ *
  * @brief
  *  Some useful routines for dealing with planes and lines.
  *
@@ -30,9 +30,8 @@
  *
  *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
- *@n	The U. S. Army Ballistic Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005
- *
+ *  @n	The U. S. Army Ballistic Research Laboratory
+ *  @n	Aberdeen Proving Ground, Maryland  21005
  */
 
 #ifndef lint
@@ -2859,7 +2858,7 @@ bn_isect_lseg_rpp(fastf_t *a,
 	return(1);		/* HIT */
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

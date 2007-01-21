@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup rb */
-/*@{*/
+/** @addtogroup rb */
+/** @{ */
 /** @file rb_rotate.c
+ *
  *	    Routines to perform rotations on a red-black tree
  *
  *  @author
@@ -29,9 +29,9 @@
  *
  *  @par Source -
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char libbu_rb_rotate_RCSid[] = "@(#) $Header$";
@@ -146,7 +146,7 @@ void _rb_rot_right (struct bu_rb_node *y, int order)
 	bu_log("After rotation, size(%x, %d)=%d, size(%x, %d)=%d\n",
 	    x, order, bu_rb_size(x, order), y, order, bu_rb_size(y, order));
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

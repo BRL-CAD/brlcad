@@ -18,18 +18,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup msr */
-/*@{*/
-
+/** @addtogroup msr */
+/** @{ */
 /** @file msr.c
+ *
  * @brief
  * Minimal Standard RANdom number generator
  *
  * @par From:
  *	Stephen K. Park and Keith W. Miller
- *@n	"Random number generators: good ones are hard to find"
- *@n	CACM vol 31 no 10, Oct 88
+ * @n	"Random number generators: good ones are hard to find"
+ * @n	CACM vol 31 no 10, Oct 88
  *
  *  @author
  *	Christopher T. Johnson - 90/04/20
@@ -359,7 +358,7 @@ bn_gauss_free(struct bn_gauss *p)
 #undef Q
 #undef R
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

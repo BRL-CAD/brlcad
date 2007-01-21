@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup plot */
-/*@{*/
-
+/** @addtogroup plot */
+/** @{ */
 /** @file symbol.c
+ *
  *	Terminal Independant Graphics Display Package.
  *		Mike Muuss  July 31, 1978
  *
@@ -183,7 +182,7 @@ float	*theta;
 	buf[sizeof(buf)-1] = '\0';
 	tp_2symbol( *fp, buf, *x, *y, *scale, *theta );
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

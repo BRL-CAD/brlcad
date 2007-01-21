@@ -436,13 +436,13 @@ main(int argc, char *argv[])
 /**
  *      R E G I O N _ S T A R T
  *
- * \brief This routine is called when a region is first encountered in the
+ * @brief This routine is called when a region is first encountered in the
  * heirarchy when processing a tree
  *
- *      \param tsp tree state (for parsing the tree)
- *      \param pathp A listing of all the nodes traversed to get to this node in the database
- *      \param combp the combination record for this region
- *      \param client_data pointer that was passed as last argument to db_walk_tree()
+ *      @param tsp tree state (for parsing the tree)
+ *      @param pathp A listing of all the nodes traversed to get to this node in the database
+ *      @param combp the combination record for this region
+ *      @param client_data pointer that was passed as last argument to db_walk_tree()
  *
  */
 int
@@ -491,14 +491,14 @@ region_start ( db_tree_state *tsp,
  *      R E G I O N _ E N D
  *
  *
- * \brief This is called when all sub-elements of a region have been processed by leaf_func.
+ * @brief This is called when all sub-elements of a region have been processed by leaf_func.
  *
- *      \param tsp
- *      \param pathp
- *      \param curtree
- *      \param client_data
+ *      @param tsp
+ *      @param pathp
+ *      @param curtree
+ *      @param client_data
  *
- *      \return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
+ *      @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
  *      clean up the data in the  tree * that is returned
  *
  * If it wants to retain the data in curtree it can by returning TREE_NULL.  Otherwise

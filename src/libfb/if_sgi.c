@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup if */
-/*@{*/
+/** @addtogroup if */
+/** @{ */
 /** @file if_sgi.c
+ *
  *  SGI display interface.  By default, we operate in 24-bit (RGB) mode.
  *  However, when running under MEX, 12-bit mode is utilized (actually,
  *  only 10 bits are available, thanks to MEX).  Several flavors of
@@ -59,7 +59,7 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";

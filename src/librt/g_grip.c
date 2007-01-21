@@ -1,8 +1,28 @@
-/** @addtogroup g_  */
-/*@{*/
-/** @file g_grip.c
- *  Intersect a ray with a "grip" and return nothing.
+/*                        G _ G R I P . C
+ * BRL-CAD
  *
+ * Copyright (c) 1985-2007 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @addtogroup g_  */
+/** @{ */
+/** @file g_grip.c
+ *
+ *  Intersect a ray with a "grip" and return nothing.
  *
  *  A GRIP is defiend by a direction normal, a center and a
  *  height/magnitued vector.  The center is the control point used
@@ -14,7 +34,6 @@
  *
  *  Authors -
  *	Christopher T. Johnson
- *
  *
  *  Copyright Notice -
  *	This software is Copyright (C) 1993 by Geometric Solutions, Inc.
@@ -469,7 +488,7 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	return(-1);
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

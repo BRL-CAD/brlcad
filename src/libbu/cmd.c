@@ -19,8 +19,9 @@
  * information.
  */
 /** @addtogroup butcl */
-/*@{*/
+/** @{ */
 /** @file libbu/cmd.c
+ *
  * @brief
  *	Utility routines for handling commands.
  *
@@ -127,7 +128,7 @@ bu_register_cmds(Tcl_Interp		*interp,
 		(void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
 					(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -19,8 +19,9 @@
  * information.
  */
 /** @addtogroup deprecated */
-/*@{*/
+/** @{ */
 /** @file compat4.h
+ *
  *@deprecated
  *  A compatability header file for LIBBU and LIBBN which provides
  *  BRL-CAD Release 4.4 style rt_xxx() names for the new bu_xxx() routines.
@@ -476,7 +477,7 @@ __END_DECLS
 #endif /* SEEN_COMPAT4_H */
 
 #endif /* DONT_USE_COMPAT4_H */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

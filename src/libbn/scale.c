@@ -18,24 +18,22 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup plot */
-/*@{*/
+/** @addtogroup plot */
+/** @{ */
 /** @file scale.c
+ *
  * @brief scale geometry points.
  *
- *
- *  @author
+ * @author
  *	Michael John Muuss
  *
- *  @par Source
+ * @par Source
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  *	@note
  *	This file is a candidate for deletion.  
  *	Nothing else in BRL-CAD uses this.
- *
  */
 
 
@@ -226,7 +224,7 @@ double	*dx;
 	tp_scale( idata, *elements, *mode, *length, odata, min, dx );
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

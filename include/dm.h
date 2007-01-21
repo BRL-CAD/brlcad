@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libdm */
-/*@{*/
+/** @{ */
 /** @file dm.h
  *
  */
@@ -366,7 +366,7 @@ DM_EXPORT BU_EXTERN(void dmo_drawAxes_cmd,
 		     int tickThreshold));
 
 #endif /* SEEN_DM_H */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

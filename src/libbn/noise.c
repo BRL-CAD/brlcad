@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup noise */
-/*@{*/
+/** @addtogroup noise */
+/** @{ */
 /** @file noise.c
+ *
  *  Signed noise functions
  *
  *	- bn_noise_perlin	Robert Skinner's Perlin-style "Noise" function
@@ -826,7 +826,7 @@ bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, dou
 	return result;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -18,19 +18,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup rb  */
-/*@{*/
+/** @addtogroup rb  */
+/** @{ */
 /** @file rb_delete.c
- *	    Routines to delete a node from a red-black tree
  *
+ *	    Routines to delete a node from a red-black tree
  *
  *  @author	Paul J. Tanenbaum
  *
- * @par  Source -
+ *  @par  Source -
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static char const libbu_rb_delete_RCSid[] = "@(#) $Header$";
@@ -221,7 +221,7 @@ void bu_rb_delete (bu_rb_tree *tree, int order)
     bu_rb_free_package(package);
     bu_free((genptr_t) node, "node list");
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

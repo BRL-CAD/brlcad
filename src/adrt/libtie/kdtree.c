@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libtie */
+/** @{ */
 /** @file tie.c
  *
  *  @brief support routines for shooting at triangles
@@ -32,9 +34,6 @@
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  * $Id$
- */
-/** @addtogroup libtie
- * @{
  */
 
 #include "kdtree.h"

@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup db5 */
-/*@{*/
+/** @{ */
 /** @file db5_scan.c
+ *
  *  Scan a v5 database, sending each object off to a handler.
  *
  *  Author -
@@ -30,7 +30,6 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #ifndef lint
@@ -473,7 +472,7 @@ db_get_version(struct db_i *dbip)
 
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

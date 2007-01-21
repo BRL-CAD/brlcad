@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup librt */
-/*@{*/
+/** @{ */
 /** @file view_obj.c
+ *
  * A view object contains the attributes and methods for
  * controlling viewing transformations. Much of this code
  * was extracted from MGED and modified to work herein.
@@ -38,7 +38,7 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #include "common.h"
 

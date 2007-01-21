@@ -18,12 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup butcl */
-/*@{*/
+/** @addtogroup butcl */
+/** @{ */
 /** @file cmdhist.c
  *
- *@brief
+ * @brief
  * Routines for maintaining a command history
  *
  * The history routines were borrowed from mged/history.c
@@ -345,7 +344,7 @@ f_delay(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 #endif
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

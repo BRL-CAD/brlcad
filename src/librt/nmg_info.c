@@ -19,9 +19,9 @@
  * information.
  */
 /** @addtogroup nmg */
-
-/*@{*/
+/** @{ */
 /** @file nmg_info.c
+ *
  *  A companion module to nmg_mod.c which contains routines to
  *  answer questions about n-Manifold Geometry data structures.
  *  None of these routines will modify the NMG structures in any way.
@@ -34,7 +34,7 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";

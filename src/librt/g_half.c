@@ -18,13 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_half.c
- *  Intersect a ray with a Halfspace.
  *
+ *  Intersect a ray with a Halfspace.
  *
  *  A HALFSPACE is defined by an outward pointing normal vector,
  *  and the distance from the origin to the plane, which is defined
@@ -778,7 +776,7 @@ rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	return(-1);
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

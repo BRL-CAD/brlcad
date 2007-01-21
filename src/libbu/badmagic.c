@@ -18,9 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup magic */
-/*@{*/
+/** @addtogroup magic */
+/** @{ */
 /** @file badmagic.c
  *
  * @brief
@@ -78,7 +77,7 @@ bu_badmagic(const long int *ptr, unsigned long int magic, const char *str, const
 		bu_bomb(buf);
 	}
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

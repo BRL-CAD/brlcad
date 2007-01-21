@@ -18,10 +18,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup bu_log */
-/*@{*/
-/**  @file ./libbu/bomb.c
+/** @addtogroup bu_log */
+/** @{ */
+/** @file ./libbu/bomb.c
  *
  *  This routine is called on a fatal
  *  error, where no recovery is possible.
@@ -150,7 +149,7 @@ bu_bomb(const char *str)
 
 	exit(12);
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

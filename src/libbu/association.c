@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup bu_log */
-/*@{*/
+/** @addtogroup bu_log */
+/** @{ */
 /** @file association.c
+ *
  * Look up the association for a specified value.
  *
  *  @author -
@@ -29,9 +29,9 @@
  *
  *  @par Source -
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char libbu_association_RCSid[] = "@(#)$Header$ (ARL)";
@@ -110,7 +110,7 @@ wrap_up:
     fclose(fp);
     return (vp);
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup nmg */
-/*@{*/
+/** @{ */
 /** @file nmg_mesh.c
+ *
  *	Meshing routines for n-Manifold Geometry.
  *  This stuff is destined to be absorbed into nmg_fuse.c.
  *  "meshing" here refers to the sorting of faceuses around an edge
@@ -37,7 +37,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

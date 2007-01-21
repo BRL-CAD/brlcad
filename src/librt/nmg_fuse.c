@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup nmg */
-
-/*@{*/
+/** @{ */
 /** @file nmg_fuse.c
+ *
  *  Routines to "fuse" entities together that are geometrically identical
  *  (within tolerance) into entities that share underlying geometry
  *  structures, so that the relationship is explicit.
@@ -35,7 +34,7 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
@@ -3172,7 +3171,7 @@ nmg_do_radial_flips(struct bu_list *hd)
 	}
 }
 
-/**              N M G _ D O _ R A D I A L _ J O I N
+/**     N M G _ D O _ R A D I A L _ J O I N
  *
  *      Perform radial join of edges in list "hd" based on direction with respect
  *      to "eu1ref"

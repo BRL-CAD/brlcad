@@ -18,10 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup db4 */
-
-/*@{*/
+/** @{ */
 /** @file db_scan.c
  *
  * Functions -
@@ -571,7 +569,7 @@ db_v4_get_units_code( const char *str )
 	return -1;		/* error */
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

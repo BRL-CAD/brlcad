@@ -18,10 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup plot */
-/*@{*/
+/** @addtogroup plot */
+/** @{ */
 /** @file tplot.c
- *@brief
+ *
+ * @brief
  *	This routine is designed to simplify the creation of
  *  X,Y plots for user.
  *
@@ -460,7 +461,7 @@ PL_FORTRAN(fplot, FPLOT)(FILE **fp, int *xp, int *yp, int *xl, int *yl, char *xt
     tp_plot(*fp, *xp, *yp, *xl, *yl, xtitle, ytitle, x, y, *n, *cscale);
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

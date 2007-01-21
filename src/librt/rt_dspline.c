@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup librt */
-/*@{*/
+/** @{ */
 /** @file rt_dspline.c
+ *
  * Simple data (double) spline package.
  *
  *  rt_dspline_matrix(m, type, tension, bias)	create basis matrix
@@ -56,7 +56,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";

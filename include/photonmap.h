@@ -19,20 +19,20 @@
  * information.
  */
 /** @addtogroup librt */
-/*@{*/
+/** @{ */
 /** @file photonmap.h
  *			P H O T O N M A P. H
- *@brief
+ * @brief
  *  Declarations related to Photon Mapping
  *
  * @author Justin Shumaker
  *
- *  @par Source
+ * @par Source
  *	Bldg 238
- *@n	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5066
+ * @n	The U. S. Army Research Laboratory
+ * @n	Aberdeen Proving Ground, Maryland  21005-5066
  *
- *  @(#)$Header
+ * @(#)$Header
  */
 
 #include "common.h"
@@ -163,7 +163,7 @@ OPTICAL_EXPORT BU_EXTERN(void IrradianceEstimate,
 			  vect_t normal,
 			  fastf_t rad,
 			  int np));
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

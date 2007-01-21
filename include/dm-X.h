@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libdm */
-/*@{*/
+/** @{ */
 /** @file dm-X.h
  *
  */
@@ -47,7 +47,7 @@ struct x_vars {
 };
 
 #endif /* __DM_X__ */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

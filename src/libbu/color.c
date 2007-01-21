@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup color */
-/*@{*/
+/** @addtogroup color */
+/** @{ */
 /** @file color.c
+ *
  *  Routines to convert between various color models.
  *
  *  @author
@@ -250,7 +250,7 @@ int bu_str_to_rgb (char *str, unsigned char *rgb)
     VSET(rgb, r, g, b);
     return 1;
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

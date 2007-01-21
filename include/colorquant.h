@@ -15,12 +15,11 @@
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-
 /** @addtogroup utahrle */
-/*@{*/
+/** @{ */
 /** @file colorquant.h
  *
- * colorquant.h - Definitions for colorquant.
+ * Definitions for colorquant.
  * 
  * @author	Spencer W. Thomas
  * 		EECS Dept.
@@ -79,4 +78,4 @@ extern int  colorquant( unsigned char *red,
 extern int colorquant();
 #endif
 
-/*@}*/
+/** @} */

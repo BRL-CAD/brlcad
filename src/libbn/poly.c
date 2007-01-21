@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup poly */
-/*@{*/
+/** @addtogroup poly */
+/** @{ */
 /** @file poly.c
+ *
  *	Library for dealing with polynomials.
  *
  *  Author -
@@ -30,7 +30,6 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 
@@ -558,7 +557,7 @@ bn_pr_roots(const char *title, const struct bn_complex *roots, int n)
 		bu_log("%4d %e + i * %e\n", i, roots[i].re, roots[i].im );
 	}
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

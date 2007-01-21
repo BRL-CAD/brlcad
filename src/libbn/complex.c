@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup complex */
-/*@{*/
+/** @addtogroup complex */
+/** @{ */
 /** @file complex.c
+ *
  *  @par Functions:
  *  @li bn_cx_div		Complex Division
  *  @li  bn_cx_sqrt	Complex Square Root
@@ -32,10 +32,10 @@
  *
  * @par Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
- *@n	The U. S. Army Ballistic Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005
+ * @n	The U. S. Army Ballistic Research Laboratory
+ * @n	Aberdeen Proving Ground, Maryland  21005
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCScomplex[] = "@(#)$Header$ (BRL)";
@@ -157,7 +157,7 @@ bn_cx_sqrt(bn_complex_t *op, register const bn_complex_t *ip)
 		}
 	}
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -18,6 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** addtogroup libtie */
+/** @{ */
 /** @file tie.h
  *
  *  Comments -
@@ -32,7 +34,6 @@
  *
  * $Id$
  */
-/** addtogroup libtie */ /** @{ */
 
 #ifndef _TIE_H
 #define _TIE_H

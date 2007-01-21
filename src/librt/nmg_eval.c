@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup nmg */
-
-/*@{*/
+/** @{ */
 /** @file nmg_eval.c
+ *
  *	Evaluate boolean operations on NMG objects.
  *
  *  Authors -
@@ -35,7 +34,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSnmg_eval[] = "@(#)$Header$ (BRL)";

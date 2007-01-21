@@ -18,9 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup vls */
-/*@{*/
+/** @addtogroup vls */
+/** @{ */
 /** @file vls.c
  *
  *  @brief The variable length string package.
@@ -1193,7 +1192,7 @@ bu_vls_prepend(struct bu_vls *vp, char *str)
     /* insert the data at the head of the string */
     memcpy( vp->vls_str+vp->vls_offset, str, len);
 }
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

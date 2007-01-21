@@ -18,9 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup vfont */
-/*@{*/
+/** @addtogroup vfont */
+/** @{ */
 /** @file vfont.c
  *
  * @brief Berkely Vector Fonts
@@ -190,7 +189,7 @@ vfont_free(register struct vfont *vfp)
 	bu_free( vfp->vf_bits, "vfont bits" );
 	bu_free( (char *)vfp, "vfont" );
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

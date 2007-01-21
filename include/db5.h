@@ -19,9 +19,9 @@
  * information.
  */
 /** @addtogroup db5 */
-/*@{*/
+/** @{ */
 /** @file db5.h
- *@brief
+ * @brief
  *  Definition of the BRL-CAD "v5" database format used for new ".g" files.
  *  
  * @author	Michael John Muuss
@@ -228,7 +228,7 @@ __END_DECLS
 #endif	/* DB5_H */
 
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

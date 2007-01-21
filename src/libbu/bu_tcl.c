@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup butcl */
-/*@{*/
+/** @addtogroup butcl */
+/** @{ */
 /** @file bu_tcl.c
+ *
  * @brief
  *	Tcl interfaces to all the LIBBU Basic BRL-CAD Utility routines.
  *
@@ -1509,7 +1509,7 @@ Bu_Init(Tcl_Interp *interp)
 #endif
 	return TCL_OK;
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

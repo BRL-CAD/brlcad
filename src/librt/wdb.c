@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup wdb */
-/*@{*/
+/** @{ */
 /** @file wdb.c
+ *
  *  Routines to allow libwdb to use librt's import/export interface,
  *  rather than having to know about the database formats directly.
  *
@@ -32,7 +32,7 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";

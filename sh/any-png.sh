@@ -103,7 +103,7 @@ esac
 
 if test $? -ne 0
 then
-	echo "*** ERROR ***  $OLDFILE not converted. ***"
+	echo "*** ERROR *** $OLDFILE not converted. ***"
 	exit 1
 fi
 

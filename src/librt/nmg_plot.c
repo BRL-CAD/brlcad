@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup nmg */
-
-/*@{*/
+/** @{ */
 /** @file nmg_plot.c
+ *
  *  This file contains routines that create VLISTs and UNIX-plot files.
  *  Some routines are essential to the MGED interface, some are
  *  more for diagnostic and visualization purposes.
@@ -47,7 +46,7 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";

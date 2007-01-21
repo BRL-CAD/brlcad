@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup db4 */
-
-/*@{*/
+/** @{ */
 /** @file db_comb.c
+ *
  *  This module contains the import/export routines for "Combinations",
  *  the non-leaf nodes in the directed acyclic graphs (DAGs) in the
  *  BRL-CAD ".g" database.
@@ -1160,7 +1159,7 @@ db_mkgift_tree(
 	return( curtree );
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -18,15 +18,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup nmg */
-/*@{*/
+/** @{ */
 /** @file nmg_junk.c
+ *
  *  This module is a resting place for unfinished subroutines
  *  that are NOT a part of the current NMG library, but which
  *  were sufficiently far along as to be worth saving.
  */
-/*@}*/
+/** @} */
 
 
 

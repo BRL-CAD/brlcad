@@ -18,12 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup bu_list */
-/*@{*/
+/** @addtogroup bu_list */
+/** @{ */
 /** @file ./libbu/list.c
  *
- * @brief Support routines for linked lists.
+ *  @brief Support routines for linked lists.
  *
  *  Generic bu_list routines.
  *
@@ -305,7 +304,7 @@ bu_list_dequeue_next( struct bu_list *hp, struct bu_list *p )
 	return( p2 );
 }
 
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup wdb */
-/*@{*/
+/** @{ */
 /** @file wdb_comb_std.c
+ *
  *	Code to implement the database objects "c" command.
  *
  *  Author -
@@ -780,7 +780,7 @@ wdb_comb_std_tcl(ClientData	clientData,
 
 	return wdb_comb_std_cmd(wdbp, interp, argc-1, argv+1);
 }
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

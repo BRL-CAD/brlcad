@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_ */
-
-/*@{*/
+/** @{ */
 /** @file g_tgc.c
+ *
  *	Intersect a ray with a Truncated General Cone.
  *
  * Method -
@@ -44,7 +43,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCStgc[] = "@(#)$Header$ (BRL)";

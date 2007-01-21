@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup fixme */
-/*@{*/
+/** @{ */
 /** @file config_win.h
  *
  */
@@ -186,7 +186,7 @@
 #endif /* ifndef IGNORE_CONFIG_H */
 
 #endif /* CONFIG_H */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

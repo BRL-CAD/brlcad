@@ -18,17 +18,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup libfb */
-/*@{*/
+/** @addtogroup libfb */
+/** @{ */
 /** @file oglcursor.h
+ *
  * OpenGL framebuffer arrow cursor.
  *
  * The origin is in first quadrant coordinates.
  * The bytes are read in starting at the bottom left corner of the
  * cursor and proceeding to the right and then up.
  */
-/*@}*/
+/** @} */
 
 16, 16,		/* size */
 0, 0,		/* origin */

@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup ray */
-/*@{*/
+/** @{ */
 /** @file cut.c
+ *
  *  Cut space into lots of small boxes (RPPs actually).
  *
  *  Call tree for default path through the code:
@@ -33,7 +33,6 @@
  *				rt_ct_populate_box()
  *					rt_ck_overlap()
  *
- *
  *  Author -
  *	Michael John Muuss
  *
@@ -43,7 +42,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCScut[] = "@(#)$Header$ (BRL)";

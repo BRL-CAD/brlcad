@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup if */
-/*@{*/
+/** @addtogroup if */
+/** @{ */
 /** @file if_sun.c
+ *
  *  SUN display interface.  In order to simulate the behavior of a real
  *  framebuffer, an entire image worth of memory is saved using SysV
  *  shared memory.  This image exists across invocations of frame buffer
@@ -69,7 +69,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";

@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_pg.c
+ *
  *	Intersect a ray with a Polygonal Object
  *	that has no explicit topology.
  *	It is assumed that the solid has no holes.
@@ -36,7 +35,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSpg[] = "@(#)$Header$ (BRL)";

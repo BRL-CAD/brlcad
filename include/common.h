@@ -19,9 +19,10 @@
  * information.
  */
 /** @addtogroup fixme */
-/*@{*/
+/** @{ */
 /** @file common.h
- *@brief
+ *
+ * @brief
  *  Header file for the BRL-CAD common definitions.
  *
  *  This header wraps the system-specific encapsulation of
@@ -67,7 +68,7 @@
 #endif
 
 #endif  /* __COMMON_H__ */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

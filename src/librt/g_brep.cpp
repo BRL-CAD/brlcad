@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup g_  */
-/*@{*/
+/** @{ */
 /** @file g_brep.cpp
  *
  */
@@ -375,7 +375,7 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
     return 0;
 }
 
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

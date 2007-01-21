@@ -19,9 +19,10 @@
  * information.
  */
 /** @addtogroup librt */
-/*@{*/
+/** @{ */
 /** @file mater.h
- *@brief
+ *
+ * @brief
  *  Information about mapping between region IDs and material
  *  information (colors and outboard database "handles").
  *
@@ -30,8 +31,8 @@
  *
  *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
- *@n	The U. S. Army Ballistic Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005
+ *  @n	The U. S. Army Ballistic Research Laboratory
+ *  @n	Aberdeen Proving Ground, Maryland  21005
  *
  *  $Header$
  */
@@ -65,7 +66,7 @@ struct mater {
 RT_EXPORT extern struct mater *rt_material_head; /**< @brief defined in mater.c */
 RT_EXPORT BU_EXTERN(void rt_insert_color,
 		       (struct mater *newp));
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

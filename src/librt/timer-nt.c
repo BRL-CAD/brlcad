@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup timer */
-/*@{*/
+/** @{ */
 /** @file timer-nt.c
+ *
  * To provide timing information on Microsoft Windows NT.
  */
 
@@ -115,7 +115,7 @@ rt_read_timer(char *str, int len)
 	return cpu;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

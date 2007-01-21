@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup bu_log */
-/*@{*/
+/** @{ */
 /** @file which.c
  *
  * Routine to provide BSD "which" functionality, locating binaries of
@@ -210,7 +210,7 @@ int bu_which(char *argv[], int lim, const char *cmd)
 
   return found_count;
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

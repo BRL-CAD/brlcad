@@ -18,10 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup db4 */
-
-/*@{*/
+/** @{ */
 /** @file db_flags.c
  *
  *  Given an internal representation of a geometry object, there are
@@ -116,7 +114,7 @@ db_flags_raw_internal(const struct db5_raw_internal *raw)
     return DIR_SOLID;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

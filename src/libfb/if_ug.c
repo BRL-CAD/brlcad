@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup if */
-/*@{*/
+/** @addtogroup if */
+/** @{ */
 /** @file if_ug.c
+ *
  *  Ultra Network Technologies "Ultra Graphics" Display Device.
  *  			PRELIMINARY!
  *
@@ -39,7 +39,7 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";

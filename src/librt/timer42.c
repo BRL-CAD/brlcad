@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup timer */
-/*@{*/
+/** @{ */
 /** @file timer42.c
+ *
  * To provide timing information for RT when running on 4.2 BSD UNIX.
  *
  *  Source -
@@ -274,7 +274,7 @@ rt_read_timer(char *str, int len)
 	return cpu;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

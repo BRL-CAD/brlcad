@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup ray */
-/*@{*/
+/** @{ */
 /** @file prep.c
+ *
  *  Manage one-time preparations to be done before actual
  *  ray-tracing can commence.
  *
@@ -34,7 +34,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSprep[] = "@(#)$Header$ (BRL)";

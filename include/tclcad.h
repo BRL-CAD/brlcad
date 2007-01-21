@@ -19,9 +19,10 @@
  * information.
  */
 /** @addtogroup libtclcad */
-/*@{*/
+/** @{ */
 /** @file tclcad.h
- *@brief
+ *
+ * @brief
  *  Header file for the BRL-CAD TclCAD Library, LIBTCLCAD.
  *
  *  This library contains convenience routines for preparing and
@@ -78,7 +79,7 @@ TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_auto_path, (Tcl_Interp *interp));
 __END_DECLS
 
 #endif /* __TCLCAD_H__ */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

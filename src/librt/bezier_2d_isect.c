@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup ray */
-/*@{*/
+/** @{ */
 /** @file bezier_2d_isect.c
+ *
  *	The following routines are for 2D Bezier curves
  *
  *	The following routines are borrowed from Graphics Gems I,
@@ -510,7 +510,7 @@ subdivide_bezier( struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon,
 	return( new_head );
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

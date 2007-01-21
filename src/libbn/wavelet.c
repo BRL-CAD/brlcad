@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup wavelet */
-/*@{*/
-
+/** @addtogroup wavelet */
+/** @{ */
 /** @file wavelet.c
+ *
  * @brief
  *  This is a standard wavelet library that takes a given data buffer of some data
  *  type and then performs a wavelet transform on that data.  
@@ -151,7 +150,7 @@
  *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-/*@}*/
+/** @} */
 
 #include "common.h"
 

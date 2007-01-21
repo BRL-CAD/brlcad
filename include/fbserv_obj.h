@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libfb */
-/*@{*/
+/** @{ */
 /** @file fbserv_obj.h
  *
  */
@@ -59,7 +59,7 @@ FB_EXPORT extern int fbs_open();
 FB_EXPORT extern int fbs_close();
 
 #endif  /* __FBSERV_OBJ_H__ */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

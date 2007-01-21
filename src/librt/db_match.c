@@ -18,10 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup dbio */
-
-/*@{*/
+/** @{ */
 /** @file db_match.c
  *
  * Functions -
@@ -254,7 +252,7 @@ db_update_nref( struct db_i *dbip, struct resource *resp )
 	}
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

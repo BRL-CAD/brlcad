@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup rtserver */
-/*@{*/
+/** @{ */
 /** @file rtserver.h
  * @brief
  *	header file for the rtserver
@@ -115,7 +115,7 @@ extern struct rtserver_job *rts_get_rtserver_job();
 extern struct xray *rts_get_xray();
 
 extern int get_max_working_threads();
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

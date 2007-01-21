@@ -18,10 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup libsysv */
-/*@{*/
-
+/** @addtogroup libsysv */
+/** @{ */
 /** @file memset.c
  *
  *  Author - Lee A. Butler
@@ -30,7 +28,7 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #include "common.h"
 

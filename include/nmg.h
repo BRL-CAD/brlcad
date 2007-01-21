@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup nmg */
-/*@{*/
+/** @{ */
 /** @file nmg.h
  *
  *
@@ -28,9 +28,9 @@
  *
  *  @par Source
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5066
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5066
  *
- *@brief
+ * @brief
  *  Definition of data structures for "Non-Manifold Geometry Modelling."
  *  Developed from "Non-Manifold Geometric Boundary Modeling" by
  *  Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
@@ -863,7 +863,7 @@ struct nmg_visit_handlers {
 };
 
 #endif
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup anim */
-/*@{*/
+/** @{ */
 /** @file anim.h
  *
  *  @author
@@ -129,7 +129,7 @@ typedef fastf_t  mat3_t[9];
 
 
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

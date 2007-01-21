@@ -18,13 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup malloc */
-/*@{*/
+/** @addtogroup malloc */
+/** @{ */
 /** 
  * @file malloc.c
  *
- *@brief
+ * @brief
  *  Parallel-protected debugging-enhanced wrapper around system malloc().
  *
  *  The bu_malloc() routines can't use bu_log() because that uses
@@ -849,7 +848,7 @@ void bu_free_array(int argc, char *argv[], const char *str)
   return;
 }
 
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

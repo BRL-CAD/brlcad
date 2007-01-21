@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup ray */
-/*@{*/
-
+/** @{ */
 /** @file shoot.c
+ *
  *	Ray Tracing program shot coordinator.
  *
  *  This is the heart of LIBRT's ray-tracing capability.
@@ -2110,7 +2109,7 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 	bu_log("wrote %s\n", buf);
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

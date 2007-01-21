@@ -18,12 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup hton */
-/*@{*/
+/** @addtogroup hton */
+/** @{ */
 /** @file htonf.c
  *
- *@brief convert floats to host/network format
+ * @brief convert floats to host/network format
  *
  * Host to Network Floats  +  Network to Host Floats.
  *  Author -
@@ -139,7 +138,7 @@ ntohf(register unsigned char *out, register const unsigned char *in, int count)
 # include "ntohf.c:  ERROR, no NtoHD conversion for this machine type"
 #endif
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -18,16 +18,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup bu_log */
-/*@{*/
+/** @addtogroup bu_log */
+/** @{ */
 /** @file fopen_uniq.c
  *
  * @brief Routine to open a unique filename.
  *
- *  @author Lee A. Butler
+ * @author Lee A. Butler
  *
- *  @par Source
+ * @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394	@n
  *	The U. S. Army Ballistic Research Laboratory	@n
  *	Aberdeen Proving Ground, Maryland  21005
@@ -103,7 +102,7 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
 
     return fp;
 }
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

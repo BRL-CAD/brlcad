@@ -18,18 +18,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup vlist */
-/*@{*/
+/** @addtogroup vlist */
+/** @{ */
 /** @file font.c
- *
  *
  *  @author	Michael John Muuss
  *  @author	John Anderson
  *
  *  @par Source -
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
 
@@ -182,7 +180,7 @@ bn_vlist_2string(struct bu_list *vhead,
 	VSET( p, x, y, 0 );
 	bn_vlist_3string( vhead, free_hd, string, p, mat, scale );
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

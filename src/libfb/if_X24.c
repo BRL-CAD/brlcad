@@ -24,7 +24,6 @@
 /** @{*/
 /** @file if_X24.c
  *
- *
  *  X Window System (X11) libfb interface, supporting 24-, 8-, and 1-bit
  *  displays.
  *
@@ -43,7 +42,7 @@
  *	This software is loosely based on the original if_X.c by
  *	Phillip Dykstra of BRL, which was Copyright 1988, US Army.
  */
-/*@}*/
+/** @} */
 
 #include "common.h"
 

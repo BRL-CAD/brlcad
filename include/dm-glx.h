@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libdm */
-/*@{*/
+/** @{ */
 /** @file dm-glx.h
  *
  */
@@ -68,7 +68,7 @@ extern void glx_clearToBlack();
 extern struct glx_vars head_glx_vars;
 
 #endif /* SEEN_DM_GLX */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

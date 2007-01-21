@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup librt */
-/*@{*/
+/** @{ */
 /** @file light.h
  *
  * @brief
@@ -27,8 +27,8 @@
  *
  *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
- *@n	The U. S. Army Ballistic Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5066
+ *  @n	The U. S. Army Ballistic Research Laboratory
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  *  @(#)$Header$ (BRL)
  */
@@ -111,7 +111,7 @@ OPTICAL_EXPORT extern void light_obs(struct application *ap, struct shadework *s
 __END_DECLS
 
 #endif /* SEEN_LIGHT_H */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

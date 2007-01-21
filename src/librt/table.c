@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_ */
-/*@{*/
+/** @{ */
 /** @file table.c
+ *
  *  Tables for the BRL-CAD Package ray-tracing library "librt".
  *
  *  Author -
@@ -33,7 +33,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCStree[] = "@(#)$Header$ (BRL)";

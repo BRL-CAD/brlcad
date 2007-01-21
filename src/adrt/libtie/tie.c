@@ -18,32 +18,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup libtie */
+/** @{ */
 /** @file tie.c
  *
  *  @brief support routines for shooting at triangles
  *  Comments -
  *      Triangle Intersection Engine
- *
- *      The calling sequence is as follows:
- *        - tie_init()	initialize the data structure
- *        - tie_push()	add triangles to the universe to be raytraced
- *        - tie_prep()	build the KDTREE for the triangles
- *        - tie_work()	shoot some ray
- *        - tie_work()	shoot some ray
- *        - tie_work()	shoot some ray
- *        - tie_work()	shoot some ray
- *        - tie_free()	Free up all the memory
- *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
- */
-/** @addtogroup libtie
  *
  * The calling sequence is as follows:
  *	@li tie_init()	initialize the data structure
@@ -55,7 +36,15 @@
  *	@li tie_work()	shoot some ray
  *	@li tie_work()	shoot some ray
  *	@li tie_free()	Free up all the memory
- * @{
+ *
+ *  Author -
+ *      Justin L. Shumaker
+ *
+ *  Source -
+ *      The U. S. Army Research Laboratory
+ *      Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *
+ * $Id$
  */
 
 #ifdef HAVE_CONFIG_H

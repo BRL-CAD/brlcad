@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup librt */
-/*@{*/
+/** @{ */
 /** @file dg_obj.c
+ *
  * A drawable geometry object contains methods and attributes
  * for preparing geometry that is ready (i.e. vlists) for
  * display. Much of this code was extracted from MGED and modified
@@ -4924,7 +4924,7 @@ dgo_bot_check_leaf(struct db_tree_state		*tsp,
     return curtree;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

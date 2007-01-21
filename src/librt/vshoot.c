@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup ray */
-/*@{*/
-
+/** @{ */
 /** @file vshoot.c
+ *
  *  EXPERIMENTAL vector version of the
  * Ray Tracing program shot coordinator.
  *
@@ -550,7 +549,7 @@ rt_get_bitv(struct rt_i *rtip, struct resource *res)
 	}
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

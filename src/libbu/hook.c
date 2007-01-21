@@ -18,9 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup bu_log */
-/*@{*/
+/** @addtogroup bu_log */
+/** @{ */
 /** @file hook.c
  *
  * @brief
@@ -40,7 +39,7 @@
  *	This builds on the work in libbu/log.c.
  *
  */
-/*@}*/
+/** @} */
 
 
 #include "common.h"

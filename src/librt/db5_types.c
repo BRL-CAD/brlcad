@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup db5 */
-
-/*@{*/
+/** @{ */
 /** @file db5_types.c
+ *
  *	Map between Major_Types/Minor_Types and ASCII strings
  *
  *  Author -
@@ -31,7 +30,6 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *
  */
 #ifndef lint
 static const char RCSell[] = "@(#)$Header$ (BRL)";
@@ -379,7 +377,7 @@ db5_type_sizeof_n_binu( const int minor ) {
     return 0;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

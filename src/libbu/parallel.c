@@ -18,13 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup thread */
-/*@{*/
-
+/** @addtogroup thread */
+/** @{ */
 /** @file parallel.c
  *
- * @brief routines for parallel processing
+ *  @brief routines for parallel processing
  *
  *  Machine-specific routines for parallel processing.
  *  Primarily calling functions in multiple threads on multiple CPUs.
@@ -1272,7 +1270,7 @@ double a,b;
 }
 #endif /* sgi */
 
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

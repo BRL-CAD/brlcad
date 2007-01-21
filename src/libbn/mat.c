@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup mat */
-/*@{*/
-
+/** @{ */
 /** @file mat.c
+ *
  * @brief
  * 4 x 4 Matrix manipulation functions...
  *
@@ -67,7 +66,7 @@
  *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char bn_RCSmat[] = "@(#)$Header$ (ARL)";
@@ -1443,7 +1442,7 @@ bn_mat_is_non_unif(const mat_t m)
 
     return 0;
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

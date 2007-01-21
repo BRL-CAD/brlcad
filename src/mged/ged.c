@@ -733,7 +733,7 @@ main(int argc, char **argv)
 
     mged_init_flag = 0;	/* all done with initialization */
 
-    /****************  M A I N   L O O P   *********************/
+    /****************   M A I N   L O O P   *********************/
     while(1) {
 	/* This test stops optimizers from complaining about an infinite loop */
 	if( (rateflag = event_check( rateflag )) < 0 )  break;

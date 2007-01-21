@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup fb */
-/*@{*/
+/** @addtogroup fb */
+/** @{ */
 /** @file fb_obj.c
+ *
  * A framebuffer object contains the attributes and
  * methods for controlling  framebuffers.
  *
@@ -38,7 +38,7 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-/*@}*/
+/** @} */
 
 #include "common.h"
 

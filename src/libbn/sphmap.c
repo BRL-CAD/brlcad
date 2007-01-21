@@ -18,21 +18,20 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup sphmap */
-/*@{*/
-
+/** @addtogroup sphmap */
+/** @{ */
 /** @file sphmap.c
+ *
  * @brief
  *  Common Subroutines for Spherical Data Structures/Texture Maps Subroutines
  *
- *  @author
+ * @author
  *	Phillip Dykstra
  *
- *  @par Source -
+ * @par Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
- *@n	The U. S. Army Ballistic Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5066
+ * @n	The U. S. Army Ballistic Research Laboratory
+ * @n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
 
@@ -463,7 +462,7 @@ spm_dump(spm_map_t *mp, int verbose)
 			i, mp->nx[i], i, mp->xbin[i] );
 	}
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

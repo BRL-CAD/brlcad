@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup nurb */
-/*@{*/
+/** @{ */
 /** @file nurb_knot.c
+ *
  * Various knot vector routines.
  *
  * Author -
@@ -33,7 +33,7 @@
  *     Aberdeen Proving Ground, Maryland 21005
  *
  */
-/*@}*/
+/** @} */
 
 #include "common.h"
 

@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_vol.c
+ *
  *	Intersect a ray with a 3-D volume.
  *	The volume is described as a concatenation of
  *	bw(5) files.
@@ -37,7 +36,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSvol[] = "@(#)$Header$ (BRL)";

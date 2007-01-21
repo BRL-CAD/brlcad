@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup rb */
-/*@{*/
+/** @addtogroup rb */
+/** @{ */
 /** @file rb_walk.c
+ *
  *	    Routines for traversal of red-black trees
  *
  *  @author -
@@ -30,10 +30,6 @@
  *  @par Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *
- *
- *
  *
  *	The function bu_rb_walk() is defined in terms of the function
  *	_rb_walk(), which, in turn, calls any of the six functions
@@ -52,7 +48,7 @@
  *	walking, the function to apply at each visit, and the current
  *	depth in the tree.
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char libbu_rb_walk_RCSid[] = "@(#) $Header$";
@@ -232,7 +228,7 @@ void bu_rb_walk (bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int tra
     _rb_walk(tree, order, visit, WALK_DATA, trav_type);
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libdm */
-/*@{*/
+/** @{ */
 /** @file dm-ps.h
  *
  */
@@ -52,7 +52,7 @@ struct ps_vars {
 extern struct ps_vars head_ps_vars;
 
 #endif /* SEEN_DM_PS */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

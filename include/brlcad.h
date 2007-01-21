@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup fixme */
-/*@{*/
+/** @{ */
 /** @file brlcad.h
  *@brief
  *  Convenience header for the core BRL-CAD libraries
@@ -82,7 +82,7 @@
 
 
 #endif  /* __BRLCAD_H__ */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

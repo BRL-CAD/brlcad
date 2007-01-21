@@ -18,13 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup bu_log */
-/*@{*/
-
+/** @addtogroup bu_log */
+/** @{ */
 /** @file linebuf.c
  *
- * @brief A portable way of doing setlinebuf().
+ *  @brief
+ *  A portable way of doing setlinebuf().
  *
  *	A portable way of doing setlinebuf().
  *
@@ -78,7 +77,7 @@ bu_setlinebuf(FILE *fp)
 #  error "Do not know how to set line buffered mode for this platform"
 #endif
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

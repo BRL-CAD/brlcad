@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libbn */
-/*@{*/
+/** @{ */
 /** @file shortvect-pr.h
  *			S H O R T V E C T - P R A G . H
  *
@@ -49,7 +49,7 @@
 		/* ??? */
 #	endif
 #endif
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

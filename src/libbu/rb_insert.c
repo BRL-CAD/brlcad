@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup rb */
-/*@{*/
+/** @addtogroup rb */
+/** @{ */
 /** @file rb_insert.c
+ *
  *		Routines to insert into a red-black tree
  *
  *  @author
@@ -29,7 +29,7 @@
  *
  * @par Source -
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #ifndef lint
@@ -442,7 +442,7 @@ void bu_rb_uniq_all_off (bu_rb_tree *tree)
 {
     _rb_set_uniq_all(tree, 0);
 }
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

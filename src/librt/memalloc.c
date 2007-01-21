@@ -18,9 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup librt */
-/*@{*/
+/** @{ */
 /** @file memalloc.c
  *
  * Functions -
@@ -55,7 +54,7 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

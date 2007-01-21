@@ -18,11 +18,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup plot */
-/*@{*/
+/** @addtogroup plot */
+/** @{ */
 /** @file marker.c
- *
  *
  *	This routine places a specified character (either from
  * the ASCII set, or one of the 5 special marker characters)
@@ -49,7 +47,7 @@
  *@n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -122,7 +120,7 @@ float	*scale;
 	tp_3marker( *fp, *c, *x, *y, *z, *scale );
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

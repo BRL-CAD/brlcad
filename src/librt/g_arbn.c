@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_arbn.c
+ *
  *  Intersect a ray with an Arbitrary Regular Polyhedron with
  *	an arbitrary number of faces.
  *
@@ -1246,7 +1245,7 @@ rt_arbn_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 	return( TCL_OK );
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

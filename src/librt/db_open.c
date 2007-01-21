@@ -18,10 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup dbio */
-
-/*@{*/
+/** @{ */
 /** @file db_open.c
  *
  * Functions -
@@ -469,7 +467,7 @@ db_sync(struct db_i *dbip)
 	bu_semaphore_release(BU_SEM_SYSCALL);
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

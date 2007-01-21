@@ -18,11 +18,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup thread */
-/*@{*/
+/** @addtogroup thread */
+/** @{ */
 /** @file ispar.c
- * @brief subroutine to determine if we are multi-threaded
+ *
+ *  @brief
+ *  subroutine to determine if we are multi-threaded
  *
  *  This subroutine is separated off from parallel.c so that
  *  bu_bomb() and others can call it, without causing either
@@ -89,7 +90,7 @@ bu_kill_parallel(void)
 #endif
     return;
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

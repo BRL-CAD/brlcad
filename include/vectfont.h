@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup plot */
-/*@{*/
+/** @{ */
 /** @file vectfont.h
  *
  *  Vector font definitions, for TIG-PACK fonts.
@@ -56,7 +56,7 @@
 
 extern TINY	*tp_cindex[256];	/**< @brief  index to stroke tokens */
 extern TINY	tp_ctable[];		/**< @brief  table of strokes */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

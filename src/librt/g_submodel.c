@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_submodel.c
+ *
  *	Intersect a ray with an entire subspace full of geometry,
  *	possibly included from another .g file, with a subordinate
  *	instance of LIBRT.
@@ -38,7 +37,7 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSsubmodel[] = "@(#)$Header$ (BRL)";

@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libtermio */
-/*@{*/
+/** @{ */
 /** @file libtermio.h
  *			T E R M I O . H
  *
@@ -30,7 +30,7 @@
  *
  *  @par Source
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  *  @par Include Sequencing -
 @code	#include "common.h"
@@ -57,7 +57,7 @@ int save_Fil_Stat( int fd );
 int reset_Fil_Stat( int	fd );
 int set_O_NDELAY( int fd );
 void prnt_Tio();	/* misc. types of args */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

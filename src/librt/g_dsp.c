@@ -1,10 +1,28 @@
-#define FULL_DSP_DEBUGGING 1
-
+/*                         G _ D S P . C
+ * BRL-CAD
+ *
+ * Copyright (c) 1999-2007 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_dsp.c
- *	Intersect a ray with a displacement map.
+ *
+ *  Intersect a ray with a displacement map.
  *
  *  The bounding box planes (in dsp coordinates) are numbered 0 .. 5
  *
@@ -41,6 +59,8 @@
 #ifndef lint
 static const char RCSdsp[] = "@(#)$Header$ (BRL)";
 #endif
+
+#define FULL_DSP_DEBUGGING 1
 
 #include "common.h"
 
@@ -4470,7 +4490,7 @@ dsp_pos(point_t out, /* return value */
 #undef XSIZ
 #undef YSIZ
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

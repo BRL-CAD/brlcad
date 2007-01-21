@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup timer */
-/*@{*/
+/** @{ */
 /** @file timerunix.c
+ *
  * To provide timing information for RT.
  *	This version for any non-BSD UNIX system, including
  *	System III, Vr1, Vr2.
@@ -156,7 +156,7 @@ rt_read_timer(char *str, int len)
 	return cpu;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -18,10 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup libfb */
-/*@{*/
+/** @addtogroup libfb */
+/** @{ */
 /** @file ./libfb/asize.c
- * Image file AutoSizing code.
+ *
+ *  Image file AutoSizing code.
  *
  *  Author -
  *	Phil Dykstra
@@ -32,7 +33,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

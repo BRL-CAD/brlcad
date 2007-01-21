@@ -18,10 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup dbio */
-
-/*@{*/
+/** @{ */
 /** @file db_tree.c
  *
  * Functions -
@@ -2702,7 +2700,7 @@ db_shader_mat(
 	return 0;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

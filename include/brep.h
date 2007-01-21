@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup nurb */
-/*@{*/
+/** @{ */
 /** @file on_nurb.h
  *
  * @brief

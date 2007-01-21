@@ -19,9 +19,10 @@
  * information.
  */
 /** @addtogroup libbn */
-/*@{*/
+/** @{ */
 /** @file shortvect.h
- *@brief
+ *
+ * @brief
  *  This header file is intended to be include'ed in front of any
  *  loop which is known to never involve more than 32,
  *  to permit vectorizing compilers to omit extra overhead.
@@ -58,7 +59,7 @@
 #else
 	/* convex? */
 #endif
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -19,16 +19,16 @@
  * information.
  *
  */
-/** \file example_geom.c
- *	\brief An example of how to traverse a BRL-CAD database heirarchy.
+/** @file example_geom.c
+ *	@brief An example of how to traverse a BRL-CAD database heirarchy.
  *
  *	This program uses the BRL-CAD librt function db_walk_tree() to traverse a
  *	user-specified portion of the Directed acyclic graph of the database.  This
  *	function allows for fast and easy database parsers to be developed
  *
- *	\param -h print help
- *	\param database_file The name of the geometry file to be processed
- *	\param objects_within_database A list of object names to be processed (tree tops)
+ *	@param -h print help
+ *	@param database_file The name of the geometry file to be processed
+ *	@param objects_within_database A list of object names to be processed (tree tops)
  */
 
 #include <stdio.h>
@@ -63,9 +63,9 @@ int verbose = 0;
 
 /**
  *	U S A G E
- *	\brief tell user how to invoke this program, then exit
- *	\param s an pointer to a null-terminated character string
- *	\return never returns
+ *	@brief tell user how to invoke this program, then exit
+ *	@param s an pointer to a null-terminated character string
+ *	@return never returns
  */
 void usage(char *s)
 {
@@ -76,16 +76,16 @@ void usage(char *s)
     exit(1);
 }
 
-/** \if no
+/** @if no
  *	P A R S E _ A R G S
- * \endif
- *	\brief Parse command line flags.
+ * @endif
+ *	@brief Parse command line flags.
  *
  *	This routine handles parsing of all command line options.
  *
- *	\param ac count of arguments
- *	\param av array of pointers to null-terminated strings
- *	\return index into av of first argument past options (new ac value)
+ *	@param ac count of arguments
+ *	@param av array of pointers to null-terminated strings
+ *	@return index into av of first argument past options (new ac value)
  */
 int parse_args(int ac, char *av[])
 {
@@ -116,13 +116,13 @@ int parse_args(int ac, char *av[])
 /**
  *	R E G I O N _ S T A R T
  *
- * \brief This routine is called when a region is first encountered in the
+ * @brief This routine is called when a region is first encountered in the
  * heirarchy when processing a tree
  *
- *	\param tsp tree state (for parsing the tree)
- *	\param pathp A listing of all the nodes traversed to get to this node in the database
- *	\param combp the combination record for this region
- *	\param client_data pointer that was passed as last argument to db_walk_tree()
+ *	@param tsp tree state (for parsing the tree)
+ *	@param pathp A listing of all the nodes traversed to get to this node in the database
+ *	@param combp the combination record for this region
+ *	@param client_data pointer that was passed as last argument to db_walk_tree()
  *
  */
 int
@@ -144,14 +144,14 @@ region_start (struct db_tree_state * tsp,
  *	R E G I O N _ E N D
  *
  *
- * \brief This is called when all sub-elements of a region have been processed by leaf_func.
+ * @brief This is called when all sub-elements of a region have been processed by leaf_func.
  *
- *	\param tsp
- *	\param pathp
- *	\param curtree
- *	\param client_data
+ *	@param tsp
+ *	@param pathp
+ *	@param curtree
+ *	@param client_data
  *
- *	\return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
+ *	@return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
  *	clean up the dta in the union tree * that is returned
  *
  * If it wants to retain the data in curtree it can by returning TREE_NULL.  Otherwise
@@ -178,10 +178,11 @@ region_end (struct db_tree_state * tsp,
 /**
  *	L E A F _ F U N C
  *
- *	\brief Function to process a leaf node.
+ *	@brief Function to process a leaf node.
  *
  *     	This is actually invoked from db_recurse() from db_walk_subtree().
- *	\return (union tree *) representing the leaf, or
+ *
+ *	@return (union tree *) representing the leaf, or
  *	TREE_NULL if leaf does not exist or has an error.
  */
 union tree *
@@ -238,12 +239,12 @@ leaf_func (struct db_tree_state * tsp,
  */
 int main(int ac, char *av[])
 {
-    /** \struct rt_i
+    /** @struct rt_i
      * This structure contains some global state information for librt
      */
     struct rt_i *rtip;
 
-    /** \struct rt_db_internal
+    /** @struct rt_db_internal
      * this structure is used to manage the payload of an
      * "internal" or "in memory" representation of geometry
      * (as opposed to the "on-disk" version, which can be different)
@@ -265,7 +266,8 @@ int main(int ac, char *av[])
     struct db_tree_state init_state; /* state table for the heirarchy walker */
     char idbuf[132];		/* Database title */
     int arg_count;
-    /** \struct user_data
+
+    /** @struct user_data
      * This is an example structure.
      * It contains anything you want to have available in the region/leaf processing routines
      */

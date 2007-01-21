@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_ebm.c
+ *
  *	Intersect a ray with an Extruded Bitmap,
  *	where the bitmap is taken from a bw(5) file.
  *
@@ -2080,7 +2079,7 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
 	ebm->tallness = 1.0;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

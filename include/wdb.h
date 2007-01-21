@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup wdb */
-/*@{*/
+/** @{ */
 /** @file wdb.h
  *
  *  Interface structures and routines for libwdb
@@ -506,7 +506,7 @@ WDB_EXPORT WDB_EXTERN( int make_hole_in_prepped_regions, ( struct rt_wdb *wdbp,
 __END_DECLS
 
 #endif /* WDB_H */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

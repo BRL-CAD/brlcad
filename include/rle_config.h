@@ -1,5 +1,5 @@
 /** @addtogroup utahrle */
-/*@{*/
+/** @{ */
 
 /** @file rle_config.h
  * 
@@ -125,4 +125,4 @@ extern char *getenv();
  */
 #include "common.h"
 
-/*@}*/
+/** @} */

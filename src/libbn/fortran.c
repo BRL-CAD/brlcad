@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup fort */
-/*@{*/
+/** @addtogroup fort */
+/** @{ */
 /** @file fortran.c
+ *
  * @brief
  *  A FORTRAN-callable interface to libplot3.
  *
@@ -496,7 +496,7 @@ float	*x1, *y1, *z1, *x2, *y2, *z2;
 	pd_3box( *plotfp, *x1, *y1, *z1, *x2, *y2, *z2 );
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

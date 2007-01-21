@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup rt */
-/*@{*/
+/** @{ */
 /** @file rtprivate.h
  *
  *@brief
@@ -82,7 +82,7 @@ extern int view_init();
 #endif
 
 #endif  /* __RTPRIVATE_H__ */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

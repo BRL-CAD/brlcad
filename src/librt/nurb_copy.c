@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup nurb */
-/*@{*/
+/** @{ */
 /** @file nurb_copy.c
+ *
  *	Duplicate the nurb surface.
  *  Author -
  *	Paul Randal Stay
@@ -32,7 +32,7 @@
  * 	Aberdeen Proving Ground, Maryland 21005
  *
  */
-/*@}*/
+/** @} */
 
 #include "common.h"
 

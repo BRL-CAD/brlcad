@@ -18,14 +18,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup fort */
-/*@{*/
+/** @{ */
 /** @file fortray.c
+ *
  *  A general-purpose set of FORTRAN-callable interface routines to
  *  permit any FORTRAN program to use LIBRT, the ray-tracing library
  *  of the BRL-CAD Package.
- *
  *
  *  Author -
  *	Michael John Muuss
@@ -34,7 +33,6 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$";
@@ -387,7 +385,7 @@ BU_FORTRAN(frname,FRNAME)(char		*fbuf,
 	fr_string_c2f( fbuf, buf, fbuflen );
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

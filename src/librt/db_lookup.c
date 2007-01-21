@@ -18,10 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup dbio */
-
-/*@{*/
+/** @{ */
 /** @file db_lookup.c
  *
  * Functions -
@@ -613,7 +611,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 	return( tbl );
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

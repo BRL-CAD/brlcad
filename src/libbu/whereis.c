@@ -18,9 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup bu_log */
-/*@{*/
+/** @{ */
 /** @file whereis.c
  *
  * Routine to provide BSD "whereis" functionality, locating binaries
@@ -206,7 +205,7 @@ int bu_whereis(char *argv[], int lim, const char *cmd)
 
   return found_count;
 }
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

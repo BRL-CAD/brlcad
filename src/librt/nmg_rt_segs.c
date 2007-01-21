@@ -19,8 +19,9 @@
  * information.
  */
 /** @addtogroup nmg */
-/*@{*/
+/** @{ */
 /** @file nmg_rt_segs.c
+ *
  *	Support routines for raytracing an NMG.
  *
  *  Author -
@@ -31,7 +32,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066  USA
  *
  */
-/*@}*/
+/** @} */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

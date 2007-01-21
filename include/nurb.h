@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup nurb */
-/*@{*/
+/** @{ */
 /** @file nurb.h
  *
  * @brief
@@ -311,7 +311,7 @@ RT_EXPORT BU_EXTERN( struct bezier_2d_list *subdivide_bezier, (struct bezier_2d_
 							fastf_t epsilon, int depth) );
 #endif
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -19,8 +19,9 @@
  * information.
  */
 /** @addtogroup deprecated */
-/*@{*/
+/** @{ */
 /** @file conf.h
+ *
  * @deprecated
  * The conf.h header is deprecated -- use common.h instead
  */
@@ -31,7 +32,7 @@
 #include "common.h"
 
 #endif /* CONF_H */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

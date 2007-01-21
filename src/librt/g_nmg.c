@@ -19,8 +19,9 @@
  * information.
  */
 /** @addtogroup g_  */
-/*@{*/
+/** @{ */
 /** @file g_nmg.c
+ *
  *	Intersect a ray with an NMG solid.
  *
  *  Authors -
@@ -31,7 +32,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSnmg[] = "@(#)$Header$ (BRL)";

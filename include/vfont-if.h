@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup vfont */
-/*@{*/
+/** @{ */
 /** @file vfont-if.h
  *
  *  This header file describes the in-memory format used by
@@ -91,7 +91,7 @@ struct vfont {
 
 extern struct vfont	*vfont_get();
 extern void		vfont_free();
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

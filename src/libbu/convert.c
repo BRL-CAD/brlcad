@@ -18,9 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup conv */
-/*@{*/
+/** @addtogroup conv */
+/** @{ */
 /** @file convert.c
  * 
  * @brief
@@ -1092,7 +1091,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	bu_free(t3, "vert.c: t3");
 	return(number_done);
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

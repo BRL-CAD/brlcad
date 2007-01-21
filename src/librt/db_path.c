@@ -18,12 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup dbio */
-
-/*@{*/
+/** @{ */
 /** @file db_path.c
- *  Routines to manipulate "db_full_path" structures
+ *
+ * Routines to manipulate "db_full_path" structures
  *
  * Functions -
  *
@@ -488,7 +487,7 @@ db_full_path_search( const struct db_full_path *a, const struct directory *dp )
 	return 0;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

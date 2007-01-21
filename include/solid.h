@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup librt */
-/*@{*/
+/** @{ */
 /** @file solid.h
  *
  *	Solids structure definition
@@ -104,7 +104,7 @@ struct solid  {
 	BU_LIST_NOT_HEAD(p1,hp);\
 	(p1)=BU_LIST_PNEXT(structure,p1)
 #endif
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

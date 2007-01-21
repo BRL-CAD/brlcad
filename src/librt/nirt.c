@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup librt */
-
-/*@{*/
+/** @{ */
 /** @file nirt.c
+ *
  *  Routines to interface to nirt.
  *
  *  Functions -
@@ -43,7 +42,7 @@
  * 	of the drawable geometry object.
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

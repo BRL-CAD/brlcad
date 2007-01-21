@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup nurb */
-/*@{*/
+/** @{ */
 /** @file oslo_map.c
+ *
  * Map the olso matrix with the old curve resulting in a new one.
  *
  * Author -
@@ -100,7 +100,7 @@ rt_nurb_map_oslo(struct oslo_mat *oslo, fastf_t *old_pts, fastf_t *new_pts, int 
 	}
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

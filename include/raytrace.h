@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup librt */
-/*@{*/
+/** @{ */
 /** @file raytrace.h
  *
  *  All the data structures and manifest constants
@@ -434,9 +434,10 @@ struct seg {
 	BU_LIST_INSERT( &((res)->re_seg), &((p)->l) ); \
 	res->re_segfree++; }
 
-/**  This could be
+/**
+ * This could be
  *	BU_LIST_INSERT_LIST( &((_res)->re_seg), &((_segheadp)->l) )
- *  except for security of checking & counting each element this way.
+ * except for security of checking & counting each element this way.
  */
 #define RT_FREE_SEG_LIST( _segheadp, _res )	{ \
 	register struct seg *_a; \
@@ -6867,7 +6868,7 @@ RT_EXPORT extern const char rt_version[];
 __END_DECLS
 
 #endif /* RAYTRACE_H */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -20,7 +20,7 @@
  */
 
 /** \defgroup libfb libfb */
-/*@{*/
+/** @{ */
 /** @file adage.h
 
   Authors -
@@ -35,7 +35,7 @@
 
 	$Header$ (BRL)
  */
-/*@}*/
+/** @} */
 #ifdef vax
 /* GSM : '' needed for Sys V emulation.					*/
 #ifdef BSD

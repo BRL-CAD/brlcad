@@ -1,5 +1,5 @@
 /** @addtogroup utahrle */
-/*@{*/
+/** @{ */
 /*
 
 	Modified by :		Gary S. Moss
@@ -120,7 +120,7 @@ void	rle_rlen(), rle_wlen(), rle_rpos(), rle_wpos();
 int	rle_rhdr(), rle_whdr(), rle_rmap(), rle_wmap();
 int	rle_decode_ln(), rle_encode_ln();
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

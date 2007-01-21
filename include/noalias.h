@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libbn */
-/*@{*/
+/** @{ */
 /** @file noalias.h
  *
  *  This header file is intended to be included in front of any
@@ -53,7 +53,7 @@
 		/*$dir no_recurrence */
 #	endif
 #endif
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

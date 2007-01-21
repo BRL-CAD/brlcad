@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup librt */
-/*@{*/
+/** @addtogroup librt */
+/** @{ */
 /** @file fixpt.h
+ *
  *  Data structures and macros for dealing with integer-based
  *  fixed point math.
  *
@@ -41,7 +41,7 @@
  *
  *  $Header$
  */
-/*@}*/
+/** @} */
 
 #ifndef FIXPT_H
 #define FIXPT_H seen

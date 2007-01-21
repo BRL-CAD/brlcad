@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-/*@{*/
+/** @{ */
 /** @file g_ehy.c
+ *
  *	Intersect a ray with a Right Hyperbolic Cylinder.
  *
  *  Algorithm -
@@ -1684,7 +1684,7 @@ rt_ehy_ifree(struct rt_db_internal *ip)
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

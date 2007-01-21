@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libdm */
-/*@{*/
+/** @{ */
 /** @file dm-wgl.h
  *
  */
@@ -66,7 +66,7 @@ struct wgl_vars {
 extern void wgl_fogHint();
 
 #endif /* SEEN_DM_WGL */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

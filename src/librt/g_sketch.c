@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_sketch.c
+ *
  *	Provide support for 2D sketches.
  *
  *  Source -
@@ -31,7 +30,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCSsketch[] = "@(#)$Header$ (BRL)";

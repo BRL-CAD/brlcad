@@ -18,11 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_ */
-/*@{*/
+/** @{ */
 /** @file rtgeom.h
- *@brief
+ *
+ * @brief
  *  Details of the internal forms used by the LIBRT geometry routines
  *  for the different solids.
  *
@@ -582,7 +582,7 @@ struct rt_bot_internal
 __END_DECLS
 
 #endif /* SEEN_RTGEOM_H */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

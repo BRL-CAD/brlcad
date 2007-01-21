@@ -18,9 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup bntcl */
-/*@{*/
+/** @addtogroup bntcl */
+/** @{ */
 /** @file bn_tcl.c
+ *
  * @brief
  *  Tcl interfaces to all the LIBBN math routines.
  *
@@ -29,7 +30,7 @@
  *
  *  @par Source
  *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 
@@ -963,7 +964,7 @@ Bn_Init(Tcl_Interp *interp)
 
 double bn_noise_fbm(point_t point,double h_val,double lacunarity,double octaves);
 double bn_noise_turb(point_t point,double h_val,double lacunarity,double octaves);
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

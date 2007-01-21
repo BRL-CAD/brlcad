@@ -18,9 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup fb */
-/*@{*/
+/** @addtogroup fb */
+/** @{ */
 /** @file fblocal.h
  *
  *  Author -
@@ -31,10 +30,9 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *
- *
  *  $Header$
  */
-/*@}*/
+/** @} */
 
 #ifndef __FBLOCAL_H__
 #define __FBLOCAL_H__

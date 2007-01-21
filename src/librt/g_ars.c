@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_ars.c
+ *
  *	Intersect a ray with an ARS (Arbitrary faceted solid).
  *
  *  Author -
@@ -1414,7 +1413,7 @@ rt_ars_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, ch
 	return( TCL_OK );
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

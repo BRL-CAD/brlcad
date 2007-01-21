@@ -18,10 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup dbio */
-
-/*@{*/
+/** @{ */
 /** @file db_anim.c
  *  Routines to apply animation directives to geometry database.
  *
@@ -542,7 +540,7 @@ db_write_anim(FILE *fop, struct animate *anp)
 	return;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

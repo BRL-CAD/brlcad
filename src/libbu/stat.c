@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup bu_log */
-/*@{*/
+/** @{ */
 /** @file stat.c
  *
  *  Support routine for identifying whether files and directories
@@ -98,7 +98,7 @@ bu_file_exists(const char *path)
     }
     return 0;					/* FAIL */
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

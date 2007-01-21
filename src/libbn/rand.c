@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup rnd */
-/*@{*/
-
+/** @addtogroup rnd */
+/** @{ */
 /** @file rand.c
+ *
  * @brief
  * These are our tables of random numbers.
  */
@@ -3651,7 +3650,7 @@ bn_mathtab_constant(void)
 		bn_rand_halftab[i] = 0.0;
 }
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

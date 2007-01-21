@@ -18,10 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup db4 */
-
-/*@{*/
+/** @{ */
 /** @file db_alloc.c
  *
  * Functions -
@@ -231,7 +229,7 @@ db_zapper(struct db_i *dbip, struct directory *dp, int start)
 	bu_free( (char *)rp, "db_zapper buf" );
 	return i;
 }
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup rt */
-/*@{*/
+/** @{ */
 /** @file shadefuncs.h
  *
  *  @par Source
@@ -97,7 +97,7 @@ OPTICAL_EXPORT BU_EXTERN(struct mfuncs *load_dynamic_shader,
 			  const int mlen));
 
 #endif
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

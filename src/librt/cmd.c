@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup ray */
-/*@{*/
+/** @{ */
 /** @file librt/cmd.c
+ *
  *  Read and parse a viewpoint-control command stream.
  *  This module is intended to be common to all programs which
  *  read this type of command stream;  the routines to handle
@@ -36,7 +36,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCScmd[] = "@(#)$Header$ (BRL)";

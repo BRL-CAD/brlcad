@@ -16,9 +16,11 @@
  * and the reason for such modification.
  */
 /** @addtogroup utahrle */
-/*@{*/
-/* 
- * rle_code.h - Definitions for Run Length Encoding.
+/** @{ */
+/** @file rle_code.h
+ *
+ * @brief
+ *   Definitions for Run Length Encoding.
  * 
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
@@ -69,5 +71,5 @@ struct XtndRsetup
 #define	    RLE_MAGIC	((short)0xcc52)	/* RLE file magic number */
 
 #endif /* RLE_MAGIC */
-/*@}*/
+/** @} */
 

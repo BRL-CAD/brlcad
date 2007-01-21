@@ -18,15 +18,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup g_ */
-/*@{*/
+/** @addtogroup g_ */
+/** @{ */
 /** @file bot.h
+ *
  *  Header file for the "bot" specific structure.  This is shared between
  *  the bot, and ars at the moment.
- *
  */
-/*@}*/
+/** @} */
 
 
 struct bot_specific {

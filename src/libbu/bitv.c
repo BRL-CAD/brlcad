@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup bitv */
-/*@{*/
-/**  @file bitv.c
+/** @addtogroup bitv */
+/** @{ */
+/** @file bitv.c
+ *
  * @brief
  *  Routines for managing bit vectors of arbitrary length.
  *
@@ -321,7 +321,7 @@ bu_bitv_dup(register const struct bu_bitv *bv)
 
     return( bv2 );
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

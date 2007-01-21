@@ -19,7 +19,7 @@
  * information.
  */
 /** @addtogroup libmultispectral */
-/*@{*/
+/** @{ */
 /** @file spectrum.h
  *
  *  A header file containing data structures to assist with
@@ -121,7 +121,7 @@ RT_EXPORT BU_EXTERN(void			rt_spect_reflectance_rgb,
 		    (struct bn_tabdata		*curve,
 		     const float		rgb[3]));
 
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

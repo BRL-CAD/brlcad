@@ -18,11 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup g_  */
-
-/*@{*/
+/** @{ */
 /** @file g_extrude.c
+ *
  *	Provide support for solids of extrusion.
  *
  *  Authors -
@@ -2648,7 +2647,7 @@ rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc
 
 
 
-/*@}*/
+/** @} */
 
 /*
  * Local Variables:

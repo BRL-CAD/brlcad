@@ -18,8 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** \addtogroup libfb */
-/*@{*/
+/** @addtogroup libfb */
+/** @{ */
 /** @file fb.h
  * @brief
  *  BRL "Generic" Framebuffer Library Interface Defines.
@@ -28,8 +28,8 @@
  *
  *  @par Source
  *	SECAD/VLD Computing Consortium, Bldg 394
- *@n	The U. S. Army Ballistic Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5066
+ * @n	The U. S. Army Ballistic Research Laboratory
+ * @n	Aberdeen Proving Ground, Maryland  21005-5066
  *
  *  $Header$
  */
@@ -249,7 +249,7 @@ FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
 FB_EXPORT extern char fb_version[];
 
 #endif /* FB_H */
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

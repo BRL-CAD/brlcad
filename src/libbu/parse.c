@@ -18,10 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup parse */
-/*@{*/
-
+/** @addtogroup parse */
+/** @{ */
 /** @file ./libbu/parse.c
  *
  * @brief routines for parsing arbitrary structures
@@ -2236,7 +2234,7 @@ bu_next_token( char *str )
 
   return( ret );
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

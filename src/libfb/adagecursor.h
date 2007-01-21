@@ -18,13 +18,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup libfb */
-/*@{*/
+/** @addtogroup libfb */
+/** @{ */
 /** @file adagecursor.h
+ *
  *  Adage arrow cursor
  */
-/*@}*/
+/** @} */
 
 16, 16,		/* size */
 0, 15,		/* origin */

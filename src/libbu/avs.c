@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup avs */
-/*@{*/
+/** @{ */
 /** @file avs.c
+ *
  *  @brief
  *  Routines to manage attribute/value sets.
  *
@@ -340,7 +340,7 @@ bu_avs_add_nonunique( struct bu_attribute_value_set *avsp, char *attribute, char
 	else
 		app->value = (char *)NULL;
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C

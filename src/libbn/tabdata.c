@@ -18,10 +18,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-/** \addtogroup anim */
-/*@{*/
+/** @addtogroup anim */
+/** @{ */
 /** @file tabdata.c
+ *
  * @brief
  *  Routines for processing tables (curves) of data with one independent
  *  parameter which is common to many sets of dependent data values.
@@ -46,7 +46,7 @@
  *
  *  With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
  */
-/*@}*/
+/** @} */
 
 #ifndef lint
 static const char RCStabdata[] = "@(#)$Header$ (ARL)";
@@ -1587,7 +1587,7 @@ bn_tabdata_mk_linear_filter(const struct bn_table *spectrum, double lower_wavele
 
 	return filt;
 }
-/*@}*/
+/** @} */
 /*
  * Local Variables:
  * mode: C
