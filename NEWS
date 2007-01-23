@@ -11,6 +11,28 @@ entire history of the project is available through CVS.
 --- 2006-12-XX  Release 7.9.0                                      ---
 ----------------------------------------------------------------------
 
+With this release marks several significant changes to BRL-CAD's
+licensing in order to simplify the distribution terms and increase
+overall flexibility of use.  All application front-end code in BRL-CAD
+is converted from the GNU General Public License (GPLv2) to the less
+restrictive GNU Lesser General Public License (LGPLv2.1).
+
+For documents not already in the public domain, BRL-CAD's default
+documentation license terms are also changed from the dual-licensed
+GFDL/GPL terms to the BSD Documentation License (BDL).  Originally
+derived from the FreeBSD Documentation License, the BDL is effectively
+the BSD License with language as it applies specifically to
+documentation.  The terms of the BDL are just as flexible allowing
+practically any use, whether it be commercial or private, so long as
+the authors are appropriately credited.
+
+As a collective work, BRL-CAD is being distributed under the terms of
+the LGPL.  Individual portions of BRL-CAD, save for a few 3rd party
+codes, effectively fall into one of the following three license
+categories: 1) LGPL, 2) BSD/BDL, or 3) are in the public domain.  See
+the terms of each individual license as well as BRL-CAD's COPYING file
+for more details.
+
 * g_qa manual page documents the -t tolerance option - Lee Butler
 * dxf-g turns 2D entities into sketches instead of nmg - John Anderson
 * removed advertising clause from BSD code - Sean Morrison
