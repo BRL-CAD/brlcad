@@ -71,13 +71,16 @@ USAGE="Usage: $0 LICENSE FILE [ProjectName] [CopyrightHolder]"
 # validate input #
 ##################
 if [ "x$LICE" = "x" ] ; then
-    echo "ERROR: must give a license type (BSD, LGPL, GPL, GFDL)"
+    echo "ERROR: must give a license type (BSD, BDL, LGPL, GPL, GFDL)"
     echo "$USAGE"
     exit 1
 fi
 case $LICE in
     bsd|BSD)
         LICE=BSD
+	;;
+    bdl|BDL)
+	LICE=BDL
 	;;
     lgpl|LGPL)
         LICE=LGPL
@@ -421,16 +424,51 @@ $c NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 $c SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 "
         ;;
+    BDL)
+        block="${block}
+$c Redistribution and use in source (Docbook format) and 'compiled'
+$c forms (PDF, PostScript, HTML, RTF, etc), with or without
+$c modification, are permitted provided that the following conditions
+$c are met:
+$c 
+$c 1. Redistributions of source code (Docbook format) must retain the
+$c above copyright notice, this list of conditions and the following
+$c disclaimer.
+$c 
+$c 2. Redistributions in compiled form (transformed to other DTDs,
+$c converted to PDF, PostScript, HTML, RTF, and other formats) must
+$c reproduce the above copyright notice, this list of conditions and
+$c the following disclaimer in the documentation and/or other
+$c materials provided with the distribution.
+$c 
+$c 3. The name of the author may not be used to endorse or promote
+$c products derived from this documentation without specific prior
+$c written permission.
+$c 
+$c THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
+$c EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+$c IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+$c PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+$c ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+$c CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+$c OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+$c BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+$c LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+$c (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+$c USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF
+$c SUCH DAMAGE.
+"
+	;;
     LGPL)
         block="${block}
 $c This library is free software; you can redistribute it and/or
 $c modify it under the terms of the GNU Lesser General Public License
-$c as published by the Free Software Foundation.
+$c version 2.1 as published by the Free Software Foundation.
 $c
 $c This library is distributed in the hope that it will be useful, but
 $c WITHOUT ANY WARRANTY; without even the implied warranty of
 $c MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-$c Lesser General Public License for more details.
+$c Lesser Lesser General Public License for more details.
 $c
 $c You should have received a copy of the GNU Lesser General Public
 $c License along with this file; see the file named COPYING for more
@@ -455,19 +493,37 @@ $c information.
         ;;
     GFDL)
         block="${block}
-$c This document is made available under the terms of the GNU Free
-$c Documentation License or, at your option, under the terms of the
-$c GNU General Public License as published by the Free Software
-$c Foundation.  Permission is granted to copy, distribute and/or
-$c modify this document under the terms of the GNU Free Documentation
-$c License as published by the Free Software Foundation; with no
-$c Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
-$c Permission is also granted to redistribute this document under the
-$c terms of the GNU General Public License.
-$c
-$c You should have received a copy of the GNU Free Documentation
-$c License and/or the GNU General Public License along with this
-$c document; see the file named COPYING for more information.
+$c Redistribution and use in source (Docbook format) and 'compiled'
+ forms (PDF, PostScript, HTML, RTF, etc), with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 
+ 1. Redistributions of source code (Docbook format) must retain the
+ above copyright notice, this list of conditions and the following
+ disclaimer.
+ 
+ 2. Redistributions in compiled form (transformed to other DTDs,
+ converted to PDF, PostScript, HTML, RTF, and other formats) must
+ reproduce the above copyright notice, this list of conditions and
+ the following disclaimer in the documentation and/or other
+ materials provided with the distribution.
+ 
+ 3. The name of the author may not be used to endorse or promote
+ products derived from this documentation without specific prior
+ written permission.
+ 
+ THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY
+ EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
 "
         ;;
     *)

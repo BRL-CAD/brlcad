@@ -5,17 +5,16 @@ dnl Copyright (c) 2004-2007 United States Government as represented by
 dnl U.S. Army Research Laboratory.
 dnl
 dnl This program is free software; you can redistribute it and/or
-dnl modify it under the terms of the GNU General Public License as
-dnl published by the Free Software Foundation; either version 2 of the
-dnl License, or (at your option) any later version.
+dnl modify it under the terms of the GNU Lesser General Public License
+dnl version 2.1 as published by the Free Software Foundation.
 dnl
 dnl This program is distributed in the hope that it will be useful, but
 dnl WITHOUT ANY WARRANTY; without even the implied warranty of
 dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-dnl General Public License for more details.
+dnl Lesser General Public License for more details.
 dnl
-dnl You should have received a copy of the GNU General Public License
-dnl along with this file; see the file named COPYING for more
+dnl You should have received a copy of the GNU Lesser General Public
+dnl License along with this file; see the file named COPYING for more
 dnl information.
 dnl
 dnl $Id$

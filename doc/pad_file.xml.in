@@ -110,9 +110,9 @@ Actively developed since 1979, BRL-CAD is a collection of more than 400 tools, u
 
 Most of BRL-CAD's build infrastructure (i.e. files required by the GNU Build System such as the configure.ac and all Makefile.am files), a variety of scripts located in the misc/ and sh/ directories, and the testing infrastructure (scripts and resources) are provided either under the BSD license or are in the public domain.  Refer to each individual file in the source distribution of BRL-CAD for specific terms.
 
-BRL-CAD's documentation consists of manual pages located throughout the package, most of the files in the doc/ directory, and the top-level administrative project text files (e.g. README &amp; AUTHORS). Unless otherwise denoted, all of BRL-CAD's documentation is made available under the terms of the GFDL or, at your option, under the terms of the GPL as published by the Free Software Foundation.  Refer to each document individually for specific terms.
+BRL-CAD's documentation consists of manual pages located throughout the package, most of the files in the doc/ directory, and the top-level administrative project text files (e.g. README &amp; AUTHORS). Unless otherwise denoted, all of BRL-CAD's documentation is made available under the terms of the GFDL or, at your option, under the terms of the GPL version 2.1 as published by the Free Software Foundation.  Refer to each document individually for specific terms.
 
-Unless previously described or otherwise already covered by another license, the BRL-CAD package is covered under the terms of the GPL as published by the Free Software Foundation.  This includes but is not limited to the applications, geometric models, images, and other resource data included in the BRL-CAD distribution.
+Unless previously described or otherwise already covered by another license, the BRL-CAD package is covered under the terms of the GPL version 2.1 as published by the Free Software Foundation.  This includes but is not limited to the applications, geometric models, images, and other resource data included in the BRL-CAD distribution.
 </Distribution_Permissions>
 	<EULA>		    GNU GENERAL PUBLIC LICENSE
 		       Version 2, June 1991
@@ -411,8 +411,7 @@ the "copyright" line and a pointer to where the full notice is found.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+    the Free Software Foundation.
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of

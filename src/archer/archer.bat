@@ -6,8 +6,7 @@ REM  the U.S. Army Research Laboratory.
 REM 
 REM  This library is free software; you can redistribute it and/or
 REM  modify it under the terms of the GNU Lesser General Public License
-REM  as published by the Free Software Foundation; either version 2 of
-REM  the License, or (at your option) any later version.
+REM  version 2.1 as published by the Free Software Foundation.
 REM 
 REM  This library is distributed in the hope that it will be useful, but
 REM  WITHOUT ANY WARRANTY; without even the implied warranty of

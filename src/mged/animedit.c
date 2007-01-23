@@ -1,5 +1,10 @@
-/*
- *			A N I M E D I T . C
+/*                      A N I M E D I T . C
+ * BRL-CAD
+ *
+ * Copyright (c) 1994-2007 Geometric Solutions, Inc.
+ * All rights reserved.
+ */
+/** @file animedit.c
  *
  * Process all animation edit commands.
  *
@@ -8,12 +13,6 @@
  *
  *  Author -
  *	Christopher T. Johnson
- *
- *  Source -
- *
- *  Copyright Notice -
- *	This software is Copyright (C) 1994 by Geometric Solutions, Inc.
- *	All rights reserved.
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$";
