@@ -1721,8 +1721,8 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 	   (*env)->DeleteGlobalRef( env, ray_class )
 	*/
 	jclass ray_class, rayResult_class, partition_class;
-	jmethodID ray_constructor_id, rayResult_constructor_id, point_constructor_id, partition_constructor_id, add_partition_id;
-	jobject jrayResult, jray, jpartition, jinhitPoint, jouthitPoint;
+	jmethodID ray_constructor_id, rayResult_constructor_id, point_constructor_id, partition_constructor_id, add_partition_id, vector_constructor_id;
+	jobject jrayResult, jray, jpartition, jinhitPoint, jouthitPoint, jinHitNormal, joutHitNormal;
 	struct ray_hit *ahit;
 
 	/* get the JAVA Ray class */
@@ -1787,6 +1787,14 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 		return( (jobject)NULL );
 	}
 
+	/* Get the JAVA methodid for the Vector3 constructor */
+	if( (vector_constructor_id=(*env)->GetMethodID( env, vect_class, "<init>",
+							   "(DDD)V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for Vector3 constructor\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
 	/* Get the JAVA class for Partition */
 	if( (partition_class=(*env)->FindClass( env,
 	    "mil/army/arl/geometryservice/datatypes/Partition" )) == NULL ) {
@@ -1797,7 +1805,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 
 	/* Get the JAVA constructor for a Partition */
 	if( (partition_constructor_id=(*env)->GetMethodID( env, partition_class, "<init>",
-	     "(DFFLmil/army/arl/math/Point;Lmil/army/arl/math/Point;Ljava/lang/String;)V" )) == NULL ) {
+	     "(DFFLmil/army/arl/math/Point;Lmil/army/arl/math/Vector3;Lmil/army/arl/math/Point;Lmil/army/arl/math/Vector3;Ljava/lang/String;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for Partition constructor\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
@@ -1847,6 +1855,28 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 			return( (jobject)NULL );
 		}
 
+		/* Create an entrance normal (Vector3) */
+		jinHitNormal = (*env)->NewObject( env, vect_class, vector_constructor_id,
+						  ahit->enter_normal[X], ahit->enter_normal[Y], ahit->enter_normal[Z] );
+
+		/* check for any exceptions */
+		if( (*env)->ExceptionOccurred(env) ) {
+			fprintf( stderr, "Exception thrown while creating inhit normal\n" );
+			(*env)->ExceptionDescribe(env);
+			return( (jobject)NULL );
+		}
+
+		/* Create an exit normal (Vector3) */
+		joutHitNormal = (*env)->NewObject( env, vect_class, vector_constructor_id,
+						  ahit->exit_normal[X], ahit->exit_normal[Y], ahit->exit_normal[Z] );
+
+		/* check for any exceptions */
+		if( (*env)->ExceptionOccurred(env) ) {
+			fprintf( stderr, "Exception thrown while creating inhit normal\n" );
+			(*env)->ExceptionDescribe(env);
+			return( (jobject)NULL );
+		}
+
 		/* calculate the entrance and exit obliquities */
 		inObl = acos( VDOT( reverse_ray_dir, ahit->enter_normal ) );
 		if( inObl < 0.0 ) {
@@ -1877,7 +1907,7 @@ build_Java_RayResult( JNIEnv *env, struct ray_result *ray_res, jobject jstart_pt
 		/* Create a JAVA Partition with all the needed info */
 		jpartition = (*env)->NewObject( env, partition_class, partition_constructor_id,
 						ahit->los, inObl, outObl,
-						jinhitPoint, jouthitPoint,
+						jinhitPoint, jinHitNormal, jouthitPoint, joutHitNormal,
 						regionName );
 
 		/* check for any exceptions */
