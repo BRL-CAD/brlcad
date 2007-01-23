@@ -566,10 +566,6 @@ SOURCE=.\opennurbs_xform.cpp
 
 SOURCE=.\opennurbs_zlib.cpp
 # End Source File
-# Begin Source File
-
-SOURCE=.\opennurbs_zlib_memory.cpp
-# End Source File
 # End Group
 # Begin Group "Header Files"
 
