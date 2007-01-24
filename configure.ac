@@ -1346,7 +1346,7 @@ fi
 dnl check if the Windows WGL graphics library links
 wgl_link_works=no
 LIBWGL=""
-if "test "xbc_with_wgl" != "xno" ; then
+if test "xbc_with_wgl" != "xno" ; then
     AC_CHECK_LIB(opengl32, glEnable, wgl_link_works=yes ; LIBWGL="-lopengl32")
 fi
 
