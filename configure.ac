@@ -255,21 +255,6 @@ BC_RESTORE_CLOBBERED([COPYING INSTALL], [misc])
 # automatically enable and load our configure cache file if available
 BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}])
 
-dnl be sure to search these directories for components
-BC_SEARCH_DIRECTORY([/usr/X11R6], [X11])
-
-dnl BSD uses /usr/local by default for ports
-BC_SEARCH_DIRECTORY([/usr/local])
-
-dnl search several additional locations if configure happens to fail
-dnl to find a required component
-BC_RETRY_DIRECTORY([/usr/freeware], [freeware])
-BC_RETRY_DIRECTORY([/opt/X11R6], [X11])
-BC_RETRY_DIRECTORY([/opt/X11], [X11])
-BC_RETRY_DIRECTORY([/usr/X11], [X11])
-BC_RETRY_DIRECTORY([/opt])
-BC_RETRY_DIRECTORY([/sw], [fink])
-
 
 dnl ***********************
 dnl *** Check arguments ***
@@ -381,12 +366,6 @@ BC_ARG_WITH([with_java], [jdk], [Specify use of or path to the Java Development 
 
 # use x11
 BC_ARG_WITH([with_x11], [x11], [Specify use of or path to X11], [auto])
-dnl *** X11 ***
-if test "x$bc_with_x11_val" != "x" ; then
-	BC_RETRY_DIRECTORY([$bc_with_x11_val])
-fi
-AC_PATH_X
-AC_PATH_XTRA
 
 # use opengl
 BC_ARG_WITH([with_opengl], [opengl], [Specify use of or path to OpenGL], [auto])
@@ -399,7 +378,6 @@ BC_ARG_WITH([with_sdl], [sdl], [Specify use of or path to SDL], [auto])
 
 # use python
 BC_ARG_WITH([with_python], [python], [Specify use of or path to python], [auto])
-
 
 ###
 # argument aliases
@@ -644,6 +622,35 @@ BC_ARG_WITH_ALIAS([with_sdl], [libsdl])
 
 # with python aliases (help uses python)
 BC_ARG_WITH_ALIAS([with_python], [py])
+
+
+###
+# set up path searching
+###
+
+dnl *** X11 ***
+if test "x$bc_with_x11_val" != "x" ; then
+	BC_RETRY_DIRECTORY([$bc_with_x11_val])
+elif test "x$bc_with_x11" = "xyes" -o "x$bc_with_x11" = "xauto" ; then
+	# search /usr/X11R6 for X11
+	BC_SEARCH_DIRECTORY([/usr/X11R6], [X11])
+
+	# if we hit a wall, retry configure with these
+	BC_RETRY_DIRECTORY([/opt/X11R6], [X11])
+	BC_RETRY_DIRECTORY([/opt/X11], [X11])
+	BC_RETRY_DIRECTORY([/usr/X11], [X11])
+fi
+AC_PATH_X
+AC_PATH_XTRA
+
+dnl automatically scan /usr/local (e.g. BSD uses /usr/local for ports)
+BC_SEARCH_DIRECTORY([/usr/local])
+
+dnl search several additional locations if configure happens to fail
+dnl to find a required component
+BC_RETRY_DIRECTORY([/usr/freeware], [freeware])
+BC_RETRY_DIRECTORY([/opt])
+BC_RETRY_DIRECTORY([/sw], [fink])
 
 
 ###
@@ -1147,27 +1154,23 @@ AC_CHECK_LIB(termlib, tputs, LIBTERMLIB="-ltermlib",
     )]
 )
 
-dnl check if X11 library link works
+dnl check if X11 libraries link
 LIBX11=""
-AC_CHECK_LIB(X11, XCreateWindow, LIBX11="-lX11")
-
 LIBXEXT=""
-AC_CHECK_LIB(Xext, XShapeCombineMask, LIBEXT="-lXext")
-
 LIBXI=""
-AC_CHECK_LIB(Xi, XGetExtensionVersion, LIBXI="-lXi")
-
 ice_link_works=no
-AC_CHECK_LIB(ICE, IceOpenConnection, ice_link_works=yes)
-
 sm_link_works=no
-AC_CHECK_LIB(SM, SmcOpenConnection, sm_link_works=yes)
-
 xt_link_works=no
-AC_CHECK_LIB(Xt, XtMalloc, xt_link_works=yes)
-
 xmu_link_works=no
-AC_CHECK_LIB(Xmu, XmuLookupStandardColormap, xmu_link_works=yes)
+if test "x$bc_with_x11" != "xno" ; then
+    AC_CHECK_LIB(X11, XCreateWindow, LIBX11="-lX11")
+    AC_CHECK_LIB(Xext, XShapeCombineMask, LIBEXT="-lXext")
+    AC_CHECK_LIB(Xi, XGetExtensionVersion, LIBXI="-lXi")
+    AC_CHECK_LIB(ICE, IceOpenConnection, ice_link_works=yes)
+    AC_CHECK_LIB(SM, SmcOpenConnection, sm_link_works=yes)
+    AC_CHECK_LIB(Xt, XtMalloc, xt_link_works=yes)
+    AC_CHECK_LIB(Xmu, XmuLookupStandardColormap, xmu_link_works=yes)
+fi
 
 dnl check if a math library links
 m_link_works=no
@@ -1365,8 +1368,6 @@ AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS( \
 	GL/gl.h \
 	GL/glx.h \
-	X11/Xlib.h \
-	X11/Xosdefs.h \
 	arpa/inet.h \
 	curses.h \
 	dslib.h \
@@ -1446,6 +1447,14 @@ AC_CHECK_HEADERS( \
 	wchar.h \
 	winsock.h
 )
+
+# optionally check for X11 headers
+if test "x$bc_with_x11" != "xno" ; then
+	AC_CHECK_HEADERS( \
+		X11/Xlib.h \
+		X11/Xosdefs.h \
+	)
+fi
 
 AC_CHECK_HEADER(sys/sched.h,
 		AC_DEFINE(HAVE_SYS_SCHED_H, 1, Define to 1 if you have the <sys/sched.h> header file.),,
@@ -2975,22 +2984,21 @@ AC_MSG_RESULT($build_against_wgl)
 
 
 dnl *** X11 interface compilation ***
-# XXX ugly hack that needs to die
-X_PREFIX=/usr/X11R6
-if test "x$bc_with_x11_val" != "x" ; then
+build_against_x11="no"
+if test "x$bc_with_x11" != "xno" ; then
+    # XXX ugly hack (that needs to die)
+    X_PREFIX=/usr/X11R6
+    if test "x$bc_with_x11_val" != "x" ; then
 	X_PREFIX="$bc_with_x11_val"
-fi
-AC_SUBST(X_PREFIX)
-X_CFLAGS="-I${X_PREFIX}/include"
-AC_SUBST(X_CFLAGS)
-X_LIBS="-L${X_PREFIX}/lib $LIBX11 $LIBXI"
-AC_SUBST(X_LIBS)
+    fi
+    X_CFLAGS="-I${X_PREFIX}/include"
+    X_LIBS="-L${X_PREFIX}/lib $LIBX11 $LIBXI"
 
-x11_works=no
-AC_MSG_CHECKING(for X11 header functionality)
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $X_LIBS"
-AC_TRY_RUN([
+    x11_works=no
+    AC_MSG_CHECKING(for X11 header functionality)
+    PRELDFLAGS="$LDFLAGS"
+    LDFLAGS="$LDFLAGS $X_LIBS"
+    AC_TRY_RUN([
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xlib.h>
 #endif
@@ -2999,10 +3007,9 @@ main() {
        pt.x = pt.y = 0;
        return pt.x;
 }
-	],[x11_works=yes])
-AC_MSG_RESULT($x11_works)
-if test "x$x11_works" = "xyes"
-then
+		],[x11_works=yes])
+    AC_MSG_RESULT($x11_works)
+    if test "x$x11_works" = "xyes" ; then
 	AC_MSG_CHECKING(for X11 link functionality)
 	AC_TRY_RUN([
 #ifdef HAVE_X11_XLIB_H
@@ -3015,26 +3022,29 @@ main() {
 }
 		    ],,x11_works=no)
 	AC_MSG_RESULT($x11_works)
-fi
-LDFLAGS="$PRELDFLAGS"
+    fi
+    LDFLAGS="$PRELDFLAGS"
 
-dnl figure out whether we need to build against X11
-build_against_x11="no"
-if test "x$bc_with_x11" != "xno" ; then
+    dnl figure out whether we need to build against X11
+    if test "x$bc_with_x11" != "xno" ; then
 	if test "x$x11_works" = "xyes" ; then
-		build_against_x11="yes"
+	    build_against_x11="yes"
 	else
-		if test "x$bc_with_x11" = "xyes" ; then
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([X11 was requested, but no system X11 libraries were found])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Try adding --without-x11])
-			AC_MSG_ERROR([*** Using X11 was requested, yet no system X11 was found ***])
-		else
-			AC_MSG_NOTICE([X11 does not appear to be functionally available])
-		fi
+	    if test "x$bc_with_x11" = "xyes" ; then
+		BC_RETRY_CONFIGURE([$this], [$args])
+		AC_MSG_NOTICE([X11 was requested, but no system X11 libraries were found])
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_NOTICE([Try adding --without-x11])
+		AC_MSG_ERROR([*** Using X11 was requested, yet no system X11 was found ***])
+	    else
+		AC_MSG_NOTICE([X11 does not appear to be functionally available])
+	    fi
 	fi
+    fi
 fi
+AC_SUBST(X_PREFIX)
+AC_SUBST(X_CFLAGS)
+AC_SUBST(X_LIBS)
 AC_MSG_CHECKING(whether to build against X11)
 AC_MSG_RESULT($build_against_x11)
 
