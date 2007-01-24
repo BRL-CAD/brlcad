@@ -1,7 +1,7 @@
 /*                        G _ G R I P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2007 United States Government as represented by
+ * Copyright (c) 1993-2007 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,10 +33,7 @@
  *
  *  Authors -
  *	Christopher T. Johnson
- *
- *  Copyright Notice -
- *	This software is Copyright (C) 1993 by Geometric Solutions, Inc.
- *	All rights reserved.
+ *      Geometric Solutions, Inc.
  */
 
 #ifndef lint
