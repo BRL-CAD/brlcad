@@ -240,6 +240,45 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   values, construction history, and timestamping.
 
 
+DOCUMENTATION
+-------------
+
+* BRL-CAD Overview Diagram
+	Completed, but not integrated
+
+* BRL-CAD Industry Diagram
+	Completed, but not integrated
+
+* BRL-CAD Commands Quick Reference
+	Partial
+
+* MGED Quick Reference
+	Complted, but not integrated
+
+* DoD V/L M&S Industry Diagram
+	Similar to existing Industry Diagram
+
+* Commercial CAD Comparison Diagram
+
+* Solid Geometry Representation Comparisons
+
+* BRL-CAD Primitives
+
+* BRL-CAD Ray Tracing Shaders
+
+* BRL-CAD Open Source Effort
+	Why, History, How
+
+* BRL-CAD Manifesto
+	Vision & Scope
+
+* Procedural Geometry in BRL-CAD
+
+* Implementing a BRL-CAD Primitive
+
+* Geometry Conversion with BRL-CAD
+
+
 ---
 See the project task tracker for more to do items and future planning
 efforts.  http://sf.net/pm/?group_id=105292
