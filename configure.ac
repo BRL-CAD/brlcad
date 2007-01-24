@@ -592,7 +592,7 @@ BC_ARG_ALIAS([install_geometry], [example-geometry])
 BC_ARG_ALIAS([install_geometry], [install-example-geometry])
 
 # optimized aliases (help uses optimized)
-BC_ARG_ALIAS([use_optimized], [optimize])
+BC_ARG_ALIAS([use_optimized], [opt optimize])
 BC_ARG_ALIAS([use_optimized], [optimization])
 BC_ARG_ALIAS([use_optimized], [optimizations])
 
@@ -1337,14 +1337,18 @@ AC_CHECK_LIB(ds, dsopen, ds_link_works=yes ; LIBDS="-lds")
 dnl check if an OpenGL graphics library links
 gl_link_works=no
 LIBGL=""
-AC_CHECK_LIB(GL, glEnable, gl_link_works=yes ; LIBGL="-lGL",
-    [AC_CHECK_LIB(GL2, glEnable, gl_link_works=yes ; LIBGL="-lGL2")]
-)
+if test "x$bc_with_opengl" != "xno" ; then
+    AC_CHECK_LIB(GL, glEnable, gl_link_works=yes ; LIBGL="-lGL",
+		 [AC_CHECK_LIB(GL2, glEnable, gl_link_works=yes ; LIBGL="-lGL2")]
+    )
+fi
 
 dnl check if the Windows WGL graphics library links
 wgl_link_works=no
 LIBWGL=""
-AC_CHECK_LIB(opengl32, glEnable, wgl_link_works=yes ; LIBWGL="-lopengl32")
+if "test "xbc_with_wgl" != "xno" ; then
+    AC_CHECK_LIB(opengl32, glEnable, wgl_link_works=yes ; LIBWGL="-lopengl32")
+fi
 
 dnl check if the SGI graphics library links
 sgigl_link_works=no
@@ -1387,8 +1391,6 @@ AC_HEADER_STDC
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS( \
-	GL/gl.h \
-	GL/glx.h \
 	arpa/inet.h \
 	curses.h \
 	dslib.h \
@@ -1471,11 +1473,19 @@ AC_CHECK_HEADERS( \
 
 # optionally check for X11 headers
 if test "x$bc_with_x11" != "xno" ; then
-	AC_CHECK_HEADERS( \
-		X11/Xlib.h \
-		X11/Xosdefs.h \
-	)
+    AC_CHECK_HEADERS( \
+	X11/Xlib.h \
+	X11/Xosdefs.h \
+    )
 fi # bc_with_x11
+
+# optionally check for OpenGL headers
+if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
+    AC_CHECK_HEADERS( \
+	GL/gl.h \
+	GL/glx.h \
+    )
+fi # bc_with_opengl
 
 AC_CHECK_HEADER(sys/sched.h,
 		AC_DEFINE(HAVE_SYS_SCHED_H, 1, Define to 1 if you have the <sys/sched.h> header file.),,
@@ -2906,11 +2916,13 @@ fi # bc_with_java
 
 
 dnl *** OpenGL interface compilation ***
-opengl_works=no
-AC_MSG_CHECKING(for OpenGL functionality)
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBGL"
-AC_TRY_RUN([
+build_against_opengl="no"
+if test "x$bc_with_opengl" != "xno" ; then
+    AC_MSG_CHECKING(for OpenGL functionality)
+    opengl_works=no
+    PRELDFLAGS="$LDFLAGS"
+    LDFLAGS="$LDFLAGS $LIBGL"
+    AC_TRY_RUN([
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
@@ -2924,39 +2936,39 @@ main(int argc, char *argv[]) {
   }
   return 0;
 }
-	],
-	[opengl_works=yes]
-)
-LDFLAGS="$PRELDFLAGS"
-AC_MSG_RESULT($opengl_works)
+	       ],
+	       [opengl_works=yes]
+	      )
+    LDFLAGS="$PRELDFLAGS"
+    AC_MSG_RESULT($opengl_works)
 
-dnl figure out whether we need to build against opengl
-build_against_opengl="no"
-if test "x$bc_with_opengl" != "xno" ; then
-	if test "x$opengl_works" = "xyes" ; then
-		build_against_opengl="yes"
+    dnl figure out whether we need to build against opengl
+    if test "x$opengl_works" = "xyes" ; then
+	build_against_opengl="yes"
+    else
+	if test "x$bc_with_opengl" = "xyes" ; then
+	    AC_MSG_NOTICE([OpenGL was requested, but no system OpenGL libraries were found])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --without-opengl])
+	    AC_MSG_ERROR([*** Using OpenGL was requested, yet no system OpenGL was found ***])
 	else
-		if test "x$bc_with_opengl" = "xyes" ; then
-			AC_MSG_NOTICE([OpenGL was requested, but no system OpenGL libraries were found])
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Try adding --without-opengl])
-			AC_MSG_ERROR([*** Using OpenGL was requested, yet no system OpenGL was found ***])
-		else
-			AC_MSG_NOTICE([OpenGL does not appear to be functionally available])
-		fi
+	    AC_MSG_NOTICE([OpenGL does not appear to be functionally available])
 	fi
-fi
+    fi
+fi # bc_with_opengl
 AC_MSG_CHECKING(whether to build against OpenGL)
 AC_MSG_RESULT($build_against_opengl)
 
 
 dnl *** WindowsGL interface compilation ***
-wgl_works=no
-AC_MSG_CHECKING(for WindowsGL functionality)
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBWGL"
-AC_TRY_RUN([
+build_against_wgl="no"
+if test "x$bc_with_wgl" != "xno" ; then
+    AC_MSG_CHECKING(for WindowsGL functionality)
+    wgl_works=no
+    PRELDFLAGS="$LDFLAGS"
+    LDFLAGS="$LDFLAGS $LIBWGL"
+    AC_TRY_RUN([
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
@@ -2970,29 +2982,27 @@ main(int argc, char *argv[]) {
   }
   return 0;
 }
-	],
-	[wgl_works=yes]
-)
-LDFLAGS="$PRELDFLAGS"
-AC_MSG_RESULT($wgl_works)
+	       ],
+	       [wgl_works=yes]
+	      )
+    LDFLAGS="$PRELDFLAGS"
+    AC_MSG_RESULT($wgl_works)
 
-dnl figure out whether we need to build against wgl
-build_against_wgl="no"
-if test "x$bc_with_wgl" != "xno" ; then
-	if test "x$wgl_works" = "xyes" ; then
-		build_against_wgl="yes"
+    dnl figure out whether we need to build against wgl
+    if test "x$wgl_works" = "xyes" ; then
+	build_against_wgl="yes"
+    else
+	if test "x$bc_with_wgl" = "xyes" ; then
+	    AC_MSG_NOTICE([WindowsGL was requested, but no system WGL OpenGL libraries were found])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --without-wgl])
+	    AC_MSG_ERROR([*** Using WindowsGL was requested, yet no system WGL OpenGL was found ***])
 	else
-		if test "x$bc_with_wgl" = "xyes" ; then
-			AC_MSG_NOTICE([WindowsGL was requested, but no system WGL OpenGL libraries were found])
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Try adding --without-wgl])
-			AC_MSG_ERROR([*** Using WindowsGL was requested, yet no system WGL OpenGL was found ***])
-		else
-			AC_MSG_NOTICE([WindowsGL does not appear to be functionally available])
-		fi
+	    AC_MSG_NOTICE([WindowsGL does not appear to be functionally available])
 	fi
-fi
+    fi
+fi # bc_with_wgl
 AC_MSG_CHECKING(whether to build against WindowsGL)
 AC_MSG_RESULT($build_against_wgl)
 
