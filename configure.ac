@@ -2987,7 +2987,7 @@ X_LIBS="-L${X_PREFIX}/lib $LIBX11 $LIBXI"
 AC_SUBST(X_LIBS)
 
 x11_works=no
-AC_MSG_CHECKING(for X11 functionality)
+AC_MSG_CHECKING(for X11 header functionality)
 PRELDFLAGS="$LDFLAGS"
 LDFLAGS="$LDFLAGS $X_LIBS"
 AC_TRY_RUN([
@@ -2999,11 +2999,24 @@ main() {
        pt.x = pt.y = 0;
        return pt.x;
 }
-	],
-	[x11_works=yes]
-)
-LDFLAGS="$PRELDFLAGS"
+	],[x11_works=yes])
 AC_MSG_RESULT($x11_works)
+if test "x$x11_works" = "xyes"
+then
+	AC_MSG_CHECKING(for X11 link functionality)
+	AC_TRY_RUN([
+#ifdef HAVE_X11_XLIB_H
+#  include <X11/Xlib.h>
+#endif
+main() {
+	XModifierKeymap *xmkm;
+	xmkm=XNewModifiermap(1);
+	return xmkm==NULL;
+}
+		    ],,x11_works=no)
+	AC_MSG_RESULT($x11_works)
+fi
+LDFLAGS="$PRELDFLAGS"
 
 dnl figure out whether we need to build against X11
 build_against_x11="no"
