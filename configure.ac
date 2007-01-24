@@ -1170,7 +1170,7 @@ if test "x$bc_with_x11" != "xno" ; then
     AC_CHECK_LIB(SM, SmcOpenConnection, sm_link_works=yes)
     AC_CHECK_LIB(Xt, XtMalloc, xt_link_works=yes)
     AC_CHECK_LIB(Xmu, XmuLookupStandardColormap, xmu_link_works=yes)
-fi
+fi # bc_with_x11
 
 dnl check if a math library links
 m_link_works=no
@@ -1341,7 +1341,9 @@ dnl check for java
 JAVA_CFLAGS=
 JAVA_LDFLAGS=
 if test "x$bc_with_java" = "xyes" ; then
+    if test "x$bc_with_java_val" != "x" ; then
 	JAVA_CFLAGS="-I$bc_with_java_val/include -I$bc_with_java_val/include/`uname | tr [A-Z] [a-z]`"
+    fi
 fi
 # XXX this should go away and become proper library or compiler option checks
 if test ! "x$bc_auto_flags" = "xno" ; then
@@ -1454,7 +1456,7 @@ if test "x$bc_with_x11" != "xno" ; then
 		X11/Xlib.h \
 		X11/Xosdefs.h \
 	)
-fi
+fi # bc_with_x11
 
 AC_CHECK_HEADER(sys/sched.h,
 		AC_DEFINE(HAVE_SYS_SCHED_H, 1, Define to 1 if you have the <sys/sched.h> header file.),,
@@ -1507,39 +1509,36 @@ AC_CHECK_HEADER(regex.h,
 		AC_DEFINE(HAVE_REGEX_H,1,[Define to 1 if you have the '<regex.h>' header file])
 		found_regex_h=yes )
 
-#################### Begin java check ##############################
-OLD_CPPFLAGS="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS $JAVA_CFLAGS"
-found_jni_h=no
-AC_CHECK_HEADER(JavaVM/jni.h,
-		AC_DEFINE(HAVE_JAVAVM_JNI_H,1,[Define to 1 if you have the '<JavaVM/jni.h>' header file])
-		found_jni_h=yes	)
-AC_CHECK_HEADER(jni.h,
-		AC_DEFINE(HAVE_JNI_H,1,[Define to 1 if you have the '<jni.h>' header file])
-		found_jni_h=yes )
 
-search_for_jni_h_more=no
-if test "x$found_jni_h" = "xno" ; then
-	if test "x$bc_with_java" != "xno" ; then
-		search_for_jni_h_more=yes
-		if test "x$bc_only_benchmark" != "xno" ; then
-			if test "x$bc_only_rts" = "xno" ; then
-				search_for_jni_h_more=no
-			fi
-		fi
+# check for java headers
+if test "x$bc_with_java " != "xno" ; then
+    PRECPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $JAVA_CFLAGS"
+    found_jni_h=no
+    AC_CHECK_HEADER(JavaVM/jni.h,
+		    AC_DEFINE(HAVE_JAVAVM_JNI_H,1,[Define to 1 if you have the '<JavaVM/jni.h>' header file])
+		    found_jni_h=yes)
+    AC_CHECK_HEADER(jni.h,
+		    AC_DEFINE(HAVE_JNI_H,1,[Define to 1 if you have the '<jni.h>' header file])
+		    found_jni_h=yes )
+
+    search_for_jni_h_more=no
+    if test "x$found_jni_h" = "xno" ; then
+	if test "x$bc_only_rts" = "xyes" ; then
+	    search_for_jni_h_more=yes
 	fi
-fi
+    fi
 
-if test "x$search_for_jni_h_more" = "xyes" ; then
+    if test "x$search_for_jni_h_more" = "xyes" ; then
 	# darwin systems may have a prior jni.h stashed away elsewhere
 	macjvmdir=/System/Library/Frameworks/JavaVM.framework/Versions
 	if test -d "$macjvmdir"  ; then
-		for dir in `ls $macjvmdir` ; do
-			if test -d "$macjvmdir/$dir" ; then
-				JAVA_CFLAGS="$JAVA_CFLAGS -I$macjvmdir/$dir/Headers"
-				CPPFLAGS="$CPPFLAGS -I$macjvmdir/$dir/Headers"
-			fi
-		done
+	    for dir in `ls $macjvmdir` ; do
+		if test -d "$macjvmdir/$dir/Headers" ; then
+		    JAVA_CFLAGS="$JAVA_CFLAGS -I$macjvmdir/$dir/Headers"
+		    CPPFLAGS="$CPPFLAGS -I$macjvmdir/$dir/Headers"
+		fi
+	    done
 	fi
 
 	# try one last time to find jni.h (must disable cached result)
@@ -1551,18 +1550,16 @@ if test "x$search_for_jni_h_more" = "xyes" ; then
 			found_jni_h=yes )
 
 	if test "x$found_jni_h" != "xno" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([jni.h was found by hunting through the JavaVM framework])
-		AC_MSG_WARN([This means you probably need to install the latest Java SDK])
-		AC_MSG_WARN([Build will try to use what it found, but you should update])
-		AC_MSG_NOTICE([See http://developer.apple.com/java/ for updates])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_WARN([jni.h was found by hunting through the JavaVM framework])
+	    AC_MSG_WARN([This means you probably need to install the latest Java SDK])
+	    AC_MSG_WARN([Build will try to use what it found, but you should update])
+	    AC_MSG_NOTICE([See http://developer.apple.com/java/ for updates])
+	    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	fi
-fi
-CPPFLAGS="$OLD_CPPFLAGS"
-
-
-###################### End java check ##############################
+    fi # search_for_jni_h_more
+    CPPFLAGS="$PRECPPFLAGS"
+fi # bc_with_java
 
 
 dnl **********************************
@@ -2852,43 +2849,41 @@ fi
 
 dnl *** Java interface compilation ***
 build_against_java=no
-AC_MSG_CHECKING(for Java functionality)
-if test "x$found_jni_h" = "xno" ; then
+if test "x$bc_with_java" != "xno" ; then
+    AC_MSG_CHECKING(for Java functionality)
+    if test "x$found_jni_h" = "xno" ; then
 	if test "x$bc_only_rts" != "xno" ; then
-		AC_MSG_RESULT(no)
-		AC_MSG_NOTICE([searching more extensively])
-		BC_RETRY_CONFIGURE([$this], [$args])
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
-		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
+	    AC_MSG_RESULT(no)
+	    AC_MSG_NOTICE([searching more extensively])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
+	    AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
 	fi
 	if test "x$bc_with_java" = "xyes" ; then
-		AC_MSG_RESULT(no)
-		AC_MSG_NOTICE([searching more extensively])
-		BC_RETRY_CONFIGURE([$this], [$args])
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_ERROR([Failed to locate a functioning jni.h for Java])
+	    AC_MSG_RESULT(no)
+	    AC_MSG_NOTICE([searching more extensively])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_ERROR([Failed to locate a functioning jni.h for Java])
 	fi
 
 	if test "x$bc_with_java" != "xauto" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([Unable to locate a functioning Java])
-		AC_MSG_WARN([Compilation of librtserver will be disabled])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_WARN([Unable to locate a functioning Java])
+	    AC_MSG_WARN([Compilation of librtserver will be disabled])
+	    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	fi
 	AC_MSG_RESULT(no)
-else
-	if test "x$bc_with_java" != "xno" ; then
-		if test "x$bc_with_java" = "xauto" ; then
-			build_against_java=yes
-		else
-			build_against_java="yes ($bc_with_java_val)"
-		fi
-		AC_MSG_RESULT(yes)
+    else # found_jni_h
+	if test "x$bc_with_java" = "xauto" ; then
+	    build_against_java=yes
 	else
-		AC_MSG_RESULT(no)
+	    build_against_java="yes ($bc_with_java_val)"
 	fi
-fi
+	AC_MSG_RESULT(yes)
+    fi # found_jni_h
+fi # bc_with_java
 
 
 dnl *** OpenGL interface compilation ***
