@@ -1,21 +1,40 @@
-dnl                   C O N F I G U R E . A C
+dnl                    C O N F I G U R E . A C
 dnl BRL-CAD
 dnl
 dnl Copyright (c) 2004-2007 United States Government as represented by
-dnl U.S. Army Research Laboratory.
+dnl the U.S. Army Research Laboratory.
 dnl
-dnl This program is free software; you can redistribute it and/or
-dnl modify it under the terms of the GNU Lesser General Public License
-dnl version 2.1 as published by the Free Software Foundation.
+dnl Redistribution and use in source and binary forms, with or without
+dnl modification, are permitted provided that the following conditions
+dnl are met:
 dnl
-dnl This program is distributed in the hope that it will be useful, but
-dnl WITHOUT ANY WARRANTY; without even the implied warranty of
-dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-dnl Lesser General Public License for more details.
+dnl 1. Redistributions of source code must retain the above copyright
+dnl notice, this list of conditions and the following disclaimer.
 dnl
-dnl You should have received a copy of the GNU Lesser General Public
-dnl License along with this file; see the file named COPYING for more
-dnl information.
+dnl 2. Redistributions in binary form must reproduce the above
+dnl copyright notice, this list of conditions and the following
+dnl disclaimer in the documentation and/or other materials provided
+dnl with the distribution.
+dnl
+dnl 3. The name of the author may not be used to endorse or promote
+dnl products derived from this software without specific prior written
+dnl permission.
+dnl
+dnl THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+dnl OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+dnl WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+dnl ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+dnl DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+dnl DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+dnl GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+dnl INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+dnl WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+dnl NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+dnl SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+dnl
+dnl NOTE: BRL-CAD as a collective work is distributed under the LGPL.
+dnl       BRL-CAD's build system is under the BSD license.
+dnl       See the COPYING file for more details.
 dnl
 dnl $Id$
 dnl
