@@ -592,7 +592,8 @@ BC_ARG_ALIAS([install_geometry], [example-geometry])
 BC_ARG_ALIAS([install_geometry], [install-example-geometry])
 
 # optimized aliases (help uses optimized)
-BC_ARG_ALIAS([use_optimized], [opt optimize])
+BC_ARG_ALIAS([use_optimized], [opt])
+BC_ARG_ALIAS([use_optimized], [optimize])
 BC_ARG_ALIAS([use_optimized], [optimization])
 BC_ARG_ALIAS([use_optimized], [optimizations])
 
