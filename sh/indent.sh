@@ -139,10 +139,10 @@ for file in $files ; do
 	echo "WARNING: $file does not exist, skipping"
 	continue
     elif [ ! -r "$file" ] ; then
-	echo "WARNING: $file is not readable"
+	echo "WARNING: $file is not readable, skipping"
 	continue
     elif [ ! -w "$file" ] ; then
-	echo "WARNING: $file is not writeable"
+	echo "WARNING: $file is not writeable, skipping"
 	continue
     fi
 
