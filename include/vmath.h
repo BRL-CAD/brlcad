@@ -291,7 +291,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			(_m)[MDZ] *= (_z); }
 
 /** @brief decrement translation elements in a 4x4 matrix from a vector */
-#define MAT_DELTAS_NUL_VEC(_m,_v) { \
+#define MAT_DELTAS_MUL_VEC(_m,_v) { \
 			(_m)[MDX] *= (_v)[X]; \
 			(_m)[MDY] *= (_v)[Y]; \
 			(_m)[MDZ] *= (_v)[Z]; }
