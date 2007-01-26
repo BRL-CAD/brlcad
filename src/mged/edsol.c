@@ -6656,8 +6656,7 @@ objedit_mouse( const vect_t mousevec )
     MAT4X3PNT(pos_model, view_state->vs_vop->vo_view2model, pos_view);/* NOT objview */
     MAT4X3PNT( tr_temp, modelchanges, temp );
     VSUB2( tr_temp, pos_model, tr_temp );
-    MAT_DELTAS(incr_change,
-	       tr_temp[X], tr_temp[Y], tr_temp[Z]);
+    MAT_DELTAS_VEC(incr_change, tr_temp);
     MAT_COPY( oldchanges, modelchanges );
     bn_mat_mul( modelchanges, incr_change, oldchanges );
 
@@ -6690,8 +6689,7 @@ oedit_trans(fastf_t *tvec)
   MAT4X3PNT( pos_model, view_state->vs_vop->vo_view2model, tvec );/* NOT objview */
   MAT4X3PNT( tr_temp, modelchanges, temp );
   VSUB2( tr_temp, pos_model, tr_temp );
-  MAT_DELTAS(incr_mat,
-	     tr_temp[X], tr_temp[Y], tr_temp[Z]);
+  MAT_DELTAS_VEC(incr_mat, tr_temp);
   MAT_COPY( oldchanges, modelchanges );
   bn_mat_mul( modelchanges, incr_mat, oldchanges );
 

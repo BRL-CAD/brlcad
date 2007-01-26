@@ -2131,7 +2131,7 @@ mged_rot_obj(Tcl_Interp *interp, int iflag, fastf_t *argvect)
    *	3. same scale factor
    */
   MAT_IDN(temp);
-  MAT_DELTAS(temp, v_work[X], v_work[Y], v_work[Z]);
+  MAT_DELTAS_VEC(temp, v_work);
   temp[15] = modelchanges[15];
   MAT_COPY(modelchanges, temp);
 
@@ -2345,7 +2345,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 #endif
 	MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
 	VSUB2(model_incr, new_vertex, ed_sol_pt);
-	MAT_DELTAS(incr, model_incr[0], model_incr[1], model_incr[2]);
+	MAT_DELTAS_VEC(incr, model_incr);
 	MAT_COPY(old,modelchanges);
 	bn_mat_mul(modelchanges, incr, old);
 #ifdef DO_NEW_EDIT_MATS
@@ -2682,7 +2682,7 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	 *	3. same scale factor
 	 */
 	MAT_IDN(temp);
-	MAT_DELTAS(temp, v_work[X], v_work[Y], v_work[Z]);
+	MAT_DELTAS_VEC(temp, v_work);
 	temp[15] = modelchanges[15];
 	MAT_COPY(modelchanges, temp);
 

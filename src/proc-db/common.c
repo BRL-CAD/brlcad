@@ -123,7 +123,7 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
 	VSET( from, 0, 0, -1 );
 	bn_mat_fromto( rot, from, dir );
 	MAT_IDN( xlate );
-	MAT_DELTAS( xlate, pos[X], pos[Y], pos[Z] );
+	MAT_DELTAS_VEC( xlate, pos);
 	bn_mat_mul( both, xlate, rot );
 
 	mk_region1( outfp, name, nbuf, "light", "shadows=1", rgb );
