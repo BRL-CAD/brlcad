@@ -133,7 +133,7 @@ EXTRA_DIST = \
 	$(dist_tcl_DATA) \
 	$(scripties)
 
-CLEANFILES = $(BUILT_SOURCES)
+# CLEANFILES = $(BUILT_SOURCES)
 
 MAINTAINERCLEANFILES = Makefile.in
 
