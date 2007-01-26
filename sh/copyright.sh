@@ -56,11 +56,11 @@ files="$*"
 findgen="."
 if [ "x$files" = "x" ] ; then
 
-    if [ -r "`dirname $0`/../configure.ac" ] ; then
+    if [ -f "`dirname $0`/../configure.ac" ] ; then
 	findgen="`dirname $0`/.."
     else
 	for dir in . .. brlcad ; do
-	    if [ -r "$dir/configure.ac" ] ; then
+	    if [ -f "$dir/configure.ac" ] ; then
 		findgen="$dir"
 		break
 	    fi

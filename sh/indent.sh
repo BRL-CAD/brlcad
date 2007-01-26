@@ -50,11 +50,11 @@ files="$*"
 findgen="."
 if [ "x$files" = "x" ] ; then
     # locate ourselves for generating a file list
-    if [ -r "`dirname $0`/../configure.ac" ] ; then
+    if [ -f "`dirname $0`/../configure.ac" ] ; then
 	findgen="`dirname $0`/.."
     else
 	for dir in . .. brlcad ; do
-	    if [ -r "$dir/configure.ac" ] ; then
+	    if [ -f "$dir/configure.ac" ] ; then
 		findgen="$dir"
 		break
 	    fi
@@ -72,7 +72,7 @@ fi
 bir="batch-indent-region.el"
 bir_dir="."
 for dir in ${findgen}/misc . .. misc ../misc ; do
-    if [ -r "$dir/$bir" ] ; then
+    if [ -f "$dir/$bir" ] ; then
 	bir_dir="$dir"
     fi
 done
@@ -82,6 +82,10 @@ if [ ! -f "$bir_dir/$bir" ] ; then
     echo "ERROR: Unable to find the batch-indent-region.el lisp script"
     echo "       Searched for $bir in:"
     echo "         $findgen/misc:.:..:misc:../misc"
+    exit 1
+fi
+if [ ! -r "$bir_dir/$bir" ] ; then
+    echo "ERROR: found $bir in $dir but the script is not readable"
     exit 1
 fi
 
