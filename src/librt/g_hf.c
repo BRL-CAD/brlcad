@@ -2040,6 +2040,7 @@ err1:
 	}
 
 	/* Apply modeling transformations */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( tmp, mat, xip->v );
 	VMOVE( xip->v, tmp );
 	MAT4X3VEC( tmp, mat, xip->x );

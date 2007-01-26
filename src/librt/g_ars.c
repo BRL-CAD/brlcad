@@ -181,6 +181,7 @@ rt_ars_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	 * by rotating vectors and adding base vector.
 	 * Observe special treatment for base vector.
 	 */
+	if (mat == NULL) mat = bn_mat_identity;
 	for( i = 0; i < ari->ncurves; i++ )  {
 		register fastf_t *v;
 
@@ -317,6 +318,7 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	 */
 	ari->curves = (fastf_t **)bu_calloc(
 		(ari->ncurves+1), sizeof(fastf_t *), "ars curve ptrs" );
+	if (mat == NULL) mat = bn_mat_identity;
 	for( i=0; i < ari->ncurves; i++ )  {
 		ari->curves[i] = (fastf_t *)bu_calloc( (ari->pts_per_curve + 1) * 3,
 			sizeof( fastf_t ), "ARS points" );

@@ -824,6 +824,7 @@ rt_submodel_import(struct rt_db_internal *ip, const struct bu_external *ep, regi
 	sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
 	sip->dbip = dbip;
 
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT_COPY( sip->root2leaf, mat );
 
 	bu_vls_init( &str );
@@ -921,6 +922,7 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 	sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
 	sip->dbip = dbip;
 
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT_COPY( sip->root2leaf, mat );
 
 	bu_vls_init( &str );

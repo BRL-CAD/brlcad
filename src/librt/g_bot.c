@@ -671,6 +671,7 @@ rt_bot_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	bot_ip->vertices = (fastf_t *)bu_calloc( bot_ip->num_vertices * 3, sizeof( fastf_t ), "Bot vertices" );
 	bot_ip->faces = (int *)bu_calloc( bot_ip->num_faces * 3, sizeof( int ), "Bot faces" );
 
+	if (mat == NULL) mat = bn_mat_identity;
 	for( i=0 ; i<bot_ip->num_vertices ; i++ )
 	{
 		point_t tmp;
@@ -850,6 +851,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	bip->vertices = (fastf_t *)bu_calloc( bip->num_vertices * 3, sizeof( fastf_t ), "BOT vertices" );
 	bip->faces = (int *)bu_calloc( bip->num_faces * 3, sizeof( int ), "BOT faces" );
 
+	if (mat == NULL) mat = bn_mat_identity;
 	for( i=0 ; i<bip->num_vertices ; i++ )
 	{
 		point_t tmp;

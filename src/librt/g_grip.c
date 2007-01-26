@@ -298,6 +298,7 @@ rt_grp_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	rt_fastf_float( orig_eqn, rp->s.s_values, 3 );	/* 2 floats to many */
 
 	/* Transform the point, and the normal */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( gip->center, mat, &orig_eqn[0] );
 	MAT4X3VEC( gip->normal, mat, &orig_eqn[3] );
 	if ( NEAR_ZERO(mat[15], 0.001) ) {
@@ -372,6 +373,7 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	ntohd( (unsigned char *)vec, ep->ext_buf, 7 );
 
 	/* Transform the point, and the normal */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( gip->center, mat, &vec[0] );
 	MAT4X3VEC( gip->normal, mat, &vec[3] );
 	if ( NEAR_ZERO(mat[15], 0.001) ) {

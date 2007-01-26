@@ -306,6 +306,7 @@ rt_xxx_import( struct rt_db_internal *ip, const struct bu_external *ep, const ma
 	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
 	xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
 
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( xxx_ip->xxx_V, mat, &rp->s.s_values[0] );
 
 	return(0);			/* OK */
@@ -391,6 +392,7 @@ rt_xxx_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const 
 	ntohd( (unsigned char *)&vv, (char *)ep->ext_buf, ELEMENTS_PER_VECT*1 );
 
 	/* Apply the modeling transformation */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( xxx_ip->v, mat, vv );
 
 	return(0);			/* OK */

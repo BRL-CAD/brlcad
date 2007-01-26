@@ -472,6 +472,7 @@ rt_vol_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	}
 
 	/* Apply any modeling transforms to get final matrix */
+	if (mat == NULL) mat = bn_mat_identity;
 	bn_mat_mul( tmat, mat, vip->mat );
 	MAT_COPY( vip->mat, tmat );
 
@@ -604,6 +605,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	}
 
 	/* Apply any modeling transforms to get final matrix */
+	if (mat == NULL) mat = bn_mat_identity;
 	bn_mat_mul( tmat, mat, vip->mat );
 	MAT_COPY( vip->mat, tmat );
 

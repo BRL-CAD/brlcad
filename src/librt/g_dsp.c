@@ -3663,6 +3663,7 @@ rt_dsp_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 		IMPORT_FAIL("zero dimension on map");
 	}
 
+	if (mat == NULL) mat = bn_mat_identity;
 	if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)!=0) {
 		IMPORT_FAIL("unable to load displacement map data");
 	}
@@ -3830,6 +3831,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	bu_vls_strncpy( &dsp_ip->dsp_name, (char *)cp,
 									ep->ext_nbytes - (cp - (unsigned char *)ep->ext_buf) );
 
+	if (mat == NULL) mat = bn_mat_identity;
 	if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)!=0) {
 		IMPORT_FAIL("unable to load displacement map data");
 	}

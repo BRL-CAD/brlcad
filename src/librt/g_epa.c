@@ -1480,6 +1480,7 @@ rt_epa_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	xip->epa_magic = RT_EPA_INTERNAL_MAGIC;
 
 	/* Warning:  type conversion */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( xip->epa_V, mat, &rp->s.s_values[0*3] );
 	MAT4X3VEC( xip->epa_H, mat, &rp->s.s_values[1*3] );
 	MAT4X3VEC( xip->epa_Au, mat, &rp->s.s_values[2*3] );
@@ -1585,6 +1586,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	ntohd( (unsigned char *)vec, ep->ext_buf, 11 );
 
 	/* Apply modeling transformations */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( xip->epa_V, mat, &vec[0*3] );
 	MAT4X3VEC( xip->epa_H, mat, &vec[1*3] );
 	MAT4X3VEC( xip->epa_Au, mat, &vec[2*3] );

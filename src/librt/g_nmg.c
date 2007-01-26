@@ -874,12 +874,6 @@ rt_nmg_export_fastf(const fastf_t *fp, int count, int pt_type, double scale)
  */
 fastf_t *
 rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long int subscript, const matp_t mat, int len, int pt_type)
-
-
-
-
-   			    		/* expected size */
-
 {
 	const unsigned char	*cp;
 	register int		count;

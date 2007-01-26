@@ -781,6 +781,7 @@ rt_sketch_import(struct rt_db_internal *ip, const struct bu_external *ep, regist
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
 
+    if (mat == NULL) mat = bn_mat_identity;
     ntohd( (unsigned char *)v, rp->skt.skt_V, 3 );
     MAT4X3PNT( sketch_ip->V, mat, v );
     ntohd( (unsigned char *)v, rp->skt.skt_uvec, 3 );
@@ -1129,6 +1130,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, regis
     sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
 
     ptr = ep->ext_buf;
+    if (mat == NULL) mat = bn_mat_identity;
     ntohd( (unsigned char *)v, ptr, 3 );
     MAT4X3PNT( sketch_ip->V, mat, v );
     ptr += SIZEOF_NETWORK_DOUBLE * 3;

@@ -677,6 +677,7 @@ rt_pg_import(struct rt_db_internal *ip, const struct bu_external *ep, const fast
 			pgp->npoly * sizeof(struct rt_pg_face_internal), "rt_pg_face_internal");
 	pgp->max_npts = 0;
 
+	if (mat == NULL) mat = bn_mat_identity;
 	for( p=0; p < pgp->npoly; p++ )  {
 		register struct rt_pg_face_internal	*pp;
 

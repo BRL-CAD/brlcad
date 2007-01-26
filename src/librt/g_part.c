@@ -1509,6 +1509,7 @@ rt_part_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 	part->part_magic = RT_PART_INTERNAL_MAGIC;
 
 	/* Apply modeling transformations */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( part->part_V, mat, v );
 	MAT4X3VEC( part->part_H, mat, h );
 	if( (part->part_vrad = vrad / mat[15]) < 0 )  {
@@ -1624,6 +1625,7 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	ntohd( (unsigned char *)vec, ep->ext_buf, 8 );
 
 	/* Apply modeling transformations */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( part->part_V, mat, &vec[0*3] );
 	MAT4X3VEC( part->part_H, mat, &vec[1*3] );
 	if( (part->part_vrad = vec[2*3] / mat[15]) < 0 )  {

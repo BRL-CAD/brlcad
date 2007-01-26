@@ -1440,6 +1440,7 @@ rt_ehy_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	xip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 
 	/* Warning:  type conversion */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( xip->ehy_V, mat, &rp->s.s_values[0*3] );
 	MAT4X3VEC( xip->ehy_H, mat, &rp->s.s_values[1*3] );
 	MAT4X3VEC( xip->ehy_Au, mat, &rp->s.s_values[2*3] );
@@ -1546,6 +1547,7 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	ntohd( (unsigned char *)vec, ep->ext_buf, 3*4 );
 
 	/* Apply modeling transformations */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( xip->ehy_V, mat, &vec[0*3] );
 	MAT4X3VEC( xip->ehy_H, mat, &vec[1*3] );
 	MAT4X3VEC( xip->ehy_Au, mat, &vec[2*3] );

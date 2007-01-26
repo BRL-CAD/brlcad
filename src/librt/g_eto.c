@@ -1234,6 +1234,7 @@ rt_eto_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	tip->eto_magic = RT_ETO_INTERNAL_MAGIC;
 
 	/* Apply modeling transformations */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( tip->eto_V, mat, &rp->s.s_values[0*3] );
 	MAT4X3VEC( tip->eto_N, mat, &rp->s.s_values[1*3] );
 	MAT4X3VEC( tip->eto_C, mat, &rp->s.s_values[2*3] );
@@ -1324,6 +1325,7 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	ntohd( (unsigned char *)vec, ep->ext_buf, 11 );
 
 	/* Apply modeling transformations */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( tip->eto_V, mat, &vec[0*3] );
 	MAT4X3VEC( tip->eto_N, mat, &vec[1*3] );
 	MAT4X3VEC( tip->eto_C, mat, &vec[2*3] );

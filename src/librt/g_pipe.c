@@ -3388,6 +3388,7 @@ rt_pipe_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 	 *  using exactly the same structures as libwdb.
 	 */
 	BU_LIST_INIT( &pipe->pipe_segs_head );
+	if (mat == NULL) mat = bn_mat_identity;
 	for( exp = &rp->pwr.pwr_data[pipe->pipe_count-1]; exp >= &rp->pwr.pwr_data[0]; exp-- )  {
 		ntohd( (unsigned char *)&tmp.pp_id, exp->epp_id, 1 );
 		ntohd( (unsigned char *)&tmp.pp_od, exp->epp_od, 1 );
@@ -3515,6 +3516,7 @@ rt_pipe_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	 *  using exactly the same structures as libwdb.
 	 */
 	BU_LIST_INIT( &pipe->pipe_segs_head );
+	if (mat == NULL) mat = bn_mat_identity;
 	for (i = 0; i < double_count; i += 6) {
 		/* Apply modeling transformations */
 		BU_GETSTRUCT( ptp, wdb_pipept );

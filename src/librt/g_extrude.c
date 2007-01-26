@@ -2193,6 +2193,7 @@ rt_extrude_import(struct rt_db_internal *ip, const struct bu_external *ep, regis
 			extrude_ip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
 	}
 
+	if (mat == NULL) mat = bn_mat_identity;
 	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_V, ELEMENTS_PER_VECT );
 	MAT4X3PNT( extrude_ip->V, mat, tmp_vec );
 	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_h, ELEMENTS_PER_VECT );
@@ -2349,6 +2350,7 @@ rt_extrude_import5(
 	}
 
 	ntohd( (unsigned char *)tmp_vec, ptr, ELEMENTS_PER_VECT*4 );
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( extrude_ip->V, mat, tmp_vec[0] );
 	MAT4X3VEC( extrude_ip->h, mat, tmp_vec[1] );
 	MAT4X3VEC( extrude_ip->u_vec, mat, tmp_vec[2] );

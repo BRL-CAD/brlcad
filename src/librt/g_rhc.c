@@ -1205,6 +1205,7 @@ rt_rhc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	xip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 
 	/* Warning:  type conversion */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( xip->rhc_V, mat, &rp->s.s_values[0*3] );
 	MAT4X3VEC( xip->rhc_H, mat, &rp->s.s_values[1*3] );
 	MAT4X3VEC( xip->rhc_B, mat, &rp->s.s_values[2*3] );
@@ -1305,6 +1306,7 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	ntohd( (unsigned char *)vec, ep->ext_buf, 11 );
 
 	/* Apply modeling transformations */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( xip->rhc_V, mat, &vec[0*3] );
 	MAT4X3VEC( xip->rhc_H, mat, &vec[1*3] );
 	MAT4X3VEC( xip->rhc_B, mat, &vec[2*3] );

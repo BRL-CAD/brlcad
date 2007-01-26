@@ -1342,6 +1342,7 @@ rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	rt_fastf_float( vec, rp->s.s_values, 4 );
 
 	/* Apply modeling transformations */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( tip->v, mat, &vec[0*3] );
 	MAT4X3VEC( tip->h, mat, &vec[1*3] );
 	MAT4X3VEC( tip->a, mat, &vec[2*3] );
@@ -1514,6 +1515,7 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 	RT_CK_DB_INTERNAL( ip );
 
+	if (mat == NULL) mat = bn_mat_identity;
 	if (bn_mat_is_non_unif(mat)) {
 		bu_log("------------------ WARNING ----------------\nNon-uniform matrix transform on torus.  Ignored\n");
 	}

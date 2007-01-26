@@ -576,6 +576,7 @@ rt_hlf_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	VSCALE( orig_pt, orig_eqn, orig_eqn[1*ELEMENTS_PER_VECT] );
 
 	/* Transform the point, and the normal */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3VEC( hip->eqn, mat, orig_eqn );
 	MAT4X3PNT( pt, mat, orig_pt );
 
@@ -661,6 +662,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	VSCALE( tmp_pt, tmp_plane, tmp_plane[3] );
 
 	/* transform both the point and the vector */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3VEC( hip->eqn, mat, tmp_plane );
 	MAT4X3PNT( new_pt, mat, tmp_pt );
 

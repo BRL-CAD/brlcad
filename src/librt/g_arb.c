@@ -1204,6 +1204,7 @@ rt_arb_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	/*
 	 * Convert from vector notation (in database) to point notation.
 	 */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( aip->pt[0], mat, &vec[0] );
 
 #	include "noalias.h"
@@ -1272,6 +1273,7 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 	/* Convert from database (network) to internal (host) format */
 	ntohd( (unsigned char *)vec, ep->ext_buf, 8*3);
+	if (mat == NULL) mat = bn_mat_identity;
 	for (i=0; i<8; i++) {
 		MAT4X3PNT( aip->pt[i], mat, &vec[i*3]);
 	}

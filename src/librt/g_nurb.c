@@ -670,6 +670,7 @@ rt_nurb_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 		m = sip->srfs[s]->ctl_points;
 		coords = rp->d.d_geom_type;
 		i = (rp->d.d_ctl_size[0] *rp->d.d_ctl_size[1]);
+		if (mat == NULL) mat = bn_mat_identity;
 		if( coords == 3)
 		{
 			for( ; i> 0; i--)
@@ -1071,6 +1072,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 
 		cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
 
+		if (mat == NULL) mat = bn_mat_identity;
 		for( i=0 ; i<srf->s_size[0] * srf->s_size[1] ; i++ )
 		{
 			if( coords == 3 )

@@ -859,6 +859,8 @@ rt_cline_import(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_cline_internal), "rt_cline_internal");
 	cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
 	cline_ip->magic = RT_CLINE_INTERNAL_MAGIC;
+	if (mat == NULL) mat = bn_mat_identity;
+
 	ntohd( (unsigned char *)(&cline_ip->thickness), rp->cli.cli_thick, 1 );
 	cline_ip->thickness /= mat[15];
 	ntohd( (unsigned char *)(&cline_ip->radius), rp->cli.cli_radius, 1 );
@@ -937,6 +939,7 @@ rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, regist
 	/* Convert from database (network) to internal (host) format */
 	ntohd( (unsigned char *)vec, ep->ext_buf, 8 );
 
+	if (mat == NULL) mat = bn_mat_identity;
 	cline_ip->thickness = vec[0] / mat[15];
 	cline_ip->radius = vec[1] / mat[15];
 	MAT4X3PNT(cline_ip->v, mat, &vec[2]);

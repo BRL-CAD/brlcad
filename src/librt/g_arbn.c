@@ -814,6 +814,7 @@ rt_arbn_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 	/* Transform by the matrix */
 #	include "noalias.h"
+	if (mat == NULL) mat = bn_mat_identity;
 	for( i=0; i < aip->neqn; i++ )  {
 		point_t	orig_pt;
 		point_t	pt;

@@ -1142,6 +1142,7 @@ rt_ell_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	rt_fastf_float( vec, rp->s.s_values, 4 );
 
 	/* Apply modeling transformations */
+	if( mat == NULL )  mat = bn_mat_identity;
 	MAT4X3PNT( eip->v, mat, &vec[0*3] );
 	MAT4X3VEC( eip->a, mat, &vec[1*3] );
 	MAT4X3VEC( eip->b, mat, &vec[2*3] );
@@ -1211,6 +1212,7 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	ntohd( (unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 );
 
 	/* Apply modeling transformations */
+	if( mat == NULL )  mat = bn_mat_identity;
 	MAT4X3PNT( eip->v, mat, &vec[0*ELEMENTS_PER_VECT] );
 	MAT4X3VEC( eip->a, mat, &vec[1*ELEMENTS_PER_VECT] );
 	MAT4X3VEC( eip->b, mat, &vec[2*ELEMENTS_PER_VECT] );

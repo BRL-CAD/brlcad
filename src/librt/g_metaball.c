@@ -434,6 +434,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 	mb->threshold = buf[0];
 	mb->method = ((long *)buf)[1];
 	BU_LIST_INIT( &mb->metaball_ctrl_head );
+	if (mat == NULL) mat = bn_mat_identity;
 	for(i=2 ; i<=metaball_count*4 ; i+=4) {
 			/* Apply modeling transformations */
 		BU_GETSTRUCT( mbpt, wdb_metaballpt );

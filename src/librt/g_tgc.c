@@ -1559,6 +1559,7 @@ rt_tgc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	rt_fastf_float( vec, rp->s.s_values, 6 );
 
 	/* Apply modeling transformations */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( tip->v, mat, &vec[0*3] );
 	MAT4X3VEC( tip->h, mat, &vec[1*3] );
 	MAT4X3VEC( tip->a, mat, &vec[2*3] );
@@ -1631,6 +1632,7 @@ rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	ntohd( (unsigned char *)vec, ep->ext_buf, 3*6 );
 
 	/* Apply modeling transformations */
+	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( tip->v, mat, &vec[0*3] );
 	MAT4X3VEC( tip->h, mat, &vec[1*3] );
 	MAT4X3VEC( tip->a, mat, &vec[2*3] );
