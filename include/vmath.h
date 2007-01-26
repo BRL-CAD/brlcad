@@ -318,6 +318,42 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /** @brief set uniform scale of 4x4 matrix from scalar */
 #define MAT_SCALE_ALL(_m, _s) (_m)[MSA] = (_s)
 
+/** @brief add to scaling elements in a 4x4 matrix from xyz */
+#define MAT_SCALE_ADD(_m, _x, _y, _z) { \
+	(_m)[MSX] += _x; \
+	(_m)[MSY] += _y; \
+	(_m)[MSZ] += _z; }
+
+/** @brief add to scaling elements in a 4x4 matrix from vector */
+#define MAT_SCALE_ADD_VEC(_m, _v) {\
+	(_m)[MSX] += (_v)[X]; \
+	(_m)[MSY] += (_v)[Y]; \
+	(_m)[MSZ] += (_v)[Z]; }
+
+/** @brief subtract from scaling elements in a 4x4 matrix from xyz */
+#define MAT_SCALE_SUB(_m, _x, _y, _z) { \
+	(_m)[MSX] -= _x; \
+	(_m)[MSY] -= _y; \
+	(_m)[MSZ] -= _z; }
+
+/** @brief subtract from scaling elements in a 4x4 matrix from vector */
+#define MAT_SCALE_SUB_VEC(_m, _v) {\
+	(_m)[MSX] -= (_v)[X]; \
+	(_m)[MSY] -= (_v)[Y]; \
+	(_m)[MSZ] -= (_v)[Z]; }
+
+/** @brief multipy scaling elements in a 4x4 matrix from xyz */
+#define MAT_SCALE_MUL(_m, _x, _y, _z) { \
+	(_m)[MSX] *= _x; \
+	(_m)[MSY] *= _y; \
+	(_m)[MSZ] *= _z; }
+
+/** @brief multiply scaling elements in a 4x4 matrix from vector */
+#define MAT_SCALE_MUL_VEC(_m, _v) {\
+	(_m)[MSX] *= (_v)[X]; \
+	(_m)[MSY] *= (_v)[Y]; \
+	(_m)[MSZ] *= (_v)[Z]; }
+
 
 /* Macro versions of librt/mat.c functions, for when speed really matters */
 
