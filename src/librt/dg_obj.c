@@ -1125,7 +1125,7 @@ dgo_autoview(struct dg_obj	*dgop,
 		VSETALL(radial , 1.0);
 
 	MAT_IDN(vop->vo_center);
-	MAT_DELTAS(vop->vo_center, -center[X], -center[Y], -center[Z]);
+	MAT_DELTAS_VEC_NEG(vop->vo_center, center);
 	vop->vo_scale = radial[X];
 	V_MAX(vop->vo_scale, radial[Y]);
 	V_MAX(vop->vo_scale, radial[Z]);
