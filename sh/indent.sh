@@ -148,26 +148,26 @@ for file in $files ; do
 
     # process a backup until we're sure it makes a change
     echo "=== BEGIN ===> $file"
-    if [ -f $file.indent.new ] ; then
+    if [ -f "$file.indent.new" ] ; then
 	echo "WARNING: $file.indent.new was in the way (overwritten)"
-	rm -f $file.indent.new
+	rm -f "$file.indent.new"
     fi
-    cp $file $file.indent.new
+    cp "$file" "$file.indent.new"
 
     # do the work
-    emacs -batch -l $bir_dir/$bir -f batch-indent-region $file.indent.new
+    emacs -batch -l "$bir_dir/$bir" -f batch-indent-region "$file.indent.new"
 
     # if the file changed, move it into place
     filediff="`diff $file $file.indent.new`"
     if [ "x$filediff" = "x" ] ; then
-	if [ -f $file.indent.old ] ; then
+	if [ -f "$file.indent.old" ] ; then
 	    echo "WARNING: $file.indent.old was in the way (overwritten)"
-	    rm -f $file.indent.old
+	    rm -f "$file.indent.old"
 	fi
-	mv $file $file.indent.old
-	mv $file.indent.new $file
+	mv "$file" "$file.indent.old"
+	mv "$file.indent.new" "$file"
     else
-	rm -f $file.indent.new
+	rm -f "$file.indent.new"
     fi
 
 done  # iteration over files
