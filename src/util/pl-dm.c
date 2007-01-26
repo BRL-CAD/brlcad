@@ -581,7 +581,7 @@ size_reset()
     VSETALL( radial , 1.0 );
 
   MAT_IDN( toViewcenter );
-  MAT_DELTAS( toViewcenter, -center[X], -center[Y], -center[Z] );
+  MAT_DELTAS_VEC_NEG( toViewcenter, center);
   Viewscale = radial[X];
   V_MAX( Viewscale, radial[Y] );
   V_MAX( Viewscale, radial[Z] );

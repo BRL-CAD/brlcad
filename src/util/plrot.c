@@ -132,7 +132,7 @@ model_rpp(const fastf_t *min, const fastf_t *max)
 
 		/* Create the matrix which encodes this */
 		MAT_IDN( xlate );
-		MAT_DELTAS( xlate, -rot_center[X], -rot_center[Y], -rot_center[Z] );
+		MAT_DELTAS_VEC_NEG( xlate, rot_center);
 		MAT_IDN( resize );
 		resize[15] = 1/scale;
 		bn_mat_mul( t1, resize, xlate );

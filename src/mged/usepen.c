@@ -448,11 +448,11 @@ wrt_point_direc( mat_t out, const mat_t change, const mat_t in, const point_t po
 
 	/* build "point to origin" matrix */
 	MAT_IDN( pt_to_origin );
-	MAT_DELTAS(pt_to_origin, -point[X], -point[Y], -point[Z]);
+	MAT_DELTAS_VEC_NEG(pt_to_origin, point);
 
 	/* build "origin to point" matrix */
 	MAT_IDN( origin_to_pt );
-	MAT_DELTAS(origin_to_pt, point[X], point[Y], point[Z]);
+	MAT_DELTAS_VEC_NEG(origin_to_pt, point);
 
 	/* build "direc to zaxis" matrix */
 	VSET(zaxis, 0.0, 0.0, 1.0);

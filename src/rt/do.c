@@ -638,7 +638,7 @@ do_frame(int framenumber)
 			quat_quat2mat( rotscale, quat );
 			rotscale[15] = 0.5 * viewsize;
 			MAT_IDN( xlate );
-			MAT_DELTAS( xlate, -eye_model[X], -eye_model[Y], -eye_model[Z] );
+			MAT_DELTAS_VEC_NEG( xlate, eye_model);
 			bn_mat_mul( new, rotscale, xlate );
 			bn_mat_print("reconstructed m2v", new);
 			quat_mat2quat( newquat, new );

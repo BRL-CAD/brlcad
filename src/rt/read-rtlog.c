@@ -277,7 +277,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	quat_quat2mat( rotate, orientation );
 	rotate[15] = 0.5 * m_size;
 	MAT_IDN( xlate );
-	MAT_DELTAS( xlate, -eye_pos[0], -eye_pos[1], -eye_pos[2] );
+	MAT_DELTAS_VEC_NEG( xlate, eye_pos);
 	bn_mat_mul( model2view, rotate, xlate );
 
 	if(verbose)  {

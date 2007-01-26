@@ -1449,27 +1449,18 @@ work:
 	    		/* First step:  put eye in center */
 		       	view_state->vs_vop->vo_scale = scale;
 		       	MAT_COPY(view_state->vs_vop->vo_rotation, rot);
-			MAT_DELTAS(view_state->vs_vop->vo_center,
-				-eye_model[X],
-				-eye_model[Y],
-				-eye_model[Z] );
+			MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, eye_model);
 	    		new_mats();
 	    		/* Second step:  put eye in front */
 	    		VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
 	    		MAT4X3PNT(eye_model, view_state->vs_vop->vo_view2model, xlate);
-			MAT_DELTAS(view_state->vs_vop->vo_center,
-				-eye_model[X],
-				-eye_model[Y],
-				-eye_model[Z] );
+			MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, eye_model);
 	    		new_mats();
 	    		break;
 	    	case 0:
 		       	view_state->vs_vop->vo_scale = scale;
 			MAT_IDN(view_state->vs_vop->vo_rotation);	/* top view */
-			MAT_DELTAS( view_state->vs_vop->vo_center,
-				-eye_model[X],
-				-eye_model[Y],
-				-eye_model[Z] );
+			MAT_DELTAS_VEC_NEG( view_state->vs_vop->vo_center, eye_model);
 			new_mats();
 	    		break;
 	    	case 1:
