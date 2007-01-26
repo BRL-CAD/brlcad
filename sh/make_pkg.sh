@@ -202,16 +202,16 @@ if [ "x$exists_writeable" = "xyes" ] ; then
 	read remove
 	case x$remove in
 	    x[yY][eE][sS])
-	        remove=yes
+		remove=yes
 		;;
 	    x[yY])
-	        remove=yes
+		remove=yes
 		;;
 	    x[nN][oO])
-	        remove=no
+		remove=no
 		;;
 	    x[nN])
-	        remove=no
+		remove=no
 		;;
 	    *)
 		remove=""
@@ -277,38 +277,38 @@ cat > "$PKG/Contents/Info.plist" <<EOF
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-        <key>CFBundleGetInfoString</key>
-        <string>${NAME} ${VERSION}</string>
-        <key>CFBundleIdentifier</key>
-        <string>org.brlcad.${NAME}</string>
-        <key>CFBundleName</key>
-        <string>${NAME}</string>
-        <key>CFBundleShortVersionString</key>
-        <string>${MAJOR_VERSION}.${MINOR_VERSION}</string>
-        <key>IFMajorVersion</key>
-        <integer>${MAJOR_VERSION}</integer>
-        <key>IFMinorVersion</key>
-        <integer>${MINOR_VERSION}</integer>
-        <key>IFPkgFlagAllowBackRev</key>
-        <true/>
-        <key>IFPkgFlagAuthorizationAction</key>
-        <string>RootAuthorization</string>
-        <key>IFPkgFlagDefaultLocation</key>
-        <string>/</string>
-        <key>IFPkgFlagInstallFat</key>
-        <false/>
-        <key>IFPkgFlagIsRequired</key>
-        <true/>
-        <key>IFPkgFlagRelocatable</key>
-        <false/>
-        <key>IFPkgFlagRestartAction</key>
-        <string>NoRestart</string>
-        <key>IFPkgFlagRootVolumeOnly</key>
-        <false/>
-        <key>IFPkgFlagUpdateInstalledLanguages</key>
-        <false/>
-        <key>IFPkgFormatVersion</key>
-        <real>0.10000000149011612</real>
+	<key>CFBundleGetInfoString</key>
+	<string>${NAME} ${VERSION}</string>
+	<key>CFBundleIdentifier</key>
+	<string>org.brlcad.${NAME}</string>
+	<key>CFBundleName</key>
+	<string>${NAME}</string>
+	<key>CFBundleShortVersionString</key>
+	<string>${MAJOR_VERSION}.${MINOR_VERSION}</string>
+	<key>IFMajorVersion</key>
+	<integer>${MAJOR_VERSION}</integer>
+	<key>IFMinorVersion</key>
+	<integer>${MINOR_VERSION}</integer>
+	<key>IFPkgFlagAllowBackRev</key>
+	<true/>
+	<key>IFPkgFlagAuthorizationAction</key>
+	<string>RootAuthorization</string>
+	<key>IFPkgFlagDefaultLocation</key>
+	<string>/</string>
+	<key>IFPkgFlagInstallFat</key>
+	<false/>
+	<key>IFPkgFlagIsRequired</key>
+	<true/>
+	<key>IFPkgFlagRelocatable</key>
+	<false/>
+	<key>IFPkgFlagRestartAction</key>
+	<string>NoRestart</string>
+	<key>IFPkgFlagRootVolumeOnly</key>
+	<false/>
+	<key>IFPkgFlagUpdateInstalledLanguages</key>
+	<false/>
+	<key>IFPkgFormatVersion</key>
+	<real>0.10000000149011612</real>
 </dict>
 </plist>
 EOF
@@ -440,14 +440,14 @@ cat > "$PKG/Contents/Resources/Description.plist" <<EOF
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-        <key>IFPkgDescriptionDeleteWarning</key>
-        <string>Don't do it... untested.</string>
-        <key>IFPkgDescriptionDescription</key>
-        <string>${NAME} ${VERSION}</string>
-        <key>IFPkgDescriptionTitle</key>
-        <string>${NAME}</string>
-        <key>IFPkgDescriptionVersion</key>
-        <string>${VERSION}</string>
+	<key>IFPkgDescriptionDeleteWarning</key>
+	<string>Don't do it... untested.</string>
+	<key>IFPkgDescriptionDescription</key>
+	<string>${NAME} ${VERSION}</string>
+	<key>IFPkgDescriptionTitle</key>
+	<string>${NAME}</string>
+	<key>IFPkgDescriptionVersion</key>
+	<string>${VERSION}</string>
 </dict>
 </plist>
 EOF

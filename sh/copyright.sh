@@ -86,33 +86,33 @@ if [ "x$files" = "x" ] ; then
 	    grep -v '/.#' | \
 	    grep -v '.deps/' | \
 	    grep -v '.libs/' | \
-            grep -v 'CVS' | \
+	    grep -v 'CVS' | \
 	    grep -v 'Makefile$' |\
 	    grep -v 'Makefile.in$' |\
-            grep -v 'autom4te.cache' | \
-            grep -v 'config.cache' | \
-            grep -v 'config.status' | \
-            grep -v 'misc/enigma/' | \
-            grep -v 'misc/vfont/' | \
-            grep -v 'other/' | \
-            grep -v '\.bak$' |\
-            grep -v '\.bmp$' |\
-            grep -v '\.dll$' |\
-            grep -v '\.g$' | \
-            grep -v '\.gif$' |\
-            grep -v '\.ico$' |\
-            grep -v '\.jpg$' |\
-            grep -v '\.lo$' |\
-            grep -v '\.log' |\
-            grep -v '\.mpg$' |\
-            grep -v '\.o$' |\
-            grep -v '\.old$' |\
-            grep -v '\.pdf$' |\
-            grep -v '\.pix' |\
-            grep -v '\.png$' |\
-            grep -v '#$' |\
-            grep -v '~$' \
-          `"
+	    grep -v 'autom4te.cache' | \
+	    grep -v 'config.cache' | \
+	    grep -v 'config.status' | \
+	    grep -v 'misc/enigma/' | \
+	    grep -v 'misc/vfont/' | \
+	    grep -v 'other/' | \
+	    grep -v '\.bak$' |\
+	    grep -v '\.bmp$' |\
+	    grep -v '\.dll$' |\
+	    grep -v '\.g$' | \
+	    grep -v '\.gif$' |\
+	    grep -v '\.ico$' |\
+	    grep -v '\.jpg$' |\
+	    grep -v '\.lo$' |\
+	    grep -v '\.log' |\
+	    grep -v '\.mpg$' |\
+	    grep -v '\.o$' |\
+	    grep -v '\.old$' |\
+	    grep -v '\.pdf$' |\
+	    grep -v '\.pix' |\
+	    grep -v '\.png$' |\
+	    grep -v '#$' |\
+	    grep -v '~$' \
+	  `"
 fi
 
 # process the files
@@ -179,7 +179,7 @@ for file in $files ; do
 	# make sure it's not a current year
 	sed "s/Copyright ([cC]) $year-$year/Copyright (c) $year/" < $file > $file.copyright.new
 	echo -n "."
-	
+
 	filediff="`diff $file $file.copyright.new`"
 	if [ "x$filediff" = "x" ] ; then
 	    echo -n "."

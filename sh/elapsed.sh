@@ -129,10 +129,10 @@ pre_sec="`echo $CONFIG_TIME | awk '{print $3}'`"
 
 if test "x$pre_sec" = "x" ; then
     if test "x$pre_min" = "x" ; then
-        # presume single value in CONFIG_TIME is elapsed seconds
+	# presume single value in CONFIG_TIME is elapsed seconds
 	if test ! "x$pre_hour" = "x" ; then
-	    pre_sec="`expr $post_sec - $pre_hour`"
-	    pre_hour=""
+	   pre_sec="`expr $post_sec - $pre_hour`"
+	   pre_hour=""
 	fi
     fi
 fi
@@ -155,7 +155,7 @@ total_pre="`expr $hour_seconds_before + $min_seconds_before + $pre_sec`"
 # if the end time is smaller than the start time, we have gone back in
 # time so assume that the clock turned over a day.
 if test $total_post -lt $total_pre ; then
-	total_post="`expr $total_post + 86400`"
+    total_post="`expr $total_post + 86400`"
 fi
 
 # break out the elapsed time into seconds, minutes, and hours
@@ -185,31 +185,31 @@ fi
 time_elapsed=""
 if test ! "x$hour_elapsed" = "x0" ; then
 	if test "x$hour_elapsed" = "x1" ; then
-		time_elapsed="$hour_elapsed hour"
+	       time_elapsed="$hour_elapsed hour"
 	else
-		time_elapsed="$hour_elapsed hours"
+	       time_elapsed="$hour_elapsed hours"
 	fi
 fi
 if test ! "x$min_elapsed" = "x0" ; then
 	if test ! "x$time_elapsed" = "x" ; then
-		time_elapsed="${time_elapsed}, "
+	       time_elapsed="${time_elapsed}, "
 	fi
 	time_elapsed="${time_elapsed}${min_elapsed}"
 	if test "x$min_elapsed" = "x1" ; then
-		time_elapsed="${time_elapsed} minute"
+	       time_elapsed="${time_elapsed} minute"
 	else
-		time_elapsed="${time_elapsed} minutes"
+	       time_elapsed="${time_elapsed} minutes"
 	fi
 fi
 if test ! "x$sec_elapsed" = "x0" ; then
 	if test ! "x$time_elapsed" = "x" ; then
-		time_elapsed="${time_elapsed}, "
+		  time_elapsed="${time_elapsed}, "
 	fi
 	time_elapsed="${time_elapsed}${sec_elapsed}"
 	if test "x$sec_elapsed" = "x1" ; then
-		time_elapsed="${time_elapsed} second"
+	       time_elapsed="${time_elapsed} second"
 	else
-		time_elapsed="${time_elapsed} seconds"
+	       time_elapsed="${time_elapsed} seconds"
 	fi
 fi
 if test "x$time_elapsed" = "x" ; then

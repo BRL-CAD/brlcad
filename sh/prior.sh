@@ -36,7 +36,7 @@
 
 psql -U forge -h forge forge <<EOF | \
 sed -E -e 's/[  ]{2,}//g' -e 's/[ ]*\|[ ]*/\|/g' -e 's/\|/,/g' | \
-awk -F , '{ if (match($4, "[12]+")) { sub(1, "Open", $4) ;  printf "%s,Forge,%s,%s,%s\n", $1, $2, $3 + 10, $4 	 } }'
+awk -F , '{ if (match($4, "[12]+")) { sub(1, "Open", $4) ;  printf "%s,Forge,%s,%s,%s\n", $1, $2, $3 + 10, $4    } }'
 SELECT project_task.project_task_id,summary,priority,status_id,realname
 FROM project_task,users,project_assigned_to
 WHERE project_assigned_to.project_task_id=project_task.project_task_id

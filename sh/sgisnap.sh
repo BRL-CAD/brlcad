@@ -35,29 +35,29 @@
 #
 ###
 #################################################################
-#								#
-#  A general purpose script to photograph an arbitrary image	#
-#  file (.rle, .pix, .bw) on a Dunn camera connected to an	#
-#  SGI workstation.						#
-#  The main point of this script is to automagicly determine	#
-#  the type and size of the image, and then expand it to	#
-#  occupy as much of the actual 1280x1024 screen as possible.	#
-#								#
-#  Author -							#
-#	Michael John Muuss					#
-#								#
-#  Source -							#
-#	SECAD/VLD Computing Consortium, Bldg 394		#
-#	The U. S. Army Ballistic Research Laboratory		#
-#	Aberdeen Proving Ground, Maryland  21005-5066		#
-#								#
-#  $Header$	#
-#								#
+#                                                               #
+#  A general purpose script to photograph an arbitrary image    #
+#  file (.rle, .pix, .bw) on a Dunn camera connected to an      #
+#  SGI workstation.                                             #
+#  The main point of this script is to automagicly determine    #
+#  the type and size of the image, and then expand it to        #
+#  occupy as much of the actual 1280x1024 screen as possible.   #
+#                                                               #
+#  Author -                                                     #
+#       Michael John Muuss                                      #
+#                                                               #
+#  Source -                                                     #
+#       SECAD/VLD Computing Consortium, Bldg 394                #
+#       The U. S. Army Ballistic Research Laboratory            #
+#       Aberdeen Proving Ground, Maryland  21005-5066           #
+#                                                               #
+#  $Header$        #
+#                                                               #
 #################################################################
 
-FB_FILE=/dev/sgif	# Full screen
+FB_FILE=/dev/sgif       # Full screen
 export FB_FILE
-FB2=/dev/sgift		# Full screen, 30 hz
+FB2=/dev/sgift          # Full screen, 30 hz
 
 fbgamma 1.5
 
@@ -135,7 +135,7 @@ do
 				esac
 				shift
 			done
-			shift		# eliminate getopt provided "--" from $1
+			shift           # eliminate getopt provided "--" from $1
 
 			if test $WIDTH -ge 1024 -a $HEIGHT -eq 1024
 			then
@@ -171,7 +171,7 @@ do
 				read ANS
 			done
 			# retake will be done on next pass through
-			Set60		# timeout leaves sgi in 30hz
+			Set60           # timeout leaves sgi in 30hz
 		fi
 	done
 done

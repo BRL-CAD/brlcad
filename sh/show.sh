@@ -47,7 +47,7 @@
 if test "$1" = ""
 then
 	echo "Usage: show filename [filetype-specific-flags]"
-	echo "	Regardless of file type, try to show it on the framebuffer."
+	echo "  Regardless of file type, try to show it on the framebuffer."
 	exit 1
 fi
 
@@ -61,7 +61,7 @@ then
 	exit 1
 fi
 
-eval `pixinfo.sh $FILE`	# sets BASE, SUFFIX, WIDTH, HEIGHT
+eval `pixinfo.sh $FILE` # sets BASE, SUFFIX, WIDTH, HEIGHT
 
 # Since we don't have an easy (fast) way to query the current framebuffer
 # for it's current size without opening a window, if the user isn't

@@ -95,39 +95,39 @@ fi
 # here/now documents.  this is, if no file arguments were provided.
 if [ "x$files" = "x" ] ; then
     files="`find $findgen -type f -and \( \
-            -name '*.c' -or \
-            -name '*.h' -or \
-            -name '*.tcl' -or \
-            -name '*.tk' -or \
-            -name '*.itcl' -or \
-            -name '*.itk' -or \
-            -name '*.pl' -or \
-            -name '*.java' -or \
-            -name '*.el' -or \
-            -name '*.f' -or \
-            -name '*.m4' -or \
-            -name '*.sh' -or \
-            -name '*.cc' -or \
-            -name '*.cp' -or \
-            -name '*.cxx' -or \
-            -name '*.cpp' -or \
-            -name '*.CPP' -or \
-            -name '*.c++' -or \
-            -name '*.C' -or \
-            -name '*.hh' -or \
-            -name '*.H' -or \
-            -name '*.m' -or \
-            -name '*.mm' -or \
-            -name '*.M' \
-            \) | \
-            grep -v '/other/' | \
-            grep -v '/doc/' | \
-            grep -v '/CVS' | \
-            grep -v '/misc/enigma/' | \
-            grep -v '/misc/vfont/' | \
-            grep -v 'autom4te.cache' | \
-            grep -v 'aclocal.m4' \
-          `"
+	    -name '*.c' -or \
+	    -name '*.h' -or \
+	    -name '*.tcl' -or \
+	    -name '*.tk' -or \
+	    -name '*.itcl' -or \
+	    -name '*.itk' -or \
+	    -name '*.pl' -or \
+	    -name '*.java' -or \
+	    -name '*.el' -or \
+	    -name '*.f' -or \
+	    -name '*.m4' -or \
+	    -name '*.sh' -or \
+	    -name '*.cc' -or \
+	    -name '*.cp' -or \
+	    -name '*.cxx' -or \
+	    -name '*.cpp' -or \
+	    -name '*.CPP' -or \
+	    -name '*.c++' -or \
+	    -name '*.C' -or \
+	    -name '*.hh' -or \
+	    -name '*.H' -or \
+	    -name '*.m' -or \
+	    -name '*.mm' -or \
+	    -name '*.M' \
+	    \) | \
+	    grep -v '/other/' | \
+	    grep -v '/doc/' | \
+	    grep -v '/CVS' | \
+	    grep -v '/misc/enigma/' | \
+	    grep -v '/misc/vfont/' | \
+	    grep -v 'autom4te.cache' | \
+	    grep -v 'aclocal.m4' \
+	  `"
 fi
 
 for file in $files ; do

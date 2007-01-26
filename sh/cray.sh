@@ -35,49 +35,49 @@
 #
 ###
 #################################################################
-#								#
-#  This shell script is intended for use with the MGED "rrt"	#
-#  (remote RT) command.  It takes the local copy of the model	#
-#  database, converts it to ASCII, and sends it over the 	#
-#  network to a compute server machine (at BRL, usually either	#
-#  a Cray or Alliant), where it is converted back into a binary	#
-#  file in /tmp.  RT (on the compute server) is started, with	#
-#  the viewing matrix provided on stdin, from the MGED rrt	#
-#  command.							#
-#								#
-#  If the environment variable FB_FILE is set before MGED is	#
-#  run, then we arrange to force the image to be routed to that	#
-#  display (it better be in host:device form!).  This can be	#
-#  overriden by supplying a -F option to the "rrt" command.	#
-#								#
-#  If the environment variable COMPUTE_SERVER is set before	#
-#  MGED is run, that network host is used to perform the	#
-#  raytracing.  Otherwise, BRL's XMP48 is used by default.	#
-#  This can be altered from within MGED by specifying the	#
-#  -C compute_server flag, which this script intercepts and	#
-#  uses to change the default/environment specification.	#
-#  The -C flag is not passed on to RT.				#
-#								#
-#  The compute server is assumed to have a different floating	#
-#  point format than the local machine, hence the conversion	#
-#  to ASCII.  The procedure can be simplified for machines of	#
-#  identical binary database format.  The procedure becomes	#
-#  almost trivial when compatible machines have NFS too.	#
-#								#
-#  Author -							#
-#	Michael John Muuss					#
-#								#
-#  Source -							#
-#	SECAD/VLD Computing Consortium, Bldg 394		#
-#	The U. S. Army Ballistic Research Laboratory		#
-#	Aberdeen Proving Ground, Maryland  21005		#
-#								#
-#  Acknowledgements -						#
-#	This Makefile draws heavily on Doug Gwyn's		#
-#	"ipr" shell script for the option parsing technique	#
-#								#
-#  $Header$		#
-#								#
+#                                                               #
+#  This shell script is intended for use with the MGED "rrt"    #
+#  (remote RT) command.  It takes the local copy of the model   #
+#  database, converts it to ASCII, and sends it over the        #
+#  network to a compute server machine (at BRL, usually either  #
+#  a Cray or Alliant), where it is converted back into a binary #
+#  file in /tmp.  RT (on the compute server) is started, with   #
+#  the viewing matrix provided on stdin, from the MGED rrt      #
+#  command.                                                     #
+#                                                               #
+#  If the environment variable FB_FILE is set before MGED is    #
+#  run, then we arrange to force the image to be routed to that #
+#  display (it better be in host:device form!).  This can be    #
+#  overriden by supplying a -F option to the "rrt" command.     #
+#                                                               #
+#  If the environment variable COMPUTE_SERVER is set before     #
+#  MGED is run, that network host is used to perform the        #
+#  raytracing.  Otherwise, BRL's XMP48 is used by default.      #
+#  This can be altered from within MGED by specifying the       #
+#  -C compute_server flag, which this script intercepts and     #
+#  uses to change the default/environment specification.        #
+#  The -C flag is not passed on to RT.                          #
+#                                                               #
+#  The compute server is assumed to have a different floating   #
+#  point format than the local machine, hence the conversion    #
+#  to ASCII.  The procedure can be simplified for machines of   #
+#  identical binary database format.  The procedure becomes     #
+#  almost trivial when compatible machines have NFS too.        #
+#                                                               #
+#  Author -                                                     #
+#       Michael John Muuss                                      #
+#                                                               #
+#  Source -                                                     #
+#       SECAD/VLD Computing Consortium, Bldg 394                #
+#       The U. S. Army Ballistic Research Laboratory            #
+#       Aberdeen Proving Ground, Maryland  21005                #
+#                                                               #
+#  Acknowledgements -                                           #
+#       This Makefile draws heavily on Doug Gwyn's              #
+#       "ipr" shell script for the option parsing technique     #
+#                                                               #
+#  $Header$           #
+#                                                               #
 #################################################################
 
 # Silicon Graphics renamed /usr/ucb as /usr/bsd, sigh
@@ -128,7 +128,7 @@ do
 	esac
 	shift
 done
-shift			# eliminate getopt provided "--" from $1
+shift                   # eliminate getopt provided "--" from $1
 
 # Always put a framebuffer specification on the front.
 ARGS="-F $FB_FILE $ARGS"
@@ -150,9 +150,9 @@ then
 fi
 
 echo ""
-echo "SERVER	$COMPUTE_SERVER"
-echo "FILE	$DBASE $OBJS"
-echo "ARGS	$ARGS"
+echo "SERVER    $COMPUTE_SERVER"
+echo "FILE      $DBASE $OBJS"
+echo "ARGS      $ARGS"
 echo ""
 
 REM_DB="/tmp/${USER}db"

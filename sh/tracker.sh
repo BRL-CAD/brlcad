@@ -167,7 +167,7 @@ days ( ) {
 	11) _dys=304 ;;
 	12) _dys=334 ;;
     esac
-	
+
     echo "`expr \( $_yer \* 365 \) \+ $_dys \+ $_day`"
     return 0;
 }
@@ -443,7 +443,7 @@ for _track in $_trackers ; do
 	[ $VERBOSE -gt 1 ] && echo "curl -d set=custom -d _status=100 -d offset=$_trackerPageCount $SITE/$_track 2>/dev/null"
 	_trackData="`curl -d set=custom -d _status=100 -d offset=$_trackerPageCount $SITE/$_track 2>/dev/null`"
 
-        # log the individual tracker group data
+	# log the individual tracker group data
 	if [ $VERBOSE -gt 2 ] ; then
 	    echo "Wrote out html data for tracker group $SITE/$_track to:"
 	    printf "\t$_stmp/${_trackID}.html\n"
@@ -455,11 +455,11 @@ for _track in $_trackers ; do
 	    echo "end curl results for $SITE/$_track"
 	fi
 
-        # extract the tracker title from the individual tracker data
+	# extract the tracker title from the individual tracker data
 	_trackTitle="`echo \"$_trackData\" | grep '<title>' | cut -d: -f2 | sed 's/[ ]*<\/title>//' | sed 's/^[ ]*//'`"
 	[ $VERBOSE -gt 0 ] && echo "Processing $_trackTitle (tracker $_trackID)"
 
-        # get the item urls
+	# get the item urls
 	[ $VERBOSE -gt 1 ] && echo "echo \"\$_trackData\" | grep /tracker/ | grep detail | cut -d'\"' -f2 | sed 's/&amp;/\&/g'"
 	_items="`echo \"$_trackData\" | grep /tracker/ | grep detail | cut -d'\"' -f2 | sed 's/&amp;/\&/g'`"
 	if [ $VERBOSE -gt 1 ] ; then
@@ -602,7 +602,7 @@ for _item in $_itemURLS ; do
 	if [ $(($_today - $_closed)) -le $CLOSED ] ; then
 	    # if this is a deleted item, make sure output was requested
 	    if [ "x$DELETED" = "xyes" -o "x$_itemStatus" = "xClosed" ] ; then
-	        # add the item to the output list
+		# add the item to the output list
 		_itemLines="$_itemLines
 $_itemLine"
 		wrote=$(($wrote + 1))
@@ -644,7 +644,7 @@ if [ -d "$_stmp" ] ; then
     else
 	echo "Session files found in $_stmp"
     fi
-	
+
 fi
 
 # remove the tracker working dir if this is the last session

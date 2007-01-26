@@ -39,13 +39,13 @@
 # the suffix, and the dimensions.
 #
 #  e.g.:
-#	data-w123-n456.pix
-#	stuff.rle
+#       data-w123-n456.pix
+#       stuff.rle
 #
 #  The output of this script is one line, suitable for use in a
 #  Bourne-shell accent-grave form, like this:
 #
-#	eval `pixinfo.sh $FILE`		# Sets BASE, SUFFIX, WIDTH, HEIGHT
+#       eval `pixinfo.sh $FILE`         # Sets BASE, SUFFIX, WIDTH, HEIGHT
 #
 #  -Mike Muuss, BRL, 11-Sept-92.
 #
@@ -54,7 +54,7 @@
 if test "$1" = ""
 then
 	echo "Usage: pixinfo.sh filename"
-	echo "	gives /bin/sh definitions for BASE SUFFIX WIDTH HEIGHT"
+	echo "  gives /bin/sh definitions for BASE SUFFIX WIDTH HEIGHT"
 	exit 1
 fi
 
@@ -88,17 +88,17 @@ fi
 ARGS=""
 case "$SUFFIX" in
 pix)
-	eval `pixautosize -b 3 -f $FILE`;;	# Sets WIDTH, HEIGHT
+	eval `pixautosize -b 3 -f $FILE`;;      # Sets WIDTH, HEIGHT
 bw)
-	eval `pixautosize -b 1 -f $FILE`;;	# Sets WIDTH, HEIGHT
+	eval `pixautosize -b 1 -f $FILE`;;      # Sets WIDTH, HEIGHT
 dpix)
-	eval `pixautosize -b 24 -f $FILE`;;	# Sets WIDTH, HEIGHT
+	eval `pixautosize -b 24 -f $FILE`;;     # Sets WIDTH, HEIGHT
 dbw)
-	eval `pixautosize -b 8 -f $FILE`;;	# Sets WIDTH, HEIGHT
+	eval `pixautosize -b 8 -f $FILE`;;      # Sets WIDTH, HEIGHT
 yuv)
-	eval `pixautosize -b 2 -f $FILE`;;	# Sets WIDTH, HEIGHT
+	eval `pixautosize -b 2 -f $FILE`;;      # Sets WIDTH, HEIGHT
 png)
-	eval `png-fb -H $FILE`;;		# Sets WIDTH, HEIGHT
+	eval `png-fb -H $FILE`;;                # Sets WIDTH, HEIGHT
 jpg|jpeg)
 	ARGS=`jpeg-fb -h $FILE` ;;
 rle)

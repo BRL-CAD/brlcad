@@ -34,10 +34,10 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-# 
+#
 # This script iterates over all regions in a geometry file and
 # attempts to facetize them all.
-# 
+#
 # Author -
 #   Lee Butler
 #

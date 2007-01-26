@@ -105,16 +105,16 @@ if [ -f "$DMG" ] ; then
 	read remove
 	case x$remove in
 	    x[yY][eE][sS])
-	        remove=yes
+		remove=yes
 		;;
 	    x[yY])
-	        remove=yes
+		remove=yes
 		;;
 	    x[nN][oO])
-	        remove=no
+		remove=no
 		;;
 	    x[nN])
-	        remove=no
+		remove=no
 		;;
 	    *)
 		remove=""
@@ -331,7 +331,7 @@ tell application "Finder"
 	    set arrangement to arranged by kind
 	    try
 -- only 10.4
---		set background picture to imageFile
+--              set background picture to imageFile
 	    end try
 	end tell
     end tell

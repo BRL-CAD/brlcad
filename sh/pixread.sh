@@ -40,37 +40,37 @@
 # frames all concatenated together, no separating tape marks.
 #
 # Formats -
-#	512x512	nrec=32 count=192
-#	640x480 nrec=38 count=160
+#       512x512 nrec=32 count=192
+#       640x480 nrec=38 count=160
 
 # base string for no rewind tape
 NRW_BASE=/dev/nrmt
 
 if test x$2 = x
-then	echo "Usage:  $0 basename start_frame [nrec/image] [images/tape]"
+then    echo "Usage:  $0 basename start_frame [nrec/image] [images/tape]"
 	exit 1
 fi
 
 START_FRAME=$2
 
 if test x$3 = x
-then	NREC=32		# Expecting 512x512 on 6250 tapes
-else	NREC=$3
+then    NREC=32         # Expecting 512x512 on 6250 tapes
+else    NREC=$3
 fi
 
 case $NREC in
-	32)	NFRAME=192;;	# 512x512
-	38)	NFRAME=160;;	# 640x480
-	*)	NFRAME=`expr 6144 / $NREC`;;
+	32)     NFRAME=192;;    # 512x512
+	38)     NFRAME=160;;    # 640x480
+	*)      NFRAME=`expr 6144 / $NREC`;;
 esac
 
 if test x$4 != x
-then	NFRAME=$4
+then    NFRAME=$4
 fi
 
 echo "bs=24k  count=$NREC.  # images per tape=$NFRAME, first file=$1.$START_FRAME"
 
-TAPE=/dev/null		# to defeat initial "mt off" cmd
+TAPE=/dev/null          # to defeat initial "mt off" cmd
 i=0
 while eval
 do

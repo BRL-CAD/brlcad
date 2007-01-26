@@ -54,14 +54,14 @@ cat > $BUG_REPORT << ___EOF___
 Abstract: [Program/library, 40 character or so descriptive subject (for ref)]
 Environment: [BRL-CAD Release, Hardware, OS version]
 Description:
-        [Detailed description of the problem/suggestion/complaint.]
+	[Detailed description of the problem/suggestion/complaint.]
 
 Repeat-By:
-        [Describe the sequence of events that causes the problem to occur.]
+	[Describe the sequence of events that causes the problem to occur.]
 
 Fix:
-        [Description of how to fix the problem.  If you don't know a
-        fix for the problem, don't include this section.]
+	[Description of how to fix the problem.  If you don't know a
+	fix for the problem, don't include this section.]
 
 Please remove the portions in [], and replace with your own remarks.
 ___EOF___
@@ -69,9 +69,9 @@ ___EOF___
 ACTION=E
 while [ 1 ] ; do
 	case $ACTION in
-		S*|s*)	break ;;
-		F*|f*)	rm -f $BUG_REPORT ; exit ;;
-		E*|e*)	$REPT_EDITOR $BUG_REPORT ;;
+		S*|s*)  break ;;
+		F*|f*)  rm -f $BUG_REPORT ; exit ;;
+		E*|e*)  $REPT_EDITOR $BUG_REPORT ;;
 	esac
 
 	ACTION=S

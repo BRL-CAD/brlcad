@@ -67,7 +67,7 @@ then
 	exit 1
 fi
 
-eval `pixinfo.sh $OLDFILE`	# sets BASE, SUFFIX, WIDTH, HEIGHT
+eval `pixinfo.sh $OLDFILE`      # sets BASE, SUFFIX, WIDTH, HEIGHT
 
 NEWFILE=${BASE}.png
 if test -f $NEWFILE

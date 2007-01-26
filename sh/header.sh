@@ -77,22 +77,22 @@ if [ "x$LICE" = "x" ] ; then
 fi
 case $LICE in
     bsd|BSD)
-        LICE=BSD
+	LICE=BSD
 	;;
     bdl|BDL)
 	LICE=BDL
 	;;
     lgpl|LGPL)
-        LICE=LGPL
+	LICE=LGPL
 	;;
     gpl|GPL)
-        LICE=GPL
+	LICE=GPL
 	;;
     gfdl|fdl|GFDL|FDL)
-        LICE=GFDL
-    	;;
+	LICE=GFDL
+	;;
     *)
-        echo "ERROR: Unknown license type: $LICE"
+	echo "ERROR: Unknown license type: $LICE"
 	echo "License should be one of BSD, LGPL, GPL, GFDL"
 	echo "$USAGE"
 	exit 1
@@ -345,7 +345,7 @@ else
     startyear="`echo "$copyrightline" | sed 's/.*\([0-9][0-9][0-9][0-9]\)-[0-9][0-9][0-9][0-9].*/\1/'`"
     echo "start is $startyear"
     if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
-        startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\),[0-9][0-9][0-9][0-9],[0-9][0-9][0-9][0-9][^0-9].*/\1/'`"
+	startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\),[0-9][0-9][0-9][0-9],[0-9][0-9][0-9][0-9][^0-9].*/\1/'`"
 	echo "start2 is $startyear"
 	if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
 	    # didn't find a year, so use current year
@@ -394,7 +394,7 @@ fi
 
 case $LICE in
     BSD)
-        block="${block}
+	block="${block}
 $c Redistribution and use in source and binary forms, with or without
 $c modification, are permitted provided that the following conditions
 $c are met:
@@ -423,28 +423,28 @@ $c WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 $c NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 $c SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 "
-        ;;
+	;;
     BDL)
-        block="${block}
+	block="${block}
 $c Redistribution and use in source (Docbook format) and 'compiled'
 $c forms (PDF, PostScript, HTML, RTF, etc), with or without
 $c modification, are permitted provided that the following conditions
 $c are met:
-$c 
+$c
 $c 1. Redistributions of source code (Docbook format) must retain the
 $c above copyright notice, this list of conditions and the following
 $c disclaimer.
-$c 
+$c
 $c 2. Redistributions in compiled form (transformed to other DTDs,
 $c converted to PDF, PostScript, HTML, RTF, and other formats) must
 $c reproduce the above copyright notice, this list of conditions and
 $c the following disclaimer in the documentation and/or other
 $c materials provided with the distribution.
-$c 
+$c
 $c 3. The name of the author may not be used to endorse or promote
 $c products derived from this documentation without specific prior
 $c written permission.
-$c 
+$c
 $c THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
 $c EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 $c IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -460,7 +460,7 @@ $c SUCH DAMAGE.
 "
 	;;
     LGPL)
-        block="${block}
+	block="${block}
 $c This library is free software; you can redistribute it and/or
 $c modify it under the terms of the GNU Lesser General Public License
 $c version 2.1 as published by the Free Software Foundation.
@@ -474,9 +474,9 @@ $c You should have received a copy of the GNU Lesser General Public
 $c License along with this file; see the file named COPYING for more
 $c information.
 "
-        ;;
+	;;
     GPL)
-        block="${block}
+	block="${block}
 $c This program is free software; you can redistribute it and/or
 $c modify it under the terms of the GNU General Public License as
 $c published by the Free Software Foundation.
@@ -490,28 +490,28 @@ $c You should have received a copy of the GNU General Public License
 $c along with this file; see the file named COPYING for more
 $c information.
 "
-        ;;
+	;;
     GFDL)
-        block="${block}
+	block="${block}
 $c Redistribution and use in source (Docbook format) and 'compiled'
  forms (PDF, PostScript, HTML, RTF, etc), with or without
  modification, are permitted provided that the following conditions
  are met:
- 
+
  1. Redistributions of source code (Docbook format) must retain the
  above copyright notice, this list of conditions and the following
  disclaimer.
- 
+
  2. Redistributions in compiled form (transformed to other DTDs,
  converted to PDF, PostScript, HTML, RTF, and other formats) must
  reproduce the above copyright notice, this list of conditions and
  the following disclaimer in the documentation and/or other
  materials provided with the distribution.
- 
+
  3. The name of the author may not be used to endorse or promote
  products derived from this documentation without specific prior
  written permission.
- 
+
  THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY
  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -525,9 +525,9 @@ $c Redistribution and use in source (Docbook format) and 'compiled'
  USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF
  SUCH DAMAGE.
 "
-        ;;
+	;;
     *)
-        echo "ERROR: encountered unknown license type $LICE during processing"
+	echo "ERROR: encountered unknown license type $LICE during processing"
 	exit 6
 	;;
 esac
@@ -580,39 +580,39 @@ linetwo="`cat ${FILE}.backup | head -n 2 | tail -n 1`"
 linethree="`cat ${FILE}.backup | head -n 3 | tail -n 1`"
 case "$lineone" in
     "/*"*${title})
-        echo "Found C comment start with file header"
+	echo "Found C comment start with file header"
 	skip=2
 	case "$linetwo" in
 	    " *")
-	        echo "Found empty comment line"
+		echo "Found empty comment line"
 		skip=3
 		;;
 	esac
 	;;
     "/*"*${titlesansext})
-        echo "Found C comment start with file header sans extension"
+	echo "Found C comment start with file header sans extension"
 	skip=2
 	case "$linetwo" in
 	    " *")
-	        echo "Found empty comment line"
+		echo "Found empty comment line"
 		skip=3
 		;;
 	esac
 	;;
     "/*")
-        echo "Found C comment start"
+	echo "Found C comment start"
 	skip=2
 	case "$linetwo" in
 	    " *"*${title})
-	        echo "Found old file header"
+		echo "Found old file header"
 		skip=3
 		;;
 	    " *"*${titlesansext})
-	        echo "Found old file header sans extension"
+		echo "Found old file header sans extension"
 		skip=3
 		;;
 	    " *")
-	        echo "Found empty comment line"
+		echo "Found empty comment line"
 		skip=3
 		if [ "x$foundtitle" = "x1" ] ; then
 		    case "$linethree" in
@@ -635,45 +635,45 @@ case "$lineone" in
 	skip=2
 	;;
     "/*"*)
-        echo "WARNING: Found C comment start with stuff trailing"
+	echo "WARNING: Found C comment start with stuff trailing"
 	skip=0
 	closeit=1
 	;;
     "#"*"!"*"/bin/"*)
-        echo "Found script exec line"
+	echo "Found script exec line"
 	echo "$lineone" >> $FILE
 	skip=2
 	case "$linetwo" in
 	    "# "*${title})
-	        echo "Found old file header"
+		echo "Found old file header"
 		skip=3
 		;;
 	    "# "*${titlesansext})
-	        echo "Found old file header sans extension"
+		echo "Found old file header sans extension"
 		skip=3
 		;;
 	esac
 	;;
     "")
-        echo "Found empty line"
+	echo "Found empty line"
 	skip=2
 	closeit=1
 	case "$linetwo" in
 	    "/*")
-	        echo "Found C comment start"
+		echo "Found C comment start"
 		skip=3
 		closeit=0
 		case "$linethree" in
 		    " *"*${title})
-		        echo "Found old file header"
+			echo "Found old file header"
 			skip=4
 			;;
 		    " *"*${titlesansext})
-		        echo "Found old file header sans extension"
+			echo "Found old file header sans extension"
 			skip=4
 			;;
 		    " *")
-		        echo "Found empty comment line"
+			echo "Found empty comment line"
 			skip=4
 			if [ "x$foundtitle" = "x1" ] ; then
 			    case "$linethree" in
@@ -692,23 +692,23 @@ case "$lineone" in
 		esac
 		;;
 	    "/*"*${title})
-	        echo "Found C comment start with file header"
+		echo "Found C comment start with file header"
 		skip=3
 		closeit=0
 		case "$linetwo" in
 		    " *")
-	                echo "Found empty comment line"
+			echo "Found empty comment line"
 			skip=4
 			;;
 		esac
 		;;
 	    "/*"*${titlesansext})
-	        echo "Found C comment start with file header sans extension"
+		echo "Found C comment start with file header sans extension"
 		skip=3
 		closeit=0
 		case "$linetwo" in
 		    " *")
-	                echo "Found empty comment line"
+			echo "Found empty comment line"
 			skip=4
 			;;
 		esac
@@ -716,38 +716,38 @@ case "$lineone" in
 	esac
 	;;
     [a-z]*)
-        echo "found code"
+	echo "found code"
 	skip=0
 	closeit=1
 	;;
     \#include*)
-        echo "found code"
+	echo "found code"
 	skip=0
 	closeit=1
 	;;
     \#*${title})
-        echo "Found old file header"
+	echo "Found old file header"
 	skip=2
 	;;
     \#*${titlesansext})
-        echo "Found old file header sans extension"
+	echo "Found old file header sans extension"
 	skip=2
 	;;
     \#*)
-        echo "found comment line"
+	echo "found comment line"
 	skip=0
 	closeit=1
 	;;
     \@*)
-        echo "found batch command"
+	echo "found batch command"
 	skip=0
 	;;
     \REM*)
-        echo "found batch comment"
+	echo "found batch comment"
 	skip=0
 	;;
     *)
-        echo "${FILE}:1 ERROR: Unknown line one: $lineone"
+	echo "${FILE}:1 ERROR: Unknown line one: $lineone"
 	mv -f ${FILE}.backup $FILE
 	exit 9
 	;;

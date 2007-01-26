@@ -50,8 +50,8 @@ fi
 
 START_FRAME=$2
 if test x$3 = x
-then	END_FRAME=`expr ${START_FRAME} + 191`;
-else	END_FRAME=$3;
+then    END_FRAME=`expr ${START_FRAME} + 191`;
+else    END_FRAME=$3;
 fi
 
 # Be certain that the end frames are really there

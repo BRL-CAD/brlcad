@@ -191,7 +191,7 @@ $bic2"
 bic_lc="`echo \"$bic\" | sort | xargs wc -l`"
 bic_lc_lines="`echo \"$bic_lc\" | grep -v 'total$' | awk '{print $1}'`"
 bic_lc_total="`sum $bic_lc_lines`"
-bic_lc_blank="`echo \"$bic\" | xargs awk ' /^[ 	]*$/ { ++x } END { print x } '`"
+bic_lc_blank="`echo \"$bic\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } '`"
 bic_lc_total="`expr $bic_lc_total - $bic_lc_blank`"
 
 # compute header code line counts
@@ -199,7 +199,7 @@ header="`find \"$BASE\" -type f \( -name \*.h \) | grep -v '/other/' | grep -v '
 header_lc="`echo \"$header\" | sort | xargs wc -l`"
 header_lc_lines="`echo \"$header_lc\" | grep -v 'total$' | awk '{print $1}'`"
 header_lc_total="`sum $header_lc_lines`"
-header_lc_blank="`echo \"$header\" | xargs awk ' /^[ 	]*$/ { ++x } END { print x } '`"
+header_lc_blank="`echo \"$header\" | xargs awk ' /^[    ]*$/ { ++x } END { print x } '`"
 header_lc_total="`expr $header_lc_total - $header_lc_blank`"
 
 # compute non-header library code line counts
@@ -207,7 +207,7 @@ sourcelib="`find \"$BASE\" -type f \( -name \*.c -or -name \*.java -or -name \*.
 sourcelib_lc="`echo \"$sourcelib\" | sort | xargs wc -l`"
 sourcelib_lc_lines="`echo \"$sourcelib_lc\" | grep -v 'total$' | awk '{print $1}'`"
 sourcelib_lc_total="`sum $sourcelib_lc_lines`"
-sourcelib_lc_blank="`echo \"$sourcelib\" | xargs awk ' /^[ 	]*$/ { ++x } END { print x } '`"
+sourcelib_lc_blank="`echo \"$sourcelib\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } '`"
 sourcelib_lc_total="`expr $sourcelib_lc_total - $sourcelib_lc_blank`"
 
 # compute non-header application code line counts
@@ -215,7 +215,7 @@ sourcebin="`find \"$BASE\" -type f \( -name \*.c -or -name \*.java -or -name \*.
 sourcebin_lc="`echo \"$sourcebin\" | sort | xargs wc -l`"
 sourcebin_lc_lines="`echo \"$sourcebin_lc\" | grep -v 'total$' | awk '{print $1}'`"
 sourcebin_lc_total="`sum $sourcebin_lc_lines`"
-sourcebin_lc_blank="`echo \"$sourcebin\" | xargs awk ' /^[ 	]*$/ { ++x } END { print x } '`"
+sourcebin_lc_blank="`echo \"$sourcebin\" | xargs awk ' /^[      ]*$/ { ++x } END { print x } '`"
 sourcebin_lc_total="`expr $sourcebin_lc_total - $sourcebin_lc_blank`"
 
 # compute script code line counts
@@ -223,7 +223,7 @@ scripts="`find \"$BASE\" -type f \( -name \*.sh -or -name \*.tcl -or -name \*.tk
 scripts_lc="`echo \"$scripts\" | sort | xargs wc -l`"
 scripts_lc_lines="`echo \"$scripts_lc\" | grep -v 'total$' | awk '{print $1}'`"
 scripts_lc_total="`sum $scripts_lc_lines`"
-scripts_lc_blank="`echo \"$scripts\" | xargs awk ' /^[ 	]*$/ { ++x } END { print x } '`"
+scripts_lc_blank="`echo \"$scripts\" | xargs awk ' /^[  ]*$/ { ++x } END { print x } '`"
 scripts_lc_total="`expr $scripts_lc_total - $scripts_lc_blank`"
 
 # compute 3rd party code line counts
