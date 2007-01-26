@@ -150,7 +150,7 @@ __BEGIN_DECLS
 
 /** @brief # of fastf_t's per plane_t */
 #define ELEMENTS_PER_PLANE	4
-#define ELEMENTS_PER_MAT	(4*4)
+#define ELEMENTS_PER_MAT	(ELEMENTS_PER_PLANE*ELEMENTS_PER_PLANE)
 
 /*
  * Types for matrixes and vectors.
