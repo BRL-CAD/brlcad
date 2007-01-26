@@ -235,10 +235,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define MDZ	11
 
 /** @brief set translation values of 4x4 matrix with x, y, z values */
-#define MAT_DELTAS(m,x,y,z)	{ \
-			(m)[MDX] = (x); \
-			(m)[MDY] = (y); \
-			(m)[MDZ] = (z); }
+#define MAT_DELTAS(_m,_x,_y,_z)	{ \
+			(_m)[MDX] = (_x); \
+			(_m)[MDY] = (_y); \
+			(_m)[MDZ] = (_z); }
 
 /** @brief set translation values of 4x4 matrix from a vector */
 #define MAT_DELTAS_VEC(_m,_v)	\
@@ -249,16 +249,53 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			MAT_DELTAS(_m,-(_v)[X],-(_v)[Y],-(_v)[Z] )
 
 /** @brief get translation values of 4x4 matrix to a vector */
-#define MAT_DELTAS_GET(_v,_m)	{ \
+#define MAT_DELTAS_GET(_v,_m) { \
 			(_v)[X] = (_m)[MDX]; \
 			(_v)[Y] = (_m)[MDY]; \
 			(_v)[Z] = (_m)[MDZ]; }
 
 /** @brief get translation values of 4x4 matrix to a vector, reversed */
-#define MAT_DELTAS_GET_NEG(_v,_m)	{ \
+#define MAT_DELTAS_GET_NEG(_v,_m) { \
 			(_v)[X] = -(_m)[MDX]; \
 			(_v)[Y] = -(_m)[MDY]; \
 			(_v)[Z] = -(_m)[MDZ]; }
+
+/** @brief increment translation elements in a 4x4 matrix with x, y, z values */
+#define MAT_DELTAS_ADD(_m,_x,_y,_z) { \
+			(_m)[MDX] += (_x); \
+			(_m)[MDY] += (_y); \
+			(_m)[MDZ] += (_z); }
+
+/** @brief increment translation elements in a 4x4 matrix from a vector */
+#define MAT_DELTAS_ADD_VEC(_m,_v) { \
+			(_m)[MDX] += (_v)[X]; \
+			(_m)[MDY] += (_v)[Y]; \
+			(_m)[MDZ] += (_v)[Z]; }
+
+/** @brief decrement translation elements in a 4x4 matrix with x, y, z values */
+#define MAT_DELTAS_SUB(_m,_x,_y,_z) { \
+			(_m)[MDX] -= (_x); \
+			(_m)[MDY] -= (_y); \
+			(_m)[MDZ] -= (_z); }
+
+/** @brief decrement translation elements in a 4x4 matrix from a vector */
+#define MAT_DELTAS_SUB_VEC(_m,_v) { \
+			(_m)[MDX] -= (_v)[X]; \
+			(_m)[MDY] -= (_v)[Y]; \
+			(_m)[MDZ] -= (_v)[Z]; }
+
+/** @brief decrement translation elements in a 4x4 matrix with x, y, z values */
+#define MAT_DELTAS_MUL(_m,_x,_y,_z) { \
+			(_m)[MDX] *= (_x); \
+			(_m)[MDY] *= (_y); \
+			(_m)[MDZ] *= (_z); }
+
+/** @brief decrement translation elements in a 4x4 matrix from a vector */
+#define MAT_DELTAS_NUL_VEC(_m,_v) { \
+			(_m)[MDX] *= (_v)[X]; \
+			(_m)[MDY] *= (_v)[Y]; \
+			(_m)[MDZ] *= (_v)[Z]; }
+
 
 /* Locations of scaling values in 4x4 Homogenous Transform matrix */
 #define MSX	0
