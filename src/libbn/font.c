@@ -100,7 +100,7 @@ bn_vlist_3string(struct bu_list *vhead,
 	 *  scaling in his matrix, it will *also* be applied.
 	 */
 	MAT_IDN( xlate_to_origin );
-	MAT_DELTAS( xlate_to_origin,	origin[X], origin[Y], origin[Z] );
+	MAT_DELTAS_VEC( xlate_to_origin, origin );
 	bn_mat_mul( mat, xlate_to_origin, rot );
 
 	/* Check to see if initialization is needed */

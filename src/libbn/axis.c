@@ -120,7 +120,7 @@ tp_3axis(FILE *fp,
 	 *  cases that would not be useful.
 	 */
 	MAT_IDN( xlate_to_0 );
-	MAT_DELTAS( xlate_to_0,	 origin[X],  origin[Y],  origin[Z] );
+	MAT_DELTAS_VEC( xlate_to_0, origin);
 	bn_mat_mul( mat, rot, xlate_to_0 );
 	VMOVE( cur_point, origin );
 
