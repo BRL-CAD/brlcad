@@ -51,30 +51,6 @@
 
 files="$*"
 
-# if provided arguments, assume those will be the files we are to
-# process.  otherwise, locate ourselves for generating a file list.
-findgen="."
-if [ "x$files" = "x" ] ; then
-
-    if [ -f "`dirname $0`/../configure.ac" ] ; then
-	findgen="`dirname $0`/.."
-    else
-	for dir in . .. brlcad ; do
-	    if [ -f "$dir/configure.ac" ] ; then
-		findgen="$dir"
-		break
-	    fi
-	done
-    fi
-
-  # sanity check
-    if [ ! -d "$findgen/sh" ] ; then
-	echo "ERROR: Unable to find our path relative to configure.ac"
-	exit 1
-    fi
-
-fi
-
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
@@ -82,7 +58,7 @@ LC_ALL=C
 # of files to check, excluding directories that are not BRL-CAD source
 # files, CVS foo, or known binary files.
 if [ "x$files" = "x" ] ; then
-    files="`find $findgen -type f | \
+    files="`find . -type f | \
 	    grep -v '/.#' | \
 	    grep -v '.deps/' | \
 	    grep -v '.libs/' | \
