@@ -119,7 +119,7 @@ if [ "x$COPY" = "x" ] ; then
 fi
 
 if [ "x$5" != "x" ] ; then
-    echo "ERROR: LICENSE should be one of BSD, LGPL, GPL, or GFDL"
+    echo "ERROR: LICENSE should be one of BSD, BDL, LGPL"
     echo "No other arguments should follow."
     echo "$USAGE"
     exit 3
