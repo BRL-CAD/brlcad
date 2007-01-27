@@ -185,7 +185,10 @@ if [ "x$files" = "x" ] ; then
 	    grep -v '/.deps/' | \
 	    grep -v '/.libs/' | \
 	    grep -v 'autom4te.cache' | \
-	    grep -v 'aclocal.m4' \
+	    grep -v 'aclocal.m4' | \
+	    grep -v '.ws.bak' | \
+	    grep -v '.ws.expand' | \
+	    grep -v '.ws.new' \
 	  `"
 fi
 
