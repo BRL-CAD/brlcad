@@ -47,31 +47,11 @@
 
 files="$*"
 
-findgen="."
-if [ "x$files" = "x" ] ; then
-    # locate ourselves for generating a file list
-    if [ -f "`dirname $0`/../configure.ac" ] ; then
-	findgen="`dirname $0`/.."
-    else
-	for dir in . .. brlcad ; do
-	    if [ -f "$dir/configure.ac" ] ; then
-		findgen="$dir"
-		break
-	    fi
-	done
-    fi
-
-    # sanity check
-    if [ ! -d "$findgen/sh" ] ; then
-	echo "ERROR: Unable to find our path relative to configure.ac"
-	exit 1
-    fi
-fi
 
 # locate our requisite lisp helper script
 bir="batch-indent-region.el"
 bir_dir="."
-for dir in ${findgen}/misc . .. misc ../misc ; do
+for dir in `dirname $0`/../misc misc ../misc . .. ; do
     if [ -f "$dir/$bir" ] ; then
 	bir_dir="$dir"
     fi
@@ -81,7 +61,7 @@ done
 if [ ! -f "$bir_dir/$bir" ] ; then
     echo "ERROR: Unable to find the batch-indent-region.el lisp script"
     echo "       Searched for $bir in:"
-    echo "         $findgen/misc:.:..:misc:../misc"
+    echo "         `dirname $0`/../misc:misc:../misc:.:.."
     exit 1
 fi
 if [ ! -r "$bir_dir/$bir" ] ; then
@@ -94,7 +74,7 @@ fi
 # have to take care if including shell scripts; look for mistakes in
 # here/now documents.  this is, if no file arguments were provided.
 if [ "x$files" = "x" ] ; then
-    files="`find $findgen -type f -and \( \
+    files="`find . -type f -and \( \
 	    -name '*.c' -or \
 	    -name '*.h' -or \
 	    -name '*.tcl' -or \
