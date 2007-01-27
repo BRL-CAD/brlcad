@@ -744,14 +744,6 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-	  return TCL_ERROR;
-
-	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
-	  aexists( argv[2] );
-	  return TCL_ERROR;
-	}
-
 	k = -1;
 	if( strcmp( argv[3], "x" ) == 0 )
 		k = 0;
@@ -761,6 +753,14 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		k = 2;
 	if( k < 0 ) {
 	  Tcl_AppendResult(interp, "axis must be x, y or z\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+
+	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
+	  return TCL_ERROR;
+
+	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
+	  aexists( argv[2] );
 	  return TCL_ERROR;
 	}
 
