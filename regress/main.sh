@@ -26,7 +26,6 @@ vast)
 esac
 
 
-
 # note thate MYNAME and START_TIME are set in the nightly.sh script for us
 export BUILD_DIR=`pwd`/${MYNAME}_${START_TIME}.dir
 rm -f $BUILD_DIR

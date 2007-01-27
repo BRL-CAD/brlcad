@@ -13,7 +13,7 @@ r box.r u box
 EOF
 
 cat > .density <<EOF
-1 7.8295	steel
+1 7.8295        steel
 EOF
 
 ../src/rt/rtweight -a 25 -e 35 -s128 -o wgt.out weight.g box.r > weight.log 2>&1
@@ -23,7 +23,6 @@ cat >> weight.ref <<EOF
 RT Weight Program Output:
 
 Database Title: "Untitled BRL-CAD Database"
-
 
 
 Material  Density(g/cm^3)  Name
@@ -46,8 +45,8 @@ Database Title: "Untitled BRL-CAD Database"
 Total volume = 0.999991 cm.^3
 
 Centroid: X = 0.5 cm.
-          Y = 0.5 cm.
-          Z = 0.5 cm.
+	  Y = 0.5 cm.
+	  Z = 0.5 cm.
 
 Total mass = 7.82943 grams
 

@@ -38,4 +38,3 @@ fi
 # prepare the build
 #
 /bin/sh brlcad/regress/master_prep.sh
-

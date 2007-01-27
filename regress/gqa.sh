@@ -58,13 +58,13 @@ EOF
 #
 # now that the inputs have been built, run the tests
 #
-# box1.s = 10x10x10	= 1000 m^3
-# box2.s = 8x8x8	=  512 m^3
-# box3.s = 8x8x9	=  576 m^3
-# adj_air1.r = 512-256	= 256 m^3
-# adj_air2.r = 512-256	= 256 m^3
+# box1.s = 10x10x10     = 1000 m^3
+# box2.s = 8x8x8        =  512 m^3
+# box3.s = 8x8x9        =  576 m^3
+# adj_air1.r = 512-256  = 256 m^3
+# adj_air2.r = 512-256  = 256 m^3
 # closed_box.r =1000-512= 488 m^3
-# exposed_air.r 	= 576 m^3
+# exposed_air.r         = 576 m^3
 # open_box.r = 1000-576 = 424 m^3
 
 

@@ -11,14 +11,14 @@ if [ $# = 1 ] ; then
      # wait for the directory in case it hasn't been built
      #
      while [ ! -d $1 ] ; do
- 
+
        NOW=`date "+%y%m%d%H%M"`
        DELTA=`expr $START_TIME - $NOW`
- 
+
        if [ $DELTA -gt 300 ] ; then
-           # we log that we're quitting
-           /bin/echo $1 does not exist giving up at $NOW >> $LOG_FILE
-           exit 1
+	   # we log that we're quitting
+	   /bin/echo $1 does not exist giving up at $NOW >> $LOG_FILE
+	   exit 1
        fi
     fi
 fi
