@@ -119,33 +119,12 @@ if [ "x$WS_BACKUPS" = "x" ] ; then
 fi
 
 
-findgen="."
-if [ "x$files" = "x" ] ; then
-    # locate ourselves for generating a file list
-    if [ -f "`dirname $0`/../configure.ac" ] ; then
-	findgen="`dirname $0`/.."
-    else
-	for dir in . .. brlcad ; do
-	    if [ -f "$dir/configure.ac" ] ; then
-		findgen="$dir"
-		break
-	    fi
-	done
-    fi
-
-    # sanity check
-    if [ ! -d "$findgen/sh" ] ; then
-	echo "ERROR: Unable to find our path relative to configure.ac"
-	exit 1
-    fi
-fi
-
 # generate a list of files to check, excluding directories that are
 # not BRL-CAD sources, CVS, or start with a dot among other files.
 # have to take care if including shell scripts; look for mistakes in
 # here/now documents.  this is, if no file arguments were provided.
 if [ "x$files" = "x" ] ; then
-    files="`find $findgen -type f -and \( \
+    files="`find . -type f -and \( \
 	    -name '*.[0-9n]' -or \
 	    -name '*.[aA][cC]' -or \
 	    -name '*.[aA][mM]' -or \
