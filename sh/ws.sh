@@ -255,33 +255,45 @@ for file in $files ; do
 	case x$step in
 	    x[aA])
 		# remove whitespace one lines with only whitespace
-		echo -n "a"
+	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		    echo -n "a"
+		fi
 		perl -pi -e 's/^[ \t]*$//g' "$file.ws.new"
 		;;
 	    x[bB])
 		# remove whitespace at end of all lines
-		echo -n "b"
+	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		    echo -n "b"
+		fi
 		perl -pi -e 's/[ \t]*$//g' "$file.ws.new"
 		;;
 	    x[cC])
 		# remove successive blank lines
-		echo -n "c"
+	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		    echo -n "c"
+		fi
 		cmd="perl -0777 -pi -e $step_c_regex \"$file.ws.new\""
 		eval "$cmd"
 		;;
 	    x[dD])
 		# remove all blank lines from end of file
-		echo -n "d"
+	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		    echo -n "d"
+		fi
 		perl -0777 -pi -e 's/\n\n*$/\n/' "$file.ws.new"
 		;;
 	    x[eE])
 		# ensure there is a trailing newline
-		echo -n "e"
+	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		    echo -n "e"
+		fi
 		perl -0777 -pi -e 's/\([^\n]\)$/\1\n/' "$file.ws.new"
 		;;
 	    x[fF])
  		# convert embedded tabs to spaces
-		echo -n "f"
+	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		    echo -n "f"
+		fi
 		if [ -f "$file.ws.expand" ] ; then
 		    echo "WARNING: $file.ws.expand was in the way (overwritten)"
 		    rm -f "$file.ws.expand"
@@ -293,7 +305,9 @@ for file in $files ; do
 		;;
 	    x[gG])
  		# convert leading whitespace and tabs, insert tabs
-		echo -n "g"
+	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		    echo -n "g"
+		fi
 		cmd1="perl -pi -e $step_g_regex1 \"$file.ws.new\""
 		cmd2="perl -pi -e $step_g_regex2 \"$file.ws.new\""
 
@@ -313,12 +327,17 @@ for file in $files ; do
     # if the file changed, move it into place and keep a backup
     filediff="`diff $file $file.ws.new`"
     if [ "x$filediff" = "x" ] ; then
-	echo ""
+	if [ "x$WS_PROGRESS" = "xyes" ] ; then
+	    echo ""
+	fi
 	rm -f "$file.ws.new"
     else
-	echo " ... FILE CHANGED"
+	if [ "x$WS_PROGRESS" = "xyes" ] ; then
+	    echo " ... FILE CHANGED"
+	fi
 	if [ "x$WS_BACKUPS" = "xyes" ] ; then
 	    if [ -f "$file.ws.bak" ] ; then
+		echo ""
 		echo "WARNING: $file.ws.bak was in the way (overwritten)"
 		rm -f "$file.ws.bak"
 	    fi
