@@ -80,6 +80,7 @@ SRCS = \
 	many.c \
 	mater.c \
 	memalloc.c \
+	mirror.c \
 	mkbundle.c \
 	nirt.c \
 	nmg_bool.c \
