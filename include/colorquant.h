@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -20,7 +20,7 @@
 /** @file colorquant.h
  *
  * Definitions for colorquant.
- * 
+ *
  * @author	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
@@ -31,7 +31,7 @@
 
 
 /* Define values for the accum_hist argument:
- * 
+ *
  * If non-zero the histogram will accumulate and reflect pixels from
  * multiple images.  When 1, the histogram will be initialized and
  * summed, but not thrown away OR processed.  When 2, the image RGB will
@@ -56,7 +56,7 @@
  * 		This slows the routine slightly.  If not set, the data
  * 		has been prequantized to 'bits' significant bits.
  * CQ_NO_RGBMAP:If set, rgbmap will not be built.
- * 		
+ *
  */
 #define CQ_FAST		1
 #define CQ_QUANTIZE	2
@@ -65,7 +65,7 @@
 /* Declare the function. */
 #ifdef USE_PROTOTYPES
 extern int  colorquant( unsigned char *red,
-		        unsigned char *green,
+			unsigned char *green,
 			unsigned char *blue,
 			unsigned long pixels,
 			unsigned char *colormap[3],

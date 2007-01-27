@@ -95,4 +95,3 @@ BN_EXPORT extern int spm_px_load( spm_map_t *mapp, char *filename, int nx, int n
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

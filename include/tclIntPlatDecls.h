@@ -29,32 +29,32 @@
 
 #if !defined(__WIN32__) && !defined(MAC_TCL) /* UNIX */
 /* 0 */
-EXTERN void		TclGetAndDetachPids _ANSI_ARGS_((Tcl_Interp * interp, 
+EXTERN void		TclGetAndDetachPids _ANSI_ARGS_((Tcl_Interp * interp,
 				Tcl_Channel chan));
 /* 1 */
 EXTERN int		TclpCloseFile _ANSI_ARGS_((TclFile file));
 /* 2 */
 EXTERN Tcl_Channel	TclpCreateCommandChannel _ANSI_ARGS_((
-				TclFile readFile, TclFile writeFile, 
-				TclFile errorFile, int numPids, 
+				TclFile readFile, TclFile writeFile,
+				TclFile errorFile, int numPids,
 				Tcl_Pid * pidPtr));
 /* 3 */
-EXTERN int		TclpCreatePipe _ANSI_ARGS_((TclFile * readPipe, 
+EXTERN int		TclpCreatePipe _ANSI_ARGS_((TclFile * readPipe,
 				TclFile * writePipe));
 /* 4 */
-EXTERN int		TclpCreateProcess _ANSI_ARGS_((Tcl_Interp * interp, 
-				int argc, CONST char ** argv, 
-				TclFile inputFile, TclFile outputFile, 
+EXTERN int		TclpCreateProcess _ANSI_ARGS_((Tcl_Interp * interp,
+				int argc, CONST char ** argv,
+				TclFile inputFile, TclFile outputFile,
 				TclFile errorFile, Tcl_Pid * pidPtr));
 /* Slot 5 is reserved */
 /* 6 */
-EXTERN TclFile		TclpMakeFile _ANSI_ARGS_((Tcl_Channel channel, 
+EXTERN TclFile		TclpMakeFile _ANSI_ARGS_((Tcl_Channel channel,
 				int direction));
 /* 7 */
-EXTERN TclFile		TclpOpenFile _ANSI_ARGS_((CONST char * fname, 
+EXTERN TclFile		TclpOpenFile _ANSI_ARGS_((CONST char * fname,
 				int mode));
 /* 8 */
-EXTERN int		TclUnixWaitForFile _ANSI_ARGS_((int fd, int mask, 
+EXTERN int		TclUnixWaitForFile _ANSI_ARGS_((int fd, int mask,
 				int timeout));
 /* 9 */
 EXTERN TclFile		TclpCreateTempFile _ANSI_ARGS_((
@@ -74,11 +74,11 @@ EXTERN void		TclWinConvertError _ANSI_ARGS_((DWORD errCode));
 /* 1 */
 EXTERN void		TclWinConvertWSAError _ANSI_ARGS_((DWORD errCode));
 /* 2 */
-EXTERN struct servent *	 TclWinGetServByName _ANSI_ARGS_((CONST char * nm, 
+EXTERN struct servent *	 TclWinGetServByName _ANSI_ARGS_((CONST char * nm,
 				CONST char * proto));
 /* 3 */
-EXTERN int		TclWinGetSockOpt _ANSI_ARGS_((SOCKET s, int level, 
-				int optname, char FAR * optval, 
+EXTERN int		TclWinGetSockOpt _ANSI_ARGS_((SOCKET s, int level,
+				int optname, char FAR * optval,
 				int FAR * optlen));
 /* 4 */
 EXTERN HINSTANCE	TclWinGetTclInstance _ANSI_ARGS_((void));
@@ -86,8 +86,8 @@ EXTERN HINSTANCE	TclWinGetTclInstance _ANSI_ARGS_((void));
 /* 6 */
 EXTERN u_short		TclWinNToHS _ANSI_ARGS_((u_short ns));
 /* 7 */
-EXTERN int		TclWinSetSockOpt _ANSI_ARGS_((SOCKET s, int level, 
-				int optname, CONST char FAR * optval, 
+EXTERN int		TclWinSetSockOpt _ANSI_ARGS_((SOCKET s, int level,
+				int optname, CONST char FAR * optval,
 				int optlen));
 /* 8 */
 EXTERN unsigned long	TclpGetPid _ANSI_ARGS_((Tcl_Pid pid));
@@ -95,33 +95,33 @@ EXTERN unsigned long	TclpGetPid _ANSI_ARGS_((Tcl_Pid pid));
 EXTERN int		TclWinGetPlatformId _ANSI_ARGS_((void));
 /* Slot 10 is reserved */
 /* 11 */
-EXTERN void		TclGetAndDetachPids _ANSI_ARGS_((Tcl_Interp * interp, 
+EXTERN void		TclGetAndDetachPids _ANSI_ARGS_((Tcl_Interp * interp,
 				Tcl_Channel chan));
 /* 12 */
 EXTERN int		TclpCloseFile _ANSI_ARGS_((TclFile file));
 /* 13 */
 EXTERN Tcl_Channel	TclpCreateCommandChannel _ANSI_ARGS_((
-				TclFile readFile, TclFile writeFile, 
-				TclFile errorFile, int numPids, 
+				TclFile readFile, TclFile writeFile,
+				TclFile errorFile, int numPids,
 				Tcl_Pid * pidPtr));
 /* 14 */
-EXTERN int		TclpCreatePipe _ANSI_ARGS_((TclFile * readPipe, 
+EXTERN int		TclpCreatePipe _ANSI_ARGS_((TclFile * readPipe,
 				TclFile * writePipe));
 /* 15 */
-EXTERN int		TclpCreateProcess _ANSI_ARGS_((Tcl_Interp * interp, 
-				int argc, CONST char ** argv, 
-				TclFile inputFile, TclFile outputFile, 
+EXTERN int		TclpCreateProcess _ANSI_ARGS_((Tcl_Interp * interp,
+				int argc, CONST char ** argv,
+				TclFile inputFile, TclFile outputFile,
 				TclFile errorFile, Tcl_Pid * pidPtr));
 /* Slot 16 is reserved */
 /* Slot 17 is reserved */
 /* 18 */
-EXTERN TclFile		TclpMakeFile _ANSI_ARGS_((Tcl_Channel channel, 
+EXTERN TclFile		TclpMakeFile _ANSI_ARGS_((Tcl_Channel channel,
 				int direction));
 /* 19 */
-EXTERN TclFile		TclpOpenFile _ANSI_ARGS_((CONST char * fname, 
+EXTERN TclFile		TclpOpenFile _ANSI_ARGS_((CONST char * fname,
 				int mode));
 /* 20 */
-EXTERN void		TclWinAddProcess _ANSI_ARGS_((HANDLE hProcess, 
+EXTERN void		TclWinAddProcess _ANSI_ARGS_((HANDLE hProcess,
 				DWORD id));
 /* Slot 21 is reserved */
 /* 22 */
@@ -146,7 +146,7 @@ EXTERN VOID *		TclpSysAlloc _ANSI_ARGS_((long size, int isBin));
 /* 1 */
 EXTERN void		TclpSysFree _ANSI_ARGS_((VOID * ptr));
 /* 2 */
-EXTERN VOID *		TclpSysRealloc _ANSI_ARGS_((VOID * cp, 
+EXTERN VOID *		TclpSysRealloc _ANSI_ARGS_((VOID * cp,
 				unsigned int size));
 /* 3 */
 EXTERN void		TclpExit _ANSI_ARGS_((int status));
@@ -155,27 +155,27 @@ EXTERN int		FSpGetDefaultDir _ANSI_ARGS_((FSSpecPtr theSpec));
 /* 5 */
 EXTERN int		FSpSetDefaultDir _ANSI_ARGS_((FSSpecPtr theSpec));
 /* 6 */
-EXTERN OSErr		FSpFindFolder _ANSI_ARGS_((short vRefNum, 
-				OSType folderType, Boolean createFolder, 
+EXTERN OSErr		FSpFindFolder _ANSI_ARGS_((short vRefNum,
+				OSType folderType, Boolean createFolder,
 				FSSpec * spec));
 /* 7 */
 EXTERN void		GetGlobalMouseTcl _ANSI_ARGS_((Point * mouse));
 /* 8 */
 EXTERN pascal OSErr	FSpGetDirectoryIDTcl _ANSI_ARGS_((
-				CONST FSSpec * spec, long * theDirID, 
+				CONST FSSpec * spec, long * theDirID,
 				Boolean * isDirectory));
 /* 9 */
 EXTERN pascal short	FSpOpenResFileCompatTcl _ANSI_ARGS_((
 				CONST FSSpec * spec, SignedByte permission));
 /* 10 */
 EXTERN pascal void	FSpCreateResFileCompatTcl _ANSI_ARGS_((
-				CONST FSSpec * spec, OSType creator, 
+				CONST FSSpec * spec, OSType creator,
 				OSType fileType, ScriptCode scriptTag));
 /* 11 */
-EXTERN int		FSpLocationFromPath _ANSI_ARGS_((int length, 
+EXTERN int		FSpLocationFromPath _ANSI_ARGS_((int length,
 				CONST char * path, FSSpecPtr theSpec));
 /* 12 */
-EXTERN OSErr		FSpPathFromLocation _ANSI_ARGS_((FSSpecPtr theSpec, 
+EXTERN OSErr		FSpPathFromLocation _ANSI_ARGS_((FSSpecPtr theSpec,
 				int * length, Handle * fullPath));
 /* 13 */
 EXTERN void		TclMacExitHandler _ANSI_ARGS_((void));
@@ -194,7 +194,7 @@ EXTERN void *		TclMacStartTimer _ANSI_ARGS_((long ms));
 EXTERN int		TclMacTimerExpired _ANSI_ARGS_((void * timerToken));
 /* 20 */
 EXTERN int		TclMacRegisterResourceFork _ANSI_ARGS_((
-				short fileRef, Tcl_Obj * tokenPtr, 
+				short fileRef, Tcl_Obj * tokenPtr,
 				int insert));
 /* 21 */
 EXTERN short		TclMacUnRegisterResourceFork _ANSI_ARGS_((
@@ -202,14 +202,14 @@ EXTERN short		TclMacUnRegisterResourceFork _ANSI_ARGS_((
 /* 22 */
 EXTERN int		TclMacCreateEnv _ANSI_ARGS_((void));
 /* 23 */
-EXTERN FILE *		TclMacFOpenHack _ANSI_ARGS_((CONST char * path, 
+EXTERN FILE *		TclMacFOpenHack _ANSI_ARGS_((CONST char * path,
 				CONST char * mode));
 /* 24 */
 EXTERN char *		TclpGetTZName _ANSI_ARGS_((int isdst));
 /* 25 */
 EXTERN int		TclMacChmod _ANSI_ARGS_((CONST char * path, int mode));
 /* 26 */
-EXTERN int		FSpLLocationFromPath _ANSI_ARGS_((int length, 
+EXTERN int		FSpLLocationFromPath _ANSI_ARGS_((int length,
 				CONST char * path, FSSpecPtr theSpec));
 #endif /* MAC_TCL */
 

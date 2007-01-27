@@ -55,4 +55,3 @@ extern struct bu_structparse phong_parse[];
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

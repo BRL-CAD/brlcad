@@ -1,15 +1,15 @@
 /** @addotgroup deprecated */
 /** @{ */
 /** @file pyramid.h
- * @deprecated 
+ * @deprecated
  * pyramid.h - Types, constants, globals, routine decls for pyramids
- * 
+ *
  * Author:	Rod Bogart
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Thu Mar 12 1987
  * Copyright (c) 1987 Rod Bogart
- * 
+ *
  */
 #define and &&
 #define or ||

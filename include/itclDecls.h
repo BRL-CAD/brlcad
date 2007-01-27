@@ -37,25 +37,25 @@ TCL_EXTERN(int)		Itcl_SafeInit _ANSI_ARGS_((Tcl_Interp * interp));
 #ifndef Itcl_RegisterC_TCL_DECLARED
 #define Itcl_RegisterC_TCL_DECLARED
 /* 2 */
-TCL_EXTERN(int)		Itcl_RegisterC _ANSI_ARGS_((Tcl_Interp * interp, 
-				CONST char * name, Tcl_CmdProc * proc, 
-				ClientData clientData, 
+TCL_EXTERN(int)		Itcl_RegisterC _ANSI_ARGS_((Tcl_Interp * interp,
+				CONST char * name, Tcl_CmdProc * proc,
+				ClientData clientData,
 				Tcl_CmdDeleteProc * deleteProc));
 #endif
 #ifndef Itcl_RegisterObjC_TCL_DECLARED
 #define Itcl_RegisterObjC_TCL_DECLARED
 /* 3 */
-TCL_EXTERN(int)		Itcl_RegisterObjC _ANSI_ARGS_((Tcl_Interp * interp, 
-				CONST char * name, Tcl_ObjCmdProc * proc, 
-				ClientData clientData, 
+TCL_EXTERN(int)		Itcl_RegisterObjC _ANSI_ARGS_((Tcl_Interp * interp,
+				CONST char * name, Tcl_ObjCmdProc * proc,
+				ClientData clientData,
 				Tcl_CmdDeleteProc * deleteProc));
 #endif
 #ifndef Itcl_FindC_TCL_DECLARED
 #define Itcl_FindC_TCL_DECLARED
 /* 4 */
-TCL_EXTERN(int)		Itcl_FindC _ANSI_ARGS_((Tcl_Interp * interp, 
-				CONST char * name, Tcl_CmdProc ** argProcPtr, 
-				Tcl_ObjCmdProc ** objProcPtr, 
+TCL_EXTERN(int)		Itcl_FindC _ANSI_ARGS_((Tcl_Interp * interp,
+				CONST char * name, Tcl_CmdProc ** argProcPtr,
+				Tcl_ObjCmdProc ** objProcPtr,
 				ClientData * cDataPtr));
 #endif
 #ifndef Itcl_InitStack_TCL_DECLARED
@@ -71,7 +71,7 @@ TCL_EXTERN(void)	Itcl_DeleteStack _ANSI_ARGS_((Itcl_Stack * stack));
 #ifndef Itcl_PushStack_TCL_DECLARED
 #define Itcl_PushStack_TCL_DECLARED
 /* 7 */
-TCL_EXTERN(void)	Itcl_PushStack _ANSI_ARGS_((ClientData cdata, 
+TCL_EXTERN(void)	Itcl_PushStack _ANSI_ARGS_((ClientData cdata,
 				Itcl_Stack * stack));
 #endif
 #ifndef Itcl_PopStack_TCL_DECLARED
@@ -87,7 +87,7 @@ TCL_EXTERN(ClientData)	Itcl_PeekStack _ANSI_ARGS_((Itcl_Stack * stack));
 #ifndef Itcl_GetStackValue_TCL_DECLARED
 #define Itcl_GetStackValue_TCL_DECLARED
 /* 10 */
-TCL_EXTERN(ClientData)	Itcl_GetStackValue _ANSI_ARGS_((Itcl_Stack * stack, 
+TCL_EXTERN(ClientData)	Itcl_GetStackValue _ANSI_ARGS_((Itcl_Stack * stack,
 				int pos));
 #endif
 #ifndef Itcl_InitList_TCL_DECLARED
@@ -115,7 +115,7 @@ TCL_EXTERN(Itcl_ListElem*) Itcl_DeleteListElem _ANSI_ARGS_((
 #ifndef Itcl_InsertList_TCL_DECLARED
 #define Itcl_InsertList_TCL_DECLARED
 /* 15 */
-TCL_EXTERN(Itcl_ListElem*) Itcl_InsertList _ANSI_ARGS_((Itcl_List * listPtr, 
+TCL_EXTERN(Itcl_ListElem*) Itcl_InsertList _ANSI_ARGS_((Itcl_List * listPtr,
 				ClientData val));
 #endif
 #ifndef Itcl_InsertListElem_TCL_DECLARED
@@ -127,7 +127,7 @@ TCL_EXTERN(Itcl_ListElem*) Itcl_InsertListElem _ANSI_ARGS_((
 #ifndef Itcl_AppendList_TCL_DECLARED
 #define Itcl_AppendList_TCL_DECLARED
 /* 17 */
-TCL_EXTERN(Itcl_ListElem*) Itcl_AppendList _ANSI_ARGS_((Itcl_List * listPtr, 
+TCL_EXTERN(Itcl_ListElem*) Itcl_AppendList _ANSI_ARGS_((Itcl_List * listPtr,
 				ClientData val));
 #endif
 #ifndef Itcl_AppendListElem_TCL_DECLARED
@@ -145,7 +145,7 @@ TCL_EXTERN(void)	Itcl_SetListValue _ANSI_ARGS_((
 #ifndef Itcl_EventuallyFree_TCL_DECLARED
 #define Itcl_EventuallyFree_TCL_DECLARED
 /* 20 */
-TCL_EXTERN(void)	Itcl_EventuallyFree _ANSI_ARGS_((ClientData cdata, 
+TCL_EXTERN(void)	Itcl_EventuallyFree _ANSI_ARGS_((ClientData cdata,
 				Tcl_FreeProc * fproc));
 #endif
 #ifndef Itcl_PreserveData_TCL_DECLARED

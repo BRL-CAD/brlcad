@@ -20,7 +20,7 @@
 /** @addtogroup libbu */
 /** @{ */
 /** @file bu.h
- * 
+ *
  * @brief
  *  Header file for the BRL-CAD Utility Library, LIBBU.
  *
@@ -41,16 +41,16 @@
  *  @author Michael John Muuss
  *
  *  @par Source
- *	The U. S. Army Research Laboratory 			@n 
+ *	The U. S. Army Research Laboratory 			@n
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA	@n
  *
  *  Proper include Sequencing -
 @code
- 	#include "common.h"
- 	#include <stdio.h>
- 	#include "machine.h"	/_* For fastf_t definition on this machine *_/
- 	#include "rtlist.h"	/_* OPTIONAL, auto-included by bu.h *_/
- 	#include "bu.h"
+	#include "common.h"
+	#include <stdio.h>
+	#include "machine.h"	/_* For fastf_t definition on this machine *_/
+	#include "rtlist.h"	/_* OPTIONAL, auto-included by bu.h *_/
+	#include "bu.h"
 @endcode
  *
  *  @par Libraries Used -
@@ -103,7 +103,7 @@ __BEGIN_DECLS
 #  endif  /* DIR_SEPARATOR_2 */
 #endif  /* DIR_SEPARATOR */
 
-/** 
+/**
  * Maximum length of a filesystem path.  Typically defined in a system file
  * but if it isn't set, we create it.
  */
@@ -217,7 +217,6 @@ __BEGIN_DECLS
 #  define BU_GETTYPE(_p,_type) \
 	_p = (_type *)bu_calloc(1,sizeof(_type), "_type (getstruct)")
 #endif
-
 
 
 /*			B U _ C K M A G
@@ -463,57 +462,57 @@ BU_EXPORT BU_EXTERN(int bu_cv_htonul,
 /* list.c */
 
 /** @addtogroup bu_list
- *									
- *			     B U _ L I S T				
  *
- *			Doubly-linked list support			
- *									
- *  These macros assume that all user-provided structures will have	
- *  a "struct bu_list" as their first element (often named "l" [ell]).	
- *  Thus, a pointer to the bu_list struct is a "pun" for the		
- *  user-provided structure as well, and the pointers can be converted	
- *  back and forth safely with type casts.				
- *									
- *  Furthermore, the head of the linked list could be			
- *  a full instance of the user-provided structure			
- *  (although the storage-conscious programmer could make the head	
- *  just an bu_list structure, with careful type casting).		
- *  This results in a doubly-linked circular list, with the head	
- *  having the same shape as all the list members.			
- *  The application is free to make use of this symmetry and store	
- *  data values in the head, or the extra storage in the head can	
- *  be ignored.								
- *									
- *  Where a macro expects an argument "p", it should be a pointer to	
- *  a user-provided structure.						
- *									
- *  Where a macro expects an argument "hp", it should be a pointer to	
- *  a "struct bu_list" located in the list head, e.g., &(head.l).	
- *									
- *  Where a macro expects an argument "old", "new", or "cur", it should	
- *  be a pointer to the "struct bu_list" located either			
- *  in a user-provided structure, e.g. &((p)->l),			
- *  or for the case of "old" it may also be in the list head, e.g.	
- *	BU_LIST_INSERT( &(head.l), &((p)->l) );				
- *									
- *  Dequeueing the head of a list is a valid and			
- *  well defined operation which should be performed with caution.	
- *  Unless a pointer to some other element of the list is retained	
- *  by the application, the rest of the linked list can no longer be	
- *  referred to.							
- *									
- *  The "magic" field of the list header _must_ be set to the constant	
- *  BU_LIST_HEAD_MAGIC, but the "magic" field of all list members	
- *  should be established by user code, to identify the type of		
- *  structure that the bu_list structure is embedded in.		
- *  It is permissible for one list to contain an arbitrarily mixed	
+ *			     B U _ L I S T
+ *
+ *			Doubly-linked list support
+ *
+ *  These macros assume that all user-provided structures will have
+ *  a "struct bu_list" as their first element (often named "l" [ell]).
+ *  Thus, a pointer to the bu_list struct is a "pun" for the
+ *  user-provided structure as well, and the pointers can be converted
+ *  back and forth safely with type casts.
+ *
+ *  Furthermore, the head of the linked list could be
+ *  a full instance of the user-provided structure
+ *  (although the storage-conscious programmer could make the head
+ *  just an bu_list structure, with careful type casting).
+ *  This results in a doubly-linked circular list, with the head
+ *  having the same shape as all the list members.
+ *  The application is free to make use of this symmetry and store
+ *  data values in the head, or the extra storage in the head can
+ *  be ignored.
+ *
+ *  Where a macro expects an argument "p", it should be a pointer to
+ *  a user-provided structure.
+ *
+ *  Where a macro expects an argument "hp", it should be a pointer to
+ *  a "struct bu_list" located in the list head, e.g., &(head.l).
+ *
+ *  Where a macro expects an argument "old", "new", or "cur", it should
+ *  be a pointer to the "struct bu_list" located either
+ *  in a user-provided structure, e.g. &((p)->l),
+ *  or for the case of "old" it may also be in the list head, e.g.
+ *	BU_LIST_INSERT( &(head.l), &((p)->l) );
+ *
+ *  Dequeueing the head of a list is a valid and
+ *  well defined operation which should be performed with caution.
+ *  Unless a pointer to some other element of the list is retained
+ *  by the application, the rest of the linked list can no longer be
+ *  referred to.
+ *
+ *  The "magic" field of the list header _must_ be set to the constant
+ *  BU_LIST_HEAD_MAGIC, but the "magic" field of all list members
+ *  should be established by user code, to identify the type of
+ *  structure that the bu_list structure is embedded in.
+ *  It is permissible for one list to contain an arbitrarily mixed
  *  set of user "magic" numbers, as long as the head is properly marked.
- *									
- *  There is a dual set of terminology used in some of the macros:	
- *	FIRST / LAST	from the point of view of the list head		
- *	NEXT / PREV	from the point of view of a list member		
- *	forw / back	the actual pointer names			
- *									
+ *
+ *  There is a dual set of terminology used in some of the macros:
+ *	FIRST / LAST	from the point of view of the list head
+ *	NEXT / PREV	from the point of view of a list member
+ *	forw / back	the actual pointer names
+ *
  ************************************************************************/
 /**@{*/
 
@@ -820,7 +819,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 /** @addtogroup bitv */
 /**@{*/
 /**
- * 
+ *
  * @brief
  *  Bit vector data structure.
  *
@@ -860,13 +859,13 @@ struct bu_bitv {
 #else
 static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 {
-        int oldbit;
+	int oldbit;
 
-        __asm__ __volatile__(
-                "btl %2,%1\n\tsbbl %0,%0"
-                :"=r" (oldbit)
-                :"m" (addr),"Ir" (nr));
-        return oldbit;
+	__asm__ __volatile__(
+		"btl %2,%1\n\tsbbl %0,%0"
+		:"=r" (oldbit)
+		:"m" (addr),"Ir" (nr));
+	return oldbit;
 }
 #endif
 
@@ -908,9 +907,9 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  *
  *  @par Example:
 @code
- 	BU_BITV_LOOP_START(bv)  {
- 		fiddle(BU_BITV_LOOP_INDEX);
- 	} BU_BITV_LOOP_END;
+	BU_BITV_LOOP_START(bv)  {
+		fiddle(BU_BITV_LOOP_INDEX);
+	} BU_BITV_LOOP_END;
 @endcode
  *
  */
@@ -1240,7 +1239,7 @@ struct bu_mro {
 /** @} */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup bu_debug Debugging 
+/** @addtogroup bu_debug Debugging
  * @ingroup libbu
  */
 /** @{ */
@@ -1340,7 +1339,7 @@ BU_EXPORT extern int	bu_debug;
 #          define bu_byteoffset(_i)	((long)(((void *)&(_i))-((void *)0)))
 #        endif
 #      else
-         /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
+	 /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
 #        define bu_byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
 #      endif
 #    endif
@@ -1354,44 +1353,44 @@ BU_EXPORT extern int	bu_debug;
  * desired.  For example:
  *@code
   struct data_structure {
- 	char	a_char;
- 	char	str[32];
- 	short	a_short;
- 	int	a_int;
- 	double	a_double;
+	char	a_char;
+	char	str[32];
+	short	a_short;
+	int	a_int;
+	double	a_double;
   }
- 
+
   struct data_structure data_default =
- 	{ 'c', "the default string", 32767, 1, 1.0 };
- 
+	{ 'c', "the default string", 32767, 1, 1.0 };
+
   struct data_structure my_values;
- 
+
   struct bu_structparse data_sp[] ={
- 
+
   {"%c", 1,  "a_char",   bu_offsetof(data_structure, a_char),
- 	BU_STRUCTPARSE_FUNC_NULL,
- 	"a single character",	(void*)&default.a_char },
- 
+	BU_STRUCTPARSE_FUNC_NULL,
+	"a single character",	(void*)&default.a_char },
+
   {"%s", 32, "str",      bu_offsetofarray(data_structure, str),
- 	BU_STRUCTPARSE_FUNC_NULL,
- 	"This is a full character string", (void*)default.str }, },
- 
+	BU_STRUCTPARSE_FUNC_NULL,
+	"This is a full character string", (void*)default.str }, },
+
   {"%i", 1,  "a_short",  bu_offsetof(data_structure, a_short),
- 	BU_STRUCTPARSE_FUNC_NULL,
- 	"A 16bit integer",	(void*)&default.a_short },
- 
+	BU_STRUCTPARSE_FUNC_NULL,
+	"A 16bit integer",	(void*)&default.a_short },
+
   {"%d", 1,  "a_int",    bu_offsetof(data_structure, a_int),
- 	BU_STRUCTPARSE_FUNC_NULL,
- 	"A full integer",	(void*)&default.a_int },
- 
+	BU_STRUCTPARSE_FUNC_NULL,
+	"A full integer",	(void*)&default.a_int },
+
   {"%f", 1,  "a_double", bu_offsetof(data_structure, a_double),
- 	BU_STRUCTPARSE_FUNC_NULL,
- 	"A double-precision floating point value",  (void*)&default.a_double },
- 
+	BU_STRUCTPARSE_FUNC_NULL,
+	"A double-precision floating point value",  (void*)&default.a_double },
+
   { "", 0, (char *)NULL, 0,
- 	BU_STRUCTPARSE_FUNC_NULL,
- 	(char *)NULL, (void *)NULL }
- 
+	BU_STRUCTPARSE_FUNC_NULL,
+	(char *)NULL, (void *)NULL }
+
   };
  @endcode
  *
@@ -1418,8 +1417,6 @@ struct bu_structparse {
     void		*sp_default;		/**< @brief ptr to default value  */
 };
 #define BU_STRUCTPARSE_FUNC_NULL	((void (*)())0)
-
-
 
 
 /*----------------------------------------------------------------------*/
@@ -2429,7 +2426,6 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 		     const char *value));
 
 
-
 /** @} */
 /** @addtogroup hton */
 /** @{ */
@@ -2439,21 +2435,21 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 /* The argument is expected to be of type "unsigned char" */
 #define BU_GLONGLONG(_cp)	\
 	    ((((long)((_cp)[0])) << 56) |	\
-             (((long)((_cp)[1])) << 48) |	\
-             (((long)((_cp)[2])) << 40) |	\
-             (((long)((_cp)[3])) << 32) |	\
-             (((long)((_cp)[4])) << 24) |	\
-             (((long)((_cp)[5])) << 16) |	\
-             (((long)((_cp)[6])) <<  8) |	\
-              ((long)((_cp)[7])) )
+	     (((long)((_cp)[1])) << 48) |	\
+	     (((long)((_cp)[2])) << 40) |	\
+	     (((long)((_cp)[3])) << 32) |	\
+	     (((long)((_cp)[4])) << 24) |	\
+	     (((long)((_cp)[5])) << 16) |	\
+	     (((long)((_cp)[6])) <<  8) |	\
+	      ((long)((_cp)[7])) )
 #define BU_GLONG(_cp)	\
 	    ((((long)((_cp)[0])) << 24) |	\
-             (((long)((_cp)[1])) << 16) |	\
-             (((long)((_cp)[2])) <<  8) |	\
-              ((long)((_cp)[3])) )
+	     (((long)((_cp)[1])) << 16) |	\
+	     (((long)((_cp)[2])) <<  8) |	\
+	      ((long)((_cp)[3])) )
 #define BU_GSHORT(_cp)	\
-            ((((short)((_cp)[0])) << 8) | \
-                       (_cp)[1] )
+	    ((((short)((_cp)[0])) << 8) | \
+		       (_cp)[1] )
 
 BU_EXPORT BU_EXTERN(unsigned short bu_gshort,
 		    (const unsigned char *msgp));
@@ -2465,7 +2461,6 @@ BU_EXPORT BU_EXTERN(unsigned char *bu_pshort,
 BU_EXPORT BU_EXTERN(unsigned char *bu_plong,
 		    (register unsigned char *msgp,
 		     register unsigned long l));
-
 
 
 /** @} */
@@ -2773,4 +2768,3 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

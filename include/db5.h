@@ -22,7 +22,7 @@
 /** @file db5.h
  * @brief
  *  Definition of the BRL-CAD "v5" database format used for new ".g" files.
- *  
+ *
  * @author	Michael John Muuss
  * @author	Lee A. Butler
  * @author	Paul J. Tanenbaum
@@ -237,4 +237,3 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

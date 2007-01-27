@@ -73,7 +73,7 @@ struct rt_tor_internal {
 	vect_t	h;		/**< @brief  normal, unit length */
 	fastf_t	r_h;		/**< @brief  radius in H direction (r2) */
 	fastf_t	r_a;		/**< @brief  radius in A direction (r1) */
-        /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
+	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
 	vect_t	a;		/**< @brief  r_a length */
 	vect_t	b;		/**< @brief  r_b length */
 	fastf_t	r_b;		/**< @brief  radius in B direction (typ == r_a) */
@@ -221,7 +221,7 @@ struct rt_nurb_internal {
 #if OBJ_BREP /* are we compiling the b-rep/NURBS support? */
 #include "brep.h"
 /*
- * a b-rep solid consists of a 
+ * a b-rep solid consists of a
  */
 /* ID_BREP */
 struct rt_brep_internal {
@@ -232,7 +232,7 @@ struct rt_brep_internal {
 #define RT_BREP_INTERNAL_MAGIC 0x42524550 /* BREP */
 #define RT_BREP_CK_MAGIC( _p) BU_CKMAG(_p,RT_BREP_INTERNAL_MAGIC,"rt_brep_internal");
 
-#endif 
+#endif
 
 /*
  *	ID_NMG
@@ -591,4 +591,3 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

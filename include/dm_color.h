@@ -39,4 +39,3 @@ extern void dm_allocate_color_cube();
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

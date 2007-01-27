@@ -77,4 +77,3 @@ extern struct glx_vars head_glx_vars;
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

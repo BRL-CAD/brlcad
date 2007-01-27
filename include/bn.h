@@ -51,13 +51,13 @@
  *
  *  Include Sequencing -
 @code
- 	# include "common.h"
- 	# include <stdio.h>
- 	# include <math.h>
- 	# include "machine.h"	/_* For fastf_t definition on this machine *_/
- 	# include "bu.h"
- 	# include "vmath.h"
- 	# include "bn.h"
+	# include "common.h"
+	# include <stdio.h>
+	# include <math.h>
+	# include "machine.h"	/_* For fastf_t definition on this machine *_/
+	# include "bu.h"
+	# include "vmath.h"
+	# include "bn.h"
 @endcode
  *
  *  @par Libraries Used -
@@ -113,13 +113,13 @@ __BEGIN_DECLS
  *	be considered the same point.
  *	For example:
 @code
- 		point_t	a,b;
- 		vect_t	diff;
- 		VSUB2( diff, a, b );
- 		if( MAGNITUDE(diff) < tol->dist )	a & b are the same.
- 	or, more efficiently:
- 		if( MAQSQ(diff) < tol->dist_sq )
-@endcode 
+		point_t	a,b;
+		vect_t	diff;
+		VSUB2( diff, a, b );
+		if( MAGNITUDE(diff) < tol->dist )	a & b are the same.
+	or, more efficiently:
+		if( MAQSQ(diff) < tol->dist_sq )
+@endcode
  *  perp & para establish the angular tolerance.
  *
  *	If two rays emanate from the same point, and their dot product
@@ -127,9 +127,9 @@ __BEGIN_DECLS
  *	dot product is nearly zero, then they are perpendicular.
  *	For example:
 @code
- 		vect_t	a,b;
- 		if( fabs(VDOT(a,b)) >= tol->para )	a & b are parallel
- 		if( fabs(VDOT(a,b)) <= tol->perp )	a & b are perpendicular
+		vect_t	a,b;
+		if( fabs(VDOT(a,b)) >= tol->para )	a & b are parallel
+		if( fabs(VDOT(a,b)) <= tol->perp )	a & b are perpendicular
 @endcode
  *
  *  @note
@@ -566,7 +566,6 @@ struct bn_unif {
 
 #define BN_CK_UNIF(_p) BU_CKMAG(_p, BN_UNIF_MAGIC, "bn_unif")
 #define BN_CK_GAUSS(_p) BU_CKMAG(_p, BN_GAUSS_MAGIC, "bn_gauss")
-
 
 
 /**
@@ -1159,7 +1158,6 @@ BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_long_reconstruct,
 		     unsigned long limit));
 
 
-
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_double_decompose,
 		    (double *tbuf,
 		     double *buf,
@@ -1243,7 +1241,6 @@ BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_long_reconstruct,
 		     unsigned long depth,
 		     unsigned long subimage_size,
 		     unsigned long limit));
-
 
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_double_decompose2,
@@ -1787,4 +1784,3 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

@@ -130,4 +130,3 @@ RT_EXPORT BU_EXTERN(void			rt_spect_reflectance_rgb,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

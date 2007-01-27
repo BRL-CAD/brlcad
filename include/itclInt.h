@@ -11,7 +11,7 @@
  *  it encourages better organization of Tcl applications through the
  *  object-oriented paradigm, leading to code that is easier to
  *  understand and maintain.
- *  
+ *
  *  ADDING [incr Tcl] TO A Tcl-BASED APPLICATION:
  *
  *    To add [incr Tcl] facilities to a Tcl application, modify the
@@ -27,12 +27,12 @@
  *         if (Itcl_Init(interp) == TCL_ERROR) {
  *             return TCL_ERROR;
  *         }
- * 
+ *
  *    3) Link your application with libitcl.a
  *
  *    NOTE:  An example file "tclAppInit.c" containing the changes shown
  *           above is included in this distribution.
- *  
+ *
  * ========================================================================
  *  AUTHOR:  Michael J. McLennan
  *           Bell Labs Innovations for Lucent Technologies
@@ -133,17 +133,17 @@ typedef struct ItclObjectInfo {
     Tcl_HashTable objects;          /* list of all known objects */
 
     Itcl_Stack transparentFrames;   /* stack of call frames that should be
-                                     * treated transparently.  When
-                                     * Itcl_EvalMemberCode is invoked in
-                                     * one of these contexts, it does an
-                                     * "uplevel" to get past the transparent
-                                     * frame and back to the calling context. */
+				     * treated transparently.  When
+				     * Itcl_EvalMemberCode is invoked in
+				     * one of these contexts, it does an
+				     * "uplevel" to get past the transparent
+				     * frame and back to the calling context. */
     Tcl_HashTable contextFrames;    /* object contexts for active call frames */
 
     int protection;                 /* protection level currently in effect */
 
     Itcl_Stack cdefnStack;          /* stack of class definitions currently
-                                     * being parsed */
+				     * being parsed */
 } ItclObjectInfo;
 
 #define ITCL_INTERP_DATA "itcl_data"
@@ -162,22 +162,22 @@ typedef struct ItclClass {
     Itcl_List bases;              /* list of base classes */
     Itcl_List derived;            /* list of all derived classes */
     Tcl_HashTable heritage;       /* table of all base classes.  Look up
-                                   * by pointer to class definition.  This
-                                   * provides fast lookup for inheritance
-                                   * tests. */
+				   * by pointer to class definition.  This
+				   * provides fast lookup for inheritance
+				   * tests. */
     Tcl_Obj *initCode;            /* initialization code for new objs */
     Tcl_HashTable variables;      /* definitions for all data members
-                                     in this class.  Look up simple string
-                                     names and get back ItclVarDefn* ptrs */
+				     in this class.  Look up simple string
+				     names and get back ItclVarDefn* ptrs */
     Tcl_HashTable functions;      /* definitions for all member functions
-                                     in this class.  Look up simple string
-                                     names and get back ItclMemberFunc* ptrs */
+				     in this class.  Look up simple string
+				     names and get back ItclMemberFunc* ptrs */
     int numInstanceVars;          /* number of instance vars in variables
-                                     table */
+				     table */
     Tcl_HashTable resolveVars;    /* all possible names for variables in
-                                   * this class (e.g., x, foo::x, etc.) */
+				   * this class (e.g., x, foo::x, etc.) */
     Tcl_HashTable resolveCmds;    /* all possible names for functions in
-                                   * this class (e.g., x, foo::x, etc.) */
+				   * this class (e.g., x, foo::x, etc.) */
     int unique;                   /* unique number for #auto generation */
     int flags;                    /* maintains class status */
 } ItclClass;
@@ -210,10 +210,10 @@ typedef struct ItclMemberCode {
     CompiledLocal *arglist;     /* list of arg names and initial values */
     int argcount;               /* number of args in arglist */
     Proc *procPtr;              /* Tcl proc representation (needed to
-                                 * handle compiled locals) */
+				 * handle compiled locals) */
     union {
-        Tcl_CmdProc *argCmd;    /* (argc,argv) C implementation */
-        Tcl_ObjCmdProc *objCmd; /* (objc,objv) C implementation */
+	Tcl_CmdProc *argCmd;    /* (argc,argv) C implementation */
+	Tcl_ObjCmdProc *objCmd; /* (objc,objv) C implementation */
     } cfunc;
 
     ClientData clientData;      /* client data for C implementations */
@@ -247,7 +247,7 @@ typedef struct ItclMember {
 #define ITCL_ARG_SPEC          0x080  /* non-zero => has an argument spec */
 
 #define ITCL_OLD_STYLE         0x100  /* non-zero => old-style method
-                                       * (process "config" argument) */
+				       * (process "config" argument) */
 
 #define ITCL_THIS_VAR          0x200  /* non-zero => built-in "this" variable */
 
@@ -276,14 +276,14 @@ typedef struct ItclVarLookup {
     ItclVarDefn* vdefn;       /* variable definition */
     int usage;                /* number of uses for this record */
     int accessible;           /* non-zero => accessible from class with
-                               * this lookup record in its resolveVars */
+			       * this lookup record in its resolveVars */
     char *leastQualName;      /* simplist name for this variable, with
-                               * the fewest qualifiers.  This string is
-                               * taken from the resolveVars table, so
-                               * it shouldn't be freed. */
+			       * the fewest qualifiers.  This string is
+			       * taken from the resolveVars table, so
+			       * it shouldn't be freed. */
     union {
-        int index;            /* index into virtual table (instance data) */
-        Tcl_Var common;       /* variable (common data) */
+	int index;            /* index into virtual table (instance data) */
+	Tcl_Var common;       /* variable (common data) */
     } var;
 } ItclVarLookup;
 

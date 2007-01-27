@@ -40,7 +40,7 @@
 #define RTOD	180.0/M_PI
 
 #define VSUBUNIT(a,b,c) {VSUB2(a,b,c);\
-                        VUNITIZE(a);}
+			VUNITIZE(a);}
 #define FVSCAN(f,a)	fscanf(f,"%lf %lf %lf", (a),(a)+1,(a)+2)
 #define FMATSCAN(f,m)	{FVSCAN(f,(m)); FVSCAN(f,(m)+4);\
 			 FVSCAN(f,(m)+8); FVSCAN(f,(m)+12);}
@@ -127,7 +127,6 @@ typedef fastf_t  mat3_t[9];
 	(m)[6] = -(b)[1]; (m)[7] = -(b)[2]; (m)[8]=  (a)[2];}
 
 
-
 /** @} */
 /*
  * Local Variables:
@@ -138,4 +137,3 @@ typedef fastf_t  mat3_t[9];
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

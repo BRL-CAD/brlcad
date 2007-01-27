@@ -268,4 +268,3 @@ BU_EXTERN(void rb_walk,		(rb_tree	*tree,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

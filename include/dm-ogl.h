@@ -75,4 +75,3 @@ extern void ogl_fogHint();
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

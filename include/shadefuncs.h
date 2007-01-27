@@ -106,4 +106,3 @@ OPTICAL_EXPORT BU_EXTERN(struct mfuncs *load_dynamic_shader,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

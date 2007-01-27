@@ -42,36 +42,36 @@ TCL_EXTERN(int)		Itk_SafeInit _ANSI_ARGS_((Tcl_Interp * interp));
 #ifndef Itk_ConfigBodyCmd_TCL_DECLARED
 #define Itk_ConfigBodyCmd_TCL_DECLARED
 /* 2 */
-TCL_EXTERN(int)		Itk_ConfigBodyCmd _ANSI_ARGS_((ClientData cdata, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itk_ConfigBodyCmd _ANSI_ARGS_((ClientData cdata,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itk_UsualCmd_TCL_DECLARED
 #define Itk_UsualCmd_TCL_DECLARED
 /* 3 */
-TCL_EXTERN(int)		Itk_UsualCmd _ANSI_ARGS_((ClientData cdata, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itk_UsualCmd _ANSI_ARGS_((ClientData cdata,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itk_ClassOptionDefineCmd_TCL_DECLARED
 #define Itk_ClassOptionDefineCmd_TCL_DECLARED
 /* 4 */
 TCL_EXTERN(int)		Itk_ClassOptionDefineCmd _ANSI_ARGS_((
-				ClientData cdata, Tcl_Interp * interp, 
+				ClientData cdata, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itk_ClassOptionIllegalCmd_TCL_DECLARED
 #define Itk_ClassOptionIllegalCmd_TCL_DECLARED
 /* 5 */
 TCL_EXTERN(int)		Itk_ClassOptionIllegalCmd _ANSI_ARGS_((
-				ClientData cdata, Tcl_Interp * interp, 
+				ClientData cdata, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itk_ConfigClassOption_TCL_DECLARED
 #define Itk_ConfigClassOption_TCL_DECLARED
 /* 6 */
 TCL_EXTERN(int)		Itk_ConfigClassOption _ANSI_ARGS_((
-				Tcl_Interp * interp, ItclObject * contextObj, 
+				Tcl_Interp * interp, ItclObject * contextObj,
 				ClientData cdata, CONST char* newVal));
 #endif
 #ifndef Itk_CreateClassOptTable_TCL_DECLARED
@@ -91,9 +91,9 @@ TCL_EXTERN(ItkClassOptTable*) Itk_FindClassOptTable _ANSI_ARGS_((
 #define Itk_CreateClassOption_TCL_DECLARED
 /* 10 */
 TCL_EXTERN(int)		Itk_CreateClassOption _ANSI_ARGS_((
-				Tcl_Interp * interp, ItclClass * cdefn, 
-				char * switchName, char * resName, 
-				char * resClass, char * defVal, 
+				Tcl_Interp * interp, ItclClass * cdefn,
+				char * switchName, char * resName,
+				char * resClass, char * defVal,
 				char * config, ItkClassOption ** optPtr));
 #endif
 #ifndef Itk_FindClassOption_TCL_DECLARED
@@ -115,7 +115,7 @@ TCL_EXTERN(int)		Itk_ArchetypeInit _ANSI_ARGS_((Tcl_Interp* interp));
 #ifndef Itk_OptListInit_TCL_DECLARED
 #define Itk_OptListInit_TCL_DECLARED
 /* 14 */
-TCL_EXTERN(void)	Itk_OptListInit _ANSI_ARGS_((ItkOptList* olist, 
+TCL_EXTERN(void)	Itk_OptListInit _ANSI_ARGS_((ItkOptList* olist,
 				Tcl_HashTable * options));
 #endif
 #ifndef Itk_OptListFree_TCL_DECLARED
@@ -126,13 +126,13 @@ TCL_EXTERN(void)	Itk_OptListFree _ANSI_ARGS_((ItkOptList* olist));
 #ifndef Itk_OptListAdd_TCL_DECLARED
 #define Itk_OptListAdd_TCL_DECLARED
 /* 16 */
-TCL_EXTERN(void)	Itk_OptListAdd _ANSI_ARGS_((ItkOptList* olist, 
+TCL_EXTERN(void)	Itk_OptListAdd _ANSI_ARGS_((ItkOptList* olist,
 				Tcl_HashEntry * entry));
 #endif
 #ifndef Itk_OptListRemove_TCL_DECLARED
 #define Itk_OptListRemove_TCL_DECLARED
 /* 17 */
-TCL_EXTERN(void)	Itk_OptListRemove _ANSI_ARGS_((ItkOptList* olist, 
+TCL_EXTERN(void)	Itk_OptListRemove _ANSI_ARGS_((ItkOptList* olist,
 				Tcl_HashEntry * entry));
 #endif
 

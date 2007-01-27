@@ -337,7 +337,6 @@ struct hit {
 /* RT_GET_NORMAL( _normal, _partition, inhit/outhit flag, ap ) */
 
 
-
 /**
  *			C U R V A T U R E
  *
@@ -912,7 +911,6 @@ struct directory  {
 #endif
 
 
-
 /**
  *			R T _ C O M B _ I N T E R N A L
  *
@@ -1034,19 +1032,19 @@ struct db_tree_state {
  */
 struct db_traverse
 {
-    	long	magic;
-    	struct db_i 	*dbip;
+	long	magic;
+	struct db_i 	*dbip;
 	void 	(*comb_enter_func) (
-			struct db_i *, 
-			struct directory *, 
+			struct db_i *,
+			struct directory *,
 			genptr_t);
 	void 	(*comb_exit_func) (
-			struct db_i *, 
-			struct directory *, 
+			struct db_i *,
+			struct directory *,
 			genptr_t);
 	void 	(*leaf_func) (
-			struct db_i *, 
-			struct directory *, 
+			struct db_i *,
+			struct directory *,
 			genptr_t);
 	struct resource *resp;
 	genptr_t 	client_data;
@@ -1555,8 +1553,6 @@ struct rt_reprep_obj_list {
 };
 
 
-
-
 /**
  *			P I X E L _ E X T
  *
@@ -1880,7 +1876,6 @@ struct rt_i {
 #define RT_FREE_VLIST(hd)	BN_FREE_VLIST(&rt_g.rtg_vlfree, hd)
 
 #define RT_ADD_VLIST(hd,pnt,draw)  BN_ADD_VLIST(&rt_g.rtg_vlfree,hd,pnt,draw)
-
 
 
 /*
@@ -2647,7 +2642,6 @@ RT_EXPORT BU_EXTERN(int	rt_defoverlap,
 		     struct partition *pheadp));
 
 
-
 /* mater.c */
 
 RT_EXPORT BU_EXTERN(void rt_region_color_map,
@@ -2765,7 +2759,6 @@ RT_EXPORT BU_EXTERN(int db_parse_anim,
 		    (struct db_i     *dbip,
 		     int             argc,
 		     const char      **argv));
-
 
 
 RT_EXPORT BU_EXTERN(int db_add_anim,
@@ -4997,7 +4990,6 @@ RT_EXPORT BU_EXTERN(int rt_mk_hyperbola,
 		     fastf_t ntol));
 
 
-
 /* nmg_class.c */
 RT_EXPORT BU_EXTERN(int nmg_classify_pt_loop,
 		    (const point_t pt,
@@ -6877,4 +6869,3 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

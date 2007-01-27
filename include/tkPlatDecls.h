@@ -33,7 +33,7 @@
 
 #ifdef __WIN32__
 /* 0 */
-EXTERN Window		Tk_AttachHWND _ANSI_ARGS_((Tk_Window tkwin, 
+EXTERN Window		Tk_AttachHWND _ANSI_ARGS_((Tk_Window tkwin,
 				HWND hwnd));
 /* 1 */
 EXTERN HINSTANCE	Tk_GetHINSTANCE _ANSI_ARGS_((void));
@@ -44,17 +44,17 @@ EXTERN Tk_Window	Tk_HWNDToWindow _ANSI_ARGS_((HWND hwnd));
 /* 4 */
 EXTERN void		Tk_PointerEvent _ANSI_ARGS_((HWND hwnd, int x, int y));
 /* 5 */
-EXTERN int		Tk_TranslateWinEvent _ANSI_ARGS_((HWND hwnd, 
-				UINT message, WPARAM wParam, LPARAM lParam, 
+EXTERN int		Tk_TranslateWinEvent _ANSI_ARGS_((HWND hwnd,
+				UINT message, WPARAM wParam, LPARAM lParam,
 				LRESULT * result));
 #endif /* __WIN32__ */
 #ifdef MAC_TCL
 /* 0 */
 EXTERN void		Tk_MacSetEmbedHandler _ANSI_ARGS_((
-				Tk_MacEmbedRegisterWinProc * registerWinProcPtr, 
-				Tk_MacEmbedGetGrafPortProc * getPortProcPtr, 
-				Tk_MacEmbedMakeContainerExistProc * containerExistProcPtr, 
-				Tk_MacEmbedGetClipProc * getClipProc, 
+				Tk_MacEmbedRegisterWinProc * registerWinProcPtr,
+				Tk_MacEmbedGetGrafPortProc * getPortProcPtr,
+				Tk_MacEmbedMakeContainerExistProc * containerExistProcPtr,
+				Tk_MacEmbedGetClipProc * getClipProc,
 				Tk_MacEmbedGetOffsetInParentProc * getOffsetProc));
 /* 1 */
 EXTERN void		Tk_MacTurnOffMenus _ANSI_ARGS_((void));
@@ -72,8 +72,8 @@ EXTERN int		TkMacConvertEvent _ANSI_ARGS_((
 EXTERN int		TkMacConvertTkEvent _ANSI_ARGS_((
 				EventRecord * eventPtr, Window window));
 /* 7 */
-EXTERN void		TkGenWMConfigureEvent _ANSI_ARGS_((Tk_Window tkwin, 
-				int x, int y, int width, int height, 
+EXTERN void		TkGenWMConfigureEvent _ANSI_ARGS_((Tk_Window tkwin,
+				int x, int y, int width, int height,
 				int flags));
 /* 8 */
 EXTERN void		TkMacInvalClipRgns _ANSI_ARGS_((TkWindow * winPtr));
@@ -85,10 +85,10 @@ EXTERN GWorldPtr	TkMacGetDrawablePort _ANSI_ARGS_((Drawable drawable));
 #ifdef MAC_OSX_TK
 /* 0 */
 EXTERN void		Tk_MacOSXSetEmbedHandler _ANSI_ARGS_((
-				Tk_MacOSXEmbedRegisterWinProc * registerWinProcPtr, 
-				Tk_MacOSXEmbedGetGrafPortProc * getPortProcPtr, 
-				Tk_MacOSXEmbedMakeContainerExistProc * containerExistProcPtr, 
-				Tk_MacOSXEmbedGetClipProc * getClipProc, 
+				Tk_MacOSXEmbedRegisterWinProc * registerWinProcPtr,
+				Tk_MacOSXEmbedGetGrafPortProc * getPortProcPtr,
+				Tk_MacOSXEmbedMakeContainerExistProc * containerExistProcPtr,
+				Tk_MacOSXEmbedGetClipProc * getClipProc,
 				Tk_MacOSXEmbedGetOffsetInParentProc * getOffsetProc));
 /* 1 */
 EXTERN void		Tk_MacOSXTurnOffMenus _ANSI_ARGS_((void));
@@ -100,8 +100,8 @@ EXTERN void		TkMacOSXInitMenus _ANSI_ARGS_((Tcl_Interp * interp));
 EXTERN void		TkMacOSXInitAppleEvents _ANSI_ARGS_((
 				Tcl_Interp * interp));
 /* 5 */
-EXTERN void		TkGenWMConfigureEvent _ANSI_ARGS_((Tk_Window tkwin, 
-				int x, int y, int width, int height, 
+EXTERN void		TkGenWMConfigureEvent _ANSI_ARGS_((Tk_Window tkwin,
+				int x, int y, int width, int height,
 				int flags));
 /* 6 */
 EXTERN void		TkMacOSXInvalClipRgns _ANSI_ARGS_((TkWindow * winPtr));

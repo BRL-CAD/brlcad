@@ -172,4 +172,3 @@ OPTICAL_EXPORT BU_EXTERN(void IrradianceEstimate,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

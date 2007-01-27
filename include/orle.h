@@ -46,7 +46,7 @@
 typedef struct	/* Extended format RLE header.				*/
 	{
 	short	h_xpos, h_ypos;	/* Lower-left corner of image.		*/
-        short	h_xlen, h_ylen;	/* Size of saved box.			*/
+	short	h_xlen, h_ylen;	/* Size of saved box.			*/
 	char	h_flags;	/* Some flags.				*/
 #define	H_CLEARFIRST	0x1	/* Clear the fb to background first.	*/
 #define H_BOXSAVE	0x0	/* Straight box save.			*/

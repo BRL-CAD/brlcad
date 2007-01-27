@@ -45,7 +45,7 @@
 typedef struct _on_brep_placeholder {
     int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
 } ON_Brep;
-#endif 
+#endif
 
 #ifdef __cplusplus
 extern "C" {

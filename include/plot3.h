@@ -25,15 +25,15 @@
  * This header file will also work if called by a "traditional" C
  * compiler.
  *
- *  For best results, before the 
+ *  For best results, before the
 @code
      #include "plot3.h"
 @endcode
  * there should be:
  *
 @code
- 	#include "machine.h"
-     	#include "vmath.h"
+	#include "machine.h"
+	#include "vmath.h"
 @endcode
  *
  *  although not doing this should not be fatal.
@@ -509,4 +509,3 @@ BN_EXPORT BU_EXTERN(void BU_FORTRAN(f3vect, F3VECT),
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

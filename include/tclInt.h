@@ -65,7 +65,7 @@
 /*
  * The following procedures allow namespaces to be customized to
  * support special name resolution rules for commands/variables.
- * 
+ *
  */
 
 struct Tcl_ResolvedVarInfo;
@@ -89,7 +89,6 @@ typedef struct Tcl_ResolvedVarInfo {
 } Tcl_ResolvedVarInfo;
 
 
-
 typedef int (Tcl_ResolveCompiledVarProc) _ANSI_ARGS_((
     Tcl_Interp* interp, CONST84 char* name, int length,
     Tcl_Namespace *context, Tcl_ResolvedVarInfo **rPtr));
@@ -101,7 +100,7 @@ typedef int (Tcl_ResolveVarProc) _ANSI_ARGS_((
 typedef int (Tcl_ResolveCmdProc) _ANSI_ARGS_((Tcl_Interp* interp,
     CONST84 char* name, Tcl_Namespace *context, int flags,
     Tcl_Command *rPtr));
- 
+
 typedef struct Tcl_ResolverInfo {
     Tcl_ResolveCmdProc *cmdResProc;	/* Procedure handling command name
 					 * resolution. */
@@ -186,7 +185,7 @@ typedef struct Namespace {
 				  * pointer; this causes all its cached
 				  * Command* pointers to be invalidated. */
     int resolverEpoch;		 /* Incremented whenever (a) the name resolution
-				  * rules change for this namespace or (b) a 
+				  * rules change for this namespace or (b) a
 				  * newly added command shadows a command that
 				  * is compiled to bytecodes.
 				  * This invalidates all byte codes compiled
@@ -288,9 +287,9 @@ typedef struct CommandTrace {
     struct CommandTrace *nextPtr;   /* Next in list of traces associated with
 				     * a particular command. */
     int refCount;                   /* Used to ensure this structure is
-                                     * not deleted too early.  Keeps track
-                                     * of how many pieces of code have
-                                     * a pointer to this structure. */
+				     * not deleted too early.  Keeps track
+				     * of how many pieces of code have
+				     * a pointer to this structure. */
 } CommandTrace;
 
 /*
@@ -369,11 +368,11 @@ typedef struct ArraySearch {
 
 typedef struct Var {
     union {
-	Tcl_Obj *objPtr;	/* The variable's object value. Used for 
+	Tcl_Obj *objPtr;	/* The variable's object value. Used for
 				 * scalar variables and array elements. */
 	Tcl_HashTable *tablePtr;/* For array variables, this points to
 				 * information about the hash table used
-				 * to implement the associative array. 
+				 * to implement the associative array.
 				 * Points to malloc-ed data. */
 	struct Var *linkPtr;	/* If this is a global variable being
 				 * referred to in a procedure, or a variable
@@ -405,7 +404,7 @@ typedef struct Var {
 				 * call frame or the hash table: 1 for each
 				 * additional variable whose linkPtr points
 				 * here, 1 for each nested trace active on
-				 * variable, and 1 if the variable is a 
+				 * variable, and 1 if the variable is a
 				 * namespace variable. This record can't be
 				 * deleted until refCount becomes 0. */
     VarTrace *tracePtr;		/* First in list of all traces set for this
@@ -419,7 +418,7 @@ typedef struct Var {
 /*
  * Flag bits for variables. The first three (VAR_SCALAR, VAR_ARRAY, and
  * VAR_LINK) are mutually exclusive and give the "type" of the variable.
- * VAR_UNDEFINED is independent of the variable's type. 
+ * VAR_UNDEFINED is independent of the variable's type.
  *
  * VAR_SCALAR -			1 means this is a scalar variable and not
  *				an array or link. The "objPtr" field points
@@ -468,7 +467,7 @@ typedef struct Var {
  * defined below:
  *
  * VAR_ARGUMENT -		1 means that this variable holds a procedure
- *				argument. 
+ *				argument.
  * VAR_TEMPORARY -		1 if the local variable is an anonymous
  *				temporary variable. Temporaries have a NULL
  *				name.
@@ -487,7 +486,7 @@ typedef struct Var {
 
 #define VAR_ARGUMENT		0x100
 #define VAR_TEMPORARY		0x200
-#define VAR_RESOLVED		0x400	
+#define VAR_RESOLVED		0x400
 
 /*
  * Macros to ensure that various flag bits are set properly for variables.
@@ -532,7 +531,7 @@ typedef struct Var {
  * EXTERN int	TclIsVarArgument _ANSI_ARGS_((Var *varPtr));
  * EXTERN int	TclIsVarResolved _ANSI_ARGS_((Var *varPtr));
  */
-    
+
 #define TclIsVarScalar(varPtr) \
     ((varPtr)->flags & VAR_SCALAR)
 
@@ -550,10 +549,10 @@ typedef struct Var {
 
 #define TclIsVarTemporary(varPtr) \
     ((varPtr)->flags & VAR_TEMPORARY)
-    
+
 #define TclIsVarArgument(varPtr) \
     ((varPtr)->flags & VAR_ARGUMENT)
-    
+
 #define TclIsVarResolved(varPtr) \
     ((varPtr)->flags & VAR_RESOLVED)
 
@@ -596,7 +595,7 @@ typedef struct CompiledLocal {
 				 * variables in the procedure call frame. */
     int flags;			/* Flag bits for the local variable. Same as
 				 * the flags for the Var structure above,
-				 * although only VAR_SCALAR, VAR_ARRAY, 
+				 * although only VAR_SCALAR, VAR_ARRAY,
 				 * VAR_LINK, VAR_ARGUMENT, VAR_TEMPORARY, and
 				 * VAR_RESOLVED make sense. */
     Tcl_Obj *defValuePtr;	/* Pointer to the default value of an
@@ -696,7 +695,7 @@ typedef struct ActiveInterpTrace {
 typedef struct AssocData {
     Tcl_InterpDeleteProc *proc;	/* Proc to call when deleting. */
     ClientData clientData;	/* Value to pass to proc. */
-} AssocData;	
+} AssocData;
 
 /*
  * The structure below defines a call frame. A call frame defines a naming
@@ -707,7 +706,7 @@ typedef struct AssocData {
  * command's code should execute. The Tcl_CallFrame structures exist only
  * while procedures or namespace eval/inscope's are being executed, and
  * provide a kind of Tcl call stack.
- * 
+ *
  * WARNING!! The structure definition must be kept consistent with the
  * Tcl_CallFrame structure in tcl.h. If you change one, change the other.
  */
@@ -842,7 +841,7 @@ struct CompileEnv;
  *			the interpreter's result describes what went wrong.
  * TCL_OUT_LINE_COMPILE	Compilation failed because, e.g., the command is
  *			too complex for effective inline compilation. The
- *			CompileProc believes the command is legal but 
+ *			CompileProc believes the command is legal but
  *			should be compiled "out of line" by emitting code
  *			to invoke its command procedure at runtime.
  */
@@ -953,13 +952,13 @@ typedef struct ByteCodeStats {
 				   * size [2**(n-1)..2**n), n in [0..32). */
     long byteCodeCount[32];	  /* ByteCode size distribution. */
     long lifetimeCount[32];	  /* ByteCode lifetime distribution (ms). */
-    
+
     double currentInstBytes;	  /* Instruction bytes-current ByteCodes. */
     double currentLitBytes;	  /* Current literal bytes. */
     double currentExceptBytes;	  /* Current exception table bytes. */
     double currentAuxBytes;	  /* Current auxiliary information bytes. */
     double currentCmdMapBytes;	  /* Current src<->code map bytes. */
-    
+
     long numLiteralsCreated;	  /* Total literal objects ever compiled. */
     double totalLitStringBytes;	  /* Total string bytes in all literals. */
     double currentLitStringBytes; /* String bytes in current literals. */
@@ -1060,7 +1059,7 @@ typedef struct Command {
 } Command;
 
 /*
- * Flag bits for commands. 
+ * Flag bits for commands.
  *
  * CMD_IS_DELETED -		Means that the command is in the process
  *                              of being deleted (its deleteProc is
@@ -1075,7 +1074,7 @@ typedef struct Command {
  *                              delete/rename traces) in its tracePtr list.
  * TCL_TRACE_RENAME -           A rename trace is in progress. Further
  *                              recursive renames will not be traced.
- * TCL_TRACE_DELETE -           A delete trace is in progress. Further 
+ * TCL_TRACE_DELETE -           A delete trace is in progress. Further
  *                              recursive deletes will not be traced.
  * (these last two flags are defined in tcl.h)
  */
@@ -1181,7 +1180,6 @@ typedef struct Interp {
 				 * type (MathFunc *). */
 
 
-
     /*
      * Information related to procedures and variables. See tclProc.c
      * and tclVar.c for usage.
@@ -1236,7 +1234,7 @@ typedef struct Interp {
 				 * (Package *) pointers. */
     char *packageUnknown;	/* Command to invoke during "package
 				 * require" commands for packages that
-				 * aren't described in packageTable. 
+				 * aren't described in packageTable.
 				 * Malloc'ed, may be NULL. */
 
     /*
@@ -1314,7 +1312,7 @@ typedef struct Interp {
 #ifdef TCL_COMPILE_STATS
     ByteCodeStats stats;	/* Holds compilation and execution
 				 * statistics for this interpreter. */
-#endif /* TCL_COMPILE_STATS */	  
+#endif /* TCL_COMPILE_STATS */
 } Interp;
 
 /*
@@ -1489,11 +1487,11 @@ typedef struct TclFileAttrProcs {
 
 /*
  * Opaque handle used in pipeline routines to encapsulate platform-dependent
- * state. 
+ * state.
  */
 
 typedef struct TclFile_ *TclFile;
-    
+
 /*
  * Opaque names for platform specific types.
  */
@@ -1613,7 +1611,7 @@ EXTERN void		TclExpandTokenArray _ANSI_ARGS_((
 			    Tcl_Parse *parsePtr));
 EXTERN int		TclFileAttrsCmd _ANSI_ARGS_((Tcl_Interp *interp,
 			    int objc, Tcl_Obj *CONST objv[]));
-EXTERN int		TclFileCopyCmd _ANSI_ARGS_((Tcl_Interp *interp, 
+EXTERN int		TclFileCopyCmd _ANSI_ARGS_((Tcl_Interp *interp,
 			    int objc, Tcl_Obj *CONST objv[])) ;
 EXTERN int		TclFileDeleteCmd _ANSI_ARGS_((Tcl_Interp *interp,
 			    int objc, Tcl_Obj *CONST objv[]));
@@ -1638,7 +1636,7 @@ EXTERN void		TclFinalizeSynchronization _ANSI_ARGS_((void));
 EXTERN void		TclFinalizeThreadData _ANSI_ARGS_((void));
 EXTERN void		TclFindEncodings _ANSI_ARGS_((CONST char *argv0));
 EXTERN int		TclGlob _ANSI_ARGS_((Tcl_Interp *interp,
-			    char *pattern, Tcl_Obj *unquotedPrefix, 
+			    char *pattern, Tcl_Obj *unquotedPrefix,
 			    int globFlags, Tcl_GlobTypeData* types));
 EXTERN void		TclInitAlloc _ANSI_ARGS_((void));
 EXTERN void		TclInitDbCkalloc _ANSI_ARGS_((void));
@@ -1663,7 +1661,7 @@ EXTERN Tcl_Obj *	TclLindexFlat _ANSI_ARGS_((Tcl_Interp* interp,
 EXTERN Tcl_Obj *	TclLsetList _ANSI_ARGS_((Tcl_Interp* interp,
 						 Tcl_Obj* listPtr,
 						 Tcl_Obj* indexPtr,
-						 Tcl_Obj* valuePtr  
+						 Tcl_Obj* valuePtr
 						 ));
 EXTERN Tcl_Obj *	TclLsetFlat _ANSI_ARGS_((Tcl_Interp* interp,
 						 Tcl_Obj* listPtr,
@@ -1672,20 +1670,20 @@ EXTERN Tcl_Obj *	TclLsetFlat _ANSI_ARGS_((Tcl_Interp* interp,
 						 Tcl_Obj* valuePtr
 						 ));
 EXTERN int              TclParseBackslash _ANSI_ARGS_((CONST char *src,
-                            int numBytes, int *readPtr, char *dst));
+			    int numBytes, int *readPtr, char *dst));
 EXTERN int		TclParseHex _ANSI_ARGS_((CONST char *src, int numBytes,
-                            Tcl_UniChar *resultPtr));
+			    Tcl_UniChar *resultPtr));
 EXTERN int		TclParseInteger _ANSI_ARGS_((CONST char *string,
 			    int numBytes));
 EXTERN int		TclParseWhiteSpace _ANSI_ARGS_((CONST char *src,
 			    int numBytes, Tcl_Parse *parsePtr, char *typePtr));
 EXTERN int		TclpObjAccess _ANSI_ARGS_((Tcl_Obj *filename,
 			    int mode));
-EXTERN int              TclpObjLstat _ANSI_ARGS_((Tcl_Obj *pathPtr, 
+EXTERN int              TclpObjLstat _ANSI_ARGS_((Tcl_Obj *pathPtr,
 			    Tcl_StatBuf *buf));
 EXTERN int		TclpCheckStackSpace _ANSI_ARGS_((void));
 EXTERN Tcl_Obj*         TclpTempFileName _ANSI_ARGS_((void));
-EXTERN Tcl_Obj*         TclNewFSPathObj _ANSI_ARGS_((Tcl_Obj *dirPtr, 
+EXTERN Tcl_Obj*         TclNewFSPathObj _ANSI_ARGS_((Tcl_Obj *dirPtr,
 			    CONST char *addStrRep, int len));
 EXTERN int              TclpDeleteFile _ANSI_ARGS_((CONST char *path));
 EXTERN void		TclpFinalizeCondition _ANSI_ARGS_((
@@ -1703,11 +1701,11 @@ EXTERN void		TclpInitLibraryPath _ANSI_ARGS_((CONST char *argv0));
 EXTERN void		TclpInitLock _ANSI_ARGS_((void));
 EXTERN void		TclpInitPlatform _ANSI_ARGS_((void));
 EXTERN void		TclpInitUnlock _ANSI_ARGS_((void));
-EXTERN int              TclpLoadFile _ANSI_ARGS_((Tcl_Interp *interp, 
+EXTERN int              TclpLoadFile _ANSI_ARGS_((Tcl_Interp *interp,
 				Tcl_Obj *pathPtr,
-				CONST char *sym1, CONST char *sym2, 
+				CONST char *sym1, CONST char *sym2,
 				Tcl_PackageInitProc **proc1Ptr,
-				Tcl_PackageInitProc **proc2Ptr, 
+				Tcl_PackageInitProc **proc2Ptr,
 				ClientData *clientDataPtr,
 				Tcl_FSUnloadFileProc **unloadProcPtr));
 EXTERN Tcl_Obj*		TclpObjListVolumes _ANSI_ARGS_((void));
@@ -1716,34 +1714,34 @@ EXTERN void		TclpMasterUnlock _ANSI_ARGS_((void));
 EXTERN int		TclpMatchFiles _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *separators, Tcl_DString *dirPtr,
 			    char *pattern, char *tail));
-EXTERN int              TclpObjNormalizePath _ANSI_ARGS_((Tcl_Interp *interp, 
+EXTERN int              TclpObjNormalizePath _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Obj *pathPtr, int nextCheckpoint));
 EXTERN int		TclpObjCreateDirectory _ANSI_ARGS_((Tcl_Obj *pathPtr));
-EXTERN void             TclpNativeJoinPath _ANSI_ARGS_((Tcl_Obj *prefix, 
+EXTERN void             TclpNativeJoinPath _ANSI_ARGS_((Tcl_Obj *prefix,
 							char *joining));
-EXTERN Tcl_Obj*         TclpNativeSplitPath _ANSI_ARGS_((Tcl_Obj *pathPtr, 
+EXTERN Tcl_Obj*         TclpNativeSplitPath _ANSI_ARGS_((Tcl_Obj *pathPtr,
 							 int *lenPtr));
 EXTERN Tcl_PathType     TclpGetNativePathType _ANSI_ARGS_((Tcl_Obj *pathObjPtr,
 			    int *driveNameLengthPtr, Tcl_Obj **driveNameRef));
-EXTERN int 		TclCrossFilesystemCopy _ANSI_ARGS_((Tcl_Interp *interp, 
+EXTERN int 		TclCrossFilesystemCopy _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Obj *source, Tcl_Obj *target));
 EXTERN int		TclpObjDeleteFile _ANSI_ARGS_((Tcl_Obj *pathPtr));
-EXTERN int		TclpObjCopyDirectory _ANSI_ARGS_((Tcl_Obj *srcPathPtr, 
+EXTERN int		TclpObjCopyDirectory _ANSI_ARGS_((Tcl_Obj *srcPathPtr,
 				Tcl_Obj *destPathPtr, Tcl_Obj **errorPtr));
-EXTERN int		TclpObjCopyFile _ANSI_ARGS_((Tcl_Obj *srcPathPtr, 
+EXTERN int		TclpObjCopyFile _ANSI_ARGS_((Tcl_Obj *srcPathPtr,
 				Tcl_Obj *destPathPtr));
-EXTERN int		TclpObjRemoveDirectory _ANSI_ARGS_((Tcl_Obj *pathPtr, 
+EXTERN int		TclpObjRemoveDirectory _ANSI_ARGS_((Tcl_Obj *pathPtr,
 				int recursive, Tcl_Obj **errorPtr));
-EXTERN int		TclpObjRenameFile _ANSI_ARGS_((Tcl_Obj *srcPathPtr, 
+EXTERN int		TclpObjRenameFile _ANSI_ARGS_((Tcl_Obj *srcPathPtr,
 				Tcl_Obj *destPathPtr));
-EXTERN int		TclpMatchInDirectory _ANSI_ARGS_((Tcl_Interp *interp, 
-			        Tcl_Obj *resultPtr, Tcl_Obj *pathPtr, 
+EXTERN int		TclpMatchInDirectory _ANSI_ARGS_((Tcl_Interp *interp,
+				Tcl_Obj *resultPtr, Tcl_Obj *pathPtr,
 				CONST char *pattern, Tcl_GlobTypeData *types));
 EXTERN Tcl_Obj*		TclpObjGetCwd _ANSI_ARGS_((Tcl_Interp *interp));
-EXTERN Tcl_Obj*		TclpObjLink _ANSI_ARGS_((Tcl_Obj *pathPtr, 
+EXTERN Tcl_Obj*		TclpObjLink _ANSI_ARGS_((Tcl_Obj *pathPtr,
 				Tcl_Obj *toPtr, int linkType));
 EXTERN int		TclpObjChdir _ANSI_ARGS_((Tcl_Obj *pathPtr));
-EXTERN Tcl_Obj*         TclFileDirname _ANSI_ARGS_((Tcl_Interp *interp, 
+EXTERN Tcl_Obj*         TclFileDirname _ANSI_ARGS_((Tcl_Interp *interp,
 						    Tcl_Obj*pathPtr));
 EXTERN int		TclpObjStat _ANSI_ARGS_((Tcl_Obj *pathPtr, Tcl_StatBuf *buf));
 EXTERN Tcl_Channel	TclpOpenFileChannel _ANSI_ARGS_((Tcl_Interp *interp,
@@ -1773,16 +1771,16 @@ EXTERN VOID             TclSignalExitThread _ANSI_ARGS_((Tcl_ThreadId id,
 			     int result));
 EXTERN void		TclTransferResult _ANSI_ARGS_((Tcl_Interp *sourceInterp,
 			    int result, Tcl_Interp *targetInterp));
-EXTERN Tcl_Obj*         TclpNativeToNormalized 
-                            _ANSI_ARGS_((ClientData clientData));
+EXTERN Tcl_Obj*         TclpNativeToNormalized
+			    _ANSI_ARGS_((ClientData clientData));
 EXTERN Tcl_Obj*	        TclpFilesystemPathType
 					_ANSI_ARGS_((Tcl_Obj* pathObjPtr));
 EXTERN Tcl_PackageInitProc* TclpFindSymbol _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_LoadHandle loadHandle, CONST char *symbol));
-EXTERN int              TclpDlopen _ANSI_ARGS_((Tcl_Interp *interp, 
-			    Tcl_Obj *pathPtr, 
-	                    Tcl_LoadHandle *loadHandle, 
-		            Tcl_FSUnloadFileProc **unloadProcPtr));
+EXTERN int              TclpDlopen _ANSI_ARGS_((Tcl_Interp *interp,
+			    Tcl_Obj *pathPtr,
+			    Tcl_LoadHandle *loadHandle,
+			    Tcl_FSUnloadFileProc **unloadProcPtr));
 EXTERN int              TclpUtime _ANSI_ARGS_((Tcl_Obj *pathPtr,
 					       struct utimbuf *tval));
 
@@ -1883,7 +1881,7 @@ EXTERN int	Tcl_LreplaceObjCmd _ANSI_ARGS_((ClientData clientData,
 EXTERN int	Tcl_LsearchObjCmd _ANSI_ARGS_((ClientData clientData,
 		    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 EXTERN int	Tcl_LsetObjCmd _ANSI_ARGS_((ClientData clientData,
-                    Tcl_Interp* interp, int objc, Tcl_Obj *CONST objv[]));
+		    Tcl_Interp* interp, int objc, Tcl_Obj *CONST objv[]));
 EXTERN int	Tcl_LsortObjCmd _ANSI_ARGS_((ClientData clientData,
 		    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 EXTERN int	Tcl_NamespaceObjCmd _ANSI_ARGS_((ClientData clientData,
@@ -2012,15 +2010,15 @@ EXTERN int	TclCompileWhileCmd _ANSI_ARGS_((Tcl_Interp *interp,
 		    Tcl_Parse *parsePtr, struct CompileEnv *envPtr));
 
 /*
- * Functions defined in generic/tclVar.c and currenttly exported only 
- * for use by the bytecode compiler and engine. Some of these could later 
+ * Functions defined in generic/tclVar.c and currenttly exported only
+ * for use by the bytecode compiler and engine. Some of these could later
  * be placed in the public interface.
  */
 
 EXTERN Var *	TclLookupArrayElement _ANSI_ARGS_((Tcl_Interp *interp,
 		    CONST char *arrayName, CONST char *elName, CONST int flags,
 		    CONST char *msg, CONST int createPart1,
-		    CONST int createPart2, Var *arrayPtr));	
+		    CONST int createPart2, Var *arrayPtr));
 EXTERN Var *    TclObjLookupVar _ANSI_ARGS_((Tcl_Interp *interp,
 		    Tcl_Obj *part1Ptr, CONST char *part2, int flags,
 		    CONST char *msg, CONST int createPart1,
@@ -2051,7 +2049,7 @@ EXTERN Tcl_Obj *TclPtrIncrVar _ANSI_ARGS_((Tcl_Interp *interp, Var *varPtr,
  * EXTERN void	TclNewObj _ANSI_ARGS_((Tcl_Obj *objPtr));
  * EXTERN void	TclDecrRefCount _ANSI_ARGS_((Tcl_Obj *objPtr));
  *
- * These macros are defined in terms of two macros that depend on 
+ * These macros are defined in terms of two macros that depend on
  * memory allocator in use: TclAllocObjStorage, TclFreeObjStorage.
  * They are defined below.
  *----------------------------------------------------------------
@@ -2085,22 +2083,22 @@ EXTERN Tcl_Obj *TclPtrIncrVar _ANSI_ARGS_((Tcl_Interp *interp, Var *varPtr,
 		&& ((objPtr)->bytes != tclEmptyStringRep)) { \
 	    ckfree((char *) (objPtr)->bytes); \
 	} \
-        TclFreeObjStorage(objPtr); \
+	TclFreeObjStorage(objPtr); \
 	TclIncrObjsFreed(); \
     }
 
 #ifdef TCL_MEM_DEBUG
 #  define TclAllocObjStorage(objPtr) \
        (objPtr) = (Tcl_Obj *) \
-           Tcl_DbCkalloc(sizeof(Tcl_Obj), __FILE__, __LINE__)
+	   Tcl_DbCkalloc(sizeof(Tcl_Obj), __FILE__, __LINE__)
 
 #  define TclFreeObjStorage(objPtr) \
        if ((objPtr)->refCount < -1) { \
-           panic("Reference count for %lx was negative: %s line %d", \
-	           (objPtr), __FILE__, __LINE__); \
+	   panic("Reference count for %lx was negative: %s line %d", \
+		   (objPtr), __FILE__, __LINE__); \
        } \
        ckfree((char *) (objPtr))
-     
+
 #  define TclDbNewObj(objPtr, file, line) \
        (objPtr) = (Tcl_Obj *) Tcl_DbCkalloc(sizeof(Tcl_Obj), (file), (line)); \
        (objPtr)->refCount = 0; \
@@ -2108,7 +2106,7 @@ EXTERN Tcl_Obj *TclPtrIncrVar _ANSI_ARGS_((Tcl_Interp *interp, Var *varPtr,
        (objPtr)->length   = 0; \
        (objPtr)->typePtr  = NULL; \
        TclIncrObjsAllocated()
-     
+
 #elif defined(PURIFY)
 
 /*
@@ -2196,7 +2194,7 @@ extern Tcl_Mutex tclObjMutex;
  * Macro used by the Tcl core to get the string representation's
  * byte array pointer from a Tcl_Obj. This is an inline version
  * of Tcl_GetString(). The macro's expression result is the string
- * rep's byte pointer which might be NULL. The bytes referenced by 
+ * rep's byte pointer which might be NULL. The bytes referenced by
  * this pointer must not be modified by the caller.
  * The ANSI C "prototype" for this macro is:
  *

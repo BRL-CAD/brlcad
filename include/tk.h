@@ -75,7 +75,7 @@ extern "C" {
 #   endif
 #endif
 
-/* 
+/*
  * A special definition used to allow this header file to be included
  * from windows or mac resource files so that they can obtain version
  * information.  RC_INVOKED is defined by default by the windows RC tool
@@ -84,9 +84,9 @@ extern "C" {
  * Resource compilers don't like all the C stuff, like typedefs and
  * procedure declarations, that occur below, so block them out.
  */
-    
+
 #ifndef RC_INVOKED
-    
+
 #ifndef _XLIB_H
 #   if defined (MAC_TCL)
 #	include <Xlib.h>
@@ -177,10 +177,10 @@ typedef enum {
  */
 
 typedef struct Tk_OptionSpec {
-    Tk_OptionType type;		/* Type of option, such as TK_OPTION_COLOR; 
+    Tk_OptionType type;		/* Type of option, such as TK_OPTION_COLOR;
 				 * see definitions above. Last option in
 				 * table must have type TK_OPTION_END. */
-    char *optionName;		/* Name used to specify option in Tcl	
+    char *optionName;		/* Name used to specify option in Tcl
 				 * commands. */
     char *dbName;		/* Name for option in option database. */
     char *dbClass;		/* Class for option in database. */
@@ -204,7 +204,7 @@ typedef struct Tk_OptionSpec {
     int flags;			/* Any combination of the values defined
 				 * below. */
     ClientData clientData;	/* An alternate place to put option-specific
-    				 * data. Used for the monochrome default value
+				 * data. Used for the monochrome default value
 				 * for colors, etc. */
     int typeMask;		/* An arbitrary bit mask defined by the
 				 * class manager; typically bits correspond
@@ -239,7 +239,7 @@ typedef void (Tk_CustomOptionRestoreProc) _ANSI_ARGS_((ClientData clientData,
 	Tk_Window tkwin, char *internalPtr, char *saveInternalPtr));
 typedef void (Tk_CustomOptionFreeProc) _ANSI_ARGS_((ClientData clientData,
 	Tk_Window tkwin, char *internalPtr));
-    
+
 typedef struct Tk_ObjCustomOption {
     char *name;				/* Name of the custom option. */
     Tk_CustomOptionSetProc *setProc;	/* Function to use to set a record's
@@ -311,11 +311,11 @@ typedef struct Tk_SavedOptions {
 					 * restore configuration options. */
     Tk_Window tkwin;			/* Window associated with recordPtr;
 					 * needed to restore certain options. */
-    int numItems;			/* The number of valid items in 
+    int numItems;			/* The number of valid items in
 					 * items field. */
     Tk_SavedOption items[TK_NUM_SAVED_OPTIONS];
 					/* Items used to hold old values. */
-    struct Tk_SavedOptions *nextPtr;	/* Points to next structure in list;	
+    struct Tk_SavedOptions *nextPtr;	/* Points to next structure in list;
 					 * needed if too many options changed
 					 * to hold all the old values in a
 					 * single structure.  NULL means no
@@ -392,10 +392,10 @@ typedef struct Tk_ConfigSpec {
 typedef enum {
     TK_CONFIG_BOOLEAN, TK_CONFIG_INT, TK_CONFIG_DOUBLE, TK_CONFIG_STRING,
     TK_CONFIG_UID, TK_CONFIG_COLOR, TK_CONFIG_FONT, TK_CONFIG_BITMAP,
-    TK_CONFIG_BORDER, TK_CONFIG_RELIEF, TK_CONFIG_CURSOR, 
-    TK_CONFIG_ACTIVE_CURSOR, TK_CONFIG_JUSTIFY, TK_CONFIG_ANCHOR, 
+    TK_CONFIG_BORDER, TK_CONFIG_RELIEF, TK_CONFIG_CURSOR,
+    TK_CONFIG_ACTIVE_CURSOR, TK_CONFIG_JUSTIFY, TK_CONFIG_ANCHOR,
     TK_CONFIG_SYNONYM, TK_CONFIG_CAP_STYLE, TK_CONFIG_JOIN_STYLE,
-    TK_CONFIG_PIXELS, TK_CONFIG_MM, TK_CONFIG_WINDOW, TK_CONFIG_CUSTOM, 
+    TK_CONFIG_PIXELS, TK_CONFIG_MM, TK_CONFIG_WINDOW, TK_CONFIG_CUSTOM,
     TK_CONFIG_END
 } Tk_ConfigTypes;
 
@@ -532,7 +532,7 @@ typedef enum {
 
 /*
  * The following structure is used by Tk_GetFontMetrics() to return
- * information about the properties of a Tk_Font.  
+ * information about the properties of a Tk_Font.
  */
 
 typedef struct Tk_FontMetrics {
@@ -586,7 +586,7 @@ typedef struct Tk_ClassProcs {
     Tk_ClassCreateProc *createProc;
 				/* Procedure to invoke when the
 				 * platform-dependent window needs to be
-                                 * created. */
+				 * created. */
     Tk_ClassModalProc *modalProc;
 				/* Procedure to invoke after all bindings on a
 				 * widget have been triggered in order to
@@ -1072,7 +1072,7 @@ typedef struct Tk_ItemType {
 					 * this type. */
     int alwaysRedraw;			/* Non-zero means displayProc should
 					 * be called even when the item has
-  					 * been moved off-screen. */
+					 * been moved off-screen. */
     Tk_ItemPointProc *pointProc;	/* Computes distance from item to
 					 * a given point. */
     Tk_ItemAreaProc *areaProc;		/* Computes whether item is inside,
@@ -1118,7 +1118,7 @@ typedef struct Tk_ItemType {
 typedef struct Tk_CanvasTextInfo {
     Tk_3DBorder selBorder;	/* Border and background for selected
 				 * characters.  Read-only to items.*/
-    int selBorderWidth;		/* Width of border around selection. 
+    int selBorderWidth;		/* Width of border around selection.
 				 * Read-only to items. */
     XColor *selFgColorPtr;	/* Foreground color for selected text.
 				 * Read-only to items. */
@@ -1425,45 +1425,45 @@ EXTERN void		Tk_CreateOldPhotoImageFormat _ANSI_ARGS_((
  */
 
 typedef void (Tk_GetElementSizeProc) _ANSI_ARGS_((ClientData clientData,
-        char *recordPtr, CONST Tk_OptionSpec **optionsPtr, Tk_Window tkwin,
-        int width, int height, int inner, int *widthPtr, int *heightPtr));
+	char *recordPtr, CONST Tk_OptionSpec **optionsPtr, Tk_Window tkwin,
+	int width, int height, int inner, int *widthPtr, int *heightPtr));
 typedef void (Tk_GetElementBoxProc) _ANSI_ARGS_((ClientData clientData,
-        char *recordPtr, CONST Tk_OptionSpec **optionsPtr, Tk_Window tkwin,
-        int x, int y, int width, int height, int inner, int *xPtr, int *yPtr,
-        int *widthPtr, int *heightPtr));
+	char *recordPtr, CONST Tk_OptionSpec **optionsPtr, Tk_Window tkwin,
+	int x, int y, int width, int height, int inner, int *xPtr, int *yPtr,
+	int *widthPtr, int *heightPtr));
 typedef int (Tk_GetElementBorderWidthProc) _ANSI_ARGS_((ClientData clientData,
-        char *recordPtr, CONST Tk_OptionSpec **optionsPtr, Tk_Window tkwin));
+	char *recordPtr, CONST Tk_OptionSpec **optionsPtr, Tk_Window tkwin));
 typedef void (Tk_DrawElementProc) _ANSI_ARGS_((ClientData clientData,
-        char *recordPtr, CONST Tk_OptionSpec **optionsPtr, Tk_Window tkwin,
-        Drawable d, int x, int y, int width, int height, int state));
+	char *recordPtr, CONST Tk_OptionSpec **optionsPtr, Tk_Window tkwin,
+	Drawable d, int x, int y, int width, int height, int state));
 
 typedef struct Tk_ElementOptionSpec {
     char *name;                 /* Name of the required option. */
     Tk_OptionType type;         /* Accepted option type. TK_OPTION_END means
-                                 * any. */
+				 * any. */
 } Tk_ElementOptionSpec;
 
 typedef struct Tk_ElementSpec {
     int version;                /* Version of the style support. */
     char *name;                 /* Name of element. */
     Tk_ElementOptionSpec *options;
-                                /* List of required options. Last one's name
-                                 * must be NULL. */
+				/* List of required options. Last one's name
+				 * must be NULL. */
 
     /*
      * Hooks
      */
 
     Tk_GetElementSizeProc *getSize;
-                                /* Compute the external (resp. internal) size of
-                                 * the element from its desired internal (resp.
-                                 * external) size. */
+				/* Compute the external (resp. internal) size of
+				 * the element from its desired internal (resp.
+				 * external) size. */
     Tk_GetElementBoxProc *getBox;
-                                /* Compute the inscribed or bounding boxes
-                                 * within a given area. */
+				/* Compute the inscribed or bounding boxes
+				 * within a given area. */
     Tk_GetElementBorderWidthProc *getBorderWidth;
-                                /* Return the element's internal border width.
-                                 * Mostly useful for widgets. */
+				/* Return the element's internal border width.
+				 * Mostly useful for widgets. */
     Tk_DrawElementProc *draw;   /* Draw the element in the given bounding box.*/
 } Tk_ElementSpec;
 
@@ -1610,11 +1610,11 @@ typedef int (Tk_SelectionProc) _ANSI_ARGS_((ClientData clientData,
 /*
  * end block for C++
  */
-    
+
 #ifdef __cplusplus
 }
 #endif
-    
+
 #endif /* _TK */
 
 /*

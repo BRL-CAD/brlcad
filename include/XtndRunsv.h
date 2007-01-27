@@ -58,7 +58,7 @@ struct XtndRsetup
     char    hc_xlen[2];
     char    hc_ylen[2];
     char    h_flags,
-            h_ncolors,
+	    h_ncolors,
 	    h_pixelbits,
 	    h_ncmap,
 	    h_cmaplen;

@@ -66,4 +66,3 @@ void prnt_Tio();	/* misc. types of args */
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

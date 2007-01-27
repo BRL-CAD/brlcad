@@ -19,7 +19,7 @@
 
 #define PNG_1_2_X
 
-/* 
+/*
  * PNG_USER_CONFIG has to be defined on the compiler command line. This
  * includes the resource compiler for Windows DLL configurations.
  */
@@ -29,7 +29,7 @@
 
 /*
  * Added at libpng-1.2.8
- *  
+ *
  * If you create a private DLL you need to define in "pngusr.h" the followings:
  * #define PNG_USER_PRIVATEBUILD <Describes by whom and why this version of
  *        the DLL was built>
@@ -40,8 +40,8 @@
  *        number and must match your private DLL name>
  *  e.g. // private DLL "libpng13gx.dll"
  *       #define PNG_USER_DLLFNAME_POSTFIX "gx"
- * 
- * The following macros are also at your disposal if you want to complete the 
+ *
+ * The following macros are also at your disposal if you want to complete the
  * DLL VERSIONINFO structure.
  * - PNG_USER_VERSIONINFO_COMMENTS
  * - PNG_USER_VERSIONINFO_COMPANYNAME
@@ -129,9 +129,9 @@
  * 'Cygwin' defines/defaults:
  *   PNG_BUILD_DLL -- (ignored) building the dll
  *   (no define)   -- (ignored) building an application, linking to the dll
- *   PNG_STATIC    -- (ignored) building the static lib, or building an 
+ *   PNG_STATIC    -- (ignored) building the static lib, or building an
  *                    application that links to the static lib.
- *   ALL_STATIC    -- (ignored) building various static libs, or building an 
+ *   ALL_STATIC    -- (ignored) building various static libs, or building an
  *                    application that links to the static libs.
  * Thus,
  * a cygwin user should define either PNG_BUILD_DLL or PNG_STATIC, and
@@ -144,12 +144,12 @@
  *   PNG_BUILD_DLL
  *   PNG_STATIC
  *   (nothing) == PNG_USE_DLL
- * 
+ *
  * CYGWIN (2002-01-20): The preceding is now obsolete. With the advent
- *   of auto-import in binutils, we no longer need to worry about 
+ *   of auto-import in binutils, we no longer need to worry about
  *   __declspec(dllexport) / __declspec(dllimport) and friends.  Therefore,
  *   we don't need to worry about PNG_STATIC or ALL_STATIC when it comes
- *   to __declspec() stuff.  However, we DO need to worry about 
+ *   to __declspec() stuff.  However, we DO need to worry about
  *   PNG_BUILD_DLL and PNG_STATIC because those change some defaults
  *   such as CONSOLE_IO and whether GLOBAL_ARRAYS are allowed.
  */
@@ -193,8 +193,8 @@
 #        if !defined(PNG_DLL)
 #          define PNG_DLL
 #        endif
-#      endif  
-#    endif  
+#      endif
+#    endif
 #  endif
 #endif
 
@@ -305,8 +305,8 @@
       * near the end of INSTALL.
       */
 #if 0
-         __png.h__ already includes setjmp.h;
-         __dont__ include it again.;
+	 __png.h__ already includes setjmp.h;
+	 __dont__ include it again.;
 #endif
 #    endif
 #  endif /* __linux__ */
@@ -577,7 +577,7 @@
  !defined(PNG_PROGRESSIVE_READ_NOT_SUPPORTED)  /* if you don't do progressive */
 #  define PNG_PROGRESSIVE_READ_SUPPORTED     /* reading.  This is not talking */
 #endif                               /* about interlacing capability!  You'll */
-              /* still have interlacing unless you change the following line: */
+	      /* still have interlacing unless you change the following line: */
 
 #define PNG_READ_INTERLACING_SUPPORTED /* required for PNG-compliant decoders */
 
@@ -636,8 +636,8 @@
 #endif /* PNG_WRITE_TRANSFORMS_SUPPORTED */
 
 #define PNG_WRITE_INTERLACING_SUPPORTED  /* not required for PNG-compliant
-                                            encoders, but can cause trouble
-                                            if left undefined */
+					    encoders, but can cause trouble
+					    if left undefined */
 
 #if !defined(PNG_NO_WRITE_WEIGHTED_FILTER) && \
      defined(PNG_FLOATING_POINT_SUPPORTED)
@@ -692,7 +692,7 @@
 #  define PNG_EASY_ACCESS_SUPPORTED
 #endif
 
-/* PNG_ASSEMBLER_CODE was enabled by default in version 1.2.0 
+/* PNG_ASSEMBLER_CODE was enabled by default in version 1.2.0
    even when PNG_USE_PNGVCRD or PNG_USE_PNGGCCRD is not defined */
 #if defined(PNG_READ_SUPPORTED) && !defined(PNG_NO_ASSEMBLER_CODE)
 #  ifndef PNG_ASSEMBLER_CODE_SUPPORTED
@@ -1241,7 +1241,7 @@ typedef z_stream FAR *  png_zstreamp;
 #  define PNGAPI __cdecl
 #  undef PNG_IMPEXP
 #  define PNG_IMPEXP
-#endif  
+#endif
 
 /* If you define PNGAPI, e.g., with compiler option "-DPNGAPI=__stdcall",
  * you may get warnings regarding the linkage of png_zalloc and png_zfree.
@@ -1292,9 +1292,9 @@ typedef z_stream FAR *  png_zstreamp;
 #              define PNG_IMPEXP __export
 #           else
 #              define PNG_IMPEXP /*__import */ /* doesn't exist AFAIK in
-                                                 VC++ */
+						 VC++ */
 #           endif                             /* Exists in Borland C++ for
-                                                 C++ classes (== huge) */
+						 C++ classes (== huge) */
 #        endif
 #     endif
 
@@ -1406,7 +1406,7 @@ typedef z_stream FAR *  png_zstreamp;
 #  define PNG_MMX_ROWBYTES_THRESHOLD_DEFAULT  128  /*  >=  */
 #endif
 #ifndef PNG_MMX_BITDEPTH_THRESHOLD_DEFAULT
-#  define PNG_MMX_BITDEPTH_THRESHOLD_DEFAULT  9    /*  >=  */   
+#  define PNG_MMX_BITDEPTH_THRESHOLD_DEFAULT  9    /*  >=  */
 #endif
 
 /* Set this in the makefile for VC++ on Pentium, not here. */

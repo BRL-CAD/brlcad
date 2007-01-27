@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -17,15 +17,15 @@
  */
 /** @addtogroup utahrle */
 /** @{ */
-/* 
+/*
  * rle_put.h - Definitions and a few global variables for rle_putrow/putraw.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Mon Aug  9 1982
  * Copyright (c) 1982 Spencer W. Thomas
- * 
+ *
  * $Id$
  */
 
@@ -36,7 +36,7 @@
  */
 #ifdef __cplusplus        /* Cfront 2.0  or g++ */
 #ifndef c_plusplus
-#define c_plusplus        
+#define c_plusplus
 #endif
 extern "C" {
 #endif
@@ -66,7 +66,7 @@ struct rle_dispatch_tab {
 
 extern struct rle_dispatch_tab rle_DTable[];
 
-/* 
+/*
  * These definitions presume the existence of a variable called
  * "fileptr", declared "long * fileptr".  *fileptr should be
  * initialized to 0 before calling Setup().
@@ -84,7 +84,7 @@ extern struct rle_dispatch_tab rle_DTable[];
 #define	    BlockHook()		(*rle_DTable[(int)the_hdr->dispatch].blockHook)(the_hdr)
 #define	    PutEof()		(*rle_DTable[(int)the_hdr->dispatch].putEof)(the_hdr)
 
-/* 
+/*
  * States for run detection
  */
 #define	DATA	0

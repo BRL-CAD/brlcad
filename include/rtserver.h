@@ -56,7 +56,7 @@ struct rtserver_job {
 	int exit_flag;			/* flag, non-zero means the running thread should exit */
 	int sessionid;			/* index into sessions (rts_geometry array) */
 	int rtjob_id;			/* identifying number, assigned by the rt server */
-        int maxHits;			/* Max number of hits to consider along each ray (zero means take all of them) */
+	int maxHits;			/* Max number of hits to consider along each ray (zero means take all of them) */
 	struct bu_ptbl rtjob_rays;	/* list of pointers to rays to be fired */
 };
 
@@ -124,4 +124,3 @@ extern int get_max_working_threads();
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

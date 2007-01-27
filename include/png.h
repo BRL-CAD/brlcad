@@ -336,14 +336,14 @@
 #define PNG_LIBPNG_BUILD_RC       3
 #define PNG_LIBPNG_BUILD_STABLE   4
 #define PNG_LIBPNG_BUILD_RELEASE_STATUS_MASK 7
-  
+
 /* Release-Specific Flags */
 #define PNG_LIBPNG_BUILD_PATCH    8 /* Can be OR'ed with
-                                       PNG_LIBPNG_BUILD_STABLE only */
+				       PNG_LIBPNG_BUILD_STABLE only */
 #define PNG_LIBPNG_BUILD_PRIVATE 16 /* Cannot be OR'ed with
-                                       PNG_LIBPNG_BUILD_SPECIAL */
+				       PNG_LIBPNG_BUILD_SPECIAL */
 #define PNG_LIBPNG_BUILD_SPECIAL 32 /* Cannot be OR'ed with
-                                       PNG_LIBPNG_BUILD_PRIVATE */
+				       PNG_LIBPNG_BUILD_PRIVATE */
 
 #define PNG_LIBPNG_BUILD_BASE_TYPE PNG_LIBPNG_BUILD_STABLE
 
@@ -367,21 +367,21 @@
 /* Ref MSDN: Private as priority over Special
  * VS_FF_PRIVATEBUILD File *was not* built using standard release
  * procedures. If this value is given, the StringFileInfo block must
- * contain a PrivateBuild string. 
+ * contain a PrivateBuild string.
  *
  * VS_FF_SPECIALBUILD File *was* built by the original company using
  * standard release procedures but is a variation of the standard
  * file of the same version number. If this value is given, the
- * StringFileInfo block must contain a SpecialBuild string. 
+ * StringFileInfo block must contain a SpecialBuild string.
  */
 
 #if defined(PNG_USER_PRIVATEBUILD)
 #  define PNG_LIBPNG_BUILD_TYPE PNG_LIBPNG_BUILD_BASE_TYPE | \
-          PNG_LIBPNG_BUILD_PRIVATE
+	  PNG_LIBPNG_BUILD_PRIVATE
 #else
 #  if defined(PNG_LIBPNG_SPECIALBUILD)
 #    define PNG_LIBPNG_BUILD_TYPE PNG_LIBPNG_BUILD_BASE_TYPE | \
-            PNG_LIBPNG_BUILD_SPECIAL
+	    PNG_LIBPNG_BUILD_SPECIAL
 #  else
 #    define PNG_LIBPNG_BUILD_TYPE PNG_LIBPNG_BUILD_BASE_TYPE
 #  endif
@@ -542,20 +542,20 @@ typedef png_sPLT_t FAR * FAR * png_sPLT_tpp;
 typedef struct png_text_struct
 {
    int  compression;       /* compression value:
-                             -1: tEXt, none
-                              0: zTXt, deflate
-                              1: iTXt, none
-                              2: iTXt, deflate  */
+			     -1: tEXt, none
+			      0: zTXt, deflate
+			      1: iTXt, none
+			      2: iTXt, deflate  */
    png_charp key;          /* keyword, 1-79 character description of "text" */
    png_charp text;         /* comment, may be an empty string (ie "")
-                              or a NULL pointer */
+			      or a NULL pointer */
    png_size_t text_length; /* length of the text string */
 #ifdef PNG_iTXt_SUPPORTED
    png_size_t itxt_length; /* length of the itxt string */
    png_charp lang;         /* language code, 0-79 characters
-                              or a NULL pointer */
+			      or a NULL pointer */
    png_charp lang_key;     /* keyword translated UTF-8 string, 0 or more
-                              chars or a NULL pointer */
+			      chars or a NULL pointer */
 #endif
 } png_text;
 typedef png_text FAR * png_textp;
@@ -834,7 +834,7 @@ defined(PNG_READ_BACKGROUND_SUPPORTED)
    /* iCCP chunk data. */
    png_charp iccp_name;     /* profile name */
    png_charp iccp_profile;  /* International Color Consortium profile data */
-                            /* Note to maintainer: should be png_bytep */
+			    /* Note to maintainer: should be png_bytep */
    png_uint_32 iccp_proflen;  /* ICC profile data length */
    png_byte iccp_compression; /* Always zero */
 #endif
@@ -1337,9 +1337,9 @@ struct png_struct_def
 /* The following three members were added at version 1.0.14 and 1.2.4 */
    png_bytep dither_sort;            /* working sort array */
    png_bytep index_to_palette;       /* where the original index currently is */
-                                     /* in the palette */
+				     /* in the palette */
    png_bytep palette_to_index;       /* which original index points to this */
-                                     /* palette color */
+				     /* palette color */
 #endif
 
 /* New members added in libpng-1.0.16 and 1.2.6 */
@@ -1743,7 +1743,7 @@ extern PNG_EXPORT(void,png_set_filter) PNGARG((png_structp png_ptr, int method,
 #define PNG_FILTER_AVG     0x40
 #define PNG_FILTER_PAETH   0x80
 #define PNG_ALL_FILTERS (PNG_FILTER_NONE | PNG_FILTER_SUB | PNG_FILTER_UP | \
-                         PNG_FILTER_AVG | PNG_FILTER_PAETH)
+			 PNG_FILTER_AVG | PNG_FILTER_PAETH)
 
 /* Filter values (not flags) - used in pngwrite.c, pngwutil.c for now.
  * These defines should NOT be changed.
@@ -2349,9 +2349,9 @@ extern PNG_EXPORT(void,png_set_sCAL_s) PNGARG((png_structp png_ptr,
    listed will be handled in the default manner.  The IHDR and IEND chunks
    must not be listed.
       keep = 0: follow default behavour
-           = 1: do not keep
-           = 2: keep only if safe-to-copy
-           = 3: keep even if unsafe-to-copy
+	   = 1: do not keep
+	   = 2: keep only if safe-to-copy
+	   = 3: keep even if unsafe-to-copy
 */
 extern PNG_EXPORT(void, png_set_keep_unknown_chunks) PNGARG((png_structp
    png_ptr, int keep, png_bytep chunk_list, int num_chunks));
@@ -2376,13 +2376,13 @@ extern PNG_EXPORT(void, png_set_invalid) PNGARG((png_structp png_ptr,
 #if defined(PNG_INFO_IMAGE_SUPPORTED)
 /* The "params" pointer is currently not used and is for future expansion. */
 extern PNG_EXPORT(void, png_read_png) PNGARG((png_structp png_ptr,
-                        png_infop info_ptr,
-                        int transforms,
-                        png_voidp params));
+			png_infop info_ptr,
+			int transforms,
+			png_voidp params));
 extern PNG_EXPORT(void, png_write_png) PNGARG((png_structp png_ptr,
-                        png_infop info_ptr,
-                        int transforms,
-                        png_voidp params));
+			png_infop info_ptr,
+			int transforms,
+			png_voidp params));
 #endif
 
 /* Define PNG_DEBUG at compile time for debugging information.  Higher
@@ -2467,17 +2467,17 @@ extern PNG_EXPORT(png_uint_32,png_permit_mng_features) PNGARG((png_structp
 #define PNG_ASM_FLAGS_INITIALIZED          0x80000000  /* not user-settable */
 
 #define PNG_MMX_READ_FLAGS ( PNG_ASM_FLAG_MMX_READ_COMBINE_ROW  \
-                           | PNG_ASM_FLAG_MMX_READ_INTERLACE    \
-                           | PNG_ASM_FLAG_MMX_READ_FILTER_SUB   \
-                           | PNG_ASM_FLAG_MMX_READ_FILTER_UP    \
-                           | PNG_ASM_FLAG_MMX_READ_FILTER_AVG   \
-                           | PNG_ASM_FLAG_MMX_READ_FILTER_PAETH )
+			   | PNG_ASM_FLAG_MMX_READ_INTERLACE    \
+			   | PNG_ASM_FLAG_MMX_READ_FILTER_SUB   \
+			   | PNG_ASM_FLAG_MMX_READ_FILTER_UP    \
+			   | PNG_ASM_FLAG_MMX_READ_FILTER_AVG   \
+			   | PNG_ASM_FLAG_MMX_READ_FILTER_PAETH )
 #define PNG_MMX_WRITE_FLAGS ( 0 )
 
 #define PNG_MMX_FLAGS ( PNG_ASM_FLAG_MMX_SUPPORT_COMPILED \
-                      | PNG_ASM_FLAG_MMX_SUPPORT_IN_CPU   \
-                      | PNG_MMX_READ_FLAGS                \
-                      | PNG_MMX_WRITE_FLAGS )
+		      | PNG_ASM_FLAG_MMX_SUPPORT_IN_CPU   \
+		      | PNG_MMX_READ_FLAGS                \
+		      | PNG_MMX_WRITE_FLAGS )
 
 #define PNG_SELECT_READ   1
 #define PNG_SELECT_WRITE  2
@@ -2557,14 +2557,14 @@ extern PNG_EXPORT(png_uint_32,png_get_user_height_max) PNGARG((png_structp
 
 #  define png_composite(composite, fg, alpha, bg)                            \
      { png_uint_16 temp = (png_uint_16)((png_uint_16)(fg) * (png_uint_16)(alpha) \
-                        +        (png_uint_16)(bg)*(png_uint_16)(255 -       \
-                        (png_uint_16)(alpha)) + (png_uint_16)128);           \
+			+        (png_uint_16)(bg)*(png_uint_16)(255 -       \
+			(png_uint_16)(alpha)) + (png_uint_16)128);           \
        (composite) = (png_byte)((temp + (temp >> 8)) >> 8); }
 
 #  define png_composite_16(composite, fg, alpha, bg)                         \
      { png_uint_32 temp = (png_uint_32)((png_uint_32)(fg) * (png_uint_32)(alpha) \
-                        + (png_uint_32)(bg)*(png_uint_32)(65535L -           \
-                        (png_uint_32)(alpha)) + (png_uint_32)32768L);        \
+			+ (png_uint_32)(bg)*(png_uint_32)(65535L -           \
+			(png_uint_32)(alpha)) + (png_uint_32)32768L);        \
        (composite) = (png_uint_16)((temp + (temp >> 16)) >> 16); }
 
 #else  /* standard method using integer division */
@@ -2616,7 +2616,7 @@ extern PNG_EXPORT(png_uint_32,png_get_user_height_max) PNGARG((png_structp
 #define PNG_DITHER             0x0040
 #define PNG_BACKGROUND         0x0080
 #define PNG_BACKGROUND_EXPAND  0x0100
-                          /*   0x0200 unused */
+			  /*   0x0200 unused */
 #define PNG_16_TO_8            0x0400
 #define PNG_RGBA               0x0800
 #define PNG_EXPAND             0x1000
@@ -2631,14 +2631,14 @@ extern PNG_EXPORT(png_uint_32,png_get_user_height_max) PNGARG((png_structp
 #define PNG_RGB_TO_GRAY_ERR  0x200000L
 #define PNG_RGB_TO_GRAY_WARN 0x400000L
 #define PNG_RGB_TO_GRAY      0x600000L  /* two bits, RGB_TO_GRAY_ERR|WARN */
-                       /*    0x800000L     Unused */
+		       /*    0x800000L     Unused */
 #define PNG_ADD_ALPHA       0x1000000L  /* Added to libpng-1.2.7 */
-                       /*   0x2000000L  unused */
-                       /*   0x4000000L  unused */
-                       /*   0x8000000L  unused */
-                       /*  0x10000000L  unused */
-                       /*  0x20000000L  unused */
-                       /*  0x40000000L  unused */
+		       /*   0x2000000L  unused */
+		       /*   0x4000000L  unused */
+		       /*   0x8000000L  unused */
+		       /*  0x10000000L  unused */
+		       /*  0x20000000L  unused */
+		       /*  0x40000000L  unused */
 
 /* flags for png_create_struct */
 #define PNG_STRUCT_PNG   0x0001
@@ -2674,23 +2674,23 @@ extern PNG_EXPORT(png_uint_32,png_get_user_height_max) PNGARG((png_structp
 #define PNG_FLAG_MALLOC_NULL_MEM_OK       0x100000L
 #define PNG_FLAG_ADD_ALPHA                0x200000L  /* Added to libpng-1.2.8 */
 #define PNG_FLAG_STRIP_ALPHA              0x400000L  /* Added to libpng-1.2.8 */
-                                  /*      0x800000L  unused */
-                                  /*     0x1000000L  unused */
-                                  /*     0x2000000L  unused */
-                                  /*     0x4000000L  unused */
-                                  /*     0x8000000L  unused */
-                                  /*    0x10000000L  unused */
-                                  /*    0x20000000L  unused */
-                                  /*    0x40000000L  unused */
+				  /*      0x800000L  unused */
+				  /*     0x1000000L  unused */
+				  /*     0x2000000L  unused */
+				  /*     0x4000000L  unused */
+				  /*     0x8000000L  unused */
+				  /*    0x10000000L  unused */
+				  /*    0x20000000L  unused */
+				  /*    0x40000000L  unused */
 
 #define PNG_FLAG_CRC_ANCILLARY_MASK (PNG_FLAG_CRC_ANCILLARY_USE | \
-                                     PNG_FLAG_CRC_ANCILLARY_NOWARN)
+				     PNG_FLAG_CRC_ANCILLARY_NOWARN)
 
 #define PNG_FLAG_CRC_CRITICAL_MASK  (PNG_FLAG_CRC_CRITICAL_USE | \
-                                     PNG_FLAG_CRC_CRITICAL_IGNORE)
+				     PNG_FLAG_CRC_CRITICAL_IGNORE)
 
 #define PNG_FLAG_CRC_MASK           (PNG_FLAG_CRC_ANCILLARY_MASK | \
-                                     PNG_FLAG_CRC_CRITICAL_MASK)
+				     PNG_FLAG_CRC_CRITICAL_MASK)
 
 /* save typing and make code easier to understand */
 
@@ -2709,7 +2709,7 @@ extern PNG_EXPORT(png_uint_32,png_get_user_height_max) PNGARG((png_structp
    "ideal" and "delta" should be constants, normally simple
    integers, "value" a variable. Added to libpng-1.2.6 JB */
 #define PNG_OUT_OF_RANGE(value, ideal, delta) \
-        ( (value) < (ideal)-(delta) || (value) > (ideal)+(delta) )
+	( (value) < (ideal)-(delta) || (value) > (ideal)+(delta) )
 
 /* variables declared in png.c - only it needs to define PNG_NO_EXTERN */
 #if !defined(PNG_NO_EXTERN) || defined(PNG_ALWAYS_EXTERN)

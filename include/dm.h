@@ -375,4 +375,3 @@ DM_EXPORT BU_EXTERN(void dmo_drawAxes_cmd,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

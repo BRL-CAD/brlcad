@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -21,13 +21,13 @@
  *
  * @brief
  *   Global declarations for Utah Raster Toolkit RLE programs.
- * 
+ *
  * Author:	Todd W. Fuqua
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Sun Jul 29 1984
  * Copyright (c) 1984 Todd W. Fuqua
- * 
+ *
  * $Id$
  */
 
@@ -104,23 +104,23 @@ struct rle_hdr {
     enum 	rle_dispatch dispatch;	/* Type of file to create. */
     int	    	ncolors,	/* Number of color channels. */
 	       *bg_color,	/* Pointer to bg color vector. */
-	    	alpha,		/* If !0, save alpha channel. */
-	    	background,	/* 0->just save all pixels, */
+		alpha,		/* If !0, save alpha channel. */
+		background,	/* 0->just save all pixels, */
 				/* 1->overlay, 2->clear to bg first. */
-	    	xmin,		/* Lower X bound (left.) */
-	    	xmax,		/* Upper X bound (right.) */
-	    	ymin,		/* Lower Y bound (bottom.) */
-	    	ymax,		/* Upper Y bound (top.) */
-	    	ncmap,		/* Number of color channels in color map. */
+		xmin,		/* Lower X bound (left.) */
+		xmax,		/* Upper X bound (right.) */
+		ymin,		/* Lower Y bound (bottom.) */
+		ymax,		/* Upper Y bound (top.) */
+		ncmap,		/* Number of color channels in color map. */
 				/* Map only saved if != 0. */
-	    	cmaplen;	/* Log2 of color map length. */
+		cmaplen;	/* Log2 of color map length. */
     rle_map    *cmap;		/* Pointer to color map array. */
     CONST_DECL char **comments;	/* Pointer to array of pointers to comments. */
     FILE       *rle_file;	/* Input or output file. */
-    /* 
+    /*
      * Bit map of channels to read/save.  Indexed by (channel mod 256).
      * Alpha channel sets bit 255.
-     * 
+     *
      * Indexing (0 <= c <= 255):
      *	    bits[c/8] & (1 << (c%8))
      */
@@ -133,12 +133,12 @@ struct rle_hdr {
     char    bits[256/8];
     /* Set to magic pattern if following fields are initialized. */
     /* This gives a 2^(-32) chance of missing. */
-    long int is_init;	
+    long int is_init;
     /* Save the command, file name and image number for error messages. */
     CONST_DECL char *cmd;
     CONST_DECL char *file_name;
     int img_num;
-    /* 
+    /*
      * Local storage for rle_getrow & rle_putrow.
      * rle_getrow has
      *	    scan_y	int	    current Y scanline.
@@ -167,7 +167,7 @@ rle_hdr				/* End of typedef. */
 #endif
 ;
 
-/* 
+/*
  * TAG( rle_dflt_hdr )
  *
  * Global variable with possibly useful default values.
@@ -181,7 +181,7 @@ extern rle_hdr rle_dflt_hdr;
     /* From rle_error.c. */
     /*****************************************************************
      * TAG( rle_alloc_error )
-     * 
+     *
      * Print memory allocation error message and exit.
      */
     extern int rle_alloc_error( CONST_DECL char *pgm,
@@ -196,12 +196,12 @@ extern rle_hdr rle_dflt_hdr;
     extern int rle_get_error( int code,
 			      CONST_DECL char *pgmname,
 			      CONST_DECL char *fname );
-			  
+
     /* From rle_getrow.c */
 
     /*****************************************************************
      * TAG( rle_debug )
-     * 
+     *
      * Turn RLE debugging on or off.
      */
     extern void rle_debug( int on_off );
@@ -216,7 +216,7 @@ extern rle_hdr rle_dflt_hdr;
      *
      * Call rle_get_setup.  If it returns an error code, call
      * rle_get_error to print the error message, then exit with the error
-     * code. 
+     * code.
      */
     extern void rle_get_setup_ok( rle_hdr *the_hdr,
 				  CONST_DECL char *prog_name,
@@ -227,7 +227,7 @@ extern rle_hdr rle_dflt_hdr;
      *
      * Read a scanline worth of data from an RLE file.
      */
-    extern int rle_getrow( rle_hdr * the_hdr, 
+    extern int rle_getrow( rle_hdr * the_hdr,
 			   rle_pixel * scanline[] );
 
     /* From rle_getskip.c */
@@ -252,7 +252,7 @@ extern rle_hdr rle_dflt_hdr;
 
     /*****************************************************************
      * TAG( rle_hdr_cp )
-     * 
+     *
      * Make a "safe" copy of a rle_hdr structure.
      */
     extern rle_hdr * rle_hdr_cp( rle_hdr *from_hdr,
@@ -260,14 +260,14 @@ extern rle_hdr rle_dflt_hdr;
 
     /*****************************************************************
      * TAG( rle_hdr_init )
-     * 
+     *
      * Initialize a rle_hdr structure.
      */
     extern rle_hdr * rle_hdr_init( rle_hdr *the_hdr );
 
     /*****************************************************************
      * TAG( rle_hdr_clear )
-     * 
+     *
      */
     extern void rle_hdr_clear( rle_hdr *the_hdr );
 
@@ -343,7 +343,7 @@ extern rle_hdr rle_dflt_hdr;
     extern void rle_row_free( rle_hdr *the_hdr, rle_pixel **scanp );
 
     /* From buildmap.c. */
-    /* 
+    /*
      * buildmap - build a more usable colormap from data in the_hdr struct.
      */
     extern rle_pixel **buildmap( rle_hdr *the_hdr,
@@ -370,7 +370,7 @@ extern rle_hdr rle_dflt_hdr;
 
     /*****************************************************************
      * TAG( rle_putcom )
-     * 
+     *
      * Put (or replace) a comment into the image comments.
      */
     extern CONST_DECL char *
@@ -387,7 +387,7 @@ extern rle_hdr rle_dflt_hdr;
      * TAG( ditherbw )
      * Dither a gray-scale value.
      */
-    extern int ditherbw( int x, int y, int val, 
+    extern int ditherbw( int x, int y, int val,
 			 int divN[256], int modN[256], int magic[16][16] );
     /*****************************************************************
      * TAG( dithergb )
@@ -438,11 +438,11 @@ extern rle_hdr rle_dflt_hdr;
 
     /*****************************************************************
      * TAG( rle_close_f )
-     * 
+     *
      * Close a file opened by rle_open_f.  If the file is stdin or stdout,
      * it will not be closed.
      */
-    extern void 
+    extern void
     rle_close_f( FILE *fd );
 
     /* From colorquant.c. */
@@ -453,7 +453,7 @@ extern rle_hdr rle_dflt_hdr;
     extern int colorquant( rle_pixel *red, rle_pixel *green, rle_pixel *blue,
 			   unsigned long pixels, rle_pixel *colormap[3],
 			   int colors, int bits,
-                         rle_pixel *rgbmap, int fast, int otherimages );
+			 rle_pixel *rgbmap, int fast, int otherimages );
 
     /* From rle_addhist.c. */
     /*****************************************************************
@@ -543,7 +543,7 @@ extern rle_hdr rle_dflt_hdr;
 
     /* From buildmap.c. */
     extern rle_pixel **buildmap();
-    
+
     /* From rle_getcom.c. */
     extern char *rle_getcom();
 

@@ -180,7 +180,7 @@
 #define NMG_VERTEXUSE_A_CNURB_MAGIC	0x20416e64
 #define NMG_KNOT_VECTOR_MAGIC	0x6b6e6f74	/**< @brief aka RT_KNOT_VECTOR_MAGIC */
 
-/** 
+/**
  * macros to check/validate a structure pointer
  */
 #define NMG_CKMAG(_ptr, _magic, _str)	BU_CKMAG(_ptr,_magic,_str)
@@ -225,8 +225,8 @@
 			rt_bomb("Null pointer\n"); \
 	} else if ((_p)->vu_p->up.eu_p != (_p) || \
 	(_p)->eumate_p->vu_p->up.eu_p != (_p)->eumate_p) {\
-	    	bu_log("in %s at %d edgeuse lost vertexuse\n",\
-	    		 __FILE__, __LINE__); rt_bomb("bye");}
+		bu_log("in %s at %d edgeuse lost vertexuse\n",\
+			 __FILE__, __LINE__); rt_bomb("bye");}
 
 /**
  *			K N O T _ V E C T O R
@@ -872,4 +872,3 @@ struct nmg_visit_handlers {
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

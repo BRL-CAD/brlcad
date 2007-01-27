@@ -37,7 +37,7 @@
  *
  *  Furthermore, additional transformations are multiplied on the left, ie:
  *
-<tt> @code 
+<tt> @code
  *		vec'  =  T1 * vec
  *		vec'' =  T2 * T1 * vec  =  T2 * vec'
 @endcode </tt>
@@ -67,7 +67,7 @@
  *	{ register double _f; stuff; }
  *
  *  @author Michael John Muuss
- *	
+ *
  *
  *  @par Source
  *	The U. S. Army Research Laboratory
@@ -142,10 +142,10 @@ __BEGIN_DECLS
 #endif
 
 /** @brief # of fastf_t's per vect_t */
-#define ELEMENTS_PER_VECT	3      
+#define ELEMENTS_PER_VECT	3
 #define ELEMENTS_PER_PT         3
 /** @brief # of fastf_t's per hvect_t */
-#define HVECT_LEN		4      
+#define HVECT_LEN		4
 #define HPT_LEN			4
 
 /** @brief # of fastf_t's per plane_t */
@@ -156,27 +156,27 @@ __BEGIN_DECLS
  * Types for matrixes and vectors.
  */
 /** @brief 4x4 matrix */
-typedef	fastf_t	mat_t[ELEMENTS_PER_MAT]; 
+typedef	fastf_t	mat_t[ELEMENTS_PER_MAT];
 typedef	fastf_t	*matp_t;
 
 /** @brief 3-tuple vector */
-typedef	fastf_t	vect_t[ELEMENTS_PER_VECT];  
+typedef	fastf_t	vect_t[ELEMENTS_PER_VECT];
 typedef	fastf_t	*vectp_t;
 
 /** @brief 3-tuple point */
-typedef fastf_t	point_t[ELEMENTS_PER_PT];  
+typedef fastf_t	point_t[ELEMENTS_PER_PT];
 typedef fastf_t	*pointp_t;
 
 typedef fastf_t point2d_t[2];
 
 /** @brief 4-tuple vector */
-typedef fastf_t hvect_t[HVECT_LEN];   
+typedef fastf_t hvect_t[HVECT_LEN];
 
 /** @brief 4-tuple point */
-typedef fastf_t hpoint_t[HPT_LEN];    
+typedef fastf_t hpoint_t[HPT_LEN];
 
 /** @brief 4-element quaternion */
-#define quat_t	hvect_t		
+#define quat_t	hvect_t
 
 /**
  * return truthfully whether a value is within some epsilon from zero
@@ -896,7 +896,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
     }
 
 /** @brief Apply the 3x3 part of a mat_t to a 3-tuple.
- * This rotates a vector without scaling it (changing its length) 
+ * This rotates a vector without scaling it (changing its length)
  */
 #ifdef SHORT_VECTORS
 #define MAT3X3VEC(o,mat,vec) \
@@ -1012,7 +1012,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #endif /* SHORT_VECTORS */
 
 /** @brief Apply a 4x4 matrix to a 3-tuple which is a relative Vector in space
- * This macro can scale the length of the vector if [15] != 1.0 
+ * This macro can scale the length of the vector if [15] != 1.0
  */
 #ifdef SHORT_VECTORS
 #define MAT4X3VEC(o,m,i) \
@@ -1153,7 +1153,6 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 #define QUAT_FROM_ROT_DEG(q, r, x, y, z) \
 	QUAT_FROM_ROT(q, ((r)*(M_PI/180.0)), x, y, z)
-
 
 
 /** @brief Set quaternion at `a' to have coordinates `b', `c', `d', `e' */
@@ -1309,4 +1308,3 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

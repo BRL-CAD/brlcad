@@ -692,7 +692,7 @@ typedef long bitv_t;          /* could use long long */
  *    FreeBSD/NetBSD/OpenBSD    *
  *                              *
  ********************************/
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) 
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 typedef double		fastf_t;	/* double|float, "Fastest" float type */
 typedef long		bitv_t;		/* largest integer type */
 # define IEEE_FLOAT	1		/* Uses IEEE style floating point */
@@ -817,7 +817,7 @@ typedef long	bitv_t;		/* largest integer type */
 #if defined(_POSIX_SOURCE) && !defined(__USE_MISC)
 	/* But the sgi -lm does have a hypot routine so lets use it */
 #if defined(__sgi) || defined(__convexc__)
-        extern double hypot(double, double);
+	extern double hypot(double, double);
 #else
 #  include <math.h>
 #  define hypot(x,y)      sqrt( (x)*(x)+(y)*(y) )
@@ -826,7 +826,7 @@ typedef long	bitv_t;		/* largest integer type */
 
 #if defined(SUNOS) && SUNOS >= 52
 #  include <math.h>
-        extern double hypot(double, double);
+	extern double hypot(double, double);
 #endif
 
 #endif  /* MACHINE_H */
@@ -840,4 +840,3 @@ typedef long	bitv_t;		/* largest integer type */
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

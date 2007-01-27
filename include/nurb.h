@@ -320,4 +320,3 @@ RT_EXPORT BU_EXTERN( struct bezier_2d_list *subdivide_bezier, (struct bezier_2d_
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -20,7 +20,7 @@
 /** @file rle_raw.h
  *
  * Definitions for rle_getraw/rle_putraw.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
@@ -34,7 +34,7 @@
 
 #ifdef __cplusplus        /* Cfront 2.0  or g++ */
 #ifndef c_plusplus
-#define c_plusplus        
+#define c_plusplus
 #endif
 extern "C" {
 #endif
@@ -61,7 +61,7 @@ struct rle_op {
 #ifdef USE_PROTOTYPES
     /*****************************************************************
      * TAG( rle_raw_alloc )
-     * 
+     *
      * Allocate buffer space for use by rle_getraw and rle_putraw.
      */
     extern int
@@ -76,7 +76,7 @@ struct rle_op {
 
     /*****************************************************************
      * TAG( rle_getraw )
-     * 
+     *
      * Get a raw scanline from the input file.
      */
     extern unsigned int
@@ -84,7 +84,7 @@ struct rle_op {
 
     /*****************************************************************
      * TAG( rle_freeraw )
-     * 
+     *
      * Free all the pixel arrays in the raw scan struct.
      */
     extern void

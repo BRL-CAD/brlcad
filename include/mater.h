@@ -75,4 +75,3 @@ RT_EXPORT BU_EXTERN(void rt_insert_color,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

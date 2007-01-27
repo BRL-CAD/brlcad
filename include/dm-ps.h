@@ -61,4 +61,3 @@ extern struct ps_vars head_ps_vars;
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

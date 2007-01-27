@@ -65,4 +65,3 @@ extern TINY	tp_ctable[];		/**< @brief  table of strokes */
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-
