@@ -51,7 +51,7 @@
 #
 #   e) ensures that there is a newline at the end of file.
 #
-#   f) expand embedded tabs to spaces.
+#   f) expand embedded tabs to spaces. (DISABLED BY DEFAULT)
 #
 #   g) unexpands leading whitespace and tabs, inserting tabs at the
 #      default system tabstops.	 WS_TABSTOPS=8
@@ -88,7 +88,8 @@ files="$*"
 # default settings
 if [ "x$WS" = "x" ] ; then
     # run everything
-    WS=abcdefghijklmnopqrstuvwxyz
+    # NOTE: step f is disabled
+    WS=abcdeghijklmnopqrstuvwxyz
 fi
 if [ "x$WS_SUCCESSIVE" = "x" ] ; then
     # how many blank lines in a row (max)
