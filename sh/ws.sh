@@ -322,9 +322,6 @@ for file in $files ; do
 
 done # iteration over files
 
-echo ""
-echo "Done."
-
 # Local Variables:
 # mode: sh
 # tab-width: 8
