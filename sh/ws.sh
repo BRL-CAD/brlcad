@@ -255,21 +255,21 @@ for file in $files ; do
 	case x$step in
 	    x[aA])
 		# remove whitespace one lines with only whitespace
-	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "a"
 		fi
 		perl -pi -e 's/^[ \t]*$//g' "$file.ws.new"
 		;;
 	    x[bB])
 		# remove whitespace at end of all lines
-	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "b"
 		fi
 		perl -pi -e 's/[ \t]*$//g' "$file.ws.new"
 		;;
 	    x[cC])
 		# remove successive blank lines
-	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "c"
 		fi
 		cmd="perl -0777 -pi -e $step_c_regex \"$file.ws.new\""
@@ -277,21 +277,21 @@ for file in $files ; do
 		;;
 	    x[dD])
 		# remove all blank lines from end of file
-	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "d"
 		fi
 		perl -0777 -pi -e 's/\n\n*$/\n/' "$file.ws.new"
 		;;
 	    x[eE])
 		# ensure there is a trailing newline
-	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "e"
 		fi
 		perl -0777 -pi -e 's/\([^\n]\)$/\1\n/' "$file.ws.new"
 		;;
 	    x[fF])
- 		# convert embedded tabs to spaces
-	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		# convert embedded tabs to spaces
+		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "f"
 		fi
 		if [ -f "$file.ws.expand" ] ; then
@@ -304,8 +304,8 @@ for file in $files ; do
 		mv "$file.ws.expand" "$file.ws.new"
 		;;
 	    x[gG])
- 		# convert leading whitespace and tabs, insert tabs
-	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		# convert leading whitespace and tabs, insert tabs
+		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "g"
 		fi
 		cmd1="perl -pi -e $step_g_regex1 \"$file.ws.new\""
@@ -313,7 +313,7 @@ for file in $files ; do
 
 		# regex woes, nasty hack -- iterate to clean up
 		# indentation one tab at a time.
-	        count=0
+		count=0
 		while [ $count -lt 10 ] ; do
 		    eval "$cmd1"
 		    eval "$cmd2"
