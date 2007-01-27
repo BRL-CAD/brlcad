@@ -254,7 +254,7 @@ for file in $files ; do
     for step in $steps ; do
 	case x$step in
 	    x[aA])
-		# remove whitespace one lines with only whitespace
+		# remove whitespace on lines with only whitespace
 		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    echo -n "a"
 		fi
