@@ -30,6 +30,7 @@ EXTRA_DIST = \
 	make_zip.sh \
 	prior.sh \
 	shtool \
+	template.sh \
 	vers.sh \
 	ws.sh
 
