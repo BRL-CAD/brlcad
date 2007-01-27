@@ -107,7 +107,7 @@ int entityno;
 	for( i=0 ; i<num_of_voids ; i++ )
 	{
 		nmg_fix_normals( void_shells[i] , &tol );
-		nmg_invert_shell( void_shells[i] , &tol );
+		nmg_invert_shell( void_shells[i] );
 	}
 
 	if( do_bots )

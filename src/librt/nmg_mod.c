@@ -956,11 +956,9 @@ nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol
  *  While this function is operating, the parity of faceuses radially
  *  around edgeuses is disrupted, hence this atomic interface to
  *  invert the shell.
- *
- *  The 'tol' argument is used strictly for printing.
  */
 void
-nmg_invert_shell(struct shell *s, const struct bn_tol *tol)
+nmg_invert_shell(struct shell *s)
 {
 	struct model	*m;
 	struct faceuse	*fu;
@@ -969,7 +967,6 @@ nmg_invert_shell(struct shell *s, const struct bn_tol *tol)
 	NMG_CK_SHELL(s);
 	m = s->r_p->m_p;
 	NMG_CK_MODEL(m);
-	BN_CK_TOL(tol);
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		bu_log("nmg_invert_shell(x%x)\n", s);

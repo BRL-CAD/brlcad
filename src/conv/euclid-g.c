@@ -993,7 +993,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 			if( inners%2 )
 			{
 				shell_inout[shell1_no] |= INVERT_SHELL;
-				nmg_invert_shell( shells[shell1_no], &tol );
+				nmg_invert_shell( shells[shell1_no] );
 			}
 		}
 

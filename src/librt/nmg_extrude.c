@@ -1132,7 +1132,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 		}
 
 		/* Reverse the normals of all the faces */
-		nmg_invert_shell( is , tol );
+		nmg_invert_shell( is );
 
 		is_void = nmg_shell_is_void( is );
 

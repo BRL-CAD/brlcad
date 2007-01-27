@@ -220,7 +220,7 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, long int **clas
 	switch( op )  {
 	case NMG_BOOL_SUB:
 		actions = subtraction_actions;
-		nmg_invert_shell(sB, tol);	/* FLIP all faceuse normals */
+		nmg_invert_shell(sB);	/* FLIP all faceuse normals */
 		break;
 	case NMG_BOOL_ADD:
 		actions = union_actions;

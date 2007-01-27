@@ -4089,8 +4089,7 @@ RT_EXPORT BU_EXTERN(void nmg_js,
 		     struct shell	*s2,
 		     const struct bn_tol	*tol));
 RT_EXPORT BU_EXTERN(void nmg_invert_shell,
-		    (struct shell		*s,
-		     const struct bn_tol	*tol));
+		    (struct shell		*s));
 
 /*	FACE Routines */
 RT_EXPORT BU_EXTERN(struct faceuse *nmg_cmface,
