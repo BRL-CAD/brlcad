@@ -88,11 +88,11 @@ fastf_t			hsv_tol[3];
 
 static char usage[] = "\
 Usage: pixborder [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
-                 [-B 'H S V'] [-E 'H S V'] [-I 'H S V'] [-T 'H S V']\n\
+		 [-B 'H S V'] [-E 'H S V'] [-I 'H S V'] [-T 'H S V']\n\
 		 [-x left_edge]  [-y bottom_edge]\n\
 		 [-X right_edge] [-Y top_edge]\n\
-                 [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\
-                 [file.pix]\n";
+		 [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\
+		 [file.pix]\n";
 
 /*
  *		    R E A D _ H S V ( )
@@ -326,10 +326,10 @@ static int is_exterior (unsigned char *pix_rgb)
  */
 static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp, int col_nm)
 
-             	     		/* Previous row */
-             	     		/* Current (this) row */
-             	     		/* Next row */
-   		       		/* Current column */
+				/* Previous row */
+				/* Current (this) row */
+				/* Next row */
+				/* Current column */
 
 {
     unsigned char	pix_rgb[3];

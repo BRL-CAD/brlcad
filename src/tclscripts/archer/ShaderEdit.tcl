@@ -43,7 +43,7 @@
     }
 
     protected {
-	common SHADER_NAMES_AND_TYPES_FULL { 
+	common SHADER_NAMES_AND_TYPES_FULL {
 	    {Plastic plastic}
 	    {Mirror mirror}
 	    {Glass glass}
@@ -65,7 +65,7 @@
 	    {None ""}
 	}
 
-	common SHADER_NAMES { 
+	common SHADER_NAMES {
 	    Plastic
 	    Mirror
 	    Glass
@@ -73,7 +73,7 @@
 	    None
 	}
 
-	common SHADER_TYPES { 
+	common SHADER_TYPES {
 	    plastic
 	    mirror
 	    glass
@@ -81,7 +81,7 @@
 	    ""
 	}
 
-	common SHADER_NAMES_AND_TYPES { 
+	common SHADER_NAMES_AND_TYPES {
 	    {Plastic plastic}
 	    {Mirror mirror}
 	    {Glass glass}

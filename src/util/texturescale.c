@@ -70,8 +70,8 @@ static fastf_t		r1, r2;		/* radii */
 				fflush(stderr)
 static char usage[] = "\
 Usage: texturescale [-T 'r1 r2' | -S]\n\
-                 [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\
-                 [file.pix]\n";
+		 [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\
+		 [file.pix]\n";
 
 /*
  *		    R E A D _ R A D I I ( )

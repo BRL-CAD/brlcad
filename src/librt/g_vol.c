@@ -466,9 +466,9 @@ rt_vol_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	if( vip->file[0] == '\0' || vip->xdim < 1 ||
 	    vip->ydim < 1 || vip->zdim < 1 || vip->mat[15] <= 0.0 ||
 	    vip->lo < 0 || vip->hi > 255 )  {
-	    	bu_struct_print("Unreasonable VOL parameters", rt_vol_parse,
+		bu_struct_print("Unreasonable VOL parameters", rt_vol_parse,
 			(char *)vip );
-	    	return(-1);
+		return(-1);
 	}
 
 	/* Apply any modeling transforms to get final matrix */
@@ -599,9 +599,9 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	if( vip->file[0] == '\0' || vip->xdim < 1 ||
 	    vip->ydim < 1 || vip->zdim < 1 || vip->mat[15] <= 0.0 ||
 	    vip->lo < 0 || vip->hi > 255 )  {
-	    	bu_struct_print("Unreasonable VOL parameters", rt_vol_parse,
+		bu_struct_print("Unreasonable VOL parameters", rt_vol_parse,
 			(char *)vip );
-	    	return(-1);
+		return(-1);
 	}
 
 	/* Apply any modeling transforms to get final matrix */

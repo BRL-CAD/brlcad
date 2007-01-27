@@ -123,7 +123,7 @@ const struct bu_structparse rt_nul_parse[] = {
 			struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_describe, (struct bu_vls *str, \
 			const struct rt_db_internal *ip, \
-		        int verbose, \
+			int verbose, \
 			double mm2local, \
 			struct resource *resp, \
 			struct db_i *db_i)); \
@@ -315,20 +315,20 @@ int rt_comb_import5(
 
 /* from db5_bin.c */
 BU_EXTERN(int rt_binexpm_import5, (struct rt_db_internal * ip,
- 			const struct bu_external *ep,
- 			const mat_t mat,
+			const struct bu_external *ep,
+			const mat_t mat,
 			const struct db_i *dbip,
 			      struct resource *resp,
 			const int minor_type));
 BU_EXTERN(int rt_binunif_import5, (struct rt_db_internal * ip,
- 			const struct bu_external *ep,
- 			const mat_t mat,
+			const struct bu_external *ep,
+			const mat_t mat,
 			const struct db_i *dbip,
 			      struct resource *resp,
 			const int minor_type));
 BU_EXTERN(int rt_binmime_import5, (struct rt_db_internal * ip,
- 			const struct bu_external *ep,
- 			const mat_t mat,
+			const struct bu_external *ep,
+			const mat_t mat,
 			const struct db_i *dbip,
 			      struct resource *resp,
 			const int minor_type));
@@ -545,7 +545,7 @@ const struct rt_functab rt_functab[] = {
 		0,		/* 0: unused, for sanity checking. */
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print, 	rt_nul_norm,
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
-	 	rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
+		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
 		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
 		rt_nul_import5, rt_nul_export5,
 		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
@@ -862,7 +862,7 @@ const struct rt_functab rt_functab[] = {
 		rt_grp_describe,rt_grp_xform,	rt_grp_parse,
 		sizeof(struct rt_grip_internal), RT_GRIP_INTERNAL_MAGIC,
 		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-	        NULL,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_JOINT", "joint",
@@ -903,8 +903,8 @@ const struct rt_functab rt_functab[] = {
 		rt_dsp_import,	rt_dsp_export,	rt_dsp_ifree,
 		rt_dsp_describe,rt_dsp_xform,	rt_dsp_parse,
 		sizeof(struct rt_dsp_internal), RT_DSP_INTERNAL_MAGIC,
-	        rt_dsp_tclget,  rt_dsp_tcladjust, rt_nul_tclform,
-	        rt_dsp_make,
+		rt_dsp_tclget,  rt_dsp_tcladjust, rt_nul_tclform,
+		rt_dsp_make,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_SKETCH", "sketch",
@@ -1067,11 +1067,11 @@ const struct rt_functab rt_functab[] = {
 
 #if OBJ_BREP
 	{RT_FUNCTAB_MAGIC, "ID_BREP", "brep",
-	        1,             /* 37 */
+		1,             /* 37 */
 		rt_brep_prep,	rt_brep_shot,	rt_brep_print,	rt_brep_norm,
 		rt_nul_piece_shot,	rt_nul_piece_hitsegs,
 		rt_brep_uv,		rt_brep_curve,	        rt_brep_class,	rt_brep_free,
-	        rt_brep_plot,	        rt_nul_vshot,	        rt_brep_tess,	rt_nul_tnurb,
+		rt_brep_plot,	        rt_nul_vshot,	        rt_brep_tess,	rt_nul_tnurb,
 		rt_brep_import5,	rt_brep_export5,
 		rt_nul_import,		rt_nul_export,	        rt_brep_ifree,
 		rt_brep_describe,	rt_brep_xform,	        rt_nul_parse,

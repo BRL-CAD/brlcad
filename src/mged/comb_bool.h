@@ -77,12 +77,12 @@ extern struct bool_tree_node	*comb_bool_tree;
  *      of causing l to point to the allocated storage.
  */
 #define         talloc(l, t, n)                                         \
-        if (((l) = (t *) malloc(n * sizeof(t))) == (t *) 0)             \
-        {                                                               \
-            fprintf(stderr, "%s:%d: Ran out of memory\n",		\
-                    __FILE__, __LINE__);                                \
-            exit(1);                                                    \
-        }
+	if (((l) = (t *) malloc(n * sizeof(t))) == (t *) 0)             \
+	{                                                               \
+	    fprintf(stderr, "%s:%d: Ran out of memory\n",		\
+		    __FILE__, __LINE__);                                \
+	    exit(1);                                                    \
+	}
 
 /*
  *

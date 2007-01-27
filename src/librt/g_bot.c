@@ -269,7 +269,6 @@ rt_bot_unoriented_segs(struct hit		*hits,
 }
 
 
-
 /**
  *			R T _ B O T _ M A K E S E G S
  *
@@ -376,10 +375,10 @@ rt_bot_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct appl
  */
 void
 rt_bot_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	rt_vstub( stp, rp, segp, n, ap );
@@ -410,10 +409,10 @@ rt_bot_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 void
 rt_bot_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
- 	cvp->crv_c1 = cvp->crv_c2 = 0;
+	cvp->crv_c1 = cvp->crv_c2 = 0;
 
 	/* any tangent direction */
- 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 
@@ -557,8 +556,8 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	if( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )	/* tesselation not supported */
 		return( -1 );
 #endif
-        *r = nmg_mrsv( m );     /* Make region, empty shell, vertex */
-        s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+	*r = nmg_mrsv( m );     /* Make region, empty shell, vertex */
+	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
 	verts = (struct vertex **)bu_calloc( bot_ip->num_vertices, sizeof( struct vertex *),
 		"rt_bot_tess: *verts[]" );
@@ -588,7 +587,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 
 		if( !bn_3pts_distinct( pt[0], pt[1], pt[2], tol )
-                           || bn_3pts_collinear( pt[0], pt[1], pt[2], tol ) )
+			   || bn_3pts_collinear( pt[0], pt[1], pt[2], tol ) )
 				continue;
 
 		if( (fu=nmg_cmface( s, corners, 3 )) == (struct faceuse *)NULL )
@@ -1099,9 +1098,9 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		case RT_BOT_PLATE:
 			mode = plate;
 			break;
-	        case RT_BOT_PLATE_NOCOS:
-		        mode = nocos;
-		        break;
+		case RT_BOT_PLATE_NOCOS:
+			mode = nocos;
+			break;
 		default:
 			mode = unknown_mode;
 			break;
@@ -1919,7 +1918,7 @@ rt_bot_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, ch
 				else if( !strcmp( argv[1], "append" ) )
 					BU_BITSET( bot->face_mode, i );
 				else
-				        BU_BITCLR( bot->face_mode, i );
+					BU_BITCLR( bot->face_mode, i );
 			}
 		}
 		else if( !strcmp( argv[0], "nn" ) )
@@ -2014,7 +2013,7 @@ rt_bot_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, ch
 			    return( TCL_ERROR );
 			  }
 			f_str = Tcl_GetStringFromObj( list, NULL );
-		      	while( isspace( *f_str ) ) f_str++;
+			while( isspace( *f_str ) ) f_str++;
 			bot->face_normals[i*3] = atoi( f_str );
 			f_str = bu_next_token( f_str );
 			if( *f_str == '\0' )
@@ -2263,7 +2262,7 @@ rt_bot_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, ch
 			    return( TCL_ERROR );
 			  }
 			f_str = Tcl_GetStringFromObj( list, NULL );
-		      	while( isspace( *f_str ) ) f_str++;
+			while( isspace( *f_str ) ) f_str++;
 			bot->faces[i*3] = atoi( f_str );
 			f_str = bu_next_token( f_str );
 			if( *f_str == '\0' )

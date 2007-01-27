@@ -144,10 +144,10 @@ rt_grp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  */
 void
 rt_grp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	return;
@@ -448,7 +448,7 @@ rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC (%g %g %g) mag=%g\n",
-		INTCLAMP(gip->center[0]*mm2local), 
+		INTCLAMP(gip->center[0]*mm2local),
 		INTCLAMP(gip->center[1]*mm2local),
 		INTCLAMP(gip->center[2]*mm2local),
 		INTCLAMP(gip->mag*mm2local) );

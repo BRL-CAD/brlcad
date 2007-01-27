@@ -169,7 +169,6 @@ void new_image(register const struct bu_structparse	*sdp,	/*struct desc*/
 }
 
 
-
 /*	B I L L B O A R D _ S E T U P
  *
  *	This routine is called (at prep time)

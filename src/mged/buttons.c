@@ -777,7 +777,7 @@ be_s_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 	edsol = BE_S_ROTATE;
 	mmenu_set( MENU_L1, MENU_NULL );
 
-        set_e_axes_pos(1);
+	set_e_axes_pos(1);
 	return TCL_OK;
 }
 
@@ -792,7 +792,7 @@ be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 	movedir = UARROW | RARROW;
 	mmenu_set( MENU_L1, MENU_NULL );
 
-        set_e_axes_pos(1);
+	set_e_axes_pos(1);
 	return TCL_OK;
 }
 
@@ -807,7 +807,7 @@ be_s_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 	mmenu_set( MENU_L1, MENU_NULL );
 	acc_sc_sol = 1.0;
 
-        set_e_axes_pos(1);
+	set_e_axes_pos(1);
 	return TCL_OK;
 }
 

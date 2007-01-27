@@ -31,7 +31,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
@@ -65,7 +64,7 @@ void
 do_line(int xpos, int ypos, register char *line, RGBpixel (*menu_border))
 
 
-                       /* Menu outline color, if NULL, do filtering. */
+		       /* Menu outline color, if NULL, do filtering. */
 	{	register int    currx;
 		register int    char_count, char_id;
 		register int len = strlen( line );
@@ -124,7 +123,7 @@ do_line(int xpos, int ypos, register char *line, RGBpixel (*menu_border))
 					(unsigned char*)menu_border
 					);
 		currx += SWABV(dir[char_id].width) + 2;
-    		}
+		}
 	return;
 	}
 
@@ -160,7 +159,7 @@ do_Char(int c, int xpos, int ypos, int odd)
 
 
 	/* Produce a RGBpixel buffer from a description of the character and
-	 	the read back data from the frame buffer for anti-aliasing.
+		the read back data from the frame buffer for anti-aliasing.
 	 */
 	for (i = height + base; i >= base; i--)
 		{
@@ -211,7 +210,7 @@ menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_bord
 	for (k=0; k<embold; k++)
 		for (i=2; i<height+2; i++)
 			for (j=totwid+1; j>=2; j--)
-		  		filterbuf[i][j+1] |= filterbuf[i][j];
+				filterbuf[i][j+1] |= filterbuf[i][j];
 
 	/* Initial base line for filtering depends on odd flag. */
 	base = (odd ? 1 : 2);
@@ -236,9 +235,9 @@ int
 bitx(register char *bitstring, register int posn)
 {
 #if 0 /* Was #ifdef vax , but doesn't work on 4.3BSD */
-   	register field;
+	register field;
 
-   	asm("extzv	r10,$1,(r11),r8");
+	asm("extzv	r10,$1,(r11),r8");
 	return field;
 #else
 	for( ; posn >= 8; posn -= 8, bitstring++ )

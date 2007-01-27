@@ -256,12 +256,12 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
     if (ovlp_list.forw != &ovlp_list)
     {
 	fprintf(stderr, "Previously unreported overlaps.  Shouldn't happen\n");
-    	ovp = ovlp_list.forw;
-    	while( ovp != &ovlp_list )
-    	{
+	ovp = ovlp_list.forw;
+	while( ovp != &ovlp_list )
+	{
 		bu_log( " OVERLAP:\n\t%s %s (%g %g %g) %g\n",ovp -> reg1 -> reg_name, ovp -> reg2 -> reg_name, V3ARGS( ovp->in_point ), ovp->out_dist - ovp->in_dist );
-    	    ovp = ovp->forw;
-    	}
+	    ovp = ovp->forw;
+	}
     }
 
     bu_vls_free(&attr_vls);
@@ -387,7 +387,7 @@ fastf_t get_obliq (fastf_t *ray, fastf_t *normal)
     {
 	fflush(stdout);
 	fprintf (stderr, "Error:  cos(obliquity) > 1\n");
-    	obliquity = 0;
+	obliquity = 0;
 	exit(1);
     }
 

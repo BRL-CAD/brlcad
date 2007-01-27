@@ -52,7 +52,7 @@ static struct option longopts[] =
 	{ "obs_port",	required_argument,	NULL, 'o' },
 	{ "port",	required_argument,	NULL, 'p' },
 	{ "version",	no_argument,		NULL, 'v' },
-  	{ "list",	required_argument,	NULL, 'l' },
+	{ "list",	required_argument,	NULL, 'l' },
 };
 #endif
 

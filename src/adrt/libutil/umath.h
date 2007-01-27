@@ -61,7 +61,7 @@
 
 #define MATH_MIN_MAX3(_a, _b, _c, _d, _e) { \
 	MATH_MIN3(_a, _c, _d, _e); \
-        MATH_MAX3(_b, _c, _d, _e); }
+	MATH_MAX3(_b, _c, _d, _e); }
 
 #define MATH_VEC_MIN(_a, _b) { \
 	_a.v[0] = _a.v[0] < _b.v[0] ? _a.v[0] : _b.v[0]; \
@@ -97,8 +97,8 @@
 	_a.v[1] = (_b.v[0] * _c[1]) + (_b.v[1] * _c[5]) + (_b.v[2] * _c[9]) + _c[13]; \
 	_a.v[2] = (_b.v[0] * _c[2]) + (_b.v[1] * _c[6]) + (_b.v[2] * _c[10]) + _c[14]; \
 	w = (_b.v[0] * _c[3]) + (_b.v[1] * _c[7]) + (_b.v[2] * _c[11]) + _c[15]; \
-        w = w ? 1/w : 1.0; \
-        _a.v[0] *= w; _a.v[1] *= w; _a.v[2] *= w; }
+	w = w ? 1/w : 1.0; \
+	_a.v[0] *= w; _a.v[1] *= w; _a.v[2] *= w; }
 
 /* _a is transformed vertex, _b is input vertex, _c is 4x4 transformation matrix */
 #define MATH_VEC_TRANSFORM_ROTATE(_a, _b, _c) { \

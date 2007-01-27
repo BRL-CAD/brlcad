@@ -50,7 +50,7 @@
 #include "bu.h"
 
 
-/** 
+/**
  * "Multiple try" read.  Read multiple times until quantity is
  *  obtained or an error occurs.  This is useful for pipes.
  */

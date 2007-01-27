@@ -74,7 +74,6 @@ HIDDEN int	stk_open(FBIO *ifp, char *file, int width, int height),
 		stk_help(FBIO *ifp);
 
 
-
 /* This is the ONLY thing that we normally "export" */
 FBIO stk_interface =  {
 	0,

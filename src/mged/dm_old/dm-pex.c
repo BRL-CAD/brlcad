@@ -50,7 +50,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <sys/time.h>		/* for struct timeval */
 #include <X11/X.h>
 #ifdef HAVE_XOSDEFS_H
@@ -271,7 +270,7 @@ int	a, b;
 	 *  object highlighting
 	 */
 #if DO_XSELECTINPUT
- 	switch( b )  {
+	switch( b )  {
 	case ST_VIEW:
 	  /* constant tracking OFF */
 	  XSelectInput(((struct pex_vars *)dmp->dm_vars)->dpy, ((struct pex_vars *)dmp->dm_vars)->win, ExposureMask|ButtonPressMask|
@@ -291,7 +290,7 @@ int	a, b;
 		       KeyPressMask|StructureNotifyMask);
 	  break;
 #else
- 	switch( b )  {
+	switch( b )  {
 	case ST_VIEW:
 	    /* constant tracking OFF */
 	    XdoMotion = 0;
@@ -425,7 +424,7 @@ char *argv[];
       case 't':
 	am_mode = ALT_MOUSE_MODE_TRANSLATE;
 	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
-	              (edobj || es_edflag > 0)){
+		      (edobj || es_edflag > 0)){
 
 	  av[0] = "knob";
 	  av[1] = "aX";

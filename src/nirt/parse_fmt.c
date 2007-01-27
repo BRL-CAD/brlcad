@@ -215,8 +215,8 @@ format_output (char *buffer, com_table	*ctp)
 
 void parse_fmt(char *uoutspec, int outcom_type)
 
-    	          	/* The user's output specification (format & args) */
-   	            	/* Type of output command */
+			/* The user's output specification (format & args) */
+			/* Type of output command */
 
 {
     char	*of;		/* Format for current output item */
@@ -274,7 +274,7 @@ void parse_fmt(char *uoutspec, int outcom_type)
 	 * needs an output item or not (i.e. whether it
 	 * contains 1 conversion spec vs. none)
 	 */
-    	oip->format = bu_malloc(uos - up + 1, "format");
+	oip->format = bu_malloc(uos - up + 1, "format");
 	of = oip -> format;
 	while (up != uos)
 	{
@@ -390,7 +390,7 @@ void default_ospec (void)
 
 void show_ospec (outitem *oil)
 
-       		     		/* List of output items */
+				/* List of output items */
 
 {
     outitem	*oip;		/* Pointer into list of output items */
@@ -532,7 +532,7 @@ FILE *fopenrc(void)
 	if ((home = getenv("HOME")) != NULL)
 	{
 	    rc_file_name = bu_malloc(strlen(home) + strlen(DEF_RCF_NAME) + 2,
-	    			"rc_file_name");
+				"rc_file_name");
 	    sprintf(rc_file_name, "%s/%s", home, DEF_RCF_NAME);
 	    fPtr = fopen(rc_file_name, "r");
 	}
@@ -797,7 +797,7 @@ void load_state(char *buffer, com_table *ctp)
 
 void free_ospec (outitem *oil)
 
-       		     		/* List of output items */
+				/* List of output items */
 
 {
     outitem	*next = oil;	/* Pointer to next output item */

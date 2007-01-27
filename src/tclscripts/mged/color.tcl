@@ -77,50 +77,50 @@ in the menu is an entry for a color tool." } }
 if {$canned_colors == "rt"} {
     $top.$key\MB.m add command -background #000032 -activebackground #000032 \
 	    -command "set $vn \"0 0 50\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
     $top.$key\MB.m add command -background #84dfff -activebackground #84dfff \
 	    -command "set $vn \"132 223 255\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
     $top.$key\MB.m add command -background #008000 -activebackground #008000 \
 	    -command "set $vn \"0 128 0\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
     $top.$key\MB.m add command -background #f0f0a0 -activebackground #f0f0a0 \
 	    -command "set $vn \"240 240 160\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
     $top.$key\MB.m add command -background #ffffff -activebackground #ffffff \
 	    -command "set $vn \"255 255 255\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
     $top.$key\MB.m add command -background #808080 -activebackground #808080 \
 	    -command "set $vn \"128 128 128\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
     $top.$key\MB.m add command -background #000000 -activebackground #000000 \
 	    -command "set $vn \"0 0 0\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
 } else {
     $top.$key\MB.m add command -background #000000 -activebackground #000000 \
 	    -command "set $vn \"0 0 0\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
     $top.$key\MB.m add command -background #ffffff -activebackground #ffffff \
 	    -command "set $vn \"255 255 255\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
     $top.$key\MB.m add command -background #ff0000 -activebackground #ff0000 \
 	    -command "set $vn \"255 0 0\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
     $top.$key\MB.m add command -background #00ff00 -activebackground #00ff00 \
 	    -command "set $vn \"0 255 0\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
     $top.$key\MB.m add command -background #0000ff -activebackground #0000ff \
 	    -command "set $vn \"0 0 255\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
     $top.$key\MB.m add command -background #ffff00 -activebackground #ffff00 \
 	    -command "set $vn \"255 255 0\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
     $top.$key\MB.m add command -background #00ffff -activebackground #00ffff \
 	    -command "set $vn \"0 255 255\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
     $top.$key\MB.m add command -background #ff00ff -activebackground #ff00ff \
 	    -command "set $vn \"255 0 255\"; \
-	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
+		      setWidgetRGBColor $top.$key\MB $vn \$$vn"
 }
     $top.$key\MB.m add separator
     $top.$key\MB.m add command -label "Color Tool..." -command $user_color_cmd
@@ -255,9 +255,9 @@ proc getRGB { w color } {
     set result [regexp "^\[ \]*(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]*$" \
 	    $color cmatch red green blue]
     if {!$result ||
-        $red < 0 || $red > 255 ||
-        $green < 0 || $green > 255 ||
-        $blue < 0 || $blue > 255 } {
+	$red < 0 || $red > 255 ||
+	$green < 0 || $green > 255 ||
+	$blue < 0 || $blue > 255 } {
 	return -code error "Improper color specification - $color"
     }
 

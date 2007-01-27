@@ -274,7 +274,7 @@ Va_Decl( prnt_Debug )
 	else
 		{
 		Va_Print( stderr );
-	 	(void) fprintf( stderr, "\n" );
+		(void) fprintf( stderr, "\n" );
 		}
 	Va_End();
 	return;

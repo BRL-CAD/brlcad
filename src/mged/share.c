@@ -79,11 +79,11 @@
     } else { \
       /* must not be sharing this resource */ \
       if (dlp1->resource != dlp2->resource) { \
-        if (!--dlp2->resource->rc) \
-          bu_free((genptr_t)dlp2->resource, error_msg); \
+	if (!--dlp2->resource->rc) \
+	  bu_free((genptr_t)dlp2->resource, error_msg); \
 \
-          dlp2->resource = dlp1->resource; \
-          ++dlp1->resource->rc; \
+	  dlp2->resource = dlp1->resource; \
+	  ++dlp1->resource->rc; \
       } \
     } \
 }

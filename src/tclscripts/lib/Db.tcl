@@ -474,29 +474,29 @@
     $help add adjust	{{} {adjust database object parameters}}
     $help add attr      {{ {set|get|rm|append} object [args]}
 	      {set, get, remove or append to attribute values for the specified object.
-         for the "set" subcommand, the arguments are attribute name/value pairs
-         for the "get" subcommand, the arguments are attribute names
-         for the "rm" subcommand, the arguments are attribute names
-         for the "append" subcommand, the arguments are attribute name/value pairs } }
+	 for the "set" subcommand, the arguments are attribute name/value pairs
+	 for the "get" subcommand, the arguments are attribute names
+	 for the "rm" subcommand, the arguments are attribute names
+	 for the "append" subcommand, the arguments are attribute name/value pairs } }
 
     $help add binary	{{(-i|-o) major_type minor_type dest source}
-                {manipulate opaque objects.
-                 Must specify one of -i (for creating or adjusting objects (input))
-                 or -o for extracting objects (output).
-                 If the major type is "u" the minor type must be one of:
-                      "f" -> float
-                      "d" -> double
-                      "c" -> char (8 bit)
-                      "s" -> short (16 bit)
-                      "i" -> int (32 bit)
-                      "l" -> long (64 bit)
-                      "C" -> unsigned char (8 bit)
-                      "S" -> unsigned short (16 bit)
-                      "I" -> unsigned int (32 bit)
-                      "L" -> unsigned long (64 bit)
-                 For input, source is a file name and dest is an object name.
-                 For output source is an object name and dest is a file name.
-                 Only uniform array binary objects (major_type=u) are currently supported}}
+		{manipulate opaque objects.
+		 Must specify one of -i (for creating or adjusting objects (input))
+		 or -o for extracting objects (output).
+		 If the major type is "u" the minor type must be one of:
+		      "f" -> float
+		      "d" -> double
+		      "c" -> char (8 bit)
+		      "s" -> short (16 bit)
+		      "i" -> int (32 bit)
+		      "l" -> long (64 bit)
+		      "C" -> unsigned char (8 bit)
+		      "S" -> unsigned short (16 bit)
+		      "I" -> unsigned int (32 bit)
+		      "L" -> unsigned long (64 bit)
+		 For input, source is a file name and dest is an object name.
+		 For output source is an object name and dest is a file name.
+		 Only uniform array binary objects (major_type=u) are currently supported}}
     $help add c		{{[-gr] comb_name <boolean_expr>} {create or extend a combination using standard notation}}
     $help add cat	{{<objects>} {list attributes (brief)}}
     $help add color	{{low high r g b str} {make color entry}}

@@ -829,7 +829,7 @@ genptr_t	ptr;
 	if( get_de_pointers( comb->tree, dp, comb_len, de_pointers ) )
 	{
 		bu_log( "Error in combination %s\n", dp->d_namep );
-	        bu_free( (char *)de_pointers , "csg_comb_func de_pointers" );
+		bu_free( (char *)de_pointers , "csg_comb_func de_pointers" );
 		rt_db_free_internal( &intern , &rt_uniresource);
 		return;
 	}
@@ -856,7 +856,7 @@ genptr_t	ptr;
 	}
 
 	rt_db_free_internal( &intern , &rt_uniresource);
-        bu_free( (char *)de_pointers , "csg_comb_func de_pointers" );
+	bu_free( (char *)de_pointers , "csg_comb_func de_pointers" );
 
 }
 

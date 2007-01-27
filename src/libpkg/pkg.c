@@ -180,7 +180,7 @@ pkg_init() {
 #ifdef _WIN32
     WORD wVersionRequested;
     WSADATA wsaData;
-    
+
     wVersionRequested = MAKEWORD(1, 1);
     if (WSAStartup(wVersionRequested, &wsaData) != 0) {
 	fprintf(stderr, "pkg_startup:  could not find a usable WinSock DLL" );
@@ -461,7 +461,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     int	addrlen;			/* length of address */
     int	on = 1;
 #endif
-    
+
     pkg_ck_debug();
     if( pkg_debug )  {
 	pkg_timestamp();
@@ -470,15 +470,15 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 		 service, protocol, backlog, (long)errlog );
 	fflush(pkg_debug);
     }
-    
+
     /* Check for default error handler */
     if( errlog == NULL )
 	errlog = pkg_errlog;
-    
+
     /* WIN32 STUFF ========================= */
 #ifdef _WIN32
     bzero((char *)&saServer, sizeof(saServer));
-    
+
     if (atoi(service) > 0) {
 	saServer.sin_port = htons((unsigned short)atoi(service));
     } else {
@@ -500,32 +500,32 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 #if 0
     _setmode(pkg_listenfd, _O_BINARY);
 #endif
-    
+
     saServer.sin_family = AF_INET;
     saServer.sin_addr = iface;
-    
+
     if (bind(pkg_listenfd, (LPSOCKADDR)&saServer, sizeof(struct sockaddr)) == SOCKET_ERROR) {
 	pkg_perror(errlog, "pkg_permserver: bind");
 	closesocket(pkg_listenfd);
-	
+
 	return(-1);
     }
-    
+
     if (backlog > 5)
 	backlog = 5;
-    
+
     if (listen(pkg_listenfd, backlog) == SOCKET_ERROR) {
 	pkg_perror(errlog, "pkg_permserver:  listen");
 	closesocket(pkg_listenfd);
-	
+
 	return(-1);
     }
-    
+
     return(pkg_listenfd);
     /* END WIN32 STUFF ========================= */
-#else 
+#else
     bzero((char *)&sinme, sizeof(sinme));
-	
+
 #ifdef HAVE_SYS_UN_H
     if( service != NULL && service[0] == '/' ) {
 	/* UNIX Domain socket */
@@ -620,7 +620,7 @@ pkg_permserver(const char *service, const char *protocol, int backlog, void (*er
  *
  *  Returns fd to listen on (>=0), -1 on error.
  */
-int 
+int
 pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *protocol, int backlog, void (*errlog)(char *msg))
 {
     struct hostent* host;

@@ -376,7 +376,6 @@ make_3manifold_bits(struct bn_tol *tol)
 	(void)nmg_fu_planeeqn(fu, tol);
 
 
-
 	/* now make the void in the center of the solid */
 
 	/* void bottom */
@@ -489,7 +488,6 @@ make_2manifold_bits(struct bn_tol *tol)
 	nmg_vertex_g(vertl[31],  150.0,   0.0, 150.0);
 	(void)nmg_fu_planeeqn(fu, tol);
 	nmg_mesh_faces(fr_fu, fu, tol);
-
 
 
 }

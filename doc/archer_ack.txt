@@ -6,6 +6,6 @@ Archer is built upon BRL-CAD.  SURVICE would like to acknowledge the contributio
 The following is the Archer Development Team:
 - Bob Parker: Principal programmer
 - Doug Howard: Original coding and plug-in interface design
-- Keith Bowman: Architecture 
+- Keith Bowman: Architecture
 - Steve Phillips: Website and Software Change Request (SCR) tracking system
 - Mark Butkiewicz: Project Management

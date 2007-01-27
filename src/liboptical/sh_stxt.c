@@ -184,9 +184,7 @@ HIDDEN int
 stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-
-
-                                /* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct stxt_specific *stp;
 

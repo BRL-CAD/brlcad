@@ -31,7 +31,6 @@ static const char RCSid[] = "";
 #include "common.h"
 
 
-
 #include <math.h>
 #include <stdio.h>
 

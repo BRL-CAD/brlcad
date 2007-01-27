@@ -21,9 +21,9 @@
 #    Filename: bgerror.tcl
 #      Author: Rick Garriques, Jr.
 #        Date: 30-May-2000
-# Description: This file contains the procedures used to override the 
+# Description: This file contains the procedures used to override the
 #              standard Tcl/Tk error code. To use it all you need to do
-#              is source it into your main Tcl/Tk file. The following 
+#              is source it into your main Tcl/Tk file. The following
 #              global variables are used in this code (they could interfer
 #              with other code):
 #
@@ -65,22 +65,22 @@ proc initBgerror {} {
 #--------------------------------------------------------------------
 proc bgerrorExit { base } {
     global App
-    
+
     set answer [tk_messageBox \
 	    -message "Are you sure you want to terminate the program (without saving)?" \
 	    -icon question \
 	    -parent $base \
 	    -type yesno -title "Exit Confirmation"]
-    
+
     # cleanup stuff used by the gui
-    if {[string equal $answer "yes"]} { 
-	if [info exists App::gui] {    
+    if {[string equal $answer "yes"]} {
+	if [info exists App::gui] {
 	    $App::gui CloseServer
 	    $App::gui MemoryCleanup
 	}
 	exit
     }
-    
+
     # set bgerrorButton Exit
 }
 
@@ -95,25 +95,25 @@ proc bgerrorSave { base } {
     global bgerrorLog
     global bgerrorInfo
     global bgerrorButton
-    
+
     set bgerrorInfo [$base.frame#4.errorInfo.userText get 1.0 end]
-    
+
     set itemList {
 	{{Text Files} {.txt}}
 	{{All Files} * }
     }
-    
+
     set file [tk_getSaveFile  -defaultextension "" \
 	    -initialfile "error.txt" \
 	    -title "Save/Append Error Log File" \
 	    -filetypes $itemList \
 	    -parent $base]
-    
+
     if {$file == ""} {return}
-    
+
     set fid [open $file a]
     set currentDateTime [clock format [clock seconds]]
-    
+
     puts $fid $currentDateTime
     puts $fid ""
     puts $fid "Error Message:"
@@ -131,7 +131,7 @@ proc bgerrorSave { base } {
     puts $fid "-- End of Error --"
     puts $fid ""
     close $fid
-    
+
     # set bgerrorButton SAVE
 }
 
@@ -164,15 +164,15 @@ proc secErrorDialog {root title text default args} {
     global bgerrorLog
     global bgerrorInfo
     global bgerrorButton
-    
+
     set bgerrorArrowColor "blue"
-    
+
     if {$root == "."} {
 	set base ""
     } else {
 	set base $root
     }
-    
+
     # Create error window dialog
     toplevel $base \
 	    -class Dialog
@@ -181,12 +181,12 @@ proc secErrorDialog {root title text default args} {
     wm resizable $base 0 0
     wm withdraw $base
     update idletasks
-    
+
     # First frame consists of error icon and message
     frame $base.frame#1 \
 	    -class Panedwindow
     pack $base.frame#1 -fill x -anchor w
-    
+
     canvas $base.frame#1.bitmap \
 	    -width 32 \
 	    -height 32 \
@@ -204,7 +204,7 @@ proc secErrorDialog {root title text default args} {
 	    -side left \
 	    -padx 3m \
 	    -pady 3m
-    
+
     label $base.frame#1.msg \
 	    -text $text \
 	    -width 80 \
@@ -214,12 +214,12 @@ proc secErrorDialog {root title text default args} {
 	    -justify left
     pack $base.frame#1.msg \
 	    -side left
-    
+
     # Second frame holds the buttons
     frame $base.frame#2
     pack $base.frame#2 \
 	    -fill both
-    
+
     set i 0
     foreach but $args {
 	if { [string equal $but "Exit"] } {
@@ -240,11 +240,11 @@ proc secErrorDialog {root title text default args} {
 	    set key [string index $but $underIdx]
 	    bind $base <Alt-[string tolower $key]>  \
 		    [list $base.frame#2.button$i invoke]
-	    
+
 	    bind $base <Alt-[string toupper $key]>  \
 		    [list $base.frame#2.button$i invoke]
 	}
-	
+
 	if {[string equal $default $but]} {
 	    $base.frame#2.button$i configure \
 		    -default active
@@ -255,7 +255,7 @@ proc secErrorDialog {root title text default args} {
 		-padx 3m
 	incr i
     }
-    
+
     # Third frame holds the controls to displays the fourth frame or not
     set frm [frame $base.frame#3]
     set arrow [::swidgets::togglearrow $frm.arrow \
@@ -272,11 +272,11 @@ proc secErrorDialog {root title text default args} {
 	    -fill x \
 	    -padx 1 \
 	    -pady 8
-    
+
     # The fourth frame is hidden at first but displays the error and allows
     # the user to enter comments to save in the log file
     frame $base.frame#4
-    frame $base.frame#4.errorLog 
+    frame $base.frame#4.errorLog
     label $base.frame#4.errorLog.msg \
 	    -text "The error stack trace:" \
 	    -anchor w
@@ -310,7 +310,7 @@ proc secErrorDialog {root title text default args} {
 	    -sticky ns
     grid columnconfigure $base.frame#4.errorLog 0 -weight 1
     grid rowconfigure $base.frame#4.errorLog 1 -weight 1
-    
+
     $base.frame#4.errorLog.text insert end $bgerrorLog
     $base.frame#4.errorLog.text configure \
 	    -state disabled
@@ -318,7 +318,7 @@ proc secErrorDialog {root title text default args} {
 	    -row 0 \
 	    -column 0 \
 	    -sticky news
-    
+
     frame $base.frame#4.errorInfo
     label $base.frame#4.errorInfo.msg \
 	    -text "User comment:" \
@@ -346,12 +346,12 @@ proc secErrorDialog {root title text default args} {
 	    -sticky ns
     grid columnconfigure $base.frame#4.errorInfo 0 -weight 1
     grid rowconfigure $base.frame#4.errorInfo 1 -weight 1
-    
+
     grid $base.frame#4.errorInfo \
 	    -row 1 \
 	    -column 0 \
 	    -sticky news
-    
+
     button $base.frame#4.button \
 	    -text "Save As..." \
 	    -under 0 \
@@ -360,16 +360,16 @@ proc secErrorDialog {root title text default args} {
 	    -row 2 \
 	    -column 0 \
 	    -pady 3
-    
+
     grid columnconfigure $base.frame#4 0 -weight 1
     grid rowconfigure $base.frame#4 0 -weight 1
-    
+
     update idletasks
     set bgerrorX [expr ([winfo screenwidth .]-[winfo reqwidth $base])/2]
     set bgerrorY [expr ([winfo screenheight .])/5]
     wm geometry $base +$bgerrorX+$bgerrorY
     wm deiconify $base
-    
+
     bind $base <FocusIn> {
 	if {[string equal Button [winfo class %W]]} {
 	    %W configure -default active
@@ -380,23 +380,23 @@ proc secErrorDialog {root title text default args} {
 	    %W configure -default normal
 	}
     }
-    
+
     bind $base <Return> {
 	if {[string equal Button [winfo class %W]]} {
 	    tkButtonInvoke %W
 	}
     }
-    
+
     set oldFocus [focus]
     # grab set $base
     focus $base.frame#2.button0
-    
+
     tkwait variable bgerrorButton
-    
+
     destroy $base
     focus $oldFocus
     return $bgerrorButton
-    
+
 }
 
 #--------------------------------------------------------------------
@@ -407,9 +407,9 @@ proc secErrorDialog {root title text default args} {
 #     Returns: The value of the selected button
 #--------------------------------------------------------------------
 proc secMessageBox {args} {
-    
+
     set answer " "
-    
+
     set w tkPrivMsgBox
     upvar #0 $w data
     set specs {
@@ -421,15 +421,15 @@ proc secMessageBox {args} {
 	{-type "" "" "ok"}
     }
     tclParseConfigSpec $w $specs "" $args
-    
+
     if {[lsearch -exact {error abortretryignore ok okcancel retrycancel yesno yesnocancel} $data(-type)] == -1} {
 	error "bad -type value \"$args(-type)\": must be error abortretryignore, ok, okcancel, retrycancel, yesno, or yesnocancel"
     }
-    
+
     if {[lsearch -exact {abortretryignore ok okcancel retrycancel yesno yesnocancel} $data(-type)] >= 0} {
 	set answer [eval tk_messageBox $args]
     } else {
-	
+
 	if {![winfo exists $data(-parent)]} {
 	    error "bad window path name \"$data(-parent)\""
 	}
@@ -438,10 +438,10 @@ proc secMessageBox {args} {
 	} else {
 	    set w .__sec__errordialog
 	}
-	
+
 	set answer [secErrorDialog $data(-parent)_secErrorDialog $data(-title) $data(-message) OK OK Exit]
     }
-    
+
     return $answer
 }
 
@@ -450,19 +450,19 @@ proc secMessageBox {args} {
 # Description: Procedure to replace the standard error dialog and allow
 #              for saving the stack trace and user comments
 #       Input: error - The error message to display
-#     Results: 
+#     Results:
 #--------------------------------------------------------------------
 proc bgerror {error} {
     global bgerrorMessage
     global bgerrorLog
     global App
-    
+
     # tcl error variable
     global errorInfo
-    
+
     # save text of original error
     set bgerrorLog $errorInfo
-    
+
     if { $error == "" } {
 	if { $errorInfo == "" } {
 	    # if no message and no stack trace do nothing
@@ -470,22 +470,22 @@ proc bgerror {error} {
 	}
 	set error "Error: An unexpected error has occurred."
     }
-    
+
     # set global variable for bgerrorSave procedure
     set bgerrorMessage $error
-    
+
     # display error dialog
     set answer [secMessageBox \
 	    -icon error \
 	    -type error \
 	    -title Error \
 	    -message $bgerrorMessage]
-    
+
     # potentially perform additional tasks upon return of error dialog
     case $answer {
 	OK {
 	    # Make sure the wait cursor is unlocked
-	    if [info exists App::gui] {    
+	    if [info exists App::gui] {
 		$App::gui SetStatusString
 	    }
 	    SetNormalCursor
@@ -511,7 +511,6 @@ catch {
 	pack .error2 -fill x -expand 1
     }
 }
-
 
 
 # Local Variables:

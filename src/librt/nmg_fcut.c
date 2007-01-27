@@ -64,7 +64,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 
 
-
 /* States of the state machine */
 #define NMG_STATE_ERROR		0
 #define NMG_STATE_OUT		1
@@ -228,11 +227,9 @@ nmg_face_state_transition(struct nmg_ray_state	*rs,
  *  than a few hundred entries on it.
  */
 static void ptbl_vsort(struct bu_ptbl *b, struct faceuse *fu1, struct faceuse *fu2, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t dist_tol)
-                  		/* table of vertexuses on intercept line */
-              	     		/* unused? */
-              	     		/* unused? */
-
-
+				/* table of vertexuses on intercept line */
+				/* unused? */
+				/* unused? */
 
 
 {
@@ -430,9 +427,7 @@ double
 nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int assessment, int in)
 
 
-
-
-   			   	/* 1 = inbound edge, 0 = outbound edge */
+				/* 1 = inbound edge, 0 = outbound edge */
 {
 	struct loopuse	*lu;
 	struct edgeuse	*this_eu;
@@ -885,7 +880,7 @@ nmg_pr_vu_stuff(const struct nmg_vu_stuff *vs)
  */
 int
 nmg_wedge_class(int ass, double a, double b)
-   	    			/* assessment of two edges forming wedge */
+				/* assessment of two edges forming wedge */
 
 
 {
@@ -1143,10 +1138,7 @@ out:
 static int
 nmg_find_vu_in_wedge(struct nmg_vu_stuff *vs, int start, int end, double lo_ang, double hi_ang, int wclass, int *skip_array)
 
-   	      		/* vu index of coincident range */
-
-
-
+			/* vu index of coincident range */
 
 
 {
@@ -1551,11 +1543,7 @@ nmg_face_vu_dot(struct nmg_vu_stuff *vsp, struct loopuse *lu, const struct nmg_r
 static int
 nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double lo_ang, double hi_ang, int wclass, int *exclude, const struct bn_tol *tol)
 
-   	      		/* vu index of coincident range */
-
-
-
-
+			/* vu index of coincident range */
 
 
 {
@@ -1719,8 +1707,8 @@ rt_g.NMG_debug |= DEBUG_VU_SORT|DEBUG_FCUT;
 int
 nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
 
-   			      		/* first index */
-   			    		/* last index + 1 */
+					/* first index */
+					/* last index + 1 */
 {
 	int		num;
 	struct nmg_vu_stuff	*vs;
@@ -1974,12 +1962,12 @@ nmg_sanitize_fu(struct faceuse *fu)
 void
 nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu1, struct faceuse *fu2, fastf_t *pt, fastf_t *dir, struct edge_g_lseg *eg, const struct bn_tol *tol)
 
-              	   		/* table of vertexuses in fu1 on intercept line */
-              	     		/* face being worked */
-              	     		/* for plane equation */
+				/* table of vertexuses in fu1 on intercept line */
+				/* face being worked */
+				/* for plane equation */
 
 
-                  		    	/* may be null.  Geom of isect line. */
+					/* may be null.  Geom of isect line. */
 
 {
 	plane_t	n1;
@@ -3381,9 +3369,9 @@ int
 nmg_onon_fix(struct nmg_ray_state *rs, struct bu_ptbl *b, struct bu_ptbl *ob, fastf_t *mag, fastf_t *omag)
 
 
-              		    	/* other rs's vu list */
-       			     	/* list of distances from intersect ray start point */
-       			      	/* list of distances from intersect ray start point */
+				/* other rs's vu list */
+				/* list of distances from intersect ray start point */
+				/* list of distances from intersect ray start point */
 {
 	int		i;
 	int		zapped;
@@ -3566,15 +3554,15 @@ const struct bn_tol *tol;
  */
 struct edge_g_lseg *
 nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t *mag2, struct faceuse *fu1, struct faceuse *fu2, fastf_t *pt, fastf_t *dir, struct edge_g_lseg *eg, const struct bn_tol *tol)
-              	    		/* table of vertexuses in fu1 on intercept line */
-              	    		/* table of vertexuses in fu2 on intercept line */
-       		      		/* table of distances to vertexuses from is->pt */
-       		      		/* table of distances to vertexuses from is->pt */
-              	     		/* face being worked */
-              	     		/* for plane equation */
+				/* table of vertexuses in fu1 on intercept line */
+				/* table of vertexuses in fu2 on intercept line */
+				/* table of distances to vertexuses from is->pt */
+				/* table of distances to vertexuses from is->pt */
+				/* face being worked */
+				/* for plane equation */
 
 
-                  		    	/* may be null.  geometry of isect line */
+					/* may be null.  geometry of isect line */
 
 {
 	struct vertexuse **vu1, **vu2;
@@ -3886,10 +3874,10 @@ static const struct state_transitions nmg_state_is_in[17] = {
  */
 int
 nmg_insert_vu_if_on_edge(struct vertexuse *vu1, struct vertexuse *vu2, struct edgeuse *new_eu, struct bn_tol *tol)
-                      	/* vertexuse from a loop of a single vertex */
-                      	/* vertexuse from another loop */
-                       	/* use of new edge that may be created (implicit return ) */
-                   	/* tolerance for collinearity check */
+			/* vertexuse from a loop of a single vertex */
+			/* vertexuse from another loop */
+			/* use of new edge that may be created (implicit return ) */
+			/* tolerance for collinearity check */
 {
 	struct edgeuse *eu_from;	/* edgeuse that starts at end of vu2's eu */
 	struct edgeuse *eu_to;		/* edgeuse that terminates at vu2 */
@@ -4105,7 +4093,7 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 		struct bu_vls	str;
 
 		bu_log("nmg_face_state_transition: got action=ERROR\n");
-	    	bu_vls_init(&str);
+		bu_vls_init(&str);
 		bu_vls_printf(&str,"nmg_face_state_transition(vu x%lx, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
 			(long)vu, pos,
 			nmg_state_names[old_state], nmg_v_assessment_names[assessment],
@@ -4113,7 +4101,7 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 	     if( RT_G_DEBUG || rt_g.NMG_debug )  {
 		/* First, print this faceuse */
 		lu = nmg_find_lu_of_vu( vu );
-	     	NMG_CK_LOOPUSE(lu);
+		NMG_CK_LOOPUSE(lu);
 		/* Print the faceuse for later analysis */
 		bu_log("Loop with the offending vertex\n");
 		nmg_pr_lu_briefly(lu, (char *)0);
@@ -4140,7 +4128,7 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 #endif
 	     }
 		/* Explode */
-	    	rt_bomb(bu_vls_addr(&str));
+		rt_bomb(bu_vls_addr(&str));
 	    }
 	case NMG_ACTION_NONE:
 	case NMG_ACTION_NONE_OPTIM:
@@ -4254,7 +4242,7 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 		if( *prev_vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
 			/* Both prev and current are lone vertex loops */
 			rs->vu[pos] = nmg_join_2singvu_loops( prev_vu, vu );
-		    	/* Set orientation */
+			/* Set orientation */
 			lu = nmg_find_lu_of_vu(rs->vu[pos]);
 			NMG_CK_LOOPUSE(lu);
 			/* If state is IN, this is a "crack" loop */
@@ -4361,33 +4349,33 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 
 		if( *prev_vu->up.magic_p == NMG_LOOPUSE_MAGIC ||
 		    *vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
-		    	/* One (or both) is a loop of a single vertex */
-		    	/* This is the special boolean vertex marker */
+			/* One (or both) is a loop of a single vertex */
+			/* This is the special boolean vertex marker */
 
-		    	/* See if there is an existing edge between
-		    	 * the two vertices.
-		    	 */
+			/* See if there is an existing edge between
+			 * the two vertices.
+			 */
 
 			if( *prev_vu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 			    *vu->up.magic_p != NMG_LOOPUSE_MAGIC )  {
-			    	if(rt_g.NMG_debug&DEBUG_FCUT)
-			    		bu_log( "\tprev_vu is a vertex loop\n" );
-			    	/* if prev_vu is geometrically on an edge that goes through vu,
-			    	 * then split that edge at prev_vu */
+				if(rt_g.NMG_debug&DEBUG_FCUT)
+					bu_log( "\tprev_vu is a vertex loop\n" );
+				/* if prev_vu is geometrically on an edge that goes through vu,
+				 * then split that edge at prev_vu */
 				rs->vu[pos-1] = nmg_join_singvu_loop( vu, prev_vu );
 			} else if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 			    *prev_vu->up.magic_p != NMG_LOOPUSE_MAGIC )  {
-			    	if(rt_g.NMG_debug&DEBUG_FCUT)
-			    		bu_log( "\tvu is a vertex loop\n" );
-			    	/* if vu is geometrically on an edge that goes through prev_vu,
-			    	 * then split that edge at vu */
+				if(rt_g.NMG_debug&DEBUG_FCUT)
+					bu_log( "\tvu is a vertex loop\n" );
+				/* if vu is geometrically on an edge that goes through prev_vu,
+				 * then split that edge at vu */
 				rs->vu[pos] = nmg_join_singvu_loop( prev_vu, vu );
 			} else {
 				/* Both are loops of single vertex */
-			    	if(rt_g.NMG_debug&DEBUG_FCUT)
-			    		bu_log( "\tprev_vu and vu are vertex loops\n" );
+				if(rt_g.NMG_debug&DEBUG_FCUT)
+					bu_log( "\tprev_vu and vu are vertex loops\n" );
 				vu = rs->vu[pos] = nmg_join_2singvu_loops( prev_vu, vu );
-			    	/* Set orientation */
+				/* Set orientation */
 				lu = nmg_find_lu_of_vu(vu);
 				NMG_CK_LOOPUSE(lu);
 				nmg_set_lu_orientation( lu, old_state==NMG_STATE_IN );

@@ -421,7 +421,7 @@ char *argv[];
 			case 'd':	/* debug level */
 				debug = atoi( optarg );
 				break;
-		        case 'm':	/* use first and last hits */
+			case 'm':	/* use first and last hits */
 				ap.a_onehit = 0;
 				break;
 			case 'g':	/* cell size */
@@ -434,7 +434,7 @@ char *argv[];
 			case 'o':	/* VTK polydata output file */
 				output_file = optarg;
 				break;
-		        case 'n':	/* include normals in the VTK data */
+			case 'n':	/* include normals in the VTK data */
 				use_normals = 1;
 				break;
 		}

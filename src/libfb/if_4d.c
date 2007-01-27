@@ -66,7 +66,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <ctype.h>
 #include <gl.h>
@@ -573,14 +572,14 @@ int		npix;
 		}
 		if( ifp->if_xcenter != ifp->if_width/2 ||
 		    ifp->if_ycenter != ifp->if_height/2 )  {
-		    	sw_zoom = 1;
+			sw_zoom = 1;
 		}
 		sgi_clipper( ifp, &clip );
 	}
 
 	if( (ifp->if_mode & MODE_7MASK) == MODE_7SWCMAP  &&
 	    SGI(ifp)->mi_cmap_flag )  {
-	    	sw_cmap = 1;
+		sw_cmap = 1;
 	} else {
 		sw_cmap = 0;
 	}
@@ -923,7 +922,7 @@ int	width, height;
 	 * This allows us to use the traditional fb utility programs
 	 * as well as allow the frame buffer window to remain around
 	 * until killed by the menu subsystem.
-    	 */
+	 */
 	if( (ifp->if_mode & MODE_2MASK) == MODE_2LINGERING )  {
 		/* save parent pid for later signalling */
 		SGI(ifp)->mi_parent = getpid();
@@ -1068,7 +1067,7 @@ int	width, height;
 			 *  So, in this case, do nothing.
 			 */
 		} else if( getvideo(CG_MODE) != -1 )  {
-		    	/*
+			/*
 			 *  Optional CG2 GENLOCK board is installed.
 			 *
 			 *  Mode 2:  Internal sync generator is used.
@@ -1080,10 +1079,10 @@ int	width, height;
 			 *
 			 *  Mode 3:  Output is locked to incoming
 			 *  NTSC composite video picture
-		    	 *  for sync and chroma (on "REM IN" connector).
-		    	 *  Color subcarrier is phase and amplitude locked to
-		    	 *  incomming color burst.
-		    	 *  The blue LSB has no effect on video overlay.
+			 *  for sync and chroma (on "REM IN" connector).
+			 *  Color subcarrier is phase and amplitude locked to
+			 *  incomming color burst.
+			 *  The blue LSB has no effect on video overlay.
 			 *
 			 *  Note that the generated composite NTSC output
 			 *  (on "VID OUT" connector) is often a problem,
@@ -1095,10 +1094,10 @@ int	width, height;
 			 *  Also, the inboard encoder chip isn't very good.
 			 *  Therefore, it is necessary to use an outboard
 			 *  RS-170 to NTSC encoder to get useful results.
-		    	 */
+			 */
 			if( (ifp->if_mode & MODE_6MASK) == MODE_6EXTSYNC )  {
 				/* external sync via GENLOCK board REM IN */
-			    	setvideo(CG_MODE, CG2_M_MODE3);
+				setvideo(CG_MODE, CG2_M_MODE3);
 				new_der1 = DER1_G_170;
 			} else {
 				/* internal sync */
@@ -2154,7 +2153,7 @@ int		one_y;
 	zdraw(FALSE);
 	/* dest for rectcopy() */
 	if( SGI(ifp)->mi_doublebuffer )  {
- 		backbuffer(TRUE);
+		backbuffer(TRUE);
 		frontbuffer(FALSE);
 	} else {
 		backbuffer(FALSE);
@@ -2197,7 +2196,7 @@ int		one_y;
 		clip.yscroff+SGI(ifp)->mi_yoff );
 
 	if( SGI(ifp)->mi_doublebuffer )  {
-	 	swapbuffers();
+		swapbuffers();
 	}
 	rectzoom( 1.0, 1.0 );
 }

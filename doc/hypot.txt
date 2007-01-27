@@ -73,5 +73,3 @@ that have arbitrarily large order of convergence.
 Ken Turkowski @ CADLINC, Palo Alto (soon Menlo Park), CA
 UUCP: {amd,decwrl,flairvax,nsc}!turtlevax!ken
 ARPA: turtlevax!ken@DECWRL.ARPA
-
-

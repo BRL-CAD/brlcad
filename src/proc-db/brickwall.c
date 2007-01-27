@@ -161,7 +161,7 @@ int parse_args(int ac, char **av)
 		usage("wall height < brick height\n");
 
 	if (brick_name == (char *)NULL || *brick_name == '\0')
-	    	usage("bad or no brick name\n");
+		usage("bad or no brick name\n");
 
 	return(optind);
 }
@@ -202,9 +202,9 @@ void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 			0.0, brick_depth,
 			zstart, zstart+vert_spacing);
 
-	    	(void)fprintf(stdout,
-	    		"r r.m.%s u s.%s.rm.%d\n",
-	    		brick_name, brick_name, row);
+		(void)fprintf(stdout,
+			"r r.m.%s u s.%s.rm.%d\n",
+			brick_name, brick_name, row);
 	    }
 	    if (horiz_spacing > tol) {
 		/* generate mortar between bricks */
@@ -224,9 +224,9 @@ void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double 
 				0.0, brick_depth,
 				zstart, zstart+brick_height);
 
-		    	(void)fprintf(stdout,
-		    		"r r.m.%s u s.%s.bm.%d.%d\n",
-		    		brick_name, brick_name, row, i);
+			(void)fprintf(stdout,
+				"r r.m.%s u s.%s.bm.%d.%d\n",
+				brick_name, brick_name, row, i);
 
 		}
 	    }

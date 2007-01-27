@@ -448,7 +448,7 @@ adage_clear(FBIO *ifp, RGBpixel (*bgpp))
  */
 
 #define	IKSEEK(x,y)	if(lseek(ifp->if_fd,(off_t)((y)*ifp->if_width+(x))\
-	    		*sizeof(IKONASpixel),0) == -1) return -1;
+			*sizeof(IKONASpixel),0) == -1) return -1;
 
 HIDDEN int
 adage_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
@@ -899,7 +899,7 @@ adage_window_set(register FBIO *ifp, int x, int y)
 	IKI(ifp)->y_window = iky;
 
 	/*
- 	 *  These formulas are taken from section 5.2.3.2.4 (page 5-5)
+	 *  These formulas are taken from section 5.2.3.2.4 (page 5-5)
 	 *  of the Adage RDS-3000 programming reference manual, June 1982.
 	 *  Note that the published magic numbers are off by one.
 	 */

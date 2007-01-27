@@ -20,7 +20,7 @@
 /** @file clone.c
  *
  * Functions -
- *	f_clone		clones an object, optionally 
+ *	f_clone		clones an object, optionally
  *			rotating or translating the copies
  *	f_tracker	clones an object, evenly
  *			spacing the copies along a spline
@@ -38,7 +38,7 @@
  */
 
 #include "common.h"
-  
+
 #include <stdlib.h>
 #include <signal.h>
 #include <stdio.h>
@@ -219,7 +219,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 	/* primitives and regions */
 	do {
 	    if (suffix[0] == '.') {
-		
+
 		if ((i == 1) && is_in_list(obj_list, buf)) {
 		    j = index_in_list(obj_list, buf);
 		    snprintf(buf, NAMESIZE, "%s%d", prefix, num);
@@ -369,7 +369,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	if (state->rot[W]) {
 	    mat_t r;
 	    vect_t vec, ovec;
-	    
+
 	    if (state->rpnt[W]) {
 		VSUB2(rp->s.s_values, rp->s.s_values, state->rpnt);
 	    }
@@ -386,7 +386,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	}
 #endif
     }
-    
+
     return;
 }
 
@@ -421,7 +421,6 @@ copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t state)
 
     return;
 }
-
 
 
 /** make n copies of a v4 combination.
@@ -587,7 +586,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 
     /* copy the object */
     if (dp->d_flags & DIR_COMB) {
-	
+
 	if (_dbip->dbi_version < 5) {
 	    /* A v4 method of peeking into a combination */
 
@@ -616,7 +615,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 
 	    if (errors) {
 		bu_log("WARNING: some elements of \"%s\" could not be cloned\n", dp->d_namep);
-	    } 
+	    }
 
 	    /* copy this combination itself */
 	    copy_comb(_dbip, dp, (genptr_t)state);
@@ -818,7 +817,7 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
     if (!argv[bu_optind]) {
 	return TCL_ERROR;
     }
-    
+
     /* use global dbip; we make sure the lookup succeeded in f_clone() */
     state->src = db_lookup(dbip, argv[bu_optind], LOOKUP_QUIET);
     if (!state->src) {
@@ -1029,7 +1028,6 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     fclose(points);
 
 
-
     /* Interpolate link vertices *********************/
     for (i = 0; i < s.n_segs; i++) { /* determine initial track length */
 	totlen += DIST_PT_PT(s.k[i].pt, s.k[i+1].pt);
@@ -1129,13 +1127,13 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		VSCALE(state.rpnt, verts[n_links*i+j], local2base);
 
 		VSUB2(pt, verts[n_links*i+j], verts[n_links*i+j+1]);
-		VSET(state.rot, 0, (M_PI - atan2(pt[Z], pt[X])), 
+		VSET(state.rot, 0, (M_PI - atan2(pt[Z], pt[X])),
 		     -atan2(pt[Y], sqrt(pt[X]*pt[X]+pt[Z]*pt[Z])));
 		VSCALE(state.rot, state.rot, radtodeg);
 		/*				VSUB2(state.rot, state.rot, rots[j]);
 						VADD2(rots[j], state.rot, rots[j]);*/
 
-					
+
 		state.src = dps[j];
 		/* global dbip */
 		dps[j] = copy_object(dbip, &rt_uniresource, &state);

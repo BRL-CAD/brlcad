@@ -40,7 +40,6 @@ static const char RCSid[] = "@(#)$Header$";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <string.h>
 #include "machine.h"

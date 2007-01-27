@@ -39,7 +39,7 @@ void cdiv();
  */
 double
 butter(double w)
-      	  	/* relative frequency (1.0 = center freq) */
+		/* relative frequency (1.0 = center freq) */
 {
 	COMPLEX	denom, num, H;
 	double	gamma, k1, k2, k3, k4;
@@ -72,8 +72,8 @@ butter(double w)
 void
 cbweights(double *filter, int window, int points)
 
-   	       		/* Length of FFT to compute relative freq for */
-   	       		/* Length of filter kernel wanted */
+			/* Length of FFT to compute relative freq for */
+			/* Length of filter kernel wanted */
 {
 	int	i, center;
 	double	step, w;

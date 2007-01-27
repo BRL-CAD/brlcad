@@ -121,7 +121,7 @@ of the supported primitive types." } }
 		-command "esol_process_type $id $w.sformF $type"
 	hoc_register_menu_data "Primitive Type" $type "Primitive Type - $type"\
 		"\"synopsis \\\"Change primitive type to $type.\\\"\"
-	         \"description \\\"$solid_data(hoc,$type)\\\"\""
+		 \"description \\\"$solid_data(hoc,$type)\\\"\""
     }
     grid $w.typeL $w.typeMB -in $w.typeF
     #
@@ -174,7 +174,7 @@ somewhere in the equation." } }
     set hoc_data { { summary "This string is used with the Tcl
 format command to format the values
 of the primitive parameter entries." }
-              { see_also format } }
+	      { see_also format } }
     label $w.fmtL -text "format:" -width 9 -anchor e
     hoc_register_data $w.fmtL "Format" $hoc_data
     entry $w.fmtE -relief sunken -bd 2 -textvar esol_control($id,format_string)

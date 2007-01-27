@@ -318,49 +318,49 @@ pars_Argv(int argc, register char **argv)
 void
 rgbhsv(register int *rgb, register int *hsv)
 {
-        int	s, v;
-        int	r, g, b;
-        int	x;
+	int	s, v;
+	int	r, g, b;
+	int	x;
 	static int h;
-        double dif = 0;
+	double dif = 0;
 
-        r = rgb[0];
-        g = rgb[1];
-        b = rgb[2];
-        v = ((r > g) ? r : g);
-        v = ((v > b) ? v : b);
-        x = ((r < g) ? r : g);
-        x = ((x < b) ? x : b);
+	r = rgb[0];
+	g = rgb[1];
+	b = rgb[2];
+	v = ((r > g) ? r : g);
+	v = ((v > b) ? v : b);
+	x = ((r < g) ? r : g);
+	x = ((x < b) ? x : b);
 	if (v != x)  {
-            dif = (double) (v - x);
-            if (r != v)  {
-                if (g == v)  {
-                    if (b != x)
-                        h = (int) (42.5 * (3. - (double)(v-b) / dif));
-                    else
-                        h = (int) (42.5 * (1. + (double)(v-r) / dif));
-                } else {
-                    if (r != x)
-                        h = (int) (42.5 * (5. - (double)(v-r) / dif));
-                    else
-                        h = (int) (42.5 * (3. + (double)(v-g) / dif));
-                }
-            } else {
-                if (g != x)
-                    h = (int) (42.5 * (1. - (double)(v-g) / dif));
-                else
-                    h = (int) (42.5 * (5. + (double)(v-b) / dif));
-            }
+	    dif = (double) (v - x);
+	    if (r != v)  {
+		if (g == v)  {
+		    if (b != x)
+			h = (int) (42.5 * (3. - (double)(v-b) / dif));
+		    else
+			h = (int) (42.5 * (1. + (double)(v-r) / dif));
+		} else {
+		    if (r != x)
+			h = (int) (42.5 * (5. - (double)(v-r) / dif));
+		    else
+			h = (int) (42.5 * (3. + (double)(v-g) / dif));
+		}
+	    } else {
+		if (g != x)
+		    h = (int) (42.5 * (1. - (double)(v-g) / dif));
+		else
+		    h = (int) (42.5 * (5. + (double)(v-b) / dif));
+	    }
 	}
 
 	if (v != 0)
-            s = (int)(255. * dif / (double)v);
-        else
-            s = 0;
+	    s = (int)(255. * dif / (double)v);
+	else
+	    s = 0;
 
-        hsv[0] = h;
-        hsv[1] = s;
-        hsv[2] = v;
+	hsv[0] = h;
+	hsv[1] = s;
+	hsv[2] = v;
 }
 
 /* hsvrgb
@@ -373,60 +373,60 @@ double modf(double, double *);
 void
 hsvrgb(register int *hsv, register int *rgb)
 {
-  	int r, g, b, m, n, k;
-        double h, s, v, foo;
-        double f;
+	int r, g, b, m, n, k;
+	double h, s, v, foo;
+	double f;
 
 	if(hsv[1] != 0)
-        {
-            s = (double)hsv[1] / 255.;
-            h = (double)hsv[0] / 42.666;
-            f = modf(h, &(foo));
-            v = (double)hsv[2];
-            m = (int) (v * (1. - s) + .5);
-            n = (int) (v * (1. - s*f) + .5);
-            k = (int) (v * (1. - (s * (1.-f))) + .5);
-            switch((int) h)
-            {
-            case 0:
-                r = hsv[2];
-                g = k;
-                b = m;
-                break;
-            case 1:
-                r = n;
-                g = hsv[2];
-                b = m;
-                break;
-            case 2:
-                r = m;
-                g = hsv[2];
-                b = k;
-                break;
-            case 3:
-                r = m;
-                g = n;
-                b = hsv[2];
-                break;
-            case 4:
-                r = k;
-                g = m;
-                b = hsv[2];
-                break;
-            default:
-            case 5:
-                r = hsv[2];
-                g = m;
-                b = n;
-                break;
-            }
-        }
-        else
-            r = g = b = hsv[2];
+	{
+	    s = (double)hsv[1] / 255.;
+	    h = (double)hsv[0] / 42.666;
+	    f = modf(h, &(foo));
+	    v = (double)hsv[2];
+	    m = (int) (v * (1. - s) + .5);
+	    n = (int) (v * (1. - s*f) + .5);
+	    k = (int) (v * (1. - (s * (1.-f))) + .5);
+	    switch((int) h)
+	    {
+	    case 0:
+		r = hsv[2];
+		g = k;
+		b = m;
+		break;
+	    case 1:
+		r = n;
+		g = hsv[2];
+		b = m;
+		break;
+	    case 2:
+		r = m;
+		g = hsv[2];
+		b = k;
+		break;
+	    case 3:
+		r = m;
+		g = n;
+		b = hsv[2];
+		break;
+	    case 4:
+		r = k;
+		g = m;
+		b = hsv[2];
+		break;
+	    default:
+	    case 5:
+		r = hsv[2];
+		g = m;
+		b = n;
+		break;
+	    }
+	}
+	else
+	    r = g = b = hsv[2];
 
-        rgb[0] = r;
-        rgb[1] = g;
-        rgb[2] = b;
+	rgb[0] = r;
+	rgb[1] = g;
+	rgb[2] = b;
 }
 
 /*

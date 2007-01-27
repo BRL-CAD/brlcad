@@ -279,7 +279,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       node_aligned = (tie_kdtree_t *)((intptr_t)(temp[i]) & ~0x7L);
 
       if(far < dist || i)
-        continue;
+	continue;
 
       /* Nearest Node and Push Furthest */
       stack_ind++;
@@ -318,7 +318,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       * have hit.
       */
       if(t.dist < near-TIE_PREC || t.dist > far+TIE_PREC)
-        continue;
+	continue;
 
       /* Compute Intersection Point (P = O + Dt) */
       MATH_VEC_MUL_SCALAR(t.pos, ray->dir, t.dist);
@@ -339,25 +339,25 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       * fall within the boundaries of the triangle plane.
       */
       if(fabs(tri->data[2].v[1]) <= TIE_PREC) {
-        t.beta = u0 / tri->data[2].v[2];
-        if(t.beta < 0 || t.beta > 1)
-          continue;
-        t.alpha = (v0 - t.beta*v[1]) / v[0];
+	t.beta = u0 / tri->data[2].v[2];
+	if(t.beta < 0 || t.beta > 1)
+	  continue;
+	t.alpha = (v0 - t.beta*v[1]) / v[0];
       } else {
-        t.beta = (v0*tri->data[2].v[1] - u0*v[0]) / (v[1]*tri->data[2].v[1] - tri->data[2].v[2]*v[0]);
-        if(t.beta < 0 || t.beta > 1)
-          continue;
-        t.alpha = (u0 - t.beta*tri->data[2].v[2]) / tri->data[2].v[1];
+	t.beta = (v0*tri->data[2].v[1] - u0*v[0]) / (v[1]*tri->data[2].v[1] - tri->data[2].v[2]*v[0]);
+	if(t.beta < 0 || t.beta > 1)
+	  continue;
+	t.alpha = (u0 - t.beta*tri->data[2].v[2]) / tri->data[2].v[1];
       }
 
       if(t.alpha < 0 || (t.alpha + t.beta) > 1.0)
-        continue;
+	continue;
 
       /* Triangle Intersected, append it in the list */
       if(hit_count < 0xff) {
-        hit_list[hit_count] = tri;
-        id_list[hit_count] = t;
-        hit_count++;
+	hit_list[hit_count] = tri;
+	id_list[hit_count] = t;
+	hit_count++;
       }
 
 
@@ -368,23 +368,23 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
     for(i = 0; i < hit_count; i++) {
       /* Sort the list so that HitList and IDList [n] is in order wrt [i] */
       for(n = i; n < hit_count; n++) {
-        if(id_list[n].dist < id_list[i].dist) {
-          /* Swap */
-          tri = hit_list[i];
-          t = id_list[i];
-          hit_list[i] = hit_list[n];
-          id_list[i] = id_list[n];
-          hit_list[n] = tri;
-          id_list[n] = t;
-        }
+	if(id_list[n].dist < id_list[i].dist) {
+	  /* Swap */
+	  tri = hit_list[i];
+	  t = id_list[i];
+	  hit_list[i] = hit_list[n];
+	  id_list[i] = id_list[n];
+	  hit_list[n] = tri;
+	  id_list[n] = t;
+	}
       }
 
       id_list[i].norm = hit_list[i]->data[1];
       result = hitfunc(ray, &id_list[i], hit_list[i], ptr);
 
       if(result) {
-        *id = id_list[i];
-        return(result);
+	*id = id_list[i];
+	return(result);
       }
     }
   }

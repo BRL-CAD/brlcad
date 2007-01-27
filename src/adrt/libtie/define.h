@@ -184,7 +184,7 @@
 #define AXISTEST_X01(a, b, fa, fb) \
 	p.v[0] = a*v0.v[1] - b*v0.v[2]; \
 	p.v[2] = a*v2.v[1] - b*v2.v[2]; \
-        if (p.v[0] < p.v[2]) { min = p.v[0]; max = p.v[2]; } else { min = p.v[2]; max = p.v[0]; } \
+	if (p.v[0] < p.v[2]) { min = p.v[0]; max = p.v[2]; } else { min = p.v[2]; max = p.v[0]; } \
 	rad = fa * half_size -> v[1] + fb * half_size -> v[2]; \
 	if (min > rad || max < -rad) return 0; \
 
@@ -194,7 +194,7 @@
 #define AXISTEST_X2(a, b, fa, fb) \
 	p.v[0] = a*v0.v[1] - b*v0.v[2]; \
 	p.v[1] = a*v1.v[1] - b*v1.v[2]; \
-        if (p.v[0] < p.v[1]) { min = p.v[0]; max = p.v[1]; } else { min = p.v[1]; max = p.v[0]; } \
+	if (p.v[0] < p.v[1]) { min = p.v[0]; max = p.v[1]; } else { min = p.v[1]; max = p.v[0]; } \
 	rad = fa * half_size -> v[1] + fb * half_size -> v[2]; \
 	if (min > rad || max < -rad) return 0;
 
@@ -205,7 +205,7 @@
 #define AXISTEST_Y02(a, b, fa, fb) \
 	p.v[0] = -a*v0.v[0] + b*v0.v[2]; \
 	p.v[2] = -a*v2.v[0] + b*v2.v[2]; \
-        if (p.v[0] < p.v[2]) { min = p.v[0]; max = p.v[2]; } else { min = p.v[2]; max = p.v[0]; } \
+	if (p.v[0] < p.v[2]) { min = p.v[0]; max = p.v[2]; } else { min = p.v[2]; max = p.v[0]; } \
 	rad = fa * half_size -> v[0] + fb * half_size -> v[2]; \
 	if (min > rad || max < -rad) return 0;
 
@@ -215,7 +215,7 @@
 #define AXISTEST_Y1(a, b, fa, fb) \
 	p.v[0] = -a*v0.v[0] + b*v0.v[2]; \
 	p.v[1] = -a*v1.v[0] + b*v1.v[2]; \
-        if (p.v[0] < p.v[1]) { min = p.v[0]; max = p.v[1]; } else { min = p.v[1]; max = p.v[0]; } \
+	if (p.v[0] < p.v[1]) { min = p.v[0]; max = p.v[1]; } else { min = p.v[1]; max = p.v[0]; } \
 	rad = fa * half_size -> v[0] + fb * half_size -> v[2]; \
 	if (min > rad || max < -rad) return 0;
 
@@ -226,7 +226,7 @@
 #define AXISTEST_Z12(a, b, fa, fb) \
 	p.v[1] = a*v1.v[0] - b*v1.v[1]; \
 	p.v[2] = a*v2.v[0] - b*v2.v[1]; \
-        if (p.v[2] < p.v[1]) { min = p.v[2]; max = p.v[1]; } else { min = p.v[1]; max = p.v[2]; } \
+	if (p.v[2] < p.v[1]) { min = p.v[2]; max = p.v[1]; } else { min = p.v[1]; max = p.v[2]; } \
 	rad = fa * half_size -> v[0] + fb * half_size -> v[1]; \
 	if (min > rad || max < -rad) return 0;
 
@@ -236,7 +236,7 @@
 #define AXISTEST_Z0(a, b, fa, fb) \
 	p.v[0] = a*v0.v[0] - b*v0.v[1]; \
 	p.v[1] = a*v1.v[0] - b*v1.v[1]; \
-        if (p.v[0] < p.v[1]) { min = p.v[0]; max = p.v[1]; } else { min = p.v[1]; max = p.v[0]; } \
+	if (p.v[0] < p.v[1]) { min = p.v[0]; max = p.v[1]; } else { min = p.v[1]; max = p.v[0]; } \
 	rad = fa * half_size -> v[0] + fb * half_size -> v[1]; \
 	if (min > rad || max < -rad) return 0;
 

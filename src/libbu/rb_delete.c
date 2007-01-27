@@ -67,7 +67,7 @@ static void bu_rb_fixup (bu_rb_tree *tree, struct bu_rb_node *node, int order)
     BU_RB_CKORDER(tree, order);
 
     while ((node != bu_rb_root(tree, order))
-        && (bu_rb_get_color(node, order) == BU_RB_BLACK))
+	&& (bu_rb_get_color(node, order) == BU_RB_BLACK))
     {
 	parent = bu_rb_parent(node, order);
 	if (node == bu_rb_left_child(parent, order))

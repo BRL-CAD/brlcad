@@ -109,8 +109,8 @@ mk_bsurf( FILE *filep, struct face_g_snurb *srf )
 
 	if( srf->u.k_size != srf->s_size[RT_NURB_SPLIT_COL] + srf->order[0] ||
 	    srf->v.k_size != srf->s_size[RT_NURB_SPLIT_ROW] + srf->order[1]) {
-	    	fprintf(stderr,"mk_bsurf:  mis-matched knot/mesh/order\n");
-	    	return(-1);
+		fprintf(stderr,"mk_bsurf:  mis-matched knot/mesh/order\n");
+		return(-1);
 	}
 
 	bzero( (char *)&rec, sizeof(rec) );
@@ -156,7 +156,7 @@ mk_bsurf( FILE *filep, struct face_g_snurb *srf )
 	    fwrite( (char *)mp, sizeof(rec), rec.d.d_nctls, filep ) != rec.d.d_nctls )  {
 		free( (char *)kp );
 		free( (char *)mp );
-	    	return(-1);
+		return(-1);
 	}
 
 	free( (char *)kp );

@@ -27,7 +27,7 @@
  *  Primarily calling functions in multiple threads on multiple CPUs.
  *
  *  @author  Michael John Muuss
- *	
+ *
  *
  *  @par Source -
  *	The U. S. Army Research Laboratory
@@ -303,7 +303,6 @@ bu_cpulimit_set(int sec)
 #endif
 	if (sec < 0) sec = 0;
 }
-
 
 
 /**
@@ -621,7 +620,7 @@ bu_set_realtime(void)
 			SCHED_RR,		/* policy */
 			&bu_param
 		    ) >= 0 )  {
-		    	return 1;		/* realtime */
+			return 1;		/* realtime */
 		}
 		/* Fall through to return 0 */
 	}
@@ -903,10 +902,10 @@ genptr_t	arg;
 #  endif
 
 #  if defined(alliant) && defined(i860)
-        #pragma loop cncall
-        for( x=0; x<ncpu; x++) {
+	#pragma loop cncall
+	for( x=0; x<ncpu; x++) {
 		bu_parallel_interface();
-        }
+	}
 #  endif
 
 #  if defined(convex) || defined(__convex__)

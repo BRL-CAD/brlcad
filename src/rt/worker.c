@@ -260,7 +260,7 @@ void do_pixel(int cpu,
      */
     if (hypersample == 0) {
 	/* not hypersampling, so just do it */
-	
+
 	/****************/
 	/* BEGIN UNROLL */
 	/****************/
@@ -292,7 +292,7 @@ void do_pixel(int cpu,
 	} else {
 	    VMOVE( a.a_ray.r_pt, point );
 	    VMOVE( a.a_ray.r_dir, ap.a_ray.r_dir );
-	    
+
 	    if (a.a_rt_i->rti_prismtrace) {
 		VMOVE(pe.corner[0].r_dir, a.a_ray.r_dir);
 		VMOVE(pe.corner[1].r_dir, a.a_ray.r_dir);
@@ -304,16 +304,16 @@ void do_pixel(int cpu,
 	    report_progress = 0;
 	    bu_log("\tframe %d, xy=%d,%d on cpu %d, samp=%d\n", curframe, a.a_x, a.a_y, cpu, samplenum );
 	}
-	
+
 	a.a_level = 0;		/* recursion level */
 	a.a_purpose = "main ray";
 	(void)rt_shootray( &a );
-	
+
 	if( stereo )  {
 	    FAST fastf_t right,left;
-	    
+
 	    right = CRT_BLEND(a.a_color);
-	    
+
 	    VSUB2( stereo_point, point, left_eye_delta );
 	    if( rt_perspective > 0.0 )  {
 		VSUB2( a.a_ray.r_dir, stereo_point, eye_model );
@@ -325,7 +325,7 @@ void do_pixel(int cpu,
 	    a.a_level = 0;		/* recursion level */
 	    a.a_purpose = "left eye ray";
 	    (void)rt_shootray( &a );
-	   
+
 	    left = CRT_BLEND(a.a_color);
 	    VSET( a.a_color, left, 0, right );
 	}
@@ -372,7 +372,7 @@ void do_pixel(int cpu,
 	    } else {
 		VMOVE( a.a_ray.r_pt, point );
 		VMOVE( a.a_ray.r_dir, ap.a_ray.r_dir );
-	    
+
 		if (a.a_rt_i->rti_prismtrace) {
 		    VMOVE(pe.corner[0].r_dir, a.a_ray.r_dir);
 		    VMOVE(pe.corner[1].r_dir, a.a_ray.r_dir);
@@ -384,16 +384,16 @@ void do_pixel(int cpu,
 		report_progress = 0;
 		bu_log("\tframe %d, xy=%d,%d on cpu %d, samp=%d\n", curframe, a.a_x, a.a_y, cpu, samplenum );
 	    }
-	
+
 	    a.a_level = 0;		/* recursion level */
 	    a.a_purpose = "main ray";
 	    (void)rt_shootray( &a );
-	
+
 	    if( stereo )  {
 		FAST fastf_t right,left;
-	    
+
 		right = CRT_BLEND(a.a_color);
-	    
+
 		VSUB2( stereo_point, point, left_eye_delta );
 		if( rt_perspective > 0.0 )  {
 		    VSUB2( a.a_ray.r_dir, stereo_point, eye_model );
@@ -405,7 +405,7 @@ void do_pixel(int cpu,
 		a.a_level = 0;		/* recursion level */
 		a.a_purpose = "left eye ray";
 		(void)rt_shootray( &a );
-	   
+
 		left = CRT_BLEND(a.a_color);
 		VSET( a.a_color, left, 0, right );
 	    }
@@ -656,7 +656,7 @@ grid_setup(void)
 	    cell_height <= 0 || cell_height >= INFINITY )  {
 		bu_log("grid_setup: cell size ERROR (%g, %g) mm\n",
 			cell_width, cell_height );
-	    	rt_bomb("cell size");
+		rt_bomb("cell size");
 	}
 	if( width <= 0 || height <= 0 )  {
 		bu_log("grid_setup: ERROR bad image size (%d, %d)\n",
@@ -734,8 +734,8 @@ void do_run( int a, int b )
 			}
 			/* flush the pipe */
 			if (close(p[1]) == -1) {
-			  	perror("Unable to close the communication pipe");
-			  	sleep(1); /* give the parent time to read */
+				perror("Unable to close the communication pipe");
+				sleep(1); /* give the parent time to read */
 			}
 			exit(0);
 		} else {

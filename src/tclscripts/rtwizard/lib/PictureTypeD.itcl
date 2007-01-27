@@ -184,21 +184,6 @@ namespace eval RtWizard {
 }; # end namespace
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

@@ -151,7 +151,7 @@ rt_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap
 		}
 		if( pp->pt_forw == PartHdp ||
 		    segp->seg_out.hit_dist < pp->pt_forw->pt_inhit->hit_dist )  {
-		    	struct partition	*npp;
+			struct partition	*npp;
 			if(RT_G_DEBUG&DEBUG_PARTITION) bu_log("0-len segment after existing partition, but before next partition.\n");
 			GET_PT_INIT( rtip, npp, res );
 			bu_ptbl_ins_unique( &npp->pt_seglist, (long *)segp );
@@ -261,8 +261,8 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		if( segp->seg_stp->st_aradius < INFINITY &&
 		    !(segp->seg_in.hit_dist >= -INFINITY &&
 		    segp->seg_out.hit_dist <= INFINITY) )  {
-		    	bu_log("rt_boolweave:  Defective %s segment %s (%.18e,%.18e) %d,%d\n",
-		    		rt_functab[segp->seg_stp->st_id].ft_name,
+			bu_log("rt_boolweave:  Defective %s segment %s (%.18e,%.18e) %d,%d\n",
+				rt_functab[segp->seg_stp->st_id].ft_name,
 				segp->seg_stp->st_name,
 				segp->seg_in.hit_dist,
 				segp->seg_out.hit_dist,
@@ -271,8 +271,8 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 			continue;
 		}
 		if( segp->seg_in.hit_dist > segp->seg_out.hit_dist )  {
-		    	bu_log("rt_boolweave:  Inside-out %s segment %s (%.18e,%.18e) %d,%d\n",
-		    		rt_functab[segp->seg_stp->st_id].ft_name,
+			bu_log("rt_boolweave:  Inside-out %s segment %s (%.18e,%.18e) %d,%d\n",
+				rt_functab[segp->seg_stp->st_id].ft_name,
 				segp->seg_stp->st_name,
 				segp->seg_in.hit_dist,
 				segp->seg_out.hit_dist,
@@ -937,8 +937,8 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	BU_CK_PTBL(regiontable);
 	RT_CK_PT_HD(InputHdp);
 
-   	if( ap->a_overlap == RT_AFN_NULL )
-   		ap->a_overlap = rt_defoverlap;
+	if( ap->a_overlap == RT_AFN_NULL )
+		ap->a_overlap = rt_defoverlap;
 
 	/* Count number of FASTGEN regions */
 	n_regions = BU_PTBL_LEN(regiontable);
@@ -1056,7 +1056,7 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 		} else if( lastregion->reg_aircode != 0 &&
 		    regp->reg_aircode != 0 &&
 		    regp->reg_aircode == lastregion->reg_aircode )  {
-		    	/* both are same air, keep last */
+			/* both are same air, keep last */
 			goto code1;
 		}
 
@@ -1095,13 +1095,13 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 			}
 		}
 
-	   	/*
-	   	 *  Hand overlap to old-style application-specific
-	   	 *  overlap handler, or default.
+		/*
+		 *  Hand overlap to old-style application-specific
+		 *  overlap handler, or default.
 		 *	0 = destroy partition,
 		 *	1 = keep part, claiming region=lastregion
 		 *	2 = keep part, claiming region=regp
-	   	 */
+		 */
 		code = ap->a_overlap(ap, pp, lastregion, regp, InputHdp);
 
 		/* Implement the policy in "code" */
@@ -1589,8 +1589,8 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 				if( rt_booleval( regp->reg_treetop, pp, TrueRg,
 				    ap->a_resource ) == FALSE )  {
 					if(RT_G_DEBUG&DEBUG_PARTITION) bu_log("FALSE\n");
-				    	/* Null out non-claiming region's pointer */
-				    	*regpp = REGION_NULL;
+					/* Null out non-claiming region's pointer */
+					*regpp = REGION_NULL;
 					continue;
 				}
 				/* This region claims partition */
@@ -1768,10 +1768,10 @@ out:
  */
 int
 rt_booleval(register union tree *treep, struct partition *partp, struct region **trueregp, struct resource *resp)
-                           	/* Tree to evaluate */
-                        	/* Partition to evaluate */
-             	           	/* XOR true (and overlap) return */
-               	      		/* resource pointer for this CPU */
+				/* Tree to evaluate */
+				/* Partition to evaluate */
+				/* XOR true (and overlap) return */
+				/* resource pointer for this CPU */
 {
 	static union tree tree_not[MAX_PSW];	/* for OP_NOT nodes */
 	static union tree tree_guard[MAX_PSW];	/* for OP_GUARD nodes */

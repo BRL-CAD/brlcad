@@ -108,7 +108,7 @@ void	select_filter(char *str), dousage(void);
 
 char	usage[] = "\
 Usage: pix3filter [-f<type>] [-v] [-d#] [-o#]\n\
-        [-s squaresize] [-w width] [-n height]\n\
+	[-s squaresize] [-w width] [-n height]\n\
 	file.pix.n | file.pix1 file.pix2 file.pix3  > file.pix\n";
 
 int

@@ -192,7 +192,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
-        else
+	else
 	  return TCL_OK;
 
 	/* SCHEME:
@@ -304,7 +304,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	case ID_ARB8:
 	    {
-	    	struct rt_arb_internal *arb =
+		struct rt_arb_internal *arb =
 			(struct rt_arb_internal *)intern.idb_ptr;
 
 		nface = 6;
@@ -556,7 +556,6 @@ end:
 	(void)signal( SIGINT, SIG_IGN );
 	return status;
 }
-
 
 
 /* finds inside arbs */

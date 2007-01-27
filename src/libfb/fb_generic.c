@@ -171,7 +171,7 @@ fb_open(char *file, int width, int height)
 	while( _if_list[i] != (FBIO *)NULL ) {
 		if( strncmp( file, _if_list[i]->if_name,
 		    strlen(_if_list[i]->if_name) ) == 0 ) {
-		    	/* found it, copy its struct in */
+			/* found it, copy its struct in */
 			*ifp = *(_if_list[i]);
 			goto found_interface;
 		}

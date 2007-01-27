@@ -47,7 +47,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <errno.h>
 
@@ -154,7 +153,7 @@ int	width, height;
 {
 	register int	i;
 	int	status;
- 	FILE	*fp;
+	FILE	*fp;
 
 	FB_CK_FBIO(ifp);
 
@@ -173,7 +172,7 @@ int	width, height;
 	if ( width > ifp->if_max_width)
 		width = ifp->if_max_width;
 
- 	ifp->if_width = width;
+	ifp->if_width = width;
 	ifp->if_height = height;
 
 	x_zoom = y_zoom = 1;

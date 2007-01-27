@@ -1470,7 +1470,7 @@ cmd_aetview(ClientData	clientData,
  */
 void
 eraseobjall(register struct directory **dpp)
-                                     	/* this is a partial path spec. XXX should be db_full_path? */
+					/* this is a partial path spec. XXX should be db_full_path? */
 {
 	register struct directory **tmp_dpp;
 	register struct solid *sp;
@@ -1525,7 +1525,7 @@ eraseobjall(register struct directory **dpp)
  */
 void
 eraseobj(register struct directory **dpp)
-                                     	/* this is a partial path spec. XXX should be db_full_path? */
+					/* this is a partial path spec. XXX should be db_full_path? */
 {
 	register struct directory **tmp_dpp;
 	register struct solid *sp;
@@ -1585,7 +1585,7 @@ eraseobj(register struct directory **dpp)
 void
 pr_schain(struct solid *startp, int lvl)
 
-   		    			/* debug level */
+					/* debug level */
 {
   register struct solid	*sp;
   register struct bn_vlist	*vp;
@@ -1636,9 +1636,9 @@ pr_schain(struct solid *startp, int lvl)
 		  sp->s_color[0],
 		  sp->s_color[1],
 		  sp->s_color[2],
-  		  sp->s_uflag?" U":"",
-  		  sp->s_dflag?" D":"",
-  		  sp->s_cflag?" C":"");
+		  sp->s_uflag?" U":"",
+		  sp->s_dflag?" D":"",
+		  sp->s_cflag?" C":"");
 
     if( lvl <= 1 )  continue;
 

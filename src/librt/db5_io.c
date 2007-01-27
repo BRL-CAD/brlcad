@@ -856,7 +856,6 @@ if(bu_debug & BU_DEBUG_AVS)  bu_avs_print(avs, "db5_export_attributes");
 }
 
 
-
 /**
  *			D B 5 _ R E P L A C E _ A T T R I B U T E S
  *

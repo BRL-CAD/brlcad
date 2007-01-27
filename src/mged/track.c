@@ -902,8 +902,6 @@ crregion(char *region, char *op, int *members, int number, char *solidname)
 }
 
 
-
-
 /*	==== I T O A ( )
  *	convert integer to ascii  wd format
  */

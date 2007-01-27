@@ -180,7 +180,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 			break;
 		}
 		if (anp->an_u.anu_p.anp_op == RT_ANP_REPLACE) {
-		    	if( materp->ma_shader ) bu_free( (genptr_t)materp->ma_shader, "ma_shader" );
+			if( materp->ma_shader ) bu_free( (genptr_t)materp->ma_shader, "ma_shader" );
 			materp->ma_shader = bu_vls_strdup(&anp->an_u.anu_p.anp_shader);
 		} else if (anp->an_u.anu_p.anp_op == RT_ANP_APPEND) {
 			struct bu_vls	str;
@@ -189,7 +189,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 			bu_vls_strcpy( &str, materp->ma_shader );
 			bu_vls_putc( &str, ' ' );
 			bu_vls_vlscat( &str, &anp->an_u.anu_p.anp_shader );
-		    	if( materp->ma_shader )  bu_free( (genptr_t)materp->ma_shader, "ma_shader" );
+			if( materp->ma_shader )  bu_free( (genptr_t)materp->ma_shader, "ma_shader" );
 			materp->ma_shader = bu_vls_strgrab( &str );
 			/* bu_vls_free( &str ) is done by bu_vls_strgrab() */
 		} else
@@ -340,60 +340,60 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 		/* Allow some shorthands for the matrix spec */
 		if( strcmp( argv[4], "translate" ) == 0 ||
 		    strcmp( argv[4], "xlate" ) == 0 )  {
-		    	if( argc < 5+2 )  {
-		    		bu_log("db_parse_1anim:  matrix %s translate does not have enough arguments, only %d\n",
-		    			argv[3], argc );
-		    		goto bad;
-		    	}
-		    	MAT_IDN( anp->an_u.anu_m.anm_mat );
-		    	MAT_DELTAS( anp->an_u.anu_m.anm_mat,
-		    		atof( argv[5+0] ),
-		    		atof( argv[5+1] ),
-		    		atof( argv[5+2] ) );
+			if( argc < 5+2 )  {
+				bu_log("db_parse_1anim:  matrix %s translate does not have enough arguments, only %d\n",
+					argv[3], argc );
+				goto bad;
+			}
+			MAT_IDN( anp->an_u.anu_m.anm_mat );
+			MAT_DELTAS( anp->an_u.anu_m.anm_mat,
+				atof( argv[5+0] ),
+				atof( argv[5+1] ),
+				atof( argv[5+2] ) );
 		} else if( strcmp( argv[4], "rot" ) == 0 )  {
 			if( argc < 5+2 )  {
-		    		bu_log("db_parse_1anim:  matrix %s rot does not have enough arguments, only %d\n",
-		    			argv[3], argc );
-		    		goto bad;
-		    	}
-		    	MAT_IDN( anp->an_u.anu_m.anm_mat );
+				bu_log("db_parse_1anim:  matrix %s rot does not have enough arguments, only %d\n",
+					argv[3], argc );
+				goto bad;
+			}
+			MAT_IDN( anp->an_u.anu_m.anm_mat );
 			bn_mat_angles( anp->an_u.anu_m.anm_mat,
-		    		atof( argv[5+0] ),
-		    		atof( argv[5+1] ),
-		    		atof( argv[5+2] ) );
+				atof( argv[5+0] ),
+				atof( argv[5+1] ),
+				atof( argv[5+2] ) );
 		} else if( strcmp( argv[4], "scale" ) == 0 )  {
 			fastf_t	scale;
 			if( argc < 5+0 )  {
-		    		bu_log("db_parse_1anim:  matrix %s scale does not have enough arguments, only %d\n",
-		    			argv[3], argc );
-		    		goto bad;
-		    	}
+				bu_log("db_parse_1anim:  matrix %s scale does not have enough arguments, only %d\n",
+					argv[3], argc );
+				goto bad;
+			}
 			scale = atof( argv[5+3] );
 			if( NEAR_ZERO( scale, SMALL ) )  {
 				bu_log("db_parse_1anim:  matrix %s scale factor is zero\n",
-		    			argv[3] );
+					argv[3] );
 				goto bad;
 			}
-		    	MAT_IDN( anp->an_u.anu_m.anm_mat );
+			MAT_IDN( anp->an_u.anu_m.anm_mat );
 			anp->an_u.anu_m.anm_mat[15] = 1/scale;
 		} else if( strcmp( argv[4], "scale_about" ) == 0 )  {
 			point_t	pt;
 			fastf_t	scale;
 			if( argc < 5+3 )  {
-		    		bu_log("db_parse_1anim:  matrix %s scale_about does not have enough arguments, only %d\n",
-		    			argv[3], argc );
-		    		goto bad;
-		    	}
+				bu_log("db_parse_1anim:  matrix %s scale_about does not have enough arguments, only %d\n",
+					argv[3], argc );
+				goto bad;
+			}
 			VSET( pt,
-		    		atof( argv[5+0] ),
-		    		atof( argv[5+1] ),
-		    		atof( argv[5+2] ) );
+				atof( argv[5+0] ),
+				atof( argv[5+1] ),
+				atof( argv[5+2] ) );
 			scale = atof( argv[5+3] );
 			if( bn_mat_scale_about_pt( anp->an_u.anu_m.anm_mat,
 			    pt, scale ) < 0 )  {
 				bu_log("db_parse_1anim: matrix %s scale_about (%g, %g, %g) scale=%g failed\n",
-			    		argv[3], V3ARGS(pt), scale );
-			    	goto bad;
+					argv[3], V3ARGS(pt), scale );
+				goto bad;
 			}
 		} else {
 			/* No keyword, assume full 4x4 matrix */

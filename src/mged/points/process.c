@@ -45,7 +45,7 @@
 
 extern Tcl_Interp *twerp;
 
-/* some os's (like OpenBSD) lack an INT32_MAX define. Cross fingers and hope 
+/* some os's (like OpenBSD) lack an INT32_MAX define. Cross fingers and hope
  * that INT_MAX exists and is 32b...  */
 #ifndef INT32_MAX
 #  ifdef INT_MAX
@@ -64,7 +64,7 @@ extern Tcl_Interp *twerp;
 static int print_array(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
-    
+
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
 	if (plt && plt->type) {
@@ -91,7 +91,7 @@ void process_value(point_line_t *plt, double value)
     }
 
     plt->val[plt->count++] = value;
-    
+
     return;
 }
 
@@ -104,7 +104,7 @@ void process_type(point_line_t *plt, const char *type, int code)
 
     plt->type = type;
     plt->code = code;;
-    
+
     return;
 }
 
@@ -170,7 +170,7 @@ int condense_points(point_line_t **plta, int count) {
 	    }
 	    valid_count++;
 	}
-	
+
     }
 
 #if PRINT_DEBUG
@@ -196,7 +196,7 @@ int delete_points(point_line_t **plta, int count, double tolerance) {
 	printf("WARNING: Unexpected call to delete_points with a NULL point array\n");
 	return 0;
     }
-    
+
     if (count < 6) {
 	printf("WARNING: Unexpected call to delete_points with insufficient points\n");
 	return 0;
@@ -207,13 +207,13 @@ int delete_points(point_line_t **plta, int count, double tolerance) {
 
     for (i=1; i < count; i++) {
 	plt = &(*plta)[i];
-	
+
 	if (DIST_PT_PT(previous_plt->val, plt->val) < tolerance) {
 	    repeats++;
 	} else {
 	    /* not a repeat, so check if we need to remove the repeats
-             * and the previous as convention.
-             */
+	     * and the previous as convention.
+	     */
 	    if (repeats >= 4) {
 		/* 5+ repeated values in a row */
 		repeat_counter = 1;
@@ -351,7 +351,7 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 		/* process_group is allowed to return non-zero if
 		   there are not enough points -- they get returned to
 		   the stack for processing again */
-		printf("warning, process_group returned 0\n"); 
+		printf("warning, process_group returned 0\n");
 	    }
 
 	    marker = 0;
@@ -373,7 +373,7 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 	    printf("Blah! Error. Group array is null. Shouldn't be here!\n");
 	    return;
 	}
-	
+
 	pltg = (point_line_t *) bu_realloc(pltg, sizeof(point_line_t) * (points + 2), "add subgroup: point_line_t");
 
 	points++;
@@ -410,7 +410,7 @@ process_group(point_line_t **plta, int count) {
     if (!plta) {
 	printf("WARNING: Unexpected call to process_multi_group with a NULL point array\n");
 	return 0;
-    } 
+    }
 
     bu_log("processing a group!\n");
 

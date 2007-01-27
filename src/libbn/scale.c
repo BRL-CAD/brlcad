@@ -31,7 +31,7 @@
  * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  *	@note
- *	This file is a candidate for deletion.  
+ *	This file is a candidate for deletion.
  *	Nothing else in BRL-CAD uses this.
  */
 
@@ -41,7 +41,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "common.h"
-
 
 
 #include <stdio.h>
@@ -114,7 +113,7 @@ tp_scale(int *idata,
 	 int elements,
 	 register int mode,
 	 int length,
-	 int *odata,	
+	 int *odata,
 	 double *min,
 	 double *dx)
 {
@@ -204,7 +203,6 @@ tp_scale(int *idata,
 	*min = xmin;
 	*dx = workdx;
 }
-
 
 
 /*

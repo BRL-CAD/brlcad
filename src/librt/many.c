@@ -41,7 +41,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -162,9 +161,7 @@ void
 rt_shoot_many_rays(const struct application *proto_ap, int (*callback) (struct application *, int), int ncpus, long int nrays, struct resource *resources)
 
 
-
-
-               		           	/* resources[ncpus] */
+					/* resources[ncpus] */
 {
 	struct rt_many_internal	rmi;
 	int	i;

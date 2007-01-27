@@ -164,11 +164,11 @@ main(int argc, char **argv)
 	polysolids = 1;
 	debug = 0;
 
-        tol.magic = BN_TOL_MAGIC;
-        tol.dist = 0.005;
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 1e-6;
-        tol.para = 1 - tol.perp;
+	tol.magic = BN_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 
 	/* Get command line arguments. */

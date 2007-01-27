@@ -730,12 +730,12 @@ X_scanwrite(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count, int
 
 	{
 	int	row, col, bit;
-    	int	byte, rem;
+	int	byte, rem;
 	unsigned char	mvalue;
 	unsigned char	*mbuffer;	/* = &buffer[(sy*ifp->if_width + x)/8]; */
-    	byte = sy * ifp->if_width + x;
-    	rem = byte % 8;
-    	byte /= 8;
+	byte = sy * ifp->if_width + x;
+	rem = byte % 8;
+	byte /= 8;
 	if( save )
 		mbuffer = &bitbuf[byte];
 	else
@@ -788,7 +788,7 @@ done:
 	if( count > 1 )
 		XFlush(XI(ifp)->dpy);
 
-    	return	count;
+	return	count;
 }
 
 HIDDEN int
@@ -839,7 +839,7 @@ X_wmap(FBIO *ifp, const ColorMap *cmp)
 			color_defs[i].red   = cmp->cm_red[i];
 			color_defs[i].green = cmp->cm_green[i];
 			color_defs[i].blue  = cmp->cm_blue[i];
-		        color_defs[i].flags = DoRed | DoGreen | DoBlue;
+			color_defs[i].flags = DoRed | DoGreen | DoBlue;
 		}
 		XStoreColors( XI(ifp)->dpy, XI(ifp)->cmap, color_defs, 256 );
 	}
@@ -1371,7 +1371,7 @@ x_make_colormap(FBIO *ifp)
 	printf("make_colormap\n");
 #endif
 #ifdef notes
-        colormap = GetColormap(colors, ncolors, &newmap_flag,
+	colormap = GetColormap(colors, ncolors, &newmap_flag,
 		buffer, buffer_size);
 #endif
 
@@ -1414,11 +1414,11 @@ x_make_colormap(FBIO *ifp)
 
 	/* put our colors into those cells */
 	for (i = 0; i < tot_levels; i++) {
-        	color_defs[i].pixel = x_pixel_table[i];
-	        color_defs[i].red   = redmap[i]<<8;
-	        color_defs[i].green = grnmap[i]<<8;
-	        color_defs[i].blue  = blumap[i]<<8;
-	        color_defs[i].flags = DoRed | DoGreen | DoBlue;
+		color_defs[i].pixel = x_pixel_table[i];
+		color_defs[i].red   = redmap[i]<<8;
+		color_defs[i].green = grnmap[i]<<8;
+		color_defs[i].blue  = blumap[i]<<8;
+		color_defs[i].flags = DoRed | DoGreen | DoBlue;
 	}
 	XStoreColors ( XI(ifp)->dpy, color_map, color_defs, tot_levels);
 
@@ -1695,7 +1695,7 @@ repaint(FBIO *ifp)
 HIDDEN void
 slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax)
 
-               	/* image bounds */
+		/* image bounds */
 
 {
 	int	sxmin;		/* screen versions of above */

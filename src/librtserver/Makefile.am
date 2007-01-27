@@ -33,4 +33,3 @@ rtserverTest_SOURCES = rtserverTest.c
 rtserverTest_LDADD = ${lib_LTLIBRARIES}
 
 include $(top_srcdir)/misc/Makefile.defs
-

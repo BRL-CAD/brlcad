@@ -182,8 +182,6 @@ void parse_args(int ac, char **av)
 }
 
 
-
-
 /*
  *	M A I N
  *
@@ -237,7 +235,6 @@ int main(int ac, char **av)
 
 	return(0);
 }
-
 
 
 /*

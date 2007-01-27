@@ -125,9 +125,7 @@ HIDDEN int
 phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-
-
-                                /* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct phong_specific *pp;
 
@@ -162,9 +160,7 @@ HIDDEN int
 mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-
-
-                                /* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct phong_specific *pp;
 
@@ -199,9 +195,7 @@ HIDDEN int
 glass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-
-
-                                /* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct phong_specific *pp;
 
@@ -380,7 +374,7 @@ color[2]= swp -> sw_color[2];
 #endif
 
 #ifndef RT_MULTISPECTRAL
-if (!PM_Visualize) 
+if (!PM_Visualize)
 #endif
     {
 	/* Diffuse reflectance from "Ambient" light source (at eye) */
@@ -481,13 +475,13 @@ if (!PM_Visualize)
 			}
 			/* Get Obj Hit Point For Attenuation */
 #ifndef RT_MULTISPECTRAL
-                        if (pp && PM_Activated) {
+			if (pp && PM_Activated) {
 				VJOIN1(pt, ap -> a_ray.r_pt, pp -> pt_inhit -> hit_dist, ap -> a_ray.r_dir)
 				dist= sqrt((pt[0]-lp -> lt_pos[0])*(pt[0]-lp -> lt_pos[0]) + (pt[1]-lp -> lt_pos[1])*(pt[1]-lp -> lt_pos[1]) + (pt[2]-lp -> lt_pos[2])*(pt[2]-lp -> lt_pos[2]))/1000.0;
 				dist= (1.0/(0.1 + 1.0*dist + 0.01*dist*dist));
 				refl= dist * ps -> wgt_diffuse * cosine * swp -> sw_lightfract[i] * lp -> lt_intensity;
 /*				bu_log("pt: [%.3f][%.3f,%.3f,%.3f]\n",dist,pt[0],pt[1],pt[2]);*/
-                        } else
+			} else
 #endif
 			{
 				refl= ps -> wgt_diffuse * swp -> sw_lightfract[i] * cosine * lp -> lt_fraction;
@@ -576,7 +570,6 @@ if (!PM_Visualize)
 #endif
 	return(1);
 }
-
 
 
 #ifndef PHAST_PHONG

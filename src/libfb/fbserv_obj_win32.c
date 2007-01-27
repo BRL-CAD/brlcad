@@ -202,7 +202,7 @@ fbs_pkgfoo(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-  	return;
+	return;
 }
 
 /******** Here's where the hooks lead *********/

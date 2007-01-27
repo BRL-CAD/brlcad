@@ -38,7 +38,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -77,7 +76,7 @@ db5_write_free( struct db_i *dbip, struct directory *dp, long length )
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
 
- 	if( length <= 8192 )  {
+	if( length <= 8192 )  {
 
 		BU_INIT_EXTERNAL( &ext );
 		db5_make_free_object( &ext, length );

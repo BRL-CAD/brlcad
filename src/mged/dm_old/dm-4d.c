@@ -41,7 +41,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 /* Forwards compat with IRIX 5.0.1 */
 #define class	inv_class	/* Map Irix 4 name into Irix 5 name */
 #define type	inv_type	/* Map Irix 4 name into Irix 5 name */
@@ -729,23 +728,23 @@ Ir_open()
 	dbtext("");
 # endif
 #endif
-        qdevice(THREEKEY); /* press 35,25 */
-        qdevice(FOURKEY); /* press 45,45 */
+	qdevice(THREEKEY); /* press 35,25 */
+	qdevice(FOURKEY); /* press 45,45 */
 	qdevice(AKEY); /* adc */
-        qdevice(BKEY); /* press bottom */
-        qdevice(EKEY); /* set e_axes ! */
-        qdevice(FKEY); /* press front */
-        qdevice(IKEY); /* aip f */
-        qdevice(LKEY); /* press left */
-        qdevice(OKEY); /* press oill */
+	qdevice(BKEY); /* press bottom */
+	qdevice(EKEY); /* set e_axes ! */
+	qdevice(FKEY); /* press front */
+	qdevice(IKEY); /* aip f */
+	qdevice(LKEY); /* press left */
+	qdevice(OKEY); /* press oill */
 	qdevice(PKEY); /* M 1 0 0 */
-        qdevice(QKEY); /* press reject */
-        qdevice(RKEY); /* press right */
-        qdevice(SKEY); /* press sill */
-        qdevice(TKEY); /* press top */
-        qdevice(UKEY); /* aip b */
-        qdevice(VKEY); /* set v_axes ! */
-        qdevice(WKEY); /* set w_axes ! */
+	qdevice(QKEY); /* press reject */
+	qdevice(RKEY); /* press right */
+	qdevice(SKEY); /* press sill */
+	qdevice(TKEY); /* press top */
+	qdevice(UKEY); /* aip b */
+	qdevice(VKEY); /* set v_axes ! */
+	qdevice(WKEY); /* set w_axes ! */
 
 	qdevice(F1KEY);	/* pf1 key for depthcue switching */
 	qdevice(F2KEY);	/* pf2 for Z clipping */
@@ -1590,7 +1589,6 @@ continue;
 			i = bmap[ret - SWBASE];
 
 
-
 			if(!valp[1]) continue;
 			if(button0) {
 				ir_dbtext(label_button(i));
@@ -1844,7 +1842,7 @@ continue;
 				}
 				break;
 			case DIAL5:
-			        if(mged_variables.rateknobs)
+				if(mged_variables.rateknobs)
 				  bu_vls_printf( &cmd , "knob Y %f\n",
 						 setting/2048.0 );
 				else
@@ -1865,7 +1863,7 @@ continue;
 				}
 				break;
 			case DIAL7:
-			        if(mged_variables.rateknobs)
+				if(mged_variables.rateknobs)
 				  bu_vls_printf( &cmd , "knob X %f\n",
 						 setting/2048.0 );
 				else
@@ -2728,8 +2726,6 @@ static float white_local_light[] = {
 #endif
 
 
-
-
 /*
  *  Lighting model parameters
  *	AMBIENT		amount of ambient light present in the scene, 0..1
@@ -2871,9 +2867,9 @@ char	**argv;
 	} else if( argc == 2 ) {
 	  bu_vls_struct_item_named( &vls, Ir_vparse, argv[1], (char *)&mvars, ',');
 		bu_log( "%s\n", bu_vls_addr(&vls) );
-  	} else {
-	        bu_vls_printf( &vls, "%s=\"", argv[1] );
-	        bu_vls_from_argv( &vls, argc-2, argv+2 );
+	} else {
+		bu_vls_printf( &vls, "%s=\"", argv[1] );
+		bu_vls_from_argv( &vls, argc-2, argv+2 );
 		bu_vls_putc( &vls, '\"' );
 		bu_struct_parse( &vls, Ir_vparse, (char *)&mvars );
 	}

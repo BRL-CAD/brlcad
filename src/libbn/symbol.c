@@ -51,7 +51,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -71,10 +70,10 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 void
 tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 
-    	        		/* string of chars to be plotted */
-       	       			/* lower left corner of 1st char */
-     	    			/* Transform matrix (WARNING: may xlate) */
-      	      			/* scale factor to change 1x1 char sz */
+				/* string of chars to be plotted */
+				/* lower left corner of 1st char */
+				/* Transform matrix (WARNING: may xlate) */
+				/* scale factor to change 1x1 char sz */
 {
 	register unsigned char *cp;
 	double	offset;			/* offset of char from given x,y */
@@ -149,11 +148,11 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 void
 tp_2symbol(FILE *fp, char *string, double x, double y, double scale, double theta)
 
-    	        		/* string of chars to be plotted */
-      	  			/* x,y of lower left corner of 1st char */
+				/* string of chars to be plotted */
+				/* x,y of lower left corner of 1st char */
 
-      	      			/* scale factor to change 1x1 char sz */
-      	      			/* degrees ccw from X-axis */
+				/* scale factor to change 1x1 char sz */
+				/* degrees ccw from X-axis */
 {
 	mat_t	mat;
 	vect_t	p;

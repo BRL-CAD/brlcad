@@ -1140,7 +1140,7 @@ bn_tabdata_binary_read(const char *filename, int num, const struct bn_table *tab
 	bu_semaphore_release( BU_SEM_SYSCALL );
 	if( got != len )  {
 	    if (got < 0) {
-		perror(filename);		
+		perror(filename);
 		bu_log("bn_tabdata_binary_read read error on \"%s\"\n", filename);
 	    } else {
 		bu_log("bn_tabdata_binary_read(%s) expected %d got %d\n", filename, len, got);

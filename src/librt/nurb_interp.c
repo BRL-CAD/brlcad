@@ -40,7 +40,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <string.h>
 
@@ -127,7 +126,7 @@ rt_nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
 	rt_nurb_nodes( nodes, &crv->k, order);
 
 	/* use the node values to create the interpolation matrix
-    	 * which is a diagonal matrix
+	 * which is a diagonal matrix
 	 */
 
 	rt_nurb_interp_mat( interp_mat, &crv->k, nodes, order, n);
@@ -167,9 +166,9 @@ void
 rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ymax, int xmax)
 
 
-             	      		/* data[x,y] */
-   		     		/* nrow = max Y */
-   		     		/* ncol = max X */
+				/* data[x,y] */
+				/* nrow = max Y */
+				/* ncol = max X */
 {
 	int	x;
 	int	y;

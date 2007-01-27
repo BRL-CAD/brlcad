@@ -70,7 +70,7 @@ FILE	*ifp, *ofp;
 static char usage[] = "\
 Usage: bwcrop in.bw out.bw (I prompt!)\n\
    or  bwcrop in.bw out.bw inwidth outwidth outheight\n\
-        ulx uly urx ury lrx lry llx lly\n";
+	ulx uly urx ury lrx lry llx lly\n";
 
 int
 main(int argc, char **argv)

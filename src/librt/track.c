@@ -72,10 +72,10 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 			return TCL_ERROR; \
 		} \
 	} else { \
-    		bu_log("Sorry, this database is READ-ONLY\n"); \
+		bu_log("Sorry, this database is READ-ONLY\n"); \
 	}
 #define	WDB_TCL_ERROR_RECOVERY_SUGGESTION\
-        Tcl_AppendResult(interp, "\
+	Tcl_AppendResult(interp, "\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety,\n\
 you should exit now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
@@ -895,8 +895,6 @@ crregion(struct rt_wdb	*wdbp,
 }
 
 
-
-
 /*	==== I T O A ( )
  *	convert integer to ascii  wd format
  */
@@ -1181,11 +1179,11 @@ track_mk_comb(
 
 	if( append_ok &&
 	    wdb_import( wdbp, &intern, combname, (matp_t)NULL ) >= 0 )  {
-	    	/* We retrieved an existing object, append to it */
+		/* We retrieved an existing object, append to it */
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB( comb );
 
-	    	fresh_combination = 0;
+		fresh_combination = 0;
 	} else {
 		/* Create a fresh new object for export */
 		BU_GETSTRUCT( comb, rt_comb_internal );

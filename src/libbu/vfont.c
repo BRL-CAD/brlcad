@@ -101,8 +101,8 @@ vfont_get(char *font)
 	if( fread( (char *)header, sizeof(header), 1, fp ) != 1 ||
 	    fread( (char *)dispatch, sizeof(dispatch), 1, fp ) != 1 )  {
 		fprintf(stderr, "vfont_get(%s):  header read error\n", fname );
-	    	fclose(fp);
-	    	return(VFONT_NULL);
+		fclose(fp);
+		return(VFONT_NULL);
 	}
 	magic = vax_gshort( &header[0*2] ) & 0xFFFF;
 	size = vax_gshort( &header[1*2] ) & 0xFFFF;	/* unsigned short */

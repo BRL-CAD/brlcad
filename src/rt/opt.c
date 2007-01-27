@@ -396,7 +396,7 @@ int get_args( int argc, register char **argv )
 
 				if (lightmodel == 7) {					/* Process the photon mapping arguments */
 					item= strtok(NULL,",");
- 					pmargs[0]= item ? atoi(item) : 16384;		/* Number of Global Photons */
+					pmargs[0]= item ? atoi(item) : 16384;		/* Number of Global Photons */
 					item= strtok(NULL,",");
 					pmargs[1]= item ? atof(item) : 50;		/* Percent of Global Photons that should be used for Caustic Photons */
 					item= strtok(NULL,",");

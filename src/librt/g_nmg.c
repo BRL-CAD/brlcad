@@ -156,7 +156,6 @@ rt_nmg_print(register const struct soltab *stp)
 }
 
 
-
 /**
  *  			R T _ N M G _ S H O T
  *
@@ -171,9 +170,9 @@ rt_nmg_print(register const struct soltab *stp)
 int
 rt_nmg_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 
-                    	    	/* info about the ray */
+				/* info about the ray */
 
-          		         	/* intersection w/ ray */
+					/* intersection w/ ray */
 {
 	struct ray_data rd;
 	int status;
@@ -186,10 +185,10 @@ rt_nmg_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	}
 
 	/* check validity of nmg specific structure */
- 	if (nmg->nmg_smagic != NMG_SPEC_START_MAGIC)
+	if (nmg->nmg_smagic != NMG_SPEC_START_MAGIC)
 		rt_bomb("start of NMG st_specific structure corrupted\n");
 
- 	if (nmg->nmg_emagic != NMG_SPEC_END_MAGIC)
+	if (nmg->nmg_emagic != NMG_SPEC_END_MAGIC)
 		rt_bomb("end of NMG st_specific structure corrupted\n");
 
 	/* Compute the inverse of the direction cosines */
@@ -259,10 +258,10 @@ rt_nmg_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  */
 void
 rt_nmg_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	rt_vstub( stp, rp, segp, n, ap );
@@ -290,10 +289,10 @@ rt_nmg_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 /*	register struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific; */
 
- 	cvp->crv_c1 = cvp->crv_c2 = 0;
+	cvp->crv_c1 = cvp->crv_c2 = 0;
 
 	/* any tangent direction */
- 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
 /**
@@ -829,7 +828,7 @@ int
 rt_nmg_export_fastf(const fastf_t *fp, int count, int pt_type, double scale)
 
 
-   		        	/* If zero, means literal array of values */
+				/* If zero, means literal array of values */
 
 {
 	register unsigned char	*cp;
@@ -1004,9 +1003,8 @@ rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
  */
 void
 rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, double local2mm)
-        	   		/* base of disk array */
-        	   		/* ptr to in-memory structure */
-
+				/* base of disk array */
+				/* ptr to in-memory structure */
 
 
 {
@@ -1391,13 +1389,11 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
  */
 int
 rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, long int **ptrs, const fastf_t *mat, const unsigned char *basep)
-        	   		/* ptr to in-memory structure */
-        	   		/* base of disk array */
+				/* ptr to in-memory structure */
+				/* base of disk array */
 
 
-
-
-                   	       	/* base of whole import record */
+				/* base of whole import record */
 {
 	int	iindex;		/* index in ip */
 
@@ -2281,8 +2277,8 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 		    kind == NMG_KIND_LOOP_G ) )  {
 			/*
 			 * Don't assign any new subscripts for them.
-		    	 * Instead, use DISK_INDEX_NULL, yielding null ptrs.
-		    	 */
+			 * Instead, use DISK_INDEX_NULL, yielding null ptrs.
+			 */
 			for( i=0; i < m->maxindex; i++ )  {
 				if( ptrs[i] == (long *)0 )  continue;
 				if( ecnt[i].kind != kind )  continue;
@@ -2480,7 +2476,7 @@ rt_nmg_import5( struct rt_db_internal	*ip,
 		if (ecnt[i].kind == NMG_KIND_DOUBLE_ARRAY) break;
 		if (rt_nmg_idisk( (genptr_t)(ptrs[i]), (genptr_t)dp, ecnt,
 		    i, ptrs, mat, (unsigned char *)startdata) < 0) {
-		    	return -1;
+			return -1;
 		    }
 		dp += rt_nmg_disk_sizes[ecnt[i].kind];
 	}
@@ -2619,12 +2615,12 @@ rt_nmg_export5(
 		if ( kind == NMG_KIND_NMGREGION_A ||
 		     kind == NMG_KIND_SHELL_A ||
 		     kind == NMG_KIND_LOOP_G ) {
-		     	for (i=0; i<m->maxindex; i++) {
-		     		if (ptrs[i] == (long *)0) continue;
-		     		if (ecnt[i].kind != kind) continue;
-		     		ecnt[i].new_subscript = DISK_INDEX_NULL;
-		     	}
-		     	continue;
+			for (i=0; i<m->maxindex; i++) {
+				if (ptrs[i] == (long *)0) continue;
+				if (ecnt[i].kind != kind) continue;
+				ecnt[i].new_subscript = DISK_INDEX_NULL;
+			}
+			continue;
 		}
 #endif
 		for (i=0; i< m->maxindex;i++) {

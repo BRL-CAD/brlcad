@@ -307,9 +307,9 @@ HIDDEN int
 gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    			      	/* pointer to reg_udata in *rp */
+				/* pointer to reg_udata in *rp */
 
-           		      	/* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct gauss_specific	*gauss_sp;
 	struct tree_bark tb;
@@ -457,7 +457,6 @@ eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg
 	 */
 
 
-
 	span = seg_p->seg_out.hit_dist - seg_p->seg_in.hit_dist;
 	steps = (int)(span / 100.0 + 0.5);
 	if ( steps < 2 ) steps = 2;
@@ -497,8 +496,8 @@ int
 gauss_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-                	     	/* defined in material.h */
-    			    	/* ptr to the shader-specific struct */
+				/* defined in material.h */
+				/* ptr to the shader-specific struct */
 {
 	register struct gauss_specific *gauss_sp =
 		(struct gauss_specific *)dp;
@@ -571,9 +570,9 @@ gauss_render(struct application *ap, struct partition *pp, struct shadework *swp
 		partition_dist = (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist);
 
 	tau = optical_density * partition_dist;
- 	swp->sw_transmit = exp(-tau); */
+	swp->sw_transmit = exp(-tau); */
 
- 	swp->sw_transmit = 1.0 - optical_density;
+	swp->sw_transmit = 1.0 - optical_density;
 
 /*	VMOVE(swp->sw_color, pt);*/
 

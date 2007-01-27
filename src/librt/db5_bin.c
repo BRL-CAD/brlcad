@@ -120,8 +120,8 @@ rt_bin_unif_export5(struct bu_external *ep,
 }
 int
 rt_bin_unif_import5(struct rt_db_internal * ip,
- 			const struct bu_external *ep,
- 			const mat_t mat,
+			const struct bu_external *ep,
+			const mat_t mat,
 			const struct db_i *dbip,
 			      struct resource *resp)
 {
@@ -130,8 +130,8 @@ rt_bin_unif_import5(struct rt_db_internal * ip,
 }
 int
 rt_bin_expm_import5(struct rt_db_internal * ip,
- 			const struct bu_external *ep,
- 			const mat_t mat,
+			const struct bu_external *ep,
+			const mat_t mat,
 			const struct db_i *dbip,
 			      struct resource *resp)
 {
@@ -141,8 +141,8 @@ rt_bin_expm_import5(struct rt_db_internal * ip,
 
 int
 rt_bin_mime_import5(struct rt_db_internal * ip,
- 			const struct bu_external *ep,
- 			const mat_t mat,
+			const struct bu_external *ep,
+			const mat_t mat,
 			const struct db_i *dbip,
 			      struct resource *resp)
 {

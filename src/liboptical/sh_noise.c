@@ -66,10 +66,10 @@ extern int rr_render(struct application	*ap,
  */
 void
 noise_cvt_parse(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+						/* structure description */
+						/* struct member name */
+						/* begining of structure */
+						/* string containing value */
 {
 	double *p = (double *)(base+sdp->sp_offset);
 
@@ -85,10 +85,10 @@ noise_cvt_parse(register const struct bu_structparse *sdp, register const char *
 
 void
 noise_deg_to_rad(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+						/* structure description */
+						/* struct member name */
+						/* begining of structure */
+						/* string containing value */
 {
 	double *p = (double *)(base+sdp->sp_offset);
 
@@ -243,9 +243,9 @@ HIDDEN int
 noise_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    			      	/* pointer to reg_udata in *rp */
+				/* pointer to reg_udata in *rp */
 
-           		      	/* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct noise_specific	*noise_sp;
 	mat_t	tmp;
@@ -349,9 +349,7 @@ static void
 norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*func) (/* ??? */), struct shadework *swp, int rescale)
 
 
-
-
-                	     	/* defined in material.h */
+				/* defined in material.h */
 
 {
 	vect_t N, tmp;
@@ -425,8 +423,8 @@ int
 fractal_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-                	     	/* defined in material.h */
-    			    	/* ptr to the shader-specific struct */
+				/* defined in material.h */
+				/* ptr to the shader-specific struct */
 {
 	register struct noise_specific *noise_sp =
 		(struct noise_specific *)dp;

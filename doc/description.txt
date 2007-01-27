@@ -26,7 +26,7 @@ HISTORY
 
 "The future exists first in the imagination,
 then in the will, then in reality."
-                - Mike Muuss
+		- Mike Muuss
 
 BRL-CAD was originally conceived and written for the most part by the
 late Michael John Muuss.  He is the original primary architect and
@@ -43,7 +43,7 @@ December 21, 2004.
 
 
 PROJECT NAME
-------------  
+------------
 
 The proper name of the project is "BRL-CAD", with specific importance
 to spell the name in uppercase and utilizing a hyphen.  The "BRL-CAD"
@@ -94,7 +94,7 @@ Patch Contributions: http://sourceforge.net/tracker/?group_id=105292&atid=640804
 Internet Relay Chat: irc://irc.freenode.net/brlcad i.e. #brlcad on the Freenode network
 Mailing Lists: http://sourceforge.net/mail/?group_id=105292
 Forums: http://sourceforge.net/forum/?group_id=105292
-CVS Access: http://sourceforge.net/cvs/?group_id=105292 
+CVS Access: http://sourceforge.net/cvs/?group_id=105292
 
 
 KEYWORDS & CATEGORIES

@@ -171,7 +171,7 @@ main(int argc, char **argv)
 	int threshold = 0;
 	int gthreshold = 0;
 #endif
-        int c = 0;
+	int c = 0;
 
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);
@@ -204,8 +204,8 @@ main(int argc, char **argv)
 	if( (b1 = (char *)malloc( CHUNK )) == (char *)0 ||
 	    (b2 = (char *)malloc( CHUNK )) == (char *)0 ||
 	    (b3 = (char *)malloc( CHUNK )) == (char *)0 ) {
-	    	fprintf(stderr, "pixblend:  malloc failure\n");
-	    	exit(3);
+		fprintf(stderr, "pixblend:  malloc failure\n");
+		exit(3);
 	}
 
 	while(1)  {
@@ -213,7 +213,7 @@ main(int argc, char **argv)
 		register unsigned char	*cb3; 	/* current output buf ptr */
 		int r1, r2, len, todo;
 
-	        ++c;
+		++c;
 		r1 = fread( b1, 1, CHUNK, f1 );
 		r2 = fread( b2, 1, CHUNK, f2 );
 		len = r1;
@@ -252,7 +252,7 @@ main(int argc, char **argv)
 #else
 			    int r;
 			    r = random() & 0xffff;
- 			    if (r >= threshold) {
+			    if (r >= threshold) {
 #endif
 				cb3[0] = cb1[0];
 				cb3[1] = cb1[1];

@@ -55,7 +55,6 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -226,9 +225,9 @@ view_pixel(register struct application *ap)
 		else if( b < 0 )  b = 0;
 		if( r == ibackground[0] && g == ibackground[1] &&
 		    b == ibackground[2] )  {
-		    	r = inonbackground[0];
-		    	g = inonbackground[1];
-		    	b = inonbackground[2];
+			r = inonbackground[0];
+			g = inonbackground[1];
+			b = inonbackground[2];
 		}
 
 		/* Make sure it's never perfect black */
@@ -596,7 +595,7 @@ view_setup(struct rt_i *rtip)
 			}
 			/* Perhaps this should be a function? */
 			break;
-	        case 2:
+		case 2:
 			/* Full success, and this region should get dropped later */
 			/* Add to list of regions to drop */
 			bu_ptbl_ins( &rtip->delete_regs, (long *)regp );
@@ -815,14 +814,14 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 
 		if( pp->pt_outhit->hit_dist >= INFINITY ||
 		    ap->a_level > max_bounces )  {
-		    	if( R_DEBUG&RDEBUG_SHOWERR )  {
+			if( R_DEBUG&RDEBUG_SHOWERR )  {
 				VSET( ap->a_color, 9, 0, 0 );	/* RED */
 				bu_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
 					pp->pt_regionp->reg_name,
 					ap->a_x, ap->a_y, ap->a_level);
-		    	} else {
-		    		VSETALL( ap->a_color, 0.18 );	/* 18% Grey */
-		    	}
+			} else {
+				VSETALL( ap->a_color, 0.18 );	/* 18% Grey */
+			}
 			ap->a_user = 1;		/* Signal view_pixel:  HIT */
 			ap->a_dist = hitp->hit_dist;
 			goto out;
@@ -952,7 +951,6 @@ out:
 }
 
 
-
 /*
  *			V I E W I T
  *
@@ -1003,7 +1001,7 @@ int viewit(register struct application *ap,
 		ap->a_color[2] = (normal[2] * (-.5)) + .5;
 		break;
 	case 4:
-	 	{
+		{
 			LOCAL struct curvature cv;
 			FAST fastf_t f;
 
@@ -1024,7 +1022,7 @@ int viewit(register struct application *ap,
 		}
 		break;
 	case 5:
-	 	{
+		{
 			LOCAL struct curvature cv;
 
 			RT_CURVATURE( &cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
@@ -1032,7 +1030,7 @@ int viewit(register struct application *ap,
 			ap->a_color[0] = (cv.crv_pdir[0] * (-.5)) + .5;
 			ap->a_color[1] = (cv.crv_pdir[1] * (-.5)) + .5;
 			ap->a_color[2] = (cv.crv_pdir[2] * (-.5)) + .5;
-	 	}
+		}
 		break;
 	case 6:
 		{
@@ -1310,12 +1308,12 @@ view_2init(register struct application *ap, char *framename)
 	} else if( width <= 96 )  {
 		buf_mode = BUFMODE_UNBUF;
 	} else if( npsw <= height/4 )  {
-	    	/* Have each CPU do a whole scanline.
-	    	 * Saves lots of semaphore overhead.
+		/* Have each CPU do a whole scanline.
+		 * Saves lots of semaphore overhead.
 		 * For load balancing make sure each CPU has several lines to do.
-	    	 */
+		 */
 		per_processor_chunk = width;
-	    	buf_mode = BUFMODE_SCANLINE;
+		buf_mode = BUFMODE_SCANLINE;
 	}  else  {
 		buf_mode = BUFMODE_DYNAMIC;
 	}
@@ -1426,15 +1424,15 @@ bu_log("mallocing curr_float_frame\n");
 		    sb.st_size > 0 )  {
 			/* File exists, with partial results */
 			register int	xx, yy;
-		    	int		got;
+			int		got;
 
 			/* Replaced with new method of looking through whole image and calculating black pixels */
 			/* pix_start = sb.st_size / sizeof(RGBpixel); */
 
-		    	/* Protect against file being too large */
+			/* Protect against file being too large */
 			if( pix_start > pix_end )  pix_start = pix_end;
 
-		    	/* XXX Need to check for black interior regions! */
+			/* XXX Need to check for black interior regions! */
 
 			xx = pix_start % width;
 			yy = pix_start / width;
@@ -1448,12 +1446,12 @@ bu_log("mallocing curr_float_frame\n");
 				sizeof(RGBpixel),
 				"sl_buf scanline buffer (for continuation scanline)");
 			if( fseek( outfp, yy*width*pwidth, 0 ) != 0 )
-		    		bu_log("fseek error\n");
-		    	/* Read the fractional scanline */
+				bu_log("fseek error\n");
+			/* Read the fractional scanline */
 			got = fread( scanline[yy].sl_buf, sizeof(RGBpixel),
 			    xx, outfp );
-		    	if( got != xx )
-		    		bu_log("Unable to fread fractional scanline, wanted %d, got %d pixels\n", xx, got);
+			if( got != xx )
+				bu_log("Unable to fread fractional scanline, wanted %d, got %d pixels\n", xx, got);
 
 			/* Account for pixels that don't need to be done */
 			scanline[yy].sl_left -= xx;
@@ -1505,7 +1503,7 @@ bu_log("mallocing curr_float_frame\n");
 			light_maker(1, view2model);
 		}
 
-                /* Build Photon Map */
+		/* Build Photon Map */
 		PM_Activated= 1;
 		BuildPhotonMap(ap,eye_model,npsw,width,height,hypersample,(int)pmargs[0],pmargs[1],(int)pmargs[2],pmargs[3],(int)pmargs[4],(int)pmargs[5],(int)pmargs[6],(int)pmargs[7],pmargs[8],pmfile);
 
@@ -1580,14 +1578,14 @@ bu_log("mallocing curr_float_frame\n");
 	 * Perturb the background color channel with the largest intensity.
 	 */
 	if( inonbackground[0] > inonbackground[1] )  {
-    		if( inonbackground[0] > inonbackground[2] )  i = 0;
-    		else i = 2;
-    	} else {
+		if( inonbackground[0] > inonbackground[2] )  i = 0;
+		else i = 2;
+	} else {
 		if( inonbackground[1] > inonbackground[2] ) i = 1;
-    		else i = 2;
-    	}
+		else i = 2;
+	}
 	if( inonbackground[i] < 127 ) inonbackground[i]++;
-    	else inonbackground[i]--;
+	else inonbackground[i]--;
 
 }
 

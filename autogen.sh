@@ -445,7 +445,7 @@ if [ "x$LIBTOOLIZE" = "x" ] ; then
 	    $ECHO "work and will be done automatically for you if autoreconf fails."
 	fi
 
-        # look for some alternates
+	# look for some alternates
 	for tool in glibtoolize libtoolize15 libtoolize14 libtoolize13 ; do
 	    $VERBOSE_ECHO "Checking libtoolize alternate: $tool --version"
 	    _glibtoolize="`$tool --version > /dev/null 2>&1`"
@@ -684,7 +684,7 @@ initialize ( ) {
 	$VERBOSE_ECHO "rm -f aclocal.m4"
 	rm -f aclocal.m4
     fi
-    
+
 } # end of initialize()
 
 
@@ -975,7 +975,7 @@ EOF
 # run manual configuration steps #
 ##################################
 if [ "x$reconfigure_manually" = "xyes" ] ; then
-    
+
     # XXX if this is a recursive configure, manual steps don't work
     # yet .. assume it's the libtool/glibtool problem.
     if [ ! "x$CONFIG_SUBDIRS" = "x" ] ; then

@@ -202,10 +202,10 @@ rt_xxx_curve( struct curvature *cvp, struct hit *hitp, struct soltab *stp )
 	register struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
 
- 	cvp->crv_c1 = cvp->crv_c2 = 0;
+	cvp->crv_c1 = cvp->crv_c2 = 0;
 
 	/* any tangent direction */
- 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
 /**
@@ -352,7 +352,6 @@ rt_xxx_export( struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 	return(0);
 }
-
 
 
 /**

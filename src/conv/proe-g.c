@@ -1171,15 +1171,15 @@ main(int argc, char **argv)
 {
 	register int c;
 
-        tol.magic = BN_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 
 	/* this value selected as a resaonable compromise between eliminating
 	 * needed faces and keeping degenerate faces
 	 */
-        tol.dist = 0.005;	/* default, same as MGED, RT, ... */
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 1e-6;
-        tol.para = 1 - tol.perp;
+	tol.dist = 0.005;	/* default, same as MGED, RT, ... */
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 	vert_tree_root = create_vert_tree();
 

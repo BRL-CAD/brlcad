@@ -59,32 +59,32 @@ set helplib_data(dm_clearBufferAfter)	{{[flag]} {Get/set the clearBufferAfter fl
 set helplib_data(wdb_adjust)		{{object attr value ?attr value?} {adjust object's attribute(s)}}
 set helplib_data(wdb_attr)        {{ {set|get|show|rm|append} object [args]}
 	      {set, get, show, remove or append to attribute values for the specified object.
-         The arguments for "set" and "append" subcommands are attribute name/value pairs.
-         The arguments for "get", "rm", and "show" subcommands are attribute names.
-         The "set" subcommand sets the specified attributes for the object.
-         The "append" subcommand appends the provided value to an existing attribute,
-                 or creates a new attribute if it does not already exist.
-         The "get" subcommand retrieves and displays the specified attributes.
-         The "rm" subcommand deletes the specified attributes.
-         The "show" subcommand does a "get" and displays the results in a user readable format.}   }
+	 The arguments for "set" and "append" subcommands are attribute name/value pairs.
+	 The arguments for "get", "rm", and "show" subcommands are attribute names.
+	 The "set" subcommand sets the specified attributes for the object.
+	 The "append" subcommand appends the provided value to an existing attribute,
+		 or creates a new attribute if it does not already exist.
+	 The "get" subcommand retrieves and displays the specified attributes.
+	 The "rm" subcommand deletes the specified attributes.
+	 The "show" subcommand does a "get" and displays the results in a user readable format.}   }
 set helplib_data(wdb_binary)		{{(-i|-o) major_type minor_type dest source}
-                {manipulate opaque objects.
-                 Must specify one of -i (for creating or adjusting objects (input))
-                 or -o for extracting objects (output).
-                 If the major type is "u" the minor type must be one of:
-                      "f" -> float
-                      "d" -> double
-                      "c" -> char (8 bit)
-                      "s" -> short (16 bit)
-                      "i" -> int (32 bit)
-                      "l" -> long (64 bit)
-                      "C" -> unsigned char (8 bit)
-                      "S" -> unsigned short (16 bit)
-                      "I" -> unsigned int (32 bit)
-                      "L" -> unsigned long (64 bit)
-                 For input, source is a file name and dest is an object name.
-                 For output source is an object name and dest is a file name.
-                 Only uniform array binary objects (major_type=u) are currently supported}}
+		{manipulate opaque objects.
+		 Must specify one of -i (for creating or adjusting objects (input))
+		 or -o for extracting objects (output).
+		 If the major type is "u" the minor type must be one of:
+		      "f" -> float
+		      "d" -> double
+		      "c" -> char (8 bit)
+		      "s" -> short (16 bit)
+		      "i" -> int (32 bit)
+		      "l" -> long (64 bit)
+		      "C" -> unsigned char (8 bit)
+		      "S" -> unsigned short (16 bit)
+		      "I" -> unsigned int (32 bit)
+		      "L" -> unsigned long (64 bit)
+		 For input, source is a file name and dest is an object name.
+		 For output source is an object name and dest is a file name.
+		 Only uniform array binary objects (major_type=u) are currently supported}}
 set helplib_data(wdb_bot_face_sort)     {{triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]} {sort the facelist of BOT solids to optimize ray trace performance for a particular number of triangles per raytrace piece }}
 set helplib_data(wdb_bot_decimate)      {{ -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name} {Uses edge decimation to reduce the number of triangles in the specified BOT while keeping within the specified constraints}}
 set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}
@@ -234,35 +234,35 @@ set helplib_data(mat_inv)		{{mat}	{invert a 4x4 matrix}}
 set helplib_data(mat_trn)		{{mat}	{transpose a 4x4 matrix}}
 set helplib_data(mat_ae)		{{azimuth elevation}	{compute a 4x4 rotation matrix given azimuth and elevation}}
 set helplib_data(mat_ae_vec)		{{vect}	{find azimuth and elevation angles that correspond to the
-        direction given by vect}}
+	direction given by vect}}
 set helplib_data(mat_aet_vec)		{{vec_ae vec_twist}	{find azimuth, elevation and twist angles}}
 set helplib_data(mat_angles)		{{alpha beta gamma}	{build a homogeneous rotation matrix given 3 angles of rotation}}
 set helplib_data(mat_eigen2x2)		{{a b c}	{find eigenvalues and eigenvectors of a symmetric 2x2 matrix}}
 set helplib_data(mat_fromto)		{{vecFrom vecTo}	{compute a rotation matrix that will transform space by the
-        angle between the two given vectors}}
+	angle between the two given vectors}}
 set helplib_data(mat_xrot)		{{sinAngle cosAngle}	{find the rotation matrix given the sin and cos of the X rotation angle}}
 set helplib_data(mat_yrot)		{{sinAngle cosAngle}	{find the rotation matrix given the sin and cos of the Y rotation angle}}
 set helplib_data(mat_zrot)		{{sinAngle cosAngle}	{find the rotation matrix given the sin and cos of the Z rotation angle}}
 set helplib_data(mat_lookat)		{{dir yflip}	{compute a matrix which rotates vector dir onto the -Z axis}}
 set helplib_data(mat_vec_ortho)		{{vec}	{find a vector which is perpendicular to vec and with unit length}}
 set helplib_data(mat_vec_perp)		{{vec}	{find a vector which is perpendicular to vec and with unit length
-        if vec was of unit length}}
+	if vec was of unit length}}
 set helplib_data(mat_scale_about_pt)	{{pt scale}	{build a matrix to scale uniformly around a given point}}
 set helplib_data(mat_xform_about_pt)	{{xform pt}	{build a matrix to apply an arbitrary 4x4 transformation around
-        a given point}}
+	a given point}}
 set helplib_data(mat_arb_rot)		{{pt dir angle}	{build a matrix to rotate about an arbitrary axis}}
 set helplib_data(quat_mat2quat)		{{mat}	{convert matrix to quaternion}}
 set helplib_data(quat_quat2mat)		{{quat}	{convert quaternion to matrix}}
 set helplib_data(quat_distance)		{{quatA quatB}	{finds the euclidean distance between two quaternions}}
 set helplib_data(quat_double)		{{quatA quatB}	{finds the quaternion point representing twice the rotation from
-        quatA to quatB}}
+	quatA to quatB}}
 set helplib_data(quat_bisect)		{{quatA quatB}	{finds the bisector of quaternions quatA and quatB}}
 set helplib_data(quat_sberp)		{{quat1 quat2 quat3 quat4 factor}	{do sperical bezier interpolation between four quaternions
-        by the given factor}}
+	by the given factor}}
 set helplib_data(quat_slerp)		{{quat1 quat2 factor}	{do spherical linear interpolation between two unit quaternions
-        by the given factor}}
+	by the given factor}}
 set helplib_data(quat_make_nearest)	{{quatA quatB}	{set quaternion quatA to the quaternion which yields the smallest
-        rotation from quatB}}
+	rotation from quatB}}
 set helplib_data(quat_exp)		{{quat}	{exponentiate a quaternion}}
 set helplib_data(quat_log)		{{quat}	{take the natural logarithm of a unit quaternion}}
 

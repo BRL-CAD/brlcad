@@ -35,7 +35,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 
 #include "machine.h"
@@ -147,8 +146,6 @@ point_t pt;	/* Evaluated point on spline */
 	for( j=0 ; j<3 ; j++ )
 		pt[j] = numer[j]/denom;
 }
-
-
 
 
 /*

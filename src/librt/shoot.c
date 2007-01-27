@@ -291,8 +291,8 @@ top:		switch( curcut->cut_type ) {
 				if( z<0 ) break;
 
 				cutp = &nu_grid[z*nu_stepsize[Z] +
-					        y*nu_stepsize[Y] +
-					        x*nu_stepsize[X]];
+						y*nu_stepsize[Y] +
+						x*nu_stepsize[X]];
 
 				ssp->igrid[X] = x;
 				ssp->igrid[Y] = y;
@@ -446,7 +446,7 @@ pop_space_stack:
 
 		if( RT_G_DEBUG&DEBUG_ADVANCE ) {
 			bu_log(
-	           "rt_advance_to_next_cell() dist_corr=%g, pt=(%g, %g, %g)\n",
+		   "rt_advance_to_next_cell() dist_corr=%g, pt=(%g, %g, %g)\n",
 				t0 /*ssp->dist_corr*/, px, py, pz );
 		}
 
@@ -978,23 +978,23 @@ rt_shootray(register struct application *ap)
 	if( !rt_in_rpp( &ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	    ap->a_ray.r_max < 0.0 )  {
 		cutp = &ap->a_rt_i->rti_inf_box;
-	    	if( cutp->bn.bn_len > 0 )  {
-	    		/* Model has infinite solids, need to fire at them. */
+		if( cutp->bn.bn_len > 0 )  {
+			/* Model has infinite solids, need to fire at them. */
 			ss.box_start = BACKING_DIST;
 			ss.model_start = 0;
 			ss.box_end = ss.model_end = INFINITY;
 			ss.lastcut = CUTTER_NULL;
 			ss.old_status = (struct rt_shootray_status *)NULL;
 			ss.curcut = cutp;
-	    		ss.lastcell = ss.curcut;
+			ss.lastcell = ss.curcut;
 			VMOVE( ss.curmin, rtip->mdl_min );
 			VMOVE( ss.curmax, rtip->mdl_max );
 			last_bool_start = BACKING_DIST;
 			ss.newray = ap->a_ray;		/* struct copy */
 			ss.odist_corr = ss.obox_start = ss.obox_end = -99;
-	    		ss.dist_corr = 0.0;
-	    		goto start_cell;
-	    	}
+			ss.dist_corr = 0.0;
+			goto start_cell;
+		}
 		resp->re_nmiss_model++;
 		ap->a_return = ap->a_miss( ap );
 		status = "MISS model";
@@ -1180,7 +1180,7 @@ start_cell:
 				psp->cutp = cutp;
 				if( (ret = stp->st_meth->ft_piece_shot(
 				    psp, plp, ss.dist_corr, &ss.newray, ap, &waiting_segs )) <= 0 )  {
-				    	/* No hits at all */
+					/* No hits at all */
 					resp->re_piece_shot_miss++;
 				} else {
 					resp->re_piece_shot_hit++;
@@ -1200,7 +1200,7 @@ start_cell:
 					BU_BITSET( solidbits, stp->st_bit );
 
 					if( had_hits_before )
-    						bu_ptbl_rm( &resp->re_pieces_pending, (long *)psp );
+						bu_ptbl_rm( &resp->re_pieces_pending, (long *)psp );
 				} else {
 					if( !had_hits_before )
 						bu_ptbl_ins_unique( &resp->re_pieces_pending, (long *)psp );
@@ -1461,7 +1461,7 @@ out:
 const union cutter *
 rt_cell_n_on_ray(register struct application *ap, int n)
 
-   	  		/* First cell is #0 */
+			/* First cell is #0 */
 {
 	struct rt_shootray_status	ss;
 	register const union cutter *cutp;
@@ -1596,10 +1596,10 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 	if( !rt_in_rpp( &ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	    ap->a_ray.r_max < 0.0 )  {
 		cutp = &ap->a_rt_i->rti_inf_box;
-	    	if( cutp->bn.bn_len > 0 )  {
-	    		if( n == 0 )  return cutp;
-	    	}
-    		return CUTTER_NULL;
+		if( cutp->bn.bn_len > 0 )  {
+			if( n == 0 )  return cutp;
+		}
+		return CUTTER_NULL;
 	}
 
 	/*
@@ -1784,7 +1784,7 @@ rt_in_rpp(struct xray		*rp,
 int
 rt_DB_rpp(register struct xray *rp, register const fastf_t *invdir, register const fastf_t *min, register const fastf_t *max)
 
-                               	/* inverses of rp->r_dir[] */
+				/* inverses of rp->r_dir[] */
 
 
 {
@@ -1914,11 +1914,11 @@ miss:
 /* Stub function which will "similate" a call to a vector shot routine */
 void
 rt_vstub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
-                  	     /* pointer to an application */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
+			     /* pointer to an application */
 {
 	register int    i;
 	register struct seg *tmp_seg;

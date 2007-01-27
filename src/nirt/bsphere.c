@@ -30,7 +30,6 @@ static const char RCSid[] = "$Header$";
 #include "common.h"
 
 
-
 #include	<stdio.h>
 #include	<math.h>
 

@@ -901,8 +901,8 @@ void
 rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, int n, struct application *ap)
 
 
-                               /* array of segs (results returned) */
-                               /* Number of ray/object pairs */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	register struct tgc_specific	*tgc;
@@ -2698,18 +2698,18 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 	bn_mat_mul(imat, mat, omat);
 
-        VMOVE(anorm, tip->c);
-        VMOVE(bnorm, tip->d);
-        VCROSS(cnorm, tip->c, tip->d);
-        VUNITIZE(anorm);
-        VUNITIZE(bnorm);
-        VUNITIZE(cnorm);
+	VMOVE(anorm, tip->c);
+	VMOVE(bnorm, tip->d);
+	VCROSS(cnorm, tip->c, tip->d);
+	VUNITIZE(anorm);
+	VUNITIZE(bnorm);
+	VUNITIZE(cnorm);
 
-        MAT_IDN( omat );
+	MAT_IDN( omat );
 
-        VMOVE( &omat[0], anorm);
-        VMOVE( &omat[4], bnorm);
-        VMOVE( &omat[8], cnorm);
+	VMOVE( &omat[0], anorm);
+	VMOVE( &omat[4], bnorm);
+	VMOVE( &omat[8], cnorm);
 
 
 	bn_mat_mul(top_mat, omat, imat);
@@ -2742,26 +2742,26 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 	omat[0] = MAGNITUDE(tip->a);
 	omat[5] = MAGNITUDE(tip->b);
-        omat[3] = tip->v[0];
-        omat[7] = tip->v[1];
-        omat[11] = tip->v[2];
+	omat[3] = tip->v[0];
+	omat[7] = tip->v[1];
+	omat[11] = tip->v[2];
 
-        bn_mat_mul(imat, mat, omat);
+	bn_mat_mul(imat, mat, omat);
 
-        VMOVE(anorm, tip->a);
-        VMOVE(bnorm, tip->b);
-        VCROSS(cnorm, tip->a, tip->b);
-        VUNITIZE(anorm);
-        VUNITIZE(bnorm);
-        VUNITIZE(cnorm);
+	VMOVE(anorm, tip->a);
+	VMOVE(bnorm, tip->b);
+	VCROSS(cnorm, tip->a, tip->b);
+	VUNITIZE(anorm);
+	VUNITIZE(bnorm);
+	VUNITIZE(cnorm);
 
-        MAT_IDN( omat );
+	MAT_IDN( omat );
 
-        VMOVE( &omat[0], anorm);
-        VMOVE( &omat[4], bnorm);
-        VMOVE( &omat[8], cnorm);
+	VMOVE( &omat[0], anorm);
+	VMOVE( &omat[4], bnorm);
+	VMOVE( &omat[8], cnorm);
 
-        bn_mat_mul(bot_mat, omat, imat);
+	bn_mat_mul(bot_mat, omat, imat);
 
 	/* Create topology for bottom cap surface */
 
@@ -2910,14 +2910,14 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 
 	i = fg->s_size[0] * fg->s_size[1];
 
-        for( ; i> 0; i--)
-        {
+	for( ; i> 0; i--)
+	{
 		MAT4X3PNT(vect,rmat,mptr);
-                mptr[0] = vect[0];
-                mptr[1] = vect[1];
-                mptr[2] = vect[2];
-                mptr += 3;
-        }
+		mptr[0] = vect[0];
+		mptr[1] = vect[1];
+		mptr[2] = vect[2];
+		mptr += 3;
+	}
 
 	lu = BU_LIST_FIRST( loopuse, &fu->lu_hd);
 	NMG_CK_LOOPUSE(lu);

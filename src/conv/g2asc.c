@@ -344,71 +344,71 @@ main(int argc, char **argv)
 top:
 	do {
 		/* Check record type and skip deleted records */
-	    	switch( record.u_id )  {
-	    	case ID_FREE:
+		switch( record.u_id )  {
+		case ID_FREE:
 			continue;
-	    	case ID_SOLID:
+		case ID_SOLID:
 			soldump();
 			continue;
-	    	case ID_COMB:
+		case ID_COMB:
 			if( combdump() > 0 )  goto top;
 			continue;
-	    	case ID_MEMB:
-	    		(void)fprintf(stderr, "g2asc: stray MEMB record, skipped\n");
-	    		continue;
-	    	case ID_ARS_A:
+		case ID_MEMB:
+			(void)fprintf(stderr, "g2asc: stray MEMB record, skipped\n");
+			continue;
+		case ID_ARS_A:
 			arsadump();
-	    		continue;
-	    	case ID_P_HEAD:
+			continue;
+		case ID_P_HEAD:
 			polyhead();
-	    		continue;
-	    	case ID_P_DATA:
+			continue;
+		case ID_P_DATA:
 			polydata();
-	    		continue;
-	    	case ID_IDENT:
+			continue;
+		case ID_IDENT:
 			idendump();
-	    		continue;
-	    	case ID_MATERIAL:
+			continue;
+		case ID_MATERIAL:
 			materdump();
-	    		continue;
-	    	case DBID_PIPE:
-	    		pipe_dump();
-	    		continue;
-	    	case DBID_STRSOL:
-	    		strsol_dump();
-	    		continue;
-	    	case DBID_NMG:
-	    		nmg_dump();
-	    		continue;
-	    	case DBID_PARTICLE:
-	    		particle_dump();
-	    		continue;
-	    	case DBID_ARBN:
-	    		arbn_dump();
-	    		continue;
-	    	case DBID_CLINE:
-	    		cline_dump();
-	    		continue;
-	    	case DBID_BOT:
-	    		bot_dump();
-	    		continue;
-	    	case ID_BSOLID:
+			continue;
+		case DBID_PIPE:
+			pipe_dump();
+			continue;
+		case DBID_STRSOL:
+			strsol_dump();
+			continue;
+		case DBID_NMG:
+			nmg_dump();
+			continue;
+		case DBID_PARTICLE:
+			particle_dump();
+			continue;
+		case DBID_ARBN:
+			arbn_dump();
+			continue;
+		case DBID_CLINE:
+			cline_dump();
+			continue;
+		case DBID_BOT:
+			bot_dump();
+			continue;
+		case ID_BSOLID:
 			bspldump();
-	    		continue;
-	    	case ID_BSURF:
+			continue;
+		case ID_BSURF:
 			bsurfdump();
-	    		continue;
-	    	case DBID_SKETCH:
-	    		sketchdump();
-	    		continue;
-	    	case DBID_EXTR:
-	    		extrdump();
-	    		continue;
-	    	default:
+			continue;
+		case DBID_SKETCH:
+			sketchdump();
+			continue;
+		case DBID_EXTR:
+			extrdump();
+			continue;
+		default:
 			(void)fprintf(stderr,
 				"g2asc: unable to convert record type '%c' (0%o), skipping\n",
 				record.u_id, record.u_id);
-	    		continue;
+			continue;
 		}
 	}  while( fread( (char *)&record, sizeof record, 1, ifp ) == 1  &&
 	    !feof(ifp) );

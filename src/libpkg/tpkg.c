@@ -142,7 +142,7 @@ run_server(int port) {
 	{MSG_CIAO, server_ciao, "CIAO"},
 	{0, 0, (char *)0}
     };
-    
+
     validate_port(port);
 
     /* start up the server on the given port */
@@ -155,7 +155,7 @@ run_server(int port) {
     /* listen for a good client indefinitely.  this is a simple
      * handshake that waits for a HELO message from the client.  if it
      * doesn't get one, the server continues to wait.
-     */	
+     */
     do {
 	client = pkg_getclient(netfd, callbacks, NULL, 0);
 	if (client == PKC_NULL) {
@@ -273,7 +273,7 @@ run_client(const char *server, int port, const char *file)
 
 	if (bytes > 0) {
 	    bytes = pkg_send(MSG_DATA, buffer, bytes, stash.connection);
-	    if (bytes < 0) {	
+	    if (bytes < 0) {
 		pkg_close(stash.connection);
 		bu_log("Unable to successfully send data to %s, port %d.\n", stash.server, stash.port);
 		bu_free(buffer, "buffer release");

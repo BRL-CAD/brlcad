@@ -470,7 +470,7 @@ f_SetFbSize(HMitem *itemp, char **args)
 			(void) sprintf( prompt,
 					"Frame buffer size ? (%d) ", fb_size );
 			if(	get_Input( input_ln, MAX_LN, prompt ) != NULL
-	 		    &&	sscanf( input_ln, "%d", &fb_size ) != 1
+			    &&	sscanf( input_ln, "%d", &fb_size ) != 1
 				)
 				{
 				force_fbsz = FALSE;
@@ -637,7 +637,7 @@ f_Grid_Roll(HMitem *itemp, char **args)
 			(void) sprintf( prompt, "Grid roll ? (%g) ", grid_roll*DEGRAD );
 			if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
 				{
-			   	if( sscanf( input_ln, "%lf", &grid_roll ) != 1 )
+				if( sscanf( input_ln, "%lf", &grid_roll ) != 1 )
 					return	-1;
 				else
 					grid_roll /= DEGRAD;
@@ -1032,7 +1032,7 @@ keybd_input :
 				else
 					ring_Bell();
 				break;
-	 		case READ :
+			case READ :
 				{	RGBpixel	pixel;
 				mx = XSCR2MEM( x );
 				my = YSCR2MEM( y );
@@ -1423,7 +1423,7 @@ f_GridConfig(HMitem *itemp, char **args)
 			{
 			(void) sprintf( prompt, "Grid size ? (%d) ", grid_sz );
 			if(	get_Input( input_ln, MAX_LN, prompt ) != NULL
-		 	   &&	sscanf( input_ln, "%d", &grid_sz ) != 1
+			   &&	sscanf( input_ln, "%d", &grid_sz ) != 1
 				)
 				return	-1;
 			}
@@ -2254,7 +2254,7 @@ f_Wrt_IR_Db(HMitem *itemp, char **args)
 static int
 f_Wrt_Lgt_Db(HMitem *itemp, char **args)
 {
- 	if( args != NULL && args[1] != NULL )
+	if( args != NULL && args[1] != NULL )
 		(void) strncpy( lgt_db_file, args[1], MAX_LN );
 	else
 	if( tty )
@@ -3652,7 +3652,7 @@ make_Script(char *file)
 	if( hiddenln_draw )
 		(void) fprintf( run_fp,	" -k%d",
 				hiddenln_draw ? (reverse_video ? 2 : 1) : 0
-			 	);
+				);
 	if( ! report_overlaps )
 		(void) fprintf( run_fp, " -X%d", report_overlaps );
 	if( ! shadowing )

@@ -251,8 +251,8 @@ rt_spect_reflectance_rgb(struct bn_tabdata *curve, const float *rgb)
 void
 rt_spect_black_body(struct bn_tabdata *data, double temp, unsigned int n)
 
-      			     		/* Degrees Kelvin */
-            		  		/* # wavelengths to eval at */
+					/* Degrees Kelvin */
+					/* # wavelengths to eval at */
 {
 	const struct bn_table	*tabp;
 	int				j;
@@ -310,7 +310,7 @@ rt_spect_black_body(struct bn_tabdata *data, double temp, unsigned int n)
 void
 rt_spect_black_body_fast(struct bn_tabdata *data, double temp)
 
-      			     		/* Degrees Kelvin */
+					/* Degrees Kelvin */
 {
 	const struct bn_table	*tabp;
 	int				j;
@@ -340,7 +340,7 @@ rt_spect_black_body_fast(struct bn_tabdata *data, double temp)
 void
 rt_spect_black_body_points(struct bn_tabdata *data, double temp)
 
-      			     		/* Degrees Kelvin */
+					/* Degrees Kelvin */
 {
 	const struct bn_table	*tabp;
 	int				j;

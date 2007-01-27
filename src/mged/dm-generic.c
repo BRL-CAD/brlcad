@@ -200,9 +200,9 @@ end:
 	snap_to_grid(&fx, &fy);
 
       if( mged_variables->mv_perspective_mode )
-            VSET(view_pt, fx, fy, 0.0)
+	    VSET(view_pt, fx, fy, 0.0)
       else
-            VSET(view_pt, fx, fy, 1.0)
+	    VSET(view_pt, fx, fy, 1.0)
 
       MAT4X3PNT(model_pt, view_state->vs_vop->vo_view2model, view_pt);
       VSCALE(model_pt, model_pt, base2local);

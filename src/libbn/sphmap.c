@@ -42,7 +42,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
@@ -60,7 +59,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *		S P M _ I N I T
  *@brief
  *  Return a sphere map structure initialized for N points around
- *  the equator.  
+ *  the equator.
  *
  * Malloc the storage and fill in the pointers.
  *  This code leaves a ring of "triangular" pixels at the poles.
@@ -303,9 +302,9 @@ spm_save(spm_map_t *mapp, char *filename)
 		if( got != mapp->nx[i] ) {
 			bu_log("spm_save(%s): write error\n", filename);
 			bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-		    	(void) fclose( fp );
+			(void) fclose( fp );
 			bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
-		    	return( -1 );
+			return( -1 );
 		}
 	}
 

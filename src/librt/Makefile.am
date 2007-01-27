@@ -159,7 +159,7 @@ EXTRA_librt_nil_la_SOURCES = \
 	g_brep.cpp
 
 INCLUDES = ${BREP_CPPFLAGS}
-librt_la_SOURCES = 
+librt_la_SOURCES =
 librt_la_LDFLAGS = -version-info 19:1
 #librt_la_CPPFLAGS = ${BREP_CPPFLAGS}
 librt_la_LIBADD = \

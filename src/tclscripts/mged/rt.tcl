@@ -681,7 +681,7 @@ ray tracer will handle light." } }
     $top.lmodelMB.lmodelM add command -label "Full"\
 	    -command "set rt_control($id,lmodel) 0;\
 	    set rt_control($id,lmodelTitle) \"Full\";\
-            PMMenu $id $top 0"
+	    PMMenu $id $top 0"
     hoc_register_menu_data "Light Model" "Full"\
 	    "Lighting Model - Full"\
 	    { { summary "This is the default. The full lighting model has the
@@ -697,7 +697,7 @@ will be initiated automatically." } }
     $top.lmodelMB.lmodelM add command -label "Diffuse"\
 	    -command "set rt_control($id,lmodel) 1;\
 	    set rt_control($id,lmodelTitle) \"Diffuse\";\
-            PMMenu $id $top 0"
+	    PMMenu $id $top 0"
     hoc_register_menu_data "Light Model" "Diffuse"\
 	    "Lighting Model - Diffuse"\
 	    { { summary "This is a diffuse lighting model only and\
@@ -705,7 +705,7 @@ is intended for debugging." } }
     $top.lmodelMB.lmodelM add command -label "Surface Normals"\
 	    -command "set rt_control($id,lmodel) 2;\
 	    set rt_control($id,lmodelTitle) \"Surface Normals\";\
-            PMMenu $id $top 0"
+	    PMMenu $id $top 0"
     hoc_register_menu_data "Light Model" "Surface Normals"\
 	    "Lighting Model - Surface Normals"\
 	    { { summary "This lighting model displays the surface normals
@@ -714,7 +714,7 @@ curvature and surface orientation." } }
     $top.lmodelMB.lmodelM add command -label "Diffuse - 3 light"\
 	    -command "set rt_control($id,lmodel) 3;\
 	    set rt_control($id,lmodelTitle) \"Diffuse - 3 light\";\
-            PMMenu $id $top 0"
+	    PMMenu $id $top 0"
     hoc_register_menu_data "Light Model" "Diffuse - 3 light"\
 	    "Lighting Model - Diffuse 3 Light"\
 	    { { summary "This is a three-light diffuse-lighting model\
@@ -722,7 +722,7 @@ and is intended for debugging." } }
     $top.lmodelMB.lmodelM add command -label "Curvature - inverse radius"\
 	    -command "set rt_control($id,lmodel) 4;\
 	    set rt_control($id,lmodelTitle) \"Curvature - inverse radius\";\
-            PMMenu $id $top 0"
+	    PMMenu $id $top 0"
     hoc_register_menu_data "Light Model" "Curvature - inverse radius"\
 	    "Lighting Model - Curvature, Inverse Radius"\
 	    { { summary "This is a curvature debugging display,
@@ -730,7 +730,7 @@ showing the inverse radius of curvature." } }
     $top.lmodelMB.lmodelM add command -label "Curvature - direction vector"\
 	    -command "set rt_control($id,lmodel) 5;\
 	    set rt_control($id,lmodelTitle) \"Curvature - direction vector\";\
-            PMMenu $id $top 0"
+	    PMMenu $id $top 0"
     hoc_register_menu_data "Light Model" "Curvature - direction vector"\
 	    "Lighting Model - Curvature, Direction Vector"\
 	    { { summary "This is a curvature debugging display,
@@ -1337,7 +1337,7 @@ proc rt_init_vars { id win } {
 	set rt_control($id,lmodelTitle) "Full"
 	set rt_control($id,other) {}
 
-        ## Photon Mapping Init Stuff
+	## Photon Mapping Init Stuff
 	set rt_control($id,pmGlobalPhotonsEntry) 16384
 	set rt_control($id,pmGlobalPhotonsScale) 14
 	set rt_control($id,pmCausticsPercentScale) 0

@@ -23,7 +23,7 @@
  *
  * @brief
  *  This is a standard wavelet library that takes a given data buffer of some data
- *  type and then performs a wavelet transform on that data.  
+ *  type and then performs a wavelet transform on that data.
  *
  * The transform
  *  operations available are to either decompose or reconstruct a signal into it's
@@ -171,7 +171,6 @@
 #endif
 
 
-
 #define make_wlt_haar_1d_decompose(DATATYPE)  \
 void \
 decompose_1d(DATATYPE) \
@@ -262,19 +261,19 @@ unsigned long limit; \
 	CK_POW_2( dimen ); \
 	CK_POW_2( limit ); \
 \
-        if ( ! (subimage_size < dimen) ) { \
+	if ( ! (subimage_size < dimen) ) { \
 		bu_log("%s:%d Dimension %d should be greater than subimage size (%d)\n", \
 			__FILE__, __LINE__, dimen, subimage_size); \
 		bu_bomb("reconstruct"); \
 	} \
 \
-        if ( ! (subimage_size < limit) ) { \
+	if ( ! (subimage_size < limit) ) { \
 		bu_log("%s:%d Channels limit %d should be greater than subimage size (%d)\n", \
 			__FILE__, __LINE__, limit, subimage_size); \
 		bu_bomb("reconstruct"); \
 	} \
 \
-        if ( ! (limit <= dimen) ) { \
+	if ( ! (limit <= dimen) ) { \
 		bu_log("%s:%d Dimension %d should be greater than or equal to the channels limit (%d)\n", \
 			__FILE__, __LINE__, dimen, limit); \
 		bu_bomb("reconstruct"); \
@@ -567,7 +566,6 @@ make_wlt_haar_2d_reconstruct(short)
 make_wlt_haar_2d_reconstruct(long)
 
 
-
 #ifdef __STDC__
 #define decompose_2d_2( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _decompose2
 #else
@@ -597,8 +595,8 @@ unsigned long limit; \
 	CK_POW_2( width ); \
 	CK_POW_2( height ); \
 \
-        /* create a temp buffer the half the size of the larger dimension \
-         */ \
+	/* create a temp buffer the half the size of the larger dimension \
+	 */ \
 	if ( ! tbuffer ) { \
 		tbuffer = (DATATYPE *)bu_malloc( \
 				(((width>height)?width:height)/2) * channels * sizeof( *buffer ), \
@@ -682,7 +680,6 @@ make_wlt_haar_2d_decompose2(char)
 make_wlt_haar_2d_decompose2(int)
 make_wlt_haar_2d_decompose2(short)
 make_wlt_haar_2d_decompose2(long)
-
 
 
 /*

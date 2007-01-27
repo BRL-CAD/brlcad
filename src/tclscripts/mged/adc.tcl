@@ -221,16 +221,16 @@ the control panel."} }
     button $top.applyB -relief raised -text "Apply"\
 	    -command "mged_apply $id \"adc_apply $id\";\
 	    if {\$mged_adc_control($id,interpval) == \"abs\"} {
-	        adc_load $id
-            }"
+		adc_load $id
+	    }"
     hoc_register_data $top.applyB "Apply"\
 	    { { summary "Apply the values in the ADC control panel
 to the angle distance cursor." } }
     button $top.resetB -relief raised -text "Reset"\
 	    -command "mged_apply $id \"adc reset\";\
 	    if {\$mged_adc_control($id,interpval) == \"abs\"} {
-	        adc_load $id
-            }"
+		adc_load $id
+	    }"
     hoc_register_data $top.resetB "Reset"\
 	    { { summary "Reset the angle distance cursor to its
 default values." } }
@@ -445,12 +445,12 @@ types - model and grid. The current coordinate
 system type is model. This is the coordinate system
 type that the MGED database lives in." } }
 
-            set hoc_data { { summary "Indicates the angle distance cursor's position
+	    set hoc_data { { summary "Indicates the angle distance cursor's position
 in model coordinates (local units)." } }
-            hoc_register_data $top.posL "ADC Position" $hoc_data
-            hoc_register_data $top.posE "ADC Position" $hoc_data
+	    hoc_register_data $top.posL "ADC Position" $hoc_data
+	    hoc_register_data $top.posE "ADC Position" $hoc_data
 
-            hoc_register_data $top.anchorL "Anchor Points"\
+	    hoc_register_data $top.anchorL "Anchor Points"\
 		    { { summary "Anchor points are currently used to \"anchor\"
 certain ADC attributes to a point in model space.
 For example, if the ADC position is anchored to the
@@ -459,37 +459,37 @@ drawn with its center at the model origin. The following
 four attributes can be anchored: position, tick distance,
 angle1 and angle2." } }
 
-            set hoc_data { { summary "Indicates the angle distance cursor's position
+	    set hoc_data { { summary "Indicates the angle distance cursor's position
 in model coordinates (local units). If the
 ADC position is anchored, the ADC will remain
 positioned at the anchor point. So if the view
 changes while the ADC position is anchored, the
 ADC will move with respect to the view." } }
-            hoc_register_data $top.anchor_xyzL "Position" $hoc_data
-            hoc_register_data $top.anchor_xyzE "Position" $hoc_data
+	    hoc_register_data $top.anchor_xyzL "Position" $hoc_data
+	    hoc_register_data $top.anchor_xyzE "Position" $hoc_data
 
-            set hoc_data { { summary "If anchoring, the tick is drawn at
+	    set hoc_data { { summary "If anchoring, the tick is drawn at
 a distance from the ADC center position
 that is equal to the distance between the
 ADC center position and the anchor point.
 Note - the anchor point is currently specified
 in model coordinates (local units)." } }
-            hoc_register_data $top.anchor_tickL "Tick Distance Anchor Point" $hoc_data
-            hoc_register_data $top.anchor_tickE "Tick Distance Ancor Point" $hoc_data
+	    hoc_register_data $top.anchor_tickL "Tick Distance Anchor Point" $hoc_data
+	    hoc_register_data $top.anchor_tickE "Tick Distance Ancor Point" $hoc_data
 
-            set hoc_data { { summary "If anchoring is enabled, then angle 1 is always
+	    set hoc_data { { summary "If anchoring is enabled, then angle 1 is always
 drawn through its anchor point. Note - the
 anchor point is currently specified in model
 coordinates (local units)." } }
-            hoc_register_data $top.anchor_a1L "Angle 1 Anchor Point" $hoc_data
-            hoc_register_data $top.anchor_a1E "Angle 1 Anchor Point" $hoc_data
+	    hoc_register_data $top.anchor_a1L "Angle 1 Anchor Point" $hoc_data
+	    hoc_register_data $top.anchor_a1E "Angle 1 Anchor Point" $hoc_data
 
-            set hoc_data { { summary "If anchoring is enabled, then angle 2 is always
+	    set hoc_data { { summary "If anchoring is enabled, then angle 2 is always
 drawn through its anchor point. Note - the
 anchor point is currently specified in model
 coordinates (local units)." } }
-            hoc_register_data $top.anchor_a2L "Angle 2 Anchor Point" $hoc_data
-            hoc_register_data $top.anchor_a2E "Angle 2 Anchor Point" $hoc_data
+	    hoc_register_data $top.anchor_a2L "Angle 2 Anchor Point" $hoc_data
+	    hoc_register_data $top.anchor_a2E "Angle 2 Anchor Point" $hoc_data
 	}
 	grid {
 	    set mged_adc_control($id,coords_text) "Grid Coords"
@@ -501,12 +501,12 @@ system type is grid. This coordinate system is
 this system is located by projecting the model
 origin onto the view plane." } }
 
-            set hoc_data { { summary "Indicates the angle distance cursor's position
+	    set hoc_data { { summary "Indicates the angle distance cursor's position
 in grid coordinates (local units)." } }
-            hoc_register_data $top.posL "ADC Position" $hoc_data
-            hoc_register_data $top.posE "ADC Position" $hoc_data
+	    hoc_register_data $top.posL "ADC Position" $hoc_data
+	    hoc_register_data $top.posE "ADC Position" $hoc_data
 
-            hoc_register_data $top.anchorL "Anchor Points"\
+	    hoc_register_data $top.anchorL "Anchor Points"\
 		    { { summary "Anchor points are currently used to \"anchor\"
 certain ADC attributes to a point in grid space.
 For example, if the ADC position is anchored to the
@@ -515,33 +515,33 @@ drawn with its center at the grid origin. The following
 four attributes can be anchored: position, tick distance,
 angle1 and angle2." } }
 
-            set hoc_data { { summary "Indicates the angle distance cursor's position
+	    set hoc_data { { summary "Indicates the angle distance cursor's position
 in grid coordinates (local units)." } }
-            hoc_register_data $top.anchor_xyzL "Position" $hoc_data
-            hoc_register_data $top.anchor_xyzE "Position" $hoc_data
+	    hoc_register_data $top.anchor_xyzL "Position" $hoc_data
+	    hoc_register_data $top.anchor_xyzE "Position" $hoc_data
 
-            set hoc_data { { summary "If anchoring is enabled, the tick is always
+	    set hoc_data { { summary "If anchoring is enabled, the tick is always
 drawn at a distance from the ADC center
 position that is equal to the distance between the
 the ADC center position and the anchor point.
 Note - the anchor point is currently specified
 in grid coordinates (local units)." } }
-            hoc_register_data $top.anchor_tickL "Tick Distance Anchor Point" $hoc_data
+	    hoc_register_data $top.anchor_tickL "Tick Distance Anchor Point" $hoc_data
 	    hoc_register_data $top.anchor_tickE "Tick Distance Ancor Point" $hoc_data
 
-            set hoc_data { { summary "If anchoring is enabled, then angle 1 is always
+	    set hoc_data { { summary "If anchoring is enabled, then angle 1 is always
 drawn through its anchor point. Note - the
 anchor point is currently specified in grid
 coordinates (local units)." } }
-            hoc_register_data $top.anchor_a1L "Angle 1 Anchor Point" $hoc_data
-            hoc_register_data $top.anchor_a1E "Angle 1 Anchor Point" $hoc_data
+	    hoc_register_data $top.anchor_a1L "Angle 1 Anchor Point" $hoc_data
+	    hoc_register_data $top.anchor_a1E "Angle 1 Anchor Point" $hoc_data
 
-            set hoc_data { { summary "If anchoring is enabled, then angle 2 is always
+	    set hoc_data { { summary "If anchoring is enabled, then angle 2 is always
 drawn through its anchor point. Note - the
 anchor point is currently specified in grid
 coordinates (local units)." } }
-            hoc_register_data $top.anchor_a2L "Angle 2 Anchor Point" $hoc_data
-            hoc_register_data $top.anchor_a2E "Angle 2 Anchor Point" $hoc_data
+	    hoc_register_data $top.anchor_a2L "Angle 2 Anchor Point" $hoc_data
+	    hoc_register_data $top.anchor_a2E "Angle 2 Anchor Point" $hoc_data
 	}
     }
 

@@ -964,7 +964,7 @@ ogl_open(FBIO *ifp, char *file, int width, int height)
 	printf("                 depth = %d,\n", depth), \
 	printf("                 class = %d,\n", class), \
 	printf("                visual = %08X,\n", (long)visual), \
-        printf("             valuemask = %08X,\n", valuemask), \
+	printf("             valuemask = %08X,\n", valuemask), \
 	printf("            attributes = {"), \
 	(valuemask & CWBackPixmap) ? printf(" background_pixmap = %08X ", (long)((attributes)->background_pixmap)) : 0, \
 	(valuemask & CWBackPixel) ? printf(" background_pixel = %08X ", (attributes)->background_pixel) : 0, \
@@ -1785,7 +1785,6 @@ ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 }
 
 
-
 HIDDEN int
 ogl_rmap(register FBIO *ifp, register ColorMap *cmp)
 {
@@ -2039,7 +2038,6 @@ ogl_cursor(FBIO *ifp, int mode, int x, int y)
 
     return(0);
 }
-
 
 
 HIDDEN int

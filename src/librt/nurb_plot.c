@@ -38,7 +38,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -67,18 +66,18 @@ rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 	{
 		for( j = 0; j < srf->s_size[1]; j++)
 		{
-                       if ( rat )
-                        {
-                                pt[0] = m_ptr[0]/ m_ptr[3];
-                                pt[1] = m_ptr[1]/ m_ptr[3];
-                                pt[2] = m_ptr[2]/ m_ptr[3];
-                        } else
-                        {
-                                pt[0] = m_ptr[0];
-                                pt[1] = m_ptr[1];
-                                pt[2] = m_ptr[2];
+		       if ( rat )
+			{
+				pt[0] = m_ptr[0]/ m_ptr[3];
+				pt[1] = m_ptr[1]/ m_ptr[3];
+				pt[2] = m_ptr[2]/ m_ptr[3];
+			} else
+			{
+				pt[0] = m_ptr[0];
+				pt[1] = m_ptr[1];
+				pt[2] = m_ptr[2];
 
-                        }
+			}
 
 			if( j == 0)
 			{
@@ -97,18 +96,18 @@ rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 		m_ptr = &srf->ctl_points[j * evp];
 		for( i = 0; i < srf->s_size[0]; i++)
 		{
-                        if ( rat )
-                        {
-                                pt[0] = m_ptr[0]/ m_ptr[3];
-                                pt[1] = m_ptr[1]/ m_ptr[3];
-                                pt[2] = m_ptr[2]/ m_ptr[3];
-                        } else
-                        {
-                                pt[0] = m_ptr[0];
-                                pt[1] = m_ptr[1];
-                                pt[2] = m_ptr[2];
+			if ( rat )
+			{
+				pt[0] = m_ptr[0]/ m_ptr[3];
+				pt[1] = m_ptr[1]/ m_ptr[3];
+				pt[2] = m_ptr[2]/ m_ptr[3];
+			} else
+			{
+				pt[0] = m_ptr[0];
+				pt[1] = m_ptr[1];
+				pt[2] = m_ptr[2];
 
-                        }
+			}
 
 
 			if( i == 0)

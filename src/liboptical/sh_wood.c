@@ -279,9 +279,7 @@ HIDDEN void wood_D_set (const struct bu_structparse *sdp, const char *name, cons
 HIDDEN int wood_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-
-
-                                /* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register int i;
 	register struct wood_specific *wd;

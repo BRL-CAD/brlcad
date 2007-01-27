@@ -79,11 +79,11 @@ main(int argc, char **argv) 			/* really has no arguments */
 	FILE *fp;
 	int i;
 
-        tol.magic = BN_TOL_MAGIC;
-        tol.dist = 0.005;
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 1e-6;
-        tol.para = 1 - tol.perp;
+	tol.magic = BN_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 	BU_LIST_INIT( &rt_g.rtg_vlfree );
 

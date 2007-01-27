@@ -345,17 +345,16 @@ proc obj_exists { obj_name } {
 }
 
 
-
 proc pattern_rect { args } {
-        global local2base
+	global local2base
 
-    	set usage "Usage:\n\tpattern_rect \[-top|-regions|-primitives\] \[-g group_name\] \
+	set usage "Usage:\n\tpattern_rect \[-top|-regions|-primitives\] \[-g group_name\] \
 		 \[-xdir { x y z }\] \[-ydir { x y z }\] \[-zdir { x y z }\] \
 		\[-nx num_x -dx delta_x | -lx list_of_x_values\]\n\t\t \
 		\[-ny num_y -dy delta_y | -ly list_of_y_values\] \[-nz num_z -dz delta_z | -lz list_of_z_values\] \
 		\[-s source_string replacement_string\] \[-i increment\]  object1 \[object2 object3 ...\]"
 
-        init_vmath
+	init_vmath
 
 	set opt_str ""
 	set group_name ""
@@ -564,29 +563,29 @@ proc pattern_rect { args } {
 	set ydir [vunitize $ydir]
 	set zdir [vunitize $zdir]
 
-        # convert to local units
-        for { set i 0 } { $i < $num_x } { incr i } {
+	# convert to local units
+	for { set i 0 } { $i < $num_x } { incr i } {
 	    set list_x [lreplace $list_x $i $i [expr [lindex $list_x $i] * $local2base]]
 	}
-        for { set i 0 } { $i < $num_y } { incr i } {
+	for { set i 0 } { $i < $num_y } { incr i } {
 	    set list_y [lreplace $list_y $i $i [expr [lindex $list_y $i] * $local2base]]
 	}
-        for { set i 0 } { $i < $num_z } { incr i } {
+	for { set i 0 } { $i < $num_z } { incr i } {
 	    set list_z [lreplace $list_z $i $i [expr [lindex $list_z $i] * $local2base]]
 	}
 
 	set x_index 0
 	foreach x $list_x {
 		incr x_index
-	        set x_vec [vscale $xdir $x]
+		set x_vec [vscale $xdir $x]
 		set y_index 0
 		foreach y $list_y {
 			incr y_index
-		        set y_vec [vscale $ydir $y]
+			set y_vec [vscale $ydir $y]
 			set z_index 0
 			foreach z $list_z {
 				incr z_index
-			        set z_vec [vscale $zdir $z]
+				set z_vec [vscale $zdir $z]
 				set mat [mat_deltas_vec [mat_idn] [vadd3 $x_vec $y_vec $z_vec]]
 				foreach obj $objs {
 					switch $depth {
@@ -675,7 +674,7 @@ proc pattern_sph { args } {
 	while { $index < $argc } {
 		set opt [lindex $args $index]
 		switch -- $opt {
-		        "-start_r" {
+			"-start_r" {
 			    incr index
 			    set start_r [lindex $args $index]
 			    incr index
@@ -778,7 +777,7 @@ proc pattern_sph { args } {
 			"-laz" {
 				incr index
 				set tmp_list [lindex $args $index ]
-			        set list_az {}
+				set list_az {}
 				foreach az $tmp_list {
 				    lappend list_az [expr {$az * $M_PI / 180.0}]
 				}
@@ -787,7 +786,7 @@ proc pattern_sph { args } {
 			"-lel" {
 				incr index
 				set tmp_list [lindex $args $index ]
-			        set list_el {}
+				set list_el {}
 				foreach el $tmp_list {
 				    lappend list_el [expr {$el * $M_PI / 180.0}]
 				}
@@ -879,13 +878,13 @@ proc pattern_sph { args } {
 	    }
 	}
 
-        # convert to base units
-        for { set i 0 } { $i < $num_r } { incr i } {
+	# convert to base units
+	for { set i 0 } { $i < $num_r } { incr i } {
 	    set list_r [lreplace $list_r $i $i [expr [lindex $list_r $i] * $local2base]]
 	}
 
-        set center_pat [vscale $center_pat $local2base]
-        set center_obj [vscale $center_obj $local2base]
+	set center_pat [vscale $center_pat $local2base]
+	set center_obj [vscale $center_obj $local2base]
 
 	$feed_name configure -steps [expr {$rlen * ($ellen - $pole_count) * $azlen + $pole_count * $rlen}]
 	set r_index 0
@@ -1086,7 +1085,7 @@ proc pattern_cyl { args } {
 			"-laz" {
 				incr index
 				set tmp_list [lindex $args $index ]
-			        set list_az {}
+				set list_az {}
 				foreach az $tmp_list {
 				    lappend list_az [expr {$az * $M_PI / 180.0}]
 				}
@@ -1224,15 +1223,15 @@ proc pattern_cyl { args } {
 	set azlen [llength $list_az]
 	$feed_name configure -steps [expr $rlen * $hlen * $azlen]
 
-        # convert to base units
-        for { set i 0 } { $i < $num_h } { incr i } {
+	# convert to base units
+	for { set i 0 } { $i < $num_h } { incr i } {
 	    set list_h [lreplace $list_h $i $i [expr [lindex $list_h $i] * $local2base]]
 	}
-        for { set i 0 } { $i < $num_r } { incr i } {
+	for { set i 0 } { $i < $num_r } { incr i } {
 	    set list_r [lreplace $list_r $i $i [expr [lindex $list_r $i] * $local2base]]
 	}
-        set center_obj [vscale $center_obj $local2base]
-        set center_base [vscale $center_base $local2base]
+	set center_obj [vscale $center_obj $local2base]
+	set center_base [vscale $center_base $local2base]
 
 	set r_index 0
 	foreach radius $list_r {

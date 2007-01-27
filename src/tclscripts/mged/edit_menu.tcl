@@ -69,7 +69,7 @@ proc init_solid_edit_menus { stype menu } {
 
 	set cmds "set mged_gui($id,transform) e; \
 		  set_transform $id
-	          press \"Edit Menu\"; "
+		  press \"Edit Menu\"; "
 	set i [build_solid_edit_menus .$id.menubar.edit $id 0 $cmds $menu]
 
 	.$id.menubar.edit insert $i separator

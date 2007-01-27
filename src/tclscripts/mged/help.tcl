@@ -31,8 +31,8 @@ set mged_help_data(?)		{{}	{summary of available mged commands}}
 set mged_help_data(?lib)	{{}	{summary of available library commands}}
 set mged_help_data(?devel)	{{}	{summary of available mged developer commands}}
 set mged_help_data(%)		{{}	{Escape to an interactive shell. Note - This only works in a
-        command window associated with a tty (i.e. the window used
-        to start MGED in classic mode). }}
+	command window associated with a tty (i.e. the window used
+	to start MGED in classic mode). }}
 set mged_help_data(3ptarb)	{{}	{makes arb given 3 pts, 2 coord of 4th pt, and thickness}}
 set mged_help_data(adc)		{{[<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help> [value(s)]]}	{control the angle/distance cursor}}
 set mged_help_data(adjust)	$helplib_data(wdb_adjust)
@@ -42,7 +42,7 @@ set mged_help_data(animmate)	{{[parent]}	{tool for building animation scripts}}
 set mged_help_data(apropos)	{{keyword}	{finds commands whose descriptions contain the given keyword}}
 set mged_help_data(aproposlib)	{{keyword}	{finds library commands whose descriptions contain the given keyword}}
 set mged_help_data(aproposdevel)	{{keyword}	{finds commands used for development whose descriptions
-        contain the given keyword}}
+	contain the given keyword}}
 set mged_help_data(arb)		{{name rot fb}	{make arb8, rotation + fallback}}
 set mged_help_data(arced)	{{a/b ...anim_command...}	{edit matrix or materials on combination's arc}}
 set mged_help_data(area)	{{[endpoint_tolerance]}	{calculate presented area of view (use ev -wT)}}
@@ -76,7 +76,7 @@ set mged_help_data(d)		$helplib_data(dgo_erase)
 set mged_help_data(dall)	$helplib_data(dgo_erase_all)
 set mged_help_data(db)		{{command}	{database manipulation routines}}
 set mged_help_data(db_glob)	{{cmd_string}	{globs cmd_string against the MGED database
-         resulting in an expanded command string}}
+	 resulting in an expanded command string}}
 set mged_help_data(dbconcat)	$helplib_data(wdb_concat)
 set mged_help_data(dbfind)	$helplib_data(wdb_find)
 set mged_help_data(dbupgrade)	{{[-f|-help]}	{upgrade your database to the current format}}
@@ -120,8 +120,8 @@ set mged_help_data(garbage_collect)	{{}	{eliminate unused space in database file
 set mged_help_data(get)		$helplib_data(wdb_get)
 set mged_help_data(get_regions)	{{combination}	{returns the names of all regions under a given combination/assembly}}
 set mged_help_data(gui)	{{[-config b|c|g] [-d display_string]
-        [-gd graphics_display_string] [-dt graphics_type]
-        [-id name] [-c -h -j -s]}	{create display/command window pair}}
+	[-gd graphics_display_string] [-dt graphics_type]
+	[-id name] [-c -h -j -s]}	{create display/command window pair}}
 set mged_help_data(help)	{{[command(s)]}	{give usage message for given command(s)}}
 set mged_help_data(helplib)	{{[library_command(s)]}	{give usage message for given library command(s)}}
 set mged_help_data(helpdevel)	{{[command(s)]}	{give usage message for given developer command(s)}}
@@ -204,9 +204,9 @@ set mged_help_data(rcodes)	{{filename}	{read region ident codes from filename}}
 set mged_help_data(read_muves)	{{MUVES_regionmap_file [sysdef_file]}	{read the MUVES region_map file and optionally the sysdef file}}
 set mged_help_data(red)		{{object}	{edit a group or region using a text editor}}
 set mged_help_data(redraw_vlist)	{{object(s)}	{given the name(s) of database objects, re-generate the vlist
-        associated with every solid in view which references the
-        named object(s), either solids or regions. Particularly
-        useful with outboard .inmem database modifications.}}
+	associated with every solid in view which references the
+	named object(s), either solids or regions. Particularly
+	useful with outboard .inmem database modifications.}}
 set mged_help_data(refresh)	{{}	{send new control list}}
 set mged_help_data(regdebug)	{{[number]}	{toggle display manager debugging or set debug level}}
 set mged_help_data(regdef)	{{ident [air [los [material]]]}	{change next region default codes}}
@@ -243,8 +243,8 @@ set mged_help_data(size)	$helplib_data(vo_size)
 set mged_help_data(solids)	{{file object(s)}	{make ascii summary of solid parameters}}
 set mged_help_data(sph-part)	{{sph1name sph2name newname}	{create a part from two sph's}}
 set mged_help_data(status)	{{[state|Viewscale|base2local|local2base|
-        toViewcenter|Viewrot|model2view|view2model|
-        model2objview|objview2model|help]}	{get view status}}
+	toViewcenter|Viewrot|model2view|view2model|
+	model2objview|objview2model|help]}	{get view status}}
 set mged_help_data(summary)	$helplib_data(wdb_summary)
 set mged_help_data(sv)		$helplib_data(vo_slew)
 set mged_help_data(sync)	{{}	{forces UNIX sync}}

@@ -289,7 +289,6 @@ main(int argc, char **argv)
 	}
 
 
-
 	if ((dist_mode==CALCULATED)||(dist_mode==STEERED)){
 	    /*determine distance traveled*/
 	    VMOVE(wheel_prev,wheel_now);
@@ -658,7 +657,6 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	VADD2(pos,x[0].t.pos0,temp);
 	*angle_p = atan2(x[0].t.dir[Z],x[0].t.dir[X]);
     }
-
 
 
     return -1;

@@ -424,7 +424,7 @@ ab_close(FBIO *ifp)
 		    ) != 720*486*2 )  {
 			fb_log("ab_close: unable to send frame %d to A60 %s!\n",
 				ifp->if_frame, ifp->if_host);
-		    	ret = -1;
+			ret = -1;
 		}
 		ab_log(ifp, "Transmission done");
 	}
@@ -686,8 +686,8 @@ ab_help(FBIO *ifp)
  */
 int
 ab_yuvio(int output, char *host, char *buf, int len, int frame, int to_network)
-   	       		/* 0=read(input), 1=write(output) */
-   	      		/* frame number */
+			/* 0=read(input), 1=write(output) */
+			/* frame number */
 {
 	struct sockaddr_in	sinme;		/* Client */
 	struct sockaddr_in	sinhim;		/* Server */

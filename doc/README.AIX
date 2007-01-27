@@ -25,4 +25,3 @@ been used in the past is to simply swap the compiler between the two
 modes as when one fails (e.g. strict), the other usually succeeds
 (e.g. extended).  Barring that working, you can use extended mode and
 define __STDC__ manually.
-

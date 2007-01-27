@@ -13,7 +13,7 @@ machines, but differing by one bit, ie:
 
 XMP	4001E00000000000
 Cray-2	4001DFFFFFFFFFFF
-        ^__^
+	^__^
 	exp
 
 It looks like the XMP is rounding UP, and the Cray-2 is rounding DOWN.
@@ -48,4 +48,3 @@ would be even better.
 
 	Best,
 	 -Mike
-

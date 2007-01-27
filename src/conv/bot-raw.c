@@ -61,15 +61,15 @@ void write_bot(struct rt_bot_internal *bot, FILE *fh, char *name)
     fwrite (&num_vertices, sizeof(int), 1, fh);
     for (i = 0; i < num_vertices; i++)
       for (n = 0; n < 3; n++) {
-        v = (float)vertices[3*i+n] * 0.001;
-        fwrite ( &v , sizeof(float), 1, fh);
+	v = (float)vertices[3*i+n] * 0.001;
+	fwrite ( &v , sizeof(float), 1, fh);
       }
 
     /* Faces */
     fwrite (&num_faces, sizeof(int), 1, fh);
     for (i = 0; i < num_faces; i++)
       for (n = 0; n < 3; n++)
-        fwrite (&faces[3*i+n], sizeof(int), 1, fh);
+	fwrite (&faces[3*i+n], sizeof(int), 1, fh);
 }
 
 
@@ -98,7 +98,6 @@ int main(int ac, char *av[])
     printf("geometry file: %s\n", av[1]);
 
 
-
     if ((rtip=rt_dirbuild(av[1], idbuf, sizeof(idbuf)))==RTI_NULL){
 	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
 	return 2;
@@ -111,15 +110,15 @@ int main(int ac, char *av[])
 	FILE *fh;
 
 
-        fh = fopen(av[2], "w");
+	fh = fopen(av[2], "w");
 
 	mat_idn(mat);
 
 	/* dump all the bots */
 	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 
-        /* we only dump BOT primitives, so skip some obvious exceptions */
-        if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
+	/* we only dump BOT primitives, so skip some obvious exceptions */
+	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
 	if (dp->d_flags & DIR_COMB) continue;
 
 	/* get the internal form */

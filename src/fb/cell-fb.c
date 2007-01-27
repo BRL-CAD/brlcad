@@ -245,8 +245,8 @@ static RGBpixel	colortbl[12] =		/* The map: value --> R, G, B */
 
 #if 0
 static const char   *mon_nam[] =
-                        { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+			{ "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+			  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 #endif
 
 static struct locrec	gp_locs;
@@ -336,7 +336,7 @@ static long read_Cell_Data(void)
     if (lbp == NULL)
     {
 	lbp = linebuf;
-        fgets(lbp, MAX_LINE, filep);
+	fgets(lbp, MAX_LINE, filep);
 	(void) strcpy(format, "%lf %lf");
 	(void) strcpy(format, "%lf %lf");
 	if (color_flag)
@@ -501,8 +501,8 @@ static bool display_Cells (long int ncells)
 	return (false);
     if (compute_fb_height || compute_fb_width)  {
 	bu_log("fb_size requested: %d %d\n", fb_width, fb_height);
-    	fb_width = fb_getwidth(fbiop);
-    	fb_height = fb_getheight(fbiop);
+	fb_width = fb_getwidth(fbiop);
+	fb_height = fb_getheight(fbiop);
 	bu_log("fb_size obtained: %d %d\n", fb_width, fb_height);
     }
     if (fb_wmap(fbiop, COLORMAP_NULL) == -1)
@@ -531,7 +531,7 @@ static bool display_Cells (long int ncells)
 		if (debug_flag & CFB_DBG_GRID)
 		    bu_log("%g = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
 		y0 = V2SCRY(lasty);
-	    	if( y0 >= 0 && y0 < fb_height )  {
+		if( y0 >= 0 && y0 < fb_height )  {
 			for(y1 = y0 + hgt; y0 < y1; y0++)
 			    if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
 			    {
@@ -539,7 +539,7 @@ static bool display_Cells (long int ncells)
 				(void) fb_close(fbiop);
 				return (false);
 			    }
-	    	}
+		}
 	    }
 	    /* Clear buffer. */
 	    for (x0 = 0; x0 < fb_width; x0++)
@@ -562,14 +562,14 @@ static bool display_Cells (long int ncells)
 	    lasty = gp->c_y;
 	}
 	val_To_RGB(gp->c_val, pixel);
-    	/* Be careful only to write color within bounds of the screen */
-    	x0 = H2SCRX(gp->c_x);
-    	if( x0 >= 0 && x0 <= fb_width - wid )  {
+	/* Be careful only to write color within bounds of the screen */
+	x0 = H2SCRX(gp->c_x);
+	if( x0 >= 0 && x0 <= fb_width - wid )  {
 		for (x1 = x0 + wid; x0 < x1;  x0++)
 		{
 		    COPYRGB(&buf[3*x0], pixel);
 		}
-    	}
+	}
     }
 
     /* Write out last row of cells. */
@@ -590,31 +590,31 @@ static bool display_Cells (long int ncells)
     {
 	register int	i, j;
 	double		base;
-    	int		scr_min, scr_max;
-    	int		scr_center;	/* screen coord of center of view */
-    	int		center_cell;	/* cell # of center of view */
+	int		scr_min, scr_max;
+	int		scr_center;	/* screen coord of center of view */
+	int		center_cell;	/* cell # of center of view */
 
 	/* Clear buffer. */
 	for (i = 0; i < fb_width; i++)
 	{
 	    COPYRGB(&buf[3*i], BACKGROUND);
 	}
-    	/*  Center the color key from side-to-side in the viewport.
-    	 *  Find screen coords of min and max vals, clip to (0,fb_width).
+	/*  Center the color key from side-to-side in the viewport.
+	 *  Find screen coords of min and max vals, clip to (0,fb_width).
 	 *  If there are fewer than 11 cells, the run the key
 	 *  from the left edge to beyond the right edge.
 	 */
-    	scr_min = H2SCRX(xmin);
-    	scr_max = H2SCRX(xmax);
-    	if( scr_min < 0 )  scr_min = 0;
-    	if( scr_min > fb_width )  scr_min = fb_width;
-    	if( scr_max < 0 )  scr_max = 0;
-    	if( scr_max > fb_width )  scr_max = fb_width;
-    	scr_center = (scr_max + scr_min)/2;
-    	if ((center_cell = VPX2CX(SCRX2VPX(scr_center))) < 5)
+	scr_min = H2SCRX(xmin);
+	scr_max = H2SCRX(xmax);
+	if( scr_min < 0 )  scr_min = 0;
+	if( scr_min > fb_width )  scr_min = fb_width;
+	if( scr_max < 0 )  scr_max = 0;
+	if( scr_max > fb_width )  scr_max = fb_width;
+	scr_center = (scr_max + scr_min)/2;
+	if ((center_cell = VPX2CX(SCRX2VPX(scr_center))) < 5)
 	    center_cell = 5;
 
-    	/* Draw 10 cells for the color key */
+	/* Draw 10 cells for the color key */
 	dom_cvt = 10.0;
 	for (i = 0; i <= 10; i++)
 	{
@@ -624,7 +624,7 @@ static bool display_Cells (long int ncells)
 	     *	Determine where to start the key,
 	     *	being careful not to back up beyond the beginning of buf.
 	     */
-    	    base = VPX2SCRX( CX2VPX( center_cell - 10/2 + i ) );
+	    base = VPX2SCRX( CX2VPX( center_cell - 10/2 + i ) );
 
 	    cv.v_scalar = i / 10.0;
 
@@ -942,7 +942,7 @@ static bool pars_Argv (register int argc, register char **argv)
 		if (view_flag == 0)
 		    log_flag = false;
 		break;
-            case 'x':
+	    case 'x':
 		if (sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug) < 1)
 		{
 		    bu_log("Invalid debug flag: '%s'\n", bu_optarg);
@@ -1013,7 +1013,7 @@ static void log_Run(void)
 
 	/* Produce the orientation, the model eye_pos, and the model
 	 * view size for input into rtregis.
- 	 * First use the azimuth and elevation to produce the model2hv
+	 * First use the azimuth and elevation to produce the model2hv
 	 * matrix and use that to find the orientation.
 	 */
 

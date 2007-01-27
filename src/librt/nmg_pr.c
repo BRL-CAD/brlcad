@@ -897,7 +897,7 @@ nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t 
 	const struct vertex	*v;
 	const struct vertex_g	*vg;
 
-    	bu_log("nmg_pr_ptbl_vert_list(%s):\n", str);
+	bu_log("nmg_pr_ptbl_vert_list(%s):\n", str);
 
 	vup = (const struct vertexuse **)tbl->buffer;
 	for (i=0 ; i < tbl->end ; ++i) {

@@ -39,7 +39,6 @@ static const char RCSid[] = "@(#) fill_buf.c 2.1, modified 12/9/86 at 15:55:48, 
 #include "common.h"
 
 
-
 #include <stdio.h>
 
 #include "machine.h"

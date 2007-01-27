@@ -31,7 +31,6 @@ static const char RCSid[] = "@(#) getinput.c 2.1, modified 12/9/86 at 15:56:41, 
 #include "common.h"
 
 
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H

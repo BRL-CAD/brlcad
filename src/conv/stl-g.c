@@ -73,7 +73,7 @@ static int binary=0;		/* flag indicating input is binary format */
 static char *usage="%s [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-x rt_debug_flag] input.stl output.g\n\
 	where input.stl is a STereoLithography file\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
-        The -b option specifies that the input file is in the binary STL format (default is ASCII). \n\
+	The -b option specifies that the input file is in the binary STL format (default is ASCII). \n\
 	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\",... default is \"mm\"\n\
 	The -N option specifies a name to use for the object.\n\
 	The -d option prints additional debugging information.\n\
@@ -458,7 +458,6 @@ Convert_part_binary()
 	bu_log( "\tUsing solid name: %s\n" , bu_vls_addr( &solid_name ) );
 
 
-
 	fread( buf, 4, 1, fd_in );
 
 	/* swap bytes to convert from Little-endian to network order (big-endian) */
@@ -468,7 +467,7 @@ Convert_part_binary()
 	num_facets = bu_glong( buf );
 
 	bu_log( "\t%d facets\n", num_facets );
- 	while( fread( buf, 48, 1, fd_in ) ) {
+	while( fread( buf, 48, 1, fd_in ) ) {
 		int i;
 		double pt[3];
 
@@ -619,15 +618,15 @@ char	*argv[];
 {
 	register int c;
 
-        tol.magic = BN_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 
 	/* this value selected as a resaonable compromise between eliminating
 	 * needed faces and keeping degenerate faces
 	 */
-        tol.dist = 0.005;	/* default, same as MGED, RT, ... */
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 1e-6;
-        tol.para = 1 - tol.perp;
+	tol.dist = 0.005;	/* default, same as MGED, RT, ... */
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 	bu_vls_init( &ret_name );
 

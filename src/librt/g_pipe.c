@@ -279,7 +279,6 @@ rt_linear_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *pt1, fast
 	bn_mat_mul( pipe->pipe_invRoS, Rinv, S );
 
 
-
 	VJOIN2( work, pt1, od1, v1, od1, v2 );
 	PIPE_MM( work )
 	VJOIN2( work, pt1, -od1, v1, od1, v2 );
@@ -1392,10 +1391,10 @@ rt_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *a
  */
 void
 rt_pipe_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	rt_vstub( stp, rp, segp, n, ap );
@@ -1412,10 +1411,10 @@ rt_pipe_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 /*	register struct bu_list *pipe =
 		(struct bu_list *)stp->st_specific; */
 
- 	cvp->crv_c1 = cvp->crv_c2 = 0;
+	cvp->crv_c1 = cvp->crv_c2 = 0;
 
 	/* any tangent direction */
- 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
 /**

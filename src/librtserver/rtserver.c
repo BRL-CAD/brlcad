@@ -174,141 +174,141 @@ fillItemTree( jobject parent_node,
 
 /* MACROS for getting and releasing resources */
 #define RTS_GET_XRAY( _p ) \
-        pthread_mutex_lock( &resource_mutex ); \
-        if( BU_PTBL_LEN( &rts_resource.xrays ) ) { \
-                _p = (struct xray *)BU_PTBL_GET( &rts_resource.xrays, BU_PTBL_LEN( &rts_resource.xrays )-1 );\
-                bu_ptbl_trunc( &rts_resource.xrays, BU_PTBL_LEN( &rts_resource.xrays )-1 );\
-                pthread_mutex_unlock( &resource_mutex ); \
-                bzero( (_p), sizeof( struct xray ) ); \
-        } else { \
-                pthread_mutex_unlock( &resource_mutex ); \
-                _p = (struct xray *)bu_calloc( 1, sizeof( struct xray ), "xray" ); \
-        } \
-        (_p)->magic = RT_RAY_MAGIC;
+	pthread_mutex_lock( &resource_mutex ); \
+	if( BU_PTBL_LEN( &rts_resource.xrays ) ) { \
+		_p = (struct xray *)BU_PTBL_GET( &rts_resource.xrays, BU_PTBL_LEN( &rts_resource.xrays )-1 );\
+		bu_ptbl_trunc( &rts_resource.xrays, BU_PTBL_LEN( &rts_resource.xrays )-1 );\
+		pthread_mutex_unlock( &resource_mutex ); \
+		bzero( (_p), sizeof( struct xray ) ); \
+	} else { \
+		pthread_mutex_unlock( &resource_mutex ); \
+		_p = (struct xray *)bu_calloc( 1, sizeof( struct xray ), "xray" ); \
+	} \
+	(_p)->magic = RT_RAY_MAGIC;
 
 #define RTS_FREE_XRAY( _p ) \
-        pthread_mutex_lock( &resource_mutex ); \
-        bu_ptbl_ins( &rts_resource.xrays, (long *)(_p) ); \
-        pthread_mutex_unlock( &resource_mutex ); \
-        _p = (struct xray *)NULL;
+	pthread_mutex_lock( &resource_mutex ); \
+	bu_ptbl_ins( &rts_resource.xrays, (long *)(_p) ); \
+	pthread_mutex_unlock( &resource_mutex ); \
+	_p = (struct xray *)NULL;
 
 
 #define RTS_GET_RTSERVER_JOB( _p ) \
-        pthread_mutex_lock( &resource_mutex ); \
-        if( BU_LIST_NON_EMPTY( &rts_resource.rtserver_jobs ) ) { \
+	pthread_mutex_lock( &resource_mutex ); \
+	if( BU_LIST_NON_EMPTY( &rts_resource.rtserver_jobs ) ) { \
 	       _p = BU_LIST_FIRST( rtserver_job, &rts_resource.rtserver_jobs ); \
-               BU_LIST_DEQUEUE( &(_p)->l ); \
-               pthread_mutex_unlock( &resource_mutex ); \
-               bzero( (_p), sizeof( struct rtserver_job ) ); \
-        } else { \
-                pthread_mutex_unlock( &resource_mutex ); \
-               _p = (struct rtserver_job *)bu_calloc( 1, sizeof( struct rtserver_job ), "rtserver_job" ); \
-        } \
-        BU_LIST_INIT( &(_p)->l ); \
-        bu_ptbl_init( &(_p)->rtjob_rays, 128, "rtjob_rays list" );
+	       BU_LIST_DEQUEUE( &(_p)->l ); \
+	       pthread_mutex_unlock( &resource_mutex ); \
+	       bzero( (_p), sizeof( struct rtserver_job ) ); \
+	} else { \
+		pthread_mutex_unlock( &resource_mutex ); \
+	       _p = (struct rtserver_job *)bu_calloc( 1, sizeof( struct rtserver_job ), "rtserver_job" ); \
+	} \
+	BU_LIST_INIT( &(_p)->l ); \
+	bu_ptbl_init( &(_p)->rtjob_rays, 128, "rtjob_rays list" );
 
 #define RTS_FREE_RTSERVER_JOB( _p ) \
-        { \
-                int _i; \
+	{ \
+		int _i; \
 		if( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) { \
-                       BU_LIST_DEQUEUE( &((_p)->l) ); \
-                } \
-                for( _i=0 ; _i<BU_PTBL_LEN( &(_p)->rtjob_rays) ; _i++ ) { \
-                        struct xray *_xray; \
-                        _xray = (struct xray *)BU_PTBL_GET( &(_p)->rtjob_rays, _i ); \
-                        RTS_FREE_XRAY( _xray ); \
-                } \
-                bu_ptbl_free( &(_p)->rtjob_rays ); \
-                pthread_mutex_lock( &resource_mutex ); \
-                BU_LIST_INSERT( &rts_resource.rtserver_jobs, &((_p)->l) ); \
-                pthread_mutex_unlock( &resource_mutex ); \
-                _p = (struct rtserver_job *)NULL; \
-        }
+		       BU_LIST_DEQUEUE( &((_p)->l) ); \
+		} \
+		for( _i=0 ; _i<BU_PTBL_LEN( &(_p)->rtjob_rays) ; _i++ ) { \
+			struct xray *_xray; \
+			_xray = (struct xray *)BU_PTBL_GET( &(_p)->rtjob_rays, _i ); \
+			RTS_FREE_XRAY( _xray ); \
+		} \
+		bu_ptbl_free( &(_p)->rtjob_rays ); \
+		pthread_mutex_lock( &resource_mutex ); \
+		BU_LIST_INSERT( &rts_resource.rtserver_jobs, &((_p)->l) ); \
+		pthread_mutex_unlock( &resource_mutex ); \
+		_p = (struct rtserver_job *)NULL; \
+	}
 
 #define RTS_GET_RAY_HIT( _p ) \
-        pthread_mutex_lock( &resource_mutex ); \
-        if( BU_LIST_NON_EMPTY( &rts_resource.ray_hits ) ) { \
+	pthread_mutex_lock( &resource_mutex ); \
+	if( BU_LIST_NON_EMPTY( &rts_resource.ray_hits ) ) { \
 	       _p = BU_LIST_FIRST( ray_hit, &rts_resource.ray_hits ); \
-               BU_LIST_DEQUEUE( &(_p)->l ); \
-               pthread_mutex_unlock( &resource_mutex ); \
-               bzero( (_p), sizeof( struct ray_hit ) ); \
-               BU_LIST_INIT( &(_p)->l ); \
-        } else { \
-                pthread_mutex_unlock( &resource_mutex ); \
-               _p = (struct ray_hit *)bu_calloc( 1, sizeof( struct ray_hit ), "ray_hit" ); \
-                BU_LIST_INIT( &(_p)->l );\
-        }
+	       BU_LIST_DEQUEUE( &(_p)->l ); \
+	       pthread_mutex_unlock( &resource_mutex ); \
+	       bzero( (_p), sizeof( struct ray_hit ) ); \
+	       BU_LIST_INIT( &(_p)->l ); \
+	} else { \
+		pthread_mutex_unlock( &resource_mutex ); \
+	       _p = (struct ray_hit *)bu_calloc( 1, sizeof( struct ray_hit ), "ray_hit" ); \
+		BU_LIST_INIT( &(_p)->l );\
+	}
 
 #define RTS_FREE_RAY_HIT( _p ) \
 	if(  (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &(_p)->l ) ) {\
-	        BU_LIST_DEQUEUE( &(_p)->l ); \
+		BU_LIST_DEQUEUE( &(_p)->l ); \
 	} \
-        pthread_mutex_lock( &resource_mutex ); \
-        BU_LIST_APPEND( &rts_resource.ray_hits, &(_p)->l ); \
-        pthread_mutex_unlock( &resource_mutex ); \
-        _p = (struct ray_hit *)NULL;
+	pthread_mutex_lock( &resource_mutex ); \
+	BU_LIST_APPEND( &rts_resource.ray_hits, &(_p)->l ); \
+	pthread_mutex_unlock( &resource_mutex ); \
+	_p = (struct ray_hit *)NULL;
 
 #define RTS_FREE_RAY_RESULT( _p ) \
-        { \
-                struct ray_hit *_rhp; \
-                while( BU_LIST_WHILE( _rhp, ray_hit, &(_p)->hitHead.l ) ) { \
-                        RTS_FREE_RAY_HIT( _rhp ); \
-                } \
-		if( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) {\
-	                BU_LIST_DEQUEUE( &((_p)->l) ); \
+	{ \
+		struct ray_hit *_rhp; \
+		while( BU_LIST_WHILE( _rhp, ray_hit, &(_p)->hitHead.l ) ) { \
+			RTS_FREE_RAY_HIT( _rhp ); \
 		} \
-                pthread_mutex_lock( &resource_mutex ); \
-                BU_LIST_INSERT( &rts_resource.ray_results, &((_p)->l) ); \
-                pthread_mutex_unlock( &resource_mutex ); \
-                _p = (struct ray_result *)NULL; \
-        }
+		if( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) {\
+			BU_LIST_DEQUEUE( &((_p)->l) ); \
+		} \
+		pthread_mutex_lock( &resource_mutex ); \
+		BU_LIST_INSERT( &rts_resource.ray_results, &((_p)->l) ); \
+		pthread_mutex_unlock( &resource_mutex ); \
+		_p = (struct ray_result *)NULL; \
+	}
 
 #define RTS_GET_RAY_RESULT( _p ) \
-        pthread_mutex_lock( &resource_mutex ); \
-        if( BU_LIST_NON_EMPTY( &rts_resource.ray_results ) ) { \
+	pthread_mutex_lock( &resource_mutex ); \
+	if( BU_LIST_NON_EMPTY( &rts_resource.ray_results ) ) { \
 	       _p = BU_LIST_FIRST( ray_result, &rts_resource.ray_results ); \
-               BU_LIST_DEQUEUE( &(_p)->l ); \
-               pthread_mutex_unlock( &resource_mutex ); \
-               bzero( (_p), sizeof( struct ray_result ) ); \
-        } else { \
-                pthread_mutex_unlock( &resource_mutex ); \
-               _p = (struct ray_result *)bu_calloc( 1, sizeof( struct ray_result ), "ray_result" ); \
-        } \
-        BU_LIST_INIT( &((_p)->l) );\
-        BU_LIST_INIT( &(_p)->hitHead.l );
+	       BU_LIST_DEQUEUE( &(_p)->l ); \
+	       pthread_mutex_unlock( &resource_mutex ); \
+	       bzero( (_p), sizeof( struct ray_result ) ); \
+	} else { \
+		pthread_mutex_unlock( &resource_mutex ); \
+	       _p = (struct ray_result *)bu_calloc( 1, sizeof( struct ray_result ), "ray_result" ); \
+	} \
+	BU_LIST_INIT( &((_p)->l) );\
+	BU_LIST_INIT( &(_p)->hitHead.l );
 
 
 #define RTS_GET_RTSERVER_RESULT( _p ) \
-        pthread_mutex_lock( &resource_mutex ); \
-        if( BU_LIST_NON_EMPTY( &rts_resource.rtserver_results ) ) { \
+	pthread_mutex_lock( &resource_mutex ); \
+	if( BU_LIST_NON_EMPTY( &rts_resource.rtserver_results ) ) { \
 	       _p = BU_LIST_FIRST( rtserver_result, &rts_resource.rtserver_results ); \
-               BU_LIST_DEQUEUE( &(_p)->l ); \
-               pthread_mutex_unlock( &resource_mutex ); \
-               bzero( (_p), sizeof( struct rtserver_result ) ); \
-        } else { \
-                pthread_mutex_unlock( &resource_mutex ); \
-               _p = (struct rtserver_result *)bu_calloc( 1, sizeof( struct rtserver_result ), "rtserver_result" ); \
-        } \
-        BU_LIST_INIT( &(_p)->l ); \
-        BU_LIST_INIT( &(_p)->resultHead.l );
+	       BU_LIST_DEQUEUE( &(_p)->l ); \
+	       pthread_mutex_unlock( &resource_mutex ); \
+	       bzero( (_p), sizeof( struct rtserver_result ) ); \
+	} else { \
+		pthread_mutex_unlock( &resource_mutex ); \
+	       _p = (struct rtserver_result *)bu_calloc( 1, sizeof( struct rtserver_result ), "rtserver_result" ); \
+	} \
+	BU_LIST_INIT( &(_p)->l ); \
+	BU_LIST_INIT( &(_p)->resultHead.l );
 
 #define RTS_FREE_RTSERVER_RESULT( _p ) \
-        { \
-                struct ray_result *_rrp; \
-                while( BU_LIST_WHILE( _rrp, ray_result, &(_p)->resultHead.l ) ) { \
-                        RTS_FREE_RAY_RESULT( _rrp ); \
-                } \
-                if( (_p)->the_job ) { \
-                     RTS_FREE_RTSERVER_JOB( (_p)->the_job ); \
+	{ \
+		struct ray_result *_rrp; \
+		while( BU_LIST_WHILE( _rrp, ray_result, &(_p)->resultHead.l ) ) { \
+			RTS_FREE_RAY_RESULT( _rrp ); \
+		} \
+		if( (_p)->the_job ) { \
+		     RTS_FREE_RTSERVER_JOB( (_p)->the_job ); \
 		     (_p)->the_job = NULL; \
-                } \
-                if( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) { \
-                        BU_LIST_DEQUEUE( &((_p)->l) ); \
-                } \
-                pthread_mutex_lock( &resource_mutex ); \
-                BU_LIST_INSERT( &rts_resource.rtserver_results, &((_p)->l) ); \
-                pthread_mutex_unlock( &resource_mutex ); \
-        }
+		} \
+		if( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) { \
+			BU_LIST_DEQUEUE( &((_p)->l) ); \
+		} \
+		pthread_mutex_lock( &resource_mutex ); \
+		BU_LIST_INSERT( &rts_resource.rtserver_results, &((_p)->l) ); \
+		pthread_mutex_unlock( &resource_mutex ); \
+	}
 
 int
 get_unique_jobid()
@@ -371,13 +371,13 @@ count_list_members( struct bu_list *listhead )
 void
 rts_resource_init()
 {
-        pthread_mutex_lock( &resource_mutex ); \
+	pthread_mutex_lock( &resource_mutex ); \
 	BU_LIST_INIT( &rts_resource.rtserver_results );
 	BU_LIST_INIT( &rts_resource.ray_results );
 	BU_LIST_INIT( &rts_resource.ray_hits );
 	BU_LIST_INIT( &rts_resource.rtserver_jobs );
 	bu_ptbl_init( &rts_resource.xrays, 128, "xrays" );
-        pthread_mutex_unlock( &resource_mutex ); \
+	pthread_mutex_unlock( &resource_mutex ); \
 }
 
 int
@@ -393,7 +393,7 @@ rts_pr_resource_summary()
 {
 	fprintf( stderr, "Resource Summary:\n" );
 
-        pthread_mutex_lock( &resource_mutex ); \
+	pthread_mutex_lock( &resource_mutex ); \
 	fprintf( stderr, "\t %d rtserver_job structures\n",
 		 count_list_members( &rts_resource.rtserver_jobs ) );
 	fprintf( stderr, "\t %d rtserver_result structures\n",
@@ -404,7 +404,7 @@ rts_pr_resource_summary()
 		 count_list_members( &rts_resource.ray_hits ) );
 	fprintf( stderr, "\t %d xray structures\n",
 		 BU_PTBL_LEN( &rts_resource.xrays ) );
-        pthread_mutex_unlock( &resource_mutex ); \
+	pthread_mutex_unlock( &resource_mutex ); \
 }
 
 
@@ -1419,7 +1419,7 @@ rts_submit_job_to_queue_and_wait( struct rtserver_job *ajob, int queue )
 				if( aresult->the_job->rtjob_id == id &&
 				    aresult->the_job->sessionid == sessionid ) {
 					BU_LIST_DEQUEUE( &aresult->l );
-				    	found = 1;
+					found = 1;
 					break;
 				}
 			}
@@ -2403,9 +2403,9 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getLibraryVersion(JNIEnv *
  */
 JNIEXPORT jobject JNICALL
 Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootArray( JNIEnv *env, jobject jobj,
-         jobject jstart_pt, jobject jdir, jobject jrow_diff, jobject jcol_diff, jint num_rows, jint num_cols, jint oneHit, jint sessionId )
+	 jobject jstart_pt, jobject jdir, jobject jrow_diff, jobject jcol_diff, jint num_rows, jint num_cols, jint oneHit, jint sessionId )
 {
-   	jclass point_class, vect_class, rayResult_class, arrayClass;
+	jclass point_class, vect_class, rayResult_class, arrayClass;
 	jmethodID point_constructorID, arraySetID;
 	jobjectArray resultsArray;
 	jfieldID fidvx, fidvy, fidvz;

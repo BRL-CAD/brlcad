@@ -98,9 +98,9 @@ HIDDEN int
 rtrans_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    			      	/* pointer to reg_udata in *rp */
+				/* pointer to reg_udata in *rp */
 
-           		      	/* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct rtrans_specific	*rtrans_sp;
 

@@ -114,7 +114,7 @@ proc ::swidgets::togglearrow {args} {
 }
 
 # ------------------------------------------------------------
-#                        OPTIONS 
+#                        OPTIONS
 # ------------------------------------------------------------
 ::itcl::configbody swidgets::Togglearrow::color {
     _cleararrows
@@ -158,7 +158,7 @@ proc ::swidgets::togglearrow {args} {
 }
 
 # ------------------------------------------------------------
-#                        METHODS 
+#                        METHODS
 # ------------------------------------------------------------
 ::itcl::body swidgets::Togglearrow::_cleararrows {} {
     # clear canvases
@@ -183,7 +183,7 @@ proc ::swidgets::togglearrow {args} {
     $itk_component(closed) create polygon 2 2 14 8 2 14 2 2 \
 	    -fill $color -outline $outline \
 	    -width 1 -tag closed
-    
+
     # bind click for closed arrow
     bind $itk_component(closed) <ButtonPress-1> [::itcl::code $this _open]
 
@@ -191,7 +191,7 @@ proc ::swidgets::togglearrow {args} {
     $itk_component(open) create polygon 2 2 14 2 8 14 2 2 \
 	    -fill $color -outline $outline \
 	    -width 1 -tag open
-	    
+
     # bind click for open arrow
     bind $itk_component(open) <ButtonPress-1> [::itcl::code $this _close]
 

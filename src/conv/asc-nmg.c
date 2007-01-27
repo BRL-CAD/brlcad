@@ -150,7 +150,7 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
 	s = BU_LIST_FIRST(shell, &r->s_hd);
 	descr_to_nmg(s, fpin, Ext);	/* Convert ascii description to nmg. */
 
-        /* Copied from proc-db/nmgmodel.c */
+	/* Copied from proc-db/nmgmodel.c */
 	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.01;
 	tol.dist_sq = tol.dist * tol.dist;
@@ -184,9 +184,9 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
  */
 static void
 descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
-            	   	/* NMG shell to add loops to. */
-    		    	/* File pointer for ascii nmg file. */
-      		    	/* Extrusion vector. */
+			/* NMG shell to add loops to. */
+			/* File pointer for ascii nmg file. */
+			/* Extrusion vector. */
 {
 #define MAXV	10000
 

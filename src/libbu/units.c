@@ -233,10 +233,10 @@ bu_mm_value(const char *s)
  */
 void
 bu_mm_cvt(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+						/* structure description */
+						/* struct member name */
+						/* begining of structure */
+						/* string containing value */
 {
 	register double *p = (double *)(base+sdp->sp_offset);
 

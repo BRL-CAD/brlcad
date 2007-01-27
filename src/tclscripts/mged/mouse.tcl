@@ -348,7 +348,7 @@ proc mouse_rt_obj_select { x y } {
 
     switch $rt_control($id,omode) {
 	all
-            -
+	    -
 	one {
 	    rt_olist_set $id $component
 	    do_Raytrace $id

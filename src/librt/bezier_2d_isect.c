@@ -36,7 +36,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -97,11 +96,11 @@ ControlPolygonFlatEnough(
     double 	max_distance_below;
     double 	error;			/* Precision of root		*/
     double 	intercept_1,
-    	   	intercept_2,
-	   		left_intercept,
-		   	right_intercept;
+		intercept_2,
+			left_intercept,
+			right_intercept;
     double 	a, b, c;		/* Coefficients of implicit	*/
-    					/* eqn for line from V[0]-V[deg]*/
+					/* eqn for line from V[0]-V[deg]*/
 
     /* Find the  perpendicular distance		*/
     /* from each interior control point to 	*/
@@ -118,15 +117,15 @@ ControlPolygonFlatEnough(
 
 	abSquared = (a * a) + (b * b);
 
-        for (i = 1; i < degree; i++) {
+	for (i = 1; i < degree; i++) {
 	    /* Compute distance from each of the points to that line	*/
-	    	distance[i] = a * V[i][X] + b * V[i][Y] + c;
-	    	if (distance[i] > 0.0) {
+		distance[i] = a * V[i][X] + b * V[i][Y] + c;
+		if (distance[i] > 0.0) {
 				distance[i] = (distance[i] * distance[i]) / abSquared;
-	    	}
-	    	if (distance[i] < 0.0) {
+		}
+		if (distance[i] < 0.0) {
 				distance[i] = -((distance[i] * distance[i]) / abSquared);
-	    	}
+		}
 	}
     }
 
@@ -224,21 +223,21 @@ Bezier(
     /* Triangle computation	*/
     for (i = 1; i <= degree; i++) {
 		for (j =0 ; j <= degree - i; j++) {
-	    	Vtemp[i][j][X] =
-	      		(1.0 - t) * Vtemp[i-1][j][X] + t * Vtemp[i-1][j+1][X];
-	    	Vtemp[i][j][Y] =
-	      		(1.0 - t) * Vtemp[i-1][j][Y] + t * Vtemp[i-1][j+1][Y];
+		Vtemp[i][j][X] =
+			(1.0 - t) * Vtemp[i-1][j][X] + t * Vtemp[i-1][j+1][X];
+		Vtemp[i][j][Y] =
+			(1.0 - t) * Vtemp[i-1][j][Y] + t * Vtemp[i-1][j+1][Y];
 		}
     }
 
     if (Left != NULL) {
 		for (j = 0; j <= degree; j++) {
-	    	V2MOVE( Left[j], Vtemp[j][0]);
+		V2MOVE( Left[j], Vtemp[j][0]);
 		}
     }
     if (Right != NULL) {
 		for (j = 0; j <= degree; j++) {
-	    	V2MOVE( Right[j], Vtemp[degree-j][j]);
+		V2MOVE( Right[j], Vtemp[degree-j][j]);
 		}
     }
 
@@ -330,15 +329,15 @@ ComputeXIntercept(
 		return 0;
 
 	switch( ret ) {
-	        case 1:
+		case 1:
 			/* intercept at V[0] */
 			V2MOVE( intercept, V[0] );
 			break;
-	        case 2:
+		case 2:
 			/* intercept at V[degree] */
 			V2MOVE( intercept, V[degree] );
 			break;
-	        case 3:
+		case 3:
 			/* intercept between endpoints */
 			V2JOIN1( intercept, ray_start, dist[0], ray_dir );
 			break;
@@ -376,30 +375,30 @@ FindRoots(
 {
     int         i;
     point2d_t   *Left,                  /* New left and right           */
-                *Right;                 /* control polygons             */
+		*Right;                 /* control polygons             */
     int         left_count,             /* Solution count from          */
-                right_count;            /* children                     */
+		right_count;            /* children                     */
     point2d_t   *left_t,                /* Solutions from kids          */
-                *right_t;
+		*right_t;
     point2d_t	*left_n,		/* normals from kids		*/
 		*right_n;
     int		total_count;
     point2d_t	eval_pt;
 
     switch (CrossingCount(w, degree, ray_start, ray_dir, ray_perp)) {
-        case 0 : {      /* No solutions here    */
-             return 0;
-        }
-        case 1 : {      /* Unique solution      */
-            /* Stop recursion when the tree is deep enough      */
-            /* if deep enough, return 1 solution at midpoint    */
-            if (depth >= MAXDEPTH) {
+	case 0 : {      /* No solutions here    */
+	     return 0;
+	}
+	case 1 : {      /* Unique solution      */
+	    /* Stop recursion when the tree is deep enough      */
+	    /* if deep enough, return 1 solution at midpoint    */
+	    if (depth >= MAXDEPTH) {
 		    *intercept = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (intercept)" );
 		    *normal = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (normal)" );
 		    Bezier( w, degree, 0.5, NULL, NULL, *intercept[0], *normal[0] );
-                    return 1;
-            }
-            if (ControlPolygonFlatEnough(w, degree, epsilon)) {
+		    return 1;
+	    }
+	    if (ControlPolygonFlatEnough(w, degree, epsilon)) {
 		    *intercept = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (intercept)" );
 		    *normal = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (normal)" );
 		    if( !ComputeXIntercept( w, degree, ray_start, ray_dir, epsilon, *intercept[0], *normal[0] ) ){
@@ -407,10 +406,10 @@ FindRoots(
 			    bu_free( (char *)(*normal), "FindRoots: no solution" );
 			    return 0;
 		    }
-                    return 1;
-            }
-            break;
-        }
+		    return 1;
+	    }
+	    break;
+	}
     }
 
     /* Otherwise, solve recursively after       */

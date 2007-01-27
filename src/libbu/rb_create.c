@@ -39,7 +39,6 @@ static const char libbu_rb_create_RCSid[] = "@(#) $Header$";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"

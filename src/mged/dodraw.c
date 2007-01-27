@@ -166,7 +166,7 @@ extern struct rt_tess_tol	mged_ttol;	/* from ged.c */
 void
 mged_plot_anim_upcall_handler(char *file, long int us)
 
-    	   		/* microseconds of extra delay */
+			/* microseconds of extra delay */
 {
 	char *av[3];
 
@@ -218,7 +218,7 @@ mged_plot_anim_upcall_handler(char *file, long int us)
 void
 mged_vlblock_anim_upcall_handler(struct bn_vlblock *vbp, long int us, int copy)
 
-    		   		/* microseconds of extra delay */
+				/* microseconds of extra delay */
 
 {
 
@@ -772,33 +772,33 @@ drawtrees(
 Please note that the NMG library used by this command is experimental.\n\
 A production implementation will exist in the maintenance release.\n", (char *)NULL);
 #endif
-	  	mged_nmg_model = nmg_mm();
+		mged_nmg_model = nmg_mm();
 		mged_initial_tree_state.ts_m = &mged_nmg_model;
-	  	if (mged_draw_edge_uses) {
+		if (mged_draw_edge_uses) {
 		  Tcl_AppendResult(interp, "Doing the edgeuse thang (-u)\n", (char *)NULL);
 		  mged_draw_edge_uses_vbp = rt_vlblock_init();
-	  	}
+		}
 
 		ret = db_walk_tree( dbip, argc, (const char **)argv,
 			ncpu,
 			&mged_initial_tree_state,
 			mged_enable_fastpath ? mged_nmg_region_start : 0,
 			mged_nmg_region_end,
-	  		mged_nmg_use_tnurbs ?
-	  			nmg_booltree_leaf_tnurb :
+			mged_nmg_use_tnurbs ?
+				nmg_booltree_leaf_tnurb :
 				nmg_booltree_leaf_tess,
 			(genptr_t)NULL
 			);
 
-	  	if (mged_draw_edge_uses) {
-	  		cvt_vlblock_to_solids(mged_draw_edge_uses_vbp, "_EDGEUSES_", 0);
-	  		rt_vlblock_free(mged_draw_edge_uses_vbp);
+		if (mged_draw_edge_uses) {
+			cvt_vlblock_to_solids(mged_draw_edge_uses_vbp, "_EDGEUSES_", 0);
+			rt_vlblock_free(mged_draw_edge_uses_vbp);
 			mged_draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
- 	  	}
+		}
 
 		/* Destroy NMG */
 		nmg_km( mged_nmg_model );
-	  	break;
+		break;
 	  }
 	}
 	if(mged_fastpath_count)  {
@@ -916,7 +916,7 @@ drawH_part2(
 	if( !existing_sp )  {
 		/* Take note of the base color */
 		if( mged_wireframe_color_override ) {
-		        /* a user specified the color, so arrange to use it */
+			/* a user specified the color, so arrange to use it */
 			sp->s_uflag = 1;
 			sp->s_dflag = 0;
 			sp->s_basecolor[0] = mged_wireframe_color[0];
@@ -1417,7 +1417,7 @@ f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  bu_vls_free(&tmp_vls);
 	}
 	mged_facetize_tree = (union tree *)0;
-  	mged_nmg_model = nmg_mm();
+	mged_nmg_model = nmg_mm();
 	mged_initial_tree_state.ts_m = &mged_nmg_model;
 
 	i = db_walk_tree( dbip, argc, (const char **)argv,
@@ -1425,8 +1425,8 @@ f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		&mged_initial_tree_state,
 		0,			/* take all regions */
 		mged_facetize_region_end,
-  		mged_nmg_use_tnurbs ?
-  			nmg_booltree_leaf_tnurb :
+		mged_nmg_use_tnurbs ?
+			nmg_booltree_leaf_tnurb :
 			nmg_booltree_leaf_tess,
 		(genptr_t)NULL
 		);
@@ -1546,7 +1546,7 @@ f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* Free boolean tree, and the regions in it */
 	db_free_tree( mged_facetize_tree, &rt_uniresource );
-    	mged_facetize_tree = (union tree *)NULL;
+	mged_facetize_tree = (union tree *)NULL;
 
 	return TCL_OK;					/* OK */
 }
@@ -1656,7 +1656,7 @@ f_bev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	mged_facetize_tree = (union tree *)0;
-  	mged_nmg_model = nmg_mm();
+	mged_nmg_model = nmg_mm();
 	mged_initial_tree_state.ts_m = &mged_nmg_model;
 
 	op = ' ';

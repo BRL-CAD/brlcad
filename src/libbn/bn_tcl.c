@@ -533,7 +533,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		BN_TOL_MAGIC, 0.005, 0.005*0.005, 1e-6, 1-1e-6
 	    };
 	    if (argc != 5) {
-		bu_vls_printf(&result, 
+		bu_vls_printf(&result,
 		      "Usage: bn_isect_line3_line3 pt dir pt dir (%d args specified)",
 			      argc-1);
 		goto error;
@@ -574,7 +574,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    };
 
 	    if (argc != 5) {
-		bu_vls_printf(&result, 
+		bu_vls_printf(&result,
 		      "Usage: bn_isect_line2_line2 pt dir pt dir (%d args specified)",
 			      argc-1);
 		goto error;

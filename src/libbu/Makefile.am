@@ -64,7 +64,7 @@ libbu_nil_la_SOURCES = \
 	$(SRCS) \
 	vers.c
 
-libbu_la_SOURCES = 
+libbu_la_SOURCES =
 libbu_la_LDFLAGS = -version-info 19:1
 libbu_la_LIBADD = \
 	libbu_nil.la \

@@ -41,7 +41,7 @@ public class Partition implements Serializable {
      * @return    An obliquity value between 0 and PI/2.
      */
     public float getObliquity() {
-        return obliquity;
+	return obliquity;
     }
 
     /**
@@ -50,6 +50,6 @@ public class Partition implements Serializable {
      * @param obl The obliquity value.
      */
     public void setObliquity(float obl) {
-        this.obliquity = obl;
+	this.obliquity = obl;
     }
 }

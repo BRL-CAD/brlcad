@@ -298,7 +298,6 @@ Lee_open_part(char *p_name, int level)
 }
 
 
-
 struct ug_type_data {
     char	*name;
     int		value;
@@ -558,8 +557,6 @@ struct ug_type_data ug_typelist[] = {
 {            "UF_max_entity_type",	       254, ""},
 {            (char *)NULL,			 0, (char *)NULL}
 };
-
-
 
 
 struct ug_type_data ug_subtypelist[] = {

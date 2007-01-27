@@ -400,7 +400,7 @@ static short	exp_buffer[(1 << 11) - 2];	/* reverse-order atomic codes */
 /* Non-recursive version, for wimpy systems: */
 static void
 Expand(register int c)
-	            	  		/* LZW code */
+					/* LZW code */
 	{
 	register short	*bp = exp_buffer;
 

@@ -42,7 +42,6 @@ static const char RCSsph[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -124,7 +123,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	if( fabs(magsq_a - magsq_b) > 0.0001
 	    || fabs(magsq_a - magsq_c) > 0.0001 ) {
 #if 0
-	    	/* Ordinarily, don't say anything here, will handle as ELL */
+		/* Ordinarily, don't say anything here, will handle as ELL */
 		bu_log("sph(%s):  non-equal length A, B, C vectors\n",
 			stp->st_name );
 #endif
@@ -283,10 +282,10 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  */
 void
 rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	register struct sph_specific *sph;
@@ -300,13 +299,13 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 #	include "noalias.h"
 	for(i = 0; i < n; i++){
 #if !CRAY	/* XXX currently prevents vectorization on cray */
-	 	if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
+		if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
 #endif
 
 		sph = (struct sph_specific *)stp[i]->st_specific;
 		VSUB2( ov, sph->sph_V, rp[i]->r_pt );
 		b = VDOT( rp[i]->r_dir, ov );
-	        magsq_ov = MAGSQ(ov);
+		magsq_ov = MAGSQ(ov);
 
 		if( magsq_ov >= sph->sph_radsq ) {
 			/* ray origin is outside of sphere */
@@ -361,7 +360,7 @@ rt_sph_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
 
- 	cvp->crv_c1 = cvp->crv_c2 = - sph->sph_invrad;
+	cvp->crv_c1 = cvp->crv_c2 = - sph->sph_invrad;
 
 	/* any tangent direction */
 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );

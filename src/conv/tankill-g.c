@@ -180,12 +180,12 @@ main(int argc, char **argv)
 
 	/* Set defaults */
 
-        /* XXX These need to be improved */
-        tol.magic = BN_TOL_MAGIC;
-        tol.dist = 0.005;
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 1e-6;
-        tol.para = 1 - tol.perp;
+	/* XXX These need to be improved */
+	tol.magic = BN_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 	in_fp = stdin;
 	polysolids = 1;
@@ -269,7 +269,7 @@ main(int argc, char **argv)
 		{
 			while( array_size < no_of_verts )
 				array_size += ARRAY_BLOCK_SIZE;
-		        verts = (struct tankill_verts *)rt_realloc( (char *)verts , array_size*sizeof( struct tankill_verts ) , "tankill-g: vertex array" );
+			verts = (struct tankill_verts *)rt_realloc( (char *)verts , array_size*sizeof( struct tankill_verts ) , "tankill-g: vertex array" );
 		}
 
 		/* read the component code number */
@@ -357,15 +357,15 @@ main(int argc, char **argv)
 		    NMG_CK_SHELL( s );
 		    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd))
 		    {
-		        NMG_CK_FACEUSE( fu );
-		        if( fu->orientation == OT_SAME )
-		        {
-		                if( nmg_calc_face_g( fu ) )
-		                        bu_log( "Failed to calculate plane eqn\n" );
+			NMG_CK_FACEUSE( fu );
+			if( fu->orientation == OT_SAME )
+			{
+				if( nmg_calc_face_g( fu ) )
+					bu_log( "Failed to calculate plane eqn\n" );
 
 				/* save the face in a table */
 				bu_ptbl_ins( &faces , (long *)fu );
-		        }
+			}
 		    }
 		}
 

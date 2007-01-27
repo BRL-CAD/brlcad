@@ -168,7 +168,7 @@ char *argv[];
   BU_LIST_APPEND(&head_pex_vars.l, &((struct pex_vars *)dmp->dmr_vars)->l);
 
   if(dmp->dmr_vars)
-        return TCL_OK;
+	return TCL_OK;
 
   return TCL_ERROR;
 }
@@ -792,8 +792,8 @@ register short r, g, b;
 		     PEXOCRender, PEXLineTypeDashed);
     }else{
       PEXSetLineType(((struct pex_vars *)dmp->dmr_vars)->dpy,
-		                          ((struct pex_vars *)dmp->dmr_vars)->renderer,
-		                          PEXOCRender, PEXLineTypeSolid);
+					  ((struct pex_vars *)dmp->dmr_vars)->renderer,
+					  PEXOCRender, PEXLineTypeSolid);
     }
 
 
@@ -992,7 +992,7 @@ char	*str;
 }
 
 static XWMHints xwmh = {
-        StateHint,		        /* flags */
+	StateHint,		        /* flags */
 	0,				/* input */
 	NormalState,			/* initial_state */
 	0,				/* icon pixmap */

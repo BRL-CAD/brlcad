@@ -148,16 +148,16 @@ tk_open(FBIO *ifp, char *file, int width, int height)
 	if (Tcl_Eval(fbinterp, cmd) != TCL_OK) {
 	    fb_log( "Error returned attempting to start tk in fb_open." );
 	}
-	
+
 
 	fbwin = Tk_MainWindow(fbinterp);
 
 	Tk_GeometryRequest(fbwin, width, height);
-	
+
 	Tk_MakeWindowExist(fbwin);
 
 	char image_create_cmd[255];
-	sprintf(image_create_cmd, 
+	sprintf(image_create_cmd,
 		"image create photo fb_tk_photo -height %d -width %d",
 		 width, height);
 
@@ -170,25 +170,25 @@ tk_open(FBIO *ifp, char *file, int width, int height)
 	}
 
 	char canvas_create_cmd[255];
-	sprintf(canvas_create_cmd, 
+	sprintf(canvas_create_cmd,
 		"canvas .fb_tk_canvas -height %d -width %d", width, height);
 
 	if (Tcl_Eval(fbinterp, canvas_create_cmd) != TCL_OK) {
 	    fb_log( "Error returned attempting to create canvas in fb_open." );
 	}
 
-	const char canvas_pack_cmd[255] = 
+	const char canvas_pack_cmd[255] =
 		"pack .fb_tk_canvas -fill both -expand true";
 
 	if (Tcl_Eval(fbinterp, canvas_pack_cmd) != TCL_OK) {
-	    fb_log( "Error returned attempting to pack canvas in fb_open. %s", 
+	    fb_log( "Error returned attempting to pack canvas in fb_open. %s",
 		Tcl_GetStringResult(fbinterp));
 	}
 
-	const char place_image_cmd[255] = 
+	const char place_image_cmd[255] =
 		".fb_tk_canvas create image 0 0 -image fb_tk_photo -anchor nw";
 	if (Tcl_Eval(fbinterp, place_image_cmd) != TCL_OK) {
-	    fb_log( "Error returned attempting to place image in fb_open. %s", 
+	    fb_log( "Error returned attempting to place image in fb_open. %s",
 		Tcl_GetStringResult(fbinterp));
 	}
 

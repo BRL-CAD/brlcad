@@ -1237,7 +1237,7 @@ again:
 			{
 				/* both are line segments */
 				nmg_radial_join_eu(eu1, eu2, tol);
-			     	total++;
+				total++;
 			}
 		}
 
@@ -1365,7 +1365,7 @@ nmg_model_edge_g_fuse(struct model *m, const struct bn_tol *tol)
 			 * XXX really should check ALL edges using eg1
 			 * XXX against ALL edges using eg2 for coincidence.
 			 */
-		     	total++;
+			total++;
 			nmg_jeg( eg2, eg1 );
 			BU_PTBL_GET(&etab,i) = (long *)NULL;
 			break;
@@ -2210,13 +2210,10 @@ nmg_insure_radial_list_is_increasing(struct bu_list *hd, fastf_t amin, fastf_t a
 void
 nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existing, struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec, const struct bn_tol *tol)
 
-              		           	/* may be null */
+					/* may be null */
 
 
-
-
-
-                   	     		/* for printing */
+					/* for printing */
 {
 	struct edgeuse		*teu;
 	struct nmg_radial	*rad;
@@ -2562,7 +2559,7 @@ const struct edgeuse *
 nmg_find_next_use_of_2e_in_lu(const struct edgeuse *eu, const struct edge *e1, const struct edge *e2)
 
 
-                 	    		/* may be NULL */
+					/* may be NULL */
 {
 	register const struct edgeuse	*neu;
 
@@ -2599,7 +2596,7 @@ void
 nmg_radial_mark_cracks(struct bu_list *hd, const struct edge *e1, const struct edge *e2, const struct bn_tol *tol)
 
 
-                 	    		/* may be NULL */
+					/* may be NULL */
 
 {
 	struct nmg_radial	*rad;
@@ -2899,7 +2896,7 @@ nmg_radial_check_parity(const struct bu_list *hd, const struct bu_ptbl *shells, 
 	BN_CK_TOL(tol);
 
 	for( sp = (struct shell **)BU_PTBL_LASTADDR(shells);
- 	     sp >= (struct shell **)BU_PTBL_BASEADDR(shells); sp--
+	     sp >= (struct shell **)BU_PTBL_BASEADDR(shells); sp--
 	)  {
 
 		NMG_CK_SHELL(*sp);
@@ -2933,7 +2930,7 @@ nmg_radial_check_parity(const struct bu_list *hd, const struct bu_ptbl *shells, 
 		bu_log("nmg_radial_check_parity() bad parity at END eu=x%x, s=x%x\n",
 			rad->eu, *sp);
 		count++;
- 	}
+	}
 	return count;
 }
 
@@ -2946,9 +2943,9 @@ nmg_radial_check_parity(const struct bu_list *hd, const struct bu_ptbl *shells, 
 void
 nmg_radial_implement_decisions(struct bu_list *hd, const struct bn_tol *tol, struct edgeuse *eu1, fastf_t *xvec, fastf_t *yvec, fastf_t *zvec)
 
-                   	     		/* for printing */
-              		     	/* temp */
-      			                 	/*** temp ***/
+					/* for printing */
+				/* temp */
+						/*** temp ***/
 {
 	struct nmg_radial	*rad;
 	struct nmg_radial	*prev;
@@ -3052,7 +3049,7 @@ nmg_pr_radial(const char *title, const struct nmg_radial *rad)
 void
 nmg_pr_radial_list(const struct bu_list *hd, const struct bn_tol *tol)
 
-                   	     		/* for printing */
+					/* for printing */
 {
 	struct nmg_radial	*rad;
 
@@ -3431,7 +3428,7 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
 	nmg_radial_mark_cracks( &list1, eu1->e_p, eu2->e_p, tol );
 
 	for( sp = (struct shell **)BU_PTBL_LASTADDR(&shell_tbl);
- 	     sp >= (struct shell **)BU_PTBL_BASEADDR(&shell_tbl); sp--
+	     sp >= (struct shell **)BU_PTBL_BASEADDR(&shell_tbl); sp--
 	)  {
 		nmg_radial_mark_flips( &list1, *sp, tol );
 	}
@@ -3467,7 +3464,7 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
 void
 nmg_radial_exchange_marked(struct bu_list *hd, const struct bn_tol *tol)
 
-                   	     		/* for printing */
+					/* for printing */
 {
 	struct nmg_radial	*rad;
 

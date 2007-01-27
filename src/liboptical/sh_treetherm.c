@@ -125,7 +125,6 @@ struct tthrm_specific {
 };
 
 
-
 /* The default values for the variables in the shader specific structure */
 #define SHDR_NULL	((struct tthrm_specific *)0)
 #define SHDR_O(m)	bu_offsetof(struct tthrm_specific, m)
@@ -221,9 +220,9 @@ HIDDEN int
 tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    			      	/* pointer to reg_udata in *rp */
+				/* pointer to reg_udata in *rp */
 
-           		      	/* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct tthrm_specific	*tthrm_sp;
 	struct bu_mapped_file	*tt_file;
@@ -535,8 +534,8 @@ int
 tthrm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-                	     	/* defined in material.h */
-    			    	/* ptr to the shader-specific struct */
+				/* defined in material.h */
+				/* ptr to the shader-specific struct */
 {
 	register struct tthrm_specific *tthrm_sp =
 		(struct tthrm_specific *)dp;
@@ -578,7 +577,6 @@ tthrm_render(struct application *ap, struct partition *pp, struct shadework *swp
 
 	thrm_seg = &tthrm_sp->tt_segs[solid_number];
 	CK_THRM_SEG(thrm_seg);
-
 
 
 	/* Extract the solid parameters for the particle we hit,

@@ -177,18 +177,18 @@ nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt)
 static void
 pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
 {
-        FILE *fd;
-        char name[25];
+	FILE *fd;
+	char name[25];
 	long *b;
 	point_t min_pt, max_pt;
 	int i;
 	struct model *m;
 
-        sprintf(name, "ray%02d.pl", plot_file_number++);
-        if ((fd=fopen(name, "w")) == (FILE *)NULL) {
-        	perror(name);
+	sprintf(name, "ray%02d.pl", plot_file_number++);
+	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
+		perror(name);
 		bu_bomb("unable to open file for writing");
-        }
+	}
 
 	bu_log("overlay %s\n", name);
 	m = nmg_find_model( eu->up.magic_p );
@@ -254,8 +254,6 @@ nmg_rt_print_hitlist(struct hitmiss *hl)
 		nmg_rt_print_hitmiss(a_hit);
 	}
 }
-
-
 
 
 /**
@@ -355,7 +353,7 @@ ray_miss_vertex(struct ray_data *rd, struct vertexuse *vu_p)
 	NMG_CK_HITMISS(myhit);
 	NMG_CK_HITMISS_LISTS(myhit, rd);
 #endif
- 	return myhit;
+	return myhit;
 }
 
 /*
@@ -419,7 +417,7 @@ get_pole_dist_to_face(struct ray_data *rd, struct vertexuse *vu, fastf_t *Pole, 
 	 *	 5	5	pick the edge with smallest "dist"
 	 *	 		and compute pole-pca distance.
 	 */
-   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log("get_pole_dist_to_face(%s) status from dist_pt_lseg == 0x%02x\n", Pole_name, status);
 
 	switch (status) {
@@ -429,7 +427,7 @@ get_pole_dist_to_face(struct ray_data *rd, struct vertexuse *vu, fastf_t *Pole, 
 		VSUB2(VtoPole_prj, Pole_prj_pt, vu->v_p->vg_p->coord);
 		if (VDOT(leftB, VtoPole_prj) >= 0.0) {
 			/* plane point is "inside" edge B */
-		   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				bu_log("\tplane point inside face\n");
 			VMOVE(Pole_pca, Pole_prj_pt);
 			VSUB2(pca_to_pole_vect, Pole_prj_pt, Pole);
@@ -437,7 +435,7 @@ get_pole_dist_to_face(struct ray_data *rd, struct vertexuse *vu, fastf_t *Pole, 
 			return;
 		}
 
-	   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				bu_log("\tplane point outside face\n");
 		VSUB2(pca_to_pole_vect, pcaB, Pole);
 		VMOVE(Pole_pca, pcaB);
@@ -448,7 +446,7 @@ get_pole_dist_to_face(struct ray_data *rd, struct vertexuse *vu, fastf_t *Pole, 
 		VSUB2(VtoPole_prj, Pole_prj_pt, vu->v_p->vg_p->coord);
 		if (VDOT(leftA, VtoPole_prj) >= 0.0) {
 			/* plane point is "inside" edge A */
-		   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				bu_log("\tplane point inside face\n");
 			VMOVE(Pole_pca, Pole_prj_pt);
 			VSUB2(pca_to_pole_vect, Pole_prj_pt, Pole);
@@ -456,7 +454,7 @@ get_pole_dist_to_face(struct ray_data *rd, struct vertexuse *vu, fastf_t *Pole, 
 			return;
 		}
 
-	   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				bu_log("\tplane point outside face\n");
 		VSUB2(pca_to_pole_vect, pcaA, Pole);
 		VMOVE(Pole_pca, pcaA);
@@ -476,14 +474,14 @@ get_pole_dist_to_face(struct ray_data *rd, struct vertexuse *vu, fastf_t *Pole, 
 
 			if (VDOT(leftA, VtoPole_prj) >= 0.0) {
 				/* plane point is "inside" edge A */
-			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 					bu_log("\tplane point inside face\n");
 				VSUB2(pca_to_pole_vect, Pole_prj_pt, Pole);
 				*Pole_dist = MAGNITUDE(pca_to_pole_vect);
 				VMOVE(Pole_pca, Pole_prj_pt);
 				return;
 			}
-		   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 					bu_log("\tplane point outside face\n");
 			VSUB2(pca_to_pole_vect, pcaA, Pole);
 			VMOVE(Pole_pca, pcaA);
@@ -496,14 +494,14 @@ get_pole_dist_to_face(struct ray_data *rd, struct vertexuse *vu, fastf_t *Pole, 
 			}
 			if (VDOT(leftB, VtoPole_prj) >= 0.0) {
 				/* plane point is "inside" edge B */
-			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 					bu_log("\tplane point inside face\n");
 				VMOVE(Pole_pca, Pole_prj_pt);
 				VSUB2(pca_to_pole_vect, Pole_prj_pt, Pole);
 				*Pole_dist = MAGNITUDE(pca_to_pole_vect);
 				return;
 			}
-		   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 					bu_log("\tplane point outside face\n");
 			VSUB2(pca_to_pole_vect, pcaB, Pole);
 			VMOVE(Pole_pca, pcaB);
@@ -519,7 +517,7 @@ get_pole_dist_to_face(struct ray_data *rd, struct vertexuse *vu, fastf_t *Pole, 
 		double dotA;
 		double dotB;
 
-	   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 			bu_log("\tplane point beyond both edges.... Doing the Tanenbaum algorithm.\n");
 
 		VSUB2(VtoPole_prj, Pole_prj_pt, vu->v_p->vg_p->coord);
@@ -532,13 +530,13 @@ get_pole_dist_to_face(struct ray_data *rd, struct vertexuse *vu, fastf_t *Pole, 
 				/* Point is "inside" face,
 				 * PCA is plane projection point.
 				 */
-			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 					bu_log("\tpoint inside face\n");
 				VMOVE(Pole_pca, Pole_prj_pt);
 				VSUB2(pca_to_pole_vect, Pole, Pole_prj_pt);
 			} else {
 				/* Point is "outside" face, PCA is at vertex. */
-			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 					bu_log("\tpoint outside face, PCA is vertex\n");
 
 				VSUB2(pca_to_pole_vect, pcaA, Pole);
@@ -549,20 +547,20 @@ get_pole_dist_to_face(struct ray_data *rd, struct vertexuse *vu, fastf_t *Pole, 
 				/* Point is "inside" face,
 				 * PCA is plane projection point
 				 */
-			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 					bu_log("\tpoint is inside face\n");
 				VMOVE(Pole_pca, Pole_prj_pt);
 				VSUB2(pca_to_pole_vect, Pole, Pole_prj_pt);
 			} else {
 
 				/* Point is "outside" face, PCA is at vertex. */
-			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 					bu_log("\tpoint is outside face, PCA is vertex\n");
 				VSUB2(pca_to_pole_vect, pcaB, Pole);
 				VMOVE(Pole_pca, pcaB);
 			}
 		}
-	   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 			VPRINT("\tpca_to_pole_vect", pca_to_pole_vect);
 		*Pole_dist = MAGNITUDE(pca_to_pole_vect);
 		return;
@@ -650,12 +648,6 @@ plot_neighborhood(fastf_t *North_Pole, fastf_t *North_pl_pt, fastf_t *North_pca,
 
 	fclose(pfd);
 }
-
-
-
-
-
-
 
 
 /**	V E R T E X _ N E I G H B O R H O O D
@@ -755,7 +747,7 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 	NMG_CK_VERTEX(vu_p->v_p);
 	NMG_CK_VERTEX_G(vu_p->v_p->vg_p);
 
-   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log("vertex_neighborhood\n");
 
 	nmg_model_bb( min_pt, max_pt, nmg_find_model( vu_p->up.magic_p ));
@@ -764,7 +756,7 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 		if (t > dimen) dimen = t;
 	}
 
-  	VJOIN1(North_Pole, vu_p->v_p->vg_p->coord, -dimen, rd->rp->r_dir);
+	VJOIN1(North_Pole, vu_p->v_p->vg_p->coord, -dimen, rd->rp->r_dir);
 	VJOIN1(South_Pole, vu_p->v_p->vg_p->coord, dimen, rd->rp->r_dir);
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
@@ -772,12 +764,12 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 		VPRINT("\tSouth Pole", South_Pole);
 	}
 
-    	/* There is a conceptual sphere around the vertex
+	/* There is a conceptual sphere around the vertex
 	 * The max dimension of the bounding box for the NMG defines the size.
-    	 * The point where the ray enters this sphere is
-    	 *  called the North Pole, and the point where it
-    	 *  exits is called the South Pole.
-    	 */
+	 * The point where the ray enters this sphere is
+	 *  called the North Pole, and the point where it
+	 *  exits is called the South Pole.
+	 */
 
 	South_min = North_min = MAX_FASTF;
 	found_faces = 0;
@@ -811,7 +803,7 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 			NMG_GET_FU_NORMAL( norm, fu );
 			VREVERSE(anti_norm, norm);
 
-		    	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				VPRINT("\tchecking face", norm);
 
 			/* project the north pole onto the plane */
@@ -821,10 +813,10 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 			/* project the poles down onto the plane */
 			VJOIN1(North_pl_pt, North_Pole, scalar_dist, norm);
 			VJOIN1(South_pl_pt, South_Pole, scalar_dist, anti_norm);
-		    	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
-		    		VPRINT("\tNorth Plane Point", North_pl_pt);
-		    		VPRINT("\tSouth Plane Point", South_pl_pt);
-		    	}
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+				VPRINT("\tNorth Plane Point", North_pl_pt);
+				VPRINT("\tSouth Plane Point", South_pl_pt);
+			}
 			/* Find points on sphere in direction of edges
 			 * (away from vertex along edge)
 			 */
@@ -847,11 +839,11 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 			VJOIN1(pointB, vu->v_p->vg_p->coord, dimen, edge_vect)
 
 
-		    	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
-		    		VPRINT("\tLeftA", leftA);
-		    		VPRINT("\tLeftB", leftB);
-		    	}
-		    	/* find distance of face to North Pole */
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+				VPRINT("\tLeftA", leftA);
+				VPRINT("\tLeftB", leftB);
+			}
+			/* find distance of face to North Pole */
 			get_pole_dist_to_face(rd, vu,
 				North_Pole, North_pl_pt, &North_dist, North_pca,
 				pointA, leftA, pointB, leftB,
@@ -865,11 +857,11 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 				North_fu = fu;
 				North_vu = vu;
 				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-			    		bu_log("New North Pole Min: %g\n", North_min);
+					bu_log("New North Pole Min: %g\n", North_min);
 			}
 
 
-		    	/* find distance of face to South Pole */
+			/* find distance of face to South Pole */
 			get_pole_dist_to_face(rd, vu,
 				South_Pole, South_pl_pt, &South_dist, South_pca,
 				pointA, leftA, pointB, leftB,
@@ -883,7 +875,7 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 				South_fu = fu;
 				South_vu = vu;
 				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-			    		bu_log("New South Pole Min: %g\n", South_min);
+					bu_log("New South Pole Min: %g\n", South_min);
 			}
 
 
@@ -969,10 +961,6 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 
 	}
 }
-
-
-
-
 
 
 /**
@@ -1242,7 +1230,7 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 			if (fu->orientation == OT_OPPOSITE &&
 			    fu->fumate_p->orientation == OT_SAME) {
 				fu = fu->fumate_p;
-			    	fu_eu = eu_p->eumate_p;
+				fu_eu = eu_p->eumate_p;
 			    }
 			if (fu->orientation != OT_SAME) {
 				bu_log("%s[%d]: I can't seem to find an OT_SAME faceuse\nThis must be a `dangling' face  I'll skip it\n", __FILE__, __LINE__);
@@ -1681,10 +1669,6 @@ isect_ray_edgeuse(struct ray_data *rd, struct edgeuse *eu_p)
 }
 
 
-
-
-
-
 /**	I S E C T _ R A Y _ L O O P U S E
  *
  */
@@ -1716,7 +1700,6 @@ isect_ray_loopuse(struct ray_data *rd, struct loopuse *lu_p)
 	(void) isect_ray_vertexuse(rd,
 		BU_LIST_FIRST(vertexuse, &lu_p->down_hd));
 }
-
 
 
 #ifndef FAST_NMG
@@ -2267,7 +2250,6 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p, struct face_g_p
 	myhit->inbound_use = myhit->outbound_use = &fu_p->l.magic;
 
 
-
 	switch (pt_class) {
 	case NMG_CLASS_Unknown	:
 		bu_log("%s[line:%d] ray/plane intercept point cannot be classified wrt face\n",
@@ -2319,10 +2301,6 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p, struct face_g_p
 		isect_ray_loopuse(rd, lu_p);
 
 }
-
-
-
-
 
 
 /**	I S E C T _ R A Y _ F A C E U S E
@@ -2392,7 +2370,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 			BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 			BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
 #ifndef FAST_NMG
-		    	NMG_CK_HITMISS(myhit);
+			NMG_CK_HITMISS(myhit);
 #endif
 
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
@@ -2408,7 +2386,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 			BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 			BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
 #ifndef FAST_NMG
-		    	NMG_CK_HITMISS(myhit);
+			NMG_CK_HITMISS(myhit);
 #endif
 
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
@@ -2427,7 +2405,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 		BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 		BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
 #ifndef FAST_NMG
-	    	NMG_CK_HITMISS(myhit);
+		NMG_CK_HITMISS(myhit);
 #endif
 
 		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
@@ -2614,12 +2592,12 @@ guess_class_from_hitlist_max(struct ray_data *rd, int *hari_kari, int in_or_out_
 		{
 			/* if we've got a zero distance hit, that clinches it */
 			if (a_hit->hit.hit_dist <= rd->tol->dist &&
-		    	    a_hit->hit.hit_dist >= -rd->tol->dist) {
+			    a_hit->hit.hit_dist >= -rd->tol->dist) {
 				if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 					bu_log("guess_class_from_hitlist_min() returns NMG_CLASS_AonBshared for 0 dist hit\n");
 
-		    		return NMG_CLASS_AonBshared;
-		    	}
+				return NMG_CLASS_AonBshared;
+			}
 
 			if (a_hit->hit.hit_dist < -rd->tol->dist)
 				continue;
@@ -2711,12 +2689,12 @@ guess_class_from_hitlist_min(struct ray_data *rd, int *hari_kari, int in_or_out_
 		{
 			/* if we've got a zero distance hit, that clinches it */
 			if (a_hit->hit.hit_dist <= rd->tol->dist &&
-		    	    a_hit->hit.hit_dist >= -rd->tol->dist) {
+			    a_hit->hit.hit_dist >= -rd->tol->dist) {
 				if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 					bu_log("guess_class_from_hitlist_min() returns NMG_CLASS_AonBshared for 0 dist hit\n");
 
-		    		return NMG_CLASS_AonBshared;
-		    	}
+				return NMG_CLASS_AonBshared;
+			}
 
 			if (a_hit->hit.hit_dist > rd->tol->dist)
 				continue;
@@ -2913,7 +2891,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
 
 	if( (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) &&
 	    (rt_g.NMG_debug & (DEBUG_PLOTEM)) )  {
-	    	static int	num=0;
+		static int	num=0;
 		nmg_pl_hitmiss_list( "shell-ray", num++, &rd.rd_hit, rp );
 	}
 

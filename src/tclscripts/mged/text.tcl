@@ -1525,7 +1525,7 @@ proc text_scroll { w x y } {
     global mged_gui
 
     if [expr {abs($mged_gui($w,omx) - $x) > 4 ||
-              abs($mged_gui($w,omy) - $y) > 4}] {
+	      abs($mged_gui($w,omy) - $y) > 4}] {
 	set mged_gui($w,moveView) 1
 	$w scan dragto $x $y
     }

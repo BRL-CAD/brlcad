@@ -41,7 +41,6 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"

@@ -117,8 +117,8 @@ proc set_extern_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
-	        set shader_name [lindex $shader_str 0]
-	        if { $shader_name != "extern" } {
+		set shader_name [lindex $shader_str 0]
+		if { $shader_name != "extern" } {
 		    return
 		}
 	} else {
@@ -449,8 +449,8 @@ proc set_camo_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
-	        set shader_name [lindex $shader_str 0]
-	        if { $shader_name != "camo" } {
+		set shader_name [lindex $shader_str 0]
+		if { $shader_name != "camo" } {
 		    return
 		}
 	} else {
@@ -737,8 +737,8 @@ proc set_prj_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
-	        set shader_name [lindex $shader_str 0]
-	        if { $shader_name != "prj" } {
+		set shader_name [lindex $shader_str 0]
+		if { $shader_name != "prj" } {
 		    return
 		}
 	} else {
@@ -780,7 +780,7 @@ proc do_fakestar { shade_var id } {
 
 	label $shader_params($id,window).fr.fakestar_m \
 	    -text "There are no parameters to set \n\
-                   for the fakestar texture map"
+		   for the fakestar texture map"
 	hoc_register_data $shader_params($id,window).fr.fakestar_m "Fake Star" {
 		{summary "The Fake Star texture maps an imaginary star field onto the object."}
 	}
@@ -919,8 +919,8 @@ proc set_checker_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
-	        set shader_name [lindex $shader_str 0]
-	        if { $shader_name != "checker" } {
+		set shader_name [lindex $shader_str 0]
+		if { $shader_name != "checker" } {
 		    return
 		}
 	} else {
@@ -1265,8 +1265,8 @@ proc set_phong_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
-	        set shader_name [lindex $shader_str 0]
-	        if { $shader_name != "plastic" && $shader_name != "glass" && $shader_name != "mirror" } {
+		set shader_name [lindex $shader_str 0]
+		if { $shader_name != "plastic" && $shader_name != "glass" && $shader_name != "mirror" } {
 		    return
 		}
 	} else {
@@ -1496,8 +1496,8 @@ proc set_texture_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
-	        set shader_name [lindex $shader_str 0]
-	        if { $shader_name != "bump" && $shader_name != "bwtexture" && $shader_name != "texture" } {
+		set shader_name [lindex $shader_str 0]
+		if { $shader_name != "bump" && $shader_name != "bwtexture" && $shader_name != "texture" } {
 		    return
 		}
 	} else {
@@ -1623,8 +1623,6 @@ proc do_light { shade_var id } {
 	}
 
 
-
-
 	foreach {type name abbrev def_val summary range row col } $light_data {
 	    switch $type {
 		e {
@@ -1666,8 +1664,7 @@ proc do_light { shade_var id } {
 		-command "light_scale $shade_var $id $w.icon"\
 		-variable shader_params($id,light_s) ] \
 		-row 0 -column 2 -rowspan 3 -columnspan 2 -sticky nesw
-        hoc_register_data $w.shadows shadows [list [list summary "number of rays to fire at light source in determining shadow\n0 rays means no shadows"] [list range "0..64"]]
-
+	hoc_register_data $w.shadows shadows [list [list summary "number of rays to fire at light source in determining shadow\n0 rays means no shadows"] [list range "0..64"]]
 
 
 	# Set the entry widget values from the current shader string
@@ -1693,8 +1690,8 @@ proc set_light_values { shader_str id } {
 	# grab OUR shader parameters from the shader string
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
-	        set shader_name [lindex $shader_str 0]
-	        if { $shader_name != "light" } {
+		set shader_name [lindex $shader_str 0]
+		if { $shader_name != "light" } {
 		    return
 		}
 	} else {
@@ -1753,8 +1750,8 @@ proc do_light_apply { shade_var id } {
 	set pattern ($id,light_)(\[a-z\]*)
 	foreach i [array names shader_params] {
 	    if { [regexp $pattern $i name head varname] && \
-	         $shader_params($id,light_$varname) != \
-	         $shader_params(def_light_$varname) } {
+		 $shader_params($id,light_$varname) != \
+		 $shader_params(def_light_$varname) } {
 			lappend params $varname $shader_params($id,light_$varname)
 		}
 	}
@@ -2720,8 +2717,8 @@ proc set_cloud_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
-	        set shader_name [lindex $shader_str 0]
-	        if { $shader_name != "cloud" } {
+		set shader_name [lindex $shader_str 0]
+		if { $shader_name != "cloud" } {
 		    return
 		}
 	} else {
@@ -2917,8 +2914,8 @@ proc set_air_values { shader_str id } {
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
-	        set shader_name [lindex $shader_str 0]
-	        if { $shader_name != "air" } {
+		set shader_name [lindex $shader_str 0]
+		if { $shader_name != "air" } {
 		    return
 		}
 	} else {

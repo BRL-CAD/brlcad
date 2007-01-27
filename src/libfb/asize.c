@@ -104,10 +104,10 @@ struct sizes fb_common_sizes[] = {
  */
 int
 fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const char *filename, int pixel_size)
-   	        		/* pointer to returned width */
-   	         		/* pointer to returned height */
-          	          	/* image file to stat */
-   	           		/* bytes per pixel */
+				/* pointer to returned width */
+				/* pointer to returned height */
+				/* image file to stat */
+				/* bytes per pixel */
 {
 	struct	stat	sbuf;
 	unsigned long int	size;
@@ -132,7 +132,7 @@ fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const
 	}
 
 	if( fb_common_name_size( widthp, heightp, cp ) )
-	        return 1;
+		return 1;
 
 	if( stat( filename, &sbuf ) < 0 )
 		return	0;
@@ -156,9 +156,9 @@ fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const
 
 int
 fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const char *name)
-   	        		/* pointer to returned width */
-   	         		/* pointer to returned height */
-          	      		        /* name to parse */
+				/* pointer to returned width */
+				/* pointer to returned height */
+					/* name to parse */
 {
     register const char *cp = name;
 
@@ -176,7 +176,6 @@ fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const
 }
 
 
-
 /*
  *			F B _ C O M M O N _ I M A G E _ S I Z E
  *
@@ -190,9 +189,9 @@ fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const
  */
 int
 fb_common_image_size(unsigned long int *widthp, unsigned long int *heightp, register unsigned long int npixels)
-   	        		/* pointer to returned width */
-   	         		/* pointer to returned height */
-            	        	/* Number of pixels */
+				/* pointer to returned width */
+				/* pointer to returned height */
+				/* Number of pixels */
 {
 	register struct	sizes	*sp;
 	long int		root;

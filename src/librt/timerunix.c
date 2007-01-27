@@ -44,7 +44,6 @@ static const char RCStimer[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #ifdef HAVE_MEMORY_H
 #include <memory.h>

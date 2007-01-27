@@ -120,7 +120,7 @@ AC_MSG_RESULT([$bc_dbl_epsilon])
 # BC_COMPLIANT_FLOAT()
 AC_DEFUN([BC_COMPLIANT_FLOAT], [
 dnl determine whether the floating point implementation seems to be
-dnl IEEE 754 compliant by checking whether the tolerance epsilon 
+dnl IEEE 754 compliant by checking whether the tolerance epsilon
 dnl matches -23 power.  make sure 0 == -0 too.
 AC_MSG_CHECKING([whether floats conform to IEEE 754])
 AC_TRY_RUN([
@@ -164,7 +164,7 @@ int main (int ac, char *av[]) {
 # BC_COMPLIANT_DOUBLE()
 AC_DEFUN([BC_COMPLIANT_DOUBLE], [
 dnl determine whether the floating point implementation seems to be
-dnl IEEE 754 compliant by checking whether the tolerance epsilon 
+dnl IEEE 754 compliant by checking whether the tolerance epsilon
 dnl matches -23 power.  make sure 0 == -0 too.
 AC_MSG_CHECKING([whether doubles conform to IEEE 754])
 AC_TRY_RUN([

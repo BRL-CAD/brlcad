@@ -250,12 +250,6 @@ proc ic_reflist { w id } {
 }
 
 
-
-
-
-
-
-
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

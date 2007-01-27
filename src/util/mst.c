@@ -477,10 +477,10 @@ struct bridge *extract_min (void)
 int get_edge (FILE *fp, long int *index, char **label, double *w, int numeric)
 
 
-    	       		/* Indices of edge endpoints */
-    	        	/* Labels of edge endpoints */
-      	   		/* Weight */
-   	        	/* Use indices instead of labels? */
+			/* Indices of edge endpoints */
+			/* Labels of edge endpoints */
+			/* Weight */
+			/* Use indices instead of labels? */
 
 {
     char		*bp;

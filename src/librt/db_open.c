@@ -311,7 +311,7 @@ db_close(register struct db_i *dbip)
 		 *  For speed of re-open, at the price of some address space,
 		 *  the second choice is taken.
 		 */
-        	bu_close_mapped_file( dbip->dbi_mf );
+		bu_close_mapped_file( dbip->dbi_mf );
 		bu_free_mapped_files( 0 );
 		dbip->dbi_mf = (struct bu_mapped_file *)NULL;
 	}
@@ -389,8 +389,8 @@ db_close(register struct db_i *dbip)
  */
 int
 db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
-             	      		/* output */
-           	      		/* input */
+				/* output */
+				/* input */
 {
 	register int		i;
 	register struct directory *dp;

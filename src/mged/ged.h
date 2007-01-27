@@ -315,7 +315,7 @@ extern char *state_str[];		/* identifying strings */
 	}
 
 #define TCL_READ_ERR_return {\
-          TCL_READ_ERR;\
+	  TCL_READ_ERR;\
 	  return TCL_ERROR;\
 	}
 
@@ -348,7 +348,7 @@ An error has occured while adding a new object to the database.\n", (char *)NULL
 
 /* A verbose message to attempt to soothe and advise the user */
 #define	TCL_ERROR_RECOVERY_SUGGESTION\
-        Tcl_AppendResult(interp, "\
+	Tcl_AppendResult(interp, "\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety,\n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n", (char *)NULL)

@@ -217,7 +217,7 @@ main( int argc, char *argv[] )
     assert( airids.i_next == NULL );
     assert( armorids.i_next == NULL );
     assert( critids.i_next == NULL );
-    
+
     if( ! isatty( 0 ) || ! tty )
 	readBatchInput( stdin );
     if( tty )

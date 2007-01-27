@@ -198,10 +198,10 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
  */
 HIDDEN void
 persp_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+						/* structure description */
+						/* struct member name */
+						/* begining of structure */
+						/* string containing value */
 {
 	struct img_specific *img_sp = (struct img_specific *)base;
 
@@ -210,7 +210,7 @@ persp_hook(register const struct bu_structparse *sdp, register const char *name,
 		bu_bomb("");
 	}
 
- 	if (img_sp->i_perspective > 180.0) {
+	if (img_sp->i_perspective > 180.0) {
 		bu_log("perspective %s > 180.\n", value);
 		bu_bomb("");
 	}
@@ -225,10 +225,10 @@ persp_hook(register const struct bu_structparse *sdp, register const char *name,
  */
 HIDDEN void
 dimen_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+						/* structure description */
+						/* struct member name */
+						/* begining of structure */
+						/* string containing value */
 {
 	if (! strcmp("%f", sdp->sp_fmt)) {
 		fastf_t *f;
@@ -278,10 +278,10 @@ const char				*value;	/* string containing value */
  */
 static void
 orient_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+						/* structure description */
+						/* struct member name */
+						/* begining of structure */
+						/* string containing value */
 {
 	struct prj_specific	*prj_sp;
 	struct img_specific	*img_sp = (struct img_specific *)base;
@@ -413,7 +413,6 @@ struct bu_structparse img_print_tab[] = {
 };
 
 
-
 HIDDEN int	prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), prj_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
 HIDDEN void	prj_print(register struct region *rp, char *dp), prj_free(char *cp);
 
@@ -445,9 +444,9 @@ HIDDEN int
 prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    			      	/* pointer to reg_udata in *rp */
+				/* pointer to reg_udata in *rp */
 
-           		      	/* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	struct prj_specific		*prj_sp;
 	struct img_specific		*img_sp;
@@ -541,8 +540,8 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
 	bu_vls_free( &parameter_data );
 
-        /* load the image data for any specified images */
-        for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
+	/* load the image data for any specified images */
+	for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
 	  if (img_load_datasource(img_sp, rtip->rti_dbip, img_sp->i_width * img_sp->i_height * 3) < 0) {
 	    bu_log("\nERROR: prj_setup() %s %s could not be loaded [source was %s]\n",
 		   rp->reg_name, bu_vls_addr(&img_sp->i_name),
@@ -554,7 +553,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
 	    return -1;
 	  }
-        }
+	}
 
 	/* if even one of the images is to be anti-aliased, then we need
 	 * to set the rti_prismtrace flag so that we can compute the exact
@@ -694,9 +693,9 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
 	if (x >= img_sp->i_width || x < 0 ||
 	    y >= img_sp->i_height || y < 0 ||
 	    ((img_sp->i_behind == '0' && sh_pt[Z] > 0.0)) ) {
-	    	/* we're out of bounds,
-	    	 * leave the color alone
-	    	 */
+		/* we're out of bounds,
+		 * leave the color alone
+		 */
 		return 1;
 	}
 
@@ -726,8 +725,8 @@ int
 prj_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-                	     	/* defined in material.h */
-    			    	/* ptr to the shader-specific struct */
+				/* defined in material.h */
+				/* ptr to the shader-specific struct */
 {
 	register struct prj_specific *prj_sp =
 		(struct prj_specific *)dp;
@@ -759,8 +758,6 @@ prj_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	 */
 	MAT4X3PNT(r_pt, prj_sp->prj_m_to_sh, swp->sw_hit.hit_point);
 	MAT4X3VEC(r_N, prj_sp->prj_m_to_sh, swp->sw_hit.hit_normal);
-
-
 
 
 	if (rdebug&RDEBUG_SHADE) {

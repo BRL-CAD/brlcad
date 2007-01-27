@@ -259,7 +259,6 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     faces = bot->faces;
 
 
-
     sprintf(Value,"%s.dxf",name);
     if (debug&DEBUG_NAMES) fprintf(stderr, "Writing DXF: %s\n",Value);
     FH= fopen(Value,"w");
@@ -550,7 +549,7 @@ int main(int ac, char *av[])
 
     /* process command line objects */
     if (arg_count < ac) {
-        struct directory *dirp;
+	struct directory *dirp;
 
 	for ( ; arg_count < ac ; arg_count++ ) {
 	    printf("current: %s\n",av[arg_count]);
@@ -602,8 +601,8 @@ int main(int ac, char *av[])
 	/* dump all the bots */
 	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 
-        /* we only dump BOT primitives, so skip some obvious exceptions */
-        if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
+	/* we only dump BOT primitives, so skip some obvious exceptions */
+	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
 	if (dp->d_flags & DIR_COMB) continue;
 
 	if (debug&DEBUG_NAMES)
@@ -631,7 +630,6 @@ FOR_ALL_DIRECTORY_END
     }
     return 0;
 }
-
 
 
 /*

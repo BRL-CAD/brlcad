@@ -201,7 +201,7 @@ attrib_add(char *a)
 	}
 
 	/* add the attribute name(s) */
-    	a_tab.attrib[a_tab.attrib_use] = bu_strdup(p);
+	a_tab.attrib[a_tab.attrib_use] = bu_strdup(p);
 	/* bu_log("attrib[%d]=\"%s\"\n", attrib_use, attrib[attrib_use]); */
 	a_tab.attrib[++a_tab.attrib_use] = (char *)NULL;
 
@@ -210,15 +210,6 @@ attrib_add(char *a)
     }
 
 }
-
-
-
-
-
-
-
-
-
 
 
 struct script_rec
@@ -234,8 +225,7 @@ struct script_rec
 static void enqueue_script (struct bu_list *qp, int type, char *string)
 
 
-
-    		        	/* Literal or file name */
+				/* Literal or file name */
 
 {
     struct script_rec	*srp;
@@ -255,7 +245,7 @@ static void enqueue_script (struct bu_list *qp, int type, char *string)
 static void show_scripts (struct bu_list *sl, char *text)
 
 
-    		      		/* for title line */
+				/* for title line */
 
 {
     int			i;
@@ -389,8 +379,8 @@ main (int argc, char **argv)
 
     /* Handle command-line options */
     while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
-        switch (Ch)
-        {
+	switch (Ch)
+	{
 	    case 'A':
 		attrib_add(bu_optarg);
 		break;
@@ -433,25 +423,25 @@ main (int argc, char **argv)
 	    case 'v':
 		silent_flag = SILENT_NO;	/* Positively no */
 		break;
-            case 'x':
+	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 		break;
-            case 'X':
+	    case 'X':
 		sscanf( bu_optarg, "%x", (unsigned int *)&nirt_debug );
 		break;
-            case 'u':
-                if (sscanf(bu_optarg, "%d", &use_of_air) != 1)
-                {
-                    (void) fprintf(stderr,
-                        "Illegal use-air specification: '%s'\n", bu_optarg);
+	    case 'u':
+		if (sscanf(bu_optarg, "%d", &use_of_air) != 1)
+		{
+		    (void) fprintf(stderr,
+			"Illegal use-air specification: '%s'\n", bu_optarg);
 		    return 1;
-                }
-                break;
-            case '?':
+		}
+		break;
+	    case '?':
 	    default:
-                printusage();
-                exit (Ch != '?');
-        }
+		printusage();
+		exit (Ch != '?');
+	}
     if (argc - bu_optind < 2)
     {
 	printusage();

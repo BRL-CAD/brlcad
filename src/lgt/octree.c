@@ -57,7 +57,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /* Error incurred while converting from double to float and back.	*/
 #define F2D_EPSILON	1.0e-1
 #define SamePoint( p, q, e ) \
-	 	(	Abs((p)[X]-(q)[X]) < (e) \
+		(	Abs((p)[X]-(q)[X]) < (e) \
 		    &&	Abs((p)[Y]-(q)[Y]) < (e) \
 		    &&	Abs((p)[Z]-(q)[Z]) < (e) \
 		)
@@ -75,7 +75,7 @@ new_Octant(Octree *parentp, Octree **childpp, int bitv, int level)
 	/* Create child node, filling in parent's pointer.		*/
 	if( ! NewOctree( *childpp ) )
 		{
-	 	Malloc_Bomb(sizeof(Octree));
+		Malloc_Bomb(sizeof(Octree));
 		fatal_error = TRUE;
 		return	OCTREE_NULL;
 		}
@@ -279,7 +279,7 @@ subdivide_Octree(register Octree *parentp, int level)
 			Octree	*octreep;
 		VMOVE( c_point, cp->c_point );
 		if(	(octreep =
-		  	add_Region_Octree( parentp, c_point, triep, temp, level )
+			add_Region_Octree( parentp, c_point, triep, temp, level )
 			) != OCTREE_NULL
 			)
 			append_Octp( triep, octreep );
@@ -442,7 +442,7 @@ ir_shootray_octree(struct application *ap)
 	/* Descend octree from root to find the closest intersected leaf node.
 		Store minimum hit distance in "a_uvec[0]" field of application
 		structure.  Implicitly return the leaf node in "leafp".
- 	 */
+	 */
 	ap->a_uvec[0] = INFINITY; /* Minimum hit point, safe distance.	*/
 	hit_octant( ap, &ir_octree, &leafp, inv_dir, 0 );
 	if( leafp != OCTREE_NULL )

@@ -42,14 +42,14 @@
  */
 int
 mk_vol(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, int zdim, int lo, int hi, const fastf_t *cellsize, const matp_t mat)
-          	      		/* name of file containing bitmap */
-   		     		/* X dimansion of file (w cells) */
-   		     		/* Y dimension of file (n cells) */
-   		     		/* Z dimension of file (d cells) */
-   		   		/* Low threshold */
-   		   		/* High threshold */
-            	         	/* ideal coords: size of each cell */
-            	    		/* convert local coords to model space */
+				/* name of file containing bitmap */
+				/* X dimansion of file (w cells) */
+				/* Y dimension of file (n cells) */
+				/* Z dimension of file (d cells) */
+				/* Low threshold */
+				/* High threshold */
+				/* ideal coords: size of each cell */
+				/* convert local coords to model space */
 {
 	struct rt_vol_internal	*vol;
 

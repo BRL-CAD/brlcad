@@ -293,42 +293,42 @@ nmg_veu(const struct bu_list *hp, const long int *up_magic_p)
 		 */
 		if ( up_magic == NMG_LOOPUSE_MAGIC &&
 		     eu->vu_p->v_p != eulast->eumate_p->vu_p->v_p) {
-		     	bu_log("eu=x%x, e=x%x\n", eu, eu->e_p );
-		     	bu_log("eulast=x%x, e=x%x\n", eulast, eulast->e_p);
-		     	bu_log("	    eu: (%g, %g, %g) <--> (%g, %g, %g)\n",
-		     		V3ARGS(eu->vu_p->v_p->vg_p->coord),
-		     		V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
-		     	bu_log("	eulast: (%g, %g, %g) <--> (%g, %g, %g)\n",
-		     		V3ARGS(eulast->vu_p->v_p->vg_p->coord),
-		     		V3ARGS(eulast->eumate_p->vu_p->v_p->vg_p->coord) );
+			bu_log("eu=x%x, e=x%x\n", eu, eu->e_p );
+			bu_log("eulast=x%x, e=x%x\n", eulast, eulast->e_p);
+			bu_log("	    eu: (%g, %g, %g) <--> (%g, %g, %g)\n",
+				V3ARGS(eu->vu_p->v_p->vg_p->coord),
+				V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
+			bu_log("	eulast: (%g, %g, %g) <--> (%g, %g, %g)\n",
+				V3ARGS(eulast->vu_p->v_p->vg_p->coord),
+				V3ARGS(eulast->eumate_p->vu_p->v_p->vg_p->coord) );
 			bu_log("unshared vertex (mine) v=x%x: (%g, %g, %g)\n",
 				eu->vu_p->v_p,
 				V3ARGS(eu->vu_p->v_p->vg_p->coord) );
 			bu_log("\t\t (last->eumate_p) v=x%x: (%g, %g, %g)\n",
 				eulast->eumate_p->vu_p->v_p,
 				V3ARGS(eulast->eumate_p->vu_p->v_p->vg_p->coord) );
-		     	nmg_pr_lu_briefly(eu->up.lu_p, (char *)NULL);
-		     	nmg_pr_lu_briefly(eu->up.lu_p->lumate_p, (char *)NULL);
+			nmg_pr_lu_briefly(eu->up.lu_p, (char *)NULL);
+			nmg_pr_lu_briefly(eu->up.lu_p->lumate_p, (char *)NULL);
 			rt_bomb("nmg_veu() discontinuous edgeloop mine/last\n");
 		}
 		if ( up_magic == NMG_LOOPUSE_MAGIC &&
 		     eunext->vu_p->v_p != eu->eumate_p->vu_p->v_p) {
-		     	bu_log("eu=x%x, e=x%x\n", eu, eu->e_p );
-		     	bu_log("eunext=x%x, e=x%x\n", eunext, eunext->e_p);
-		     	bu_log("	    eu: (%g, %g, %g) <--> (%g, %g, %g)\n",
-		     		V3ARGS(eu->vu_p->v_p->vg_p->coord),
-		     		V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
-		     	bu_log("	eunext: (%g, %g, %g) <--> (%g, %g, %g)\n",
-		     		V3ARGS(eunext->vu_p->v_p->vg_p->coord),
-		     		V3ARGS(eunext->eumate_p->vu_p->v_p->vg_p->coord) );
+			bu_log("eu=x%x, e=x%x\n", eu, eu->e_p );
+			bu_log("eunext=x%x, e=x%x\n", eunext, eunext->e_p);
+			bu_log("	    eu: (%g, %g, %g) <--> (%g, %g, %g)\n",
+				V3ARGS(eu->vu_p->v_p->vg_p->coord),
+				V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
+			bu_log("	eunext: (%g, %g, %g) <--> (%g, %g, %g)\n",
+				V3ARGS(eunext->vu_p->v_p->vg_p->coord),
+				V3ARGS(eunext->eumate_p->vu_p->v_p->vg_p->coord) );
 			bu_log("unshared vertex (mate) v=x%x: (%g, %g, %g)\n",
 				eu->eumate_p->vu_p->v_p,
 				V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
 			bu_log("\t\t (next) v=x%x: (%g, %g, %g)\n",
 				eunext->vu_p->v_p,
 				V3ARGS(eunext->vu_p->v_p->vg_p->coord) );
-		     	nmg_pr_lu_briefly(eu->up.lu_p, (char *)NULL);
-		     	nmg_pr_lu_briefly(eu->up.lu_p->lumate_p, (char *)NULL);
+			nmg_pr_lu_briefly(eu->up.lu_p, (char *)NULL);
+			nmg_pr_lu_briefly(eu->up.lu_p->lumate_p, (char *)NULL);
 			rt_bomb("nmg_veu() discontinuous edgeloop next/mate\n");
 		}
 
@@ -655,7 +655,6 @@ nmg_vshell(const struct bu_list *hp, const struct nmgregion *r)
 }
 
 
-
 /**
  *			N M G _ V R E G I O N
  *
@@ -927,7 +926,7 @@ nmg_ck_fg(const struct face *f, const struct face_g_plane *fg, const char *str)
 		(void)sprintf(&errstr[strlen(errstr)],
 			"nmg_ck_fg() bad NMG plane equation %fX + %fY + %fZ = %f\n",
 			fg->N[X], fg->N[Y], fg->N[Z], fg->N[H]);
-	        rt_bomb(errstr);
+		rt_bomb(errstr);
 	}
 
 	bu_free(errstr, "nmg_ck_fg error str");
@@ -1162,7 +1161,6 @@ nmg_ck_face_worthless_edges(const struct faceuse *fu)
 }
 
 
-
 /**
  *			N M G _ C K _ L U E U
  *
@@ -1312,9 +1310,9 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 		NMG_CK_FACEUSE(fu);
 		if (fu->orientation != curr_orient &&
 		    eur != eu1->eumate_p ) {
-		    	char file[128];
-		    	char buf[128];
-		    	static int num=0;
+			char file[128];
+			char buf[128];
+			static int num=0;
 
 			p = eu1->vu_p->v_p->vg_p->coord;
 			q = eu1->eumate_p->vu_p->v_p->vg_p->coord;
@@ -1331,12 +1329,12 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 			nmg_face_lu_plot( eur->up.lu_p, eur->vu_p,
 				eur->eumate_p->vu_p );
 
-		    	sprintf(buf, "%g %g %g -> %g %g %g\n",
+			sprintf(buf, "%g %g %g -> %g %g %g\n",
 				p[0], p[1], p[2], q[0], q[1], q[2]);
 
-		    	sprintf(file, "radial%d.g", num++);
-		    	nmg_stash_model_to_file( file,
-		    		nmg_find_model(&(fu->l.magic)), buf);
+			sprintf(file, "radial%d.g", num++);
+			nmg_stash_model_to_file( file,
+				nmg_find_model(&(fu->l.magic)), buf);
 
 			nmg_pr_fu_around_eu( eu_orig, tol );
 
@@ -1452,8 +1450,8 @@ next_eu:
 			nmg_pr_fu_around_eu( eu_orig, tol );
 			bu_log("nmg_eu_2s_orient_bad(eu=x%x, s1=x%x, s2=x%x) bad radial parity eu1=x%x, eur=x%x, eurstart=x%x\n",
 				eu_orig, s1, s2, eu1, eur, eurstart);
-		    	ret = 1;
-		    	goto out;
+			ret = 1;
+			goto out;
 		}
 
 		/* If eu belongs to a face, eumate had better, also! */
@@ -1622,20 +1620,20 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
  */
 
 struct v_ck_state {
-        char            *visited;
-        struct bu_ptbl *tabl;
+	char            *visited;
+	struct bu_ptbl *tabl;
 	struct bn_tol	*tol;
 };
 
 static void
 nmg_ck_v_in_fus(long int *vp, genptr_t state, int first)
 {
-        register struct v_ck_state *sp = (struct v_ck_state *)state;
-        register struct vertex  *v = (struct vertex *)vp;
+	register struct v_ck_state *sp = (struct v_ck_state *)state;
+	register struct vertex  *v = (struct vertex *)vp;
 
-        NMG_CK_VERTEX(v);
-        /* If this vertex has been processed before, do nothing more */
-        if( NMG_INDEX_FIRST_TIME(sp->visited, v) )
+	NMG_CK_VERTEX(v);
+	/* If this vertex has been processed before, do nothing more */
+	if( NMG_INDEX_FIRST_TIME(sp->visited, v) )
 	{
 		struct vertexuse *vu;
 		struct faceuse *fu;
@@ -1681,24 +1679,24 @@ nmg_ck_vs_in_region(const struct nmgregion *r, const struct bn_tol *tol)
 							   NULL, NULL, NULL, NULL, NULL,
 							   NULL, NULL, NULL, NULL, NULL,
 							   NULL, NULL, NULL, nmg_ck_v_in_fus, NULL};
-        /* handlers.vis_vertex = nmg_ck_v_in_fus; */
+	/* handlers.vis_vertex = nmg_ck_v_in_fus; */
 
-        NMG_CK_REGION(r);
+	NMG_CK_REGION(r);
 	BN_CK_TOL( tol );
-        m = r->m_p;
-        NMG_CK_MODEL(m);
+	m = r->m_p;
+	NMG_CK_MODEL(m);
 
-        st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
-        st.tabl = &tab;
+	st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.tabl = &tab;
 	st.tol = (struct bn_tol *)tol;
 
-        (void)bu_ptbl_init( &tab, 64, " &tab");
+	(void)bu_ptbl_init( &tab, 64, " &tab");
 
-        nmg_visit( &r->l.magic, &handlers, (genptr_t)&st );
+	nmg_visit( &r->l.magic, &handlers, (genptr_t)&st );
 
 	bu_ptbl_free( &tab );
 
-        bu_free( (char *)st.visited, "visited[]");
+	bu_free( (char *)st.visited, "visited[]");
 }
 
 /*

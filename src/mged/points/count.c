@@ -42,7 +42,7 @@ static counter_t *counter = NULL;
 static void incr_token(id)
 {
     token_t *t;
-    
+
     /* allocate and initialize on first use */
     if (!counter) {
 	counter = bu_malloc(sizeof(counter_t), "count()");
@@ -114,17 +114,16 @@ void freecount()
     }
 
     t = (counter->token).next;
-    
+
     while (t != (token_t*)NULL) {
 	next = t->next;
 	bu_free(t, "freecount()");
 	t = next;
     }
-    
+
     bu_free(counter, "freecount()");
 }
-    
-    
+
 
 long int get_column()
 {

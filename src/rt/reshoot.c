@@ -22,21 +22,21 @@
  * A program to shoot reshoot and compare results to previous runs.
  *
  * This program is geared towards performing regression tests of the
- * BRL-CAD libraries.  A candidate application is run with 
+ * BRL-CAD libraries.  A candidate application is run with
  * the RT_G_DEBUG flag DEBUG_ALLHITS set.  This causes the application
- * to log all calls to the application hit() routine, and print the 
- * contents of the struct partition.  The log is processed to 
- * eliminate extraneous information to produce the input to this 
+ * to log all calls to the application hit() routine, and print the
+ * contents of the struct partition.  The log is processed to
+ * eliminate extraneous information to produce the input to this
  * program.  The following awk program, will suffice:  @verbatim
 
 	/Pnt/ { START=index($0,"(") + 1
 	       STR=substr($0, START, index($0,")") - START)
 	       gsub(  ", "  , "," , STR)
 	       printf "Pnt=%s\n",STR
-	
+
 	       }
-	
-	
+
+
 	/Dir/ { START=index($0,"(") + 1
 	       STR=substr($0, START, index($0,")") - START)
 	       gsub(  ", "  , "," , STR)
@@ -48,27 +48,27 @@
 	/InHIT/ { INHIT=$2 }
 	/OutHIT/ { OUTHIT=$2 }
 	/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n",$2,PARTIN,INHIT,PARTOUT,OUTHIT}
-	
+
 @endverbatim
  * If this awk program is stored in the file p.awk then: @verbatim
- 	awk -f p.awk < logfile > inputfile
+	awk -f p.awk < logfile > inputfile
 @endverbatim
- * will produce a suitable input file for this program.  The form is as 
+ * will produce a suitable input file for this program.  The form is as
  * follows: @verbatim
- 	Pnt=1,2,3
- 	Dir=4,5,6
+	Pnt=1,2,3
+	Dir=4,5,6
 		region=/all.g/platform.r in=platform.s indist=10016.8 out=platform.s outdist=10023.8
 @endverbatim
  * where the line begining with "region" may be repeated any number of times, representing each
  * region encountered along the ray.
  * now run this program as follows: @verbatim
- 	reshoot geom.g obj [obj...] < inputfile
+	reshoot geom.g obj [obj...] < inputfile
 @endverbatim
  * and this  will re-shoot all of the rays that the original program
  * shot, and compare the results.
  *
- * One of the basic assumptions is that the application structure 
- * field a_onehit is set to zero in the original application, causing 
+ * One of the basic assumptions is that the application structure
+ * field a_onehit is set to zero in the original application, causing
  * all rays to be shot all the way through the geometry
  */
 #include "common.h"
@@ -82,7 +82,6 @@
 #include "bu.h"
 #include "raytrace.h"		/* librt interface definitions */
 #include "rtprivate.h"
-
 
 
 char *progname = "(noname)";
@@ -146,7 +145,6 @@ usage(char *s)
 }
 
 
-
 /**
  *  Process a single ray intersection list.
  *  A pointer to this function is in the application structure a_hit field.
@@ -181,9 +179,9 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
     rh = BU_LIST_FIRST(reg_hit, &sh->regions);
     for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
 
- 	bu_vls_trunc(&result, 0);
+	bu_vls_trunc(&result, 0);
 
-	/* since the values were printed out using a %g format, 
+	/* since the values were printed out using a %g format,
 	 * we have to do the same thing to the result to compare them
 	 */
 	bu_vls_trunc(&v, 0);
@@ -221,10 +219,10 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	    status = 1;
 	}
 	if (bu_vls_strlen(&result) > 0) {
- 	    bu_log("Ray Pt %g,%g,%g Dir %g,%g,%g\n%S", 
- 		   V3ARGS(sh->pt),
- 		   V3ARGS(sh->dir),
- 		   &result);
+	    bu_log("Ray Pt %g,%g,%g Dir %g,%g,%g\n%S",
+		   V3ARGS(sh->pt),
+		   V3ARGS(sh->dir),
+		   &result);
 	}
 
 	rh = BU_LIST_NEXT(reg_hit, &rh->l);
@@ -240,7 +238,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 
 /**
  * Function called when ray misses all geometry
- * A pointer to this function is stored in the application structure 
+ * A pointer to this function is stored in the application structure
  * field a_miss.  rt_shootray() will call this when the ray misses all geometry.
  * it passees the application structure.
  * @return
@@ -291,7 +289,7 @@ do_shot(struct shot *sh, struct application *ap)
     ap->a_miss = miss;
     status = rt_shootray( ap );	/* do it */
 
-    /* clean up */		
+    /* clean up */
     while (BU_LIST_WHILE(rh, reg_hit, &sh->regions)) {
 	BU_LIST_DEQUEUE( &(rh->l) );
 	bu_vls_free(&rh->regname);
@@ -329,9 +327,6 @@ main(int argc, char **argv)
 	exit(1);
     }
 
-    
-
-
 
     /*
      *  Load database.
@@ -366,8 +361,6 @@ main(int argc, char **argv)
     rt_prep_parallel(rtip,1);
 
 
-
-
     bu_vls_init(&buf);
 
 
@@ -399,7 +392,7 @@ main(int argc, char **argv)
 		break;
 	    }
 
-	default: 
+	default:
 	    {
 		struct reg_hit *rh = bu_calloc(1, sizeof (struct reg_hit), "");
 
@@ -420,7 +413,6 @@ main(int argc, char **argv)
 
     return status;
 }
-
 
 
 /*

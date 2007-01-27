@@ -19,13 +19,13 @@
 #
 ###
 #
- 
+
 package require Tcl 8.0
 package require Tk 8.0
 package require Itcl 3.2
 package require Itk 3.2
 package require Iwidgets
- 
+
 namespace eval ::sdialogs {
     namespace export *
 

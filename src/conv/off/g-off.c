@@ -392,8 +392,8 @@ out:
 
 static void
 nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
-                    		/* NMG region to be converted. */
-    		          	/* Jack format file to write vertex list to. */
+				/* NMG region to be converted. */
+				/* Jack format file to write vertex list to. */
 {
 	int			i;
 	int			*map;	/* map from v->index to Jack vert # */
@@ -439,8 +439,8 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 */
 static void
 jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
-                    		/* NMG region to be converted. */
-    		          	/* Jack format file to write face vertices to. */
+				/* NMG region to be converted. */
+				/* Jack format file to write face vertices to. */
 
 {
 	struct edgeuse		*eu;
@@ -464,14 +464,14 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
 						NMG_CK_VERTEXUSE(eu->vu_p);
 						NMG_CK_VERTEX(eu->vu_p->v_p);
 						NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-		    				fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,eu->vu_p->v_p));
+						fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,eu->vu_p->v_p));
 					}
 				} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd)
-		  			== NMG_VERTEXUSE_MAGIC) {
-		  			v = BU_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
+					== NMG_VERTEXUSE_MAGIC) {
+					v = BU_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
 					NMG_CK_VERTEX(v);
 					NMG_CK_VERTEX_G(v->vg_p);
-		  			fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,v));
+					fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,v));
 				} else
 					bu_log("jack_faces: loopuse mess up! (1)\n");
 				fprintf(fp_psurf, ";\n");
@@ -488,7 +488,7 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
 					NMG_CK_VERTEXUSE(eu->vu_p);
 					NMG_CK_VERTEX(eu->vu_p->v_p);
 					NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-		  			fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,eu->vu_p->v_p));
+					fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,eu->vu_p->v_p));
 				}
 			} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd)
 				== NMG_VERTEXUSE_MAGIC) {

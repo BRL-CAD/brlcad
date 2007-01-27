@@ -579,7 +579,7 @@ noread:		if(io>31){
 				if(trnf==0||(trnf==4&&iwih&&opq==0)){
 					FBWPIXEL(ocl);
 				}else if(trnf==2&&iwih&&opq==0){
-			   		FBWPIXEL(bp);
+					FBWPIXEL(bp);
 				}else {
 					FBWPIXEL(tcl);
 				}

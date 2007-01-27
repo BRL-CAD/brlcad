@@ -54,7 +54,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -64,7 +63,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bn.h"
 
 
-
 /**
  * @brief interpolate smoothly from 0 .. 1
  *  SMOOTHSTEP() takes a value in the range [0:1] and provides a number
@@ -72,8 +70,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  * interpolation transition between (a) and (b)
  */
 #define SMOOTHSTEP(x)	(  (x) * (x) * (3 - 2*(x))  )
-
-
 
 
 #define FLOOR(x)	(  (int)(x) - (  (x) < 0 && (x) != (int)(x)  )  )
@@ -133,7 +129,6 @@ static double	RTable[MAXSIZE];
 					+ RTable[m+1]*(x)	\
 					+ RTable[m+2]*(y)	\
 					+ RTable[m+3]*(z)))
-
 
 
 /**
@@ -233,7 +228,6 @@ bn_noise_init(void)
 
 	CK_HT();
 }
-
 
 
 /**
@@ -440,8 +434,8 @@ bn_noise_vec(fastf_t *point, fastf_t *result)
  *	The Spectral Noise functions cache the values of the
  *	term:
  *@code
- 		    (-h_val)
- 		freq
+		    (-h_val)
+		freq
  *@endcode
  *	Which on some systems is rather expensive to compute.
  *
@@ -462,7 +456,6 @@ static int etbl_size = 0;
 
 #define PSCALE(_p, _s) _p[0] *= _s; _p[1] *= _s; _p[2] *= _s
 #define PCOPY(_d, _s) _d[0] = _s[0]; _d[1] = _s[1]; _d[2] = _s[2]
-
 
 
 static struct fbm_spec *
@@ -546,7 +539,7 @@ find_spec_wgt(double h, double l, double o)
 		if (ep->magic != MAGIC_fbm_spec_wgt) bu_bomb("find_spec_wgt");
 		if (ep->lacunarity == l && ep->h_val == h &&
 			ep->octaves >= o )
-		    		break;
+				break;
 	}
 
 	if (i >= etbl_next) ep = build_spec_tbl(h, l, o);
@@ -616,7 +609,7 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 		/* add in ``octaves''  remainder
 		 * ``i''  and spatial freq. are preset in loop above
 		 */
-            value += remainder * bn_noise_perlin( pt ) * spec_wgts[i];
+	    value += remainder * bn_noise_perlin( pt ) * spec_wgts[i];
 	}
 
 	return( value );
@@ -692,7 +685,7 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 		/* add in ``octaves''  remainder
 		 * ``i''  and spatial freq. are preset in loop above
 		 */
-            value += remainder * bn_noise_perlin( pt ) * spec_wgts[i];
+	    value += remainder * bn_noise_perlin( pt ) * spec_wgts[i];
 	}
 #else
 	PCOPY(pt, point);
@@ -712,7 +705,7 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 		/* add in ``octaves''  remainder
 		 * ``i''  and spatial freq. are preset in loop above
 		 */
-            value += remainder * bn_noise_perlin( pt ) * pow(frequency, -h_val);
+	    value += remainder * bn_noise_perlin( pt ) * pow(frequency, -h_val);
 	}
 #endif
 	return( value );

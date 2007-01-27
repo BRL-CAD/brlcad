@@ -19,7 +19,7 @@
 #
 ###
 proc mike_dedication {id} {
-        global mged_gui
+	global mged_gui
 
 	set top .$id\_mike
 

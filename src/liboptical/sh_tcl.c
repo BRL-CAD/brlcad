@@ -120,9 +120,9 @@ HIDDEN int
 tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    			      	/* pointer to reg_udata in *rp */
+				/* pointer to reg_udata in *rp */
 
-           		      	/* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct tcl_specific	*tcl_sp;
 	int cpu;
@@ -209,8 +209,8 @@ int
 tcl_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-                	     	/* defined in material.h */
-    			    	/* ptr to the shader-specific struct */
+				/* defined in material.h */
+				/* ptr to the shader-specific struct */
 {
 	register struct tcl_specific *tcl_sp =
 		(struct tcl_specific *)dp;

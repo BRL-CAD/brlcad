@@ -431,10 +431,7 @@ int
 isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb, fastf_t *norm, fastf_t *start, fastf_t *end, int orientation)
 
 
-
-
-
-                	/* 0 -> ccw, !0 -> cw */
+			/* 0 -> ccw, !0 -> cw */
 {
 	int dist_count;
 	vect_t local_x, local_y, local_z;
@@ -583,7 +580,6 @@ isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *ce
 
 	return( dist_count );
 }
-
 
 
 /**
@@ -1030,10 +1026,10 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
  */
 void
 rt_extrude_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	rt_vstub( stp, rp, segp, n, ap );
@@ -1047,7 +1043,7 @@ rt_extrude_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n,
 void
 rt_extrude_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
-        struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
+	struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
 	fastf_t alpha;
 	point_t hit_in_plane;
 	vect_t tmp, tmp2;
@@ -1110,7 +1106,7 @@ rt_extrude_norm(register struct hit *hitp, struct soltab *stp, register struct x
 void
 rt_extrude_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
-        struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
+	struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
 	struct carc_seg *csg;
 	fastf_t radius, a, b, a_sq, b_sq;
 	fastf_t curvature, tmp, dota, dotb;
@@ -1786,7 +1782,7 @@ classify_sketch_loops( struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_s
 	V2SCALE( dir, dir, inv_len );
 
 	/* intersect pta<->ptb line with both loops */
-        isect_2D_loop_ray( pta, dir, loopa, &inter_root, LOOPA, ip, &tol );
+	isect_2D_loop_ray( pta, dir, loopa, &inter_root, LOOPA, ip, &tol );
 	isect_2D_loop_ray( pta, dir, loopb, &inter_root, LOOPB, ip, &tol );
 
 	sort_intersections( &inter_root, &tol );
@@ -2503,12 +2499,12 @@ rt_extrude_xform(
 int
 rt_extrude_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
 {
-        RT_CK_FUNCTAB(ftp);
+	RT_CK_FUNCTAB(ftp);
 
-        Tcl_AppendResult( interp,
+	Tcl_AppendResult( interp,
 			  "V {%f %f %f} H {%f %f %f} A {%f %f %f} B {%f %f %f} S %s K %d", (char *)NULL );
 
-        return TCL_OK;
+	return TCL_OK;
 
 }
 
@@ -2516,8 +2512,8 @@ int
 rt_extrude_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
 {
 	register struct rt_extrude_internal *extr=(struct rt_extrude_internal *) intern->idb_ptr;
-        Tcl_DString     ds;
-        struct bu_vls   vls;
+	Tcl_DString     ds;
+	struct bu_vls   vls;
 	int ret=TCL_OK;
 
 	RT_EXTRUDE_CK_MAGIC( extr );
@@ -2554,23 +2550,23 @@ rt_extrude_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const
 		ret = TCL_ERROR;
 	}
 
-        Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
-        Tcl_DStringResult( interp, &ds );
-        Tcl_DStringFree( &ds );
-        bu_vls_free( &vls );
-        return( ret );
+	Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
+	Tcl_DStringResult( interp, &ds );
+	Tcl_DStringFree( &ds );
+	bu_vls_free( &vls );
+	return( ret );
 }
 
 int
 rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
 {
-        struct rt_extrude_internal *extr;
-        fastf_t *new;
+	struct rt_extrude_internal *extr;
+	fastf_t *new;
 	fastf_t len;
 
-        RT_CK_DB_INTERNAL( intern );
-        extr = (struct rt_extrude_internal *)intern->idb_ptr;
-        RT_EXTRUDE_CK_MAGIC( extr );
+	RT_CK_DB_INTERNAL( intern );
+	extr = (struct rt_extrude_internal *)intern->idb_ptr;
+	RT_EXTRUDE_CK_MAGIC( extr );
 
 	while( argc >= 2 )
 	{
@@ -2643,9 +2639,6 @@ rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc
 
 	return( TCL_OK );
 }
-
-
-
 
 
 /** @} */

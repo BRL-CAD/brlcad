@@ -71,4 +71,3 @@ MOSTLYCLEANFILES = ${MODELS:asc=g}
 MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
-

@@ -139,12 +139,12 @@ read_data(void)
 			atom_list[i].blue  = blue;
 			break;
 		case (1):
-		        scanf("%d", &sphere_id);
-		        scanf("%f", &x );
-		        scanf("%f", &y);
-		        scanf("%f", &z);
-		        scanf("%f", &sphere_radius);
-		        scanf("%d", &atom_type);
+			scanf("%d", &sphere_id);
+			scanf("%f", &x );
+			scanf("%f", &y);
+			scanf("%f", &z);
+			scanf("%f", &sphere_radius);
+			scanf("%d", &atom_type);
 			VSET( center, x, y, z );
 			process_sphere(sphere_id, center, sphere_radius,
 				atom_type);

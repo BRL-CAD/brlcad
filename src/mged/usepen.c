@@ -308,7 +308,7 @@ illuminate(int y) {
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
 		/* Only consider solids which are presently in view */
 		if( sp->s_flag == UP )  {
-		        if( count-- == 0 ) {
+			if( count-- == 0 ) {
 				sp->s_iflag = UP;
 				illump = sp;
 			}  else  {

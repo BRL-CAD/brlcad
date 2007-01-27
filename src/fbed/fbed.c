@@ -422,7 +422,7 @@ main(int argc, char **argv)
 			}
 		if(   !	reposition_cursor
 		    &&	(get_Mouse_Pos( &cursor_pos ))
-		    	!= -1
+			!= -1
 			)
 			status_change = true;
 		if( status_change )
@@ -615,7 +615,7 @@ do_Key_Cmd(register int key, register int n)
 		/* For now, ignore return values;
 			-1 for illegal command.
 			 0 for failed command.
-		 	 1 for success.
+			 1 for success.
 		 */
 		(void) (*bindings[key]->f_func)( bindings[key]->f_buff );
 		}

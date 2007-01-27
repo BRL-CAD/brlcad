@@ -55,10 +55,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  * 	used in edge_hit() for 3manifold case
  */
 struct ef_data {
-    	fastf_t		fdotr;	/* face vector VDOT with ray */
-    	fastf_t		fdotl;	/* face vector VDOT with ray-left */
-    	fastf_t		ndotr;	/* face normal VDOT with ray */
-    	struct edgeuse *eu;
+	fastf_t		fdotr;	/* face vector VDOT with ray */
+	fastf_t		fdotl;	/* face vector VDOT with ray-left */
+	fastf_t		ndotr;	/* face normal VDOT with ray */
+	struct edgeuse *eu;
 };
 
 #if 0
@@ -93,7 +93,6 @@ jmp_buf nmg_longjump_env;
 #else
 #define nmg_rt_segs_exit(_s) rt_bomb(_s)
 #endif
-
 
 
 static void
@@ -247,8 +246,8 @@ pl_ray(struct ray_data *rd)
 
 static void
 set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struct application *ap)
-          	        	/* The segment we're building */
-              	       		/* The input hit point */
+				/* The segment we're building */
+				/* The input hit point */
 
 
 {
@@ -284,8 +283,8 @@ set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struc
 
 static void
 set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
-          	        	/* The segment we're building */
-              	       		/* The input hit point */
+				/* The segment we're building */
+				/* The input hit point */
 {
 	if ( !seg_p ) {
 		bu_log("%s[line:%d]: Null pointer to segment pointer\n",
@@ -324,14 +323,12 @@ set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
 }
 
 
-
 static int
 state0(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-          	         	/* intersection w/ ray */
-          	        	/* The segment we're building */
-   		           	/* The number of valid segments built */
-              	       		/* The input hit point */
-
+				/* intersection w/ ray */
+				/* The segment we're building */
+				/* The number of valid segments built */
+				/* The input hit point */
 
 
 {
@@ -379,11 +376,10 @@ state0(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 static int
 state1(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-          	         	/* intersection w/ ray */
-          	        	/* The segment we're building */
-   		           	/* The number of valid segments built */
-              	       		/* The input hit point */
-
+				/* intersection w/ ray */
+				/* The segment we're building */
+				/* The number of valid segments built */
+				/* The input hit point */
 
 
 {
@@ -423,11 +419,10 @@ state1(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 static int
 state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-          	         	/* intersection w/ ray */
-          	        	/* The segment we're building */
-   		           	/* The number of valid segments built */
-              	       		/* The input hit point */
-
+				/* intersection w/ ray */
+				/* The segment we're building */
+				/* The number of valid segments built */
+				/* The input hit point */
 
 
 {
@@ -517,11 +512,10 @@ state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 static int
 state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-          	         	/* intersection w/ ray */
-          	        	/* The segment we're building */
-   		           	/* The number of valid segments built */
-              	       		/* The input hit point */
-
+				/* intersection w/ ray */
+				/* The segment we're building */
+				/* The number of valid segments built */
+				/* The input hit point */
 
 
 {
@@ -619,11 +613,10 @@ state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 static int
 state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-          	         	/* intersection w/ ray */
-          	        	/* The segment we're building */
-   		           	/* The number of valid segments built */
-              	       		/* The input hit point */
-
+				/* intersection w/ ray */
+				/* The segment we're building */
+				/* The number of valid segments built */
+				/* The input hit point */
 
 
 {
@@ -705,11 +698,10 @@ state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 static int
 state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-          	         	/* intersection w/ ray */
-          	        	/* The segment we're building */
-   		           	/* The number of valid segments built */
-              	       		/* The input hit point */
-
+				/* intersection w/ ray */
+				/* The segment we're building */
+				/* The number of valid segments built */
+				/* The input hit point */
 
 
 {
@@ -797,11 +789,10 @@ state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 static int
 state6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-          	         	/* intersection w/ ray */
-          	        	/* The segment we're building */
-   		           	/* The number of valid segments built */
-              	       		/* The input hit point */
-
+				/* intersection w/ ray */
+				/* The segment we're building */
+				/* The number of valid segments built */
+				/* The input hit point */
 
 
 {
@@ -898,7 +889,7 @@ static int
 nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, struct soltab *stp)
 
 
-          		         	/* intersection w/ ray */
+					/* intersection w/ ray */
 
 {
 	int ray_state = 0;
@@ -939,8 +930,8 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 				rd->stp->st_dp->d_namep,
 				rd->ap->a_x, rd->ap->a_y, rd->ap->a_level,
 				rd->ap->a_purpose );
-		    	bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
-		    		V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
+			bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
+				V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
 			nmg_rt_segs_exit("Goodbye\n");
 		}
 
@@ -954,8 +945,8 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 		bu_log("%s[line:%d]: Input ended at non-terminal FSM state\n",
 			__FILE__, __LINE__);
 
-	    	bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
-	    		V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
+		bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
+			V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
 
 		bu_log("Primitive: %s, pixel=%d %d, lvl=%d %s\n",
 			stp->st_dp->d_namep,
@@ -1154,10 +1145,10 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 	if (((a_hit->in_out & 0x0f0) >> 4) != NMG_RAY_STATE_OUTSIDE ||
 	    rt_g.NMG_debug & DEBUG_RT_SEGS) {
 		bu_log("check_hitstate()\n");
-	     	nmg_rt_print_hitlist(hd);
+		nmg_rt_print_hitlist(hd);
 
-	    	bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
-	    		V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
+		bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
+			V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
 	}
 
 	while( a_hit != hd &&

@@ -60,7 +60,7 @@ char	*file_name;
 
 char usage[] = "\
 Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root\n\
-                   -S shift -M and -O or -X xor -t trunc} [file.bw] > file2.bw\n";
+		   -S shift -M and -O or -X xor -t trunc} [file.bw] > file2.bw\n";
 
 #define	ADD	1
 #define MULT	2

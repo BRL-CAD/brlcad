@@ -23,7 +23,7 @@
  *
  * Routines in support of maintaining geometry in-memory-only.  The
  * general process for adding geometry to an inmem database is to
- * either: 
+ * either:
  *
  *   1) call wdb_export_external() providing an external
  *   representation of the geometry object and a flag marking it as
@@ -136,7 +136,7 @@ db_create_inmem(void) {
     /* Second, create the attribute-only _GLOBAL object */
     bu_vls_init( &units );
     bu_vls_printf( &units, "%.25e", dbip->dbi_local2base );
-    
+
     bu_avs_init( &avs, 4, "db_create_inmem" );
     bu_avs_add( &avs, "title", dbip->dbi_title );
     bu_avs_add( &avs, "units", bu_vls_addr(&units) );

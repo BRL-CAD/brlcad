@@ -201,7 +201,7 @@ hm_Put_Item(register HWindow *win, register HMitem *itemp, int flag)
 
 		PutMenuChar( '|', col, row, bitmap, bit );
 		if( flag & P_ON )
-		 	(void) SetStandout();
+			(void) SetStandout();
 		else
 			(void) ClrStandout();
 
@@ -399,7 +399,7 @@ hmredraw(void)
 
 HMitem *
 hmenuhit(HMenu *menup, int menux, int menuy)
-     	       			/* -> first HMitem in array.		*/
+				/* -> first HMitem in array.		*/
 
 	{	register HMitem	*itemp;
 		HMitem		*retitemp = 0;

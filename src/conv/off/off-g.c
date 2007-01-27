@@ -149,8 +149,6 @@ int read_faces(struct model *m, FILE *fgeom)
 }
 
 
-
-
 int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 {
 	char title[64], geom_fname[64];

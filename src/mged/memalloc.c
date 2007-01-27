@@ -237,7 +237,7 @@ unsigned long addr;
 	}
 
 	/*
- 	 * Now we do the surgery:
+	 * Now we do the surgery:
 	 * If there are no matches on boundaries we allocate a buffer
 	 * If there is one match we expand the appropriate buffer
 	 * If there are two matches we will have a free buffer returned.

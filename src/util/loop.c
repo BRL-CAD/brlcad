@@ -109,19 +109,19 @@ main(int argc, char **argv)
 		int	zeros_arg2 = 0;  /* leading zeros in arg[2]  */
 		int	zeros_arg3 = 0;  /* leading zeros in arg[3]  */
 
- 		/* count leading leading zeros in argv[1] */
+		/* count leading leading zeros in argv[1] */
 		for (cp = argv[1]; *cp == '0'; cp++)
 			zeros_arg1++;
 		if (*cp == '\0')
 			zeros_arg1--;
 
- 		/* count leading leading zeros in argv[2] */
+		/* count leading leading zeros in argv[2] */
 		for (cp = argv[2]; *cp == '0'; cp++)
 			zeros_arg2++;
 		if (*cp == '\0')
 			zeros_arg2--;
 
- 		/* if argv[3] exists, count leading leading zeros */
+		/* if argv[3] exists, count leading leading zeros */
 		if (argc == 4 ) {
 			for (cp = argv[3]; *cp == '0'; cp++)
 				zeros_arg3++;

@@ -157,7 +157,7 @@ namespace eval Archer {
 	# public database commands
 	method dbCmd               {args}
 	method cmd                 {args}
-        method png                 {filename}
+	method png                 {filename}
 
 	# general
 	method UpdateTheme         {theme} {set mTheme $theme; _update_theme}
@@ -406,9 +406,9 @@ namespace eval Archer {
 	variable mBindingMode 0
 	variable mBindingModePref ""
 	variable mBackground "0 0 0"
-	variable mBackgroundRedPref 
-	variable mBackgroundGreenPref 
-	variable mBackgroundBluePref 
+	variable mBackgroundRedPref
+	variable mBackgroundGreenPref
+	variable mBackgroundBluePref
 	variable mPrimitiveLabelColor Yellow
 	variable mPrimitiveLabelColorPref
 	variable mViewingParamsColor Yellow
@@ -2090,7 +2090,7 @@ Popup Menu    Right or Ctrl-Left
 
     if {$wplugins == {}} {
 	$itk_component(primaryToolbar) itemconfigure wizards -state disabled
-	
+
 	return
     }
 
@@ -2539,7 +2539,7 @@ Popup Menu    Right or Ctrl-Left
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
 
-	
+
     # delete the previous wizard instance
     if {$mWizardClass != ""} {
 	::destroy $itk_component($mWizardClass)
@@ -3029,7 +3029,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set mNeedSave 1
-    _update_save_mode	
+    _update_save_mode
 
     # Disable the "apply" and "reset" buttons
     $itk_component(objEditToolbar) itemconfigure apply \
@@ -3238,7 +3238,7 @@ Popup Menu    Right or Ctrl-Left
 		dbCmd kill $deadObj
 	    }
 	}
-	
+
 	dbCmd attr set $old_hname next $new_hname
 	dbCmd attr set $new_hname previous $old_hname
     } else {
@@ -3365,8 +3365,8 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(tree) selection clear
     set node [$itk_component(tree) insert end "root" $name "leaf"]
     $itk_component(tree) alternode $node -color blue
-    $itk_component(tree) redraw; # force redraw to 
-                                  # make sure stuff is there to select
+    $itk_component(tree) redraw; # force redraw to
+				  # make sure stuff is there to select
     $itk_component(tree) selection set $node
 
     dbCmd configure -autoViewEnable 0
@@ -4579,7 +4579,7 @@ Popup Menu    Right or Ctrl-Left
 			    -helpstr "Set the active pane to the lower left pane"
 			radiobutton lr -label "Lower Right" \
 			    -helpstr "Set the active pane to the lower right pane"
-		    
+
 		    }
 		    checkbutton quadview -label "Quad View" \
 			-helpstr "Hide/Show multiple (4) views"
@@ -5073,7 +5073,7 @@ Popup Menu    Right or Ctrl-Left
     }
     $itk_component(mged) transparencyAll 1
     $itk_component(mged) bounds "-4096 4095 -4096 4095 -4096 4095"
-    
+
     # RT Control Panel
     itk_component add rtcntrl {
 	RtControl $itk_interior.rtcp -mged $itk_component(mged)
@@ -5091,7 +5091,7 @@ Popup Menu    Right or Ctrl-Left
 #    }
 #    $itk_component(menubar) menuconfigure .modes.viewaxesCP \
 	-command "$itk_component(vac) show"
-    
+
     # create model axes control panel
 #    itk_component add mac {
 #	ModelAxesControl $itk_interior.mac -mged $itk_component(mged)
@@ -5100,13 +5100,13 @@ Popup Menu    Right or Ctrl-Left
 #    }
 #   $itk_component(menubar) menuconfigure .modes.modelaxesCP \
 	    -command "$itk_component(mac) show"
-    
+
 #    wm protocol $itk_component(vac) WM_DELETE_WINDOW "$itk_component(vac) hide"
 #    wm protocol $itk_component(mac) WM_DELETE_WINDOW "$itk_component(mac) hide"
-    
+
 #    $itk_component(mged) configure -unitsCallback "$itk_component(mac) updateControlPanel"
     $itk_component(mged) configure -paneCallback [::itcl::code $this _update_active_pane]
-    
+
     # Override axes hot keys in the Mged widget
 #    bind [$itk_component(mged) component ul component dm] m [::itcl::code $this _toggle_model_axes ul]
 #    bind [$itk_component(mged) component ur component dm] m [::itcl::code $this _toggle_model_axes ur]
@@ -5214,7 +5214,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(canvas_menu) menuconfigure .view.35,25 \
 	-state normal
     $itk_component(canvas_menu) menuconfigure .view.45,45 \
-	-state normal    
+	-state normal
 }
 
 ::itcl::body Archer::_init_sdb {} {
@@ -5224,7 +5224,7 @@ Popup Menu    Right or Ctrl-Left
 	} else {
 	    set _target $mTargetCopy
 	}
-	
+
 	SdbBrlView $itk_component(canvasF).sdb $_target \
 	    -type $mDisplayType \
 	    -showhandle 0 \
@@ -5248,7 +5248,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(sdb) transparencyAll 1
     $itk_component(sdb) bounds "-4096 4095 -4096 4095 -4096 4095"
     $itk_component(sdb) configure -paneCallback [::itcl::code $this _update_active_pane]
-    
+
     # Override axes hot keys in the Mged widget
 #    bind [$itk_component(sdb) component ul component dm] m [::itcl::code $this _toggle_model_axes ul]
 #    bind [$itk_component(sdb) component ur component dm] m [::itcl::code $this _toggle_model_axes ur]
@@ -5295,7 +5295,7 @@ Popup Menu    Right or Ctrl-Left
 	    $itk_component(menubar) insert .file.import command compact \
 		-label "Compact" \
 		-helpstr "Compact the target description"
-		
+
 	    $itk_component(menubar) menuconfigure .file.import -state normal
 	    $itk_component(menubar) menuconfigure .file.export -state normal
 	    $itk_component(menubar) menuconfigure .display.standard -state normal
@@ -5403,7 +5403,7 @@ Popup Menu    Right or Ctrl-Left
 	    -initialdir $mLastSelectedDir \
 	    -title "Create a New Database" \
 	    -filetypes $typelist]
-    
+
     if {$target == ""} {
 	return
     } else {
@@ -5464,7 +5464,7 @@ Popup Menu    Right or Ctrl-Left
 	    -initialdir $mLastSelectedDir \
 	    -title "Open Database" \
 	    -filetypes $typelist]
-    
+
     if {$target == ""} {
 	return
     } else {
@@ -5493,12 +5493,12 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_save_db {} {
     set mNeedSave 0
-    _update_save_mode	
+    _update_save_mode
 
     # Sanity
     if {$mTarget == "" ||
 	$mTargetCopy == "" ||
-        $mDbReadOnly ||
+	$mDbReadOnly ||
 	$mDbNoCopy} {
 	return
     }
@@ -5637,7 +5637,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set mNeedSave 1
-    _update_save_mode	
+    _update_save_mode
     SetWaitCursor
     dbCmd kill $comp
 
@@ -5649,7 +5649,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set node [$itk_component(tree) query -path $element]
-    
+
     set node ""
     foreach t $tags {
 	if {[string compare [string trim $t] "leaf"] != 0 &&
@@ -5672,21 +5672,21 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_group_obj {comp} {
     set mNeedSave 1
-    _update_save_mode	
+    _update_save_mode
 }
 
 ::itcl::body Archer::_region_obj {comp} {
     set mNeedSave 1
-    _update_save_mode	
+    _update_save_mode
 }
 
 ::itcl::body Archer::_cp_mv {top comp cmd} {
     set mNeedSave 1
-    _update_save_mode	
+    _update_save_mode
     SetWaitCursor
     set comp2 [string trim [$top.entry get]]
     wm withdraw $top
-    dbCmd $cmd $comp 
+    dbCmd $cmd $comp
     _refresh_tree
     SetNormalCursor
     destroy $top
@@ -5807,7 +5807,7 @@ Popup Menu    Right or Ctrl-Left
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
-    } else {	
+    } else {
 	return
     }
 
@@ -5826,7 +5826,7 @@ Popup Menu    Right or Ctrl-Left
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
-    } else {	
+    } else {
 	return
     }
 
@@ -5839,7 +5839,7 @@ Popup Menu    Right or Ctrl-Left
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
-    } else {	
+    } else {
 	return
     }
 
@@ -5858,7 +5858,7 @@ Popup Menu    Right or Ctrl-Left
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
-    } else {	
+    } else {
 	return
     }
 
@@ -5871,7 +5871,7 @@ Popup Menu    Right or Ctrl-Left
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
-    } else {	
+    } else {
 	return
     }
 
@@ -5890,7 +5890,7 @@ Popup Menu    Right or Ctrl-Left
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
-    } else {	
+    } else {
 	return
     }
 
@@ -5903,7 +5903,7 @@ Popup Menu    Right or Ctrl-Left
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
-    } else {	
+    } else {
 	return
     }
 
@@ -5933,7 +5933,7 @@ Popup Menu    Right or Ctrl-Left
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
-    } else {	
+    } else {
 	return
     }
 
@@ -6003,7 +6003,7 @@ Popup Menu    Right or Ctrl-Left
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
-    } else {	
+    } else {
 	return
     }
 
@@ -6055,7 +6055,7 @@ Popup Menu    Right or Ctrl-Left
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
-    } else {	
+    } else {
 	return
     }
 
@@ -6107,7 +6107,7 @@ Popup Menu    Right or Ctrl-Left
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
-    } else {	
+    } else {
 	return
     }
 
@@ -6143,7 +6143,7 @@ Popup Menu    Right or Ctrl-Left
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
-    } else {	
+    } else {
 	return
     }
 
@@ -6173,7 +6173,7 @@ Popup Menu    Right or Ctrl-Left
 	cd /
 	set center [$itk_component(sdb) ocenter $obj]
 	cd $savePwd
-    } else {	
+    } else {
 	return
     }
 
@@ -6185,7 +6185,7 @@ Popup Menu    Right or Ctrl-Left
 	set _comp $itk_component(mged)
     } elseif {[info exists itk_component(sdb)]} {
 	set _comp $itk_component(sdb)
-    } else {	
+    } else {
 	return
     }
 
@@ -7780,8 +7780,8 @@ Popup Menu    Right or Ctrl-Left
     if {$mBackgroundRedPref != $r ||
 	$mBackgroundGreenPref != $g ||
 	$mBackgroundBluePref != $b} {
-	
-        _background_color $mBackgroundRedPref $mBackgroundGreenPref $mBackgroundBluePref 
+
+	_background_color $mBackgroundRedPref $mBackgroundGreenPref $mBackgroundBluePref
     }
 
     if {$mPrimitiveLabelColor != $mPrimitiveLabelColorPref} {
@@ -8106,7 +8106,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::_read_preferences {} {
-    global env 
+    global env
 
     if {$mViewOnly} {
 	return
@@ -8147,7 +8147,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body Archer::_write_preferences {} {
-    global env 
+    global env
 
     if {$mViewOnly} {
 	return
@@ -8236,7 +8236,7 @@ Popup Menu    Right or Ctrl-Left
 
     _background_color [lindex $mBackground 0] \
 	    [lindex $mBackground 1] \
-	    [lindex $mBackground 2] 
+	    [lindex $mBackground 2]
     _set_color_option dbCmd -primitiveLabelColor $mPrimitiveLabelColor
     _set_color_option dbCmd -scaleColor $mScaleColor
     _set_color_option dbCmd -viewingParamsColor $mViewingParamsColor
@@ -8832,7 +8832,7 @@ Popup Menu    Right or Ctrl-Left
 
     if {$filename != ""} {
 	set mLastSelectedDir [file dirname $finename]
-	
+
 	#XXX Hack! Hack! Hack!
 	raise .
 
@@ -9002,7 +9002,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 
-
 # ------------------------------------------------------------
 #                     TREE COMMANDS
 # ------------------------------------------------------------
@@ -9030,7 +9029,7 @@ Popup Menu    Right or Ctrl-Left
 
 	# get current open state
 	set opennodes [$itk_component(tree) opennodes "root"]
-	
+
 	set paths ""
 	foreach node $opennodes {
 	    lappend paths [$itk_component(tree) query -path $node]
@@ -9070,12 +9069,12 @@ Popup Menu    Right or Ctrl-Left
 	set parent [lindex $_path [expr [llength $_path] -2]]
 	set nname  [lindex $_path [expr [llength $_path] -1]]
     }
-	    
+
     set pnode [$itk_component(tree) find $parent]
-	    
+
     set node [$itk_component(tree) find $nname $pnode]
     $itk_component(tree) toggle $node
-	    
+
     #set prev $nname
 }
 
@@ -9243,17 +9242,17 @@ Popup Menu    Right or Ctrl-Left
 
 	    switch -- $mDefaultBindingMode \
 		$OBJECT_ROTATE_MODE { \
-		        beginObjRotate
-	            } \
+			beginObjRotate
+		    } \
 		    $OBJECT_SCALE_MODE { \
-		        beginObjScale
-	            } \
+			beginObjScale
+		    } \
 		    $OBJECT_TRANSLATE_MODE { \
-		        beginObjTranslate 
-	            } \
+			beginObjTranslate
+		    } \
 		    $OBJECT_CENTER_MODE { \
-		        beginObjCenter
-	            }
+			beginObjCenter
+		    }
 	    }
 	}
     }
@@ -9388,7 +9387,7 @@ Popup Menu    Right or Ctrl-Left
 	$menu add radiobutton -label "Wireframe" \
 	    -indicatoron 1 -value 0 -variable [::itcl::scope mRenderMode] \
 	    -command [::itcl::code $this _render $node 0 1 1]
-	
+
 	if {[info exists itk_component(sdb)]} {
 	    $menu add radiobutton -label "Shaded" \
 		-indicatoron 1 -value 1 -variable [::itcl::scope mRenderMode] \
@@ -9560,7 +9559,7 @@ Popup Menu    Right or Ctrl-Left
 	    _save_db
 	} else {
 	    set mNeedSave 0
-	    _update_save_mode	
+	    _update_save_mode
 	}
     }
 
@@ -9711,8 +9710,8 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::Close {} {
     if {$itk_option(-quitcmd) != {}} {
-        catch {eval $itk_option(-quitcmd)}
-    }    
+	catch {eval $itk_option(-quitcmd)}
+    }
 }
 
 ::itcl::body Archer::askToSave {} {
@@ -9934,7 +9933,7 @@ Popup Menu    Right or Ctrl-Left
 	_toggle_tree_view "open"
     }
     set mVPaneToggle1 $toggle1
-    
+
     # How screwed up is this?
     $itk_component(vpane) fraction $mVPaneFraction1 $mVPaneFraction2
     update
@@ -10058,7 +10057,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_update_theme {} {
     set dir [file join $_imgdir Themes $mTheme]
-    
+
     if {!$mViewOnly} {
     # Tree Control
     $itk_component(tree) configure \
@@ -10572,7 +10571,7 @@ Popup Menu    Right or Ctrl-Left
 	    switch -- $state {
 		"open" {
 		    set fraction1 $mVPaneToggle3
-		    
+
 		    # check state of attribute pane
 		    switch -- [$itk_component(attr_expand) cget -state] {
 			"normal" {
@@ -10665,7 +10664,7 @@ Popup Menu    Right or Ctrl-Left
 	    # adjust minimum size to zero
 	    $itk_component(vpane) paneconfigure attrView \
 		    -minimum 0
-	    
+
 	    set fraction3 0
 	    switch -- [$itk_component(tree_expand) cget -state] {
 		"normal" {
@@ -10709,7 +10708,7 @@ Popup Menu    Right or Ctrl-Left
 	    if {$mVPaneFraction1 == 0} {
 		_toggle_tree_view "close"
 	    }
-	    
+
 	    set mVPaneToggle1 $toggle1
 	}
 	default {
@@ -10723,7 +10722,7 @@ Popup Menu    Right or Ctrl-Left
 	    if {$mVPaneFraction5 == 0} {
 		_toggle_attr_view "close"
 	    }
-	    
+
 	    set mVPaneToggle3 $toggle3
 	    set mVPaneToggle5 $toggle5
 	}
@@ -10749,7 +10748,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::editApplyCallback {comp} {
     set mNeedSave 1
-    _update_save_mode	
+    _update_save_mode
 
     set savePwd [pwd]
     cd /
@@ -10861,7 +10860,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set mNeedSave 1
-    _update_save_mode	
+    _update_save_mode
 
     pluginUpdateProgressBar 0
 
@@ -10877,7 +10876,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::reverseCompNormals {comp} {
     set mNeedSave 1
-    _update_save_mode	
+    _update_save_mode
 
     set savePwd [pwd]
     cd /
@@ -10935,7 +10934,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set mNeedSave 1
-    _update_save_mode	
+    _update_save_mode
 }
 
 ::itcl::body Archer::getLastSelectedDir {} {
@@ -11320,7 +11319,7 @@ Popup Menu    Right or Ctrl-Left
 	    -initialdir $mLastSelectedDir \
 	    -title "Open Fastgen 4" \
 	    -filetypes $typelist]
-    
+
     if {$target == ""} {
 	return
     } else {
@@ -11387,7 +11386,7 @@ Popup Menu    Right or Ctrl-Left
 	    -initialdir $mLastSelectedDir \
 	    -title "Open VRML" \
 	    -filetypes $typelist]
-    
+
     if {$target == ""} {
 	return
     } else {
@@ -11456,7 +11455,7 @@ Popup Menu    Right or Ctrl-Left
 	    -initialdir $mLastSelectedDir \
 	    -title "Import Fastgen 4" \
 	    -filetypes $typelist]
-    
+
     if {$target == ""} {
 	return
     } else {

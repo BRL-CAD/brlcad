@@ -546,9 +546,9 @@ int main(int argc, char **argv)
 	      vec[Y] = center[Y] - radius + (float)j * deltaw;
 	      /*  Rotate starting point.  */
 	      ap.a_ray.r_pt[X] = vec[X] * cbeta * calpha +
-	   	vec[Z] * sbeta * calpha - vec[Y] * salpha;
+		vec[Z] * sbeta * calpha - vec[Y] * salpha;
 	      ap.a_ray.r_pt[Y] = vec[X] * cbeta * salpha +
-	   	vec[Z] * sbeta * salpha + vec[Y] * calpha;
+		vec[Z] * sbeta * salpha + vec[Y] * calpha;
 	      ap.a_ray.r_pt[Z] = (-vec[X]) * sbeta + vec[Z] * cbeta;
 
 	      /*

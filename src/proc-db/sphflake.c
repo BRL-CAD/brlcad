@@ -44,8 +44,8 @@
 #define MATXPNT(d, m, v) { \
   register double _i = 1.0/((m)[12]*(v)[0] + (m)[13]*(v)[1] + (m)[14]*(v)[2] + (m)[15]*1); \
 	      (d)[0] = ((m)[0]*(v)[0] + (m)[1]*(v)[1] + (m)[2]*(v)[2] + (m)[3])*_i; \
-              (d)[1] = ((m)[4]*(v)[0] + (m)[5]*(v)[1] + (m)[6]*(v)[2] + (m)[7])*_i; \
-              (d)[2] = ((m)[8]*(v)[0] + (m)[9]*(v)[1] + (m)[10]*(v)[2] + (m)[11])*_i; \
+	      (d)[1] = ((m)[4]*(v)[0] + (m)[5]*(v)[1] + (m)[6]*(v)[2] + (m)[7])*_i; \
+	      (d)[2] = ((m)[8]*(v)[0] + (m)[9]*(v)[1] + (m)[10]*(v)[2] + (m)[11])*_i; \
 }
 
 
@@ -238,10 +238,10 @@ void usage(char *n)
 {
   printf(
 	 "\nUSAGE: %s -D -d# -i -f fileName\n\
-          D -- use default parameters\n\
-          d -- set the recursive depth of the procedure\n\
-          i -- use interactive mode\n\
-          f -- specify output file\n\n", n);
+	  D -- use default parameters\n\
+	  d -- set the recursive depth of the procedure\n\
+	  i -- use interactive mode\n\
+	  f -- specify output file\n\n", n);
 }
 
 void initializeInfo(params_t *p, int inter, char *name, int depth)

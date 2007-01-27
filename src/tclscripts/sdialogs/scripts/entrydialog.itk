@@ -36,7 +36,7 @@
 # Usual options.
 #
 itk::usual Entrydialog {
-    keep -background -cursor -foreground -modality 
+    keep -background -cursor -foreground -modality
     keep -master -title -height -width
 }
 
@@ -44,7 +44,7 @@ itk::usual Entrydialog {
     inherit ::iwidgets::Dialog
 
     itk_option define -label label Label ""
-    
+
     constructor {args} {}
     destructor {}
 
@@ -63,7 +63,7 @@ itk::usual Entrydialog {
 
 #
 # Provide a lowercased access method for the Dialog class.
-# 
+#
 proc ::sdialogs::entrydialog {pathName args} {
     uplevel ::sdialogs::Entrydialog $pathName $args
 }

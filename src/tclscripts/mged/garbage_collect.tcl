@@ -28,9 +28,9 @@ proc garbage_collect {} {
 
 	# get the name of the current database
 	set cur_file [opendb]
-        set cur_dir [file dirname $cur_file]
-        set cur_tail [file tail $cur_file]
-        set old_size [file size $cur_file]
+	set cur_dir [file dirname $cur_file]
+	set cur_tail [file tail $cur_file]
+	set old_size [file size $cur_file]
 
 	# save the current setting of autosize
 	set save_autosize $autosize

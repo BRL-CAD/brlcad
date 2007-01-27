@@ -71,70 +71,70 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
     /* Terminate if depth is too great. */
     while(propogate) {
       if((new_mesh = (common_mesh_t *)tie_work(tie, &new_ray, &new_id, render_hit, NULL)) && new_ray.depth < RENDER_MAX_DEPTH) {
-        if(new_mesh->prop->ior != 1.0) {	/* Refractive Caustic */
-          /* Deal with refractive-fu */
-        } else if(new_mesh->prop->emission > 0.0) {	/* Emitting Light Source */
-          T = new_mesh->prop->color;
-          MATH_VEC_MUL_SCALAR(T, T, new_mesh->prop->emission);
-          propogate = 0;
-        } else {	/* Diffuse */
-          if(new_mesh->texture) {
-            new_mesh->texture->work(new_mesh->texture, new_mesh, &new_ray, &new_id, &T);
-          } else {
-            T = new_mesh->prop->color;
-          }
-        }
+	if(new_mesh->prop->ior != 1.0) {	/* Refractive Caustic */
+	  /* Deal with refractive-fu */
+	} else if(new_mesh->prop->emission > 0.0) {	/* Emitting Light Source */
+	  T = new_mesh->prop->color;
+	  MATH_VEC_MUL_SCALAR(T, T, new_mesh->prop->emission);
+	  propogate = 0;
+	} else {	/* Diffuse */
+	  if(new_mesh->texture) {
+	    new_mesh->texture->work(new_mesh->texture, new_mesh, &new_ray, &new_id, &T);
+	  } else {
+	    T = new_mesh->prop->color;
+	  }
+	}
 
-        if(new_ray.depth) {
-          MATH_VEC_MUL(new_pix, new_pix, T);
-        } else {
-          new_pix = T;
-        }
+	if(new_ray.depth) {
+	  MATH_VEC_MUL(new_pix, new_pix, T);
+	} else {
+	  new_pix = T;
+	}
 
-        new_ray.depth++;
+	new_ray.depth++;
 
-        MATH_VEC_REFLECT(ref, new_ray.dir, new_id.norm);
+	MATH_VEC_REFLECT(ref, new_ray.dir, new_id.norm);
 
-        new_ray.pos.v[0] = new_id.pos.v[0] + new_id.norm.v[0]*TIE_PREC;
-        new_ray.pos.v[1] = new_id.pos.v[1] + new_id.norm.v[1]*TIE_PREC;
-        new_ray.pos.v[2] = new_id.pos.v[2] + new_id.norm.v[2]*TIE_PREC;
+	new_ray.pos.v[0] = new_id.pos.v[0] + new_id.norm.v[0]*TIE_PREC;
+	new_ray.pos.v[1] = new_id.pos.v[1] + new_id.norm.v[1]*TIE_PREC;
+	new_ray.pos.v[2] = new_id.pos.v[2] + new_id.norm.v[2]*TIE_PREC;
 
-        T.v[0] = new_id.norm.v[0] - new_mesh->prop->gloss*ref.v[0];
-        T.v[1] = new_id.norm.v[1] - new_mesh->prop->gloss*ref.v[1];
-        T.v[2] = new_id.norm.v[2] - new_mesh->prop->gloss*ref.v[2];
-        MATH_VEC_UNITIZE(T);
+	T.v[0] = new_id.norm.v[0] - new_mesh->prop->gloss*ref.v[0];
+	T.v[1] = new_id.norm.v[1] - new_mesh->prop->gloss*ref.v[1];
+	T.v[2] = new_id.norm.v[2] - new_mesh->prop->gloss*ref.v[2];
+	MATH_VEC_UNITIZE(T);
 
-        /* Form Basis X */
-        bax.v[0] = T.v[0] || T.v[1] ? -T.v[1] : 1.0;
-        bax.v[1] = T.v[0];
-        bax.v[2] = 0;
-        MATH_VEC_UNITIZE(bax);
+	/* Form Basis X */
+	bax.v[0] = T.v[0] || T.v[1] ? -T.v[1] : 1.0;
+	bax.v[1] = T.v[0];
+	bax.v[2] = 0;
+	MATH_VEC_UNITIZE(bax);
 
-        /* Form Basis Y, Simplified Cross Product of two unit vectors is a unit vector */
-        bay.v[0] = -T.v[2]*bax.v[1];
-        bay.v[1] = T.v[2]*bax.v[0];
-        bay.v[2] = T.v[0]*bax.v[1] - T.v[1]*bax.v[0];
+	/* Form Basis Y, Simplified Cross Product of two unit vectors is a unit vector */
+	bay.v[0] = -T.v[2]*bax.v[1];
+	bay.v[1] = T.v[2]*bax.v[0];
+	bay.v[2] = T.v[0]*bax.v[1] - T.v[1]*bax.v[0];
 
-        cos_theta = math_rand();
-        sin_theta = sqrt(cos_theta);
-        cos_theta = 1-cos_theta;
+	cos_theta = math_rand();
+	sin_theta = sqrt(cos_theta);
+	cos_theta = 1-cos_theta;
 
-        cos_phi = math_rand()*MATH_2_PI;
-        sin_phi = sin(cos_phi);
-        cos_phi = cos(cos_phi);
+	cos_phi = math_rand()*MATH_2_PI;
+	sin_phi = sin(cos_phi);
+	cos_phi = cos(cos_phi);
 
-        for(n = 0; n < 3; n++) {
-          T.v[n] = sin_theta*cos_phi*bax.v[n] + sin_theta*sin_phi*bay.v[n] + cos_theta*T.v[n];
-          /* Weigh reflected vector back in */
-          new_ray.dir.v[n] = (1.0 - new_mesh->prop->gloss)*T.v[n] + new_mesh->prop->gloss * ref.v[n];
-        }
+	for(n = 0; n < 3; n++) {
+	  T.v[n] = sin_theta*cos_phi*bax.v[n] + sin_theta*sin_phi*bay.v[n] + cos_theta*T.v[n];
+	  /* Weigh reflected vector back in */
+	  new_ray.dir.v[n] = (1.0 - new_mesh->prop->gloss)*T.v[n] + new_mesh->prop->gloss * ref.v[n];
+	}
 
-        MATH_VEC_UNITIZE(new_ray.dir);
+	MATH_VEC_UNITIZE(new_ray.dir);
       } else {
-        new_pix.v[0] = 0;
-        new_pix.v[1] = 0;
-        new_pix.v[2] = 0;
-        propogate = 0;
+	new_pix.v[0] = 0;
+	new_pix.v[1] = 0;
+	new_pix.v[2] = 0;
+	propogate = 0;
       }
     }
 

@@ -91,7 +91,7 @@
 		{leaf Gun}
 		{branch Hull {
 		    {leaf {Frontal Slope}} {leaf {Wheel Well Cutout}}
-	        }}
+		}}
 		{leaf Tracks} {leaf Turret}
 	    }}
 	    {leaf Armor}
@@ -169,7 +169,7 @@
 		    {leaf M1000}
 		    {leaf PLST}
 		    {leaf XM1006}
-	        }}
+		}}
 	    }}
 	}
 
@@ -184,7 +184,7 @@
 		{leaf SEE}
 	    }}
 	    {branch Maintenance {
-	        {branch {Recovery Vehicles} {
+		{branch {Recovery Vehicles} {
 		    {leaf ARV}
 		    {leaf M88}
 		    {leaf M88A1}
@@ -194,7 +194,7 @@
 		    {leaf M984A1}
 		    {leaf V-150S}
 		    {leaf V-300}
-	        }}
+		}}
 		{branch {Repair Vehicles} {
 		    {leaf 66WT22}
 		    {leaf {M60 Wrecker(2.5 Ton)}}
@@ -203,21 +203,21 @@
 		    {leaf {M108 Wrecker(2.5 Ton)}}
 		    {leaf {M816 (5 Ton)}}
 		    {leaf {M819 (5 Ton)}}
-	        }}
+		}}
 	    }}
 	    {branch Tank {
-	        {branch {Main Battle} {
+		{branch {Main Battle} {
 		    {leaf M60A2}
 		    {leaf {XM-1 Abrams}}
-	        }}
+		}}
 		{branch Light {
 		    {leaf {M551 Sheridan}}
-	        }}
+		}}
 	    }}
 	    {branch Transport {
 		{branch Amphibious {
 		    {leaf {LARC}}
-	        }}
+		}}
 		{branch {Light (up to 1000 Kg)} {
 		    {leaf AMT600}
 		    {leaf DJ-5}
@@ -232,7 +232,7 @@
 		    {leaf SS200}
 		    {leaf {Teledyne LFV (4x4)}}
 		    {leaf {TPC Ramp-v}}
-	        }}
+		}}
 		{branch "Materials Handling Equipment" {
 		    {leaf 72-31F}
 		    {leaf 72-31M}
@@ -260,12 +260,12 @@
 		    {leaf TMS760}
 		    {leaf USDCH}
 		    {leaf VRRTFLT}
-	        }}
+		}}
 		{branch {Over-Snow} {
 		    {leaf LMC1200}
 		    {leaf LMC1500}
 		    {leaf LMC3700C}
-	        }}
+		}}
 		{branch {Tank Transporter} {
 		    {leaf 66TT50}
 		    {leaf 66TT60}
@@ -274,12 +274,12 @@
 		    {leaf M746}
 		    {leaf M911}
 		    {leaf RD8226SX}
-	        }}
+		}}
 		{branch {Tracked Prime Movers} {
 		    {leaf M548}
 		    {leaf M973}
 		    {leaf M992}
-	        }}
+		}}
 		{branch Trucks {
 		    {leaf AM715}
 		    {leaf AM720}
@@ -303,24 +303,24 @@
 		    {leaf MK48}
 		    {leaf RM6866SX}
 		    {leaf SS300}
-	        }}
+		}}
 	    }}
 	    {branch {Weapon Systems} {
 		{branch {Mobile Surface-to-Air Missile System} {
 		    {leaf {MIM-23 Hawk}}
 		    {leaf {MIM-72 Chaparral (M48)}}
-	        }}
+		}}
 		{branch {Anit-Aircraft Gun System} {
 		    {leaf M163}
 		    {leaf M167}
-	        }}
+		}}
 		{branch Howitzer {
 		    {leaf M102}
 		    {leaf M109}
 		    {leaf M110}
 		    {leaf M198}
 		    {leaf XM204}
-	        }}
+		}}
 	    }}
 	}
 
@@ -597,7 +597,7 @@
 
     itk_component add paramOriginE {
 	::entry $itk_component(paramNonArrowF).originE \
-	    -textvariable [::itcl::scope wizardOrigin] 
+	    -textvariable [::itcl::scope wizardOrigin]
     } {}
 
     set row 0

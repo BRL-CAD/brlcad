@@ -350,7 +350,7 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 		if( nmg_is_vertex_in_facelist( vu->v_p, &s->fu_hd ) ||
 		    nmg_is_vertex_in_looplist( vu->v_p, &s->lu_hd,0 ) ||
 		    nmg_is_vertex_in_edgelist( vu->v_p, &s->eu_hd ) )  {
-		    	/* Kill lu and mate */
+			/* Kill lu and mate */
 			if( nextlu == lu->lumate_p )
 				nextlu = BU_LIST_PNEXT(loopuse, nextlu);
 			nmg_klu( lu );
@@ -796,8 +796,8 @@ nmg_s_join_touchingloops(struct shell *s, const struct bn_tol *tol)
  */
 void
 nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol *tol)
-                     	    		/* destination */
-                     	    		/* source */
+					/* destination */
+					/* source */
 
 {
 	struct faceuse	*fu2;
@@ -1452,12 +1452,12 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
 			V3ARGS( a->vg_p->coord ),
 			V3ARGS( b->vg_p->coord ),
 			V3ARGS( c->vg_p->coord ) );
-	    	HPRINT("plane", plane);
+		HPRINT("plane", plane);
 		return(-1);
 	}
 	if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
 		bu_log("nmg_fu_planeeqn():  Bad plane equation from bn_mk_plane_3pts\n" );
-	    	HPRINT("plane", plane);
+		HPRINT("plane", plane);
 		return(-1);
 	}
 	nmg_face_g( fu, plane);
@@ -2120,7 +2120,7 @@ nmg_jl(struct loopuse *lu, struct edgeuse *eu)
 
 	if (eu->radial_p->eumate_p->radial_p->eumate_p != eu ||
 	    eu->eumate_p->radial_p->eumate_p->radial_p != eu)
-	    	rt_bomb("nmg_jl: edgeuses must be sole uses of edge to join loops\n");
+		rt_bomb("nmg_jl: edgeuses must be sole uses of edge to join loops\n");
 
 	/*
 	 * Remove all the edgeuses "ahead" of our radial and insert them
@@ -2269,7 +2269,7 @@ nmg_join_2loops(struct vertexuse *vu1, struct vertexuse *vu2)
 struct vertexuse *
 nmg_join_singvu_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 {
-    	struct edgeuse	*eu1;
+	struct edgeuse	*eu1;
 	struct edgeuse	*first_new_eu, *second_new_eu;
 	struct loopuse	*lu2;
 
@@ -2286,12 +2286,12 @@ nmg_join_singvu_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 
 	if( vu1->v_p == vu2->v_p )  rt_bomb("nmg_join_singvu_loop same vertex\n");
 
-    	/* Take jaunt from vu1 to vu2 and back */
-    	eu1 = vu1->up.eu_p;
-    	NMG_CK_EDGEUSE(eu1);
+	/* Take jaunt from vu1 to vu2 and back */
+	eu1 = vu1->up.eu_p;
+	NMG_CK_EDGEUSE(eu1);
 
-    	/* Insert 0 length edge */
-    	first_new_eu = nmg_eins(eu1);
+	/* Insert 0 length edge */
+	first_new_eu = nmg_eins(eu1);
 	/* split the new edge, and connect it to vertex 2 */
 	second_new_eu = nmg_eusplit( vu2->v_p, first_new_eu, 0 );
 	first_new_eu = BU_LIST_PPREV_CIRC(edgeuse, second_new_eu);
@@ -2335,7 +2335,7 @@ nmg_join_2singvu_loops(struct vertexuse *vu1, struct vertexuse *vu2)
 
 	if( vu1->v_p == vu2->v_p )  rt_bomb("nmg_join_2singvu_loops same vertex\n");
 
-    	/* Take jaunt from vu1 to vu2 and back */
+	/* Take jaunt from vu1 to vu2 and back */
 	/* Make a 0 length edge on vu1 */
 	first_new_eu = nmg_meonvu(vu1);
 	/* split the new edge, and connect it to vertex 2 */
@@ -3463,38 +3463,38 @@ nmg_simplify_loop(struct loopuse *lu)
 		    eu->eumate_p->radial_p == eu->radial_p->eumate_p &&
 		    eu_r->up.lu_p != lu) {
 
-		    	if( eu_r->up.lu_p->orientation != lu->orientation &&
-		    	   (lu->orientation != OT_SAME ||
+			if( eu_r->up.lu_p->orientation != lu->orientation &&
+			   (lu->orientation != OT_SAME ||
 			    eu_r->up.lu_p->orientation != OT_OPPOSITE) )  {
 				/* Does not meet requirements of nmg_jl(),
 				 * skip it.
 				 */
-			    	eu = BU_LIST_PNEXT(edgeuse, eu);
+				eu = BU_LIST_PNEXT(edgeuse, eu);
 				continue;
 			}
 
-		    	/* save a pointer to where we've already been
-		    	 * so that when eu becomes an invalid pointer, we
-		    	 * still know where to pick up from.
-		    	 */
-		    	tmpeu = BU_LIST_PLAST(edgeuse, eu);
+			/* save a pointer to where we've already been
+			 * so that when eu becomes an invalid pointer, we
+			 * still know where to pick up from.
+			 */
+			tmpeu = BU_LIST_PLAST(edgeuse, eu);
 
 			nmg_jl(lu, eu);
 
-		    	/* Since all the new edges will have been appended
-		    	 * after tmpeu, we can pick up processing with the
-		    	 * edgeuse immediately after tmpeu
-		    	 */
-		    	eu = tmpeu;
+			/* Since all the new edges will have been appended
+			 * after tmpeu, we can pick up processing with the
+			 * edgeuse immediately after tmpeu
+			 */
+			eu = tmpeu;
 
-		    	if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) &&
+			if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) &&
 			    *lu->up.magic_p == NMG_FACEUSE_MAGIC ) {
-		    	    	static int fno=0;
+				static int fno=0;
 
 				nmg_pl_2fu("After_joinloop%d.pl", fno++,
 				    lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
 
-		    	}
+			}
 		}
 		eu = BU_LIST_PNEXT(edgeuse, eu);
 	}
@@ -3542,10 +3542,10 @@ nmg_kill_snakes(struct loopuse *lu)
 		    eu->eumate_p->radial_p == eu->radial_p->eumate_p &&
 		    BU_LIST_PNEXT_CIRC(edgeuse, eu) == eu_r) {
 
-		    	/* if there are no other uses of the vertex
-		    	 * between these two edgeuses, then this is
-		    	 * indeed the tail of a snake
-		    	 */
+			/* if there are no other uses of the vertex
+			 * between these two edgeuses, then this is
+			 * indeed the tail of a snake
+			 */
 			v = eu->eumate_p->vu_p->v_p;
 			vu = BU_LIST_FIRST(vertexuse, &v->vu_hd);
 			while (BU_LIST_NOT_HEAD(vu, &v->vu_hd) &&
@@ -3561,14 +3561,14 @@ nmg_kill_snakes(struct loopuse *lu)
 					return 1;	/* loopuse is empty */
 				eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
 
-			    	if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) &&
+				if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) &&
 				    *lu->up.magic_p == NMG_FACEUSE_MAGIC ) {
-			    	    	static int fno=0;
+					static int fno=0;
 
 					nmg_pl_2fu("After_joinloop%d.pl", fno++,
 					    lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
 
-			    	}
+				}
 
 
 			} else
@@ -3675,7 +3675,7 @@ void nmg_moveltof(struct faceuse *fu, struct shell *s)
 struct loopuse *
 nmg_dup_loop(struct loopuse *lu, long int *parent, long int **trans_tbl)
 
-    	        		/* fu or shell ptr */
+				/* fu or shell ptr */
 
 {
 	struct loopuse *new_lu = (struct loopuse *)NULL;
@@ -4264,7 +4264,7 @@ out:
  */
 struct edgeuse *
 nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
-             	   		/* New vertex, to go in middle */
+				/* New vertex, to go in middle */
 
 
 {
@@ -4382,7 +4382,7 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
  */
 struct edgeuse *
 nmg_ebreak(struct vertex *v, struct edgeuse *eu)
-             	   			/* May be NULL */
+					/* May be NULL */
 
 {
 	struct edgeuse	*new_eu;
@@ -4418,7 +4418,7 @@ nmg_ebreak(struct vertex *v, struct edgeuse *eu)
  */
 struct edgeuse *
 nmg_ebreaker(struct vertex *v, struct edgeuse *eu, const struct bn_tol *tol)
-             		   			/* May be NULL */
+						/* May be NULL */
 
 
 {

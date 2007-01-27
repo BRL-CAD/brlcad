@@ -190,10 +190,10 @@ numeric(register char *s)
  */
 int
 parse_file(char *file, char *host, int *portp, char *device)
-           	/* input file spec */
-           	/* host part */
-            	/* port number */
-             	/* device part */
+		/* input file spec */
+		/* host part */
+		/* port number */
+		/* device part */
 {
 	int	port;
 	char	prefix[256];

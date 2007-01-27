@@ -58,7 +58,6 @@ void render_component_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *
   tfloat angle;
 
 
-
   if((m = (common_mesh_t *)tie_work(tie, ray, &id, component_hit, NULL))) {
     /* Flip normal to face ray origin (via dot product check) */
     if(ray->dir.v[0] * id.norm.v[0] + ray->dir.v[1] * id.norm.v[1] + ray->dir.v[2] * id.norm.v[2] > 0)

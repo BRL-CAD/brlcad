@@ -39,7 +39,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 
@@ -132,20 +131,20 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 
 	/* free up storage */
 
-        rt_nurb_free_snurb( us, (struct resource *)NULL);
-        rt_nurb_free_snurb( vs, (struct resource *)NULL);
-        rt_nurb_free_snurb( uus, (struct resource *)NULL);
-        rt_nurb_free_snurb( vvs, (struct resource *)NULL);
-        rt_nurb_free_snurb( uvs, (struct resource *)NULL);
+	rt_nurb_free_snurb( us, (struct resource *)NULL);
+	rt_nurb_free_snurb( vs, (struct resource *)NULL);
+	rt_nurb_free_snurb( uus, (struct resource *)NULL);
+	rt_nurb_free_snurb( vvs, (struct resource *)NULL);
+	rt_nurb_free_snurb( uvs, (struct resource *)NULL);
 
 
 	/* The paper uses the following to calculate the longest edge size
-  	 *			  	  1/2
+	 *			  	  1/2
 	 *  3.0 * (			)
 	 *	  (	   2.0		)
 	 *	  _________________________
 	 *	  (2.0 * (d1 + 2 D2 + d3)
- 	 */
+	 */
 
 	return ( 3.0 * sqrt( epsilon / (2.0*(d1 + (2.0 * d2)+ d3))));
 }

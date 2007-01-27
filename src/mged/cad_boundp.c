@@ -129,8 +129,8 @@ Usage(void) 				/* print usage message */
 
 int
 main(int argc, char **argv)			/* "cad_boundp" entry point */
-   	     			/* argument count */
-    	        		/* argument strings */
+				/* argument count */
+				/* argument strings */
 {
 	if ( !GetArgs( argc, argv ) )	/* process command arguments */
 		return 1;
@@ -150,8 +150,8 @@ main(int argc, char **argv)			/* "cad_boundp" entry point */
 
 static bool
 GetArgs(int argc, char **argv)			/* process command arguments */
-   		     		/* argument count */
-    		        	/* argument strings */
+				/* argument count */
+				/* argument strings */
 {
 	static bool	iflag = false;	/* set if "-i" option found */
 	static bool	oflag = false;	/* set if "-o" option found */
@@ -329,9 +329,9 @@ Chop(void)					/* chop vectors into segments */
 
 static bool
 Split(coords *p, register segment *oldp, register segment *listh) 		/* split segment in two */
-      			   	/* -> break point */
-                	      	/* -> segment to be split */
-                	        /* -> list to attach tail to */
+				/* -> break point */
+				/* -> segment to be split */
+				/* -> list to attach tail to */
 {
 	register segment	*newp;	/* -> new list entry */
 
@@ -501,7 +501,7 @@ Search(void)				/* output bounding polygon */
 
 static point *
 PutList(register coords *coop) 			/* return -> point in list */
-                      		/* -> coordinates */
+				/* -> coordinates */
 {
 	register point	*p;		/* -> list entry */
 
@@ -526,7 +526,7 @@ PutList(register coords *coop) 			/* return -> point in list */
 
 static point *
 LookUp(register coords *coop)				/* find point group in list */
-                      		/* -> coordinates */
+				/* -> coordinates */
 {
 	register point	*p;		/* -> list members */
 
@@ -547,7 +547,7 @@ LookUp(register coords *coop)				/* find point group in list */
 
 static point *
 NewPoint(register coords *coop)			/* add point to list */
-                      		/* -> coordinates */
+				/* -> coordinates */
 {
 	register point	*newp;		/* newly allocated point */
 
@@ -569,8 +569,8 @@ NewPoint(register coords *coop)			/* add point to list */
 
 static queue *
 Enqueue(register point *addp, register point *startp) 		/* add to endpoint queue */
-              	      		/* -> point being queued */
-              	        	/* -> point owning queue */
+				/* -> point being queued */
+				/* -> point owning queue */
 {
 	register queue	*newq;		/* new queue element */
 
@@ -592,7 +592,7 @@ Enqueue(register point *addp, register point *startp) 		/* add to endpoint queue
 
 static coords *
 Intersect(register segment *a, register segment *b)			/* determine intersection */
-                	        /* segments being tested */
+				/* segments being tested */
 {
 	double			det;	/* determinant, 0 if parallel */
 	double			xaeas, xbebs, yaeas, ybebs;
@@ -700,8 +700,8 @@ Intersect(register segment *a, register segment *b)			/* determine intersection 
 
 static bool
 EndPoint(register coords *p, register segment *segp)			/* check for segment endpoint */
-                	   	/* -> point being tested */
-                	      	/* -> segment */
+				/* -> point being tested */
+				/* -> segment */
 {
 #ifdef	DEBUG
 	if ( Near( p, &segp->sxy ) || Near( p, &segp->exy ) )
@@ -717,7 +717,7 @@ EndPoint(register coords *p, register segment *segp)			/* check for segment endp
 
 static bool
 Near(register coords *ap, register coords *bp)				/* check if within tolerance */
-                         	/* -> points being checked */
+				/* -> points being checked */
 {
 	double		xsq, ysq;	/* dist between coords ^ 2 */
 
@@ -741,7 +741,7 @@ Near(register coords *ap, register coords *bp)				/* check if within tolerance *
 
 static pointer
 Alloc(unsigned int size)				/* allocate storage from heap */
-        		     	/* # bytes required */
+				/* # bytes required */
 {
 	register pointer	ptr;	/* -> allocated storage */
 
@@ -754,7 +754,7 @@ Alloc(unsigned int size)				/* allocate storage from heap */
 
 static void
 Toss(register pointer ptr)				/* return storage to heap */
-                	    	/* -> allocated storage */
+				/* -> allocated storage */
 {
 	if ( ptr != NULL )
 		free( ptr );
@@ -796,7 +796,7 @@ va_dcl					/* format, optional arguments */
 
 static bool
 Input(register segment *inp)				/* input stroke record */
-                	     	/* -> input segment */
+				/* -> input segment */
 {
 	char			inbuf[82];	/* record buffer */
 
@@ -828,7 +828,7 @@ Input(register segment *inp)				/* input stroke record */
 
 static void
 Output(register coords *coop)				/* dump polygon vertex coords */
-                      		/* -> coords to be output */
+				/* -> coords to be output */
 {
 	static coords	last;		/* previous *coop */
 

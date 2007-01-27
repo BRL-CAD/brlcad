@@ -34,7 +34,7 @@
 struct	scroll_item  {
 	char	*scroll_string;
 	void	(*scroll_func)();
-        int	scroll_val;
+	int	scroll_val;
 	char	*scroll_cmd;
 };
 #define SCROLL_NULL		((struct scroll_item *)0)

@@ -59,7 +59,6 @@ static const char tp_RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 

@@ -176,7 +176,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 						/* face 2376 of arb7 */
 			  if(es_type==5)
 				plane=1; 	/* face  125 of arb5 */
-		 	  break;
+			  break;
 		case   72:               	/* face  346 of arb6 */
 		case   60:plane=4;	 	/* face 1265 of arb8 */
 						/* face 1265 of arb7 */

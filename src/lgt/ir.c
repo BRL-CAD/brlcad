@@ -204,7 +204,7 @@ read_IR(FILE *fp)
 		{
 		return	0;
 		}
- 	for( ry = 0, fy = grid_sz-1; ; ry += ir_aperture, fy-- )
+	for( ry = 0, fy = grid_sz-1; ; ry += ir_aperture, fy-- )
 		{
 		if( fb_seek( fbiop, 0, fy ) == -1 )
 			{

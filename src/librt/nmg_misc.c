@@ -3926,19 +3926,19 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
 		}
 	}
 
-        m = s_orig->r_p->m_p;
+	m = s_orig->r_p->m_p;
 
-        /* make a temporary nmgregion for us to work in */
-        tmp_r = nmg_mrsv( m );
+	/* make a temporary nmgregion for us to work in */
+	tmp_r = nmg_mrsv( m );
 
-        /* get rid of the automatically created shell */
-        (void)nmg_ks( BU_LIST_FIRST( shell, &tmp_r->s_hd ) );
+	/* get rid of the automatically created shell */
+	(void)nmg_ks( BU_LIST_FIRST( shell, &tmp_r->s_hd ) );
 
-        /* make a copy of the shell of interest */
-        dup_s = nmg_dup_shell( s_orig, &trans_tbl, tol );
+	/* make a copy of the shell of interest */
+	dup_s = nmg_dup_shell( s_orig, &trans_tbl, tol );
 
-        /* move the copy to our work area */
-        nmg_mv_shell_to_region( dup_s, tmp_r );
+	/* move the copy to our work area */
+	nmg_mv_shell_to_region( dup_s, tmp_r );
 
 	/* move duplicate shell to another model */
 	tmp_m = nmg_mk_model_from_region( tmp_r, 0 ); /* don't reindex, We need the old indices */
@@ -4579,23 +4579,23 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
 		/* if this faceuse has already been visited, skip it */
 		if( !NMG_INDEX_TEST( flags , fu ) )
 		{
-                        /* push all edgeuses of "fu" onto the stacks */
-                        for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-                        {
-                                NMG_CK_LOOPUSE( lu );
+			/* push all edgeuses of "fu" onto the stacks */
+			for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+			{
+				NMG_CK_LOOPUSE( lu );
 
-                                if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-                                        continue;
+				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+					continue;
 
-                                for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-                                {
+				for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
 					/* build two lists, one of winged edges, the other not */
 					if( nmg_radial_face_count( eu , s ) > 2 )
 						bu_ptbl_ins_unique( &shared_edges , (long *)eu );
 					else
 						bu_ptbl_ins_unique( &stack , (long *)eu );
-                                }
-                        }
+				}
+			}
 			/* Mark this faceuse and its mate with a shell number */
 			NMG_INDEX_ASSIGN( flags , fu , shell_no );
 			NMG_INDEX_ASSIGN( flags , fu->fumate_p , shell_no );
@@ -4801,23 +4801,23 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
 		{
 			/* move this missed face to the new shell */
 
-                        /* push all edgeuses of "fu" onto the stack */
-                        for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-                        {
-                                NMG_CK_LOOPUSE( lu );
+			/* push all edgeuses of "fu" onto the stack */
+			for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+			{
+				NMG_CK_LOOPUSE( lu );
 
-                                if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-                                        continue;
+				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+					continue;
 
-                                for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-                                {
+				for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
 					/* build two lists, one of winged edges, the other not */
 					if( nmg_radial_face_count( eu , s ) > 2 )
 						bu_ptbl_ins_unique( &shared_edges , (long *)eu );
 					else
 						bu_ptbl_ins_unique( &stack , (long *)eu );
-                                }
-                        }
+				}
+			}
 
 			/* Mark this faceuse with a shell number */
 			NMG_INDEX_ASSIGN( flags , fu , shell_no );
@@ -4849,21 +4849,21 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
 			/* if this face has already been visited, skip it */
 			if( !NMG_INDEX_TEST( flags , fu ) )
 			{
-	                        /* push all edgeuses of "fu" onto the stack */
-	                        for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-	                        {
-	                                NMG_CK_LOOPUSE( lu );
-	                                if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-	                                        continue;
-	                                for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-	                                {
+				/* push all edgeuses of "fu" onto the stack */
+				for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+				{
+					NMG_CK_LOOPUSE( lu );
+					if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+						continue;
+					for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+					{
 						/* build two lists, one of winged edges, the other not */
 						if( nmg_radial_face_count( eu , s ) > 2 )
 							bu_ptbl_ins_unique( &shared_edges , (long *)eu );
 						else
 							bu_ptbl_ins_unique( &stack , (long *)eu );
-	                                }
-	                        }
+					}
+				}
 
 				/* Mark this faceuse with a shell number */
 				NMG_INDEX_ASSIGN( flags , fu , shell_no );

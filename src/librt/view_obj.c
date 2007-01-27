@@ -2616,7 +2616,7 @@ vo_viewDir_cmd(struct view_obj	*vop,
 
     bn_mat_inv(invRot, vop->vo_rotation);
     MAT4X3PNT(model, invRot, view);
-    
+
     bu_vls_init(&vls);
     bn_encode_vect(&vls, model);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -2828,7 +2828,6 @@ vo_mike_persp_mat(mat_t		pmat,
 
 	bn_mat_mul( pmat, xlate, t2 );
 }
-
 
 
 /*

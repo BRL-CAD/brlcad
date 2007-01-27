@@ -82,10 +82,10 @@ struct camo_specific {
  */
 void
 camo_cvt_parse(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+						/* structure description */
+						/* struct member name */
+						/* begining of structure */
+						/* string containing value */
 {
 	double *p = (double *)(base+sdp->sp_offset);
 
@@ -187,10 +187,10 @@ struct mfuncs camo_mfuncs[] = {
  */
 void
 color_fix(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+						/* structure description */
+						/* struct member name */
+						/* begining of structure */
+						/* string containing value */
 {
 	register double *p = (double *)(base+sdp->sp_offset);
 	register int i;
@@ -212,8 +212,6 @@ color_fix(register const struct bu_structparse *sdp, register const char *name, 
 }
 
 
-
-
 /*	C A M O _ S E T U P
  *
  *	This routine is called (at prep time)
@@ -224,9 +222,9 @@ HIDDEN int
 camo_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    			      	/* pointer to reg_udata in *rp */
+				/* pointer to reg_udata in *rp */
 
-           		      	/* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct camo_specific	*camo_sp;
 	mat_t	model_to_region;
@@ -368,9 +366,9 @@ HIDDEN int
 marble_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    			      	/* pointer to reg_udata in *rp */
+				/* pointer to reg_udata in *rp */
 
-           		      	/* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct camo_specific	*camo_sp;
 	mat_t	model_to_region;
@@ -425,7 +423,6 @@ marble_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 
 	return(1);
 }
-
 
 
 /*

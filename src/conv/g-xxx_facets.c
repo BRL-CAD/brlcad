@@ -264,7 +264,7 @@ int material_id;
 	} else {
 		printf( "Converted %s\n", region_name );
 	}
- 	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 		struct faceuse *fu;
 
@@ -361,8 +361,8 @@ genptr_t		client_data;
 			BU_UNSETJUMP;		/* Relinquish the protection */
 
 			sofar = db_path_to_string(pathp);
-	                bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
-                        bu_free( (char *)sofar, "sofar" );
+			bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
+			bu_free( (char *)sofar, "sofar" );
 
 			/* Sometimes the NMG library adds debugging bits when
 			 * it detects an internal error, before rt_bomb().

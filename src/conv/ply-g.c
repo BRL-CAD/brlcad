@@ -819,7 +819,7 @@ main( int argc, char *argv[] )
 	{
 		switch( c )
 		{
-		        case 's':	/* scale factor */
+			case 's':	/* scale factor */
 				scale_factor = atof( optarg );
 				if( scale_factor < SQRT_SMALL_FASTF ) {
 					bu_log( "scale factor too small\n" );
@@ -827,7 +827,7 @@ main( int argc, char *argv[] )
 					exit( 1 );
 				}
 				break;
-		        case 'd':	/* debug */
+			case 'd':	/* debug */
 				bu_debug = BU_DEBUG_COREDUMP;
 				break;
 			case 'v':	/* verbose */

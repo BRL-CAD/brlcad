@@ -809,9 +809,7 @@ HIDDEN int
 ckr_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-
-
-                                /* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct ckr_specific *ckp;
 
@@ -1033,7 +1031,6 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, con
 
 	return(0);		/* This region should be dropped */
 }
-
 
 
 /*

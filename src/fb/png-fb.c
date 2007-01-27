@@ -378,7 +378,7 @@ main(int argc, char **argv)
 	if( !one_line_only && multiple_lines > 0 && !inverse && !zoom &&
 	    xout == file_width && file_xoff == 0 &&
 	    file_width <= scr_width )  {
-	    	scanpix *= multiple_lines;
+		scanpix *= multiple_lines;
 	}
 
 	scanbytes = scanpix * sizeof(RGBpixel);

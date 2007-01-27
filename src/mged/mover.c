@@ -38,7 +38,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
@@ -77,7 +76,7 @@ moveHobj(register struct directory *dp, matp_t xlate)
 	if(dbip == DBI_NULL)
 	  return;
 
-    	RT_INIT_DB_INTERNAL(&intern);
+	RT_INIT_DB_INTERNAL(&intern);
 	if( rt_db_get_internal( &intern, dp, dbip, xlate, &rt_uniresource ) < 0 )
 	{
 		Tcl_AppendResult(interp, "rt_db_get_internal() failed for ", dp->d_namep,

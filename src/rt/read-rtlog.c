@@ -134,8 +134,8 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 			 * unexpected end.
 			 */
 			fprintf(stderr, "read_rt_file: read failure on file %s\n",
- 				name);
- 			return(-1);
+				name);
+			return(-1);
 		}
 
 		/* Check the first for a colon in the buffer.  If there is
@@ -212,9 +212,9 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 				&orientation[0], &orientation[1], &orientation[2],
 				&orientation[3]);
 
- 			if(num != 4)  {
+			if(num != 4)  {
 				fprintf(stderr, "Orientation= %.6f, %.6f, %.6f, %.6f\n",
-				 	V4ARGS(orientation) );
+					V4ARGS(orientation) );
 				return(-1);
 			}
 			seen_orientation = TRUE;

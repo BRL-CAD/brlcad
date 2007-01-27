@@ -332,7 +332,7 @@ reverse_buffer(void)
 
 void
 arbrot(double a)
-      	  	/* rotation angle */
+		/* rotation angle */
 {
 	int	x, y;				/* working coord */
 	double	x2, y2;				/* its rotated position */

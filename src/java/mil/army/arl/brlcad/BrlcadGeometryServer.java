@@ -34,31 +34,31 @@ public class BrlcadGeometryServer implements GeometryServer {
 
     public boolean loadGeometry(String geomInfo)
 	throws RemoteException {
-        return false;
+	return false;
     }
 
     public Vect shootRay(Point origin, Vect dir)
 	throws RemoteException {
-        return null;
+	return null;
     }
 
     public BoundingBox getBoundingBox()
 	throws RemoteException {
-        return null;
+	return null;
     }
 
     public BoundingBox getBoundingBox(String item)
 	throws RemoteException {
-        return null;
+	return null;
     }
 
     public String getTitle() throws RemoteException {
-        return null;
+	return null;
     }
 
     public boolean makeHole(Point origin, Vect dir,
 			    float baseDiam, float topDiam)
 	throws RemoteException {
-        return false;
+	return false;
     }
 }

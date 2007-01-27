@@ -165,9 +165,9 @@ HIDDEN int
 xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    			      	/* pointer to reg_udata in *rp */
+				/* pointer to reg_udata in *rp */
 
-           		      	/* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct xxx_specific	*xxx_sp;
 	mat_t	tmp;
@@ -252,8 +252,8 @@ int
 xxx_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-                	     	/* defined in ../h/shadework.h */
-    			    	/* ptr to the shader-specific struct */
+				/* defined in ../h/shadework.h */
+				/* ptr to the shader-specific struct */
 {
 	register struct xxx_specific *xxx_sp =
 		(struct xxx_specific *)dp;

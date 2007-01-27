@@ -1120,7 +1120,6 @@ body GeometryBrowser::raytraceWizard {} {
 }
 
 
-
 # toggleAutosizing
 #
 # makes it so that the view is either auto-sizing or not.
@@ -1168,7 +1167,6 @@ body GeometryBrowser::toggleAutosizing { { state "" } } {
 	puts "set autosize 0"
 	return [ set autosize 0 ]
 }
-
 
 
 # toggleAutorender

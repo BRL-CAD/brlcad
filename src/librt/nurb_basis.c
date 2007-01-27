@@ -46,7 +46,6 @@ static const char rcs_ident[] = "$Header$";
 #include "common.h"
 
 
-
 #include <stdio.h>
 
 #include "machine.h"

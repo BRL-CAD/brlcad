@@ -134,13 +134,13 @@ set_translate(char *s)
 	if (sscanf(s, "%lf/%lf/%lf", &dx, &dy, &dz) != 3)
 		usage("translation option problem\n");
 
-    	if (!trans_matrix) {
-    		trans_matrix = (matp_t)bu_calloc(sizeof(mat_t), 1,
-    					"transformation matrix");
-    		bcopy( (char *)bn_mat_identity, (char *)trans_matrix, sizeof(mat_t));
-    	}
+	if (!trans_matrix) {
+		trans_matrix = (matp_t)bu_calloc(sizeof(mat_t), 1,
+					"transformation matrix");
+		bcopy( (char *)bn_mat_identity, (char *)trans_matrix, sizeof(mat_t));
+	}
 
-    	MAT_DELTAS(trans_matrix, dx*unit_conv, dy*unit_conv, dz*unit_conv);
+	MAT_DELTAS(trans_matrix, dx*unit_conv, dy*unit_conv, dz*unit_conv);
 }
 
 /*
@@ -211,11 +211,11 @@ set_rotate(char *s)
 	if (sscanf(s, "%lf/%lf/%lf", &rx, &ry, &rz) != 3)
 		usage("rotation option problem\n");
 
-    	if (!trans_matrix) {
-    		trans_matrix = (matp_t)bu_calloc(sizeof(mat_t), 1,
-	    		"rotation matrix");
-    		bcopy((char *)bn_mat_identity, (char *)trans_matrix, sizeof(mat_t));
-    	}
+	if (!trans_matrix) {
+		trans_matrix = (matp_t)bu_calloc(sizeof(mat_t), 1,
+			"rotation matrix");
+		bcopy((char *)bn_mat_identity, (char *)trans_matrix, sizeof(mat_t));
+	}
 	buildHrot(trans_matrix,
 		rx * degtorad,
 		ry * degtorad,
@@ -259,14 +259,14 @@ int parse_args(int ac, char **av)
 					brick_width = width * unit_conv;
 					brick_height = height * unit_conv;
 					brick_depth = dy * unit_conv;
-				     	units_lock = 1;
+					units_lock = 1;
 				  } else
-				  	usage("error parsing -b option\n");
+					usage("error parsing -b option\n");
 
 				  break;
 		case 'c'	: if (sscanf(optarg, "%d %d %d", &R, &G, &B)
 				     == 3) {
-				     	color = def_color;
+					color = def_color;
 					color[0] = R & 0x0ff;
 					color[1] = G & 0x0ff;
 					color[2] = B & 0x0ff;
@@ -288,21 +288,21 @@ int parse_args(int ac, char **av)
 				  else if (sscanf(optarg, "%lf,%lf,%lf,%lf",
 				     &dx, &dy, &width, &height) == 4) {
 					op = (struct opening *)bu_calloc(1, sizeof(struct opening), "calloc opening");
-				     	BU_LIST_INSERT(&ol_hd.l, &op->l);
-				     	op->sx = dx * unit_conv;
-				     	op->sz = dy * unit_conv;
-				     	op->ex = width * unit_conv;
-				     	op->ez = height * unit_conv;
+					BU_LIST_INSERT(&ol_hd.l, &op->l);
+					op->sx = dx * unit_conv;
+					op->sz = dy * unit_conv;
+					op->ex = width * unit_conv;
+					op->ez = height * unit_conv;
 
-				     	/* do bounds checking */
-				     	if (op->sx < 0.0) op->sx = 0.0;
-				     	if (op->sz < 0.0) op->sz = 0.0;
-				     	if (op->ex > WALL_WIDTH)
-				     		op->ex = WALL_WIDTH;
-				     	if (op->ez > WALL_HEIGHT)
-				     		op->ez = WALL_HEIGHT;
+					/* do bounds checking */
+					if (op->sx < 0.0) op->sx = 0.0;
+					if (op->sz < 0.0) op->sz = 0.0;
+					if (op->ex > WALL_WIDTH)
+						op->ex = WALL_WIDTH;
+					if (op->ez > WALL_HEIGHT)
+						op->ez = WALL_HEIGHT;
 
-				     	units_lock = 1;
+					units_lock = 1;
 				} else
 					usage("error parsing -o option\n");
 				break;
@@ -321,9 +321,9 @@ int parse_args(int ac, char **av)
 				     &width, &height) == 2) {
 					WALL_WIDTH = width * unit_conv;
 					WALL_HEIGHT = height * unit_conv;
-				     	units_lock = 1;
+					units_lock = 1;
 				  } else
-				  	usage("error parsing -w (wall dimensions)\n");
+					usage("error parsing -w (wall dimensions)\n");
 				break;
 		case '?'	:
 		case 'h'	:
@@ -363,40 +363,40 @@ struct boardseg *seglist;
 	if (!seg) abort();
 
 	/* trim opening to X bounds of wall */
-    	if (seg->s < ol_hd.sz) seg->s = ol_hd.sz;
-    	if (seg->e > WALL_HEIGHT) seg->e = WALL_HEIGHT;
+	if (seg->s < ol_hd.sz) seg->s = ol_hd.sz;
+	if (seg->e > WALL_HEIGHT) seg->e = WALL_HEIGHT;
 	BU_LIST_APPEND(&(seglist->l), &(seg->l));
 
 
 	for (BU_LIST_FOR(op, opening, &ol_hd.l) ) {
 	    if ((sx >= op->sx && sx <= op->ex) ||
-	    	    (ex >= op->sx && ex <= op->ex) ||
-	    	    (sx <= op->sx && ex >= op->ex) ) {
+		    (ex >= op->sx && ex <= op->ex) ||
+		    (sx <= op->sx && ex >= op->ex) ) {
 
-    	    	/* opening in vertical segment */
-	    	for (BU_LIST_FOR(seg, boardseg, &(seglist->l)) ) {
+		/* opening in vertical segment */
+		for (BU_LIST_FOR(seg, boardseg, &(seglist->l)) ) {
 
 
 			if (op->sz <= seg->s) {
 			    if (op->ez >= seg->e) {
-			    	/* opening covers entire segment.
-			    	 * segement gets deleted
-			    	 */
-			    	sp = BU_LIST_PLAST(boardseg, &(seg->l));
-			    	BU_LIST_DEQUEUE(&(seg->l));
-			    	bu_free((char *)seg, "seg free");
+				/* opening covers entire segment.
+				 * segement gets deleted
+				 */
+				sp = BU_LIST_PLAST(boardseg, &(seg->l));
+				BU_LIST_DEQUEUE(&(seg->l));
+				bu_free((char *)seg, "seg free");
 				if (debug)
-				 	bu_log("deleting segment\n");
-			    	seg = sp;
+					bu_log("deleting segment\n");
+				seg = sp;
 			    } else if (op->ez > seg->s) {
-			    	/* opening covers begining of segment */
-			    	seg->s = op->ez;
+				/* opening covers begining of segment */
+				seg->s = op->ez;
 			    }
 				/* else opening is entirely prior to seg->s */
 			} else if (op->ez >= seg->e) {
 			    if (op->sz < seg->e) {
-			    	/* opening covers end of segment */
-			    	seg->e = op->sz;
+				/* opening covers end of segment */
+				seg->e = op->sz;
 			    }
 			    /* else opening entirely after segment */
 			} else {
@@ -410,12 +410,11 @@ struct boardseg *seglist;
 				 seg->s = op->ez;
 				 BU_LIST_INSERT(&(seg->l), &(sp->l));
 				 if (debug)
-				 	bu_log("splitting segment\n");
+					bu_log("splitting segment\n");
 			}
 
 
-
-	    	    }
+		    }
 	    }
 	}
 }
@@ -432,10 +431,9 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 	seg->s = sx;
 	seg->e = ex;
 	/* trim opening to X bounds of wall */
-    	if (seg->s < ol_hd.sx) seg->s = ol_hd.sx;
-    	if (seg->e > WALL_WIDTH) seg->e = WALL_WIDTH;
+	if (seg->s < ol_hd.sx) seg->s = ol_hd.sx;
+	if (seg->e > WALL_WIDTH) seg->e = WALL_WIDTH;
 	BU_LIST_APPEND(&(seglist->l), &(seg->l));
-
 
 
 	for(BU_LIST_FOR(op, opening, &ol_hd.l) ) {
@@ -445,26 +443,26 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 		(op->sz <= sz && op->ez >= ez) ) {
 
 		/* opening in horizontal segment */
-	    	for (BU_LIST_FOR(seg, boardseg, &(seglist->l)) ) {
+		for (BU_LIST_FOR(seg, boardseg, &(seglist->l)) ) {
 			if (op->sx <= seg->s) {
 			    if (op->ex >= seg->e) {
-			    	/* opening covers entire segment.
-			    	 * segement gets deleted
-			    	 */
-			    	sp = BU_LIST_PLAST(boardseg, &(seg->l));
-			    	BU_LIST_DEQUEUE(&(seg->l));
-			    	bu_free((char *)seg, "seg free 2");
-			    	seg = sp;
+				/* opening covers entire segment.
+				 * segement gets deleted
+				 */
+				sp = BU_LIST_PLAST(boardseg, &(seg->l));
+				BU_LIST_DEQUEUE(&(seg->l));
+				bu_free((char *)seg, "seg free 2");
+				seg = sp;
 
 			    } else if (op->ex > seg->s) {
-			    	/* opening covers begining of segment */
-			    	seg->s = op->ex;
+				/* opening covers begining of segment */
+				seg->s = op->ex;
 			    }
 				/* else opening is entirely prior to seg->s */
 			} else if (op->ex >= seg->e) {
 			    if (op->sx < seg->e) {
-			    	/* opening covers end of segment */
-			    	seg->e = op->sx;
+				/* opening covers end of segment */
+				seg->e = op->sx;
 			    }
 			    /* else opening entirely after segment */
 			} else {
@@ -605,8 +603,6 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 	/* 2 vertical studs @ op->sx-bd_thin*2.0 && op->ex+bd_thin*2.0 */
 
 
-
-
 	/* build the bottom of the opening */
 	if (op->sz > bd_thin) {
 		/* put in bottom board of opening */
@@ -695,13 +691,13 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 			/* put in the offset boards */
 			mk_v_rpp(fd, wm_hd,
 				op->sx, op->sx+bd_thin,
-			    	0.0, bd_thick,
+				0.0, bd_thick,
 				op->ez+bd_thin,
 				WALL_HEIGHT-bd_thin-beam_height);
 
 			mk_v_rpp(fd, wm_hd,
 				op->ex-bd_thin, op->ex,
-			    	0.0, bd_thick,
+				0.0, bd_thick,
 				op->ez+bd_thin,
 				WALL_HEIGHT-bd_thin-beam_height);
 
@@ -715,7 +711,7 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 			for(pos=op->sx+dx ; studs-- ; pos += dx) {
 				mk_v_rpp(fd, wm_hd,
 					pos, pos+bd_thin,
-				    	0.0, bd_thick,
+					0.0, bd_thick,
 					op->ez+bd_thin,
 					WALL_HEIGHT-bd_thin-beam_height);
 			}
@@ -818,7 +814,6 @@ frame(struct rt_wdb *fd)
 	}
 
 
-
 	/* put in the vertical stud boards that are not a part of an
 	 * opening for a window or a door.
 	 */
@@ -836,8 +831,8 @@ frame(struct rt_wdb *fd)
 			    (pos+bd_thin > op->sx-bd_thin*2.0 &&
 				pos+bd_thin < op->ex+bd_thin*2.0)
 			    ) {
-			    	if (debug)
-			    		bu_log("not making stud @ %g\n", pos / unit_conv);
+				if (debug)
+					bu_log("not making stud @ %g\n", pos / unit_conv);
 
 				mk_stud_flag = 0;
 				break;
@@ -845,8 +840,8 @@ frame(struct rt_wdb *fd)
 		}
 		if (mk_stud_flag) {
 			/* put in the vertical stud */
-		    	if (debug)
-		    		bu_log("Making stud @ %g\n", pos / unit_conv);
+			if (debug)
+				bu_log("Making stud @ %g\n", pos / unit_conv);
 
 			mk_v_rpp(fd, &wm_hd,
 				pos, pos+bd_thin,
@@ -857,7 +852,7 @@ frame(struct rt_wdb *fd)
 
 		if (pos < WALL_WIDTH-bd_thin &&
 		    pos+stud_spacing > WALL_WIDTH-bd_thin)
-		    	pos = WALL_WIDTH - bd_thin - stud_spacing;
+			pos = WALL_WIDTH - bd_thin - stud_spacing;
 	}
 
 	for (BU_LIST_FOR(op, opening, &ol_hd.l))

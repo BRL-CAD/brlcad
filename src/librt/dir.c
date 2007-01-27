@@ -43,7 +43,6 @@ static const char RCSdir[] = "@(#)$Header$";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -77,12 +76,12 @@ rt_dirbuild( const char *filename, char *buf, int len )
 		rt_init_resource( &rt_uniresource, 0, NULL );
 
 	if( (dbip = db_open( filename, "r" )) == DBI_NULL )
-	    	return( RTI_NULL );		/* FAIL */
+		return( RTI_NULL );		/* FAIL */
 	RT_CK_DBI(dbip);
 
 	if( db_dirbuild( dbip ) < 0 )  {
 		db_close( dbip );
-	    	return RTI_NULL;		/* FAIL */
+		return RTI_NULL;		/* FAIL */
 	}
 
 	rtip = rt_new_rti( dbip );		/* clones dbip */
@@ -136,7 +135,7 @@ rt_db_get_internal(
 	if( rt_functab[id].ft_import( ip, &ext, mat, dbip, resp ) < 0 )  {
 		bu_log("rt_db_get_internal(%s):  import failure\n",
 			dp->d_namep );
-	    	rt_db_free_internal( ip, resp );
+		rt_db_free_internal( ip, resp );
 		bu_free_external( &ext );
 		return -1;		/* FAIL */
 	}

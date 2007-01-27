@@ -45,7 +45,6 @@ static const char RCSwray[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"

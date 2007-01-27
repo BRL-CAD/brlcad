@@ -335,7 +335,7 @@ init_display()
 		qdevice(i);
 	}
 #ifdef SPACEBALL
-        /* INIT Spaceball */
+	/* INIT Spaceball */
 	qdevice(SBTX);
 	qdevice(SBTY);
 	qdevice(SBTZ);

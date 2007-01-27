@@ -225,7 +225,7 @@ match_Trie(register Trie *triep)
 
 static OcList	*
 copy_OcList(register OcList *orp)
-               	     			/* Input list read pointer.	*/
+					/* Input list read pointer.	*/
 	{	OcList *oclistp = OCLIST_NULL;	/* Output list pointer.	*/
 		register OcList	**owpp = &oclistp; /* Write pointer.	*/
 	/* Make copy of Octree pointer list.				*/

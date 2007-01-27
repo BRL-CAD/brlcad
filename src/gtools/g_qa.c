@@ -139,7 +139,6 @@ int debug;
 #define A_STATE a_uptr
 
 
-
 struct resource	resource[MAX_PSW];	/* memory resources for multi-cpu processing */
 
 struct cstate {
@@ -199,7 +198,6 @@ struct per_region_data {
 } *reg_tbl;
 
 
-
 struct region_pair {
     struct bu_list 	l;
     union {
@@ -220,7 +218,7 @@ static struct region_pair gapList = { /* list of gaps */
     {
 	BU_LIST_HEAD_MAGIC,
 	(struct bu_list *)&gapList,
-	(struct bu_list *)&gapList 
+	(struct bu_list *)&gapList
     },
     { "Gaps" },
     (struct region *)NULL,
@@ -442,8 +440,6 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 /* the above should be extracted to libbu/units.c */
 
 
-
-
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
@@ -457,7 +453,6 @@ usage(s)
 
     exit(1);
 }
-
 
 
 /*
@@ -571,7 +566,7 @@ parse_args(int ac, char *av[])
 		i = 0;
 
 
-		/* find out if we have two or one args 
+		/* find out if we have two or one args
 		 * user can separate them with , or - delimiter
 		 */
 		if (p = strchr(bu_optarg, ','))  	 *p++ = '\0';
@@ -592,7 +587,7 @@ parse_args(int ac, char *av[])
 		    gridSpacingLimit = value2;
 		} else {
 		    gridSpacingLimit = value1;
-		    
+
 		    gridSpacing = 0.0; /* flag it */
 		}
 
@@ -911,7 +906,6 @@ add_unique_pair(struct region_pair *list, /* list to add into */
 }
 
 
-
 /*
  *			O V E R L A P
  *
@@ -1054,7 +1048,6 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
     struct cstate *state = ap->A_STATE;
 
     if (PartHeadp->pt_forw == PartHeadp) return 1;
-
 
 
     /* examine each partition until we get back to the head */
@@ -1469,8 +1462,6 @@ allocate_per_region_data(struct cstate *state, int start, int ac, char *av[])
 }
 
 
-
-
 /*
  *	list_report
  *
@@ -1499,10 +1490,6 @@ list_report(struct region_pair *list)
 	}
     }
 }
-
-
-
-
 
 
 /*
@@ -1858,8 +1845,8 @@ terminate_check(struct cstate *state)
     }
 
     /* if we are doing one of the "Error" checking operations:
-     * Overlap, gap, adj_air, exp_air, then we ALWAYS go to the 
-     * grid spacing limit and we ALWAYS terminate on first 
+     * Overlap, gap, adj_air, exp_air, then we ALWAYS go to the
+     * grid spacing limit and we ALWAYS terminate on first
      * error/list-entry
      */
     if ( (analysis_flags & ANALYSIS_OVERLAPS)) {
@@ -2018,7 +2005,6 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
     }
 
 
-
     if (analysis_flags & ANALYSIS_VOLUME) {
 	bu_log("Volume:\n");
 
@@ -2070,7 +2056,6 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 		       avg - low);
 	    }
 	}
-
 
 
 	/* print grand totals */
@@ -2284,7 +2269,6 @@ main(int ac, char *av[])
 
     return(0);
 }
-
 
 
 /*

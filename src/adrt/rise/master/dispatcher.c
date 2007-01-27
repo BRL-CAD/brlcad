@@ -82,14 +82,14 @@ void rise_dispatcher_generate(common_db_t *db, void *data, int data_len) {
       */
 #if 0
       if(rise_image_raw[(i*db->env.img_vw+n)*4 + 3]) {
-        rise_dispatcher_progress += RISE_TILE_SIZE * RISE_TILE_SIZE;
+	rise_dispatcher_progress += RISE_TILE_SIZE * RISE_TILE_SIZE;
       } else {
 #endif
-        work.orig_x = n;
-        work.orig_y = i;
-        memcpy(&((char *)mesg)[0], &work, sizeof(common_work_t));
-        memcpy(&((char *)mesg)[sizeof(common_work_t)], data, data_len);
-        tienet_master_push(mesg, sizeof(common_work_t)+data_len);
+	work.orig_x = n;
+	work.orig_y = i;
+	memcpy(&((char *)mesg)[0], &work, sizeof(common_work_t));
+	memcpy(&((char *)mesg)[sizeof(common_work_t)], data, data_len);
+	tienet_master_push(mesg, sizeof(common_work_t)+data_len);
 #if 0
       }
 #endif

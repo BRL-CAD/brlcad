@@ -61,9 +61,9 @@ void math_mat_mult(tfloat *A, int Ar, int Ac, tfloat *B, int Br, int Bc, tfloat 
     M = (tfloat*)malloc(sizeof(tfloat)*Ar*Bc);
     for (i = 0; i < Bc; i++)
       for (j = 0; j < Ar; j++) {
-        M[j*Bc+i] = 0;
-        for (k = 0; k < Br; k++)
-          M[j*Bc+i] += A[j*Ac+k]*B[k*Bc+i];
+	M[j*Bc+i] = 0;
+	for (k = 0; k < Br; k++)
+	  M[j*Bc+i] += A[j*Ac+k]*B[k*Bc+i];
       }
     memcpy(C, M, sizeof(tfloat)*Ar*Bc);
     free(M);
@@ -104,8 +104,8 @@ void math_mat_invert(tfloat *D, tfloat *M, int S) {
     for(j = i+1; j < 4; j++) {
       val = M[j*4 + i];
       if(fabs(val) > fabs(maxval)) {
-        maxval = val;
-        maxrow = j;
+	maxval = val;
+	maxrow = j;
       }
     }
 
@@ -125,8 +125,8 @@ void math_mat_invert(tfloat *D, tfloat *M, int S) {
     for(j = i+1; j < 4; j++) {
       val = M[j*4 + i];
       for(k = 0; k < 4; k++) {
-        M[j*4 + k] -= M[i*4 + k] * val;
-        D[j*4 + k] -= D[i*4 + k] * val;
+	M[j*4 + k] -= M[i*4 + k] * val;
+	D[j*4 + k] -= D[i*4 + k] * val;
       }
     }
   }
@@ -136,8 +136,8 @@ void math_mat_invert(tfloat *D, tfloat *M, int S) {
     for(j = i-1; j >= 0; j--) {
       val = M[j*4 + i];
       for(k = 0; k < 4; k++) {
-        M[j*4 + k] -= M[i*4 + k] * val;
-        D[j*4 + k] -= D[i*4 + k] * val;
+	M[j*4 + k] -= M[i*4 + k] * val;
+	D[j*4 + k] -= D[i*4 + k] * val;
       }
     }
   }

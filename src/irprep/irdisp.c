@@ -133,26 +133,26 @@ main(void)
 
    if( (ichoice == 1) || (ichoice == 2) )
    {
-   	char choice[80];
+	char choice[80];
 
 	/*  Call the program ir-X or ir-sgi so that a file that has been raytraced  */
 	/*  may be displayed.  */
-   	choice[0] = '\0';
-   	while( strcmp( choice , "sgi" ) && strcmp( choice , "X" ) && strcmp( choice , "x" ) )
-   	{
-	   	(void)printf("\nSelect display ('X' or 'sgi') -> " );
-   		(void)fflush(stdout);
-   		(void)scanf( "%s", choice );
-   	}
-   	if( !strcmp( choice , "X" ) || !strcmp( choice , "x" ) )
-   		X_or_SGI = irX;
-   	else if( !strcmp( choice , "sgi" ) )
-   		X_or_SGI = irsgi;
-   	else
-   	{
-   		fprintf( stderr , "Bad choice for display (%s)\n" , choice );
-   		exit( 1 );
-   	}
+	choice[0] = '\0';
+	while( strcmp( choice , "sgi" ) && strcmp( choice , "X" ) && strcmp( choice , "x" ) )
+	{
+		(void)printf("\nSelect display ('X' or 'sgi') -> " );
+		(void)fflush(stdout);
+		(void)scanf( "%s", choice );
+	}
+	if( !strcmp( choice , "X" ) || !strcmp( choice , "x" ) )
+		X_or_SGI = irX;
+	else if( !strcmp( choice , "sgi" ) )
+		X_or_SGI = irsgi;
+	else
+	{
+		fprintf( stderr , "Bad choice for display (%s)\n" , choice );
+		exit( 1 );
+	}
 	(void)printf("\nThe program %s in now being run.  If option\n", X_or_SGI);
 	(void)printf("0 or 1 was used when the name of a file is asked\n");
 	(void)printf("for enter the name of the file that was just\n");

@@ -47,10 +47,10 @@
  *
  * Matrix array elements have the following positions in the matrix:
 @code
- 				|  0  1  2  3 |		| 0 |
- 	  [ 0 1 2 3 ]		|  4  5  6  7 |		| 1 |
- 				|  8  9 10 11 |		| 2 |
- 				| 12 13 14 15 |		| 3 |
+				|  0  1  2  3 |		| 0 |
+	  [ 0 1 2 3 ]		|  4  5  6  7 |		| 1 |
+				|  8  9 10 11 |		| 2 |
+				| 12 13 14 15 |		| 3 |
 @endcode
  *
  *     preVector (vect_t)	 Matrix (mat_t)    postVector (vect_t)
@@ -72,7 +72,6 @@ static const char bn_RCSmat[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "common.h"
-
 
 
 #include <stdio.h>
@@ -177,7 +176,6 @@ mat_t	m;
 	for(; i<16; i++)
 		*mp++ = 0.0;
 }
-
 
 
 /*
@@ -336,8 +334,8 @@ bn_mat_inv(register mat_t output, const mat_t input)
 		bu_log("bn_mat_inv:  error!");
 		bn_mat_print("singular matrix", input);
 		bu_bomb("bn_mat_inv: singular matrix\n");
-                /* NOTREACHED */
-        }
+		/* NOTREACHED */
+	}
 }
 
 
@@ -366,7 +364,7 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 
 	MAT_COPY( output, input );	/* Duplicate */
 
-        /* Initialization */
+	/* Initialization */
 	for( j = 0; j < 4; j++ )
 		z[j] = j;
 
@@ -434,7 +432,7 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 		}
 	}
 
-        return 1;
+	return 1;
 }
 
 /*
@@ -995,13 +993,13 @@ bn_mat_zrot(fastf_t *m, double sinz, double cosz)
  *
  *  This is done in several steps.
 @code
- 	1)  Rotate D about Z to match +X axis.  Azimuth adjustment.
- 	2)  Rotate D about Y to match -Y axis.  Elevation adjustment.
- 	3)  Rotate D about Z to make projection of X axis again point
- 	    in the +X direction.  Twist adjustment.
- 	4)  Optionally, flip sign on Y axis if original Z becomes inverted.
- 	    This can be nice for static frames, but is astonishing when
- 	    used in animation.
+	1)  Rotate D about Z to match +X axis.  Azimuth adjustment.
+	2)  Rotate D about Y to match -Y axis.  Elevation adjustment.
+	3)  Rotate D about Z to make projection of X axis again point
+	    in the +X direction.  Twist adjustment.
+	4)  Optionally, flip sign on Y axis if original Z becomes inverted.
+	    This can be nice for static frames, but is astonishing when
+	    used in animation.
 @endcode
  */
 void
@@ -1361,7 +1359,7 @@ bn_mat_ck(const char *title, const mat_t m)
 			bu_debug |= BU_DEBUG_COREDUMP;
 			bu_bomb("bn_mat_ck() bad matrix\n");
 		}
-	    	return -1;	/* FAIL */
+		return -1;	/* FAIL */
 	}
 	return 0;		/* OK */
 }

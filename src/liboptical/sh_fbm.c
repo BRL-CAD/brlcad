@@ -97,7 +97,6 @@ struct mfuncs fbm_mfuncs[] = {
 };
 
 
-
 /*
  *	F B M _ S E T U P
  */

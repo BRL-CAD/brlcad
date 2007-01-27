@@ -37,7 +37,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -314,10 +313,10 @@ rt_nurb_gen_knot_vector(register struct knot_vector *new_knots, int order, fastf
 		"rt_nurb_gen_knot_vector: new knots values");
 
     for ( i = 0; i < order; i++)
-        new_knots->knots[i] = lower;
+	new_knots->knots[i] = lower;
 
     for ( i = order; i < total; i++)
-        new_knots->knots[i] = upper;
+	new_knots->knots[i] = upper;
 }
 
 /*

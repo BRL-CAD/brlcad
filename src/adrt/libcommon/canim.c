@@ -109,8 +109,8 @@ int common_anim_read(common_anim_t *anim, char *frames_file) {
 
       /* Matrix */
       for(i = 0; i < 16; i++) {
-        token = strtok(NULL, ",");
-        anim->frame_list[anim->frame_num].tlist[anim->frame_list[anim->frame_num].tnum].matrix[i] = atof(token);
+	token = strtok(NULL, ",");
+	anim->frame_list[anim->frame_num].tlist[anim->frame_list[anim->frame_num].tnum].matrix[i] = atof(token);
       }
 
       anim->frame_list[anim->frame_num].tnum++;

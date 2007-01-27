@@ -31,10 +31,10 @@ proc mged_bind_dm { w } {
 
 #make this the current display manager
     if { $::tcl_platform(platform) != "windows" && $::tcl_platform(os) != "Darwin" } {
-        bind $w <Enter> "winset $w; focus $w;"
+	bind $w <Enter> "winset $w; focus $w;"
     } else {
-        # some platforms should not be forced window activiation (winset)
-        bind $w <Enter> "winset $w;"
+	# some platforms should not be forced window activiation (winset)
+	bind $w <Enter> "winset $w;"
     }
 
 #default mouse bindings

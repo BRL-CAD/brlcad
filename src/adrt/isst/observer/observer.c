@@ -88,7 +88,6 @@ void *magnify_buffer;
 /*******************/
 
 
-
 void isst_observer(char *host, int port) {
   isst_observer_net_info_t ni;
 
@@ -254,18 +253,18 @@ void* isst_observer_networking(void *ptr) {
       unsigned char pixel[6];
 
       if(isst_observer_magnify == 1) {
-        memcpy(util_display_buffer->pixels, frame, 3*screen_w*screen_h);
+	memcpy(util_display_buffer->pixels, frame, 3*screen_w*screen_h);
       } else if(isst_observer_magnify == 2) {
-        for(y = 0; y < screen_h; y++) {
-          for(x = 0; x < screen_w; x++) {
-            memcpy(pixel, &((char *)frame)[3*(y*screen_w+x)], 3);
-            pixel[3] = pixel[0];
-            pixel[4] = pixel[1];
-            pixel[5] = pixel[2];
-            memcpy(&((char *)util_display_buffer->pixels)[3*(4*y*screen_w+2*x)], pixel, 6);
-            memcpy(&((char *)util_display_buffer->pixels)[3*(2*screen_w*(2*y+1)+2*x)], pixel, 6);
-          }
-        }
+	for(y = 0; y < screen_h; y++) {
+	  for(x = 0; x < screen_w; x++) {
+	    memcpy(pixel, &((char *)frame)[3*(y*screen_w+x)], 3);
+	    pixel[3] = pixel[0];
+	    pixel[4] = pixel[1];
+	    pixel[5] = pixel[2];
+	    memcpy(&((char *)util_display_buffer->pixels)[3*(4*y*screen_w+2*x)], pixel, 6);
+	    memcpy(&((char *)util_display_buffer->pixels)[3*(2*screen_w*(2*y+1)+2*x)], pixel, 6);
+	  }
+	}
       }
     }
 
@@ -395,73 +394,73 @@ void isst_observer_event_loop() {
   while(SDL_WaitEvent(&event) >= 0 && isst_observer_event_loop_alive) {
     switch(event.type) {
       case SDL_KEYDOWN:
-        switch(event.key.keysym.sym) {
-          case SDLK_F1: /* screen magnify 1x */
-            /* Set magnification level */
-            pthread_mutex_lock(&isst_observer_magnify_mut);
-            isst_observer_magnify = 1;
+	switch(event.key.keysym.sym) {
+	  case SDLK_F1: /* screen magnify 1x */
+	    /* Set magnification level */
+	    pthread_mutex_lock(&isst_observer_magnify_mut);
+	    isst_observer_magnify = 1;
 
-            /* Free the existing context */
-            util_display_free();
+	    /* Free the existing context */
+	    util_display_free();
 
-            /* Initialize the new context */
-            util_display_init(screen_w, screen_h);
+	    /* Initialize the new context */
+	    util_display_init(screen_w, screen_h);
 
-            magnify_buffer = realloc(magnify_buffer, screen_w*screen_h*3);
-            pthread_mutex_unlock(&isst_observer_magnify_mut);
-            break;
+	    magnify_buffer = realloc(magnify_buffer, screen_w*screen_h*3);
+	    pthread_mutex_unlock(&isst_observer_magnify_mut);
+	    break;
 
-          case SDLK_F2: /* screen magnify 2x */
-            /* Set magnification level */
-            pthread_mutex_lock(&isst_observer_magnify_mut);
-            isst_observer_magnify = 2;
+	  case SDLK_F2: /* screen magnify 2x */
+	    /* Set magnification level */
+	    pthread_mutex_lock(&isst_observer_magnify_mut);
+	    isst_observer_magnify = 2;
 
-            /* Free the existing context */
-            util_display_free();
+	    /* Free the existing context */
+	    util_display_free();
 
-            /* Initialize the new context */
-            util_display_init(2*screen_w, 2*screen_h);
+	    /* Initialize the new context */
+	    util_display_init(2*screen_w, 2*screen_h);
 
-            magnify_buffer = realloc(magnify_buffer, 4*screen_w*screen_h*3);
-            pthread_mutex_unlock(&isst_observer_magnify_mut);
-            break;
+	    magnify_buffer = realloc(magnify_buffer, 4*screen_w*screen_h*3);
+	    pthread_mutex_unlock(&isst_observer_magnify_mut);
+	    break;
 
-          case SDLK_f: /* fullscreen mode */
-            SDL_WM_ToggleFullScreen(util_display_screen);
-            break;
+	  case SDLK_f: /* fullscreen mode */
+	    SDL_WM_ToggleFullScreen(util_display_screen);
+	    break;
 
-          case SDLK_g: /* mouse grabbing */
-            isst_observer_mouse_grab ^= 1;
-            SDL_WM_GrabInput(isst_observer_mouse_grab ? SDL_GRAB_ON : SDL_GRAB_OFF);
-            SDL_ShowCursor(!isst_observer_mouse_grab);
-            break;
+	  case SDLK_g: /* mouse grabbing */
+	    isst_observer_mouse_grab ^= 1;
+	    SDL_WM_GrabInput(isst_observer_mouse_grab ? SDL_GRAB_ON : SDL_GRAB_OFF);
+	    SDL_ShowCursor(!isst_observer_mouse_grab);
+	    break;
 
-          case SDLK_PRINT:
-            {
-              void *image24;
+	  case SDLK_PRINT:
+	    {
+	      void *image24;
 
-              /* Screen dump */
-              image24 = malloc(3 * screen_w * screen_h);
-              util_image_convert_32to24(image24, util_display_screen->pixels, screen_w, screen_h, 0);
-              util_image_save_ppm("screenshot.ppm", image24, screen_w, screen_h);
-              free(image24);
-            }
-            break;
+	      /* Screen dump */
+	      image24 = malloc(3 * screen_w * screen_h);
+	      util_image_convert_32to24(image24, util_display_screen->pixels, screen_w, screen_h, 0);
+	      util_image_save_ppm("screenshot.ppm", image24, screen_w, screen_h);
+	      free(image24);
+	    }
+	    break;
 
-          case SDLK_BACKQUOTE:
-            /* Bring up the console */
-            pthread_mutex_lock(&isst_observer_console_mut);
-            util_display_editor(content_buffer, &content_lines, console_buffer, &console_lines, isst_observer_process);
-            pthread_mutex_unlock(&isst_observer_console_mut);
-            break;
+	  case SDLK_BACKQUOTE:
+	    /* Bring up the console */
+	    pthread_mutex_lock(&isst_observer_console_mut);
+	    util_display_editor(content_buffer, &content_lines, console_buffer, &console_lines, isst_observer_process);
+	    pthread_mutex_unlock(&isst_observer_console_mut);
+	    break;
 
-          default:
-            break;
-        }
-        break;
+	  default:
+	    break;
+	}
+	break;
 
       default:
-        break;
+	break;
     }
 
     pthread_mutex_lock(&event_mut);

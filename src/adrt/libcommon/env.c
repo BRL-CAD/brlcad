@@ -121,40 +121,40 @@ void common_env_read(common_env_t *env, char *fpath) {
       if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
 
       if(!strcmp(token, "normal")) {
-        env->rm = RENDER_METHOD_NORMAL;
-        render_normal_init(&env->render);
+	env->rm = RENDER_METHOD_NORMAL;
+	render_normal_init(&env->render);
       } else if(!strcmp(token, "phong")) {
-        env->rm = RENDER_METHOD_PHONG;
-        render_phong_init(&env->render);
+	env->rm = RENDER_METHOD_PHONG;
+	render_phong_init(&env->render);
       } else if(!strcmp(token, "depth")) {
-        env->rm = RENDER_METHOD_DEPTH;
-        render_depth_init(&env->render);
+	env->rm = RENDER_METHOD_DEPTH;
+	render_depth_init(&env->render);
       } else if(!strcmp(token, "path")) {
-        env->rm = RENDER_METHOD_PATH;
-        token = strtok(NULL, ",");
-        render_path_init(&env->render, atoi(token));
+	env->rm = RENDER_METHOD_PATH;
+	token = strtok(NULL, ",");
+	render_path_init(&env->render, atoi(token));
       } else if(!strcmp(token, "plane")) {
-        TIE_3 pos, dir;
-        int i;
+	TIE_3 pos, dir;
+	int i;
 
-        env->rm = RENDER_METHOD_PLANE;
+	env->rm = RENDER_METHOD_PLANE;
 
-        /* ray position */
-        for(i = 0; i < 3; i++) {
-          token = strtok(NULL, ",");
-          pos.v[i] = atof(token);
-        }
+	/* ray position */
+	for(i = 0; i < 3; i++) {
+	  token = strtok(NULL, ",");
+	  pos.v[i] = atof(token);
+	}
 
-        /* ray direction */
-        for(i = 0; i < 3; i++) {
-          token = strtok(NULL, ",");
-          dir.v[i] = atof(token);
-        }
+	/* ray direction */
+	for(i = 0; i < 3; i++) {
+	  token = strtok(NULL, ",");
+	  dir.v[i] = atof(token);
+	}
 
-        render_plane_init(&env->render, pos, dir);
+	render_plane_init(&env->render, pos, dir);
       } else {
-        env->rm = RENDER_METHOD_FLAT;
-        render_flat_init(&env->render);
+	env->rm = RENDER_METHOD_FLAT;
+	render_flat_init(&env->render);
       }
 
     }

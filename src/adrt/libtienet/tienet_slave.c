@@ -75,11 +75,11 @@ tienet_slave_fcb_mesg_t	*tienet_slave_fcb_mesg;
 
 
 void tienet_slave_init(int port, char *host,
-                       void fcb_init(tie_t *tie, int socknum),
-                       void fcb_work(tie_t *tie, void *data, unsigned int size, void **res_buf, unsigned int *res_len),
-                       void fcb_free(void),
-                       void fcb_mesg(void *mesg, unsigned int mesg_len),
-                       int ver_key)
+		       void fcb_init(tie_t *tie, int socknum),
+		       void fcb_work(tie_t *tie, void *data, unsigned int size, void **res_buf, unsigned int *res_len),
+		       void fcb_free(void),
+		       void fcb_mesg(void *mesg, unsigned int mesg_len),
+		       int ver_key)
 {
   tienet_slave_fcb_init = fcb_init;
   tienet_slave_fcb_work = fcb_work;
@@ -205,9 +205,9 @@ void tienet_slave_worker(int port, char *host) {
       tienet_slave_fcb_free();
 
       if(tienet_slave_prep(slave_socket, &tie)) {
-        fprintf(stderr, "version mismatch, exiting.\n");
-        close(slave_socket);
-        exit(0);
+	fprintf(stderr, "version mismatch, exiting.\n");
+	close(slave_socket);
+	exit(0);
       }
 
       /* Now that we've been updated, Request a Work Unit */
@@ -216,8 +216,8 @@ void tienet_slave_worker(int port, char *host) {
     } else {
       tienet_recv(slave_socket, &size, sizeof(unsigned int), tienet_endian);
       if(size > data_max) {
-        data_max = size;
-        data = realloc(data, size);
+	data_max = size;
+	data = realloc(data, size);
       }
 
       tienet_recv(slave_socket, data, size, 0);
@@ -226,8 +226,8 @@ void tienet_slave_worker(int port, char *host) {
 
       /* Send Result Back, length of: result + op_code + rays_fired + result_length + compression_length */
       if(res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(unsigned int) > data_max) {
-        data_max = res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(unsigned int);
-        data = realloc(data, data_max);
+	data_max = res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(unsigned int);
+	data = realloc(data, data_max);
       }
 
       ind = 0;
@@ -253,8 +253,8 @@ void tienet_slave_worker(int port, char *host) {
 #if TN_COMPRESSION
       /* Compress the result buffer */
       if(comp_max < res_len) {
-        comp_buf = realloc(comp_buf, res_len+32);	/* 32 bytes of extra padding for zlib */
-        comp_max = res_len;
+	comp_buf = realloc(comp_buf, res_len+32);	/* 32 bytes of extra padding for zlib */
+	comp_max = res_len;
       }
 
       dest_len = comp_max+32;
@@ -362,114 +362,114 @@ void tienet_slave_daemon(int port) {
 
     if(master_socket >= 0) {
       do {
-        /* Fetch Work Unit */
-        tienet_recv(master_socket, &op, sizeof(short), tienet_endian);
-        if(op == TN_OP_SHUTDOWN) {
-          close(master_socket);
-          close(slave_socket);
-          tienet_slave_fcb_free();
-          exit(0);
-        } else if(op == TN_OP_COMPLETE) {
-          close(master_socket);
-          tienet_slave_fcb_free();
-        } else if(op == TN_OP_MESSAGE) {
-          unsigned int mesg_len;
-          void *mesg;
+	/* Fetch Work Unit */
+	tienet_recv(master_socket, &op, sizeof(short), tienet_endian);
+	if(op == TN_OP_SHUTDOWN) {
+	  close(master_socket);
+	  close(slave_socket);
+	  tienet_slave_fcb_free();
+	  exit(0);
+	} else if(op == TN_OP_COMPLETE) {
+	  close(master_socket);
+	  tienet_slave_fcb_free();
+	} else if(op == TN_OP_MESSAGE) {
+	  unsigned int mesg_len;
+	  void *mesg;
 
-          /* send this message to the application */
-          tienet_recv(master_socket, &mesg_len, sizeof(unsigned int), tienet_endian);
-          mesg = malloc(mesg_len);
-          tienet_recv(master_socket, mesg, mesg_len, 0);
-          tienet_slave_fcb_mesg(mesg, mesg_len);
-          free(mesg);
-        } else if(op == TN_OP_PREP) {
-          /* This can be done better */
+	  /* send this message to the application */
+	  tienet_recv(master_socket, &mesg_len, sizeof(unsigned int), tienet_endian);
+	  mesg = malloc(mesg_len);
+	  tienet_recv(master_socket, mesg, mesg_len, 0);
+	  tienet_slave_fcb_mesg(mesg, mesg_len);
+	  free(mesg);
+	} else if(op == TN_OP_PREP) {
+	  /* This can be done better */
 
-          /* Clean and Reinitialize TIE */
-          tienet_slave_fcb_free();
+	  /* Clean and Reinitialize TIE */
+	  tienet_slave_fcb_free();
 
-          if(tienet_slave_prep(master_socket, &tie)) {
-            fprintf(stderr, "version mismatch, exiting.\n");
-            close(master_socket);
-            exit(0);
-          }
+	  if(tienet_slave_prep(master_socket, &tie)) {
+	    fprintf(stderr, "version mismatch, exiting.\n");
+	    close(master_socket);
+	    exit(0);
+	  }
 
-          /* Now that we've been updated, Request a Work Unit */
-          op = TN_OP_REQWORK;
-          tienet_send(master_socket, &op, sizeof(short), tienet_endian);
-        } else {
-          disconnect += tienet_recv(master_socket, &size, sizeof(unsigned int), tienet_endian);
+	  /* Now that we've been updated, Request a Work Unit */
+	  op = TN_OP_REQWORK;
+	  tienet_send(master_socket, &op, sizeof(short), tienet_endian);
+	} else {
+	  disconnect += tienet_recv(master_socket, &size, sizeof(unsigned int), tienet_endian);
 
-          if(size > data_max) {
-            data_max = size;
-            data = realloc(data, size);
-          }
+	  if(size > data_max) {
+	    data_max = size;
+	    data = realloc(data, size);
+	  }
 
-          /* Process work and Generate Results */
-          disconnect += tienet_recv(master_socket, data, size, 0);
+	  /* Process work and Generate Results */
+	  disconnect += tienet_recv(master_socket, data, size, 0);
 
-          if(!disconnect)
-            tienet_slave_fcb_work(&tie, data, size, &res_buf, &res_len);
+	  if(!disconnect)
+	    tienet_slave_fcb_work(&tie, data, size, &res_buf, &res_len);
 
-          /* Send Result Back, length of: result + op_code + rays_fired + result_length + compression_length */
-          if(res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(unsigned int) > data_max) {
-            data_max = res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(unsigned int);
-            data = realloc(data, data_max);
-          }
+	  /* Send Result Back, length of: result + op_code + rays_fired + result_length + compression_length */
+	  if(res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(unsigned int) > data_max) {
+	    data_max = res_len+sizeof(short)+sizeof(uint64_t)+sizeof(int)+sizeof(unsigned int);
+	    data = realloc(data, data_max);
+	  }
 
-          ind = 0;
-          /* Pack Operation Code */
-          op = TN_OP_RESULT;
-          if(tienet_endian) tienet_flip(&op, &op, sizeof(short));
-          memcpy(&((char*)data)[ind], &op, sizeof(short));
-          if(tienet_endian) tienet_flip(&op, &op, sizeof(short));
-          ind += sizeof(short);
+	  ind = 0;
+	  /* Pack Operation Code */
+	  op = TN_OP_RESULT;
+	  if(tienet_endian) tienet_flip(&op, &op, sizeof(short));
+	  memcpy(&((char*)data)[ind], &op, sizeof(short));
+	  if(tienet_endian) tienet_flip(&op, &op, sizeof(short));
+	  ind += sizeof(short);
 
-          /* Pack total number of rays fired */
-          rays_fired = tie.rays_fired;
-          if(tienet_endian) tienet_flip(&rays_fired, &rays_fired, sizeof(uint64_t));
-          memcpy(&((char*)data)[ind], &rays_fired, sizeof(uint64_t));
-          ind += sizeof(uint64_t);
+	  /* Pack total number of rays fired */
+	  rays_fired = tie.rays_fired;
+	  if(tienet_endian) tienet_flip(&rays_fired, &rays_fired, sizeof(uint64_t));
+	  memcpy(&((char*)data)[ind], &rays_fired, sizeof(uint64_t));
+	  ind += sizeof(uint64_t);
 
-          /* Pack Result Length */
-          if(tienet_endian) tienet_flip(&res_len, &res_len, sizeof(unsigned int));
-          memcpy(&((char*)data)[ind], &res_len, sizeof(unsigned int));
-          if(tienet_endian) tienet_flip(&res_len, &res_len, sizeof(unsigned int));
-          ind += sizeof(unsigned int);
+	  /* Pack Result Length */
+	  if(tienet_endian) tienet_flip(&res_len, &res_len, sizeof(unsigned int));
+	  memcpy(&((char*)data)[ind], &res_len, sizeof(unsigned int));
+	  if(tienet_endian) tienet_flip(&res_len, &res_len, sizeof(unsigned int));
+	  ind += sizeof(unsigned int);
 
 #if TN_COMPRESSION
-          /* Compress the result buffer */
-          if(comp_max < res_len) {
-            comp_buf = realloc(comp_buf, res_len+32);	/* 32 bytes of extra padding for zlib */
-            comp_max = res_len;
-          }
+	  /* Compress the result buffer */
+	  if(comp_max < res_len) {
+	    comp_buf = realloc(comp_buf, res_len+32);	/* 32 bytes of extra padding for zlib */
+	    comp_max = res_len;
+	  }
 
-          dest_len = comp_max+32;
-          compress(comp_buf, &dest_len, res_buf, res_len);
-          size = (unsigned int)dest_len;
+	  dest_len = comp_max+32;
+	  compress(comp_buf, &dest_len, res_buf, res_len);
+	  size = (unsigned int)dest_len;
 
-          /* Pack Compressed Result Length */
-          if(tienet_endian) tienet_flip(&size, &size, sizeof(unsigned int));
-          memcpy(&((char*)data)[ind], &size, sizeof(unsigned int));
-          if(tienet_endian) tienet_flip(&size, &size, sizeof(unsigned int));
-          ind += sizeof(unsigned int);
+	  /* Pack Compressed Result Length */
+	  if(tienet_endian) tienet_flip(&size, &size, sizeof(unsigned int));
+	  memcpy(&((char*)data)[ind], &size, sizeof(unsigned int));
+	  if(tienet_endian) tienet_flip(&size, &size, sizeof(unsigned int));
+	  ind += sizeof(unsigned int);
 
-          /* Pack Compressed Result Data */
-          memcpy(&((char*)data)[ind], comp_buf, size);
-          ind += size;
+	  /* Pack Compressed Result Data */
+	  memcpy(&((char*)data)[ind], comp_buf, size);
+	  ind += size;
 #else
-          /* Pack Result Data */
-          memcpy(&((char*)data)[ind], res_buf, res_len);
-          ind += res_len;
+	  /* Pack Result Data */
+	  memcpy(&((char*)data)[ind], res_buf, res_len);
+	  ind += res_len;
 #endif
-          disconnect += tienet_send(master_socket, data, ind, 0);
-        }
+	  disconnect += tienet_send(master_socket, data, ind, 0);
+	}
       } while(op != TN_OP_COMPLETE && !disconnect);
 
       /* Free Data When Master disconnects */
       if(disconnect) {
-        close(master_socket);
-        tienet_slave_fcb_free();
+	close(master_socket);
+	tienet_slave_fcb_free();
       }
     }
 

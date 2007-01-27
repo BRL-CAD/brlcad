@@ -66,11 +66,11 @@ proc SetWaitCursor {} {
     update idletasks
     set children [winfo children .]
     foreach kid $children {
-        if {![catch {$kid isa "::itk::Toplevel"} result]} {
-            switch -- $result {
-                "1" {catch {blt::busy $kid}}
-            }
-        }
+	if {![catch {$kid isa "::itk::Toplevel"} result]} {
+	    switch -- $result {
+		"1" {catch {blt::busy $kid}}
+	    }
+	}
     }
     blt::busy .
     update
@@ -101,11 +101,11 @@ proc SetNormalCursor {} {
     update idletasks
     set children [winfo children .]
     foreach kid $children {
-        if {![catch {$kid isa "::itk::Toplevel"} result]} {
-            switch -- $result {
-                "1" {catch {blt::busy release $kid}}
-            }
-        }
+	if {![catch {$kid isa "::itk::Toplevel"} result]} {
+	    switch -- $result {
+		"1" {catch {blt::busy release $kid}}
+	    }
+	}
     }
     blt::busy release .
     update

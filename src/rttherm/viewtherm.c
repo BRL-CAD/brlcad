@@ -530,7 +530,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 			bu_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
 				pp->pt_regionp->reg_name,
 				ap->a_x, ap->a_y, ap->a_level);
-		    	background_radiation(ap);	/* was: VSETALL( ap->a_color, 0.18 ); */
+			background_radiation(ap);	/* was: VSETALL( ap->a_color, 0.18 ); */
 			ap->a_user = 1;		/* Signal view_pixel:  HIT */
 			ap->a_dist = hitp->hit_dist;
 			goto out;

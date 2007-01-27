@@ -159,7 +159,7 @@ Tk_doevent(ClientData	clientData,
 	/* allow further processing of this event */
 	return TCL_OK;
 }
-	    
+
 static int
 Tk_dm(int	argc,
      char	*argv[])

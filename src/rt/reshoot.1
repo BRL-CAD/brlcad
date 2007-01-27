@@ -9,21 +9,21 @@
 .\" forms (PDF, PostScript, HTML, RTF, etc), with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
-.\" 
+.\"
 .\" 1. Redistributions of source code (Docbook format) must retain the
 .\" above copyright notice, this list of conditions and the following
 .\" disclaimer.
-.\" 
+.\"
 .\" 2. Redistributions in compiled form (transformed to other DTDs,
 .\" converted to PDF, PostScript, HTML, RTF, and other formats) must
 .\" reproduce the above copyright notice, this list of conditions and
 .\" the following disclaimer in the documentation and/or other
 .\" materials provided with the distribution.
-.\" 
+.\"
 .\" 3. The name of the author may not be used to endorse or promote
 .\" products derived from this documentation without specific prior
 .\" written permission.
-.\" 
+.\"
 .\" THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY
 .\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -45,19 +45,18 @@ reshoot \- re-shoot rays and compare results
 model.g objects ... < raylist
 .SH DESCRIPTION
 This program is designed to shoot a set of rays and compare the results with previous results.
-The program exits with a non-zero status if any rays are different from the previous run, 
+The program exits with a non-zero status if any rays are different from the previous run,
 and a 0 status if no differences were found.
 
 
-
 .P
-Typically, an application (probably other than 
+Typically, an application (probably other than
 .I reshoot\fR)
 is run with the RT_G_DEBUG flag DEBUG_ALLHITS set.
 This will cause librt to log all calls to the application \fIhit\fR routine to the standard error.
-The logged output can be processed by an 
-.I awk 
-program to produce input to 
+The logged output can be processed by an
+.I awk
+program to produce input to
 .I reshoot\fR.
 Consider the file p.awk with the following contents:
 .P
@@ -81,15 +80,15 @@ Consider the file p.awk with the following contents:
 	}
 .fi
 .P
-Given this 
-.I awk 
+Given this
+.I awk
 program The log file from the application can be processed as follows:
 .IP
 awk -f p.awk < logfile > shotlist
 .P
-to produce input for 
+to produce input for
 .I reshoot\fR.
-An example of the input file format for 
+An example of the input file format for
 .I reshoot
 is:
 .P
@@ -114,7 +113,7 @@ The keywords "Pnt" and "Dir" must occur atthe begining of a line.
 There can be an arbitrary number of regions along the ray path.
 Each region must be described on a single line.
 A new ray is started by a "Pnt" value.
-Then 
+Then
 .I reshoot
 can be run as follows:
 .IP
@@ -124,10 +123,10 @@ Differences are reported for each ray as they are found:
 
 .in +5
 Ray Pt 0,0,1 Dir 0,0,-1
-        inhit mismatch 17.8177 16.8
-        outhit mismatch 24.7685 23.8
-        region name mismatch /oops.r sb r1.r
-        in primitive name mismatch p8.s sb p1.s
+	inhit mismatch 17.8177 16.8
+	outhit mismatch 24.7685 23.8
+	region name mismatch /oops.r sb r1.r
+	in primitive name mismatch p8.s sb p1.s
 
 
 .SH BUGS

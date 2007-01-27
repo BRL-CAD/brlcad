@@ -70,8 +70,8 @@ void postlog(FILE *fp);
 
 static char usage[] = "\
 Usage: bw-ps [-e] [-c] [-L] [-h]\n\
-        [-s input_squaresize] [-w input_width] [-n input_height]\n\
-        [-S inches_square] [-W inches_width] [-N inches_height] [file.bw]\n";
+	[-s input_squaresize] [-w input_width] [-n input_height]\n\
+	[-S inches_square] [-W inches_width] [-N inches_height] [file.bw]\n";
 
 int
 get_args(int argc, register char **argv)
@@ -200,7 +200,7 @@ void
 prolog(FILE *fp, char *name, int width, int height)
 
 
-   	              		/* in points */
+				/* in points */
 {
 	time_t	ltime;
 

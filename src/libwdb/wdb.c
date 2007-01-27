@@ -133,7 +133,6 @@ mk_rpp(struct rt_wdb *wdbp, const char *name, const fastf_t *min, const fastf_t 
 }
 
 
-
 /*			M K _ W E D G E
  *
  *  Makes a right angular wedge given a starting vertex located in the, lower
@@ -191,7 +190,7 @@ int
 mk_arb4(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 
 
-             	     	/* [4*3] */
+			/* [4*3] */
 {
 	point_t	pt8[8];
 
@@ -222,7 +221,7 @@ int
 mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 
 
-             	     		/* [24] */
+				/* [24] */
 {
 	register int i;
 	struct rt_arb_internal	*arb;

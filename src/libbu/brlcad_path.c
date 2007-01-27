@@ -51,7 +51,7 @@ static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 
 
-/** 
+/**
  *	b u _ i p w d
  * @brief
  * set/return the path to the initial working directory.
@@ -77,7 +77,7 @@ bu_ipwd()
 }
 
 
-/** 
+/**
  *		b u _ a r g v 0
  *
  * set the location of argv[0], used by the brlcad-path-finding
@@ -121,7 +121,6 @@ const char *
 bu_getprogname(void) {
     return bu_argv0(NULL);
 }
-
 
 
 /** b u _ s e t p r o g n a m e
@@ -201,7 +200,7 @@ for sh/bash users:\n\
 
 /**
  * put a left-hand and right-hand path together and test whether they
- * exist or not.  
+ * exist or not.
  *
  * @return boolean on whether a match was found.
  */
@@ -503,7 +502,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 
     /* bu_brlcad_root/share/brlcad path */
     lhs = bu_brlcad_root("share/brlcad", 1);
-    if (lhs) {	
+    if (lhs) {
 	snprintf(where, (size_t)(MAXPATHLEN + 64), "\tBRLCAD_ROOT common data path  [%s]\n", lhs);
 	if (bu_find_path(result, lhs, rhs, &searched, where)) {
 	    if (bu_debug) {
@@ -515,7 +514,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 
     /* bu_brlcad_root/share path */
     lhs = bu_brlcad_root("share", 1);
-    if (lhs) {	
+    if (lhs) {
 	snprintf(where, (size_t)(MAXPATHLEN + 64), "\tBRLCAD_ROOT common data path  [%s]\n", lhs);
 	if (bu_find_path(result, lhs, rhs, &searched, where)) {
 	    if (bu_debug) {
@@ -527,7 +526,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 
     /* bu_brlcad_root path */
     lhs = bu_brlcad_root("", 1);
-    if (lhs) {	
+    if (lhs) {
 	snprintf(where, (size_t)(MAXPATHLEN + 64), "\tBRLCAD_ROOT common data path  [%s]\n", lhs);
 	if (bu_find_path(result, lhs, rhs, &searched, where)) {
 	    if (bu_debug) {

@@ -808,7 +808,7 @@ main(int argc, char **argv)
 
 	Normals();	/* Calculate normals and other vectors */
 
-        Adjust();       /* Adjust points to allow for elbows */
+	Adjust();       /* Adjust points to allow for elbows */
 
 /*	Generate Title */
 

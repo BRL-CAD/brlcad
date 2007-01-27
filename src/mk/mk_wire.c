@@ -34,7 +34,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -219,7 +218,7 @@ main(int argc, char **argv)
    {							/*  START # 5  */
 	(void)printf("Segment # %d:  ",(i+1));
 	(void)printf("(%f,%f,%f)", strtpt[i][0],strtpt[i][1],strtpt[i][2]);
-        (void)printf(" %f\n", strtrad[i]);
+	(void)printf(" %f\n", strtrad[i]);
 	(void)printf("              ");
 	(void)printf("(%f,%f,%f)", endpt[i][0],endpt[i][1],endpt[i][2]);
 	(void)printf("%f\n",endrad[i]);

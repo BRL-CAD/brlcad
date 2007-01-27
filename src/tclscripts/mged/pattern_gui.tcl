@@ -459,7 +459,6 @@ body pattern_control::constructor {} {
     grid columnconfigure $itk_component(f_list_r) 1 -weight 1
 
 
-
     #bind $itk_component() <Enter> " set [list [scope helpvar]] {}"
     bind $itk_component(l_combo_r) <Enter> " set [list [scope helpvar]]   {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``primitives'' - duplicate down to and including primitives} "
     bind $itk_component(l_group_r) <Enter> " set [list [scope helpvar]]   {Enter the name for the created group} "
@@ -484,7 +483,7 @@ body pattern_control::constructor {} {
 
 
     foreach obj { l_combo_r \
-	          l_group_r \
+		  l_group_r \
 		  l_xdir_r  \
 		  l_ydir_r  \
 		  l_zdir_r  \
@@ -510,7 +509,6 @@ body pattern_control::constructor {} {
 
     code $this update_depth top
     update
-
 
 
 # S P H _ T A B
@@ -758,7 +756,6 @@ body pattern_control::constructor {} {
     }
 
 
-
     itk_component add b_ok_s {
 	button $itk_interior.b_ok_s -text "OK" -command [code $this apply_sph]
     }
@@ -972,7 +969,6 @@ body pattern_control::constructor {} {
     }
 
 
-
     itk_component add f_num_c {
 	frame $itk_interior.f_num_c -relief groove -bd 2
     }
@@ -992,17 +988,14 @@ body pattern_control::constructor {} {
     }
 
 
-
     itk_component add l_delaz_c {
 	label $itk_interior.l_delaz_c -text "Delta in Azimuth:"
     }
 
 
-
     itk_component add e_delaz_c {
 	entry $itk_interior.e_delaz_c -relief sunken -textvariable [scope delaz_c]
     }
-
 
 
     grid $itk_component(rb_num_c)  -in $itk_component(f_num_c) -row 0 -column 0 -sticky nsw
@@ -1062,7 +1055,6 @@ body pattern_control::constructor {} {
     itk_component add e_delta_c {
 	entry $itk_interior.e_delta_c -relief sunken -textvariable [scope raddel_c]
     }
-
 
 
     itk_component add f_radlist_c {
@@ -1194,7 +1186,6 @@ body pattern_control::constructor {} {
     itk_component add e_incr_c {
 	entry $itk_interior.e_incr_c -relief sunken -textvariable [scope increment_c]
     }
-
 
 
     itk_component add b_ok_c {
@@ -1379,37 +1370,36 @@ body pattern_control::constructor {} {
     bind $itk_component(l_incr_c) <Enter> " set [list [scope helpvar]] {Enter value to use in incrementing primitive/region numbers (0 is OK)}"
 
      foreach obj { l_combo_c \
-                   l_group_c \
-                   l_cbase_c \
-                   l_cobj_c \
-                   cb_rot_c \
-                   l_numaz_c \
-                   l_delaz_c \
-                   cb_list_c \
-                   l_listaz_c \
-                   l_startr_c \
-                   rb_radius_c \
-                   l_radius_c \
-                   l_delta_c \
-                   rb_radlist_c \
-                   l_radlist_c  \
-                   l_startaz_c \
-                   l_heightdir_c \
-                   l_starth_c \
-                   l_obj_c \
-                   rb_height_c \
-                   l_hnum_c \
-                   l_dnum_c \
-                   rb_lnum_c \
-                   l_lnum_c \
-                   l_sstring_c \
-                   l_rstring_c \
-                   l_incr_c \
-                   rb_num_c} {
+		   l_group_c \
+		   l_cbase_c \
+		   l_cobj_c \
+		   cb_rot_c \
+		   l_numaz_c \
+		   l_delaz_c \
+		   cb_list_c \
+		   l_listaz_c \
+		   l_startr_c \
+		   rb_radius_c \
+		   l_radius_c \
+		   l_delta_c \
+		   rb_radlist_c \
+		   l_radlist_c  \
+		   l_startaz_c \
+		   l_heightdir_c \
+		   l_starth_c \
+		   l_obj_c \
+		   rb_height_c \
+		   l_hnum_c \
+		   l_dnum_c \
+		   rb_lnum_c \
+		   l_lnum_c \
+		   l_sstring_c \
+		   l_rstring_c \
+		   l_incr_c \
+		   rb_num_c} {
 
 	bind $itk_component($obj) <Leave> " set [list [scope helpvar]] {} "
     }
-
 
 
     grid $itk_component(l_help) -in $itk_component(f_status) -sticky w -row 0 -column 0
@@ -1427,7 +1417,6 @@ body pattern_control::constructor {} {
     [code $this switch_states f_radius_c f_radlist_c]
     [code $this switch_states f_height_c f_lnum_c]
 }
-
 
 
 body pattern_control::destructor {} {
@@ -1629,7 +1618,7 @@ body pattern_control::frame_disable { frame_name } {
     switch -- $frame_name {
 	"f_list_r" {
 	    foreach obj { l_xlist_r \
-		          l_ylist_r \
+			  l_ylist_r \
 			  l_zlist_r \
 			  e_xlist_r \
 			  e_ylist_r \
@@ -1641,7 +1630,7 @@ body pattern_control::frame_disable { frame_name } {
 	}
 	"f_dir_r" {
 	    foreach obj { l_nxdir_r \
-		          l_nydir_r \
+			  l_nydir_r \
 			  l_nzdir_r \
 			  e_nxdir_r \
 			  e_nydir_r \
@@ -1658,7 +1647,7 @@ body pattern_control::frame_disable { frame_name } {
 	}
 	"f_num_s" {
 	    foreach obj { l_numaz_s \
-		          e_numaz_s \
+			  e_numaz_s \
 			  l_numel_s \
 			  e_numel_s \
 			  l_delaz_s \
@@ -1671,7 +1660,7 @@ body pattern_control::frame_disable { frame_name } {
 	}
 	"f_list_s" {
 	    foreach obj { l_listaz_s \
-		          e_listaz_s \
+			  e_listaz_s \
 			  l_listel_s \
 			  e_listel_s } {
 
@@ -1680,7 +1669,7 @@ body pattern_control::frame_disable { frame_name } {
 	}
 	"f_radius_s" {
 	    foreach obj { l_radius_s \
-		          e_radius_s \
+			  e_radius_s \
 			  l_delta_s  \
 			  e_delta_s  } {
 
@@ -1689,14 +1678,14 @@ body pattern_control::frame_disable { frame_name } {
 	}
 	"f_radlist_s" {
 	    foreach obj { l_radlist_s \
-		          e_radlist_s } {
+			  e_radlist_s } {
 
 		$itk_component($obj) configure -state disabled
 	    }
 	}
 	"f_num_c" {
 	    foreach obj { l_numaz_c \
-		          e_numaz_c \
+			  e_numaz_c \
 			  l_delaz_c \
 			  e_delaz_c } {
 
@@ -1705,14 +1694,14 @@ body pattern_control::frame_disable { frame_name } {
 	}
 	"f_list_c" {
 	    foreach obj { l_listaz_c \
-		          e_listaz_c } {
+			  e_listaz_c } {
 
 		$itk_component($obj) configure -state disabled
 	    }
 	}
 	"f_height_c" {
 	    foreach obj { l_hnum_c \
-		          e_hnum_c \
+			  e_hnum_c \
 			  l_dnum_c \
 			  e_dnum_c } {
 
@@ -1721,7 +1710,7 @@ body pattern_control::frame_disable { frame_name } {
 	}
 	"f_radius_c" {
 	    foreach obj { l_radius_c \
-		          e_radius_c \
+			  e_radius_c \
 			  l_delta_c  \
 			  e_delta_c } {
 
@@ -1730,14 +1719,14 @@ body pattern_control::frame_disable { frame_name } {
 	}
 	"f_radlist_c" {
 	    foreach obj { l_radlist_c \
-		          e_radlist_c } {
+			  e_radlist_c } {
 
 		$itk_component($obj) configure -state disabled
 	    }
 	}
 	"f_lnum_c" {
 	    foreach obj { l_lnum_c \
-		          e_lnum_c } {
+			  e_lnum_c } {
 
 		$itk_component($obj) configure -state disabled
 	    }
@@ -1753,7 +1742,7 @@ body pattern_control::frame_enable { frame_name } {
     switch -- $frame_name {
 	"f_list_r" {
 	    foreach obj { l_xlist_r \
-		          l_ylist_r \
+			  l_ylist_r \
 			  l_zlist_r \
 			  e_xlist_r \
 			  e_ylist_r \
@@ -1765,7 +1754,7 @@ body pattern_control::frame_enable { frame_name } {
 	}
 	"f_dir_r" {
 	    foreach obj { l_nxdir_r \
-		          l_nydir_r \
+			  l_nydir_r \
 			  l_nzdir_r \
 			  e_nxdir_r \
 			  e_nydir_r \
@@ -1782,7 +1771,7 @@ body pattern_control::frame_enable { frame_name } {
 	}
 	"f_num_s" {
 	    foreach obj { l_numaz_s \
-		          e_numaz_s \
+			  e_numaz_s \
 			  l_numel_s \
 			  e_numel_s \
 			  l_delaz_s \
@@ -1795,7 +1784,7 @@ body pattern_control::frame_enable { frame_name } {
 	}
 	"f_list_s" {
 	    foreach obj { l_listaz_s \
-		          e_listaz_s \
+			  e_listaz_s \
 			  l_listel_s \
 			  e_listel_s } {
 
@@ -1804,7 +1793,7 @@ body pattern_control::frame_enable { frame_name } {
 	}
 	"f_radius_s" {
 	    foreach obj { l_radius_s \
-		          e_radius_s \
+			  e_radius_s \
 			  l_delta_s  \
 			  e_delta_s  } {
 
@@ -1813,14 +1802,14 @@ body pattern_control::frame_enable { frame_name } {
 	}
 	"f_radlist_s" {
 	    foreach obj { l_radlist_s \
-		          e_radlist_s } {
+			  e_radlist_s } {
 
 		$itk_component($obj) configure -state normal
 	    }
 	}
 	"f_num_c" {
 	    foreach obj { l_numaz_c \
-		          e_numaz_c \
+			  e_numaz_c \
 			  l_delaz_c \
 			  e_delaz_c } {
 
@@ -1829,14 +1818,14 @@ body pattern_control::frame_enable { frame_name } {
 	}
 	"f_list_c" {
 	    foreach obj { l_listaz_c \
-		          e_listaz_c } {
+			  e_listaz_c } {
 
 		$itk_component($obj) configure -state normal
 	    }
 	}
 	"f_height_c" {
 	    foreach obj { l_hnum_c \
-		          e_hnum_c \
+			  e_hnum_c \
 			  l_dnum_c \
 			  e_dnum_c } {
 
@@ -1845,7 +1834,7 @@ body pattern_control::frame_enable { frame_name } {
 	}
 	"f_radius_c" {
 	    foreach obj { l_radius_c \
-		          e_radius_c \
+			  e_radius_c \
 			  l_delta_c  \
 			  e_delta_c } {
 
@@ -1854,14 +1843,14 @@ body pattern_control::frame_enable { frame_name } {
 	}
 	"f_radlist_c" {
 	    foreach obj { l_radlist_c \
-		          e_radlist_c } {
+			  e_radlist_c } {
 
 		$itk_component($obj) configure -state normal
 	    }
 	}
 	"f_lnum_c" {
 	    foreach obj { l_lnum_c \
-		          e_lnum_c } {
+			  e_lnum_c } {
 
 		$itk_component($obj) configure -state normal
 	    }

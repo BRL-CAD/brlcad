@@ -327,7 +327,6 @@ view_end(struct application *ap)
 }
 
 
-
 void application_init (void) {}
 
 /*

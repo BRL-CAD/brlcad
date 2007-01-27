@@ -77,8 +77,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /* should be HIDDEN */
 int
 db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
-    		      		/* byte count */
-    		       		/* byte offset from start of file */
+				/* byte count */
+				/* byte offset from start of file */
 {
 	register int	got;
 #ifdef HAVE_UNIX_IO
@@ -324,7 +324,6 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, int o
 }
 
 
-
 /**
  *			D B _ G E T _ E X T E R N A L
  *
@@ -365,8 +364,8 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 	if( db_read( dbip, (char *)ep->ext_buf,
 	    (long)ep->ext_nbytes, dp->d_addr ) < 0 )  {
 		bu_free( ep->ext_buf, "db_get_ext ext_buf" );
-	    	ep->ext_buf = (genptr_t)NULL;
-	    	ep->ext_nbytes = 0;
+		ep->ext_buf = (genptr_t)NULL;
+		ep->ext_nbytes = 0;
 		return( -1 );	/* VERY BAD */
 	}
 	return(0);
@@ -422,7 +421,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 					return -2;
 			}
 			if( db_alloc( dbip, dp, ngran ) < 0 )  {
-			    	return -3;
+				return -3;
 			}
 		}
 		/* Sanity check */
@@ -471,7 +470,7 @@ int
 db_fwrite_external(FILE *fp, const char *name, struct bu_external *ep)
 
 
-                  	    			/* can't be const */
+						/* can't be const */
 {
 
 	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_external(%s) ep=x%x\n",

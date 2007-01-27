@@ -71,16 +71,16 @@ proc color_scheme_init {} {
 
     set mged_color_scheme(primary_map) {
 	{ bg "Background"
-          {{summary "Specify the background color for both
+	  {{summary "Specify the background color for both
 the active and inactive panes."} {see_also rset}}}
 	{ adc_line "ADC Lines"
-          {{summary "Specify the ADC line color for both
+	  {{summary "Specify the ADC line color for both
 the active and inactive panes."} {see_also rset}}}
 	{ adc_tick "ADC Tick"
-          {{summary "Specify the ADC tick color for both
+	  {{summary "Specify the ADC tick color for both
 the active and inactive panes."} {see_also rset}}}
 	{ geo_def "Geometry Default"
-          {{summary "Specify the default color used to draw geometry.
+	  {{summary "Specify the default color used to draw geometry.
 This color is used as a last resort. The color
 actually used has the following priority:
     1) user specified color (i.e. with e command)
@@ -88,91 +88,91 @@ actually used has the following priority:
     3) combination record color
     4) default geometry color"} {see_also rset}}}
 	{ geo_hl "Geometry Highlight"
-          {{summary "Specify the color to use for highlighting
+	  {{summary "Specify the color to use for highlighting
 geometry (i.e. when in solid illumination mode)."} {see_also rset}}}
 	{ geo_label "Geometry Label"
-          {{summary "Specify the color to use for labeling
+	  {{summary "Specify the color to use for labeling
 geometry."} {see_also rset}}}
 	{ model_axes "Model Axes"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the model axes."} {see_also rset}}}
 	{ model_axes_label "Model Axes Label"
-          {{summary "Specify the color to use for labeling
+	  {{summary "Specify the color to use for labeling
 the model axes."} {see_also rset}}}
 	{ view_axes "View Axes"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the view axes."} {see_also rset}}}
 	{ view_axes_label "View Axes Label"
-          {{summary "Specify the color to use for labeling
+	  {{summary "Specify the color to use for labeling
 the view axes."} {see_also rset}}}
 	{ edit_axes1 "Edit Axes (Primary)"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the primary edit axes."} {see_also rset}}}
 	{ edit_axes_label1 "Edit Axes Label (Primary)"
-          {{summary "Specify the color to use for labeling
+	  {{summary "Specify the color to use for labeling
 the primary edit axes."} {see_also rset}}}
 	{ edit_axes2 "Edit Axes (Secondary)"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the secondary edit axes."} {see_also rset}}}
 	{ edit_axes_label2 "Edit Axes Label (Secondary)"
-          {{summary "Specify the color to use for labeling
+	  {{summary "Specify the color to use for labeling
 the secondary edit axes."} {see_also rset}}}
 	{ rubber_band "Rubber Band"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the rubber band rectangle."} {see_also rset}}}
 	{ grid "Grid"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the grid array."} {see_also rset}}}
 	{ predictor "Predictor"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the predictor."} {see_also rset}}}
     }
 
     set mged_color_scheme(secondary_map) {
 	{ menu_line "Menu Lines"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 lines that make up the faceplate menu."} {see_also rset}}}
 	{ menu_title "Menu Title"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the faceplate menu title."} {see_also rset}}}
 	{ menu_text2 "Menu Text"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 faceplate menu text."} {see_also rset}}}
 	{ menu_text1 "Menu Text (Highlight)"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 faceplate menu highlight text."} {see_also rset}}}
 	{ state_text1 "Menu State Text 1"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 faceplate menu state text."} {see_also rset}}}
 	{ state_text2 "Menu State Text 2"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 faceplate menu state text."} {see_also rset}}}
 	{ menu_arrow "Menu Arrow"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the faceplate menu arrow."} {see_also rset}}}
 	{ slider_line "Slider Lines"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the faceplate slider lines."} {see_also rset}}}
 	{ slider_text1 "Slider Text 1"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the faceplate slider text."} {see_also rset}}}
 	{ slider_text2 "Slider Text 2"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the faceplate slider text."} {see_also rset}}}
 	{ status_text1 "Status Text 1"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the faceplate text for status line 1."} {see_also rset}}}
 	{ status_text2 "Status Text 2"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the faceplate text for status line 2."} {see_also rset}}}
 	{ edit_info "Edit Info"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the edit information."} {see_also rset}}}
 	{ center_dot "Center Dot"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 the faceplate center dot."} {see_also rset}}}
 	{ other_line "Other Lines"
-          {{summary "Specify the color to use for drawing
+	  {{summary "Specify the color to use for drawing
 other faceplate lines."} {see_also rset}}}
     }
 }

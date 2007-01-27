@@ -95,28 +95,28 @@ int main(int argc, char **argv) {
 	)!= -1)
   {
 	  switch(c) {
-            case 'p':
-              port = atoi(optarg);
-              break;
+	    case 'p':
+	      port = atoi(optarg);
+	      break;
 
-            case 't':
-              strncpy(temp, optarg, 4);
-              threads = atoi(temp);
-              if(threads < 0) threads = 0;
-              if(threads > 32) threads = 32;
-              break;
+	    case 't':
+	      strncpy(temp, optarg, 4);
+	      threads = atoi(temp);
+	      if(threads < 0) threads = 0;
+	      if(threads > 32) threads = 32;
+	      break;
 
-            case 'h':
-              help();
-              return EXIT_SUCCESS;
+	    case 'h':
+	      help();
+	      return EXIT_SUCCESS;
 
-            case 'v':
-              printf("%s\n", RISE_VER_DETAIL);
-              return EXIT_SUCCESS;
+	    case 'v':
+	      printf("%s\n", RISE_VER_DETAIL);
+	      return EXIT_SUCCESS;
 
-            default:
-              help();
-              return EXIT_FAILURE;
+	    default:
+	      help();
+	      return EXIT_FAILURE;
 	  }
   }
 

@@ -38,7 +38,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -429,20 +428,20 @@ top:
 			}
 			if ( dir == RT_NURB_SPLIT_ROW)
 			{
-		                smin = (1.0 - smin) * psrf->u.knots[0] +
-                		        smin * psrf->u.knots[
-		                        psrf->u.k_size -1];
-		                smax = (1.0 - smax) * psrf->u.knots[0] +
-		                        smax * psrf->u.knots[
-                		        psrf->u.k_size -1];
+				smin = (1.0 - smin) * psrf->u.knots[0] +
+					smin * psrf->u.knots[
+					psrf->u.k_size -1];
+				smax = (1.0 - smax) * psrf->u.knots[0] +
+					smax * psrf->u.knots[
+					psrf->u.k_size -1];
 			} else
 			{
-	                        smin = (1.0 - smin) * psrf->v.knots[0] +
-        	                        smin * psrf->v.knots[
-                	                psrf->v.k_size -1];
-                        	smax = (1.0 - smax) * psrf->v.knots[0] +
-                                	smax * psrf->v.knots[
-	                                psrf->v.k_size -1];
+				smin = (1.0 - smin) * psrf->v.knots[0] +
+					smin * psrf->v.knots[
+					psrf->v.k_size -1];
+				smax = (1.0 - smax) * psrf->v.knots[0] +
+					smax * psrf->v.knots[
+					psrf->v.k_size -1];
 			}
 
 			osrf = psrf;
@@ -464,8 +463,8 @@ top:
 			v[0] = psrf->v.knots[0];
 			v[1] = psrf->v.knots[psrf->v.k_size -1];
 
-                        if( (u[1] - u[0]) < uv_tol && (v[1] - v[0]) < uv_tol)
-                        {
+			if( (u[1] - u[0]) < uv_tol && (v[1] - v[0]) < uv_tol)
+			{
 				struct rt_nurb_uv_hit * hit;
 
 				if( RT_G_DEBUG & DEBUG_SPLINE )
@@ -494,24 +493,24 @@ top:
 						MAGNITUDE( diff ), V3ARGS( p1 ), V3ARGS( p2 ) );
 				}
 
-                       		hit = (struct rt_nurb_uv_hit *) bu_malloc(
+				hit = (struct rt_nurb_uv_hit *) bu_malloc(
 						sizeof( struct rt_nurb_uv_hit),  "hit" );
 
-                        	hit->next = (struct rt_nurb_uv_hit *)0;
-                        	hit->sub = sub;
-                        	hit->u = (u[0] + u[1])/2.0;
-                        	hit->v = (v[0] + v[1])/2.0;
+				hit->next = (struct rt_nurb_uv_hit *)0;
+				hit->sub = sub;
+				hit->u = (u[0] + u[1])/2.0;
+				hit->v = (v[0] + v[1])/2.0;
 
-                        	if( h == (struct rt_nurb_uv_hit *)0)
-                        		h = hit;
-                        	else
-                        	{
-                        		hit->next = h;
-                        		h = hit;
-                        	}
-                        	flat = 1;
-                        	rt_nurb_free_snurb( psrf, res );
-                        }
+				if( h == (struct rt_nurb_uv_hit *)0)
+					h = hit;
+				else
+				{
+					hit->next = h;
+					h = hit;
+				}
+				flat = 1;
+				rt_nurb_free_snurb( psrf, res );
+			}
 			if( (u[1] - u[0]) > (v[1] - v[0]) )
 				dir = 1;
 			else dir = 0;
@@ -528,7 +527,7 @@ rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax)
 	register int coords;
 	int i;
 
- 	vmin[0] = vmin[1] = vmin[2] = INFINITY;
+	vmin[0] = vmin[1] = vmin[2] = INFINITY;
 	vmax[0] = vmax[1] = vmax[2] = -INFINITY;
 
 	ptr = srf->ctl_points;

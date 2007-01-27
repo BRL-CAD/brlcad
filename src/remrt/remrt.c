@@ -70,7 +70,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #ifndef FD_MOVE
 #  define FD_MOVE(a, b) { register int _i; for (_i = 0; _i < FD_SETSIZE; _i++) \
-	        if (FD_ISSET(_i, b)) FD_SET(_i, a); else FD_CLR(_i, a); }
+		if (FD_ISSET(_i, b)) FD_SET(_i, a); else FD_CLR(_i, a); }
 #endif
 
 #include "machine.h"
@@ -2338,10 +2338,10 @@ ph_pixels(register struct pkg_conn *pc, char *buf)
 	    info.li_endpix != lp->li_stop )  {
 		bu_log("%s:  assignment mismatch, sent %d..%d, got %d..%d\n",
 			sp->sr_host->ht_name,
-	    		lp->li_start, lp->li_stop,
-	    		info.li_startpix, info.li_endpix );
-	    	drop_server( sp, "pixel assignment mismatch");
-	    	goto out;
+			lp->li_start, lp->li_stop,
+			info.li_startpix, info.li_endpix );
+		drop_server( sp, "pixel assignment mismatch");
+		goto out;
 	}
 
 	if( info.li_startpix < 0 ||
@@ -3518,7 +3518,7 @@ int
 cd_stat( int argc, char **argv )
 {
 	register struct servers *sp;
-    	int	frame;
+	int	frame;
 	char	*s;
 	char	buf[48];
 	char	*state;
@@ -3572,7 +3572,7 @@ int
 cd_status(int argc, char **argv)
 {
 	register struct servers *sp;
-    	int	num;
+	int	num;
 	char	*s;
 
 	s = stamp();
@@ -3595,7 +3595,7 @@ cd_status(int argc, char **argv)
 		bu_log("%s Output file: %s.###\n", s, outputfile );
 	bu_log("%s Printing of remote messages is %s\n",
 		s, print_on?"ON":"Off" );
-    	bu_log("%s Listening at %s, port %d\n",
+	bu_log("%s Listening at %s, port %d\n",
 		s, our_hostname, pkg_permport);
 
 	/* Print work assignments */

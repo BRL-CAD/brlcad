@@ -33,7 +33,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #include <termio.h>
@@ -319,7 +318,6 @@ static XFontStruct *fontstruct;		/* X Font */
 /********************************************************************/
 
 
-
 /*
  *			O G L _ O P E N
  *
@@ -328,8 +326,8 @@ static XFontStruct *fontstruct;		/* X Font */
  */
 Ogl_open()
 {
-        char	line[82];
-        char	hostname[80];
+	char	line[82];
+	char	hostname[80];
 	char	display[82];
 	char	*envp;
 
@@ -668,7 +666,6 @@ int which_eye;
 	}
 
 }
-
 
 
 /*
@@ -1032,7 +1029,7 @@ XEvent *eventPtr;
 		dmaflag = 1;
 	}
     } else if( eventPtr->type == ConfigureNotify) {
-    	Ogl_configure_window_shape();
+	Ogl_configure_window_shape();
     } else if( eventPtr->type == MotionNotify ) {
 	int	x, y;
 	if ( !OgldoMotion )
@@ -1083,7 +1080,7 @@ XEvent *eventPtr;
 	cnt = XLookupString(&eventPtr->xkey, keybuf, sizeof(keybuf),
 			    &key, &compose_stat);
 
-    	/* CJXX I think the following line is bad in X.c*/
+	/* CJXX I think the following line is bad in X.c*/
 /*	for(i=0 ; i < cnt ; i++){*/
 
 	inc = 0.1;
@@ -1200,7 +1197,7 @@ R		Rear view\n\
 			      "set faceplate 1\n" );
 		break;
 	case XK_F1:			/* F1 key */
-	    	bu_log("F1 botton!\n");
+		bu_log("F1 botton!\n");
 		bu_vls_printf( &dm_values.dv_string,
 				"dm set depthcue !\n");
 		break;
@@ -1226,7 +1223,7 @@ R		Rear view\n\
 		/* toggle status */
 		bu_vls_printf(&dm_values.dv_string,
 		    "dm set lighting !\n");
-	    	break;
+		break;
 	case XK_F6:			/* F6 key */
 		/* toggle perspective matrix */
 		if (--perspective_angle < 0) perspective_angle = 3;
@@ -1249,50 +1246,50 @@ R		Rear view\n\
 		bu_vls_printf( &dm_values.dv_string, "knob zero\n" );
 		break;
 	case XK_Up:
-	    	if (ogl_which_slid-- == 0)
-	    		ogl_which_slid = OGL_NUM_SLID - 1;
+		if (ogl_which_slid-- == 0)
+			ogl_which_slid = OGL_NUM_SLID - 1;
 		break;
 	case XK_Down:
-	    	if (ogl_which_slid++ == OGL_NUM_SLID - 1)
-	    		ogl_which_slid = 0;
+		if (ogl_which_slid++ == OGL_NUM_SLID - 1)
+			ogl_which_slid = 0;
 		break;
 	case XK_Left:
-	    	/* set inc and fall through */
-	    	inc = -0.1;
+		/* set inc and fall through */
+		inc = -0.1;
 	case XK_Right:
-	    	/* keep value of inc set at top of switch */
-	    	switch(ogl_which_slid){
-	    	case OGL_XSLEW:
-	    		bu_vls_printf( &dm_values.dv_string,
+		/* keep value of inc set at top of switch */
+		switch(ogl_which_slid){
+		case OGL_XSLEW:
+			bu_vls_printf( &dm_values.dv_string,
 				"knob X %f\n", rate_slew[X] + inc);
-	    		break;
-	    	case OGL_YSLEW:
-	    		bu_vls_printf( &dm_values.dv_string,
+			break;
+		case OGL_YSLEW:
+			bu_vls_printf( &dm_values.dv_string,
 				"knob Y %f\n", rate_slew[Y] + inc);
-	    		break;
-	    	case OGL_ZSLEW:
-	    		bu_vls_printf( &dm_values.dv_string,
+			break;
+		case OGL_ZSLEW:
+			bu_vls_printf( &dm_values.dv_string,
 				"knob Z %f\n", rate_slew[Z] + inc);
-	    		break;
-	    	case OGL_ZOOM:
-	    		bu_vls_printf( &dm_values.dv_string,
+			break;
+		case OGL_ZOOM:
+			bu_vls_printf( &dm_values.dv_string,
 				"knob S %f\n", rate_zoom + inc);
-	    		break;
-	    	case OGL_XROT:
-	    		bu_vls_printf( &dm_values.dv_string,
+			break;
+		case OGL_XROT:
+			bu_vls_printf( &dm_values.dv_string,
 				"knob x %f\n", rate_rotate[X] + inc);
-	    		break;
-	    	case OGL_YROT:
-	    		bu_vls_printf( &dm_values.dv_string,
+			break;
+		case OGL_YROT:
+			bu_vls_printf( &dm_values.dv_string,
 				"knob y %f\n", rate_rotate[Y] + inc);
-	    		break;
-	    	case OGL_ZROT:
-	    		bu_vls_printf( &dm_values.dv_string,
+			break;
+		case OGL_ZROT:
+			bu_vls_printf( &dm_values.dv_string,
 				"knob z %f\n", rate_rotate[Z] + inc);
-	    		break;
-	    	default:
-	    		break;
-	    	}
+			break;
+		default:
+			break;
+		}
 		break;
 	case XK_Shift_L:
 	case XK_Shift_R:
@@ -2041,11 +2038,11 @@ char	**argv;
 		bu_structprint("dm_gl internal variables", Ogl_vparse, (char *)0 );
 		bu_log("%s", bu_vls_addr(&vls) );
 	} else if( argc == 2 ) {
-	        bu_vls_struct_item_named( &vls, Ogl_vparse, argv[1], (char *)0, ',');
+		bu_vls_struct_item_named( &vls, Ogl_vparse, argv[1], (char *)0, ',');
 		bu_log( "%s\n", bu_vls_addr(&vls) );
-  	} else {
-	        bu_vls_printf( &vls, "%s=\"", argv[1] );
-	        bu_vls_from_argv( &vls, argc-2, argv+2 );
+	} else {
+		bu_vls_printf( &vls, "%s=\"", argv[1] );
+		bu_vls_from_argv( &vls, argc-2, argv+2 );
 		bu_vls_putc( &vls, '\"' );
 		bu_structparse( &vls, Ogl_vparse, (char *)0 );
 	}
@@ -2315,9 +2312,6 @@ static float white_local_light[] = {
 	LMNULL};
 
 
-
-
-
 /*
  *  Lighting model parameters
  *	AMBIENT		amount of ambient light present in the scene, 0..1
@@ -2340,7 +2334,6 @@ static float local[] = {
 	LOCALVIEWER, 1.0,
 	ATTENUATION, 1.0, 0.0,
 	LMNULL};
-
 
 
 #endif
@@ -2445,11 +2438,11 @@ int c;
 
 			for(i = 15, j = MAP_ENTRY(c) + 15; i >= 0;
 			    i--, j--, red -= r_inc, green -= g_inc, blue -= b_inc){
-			    	cells[i].pixel = j;
-			    	cells[i].red = (short)red;
-			    	cells[i].green = (short)green;
-			    	cells[i].blue = (short)blue;
-			    	cells[i].flags = DoRed|DoGreen|DoBlue;
+				cells[i].pixel = j;
+				cells[i].red = (short)red;
+				cells[i].green = (short)green;
+				cells[i].blue = (short)blue;
+				cells[i].flags = DoRed|DoGreen|DoBlue;
 			}
 			XStoreColors(dpy, cmap, cells, 16);
 		}

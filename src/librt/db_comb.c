@@ -48,7 +48,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
@@ -888,10 +887,10 @@ rt_comb_ifree( struct rt_db_internal *ip, struct resource *resp )
 	    /* If tree hasn't been stolen, release it */
 	    if(comb->tree) db_free_tree( comb->tree, resp );
 	    comb->tree = NULL;
-	    
+
 	    bu_vls_free( &comb->shader );
 	    bu_vls_free( &comb->material );
-	    
+
 	    comb->magic = 0;			/* sanity */
 	    bu_free( (genptr_t)comb, "comb ifree" );
 	}

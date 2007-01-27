@@ -54,7 +54,7 @@ int loadfont(char *ff)
 		prnt_Debug( "Error opening font file '%s'", ff );
 		ffdes = NULL;
 		return 0;
-    		}
+		}
 	if( ffdes != NULL )
 		(void) fclose(ffdes);
 	ffdes = newff;
@@ -66,7 +66,7 @@ int loadfont(char *ff)
 		}
 
 	if( lochdr.magic != 0436 )
-    		{
+		{
 		prnt_Debug( "Not a font file: %s", ff );
 		ffdes = NULL;
 		return 0;
@@ -84,7 +84,7 @@ int loadfont(char *ff)
 		point in the file after the directory, so grab the
 		current position.
 	 */
- 	offset = ftell( ffdes );
+	offset = ftell( ffdes );
 	return 1;
 	}
 

@@ -120,7 +120,6 @@ struct dsp_bb_layer {
 };
 
 
-
 extern int rt_retrieve_binunif(struct rt_db_internal *intern,
 			       const struct db_i	*dbip,
 			       const char *name);
@@ -142,7 +141,6 @@ extern void rt_binunif_ifree( struct rt_db_internal	*ip );
 #define ZTOP 7
 
 
-
 /* per-solid ray tracing form of solid, including precomputed terms
  *
  * The dsp_i element MUST BE FIRST so that we can cast a pointer to
@@ -157,7 +155,6 @@ struct dsp_specific {
     struct dsp_bb_layer *layer;
     struct dsp_bb *bb_array;
 };
-
 
 
 /* access to the array */
@@ -191,8 +188,6 @@ dsp_val(struct rt_dsp_internal *dsp_i, unsigned x, unsigned y, char *file, int l
 # define YSIZ(_p) (_p->dsp_i.dsp_ycnt - 1)
 
 
-
-
 struct bbox_isect {
     double	in_dist;
     double	out_dist;
@@ -219,8 +214,6 @@ struct isect_stuff {
     int			num_segs;
     int			dmin, dmax;	/* for dsp_in_rpp , {X,Y,Z}MIN/MAX */
 };
-
-
 
 
 /* plane equations (minus offset distances) for bounding RPP */
@@ -1205,8 +1198,6 @@ add_seg(struct isect_stuff *isect,
     }
 
 
-
-
     RT_GET_SEG(seg, isect->ap->a_resource);
 
 #if 0
@@ -1263,8 +1254,6 @@ add_seg(struct isect_stuff *isect,
 #else
     BU_LIST_INSERT(spot, &seg->l);
 #endif
-
-
 
 
     if (RT_G_DEBUG & DEBUG_HF)
@@ -1851,7 +1840,6 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     } else {
 	dlog("miss ray/bb max\n");
     }
-
 
 
     (void)permute_cell(A, B, C, D, isect->dsp, &dsp_bb->dspb_rpp);
@@ -2674,10 +2662,10 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  */
 void
 rt_dsp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-                  	               /* An array of solid pointers */
-                		       /* An array of ray pointers */
-                                    /* array of segs (results returned) */
-        		  	       /* Number of ray/object pairs */
+				       /* An array of solid pointers */
+				       /* An array of ray pointers */
+				    /* array of segs (results returned) */
+				       /* Number of ray/object pairs */
 
 {
     if (RT_G_DEBUG & DEBUG_HF)
@@ -2685,7 +2673,6 @@ rt_dsp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
     (void)rt_vstub( stp, rp, segp, n, ap );
 }
-
 
 
 /***********************************************************************
@@ -3060,7 +3047,6 @@ rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	uvp->uv_du = (r / U_len) * VDOT( UV_dir, U_dir ) / dot_N;
 	uvp->uv_dv = (r / V_len) * VDOT( UV_dir, V_dir ) / dot_N;
     }
-
 
 
     if (uvp->uv_du < 0.0 )
@@ -3602,15 +3588,13 @@ rt_dsp_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	struct bu_vls			str;
 
 
-
 	if (RT_G_DEBUG & DEBUG_HF)
 		bu_log("rt_dsp_import_v4()\n");
 
 
-
 #define IMPORT_FAIL(_s) \
 	bu_log("rt_dsp_import(%d) '%s' %s\n", __LINE__, \
-               bu_vls_addr(&dsp_ip->dsp_name), _s);\
+	       bu_vls_addr(&dsp_ip->dsp_name), _s);\
 	bu_free( (char *)dsp_ip , "rt_dsp_import: dsp_ip" ); \
 	ip->idb_type = ID_NULL; \
 	ip->idb_ptr = (genptr_t)NULL; \
@@ -3622,7 +3606,6 @@ rt_dsp_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	if (RT_G_DEBUG & DEBUG_HF)
 		bu_log("rt_dsp_import(%s)\n", rp->ss.ss_args);
 	/*----------------------------------------------------------------------*/
-
 
 
 	/* Check record type */
@@ -3734,8 +3717,6 @@ rt_dsp_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 }
 
 
-
-
 /**
  *			R T _ D S P _ I M P O R T 5
  *
@@ -3750,7 +3731,6 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 	if (RT_G_DEBUG & DEBUG_HF)
 		bu_log("rt_dsp_import_v5()\n");
-
 
 
 	BU_CK_EXTERNAL( ep );
@@ -3926,8 +3906,6 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
-
-
 /**
  *			R T _ D S P _ D E S C R I B E
  *
@@ -4057,7 +4035,6 @@ hook_verify(const struct bu_structparse	*ip,
 }
 
 
-
 const struct bu_structparse fake_dsp_printab[] = {
     {"%c",  1, "src", DSP_O(dsp_datasrc), hook_verify },
     {"%S",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
@@ -4090,7 +4067,6 @@ rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 	struct bu_vls           str;
 
 
-
 	/* XXX if dsp_datasrc == RT_DSP_SRC_V4_FILE we have a V4 dsp
 	 * otherwise, a V5 dsp.  Take advantage of this.
 	 */
@@ -4105,7 +4081,6 @@ rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 	    /* Print out solid type and all attributes */
 
 	    Tcl_DStringAppendElement( &ds, "dsp" );
-
 
 
 	    switch (dsp_ip->dsp_datasrc) {
@@ -4320,7 +4295,6 @@ swap_cell_pts(int A[3],
     /* not reached */
     return -1;
 }
-
 
 
 /*

@@ -222,7 +222,6 @@ void argumentExamples(FILE *fp, char *progname)
 }
 
 
-
 /*
  * defaultSettings() outputs the default values of the program to a
  * given file pointer.
@@ -1133,7 +1132,6 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
   struct wmember basicmeshregionmembers;
   struct wmember wireregionmembers;
   struct wmember *matrixextractor;
-
 
 
   if ((matrixextractor = (struct wmember *) malloc(sizeof(struct wmember)))==NULL) {

@@ -70,8 +70,8 @@ void prolog(FILE *fp, char *name, int width, int height), postlog(FILE *fp), hex
 
 static char usage[] = "\
 Usage: pix-ps [-e] [-c|-l] [-L] [-h]\n\
-        [-s input_squaresize] [-w input_width] [-n input_height]\n\
-        [-S inches_square] [-W inches_width] [-N inches_height] [file.pix]\n";
+	[-s input_squaresize] [-w input_width] [-n input_height]\n\
+	[-S inches_square] [-W inches_width] [-N inches_height] [file.pix]\n";
 
 int
 get_args(int argc, register char **argv)
@@ -210,7 +210,7 @@ void
 prolog(FILE *fp, char *name, int width, int height)
 
 
-   	              		/* in points */
+				/* in points */
 {
 	time_t	ltime;
 
@@ -264,7 +264,7 @@ postlog(FILE *fp)
 void
 hexout(FILE *fp, int byte)
 
-         		/* 0 <= byte <= 255 */
+			/* 0 <= byte <= 255 */
 {
 	int high, low;
 	static int symbol[16] = { '0', '1', '2', '3', '4', '5', '6',

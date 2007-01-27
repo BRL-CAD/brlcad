@@ -124,7 +124,7 @@ An error has occured while adding a new object to the database.\n", (char *)NULL
 
 /* A verbose message to attempt to soothe and advise the user */
 #define	WDB_TCL_ERROR_RECOVERY_SUGGESTION\
-        Tcl_AppendResult(interp, "\
+	Tcl_AppendResult(interp, "\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety,\n\
 you should exit now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
@@ -155,7 +155,7 @@ you should exit now, and resolve the I/O problem, before continuing.\n", (char *
 
 /* A verbose message to attempt to soothe and advise the user */
 #define	WDB_ERROR_RECOVERY_SUGGESTION\
-        bu_log(WDB_ERROR_RECOVERY_MESSAGE)
+	bu_log(WDB_ERROR_RECOVERY_MESSAGE)
 
 #define WDB_ERROR_RECOVERY_MESSAGE "\
 The in-memory table of contents may not match the status of the on-disk\n\
@@ -169,7 +169,7 @@ you should exit now, and resolve the I/O problem, before continuing.\n"
 			return TCL_ERROR; \
 		} \
 	} else { \
-    		bu_log("Sorry, this database is READ-ONLY\n"); \
+		bu_log("Sorry, this database is READ-ONLY\n"); \
 	}
 
 #define WDB_MAX_LEVELS 12
@@ -464,7 +464,7 @@ wdb_deleteProc(ClientData clientData)
 /**
  * @brief
  * Create a command named "oname" in "interp" using "wdbp" as its state.
- * 
+ *
  */
 int
 wdb_create_cmd(Tcl_Interp	*interp,
@@ -513,14 +513,14 @@ wdb_init_obj(Tcl_Interp		*interp,
 	wdbp->wdb_ttol.abs = 0.0;               /* disabled */
 	wdbp->wdb_ttol.rel = 0.01;
 	wdbp->wdb_ttol.norm = 0.0;              /* disabled */
-	
+
 	wdbp->wdb_tol.magic = BN_TOL_MAGIC;
 	wdbp->wdb_tol.dist = 0.005;
 	wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
 	wdbp->wdb_tol.perp = 1e-6;
 	wdbp->wdb_tol.para = 1 - wdbp->wdb_tol.perp;
 #endif
- 
+
 	/* initialize tree state */
 	wdbp->wdb_initial_tree_state = rt_initial_tree_state;  /* struct copy */
 	wdbp->wdb_initial_tree_state.ts_ttol = &wdbp->wdb_ttol;
@@ -921,7 +921,7 @@ wdb_get_cmd(struct rt_wdb	*wdbp,
  * string.
  *
  *
- * NOTE: This is called directly by gdiff/g_diff.c 
+ * NOTE: This is called directly by gdiff/g_diff.c
  */
 int
 wdb_get_tcl(ClientData	clientData,
@@ -1465,7 +1465,7 @@ wdb_tops_cmd(struct rt_wdb	*wdbp,
 	wdb_vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0), no_decorate);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
 	bu_vls_free(&vls);
-        bu_free((genptr_t)dirp0, "wdb_tops_cmd: wdb_dir_getspace");
+	bu_free((genptr_t)dirp0, "wdb_tops_cmd: wdb_dir_getspace");
 
 	return TCL_OK;
 }
@@ -2309,7 +2309,7 @@ wdb_do_trace(struct db_i		*dbip,
 	old_xlate = (matp_t)user_ptr2;
 	wtdp = (struct wdb_trace_data *)user_ptr3;
 
-	/* 
+	/*
 	 * In WDB_EVAL_ONLY mode we're collecting the matrices along
 	 * the path in order to perform some type of edit where the object
 	 * lives (i.e. after applying the accumulated transforms). So, if
@@ -3166,7 +3166,6 @@ wdb_move_all_cmd(struct rt_wdb	*wdbp,
 	}
 
 
-
 	/* rename the record itself */
 	if ((dp = db_lookup(wdbp->dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL)
 		return TCL_ERROR;
@@ -3176,7 +3175,7 @@ wdb_move_all_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-	/* if this was a sketch, we need to look for all the extrude 
+	/* if this was a sketch, we need to look for all the extrude
 	 * objects that might use it.
 	 *
 	 * This has to be done here, before we rename the (possible) sketch object
@@ -3243,7 +3242,6 @@ wdb_move_all_cmd(struct rt_wdb	*wdbp,
 			int		done=0;
 			int		changed=0;
 
-			
 
 			if (!(dp->d_flags & DIR_COMB))
 				continue;
@@ -3609,7 +3607,7 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
 			continue;
 		}
 
-	        copy_object( interp, dp, newdbp, wdbp->dbip, &name_tbl,
+		copy_object( interp, dp, newdbp, wdbp->dbip, &name_tbl,
 				     &used_names_tbl, &cc_data );
 	FOR_ALL_DIRECTORY_END;
 
@@ -3800,7 +3798,7 @@ genptr_t ptr));
  *
  */
 struct dir_check_stuff {
- 	struct db_i	*main_dbip;
+	struct db_i	*main_dbip;
 	struct rt_wdb	*wdbp;
 	struct directory **dup_dirp;
 };
@@ -4185,8 +4183,8 @@ wdb_region_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
- 	ident = wdbp->wdb_item_default;
- 	air = wdbp->wdb_air_default;
+	ident = wdbp->wdb_item_default;
+	air = wdbp->wdb_air_default;
 
 	/* Check for even number of arguments */
 	if (argc & 01) {
@@ -4535,7 +4533,7 @@ wdb_facetize_cmd(struct rt_wdb	*wdbp,
 	  bu_vls_free(&tmp_vls);
 	}
 	facetize_tree = (union tree *)0;
-  	nmg_model = nmg_mm();
+	nmg_model = nmg_mm();
 	init_state.ts_m = &nmg_model;
 
 	i = db_walk_tree( dbip, argc, (const char **)argv,
@@ -4543,8 +4541,8 @@ wdb_facetize_cmd(struct rt_wdb	*wdbp,
 		&init_state,
 		0,			/* take all regions */
 		facetize_region_end,
-  		nmg_use_tnurbs ?
-  			nmg_booltree_leaf_tnurb :
+		nmg_use_tnurbs ?
+			nmg_booltree_leaf_tnurb :
 			nmg_booltree_leaf_tess,
 		(genptr_t)&facetize_tree
 		);
@@ -4665,7 +4663,7 @@ wdb_facetize_cmd(struct rt_wdb	*wdbp,
 
 	/* Free boolean tree, and the regions in it */
 	db_free_tree( facetize_tree, &rt_uniresource );
-    	facetize_tree = (union tree *)NULL;
+	facetize_tree = (union tree *)NULL;
 
 	return TCL_OK;
 }
@@ -6017,7 +6015,7 @@ wdb_tol_cmd(struct rt_wdb	*wdbp,
 	    bu_vls_printf(&vls, "unrecognized tolerance type - %s", argv[1]);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
-	    
+
 	    return TCL_ERROR;
 	}
 
@@ -6069,7 +6067,7 @@ struct wdb_push_data {
  *
  * This routine must be prepared to run in parallel.
  *
- * @brief 
+ * @brief
  * This routine is called once for eas leaf (solid) that is to
  * be pushed.  All it does is build at push_id linked list.  The
  * linked list could be handled by bu_list macros but it is simple
@@ -7861,11 +7859,11 @@ wdb_units_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-        if (db_update_ident(wdbp->dbip, wdbp->dbip->dbi_title, loc2mm) < 0) {
+	if (db_update_ident(wdbp->dbip, wdbp->dbip->dbi_title, loc2mm) < 0) {
 		Tcl_AppendResult(interp,
 				 "Warning: unable to stash working units into database\n",
 				 (char *)NULL);
-        }
+	}
 
 	wdbp->dbip->dbi_local2base = loc2mm;
 	wdbp->dbip->dbi_base2local = 1.0 / loc2mm;
@@ -8277,7 +8275,7 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 		/* setting attribute/value pairs */
 		if( (argc - 3) % 2 ) {
 			Tcl_AppendResult(interp,
-		          "Error: attribute names and values must be in pairs!!!\n",
+			  "Error: attribute names and values must be in pairs!!!\n",
 			  (char *)NULL );
 			bu_avs_free( &avs );
 			return TCL_ERROR;
@@ -8317,7 +8315,7 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 	} else if( strcmp( argv[1], "append" ) == 0 ) {
 		if( (argc-3)%2 ) {
 			Tcl_AppendResult(interp,
-		          "Error: attribute names and values must be in pairs!!!\n",
+			  "Error: attribute names and values must be in pairs!!!\n",
 			  (char *)NULL );
 			bu_avs_free( &avs );
 			return TCL_ERROR;

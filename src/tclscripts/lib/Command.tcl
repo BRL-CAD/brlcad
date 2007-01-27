@@ -148,7 +148,7 @@
     }
 
     # Create new slave interp
-    interp delete $slaveInterp 
+    interp delete $slaveInterp
     set slaveInterp [interp create]
 
     # Create slave interp's aliases
@@ -210,7 +210,7 @@
 }
 
 ::itcl::body Command::destructor {} {
-    interp delete $slaveInterp 
+    interp delete $slaveInterp
 
     # destroy command history object
     rename $hist ""

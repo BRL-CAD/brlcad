@@ -30,7 +30,6 @@ static const char RCSid[] = "$Header$";
 #include "common.h"
 
 
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
@@ -99,10 +98,10 @@ char *basename(char *string)
     for (sp = string + strlen(string); (sp > string) && (*sp != '/'); --sp)
 	;
     if (*sp == '/')
-        ++sp;
+	++sp;
     sp2 = sp;
     while (*sp2 != '{' && *sp2 != '\0')
-    	++sp2;
+	++sp2;
     *sp2 = '\0';
     return (sp);
 }

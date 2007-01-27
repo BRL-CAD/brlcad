@@ -364,7 +364,7 @@ int material_id;
 	nmg_triangulate_model( m, &tol );
 
 	/* output triangles */
- 	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 		struct faceuse *fu;
 
@@ -455,10 +455,10 @@ genptr_t		client_data;
 			BU_UNSETJUMP;		/* Relinquish the protection */
 
 			sofar = db_path_to_string(pathp);
-	                bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
+			bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
 			fprintf(fpe,"Failed Bool. Eval.: %s\n",sofar);
 			fflush(fpe);
-                        bu_free( (char *)sofar, "sofar" );
+			bu_free( (char *)sofar, "sofar" );
 
 			/* Sometimes the NMG library adds debugging bits when
 			 * it detects an internal error, before rt_bomb().

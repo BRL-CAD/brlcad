@@ -315,8 +315,8 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 		/* plate mode */
 
 		RT_GET_SEG( segp, ap->a_resource);
-                        segp->seg_stp = stp;
-                        segp->seg_in.hit_surfno = 2;
+			segp->seg_stp = stp;
+			segp->seg_in.hit_surfno = 2;
 		segp->seg_in.hit_dist = dist[1] - half_los;
 		if( segp->seg_in.hit_dist < distmin )
 			segp->seg_in.hit_dist = distmin;
@@ -328,8 +328,8 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 
 		RT_GET_SEG( segp, ap->a_resource);
-                        segp->seg_stp = stp;
-                        segp->seg_in.hit_surfno = 2;
+			segp->seg_stp = stp;
+			segp->seg_in.hit_surfno = 2;
 		segp->seg_in.hit_dist = dist[1] + half_los;
 		if( segp->seg_in.hit_dist > distmax )
 			segp->seg_in.hit_dist = distmax;
@@ -354,10 +354,10 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
  */
 void
 rt_cline_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	rt_vstub( stp, rp, segp, n, ap );
@@ -394,7 +394,7 @@ rt_cline_norm(register struct hit *hitp, struct soltab *stp, register struct xra
 			stp->st_name, V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
 		bu_bomb( "BAD normal\n" );
 	}
-    	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 }
 
 /**
@@ -407,10 +407,10 @@ rt_cline_curve(register struct curvature *cvp, register struct hit *hitp, struct
 {
 
 	/* for now, don't do curvature */
- 	cvp->crv_c1 = cvp->crv_c2 = 0;
+	cvp->crv_c1 = cvp->crv_c2 = 0;
 
 	/* any tangent direction */
- 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
 /**
@@ -457,8 +457,8 @@ int
 rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	LOCAL struct rt_cline_internal	*cline_ip;
-        LOCAL fastf_t           top[16*3];
-        LOCAL fastf_t           bottom[16*3];
+	LOCAL fastf_t           top[16*3];
+	LOCAL fastf_t           bottom[16*3];
 	point_t top_pt;
 	vect_t unit_a, unit_b;
 	vect_t a, b;
@@ -479,23 +479,23 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 	rt_ell_16pts( bottom, cline_ip->v, a, b );
 	rt_ell_16pts( top, top_pt, a, b );
 
-        /* Draw the top */
-        RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-        for( i=0; i<16; i++ )  {
-                RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
-        }
+	/* Draw the top */
+	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+	for( i=0; i<16; i++ )  {
+		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+	}
 
-        /* Draw the bottom */
-        RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-        for( i=0; i<16; i++ )  {
-                RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
-        }
+	/* Draw the bottom */
+	RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+	for( i=0; i<16; i++ )  {
+		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+	}
 
-        /* Draw connections */
-        for( i=0; i<16; i += 4 )  {
-                RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-                RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
-        }
+	/* Draw connections */
+	for( i=0; i<16; i += 4 )  {
+		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+	}
 
 	if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
 	{
@@ -509,27 +509,27 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 		rt_ell_16pts( bottom, cline_ip->v, a, b );
 		rt_ell_16pts( top, top_pt, a, b );
 
-	        /* Draw the top */
-	        RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	        for( i=0; i<16; i++ )  {
-	                RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
-	        }
+		/* Draw the top */
+		RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+		for( i=0; i<16; i++ )  {
+			RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+		}
 
-	        /* Draw the bottom */
-	        RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	        for( i=0; i<16; i++ )  {
-	                RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
-	        }
+		/* Draw the bottom */
+		RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+		for( i=0; i<16; i++ )  {
+			RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+		}
 
-	        /* Draw connections */
-	        for( i=0; i<16; i += 4 )  {
-	                RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-	                RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
-	        }
+		/* Draw connections */
+		for( i=0; i<16; i += 4 )  {
+			RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
+			RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+		}
 
 	}
 
-        return(0);
+	return(0);
 }
 
 struct cline_vert {
@@ -1076,11 +1076,11 @@ rt_cline_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const c
 		ret = TCL_ERROR;
 	}
 
-        Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
-        Tcl_DStringResult( interp, &ds );
-        Tcl_DStringFree( &ds );
-        bu_vls_free( &vls );
-        return( ret );
+	Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
+	Tcl_DStringResult( interp, &ds );
+	Tcl_DStringFree( &ds );
+	bu_vls_free( &vls );
+	return( ret );
 }
 
 int
@@ -1134,12 +1134,12 @@ rt_cline_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, 
 int
 rt_cline_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
 {
-        RT_CK_FUNCTAB(ftp);
+	RT_CK_FUNCTAB(ftp);
 
-        Tcl_AppendResult( interp,
+	Tcl_AppendResult( interp,
 			  "V {%f %f %f} H {%f %f %f} R %f T %f", (char *)NULL );
 
-        return TCL_OK;
+	return TCL_OK;
 
 }
 

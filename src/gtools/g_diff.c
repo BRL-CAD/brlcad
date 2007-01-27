@@ -211,7 +211,7 @@ compare_external(struct directory *dp1, struct directory *dp2)
 {
     int kill = 0;
     struct bu_external ext1, ext2;
-    
+
     if( db_get_external( &ext1, dp1, dbip1 ) ) {
 	fprintf( stderr, "ERROR: db_get_external failed on solid %s in %s\n", dp1->d_namep, dbip1->dbi_filename );
 	exit( 1 );
@@ -220,17 +220,17 @@ compare_external(struct directory *dp1, struct directory *dp2)
 	fprintf( stderr, "ERROR: db_get_external failed on solid %s in %s\n", dp2->d_namep, dbip2->dbi_filename );
 	exit( 1 );
     }
-    
+
     if( ext1.ext_nbytes != ext2.ext_nbytes ) {
 	printf("Byte counts are different on %s (%ld != %ld)\n", dp1->d_namep, ext1.ext_nbytes, ext2.ext_nbytes);
 	kill = 1;
     }
-    
+
     if (bcmp( (void *)ext1.ext_buf, (void *)ext2.ext_buf, ext1.ext_nbytes )) {
 	printf("Byte value(s) are different on %s (has no Tcl list representation)\n", dp1->d_namep);
 	kill = 1;
     }
-    
+
     if (kill) {
 	if( mode == HUMAN ) {
 	    printf( "kill %s and import it from %s\n", dp1->d_namep, dbip1->dbi_filename );
@@ -1059,12 +1059,12 @@ main(int argc, char **argv)
     if (diff_objs( wdb1, wdb2 )) {
 	different = 1;
     }
-    
+
     /* let the user know if there are no differences */
     if (different == 0) {
 	printf("No differences.\n");
     }
-    
+
     return 0;
 }
 

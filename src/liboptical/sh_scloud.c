@@ -131,7 +131,6 @@ struct mfuncs scloud_mfuncs[] = {
 };
 
 
-
 /*
  *	S C L O U D _ S E T U P
  */
@@ -139,7 +138,7 @@ HIDDEN int
 scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    	      	/* pointer to reg_udata in *rp */
+		/* pointer to reg_udata in *rp */
 
 
 {
@@ -226,7 +225,6 @@ scloud_free(char *cp)
 }
 
 
-
 /*
  *	T S P L A T _ R E N D E R
  *
@@ -259,7 +257,6 @@ tsplat_render(struct application *ap, struct partition *pp, struct shadework *sw
 
 	return 1;
 }
-
 
 
 /*
@@ -394,7 +391,7 @@ scloud_render(struct application *ap, struct partition *pp, struct shadework *sw
 	 */
 	swp->sw_hit.hit_dist = pp->pt_inhit->hit_dist;
 	VJOIN1(swp->sw_hit.hit_point, ap->a_ray.r_pt, swp->sw_hit.hit_dist,
- 		ap->a_ray.r_dir);
+		ap->a_ray.r_dir);
 	VREVERSE( swp->sw_hit.hit_normal, ap->a_ray.r_dir );
 	swp->sw_inputs |= MFI_HIT | MFI_NORMAL;
 	light_obs( ap, swp, swp->sw_inputs );
@@ -420,9 +417,6 @@ scloud_render(struct application *ap, struct partition *pp, struct shadework *sw
 
 	return(1);
 }
-
-
-
 
 
 /*

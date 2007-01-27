@@ -49,7 +49,6 @@ static const char RCSmater[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -220,7 +219,7 @@ rt_region_color_map(register struct region *regp)
 	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 		if( regp->reg_regionid <= mp->mt_high &&
 		    regp->reg_regionid >= mp->mt_low ) {
-		    	regp->reg_mater.ma_color_valid = 1;
+			regp->reg_mater.ma_color_valid = 1;
 			regp->reg_mater.ma_color[0] =
 				(((double)mp->mt_r)+0.5)*bn_inv255;
 			regp->reg_mater.ma_color[1] =

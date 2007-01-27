@@ -473,7 +473,7 @@ nmg_m_reindex(struct model *m, register long int newindex)
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )  {
 		 bu_log("nmg_m_reindex() oldmax=%d, new%d=>%d\n",
-		 	m->maxindex, m->index, newindex );
+			m->maxindex, m->index, newindex );
 	}
 	m->maxindex = newindex;
 }

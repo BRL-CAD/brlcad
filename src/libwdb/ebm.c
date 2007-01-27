@@ -42,11 +42,11 @@
  */
 int
 mk_ebm(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, fastf_t tallness, const matp_t mat)
-          	      		/* name of file containing bitmap */
-   		     		/* X dimansion of file (w cells) */
-   		     		/* Y dimension of file (n cells) */
-       		         	/* Z extrusion height (mm) */
-            	    		/* convert local coords to model space */
+				/* name of file containing bitmap */
+				/* X dimansion of file (w cells) */
+				/* Y dimension of file (n cells) */
+				/* Z extrusion height (mm) */
+				/* convert local coords to model space */
 {
 	struct rt_ebm_internal	*ebm;
 

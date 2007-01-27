@@ -87,9 +87,9 @@ import sys\n\
 import string\n\
 class Redirect:\n\
     def __init__(self, stdout):\n\
-        self.stdout = stdout\n\
+	self.stdout = stdout\n\
     def write(self, s):\n\
-        adrt.stdout(s)\n\
+	adrt.stdout(s)\n\
 sys.stdout = Redirect(sys.stdout)\n\
 sys.stderr = Redirect(sys.stderr)\n\
 ");
@@ -213,10 +213,10 @@ static PyObject* isst_python_load(PyObject *self, PyObject *args) {
     while(!feof(fh)) {
       fgets(line, 256, fh);
       if(!strstr(line, "label:"))
-        continue;
+	continue;
 
       if(!strstr(line, string))
-        continue;
+	continue;
 
        /* Read in camera_position and camera_ae values */
        fscanf(fh, "camera_position: %f %f %f\n", &isst_master_camera_position.v[0], &isst_master_camera_position.v[1], &isst_master_camera_position.v[2]);

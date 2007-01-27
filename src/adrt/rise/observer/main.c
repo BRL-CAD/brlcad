@@ -99,25 +99,25 @@ int main(int argc, char **argv) {
 	)!= -1)
   {
 	  switch(c) {
-            case 'p':
-              port = atoi(optarg);
-              break;
+	    case 'p':
+	      port = atoi(optarg);
+	      break;
 
-            case 'H':
-              strncpy(host, optarg, 64);
-              break;
+	    case 'H':
+	      strncpy(host, optarg, 64);
+	      break;
 
-            case 'h':
-              help();
-              return EXIT_SUCCESS;
+	    case 'h':
+	      help();
+	      return EXIT_SUCCESS;
 
-            case 'v':
-              printf("RISE %s - Copyright (C) U.S Army Research Laboratory (2003 - 2004)\n", VERSION);
-              return EXIT_SUCCESS;
+	    case 'v':
+	      printf("RISE %s - Copyright (C) U.S Army Research Laboratory (2003 - 2004)\n", VERSION);
+	      return EXIT_SUCCESS;
 
-            default:
-              help();
-              return EXIT_FAILURE;
+	    default:
+	      help();
+	      return EXIT_FAILURE;
 	  }
   }
 

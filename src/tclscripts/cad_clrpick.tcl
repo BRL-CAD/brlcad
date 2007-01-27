@@ -538,7 +538,6 @@ proc cadColorWidget_ColorToX { w color cf } {
 }
 
 
-
 # cadColorWidget_DrawColorScale --
 #
 proc cadColorWidget_DrawColorScale {w colorBar {create 0}} {

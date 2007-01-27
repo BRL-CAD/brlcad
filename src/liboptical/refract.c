@@ -104,7 +104,7 @@ rr_render(register struct application *ap,
 #endif
 
 	RT_AP_CHECK(ap);
-	
+
 	RT_APPLICATION_INIT(&sub_ap);
 
 #ifdef RT_MULTISPECTRAL
@@ -206,8 +206,8 @@ rr_render(register struct application *ap,
 	 */
 	if( NEAR_ZERO( pp->pt_inhit->hit_dist, AIR_GAP_TOL ) &&
 	    ap->a_refrac_index == swp->sw_refrac_index )  {
-	    	transmit += reflect;
-	    	reflect = 0;
+		transmit += reflect;
+		reflect = 0;
 	}
 
 	/*

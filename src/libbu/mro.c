@@ -36,7 +36,6 @@ static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <ctype.h>
 #ifdef HAVE_STRING_H

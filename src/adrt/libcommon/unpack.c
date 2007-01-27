@@ -132,70 +132,70 @@ void common_unpack_env(common_db_t *db, int socknum) {
     ind += sizeof(short);
     switch(block) {
       case COMMON_PACK_ENV_RM:
-        {
-          tienet_recv(socknum, &db->env.rm, sizeof(int), tienet_endian);
-          ind += sizeof(int);
-          switch(db->env.rm) {
-            case RENDER_METHOD_FLAT:
-              render_flat_init(&db->env.render);
-              break;
+	{
+	  tienet_recv(socknum, &db->env.rm, sizeof(int), tienet_endian);
+	  ind += sizeof(int);
+	  switch(db->env.rm) {
+	    case RENDER_METHOD_FLAT:
+	      render_flat_init(&db->env.render);
+	      break;
 
-            case RENDER_METHOD_NORMAL:
-              render_normal_init(&db->env.render);
-              break;
+	    case RENDER_METHOD_NORMAL:
+	      render_normal_init(&db->env.render);
+	      break;
 
-            case RENDER_METHOD_PHONG:
-              render_phong_init(&db->env.render);
-              break;
+	    case RENDER_METHOD_PHONG:
+	      render_phong_init(&db->env.render);
+	      break;
 
-            case RENDER_METHOD_DEPTH:
-              render_depth_init(&db->env.render);
-              break;
+	    case RENDER_METHOD_DEPTH:
+	      render_depth_init(&db->env.render);
+	      break;
 
-            case RENDER_METHOD_PATH:
-              {
-                int samples;
+	    case RENDER_METHOD_PATH:
+	      {
+		int samples;
 
-                tienet_recv(socknum, &samples, sizeof(int), tienet_endian);
-                ind += sizeof(int);
-                render_path_init(&db->env.render, samples);
-              }
-              break;
+		tienet_recv(socknum, &samples, sizeof(int), tienet_endian);
+		ind += sizeof(int);
+		render_path_init(&db->env.render, samples);
+	      }
+	      break;
 
-            case RENDER_METHOD_PLANE:
-              {
-                TIE_3 ray_pos, ray_dir;
+	    case RENDER_METHOD_PLANE:
+	      {
+		TIE_3 ray_pos, ray_dir;
 
-                tienet_recv(socknum, &ray_pos.v[0], sizeof(tfloat), tienet_endian);
-                tienet_recv(socknum, &ray_pos.v[1], sizeof(tfloat), tienet_endian);
-                tienet_recv(socknum, &ray_pos.v[2], sizeof(tfloat), tienet_endian);
+		tienet_recv(socknum, &ray_pos.v[0], sizeof(tfloat), tienet_endian);
+		tienet_recv(socknum, &ray_pos.v[1], sizeof(tfloat), tienet_endian);
+		tienet_recv(socknum, &ray_pos.v[2], sizeof(tfloat), tienet_endian);
 
-                tienet_recv(socknum, &ray_dir.v[0], sizeof(tfloat), tienet_endian);
-                tienet_recv(socknum, &ray_dir.v[1], sizeof(tfloat), tienet_endian);
-                tienet_recv(socknum, &ray_dir.v[2], sizeof(tfloat), tienet_endian);
+		tienet_recv(socknum, &ray_dir.v[0], sizeof(tfloat), tienet_endian);
+		tienet_recv(socknum, &ray_dir.v[1], sizeof(tfloat), tienet_endian);
+		tienet_recv(socknum, &ray_dir.v[2], sizeof(tfloat), tienet_endian);
 
-                ind += 6 * sizeof(tfloat);
-                render_plane_init(&db->env.render, ray_pos, ray_dir);
-              }
-              break;
+		ind += 6 * sizeof(tfloat);
+		render_plane_init(&db->env.render, ray_pos, ray_dir);
+	      }
+	      break;
 
-            default:
-              break;
-          }
-        }
-        break;
+	    default:
+	      break;
+	  }
+	}
+	break;
 
       case COMMON_PACK_ENV_IMAGESIZE:
-        {
-          tienet_recv(socknum, &db->env.img_w, sizeof(int), tienet_endian);
-          tienet_recv(socknum, &db->env.img_h, sizeof(int), tienet_endian);
-          tienet_recv(socknum, &db->env.img_hs, sizeof(int), tienet_endian);
-          ind += 3 * sizeof(int);
-        }
-        break;
+	{
+	  tienet_recv(socknum, &db->env.img_w, sizeof(int), tienet_endian);
+	  tienet_recv(socknum, &db->env.img_h, sizeof(int), tienet_endian);
+	  tienet_recv(socknum, &db->env.img_hs, sizeof(int), tienet_endian);
+	  ind += 3 * sizeof(int);
+	}
+	break;
 
       default:
-        break;
+	break;
     }
   } while(ind < size);
 }
@@ -275,168 +275,168 @@ void common_unpack_texture(int socknum) {
 
     switch(block) {
       case TEXTURE_STACK:
-        texture_num++;
-        texture_list = (common_unpack_texture_node_t *)realloc(texture_list, sizeof(common_unpack_texture_node_t)*texture_num);
+	texture_num++;
+	texture_list = (common_unpack_texture_node_t *)realloc(texture_list, sizeof(common_unpack_texture_node_t)*texture_num);
 
-        texture_list[texture_num-1].texture = stack = (texture_t *)malloc(sizeof(texture_t));
-        texture_stack_init(stack);
+	texture_list[texture_num-1].texture = stack = (texture_t *)malloc(sizeof(texture_t));
+	texture_stack_init(stack);
 
-        tienet_recv(socknum, &c, sizeof(char), 0);
-        tienet_recv(socknum, texture_list[texture_num-1].name, c, 0);
-        ind += c + 1;
-        break;
+	tienet_recv(socknum, &c, sizeof(char), 0);
+	tienet_recv(socknum, texture_list[texture_num-1].name, c, 0);
+	ind += c + 1;
+	break;
 
       case TEXTURE_MIX:
-        {
-          texture_t *texture1, *texture2;
-          char s1[64], s2[64];
-          tfloat coef;
+	{
+	  texture_t *texture1, *texture2;
+	  char s1[64], s2[64];
+	  tfloat coef;
 
-          texture_num++;
-          texture_list = (common_unpack_texture_node_t*)realloc(texture_list, sizeof(common_unpack_texture_node_t)*texture_num);
-          texture_list[texture_num-1].texture = (texture_t*)malloc(sizeof(texture_t));
-          tienet_recv(socknum, &c, sizeof(char), 0);
-          tienet_recv(socknum, texture_list[texture_num-1].name, c, 0);
-          ind += c + c+1;
-          tienet_recv(socknum, &c, sizeof(char), 0);
-          tienet_recv(socknum, s1, c, 0);
-          ind += c + c+1;
-          tienet_recv(socknum, &c, sizeof(char), 0);
-          tienet_recv(socknum, s2, c, 0);
-          ind += c + c+1;
-          tienet_recv(socknum, &coef, sizeof(tfloat), tienet_endian);
-          ind += sizeof(tfloat);
-          common_unpack_texture_lookup(s1, &texture1);
-          common_unpack_texture_lookup(s2, &texture2);
-          texture_mix_init(texture_list[texture_num-1].texture, texture1, texture2, coef);
-        }
-        break;
+	  texture_num++;
+	  texture_list = (common_unpack_texture_node_t*)realloc(texture_list, sizeof(common_unpack_texture_node_t)*texture_num);
+	  texture_list[texture_num-1].texture = (texture_t*)malloc(sizeof(texture_t));
+	  tienet_recv(socknum, &c, sizeof(char), 0);
+	  tienet_recv(socknum, texture_list[texture_num-1].name, c, 0);
+	  ind += c + c+1;
+	  tienet_recv(socknum, &c, sizeof(char), 0);
+	  tienet_recv(socknum, s1, c, 0);
+	  ind += c + c+1;
+	  tienet_recv(socknum, &c, sizeof(char), 0);
+	  tienet_recv(socknum, s2, c, 0);
+	  ind += c + c+1;
+	  tienet_recv(socknum, &coef, sizeof(tfloat), tienet_endian);
+	  ind += sizeof(tfloat);
+	  common_unpack_texture_lookup(s1, &texture1);
+	  common_unpack_texture_lookup(s2, &texture2);
+	  texture_mix_init(texture_list[texture_num-1].texture, texture1, texture2, coef);
+	}
+	break;
 
       case TEXTURE_BLEND:
-        {
-          TIE_3 color1, color2;
+	{
+	  TIE_3 color1, color2;
 
-          texture = (texture_t*)malloc(sizeof(texture_t));
-          /* COLOR 1 */
-          tienet_recv(socknum, &color1.v[0], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &color1.v[1], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &color1.v[2], sizeof(tfloat), tienet_endian);
-          ind += 3 * sizeof(tfloat);
-          /* COLOR 2 */
-          tienet_recv(socknum, &color2.v[0], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &color2.v[1], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &color2.v[2], sizeof(tfloat), tienet_endian);
-          ind += 3 * sizeof(tfloat);
-          texture_blend_init(texture, color1, color2);
-          texture_stack_push(stack, texture);
-        }
-        break;
+	  texture = (texture_t*)malloc(sizeof(texture_t));
+	  /* COLOR 1 */
+	  tienet_recv(socknum, &color1.v[0], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &color1.v[1], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &color1.v[2], sizeof(tfloat), tienet_endian);
+	  ind += 3 * sizeof(tfloat);
+	  /* COLOR 2 */
+	  tienet_recv(socknum, &color2.v[0], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &color2.v[1], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &color2.v[2], sizeof(tfloat), tienet_endian);
+	  ind += 3 * sizeof(tfloat);
+	  texture_blend_init(texture, color1, color2);
+	  texture_stack_push(stack, texture);
+	}
+	break;
 
       case TEXTURE_BUMP:
-        {
-          TIE_3 coef;
+	{
+	  TIE_3 coef;
 
-          texture = (texture_t*)malloc(sizeof(texture_t));
-          tienet_recv(socknum, &coef.v[0], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &coef.v[1], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &coef.v[2], sizeof(tfloat), tienet_endian);
-          ind += 3 * sizeof(tfloat);
-          texture_bump_init(texture, coef);
-          texture_stack_push(stack, texture);
-        }
-        break;
+	  texture = (texture_t*)malloc(sizeof(texture_t));
+	  tienet_recv(socknum, &coef.v[0], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &coef.v[1], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &coef.v[2], sizeof(tfloat), tienet_endian);
+	  ind += 3 * sizeof(tfloat);
+	  texture_bump_init(texture, coef);
+	  texture_stack_push(stack, texture);
+	}
+	break;
 
       case TEXTURE_CHECKER:
-        {
-          int tile;
+	{
+	  int tile;
 
-          texture = (texture_t*)malloc(sizeof(texture_t));
-          tienet_recv(socknum, &tile, sizeof(int), tienet_endian);
-          ind += sizeof(int);
-          texture_checker_init(texture, tile);
-          texture_stack_push(stack, texture);
-        }
-        break;
+	  texture = (texture_t*)malloc(sizeof(texture_t));
+	  tienet_recv(socknum, &tile, sizeof(int), tienet_endian);
+	  ind += sizeof(int);
+	  texture_checker_init(texture, tile);
+	  texture_stack_push(stack, texture);
+	}
+	break;
 
       case TEXTURE_CAMO:
-        {
-          tfloat size;
-          int octaves, absolute;
-          TIE_3 color1, color2, color3;
+	{
+	  tfloat size;
+	  int octaves, absolute;
+	  TIE_3 color1, color2, color3;
 
-          texture = (texture_t*)malloc(sizeof(texture_t));
-          tienet_recv(socknum, &size, sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &octaves, sizeof(int), tienet_endian);
-          tienet_recv(socknum, &absolute, sizeof(int), tienet_endian);
-          tienet_recv(socknum, &color1.v[0], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &color1.v[1], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &color1.v[2], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &color2.v[0], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &color2.v[1], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &color2.v[2], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &color3.v[0], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &color3.v[1], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &color3.v[2], sizeof(tfloat), tienet_endian);
-          ind += 10*sizeof(tfloat) + 2*sizeof(int);
-          texture_camo_init(texture, size, octaves, absolute, color1, color2, color3);
-          texture_stack_push(stack, texture);
-        }
-        break;
+	  texture = (texture_t*)malloc(sizeof(texture_t));
+	  tienet_recv(socknum, &size, sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &octaves, sizeof(int), tienet_endian);
+	  tienet_recv(socknum, &absolute, sizeof(int), tienet_endian);
+	  tienet_recv(socknum, &color1.v[0], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &color1.v[1], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &color1.v[2], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &color2.v[0], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &color2.v[1], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &color2.v[2], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &color3.v[0], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &color3.v[1], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &color3.v[2], sizeof(tfloat), tienet_endian);
+	  ind += 10*sizeof(tfloat) + 2*sizeof(int);
+	  texture_camo_init(texture, size, octaves, absolute, color1, color2, color3);
+	  texture_stack_push(stack, texture);
+	}
+	break;
 
       case TEXTURE_CLOUDS:
-        {
-          tfloat size;
-          int octaves, absolute;
-          TIE_3 scale, translate;
+	{
+	  tfloat size;
+	  int octaves, absolute;
+	  TIE_3 scale, translate;
 
-          texture = (texture_t*)malloc(sizeof(texture_t));
-          tienet_recv(socknum, &size, sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &octaves, sizeof(int), tienet_endian);
-          tienet_recv(socknum, &absolute, sizeof(int), tienet_endian);
-          tienet_recv(socknum, &scale.v[0], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &scale.v[1], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &scale.v[2], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &translate.v[0], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &translate.v[1], sizeof(tfloat), tienet_endian);
-          tienet_recv(socknum, &translate.v[2], sizeof(tfloat), tienet_endian);
-          ind += 7*sizeof(tfloat) + 2*sizeof(int);
-          texture_clouds_init(texture, size, octaves, absolute, scale, translate);
-          texture_stack_push(stack, texture);
-        }
-        break;
+	  texture = (texture_t*)malloc(sizeof(texture_t));
+	  tienet_recv(socknum, &size, sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &octaves, sizeof(int), tienet_endian);
+	  tienet_recv(socknum, &absolute, sizeof(int), tienet_endian);
+	  tienet_recv(socknum, &scale.v[0], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &scale.v[1], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &scale.v[2], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &translate.v[0], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &translate.v[1], sizeof(tfloat), tienet_endian);
+	  tienet_recv(socknum, &translate.v[2], sizeof(tfloat), tienet_endian);
+	  ind += 7*sizeof(tfloat) + 2*sizeof(int);
+	  texture_clouds_init(texture, size, octaves, absolute, scale, translate);
+	  texture_stack_push(stack, texture);
+	}
+	break;
 
       case TEXTURE_IMAGE:
-        {
-          short w, h;
-          unsigned char *image;
+	{
+	  short w, h;
+	  unsigned char *image;
 
-          texture = (texture_t*)malloc(sizeof(texture_t));
-          tienet_recv(socknum, &w, sizeof(short), tienet_endian);
-          tienet_recv(socknum, &h, sizeof(short), tienet_endian);
-          ind += 2*sizeof(short);
-          image = (unsigned char*)malloc(3*w*h);
-          tienet_recv(socknum, image, 3*w*h, 0);
-          ind += 3*w*h;
-          texture_image_init(texture, w, h, image);
-          texture_stack_push(stack, texture);
-          free(image);
-        }
-        break;
+	  texture = (texture_t*)malloc(sizeof(texture_t));
+	  tienet_recv(socknum, &w, sizeof(short), tienet_endian);
+	  tienet_recv(socknum, &h, sizeof(short), tienet_endian);
+	  ind += 2*sizeof(short);
+	  image = (unsigned char*)malloc(3*w*h);
+	  tienet_recv(socknum, image, 3*w*h, 0);
+	  ind += 3*w*h;
+	  texture_image_init(texture, w, h, image);
+	  texture_stack_push(stack, texture);
+	  free(image);
+	}
+	break;
 
       case TEXTURE_GRADIENT:
-        {
-          int axis;
+	{
+	  int axis;
 
-          texture = (texture_t*)malloc(sizeof(texture_t));
-          tienet_recv(socknum, &axis, sizeof(int), tienet_endian);
-          ind += sizeof(int);
-          texture_gradient_init(texture, axis);
-          texture_stack_push(stack, texture);
-        }
-        break;
+	  texture = (texture_t*)malloc(sizeof(texture_t));
+	  tienet_recv(socknum, &axis, sizeof(int), tienet_endian);
+	  ind += sizeof(int);
+	  texture_gradient_init(texture, axis);
+	  texture_stack_push(stack, texture);
+	}
+	break;
 
       default:
-        break;
+	break;
     }
   }
 }
@@ -500,9 +500,9 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
       ind += sizeof(int);
 
       if(fnum > fmax) {
-        fmax = fnum;
-        flist = (int *)realloc(flist, fmax * 3 * sizeof(int));
-        tlist = (TIE_3 *)realloc(tlist, fmax * 3 * sizeof(TIE_3));
+	fmax = fnum;
+	flist = (int *)realloc(flist, fmax * 3 * sizeof(int));
+	tlist = (TIE_3 *)realloc(tlist, fmax * 3 * sizeof(TIE_3));
       }
       tienet_recv(socknum, flist, fnum * 3 * sizeof(int), 0);
       ind += fnum * 3 * sizeof(int);
@@ -515,23 +515,23 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
 
       fnum = sfnum;
       if(fnum > fmax) {
-        fmax = fnum;
-        flist = (int *)realloc(flist, fmax * 3 * sizeof(int));
-        tlist = (TIE_3 *)realloc(tlist, fmax * 3 * sizeof(TIE_3));
+	fmax = fnum;
+	flist = (int *)realloc(flist, fmax * 3 * sizeof(int));
+	tlist = (TIE_3 *)realloc(tlist, fmax * 3 * sizeof(TIE_3));
       }
 
       i = 0;
       while(i < fnum) {
-        n = fnum - i > 48 ? 48 : fnum - i;
-        tienet_recv(socknum, &sind, 3 * n * sizeof(unsigned short), 0);
+	n = fnum - i > 48 ? 48 : fnum - i;
+	tienet_recv(socknum, &sind, 3 * n * sizeof(unsigned short), 0);
 
-        for(j = 0; j < n; j++) {
-          flist[3*(i+j) + 0] = sind[3*j + 0];
-          flist[3*(i+j) + 1] = sind[3*j + 1];
-          flist[3*(i+j) + 2] = sind[3*j + 2];
-        }
+	for(j = 0; j < n; j++) {
+	  flist[3*(i+j) + 0] = sind[3*j + 0];
+	  flist[3*(i+j) + 1] = sind[3*j + 1];
+	  flist[3*(i+j) + 2] = sind[3*j + 2];
+	}
 
-        i += n;
+	i += n;
       }
 
       ind += fnum * 3 * sizeof(unsigned short);

@@ -28,7 +28,6 @@
 /** @} */
 
 
-
 #if 0
 /*XXX	Group sets of loops within a face into overlapping units.
  *	This will allow us to separate dis-associated groups into separate
@@ -120,7 +119,6 @@ struct bu_list *head;
 		}
 
 
-
 	}
 #endif
 
@@ -144,7 +142,6 @@ struct edgeuse *eu;
 	 * previous edge.  There may not be any "extra" uses of the
 	 * previous edge
 	 */
-
 
 
 	matenext = BU_LIST_PNEXT_CIRC(eu->eumate_p);
@@ -404,7 +401,6 @@ int		loc;	/* Location to start search at. */
 	}
 	return(retval);
 }
-
 
 
 /**

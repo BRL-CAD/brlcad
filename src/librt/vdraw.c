@@ -25,11 +25,11 @@
 
 OPEN COMMAND
 vdraw	open			- with no argument, asks if there is
-	  			  an open vlist (1 yes, 0 no)
+				  an open vlist (1 yes, 0 no)
 
 		name		- opens the specified vlist
 				  returns 1 if creating new vlist
-				          0 if opening an existing vlist
+					  0 if opening an existing vlist
 
 EDITING COMMANDS - no return value
 
@@ -94,7 +94,7 @@ Example Use -
 
 Acknowledgements:
   Modifications by Bob Parker:
-        *- adapt for use in LIBRT's "Drawable Geometry" object
+	*- adapt for use in LIBRT's "Drawable Geometry" object
 	*- build separate vdraw commands
 
 ********************************************************************/

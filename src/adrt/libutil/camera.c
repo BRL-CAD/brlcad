@@ -379,62 +379,62 @@ void* util_camera_render_thread(void *ptr) {
 
       /* depth of view samples */
       if(td->camera->view_num > 1) {
-        MATH_VEC_SET(accum, 0, 0, 0);
+	MATH_VEC_SET(accum, 0, 0, 0);
 
-        for(d = 0; d < td->camera->view_num; d++) {
-          MATH_VEC_MUL_SCALAR(ray.dir, td->camera->view_list[d].step_y, v_scanline);
-          MATH_VEC_ADD(ray.dir, ray.dir, td->camera->view_list[d].top_l);
-          MATH_VEC_MUL_SCALAR(v1, td->camera->view_list[d].step_x, n);
-          MATH_VEC_ADD(ray.dir, ray.dir, v1);
+	for(d = 0; d < td->camera->view_num; d++) {
+	  MATH_VEC_MUL_SCALAR(ray.dir, td->camera->view_list[d].step_y, v_scanline);
+	  MATH_VEC_ADD(ray.dir, ray.dir, td->camera->view_list[d].top_l);
+	  MATH_VEC_MUL_SCALAR(v1, td->camera->view_list[d].step_x, n);
+	  MATH_VEC_ADD(ray.dir, ray.dir, v1);
 
-          MATH_VEC_SET(pixel, 0, 0, 0);
+	  MATH_VEC_SET(pixel, 0, 0, 0);
 
-          ray.pos = td->camera->view_list[d].pos;
-          ray.depth = 0;
-          MATH_VEC_UNITIZE(ray.dir);
+	  ray.pos = td->camera->view_list[d].pos;
+	  ray.depth = 0;
+	  MATH_VEC_UNITIZE(ray.dir);
 
-          /* Compute pixel value using this ray */
-          td->db->env.render.work(&td->db->env.render, td->tie, &ray, &pixel);
+	  /* Compute pixel value using this ray */
+	  td->db->env.render.work(&td->db->env.render, td->tie, &ray, &pixel);
 
-          MATH_VEC_ADD(accum, accum, pixel);
-        }
+	  MATH_VEC_ADD(accum, accum, pixel);
+	}
 
-        /* Find Mean value of all views */
-        MATH_VEC_MUL_SCALAR(pixel, accum, view_inv);
+	/* Find Mean value of all views */
+	MATH_VEC_MUL_SCALAR(pixel, accum, view_inv);
       } else {
-        MATH_VEC_MUL_SCALAR(v2, td->camera->view_list[0].step_x, n);
-        MATH_VEC_ADD(ray.dir, v1, v2);
+	MATH_VEC_MUL_SCALAR(v2, td->camera->view_list[0].step_x, n);
+	MATH_VEC_ADD(ray.dir, v1, v2);
 
-        MATH_VEC_SET(pixel, 0, 0, 0);
+	MATH_VEC_SET(pixel, 0, 0, 0);
 
-        ray.pos = td->camera->view_list[0].pos;
-        ray.depth = 0;
-        MATH_VEC_UNITIZE(ray.dir);
+	ray.pos = td->camera->view_list[0].pos;
+	ray.depth = 0;
+	MATH_VEC_UNITIZE(ray.dir);
 
-        /* Compute pixel value using this ray */
-        td->db->env.render.work(&td->db->env.render, td->tie, &ray, &pixel);
+	/* Compute pixel value using this ray */
+	td->db->env.render.work(&td->db->env.render, td->tie, &ray, &pixel);
       }
 
 
       if(td->work.format == COMMON_BIT_DEPTH_24) {
-        if(pixel.v[0] > 1) pixel.v[0] = 1;
-        if(pixel.v[1] > 1) pixel.v[1] = 1;
-        if(pixel.v[2] > 1) pixel.v[2] = 1;
-        ((char *)(td->res_buf))[res_ind+0] = (unsigned char)(255 * pixel.v[0]);
-        ((char *)(td->res_buf))[res_ind+1] = (unsigned char)(255 * pixel.v[1]);
-        ((char *)(td->res_buf))[res_ind+2] = (unsigned char)(255 * pixel.v[2]);
-        res_ind += 3;
+	if(pixel.v[0] > 1) pixel.v[0] = 1;
+	if(pixel.v[1] > 1) pixel.v[1] = 1;
+	if(pixel.v[2] > 1) pixel.v[2] = 1;
+	((char *)(td->res_buf))[res_ind+0] = (unsigned char)(255 * pixel.v[0]);
+	((char *)(td->res_buf))[res_ind+1] = (unsigned char)(255 * pixel.v[1]);
+	((char *)(td->res_buf))[res_ind+2] = (unsigned char)(255 * pixel.v[2]);
+	res_ind += 3;
       } else if(td->work.format == COMMON_BIT_DEPTH_128) {
-        tfloat alpha;
+	tfloat alpha;
 
-        alpha = 1.0;
+	alpha = 1.0;
 
-        ((tfloat *)(td->res_buf))[res_ind + 0] = pixel.v[0];
-        ((tfloat *)(td->res_buf))[res_ind + 1] = pixel.v[1];
-        ((tfloat *)(td->res_buf))[res_ind + 2] = pixel.v[2];
-        ((tfloat *)(td->res_buf))[res_ind + 3] = alpha;
+	((tfloat *)(td->res_buf))[res_ind + 0] = pixel.v[0];
+	((tfloat *)(td->res_buf))[res_ind + 1] = pixel.v[1];
+	((tfloat *)(td->res_buf))[res_ind + 2] = pixel.v[2];
+	((tfloat *)(td->res_buf))[res_ind + 3] = alpha;
 
-        res_ind += 4;
+	res_ind += 4;
       }
 /*          printf("Pixel: [%d, %d, %d]\n", rgb[0], rgb[1], rgb[2]); */
 

@@ -46,7 +46,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     /* Locate the BRL-CAD-specific Tcl scripts quietly. */
     /****************************************************/
     pathname = bu_brlcad_data( "tclscripts", 1 );
-    
+
     bu_vls_init(&str);
     if (pathname) {
 #ifdef _WIN32
@@ -56,7 +56,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 
 	strcat(pathname,"/");
 	for (i = 0; i < strlen(pathname); i++) {
-	    if (pathname[i]=='\\') 
+	    if (pathname[i]=='\\')
 		pathname[i]='/';
 	}
     }
@@ -90,7 +90,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 		bu_vls_sprintf(&str, "lappend auto_path \"%S%S\" \"%S%S/lib\" \"%S%S/util\" \"%S%S/mged\" \"%S%S/geometree\" \"%S%S/rtwizard\"",
 			      &prefix, &base, &prefix, &base, &prefix, &base, &prefix, &base, &prefix, &base, &prefix, &base);
 		/* make sure tcl's scripts are in the path */
-		(void)Tcl_Eval(interp, bu_vls_addr(&str)); 
+		(void)Tcl_Eval(interp, bu_vls_addr(&str));
 		break;
 	    }
 	}
@@ -118,7 +118,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 
 	strcat(pathname,"/");
 	for (i = 0; i < strlen(pathname); i++) {
-	    if (pathname[i]=='\\') 
+	    if (pathname[i]=='\\')
 		pathname[i]='/';
 	}
     }
@@ -149,9 +149,9 @@ tclcad_auto_path(Tcl_Interp *interp)
 	    bu_vls_sprintf(&str, "%S%S", &prefix, &base);
 	    if (bu_file_exists(bu_vls_addr(&str))) {
 		bu_vls_sprintf(&str, "lappend auto_path \"%S%S\"", &prefix, &base);
-		(void)Tcl_Eval(interp, bu_vls_addr(&str)); 
+		(void)Tcl_Eval(interp, bu_vls_addr(&str));
 		bu_vls_sprintf(&str, "set tcl_library \"%S%S\"", &prefix, &base);
-		(void)Tcl_Eval(interp, bu_vls_addr(&str)); 
+		(void)Tcl_Eval(interp, bu_vls_addr(&str));
 		break;
 	    }
 	}
@@ -181,7 +181,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 
 	strcat(pathname,"/");
 	for (i=0;i<strlen(pathname);i++) {
-	    if(pathname[i]=='\\') 
+	    if(pathname[i]=='\\')
 		pathname[i]='/';
 	}
     }
@@ -212,9 +212,9 @@ tclcad_auto_path(Tcl_Interp *interp)
 	    bu_vls_sprintf(&str, "%S%S", &prefix, &base);
 	    if (bu_file_exists(bu_vls_addr(&str))) {
 		bu_vls_sprintf(&str, "lappend auto_path \"%S%S\"", &prefix, &base);
-		(void)Tcl_Eval(interp, bu_vls_addr(&str)); 
+		(void)Tcl_Eval(interp, bu_vls_addr(&str));
 		bu_vls_sprintf(&str, "set tk_library \"%S%S\"", &prefix, &base);
-		(void)Tcl_Eval(interp, bu_vls_addr(&str)); 
+		(void)Tcl_Eval(interp, bu_vls_addr(&str));
 		break;
 	    }
 	}
@@ -244,7 +244,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 
 	strcat(pathname,"/");
 	for (i = 0; i < strlen(pathname); i++) {
-	    if (pathname[i]=='\\') 
+	    if (pathname[i]=='\\')
 		pathname[i]='/';
 	}
     }
@@ -275,9 +275,9 @@ tclcad_auto_path(Tcl_Interp *interp)
 	    bu_vls_sprintf(&str, "%S%S", &prefix, &base);
 	    if (bu_file_exists(bu_vls_addr(&str))) {
 		bu_vls_sprintf(&str, "lappend auto_path \"%S%S\"", &prefix, &base);
-		(void)Tcl_Eval(interp, bu_vls_addr(&str)); 
+		(void)Tcl_Eval(interp, bu_vls_addr(&str));
 		bu_vls_sprintf(&str, "set iwidgets_library \"%S%S\"", &prefix, &base);
-		(void)Tcl_Eval(interp, bu_vls_addr(&str)); 
+		(void)Tcl_Eval(interp, bu_vls_addr(&str));
 		break;
 	    }
 	}

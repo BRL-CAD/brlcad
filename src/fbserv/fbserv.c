@@ -153,10 +153,10 @@ extern int	fb_server_retain_on_close;   /* !0 => we are holding a reusable FB op
 /* Hidden args: -p<port_num> -F<frame_buffer> */
 static char usage[] = "\
 Usage: fbserv port_num\n\
-          (for a stand-alone daemon)\n\
+	  (for a stand-alone daemon)\n\
    or  fbserv [-v] [-h] [-S squaresize]\n\
-          [-W width] [-N height] port_num frame_buffer\n\
-          (for a single-frame-buffer server)\n\
+	  [-W width] [-N height] port_num frame_buffer\n\
+	  (for a single-frame-buffer server)\n\
 ";
 
 int
@@ -223,7 +223,7 @@ int
 is_socket(int fd)
 {
 	struct sockaddr saddr;
-        socklen_t namelen;
+	socklen_t namelen;
 
 	if( getsockname(fd,&saddr,&namelen) == 0 ) {
 		return	1;

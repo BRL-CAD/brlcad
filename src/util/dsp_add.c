@@ -227,7 +227,6 @@ main(int ac, char *av[])
 	fclose(in2);
 
 
-
 	/* Convert from network to host format */
 	in_cookie = bu_cv_cookie("nus");
 	out_cookie = bu_cv_cookie("hus");

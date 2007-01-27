@@ -190,8 +190,8 @@ main (int argc, char **argv)
 
 /* Handle command-line options */
     while ((--argc > 0) && ((*++argv)[0] == '-'))
-        for (Opt = argv[0] + 1; *Opt != '\0'; Opt++)
-            switch (*Opt)
+	for (Opt = argv[0] + 1; *Opt != '\0'; Opt++)
+	    switch (*Opt)
 	    {
 		case 'o':		/* Translate the plot */
 		    if (argc < 3)
@@ -658,8 +658,8 @@ main (int argc, char **argv)
 		theta = atan2((double) Y, (double) X) + M_PI_2;
 
 	    /* If this point is in the wrong half of the plot, skip it */
- 	    if (Half && (Half * X > 0))
- 		continue;
+	    if (Half && (Half * X > 0))
+		continue;
 
 	    /* Rotate the point for display */
 	    theta += twist;
@@ -728,12 +728,12 @@ PrintUsage (int ShoOpts)
 bool
 LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_min, double arc_max)
 
-    	          	/* Name of input file */
-      	       		/* Location for storing function */
-   	        	/* Angular resolution of Table (in degrees) */
-      	        	/* Factor to convert input units to radians */
-      	        	/* First angle of interest */
-      	        	/* Last    "    "     "    */
+			/* Name of input file */
+			/* Location for storing function */
+			/* Angular resolution of Table (in degrees) */
+			/* Factor to convert input units to radians */
+			/* First angle of interest */
+			/* Last    "    "     "    */
 
 {
     bool	Warnings = 0;	/* Have any warning messages been printed? */
@@ -828,7 +828,7 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
     }
 
      if (fPtr != stdin)
- 	(void) fclose(fPtr);
+	(void) fclose(fPtr);
      return(Warnings);
 }
 
@@ -864,7 +864,7 @@ ArgCompat (int Interior)
 {
     if (Interior != BI_RINGS)
     {
-        (void) fputs("Only one of -e, -i, -l, and -w may be specified\n",
+	(void) fputs("Only one of -e, -i, -l, and -w may be specified\n",
 		     stderr);
 	(void) exit (1);
     }
@@ -873,11 +873,11 @@ ArgCompat (int Interior)
 void
 Fill_Empty (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-             	        	/* Pointer to within fbb */
-      		    		/* Radius of current pixel */
-      		        	/* Value of function at this theta */
-   		       		/* Unit radius (in pixels) */
-    		      		/* Overlay onto current FB contents? */
+				/* Pointer to within fbb */
+				/* Radius of current pixel */
+				/* Value of function at this theta */
+				/* Unit radius (in pixels) */
+				/* Overlay onto current FB contents? */
 
 {
     if (! merge)
@@ -887,11 +887,11 @@ Fill_Empty (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int m
 void
 Fill_Constant (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-             	        	/* Pointer to within fbb */
-      		    		/* Radius of current pixel */
-      		        	/* Value of function at this theta */
-   		       		/* Unit radius (in pixels) */
-    		      		/* Overlay onto current FB contents? */
+				/* Pointer to within fbb */
+				/* Radius of current pixel */
+				/* Value of function at this theta */
+				/* Unit radius (in pixels) */
+				/* Overlay onto current FB contents? */
 
 {
     COPYRGB(fbbPtr, Color[C_INTERIOR])
@@ -900,11 +900,11 @@ Fill_Constant (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, in
 void
 Fill_Ramp (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-             	        	/* Pointer to within fbb */
-      		    		/* Radius of current pixel */
-      		        	/* Value of function at this theta */
-   		       		/* Unit radius (in pixels) */
-    		      		/* Overlay onto current FB contents? */
+				/* Pointer to within fbb */
+				/* Radius of current pixel */
+				/* Value of function at this theta */
+				/* Unit radius (in pixels) */
+				/* Overlay onto current FB contents? */
 
 {
     RGBpixel	ThisPix;	/* Ramped color for current pixel */
@@ -921,11 +921,11 @@ Fill_Ramp (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int me
 void
 Fill_Wedges (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-             	        	/* Pointer to within fbb */
-      		    		/* Radius of current pixel */
-      		        	/* Value of function at this theta */
-   		       		/* Unit radius (in pixels) */
-    		      		/* Overlay onto current FB contents? */
+				/* Pointer to within fbb */
+				/* Radius of current pixel */
+				/* Value of function at this theta */
+				/* Unit radius (in pixels) */
+				/* Overlay onto current FB contents? */
 
 {
     if (npf_rho > .8)
@@ -943,11 +943,11 @@ Fill_Wedges (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int 
 void
 Fill_Rings (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
 
-             	        	/* Pointer to within fbb */
-      		    		/* Radius of current pixel */
-      		        	/* Value of function at this theta */
-   		       		/* Unit radius (in pixels) */
-    		      		/* Overlay onto current FB contents? */
+				/* Pointer to within fbb */
+				/* Radius of current pixel */
+				/* Value of function at this theta */
+				/* Unit radius (in pixels) */
+				/* Overlay onto current FB contents? */
 
 {
     if (rho / unit_r > .8)

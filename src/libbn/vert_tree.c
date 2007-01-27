@@ -22,10 +22,10 @@
 /** @file vert_tree.c
  *
  * @brief
- * Routines to manage a binary search tree of vertices. 
+ * Routines to manage a binary search tree of vertices.
  *
  * The actual vertices are stored in an array
- * for convenient use by routines such as "mk_bot". 
+ * for convenient use by routines such as "mk_bot".
  * The binary search tree stores indices into the array.
  *
  * @author
@@ -62,10 +62,10 @@ static const char bn_RCSvert_tree[] = "@(#)$Header$ (ARL)";
 /**
  * Structure to make vertex searching fast.
  *
- * Each leaf represents a vertex, and has an index into 
+ * Each leaf represents a vertex, and has an index into
  *   the vertices array ("the_array")
  *
- * Each node is a cutting plane at the "cut_val" on 
+ * Each node is a cutting plane at the "cut_val" on
  *   the "coord" (0, 1, or 2) axis.
  *
  * All vertices with "coord" value less than the "cut_val" are in the "lower"

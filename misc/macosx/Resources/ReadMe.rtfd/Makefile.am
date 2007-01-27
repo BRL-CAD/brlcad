@@ -8,4 +8,3 @@ EXTRA_DIST = \
 MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
-

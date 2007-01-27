@@ -38,7 +38,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"

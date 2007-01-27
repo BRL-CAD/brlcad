@@ -71,7 +71,7 @@ set solc(descr_epa)  "Elliptical Paraboloid"
 set solc(default_epa)  {V {-1 -1 -1.5} H {0 0 1} A {0 1 0} r_1 .5 r_2 .25}
 set solc(descr_ehy)  "Right Hyperbolic Cylinder"
 set solc(default_ehy)  {V {-1 -1 -1.5} H {0 0 1} A {0 1 0} r_1 .5 r_2 .25 \
-	                 c .25}
+			 c .25}
 set solc(descr_eto)  "Elliptical Torus"
 set solc(default_eto)  {V {-1 -1 -1} N {0 0 1} C {.1 0 .1} r .5 r_d .05}
 set solc(descr_part) "Particle Primitive"
@@ -361,17 +361,6 @@ proc solc_defaults { w wfr } {
 	pack $wfr.l.l$attr -side top -anchor w -fill y -expand yes
     }
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 # Local Variables:

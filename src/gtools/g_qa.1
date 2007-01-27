@@ -9,21 +9,21 @@
 .\" forms (PDF, PostScript, HTML, RTF, etc), with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
-.\" 
+.\"
 .\" 1. Redistributions of source code (Docbook format) must retain the
 .\" above copyright notice, this list of conditions and the following
 .\" disclaimer.
-.\" 
+.\"
 .\" 2. Redistributions in compiled form (transformed to other DTDs,
 .\" converted to PDF, PostScript, HTML, RTF, and other formats) must
 .\" reproduce the above copyright notice, this list of conditions and
 .\" the following disclaimer in the documentation and/or other
 .\" materials provided with the distribution.
-.\" 
+.\"
 .\" 3. The name of the author may not be used to endorse or promote
 .\" products derived from this documentation without specific prior
 .\" written permission.
-.\" 
+.\"
 .\" THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY
 .\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -55,7 +55,7 @@ specified from the given
 .I model.g
 geometric description.
 The characteristics which can be computed include
-.B weight, volume, overlaps, exposed air, gaps/voids, 
+.B weight, volume, overlaps, exposed air, gaps/voids,
 and
 .B adjacent air.
 .\"and
@@ -163,8 +163,8 @@ All of these calculations run until an error is detected, or until the grid
 refinement limit is reached.
 .SH OVERLAP DETECTION
 For each pair of regions that overlap, the tool reports the two regions that
-overlap, 
-the maximum line-of-sight thickness of the overlap, and the in-hit location 
+overlap,
+the maximum line-of-sight thickness of the overlap, and the in-hit location
 of the ray that caused that maximum overlap thickness.
 .P
 Other analysis in the error detection category behave in a similar manner.
@@ -298,7 +298,7 @@ or
 If units are not provided, millimeters are presumed to be the units.
 .IP
 
-The default values are 50.0 mm and 0.5 mm, which is equivalent to specifying: 
+The default values are 50.0 mm and 0.5 mm, which is equivalent to specifying:
 .B \-g 50.0mm-0.5mm
 or
 .B \-g 50.0mm,0.5mm
@@ -349,7 +349,7 @@ ray intersections.  Applies only when Weight or Volume calculations are being pe
 This limit is not applied per-view, but rather per-analysis.
 So for example, it is accepted that a thin object might not be hit from one view at all, but hit when shooting from other views.
 .IP
-The default is 1.  
+The default is 1.
 Hence, each region must be intersected by a ray at least once during the analysis.
 .TP
 .B \-N \fR\fInum_views\fR
@@ -392,14 +392,14 @@ will cause the initial grid spacing to be adjusted to 0.5 so that 4 samples will
 The default is to assure 1 rays per model grid axis.
 .TP
 .B \-t \fR\fIoverlap_tolerance\fR
-Sets the tolerance for computing overlaps.  the 
+Sets the tolerance for computing overlaps.  the
 .I overlap_tolerance
 must be a positive number equal to or greater than 0.0.
-Any overlap smaller than the value specified will be ignored.  
-The default value is 0.0, which causes any overlap to be reported/processed.  
-The value may be specified with a unit specifier such as: 
+Any overlap smaller than the value specified will be ignored.
+The default value is 0.0, which causes any overlap to be reported/processed.
+The value may be specified with a unit specifier such as:
 .B -t 1.0mm
-or 
+or
 .B -t 0.25in.
 .TP
 .B \-U \fR\fIuse_air\fR
@@ -463,7 +463,7 @@ The grid starts at 1 cm and is refined to 1mm unless overlaps or exposed air is 
 before the grid is refined to 1mm
 
 .IP
-g_qa -g 1cm-1mm -A oe model.g hull turret suspension 
+g_qa -g 1cm-1mm -A oe model.g hull turret suspension
 
 .P
 The following computes volume and weight of hull, turret, and suspension.  Results are reported in cubic centimeters (cc) and ounces (oz).  The grid spacing starts at 5in and will not be refined below 0.3mm spacing.
@@ -507,7 +507,7 @@ grid spacing 50mm  199 x 199 x 199
 grid spacing 25mm  399 x 399 x 399
 grid spacing 12.5mm  799 x 799 x 799
 Summary:
-        closed_box.r  484.195 m^3
+	closed_box.r  484.195 m^3
   Average total volume: 488.327 m^3
 
 % \fBg_qa -u m,m^3,kg -Aw geometry.g closed_box.r\fR
@@ -517,7 +517,7 @@ setting weight tolerance to 768000 kg
 grid spacing 50mm  199 x 199 x 199
 Summary:
 Weight:
-        closed_box.r  3.6375e+06 kg
+	closed_box.r  3.6375e+06 kg
   Average total weight: 3.67541e+06 kg
 
 .fi

@@ -19,7 +19,7 @@
  */
 /** @addtogroup malloc */
 /** @{ */
-/** 
+/**
  * @file malloc.c
  *
  * @brief
@@ -135,7 +135,7 @@ top:
 		mp = &bu_memdebug[bu_memdebug_len-1];
 		if( bu_memdebug_lowat > bu_memdebug &&
 		    bu_memdebug_lowat < mp )  {
-		    	mp = bu_memdebug_lowat;
+			mp = bu_memdebug_lowat;
 		} else {
 			bu_memdebug_lowat = mp;
 		}

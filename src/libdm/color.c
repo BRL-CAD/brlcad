@@ -24,7 +24,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <X11/Xlib.h>
 #include "machine.h"
@@ -39,9 +38,9 @@ void dm_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixe
 the color requested. */
 unsigned long
 dm_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned int *pixels, int cd)
-                        /* values assumed to be [0,255] */
+			/* values assumed to be [0,255] */
 
-        /* cube dimension */
+	/* cube dimension */
 {
   fastf_t f;
   int rf, gf, bf;
@@ -103,8 +102,7 @@ void
 dm_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixels, int cd, int cmap_base, int store)
 
 
-
-          /* cube dimension */
+	  /* cube dimension */
 
 
 {

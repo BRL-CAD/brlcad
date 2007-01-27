@@ -38,7 +38,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 
@@ -52,13 +51,13 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 {
 	struct face_g_snurb * us, *vs, * uus, * vvs, *uvs;
 	fastf_t ue[4], ve[4], uue[4], vve[4], uve[4], se[4];
-        fastf_t         E, F, G;                /* First Fundamental Form */
-        fastf_t         L, M, N;                /* Second Fundamental form */
-        fastf_t         denom;
-        fastf_t         wein[4];                /*Weingarten matrix */
-        fastf_t         evec[3];
-        fastf_t         mean, gauss, discrim;
-        vect_t          norm;
+	fastf_t         E, F, G;                /* First Fundamental Form */
+	fastf_t         L, M, N;                /* Second Fundamental form */
+	fastf_t         denom;
+	fastf_t         wein[4];                /*Weingarten matrix */
+	fastf_t         evec[3];
+	fastf_t         mean, gauss, discrim;
+	vect_t          norm;
 	int 		i;
 
 	us = rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
@@ -106,11 +105,11 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 				vve[3]/se[3] * (se[i]/se[3]);
 
 			 uve[i] = 1.0 / se[3] * uve[i] +
-	                        (-1.0 / (se[3] * se[3])) *
-        	                (ve[3] * ue[i] + ue[3] * ve[i] +
-                	         uve[3] * se[i]) +
+				(-1.0 / (se[3] * se[3])) *
+				(ve[3] * ue[i] + ue[3] * ve[i] +
+				 uve[3] * se[i]) +
 				(-2.0 / (se[3] * se[3] * se[3])) *
-	                        (ve[3] * ue[3] * se[i]);
+				(ve[3] * ue[3] * se[i]);
 		}
 
 		L = VDOT( norm, uue);
@@ -153,29 +152,29 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 		return;
 	}
 
-        wein[0] = ( (G * L) - (F * M))/ (denom);
-        wein[1] = ( (G * M) - (F * N))/ (denom);
-        wein[2] = ( (E * M) - (F * L))/ (denom);
-        wein[3] = ( (E * N) - (F * M))/ (denom);
+	wein[0] = ( (G * L) - (F * M))/ (denom);
+	wein[1] = ( (G * M) - (F * N))/ (denom);
+	wein[2] = ( (E * M) - (F * L))/ (denom);
+	wein[3] = ( (E * N) - (F * M))/ (denom);
 
 	if( fabs(wein[1]) < 0.0001 && fabs( wein[3] - cvp->crv_c1 ) < 0.0001 )
-        {
-                evec[0] = 0.0; evec[1] = 1.0;
-        } else
-        {
-                evec[0] = 1.0;
-                if( fabs( wein[1] ) > fabs( wein[3] - cvp->crv_c1) )
-                {
-                        evec[1] = (cvp->crv_c1 - wein[0]) / wein[1];
-                } else
-                {
-                        evec[1] = wein[2] / ( cvp->crv_c1 - wein[3] );
-                }
-        }
+	{
+		evec[0] = 0.0; evec[1] = 1.0;
+	} else
+	{
+		evec[0] = 1.0;
+		if( fabs( wein[1] ) > fabs( wein[3] - cvp->crv_c1) )
+		{
+			evec[1] = (cvp->crv_c1 - wein[0]) / wein[1];
+		} else
+		{
+			evec[1] = wein[2] / ( cvp->crv_c1 - wein[3] );
+		}
+	}
 
 	cvp->crv_pdir[0] = evec[0] * ue[0] + evec[1] * ve[0];
-        cvp->crv_pdir[1] = evec[0] * ue[1] + evec[1] * ve[1];
-        cvp->crv_pdir[2] = evec[0] * ue[2] + evec[1] * ve[2];
+	cvp->crv_pdir[1] = evec[0] * ue[1] + evec[1] * ve[1];
+	cvp->crv_pdir[2] = evec[0] * ue[2] + evec[1] * ve[2];
 	VUNITIZE( cvp->crv_pdir);
 }
 

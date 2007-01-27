@@ -376,12 +376,12 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 *
 	 *  The equation for the eto is:
 	 *
-            _______                           ________
-           / 2    2              2           / 2    2               2
+	    _______                           ________
+	   / 2    2              2           / 2    2               2
   [Eu(+- \/ x  + y   - R) + Ev z]  + [Fu(+-\/ x  + y   - R) + Fv z ]
  --------------------------------    -------------------------------  = 1
-               2                                      2
-             Rc                                     Rd
+	       2                                      2
+	     Rc                                     Rd
 	 *
 	 *                  ^   ^
 	 *       where Ev = C . N
@@ -414,7 +414,7 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	C2 = 2 * (dprime[X] * cor_pprime[X] + dprime[Y] * cor_pprime[Y]);
 	C3 = dprime[X] * dprime[X] + dprime[Y] * dprime[Y];
 	A2 = -eto->eto_rd * eto->eto_r * eto->eu + eto->eto_rd * eto->ev * cor_pprime[Z];
-   	B2 = -eto->eto_rc * eto->eto_r * eto->fu + eto->eto_rc * eto->fv * cor_pprime[Z];
+	B2 = -eto->eto_rc * eto->eto_r * eto->fu + eto->eto_rc * eto->fv * cor_pprime[Z];
 	A3 = eto->eto_rd * eto->ev * dprime[Z];
 	B3 = eto->eto_rc * eto->fv * dprime[Z];
 	D1 = eto->eto_rc * eto->eto_rc * eto->eto_rd * eto->eto_rd;
@@ -555,10 +555,10 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  */
 void
 rt_eto_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 }

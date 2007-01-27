@@ -899,7 +899,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 	}
 
 #if 1
-        /* XXX need code to handle light */
+	/* XXX need code to handle light */
 
 	/* get list of vertices */
 	nmg_vertex_tabulate( &verts, &m->magic );
@@ -957,12 +957,12 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 				}
 			}
 		}
-                /* close coordIndex */
+		/* close coordIndex */
 		fprintf( fp, "\" ");
 		fprintf( fp, "normalPerVertex=\"false\" ");
 		fprintf( fp, "convex=\"false\" ");
 		fprintf( fp, "creaseAngle=\"0.5\" ");
-                /* close IndexedFaceSet open tag */
+		/* close IndexedFaceSet open tag */
 		fprintf( fp, ">\n");
 	}
 

@@ -383,7 +383,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
 
 	if(verbose)  {
 		fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_lable_st= %.6f, %.6f, %.6f, m_char_width=%.6f\n",
-		        label, V3ARGS(m_label_st), m_char_width);
+			label, V3ARGS(m_label_st), m_char_width);
 		bn_mat_print("v2symbol", v2symbol);
 	}
 
@@ -395,7 +395,6 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
 	tp_3symbol(outfp, descript, m_descript_st, v2symbol, m_char_width);
 	return( 0 );		/* OK */
 }
-
 
 
 /*		D R A W S C A L E

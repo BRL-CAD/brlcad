@@ -119,7 +119,6 @@ register const struct shadework *swp;
 }
 
 
-
 /*
  *			S H A D E _ I N P U T S
  *
@@ -168,7 +167,7 @@ shade_inputs( struct application *ap, const struct partition *pp, struct shadewo
 			if( swp->sw_hit.hit_normal[X] < -1.01 || swp->sw_hit.hit_normal[X] > 1.01 ||
 			    swp->sw_hit.hit_normal[Y] < -1.01 || swp->sw_hit.hit_normal[Y] > 1.01 ||
 			    swp->sw_hit.hit_normal[Z] < -1.01 || swp->sw_hit.hit_normal[Z] > 1.01 )  {
-			    	VPRINT("shade_inputs: N", swp->sw_hit.hit_normal);
+				VPRINT("shade_inputs: N", swp->sw_hit.hit_normal);
 				VSET( swp->sw_color, 9, 9, 0 );	/* Yellow */
 				return;
 			}
@@ -235,14 +234,14 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 				swp->sw_uv.uv_u, swp->sw_uv.uv_v,
 				swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 				pp->pt_inseg->seg_stp->st_name,
-		    		rt_functab[pp->pt_inseg->seg_stp->st_id].ft_name,
-		    		pp->pt_inhit->hit_surfno,
+				rt_functab[pp->pt_inseg->seg_stp->st_id].ft_name,
+				pp->pt_inhit->hit_surfno,
 				ap->a_x, ap->a_y );
 #ifdef RT_MULTISPECTRAL
-		    	{
-		    		static const float green[3] = {0.0f,9.0f,0.0f};
+			{
+				static const float green[3] = {0.0f,9.0f,0.0f};
 				rt_spect_reflectance_rgb( swp->msw_color, green );
-		    	}
+			}
 #else
 			VSET( swp->sw_color, 0, 9, 0 );	/* Hyper-Green */
 #endif

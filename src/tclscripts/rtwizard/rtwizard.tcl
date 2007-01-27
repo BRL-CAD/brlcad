@@ -36,7 +36,6 @@ foreach i $auto_path {
 }
 
 
-
 #
 # All RtWizard stuff is in the RtWizard namespace
 #
@@ -242,19 +241,6 @@ namespace eval RtWizard {
 # Start main
 #
 RtWizard::main $argv
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # Local Variables:

@@ -46,7 +46,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -59,8 +58,8 @@
 struct oslo_mat *
 rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv, register struct knot_vector *t_kv, struct resource *res)
 
-                                           	/* old knot vector */
-                                   		/* new knot vector */
+						/* old knot vector */
+						/* new knot vector */
 
 {
 	register fastf_t	*t_p;

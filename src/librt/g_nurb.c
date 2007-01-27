@@ -338,10 +338,10 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
  */
 void
 rt_nurb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	rt_vstub( stp, rp, segp, n, ap );
@@ -386,14 +386,14 @@ rt_nurb_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 /*	register struct nurb_specific *nurb =
 		(struct nurb_specific *)stp->st_specific; */
 	struct face_g_snurb * srf = (struct face_g_snurb *) hitp->hit_private;
-        fastf_t         u, v;
+	fastf_t         u, v;
 
 	if( srf->order[0] <= 2 && srf->order[1] <= 2)
 	{
-	 	cvp->crv_c1 = cvp->crv_c2 = 0;
+		cvp->crv_c1 = cvp->crv_c2 = 0;
 
 		/* any tangent direction */
-	 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+		bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 		return;
 	}
 
@@ -491,47 +491,47 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 		n = (struct face_g_snurb *) sip->srfs[s];
 
-                VSUB2(tmp_pt, n->min_pt, n->max_pt);
-                bound =         MAGNITUDE( tmp_pt)/ 2.0;
-                /*
-                 *  Establish tolerances
-                 */
-                if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
-                        rel = 0.0;              /* none */
-                } else {
-                        /* Convert rel to absolute by scaling by diameter */
-                        rel = ttol->rel * 2 * bound;
-                }
-                if( ttol->abs <= 0.0 )  {
-                        if( rel <= 0.0 )  {
-                                /* No tolerance given, use a default */
-                                rel = 2 * 0.10 * bound;        /* 10% */
-                        } else {
-                                /* Use absolute-ized relative tolerance */
-                        }
-                } else {
-                        /* Absolute tolerance was given, pick smaller */
-                        if( ttol->rel <= 0.0 || rel > ttol->abs )
-                                rel = ttol->abs;
-                }
+		VSUB2(tmp_pt, n->min_pt, n->max_pt);
+		bound =         MAGNITUDE( tmp_pt)/ 2.0;
+		/*
+		 *  Establish tolerances
+		 */
+		if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
+			rel = 0.0;              /* none */
+		} else {
+			/* Convert rel to absolute by scaling by diameter */
+			rel = ttol->rel * 2 * bound;
+		}
+		if( ttol->abs <= 0.0 )  {
+			if( rel <= 0.0 )  {
+				/* No tolerance given, use a default */
+				rel = 2 * 0.10 * bound;        /* 10% */
+			} else {
+				/* Use absolute-ized relative tolerance */
+			}
+		} else {
+			/* Absolute tolerance was given, pick smaller */
+			if( ttol->rel <= 0.0 || rel > ttol->abs )
+				rel = ttol->abs;
+		}
 
 		if( n->order[0] < 3 || n->order[1] < 3 ) {
 			/* cannot use rt_nurb_par_edge() in this case */
 			tess = 0.25; /* hack for now */
 		} else
-	                tess = (fastf_t) rt_nurb_par_edge(n, rel);
+			tess = (fastf_t) rt_nurb_par_edge(n, rel);
 
-                num_knots = (int)floor(1.0/((M_SQRT1_2 / 2.0) * tess));
+		num_knots = (int)floor(1.0/((M_SQRT1_2 / 2.0) * tess));
 
-                if( num_knots < 2) num_knots = 2;
+		if( num_knots < 2) num_knots = 2;
 
-                rt_nurb_kvknot( &tkv1, n->order[0],
-                        n->u.knots[0],
-                        n->u.knots[n->u.k_size-1], num_knots, (struct resource *)NULL);
+		rt_nurb_kvknot( &tkv1, n->order[0],
+			n->u.knots[0],
+			n->u.knots[n->u.k_size-1], num_knots, (struct resource *)NULL);
 
-                rt_nurb_kvknot( &tkv2, n->order[1],
-                        n->v.knots[0],
-                        n->v.knots[n->v.k_size-1], num_knots, (struct resource *)NULL);
+		rt_nurb_kvknot( &tkv2, n->order[1],
+			n->v.knots[0],
+			n->v.knots[n->v.k_size-1], num_knots, (struct resource *)NULL);
 
 
 		r = (struct face_g_snurb *) rt_nurb_s_refine( n, RT_NURB_SPLIT_COL, &tkv2, (struct resource *)NULL);
@@ -693,8 +693,8 @@ rt_nurb_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 		}
 
 		/* bound the surface for tolerancing and other bounding box tests */
-                rt_nurb_s_bound( sip->srfs[s], sip->srfs[s]->min_pt,
-                        sip->srfs[s]->max_pt);
+		rt_nurb_s_bound( sip->srfs[s], sip->srfs[s]->min_pt,
+			sip->srfs[s]->max_pt);
 
 		rp += 1 + rp->d.d_nknots + rp->d.d_nctls;
 	}
@@ -1093,8 +1093,8 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 		}
 
 		/* bound the surface for tolerancing and other bounding box tests */
-                rt_nurb_s_bound( sip->srfs[s], sip->srfs[s]->min_pt,
-                        sip->srfs[s]->max_pt);
+		rt_nurb_s_bound( sip->srfs[s], sip->srfs[s]->min_pt,
+			sip->srfs[s]->max_pt);
 	}
 	return (0);
 }

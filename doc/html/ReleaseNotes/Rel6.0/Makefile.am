@@ -6,4 +6,3 @@ htmldocs_DATA = index.html
 EXTRA_DIST = $(htmldocs_DATA)
 
 include $(top_srcdir)/misc/Makefile.defs
-

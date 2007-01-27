@@ -1515,8 +1515,6 @@ static float white_local_light[] = {
 #endif
 
 
-
-
 /*
  *  Lighting model parameters
  *	AMBIENT		amount of ambient light present in the scene, 0..1

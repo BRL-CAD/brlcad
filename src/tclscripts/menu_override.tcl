@@ -93,13 +93,13 @@ proc cad_MenuFirstEntry { menu } {
     tk_menuSetFocus $menu
 
     if {[$menu index active] != "none"} {
-        return
+	return
     }
 
     set last [$menu index last]
 
     if {$last == "none"} {
-        return
+	return
     }
 
     for {set i 0} {$i <= $last} {incr i} {
@@ -113,7 +113,7 @@ proc cad_MenuFirstEntry { menu } {
 		    $menu postcascade $i
 		}
 	    }
-            return
+	    return
 	}
     }
 }
@@ -127,7 +127,7 @@ proc ::tk::TraverseWithinMenu { w char } {
     set last [$w index last]
 
     if {$last == "none"} {
-        return
+	return
     }
 
     for {set i 0} {$i <= $last} {incr i} {
@@ -145,10 +145,10 @@ proc ::tk::TraverseWithinMenu { w char } {
 		    cad_MenuFirstEntry $m2
 		}
 	    }    else {
-                ::tk::MenuUnpost $w
-                uplevel #0 [list $w invoke $i]
+		::tk::MenuUnpost $w
+		uplevel #0 [list $w invoke $i]
 	    }
-            return
+	    return
 	}
 
     }

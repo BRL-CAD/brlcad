@@ -44,7 +44,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -67,8 +66,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  */
 void
 db_traverse_subtree(union tree *tp,
-	            void (*traverse_func) ( struct directory *, struct db_traverse * ),
-	            struct db_traverse *dtp)
+		    void (*traverse_func) ( struct directory *, struct db_traverse * ),
+		    struct db_traverse *dtp)
 {
     struct directory *dp;
 
@@ -105,7 +104,7 @@ db_traverse_subtree(union tree *tp,
  *     D B _ P R E O R D E R _ T R A V E R S E
  *
  *  This subroutine is called for a no-frills tree-walk,
- *  with the provided subroutines being called when entering and 
+ *  with the provided subroutines being called when entering and
  *  exiting combinations and at leaf (solid) nodes.
  *
  *  This routine is recursive, so no variables may be declared static.
@@ -113,7 +112,7 @@ db_traverse_subtree(union tree *tp,
  */
 void
 db_preorder_traverse( struct directory *dp,
-                      struct db_traverse *dtp )
+		      struct db_traverse *dtp )
 {
     register int i;
     RT_CK_DBTR(dtp);
@@ -170,8 +169,6 @@ db_preorder_traverse( struct directory *dp,
 		dp->d_namep );
     }
 }
-
- 
 
 
 /*	D B _ F U N C T R E E _ S U B T R E E

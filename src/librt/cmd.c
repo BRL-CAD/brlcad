@@ -44,7 +44,6 @@ static const char RCScmd[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <ctype.h>
 #ifdef HAVE_STRING_H
@@ -194,7 +193,7 @@ rt_split_cmd(char **argv, int lim, register char *lp)
  */
 int
 rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab *tp)
-           		      			/* FUTURE:  for globbing */
+						/* FUTURE:  for globbing */
 
 
 {

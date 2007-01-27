@@ -56,7 +56,6 @@ typedef unsigned long dim;
 #define SECSIZE 0x800
 
 
-
 #define SeHead   2
 #define L_Head   (1+SeHead)
 
@@ -116,7 +115,7 @@ static int do_bw;
 static long bufpos;
 
 #define SEEK(x) { if (fseek(fin,((x) * SECSIZE),0)) error(E_READ);\
-                  fprintf(stderr,"S-Position %x\n",ftell(fin)); }
+		  fprintf(stderr,"S-Position %x\n",ftell(fin)); }
 #define RPRINT  {fprintf(stderr,"R-Position %x\n",ftell(fin));}
 
 #define READBUF   (bufpos=ftell(fin),fread(sbuffer,sizeof(sbuffer),1,fin))
@@ -327,8 +326,6 @@ main(int argc, char **argv)
 		}
 
 
-
-
 		if((!strcmp(opt,"Base/16")) || (!strcmp(opt,"1"))  || (!strcmp(opt,"128x192")))
 		{
 			if (size == S_UNSPEC) size = S_Base16;
@@ -370,8 +367,6 @@ main(int argc, char **argv)
 		fprintf(stderr,"Unknown option: -%s\n",opt);
 		error(E_ARG);
 	}
-
-
 
 
 	if(size==S_UNSPEC) size=S_DEFAULT;
@@ -980,7 +975,6 @@ static void druckeid(void)
 }
 
 
-
 #if 0
 struct pcdword
 {
@@ -1003,7 +997,6 @@ dim w,h;
 	{
 		lpt[i] = ((int)ptr->high)<<8 | ptr->low ;
 	}
-
 
 
 }
@@ -1109,12 +1102,12 @@ static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autos
 #define nextbuf  {  nptr=sbuffer;  EREADBUF; }
 #define checkbuf { if (nptr >= sbuffer + sizeof(sbuffer)) nextbuf; }
 #define shiftout(n){ sreg<<=n; inh-=n; \
-                    while (inh<=24) \
-                     {checkbuf; \
-                      sreg |= ((unsigned long)(*(nptr++)))<<(24-inh);\
-                      inh+=8;\
-                     }\
-                   }
+		    while (inh<=24) \
+		     {checkbuf; \
+		      sreg |= ((unsigned long)(*(nptr++)))<<(24-inh);\
+		      inh+=8;\
+		     }\
+		   }
 #define issync ((sreg & 0xffffff00) == 0xfffffe00)
 #define seeksync { while (!issync) shiftout(1);}
 

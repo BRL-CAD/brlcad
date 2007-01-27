@@ -80,7 +80,7 @@ proc ::swidgets::selectlists {args} {
 #                      CONSTRUCTOR
 # ------------------------------------------------------------
 ::itcl::body swidgets::Selectlists::constructor {args} {
-    
+
     set frame [frame $itk_interior.frame]
 
     # LISTBOX 1
@@ -100,7 +100,7 @@ proc ::swidgets::selectlists {args} {
 		-hscrollmode dynamic -selectmode single \
 		-dblclickcommand [::itcl::code $this _dblclick "listbox2"]
     } {
-	keep -textbackground 
+	keep -textbackground
 	rename -labelpos -labelpos2 labelPos2 Position
 	rename -labeltext -labeltext2 labelText2 Text
     }
@@ -127,7 +127,7 @@ proc ::swidgets::selectlists {args} {
     grid columnconfigure $frame {0 2} -weight 1
     grid rowconfigure $frame 0 -weight 1
     pack $frame -fill both -expand yes
-    
+
 
     #
     # Initialize the widget based on the command line options
@@ -139,7 +139,7 @@ proc ::swidgets::selectlists {args} {
 }
 
 # ------------------------------------------------------------
-#                        OPTIONS 
+#                        OPTIONS
 # ------------------------------------------------------------
 ::itcl::configbody swidgets::Selectlists::sortlist1 {
     switch $itk_option(-sortlist1) {
@@ -205,7 +205,7 @@ proc ::swidgets::selectlists {args} {
 }
 
 # ------------------------------------------------------------
-#                        METHODS 
+#                        METHODS
 # ------------------------------------------------------------
 ::itcl::body swidgets::Selectlists::_dblclick {list} {
     switch $list {
@@ -220,7 +220,7 @@ proc ::swidgets::selectlists {args} {
     foreach item $selected {
 	$itk_component(listbox2) insert end [$itk_component(listbox1) get $item]
     }
-    
+
     foreach item [lsort -decreasing $selected] {
 	$itk_component(listbox1) delete $item
     }
@@ -250,10 +250,10 @@ proc ::swidgets::selectlists {args} {
     foreach item $selected {
 	$itk_component(listbox1) insert end [$itk_component(listbox2) get $item]
     }
-    
+
     foreach item [lsort -decreasing $selected] {
 	$itk_component(listbox2) delete $item
-    }	
+    }
 
     # check for empty listbox1
     if {[$itk_component(listbox1) get 0] == ""} {
@@ -294,7 +294,7 @@ proc ::swidgets::selectlists {args} {
     }
 }
 
-::itcl::body swidgets::Selectlists::_removeall {} { 
+::itcl::body swidgets::Selectlists::_removeall {} {
     if {[$itk_component(listbox2) get 0] == ""} {return}
     while {[$itk_component(listbox2) get 0] != ""} {
 	$itk_component(listbox1) insert end [$itk_component(listbox2) get 0]

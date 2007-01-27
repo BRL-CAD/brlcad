@@ -292,7 +292,7 @@ dsk_rmap(FBIO *ifp, ColorMap *cmap)
 	    lseek( fd, (off_t)FILE_CMAP_ADDR, 0 ) == -1 ) {
 		fb_log(	"disk_colormap_read : seek to %ld failed.\n",
 				FILE_CMAP_ADDR );
-	   	return	-1;
+		return	-1;
 	}
 	if(read( fd, (char *) cmap, sizeof(ColorMap) ) != sizeof(ColorMap) ) {
 	    /* Not necessarily an error.  It is not required that a
@@ -319,7 +319,7 @@ dsk_wmap(FBIO *ifp, const ColorMap *cmap)
 	}
 	if( write( ifp->if_fd, (char *) cmap, sizeof(ColorMap) )
 	    != sizeof(ColorMap) ) {
-	    	fb_log( "disk_colormap_write : write failed.\n" );
+		fb_log( "disk_colormap_write : write failed.\n" );
 		return	-1;
 	}
 	return	0;

@@ -19,7 +19,7 @@
 #
 ###
 #
-#  Expand the tree from a combination record into 
+#  Expand the tree from a combination record into
 #  indivudually named combinations
 #
 #  Typically called from expand_comb
@@ -29,7 +29,7 @@ proc expand_tree {prefix tree regflag} {
     puts "expand_tree $prefix $regflag"
 
     set op [lindex $tree 0]
-    
+
     if { $op == "l" } {
 	set leaf_obj [lindex $tree 1]
 
@@ -105,7 +105,7 @@ proc expand_comb {args} {
 	puts "get tree $r failed"
 	return
     }
-    
+
     expand_tree $prefix $tree [get $comb region]
 
     return

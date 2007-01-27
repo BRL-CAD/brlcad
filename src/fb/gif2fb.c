@@ -478,8 +478,8 @@ int getByte(FILE *inp)
 			next_ent++;
 			if ((next_ent >= max_code) &&
 			    (max_code < (1<<12))) {
-			    	max_code *= 2;
-			    	Bits++;
+				max_code *= 2;
+				Bits++;
 			}
 		}
 

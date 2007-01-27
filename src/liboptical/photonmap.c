@@ -130,15 +130,15 @@ void BuildTree(struct Photon *EList, int ESize, struct PNode *Root) {
   for (i= 0; i < ESize; i++) {
     if (i != MedianIndex) {
       if (EList[i].Pos[Axis] < EList[MedianIndex].Pos[Axis]) {
-        LList[LInd++]= EList[i];
+	LList[LInd++]= EList[i];
       } else {
-        RList[RInd++]= EList[i];
+	RList[RInd++]= EList[i];
       }
 /*
       if (EList[i].Pos[Axis] < Median.Pos[Axis]) {
-        LList[LInd++]= EList[i];
+	LList[LInd++]= EList[i];
       } else {
-        RList[RInd++]= EList[i];
+	RList[RInd++]= EList[i];
       }
 */
     }
@@ -204,7 +204,7 @@ void Store(point_t Pos, vect_t Dir, vect_t Normal, int Map) {
       Search.Found= 0;
       LocatePhotons(&Search,PMap[map] -> Root);
       if (!Search.Found && Search.RadSq > ScaleFactor*ScaleFactor/100.0)
-        break;
+	break;
     } while(Search.Found < Search.Max && Search.RadSq < max_rad*max_rad);
     free(Search.List);
 */
@@ -302,13 +302,12 @@ int CheckMaterial(char *cmp, char *MS) {
   if (MS) {
     for (i= 0; i < strlen(cmp) && i < strlen(MS); i++)
       if (MS[i] != cmp[i])
-        return(0);
+	return(0);
     return(1);
   } else {
     return(0);
   }
 }
-
 
 
 /* This function parses the material string to obtain specular and refractive values */
@@ -461,7 +460,7 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
 
       if (!CheckMaterial("light",part -> pt_regionp -> reg_mater.ma_shader)) {
 /*        bu_log("  Found object!\n");*/
-        break;
+	break;
       }
     }
   }
@@ -549,8 +548,8 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
       ap -> a_ray.r_pt[2]= pt[2];
 
       if (PType != PM_CAUSTIC) {
-          Depth++;
-          rt_shootray(ap);
+	  Depth++;
+	  rt_shootray(ap);
       }
     } else if (prob >= prob_diff && prob < prob_diff + prob_spec) {
       /* Store power of incident Photon */
@@ -572,7 +571,7 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
       ap -> a_ray.r_pt[2]= pt[2];
 
       if (PType != PM_IMPORTANCE)
-        PType= PM_CAUSTIC;
+	PType= PM_CAUSTIC;
       Depth++;
       rt_shootray(ap);
     } else {
@@ -582,7 +581,7 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
   } else {
     if (refi > 1.0 && (PType == PM_CAUSTIC || Depth == 0)) {
       if (PType != PM_IMPORTANCE)
-        PType= PM_CAUSTIC;
+	PType= PM_CAUSTIC;
 
       /* Store power of incident Photon */
       power[0]= CurPh.Power[0];
@@ -596,24 +595,24 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
 
       /* Refractive or Reflective */
       if (refi > 1.0 && prob < transmit) {
-        CurPh.Power[0]= power[0];
-        CurPh.Power[1]= power[1];
-        CurPh.Power[2]= power[2];
+	CurPh.Power[0]= power[0];
+	CurPh.Power[1]= power[1];
+	CurPh.Power[2]= power[2];
 
-        if (!Refract(ap -> a_ray.r_dir,normal,1.0,refi))
-          printf("TIF0\n");
+	if (!Refract(ap -> a_ray.r_dir,normal,1.0,refi))
+	  printf("TIF0\n");
 
-        ap -> a_hit= HitRef;
+	ap -> a_hit= HitRef;
 
 /*
-        bu_log("dir: [%.3f,%.3f,%.3f]\n",ap -> a_ray.r_dir[0],ap -> a_ray.r_dir[1],ap -> a_ray.r_dir[2]);
-        bu_log("ref: [%.3f,%.3f,%.3f]\n",ap -> a_ray.r_dir[0],ap -> a_ray.r_dir[1],ap -> a_ray.r_dir[2]);
-        bu_log("nor: [%.3f,%.3f,%.3f]\n",normal[0],normal[1],normal[2]);
-        bu_log("p0: [%.3f,%.3f,%.3f],[%.3f,%.3f,%.3f]\n",pt[0],pt[1],pt[2],ap -> a_ray.r_dir[0],ap -> a_ray.r_dir[1],ap -> a_ray.r_dir[2]);
+	bu_log("dir: [%.3f,%.3f,%.3f]\n",ap -> a_ray.r_dir[0],ap -> a_ray.r_dir[1],ap -> a_ray.r_dir[2]);
+	bu_log("ref: [%.3f,%.3f,%.3f]\n",ap -> a_ray.r_dir[0],ap -> a_ray.r_dir[1],ap -> a_ray.r_dir[2]);
+	bu_log("nor: [%.3f,%.3f,%.3f]\n",normal[0],normal[1],normal[2]);
+	bu_log("p0: [%.3f,%.3f,%.3f],[%.3f,%.3f,%.3f]\n",pt[0],pt[1],pt[2],ap -> a_ray.r_dir[0],ap -> a_ray.r_dir[1],ap -> a_ray.r_dir[2]);
 */
-        ap -> a_onehit= 0;
+	ap -> a_onehit= 0;
       } else {
-        SpecularReflect(normal,ap -> a_ray.r_dir);
+	SpecularReflect(normal,ap -> a_ray.r_dir);
       }
 
       /* Assign pt */
@@ -650,7 +649,6 @@ void ScalePhotonPower(int Map) {
     Emit[Map][i].Power[2]*= ScaleFactor/(double)EPS[Map];
   }
 }
-
 
 
 /* Generate Importons and emit them into the scene from the eye position */
@@ -706,19 +704,19 @@ void EmitPhotonsRandom(struct application *ap, double ScaleIndirect) {
     for (BU_LIST_FOR(lp, light_specific, &(LightHead.l))) {
       /* If the Global Photon Map Completes before the Caustics Map, then it probably means there are no caustic objects in the Scene */
       if (PMap[PM_GLOBAL] -> StoredPhotons == PMap[PM_GLOBAL] -> MaxPhotons && (!PMap[PM_CAUSTIC] -> StoredPhotons || PMap[PM_CAUSTIC] -> StoredPhotons == PMap[PM_CAUSTIC] -> MaxPhotons))
-        return;
+	return;
 
       do {
 /*      do {*/
-        /* Set Ray Direction to application ptr */
+	/* Set Ray Direction to application ptr */
 #ifndef HAVE_DRAND48
 	ap -> a_ray.r_dir[0]= 2.0*rand()/(double)RAND_MAX-1.0;
 	ap -> a_ray.r_dir[1]= 2.0*rand()/(double)RAND_MAX-1.0;
 	ap -> a_ray.r_dir[2]= 2.0*rand()/(double)RAND_MAX-1.0;
 #else
-        ap -> a_ray.r_dir[0]= 2.0*drand48()-1.0;
-        ap -> a_ray.r_dir[1]= 2.0*drand48()-1.0;
-        ap -> a_ray.r_dir[2]= 2.0*drand48()-1.0;
+	ap -> a_ray.r_dir[0]= 2.0*drand48()-1.0;
+	ap -> a_ray.r_dir[1]= 2.0*drand48()-1.0;
+	ap -> a_ray.r_dir[2]= 2.0*drand48()-1.0;
 #endif
       } while (ap -> a_ray.r_dir[0]*ap -> a_ray.r_dir[0] + ap -> a_ray.r_dir[1]*ap -> a_ray.r_dir[1] + ap -> a_ray.r_dir[2]*ap -> a_ray.r_dir[2] > 1);
       /* Normalize Ray Direction */
@@ -742,8 +740,8 @@ void EmitPhotonsRandom(struct application *ap, double ScaleIndirect) {
 
       EPL++;
       for (i= 0; i < PM_MAPS; i++)
-        if (PMap[i] -> StoredPhotons < PMap[i] -> MaxPhotons)
-          EPS[i]++;
+	if (PMap[i] -> StoredPhotons < PMap[i] -> MaxPhotons)
+	  EPS[i]++;
 
       rt_shootray(ap);
 /*    bu_log("1: %d, 2: %d\n",PMap[PM_GLOBAL] -> StoredPhotons, PMap[PM_CAUSTIC] -> StoredPhotons);*/
@@ -1121,7 +1119,7 @@ bu_log("EPL: %d, Adjusted EPL: %d\n",(int)EPL,(int)(EPL*ratio));
     /* Balance KD-Tree */
     for (i= 0; i < 3; i++)
       if (PMap[i] -> StoredPhotons)
-        BuildTree(Emit[i],PMap[i] -> StoredPhotons,PMap[i] -> Root);
+	BuildTree(Emit[i],PMap[i] -> StoredPhotons,PMap[i] -> Root);
 
 
     bu_semaphore_init(PM_SEM_INIT);
@@ -1137,10 +1135,10 @@ bu_log("EPL: %d, Adjusted EPL: %d\n",(int)EPL,(int)(EPL*ratio));
       GPM_RTAB= (struct resource*)malloc(sizeof(struct resource)*cpus);
       bzero(GPM_RTAB,cpus*sizeof(struct resource));
       for (i= 0; i < cpus; i++) {
-        GPM_RTAB[i].re_cpu= i;
-        GPM_RTAB[i].re_magic= RESOURCE_MAGIC;
-        BU_PTBL_SET(&ap -> a_rt_i -> rti_resources, i, &GPM_RTAB[i]);
-        rt_init_resource(&GPM_RTAB[i], GPM_RTAB[i].re_cpu, ap -> a_rt_i);
+	GPM_RTAB[i].re_cpu= i;
+	GPM_RTAB[i].re_magic= RESOURCE_MAGIC;
+	BU_PTBL_SET(&ap -> a_rt_i -> rti_resources, i, &GPM_RTAB[i]);
+	rt_init_resource(&GPM_RTAB[i], GPM_RTAB[i].re_cpu, ap -> a_rt_i);
       }
       bu_parallel(IrradianceThread, cpus, ap);
     } else {
@@ -1153,11 +1151,11 @@ bu_log("EPL: %d, Adjusted EPL: %d\n",(int)EPL,(int)(EPL*ratio));
     if (GPM_IH) {
       Map= (char*)malloc(sizeof(char)*width*height);
       for (i= 0; i < width*height; i++)
-        Map[i]= 0;
+	Map[i]= 0;
       IC= (struct IrradCache*)malloc(sizeof(struct IrradCache)*width*height);
       for (i= 0; i < width*height; i++) {
-        IC[i].List= (struct IrradNode*)malloc(sizeof(struct IrradNode));
-        IC[i].Num= 0;
+	IC[i].List= (struct IrradNode*)malloc(sizeof(struct IrradNode));
+	IC[i].Num= 0;
       }
     }
 
@@ -1194,7 +1192,6 @@ void Swap(struct PSN *a, struct PSN *b) {
   memcpy(b,&c,sizeof(struct PSN));
 /*  bu_log("  SWAP_OT: %.3f,%.3f\n",a -> Dist, b -> Dist);*/
 }
-
 
 
 /*
@@ -1294,8 +1291,8 @@ void LocatePhotons(struct PhotonSearch *Search, struct PNode *Root) {
       Push(Search, Node);
     } else {
       if (Node.Dist < Search -> List[0].Dist) {
-        Pop(Search);
-        Push(Search, Node);
+	Pop(Search);
+	Push(Search, Node);
       }
     }
   }
@@ -1314,15 +1311,15 @@ void LocatePhotons(struct PhotonSearch *Search, struct PNode *Root) {
       MDist= (Search -> Pos[0] - Search -> List[0].P.Pos[0])*(Search -> Pos[0] - Search -> List[0].P.Pos[0])+(Search -> Pos[1] - Search -> List[0].P.Pos[1])*(Search -> Pos[1] - Search -> List[0].P.Pos[1])+(Search -> Pos[2] - Search -> List[0].P.Pos[2])*(Search -> Pos[2] - Search -> List[0].P.Pos[2]);
       MaxInd= 0;
       for (i= 1; i < Search -> Found; i++) {
-        TDist= (Search -> Pos[0] - Search -> List[i].P.Pos[0])*(Search -> Pos[0] - Search -> List[i].P.Pos[0])+(Search -> Pos[1] - Search -> List[i].P.Pos[1])*(Search -> Pos[1] - Search -> List[i].P.Pos[1])+(Search -> Pos[2] - Search -> List[i].P.Pos[2])*(Search -> Pos[2] - Search -> List[i].P.Pos[2]);
-        if (TDist > MDist) {
-          MDist= TDist;
-          MaxInd= i;
-        }
+	TDist= (Search -> Pos[0] - Search -> List[i].P.Pos[0])*(Search -> Pos[0] - Search -> List[i].P.Pos[0])+(Search -> Pos[1] - Search -> List[i].P.Pos[1])*(Search -> Pos[1] - Search -> List[i].P.Pos[1])+(Search -> Pos[2] - Search -> List[i].P.Pos[2])*(Search -> Pos[2] - Search -> List[i].P.Pos[2]);
+	if (TDist > MDist) {
+	  MDist= TDist;
+	  MaxInd= i;
+	}
       }
 
       if (Dist < MDist)
-        Search -> List[MaxInd].P= Root -> P;
+	Search -> List[MaxInd].P= Root -> P;
     }
   }
 #endif
@@ -1358,10 +1355,10 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
     for (i= 0; i < IC[index].Num; i++) {
       dist= (pos[0]-IC[index].List[i].Pos[0])*(pos[0]-IC[index].List[i].Pos[0])+(pos[1]-IC[index].List[i].Pos[1])*(pos[1]-IC[index].List[i].Pos[1])+(pos[2]-IC[index].List[i].Pos[2])*(pos[2]-IC[index].List[i].Pos[2]);
       if (dist < (ScaleFactor/100.0)*(ScaleFactor*100.0)) {
-        irrad[0]= IC[index].List[i].RGB[0];
-        irrad[1]= IC[index].List[i].RGB[1];
-        irrad[2]= IC[index].List[i].RGB[2];
-        return;
+	irrad[0]= IC[index].List[i].RGB[0];
+	irrad[1]= IC[index].List[i].RGB[1];
+	irrad[2]= IC[index].List[i].RGB[2];
+	return;
       }
     }
 

@@ -2267,7 +2267,7 @@ f_get_solid_keypoint(ClientData clientData, Tcl_Interp *interp, int argc, char *
 
 void
 set_e_axes_pos(int both)
-             /* if(!both) then set only curr_e_axes_pos, otherwise
+	     /* if(!both) then set only curr_e_axes_pos, otherwise
 	      set e_axes_pos and curr_e_axes_pos */
 {
 	int	i;
@@ -2471,7 +2471,7 @@ init_sedit(void)
 	if( rt_db_get_internal( &es_int, LAST_SOLID(illump),
 	  dbip, NULL, &rt_uniresource ) < 0 )  {
 	  Tcl_AppendResult(interp, "init_sedit(",
-	  		LAST_SOLID(illump)->d_namep,
+			LAST_SOLID(illump)->d_namep,
 			   "):  solid import failure\n", (char *)NULL);
 	  rt_db_free_internal( &es_int, &rt_uniresource );
 	  return;				/* FAIL */
@@ -2509,7 +2509,7 @@ init_sedit(void)
 		NMG_CK_SNURB(surf);
 		spl_ui = surf->s_size[1]/2;
 		spl_vi = surf->s_size[0]/2;
-	} 
+	}
 	else if ( id == ID_METABALL )
 	{
 		struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)es_int.idb_ptr;
@@ -3580,12 +3580,12 @@ sedit(void)
 			{
 				/* import the new sketch */
 
-			        if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource ) != ID_SKETCH )
-			        {
-			                bu_log( "rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n",
-			                        sketch_name );
-			        	extr->skt = (struct rt_sketch_internal *)NULL;
-			        }
+				if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource ) != ID_SKETCH )
+				{
+					bu_log( "rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n",
+						sketch_name );
+					extr->skt = (struct rt_sketch_internal *)NULL;
+				}
 				else
 					extr->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
 			}
@@ -5705,7 +5705,6 @@ sedit(void)
 				break;
 
 
-
 			VSUB2( diff, new_pt, &bot->vertices[v1*3] );
 			VMOVE( &bot->vertices[v1*3] , new_pt );
 			VADD2( &bot->vertices[v2*3], &bot->vertices[v2*3], diff );
@@ -5838,15 +5837,15 @@ sedit(void)
 		    if (BU_LIST_IS_EMPTY(&es_metaballpt->l)) {
 			bu_log("Cannot delete, this metaball has no point");
 			break;
-		    } 
+		    }
 		    p = BU_LIST_PREV(wdb_metaballpt, &es_metaballpt->l);
-		    if (p->l.magic == BU_LIST_HEAD_MAGIC) 
+		    if (p->l.magic == BU_LIST_HEAD_MAGIC)
 			es_metaballpt = BU_LIST_NEXT( wdb_metaballpt, &es_metaballpt->l );
-		    else 
+		    else
 			es_metaballpt = p;
 		    BU_LIST_DQ(&tmp->l);
 		    free(tmp);
-		    if (es_metaballpt->l.magic == BU_LIST_HEAD_MAGIC) 
+		    if (es_metaballpt->l.magic == BU_LIST_HEAD_MAGIC)
 			bu_log("WARNING: Last point of this metaball has been deleted.");
 		}
 		break;
@@ -6043,10 +6042,10 @@ sedit_mouse( const vect_t mousevec )
     break;
   case ECMD_CLINE_MOVE_H:
     {
-    	struct rt_cline_internal *cli =
-    		(struct rt_cline_internal *)es_int.idb_ptr;
+	struct rt_cline_internal *cli =
+		(struct rt_cline_internal *)es_int.idb_ptr;
 
-    	RT_CLINE_CK_MAGIC( cli );
+	RT_CLINE_CK_MAGIC( cli );
 
       MAT4X3PNT(pos_view, view_state->vs_vop->vo_model2view, curr_e_axes_pos);
       pos_view[X] = mousevec[X];
@@ -6098,109 +6097,109 @@ sedit_mouse( const vect_t mousevec )
     break;
   case ECMD_BOT_PICKV:
     {
-  	struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
-  	int tmp_vert;
-    	char tmp_msg[256];
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+	int tmp_vert;
+	char tmp_msg[256];
 
-  	RT_BOT_CK_MAGIC( bot );
+	RT_BOT_CK_MAGIC( bot );
 
 	MAT4X3PNT(pos_view, view_state->vs_vop->vo_model2view, curr_e_axes_pos);
 	pos_view[X] = mousevec[X];
 	pos_view[Y] = mousevec[Y];
 
-  	tmp_vert = rt_bot_find_v_nearest_pt2(bot, pos_view, view_state->vs_vop->vo_model2view);
-  	if( tmp_vert < 0 )
-  	{
-  		Tcl_AppendResult(interp, "ECMD_BOT_PICKV: unable to find a vertex!!!\n", (char *)NULL );
-  		mged_print_result( TCL_ERROR );
-  		return;
-  	}
+	tmp_vert = rt_bot_find_v_nearest_pt2(bot, pos_view, view_state->vs_vop->vo_model2view);
+	if( tmp_vert < 0 )
+	{
+		Tcl_AppendResult(interp, "ECMD_BOT_PICKV: unable to find a vertex!!!\n", (char *)NULL );
+		mged_print_result( TCL_ERROR );
+		return;
+	}
 
-  	bot_verts[0] = tmp_vert;
-  	bot_verts[1] = -1;
-  	bot_verts[2] = -1;
+	bot_verts[0] = tmp_vert;
+	bot_verts[1] = -1;
+	bot_verts[2] = -1;
 	sprintf( tmp_msg, "picked point at (%g %g %g), vertex #%d\n", V3ARGS( &bot->vertices[tmp_vert*3] ), tmp_vert );
-    	Tcl_AppendResult(interp, tmp_msg, (char *)NULL );
+	Tcl_AppendResult(interp, tmp_msg, (char *)NULL );
 	mged_print_result( TCL_OK );
     }
     break;
   case ECMD_BOT_PICKE:
     {
-  	struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
-    	int vert1, vert2;
-    	char tmp_msg[256];
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+	int vert1, vert2;
+	char tmp_msg[256];
 
-    	RT_BOT_CK_MAGIC( bot );
+	RT_BOT_CK_MAGIC( bot );
 
 	MAT4X3PNT(pos_view, view_state->vs_vop->vo_model2view, curr_e_axes_pos);
 	pos_view[X] = mousevec[X];
 	pos_view[Y] = mousevec[Y];
 
-    	if (rt_bot_find_e_nearest_pt2(&vert1, &vert2, bot, pos_view, view_state->vs_vop->vo_model2view))
-  	{
-  		Tcl_AppendResult(interp, "ECMD_BOT_PICKE: unable to find an edge!!!\n", (char *)NULL );
-  		mged_print_result( TCL_ERROR );
-  		return;
-  	}
+	if (rt_bot_find_e_nearest_pt2(&vert1, &vert2, bot, pos_view, view_state->vs_vop->vo_model2view))
+	{
+		Tcl_AppendResult(interp, "ECMD_BOT_PICKE: unable to find an edge!!!\n", (char *)NULL );
+		mged_print_result( TCL_ERROR );
+		return;
+	}
 
-  	bot_verts[0] = vert1;
-  	bot_verts[1] = vert2;
-  	bot_verts[2] = -1;
+	bot_verts[0] = vert1;
+	bot_verts[1] = vert2;
+	bot_verts[2] = -1;
 	sprintf( tmp_msg, "picked edge from (%g %g %g) to (%g %g %g)\n", V3ARGS( &bot->vertices[vert1*3] ), V3ARGS( &bot->vertices[vert2*3] ) );
-    	Tcl_AppendResult(interp, tmp_msg, (char *)NULL );
+	Tcl_AppendResult(interp, tmp_msg, (char *)NULL );
 	mged_print_result( TCL_OK );
     }
     break;
   case ECMD_BOT_PICKT:
-  	{
+	{
 		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
-  		point_t start_pt, tmp;
-  		vect_t dir;
-  		int i, hits, ret_tcl;
-  		int v1, v2, v3;
-  		point_t pt1, pt2, pt3;
+		point_t start_pt, tmp;
+		vect_t dir;
+		int i, hits, ret_tcl;
+		int v1, v2, v3;
+		point_t pt1, pt2, pt3;
 		struct bu_vls vls;
 
-  		RT_BOT_CK_MAGIC( bot );
+		RT_BOT_CK_MAGIC( bot );
 
 		bu_vls_init( &vls );
 
-  		VSET( tmp, mousevec[X], mousevec[Y], 0.0 );
-  		MAT4X3PNT(start_pt, view_state->vs_vop->vo_view2model, tmp);
-  		VSET(tmp, 0, 0, 1 );
-  		MAT4X3VEC(dir, view_state->vs_vop->vo_view2model, tmp);
+		VSET( tmp, mousevec[X], mousevec[Y], 0.0 );
+		MAT4X3PNT(start_pt, view_state->vs_vop->vo_view2model, tmp);
+		VSET(tmp, 0, 0, 1 );
+		MAT4X3VEC(dir, view_state->vs_vop->vo_view2model, tmp);
 
 		bu_vls_strcat( &vls, " {" );
 		hits = 0;
-  		for( i=0 ; i<bot->num_faces ; i++ )
-  		{
-  			v1 = bot->faces[i*3];
-  			v2 = bot->faces[i*3+1];
-  			v3 = bot->faces[i*3+2];
-  			VMOVE( pt1, &bot->vertices[v1*3] );
-  			VMOVE( pt2, &bot->vertices[v2*3] );
-  			VMOVE( pt3, &bot->vertices[v3*3] );
+		for( i=0 ; i<bot->num_faces ; i++ )
+		{
+			v1 = bot->faces[i*3];
+			v2 = bot->faces[i*3+1];
+			v3 = bot->faces[i*3+2];
+			VMOVE( pt1, &bot->vertices[v1*3] );
+			VMOVE( pt2, &bot->vertices[v2*3] );
+			VMOVE( pt3, &bot->vertices[v3*3] );
 
-  			if( bn_does_ray_isect_tri(start_pt, dir, pt1, pt2, pt3, tmp ) )
+			if( bn_does_ray_isect_tri(start_pt, dir, pt1, pt2, pt3, tmp ) )
 			  {
 			    hits++;
 			    bu_vls_printf( &vls, " { %d %d %d }", v1, v2, v3 );
 			  }
-  		}
+		}
 		bu_vls_strcat( &vls, " } " );
 
 		if( hits == 0 )
-  		{
-	  		bot_verts[0] = -1;
-	  		bot_verts[1] = -1;
-	  		bot_verts[2] = -1;
+		{
+			bot_verts[0] = -1;
+			bot_verts[1] = -1;
+			bot_verts[2] = -1;
 			bu_vls_free( &vls );
-  		}
-  		if( hits == 1 )
-  		{
-  			(void)sscanf( bu_vls_addr( &vls ), " { { %d %d %d", &bot_verts[0], &bot_verts[1], &bot_verts[2] );
+		}
+		if( hits == 1 )
+		{
+			(void)sscanf( bu_vls_addr( &vls ), " { { %d %d %d", &bot_verts[0], &bot_verts[1], &bot_verts[2] );
 			bu_vls_free( &vls );
-  		}
+		}
 		else
 		{
 			Tcl_LinkVar( interp, "bot_v1", (char *)&bot_verts[0], TCL_LINK_INT );
@@ -6218,8 +6217,8 @@ sedit_mouse( const vect_t mousevec )
 			  break;
 			}
 		}
-  	}
-  	break;
+	}
+	break;
   case ECMD_NMG_EPICK:
     /* XXX Should just leave desired location in es_mparam for sedit() */
     {
@@ -7810,7 +7809,7 @@ init_oedit_guts(void)
 	if( rt_db_get_internal( &es_int, LAST_SOLID(illump),
 	    dbip, NULL, &rt_uniresource ) < 0 )  {
 		Tcl_AppendResult(interp, "init_oedit(",
-	    			LAST_SOLID(illump)->d_namep,
+				LAST_SOLID(illump)->d_namep,
 				 "):  solid import failure\n", (char *)NULL);
 		rt_db_free_internal( &es_int, &rt_uniresource );
 		button(BE_REJECT);
@@ -8251,7 +8250,7 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 	    return TCL_ERROR;
     }
 
-    if( es_menu == MENU_PIPE_PT_OD || es_menu == MENU_PIPE_PT_ID || es_menu == MENU_PIPE_SCALE_ID 
+    if( es_menu == MENU_PIPE_PT_OD || es_menu == MENU_PIPE_PT_ID || es_menu == MENU_PIPE_SCALE_ID
 	    || es_menu == MENU_METABALL_SET_THRESHOLD || es_menu == MENU_METABALL_SET_METHOD)
       {
 	if( es_para[0] < 0.0 )
@@ -8662,21 +8661,21 @@ label_edited_solid(
 			POINT_LABEL( pos_view, 'V' );
 
 			VADD2( work, part->part_V, part->part_H );
-                        MAT4X3PNT(pos_view, xform, work);
-                        POINT_LABEL( pos_view, 'H' );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'H' );
 
 			VMOVE( Ru, part->part_H );
 			VUNITIZE( Ru );
 			bn_vec_ortho( ortho, Ru );
 			VSCALE( work, ortho, part->part_vrad );
 			VADD2( work, part->part_V, work );
-                        MAT4X3PNT( pos_view, xform, work );
-                        POINT_LABEL( pos_view, 'v' );
+			MAT4X3PNT( pos_view, xform, work );
+			POINT_LABEL( pos_view, 'v' );
 
 			VSCALE( work, ortho, part->part_hrad );
 			VADD3( work, part->part_V, part->part_H, work );
-                        MAT4X3PNT( pos_view, xform, work );
-                        POINT_LABEL( pos_view, 'h' );
+			MAT4X3PNT( pos_view, xform, work );
+			POINT_LABEL( pos_view, 'h' );
 		}
 		break;
 
@@ -9566,11 +9565,11 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   pnto = Tcl_NewObj();
   /* insert full pathname */
   {
-  	struct bu_vls str;
-  	bu_vls_init(&str);
-  	db_path_to_vls(&str, &illump->s_fullpath);
-        Tcl_AppendStringsToObj(pnto, bu_vls_addr(&str), NULL );
-  	bu_vls_free(&str);
+	struct bu_vls str;
+	bu_vls_init(&str);
+	db_path_to_vls(&str, &illump->s_fullpath);
+	Tcl_AppendStringsToObj(pnto, bu_vls_addr(&str), NULL );
+	bu_vls_free(&str);
   }
 
   /* insert solid type and parameters */
@@ -9691,7 +9690,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   if( rt_db_get_internal( &es_int, LAST_SOLID(illump),
    dbip, NULL, &rt_uniresource ) < 0 )  {
     Tcl_AppendResult(interp, "sedit_reset(",
-   			LAST_SOLID(illump)->d_namep,
+			LAST_SOLID(illump)->d_namep,
 		     "):  solid import failure\n", (char *)NULL);
     return TCL_ERROR;				/* FAIL */
   }

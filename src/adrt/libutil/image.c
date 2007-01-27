@@ -44,7 +44,6 @@
 #endif
 
 
-
 void util_image_init() {
 }
 

@@ -301,7 +301,7 @@ com_table		*ctp;
 	{
 		com_usage(ctp);
 		return;
-        }
+	}
 	i += rc;
 	while (isspace(*(buffer+i)))
 		++i;
@@ -328,7 +328,7 @@ com_table		*ctp;
 	direct(X) = Dir[X];
 	direct(Y) = Dir[Y];
 	direct(Z) = Dir[Z];
-        dir2ae();
+	dir2ae();
 }
 
 void quit()
@@ -359,7 +359,6 @@ int			ctp;
 	if (rtip) rt_clean(rtip);
 	do_rt_gettrees(rtip, NULL, 0);
     }
-
 
 
     if (do_backout)

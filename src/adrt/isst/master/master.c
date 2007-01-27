@@ -218,8 +218,8 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
     if(!(frame_num % 7)) {
       gettimeofday(&cur, NULL);
       printf("FPS: %.3f  SLAVES: %d    \r",
-            (tfloat)(frame_num) / ((cur.tv_sec + (tfloat)cur.tv_usec/1000000.0) - (start.tv_sec + (tfloat)start.tv_usec/1000000.0)),
-            tienet_master_socket_num);
+	    (tfloat)(frame_num) / ((cur.tv_sec + (tfloat)cur.tv_usec/1000000.0) - (start.tv_sec + (tfloat)start.tv_usec/1000000.0)),
+	    tienet_master_socket_num);
       start = cur;
       frame_num = 0;
       fflush(stdout);
@@ -339,9 +339,9 @@ printf("component[%d]: %s\n", i, name);
 
       /* Alert the observers that a new frame is available for viewing */
       for(sock = isst_master_socklist; sock; sock = sock->next) {
-        if(sock->next)
-          if(!sock->frame_sem.val)
-            tienet_sem_post(&(sock->frame_sem));
+	if(sock->next)
+	  if(!sock->frame_sem.val)
+	    tienet_sem_post(&(sock->frame_sem));
       }
     }
   }
@@ -410,152 +410,152 @@ void* isst_master_networking(void *ptr) {
     for(sock = isst_master_socklist; sock; sock = sock->next) {
       /* if no longer alive then mark each of the active connections as no longer active */
       if(!isst_master_alive)
-        sock->active = 0;
+	sock->active = 0;
 
       /* check if activity was on this socket */
       if(FD_ISSET(sock->num, &readfds)) {
-        if(sock->num == master_socket) {
-          /* new connection */
-          new_socket = accept(master_socket, (struct sockaddr *)&observer, &addrlen);
-          if(new_socket >= 0) {
-            tmp = isst_master_socklist;
-            isst_master_socklist = (isst_master_socket_t *)malloc(sizeof(isst_master_socket_t));
-            isst_master_socklist->num = new_socket;
-            isst_master_socklist->controller = isst_master_active_connections ? 0 : 1;
-            isst_master_socklist->active = 1;
-            isst_master_socklist->next = tmp;
-            isst_master_socklist->prev = NULL;
-            tienet_sem_init(&(isst_master_socklist->frame_sem), 0);
-            tmp->prev = isst_master_socklist;
-            if(new_socket > highest_fd)
-              highest_fd = new_socket;
-            isst_master_active_connections++;
-          }
-        } else {
-          op = 255;
-          /* observer communication */
-          error = tienet_recv(sock->num, &op, 1, 0);
+	if(sock->num == master_socket) {
+	  /* new connection */
+	  new_socket = accept(master_socket, (struct sockaddr *)&observer, &addrlen);
+	  if(new_socket >= 0) {
+	    tmp = isst_master_socklist;
+	    isst_master_socklist = (isst_master_socket_t *)malloc(sizeof(isst_master_socket_t));
+	    isst_master_socklist->num = new_socket;
+	    isst_master_socklist->controller = isst_master_active_connections ? 0 : 1;
+	    isst_master_socklist->active = 1;
+	    isst_master_socklist->next = tmp;
+	    isst_master_socklist->prev = NULL;
+	    tienet_sem_init(&(isst_master_socklist->frame_sem), 0);
+	    tmp->prev = isst_master_socklist;
+	    if(new_socket > highest_fd)
+	      highest_fd = new_socket;
+	    isst_master_active_connections++;
+	  }
+	} else {
+	  op = 255;
+	  /* observer communication */
+	  error = tienet_recv(sock->num, &op, 1, 0);
 
-          /* remove socket from pool if there's an error, i.e slave disconnected */
-          if(error || op == ISST_NET_OP_QUIT || !sock->active) {
-            op = ISST_NET_OP_QUIT;
-            tienet_send(sock->num, &op, 1, 0);
+	  /* remove socket from pool if there's an error, i.e slave disconnected */
+	  if(error || op == ISST_NET_OP_QUIT || !sock->active) {
+	    op = ISST_NET_OP_QUIT;
+	    tienet_send(sock->num, &op, 1, 0);
 
-            tmp = sock;
-            if(sock->prev)
-              sock->prev->next = sock->next;
-            /* master is always last, no need to check for sock->next next */
-            sock->next->prev = sock->prev;
-            if(sock == isst_master_socklist)
-              isst_master_socklist = isst_master_socklist->next;
-            close(sock->num);
-            sock = sock->next;
-            free(tmp);
-            isst_master_active_connections--;
+	    tmp = sock;
+	    if(sock->prev)
+	      sock->prev->next = sock->next;
+	    /* master is always last, no need to check for sock->next next */
+	    sock->next->prev = sock->prev;
+	    if(sock == isst_master_socklist)
+	      isst_master_socklist = isst_master_socklist->next;
+	    close(sock->num);
+	    sock = sock->next;
+	    free(tmp);
+	    isst_master_active_connections--;
 
-          } else {
-            switch(op) {
-              case ISST_NET_OP_INIT:
-                /* Send screen width and height */
-                endian = 1;
-                tienet_send(sock->num, &endian, sizeof(short), 0);
-                tienet_send(sock->num, &db.env.img_w, sizeof(int), 0);
-                tienet_send(sock->num, &db.env.img_h, sizeof(int), 0);
-                break;
+	  } else {
+	    switch(op) {
+	      case ISST_NET_OP_INIT:
+		/* Send screen width and height */
+		endian = 1;
+		tienet_send(sock->num, &endian, sizeof(short), 0);
+		tienet_send(sock->num, &db.env.img_w, sizeof(int), 0);
+		tienet_send(sock->num, &db.env.img_h, sizeof(int), 0);
+		break;
 
-              case ISST_NET_OP_FRAME:
-                tienet_sem_wait(&(sock->frame_sem));
+	      case ISST_NET_OP_FRAME:
+		tienet_sem_wait(&(sock->frame_sem));
 
-                /* Let observer know everything is okay, continue as usual. */
-                op = ISST_NET_OP_NOP;
-                tienet_send(sock->num, &op, 1, 0);
+		/* Let observer know everything is okay, continue as usual. */
+		op = ISST_NET_OP_NOP;
+		tienet_send(sock->num, &op, 1, 0);
 
-                {
-                  isst_event_t event_queue[64];
-                  uint8_t event_num;
+		{
+		  isst_event_t event_queue[64];
+		  uint8_t event_num;
 
-                  /* Get the event Queue and process it */
-                  tienet_recv(sock->num, &event_num, sizeof(uint8_t), 0);
-                  if(event_num)
-                    tienet_recv(sock->num, event_queue, event_num * sizeof(isst_event_t), 0);
-                  isst_master_process_events(event_queue, event_num, sock);
-                }
+		  /* Get the event Queue and process it */
+		  tienet_recv(sock->num, &event_num, sizeof(uint8_t), 0);
+		  if(event_num)
+		    tienet_recv(sock->num, event_queue, event_num * sizeof(isst_event_t), 0);
+		  isst_master_process_events(event_queue, event_num, sock);
+		}
 
 #if ISST_USE_COMPRESSION
-                {
-                  unsigned long dest_len;
-                  unsigned int comp_size;
-                  dest_len = 3 * db.env.img_w * db.env.img_h + 1024;
+		{
+		  unsigned long dest_len;
+		  unsigned int comp_size;
+		  dest_len = 3 * db.env.img_w * db.env.img_h + 1024;
 
-                  /* frame data */
-                  pthread_mutex_lock(&isst_master_observer_frame_mut);
-                  compress(&((char *)comp_buf)[sizeof(unsigned int)], &dest_len, isst_master_observer_frame, 3 * db.env.img_w * db.env.img_h);
-                  pthread_mutex_unlock(&isst_master_observer_frame_mut);
-                  comp_size = dest_len;
-                  memcpy(comp_buf, &comp_size, sizeof(unsigned int));
-                  /* int for frame size in bytes followed by actual rgb frame data */
-                  tienet_send(sock->num, comp_buf, comp_size + sizeof(unsigned int), 0);
-                }
+		  /* frame data */
+		  pthread_mutex_lock(&isst_master_observer_frame_mut);
+		  compress(&((char *)comp_buf)[sizeof(unsigned int)], &dest_len, isst_master_observer_frame, 3 * db.env.img_w * db.env.img_h);
+		  pthread_mutex_unlock(&isst_master_observer_frame_mut);
+		  comp_size = dest_len;
+		  memcpy(comp_buf, &comp_size, sizeof(unsigned int));
+		  /* int for frame size in bytes followed by actual rgb frame data */
+		  tienet_send(sock->num, comp_buf, comp_size + sizeof(unsigned int), 0);
+		}
 #else
-                /* frame data */
-                pthread_mutex_lock(&isst_master_observer_frame_mut);
-                tienet_send(sock->num, isst_master_observer_frame, db.env.img_w * db.env.img_h * 3, 0);
-                pthread_mutex_unlock(&isst_master_observer_frame_mut);
+		/* frame data */
+		pthread_mutex_lock(&isst_master_observer_frame_mut);
+		tienet_send(sock->num, isst_master_observer_frame, db.env.img_w * db.env.img_h * 3, 0);
+		pthread_mutex_unlock(&isst_master_observer_frame_mut);
 #endif
 
-                /* Send overlay data */
-                {
-                  isst_overlay_data_t overlay;
+		/* Send overlay data */
+		{
+		  isst_overlay_data_t overlay;
 
-                  overlay.camera_position = isst_master_camera_position;
-                  overlay.camera_azimuth = isst_master_camera_azimuth;
-                  overlay.camera_elevation = isst_master_camera_elevation;
-                  overlay.compute_nodes = tienet_master_active_slaves;
-                  overlay.in_hit = isst_master_in_hit;
-                  overlay.out_hit = isst_master_out_hit;
-                  overlay.scale = isst_master_scale;
-                  sprintf(overlay.resolution, "%dx%d", db.env.img_w, db.env.img_h);
-                  overlay.controller = sock->controller;
+		  overlay.camera_position = isst_master_camera_position;
+		  overlay.camera_azimuth = isst_master_camera_azimuth;
+		  overlay.camera_elevation = isst_master_camera_elevation;
+		  overlay.compute_nodes = tienet_master_active_slaves;
+		  overlay.in_hit = isst_master_in_hit;
+		  overlay.out_hit = isst_master_out_hit;
+		  overlay.scale = isst_master_scale;
+		  sprintf(overlay.resolution, "%dx%d", db.env.img_w, db.env.img_h);
+		  overlay.controller = sock->controller;
 
-                  tienet_send(sock->num, &overlay, sizeof(isst_overlay_data_t), 0);
-                }
+		  tienet_send(sock->num, &overlay, sizeof(isst_overlay_data_t), 0);
+		}
 
-                /* Lock things down so that isst_master_update data doesn't get tainted */
-                pthread_mutex_lock(&isst_master_update_mut);
+		/* Lock things down so that isst_master_update data doesn't get tainted */
+		pthread_mutex_lock(&isst_master_update_mut);
 
-                pthread_mutex_unlock(&isst_master_update_mut);
-                break;
+		pthread_mutex_unlock(&isst_master_update_mut);
+		break;
 
-              case ISST_NET_OP_MESG:
-                {
-                  char *string;
-                  int len;
+	      case ISST_NET_OP_MESG:
+		{
+		  char *string;
+		  int len;
 
-                  string = (char *)malloc(1024);
-                  tienet_recv(sock->num, &len, 1, 0);
-                  tienet_recv(sock->num, string, len, 0);
+		  string = (char *)malloc(1024);
+		  tienet_recv(sock->num, &len, 1, 0);
+		  tienet_recv(sock->num, string, len, 0);
 
-                  isst_python_code(string);
-                  len = strlen(string) + 1;
+		  isst_python_code(string);
+		  len = strlen(string) + 1;
 
-                  tienet_send(sock->num, &len, 1, 0);
-                  tienet_send(sock->num, string, len, 0);
+		  tienet_send(sock->num, &len, 1, 0);
+		  tienet_send(sock->num, string, len, 0);
 
-                  free(string);
-                }
-                break;
-
-
-              case ISST_NET_OP_QUIT:
-                isst_master_active_connections = 0;
-                break;
+		  free(string);
+		}
+		break;
 
 
-              default:
-                break;
-            }
-          }
-        }
+	      case ISST_NET_OP_QUIT:
+		isst_master_active_connections = 0;
+		break;
+
+
+	      default:
+		break;
+	    }
+	  }
+	}
       }
     }
 
@@ -563,7 +563,7 @@ void* isst_master_networking(void *ptr) {
     highest_fd = 0;
     for(sock = isst_master_socklist; sock; sock = sock->next) {
       if(sock->num > highest_fd)
-        highest_fd = sock->num;
+	highest_fd = sock->num;
       FD_SET(sock->num, &readfds);
     }
   }
@@ -646,392 +646,392 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
     switch(event_queue[i].type) {
       printf("event_type: %d\n", event_queue[i].type);
       case SDL_KEYDOWN:
-        update = 1;
-        switch(event_queue[i].keysym) {
-          case SDLK_LSHIFT:
-          case SDLK_RSHIFT:
-            isst_master_shift_enabled = 1;
-            break;
-
-          case SDLK_1: /* RENDER_METHOD_PHONG */
-            isst_master_rm = RENDER_METHOD_PHONG;
-            break;
-
-          case SDLK_2: /* RENDER_METHOD_PLANE */
-            isst_master_rm = RENDER_METHOD_PLANE;
-            break;
-
-          case SDLK_3: /* RENDER_METHOD_SPALL */
-            isst_master_rm = RENDER_METHOD_SPALL;
-            break;
-
-          case SDLK_4: /* RENDER_METHOD_COMPONENT */
-            isst_master_rm = RENDER_METHOD_COMPONENT;
-            break;
-
-          case SDLK_8: /* RENDER_METHOD_DEPTH */
-            isst_master_rm = RENDER_METHOD_DEPTH;
-            break;
-
-          case SDLK_9: /* RENDER_METHOD_GRID */
-            isst_master_rm = RENDER_METHOD_GRID;
-            break;
-
-          case SDLK_0: /* RENDER_METHOD_NORMAL */
-            isst_master_rm = RENDER_METHOD_NORMAL;
-            break;
-
-
-          case SDLK_UP:
-            MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
-            MATH_VEC_MUL_SCALAR(vec, vec, isst_master_scale*10.0);
-            MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec);
-            break;
-
-          case SDLK_DOWN:
-            MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
-            MATH_VEC_MUL_SCALAR(vec, vec, isst_master_scale*10.0);
-            MATH_VEC_SUB(isst_master_camera_position, isst_master_camera_position, vec);
-            break;
-
-          case SDLK_LEFT:
-            /* strafe left */
-            MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
-            MATH_VEC_SET(vec2, 0, 0, 1);
-            MATH_VEC_CROSS(vec3, vec2, vec);
-            MATH_VEC_MUL_SCALAR(vec3, vec3, (isst_master_scale*10.0));
-            MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec3);
-            break;
-
-          case SDLK_RIGHT:
-            /* strafe right */
-            MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
-            MATH_VEC_SET(vec2, 0, 0, 1);
-            MATH_VEC_CROSS(vec3, vec2, vec);
-            MATH_VEC_MUL_SCALAR(vec3, vec3, (isst_master_scale*10.0));
-            MATH_VEC_SUB(isst_master_camera_position, isst_master_camera_position, vec3);
-            break;
-
-          case SDLK_F12: /* Server Shutdown and quit*/
-            isst_master_alive = 0;
-            break;
-
-          case SDLK_d: /* detach */
-            sock->active = 0;
-            break;
-
-          case SDLK_e: /* export frame */
-#if 0
-            pthread_mutex_lock(&isst_observer_gui_mut);
-            {
-              char filename[32];
-              void *image24;
-              strcpy(filename, "frame.ppm");
-              image24 = malloc(3 * screen_w * screen_h);
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN
-              util_image_convert_32to24(image24, util_display_screen->pixels, screen_w, screen_h, 0);
-#else
-              util_image_convert_32to24(image24, util_display_screen->pixels, screen_w, screen_h, 1);
-#endif
-              util_display_text_input("export_frame", filename, 32);
-              util_image_save_ppm(filename, image24, screen_w, screen_h);
-            }
-            pthread_mutex_unlock(&isst_observer_gui_mut);
-#endif
-            break;
-
-          case SDLK_f: /* fullscreen toggle */
-            /* Reserved for Fullscreen */
-            break;
-
-	  case SDLK_g: /* grab mouse */
-            isst_master_mouse_grab = isst_master_mouse_grab ^ 1;
+	update = 1;
+	switch(event_queue[i].keysym) {
+	  case SDLK_LSHIFT:
+	  case SDLK_RSHIFT:
+	    isst_master_shift_enabled = 1;
 	    break;
 
-          case SDLK_KP1: /* front, back */
-            {
-              tfloat dist;
+	  case SDLK_1: /* RENDER_METHOD_PHONG */
+	    isst_master_rm = RENDER_METHOD_PHONG;
+	    break;
 
-              /* distance to center of rotation */
-              MATH_VEC_SUB(vec, isst_master_camera_position, isst_master_cor);
-              MATH_VEC_DOT(dist, vec, vec);
-              dist = sqrt(dist);
+	  case SDLK_2: /* RENDER_METHOD_PLANE */
+	    isst_master_rm = RENDER_METHOD_PLANE;
+	    break;
 
-              isst_master_camera_position = isst_master_cor;
-              if(isst_master_shift_enabled) {
-                isst_master_camera_position.v[0] -= dist;
-                isst_master_camera_azimuth = 180;
-                isst_master_camera_elevation = 0;
-              } else {
-                isst_master_camera_position.v[0] += dist;
-                isst_master_camera_azimuth = 0;
-                isst_master_camera_elevation = 0;
-              }
-            }
-            break;
+	  case SDLK_3: /* RENDER_METHOD_SPALL */
+	    isst_master_rm = RENDER_METHOD_SPALL;
+	    break;
 
-          case SDLK_KP3: /* right, left */
-            {
-              tfloat dist;
+	  case SDLK_4: /* RENDER_METHOD_COMPONENT */
+	    isst_master_rm = RENDER_METHOD_COMPONENT;
+	    break;
 
-              /* distance to center of rotation */
-              MATH_VEC_SUB(vec, isst_master_camera_position, isst_master_cor);
-              MATH_VEC_DOT(dist, vec, vec);
-              dist = sqrt(dist);
+	  case SDLK_8: /* RENDER_METHOD_DEPTH */
+	    isst_master_rm = RENDER_METHOD_DEPTH;
+	    break;
 
-              isst_master_camera_position = isst_master_cor;
-              if(isst_master_shift_enabled) {
-                isst_master_camera_position.v[1] -= dist;
-                isst_master_camera_azimuth = 270;
-                isst_master_camera_elevation = 0;
-              } else {
-                isst_master_camera_position.v[1] += dist;
-                isst_master_camera_azimuth = 90;
-                isst_master_camera_elevation = 0;
-              }
-            }
-            break;
+	  case SDLK_9: /* RENDER_METHOD_GRID */
+	    isst_master_rm = RENDER_METHOD_GRID;
+	    break;
 
-          case SDLK_KP7: /* top, bottom */
-            {
-              tfloat dist;
-
-              /* distance to center of rotation */
-              MATH_VEC_SUB(vec, isst_master_camera_position, isst_master_cor);
-              MATH_VEC_DOT(dist, vec, vec);
-              dist = sqrt(dist);
-
-              isst_master_camera_position = isst_master_cor;
-              if(isst_master_shift_enabled) {
-                isst_master_camera_position.v[2] -= dist;
-                isst_master_camera_azimuth = 0;
-                isst_master_camera_elevation = -90 + 0.01;
-              } else {
-                isst_master_camera_position.v[2] += dist;
-                isst_master_camera_azimuth = 0;
-                isst_master_camera_elevation = 90 - 0.01;
-              }
-            }
-            break;
-
-          case SDLK_KP0: /* set camera position and direction to shot position and direction */
-            isst_master_camera_position = isst_master_shot_position;
-            /* project and unitize shot vector onto xy plane */
-            vec = isst_master_shot_direction;
-            vec.v[2] = 0;
-            MATH_VEC_UNITIZE(vec);
-
-            isst_master_camera_azimuth = fmod(180 + (vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*MATH_RAD2DEG : acos(vec.v[0])*MATH_RAD2DEG), 360.0);
-            isst_master_camera_elevation = -asin(isst_master_shot_direction.v[2]) * MATH_RAD2DEG;
-            break;
+	  case SDLK_0: /* RENDER_METHOD_NORMAL */
+	    isst_master_rm = RENDER_METHOD_NORMAL;
+	    break;
 
 
-          case SDLK_KP_DIVIDE: /* shotline */
-            {
-              void *mesg;
-              common_work_t work;
-              TIE_3 direction;
-              int dlen;
-              char op;
+	  case SDLK_UP:
+	    MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
+	    MATH_VEC_MUL_SCALAR(vec, vec, isst_master_scale*10.0);
+	    MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec);
+	    break;
 
-              /* Queue a work unit for a shot needed for the plane render method */
-              mesg = malloc(sizeof(common_work_t) + 1 + 2*sizeof(TIE_3));
-              dlen = 0;
+	  case SDLK_DOWN:
+	    MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
+	    MATH_VEC_MUL_SCALAR(vec, vec, isst_master_scale*10.0);
+	    MATH_VEC_SUB(isst_master_camera_position, isst_master_camera_position, vec);
+	    break;
 
-              work.orig_x = 0;
-              work.orig_y = 0;
-              work.size_x = 0;
-              work.size_y = 0;
+	  case SDLK_LEFT:
+	    /* strafe left */
+	    MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
+	    MATH_VEC_SET(vec2, 0, 0, 1);
+	    MATH_VEC_CROSS(vec3, vec2, vec);
+	    MATH_VEC_MUL_SCALAR(vec3, vec3, (isst_master_scale*10.0));
+	    MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec3);
+	    break;
 
-              memcpy(&((char *)mesg)[dlen], &work, sizeof(common_work_t));
-              dlen += sizeof(common_work_t);
+	  case SDLK_RIGHT:
+	    /* strafe right */
+	    MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
+	    MATH_VEC_SET(vec2, 0, 0, 1);
+	    MATH_VEC_CROSS(vec3, vec2, vec);
+	    MATH_VEC_MUL_SCALAR(vec3, vec3, (isst_master_scale*10.0));
+	    MATH_VEC_SUB(isst_master_camera_position, isst_master_camera_position, vec3);
+	    break;
 
-              /* function */
-              op = ISST_OP_SHOT;
-              memcpy(&((char *)mesg)[dlen], &op, 1);
-              dlen += 1;
+	  case SDLK_F12: /* Server Shutdown and quit*/
+	    isst_master_alive = 0;
+	    break;
 
-              /* position */
-              memcpy(&((char *)mesg)[dlen], &isst_master_camera_position, sizeof(TIE_3));
-              dlen += sizeof(TIE_3);
+	  case SDLK_d: /* detach */
+	    sock->active = 0;
+	    break;
 
-              MATH_VEC_SUB(direction, isst_master_camera_focus, isst_master_camera_position);
-              MATH_VEC_UNITIZE(direction);
+	  case SDLK_e: /* export frame */
+#if 0
+	    pthread_mutex_lock(&isst_observer_gui_mut);
+	    {
+	      char filename[32];
+	      void *image24;
+	      strcpy(filename, "frame.ppm");
+	      image24 = malloc(3 * screen_w * screen_h);
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+	      util_image_convert_32to24(image24, util_display_screen->pixels, screen_w, screen_h, 0);
+#else
+	      util_image_convert_32to24(image24, util_display_screen->pixels, screen_w, screen_h, 1);
+#endif
+	      util_display_text_input("export_frame", filename, 32);
+	      util_image_save_ppm(filename, image24, screen_w, screen_h);
+	    }
+	    pthread_mutex_unlock(&isst_observer_gui_mut);
+#endif
+	    break;
 
-              /* direction */
-              memcpy(&((char *)mesg)[dlen], &direction, sizeof(TIE_3));
-              dlen += sizeof(TIE_3);
+	  case SDLK_f: /* fullscreen toggle */
+	    /* Reserved for Fullscreen */
+	    break;
 
-              isst_master_shot_position = isst_master_camera_position;
-              isst_master_shot_direction = direction;
+	  case SDLK_g: /* grab mouse */
+	    isst_master_mouse_grab = isst_master_mouse_grab ^ 1;
+	    break;
 
-              tienet_master_push(mesg, dlen);
-              free(mesg);
-            }
-            break;
+	  case SDLK_KP1: /* front, back */
+	    {
+	      tfloat dist;
 
-          case SDLK_KP_MULTIPLY: /* spawl cone */
-            {
-              void *mesg;
-              common_work_t work;
-              TIE_3 direction;
-              int dlen;
-              char op;
+	      /* distance to center of rotation */
+	      MATH_VEC_SUB(vec, isst_master_camera_position, isst_master_cor);
+	      MATH_VEC_DOT(dist, vec, vec);
+	      dist = sqrt(dist);
 
-              /* Queue a work unit for a shot needed for the plane render method */
-              mesg = malloc(sizeof(common_work_t) + 1 + 2*sizeof(TIE_3) + sizeof(tfloat));
-              dlen = 0;
+	      isst_master_camera_position = isst_master_cor;
+	      if(isst_master_shift_enabled) {
+		isst_master_camera_position.v[0] -= dist;
+		isst_master_camera_azimuth = 180;
+		isst_master_camera_elevation = 0;
+	      } else {
+		isst_master_camera_position.v[0] += dist;
+		isst_master_camera_azimuth = 0;
+		isst_master_camera_elevation = 0;
+	      }
+	    }
+	    break;
 
-              work.orig_x = 0;
-              work.orig_y = 0;
-              work.size_x = 0;
-              work.size_y = 0;
+	  case SDLK_KP3: /* right, left */
+	    {
+	      tfloat dist;
 
-              memcpy(&((char *)mesg)[dlen], &work, sizeof(common_work_t));
-              dlen += sizeof(common_work_t);
+	      /* distance to center of rotation */
+	      MATH_VEC_SUB(vec, isst_master_camera_position, isst_master_cor);
+	      MATH_VEC_DOT(dist, vec, vec);
+	      dist = sqrt(dist);
 
-              /* function */
-              op = ISST_OP_SPALL;
-              memcpy(&((char *)mesg)[dlen], &op, 1);
-              dlen += 1;
+	      isst_master_camera_position = isst_master_cor;
+	      if(isst_master_shift_enabled) {
+		isst_master_camera_position.v[1] -= dist;
+		isst_master_camera_azimuth = 270;
+		isst_master_camera_elevation = 0;
+	      } else {
+		isst_master_camera_position.v[1] += dist;
+		isst_master_camera_azimuth = 90;
+		isst_master_camera_elevation = 0;
+	      }
+	    }
+	    break;
 
-              /* position */
-              memcpy(&((char *)mesg)[dlen], &isst_master_camera_position, sizeof(TIE_3));
-              dlen += sizeof(TIE_3);
+	  case SDLK_KP7: /* top, bottom */
+	    {
+	      tfloat dist;
 
-              MATH_VEC_SUB(direction, isst_master_camera_focus, isst_master_camera_position);
-              MATH_VEC_UNITIZE(direction);
+	      /* distance to center of rotation */
+	      MATH_VEC_SUB(vec, isst_master_camera_position, isst_master_cor);
+	      MATH_VEC_DOT(dist, vec, vec);
+	      dist = sqrt(dist);
 
-              /* direction */
-              memcpy(&((char *)mesg)[dlen], &direction, sizeof(TIE_3));
-              dlen += sizeof(TIE_3);
+	      isst_master_camera_position = isst_master_cor;
+	      if(isst_master_shift_enabled) {
+		isst_master_camera_position.v[2] -= dist;
+		isst_master_camera_azimuth = 0;
+		isst_master_camera_elevation = -90 + 0.01;
+	      } else {
+		isst_master_camera_position.v[2] += dist;
+		isst_master_camera_azimuth = 0;
+		isst_master_camera_elevation = 90 - 0.01;
+	      }
+	    }
+	    break;
 
-              /* angle */
-              memcpy(&((char *)mesg)[dlen], &isst_master_spall_angle, sizeof(tfloat));
-              dlen += sizeof(tfloat);
+	  case SDLK_KP0: /* set camera position and direction to shot position and direction */
+	    isst_master_camera_position = isst_master_shot_position;
+	    /* project and unitize shot vector onto xy plane */
+	    vec = isst_master_shot_direction;
+	    vec.v[2] = 0;
+	    MATH_VEC_UNITIZE(vec);
 
-              isst_master_shot_position = isst_master_camera_position;
-              isst_master_shot_direction = direction;
-
-              tienet_master_push(mesg, dlen);
-              free(mesg);
-            }
-            break;
+	    isst_master_camera_azimuth = fmod(180 + (vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*MATH_RAD2DEG : acos(vec.v[0])*MATH_RAD2DEG), 360.0);
+	    isst_master_camera_elevation = -asin(isst_master_shot_direction.v[2]) * MATH_RAD2DEG;
+	    break;
 
 
-          case SDLK_BACKQUOTE: /* console */
-            /* reserved for console in observer */
-            break;
+	  case SDLK_KP_DIVIDE: /* shotline */
+	    {
+	      void *mesg;
+	      common_work_t work;
+	      TIE_3 direction;
+	      int dlen;
+	      char op;
 
-          default:
-            break;
-        }
-        break;
+	      /* Queue a work unit for a shot needed for the plane render method */
+	      mesg = malloc(sizeof(common_work_t) + 1 + 2*sizeof(TIE_3));
+	      dlen = 0;
+
+	      work.orig_x = 0;
+	      work.orig_y = 0;
+	      work.size_x = 0;
+	      work.size_y = 0;
+
+	      memcpy(&((char *)mesg)[dlen], &work, sizeof(common_work_t));
+	      dlen += sizeof(common_work_t);
+
+	      /* function */
+	      op = ISST_OP_SHOT;
+	      memcpy(&((char *)mesg)[dlen], &op, 1);
+	      dlen += 1;
+
+	      /* position */
+	      memcpy(&((char *)mesg)[dlen], &isst_master_camera_position, sizeof(TIE_3));
+	      dlen += sizeof(TIE_3);
+
+	      MATH_VEC_SUB(direction, isst_master_camera_focus, isst_master_camera_position);
+	      MATH_VEC_UNITIZE(direction);
+
+	      /* direction */
+	      memcpy(&((char *)mesg)[dlen], &direction, sizeof(TIE_3));
+	      dlen += sizeof(TIE_3);
+
+	      isst_master_shot_position = isst_master_camera_position;
+	      isst_master_shot_direction = direction;
+
+	      tienet_master_push(mesg, dlen);
+	      free(mesg);
+	    }
+	    break;
+
+	  case SDLK_KP_MULTIPLY: /* spawl cone */
+	    {
+	      void *mesg;
+	      common_work_t work;
+	      TIE_3 direction;
+	      int dlen;
+	      char op;
+
+	      /* Queue a work unit for a shot needed for the plane render method */
+	      mesg = malloc(sizeof(common_work_t) + 1 + 2*sizeof(TIE_3) + sizeof(tfloat));
+	      dlen = 0;
+
+	      work.orig_x = 0;
+	      work.orig_y = 0;
+	      work.size_x = 0;
+	      work.size_y = 0;
+
+	      memcpy(&((char *)mesg)[dlen], &work, sizeof(common_work_t));
+	      dlen += sizeof(common_work_t);
+
+	      /* function */
+	      op = ISST_OP_SPALL;
+	      memcpy(&((char *)mesg)[dlen], &op, 1);
+	      dlen += 1;
+
+	      /* position */
+	      memcpy(&((char *)mesg)[dlen], &isst_master_camera_position, sizeof(TIE_3));
+	      dlen += sizeof(TIE_3);
+
+	      MATH_VEC_SUB(direction, isst_master_camera_focus, isst_master_camera_position);
+	      MATH_VEC_UNITIZE(direction);
+
+	      /* direction */
+	      memcpy(&((char *)mesg)[dlen], &direction, sizeof(TIE_3));
+	      dlen += sizeof(TIE_3);
+
+	      /* angle */
+	      memcpy(&((char *)mesg)[dlen], &isst_master_spall_angle, sizeof(tfloat));
+	      dlen += sizeof(tfloat);
+
+	      isst_master_shot_position = isst_master_camera_position;
+	      isst_master_shot_direction = direction;
+
+	      tienet_master_push(mesg, dlen);
+	      free(mesg);
+	    }
+	    break;
+
+
+	  case SDLK_BACKQUOTE: /* console */
+	    /* reserved for console in observer */
+	    break;
+
+	  default:
+	    break;
+	}
+	break;
 
       case SDL_KEYUP:
-        switch(event_queue[i].keysym) {
-          case SDLK_LSHIFT:
-          case SDLK_RSHIFT:
-            isst_master_shift_enabled = 0;
-            break;
+	switch(event_queue[i].keysym) {
+	  case SDLK_LSHIFT:
+	  case SDLK_RSHIFT:
+	    isst_master_shift_enabled = 0;
+	    break;
 
-          default:
-            break;
-        }
+	  default:
+	    break;
+	}
 
       case SDL_MOUSEBUTTONDOWN:
-        update = 1;
-        if(event_queue[i].button == SDL_BUTTON_WHEELUP)
-          isst_master_scale *= 1.25;
+	update = 1;
+	if(event_queue[i].button == SDL_BUTTON_WHEELUP)
+	  isst_master_scale *= 1.25;
 
-        if(event_queue[i].button == SDL_BUTTON_WHEELDOWN)
-          isst_master_scale *= 0.8;
-        break;
+	if(event_queue[i].button == SDL_BUTTON_WHEELDOWN)
+	  isst_master_scale *= 0.8;
+	break;
 
       case SDL_MOUSEMOTION:
-        if(event_queue[i].motion_state && isst_master_mouse_grab) {
+	if(event_queue[i].motion_state && isst_master_mouse_grab) {
 	  int dx, dy;
 
 	  dx = -event_queue[i].motion_xrel;
 	  dy = -event_queue[i].motion_yrel;
 
-          update = 1;
-          if(event_queue[i].button & 1<<(SDL_BUTTON_LEFT-1)) {
-            /* backward and forward */
-            MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
-            MATH_VEC_MUL_SCALAR(vec, vec, (isst_master_scale*dy));
-            MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec);
+	  update = 1;
+	  if(event_queue[i].button & 1<<(SDL_BUTTON_LEFT-1)) {
+	    /* backward and forward */
+	    MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
+	    MATH_VEC_MUL_SCALAR(vec, vec, (isst_master_scale*dy));
+	    MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec);
 
-            /* strafe */
+	    /* strafe */
 #if 0
-            MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
-            vec2.v[0] = 0;
-            vec2.v[1] = 0;
-            vec2.v[2] = 1;
-            MATH_VEC_CROSS(vec3, vec2, vec);
-            MATH_VEC_MUL_SCALAR(vec3, vec3, (isst_master_scale*dx));
-            MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec3);
+	    MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
+	    vec2.v[0] = 0;
+	    vec2.v[1] = 0;
+	    vec2.v[2] = 1;
+	    MATH_VEC_CROSS(vec3, vec2, vec);
+	    MATH_VEC_MUL_SCALAR(vec3, vec3, (isst_master_scale*dx));
+	    MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec3);
 #endif
-          } else if(event_queue[i].button & 1<<(SDL_BUTTON_RIGHT-1)) {
-            /* if the shift key is held down then rotate about Center of Rotation */
-            if(isst_master_shift_enabled) {
-              TIE_3 vec;
-              tfloat mag, angle;
+	  } else if(event_queue[i].button & 1<<(SDL_BUTTON_RIGHT-1)) {
+	    /* if the shift key is held down then rotate about Center of Rotation */
+	    if(isst_master_shift_enabled) {
+	      TIE_3 vec;
+	      tfloat mag, angle;
 
-              vec.v[0] = isst_master_cor.v[0] - isst_master_camera_position.v[0];
-              vec.v[1] = isst_master_cor.v[1] - isst_master_camera_position.v[1];
-              vec.v[2] = 0;
+	      vec.v[0] = isst_master_cor.v[0] - isst_master_camera_position.v[0];
+	      vec.v[1] = isst_master_cor.v[1] - isst_master_camera_position.v[1];
+	      vec.v[2] = 0;
 
 #if 0
-              MATH_VEC_UNITIZE(vec);
-              MATH_VEC_MAGnitude(mag, vec);
+	      MATH_VEC_UNITIZE(vec);
+	      MATH_VEC_MAGnitude(mag, vec);
 #else
-              angle = vec.v[0]*vec.v[0] + vec.v[1]*vec.v[1];
-              mag = sqrt(angle);
-              vec.v[0] /= mag;
-              vec.v[1] /= mag;
+	      angle = vec.v[0]*vec.v[0] + vec.v[1]*vec.v[1];
+	      mag = sqrt(angle);
+	      vec.v[0] /= mag;
+	      vec.v[1] /= mag;
 #endif
 
-              vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*MATH_RAD2DEG : acos(vec.v[0])*MATH_RAD2DEG;
+	      vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*MATH_RAD2DEG : acos(vec.v[0])*MATH_RAD2DEG;
 
-              vec.v[0] -= 0.035*dx;
-              vec.v[0] *= MATH_DEG2RAD;
+	      vec.v[0] -= 0.035*dx;
+	      vec.v[0] *= MATH_DEG2RAD;
 
-              isst_master_camera_position.v[0] = -mag*cos(vec.v[0]) + isst_master_cor.v[0];
-              isst_master_camera_position.v[1] = -mag*sin(vec.v[0]) + isst_master_cor.v[1];
-              isst_master_camera_azimuth -= 0.035*dx;
-            } else {
-              isst_master_camera_azimuth += 0.035*dx;
-              isst_master_camera_elevation -= 0.035*dy;
-            }
-          } else if(event_queue[i].button & 1<<(SDL_BUTTON_MIDDLE-1)) {
-            isst_master_camera_position.v[2] += isst_master_scale*dy;
+	      isst_master_camera_position.v[0] = -mag*cos(vec.v[0]) + isst_master_cor.v[0];
+	      isst_master_camera_position.v[1] = -mag*sin(vec.v[0]) + isst_master_cor.v[1];
+	      isst_master_camera_azimuth -= 0.035*dx;
+	    } else {
+	      isst_master_camera_azimuth += 0.035*dx;
+	      isst_master_camera_elevation -= 0.035*dy;
+	    }
+	  } else if(event_queue[i].button & 1<<(SDL_BUTTON_MIDDLE-1)) {
+	    isst_master_camera_position.v[2] += isst_master_scale*dy;
 
-            /* strafe */
-            MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
-            MATH_VEC_SET(vec2, 0, 0, 1);
-            MATH_VEC_CROSS(vec3, vec2, vec);
-            MATH_VEC_MUL_SCALAR(vec3, vec3, (isst_master_scale*dx));
-            MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec3);
-          }
+	    /* strafe */
+	    MATH_VEC_SUB(vec, isst_master_camera_focus, isst_master_camera_position);
+	    MATH_VEC_SET(vec2, 0, 0, 1);
+	    MATH_VEC_CROSS(vec3, vec2, vec);
+	    MATH_VEC_MUL_SCALAR(vec3, vec3, (isst_master_scale*dx));
+	    MATH_VEC_ADD(isst_master_camera_position, isst_master_camera_position, vec3);
+	  }
 
-          /* Keep azimuth position */
-          if(isst_master_camera_azimuth < 0)
-            isst_master_camera_azimuth += 360;
-          if(isst_master_camera_azimuth > 360)
-            isst_master_camera_azimuth -= 360;
+	  /* Keep azimuth position */
+	  if(isst_master_camera_azimuth < 0)
+	    isst_master_camera_azimuth += 360;
+	  if(isst_master_camera_azimuth > 360)
+	    isst_master_camera_azimuth -= 360;
 
-          /* Keep elevation between -90 and +90 */
-          if(isst_master_camera_elevation < -90)
-            isst_master_camera_elevation = -90;
-          if(isst_master_camera_elevation > 90)
-            isst_master_camera_elevation = 90;
+	  /* Keep elevation between -90 and +90 */
+	  if(isst_master_camera_elevation < -90)
+	    isst_master_camera_elevation = -90;
+	  if(isst_master_camera_elevation > 90)
+	    isst_master_camera_elevation = 90;
 
-        }
-        break;
+	}
+	break;
 
       default:
-        break;
+	break;
     }
 
     if(update) {

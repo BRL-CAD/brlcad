@@ -101,8 +101,8 @@ static struct bu_list	bu_mapped_file_list = {
  */
 struct bu_mapped_file *
 bu_open_mapped_file(const char *name, const char *appl)
-          	      		/* file name */
-          	      		/* non-null only when app. will use 'apbuf' */
+				/* file name */
+				/* non-null only when app. will use 'apbuf' */
 {
 	struct bu_mapped_file	*mp = (struct bu_mapped_file *)NULL;
 #ifdef HAVE_UNIX_IO
@@ -210,9 +210,9 @@ dont_reuse:
 
 	if( mp->buf == MAP_FAILED )  perror(name);
 	if( mp->buf != MAP_FAILED )  {
-	    	/* OK, it's memory mapped in! */
-	    	mp->is_mapped = 1;
-	    	/* It's safe to close the fd now, the manuals say */
+		/* OK, it's memory mapped in! */
+		mp->is_mapped = 1;
+		/* It's safe to close the fd now, the manuals say */
 	} else
 #  endif /* HAVE_SYS_MMAN_H */
 	{
@@ -434,8 +434,8 @@ bu_free_mapped_files(int verbose)
 struct bu_mapped_file *
 bu_open_mapped_file_with_path(char *const *path, const char *name, const char *appl)
 
-          	      		/* file name */
-          	      		/* non-null only when app. will use 'apbuf' */
+				/* file name */
+				/* non-null only when app. will use 'apbuf' */
 {
 	char	* const *pathp = path;
 	struct bu_vls	str;

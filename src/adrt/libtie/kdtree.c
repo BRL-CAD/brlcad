@@ -353,15 +353,15 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
 
       /* Clamp to node AABB */
       if(tri->v[0] < min.v[d])
-        tri->v[0] = min.v[d];
+	tri->v[0] = min.v[d];
       if(tri->v[1] > max.v[d])
-        tri->v[1] = max.v[d];
+	tri->v[1] = max.v[d];
 
       if(i == 0 || tri->v[0] < d_min)
-        d_min = tri->v[0];
+	d_min = tri->v[0];
 
       if(i == 0 || tri->v[1] > d_max)
-        d_max = tri->v[1];
+	d_max = tri->v[1];
     }
 
     for(k = 0; k < slice_num; k++) {
@@ -383,58 +383,58 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
       cmin[1].v[d] = cmax[0].v[d];
 
       if(cmax[0].v[d] < d_min || cmax[0].v[d] > d_max)
-        continue;
+	continue;
 
       for(n = 0; n < 2; n++) {
-        MATH_VEC_ADD(center[n], cmax[n], cmin[n]);
-        MATH_VEC_MUL_SCALAR(center[n], center[n], 0.5);
-        MATH_VEC_SUB(half_size[n], cmax[n], cmin[n]);
-        MATH_VEC_MUL_SCALAR(half_size[n], half_size[n], 0.5);
+	MATH_VEC_ADD(center[n], cmax[n], cmin[n]);
+	MATH_VEC_MUL_SCALAR(center[n], center[n], 0.5);
+	MATH_VEC_SUB(half_size[n], cmax[n], cmin[n]);
+	MATH_VEC_MUL_SCALAR(half_size[n], half_size[n], 0.5);
       }
 
       for(i = 0; i < node_gd->tri_num; i++) {
-        /*
-        * Optimization: If the points for the triangle of the dimension being tested
-        * do not span the cutting plane, then do not bother with the next test.
-        */
-        if((node_gd->tri_list[i]->data[0].v[d] > cmax[0].v[d] &&
-            node_gd->tri_list[i]->data[1].v[d] > cmax[0].v[d] &&
-            node_gd->tri_list[i]->data[2].v[d] > cmax[0].v[d])||
-           (node_gd->tri_list[i]->data[0].v[d] < cmax[0].v[d] &&
-            node_gd->tri_list[i]->data[1].v[d] < cmax[0].v[d] &&
-            node_gd->tri_list[i]->data[2].v[d] < cmax[0].v[d]))
-          continue;
+	/*
+	* Optimization: If the points for the triangle of the dimension being tested
+	* do not span the cutting plane, then do not bother with the next test.
+	*/
+	if((node_gd->tri_list[i]->data[0].v[d] > cmax[0].v[d] &&
+	    node_gd->tri_list[i]->data[1].v[d] > cmax[0].v[d] &&
+	    node_gd->tri_list[i]->data[2].v[d] > cmax[0].v[d])||
+	   (node_gd->tri_list[i]->data[0].v[d] < cmax[0].v[d] &&
+	    node_gd->tri_list[i]->data[1].v[d] < cmax[0].v[d] &&
+	    node_gd->tri_list[i]->data[2].v[d] < cmax[0].v[d]))
+	  continue;
 
-        /* Check that the triangle is in both node A and B for it to span. */
-        s = 0;
-        for(n = 0; n < 2; n++) {
-          /*
-          * Check to see if any triangle points are inside of the node before
-          * spending alot of cycles on the full blown triangle box overlap
-          */
-          for(j = 0; j < 3; j++)
-            if(node_gd->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
-               node_gd->tri_list[i]->data[j].v[0] < cmax[n].v[0] &&
-               node_gd->tri_list[i]->data[j].v[1] > cmin[n].v[1] &&
-               node_gd->tri_list[i]->data[j].v[1] < cmax[n].v[1] &&
-               node_gd->tri_list[i]->data[j].v[2] > cmin[n].v[2] &&
-               node_gd->tri_list[i]->data[j].v[2] < cmax[n].v[2]) {
-               j = 4;
-            }
+	/* Check that the triangle is in both node A and B for it to span. */
+	s = 0;
+	for(n = 0; n < 2; n++) {
+	  /*
+	  * Check to see if any triangle points are inside of the node before
+	  * spending alot of cycles on the full blown triangle box overlap
+	  */
+	  for(j = 0; j < 3; j++)
+	    if(node_gd->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
+	       node_gd->tri_list[i]->data[j].v[0] < cmax[n].v[0] &&
+	       node_gd->tri_list[i]->data[j].v[1] > cmin[n].v[1] &&
+	       node_gd->tri_list[i]->data[j].v[1] < cmax[n].v[1] &&
+	       node_gd->tri_list[i]->data[j].v[2] > cmin[n].v[2] &&
+	       node_gd->tri_list[i]->data[j].v[2] < cmax[n].v[2]) {
+	       j = 4;
+	    }
 
-          if(j == 5) {
-            s++;
-            side[d][k][n]++;
-          } else {
-            if(tie_kdtree_tri_box_overlap(&center[n], &half_size[n], node_gd->tri_list[i]->data)) {
-              s++;
-              side[d][k][n]++;
-            }
-          }
-        }
+	  if(j == 5) {
+	    s++;
+	    side[d][k][n]++;
+	  } else {
+	    if(tie_kdtree_tri_box_overlap(&center[n], &half_size[n], node_gd->tri_list[i]->data)) {
+	      s++;
+	      side[d][k][n]++;
+	    }
+	  }
+	}
 
-        if(s == 2)
-          slice[d][k]++;
+	if(s == 2)
+	  slice[d][k]++;
       }
     }
   }
@@ -444,7 +444,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
     smax[d] = 0;
     for(k = 0; k < slice_num; k++) {
       if(slice[d][k] > smax[d])
-        smax[d] = slice[d][k];
+	smax[d] = slice[d][k];
     }
   }
 
@@ -464,28 +464,28 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
     for(k = 0; k < slice_num; k++) {
 /*      printf("slice[%d][%d]: %d < %d\n", d, k, slice[d][k], (int)(MIN_DENSITY * (tfloat)smax[d])); */
       if(slice[d][k] < (int)(MIN_DENSITY * (tfloat)smax[d])) {
-        if(!active) {
-          active = 1;
-          beg = k;
-          end = k;
-        } else {
-          end = k;
-        }
+	if(!active) {
+	  active = 1;
+	  beg = k;
+	  end = k;
+	} else {
+	  end = k;
+	}
       } else {
-        if(active) {
-          if(end - beg > gap[d][1] - gap[d][0]) {
-            gap[d][0] = beg;
-            gap[d][1] = end;
-          }
-        }
-        active = 0;
+	if(active) {
+	  if(end - beg > gap[d][1] - gap[d][0]) {
+	    gap[d][0] = beg;
+	    gap[d][1] = end;
+	  }
+	}
+	active = 0;
       }
     }
 
     if(active)
       if(end - beg > gap[d][1] - gap[d][0]) {
-        gap[d][0] = beg;
-        gap[d][1] = end;
+	gap[d][0] = beg;
+	gap[d][1] = end;
       }
   }
 
@@ -539,7 +539,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
     */
     for(d = 0; d < 3; d++) {
       for(k = 0; k < slice_num; k++) {
-        slice[d][k] += fabs(coef[d][k]-0.5) * SCALE_COEF * smax[d];
+	slice[d][k] += fabs(coef[d][k]-0.5) * SCALE_COEF * smax[d];
 /*        printf("%.3f %d\n", coef[d][k], slice[d][k]); */
       }
     }
@@ -550,12 +550,12 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
     split_coef = 0.5;
     for(d = 0; d < 3; d++) {
       for(k = 0; k < slice_num; k++) {
-        if(slice[d][k] < smin) {
-          split_coef = coef[d][k];
-          split = d;
-          split_slice = k;
-          smin = slice[d][k];
-        }
+	if(slice[d][k] < smin) {
+	  split_coef = coef[d][k];
+	  split = d;
+	  split_slice = k;
+	  smin = slice[d][k];
+	}
       }
     }
 
@@ -650,23 +650,23 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
       * spending alot of cycles on the full blown triangle box overlap
       */
       for(j = 0; j < 3; j++)
-        if(node_gd->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
-           node_gd->tri_list[i]->data[j].v[0] < cmax[n].v[0] &&
-           node_gd->tri_list[i]->data[j].v[1] > cmin[n].v[1] &&
-           node_gd->tri_list[i]->data[j].v[1] < cmax[n].v[1] &&
-           node_gd->tri_list[i]->data[j].v[2] > cmin[n].v[2] &&
-           node_gd->tri_list[i]->data[j].v[2] < cmax[n].v[2]) {
-           j = 4;
-        }
+	if(node_gd->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
+	   node_gd->tri_list[i]->data[j].v[0] < cmax[n].v[0] &&
+	   node_gd->tri_list[i]->data[j].v[1] > cmin[n].v[1] &&
+	   node_gd->tri_list[i]->data[j].v[1] < cmax[n].v[1] &&
+	   node_gd->tri_list[i]->data[j].v[2] > cmin[n].v[2] &&
+	   node_gd->tri_list[i]->data[j].v[2] < cmax[n].v[2]) {
+	   j = 4;
+	}
 
       if(j == 5) {
-        child[n]->tri_list[child[n]->tri_num++] = node_gd->tri_list[i];
-        cnt[n]++;
+	child[n]->tri_list[child[n]->tri_num++] = node_gd->tri_list[i];
+	cnt[n]++;
       } else {
-        if(tie_kdtree_tri_box_overlap(&center[n], &half_size[n], node_gd->tri_list[i]->data)) {
-          child[n]->tri_list[child[n]->tri_num++] = node_gd->tri_list[i];
-          cnt[n]++;
-        }
+	if(tie_kdtree_tri_box_overlap(&center[n], &half_size[n], node_gd->tri_list[i]->data)) {
+	  child[n]->tri_list[child[n]->tri_num++] = node_gd->tri_list[i];
+	  cnt[n]++;
+	}
       }
     }
 
@@ -783,22 +783,22 @@ void tie_kdtree_cache_load(tie_t *tie, void *cache) {
 
       geom->tri_list = (tie_tri_t **)malloc(geom->tri_num * sizeof(tie_tri_t *));
       for(i = 0; i < geom->tri_num; i++) {
-        memcpy(&tri_ind, &((char *)cache)[index], sizeof(unsigned int));
-        index += sizeof(unsigned int);
+	memcpy(&tri_ind, &((char *)cache)[index], sizeof(unsigned int));
+	index += sizeof(unsigned int);
 
-        /* Translate the numerical index to a pointer index into tie->tri_list. */
-        geom->tri_list[i] = &tie->tri_list[0] + tri_ind;
+	/* Translate the numerical index to a pointer index into tie->tri_list. */
+	geom->tri_list[i] = &tie->tri_list[0] + tri_ind;
       }
 
       if(stack_ind) {
-        stack_ind--;
-        node = stack[stack_ind];
+	stack_ind--;
+	node = stack[stack_ind];
       }
     } else {
       /* KD-Tree Node */
       if(!tie->kdtree) {
-        tie->kdtree = (tie_kdtree_t *)malloc(sizeof(tie_kdtree_t));
-        node = tie->kdtree;
+	tie->kdtree = (tie_kdtree_t *)malloc(sizeof(tie_kdtree_t));
+	node = tie->kdtree;
       }
 
       /* Assign splitting axis value */

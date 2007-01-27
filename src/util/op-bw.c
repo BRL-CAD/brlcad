@@ -75,7 +75,7 @@ extern int	bu_optind;
 
 static char usage[] = "\
 Usage: op-bw [-hv] [-S step] [-x xoffset] [-y yoffset]\n\
-        [-s squaresize] [-w width] [-n nlines] > file.bw\n";
+	[-s squaresize] [-w width] [-n nlines] > file.bw\n";
 
 /*
  *			G E T_ A R G S

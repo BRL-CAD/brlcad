@@ -749,10 +749,10 @@ out:
  */
 void
 rt_part_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	rt_vstub( stp, rp, segp, n, ap );
@@ -823,12 +823,12 @@ rt_part_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 
 	switch( hitp->hit_surfno )  {
 	case RT_PARTICLE_SURF_VSPHERE:
-	 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
-	 	cvp->crv_c1 = cvp->crv_c2 = -part->part_int.part_vrad;
+		bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+		cvp->crv_c1 = cvp->crv_c2 = -part->part_int.part_vrad;
 		break;
 	case RT_PARTICLE_SURF_HSPHERE:
-	 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
-	 	cvp->crv_c1 = cvp->crv_c2 = -part->part_int.part_hrad;
+		bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+		cvp->crv_c1 = cvp->crv_c2 = -part->part_int.part_hrad;
 		break;
 	case RT_PARTICLE_SURF_BODY:
 		/* Curvature in only one direction, around H */
@@ -838,7 +838,7 @@ rt_part_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 		VSUB2( hit_local, hitp->hit_point, part->part_int.part_V );
 		MAT4X3VEC( hit_unit, part->part_SoR, hit_local );
 		/* hit_unit[Z] ranges from 0 at V to 1 at H, interpolate */
-	 	cvp->crv_c1 = -(
+		cvp->crv_c1 = -(
 			part->part_v_erad * hit_unit[Z] +
 			part->part_h_erad * (1 - hit_unit[Z]) );
 		cvp->crv_c2 = 0;

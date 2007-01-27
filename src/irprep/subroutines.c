@@ -101,7 +101,6 @@ void rotate(double *p, double *a, double *np)
 }
 
 
-
 /*  Subroutine to receive an angle in degrees and return  */
 /*  the angle in radians.  */
 

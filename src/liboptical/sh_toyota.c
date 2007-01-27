@@ -157,9 +157,7 @@ HIDDEN int
 toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-
-
-                                /* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	char	mfile[200];
 	fastf_t	l, a, b;
@@ -248,9 +246,7 @@ HIDDEN int
 tmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-
-
-                                /* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct toyota_specific *pp;
 
@@ -271,9 +267,7 @@ HIDDEN int
 tglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-
-
-                                /* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct toyota_specific *pp;
 
@@ -318,7 +312,7 @@ toyota_free(char *cp)
  */
 fastf_t
 air_mass(fastf_t gamma)
-       	      	/* Solar altitude off horizon (degrees). */
+		/* Solar altitude off horizon (degrees). */
 {
 	fastf_t	m;
 
@@ -343,8 +337,8 @@ air_mass(fastf_t gamma)
  */
 fastf_t
 zenith_luminance(fastf_t sun_alt, fastf_t t_vl)
-       	        	/* Solar altitude off horizon (degrees). */
-       	     		/* atmospheric turbidity (aerosol optical depth) */
+			/* Solar altitude off horizon (degrees). */
+			/* atmospheric turbidity (aerosol optical depth) */
 {
 	return(2000.);	/* swag */
 }
@@ -362,8 +356,8 @@ zenith_luminance(fastf_t sun_alt, fastf_t t_vl)
  */
 fastf_t
 overcast_sky_lum(fastf_t lz, fastf_t *Zenith, fastf_t *Sky_elmt)
-       	   			/* luminance of the zenith */
-      	                 	/* vectors to zenith and a sky element */
+				/* luminance of the zenith */
+				/* vectors to zenith and a sky element */
 {
 	return(lz * (1. + 2.*VDOT(Zenith, Sky_elmt)/3.));
 }
@@ -380,8 +374,8 @@ overcast_sky_lum(fastf_t lz, fastf_t *Zenith, fastf_t *Sky_elmt)
  */
 fastf_t
 homogenous_sky_lum(fastf_t *Sky_elmt, fastf_t *Sun, fastf_t t_vl)
-      	              	/* vectors to a sky element and to sun */
-       	     		/* Turbidity factor. */
+			/* vectors to a sky element and to sun */
+			/* Turbidity factor. */
 {
 	return(0.);
 }
@@ -398,9 +392,9 @@ homogenous_sky_lum(fastf_t *Sky_elmt, fastf_t *Sun, fastf_t t_vl)
  */
 fastf_t
 clear_sky_lum(fastf_t lz, fastf_t *Sky_elmt, fastf_t *Sun, fastf_t *Zenith)
-       	   		/* luminance of the zenith */
-      	              	/* vectors to a sky element and to sun */
-      	       		/* vector to zenith */
+			/* luminance of the zenith */
+			/* vectors to a sky element and to sun */
+			/* vector to zenith */
 {
 	fastf_t	cos_gamma;	/* cos(gamma) */
 	fastf_t	cos_z0;		/* cos(z0) */
@@ -1478,7 +1472,7 @@ atmos_irradiance(fastf_t lambda)
  */
 fastf_t
 ozone_absorption(fastf_t lambda)
-       	       	/* Wavelength of light.  Units: nm. */
+		/* Wavelength of light.  Units: nm. */
 {
 #define NABSORP 38 /* Number of entries in absorption coefficient table. */
 
@@ -1652,12 +1646,12 @@ spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2)
  */
 fastf_t
 skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf_t *Sun, int weather, fastf_t t_vl)
-       	       		/* Wavelength of light (nm). */
-      	       		/* Vector to sky zenith. */
-      	         	/* Vector to sky element of interest. */
-      	    		/* Vector to sun. */
-   	        	/* Weather condition. */
-       	     		/* Turbidity factor. */
+			/* Wavelength of light (nm). */
+			/* Vector to sky zenith. */
+			/* Vector to sky element of interest. */
+			/* Vector to sun. */
+			/* Weather condition. */
+			/* Turbidity factor. */
 {
 	fastf_t	e_mean, v1, v2,
 		lum,	/* Luminance at a given point in the sky (cd/m^2). */
@@ -1748,10 +1742,10 @@ if (lum <= 0.) {/*bu_log("lum = %g\n", lum);*/ return(0.);}
  */
 fastf_t
 sun_radiance(fastf_t lambda, fastf_t alpha, fastf_t beta, fastf_t sun_alt, fastf_t sun_sang)
-       	       		/* Wavelength of light (nm). */
-	            	/* Coefficients of turbidity. */
-	        	/* Altitude of sun above horizon. */
-	         	/* Solid angle of sun as seen from ground. */
+			/* Wavelength of light (nm). */
+			/* Coefficients of turbidity. */
+			/* Altitude of sun above horizon. */
+			/* Solid angle of sun as seen from ground. */
 {
 	fastf_t	cm,	/* Attenuation factor according to diffusion of */
 			/* aerosol (unitless?). */
@@ -1796,10 +1790,10 @@ bu_log("sun radiance = %g\n", ls);
  */
 fastf_t
 fresnel_refl(fastf_t cos_eps, fastf_t n1, fastf_t n2)
-       	        	/* Cosine of angle of incidence on the medium. */
-	   		/* Index of refraction of material (usually air)
+			/* Cosine of angle of incidence on the medium. */
+			/* Index of refraction of material (usually air)
 			 * in contact with the medium under test. */
-	   		/* Index of refraction of the medium. */
+			/* Index of refraction of the medium. */
 {
 	fastf_t	refl;		/* Returned reflectance. */
 	fastf_t	p_parallel;	/* Reflectance for a plane-polarized beam
@@ -1841,7 +1835,7 @@ fresnel_refl(fastf_t cos_eps, fastf_t n1, fastf_t n2)
  */
 fastf_t
 absorp_coeff(fastf_t lambda, char *material)
-       	       		/* wavelength (nm) */
+			/* wavelength (nm) */
 
 {
 	char	mfile[80];
@@ -1896,10 +1890,10 @@ absorp_coeff(fastf_t lambda, char *material)
  */
 fastf_t
 reflectance(fastf_t lambda, fastf_t alpha, fastf_t *refl, int lines)
-       	       		/* Wavelength (nm). */
-       	      		/* Angle of incident light, in degrees. */
-       	      		/* Reflectance data. */
-   	      		/* How many lines of data in refl[]. */
+			/* Wavelength (nm). */
+			/* Angle of incident light, in degrees. */
+			/* Reflectance data. */
+			/* How many lines of data in refl[]. */
 {
 	fastf_t	alpha_hh, alpha_hl, alpha_lh, alpha_ll,
 		beta_hh,  beta_hl,  beta_lh,  beta_ll,
@@ -1999,9 +1993,9 @@ bu_log("reflectance(lambda=%g, alpha=%g)=%g\n", lambda, alpha, beta );
  */
 void
 lambda_to_rgb(fastf_t lambda, fastf_t irrad, fastf_t *rgb)
-       	       	/* Input, wavelength of light. */
-       	      	/* Input, irradiance of light. */
-       	     	/* Output, RGB approximation of input. */
+		/* Input, wavelength of light. */
+		/* Input, irradiance of light. */
+		/* Output, RGB approximation of input. */
 {
 
 /* Number of entries in color matching table. */
@@ -2162,12 +2156,12 @@ bu_log("rgb = (%g %g %g), irrad = %g\n",r,g,b,irrad);
  */
 fastf_t
 background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fastf_t *Sun, fastf_t t_vl, struct shadework *swp)
-       			       	/* Wavelength of light (nm). */
+				/* Wavelength of light (nm). */
 
-      			     	/* Regularly reflected ray. */
-      			    	/* Vector pointing to sun. */
-       			     	/* Atmospheric turbidity. */
-                	     	/* Holds surface normal. */
+				/* Regularly reflected ray. */
+				/* Vector pointing to sun. */
+				/* Atmospheric turbidity. */
+				/* Holds surface normal. */
 {
 	fastf_t	alpha0, alpha1, alpha_c,
 		ang,
@@ -2214,7 +2208,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	if (!NEAR_ZERO(VDOT(swp->sw_hit.hit_normal, Refl)-1, MIKE_TOL)) {
 		VCROSS(Yaxis, swp->sw_hit.hit_normal, Refl);
 	} else {	/* R and N are the same vector. */
-	 	vec_ortho(Yaxis, swp->sw_hit.hit_normal);
+		vec_ortho(Yaxis, swp->sw_hit.hit_normal);
 	}
 	VCROSS(Horiz, Yaxis, swp->sw_hit.hit_normal);
 

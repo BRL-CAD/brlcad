@@ -40,7 +40,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include "machine.h"
 #include "bu.h"
@@ -684,7 +683,7 @@ caddr_t	*arg;
 		yval = (float) ypen / 2048.;
 		if (yval < -1.0)
 			yval = -1.0;
-	    	if (yval > 1.0)
+		if (yval > 1.0)
 			yval = 1.0;
 		for( button = 0; button < NBUTTONS; button++ ) {
 			char str_buf[128];
@@ -981,7 +980,7 @@ sun_colorit()
 		b = sp->s_color[2];
 		if( (r == 255 && g == 255 && b == 255) ||
 		    (r == 0 && g == 0 && b == 0) )  {
-		    	sp->s_dmindex = DM_WHITE;
+			sp->s_dmindex = DM_WHITE;
 			continue;
 		}
 

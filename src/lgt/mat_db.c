@@ -270,7 +270,7 @@ mat_Edit_Db_Entry(int id)
 				entry->df_rgb[1]<<3
 				);
 		if(	get_Input( input_buf, MAX_LN, prompt ) != NULL
-	 	    &&	sscanf( input_buf, "%d %d", &red, &grn ) == 2
+		    &&	sscanf( input_buf, "%d %d", &red, &grn ) == 2
 			)
 			{
 			entry->df_rgb[0] = red >> 3;

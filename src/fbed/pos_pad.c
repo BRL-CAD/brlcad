@@ -90,7 +90,7 @@ pad_close(void)
 
 int
 getpos(Point *pos)
-{	
+{
     static char str[1024] = {0};
     int buttons = -1;
     static int nread = 0;

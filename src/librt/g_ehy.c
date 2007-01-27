@@ -470,10 +470,10 @@ check_plates:
  */
 void
 rt_ehy_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	rt_vstub( stp, rp, segp, n, ap );
@@ -564,16 +564,16 @@ rt_ehy_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 		VUNITIZE( cvp->crv_pdir );
 		break;
 	case EHY_NORM_TOP:
-	 	cvp->crv_c1 = cvp->crv_c2 = 0;
+		cvp->crv_c1 = cvp->crv_c2 = 0;
 		/* any tangent direction */
-	 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
-	 	break;
+		bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+		break;
 	}
 
- 	cvp->crv_c1 = cvp->crv_c2 = 0;
+	cvp->crv_c1 = cvp->crv_c2 = 0;
 
 	/* any tangent direction */
- 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
 /**
@@ -1179,8 +1179,8 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
 	j = nseg;
 	for (i = nell-1; i >= 0; i--) {
-	        vells[i] = (struct vertex **)
-	        	bu_malloc(j*sizeof(struct vertex *), "vertex []");
+		vells[i] = (struct vertex **)
+			bu_malloc(j*sizeof(struct vertex *), "vertex []");
 		if (i && pts_dbl[i])
 			j /= 2;
 	}
@@ -1235,17 +1235,17 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 			if (pts_dbl[top]) {
 				/* first triangle */
-			        vertp[1] = vells[top][jj+1];
-			        vertp[2] = vells[top][jj];
+				vertp[1] = vells[top][jj+1];
+				vertp[2] = vells[top][jj];
 				if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
 					bu_log("rt_ehy_tess() failure\n");
 					goto fail;
 				}
 				if (j == 0)
-				        vells[bottom][j] = vertp[0];
+					vells[bottom][j] = vertp[0];
 
 				/* second triangle */
-			        vertp[2] = vertp[1];
+				vertp[2] = vertp[1];
 				if (j == nseg-1)
 					vertp[1] = vells[bottom][0];
 				else
@@ -1272,17 +1272,17 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				if (j == nseg-1)
 					vertp[1] = vells[top][0];
 				else
-				        vertp[1] = vells[top][j+1];
-			        vertp[2] = vells[top][j];
+					vertp[1] = vells[top][j+1];
+				vertp[2] = vells[top][j];
 				if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
 					bu_log("rt_ehy_tess() failure\n");
 					goto fail;
 				}
 				if (j == 0)
-				        vells[bottom][j] = vertp[0];
+					vells[bottom][j] = vertp[0];
 
 				/* second triangle */
-			        vertp[2] = vertp[0];
+				vertp[2] = vertp[0];
 				if (j == nseg-1)
 					vertp[0] = vells[bottom][0];
 				else
@@ -1307,7 +1307,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* connect bottom of ellipse to apex of ehy */
 	VADD2(V, xip->ehy_V, xip->ehy_H);
-        vertp[0] = (struct vertex *)0;
+	vertp[0] = (struct vertex *)0;
 	vertp[1] = vells[0][1];
 	vertp[2] = vells[0][0];
 	if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
@@ -1349,7 +1349,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_free( (char *)outfaceuses, "faceuse []");
 	for (i = 0; i < nell; i++) {
 		bu_free( (char *)ellipses[i], "pts ell");
-	        bu_free( (char *)vells[i], "vertex []");
+		bu_free( (char *)vells[i], "vertex []");
 	}
 	bu_free( (char *)ellipses, "fastf_t ell[]");
 	bu_free( (char *)vells, "vertex [][]");
@@ -1403,7 +1403,7 @@ fail:
 	bu_free( (char *)outfaceuses, "faceuse []");
 	for (i = 0; i < nell; i++) {
 		bu_free( (char *)ellipses[i], "pts ell");
-	        bu_free( (char *)vells[i], "vertex []");
+		bu_free( (char *)vells[i], "vertex []");
 	}
 	bu_free( (char *)ellipses, "fastf_t ell[]");
 	bu_free( (char *)vells, "vertex [][]");

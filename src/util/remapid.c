@@ -135,7 +135,7 @@ BU_FILE	bu_iob[1] = {
 #if 0
 	stdin,		/* this won't work on Linux, others */
 #else
-    	NULL,
+	NULL,
 #endif
 	"stdin",
 	{
@@ -334,8 +334,6 @@ void bu_file_err (register BU_FILE *bfp, register char *text1, register char *te
 /*
  * ******************** Hack
  */
-
-
 
 
 bu_rb_tree		*assignment;	/* Remapping assignment */
@@ -617,8 +615,7 @@ int compare_curr_ids (void *v1, void *v2)
 int read_int (BU_FILE *sfp, int *ch, int *n)
 
 
-
-   	   		/* The result */
+			/* The result */
 
 {
     int	got_digit = 0;	/* Did we actually succeed in reading a number? */

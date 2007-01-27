@@ -634,7 +634,7 @@ register int	ct;
 /*	g e t a r g ( )
 	Get a word of input into 'str',
 	Return 0 if newline is encountered.
- 	Return 1 otherwise.
+	Return 1 otherwise.
  */
 char
 getarg( str )

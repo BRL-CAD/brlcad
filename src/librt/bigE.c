@@ -96,9 +96,9 @@ union E_tree *build_etree(union tree *tp, struct dg_client_data *dgcdp);
 
 /* stolen from g_half.c */
 struct half_specific  {
-        plane_t half_eqn;               /* Plane equation, outward normal */
-        vect_t  half_Xbase;             /* "X" basis direction */
-        vect_t  half_Ybase;             /* "Y" basis direction */
+	plane_t half_eqn;               /* Plane equation, outward normal */
+	vect_t  half_Xbase;             /* "X" basis direction */
+	vect_t  half_Ybase;             /* "Y" basis direction */
 };
 #define HALF_NULL       ((struct half_specific *)0)
 

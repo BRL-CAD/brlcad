@@ -279,8 +279,8 @@ done:
 		*vp++ = bu_vls_addr(&dgop->dgo_qray_script);
 	}
 
-        *vp++ = "-e";
-        *vp++ = bu_vls_addr(&p_vls);
+	*vp++ = "-e";
+	*vp++ = bu_vls_addr(&p_vls);
 
 	for (i=1; i < argc; i++)
 		*vp++ = argv[i];
@@ -318,7 +318,7 @@ done:
 	(void)pipe(pipe_err);
 	(void)signal(SIGINT, SIG_IGN);
 	if ((pid = fork()) == 0) {
- 	        /* Redirect stdin, stdout, stderr */
+		/* Redirect stdin, stdout, stderr */
 		(void)close(0);
 		(void)dup( pipe_in[0] );
 		(void)close(1);

@@ -38,7 +38,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -49,7 +48,7 @@
 int
 rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
-                		/* Epsilon value for flatness testing */
+				/* Epsilon value for flatness testing */
 {
 	register fastf_t 	max_row_dist;
 	register fastf_t 	max_col_dist;
@@ -157,23 +156,23 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 	} else
 	 {
 		hvect_t h1, h2, h3, h4;
-	 	int	offset;
+		int	offset;
 
 		HMOVE(h1, mesh_ptr);
 		HDIVIDE( p1, h1 );
 
-	 	offset = (srf->s_size[1] - 1) * coords;
+		offset = (srf->s_size[1] - 1) * coords;
 		HMOVE(h2, mesh_ptr + offset);
 		HDIVIDE( p2, h2 );
 
-	 	offset =
+		offset =
 		    ((srf->s_size[1] *
 		    (srf->s_size[0] - 1)) +
 		    (srf->s_size[1] - 1)) * coords;
 		HMOVE(h3, mesh_ptr + offset);
 		HDIVIDE( p3, h3 );
 
-	 	offset =
+		offset =
 		    (srf->s_size[1] *
 		    (srf->s_size[0] - 1)) * coords;
 		HMOVE(h4, mesh_ptr + offset);

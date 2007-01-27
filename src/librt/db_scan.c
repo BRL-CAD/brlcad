@@ -42,7 +42,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -92,8 +91,7 @@ int
 db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *, long int, int, int, genptr_t), int do_old_matter, genptr_t client_data)
 
 
-
-        		            	/* argument for handler */
+					/* argument for handler */
 {
 	union record	record;		/* Initial record, holds name */
 	union record	rec2;		/* additional record(s) */
@@ -113,7 +111,7 @@ db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *,
 	if( fread( (char *)&record, sizeof record, 1, dbip->dbi_fp ) != 1  ||
 	    record.u_id != ID_IDENT )  {
 		bu_log("db_scan ERROR:  File is lacking a proper MGED database header\n");
-	    	return(-1);
+		return(-1);
 	}
 	rewind( dbip->dbi_fp );
 	next = ftell(dbip->dbi_fp);
@@ -393,8 +391,8 @@ db_update_ident( struct db_i *dbip, const char *new_title, double local2mm )
 	dir.d_flags = 0;
 	if( db_get( dbip, &dir, &rec, 0, 1 ) < 0 ||
 	    rec.u_id != ID_IDENT )  {
-	    	bu_log("db_update_ident() corrupted database header!\n");
-	    	dbip->dbi_read_only = 1;
+		bu_log("db_update_ident() corrupted database header!\n");
+		dbip->dbi_read_only = 1;
 		return(-1);
 	}
 
@@ -466,7 +464,7 @@ db_fwrite_ident( FILE *fp, const char *title, double local2mm )
 void
 db_conversions(struct db_i *dbip, int local)
 
-          					/* one of ID_??_UNIT */
+						/* one of ID_??_UNIT */
 {
 	RT_CK_DBI(dbip);
 

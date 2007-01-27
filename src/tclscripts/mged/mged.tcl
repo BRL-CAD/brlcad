@@ -76,9 +76,9 @@ if ![info exists mged_default(html_dir)] {
 
 
 if [info exists env(MGED_HTML_DIR)] {
-        set mged_html_dir $env(MGED_HTML_DIR)
+	set mged_html_dir $env(MGED_HTML_DIR)
 } else {
-        set mged_html_dir $mged_default(html_dir)
+	set mged_html_dir $mged_default(html_dir)
 }
 
 proc ia_help { parent screen cmds } {
@@ -320,7 +320,7 @@ This is where to enter a prefix. The prefix,
 if entered, is prepended to each object of
 the database being inserted."} { see_also dbconcat } } OK Cancel]
 
-        if {$prefix == ""} {
+	if {$prefix == ""} {
 	    set prefix /
 	}
 
@@ -487,8 +487,8 @@ proc ia_invoke { w } {
 	}
 
 	if {$result != 0} {
-            set i [string first "more arguments needed::" $ia_msg]
-            if { $i > -1 } {
+	    set i [string first "more arguments needed::" $ia_msg]
+	    if { $i > -1 } {
 		if { $i != 0 } {
 		    mged_print $w [string range $ia_msg 0 [expr $i - 1]]
 		}

@@ -1419,19 +1419,19 @@ wgl_configureWin_guts(struct dm *dmp,
 
     /* First time through, load a font or quit */
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
-	logfont.lfHeight = 18;    
-	logfont.lfWidth = 0;    
-	logfont.lfEscapement = 0;    
-	logfont.lfOrientation = 10; 
-	logfont.lfWeight = FW_NORMAL;    
-	logfont.lfItalic = FALSE;    
-	logfont.lfUnderline = FALSE;    
-	logfont.lfStrikeOut = FALSE; 
-	logfont.lfCharSet = ANSI_CHARSET;    
-	logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;    
-	logfont.lfClipPrecision =  CLIP_DEFAULT_PRECIS; 
-	logfont.lfQuality = DEFAULT_QUALITY;    
-	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;    
+	logfont.lfHeight = 18;
+	logfont.lfWidth = 0;
+	logfont.lfEscapement = 0;
+	logfont.lfOrientation = 10;
+	logfont.lfWeight = FW_NORMAL;
+	logfont.lfItalic = FALSE;
+	logfont.lfUnderline = FALSE;
+	logfont.lfStrikeOut = FALSE;
+	logfont.lfCharSet = ANSI_CHARSET;
+	logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;
+	logfont.lfClipPrecision =  CLIP_DEFAULT_PRECIS;
+	logfont.lfQuality = DEFAULT_QUALITY;
+	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
 	logfont.lfFaceName[0] = (TCHAR)0;
 
 	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
@@ -1457,21 +1457,21 @@ wgl_configureWin_guts(struct dm *dmp,
      */
 
     if(!GetObject( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct, sizeof(LOGFONT), &logfont)) {
-	logfont.lfHeight = 18;    
-	logfont.lfWidth = 0;    
-	logfont.lfEscapement = 0;    
-	logfont.lfOrientation = 10; 
-	logfont.lfWeight = FW_NORMAL;    
-	logfont.lfItalic = FALSE;    
-	logfont.lfUnderline = FALSE;    
-	logfont.lfStrikeOut = FALSE; 
-	logfont.lfCharSet = ANSI_CHARSET ;    
-	logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;    
-	logfont.lfClipPrecision =  CLIP_DEFAULT_PRECIS ; 
-	logfont.lfQuality = DEFAULT_QUALITY;    
-	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;    
+	logfont.lfHeight = 18;
+	logfont.lfWidth = 0;
+	logfont.lfEscapement = 0;
+	logfont.lfOrientation = 10;
+	logfont.lfWeight = FW_NORMAL;
+	logfont.lfItalic = FALSE;
+	logfont.lfUnderline = FALSE;
+	logfont.lfStrikeOut = FALSE;
+	logfont.lfCharSet = ANSI_CHARSET ;
+	logfont.lfOutPrecision = OUT_DEFAULT_PRECIS;
+	logfont.lfClipPrecision =  CLIP_DEFAULT_PRECIS ;
+	logfont.lfQuality = DEFAULT_QUALITY;
+	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
 	logfont.lfFaceName[0] = (TCHAR) 0;
-  
+
 	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
 	     CreateFontIndirect(&logfont)) == NULL ) {
 	    bu_log("wgl_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);

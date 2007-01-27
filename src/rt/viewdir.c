@@ -51,7 +51,6 @@ extern	int	width;			/* # of pixels in X; picture width */
 extern int	npsw;			/* number of worker PSWs to run */
 
 
-
 int		use_air = 0;		/* Internal air recognition is off */
 
 int		using_mlib = 0;		/* Material routines NOT used */
@@ -152,7 +151,6 @@ raymiss(register struct application *ap)
 	}
 
 
-
 	return(0);
 }
 
@@ -211,8 +209,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp)
 
 	fprintf(stdout, "%g %g %g %g %g %g;\n",
 	    pp->pt_inhit->hit_point[0], pp->pt_inhit->hit_point[1], pp->pt_inhit->hit_point[2],
-            ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);
-
+	    ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);
 
 
 	return(0);

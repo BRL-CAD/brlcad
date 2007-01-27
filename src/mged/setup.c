@@ -101,11 +101,11 @@ mged_setup(void)
 	const char *path = getenv("PATH");
 	const char *binpath = bu_brlcad_root("bin", 1);
 	int set = 0;
- 
+
 	if (binpath) {
- 
+
 	    bu_vls_init(&newpath);
- 
+
 	    if (path) {
 		if (path[strlen(path)-1] == ':') {
 		    bu_vls_printf(&newpath, "PATH=%s%s", path, binpath);
@@ -115,7 +115,7 @@ mged_setup(void)
 	    } else {
 		bu_vls_printf(&newpath, "PATH=%s", binpath);
 	    }
-	    
+
 #  ifdef HAVE_PUTENV
 	    set = putenv(bu_vls_addr(&newpath));
 #  else

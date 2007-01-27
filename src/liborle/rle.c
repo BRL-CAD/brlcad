@@ -351,7 +351,7 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
 	}
 
 /*	r l e _ w h d r ( )
- 	This routine should be called after 'setfbsize()', unless the
+	This routine should be called after 'setfbsize()', unless the
 	framebuffer image is the default size (512).
 	This routine should be called before 'rle_encode_ln()' to set up
 	the global data: _bg_flag, _bw_flag, _cm_flag, and _bg_pixel.
@@ -514,12 +514,12 @@ rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
 		case RSetColorOp:
 			/* Select "color channel" that following ops go to.
 				Set `pp' to point to starting pixel element;
-		 		by adding STRIDE to pp, will move to
+				by adding STRIDE to pp, will move to
 				corresponding color element in next pixel.
 				If Black & White image:  point to left-most
 				byte (Red for Ikonas) in long, and Run and
 				Data will ignore strides below.
-		 	*/
+			*/
 			PRNT_A1_DEBUG( "Set-Color", datum );
 			if( (n = _bw_flag ? 0 : datum) > 2 )
 				{
@@ -691,7 +691,7 @@ _bg_Get_Runs(register RGBpixel (*pixelp), register RGBpixel (*endpix))
 			    &&	 (	(*pixelp)[RED] != _bg_pixel[RED]
 				   ||	(*pixelp)[GRN] != _bg_pixel[GRN]
 				   ||	(*pixelp)[BLU] != _bg_pixel[BLU]
-		    		 )
+				 )
 				)
 				pixelp++;
 			/* last pixel in segment */
@@ -762,8 +762,8 @@ _enc_Segment(FILE *fp, register RGBpixel (*data_p), register RGBpixel (*last_p))
 				if( runs_p > data_p )
 					_put_Data(	fp,
 							&((*data_p)[CUR]),
-						 	runs_p-data_p
-						 	);
+							runs_p-data_p
+							);
 				}
 			else
 				{ /* Not a run, but maybe this starts one. */
@@ -917,7 +917,7 @@ _get_Old_Inst(register FILE *fp, register int *op, register int *dat)
 
 	*p++ = getc( fp );
 	*p++ = getc( fp );
- 	SWAB( *((short *)&instruction) );
+	SWAB( *((short *)&instruction) );
 	if( feof( fp ) )
 		return	EOF;
 #ifndef CRAY

@@ -134,9 +134,9 @@ top:
 			}
 			if( strcmp( rcard, "  end" ) == 0 ||
 			    strcmp( rcard, "  END" ) == 0 )  {
-			    	/* Version 1, DoE/MORSE */
-			    	reg_total = reg_num;
-			    	return(0);	/* done */
+				/* Version 1, DoE/MORSE */
+				reg_total = reg_num;
+				return(0);	/* done */
 			}
 			if( getint( rcard, 0, 5 ) != 0 )  {
 				/* finished with this region */

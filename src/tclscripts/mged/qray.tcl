@@ -195,7 +195,7 @@ rays being drawn through the geometry." } }
     hoc_register_data $top.cmd_echoCB "Echo Cmd"\
 	    { { summary "Toggle echoing of the command used
 to fire a query ray." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
     menubutton $top.effectsMB -textvariable qray_control($id,text_effects)\
 	    -menu $top.effectsMB.m -indicatoron 1
     hoc_register_data $top.effectsMB "Query Ray Effects"\
@@ -414,7 +414,7 @@ format strings that can be set." } }
     label $top.rayL  -text "Ray" -anchor e
     hoc_register_data $top.rayL "Ray Format String"\
 	    { { summary "Enter/edit the ray format string." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
     entry $top.rayE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_ray)
     hoc_register_data $top.rayE "Ray Format String"\
 	    { { summary "Enter/edit the ray format string. Note that the
@@ -422,12 +422,12 @@ middle mouse button can be used to scroll
 the entry widget. Also, by default, the
 entry widget supports some emacs style
 bindings." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
 
     label $top.headL -text "Head" -anchor e
     hoc_register_data $top.headL "Head Format String"\
 	    { { summary "Enter/edit the head format string." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
     entry $top.headE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_head)
     hoc_register_data $top.headE "Head Format String"\
 	    { { summary "Enter/edit the head format string. Note that the
@@ -435,12 +435,12 @@ middle mouse button can be used to scroll
 the entry widget. Also, by default, the
 entry widget supports some emacs style
 bindings." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
 
     label $top.partitionL -text "Partition" -anchor e
     hoc_register_data $top.partitionL "Partition Format String"\
 	    { { summary "Enter/edit the partition format string." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
     entry $top.partitionE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_partition)
     hoc_register_data $top.partitionE "Partition Format String"\
 	    { { summary "Enter/edit the partition format string. Note that the
@@ -448,12 +448,12 @@ middle mouse button can be used to scroll
 the entry widget. Also, by default, the
 entry widget supports some emacs style
 bindings." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
 
     label $top.footL -text "Foot" -anchor e
     hoc_register_data $top.footL "Foot Format String"\
 	    { { summary "Enter/edit the foot format string." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
     entry $top.footE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_foot)
     hoc_register_data $top.footE "Foot Format String"\
 	    { { summary "Enter/edit the foot format string. Note that the
@@ -461,12 +461,12 @@ middle mouse button can be used to scroll
 the entry widget. Also, by default, the
 entry widget supports some emacs style
 bindings." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
 
     label $top.missL -text "Miss" -anchor e
     hoc_register_data $top.missL "Miss Format String"\
 	    { { summary "Enter/edit the miss format string." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
     entry $top.missE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_miss)
     hoc_register_data $top.missE "Miss Format String"\
 	    { { summary "Enter/edit the miss format string. Note that the
@@ -474,12 +474,12 @@ middle mouse button can be used to scroll
 the entry widget. Also, by default, the
 entry widget supports some emacs style
 bindings." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
 
     label $top.overlapL -text "Overlap" -anchor e
     hoc_register_data $top.overlapL "Overlap Format String"\
 	    { { summary "Enter/edit the overlay format string." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
     entry $top.overlapE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_overlap)
     hoc_register_data $top.overlapE "Overlap Format String"\
 	    { { summary "Enter/edit the overlap format string. Note that the
@@ -487,12 +487,12 @@ middle mouse button can be used to scroll
 the entry widget. Also, by default, the
 entry widget supports some emacs style
 bindings." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
 
     label $top.scriptL -text "Script" -anchor e
     hoc_register_data $top.scriptL "Script String"\
 	    { { summary "Enter/edit the nirt script string." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
     entry $top.scriptE -relief sunken -bd 2 -width 80 -textvar qray_control($id,script)
     hoc_register_data $top.scriptE "Script String"\
 	    { { summary "Enter/edit the nirt script string. Note that the
@@ -500,7 +500,7 @@ middle mouse button can be used to scroll
 the entry widget. Also, by default, the
 entry widget supports some emacs style
 bindings." }
-              { see_also "nirt" } }
+	      { see_also "nirt" } }
 
     frame $top.gridF2
     button $top.okB -relief raised -text "OK"\

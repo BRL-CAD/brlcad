@@ -50,8 +50,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 	Note that the Solid table begins with a Title and a Control card, the
 	rest of the record types appear once for each object, that is, one
 	Solid record for each Solid, one Region and one
-  	Ident record for each Region as totaled on the Control card, however,
-  	the Solid and Region records may span more than 1 card.
+	Ident record for each Region as totaled on the Control card, however,
+	the Solid and Region records may span more than 1 card.
 
 ----------------------------------------------------------------------------
 |File|Record  :             Contents              :       Format           |
@@ -1398,7 +1398,7 @@ register char *prefix;
 	    1, &rt_initial_tree_state,
 	    0, region_end, gettree_leaf, (genptr_t)NULL ) < 0 )  {
 		fprintf(stderr,"Unable to treewalk any trees!\n");
-	    	exit(11);
+		exit(11);
 	}
 
 	/* Go back, and add number of solids and regions on second card. */
@@ -1902,7 +1902,7 @@ register int	ct;
 /*	g e t a r g ( )
 	Get a word of input into 'str',
 	Return 0 if newline is encountered.
- 	Return 1 otherwise.
+	Return 1 otherwise.
  */
 char
 getarg( str )

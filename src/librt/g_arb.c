@@ -381,8 +381,7 @@ HIDDEN int
 rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, int ptno, const char *name)
 
 
-
-   		     	/* current point # on face */
+			/* current point # on face */
 
 {
 	LOCAL vect_t	work;
@@ -823,10 +822,10 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		dxbdn = VDOT( afp->peqn, rp->r_pt ) - afp->peqn[3];
 		dn = -VDOT( afp->peqn, rp->r_dir );
 
-	        if (RT_G_DEBUG & DEBUG_ARB8) {
-	        	HPRINT("arb: Plane Equation", afp->peqn);
+		if (RT_G_DEBUG & DEBUG_ARB8) {
+			HPRINT("arb: Plane Equation", afp->peqn);
 			bu_log("arb: dn=%g dxbdn=%g s=%g\n", dn, dxbdn, dxbdn/dn);
-	        }
+		}
 
 		if( dn < -SQRT_SMALL_FASTF )  {
 			/* exit point, when dir.N < 0.  out = min(out,s) */
@@ -884,10 +883,10 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  */
 void
 rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		 	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	register int    j, i;
@@ -900,10 +899,10 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 #	include "noalias.h"
 	for(i = 0; i < n; i++){
 		segp[i].seg_stp = stp[i];	/* Assume hit, if 0 then miss */
-                segp[i].seg_in.hit_dist = -INFINITY;    /* used as in */
-                segp[i].seg_in.hit_surfno = -1;		/* used as iplane */
-                segp[i].seg_out.hit_dist = INFINITY;    /* used as out */
-                segp[i].seg_out.hit_surfno = -1;	/* used as oplane */
+		segp[i].seg_in.hit_dist = -INFINITY;    /* used as in */
+		segp[i].seg_in.hit_surfno = -1;		/* used as iplane */
+		segp[i].seg_out.hit_dist = INFINITY;    /* used as out */
+		segp[i].seg_out.hit_surfno = -1;	/* used as oplane */
 /*                segp[i].seg_next = SEG_NULL;*/
 	}
 
@@ -925,7 +924,7 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 							-SQRT_SMALL_FASTF )  {
 			   /* exit point, when dir.N < 0.  out = min(out,s) */
 			   if( segp[i].seg_out.hit_dist > (s = dxbdn/dn) )  {
-			   	   segp[i].seg_out.hit_dist = s;
+				   segp[i].seg_out.hit_dist = s;
 				   segp[i].seg_out.hit_surfno = j;
 			   }
 			} else if ( dn > SQRT_SMALL_FASTF )  {
@@ -934,14 +933,14 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 				   segp[i].seg_in.hit_dist = s;
 				   segp[i].seg_in.hit_surfno = j;
 			   }
-		        }  else  {
+			}  else  {
 			   /* ray is parallel to plane when dir.N == 0.
 			    * If it is outside the solid, stop now */
 			   if( dxbdn > SQRT_SMALL_FASTF ) {
 				SEG_MISS(segp[i]);		/* MISS */
 			   }
 			}
-		        if(segp[i].seg_in.hit_dist > segp[i].seg_out.hit_dist) {
+			if(segp[i].seg_in.hit_dist > segp[i].seg_out.hit_dist) {
 			   SEG_MISS(segp[i]);		/* MISS */
 			}
 		} /* for each ray/arb_face pair */
@@ -1052,7 +1051,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		if( ret != 0 || arbp->arb_opt == (struct oface *)0 )  {
 			bu_log("rt_arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",
 				stp->st_name,
-		    		stp->st_specific, arbp->arb_opt );
+				stp->st_specific, arbp->arb_opt );
 			return;
 		}
 		if(RT_G_DEBUG&DEBUG_SOLIDS)  rt_pr_soltab( stp );
@@ -1318,30 +1317,30 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     int	i;
     int	arb_type;
     struct bn_tol tmp_tol;	/* temporay tolerance */
-    
+
     RT_ARB_CK_MAGIC(aip);
-    
+
     tmp_tol.magic = BN_TOL_MAGIC;
     tmp_tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
     tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
     tmp_tol.perp = 1e-5;
     tmp_tol.para = 1 - tmp_tol.perp;
-    
+
     arb_type = rt_arb_std_type( ip, &tmp_tol );
-    
+
     if( !arb_type ) {
-	
+
 	bu_vls_strcat( str, "ARB8\n");
-	
-	/* Use 1-based numbering, to match vertex labels in MGED */		
+
+	/* Use 1-based numbering, to match vertex labels in MGED */
 	sprintf( buf, "\t1 (%g, %g, %g)\n",
 		 INTCLAMP(aip->pt[0][X] * mm2local),
 		 INTCLAMP(aip->pt[0][Y] * mm2local),
 		 INTCLAMP(aip->pt[0][Z] * mm2local) );
 	bu_vls_strcat( str, buf );
-	
+
 	if( !verbose )  return(0);
-	
+
 	for( i=1; i < 8; i++ )  {
 	    sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
 		     INTCLAMP(aip->pt[i][X] * mm2local),
@@ -1355,7 +1354,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	switch( arb_type ) {
 	    case ARB8:
 		for( i=0 ; i<8 ; i++ ) {
-		    sprintf( buf, "\t%d (%g, %g, %g)\n", i+1, 
+		    sprintf( buf, "\t%d (%g, %g, %g)\n", i+1,
 			     INTCLAMP(aip->pt[i][X] * mm2local),
 			     INTCLAMP(aip->pt[i][Y] * mm2local),
 			     INTCLAMP(aip->pt[i][Z] * mm2local) );

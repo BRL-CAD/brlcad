@@ -68,7 +68,7 @@ to put the RT script."} {see_also "saveview, rt"}}
     hoc_register_data $top.fileE "File Name" $tmp_hoc_data
 
     set tmp_hoc_data {{summary "Enter other rt options."}
-                      {see_also "saveview, rt"}}
+		      {see_also "saveview, rt"}}
     label $top.argsL -text "Other args" -anchor w
     hoc_register_data $top.argsL "Other args" $tmp_hoc_data
     entry $top.argsE -width 12 -textvar rts_control($id,args)

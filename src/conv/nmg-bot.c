@@ -148,7 +148,7 @@ main(int argc, char **argv)
 			continue;
 		}
 		if ( id == ID_NMG ) {
-	    		nmg_conv( &intern, dp->d_namep );
+			nmg_conv( &intern, dp->d_namep );
 		} else {
 			ret = wdb_put_internal( fdout, dp->d_namep, &intern, 1.0 );
 			if( ret < 0 )  {

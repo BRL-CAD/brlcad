@@ -253,9 +253,9 @@ main(int argc, char **argv)
  */
 void
 separate(register int *rop, register int *gop, register int *bop, register unsigned char *cp, long int num)
-            	     			/* Y */
-            	     			/* U */
-            	     			/* V */
+					/* Y */
+					/* U */
+					/* V */
 
 
 {

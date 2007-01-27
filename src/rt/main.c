@@ -302,7 +302,7 @@ int main(int argc, char **argv)
 	if( npsw > 1 )  {
 	    rt_g.rtg_parallel = 1;
 	    if (rt_verbosity & VERBOSE_MULTICPU)
-	        fprintf(stderr,"Planning to run with %d processors\n", npsw );
+		fprintf(stderr,"Planning to run with %d processors\n", npsw );
 	} else
 		rt_g.rtg_parallel = 0;
 
@@ -399,7 +399,7 @@ int main(int argc, char **argv)
 
 	pkg_init();
 
-	/* 
+	/*
 	 *  Initialize application.
 	 *  Note that width & height may not have been set yet,
 	 *  since they may change from frame to frame.

@@ -43,7 +43,6 @@ static const char RCSpg[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -309,7 +308,7 @@ rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 			dist = hits[i].hit_dist - hits[i+1].hit_dist;
 			if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) &&
 				VDOT( hits[i].hit_normal, rp->r_dir ) *
-			        VDOT( hits[i+1].hit_normal, rp->r_dir) > 0)
+				VDOT( hits[i+1].hit_normal, rp->r_dir) > 0)
 			{
 				for( j=i ; j<nhits-1 ; j++ )
 					hits[j] = hits[j+1];
@@ -955,7 +954,7 @@ rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol, struct resour
 			if( m1 >= tol->dist && m2 >= tol->dist &&
 			    m3 >= tol->dist && m4 >= tol->dist )  {
 
-			    	/* add this triangle to the BOT */
+				/* add this triangle to the BOT */
 				if( first ) {
 					ip_bot->faces[ip_bot->num_faces * 3] = ip_bot->num_vertices;
 					VMOVE( &ip_bot->vertices[ip_bot->num_vertices * 3], work[0] );
@@ -970,12 +969,12 @@ rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol, struct resour
 					ip_bot->faces[ip_bot->num_faces * 3] = v0;
 					ip_bot->faces[ip_bot->num_faces * 3 + 1] = v2;
 				}
-			    	VMOVE( &ip_bot->vertices[ip_bot->num_vertices * 3], work[2] );
-			    	ip_bot->faces[ip_bot->num_faces * 3 + 2] = ip_bot->num_vertices;
+				VMOVE( &ip_bot->vertices[ip_bot->num_vertices * 3], work[2] );
+				ip_bot->faces[ip_bot->num_faces * 3 + 2] = ip_bot->num_vertices;
 				v2 = ip_bot->num_vertices;
-			    	ip_bot->num_vertices++;
+				ip_bot->num_vertices++;
 
-			    	ip_bot->num_faces++;
+				ip_bot->num_faces++;
 			}
 
 			/* Chop off a triangle, and continue */

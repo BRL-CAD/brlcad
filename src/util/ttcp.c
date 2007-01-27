@@ -65,8 +65,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #if defined (IRIX) && IRIX == 5
 /* we need a struct timeval */
 struct timeval {
-        long    tv_sec;         /* seconds */
-        long    tv_usec;        /* and microseconds */
+	long    tv_sec;         /* seconds */
+	long    tv_usec;        /* and microseconds */
 };
 #endif
 
@@ -439,7 +439,6 @@ delay(int us)
 }
 
 
-
 /*
  *			N W R I T E
  */
@@ -462,7 +461,6 @@ again:
 	}
 	return(cnt);
 }
-
 
 
 int
@@ -569,8 +567,8 @@ main(int argc, char **argv)
 		mes("connect");
 	    } else {
 		/* otherwise, we are the server and
-	         * should listen for the connections
-	         */
+		 * should listen for the connections
+		 */
 		listen(fd,0);   /* allow a queue of 0 */
 		if(options)  {
 #ifdef BSD42

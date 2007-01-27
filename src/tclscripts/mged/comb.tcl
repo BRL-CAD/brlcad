@@ -419,7 +419,7 @@ a region, double click with the left mouse button." } }
 	    { { summary "This automatically generates a combination
 name of the form 'comb@' where '@' represents
 the counter used by make_name." }
-              { see_also "make_name" } }
+	      { see_also "make_name" } }
 
     # create label for region id
     label $top.idL -text "Region Id:" -anchor e
@@ -543,7 +543,6 @@ the form of the selected shader type." } }
 	    -command "comb_shader_gui $id light"
     hoc_register_menu_data "Shader" light "Shader - Light" \
 	    { { summary "Set shader parameters to make this object appear as a light source." } }
-
 
 
     $top.shaderMB.m add command -label "texture (color)" \
@@ -710,13 +709,13 @@ from the combination." } }
 
     # put id_los_air_mater into the "Boolean" frame
     grid $top.id_los_air_mater -in $bool_frame \
-             -padx $comb_control($id,padx) \
-             -pady $comb_control($id,pady) \
-             -sticky new -row 0 -column 0
+	     -padx $comb_control($id,padx) \
+	     -pady $comb_control($id,pady) \
+	     -sticky new -row 0 -column 0
     grid $top.bool_expr_frame -in $bool_frame \
-             -padx $comb_control($id,padx) \
-             -pady $comb_control($id,pady) \
-             -sticky nsew -row 1 -column 0
+	     -padx $comb_control($id,padx) \
+	     -pady $comb_control($id,pady) \
+	     -sticky nsew -row 1 -column 0
     grid columnconfigure $bool_frame 0 -weight 1
     grid rowconfigure $bool_frame 0 -weight 0
     grid rowconfigure $bool_frame 1 -weight 1
@@ -724,15 +723,15 @@ from the combination." } }
     # put the color label and the frame built by
     # "color_entry_build" into "color_frame"
     grid $top.colorL \
-            -row 0 -column 0 \
+	    -row 0 -column 0 \
 	    -sticky "e" \
-            -in $top.color_frame \
-            -pady $comb_control($id,pady)
+	    -in $top.color_frame \
+	    -pady $comb_control($id,pady)
     grid $top.colorF \
-            -row 0 -column 1 \
+	    -row 0 -column 1 \
 	    -sticky "w" \
-            -in $top.color_frame \
-            -pady $comb_control($id,pady)
+	    -in $top.color_frame \
+	    -pady $comb_control($id,pady)
 
     # puts shader entry widget and shader selector menubutton into the
     # "shader_entry_and_menu_frame"
@@ -766,15 +765,15 @@ from the combination." } }
 
     # puts color frame into "Shader" labeledframe
     grid $top.color_frame -in $shade_frame \
-             -padx $comb_control($id,padx) \
-             -pady $comb_control($id,pady) \
-             -sticky new -row 0 -column 0
+	     -padx $comb_control($id,padx) \
+	     -pady $comb_control($id,pady) \
+	     -sticky new -row 0 -column 0
 
     # add the actual shader frame to the "Shader" labeledframe
     grid $top.shader_top_frame -in $shade_frame \
-             -padx $comb_control($id,padx) \
-             -pady $comb_control($id,pady) \
-             -sticky nsew -row 1 -column 0
+	     -padx $comb_control($id,padx) \
+	     -pady $comb_control($id,pady) \
+	     -sticky nsew -row 1 -column 0
 
     grid rowconfigure $shade_frame 0 -weight 0
     grid rowconfigure $shade_frame 1 -weight 1
@@ -786,17 +785,17 @@ from the combination." } }
     # put the display selection menubutton, the "Is Region" checkbutton,
     # and the "Inherit" checkbutton in the "region_inherit_frame"
     grid $bool_shade_b \
-            -row 0 -column 0 \
-            -sticky "w" \
-            -in $top.region_inherit_frame
+	    -row 0 -column 0 \
+	    -sticky "w" \
+	    -in $top.region_inherit_frame
     grid $top.isRegionCB \
-            -row 0 -column 2 \
-            -sticky "nse" \
-            -in $top.region_inherit_frame
+	    -row 0 -column 2 \
+	    -sticky "nse" \
+	    -in $top.region_inherit_frame
     grid $top.inheritCB \
-            -row 0 -column 3 \
-            -sticky "nse" \
-            -in $top.region_inherit_frame
+	    -row 0 -column 3 \
+	    -sticky "nse" \
+	    -in $top.region_inherit_frame
     grid columnconfigure $top.region_inherit_frame 1 -weight 1
     grid rowconfigure $top.region_inherit_frame 0 -weight 0
 
@@ -818,29 +817,29 @@ from the combination." } }
 
     # grid the remaining frames
     grid $top.name_stuff \
-         -sticky "ew" \
-         -padx $comb_control($id,padx) \
-         -pady $comb_control($id,pady) \
-         -row 0 -column 0
+	 -sticky "ew" \
+	 -padx $comb_control($id,padx) \
+	 -pady $comb_control($id,pady) \
+	 -row 0 -column 0
 
     grid $top.region_inherit_frame \
-         -padx $comb_control($id,padx) \
-         -pady $comb_control($id,pady) \
-         -sticky new -row 1 -column 0
+	 -padx $comb_control($id,padx) \
+	 -pady $comb_control($id,pady) \
+	 -sticky new -row 1 -column 0
 
     grid $my_tabbed_frame \
-          -sticky "nsew" \
-          -padx $comb_control($id,padx) \
-          -pady $comb_control($id,pady) \
-          -row 2 -column 0
+	  -sticky "nsew" \
+	  -padx $comb_control($id,padx) \
+	  -pady $comb_control($id,pady) \
+	  -row 2 -column 0
     grid rowconfigure $my_tabbed_frame 0 -weight 1
     grid columnconfigure $my_tabbed_frame 0 -weight 1
 
     grid $top.control_buttons_frame \
-         -sticky "ew" \
-         -padx $comb_control($id,padx) \
-         -pady $comb_control($id,pady) \
-         -row 3 -column 0
+	 -sticky "ew" \
+	 -padx $comb_control($id,padx) \
+	 -pady $comb_control($id,pady) \
+	 -row 3 -column 0
 
     grid rowconfigure $top 0 -weight 0
     grid rowconfigure $top 2 -weight 1
@@ -918,7 +917,7 @@ proc comb_apply { id } {
 	}
 
 	if {$comb_control($id,id) == 0 && $comb_control($id,air) == 0 ||
-            $comb_control($id,id) != 0 && $comb_control($id,air) != 0} {
+	    $comb_control($id,id) != 0 && $comb_control($id,air) != 0} {
 	    # exactly one of region id and air code should be set
 	    set ret [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		    "Warning: both region id and air code are set/unset"\

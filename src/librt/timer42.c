@@ -37,7 +37,6 @@ static const char RCStimer[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -59,7 +58,6 @@ static void tvadd();
 #endif
 static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0);
 static void psecs(long int l, struct bu_vls *vp);
-
 
 
 /*

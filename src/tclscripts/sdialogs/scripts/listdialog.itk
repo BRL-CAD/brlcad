@@ -33,7 +33,7 @@
 # Usual options.
 #
 itk::usual Listdialog {
-    keep -background -cursor -foreground -modality 
+    keep -background -cursor -foreground -modality
     keep -master -title -height -width
 }
 
@@ -41,7 +41,7 @@ itk::usual Listdialog {
     inherit iwidgets::Dialog
 
     itk_option define -label label Label ""
-    
+
     constructor {args} {}
     destructor {}
 
@@ -59,7 +59,7 @@ itk::usual Listdialog {
 
 #
 # Provide a lowercased access method for the Dialog class.
-# 
+#
 proc ::sdialogs::listdialog {pathName args} {
     uplevel ::sdialogs::Listdialog $pathName $args
 }

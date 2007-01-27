@@ -115,8 +115,6 @@ int get_args(int argc, char **argv)
 }
 
 
-
-
 /*
  * Local Variables:
  * mode: C

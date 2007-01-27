@@ -226,7 +226,7 @@ struct mfuncs grass_mfuncs[] = {
 /* fraction of total allowed returned */
 static double
 plants_this_cell(long int *cell, struct grass_specific *grass_sp)
-             	/* integer cell number */
+		/* integer cell number */
 
 {
 	point_t c;
@@ -316,7 +316,7 @@ plant_rot(struct plant *pl, double a)
 static void
 plant_scale(struct plant *pl, double w)
 
-         	/* 0..1, */
+		/* 0..1, */
 {
 	int blade, seg;
 	double d;
@@ -388,7 +388,7 @@ make_proto(struct grass_specific *grass_sp)
     grass_sp->proto.b[blade].tot_len = 0.0;
     grass_sp->proto.b[blade].width = grass_sp->blade_width;
     grass_sp->proto.b[blade].segs = BLADE_SEGS_MAX
-    	/* - (val*BLADE_SEGS_MAX*.25) */   ;
+	/* - (val*BLADE_SEGS_MAX*.25) */   ;
 
 
     /* pick a start angle for the first segment */
@@ -396,34 +396,33 @@ make_proto(struct grass_specific *grass_sp)
     seg_len = grass_sp->t / grass_sp->proto.b[blade].segs;
 
     for (seg=0 ; seg < grass_sp->proto.b[blade].segs; seg++) {
-        grass_sp->proto.b[blade].leaf[seg].magic = LEAF_MAGIC;
+	grass_sp->proto.b[blade].leaf[seg].magic = LEAF_MAGIC;
 
-    	angle = start_angle - (double)seg * seg_delta_angle;
-    	angle *= bn_degtorad;
-        VSET(grass_sp->proto.b[blade].leaf[seg].blade,
-        	cos(angle), 0.0, sin(angle));
+	angle = start_angle - (double)seg * seg_delta_angle;
+	angle *= bn_degtorad;
+	VSET(grass_sp->proto.b[blade].leaf[seg].blade,
+		cos(angle), 0.0, sin(angle));
 
-    	/* pick a length for the blade */
-    	tmp = (double)seg / (double)BLADE_SEGS_MAX;
-
+	/* pick a length for the blade */
+	tmp = (double)seg / (double)BLADE_SEGS_MAX;
 
 
 	grass_sp->proto.b[blade].leaf[seg].len =
 #if 1
-    	seg_len * .25 + tmp * (seg_len*1.75);
+	seg_len * .25 + tmp * (seg_len*1.75);
 #else
-    	    (grass_sp->t*.8) + seg * (grass_sp->t*.5);
+	    (grass_sp->t*.8) + seg * (grass_sp->t*.5);
 #endif
-        grass_sp->proto.b[blade].tot_len +=
-    	     grass_sp->proto.b[blade].leaf[seg].len;
+	grass_sp->proto.b[blade].tot_len +=
+	     grass_sp->proto.b[blade].leaf[seg].len;
 
 
-        VUNITIZE(grass_sp->proto.b[blade].leaf[seg].blade);
-        VCROSS(left, grass_sp->proto.b[blade].leaf[seg].blade, z_axis);
-        VUNITIZE(left);
-        VCROSS(grass_sp->proto.b[blade].leaf[seg].N,
-      		left, grass_sp->proto.b[blade].leaf[seg].blade);
-        VUNITIZE(grass_sp->proto.b[blade].leaf[seg].N);
+	VUNITIZE(grass_sp->proto.b[blade].leaf[seg].blade);
+	VCROSS(left, grass_sp->proto.b[blade].leaf[seg].blade, z_axis);
+	VUNITIZE(left);
+	VCROSS(grass_sp->proto.b[blade].leaf[seg].N,
+		left, grass_sp->proto.b[blade].leaf[seg].blade);
+	VUNITIZE(grass_sp->proto.b[blade].leaf[seg].N);
     }
     blade_rot(&grass_sp->proto.b[blade], &grass_sp->proto.b[blade], m, grass_sp->proto.root);
     bn_mat_mul2(r, m);
@@ -458,14 +457,14 @@ make_proto(struct grass_specific *grass_sp)
     VCROSS(left, grass_sp->proto.b[blade].leaf[seg].blade, z_axis);
     VUNITIZE(left);
     VCROSS(grass_sp->proto.b[blade].leaf[seg].N,
-      		left, grass_sp->proto.b[blade].leaf[seg].blade);
+		left, grass_sp->proto.b[blade].leaf[seg].blade);
     VUNITIZE(grass_sp->proto.b[blade].leaf[seg].N);
 
     val -= tmp * .4;
   }
 
   if (rdebug&RDEBUG_SHADE) {
-  	print_plant("proto", &grass_sp->proto);
+	print_plant("proto", &grass_sp->proto);
   }
 
 
@@ -481,9 +480,9 @@ HIDDEN int
 grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    			      	/* pointer to reg_udata in *rp */
+				/* pointer to reg_udata in *rp */
 
-           		      	/* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct grass_specific	*grass_sp;
 
@@ -601,10 +600,10 @@ plot_bush(struct plant *pl, struct grass_ray *r)
 static void
 make_bush(struct plant *pl, double seed, const fastf_t *cell_pos, const struct grass_specific *grass_sp, double w, struct grass_ray *r)
 
-       				     	/* derived from cell_num */
+					/* derived from cell_num */
 
 
-      				   /* cell specific weght for count, height */
+				   /* cell specific weght for count, height */
 
 {
 	point_t pt;
@@ -652,7 +651,6 @@ make_bush(struct plant *pl, double seed, const fastf_t *cell_pos, const struct g
 }
 
 
-
 /*	Intersect ray with leaf segment.  We already know we're within
  *	max width of the segment.
  *
@@ -661,10 +659,7 @@ static void
 hit_blade(const struct blade *bl, struct grass_ray *r, struct shadework *swp, const struct grass_specific *grass_sp, int seg, double *ldist, int blade_num, double fract)
 
 
-                	     	/* defined in material.h */
-
-
-
+				/* defined in material.h */
 
 
 {
@@ -734,8 +729,7 @@ static void
 isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, struct shadework *swp, const struct grass_specific *grass_sp, int blade_num)
 
 
-
-                	     	/* defined in material.h */
+				/* defined in material.h */
 
 
 {
@@ -834,7 +828,7 @@ static void
 isect_plant(const struct plant *pl, struct grass_ray *r, struct shadework *swp, const struct grass_specific *grass_sp)
 
 
-                	     	/* defined in material.h */
+				/* defined in material.h */
 
 {
 	int i;
@@ -893,12 +887,10 @@ isect_plant(const struct plant *pl, struct grass_ray *r, struct shadework *swp, 
 
 static int
 stat_cell(fastf_t *cell_pos, struct grass_ray *r, struct grass_specific *grass_sp, struct shadework *swp, double dist_to_cell, double radius)
-                 	/* origin of cell in region coordinates */
+			/* origin of cell in region coordinates */
 
 
-
-
-              	/* radius of ray */
+		/* radius of ray */
 {
 	point_t tmp;
 	vect_t color;
@@ -951,7 +943,7 @@ stat_cell(fastf_t *cell_pos, struct grass_ray *r, struct grass_specific *grass_s
 
 static void
 plot_cell(long int *cell, struct grass_ray *r, struct grass_specific *grass_sp)
-    			        	/* cell number (such as 5,3) */
+					/* cell number (such as 5,3) */
 
 
 {
@@ -983,10 +975,7 @@ plot_cell(long int *cell, struct grass_ray *r, struct grass_specific *grass_sp)
  */
 static void
 isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double out_dist, struct grass_specific *grass_sp, double curr_dist)
-    			        	/* cell number (such as 5,3) */
-
-
-
+					/* cell number (such as 5,3) */
 
 
 {
@@ -1038,7 +1027,6 @@ isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double ou
 
 	VSUB2(v, cell_pos, r->r.r_pt);
 	dist_to_cell = MAGNITUDE(v);
-
 
 
 	/* radius of ray at cell origin */
@@ -1094,7 +1082,6 @@ isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double ou
 }
 
 
-
 /*  Process a grid cell and any unprocessed adjoining neighbors.
  *
  * The flags argument indicates which cells (relative to the central
@@ -1118,9 +1105,9 @@ static void
 do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadework *swp, double out_dist, struct grass_specific *grass_sp, double curr_dist)
 
 
-      			      		/* which adj cells need processing */
+					/* which adj cells need processing */
 
-                	     	/* defined in material.h */
+				/* defined in material.h */
 
 
 {
@@ -1165,8 +1152,8 @@ int
 grass_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-                	     	/* defined in material.h */
-    			    	/* ptr to the shader-specific struct */
+				/* defined in material.h */
+				/* ptr to the shader-specific struct */
 {
 	register struct grass_specific *grass_sp =
 		(struct grass_specific *)dp;
@@ -1243,7 +1230,6 @@ grass_render(struct application *ap, struct partition *pp, struct shadework *swp
 	radius = ap->a_rbeam + pp->pt_outhit->hit_dist * ap->a_diverge;
 	VSETALL(v, radius);
 	MAT4X3VEC(out_rad, grass_sp->m_to_sh, v);
-
 
 
 	/* set up a DDA grid to march through. */
@@ -1411,8 +1397,6 @@ grass_render(struct application *ap, struct partition *pp, struct shadework *swp
 	/* Missed everything */
 
 
-
-
 	if (grass_sp->debug && !swp->sw_xmitonly) {
 		/* show the cell positions on the ground */
 		double bc;
@@ -1430,7 +1414,6 @@ grass_render(struct application *ap, struct partition *pp, struct shadework *swp
 		/* setting basecolor to 1.0 prevents 'filterglass' effect */
 		VSETALL(swp->sw_basecolor, 1.0);
 	}
-
 
 
 	(void)rr_render( ap, pp, swp );

@@ -125,7 +125,7 @@ nmg_ck_lu_orientation(struct loopuse *lu, const struct bn_tol *tolp)
 			nmg_orientation(fu->orientation),
 			nmg_orientation(lu->orientation)
 		);
-	     	rt_bomb("nmg_ck_lu_orientation() loop orientation flags do not match geometry\n");
+		rt_bomb("nmg_ck_lu_orientation() loop orientation flags do not match geometry\n");
 	}
 }
 
@@ -263,7 +263,7 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, long int **clas
 			(void)perror("bool_ans.pl");
 			bu_bomb("unable to open bool_ans.pl for writing");
 		}
-    		bu_log("plotting bool_ans.pl\n");
+		bu_log("plotting bool_ans.pl\n");
 		nmg_pl_s( fp, sA );
 		(void)fclose(fp);
 	}
@@ -460,7 +460,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 			if( loops_retained )  rt_bomb("nmg_eval_shell() empty faceuse with retained loops?\n");
 			/* faceuse is empty, face & mate die */
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
-		    		bu_log("faceuse x%x empty, kill\n", fu);
+				bu_log("faceuse x%x empty, kill\n", fu);
 			nmg_kfu( fu );	/* kill face & mate, dequeue from shell */
 			if( rt_g.NMG_debug & DEBUG_VERIFY )
 				nmg_vshell( &s->r_p->s_hd, s->r_p );

@@ -145,13 +145,13 @@ get_args(int argc, register char **argv)
 			break;
 		/* backword compatability */
 		case 'r':
-		        pixcolor[RED] = atoi( bu_optarg );
+			pixcolor[RED] = atoi( bu_optarg );
 			break;
 		case 'g':
-		        pixcolor[GRN] = atoi( bu_optarg );
+			pixcolor[GRN] = atoi( bu_optarg );
 			break;
 		case 'b':
-		        pixcolor[BLU] = atoi( bu_optarg );
+			pixcolor[BLU] = atoi( bu_optarg );
 			break;
 		default:		/* '?' */
 			return(0);
@@ -229,20 +229,20 @@ do_line(register struct vfont *vfp, register char *line)
 		 *  Space characters are frequently not represented
 		 *  in the font set, so leave white space here.
 		 */
-	 	if( width <= 1 )  {
-	 		char_id = 'n';	/* 1-en space */
+		if( width <= 1 )  {
+			char_id = 'n';	/* 1-en space */
 			vdp = &vfp->vf_dispatch[char_id];
 			width = vdp->vd_left + vdp->vd_right;
-	 		if( width <= 1 )  {
-		 		char_id = 'N';	/* 1-en space */
+			if( width <= 1 )  {
+				char_id = 'N';	/* 1-en space */
 				vdp = &vfp->vf_dispatch[char_id];
 				width = vdp->vd_left + vdp->vd_right;
-	 			if( width <= 1 )
-	 				width = 16;	/* punt */
-	 		}
-	 		currx += width;
-	 		continue;
-	 	}
+				if( width <= 1 )
+					width = 16;	/* punt */
+			}
+			currx += width;
+			continue;
+		}
 
 		if( currx + width > fb_getwidth(fbp) - 1 )  {
 			fprintf(stderr,"fblabel:  Ran off screen\n");

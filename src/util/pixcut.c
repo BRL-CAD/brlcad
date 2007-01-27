@@ -224,47 +224,47 @@ main(int argc, char **argv)
 		if (base_x < 0 || base_y < 0 ||
 		    base_x+new_width >org_width ||
 		    base_y+new_height > org_height) {
-		    	int comma=0;
-		    	char *last = 0;
+			int comma=0;
+			char *last = 0;
 			(void) fprintf(stderr,
 "pixcut: adding background strip on the");
 
-		    	if (base_x < 0) {
-		    		last = "left";
-		    	}
-		    	if (base_y < 0) {
-		    		if (last) {
-		    			(void) fprintf(stderr," %s",last);
-		    			comma=1;
-		    		}
-		    		last = "bottom";
-		    	}
-		    	if (base_x+new_width >org_width ){
-		    		if (last) {
-		    			if (comma) {
-		    				(void)fprintf(stderr,", %s",last);
-		    			} else {
-		    				(void)fprintf(stderr," %s",last);
-		    			}
-		    			comma=1;
-		    		}
-		    	}
-		    	if (base_y+new_height > org_height) {
-		    		if (last) {
-		    			if (comma) {
-		    				(void)fprintf(stderr,", %s",last);
-		    			} else {
-		    				(void)fprintf(stderr," %s",last);
-		    			}
-		    			comma = 1;
-		    		}
-		    		last = "top";
-		    	}
-		    	if (comma) {
-		    		(void)fprintf(stderr," and %s.\n",last);
-		    	} else {
-		    		(void)fprintf(stderr," %s.\n",last);
-		    	}
+			if (base_x < 0) {
+				last = "left";
+			}
+			if (base_y < 0) {
+				if (last) {
+					(void) fprintf(stderr," %s",last);
+					comma=1;
+				}
+				last = "bottom";
+			}
+			if (base_x+new_width >org_width ){
+				if (last) {
+					if (comma) {
+						(void)fprintf(stderr,", %s",last);
+					} else {
+						(void)fprintf(stderr," %s",last);
+					}
+					comma=1;
+				}
+			}
+			if (base_y+new_height > org_height) {
+				if (last) {
+					if (comma) {
+						(void)fprintf(stderr,", %s",last);
+					} else {
+						(void)fprintf(stderr," %s",last);
+					}
+					comma = 1;
+				}
+				last = "top";
+			}
+			if (comma) {
+				(void)fprintf(stderr," and %s.\n",last);
+			} else {
+				(void)fprintf(stderr," %s.\n",last);
+			}
 		}
 	}
 /*

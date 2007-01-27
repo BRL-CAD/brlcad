@@ -335,37 +335,37 @@ install-data-local:
 	    $(ECHO) "    find $(DESTDIR)$(prefix)/. -type d -exec chmod go+x {} \;" ; \
 	    if test -d "$(DESTDIR)$(bindir)" ; then \
 	      if test "x$(DESTDIR)$(exec_prefix)/bin" != "x$(DESTDIR)$(bindir)" ; then \
-	  	$(ECHO) "    find $(DESTDIR)$(bindir)/. -type d -exec chmod go+x {} \;" ; \
+		$(ECHO) "    find $(DESTDIR)$(bindir)/. -type d -exec chmod go+x {} \;" ; \
 	      fi ; \
 	    fi ; \
 	    if test -d "$(DESTDIR)$(sbindir)" ; then \
 	      if test "x$(DESTDIR)$(exec_prefix)/sbin" != "x$(DESTDIR)$(sbindir)" ; then \
-	  	$(ECHO) "    find $(DESTDIR)$(sbindir)/. -type d -exec chmod go+x {} \;" ; \
+		$(ECHO) "    find $(DESTDIR)$(sbindir)/. -type d -exec chmod go+x {} \;" ; \
 	      fi ; \
 	    fi ; \
 	    if test -d "$(DESTDIR)$(libexecdir)" ; then \
 	      if test "x$(DESTDIR)$(exec_prefix)/libexec" != "x$(DESTDIR)$(libexecdir)" ; then \
-	  	$(ECHO) "    find $(DESTDIR)$(libexecdir)/. -type d -exec chmod go+x {} \;" ; \
+		$(ECHO) "    find $(DESTDIR)$(libexecdir)/. -type d -exec chmod go+x {} \;" ; \
 	      fi ; \
 	    fi ; \
 	    if test -d "$(DESTDIR)$(datadir)" ; then \
 	      if test "x$(DESTDIR)$(prefix)/share" != "x$(DESTDIR)$(datadir)" ; then \
-	   	$(ECHO) "    find $(DESTDIR)$(prefix)/. -type d -exec chmod go+x {} \;" ; \
+		$(ECHO) "    find $(DESTDIR)$(prefix)/. -type d -exec chmod go+x {} \;" ; \
 	      fi ; \
 	    fi ; \
 	    if test -d "$(DESTDIR)$(libdir)" ; then \
 	      if test "x$(DESTDIR)$(exec_prefix)/lib" != "x$(DESTDIR)$(libdir)" ; then \
-	   	$(ECHO) "    find $(DESTDIR)$(libdir)/. -type d -exec chmod go+x {} \;" ; \
+		$(ECHO) "    find $(DESTDIR)$(libdir)/. -type d -exec chmod go+x {} \;" ; \
 	      fi ; \
 	    fi ; \
 	    if test -d "$(DESTDIR)$(mandir)" ; then \
 	      if test "x$(DESTDIR)$(prefix)/man" != "x$(DESTDIR)$(mandir)" ; then \
-	   	$(ECHO) "    find $(DESTDIR)$(mandir)/. -type d -exec chmod go+x {} \;" ; \
+		$(ECHO) "    find $(DESTDIR)$(mandir)/. -type d -exec chmod go+x {} \;" ; \
 	      fi ; \
 	    fi ; \
 	    if test -d "$(DESTDIR)$(includedir)" ; then \
 	      if test "x$(DESTDIR)$(prefix)/include" != "x$(DESTDIR)$(includedir)" ; then \
-	   	$(ECHO) "    find $(DESTDIR)$(includedir)/. -type d -exec chmod go+x {} \;" ; \
+		$(ECHO) "    find $(DESTDIR)$(includedir)/. -type d -exec chmod go+x {} \;" ; \
 	      fi ; \
 	    fi ; \
 	    $(ECHO) ; \

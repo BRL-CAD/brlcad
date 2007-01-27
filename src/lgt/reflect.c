@@ -1429,7 +1429,7 @@ refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri
 	Scale2Vec( v_1, beta, w );
 	CrossProd( w, norml, u );
 	/*	|w X norml| = |w||norml| * sin( theta_1 )
-		        |u| = ri_1/ri_2 * sin( theta_1 ) = sin( theta_2 )
+			|u| = ri_1/ri_2 * sin( theta_1 ) = sin( theta_2 )
 	 */
 	if( (beta = Dot( u, u )) > 1.0 ) /* beta = sin( theta_2 )^^2. */
 		{ /* Past critical angle, total reflection.
@@ -1630,8 +1630,8 @@ model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_
 
 	if( ap->a_user != 0 )
 		/* Calculate specular reflectance, if not ambient light.
-		 	Reflected ray = (2 * cos(i) * Normal) - Incident ray.
-		 	Cos(s) = dot product of Reflected ray with Incident ray.
+			Reflected ray = (2 * cos(i) * Normal) - Incident ray.
+			Cos(s) = dot product of Reflected ray with Incident ray.
 		 */
 		{	auto fastf_t lgt_reflect[3], tmp_dir[3];
 			register fastf_t specular;

@@ -564,7 +564,7 @@ nmg_mesh_two_faces(register struct faceuse *fu1, register struct faceuse *fu2, c
 					    (eu2->eumate_p->vu_p->v_p == v1a &&
 					     eu2->vu_p->v_p == v1b) )  {
 						nmg_radial_join_eu(eu1, eu2, tol);
-					     	count++;
+						count++;
 					 }
 				}
 			}
@@ -591,10 +591,10 @@ nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *to
 	NMG_CK_FACEUSE(fu2);
 	BN_CK_TOL(tol);
 
-    	if (rt_g.NMG_debug & DEBUG_MESH_EU && rt_g.NMG_debug & DEBUG_PLOTEM) {
-    		static int fnum=1;
-    	    	nmg_pl_2fu( "Before_mesh%d.pl", fnum++, fu1, fu2, 1 );
-    	}
+	if (rt_g.NMG_debug & DEBUG_MESH_EU && rt_g.NMG_debug & DEBUG_PLOTEM) {
+		static int fnum=1;
+		nmg_pl_2fu( "Before_mesh%d.pl", fnum++, fu1, fu2, 1 );
+	}
 
 	if (rt_g.NMG_debug & DEBUG_MESH_EU)
 		bu_log("meshing self (fu1 %8x)\n", fu1);
@@ -608,10 +608,10 @@ nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *to
 		bu_log("meshing to other (fu1:%8x fu2:%8x)\n", fu1, fu2);
 	count += nmg_mesh_two_faces( fu1, fu2, tol );
 
-    	if (rt_g.NMG_debug & DEBUG_MESH_EU && rt_g.NMG_debug & DEBUG_PLOTEM) {
-    		static int fno=1;
-    	    	nmg_pl_2fu( "After_mesh%d.pl", fno++, fu1, fu2, 1 );
-    	}
+	if (rt_g.NMG_debug & DEBUG_MESH_EU && rt_g.NMG_debug & DEBUG_PLOTEM) {
+		static int fno=1;
+		nmg_pl_2fu( "After_mesh%d.pl", fno++, fu1, fu2, 1 );
+	}
 }
 
 /**

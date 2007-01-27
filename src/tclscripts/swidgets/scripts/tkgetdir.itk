@@ -27,7 +27,7 @@
 #  Cyrille Artho <cartho@netlink.ch> for the 'saving pwd fix'
 #  Terry Griffin <terryg@axian.com> for <Return> key bindings on buttons.
 #  Kenneth Kehl  <Kenneth.Kehl@marconiastronics.com> for blocking at end of dir tree
-#  Michael Barth <m.barth@de.bosch.com> for finding the "-fill on image" problem 
+#  Michael Barth <m.barth@de.bosch.com> for finding the "-fill on image" problem
 #  Mike Avery <avery@loran.com> for finding the "myfont already exist" problem
 #  Branko Rogic <b.rogic@lectra.com> for gif icons, parent and background options
 #  Reinhard Holler <rones@augusta.de> for colors ,font and autovalid options
@@ -38,7 +38,7 @@
 #########################################################
 
 #########################################################
-# 
+#
 # tkgetdir name [option value ...]
 #
 #  options are :
@@ -136,7 +136,7 @@ itcl::class swidgets::tkgetdir {
 }
 
 # ------------------------------------------------------------
-#                        OPTIONS 
+#                        OPTIONS
 # ------------------------------------------------------------
 ::itcl::configbody swidgets::tkgetdir::ok {
     $itk_component(ok) configure -text $itk_option(-ok)
@@ -299,7 +299,7 @@ itcl::class swidgets::tkgetdir {
 		# disassemble the parts
 		set dir [file split [pwd]]
 		set idir [file split $itk_option(-initialdir)]
-		
+
 		# back off ony back-directory parts
 		foreach part $idir {
 		    switch -- $part {
@@ -308,7 +308,7 @@ itcl::class swidgets::tkgetdir {
 			default {lappend dir $part}
 		    }
 		}
-		
+
 		# reassemble
 		set idir $dir
 		set dir ""
@@ -320,7 +320,7 @@ itcl::class swidgets::tkgetdir {
     } else {
 	set dir [pwd]
     }
-	
+
     _show_dir $dir
     update idletasks
 }
@@ -355,14 +355,14 @@ itcl::class swidgets::tkgetdir {
 
     set curdir $dir
     cd $dir
-    
+
     # breakup directory path
     $itk_component(directory) configure -command {}
     $itk_component(directory) delete 0 end
     $itk_component(directory) insert end $dir
     $itk_component(open) configure -state disabled
     $itk_component(chosen) delete 0 end; # added 4/2/02, if removed need to copy this line
-                                         # before all _show_dir func calls except constructor
+					 # before all _show_dir func calls except constructor
     $itk_component(chosen) insert 0 $dir; # added 4/2/02
 
     set curlst [file split $dir]
@@ -396,15 +396,15 @@ itcl::class swidgets::tkgetdir {
     set wi1 [image width $itk_option(-dirimg)]
     incr wi1 4
     set wi2 [winfo width $itk_component(canvas)]
-    
+
     set lidir [list]
     foreach file [glob -nocomplain *] {
-	if [file isdirectory [string trim $file "~"]] { 
+	if [file isdirectory [string trim $file "~"]] {
 	    lappend lidir $file
 	}
     }
     set sldir [lsort $lidir]
-    
+
     $itk_component(canvas) delete all
     set ind 0
     # Adjust the position of the text wi1 with an offset.
@@ -414,7 +414,7 @@ itcl::class swidgets::tkgetdir {
 	set offset 0
     }
     foreach file $sldir {
-	if [file isdirectory $file] { 
+	if [file isdirectory $file] {
 	    $itk_component(canvas) create image 2 [expr $ind * $hi] \
 		    -anchor nw -image $itk_option(-dirimg) -tags IMG
 	    $itk_component(canvas) create text $wi1 [expr ($ind * $hi) + $offset] \
@@ -442,7 +442,7 @@ itcl::class swidgets::tkgetdir {
     set nbr [llength $curlst]
     if {$nbr < 2} {return}
     set tmp [expr $nbr - 2]
-    
+
     set newlst [lrange $curlst 0 $tmp]
     set newdir [eval file join $newlst]
 
@@ -464,7 +464,7 @@ itcl::class swidgets::tkgetdir {
 	    break
 	}
     }
- 
+
     if {$areDirs} {
 	_show_dir $newdir
     } else {

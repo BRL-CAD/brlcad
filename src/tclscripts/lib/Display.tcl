@@ -266,7 +266,7 @@
 
 ::itcl::configbody Display::centerDotEnable {
     if {$itk_option(-centerDotEnable) != 0 &&
-        $itk_option(-centerDotEnable) != 1} {
+	$itk_option(-centerDotEnable) != 1} {
 	error "value must be 0, 1"
     }
 
@@ -285,10 +285,10 @@
     # validate color
     if {![string is digit $r] ||
 	![string is digit $g] ||
-        ![string is digit $b] ||
-        $r < 0 || 255 < $r ||
-        $g < 0 || 255 < $g ||
-        $b < 0 || 255 < $b} {
+	![string is digit $b] ||
+	$r < 0 || 255 < $r ||
+	$g < 0 || 255 < $g ||
+	$b < 0 || 255 < $b} {
 
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -326,10 +326,10 @@
     # validate color
     if {![string is digit $r] ||
 	![string is digit $g] ||
-        ![string is digit $b] ||
-        $r < 0 || 255 < $r ||
-        $g < 0 || 255 < $g ||
-        $b < 0 || 255 < $b} {
+	![string is digit $b] ||
+	$r < 0 || 255 < $r ||
+	$g < 0 || 255 < $g ||
+	$b < 0 || 255 < $b} {
 
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -349,10 +349,10 @@
     # validate color
     if {![string is digit $r] ||
 	![string is digit $g] ||
-        ![string is digit $b] ||
-        $r < 0 || 255 < $r ||
-        $g < 0 || 255 < $g ||
-        $b < 0 || 255 < $b} {
+	![string is digit $b] ||
+	$r < 0 || 255 < $r ||
+	$g < 0 || 255 < $g ||
+	$b < 0 || 255 < $b} {
 
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -372,10 +372,10 @@
     # validate color
     if {![string is digit $r] ||
 	![string is digit $g] ||
-        ![string is digit $b] ||
-        $r < 0 || 255 < $r ||
-        $g < 0 || 255 < $g ||
-        $b < 0 || 255 < $b} {
+	![string is digit $b] ||
+	$r < 0 || 255 < $r ||
+	$g < 0 || 255 < $g ||
+	$b < 0 || 255 < $b} {
 
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -385,7 +385,7 @@
 
 ::itcl::configbody Display::viewAxesEnable {
     if {$itk_option(-viewAxesEnable) != 0 &&
-        $itk_option(-viewAxesEnable) != 1} {
+	$itk_option(-viewAxesEnable) != 1} {
 	error "value must be 0, 1"
     }
 
@@ -394,7 +394,7 @@
 
 ::itcl::configbody Display::modelAxesEnable {
     if {$itk_option(-modelAxesEnable) != 0 &&
-        $itk_option(-modelAxesEnable) != 1} {
+	$itk_option(-modelAxesEnable) != 1} {
 	error "value must be 0, 1"
     }
 
@@ -404,7 +404,7 @@
 ::itcl::configbody Display::viewAxesSize {
     # validate size
     if {![string is double $itk_option(-viewAxesSize)] ||
-        $itk_option(-viewAxesSize) < $minAxesSize} {
+	$itk_option(-viewAxesSize) < $minAxesSize} {
 	    error "-viewAxesSize must be >= $minAxesSize"
     }
 
@@ -414,7 +414,7 @@
 ::itcl::configbody Display::modelAxesSize {
     # validate size
     if {![string is double $itk_option(-modelAxesSize)] ||
-        $itk_option(-modelAxesSize) < $minAxesSize} {
+	$itk_option(-modelAxesSize) < $minAxesSize} {
 	    error "-modelAxesSize must be >= $minAxesSize"
     }
 
@@ -433,7 +433,7 @@
     # validate center
     if {![string is double $x] ||
 	![string is double $y] ||
-        ![string is double $z]} {
+	![string is double $z]} {
 
 	error "values must be {x y z} where x, y and z are numeric"
     }
@@ -453,7 +453,7 @@
     # validate center
     if {![string is double $x] ||
 	![string is double $y] ||
-        ![string is double $z]} {
+	![string is double $z]} {
 
 	error "values must be {x y z} where x, y and z are numeric"
     }
@@ -461,7 +461,7 @@
     # convert to mm
     set local2mm [local2base]
     set itk_option(-modelAxesPosition) [list [expr {$local2mm * $x}] \
-	                                     [expr {$local2mm * $y}] \
+					     [expr {$local2mm * $y}] \
 					     [expr {$local2mm * $z}]]
 
     refresh
@@ -470,7 +470,7 @@
 ::itcl::configbody Display::viewAxesLineWidth {
     # validate line width
     if {![string is digit $itk_option(-viewAxesLineWidth)] ||
-        $itk_option(-viewAxesLineWidth) < $minAxesLineWidth} {
+	$itk_option(-viewAxesLineWidth) < $minAxesLineWidth} {
 	    error "-viewAxesLineWidth must be >= $minAxesLineWidth"
     }
 
@@ -480,7 +480,7 @@
 ::itcl::configbody Display::modelAxesLineWidth {
     # validate line width
     if {![string is digit $itk_option(-modelAxesLineWidth)] ||
-        $itk_option(-modelAxesLineWidth) < $minAxesLineWidth} {
+	$itk_option(-modelAxesLineWidth) < $minAxesLineWidth} {
 	    error "-modelAxesLineWidth must be >= $minAxesLineWidth"
     }
 
@@ -489,7 +489,7 @@
 
 ::itcl::configbody Display::viewAxesTripleColor {
     if {$itk_option(-viewAxesTripleColor) != 0 &&
-        $itk_option(-viewAxesTripleColor) != 1} {
+	$itk_option(-viewAxesTripleColor) != 1} {
 	error "value must be 0 or 1"
     }
 
@@ -498,7 +498,7 @@
 
 ::itcl::configbody Display::modelAxesTripleColor {
     if {$itk_option(-modelAxesTripleColor) != 0 &&
-        $itk_option(-modelAxesTripleColor) != 1} {
+	$itk_option(-modelAxesTripleColor) != 1} {
 	error "value must be 0 or 1"
     }
 
@@ -517,10 +517,10 @@
     # validate color
     if {![string is digit $r] ||
 	![string is digit $g] ||
-        ![string is digit $b] ||
-        $r < 0 || 255 < $r ||
-        $g < 0 || 255 < $g ||
-        $b < 0 || 255 < $b} {
+	![string is digit $b] ||
+	$r < 0 || 255 < $r ||
+	$g < 0 || 255 < $g ||
+	$b < 0 || 255 < $b} {
 
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -541,9 +541,9 @@
     if {![string is digit $r] ||
 	![string is digit $g] ||
 	![string is digit $b] ||
-        $r < 0 || 255 < $r ||
-        $g < 0 || 255 < $g ||
-        $b < 0 || 255 < $b} {
+	$r < 0 || 255 < $r ||
+	$g < 0 || 255 < $g ||
+	$b < 0 || 255 < $b} {
 
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -563,10 +563,10 @@
     # validate color
     if {![string is digit $r] ||
 	![string is digit $g] ||
-        ![string is digit $b] ||
-        $r < 0 || 255 < $r ||
-        $g < 0 || 255 < $g ||
-        $b < 0 || 255 < $b} {
+	![string is digit $b] ||
+	$r < 0 || 255 < $r ||
+	$g < 0 || 255 < $g ||
+	$b < 0 || 255 < $b} {
 
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -587,9 +587,9 @@
     if {![string is digit $r] ||
 	![string is digit $g] ||
 	![string is digit $b] ||
-        $r < 0 || 255 < $r ||
-        $g < 0 || 255 < $g ||
-        $b < 0 || 255 < $b} {
+	$r < 0 || 255 < $r ||
+	$g < 0 || 255 < $g ||
+	$b < 0 || 255 < $b} {
 
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -599,7 +599,7 @@
 
 ::itcl::configbody Display::modelAxesTickEnable {
     if {$itk_option(-modelAxesTickEnable) != 0 &&
-        $itk_option(-modelAxesTickEnable) != 1} {
+	$itk_option(-modelAxesTickEnable) != 1} {
 	error "value must be 0, 1"
     }
 
@@ -609,7 +609,7 @@
 ::itcl::configbody Display::modelAxesTickLength {
     # validate tick length
     if {![string is digit $itk_option(-modelAxesTickLength)] ||
-        $itk_option(-modelAxesTickLength) < $minAxesTickLength} {
+	$itk_option(-modelAxesTickLength) < $minAxesTickLength} {
 	    error "-modelAxesTickLength must be >= $minAxesTickLength"
     }
 
@@ -619,7 +619,7 @@
 ::itcl::configbody Display::modelAxesTickMajorLength {
     # validate major tick length
     if {![string is digit $itk_option(-modelAxesTickMajorLength)] ||
-        $itk_option(-modelAxesTickMajorLength) < $minAxesTickMajorLength} {
+	$itk_option(-modelAxesTickMajorLength) < $minAxesTickMajorLength} {
 	    error "-modelAxesTickMajorLength must be >= $minAxesTickMajorLength"
     }
 
@@ -628,7 +628,7 @@
 
 ::itcl::configbody Display::modelAxesTickInterval {
     if {![string is double $itk_option(-modelAxesTickInterval)] ||
-        $itk_option(-modelAxesTickInterval) <= 0} {
+	$itk_option(-modelAxesTickInterval) <= 0} {
 	error "-modelAxesTickInterval must be > 0"
     }
 
@@ -658,9 +658,9 @@
     if {![string is digit $r] ||
 	![string is digit $g] ||
 	![string is digit $b] ||
-        $r < 0 || 255 < $r ||
-        $g < 0 || 255 < $g ||
-        $b < 0 || 255 < $b} {
+	$r < 0 || 255 < $r ||
+	$g < 0 || 255 < $g ||
+	$b < 0 || 255 < $b} {
 
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }
@@ -681,9 +681,9 @@
     if {![string is digit $r] ||
 	![string is digit $g] ||
 	![string is digit $b] ||
-        $r < 0 || 255 < $r ||
-        $g < 0 || 255 < $g ||
-        $b < 0 || 255 < $b} {
+	$r < 0 || 255 < $r ||
+	$g < 0 || 255 < $g ||
+	$b < 0 || 255 < $b} {
 
 	error "values must be {r g b} where 0 <= r/g/b <= 255"
     }

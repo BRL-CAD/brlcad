@@ -866,7 +866,7 @@ editit(const char *file)
 #ifdef HAVE_GETENV
 	editor = getenv("EDITOR");
 #endif
-	
+
 	/* still unset? try windows */
 	if (!editor || editor[0] == '\0') {
 #ifdef DM_WGL
@@ -963,7 +963,7 @@ editit(const char *file)
 		    si.cbReserved2 = 0;
 		    si.lpDesktop = NULL;
 		    si.dwFlags = 0;
-		    
+
 		    sprintf(buffer, "%s %s", editor, file);
 
 		    CreateProcess(NULL, buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);

@@ -90,7 +90,7 @@ int parse_args(int ac, char **av)
 		case 'd'	: if ((c=atoi(bu_optarg)) > 0 )
 					depth = c;
 				   else
-				   	fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
+					fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
 				break;
 		case '?'	:
 		case 'h'	:

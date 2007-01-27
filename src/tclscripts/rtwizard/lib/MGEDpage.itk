@@ -113,9 +113,9 @@ namespace eval RtWizard {
 	    method getObjects {}
 	    method getAzimuth {}
 	    method getElevation {}
- 	    method getSize {}
+	    method getSize {}
 	    method getPerspective {}
-            method getOrientation
+	    method getOrientation
 	    method getEyepoint
 	    method getLineColor {} {return $lineColor}
 	    method getNonLineColor {} {return $nonLineColor}
@@ -383,11 +383,11 @@ namespace eval RtWizard {
 #	    usual
 #	}
 
-        #
-        # Create the hierarchy browser
-        #
-        itk_component add hier {
-            hierarchy $itk_component(hierFrame).#auto \
+	#
+	# Create the hierarchy browser
+	#
+	itk_component add hier {
+	    hierarchy $itk_component(hierFrame).#auto \
 		    -querycommand  "[itcl::code $this getChildren] %n " \
 		    -selectcommand "[itcl::code $this selectNode] %n %s " \
 		    -alwaysquery 0 \
@@ -504,7 +504,7 @@ namespace eval RtWizard {
 		-text "View" \
 		-menu {
 	    options -tearoff true -selectcolor green
-        }
+	}
 
 	$w menubar add command .$viewMenu.azimuth -label "Azimuth..." \
 		-helpstr "Set azimuth value" \
@@ -534,7 +534,7 @@ namespace eval RtWizard {
 		-text "Options" \
 		-menu {
 	    options -selectcolor green
-        }
+	}
 
 	if {[cget -onSelectCallback] != ""} {
 	    eval [cget -onSelectCallback] $optionsMenu
@@ -1504,8 +1504,6 @@ namespace eval RtWizard {
     }
 
 }; # end namespace
-
-
 
 
 # Local Variables:

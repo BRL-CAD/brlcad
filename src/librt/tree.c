@@ -559,11 +559,11 @@ HIDDEN union tree *rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_pat
 	VSETALL( stp->st_max, -INFINITY );
 	VSETALL( stp->st_min,  INFINITY );
 
-    	/*
-    	 *  If the ft_prep routine wants to keep the internal structure,
-    	 *  that is OK, as long as idb_ptr is set to null.
+	/*
+	 *  If the ft_prep routine wants to keep the internal structure,
+	 *  that is OK, as long as idb_ptr is set to null.
 	 *  Note that the prep routine may have changed st_id.
-    	 */
+	 */
 	if( stp->st_meth->ft_prep( stp, ip, rtip ) )  {
 		int	hash;
 		/* Error, solid no good */
@@ -767,10 +767,10 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 		tree_state.ts_resp = NULL;	/* sanity.  Needs to be updated */
 
 		if( attrs ) {
-                       if( rtip->rti_dbip->dbi_version < 5 ) {
-                               bu_log( "WARNING: requesting attributes from an old database version (ignored)\n" );
+		       if( rtip->rti_dbip->dbi_version < 5 ) {
+			       bu_log( "WARNING: requesting attributes from an old database version (ignored)\n" );
 			       bu_avs_init_empty( &tree_state.ts_attrs );
-                       } else {
+		       } else {
 			       while( attrs[num_attrs] ) {
 				       num_attrs++;
 			       }
@@ -1158,10 +1158,10 @@ top:
 		right = tp->tr_b.tb_right;
 		if( rt_tree_elim_nops( left, resp ) < 0 ||
 		    rt_tree_elim_nops( right, resp ) < 0 )  {
-		    	db_free_tree( left, resp );
-		    	db_free_tree( right, resp );
-		    	tp->tr_op = OP_NOP;
-		    	return(-1);	/* eliminate reference to tp */
+			db_free_tree( left, resp );
+			db_free_tree( right, resp );
+			tp->tr_op = OP_NOP;
+			return(-1);	/* eliminate reference to tp */
 		}
 		break;
 	case OP_SUBTRACT:
@@ -1171,10 +1171,10 @@ top:
 		left = tp->tr_b.tb_left;
 		right = tp->tr_b.tb_right;
 		if( rt_tree_elim_nops( left, resp ) < 0 )  {
-		    	db_free_tree( left, resp );
-		    	db_free_tree( right, resp );
-		    	tp->tr_op = OP_NOP;
-		    	return(-1);	/* eliminate reference to tp */
+			db_free_tree( left, resp );
+			db_free_tree( right, resp );
+			tp->tr_op = OP_NOP;
+			return(-1);	/* eliminate reference to tp */
 		}
 		if( rt_tree_elim_nops( right, resp ) < 0 )  {
 			*tp = *left;	/* struct copy */

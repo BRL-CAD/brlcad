@@ -192,8 +192,8 @@ struct fast4_color HeadColor;
 				ptr = (struct structure *)NULL; \
 			  else \
 			  { \
-			  	ptr = (struct structure *)BU_PTBL_GET( &stack , BU_PTBL_END( &stack )-1 ); \
-			  	bu_ptbl_rm( &stack , (long *)ptr ); \
+				ptr = (struct structure *)BU_PTBL_GET( &stack , BU_PTBL_END( &stack )-1 ); \
+				bu_ptbl_rm( &stack , (long *)ptr ); \
 			  } \
 			}
 #define	PUSH2( ptr )	bu_ptbl_ins( &stack2 , (long *)ptr )
@@ -201,8 +201,8 @@ struct fast4_color HeadColor;
 				ptr = (struct structure *)NULL; \
 			  else \
 			  { \
-			  	ptr = (struct structure *)BU_PTBL_GET( &stack2 , BU_PTBL_END( &stack2 )-1 ); \
-			  	bu_ptbl_rm( &stack2 , (long *)ptr ); \
+				ptr = (struct structure *)BU_PTBL_GET( &stack2 , BU_PTBL_END( &stack2 )-1 ); \
+				bu_ptbl_rm( &stack2 , (long *)ptr ); \
 			  } \
 			}
 

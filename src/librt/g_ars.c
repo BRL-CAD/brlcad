@@ -127,8 +127,6 @@ rt_ars_rd_curve(union record *rp, int npts)
 }
 
 
-
-
 /**
  *			R T _ A R S _ I M P O R T
  *
@@ -775,7 +773,7 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 			dist = hits[i].hit_dist - hits[i+1].hit_dist;
 			if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) &&
 				VDOT( hits[i].hit_normal, rp->r_dir ) *
-			        VDOT( hits[i+1].hit_normal, rp->r_dir) > 0)
+				VDOT( hits[i+1].hit_normal, rp->r_dir) > 0)
 			{
 				for( j=i ; j<nhits-1 ; j++ )
 					hits[j] = hits[j+1];
@@ -828,19 +826,19 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 				continue;
 			}
 #endif
-		   	bu_log("ars(%s): in/out error\n", stp->st_name );
+			bu_log("ars(%s): in/out error\n", stp->st_name );
 			for( j=nhits-1; j >= 0; j-- )  {
-		   		bu_log("%d %s dist=%g dn=%g\n",
+				bu_log("%d %s dist=%g dn=%g\n",
 					j,
 					((hits[j].hit_vpriv[X] > 0) ?
-		   				" In" : "Out" ),
-			   		hits[j].hit_dist,
+						" In" : "Out" ),
+					hits[j].hit_dist,
 					hits[j].hit_vpriv[X] );
 				if( j>0 )
 					bu_log( "\tseg length = %g\n", hits[j].hit_dist - hits[j-1].hit_dist );
-		   	}
+			}
 #ifdef CONSERVATIVE
-		   	return(0);
+			return(0);
 #else
 			/* For now, just chatter, and return *something* */
 			break;
@@ -1290,7 +1288,7 @@ rt_ars_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, ch
 				ars->curves = (fastf_t **)bu_realloc( ars->curves,
 						    i*sizeof( fastf_t *), "ars->curves" );
 				if( ars->pts_per_curve ) {
-				        /* new curves are duplicates of the last */
+					/* new curves are duplicates of the last */
 					for( j=ars->ncurves ; j<i ; j++ ) {
 					    ars->curves[j] = (fastf_t *)bu_malloc(
 						 ars->pts_per_curve * 3 * sizeof( fastf_t ),

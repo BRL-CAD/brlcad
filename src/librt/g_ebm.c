@@ -583,11 +583,11 @@ rt_ebm_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	if( eip->file[0] == '\0' || eip->xdim < 1 ||
 	    eip->ydim < 1 || eip->mat[15] <= 0.0 ||
 	    eip->tallness <= 0.0 )  {
-	    	bu_struct_print( "Unreasonable EBM parameters", rt_ebm_parse,
-	    		(char *)eip );
-	    	bu_free( (char *)eip , "rt_ebm_import: eip" );
-	    	ip->idb_type = ID_NULL;
-	    	ip->idb_ptr = (genptr_t)NULL;
+		bu_struct_print( "Unreasonable EBM parameters", rt_ebm_parse,
+			(char *)eip );
+		bu_free( (char *)eip , "rt_ebm_import: eip" );
+		ip->idb_type = ID_NULL;
+		ip->idb_ptr = (genptr_t)NULL;
 		return -1;
 	}
 
@@ -726,11 +726,11 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	if( eip->file[0] == '\0' || eip->xdim < 1 ||
 	    eip->ydim < 1 || eip->mat[15] <= 0.0 ||
 	    eip->tallness <= 0.0 )  {
-	    	bu_struct_print( "Unreasonable EBM parameters", rt_ebm_parse,
-	    		(char *)eip );
-	    	bu_free( (char *)eip , "rt_ebm_import: eip" );
-	    	ip->idb_type = ID_NULL;
-	    	ip->idb_ptr = (genptr_t)NULL;
+		bu_struct_print( "Unreasonable EBM parameters", rt_ebm_parse,
+			(char *)eip );
+		bu_free( (char *)eip , "rt_ebm_import: eip" );
+		ip->idb_type = ID_NULL;
+		ip->idb_ptr = (genptr_t)NULL;
 		return -1;
 	}
 
@@ -2046,12 +2046,12 @@ rt_ebm_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, ch
 int
 rt_ebm_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
 {
-        RT_CK_FUNCTAB(ftp);
+	RT_CK_FUNCTAB(ftp);
 
-        Tcl_AppendResult( interp,
+	Tcl_AppendResult( interp,
 			  "F %s W %d N %d H %f M { %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", (char *)NULL );
 
-        return TCL_OK;
+	return TCL_OK;
 
 }
 

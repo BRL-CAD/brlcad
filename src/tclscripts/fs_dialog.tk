@@ -175,9 +175,9 @@ proc fs_dialog {w parent pattern} {
 
     # Clean up our garbage
     unset fs_glob(selection) fs_glob(filter) \
-    	fs_glob(pat_file) fs_glob(pat_dir) \
-    	fs_glob(listbox_dir) fs_glob(listbox_file) \
-    	fs_glob(win) fs_glob(button)
+	fs_glob(pat_file) fs_glob(pat_dir) \
+	fs_glob(listbox_dir) fs_glob(listbox_file) \
+	fs_glob(win) fs_glob(button)
 
     return $ret_status
 }
@@ -248,7 +248,7 @@ proc fs_dialog_rescan {} {
 	}
 
     } else {
-    	set fs_glob(selection) ""
+	set fs_glob(selection) ""
 	set fs_glob(fully_qualified) 1
 
 	# Fill in the directory listbox

@@ -41,7 +41,7 @@ c     Open a BRL-CAD geometry file called 'model.g' for reading
 c     The "7" is the length of the string 'model.g'
       call frdir(rtip, 'model.g', 7)
       if (rtip .eq. 0) then
-         stop
+	 stop
       end if
 
 
@@ -50,7 +50,7 @@ c     object called 'all.g' (including everything that goes into making it)
 c     The 5 is the length of the string 'all.g'
       call frtree(fail, rtip, 'all.g', 5)
       if (fail .ne. 0) then
-         stop
+	 stop
       end if
 
 c     Prepare the geometry for ray-tracing
@@ -81,9 +81,9 @@ c     shoot the ray
 c     look to see how many things we hit and print them
       print *, 'number of partitions=',nloc
       if (nloc .gt. 0) then
-         do i=1,nloc
-            print *,indist(i),' --- ',outdist(i)
-         end do
+	 do i=1,nloc
+	    print *,indist(i),' --- ',outdist(i)
+	 end do
       end if
 
 c     change directions and shoot a different ray from the same origin
@@ -100,9 +100,9 @@ c     shoot the ray
 c     look to see how many things we hit and print them
       print *, 'number of partitions=',nloc
       if (nloc .gt. 0) then
-         do i=1,nloc
-            print *,indist(i),' --- ',outdist(i)
-         end do
+	 do i=1,nloc
+	    print *,indist(i),' --- ',outdist(i)
+	 end do
       end if
 
       stop

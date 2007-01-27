@@ -122,7 +122,7 @@ int main(int argc, char **argv)
    /*  Check to see if arguments are implimented correctly.  */
    if( (argv[1] == NULL) || (argv[2] == NULL) )
    {
-        (void)fprintf(stderr,"\nusage:  %s file.g objects\n\n", *argv);
+	(void)fprintf(stderr,"\nusage:  %s file.g objects\n\n", *argv);
    }
 
    else
@@ -171,28 +171,28 @@ int main(int argc, char **argv)
 	(void)fprintf(fpw1,"lwx file created:  %s\n",errfile);
 	(void)fflush(fpw1);
 
-        /*  Build directory.  */
-        index = 1;      /*  Set index for rt_dirbuild.  */
-        rtip = rt_dirbuild(argv[index],idbuf,sizeof(idbuf));
-        (void)printf("Database Title:  %s\n",idbuf);
-        (void)fflush(stdout);
+	/*  Build directory.  */
+	index = 1;      /*  Set index for rt_dirbuild.  */
+	rtip = rt_dirbuild(argv[index],idbuf,sizeof(idbuf));
+	(void)printf("Database Title:  %s\n",idbuf);
+	(void)fflush(stdout);
 
-        /*  Set useair to 0 to show no hits of air.  */
-        rtip->useair = 0;
+	/*  Set useair to 0 to show no hits of air.  */
+	rtip->useair = 0;
 
-        /*  Load desired objects.  */
-        index = 2;      /*  Set index.  */
-        while(argv[index] != NULL)
-        {
-                rt_gettree(rtip,argv[index]);
-                index += 1;
-        }
+	/*  Load desired objects.  */
+	index = 2;      /*  Set index.  */
+	while(argv[index] != NULL)
+	{
+		rt_gettree(rtip,argv[index]);
+		index += 1;
+	}
 
-        /*  Find number of regions.  */
-        numreg = (int)rtip->nregions;
+	/*  Find number of regions.  */
+	numreg = (int)rtip->nregions;
 
-        (void)fprintf(stderr,"Number of regions:  %d\n",numreg);
-        (void)fflush(stderr);
+	(void)fprintf(stderr,"Number of regions:  %d\n",numreg);
+	(void)fflush(stderr);
 
 	/*  Malloc everything now that the number of regions is known.  */
 	info = (struct table *)bu_malloc(numreg * sizeof(*info), "info");
@@ -215,16 +215,16 @@ int main(int argc, char **argv)
 	   info[i].regarea = 0.;
 	}						/*  END # 110  */
 
-        /*  Get database ready by starting prep.  */
-        rt_prep(rtip);
+	/*  Get database ready by starting prep.  */
+	rt_prep(rtip);
 
-        /*  Find the center of the bounding rpp of entire model.  */
-        centall[X] = rtip->mdl_min[X] +
-                (rtip->mdl_max[X] - rtip->mdl_min[X]) / 2.;
-        centall[Y] = rtip->mdl_min[Y] +
-                (rtip->mdl_max[Y] - rtip->mdl_min[Y]) / 2.;
-        centall[Z] = rtip->mdl_min[Z] +
-                (rtip->mdl_max[Z] - rtip->mdl_min[Z]) / 2.;
+	/*  Find the center of the bounding rpp of entire model.  */
+	centall[X] = rtip->mdl_min[X] +
+		(rtip->mdl_max[X] - rtip->mdl_min[X]) / 2.;
+	centall[Y] = rtip->mdl_min[Y] +
+		(rtip->mdl_max[Y] - rtip->mdl_min[Y]) / 2.;
+	centall[Z] = rtip->mdl_min[Z] +
+		(rtip->mdl_max[Z] - rtip->mdl_min[Z]) / 2.;
 
 	/*  Find minimum and maximum of entire model.  */
 	minall[X] = rtip->mdl_min[X];
@@ -284,13 +284,13 @@ int main(int argc, char **argv)
 	(void)fprintf(fpw1,"Number of rays fired:  %f\n\n",rayfir);
 	(void)fflush(fpw1);
 
-        /*  Put region names into structure.  */
-        pr = BU_LIST_FIRST(region, &rtip->HeadRegion);
-        for(i=0; i<numreg; i++)
-        {
-           info[(int)(pr->reg_bit)].name = pr->reg_name;
-           pr = BU_LIST_FORW(region, &(pr->l) );
-        }
+	/*  Put region names into structure.  */
+	pr = BU_LIST_FIRST(region, &rtip->HeadRegion);
+	for(i=0; i<numreg; i++)
+	{
+	   info[(int)(pr->reg_bit)].name = pr->reg_name;
+	   pr = BU_LIST_FORW(region, &(pr->l) );
+	}
 
 	(void)printf("Region names in structure.\n");
 	(void)fflush(stdout);
@@ -416,8 +416,8 @@ int main(int argc, char **argv)
 
 		/*  Normalize starting direction & make negative.  */
 		denom = strtdir[X] *strtdir[X] +
-		        strtdir[Y] *strtdir[Y] +
-		        strtdir[Z] *strtdir[Z];
+			strtdir[Y] *strtdir[Y] +
+			strtdir[Z] *strtdir[Z];
 		denom = sqrt(denom);
 		strtdir[X] /= (-denom);
 		strtdir[Y] /= (-denom);

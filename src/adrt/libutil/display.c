@@ -100,9 +100,9 @@ if(modes == (SDL_Rect **)-1){
 
   util_display_buffer = SDL_CreateRGBSurface(SDL_HWSURFACE, util_display_screen_w, util_display_screen_h, 24,
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
-                                             0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000);
+					     0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000);
 #else
-                                             0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000);
+					     0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000);
 #endif
 
 
@@ -128,9 +128,9 @@ if(modes == (SDL_Rect **)-1){
 
   util_display_font = SDL_CreateRGBSurface(SDL_SWSURFACE, util_font.width, util_font.height, 32,
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
-                                             0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+					     0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
 #else
-                                             0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
+					     0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
 #endif
 
 /*  printf("util_font width: %d, %d\n", util_font.width, util_font.height); */
@@ -268,156 +268,156 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
 
     switch(event.type) {
       case SDL_KEYDOWN:
-        switch(event.key.keysym.sym) {
-          case SDLK_BACKQUOTE:
-            return;
-            break;
+	switch(event.key.keysym.sym) {
+	  case SDLK_BACKQUOTE:
+	    return;
+	    break;
 
-          case SDLK_HOME:
-            h_ind = 0;
-            break;
+	  case SDLK_HOME:
+	    h_ind = 0;
+	    break;
 
-          case SDLK_END:
-            h_ind = strlen(content_buffer[v_ind]);
-            break;
+	  case SDLK_END:
+	    h_ind = strlen(content_buffer[v_ind]);
+	    break;
 
-          case SDLK_PAGEUP:
-            v_ind = 0;
-            break;
+	  case SDLK_PAGEUP:
+	    v_ind = 0;
+	    break;
 
-          case SDLK_PAGEDOWN:
-            v_ind = *content_lines;
-            break;
+	  case SDLK_PAGEDOWN:
+	    v_ind = *content_lines;
+	    break;
 
-          case SDLK_LEFT:
-            if(h_ind)
-              h_ind--;
-            break;
+	  case SDLK_LEFT:
+	    if(h_ind)
+	      h_ind--;
+	    break;
 
-          case SDLK_RIGHT:
-            if(h_ind < strlen(content_buffer[v_ind]))
-              h_ind++;
-            break;
+	  case SDLK_RIGHT:
+	    if(h_ind < strlen(content_buffer[v_ind]))
+	      h_ind++;
+	    break;
 
-          case SDLK_DOWN:
-            if(v_ind < *content_lines)
-              v_ind++;
+	  case SDLK_DOWN:
+	    if(v_ind < *content_lines)
+	      v_ind++;
 
-            if(h_ind > strlen(content_buffer[v_ind]))
-              h_ind = strlen(content_buffer[v_ind]);
-            break;
+	    if(h_ind > strlen(content_buffer[v_ind]))
+	      h_ind = strlen(content_buffer[v_ind]);
+	    break;
 
-          case SDLK_UP:
-            if(v_ind)
-              v_ind--;
+	  case SDLK_UP:
+	    if(v_ind)
+	      v_ind--;
 
-            if(h_ind > strlen(content_buffer[v_ind]))
-              h_ind = strlen(content_buffer[v_ind]);
-            break;
+	    if(h_ind > strlen(content_buffer[v_ind]))
+	      h_ind = strlen(content_buffer[v_ind]);
+	    break;
 
-          case SDLK_BACKSPACE:
-            if(h_ind) {
-              for(i = h_ind-1; i < strlen(content_buffer[v_ind]); i++)
-                content_buffer[v_ind][i] = content_buffer[v_ind][i+1];
-              h_ind--;
-            }
-            break;
+	  case SDLK_BACKSPACE:
+	    if(h_ind) {
+	      for(i = h_ind-1; i < strlen(content_buffer[v_ind]); i++)
+		content_buffer[v_ind][i] = content_buffer[v_ind][i+1];
+	      h_ind--;
+	    }
+	    break;
 
-          case SDLK_DELETE:
-            for(i = h_ind; i < strlen(content_buffer[v_ind]); i++)
-              content_buffer[v_ind][i] = content_buffer[v_ind][i+1];
-            break;
+	  case SDLK_DELETE:
+	    for(i = h_ind; i < strlen(content_buffer[v_ind]); i++)
+	      content_buffer[v_ind][i] = content_buffer[v_ind][i+1];
+	    break;
 
-          case SDLK_RETURN:
-            {
-              h_ind = 0;
-              if(v_ind == *content_lines) {
-                (*content_lines)++;
-                content_buffer[*content_lines][0] = 0;
-              }
-              v_ind++;
-            }
-            break;
+	  case SDLK_RETURN:
+	    {
+	      h_ind = 0;
+	      if(v_ind == *content_lines) {
+		(*content_lines)++;
+		content_buffer[*content_lines][0] = 0;
+	      }
+	      v_ind++;
+	    }
+	    break;
 
-          default:
-            /* First check for any special commands */
-            if(event.key.keysym.mod & KMOD_CTRL) {
-              switch(event.key.keysym.sym) {
-                case SDLK_p: /* process code */
-                  {
-                    char *code, response[1024];
-                    int n;
+	  default:
+	    /* First check for any special commands */
+	    if(event.key.keysym.mod & KMOD_CTRL) {
+	      switch(event.key.keysym.sym) {
+		case SDLK_p: /* process code */
+		  {
+		    char *code, response[1024];
+		    int n;
 
-                    code = (char *)malloc((*content_lines+1) * 80);
+		    code = (char *)malloc((*content_lines+1) * 80);
 
-                    code[0] = 0;
-                    for(i = 0; i <= *content_lines; i++) {
-                      strcat(code, content_buffer[i]);
-                      strcat(code, "\n");
-                    }
-                    fcb_process(code, response);
+		    code[0] = 0;
+		    for(i = 0; i <= *content_lines; i++) {
+		      strcat(code, content_buffer[i]);
+		      strcat(code, "\n");
+		    }
+		    fcb_process(code, response);
 
-                    i = 0;
-                    n = 0;
-                    while(i < strlen(response)) {
-                      console_buffer[*console_lines][n] = response[i];
-                      console_buffer[*console_lines][n+1] = 0;
-                      n++;
-                      if(response[i] == '\n') {
-                        (*console_lines)++;
-                        n = 0;
-                      }
-                      i++;
-                    }
+		    i = 0;
+		    n = 0;
+		    while(i < strlen(response)) {
+		      console_buffer[*console_lines][n] = response[i];
+		      console_buffer[*console_lines][n+1] = 0;
+		      n++;
+		      if(response[i] == '\n') {
+			(*console_lines)++;
+			n = 0;
+		      }
+		      i++;
+		    }
 
-                    free(code);
-                  }
-                  break;
+		    free(code);
+		  }
+		  break;
 
-                case SDLK_l: /* clear buffers */
-                  content_buffer[0][0] = 0;
-                  console_buffer[0][0] = 0;
-                  (*content_lines) = 0;
-                  (*console_lines) = 0;
-                  h_ind = 0;
-                  v_ind = 0;
-                  break;
+		case SDLK_l: /* clear buffers */
+		  content_buffer[0][0] = 0;
+		  console_buffer[0][0] = 0;
+		  (*content_lines) = 0;
+		  (*console_lines) = 0;
+		  h_ind = 0;
+		  v_ind = 0;
+		  break;
 
-                case SDLK_x: /* cut */
-                  strcpy(paste, content_buffer[v_ind]);
-                  for(i = v_ind; i < *content_lines; i++)
-                    strcpy(content_buffer[i], content_buffer[i+1]);
-                  if(*content_lines) {
-                    (*content_lines)--;
-                  } else {
-                    content_buffer[0][0] = 0;
-                  }
-                  h_ind = 0;
-                  break;
+		case SDLK_x: /* cut */
+		  strcpy(paste, content_buffer[v_ind]);
+		  for(i = v_ind; i < *content_lines; i++)
+		    strcpy(content_buffer[i], content_buffer[i+1]);
+		  if(*content_lines) {
+		    (*content_lines)--;
+		  } else {
+		    content_buffer[0][0] = 0;
+		  }
+		  h_ind = 0;
+		  break;
 
-                case SDLK_v: /* paste */
-                  for(i = *content_lines; i >= v_ind; i--)
-                    strcpy(content_buffer[i+1], content_buffer[i]);
-                  strcpy(content_buffer[v_ind], paste);
-                  (*content_lines)++;
-                  h_ind = 0;
-                  break;
+		case SDLK_v: /* paste */
+		  for(i = *content_lines; i >= v_ind; i--)
+		    strcpy(content_buffer[i+1], content_buffer[i]);
+		  strcpy(content_buffer[v_ind], paste);
+		  (*content_lines)++;
+		  h_ind = 0;
+		  break;
 
-              }
-            } else {
-              if(h_ind < 80)
-                if(event.key.keysym.unicode & 0x7F) {
-                  for(i = strlen(content_buffer[v_ind]); i >= h_ind; i--)
-                    content_buffer[v_ind][i+1] = content_buffer[v_ind][i];
-                  content_buffer[v_ind][h_ind++] = event.key.keysym.unicode & 0x7F;
-                }
-            }
-            break;
-        }
-        break;
+	      }
+	    } else {
+	      if(h_ind < 80)
+		if(event.key.keysym.unicode & 0x7F) {
+		  for(i = strlen(content_buffer[v_ind]); i >= h_ind; i--)
+		    content_buffer[v_ind][i+1] = content_buffer[v_ind][i];
+		  content_buffer[v_ind][h_ind++] = event.key.keysym.unicode & 0x7F;
+		}
+	    }
+	    break;
+	}
+	break;
 
       default:
-        break;
+	break;
     }
   }
 }

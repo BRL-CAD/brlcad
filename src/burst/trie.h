@@ -42,22 +42,22 @@ typedef void Func();
 /* Trie tree node.  */
 typedef union trie Trie;
 union trie
-        {
-        struct  /* Internal nodes: datum is current letter. */
-                {
-                int t_char;   /* Current letter.  */
-                Trie *t_altr; /* Alternate letter node link.  */
-                Trie *t_next; /* Next letter node link.  */
-                }
-        n;
-        struct  /* Leaf nodes: datum is function ptr.  */
-                {
-                Func *t_func; /* Function pointer.  */
-                Trie *t_altr; /* Alternate letter node link.  */
-                Trie *t_next; /* Next letter node link.  */
-                }
-        l;
-        };
+	{
+	struct  /* Internal nodes: datum is current letter. */
+		{
+		int t_char;   /* Current letter.  */
+		Trie *t_altr; /* Alternate letter node link.  */
+		Trie *t_next; /* Next letter node link.  */
+		}
+	n;
+	struct  /* Leaf nodes: datum is function ptr.  */
+		{
+		Func *t_func; /* Function pointer.  */
+		Trie *t_altr; /* Alternate letter node link.  */
+		Trie *t_next; /* Next letter node link.  */
+		}
+	l;
+	};
 #define NewTrie( p ) \
 		if( ((p) = (Trie *) malloc( sizeof(Trie) )) == TRIE_NULL )\
 			{\

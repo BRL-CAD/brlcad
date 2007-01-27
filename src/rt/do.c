@@ -945,7 +945,7 @@ do_frame(int framenumber)
 	}
 
 	bu_log("\n");
-        bu_free(pixmap, "pixmap allocate");
+	bu_free(pixmap, "pixmap allocate");
 	pixmap = (unsigned char *)NULL;
 	return(0);		/* OK */
 }
@@ -1091,7 +1091,7 @@ struct command_tab rt_cmdtab[] = {
 	{"opt", "-flags", "set flags, like on command line",
 		cm_opt,		2, 999},
 	{(char *)0, (char *)0, (char *)0,
-	        0,		0, 0	/* END */}
+		0,		0, 0	/* END */}
 };
 
 /*

@@ -36,7 +36,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -191,7 +190,6 @@ int get_args(int argc, char **argv)
     }
     return(1);
 }
-
 
 
 /*

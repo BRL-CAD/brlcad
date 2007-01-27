@@ -133,7 +133,7 @@ dunnopen(void)
 	if( (fd = open("/dev/camera", O_RDWR | O_NDELAY)) < 0 )
 #endif
 	{
-	     	printf("\007dunnopen: can't open /dev/camera\n");
+		printf("\007dunnopen: can't open /dev/camera\n");
 		close(fd);
 		exit(10);
 	}
@@ -143,7 +143,7 @@ dunnopen(void)
 	if( ioctl(fd, TCGETA, &tty) < 0)
 #endif
 	{
-	     	printf("\007dunnopen: can't open /dev/camera\n");
+		printf("\007dunnopen: can't open /dev/camera\n");
 		close(fd);
 		exit(10);
 	}

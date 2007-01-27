@@ -242,9 +242,7 @@ HIDDEN int
 temp_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 
 
-
-
-                                /* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct temp_specific *tp;
 	int		pixelbytes = 8;

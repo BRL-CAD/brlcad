@@ -388,21 +388,21 @@ f_rcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
       continue;
     }
 
-  	if( !(dp->d_flags & DIR_REGION) )
-  	{
-  		Tcl_AppendResult(interp, "f_rcodes: Warning ", cp, " not a region\n", (char *)NULL );
-  		continue;
-  	}
+	if( !(dp->d_flags & DIR_REGION) )
+	{
+		Tcl_AppendResult(interp, "f_rcodes: Warning ", cp, " not a region\n", (char *)NULL );
+		continue;
+	}
 
-  	if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource ) != ID_COMBINATION )
-  	{
-  		Tcl_AppendResult(interp, "f_rcodes: Warning ", cp, " not a region\n", (char *)NULL );
-  		continue;
-  	}
+	if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource ) != ID_COMBINATION )
+	{
+		Tcl_AppendResult(interp, "f_rcodes: Warning ", cp, " not a region\n", (char *)NULL );
+		continue;
+	}
 
-  	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-  	/* make the changes */
+	/* make the changes */
 	changed = 0;
 	if( comb->region_id != item ) {
 		comb->region_id = item;
@@ -560,7 +560,7 @@ f_which_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
-        else
+	else
 	  return TCL_OK;
 
 	myArgc = argc;
@@ -659,7 +659,7 @@ f_decompose(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
-        else
+	else
 	  return TCL_OK;
 
 	count = 0;

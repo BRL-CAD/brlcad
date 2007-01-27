@@ -58,7 +58,7 @@ proc get_regions { args } {
 		# ignore primitive
 		continue
 	    }
-	    
+
 	    if { [lindex [db get $child] 2] == "yes" } {
 		# found a region, add to the list and stop recursion
 		set regions [concat $regions $child]
@@ -77,10 +77,10 @@ proc  reid { args } {
 	puts "Usage: reid assembly regionID"
 	return
     }
-    
+
     set name [lindex $args 0]
     set regionid [lindex $args 1]
-    
+
     set objData [db get $name]
     if { [lindex $objData 0] != "comb" } {
 	return

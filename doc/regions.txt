@@ -24,8 +24,8 @@ The procedure generally followed in building a model is:
 	    desired shape.
 	3.  Make higher level groups of these regions,
 	    generally according to function, etc
-            NOTE: using this procedure, the regions
-            cannot occupy the same volume in space(overlap)
+	    NOTE: using this procedure, the regions
+	    cannot occupy the same volume in space(overlap)
 
 I got your "castle" today and took a quick look at castle.g.  The use of
 all regions (using the union operation) allows just about everything to

@@ -464,7 +464,7 @@ get_args(int argc, register char **argv)
 
 static char usage[] = "\
 Usage: pl-fb [-h -d -o -i] [-t thickness] [-F framebuffer]\n\
-        [-S squaresize] [-W width] [-N height] [file.plot]\n";
+	[-S squaresize] [-W width] [-N height] [file.plot]\n";
 
 /*
  *  M A I N
@@ -529,10 +529,10 @@ main(int argc, char **argv)
 	bzero( (char *)band, (BANDSLOP)*sizeof(struct band) );
 	bandEnd = &band[BANDS];
 	if( single_banded && over ) {
-    		/* Read in initial screen */
-	    	if( fb_read( fbp, 0, 0, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
-    			fprintf(stderr,"pl-fb: band read error\n");
-    	}
+		/* Read in initial screen */
+		if( fb_read( fbp, 0, 0, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+			fprintf(stderr,"pl-fb: band read error\n");
+	}
 	if( debug )
 		fprintf(stderr, "pl-fb output of %s\n", filename);
 
@@ -768,7 +768,7 @@ DoFile(void)	/* returns vpl status code */
 				if( debug )
 					fprintf( stderr,"dspace3\n");
 				if( fread( in, sizeof(in), 1, pfin) != 1 )
-				  	return Foo( -11 );
+					return Foo( -11 );
 				ntohd( (unsigned char *)out, in, 5 );
 				/* Only need X and Y, ignore Z */
 				space.left  = out[0]; /* x1 */
@@ -787,7 +787,7 @@ DoFile(void)	/* returns vpl status code */
 				if( debug )
 					fprintf( stderr,"dspace\n");
 				if( fread( in, sizeof(in), 1, pfin) != 1 )
-				  	return Foo( -11 );
+					return Foo( -11 );
 				ntohd( (unsigned char *)out, in, 4 );
 				space.left  = out[0]; /* x1 */
 				space.bottom= out[1]; /* y1 */
@@ -804,7 +804,7 @@ DoFile(void)	/* returns vpl status code */
 					   (int)sizeof buf3, 1, pfin)
 					   != 1
 				  )
-				  	return Foo( -11 );
+					return Foo( -11 );
 				/* Only need X and Y, ignore Z */
 				space.left  = sxt16((long)(buf3[1]<<8) | buf3[0]); /* x1 */
 				space.bottom= sxt16((long)(buf3[3]<<8) | buf3[2]); /* y1 */
@@ -995,7 +995,7 @@ bool Get3Coords(register coords *coop)
 
 static bool
 GetCoords(register coords *coop)
-               	      		/* -> input coordinates */
+				/* -> input coordinates */
 {
 	unsigned char buf[4];
 	double	x, y;
@@ -1070,7 +1070,7 @@ bool Get3DCoords(register coords *coop)
 
 bool
 GetDCoords(register coords *coop)
-               	      		/* -> input coordinates */
+				/* -> input coordinates */
 {
 	static unsigned char	in[2*8];
 	static double	out[2];
@@ -1146,7 +1146,7 @@ Requeue(register struct band *bp, register stroke *vp)
 static stroke *
 Dequeue(register struct band *bp, register stroke **hp)
 
-                     		/* *hp -> first descr in list */
+				/* *hp -> first descr in list */
 {
 	register stroke *vp;		/* -> descriptor */
 
@@ -1217,7 +1217,7 @@ prep_dda(register stroke *vp, register coords *pt1, register coords *pt2)
  */
 static bool
 BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
-      	           		/* endpoints */
+				/* endpoints */
 {
 	register stroke *vp;		/* -> rasterization descr */
 	register int	thick;
@@ -1300,15 +1300,15 @@ OutBuild(void)				/* returns true if successful */
 	      hp < bandEnd;
 	      hp = np++, ystart += lines_per_band
 	    )	{
-	    	if(debug) fprintf(stderr,"OutBuild:  band y=%d\n", ystart);
-	    	if( over )  {
-	    		/* Read in current band */
-		    	if( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
-	    			fprintf(stderr,"pl-fb:  band read error\n");
-	    	} else {
+		if(debug) fprintf(stderr,"OutBuild:  band y=%d\n", ystart);
+		if( over )  {
+			/* Read in current band */
+			if( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+				fprintf(stderr,"pl-fb:  band read error\n");
+		} else {
 			/* clear pixels in the band */
 			bzero( (char *)buffer, buffersize );
-	    	}
+		}
 
 		while ( (vp = Dequeue( hp, &hp->first )) != NULL )
 			Raster( vp, np );      /* rasterize stroke */
@@ -1316,8 +1316,8 @@ OutBuild(void)				/* returns true if successful */
 		/* Raster() either re-queued the descriptor onto the
 		   next band list or else it freed the descriptor */
 
-	    	if(debug) fprintf(stderr,"OutBuild:  fbwrite y=%d\n", ystart);
-	    	if( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+		if(debug) fprintf(stderr,"OutBuild:  fbwrite y=%d\n", ystart);
+		if( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
 			return false;	/* can't write image file */
 	}
 
@@ -1338,8 +1338,8 @@ OutBuild(void)				/* returns true if successful */
  */
 static void
 Raster(register stroke *vp, register struct band *np)
-                    		/* -> rasterization descr */
-                         	/* *np -> next band 1st descr */
+				/* -> rasterization descr */
+				/* *np -> next band 1st descr */
 {
 	register short	dy;		/* raster within active band */
 
@@ -1391,7 +1391,7 @@ Raster(register stroke *vp, register struct band *np)
 
 static int
 Foo(int code)				/* returns status code */
-	   	     			/* status code */
+					/* status code */
 	{
 	if( debug ) fprintf(stderr,"Foo(%d)\n", code);
 	fb_close( fbp );		/* release framebuffer */
@@ -1424,7 +1424,7 @@ SetSigs(void)
 
 static void
 Catch(register int sig)
-	            	    		/* signal number */
+					/* signal number */
 	{
 	register int	pid;		/* this process's ID */
 	register int	*psig;		/* -> sigs[.] */

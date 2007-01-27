@@ -96,10 +96,10 @@ struct mfuncs air_mfuncs[] = {
 };
 static void
 dpm_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+						/* structure description */
+						/* struct member name */
+						/* begining of structure */
+						/* string containing value */
 {
 #define meters_to_millimeters 0.001
 	struct air_specific *air_sp = (struct air_specific *)base;
@@ -116,9 +116,9 @@ HIDDEN int
 air_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    			      	/* pointer to reg_udata in *rp */
+				/* pointer to reg_udata in *rp */
 
-           		      	/* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct air_specific	*air_sp;
 
@@ -495,7 +495,6 @@ emist_fbm_render(struct application *ap, struct partition *pp, struct shadework 
 		 */
 
 	}
-
 
 
 	return(1);

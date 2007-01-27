@@ -58,11 +58,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 	    BU_LIST_PLAST_PNEXT(bu_list, p) != p) { \
 		bu_log("%s[%d]: linked list integrity check failed\n", \
 				__FILE__, __LINE__); \
-	    	bu_log("0x%08x->forw(0x%08x)->back = 0x%08x\n", \
-	    		(p), (p)->forw, (p)->forw->back); \
-	    	bu_log("0x%08x->back(0x%08x)->forw = 0x%08x\n", \
-	    		(p), (p)->back, (p)->back->forw); \
-	    	rt_bomb("Goodbye\n"); \
+		bu_log("0x%08x->forw(0x%08x)->back = 0x%08x\n", \
+			(p), (p)->forw, (p)->forw->back); \
+		bu_log("0x%08x->back(0x%08x)->forw = 0x%08x\n", \
+			(p), (p)->back, (p)->back->forw); \
+		rt_bomb("Goodbye\n"); \
 	}
 
 
@@ -92,33 +92,33 @@ nmg_dangling_face(const struct faceuse *fu, register const char *manifolds)
 	    BU_LIST_LINK_CHECK( &lu->l );
 
 	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-	        /* go looking around each edge for a face of the same
-	         * shell which isn't us and isn't our mate.  If we
-	         * find us or our mate before another face of this
-	         * shell, we are non-3-manifold.
-	         */
+		/* go looking around each edge for a face of the same
+		 * shell which isn't us and isn't our mate.  If we
+		 * find us or our mate before another face of this
+		 * shell, we are non-3-manifold.
+		 */
 
-	    	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 
-	 	    NMG_CK_EDGEUSE( eu );
-	 	    BU_LIST_LINK_CHECK( &eu->l );
+		    NMG_CK_EDGEUSE( eu );
+		    BU_LIST_LINK_CHECK( &eu->l );
 
 		    eur = nmg_radial_face_edge_in_shell(eu);
 		    newfu = eur->up.lu_p->up.fu_p;
 
-	    	    /* skip any known dangling-edge faces or
+		    /* skip any known dangling-edge faces or
 		     * faces known to be 2manifolds.
 		     */
 		    while (manifolds &&
-		        NMG_MANIFOLDS(manifolds,newfu) & NMG_2MANIFOLD &&
+			NMG_MANIFOLDS(manifolds,newfu) & NMG_2MANIFOLD &&
 			eur != eu->eumate_p) {
 				eur = nmg_radial_face_edge_in_shell(
 					eur->eumate_p);
 				newfu = eur->up.lu_p->up.fu_p;
-	    	    }
+		    }
 
 		    if (eur == eu->eumate_p) {
-		    	goto out;
+			goto out;
 		    }
 		}
 	    }
@@ -272,7 +272,6 @@ static void set_face_sub_manifold(char *tbl, struct faceuse *fu_p, char manifold
 }
 
 
-
 char *
 nmg_shell_manifolds(struct shell *sp, char *tbl)
 {
@@ -401,10 +400,10 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 
 		if (NMG_INDEX_VALUE(paint_meaning, (int)paint_color) ==
 		    PAINT_INTERIOR) {
-		    	set_face_sub_manifold(tbl, fu_p, NMG_2MANIFOLD);
+			set_face_sub_manifold(tbl, fu_p, NMG_2MANIFOLD);
 		} else if (NMG_INDEX_VALUE(paint_meaning, (int)paint_color)
 		    == PAINT_EXTERIOR) {
-		    	set_face_sub_manifold(tbl, fu_p, NMG_3MANIFOLD);
+			set_face_sub_manifold(tbl, fu_p, NMG_3MANIFOLD);
 		}
 	}
 

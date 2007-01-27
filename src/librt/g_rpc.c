@@ -505,10 +505,10 @@ check_plates:
  */
 void
 rt_rpc_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	rt_vstub( stp, rp, segp, n, ap );
@@ -574,8 +574,8 @@ rt_rpc_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	case RPC_NORM_FRT:
 	case RPC_NORM_TOP:
 		/* any tangent direction */
-	 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
-	 	cvp->crv_c1 = cvp->crv_c2 = 0;
+		bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+		cvp->crv_c1 = cvp->crv_c2 = 0;
 		break;
 	}
 }
@@ -656,7 +656,7 @@ int
 rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	LOCAL struct rt_rpc_internal	*xip;
-        fastf_t *front;
+	fastf_t *front;
 	fastf_t *back;
 	fastf_t b, dtol, f, h, ntol, rh;
 	int	i, n;

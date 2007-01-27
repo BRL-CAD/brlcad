@@ -211,9 +211,6 @@ raymiss(register struct application *ap)
 void application_init (void) {}
 
 
-
-
-
 /*
  * Local Variables:
  * mode: C

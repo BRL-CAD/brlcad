@@ -366,7 +366,7 @@ wdb_eval_bool(struct bu_list *hp)
 		return(final_tree);
 	}
 
-        return (union tree *)NULL;
+	return (union tree *)NULL;
 }
 
 HIDDEN int
@@ -469,7 +469,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 	int				ch;
 	int				region_flag = -1;
 	register struct directory	*dp;
-    	struct rt_db_internal		intern;
+	struct rt_db_internal		intern;
 	struct rt_comb_internal		*comb = NULL;
 	struct tokens			tok_hd;
 	struct tokens			*tok;

@@ -64,7 +64,7 @@ int c;
 	if( c <= '-' )  return ('z' - ( c - '-' ));
 	if( c >= '{' )  return ((c - '{' ) + '.');
 	if( c >= '[' && c <= '`' )  return ((c - '[' ) + 'U' );
- 	if( c >= ':' && c <= '@' )  return ((c - ':' ) + '3' );
+	if( c >= ':' && c <= '@' )  return ((c - ':' ) + '3' );
 
 	fprintf(stderr, "ERROR: Character '%c' is illegal in password, aborting.\n", c);
 	exit(1);
@@ -78,22 +78,22 @@ setup(pw)
 	int ic, i, k, temp;
 	unsigned random;
 	long seed;
-        char *r;
-        char salt[3];
+	char *r;
+	char salt[3];
 
-        /* Verify backwards-compatible operation of library routine crypt() */
-        r = crypt("glorp", "gl");
-        if( strncmp( r, "$1$gl$85n.KNI", 13 ) == 0 )  {
-                fprintf(stderr, "enigma: crypt() library routine is using MD5 rather than DES.\n%s\n",
+	/* Verify backwards-compatible operation of library routine crypt() */
+	r = crypt("glorp", "gl");
+	if( strncmp( r, "$1$gl$85n.KNI", 13 ) == 0 )  {
+		fprintf(stderr, "enigma: crypt() library routine is using MD5 rather than DES.\n%s\n",
 			"Incompatible encryption would occur, aborting.");
-                exit(1);
-        }
-        if( strcmp( r, "gl4EsjmGvYQE." ) != 0 )  {
-                fprintf(stderr, "enigma: malfunction in crypt() library routine, aborting.\n");
-                exit(1);
-        }
+		exit(1);
+	}
+	if( strcmp( r, "gl4EsjmGvYQE." ) != 0 )  {
+		fprintf(stderr, "enigma: malfunction in crypt() library routine, aborting.\n");
+		exit(1);
+	}
 
-        /* Don't exec makekey, just invoke library routine directly */
+	/* Don't exec makekey, just invoke library routine directly */
 	strncpy(ibuf, pw, 8);
 	while (*pw)
 		*pw++ = '\0';
@@ -101,8 +101,8 @@ setup(pw)
 	salt[0] = saltfix(ibuf[0]);
 	salt[1] = saltfix(ibuf[1]);
 	salt[2] = '\0';
-        r = crypt( ibuf, salt );
-        strncpy( buf, r, sizeof(buf) );
+	r = crypt( ibuf, salt );
+	strncpy( buf, r, sizeof(buf) );
 
 	/* First 2 bytes are echo of the salt.  Replace with original salt. */
 	buf[0] = ibuf[0];

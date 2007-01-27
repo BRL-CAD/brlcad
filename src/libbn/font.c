@@ -38,7 +38,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
@@ -57,7 +56,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *			B N _ V L I S T _ 3 S T R I N G
  *@brief
  * Convert a string to a vlist.
- * 
+ *
  *  'scale' is the width, in mm, of one character.
  *
  * @param vhead
@@ -69,8 +68,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *
  */
 void
-bn_vlist_3string(struct bu_list *vhead,  
-		 struct bu_list *free_hd,/* source of free vlists */ 
+bn_vlist_3string(struct bu_list *vhead,
+		 struct bu_list *free_hd,/* source of free vlists */
 		 const char *string,    /* string of chars to be plotted */
 		 const vect_t origin,	/* lower left corner of 1st char */
 		 const mat_t rot,	/* Transform matrix (WARNING: may xlate) */
@@ -153,7 +152,7 @@ bn_vlist_3string(struct bu_list *vhead,
  *
  *  A simpler interface, for those cases where the text lies
  *  in the X-Y plane.
- * 
+ *
  * @param vhead
  * @param free_hd	source of free vlists
  * @param string	string of chars to be plotted

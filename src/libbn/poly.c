@@ -39,7 +39,6 @@ static const char RCSpoly[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #include <signal.h>
@@ -59,7 +58,7 @@ static const char RCSpoly[] = "@(#)$Header$ (ARL)";
 static const struct bn_poly	bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 
 /**
- *	bn_poly_mul 
+ *	bn_poly_mul
  *
  * @brief multiply two polynomials
  */
@@ -113,7 +112,7 @@ bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1,
 
 
 /**
- *	bn_poly_scale 
+ *	bn_poly_scale
  * @brief
  * scale a polynomial
  */
@@ -130,7 +129,7 @@ bn_poly_scale(register struct bn_poly *eqn, double factor)
 
 
 /**
- *	bn_poly_add 
+ *	bn_poly_add
  * @brief
  * add two polynomials
  */
@@ -164,7 +163,7 @@ bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, 
 
 
 /**
- *	bn_poly_sub 
+ *	bn_poly_sub
  * @brief
  * subtract two polynomials
  */

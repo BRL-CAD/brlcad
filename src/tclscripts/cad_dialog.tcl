@@ -210,7 +210,7 @@ actions as indicated by the button label."}}
 #	help_strings is a list of help strings for the corresponding labels in choice_labels
 proc cad_radio { my_widget_name screen radio_result title text_message default choice_labels help_strings } {
 	global $radio_result
-        global ::tk::Priv
+	global ::tk::Priv
 	# The screen parameter can be the pathname of some
 	# widget where the screen value can be obtained.
 	# Otherwise, it is assumed to be a genuine X DISPLAY

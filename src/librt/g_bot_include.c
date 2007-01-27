@@ -89,7 +89,7 @@ XGLUE(rt_botface_w_normals_,TRI_TYPE)(struct soltab	*stp,
 			   stp->st_name, face_no);
 		    bu_log( "\t(%g %g %g) (%g %g %g) (%g %g %g)\n",
 			    V3ARGS( ap ), V3ARGS( bp ), V3ARGS( cp ) );
-	    	}
+		}
 		return(0);			/* BAD */
 	}
 
@@ -360,7 +360,7 @@ struct rt_i		*rtip;
 	 *  Each piece can represent a number of triangles.  This is encoded
 	 *  in bot->bot_tri_per_piece.
 	 *
-      	 *  These array allocations can't be made until the number of
+	 *  These array allocations can't be made until the number of
 	 *  triangles are known.
 	 *
 	 *  If the number of triangles is too small,
@@ -551,7 +551,6 @@ XGLUE(rt_bot_unoriented_segs_,TRI_TYPE)(struct hit		*hits,
     }
     return( nhits );
 }
-
 
 
 /**

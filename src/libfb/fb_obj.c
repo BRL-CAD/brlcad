@@ -581,7 +581,6 @@ fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	unsigned char *pp;
 
 
-
 	if (argc != 7) {
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib fb_cell");

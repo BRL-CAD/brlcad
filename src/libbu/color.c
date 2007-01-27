@@ -67,7 +67,6 @@ static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 
 
-
 #define	ACHROMATIC	-1.0
 
 #define	HUE	0

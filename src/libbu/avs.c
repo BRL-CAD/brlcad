@@ -51,7 +51,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 /**
  *			B U _ A V S _ I N I T _ E M P T Y
  *
- * @brief 
+ * @brief
  *	initialize an empty avs
  */
 void
@@ -67,7 +67,7 @@ bu_avs_init_empty( struct bu_attribute_value_set *avsp )
 /**
  *			B U _ A V S _ I N I T
  *
- * @brief 
+ * @brief
  *	initialize avs with storage for len entries
  */
 void
@@ -87,7 +87,7 @@ bu_avs_init(struct bu_attribute_value_set *avsp, int len, const char *str)
 
 /**			B U _ A V S _ N E W
  *
- *  @brief 
+ *  @brief
  *	Allocate storage for a new attribute/value set, with at least
  *	'len' slots pre-allocated.
  */
@@ -173,7 +173,7 @@ bu_avs_add_vls(struct bu_attribute_value_set *avsp, const char *attribute, const
 /**
  *			B U _ A V S _ M E R G E
  *
- *  @brief 
+ *  @brief
  *	Take all the attributes from 'src' and merge them into 'dest'.
  */
 void

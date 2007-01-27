@@ -201,8 +201,8 @@ main(int argc, char **argv)
 	if( (b1 = (char *)malloc( width*CHUNK )) == (char *)0 ||
 	    (b2 = (char *)malloc( width*CHUNK )) == (char *)0 ||
 	    (b3 = (char *)malloc( width*CHUNK )) == (char *)0 ) {
-	    	fprintf(stderr, "pixmerge:  malloc failure\n");
-	    	exit(3);
+		fprintf(stderr, "pixmerge:  malloc failure\n");
+		exit(3);
 	}
 
 	while(1)  {

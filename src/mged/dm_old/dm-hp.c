@@ -38,7 +38,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -307,27 +306,27 @@ int		noblock;
 	    ypen     = YHP_TO_GED(cury);
 	    switch ( ch ) {
 		case 'q':
-	    		if( xpen )
-	    		{
-		    		sprintf( str_buf , "knob X %f\n" , (float)xpen/2048.0 );
-	    			bu_vls_strcat( &dm_values.dv_string , str_buf );
-	    		}
-	    		if( ypen )
-	    		{
-		    		sprintf( str_buf , "knob Y %f\n" , (float)ypen/2048.0 );
-	    			bu_vls_strcat( &dm_values.dv_string , str_buf );
-	    		}
+			if( xpen )
+			{
+				sprintf( str_buf , "knob X %f\n" , (float)xpen/2048.0 );
+				bu_vls_strcat( &dm_values.dv_string , str_buf );
+			}
+			if( ypen )
+			{
+				sprintf( str_buf , "knob Y %f\n" , (float)ypen/2048.0 );
+				bu_vls_strcat( &dm_values.dv_string , str_buf );
+			}
 		    break;
 		case 'r':
-	    		bu_vls_strcat( &dm_values.dv_string , "zoom 0.5\n" );
+			bu_vls_strcat( &dm_values.dv_string , "zoom 0.5\n" );
 		    break;
 		case 's':
-	    		bu_vls_strcat( &dm_values.dv_string , "zoom 2\n" );
+			bu_vls_strcat( &dm_values.dv_string , "zoom 2\n" );
 		    break;
 		default:
-	    		sprintf( str_buf , "M 1 %d %d\n", xpen, ypen );
-	    		bu_vls_strcat( &dm_values.dv_string , str_buf );
-	    	    break;
+			sprintf( str_buf , "M 1 %d %d\n", xpen, ypen );
+			bu_vls_strcat( &dm_values.dv_string , str_buf );
+		    break;
 	    }
 		FD_CLR( fileno(stdin), input );
 		return;
@@ -421,7 +420,7 @@ register char *s;
 }
 
 static point(xi,yi){
-        HPmove(xi,yi);
+	HPmove(xi,yi);
 	HPcont(xi,yi);
 }
 

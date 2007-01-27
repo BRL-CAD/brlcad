@@ -69,8 +69,8 @@ Usage(void) 				/* print usage message */
 
 int
 main(int argc, char **argv)			/* "cad_parea" entry point */
-   		     		/* argument count */
-    		        	/* argument strings */
+				/* argument count */
+				/* argument strings */
 {
 	point		previous;	/* previous point */
 	point		current;	/* current point */
@@ -111,8 +111,8 @@ main(int argc, char **argv)			/* "cad_parea" entry point */
 
 static bool
 GetArgs(int argc, char **argv)			/* process command arguments */
-   		     		/* argument count */
-    		        	/* argument strings */
+				/* argument count */
+				/* argument strings */
 {
 	static bool	iflag = false;	/* set if "-i" option found */
 	static bool	oflag = false;	/* set if "-o" option found */
@@ -174,7 +174,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 
 static bool
 Input(register point *coop)				/* input a coordinate record */
-              	      		/* -> input coordinates */
+				/* -> input coordinates */
 {
 	char		inbuf[82];	/* input record buffer */
 
@@ -202,7 +202,7 @@ Input(register point *coop)				/* input a coordinate record */
 
 static void
 Output(double result)			/* output computed area */
-      	        		/* computed area */
+				/* computed area */
 {
 	printf( "%g\n", result );
 }

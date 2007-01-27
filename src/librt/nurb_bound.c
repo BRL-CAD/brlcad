@@ -43,7 +43,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 
 #include "machine.h"
@@ -171,7 +170,6 @@ rt_nurb_s_check(register struct face_g_snurb *srf)
 }
 
 
-
 /* rt_nurb_c_check( srf )
  * 	Checks the NURB curve control points to make
  *	sure no one point is near INIFITY, which probably means
@@ -196,7 +194,6 @@ rt_nurb_c_check(register struct edge_g_cnurb *crv)
 	}
 	return(0);			/* OK */
 }
-
 
 
 /*

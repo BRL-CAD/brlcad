@@ -49,8 +49,8 @@ static const char libbu_hash_RCSid[] = "@(#) $Header$";
 unsigned long
 bu_hash(unsigned char *str, int len)
 {
-        unsigned long hash = 5381;
-        int i, c;
+	unsigned long hash = 5381;
+	int i, c;
 
 	c = *str;
 	for( i=0 ; i<len ; i++ ) {
@@ -59,7 +59,7 @@ bu_hash(unsigned char *str, int len)
 		str++;
 	}
 
-        return hash;
+	return hash;
 }
 
 /**			B U _ C R E A T E _ H A S H _ T B L
@@ -116,7 +116,7 @@ bu_create_hash_tbl( unsigned long tbl_size )
  * @brief
  *	Find the hash table entry corresponding to the provided key
  *
- * 
+ *
  * @param[in] hsh_tbl - The hash table to look in
  * @param[in] key - the key to look for
  * @param[in] key_len - the length of the key in bytes
@@ -238,7 +238,7 @@ bu_get_hash_key( struct bu_hash_entry *hsh_entry )
  *
  *	Add an new entry to a hash table
  *
- * 
+ *
  * @param[in] hsh_tbl - the hash table to accept thye new entry
  * @param[in] key - the key (any byte string)
  * @param[in] key_len - the number of bytes in the key

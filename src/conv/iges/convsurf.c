@@ -64,13 +64,13 @@ Convsurfs()
 		}
 	}
 
-        if( totsurfs )
-        {
-                if( curr_file->obj_name )
-                        mk_bspline( fdout , curr_file->obj_name , surfs );
-                else
-                        mk_bspline( fdout , "nurb.s" , surfs );
-        }
+	if( totsurfs )
+	{
+		if( curr_file->obj_name )
+			mk_bspline( fdout , curr_file->obj_name , surfs );
+		else
+			mk_bspline( fdout , "nurb.s" , surfs );
+	}
 
 	bu_log( "Converted %d NURBS successfully out of %d total NURBS\n" , convsurf , totsurfs );
 	if( convsurf )

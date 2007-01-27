@@ -207,10 +207,10 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  */
 void
 rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	register int    i;
@@ -243,7 +243,7 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 			 * If it is outside the solid, stop now */
 			if( norm_dist > 0.0 ) {
 				RT_HALF_SEG_MISS(segp[i]);	/* No hit */
-			        continue;
+				continue;
 			}
 		}
 

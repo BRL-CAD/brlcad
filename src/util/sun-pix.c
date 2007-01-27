@@ -203,9 +203,9 @@ get_args(int argc, register char **argv)
 int
 decoderead(unsigned char *buf, int size, int length, FILE *fp)
 
-   		     		/* should be one! */
-   		       		/* number of items to read */
-    		    		/* input file pointer */
+				/* should be one! */
+				/* number of items to read */
+				/* input file pointer */
 {
 	static	int	repeat = -1;
 	static	int	lastchar = 0;

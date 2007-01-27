@@ -35,9 +35,8 @@ typedef	struct TIE_3_t {
 
 
 #define unitize(_a) { \
-        float _b = sqrt(_a.v[0]*_a.v[0] + _a.v[1]*_a.v[1] + _a.v[2]*_a.v[2]); \
-        _a.v[0] /= _b; _a.v[1] /= _b; _a.v[2] /= _b; }
-
+	float _b = sqrt(_a.v[0]*_a.v[0] + _a.v[1]*_a.v[1] + _a.v[2]*_a.v[2]); \
+	_a.v[0] /= _b; _a.v[1] /= _b; _a.v[2] /= _b; }
 
 
 int main(int argc, char *args[]) {
@@ -69,32 +68,32 @@ int main(int argc, char *args[]) {
     for(k = 1; k <= atoi(args[1]); k++) {
     switch(atoi(args[2])) {
       case 1:
-        foo = drand48();
-        sin_theta = sqrt(1-foo*foo);
-        cos_theta = 1-sin_theta;
-        break;
+	foo = drand48();
+	sin_theta = sqrt(1-foo*foo);
+	cos_theta = 1-sin_theta;
+	break;
 
       case 2:
-        foo = drand48();
-        sin_theta = sqrt(foo);
-        cos_theta = sin_theta;
-        break;
+	foo = drand48();
+	sin_theta = sqrt(foo);
+	cos_theta = sin_theta;
+	break;
 
       case 3:
-        foo = drand48();
-        sin_theta = sqrt(foo);
-        cos_theta = 1-sin_theta;
-        break;
+	foo = drand48();
+	sin_theta = sqrt(foo);
+	cos_theta = 1-sin_theta;
+	break;
 
       case 4:
-        cos_theta = (((float)j / atof(args[1])) + (2.0 * drand48() - 1.0) / (2.0*atof(args[1]))) * 1.57;
-        sin_theta = sin(cos_theta);
-        cos_theta = cos(cos_theta);
-        break;
+	cos_theta = (((float)j / atof(args[1])) + (2.0 * drand48() - 1.0) / (2.0*atof(args[1]))) * 1.57;
+	sin_theta = sin(cos_theta);
+	cos_theta = cos(cos_theta);
+	break;
 
       default:
-        exit(0);
-        break;
+	exit(0);
+	break;
     }
 
     cos_phi = (((float)k / atof(args[1])) + (2.0 * drand48() - 1.0) / (2.0*atof(args[1]))) * 2.0*M_PI;

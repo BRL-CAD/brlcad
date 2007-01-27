@@ -103,7 +103,7 @@ do_line(int xpos, int ypos, register char *line)
 
 		do_char( char_id, currx, ypos );
 		currx += (SWABV(dir[char_id].width) + 2) / ir_aperture;
-    		}
+		}
 	return;
 	}
 
@@ -182,9 +182,9 @@ static int
 bitx(register char *bitstring, register int posn)
 {
 #if defined( vax )
-   	register field;
+	register field;
 
-   	asm("extzv	r10,$1,(r11),r8");
+	asm("extzv	r10,$1,(r11),r8");
 	return field;
 #else
 	for( ; posn >= 8; posn -= 8, bitstring++ )

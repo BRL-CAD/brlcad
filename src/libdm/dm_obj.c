@@ -2258,7 +2258,7 @@ dmo_lineWidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 		return TCL_OK;
 	}
 
- 	/* set lineWidth */
+	/* set lineWidth */
 	if (argc == 3) {
 		if (sscanf(argv[2], "%d", &lineWidth) != 1)
 			goto bad_lineWidth;
@@ -2630,9 +2630,9 @@ dmo_depthMask_tcl(ClientData	clientData,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dm_depthMask %s", argv[1]);
-  	Tcl_Eval(interp, bu_vls_addr(&vls));
-  	bu_vls_free(&vls);
-  	return TCL_ERROR;
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
 }
 
 /*
@@ -2764,7 +2764,7 @@ dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **
 
 #if 1
 #define DM_REVERSE_COLOR_BYTE_ORDER(_shift,_mask) { \
-        _shift = 24 - _shift; \
+	_shift = 24 - _shift; \
 	switch (_shift) { \
 	case 0: \
 	     _mask >>= 24; \

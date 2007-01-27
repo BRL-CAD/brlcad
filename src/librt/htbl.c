@@ -54,7 +54,7 @@ static const char librt_htbl_RCSid[] = "@(#)$Header$ (ARL)";
 void
 rt_htbl_init(struct rt_htbl *b, int len, const char *str)
 
-   		    		/* initial len. */
+				/* initial len. */
 
 {
 	if (bu_debug & BU_DEBUG_PTBL)

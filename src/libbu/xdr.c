@@ -60,7 +60,6 @@ static const char libbu_xdr_RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 
 
-
 /**
  *			B U _ G S H O R T
  */

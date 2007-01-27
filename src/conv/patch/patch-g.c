@@ -156,12 +156,12 @@ main(int argc, char **argv)
 
 	bzero( (char *)list,sizeof(list));
 
-        /* initialize tolerance structure */
-        tol.magic = BN_TOL_MAGIC;
-        tol.dist = 0.01;
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 0.001;
-        tol.para = 1 - tol.perp;
+	/* initialize tolerance structure */
+	tol.magic = BN_TOL_MAGIC;
+	tol.dist = 0.01;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 0.001;
+	tol.para = 1 - tol.perp;
 
 	conv_mm2in = 1.0/25.4; /* convert mm to inches */
 
@@ -459,19 +459,19 @@ main(int argc, char **argv)
 
 		if( i == 0 )
 			continue;
-                if ( done || (in[i].cc != in[i-1].cc) ||
-                    ((in[i].surf_type > 3 || in[i-1].surf_type > 3) &&
-                    (in[i].surf_type != in[i-1].surf_type)) ) {
+		if ( done || (in[i].cc != in[i-1].cc) ||
+		    ((in[i].surf_type > 3 || in[i-1].surf_type > 3) &&
+		    (in[i].surf_type != in[i-1].surf_type)) ) {
 
-               		bu_log( "component code #%d\n" , in[i-1].cc );
+			bu_log( "component code #%d\n" , in[i-1].cc );
 
 			if( debug > 2 ) {
 				for( j=0; j<i; j++ )
 					bu_log("IN: %f %f %f\n",in[j].x,in[j].y,in[j].z);
 			}
 
-                    	if( RT_G_DEBUG&DEBUG_MEM_FULL )
-                    		bu_prmem( "At start of component" );
+			if( RT_G_DEBUG&DEBUG_MEM_FULL )
+				bu_prmem( "At start of component" );
 
 			switch(in[i-1].surf_type){    /* Key on surface types. */
 
@@ -549,8 +549,8 @@ main(int argc, char **argv)
 			in[0] = in[i];
 			i = 0;
 
-                    	if( RT_G_DEBUG&DEBUG_MEM_FULL )
-                    		bu_prmem( "At end of component" );
+			if( RT_G_DEBUG&DEBUG_MEM_FULL )
+				bu_prmem( "At end of component" );
 
 		}       /* end "processing" if */
 	}
@@ -1220,22 +1220,22 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	}
 
 	/* calculate plane equations for all the faces */
-        for (BU_LIST_FOR(s, shell, &r->s_hd))
-        {
-            NMG_CK_SHELL( s );
-            for (BU_LIST_FOR(fu, faceuse, &s->fu_hd))
-            {
-                NMG_CK_FACEUSE( fu );
-                if( fu->orientation == OT_SAME )
-                {
-                        if( nmg_fu_planeeqn( fu , tol ) )
-                	{
-                                bu_log( "Build_solid: Failed to calculate plane eqn for outside fu x%x:\n" , fu );
-                		nmg_pr_fu_briefly( fu , (char *)NULL );
-                	}
-                }
-            }
-        }
+	for (BU_LIST_FOR(s, shell, &r->s_hd))
+	{
+	    NMG_CK_SHELL( s );
+	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd))
+	    {
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation == OT_SAME )
+		{
+			if( nmg_fu_planeeqn( fu , tol ) )
+			{
+				bu_log( "Build_solid: Failed to calculate plane eqn for outside fu x%x:\n" , fu );
+				nmg_pr_fu_briefly( fu , (char *)NULL );
+			}
+		}
+	    }
+	}
 
 	/* don't need the verts array any more */
 	bu_free( (char *)verts , "build_solid: verts" );
@@ -1619,19 +1619,19 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 plane_t pl1,pl2;
 
 NMG_GET_FU_PLANE( pl1 , fu );
-	                        if( nmg_fu_planeeqn( fu , tol ) )
-	                	{
+				if( nmg_fu_planeeqn( fu , tol ) )
+				{
 NMG_GET_FU_PLANE( pl2 , fu );
-	                                bu_log( "Build_solid: Failed to re-calculate plane eqn for fu x%x:\n" , fu );
-	                		nmg_pr_fu_briefly( fu , (char *)NULL );
-	                		rt_g.NMG_debug |= DEBUG_MESH;
-	                		nmg_ck_fu_verts( fu , fu->f_p , tol );
+					bu_log( "Build_solid: Failed to re-calculate plane eqn for fu x%x:\n" , fu );
+					nmg_pr_fu_briefly( fu , (char *)NULL );
+					rt_g.NMG_debug |= DEBUG_MESH;
+					nmg_ck_fu_verts( fu , fu->f_p , tol );
 bu_log( "Old plane was ( %f %f %f %f )\n" , V4ARGS( pl1 ) );
 bu_log( "New plane is ( %f %f %f %f )\n" , V4ARGS( pl2 ) );
 nmg_face_g( fu , pl1 );
-	                		nmg_ck_fu_verts( fu , fu->f_p , tol );
-	                		rt_g.NMG_debug &= ~DEBUG_MESH;
-	                	}
+					nmg_ck_fu_verts( fu , fu->f_p , tol );
+					rt_g.NMG_debug &= ~DEBUG_MESH;
+				}
 			}
 		}
 	}
@@ -4285,7 +4285,6 @@ pt_inside( point_t a, point_t base, point_t top, double rad1, double rad2 )
 }
 
 
-
 /* 			M K _ C Y L A D D M E M B E R
  *
  * For the cylinder given by 'name1', determine whether it has any
@@ -4329,8 +4328,6 @@ mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, 
 		}
 	}
 }
-
-
 
 
 /*			G E T _ S U B T R A C T

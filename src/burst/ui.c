@@ -420,18 +420,18 @@ Ftable *tp;
 	}
 
 /*
-        void banner( void )
+	void banner( void )
 
-        Display program name and version on one line with BORDER_CHRs
+	Display program name and version on one line with BORDER_CHRs
 	to border the top of the scrolling region.
  */
 static void
 banner()
-        {
-        (void) sprintf(	scrbuf,	bannerp, pgmverp );
+	{
+	(void) sprintf(	scrbuf,	bannerp, pgmverp );
 	HmBanner( scrbuf, BORDER_CHR );
-        return;
-        }
+	return;
+	}
 
 void
 closeUi()
@@ -514,7 +514,7 @@ initUi()
 		{
 		if( ! ScInit( stdout ) )
 			return	0;
- 		if( ScSetScrlReg( SCROLL_TOP, SCROLL_BTM ) )
+		if( ScSetScrlReg( SCROLL_TOP, SCROLL_BTM ) )
 			(void) ScClrScrlReg();
 		else
 		if( ScDL == NULL )
@@ -929,20 +929,20 @@ HmItem *itemp;
 		(void) strcpy( errfile, ip->buffer );
 	else
 		(void) strncpy( errfile, "/dev/tty", LNBUFSZ );
-        /* insure that error log is truncated */
+	/* insure that error log is truncated */
 	errfd = open( errfile, O_TRUNC|O_CREAT|O_WRONLY, 0644 );
-        if (errfd == -1)
-                {
-                locPerror( errfile );
-                return;
-                }
-        (void) close( 2 );
-        if( fcntl( errfd, F_DUPFD, 2 ) == -1 )
-                {
-                locPerror( "fcntl" );
-                return;
-                }
-  	(void) sprintf( scrbuf, "%s\t\t%s",
+	if (errfd == -1)
+		{
+		locPerror( errfile );
+		return;
+		}
+	(void) close( 2 );
+	if( fcntl( errfd, F_DUPFD, 2 ) == -1 )
+		{
+		locPerror( "fcntl" );
+		return;
+		}
+	(void) sprintf( scrbuf, "%s\t\t%s",
 			itemp != NULL ? itemp->text : cmdname,
 			errfile );
 	logCmd( scrbuf );
@@ -976,7 +976,7 @@ HmItem *itemp;
 	prntTimer( "dir" );
 	notify( NULL, NOTIFY_DELETE );
 	/* Add air into boolean trees, must be set after rt_dirbuild() and
-                before rt_gettree().
+		before rt_gettree().
 	 */
 	rtip->useair = 1;
 	if( ! gottree )

@@ -117,8 +117,8 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		mged_print_result( TCL_ERROR );
 		return TCL_ERROR;
 	    }
-    	    major_code = majc;
-    	    minor_code = minc;
+	    major_code = majc;
+	    minor_code = minc;
 	    break;
     }
     bu_vls_init( &vls );
@@ -132,7 +132,7 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	return TCL_ERROR;
     }
     if (RT_G_DEBUG & DEBUG_VOL)
-        bu_log( "Type is %d %d '%s'\n", major_code, minor_code, descrip);
+	bu_log( "Type is %d %d '%s'\n", major_code, minor_code, descrip);
 
     /*
      *	Check to see if we need to create a new object
@@ -390,7 +390,7 @@ cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	    bu_log("going to write %ld bytes\n", nbytes);
 
     if ( (written = write(fd, bufp, nbytes) ) != nbytes ) {
-    	perror(argv[1]);
+	perror(argv[1]);
 	    bu_log("%s:%d\n", __FILE__, __LINE__);
 	bu_free_external( &ext );
 	bu_vls_init( &vls );

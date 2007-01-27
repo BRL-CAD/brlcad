@@ -161,7 +161,7 @@ static FILE	*infp;
 
 static char usage[] = "\
 Usage: pl-ps [-e] [-c] [-S inches_square]\n\
-        [-W width_inches] [-N height_inches] [file.pl]\n";
+	[-W width_inches] [-N height_inches] [file.pl]\n";
 
 int
 get_args(int argc, register char **argv)
@@ -424,8 +424,8 @@ getieee(void)
 
 void
 draw(double x1, double y1, double z1, double x2, double y2, double z2)
-      	           	/* from point */
-      	           	/* to point */
+			/* from point */
+			/* to point */
 {
 	int	sx1, sy1, sx2, sy2;
 
@@ -501,7 +501,7 @@ void
 prolog(FILE *fp, char *name, int width, int height)
 
 
-   	              		/* in points */
+				/* in points */
 {
 	time_t	ltime;
 
@@ -531,7 +531,7 @@ prolog(FILE *fp, char *name, int width, int height)
 void
 scaleinfo(FILE *fp, int width, int height)
 
-   	              		/* in points */
+				/* in points */
 {
 	/*
 	 * About this PostScript scaling issue...

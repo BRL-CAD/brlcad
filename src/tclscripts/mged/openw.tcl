@@ -216,8 +216,8 @@ if {![info exists mged_browser]} {
 					set mged_browser $path/mozilla
 					break;
 				} elseif { ($::tcl_platform(os) == "Darwin") && [file exists $path/open] } {
-				        set mged_browser $path/open
-				        break
+					set mged_browser $path/open
+					break
 				}
 			}
 		}
@@ -269,11 +269,11 @@ proc gui { args } {
 	global vi_state
 	global mged_color_scheme
 	global mged_Priv
-        global tcl_platform
+	global tcl_platform
 
-        # configure the stdout chanel for this platform
-        # this is supposedly done automatically by Tcl, but not
-        switch $::tcl_platform(platform) {
+	# configure the stdout chanel for this platform
+	# this is supposedly done automatically by Tcl, but not
+	switch $::tcl_platform(platform) {
 	    "macintosh" -
 	    "unix" {
 		fconfigure stdout -translation lf
@@ -532,9 +532,9 @@ proc gui { args } {
 	hoc_register_menu_data "File" "Create/Update .mgedrc" "Create/Update .mgedrc"\
 			{ { summary "Create the .mgedrc startup file with default variable settings, or update to current settings." }
 	{ see_also } }
-        .$id.menubar.file add command -label "Clear Command Window" -underline 14 \
+	.$id.menubar.file add command -label "Clear Command Window" -underline 14 \
 	    -command ".$id.t delete 1.0 end; mged_print_prompt .$id.t {mged> }"
-        hoc_register_menu_data "File" "Clear Command Window" "Delete all text from command window"\
+	hoc_register_menu_data "File" "Clear Command Window" "Delete all text from command window"\
 	    { { summary "Delete all text from command window" } see_also }
 	.$id.menubar.file add command -label "Exit" -underline 1 -command _mged_quit
 	hoc_register_menu_data "File" "Exit" "Exit MGED"\
@@ -2078,7 +2078,7 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 	} else {
 		set web_cmd "exec \$mged_browser -display $screen \
 			\$mged_html_dir/index.html 2> /dev/null &"
-        }
+	}
 
 	.$id.menubar.help add command -label "Manual" -underline 0 -command $web_cmd
 	hoc_register_menu_data "Help" "Manual" "Manual"\
@@ -2145,12 +2145,12 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 	}
 	scrollbar .$id.s -relief flat -command ".$id.t yview"
 
-        if { $::tcl_platform(platform) != "windows" && $::tcl_platform(os) != "Darwin" } {
-            bind .$id.t <Enter> "focus .$id.t; break"
-        } else {
-             # some platforms should not be forced window activiation
-            focus .$id.t
-        }
+	if { $::tcl_platform(platform) != "windows" && $::tcl_platform(os) != "Darwin" } {
+	    bind .$id.t <Enter> "focus .$id.t; break"
+	} else {
+	     # some platforms should not be forced window activiation
+	    focus .$id.t
+	}
 
 	hoc_register_data .$id.t "Command Window"\
 			{ { summary "This is MGED's default command window. Its main

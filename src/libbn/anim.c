@@ -92,7 +92,7 @@
  */
 
 /**
- *  ANIM_V_PERMUTE 
+ *  ANIM_V_PERMUTE
  * @brief Pre-multiply a rotation matrix by a matrix
  * which maps the z-axis to the negative x-axis, the y-axis to the
  * z-axis and the x-axis to the negative y-axis.
@@ -116,7 +116,7 @@ void anim_v_permute(mat_t m)
 }
 
 /**
- *  ANIM_V_UNPERMUTE 
+ *  ANIM_V_UNPERMUTE
  * @brief Undo the mapping done by anim_v_permute().
  *
  * This has the effect of twisting an object in the default object
@@ -179,7 +179,7 @@ void anim_tran(mat_t m)
  *ANIM_MAT2* - Conversions from matrices
  ***************************************/
 
-/** ANIM_MAT2ZYX 
+/** ANIM_MAT2ZYX
  * @brief
  *  Convert the rotational part of a 4x4 transformation matrix
  * to zyx form, that is to say, rotations carried out in the order z, y,
@@ -189,26 +189,26 @@ void anim_tran(mat_t m)
  */
 int anim_mat2zyx(const mat_t viewrot, vect_t angle)
 {
-        int i, return_value, id_x, id_z;
-        fastf_t sin_x, sin_z, cos_x, cos_z, big_x, big_z;
-        static fastf_t previous[3];
+	int i, return_value, id_x, id_z;
+	fastf_t sin_x, sin_z, cos_x, cos_z, big_x, big_z;
+	static fastf_t previous[3];
 
-        if ((viewrot[1]==0.0) && (viewrot[0]==0.0)){
-                return_value = ERROR1;
-                angle[0] = 0.0;
-                angle[2] = atan2(viewrot[4],viewrot[5]);
-                /*bu_log("Warning: x arbitrarily set to 0.0; z set to %f.\n",angle[2]);*/
-        }
-        else {
-                return_value = NORMAL;
-                angle[2] = atan2(-viewrot[1],viewrot[0]);
-                angle[0] = atan2(-viewrot[6],viewrot[10]);
-        }
+	if ((viewrot[1]==0.0) && (viewrot[0]==0.0)){
+		return_value = ERROR1;
+		angle[0] = 0.0;
+		angle[2] = atan2(viewrot[4],viewrot[5]);
+		/*bu_log("Warning: x arbitrarily set to 0.0; z set to %f.\n",angle[2]);*/
+	}
+	else {
+		return_value = NORMAL;
+		angle[2] = atan2(-viewrot[1],viewrot[0]);
+		angle[0] = atan2(-viewrot[6],viewrot[10]);
+	}
 
-        sin_x = sin(angle[0]);
-        sin_z = sin(angle[2]);
-        cos_x = cos(angle[0]);
-        cos_z = cos(angle[2]);
+	sin_x = sin(angle[0]);
+	sin_z = sin(angle[2]);
+	cos_x = cos(angle[0]);
+	cos_z = cos(angle[2]);
 
 	/* in principle, we can use the sin_x or cos_x with sin_z or cos_z to
 	 * figure out angle[1], as long as they are non-zero. To avoid
@@ -222,32 +222,32 @@ int anim_mat2zyx(const mat_t viewrot, vect_t angle)
 	big_x = id_x ? sin_x : cos_x;
 
 	if (fabs(big_x*big_z) < VDIVIDE_TOL){ /* this should be impossible*/
-                /* unable to calculate pitch*/
-                return(ERROR2);
-        }
-        else if ( id_x && (!id_z) )
-                angle[1]=atan2( (viewrot[4] - cos_x*sin_z)/(sin_x*cos_z), -viewrot[6]/sin_x);
-        else if ( (!id_x) && (!id_z) )
-                angle[1]=atan2( (-viewrot[8] + sin_x*sin_z)/(cos_x*cos_z), viewrot[0]/cos_z);
-        else if ( id_x && id_z )
-                angle[1]=atan2( (-viewrot[5] + cos_x*cos_z)/(sin_x*sin_z), -viewrot[1]/sin_z);
-        else if ( (!id_x) && id_z )
-                angle[1]=atan2( (viewrot[9] - sin_x*cos_z)/(cos_x*sin_z), viewrot[10]/cos_x);
+		/* unable to calculate pitch*/
+		return(ERROR2);
+	}
+	else if ( id_x && (!id_z) )
+		angle[1]=atan2( (viewrot[4] - cos_x*sin_z)/(sin_x*cos_z), -viewrot[6]/sin_x);
+	else if ( (!id_x) && (!id_z) )
+		angle[1]=atan2( (-viewrot[8] + sin_x*sin_z)/(cos_x*cos_z), viewrot[0]/cos_z);
+	else if ( id_x && id_z )
+		angle[1]=atan2( (-viewrot[5] + cos_x*cos_z)/(sin_x*sin_z), -viewrot[1]/sin_z);
+	else if ( (!id_x) && id_z )
+		angle[1]=atan2( (viewrot[9] - sin_x*cos_z)/(cos_x*sin_z), viewrot[10]/cos_x);
 
 
-        /* assume the smallest possible arc-length from frame to frame */
-        for (i=0; i<3; i++) {
-                while ((angle[i] - previous[i]) > M_PI)
-                        angle[i] -= (2.0*M_PI);
-                while ((previous[i] - angle[i]) > M_PI)
-                        angle[i] += (2.0*M_PI);
-                previous[i] = angle[i];
-        }
+	/* assume the smallest possible arc-length from frame to frame */
+	for (i=0; i<3; i++) {
+		while ((angle[i] - previous[i]) > M_PI)
+			angle[i] -= (2.0*M_PI);
+		while ((previous[i] - angle[i]) > M_PI)
+			angle[i] += (2.0*M_PI);
+		previous[i] = angle[i];
+	}
 
 	return(return_value);
 }
 
-/** ANIM_MAT2YPR 
+/** ANIM_MAT2YPR
  *@brief
  * Convert the rotational part of a 4x4 transformation matrix
  * to yaw-pitch-roll form, that is to say, +roll degrees about the x-axis,
@@ -258,26 +258,26 @@ int anim_mat2zyx(const mat_t viewrot, vect_t angle)
  */
 int anim_mat2ypr(mat_t viewrot, vect_t angle)
 {
-        int i, return_value, id_y, id_r;
-        fastf_t sin_y, sin_r, cos_y, cos_r, big_y, big_r;
-        static fastf_t prev_angle[3];
+	int i, return_value, id_y, id_r;
+	fastf_t sin_y, sin_r, cos_y, cos_r, big_y, big_r;
+	static fastf_t prev_angle[3];
 
-        if ((viewrot[9]==0.0) && (viewrot[10]==0.0)){
-                return_value = ERROR1;
-                angle[2] = 0.0;
-                angle[0] = atan2(-viewrot[1],viewrot[5]);
-                /*bu_log("Warning: roll arbitrarily set to 0.0; yaw set to %f radians.\n",angle[0]);*/
-        }
-        else {
-                return_value = NORMAL;
-                angle[0] = atan2(viewrot[4],viewrot[0]);
-                angle[2] = atan2(viewrot[9],viewrot[10]);
-        }
+	if ((viewrot[9]==0.0) && (viewrot[10]==0.0)){
+		return_value = ERROR1;
+		angle[2] = 0.0;
+		angle[0] = atan2(-viewrot[1],viewrot[5]);
+		/*bu_log("Warning: roll arbitrarily set to 0.0; yaw set to %f radians.\n",angle[0]);*/
+	}
+	else {
+		return_value = NORMAL;
+		angle[0] = atan2(viewrot[4],viewrot[0]);
+		angle[2] = atan2(viewrot[9],viewrot[10]);
+	}
 
-        sin_y = sin(angle[0]);
-        sin_r = sin(angle[2]);
-        cos_y = cos(angle[0]);
-        cos_r = cos(angle[2]);
+	sin_y = sin(angle[0]);
+	sin_r = sin(angle[2]);
+	cos_y = cos(angle[0]);
+	cos_r = cos(angle[2]);
 
 	/* in principle, we can use sin_y or cos_y with sin_r or cos_r to
 	 * figure out angle[1], as long as they are non-zero. To avoid
@@ -291,32 +291,32 @@ int anim_mat2ypr(mat_t viewrot, vect_t angle)
 	big_r = id_r ? sin_r : cos_r;
 
 	if (fabs(big_y*big_r) < VDIVIDE_TOL){ /* this should not happen */
-                /* unable to calculate pitch*/
-                return(ERROR2);
-        }
-        else if ( (!id_y) && id_r )
-                angle[1] = atan2( -(viewrot[1]+sin_y*cos_r)/(cos_y*sin_r),viewrot[9]/sin_r);
-        else if ( id_y && (!id_r) )
-                angle[1] = atan2( -(viewrot[6]+cos_y*sin_r)/(sin_y*cos_r),viewrot[10]/cos_r);
-        else if ( id_y && id_r )
-                angle[1] = atan2( -(viewrot[5]-cos_y*cos_r)/(sin_y*sin_r),viewrot[4]/sin_y);
-        else if ( (!id_y) && (!id_r) )
-                angle[1] = atan2( -(viewrot[2]-sin_y*sin_r)/(cos_y*cos_r),viewrot[0]/cos_y);
+		/* unable to calculate pitch*/
+		return(ERROR2);
+	}
+	else if ( (!id_y) && id_r )
+		angle[1] = atan2( -(viewrot[1]+sin_y*cos_r)/(cos_y*sin_r),viewrot[9]/sin_r);
+	else if ( id_y && (!id_r) )
+		angle[1] = atan2( -(viewrot[6]+cos_y*sin_r)/(sin_y*cos_r),viewrot[10]/cos_r);
+	else if ( id_y && id_r )
+		angle[1] = atan2( -(viewrot[5]-cos_y*cos_r)/(sin_y*sin_r),viewrot[4]/sin_y);
+	else if ( (!id_y) && (!id_r) )
+		angle[1] = atan2( -(viewrot[2]-sin_y*sin_r)/(cos_y*cos_r),viewrot[0]/cos_y);
 
 
-        /* assume the smallest possible arc-length from frame to frame */
-        for (i=0; i<3; i++) {
-                while ((angle[i] - prev_angle[i]) > M_PI)
-                        angle[i] -= (2.0*M_PI);
-                while ((prev_angle[i] - angle[i]) > M_PI)
-                        angle[i] += (2.0*M_PI);
-                prev_angle[i] = angle[i];
-        }
+	/* assume the smallest possible arc-length from frame to frame */
+	for (i=0; i<3; i++) {
+		while ((angle[i] - prev_angle[i]) > M_PI)
+			angle[i] -= (2.0*M_PI);
+		while ((prev_angle[i] - angle[i]) > M_PI)
+			angle[i] += (2.0*M_PI);
+		prev_angle[i] = angle[i];
+	}
 
 	return(return_value);
 }
 
-/** ANIM_MAT2QUAT 
+/** ANIM_MAT2QUAT
  * @brief
  * This interprets the rotational part of a 4x4 transformation
  *  matrix in terms of unit quaternions. The result is stored as a vector in
@@ -383,7 +383,7 @@ int anim_mat2quat(quat_t quat, const mat_t viewrot)
  *ANIM_*2MAT - Conversions to matrices
  ***************************************/
 
-/** ANIM_YPR2MAT 
+/** ANIM_YPR2MAT
  * @brief Create a premultiplication rotation matrix to turn the front
  * of an object (its x-axis) to the given yaw, pitch, and roll,
  * which is stored in radians in the vector a.
@@ -399,17 +399,17 @@ void anim_ypr2mat(mat_t m, const vect_t a)
 	sin_p = sin(a[1]);
 	sin_r = sin(a[2]);
 
-        m[0] =	 cos_y*cos_p;
+	m[0] =	 cos_y*cos_p;
 	m[1] =	 -cos_y*sin_p*sin_r-sin_y*cos_r;
-        m[2] =	 -cos_y*sin_p*cos_r+sin_y*sin_r;
+	m[2] =	 -cos_y*sin_p*cos_r+sin_y*sin_r;
 	m[3] =	0;
-        m[4] = 	sin_y*cos_p;
-        m[5] =	-sin_y*sin_p*sin_r+cos_y*cos_r;
-        m[6] =	-sin_y*sin_p*cos_r-cos_y*sin_r;
+	m[4] = 	sin_y*cos_p;
+	m[5] =	-sin_y*sin_p*sin_r+cos_y*cos_r;
+	m[6] =	-sin_y*sin_p*cos_r-cos_y*sin_r;
 	m[7] =	0;
-        m[8]= 	sin_p;
-        m[9] = 	cos_p*sin_r;
-        m[10] = cos_p*cos_r;
+	m[8]= 	sin_p;
+	m[9] = 	cos_p*sin_r;
+	m[10] = cos_p*cos_r;
 	m[11] =	0.0;
 	m[12] =	0.0;
 	m[13] =	0.0;
@@ -417,7 +417,7 @@ void anim_ypr2mat(mat_t m, const vect_t a)
 	m[15] =	1.0;
 }
 
-/** ANIM_YPR2VMAT 
+/** ANIM_YPR2VMAT
  * @brief Create a post-multiplication rotation matrix ,which could
  * be used to move the virtual camera to the given yaw, pitch,
  * and roll,  which are stored in radians in the given vector a. The
@@ -457,34 +457,32 @@ void anim_ypr2vmat(mat_t m, const vect_t a)
 	m[15] =	   1.0;
 }
 
-/** ANIM_Y_P_R2MAT 
+/** ANIM_Y_P_R2MAT
  * @brief
  * Make matrix to rotate an object to the given yaw,
  * pitch, and roll. (Specified in radians.)
  */
 void anim_y_p_r2mat(mat_t m, double y, double p, double r)
 {
-        fastf_t cos_y = cos(y);
-        fastf_t sin_y = sin(y);
-        fastf_t cos_p = cos(p);
-        fastf_t sin_p = sin(p);
-        fastf_t cos_r = cos(r);
-        fastf_t sin_r = sin(r);
+	fastf_t cos_y = cos(y);
+	fastf_t sin_y = sin(y);
+	fastf_t cos_p = cos(p);
+	fastf_t sin_p = sin(p);
+	fastf_t cos_r = cos(r);
+	fastf_t sin_r = sin(r);
 
-        m[0] = cos_y*cos_p;
-        m[1] = -cos_y*sin_p*sin_r-sin_y*cos_r;
-        m[2] = -cos_y*sin_p*cos_r+sin_y*sin_r;
-        m[4] = sin_y*cos_p;
-        m[5] = -sin_y*sin_p*sin_r+cos_y*cos_r;
-        m[6] = -sin_y*sin_p*cos_r-cos_y*sin_r;
-        m[8]= sin_p;
-        m[9] = cos_p*sin_r;
-        m[10] = cos_p*cos_r;
-        m[3]=m[7]=m[11]=m[12]=m[13]=m[14]=0;
-        m[15]=1;
+	m[0] = cos_y*cos_p;
+	m[1] = -cos_y*sin_p*sin_r-sin_y*cos_r;
+	m[2] = -cos_y*sin_p*cos_r+sin_y*sin_r;
+	m[4] = sin_y*cos_p;
+	m[5] = -sin_y*sin_p*sin_r+cos_y*cos_r;
+	m[6] = -sin_y*sin_p*cos_r-cos_y*sin_r;
+	m[8]= sin_p;
+	m[9] = cos_p*sin_r;
+	m[10] = cos_p*cos_r;
+	m[3]=m[7]=m[11]=m[12]=m[13]=m[14]=0;
+	m[15]=1;
 }
-
-
 
 
 /** ANIM_DY_P_R2MAT
@@ -493,28 +491,28 @@ void anim_y_p_r2mat(mat_t m, double y, double p, double r)
  */
 void anim_dy_p_r2mat(mat_t m, double y, double p, double r)
 {
-        fastf_t radian_yaw = y*(M_PI*0.0055555555556);
-        fastf_t radian_pitch = p*(M_PI*0.0055555555556);
-        fastf_t radian_roll = r*(M_PI*0.0055555555556);
+	fastf_t radian_yaw = y*(M_PI*0.0055555555556);
+	fastf_t radian_pitch = p*(M_PI*0.0055555555556);
+	fastf_t radian_roll = r*(M_PI*0.0055555555556);
 
-        fastf_t cos_y = cos(radian_yaw);
-        fastf_t sin_y = sin(radian_yaw);
-        fastf_t cos_p = cos(radian_pitch);
-        fastf_t sin_p = sin(radian_pitch);
-        fastf_t cos_r = cos(radian_roll);
-        fastf_t sin_r = sin(radian_roll);
+	fastf_t cos_y = cos(radian_yaw);
+	fastf_t sin_y = sin(radian_yaw);
+	fastf_t cos_p = cos(radian_pitch);
+	fastf_t sin_p = sin(radian_pitch);
+	fastf_t cos_r = cos(radian_roll);
+	fastf_t sin_r = sin(radian_roll);
 
-        m[0] = cos_y*cos_p;
-        m[1] = -cos_y*sin_p*sin_r-sin_y*cos_r;
-        m[2] = -cos_y*sin_p*cos_r+sin_y*sin_r;
-        m[4] = sin_y*cos_p;
-        m[5] = -sin_y*sin_p*sin_r+cos_y*cos_r;
-        m[6] = -sin_y*sin_p*cos_r-cos_y*sin_r;
-        m[8]= sin_p;
-        m[9] = cos_p*sin_r;
-        m[10] = cos_p*cos_r;
-        m[3]=m[7]=m[11]=m[12]=m[13]=m[14]=0;
-        m[15]=1;
+	m[0] = cos_y*cos_p;
+	m[1] = -cos_y*sin_p*sin_r-sin_y*cos_r;
+	m[2] = -cos_y*sin_p*cos_r+sin_y*sin_r;
+	m[4] = sin_y*cos_p;
+	m[5] = -sin_y*sin_p*sin_r+cos_y*cos_r;
+	m[6] = -sin_y*sin_p*cos_r-cos_y*sin_r;
+	m[8]= sin_p;
+	m[9] = cos_p*sin_r;
+	m[10] = cos_p*cos_r;
+	m[3]=m[7]=m[11]=m[12]=m[13]=m[14]=0;
+	m[15]=1;
 }
 
 
@@ -552,36 +550,35 @@ void anim_dy_p_r2vmat(mat_t m, double yaw, double pch, double rll)
 
 }
 
-/** ANIM_X_Y_Z2MAT 
+/** ANIM_X_Y_Z2MAT
  * @brief Make a rotation matrix corresponding to a rotation of
  * "x" radians about the x-axis, "y" radians about the y-axis, and
  * then "z" radians about the z-axis.
  */
 void anim_x_y_z2mat(mat_t m, double x, double y, double z)
 {
-        fastf_t cosx = cos(x);
-        fastf_t sinx = sin(x);
-        fastf_t cosy = cos(y);
-        fastf_t siny = sin(y);
-        fastf_t cosz = cos(z);
-        fastf_t sinz = sin(z);
+	fastf_t cosx = cos(x);
+	fastf_t sinx = sin(x);
+	fastf_t cosy = cos(y);
+	fastf_t siny = sin(y);
+	fastf_t cosz = cos(z);
+	fastf_t sinz = sin(z);
 
-        m[0] = cosz*cosy;
-        m[1] = cosz*siny*sinx-sinz*cosx;
-        m[2] = cosz*siny*cosx+sinz*sinx;
-        m[4] = sinz*cosy;
-        m[5] = sinz*siny*sinx+cosz*cosx;
-        m[6] = sinz*siny*cosx-cosz*sinx;
-        m[8] = -siny;
-        m[9] = cosy*sinx;
-        m[10] = cosy*cosx;
-        m[3]=m[7]=m[11]=m[12]=m[13]=m[14]=0;
-        m[15]=1;
+	m[0] = cosz*cosy;
+	m[1] = cosz*siny*sinx-sinz*cosx;
+	m[2] = cosz*siny*cosx+sinz*sinx;
+	m[4] = sinz*cosy;
+	m[5] = sinz*siny*sinx+cosz*cosx;
+	m[6] = sinz*siny*cosx-cosz*sinx;
+	m[8] = -siny;
+	m[9] = cosy*sinx;
+	m[10] = cosy*cosx;
+	m[3]=m[7]=m[11]=m[12]=m[13]=m[14]=0;
+	m[15]=1;
 }
 
 
-
-/** ANIM_DX_Y_Z2MAT 
+/** ANIM_DX_Y_Z2MAT
  * @brief Make a rotation matrix corresponding to a rotation of
  * "x" degrees about the x-axis, "y" degrees about the y-axis, and
  * then "z" degrees about the z-axis.
@@ -594,24 +591,24 @@ void anim_dx_y_z2mat(mat_t m, double x, double y, double z)
 	y *= (M_PI*0.0055555555556);
 	z *= (M_PI*0.0055555555556);
 
-        cosx = cos(x);
-        sinx = sin(x);
-        cosy = cos(y);
-        siny = sin(y);
-        cosz = cos(z);
-        sinz = sin(z);
+	cosx = cos(x);
+	sinx = sin(x);
+	cosy = cos(y);
+	siny = sin(y);
+	cosz = cos(z);
+	sinz = sin(z);
 
-        m[0] = cosz*cosy;
-        m[1] = cosz*siny*sinx-sinz*cosx;
-        m[2] = cosz*siny*cosx+sinz*sinx;
-        m[4] = sinz*cosy;
-        m[5] = sinz*siny*sinx+cosz*cosx;
-        m[6] = sinz*siny*cosx-cosz*sinx;
-        m[8] = -siny;
-        m[9] = cosy*sinx;
-        m[10] = cosy*cosx;
-        m[3]=m[7]=m[11]=m[12]=m[13]=m[14]=0.0;
-        m[15]=1.0;
+	m[0] = cosz*cosy;
+	m[1] = cosz*siny*sinx-sinz*cosx;
+	m[2] = cosz*siny*cosx+sinz*sinx;
+	m[4] = sinz*cosy;
+	m[5] = sinz*siny*sinx+cosz*cosx;
+	m[6] = sinz*siny*cosx-cosz*sinx;
+	m[8] = -siny;
+	m[9] = cosy*sinx;
+	m[10] = cosy*cosx;
+	m[3]=m[7]=m[11]=m[12]=m[13]=m[14]=0.0;
+	m[15]=1.0;
 }
 
 /* ANIM_ZYX2MAT @brief Make a rotation matrix corresponding to a rotation of
@@ -654,12 +651,12 @@ void anim_zyx2mat(mat_t m, const vect_t a)
  */
 void anim_z_y_x2mat(mat_t m, double x, double y, double z)
 {
-        fastf_t cosx = cos(x);
-        fastf_t sinx = sin(x);
-        fastf_t cosy = cos(y);
-        fastf_t siny = sin(y);
-        fastf_t cosz = cos(z);
-        fastf_t sinz = sin(z);
+	fastf_t cosx = cos(x);
+	fastf_t sinx = sin(x);
+	fastf_t cosy = cos(y);
+	fastf_t siny = sin(y);
+	fastf_t cosz = cos(z);
+	fastf_t sinz = sin(z);
 
 	m[0] =  cosy*cosz;
 	m[1] = -cosy*sinz;
@@ -670,13 +667,13 @@ void anim_z_y_x2mat(mat_t m, double x, double y, double z)
 	m[8] =  sinx*sinz - cosx*siny*cosz;
 	m[9] =  sinx*cosz + cosx*siny*sinz;
 	m[10]=  cosx*cosy;
-        m[3]=m[7]=m[11]=m[12]=m[13]=m[14]=0.0;
-        m[15]=1.0;
+	m[3]=m[7]=m[11]=m[12]=m[13]=m[14]=0.0;
+	m[15]=1.0;
 }
 
 
-/** ANIM_DZ_Y_X2MAT 
- * @brief 
+/** ANIM_DZ_Y_X2MAT
+ * @brief
  * Make a rotation matrix corresponding to a rotation of
  * "z" degrees about the z-axis, "y" degrees about the y-axis, and
  * then "x" degrees about the x-axis.
@@ -689,12 +686,12 @@ void anim_dz_y_x2mat(mat_t m, double x, double y, double z)
 	y *= (M_PI*0.0055555555556);
 	z *= (M_PI*0.0055555555556);
 
-        cosx = cos(x);
-        sinx = sin(x);
-        cosy = cos(y);
-        siny = sin(y);
-        cosz = cos(z);
-        sinz = sin(z);
+	cosx = cos(x);
+	sinx = sin(x);
+	cosy = cos(y);
+	siny = sin(y);
+	cosz = cos(z);
+	sinz = sin(z);
 
 	m[0] =  cosy*cosz;
 	m[1] = -cosy*sinz;
@@ -705,12 +702,12 @@ void anim_dz_y_x2mat(mat_t m, double x, double y, double z)
 	m[8] =  sinx*sinz - cosx*siny*cosz;
 	m[9] =  sinx*cosz + cosx*siny*sinz;
 	m[10]=  cosx*cosy;
-        m[3]=m[7]=m[11]=m[12]=m[13]=m[14]=0;
-        m[15]=1;
+	m[3]=m[7]=m[11]=m[12]=m[13]=m[14]=0;
+	m[15]=1;
 }
 
 
-/* ANIM_QUAT2MAT 
+/* ANIM_QUAT2MAT
  * @brief
  *  Make 4x4 matrix from the given quaternion
  * Note: these quaternions are the conjugates of the quaternions
@@ -746,8 +743,7 @@ void anim_quat2mat(mat_t m, const quat_t qq)
 }
 
 
-
-/* ANIM_DIR2MAT 
+/* ANIM_DIR2MAT
  * @brief
  *  make a matrix which turns a vehicle from the x-axis to
  * point in the desired direction, staying "right-side up" (ie the y-axis
@@ -757,46 +753,46 @@ void anim_quat2mat(mat_t m, const quat_t qq)
  */
 void anim_dir2mat(mat_t m, const vect_t d, const vect_t d2b)
 {
-        fastf_t hypotenuse, sign;
+	fastf_t hypotenuse, sign;
 	vect_t d2;
 
 	VMOVE( d2, d2b );
-        sign = 1.0;
-        hypotenuse = sqrt(d[0]*d[0]+d[1]*d[1]);
-        if (hypotenuse < VDIVIDE_TOL){ /* vertical direction - use d2 to
-                                        * determine roll */
-                hypotenuse = sqrt(d2[0]*d2[0]+d2[1]*d2[1]);
-                if (hypotenuse < VDIVIDE_TOL){ /* use x-axis as default*/
-                        VSET(d2,1,0,0);
-                        hypotenuse = 1;
-                }
-                if (d[2] < 0)
-                        sign = -1.0;
-                m[1] = -d2[1]/hypotenuse;
-                m[5] = d2[0]/hypotenuse;
-                m[2] = -sign * d2[0]/hypotenuse;
-                m[6] = -sign * d2[1]/hypotenuse;
-                m[8] = sign;
-                m[0]=m[4]=m[9]=m[10]=0.0;
-        }
-        else { /* normal - no roll*/
-                m[0] = d[0];
-                m[1] = -d[1]/hypotenuse;
-                m[2] = -d[0]*d[2]/hypotenuse;
-                m[4] = d[1];
-                m[5] = d[0]/hypotenuse;
-                m[6] = -d[1]*d[2]/hypotenuse;
-                m[8] = d[2];
-                m[9] = 0.0;
-                m[10] = hypotenuse;
-        }
-        m[3]=m[7]=m[11]=0.0;
-        m[12]=m[13]=m[14]=0.0;
-        m[15]=1.0;
+	sign = 1.0;
+	hypotenuse = sqrt(d[0]*d[0]+d[1]*d[1]);
+	if (hypotenuse < VDIVIDE_TOL){ /* vertical direction - use d2 to
+					* determine roll */
+		hypotenuse = sqrt(d2[0]*d2[0]+d2[1]*d2[1]);
+		if (hypotenuse < VDIVIDE_TOL){ /* use x-axis as default*/
+			VSET(d2,1,0,0);
+			hypotenuse = 1;
+		}
+		if (d[2] < 0)
+			sign = -1.0;
+		m[1] = -d2[1]/hypotenuse;
+		m[5] = d2[0]/hypotenuse;
+		m[2] = -sign * d2[0]/hypotenuse;
+		m[6] = -sign * d2[1]/hypotenuse;
+		m[8] = sign;
+		m[0]=m[4]=m[9]=m[10]=0.0;
+	}
+	else { /* normal - no roll*/
+		m[0] = d[0];
+		m[1] = -d[1]/hypotenuse;
+		m[2] = -d[0]*d[2]/hypotenuse;
+		m[4] = d[1];
+		m[5] = d[0]/hypotenuse;
+		m[6] = -d[1]*d[2]/hypotenuse;
+		m[8] = d[2];
+		m[9] = 0.0;
+		m[10] = hypotenuse;
+	}
+	m[3]=m[7]=m[11]=0.0;
+	m[12]=m[13]=m[14]=0.0;
+	m[15]=1.0;
 
 }
 
-/* ANIM_DIRN2MAT 
+/* ANIM_DIRN2MAT
  * @brief
  *  make a matrix which turns a vehicle from the x-axis to
  * point in the desired direction, staying "right-side up". In cases where
@@ -845,35 +841,34 @@ void anim_dirn2mat(mat_t m, const vect_t dx2, const vect_t dn)
 		m[2] = -sign*temp[1];
 		m[6] = sign*temp[0];
 		m[10] = 0.0;
-	        m[3]=m[7]=m[11]=0.0;
-	        m[12]=m[13]=m[14]=0.0;
-	        m[15]=1.0;
+		m[3]=m[7]=m[11]=0.0;
+		m[12]=m[13]=m[14]=0.0;
+		m[15]=1.0;
 		return;
 	}
 
 	/*else normal*/
 	m[0] = dx[0];
-        m[1] = -dx[1]/hyp;
-        m[2] = -dx[0]*dx[2]/hyp;
-        m[4] = dx[1];
-        m[5] = dx[0]/hyp;
-        m[6] = -dx[1]*dx[2]/hyp;
-        m[8] = dx[2];
-        m[9] = 0.0;
-        m[10] = hyp;
-        m[3]=m[7]=m[11]=0.0;
-        m[12]=m[13]=m[14]=0.0;
-        m[15]=1.0;
+	m[1] = -dx[1]/hyp;
+	m[2] = -dx[0]*dx[2]/hyp;
+	m[4] = dx[1];
+	m[5] = dx[0]/hyp;
+	m[6] = -dx[1]*dx[2]/hyp;
+	m[8] = dx[2];
+	m[9] = 0.0;
+	m[10] = hyp;
+	m[3]=m[7]=m[11]=0.0;
+	m[12]=m[13]=m[14]=0.0;
+	m[15]=1.0;
 
 }
-
 
 
 #define ASM_EMPTY 0
 #define ASM_FIRST 1
 #define ASM_FULL  2
 
-/*ANIM_STEER_MAT 
+/*ANIM_STEER_MAT
  * @brief
  *  given the next frame's position, remember the value of
 the previous frame's position and calculate a matrix which points the x-axis
@@ -937,7 +932,7 @@ int anim_steer_mat(mat_t  mat, vect_t point, int end)
  ***************************************/
 
 
-/* ANIM_ADD_TRANS 
+/* ANIM_ADD_TRANS
  * @brief
  *  Add pre- and post- translation to a rotation matrix.
  * The resulting matrix has the effect of performing the first
@@ -945,45 +940,44 @@ int anim_steer_mat(mat_t  mat, vect_t point, int end)
  */
 void anim_add_trans(mat_t m, const vect_t post, const vect_t pre)
 {
-        int i;
-        for (i=0; i<3; i++)
-        m[3+i*4] += m[i*4]*pre[0] + m[1+i*4]*pre[1]+m[2+i*4]*pre[2] + post[i];
+	int i;
+	for (i=0; i<3; i++)
+	m[3+i*4] += m[i*4]*pre[0] + m[1+i*4]*pre[1]+m[2+i*4]*pre[2] + post[i];
 
 }
 
-/* ANIM_ROTATEZ 
+/* ANIM_ROTATEZ
  * @brief
  *  Rotate the vector "d" through "a" radians about the z-axis.
  */
 void anim_rotatez(fastf_t a, vect_t d)
 {
-        fastf_t temp[3];
-        fastf_t cos_y = cos(a);
-        fastf_t sin_y = sin(a);
-        temp[0] = d[0]*cos_y - d[1]*sin_y;
-        temp[1] = d[0]*sin_y + d[1]*cos_y;
-        d[0]=temp[0];
-        d[1]=temp[1];
+	fastf_t temp[3];
+	fastf_t cos_y = cos(a);
+	fastf_t sin_y = sin(a);
+	temp[0] = d[0]*cos_y - d[1]*sin_y;
+	temp[1] = d[0]*sin_y + d[1]*cos_y;
+	d[0]=temp[0];
+	d[1]=temp[1];
 }
 
-/* ANIM_MAT_PRINT 
+/* ANIM_MAT_PRINT
  * @brief
  *  print out 4X4 matrix, with optional colon
  */
 void anim_mat_print(FILE *fp, const mat_t m, int s_colon)
 {
-        bu_flog( fp,"%.10g %.10g %.10g %.10g\n", m[0], m[1], m[2], m[3]);
-        bu_flog( fp,"%.10g %.10g %.10g %.10g\n", m[4], m[5], m[6], m[7]);
-        bu_flog( fp,"%.10g %.10g %.10g %.10g\n", m[8], m[9], m[10], m[11]);
-        bu_flog( fp,"%.10g %.10g %.10g %.10g", m[12], m[13], m[14], m[15]);
-        if (s_colon)
-                bu_flog( fp,";");
-        bu_flog( fp,"\n");
+	bu_flog( fp,"%.10g %.10g %.10g %.10g\n", m[0], m[1], m[2], m[3]);
+	bu_flog( fp,"%.10g %.10g %.10g %.10g\n", m[4], m[5], m[6], m[7]);
+	bu_flog( fp,"%.10g %.10g %.10g %.10g\n", m[8], m[9], m[10], m[11]);
+	bu_flog( fp,"%.10g %.10g %.10g %.10g", m[12], m[13], m[14], m[15]);
+	if (s_colon)
+		bu_flog( fp,";");
+	bu_flog( fp,"\n");
 }
 
 
-
-/* ANIM_MAT_PRINTF 
+/* ANIM_MAT_PRINTF
  * @brief
  *  print out 4X4 matrix
  * formstr must be less than twenty chars
@@ -997,25 +991,25 @@ void anim_mat_printf(
 {
 	char mystr[80];
 	sprintf(mystr,"%s%s%s%s%%s",formstr,formstr,formstr,formstr);
-        bu_flog( fp,mystr, m[0], m[1], m[2], m[3], linestr);
-        bu_flog( fp,mystr, m[4], m[5], m[6], m[7], linestr);
-        bu_flog( fp,mystr, m[8], m[9], m[10], m[11], linestr);
-        bu_flog( fp,mystr, m[12], m[13], m[14], m[15], endstr);
+	bu_flog( fp,mystr, m[0], m[1], m[2], m[3], linestr);
+	bu_flog( fp,mystr, m[4], m[5], m[6], m[7], linestr);
+	bu_flog( fp,mystr, m[8], m[9], m[10], m[11], linestr);
+	bu_flog( fp,mystr, m[12], m[13], m[14], m[15], endstr);
 }
 
-/* ANIM_VIEW_REV 
+/* ANIM_VIEW_REV
  * @brief
  *  Reverse the direction of a view matrix, keeping it
  * right-side up
  */
 void anim_view_rev(mat_t m)
 {
-        m[0] = -m[0];
-        m[1] = -m[1];
-        m[4] = -m[4];
-        m[5] = -m[5];
-        m[8] = -m[8];
-        m[9] = -m[9];
+	m[0] = -m[0];
+	m[1] = -m[1];
+	m[4] = -m[4];
+	m[5] = -m[5];
+	m[8] = -m[8];
+	m[9] = -m[9];
 }
 /** @} */
 /*

@@ -356,83 +356,83 @@ void tienet_master_connect_slaves(fd_set *readfds) {
     while(!feof(fh)) {
       fgets(host, 64, fh);
       if(host[0]) {
-        port = TN_SLAVE_PORT;
-        temp = strchr(host, ':');
-        if(temp) {
-          port = atoi(&temp[1]);
-          temp[0] = 0;
-        } else {
-          host[strlen(host)-1] = 0;
-        }
+	port = TN_SLAVE_PORT;
+	temp = strchr(host, ':');
+	if(temp) {
+	  port = atoi(&temp[1]);
+	  temp[0] = 0;
+	} else {
+	  host[strlen(host)-1] = 0;
+	}
 
-        if(gethostbyname(host)) { /* check to see if this slave is in dns */
-          slave_ent = gethostbyname(host)[0];
+	if(gethostbyname(host)) { /* check to see if this slave is in dns */
+	  slave_ent = gethostbyname(host)[0];
 
-          /* This is what we're connecting to */
-          slave.sin_family = slave_ent.h_addrtype;
-          memcpy((char *)&slave.sin_addr.s_addr, slave_ent.h_addr_list[0], slave_ent.h_length);
-          slave.sin_port = htons(port);
+	  /* This is what we're connecting to */
+	  slave.sin_family = slave_ent.h_addrtype;
+	  memcpy((char *)&slave.sin_addr.s_addr, slave_ent.h_addr_list[0], slave_ent.h_length);
+	  slave.sin_port = htons(port);
 
-          /* Make a communications socket that will get stuffed into the list */
-          daemon_socket = socket(AF_INET, SOCK_STREAM, 0);
-          if(daemon_socket < 0) {
-            fprintf(stderr, "unable to create  socket, exiting.\n");
-            exit(1);
-          }
+	  /* Make a communications socket that will get stuffed into the list */
+	  daemon_socket = socket(AF_INET, SOCK_STREAM, 0);
+	  if(daemon_socket < 0) {
+	    fprintf(stderr, "unable to create  socket, exiting.\n");
+	    exit(1);
+	  }
 
-          daemon.sin_family = AF_INET;
-          daemon.sin_addr.s_addr = htonl(INADDR_ANY);
-          daemon.sin_port = htons(0);
+	  daemon.sin_family = AF_INET;
+	  daemon.sin_addr.s_addr = htonl(INADDR_ANY);
+	  daemon.sin_port = htons(0);
 
-          if(bind(daemon_socket, (struct sockaddr *)&daemon, sizeof(daemon)) < 0) {
-            fprintf(stderr, "unable to bind socket, exiting.\n");
-            exit(1);
-          }
+	  if(bind(daemon_socket, (struct sockaddr *)&daemon, sizeof(daemon)) < 0) {
+	    fprintf(stderr, "unable to bind socket, exiting.\n");
+	    exit(1);
+	  }
 
-          /* Make an attempt to connect to this host and initiate work */
-          if(connect(daemon_socket, (struct sockaddr *)&slave, sizeof(slave)) < 0) {
-            fprintf(stderr, "cannot connect to slave: %s:%d, skipping.\n", host, port);
-          } else {
-            /* Send endian to slave */
-            op = 1;
-            tienet_send(daemon_socket, &op, sizeof(short), 0);
+	  /* Make an attempt to connect to this host and initiate work */
+	  if(connect(daemon_socket, (struct sockaddr *)&slave, sizeof(slave)) < 0) {
+	    fprintf(stderr, "cannot connect to slave: %s:%d, skipping.\n", host, port);
+	  } else {
+	    /* Send endian to slave */
+	    op = 1;
+	    tienet_send(daemon_socket, &op, sizeof(short), 0);
 
-            /* Read Version Key and Compare to ver_key, if valid proceed, if not tell slave to disconnect */
-            tienet_recv(daemon_socket, &slave_ver_key, sizeof(int), 0);
-            if(slave_ver_key != tienet_master_ver_key) {
-              op = TN_OP_COMPLETE;
-              tienet_send(daemon_socket, &op, sizeof(short), 0);
-            } else {
-              op = TN_OP_OKAY;
-              tienet_send(daemon_socket, &op, sizeof(short), 0);
+	    /* Read Version Key and Compare to ver_key, if valid proceed, if not tell slave to disconnect */
+	    tienet_recv(daemon_socket, &slave_ver_key, sizeof(int), 0);
+	    if(slave_ver_key != tienet_master_ver_key) {
+	      op = TN_OP_COMPLETE;
+	      tienet_send(daemon_socket, &op, sizeof(short), 0);
+	    } else {
+	      op = TN_OP_OKAY;
+	      tienet_send(daemon_socket, &op, sizeof(short), 0);
 
-              /* Append to select list */
-              tmp = tienet_master_socket_list;
-              tienet_master_socket_list = (tienet_master_socket_t *)malloc(sizeof(tienet_master_socket_t));
-              tienet_master_socket_list->next = tmp;
-              tienet_master_socket_list->prev = NULL;
-              tienet_master_socket_list->work.data = NULL;
-              tienet_master_socket_list->work.size = 0;
-              tienet_master_socket_list->mesg.data = NULL;
-              tienet_master_socket_list->mesg.size = 0;
-              tienet_master_socket_list->num = daemon_socket;
-              tienet_master_socket_list->rays = 0;
-              tienet_master_socket_list->active = 0;
-              tienet_master_socket_list->idle = 0;
-              tienet_master_socket_list->prep = 1;
+	      /* Append to select list */
+	      tmp = tienet_master_socket_list;
+	      tienet_master_socket_list = (tienet_master_socket_t *)malloc(sizeof(tienet_master_socket_t));
+	      tienet_master_socket_list->next = tmp;
+	      tienet_master_socket_list->prev = NULL;
+	      tienet_master_socket_list->work.data = NULL;
+	      tienet_master_socket_list->work.size = 0;
+	      tienet_master_socket_list->mesg.data = NULL;
+	      tienet_master_socket_list->mesg.size = 0;
+	      tienet_master_socket_list->num = daemon_socket;
+	      tienet_master_socket_list->rays = 0;
+	      tienet_master_socket_list->active = 0;
+	      tienet_master_socket_list->idle = 0;
+	      tienet_master_socket_list->prep = 1;
 
-              tmp->prev = tienet_master_socket_list;
-              tienet_master_socket_num++;
-              FD_SET(daemon_socket, readfds);
+	      tmp->prev = tienet_master_socket_list;
+	      tienet_master_socket_num++;
+	      FD_SET(daemon_socket, readfds);
 
-              /* Check to see if it's the new highest */
-              if(daemon_socket > tienet_master_highest_fd)
-                tienet_master_highest_fd = daemon_socket;
-            }
-          }
-        } else {
-          fprintf(stderr, "unknown host: %s, skipping.\n", host);
-        }
+	      /* Check to see if it's the new highest */
+	      if(daemon_socket > tienet_master_highest_fd)
+		tienet_master_highest_fd = daemon_socket;
+	    }
+	  }
+	} else {
+	  fprintf(stderr, "unknown host: %s, skipping.\n", host);
+	}
       }
       host[0] = 0;
     }
@@ -508,103 +508,103 @@ void* tienet_master_listener(void *ptr) {
     /* Slave Communication */
     for(sock = tienet_master_socket_list; sock; sock = sock->next) {
       if(FD_ISSET(sock->num, &readfds)) {
-        if(sock->num == master_socket) {
-          /* New Connections, Always LAST in readfds list */
-          slave_socket = accept(master_socket, (struct sockaddr *)&slave, &addrlen);
-          if(slave_socket >= 0) {
+	if(sock->num == master_socket) {
+	  /* New Connections, Always LAST in readfds list */
+	  slave_socket = accept(master_socket, (struct sockaddr *)&slave, &addrlen);
+	  if(slave_socket >= 0) {
 /*            printf("The slave %s has connected on port: %d, sock_num: %d\n", inet_ntoa(slave.sin_addr), tienet_master_port, slave_socket); */
-            tmp = tienet_master_socket_list;
-            tienet_master_socket_list = (tienet_master_socket_t *)malloc(sizeof(tienet_master_socket_t));
-            tienet_master_socket_list->next = tmp;
-            tienet_master_socket_list->prev = NULL;
-            tienet_master_socket_list->work.data = NULL;
-            tienet_master_socket_list->work.size = 0;
-            tienet_master_socket_list->mesg.data = NULL;
-            tienet_master_socket_list->mesg.size = 0;
-            tienet_master_socket_list->num = slave_socket;
-            tienet_master_socket_list->rays = 0;
-            tienet_master_socket_list->active = 0;
-            tienet_master_socket_list->idle = 0;
-            tienet_master_socket_list->prep = 1;
-            tmp->prev = tienet_master_socket_list;
-            tienet_master_socket_num++;
+	    tmp = tienet_master_socket_list;
+	    tienet_master_socket_list = (tienet_master_socket_t *)malloc(sizeof(tienet_master_socket_t));
+	    tienet_master_socket_list->next = tmp;
+	    tienet_master_socket_list->prev = NULL;
+	    tienet_master_socket_list->work.data = NULL;
+	    tienet_master_socket_list->work.size = 0;
+	    tienet_master_socket_list->mesg.data = NULL;
+	    tienet_master_socket_list->mesg.size = 0;
+	    tienet_master_socket_list->num = slave_socket;
+	    tienet_master_socket_list->rays = 0;
+	    tienet_master_socket_list->active = 0;
+	    tienet_master_socket_list->idle = 0;
+	    tienet_master_socket_list->prep = 1;
+	    tmp->prev = tienet_master_socket_list;
+	    tienet_master_socket_num++;
 
-            /* Send endian to slave */
-            op = 1;
-            tienet_send(slave_socket, &op, sizeof(short), 0);
-            /* Read Version Key and Compare to ver_key, if valid proceed, if not tell slave to disconnect */
-            tienet_recv(slave_socket, &slave_ver_key, sizeof(int), 0);
-            if(slave_ver_key != tienet_master_ver_key) {
-              op = TN_OP_COMPLETE;
-              tienet_send(slave_socket, &op, sizeof(short), 0);
-            } else {
-              /* Version is okay, proceed */
-              op = TN_OP_OKAY;
-              tienet_send(slave_socket, &op, sizeof(short), 0);
+	    /* Send endian to slave */
+	    op = 1;
+	    tienet_send(slave_socket, &op, sizeof(short), 0);
+	    /* Read Version Key and Compare to ver_key, if valid proceed, if not tell slave to disconnect */
+	    tienet_recv(slave_socket, &slave_ver_key, sizeof(int), 0);
+	    if(slave_ver_key != tienet_master_ver_key) {
+	      op = TN_OP_COMPLETE;
+	      tienet_send(slave_socket, &op, sizeof(short), 0);
+	    } else {
+	      /* Version is okay, proceed */
+	      op = TN_OP_OKAY;
+	      tienet_send(slave_socket, &op, sizeof(short), 0);
 
-              /* Append to select list */
-              if(slave_socket > tienet_master_highest_fd)
-                tienet_master_highest_fd = slave_socket;
-            }
-          }
-        } else {
-          /* Make sure socket is still active on this recv */
-          r = tienet_recv(sock->num, &op, sizeof(short), 0);
-          /* if "r", error code returned, remove slave from pool */
-          if(r) {
-            tienet_master_socket_t		*tmp2;
-            /* Because master socket is always last there is no need to check if "next" exists.
-             * Remove this socket from chain and link prev and next up to fill gap. */
-            if(sock->prev)
-              sock->prev->next = sock->next;
-            sock->next->prev = sock->prev;
+	      /* Append to select list */
+	      if(slave_socket > tienet_master_highest_fd)
+		tienet_master_highest_fd = slave_socket;
+	    }
+	  }
+	} else {
+	  /* Make sure socket is still active on this recv */
+	  r = tienet_recv(sock->num, &op, sizeof(short), 0);
+	  /* if "r", error code returned, remove slave from pool */
+	  if(r) {
+	    tienet_master_socket_t		*tmp2;
+	    /* Because master socket is always last there is no need to check if "next" exists.
+	     * Remove this socket from chain and link prev and next up to fill gap. */
+	    if(sock->prev)
+	      sock->prev->next = sock->next;
+	    sock->next->prev = sock->prev;
 
-            /* Store ptr to sock before we modify it */
-            tmp = sock;
-            /* If the socket is the head then we need to not only modify the socket,
-             * but the head as well. */
-            if(tienet_master_socket_list == sock)
-              tienet_master_socket_list = sock->next;
-            sock = sock->prev ? sock->prev : sock->next;
+	    /* Store ptr to sock before we modify it */
+	    tmp = sock;
+	    /* If the socket is the head then we need to not only modify the socket,
+	     * but the head as well. */
+	    if(tienet_master_socket_list == sock)
+	      tienet_master_socket_list = sock->next;
+	    sock = sock->prev ? sock->prev : sock->next;
 
-            /* Put the socket into the tienet_master_DeadSocketList */
-            if(tienet_master_dead_socket_list) {
-              tmp2 = tienet_master_dead_socket_list;
-              tienet_master_dead_socket_list = tmp;
-              tienet_master_dead_socket_list->prev = NULL;
-              tienet_master_dead_socket_list->next = tmp2;
-              tmp2->prev = tienet_master_dead_socket_list;
-            } else {
-              tienet_master_dead_socket_list = tmp;
-              tienet_master_dead_socket_list->next = NULL;
-              tienet_master_dead_socket_list->prev = NULL;
-            }
+	    /* Put the socket into the tienet_master_DeadSocketList */
+	    if(tienet_master_dead_socket_list) {
+	      tmp2 = tienet_master_dead_socket_list;
+	      tienet_master_dead_socket_list = tmp;
+	      tienet_master_dead_socket_list->prev = NULL;
+	      tienet_master_dead_socket_list->next = tmp2;
+	      tmp2->prev = tienet_master_dead_socket_list;
+	    } else {
+	      tienet_master_dead_socket_list = tmp;
+	      tienet_master_dead_socket_list->next = NULL;
+	      tienet_master_dead_socket_list->prev = NULL;
+	    }
 
-            tienet_master_socket_num--;
-          } else {
-            /*
-            * Slave Op Instructions
-            */
-            switch(op) {
-              case TN_OP_REQWORK:
-                /* If application/prep data is stale, send latest data */
-                if(sock->prep) {
-                  sock->prep = 0;
-                  pthread_create(&sock->thread, NULL, tienet_master_prep_thread, sock);
-                } else {
-                  tienet_master_send_work(sock);
-                }
-                break;
+	    tienet_master_socket_num--;
+	  } else {
+	    /*
+	    * Slave Op Instructions
+	    */
+	    switch(op) {
+	      case TN_OP_REQWORK:
+		/* If application/prep data is stale, send latest data */
+		if(sock->prep) {
+		  sock->prep = 0;
+		  pthread_create(&sock->thread, NULL, tienet_master_prep_thread, sock);
+		} else {
+		  tienet_master_send_work(sock);
+		}
+		break;
 
-              case TN_OP_RESULT:
-                tienet_master_result(sock);
-                break;
+	      case TN_OP_RESULT:
+		tienet_master_result(sock);
+		break;
 
-              default:
-                break;
-            }
-          }
-        }
+	      default:
+		break;
+	    }
+	  }
+	}
       }
     }
 
@@ -612,7 +612,7 @@ void* tienet_master_listener(void *ptr) {
     tienet_master_highest_fd = 0;
     for(sock = tienet_master_socket_list; sock; sock = sock->next) {
       if(sock->num > tienet_master_highest_fd)
-        tienet_master_highest_fd = sock->num;
+	tienet_master_highest_fd = sock->num;
       FD_SET(sock->num, &readfds);
     }
   }

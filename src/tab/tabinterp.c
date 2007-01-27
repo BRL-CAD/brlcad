@@ -304,7 +304,7 @@ cm_file( int argc, char **argv )
 		times[line] = d;
 		if( line > 0 && times[line-1] > times[line] )  {
 			bu_log("File '%s', Line %d:  time sequence error %g > %g\n",
-		    		file, line, times[line-1], times[line] );
+				file, line, times[line-1], times[line] );
 			errors++;
 		}
 
@@ -315,11 +315,11 @@ cm_file( int argc, char **argv )
 			if( cnum[i] < 0 )  continue;
 			if( sscanf( iwords[i], "%lf", &d ) != 1 )  {
 				bu_log("File '%s', Line %d:  scanf failure on '%s'\n",
-			    		file, line, iwords[i] );
+					file, line, iwords[i] );
 				d = 0.0;
 				errors++;
 			}
-		    	chan[cnum[i]].c_ival[line] = d;
+			chan[cnum[i]].c_ival[line] = d;
 		}
 	}
 	fclose(fp);

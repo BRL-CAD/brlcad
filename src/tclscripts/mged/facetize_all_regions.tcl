@@ -19,7 +19,7 @@
 #
 ###
 #
-# return 
+# return
 # -1 bot already exists
 # 0 success
 # 1 failure
@@ -55,7 +55,7 @@ proc attempt_facetize {reg reg_fail fail} {
 	# facetize failed
 	puts "---- $reg failed to facetize"
 	return 1
-    } 
+    }
 
     puts "---- $reg now done"
 
@@ -65,7 +65,7 @@ proc attempt_facetize {reg reg_fail fail} {
     puts -nonewline $fail $erase
     flush $fail
     seek $fail $pos_fail
-    
+
     return 0
 }
 
@@ -73,7 +73,7 @@ proc attempt_facetize {reg reg_fail fail} {
 #
 #  Attempt to facetize each region in a database
 #  This proc is usually called from facetall.sh
-#  which manages re-starting mged when we get a 
+#  which manages re-starting mged when we get a
 #  core dump
 #
 proc facetize_all_regions {filename} {
@@ -99,7 +99,7 @@ proc facetize_all_regions {filename} {
     foreach reg $reg_list {
 	puts "------ <$reg> ------"
 	switch -exact [attempt_facetize $reg $reg_fail $fail] {
-	    0 { 
+	    0 {
 		#succeeded
 		puts "$reg ok"
 	    }
@@ -114,7 +114,7 @@ proc facetize_all_regions {filename} {
 	    2 { # previous failure
 		puts "$reg failed before"
 	    }
-	    3 { # previously succeeded 
+	    3 { # previously succeeded
 		puts "$reg previously succeeded"
 	    }
 	    default { puts "what?" }
@@ -123,7 +123,6 @@ proc facetize_all_regions {filename} {
     set glob_compat_mode 1
     return
 }
-
 
 
 #

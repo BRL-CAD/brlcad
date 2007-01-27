@@ -332,7 +332,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 		rtip->rti_nu_gfactor = RT_NU_GFACTOR_DEFAULT;
 		bu_log(
       "rt_nugrid_cut: warning: rtip->rti_nu_gfactor not set, setting to %g\n",
-                        RT_NU_GFACTOR_DEFAULT );
+			RT_NU_GFACTOR_DEFAULT );
 	}
 
 	nu_ncells = (int)ceil( 2.0 + rtip->rti_nu_gfactor *
@@ -350,7 +350,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 
 	if( RT_G_DEBUG&DEBUG_CUT )
 		bu_log(
-	             "\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_ncells=%d\n",
+		     "\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_ncells=%d\n",
 		     nu_ncells, nu_sol_per_cell, nu_max_ncells );
 
 #if USE_HIST
@@ -505,7 +505,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 #if 1
 					   + 1.0
 #endif
-				           + rtip->rti_tol.dist )
+					   + rtip->rti_tol.dist )
 					continue;
 
 				/* don't make any more cuts if we've gone
@@ -791,7 +791,7 @@ rt_split_mostly_empty_cells( struct rt_i *rtip, union cutter *cutp )
 
 			/* select cutting plane, but move it slightly off any geometry */
 			if( upper_or_lower[max_empty_dir] ) {
-			        where = max[max_empty_dir] + rtip->rti_tol.dist;
+				where = max[max_empty_dir] + rtip->rti_tol.dist;
 				if( where >= cutp->bn.bn_max[max_empty_dir] ) {
 				       return( num_splits );
 				}
@@ -817,7 +817,6 @@ rt_split_mostly_empty_cells( struct rt_i *rtip, union cutter *cutp )
 
 	return( num_splits );
 }
-
 
 
 /*
@@ -1506,7 +1505,7 @@ rt_ct_piececount(const union cutter *cutp)
 HIDDEN void
 rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, int depth)
 {
- 	int oldlen;
+	int oldlen;
 
 	if( cutp->cut_type == CUT_CUTNODE )  {
 		rt_ct_optim( rtip, cutp->cn.cn_l, depth+1 );
@@ -1546,8 +1545,8 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, int depth)
  {
 	int did_a_cut;
 	int i;
- 	int axis;
- 	double where, offcenter;
+	int axis;
+	double where, offcenter;
 	/*
 	 *  In general, keep subdividing until things don't get any better.
 	 *  Really we might want to proceed for 2-3 levels.
@@ -1583,20 +1582,20 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, int depth)
 #else
 	if( cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0 )
 		return;
- 	if( rt_ct_old_assess( cutp, axis, &where, &offcenter ) <= 0 )
- 		return;			/* not practical */
+	if( rt_ct_old_assess( cutp, axis, &where, &offcenter ) <= 0 )
+		return;			/* not practical */
 	if( rt_ct_box( rtip, cutp, axis, where, 0 ) == 0 )  {
-	 	if( rt_ct_old_assess( cutp, AXIS(depth+1), &where, &offcenter ) <= 0 )
-	 		return;			/* not practical */
+		if( rt_ct_old_assess( cutp, AXIS(depth+1), &where, &offcenter ) <= 0 )
+			return;			/* not practical */
 		if( rt_ct_box( rtip, cutp, AXIS(depth+1), where, 0 ) == 0 )
 			return;	/* hopeless */
 	}
 #endif
 	if( rt_ct_piececount(cutp->cn.cn_l) >= oldlen &&
 	    rt_ct_piececount(cutp->cn.cn_r) >= oldlen )  {
- 		if( RT_G_DEBUG&DEBUG_CUTDETAIL )
-	    	bu_log("rt_ct_optim(cutp=x%x, depth=%d) oldlen=%d, lhs=%d, rhs=%d, hopeless\n",
-	    		cutp, depth, oldlen,
+		if( RT_G_DEBUG&DEBUG_CUTDETAIL )
+		bu_log("rt_ct_optim(cutp=x%x, depth=%d) oldlen=%d, lhs=%d, rhs=%d, hopeless\n",
+			cutp, depth, oldlen,
 			rt_ct_piececount(cutp->cn.cn_l),
 			rt_ct_piececount(cutp->cn.cn_r) );
 		return; /* hopeless */
@@ -1845,7 +1844,7 @@ rt_ct_free(struct rt_i *rtip, register union cutter *cutp)
 void
 rt_pr_cut(register const union cutter *cutp, int lvl)
 
-        			/* recursion level */
+				/* recursion level */
 {
 	register int i,j;
 

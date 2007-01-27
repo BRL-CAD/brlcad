@@ -38,7 +38,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -57,8 +56,8 @@ rt_nurb_reverse_srf(struct face_g_snurb *srf)
 	fastf_t * tmp;
 	fastf_t * ptr2;
 
-        p_ptr = srf->ctl_points;
-        coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+	p_ptr = srf->ctl_points;
+	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 
 	row = srf->s_size[0];
 	col = srf->s_size[1];
@@ -71,9 +70,9 @@ rt_nurb_reverse_srf(struct face_g_snurb *srf)
 	for(i = 0; i < row; i++)
 	for(j = 0; j < col; j++)
 	{
-                for( k = 0; k < coords; k++)
- 	               *ptr2++ = srf->ctl_points[ (j * col + i) * coords + k];
- 	}
+		for( k = 0; k < coords; k++)
+		       *ptr2++ = srf->ctl_points[ (j * col + i) * coords + k];
+	}
 
 	for( i = 0; i < row * col * coords; i++)
 		p_ptr[i] = tmp[i];

@@ -113,12 +113,12 @@ main(int argc, char **argv)
 	struct viewpoint_verts *verts;	/* array of structures holding coordinates and normals */
 	struct wmember reg_head;
 
-        /* XXX These need to be improved */
-        tol.magic = BN_TOL_MAGIC;
-        tol.dist = 0.005;
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 1e-6;
-        tol.para = 1 - tol.perp;
+	/* XXX These need to be improved */
+	tol.magic = BN_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 	coords = NULL;
 	elems = NULL;
@@ -381,48 +381,48 @@ main(int argc, char **argv)
 		    while( BU_LIST_NOT_HEAD( fu , &s->fu_hd))
 		    {
 			struct faceuse *kill_fu=(struct faceuse *)NULL;
-		    	struct faceuse *next_fu;
+			struct faceuse *next_fu;
 
-		        NMG_CK_FACEUSE( fu );
+			NMG_CK_FACEUSE( fu );
 
-		    	next_fu = BU_LIST_NEXT( faceuse , &fu->l );
-		        if( fu->orientation == OT_SAME )
-		    	{
-	    			struct loopuse *lu;
-		    		struct edgeuse *eu;
-	    			fastf_t area;
-	    			plane_t pl;
+			next_fu = BU_LIST_NEXT( faceuse , &fu->l );
+			if( fu->orientation == OT_SAME )
+			{
+				struct loopuse *lu;
+				struct edgeuse *eu;
+				fastf_t area;
+				plane_t pl;
 
-	    			lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
-		    		NMG_CK_LOOPUSE( lu );
-		    		for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-		    		{
-		    			NMG_CK_EDGEUSE( eu );
-		    			if( eu->vu_p->v_p == eu->eumate_p->vu_p->v_p )
-		    				kill_fu = fu;
-		    		}
-		    		if( !kill_fu )
-		    		{
-		    			area = nmg_loop_plane_area( lu , pl );
-		    			if( area <= 0.0 )
-		    			{
+				lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
+				NMG_CK_LOOPUSE( lu );
+				for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
+					NMG_CK_EDGEUSE( eu );
+					if( eu->vu_p->v_p == eu->eumate_p->vu_p->v_p )
+						kill_fu = fu;
+				}
+				if( !kill_fu )
+				{
+					area = nmg_loop_plane_area( lu , pl );
+					if( area <= 0.0 )
+					{
 
-		    				bu_log( "ERROR: Can't get plane for face\n" );
+						bu_log( "ERROR: Can't get plane for face\n" );
 
-		    				kill_fu = fu;
-		    			}
-		    		}
-		    		if( kill_fu )
-		    		{
-	    				if( next_fu == kill_fu->fumate_p )
-	    					next_fu = BU_LIST_NEXT( faceuse , &next_fu->l );
-		    			bu_ptbl_rm( &faces , (long *)kill_fu );
-	    				nmg_kfu( kill_fu );
-	    			}
-		    		else
-		    			nmg_face_g( fu , pl );
-		    	}
-		    	fu = next_fu;
+						kill_fu = fu;
+					}
+				}
+				if( kill_fu )
+				{
+					if( next_fu == kill_fu->fumate_p )
+						next_fu = BU_LIST_NEXT( faceuse , &next_fu->l );
+					bu_ptbl_rm( &faces , (long *)kill_fu );
+					nmg_kfu( kill_fu );
+				}
+				else
+					nmg_face_g( fu , pl );
+			}
+			fu = next_fu;
 		    }
 
 		if( BU_PTBL_END( &faces ) )

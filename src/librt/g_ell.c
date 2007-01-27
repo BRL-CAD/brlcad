@@ -406,10 +406,10 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  */
 void
 rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	register int    i;
@@ -425,7 +425,7 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 #	include "noalias.h"
 	for(i = 0; i < n; i++){
 #if !CRAY /* XXX currently prevents vectorization on cray */
-	 	if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
+		if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
 #endif
 		ell = (struct ell_specific *)stp[i]->st_specific;
 
@@ -439,7 +439,7 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		if( (root = dp*dp - dd * (VDOT(pprime,pprime)-1.0)) < 0 ) {
 			RT_ELL_SEG_MISS(segp[i]);		/* No hit */
 		}
-	        else {
+		else {
 			root = sqrt(root);
 
 			segp[i].seg_stp = stp[i];

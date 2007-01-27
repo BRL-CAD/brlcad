@@ -77,7 +77,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
@@ -426,8 +425,6 @@ unsigned char rmap[], gmap[], bmap[];
 }
 
 
-
-
 #define SUN_CMAPVAL( p, o )\
 	if( SUN(ifp)->su_cmap_flag )\
 		{\
@@ -534,8 +531,8 @@ register int		count;
 
 	if( (p == (RGBpixel *)0) ||
 	    ((*p)[RED] == 0 && (*p)[GRN] == 0 && (*p)[BLU] == 0) ) {
-	    	/* black */
-	    	bzero( memp, count*sizeof(RGBpixel) );
+		/* black */
+		bzero( memp, count*sizeof(RGBpixel) );
 	} else if( ((*p)[RED] == (*p)[GRN]) && ((*p)[GRN] == (*p)[BLU]) ) {
 		/* R, G, and B are equal */
 		memset( memp, (*p)[RED] );
@@ -594,7 +591,7 @@ RGBpixel	*pp;
 	/* Get color map value for pixel. */
 	SUN_CMAPVAL( pp, v );
 
- 	if( SUN(ifp)->su_depth == 1 ) {
+	if( SUN(ifp)->su_depth == 1 ) {
 		/* Construct dither pattern in memory pixrect. */
 		value = (v[RED] + v[GRN] + v[BLU]);
 		if( value == 0 ) {
@@ -657,7 +654,7 @@ RGBpixel	*pp;
 	/*fb_log( "sun_scanwrite(%d,%d,%d,0x%x)\n", xlft, ybtm, xrgt, pp );
 		/* XXX-debug */
 
- 	if( SUN(ifp)->su_depth == 1 ) {
+	if( SUN(ifp)->su_depth == 1 ) {
 		register int	x;
 		register int	sx = xl;
 		int		yzoom = ifp->if_yzoom;
@@ -889,7 +886,7 @@ common:
 HIDDEN void
 sun_zapmem()
 {
- 	int	shmid;
+	int	shmid;
 	int	i;
 	if( (shmid = shmget( SHMEM_KEY, 0, 0 )) < 0 ) {
 		fb_log( "sun_zapmem shmget failed, errno=%d\n", errno );
@@ -1003,8 +1000,8 @@ int	width, height;
 	genmap(redmap, grnmap, blumap);
 
 	/* Create window. */
-        if( sun_pixwin = (we_getgfxwindow(sun_parentwinname) == 0) ) {
-        	/************** SunView Open **************/
+	if( sun_pixwin = (we_getgfxwindow(sun_parentwinname) == 0) ) {
+		/************** SunView Open **************/
 		Window	frame;
 		Canvas	canvas;
 
@@ -1055,7 +1052,7 @@ int	width, height;
 		}
 	}
 	else {
-        	/************ Raw Screen Open ************/
+		/************ Raw Screen Open ************/
 		Pixrect	*screenpr;
 		Pixrect	*windowpr;
 
@@ -1471,7 +1468,7 @@ HIDDEN int
 is_linear_cmap(ifp)
 register FBIO	*ifp;
 {
- 	register int i;
+	register int i;
 	for( i=0; i<256; i++ )
 		{
 		if( CMR(ifp)[i] != i )  return(0);

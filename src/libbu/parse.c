@@ -533,14 +533,6 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 }
 
 
-
-
-
-
-
-
-
-
 /**
  *			B U _ P A R S E _ D O U B L E
  *
@@ -585,7 +577,7 @@ bu_parse_double(const char *str, long int count, double *loc)
 			str++;
 
 			/* skip exponent sign */
-		    	if (*str == '+' || *str == '-') str++;
+			if (*str == '+' || *str == '-') str++;
 
 			while (isdigit(*str)) str++;
 		}
@@ -616,10 +608,10 @@ bu_parse_double(const char *str, long int count, double *loc)
  */
 HIDDEN int
 bu_struct_lookup(register const struct bu_structparse *sdp, register const char *name, const char *base, const char *const value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          			       	      	/* string containing value */
+						/* structure description */
+						/* struct member name */
+						/* begining of structure */
+						/* string containing value */
 {
 	register char *loc;
 	int i, retval = 0;
@@ -670,7 +662,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 				    loc[j++] = value[i++])
 					if (value[i] == '\\' &&
 					    value[i+1] == '"')
-					    	++i;
+						++i;
 
 				/* Don't null terminate chars, only strings */
 				if (sdp->sp_count > 1)  {
@@ -790,9 +782,9 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
  */
 int
 bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, const char *base)
-                   		        	/* string to parse through */
-                           	      		/* structure description */
-    				      		/* base addr of users struct */
+						/* string to parse through */
+						/* structure description */
+						/* base addr of users struct */
 {
 	struct bu_vls	vls;
 	register char *cp;
@@ -947,9 +939,9 @@ bu_vls_matprint(struct bu_vls		*vls,
 void
 bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const char *base, int sep_char)
 
-                                     /* item description */
-                                  /* base address of users structure */
-                                 /* value separator */
+				     /* item description */
+				  /* base address of users structure */
+				 /* value separator */
 {
     register char *loc;
 
@@ -1024,7 +1016,6 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 }
 
 
-
 /**
  *	B U _ V L S _ S T R U C T _ I T E M _ N A M E D
  *
@@ -1052,8 +1043,8 @@ bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parseta
 void
 bu_struct_print(const char *title, const struct bu_structparse *parsetab, const char *base)
 
-                           	          /* structure description */
-          			      	  /* base address of users structure */
+					  /* structure description */
+					  /* base address of users structure */
 {
 	register const struct bu_structparse	*sdp;
 	register char			*loc;
@@ -1222,9 +1213,9 @@ bu_vls_print_double(struct bu_vls *vls, const char *name, register long int coun
  */
 void
 bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sdp, const char *base)
-      	      				     	/* vls to print into */
-                                    	     	/* structure description */
-          				      	/* structure ponter */
+						/* vls to print into */
+						/* structure description */
+						/* structure ponter */
 {
 	register char			*loc;
 	register int			lastoff = -1;
@@ -1548,10 +1539,10 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
  */
 void
 bu_parse_mm(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+						/* structure description */
+						/* struct member name */
+						/* begining of structure */
+						/* string containing value */
 {
 	double *p = (double *)(base+sdp->sp_offset);
 

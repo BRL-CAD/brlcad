@@ -133,7 +133,6 @@ struct bu_vls* region_name_from_path(struct db_full_path *pathp) {
 }
 
 
-
 /*
 *  r e g _ s t a r t _ f u n c
 *  Called by the tree walker when it first encounters a region
@@ -210,9 +209,9 @@ static int reg_start_func(struct db_tree_state *tsp,
 *  ie. all primitives have been processed
 */
 static union tree* reg_end_func(struct db_tree_state *tsp,
-                                struct db_full_path *pathp,
-                                union tree *curtree,
-                                genptr_t client_data)
+				struct db_full_path *pathp,
+				union tree *curtree,
+				genptr_t client_data)
 {
   return(NULL);
 }
@@ -228,9 +227,9 @@ static union tree* reg_end_func(struct db_tree_state *tsp,
 *  ADRT
 */
 static union tree *leaf_func(struct db_tree_state *tsp,
-                             struct db_full_path *pathp,
-                             struct rt_db_internal *ip,
-                             genptr_t client_data)
+			     struct db_full_path *pathp,
+			     struct rt_db_internal *ip,
+			     genptr_t client_data)
 {
     register struct soltab *stp;
     union tree *curtree;
@@ -307,7 +306,7 @@ static union tree *leaf_func(struct db_tree_state *tsp,
     i = strlen(prop_name)-1;
     if(i >= 0)
       while(prop_name[i] != '/' && i > 0)
-        i--;
+	i--;
 
     if(i != strlen(prop_name))
       strcpy(prop_name, &prop_name[i+1]);
@@ -364,8 +363,8 @@ static union tree *leaf_func(struct db_tree_state *tsp,
       ind = bot->num_faces;
       fwrite(&ind, sizeof(unsigned short), 1, adrt_fh);
       for(i = 0; i < 3 * bot->num_faces; i++) {
-        ind = bot->faces[i];
-        fwrite(&ind, sizeof(unsigned short), 1, adrt_fh);
+	ind = bot->faces[i];
+	fwrite(&ind, sizeof(unsigned short), 1, adrt_fh);
       }
     } else {
       c = 1; /* using ints */
@@ -432,7 +431,7 @@ void load_regmap(char *filename) {
     /* replace any tabs with spaces */
     for(i = 0; i < strlen(line); i++)
       if(line[i] == '\t')
-        line[i] = ' ';
+	line[i] = ' ';
 
     /* advance to the first non-space */
     ind = 0;
@@ -457,46 +456,46 @@ void load_regmap(char *filename) {
     while(ind < strlen(line)) {
       /* advance to the first id */
       while(line[ind] == ' ')
-        ind++;
+	ind++;
 
       /* check for comment */
       if(line[ind] == '#')
-        break;
+	break;
 
       /* advance to the first space while reading the id string */
       i = 0;
       while(i < 256 && line[ind] != ' ' && ind < strlen(line))
-        idstr[i++] = line[ind++];
+	idstr[i++] = line[ind++];
       idstr[i] = 0;
 
       /* chesk that there were no spaces after the last id */
       if(!strlen(idstr))
-        break;
+	break;
 
       /* if the id string contains a ':' then it's a range */
       if(strstr(idstr, ":")) {
-        int hi, lo;
+	int hi, lo;
 
-        ptr = strchr(idstr, ':');
-        ptr++;
-        hi = atoi(ptr);
-        strchr(idstr, ':')[0] = 0;
-        lo = atoi(idstr);
+	ptr = strchr(idstr, ':');
+	ptr++;
+	hi = atoi(ptr);
+	strchr(idstr, ':')[0] = 0;
+	lo = atoi(idstr);
 
-        /* insert an entry for the whole range */
-        for(i = 0; i <= hi-lo; i++) {
-          /* Insert one entry into the regmap_list */
-          regmap_list = (regmap_t *)bu_realloc(regmap_list, sizeof(regmap_t) * (regmap_num + 1), "regmap_list");
-          strcpy(regmap_list[regmap_num].name, name);
-          regmap_list[regmap_num].id = lo + i;
-          regmap_num++;
-        }
+	/* insert an entry for the whole range */
+	for(i = 0; i <= hi-lo; i++) {
+	  /* Insert one entry into the regmap_list */
+	  regmap_list = (regmap_t *)bu_realloc(regmap_list, sizeof(regmap_t) * (regmap_num + 1), "regmap_list");
+	  strcpy(regmap_list[regmap_num].name, name);
+	  regmap_list[regmap_num].id = lo + i;
+	  regmap_num++;
+	}
       } else {
-        /* insert one entry into the regmap_list */
-        regmap_list = (regmap_t *)bu_realloc(regmap_list, sizeof(regmap_t) * (regmap_num + 1), "regmap_list");
-        strcpy(regmap_list[regmap_num].name, name);
-        regmap_list[regmap_num].id = atoi(idstr);
-        regmap_num++;
+	/* insert one entry into the regmap_list */
+	regmap_list = (regmap_t *)bu_realloc(regmap_list, sizeof(regmap_t) * (regmap_num + 1), "regmap_list");
+	strcpy(regmap_list[regmap_num].name, name);
+	regmap_list[regmap_num].id = atoi(idstr);
+	regmap_num++;
       }
     }
   }
@@ -523,12 +522,12 @@ int main(int argc, char *argv[]) {
   while((c = bu_getopt(argc, argv, shortopts)) != -1) {
     switch(c) {
       case 'r':
-        use_regmap = 1;
-        load_regmap(optarg);
-        break;
+	use_regmap = 1;
+	load_regmap(optarg);
+	break;
 
       default:
-        break;
+	break;
     }
   }
   argc -= bu_optind;

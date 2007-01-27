@@ -199,7 +199,7 @@ vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_li
 	 * Pad to next boundary as there will be
 	 * another entry to the right of this one.
 	 */
-        while( namelen++ < cwidth)
+	while( namelen++ < cwidth)
 	  bu_vls_putc(vls, ' ');
       }
     }
@@ -259,7 +259,7 @@ vls_long_dpp(
 
       if (list_of_names[i]->d_flags & DIR_REGION) {
 	isRegion = 1;
-        type = "region";
+	type = "region";
       }
       else
 	isRegion = 0;

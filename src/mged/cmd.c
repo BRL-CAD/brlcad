@@ -1705,7 +1705,7 @@ f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		bu_vls_trunc(&vls, 0);
 		if(clp->cl_tie){
 			bu_vls_printf(&vls, "%S %S", &clp->cl_name,
-                                                &clp->cl_tie->dml_dmp->dm_pathName);
+						&clp->cl_tie->dml_dmp->dm_pathName);
 			Tcl_AppendElement(interp, bu_vls_addr(&vls));
 		}else{
 			bu_vls_printf(&vls, "%S {}", &clp->cl_name);
@@ -1723,10 +1723,10 @@ f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	if(argc < 2){
-                bu_vls_printf(&vls, "help tie");
-                Tcl_Eval(interp, bu_vls_addr(&vls));
-                bu_vls_free(&vls);
-                return TCL_ERROR;
+		bu_vls_printf(&vls, "help tie");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
 	}
 
 	for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
@@ -2056,8 +2056,6 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bots[0]->magic = RT_BOT_INTERNAL_MAGIC;
 
 
-
-
 	/* read in all the bots */
 	for (idx=1,i=2 ; i < argc ; i++ ) {
 	    if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL) {
@@ -2089,7 +2087,6 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	if (idx == 1) return TCL_ERROR;
-
 
 
 	for (i=1 ; i < idx ; i++ ) {
@@ -2155,7 +2152,6 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		} else {
 		}
 	    }
-
 
 
 	    avail_vert += bots[i]->num_vertices;
@@ -2546,7 +2542,7 @@ cmd_pathsum(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 #if 0
 	if (setjmp(jmp_env) == 0)
 		(void)signal(SIGINT, sig3);  /* allow interupts */
-        else
+	else
 		return TCL_OK;
 #endif
 
@@ -2577,7 +2573,7 @@ cmd_copyeval(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	if (setjmp(jmp_env) == 0)
 		(void)signal(SIGINT, sig3);  /* allow interupts */
-        else
+	else
 		return TCL_OK;
 
 	ret = wdb_copyeval_cmd(wdbp, interp, argc, argv);
@@ -2684,7 +2680,7 @@ cmd_which(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	if (setjmp(jmp_env) == 0)
 		(void)signal(SIGINT, sig3);  /* allow interupts */
-        else
+	else
 		return TCL_OK;
 
 	ret = wdb_which_cmd(wdbp, interp, argc, argv);
@@ -2708,7 +2704,7 @@ cmd_tops(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	if (setjmp(jmp_env) == 0)
 		(void)signal(SIGINT, sig3);  /* allow interupts */
-        else
+	else
 		return TCL_OK;
 
 	ret = wdb_tops_cmd(wdbp, interp, argc, argv);
@@ -2891,7 +2887,7 @@ cmd_units(ClientData	clientData,
 	sf = dbip->dbi_base2local;
 	ret = wdb_units_cmd(wdbp, interp, argc, argv);
 
- 	set_localunit_TclVar();
+	set_localunit_TclVar();
 	sf = dbip->dbi_base2local / sf;
 	update_grids(sf);
 	update_views = 1;
@@ -3325,7 +3321,7 @@ cmd_blast(ClientData	clientData,
 	return edit_com(argc, argv, 1, 1);
 }
 
-/** 
+/**
  * Edit something (add to visible display)
  * Format: e object
  */

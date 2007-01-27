@@ -46,7 +46,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <fcntl.h>
 
@@ -199,8 +198,6 @@ HIDDEN int
 rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 
 
-
-
 /*	_ r a t _ r e a d ( )
  */
 {
@@ -329,8 +326,6 @@ rat_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 
 HIDDEN int
 rat_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
-
-
 
 
 /*	_ r a t _ w r i t e ( )
@@ -495,7 +490,6 @@ rat_cursor(FBIO *ifp, int mode, int x, int y)
  */
 
 
-
 {
 	fb_sim_cursor(ifp, mode, x, y);
 /*	if(   !	cload( 5, x, y )  ||  ! xhair( 0, mode ) )
@@ -534,10 +528,6 @@ _rat_init(FBIO *ifp)
 	else
 		return	-1;
 	}
-
-
-
-
 
 
 HIDDEN int

@@ -47,7 +47,6 @@ static const char RCSparse[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
@@ -61,7 +60,6 @@ static const char RCSparse[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"
-
 
 
 /*
@@ -100,8 +98,8 @@ bu_matprint(const char *name, register const matp_t mat)
 void
 bu_structprint(const char *title, const struct bu_structparse *parsetab, const char *base)
 
-                           	          /* structure description */
-          			      	  /* base address of users structure */
+					  /* structure description */
+					  /* base address of users structure */
 {
 	register const struct bu_structparse	*sdp;
 	register char			*loc;
@@ -286,7 +284,7 @@ bu_parse_double(const char *str, long int count, double *loc)
 			str++;
 
 			/* skip exponent sign */
-		    	if (*str == '+' || *str == '-') str++;
+			if (*str == '+' || *str == '-') str++;
 
 			while (isdigit(*str)) str++;
 		}
@@ -317,10 +315,10 @@ bu_parse_double(const char *str, long int count, double *loc)
  */
 HIDDEN int
 bu_struct_lookup(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+						/* structure description */
+						/* struct member name */
+						/* begining of structure */
+						/* string containing value */
 {
 	register char *loc;
 	int i, retval = 0;
@@ -371,7 +369,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 				    loc[j++] = value[i++])
 					if (value[i] == '\\' &&
 					    value[i+1] == '"')
-					    	++i;
+						++i;
 
 				if (sdp->sp_count > 1)
 					loc[sdp->sp_count-1] = '\0';
@@ -481,9 +479,9 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
  */
 int
 bu_structparse(const struct bu_vls *in_vls, const struct bu_structparse *desc, char *base)
-                   		        	/* string to parse through */
-                           	      		/* structure description */
-    				      		/* base addr of users struct */
+						/* string to parse through */
+						/* structure description */
+						/* base addr of users struct */
 {
 	struct bu_vls	vls;
 	register char *cp;
@@ -573,9 +571,9 @@ bu_structparse(const struct bu_vls *in_vls, const struct bu_structparse *desc, c
 HIDDEN void
 bu_vls_item_print_core(struct bu_vls *vp, const struct bu_structparse *sdp, const char *base, char sep_char)
 
-                                     /* item description */
-                                  /* base address of users structure */
-                                  /* value separator */
+				     /* item description */
+				  /* base address of users structure */
+				  /* value separator */
 {
     register char *loc;
 
@@ -650,7 +648,6 @@ bu_vls_item_print_core(struct bu_vls *vp, const struct bu_structparse *sdp, cons
 }
 
 
-
 /*
  *                     B U _ V L S _ I T E M _ P R I N T
  *
@@ -661,8 +658,8 @@ bu_vls_item_print_core(struct bu_vls *vp, const struct bu_structparse *sdp, cons
 void
 bu_vls_item_print(struct bu_vls *vp, const struct bu_structparse *sdp, const char *base)
 
-                                      /* item description */
-                                  /* base address of users structure */
+				      /* item description */
+				  /* base address of users structure */
 {
     bu_vls_item_print_core( vp, sdp, base, ',' );
 }
@@ -676,8 +673,8 @@ bu_vls_item_print(struct bu_vls *vp, const struct bu_structparse *sdp, const cha
 void
 bu_vls_item_print_nc(struct bu_vls *vp, const struct bu_structparse *sdp, const char *base)
 
-                                      /* item description */
-                                  /* base address of users structure */
+				      /* item description */
+				  /* base address of users structure */
 {
     bu_vls_item_print_core( vp, sdp, base, ' ' );
 }
@@ -753,9 +750,9 @@ bu_vls_print_double(struct bu_vls *vls, const char *name, register long int coun
  */
 void
 bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp, const char *base)
-      	      				     	/* vls to print into */
-                                    	     	/* structure description */
-          				      	/* structure ponter */
+						/* vls to print into */
+						/* structure description */
+						/* structure ponter */
 {
 	register char			*loc;
 	register int			lastoff = -1;

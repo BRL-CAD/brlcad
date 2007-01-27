@@ -191,7 +191,6 @@ extern char	ScTermname[];
 #endif		/* Sc_H_INCLUDE */
 
 
-
 /*
  * Local Variables:
  * mode: C

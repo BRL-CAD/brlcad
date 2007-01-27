@@ -93,7 +93,7 @@ Usage: plrot [options] [file1 ... fileN] > file.plot\n\
    -X# -Y# -Z#    Translation along axis\n\
    -s#            Scale factor\n\
    -a# -e#        Azimuth/Elevation from front view\n\
-                  (usually first, in this order, implies -M)\n\
+		  (usually first, in this order, implies -M)\n\
    -g             MGED front view to display coordinates (usually last)\n\
    -M             Autoscale space command like RT model RPP\n\
    -m#            Takes a 4X4 matrix as an argument\n\
@@ -201,7 +201,6 @@ getshort(FILE *fp)
 	w &= ~0x7FFF;
 	return( w | v );
 }
-
 
 
 int

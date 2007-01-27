@@ -66,7 +66,7 @@ static int 	bytes_per_pixel = 3;	/* Default for RGB */
 
 static char usage[] = "\
 Usage: pixrect -w in_width -n in_height -W out_width -N out_height\n\
-               [-x xoffset] [-y yoffset] [-# bytes] [infile.pix]\n\
+	       [-x xoffset] [-y yoffset] [-# bytes] [infile.pix]\n\
   or   pixrect [-# bytes] infile outfile (I prompt!)\n";
 
 
@@ -125,8 +125,8 @@ get_args(register int argc, register char **argv)
 	}
 
 	/* If parameters (i.e. xnum, etc.) are not entered on */
-        /*    command line, obtain input in the same style as */
-        /*    the original version of pixrect.c               */
+	/*    command line, obtain input in the same style as */
+	/*    the original version of pixrect.c               */
 
 	if (inputmode == INTERACTIVE) {
 		if (argc != 4 && argc != 3)

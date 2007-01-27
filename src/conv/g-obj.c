@@ -343,7 +343,7 @@ nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int a
 	}
 
 /* Check triangles */
- 	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 		struct faceuse *fu;
 
@@ -439,7 +439,7 @@ nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int a
 	}
 
 	/* output triangles */
- 	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 		struct faceuse *fu;
 
@@ -590,10 +590,10 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 			BU_UNSETJUMP;		/* Relinquish the protection */
 
 			sofar = db_path_to_string(pathp);
-	                bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
+			bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
 			fprintf(fpe,"Failed Bool. Eval.: %s\n",sofar);
 			fflush(fpe);
-                        bu_free( (char *)sofar, "sofar" );
+			bu_free( (char *)sofar, "sofar" );
 
 			/* Sometimes the NMG library adds debugging bits when
 			 * it detects an internal error, before rt_bomb().
@@ -715,7 +715,6 @@ out:
 	 *  and there is no point to adding _another_ message to our output,
 	 *  so we need to cons up an OP_NOP node to return.
 	 */
-
 
 
 	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */

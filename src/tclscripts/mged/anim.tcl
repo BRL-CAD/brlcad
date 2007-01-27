@@ -58,7 +58,7 @@ proc sketch_init_main {} {
 
 	#note - change this variable in production version
 #	set version "developement"
-        set version ""
+	set version ""
 	if { $version == "developement" } {
 		uplevel #0 {set mged_sketch_anim_path "/tmp/.anim.6d/"}
 		uplevel #0 {set mged_sketch_tab_path "/tmp/.tab.6d/"}
@@ -173,7 +173,7 @@ proc sketch_popup_draw { p } {
 	} else {
 		set root "$p.draw"
 	}
-   	if { [info commands $root] != ""} {
+	if { [info commands $root] != ""} {
 		raise $root
 		return
 	}
@@ -653,7 +653,6 @@ proc sketch_do_spline { mode } {
 }
 
 
-
 proc sketch_popup_load {} {
 	set entries [list \
 		{"File to Load"} \
@@ -720,7 +719,6 @@ proc sketch_save { curve filename } {
 	sketch_open_curve $oldcurve
 	catch {destroy ._sketch_input}
 }
-
 
 
 proc sketch_popup_name {{mode new}} {
@@ -1058,7 +1056,6 @@ proc sketch_post_vcurve_list { menu function } {
 }
 
 
-
 #set the viewparameters for the current view curve and convert if necessary
 proc sketch_set_vparams { newlist } {
 	global mged_sketch_vname mged_sketch_vparams \
@@ -1209,7 +1206,6 @@ proc sketch_set_vparams { newlist } {
 	set oldlist $newlist
 	return
 }
-
 
 
 #append current view parameters to view curve
@@ -1528,7 +1524,6 @@ proc sketch_vload { filename vcurve cols} {
 }
 
 
-
 proc sketch_popup_vname {{mode select}} {
 	if { $mode == "select"} {
 		sketch_popup_input "Select View Curve" {
@@ -1629,7 +1624,6 @@ proc sketch_view_cancel {} {
 }
 
 
-
 #display message and return -1 if wrong number of columns
 proc sketch_vcurve_check_col { vparams incol } {
 	global mged_sketch_cmdlen
@@ -1657,7 +1651,7 @@ proc sketch_vcurve_list {} {
 	set list ""
 	foreach text [ info commands $prefix*.t] {
 		set last [expr [string length $text] - 3]
-	  	lappend list [string range $text 0 $last]
+		lappend list [string range $text 0 $last]
 	}
 	return $list
 }
@@ -1668,8 +1662,6 @@ proc sketch_vcurve_get_label { vcurve} {
 	set j [string length $prefix]
 	return [string range $vcurve $j end]
 }
-
-
 
 
 #-----------------------------------------------------------------
@@ -2096,7 +2088,7 @@ proc sketch_text_do_script {wout win rows slist} {
 		}
 		for {set j 0} {$j < $colout} {incr j} {
 			$wout insert end \
-	 		  [format "\t%.12g" [expr $outscript($j)]]
+			  [format "\t%.12g" [expr $outscript($j)]]
 		}
 		$wout insert end "\n"
 	}
@@ -2490,7 +2482,6 @@ proc sketch_text_writevc {w vcurve col} {
 	sketch_vupdate
 	catch {destroy ._sketch_input}
 }
-
 
 
 #-----------------------------------------------------------------
@@ -3048,7 +3039,6 @@ proc sketch_script_update { objorview } {
 	set mged_sketch_objncols [llength $base]
 	set mged_sketch_objcols $base
 }
-
 
 
 #-----------------------------------------------------------------
@@ -3861,8 +3851,6 @@ proc sketch_parse_col {str num output} {
 }
 
 
-
-
 proc sketch_print {} {
 	set length [vdraw read l]
 	puts "Name is [vdraw read n]"
@@ -4149,7 +4137,6 @@ proc sketch_text_from_table {tid {needcol -1}} {
 	}
 	return $text
 }
-
 
 
 #-------------------------------------------------------------------

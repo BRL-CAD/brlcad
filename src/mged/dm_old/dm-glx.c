@@ -37,7 +37,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #include <termio.h>
@@ -1457,7 +1456,7 @@ Glx_statechange( a, b )
    *  including enabling continuous tablet tracking,
    *  object highlighting
    */
- 	switch( b )  {
+	switch( b )  {
 	case ST_VIEW:
 	  /* constant tracking OFF */
 	  GlxdoMotion = 0;

@@ -75,7 +75,7 @@ extern int	ipu_debug;
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#if defined(HAVE_SYS_PRCTL_H) 
+#if defined(HAVE_SYS_PRCTL_H)
 #  include <sys/prctl.h>
 #endif
 #if defined(HAVE_DSLIB_H) && defined(PR_SALL) && defined(PR_SFDS)

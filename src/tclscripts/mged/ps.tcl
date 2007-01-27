@@ -172,7 +172,7 @@ drawing lines."} {see_also "ps"}}
 	    -variable ps_control($id,zclip)
     hoc_register_data $top.zclipCB "Z Clipping"\
 	    {{summary "If checked, clip to the viewing cube."}
-            {see_also "ps"}}
+	    {see_also "ps"}}
 
     button $top.okB -relief raised -text "OK"\
 	    -command "do_ps $id; catch {destroy $top}"

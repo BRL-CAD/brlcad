@@ -279,9 +279,9 @@ fastf_t *shotdir;	/* shotline direction vector */
 			"%c % 8.3f % 8.3f\n",
 			PB_CELL_IDENT,
 			vec[Y]*unitconv,
-			 	/* horizontal coordinate of burst point (Y') */
+				/* horizontal coordinate of burst point (Y') */
 			vec[Z]*unitconv
-			 	/* vertical coordinate of burst point (Z') */
+				/* vertical coordinate of burst point (Z') */
 			) < 0
 		)
 		{
@@ -328,9 +328,9 @@ register struct application *ap;
 			"%c % 8.3f % 8.3f\n",
 			PB_CELL_IDENT,
 			ap->a_uvec[X]*unitconv,
-			 	/* horizontal coordinate of shotline (Y') */
+				/* horizontal coordinate of shotline (Y') */
 			ap->a_uvec[Y]*unitconv
-			 	/* vertical coordinate of shotline (Z') */
+				/* vertical coordinate of shotline (Z') */
 			) < 0
 		)
 		{
@@ -343,9 +343,9 @@ register struct application *ap;
 			"%c % 8.3f % 8.3f\n",
 			PS_CELL_IDENT,
 			ap->a_uvec[X]*unitconv,
-			 	/* horizontal coordinate of shotline (Y') */
+				/* horizontal coordinate of shotline (Y') */
 			ap->a_uvec[Y]*unitconv
-			 	/* vertical coordinate of shotline (Z') */
+				/* vertical coordinate of shotline (Z') */
 			) < 0
 		)
 		{
@@ -924,7 +924,6 @@ va_dcl
 	va_end( ap );
 	return;
 	}
-
 
 
 /*

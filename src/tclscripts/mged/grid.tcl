@@ -78,11 +78,11 @@ tick in both the horizontal and vertical directions." } }
 	entry $top.resE -relief sunken -width 12 -textvar grid_control_spacing($id,tick)
 	hoc_register_data $top.resE "Tick Spacing" $hoc_data
 
-        set hoc_data { { summary "Major spacing is measured in ticks
+	set hoc_data { { summary "Major spacing is measured in ticks
 and determines how often lines of
 ticks are drawn." } }
-        label $top.majorSpacingL -text "Major Spacing\n(ticks/major)"
-        hoc_register_data $top.majorSpacingL "Major Spacing" $hoc_data
+	label $top.majorSpacingL -text "Major Spacing\n(ticks/major)"
+	hoc_register_data $top.majorSpacingL "Major Spacing" $hoc_data
 	entry $top.maj_resE -relief sunken -width 12 -textvar grid_control_spacing($id,ticksPerMajor)
 	hoc_register_data $top.maj_resE "Major Spacing" $hoc_data
     } else {
@@ -187,7 +187,7 @@ accuracy when snapping." } }
 
     button $top.okB -relief raised -text "OK"\
 	    -command "mged_apply $id \"rset grid anchor \\\$grid_control_anchor($id)\";
-                      catch { destroy $top }"
+		      catch { destroy $top }"
     hoc_register_data $top.okB "OK"\
 	    { { summary "Apply the grid anchor control panel
 settings to the grid, then close the
@@ -397,7 +397,7 @@ vertical tick spacing." } }
 	    -command "set_grid_square $id"
     hoc_register_data $top.squareGridCB "Square Grid"\
 	    { { synopsis "Toggle square grid mode." }
-              { description "In square grid mode the horizontal and
+	      { description "In square grid mode the horizontal and
 vertical attributes are the same. For
 example, if the horizontal tick spacing
 is 12 inches, then the vertical tick spacing
@@ -429,23 +429,23 @@ grid exists whether it is drawn or not." } }
 	    -offvalue 0 -onvalue 1 -variable grid_control($id,draw)
     hoc_register_data $top.drawCB "Draw Grid"\
 	    { { synopsis "Toggle drawing the grid." }
-              { description "The grid is a lattice of points over the pane
+	      { description "The grid is a lattice of points over the pane
 (geometry window). The regular spacing between
 the points gives the user accurate visual cues
 regarding dimension. This spacing can be set by
 the user." }
-            { see_also "rset" } }
+	    { see_also "rset" } }
 
     checkbutton $top.snapCB -relief flat -text "Snap"\
 	    -offvalue 0 -onvalue 1 -variable grid_control($id,snap)
     hoc_register_data $top.snapCB "Snap To Grid"\
 	    { { synopsis "Toggle grid snapping." }
-              { description "When snapping to grid, the internal routines
+	      { description "When snapping to grid, the internal routines
 that use the mouse pointer location, move/snap
 that location to the nearest grid point. This
 gives the user high accuracy with the mouse for
 transforming the view or editing solids/matrices." }
-            { see_also "rset" } }
+	    { see_also "rset" } }
 
     button $top.okB -relief raised -text "OK"\
 	    -command "grid_control_ok $id $top"

@@ -42,7 +42,6 @@ static const char RCSbadmagic[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include "machine.h"
 #include "bu.h"

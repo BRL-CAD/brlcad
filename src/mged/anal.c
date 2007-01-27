@@ -221,7 +221,6 @@ do_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 }
 
 
-
 /* edge definition array */
 static const int nedge[5][24] = {
 	{0,1, 1,2, 2,0, 0,3, 3,2, 1,3, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},	/* ARB4 */
@@ -379,8 +378,7 @@ static double
 anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_internal *arb, int type, const struct bn_tol *tol)
 
 
-       		          		/* reference center point */
-
+					/* reference center point */
 
 
 {
@@ -869,7 +867,6 @@ tgc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	return;
 
 }
-
 
 
 /*	analyze ars */

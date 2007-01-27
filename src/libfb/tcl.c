@@ -197,7 +197,7 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 	}
     }
 #endif  /* IF_OGL */
-    
+
     if (found) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%lu", (unsigned long)ifp);
@@ -210,7 +210,7 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
     ifp->if_magic = 0; /* sanity */
     free((void *) ifp->if_name);
     free((void *) ifp);
-    
+
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "fb_open_existing: supports only the following device types\n");
 #ifdef IF_X

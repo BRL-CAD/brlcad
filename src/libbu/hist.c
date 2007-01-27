@@ -44,7 +44,6 @@ static const char RCShist[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H

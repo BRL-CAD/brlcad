@@ -71,7 +71,7 @@ bn_dist_pt3_pt3(const fastf_t *a, const fastf_t *b)
 /**
  *			B N _ P T 3 _ P T 3 _ E Q U A L
  *
- *  
+ *
  *  @return	1	if the two points are equal, within the tolerance
  *  @return	0	if the two points are not "the same"
  */
@@ -308,7 +308,7 @@ bn_mk_plane_3pts(fastf_t *plane,
  *
 @endverbatim
  *
- *  
+ *
  * @return	 0	OK
  * @return	-1	Failure.  Intersection is a line or plane.
  *
@@ -476,7 +476,7 @@ bn_isect_line3_plane(fastf_t *dist,
  * @return	-2	FAIL, planes are parallel and distinct
  * @return	-3	FAIL, unable to find line of intersection
  *
- * 
+ *
  * @param[out]	pt	Starting point of line of intersection
  * @param[out]	dir	Direction vector of line of intersection (unit length)
  * @param[in]	a	plane 1
@@ -560,9 +560,9 @@ bn_isect_2planes(fastf_t *pt,
  *  Intersect two lines, each in given in parametric form:
 @verbatim
 
- 	X = P + t * D
+	X = P + t * D
    and
- 	X = A + u * C
+	X = A + u * C
 
 @endverbatim
  *  While the parametric form is usually used to denote a ray
@@ -571,7 +571,7 @@ bn_isect_2planes(fastf_t *pt,
  *
  *  The direction vectors C and D need not have unit length.
  *
- *  
+ *
  * @return	-1	no intersection, lines are parallel.
  * @return	 0	lines are co-linear
  *@n			dist[0] gives distance from P to A,
@@ -598,10 +598,7 @@ bn_isect_2planes(fastf_t *pt,
  */
 int
 bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *c, const struct bn_tol *tol)
-       			      			/* dist[2] */
-
-
-
+						/* dist[2] */
 
 
 {
@@ -862,11 +859,11 @@ bn_isect_line2_lseg2(fastf_t *dist,
 bu_log("b=(%g, %g), b_dist_sq=%g\n", V2ARGS(b), ctol);
 			bu_log("bn_isect_line2_lseg2() pts A and B within tol of line\n");
 		}
-	    	/* Find the parametric distance along the ray */
-	    	dist[0] = bn_dist_pt2_along_line2( p, d, a );
-	    	dist[1] = bn_dist_pt2_along_line2( p, d, b );
-	    	ret = 0;		/* Colinear */
-	    	goto out;
+		/* Find the parametric distance along the ray */
+		dist[0] = bn_dist_pt2_along_line2( p, d, a );
+		dist[1] = bn_dist_pt2_along_line2( p, d, b );
+		ret = 0;		/* Colinear */
+		goto out;
 	}
 
 	if( (ret = bn_isect_line2_line2( dist, p, d, a, c, tol )) < 0 )  {
@@ -950,7 +947,7 @@ bu_log("\tother hit2d=(%g,%g)\n", hit2[X], hit2[Y] );
 
 		if( !bn_between( a[X], hit_pt[X], b[X], tol ) ||
 		    !bn_between( a[Y], hit_pt[Y], b[Y], tol ) ) {
-		    	bu_bomb("bn_isect_line2_lseg2() hit_pt not between A and B!\n");
+			bu_bomb("bn_isect_line2_lseg2() hit_pt not between A and B!\n");
 		}
 	}
 
@@ -1008,7 +1005,7 @@ out:
  * @return	 1	hit (normal intersection)
  *
 
- * @param dist  The value at dist[] is set to the parametric distance of the 
+ * @param dist  The value at dist[] is set to the parametric distance of the
  *		intercept.
  *@n	dist[0] is parameter along p, range 0 to 1, to intercept.
  *@n	dist[1] is parameter along q, range 0 to 1, to intercept.
@@ -1477,7 +1474,7 @@ bn_isect_line3_line3(fastf_t *t,
  *
  *  with a line segment defined by two distinct points A and B.
  *
- *  
+ *
  * @return	-4	A and B are not distinct points
  * @return	-3	Intersection exists, < A (t is returned)
  * @return	-2	Intersection exists, > B (t is returned)
@@ -1499,7 +1496,7 @@ bn_isect_line3_line3(fastf_t *t,
  *		the endpoints.
  *
  * XXX should probably be called bn_isect_line3_lseg3()
- * XXX should probably be changed to return dist[2] 
+ * XXX should probably be changed to return dist[2]
  */
 int
 bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
@@ -1534,7 +1531,7 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
 		if( bu_debug & BU_DEBUG_MATH )  {
 			bu_log("bn_isect_line3_lseg3() pts A and B within tol of line\n");
 		}
-	    	/* Find the parametric distance along the ray */
+		/* Find the parametric distance along the ray */
 		*t = bn_dist_pt3_along_line3( p, d, a );
 		/*** dist[1] = bn_dist_pt3_along_line3( p, d, b ); ***/
 		return 0;		/* Colinear */
@@ -1764,17 +1761,17 @@ bn_area_of_triangle(register const fastf_t *a, register const fastf_t *b, regist
  * @return	3	P is on AB, dist = distance from A to P on line.
 @verbatim
      B *
- 	|
+	|
      P'*-tol-*P
- 	|    /  _
+	|    /  _
      dist  /   /|
- 	|  /   /
- 	| /   / AtoP
- 	|/   /
+	|  /   /
+	| /   / AtoP
+	|/   /
      A *   /
- 
- 	tol = distance limit from line to pt P;
- 	dist = parametric distance from A to P' (in terms of A to B)
+
+	tol = distance limit from line to pt P;
+	dist = parametric distance from A to P' (in terms of A to B)
 @endverbatim
  *
  * @param p	point
@@ -1788,8 +1785,8 @@ int bn_isect_pt_lseg(fastf_t *dist,
 		     const fastf_t *b,
 		     const fastf_t *p,
 		     const struct bn_tol *tol)
-       			      		/* distance along line from A to P */
-             		        	/* points for line and intersect */
+					/* distance along line from A to P */
+					/* points for line and intersect */
 
 {
 	vect_t	AtoP,
@@ -1846,7 +1843,7 @@ int bn_isect_pt_lseg(fastf_t *dist,
  * Intersect a point P with the line segment defined by two distinct
  * points A and B.
  *
- * 
+ *
  * @return	-2	P on line AB but outside range of AB,
  *			dist = distance from A to P on line.
  * @return	-1	P not on line of AB within tolerance
@@ -1855,23 +1852,23 @@ int bn_isect_pt_lseg(fastf_t *dist,
  * @return	3	P is on AB, dist = distance from A to P on line.
 @verbatim
      B *
- 	|
+	|
      P'*-tol-*P
- 	|    /  _
+	|    /  _
      dist  /   /|
- 	|  /   /
- 	| /   / AtoP
- 	|/   /
+	|  /   /
+	| /   / AtoP
+	|/   /
      A *   /
- 
- 	tol = distance limit from line to pt P;
- 	dist = distance from A to P'
+
+	tol = distance limit from line to pt P;
+	dist = distance from A to P'
 @endverbatim
  */
 int
 bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
-       			      		/* distance along line from A to P */
-             		        	/* points for line and intersect */
+					/* distance along line from A to P */
+					/* points for line and intersect */
 
 {
 	vect_t	AtoP,
@@ -1949,7 +1946,7 @@ bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fast
  *		*------*--------*
  *		A      PCA	B
 @endverbatim
- *  
+ *
  * @return	0	P is within tolerance of lseg AB.  *dist isn't 0: (SPECIAL!!!)
  *		  *dist = parametric dist = |PCA-A| / |B-A|.  pca=computed.
  * @return	1	P is within tolerance of point A.  *dist = 0, pca=A.
@@ -2299,7 +2296,7 @@ bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
  *  wrap it around.
  *  These conditions only occur if there are problems in atan2().
  *
- * 
+ *
  * @return	vec == x_dir returns 0,
  * @return	vec == y_dir returns pi/2,
  * @return	vec == -x_dir returns pi,
@@ -2411,7 +2408,7 @@ fail:
 /**
  *			B N _ D O E S _ R A Y _ I S E C T _ T R I
  *
- * 
+ *
  * @return	0	No intersection
  * @return	1	Intersection, 'inter' has intersect point.
  */
@@ -2622,11 +2619,11 @@ min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%d, %d, %d, %d)\n",
  *@brief
  * Calculate the square of the distance of closest approach for two lines.
  *
- * The lines are specifed as a point and a vector each. 
+ * The lines are specifed as a point and a vector each.
  * The vectors need not be unit length.
  * P and d define one line; Q and e define the other.
  *
- * 
+ *
  * @return	0 - normal return
  * @return	1 - lines are parallel, dist[0] is set to 0.0
  *

@@ -850,9 +850,9 @@ BezierCoords(interp, canvas, itemPtr, argc, argv)
 	for (i = 0; i <argc; i++) {
 	    if (Tk_CanvasGetCoordFromObj(interp, canvas, argv[i],
 		    &bezierPtr->coords[i]) != TCL_OK) {
-  		return TCL_ERROR;
-  	    }
-  	}
+		return TCL_ERROR;
+	    }
+	}
 	ComputeBezierBbox(canvas, bezierPtr);
     }
     return TCL_OK;
@@ -986,21 +986,21 @@ from "Graphics Gems", Academic Press, 1990
 
 
 typedef struct Point2Struct {   /* 2d point */
-        double x, y;
-        } Point2;
+	double x, y;
+	} Point2;
 typedef Point2 Vector2;
 
 typedef struct IntPoint2Struct {        /* 2d integer point */
-        int x, y;
-        } IntPoint2;
+	int x, y;
+	} IntPoint2;
 
 typedef struct Matrix3Struct {  /* 3-by-3 matrix */
-        double element[3][3];
-        } Matrix3;
+	double element[3][3];
+	} Matrix3;
 
 typedef struct Box2dStruct {            /* 2d box */
-        Point2 min, max;
-        } Box2;
+	Point2 min, max;
+	} Box2;
 
 Vector2 *V2Sub(a, b, c)
 Vector2 *a, *b, *c;
@@ -1123,20 +1123,20 @@ double NearestPointOnCurve(P, degree, V)
 		dist = V2SquaredLength(V2Sub(&P, &V[0], &v));
 
 	/* Find distances for candidate points	*/
-        for (i = 0; i < n_solutions; i++) {
-	    	p = Bezier(V, degree, t_candidate[i],
+	for (i = 0; i < n_solutions; i++) {
+		p = Bezier(V, degree, t_candidate[i],
 			(Point2 *)NULL, (Point2 *)NULL);
-	    	new_dist = V2SquaredLength(V2Sub(&P, &p, &v));
-	    	if (new_dist < dist) {
-                	dist = new_dist;
-    	    }
-        }
+		new_dist = V2SquaredLength(V2Sub(&P, &p, &v));
+		if (new_dist < dist) {
+			dist = new_dist;
+	    }
+	}
 
 	/* Finally, look at distance to end point, where t = 1.0 */
 		new_dist = V2SquaredLength(V2Sub(&P, &V[degree], &v));
-        	if (new_dist < dist) {
-            	dist = new_dist;
-        }
+		if (new_dist < dist) {
+		dist = new_dist;
+	}
     }
 
     ckfree( (char *)t_candidate );
@@ -1224,7 +1224,7 @@ static Point2 *ConvertToBezierForm(P, degree, V)
     /* c's and d's							*/
     for (row = 0; row <= degree - 1; row++) {
 		for (column = 0; column <= degree; column++) {
-	    	cdTable[IND(row, column)] = V2Dot(&d[row], &c[column]);
+		cdTable[IND(row, column)] = V2Dot(&d[row], &c[column]);
 		}
     }
 
@@ -1242,8 +1242,8 @@ static Point2 *ConvertToBezierForm(P, degree, V)
 		lb = MAX(0, k - m);
 		ub = MIN(k, n);
 		for (i = lb; i <= ub; i++) {
-	    	j = k - i;
-	    	w[i+j].y += cdTable[IND(j, i)] * z[IND(j, i)];
+		j = k - i;
+		w[i+j].y += cdTable[IND(j, i)] * z[IND(j, i)];
 		}
     }
 
@@ -1270,14 +1270,14 @@ static int FindRoots(w, degree, t, depth)
 {
     int 	i;
     Point2 	*Left,			/* New left and right 		*/
-    	  	*Right;			/* control polygons		*/
+		*Right;			/* control polygons		*/
     int 	left_count,		/* Solution count from		*/
 		right_count;		/* children			*/
     double 	*left_t,		/* Solutions from kids		*/
-	   	*right_t;
+		*right_t;
 
     switch (CrossingCount(w, degree)) {
-       	case 0 : {	/* No solutions here	*/
+	case 0 : {	/* No solutions here	*/
 	     return 0;
 	}
 	case 1 : {	/* Unique solution	*/
@@ -1294,7 +1294,7 @@ static int FindRoots(w, degree, t, depth)
 	    break;
 	}
     }
-    
+
     /* prevent infinite recursion */
     if (depth >= MAXDEPTH * MAXDEPTH) {
       t[0] = (w[0].x + w[degree].x) / 2.0;
@@ -1314,10 +1314,10 @@ static int FindRoots(w, degree, t, depth)
 
     /* Gather solutions together	*/
     for (i = 0; i < left_count; i++) {
-        t[i] = left_t[i];
+	t[i] = left_t[i];
     }
     for (i = 0; i < right_count; i++) {
- 		t[i+left_count] = right_t[i];
+		t[i+left_count] = right_t[i];
     }
 
     ckfree( (char *)Left );
@@ -1354,7 +1354,6 @@ static int CrossingCount(V, degree)
 }
 
 
-
 /*
  *  ControlPolygonFlatEnough :
  *	Check if the control polygon of a Bezier curve is flat enough
@@ -1371,11 +1370,11 @@ static int ControlPolygonFlatEnough(V, degree)
     double 	max_distance_below;
     double 	error;			/* Precision of root		*/
     double 	intercept_1,
-    	   	intercept_2,
-	   		left_intercept,
-		   	right_intercept;
+		intercept_2,
+			left_intercept,
+			right_intercept;
     double 	a, b, c;		/* Coefficients of implicit	*/
-    					/* eqn for line from V[0]-V[deg]*/
+					/* eqn for line from V[0]-V[deg]*/
 
     /* Find the  perpendicular distance		*/
     /* from each interior control point to 	*/
@@ -1391,15 +1390,15 @@ static int ControlPolygonFlatEnough(V, degree)
 
 	abSquared = (a * a) + (b * b);
 
-        for (i = 1; i < degree; i++) {
+	for (i = 1; i < degree; i++) {
 	    /* Compute distance from each of the points to that line	*/
-	    	distance[i] = a * V[i].x + b * V[i].y + c;
-	    	if (distance[i] > 0.0) {
+		distance[i] = a * V[i].x + b * V[i].y + c;
+		if (distance[i] > 0.0) {
 				distance[i] = (distance[i] * distance[i]) / abSquared;
-	    	}
-	    	if (distance[i] < 0.0) {
+		}
+		if (distance[i] < 0.0) {
 				distance[i] = -((distance[i] * distance[i]) / 						abSquared);
-	    	}
+		}
 		}
     }
 
@@ -1409,10 +1408,10 @@ static int ControlPolygonFlatEnough(V, degree)
     max_distance_below = 0.0;
     for (i = 1; i < degree; i++) {
 		if (distance[i] < 0.0) {
-	    	max_distance_below = MIN(max_distance_below, distance[i]);
+		max_distance_below = MIN(max_distance_below, distance[i]);
 		};
 		if (distance[i] > 0.0) {
-	    	max_distance_above = MAX(max_distance_above, distance[i]);
+		max_distance_above = MAX(max_distance_above, distance[i]);
 		}
     }
     ckfree((char *)distance);
@@ -1459,7 +1458,6 @@ static int ControlPolygonFlatEnough(V, degree)
 		return 0;
     }
 }
-
 
 
 /*
@@ -1528,21 +1526,21 @@ static Point2 Bezier(V, degree, t, Left, Right)
     /* Triangle computation	*/
     for (i = 1; i <= degree; i++) {
 		for (j =0 ; j <= degree - i; j++) {
-	    	Vtemp[i*(degree+1) + j].x =
-	      		(1.0 - t) * Vtemp[(i-1)*(degree+1) + j].x + t * Vtemp[(i-1)*(degree+1) + j+1].x;
-	    	Vtemp[i*(degree+1) + j].y =
-	      		(1.0 - t) * Vtemp[(i-1)*(degree+1) + j].y + t * Vtemp[(i-1)*(degree+1) + j+1].y;
+		Vtemp[i*(degree+1) + j].x =
+			(1.0 - t) * Vtemp[(i-1)*(degree+1) + j].x + t * Vtemp[(i-1)*(degree+1) + j+1].x;
+		Vtemp[i*(degree+1) + j].y =
+			(1.0 - t) * Vtemp[(i-1)*(degree+1) + j].y + t * Vtemp[(i-1)*(degree+1) + j+1].y;
 		}
     }
 
     if (Left != NULL) {
 		for (j = 0; j <= degree; j++) {
-	    	Left[j]  = Vtemp[j*(degree+1)];
+		Left[j]  = Vtemp[j*(degree+1)];
 		}
     }
     if (Right != NULL) {
 		for (j = 0; j <= degree; j++) {
-	    	Right[j] = Vtemp[(degree-j)*(degree+1) + j];
+		Right[j] = Vtemp[(degree-j)*(degree+1) + j];
 		}
     }
 

@@ -188,7 +188,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	    shader = NULL;
 	    matparm = NULL;
 	}
-	
+
 	bu_vls_init( &shader_params );
 	if( matparm ) {
 		bu_vls_strcpy( &shader_params, matparm );

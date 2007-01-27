@@ -562,7 +562,6 @@ dumpray(struct rayinfo *rp)
 }
 
 
-
 void application_init (void) {}
 
 /*

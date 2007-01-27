@@ -52,7 +52,7 @@ static struct option longopts[] =
 	{ "obs_port",	required_argument,	NULL, 'o' },
 	{ "port",	required_argument,	NULL, 'p' },
 	{ "version",	no_argument,		NULL, 'v' },
-  	{ "list",	required_argument,	NULL, 'l' },
+	{ "list",	required_argument,	NULL, 'l' },
 };
 #endif
 
@@ -109,37 +109,37 @@ int main(int argc, char **argv) {
 	)!= -1)
   {
 	  switch(c) {
-            case 'c':
-              strncpy(comp_host, optarg, 64);
-              break;
+	    case 'c':
+	      strncpy(comp_host, optarg, 64);
+	      break;
 
-            case 'h':
-              help();
-              return EXIT_SUCCESS;
+	    case 'h':
+	      help();
+	      return EXIT_SUCCESS;
 
-            case 'o':
-              obs_port = atoi(optarg);
-              break;
+	    case 'o':
+	      obs_port = atoi(optarg);
+	      break;
 
-            case 'p':
-              port = atoi(optarg);
-              break;
+	    case 'p':
+	      port = atoi(optarg);
+	      break;
 
-            case 'l':
-              strncpy(list, optarg, 64);
-              break;
+	    case 'l':
+	      strncpy(list, optarg, 64);
+	      break;
 
-            case 'e':
-              strncpy(exec, optarg, 64);
-              break;
+	    case 'e':
+	      strncpy(exec, optarg, 64);
+	      break;
 
-            case 'v':
-              printf("%s\n", ISST_VER_DETAIL);
-              return EXIT_SUCCESS;
+	    case 'v':
+	      printf("%s\n", ISST_VER_DETAIL);
+	      return EXIT_SUCCESS;
 
-            default:
-              help();
-              return EXIT_FAILURE;
+	    default:
+	      help();
+	      return EXIT_FAILURE;
 	  }
   }
   argc -= optind;

@@ -544,7 +544,7 @@
 	    set y [lindex $pos 1]
 
 	    if {[string is double $x] &&
-	        [string is double $y]} {
+		[string is double $y]} {
 		return true
 	    } else {
 		if {![string is double $x] && \
@@ -568,8 +568,8 @@
 	    set z [lindex $pos 2]
 
 	    if {[string is double $x] &&
-	        [string is double $y] &&
-	        [string is double $z]} {
+		[string is double $y] &&
+		[string is double $z]} {
 
 		$itk_option(-mged) setModelAxesPosition $pos
 		return true

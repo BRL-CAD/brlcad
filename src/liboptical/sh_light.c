@@ -1116,7 +1116,6 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     }
 
 
-
     if (pp == PartHeadp )  {
 	if (rdebug&RDEBUG_LIGHT) bu_log("pp == PartHeadp\n");
 
@@ -1655,7 +1654,6 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
 	return -1;
     }
-
 
 
     /*

@@ -94,7 +94,7 @@ void	select_filter(char *str), dousage(void);
 
 char	usage[] = "\
 Usage: pixfilter [-f type] [-v] [-d div] [-o offset]\n\
-        [-s squaresize] [-w width] [-n height] [file.pix] > file.pix\n";
+	[-s squaresize] [-w width] [-n height] [file.pix] > file.pix\n";
 
 int
 get_args(int argc, register char **argv)

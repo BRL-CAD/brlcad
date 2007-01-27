@@ -158,7 +158,7 @@ void
 nmg_lu_to_vlist(struct bu_list *vhead, const struct loopuse *lu, int poly_markers, const vectp_t normal)
 
 
-   			             		/* bit vector! */
+						/* bit vector! */
 
 {
 	const struct edgeuse		*eu;
@@ -392,7 +392,7 @@ nmg_s_to_vlist(struct bu_list *vhead, const struct shell *s, int poly_markers)
 
 			VSET( n, 1, 0, 0 );	/* sanity */
 			for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
-			   	nmg_lu_to_vlist( vhead, lu, poly_markers, n );
+				nmg_lu_to_vlist( vhead, lu, poly_markers, n );
 			}
 			continue;
 		}
@@ -402,7 +402,7 @@ nmg_s_to_vlist(struct bu_list *vhead, const struct shell *s, int poly_markers)
 		NMG_CK_FACE_G_PLANE(fg);
 		NMG_GET_FU_NORMAL( n, fu );
 		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
-		   	nmg_lu_to_vlist( vhead, lu, poly_markers, n );
+			nmg_lu_to_vlist( vhead, lu, poly_markers, n );
 		}
 	}
 
@@ -490,19 +490,19 @@ nmg_offset_eu_vert(fastf_t *base, const struct edgeuse *eu, const fastf_t *face_
 	NMG_CK_EDGEUSE(this_eu);
 	NMG_CK_VERTEXUSE(this_eu->vu_p);
 	NMG_CK_VERTEX(this_eu->vu_p->v_p);
-    	this_vg = this_eu->vu_p->v_p->vg_p;
+	this_vg = this_eu->vu_p->v_p->vg_p;
 	NMG_CK_VERTEX_G(this_vg);
 
 	NMG_CK_EDGEUSE(this_eu->eumate_p);
 	NMG_CK_VERTEXUSE(this_eu->eumate_p->vu_p);
 	NMG_CK_VERTEX(this_eu->eumate_p->vu_p->v_p);
-    	mate_vg = this_eu->eumate_p->vu_p->v_p->vg_p;
+	mate_vg = this_eu->eumate_p->vu_p->v_p->vg_p;
 	NMG_CK_VERTEX_G(mate_vg);
 
 	NMG_CK_EDGEUSE(prev_eu);
 	NMG_CK_VERTEXUSE(prev_eu->vu_p);
 	NMG_CK_VERTEX(prev_eu->vu_p->v_p);
-    	prev_vg = prev_eu->vu_p->v_p->vg_p;
+	prev_vg = prev_eu->vu_p->v_p->vg_p;
 	NMG_CK_VERTEX_G(prev_vg);
 
 	/* get "left" vector for edgeuse */
@@ -537,7 +537,6 @@ nmg_offset_eu_vert(fastf_t *base, const struct edgeuse *eu, const fastf_t *face_
 }
 
 
-
 /**			N M G _ E U _ C O O R D S
  *
  *  Get the two (offset and shrunken) endpoints that represent
@@ -554,22 +553,22 @@ static void nmg_eu_coords(const struct edgeuse *eu, fastf_t *base, fastf_t *tip6
 	if (*eu->up.magic_p == NMG_SHELL_MAGIC ||
 	    (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_SHELL_MAGIC) ) {
-	    	/* Wire edge, or edge in wire loop */
-	    	VMOVE( base, eu->vu_p->v_p->vg_p->coord );
+		/* Wire edge, or edge in wire loop */
+		VMOVE( base, eu->vu_p->v_p->vg_p->coord );
 		NMG_CK_EDGEUSE(eu->eumate_p);
 		VMOVE( tip, eu->eumate_p->vu_p->v_p->vg_p->coord );
 	}
 	else if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
-	    	/* Loop in face */
-	    	struct faceuse	*fu;
-	    	vect_t		face_normal;
+		/* Loop in face */
+		struct faceuse	*fu;
+		vect_t		face_normal;
 
-	    	fu = eu->up.lu_p->up.fu_p;
-	    	NMG_GET_FU_NORMAL( face_normal, fu );
+		fu = eu->up.lu_p->up.fu_p;
+		NMG_GET_FU_NORMAL( face_normal, fu );
 
 
-	    	nmg_offset_eu_vert(base, eu, face_normal, 0);
+		nmg_offset_eu_vert(base, eu, face_normal, 0);
 		nmg_offset_eu_vert(tip, BU_LIST_PNEXT_CIRC(edgeuse, eu),
 			face_normal, 1);
 
@@ -752,29 +751,29 @@ nmg_pl_eu(FILE *fp, const struct edgeuse *eu, long int *b, int red, int green, i
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
 
-	    	nmg_eu_coords(eu, base, tip);
-	    	if (eu->up.lu_p->up.fu_p->orientation == OT_SAME)
-	    		red += 50;
+		nmg_eu_coords(eu, base, tip);
+		if (eu->up.lu_p->up.fu_p->orientation == OT_SAME)
+			red += 50;
 		else if (eu->up.lu_p->up.fu_p->orientation == OT_OPPOSITE)
 			red -= 50;
-	    	else
-	    		red = green = blue = 255;
+		else
+			red = green = blue = 255;
 
 		pl_color(fp, red, green, blue);
-	    	pdv_3line( fp, base, tip );
+		pdv_3line( fp, base, tip );
 
-	    	nmg_eu_radial( eu, radial_tip );
+		nmg_eu_radial( eu, radial_tip );
 		pl_color(fp, red, green-20, blue);
-	    	pdv_3line( fp, tip, radial_tip );
+		pdv_3line( fp, tip, radial_tip );
 
 		pl_color(fp, 0, 100, 0);
-	    	nmg_eu_next_base( eu, next_base );
-	    	pdv_3line( fp, tip, next_base );
+		nmg_eu_next_base( eu, next_base );
+		pdv_3line( fp, tip, next_base );
 
 /*** presently unused ***
-	    	nmg_eu_last( eu, last_tip );
+		nmg_eu_last( eu, last_tip );
 		pl_color(fp, 0, 200, 0);
-	    	pdv_3line( fp, base, last_tip );
+		pdv_3line( fp, base, last_tip );
 ****/
 	    }
 }
@@ -984,85 +983,85 @@ nmg_vlblock_eu(struct bn_vlblock *vbp, const struct edgeuse *eu, long int *tab, 
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
 
-	    	/* if "fancy" doesn't specify plotting edgeuses of this
-	    	 * particular face orientation, return
-	    	 */
-	    	if ( (eu->up.lu_p->up.fu_p->orientation == OT_SAME &&
-	    	     (fancy & 1) == 0) ||
+		/* if "fancy" doesn't specify plotting edgeuses of this
+		 * particular face orientation, return
+		 */
+		if ( (eu->up.lu_p->up.fu_p->orientation == OT_SAME &&
+		     (fancy & 1) == 0) ||
 		     (eu->up.lu_p->up.fu_p->orientation == OT_OPPOSITE &&
 		     (fancy & 2) == 0) )
-	    		return;
+			return;
 
-	    	nmg_eu_coords(eu, base, tip);
-	    	/* draw edgeuses of an OT_SAME faceuse in bright green,
-	    	 * and  edgeuses of an OT_OPPOSITE faceuse in cyan.
-	    	 * WIRE/UNSPEC edgeuses are drawn white.
-	    	 */
-	    	if (eu->up.lu_p->up.fu_p->orientation == OT_SAME) {
-	    		if (eu->up.lu_p->orientation == OT_SAME) {
-	    			/* green */
-	    			red = 75;
-	    			green = 250;
-	    			blue = 75;
-	    		} else if (eu->up.lu_p->orientation == OT_OPPOSITE) {
-	    			/* yellow */
-	    			red = 250;
-	    			green = 250;
-	    			blue = 75;
-	    		} else {
-	    			red = 250;
-	    			green = 50;
-	    			blue = 250;
-	    		}
+		nmg_eu_coords(eu, base, tip);
+		/* draw edgeuses of an OT_SAME faceuse in bright green,
+		 * and  edgeuses of an OT_OPPOSITE faceuse in cyan.
+		 * WIRE/UNSPEC edgeuses are drawn white.
+		 */
+		if (eu->up.lu_p->up.fu_p->orientation == OT_SAME) {
+			if (eu->up.lu_p->orientation == OT_SAME) {
+				/* green */
+				red = 75;
+				green = 250;
+				blue = 75;
+			} else if (eu->up.lu_p->orientation == OT_OPPOSITE) {
+				/* yellow */
+				red = 250;
+				green = 250;
+				blue = 75;
+			} else {
+				red = 250;
+				green = 50;
+				blue = 250;
+			}
 		} else if (eu->up.lu_p->up.fu_p->orientation == OT_OPPOSITE) {
-	    		if (eu->up.lu_p->orientation == OT_SAME) {
-	    			/* blue */
-	    			red = 100;
-	    			green = 100;
-	    			blue = 250;
-	    		} else if (eu->up.lu_p->orientation == OT_OPPOSITE) {
-	    			/* cyan */
-	    			red = 200;
-	    			green = 100;
-	    			blue = 250;
-	    		} else {
-	    			/* dark magenta */
-	    			red = 125;
-	    			green = 0;
-	    			blue = 125;
-	    		}
-	    	} else
-	    		red = green = blue = 255;
+			if (eu->up.lu_p->orientation == OT_SAME) {
+				/* blue */
+				red = 100;
+				green = 100;
+				blue = 250;
+			} else if (eu->up.lu_p->orientation == OT_OPPOSITE) {
+				/* cyan */
+				red = 200;
+				green = 100;
+				blue = 250;
+			} else {
+				/* dark magenta */
+				red = 125;
+				green = 0;
+				blue = 125;
+			}
+		} else
+			red = green = blue = 255;
 
-	    	/* draw the portion from the vertexuse to just beyond the
-	    	 * midway point to represent the edgeuse
-	    	 */
+		/* draw the portion from the vertexuse to just beyond the
+		 * midway point to represent the edgeuse
+		 */
 		vh = rt_vlblock_find( vbp, red, green, blue );
 		RT_ADD_VLIST( vh, base, BN_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vh, tip, BN_VLIST_LINE_DRAW );
 
-	    	/* draw a line from the tip of the edgeuse part to a point
-	    	 * behind the tip of the radial edgeuse.  This provides 2
-	    	 * visual cues.  First it allows us to identify the radial
-	    	 * edgeuse, and second, it makes a "half arrowhead" on the
-	    	 * edgeuse, making it easier to recognize the direction
-	    	 * of the edgeuse
-	    	 */
-	    	nmg_eu_radial( eu, radial_tip );
+		/* draw a line from the tip of the edgeuse part to a point
+		 * behind the tip of the radial edgeuse.  This provides 2
+		 * visual cues.  First it allows us to identify the radial
+		 * edgeuse, and second, it makes a "half arrowhead" on the
+		 * edgeuse, making it easier to recognize the direction
+		 * of the edgeuse
+		 */
+		nmg_eu_radial( eu, radial_tip );
 		vh = rt_vlblock_find( vbp, red, green-20, blue );
 		RT_ADD_VLIST( vh, tip, BN_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vh, radial_tip, BN_VLIST_LINE_DRAW );
 
-	    	/* we draw a line from the tip of the edgeuse line
-	    	 * to the vertexuse/start of the next edgeuse in the loop.
-	    	 * This helps us to visually trace the loop from edgeuse to
-	    	 * edgeuse.  The color of this part encodes the loopuse
-	    	 * orientation.
-	    	 */
-	    	nmg_eu_next_base( eu, next_base );
-	    	red *= 0.5;
-	    	green *= 0.5;
-	    	blue *= 0.5;
+		/* we draw a line from the tip of the edgeuse line
+		 * to the vertexuse/start of the next edgeuse in the loop.
+		 * This helps us to visually trace the loop from edgeuse to
+		 * edgeuse.  The color of this part encodes the loopuse
+		 * orientation.
+		 */
+		nmg_eu_next_base( eu, next_base );
+		red *= 0.5;
+		green *= 0.5;
+		blue *= 0.5;
 		vh = rt_vlblock_find( vbp, red, green, blue );
 		RT_ADD_VLIST( vh, tip, BN_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vh, next_base, BN_VLIST_LINE_DRAW );
@@ -1198,9 +1197,9 @@ nmg_vlblock_lu(struct bn_vlblock *vbp, const struct loopuse *lu, long int *tab, 
 	magic1 = BU_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC &&
 	    lu->orientation != OT_BOOLPLACE) {
-	    	vu = BU_LIST_PNEXT(vertexuse, &lu->down_hd);
-	    	NMG_CK_VERTEXUSE(vu);
-	    	nmg_vlblock_v(vbp, vu->v_p, tab);
+		vu = BU_LIST_PNEXT(vertexuse, &lu->down_hd);
+		NMG_CK_VERTEXUSE(vu);
+		nmg_vlblock_v(vbp, vu->v_p, tab);
 	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
 		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 			nmg_vlblock_eu(vbp, eu, tab, red, green, blue,
@@ -1350,8 +1349,8 @@ nmg_pl_edges_in_2_shells(struct bn_vlblock *vbp, long int *b, const struct edgeu
 		if (*eur->up.magic_p == NMG_LOOPUSE_MAGIC &&
 		    *eur->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
 		    eur->up.lu_p->up.fu_p->s_p != s) {
-		    	nmg_vlblock_around_eu(vbp, eu, b, fancy, tol);
-		    	break;
+			nmg_vlblock_around_eu(vbp, eu, b, fancy, tol);
+			break;
 		    }
 
 		eur = eur->radial_p->eumate_p;
@@ -1454,7 +1453,7 @@ nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1)
 	nmg_vlblock_fu(vbp, fu1, tab, 3);
 
 	if( do_plot )  {
-	    	(void)sprintf(name, "comb%d.%d.pl", num1, num2);
+		(void)sprintf(name, "comb%d.%d.pl", num1, num2);
 		if ((fp=fopen(name, "w")) == (FILE *)NULL) {
 			(void)perror(name);
 			return;
@@ -1682,7 +1681,7 @@ static void
 show_broken_eu(struct bn_vlblock *vbp, const struct edgeuse *eu, int fancy)
 {
 	struct bu_list	*vh;
-    	int red, green, blue;
+	int red, green, blue;
 	point_t base, tip;
 	point_t	radial_tip;
 	point_t	next_base;
@@ -1698,28 +1697,28 @@ show_broken_eu(struct bn_vlblock *vbp, const struct edgeuse *eu, int fancy)
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
 
-	    	red = broken_colors[broken_color][0];
-	    	green = broken_colors[broken_color][1];
-	    	blue = broken_colors[broken_color][2];
+		red = broken_colors[broken_color][0];
+		green = broken_colors[broken_color][1];
+		blue = broken_colors[broken_color][2];
 
-	    	nmg_eu_coords(eu, base, tip);
-	    	if (eu->up.lu_p->up.fu_p->orientation == OT_SAME)
-	    		red += 50;
+		nmg_eu_coords(eu, base, tip);
+		if (eu->up.lu_p->up.fu_p->orientation == OT_SAME)
+			red += 50;
 		else if (eu->up.lu_p->up.fu_p->orientation == OT_OPPOSITE)
 			red -= 50;
-	    	else
-	    		red = green = blue = 255;
+		else
+			red = green = blue = 255;
 
 		vh = rt_vlblock_find( vbp, red, green, blue );
 		RT_ADD_VLIST( vh, base, BN_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vh, tip, BN_VLIST_LINE_DRAW );
 
-	    	nmg_eu_radial( eu, radial_tip );
+		nmg_eu_radial( eu, radial_tip );
 		vh = rt_vlblock_find( vbp, red, green-20, blue );
 		RT_ADD_VLIST( vh, tip, BN_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vh, radial_tip, BN_VLIST_LINE_DRAW );
 
-	    	nmg_eu_next_base( eu, next_base );
+		nmg_eu_next_base( eu, next_base );
 		vh = rt_vlblock_find( vbp, 0, 100, 0 );
 		RT_ADD_VLIST( vh, tip, BN_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vh, next_base, BN_VLIST_LINE_DRAW );
@@ -1772,7 +1771,6 @@ show_broken_lu(struct bn_vlblock *vbp, const struct loopuse *lu, int fancy)
 		/* If only DEBUG_GRAPHCL set, don't draw lu's at all */
 	}
 }
-
 
 
 static void
@@ -2281,7 +2279,7 @@ int
 nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_interior)
 
 
-   				           	/* typ. 10 */
+						/* typ. 10 */
 {
 	register int		i;
 	register int		j;
@@ -2385,8 +2383,8 @@ void
 nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interior, int cmd)
 
 
-   				           	/* typ. 10 */
-   				    		/* BN_VLIST_LINE_DRAW, etc */
+						/* typ. 10 */
+						/* BN_VLIST_LINE_DRAW, etc */
 {
 	const struct edge_g_cnurb	*eg;
 	const struct faceuse	*fu;

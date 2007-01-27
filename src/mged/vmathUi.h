@@ -38,7 +38,7 @@ set M_SQRT1_2	0.70710678118654752440;\
 \
 proc near_zero { val epsilon } {\
     return [expr abs([lindex $val 0])<$epsilon && \
-	         abs([lindex $val 1])<$epsilon && \
+		 abs([lindex $val 1])<$epsilon && \
 		 abs([lindex $val 2])<$epsilon];\
 };\
 \
@@ -64,41 +64,41 @@ proc mat_idn { } {\
 \
 proc vreverse { v } {\
     return [list [expr -1.0*[lindex $v 0]] \
-	         [expr -1.0*[lindex $v 1]] \
+		 [expr -1.0*[lindex $v 1]] \
 		 [expr -1.0*[lindex $v 2]]];\
 };\
 \
 proc hreverse { h } {\
     return [list [expr -1.0*[lindex $h 0]] \
-	         [expr -1.0*[lindex $h 1]] \
+		 [expr -1.0*[lindex $h 1]] \
 		 [expr -1.0*[lindex $h 2]] \
-	         [expr -1.0*[lindex $h 3]]];\
+		 [expr -1.0*[lindex $h 3]]];\
 };\
 \
 proc vadd2 { u v } {\
     return [list [expr [lindex $u 0]+[lindex $v 0]] \
-	         [expr [lindex $u 1]+[lindex $v 1]] \
-	         [expr [lindex $u 2]+[lindex $v 2]]];\
+		 [expr [lindex $u 1]+[lindex $v 1]] \
+		 [expr [lindex $u 2]+[lindex $v 2]]];\
 };\
 \
 proc vsub2 { u v } {\
     return [list [expr [lindex $u 0]-[lindex $v 0]] \
-	         [expr [lindex $u 1]-[lindex $v 1]] \
-	         [expr [lindex $u 2]-[lindex $v 2]]];\
+		 [expr [lindex $u 1]-[lindex $v 1]] \
+		 [expr [lindex $u 2]-[lindex $v 2]]];\
 };\
 \
 proc hadd2 { g h } {\
     return [list [expr [lindex $g 0]+[lindex $h 0]] \
-	         [expr [lindex $g 1]+[lindex $h 1]] \
-	         [expr [lindex $g 2]+[lindex $h 2]] \
-	         [expr [lindex $g 3]+[lindex $h 3]]];\
+		 [expr [lindex $g 1]+[lindex $h 1]] \
+		 [expr [lindex $g 2]+[lindex $h 2]] \
+		 [expr [lindex $g 3]+[lindex $h 3]]];\
 };\
 \
 proc hsub2 { g h } {\
     return [list [expr [lindex $g 0]-[lindex $h 0]] \
-	         [expr [lindex $g 1]-[lindex $h 1]] \
-	         [expr [lindex $g 2]-[lindex $h 2]] \
-	         [expr [lindex $g 3]-[lindex $h 3]]];\
+		 [expr [lindex $g 1]-[lindex $h 1]] \
+		 [expr [lindex $g 2]-[lindex $h 2]] \
+		 [expr [lindex $g 3]-[lindex $h 3]]];\
 };\
 \
 proc vadd3 { u v w } {\
@@ -155,12 +155,12 @@ proc hsub args {\
 \
 proc v2add2 { x y } {\
     return [list [expr [lindex $x 0]+[lindex $y 0]] \
-	         [expr [lindex $x 1]+[lindex $y 1]]];\
+		 [expr [lindex $x 1]+[lindex $y 1]]];\
 };\
 \
 proc v2sub2 { x y } {\
     return [list [expr [lindex $x 0]-[lindex $y 0]] \
-	         [expr [lindex $x 1]-[lindex $y 1]]];\
+		 [expr [lindex $x 1]-[lindex $y 1]]];\
 };\
 \
 proc v2add args {\
@@ -284,21 +284,21 @@ proc vmagnitude { v } {\
 \
 proc vcross { u v } {\
   return [list [expr [lindex $u 1]*[lindex $v 2]-[lindex $u 2]*[lindex $v 1]] \
-               [expr [lindex $u 2]*[lindex $v 0]-[lindex $u 0]*[lindex $v 2]] \
+	       [expr [lindex $u 2]*[lindex $v 0]-[lindex $u 0]*[lindex $v 2]] \
 	       [expr [lindex $u 0]*[lindex $v 1]-[lindex $u 1]*[lindex $v 0]]];\
 };\
 \
 proc vdot { u v } {\
     return [expr [lindex $u 0]*[lindex $v 0] + \
-	         [lindex $u 1]*[lindex $v 1] + \
+		 [lindex $u 1]*[lindex $v 1] + \
 		 [lindex $u 2]*[lindex $v 2]];\
 };\
 \
 proc hdot { g h } {\
     return [expr [lindex $g 0]*[lindex $h 0] + \
-                 [lindex $g 1]*[lindex $h 1] + \
-                 [lindex $g 2]*[lindex $h 2] + \
-                 [lindex $g 3]*[lindex $h 3]];\
+		 [lindex $g 1]*[lindex $h 1] + \
+		 [lindex $g 2]*[lindex $h 2] + \
+		 [lindex $g 3]*[lindex $h 3]];\
 };\
 \
 proc v2dot { x y } {\
@@ -311,13 +311,13 @@ proc vsub2dot { p2 p1 v } {\
 \
 proc velmul { u v } {\
     return [list [expr [lindex $u 0]*[lindex $v 0]] \
-	         [expr [lindex $u 1]*[lindex $v 1]] \
+		 [expr [lindex $u 1]*[lindex $v 1]] \
 		 [expr [lindex $u 2]*[lindex $v 2]]];\
 };\
 \
 proc veldiv { u v } {\
     return [list [expr [lindex $u 0]*1.0/[lindex $v 0]] \
-	         [expr [lindex $u 1]*1.0/[lindex $v 1]] \
+		 [expr [lindex $u 1]*1.0/[lindex $v 1]] \
 		 [expr [lindex $u 2]*1.0/[lindex $v 2]]];\
 };\
 \
@@ -327,77 +327,77 @@ proc vinvdir { v } {\
 \
 proc mat3x3vec { m v } {\
     return [list [vdot [lrange $m 0 2] $v] \
-	         [vdot [lrange $m 4 6] $v] \
+		 [vdot [lrange $m 4 6] $v] \
 		 [vdot [lrange $m 8 10] $v]];\
 };\
 \
 proc vec3x3mat { v m } {\
     return [list [vdot [list [lindex $m 0] [lindex $m 4] [lindex $m 8]] $v] \
-	         [vdot [list [lindex $m 1] [lindex $m 5] [lindex $m 9]] $v] \
+		 [vdot [list [lindex $m 1] [lindex $m 5] [lindex $m 9]] $v] \
 		 [vdot [list [lindex $m 2] [lindex $m 6] [lindex $m 10]] $v]];\
 };\
 \
 proc mat3x2vec { m v } {\
     return [list [v2dot [lrange $m 0 1] $v] \
-                 [v2dot [lrange $m 4 5] $v] \
-                 [v2dot [lrange $m 8 9] $v]];\
+		 [v2dot [lrange $m 4 5] $v] \
+		 [v2dot [lrange $m 8 9] $v]];\
 };\
 \
 proc vec2x3mat { v m } {\
     return [list [v2dot [list [lindex $m 0] [lindex $m 4]] $v] \
-                 [v2dot [list [lindex $m 1] [lindex $m 5]] $v] \
-                 [v2dot [list [lindex $m 2] [lindex $m 6]] $v]];\
+		 [v2dot [list [lindex $m 1] [lindex $m 5]] $v] \
+		 [v2dot [list [lindex $m 2] [lindex $m 6]] $v]];\
 };\
 \
 proc mat4x3pnt { m p } {\
     set f [expr 1.0/([vdot [lrange $m 12 14] $p]+[lindex $m 15])];\
     return [list [expr ([lindex $m 0]*[lindex $p 0] + \
-                        [lindex $m 1]*[lindex $p 1] + \
-                        [lindex $m 2]*[lindex $p 2] + [lindex $m 3])*$f] \
-                 [expr ([lindex $m 4]*[lindex $p 0] + \
-                        [lindex $m 5]*[lindex $p 1] + \
-                        [lindex $m 6]*[lindex $p 2] + [lindex $m 7])*$f] \
-                 [expr ([lindex $m 8]*[lindex $p 0] + \
-                        [lindex $m 9]*[lindex $p 1] + \
-                        [lindex $m 10]*[lindex $p 2] + [lindex $m 11])*$f]];\
+			[lindex $m 1]*[lindex $p 1] + \
+			[lindex $m 2]*[lindex $p 2] + [lindex $m 3])*$f] \
+		 [expr ([lindex $m 4]*[lindex $p 0] + \
+			[lindex $m 5]*[lindex $p 1] + \
+			[lindex $m 6]*[lindex $p 2] + [lindex $m 7])*$f] \
+		 [expr ([lindex $m 8]*[lindex $p 0] + \
+			[lindex $m 9]*[lindex $p 1] + \
+			[lindex $m 10]*[lindex $p 2] + [lindex $m 11])*$f]];\
 };\
 \
 proc pnt3x4mat { p m } {\
     set f [vdot [list [lindex $m 3] [lindex $m 7] [lindex $m 14]] $p];\
     set f [expr 1.0/($f+[lindex $m 15])];\
     return [list [expr ([lindex $m 0]*[lindex $p 0] + \
-                        [lindex $m 4]*[lindex $p 1] + \
-                        [lindex $m 8]*[lindex $p 2] + [lindex $m 12])*$f] \
-                 [expr ([lindex $m 1]*[lindex $p 0] + \
-                        [lindex $m 5]*[lindex $p 1] + \
-                        [lindex $m 9]*[lindex $p 2] + [lindex $m 13])*$f] \
-                 [expr ([lindex $m 2]*[lindex $p 0] + \
-                        [lindex $m 6]*[lindex $p 1] + \
-                        [lindex $m 10]*[lindex $p 2] + [lindex $m 14])*$f]];\
+			[lindex $m 4]*[lindex $p 1] + \
+			[lindex $m 8]*[lindex $p 2] + [lindex $m 12])*$f] \
+		 [expr ([lindex $m 1]*[lindex $p 0] + \
+			[lindex $m 5]*[lindex $p 1] + \
+			[lindex $m 9]*[lindex $p 2] + [lindex $m 13])*$f] \
+		 [expr ([lindex $m 2]*[lindex $p 0] + \
+			[lindex $m 6]*[lindex $p 1] + \
+			[lindex $m 10]*[lindex $p 2] + [lindex $m 14])*$f]];\
 }    ;\
 \
 proc mat4x4pnt { m h } {\
     return [list [hdot [lrange $m 0 3] $h] \
-                 [hdot [lrange $m 4 7] $h] \
-                 [hdot [lrange $m 8 11] $h] \
-                 [hdot [lrange $m 12 15] $h]];\
+		 [hdot [lrange $m 4 7] $h] \
+		 [hdot [lrange $m 8 11] $h] \
+		 [hdot [lrange $m 12 15] $h]];\
 };\
 \
 proc mat4x3vec { m v } {\
     set f [expr 1.0/[lindex $m 15]];\
     return [list [expr [vdot [lrange $m 0 2] $v]*$f] \
-                 [expr [vdot [lrange $m 4 6] $v]*$f] \
-                 [expr [vdot [lrange $m 8 10] $v]*$f]];\
+		 [expr [vdot [lrange $m 4 6] $v]*$f] \
+		 [expr [vdot [lrange $m 8 10] $v]*$f]];\
 };\
 \
 proc vec3x4mat { v m } {\
     set f [expr 1.0/[lindex $m 15]];\
     return [list [expr [vdot [list [lindex $m 0] [lindex $m 4] [lindex $m 8]] \
-                             $v]*$f] \
-                 [expr [vdot [list [lindex $m 1] [lindex $m 5] [lindex $m 9]] \
-                             $v]*$f] \
-                 [expr [vdot [list [lindex $m 2] [lindex $m 6] [lindex $m 10]]\
-                             $v]*$f]];\
+			     $v]*$f] \
+		 [expr [vdot [list [lindex $m 1] [lindex $m 5] [lindex $m 9]] \
+			     $v]*$f] \
+		 [expr [vdot [list [lindex $m 2] [lindex $m 6] [lindex $m 10]]\
+			     $v]*$f]];\
 };\
 ";
 
@@ -405,13 +405,13 @@ char *vmath_ui_str2 = "\
 proc vec2x4mat { v m } {\
   set f [expr 1.0/[lindex $m 15]];\
   return [list [expr [lindex $m 0]*[lindex $v 0]+[lindex $m 4]*[lindex $v 1]] \
-               [expr [lindex $m 1]*[lindex $v 0]+[lindex $m 5]*[lindex $v 1]] \
-               [expr [lindex $m 2]*[lindex $v 0]+[lindex $m 6]*[lindex $v 1]]];\
+	       [expr [lindex $m 1]*[lindex $v 0]+[lindex $m 5]*[lindex $v 1]] \
+	       [expr [lindex $m 2]*[lindex $v 0]+[lindex $m 6]*[lindex $v 1]]];\
 };\
 \
 proc vequal { u v } {\
     return [expr [lindex $u 0]==[lindex $v 0] && \
-	         [lindex $u 1]==[lindex $v 1] && \
+		 [lindex $u 1]==[lindex $v 1] && \
 		 [lindex $u 2]==[lindex $v 2]];\
 };\
 \
@@ -507,21 +507,21 @@ proc qunitize { q } {\
 \
 proc qmul { q r } {\
     return [list [expr +[lindex $q 0]*[lindex $r 3] \
-                       +[lindex $q 1]*[lindex $r 2] \
-                       -[lindex $q 2]*[lindex $r 1] \
-                       +[lindex $q 3]*[lindex $r 0]] \
-                 [expr -[lindex $q 0]*[lindex $r 2] \
-                       +[lindex $q 1]*[lindex $r 3] \
-                       +[lindex $q 2]*[lindex $r 0] \
-                       +[lindex $q 3]*[lindex $r 1]] \
-                 [expr +[lindex $q 0]*[lindex $r 1] \
-                       -[lindex $q 1]*[lindex $r 0] \
-                       +[lindex $q 2]*[lindex $r 3] \
-                       +[lindex $q 3]*[lindex $r 2]] \
-                 [expr -[lindex $q 0]*[lindex $r 0] \
-                       -[lindex $q 1]*[lindex $r 1] \
-                       -[lindex $q 2]*[lindex $r 2] \
-                       +[lindex $q 3]*[lindex $r 3]]];\
+		       +[lindex $q 1]*[lindex $r 2] \
+		       -[lindex $q 2]*[lindex $r 1] \
+		       +[lindex $q 3]*[lindex $r 0]] \
+		 [expr -[lindex $q 0]*[lindex $r 2] \
+		       +[lindex $q 1]*[lindex $r 3] \
+		       +[lindex $q 2]*[lindex $r 0] \
+		       +[lindex $q 3]*[lindex $r 1]] \
+		 [expr +[lindex $q 0]*[lindex $r 1] \
+		       -[lindex $q 1]*[lindex $r 0] \
+		       +[lindex $q 2]*[lindex $r 3] \
+		       +[lindex $q 3]*[lindex $r 2]] \
+		 [expr -[lindex $q 0]*[lindex $r 0] \
+		       -[lindex $q 1]*[lindex $r 1] \
+		       -[lindex $q 2]*[lindex $r 2] \
+		       +[lindex $q 3]*[lindex $r 3]]];\
 };\
 \
 proc qconjugate { q } {\
@@ -538,47 +538,47 @@ proc qblend2 { b c  d e } {\
 \
 proc v3rpp_overlap { l1 h1 l2 h2 } {\
     return [expr !([lindex $l1 0]>[lindex $h2 0] || \
-                   [lindex $l1 1]>[lindex $h2 1] || \
-                   [lindex $l1 2]>[lindex $h2 2] || \
-                   [lindex $l2 0]>[lindex $h1 0] || \
-                   [lindex $l2 1]>[lindex $h1 1] || \
-                   [lindex $l2 2]>[lindex $h1 2])];\
+		   [lindex $l1 1]>[lindex $h2 1] || \
+		   [lindex $l1 2]>[lindex $h2 2] || \
+		   [lindex $l2 0]>[lindex $h1 0] || \
+		   [lindex $l2 1]>[lindex $h1 1] || \
+		   [lindex $l2 2]>[lindex $h1 2])];\
 };\
 \
 proc v3rpp_overlap_tol { l1 h1 l2 h2 toldist } {\
     return [expr !([lindex $l1 0]>([lindex $h2 0]+$toldist) || \
-                   [lindex $l1 1]>([lindex $h2 1]+$toldist) || \
-                   [lindex $l1 2]>([lindex $h2 2]+$toldist) || \
-                   [lindex $l2 0]>([lindex $h1 0]+$toldist) || \
-                   [lindex $l2 1]>([lindex $h1 1]+$toldist) || \
-                   [lindex $l2 2]>([lindex $h1 2]+$toldist))];\
+		   [lindex $l1 1]>([lindex $h2 1]+$toldist) || \
+		   [lindex $l1 2]>([lindex $h2 2]+$toldist) || \
+		   [lindex $l2 0]>([lindex $h1 0]+$toldist) || \
+		   [lindex $l2 1]>([lindex $h1 1]+$toldist) || \
+		   [lindex $l2 2]>([lindex $h1 2]+$toldist))];\
 };\
 \
 proc v3pt_in_rpp { pt lo hi } {\
     return [expr [lindex $pt 0]>=[lindex $lo 0] && \
-                 [lindex $pt 0]<=[lindex $hi 0] && \
-                 [lindex $pt 1]>=[lindex $lo 1] && \
-                 [lindex $pt 1]<=[lindex $hi 1] && \
-                 [lindex $pt 2]>=[lindex $lo 2] && \
-                 [lindex $pt 2]<=[lindex $hi 2]];\
+		 [lindex $pt 0]<=[lindex $hi 0] && \
+		 [lindex $pt 1]>=[lindex $lo 1] && \
+		 [lindex $pt 1]<=[lindex $hi 1] && \
+		 [lindex $pt 2]>=[lindex $lo 2] && \
+		 [lindex $pt 2]<=[lindex $hi 2]];\
 };\
 \
 proc v3pt_in_rpp_tol { pt lo hi toldist } {\
     return [expr [lindex $pt 0]>=([lindex $lo 0]-$toldist) && \
-                 [lindex $pt 0]<=([lindex $hi 0]+$toldist) && \
-                 [lindex $pt 1]>=([lindex $lo 1]-$toldist) && \
-                 [lindex $pt 1]<=([lindex $hi 1]+$toldist) && \
-                 [lindex $pt 2]>=([lindex $lo 2]-$toldist) && \
-                 [lindex $pt 2]<=([lindex $hi 2]+$toldist)];\
+		 [lindex $pt 0]<=([lindex $hi 0]+$toldist) && \
+		 [lindex $pt 1]>=([lindex $lo 1]-$toldist) && \
+		 [lindex $pt 1]<=([lindex $hi 1]+$toldist) && \
+		 [lindex $pt 2]>=([lindex $lo 2]-$toldist) && \
+		 [lindex $pt 2]<=([lindex $hi 2]+$toldist)];\
 };\
 \
 proc v3rpp1_in_rpp2 { lo1 hi1 lo2 hi2 } {\
     return [expr [lindex $lo1 0]>=[lindex $lo2 0] && \
-                 [lindex $hi1 0]<=[lindex $hi2 0] && \
-                 [lindex $lo1 1]>=[lindex $lo2 1] && \
-                 [lindex $hi1 1]<=[lindex $hi2 1] && \
-                 [lindex $lo1 2]>=[lindex $lo2 2] && \
-                 [lindex $hi1 2]<=[lindex $hi2 2]];\
+		 [lindex $hi1 0]<=[lindex $hi2 0] && \
+		 [lindex $lo1 1]>=[lindex $lo2 1] && \
+		 [lindex $hi1 1]<=[lindex $hi2 1] && \
+		 [lindex $lo1 2]>=[lindex $lo2 2] && \
+		 [lindex $hi1 2]<=[lindex $hi2 2]];\
 };\
 \
 \

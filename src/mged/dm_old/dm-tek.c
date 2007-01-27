@@ -38,7 +38,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <sys/time.h>		/* for struct timeval */
 #ifdef HAVE_STRING_H

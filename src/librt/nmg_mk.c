@@ -630,7 +630,7 @@ nmg_mlv(long int *magic, struct vertex *v, int orientation)
 static struct vertexuse *
 nmg_mvu(struct vertex *v, long int *upptr, struct model *m)
 
-    		       		/* pointer to parent struct */
+				/* pointer to parent struct */
 
 {
 	struct vertexuse *vu;
@@ -1492,7 +1492,7 @@ nmg_keu(register struct edgeuse *eu1)
 		if (lu1->lumate_p != lu2 || lu1 != lu2->lumate_p ) {
 			bu_log("nmg_keu() lu1=x%x, mate=x%x\n", lu1, lu1->lumate_p);
 			bu_log("nmg_keu() lu2=x%x, mate=x%x\n", lu2, lu2->lumate_p);
-		    	rt_bomb("nmg_keu() edgeuse mates don't belong to loopuse mates\n");
+			rt_bomb("nmg_keu() edgeuse mates don't belong to loopuse mates\n");
 		}
 
 		/* remove the edgeuses from their parents */
@@ -2464,7 +2464,7 @@ nmg_face_bb(struct face *f, const struct bn_tol *tol)
 	/* Note, calculating the bounding box for face_g_snurbs
 	 * from the extents of the the loop does not work
 	 * since the loops are most likely in parametric space
- 	 * thus we need to calcualte the bounding box for the
+	 * thus we need to calcualte the bounding box for the
 	 * face_g_snurb here instead.  There may be a more efficient
 	 * way, and one may need some time to take a good look at
 	 * this
@@ -2801,7 +2801,7 @@ nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
 
 	if (eusrc->e_p == eudst->e_p &&
 	    (eusrc->radial_p == eudst || eudst->radial_p == eusrc))  {
-	    	bu_log("nmg_je() edgeuses already share edge\n");
+		bu_log("nmg_je() edgeuses already share edge\n");
 		return;
 	}
 
@@ -2811,11 +2811,11 @@ nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
 	    (eudst->vu_p->v_p == eusrc->vu_p->v_p &&
 	    eudst_mate->vu_p->v_p == eusrc_mate->vu_p->v_p) ) ) {
 		/* edgeuses do NOT share verticies. */
-	    	bu_log( "eusrc (v=x%x) (%g %g %g)\n", eusrc->vu_p->v_p, V3ARGS( eusrc->vu_p->v_p->vg_p->coord ) );
-	    	bu_log( "eusrc_mate (v=x%x) (%g %g %g)\n", eusrc_mate->vu_p->v_p, V3ARGS( eusrc_mate->vu_p->v_p->vg_p->coord ) );
-	    	bu_log( "eudst (v=x%x) (%g %g %g)\n", eudst->vu_p->v_p, V3ARGS( eudst->vu_p->v_p->vg_p->coord ) );
-	    	bu_log( "eudst_mate (v=x%x) (%g %g %g)\n", eudst_mate->vu_p->v_p, V3ARGS( eudst_mate->vu_p->v_p->vg_p->coord ) );
-	    	rt_bomb("nmg_je() edgeuses do not share vertices, cannot share edge\n");
+		bu_log( "eusrc (v=x%x) (%g %g %g)\n", eusrc->vu_p->v_p, V3ARGS( eusrc->vu_p->v_p->vg_p->coord ) );
+		bu_log( "eusrc_mate (v=x%x) (%g %g %g)\n", eusrc_mate->vu_p->v_p, V3ARGS( eusrc_mate->vu_p->v_p->vg_p->coord ) );
+		bu_log( "eudst (v=x%x) (%g %g %g)\n", eudst->vu_p->v_p, V3ARGS( eudst->vu_p->v_p->vg_p->coord ) );
+		bu_log( "eudst_mate (v=x%x) (%g %g %g)\n", eudst_mate->vu_p->v_p, V3ARGS( eudst_mate->vu_p->v_p->vg_p->coord ) );
+		rt_bomb("nmg_je() edgeuses do not share vertices, cannot share edge\n");
 	}
 
 	e = eusrc->e_p;

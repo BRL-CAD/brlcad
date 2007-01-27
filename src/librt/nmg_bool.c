@@ -127,8 +127,8 @@ void
 nmg_show_each_loop(struct shell *s, long int **classlist, int new, int fancy, const char *str)
 
 
-   		    		/* non-zero means flush previous vlist */
-          	     		/* non-zero means pause after the display */
+				/* non-zero means flush previous vlist */
+				/* non-zero means pause after the display */
 {
 	struct faceuse	*fu;
 	struct loopuse	*lu;
@@ -1169,7 +1169,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, st
 	if (ip->idb_meth->ft_tessellate(
 	    &r1, m, ip, tsp->ts_ttol, tsp->ts_tol) < 0) {
 		bu_log("nmg_booltree_leaf_tess(%s): tessellation failure\n", dp->d_namep);
-	    	return(TREE_NULL);
+		return(TREE_NULL);
 	}
 
 	NMG_CK_REGION(r1);
@@ -1227,7 +1227,7 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, struct db_full_path *pathp, s
 	if (ip->idb_meth->ft_tnurb(
 	    &r1, *tsp->ts_m, ip, tsp->ts_tol) < 0) {
 		bu_log("nmg_booltree_leaf_tnurb(%s): CSG to t-NURB conversation failure\n", dp->d_namep);
-	    	return(TREE_NULL);
+		return(TREE_NULL);
 	}
 
 	NMG_CK_REGION(r1);
@@ -1345,9 +1345,9 @@ bu_log(" {%s}%s{%s}\n", tl->tr_d.td_name, op_str, tr->tr_d.td_name );
 	NMG_CK_REGION(tr->tr_d.td_r);
 	NMG_CK_REGION(tl->tr_d.td_r);
 	if (nmg_ck_closed_region(tr->tr_d.td_r, tol) != 0)
-	    	bu_log("nmg_booltree_evaluate:  WARNING, non-closed shell (r), barging ahead\n");
+		bu_log("nmg_booltree_evaluate:  WARNING, non-closed shell (r), barging ahead\n");
 	if (nmg_ck_closed_region(tl->tr_d.td_r, tol) != 0)
-	    	bu_log("nmg_booltree_evaluate:  WARNING, non-closed shell (l), barging ahead\n");
+		bu_log("nmg_booltree_evaluate:  WARNING, non-closed shell (l), barging ahead\n");
 nmg_r_radial_check( tr->tr_d.td_r, tol );
 nmg_r_radial_check( tl->tr_d.td_r, tol );
 

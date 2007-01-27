@@ -130,7 +130,7 @@ main(int argc, char **argv)
 
 		if( new_xPan != xPan || new_yPan != yPan
 		  || new_xZoom != xZoom || new_yZoom != yZoom ) {
-		  	/* values have changed, write them */
+			/* values have changed, write them */
 			if( fb_view(fbp, new_xPan, new_yPan,
 			    new_xZoom, new_yZoom) >= 0 ) {
 				/* good values, save them */

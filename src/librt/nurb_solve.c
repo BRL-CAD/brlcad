@@ -61,11 +61,11 @@
  */
 void
 rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int coords)
-       	       		/* A and b array of the system Ax= b*/
+			/* A and b array of the system Ax= b*/
 
 
-   	    		/* dimension of the matrix */
-   	       		/* Number of coordsinates for mat_2 and solution */
+			/* dimension of the matrix */
+			/* Number of coordsinates for mat_2 and solution */
 {
 	register int i, k;
 	fastf_t *y;
@@ -216,8 +216,6 @@ void
 rt_nurb_forw_solve(const fastf_t *lu, const fastf_t *b, fastf_t *y, int n)		/* spl_solve lower trianglular matrix */
 
 
-
-
 {
 	register int i,j;
 	fastf_t tmp;
@@ -233,8 +231,6 @@ rt_nurb_forw_solve(const fastf_t *lu, const fastf_t *b, fastf_t *y, int n)		/* s
 
 void
 rt_nurb_back_solve(const fastf_t *lu, const fastf_t *y, fastf_t *x, int n)		/* spl_solve upper triangular matrix */
-
-
 
 
 {

@@ -37,7 +37,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -175,12 +174,12 @@ rt_nurb_eval_crv(register fastf_t *crv, int order, fastf_t param, const struct k
 		if ((k1 - k2) != 0.0 ) {
 			for ( i= 0; i < coords; i++)
 			{
- 				*((crv + ((j) * coords)) + i) =
+				*((crv + ((j) * coords)) + i) =
 					((k1 - param) *
 					*((crv + ((j - 1) * coords)) + i)
 					+ (param - k2 ) * *((crv + ((j) *
 					coords)) + i)) / (k1 - k2);
- 			}
+			}
 		}
 		j--;
 	}

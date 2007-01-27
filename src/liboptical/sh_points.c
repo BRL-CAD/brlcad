@@ -106,9 +106,7 @@ HIDDEN int
 points_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-
-
-                                /* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct points_specific *ptp;
 	char	buf[513];

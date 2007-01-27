@@ -101,8 +101,8 @@ editarb( vect_t pos_model )
 	/* set the pointer */
 	switch( es_type ) {
 
-	        case ARB4:
-		        edptr = &earb4[es_menu][0];
+		case ARB4:
+			edptr = &earb4[es_menu][0];
 			final = &earb4[es_menu][16];
 		break;
 
@@ -137,12 +137,12 @@ editarb( vect_t pos_model )
 		break;
 
 		case ARB8:
-		        edptr = &earb8[es_menu][0];
+			edptr = &earb8[es_menu][0];
 			final = &earb8[es_menu][16];
 		break;
 
 		default:
- 		  Tcl_AppendResult(interp, "edarb: unknown ARB type\n", (char *)NULL);
+		  Tcl_AppendResult(interp, "edarb: unknown ARB type\n", (char *)NULL);
 
 		return(1);
 	}
@@ -415,7 +415,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	 * ---   provides easy way to build ARB6's
 	 *        6	    123 for ARB4
 	 *	  8	    124 for ARB4
- 	 *	 12	    134 for ARB4
+	 *	 12	    134 for ARB4
 	 *	 24	    234 for ARB4
 	 */
 	prod = 1;

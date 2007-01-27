@@ -158,7 +158,7 @@ BU_EXTERN(void _rb_rot_right,		(struct bu_rb_node	*y,
 					 int		order
 					));
 BU_EXTERN(void _rb_walk,		(bu_rb_tree	*tree,
-			    		 int		order,
+					 int		order,
 					 void		(*visit)(),
 					 int		what_to_visit,
 					 int		trav_type

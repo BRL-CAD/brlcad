@@ -49,12 +49,12 @@ proc tree {args} {
 	set arg [lindex $args $i]
 	switch -- $arg {
 	    -c
-	        -
+		-
 	    -comb {
 		set cflag 1
 	    }
 	    -i
-	        -
+		-
 	    -indent {
 		incr i
 		if {$i == $argc} {
@@ -72,7 +72,7 @@ proc tree {args} {
 		}
 	    }
 	    -o
-	        -
+		-
 	    -outfile {
 		incr i
 		if {$i == $argc} {

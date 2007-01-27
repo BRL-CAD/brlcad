@@ -44,7 +44,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 
 #include "machine.h"
@@ -122,7 +121,6 @@ db_regexp_match(register const char *pattern, register const char *string)
 	} while( *pattern++ != '\0' );
 	return( 1 );
 }
-
 
 
 /**

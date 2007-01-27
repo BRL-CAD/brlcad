@@ -246,7 +246,7 @@
 	# entry options
 	variable entryOptionsList { \
 	       -bg -cursor -disabledbackground -disabledforeground \
-               -exportselection -fg -font \
+	       -exportselection -fg -font \
 	       -highlightbackground -highlightcolor -highlightthickness \
 	       -insertborderwidth -insertofftime -insertbackground \
 	       -insertontime -insertwidth -invcmd -justify -relief \
@@ -1889,10 +1889,10 @@
 	# Is this ugly or what?
 	::bind $itk_component(e$i,$j) <KeyPress> \
 	    "[::itcl::code $this handleTextEntryKeyPress %W %K]; \
-             if [list \$[list [::itcl::scope doBreak]]] break"
+	     if [list \$[list [::itcl::scope doBreak]]] break"
 	::bind $itk_component(e$i,$j) <Shift-KeyPress> \
 	    "[::itcl::code $this handleTextEntryShiftKeyPress %W %K]; \
-             if [list \$[list [::itcl::scope doBreak]]] break"
+	     if [list \$[list [::itcl::scope doBreak]]] break"
 	::bind $itk_component(e$i,$j) <FocusOut> [::itcl::code $this handleLostFocus %W]
     } else {
 	itk_component add e$i,$j {
@@ -1986,9 +1986,9 @@
     itk_component add canvas {
 	::canvas $itk_interior.canvas \
 		-height 1.0 -width 1.0 \
-                -scrollregion "0 0 1 1" \
-                -xscrollcommand [::itcl::code $this hscroll] \
-	        -highlightthickness 0 -takefocus 0
+		-scrollregion "0 0 1 1" \
+		-xscrollcommand [::itcl::code $this hscroll] \
+		-highlightthickness 0 -takefocus 0
     } {
 	ignore -highlightcolor -highlightthickness
 	keep -background -cursor
@@ -2035,7 +2035,7 @@
 
     pack $itk_component(table) -expand yes -fill both
     $itk_component(canvas) create window 0 0 -tags tableTag \
-            -window $itk_component(table) -anchor nw
+	    -window $itk_component(table) -anchor nw
     grid $itk_component(rowLabels) -row 0 -column 0 -sticky nw
     grid $itk_component(canvas) -row 0 -column 1 -sticky nsew
 

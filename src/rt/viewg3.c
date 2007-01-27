@@ -833,8 +833,8 @@ top:		nextpp = pp->pt_forw;
 		 */
 #if 0
 		  bu_log("part_comp: collapsing gap of %e mm between id=%d and id=%d air=%d and air=%d\n",
-		 	gap, pp->pt_regionp->reg_regionid,
-		 	nextpp->pt_regionp->reg_regionid, pp->pt_regionp->reg_aircode, nextpp->pt_regionp->reg_aircode);
+			gap, pp->pt_regionp->reg_regionid,
+			nextpp->pt_regionp->reg_regionid, pp->pt_regionp->reg_aircode, nextpp->pt_regionp->reg_aircode);
 #endif
 		  pp->pt_outseg = nextpp->pt_outseg;
 		  pp->pt_outhit = nextpp->pt_outhit;

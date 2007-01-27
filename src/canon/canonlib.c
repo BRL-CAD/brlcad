@@ -250,7 +250,6 @@ int ipu_ready(struct dsreq *dsp)
 }
 
 
-
 /*	I P U _ C R E A T E _ F I L E
  *
  *	create a file in the IPU

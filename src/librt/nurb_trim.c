@@ -40,7 +40,6 @@ static const char rcs_ident[] = "$Header$";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 
@@ -239,7 +238,6 @@ rt_nurb_uv_dist(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 }
 
 
-
 /* Process Case C curves;
  * A check is placed here to determin if the u,v is on the curve.
  * Determine how many times the curve will cross the u,v axis. If
@@ -339,9 +337,6 @@ rt_uv_in_trim(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 	bu_log( "rt_uv_in_trim: rt_trim_case() returned illegal value %d\n", quad_case );
 	return( -1 );
 }
-
-
-
 
 
 /* This routines is used to determine how far a point is
@@ -449,41 +444,41 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 	/* Find the convex hull of the distances and determine the
 	 * minimum and maximum distance to clip against. See the
 	 * paper for details about this step
- 	 */
+	 */
 
 	umin = 10e40;
 	umax = -10e40;
 	zero_changed = 0;
 
 	for( i = 0; i < crv->c_size; i++)
-        {
-                fastf_t d1, d2;
-                fastf_t x0, x1, zero;
+	{
+		fastf_t d1, d2;
+		fastf_t x0, x1, zero;
 
-                if ( i == (crv->c_size -1 ) )
-                {
-                        d1 = dist[i];
-                        d2 = dist[0];
-                        x0 = (fastf_t) i / (fastf_t) (crv->c_size - 1);
-                        x1 = 0.0;
-                } else
-        	{
-        		d1 = dist[i];
-        		d2 = dist[i+1];
-                        x0 = (fastf_t) i / (fastf_t) (crv->c_size - 1 );
-                        x1 = (i+1.0) / (crv->c_size - 1);
-        	}
+		if ( i == (crv->c_size -1 ) )
+		{
+			d1 = dist[i];
+			d2 = dist[0];
+			x0 = (fastf_t) i / (fastf_t) (crv->c_size - 1);
+			x1 = 0.0;
+		} else
+		{
+			d1 = dist[i];
+			d2 = dist[i+1];
+			x0 = (fastf_t) i / (fastf_t) (crv->c_size - 1 );
+			x1 = (i+1.0) / (crv->c_size - 1);
+		}
 
-                if( _SIGN(d1) != _SIGN(d2) )
-                {
-                        zero = x0 - d1 * (x1 - x0)/ (d2-d1);
-                        if( zero <= umin)
-                                umin = zero * .99;
-                        if( zero >= umax)
-                                umax = zero * .99 + .01;
-                        zero_changed = 1;
-                }
-        }
+		if( _SIGN(d1) != _SIGN(d2) )
+		{
+			zero = x0 - d1 * (x1 - x0)/ (d2-d1);
+			if( zero <= umin)
+				umin = zero * .99;
+			if( zero >= umax)
+				umax = zero * .99 + .01;
+			zero_changed = 1;
+		}
+	}
 
 	if( !zero_changed)
 		return;
@@ -497,11 +492,11 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 
 	/* Translate the 0.0-->1.09 clipping against the real knots */
 
-        m1 = (crv->k.knots[0] * (1 - umin)) +
-                crv->k.knots[crv->k.k_size -1] *  umin;
+	m1 = (crv->k.knots[0] * (1 - umin)) +
+		crv->k.knots[crv->k.k_size -1] *  umin;
 
-        m2 = (crv->k.knots[0] * (1-umax)) +
-                crv->k.knots[crv->k.k_size -1] * umax;
+	m2 = (crv->k.knots[0] * (1-umax)) +
+		crv->k.knots[crv->k.k_size -1] * umax;
 
 	/* subdivide the curve */
 	c1 = (struct edge_g_cnurb *) rt_nurb_c_xsplit(crv, m1);
@@ -515,7 +510,6 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 	BU_LIST_INSERT( &c2->l, plist);
 	BU_LIST_APPEND( plist, &c1->l);
 }
-
 
 
 int

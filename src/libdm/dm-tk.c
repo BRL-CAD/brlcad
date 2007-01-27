@@ -24,12 +24,12 @@
  *  Author -
  *	Phillip Dykstra
  *	Robert G. Parker
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
+ *
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -166,9 +166,9 @@ struct dm dm_Tk = {
 static fastf_t min_short = (fastf_t)SHRT_MIN;
 static fastf_t max_short = (fastf_t)SHRT_MAX;
 
-extern int vectorThreshold;	/* defined in libdm/tcl.c */ 
+extern int vectorThreshold;	/* defined in libdm/tcl.c */
 
-static void 
+static void
 get_color(Display *dpy, Colormap cmap, XColor *color)
 {
 	Status st;
@@ -180,7 +180,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 
 	st = XAllocColor(dpy, cmap, color);
 	switch (st) {
-	case 1: 
+	case 1:
 #if 0
 		if ( (color->red & CSCK) != (rgb.red & CSCK) ||
 		     (color->green & CSCK) != (rgb.green & CSCK) ||
@@ -195,13 +195,13 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 #endif
 		break;
 	case BadColor:
-		bu_log("XAllocColor failed (BadColor) for (%3d,%3d,%3d) %04x,%04x,%04x\n", 
+		bu_log("XAllocColor failed (BadColor) for (%3d,%3d,%3d) %04x,%04x,%04x\n",
 		       (rgb.red >> 8), (rgb.green >> 8), (rgb.blue >> 8),
 		       rgb.red, rgb.green, rgb.blue);
 		break;
 
 	default:
-		bu_log("XAllocColor error for (%3d,%3d,%3d) %04x,%04x,%04x\n", 
+		bu_log("XAllocColor error for (%3d,%3d,%3d) %04x,%04x,%04x\n",
 		       (rgb.red >> 8), (rgb.green >> 8), (rgb.blue >> 8),
 		       rgb.red, rgb.green, rgb.blue);
 		break;
@@ -352,14 +352,14 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
   if(dmp->dm_width == 0){
     dmp->dm_width =
       WidthOfScreen(Tk_Screen((
-        (struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) - 30;
+	(struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) - 30;
     ++make_square;
   }
 
   if(dmp->dm_height == 0){
     dmp->dm_height =
       HeightOfScreen(Tk_Screen((
-        (struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) - 30;
+	(struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) - 30;
     ++make_square;
   }
 
@@ -373,7 +373,7 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
   }
 
   Tk_GeometryRequest(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
-		     dmp->dm_width, 
+		     dmp->dm_width,
 		     dmp->dm_height);
 
 #if 0
@@ -406,21 +406,21 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
     fg.red = 65535;
     fg.green = fg.blue = 0;
 
-    ((struct x_vars *)dmp->dm_vars.priv_vars)->fg = 
+    ((struct x_vars *)dmp->dm_vars.priv_vars)->fg =
 	Tk_GetColorByValue(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
-        &fg)->pixel;
+	&fg)->pixel;
 
     bg.red = bg.green = bg.blue = 3277;
 
     ((struct x_vars *)dmp->dm_vars.priv_vars)->bg =
 	Tk_GetColorByValue(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
-        &bg)->pixel;
+	&bg)->pixel;
 
   gcv.background = ((struct x_vars *)dmp->dm_vars.priv_vars)->bg;
   gcv.foreground = ((struct x_vars *)dmp->dm_vars.priv_vars)->fg;
 
   ((struct x_vars *)dmp->dm_vars.priv_vars)->gc =
-    Tk_GetGC(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, 
+    Tk_GetGC(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
     (GCForeground|GCBackground), &gcv);
 
 
@@ -510,7 +510,7 @@ Skip_dials:
 
 /**
  *  @proc Tk_close
- *  
+ *
  *  Gracefully release the display.
  */
 HIDDEN int
@@ -547,7 +547,7 @@ Tk_close(struct dm *dmp)
 
 /**
  * @proc Tk_drawBegin
- * This white-washes the dm's pixmap with the background color. 
+ * This white-washes the dm's pixmap with the background color.
  */
 HIDDEN int
 Tk_drawBegin(struct dm *dmp)
@@ -593,7 +593,7 @@ Tk_drawEnd(struct dm *dmp)
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 	    ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 	      0, 0, dmp->dm_width,
- 	    dmp->dm_height, 0, 0);
+	    dmp->dm_height, 0, 0);
 
 
   /* Prevent lag between events and updates */
@@ -636,7 +636,7 @@ Tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 /**
  * Tk_drawVList
- *  
+ *
  */
 
 HIDDEN int
@@ -1022,7 +1022,7 @@ Tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
     XSetBackground(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 	((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 	Tk_GetColorByValue(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
-        &color)->pixel);
+	&color)->pixel);
 
   return TCL_OK;
 }
@@ -1114,13 +1114,13 @@ Tk_configureWin_guts(struct dm *dmp, int force)
   /* First time through, load a font or quit */
   if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct == NULL) {
     if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct =
-        Tk_GetFont(dmp->dm_interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, 
-        FONT9)) == NULL ) {
-     
+	Tk_GetFont(dmp->dm_interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
+	FONT9)) == NULL ) {
+
       /* Try hardcoded backup font */
       if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct =
-          Tk_GetFont(dmp->dm_interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, 
-          FONTBACK)) == NULL ) {
+	  Tk_GetFont(dmp->dm_interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
+	  FONTBACK)) == NULL ) {
 	bu_log("dm-Tk: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
 	return TCL_ERROR;
       }
@@ -1128,7 +1128,7 @@ Tk_configureWin_guts(struct dm *dmp, int force)
   }
 
   /* XXX:  I removed the font-sizing routine from dm-X from here.  Something
-           should be devised to replace it.  --TJM*/
+	   should be devised to replace it.  --TJM*/
 
   return TCL_OK;
 }

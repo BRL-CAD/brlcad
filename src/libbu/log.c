@@ -159,7 +159,7 @@ bu_log_delete_hook(bu_hook_t func, genptr_t clientdata)
     struct bu_hook_list *cur = &bu_log_hook_list;
 
     for ( BU_LIST_FOR( cur, bu_hook_list, &(bu_log_hook_list.l) ) ) {
-        if ( cur->hookfunc == func && cur->clientdata == clientdata) {
+	if ( cur->hookfunc == func && cur->clientdata == clientdata) {
 	    struct bu_hook_list *old = BU_LIST_PLAST(bu_hook_list, cur);
 	    BU_LIST_DEQUEUE( &(cur->l) );
 	    bu_free((genptr_t)cur, "bu_log hook");
@@ -336,7 +336,7 @@ char *fmt;
 #endif
 
     if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) )  || bu_log_hooks_called) {
-    	int ret;
+	int ret;
 	size_t len;
 
 	if (bu_log_first_time) {
@@ -440,7 +440,7 @@ char *fmt;
 #endif
 
     if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) || bu_log_hooks_called) {
-    	int ret;
+	int ret;
 	size_t len;
 
 	len = bu_vls_strlen(&output);

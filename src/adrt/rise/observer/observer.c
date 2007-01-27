@@ -178,13 +178,13 @@ void* rise_observer_networking(void *ptr) {
       /* get frame data */
 #if RISE_USE_COMPRESSION
       {
-        unsigned long dest_len;
-        int comp_size;
+	unsigned long dest_len;
+	int comp_size;
 
-        tienet_recv(sockd, &comp_size, sizeof(int), rise_observer_endian);
-        tienet_recv(sockd, comp_buf, comp_size, 0);
-        dest_len = screen_w*screen_h*3;
-        uncompress(frame, &dest_len, comp_buf, (unsigned long)comp_size);
+	tienet_recv(sockd, &comp_size, sizeof(int), rise_observer_endian);
+	tienet_recv(sockd, comp_buf, comp_size, 0);
+	dest_len = screen_w*screen_h*3;
+	uncompress(frame, &dest_len, comp_buf, (unsigned long)comp_size);
       }
 #else
       tienet_recv(sockd, frame, 3 * screen_w * screen_h, 0);
@@ -235,35 +235,35 @@ void rise_observer_event_loop() {
     pthread_mutex_lock(&event_mut);
     switch(event.type) {
       case SDL_KEYDOWN:
-        switch(event.key.keysym.sym) {
-          case SDLK_q: /* quit */
-            printf("Detaching from master and exiting.\n");
-            rise_observer_alive = 0;
-            return;
-            break;
+	switch(event.key.keysym.sym) {
+	  case SDLK_q: /* quit */
+	    printf("Detaching from master and exiting.\n");
+	    rise_observer_alive = 0;
+	    return;
+	    break;
 
 
-          case SDLK_F12: /* Server Shutdown and quit*/
-            printf("Shutting down master and exiting.\n");
-            rise_observer_master_shutdown = 1;
-            return;
-            break;
+	  case SDLK_F12: /* Server Shutdown and quit*/
+	    printf("Shutting down master and exiting.\n");
+	    rise_observer_master_shutdown = 1;
+	    return;
+	    break;
 
 
-          default:
-            break;
-        }
+	  default:
+	    break;
+	}
 
       case SDL_MOUSEBUTTONDOWN:
-        break;
+	break;
 
       case SDL_MOUSEMOTION:
-        if(event.motion.state) {
-        }
-        break;
+	if(event.motion.state) {
+	}
+	break;
 
       default:
-        break;
+	break;
     }
 
     pthread_mutex_unlock(&event_mut);

@@ -98,10 +98,10 @@ main(int argc, char **argv)
 	}
 
 	/* Create the database header record.
-  	 * this solid will consist of three surfaces
+	 * this solid will consist of three surfaces
 	 * a top surface, bottom surface, and the sides
 	 * (so that it will be closed).
- 	 */
+	 */
 
 	mk_id( outfp, id_name);
 

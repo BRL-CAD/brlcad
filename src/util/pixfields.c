@@ -64,7 +64,7 @@ FILE	*fldonefp,*fldtwofp;
 
 char	usage[] = "\
 Usage: pixfields [-v]\n\
-        [-s squaresize] [-w width] [-n height]\n\
+	[-s squaresize] [-w width] [-n height]\n\
 	 field1.pix field2.pix > file.pix\n";
 
 int

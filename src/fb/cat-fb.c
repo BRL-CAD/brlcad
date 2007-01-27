@@ -936,8 +936,8 @@ slop_lines(int nlines)
  */
 int
 writelines(int nlines, register char *buf)
-	   	       		/*  Number of scan lines to put out.  */
-	             	     	/*  Pointer to buffer location.  */
+				/*  Number of scan lines to put out.  */
+				/*  Pointer to buffer location.  */
 {
 	register unsigned char *pp;
 	register int	bit;

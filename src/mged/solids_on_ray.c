@@ -300,7 +300,7 @@ rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_se
      *	Look at each segment that participated in this ray partition.
      */
     for( index = 0; index < BU_PTBL_END(&pp->pt_seglist); index++ )  {
-        segp = (struct seg *)BU_PTBL_GET(&pp->pt_seglist, index);
+	segp = (struct seg *)BU_PTBL_GET(&pp->pt_seglist, index);
 	RT_CK_SEG(segp);
 	RT_CK_SOLTAB(segp -> seg_stp);
 

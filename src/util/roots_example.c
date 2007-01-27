@@ -44,7 +44,7 @@ main(int argc, char *argv[])
 
     /*********************************************
      * Linear polynomial (1st degree equation):
-     *  A*X + B = 0 
+     *  A*X + B = 0
      * [0]   [1]     <=coefficients
      */
     equation.dgr = 1;
@@ -65,20 +65,19 @@ main(int argc, char *argv[])
 	return 1;
     }
 
-    /*  A*X + B = 0 
+    /*  A*X + B = 0
      *  1*X + -2 = 0
      *    X -  2 = 0
      *    X      = 2
-     */ 
+     */
     /* print the roots */
     bu_log("The root should be 2\n");
     bn_pr_roots("My Linear Polynomial", roots, num_roots);
 
 
-
     /*********************************************
      * Quadratic polynomial (2nd degree equation):
-     *  A*X^2 + B*X + C = 0 
+     *  A*X^2 + B*X + C = 0
      * [0]     [1]   [2]     <=coefficients
      */
     equation.dgr = 2;
@@ -100,17 +99,16 @@ main(int argc, char *argv[])
 	return 1;
     }
 
-    /*  A*X^2 + B*X +  C = 0 
+    /*  A*X^2 + B*X +  C = 0
      *  1*X^2 + 0*X + -4 = 0
      *    X^2       -  4 = 0
      * (X - 2) * (X + 2) = 0
      *  X - 2 = 0, X + 2 = 0
      *  X = 2, X = -2
-     */ 
+     */
     /* print the roots */
     bu_log("The roots should be 2 and -2\n");
     bn_pr_roots("My Quadratic Polynomial", roots, num_roots);
-
 
 
     /*****************************************
@@ -141,8 +139,8 @@ main(int argc, char *argv[])
     /* print the roots */
     bu_log("The roots should be 1/3, -1/5, and -2/3\n");
     bn_pr_roots("My Cubic Polynomial", roots, num_roots);
- 
-    
+
+
     /*******************************************
      * Quartic polynomial (4th degree equation):
      *  A*X^4 + B*X^3 + C*X^2 + D*X + E = 0
@@ -172,7 +170,7 @@ main(int argc, char *argv[])
     /* print the roots */
     bu_log("The roots should be 3, 1, -2, -4\n");
     bn_pr_roots("My Quartic Polynomial", roots, num_roots);
- 
+
     return 0;
 }
 

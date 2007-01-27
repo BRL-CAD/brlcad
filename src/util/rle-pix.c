@@ -224,10 +224,10 @@ main(int argc, char **argv)
 
 	/* Default screen (output) size tracks input rectangle upper right corner */
 	if( screen_width == 0 )  {
-	    	screen_width = rle_dflt_hdr.xmax + 1;
+		screen_width = rle_dflt_hdr.xmax + 1;
 	}
 	if( screen_height == 0 )  {
-	    	screen_height = rle_dflt_hdr.ymax + 1;
+		screen_height = rle_dflt_hdr.ymax + 1;
 	}
 
 	/* Report screen (output) size given image size & other options */
@@ -257,14 +257,14 @@ main(int argc, char **argv)
 	if( screen_xlen <= 0 ||
 	    rle_dflt_hdr.ymin > screen_height ||
 	    rle_dflt_hdr.ymax < 0 )  {
-	    	fprintf(stderr,
+		fprintf(stderr,
 		"rle-pix:  Warning:  RLE image rectangle entirely off screen\n");
 		goto done;
 	}
 
 	/* NOTE:  This code can't do repositioning very well.
 	 * background flooding on the edges is needed, at a minimum.
- 	 */
+	 */
 
 	scan_buf = (RGBpixel *)malloc( sizeof(RGBpixel) * screen_width );
 	bg_buf = (RGBpixel *)malloc( sizeof(RGBpixel) * screen_width );

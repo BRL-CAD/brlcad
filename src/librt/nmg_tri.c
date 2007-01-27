@@ -266,7 +266,6 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 }
 
 
-
 /**	P T 2 D _ P N
  *
  *	Return Prev/Next 2D pt about loop from given 2D pt.
@@ -315,7 +314,6 @@ pt2d_pn(struct bu_list *tbl, struct pt2d *pt, int dir)
 
 	return pt;
 }
-
 
 
 /**	M A P _ V U _ T O _ 2 D
@@ -473,7 +471,7 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat)
 		}
 		if (BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC) {
 			vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-  			if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
+			if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
 				bu_log("vertex loop\n");
 			map_vu_to_2d(vu, tbl2d, TformMat, fu);
 
@@ -493,7 +491,6 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat)
 
 	return(tbl2d);
 }
-
 
 
 static int
@@ -534,7 +531,6 @@ is_convex(struct pt2d *a, struct pt2d *b, struct pt2d *c, const struct bn_tol *t
 #define POLY_END 5
 #define HOLE_POINT 6
 #define POLY_POINT 7
-
 
 
 /**
@@ -631,15 +627,15 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 	}
 	if ( (P_GT_V(n, v) && P_LT_V(p, v)) ||
 	    (P_LT_V(n, v) && P_GT_V(p, v)) ) {
-	    	/*
-	    	 *  |
-	    	 *  |
-	    	 *  .
-	    	 *   \
-	    	 *    \
-	    	 *
-	    	 * This is the "side" of a polygon.
-	    	 */
+		/*
+		 *  |
+		 *  |
+		 *  .
+		 *   \
+		 *    \
+		 *
+		 * This is the "side" of a polygon.
+		 */
 		return(POLY_SIDE);
 	}
 	bu_log(
@@ -726,7 +722,7 @@ poly_side_vertex(struct pt2d *pt, struct pt2d *tbl2d, struct bu_list *tlist)
 		/* descending edge */
 		upper_edge = plast->vu_p->up.eu_p;
 		lower_edge = pt->vu_p->up.eu_p;
- 	}
+	}
 
 	NMG_CK_EDGEUSE(upper_edge);
 	NMG_CK_EDGEUSE(lower_edge);
@@ -822,12 +818,6 @@ poly_end_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 trap_found:
 	tp->bot = pt;
 }
-
-
-
-
-
-
 
 
 /**	Hole Start in polygon
@@ -1152,8 +1142,7 @@ static void
 pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct vertexuse **vu_last, int *max_dir, struct faceuse *fu, const struct bn_tol *tol, fastf_t *dir)
 
 
-
-                       	/* 1: forward -1 reverse */
+			/* 1: forward -1 reverse */
 
 
 {
@@ -1242,9 +1231,6 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 				*min_dir = 1;
 			}
 		}
-
-
-
 
 
 		/* compute/compare vu/prev_eu vector w/ ray vector */
@@ -1384,8 +1370,6 @@ pick_eu(struct edgeuse *eu_p, struct faceuse *fu, fastf_t *dir, int find_max)
 
 	return keep_eu;
 }
-
-
 
 
 /**
@@ -1540,7 +1524,6 @@ nmg_find_first_last_use_of_v_in_fu(struct vertex *v, struct vertexuse **first_vu
 		bu_log("\t   last_eu: %g %g %g -> %g %g %g\n",
 			V3ARGS(eu_last->vu_p->v_p->vg_p->coord),
 			V3ARGS(eu_last->eumate_p->vu_p->v_p->vg_p->coord));
-
 
 
 	if (eu_last->vu_p->v_p == v)
@@ -1934,19 +1917,19 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
 	eu = BU_LIST_PPREV_CIRC(edgeuse, vu2->up.eu_p);
 
 
-    	if (rt_g.NMG_debug & DEBUG_TRI) {
-    		struct edgeuse *pr1_eu;
-    		struct edgeuse *pr2_eu;
+	if (rt_g.NMG_debug & DEBUG_TRI) {
+		struct edgeuse *pr1_eu;
+		struct edgeuse *pr2_eu;
 
-    		pr1_eu = BU_LIST_PNEXT_CIRC(edgeuse, vu1->up.eu_p);
-    		pr2_eu = BU_LIST_PNEXT_CIRC(edgeuse, vu2->up.eu_p);
+		pr1_eu = BU_LIST_PNEXT_CIRC(edgeuse, vu1->up.eu_p);
+		pr2_eu = BU_LIST_PNEXT_CIRC(edgeuse, vu2->up.eu_p);
 
-    		bu_log("joining loops between:\n\t%g %g %g -> (%g %g %g)\n\tand%g %g %g -> (%g %g %g)\n",
+		bu_log("joining loops between:\n\t%g %g %g -> (%g %g %g)\n\tand%g %g %g -> (%g %g %g)\n",
 			V3ARGS(vu1->v_p->vg_p->coord),
 			V3ARGS(pr1_eu->vu_p->v_p->vg_p->coord),
 			V3ARGS(vu2->v_p->vg_p->coord),
 			V3ARGS(pr2_eu->vu_p->v_p->vg_p->coord) );
-    	}
+	}
 
 	vu = nmg_join_2loops(vu1, vu2);
 	if (plot_fd) {
@@ -1999,7 +1982,7 @@ skip_cut(struct bu_list *tbl2d, struct pt2d *top, struct pt2d *bot)
 	bot_next = PT2D_NEXT(tbl2d, bot);
 
 	if (top_next == bot || bot_next == top) {
-	    	return 1;
+		return 1;
 	}
 
 	vu_top = top->vu_p;
@@ -2085,7 +2068,7 @@ cut_diagonals(struct bu_list *tbl2d, struct bu_list *tlist, const struct faceuse
 		if( !tp->top || !tp->bot )
 		{
 			bu_log( "tp->top and/or tp->bot is/are NULL!!!!!!!\n" );
-		    	if (rt_g.NMG_debug & DEBUG_TRI)
+			if (rt_g.NMG_debug & DEBUG_TRI)
 			{
 				nmg_pr_fu_briefly( fu, "" );
 				if( tp->top )
@@ -2097,7 +2080,7 @@ cut_diagonals(struct bu_list *tbl2d, struct bu_list *tlist, const struct faceuse
 		}
 		if (nmg_find_eu_in_face(tp->top->vu_p->v_p, tp->bot->vu_p->v_p, fu,
 		    (struct edgeuse *)NULL, 0) != (struct edgeuse *)NULL) {
-		    	if (rt_g.NMG_debug & DEBUG_TRI)
+			if (rt_g.NMG_debug & DEBUG_TRI)
 				bu_log("skipping %g %g/%g %g ... edge exists\n",
 					tp->top->coord[X],
 					tp->top->coord[Y],
@@ -2108,7 +2091,7 @@ cut_diagonals(struct bu_list *tbl2d, struct bu_list *tlist, const struct faceuse
 
 
 		if (skip_cut(tbl2d, tp->top, tp->bot)) {
-		    	if (rt_g.NMG_debug & DEBUG_TRI)
+			if (rt_g.NMG_debug & DEBUG_TRI)
 				bu_log("skipping %g %g/%g %g ... pts on same edge\n",
 					tp->top->coord[X],
 					tp->top->coord[Y],
@@ -2404,7 +2387,6 @@ cut_unimonotone(struct bu_list *tbl2d, struct bu_list *tlist, struct loopuse *lu
 		}
 	}
 }
-
 
 
 static void

@@ -35,7 +35,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include "machine.h"
 #include "bu.h"
@@ -179,8 +178,7 @@ nmg_eu_dist_set(void)
 
 static char *
 read_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, int flags)
-                             /* Contains pointer to bu_struct_parse entry */
-
+			     /* Contains pointer to bu_struct_parse entry */
 
 
 {
@@ -253,7 +251,7 @@ unset_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, i
 		  (ClientData)sp );
     Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_UNSETS,
 		  (Tcl_VarTraceProc *)unset_var,
- 		  (ClientData)sp );
+		  (ClientData)sp );
     read_var(clientData, interp, name1, name2,
 	     (flags&(~TCL_TRACE_UNSETS))|TCL_TRACE_READS);
     return NULL;

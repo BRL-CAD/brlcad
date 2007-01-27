@@ -159,7 +159,7 @@ server_helo(struct pkg_conn *connection, char *buf)
 {
     /* should not encounter since we listened for it specifically
      * before beginning processing of packets.
-     */	
+     */
     bu_log("Unexpected HELO encountered\n");
     free(buf);
 }
@@ -167,7 +167,7 @@ server_helo(struct pkg_conn *connection, char *buf)
 
 void
 server_args(struct pkg_conn *connection, char *buf)
-{    
+{
     /* updates the srv_argc and srv_argv application globals used to
      * show that we can shoot at geometry in-memory.
      */
@@ -181,7 +181,7 @@ server_args(struct pkg_conn *connection, char *buf)
     strcpy(srv_argv[srv_argc - 1], buf);
 
     bu_log("Planning to shoot at %s\n", buf);
-   
+
     free(buf);
 }
 
@@ -255,7 +255,7 @@ run_server(int port) {
 	{MSG_CIAO, server_ciao, "CIAO"},
 	{0, 0, (char *)0}
     };
-    
+
     validate_port(port);
 
     /* start up the server on the given port */
@@ -337,7 +337,7 @@ run_server(int port) {
  * this is the hook callback function for both the primitives and
  * combinations encountered during a db_functree() traversal.
  *
- * returns 0 if unsuccessful 
+ * returns 0 if unsuccessful
  * returns 1 if successful
  */
 void
@@ -356,13 +356,13 @@ send_to_server(struct db_i *dbip, struct directory *dp, genptr_t connection)
 	bu_log("Failed to read %s, skipping\n", dp->d_namep);
 	return;
     }
-    
+
     /* send the external representation over the wire */
     bu_log("Sending %s\n",dp->d_namep);
 
     /* pad the data with the length in ascii for convenience */
     bytes_sent = pkg_send(MSG_GEOM, ext.ext_buf, ext.ext_nbytes, stash->connection);
-    if (bytes_sent < 0) {	
+    if (bytes_sent < 0) {
 	pkg_close(stash->connection);
 	bu_log("Unable to successfully send %s to %s, port %d.\n", dp->d_namep, stash->server, stash->port);
 	return;
@@ -424,7 +424,7 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 	     * know what to shoot at.
 	     */
 	    bytes_sent = pkg_send(MSG_ARGS, geomv[i], strlen(geomv[i]) + 1, stash.connection);
-	    if (bytes_sent < 0) {	
+	    if (bytes_sent < 0) {
 		pkg_close(stash.connection);
 		bu_log("Unable to request server shot at %s\n", geomv[i]);
 		bu_bomb("ERROR: Unable to communicate request to server\n");

@@ -365,7 +365,7 @@ class Attr_editor {
 
 	if { [attr_name_is_valid $cur_attr_name] == 0 } {
 	   tk_messageBox -icon error -type ok -title "Error: illegal attribute name"\
-              -message "Attribute names must not have imbedded white space nor non-printable characters"
+	      -message "Attribute names must not have imbedded white space nor non-printable characters"
 	    return
 	}
 
@@ -435,7 +435,7 @@ class Attr_editor {
 
 	if { [attr_name_is_valid $cur_attr_name] == 0 } {
 	   tk_messageBox -icon error -type ok -title "Error: illegal attribute name"\
-              -message "Attribute names must not have imbedded white space nor non-printable characters"
+	      -message "Attribute names must not have imbedded white space nor non-printable characters"
 	    return
 	}
 
@@ -603,9 +603,6 @@ class Attr_editor {
 	}
     }
 }
-
-
-
 
 
 # Local Variables:

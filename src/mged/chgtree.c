@@ -616,12 +616,12 @@ f_putmat (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		bu_vls_printf(avp, "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 ");
 		break;
 	    }
-    	    /* Sometimes the matrix is sent through Tcl as one long string.
-    	     * Copy it so we can crack it, below.
-    	     */
+	    /* Sometimes the matrix is sent through Tcl as one long string.
+	     * Copy it so we can crack it, below.
+	     */
 	    avp = bu_vls_vlsinit();
-    	    bu_vls_strcat(avp, argv[2]);
-    	    break;
+	    bu_vls_strcat(avp, argv[2]);
+	    break;
 	default:
 	  Tcl_AppendResult(interp, "putmat: error in matrix specification (wrong number of args)\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -640,7 +640,7 @@ f_putmat (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  bu_vls_printf(&tmp_vls, "putmat: %s:%d: bad matrix, only got %d elements: %s\n",
 			__FILE__, __LINE__, got, bu_vls_addr(&tmp_vls));
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-    	  bu_vls_free(&tmp_vls);
+	  bu_vls_free(&tmp_vls);
 	  result = TCL_ERROR;
     }
 

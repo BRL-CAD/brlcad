@@ -42,7 +42,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #include "./complex.h"
@@ -54,7 +53,7 @@ int	irfft_adds, irfft_mults;
 void
 irfft(double *x, int n)
 
-   	  	/* length */
+		/* length */
 {
 	int	i, j, k, n1, n2, n4, n8;
 	int	i0, i1, i2, i3, i4, i5, i6, i7, i8;

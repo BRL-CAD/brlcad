@@ -39,7 +39,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -55,10 +54,10 @@
  */
 struct face_g_snurb *
 rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv, struct resource *res)
-                                		/* Old surface to be refined */
-        				/* Direction to refine */
+						/* Old surface to be refined */
+					/* Direction to refine */
 					/* Row = 0, Col = 1 */
-                       			/* New knot vector */
+					/* New knot vector */
 
 {
 	register struct face_g_snurb * nurb_srf;

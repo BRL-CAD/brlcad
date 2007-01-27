@@ -227,14 +227,14 @@ main(int argc, char **argv)
 				/* Grid lines */
 				if( (y & 63) == 0 && op[RED] == 0
 				 && op[GRN] == 0 && op[BLU] == 0 ) {
-				 	op[RED] = 128;
-				 	op[GRN] = 128;
-				 	op[BLU] = 128;
+					op[RED] = 128;
+					op[GRN] = 128;
+					op[BLU] = 128;
 				} else if( (y & 15) == 0 && op[RED] == 0
 				 && op[GRN] == 0 && op[BLU] == 0 ) {
-				 	op[RED] = 64;
-				 	op[GRN] = 64;
-				 	op[BLU] = 64;
+					op[RED] = 64;
+					op[GRN] = 64;
+					op[BLU] = 64;
 				}
 			}
 		}

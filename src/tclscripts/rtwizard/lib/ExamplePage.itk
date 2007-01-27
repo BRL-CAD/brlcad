@@ -488,34 +488,13 @@ namespace eval RtWizard {
 		"Use the menu button below to view an example of each type "
 	$hw insert end \
 		"of picture. \n\nWhen you have decided on a type, select it "
- 	$hw insert end \
+	$hw insert end \
 		"and hit \"OK\"."
 
 	$hw configure -state disabled
     }
 }
 #end namespace
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # Local Variables:

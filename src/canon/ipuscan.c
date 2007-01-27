@@ -254,7 +254,6 @@ int main(int ac, char *av[])
 	fprintf(stderr, "%s\n", ipu_list_files(dsp));
 
 
-
     /* Start three threads, then wait for them to finish */
     pid[0] = sproc( step1, PR_SALL|PR_SFDS );
     pid[1] = sproc( step2, PR_SALL|PR_SFDS );

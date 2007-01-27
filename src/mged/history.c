@@ -408,7 +408,7 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if(argc == 2){
       vp = history_next((const char *)NULL);
       if (vp == NULL)
-        return TCL_ERROR;
+	return TCL_ERROR;
     } else if(argc == 3){
       vp = history_next(argv[2]);
       if (vp == NULL)

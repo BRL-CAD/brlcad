@@ -372,7 +372,7 @@ int			flag;
 
 	PutMenuChar( '|', col, row, bitmap, bit );
 	if( flag & P_ON )
-	 	(void) ScSetStandout();
+		(void) ScSetStandout();
 	else
 		(void) ScClrStandout();
 

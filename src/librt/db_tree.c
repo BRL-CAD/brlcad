@@ -169,7 +169,7 @@ db_dup_combined_tree_state(const struct combined_tree_state *old)
 {
 	struct combined_tree_state	*new;
 
- 	RT_CK_CTS(old);
+	RT_CK_CTS(old);
 	BU_GETSTRUCT( new, combined_tree_state );
 	new->magic = RT_CTS_MAGIC;
 	db_dup_db_tree_state( &(new->cts_s), &(old->cts_s) );
@@ -184,7 +184,7 @@ db_dup_combined_tree_state(const struct combined_tree_state *old)
 void
 db_free_combined_tree_state(register struct combined_tree_state *ctsp)
 {
- 	RT_CK_CTS(ctsp);
+	RT_CK_CTS(ctsp);
 	db_free_full_path( &(ctsp->cts_p) );
 	db_free_db_tree_state( &(ctsp->cts_s) );
 	bzero( (char *)ctsp, sizeof(*ctsp) );		/* sanity */
@@ -230,7 +230,7 @@ db_pr_combined_tree_state(register const struct combined_tree_state *ctsp)
 {
 	char	*str;
 
- 	RT_CK_CTS(ctsp);
+	RT_CK_CTS(ctsp);
 	bu_log("db_pr_combined_tree_state(x%x):\n", ctsp);
 	db_pr_tree_state( &(ctsp->cts_s) );
 	str = db_path_to_string( &(ctsp->cts_p) );
@@ -680,9 +680,9 @@ db_tree_del_dbleaf(union tree **tp, const char *cp, struct resource *resp)
 		/* Perhaps the root of the tree is the named leaf? */
 		if( (*tp)->tr_op == OP_DB_LEAF &&
 		    strcmp( cp, (*tp)->tr_l.tl_name ) == 0 )  {
-		    	db_free_tree( *tp, resp );
-		    	*tp = TREE_NULL;
-		    	return 0;
+			db_free_tree( *tp, resp );
+			*tp = TREE_NULL;
+			return 0;
 		}
 		return -2;
 	}
@@ -1265,7 +1265,7 @@ region_end:
 		if(RT_G_DEBUG&DEBUG_TREEWALK)
 			bu_log("db_recurse() rt_db_get_internal(%s) solid\n", dp->d_namep);
 
-	    	RT_INIT_DB_INTERNAL(&intern);
+		RT_INIT_DB_INTERNAL(&intern);
 		if( rt_db_get_internal( &intern, dp, tsp->ts_dbip, tsp->ts_mat, tsp->ts_resp ) < 0 )  {
 			bu_log("db_recurse() rt_db_get_internal(%s) FAIL\n", dp->d_namep);
 			curtree = TREE_NULL;		/* FAIL */
@@ -1278,8 +1278,8 @@ region_end:
 			char	*sofar = db_path_to_string(pathp);
 			/*
 			 *  Solid is not contained in a region.
-		    	 *  "Invent" region info.
-		    	 *  Take note of full state here at "region start".
+			 *  "Invent" region info.
+			 *  Take note of full state here at "region start".
 			 */
 			if( *region_start_statepp != (struct combined_tree_state *)0 ) {
 				bu_log("db_recurse(%s) ERROR at start of a region (bare solid), *region_start_statepp = x%x\n",
@@ -1288,19 +1288,19 @@ region_end:
 				goto out;
 			}
 			if( RT_G_DEBUG & DEBUG_REGIONS )  {
-			    	bu_log("NOTICE: db_recurse(): solid '%s' not contained in a region, creating a region for it of the same name.\n",
-			    		sofar );
+				bu_log("NOTICE: db_recurse(): solid '%s' not contained in a region, creating a region for it of the same name.\n",
+					sofar );
 			}
 
-		    	ctsp = db_new_combined_tree_state( tsp, pathp );
-		    	ctsp->cts_s.ts_sofar |= TS_SOFAR_REGION;
+			ctsp = db_new_combined_tree_state( tsp, pathp );
+			ctsp->cts_s.ts_sofar |= TS_SOFAR_REGION;
 			*region_start_statepp = ctsp;
 			if(RT_G_DEBUG&DEBUG_TREEWALK)  {
 				bu_log("db_recurse(%s): setting *region_start_statepp to x%x (bare solid)\n",
 					sofar, ctsp );
 				db_pr_combined_tree_state(ctsp);
 			}
-		    	bu_free( sofar, "path string" );
+			bu_free( sofar, "path string" );
 		}
 
 		/* Hand the solid off for leaf processing */
@@ -1614,7 +1614,7 @@ db_non_union_push( register union tree *tp, struct resource *resp )
 	if( (tp->tr_op == OP_INTERSECT || tp->tr_op == OP_SUBTRACT) &&
 	    tp->tr_b.tb_left->tr_op == OP_UNION ) {
 		union tree	*lhs = tp->tr_b.tb_left;
-	    	union tree	*rhs;
+		union tree	*rhs;
 
 		A = lhs->tr_b.tb_left;
 		B = lhs->tr_b.tb_right;
@@ -2047,7 +2047,7 @@ db_walk_subtree(
 	case OP_REGION:
 		/* Flesh out remainder of subtree */
 		ctsp = tp->tr_c.tc_ctsp;
-	 	RT_CK_CTS(ctsp);
+		RT_CK_CTS(ctsp);
 		if( ctsp->cts_p.fp_len <= 0 )  {
 			bu_log("db_walk_subtree() REGION with null path?\n");
 			db_free_combined_tree_state( ctsp );
@@ -2407,7 +2407,7 @@ db_walk_tree(struct db_i *dbip,
 				continue;
 			}
 			ctsp = treep->tr_c.tc_ctsp;
-		 	RT_CK_CTS(ctsp);
+			RT_CK_CTS(ctsp);
 			str = db_path_to_string( &(ctsp->cts_p) );
 			bu_log("%d '%s'\n", i, str);
 			bu_free( str, "path string" );
@@ -2605,7 +2605,6 @@ db_region_mat(
 	db_free_full_path( &full_path );
 	return 0;
 }
-
 
 
 /**		D B _ S H A D E R _ M A T

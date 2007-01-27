@@ -91,7 +91,6 @@ struct cell	*botp;			/* pointer to bottom line   */
 struct cell	*topp;			/* pointer to top line	    */
 
 
-
 int		use_air = 0;		/* Internal air recognition is off */
 
 int		using_mlib = 0;		/* Material routines NOT used */
@@ -471,34 +470,34 @@ horiz_cmp(struct cell *botp, int mem_width, int y)
 		   ( botp->c_id != ID_BACKGROUND &&
 		   ( (botp->c_dist + pit_depth < (botp+1)->c_dist) ||
 		     ((botp+1)->c_dist + pit_depth < botp->c_dist)  ||
- 		     (VDOT(botp->c_normal, (botp + 1)->c_normal) < maxangle))))  {
+		     (VDOT(botp->c_normal, (botp + 1)->c_normal) < maxangle))))  {
 
-		   	cellp = find_cell(botp, (botp+1));
+			cellp = find_cell(botp, (botp+1));
 
 			/* Note that the coordinates must be expressed
-		   	 * as MODEL coordinates.  This can be done by
-		   	 * adding offsets to the hit_point.  Thus, 0.5*
-		   	 * dx_model means moving 0.5 of a cell in model
-		   	 * space, and replaces (x -1 +0.5) representing
-		   	 * backing up one whole cell and then moving to
-		   	 * the center of the new cell in file coordinates.
-		   	 * In that case, the x represented the screen coords.
-		   	 * Now, make the beginning point and the ending point.
+			 * as MODEL coordinates.  This can be done by
+			 * adding offsets to the hit_point.  Thus, 0.5*
+			 * dx_model means moving 0.5 of a cell in model
+			 * space, and replaces (x -1 +0.5) representing
+			 * backing up one whole cell and then moving to
+			 * the center of the new cell in file coordinates.
+			 * In that case, the x represented the screen coords.
+			 * Now, make the beginning point and the ending point.
 			 */
 
-		   	/* To make sure that all the vertical lines are in the
-		   	 * correct place, if cellp is the same as botp, then
-		   	 * to start,move half a cell right to start, else move half a
-		   	 * cell left; and to end, move right and up one half cell.
-		   	 */
+			/* To make sure that all the vertical lines are in the
+			 * correct place, if cellp is the same as botp, then
+			 * to start,move half a cell right to start, else move half a
+			 * cell left; and to end, move right and up one half cell.
+			 */
 
-		   	if(botp == cellp)  {
-		   		VJOIN2(start, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
-		   		VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
-		   	} else {
-			   	VJOIN2(start, cellp->c_hit, -0.5, dx_model, -0.5, dy_model);
-		   		VJOIN2(stop, cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
-		   	}
+			if(botp == cellp)  {
+				VJOIN2(start, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
+				VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
+			} else {
+				VJOIN2(start, cellp->c_hit, -0.5, dx_model, -0.5, dy_model);
+				VJOIN2(stop, cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
+			}
 
 			pdv_3line(outfp, start, stop);
 
@@ -640,7 +639,6 @@ vert_cmp(struct cell *botp, struct cell *topp, int mem_width, int y)
 }
 
 
-
 /*
  *	           F I N D_ C E L L
  *
@@ -689,7 +687,7 @@ find_cell (struct cell *cur_cellp, struct cell *next_cellp)
 
 void
 swapbuff(struct cell **onepp, struct cell **twopp)
-           	        		/* caveat: variables must start w/ letters */
+					/* caveat: variables must start w/ letters */
 
 
 {
@@ -701,9 +699,6 @@ swapbuff(struct cell **onepp, struct cell **twopp)
 	*twopp = temp_p;
 
 }
-
-
-
 
 
 /*		C L E A N L I N E

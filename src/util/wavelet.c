@@ -177,8 +177,6 @@ parse_args(int ac, char **av)
 }
 
 
-
-
 void
 wlt_decompose_1d(void)
 {
@@ -298,12 +296,6 @@ wlt_decompose_2d(void)
 }
 
 
-
-
-
-
-
-
 void
 wlt_reconstruct_1d(void)
 {
@@ -364,9 +356,6 @@ wlt_reconstruct_1d(void)
 		fwrite(buf, sample_size, width, stdout);
 	}
 }
-
-
-
 
 
 void
@@ -467,8 +456,6 @@ main(int ac, char **av)
 	usage("must specify either decompose (-d) or reconstruct (-r)\n");
 	return -1;
 }
-
-
 
 
 /*

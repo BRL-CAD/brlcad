@@ -36,7 +36,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -134,7 +133,7 @@ main(int argc, char **argv)
 void
 do_cell(struct val *vp, double xc, double yc)
 
-      	       		/* center coordinates, z=0+ */
+			/* center coordinates, z=0+ */
 {
 	LOCAL poly	polynom;
 	LOCAL bn_complex_t	roots[4];	/* roots of final equation */
@@ -237,7 +236,7 @@ draw_rect(struct val *a, struct val *b, struct val *c, struct val *d)
 	    vp[0]->v_x != vp[1]->v_x &&
 	    vp[0]->v_y != vp[1]->v_y )  {
 		fprintf(stderr, "2 corners on diagonal differ?\n");
-	    	return;
+		return;
 	}
 
 	/* Draw 1 or 2 extra faces to close off each new upper zone */
@@ -293,7 +292,7 @@ void
 pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *out, int npts)
 
 
-      	    		/* hopefully points outwards */
+			/* hopefully points outwards */
 
 {
 	register int i;
@@ -320,9 +319,9 @@ void
 do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb)
 
 
-      	       		/* direction or aim point */
-   	        	/* 0 = direction, !0 = aim point */
-      	  		/* radius of light */
+			/* direction or aim point */
+			/* 0 = direction, !0 = aim point */
+			/* radius of light */
 
 {
 	char	nbuf[64];

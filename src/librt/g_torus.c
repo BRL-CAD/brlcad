@@ -549,10 +549,10 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  */
 void
 rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	register int    i;
@@ -570,7 +570,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	LOCAL fastf_t	*cor_proj;
 
 	/* Allocate space for polys and roots */
-        C = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t), "tor bn_poly_t");
+	C = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t), "tor bn_poly_t");
 	val = (bn_complex_t (*)[4])bu_malloc(n * sizeof(bn_complex_t) * 4,
 		"tor bn_complex_t");
 	cor_proj = (fastf_t *)bu_malloc(n * sizeof(fastf_t), "tor proj");
@@ -698,12 +698,12 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		if( segp[i].seg_stp == 0) continue; /* Skip */
 
 		/*  Only real roots indicate an intersection in real space.
-	 	 *
-	 	 *  Look at each root returned; if the imaginary part is zero
-	 	 *  or sufficiently close, then use the real part as one value
-	 	 *  of 't' for the intersections
-	 	 */
-	        /* Also reverse translation by adding distance to all 'k' values. */
+		 *
+		 *  Look at each root returned; if the imaginary part is zero
+		 *  or sufficiently close, then use the real part as one value
+		 *  of 't' for the intersections
+		 */
+		/* Also reverse translation by adding distance to all 'k' values. */
 		/* Reuse C to hold k values */
 		num_zero = 0;
 		if( NEAR_ZERO( val[i][0].im, ap->a_rt_i->rti_tol.dist ) )

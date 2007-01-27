@@ -78,7 +78,7 @@ proc mmenu_init { id } {
     for { set i 0 } { $i < $mmenu($id,num) } { incr i } {
 	frame $w.f$i -relief raised -bd 1
 	listbox $w.f$i.l -bd 2 -exportselection false
-        grid $w.f$i.l -sticky nsew -row 0 -column 0
+	grid $w.f$i.l -sticky nsew -row 0 -column 0
 	grid columnconfigure $w.f$i 0 -weight 1
 	grid rowconfigure $w.f$i 0 -weight 1
 

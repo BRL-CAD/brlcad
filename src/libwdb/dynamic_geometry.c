@@ -59,7 +59,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
@@ -73,7 +72,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
-
 
 
 /*		M A K E _ H O L E
@@ -191,7 +189,6 @@ make_hole( struct rt_wdb *wdbp,		/* datbase to be modified */
 }
 
 
-
 /*			M A K E _ H O L E _ I N _ P R E P P E D _ R E G I O N S
  *
  *	This routine provides a quick approach to simply adding a hole to existing prepped geometry.
@@ -209,7 +206,7 @@ make_hole( struct rt_wdb *wdbp,		/* datbase to be modified */
  */
 int
 make_hole_in_prepped_regions( struct rt_wdb *wdbp,	/* database to be modified */
-                              struct rt_i *rtip,	/* rt_i pointer for the same database */
+			      struct rt_i *rtip,	/* rt_i pointer for the same database */
 			      point_t hole_start,	/* center of start of hole */
 			      vect_t hole_depth,	/* depth and direction of hole */
 			      fastf_t radius,		/* radius of hole */

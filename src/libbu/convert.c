@@ -20,7 +20,7 @@
 /** @addtogroup conv */
 /** @{ */
 /** @file convert.c
- * 
+ *
  * @brief
  * Routines to translate data formats.  The data formats are:
  *
@@ -47,7 +47,6 @@ static const char libbu_convert_RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <ctype.h>
 #ifdef HAVE_STRING_H
@@ -60,15 +59,15 @@ static const char libbu_convert_RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 
 
-/* bu_cv_cookie	
+/* bu_cv_cookie
  *
  * @brief
  * Set's a bit vector after parsing an input string.
  *
  * Set up the conversion tables/flags for vert.
- * 
+ *
  * @param in	format description.
- * 
+ *
  * @return a 32 bit vector.
  *
  * Format description:
@@ -298,7 +297,7 @@ bu_cv_pr_cookie( char *title, int cookie )
  * @brief
  * convert from one format to another.
  *
- * 
+ *
  * @param in	input pointer
  * @param out	output pointer
  * @param count	number of entries to convert.
@@ -619,7 +618,7 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int coun
  *		-> hd
  *		-> hs32
  *		-> ns32
-@endcode 
+@endcode
  * The worst case is probably the easiest to deal with because all steps are
  * done.  The more difficult cases are when only a subset of steps need to
  * be done.

@@ -23,7 +23,7 @@
  *
  *  @brief
  *  Test network float conversion.
- * 
+ *
  *  Expected to be used in pipes, or with TTCP links to other machines,
  *  or with files RCP'ed between machines.
  *

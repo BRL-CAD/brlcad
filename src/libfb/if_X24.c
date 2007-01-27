@@ -2206,7 +2206,7 @@ int width, height;
 {
   struct xinfo *xi = XI(ifp);
   XRectangle rect;
-  
+
   if (!xi) {
       return;
   }
@@ -2416,7 +2416,6 @@ Display *dpy;
 	XFree((char *) vp);
 
 
-
 	printf("==== Standard Colormaps ====\n");
 	if (XGetStandardColormap(dpy, win, &cmap, XA_RGB_BEST_MAP)) {
 		printf("XA_RGB_BEST_MAP    - Yes (0x%lx)\n", cmap.colormap);
@@ -2561,7 +2560,7 @@ HIDDEN void
 X24_zapmem()
 {
 #ifndef HAVE_SYS_MMAN_H
- 	int	shmid;
+	int	shmid;
 	int	i;
 #endif
 

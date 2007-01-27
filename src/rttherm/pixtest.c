@@ -39,8 +39,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
-
 #include <stdio.h>
 #include <math.h>
 
@@ -107,7 +105,7 @@ bu_log("curve:\n");rt_pr_table_and_tabdata( "/dev/tty", curve );
 			VPRINT("src ", src);
 			VPRINT("dest", dest);
 #if 0
-		    	break;
+			break;
 #endif
 		}
 

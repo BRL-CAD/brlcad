@@ -39,7 +39,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 /*  Notes:
     You almost certainly want to use this with two terminals.  Otherwise
 you can't use the crosshairs to manipulate the image.
@@ -272,7 +271,7 @@ T49_epilog()
 {
 	if( !dmaflag )
 		return;
-        t49move( TITLE_XBASE, SOLID_YBASE );
+	t49move( TITLE_XBASE, SOLID_YBASE );
 	(void)putc(US,outfp);
 }
 
@@ -712,7 +711,7 @@ register char *s;
 
 static void
 t49point(xi,yi){
-        t49move(xi,yi);
+	t49move(xi,yi);
 	t49cont(xi,yi);
 }
 

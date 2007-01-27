@@ -638,12 +638,12 @@ main(int argc, char **argv)
 #ifdef HAVE_PIPE
 		(void)pipe(pipe_out);
 		(void)pipe(pipe_err);
-		
+
 		/* Redirect stdout */
 		(void)close(1);
 		(void)dup(pipe_out[1]);
 		(void)close(pipe_out[1]);
-		
+
 		/* Redirect stderr */
 		(void)close(2);
 		(void)dup(pipe_err[1]);
@@ -708,12 +708,12 @@ main(int argc, char **argv)
     {
 #endif
 	struct bu_vls vls;
-	
+
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "output_hook output_callback");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	
+
 #ifndef _WIN32
 	/* to catch output from routines that do not use bu_log */
 	Tcl_CreateFileHandler(pipe_out[0], TCL_READABLE,
@@ -2094,7 +2094,7 @@ mged_finish(int exitcode)
     if (cbreak_mode > 0)
 	reset_Tty(fileno(stdin));
 #endif
-	    
+
     pkg_terminate();
     exit( exitcode );
 }
@@ -2319,7 +2319,7 @@ f_opendb(
     struct bu_vls		vls;
     struct bu_vls		msg;	/* use this to hold returned message */
     int			create_new_db = 0;
-	
+
 
     if( argc <= 1 )  {
 

@@ -1367,11 +1367,11 @@ polyhbld(void)
 	/* this tolerance structure is only used for converting polysolids to BOT's
 	 * use zero distance to avoid losing any polysolid facets
 	 */
-        tol.magic = BN_TOL_MAGIC;
-        tol.dist = 0.0;
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 1e-6;
-        tol.para = 1 - tol.perp;
+	tol.magic = BN_TOL_MAGIC;
+	tol.dist = 0.0;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 	if( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) < 0 )
 		bu_bomb("rt_pg_to_bot() failed\n");

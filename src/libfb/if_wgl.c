@@ -474,7 +474,6 @@ sigkid()
 }
 
 
-
 /* 			W G L _ X M I T _ S C A N L I N E S
  *
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
@@ -498,7 +497,7 @@ int		npix;
 	clp = &(WGL(ifp)->clip);
 
 	if( WGL(ifp)->soft_cmap_flag  && SGI(ifp)->mi_cmap_flag )  {
-	    	sw_cmap = 1;
+		sw_cmap = 1;
 	} else {
 		sw_cmap = 0;
 	}
@@ -773,7 +772,7 @@ int	width, height;
 	 * This allows us to use the traditional fb utility programs
 	 * as well as allow the frame buffer window to remain around
 	 * until killed by the menu subsystem.
-    	 */
+	 */
 
 	if( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {
 		/* Bump default size up to full screen, since we have it all */
@@ -859,7 +858,6 @@ int	width, height;
 	hwnd = WGL(ifp)->hwnd;
 	WGL(ifp)->hdc = GetDC(WGL(ifp)->hwnd);
 	hdc = WGL(ifp)->hdc;
-
 
 
 	/* Choose an appropriate visual. */
@@ -1134,7 +1132,7 @@ wgl_close_existing(FBIO *ifp)
 {
     /*
       if(WGL(ifp)->cursor)
-          XDestroyWindow(WGL(ifp)->dispp, WGL(ifp)->cursor);
+	  XDestroyWindow(WGL(ifp)->dispp, WGL(ifp)->cursor);
     */
 
   if( SGIL(ifp) != NULL ) {
@@ -1425,7 +1423,6 @@ int	count;
 }
 
 
-
 HIDDEN int
 wgl_write( ifp, xstart, ystart, pixelp, count ) /*write count pixels from pixelp starting at xstart,ystart*/
 FBIO	*ifp;
@@ -1712,7 +1709,6 @@ wgl_bwwriterect(FBIO *ifp,
 }
 
 
-
 HIDDEN int
 wgl_rmap(register FBIO *ifp,
 	 register ColorMap *cmp)
@@ -1818,13 +1814,13 @@ wgl_wmap(register FBIO *ifp,
 		/* This code has yet to be tested */
 
 /*	    	for (i = 0; i < 256; i++) {
-	    		color_cell[i].pixel = i;
-	    		color_cell[i].red = CMR(ifp)[i];
-	    		color_cell[i].green = CMG(ifp)[i];
-	    		color_cell[i].blue = CMB(ifp)[i];
-	    		color_cell[i].flags = DoRed | DoGreen | DoBlue;
-	    	}
-    		XStoreColors(WGL(ifp)->dispp, WGL(ifp)->xcmap, color_cell, 256);*/
+			color_cell[i].pixel = i;
+			color_cell[i].red = CMR(ifp)[i];
+			color_cell[i].green = CMG(ifp)[i];
+			color_cell[i].blue = CMB(ifp)[i];
+			color_cell[i].flags = DoRed | DoGreen | DoBlue;
+		}
+		XStoreColors(WGL(ifp)->dispp, WGL(ifp)->xcmap, color_cell, 256);*/
 	}
 	}
 
@@ -1917,7 +1913,6 @@ wgl_cursor(FBIO *ifp, int mode, int x, int y)
 {
 return 0;
 }
-
 
 
 HIDDEN int
@@ -2040,16 +2035,16 @@ wgl_do_event(FBIO *ifp)
 
     if( (bRet = GetMessage( &msg, NULL, 0, 0 )) != 0)
     {
-        if (bRet == -1)
-        {
-            /* handle the error and possibly exit */
-        }
-        else
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
+	if (bRet == -1)
+	{
+	    /* handle the error and possibly exit */
 	}
-    } 
+	else
+	{
+	    TranslateMessage(&msg);
+	    DispatchMessage(&msg);
+	}
+    }
 
     /* let's not starve the processor */
     Sleep( 250 );
@@ -2137,20 +2132,20 @@ expose_callback(FBIO *ifp,
 	} else if( (WGL(ifp)->win_width > ifp->if_width) ||
 		   (WGL(ifp)->win_height > ifp->if_height) ) {
 		/* clear whole buffer if window larger than framebuffer */
-	 	if( WGL(ifp)->copy_flag && !WGL(ifp)->front_flag ) {
-	 		glDrawBuffer(GL_FRONT);
+		if( WGL(ifp)->copy_flag && !WGL(ifp)->front_flag ) {
+			glDrawBuffer(GL_FRONT);
 			glViewport(0, 0, WGL(ifp)->win_width,
 				   WGL(ifp)->win_height);
 			glClearColor(0,0,0,0);
 			glClear(GL_COLOR_BUFFER_BIT);
-	 		glDrawBuffer(GL_BACK);
-	 	} else {
+			glDrawBuffer(GL_BACK);
+		} else {
 			glViewport(0, 0, WGL(ifp)->win_width,
 				   WGL(ifp)->win_height);
 			glClearColor(0,0,0,0);
 			glClear(GL_COLOR_BUFFER_BIT);
-	 	}
-	 	/* center viewport */
+		}
+		/* center viewport */
 		glViewport(SGI(ifp)->mi_xoff,
 			   SGI(ifp)->mi_yoff,
 			   WGL(ifp)->vp_width,

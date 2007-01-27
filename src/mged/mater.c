@@ -306,7 +306,7 @@ color_soltab(void)
 	FOR_ALL_SOLIDS( sp, &dgop->dgo_headSolid )  {
 		sp->s_cflag = 0;
 
-	        /* the user specified the color, so use it */
+		/* the user specified the color, so use it */
 		if( sp->s_uflag ) {
 			sp->s_color[0] = sp->s_basecolor[0];
 			sp->s_color[1] = sp->s_basecolor[1];
@@ -317,9 +317,9 @@ color_soltab(void)
 		for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 			if( sp->s_regionid <= mp->mt_high &&
 			    sp->s_regionid >= mp->mt_low ) {
-			    	sp->s_color[0] = mp->mt_r;
-			    	sp->s_color[1] = mp->mt_g;
-			    	sp->s_color[2] = mp->mt_b;
+				sp->s_color[0] = mp->mt_r;
+				sp->s_color[1] = mp->mt_g;
+				sp->s_color[2] = mp->mt_b;
 				goto done;
 			}
 		}

@@ -34,10 +34,10 @@
 
 int
 mk_dsp(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, const matp_t mat)
-          	      		/* name of file containing elevation data */
-   		     		/* X dimension of file (w cells) */
-   		     		/* Y dimension of file (n cells) */
-            	    		/* convert solid coords to model space */
+				/* name of file containing elevation data */
+				/* X dimension of file (w cells) */
+				/* Y dimension of file (n cells) */
+				/* convert solid coords to model space */
 {
 	struct rt_dsp_internal *dsp;
 

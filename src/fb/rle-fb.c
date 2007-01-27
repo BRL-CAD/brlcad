@@ -223,12 +223,12 @@ main(int argc, char **argv)
 
 	/* If screen sizes not specified, try to display rectangle part > 0 */
 	if( screen_width == 0 )  {
-	    	screen_width = rle_dflt_hdr.xmax + 1;
+		screen_width = rle_dflt_hdr.xmax + 1;
 		if( scr_xoff > 0 )
 			screen_width += scr_xoff;
 	}
 	if( screen_height == 0 )  {
-	    	screen_height = rle_dflt_hdr.ymax + 1;
+		screen_height = rle_dflt_hdr.ymax + 1;
 		if( scr_yoff > 0 )
 			screen_height += scr_yoff;
 	}
@@ -270,7 +270,7 @@ main(int argc, char **argv)
 	if( screen_xlen <= 0 ||
 	    rle_dflt_hdr.ymin > screen_height ||
 	    rle_dflt_hdr.ymax < 0 )  {
-	    	fprintf(stderr,
+		fprintf(stderr,
 		"rle-fb:  Warning:  RLE image rectangle entirely off screen\n");
 		goto done;
 	}

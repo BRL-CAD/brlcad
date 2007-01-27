@@ -28,7 +28,6 @@ set sph_number 0
 set point_number 0
 
 
-
 #	v R o t U p
 #
 #	Given a vector and a point, form a rotation matrix
@@ -67,7 +66,7 @@ proc vRotUp {plane pt} {
 #
 #	circleFrom3Pts
 #
-#	Given 3 points in 3d space, compute the center, radius, and the plane 
+#	Given 3 points in 3d space, compute the center, radius, and the plane
 #	defined by the points.  These are all returned as a single list:
 #	{{x y z} radius {x y z w}}
 #
@@ -108,7 +107,6 @@ proc circleFrom3Pts {a b c} {
 }
 
 
-
 #
 #	C Y L S
 #
@@ -136,9 +134,8 @@ proc sph {pts} {
 
     # get an index for this primitive so we have a unique name
     while {[catch {db get sph$sph_number} v] == 0} {
-        incr sph_number
+	incr sph_number
     }
-
 
 
 }
@@ -202,15 +199,14 @@ proc cylinder {pts} {
 }
 
 
-
 #
 #	P I P E
 #
-#       Takes a list of points on one side of a pipe, and 1 point on the 
-#       opposite side of the pipe.  From this it constructs the pipe.  
+#       Takes a list of points on one side of a pipe, and 1 point on the
+#       opposite side of the pipe.  From this it constructs the pipe.
 #       Note that this means the pipe has to lie in a single plane
 #
-#  Takes a set of 3 points for each span of the pipe, and generates the 
+#  Takes a set of 3 points for each span of the pipe, and generates the
 #  points for
 #  the pipe primitive.  Note that the pipe needs to be vaguely planar, as we
 #  translate from the path taken in one direction to find the centerline
@@ -236,7 +232,7 @@ proc pipe {pts} {
 
     # find diameter and center of the pipe
     set idx [expr [llength $pts] - 1]
-    
+
     set depth_pt [lindex $pts $idx] ; incr idx -1
     set last_pt [lindex $pts $idx] ;  incr idx -1
 
@@ -250,7 +246,7 @@ proc pipe {pts} {
     set end_center [vadd $last_pt $center_vec]
 
 
-    # now we walk the list of points (backwards) given and compute the 
+    # now we walk the list of points (backwards) given and compute the
     # pipe points from them.
 
     incr idx -1
@@ -262,7 +258,7 @@ proc pipe {pts} {
 	set c [lindex $pts [expr $idx + 2]]
 
 
-	set l [circleFrom3Pts $a $b $c]	
+	set l [circleFrom3Pts $a $b $c]
 
 	set i [expr $idx / 2]
 	if {[llength $l] == 0} {
@@ -271,7 +267,6 @@ proc pipe {pts} {
 	    continue
 	}
 
-	
 
 	# curved line segment
 	set bend_center [lindex $l 0]
@@ -293,7 +288,6 @@ proc pipe {pts} {
 	# aligned with the plane normal
 
 
-
 	# need to adjust the offset vector to the centerline
 	# because we are bending out of the plane
 
@@ -303,9 +297,9 @@ proc pipe {pts} {
 	# then take the arcosine to get the real angle (in radians)
 	set ca [vunitize [vsub $a $bend_center]]
 	set cb [vunitize [vsub $b $bend_center]]
-	set cc [vunitize [vsub $c $bend_center]] 
+	set cc [vunitize [vsub $c $bend_center]]
 	set c [vadd $c $center_vec]
-	
+
 	puts "ca $ca\ncb $cb\ncc $cc"
 
 	# find angle of rotation
@@ -323,7 +317,6 @@ proc pipe {pts} {
 	set b [vadd $b $newvec]
 
 
-
 	# find angle of rotation
 	set cosangle [vdot $cc $ca]
 	set angle [expr acos($cosangle)]
@@ -338,7 +331,6 @@ proc pipe {pts} {
 	# find the new point
 	set a [vadd $a $center_vec]
 
-	
 
 	set l [circleFrom3Pts $a $b $c]
 	set bend_center [lindex $l 0]
@@ -407,7 +399,6 @@ proc pipe {pts} {
 }
 
 
-
 #
 #    A R B
 #
@@ -419,7 +410,7 @@ proc pipe {pts} {
 #       ___
 #      |   |
 #      |   |
-#     /   
+#     /
 #  __/_
 # | /  |
 # |/   |
@@ -471,7 +462,7 @@ proc plate {pts} {
     set min_len 1e-4
 
     for {set i 0} {$i < $lim} {incr i} {
-	
+
 	# compute plane from first 3 points
 	set V [lindex $pts $i]
 
@@ -559,7 +550,7 @@ proc plate {pts} {
     set V_vector [mat4x3vec $m_inv [list 0.0 1.0 0.0 ]]
     lappend cmd "A" $U_vector
     lappend cmd "B" $V_vector
-    lappend cmd "VL" $twoDpts 
+    lappend cmd "VL" $twoDpts
 
     # add the drawing commands to the sketch
     set linecmd {}
@@ -581,8 +572,8 @@ proc plate {pts} {
     set delta [vscale $plane $dist]
 
     # create the extrude primitive
-    set cmd "put extrude$sketch_number extrude V" 
-    lappend cmd [lindex $pts 0] 
+    set cmd "put extrude$sketch_number extrude V"
+    lappend cmd [lindex $pts 0]
     # height vector
     lappend cmd "H" [vscale [vreverse [lrange $plane 0 2]] $dist]
 
@@ -597,7 +588,7 @@ proc plate {pts} {
 
     # keypoint index
     lappend cmd "K" 0
-    
+
     eval $cmd
 
     incr sketch_number
@@ -682,7 +673,7 @@ if { 1 == 0 } {
 	{0 0 0.5}
 	{5  0 0.5}
 	{9  0 0.5}
-	{9.707106781187 0.292893218813 0.5} 
+	{9.707106781187 0.292893218813 0.5}
 	{10 1 0.5}
 	{10 5 0.5}
 	{10 8 0.5}

@@ -25,7 +25,7 @@
  *  @li bn_cx_div		Complex Division
  *  @li  bn_cx_sqrt	Complex Square Root
  *
- *  
+ *
  * @author	Douglas A Gwyn		(Original Version)
  * @author	Michael John Muuss	(Macro Version)
  *
@@ -41,7 +41,6 @@ static const char RCScomplex[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "common.h"
-
 
 
 #include <stdio.h>

@@ -1077,7 +1077,6 @@ static int occlusion_miss (struct application *ap)
 }
 
 
-
 static int occludes (struct application *ap, struct cell *here)
 {
     int cpu = ap->a_resource->re_cpu;

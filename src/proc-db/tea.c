@@ -26,7 +26,6 @@
 #include "common.h"
 
 
-
 #include <stdio.h>		/* Direct the output to stdout */
 #include <unistd.h>
 #include "machine.h"		/* BRL-CAD specific machine data types */
@@ -75,7 +74,7 @@ main(int argc, char **argv) 			/* really has no arguments */
 	}
 
 	/* Setup information
-   	 * Database header record
+	 * Database header record
 	 *	File name
 	 * B-Spline Solid record
 	 * 	Name, Number of Surfaces, resolution (not used)
@@ -131,7 +130,7 @@ dump_patch( struct face_g_snurb **surfp, pt patch )
 	/* Both u and v knot vectors are [ 0 0 0 0 1 1 1 1]
 	 * spl_kvknot( order, lower parametric value, upper parametric value,
 	 * 		Number of interior knots )
- 	 */
+	 */
 
 
 	bu_free((char *)b_patch->u.knots, "dumping u knots I'm about to realloc");

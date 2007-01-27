@@ -78,7 +78,7 @@ get_Font(char *fontname)
 		fb_log( "Error opening font file '%s'\n", fname );
 		ffdes = NULL;
 		return 0;
-    		}
+		}
 	if( ffdes != NULL )
 		(void) fclose(ffdes);
 	ffdes = newff;
@@ -95,7 +95,7 @@ get_Font(char *fontname)
 	SWAB( lochdr.xtend );
 
 	if( lochdr.magic != 0436 )
-    		{
+		{
 		fb_log( "Not a font file \"%s\": magic=0%o\n",
 			fname, (int) lochdr.magic
 			);
@@ -115,7 +115,7 @@ get_Font(char *fontname)
 		point in the file after the directory, so grab the
 		current position.
 	 */
- 	offset = ftell( ffdes );
+	offset = ftell( ffdes );
 	return 1;
 	}
 

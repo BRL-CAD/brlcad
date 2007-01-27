@@ -9,21 +9,21 @@
 .\" forms (PDF, PostScript, HTML, RTF, etc), with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
-.\" 
+.\"
 .\" 1. Redistributions of source code (Docbook format) must retain the
 .\" above copyright notice, this list of conditions and the following
 .\" disclaimer.
-.\" 
+.\"
 .\" 2. Redistributions in compiled form (transformed to other DTDs,
 .\" converted to PDF, PostScript, HTML, RTF, and other formats) must
 .\" reproduce the above copyright notice, this list of conditions and
 .\" the following disclaimer in the documentation and/or other
 .\" materials provided with the distribution.
-.\" 
+.\"
 .\" 3. The name of the author may not be used to endorse or promote
 .\" products derived from this documentation without specific prior
 .\" written permission.
-.\" 
+.\"
 .\" THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY
 .\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -62,7 +62,7 @@ option is not used.
 The following options are available:
 .TP
 .B \-a abs_tess_tol
-Specify an absolute tessellation tolerance (in millimeters). 
+Specify an absolute tessellation tolerance (in millimeters).
 This requires that the maximum absolute error from the tessellated surface to the actual
 surface must not be greater than
 .I abs_tess_tol.
@@ -82,19 +82,19 @@ sets an absolute tolerance for each primitive solid by multiplying the
 overall size of the solid by
 .I rel_tess_tol.
 This allows small objects to be tessellated with small tolerances, while large objects are tessellated with large tolerances.
-For example, specifying 
+For example, specifying
 .I \-r 0.1
-when tesselating an object 2m in size, will result in a tolerance of .2m (2.0 * 0.1).  
+when tesselating an object 2m in size, will result in a tolerance of .2m (2.0 * 0.1).
 The same option will cause a 5cm object to be tesselated with a tolerance of 0.5cm.
 .TP
 .B \-t calc_dist_tol
-Specify a calculational distance tolerance (in millimeters). 
-This tolerance is used to distinguish neighboring vertices. 
-Any two vertices less than this tolerance distance apart will be considered the same vertex. 
+Specify a calculational distance tolerance (in millimeters).
+This tolerance is used to distinguish neighboring vertices.
+Any two vertices less than this tolerance distance apart will be considered the same vertex.
 The default value is 0.005mm.
 Prior to performing the Boolean operations for each region, the involved primitive solids
 are converted to a planar facetted approximation and stored as NMG solids. This tessellation
-can be controlled using the tessellation tolerances. 
+can be controlled using the tessellation tolerances.
 .TP
 .B \-v
 Produce copious progress information.

@@ -128,7 +128,7 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
  *
  *  locate a (long *) in an existing table
  *
- *  
+ *
  * @return	index of first matching element in array, if found
  * @return	-1	if not found
  *

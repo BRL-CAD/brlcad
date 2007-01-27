@@ -92,7 +92,7 @@ void	select_filter(char *str), dousage(void);
 
 char	usage[] = "\
 Usage: bwfilter [-f type] [-v] [-d div] [-o offset]\n\
-        [-s squaresize] [-w width] [-n height] [file.bw] > file.bw\n";
+	[-s squaresize] [-w width] [-n height] [file.bw] > file.bw\n";
 
 int
 get_args(int argc, register char **argv)

@@ -71,7 +71,6 @@ struct state_data {
 };
 
 
-
 static struct bu_list state_stack;
 static struct state_data *curr_state;
 static int curr_color=7;
@@ -87,19 +86,19 @@ struct layer {
 	int max_tri;			/* number of triangles currently malloced */
 	int curr_tri;			/* number of triangles currently being used */
 	int line_count;
-        int solid_count;
-        int polyline_count;
-        int lwpolyline_count;
-        int ellipse_count;
-        int circle_count;
-        int spline_count;
-        int arc_count;
-        int text_count;
-        int mtext_count;
-        int attrib_count;
-        int dimension_count;
-        int leader_count;
-        int face3d_count;
+	int solid_count;
+	int polyline_count;
+	int lwpolyline_count;
+	int ellipse_count;
+	int circle_count;
+	int spline_count;
+	int arc_count;
+	int text_count;
+	int mtext_count;
+	int attrib_count;
+	int dimension_count;
+	int leader_count;
+	int face3d_count;
 	int point_count;
 	struct bu_ptbl solids;
 	struct model *m;
@@ -1338,7 +1337,7 @@ process_entities_unknown_code( int code )
 			}
 			break;
 		} else if( !strcmp( line, "SOLID" ) ) {
-		        curr_state->sub_state = SOLID_ENTITY_STATE;
+			curr_state->sub_state = SOLID_ENTITY_STATE;
 			if( verbose ) {
 			    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 			}
@@ -1588,7 +1587,7 @@ process_lwpolyline_entities_code( int code )
     static int num_verts = 0;
     static int vert_no = 0;
     static fastf_t x, y;
-    
+
 	switch( code ) {
 	case 8:
 		if( curr_layer_name ) {
@@ -1646,7 +1645,7 @@ process_lwpolyline_entities_code( int code )
 			MAT4X3PNT( tmp_pt, curr_state->xform, &polyline_verts[i*3] );
 			VMOVE( &polyline_verts[i*3], tmp_pt );
 		    }
-		    
+
 		    for( i=0 ; i<polyline_vertex_count-1 ; i++ ) {
 			struct edgeuse *eu;
 
@@ -1797,13 +1796,13 @@ process_ellipse_entities_code( int code )
 		majorAxis[coord] = atof( line ) * units_conv[units] * scale_factor;
 		break;
 	case 40:
-	        ratio = atof( line );
+		ratio = atof( line );
 		break;
 	case 41:
-	        startAngle = atof( line );
+		startAngle = atof( line );
 		break;
 	case 42:
-	        endAngle = atof( line );
+		endAngle = atof( line );
 		break;
 	case 62:	/* color number */
 		curr_color = atoi( line );
@@ -1830,7 +1829,7 @@ process_ellipse_entities_code( int code )
 		VMOVE( majorAxis, tmp_pt );
 
 		majorRadius = MAGNITUDE( majorAxis );
-		minorRadius = ratio * majorRadius;	
+		minorRadius = ratio * majorRadius;
 
 		VMOVE( xdir, majorAxis );
 		VUNITIZE( xdir );
@@ -1862,7 +1861,7 @@ process_ellipse_entities_code( int code )
 		}
 		done = 0;
 		while( !done ) {
-		        point_t p0, p1, p2;
+			point_t p0, p1, p2;
 			double r1, r2;
 
 			if( angle >= endAngle ) {
@@ -2095,8 +2094,8 @@ convertSecretCodes( char *c, char *cp, int *maxLineLen )
 		lineLen++;
 	} else if( *c == '\\' ) {
 	    switch( *(c+1) ) {
-	        case 'P':
-	        case 'X':
+		case 'P':
+		case 'X':
 		    *cp++ = '\n';
 		    c += 2;
 		    lineCount++;
@@ -2105,16 +2104,16 @@ convertSecretCodes( char *c, char *cp, int *maxLineLen )
 		    }
 		    lineLen = 0;
 		    break;
-	        case 'A':
+		case 'A':
 		    while( *c != ';' && *c != '\0' ) c++;
 		    c++;
 		    break;
-	        case '~':
+		case '~':
 		    *cp++ = ' ';
 		    c += 2;
 		    lineLen++;
 		    break;
-	        default:
+		default:
 		    *cp++ = *c++;
 		    lineLen++;
 		    break;
@@ -2317,7 +2316,7 @@ drawMtext( char *text, int attachPoint, int drawingDirection, double textHeight,
 	}
     }
 
-    
+
     bu_free( copyOfText, "copyOfText" );
 }
 
@@ -2344,7 +2343,7 @@ process_leader_entities_code( int code )
     struct vertex *v0=NULL, *v1=NULL, *v2=NULL;
 
     switch( code ) {
-        case 8:
+	case 8:
 	    if( curr_layer_name ) {
 		bu_free( curr_layer_name, "curr_layer_name" );
 	    }
@@ -2356,64 +2355,64 @@ process_leader_entities_code( int code )
        case 62:	/* color number */
 	   curr_color = atoi( line );
 	   break;
-        case 71:
+	case 71:
 	    arrowHeadFlag = atoi( line );
 	    break;
-        case 72:
+	case 72:
 	    pathType = atoi( line );
 	    break;
-        case 73:
+	case 73:
 	    creationFlag = atoi( line );
 	    break;
-        case 74:
+	case 74:
 	    hooklineDirection = atoi( line );
 	    break;
-        case 75:
+	case 75:
 	    hooklineFlag = atoi( line );
 	    break;
-        case 40:
+	case 40:
 	    textHeight = atof( line );
 	    break;
-        case 41:
+	case 41:
 	    textWidth = atof( line );
 	    break;
-        case 76:
+	case 76:
 	    numVerts = atoi( line );
 	    break;
-        case 210:
+	case 210:
 	    normal[X] = atof( line );
 	    break;
-        case 220:
+	case 220:
 	    normal[Y] = atof( line );
 	    break;
-        case 230:
+	case 230:
 	    normal[Z] = atof( line );
 	    break;
-        case 211:
+	case 211:
 	    horizDir[X] = atof( line );
 	    break;
-        case 221:
+	case 221:
 	    horizDir[Y] = atof( line );
 	    break;
-        case 231:
+	case 231:
 	    horizDir[Z] = atof( line );
 	    break;
-        case 212:
+	case 212:
 	    offsetB[X] = atof( line );
 	    break;
-        case 222:
+	case 222:
 	    offsetB[Y] = atof( line );
 	    break;
-        case 232:
+	case 232:
 	    offsetB[Z] = atof( line );
 	    break;
-        case 213:
+	case 213:
 	    offset[X] = atof( line );
 	    break;
-        case 223:
+	case 223:
 	    offset[Y] = atof( line );
 	    break;
-        case 233:
+	case 233:
 	    offset[Z] = atof( line );
 	    break;
 	case 10:
@@ -2436,9 +2435,9 @@ process_leader_entities_code( int code )
 	    if( verbose ) {
 		bu_log( "Found end of LEADER: arrowhead flag = %d\n", arrowHeadFlag );
 	    }
-	    
+
 	    layers[curr_layer]->leader_count++;
-	    
+
 	    if( polyline_vertex_count > 1 ) {
 		if( !layers[curr_layer]->m ) {
 		    create_nmg();
@@ -2502,7 +2501,7 @@ process_mtext_entities_code( int code )
     int coord;
 
     switch( code ) {
-        case 3:
+	case 3:
 	    bu_vls_init_if_uninit( &vls );
 	    bu_vls_strcat( &vls, line );
 	    break;
@@ -2824,7 +2823,7 @@ process_dimension_entities_code( int code )
 		   BU_GETSTRUCT( new_state, state_data );
 		   *new_state = *curr_state;
 		   if( verbose ) {
-                       bu_log( "Created a new state for DIMENSION\n" );
+		       bu_log( "Created a new state for DIMENSION\n" );
 		   }
 		   for( BU_LIST_FOR( blk, block_list, &block_head ) ) {
 		       if (block_name) {
@@ -2834,13 +2833,13 @@ process_dimension_entities_code( int code )
 		       }
 		   }
 		   if( BU_LIST_IS_HEAD( blk, &block_head ) ) {
-                       bu_log( "ERROR: DIMENSION references non-existent block (%s)\n", block_name );
-                       bu_log( "\tignoring missing block\n" );
-                       blk = NULL;
+		       bu_log( "ERROR: DIMENSION references non-existent block (%s)\n", block_name );
+		       bu_log( "\tignoring missing block\n" );
+		       blk = NULL;
 		   }
 		   new_state->curr_block = blk;
 		   if( verbose && blk ) {
-                       bu_log( "Inserting block %s\n", blk->block_name );
+		       bu_log( "Inserting block %s\n", blk->block_name );
 		   }
 
 		   if (block_name) {
@@ -2848,16 +2847,16 @@ process_dimension_entities_code( int code )
 		   }
 
 		   if( new_state->curr_block ) {
-                       BU_LIST_PUSH( &state_stack, &(curr_state->l) );
-                       curr_state = new_state;
-                       new_state = NULL;
-                       fseek( dxf, curr_state->curr_block->offset, SEEK_SET );
-                       curr_state->state = ENTITIES_SECTION;
-                       curr_state->sub_state = UNKNOWN_ENTITY_STATE;
-                       if( verbose ) {
+		       BU_LIST_PUSH( &state_stack, &(curr_state->l) );
+		       curr_state = new_state;
+		       new_state = NULL;
+		       fseek( dxf, curr_state->curr_block->offset, SEEK_SET );
+		       curr_state->state = ENTITIES_SECTION;
+		       curr_state->sub_state = UNKNOWN_ENTITY_STATE;
+		       if( verbose ) {
 			   bu_log( "Changing state for INSERT\n" );
 			   bu_log( "seeked to %ld\n", curr_state->curr_block->offset );
-                       }
+		       }
 		       layers[curr_layer]->dimension_count++;
 		   }
 	       }
@@ -3496,7 +3495,7 @@ main( int argc, char *argv[] )
 	{
 		switch( c )
 		{
-		        case 's':	/* scale factor */
+			case 's':	/* scale factor */
 				scale_factor = atof( optarg );
 				if( scale_factor < SQRT_SMALL_FASTF ) {
 					bu_log( "scale factor too small\n" );
@@ -3504,10 +3503,10 @@ main( int argc, char *argv[] )
 					exit( 1 );
 				}
 				break;
-		        case 'c':	/* ignore colors */
+			case 'c':	/* ignore colors */
 				ignore_colors = 1;
 				break;
-		        case 'd':	/* debug */
+			case 'd':	/* debug */
 				bu_debug = BU_DEBUG_COREDUMP;
 				break;
 			case 't':	/* tolerance */

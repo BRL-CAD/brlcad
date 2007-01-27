@@ -146,7 +146,6 @@ static const char RCSrec[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -576,10 +575,10 @@ hit:
  */
 void
 rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	register int    i;
@@ -598,7 +597,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 #	include "noalias.h"
 	for(i = 0; i < n; i++){
 #if !CRAY /* XXX currently prevents vectorization on cray */
-	 	if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
+		if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
 #endif
 
 		rec = (struct rec_specific *)stp[i]->st_specific;

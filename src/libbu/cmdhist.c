@@ -62,8 +62,7 @@ static void
 history_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
 
 
-
-                   /* Either TCL_OK or TCL_ERROR */
+		   /* Either TCL_OK or TCL_ERROR */
 {
 	struct bu_cmdhist *new_hist;
 

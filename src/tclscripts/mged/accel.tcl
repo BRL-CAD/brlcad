@@ -37,7 +37,6 @@
 #
 
 
-
 #
 #                               R C C - C A P
 #
@@ -63,7 +62,7 @@ proc rcc-cap {args} {
     } elseif {$argc == 3} {
 	if { [regexp {^[0-9]+.*[0-9]*$} [lindex $args 2]]} {
 	    set height [expr [bu_units_conversion $mged_display(units)] *[lindex $args 2]]
-            set end b
+	    set end b
 	} else {
 	    foreach {ax ay az} [db get $rccname A] {}
 	    set amag [expr sqrt($ax*$ax + $ay*$ay + $az*$az)]
@@ -85,12 +84,12 @@ proc rcc-cap {args} {
     set vertex [db get $rccname V]
     if {$end == "t"} {
 	set vertex [vadd2 {$vertex} $hv]
-        set vec1 C
-        set vec2 D
+	set vec1 C
+	set vec2 D
     } else {
 	set ellheight [vreverse $ellheight]
-        set vec1 A
-        set vec2 B
+	set vec1 A
+	set vec2 B
     }
     set Alist [db get $rccname $vec1]
     set Blist [db get $rccname $vec2]
@@ -110,7 +109,7 @@ proc rcc-cap {args} {
 proc rcc-tgc {args} {
     global mged_display
     set usage "Usage: rcc-tgc rccname newname x y z \[b|t\] \n   \
-               \t(create a tgc with the specified apex at an end of an rcc)"
+	       \t(create a tgc with the specified apex at an end of an rcc)"
     set argc [llength $args]
     if {$argc < 5 || $argc > 6} {
 	error "$usage"
@@ -136,8 +135,8 @@ proc rcc-tgc {args} {
 	set vertex [vadd2 [db get $rccname V] [db get $rccname H]]
     } else {
 	set vec1 A
-        set vec2 B
-        set vertex [db get $rccname V]
+	set vec2 B
+	set vertex [db get $rccname V]
     }
     set vector1 [db get $rccname $vec1]
     set vector2 [db get $rccname $vec2]
@@ -146,7 +145,7 @@ proc rcc-tgc {args} {
     set apex ""
     foreach pt {$ptx $pty $ptz} {
 	set result [expr $pt*[bu_units_conversion $mged_display(units)]]
-        lappend apex $result
+	lappend apex $result
     }
     set height [vsub2 $apex $vertex]
   #Create TGC
@@ -155,7 +154,7 @@ proc rcc-tgc {args} {
 	set result ""
 	foreach coord $val {
 	    set temp [expr $coord/[bu_units_conversion $mged_display(units)]]
-            lappend result $temp
+	    lappend result $temp
 	}
 	set $param $result
     }
@@ -281,12 +280,12 @@ proc rcc-blend {args} {
     if {$end == "t"} {
 	foreach coord {vx vy vz} vval {$rvx $rvy $rvz} hval {$rhx $rhy $rhz} {
 	    set t$coord [expr $vval + $hval * $num/$hmag]
-            set r$coord [expr $vval + $num/$hmag * $hval]
-        }
+	    set r$coord [expr $vval + $num/$hmag * $hval]
+	}
     } else {
 	foreach coord {tvx tvy tvz} vval {$rvx $rvy $rvz} hval {$rhx $rhy $rhz} {
 	    set $coord [expr $vval + $hval * $thickness/$hmag]
-        }
+	}
     }
   #Create TOR
     set torname [make_name $newname]
@@ -361,17 +360,17 @@ proc rpp-cap {args} {
     if {$orient == 0} {
 	set rise1 [vadd2 $V1 $V2]
 	set rise2 [vadd2 $V3 $V4]
-        set P1 $V1
-        set P2 $V2
-        set P3 $V3
-        set P4 $V4
+	set P1 $V1
+	set P2 $V2
+	set P3 $V3
+	set P4 $V4
     } else {
 	set rise2 [vadd2 $V1 $V4]
-        set rise1 [vadd2 $V2 $V3]
-        set P1 $V2
-        set P2 $V3
-        set P3 $V4
-        set P4 $V1
+	set rise1 [vadd2 $V2 $V3]
+	set P1 $V2
+	set P2 $V3
+	set P3 $V4
+	set P4 $V1
     }
 
     foreach coord {r1x r1y r1z} index {0 1 2} {
@@ -386,10 +385,10 @@ proc rpp-cap {args} {
     while {$index <= 3 && $pt <= 8} {
 	if {$pt == [string index $face $index]} {
 	    incr pt
-            set index 0
-        } else {
-            incr index
-        }
+	    set index 0
+	} else {
+	    incr index
+	}
     }
   #Determine direction of hvector
   #Form vector from a point on the specified face and a point not on the face
@@ -400,7 +399,7 @@ proc rpp-cap {args} {
     }
   #Set ARB6 coordinates
     foreach coord {r1x r1y r1z} value {$r1x $r1y $r1z} index {0 1 2} {
-      	set $coord [expr $value + [lindex $hvector $index]]
+	set $coord [expr $value + [lindex $hvector $index]]
     }
     foreach coord {r2x r2y r2z} value {$r2x $r2y $r2z} index {0 1 2} {
 	set $coord [expr $value + [lindex $hvector $index]]
@@ -411,7 +410,7 @@ proc rpp-cap {args} {
 	set result ""
 	foreach coord $val {
 	    set temp [expr $coord/[bu_units_conversion $mged_display(units)]]
-            lappend result $temp
+	    lappend result $temp
 	}
 	set $param $result
     }
@@ -459,7 +458,7 @@ proc rpp-arch {args} {
 	set result ""
 	foreach coord $val {
 	    set temp [expr $coord/[bu_units_conversion $mged_display(units)]]
-            lappend result $temp
+	    lappend result $temp
 	}
 	set $param $result
     }

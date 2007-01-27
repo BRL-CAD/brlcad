@@ -147,7 +147,6 @@ struct fire_specific fire_defaults = {
 #define SHDR_AO(m)	bu_offsetofarray(struct fire_specific, m)
 
 
-
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
  * structure above
@@ -231,9 +230,9 @@ HIDDEN int
 fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-    			      	/* pointer to reg_udata in *rp */
+				/* pointer to reg_udata in *rp */
 
-           		      	/* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct fire_specific	*fire_sp;
 
@@ -283,7 +282,6 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 	rt_dspline_matrix(fire_sp->fire_colorspline_mat, "Catmull", 0.5, 0.0);
 
 
-
 	if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
 		bu_struct_print( " FIRE Parameters:", fire_print_tab, (char *)fire_sp );
 		bn_mat_print( "m_to_sh", fire_sp->fire_m_to_sh );
@@ -323,8 +321,8 @@ int
 fire_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
-                	     	/* defined in material.h */
-    			    	/* ptr to the shader-specific struct */
+				/* defined in material.h */
+				/* ptr to the shader-specific struct */
 {
 #define DEBUG_SPACE_PRINT(str, i_pt, o_pt) \
 	if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) { \

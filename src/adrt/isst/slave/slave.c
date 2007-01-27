@@ -96,78 +96,78 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
   switch(op) {
     case ISST_OP_SHOT:
       {
-        tie_ray_t ray;
-        void *mesg;
-        int dlen;
+	tie_ray_t ray;
+	void *mesg;
+	int dlen;
 
-        mesg = NULL;
+	mesg = NULL;
 
-        /* position */
-        memcpy(&ray.pos, &((char *)data)[ind], sizeof(TIE_3));
-        ind += sizeof(TIE_3);
+	/* position */
+	memcpy(&ray.pos, &((char *)data)[ind], sizeof(TIE_3));
+	ind += sizeof(TIE_3);
 
-        /* direction */
-        memcpy(&ray.dir, &((char *)data)[ind], sizeof(TIE_3));
-        ind += sizeof(TIE_3);
+	/* direction */
+	memcpy(&ray.dir, &((char *)data)[ind], sizeof(TIE_3));
+	ind += sizeof(TIE_3);
 
-        /* Fire the shot */
-        ray.depth = 0;
-        render_util_shotline_list(tie, &ray, &mesg, &dlen);
+	/* Fire the shot */
+	ray.depth = 0;
+	render_util_shotline_list(tie, &ray, &mesg, &dlen);
 
-        /* Make room for shot data */
-        *res_len = sizeof(common_work_t) + dlen;
-        *res_buf = (void *)realloc(*res_buf, *res_len);
+	/* Make room for shot data */
+	*res_len = sizeof(common_work_t) + dlen;
+	*res_buf = (void *)realloc(*res_buf, *res_len);
 
-        ind = 0;
+	ind = 0;
 
-        /* Pack work unit data and shot data */
-        memcpy(&((char *)*res_buf)[ind], &work, sizeof(common_work_t));
-        ind += sizeof(common_work_t);
+	/* Pack work unit data and shot data */
+	memcpy(&((char *)*res_buf)[ind], &work, sizeof(common_work_t));
+	ind += sizeof(common_work_t);
 
-        memcpy(&((char *)*res_buf)[ind], mesg, dlen);
+	memcpy(&((char *)*res_buf)[ind], mesg, dlen);
 
-        free(mesg);
+	free(mesg);
       }
       break;
 
     case ISST_OP_SPALL:
       {
-        tie_ray_t ray;
-        tfloat angle;
-        void *mesg;
-        int dlen;
+	tie_ray_t ray;
+	tfloat angle;
+	void *mesg;
+	int dlen;
 
-        mesg = NULL;
+	mesg = NULL;
 
-        /* position */
-        memcpy(&ray.pos, &((char *)data)[ind], sizeof(TIE_3));
-        ind += sizeof(TIE_3);
+	/* position */
+	memcpy(&ray.pos, &((char *)data)[ind], sizeof(TIE_3));
+	ind += sizeof(TIE_3);
 
-        /* direction */
-        memcpy(&ray.dir, &((char *)data)[ind], sizeof(TIE_3));
-        ind += sizeof(TIE_3);
+	/* direction */
+	memcpy(&ray.dir, &((char *)data)[ind], sizeof(TIE_3));
+	ind += sizeof(TIE_3);
 
-        /* angle */
-        memcpy(&angle, &((char *)data)[ind], sizeof(tfloat));
-        ind += sizeof(tfloat);
+	/* angle */
+	memcpy(&angle, &((char *)data)[ind], sizeof(tfloat));
+	ind += sizeof(tfloat);
 
-        /* Fire the shot */
-        ray.depth = 0;
-        render_util_spall_list(tie, &ray, angle, &mesg, &dlen);
+	/* Fire the shot */
+	ray.depth = 0;
+	render_util_spall_list(tie, &ray, angle, &mesg, &dlen);
 
-        /* Make room for shot data */
-        *res_len = sizeof(common_work_t) + dlen;
-        *res_buf = (void *)realloc(*res_buf, *res_len);
+	/* Make room for shot data */
+	*res_len = sizeof(common_work_t) + dlen;
+	*res_buf = (void *)realloc(*res_buf, *res_len);
 
-        ind = 0;
+	ind = 0;
 
-        /* Pack work unit data and shot data */
-        memcpy(&((char *)*res_buf)[ind], &work, sizeof(common_work_t));
-        ind += sizeof(common_work_t);
+	/* Pack work unit data and shot data */
+	memcpy(&((char *)*res_buf)[ind], &work, sizeof(common_work_t));
+	ind += sizeof(common_work_t);
 
-        memcpy(&((char *)*res_buf)[ind], mesg, dlen);
+	memcpy(&((char *)*res_buf)[ind], mesg, dlen);
 
-        free(mesg);
+	free(mesg);
       }
       break;
 
@@ -185,71 +185,71 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
       ind += 1;
 
       if(rm != db.env.rm) {
-        db.env.render.free(&db.env.render);
+	db.env.render.free(&db.env.render);
 
-        switch(rm) {
-          case RENDER_METHOD_DEPTH:
-            render_depth_init(&db.env.render);
-            break;
+	switch(rm) {
+	  case RENDER_METHOD_DEPTH:
+	    render_depth_init(&db.env.render);
+	    break;
 
-          case RENDER_METHOD_COMPONENT:
-            render_component_init(&db.env.render);
-            break;
+	  case RENDER_METHOD_COMPONENT:
+	    render_component_init(&db.env.render);
+	    break;
 
-          case RENDER_METHOD_GRID:
-            render_grid_init(&db.env.render);
-            break;
+	  case RENDER_METHOD_GRID:
+	    render_grid_init(&db.env.render);
+	    break;
 
-          case RENDER_METHOD_NORMAL:
-            render_normal_init(&db.env.render);
-            break;
+	  case RENDER_METHOD_NORMAL:
+	    render_normal_init(&db.env.render);
+	    break;
 
-          case RENDER_METHOD_PATH:
-            render_path_init(&db.env.render, 12);
-            break;
+	  case RENDER_METHOD_PATH:
+	    render_path_init(&db.env.render, 12);
+	    break;
 
-          case RENDER_METHOD_PHONG:
-            render_phong_init(&db.env.render);
-            break;
+	  case RENDER_METHOD_PHONG:
+	    render_phong_init(&db.env.render);
+	    break;
 
-          case RENDER_METHOD_PLANE:
-            {
-              TIE_3 shot_pos, shot_dir;
+	  case RENDER_METHOD_PLANE:
+	    {
+	      TIE_3 shot_pos, shot_dir;
 
-              /* Extract shot position and direction */
-              memcpy(&shot_pos, &((char *)data)[ind], sizeof(TIE_3));
-              ind += sizeof(TIE_3);
+	      /* Extract shot position and direction */
+	      memcpy(&shot_pos, &((char *)data)[ind], sizeof(TIE_3));
+	      ind += sizeof(TIE_3);
 
-              memcpy(&shot_dir, &((char *)data)[ind], sizeof(TIE_3));
-              ind += sizeof(TIE_3);
+	      memcpy(&shot_dir, &((char *)data)[ind], sizeof(TIE_3));
+	      ind += sizeof(TIE_3);
 
-              render_plane_init(&db.env.render, shot_pos, shot_dir);
-            }
-            break;
+	      render_plane_init(&db.env.render, shot_pos, shot_dir);
+	    }
+	    break;
 
-          case RENDER_METHOD_SPALL:
-            {
-              TIE_3 shot_pos, shot_dir;
-              tfloat angle;
+	  case RENDER_METHOD_SPALL:
+	    {
+	      TIE_3 shot_pos, shot_dir;
+	      tfloat angle;
 
-              /* Extract shot position and direction */
-              memcpy(&shot_pos, &((char *)data)[ind], sizeof(TIE_3));
-              ind += sizeof(TIE_3);
+	      /* Extract shot position and direction */
+	      memcpy(&shot_pos, &((char *)data)[ind], sizeof(TIE_3));
+	      ind += sizeof(TIE_3);
 
-              memcpy(&shot_dir, &((char *)data)[ind], sizeof(TIE_3));
-              ind += sizeof(TIE_3);
+	      memcpy(&shot_dir, &((char *)data)[ind], sizeof(TIE_3));
+	      ind += sizeof(TIE_3);
 
-              memcpy(&angle, &((char *)data)[ind], sizeof(tfloat));
-              ind += sizeof(tfloat);
+	      memcpy(&angle, &((char *)data)[ind], sizeof(tfloat));
+	      ind += sizeof(tfloat);
 
-              render_spall_init(&db.env.render, shot_pos, shot_dir, angle); /* 10 degrees for now */
-            }
-            break;
+	      render_spall_init(&db.env.render, shot_pos, shot_dir, angle); /* 10 degrees for now */
+	    }
+	    break;
 
-          default:
-            break;
-        }
-        db.env.rm = rm;
+	  default:
+	    break;
+	}
+	db.env.rm = rm;
       }
 
       /* Update camera */
@@ -288,7 +288,7 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
 
       /* Reset all meshes hit flag */
       for(i = 0; i < db.mesh_num; i++)
-        db.mesh_list[i]->flags &= 0x2;
+	db.mesh_list[i]->flags &= 0x2;
 
       /* Read the data */
       ind = sizeof(short);
@@ -297,18 +297,18 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
       ind += sizeof(int);
 
       for(i = 0; i < num; i++) {
-        memcpy(&c, &((unsigned char *)mesg)[ind], 1);
-        ind += 1;
-        memcpy(name, &((unsigned char *)mesg)[ind], c);
-        ind += c;
+	memcpy(&c, &((unsigned char *)mesg)[ind], 1);
+	ind += 1;
+	memcpy(name, &((unsigned char *)mesg)[ind], c);
+	ind += c;
 
-        /* set hit flag */
-        for(n = 0; n < db.mesh_num; n++) {
-          if(!strcmp(db.mesh_list[n]->name, name)) {
-            db.mesh_list[n]->flags |= 1;
-            continue;
-          }
-        }
+	/* set hit flag */
+	for(n = 0; n < db.mesh_num; n++) {
+	  if(!strcmp(db.mesh_list[n]->name, name)) {
+	    db.mesh_list[n]->flags |= 1;
+	    continue;
+	  }
+	}
       }
     }
     break;
@@ -327,8 +327,8 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
 
       /* set select flag */
       for(n = 0; n < db.mesh_num; n++)
-        if(strstr(db.mesh_list[n]->name, string) || c == 1)
-          db.mesh_list[n]->flags = (db.mesh_list[n]->flags & 0x1) | t<<1;
+	if(strstr(db.mesh_list[n]->name, string) || c == 1)
+	  db.mesh_list[n]->flags = (db.mesh_list[n]->flags & 0x1) | t<<1;
     }
     break;
 

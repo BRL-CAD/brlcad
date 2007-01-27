@@ -149,8 +149,8 @@ open_file(int i, char *name)
 
 	/* Obtain buffer */
 	if( (buf[i] = (char *)malloc( width*CHUNK )) == (char *)0 )  {
-	    	fprintf(stderr, "pixmatte:  input buffer malloc failure\n");
-	    	exit(3);
+		fprintf(stderr, "pixmatte:  input buffer malloc failure\n");
+		exit(3);
 	}
 
 	return(0);			/* OK */
@@ -254,8 +254,8 @@ main(int argc, char **argv)
 	fprintf(stderr, "pixmatte:\t\telse output %s\n", file_name[3] );
 
 	if( (obuf = (char *)malloc( width*CHUNK )) == (char *)0 ) {
-	    	fprintf(stderr, "pixmatte:  obuf malloc failure\n");
-	    	exit(3);
+		fprintf(stderr, "pixmatte:  obuf malloc failure\n");
+		exit(3);
 	}
 
 	while(1)  {

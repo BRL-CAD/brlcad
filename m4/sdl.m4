@@ -13,22 +13,22 @@ AC_DEFUN([AM_PATH_SDL],
 dnl Get the cflags and libraries from the sdl-config script
 dnl
 AC_ARG_WITH(sdl-prefix,[  --with-sdl-prefix=PFX   Prefix where SDL is installed (optional)],
-            sdl_prefix="$withval", sdl_prefix="")
+	    sdl_prefix="$withval", sdl_prefix="")
 AC_ARG_WITH(sdl-exec-prefix,[  --with-sdl-exec-prefix=PFX Exec prefix where SDL is installed (optional)],
-            sdl_exec_prefix="$withval", sdl_exec_prefix="")
+	    sdl_exec_prefix="$withval", sdl_exec_prefix="")
 AC_ARG_ENABLE(sdltest, [  --disable-sdltest       Do not try to compile and run a test SDL program],
 		    , enable_sdltest=yes)
 
   if test x$sdl_exec_prefix != x ; then
      sdl_args="$sdl_args --exec-prefix=$sdl_exec_prefix"
      if test x${SDL_CONFIG+set} != xset ; then
-        SDL_CONFIG=$sdl_exec_prefix/bin/sdl-config
+	SDL_CONFIG=$sdl_exec_prefix/bin/sdl-config
      fi
   fi
   if test x$sdl_prefix != x ; then
      sdl_args="$sdl_args --prefix=$sdl_prefix"
      if test x${SDL_CONFIG+set} != xset ; then
-        SDL_CONFIG=$sdl_prefix/bin/sdl-config
+	SDL_CONFIG=$sdl_prefix/bin/sdl-config
      fi
   fi
 
@@ -45,11 +45,11 @@ AC_ARG_ENABLE(sdltest, [  --disable-sdltest       Do not try to compile and run 
     SDL_LIBS=`$SDL_CONFIG $sdlconf_args --libs`
 
     sdl_major_version=`$SDL_CONFIG $sdl_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
+	   sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
     sdl_minor_version=`$SDL_CONFIG $sdl_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
+	   sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
     sdl_micro_version=`$SDL_CONFIG $sdl_config_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
+	   sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
     if test "x$enable_sdltest" = "xyes" ; then
       ac_save_CFLAGS="$CFLAGS"
       ac_save_LIBS="$LIBS"
@@ -134,12 +134,12 @@ int main (int argc, char *argv[])
        echo "*** full path to sdl-config."
      else
        if test -f conf.sdltest ; then
-        :
+	:
        else
-          echo "*** Could not run SDL test program, checking why..."
-          CFLAGS="$CFLAGS $SDL_CFLAGS"
-          LIBS="$LIBS $SDL_LIBS"
-          AC_TRY_LINK([
+	  echo "*** Could not run SDL test program, checking why..."
+	  CFLAGS="$CFLAGS $SDL_CFLAGS"
+	  LIBS="$LIBS $SDL_LIBS"
+	  AC_TRY_LINK([
 #include <stdio.h>
 #include "SDL.h"
 
@@ -148,21 +148,21 @@ int main(int argc, char *argv[])
 #undef  main
 #define main K_and_R_C_main
 ],      [ return 0; ],
-        [ echo "*** The test program compiled, but did not run. This usually means"
-          echo "*** that the run-time linker is not finding SDL or finding the wrong"
-          echo "*** version of SDL. If it is not finding SDL, you'll need to set your"
-          echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
-          echo "*** to the installed location  Also, make sure you have run ldconfig if that"
-          echo "*** is required on your system"
+	[ echo "*** The test program compiled, but did not run. This usually means"
+	  echo "*** that the run-time linker is not finding SDL or finding the wrong"
+	  echo "*** version of SDL. If it is not finding SDL, you'll need to set your"
+	  echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
+	  echo "*** to the installed location  Also, make sure you have run ldconfig if that"
+	  echo "*** is required on your system"
 	  echo "***"
-          echo "*** If you have an old version installed, it is best to remove it, although"
-          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"],
-        [ echo "*** The test program failed to compile or link. See the file config.log for the"
-          echo "*** exact error that occured. This usually means SDL was incorrectly installed"
-          echo "*** or that you have moved SDL since it was installed. In the latter case, you"
-          echo "*** may want to edit the sdl-config script: $SDL_CONFIG" ])
-          CFLAGS="$ac_save_CFLAGS"
-          LIBS="$ac_save_LIBS"
+	  echo "*** If you have an old version installed, it is best to remove it, although"
+	  echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"],
+	[ echo "*** The test program failed to compile or link. See the file config.log for the"
+	  echo "*** exact error that occured. This usually means SDL was incorrectly installed"
+	  echo "*** or that you have moved SDL since it was installed. In the latter case, you"
+	  echo "*** may want to edit the sdl-config script: $SDL_CONFIG" ])
+	  CFLAGS="$ac_save_CFLAGS"
+	  LIBS="$ac_save_LIBS"
        fi
      fi
      SDL_CFLAGS=""

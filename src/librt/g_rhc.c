@@ -529,10 +529,10 @@ check_plates:
  */
 void
 rt_rhc_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	rt_vstub( stp, rp, segp, n, ap );
@@ -609,8 +609,8 @@ rt_rhc_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	case RHC_NORM_FRT:
 	case RHC_NORM_TOP:
 		/* any tangent direction */
-	 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
-	 	cvp->crv_c1 = cvp->crv_c2 = 0;
+		bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+		cvp->crv_c1 = cvp->crv_c2 = 0;
 		break;
 	}
 }

@@ -81,11 +81,11 @@ static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n no
 
 
 int region_start (struct db_tree_state *tsp, struct db_full_path *pathp,
-                  const struct rt_comb_internal * combp, genptr_t client_data );
+		  const struct rt_comb_internal * combp, genptr_t client_data );
 union tree *region_end (struct db_tree_state *tsp, struct db_full_path *pathp,
-                        union tree *curtree, genptr_t client_data );
+			union tree *curtree, genptr_t client_data );
 union tree *primitive_func( struct db_tree_state *tsp, struct db_full_path *pathp,
-                            struct rt_db_internal *ip, genptr_t client_data);
+			    struct rt_db_internal *ip, genptr_t client_data);
 void describe_tree( union tree *tree, struct bu_vls *str);
 
 
@@ -95,22 +95,22 @@ void describe_tree( union tree *tree, struct bu_vls *str);
 int
 main(int argc, char *argv[])
 {
-        struct user_data {
-           int info;
-        } user_data;
+	struct user_data {
+	   int info;
+	} user_data;
 
 	int		i;
 	register int	c;
-        char idbuf[132];
+	char idbuf[132];
 
 	bu_setlinebuf( stderr );
 /*
 	rt_init_resource(&rt_uniresource, 0, NULL);
-        struct rt_db_internal intern;
-        struct directory *dp;
+	struct rt_db_internal intern;
+	struct directory *dp;
 */
-        struct rt_i *rtip;
-        struct db_tree_state init_state;
+	struct rt_i *rtip;
+	struct db_tree_state init_state;
 
 	/* calculational tolerances
 	 * mostly used by NMG routines
@@ -157,14 +157,14 @@ main(int argc, char *argv[])
 
 	/* Open BRL-CAD database */
 	/* Scan all the records in the database and build a directory */
-        /* rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf)); */
-        rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf));
-        if ( rtip == RTI_NULL) {
-           fprintf(stderr,"g-xxx: rt_dirbuild failure\n");
-           exit(1);
-        }
+	/* rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf)); */
+	rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf));
+	if ( rtip == RTI_NULL) {
+	   fprintf(stderr,"g-xxx: rt_dirbuild failure\n");
+	   exit(1);
+	}
 
-        init_state = rt_initial_tree_state;
+	init_state = rt_initial_tree_state;
 
 	optind++;
 
@@ -173,8 +173,8 @@ main(int argc, char *argv[])
 	 */
 	for( i=optind ; i<argc ; i++ )
 	{
-            db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], NUM_OF_CPUS_TO_USE,
-                         &init_state ,region_start, region_end, primitive_func, (genptr_t) &user_data);
+	    db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], NUM_OF_CPUS_TO_USE,
+			 &init_state ,region_start, region_end, primitive_func, (genptr_t) &user_data);
 	}
 
 	return 0;
@@ -195,18 +195,18 @@ main(int argc, char *argv[])
  */
 int
 region_start (struct db_tree_state *tsp,
-              struct db_full_path *pathp,
-              const struct rt_comb_internal *combp,
-              genptr_t client_data )
+	      struct db_full_path *pathp,
+	      const struct rt_comb_internal *combp,
+	      genptr_t client_data )
 {
     struct rt_comb_internal *comb;
     struct directory *dp;
     struct bu_vls str;
 
     if (debug&DEBUG_NAMES) {
-        char *name = db_path_to_string(pathp);
-        bu_log("region_start %s\n", name);
-        bu_free(name, "reg_start name");
+	char *name = db_path_to_string(pathp);
+	bu_log("region_start %s\n", name);
+	bu_free(name, "reg_start name");
     }
 
     dp = DB_FULL_PATH_CUR_DIR(pathp);
@@ -249,14 +249,14 @@ region_start (struct db_tree_state *tsp,
  */
 union tree *
 region_end (struct db_tree_state *tsp,
-            struct db_full_path *pathp,
-            union tree *curtree,
-            genptr_t client_data )
+	    struct db_full_path *pathp,
+	    union tree *curtree,
+	    genptr_t client_data )
 {
     if (debug&DEBUG_NAMES) {
-        char *name = db_path_to_string(pathp);
-        bu_log("region_end   %s\n", name);
-        bu_free(name, "region_end name");
+	char *name = db_path_to_string(pathp);
+	bu_log("region_end   %s\n", name);
+	bu_free(name, "region_end name");
     }
 
     return curtree;
@@ -268,7 +268,7 @@ region_end (struct db_tree_state *tsp,
  */
 void
 describe_tree( union tree *tree,
-               struct bu_vls *str)
+	       struct bu_vls *str)
 {
 	struct bu_vls left, right;
 	char *unionn=" u ";
@@ -347,25 +347,24 @@ binary:				/* common for all binary nodes */
 }
 
 
-
 /* This routine is called by the tree walker (db_walk_tree)
  * for every primitive encountered in the trees specified on the command line */
 union tree *
 primitive_func( struct db_tree_state *tsp,
-                struct db_full_path *pathp,
-                struct rt_db_internal *ip,
-                genptr_t client_data)
+		struct db_full_path *pathp,
+		struct rt_db_internal *ip,
+		genptr_t client_data)
 {
-        int i;
+	int i;
 
-        struct directory *dp;
-        dp = DB_FULL_PATH_CUR_DIR(pathp);
+	struct directory *dp;
+	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-        if (debug&DEBUG_NAMES) {
-            char *name = db_path_to_string(pathp);
-            bu_log("leaf_func    %s\n", name);
-            bu_free(name, "region_end name");
-        }
+	if (debug&DEBUG_NAMES) {
+	    char *name = db_path_to_string(pathp);
+	    bu_log("leaf_func    %s\n", name);
+	    bu_free(name, "region_end name");
+	}
 
 	/* handle each type of primitive (see h/rtgeom.h) */
 	if( ip->idb_major_type == DB5_MAJORTYPE_BRLCAD ) {
@@ -557,11 +556,11 @@ primitive_func( struct db_tree_state *tsp,
 				}
 
 			default:
-			          	bu_log( "Primitive %s is unrecognized type (%d)\n", dp->d_namep, ip->idb_type );
-                                        break;
-	         }
+					bu_log( "Primitive %s is unrecognized type (%d)\n", dp->d_namep, ip->idb_type );
+					break;
+		 }
 	}
-        else {
+	else {
 		switch( ip->idb_major_type ) {
 			case DB5_MAJORTYPE_BINARY_UNIF:
 				{
@@ -579,7 +578,7 @@ primitive_func( struct db_tree_state *tsp,
 		}
 	}
 
-        return (union tree *) NULL;
+	return (union tree *) NULL;
 }
 
 /*

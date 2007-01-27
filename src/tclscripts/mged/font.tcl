@@ -107,14 +107,14 @@ if ![info exists mged_default(all_font)] {
 
 if ![info exists font_scheme_data] {
     set font_scheme_data { {fs_button_font button_font Buttons}
-                           {fs_entry_font entry_font Entries}
+			   {fs_entry_font entry_font Entries}
 			   {fs_label_font label_font Labels}
 			   {fs_list_font list_font Lists}
 			   {fs_menu_font menu_font Menus}
 			   {fs_menubutton_font menubutton_font Menubuttons}
 			   {fs_text_font text_font Text}
 			   {fs_all_font {} All}
-		         }
+			 }
 }
 
 ## - font_init

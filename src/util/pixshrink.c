@@ -247,8 +247,6 @@ void parse_args(int ac, char **av)
 }
 
 
-
-
 /*
  *	M A I N
  *
@@ -276,7 +274,6 @@ int main(int ac, char **av)
 	write_image(width/factor, height/factor, buffer);
 	return(0);
 }
-
 
 
 /*

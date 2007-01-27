@@ -43,7 +43,7 @@ char *
 memset(char *s, register char c, register int n)
 {
     register char *p=s;
-    
+
     if (p) {
 	while (n-- > 0) {
 	    *p++ = c;

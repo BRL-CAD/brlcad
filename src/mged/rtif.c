@@ -196,7 +196,7 @@ struct command_tab view_cmdtab[] = {
 
 	/* XXX support for the ae command is not included, though it probably should */
 	{(char *)0, (char *)0, (char *)0,
-	        0,		0, 0	/* END */}
+		0,		0, 0	/* END */}
 };
 
 
@@ -433,7 +433,7 @@ rt_output_handler(ClientData clientData, int mask)
 		int retcode;
 		int rpid;
 		int aborted;
-		
+
 		if (count < 0) {
 		    perror("READ ERROR");
 		}
@@ -448,7 +448,7 @@ rt_output_handler(ClientData clientData, int mask)
 		aborted = run_rtp->aborted;
 
 		/* free run_rtp */
- 		BU_LIST_DEQUEUE(&run_rtp->l);
+		BU_LIST_DEQUEUE(&run_rtp->l);
 		bu_free((genptr_t)run_rtp, "rt_output_handler: run_rtp");
 
 		if (aborted)
@@ -498,7 +498,7 @@ rt_output_handler(ClientData clientData, int mask)
 		aborted = run_rtp->aborted;
 
 		/* free run_rtp */
- 		BU_LIST_DEQUEUE(&run_rtp->l);
+		BU_LIST_DEQUEUE(&run_rtp->l);
 		bu_free((genptr_t)run_rtp, "rt_output_handler: run_rtp");
 
 		if (aborted)
@@ -677,9 +677,9 @@ run_rt()
 
 	/* Create noninheritable read handle and close the inheritable read handle. */
     DuplicateHandle( GetCurrentProcess(), pipe_err[0],
-        GetCurrentProcess(),  &pipe_errDup ,
+	GetCurrentProcess(),  &pipe_errDup ,
 		0,  FALSE,
-        DUPLICATE_SAME_ACCESS );
+	DUPLICATE_SAME_ACCESS );
 	CloseHandle( pipe_err[0] );
 
 	/* The steps for redirecting child process's STDIN:
@@ -725,15 +725,15 @@ run_rt()
 
 
    if(CreateProcess( NULL,
-                     line,
-                     NULL,
-                     NULL,
-                     TRUE,
-                     DETACHED_PROCESS,
-                     NULL,
-                     NULL,
-                     &si,
-                     &pi )) {
+		     line,
+		     NULL,
+		     NULL,
+		     TRUE,
+		     DETACHED_PROCESS,
+		     NULL,
+		     NULL,
+		     &si,
+		     &pi )) {
 
 	SetStdHandle(STD_INPUT_HANDLE, hSaveStdin);
 	SetStdHandle(STD_OUTPUT_HANDLE, hSaveStderr);
@@ -1437,40 +1437,40 @@ work:
 	/* If user hits ^C, this will stop, but will leave hanging filedes */
 	(void)signal(SIGINT, cur_sigint);
 #else
-        if( setjmp( jmp_env ) == 0 )
+	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
-        else
+	else
 	  return TCL_OK;
 #endif
 	while( !feof( fp ) &&
 	    rt_read( fp, &scale, eye_model, rot ) >= 0 )  {
-	    	switch(mode)  {
-	    	case -1:
-	    		/* First step:  put eye in center */
-		       	view_state->vs_vop->vo_scale = scale;
-		       	MAT_COPY(view_state->vs_vop->vo_rotation, rot);
+		switch(mode)  {
+		case -1:
+			/* First step:  put eye in center */
+			view_state->vs_vop->vo_scale = scale;
+			MAT_COPY(view_state->vs_vop->vo_rotation, rot);
 			MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, eye_model);
-	    		new_mats();
-	    		/* Second step:  put eye in front */
-	    		VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
-	    		MAT4X3PNT(eye_model, view_state->vs_vop->vo_view2model, xlate);
+			new_mats();
+			/* Second step:  put eye in front */
+			VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
+			MAT4X3PNT(eye_model, view_state->vs_vop->vo_view2model, xlate);
 			MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, eye_model);
-	    		new_mats();
-	    		break;
-	    	case 0:
-		       	view_state->vs_vop->vo_scale = scale;
+			new_mats();
+			break;
+		case 0:
+			view_state->vs_vop->vo_scale = scale;
 			MAT_IDN(view_state->vs_vop->vo_rotation);	/* top view */
 			MAT_DELTAS_VEC_NEG( view_state->vs_vop->vo_center, eye_model);
 			new_mats();
-	    		break;
-	    	case 1:
-	    		/* Adjust center for displaylist devices */
-	    		VMOVE( sp->s_center, eye_model );
+			break;
+		case 1:
+			/* Adjust center for displaylist devices */
+			VMOVE( sp->s_center, eye_model );
 
-	    		/* Adjust vector list for non-dl devices */
-	    		if( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  break;
+			/* Adjust vector list for non-dl devices */
+			if( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  break;
 			vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
-	    		VSUB2( xlate, eye_model, vp->pt[vp->nused-1] );
+			VSUB2( xlate, eye_model, vp->pt[vp->nused-1] );
 			for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 				register int	i;
 				register int	nused = vp->nused;
@@ -1491,16 +1491,16 @@ work:
 					}
 				}
 			}
-	    		break;
-	    	}
+			break;
+		}
 		view_state->vs_flag = 1;
 		refresh();	/* Draw new display */
 	}
 	if( mode == 1 )  {
-    		VMOVE( sp->s_center, sav_center );
+		VMOVE( sp->s_center, sav_center );
 		if( BU_LIST_NON_EMPTY( &(sp->s_vlist) ) )  {
 			vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
-	    		VSUB2( xlate, sav_start, vp->pt[vp->nused-1] );
+			VSUB2( xlate, sav_start, vp->pt[vp->nused-1] );
 			for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 				register int	i;
 				register int	nused = vp->nused;
@@ -1764,7 +1764,7 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			if( rtif_currentframe < rtif_desiredframe ||
 			    (rtif_finalframe && rtif_currentframe > rtif_finalframe) )  {
 				bu_free( (genptr_t)cmd, "preview ! cmd" );
-			    	continue;
+				continue;
 			}
 		}
 		if( rt_do_cmd( (struct rt_i *)0, cmd, cmdtab ) < 0 )
@@ -2032,8 +2032,8 @@ done:
 	  *vp++ = bu_vls_addr(&qray_script);
 	}
 
-        *vp++ = "-e";
-        *vp++ = bu_vls_addr(&p_vls);
+	*vp++ = "-e";
+	*vp++ = bu_vls_addr(&p_vls);
 
 	for( i=1; i < argc; i++ )
 		*vp++ = argv[i];
@@ -2068,7 +2068,7 @@ done:
 	(void)pipe( pipe_err );
 	(void)signal( SIGINT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
- 	        /* Redirect stdin, stdout, stderr */
+		/* Redirect stdin, stdout, stderr */
 		(void)close(0);
 		(void)dup( pipe_in[0] );
 		(void)close(1);
@@ -2122,9 +2122,9 @@ done:
 
 	/* Create noninheritable read handle and close the inheritable read handle. */
 	DuplicateHandle( GetCurrentProcess(), pipe_out[0],
-        GetCurrentProcess(),  &pipe_outDup ,
+	GetCurrentProcess(),  &pipe_outDup ,
 		0,  FALSE,
-        DUPLICATE_SAME_ACCESS );
+	DUPLICATE_SAME_ACCESS );
 	CloseHandle( pipe_out[0] );
 
 	/* Save the handle to the current STDERR. */
@@ -2138,9 +2138,9 @@ done:
 
 	/* Create noninheritable read handle and close the inheritable read handle. */
 	DuplicateHandle( GetCurrentProcess(), pipe_err[0],
-        GetCurrentProcess(),  &pipe_errDup ,
+	GetCurrentProcess(),  &pipe_errDup ,
 		0,  FALSE,
-        DUPLICATE_SAME_ACCESS );
+	DUPLICATE_SAME_ACCESS );
 	CloseHandle( pipe_err[0] );
 
 	/* The steps for redirecting child process's STDIN:
@@ -2686,7 +2686,7 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
 	return (TCL_ERROR);
     }
     if ((argc == 3) &&
-        ((Tcl_GetInt(interp, argv[1], &h) != TCL_OK)
+	((Tcl_GetInt(interp, argv[1], &h) != TCL_OK)
       || (Tcl_GetInt(interp, argv[2], &v) != TCL_OK)))
     {
 	Tcl_AppendResult(interp, "\nUsage: 'solids_on_ray h v'", NULL);

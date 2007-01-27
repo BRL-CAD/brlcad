@@ -43,7 +43,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
@@ -307,11 +306,11 @@ mk_comb(
 
 	if( append_ok &&
 	    wdb_import( wdbp, &intern, combname, (matp_t)NULL ) >= 0 )  {
-	    	/* We retrieved an existing object, append to it */
+		/* We retrieved an existing object, append to it */
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB( comb );
 
-	    	fresh_combination = 0;
+		fresh_combination = 0;
 	} else {
 		/* Create a fresh new object for export */
 		BU_GETSTRUCT( comb, rt_comb_internal );

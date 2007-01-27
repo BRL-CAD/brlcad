@@ -43,7 +43,7 @@ TABLE OF CONTENTS
 	from STABLE
 	from a branch/revision
     Checking in sources
-        commit messages
+	commit messages
 	to HEAD
 	to STABLE
 	to a branch/revision
@@ -140,7 +140,7 @@ CHECKING OUT SOURCES
     FROM HEAD:
 
     As anonymous:
-        cvs -z9 -d :pserver:anonymous@cvs.sf.net:/cvsroot/brlcad checkout -P brlcad
+	cvs -z9 -d :pserver:anonymous@cvs.sf.net:/cvsroot/brlcad checkout -P brlcad
 
     As a developer:
 	cvs -z9 -d <username>@cvs.sf.net:/cvsroot/brlcad checkout -P brlcad
@@ -308,48 +308,48 @@ TAG NAMING CONVENTIONS
 
     <keyword> ::= { rel, ansi, jra, sean, ppc, ... }
 
-        The <keyword> is normally something short and concise.  For
-        release tags, it is "rel".  Other branch keywords may indicate
-        functionality, developers, etc.
+	The <keyword> is normally something short and concise.  For
+	release tags, it is "rel".  Other branch keywords may indicate
+	functionality, developers, etc.
 
     <revision> ::= <major>[-<minor>[-<patch>]]  (e.g., 6-0-2 and 5-2)
 
-        The <revision> numbering convention is fairly standard and
-        common practice:
+	The <revision> numbering convention is fairly standard and
+	common practice:
 
-        <major> is the major revision number and changes relatively
-                infrequently.  Major releases contain significant
-                architectural changes and are not generally backwards
-                compatible with existing code or data to some extent.
-                They may require data and/or code to be converted in
-                order to upgrade.
+	<major> is the major revision number and changes relatively
+		infrequently.  Major releases contain significant
+		architectural changes and are not generally backwards
+		compatible with existing code or data to some extent.
+		They may require data and/or code to be converted in
+		order to upgrade.
 
-        <minor> is the minor revision number a usually changes on a
-                fairly regular basis.  As new features are added and
-                releases are made, the minor revision number changes
-                to reflect those additions.  Odd minor numbers
-                indicate a developer revision.  Even minor numbers
-                indicate a release revision.  Minor releases may or
-                may not be backwards compatible.
+	<minor> is the minor revision number a usually changes on a
+		fairly regular basis.  As new features are added and
+		releases are made, the minor revision number changes
+		to reflect those additions.  Odd minor numbers
+		indicate a developer revision.  Even minor numbers
+		indicate a release revision.  Minor releases may or
+		may not be backwards compatible.
 
-        <patch> is the patch revision number and is used to make bug
-                fixes on an as-needed basis.  These changes are not
-                usually as extensively tested as minor and major
-                releases, but they should always be backwards
-                compatible.
+	<patch> is the patch revision number and is used to make bug
+		fixes on an as-needed basis.  These changes are not
+		usually as extensively tested as minor and major
+		releases, but they should always be backwards
+		compatible.
 
     <date> := YYYYMMDD (e.g., 20021231)
 
-        When creating tags, the date a tag is made is sometimes noted
-        and useful or even recommended.  The format of the date is
-        YYYYMMDD and should correspond to tag creation dates.  Branch
-        and release tags should not include a date in the tag name.
+	When creating tags, the date a tag is made is sometimes noted
+	and useful or even recommended.  The format of the date is
+	YYYYMMDD and should correspond to tag creation dates.  Branch
+	and release tags should not include a date in the tag name.
 
     <comment>
 
-        For branches the comment is "branch".  For releases, it is
-        left blank.  For other miscellaneous tags, the comment is up
-        to the person tagging.
+	For branches the comment is "branch".  For releases, it is
+	left blank.  For other miscellaneous tags, the comment is up
+	to the person tagging.
 
     Note that hyphens (-) are used, not underscores.  Periods (.) are
     never used because they upset CVS's branch naming.
@@ -369,7 +369,7 @@ TAG NAMING CONVENTIONS
 	sources released, bugs and all, so that proper and useful
 	diffs may be made.  The format for release tags is:
 
-        rel-<revision>
+	rel-<revision>
 
 	    <revision> ::= <major>-<minor>[-<patch>]
 
@@ -381,7 +381,7 @@ TAG NAMING CONVENTIONS
 
     FOR BRANCHES:
 
-        Branches are symbolic tags that are used to denote and allow
+	Branches are symbolic tags that are used to denote and allow
 	separate isolated revisions of code.  The following format
 	should be used for branch tags:
 
@@ -402,15 +402,15 @@ TAG NAMING CONVENTIONS
 	joining HEAD into a branch, tagging is optional. Joins into
 	head should be tagged, though.
 
-        On HEAD before the merge, use the following tag format:
+	On HEAD before the merge, use the following tag format:
 
-            premerge[-<revision>][-<date>]-<comment>
+	    premerge[-<revision>][-<date>]-<comment>
 
 	    Example: premerge-20040404-ansi
 
-        On HEAD after the merge, use the following tag format:
+	On HEAD after the merge, use the following tag format:
 
-            postmerge[-<revision>][-<date>]-<comment>
+	    postmerge[-<revision>][-<date>]-<comment>
 
 	    Example: postmerge-20040315-windows
 
@@ -443,7 +443,7 @@ TAG NAMING CONVENTIONS
 	recommended as CVS tags are not associated by date, but rather
 	to the individual revision of a file.
 
-        <keyword>[-<revision>][-<date>][-<comment>]
+	<keyword>[-<revision>][-<date>][-<comment>]
 
     When in doubt, tag.  It's easy to remove or rename tags, but it
     can be rather complicated to create one after the fact.
@@ -619,34 +619,34 @@ MAKING A BRANCH
 
     CASE 1: You have no checked out source code revision:
 
-        If you want to use the latest sources on the CVS HEAD as the
-        starting point for your branch:
+	If you want to use the latest sources on the CVS HEAD as the
+	starting point for your branch:
 
-            cvs rtag -b <keyword>-branch brlcad
-            cvs checkout -r <keyword>-branch brlcad
+	    cvs rtag -b <keyword>-branch brlcad
+	    cvs checkout -r <keyword>-branch brlcad
 
-        If you want to use some other tag as the starting point for
-        your branch:
+	If you want to use some other tag as the starting point for
+	your branch:
 
-            cvs rtag -b -r <tag> <keyword>-branch brlcad
-            cvs checkout -r <keyword>-branch brlcad
+	    cvs rtag -b -r <tag> <keyword>-branch brlcad
+	    cvs checkout -r <keyword>-branch brlcad
 
     CASE 2: You have a checked out revision with all changes committed
     and you want to tag it and start using it as a branch:
 
-        cvs tag -b <keyword>-branch
-        cvs update -dP -r <keyword>-branch
+	cvs tag -b <keyword>-branch
+	cvs update -dP -r <keyword>-branch
 
     CVS will denote the tag as a "sticky" tag to indicate which
     version is currently checked out.  You can verify this by using
     'cvs status', for example:
 
-        cvs status README
+	cvs status README
 
     To see all tags that have been set for a particular file in
     addition to checkout status, use the "-v" status option:
 
-        cvs status -v README
+	cvs status -v README
 
     or via the generally more detailed file log:
 
@@ -681,10 +681,10 @@ USAGE TIPS
        the repository:
 
        For anonymous users:
-           export CVSROOT=:pserver:anonymous@cvs.sf.net:/cvsroot/brlcad
+	   export CVSROOT=:pserver:anonymous@cvs.sf.net:/cvsroot/brlcad
 
        For developers with accounts:
-           export CVSROOT=<username>@cvs.sf.net:/cvsroot/brlcad
+	   export CVSROOT=<username>@cvs.sf.net:/cvsroot/brlcad
 
     5) CVS does not manage directories so care must be taken when
        creating new directories or moving things around.  Do NOT add

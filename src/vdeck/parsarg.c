@@ -77,7 +77,7 @@ parsArg(int argc, char **argv)
 		objfile = argv[optind++];
 	if( (dbip = db_open( objfile, "r" )) == DBI_NULL )  {
 		perror(objfile);
-	    	return( 0 );		/* FAIL */
+		return( 0 );		/* FAIL */
 	}
 
 	arg_list[0] = argv[0]; /* Program name goes in first.	*/

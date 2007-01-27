@@ -248,7 +248,7 @@
 
     $help add autoview		{{view_obj} {set the view object's size and center}}
     $help add E			{{[-s] <objects>} {evaluated edit of objects. Option 's' provides a slower,
-        but better fidelity evaluation}}
+	but better fidelity evaluation}}
     $help add blast		{{-C#/#/# <objects>} {clear screen, draw objects}}
     $help add clear		{{} {clear screen}}
     $help add draw		{{-C#/#/# <objects>} {draw objects}}

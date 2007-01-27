@@ -63,7 +63,7 @@ extern int ogl_share_dlist();
 extern struct dm *wgl_open();
 extern void wgl_fogHint();
 extern int wgl_share_dlist();
-#endif /* DM_WGL */ 
+#endif /* DM_WGL */
 
 
 struct dm *

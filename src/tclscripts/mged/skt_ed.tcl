@@ -22,8 +22,8 @@ class Sketch_editor {
 	inherit itk::Toplevel
 
 	private variable sketch_name
-        private variable sketch_path
-        private variable edit_frame
+	private variable sketch_path
+	private variable edit_frame
 	private variable V
 	private variable A
 	private variable B
@@ -47,7 +47,7 @@ class Sketch_editor {
 	private variable save_entry
 	private variable angle
 	private variable bezier_indices ""
-        private variable selection_mode ""
+	private variable selection_mode ""
 	common pi2 [expr {4.0 * asin( 1.0 )}]
 	common rad2deg  [expr {360.0 / $pi2}]
 
@@ -117,7 +117,7 @@ class Sketch_editor {
 		if { [catch units units] } {
 			set units ""
 		}
-	        if { [string index $units end] == "\n" } {
+		if { [string index $units end] == "\n" } {
 		    set units [string range $units 0 "end-1"]
 		}
 		if { [catch {status base2local} tolocal] } {
@@ -292,7 +292,7 @@ class Sketch_editor {
 		return $tobase
 	}
 
-        method verify_unique_editor {} {
+	method verify_unique_editor {} {
 	    set editors [find objects -class Sketch_editor]
 	    foreach editor $editors {
 		if { [string compare $this $editor] == 0 } {
@@ -308,11 +308,11 @@ class Sketch_editor {
 	    }
 	}
 
-        method get_sketch_name {} {
+	method get_sketch_name {} {
 	    return $sketch_name
 	}
 
-        method raise_me {} {
+	method raise_me {} {
 	    wm deiconify $itk_component(hull)
 	    raise $itk_component(hull)
 	}
@@ -555,9 +555,9 @@ class Sketch_editor {
 		set curr_seg ""
 		set index1 -1
 		set index2 -1
-	        set selection_mode ""
-	        $edit_frame.pick_seg deselect
-	        $edit_frame.pick_vert deselect
+		set selection_mode ""
+		$edit_frame.pick_seg deselect
+		$edit_frame.pick_vert deselect
 		bind $itk_component(canvas) <ButtonPress-1> {}
 		bind $itk_component(canvas) <ButtonRelease-1> {}
 		bind $itk_component(canvas) <ButtonRelease-3> {}
@@ -721,7 +721,7 @@ class Sketch_editor {
 	method do_save {} {
 		set obj_name [$save_entry get]
 		write_sketch_to_db $obj_name [check_name $obj_name]
-	        draw $sketch_path
+		draw $sketch_path
 	}
 
 	method do_scale { scale_factor } {

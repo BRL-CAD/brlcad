@@ -89,9 +89,9 @@ proc Tcl_command {} {
     tkwait window .tcwin
 
     if {$do_it == 1} {
-        if {$Tcl_string != ""} {
-            printf [eval $Tcl_string]
-        }
+	if {$Tcl_string != ""} {
+	    printf [eval $Tcl_string]
+	}
     }
 }
 

@@ -150,15 +150,15 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	/* find the bounding sphere */
 	stp->st_aradius = rt_metaball_get_bounding_sphere(&stp->st_center, mb->threshold, &mb->metaball_ctrl_head);
 	stp->st_bradius = stp->st_aradius * 1.01;
-	/* generate a bounding box around the sphere... 
+	/* generate a bounding box around the sphere...
 	 * XXX this can be optimized greatly to reduce the BSP presense... */
-	VSET(stp->st_min, 
-		stp->st_center[X] - stp->st_aradius, 
-		stp->st_center[Y] - stp->st_aradius, 
+	VSET(stp->st_min,
+		stp->st_center[X] - stp->st_aradius,
+		stp->st_center[Y] - stp->st_aradius,
 		stp->st_center[Z] - stp->st_aradius);
-	VSET(stp->st_max, 
-		stp->st_center[X] + stp->st_aradius, 
-		stp->st_center[Y] + stp->st_aradius, 
+	VSET(stp->st_max,
+		stp->st_center[X] + stp->st_aradius,
+		stp->st_center[Y] + stp->st_aradius,
 		stp->st_center[Z] + stp->st_aradius);
 	stp->st_specific = (void *)nmb;
 	return 0;
@@ -175,7 +175,7 @@ rt_metaball_print(register const struct soltab *stp)
 	struct wdb_metaballpt *mbpt;
 
 	if(stp==NULL){ bu_log("soltab is null\n"); return; }
-        mb = (struct rt_metaball_internal *)stp->st_specific;
+	mb = (struct rt_metaball_internal *)stp->st_specific;
 	RT_METABALL_CK_MAGIC(mb);
 	for( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) ++metaball_count;
 	bu_log("Metaball with %d points and a threshold of %g (method %d)\n", metaball_count, mb->threshold, mb->method);
@@ -224,17 +224,17 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	struct seg *segp = NULL;
 	point_t p, inc, delta;
 	fastf_t initstep = stp->st_aradius / 20.0, finalstep = stp->st_aradius / 1e8, step = initstep, distleft = (rp->r_max-rp->r_min);
-	
+
 	VJOIN1(p, rp->r_pt, rp->r_min, rp->r_dir);
 	VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
 
-/* we hit, but not as fine-grained as we want. So back up one step, cut the 
+/* we hit, but not as fine-grained as we want. So back up one step, cut the
  * step size in half and start over... Note that once we're happily inside, we
  * do NOT change the step size back! */
 #define STEPBACK { distleft += step; VSUB2(p, p, inc); step *= .5; VSCALE(inc,inc,.5); }
 #define STEPIN(x) { --segsleft; ++retval; VSUB2(delta, p, rp->r_pt); segp->seg_##x.hit_dist = MAGNITUDE(delta); }
 	while( distleft >= 0.0 ) {
-		distleft -= step; 
+		distleft -= step;
 		VADD2(p, p, inc);
 		if(stat == 1) {
 			if(rt_metaball_point_value(&p, &mb->metaball_ctrl_head) < mb->threshold ) {
@@ -260,7 +260,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 					}
 					/* reset the ray-walk shtuff */
 					stat = 1;
-					VSUB2(p, p, inc); 
+					VSUB2(p, p, inc);
 					VSCALE(inc, rp->r_dir, step);
 					step = initstep;
 				} else
@@ -292,10 +292,10 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
 		f = mbpt->fldstr * mbpt->fldstr;	/* f^2 */
 		a = MAGNITUDE(v);
 		f /= (a*a*a);				/* f^2 / r^3 */
-		VUNITIZE(v);						
-		VJOIN1(hitp->hit_normal, hitp->hit_normal, f, v);	
+		VUNITIZE(v);
+		VJOIN1(hitp->hit_normal, hitp->hit_normal, f, v);
 	}
-	VUNITIZE(hitp->hit_normal);					
+	VUNITIZE(hitp->hit_normal);
 	return;
 }
 
@@ -385,7 +385,7 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	RT_METABALL_CK_MAGIC(mb);
 	rad = rt_metaball_get_bounding_sphere(&bsc, mb->threshold, &mb->metaball_ctrl_head);
 	/* cope with the case where 0 points are defined. */
-	if(rad<0) 
+	if(rad<0)
 	    return 0;
 	rt_metaball_plot_sph(vhead, &bsc, rad);
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
@@ -408,7 +408,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 /**
  *			R T _ M E T A B A L L _ I M P O R T 5
  *
- *  Import an metaball/sphere from the database format to the internal 
+ *  Import an metaball/sphere from the database format to the internal
  *  structure. Apply modeling transformations as well.
  */
 int
@@ -471,7 +471,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 	fastf_t *buf;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_METABALL )  
+	if( ip->idb_type != ID_METABALL )
 		return(-1);
 	mb = (struct rt_metaball_internal *)ip->idb_ptr;
 	RT_METABALL_CK_MAGIC(mb);
@@ -502,8 +502,8 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 /**
  *			R T _ M E T A B A L L _ D E S C R I B E
  *
- *  Make human-readable formatted presentation of this solid. First line 
- *  describes type of solid. Additional lines are indented one tab, and give 
+ *  Make human-readable formatted presentation of this solid. First line
+ *  describes type of solid. Additional lines are indented one tab, and give
  *  parameter values.
  */
 int

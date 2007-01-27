@@ -243,14 +243,14 @@ mem_open(FBIO *ifp, char *file, int width, int height)
 	if( (MI(ifp)->fbp != FBIO_NULL)
 	 && (mode & MODE_2MASK) == MODE_2PREREAD ) {
 		/* Pre read all of the image data and cmap */
-	 	int got;
+		int got;
 		got = fb_readrect( MI(ifp)->fbp, 0, 0,
 			ifp->if_width, ifp->if_height,
 			(unsigned char *)MI(ifp)->mem );
-	 	if( got != ifp->if_width * ifp->if_height )  {
-	 		fb_log("if_mem:  WARNING: pre-read of %d only got %d, your image is truncated.\n",
-	 			ifp->if_width * ifp->if_height, got );
-	 	}
+		if( got != ifp->if_width * ifp->if_height )  {
+			fb_log("if_mem:  WARNING: pre-read of %d only got %d, your image is truncated.\n",
+				ifp->if_width * ifp->if_height, got );
+		}
 		if( fb_rmap( MI(ifp)->fbp, &(MI(ifp)->cmap) ) < 0 )
 			fb_make_linear_cmap( &(MI(ifp)->cmap) );
 	} else {

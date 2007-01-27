@@ -209,12 +209,12 @@ void common_pack_prop(void **app_data, int *app_ind, char *filename) {
     if(!strcmp("properties", token)) {
 
       if(prop_num) {
-        /* pack name */
-        c = strlen(name) + 1;
-        common_pack_write(app_data, app_ind, &c, sizeof(char));
-        common_pack_write(app_data, app_ind, name, c);
-        /* pack properties data */
-        common_pack_write(app_data, app_ind, &def_prop, sizeof(common_prop_t));
+	/* pack name */
+	c = strlen(name) + 1;
+	common_pack_write(app_data, app_ind, &c, sizeof(char));
+	common_pack_write(app_data, app_ind, name, c);
+	/* pack properties data */
+	common_pack_write(app_data, app_ind, &def_prop, sizeof(common_prop_t));
       }
 
       token = strtok(NULL, ",");
@@ -303,51 +303,51 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
     if(!strcmp("texture", token)) {
       token = strtok(NULL, ",");
       if(!strcmp("stack", token)) {
-        s = TEXTURE_STACK;
-        common_pack_write(app_data, app_ind, &s, sizeof(short));
+	s = TEXTURE_STACK;
+	common_pack_write(app_data, app_ind, &s, sizeof(short));
 
-        /* name */
-        token = strtok(NULL, ",");
-        if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
+	/* name */
+	token = strtok(NULL, ",");
+	if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
 
-        c = strlen(token) + 1;
-        common_pack_write(app_data, app_ind, &c, sizeof(char));
-        common_pack_write(app_data, app_ind, token, c);
+	c = strlen(token) + 1;
+	common_pack_write(app_data, app_ind, &c, sizeof(char));
+	common_pack_write(app_data, app_ind, token, c);
       } else if(!strcmp("mix", token)) {
-        tfloat coef;
+	tfloat coef;
 
-        s = TEXTURE_MIX;
-        common_pack_write(app_data, app_ind, &s, sizeof(short));
+	s = TEXTURE_MIX;
+	common_pack_write(app_data, app_ind, &s, sizeof(short));
 
-        /* name */
-        token = strtok(NULL, ",");
-        c = strlen(token) + 1;
-        common_pack_write(app_data, app_ind, &c, sizeof(char));
-        common_pack_write(app_data, app_ind, token, c);
+	/* name */
+	token = strtok(NULL, ",");
+	c = strlen(token) + 1;
+	common_pack_write(app_data, app_ind, &c, sizeof(char));
+	common_pack_write(app_data, app_ind, token, c);
 
-        /* texture 1 */
-        token = strtok(NULL, ",");
-        c = strlen(token) + 1;
-        common_pack_write(app_data, app_ind, &c, sizeof(char));
-        common_pack_write(app_data, app_ind, token, c);
+	/* texture 1 */
+	token = strtok(NULL, ",");
+	c = strlen(token) + 1;
+	common_pack_write(app_data, app_ind, &c, sizeof(char));
+	common_pack_write(app_data, app_ind, token, c);
 
-        /* texture 2 */
-        token = strtok(NULL, ",");
-        c = strlen(token) + 1;
-        common_pack_write(app_data, app_ind, &c, sizeof(char));
-        common_pack_write(app_data, app_ind, token, c);
+	/* texture 2 */
+	token = strtok(NULL, ",");
+	c = strlen(token) + 1;
+	common_pack_write(app_data, app_ind, &c, sizeof(char));
+	common_pack_write(app_data, app_ind, token, c);
 /*
-        sscanf(strstr(tag, "mode"), "mode=\"%[^\"]", ident);
-        c = strlen(ident);
-        common_pack_write(app_data, app_ind, &c, sizeof(char));
-        common_pack_write(app_data, app_ind, ident, c);
+	sscanf(strstr(tag, "mode"), "mode=\"%[^\"]", ident);
+	c = strlen(ident);
+	common_pack_write(app_data, app_ind, &c, sizeof(char));
+	common_pack_write(app_data, app_ind, ident, c);
 */
 
-        /* coefficient */
-        token = strtok(NULL, ",");
-        if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
-        coef = atof(token);
-        common_pack_write(app_data, app_ind, &coef, sizeof(tfloat));
+	/* coefficient */
+	token = strtok(NULL, ",");
+	if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
+	coef = atof(token);
+	common_pack_write(app_data, app_ind, &coef, sizeof(tfloat));
       }
     } else if(!strcmp("blend", token)) {
       TIE_3 color1, color2;
@@ -500,11 +500,11 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
       char file[64];
       image = SDL_LoadBMP(file);
       if(image) {
-        s = TEXTURE_IMAGE;
-        common_pack_write(app_data, app_ind, &s, sizeof(short));
-        common_pack_write(app_data, app_ind, &(image->w), sizeof(short));
-        common_pack_write(app_data, app_ind, &(image->h), sizeof(short));
-        common_pack_write(app_data, app_ind, image->pixels, 3*image->w*image->h);
+	s = TEXTURE_IMAGE;
+	common_pack_write(app_data, app_ind, &s, sizeof(short));
+	common_pack_write(app_data, app_ind, &(image->w), sizeof(short));
+	common_pack_write(app_data, app_ind, &(image->h), sizeof(short));
+	common_pack_write(app_data, app_ind, image->pixels, 3*image->w*image->h);
       }
 */
     } else if(!strcmp("gradient", token)) {
@@ -607,10 +607,10 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
       /* Pack Faces */
       i = 0;
       while(i < num) {
-        n = num - i > 48 ? 48 : num - i;
-        fread(face, 3*sizeof(unsigned int), n, fh);
-        common_pack_write(app_data, app_ind, face, 3 * n * sizeof(unsigned int));
-        i += n;
+	n = num - i > 48 ? 48 : num - i;
+	fread(face, 3*sizeof(unsigned int), n, fh);
+	common_pack_write(app_data, app_ind, face, 3 * n * sizeof(unsigned int));
+	i += n;
       }
     } else {
       unsigned short snum, sface[144];
@@ -623,10 +623,10 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
       /* Pack Faces */
       i = 0;
       while(i < snum) {
-        n = snum - i > 48 ? 48 : snum - i;
-        fread(sface, 3*sizeof(unsigned short), n, fh);
-        common_pack_write(app_data, app_ind, sface, 3 * n * sizeof(unsigned short));
-        i += n;
+	n = snum - i > 48 ? 48 : snum - i;
+	fread(sface, 3*sizeof(unsigned short), n, fh);
+	common_pack_write(app_data, app_ind, sface, 3 * n * sizeof(unsigned short));
+	i += n;
       }
     }
 
@@ -634,7 +634,7 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
     matrixind = -1;
     for(n = 0; n < db->anim.frame_list[0].tnum; n++)
       if(!strcmp(meshname, db->anim.frame_list[0].tlist[n].mesh_name))
-        matrixind = n;
+	matrixind = n;
 
     /* Write Matrix */
     if(matrixind >= 0) {

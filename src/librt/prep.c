@@ -538,7 +538,7 @@ rt_vlist_solid(
 		bu_log("rt_vlist_solid(%s): ft_plot() failure\n",
 			stp->st_name);
 		rt_db_free_internal( &intern, resp );
-	    	return(-2);
+		return(-2);
 	}
 	rt_db_free_internal( &intern, resp );
 	return 0;
@@ -925,7 +925,7 @@ rt_clean(register struct rt_i *rtip)
 	 *  defaulted to rt_uniresource) and can't themselves be freed.
 	 *  rt_shootray() saved a table of them for us to use here.
 	 *  rt_uniresource may or may not be in this table.
- 	 */
+	 */
 	if( BU_LIST_MAGIC_OK(&rtip->rti_resources.l, BU_PTBL_MAGIC ) )  {
 		struct resource	**rpp;
 		BU_CK_PTBL( &rtip->rti_resources );

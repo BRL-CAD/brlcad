@@ -134,7 +134,7 @@ look_for ( ) {
     if test "x$look_for_label" != "x" ; then
 	echo  "Looking for $look_for_label"
     fi
-    
+
     # get the value of the variable
     look_for_var_var="echo \"\$$look_for_var\""
     look_for_var_val="`eval ${look_for_var_var}`"
@@ -620,7 +620,7 @@ EOF
 	    fi
 	    if test "x$bench_hypersample" = "x0" ; then
 
-	        # just finished the first frame
+		# just finished the first frame
 		if test "x$DEBUG" != "x" ; then
 		    echo "DEBUG: ${bench_elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $bench_elapsed` pixels/s (inexact wallclock)"
 		fi
@@ -632,8 +632,8 @@ EOF
 		fi
 
 
-	        # increase the number of rays exponentially if we are
-	        # considerably faster than the TIMEFRAME required.
+		# increase the number of rays exponentially if we are
+		# considerably faster than the TIMEFRAME required.
 		if test `expr $bench_elapsed \* 32` -le ${TIMEFRAME} ; then
 		    # 32x increase, skip four frames
 		    bench_hypersample="`expr $bench_hypersample \* 32 + 31`"
@@ -820,14 +820,14 @@ perf ( ) {
     for perf_ref in $perf_VGRREF ; do
 	perf_cur=$1
 	shift
-	
+
 	if test "x$perf_have_dc" = "xyes" ; then
 	    perf_RATIO=`echo "2k $perf_cur $perf_ref / p" | dc`
 	else
 	    # presume bc as an alternate (tsk tsk)
 	    perf_RATIO=`echo "scale=2; $perf_cur / $perf_ref" | bc`
 	fi
-        # Note: append new value and a trail TAB to existing list.
+	# Note: append new value and a trail TAB to existing list.
 	perf_RATIO_LIST="${perf_RATIO_LIST}$perf_RATIO	"
     done
 

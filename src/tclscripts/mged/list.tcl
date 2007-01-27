@@ -103,8 +103,8 @@ proc lbdcHack {w x y t id type path} {
     }
 
     if {$mged_gui($id,lastButtonPress) == 0 ||
-        $mged_gui($id,lastItem) != $item ||
-        [expr {abs($mged_gui($id,lastButtonPress) - $t) > $mged_default(doubleClickTol)}]} {
+	$mged_gui($id,lastItem) != $item ||
+	[expr {abs($mged_gui($id,lastButtonPress) - $t) > $mged_default(doubleClickTol)}]} {
 
 	switch $type {
 	    s1 -

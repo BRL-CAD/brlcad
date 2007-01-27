@@ -232,9 +232,9 @@ main (int argc, char **argv)
     while ((Ch = fpeek(inPtr)) != EOF)
     {
 /* Read U1, V1, and W1 of next point in input frame of reference */
-        GetCoord(inPtr, &U1, *Label, LineNm + 1, inFname);
-        GetCoord(inPtr, &V1, *(Label + 1), LineNm + 1, inFname);
-        GetCoord(inPtr, &W1, *(Label + 2), LineNm + 1, inFname);
+	GetCoord(inPtr, &U1, *Label, LineNm + 1, inFname);
+	GetCoord(inPtr, &V1, *(Label + 1), LineNm + 1, inFname);
+	GetCoord(inPtr, &W1, *(Label + 2), LineNm + 1, inFname);
 
 /* Compute U2, V2, and W2 for this point */
 	U2 = (U1 * UU + V1 * VU + W1 * WU) / CelSiz;
@@ -249,21 +249,21 @@ main (int argc, char **argv)
 	}
 
 /* Read in the rest of the line for subsequent dumping out */
-        for (i = 0; (Ch = fgetc(inPtr)) != '\n'; i++)
-            if (Ch == EOF)
-            {
-                Tail[i] = '\n';
-                break;
-            }
-            else
-                Tail[i] = Ch;
-        Tail[i] = '\0';
+	for (i = 0; (Ch = fgetc(inPtr)) != '\n'; i++)
+	    if (Ch == EOF)
+	    {
+		Tail[i] = '\n';
+		break;
+	    }
+	    else
+		Tail[i] = Ch;
+	Tail[i] = '\0';
 
 /* Write out the filtered version of this line */
 	if (! PlanarProj)
 	    fprintf(outPtr, "%g\t", U2);
-        fprintf(outPtr, "%g\t%g\t%s\n", V2, W2, Tail);
-        LineNm++;
+	fprintf(outPtr, "%g\t%g\t%s\n", V2, W2, Tail);
+	LineNm++;
     }
     exit (0);
 }
@@ -277,37 +277,37 @@ PrintUsage (void)
 void
 GetCoord (FILE *Whence, double *Coord, char Label, int LineNm, char *FileName)
 
-                        /* File from which to read */
-                        /* Where to store coordinate */
-                        /* Name of coordinate */
-                        /* How far in input? */
-                        /* What input stream? */
+			/* File from which to read */
+			/* Where to store coordinate */
+			/* Name of coordinate */
+			/* How far in input? */
+			/* What input stream? */
 
 {
     int     Ch;
 
 /* Skip leading white space */
     while (((Ch = fgetc(Whence)) == ' ') || (Ch == '\t'))
-        ;
+	;
 
     if (ungetc(Ch, Whence) == EOF)
     {
-        fprintf(stderr, "azel:  Premature end-of-file, file %s\n",
-                FileName);
-        exit(1);
+	fprintf(stderr, "azel:  Premature end-of-file, file %s\n",
+		FileName);
+	exit(1);
     }
     if (Ch == '\n')
     {
-        fprintf(stderr, "azel:  Premature end-of-line on line %d, file %s\n",
-                LineNm, FileName);
-        exit(1);
+	fprintf(stderr, "azel:  Premature end-of-line on line %d, file %s\n",
+		LineNm, FileName);
+	exit(1);
     }
 
     if (fscanf(Whence, "%lf", Coord) != 1)
     {
-        fprintf(stderr, "azel:  Bad %c-coordinate at line %d, file %s\n",
-                Label, LineNm, FileName);
-        exit(1);
+	fprintf(stderr, "azel:  Bad %c-coordinate at line %d, file %s\n",
+		Label, LineNm, FileName);
+	exit(1);
     }
 }
 

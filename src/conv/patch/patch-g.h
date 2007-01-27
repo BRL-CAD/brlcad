@@ -39,14 +39,14 @@ struct input {
 } in[10000];
 
 struct patch_verts {
-        struct vertex *vp;
-        point_t coord;
+	struct vertex *vp;
+	point_t coord;
 };
 
 struct patch_faces
 {
-        struct faceuse *fu;
-        fastf_t thick;
+	struct faceuse *fu;
+	fastf_t thick;
 };
 
 struct patches{

@@ -554,10 +554,6 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 #endif
 
 
-
-
-
-
 	/* XXX This is really hard to read.  Need to fix this like above */
 	dn = VDOT(tri_wn2nd, rp->r_dir);
 	if (dn >= 0.0) {
@@ -766,7 +762,6 @@ bu_log("inout: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
 		if ((*nhits)++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
 	}
 }
-
 
 
 /**
@@ -1605,10 +1600,10 @@ rt_hf_norm(register struct hit *hitp, struct soltab *stp, register struct xray *
 void
 rt_hf_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
- 	cvp->crv_c1 = cvp->crv_c2 = 0;
+	cvp->crv_c1 = cvp->crv_c2 = 0;
 
 	/* any tangent direction */
- 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
 /**

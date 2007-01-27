@@ -211,14 +211,14 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if( argc >= 3 )  {
 	  if( strncmp( argv[2], "del", 3 ) != 0 )  {
 		/* Material */
-	  	bu_vls_trunc( &comb->shader, 0 );
-	  	if( bu_shader_to_tcl_list( argv[2], &comb->shader ))
-	  	{
-	  		Tcl_AppendResult(interp, "Problem with shader string: ", argv[2], (char *)NULL );
-	  		return TCL_ERROR;
-	  	}
+		bu_vls_trunc( &comb->shader, 0 );
+		if( bu_shader_to_tcl_list( argv[2], &comb->shader ))
+		{
+			Tcl_AppendResult(interp, "Problem with shader string: ", argv[2], (char *)NULL );
+			return TCL_ERROR;
+		}
 	  }else{
-	  	bu_vls_free( &comb->shader );
+		bu_vls_free( &comb->shader );
 	  }
 	}else{
 	  /* Shader */
@@ -227,12 +227,12 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  bu_vls_init( &tmp_vls );
 	  if( bu_vls_strlen( &comb->shader ) )
 	  {
-	  	if( bu_shader_to_key_eq( bu_vls_addr(&comb->shader), &tmp_vls ) )
-	  	{
-	  		Tcl_AppendResult(interp, "Problem with on disk shader string: ", bu_vls_addr(&comb->shader), (char *)NULL );
-	  		bu_vls_free( &tmp_vls );
-	  		return TCL_ERROR;
-	  	}
+		if( bu_shader_to_key_eq( bu_vls_addr(&comb->shader), &tmp_vls ) )
+		{
+			Tcl_AppendResult(interp, "Problem with on disk shader string: ", bu_vls_addr(&comb->shader), (char *)NULL );
+			bu_vls_free( &tmp_vls );
+			return TCL_ERROR;
+		}
 	  }
 	  curr_cmd_list->cl_quote_string = 1;
 	  Tcl_AppendResult(interp, "Shader = ", bu_vls_addr(&tmp_vls),
@@ -252,7 +252,7 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if(argc >= 4){
 	  if( strncmp(argv[3], "del", 3) == 0 ){
 	    /* leave color as is */
-	  	comb->rgb_valid = 0;
+		comb->rgb_valid = 0;
 		skip_args = 2;
 	  }else if(argc < 6){	/* prompt for color */
 	    goto color_prompt;
@@ -459,8 +459,8 @@ f_wmater(
 	fprintf(fp, "\"%s\"\t\"%s\"\t%d\t%d\t%d\t%d\t%d\n", argv[i],
 		bu_vls_strlen(&comb->shader) > 0 ?
 			bu_vls_addr(&comb->shader) : "-",
-	  	comb->rgb[0], comb->rgb[1], comb->rgb[2],
-	  	comb->rgb_valid, comb->inherit);
+		comb->rgb[0], comb->rgb[1], comb->rgb[2],
+		comb->rgb_valid, comb->inherit);
 	rt_db_free_internal( &intern, &rt_uniresource );
   }
 
@@ -529,15 +529,15 @@ f_rmater(
 
 	/* Assign new values */
 	if(shader[0] == '-')
-  		bu_vls_free( &comb->shader );
-  	else
-  		bu_vls_strcpy( &comb->shader, shader );
+		bu_vls_free( &comb->shader );
+	else
+		bu_vls_strcpy( &comb->shader, shader );
 
-  	comb->rgb[0] = (unsigned char)r;
-  	comb->rgb[1] = (unsigned char)g;
-  	comb->rgb[2] = (unsigned char)b;
-  	comb->rgb_valid = override;
-  	comb->inherit = inherit;
+	comb->rgb[0] = (unsigned char)r;
+	comb->rgb[1] = (unsigned char)g;
+	comb->rgb[2] = (unsigned char)b;
+	comb->rgb_valid = override;
+	comb->inherit = inherit;
 
 	/* Write new values to database */
 	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
@@ -838,7 +838,7 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			struct rt_half_internal *haf;
 
 			haf = (struct rt_half_internal *)internal.idb_ptr;
-                                RT_HALF_CK_MAGIC( haf );
+				RT_HALF_CK_MAGIC( haf );
 
 			haf->eqn[k] *= -1.0;
 
@@ -1239,7 +1239,7 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	(void)signal( SIGINT, SIG_IGN );
 
 	if( (dp = db_diradd( dbip, argv[2], -1L, 0, proto->d_flags, (genptr_t)&internal.idb_type)) == DIR_NULL )  {
-	    	TCL_ALLOC_ERR_return;
+		TCL_ALLOC_ERR_return;
 	}
 	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR_return;
@@ -1570,13 +1570,13 @@ f_make(ClientData	clientData,
 		VSET( view_center,
 			-view_state->vs_vop->vo_center[MDX],
 			-view_state->vs_vop->vo_center[MDY],
-		        -view_state->vs_vop->vo_center[MDZ] );
+			-view_state->vs_vop->vo_center[MDZ] );
 		for( i=0 ; i<arbn_ip->neqn ; i++ ) {
 			arbn_ip->eqn[i][3] +=
 				VDOT( view_center, arbn_ip->eqn[i] );
 		}
 	} else if( strcmp( argv[2], "ars" ) == 0 )  {
-	        int curve;
+		int curve;
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_ARS;
 		internal.idb_meth = &rt_functab[ID_ARS];
@@ -2077,7 +2077,7 @@ f_make(ClientData	clientData,
 	(void)signal( SIGINT, SIG_IGN );
 
 	if( (dp = db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )  {
-	    	TCL_ALLOC_ERR_return;
+		TCL_ALLOC_ERR_return;
 	}
 	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )  {
 		TCL_WRITE_ERR_return;
@@ -2434,7 +2434,7 @@ mged_add_nmg_part(char *newname, struct model *m)
 	}
 
 	if( (new_dp=db_diradd( dbip, newname, -1, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL )  {
-	    	TCL_ALLOC_ERR;
+		TCL_ALLOC_ERR;
 		return;
 	}
 

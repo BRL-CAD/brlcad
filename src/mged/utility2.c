@@ -80,7 +80,7 @@ f_eac(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
-        else{
+	else{
 	  bu_vls_free( &v );
 	  return TCL_OK;
 	}

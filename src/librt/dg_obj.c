@@ -91,7 +91,7 @@ struct dg_client_data {
 	struct bn_vlblock	*draw_edge_uses_vbp;
 	int			shaded_mode_override;
 	fastf_t			transparency;
-        int                     dmode;
+	int                     dmode;
 };
 
 struct dg_rt_client_data {
@@ -621,7 +621,7 @@ dgo_draw_cmd(struct dg_obj	*dgop,
 	 */
 	dgo_eraseobjpath(dgop, interp, argc, argv, LOOKUP_QUIET, 0);
 
- 	dgo_drawtrees(dgop, interp, argc, argv, kind, (struct dg_client_data *)0);
+	dgo_drawtrees(dgop, interp, argc, argv, kind, (struct dg_client_data *)0);
 
 	dgo_color_soltab((struct solid *)&dgop->dgo_headSolid);
 
@@ -1131,7 +1131,7 @@ dgo_autoview(struct dg_obj	*dgop,
 	V_MAX(vop->vo_scale, radial[Z]);
 
 	vop->vo_size = 2.0 * vop->vo_scale;
- 	vop->vo_invSize = 1.0 / vop->vo_size;
+	vop->vo_invSize = 1.0 / vop->vo_size;
 	vo_update(vop, interp, 1);
 }
 
@@ -3724,7 +3724,7 @@ dgo_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp,
 	if (!existing_sp) {
 		/* Take note of the base color */
 		if (dgcdp->wireframe_color_override) {
-		        /* a user specified the color, so arrange to use it */
+			/* a user specified the color, so arrange to use it */
 			sp->s_uflag = 1;
 			sp->s_dflag = 0;
 			sp->s_basecolor[0] = dgcdp->wireframe_color[0];
@@ -4057,7 +4057,7 @@ dgo_color_soltab(struct solid *hsp)
 	FOR_ALL_SOLIDS(sp, &hsp->l) {
 		sp->s_cflag = 0;
 
-	        /* the user specified the color, so use it */
+		/* the user specified the color, so use it */
 		if (sp->s_uflag) {
 			sp->s_color[0] = sp->s_basecolor[0];
 			sp->s_color[1] = sp->s_basecolor[1];
@@ -4068,9 +4068,9 @@ dgo_color_soltab(struct solid *hsp)
 		for (mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw) {
 			if (sp->s_regionid <= mp->mt_high &&
 			    sp->s_regionid >= mp->mt_low) {
-			    	sp->s_color[0] = mp->mt_r;
-			    	sp->s_color[1] = mp->mt_g;
-			    	sp->s_color[2] = mp->mt_b;
+				sp->s_color[0] = mp->mt_r;
+				sp->s_color[1] = mp->mt_g;
+				sp->s_color[2] = mp->mt_b;
 				goto done;
 			}
 		}
@@ -4517,9 +4517,9 @@ dgo_run_rt(struct dg_obj *dgop,
 
 	/* Create noninheritable read handle and close the inheritable read handle. */
 	DuplicateHandle( GetCurrentProcess(), pipe_err[0],
-        GetCurrentProcess(),  &pipe_errDup ,
+	GetCurrentProcess(),  &pipe_errDup ,
 		0,  FALSE,
-        DUPLICATE_SAME_ACCESS );
+	DUPLICATE_SAME_ACCESS );
 	CloseHandle( pipe_err[0] );
 
 	/* Create a pipe for the child process's STDIN. */
@@ -4556,7 +4556,7 @@ dgo_run_rt(struct dg_obj *dgop,
 	CloseHandle(pipe_in[0]);
 	CloseHandle(pipe_err[1]);
 
-   	/* As parent, send view information down pipe */
+	/* As parent, send view information down pipe */
 	fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup,_O_TEXT), "wb" );
 	_setmode(_fileno(fp_in), _O_BINARY);
 
@@ -4645,7 +4645,7 @@ static void
 dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl)
 
 
-        		    			/* debug level */
+						/* debug level */
 {
 	register struct solid		*sp;
 	register struct bn_vlist	*vp;

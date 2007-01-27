@@ -353,8 +353,8 @@ mmenu_select( int pen_y, int do_func )
 			menu_state->ms_cur_item = item;
 			menu_state->ms_cur_menu = menu;
 			menu_state->ms_flag = 1;
-		     	/* It's up to the menu_func to set menu_state->ms_flag=0
-		     	 * if no arrow is desired */
+			/* It's up to the menu_func to set menu_state->ms_flag=0
+			 * if no arrow is desired */
 			if( do_func && mptr->menu_func != ((void (*)())0) )
 				(*(mptr->menu_func))(mptr->menu_arg, menu, item);
 

@@ -164,8 +164,7 @@ main(int argc, char **argv)
 void
 make_room(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, struct wmember *headp)
 
-      	     		/* Interior RPP min point */
-
+			/* Interior RPP min point */
 
 
 {
@@ -194,9 +193,7 @@ make_room(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, struct 
 void
 make_walls(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, int bits, struct wmember *headp)
 
-      	     		/* Interior RPP min point */
-
-
+			/* Interior RPP min point */
 
 
 {
@@ -267,8 +264,7 @@ void
 make_pillar(char *prefix, int ix, int iy, fastf_t *center, fastf_t *lwh, struct wmember *headp)
 
 
-
-      	       			/* center of base */
+				/* center of base */
 
 
 {

@@ -10,4 +10,3 @@ EXTRA_DIST = \
 	brlman.in
 
 include $(top_srcdir)/misc/Makefile.defs
-

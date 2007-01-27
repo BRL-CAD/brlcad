@@ -83,9 +83,8 @@ struct bu_structparse stk_parse[] = {
 HIDDEN int
 ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp)
 
-             	         	/* parameter string */
-    		      		/* pointer to user data pointer */
-
+				/* parameter string */
+				/* pointer to user data pointer */
 
 
 {
@@ -129,8 +128,8 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 static int sh_stk_dosetup(char *cp, struct region *rp, char **dpp, char **mpp, struct rt_i *rtip, struct mfuncs **headp)
 
 
-    	      		/* udata pointer address */
-    	      		/* mfuncs pointer address */
+			/* udata pointer address */
+			/* mfuncs pointer address */
 
 
 {
@@ -187,7 +186,6 @@ retry:
 #endif
 
 
-
 	bu_log("stack_setup(%s):  material not known\n",
 		matname );
 	ret = -1;
@@ -223,9 +221,8 @@ out:
 HIDDEN int
 sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp)
 
-             	         	/* parameter string */
-    		      		/* pointer to user data pointer */
-
+				/* parameter string */
+				/* pointer to user data pointer */
 
 
 {

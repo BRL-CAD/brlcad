@@ -168,9 +168,7 @@ HIDDEN int
 cmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-
-
-                                /* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct cook_specific *pp;
 
@@ -210,9 +208,7 @@ HIDDEN int
 cglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
 
 
-
-
-                                /* New since 4.4 release */
+				/* New since 4.4 release */
 {
 	register struct cook_specific *pp;
 
@@ -390,8 +386,8 @@ cook_render(register struct application *ap, struct partition *pp, struct shadew
 
 HIDDEN double
 fresnel(double c, double n)
-      	  	/* cos(theta) = V dot H */
-      	  	/* index of refraction */
+		/* cos(theta) = V dot H */
+		/* index of refraction */
 {
 	double	g, gpc, gmc, t1, t2, f;
 
@@ -440,8 +436,8 @@ double tan2(double a)
  */
 HIDDEN double
 beckmann(double a, double m2)
-      	  		/* angle between N and H */
-      	   		/* rms slope squared (m^2) */
+			/* angle between N and H */
+			/* rms slope squared (m^2) */
 {
 	double	t1, t2;
 

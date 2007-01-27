@@ -1123,7 +1123,6 @@ dsp_in_v5 (char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-
 /*			H F _ I N
  *
  *	Read HF solid from keyboard
@@ -1371,7 +1370,7 @@ bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 /*
  *			A R B N _ I N
  */
-int 
+int
 arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 {
 	struct rt_arbn_internal *arbn;
@@ -2184,7 +2183,7 @@ box_in(char **cmd_argvs, struct rt_db_internal *intern)
 /*   R P P _ I N ( ) :   	reads rpp parameters from keyboard
  *				returns 0 if successful read
  *					1 if unsuccessful read
- */ 
+ */
 int
 rpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 {

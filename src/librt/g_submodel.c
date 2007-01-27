@@ -119,7 +119,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	} else {
 		/* db_open will cache dbip's via bu_open_mapped_file() */
 		if( (sub_dbip = db_open( bu_vls_addr( &sip->file ), "r" )) == DBI_NULL )
-		    	return -1;
+			return -1;
 
 		/* Save the overhead of stat() calls on subsequent opens */
 		if( sub_dbip->dbi_mf )  sub_dbip->dbi_mf->dont_restat = 1;
@@ -540,10 +540,10 @@ rt_submodel_shot(struct soltab *stp, register struct xray *rp, struct applicatio
  */
 void
 rt_submodel_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
+			       /* An array of solid pointers */
+			       /* An array of ray pointers */
+			       /* array of segs (results returned) */
+			       /* Number of ray/object pairs */
 
 {
 	rt_vstub( stp, rp, segp, n, ap );
@@ -580,10 +580,10 @@ rt_submodel_norm(register struct hit *hitp, struct soltab *stp, register struct 
 void
 rt_submodel_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
- 	cvp->crv_c1 = cvp->crv_c2 = 0;
+	cvp->crv_c1 = cvp->crv_c2 = 0;
 
 	/* any tangent direction */
- 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 
 	/* XXX This will never be called */
 	bu_log("rt_submodel_curve() not implemented, need extra fields in 'struct hit'\n");

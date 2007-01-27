@@ -319,11 +319,8 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     ep->ext_nbytes = 0;
 
 
-
     return 0;
 }
-
-
 
 
 /**

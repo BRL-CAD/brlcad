@@ -191,8 +191,8 @@ namespace eval RtWizard {
 	}
 
 	#
-        # Create two frames, the left frame will hold the size and
-        # color stuff, the right will hold the device stuff.
+	# Create two frames, the left frame will hold the size and
+	# color stuff, the right will hold the device stuff.
 	#
 	itk_component add ltFrame {
 	    frame $itk_component(sfm).ltFrame
@@ -296,7 +296,7 @@ namespace eval RtWizard {
 	itk_component add browse {
 	    button $devCs.browse \
 		    -text "Browse" \
-    		    -command "[::itcl::code $this selectFbFile]"
+		    -command "[::itcl::code $this selectFbFile]"
 	} {
 	    usual
 	}
@@ -570,51 +570,6 @@ namespace eval RtWizard {
 
 }
 #end namespace
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # Local Variables:

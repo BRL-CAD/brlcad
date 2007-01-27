@@ -299,11 +299,11 @@ struct edge_info *ei;
 
 	nmg_pl_eu(fd, ei->eu_p, b, 255, 255, 255);
 
-        tmp_tol.magic = BN_TOL_MAGIC;
-        tmp_tol.dist = 0.005;
-        tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
-        tmp_tol.perp = 1e-6;
-        tmp_tol.para = 1 - tmp_tol.perp;
+	tmp_tol.magic = BN_TOL_MAGIC;
+	tmp_tol.dist = 0.005;
+	tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+	tmp_tol.perp = 1e-6;
+	tmp_tol.para = 1 - tmp_tol.perp;
 
 	(void)bn_dist_pt3_lseg3( &dist, pca, ei->eu_p->vu_p->v_p->vg_p->coord,
 		ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord, fpi->pt, &tmp_tol );
@@ -703,7 +703,6 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	}
 
 
-
 	/* Add a struct for this edgeuse to the loop's list of dist-sorted
 	 * edgeuses.
 	 */
@@ -858,15 +857,15 @@ HIDDEN void make_near_list( struct edge_info *edge_list, struct bu_list *near1)
 						V3ARGS(ei_p->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
 				}
 
-			    	tmp = ei_p;
-			    	ei_p = BU_LIST_PLAST(edge_info, &ei_p->l);
+				tmp = ei_p;
+				ei_p = BU_LIST_PLAST(edge_info, &ei_p->l);
 				BU_LIST_DEQUEUE(&tmp->l);
 				bu_free((char *)tmp, "edge info struct");
-			    	tmp = ei;
-			    	ei = BU_LIST_PLAST(edge_info, &ei->l);
+				tmp = ei;
+				ei = BU_LIST_PLAST(edge_info, &ei->l);
 				BU_LIST_DEQUEUE(&tmp->l);
 				bu_free((char *)tmp, "edge info struct");
-			    	break;
+				break;
 			}
 			ei_p = BU_LIST_PNEXT( edge_info, &ei_p->l );
 		}
@@ -911,9 +910,6 @@ HIDDEN void make_near_list( struct edge_info *edge_list, struct bu_list *near1)
 }
 
 
-
-
-
 static void
 pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 {
@@ -953,11 +949,11 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 
 	nmg_pl_lu(fd, lu, b, 255, 255, 255);
 
-        tmp_tol.magic = BN_TOL_MAGIC;
-        tmp_tol.dist = 0.005;
-        tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
-        tmp_tol.perp = 1e-6;
-        tmp_tol.para = 1 - tmp_tol.perp;
+	tmp_tol.magic = BN_TOL_MAGIC;
+	tmp_tol.dist = 0.005;
+	tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+	tmp_tol.perp = 1e-6;
+	tmp_tol.para = 1 - tmp_tol.perp;
 
 	(void)bn_dist_pt3_lseg3( &dist, pca, ei->eu_p->vu_p->v_p->vg_p->coord,
 		ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord, fpi->pt, &tmp_tol );
@@ -979,8 +975,6 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 	bu_free((char *)b, "bit vec");
 	fclose(fd);
 }
-
-
 
 
 /**	C O M P U T E _ L O O P _ C L A S S
@@ -1277,12 +1271,12 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt)
 
 	pl_erase(fp);
 	pd_3space(fp,
-                fu->f_p->min_pt[0]-1.0,
-                fu->f_p->min_pt[1]-1.0,
-                fu->f_p->min_pt[2]-1.0,
-                fu->f_p->max_pt[0]+1.0,
-                fu->f_p->max_pt[1]+1.0,
-                fu->f_p->max_pt[2]+1.0);
+		fu->f_p->min_pt[0]-1.0,
+		fu->f_p->min_pt[1]-1.0,
+		fu->f_p->min_pt[2]-1.0,
+		fu->f_p->max_pt[0]+1.0,
+		fu->f_p->max_pt[1]+1.0,
+		fu->f_p->max_pt[2]+1.0);
 
 	nmg_pl_fu(fp, fu, b, 200, 200, 200);
 
@@ -1335,11 +1329,9 @@ int
 nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct loopuse *ignore_lu, void (*eu_func) (/* ??? */), void (*vu_func) (/* ??? */), const char *priv, const int call_on_hits, const int in_or_out_only, const struct bn_tol *tol)
 
 
-
-                                        /* func to call when pt on edgeuse */
-                                        /* func to call when pt on vertexuse*/
-          		                /* private data for [ev]u_func */
-
+					/* func to call when pt on edgeuse */
+					/* func to call when pt on vertexuse*/
+					/* private data for [ev]u_func */
 
 
 {

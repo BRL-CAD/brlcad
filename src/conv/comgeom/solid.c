@@ -668,7 +668,7 @@ getsolid(void)
 	if( (version == 5 && strcmp( solid_type, "ell" ) == 0)  ||
 	    strcmp( solid_type, "ell1" ) == 0 )  {
 		/* V, A, r */
-	    	/* GIFT4 name is "ell1", GIFT5 name is "ell" */
+		/* GIFT4 name is "ell1", GIFT5 name is "ell" */
 		if( getsoldata( dd, 2*3+1, sol_work ) < 0 )
 			return(-1);
 

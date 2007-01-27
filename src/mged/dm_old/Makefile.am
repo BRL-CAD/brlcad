@@ -14,4 +14,3 @@ EXTRA_DIST = \
 	dm-xgl.info
 
 include $(top_srcdir)/misc/Makefile.defs
-

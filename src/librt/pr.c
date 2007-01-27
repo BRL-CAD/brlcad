@@ -39,7 +39,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
@@ -319,7 +318,7 @@ rt_pr_hitarray_vls(struct bu_vls *v, const char *str, register const struct hit 
 void
 rt_pr_tree(register const union tree *tp, int lvl)
 
-        			/* recursion level */
+				/* recursion level */
 {
 	register int i;
 
@@ -572,10 +571,10 @@ rt_pr_tree_str(const union tree *tree)
  */
 void
 rt_pr_tree_val(register const union tree *tp, const struct partition *partp, int pr_name, int lvl)
-                              		/* Tree to print */
-                      	       		/* Partition to evaluate */
-   			        	/* 1=print name, 0=print value */
-   			    		/* Recursion level */
+					/* Tree to print */
+					/* Partition to evaluate */
+					/* 1=print name, 0=print value */
+					/* Recursion level */
 {
 
 	if( lvl == 0 )  {

@@ -85,7 +85,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 
-
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -265,9 +264,9 @@ static Xgl_color_rgb WHITE	= {1.0, 1.0, 1.0 };
 #define MINSLOTS	5			/* number of DM_ colors */
 #define	DEFAULT_COLOR	DM_YELLOW		/* default color */
 #define SetColor(c, i) if (color_type == XGL_COLOR_INDEX) \
-                                c.index = COLORINDEX(i); \
-                       else \
-                                c.rgb = color_table[i].rgb;
+				c.index = COLORINDEX(i); \
+		       else \
+				c.rgb = color_table[i].rgb;
 
 /* Light Info */
 #define NUM_LIGHTS 2
@@ -314,10 +313,10 @@ static int getms(struct timeval , struct timeval );
 /* 'Borrowed' from dm-4d.c */
 static int perspective_mode = 0;        /* Perspective flag */
 static int perspective_table[] = {
-        30, 45, 60, 90 };
+	30, 45, 60, 90 };
 #define NUM_PERSPECTIVE_ANGLES (sizeof (perspective_table)/sizeof(int))
 static int perspective_angle = NUM_PERSPECTIVE_ANGLES - 1;
-		        /* Angle of perspective */
+			/* Angle of perspective */
 
 
 
@@ -367,7 +366,7 @@ XGL_close()
 	xgl_object_destroy (ctx_2d);
 	xgl_object_destroy (ctx_3d);
 	xgl_close(sys_state);
-        XCloseDisplay( display );
+	XCloseDisplay( display );
 	return;
 }
 
@@ -414,8 +413,8 @@ static void
 apply_matrix(mat_t mat)
 {
 	int i;
-        Xgl_pt               	pt;
-        Xgl_pt_d3d           	pt_d3d;
+	Xgl_pt               	pt;
+	Xgl_pt_d3d           	pt_d3d;
 	double			w;
 	static Xgl_matrix_d3d	xgl_mat;
 
@@ -426,7 +425,7 @@ apply_matrix(mat_t mat)
 	 * Write the matrix into the transform, then transpose it
 	 */
 	xgl_transform_write_specific (trans, xgl_mat, NULL);
-        xgl_transform_transpose(trans, trans);
+	xgl_transform_transpose(trans, trans);
 
 	reposition_light(); /* reposition light source */
 }
@@ -487,7 +486,7 @@ static Xgl_pt_list pg_vnorm_list = 	{XGL_PT_NORMAL_F3D, 0, 0, 0, 0};
 
 static Xgl_pt_f3d      	 *pg_ptr = pg_pts;	/* ptr into polygon point arr*/
 static Xgl_pt_normal_f3d *pg_vnorm_ptr = pg_vnorm_pts;	/* ptr into polygon
-						           point arr w/ vertex
+							   point arr w/ vertex
 							   normals */
 Xgl_facet_list		facet_list;		/* facet (contains color and
 						   normal) */
@@ -513,25 +512,25 @@ Xgl_color_normal_facet	cn_facet;
 #define FlushPgList() \
 	if (pg_list.num_pts) {\
 		xgl_multi_simple_polygon(ctx_3d,\
-                        XGL_FACET_FLAG_SIDES_UNSPECIFIED |\
-                        XGL_FACET_FLAG_SHAPE_NONCONVEX | \
+			XGL_FACET_FLAG_SIDES_UNSPECIFIED |\
+			XGL_FACET_FLAG_SHAPE_NONCONVEX | \
 			XGL_FACET_FLAG_FN_CONSISTENT, &facet_list,\
-                        NULL, 1, &pg_list);\
+			NULL, 1, &pg_list);\
 		pg_list.num_pts = 0; pg_ptr = pg_pts;\
 	}\
 	if (pg_vnorm_list.num_pts) {\
 		xgl_multi_simple_polygon(ctx_3d,\
-                        XGL_FACET_FLAG_SIDES_UNSPECIFIED |\
-                        XGL_FACET_FLAG_SHAPE_NONCONVEX | \
+			XGL_FACET_FLAG_SIDES_UNSPECIFIED |\
+			XGL_FACET_FLAG_SHAPE_NONCONVEX | \
 			XGL_FACET_FLAG_FN_CONSISTENT, &facet_list,\
-                        NULL, 1, &pg_vnorm_list);\
+			NULL, 1, &pg_vnorm_list);\
 		pg_vnorm_list.num_pts = 0; pg_vnorm_ptr = pg_vnorm_pts;\
 	}
 
 /* Macro for pulling out double points and shoving into local array for XGL */
 #define GrabPts(xgl_ptr, pt) 	xgl_ptr->x = pt[0][0]; \
-                                xgl_ptr->y = pt[0][1]; \
-                                xgl_ptr->z = pt[0][2]; \
+				xgl_ptr->y = pt[0][1]; \
+				xgl_ptr->z = pt[0][2]; \
 				xgl_ptr++;
 
 /* Macro for bumping the number of polyline points, based on a dashed line */
@@ -570,8 +569,8 @@ double ratio;
 		FlushPgList();
 		SetColor(solid_color, color_index);
 		xgl_object_set(ctx_3d,
-               		XGL_CTX_LINE_COLOR,    &solid_color,
-               	 	0);
+			XGL_CTX_LINE_COLOR,    &solid_color,
+			0);
 		last_color_index = color_index;
 	}
 	/*
@@ -595,12 +594,12 @@ double ratio;
 	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 		int    i;
 		int    nused = vp->nused;
-                int    *cmd = vp->cmd;
-                point_t *pt = vp->pt;
+		int    *cmd = vp->cmd;
+		point_t *pt = vp->pt;
 
-                for( i = 0; i < nused; i++,cmd++,pt++ )  {
-                        switch( *cmd )  {
-                        case RT_VLIST_POLY_START:
+		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			switch( *cmd )  {
+			case RT_VLIST_POLY_START:
 				FlushPgList();
 				/* Grab normal vector */
 				cn_facet.normal.x = pt[0][0];
@@ -609,9 +608,9 @@ double ratio;
 				cn_facet.color = solid_color;
 				/* Assume no vertex normals coming */
 				vnorm_flag = 0;
-                                continue;
-                        case RT_VLIST_POLY_MOVE:
-                        case RT_VLIST_POLY_DRAW:
+				continue;
+			case RT_VLIST_POLY_MOVE:
+			case RT_VLIST_POLY_DRAW:
 				if (vnorm_flag) {
 					GrabPts(pg_vnorm_ptr, pt);
 					pg_vnorm_list.num_pts++;
@@ -620,7 +619,7 @@ double ratio;
 					pg_list.num_pts++;
 				}
 				continue;
-                        case RT_VLIST_POLY_END:
+			case RT_VLIST_POLY_END:
 				FlushPgList();
 				continue;
 			case RT_VLIST_POLY_VERTNORM:
@@ -631,20 +630,20 @@ double ratio;
 				pg_vnorm_ptr->normal.z = pt[0][2];
 				/* The vertex comes next (POLY_MOVE/DRAW) */
 				continue;
-                        case RT_VLIST_LINE_MOVE:
+			case RT_VLIST_LINE_MOVE:
 					/* Don't draw edge */
 				flag_f3d_ptr->flag = 0x00;
 				GrabPts(flag_f3d_ptr, pt);
 				BumpNumPts();
 				continue;
-                        case RT_VLIST_LINE_DRAW:
+			case RT_VLIST_LINE_DRAW:
 					/* Draw Edge */
-                               	flag_f3d_ptr->flag = 0x01;
+				flag_f3d_ptr->flag = 0x01;
 				GrabPts(flag_f3d_ptr, pt);
 				BumpNumPts();
-                                continue;
-                        }
-                }
+				continue;
+			}
+		}
 	}
 	return (1);
 }
@@ -922,7 +921,7 @@ int	oldstate, newstate;
 	case ST_O_PATH:
 		/* constant tracking ON */
 		XSelectInput( display, xwin,
-		  	PointerMotionMask|ExposureMask|ButtonPressMask|
+			PointerMotionMask|ExposureMask|ButtonPressMask|
 			KeyPressMask|StructureNotifyMask );
 		break;
 	case ST_O_EDIT:
@@ -1114,21 +1113,21 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 {
 	XVisualInfo	visual_info;
 	Visual		*visual;
-        XSizeHints 	xsh;
+	XSizeHints 	xsh;
 	int		depth;
 	int		x, y;
 	XEvent  	event;
 	Colormap        xcmap;
-        static XSetWindowAttributes xswa;
+	static XSetWindowAttributes xswa;
 	static XWMHints xwmh = {
-       	 	(InputHint|StateHint),          /* flags */
-       	 	False,                          /* input */
-       	 	NormalState,                    /* initial_state */
-       	 	0,                              /* icon pixmap */
-       	 	0,                              /* icon window */
-       	 	0, 0,                           /* icon location */
-       	 	0,                              /* icon mask */
-       	 	0                               /* Window group */
+		(InputHint|StateHint),          /* flags */
+		False,                          /* input */
+		NormalState,                    /* initial_state */
+		0,                              /* icon pixmap */
+		0,                              /* icon window */
+		0, 0,                           /* icon location */
+		0,                              /* icon mask */
+		0                               /* Window group */
 	};
 
 
@@ -1140,8 +1139,8 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 
 	*screen = DefaultScreen (*dpy);
 	visual =  DefaultVisual (*dpy, *screen);
-        depth = DefaultDepth (*dpy, *screen);
-        xcmap = CopyFromParent;
+	depth = DefaultDepth (*dpy, *screen);
+	xcmap = CopyFromParent;
 
 	/* Make the window full screen */
 	*w = DisplayWidth(*dpy, *screen);
@@ -1179,7 +1178,7 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 			visual = visual_info.visual;
 		}
 		else if (XMatchVisualInfo(*dpy, *screen, 24, DirectColor,
-                                &visual_info)) {
+				&visual_info)) {
 			xcmap = XCreateColormap(*dpy, RootWindow(*dpy,*screen),
 				visual_info.visual, AllocAll);
 			depth = 24;
@@ -1208,7 +1207,7 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 	XSetStandardProperties(*dpy, *win, "MGED", "MGED",
 			None, NULL, 0, &xsh );
 	XSetWMHints(*dpy, *win, &xwmh );
-        XSelectInput(*dpy, *win,
+	XSelectInput(*dpy, *win,
 		ExposureMask|ButtonPressMask|
 		KeyPressMask |StructureNotifyMask);
 
@@ -1220,25 +1219,25 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 	else
 		XSetWMProtocols (*dpy, *win, &wm_delete_win_atom, 1);
 
-        XMapWindow(*dpy, *win );
+	XMapWindow(*dpy, *win );
 
-        while( 1 ) {
-                XNextEvent(*dpy, &event );
-                if( event.type == Expose && event.xexpose.count == 0 ) {
-                        XWindowAttributes xwa;
+	while( 1 ) {
+		XNextEvent(*dpy, &event );
+		if( event.type == Expose && event.xexpose.count == 0 ) {
+			XWindowAttributes xwa;
 
-                        /* remove other exposure events */
-                        while( XCheckTypedEvent(*dpy, Expose, &event) ) ;
+			/* remove other exposure events */
+			while( XCheckTypedEvent(*dpy, Expose, &event) ) ;
 
-                        if( XGetWindowAttributes( *dpy, *win, &xwa ) == 0 )
-                                break;
+			if( XGetWindowAttributes( *dpy, *win, &xwa ) == 0 )
+				break;
 
-                        *w= xwa.width;
-                        *h= xwa.height;
-                        break;
-                }
-        }
-        return  0;
+			*w= xwa.width;
+			*h= xwa.height;
+			break;
+		}
+	}
+	return  0;
 }
 
 static int
@@ -1248,7 +1247,7 @@ XGL_setup()
 	Xgl_bounds_d2d	bounds_d2d;
 	Xgl_bounds_d3d	bounds_d3d;
 	int		bufs;
-       	Xgl_inquire     *inq_info;
+	Xgl_inquire     *inq_info;
 	Xgl_color	ln_color, bg_color;
 
 	xgl_x_win.X_display = display;
@@ -1261,9 +1260,9 @@ XGL_setup()
 	sys_state = xgl_open(0);
 
        if (!(inq_info = xgl_inquire(sys_state, &win_desc))) {
-          	bu_log("error in getting inquiry\n");
-          	exit(1);
-        }
+		bu_log("error in getting inquiry\n");
+		exit(1);
+	}
 	bufs = inq_info->maximum_buffer;	/* if double buffering, its 2 */
 
 	if (strcmp(inq_info->name, "Sun:GX") == 0) {
@@ -1306,8 +1305,8 @@ XGL_setup()
 
 	free(inq_info);
 
-    	/* ras MUST be created before init_check_buffering() is called */
-    	ras = xgl_object_create(sys_state, XGL_WIN_RAS, &win_desc,
+	/* ras MUST be created before init_check_buffering() is called */
+	ras = xgl_object_create(sys_state, XGL_WIN_RAS, &win_desc,
 		NULL);
 
 	if((dbuffering = init_check_buffering(bufs)) < 0)
@@ -1379,7 +1378,7 @@ XGL_setup()
 					XGL_CLIP_XMAX | XGL_CLIP_YMAX,
 		XGL_CTX_RENDERING_ORDER, XGL_RENDERING_ORDER_HLHSR,
 		XGL_3D_CTX_HLHSR_MODE, XGL_HLHSR_Z_BUFFER,
-                XGL_CTX_LINE_PATTERN,   xgl_lpat_dashed,
+		XGL_CTX_LINE_PATTERN,   xgl_lpat_dashed,
 		XGL_CTX_LINE_STYLE,	XGL_LINE_SOLID,
 		XGL_CTX_DEFERRAL_MODE, XGL_DEFER_ASTI,
 		XGL_CTX_BACKGROUND_COLOR, &bg_color,
@@ -1403,8 +1402,8 @@ XGL_setup()
 		xgl_object_set(ctx_3d, XGL_CTX_PLANE_MASK, CMAP_MASK_B, 0);
 		xgl_object_set(ctx_2d, XGL_CTX_PLANE_MASK, CMAP_MASK_B, 0);
 		xgl_object_set(ctx_3d,
-                    XGL_CTX_NEW_FRAME_ACTION,
-                        (XGL_CTX_NEW_FRAME_CLEAR | XGL_CTX_NEW_FRAME_VRETRACE |
+		    XGL_CTX_NEW_FRAME_ACTION,
+			(XGL_CTX_NEW_FRAME_CLEAR | XGL_CTX_NEW_FRAME_VRETRACE |
 			 XGL_CTX_NEW_FRAME_HLHSR_ACTION),
 			NULL);
 		xgl_context_new_frame(ctx_3d);
@@ -1428,8 +1427,8 @@ XGL_setup()
 	} else {
 		/* No double buffering */
 		xgl_object_set(ctx_3d,
-                    XGL_CTX_NEW_FRAME_ACTION,
-                        (XGL_CTX_NEW_FRAME_CLEAR | XGL_CTX_NEW_FRAME_VRETRACE |
+		    XGL_CTX_NEW_FRAME_ACTION,
+			(XGL_CTX_NEW_FRAME_CLEAR | XGL_CTX_NEW_FRAME_VRETRACE |
 			 XGL_CTX_NEW_FRAME_HLHSR_ACTION),
 		    0);
 	}
@@ -1459,14 +1458,14 @@ XGL_setup()
 	 * Set Backing store if we're not h/w double-bufferred (XGL won't
 	 * support both double-buffer AND backing store
 	 */
-        if (dbuffering != AB_DBUFF) {
+	if (dbuffering != AB_DBUFF) {
 		static XSetWindowAttributes xswa;
 
-                xswa.backing_store = Always;
-                XChangeWindowAttributes (display, xwin,
-                       	CWBackingStore , &xswa);
-                xgl_object_set (ras, XGL_WIN_RAS_BACKING_STORE, TRUE,0);
-        }
+		xswa.backing_store = Always;
+		XChangeWindowAttributes (display, xwin,
+			CWBackingStore , &xswa);
+		xgl_object_set (ras, XGL_WIN_RAS_BACKING_STORE, TRUE,0);
+	}
 	return(0);
 }
 
@@ -1520,22 +1519,22 @@ init_check_buffering( int bufs)
 				maxcolors = 2;
 				colortablesize = 2;
 				break;
-		 	case OPTION_ONE:
+			case OPTION_ONE:
 				type = NO_DBUFF;
 				maxcolors = 128;
 				colortablesize = 128;
 				break;
-		  	case OPTION_TWO:
+			case OPTION_TWO:
 				type = CMAP8_DBUFF;
 				maxcolors = 8;
 				colortablesize = 64;
 				break;
-		  	case OPTION_THREE:
+			case OPTION_THREE:
 				type = CMAP16_DBUFF;
 				maxcolors = 16;
 				colortablesize = 256;
 				break;
-		  	default:
+			default:
 			       bu_log("Undefined DEFAULT_DB option,exiting\n");
 			       exit(1);
 			}
@@ -1624,7 +1623,7 @@ checkevents()
 			if (event.xclient.message_type == wm_protocols_atom &&
 			    event.xclient.data.l[0] == wm_delete_win_atom) {
 					/* Must have quit from menu */
-			    		bu_vls_printf(
+					bu_vls_printf(
 						&dm_values.dv_string,
 						"q\n");
 			}
@@ -1636,7 +1635,7 @@ checkevents()
 			    x = (event.xmotion.x/(double)width - 0.5) * 4095;
 			    y = (0.5 - event.xmotion.y/(double)height) * 4095;
 			    bu_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
-			    	x, y );
+				x, y );
 			}
 			break;
 		case ButtonPress:
@@ -1654,7 +1653,7 @@ checkevents()
 			case Button2:
 			    /* Middle mouse, up to down transition */
 			    bu_vls_printf( &dm_values.dv_string, "M 1 %d %d\n",
-			    	x, y);
+				x, y);
 			    break;
 			case Button3:
 			    /* Right mouse: Zoom in */
@@ -1675,7 +1674,7 @@ checkevents()
 			case Button2:
 			    /* Middle mouse, down to up transition */
 			    bu_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
-			    	x, y);
+				x, y);
 			    break;
 			case Button3:
 			    /* Right mouse: Zoom in.  Do nothing more. */
@@ -1687,7 +1686,7 @@ checkevents()
 		    {
 			/*Turn these into MGED "buttonpress" or knob functions*/
 
-		    	cnt = XLookupString(&event.xkey, keybuf, sizeof(keybuf),
+			cnt = XLookupString(&event.xkey, keybuf, sizeof(keybuf),
 						&key, &compose_stat);
 
 			if (key >= XK_F1 && key <= XK_F12 ||
@@ -1793,7 +1792,7 @@ F	Toggle faceplate\n\
 						key);
 					break;
 				}
-		    	}
+			}
 		    }
 		    break;
 
@@ -2055,8 +2054,8 @@ fk_perspective()
 {
 	/* 'Borrowed' from dm-4d.c */
 	perspective_mode = 1 - perspective_mode;
-        bu_vls_printf( &dm_values.dv_string, "set perspective %d\n",
-        	perspective_mode ? perspective_table[perspective_angle] : -1 );
+	bu_vls_printf( &dm_values.dv_string, "set perspective %d\n",
+		perspective_mode ? perspective_table[perspective_angle] : -1 );
 	/*
 	 * If depth-cueing is on, re-set the depth-cue scale factors to allow
 	 * for more light so the screen is not too dark.
@@ -2144,11 +2143,11 @@ fk_p_angle()
 {
 	/* 'Borrowed' from dm-4d.c */
 	/* toggle perspective matrix */
-       	if (--perspective_angle < 0)
+	if (--perspective_angle < 0)
 		perspective_angle = NUM_PERSPECTIVE_ANGLES-1;
-       	if(perspective_mode)
+	if(perspective_mode)
 		bu_vls_printf( &dm_values.dv_string,
-       		"set perspective %d\n", perspective_table[perspective_angle] );
+		"set perspective %d\n", perspective_table[perspective_angle] );
 	dmaflag = 1;
 
 }
@@ -2258,7 +2257,7 @@ init_sundials()
 	int          	major_code, minor_code, firsterr, num_dev;
 	int		i,j;
 	XDeviceInfo	*xdevlist;
-   	XAnyClassPtr 	classInfo;
+	XAnyClassPtr 	classInfo;
 	XEventClass	ev_class;
 	XID 		sundials_id;
 	XDevice 	*sundials_device;
@@ -2287,10 +2286,10 @@ init_sundials()
 
 	/* Find the Valuator device (sundials) */
 	classInfo = xdevlist[i].inputclassinfo;
-        for (j = 0; j < xdevlist[i].num_classes; j++) {
-            switch(classInfo->class) {
-                case ValuatorClass:
-                    if ( ((XValuatorInfo *)(classInfo))->num_axes == 8) {
+	for (j = 0; j < xdevlist[i].num_classes; j++) {
+	    switch(classInfo->class) {
+		case ValuatorClass:
+		    if ( ((XValuatorInfo *)(classInfo))->num_axes == 8) {
 			sundials_id = xdevlist[i].id;
 			sundials_device = XOpenDevice(display, sundials_id);
 			if (sundials_device == 0)
@@ -2305,14 +2304,14 @@ init_sundials()
 				sundials_ev_type, ev_class);
 			XSelectExtensionEvent(display, xwin, &ev_class, 1);
 		    }
-                break;
-                case ButtonClass:
-                    if ( ((XButtonInfo *)(classInfo))->num_buttons ==32)
-                        ; /* This would be a SunButtons device */
-                break;
-            }
+		break;
+		case ButtonClass:
+		    if ( ((XButtonInfo *)(classInfo))->num_buttons ==32)
+			; /* This would be a SunButtons device */
+		break;
+	    }
 	    classInfo = (XAnyClassPtr)(((char *)classInfo) + classInfo->length);
-        }
+	}
 	XFreeDeviceList(xdevlist);
 	reset_sundials();
 }
@@ -2399,7 +2398,7 @@ static int
 stop_ts() {
 	gettimeofday(&tp2);
 	return (((tp2.tv_sec*1000000 + tp2.tv_usec) -
-                 (tp1.tv_sec*1000000 + tp1.tv_usec))/1000 );
+		 (tp1.tv_sec*1000000 + tp1.tv_usec))/1000 );
 }
 static int
 getms(struct timeval tp1, struct timeval tp2)
@@ -2410,18 +2409,18 @@ getms(struct timeval tp1, struct timeval tp2)
 dump_pl(Xgl_pt_list *pl, int n)
 {
 
-        int i, j;
+	int i, j;
 
-        for (i = 0; i < n; i++) {
-                bu_log("PL[%d]: (%d pts)\n",i, pl[i].num_pts);
-                for (j = 0; j < pl[i].num_pts; j++) {
-                        bu_log( "       pt[%d]: %e,%e,%e, %d\n",j,
-                                pl[i].pts.flag_f3d[j].x,
-                                pl[i].pts.flag_f3d[j].y,
-                                pl[i].pts.flag_f3d[j].z,
-                                pl[i].pts.flag_f3d[j].flag);
-                }
-        }
+	for (i = 0; i < n; i++) {
+		bu_log("PL[%d]: (%d pts)\n",i, pl[i].num_pts);
+		for (j = 0; j < pl[i].num_pts; j++) {
+			bu_log( "       pt[%d]: %e,%e,%e, %d\n",j,
+				pl[i].pts.flag_f3d[j].x,
+				pl[i].pts.flag_f3d[j].y,
+				pl[i].pts.flag_f3d[j].z,
+				pl[i].pts.flag_f3d[j].flag);
+		}
+	}
 }
 #endif
 

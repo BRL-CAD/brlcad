@@ -132,9 +132,9 @@ Tk_PhotoImageFormat tkImgFmtPIX = {
 static int
 FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *widthPtr, int *heightPtr, Tcl_Interp *interp)
 
-                         	/* The name of the image file. */
-                    	/* User-specified format string, or NULL. */
-                              	/* The dimensions of the image are
+				/* The name of the image file. */
+			/* User-specified format string, or NULL. */
+				/* The dimensions of the image are
 				 * returned here if the file is a valid
 				 * raw PIX file. */
 
@@ -190,16 +190,16 @@ FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *width
 
 static int
 FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj *format, Tk_PhotoHandle imageHandle, int destX, int destY, int width, int height, int srcX, int srcY)
-                       		/* Interpreter to use for reporting errors. */
+				/* Interpreter to use for reporting errors. */
 
-                         	/* The name of the image file. */
-                    		/* User-specified format string, or NULL. */
-                               	/* The photo image to write into. */
-                     		/* Coordinates of top-left pixel in
+				/* The name of the image file. */
+				/* User-specified format string, or NULL. */
+				/* The photo image to write into. */
+				/* Coordinates of top-left pixel in
 				 * photo image to be written to. */
-                      		/* Dimensions of block of photo image to
+				/* Dimensions of block of photo image to
 				 * be written to. */
-                   		/* Coordinates of top-left pixel to be used
+				/* Coordinates of top-left pixel to be used
 				 * in image being read. */
 {
     unsigned long int fileWidth, fileHeight;
@@ -248,8 +248,8 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
     Tk_PhotoExpand(imageHandle, destX + width, destY + height);
 
     if ((srcY + height) < fileHeight) {
-    	Tcl_Seek( chan, (long) ((fileHeight - srcY - height) * block.pitch),
-    		SEEK_CUR );
+	Tcl_Seek( chan, (long) ((fileHeight - srcY - height) * block.pitch),
+		SEEK_CUR );
 
     }
 
@@ -309,7 +309,7 @@ FileWritePIX(Tcl_Interp *interp, const char *fileName, Tcl_Obj *format, Tk_Photo
     }
 
     pixLinePtr = blockPtr->pixelPtr + blockPtr->offset[0] +
-	         (blockPtr->height-1)*blockPtr->pitch;
+		 (blockPtr->height-1)*blockPtr->pitch;
     greenOffset = blockPtr->offset[1] - blockPtr->offset[0];
     blueOffset = blockPtr->offset[2] - blockPtr->offset[0];
 

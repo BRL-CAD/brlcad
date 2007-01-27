@@ -135,7 +135,6 @@ AC_ARG_ENABLE([$2],,
 ])
 
 
-
 AC_DEFUN([BC_ARG_WITH], [
 # BC_ARG_WITH 1:[$1] 2:[$2] 3:[$3] 4:[$4] 5:[$5]
 bc_[$1]=[$4]

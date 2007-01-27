@@ -782,7 +782,7 @@ parse_path(struct arc *ap, FILE *fip, struct bu_vls *str)
 	  Tcl_AppendResult(interp, "parse_path: open.\n", (char *)NULL);
 	}
 	/*
- 	 * clear the arc if there is anything there.
+	 * clear the arc if there is anything there.
 	 */
 	free_arc(ap);
 	if (!gobble_token(BU_LEX_SYMBOL, SYM_EQ, fip, str)) return 0;
@@ -857,7 +857,7 @@ parse_list(struct arc *ap, FILE *fip, struct bu_vls *str)
 	  Tcl_AppendResult(interp, "parse_path: open.\n", (char *)NULL);
 	}
 	/*
- 	 * clear the arc if there is anything there.
+	 * clear the arc if there is anything there.
 	 */
 	free_arc(ap);
 
@@ -1062,50 +1062,50 @@ parse_trans(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		}
 		if (token.type == BU_LEX_SYMBOL &&
 		    token.t_key.value == SYM_CL_GROUP ) {
-		    	if (joint_debug & DEBUG_J_PARSE) {
+			if (joint_debug & DEBUG_J_PARSE) {
 			  Tcl_AppendResult(interp, "parse_trans: closing.\n", (char *)NULL);
-		    	}
+			}
 
-		    	if (!dirfound) {
-		    		parse_error(str,"parse_trans: Direction vector not given.");
-		    		return 0;
-		    	}
-		    	VUNITIZE(jp->dirs[index].unitvec);
-		    	if (!lowfound) {
-		    		parse_error(str,"parse_trans: lower bound not given.");
-		    		return 0;
-		    	}
-		    	if (!upfound) {
-		    		parse_error(str,"parse_trans: upper bound not given.");
-		    		return 0;
-		    	}
-		    	if (jp->dirs[index].lower > jp->dirs[index].upper) {
-		    		double tmp;
-		    		tmp = jp->dirs[index].lower;
-		    		jp->dirs[index].lower = jp->dirs[index].upper;
-		    		jp->dirs[index].upper = tmp;
-		    		parse_error(str,"parse_trans: lower > upper, exchanging.");
-		    	}
-		    	if (!accfound) jp->dirs[index].accepted = 0.0;
-		    	if (!curfound) jp->dirs[index].current = 0.0;
+			if (!dirfound) {
+				parse_error(str,"parse_trans: Direction vector not given.");
+				return 0;
+			}
+			VUNITIZE(jp->dirs[index].unitvec);
+			if (!lowfound) {
+				parse_error(str,"parse_trans: lower bound not given.");
+				return 0;
+			}
+			if (!upfound) {
+				parse_error(str,"parse_trans: upper bound not given.");
+				return 0;
+			}
+			if (jp->dirs[index].lower > jp->dirs[index].upper) {
+				double tmp;
+				tmp = jp->dirs[index].lower;
+				jp->dirs[index].lower = jp->dirs[index].upper;
+				jp->dirs[index].upper = tmp;
+				parse_error(str,"parse_trans: lower > upper, exchanging.");
+			}
+			if (!accfound) jp->dirs[index].accepted = 0.0;
+			if (!curfound) jp->dirs[index].current = 0.0;
 			jp->dirs[index].lower *= base2mm;
-		    	jp->dirs[index].upper *= base2mm;
-		    	jp->dirs[index].current *= base2mm;
-		    	jp->dirs[index].accepted *= base2mm;
+			jp->dirs[index].upper *= base2mm;
+			jp->dirs[index].current *= base2mm;
+			jp->dirs[index].accepted *= base2mm;
 
-		    	if (jp->dirs[index].accepted < jp->dirs[index].lower) {
-		    		jp->dirs[index].accepted = jp->dirs[index].lower;
-		    	}
-		    	if (jp->dirs[index].accepted > jp->dirs[index].upper) {
-		    		jp->dirs[index].accepted = jp->dirs[index].upper;
-		    	}
-		    	if (jp->dirs[index].current < jp->dirs[index].lower) {
-		    		jp->dirs[index].current = jp->dirs[index].lower;
-		    	}
-		    	if (jp->dirs[index].current > jp->dirs[index].upper) {
-		    		jp->dirs[index].current = jp->dirs[index].upper;
-		    	}
-		    	return 1;
+			if (jp->dirs[index].accepted < jp->dirs[index].lower) {
+				jp->dirs[index].accepted = jp->dirs[index].lower;
+			}
+			if (jp->dirs[index].accepted > jp->dirs[index].upper) {
+				jp->dirs[index].accepted = jp->dirs[index].upper;
+			}
+			if (jp->dirs[index].current < jp->dirs[index].lower) {
+				jp->dirs[index].current = jp->dirs[index].lower;
+			}
+			if (jp->dirs[index].current > jp->dirs[index].upper) {
+				jp->dirs[index].current = jp->dirs[index].upper;
+			}
+			return 1;
 		}
 
 		if (token.type != BU_LEX_KEYWORD) {
@@ -1220,50 +1220,50 @@ parse_rots(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 		}
 		if (token.type == BU_LEX_SYMBOL &&
 		    token.t_key.value == SYM_CL_GROUP ) {
-		    	if (joint_debug & DEBUG_J_PARSE) {
+			if (joint_debug & DEBUG_J_PARSE) {
 			  Tcl_AppendResult(interp, "parse_rots: closing.\n", (char *)NULL);
-		    	}
+			}
 
-		    	if (!dirfound) {
-		    		parse_error(str,"parse_rots: Direction vector not given.");
-		    		return 0;
-		    	}
-		    	VUNITIZE(jp->rots[index].quat);
-		    	jp->rots[index].quat[W] = 0.0;
-		    	if (!lowfound) {
-		    		parse_error(str,"parse_rots: lower bound not given.");
-		    		return 0;
-		    	}
-		    	if (!upfound) {
-		    		parse_error(str,"parse_rots: upper bound not given.");
-		    		return 0;
-		    	}
-		    	if (jp->rots[index].lower > jp->rots[index].upper) {
-		    		double tmp;
-		    		tmp = jp->rots[index].lower;
-		    		jp->rots[index].lower = jp->rots[index].upper;
-		    		jp->rots[index].upper = tmp;
-		    		parse_error(str,"parse_rots: lower > upper, exchanging.");
-		    	}
-		    	if (!accfound) {
-		    		jp->rots[index].accepted = 0.0;
-		    	}
-		    	if (jp->rots[index].accepted < jp->rots[index].lower) {
-		    		jp->rots[index].accepted = jp->rots[index].lower;
-		    	}
-		    	if (jp->rots[index].accepted > jp->rots[index].upper) {
-		    		jp->rots[index].accepted = jp->rots[index].upper;
-		    	}
-		    	if (!curfound) {
-		    		jp->rots[index].current = 0.0;
-		    	}
-		    	if (jp->rots[index].current < jp->rots[index].lower) {
-		    		jp->rots[index].current = jp->rots[index].lower;
-		    	}
-		    	if (jp->rots[index].current > jp->rots[index].upper) {
-		    		jp->rots[index].current = jp->rots[index].upper;
-		    	}
-		    	return 1;
+			if (!dirfound) {
+				parse_error(str,"parse_rots: Direction vector not given.");
+				return 0;
+			}
+			VUNITIZE(jp->rots[index].quat);
+			jp->rots[index].quat[W] = 0.0;
+			if (!lowfound) {
+				parse_error(str,"parse_rots: lower bound not given.");
+				return 0;
+			}
+			if (!upfound) {
+				parse_error(str,"parse_rots: upper bound not given.");
+				return 0;
+			}
+			if (jp->rots[index].lower > jp->rots[index].upper) {
+				double tmp;
+				tmp = jp->rots[index].lower;
+				jp->rots[index].lower = jp->rots[index].upper;
+				jp->rots[index].upper = tmp;
+				parse_error(str,"parse_rots: lower > upper, exchanging.");
+			}
+			if (!accfound) {
+				jp->rots[index].accepted = 0.0;
+			}
+			if (jp->rots[index].accepted < jp->rots[index].lower) {
+				jp->rots[index].accepted = jp->rots[index].lower;
+			}
+			if (jp->rots[index].accepted > jp->rots[index].upper) {
+				jp->rots[index].accepted = jp->rots[index].upper;
+			}
+			if (!curfound) {
+				jp->rots[index].current = 0.0;
+			}
+			if (jp->rots[index].current < jp->rots[index].lower) {
+				jp->rots[index].current = jp->rots[index].lower;
+			}
+			if (jp->rots[index].current > jp->rots[index].upper) {
+				jp->rots[index].current = jp->rots[index].upper;
+			}
+			return 1;
 		}
 
 		if (token.type != BU_LEX_KEYWORD) {
@@ -1399,41 +1399,41 @@ parse_joint(FILE *fip, struct bu_vls *str)
 		}
 		if (token.type == BU_LEX_SYMBOL &&
 		    token.t_key.value == SYM_CL_GROUP) {
-		    	if (joint_debug & DEBUG_J_PARSE) {
+			if (joint_debug & DEBUG_J_PARSE) {
 			  Tcl_AppendResult(interp, "parse_joint: closing.\n", (char *)NULL);
-		    	}
-		    	if (!arcfound) {
-		    		parse_error(str,"parse_joint: Arc not defined.");
-		    		free_joint(jp);
-		    		return 0;
-		    	}
-		    	if (!locfound) {
-		    		parse_error(str,"parse_joint: location not defined.");
-		    		free_joint(jp);
-		    		return 0;
-		    	}
-		    	if (trans + rots == 0) {
-		    		parse_error(str,"parse_joint: no translations or rotations defined.");
-		    		free_joint(jp);
-		    		return 0;
-		    	}
-		    	for(;trans<3;trans++) {
-		    		jp->dirs[trans].lower = -1.0;
-		    		jp->dirs[trans].upper = -2.0;
-		    		jp->dirs[trans].current = 0.0;
-		    	}
-		    	for(;rots<3;rots++) {
-		    		jp->rots[rots].lower = -1.0;
-		    		jp->rots[rots].upper = -2.0;
-		    		jp->rots[rots].current = 0.0;
-		    	}
-		    	jp->location[X] *= base2mm;
-		    	jp->location[Y] *= base2mm;
-		    	jp->location[Z] *= base2mm;
+			}
+			if (!arcfound) {
+				parse_error(str,"parse_joint: Arc not defined.");
+				free_joint(jp);
+				return 0;
+			}
+			if (!locfound) {
+				parse_error(str,"parse_joint: location not defined.");
+				free_joint(jp);
+				return 0;
+			}
+			if (trans + rots == 0) {
+				parse_error(str,"parse_joint: no translations or rotations defined.");
+				free_joint(jp);
+				return 0;
+			}
+			for(;trans<3;trans++) {
+				jp->dirs[trans].lower = -1.0;
+				jp->dirs[trans].upper = -2.0;
+				jp->dirs[trans].current = 0.0;
+			}
+			for(;rots<3;rots++) {
+				jp->rots[rots].lower = -1.0;
+				jp->rots[rots].upper = -2.0;
+				jp->rots[rots].current = 0.0;
+			}
+			jp->location[X] *= base2mm;
+			jp->location[Y] *= base2mm;
+			jp->location[Z] *= base2mm;
 
-		    	BU_LIST_INSERT(&joint_head, &(jp->l));
-		    	gobble_token(BU_LEX_SYMBOL, SYM_END, fip, str);
-		    	return 1;
+			BU_LIST_INSERT(&joint_head, &(jp->l));
+			gobble_token(BU_LEX_SYMBOL, SYM_END, fip, str);
+			return 1;
 		}
 		if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
 
@@ -1539,7 +1539,7 @@ parse_jset(struct hold *hp, FILE *fip, struct bu_vls *str)
 			if(joint_debug & DEBUG_J_PARSE) {
 			  Tcl_AppendResult(interp, "parse_jset: close\n", (char *)NULL);
 			}
- 			return 1;
+			return 1;
 		}
 		if (token.type != BU_LEX_KEYWORD) {
 			parse_error(str, "parse_jset: syntax error.");
@@ -2409,7 +2409,7 @@ part_solve(struct hold *hp, double limits, double tol)
 		for (i=0;i<3;i++) {
 			if ( (jh->flag & (1<<i)) ||
 			    jp->rots[i].upper < jp->rots[i].lower) {
-			    	jh->flag |= (1<<i);
+				jh->flag |= (1<<i);
 				continue;
 			}
 			hold = bx =jp->rots[i].current;
@@ -2498,7 +2498,7 @@ part_solve(struct hold *hp, double limits, double tol)
 		for (i=0;i<3;i++) {
 			if ( (jh->flag & (1<<(i+3))) ||
 			    (jp->dirs[i].upper < jp->dirs[i].lower)) {
-			    	jh->flag |= (1<<(i+3));
+				jh->flag |= (1<<(i+3));
 				continue;
 			}
 			hold = bx =jp->dirs[i].current;
@@ -2705,16 +2705,16 @@ system_solve(int pri, double delta, double epsilon)
 		register struct hold *tmp;
 		tmp = (struct hold *)hp->l.forw;
 
-	    	if ((tmp->priority < hp->priority) ||
+		if ((tmp->priority < hp->priority) ||
 		    ((tmp->priority == hp->priority) &&
 		     (tmp->eval > hp->eval))) {
-		     	BU_LIST_DEQUEUE(&tmp->l);
-		     	BU_LIST_INSERT(&hp->l,&tmp->l);
-		     	if (tmp->l.back != &hold_head) {
-		     		hp = (struct hold*)tmp->l.back;
-		     	}
-	     	} else {
-	     		hp = (struct hold*)hp->l.forw;
+			BU_LIST_DEQUEUE(&tmp->l);
+			BU_LIST_INSERT(&hp->l,&tmp->l);
+			if (tmp->l.back != &hold_head) {
+				hp = (struct hold*)tmp->l.back;
+			}
+		} else {
+			hp = (struct hold*)hp->l.forw;
 		}
 	}
 Middle:
@@ -3029,7 +3029,7 @@ f_jsolve(int argc, char **argv)
 				  bu_vls_printf(&tmp_vls, "joint solve: spliting delta (%g)\n",
 						delta);
 				  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-				                            bu_vls_free(&tmp_vls);
+							    bu_vls_free(&tmp_vls);
 				}
 				if (delta < epsilon) break;
 			}
@@ -3330,7 +3330,7 @@ f_jmove(int argc, char **argv)
 		}
 		if (tmp <= jp->rots[i].upper &&
 		    tmp >= jp->rots[i].lower) {
-		    	jp->rots[i].current = tmp;
+			jp->rots[i].current = tmp;
 		} else {
 		  struct bu_vls tmp_vls;
 
@@ -3356,7 +3356,7 @@ f_jmove(int argc, char **argv)
 		tmp = atof(*argv) * local2base;
 		if (tmp <= jp->dirs[i].upper &&
 		    tmp >= jp->dirs[i].lower) {
-		    	jp->dirs[i].current = tmp;
+			jp->dirs[i].current = tmp;
 		} else {
 		  struct bu_vls tmp_vls;
 
@@ -3413,8 +3413,8 @@ findjoint(struct db_full_path *pathp)
 			for (j=0; j<=jp->path.arc_last;j++) {
 				if ((*pathp->fp_names[i+j]->d_namep != *jp->path.arc[j]) ||
 				    (strcmp(pathp->fp_names[i+j]->d_namep, jp->path.arc[j]) !=0)) {
-				    	good=0;
-				    	break;
+					good=0;
+					break;
 				}
 			}
 
@@ -3425,12 +3425,12 @@ findjoint(struct db_full_path *pathp)
 		}
 	}
 	if (best > 0) {
-	    	if (joint_debug & DEBUG_J_MESH) {
+		if (joint_debug & DEBUG_J_MESH) {
 		  Tcl_AppendResult(interp, "joint mesh: returning joint '",
 				   bestjp->name, "'\n", (char *)NULL);
-	    	}
+		}
 		return bestjp;
- 	}
+	}
 
 	if (joint_debug & DEBUG_J_MESH) {
 	  Tcl_AppendResult(interp, "joint mesh: returning joint 'NULL'\n", (char *)NULL);

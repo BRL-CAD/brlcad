@@ -23,7 +23,7 @@
 #    This is a tool tip displayer.
 #
 ##############################################################
- 
+
 namespace eval swidgets::tooltiprandom {
     # Create a variable inside the namespace
     variable seed [clock seconds]
@@ -58,9 +58,9 @@ itcl::class swidgets::Tooltip {
     destructor {}
 
     public {
-        method Activate     {}
-        method Hide         {}
-        method Close        {}
+	method Activate     {}
+	method Hide         {}
+	method Close        {}
     }
 
     private {
@@ -137,7 +137,7 @@ proc ::swidgets::tooltip {args} {
 	::button $itk_component(bbox).intro -text "Introduction" \
 		-width 15 -command [::itcl::code $this intro]
     } {
-    }	
+    }
 
     itk_component add close {
 	::button $itk_component(bbox).close -text "Close" \
@@ -172,7 +172,7 @@ proc ::swidgets::tooltip {args} {
 	if {$index > 0} {incr index -1}
 	$itk_component(text) configure -state normal
 	$itk_component(text) delete 1.0 end
-	$itk_component(text) insert 1.0 "[lindex $itk_option(-tips) $index]" 
+	$itk_component(text) insert 1.0 "[lindex $itk_option(-tips) $index]"
 	$itk_component(text) configure -state disabled
      }
 }
@@ -204,7 +204,7 @@ proc ::swidgets::tooltip {args} {
     update
     wm deiconify $itk_interior
     raise $itk_interior
-    focus $itk_interior    
+    focus $itk_interior
 }
 
 ::itcl::body swidgets::Tooltip::Hide {} {
@@ -227,7 +227,7 @@ proc ::swidgets::tooltip {args} {
     if {$index >= [llength $itk_option(-tips)]} {set index 0}
     $itk_component(text) configure -state normal
     $itk_component(text) delete 1.0 end
-    $itk_component(text) insert 1.0 "[lindex $itk_option(-tips) $index]" 
+    $itk_component(text) insert 1.0 "[lindex $itk_option(-tips) $index]"
     $itk_component(text) configure -state disabled
 }
 
