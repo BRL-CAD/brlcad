@@ -315,7 +315,7 @@ manner as shown above for PATH.  Conversely, you can use the `brlman'
 command that is already preconfigured to locate the BRL-CAD manpages.
 
 
-TESTING FUNCTIONALITY 
+TESTING FUNCTIONALITY
 ---------------------
 
 Testing a Compilation:

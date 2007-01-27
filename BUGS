@@ -67,7 +67,7 @@ Recent Bugs
     shift-alt mouse (left/mid/right for x/y/z respectively) should work
 
 * mged documentation doesn't open on OS X
-   
+
 * the findfont directive in gv postscript is reporting font not found
 
 * concave arbs give correct wireframe but do not raytrace correctly.

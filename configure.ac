@@ -283,7 +283,7 @@ BC_CONFIGURE_STAGE([arguments], [1 of 9])
 
 dnl *** enable options ***
 
-# enable everything 
+# enable everything
 BC_ARG_ENABLE([everything], [almost-everything], [Turn on compilation of almost everything], [auto])
 
 # automatic flag updates
@@ -1098,7 +1098,7 @@ fi
 # test for python interpreter, auto for with-python is 'no'
 PYTHON=""
 if test "x$bc_with_python" = "xyes" ; then
-	AM_PATH_PYTHON(2.0, 
+	AM_PATH_PYTHON(2.0,
 		       PYTHON_CFLAGS=-I`$PYTHON -c "import distutils.sysconfig;print distutils.sysconfig.get_config_var('INCLUDEPY')"`
 		       PYTHON_LIBS=`$PYTHON -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LIBPL')+'/'+distutils.sysconfig.get_config_var('LIBRARY')+' '+distutils.sysconfig.get_config_var('LIBS')"`
 		       )
@@ -1164,7 +1164,7 @@ AC_CHECK_LIB(termlib, tputs, LIBTERMLIB="-ltermlib",
     [AC_CHECK_LIB(ncurses, tputs, LIBTERMLIB="-lncurses",
 	[AC_CHECK_LIB(curses, tputs, LIBTERMLIB="-lcurses",
 	    [AC_CHECK_LIB(termcap, tputs, LIBTERMLIB="-ltermcap",
-	    	[AC_CHECK_LIB(terminfo, tputs, LIBTERMLIB="-lterminfo",
+		[AC_CHECK_LIB(terminfo, tputs, LIBTERMLIB="-lterminfo",
 		    [AC_CHECK_LIB(tinfo, tputs, LIBTERMLIB="-ltinfo",
 			[AC_CHECK_LIB(ocurses, tputs, LIBTERMLIB="-locurses")]
 		    )]
@@ -1286,8 +1286,8 @@ itcl_link_works=no
 LIBITCL=""
 AC_CHECK_LIB(itcl3.3, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.3",
     [AC_CHECK_LIB(itcl3.2, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.2",
-        [AC_CHECK_LIB(itcl32, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl32",
-            [AC_CHECK_LIB(itcl, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl")]
+	[AC_CHECK_LIB(itcl32, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl32",
+	    [AC_CHECK_LIB(itcl, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl")]
 	)]
     )]
 )
@@ -1297,9 +1297,9 @@ itk_link_works=no
 LIBITK=""
 AC_CHECK_LIB(itk3.3, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.3",
     [AC_CHECK_LIB(itk3.2, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.2",
-        [AC_CHECK_LIB(itk32, Itk_Init, itk_link_works=yes ; LIBITK="-litk32",
-            [AC_CHECK_LIB(itk, Itk_Init, itk_link_works=yes ; LIBITK="-litk")]
-        )]
+	[AC_CHECK_LIB(itk32, Itk_Init, itk_link_works=yes ; LIBITK="-litk32",
+	    [AC_CHECK_LIB(itk, Itk_Init, itk_link_works=yes ; LIBITK="-litk")]
+	)]
     )]
 )
 
@@ -1636,7 +1636,7 @@ AC_CACHE_VAL(tcl_cv_union_wait,
 #include <sys/wait.h>], [
 union wait x;
  WIFEXITED(x);           /* Generates an error if WIFEXITED
-                         * uses an int. */
+			 * uses an int. */
     ], tcl_cv_union_wait=yes, tcl_cv_union_wait=no))
 AC_MSG_RESULT($tcl_cv_union_wait)
 if test $tcl_cv_union_wait = no; then
@@ -1931,7 +1931,7 @@ AC_CHECK_FUNCS(\
 	select \
 	setenv \
 	setlinebuf \
-	setlocale \	
+	setlocale \
 	setpgid \
 	setprogname \
 	setvbuf \
@@ -1974,7 +1974,7 @@ AC_CHECK_FUNC(wait3, , [AC_DEFINE(NO_WAIT3,, From Tcl -- No wait3)])
 AC_CHECK_FUNC(uname, , [AC_DEFINE(NO_UNAME,, From Tcl -- No uname)])
 AC_CHECK_FUNC(realpath, , [AC_DEFINE(NO_REALPATH,, From Tcl -- No realpath)])
 AC_CHECK_FUNC(memmove, , [AC_DEFINE(NO_MEMMOVE,, From Tcl -- No memmove)
-		          AC_DEFINE(NO_STRING_H,, From Tcl -- No string)])
+			  AC_DEFINE(NO_STRING_H,, From Tcl -- No string)])
 AC_CHECK_FUNC(opendir, , [AC_DEFINE(USE_DIRENT2_H,, From Tcl -- use dirent2)])
 AH_VERBATIM([OUR_STRSEP],
 [#ifndef HAVE_STRSEP
@@ -2094,7 +2094,7 @@ int main() {
   regexec(&re, "", 0, 0, 0);
   return 0;
 }
-        ],
+	],
 	[regex_works=yes]
 )
 LDFLAGS="$PRELDFLAGS"
@@ -2539,7 +2539,7 @@ if test "x$bc_build_itcl" = "xyes" ; then
 else
 	if test "x$bc_build_itcl" = "xno" ; then
 		if test "x$itcl_works" = "xno" ; then
-			AC_MSG_NOTICE([incrTcl was disabled, but no system incrTcl library was found])		
+			AC_MSG_NOTICE([incrTcl was disabled, but no system incrTcl library was found])
 			BC_RETRY_CONFIGURE([$this], [$args])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-itcl-build])
