@@ -12,8 +12,7 @@ bin_SCRIPTS = \
 	pixwrite.sh \
 	sgisnap.sh \
 	show.sh \
-	tracker.sh \
-	ws.sh
+	tracker.sh
 
 EXTRA_DIST = \
 	$(bin_SCRIPTS) \
@@ -31,7 +30,8 @@ EXTRA_DIST = \
 	make_zip.sh \
 	prior.sh \
 	shtool \
-	vers.sh
+	vers.sh \
+	ws.sh
 
 
 include $(top_srcdir)/misc/Makefile.defs
