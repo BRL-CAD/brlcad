@@ -100,6 +100,9 @@ Overriding the default *system* tabstop of 8 is highly discouraged for
 cross-platform and cross-software compatibility reasons.  Display of
 tabs is generally best left at the default, and instead modifying your
 software's indentation level or tab *display* width instead.
+
+This script will not change the indentation levels of your file.
+There are other/better tools for that job.
 "
 else
     # default tabtops for inserting real tabs
