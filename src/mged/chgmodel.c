@@ -719,7 +719,7 @@ f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
 /* Mirror image */
-/* Format: m oldobject newobject axis	*/
+/* Format: mirror oldobject newobject axis	*/
 int
 f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
