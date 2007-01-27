@@ -280,15 +280,21 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
 	if (rp->u_id == ID_SOLID) {
 	    strncpy(rp->s.s_name, dp->d_namep, NAMESIZE);
+
+	    /* mirror */
 	    if (state->miraxis != W) {
+		/* XXX er, this seems rather wrong .. but it's v4 so punt */
 		rp->s.s_values[state->miraxis] += 2 * (state->mirpos - rp->s.s_values[state->miraxis]);
-		for (j = 3+state->miraxis; i < 24; i++) {
+		for (j = 3+state->miraxis; j < 24; j++) {
 		    rp->s.s_values[j] = -rp->s.s_values[j];
 		}
 	    }
+	    /* translate */
 	    if (state->trans[W]) {
+		/* assumes primitive's first parameter is it's position */
 		VADD2(rp->s.s_values, rp->s.s_values, state->trans);
 	    }
+	    /* rotate */
 	    if (state->rot[W]) {
 		mat_t r;
 		vect_t vec, ovec;
@@ -298,10 +304,10 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 		}
 		mat_idn(r);
 		mat_angles(r, state->rot[X], state->rot[Y], state->rot[Z]);
-		for (i = 0; i < 24; i+=3) {
-		    VMOVE(vec, rp->s.s_values+i);
+		for (j = 0; j < 24; j+=3) {
+		    VMOVE(vec, rp->s.s_values+j);
 		    MAT4X3VEC(ovec, r, vec);
-		    VMOVE(rp->s.s_values+i, ovec);
+		    VMOVE(rp->s.s_values+j, ovec);
 		}
 		if (state->rpnt[W]) {
 		    VADD2(rp->s.s_values, rp->s.s_values, state->rpnt);
@@ -334,17 +340,21 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 {
     register struct directory *dp = (struct directory *)NULL;
     int i, ret;
-    char *argv[4] = {"wdb_copy", (char *)NULL, (char *)NULL, (char *)NULL};
+    char *argv[6] = {"wdb_copy", (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL};
+    struct rt_db_internal intern;
+    mat_t matrix;
+    MAT_IDN(matrix);
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
 	const char *name = (const char *)NULL;
 
 	if (i==0) {
-	    name = get_name(_dbip, proto, state, i);
+	    dp = proto;
 	} else {
-	    name = get_name(_dbip, db_lookup(_dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET), state, i);
+	    dp = db_lookup(_dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET);
 	}
+	name = get_name(_dbip, dp, state, i); /* get new name */
 	strncpy(obj_list.names[idx].dest[i], name, NAMESIZE);
 
 	argv[1] = proto->d_namep;
@@ -355,38 +365,35 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	}
 	bu_free((char *)name, "free get_name() name");
 
-	/* !!! still need to apply transformation matrix */
-#if 0
+	/* XXX incomplete, still needs transformation matrix */
+	bu_log("WARNING: clone incomplete -- no transfomation matrix is applied\n");
+
+	/* mirror */
 	if (state->miraxis != W) {
-	    rp->s.s_values[state->miraxis] += 2 * (state->mirpos - rp->s.s_values[state->miraxis]);
-	    for (j = 3+state->miraxis; i < 24; i++) {
-		rp->s.s_values[j] = -rp->s.s_values[j];
-	    }
+	    //	    matrix[state->miraxis * ELEMENTS_PER_PLANE] += 2 * (state->mirpos - 
 	}
+	/* translate */
 	if (state->trans[W]) {
-	    VADD2(rp->s.s_values, rp->s.s_values, state->trans);
+	    MAT_DELTAS_ADD_VEC(matrix, state->trans);
 	}
+	/* rotation */
 	if (state->rot[W]) {
-	    mat_t r;
-	    vect_t vec, ovec;
-
-	    if (state->rpnt[W]) {
-		VSUB2(rp->s.s_values, rp->s.s_values, state->rpnt);
-	    }
-	    mat_idn(r);
-	    mat_angles(r, state->rot[X], state->rot[Y], state->rot[Z]);
-	    for (i = 0; i < 24; i+=3) {
-		VMOVE(vec, rp->s.s_values+i);
-		MAT4X3VEC(ovec, r, vec);
-		VMOVE(rp->s.s_values+i, ovec);
-	    }
-	    if (state->rpnt[W]) {
-		VADD2(rp->s.s_values, rp->s.s_values, state->rpnt);
-	    }
 	}
-#endif
-    }
 
+	/* apply transformations on object */
+	if (rt_db_get_internal(&intern, dp, _dbip, matrix, &rt_uniresource) < 0) {
+	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
+	    return;
+	}
+	RT_CK_DB_INTERNAL(&intern);
+	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
+	    rt_db_free_internal(&intern, &rt_uniresource);
+	    return;
+	}
+	rt_db_free_internal(&intern, &rt_uniresource);
+    } /* end iteration over each copy */
+    
     return;
 }
 
