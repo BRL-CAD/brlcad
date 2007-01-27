@@ -3504,6 +3504,14 @@ RT_EXPORT BU_EXTERN(void db_functree,
 		     struct resource *resp,
 		     genptr_t client_data));
 
+/* mirror.c */
+RT_EXPORT BU_EXTERN(struct directory *rt_mirror,
+		    (struct db_i *dpip,
+		     const char	*from,
+		     const char *to,
+		     int axis,
+		     struct resource *resp));
+
 /*
 RT_EXPORT BU_EXTERN(void db_preorder_traverse,
 		    (struct directory *dp,
