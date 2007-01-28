@@ -66,7 +66,7 @@ bu_setlinebuf(FILE *fp)
 {
 #if defined(HAVE_SETVBUF)
     /* prefer this one */
-    if (setvbuf( fp, (char *) NULL, _IOLBF, 0) != 0) {
+    if (setvbuf( fp, (char *) NULL, _IOLBF, 2) != 0) {
 	perror("bu_setlinebuf");
     }
 #elif defined(HAVE_SETLINEBUF)
