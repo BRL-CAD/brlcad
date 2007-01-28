@@ -48,6 +48,9 @@ static const char libbu_linebuf_RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "bu.h"
 
+#ifndef BUFSIZE
+#  define BUFSIZE 2048
+#endif
 
 /** deprecated call for compatibility
  */
