@@ -11,7 +11,8 @@ The second approach is to compile using MSVC 6 using the build files
 in the misc/win32-msvc directory.  This approach, however, will ONLY
 currently build all of the libraries and is intended for 3rd party
 applications that link against BRL-CAD as a geometry engine or
-ray-trace library.
+ray-trace library.  This approach also requires separate installation
+of Tcl using, for example, the ActiveTcl distribution.
 
 The third approach is to compile using MSVC 7 using the build files in
 the misc/win32-msvc7 directory.  This approach will compile the vast
