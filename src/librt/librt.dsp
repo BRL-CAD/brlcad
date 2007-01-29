@@ -458,6 +458,10 @@ SOURCE=.\memalloc.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\mirror.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\mkbundle.c
 # End Source File
 # Begin Source File

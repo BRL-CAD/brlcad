@@ -1401,6 +1401,25 @@ copy &quot;$(TargetDir)&quot;librt_d.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\mirror.c">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+						BrowseInformation="1"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\mkbundle.c">
 				<FileConfiguration
 					Name="Release|Win32">
