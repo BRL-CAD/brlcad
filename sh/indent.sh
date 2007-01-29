@@ -140,14 +140,15 @@ for file in $files ; do
     # if the file changed, move it into place
     filediff="`diff $file $file.indent.new`"
     if [ "x$filediff" = "x" ] ; then
+	# no change, silently remove file
+	rm -f "$file.indent.new"
+    else
 	if [ -f "$file.indent.old" ] ; then
 	    echo "WARNING: $file.indent.old was in the way (overwritten)"
 	    rm -f "$file.indent.old"
 	fi
 	mv "$file" "$file.indent.old"
 	mv "$file.indent.new" "$file"
-    else
-	rm -f "$file.indent.new"
     fi
 
 done  # iteration over files
