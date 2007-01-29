@@ -120,30 +120,39 @@ rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
 void
 rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 {
-	struct rt_piecestate	*psp;
-	int			i;
-
-	RT_CK_RESOURCE(resp);
+    struct rt_piecestate	*psp;
+    int			i;
+    
+    RT_CK_RESOURCE(resp);
+    if (rtip) {
 	RT_CK_RTI(rtip);
-
-	if( !resp->re_pieces ) {
-		rtip->rti_nsolids_with_pieces = 0;
-		return;
+    }
+    
+    if( !resp->re_pieces ) {
+	/* no pieces allocated, nothing to do */
+	if (rtip) {
+	    rtip->rti_nsolids_with_pieces = 0;
 	}
+	return;
+    }
+    
+    /* pieces allocated, need to clean up */
+    if (rtip) {
 	for( i = rtip->rti_nsolids_with_pieces-1; i >= 0; i-- )  {
-		psp = &resp->re_pieces[i];
-		RT_CK_PIECESTATE(psp);
-		rt_htbl_free(&psp->htab);
-		bu_bitv_free(psp->shot);
-		psp->shot = NULL;	/* sanity */
-		psp->magic = 0;
+	    psp = &resp->re_pieces[i];
+	    RT_CK_PIECESTATE(psp);
+	    rt_htbl_free(&psp->htab);
+	    bu_bitv_free(psp->shot);
+	    psp->shot = NULL;	/* sanity */
+	    psp->magic = 0;
 	}
-	bu_free( (char *)resp->re_pieces, "re_pieces[]" );
-	resp->re_pieces = NULL;
-
-	bu_ptbl_free( &resp->re_pieces_pending );
-
-	rtip->rti_nsolids_with_pieces = 0;
+    }
+    bu_free( (char *)resp->re_pieces, "re_pieces[]" );
+    resp->re_pieces = NULL;
+    
+    bu_ptbl_free( &resp->re_pieces_pending );
+    
+    rtip->rti_nsolids_with_pieces = 0;
 }
 
 /*

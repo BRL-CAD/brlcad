@@ -703,7 +703,9 @@ rt_init_resource(struct resource *resp,
 void
 rt_clean_resource(struct rt_i *rtip, struct resource *resp)
 {
-	RT_CK_RTI(rtip);
+	if (rtip) {
+	    RT_CK_RTI(rtip);
+	}
 	RT_CK_RESOURCE(resp);
 
 	/*  The 'struct seg' guys are malloc()ed in blocks, not individually,
@@ -787,7 +789,7 @@ rt_clean_resource(struct rt_i *rtip, struct resource *resp)
 		resp->re_boolslen = 0;
 	}
 
-/* Release the state variables for 'solid pieces' */
+	/* Release the state variables for 'solid pieces' */
 	rt_res_pieces_clean( resp, rtip );
 
 	/* Reinitialize pointers, to be tidy.  No storage is allocated. */
