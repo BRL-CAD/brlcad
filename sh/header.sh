@@ -149,7 +149,7 @@ case $FILE in
 	commentprefix=" *"
 	;;
     *.cc | *.cp | *.cxx | *.cpp | *.cpp | *.CPP | *.c++ | *.C )
-	echo "$FILE is a C source file"
+	echo "$FILE is a C++ source file"
 	wrap=1
 	commentprefix=" *"
 	;;
