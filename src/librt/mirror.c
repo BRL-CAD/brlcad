@@ -31,7 +31,11 @@
 
 #include "common.h"
 
-#include <strings.h>
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
 
 #include "machine.h"
 #include "raytrace.h"
@@ -40,6 +44,7 @@
 #include "bn.h"
 #include "bu.h"
 #include "vmath.h"
+#include "nurb.h"
 
 
 /**
@@ -66,7 +71,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
     if ((dp = db_lookup(dbip, from, LOOKUP_NOISY)) == DIR_NULL) {
 	return DIR_NULL;
     }
-    
+
     /* make sure object mirroring to does not already exist */
     if (db_lookup(dbip, to, LOOKUP_QUIET) != DIR_NULL) {
 	bu_log("%s already exists\n", to);
@@ -100,54 +105,54 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	case ID_TOR:
 	    {
 		struct rt_tor_internal *tor;
-		
+
 		tor = (struct rt_tor_internal *)internal.idb_ptr;
 		RT_TOR_CK_MAGIC( tor );
-		
+
 		tor->v[axis] *= -1.0;
 		tor->h[axis] *= -1.0;
-		
+
 		break;
 	    }
 	case ID_TGC:
 	case ID_REC:
 	    {
 		struct rt_tgc_internal *tgc;
-		
+
 		tgc = (struct rt_tgc_internal *)internal.idb_ptr;
 		RT_TGC_CK_MAGIC( tgc );
-		
+
 		tgc->v[axis] *= -1.0;
 		tgc->h[axis] *= -1.0;
 		tgc->a[axis] *= -1.0;
 		tgc->b[axis] *= -1.0;
 		tgc->c[axis] *= -1.0;
 		tgc->d[axis] *= -1.0;
-		
+
 		break;
 	    }
 	case ID_ELL:
 	case ID_SPH:
 	    {
 		struct rt_ell_internal *ell;
-		
+
 		ell = (struct rt_ell_internal *)internal.idb_ptr;
 		RT_ELL_CK_MAGIC( ell );
-		
+
 		ell->v[axis] *= -1.0;
 		ell->a[axis] *= -1.0;
 		ell->b[axis] *= -1.0;
 		ell->c[axis] *= -1.0;
-		
+
 		break;
 	    }
 	case ID_ARB8:
 	    {
 		struct rt_arb_internal *arb;
-		
+
 		arb = (struct rt_arb_internal *)internal.idb_ptr;
 		RT_ARB_CK_MAGIC( arb );
-		
+
 		for( i=0 ; i<8 ; i++ )
 		    arb->pt[i][axis] *= -1.0;
 		break;
@@ -155,24 +160,24 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 	case ID_HALF:
 	    {
 		struct rt_half_internal *haf;
-		
+
 		haf = (struct rt_half_internal *)internal.idb_ptr;
 		RT_HALF_CK_MAGIC( haf );
-		
+
 		haf->eqn[axis] *= -1.0;
-		
+
 		break;
 	    }
 	case ID_GRIP:
 	    {
 		struct rt_grip_internal *grp;
-		
+
 		grp = (struct rt_grip_internal *)internal.idb_ptr;
 		RT_GRIP_CK_MAGIC( grp );
-		
+
 		grp->center[axis] *= -1.0;
 		grp->normal[axis] *= -1.0;
-			
+
 		break;
 	    }
 	case ID_POLY:
@@ -189,7 +194,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 
 		for( i=0 ; i<pg->npoly ; i++ ) {
 		    int last;
-		    
+
 		    last = (pg->poly[i].npts - 1)*3;
 		    /* mirror coords and temporarily store in reverse order */
 		    for( j=0 ; j<pg->poly[i].npts*3 ; j += 3 ) {
@@ -198,7 +203,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 			pg->poly[i].norms[j+axis] *= -1.0;
 			VMOVE( &norms[last-j], &pg->poly[i].norms[j] );
 		    }
-		    
+
 		    /* write back mirrored and reversed face loop */
 		    for( j=0 ; j<pg->poly[i].npts*3 ; j += 3 ) {
 			VMOVE( &pg->poly[i].norms[j], &norms[j] );
@@ -208,7 +213,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 
 		bu_free( (char *)verts, "f_mirror: verts" );
 		bu_free( (char *)norms, "f_mirror: norms" );
-		
+
 		break;
 	    }
 	case ID_BSPLINE:
@@ -225,32 +230,32 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		    int ncoords;
 		    int m;
 		    int l;
-		    
+
 		    /* swap knot vetcors between u and v */
 		    ptr = nurb->srfs[i]->u.knots;
 		    tmp = nurb->srfs[i]->u.k_size;
-		    
+
 		    nurb->srfs[i]->u.knots = nurb->srfs[i]->v.knots;
 		    nurb->srfs[i]->u.k_size = nurb->srfs[i]->v.k_size;
 		    nurb->srfs[i]->v.knots = ptr;
 		    nurb->srfs[i]->v.k_size = tmp;
-		    
+
 		    /* swap order */
 		    tmp = nurb->srfs[i]->order[0];
 		    nurb->srfs[i]->order[0] = nurb->srfs[i]->order[1];
 		    nurb->srfs[i]->order[1] = tmp;
-		    
+
 		    /* swap mesh size */
 		    orig_size[0] = nurb->srfs[i]->s_size[0];
 		    orig_size[1] = nurb->srfs[i]->s_size[1];
-		    
+
 		    nurb->srfs[i]->s_size[0] = orig_size[1];
 		    nurb->srfs[i]->s_size[1] = orig_size[0];
-		    
+
 		    /* allocat memory for a new control mesh */
 		    ncoords = RT_NURB_EXTRACT_COORDS( nurb->srfs[i]->pt_type );
 		    ptr = (fastf_t *)bu_calloc( orig_size[0]*orig_size[1]*ncoords, sizeof( fastf_t ), "f_mirror: ctl mesh ptr" );
-		    
+
 		    /* mirror each control point */
 		    for( j=0 ; j<orig_size[0]*orig_size[1] ; j++ ) {
 			nurb->srfs[i]->ctl_points[j*ncoords+axis] *= -1.0;
@@ -268,11 +273,11 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 
 		    /* free old mesh */
 		    bu_free( (char *)nurb->srfs[i]->ctl_points , "f_mirror: ctl points" );
-		    
+
 		    /* put new mesh in place */
 		    nurb->srfs[i]->ctl_points = ptr;
 		}
-		
+
 		break;
 	    }
 	case ID_ARBN:
@@ -299,7 +304,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		for( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) ) {
 		    ps->pp_coord[axis] *= -1.0;
 		}
-		
+
 		break;
 	    }
 	case ID_PARTICLE:
@@ -382,7 +387,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		for( i=0 ; i<BU_PTBL_END( &table ) ; i++ ) {
 		    v = (struct vertex *)BU_PTBL_GET( &table, i );
 		    NMG_CK_VERTEX( v );
-		    
+
 		    v->vg_p->coord[axis] *= -1.0;
 		}
 
@@ -391,13 +396,13 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		nmg_face_tabulate( &table, &m->magic );
 		for( i=0 ; i<BU_PTBL_END( &table ) ; i++ ) {
 		    struct face *f;
-		    
+
 		    f = (struct face *)BU_PTBL_GET( &table, i );
 		    NMG_CK_FACE( f );
-		    
+
 		    if( !f->g.magic_p )
 			continue;
-		    
+
 		    if( *f->g.magic_p != NMG_FACE_G_PLANE_MAGIC ) {
 			bu_log("Sorry, can only mirror NMG solids with planar faces\n");
 			bu_log("Error [%s] has \n", from);
@@ -417,10 +422,10 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		for( i=0 ; i<BU_PTBL_END( &table ) ; i++ ) {
 		    struct face *f;
 		    struct faceuse *fu;
-		    
+
 		    f = (struct face *)BU_PTBL_GET( &table, i );
 		    NMG_CK_FACE( f );
-		    
+
 		    fu = f->fu_p;
 		    if( fu->orientation != OT_SAME ) {
 			fu = fu->fumate_p;
@@ -431,7 +436,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 			rt_db_free_internal( &internal, resp );
 			return DIR_NULL;
 		    }
-		    
+
 		    if( nmg_calc_face_g( fu ) ) {
 			bu_log("Error calculating the NMG faces for [%s]\n", from);
 			bu_ptbl_free( &table );
