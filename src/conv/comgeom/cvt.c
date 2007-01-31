@@ -58,6 +58,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "bu.h"
 
 
 /* defined in region.c */
@@ -107,16 +108,16 @@ get_args(int argc, register char **argv)
     register int	c;
     char		*file_name;
 
-    while ( (c = getopt( argc, argv, "d:v:s:" )) != EOF )  {
+    while ( (c = bu_getopt( argc, argv, "d:v:s:" )) != EOF )  {
 	switch( c )  {
 	    case 'd':
-		verbose = atoi(optarg);
+		verbose = atoi(bu_optarg);
 		break;
 	    case 's':
-		strncpy( name_it, optarg, sizeof(name_it) );
+		strncpy( name_it, bu_optarg, sizeof(name_it) );
 		break;
 	    case 'v':
-		version = atoi(optarg);
+		version = atoi(bu_optarg);
 		break;
 
 	    default:		/* '?' */
@@ -124,14 +125,14 @@ get_args(int argc, register char **argv)
 	}
     }
 
-    if( optind+2 > argc )
+    if( bu_optind+2 > argc )
 	return(0);		/* FAIL */
 
     /* Input File */
-    if( optind >= argc )  {
+    if( bu_optind >= argc )  {
 	return(0);		/* FAIL */
     } else {
-	file_name = argv[optind++];
+	file_name = argv[bu_optind++];
 	if( (infp = fopen(file_name, "r")) == NULL )  {
 	    perror(file_name);
 	    return(0);
@@ -139,17 +140,17 @@ get_args(int argc, register char **argv)
     }
 
     /* Output File */
-    if( optind >= argc )  {
+    if( bu_optind >= argc )  {
 	return(0);		/* FAIL */
     } else {
-	file_name = argv[optind++];
+	file_name = argv[bu_optind++];
 	if( (outfp = wdb_fopen(file_name)) == NULL )  {
 	    perror(file_name);
 	    return(0);
 	}
     }
 
-    if ( argc > ++optind )
+    if ( argc > ++bu_optind )
 	(void)fprintf( stderr, "comgeom-g: excess argument(s) ignored\n" );
 
     return(1);		/* OK */
