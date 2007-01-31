@@ -89,15 +89,15 @@ main(int argc, char **argv)
 	grp_name = reg_name = NULL;
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "g:r:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "g:r:")) != EOF) {
 		switch (c) {
 		case 'g':
-			grp_name = optarg;
+			grp_name = bu_optarg;
 			/* BRL-CAD group to add psurf to. */
 			break;
 		case 'r':
 			/* BRL-CAD region name for psurf. */
-			reg_name = optarg;
+			reg_name = bu_optarg;
 			break;
 		default:
 			fprintf(stderr, usage, argv[0]);
@@ -107,11 +107,11 @@ main(int argc, char **argv)
 	}
 
 	/* Get Jack psurf input file name. */
-	if (optind >= argc) {
+	if (bu_optind >= argc) {
 		jfile = "-";
 		fpin = stdin;
 	} else {
-		jfile = argv[optind];
+		jfile = argv[bu_optind];
 		if ((fpin = fopen(jfile, "r")) == NULL) {
 			fprintf(stderr,
 				"%s: cannot open %s for reading\n",
@@ -121,13 +121,13 @@ main(int argc, char **argv)
 	}
 
 	/* Get BRL-CAD output data base name. */
-	optind++;
-	if (optind >= argc) {
+	bu_optind++;
+	if (bu_optind >= argc) {
 		bfile = "-";
 		fprintf(stderr, usage, argv[0]);
 		return 1;
 	} else {
-		bfile = argv[optind];
+		bfile = argv[bu_optind];
 		if ((fpout = wdb_fopen(bfile)) == NULL) {
 			fprintf(stderr,
 				"%s: cannot open %s for writing\n",
