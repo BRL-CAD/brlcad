@@ -386,8 +386,8 @@ $c"
 fi
 
 
-case $LICE in
-    BSD)
+case "x$LICE" in
+    xBSD)
 	block="${block}
 $c Redistribution and use in source and binary forms, with or without
 $c modification, are permitted provided that the following conditions
@@ -418,7 +418,7 @@ $c NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 $c SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 "
 	;;
-    BDL)
+    xBDL)
 	block="${block}
 $c Redistribution and use in source (Docbook format) and 'compiled'
 $c forms (PDF, PostScript, HTML, RTF, etc), with or without
@@ -453,7 +453,7 @@ $c USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF
 $c SUCH DAMAGE.
 "
 	;;
-    LGPL)
+    xLGPL)
 	block="${block}
 $c This library is free software; you can redistribute it and/or
 $c modify it under the terms of the GNU Lesser General Public License
@@ -469,7 +469,7 @@ $c License along with this file; see the file named COPYING for more
 $c information.
 "
 	;;
-    GPL)
+    xGPL)
 	block="${block}
 $c This program is free software; you can redistribute it and/or
 $c modify it under the terms of the GNU General Public License as
@@ -485,7 +485,7 @@ $c along with this file; see the file named COPYING for more
 $c information.
 "
 	;;
-    GFDL)
+    xGFDL)
 	block="${block}
 $c Redistribution and use in source (Docbook format) and 'compiled'
  forms (PDF, PostScript, HTML, RTF, etc), with or without
@@ -572,49 +572,49 @@ skip=1
 lineone="`cat ${FILE}.backup | head -n 1`"
 linetwo="`cat ${FILE}.backup | head -n 2 | tail -n 1`"
 linethree="`cat ${FILE}.backup | head -n 3 | tail -n 1`"
-case "$lineone" in
-    "/*"*${title})
+case "x$lineone" in
+    "x/*"*${title})
 	echo "Found C comment start with file header"
 	skip=2
-	case "$linetwo" in
-	    " *")
+	case "x$linetwo" in
+	    "x *")
 		echo "Found empty comment line"
 		skip=3
 		;;
 	esac
 	;;
-    "/*"*${titlesansext})
+    "x/*"*${titlesansext})
 	echo "Found C comment start with file header sans extension"
 	skip=2
-	case "$linetwo" in
-	    " *")
+	case "x$linetwo" in
+	    "x *")
 		echo "Found empty comment line"
 		skip=3
 		;;
 	esac
 	;;
-    "/*")
+    "x/*")
 	echo "Found C comment start"
 	skip=2
-	case "$linetwo" in
-	    " *"*${title})
+	case "x$linetwo" in
+	    "x *"*${title})
 		echo "Found old file header"
 		skip=3
 		;;
-	    " *"*${titlesansext})
+	    "x *"*${titlesansext})
 		echo "Found old file header sans extension"
 		skip=3
 		;;
-	    " *")
+	    "x *")
 		echo "Found empty comment line"
 		skip=3
 		if [ "x$foundtitle" = "x1" ] ; then
-		    case "$linethree" in
-			" *"*${title})
+		    case "x$linethree" in
+			"x *"*${title})
 			    echo "Found old file header"
 			    skip=4
 			    ;;
-			" *"*${titlesansext})
+			"x *"*${titlesansext})
 			    echo "Found old file header sans extension"
 			    skip=4
 			    ;;
@@ -623,59 +623,59 @@ case "$lineone" in
 		;;
 	esac
 	;;
-    ".TH"*)
+    "x.TH"*)
 	echo "Found manpage title header line"
 	echo "$lineone" >> $FILE
 	skip=2
 	;;
-    "/*"*)
+    "x/*"*)
 	echo "WARNING: Found C comment start with stuff trailing"
 	skip=0
 	closeit=1
 	;;
-    "#"*"!"*"/bin/"*)
+    "x#"*"!"*"/bin/"*)
 	echo "Found script exec line"
 	echo "$lineone" >> $FILE
 	skip=2
-	case "$linetwo" in
-	    "# "*${title})
+	case "x$linetwo" in
+	    "x# "*${title})
 		echo "Found old file header"
 		skip=3
 		;;
-	    "# "*${titlesansext})
+	    "x# "*${titlesansext})
 		echo "Found old file header sans extension"
 		skip=3
 		;;
 	esac
 	;;
-    "")
+    "x")
 	echo "Found empty line"
 	skip=2
 	closeit=1
-	case "$linetwo" in
-	    "/*")
+	case "x$linetwo" in
+	    "x/*")
 		echo "Found C comment start"
 		skip=3
 		closeit=0
-		case "$linethree" in
-		    " *"*${title})
+		case "x$linethree" in
+		    "x *"*${title})
 			echo "Found old file header"
 			skip=4
 			;;
-		    " *"*${titlesansext})
+		    "x *"*${titlesansext})
 			echo "Found old file header sans extension"
 			skip=4
 			;;
-		    " *")
+		    "x *")
 			echo "Found empty comment line"
 			skip=4
 			if [ "x$foundtitle" = "x1" ] ; then
-			    case "$linethree" in
-				" *"*${title})
+			    case "x$linethree" in
+				"x *"*${title})
 				    echo "Found old file header"
 				    skip=5
 				    ;;
-				" *"*${titlesansext})
+				"x *"*${titlesansext})
 				    echo "Found old file header sans extension"
 				    skip=5
 				    ;;
@@ -685,23 +685,23 @@ case "$lineone" in
 			;;
 		esac
 		;;
-	    "/*"*${title})
+	    "x/*"*${title})
 		echo "Found C comment start with file header"
 		skip=3
 		closeit=0
-		case "$linetwo" in
-		    " *")
+		case "x$linetwo" in
+		    "x *")
 			echo "Found empty comment line"
 			skip=4
 			;;
 		esac
 		;;
-	    "/*"*${titlesansext})
+	    "x/*"*${titlesansext})
 		echo "Found C comment start with file header sans extension"
 		skip=3
 		closeit=0
-		case "$linetwo" in
-		    " *")
+		case "x$linetwo" in
+		    "x *")
 			echo "Found empty comment line"
 			skip=4
 			;;
@@ -709,41 +709,43 @@ case "$lineone" in
 		;;
 	esac
 	;;
-    [a-z]*)
+    x[a-z]*)
 	echo "found code"
 	skip=0
 	closeit=1
 	;;
-    \#include*)
+    x\#include*)
 	echo "found code"
 	skip=0
 	closeit=1
 	;;
-    \#*${title})
+    x\#*${title})
 	echo "Found old file header"
 	skip=2
 	;;
-    \#*${titlesansext})
+    x\#*${titlesansext})
 	echo "Found old file header sans extension"
 	skip=2
 	;;
-    \#*)
+    x\#*)
 	echo "found comment line"
 	skip=0
 	closeit=1
 	;;
-    \@*)
+    x\@*)
 	echo "found batch command"
 	skip=0
 	;;
-    \REM*)
+    x\REM*)
 	echo "found batch comment"
 	skip=0
 	;;
     *)
-	echo "${FILE}:1 ERROR: Unknown line one: $lineone"
-	mv -f ${FILE}.backup $FILE
-	exit 9
+	echo "WARNING: Unknown line one in [$FILE]:"
+	echo "Line one is [$lineone]"
+	skip=0
+# 	mv -f ${FILE}.backup $FILE
+# 	exit 9
 	;;
 esac
 
