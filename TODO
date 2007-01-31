@@ -47,6 +47,9 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* set c-indentation-style to k&r to override default gnu style setting
+  in Emacs. (see c-set-style)
+
 * add support for arbitrary matrix transformations to torus primitive
 
 * add configuration checks and build system support to disable C++
