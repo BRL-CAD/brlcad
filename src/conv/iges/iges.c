@@ -85,7 +85,7 @@ static int	global_len=0;	/* Length of Global Section */
 static int	attribute_de;	/* DE of attribute definition entity */
 static char	*global_form="%-72.72s%c%07d\n"; /* format for global section */
 static char	*param_form="%-64.64s %7d%c%07d\n"; /* format for parameter section */
-static char	*att_string="BRLCAD attribute definition:material name,material parameters,region flag,ident number,air code,material code (GIFT),los density,inheritance";
+static char	*att_string="BRL-CAD attribute definition:material name,material parameters,region flag,ident number,air code,material code (GIFT),los density,inheritance";
 static struct bn_tol tol;	/* tolerances */
 static struct rt_tess_tol ttol;	/* tolerances */
 static struct db_i *dbip=NULL;
@@ -99,7 +99,6 @@ extern int	comb_form;
 extern int	do_nurbs;
 extern int	mode;
 
-BU_EXTERN( int write_freeform, ( FILE *fp, char s[], int de, char c ) );
 BU_EXTERN( int write_dir_entry, ( FILE *fp, int entry[] ) );
 BU_EXTERN( int write_vertex_list, ( struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param ) );
 BU_EXTERN( int write_edge_list, ( struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param ) );
@@ -405,207 +404,14 @@ lookup_props( props , name )
     return( 0 );
 }
 
-int
-write_color_entity( color , fp_dir , fp_param )
-     unsigned char color[3];
-     FILE *fp_dir,*fp_param;
-{
-    struct bu_vls		str;
-    int			dir_entry[21];
-    int			i;
-    float			c[3];
-
-    bu_vls_init( &str );
-
-    /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
-	dir_entry[i] = DEFAULT;
-
-    /* convert colors to percents */
-    for( i=0 ; i<3 ; i++ )
-	c[i] = (float)color[i]/2.55;
-
-    bu_vls_printf( &str , "314,%g,%g,%g;" , c[0] , c[1] , c[2] );
-
-    dir_entry[1] = 314;
-    dir_entry[2] = param_seq + 1;
-    dir_entry[8] = 0;
-    dir_entry[9] = 10201;
-    dir_entry[11] = 314;
-    dir_entry[15] = 0;
-    dir_entry[14] = write_freeform( fp_param , bu_vls_addr( &str ) , dir_seq+1 , 'P' );
-
-    bu_vls_free( &str );
-
-    return( write_dir_entry( fp_dir , dir_entry ) );
-}
 
 int
-get_color( color , fp_dir , fp_param )
-     unsigned char color[3];
-     FILE *fp_dir,*fp_param;
-{
-    int color_de;
-
-    for( color_de=0 ; color_de < 9 ; color_de++ )
-	{
-	    if( color[0] == colortab[color_de][1] &&
-		color[1] == colortab[color_de][2] &&
-		color[2] == colortab[color_de][3] )
-		break;
-	}
-
-    if( color_de == 9 )
-	color_de = (-write_color_entity( color , fp_dir , fp_param ));
-
-    return( color_de );
-}
-
-int
-write_attribute_definition( fp_dir , fp_param )
-     FILE *fp_dir,*fp_param;
-{
-    struct bu_vls str;
-    int dir_entry[21];
-    int i;
-
-    bu_vls_init( &str );
-
-    /* initialize directory entry */
-    for( i=0 ; i<21 ; i++ )
-	dir_entry[i] = DEFAULT;
-
-    /* start with parameter data */
-    bu_vls_printf( &str , "322,%ldH%s,5001,9" , strlen( att_string ) , att_string );
-    bu_vls_printf( &str , ",1,3,1" ); /* material name */
-    bu_vls_printf( &str , ",2,3,1" ); /* material parameters */
-    bu_vls_printf( &str , ",3,6,1" ); /* region flag (logical value) */
-    bu_vls_printf( &str , ",4,1,1" ); /* ident number */
-    bu_vls_printf( &str , ",5,1,1" ); /* air code number */
-    bu_vls_printf( &str , ",6,1,1" ); /* material code number */
-    bu_vls_printf( &str , ",7,1,1" ); /* los density (X100) */
-    bu_vls_printf( &str , ",8,1,1" ); /* inheritance */
-    bu_vls_printf( &str , ",9,6,1;" ); /* color_defined (logical value) */
-
-
-    /* remember where parameter data is going */
-    dir_entry[2] = param_seq + 1;
-
-    /* get parameter line count */
-    dir_entry[14] =  write_freeform( fp_param , bu_vls_addr( &str ) , dir_seq+1 , 'P' );
-
-    /* write directory entry for line entity */
-    dir_entry[1] = 322;
-    dir_entry[8] = 0;
-    dir_entry[9] = 10201;
-    dir_entry[11] = 322;
-    dir_entry[15] = 0;
-
-    bu_vls_free( &str );
-
-    return( write_dir_entry( fp_dir , dir_entry ) );
-
-}
-
-void
-iges_init( set_tol , set_ttol , set_verbose , dbip_set )
-     struct bn_tol *set_tol;
-     struct rt_tess_tol *set_ttol;
-     int set_verbose;
-     struct db_i *dbip_set;
-{
-    BN_CK_TOL( set_tol );
-    RT_CK_TESS_TOL( set_ttol );
-    tol = (*set_tol);
-    ttol = (*set_ttol);
-    verbose = set_verbose;
-    dbip = dbip_set;
-
-    dir_seq = 0;
-    param_seq = 0;
-    start_len = 0;
-    global_len = 0;
-}
-
-void
-Print_stats( fp )
-     FILE *fp;
-{
-    int i;
-    int total_entities=0;
-
-    fprintf( fp , "Wrote the following numbers and type of entities:\n" );
-    for( i=0 ; i<NO_OF_TYPES ; i++ )
-	if( type_count[i][1] > 0 )
-	    {
-		total_entities += type_count[i][1];
-		fprintf( fp , "\t%d - %s\n" , type_count[i][1] , type_name[i] );
-	    }
-
-    fprintf( fp , "Total of %d entities written\n" , total_entities );
-
-    if( solids_to_nmg )
-	fprintf( fp , "%d solids converted to NMG's before exporting to IGES\n" , solids_to_nmg );
-}
-
-int
-write_dir_entry( fp , entry )
-     FILE *fp;
-     int entry[];
-{
-    int i,j,type_index;
-    char *label;
-
-    for( type_index=0; type_index<NO_OF_TYPES ; type_index++ )
-	if( type_count[type_index][0] == entry[1] )
-	    break;
-    if( type_index == NO_OF_TYPES )
-	{
-	    bu_log( "Writing directory entry for an unknown entity type (%d)\n" , entry[1] );
-	    label = unknown;
-	    unknown_count++;
-	    entry[19] = unknown_count;
-	}
-    else
-	{
-	    label = type_label[type_index];
-	    type_count[type_index][1]++;
-	    entry[19] = type_count[type_index][1];
-	}
-
-    entry[10] = dir_seq + 1;
-    entry[20] = dir_seq + 2;
-
-    for( j=0 ; j<2 ; j++ )
-	{
-
-	    for( i=j*10+1 ; i<(j+1)*10 ; i++ )
-		{
-		    if( i == 18 )
-			fprintf( fp , "%8.8s" , label );
-		    else if( entry[i] == DEFAULT )
-			fprintf( fp , "        " );
-		    else if( i == 9 )
-			fprintf( fp , "%08d" , entry[i] );
-		    else
-			fprintf( fp , "%8d" , entry[i] );
-		}
-	    fprintf( fp , "D%07d\n" , entry[(j+1)*10] );
-	}
-
-    dir_seq += 2;
-    return( dir_seq - 1 );
-}
-
-int
-write_freeform(
-	       FILE *fp,	/* output file */
-	       char s[],	/* the string to be output (must not contain any NL's) */
+write_freeform(FILE *fp,	/* output file */
+	       char *s,		/* the string to be output (must not contain any NL's) */
 	       int de,		/* the directory entry # that this belongs to (ignored for Global section) */
 	       char c)		/* 'G' for global section
 				 * 'P' for parameter section
 				 * 'S' for start section */
-
 {
     int paramlen;
     int start_seq;
@@ -792,6 +598,197 @@ write_freeform(
 	}
 }
 
+
+int
+write_color_entity( color , fp_dir , fp_param )
+     unsigned char color[3];
+     FILE *fp_dir,*fp_param;
+{
+    struct bu_vls		str;
+    int			dir_entry[21];
+    int			i;
+    float			c[3];
+
+    bu_vls_init( &str );
+
+    /* initialize directory entry */
+    for( i=0 ; i<21 ; i++ )
+	dir_entry[i] = DEFAULT;
+
+    /* convert colors to percents */
+    for( i=0 ; i<3 ; i++ )
+	c[i] = (float)color[i]/2.55;
+
+    bu_vls_printf( &str , "314,%g,%g,%g;" , c[0] , c[1] , c[2] );
+
+    dir_entry[1] = 314;
+    dir_entry[2] = param_seq + 1;
+    dir_entry[8] = 0;
+    dir_entry[9] = 10201;
+    dir_entry[11] = 314;
+    dir_entry[15] = 0;
+    dir_entry[14] = write_freeform( fp_param , bu_vls_addr( &str ) , dir_seq+1 , 'P' );
+
+    bu_vls_free( &str );
+
+    return( write_dir_entry( fp_dir , dir_entry ) );
+}
+
+int
+get_color( color , fp_dir , fp_param )
+     unsigned char color[3];
+     FILE *fp_dir,*fp_param;
+{
+    int color_de;
+
+    for( color_de=0 ; color_de < 9 ; color_de++ )
+	{
+	    if( color[0] == colortab[color_de][1] &&
+		color[1] == colortab[color_de][2] &&
+		color[2] == colortab[color_de][3] )
+		break;
+	}
+
+    if( color_de == 9 )
+	color_de = (-write_color_entity( color , fp_dir , fp_param ));
+
+    return( color_de );
+}
+
+int
+write_attribute_definition( fp_dir , fp_param )
+     FILE *fp_dir,*fp_param;
+{
+    struct bu_vls str;
+    int dir_entry[21];
+    int i;
+
+    bu_vls_init( &str );
+
+    /* initialize directory entry */
+    for( i=0 ; i<21 ; i++ )
+	dir_entry[i] = DEFAULT;
+
+    /* start with parameter data */
+    bu_vls_printf( &str , "322,%ldH%s,5001,9" , strlen( att_string ) , att_string );
+    bu_vls_printf( &str , ",1,3,1" ); /* material name */
+    bu_vls_printf( &str , ",2,3,1" ); /* material parameters */
+    bu_vls_printf( &str , ",3,6,1" ); /* region flag (logical value) */
+    bu_vls_printf( &str , ",4,1,1" ); /* ident number */
+    bu_vls_printf( &str , ",5,1,1" ); /* air code number */
+    bu_vls_printf( &str , ",6,1,1" ); /* material code number */
+    bu_vls_printf( &str , ",7,1,1" ); /* los density (X100) */
+    bu_vls_printf( &str , ",8,1,1" ); /* inheritance */
+    bu_vls_printf( &str , ",9,6,1;" ); /* color_defined (logical value) */
+
+
+    /* remember where parameter data is going */
+    dir_entry[2] = param_seq + 1;
+
+    /* get parameter line count */
+    dir_entry[14] =  write_freeform( fp_param , bu_vls_addr( &str ) , dir_seq+1 , 'P' );
+
+    /* write directory entry for line entity */
+    dir_entry[1] = 322;
+    dir_entry[8] = 0;
+    dir_entry[9] = 10201;
+    dir_entry[11] = 322;
+    dir_entry[15] = 0;
+
+    bu_vls_free( &str );
+
+    return( write_dir_entry( fp_dir , dir_entry ) );
+
+}
+
+void
+iges_init( set_tol , set_ttol , set_verbose , dbip_set )
+     struct bn_tol *set_tol;
+     struct rt_tess_tol *set_ttol;
+     int set_verbose;
+     struct db_i *dbip_set;
+{
+    BN_CK_TOL( set_tol );
+    RT_CK_TESS_TOL( set_ttol );
+    tol = (*set_tol);
+    ttol = (*set_ttol);
+    verbose = set_verbose;
+    dbip = dbip_set;
+
+    dir_seq = 0;
+    param_seq = 0;
+    start_len = 0;
+    global_len = 0;
+}
+
+void
+Print_stats(FILE *fp)
+{
+    int i;
+    int total_entities=0;
+
+    fprintf( fp , "Wrote the following numbers and type of entities:\n" );
+    for( i=0 ; i<NO_OF_TYPES ; i++ )
+	if( type_count[i][1] > 0 )
+	    {
+		total_entities += type_count[i][1];
+		fprintf( fp , "\t%d - %s\n" , type_count[i][1] , type_name[i] );
+	    }
+
+    fprintf( fp , "Total of %d entities written\n" , total_entities );
+
+    if( solids_to_nmg )
+	fprintf( fp , "%d solids converted to NMG's before exporting to IGES\n" , solids_to_nmg );
+}
+
+int
+write_dir_entry(FILE *fp , int entry[])
+{
+    int i,j,type_index;
+    char *label;
+
+    for( type_index=0; type_index<NO_OF_TYPES ; type_index++ )
+	if( type_count[type_index][0] == entry[1] )
+	    break;
+    if( type_index == NO_OF_TYPES )
+	{
+	    bu_log( "Writing directory entry for an unknown entity type (%d)\n" , entry[1] );
+	    label = unknown;
+	    unknown_count++;
+	    entry[19] = unknown_count;
+	}
+    else
+	{
+	    label = type_label[type_index];
+	    type_count[type_index][1]++;
+	    entry[19] = type_count[type_index][1];
+	}
+
+    entry[10] = dir_seq + 1;
+    entry[20] = dir_seq + 2;
+
+    for( j=0 ; j<2 ; j++ )
+	{
+
+	    for( i=j*10+1 ; i<(j+1)*10 ; i++ )
+		{
+		    if( i == 18 )
+			fprintf( fp , "%8.8s" , label );
+		    else if( entry[i] == DEFAULT )
+			fprintf( fp , "        " );
+		    else if( i == 9 )
+			fprintf( fp , "%08d" , entry[i] );
+		    else
+			fprintf( fp , "%8d" , entry[i] );
+		}
+	    fprintf( fp , "D%07d\n" , entry[(j+1)*10] );
+	}
+
+    dir_seq += 2;
+    return( dir_seq - 1 );
+}
+
+
 void
 w_start_global(
 	       FILE *fp_dir,
@@ -811,7 +808,7 @@ w_start_global(
 
     /* Write Start Section */
     bu_vls_printf( &str , "This IGES file created by %s from the database %s." , prog_name , db_name );
-    (void)write_freeform( fp_dir , bu_vls_addr( &str ) , 0 , 'S' );
+    write_freeform( fp_dir , bu_vls_addr( &str ) , 0 , 'S' );
     bu_vls_free( &str );
 
     /* Write Global Section */
@@ -858,7 +855,7 @@ w_start_global(
 			   timep->tm_sec );
 	}
 
-    (void)write_freeform( fp_dir , bu_vls_addr( &str ) , 0 , 'G' );
+    write_freeform( fp_dir , bu_vls_addr( &str ) , 0 , 'G' );
 
     /* write attribute definition entity */
 
