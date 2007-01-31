@@ -143,7 +143,7 @@ __BEGIN_DECLS
  *  the compiler understands them or not.
  *  It is vital that the argument list given for "args" be enclosed
  *  in parens.
- *  The setting of USE_PROTOTYPES is done in machine.h
+ *  The setting of USE_PROTOTYPES is determined during configure
  */
 #if USE_PROTOTYPES
 #	define	BU_EXTERN(type_and_name,args)	extern type_and_name args
