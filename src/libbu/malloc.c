@@ -415,7 +415,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 
 	if ( ! ptr ) {
 	    /* This is so we are compatible with system realloc.
-	     * It seems like an odd behaviour, but some non-BRLCAD
+	     * It seems like an odd behaviour, but some non-BRL-CAD
 	     * code relies on this.
 	     */
 	    return bu_malloc(cnt, str);

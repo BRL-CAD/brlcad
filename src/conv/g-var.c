@@ -395,7 +395,7 @@ int main(int argc, char *argv[])
     register int	c;
     struct directory* dp;
 
-    /* setup BRLCAD environment */
+    /* setup BRL-CAD environment */
     bu_setlinebuf( stderr );
     rt_init_resource( &rt_uniresource, 0, NULL );
 

@@ -18,6 +18,11 @@
  * information.
  */
 /** @file trimsurf.c
+ *
+ * This routine loops through all the directory entries and calls
+ * appropriate routines to convert trimmed surface entities to BRL-CAD
+ * NMG TNURBS
+ *
  *  Authors -
  *	John R. Anderson
  *
@@ -27,10 +32,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-
-/*	This routine loops through all the directory entries and calls
-	appropriate routines to convert trimmed surface entities to BRLCAD
-	NMG TNURBS	*/
 
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

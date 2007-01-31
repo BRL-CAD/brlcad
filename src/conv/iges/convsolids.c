@@ -31,7 +31,7 @@
  */
 
 /*	This routine loops through all the directory entries and calls
-	appropriate routines to convert solid entities to BRLCAD
+	appropriate routines to convert solid entities to BRL-CAD
 	equivalents	*/
 
 #include "./iges_struct.h"

@@ -7,11 +7,11 @@ the source in a directory too deep.  The libtool script wrapper which
 runs bwish builds a command line that is too long for the shell to
 handle.  So for example, placing the source in:
 
-	/home/username/BRLCAD/mips64_brlcad-7.2.0
+	/home/username/CAD/mips64_brlcad-7.2.0
 
 is known to cause a build failure.  On the other hand, the following:
 
-	/home/username/BRLCAD/m6_72
+	/home/username/CAD/m6_72
 
 resulted in a successful build.
 

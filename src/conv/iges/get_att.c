@@ -28,7 +28,7 @@
  */
 
 /*	This routine loops through all the directory entries and looks
- *	at attribute definition entities, searching for a BRLCAD
+ *	at attribute definition entities, searching for a BRL-CAD
  *	attribute definition
  */
 
@@ -59,7 +59,7 @@ Get_att()
 			}
 
 			Readname( &str , "" );
-			if( !strncmp( str , "BRLCAD" , 6 ) )
+			if( !strncmp(str , "BRLCAD" , 6) || !strncmp(str, "BRL-CAD", 7) )
 			{
 				/* this is what we have been looking for */
 				brlcad_att_de = 2*i+1;

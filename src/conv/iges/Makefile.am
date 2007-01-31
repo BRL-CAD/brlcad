@@ -95,10 +95,10 @@ BUILT_SOURCES = \
 	g-iges-vers.c
 
 iges-g-vers.c: $(iges_g_srcs) Makefile.am
-	sh $(top_srcdir)/sh/vers.sh version "IGES-to-BRLCAD Translator" > $@
+	sh $(top_srcdir)/sh/vers.sh version "IGES to BRL-CAD Translator" > $@
 
 g-iges-vers.c: $(g_iges_srcs) Makefile.am
-	sh $(top_srcdir)/sh/vers.sh version "BRLCAD-to-IGES Translator" > $@
+	sh $(top_srcdir)/sh/vers.sh version "BRL-CAD to IGES Translator" > $@
 
 EXTRA_DIST = \
 	$(man_MANS) \
