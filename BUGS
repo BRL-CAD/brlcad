@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* tessellation of some pipe in toyjeep.g fails (rather reliably) on
+  some given bend
+
 * tgc reports one hit errors though hit point has 0,0,0 direction
   implying that maybe the point was supposedly deleted.
 
