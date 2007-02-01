@@ -17,6 +17,7 @@
 #include "bltInt.h"
 #include <fcntl.h>
 #include <signal.h>
+#include <sys/errno.h>
 
 #include "bltWait.h"
 
