@@ -50,6 +50,17 @@ static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 
+/* defaults for configure-less compiles */
+#ifndef BRLCAD_VERSION
+#  define BRLCAD_VERSION "xx.xx.xx"
+#endif
+#ifndef BRLCAD_ROOT
+#  define BRLCAD_ROOT "/usr/brlcad"
+#endif
+#ifndef BRLCAD_DATA
+#  define BRLCAD_DATA BRLCAD_ROOT"/share/brlcad/"BRLCAD_VERSION
+#endif
+
 
 /**
  *	b u _ i p w d
