@@ -38,6 +38,7 @@
 #endif
 #include <sys/types.h>
 #include <ctype.h>
+#include <sys/errno.h>
 
 #include "bltWait.h"
 #include "bltSwitch.h"
