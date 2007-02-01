@@ -1008,7 +1008,7 @@ bu_vls_printf(va_dcl va_alist)                            /* VARARGS */
 #  else  /* !HAVE_VARARGS_H */
 
 void
-bu_vls_printf(struct bu_vls *vls, char *fmt, a,b,c,d,e,f,g,h,i,j)       /* Cray XMP */
+bu_vls_printf(struct bu_vls *vls, char *fmt, int a, int b, int c, int d, int e, int f, int g, int h, int i, int j)       /* Cray XMP */
 {
     char append_buf[65536] = {0};   /* yuck -- fixed length buffer. */
 
@@ -1074,7 +1074,7 @@ bu_vls_sprintf(va_dcl va_alist)                            /* VARARGS */
 #  else  /* !HAVE_VARARGS_H */
 
 void
-bu_vls_sprintf(struct bu_vls *vls, char *fmt, a,b,c,d,e,f,g,h,i,j)       /* Cray XMP */
+bu_vls_sprintf(struct bu_vls *vls, char *fmt, int a, int b, int c, int d, int e, int f, int g, int h, int i, int j)       /* Cray XMP */
 {
     BU_CK_VLS(vls);
     bu_vls_trunc(vls, 0); /* poof */
