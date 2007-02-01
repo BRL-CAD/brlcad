@@ -2373,18 +2373,41 @@ BU_EXPORT BU_EXTERN(void bu_vls_putc,
 		     int c));
 BU_EXPORT BU_EXTERN(void bu_vls_trimspace,
 		    (struct bu_vls *vp));
-#if 0
+#if defined(HAVE_VARARGS_H) || defined(HAVE_STDARG_H)
 BU_EXPORT BU_EXTERN(void bu_vls_vprintf,
 		    (struct bu_vls *vls,
 		     const char *fmt,
 		     va_list ap));
 #endif
+
+#if defined(HAVE_STDARG_H)
 BU_EXPORT BU_EXTERN(void bu_vls_printf,
 		    (struct bu_vls *vls,
 		     char *fmt, ...));
+#else  /* !HAVE_STDARG_H */
+#  if defined(HAVE_VARARGS_H)
+BU_EXPORT BU_EXTERN(void bu_vls_printf,
+		    (va_dcl va_alist));
+#  else  /* !HAVE_VARARGS_H */
+BU_EXPORT BU_EXTERN(void bu_vls_printf,
+		    (struct bu_vls *vls, char *fmt, int a, int b, int c, int d, int e, int f, int g, int h, int i, int j));
+#  endif  /* HAVE_VARARGS_H */
+#endif  /* HAVE_STDARG_H */
+
+#if defined(HAVE_STDARG_H)
 BU_EXPORT BU_EXTERN(void bu_vls_sprintf,
 		    (struct bu_vls *vls,
 		     char *fmt, ...));
+#else  /* !HAVE_STDARG_H */
+#  if defined(HAVE_VARARGS_H)
+BU_EXPORT BU_EXTERN(void bu_vls_sprintf,
+		    (va_dcl va_alist));
+#  else  /* !HAVE_VARARGS_H */
+BU_EXPORT BU_EXTERN(void bu_vls_sprintf,
+		    (struct bu_vls *vls, char *fmt, int a, int b, int c, int d, int e, int f, int g, int h, int i, int j));
+#  endif  /* HAVE_VARARGS_H */
+#endif  /* HAVE_STDARG_H */
+
 BU_EXPORT BU_EXTERN(void bu_vls_spaces,
 		    (struct bu_vls *vp,
 		     int cnt));
@@ -2392,14 +2415,6 @@ BU_EXPORT BU_EXTERN(int bu_vls_print_positions_used,
 		    (const struct bu_vls *vp));
 BU_EXPORT BU_EXTERN(void bu_vls_detab,
 		    (struct bu_vls *vp));
-
-#if 0
-BU_EXPORT BU_EXTERN(void bu_vls_blkset,
-		    (struct bu_vls *vp,
-		     int len,
-		     int ch));
-#endif
-
 BU_EXPORT BU_EXTERN(void bu_vls_prepend,
 		    (struct bu_vls *vp,
 		     char *str));
