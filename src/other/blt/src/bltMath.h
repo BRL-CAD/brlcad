@@ -82,6 +82,9 @@
  *
  * ----------------------------------------------------------------------
  */
+#ifndef BLT_DBL_EPSILON
+#  define BLT_DBL_EPSILON 2.2204460492503131e-16
+#endif
 /*
  * Don't want to include __infinity (definition of HUGE_VAL (SC1.x))
  */
