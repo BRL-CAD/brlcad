@@ -1225,8 +1225,11 @@ AC_CHECK_LIB(utahrle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lutahrle $L
 LIBS="$PRELIBS"
 
 dnl check if openNURBS library links
+opennurbs_link_works=no
 LIBOPENNURBS=""
-AC_CHECK_LIB(openNURBS, onmalloc, LIBOPENNURBS="-lopenNURBS")
+if test "x$bc_build_opennurbs" != "xno" ; then
+    AC_CHECK_LIB(openNURBS, onmalloc, opennurbs_link_works=yes ; LIBOPENNURBS="-lopenNURBS")
+fi
 
 dnl check if libtcl library links
 tcl_link_works=no
@@ -1360,6 +1363,14 @@ dnl check if the Solaris lexer library links
 l_link_works=no
 LIBL=""
 AC_CHECK_LIB(l, yyless, l_link_works=yes ; LIBL="-ll")
+
+dnl check if the standard c++ library links without checking for any particular symbol 
+dnl library is needed when linking c++ code against c code (e.g. openNURBS)
+stdcxx_link_works=no
+LIBSTDCXX=""
+if test "x$bc_build_opennurbs" != "xno" ; then
+    AC_CHECK_LIB(stdc++, main, stdcxx_link_works=yes ; LIBSTDCXX="-lstdc++")
+fi
 
 dnl check for java
 JAVA_CFLAGS=
@@ -2246,22 +2257,23 @@ AC_SUBST(RLE)
 dnl *** openNURBS ***
 dnl See if openNURBS library support works
 opennurbs_works=no
-AC_MSG_CHECKING(for openNURBS functionality)
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBOPENNURBS"
-AC_LANG_PUSH([C++])
-AC_TRY_RUN([
+if test "x$bc_build_opennurbs" != "xno" ; then
+    AC_MSG_CHECKING(for openNURBS functionality)
+    PRELDFLAGS="$LDFLAGS"
+    LDFLAGS="$LDFLAGS $LIBOPENNURBS"
+    AC_LANG_PUSH([C++])
+    AC_TRY_RUN([
 #include <opennurbs.h>
 int main () {
   int version = ON::Version();
   return 0;
 }
-	],
-	[opennurbs_works=yes]
-)
-AC_LANG_POP
-LDFLAGS="$PRELDFLAGS"
-AC_MSG_RESULT($opennurbs_works)
+		],
+		[opennurbs_works=yes])
+    AC_LANG_POP
+    LDFLAGS="$PRELDFLAGS"
+    AC_MSG_RESULT($opennurbs_works)
+fi
 
 dnl figure out whether we need to build openNURBS
 build_brlcad_opennurbs="no (using system)"
@@ -2285,12 +2297,13 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included openNURBS library)
 OPENNURBS=""
+OPENNURBS_CPPFLAGS=""
 if test "x$build_brlcad_opennurbs" = "xyes" ; then
-	OPENNURBS='${top_builddir}/src/other/openNURBS/libopenNURBS.la -lstdc++'
+	OPENNURBS='${top_builddir}/src/other/openNURBS/libopenNURBS.la ${LIBSTDCXX}'
 	OPENNURBS_CPPFLAGS='-I${top_srcdir}/src/other/openNURBS'
 	AC_MSG_RESULT(yes)
 else
-	OPENNURBS="$LIBOPENNURBS -lstdc++"
+	OPENNURBS="$LIBOPENNURBS $LIBSTDCXX"
 	OPENNURBS_CPPFLAGS=''
 	AC_MSG_RESULT(no)
 fi
@@ -2774,32 +2787,32 @@ AC_SUBST(TERMLIB)
 
 
 dnl *** libm ***
-AC_MSG_CHECKING(whether to link with the math library)
+AC_MSG_CHECKING(whether to link with the system math library)
 AC_MSG_RESULT($m_link_works)
 AC_SUBST(LIBM)
 
 dnl *** libsocket ***
-AC_MSG_CHECKING(for socket library availability)
+AC_MSG_CHECKING(for system socket library availability)
 AC_MSG_RESULT([$socket_link_works])
 AC_SUBST(LIBSOCKET)
 
 dnl *** libnsl ***
-AC_MSG_CHECKING(for network socket library availablity)
+AC_MSG_CHECKING(for system network socket library availablity)
 AC_MSG_RESULT([$nsl_link_works])
 AC_SUBST(LIBNSL)
 
 dnl *** libmalloc ***
-AC_MSG_CHECKING(for malloc library availability)
+AC_MSG_CHECKING(for system malloc library availability)
 AC_MSG_RESULT([$malloc_link_works])
 AC_SUBST(LIBMALLOC)
 
 dnl *** libmx ***
-AC_MSG_CHECKING(for mx library availability)
+AC_MSG_CHECKING(for system mx library availability)
 AC_MSG_RESULT([$mx_link_works])
 AC_SUBST(LIBMX)
 
 dnl *** libdl ***
-AC_MSG_CHECKING(for dynamic linker library availability)
+AC_MSG_CHECKING(for system dynamic linker library availability)
 AC_MSG_RESULT([$dl_link_works])
 AC_SUBST(LIBDL)
 
@@ -2809,17 +2822,17 @@ AC_MSG_RESULT([$ds_link_works])
 AC_SUBST(LIBDS)
 
 dnl *** libgl ***
-AC_MSG_CHECKING(whether to link with the OpenGL library)
+AC_MSG_CHECKING(whether an OpenGL library is available)
 AC_MSG_RESULT($gl_link_works)
 AC_SUBST(LIBGL)
 
 dnl *** libopengl32 ***
-AC_MSG_CHECKING(whether to link with the WindowsGL library)
+AC_MSG_CHECKING(whether the WindowsGL library is available)
 AC_MSG_RESULT($wgl_link_works)
 AC_SUBST(LIBWGL)
 
 dnl *** sgigl ***
-AC_MSG_CHECKING(whether to link with the SGI graphics library)
+AC_MSG_CHECKING(whether the SGI graphics library is available)
 AC_MSG_RESULT($sgigl_link_works)
 AC_SUBST(LIBSGIGL)
 if test "x$sgigl_link_works" = "xyes" ; then
@@ -2827,9 +2840,14 @@ if test "x$sgigl_link_works" = "xyes" ; then
 fi
 
 dnl *** libl Solaris lexer library ***
-AC_MSG_CHECKING(whether to link with the Solaris lexer library)
+AC_MSG_CHECKING(whether the Solaris lexer library is available)
 AC_MSG_RESULT($l_link_works)
 AC_SUBST(LIBL)
+
+dnl *** libstdc++ C++ library ***
+AC_MSG_CHECKING(whether the Standard C++ library is available)
+AC_MSG_RESULT($stdcxx_link_works)
+AC_SUBST(LIBSTDCXX)
 
 
 dnl *** 64-bit compilation ***
