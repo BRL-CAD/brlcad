@@ -430,7 +430,6 @@ main( argc, argv )
 int argc;
 char *argv[\|];
 {
-	extern int optind;			/* Used by getopt(3C) */
 	static int do_if_hit(\|), do_if_miss(\|);	/* Application routines */
 	register int h, v;
 	int grid_sz;
@@ -439,11 +438,11 @@ char *argv[\|];
 	/* \s+2...\s0\& */
 
 	/* Build the directory.	*/
-	rtip = rt_dirbuild( argv[optind++] );
+	rtip = rt_dirbuild( argv[bu_optind++] );
 
 	/* Load the desired portion of the model. */
-	while( argv[optind] != NULL )
-		rt_gettree( rtip, argv[optind++] );
+	while( argv[bu_optind] != NULL )
+		rt_gettree( rtip, argv[bu_optind++] );
 
 	ap.a_hit = do_if_hit;		/* Supply routine for hit */
 	ap.a_miss = do_if_missed;	/* Supply routine for miss */
