@@ -29,10 +29,6 @@ headers_libutahrle = \
 	rle_put.h \
 	rle_raw.h
 
-headers_libpng = \
-	png.h \
-	pngconf.h
-
 headers_libitcl = \
 	itcl.h \
 	itclDecls.h \
@@ -63,7 +59,6 @@ headers_libtermlib = \
 
 brlcadinclude_wanted = \
 	$(headers_libutahrle) \
-	$(headers_libpng) \
 	$(headers_libitcl) \
 	$(headers_libtcl) \
 	$(headers_libtk) \

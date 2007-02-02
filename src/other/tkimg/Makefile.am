@@ -30,10 +30,11 @@ tkimg_la_LIBADD = \
 	${TK} \
 	${TCLSTUB}
 
+# per-program CPPFLAGS wasn't added until automake 1.7
 AM_CPPFLAGS = \
 	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
-	-DUSE_TCLALLOC=0
+	-DUSE_TCLALLOC=0 ${PNG_CPPFLAGS}
 
 EXTRA_DIST = \
 	init.c

@@ -2069,12 +2069,15 @@ AC_MSG_CHECKING(whether to build the included portable network graphics library)
 PNG=""
 if test "x$build_brlcad_png" = "xyes" ; then
 	PNG='${top_builddir}/src/other/libpng/libpng.la'
+	PNG_CPPFLAGS='-I${top_srcdir}/src/other/libpng'
 	AC_MSG_RESULT(yes)
 else
 	PNG="$LIBPNG"
+	PNG_CPPFLAGS=''
 	AC_MSG_RESULT(no)
 fi
 AC_SUBST(PNG)
+AC_SUBST(PNG_CPPFLAGS)
 
 
 dnl *** libregex ***

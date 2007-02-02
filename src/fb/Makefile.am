@@ -55,9 +55,13 @@ fbcbars_LDADD = ${FB}
 
 png_fb_SOURCES = png-fb.c
 png_fb_LDADD = ${FB} ${PNG}
+# per-program CPPFLAGS wasn't added until automake 1.7
+png_fb_CFLAGS = ${PNG_CPPFLAGS}
 
 fb_png_SOURCES = fb-png.c cmap-crunch.c
 fb_png_LDADD = ${FB} ${PNG}
+# per-program CPPFLAGS wasn't added until automake 1.7
+fb_png_CFLAGS = ${PNG_CPPFLAGS}
 
 pix_fb_SOURCES = pix-fb.c
 pix_fb_LDADD = ${FB} ${BN} ${BU}

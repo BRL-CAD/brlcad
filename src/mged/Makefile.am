@@ -145,7 +145,8 @@ mged_SOURCES = \
 	vparse.c \
 	vrlink.c
 
-mged_CFLAGS = $(OGL_CFLAGS)  $(WGL_CFLAGS) $(X11_CFLAGS) $(POINTS_CFLAGS)
+# per-program CPPFLAGS wasn't added until automake 1.7
+mged_CFLAGS = $(OGL_CFLAGS)  $(WGL_CFLAGS) $(X11_CFLAGS) $(POINTS_CFLAGS) ${PNG_CPPFLAGS}
 mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
 mged_LDADD = \
 	${POINTS_LDADD} \

@@ -6,6 +6,7 @@ tkimgp_la_LDFLAGS = -module
 tkimgp_la_SOURCES = \
 	png.c
 
+# per-program CPPFLAGS wasn't added until automake 1.7
 AM_CPPFLAGS = \
 	-I${top_srcdir}/src/other/tkimg/base \
 	-I${top_srcdir}/src/other/tkimg/png \
@@ -16,7 +17,7 @@ AM_CPPFLAGS = \
 	-DTKIMG_PNG_PACKAGE_NAME=\"Tkimgpng\" \
 	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
-	-DUSE_TCLALLOC=0
+	-DUSE_TCLALLOC=0 ${PNG_CPPFLAGS}
 
 EXTRA_DIST = \
 	init.c \

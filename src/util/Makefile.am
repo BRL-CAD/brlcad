@@ -165,8 +165,12 @@ bw_imp_LDADD = ${BU}
 bw_imp_SOURCES = bw-imp.c
 bw_pix_LDADD = ${BU}
 bw_pix_SOURCES = bw-pix.c
-bw_png_LDADD = ${FB} ${BN} ${PNG}
+
+# per-program CPPFLAGS wasn't added until automake 1.7
 bw_png_SOURCES = bw-png.c
+bw_png_CFLAGS = ${PNG_CPPFLAGS}
+bw_png_LDADD = ${FB} ${BN} ${PNG}
+
 bw_ps_LDADD = ${BU}
 bw_ps_SOURCES = bw-ps.c
 bw_rle_LDADD = ${RLE} ${BU} ${SYSV}
@@ -245,8 +249,12 @@ pix_bw_LDADD = ${BU}
 pix_bw_SOURCES = pix-bw.c
 pix_orle_LDADD = ${FB} ${ORLE}
 pix_orle_SOURCES = pix-orle.c
-pix_png_LDADD = ${FB} ${BN} ${PNG}
+
+# per-program CPPFLAGS wasn't added until automake 1.7
 pix_png_SOURCES = pix-png.c
+pix_png_CFLAGS = ${PNG_CPPFLAGS}
+pix_png_LDADD = ${FB} ${BN} ${PNG}
+
 pix_ppm_LDADD = ${FB} ${BN}
 pix_ppm_SOURCES = pix-ppm.c
 pix_ps_LDADD = ${BU}
@@ -355,12 +363,22 @@ plrot_LDADD = ${BN}
 plrot_SOURCES = plrot.c
 plstat_LDADD = ${BU}
 plstat_SOURCES = plstat.c
-png_bw_LDADD = ${BN} ${PNG}
+
+# per-program CPPFLAGS wasn't added until automake 1.7
 png_bw_SOURCES = png-bw.c
-png_info_LDADD = ${BN} ${PNG}
+png_bw_CFLAGS = ${PNG_CPPFLAGS}
+png_bw_LDADD = ${BN} ${PNG}
+
+# per-program CPPFLAGS wasn't added until automake 1.7
 png_info_SOURCES = png_info.c
-png_pix_LDADD = ${BN} ${PNG}
+png_info_CFLAGS = ${PNG_CPPFLAGS}
+png_info_LDADD = ${BN} ${PNG}
+
+# per-program CPPFLAGS wasn't added until automake 1.7
 png_pix_SOURCES = png-pix.c
+png_pix_CFLAGS = ${PNG_CPPFLAGS}
+png_pix_LDADD = ${BN} ${PNG}
+
 query_LDADD = ${BU}
 query_SOURCES = query.c
 remapid_LDADD = ${RT}

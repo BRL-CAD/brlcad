@@ -20,7 +20,9 @@ pix_ipu_SOURCES = pix-ipu.c canonlib.c
 pix_ipu_LDADD = ${FB} ${BU} ${LIBM} ${LIBDS}
 
 png_ipu_SOURCES = png-ipu.c canonlib.c
-png_ipu_LDADD =${FB} ${BU} ${LIBM} ${LIBDS} ${LIBPNG}
+png_ipu_LDADD = ${FB} ${BU} ${LIBM} ${LIBDS} ${PNG}
+# per-program CPPFLAGS wasn't added until automake 1.7
+png_ipu_CFLAGS = ${PNG_CPPFLAGS}
 
 ipuscan_SOURCES = ipuscan.c canonlib.c
 ipuscan_LDADD = ${FB} ${LIBM} ${LIBDS}
