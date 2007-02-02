@@ -38,7 +38,7 @@
 #define ISST_OP_SPALL		2
 #define ISST_OP_SELECT		3
 
-#define	ISST_PIXEL_FMT		0	/* 0 == unsigned char, 1 ==  tfloat */
+#define	ISST_PIXEL_FMT		0	/* 0 == unsigned char, 1 ==  TFLOAT */
 
 #define ISST_NET_OP_NOP		0
 #define	ISST_NET_OP_INIT	1

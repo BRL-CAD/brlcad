@@ -82,9 +82,9 @@ TIE_3 isst_master_shot_position;
 TIE_3 isst_master_shot_direction;
 TIE_3 isst_master_in_hit;
 TIE_3 isst_master_out_hit;
-tfloat isst_master_spall_angle;
-tfloat isst_master_camera_azimuth;
-tfloat isst_master_camera_elevation;
+TFLOAT isst_master_spall_angle;
+TFLOAT isst_master_camera_azimuth;
+TFLOAT isst_master_camera_elevation;
 
 common_db_t db;
 isst_master_socket_t *isst_master_socklist;
@@ -96,7 +96,7 @@ int frame_ind;
 char isst_master_slave_data[64];
 int isst_master_slave_data_len;
 pthread_t isst_master_networking_thread;
-tfloat isst_master_scale;
+TFLOAT isst_master_scale;
 int isst_master_active_connections;
 int isst_master_alive;
 unsigned char isst_master_rm;
@@ -107,7 +107,7 @@ int isst_master_shift_enabled;
 
 
 static void isst_master_setup() {
-  tfloat celev;
+  TFLOAT celev;
 
   isst_master_active_connections = 0;
 
@@ -218,7 +218,7 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
     if(!(frame_num % 7)) {
       gettimeofday(&cur, NULL);
       printf("FPS: %.3f  SLAVES: %d    \r",
-	    (tfloat)(frame_num) / ((cur.tv_sec + (tfloat)cur.tv_usec/1000000.0) - (start.tv_sec + (tfloat)start.tv_usec/1000000.0)),
+	    (TFLOAT)(frame_num) / ((cur.tv_sec + (TFLOAT)cur.tv_usec/1000000.0) - (start.tv_sec + (TFLOAT)start.tv_usec/1000000.0)),
 	    tienet_master_socket_num);
       start = cur;
       frame_num = 0;
@@ -299,15 +299,15 @@ printf("component[%d]: %s\n", i, name);
     }
 
     /* Send a message to update hitlist */
-    mesg = malloc(sizeof(short) + res_len - sizeof(common_work_t) - 6*sizeof(tfloat));
+    mesg = malloc(sizeof(short) + res_len - sizeof(common_work_t) - 6*sizeof(TFLOAT));
 
     ind = 0;
     slop = ISST_OP_SHOT;
     memcpy(&((char *)mesg)[ind], &slop, sizeof(short));
     ind += sizeof(short);
 
-    memcpy(&((char *)mesg)[ind], &((unsigned char *)res_buf)[sizeof(common_work_t) + 6*sizeof(tfloat)], res_len - sizeof(common_work_t) - 6*sizeof(tfloat));
-    ind += res_len - sizeof(common_work_t) - 6*sizeof(tfloat);
+    memcpy(&((char *)mesg)[ind], &((unsigned char *)res_buf)[sizeof(common_work_t) + 6*sizeof(TFLOAT)], res_len - sizeof(common_work_t) - 6*sizeof(TFLOAT));
+    ind += res_len - sizeof(common_work_t) - 6*sizeof(TFLOAT);
 
     tienet_master_broadcast(mesg, ind);
     free(mesg);
@@ -623,8 +623,8 @@ void isst_master_update() {
       memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &isst_master_shot_direction, sizeof(TIE_3));
       isst_master_slave_data_len += sizeof(TIE_3);
 
-      memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &isst_master_spall_angle, sizeof(tfloat));
-      isst_master_slave_data_len += sizeof(tfloat);
+      memcpy(&((char *)isst_master_slave_data)[isst_master_slave_data_len], &isst_master_spall_angle, sizeof(TFLOAT));
+      isst_master_slave_data_len += sizeof(TFLOAT);
       break;
 
     default:
@@ -638,7 +638,7 @@ void isst_master_update() {
 void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, isst_master_socket_t *sock) {
   int i, update;
   TIE_3 vec, vec2, vec3;
-  tfloat celev;
+  TFLOAT celev;
 
 
   for(i = 0; i < event_num; i++) {
@@ -750,7 +750,7 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
 
 	  case SDLK_KP1: /* front, back */
 	    {
-	      tfloat dist;
+	      TFLOAT dist;
 
 	      /* distance to center of rotation */
 	      MATH_VEC_SUB(vec, isst_master_camera_position, isst_master_cor);
@@ -772,7 +772,7 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
 
 	  case SDLK_KP3: /* right, left */
 	    {
-	      tfloat dist;
+	      TFLOAT dist;
 
 	      /* distance to center of rotation */
 	      MATH_VEC_SUB(vec, isst_master_camera_position, isst_master_cor);
@@ -794,7 +794,7 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
 
 	  case SDLK_KP7: /* top, bottom */
 	    {
-	      tfloat dist;
+	      TFLOAT dist;
 
 	      /* distance to center of rotation */
 	      MATH_VEC_SUB(vec, isst_master_camera_position, isst_master_cor);
@@ -879,7 +879,7 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
 	      char op;
 
 	      /* Queue a work unit for a shot needed for the plane render method */
-	      mesg = malloc(sizeof(common_work_t) + 1 + 2*sizeof(TIE_3) + sizeof(tfloat));
+	      mesg = malloc(sizeof(common_work_t) + 1 + 2*sizeof(TIE_3) + sizeof(TFLOAT));
 	      dlen = 0;
 
 	      work.orig_x = 0;
@@ -907,8 +907,8 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
 	      dlen += sizeof(TIE_3);
 
 	      /* angle */
-	      memcpy(&((char *)mesg)[dlen], &isst_master_spall_angle, sizeof(tfloat));
-	      dlen += sizeof(tfloat);
+	      memcpy(&((char *)mesg)[dlen], &isst_master_spall_angle, sizeof(TFLOAT));
+	      dlen += sizeof(TFLOAT);
 
 	      isst_master_shot_position = isst_master_camera_position;
 	      isst_master_shot_direction = direction;
@@ -976,7 +976,7 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
 	    /* if the shift key is held down then rotate about Center of Rotation */
 	    if(isst_master_shift_enabled) {
 	      TIE_3 vec;
-	      tfloat mag, angle;
+	      TFLOAT mag, angle;
 
 	      vec.v[0] = isst_master_cor.v[0] - isst_master_camera_position.v[0];
 	      vec.v[1] = isst_master_cor.v[1] - isst_master_camera_position.v[1];

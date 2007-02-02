@@ -131,9 +131,9 @@ void common_pack_camera(common_db_t *db, void **app_data, int *app_ind) {
 
   common_pack_write(app_data, app_ind, &db->anim.frame_list[0].pos, sizeof(TIE_3));
   common_pack_write(app_data, app_ind, &db->anim.frame_list[0].focus, sizeof(TIE_3));
-  common_pack_write(app_data, app_ind, &db->anim.frame_list[0].tilt, sizeof(tfloat));
-  common_pack_write(app_data, app_ind, &db->anim.frame_list[0].fov, sizeof(tfloat));
-  common_pack_write(app_data, app_ind, &db->anim.frame_list[0].dof, sizeof(tfloat));
+  common_pack_write(app_data, app_ind, &db->anim.frame_list[0].tilt, sizeof(TFLOAT));
+  common_pack_write(app_data, app_ind, &db->anim.frame_list[0].fov, sizeof(TFLOAT));
+  common_pack_write(app_data, app_ind, &db->anim.frame_list[0].dof, sizeof(TFLOAT));
 
 
   size = *app_ind - marker - sizeof(unsigned int);
@@ -314,7 +314,7 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
 	common_pack_write(app_data, app_ind, &c, sizeof(char));
 	common_pack_write(app_data, app_ind, token, c);
       } else if(!strcmp("mix", token)) {
-	tfloat coef;
+	TFLOAT coef;
 
 	s = TEXTURE_MIX;
 	common_pack_write(app_data, app_ind, &s, sizeof(short));
@@ -347,7 +347,7 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
 	token = strtok(NULL, ",");
 	if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
 	coef = atof(token);
-	common_pack_write(app_data, app_ind, &coef, sizeof(tfloat));
+	common_pack_write(app_data, app_ind, &coef, sizeof(TFLOAT));
       }
     } else if(!strcmp("blend", token)) {
       TIE_3 color1, color2;
@@ -403,7 +403,7 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
 
       common_pack_write(app_data, app_ind, &tile, sizeof(unsigned int));
     } else if(!strcmp("camo", token)) {
-      tfloat size;
+      TFLOAT size;
       int octaves, absolute;
       TIE_3 color1, color2, color3;
 
@@ -447,14 +447,14 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
       if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
       color3.v[2] = atof(token);
 
-      common_pack_write(app_data, app_ind, &size, sizeof(tfloat));
+      common_pack_write(app_data, app_ind, &size, sizeof(TFLOAT));
       common_pack_write(app_data, app_ind, &octaves, sizeof(int));
       common_pack_write(app_data, app_ind, &absolute, sizeof(int));
       common_pack_write(app_data, app_ind, &color1, sizeof(TIE_3));
       common_pack_write(app_data, app_ind, &color2, sizeof(TIE_3));
       common_pack_write(app_data, app_ind, &color3, sizeof(TIE_3));
     } else if(!strcmp("clouds", token)) {
-      tfloat size;
+      TFLOAT size;
       int octaves, absolute;
       TIE_3 scale, translate;
 
@@ -490,7 +490,7 @@ void common_pack_texture(void **app_data, int *app_ind, char *filename) {
       if(token[strlen(token)-1] == '\n') token[strlen(token)-1] = 0;
       translate.v[2] = atof(token);
 
-      common_pack_write(app_data, app_ind, &size, sizeof(tfloat));
+      common_pack_write(app_data, app_ind, &size, sizeof(TFLOAT));
       common_pack_write(app_data, app_ind, &octaves, sizeof(int));
       common_pack_write(app_data, app_ind, &absolute, sizeof(int));
       common_pack_write(app_data, app_ind, &scale, sizeof(TIE_3));
@@ -638,11 +638,11 @@ void common_pack_mesh_adrt(common_db_t *db, void **app_data, int *app_ind, char 
 
     /* Write Matrix */
     if(matrixind >= 0) {
-      common_pack_write(app_data, app_ind, db->anim.frame_list[0].tlist[matrixind].matrix, sizeof(tfloat)*16);
+      common_pack_write(app_data, app_ind, db->anim.frame_list[0].tlist[matrixind].matrix, sizeof(TFLOAT)*16);
     } else{
-      tfloat matrix[16];
+      TFLOAT matrix[16];
       math_mat_ident(matrix, 4);
-      common_pack_write(app_data, app_ind, matrix, sizeof(tfloat)*16);
+      common_pack_write(app_data, app_ind, matrix, sizeof(TFLOAT)*16);
     }
   }
 

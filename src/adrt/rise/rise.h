@@ -32,7 +32,7 @@
 
 #define	RISE_OP_CAMERA		0
 
-#define	RISE_PIXEL_FMT		0	/* 0 == unsigned char, 1 ==  tfloat */
+#define	RISE_PIXEL_FMT		0	/* 0 == unsigned char, 1 ==  TFLOAT */
 
 #define	RISE_OBSERVER_PORT	1982
 

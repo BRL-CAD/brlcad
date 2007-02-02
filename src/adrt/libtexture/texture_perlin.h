@@ -44,7 +44,7 @@ typedef struct texture_perlin_s {
 
 extern	void	texture_perlin_init(texture_perlin_t *P);
 extern	void	texture_perlin_free(texture_perlin_t *P);
-extern	tfloat	texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, tfloat Size, int Depth);
+extern	TFLOAT	texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, TFLOAT Size, int Depth);
 
 #endif
 

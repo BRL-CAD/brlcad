@@ -101,12 +101,12 @@ void util_camera_free(util_camera_t *camera) {
 void util_camera_prep(util_camera_t *camera, common_db_t *db) {
   TIE_3		dof_topl, dof_botl, dof_topr, fov_topl, fov_botl, fov_topr;
   TIE_3		temp, dof_look, dof_up, dof_side, fov_look, fov_up, fov_side, step_x, step_y;
-  tfloat	sfov, cfov, sdof, cdof, aspect, angle, mag;
+  TFLOAT	sfov, cfov, sdof, cdof, aspect, angle, mag;
   int		i, n;
 
 
   /* Generate an aspect ratio coefficient */
-  aspect = (tfloat)db->env.img_vw / (tfloat)db->env.img_vh;
+  aspect = (TFLOAT)db->env.img_vw / (TFLOAT)db->env.img_vh;
 
   /* Free camera view list if already allocated */
   if(camera->view_list)
@@ -259,9 +259,9 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
   for(i = 0; i < UTIL_CAMERA_DOF_SAMPLES; i++) {
     for(n = 0; n < UTIL_CAMERA_DOF_SAMPLES; n++) {
       /* Generate virtual camera position for this depth of field sample */
-      MATH_VEC_MUL_SCALAR(temp, step_x, ((tfloat)i/(tfloat)(UTIL_CAMERA_DOF_SAMPLES-1)));
+      MATH_VEC_MUL_SCALAR(temp, step_x, ((TFLOAT)i/(TFLOAT)(UTIL_CAMERA_DOF_SAMPLES-1)));
       MATH_VEC_ADD(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, dof_topl, temp);
-      MATH_VEC_MUL_SCALAR(temp, step_y, ((tfloat)n/(tfloat)(UTIL_CAMERA_DOF_SAMPLES-1)));
+      MATH_VEC_MUL_SCALAR(temp, step_y, ((TFLOAT)n/(TFLOAT)(UTIL_CAMERA_DOF_SAMPLES-1)));
       MATH_VEC_ADD(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, temp);
       MATH_VEC_UNITIZE(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos);
       MATH_VEC_MUL_SCALAR(camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, camera->view_list[i*UTIL_CAMERA_DOF_SAMPLES+n].pos, mag);
@@ -338,7 +338,7 @@ void* util_camera_render_thread(void *ptr) {
   int d, n, res_ind, scanline, v_scanline;
   TIE_3 pixel, accum, v1, v2;
   tie_ray_t ray;
-  tfloat view_inv;
+  TFLOAT view_inv;
 
 
   td = (util_camera_thread_data_t *)ptr;
@@ -425,14 +425,14 @@ void* util_camera_render_thread(void *ptr) {
 	((char *)(td->res_buf))[res_ind+2] = (unsigned char)(255 * pixel.v[2]);
 	res_ind += 3;
       } else if(td->work.format == COMMON_BIT_DEPTH_128) {
-	tfloat alpha;
+	TFLOAT alpha;
 
 	alpha = 1.0;
 
-	((tfloat *)(td->res_buf))[res_ind + 0] = pixel.v[0];
-	((tfloat *)(td->res_buf))[res_ind + 1] = pixel.v[1];
-	((tfloat *)(td->res_buf))[res_ind + 2] = pixel.v[2];
-	((tfloat *)(td->res_buf))[res_ind + 3] = alpha;
+	((TFLOAT *)(td->res_buf))[res_ind + 0] = pixel.v[0];
+	((TFLOAT *)(td->res_buf))[res_ind + 1] = pixel.v[1];
+	((TFLOAT *)(td->res_buf))[res_ind + 2] = pixel.v[2];
+	((TFLOAT *)(td->res_buf))[res_ind + 3] = alpha;
 
 	res_ind += 4;
       }
@@ -469,7 +469,7 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
   if(work.format == COMMON_BIT_DEPTH_24) {
     *res_len = 3 * work.size_x * work.size_y + sizeof(common_work_t);
   } else if(work.format == COMMON_BIT_DEPTH_128) {
-    *res_len = 4 * sizeof(tfloat) * work.size_x * work.size_y + sizeof(common_work_t);
+    *res_len = 4 * sizeof(TFLOAT) * work.size_x * work.size_y + sizeof(common_work_t);
   }
 
   *res_buf = realloc(*res_buf, *res_len);

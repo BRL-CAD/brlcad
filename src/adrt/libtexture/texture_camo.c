@@ -37,12 +37,12 @@
 #include "umath.h"
 
 
-void texture_camo_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 color1, TIE_3 color2, TIE_3 color3);
+void texture_camo_init(texture_t *texture, TFLOAT size, int octaves, int absolute, TIE_3 color1, TIE_3 color2, TIE_3 color3);
 void texture_camo_free(texture_t *texture);
 void texture_camo_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
 
 
-void texture_camo_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 color1, TIE_3 color2, TIE_3 color3) {
+void texture_camo_init(texture_t *texture, TFLOAT size, int octaves, int absolute, TIE_3 color1, TIE_3 color2, TIE_3 color3) {
   texture_camo_t   *sd;
 
   texture->data = malloc(sizeof(texture_camo_t));
@@ -73,7 +73,7 @@ void texture_camo_free(texture_t *texture) {
 void texture_camo_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel) {
   texture_camo_t *td;
   TIE_3 p, pt;
-  tfloat sum1, sum2;
+  TFLOAT sum1, sum2;
 
 
   td = (texture_camo_t *)texture->data;

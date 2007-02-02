@@ -133,7 +133,7 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
     case ISST_OP_SPALL:
       {
 	tie_ray_t ray;
-	tfloat angle;
+	TFLOAT angle;
 	void *mesg;
 	int dlen;
 
@@ -148,8 +148,8 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
 	ind += sizeof(TIE_3);
 
 	/* angle */
-	memcpy(&angle, &((char *)data)[ind], sizeof(tfloat));
-	ind += sizeof(tfloat);
+	memcpy(&angle, &((char *)data)[ind], sizeof(TFLOAT));
+	ind += sizeof(TFLOAT);
 
 	/* Fire the shot */
 	ray.depth = 0;
@@ -230,7 +230,7 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
 	  case RENDER_METHOD_SPALL:
 	    {
 	      TIE_3 shot_pos, shot_dir;
-	      tfloat angle;
+	      TFLOAT angle;
 
 	      /* Extract shot position and direction */
 	      memcpy(&shot_pos, &((char *)data)[ind], sizeof(TIE_3));
@@ -239,8 +239,8 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
 	      memcpy(&shot_dir, &((char *)data)[ind], sizeof(TIE_3));
 	      ind += sizeof(TIE_3);
 
-	      memcpy(&angle, &((char *)data)[ind], sizeof(tfloat));
-	      ind += sizeof(tfloat);
+	      memcpy(&angle, &((char *)data)[ind], sizeof(TFLOAT));
+	      ind += sizeof(TFLOAT);
 
 	      render_spall_init(&db.env.render, shot_pos, shot_dir, angle); /* 10 degrees for now */
 	    }
@@ -267,7 +267,7 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
 
 #if 0
   gettimeofday(&tv, NULL);
-  printf("[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\r", ++isst_slave_completed, (int)((tfloat)tie->rays_fired / (tfloat)(1000 * (tv.tv_sec - isst_slave_startsec + 1))), tie->rays_fired);
+  printf("[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\r", ++isst_slave_completed, (int)((TFLOAT)tie->rays_fired / (TFLOAT)(1000 * (tv.tv_sec - isst_slave_startsec + 1))), tie->rays_fired);
   fflush(stdout);
 #endif
 }

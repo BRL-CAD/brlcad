@@ -37,12 +37,12 @@
 #include "umath.h"
 
 
-void texture_clouds_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 scale, TIE_3 translate);
+void texture_clouds_init(texture_t *texture, TFLOAT size, int octaves, int absolute, TIE_3 scale, TIE_3 translate);
 void texture_clouds_free(texture_t *texture);
 void texture_clouds_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
 
 
-void texture_clouds_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 scale, TIE_3 translate) {
+void texture_clouds_init(texture_t *texture, TFLOAT size, int octaves, int absolute, TIE_3 scale, TIE_3 translate) {
   texture_clouds_t *td;
 
   texture->data = malloc(sizeof(texture_clouds_t));

@@ -195,7 +195,7 @@ void* rise_observer_networking(void *ptr) {
 
     /* Text Overlay */
     util_display_draw(frame);
-    sprintf(string, "Triangles: %.0fk", (tfloat)rise_observer_trinum / (tfloat)1024);
+    sprintf(string, "Triangles: %.0fk", (TFLOAT)rise_observer_trinum / (TFLOAT)1024);
     util_display_text(string, 0, 0, UTIL_JUSTIFY_RIGHT, UTIL_JUSTIFY_BOTTOM);
 
     sprintf(string, "RES: %dx%d", screen_w, screen_h);

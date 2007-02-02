@@ -37,12 +37,12 @@
 #include "umath.h"
 
 
-void texture_mix_init(texture_t *texture, texture_t *texture1, texture_t *texture2, tfloat coef);
+void texture_mix_init(texture_t *texture, texture_t *texture1, texture_t *texture2, TFLOAT coef);
 void texture_mix_free(texture_t *texture);
 void texture_mix_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
 
 
-void texture_mix_init(texture_t *texture, texture_t *texture1, texture_t *texture2, tfloat coef) {
+void texture_mix_init(texture_t *texture, texture_t *texture1, texture_t *texture2, TFLOAT coef) {
   texture_mix_t *td;
 
   texture->data = malloc(sizeof(texture_mix_t));

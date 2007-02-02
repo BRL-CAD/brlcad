@@ -35,9 +35,9 @@ extern TIE_3 isst_master_camera_position;
 extern TIE_3 isst_master_shot_position;
 extern TIE_3 isst_master_shot_direction;
 extern TIE_3 isst_master_in_hit;
-extern tfloat isst_master_camera_azimuth;
-extern tfloat isst_master_camera_elevation;
-extern tfloat isst_master_spall_angle;
+extern TFLOAT isst_master_camera_azimuth;
+extern TFLOAT isst_master_camera_elevation;
+extern TFLOAT isst_master_spall_angle;
 
 #endif
 

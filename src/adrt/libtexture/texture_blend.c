@@ -61,7 +61,7 @@ void texture_blend_free(texture_t *texture) {
 
 void texture_blend_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel) {
   texture_blend_t *sd;
-  tfloat coef;
+  TFLOAT coef;
 
   sd = (texture_blend_t *)texture->data;
 

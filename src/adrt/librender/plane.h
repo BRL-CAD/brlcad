@@ -32,7 +32,7 @@
 typedef struct render_plane_s {
   TIE_3 ray_pos;
   TIE_3 ray_dir;
-  tfloat plane[4];
+  TFLOAT plane[4];
   tie_t tie;
 } render_plane_t;
 

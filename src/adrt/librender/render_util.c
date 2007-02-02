@@ -41,9 +41,9 @@ typedef struct shotline_s {
 
 
 /* Generate vector list for a spall cone given a reference angle */
-void render_util_spall_vec(TIE_3 dir, tfloat angle, int vec_num, TIE_3 *vec_list) {
+void render_util_spall_vec(TIE_3 dir, TFLOAT angle, int vec_num, TIE_3 *vec_list) {
   TIE_3 vec;
-  tfloat radius, t;
+  TFLOAT radius, t;
   int i;
 
 
@@ -119,23 +119,23 @@ void render_util_shotline_list(tie_t *tie, tie_ray_t *ray, void **data, int *dle
 
   ind = 0;
 
-  *data = (void *)realloc(*data, 6*sizeof(tfloat) + sizeof(int));
+  *data = (void *)realloc(*data, 6*sizeof(TFLOAT) + sizeof(int));
 
   /* pack in hit */
-  memcpy(&((char *)*data)[ind], &shotline.in.v[0], sizeof(tfloat));
-  ind += sizeof(tfloat);
-  memcpy(&((char *)*data)[ind], &shotline.in.v[1], sizeof(tfloat));
-  ind += sizeof(tfloat);
-  memcpy(&((char *)*data)[ind], &shotline.in.v[2], sizeof(tfloat));
-  ind += sizeof(tfloat);
+  memcpy(&((char *)*data)[ind], &shotline.in.v[0], sizeof(TFLOAT));
+  ind += sizeof(TFLOAT);
+  memcpy(&((char *)*data)[ind], &shotline.in.v[1], sizeof(TFLOAT));
+  ind += sizeof(TFLOAT);
+  memcpy(&((char *)*data)[ind], &shotline.in.v[2], sizeof(TFLOAT));
+  ind += sizeof(TFLOAT);
 
   /* pack out hit */
-  memcpy(&((char *)*data)[ind], &shotline.out.v[0], sizeof(tfloat));
-  ind += sizeof(tfloat);
-  memcpy(&((char *)*data)[ind], &shotline.out.v[1], sizeof(tfloat));
-  ind += sizeof(tfloat);
-  memcpy(&((char *)*data)[ind], &shotline.out.v[2], sizeof(tfloat));
-  ind += sizeof(tfloat);
+  memcpy(&((char *)*data)[ind], &shotline.out.v[0], sizeof(TFLOAT));
+  ind += sizeof(TFLOAT);
+  memcpy(&((char *)*data)[ind], &shotline.out.v[1], sizeof(TFLOAT));
+  ind += sizeof(TFLOAT);
+  memcpy(&((char *)*data)[ind], &shotline.out.v[2], sizeof(TFLOAT));
+  ind += sizeof(TFLOAT);
 
   memcpy(&((char *)*data)[ind], &shotline.mesh_num, sizeof(int));
   ind += sizeof(int);
@@ -160,7 +160,7 @@ void render_util_shotline_list(tie_t *tie, tie_ray_t *ray, void **data, int *dle
 }
 
 
-void render_util_spall_list(tie_t *tie, tie_ray_t *ray, tfloat angle, void **data, int *dlen) {
+void render_util_spall_list(tie_t *tie, tie_ray_t *ray, TFLOAT angle, void **data, int *dlen) {
   shotline_t shotline;
   tie_ray_t sray;
   tie_id_t id;
@@ -213,7 +213,7 @@ void render_util_spall_list(tie_t *tie, tie_ray_t *ray, tfloat angle, void **dat
 
   ind = 0;
 
-  *data = (void *)realloc(*data, 6*sizeof(tfloat) + sizeof(int));
+  *data = (void *)realloc(*data, 6*sizeof(TFLOAT) + sizeof(int));
 
   /* pack in hit */
   memcpy(&((char *)*data)[ind], &shotline.in, sizeof(TIE_3));

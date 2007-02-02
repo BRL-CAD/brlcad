@@ -77,7 +77,7 @@
 	_a = sqrt(_b.v[0]*_b.v[0] + _b.v[1]*_b.v[1] + _b.v[2]*_b.v[2]); }
 
 #define MATH_SWAP(_a,_b) { \
-	tfloat	_c; \
+	TFLOAT	_c; \
 	_c = _b; \
 	_b = _a; \
 	_a = _c; }
@@ -92,7 +92,7 @@
 
 /* _a is transformed vertex, _b is input vertex, _c is 4x4 transformation matrix */
 #define MATH_VEC_TRANSFORM(_a, _b, _c) { \
-	tfloat	w; \
+	TFLOAT	w; \
 	_a.v[0] = (_b.v[0] * _c[0]) + (_b.v[1] * _c[4]) + (_b.v[2] * _c[8]) + _c[12]; \
 	_a.v[1] = (_b.v[0] * _c[1]) + (_b.v[1] * _c[5]) + (_b.v[2] * _c[9]) + _c[13]; \
 	_a.v[2] = (_b.v[0] * _c[2]) + (_b.v[1] * _c[6]) + (_b.v[2] * _c[10]) + _c[14]; \
@@ -108,16 +108,16 @@
 
 /* _a is reflected ray, _b is incident ray, _c is normal */
 #define	MATH_VEC_REFLECT(_a, _b, _c) { \
-	tfloat _d; \
+	TFLOAT _d; \
 	MATH_VEC_DOT(_d, _b, _c); \
 	MATH_VEC_MUL_SCALAR(_a, _c, 2.0*_d); \
 	MATH_VEC_SUB(_a, _b, _a); \
 	MATH_VEC_UNITIZE(_a); }
 
 
-extern	void	math_mat_ident(tfloat *M, int S);						/* Identity Matrix */
-extern	void	math_mat_mult(tfloat *A, int Ar, int Ac, tfloat *B, int Br, int Bc, tfloat *C);	/* Multiply 2 Matrices */
-extern	void	math_mat_invert(tfloat *D, tfloat *M, int S);					/* Invert */
+extern	void	math_mat_ident(TFLOAT *M, int S);						/* Identity Matrix */
+extern	void	math_mat_mult(TFLOAT *A, int Ar, int Ac, TFLOAT *B, int Br, int Bc, TFLOAT *C);	/* Multiply 2 Matrices */
+extern	void	math_mat_invert(TFLOAT *D, TFLOAT *M, int S);					/* Invert */
 
 #endif
 

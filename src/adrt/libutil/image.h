@@ -51,7 +51,7 @@ void	util_image_save_raw(char *filename, void *image, int w, int h);
 void	util_image_convert_128to24(void *image24, void *image128, int w, int h);
 void	util_image_convert_32to24(void *image24, void *image32, int w, int h, int endian);
 
-extern tfloat	*rise_image_raw;
+extern TFLOAT	*rise_image_raw;
 
 #endif
 

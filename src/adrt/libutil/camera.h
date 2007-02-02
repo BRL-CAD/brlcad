@@ -55,9 +55,9 @@ typedef struct util_camera_view_s {
 typedef struct util_camera_s {
   TIE_3 pos;
   TIE_3 focus;
-  tfloat tilt;
-  tfloat fov;
-  tfloat dof;
+  TFLOAT tilt;
+  TFLOAT fov;
+  TFLOAT dof;
   int thread_num;
   int view_num;
   util_camera_view_t *view_list;

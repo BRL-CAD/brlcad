@@ -114,7 +114,7 @@ void bench(char *proj, int cache, int image) {
   void *res_buf;
   unsigned char *image24;
   clock_t ticks1, ticks2, ticks3;
-  tfloat t;
+  TFLOAT t;
 
 
   ticks1 = clock();
@@ -184,8 +184,8 @@ void bench(char *proj, int cache, int image) {
   util_camera_prep(&camera, &db);
 
   /* Allocate memory for a frame */
-  bench_frame = malloc(4 * sizeof(tfloat) * db.env.img_w * db.env.img_h);
-  memset(bench_frame, 0, 4 * sizeof(tfloat) * db.env.img_w * db.env.img_h);
+  bench_frame = malloc(4 * sizeof(TFLOAT) * db.env.img_w * db.env.img_h);
+  memset(bench_frame, 0, 4 * sizeof(TFLOAT) * db.env.img_w * db.env.img_h);
 
   /* Render an image */
   work.orig_x = 0;
@@ -200,8 +200,8 @@ void bench(char *proj, int cache, int image) {
   util_camera_render(&camera, &db, &tie, &work, sizeof(common_work_t), &res_buf, &res_len);
   ticks3 = clock();
 
-  printf("prep   time: %.3f sec\n", (tfloat)(ticks2 - ticks1) / (tfloat)CLOCKS_PER_SEC);
-  t = (tfloat)(ticks3 - ticks2) / (tfloat)CLOCKS_PER_SEC;
+  printf("prep   time: %.3f sec\n", (TFLOAT)(ticks2 - ticks1) / (TFLOAT)CLOCKS_PER_SEC);
+  t = (TFLOAT)(ticks3 - ticks2) / (TFLOAT)CLOCKS_PER_SEC;
   printf("render time: %.3f sec\n", t);
   printf("rays /  sec: %d\n", (int)((db.env.img_w * db.env.img_h) / t));
   if(image) {

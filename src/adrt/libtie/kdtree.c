@@ -42,7 +42,7 @@
 #include <string.h>
 #include <unistd.h>
 
-tfloat TIE_PREC;
+TFLOAT TIE_PREC;
 
 /*************************************************************
  **************** PRIVATE FUNCTIONS **************************
@@ -88,8 +88,8 @@ static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **ca
     type = 0;
     memcpy(&((char *)*cache)[size], &type, 1);
     size += 1;
-    memcpy(&((char *)*cache)[size], &(node_aligned->axis), sizeof(tfloat));
-    size += sizeof(tfloat);
+    memcpy(&((char *)*cache)[size], &(node_aligned->axis), sizeof(TFLOAT));
+    size += sizeof(TFLOAT);
     split = ((intptr_t)(node_aligned->data)) & 0x3;
     memcpy(&((char *)*cache)[size], &split, 1);
     size += 1;
@@ -179,7 +179,7 @@ static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 tri
    *    this gives 3x3=9 more tests
    */
   TIE_3 v0, v1, v2, normal, e0, e1, e2, fe, p;
-  tfloat min, max, d, t, rad;
+  TFLOAT min, max, d, t, rad;
 
   /* move everything so that the boxcenter is in (0,0,0) */
   MATH_VEC_SUB(v0, triverts[0], (*center));
@@ -330,14 +330,14 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   *****************************************/
   int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice;
   int side[3][MAX_SLICES+MIN_SLICES][2], d, s, k, smax[3], smin, slice_num;
-  tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min, d_max;
+  TFLOAT coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min, d_max;
   tie_tri_t *tri;
 
   /*
   * Calculate number of slices to use as a function of triangle density.
   * Slices as a function of relative node size does not work so well.
   */
-  slice_num = MIN_SLICES + MAX_SLICES * ((tfloat)node_gd->tri_num / (tfloat)tie->tri_num);
+  slice_num = MIN_SLICES + MAX_SLICES * ((TFLOAT)node_gd->tri_num / (TFLOAT)tie->tri_num);
 
   for(d = 0; d < 3; d++) {
     /*
@@ -378,7 +378,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
       cmax[1] = max;
 
       /* construct slices so as not to use the boundaries as slices */
-      coef[d][k] = ((tfloat)k / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
+      coef[d][k] = ((TFLOAT)k / (TFLOAT)(slice_num-1)) * (TFLOAT)(slice_num-2) / (TFLOAT)slice_num + (TFLOAT)1 / (TFLOAT)slice_num;
       cmax[0].v[d] = min.v[d]*(1.0-coef[d][k]) + max.v[d]*coef[d][k];
       cmin[1].v[d] = cmax[0].v[d];
 
@@ -462,8 +462,8 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
     active = 0;
 
     for(k = 0; k < slice_num; k++) {
-/*      printf("slice[%d][%d]: %d < %d\n", d, k, slice[d][k], (int)(MIN_DENSITY * (tfloat)smax[d])); */
-      if(slice[d][k] < (int)(MIN_DENSITY * (tfloat)smax[d])) {
+/*      printf("slice[%d][%d]: %d < %d\n", d, k, slice[d][k], (int)(MIN_DENSITY * (TFLOAT)smax[d])); */
+      if(slice[d][k] < (int)(MIN_DENSITY * (TFLOAT)smax[d])) {
 	if(!active) {
 	  active = 1;
 	  beg = k;
@@ -516,16 +516,16 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   * Lower triangle numbers means there is a higher probability that
   * triangles lack any sort of coherent structure.
   */
-  if((tfloat)(gap[d][1] - gap[d][0]) / (tfloat)slice_num > MIN_SPAN && node_gd->tri_num > 500) {
+  if((TFLOAT)(gap[d][1] - gap[d][0]) / (TFLOAT)slice_num > MIN_SPAN && node_gd->tri_num > 500) {
 /*  printf("choosing slice[%d]: %d->%d :: %d tris\n", d, gap[d][0], gap[d][1], node_gd->tri_num); */
     split = d;
     if(abs(gap[d][0] - slice_num/2) < abs(gap[d][1] - slice_num/2)) {
       /* choose gap[d][0] as splitting plane */
-      split_coef = ((tfloat)gap[d][0] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
+      split_coef = ((TFLOAT)gap[d][0] / (TFLOAT)(slice_num-1)) * (TFLOAT)(slice_num-2) / (TFLOAT)slice_num + (TFLOAT)1 / (TFLOAT)slice_num;
       split_slice = gap[d][0];
     } else {
       /* choose gap[d][1] as splitting plane */
-      split_coef = ((tfloat)gap[d][1] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
+      split_coef = ((TFLOAT)gap[d][1] / (TFLOAT)(slice_num-1)) * (TFLOAT)(slice_num-2) / (TFLOAT)slice_num + (TFLOAT)1 / (TFLOAT)slice_num;
       split_slice = gap[d][1];
     }
   } else {
@@ -802,8 +802,8 @@ void tie_kdtree_cache_load(tie_t *tie, void *cache) {
       }
 
       /* Assign splitting axis value */
-      memcpy(&node->axis, &((char *)cache)[index], sizeof(tfloat));
-      index += sizeof(tfloat);
+      memcpy(&node->axis, &((char *)cache)[index], sizeof(TFLOAT));
+      index += sizeof(TFLOAT);
 
       /* Get splitting plane */
       memcpy(&split, &((char *)cache)[index], 1);

@@ -40,15 +40,15 @@ void render_plane(tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
 typedef struct render_plane_hit_s {
   tie_id_t id;
   common_mesh_t *mesh;
-  tfloat plane[4];
-  tfloat mod;
+  TFLOAT plane[4];
+  TFLOAT mod;
 } render_plane_hit_t;
 
 
 void render_plane_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
   render_plane_t *d;
   TIE_3 list[6], normal, up;
-  tfloat plane[4];
+  TFLOAT plane[4];
 
   render->work = render_plane_work;
   render->free = render_plane_free;
@@ -136,7 +136,7 @@ void render_plane_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   render_plane_hit_t hit;
   TIE_3 vec, color;
   tie_id_t id;
-  tfloat t, angle, dot;
+  TFLOAT t, angle, dot;
 
 
   rd = (render_plane_t *)render->data;

@@ -38,7 +38,7 @@ void* render_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
     MATH_VEC_MUL_SCALAR(id->norm, id->norm, -1.0);
 
   if(t->normals) {
-    tfloat	dot;
+    TFLOAT	dot;
     TIE_3	norm;
 
     norm.v[0] = (1.0 - (id->alpha + id->beta)) * t->normals[0] + id->alpha * t->normals[3] + id->beta * t->normals[6];

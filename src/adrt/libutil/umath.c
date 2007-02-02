@@ -38,13 +38,13 @@
 
 void math_math_init(void);
 void math_math_free(void);
-void math_mat_ident(tfloat *M, int S);
-void math_mat_mult(tfloat *A, int Ar, int Ac, tfloat *B, int Br, int Bc, tfloat *C);
-void MATH_SWAP_rows(tfloat m[16], int r1, int r2);
-void math_mat_invert(tfloat *D, tfloat *M, int S);
+void math_mat_ident(TFLOAT *M, int S);
+void math_mat_mult(TFLOAT *A, int Ar, int Ac, TFLOAT *B, int Br, int Bc, TFLOAT *C);
+void MATH_SWAP_rows(TFLOAT m[16], int r1, int r2);
+void math_mat_invert(TFLOAT *D, TFLOAT *M, int S);
 
 
-void math_mat_ident(tfloat *M, int S) {
+void math_mat_ident(TFLOAT *M, int S) {
   int	i,j;
 
   for(i = 0; i < S; i++)
@@ -53,26 +53,26 @@ void math_mat_ident(tfloat *M, int S) {
 }
 
 
-void math_mat_mult(tfloat *A, int Ar, int Ac, tfloat *B, int Br, int Bc, tfloat *C) {
+void math_mat_mult(TFLOAT *A, int Ar, int Ac, TFLOAT *B, int Br, int Bc, TFLOAT *C) {
   int		i, j, k;
-  tfloat	*M;
+  TFLOAT	*M;
 
   if(Ac == Br) {
-    M = (tfloat*)malloc(sizeof(tfloat)*Ar*Bc);
+    M = (TFLOAT*)malloc(sizeof(TFLOAT)*Ar*Bc);
     for (i = 0; i < Bc; i++)
       for (j = 0; j < Ar; j++) {
 	M[j*Bc+i] = 0;
 	for (k = 0; k < Br; k++)
 	  M[j*Bc+i] += A[j*Ac+k]*B[k*Bc+i];
       }
-    memcpy(C, M, sizeof(tfloat)*Ar*Bc);
+    memcpy(C, M, sizeof(TFLOAT)*Ar*Bc);
     free(M);
   }
 }
 
 
-void MATH_SWAP_rows(tfloat m[16], int r1, int r2) {
-  tfloat        tmp;
+void MATH_SWAP_rows(TFLOAT m[16], int r1, int r2) {
+  TFLOAT        tmp;
   int           i;
 
   for (i= 0; i < 4; i++) {
@@ -83,14 +83,14 @@ void MATH_SWAP_rows(tfloat m[16], int r1, int r2) {
 }
 
 
-void math_mat_invert(tfloat *D, tfloat *M, int S) {
+void math_mat_invert(TFLOAT *D, TFLOAT *M, int S) {
   int           i, j, k;
   int           maxrow;
-  tfloat        maxval;
-  tfloat        val;
-  tfloat        T[16];
+  TFLOAT        maxval;
+  TFLOAT        val;
+  TFLOAT        T[16];
 
-  memcpy(T, M, 16*sizeof(tfloat));
+  memcpy(T, M, 16*sizeof(TFLOAT));
 
   math_mat_ident(D, 4);
   maxval = M[0];
@@ -142,7 +142,7 @@ void math_mat_invert(tfloat *D, tfloat *M, int S) {
     }
   }
 
-  memcpy(M, T, 16*sizeof(tfloat));
+  memcpy(M, T, 16*sizeof(TFLOAT));
 }
 
 /*

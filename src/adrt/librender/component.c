@@ -55,7 +55,7 @@ void render_component_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *
   tie_id_t id;
   common_mesh_t	*m;
   TIE_3 vec;
-  tfloat angle;
+  TFLOAT angle;
 
 
   if((m = (common_mesh_t *)tie_work(tie, ray, &id, component_hit, NULL))) {

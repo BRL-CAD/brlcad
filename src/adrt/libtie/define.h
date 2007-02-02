@@ -55,9 +55,9 @@
 
 /* Type to use for floating precision */
 #if TIE_SINGLE_PREC
-#define tfloat float
+# define TFLOAT float
 #else
-#define tfloat double
+# define TFLOAT double
 #endif
 
 
@@ -109,7 +109,7 @@
  *
  */
 #define	MATH_VEC_UNITIZE(_a) { \
-	tfloat _b = 1/sqrt(_a.v[0]*_a.v[0] + _a.v[1]*_a.v[1] + _a.v[2]*_a.v[2]); \
+	TFLOAT _b = 1/sqrt(_a.v[0]*_a.v[0] + _a.v[1]*_a.v[1] + _a.v[2]*_a.v[2]); \
 	_a.v[0] *= _b; _a.v[1] *= _b; _a.v[2] *= _b; }
 
 /**

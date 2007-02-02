@@ -131,7 +131,7 @@ void* isst_observer_networking(void *ptr) {
   struct sockaddr_in my_addr, srv_addr;
   unsigned int addrlen;
   unsigned char op;
-  tfloat fps;
+  TFLOAT fps;
   int frame_num;
   void *frame;
 #if ISST_USE_COMPRESSION
@@ -273,7 +273,7 @@ void* isst_observer_networking(void *ptr) {
     frame_num++;
     if(!(frame_num % 7)) {
       gettimeofday(&cur, NULL);
-      fps = (tfloat)(frame_num) / ((cur.tv_sec + (tfloat)cur.tv_usec/1000000.0) - (start.tv_sec + (tfloat)start.tv_usec/1000000.0)),
+      fps = (TFLOAT)(frame_num) / ((cur.tv_sec + (TFLOAT)cur.tv_usec/1000000.0) - (start.tv_sec + (TFLOAT)start.tv_usec/1000000.0)),
       start = cur;
       frame_num = 0;
       fflush(stdout);

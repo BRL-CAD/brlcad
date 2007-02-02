@@ -106,9 +106,9 @@ static void tie_tri_prep(tie_t *tie) {
     tri->v[1] = v2.v[i2] - tri->data[0].v[i2];
 
     if(i1 == 0 && i2 == 1) {
-      tri->v = (tfloat *)((intptr_t)(tri->v) + 2);
+      tri->v = (TFLOAT *)((intptr_t)(tri->v) + 2);
     } else if (i1 == 0) {
-      tri->v = (tfloat *)((intptr_t)(tri->v) + 1);
+      tri->v = (TFLOAT *)((intptr_t)(tri->v) + 1);
     }
 
     /* Compute DotVN */
@@ -205,7 +205,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
   tie_tri_t *hit_list[256], *tri;
   tie_geom_t *data;
   tie_kdtree_t *node_aligned, *temp[2];
-  tfloat near, far, dirinv[3], dist;
+  TFLOAT near, far, dirinv[3], dist;
   int i, n, ab[3], split, stack_ind, hit_count;
   void *result;
 
@@ -303,7 +303,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       /*
       * Triangle Intersection Code
       */
-      tfloat u0, v0, *v;
+      TFLOAT u0, v0, *v;
       int i1, i2;
 
       tri = data->tri_list[i];
@@ -325,7 +325,7 @@ void* tie_work(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ra
       MATH_VEC_ADD(t.pos, ray->pos, t.pos);
 
       /* Extract i1 and i2 indices from lower bits of the v pointer */
-      v = (tfloat *)((intptr_t)(tri->v) & ~0x7L);
+      v = (TFLOAT *)((intptr_t)(tri->v) & ~0x7L);
 
       i1 = TIE_TAB1[((intptr_t)(tri->v) & 0x7)];
       i2 = TIE_TAB1[3 + ((intptr_t)(tri->v) & 0x7)];
@@ -429,7 +429,7 @@ void tie_push(tie_t *tie, TIE_3 *tlist, int tnum, void *plist, int pstride) {
     } else {
       tie->tri_list[tie->tri_num].ptr = NULL;
     }
-    tie->tri_list[tie->tri_num].v = (tfloat *)malloc(2*sizeof(tfloat));
+    tie->tri_list[tie->tri_num].v = (TFLOAT *)malloc(2*sizeof(TFLOAT));
     tie->tri_num++;
   }
 }

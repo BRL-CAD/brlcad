@@ -41,7 +41,7 @@
 
 
 typedef struct texture_clouds_s {
-  tfloat size;
+  TFLOAT size;
   int octaves;
   int absolute;
   TIE_3	scale;
@@ -50,7 +50,7 @@ typedef struct texture_clouds_s {
 } texture_clouds_t;
 
 
-extern	void	texture_clouds_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 scale, TIE_3 translate);
+extern	void	texture_clouds_init(texture_t *texture, TFLOAT size, int octaves, int absolute, TIE_3 scale, TIE_3 translate);
 extern	void	texture_clouds_free(texture_t *texture);
 extern	void	texture_clouds_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
 

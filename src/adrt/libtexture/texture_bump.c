@@ -62,7 +62,7 @@ void texture_bump_free(texture_t *texture) {
 void texture_bump_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel) {
   texture_bump_t *sd;
   TIE_3 n;
-  tfloat d;
+  TFLOAT d;
 
 
   sd = (texture_bump_t *)texture->data;

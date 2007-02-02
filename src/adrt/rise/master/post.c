@@ -29,7 +29,7 @@
 #include <string.h>
 
 
-void rise_post_process(tfloat *image, int w, int h) {
+void rise_post_process(TFLOAT *image, int w, int h) {
   int	i;
 
   for(i = 0; i < 4 * w * h; i++)

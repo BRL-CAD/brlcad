@@ -56,10 +56,10 @@ typedef struct common_work_s {
 /* Properties */
 typedef struct common_prop_s {
   TIE_3 color; /* base color of the material */
-  tfloat density; /* density of the material, x-ray/vulnerability stuff */
-  tfloat gloss; /* smoothness of the surface, ability to reflect */
-  tfloat emission; /* emission, power of light source */
-  tfloat ior; /* index of refraction */
+  TFLOAT density; /* density of the material, x-ray/vulnerability stuff */
+  TFLOAT gloss; /* smoothness of the surface, ability to reflect */
+  TFLOAT emission; /* emission, power of light source */
+  TFLOAT ior; /* index of refraction */
 } common_prop_t;
 
 
@@ -67,7 +67,7 @@ typedef struct common_prop_s {
 struct common_mesh_s;
 typedef struct common_triangle_s {
   struct common_mesh_s *mesh;
-  tfloat *normals;
+  TFLOAT *normals;
 } common_triangle_t;
 
 
@@ -76,8 +76,8 @@ typedef struct common_mesh_s {
   int flags;
   char name[256];
   TIE_3 min, max;
-  tfloat matrix[16];
-  tfloat matinv[16];
+  TFLOAT matrix[16];
+  TFLOAT matinv[16];
   common_prop_t *prop;
   struct texture_s *texture;
   int tri_num;
@@ -87,16 +87,16 @@ typedef struct common_mesh_s {
 
 typedef struct common_anim_transform_s {
   char mesh_name[256];
-  tfloat matrix[16];
+  TFLOAT matrix[16];
 } common_anim_transform_t;
 
 
 typedef struct common_anim_frame_s {
   TIE_3 pos;
   TIE_3 focus;
-  tfloat tilt;
-  tfloat fov;
-  tfloat dof;
+  TFLOAT tilt;
+  TFLOAT fov;
+  TFLOAT dof;
   int tnum;
   common_anim_transform_t *tlist;
 } common_anim_frame_t;

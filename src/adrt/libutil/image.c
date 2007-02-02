@@ -125,9 +125,9 @@ void util_image_convert_128to24(void *image24, void *image128, int w, int h) {
   int i;
 
   for(i = 0; i < w * h; i++) {
-    ((unsigned char *)image24)[3*i+0] = (unsigned char)(255.0 * ((tfloat *)image128)[4*i+0]);
-    ((unsigned char *)image24)[3*i+1] = (unsigned char)(255.0 * ((tfloat *)image128)[4*i+1]);
-    ((unsigned char *)image24)[3*i+2] = (unsigned char)(255.0 * ((tfloat *)image128)[4*i+2]);
+    ((unsigned char *)image24)[3*i+0] = (unsigned char)(255.0 * ((TFLOAT *)image128)[4*i+0]);
+    ((unsigned char *)image24)[3*i+1] = (unsigned char)(255.0 * ((TFLOAT *)image128)[4*i+1]);
+    ((unsigned char *)image24)[3*i+2] = (unsigned char)(255.0 * ((TFLOAT *)image128)[4*i+2]);
   }
 }
 

@@ -29,7 +29,7 @@
 
 #include "cdb.h"
 
-extern	void	rise_post_process(tfloat *image, int w, int h);
+extern	void	rise_post_process(TFLOAT *image, int w, int h);
 
 #endif
 

@@ -102,8 +102,8 @@ void rise_master(int port, int obs_port, char *proj, char *list, char *exec, int
   rise_master_tile_num = (db.env.img_w * db.env.img_h) / (db.env.tile_w * db.env.tile_h);
   tienet_master_init(port, rise_master_result, list, exec, 10, RISE_VER_KEY);
 
-  rise_master_frame = malloc(4 * sizeof(tfloat) * db.env.img_w * db.env.img_h);
-  memset(rise_master_frame, 0, 4 * sizeof(tfloat) * db.env.img_w * db.env.img_h);
+  rise_master_frame = malloc(4 * sizeof(TFLOAT) * db.env.img_w * db.env.img_h);
+  memset(rise_master_frame, 0, 4 * sizeof(TFLOAT) * db.env.img_w * db.env.img_h);
 
   /* Launch a thread to handle networking */
   pthread_create(&rise_master_networking_thread, NULL, rise_master_networking,&obs_port);
@@ -173,12 +173,12 @@ void rise_master_result(void *res_buf, int res_len) {
 
   ind = 0;
   for(i = work.orig_y; i < work.orig_y + work.size_y; i++) {
-    memcpy(&((char *)rise_master_frame)[4 * sizeof(tfloat) * (work.orig_x + i * db.env.img_w)], &rgb_data[ind], 4*sizeof(tfloat)*work.size_x);
-    ind += 4 * sizeof(tfloat) * work.size_x;
+    memcpy(&((char *)rise_master_frame)[4 * sizeof(TFLOAT) * (work.orig_x + i * db.env.img_w)], &rgb_data[ind], 4*sizeof(TFLOAT)*work.size_x);
+    ind += 4 * sizeof(TFLOAT) * work.size_x;
   }
 
   /* Progress Indicator */
-  printf("Progress: %.1f%%\r", 100 * (tfloat)rise_master_work_ind / (tfloat)rise_master_tile_num);
+  printf("Progress: %.1f%%\r", 100 * (TFLOAT)rise_master_work_ind / (TFLOAT)rise_master_tile_num);
   fflush(stdout);
 /*printf("result: %d %d\n", work.orig_x, work.orig_y); */
 
@@ -205,7 +205,7 @@ void* rise_master_networking(void *ptr) {
   struct sockaddr_in master, observer;
   fd_set readfds;
   int port, master_socket, highest_fd, new_socket, error;
-  tfloat cam[8];
+  TFLOAT cam[8];
   unsigned int addrlen;
   unsigned char op;
   short endian;

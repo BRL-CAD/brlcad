@@ -34,7 +34,7 @@ typedef	struct TIE_3_t {
 } TIE_3;
 
 
-#define unitize(_a) { \
+#define UNITIZE(_a) { \
 	float _b = sqrt(_a.v[0]*_a.v[0] + _a.v[1]*_a.v[1] + _a.v[2]*_a.v[2]); \
 	_a.v[0] /= _b; _a.v[1] /= _b; _a.v[2] /= _b; }
 
@@ -103,7 +103,7 @@ int main(int argc, char *args[]) {
     for(i = 0; i < 3; i++)
       T.v[i] = sin_theta*cos_phi*bax.v[i] + sin_theta*sin_phi*bay.v[i] + cos_theta*n.v[i];
     if(atoi(args[3]))
-      unitize(T);
+      UNITIZE(T);
     printf("%f %f %f\n", T.v[0], T.v[1], T.v[2]);
   }
   }

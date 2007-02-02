@@ -79,7 +79,7 @@ void rise_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
 
 #if 0
   gettimeofday(&tv, NULL);
-  printf("[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\r", ++rise_slave_completed, (int)((tfloat)tie->rays_fired / (tfloat)(1000 * (tv.tv_sec - rise_slave_startsec + 1))), tie->rays_fired);
+  printf("[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\r", ++rise_slave_completed, (int)((TFLOAT)tie->rays_fired / (TFLOAT)(1000 * (tv.tv_sec - rise_slave_startsec + 1))), tie->rays_fired);
   fflush(stdout);
 #endif
 }
@@ -96,13 +96,13 @@ void rise_slave_mesg(void *mesg, int mesg_len) {
       TIE_3	pos;
       TIE_3	foc;
 
-      memcpy(&pos.v[0], &((char*)mesg)[2], sizeof(tfloat));
-      memcpy(&pos.v[1], &((char*)mesg)[2+1*sizeof(tfloat)], sizeof(tfloat));
-      memcpy(&pos.v[2], &((char*)mesg)[2+2*sizeof(tfloat)], sizeof(tfloat));
+      memcpy(&pos.v[0], &((char*)mesg)[2], sizeof(TFLOAT));
+      memcpy(&pos.v[1], &((char*)mesg)[2+1*sizeof(TFLOAT)], sizeof(TFLOAT));
+      memcpy(&pos.v[2], &((char*)mesg)[2+2*sizeof(TFLOAT)], sizeof(TFLOAT));
 
-      memcpy(&foc.v[0], &((char*)mesg)[2+3*sizeof(tfloat)], sizeof(tfloat));
-      memcpy(&foc.v[1], &((char*)mesg)[2+4*sizeof(tfloat)], sizeof(tfloat));
-      memcpy(&foc.v[2], &((char*)mesg)[2+5*sizeof(tfloat)], sizeof(tfloat));
+      memcpy(&foc.v[0], &((char*)mesg)[2+3*sizeof(TFLOAT)], sizeof(TFLOAT));
+      memcpy(&foc.v[1], &((char*)mesg)[2+4*sizeof(TFLOAT)], sizeof(TFLOAT));
+      memcpy(&foc.v[2], &((char*)mesg)[2+5*sizeof(TFLOAT)], sizeof(TFLOAT));
 
       camera.pos = pos;
       camera.focus = foc;
