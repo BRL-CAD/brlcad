@@ -189,8 +189,8 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		pg = (struct rt_pg_internal *)internal.idb_ptr;
 		RT_PG_CK_MAGIC( pg );
 
-		verts = (fastf_t *)bu_calloc( pg->max_npts*3, sizeof( fastf_t ), "f_mirror: verts" );
-		norms = (fastf_t *)bu_calloc( pg->max_npts*3, sizeof( fastf_t ), "f_mirror: norms" );
+		verts = (fastf_t *)bu_calloc( pg->max_npts*3, sizeof( fastf_t ), "rt_mirror: verts" );
+		norms = (fastf_t *)bu_calloc( pg->max_npts*3, sizeof( fastf_t ), "rt_mirror: norms" );
 
 		for( i=0 ; i<pg->npoly ; i++ ) {
 		    int last;
@@ -211,8 +211,8 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		    }
 		}
 
-		bu_free( (char *)verts, "f_mirror: verts" );
-		bu_free( (char *)norms, "f_mirror: norms" );
+		bu_free( (char *)verts, "rt_mirror: verts" );
+		bu_free( (char *)norms, "rt_mirror: norms" );
 
 		break;
 	    }
@@ -254,7 +254,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 
 		    /* allocat memory for a new control mesh */
 		    ncoords = RT_NURB_EXTRACT_COORDS( nurb->srfs[i]->pt_type );
-		    ptr = (fastf_t *)bu_calloc( orig_size[0]*orig_size[1]*ncoords, sizeof( fastf_t ), "f_mirror: ctl mesh ptr" );
+		    ptr = (fastf_t *)bu_calloc( orig_size[0]*orig_size[1]*ncoords, sizeof( fastf_t ), "rt_mirror: ctl mesh ptr" );
 
 		    /* mirror each control point */
 		    for( j=0 ; j<orig_size[0]*orig_size[1] ; j++ ) {
@@ -272,7 +272,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		    }
 
 		    /* free old mesh */
-		    bu_free( (char *)nurb->srfs[i]->ctl_points , "f_mirror: ctl points" );
+		    bu_free( (char *)nurb->srfs[i]->ctl_points , "rt_mirror: ctl points" );
 
 		    /* put new mesh in place */
 		    nurb->srfs[i]->ctl_points = ptr;
@@ -466,7 +466,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		}
 
 		/* now reverse order of vertices in each curve */
-		tmp_curve = (fastf_t *)bu_calloc( 3*ars->pts_per_curve, sizeof( fastf_t ), "f_mirror: tmp_curve" );
+		tmp_curve = (fastf_t *)bu_calloc( 3*ars->pts_per_curve, sizeof( fastf_t ), "rt_mirror: tmp_curve" );
 		for( i=0 ; i<ars->ncurves ; i++ ) {
 		    /* reverse vertex order */
 		    for( j=0 ; j<ars->pts_per_curve ; j++ ) {
@@ -477,7 +477,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		    bcopy( tmp_curve, ars->curves[i], ars->pts_per_curve*3*sizeof( fastf_t ) );
 		}
 
-		bu_free( (char *)tmp_curve, "f_mirror: tmp_curve" );
+		bu_free( (char *)tmp_curve, "rt_mirror: tmp_curve" );
 
 		break;
 	    }
