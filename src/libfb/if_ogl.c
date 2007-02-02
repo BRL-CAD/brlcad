@@ -107,7 +107,7 @@ HIDDEN void		ogl_cminit(register FBIO *ifp);
 #if 0
 HIDDEN void		reorder_cursor();
 #endif
-HIDDEN XVisualInfo *	ogl_choose_visual(FBIO *ifp);
+HIDDEN XVisualInfo *	fb_ogl_choose_visual(FBIO *ifp);
 HIDDEN int		is_linear_cmap(register FBIO *ifp);
 
 HIDDEN int	ogl_nwindows = 0; 	/* number of open windows */
@@ -122,35 +122,35 @@ int ogl_open_existing(FBIO *ifp, int argc, char **argv);
 int ogl_close_existing(FBIO *ifp);
 int _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap);
 
-HIDDEN int	ogl_open(FBIO *ifp, char *file, int width, int height),
-    ogl_close(FBIO *ifp),
-    ogl_clear(FBIO *ifp, unsigned char *pp),
-    ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
-    ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int count),
-    ogl_rmap(register FBIO *ifp, register ColorMap *cmp),
-    ogl_wmap(register FBIO *ifp, register const ColorMap *cmp),
-    ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
-    ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
-    ogl_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
-    ogl_cursor(FBIO *ifp, int mode, int x, int y),
+HIDDEN int fb_ogl_open(FBIO *ifp, char *file, int width, int height);
+HIDDEN int fb_ogl_close(FBIO *ifp);
+HIDDEN int ogl_clear(FBIO *ifp, unsigned char *pp);
+HIDDEN int ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count);
+HIDDEN int ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int count);
+HIDDEN int ogl_rmap(register FBIO *ifp, register ColorMap *cmp);
+HIDDEN int ogl_wmap(register FBIO *ifp, register const ColorMap *cmp);
+HIDDEN int ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
+HIDDEN int ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
+HIDDEN int ogl_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
+HIDDEN int ogl_cursor(FBIO *ifp, int mode, int x, int y);
 #if 0
-    ogl_getcursor(),
-    ogl_readrect(),
-    fb_cnull(),
+HIDDEN int ogl_getcursor();
+HIDDEN int ogl_readrect();
+HIDDEN int fb_cnull();
 #endif
-    ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
-    ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
-    ogl_poll(FBIO *ifp),
-    ogl_flush(FBIO *ifp),
-    ogl_free(FBIO *ifp),
-    ogl_help(FBIO *ifp);
+HIDDEN int ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
+HIDDEN int ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
+HIDDEN int ogl_poll(FBIO *ifp);
+HIDDEN int ogl_flush(FBIO *ifp);
+HIDDEN int ogl_free(FBIO *ifp);
+HIDDEN int ogl_help(FBIO *ifp);
 
 /* This is the ONLY thing that we normally "export" */
 FBIO ogl_interface =
     {
 	0,			/* magic number slot	*/
-	ogl_open,		/* open device		*/
-	ogl_close,		/* close device		*/
+	fb_ogl_open,		/* open device		*/
+	fb_ogl_close,		/* close device		*/
 	ogl_clear,		/* clear device		*/
 	ogl_read,		/* read	pixels		*/
 	ogl_write,		/* write pixels		*/
@@ -685,7 +685,7 @@ ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npi
 
 
 HIDDEN int
-ogl_open(FBIO *ifp, char *file, int width, int height)
+fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 {
 
     int		f;
@@ -757,18 +757,18 @@ ogl_open(FBIO *ifp, char *file, int width, int height)
      */
 
     if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
-	fb_log("ogl_open:  sgiinfo malloc failed\n");
+	fb_log("fb_ogl_open:  sgiinfo malloc failed\n");
 	return(-1);
     }
     if( (OGLL(ifp) = (char *)calloc( 1, sizeof(struct oglinfo) )) == NULL )  {
-	fb_log("ogl_open:  oglinfo malloc failed\n");
+	fb_log("fb_ogl_open:  oglinfo malloc failed\n");
 	return(-1);
     }
 
     SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
 
     if (ogl_nwindows && !multiple_windows){
-	fb_log("Warning - ogl_open: Multiple windows opened. Use /dev/oglm for first window!");
+	fb_log("Warning - fb_ogl_open: Multiple windows opened. Use /dev/oglm for first window!");
     }
 
     /* Anyone can turn this on; no one can turn it off */
@@ -812,7 +812,7 @@ ogl_open(FBIO *ifp, char *file, int width, int height)
 	    exit(0);
 	    /* NOTREACHED */
 	} else if( f < 0 )  {
-	    fb_log("ogl_open:  linger-mode fork failure\n");
+	    fb_log("fb_ogl_open:  linger-mode fork failure\n");
 	    return(-1);
 	}
 	/* Child Process falls through */
@@ -871,7 +871,7 @@ ogl_open(FBIO *ifp, char *file, int width, int height)
     /* Open an X connection to the display.  Sending NULL to XOpenDisplay
        tells it to use the DISPLAY environment variable. */
     if( (OGL(ifp)->dispp = XOpenDisplay(NULL)) == NULL ) {
-	fb_log("ogl_open: Failed to open display.  Check DISPLAY environment variable.\n");
+	fb_log("fb_ogl_open: Failed to open display.  Check DISPLAY environment variable.\n");
 	return (-1);
     }
     ifp->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
@@ -881,8 +881,8 @@ ogl_open(FBIO *ifp, char *file, int width, int height)
     }
 
     /* Choose an appropriate visual. */
-    if( (OGL(ifp)->vip = ogl_choose_visual(ifp)) == NULL ) {
-	fb_log("ogl_open: Couldn't find an appropriate visual.  Exiting.\n");
+    if( (OGL(ifp)->vip = fb_ogl_choose_visual(ifp)) == NULL ) {
+	fb_log("fb_ogl_open: Couldn't find an appropriate visual.  Exiting.\n");
 	return (-1);
     }
 
@@ -1070,11 +1070,11 @@ _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
      */
 
     if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
-	fb_log("ogl_open:  sgiinfo malloc failed\n");
+	fb_log("fb_ogl_open:  sgiinfo malloc failed\n");
 	return -1;
     }
     if( (OGLL(ifp) = (char *)calloc( 1, sizeof(struct oglinfo) )) == NULL )  {
-	fb_log("ogl_open:  oglinfo malloc failed\n");
+	fb_log("fb_ogl_open:  oglinfo malloc failed\n");
 	return -1;
     }
 
@@ -1142,7 +1142,7 @@ ogl_final_close(FBIO *ifp)
 	if( SGI(ifp)->mi_shmid != -1 ) {
 	    /* detach from shared memory */
 	    if( shmdt( ifp->if_mem ) == -1 ) {
-		fb_log("ogl_close shmdt failed, errno=%d\n",
+		fb_log("fb_ogl_close shmdt failed, errno=%d\n",
 		       errno);
 		return -1;
 	    }
@@ -1166,7 +1166,7 @@ ogl_final_close(FBIO *ifp)
 
 
 HIDDEN int
-ogl_close(FBIO *ifp)
+fb_ogl_close(FBIO *ifp)
 {
 
     ogl_flush( ifp );
@@ -1179,7 +1179,7 @@ ogl_close(FBIO *ifp)
 	return ogl_final_close( ifp );
 
     if( CJDEBUG )
-	printf("ogl_close: remaining open to linger awhile.\n");
+	printf("fb_ogl_close: remaining open to linger awhile.\n");
 
     /*
      *  else:
@@ -1230,7 +1230,7 @@ ogl_close_existing(FBIO *ifp)
 	if( SGI(ifp)->mi_shmid != -1 ) {
 	    /* detach from shared memory */
 	    if( shmdt( ifp->if_mem ) == -1 ) {
-		fb_log("ogl_close shmdt failed, errno=%d\n",
+		fb_log("fb_ogl_close: shmdt failed, errno=%d\n",
 		       errno);
 		return -1;
 	    }
@@ -2503,7 +2503,7 @@ backbuffer_to_screen(register FBIO *ifp, int one_y)
  * Return NULL on failure.
  */
 HIDDEN XVisualInfo *
-ogl_choose_visual(FBIO *ifp)
+fb_ogl_choose_visual(FBIO *ifp)
 {
 
     XVisualInfo *vip, *vibase, *maxvip, template;
@@ -2555,7 +2555,7 @@ ogl_choose_visual(FBIO *ifp)
 
 	    /* this visual meets criteria */
 	    if( j >= NGOOD-1 )  {
-		fb_log("ogl_open:  More than %d candidate visuals!\n", NGOOD);
+		fb_log("fb_ogl_open:  More than %d candidate visuals!\n", NGOOD);
 		break;
 	    }
 	    good[j++] = i;
@@ -2583,7 +2583,7 @@ ogl_choose_visual(FBIO *ifp)
 	if (m_hard_cmap) {
 	    /* relax hardware colormap requirement */
 	    m_hard_cmap = 0;
-	    fb_log("ogl_open: hardware colormapping not available. Using software colormap.\n");
+	    fb_log("fb_ogl_open: hardware colormapping not available. Using software colormap.\n");
 	} else if (m_sing_buf) {
 	    /* relax single buffering requirement.
 	     * no need for any warning - we'll just use
@@ -2593,7 +2593,7 @@ ogl_choose_visual(FBIO *ifp)
 	} else if (m_doub_buf) {
 	    /* relax double buffering requirement. */
 	    m_doub_buf = 0;
-	    fb_log("ogl_open: double buffering not available. Using single buffer.\n");
+	    fb_log("fb_ogl_open: double buffering not available. Using single buffer.\n");
 	} else {
 	    /* nothing else to relax */
 	    return(NULL);
