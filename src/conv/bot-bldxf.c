@@ -39,10 +39,8 @@
 #include "../librt/debug.h"
 
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() */
 char *options = "hd:";
-extern char *optarg;
-extern int optind, opterr, getopt();
 
 char *progname = "(noname)";
 #define DEBUG_NAMES 1
@@ -77,19 +75,19 @@ int parse_args(int ac, char *av[])
     else
 	++progname;
 
-    /* Turn off getopt's error messages */
-    opterr = 0;
+    /* Turn off bu_getopt's error messages */
+    bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=getopt(ac,av,options)) != EOF)
+    while ((c=bu_getopt(ac,av,options)) != EOF)
 	switch (c) {
-	case 'd'	: debug = strtol(optarg, NULL, 16); break;
+	case 'd'	: debug = strtol(bu_optarg, NULL, 16); break;
 	case '?'	:
 	case 'h'	:
 	default		: usage("Bad or help flag specified\n"); break;
 	}
 
-    return(optind);
+    return(bu_optind);
 }
 
 

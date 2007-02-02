@@ -3694,8 +3694,8 @@ make_Script(char *file)
 int
 pars_Argv(int argc, register char **argv)
 {	register int	c;
-		extern int	optind;
-		extern char	*optarg;
+		extern int	bu_optind;
+		extern char	*bu_optarg;
 	prog_id = argv[0];
 
 	/* Initialize terminal I/O. */
@@ -3713,7 +3713,7 @@ pars_Argv(int argc, register char **argv)
 
 	/* Parse options. */
 	while(	(c =
-		getopt( argc, argv, "A:D:I:G:K:O:S:T:X:a:b:c:d:e:f:g:i:j:k:n:o:p:s:t:v:w:x:y:z:" )
+		bu_getopt( argc, argv, "A:D:I:G:K:O:S:T:X:a:b:c:d:e:f:g:i:j:k:n:o:p:s:t:v:w:x:y:z:" )
 		)
 		!= EOF
 		)
@@ -3721,7 +3721,7 @@ pars_Argv(int argc, register char **argv)
 		switch( c )
 			{
 		default :
-			if( ! user_Opt(	c, optarg ) )
+			if( ! user_Opt(	c, bu_optarg ) )
 				{
 				(void) printf( "Failure of user_Opt(%c)", c );
 				return	0;
@@ -3735,14 +3735,14 @@ pars_Argv(int argc, register char **argv)
 	prnt_Event( "Reading data base..." );
 
 	/* Check for data base name. */
-	if( (ged_file = argv[optind++]) == NULL )
+	if( (ged_file = argv[bu_optind++]) == NULL )
 		{
 		bu_log( "No GED file or objects!\n" );
 		return	0;
 		}
 
 	/* Check for objects to raytrace. */
-	if( argv[optind] == NULL )
+	if( argv[bu_optind] == NULL )
 		{
 		bu_log( "Must specify GED objects!\n" );
 		return	0;
@@ -3758,19 +3758,19 @@ pars_Argv(int argc, register char **argv)
 	prnt_Timer( "DIR" );
 
 	/* Load the desired portion of the model. */
-	objects = &argv[optind];
+	objects = &argv[bu_optind];
 	{	register int	ok = 0;
-	while( argv[optind] != NULL )
+	while( argv[bu_optind] != NULL )
 		{
 		if( tty )
 			{	char	prnt_buf[MAX_LN];
 			(void) sprintf(	prnt_buf,
 					"Loading \"%s\"...",
-					argv[optind]
+					argv[bu_optind]
 					);
 			prnt_Event( prnt_buf );
 			}
-		if( rt_gettree( rt_ip, argv[optind++] ) == 0 )
+		if( rt_gettree( rt_ip, argv[bu_optind++] ) == 0 )
 			ok++;
 		}
 	prnt_Timer( "LOAD" );

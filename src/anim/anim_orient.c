@@ -76,8 +76,8 @@ extern void	anim_v_unpermute(fastf_t *);
 extern void	anim_dirn2mat(fastf_t *, const fastf_t *, const fastf_t *);
 extern void	anim_v_permute(fastf_t *);
 
-extern int optind;
-extern char *optarg;
+extern int bu_optind;
+extern char *bu_optarg;
 
 int upright;
 int input_mode, output_mode, length, input_units, output_units;

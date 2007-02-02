@@ -44,10 +44,8 @@
 #define min(_a, _b) ((_a) < (_b) ? (_a) : (_b))
 #define max(_a, _b) ((_a) > (_b) ? (_a) : (_b))
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() system call */
 char *options = "w:o:n:t:b:u:c:rlhdm:T:R:";
-extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
 
 int debug = 0;
 char *progname = "(noname)";
@@ -243,18 +241,18 @@ int parse_args(int ac, char **av)
 
 	BU_LIST_INIT(&ol_hd.l);
 
-	/* Turn off getopt's error messages */
-	opterr = 0;
+	/* Turn off bu_getopt's error messages */
+	bu_opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
-		case 'T'	: set_translate(optarg);
+		case 'T'	: set_translate(bu_optarg);
 				units_lock = 1;
 				break;
-		case 'R'	: set_rotate(optarg);
+		case 'R'	: set_rotate(bu_optarg);
 				break;
-		case 'b'	: if (sscanf(optarg, "%lf,%lf,%lf",
+		case 'b'	: if (sscanf(bu_optarg, "%lf,%lf,%lf",
 				     &width, &height, &dy) == 3) {
 					brick_width = width * unit_conv;
 					brick_height = height * unit_conv;
@@ -264,7 +262,7 @@ int parse_args(int ac, char **av)
 					usage("error parsing -b option\n");
 
 				  break;
-		case 'c'	: if (sscanf(optarg, "%d %d %d", &R, &G, &B)
+		case 'c'	: if (sscanf(bu_optarg, "%d %d %d", &R, &G, &B)
 				     == 3) {
 					color = def_color;
 					color[0] = R & 0x0ff;
@@ -274,7 +272,7 @@ int parse_args(int ac, char **av)
 				  break;
 		case 'd'	: debug = !debug; break;
 		case 'l'	: log_cmds = !log_cmds; break;
-		case 'm'	: if ((dx=atof(optarg)) > 0.0) {
+		case 'm'	: if ((dx=atof(bu_optarg)) > 0.0) {
 					min_mortar = dx * unit_conv;
 					units_lock = 1;
 					make_mortar = 1;
@@ -282,10 +280,10 @@ int parse_args(int ac, char **av)
 					usage("error parsing -m option\n");
 
 				  break;
-		case 'n'	: obj_name = optarg; break;
+		case 'n'	: obj_name = bu_optarg; break;
 		case 'o'	: if (ol_hd.ex == 0.0)
 					usage("set wall dim before openings\n");
-				  else if (sscanf(optarg, "%lf,%lf,%lf,%lf",
+				  else if (sscanf(bu_optarg, "%lf,%lf,%lf,%lf",
 				     &dx, &dy, &width, &height) == 4) {
 					op = (struct opening *)bu_calloc(1, sizeof(struct opening), "calloc opening");
 					BU_LIST_INSERT(&ol_hd.l, &op->l);
@@ -307,17 +305,17 @@ int parse_args(int ac, char **av)
 					usage("error parsing -o option\n");
 				break;
 		case 'r'	: rand_brick_color = !rand_brick_color; break;
-		case 't'	: type = optarg; break;
+		case 't'	: type = bu_optarg; break;
 		case 'u'	: if (units_lock)
 					bu_log(
 					"Warning: attempting to change units in mid-parse\n");
-				if ((dx=rt_units_conversion(optarg)) != 0.0) {
+				if ((dx=rt_units_conversion(bu_optarg)) != 0.0) {
 					unit_conv = dx;
-					units = optarg;
+					units = bu_optarg;
 				} else
 					usage("error parsing -u (units)\n");
 				break;
-		case 'w'	: if (sscanf(optarg, "%lf,%lf",
+		case 'w'	: if (sscanf(bu_optarg, "%lf,%lf",
 				     &width, &height) == 2) {
 					WALL_WIDTH = width * unit_conv;
 					WALL_HEIGHT = height * unit_conv;
@@ -342,7 +340,7 @@ int parse_args(int ac, char **av)
 		(void)fclose(logfile);
 	}
 
-	return(optind);
+	return(bu_optind);
 
 }
 

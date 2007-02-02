@@ -84,10 +84,6 @@ static const char RCSid[] = "$Header$";
 
 using namespace std;
 
-/*
-extern char *optarg;
-extern int optind, opterr, getopt();
-*/
 
 const int NUM_OF_CPUS_TO_USE = 1;
 
@@ -165,25 +161,25 @@ main(int argc, char *argv[])
 	tol.para = 1 - tol.perp;
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "t:a:n:o:r:vx:X:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "t:a:n:o:r:vx:X:")) != EOF) {
 		switch (c) {
 		case 't':		/* calculational tolerance */
-			tol.dist = atof( optarg );
+			tol.dist = atof( bu_optarg );
 			tol.dist_sq = tol.dist * tol.dist;
 		case 'o':		/* Output file name */
 			/* grab output file name */
-			output_file = optarg;
+			output_file = bu_optarg;
 			break;
 		case 'v':		/* verbosity */
 			verbose++;
 			break;
 		case 'x':		/* librt debug flag (see librt/debug.h) */
-			sscanf( optarg, "%x", &rt_g.debug );
+			sscanf( bu_optarg, "%x", &rt_g.debug );
 			bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 			bu_log("\n");
 			break;
 		case 'X':		/* NMG debug flag (see h/nmg.h) */
-			sscanf( optarg, "%x", &rt_g.NMG_debug );
+			sscanf( bu_optarg, "%x", &rt_g.NMG_debug );
 			bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 			bu_log("\n");
 			break;
@@ -194,7 +190,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (optind+1 >= argc) {
+	if (bu_optind+1 >= argc) {
 		fprintf(stderr, usage, argv[0]);
 		exit(1);
 	}
@@ -232,8 +228,8 @@ main(int argc, char *argv[])
 
 	/* Open BRL-CAD database */
 	/* Scan all the records in the database and build a directory */
-	/* rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf)); */
-	rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf));
+	/* rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf)); */
+	rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf));
 	if ( rtip == RTI_NULL) {
 	   fprintf(stderr,"g-xxx: rt_dirbuild failure\n");
 	   exit(1);
@@ -256,12 +252,12 @@ main(int argc, char *argv[])
 	ttol.norm = 0.0;
 
 
-	optind++;
+	bu_optind++;
 
 	/* Walk the trees named on the command line
 	 * outputting combinations and primitives
 	 */
-	for( i=optind ; i<argc ; i++ )
+	for( i=bu_optind ; i<argc ; i++ )
 	{
 	    db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], NUM_OF_CPUS_TO_USE,
 			 &init_state ,region_start, region_end, primitive_func, (genptr_t) &user_data);

@@ -56,7 +56,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "fb.h"
+#include "bu.h"
+
 #include "./vas4.h"
+
 
 int		debug;
 
@@ -76,7 +79,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "dhF:s:S:w:W:n:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "dhF:s:S:w:W:n:N:" )) != EOF )  {
 		switch( c )  {
 		case 'd':
 			debug = 1;
@@ -87,20 +90,20 @@ get_args(int argc, register char **argv)
 			scr_height = scr_width = 1024;
 			break;
 		case 'F':
-			framebuffer = optarg;
+			framebuffer = bu_optarg;
 			break;
 		case 'S':
 		case 's':
 			/* square file size */
-			scr_height = scr_width = atoi(optarg);
+			scr_height = scr_width = atoi(bu_optarg);
 			break;
 		case 'w':
 		case 'W':
-			scr_width = atoi(optarg);
+			scr_width = atoi(bu_optarg);
 			break;
 		case 'n':
 		case 'N':
-			scr_height = atoi(optarg);
+			scr_height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -108,7 +111,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )
+	if( bu_optind >= argc )
 		return(0);
 
 	return(1);		/* OK */
@@ -135,8 +138,8 @@ main(int argc, char **argv)
 		exit( 1 );
 	}
 
-	argc -= (optind-1);
-	argv += (optind-1);
+	argc -= (bu_optind-1);
+	argv += (bu_optind-1);
 
 	/*
 	 *  First group of commands.

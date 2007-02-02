@@ -148,16 +148,16 @@ setup(int argc, char **argv)
 	int *Xlist, *Ylist;
 	int	autosize = 0;
 
-	while ((c = getopt(argc, argv, "D:hsa:n:w:B:M:RSI:T:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "D:hsa:n:w:B:M:RSI:T:")) != EOF) {
 		switch(c) {
 		case 's':
-			width = height = atol(optarg);
+			width = height = atol(bu_optarg);
 		break;
 		case 'n':
-			height = atol(optarg);
+			height = atol(bu_optarg);
 		break;
 		case 'w':
-			width = atol(optarg);
+			width = atol(bu_optarg);
 		break;
 		case 'h':
 			width = height = 1024;
@@ -166,10 +166,10 @@ setup(int argc, char **argv)
 			autosize = 1;
 		break;
 		case 'B':
-			Beta = atof(optarg);
+			Beta = atof(bu_optarg);
 		break;
 		case 'M':
-			Method = atoi(optarg);
+			Method = atoi(bu_optarg);
 		break;
 		case 'R':
 			RandomFlag = msr_unif_init(1,0);
@@ -178,7 +178,7 @@ setup(int argc, char **argv)
 			Surpent = 1;
 		break;
 		case 'I':
-			Levels = atoi(optarg)-1;
+			Levels = atoi(bu_optarg)-1;
 			if (Levels < 1) Levels = 1;
 		break;
 /*
@@ -191,19 +191,19 @@ setup(int argc, char **argv)
  * 255,255).
  */
 		case 'T':
-			--optind;
-			for(i=optind; i < argc && (isdigit(*argv[i]) ||
+			--bu_optind;
+			for(i=bu_optind; i < argc && (isdigit(*argv[i]) ||
 			    (*argv[i] == '-' && isdigit(*(argv[i]+1)))) ; i++);
-			if ((c=i-optind) % 2) {
+			if ((c=i-bu_optind) % 2) {
 				fprintf(stderr,"Missing Y coordent for tone map.\n");
 				exit(1);
 			}
 			Xlist = (int *) bu_malloc((c+2)*sizeof(int), "Xlist");
 			Ylist = (int *) bu_malloc((c+2)*sizeof(int), "Ylist");
 
-			for (j=0;optind < i; ) {
-				Xlist[j] = atoi(argv[optind++]);
-				Ylist[j] = atoi(argv[optind++]);
+			for (j=0;bu_optind < i; ) {
+				Xlist[j] = atoi(argv[bu_optind++]);
+				Ylist[j] = atoi(argv[bu_optind++]);
 				j++;
 			}
 			Xlist[j] = 1024;
@@ -218,7 +218,7 @@ setup(int argc, char **argv)
  * debug statements.  Debug is a level indicator NOT a bit flag.
  */
 		case 'D':
-			Debug = atoi(optarg);
+			Debug = atoi(bu_optarg);
 		break;
 		case '?':
 			fprintf(stderr,usage);
@@ -231,7 +231,7 @@ setup(int argc, char **argv)
  *	the user has given us no input file.  Spit a usage message
  * 	at them and exit.
  */
-	if (optind >= argc) {
+	if (bu_optind >= argc) {
 		if ( isatty(fileno(stdin)) ) {
 			(void) fprintf(stderr,usage);
 			exit(1);
@@ -242,20 +242,20 @@ setup(int argc, char **argv)
 			exit(1);
 		}
 	} else {
-		if (freopen(argv[optind],"r",stdin) == NULL ) {
+		if (freopen(argv[bu_optind],"r",stdin) == NULL ) {
 			(void) fprintf( stderr,
 			    "halftone: cannot open \"%s\" for reading.\n",
-			    argv[optind]);
+			    argv[bu_optind]);
 			exit(1);
 		}
 		if (autosize) {
-			if ( !fb_common_file_size((unsigned long int *)&width, (unsigned long int *)&height, argv[optind], 1)) {
+			if ( !fb_common_file_size((unsigned long int *)&width, (unsigned long int *)&height, argv[bu_optind], 1)) {
 				(void) fprintf(stderr,"halftone: unable to autosize.\n");
 			}
 		}
 	}
 
-	if ( argc > ++optind) {
+	if ( argc > ++bu_optind) {
 		(void) fprintf(stderr,"halftone: excess argument(s) ignored.\n");
 	}
 }

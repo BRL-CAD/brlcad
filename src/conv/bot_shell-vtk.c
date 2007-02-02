@@ -414,25 +414,25 @@ char *argv[];
 	/* Get command line arguments. */
 	bzero( &ap, sizeof( struct application ) );
 	ap.a_onehit = 1;
-	while( (c=getopt( argc, argv, "nmd:g:o:")) != EOF)
+	while( (c=bu_getopt( argc, argv, "nmd:g:o:")) != EOF)
 	{
 		switch( c )
 		{
 			case 'd':	/* debug level */
-				debug = atoi( optarg );
+				debug = atoi( bu_optarg );
 				break;
 			case 'm':	/* use first and last hits */
 				ap.a_onehit = 0;
 				break;
 			case 'g':	/* cell size */
-				cell_size = atof( optarg );
+				cell_size = atof( bu_optarg );
 				if( cell_size < tol.dist ) {
 					bu_log( "Cell size too small!!! (%g)\n", cell_size );
 					exit( 1 );
 				}
 				break;
 			case 'o':	/* VTK polydata output file */
-				output_file = optarg;
+				output_file = bu_optarg;
 				break;
 			case 'n':	/* include normals in the VTK data */
 				use_normals = 1;
@@ -440,7 +440,7 @@ char *argv[];
 		}
 	}
 
-	if (optind+1 >= argc)
+	if (bu_optind+1 >= argc)
 	{
 		bu_log( usage, argv[0] );
 		exit( 1 );
@@ -459,10 +459,10 @@ char *argv[];
 		bu_bomb( "Output file must be specified!!!\n" );
 
 	/* Open BRL-CAD database */
-	database_index = optind;
-	if ((rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf))) == RTI_NULL )
+	database_index = bu_optind;
+	if ((rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf))) == RTI_NULL )
 	{
-		bu_log( "rt_durbuild FAILED on %s\n", argv[optind] );
+		bu_log( "rt_durbuild FAILED on %s\n", argv[bu_optind] );
 		exit(1);
 	}
 
@@ -474,10 +474,10 @@ char *argv[];
 	ap.a_overlap = a_overlap;
 	ap.a_logoverlap = rt_silent_logoverlap;
 
-	while( ++optind < argc )
+	while( ++bu_optind < argc )
 	{
-		if( rt_gettree( rtip, argv[optind] ) < 0 )
-			bu_log( "rt_gettree failed on %s\n", argv[optind] );
+		if( rt_gettree( rtip, argv[bu_optind] ) < 0 )
+			bu_log( "rt_gettree failed on %s\n", argv[bu_optind] );
 	}
 
 	rt_prep( rtip );

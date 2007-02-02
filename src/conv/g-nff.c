@@ -151,43 +151,43 @@ char	*argv[];
 	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:i:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:i:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
-			ttol.abs = atof(optarg);
+			ttol.abs = atof(bu_optarg);
 			ttol.rel = 0.0;
 			break;
 		case 'n':		/* Surface normal tolerance. */
-			ttol.norm = atof(optarg);
+			ttol.norm = atof(bu_optarg);
 			ttol.rel = 0.0;
 			break;
 		case 'o':		/* Output file name. */
-			output_file = optarg;
+			output_file = bu_optarg;
 			break;
 		case 'r':		/* Relative tolerance. */
-			ttol.rel = atof(optarg);
+			ttol.rel = atof(bu_optarg);
 			break;
 		case 'v':
 			verbose++;
 			break;
 		case 'P':
-			ncpu = atoi( optarg );
+			ncpu = atoi( bu_optarg );
 			rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
 			break;
 		case 'x':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 			break;
 		case 'D':
-			tol.dist = atof(optarg);
+			tol.dist = atof(bu_optarg);
 			tol.dist_sq = tol.dist * tol.dist;
 			rt_pr_tol( &tol );
 			break;
 		case 'X':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 			NMG_debug = rt_g.NMG_debug;
 			break;
 		case 'e':		/* Error file name. */
-			error_file = optarg;
+			error_file = bu_optarg;
 			break;
 		case 'i':
 			inches = 1;
@@ -199,7 +199,7 @@ char	*argv[];
 		}
 	}
 
-	if (optind+1 >= argc) {
+	if (bu_optind+1 >= argc) {
 		bu_log( usage, argv[0]);
 		exit(1);
 	}
@@ -231,8 +231,8 @@ char	*argv[];
 	}
 
 	/* Open BRL-CAD database */
-	argc -= optind;
-	argv += optind;
+	argc -= bu_optind;
+	argv += bu_optind;
 	if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
 		perror(argv[0]);
 		exit(1);

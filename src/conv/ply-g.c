@@ -815,12 +815,12 @@ main( int argc, char *argv[] )
 	int c;
 
 	/* get command line arguments */
-	while ((c = getopt(argc, argv, "dvs:")) != EOF)
+	while ((c = bu_getopt(argc, argv, "dvs:")) != EOF)
 	{
 		switch( c )
 		{
 			case 's':	/* scale factor */
-				scale_factor = atof( optarg );
+				scale_factor = atof( bu_optarg );
 				if( scale_factor < SQRT_SMALL_FASTF ) {
 					bu_log( "scale factor too small\n" );
 					bu_log( "%s\n", usage );
@@ -839,13 +839,13 @@ main( int argc, char *argv[] )
 		}
 	}
 
-	if( argc - optind < 2 ) {
+	if( argc - bu_optind < 2 ) {
 		bu_log( "%s\n",usage );
 		exit( 1 );
 	}
 
-	ply_file = argv[optind++];
-	brlcad_file = argv[optind];
+	ply_file = argv[bu_optind++];
+	brlcad_file = argv[bu_optind];
 
 	if( (out_fp = wdb_fopen( brlcad_file )) == NULL ) {
 		bu_log( "Cannot open output file (%s)\n", brlcad_file );

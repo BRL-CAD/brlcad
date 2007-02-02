@@ -563,7 +563,7 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "ts:w:n:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "ts:w:n:" )) != EOF )  {
 		switch( c )  {
 		case 't':
 			fprintf(stderr, "ssampview: conducting library tests\n");
@@ -576,13 +576,13 @@ get_args(int argc, register char **argv)
 			break;
 		case 's':
 			/* square file size */
-			height = width = atoi(optarg);
+			height = width = atoi(bu_optarg);
 			break;
 		case 'w':
-			width = atoi(optarg);
+			width = atoi(bu_optarg);
 			break;
 		case 'n':
-			height = atoi(optarg);
+			height = atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -590,7 +590,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  return 0;
+	if( bu_optind >= argc )  return 0;
 	return 1;	/* OK */
 }
 
@@ -614,7 +614,7 @@ main(int argc, char **argv)
 	if( argc > 1 && strcmp(argv[1], "-t") == 0 )  {
 	}
 
-	datafile_basename = argv[optind];
+	datafile_basename = argv[bu_optind];
 
 	first_command = "doit1 42";
 

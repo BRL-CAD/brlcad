@@ -42,7 +42,7 @@
 #include "machine.h"
 #include "bu.h"
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() */
 char *options = "w:h:d:W:H:sn:t:Du:mc:C:";
 
 char *progname = "(noname)";
@@ -93,17 +93,17 @@ int parse_args(int ac, char **av)
 		++progname;
 
 	/* Turn off getopt's error messages */
-	opterr = 0;
+	bu_opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
-		case 'c'	: if ((c=sscanf(optarg, "%d/%d/%d",
+		case 'c'	: if ((c=sscanf(bu_optarg, "%d/%d/%d",
 				      &red, &grn, &blu)) == 3)
 					(void)sprintf(color, "%d %d %d", red&0x0ff,
 							grn&0x0ff, blu&0x0ff);
 				break;
-		case 'C'	: if ((c=sscanf(optarg, "%d/%d/%d",
+		case 'C'	: if ((c=sscanf(bu_optarg, "%d/%d/%d",
 				     &red, &grn, &blu)) == 3)
 					(void)sprintf(mortar_color, "%d %d %d",
 					red&0x0ff, grn&0x0ff, blu&0x0ff);
@@ -111,23 +111,23 @@ int parse_args(int ac, char **av)
 				break;
 		case 'm'	: make_mortar = !make_mortar;
 				break;
-		case 'u'	: units_conv = bu_units_conversion(optarg);
+		case 'u'	: units_conv = bu_units_conversion(bu_optarg);
 				break;
 		case 'D'	: debug = !debug;
 				break;
-		case 't'	: if ((d=atof(optarg)) != 0.0) tol = d;
+		case 't'	: if ((d=atof(bu_optarg)) != 0.0) tol = d;
 				break;
-		case 'w'	: if ((d=atof(optarg)) != 0.0) brick_width = d;
+		case 'w'	: if ((d=atof(bu_optarg)) != 0.0) brick_width = d;
 				break;
-		case 'h'	: if ((d=atof(optarg)) != 0.0) brick_height = d;
+		case 'h'	: if ((d=atof(bu_optarg)) != 0.0) brick_height = d;
 				break;
-		case 'd'	: if ((d=atof(optarg)) != 0.0) brick_depth = d;
+		case 'd'	: if ((d=atof(bu_optarg)) != 0.0) brick_depth = d;
 				break;
-		case 'W'	: if ((d=atof(optarg)) != 0.0) wall_width = d;
+		case 'W'	: if ((d=atof(bu_optarg)) != 0.0) wall_width = d;
 				break;
-		case 'H'	: if ((d=atof(optarg)) != 0.0) wall_height = d;
+		case 'H'	: if ((d=atof(bu_optarg)) != 0.0) wall_height = d;
 				break;
-		case 'n'	: brick_name = optarg;
+		case 'n'	: brick_name = bu_optarg;
 				break;
 		case 's'	: standalone = !standalone;
 				break;
@@ -163,7 +163,7 @@ int parse_args(int ac, char **av)
 	if (brick_name == (char *)NULL || *brick_name == '\0')
 		usage("bad or no brick name\n");
 
-	return(optind);
+	return(bu_optind);
 }
 
 void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double vert_spacing)

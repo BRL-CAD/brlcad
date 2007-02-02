@@ -55,8 +55,8 @@ static int ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, cha
 static void descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext);
 
 char		usage[] = "Usage: %s [file]\n";
-extern char	*optarg;
-extern int	optind;
+extern char	*bu_optarg;
+extern int	bu_optind;
 
 /*
  *	M a i n
@@ -71,11 +71,11 @@ main(int argc, char **argv)
 	struct rt_wdb	*fpout;
 
 	/* Get ascii NMG input file name. */
-	if (optind >= argc) {
+	if (bu_optind >= argc) {
 		afile = "-";
 		fpin = stdin;
 	} else {
-		afile = argv[optind];
+		afile = argv[bu_optind];
 		if ((fpin = fopen(afile, "r")) == NULL) {
 			fprintf(stderr,
 				"%s: cannot open %s for reading\n",
@@ -85,11 +85,11 @@ main(int argc, char **argv)
 	}
 
 	/* Get BRL-CAD output data base name. */
-	optind++;
-	if (optind >= argc) {
+	bu_optind++;
+	if (bu_optind >= argc) {
 		bfile = "nmg.g";
 	} else {
-		bfile = argv[optind];
+		bfile = argv[bu_optind];
 	}
 	if ((fpout = wdb_fopen(bfile)) == NULL) {
 		fprintf(stderr, "%s: cannot open %s for writing\n",

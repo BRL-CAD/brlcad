@@ -216,7 +216,7 @@ main(int argc, char **argv)
 	}
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "D3")) != EOF)
+	while ((c = bu_getopt(argc, argv, "D3")) != EOF)
 	{
 		switch (c)
 		{

@@ -75,8 +75,8 @@ main( int argc, char *argv[] )
 	int ret;
 	int nthreads=1;
 	int c;
-	extern char *optarg;
-	extern int optind, opterr, optopt;
+	extern char *bu_optarg;
+	extern int bu_optind, bu_opterr, optopt;
 	struct rtserver_job *ajob;
 	struct rtserver_result *aresult;
 	struct xray *aray;
@@ -107,25 +107,25 @@ main( int argc, char *argv[] )
 	rts_resource_init();
 
 	/* process command line args */
-	while( (c=getopt( argc, argv, "w:vs:t:q:o:" ) ) != -1 ) {
+	while( (c=bu_getopt( argc, argv, "w:vs:t:q:o:" ) ) != -1 ) {
 		switch( c ) {
 		case 'w':	/* number of worker threads */
-			worker_count = atoi( optarg );
+			worker_count = atoi( bu_optarg );
 			break;
 		case 't':	/* number of server threads to start */
-			thread_count = atoi( optarg );
+			thread_count = atoi( bu_optarg );
 			break;
 		case 'q':	/* number of request queues to create */
-			queue_count = atoi( optarg );
+			queue_count = atoi( bu_optarg );
 			break;
 		case 's':	/* set the grid size (default is 64x64) */
-			grid_size = atoi( optarg );
+			grid_size = atoi( bu_optarg );
 			break;
 		case 'v':	/* turn on verbose logging */
 			verbose = 1;
 			break;
 		case 'o':	/* add an object name to the list of BRL-CAD objects to raytrace */
-			bu_ptbl_ins( &objs, (long *)optarg );
+			bu_ptbl_ins( &objs, (long *)bu_optarg );
 			break;
 		default:	/* ERROR */
 			fprintf( stderr, usage, argv[0] );
@@ -141,18 +141,18 @@ main( int argc, char *argv[] )
 		for( i=0 ; i<BU_PTBL_LEN( &objs ) ; i++ ) {
 			objects[i] = (char *)BU_PTBL_GET( &objs, i );
 		}
-		my_session_id = rts_load_geometry( argv[optind], 0, BU_PTBL_LEN( &objs ), objects, thread_count );
+		my_session_id = rts_load_geometry( argv[bu_optind], 0, BU_PTBL_LEN( &objs ), objects, thread_count );
 	} else {
-		if( optind >= argc ) {
+		if( bu_optind >= argc ) {
 			fprintf( stderr, "No BRL-CAD model specified\n" );
 			fprintf( stderr, usage, argv[0] );
 			exit( 1 );
 		}
-		my_session_id = rts_load_geometry( argv[optind], 0, 0, (char **)NULL, thread_count );
+		my_session_id = rts_load_geometry( argv[bu_optind], 0, 0, (char **)NULL, thread_count );
 	}
 
 	if( my_session_id < 0 ) {
-		fprintf( stderr, "Failed to load geometry from file (%s)\n", argv[optind] );
+		fprintf( stderr, "Failed to load geometry from file (%s)\n", argv[bu_optind] );
 		exit( 2 );
 	}
 

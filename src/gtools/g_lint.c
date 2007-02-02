@@ -851,7 +851,7 @@ main (int argc, char **argv)
     fastf_t		elevation = 0.0;
     struct g_lint_ctrl	control;		/* Info handed to librt(3) */
     int			cell_center = 0;	/* Fire from center of cell? */
-    int			ch;			/* Character from getopt(3) */
+    int			ch;			/* Character from getopt */
     int			complement_bits;	/* Used by -r option */
     int			i;			/* Dummy loop index */
     int			use_air = 0;		/* Does air count? */
@@ -871,10 +871,8 @@ main (int argc, char **argv)
     vect_t		unit_H;
     vect_t		unit_V;
 
-    extern int		optind;			/* For use with getopt(3) */
-    extern char		*optarg;
-
-    extern int		getopt(int, char *const *, const char *);
+    extern int		bu_optind;			/* For use with getopt */
+    extern char		*bu_optarg;
 
     bu_log("%s\n", rt_version);
 
@@ -887,13 +885,13 @@ main (int argc, char **argv)
     control.glc_color = (unsigned char *) dflt_plot_rgb;
 
     /* Handle command-line options */
-    while ((ch = getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
 	switch (ch)
 	{
 	    case 'a':
-		if (sscanf(optarg, "%lf", &azimuth) != 1)
+		if (sscanf(bu_optarg, "%lf", &azimuth) != 1)
 		{
-		    bu_log("Invalid azimuth specification: '%s'\n", optarg);
+		    bu_log("Invalid azimuth specification: '%s'\n", bu_optarg);
 		    printusage();
 		    exit (1);
 		}
@@ -902,9 +900,9 @@ main (int argc, char **argv)
 		cell_center = 1;
 		break;
 	    case 'e':
-		if (sscanf(optarg, "%lf", &elevation) != 1)
+		if (sscanf(bu_optarg, "%lf", &elevation) != 1)
 		{
-		    bu_log("Invalid elevation specification: '%s'\n", optarg);
+		    bu_log("Invalid elevation specification: '%s'\n", bu_optarg);
 		    printusage();
 		    exit (1);
 		}
@@ -915,9 +913,9 @@ main (int argc, char **argv)
 		}
 		break;
 	    case 'g':
-		if (sscanf(optarg, "%lf", &celsiz) != 1)
+		if (sscanf(bu_optarg, "%lf", &celsiz) != 1)
 		{
-		    bu_log("Invalid grid-size specification: '%s'\n", optarg);
+		    bu_log("Invalid grid-size specification: '%s'\n", bu_optarg);
 		    printusage();
 		    exit (1);
 		}
@@ -939,17 +937,17 @@ main (int argc, char **argv)
 		}
 		break;
 	    case 'r':
-		if (*optarg == '-')
+		if (*bu_optarg == '-')
 		{
 		    complement_bits = 1;
-		    ++optarg;
+		    ++bu_optarg;
 		}
 		else
 		    complement_bits = 0;
-		control.glc_what_to_report = strtoul(optarg, &sp, 0);
-		if (sp == optarg)
+		control.glc_what_to_report = strtoul(bu_optarg, &sp, 0);
+		if (sp == bu_optarg)
 		{
-		    bu_log("Invalid report specification: '%s'\n", optarg);
+		    bu_log("Invalid report specification: '%s'\n", bu_optarg);
 		    printusage();
 		    exit (1);
 		}
@@ -967,10 +965,10 @@ main (int argc, char **argv)
 		bu_rb_uniq_on1(ovlp_log);
 		break;
 	    case 't':
-		if (sscanf(optarg, "%lf", &(control.glc_tol)) != 1)
+		if (sscanf(bu_optarg, "%lf", &(control.glc_tol)) != 1)
 		{
 		    bu_log("Invalid tolerance specification: '%s'\n",
-			optarg);
+			bu_optarg);
 		    printusage();
 		    exit (1);
 		}
@@ -984,10 +982,10 @@ main (int argc, char **argv)
 		use_air = 1;
 		break;
 	    case 'x':
-		control.glc_debug = strtoul(optarg, &sp, 16);
-		if (sp == optarg)
+		control.glc_debug = strtoul(bu_optarg, &sp, 16);
+		if (sp == bu_optarg)
 		{
-		    bu_log("Invalid debug-flag specification: '%s'\n", optarg);
+		    bu_log("Invalid debug-flag specification: '%s'\n", bu_optarg);
 		    printusage();
 		    exit (1);
 		}
@@ -997,7 +995,7 @@ main (int argc, char **argv)
 		exit (1);
 	}
 
-    if (argc - optind < 2)
+    if (argc - bu_optind < 2)
     {
 	printusage();
 	exit (1);
@@ -1006,20 +1004,20 @@ main (int argc, char **argv)
 	bu_log("WARNING: Ignoring undefined bits of report specification\n");
 
     /* Read in the geometry model */
-    bu_log("Database file:  '%s'\n", argv[optind]);
+    bu_log("Database file:  '%s'\n", argv[bu_optind]);
     bu_log("Building the directory... ");
-    if ((rtip = rt_dirbuild(argv[optind] , db_title, TITLE_LEN)) == RTI_NULL)
+    if ((rtip = rt_dirbuild(argv[bu_optind] , db_title, TITLE_LEN)) == RTI_NULL)
     {
-	bu_log("Could not build directory for file '%s'\n", argv[optind]);
+	bu_log("Could not build directory for file '%s'\n", argv[bu_optind]);
 	exit (1);
     }
     rtip -> useair = use_air;
     bu_log("\nPreprocessing the geometry... ");
-    while (++optind < argc)
+    while (++bu_optind < argc)
     {
-	if (rt_gettree(rtip, argv[optind]) == -1)
+	if (rt_gettree(rtip, argv[bu_optind]) == -1)
 	    exit (1);
-	bu_log("\nObject '%s' processed", argv[optind]);
+	bu_log("\nObject '%s' processed", argv[bu_optind]);
     }
     bu_log("\nPrepping the geometry... ");
     rt_prep(rtip);

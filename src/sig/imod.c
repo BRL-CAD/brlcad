@@ -54,10 +54,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
+
 
 char *progname = "(noname)";
-
-char	*file_name;
+char *file_name = NULL;
 
 char usage[] = "\
 Usage: smod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n";
@@ -77,148 +78,148 @@ int mapbuf[65536];		/* translation buffer/lookup table */
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
-	double	d;
+    register int c;
+    double	d;
 
-	while ( (c = getopt( argc, argv, "a:s:m:d:Ae:r:" )) != EOF )  {
-		switch( c )  {
-		case 'a':
-			op[ numop ] = ADD;
-			val[ numop++ ] = atof(optarg);
-			break;
-		case 's':
-			op[ numop ] = ADD;
-			val[ numop++ ] = - atof(optarg);
-			break;
-		case 'm':
-			op[ numop ] = MULT;
-			val[ numop++ ] = atof(optarg);
-			break;
-		case 'd':
-			op[ numop ] = MULT;
-			d = atof(optarg);
-			if( d == 0.0 ) {
-				(void)fprintf( stderr, "bwmod: divide by zero!\n" );
-				exit( 2 );
-			}
-			val[ numop++ ] = 1.0 / d;
-			break;
-		case 'A':
-			op[ numop ] = ABS;
-			val[ numop++ ] = 0;
-			break;
-		case 'e':
-			op[ numop ] = POW;
-			val[ numop++ ] = atof(optarg);
-			break;
-		case 'r':
-			op[ numop ] = POW;
-			d = atof(optarg);
-			if( d == 0.0 ) {
-				(void)fprintf( stderr, "bwmod: zero root!\n" );
-				exit( 2 );
-			}
-			val[ numop++ ] = 1.0 / d;
-			break;
-
-		default:		/* '?' */
-			return(0);
+    while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:" )) != EOF )  {
+	switch( c )  {
+	    case 'a':
+		op[ numop ] = ADD;
+		val[ numop++ ] = atof(bu_optarg);
+		break;
+	    case 's':
+		op[ numop ] = ADD;
+		val[ numop++ ] = - atof(bu_optarg);
+		break;
+	    case 'm':
+		op[ numop ] = MULT;
+		val[ numop++ ] = atof(bu_optarg);
+		break;
+	    case 'd':
+		op[ numop ] = MULT;
+		d = atof(bu_optarg);
+		if( d == 0.0 ) {
+		    (void)fprintf( stderr, "bwmod: divide by zero!\n" );
+		    exit( 2 );
 		}
-	}
-
-	if( optind >= argc )  {
-		if( isatty((int)fileno(stdin)) )
-			return(0);
-		file_name = "-";
-	} else {
-		file_name = argv[optind];
-		if( freopen(file_name, "r", stdin) == NULL )  {
-			(void)fprintf( stderr,
-				"bwmod: cannot open \"%s\" for reading\n",
-				file_name );
-			return(0);
+		val[ numop++ ] = 1.0 / d;
+		break;
+	    case 'A':
+		op[ numop ] = ABS;
+		val[ numop++ ] = 0;
+		break;
+	    case 'e':
+		op[ numop ] = POW;
+		val[ numop++ ] = atof(bu_optarg);
+		break;
+	    case 'r':
+		op[ numop ] = POW;
+		d = atof(bu_optarg);
+		if( d == 0.0 ) {
+		    (void)fprintf( stderr, "bwmod: zero root!\n" );
+		    exit( 2 );
 		}
+		val[ numop++ ] = 1.0 / d;
+		break;
+
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	if ( argc > ++optind )
-		(void)fprintf( stderr, "bwmod: excess argument(s) ignored\n" );
+    if( bu_optind >= argc )  {
+	if( isatty((int)fileno(stdin)) )
+	    return(0);
+	file_name = "-";
+    } else {
+	file_name = argv[bu_optind];
+	if( freopen(file_name, "r", stdin) == NULL )  {
+	    (void)fprintf( stderr,
+			   "bwmod: cannot open \"%s\" for reading\n",
+			   file_name );
+	    return(0);
+	}
+    }
 
-	return(1);		/* OK */
+    if ( argc > ++bu_optind )
+	(void)fprintf( stderr, "bwmod: excess argument(s) ignored\n" );
+
+    return(1);		/* OK */
 }
 
 void mk_trans_tbl(void)
 {
-	register int i, j;
-	register double d;
+    register int i, j;
+    register double d;
 
-	/* create translation map */
-	for (j = -32768; j < 32768 ; ++j) {
-		d = j;
-		for (i=0 ; i < numop ; i++) {
-			switch (op[i]) {
-			case ADD : d += val[i]; break;
-			case MULT: d *= val[i]; break;
-			case POW : d = pow( d, val[i]); break;
-			case ABS : if (d < 0.0) d = - d; break;
-			default  : (void)fprintf(stderr, "%s: error in op\n",
-					progname); break;
-			}
-		}
-
-		if (d > 32767.0)
-			mapbuf[j+32768] = 65537;
-		else if (d < -32768.0)
-			mapbuf[j+32768] = -65536;
-		else if (d < 0.0)
-			mapbuf[j+32768] = d - 0.5;
-		else
-			mapbuf[j+32768] = d + 0.5;
+    /* create translation map */
+    for (j = -32768; j < 32768 ; ++j) {
+	d = j;
+	for (i=0 ; i < numop ; i++) {
+	    switch (op[i]) {
+		case ADD : d += val[i]; break;
+		case MULT: d *= val[i]; break;
+		case POW : d = pow( d, val[i]); break;
+		case ABS : if (d < 0.0) d = - d; break;
+		default  : (void)fprintf(stderr, "%s: error in op\n",
+					 progname); break;
+	    }
 	}
+
+	if (d > 32767.0)
+	    mapbuf[j+32768] = 65537;
+	else if (d < -32768.0)
+	    mapbuf[j+32768] = -65536;
+	else if (d < 0.0)
+	    mapbuf[j+32768] = d - 0.5;
+	else
+	    mapbuf[j+32768] = d + 0.5;
+    }
 }
 
 int main(int argc, char **argv)
 {
-	register short *p, *q;
-	register int i;
-	register unsigned int	n;
-	unsigned long clip_high, clip_low;
+    register short *p, *q;
+    register int i;
+    register unsigned int	n;
+    unsigned long clip_high, clip_low;
 
-	if (!(progname=strrchr(*argv, '/')))
-		progname = *argv;
+    if (!(progname=strrchr(*argv, '/')))
+	progname = *argv;
 
-	if( !get_args( argc, argv ) || isatty(fileno(stdin))
-	    || isatty(fileno(stdout)) ) {
-		(void)fputs(usage, stderr);
-		exit( 1 );
+    if( !get_args( argc, argv ) || isatty(fileno(stdin))
+	|| isatty(fileno(stdout)) ) {
+	(void)fputs(usage, stderr);
+	exit( 1 );
+    }
+
+    mk_trans_tbl();
+
+    clip_high = clip_low = 0;
+
+    while ( (n=fread(iobuf, sizeof(*iobuf), BUFLEN, stdin)) > 0) {
+	/* translate */
+	for (p=iobuf, q= &iobuf[n] ; p < q ; ++p) {
+	    i = *p + 32768;
+	    if (mapbuf[i] > 32767) { ++clip_high; *p = 32767; }
+	    else if (mapbuf[i] < -32768) { ++clip_low; *p = -32768; }
+	    else *p = (short)mapbuf[i];
 	}
-
-	mk_trans_tbl();
-
-	clip_high = clip_low = 0;
-
-	while ( (n=fread(iobuf, sizeof(*iobuf), BUFLEN, stdin)) > 0) {
-		/* translate */
-		for (p=iobuf, q= &iobuf[n] ; p < q ; ++p) {
-			i = *p + 32768;
-			if (mapbuf[i] > 32767) { ++clip_high; *p = 32767; }
-			else if (mapbuf[i] < -32768) { ++clip_low; *p = -32768; }
-			else *p = (short)mapbuf[i];
-		}
-		/* output */
-		if (fwrite(iobuf, sizeof(*iobuf), n, stdout) != n) {
-			(void)fprintf(stderr, "%s: Error writing stdout\n",
-				progname);
-			exit(-1);
-		}
+	/* output */
+	if (fwrite(iobuf, sizeof(*iobuf), n, stdout) != n) {
+	    (void)fprintf(stderr, "%s: Error writing stdout\n",
+			  progname);
+	    exit(-1);
 	}
+    }
 
-	if( clip_high != 0L || clip_low != 0L ) {
-		(void)fprintf( stderr, "%s: clipped %lu high, %lu low\n",
-			progname,
-			clip_high, clip_low );
-	}
+    if( clip_high != 0L || clip_low != 0L ) {
+	(void)fprintf( stderr, "%s: clipped %lu high, %lu low\n",
+		       progname,
+		       clip_high, clip_low );
+    }
 
-	return 0;
+    return 0;
 }
 
 /*

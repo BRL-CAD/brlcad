@@ -25,11 +25,7 @@
  */
 #include <stdio.h>
 
-/* declarations to support use of getopt() system call */
 char *options = "h";
-extern char *optarg;
-extern int optind, opterr, getopt();
-
 char *progname = "(noname)";
 
 /*
@@ -60,18 +56,18 @@ char *av[];
 	else
 		++progname;
 
-	/* Turn off getopt's error messages */
-	opterr = 0;
+	/* Turn off bu_getopt's error messages */
+	bu_opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
 		case '?'	:
 		case 'h'	:
 		default		: usage("Bad or help flag specified\n"); break;
 		}
 
-	return(optind);
+	return(bu_optind);
 }
 
 /*

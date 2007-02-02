@@ -5,9 +5,10 @@ bin_PROGRAMS = \
 	rpatch
 
 patch_g_SOURCES = patch-g.c
-patch_g_LDADD = ${RT} ${WDB}
+patch_g_LDADD = ${RT} ${WDB} ${BU}
 
 rpatch_SOURCES = rpatch.c
+rpatch_LDADD = ${BU}
 
 noinst_HEADERS = patch-g.h
 

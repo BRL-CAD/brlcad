@@ -126,7 +126,7 @@ main(int argc, char **argv)
 	{
 		extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
 		/* XXX This value is specific to the Bradley */
-		/* Set it here, before the getopt() */
+		/* Set it here, before the bu_getopt() */
 		nmg_eue_dist = 2.0;
 	}
 

@@ -82,7 +82,7 @@ int parse_args(int ac, char **av)
 		++progname;
 
 	/* Turn off bu_getopt's error messages */
-	opterr = 0;
+	bu_opterr = 0;
 
 	/* get all the option flags from the command line */
 	while ((c=bu_getopt(ac,av,options)) != EOF)

@@ -87,11 +87,7 @@ static time_t start_time;
 int debug = 0;
 int show_all_features = 0;
 
-/* declarations to support use of getopt() system call */
 char *options = "hsufd:o:i:t:a:n:c:r:R:";
-extern char *optarg;
-extern int optind, opterr, getopt();
-
 char *progname = "(noname)";
 
 /* count of how parts were converted */
@@ -5708,21 +5704,21 @@ int parse_args(int ac, char *av[])
 	else
 		++progname;
 
-	/* Turn off getopt's error messages */
-	opterr = 0;
+	/* Turn off bu_getopt's error messages */
+	bu_opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
-		case 'i'	: ident = atoi( optarg ); break;
-		case 'o'	: output_file = strdup( optarg ); break;
-		case 'd'	: debug = atoi(optarg); break;
-		case 't'	: surf_tol = atof( optarg ); break;
-		case 'a'	: ang_tol = atof( optarg ) * M_PI / 180.0; break;
-		case 'n'	: part_name_file = optarg; use_part_name_hash = 1; break;
-		case 'R'	: use_refset_name = optarg; break;
-		case 'c'	: min_chamfer = atof( optarg ); break;
-		case 'r'	: min_round = atof( optarg ); break;
+		case 'i'	: ident = atoi( bu_optarg ); break;
+		case 'o'	: output_file = strdup( bu_optarg ); break;
+		case 'd'	: debug = atoi(bu_optarg); break;
+		case 't'	: surf_tol = atof( bu_optarg ); break;
+		case 'a'	: ang_tol = atof( bu_optarg ) * M_PI / 180.0; break;
+		case 'n'	: part_name_file = bu_optarg; use_part_name_hash = 1; break;
+		case 'R'	: use_refset_name = bu_optarg; break;
+		case 'c'	: min_chamfer = atof( bu_optarg ); break;
+		case 'r'	: min_round = atof( bu_optarg ); break;
 		case 'f'	: only_facetize = 1; break;
 		case 's'	: show_all_features = 1; break;
 		case 'u'	: use_normals = 1; break;
@@ -5731,7 +5727,7 @@ int parse_args(int ac, char *av[])
 		default		: fprintf(stderr, "Bad or help flag specified\n"); break;
 		}
 
-	return(optind);
+	return(bu_optind);
 }
 
 static char *usage="Usage: %s [-d level] [-i starting_ident_number] [-n part_no_to_part_name_mapping_file] [-t surface_tolerance] [-a surface_normal_tolerance] [-R use_refset_name] [-c min_chamfer] [-r min_round] [-f] [-s] [-u] -o output_file.g part_filename [subpart1 subpart2 ...]\n";

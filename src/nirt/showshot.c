@@ -78,26 +78,26 @@ main (int argc, char **argv)
     point_t	first_entryp;	/* Ray's entry into the entire geometry */
     int		i;		/* Index into rname */
     int		line_nm = 0;	/* Number of current line of input */
-    int		opt;		/* Command-line option returned by getopt() */
+    int		opt;		/* Command-line option returned by bu_getopt */
     int		pid = getpid();	/* Process ID for unique group name */
 
-    extern char *optarg;
-    extern int  optind, opterr;
+    extern char *bu_optarg;
+    extern int  bu_optind, bu_opterr;
 
-    int         getopt(int, char *const *, const char *);
+    int         bu_getopt(int, char *const *, const char *);
 
     *rayname = '\0';
     /* Handle command-line options */
-    while ((opt = getopt(argc, argv, OPT_STRING)) != -1)
+    while ((opt = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (opt)
 	{
 	    case 'n':
-		(void) strcpy(rayname, optarg);
+		(void) strcpy(rayname, bu_optarg);
 		break;
 	    case 'r':
-		if (sscanf(optarg, "%F", &ray_radius) != 1)
+		if (sscanf(bu_optarg, "%F", &ray_radius) != 1)
 		{
-		    (void) fprintf(stderr, "Illegal radius: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal radius: '%s'\n", bu_optarg);
 		    exit (1);
 		}
 		break;
@@ -107,7 +107,7 @@ main (int argc, char **argv)
 	}
 
     /* Ensure proper command-line syntax */
-    if (optind != argc)
+    if (bu_optind != argc)
     {
 	print_usage();
 	exit (1);

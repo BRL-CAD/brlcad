@@ -130,7 +130,7 @@ static int
 parsArgv( int argc, char **argv )
 {	register int c;
 /* Parse options.						*/
- while( (c = getopt( argc, argv, "b" )) != EOF )
+ while( (c = bu_getopt( argc, argv, "b" )) != EOF )
      {
 	 switch( c )
 	     {

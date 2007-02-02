@@ -2,7 +2,7 @@
 
 bin_PROGRAMS = vas4
 
-vas4_LDADD = ${FB}
+vas4_LDADD = ${FB} ${BU}
 vas4_SOURCES = \
 	record_seq.c \
 	vas4.c \

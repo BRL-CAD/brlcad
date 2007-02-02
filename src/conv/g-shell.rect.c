@@ -1793,12 +1793,12 @@ main(int argc, char **argv)
 	BU_LIST_INIT( &subtract_rpp_head );
 
 	/* Get command line arguments. */
-	while( (c=getopt( argc, argv, "bi:a:s:nR:g:o:d:p:X:")) != EOF)
+	while( (c=bu_getopt( argc, argv, "bi:a:s:nR:g:o:d:p:X:")) != EOF)
 	{
 		switch( c )
 		{
 			case 'i':	/* set initial ray direction */
-					switch( *optarg )
+					switch( *bu_optarg )
 					{
 						case 'x':
 						case 'X':
@@ -1814,7 +1814,7 @@ main(int argc, char **argv)
 							initial_ray_dir = Z;
 							break;
 						default:
-							bu_log( "Illegal ray direction (%c), must be X, Y, or Z!!!\n", *optarg );
+							bu_log( "Illegal ray direction (%c), must be X, Y, or Z!!!\n", *bu_optarg );
 							exit( 1 );
 					}
 					break;
@@ -1824,13 +1824,13 @@ main(int argc, char **argv)
 					struct refine_rpp *rpp;
 					int bad_opt=0;
 
-					ptr = optarg;
+					ptr = bu_optarg;
 
 					rpp = ( struct refine_rpp *)bu_malloc( sizeof( struct refine_rpp ), "add refine rpp" );
-					ptr = strtok( optarg, token_seps );
+					ptr = strtok( bu_optarg, token_seps );
 					if( !ptr )
 					{
-						bu_log( "Bad -a option '%s'\n", optarg );
+						bu_log( "Bad -a option '%s'\n", bu_optarg );
 						bu_free( (char *) rpp, "rpp" );
 						break;
 					}
@@ -1886,32 +1886,32 @@ main(int argc, char **argv)
 				do_extra_rays = 0;
 				break;
 			case 'R':	/* do edge breaking */
-				edge_tol = atof( optarg );
+				edge_tol = atof( bu_optarg );
 				break;
 			case 'p':	/* plot edge breaking */
-				plotfile = optarg;
+				plotfile = bu_optarg;
 				break;
 			case 'd':	/* debug level */
-				debug = atoi( optarg );
+				debug = atoi( bu_optarg );
 				break;
 			case 'g':	/* cell size */
-				cell_size = atof( optarg );
+				cell_size = atof( bu_optarg );
 				cell_size_sq = cell_size * cell_size;
 				break;
 			case 'o':	/* BRL-CAD output file */
-				output_file = optarg;
+				output_file = bu_optarg;
 				break;
 			case 'b':	/* Output a BOT rather than an NMG */
 				bot = 1;
 				break;
 			case 'X':	/* nmg debug flags */
-				sscanf( optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+				sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 				bu_log( "%s: setting rt_g.NMG_debug to x%x\n", argv[0], rt_g.NMG_debug );
 				break;
 		}
 	}
 
-	if (optind+1 >= argc)
+	if (bu_optind+1 >= argc)
 	{
 		bu_log( usage, argv[0] );
 		exit( 1 );
@@ -1941,9 +1941,9 @@ main(int argc, char **argv)
 	}
 
 	/* Open BRL-CAD database */
-	if ((rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf))) == RTI_NULL )
+	if ((rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf))) == RTI_NULL )
 	{
-		bu_log( "rt_durbuild FAILED on %s\n", argv[optind] );
+		bu_log( "rt_durbuild FAILED on %s\n", argv[bu_optind] );
 		exit(1);
 	}
 
@@ -1957,10 +1957,10 @@ main(int argc, char **argv)
 	ap.a_logoverlap = rt_silent_logoverlap;
 	ap.a_onehit = 0;
 
-	while( ++optind < argc )
+	while( ++bu_optind < argc )
 	{
-		if( rt_gettree( rtip, argv[optind] ) < 0 )
-			bu_log( "rt_gettree failed on %s\n", argv[optind] );
+		if( rt_gettree( rtip, argv[bu_optind] ) < 0 )
+			bu_log( "rt_gettree failed on %s\n", argv[bu_optind] );
 	}
 
 	rt_prep( rtip );

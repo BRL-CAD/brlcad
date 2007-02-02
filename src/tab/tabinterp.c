@@ -90,8 +90,8 @@ struct chan {
 	int	c_offset;	/* source offset (NEXT) */
 };
 
-extern int optind;
-extern char *optarg;
+extern int bu_optind;
+extern char *bu_optarg;
 
 int		verbose = 1;
 
@@ -1234,7 +1234,7 @@ chan_not_loaded_or_specified( int ch )
 int get_args(int argc, char **argv)
 {
 	int c;
-	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
+	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
 		case 'q':
 			verbose = 0;

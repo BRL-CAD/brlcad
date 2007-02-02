@@ -543,34 +543,34 @@ main(int argc, char **argv)
 	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:n:o:r:s:vx:P:X:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "a:n:o:r:s:vx:P:X:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
-			ttol.abs = atof(optarg);
+			ttol.abs = atof(bu_optarg);
 			ttol.rel = 0.0;
 			break;
 		case 'n':		/* Surface normal tolerance. */
-			ttol.norm = atof(optarg);
+			ttol.norm = atof(bu_optarg);
 			ttol.rel = 0.0;
 			break;
 		case 'o':		/* Output file name */
-			out_file = optarg;
+			out_file = bu_optarg;
 			break;
 		case 'r':		/* Relative tolerance. */
-			ttol.rel = atof(optarg);
+			ttol.rel = atof(bu_optarg);
 			break;
 		case 'v':
 			verbose++;
 			break;
 		case 'P':
-/*			ncpu = atoi( optarg ); */
+/*			ncpu = atoi( bu_optarg ); */
 			rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
 			break;
 		case 'x':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 			break;
 		case 'X':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 			NMG_debug = rt_g.NMG_debug;
 			break;
 		default:
@@ -580,15 +580,15 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (optind+1 >= argc) {
+	if (bu_optind+1 >= argc) {
 		fprintf(stderr, usage, argv[0]);
 		exit(1);
 	}
 
 	/* Open BRL-CAD database */
-	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL)
+	if ((dbip = db_open( argv[bu_optind] , "r")) == DBI_NULL)
 	{
-		bu_log( "Cannot open %s\n" , argv[optind] );
+		bu_log( "Cannot open %s\n" , argv[bu_optind] );
 		perror(argv[0]);
 		exit(1);
 	}
@@ -605,12 +605,12 @@ main(int argc, char **argv)
 			return 2;
 		}
 	}
-	optind++;
+	bu_optind++;
 
 	fprintf( fp_out , "$03" );
 
 	/* First produce an unordered list of region ident codes */
-	(void)db_walk_tree(dbip, argc-optind, (const char **)(&argv[optind]),
+	(void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
 		1,			/* ncpu */
 		&tree_state,
 		get_reg_id,			/* put id in table */
@@ -644,7 +644,7 @@ main(int argc, char **argv)
 		tree_state.ts_tol = &tol;
 		tree_state.ts_ttol = &ttol;
 
-		(void)db_walk_tree(dbip, argc-optind, (const char **)(&argv[optind]),
+		(void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
 			1,			/* ncpu */
 			&tree_state,
 			select_region,

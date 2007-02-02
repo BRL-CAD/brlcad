@@ -47,8 +47,6 @@
 /* command-line options are described in the parseArguments function
  */
 char *options="IiDdVvO:o:N:n:U:u:H:h:L:l:R:r:J:j:A:a:T:t:B:b:C:c:F:f:P:p:M:m:W:w:S:s:E:e:G:g:XxZz";
-extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
 
 /* these variables control the "behavior" of this program's output
  *   if debug is set, debug information (extra "useful" output is given) is
@@ -281,9 +279,9 @@ int parseArguments(int argc, char **argv)
   }
   fflush(stdout);
 
-  opterr = 0;
+  bu_opterr = 0;
 
-  while ((c=getopt(argc,argv,options)) != EOF){
+  while ((c=bu_getopt(argc,argv,options)) != EOF){
     switch (c) {
     case 'I' :
       interactive=(DEFAULT_INTERACTIVE) ? 0 : 1;
@@ -311,33 +309,33 @@ int parseArguments(int argc, char **argv)
 
     case 'o' :
       memset(outputFilename, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(outputFilename, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(outputFilename, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'O' :
       memset(outputFilename, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(outputFilename, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(outputFilename, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 'n' :
       memset(id, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(id, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(id, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'N' :
       memset(id, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(id, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(id, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 'u' :
       memset(units, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(units, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(units, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'U' :
       memset(units, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(units, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(units, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 'h' :
-      if ((sscanf(optarg, "%lf %lf %lf", &fenceHeight[0], &fenceHeight[1], &fenceHeight[2]))!=3) {
+      if ((sscanf(bu_optarg, "%lf %lf %lf", &fenceHeight[0], &fenceHeight[1], &fenceHeight[2]))!=3) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters to height: need x, y, z values");
 	exit(1);
       }
@@ -349,7 +347,7 @@ int parseArguments(int argc, char **argv)
       meshHeight = (double) poleHeight;
       break;
     case 'H' :
-      if ((d=(double)atof(optarg))!=0.0) {
+      if ((d=(double)atof(bu_optarg))!=0.0) {
 	fenceHeight[0]=0.0;
 	fenceHeight[1]=0.0;
 	fenceHeight[2]=d;
@@ -363,7 +361,7 @@ int parseArguments(int argc, char **argv)
       break;
 
     case 'l' :
-      if ((sscanf(optarg, "%lf %lf %lf", &fenceWidth[0], &fenceWidth[1], &fenceWidth[2]))!=3) {
+      if ((sscanf(bu_optarg, "%lf %lf %lf", &fenceWidth[0], &fenceWidth[1], &fenceWidth[2]))!=3) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters to width: need x, y, z values");
 	exit(1);
       }
@@ -374,7 +372,7 @@ int parseArguments(int argc, char **argv)
       meshWidth = (double) MAGNITUDE(fenceWidth);
       break;
     case 'L' :
-      if ((d=(double)atof(optarg))!=0.0) {
+      if ((d=(double)atof(bu_optarg))!=0.0) {
 	fenceWidth[0]=d;
 	fenceWidth[1]=0.0;
 	fenceWidth[2]=0.0;
@@ -387,7 +385,7 @@ int parseArguments(int argc, char **argv)
       break;
 
     case 'r' :
-      if ((d=(double)atof(optarg))!=0.0) {
+      if ((d=(double)atof(bu_optarg))!=0.0) {
 	wireRadius=d;
       }
       else {
@@ -396,7 +394,7 @@ int parseArguments(int argc, char **argv)
       }
       break;
     case 'R' :
-      if ((d=(double)atof(optarg))!=0.0) {
+      if ((d=(double)atof(bu_optarg))!=0.0) {
 	poleRadius=d;
       }
       else {
@@ -406,7 +404,7 @@ int parseArguments(int argc, char **argv)
       break;
 
     case 'a' :
-      if ((d=(double)atof(optarg))!=0.0) {
+      if ((d=(double)atof(bu_optarg))!=0.0) {
 	wireAngle=d;
       }
       else {
@@ -415,7 +413,7 @@ int parseArguments(int argc, char **argv)
       }
       break;
     case 'A' :
-      if ((d=(double)atof(optarg))!=0.0) {
+      if ((d=(double)atof(bu_optarg))!=0.0) {
 	wireAngle=d;
       }
       else {
@@ -425,7 +423,7 @@ int parseArguments(int argc, char **argv)
       break;
 
     case 'j' :
-      if ((d=(double)atof(optarg))!=0.0) {
+      if ((d=(double)atof(bu_optarg))!=0.0) {
 	fencePoleSpacing=d;
       }
       else {
@@ -434,7 +432,7 @@ int parseArguments(int argc, char **argv)
       }
       break;
     case 'J' :
-      if ((d=(double)atof(optarg))!=0.0) {
+      if ((d=(double)atof(bu_optarg))!=0.0) {
 	fencePoleSpacing=d;
       }
       else {
@@ -445,36 +443,36 @@ int parseArguments(int argc, char **argv)
 
     case 't' :
       memset(fenceMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(fenceMaterial, optarg, DEFAULT_MAXNAMELENGTH*3);
+      strncpy(fenceMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
       break;
     case 'T' :
       memset(fenceMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
       memset(poleMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
       memset(meshMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
       memset(wireMaterial, 0, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(fenceMaterial, optarg, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(poleMaterial, optarg, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(meshMaterial, optarg, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(wireMaterial, optarg, DEFAULT_MAXNAMELENGTH*3);
+      strncpy(fenceMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      strncpy(poleMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      strncpy(meshMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      strncpy(wireMaterial, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
       break;
 
     case 'b' :
       memset(fenceMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(fenceMaterialParams, optarg, DEFAULT_MAXNAMELENGTH*3);
+      strncpy(fenceMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
       break;
     case 'B' :
       memset(fenceMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
       memset(poleMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
       memset(meshMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
       memset(wireMaterialParams, 0, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(fenceMaterialParams, optarg, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(poleMaterialParams, optarg, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(meshMaterialParams, optarg, DEFAULT_MAXNAMELENGTH*3);
-      strncpy(wireMaterialParams, optarg, DEFAULT_MAXNAMELENGTH*3);
+      strncpy(fenceMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      strncpy(poleMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      strncpy(meshMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
+      strncpy(wireMaterialParams, bu_optarg, DEFAULT_MAXNAMELENGTH*3);
       break;
 
     case 'c' :
-      if ((sscanf(optarg, "%u %u %u", (unsigned int *)&color[0], (unsigned int *)&color[1], (unsigned int *)&color[2]))!=3) {
+      if ((sscanf(bu_optarg, "%u %u %u", (unsigned int *)&color[0], (unsigned int *)&color[1], (unsigned int *)&color[2]))!=3) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters for material color: need r, g, b values");
 	exit(1);
       }
@@ -487,7 +485,7 @@ int parseArguments(int argc, char **argv)
       fenceMaterialColor[2] = (unsigned char)color[2];
       break;
     case 'C' :
-      if ((sscanf(optarg, "%u %u %u", (unsigned int *)&color[0], (unsigned int *)&color[1], (unsigned int *)&color[2]))!=3) {
+      if ((sscanf(bu_optarg, "%u %u %u", (unsigned int *)&color[0], (unsigned int *)&color[1], (unsigned int *)&color[2]))!=3) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters for material color: need r, g, b values");
 	exit(1);
       }
@@ -512,47 +510,47 @@ int parseArguments(int argc, char **argv)
 
     case 'f' :
       memset(fenceName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(fenceName, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(fenceName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'F' :
       memset(fenceName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(fenceName, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(fenceName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 'p' :
       memset(poleName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(poleName, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(poleName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'P' :
       memset(poleName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(poleName, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(poleName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 'm' :
       memset(meshName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(meshName, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(meshName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'M' :
       memset(meshName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(meshName, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(meshName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 'w' :
       memset(wireName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(wireName, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(wireName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'W' :
       memset(wireName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(wireName, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(wireName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 's' :
       memset(segmentName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(segmentName, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(segmentName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
     case 'S' :
       memset(segmentName, 0, DEFAULT_MAXNAMELENGTH);
-      strncpy(segmentName, optarg, DEFAULT_MAXNAMELENGTH);
+      strncpy(segmentName, bu_optarg, DEFAULT_MAXNAMELENGTH);
       break;
 
     case 'e' :
@@ -560,48 +558,48 @@ int parseArguments(int argc, char **argv)
       fencePoles = 0;
       fenceMesh = 0;
       fenceWire = 0;
-      if (strchr(optarg, 'f')!=NULL) fenceFence = 1;
-      if (strchr(optarg, 'p')!=NULL) fencePoles = 1;
-      if (strchr(optarg, 'm')!=NULL) fenceMesh = 1;
-      if (strchr(optarg, 'w')!=NULL) fenceWire = 1;
-      if (strchr(optarg, 'F')!=NULL) fenceFence = 1;
-      if (strchr(optarg, 'P')!=NULL) fencePoles = 1;
-      if (strchr(optarg, 'M')!=NULL) fenceMesh = 1;
-      if (strchr(optarg, 'W')!=NULL) fenceWire = 1;
+      if (strchr(bu_optarg, 'f')!=NULL) fenceFence = 1;
+      if (strchr(bu_optarg, 'p')!=NULL) fencePoles = 1;
+      if (strchr(bu_optarg, 'm')!=NULL) fenceMesh = 1;
+      if (strchr(bu_optarg, 'w')!=NULL) fenceWire = 1;
+      if (strchr(bu_optarg, 'F')!=NULL) fenceFence = 1;
+      if (strchr(bu_optarg, 'P')!=NULL) fencePoles = 1;
+      if (strchr(bu_optarg, 'M')!=NULL) fenceMesh = 1;
+      if (strchr(bu_optarg, 'W')!=NULL) fenceWire = 1;
       break;
     case 'E' :
-      if (strchr(optarg, 'f')!=NULL) fenceFence = (DEFAULT_FENCEFENCE) ? 0 : 1;
-      if (strchr(optarg, 'p')!=NULL) fencePoles = (DEFAULT_FENCEPOLES) ? 0 : 1;
-      if (strchr(optarg, 'm')!=NULL) fenceMesh = (DEFAULT_FENCEMESH) ? 0 : 1;
-      if (strchr(optarg, 'w')!=NULL) fenceWire = (DEFAULT_FENCEWIRE) ? 0 : 1;
-      if (strchr(optarg, 'F')!=NULL) fenceFence = (DEFAULT_FENCEFENCE) ? 0 : 1;
-      if (strchr(optarg, 'P')!=NULL) fencePoles = (DEFAULT_FENCEPOLES) ? 0 : 1;
-      if (strchr(optarg, 'M')!=NULL) fenceMesh = (DEFAULT_FENCEMESH) ? 0 : 1;
-      if (strchr(optarg, 'W')!=NULL) fenceWire = (DEFAULT_FENCEWIRE) ? 0 : 1;
+      if (strchr(bu_optarg, 'f')!=NULL) fenceFence = (DEFAULT_FENCEFENCE) ? 0 : 1;
+      if (strchr(bu_optarg, 'p')!=NULL) fencePoles = (DEFAULT_FENCEPOLES) ? 0 : 1;
+      if (strchr(bu_optarg, 'm')!=NULL) fenceMesh = (DEFAULT_FENCEMESH) ? 0 : 1;
+      if (strchr(bu_optarg, 'w')!=NULL) fenceWire = (DEFAULT_FENCEWIRE) ? 0 : 1;
+      if (strchr(bu_optarg, 'F')!=NULL) fenceFence = (DEFAULT_FENCEFENCE) ? 0 : 1;
+      if (strchr(bu_optarg, 'P')!=NULL) fencePoles = (DEFAULT_FENCEPOLES) ? 0 : 1;
+      if (strchr(bu_optarg, 'M')!=NULL) fenceMesh = (DEFAULT_FENCEMESH) ? 0 : 1;
+      if (strchr(bu_optarg, 'W')!=NULL) fenceWire = (DEFAULT_FENCEWIRE) ? 0 : 1;
       break;
 
     case 'g' :
       generateFenceParam = 0;
       generatePolesParam = 0;
       generateMeshParam = 0;
-      if (strchr(optarg, 'f')!=NULL) generateFenceParam = 1;
-      if (strchr(optarg, 'p')!=NULL) generatePolesParam = 1;
-      if (strchr(optarg, 'm')!=NULL) generateMeshParam = 1;
-      if (strchr(optarg, 'F')!=NULL) generateFenceParam = 1;
-      if (strchr(optarg, 'P')!=NULL) generatePolesParam = 1;
-      if (strchr(optarg, 'M')!=NULL) generateMeshParam = 1;
+      if (strchr(bu_optarg, 'f')!=NULL) generateFenceParam = 1;
+      if (strchr(bu_optarg, 'p')!=NULL) generatePolesParam = 1;
+      if (strchr(bu_optarg, 'm')!=NULL) generateMeshParam = 1;
+      if (strchr(bu_optarg, 'F')!=NULL) generateFenceParam = 1;
+      if (strchr(bu_optarg, 'P')!=NULL) generatePolesParam = 1;
+      if (strchr(bu_optarg, 'M')!=NULL) generateMeshParam = 1;
       if (generateFenceParam == generatePolesParam == generateMeshParam == 0) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid generate parameters specified");
 	exit(1);
       }
       break;
     case 'G' :
-      if (strchr(optarg, 'f')!=NULL) generateFenceParam = (DEFAULT_GENERATEFENCE) ? 0 : 1;
-      if (strchr(optarg, 'p')!=NULL) generatePolesParam = (DEFAULT_GENERATEPOLES) ? 0 : 1;
-      if (strchr(optarg, 'm')!=NULL) generateMeshParam = (DEFAULT_GENERATEMESH) ? 0 : 1;
-      if (strchr(optarg, 'F')!=NULL) generateFenceParam = (DEFAULT_GENERATEFENCE) ? 0 : 1;
-      if (strchr(optarg, 'P')!=NULL) generatePolesParam = (DEFAULT_GENERATEPOLES) ? 0 : 1;
-      if (strchr(optarg, 'M')!=NULL) generateMeshParam = (DEFAULT_GENERATEMESH) ? 0 : 1;
+      if (strchr(bu_optarg, 'f')!=NULL) generateFenceParam = (DEFAULT_GENERATEFENCE) ? 0 : 1;
+      if (strchr(bu_optarg, 'p')!=NULL) generatePolesParam = (DEFAULT_GENERATEPOLES) ? 0 : 1;
+      if (strchr(bu_optarg, 'm')!=NULL) generateMeshParam = (DEFAULT_GENERATEMESH) ? 0 : 1;
+      if (strchr(bu_optarg, 'F')!=NULL) generateFenceParam = (DEFAULT_GENERATEFENCE) ? 0 : 1;
+      if (strchr(bu_optarg, 'P')!=NULL) generatePolesParam = (DEFAULT_GENERATEPOLES) ? 0 : 1;
+      if (strchr(bu_optarg, 'M')!=NULL) generateMeshParam = (DEFAULT_GENERATEMESH) ? 0 : 1;
       if (generateFenceParam == generatePolesParam == generateMeshParam == 0) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid generate parameters specified or all specified to zero");
 	exit(1);
@@ -645,7 +643,7 @@ int parseArguments(int argc, char **argv)
 
   bu_free(progname, "progname");
 
-  return(optind);
+  return(bu_optind);
 }
 
 /*

@@ -157,13 +157,13 @@ char	*argv[];
 	tol.para = 1 - tol.perp;
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "do:vx:X:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "do:vx:X:")) != EOF) {
 		switch (c) {
 		case 'd':		/* increment debug level */
 			debug++;
 			break;
 		case 'o':		/* Output file name */
-			out_file = optarg;
+			out_file = bu_optarg;
 			break;
 		case 's':		/* edge length statistics */
 			stats = 1;
@@ -172,12 +172,12 @@ char	*argv[];
 			verbose++;
 			break;
 		case 'x':
-			sscanf( optarg, "%x", &rt_g.debug );
+			sscanf( bu_optarg, "%x", &rt_g.debug );
 			bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 			bu_log("\n");
 			break;
 		case 'X':
-			sscanf( optarg, "%x", &rt_g.NMG_debug );
+			sscanf( bu_optarg, "%x", &rt_g.NMG_debug );
 			bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 			bu_log("\n");
 			break;
@@ -188,15 +188,15 @@ char	*argv[];
 		}
 	}
 
-	if (optind+1 >= argc) {
+	if (bu_optind+1 >= argc) {
 		fprintf(stderr, usage, argv[0]);
 		return 1;
 	}
 
 	/* Open BRL-CAD database */
-	if( (dbip = db_open( argv[optind], "r" )) == DBI_NULL )
+	if( (dbip = db_open( argv[bu_optind], "r" )) == DBI_NULL )
 	{
-		bu_log( "Cannot open %s\n" , argv[optind] );
+		bu_log( "Cannot open %s\n" , argv[bu_optind] );
 		perror(argv[0]);
 		return 1;
 	}
@@ -221,14 +221,14 @@ char	*argv[];
 	}
 
 	fprintf( fp_out, "object\n" );
-	while( ++optind < argc )
+	while( ++bu_optind < argc )
 	{
 		struct directory *dp;
 		struct rt_db_internal ip;
 		int id;
 		struct model *m;
 
-		if( (dp=db_lookup( dbip, argv[optind], LOOKUP_NOISY)) == DIR_NULL )
+		if( (dp=db_lookup( dbip, argv[bu_optind], LOOKUP_NOISY)) == DIR_NULL )
 			continue;
 
 		if( (id=rt_db_get_internal( &ip, dp, dbip, bn_mat_identity, &rt_uniresource )) < 0 )

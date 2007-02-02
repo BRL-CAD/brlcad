@@ -170,7 +170,7 @@ main(int argc, char **argv)
 	/*     This section checks usage options given at run command time.   */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "6A:T:x:X:pf:i:m:anu:t:o:rc:d:")) != EOF)
+	while ((c = bu_getopt(argc, argv, "6A:T:x:X:pf:i:m:anu:t:o:rc:d:")) != EOF)
 	{
 		switch (c)
 		{
@@ -179,7 +179,7 @@ main(int argc, char **argv)
 				break;
 			case 'T':  /* tolerance distance */
 
-				tol.dist = atof( optarg );
+				tol.dist = atof( bu_optarg );
 				if( tol.dist < 0.0 )
 				{
 					bu_log( "Illegal tolerance distance (%g inches) (must be non-negative).\n", tol.dist );
@@ -192,7 +192,7 @@ main(int argc, char **argv)
 
 			case 'A':  /* angular tolerance */
 
-				tol.perp = atof( optarg );
+				tol.perp = atof( bu_optarg );
 				if( tol.perp < 0.0 || tol.perp > 1.0 )
 				{
 					bu_log( "Illegal angular tolerance (%g) (must be non-negative between 0 and 1).\n", tol.perp );
@@ -204,12 +204,12 @@ main(int argc, char **argv)
 
 			case 'x':  /* librt debug flags */
 
-				sscanf( optarg , "%x" , (unsigned int *)&rt_g.debug );
+				sscanf( bu_optarg , "%x" , (unsigned int *)&rt_g.debug );
 				break;
 
 			case 'X':  /* librt NMG debug flags */
 
-				sscanf( optarg , "%x" , (unsigned int *)&rt_g.NMG_debug );
+				sscanf( bu_optarg , "%x" , (unsigned int *)&rt_g.NMG_debug );
 				break;
 
 			case 'p':  /* polysolid output */
@@ -219,17 +219,17 @@ main(int argc, char **argv)
 
 			case 'f':  /* fastgen source file data */
 
-				patchfile = optarg;
+				patchfile = bu_optarg;
 				break;
 
 			case 'i':  /* group labels source file */
 
-				labelfile = optarg;
+				labelfile = bu_optarg;
 				break;
 
 			case 'm':  /* materials information file */
 
-				matfile = optarg;
+				matfile = bu_optarg;
 				break;
 
 			case 'a':  /* process phantom armor ? */
@@ -246,7 +246,7 @@ main(int argc, char **argv)
 				    * to put in a region
 							    */
 
-				if( (num_unions = atoi( optarg )) <= 0 ) {
+				if( (num_unions = atoi( bu_optarg )) <= 0 ) {
 					bu_log( "%d: bad number of unions to put in a region\n", num_unions );
 					exit( 1 );
 				}
@@ -254,12 +254,12 @@ main(int argc, char **argv)
 
 			case 't':  /* optional title for the database */
 
-				title = optarg;
+				title = bu_optarg;
 				break;
 
 			case 'o':  /* optional top-level object name */
 
-				top_level = optarg;
+				top_level = bu_optarg;
 				break;
 
 			case 'r':  /* reverse normals for plate mode triangles */
@@ -270,7 +270,7 @@ main(int argc, char **argv)
 			case 'c':  /* center of object (used for some plate mode
 				    * triangle surface normal calculations
 							    */
-				sscanf( optarg,"%lf %lf %lf",
+				sscanf( bu_optarg,"%lf %lf %lf",
 				    &Centroid[0],&Centroid[1],&Centroid[2]);
 
 				bu_log( "Centroid = ( %f %f %f )\n" , V3ARGS( Centroid ) );
@@ -279,7 +279,7 @@ main(int argc, char **argv)
 
 			case 'd':  /* debug flag checking */
 
-				debug = atoi(optarg); /* Debug level */
+				debug = atoi(bu_optarg); /* Debug level */
 				break;
 
 			default:
@@ -288,12 +288,12 @@ main(int argc, char **argv)
 			}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		(void)fputs(usage, stderr);
 		exit(1);
 	}
-	if( (outfp = wdb_fopen(argv[optind])) == RT_WDB_NULL )  {
-		perror(argv[optind]);
+	if( (outfp = wdb_fopen(argv[bu_optind])) == RT_WDB_NULL )  {
+		perror(argv[bu_optind]);
 		exit(3);
 	}
 

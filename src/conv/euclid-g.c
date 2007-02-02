@@ -172,17 +172,17 @@ main(int argc, char **argv)
 
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "d:vi:o:nx:X:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "d:vi:o:nx:X:")) != EOF) {
 		switch (c) {
 		case 'd':
-			tol.dist = atof( optarg );
+			tol.dist = atof( bu_optarg );
 			tol.dist_sq = tol.dist * tol.dist;
 			break;
 		case 'v':
 			debug = 1;
 			break;
 		case 'i':
-			efile = optarg;
+			efile = bu_optarg;
 			if ((fpin = fopen(efile, "r")) == NULL)
 			{
 				fprintf(stderr,	"%s: cannot open %s for reading\n",
@@ -192,16 +192,16 @@ main(int argc, char **argv)
 			}
 			break;
 		case 'o':
-			bfile = optarg;
+			bfile = bu_optarg;
 			break;
 		case 'n':
 			polysolids = 0;
 			break;
 		case 'x':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 			break;
 		case 'X':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 			break;
 		default:
 			fprintf(stderr, usage, argv[0]);

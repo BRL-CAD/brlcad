@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
 #ifdef HAVE_GETOPT_LONG
 	getopt_long(argc, argv, shortopts, longopts, NULL)
 #else
-	getopt(argc, argv, shortopts)
+	bu_getopt(argc, argv, shortopts)
 #endif
 	)!= -1)
   {
@@ -109,8 +109,8 @@ int main(int argc, char **argv) {
 			  return EXIT_FAILURE;
 	  }
   }
-  argc -= optind;
-  argv += optind;
+  argc -= bu_optind;
+  argv += bu_optind;
 
   strcpy(proj, argv[0]);
 

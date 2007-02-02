@@ -112,7 +112,7 @@ int main(int ac, char **av)
 	 */
 
 	/* Turn off bu_getopt's error messages */
-	opterr = 0;
+	bu_opterr = 0;
 
 	/* get all the option flags from the command line
 	 */

@@ -418,7 +418,7 @@ void load_regmap(char *filename) {
     printf("region map file \"%s\" not found.\n", filename);
     return;
   } else {
-    printf("using region map: %s\n", optarg);
+    printf("using region map: %s\n", bu_optarg);
   }
 
   while(!feof(fh)) {
@@ -523,7 +523,7 @@ int main(int argc, char *argv[]) {
     switch(c) {
       case 'r':
 	use_regmap = 1;
-	load_regmap(optarg);
+	load_regmap(bu_optarg);
 	break;
 
       default:

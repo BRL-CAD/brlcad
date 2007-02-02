@@ -333,7 +333,7 @@ int main(int ac, char **av)
     for (c=0 ; c < optlen ; optflags[c++] = '\0');
 
     /* Turn off bu_getopt's error messages */
-    opterr = 0;
+    bu_opterr = 0;
 
     /* get all the option flags from the command line
     */

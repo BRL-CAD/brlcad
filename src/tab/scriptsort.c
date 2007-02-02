@@ -60,8 +60,8 @@ struct frame globals;
 
 extern int yylex(void);
 
-extern int optind;
-extern char *optarg;
+extern int bu_optind;
+extern char *bu_optarg;
 int get_args(int argc, char **argv);
 int verbose;		/* print status on stderr */
 int specify_base;	/* user specified a base */
@@ -396,14 +396,14 @@ int get_args (int argc, char **argv)
 	verbose = 1;
 	specify_base = force_shell = suppress_shell = 0;
 	frame_offset = 0;
-	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
+	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
 		case 'q':
 			verbose = 0;
 			break;
 		case 'b':
 			specify_base = 1;
-			user_base = atoi(optarg);
+			user_base = atoi(bu_optarg);
 			break;
 		case 'f':
 			force_shell = 1;
@@ -414,7 +414,7 @@ int get_args (int argc, char **argv)
 			force_shell = 0;
 			break;
 		case 'o':
-			frame_offset = atoi(optarg);
+			frame_offset = atoi(bu_optarg);
 			break;
 		default:
 			fprintf(stderr,"Unknown option: -%c\n",c);

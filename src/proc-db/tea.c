@@ -63,7 +63,7 @@ main(int argc, char **argv) 			/* really has no arguments */
 
 	outfp = wdb_fopen("teapot.g");
 
-	while ((i=getopt(argc, argv, "d")) != EOF) {
+	while ((i=bu_getopt(argc, argv, "d")) != EOF) {
 		switch (i) {
 		case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
 		default	:

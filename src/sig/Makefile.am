@@ -69,7 +69,7 @@ dauto_SOURCES = dauto.c
 dauto_LDADD = ${BU}
 
 dmod_SOURCES = dmod.c
-dmod_LDADD = ${LIBM}
+dmod_LDADD = ${BU} ${LIBM}
 
 dfft_SOURCES = dfft.c interp.c butter.c
 dfft_LDADD = ${FFT}
@@ -84,10 +84,10 @@ fhor_SOURCES = fhor.c
 fhor_LDADD = ${FB}
 
 imod_SOURCES = imod.c
-imod_LDADD = ${LIBM}
+imod_LDADD = ${BU} ${LIBM}
 
 umod_SOURCES = umod.c
-umod_LDADD = ${LIBM}
+umod_LDADD = ${BU} ${LIBM}
 
 
 #  Misc

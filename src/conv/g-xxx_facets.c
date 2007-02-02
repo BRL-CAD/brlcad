@@ -131,17 +131,17 @@ char	*argv[];
 	the_model = nmg_mm();
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "r:a:n:o:vx:D:X:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "r:a:n:o:vx:D:X:")) != EOF) {
 		switch (c) {
 		case 'r':		/* Relative tolerance. */
-			ttol.rel = atof(optarg);
+			ttol.rel = atof(bu_optarg);
 			break;
 		case 'a':		/* Absolute tolerance. */
-			ttol.abs = atof(optarg);
+			ttol.abs = atof(bu_optarg);
 			ttol.rel = 0.0;
 			break;
 		case 'n':		/* Surface normal tolerance. */
-			ttol.norm = atof(optarg);
+			ttol.norm = atof(bu_optarg);
 			ttol.rel = 0.0;
 			break;
 		case 'o':		/* Output file name. */
@@ -151,15 +151,15 @@ char	*argv[];
 			verbose++;
 			break;
 		case 'x':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 			break;
 		case 'D':
-			tol.dist = atof(optarg);
+			tol.dist = atof(bu_optarg);
 			tol.dist_sq = tol.dist * tol.dist;
 			rt_pr_tol( &tol );
 			break;
 		case 'X':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 			NMG_debug = rt_g.NMG_debug;
 			break;
 		default:
@@ -169,7 +169,7 @@ char	*argv[];
 		}
 	}
 
-	if (optind+1 >= argc) {
+	if (bu_optind+1 >= argc) {
 		bu_log( usage, argv[0]);
 		exit(1);
 	}
@@ -178,8 +178,8 @@ char	*argv[];
 
 
 	/* Open BRL-CAD database */
-	argc -= optind;
-	argv += optind;
+	argc -= bu_optind;
+	argv += bu_optind;
 	if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
 		perror(argv[0]);
 		exit(1);

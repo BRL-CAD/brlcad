@@ -194,7 +194,7 @@ main(int argc, char **argv)
 	bu_ptbl_init( &faces , 64, " &faces ");
 
 	/* get command line arguments */
-	while ((c = getopt(argc, argv, "vknt:i:o:x:X:")) != EOF)
+	while ((c = bu_getopt(argc, argv, "vknt:i:o:x:X:")) != EOF)
 	{
 		switch( c )
 		{
@@ -202,12 +202,12 @@ main(int argc, char **argv)
 				verbose = 1;
 				break;
 			case 'x':
-				sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
+				sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 				bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 				bu_log("\n");
 				break;
 			case 'X':
-				sscanf( optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+				sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 				bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 				bu_log("\n");
 				break;
@@ -218,21 +218,21 @@ main(int argc, char **argv)
 				polysolids = 0;
 				break;
 			case 't': /* tolerance */
-				tol.dist = atof( optarg );
+				tol.dist = atof( bu_optarg );
 				tol.dist_sq = tol.dist * tol.dist;
 				break;
 			case 'i': /* input file name */
-				if( (in_fp = fopen( optarg , "r" )) == NULL )
+				if( (in_fp = fopen( bu_optarg , "r" )) == NULL )
 				{
-					fprintf( stderr , "Cannot open %s\n" , optarg );
+					fprintf( stderr , "Cannot open %s\n" , bu_optarg );
 					perror( "tankill-g" );
 					rt_bomb( "Cannot open input file" );
 				}
-				input_file = bu_malloc( sizeof( optarg ) +1 , "tankill-g: input file name" );
-				strcpy( input_file , optarg );
+				input_file = bu_malloc( sizeof( bu_optarg ) +1 , "tankill-g: input file name" );
+				strcpy( input_file , bu_optarg );
 				break;
 			case 'o': /* output file name */
-				output_file = optarg;
+				output_file = bu_optarg;
 				break;
 			default:
 				rt_bomb( usage );

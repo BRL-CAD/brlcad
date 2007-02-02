@@ -81,9 +81,6 @@
 
 #define MAX_INPUT_LENGTH 48
 
-extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
-
 struct depthMat {
   char name[MAX_INPUT_LENGTH];
   char params[MAX_INPUT_LENGTH];
@@ -151,9 +148,9 @@ int main(int argc, char **argv)
   depth = DEFAULT_MAXDEPTH;
   strncpy(fileName, DEFAULT_FILENAME, MAX_INPUT_LENGTH);
 
-  opterr = 0;
+  bu_opterr = 0;
 
-  while ( (optc = getopt( argc, argv, "hHiIDd:f:F:" )) != -1 ) {
+  while ( (optc = bu_getopt( argc, argv, "hHiIDd:f:F:" )) != -1 ) {
     switch (optc) {
     case 'I' :
     case 'i' : /* interactive mode */
@@ -165,7 +162,7 @@ int main(int argc, char **argv)
       depth = DEFAULT_MAXDEPTH;
       break;
     case 'd':  /* Use a user-defined depth */
-      depth = atoi(optarg);
+      depth = atoi(bu_optarg);
       if (depth > 5) {
 	printf("\nWARNING: Depths greater than 5 produce extremely large numbers of objects.\n");
       }
@@ -173,7 +170,7 @@ int main(int argc, char **argv)
     case 'F':
     case 'f':  /* Use a user-defined filename */
       memset(fileName, 0, MAX_INPUT_LENGTH);
-      strncpy(fileName, optarg, MAX_INPUT_LENGTH);
+      strncpy(fileName, bu_optarg, MAX_INPUT_LENGTH);
       break;
     case 'h':
     case 'H':
@@ -184,7 +181,7 @@ int main(int argc, char **argv)
       break;
     }
   }
-  if (optind <= 1) {
+  if (bu_optind <= 1) {
     printf("Using all default parameters. Try %s -h for assistance\n", argv[0]);
     inter = 0;
   }

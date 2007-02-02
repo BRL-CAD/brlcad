@@ -47,10 +47,10 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() system call */
 char *options = "ht";
-extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
+extern char *bu_optarg;
+extern int bu_optind, bu_opterr, bu_getopt(int, char *const *, const char *);
 
 char *progname = "(noname)";
 int triangulate = 0;
@@ -81,10 +81,10 @@ int parse_args(int ac, char **av)
 	++progname;
 
     /* Turn off getopt's error messages */
-    opterr = 0;
+    bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=getopt(ac,av,options)) != EOF)
+    while ((c=bu_getopt(ac,av,options)) != EOF)
 	switch (c) {
 	    case 't'	: triangulate = !triangulate; break;
 	    case '?'	:
@@ -92,7 +92,7 @@ int parse_args(int ac, char **av)
 	    default		: usage("Bad or help flag specified\n"); break;
 	}
 
-    return(optind);
+    return(bu_optind);
 }
 
 static void

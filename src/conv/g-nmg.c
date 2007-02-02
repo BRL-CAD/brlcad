@@ -460,42 +460,42 @@ main(int argc, char **argv)
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "t:a:n:o:r:bvx:P:X:")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "t:a:n:o:r:bvx:P:X:")) != EOF) {
 		switch (c) {
 		case 'b':		/* make BOT's instead of NMG's */
 			do_bots = 1;
 			break;
 		case 't':		/* calculational tolerance */
-			tol.dist = atof( optarg );
+			tol.dist = atof( bu_optarg );
 			tol.dist_sq = tol.dist * tol.dist;
 		case 'a':		/* Absolute tolerance. */
-			ttol.abs = atof(optarg);
+			ttol.abs = atof(bu_optarg);
 			ttol.rel = 0.0;
 			break;
 		case 'n':		/* Surface normal tolerance. */
-			ttol.norm = atof(optarg)*bn_pi/180.0;
+			ttol.norm = atof(bu_optarg)*bn_pi/180.0;
 			ttol.rel = 0.0;
 			break;
 		case 'o':		/* Output file name */
-			out_file = optarg;
+			out_file = bu_optarg;
 			break;
 		case 'r':		/* Relative tolerance. */
-			ttol.rel = atof(optarg);
+			ttol.rel = atof(bu_optarg);
 			break;
 		case 'v':
 			verbose++;
 			break;
 		case 'P':
-/*			ncpu = atoi( optarg ); */
+/*			ncpu = atoi( bu_optarg ); */
 			rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
 			break;
 		case 'x':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 			bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 			bu_log("\n");
 			break;
 		case 'X':
-			sscanf( optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 			NMG_debug = rt_g.NMG_debug;
 			bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 			bu_log("\n");
@@ -507,14 +507,14 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (optind+1 >= argc) {
+	if (bu_optind+1 >= argc) {
 		fprintf(stderr, usage, argv[0]);
 		exit(1);
 	}
 
 	/* Open BRL-CAD database */
-	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL) {
-		bu_log( "Cannot open %s\n" , argv[optind] );
+	if ((dbip = db_open( argv[bu_optind] , "r")) == DBI_NULL) {
+		bu_log( "Cannot open %s\n" , argv[bu_optind] );
 		perror(argv[0]);
 		exit(1);
 	}
@@ -526,12 +526,12 @@ main(int argc, char **argv)
 		return 2;
 	}
 
-	optind++;
+	bu_optind++;
 
 	mk_id_editunits( fp_out , dbip->dbi_title , dbip->dbi_local2base );
 
 	/* Walk the trees outputting regions and combinations */
-	for( i=optind ; i<argc ; i++ ) {
+	for( i=bu_optind ; i<argc ; i++ ) {
 		struct directory *dp;
 
 		dp = db_lookup( dbip , argv[i] , 0 );

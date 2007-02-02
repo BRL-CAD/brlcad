@@ -84,11 +84,11 @@ main(int argc, char **argv)
 	hscale = 2.5;
 
 
-	while ((i=getopt(argc, argv, "dh:")) != EOF) {
+	while ((i=bu_getopt(argc, argv, "dh:")) != EOF) {
 		switch (i) {
 		case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
 		case 'h' :
-			hscale = atof( optarg );
+			hscale = atof( bu_optarg );
 			break;
 		default	:
 			(void)fprintf(stderr,

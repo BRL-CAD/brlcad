@@ -3491,12 +3491,12 @@ main( int argc, char *argv[] )
 
 	/* get command line arguments */
 	scale_factor = 1.0;
-	while ((c = getopt(argc, argv, "cdvt:s:")) != EOF)
+	while ((c = bu_getopt(argc, argv, "cdvt:s:")) != EOF)
 	{
 		switch( c )
 		{
 			case 's':	/* scale factor */
-				scale_factor = atof( optarg );
+				scale_factor = atof( bu_optarg );
 				if( scale_factor < SQRT_SMALL_FASTF ) {
 					bu_log( "scale factor too small\n" );
 					bu_log( "%s", usage );
@@ -3510,7 +3510,7 @@ main( int argc, char *argv[] )
 				bu_debug = BU_DEBUG_COREDUMP;
 				break;
 			case 't':	/* tolerance */
-				tol = atof( optarg );
+				tol = atof( bu_optarg );
 				tol_sq = tol * tol;
 				break;
 			case 'v':	/* verbose */
@@ -3522,12 +3522,12 @@ main( int argc, char *argv[] )
 		}
 	}
 
-	if( argc - optind < 2 ) {
+	if( argc - bu_optind < 2 ) {
 		bu_bomb( usage );
 	}
 
-	dxf_file = argv[optind++];
-	output_file = argv[optind];
+	dxf_file = argv[bu_optind++];
+	output_file = argv[bu_optind];
 
 	if( (out_fp = wdb_fopen( output_file )) == NULL ) {
 		bu_log( "Cannot open output file (%s)\n", output_file );

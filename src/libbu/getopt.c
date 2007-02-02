@@ -25,7 +25,7 @@
  *  Special re-entrant version of getopt.
  *
  *  Everything is prefixed with bu_, to distinguish it from the various
- *  getopt() routines found in libc.
+ *  getopt routines found in libc.
  *
  *  Important note -
  *	If bu_getopt() it going to be used more than once, it is necessary

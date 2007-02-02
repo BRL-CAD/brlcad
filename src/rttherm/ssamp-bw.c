@@ -93,32 +93,32 @@ get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "vs:w:n:l:u:m:M:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "vs:w:n:l:u:m:M:" )) != EOF )  {
 		switch( c )  {
 		case 'v':
 			verbose++;
 			break;
 		case 's':
 			/* square file size */
-			height = width = atoi(optarg);
+			height = width = atoi(bu_optarg);
 			break;
 		case 'w':
-			width = atoi(optarg);
+			width = atoi(bu_optarg);
 			break;
 		case 'n':
-			height = atoi(optarg);
+			height = atoi(bu_optarg);
 			break;
 		case 'l':
-			lower_wavelen = atof(optarg);
+			lower_wavelen = atof(bu_optarg);
 			break;
 		case 'u':
-			upper_wavelen = atof(optarg);
+			upper_wavelen = atof(bu_optarg);
 			break;
 		case 'm':
-			forced_minval = atof(optarg);
+			forced_minval = atof(bu_optarg);
 			break;
 		case 'M':
-			forced_maxval = atof(optarg);
+			forced_maxval = atof(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -126,7 +126,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( optind >= argc )  return 0;
+	if( bu_optind >= argc )  return 0;
 	return 1;	/* OK */
 }
 
@@ -168,7 +168,7 @@ main(int argc, char **argv)
 
 	if(verbose)	bu_debug = BU_DEBUG_COREDUMP;
 
-	datafile_basename = argv[optind];
+	datafile_basename = argv[bu_optind];
 
 	/* Read spectrum definition */
 	sprintf( spectrum_name, "%s.spect", datafile_basename );

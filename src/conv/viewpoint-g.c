@@ -127,17 +127,17 @@ main(int argc, char **argv)
 		rt_bomb( usage );
 
 	/* get command line arguments */
-	while ((c = getopt(argc, argv, "t:c:e:o:")) != EOF)
+	while ((c = bu_getopt(argc, argv, "t:c:e:o:")) != EOF)
 	{
 		switch( c )
 		{
 			case 't': /* tolerance */
-				tol.dist = atof( optarg );
+				tol.dist = atof( bu_optarg );
 				tol.dist_sq = tol.dist * tol.dist;
 				break;
 			case 'c': /* input coordinates file name */
-				coords_name = (char *)bu_malloc( strlen( optarg ) + 1 , "Viewpoint-g: base name" );
-				strcpy( coords_name , optarg );
+				coords_name = (char *)bu_malloc( strlen( bu_optarg ) + 1 , "Viewpoint-g: base name" );
+				strcpy( coords_name , bu_optarg );
 				if( (coords = fopen( coords_name , "r" )) == NULL )
 				{
 					bu_log( "Cannot open %s\n" , coords_name );
@@ -146,8 +146,8 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'e': /* input elements file name */
-				elems_name = (char *)bu_malloc( strlen( optarg ) + 1 , "Viewpoint-g: base name" );
-				strcpy( elems_name , optarg );
+				elems_name = (char *)bu_malloc( strlen( bu_optarg ) + 1 , "Viewpoint-g: base name" );
+				strcpy( elems_name , bu_optarg );
 				if( (elems = fopen( elems_name , "r" )) == NULL )
 				{
 					bu_log( "Cannot open %s\n" , elems_name );
@@ -156,7 +156,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'o': /* output file name */
-				output_file = optarg;
+				output_file = bu_optarg;
 				break;
 			default:
 				rt_bomb( usage );

@@ -49,6 +49,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 
 #include "machine.h"
+#include "bu.h"
 
 #include "./canon.h"
 
@@ -1166,8 +1167,7 @@ ipu_set_palette( dsp, cmap )
 #endif /* __sgi__ */
 
 char *options = "P:p:Q:q:acd:g:hmn:s:t:vw:zAC:M:R:D:N:S:W:X:Y:U:V#:";
-extern char *optarg;
-extern int optind, opterr, getopt();
+extern char *bu_optarg;
 
 char *progname = "(noname)";
 char scsi_device[1024] = "/dev/scsi/sc0d6l3";
@@ -1241,14 +1241,14 @@ int parse_args(ac, av)
     arg_v[arg_c = 0] = arg_buf;
     arg_v[++arg_c] = (char *)NULL;
 
-    /* Turn off getopt's error messages */
-    opterr = 0;
+    /* Turn off bu_getopt's error messages */
+    bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=getopt(ac,av,options)) != EOF) {
+    while ((c=bu_getopt(ac,av,options)) != EOF) {
 	/* slup off a printer queue name */
 	if (c == 'q' ||  c == 'p') {
-	    print_queue = optarg;
+	    print_queue = bu_optarg;
 	    continue;
 	}
 
@@ -1261,7 +1261,7 @@ int parse_args(ac, av)
 	    if (p[1] == ':') {
 		arg_v[arg_c++] = &arg_buf[len];
 		arg_v[arg_c] = (char *)NULL;
-		(void)sprintf(&arg_buf[len], "%s", optarg);
+		(void)sprintf(&arg_buf[len], "%s", bu_optarg);
 		len += strlen(&arg_buf[len]) + 1;
 	    }
 	}
@@ -1269,39 +1269,39 @@ int parse_args(ac, av)
 	switch (c) {
 	case 'a'	: autosize = !autosize; break;
 	case 'c'	: clear = !clear; break;
-	case 'd'	: if (isprint(*optarg)) {
+	case 'd'	: if (isprint(*bu_optarg)) {
 	    memset(scsi_device, 0, sizeof(scsi_device));
-	    strncpy(scsi_device,optarg,sizeof(scsi_device)-1);
+	    strncpy(scsi_device,bu_optarg,sizeof(scsi_device)-1);
 	} else
 	    usage("-d scsi_device_name\n");
 	    break;
-	case 'g'	: if (*optarg == 's')
+	case 'g'	: if (*bu_optarg == 's')
 	    ipu_gamma = IPU_GAMMA_STANDARD;
-	else if (*optarg == 'r')
+	else if (*bu_optarg == 'r')
 	    ipu_gamma = IPU_GAMMA_RGB;
-	else if (*optarg == 'c')
+	else if (*bu_optarg == 'c')
 	    ipu_gamma = IPU_GAMMA_CG;
 	else
 	    usage("-g {std|rgb|cg}\n");
 	    break;
 	case 'h'	: width = height = 1024; break;
 	case 'm'	: mosaic = !mosaic; break;
-	case 'n'	: if ((c=atoi(optarg)) > 0)
+	case 'n'	: if ((c=atoi(bu_optarg)) > 0)
 	    height = c;
 	else
 	    usage("-n scanlines\n");
 	    break;
-	case 's'	: if ((c=atoi(optarg)) > 0)
+	case 's'	: if ((c=atoi(bu_optarg)) > 0)
 	    width = height = c;
 	else
 	    usage("-s squareimagesize\n");
 	    break;
-	case 'w'	: if ((c=atoi(optarg)) > 0)
+	case 'w'	: if ((c=atoi(bu_optarg)) > 0)
 	    width = c;
 	else
 	    usage("-w imagewidth\n");
 	    break;
-	case 't'	:switch (*optarg) {
+	case 't'	:switch (*bu_optarg) {
 	case 'u'	:
 	case 'U'	: tray = IPU_UPPER_CASSETTE;
 	    break;
@@ -1316,9 +1316,9 @@ int parse_args(ac, av)
 	    break;
 	}
 	    break;
-	case 'U'	: if (*optarg == 'i')
+	case 'U'	: if (*bu_optarg == 'i')
 	    units = IPU_UNITS_INCH;
-	else if (*optarg == 'm')
+	else if (*bu_optarg == 'm')
 	    units = IPU_UNITS_MM;
 	else
 	    usage("invalid units\n");
@@ -1330,16 +1330,16 @@ int parse_args(ac, av)
 	    bzero( (char *)&param, sizeof(union ipu_prsc_param));
 	    break;
 	case 'M'	: conv = IPU_MAG_FACTOR;
-	    if ((c=atoi(optarg)) < 100 || c > 2000)
+	    if ((c=atoi(bu_optarg)) < 100 || c > 2000)
 		usage("X Mag factor out of range 100-2000\n");
 	    param.s[0] = c & 0x0ffff;
-	    while (*optarg && *optarg++ != ':')
+	    while (*bu_optarg && *bu_optarg++ != ':')
 		;
-	    if ((c = atoi(optarg)) < 100 || c > 2000)
+	    if ((c = atoi(bu_optarg)) < 100 || c > 2000)
 		usage("Y Mag factor out of range 100-2000\n");
 	    param.s[1] = c & 0x0ffff;
 	    break;
-	case 'R'	: if ((c=atoi(optarg)) > 0) {
+	case 'R'	: if ((c=atoi(bu_optarg)) > 0) {
 	    param.i = c;
 	    conv = IPU_RESOLUTION;
 	} else {
@@ -1353,44 +1353,44 @@ int parse_args(ac, av)
 			c, param.c[0], param.c[1], param.c[2],
 			param.c[3]);
 	    break;
-	case 'C'	: if ((c=atoi(optarg)) > 0 && c < 99)
+	case 'C'	: if ((c=atoi(bu_optarg)) > 0 && c < 99)
 	    copies = c;
 	else
 	    usage("-C [1-99]\n");
 	    break;
-	case 'D'	: if ((c=atoi(optarg)) > 0)
+	case 'D'	: if ((c=atoi(bu_optarg)) > 0)
 	    divisor = c;
 	else
 	    usage("-D divisor\n");
 	    break;
-	case 'N'	: if ((c=atoi(optarg)) > 0)
+	case 'N'	: if ((c=atoi(bu_optarg)) > 0)
 	    scr_height = c;
 	else
 	    usage("-N outputlines\n");
 	    break;
-	case 'S'	: if ((c=atoi(optarg)) > 0)
+	case 'S'	: if ((c=atoi(bu_optarg)) > 0)
 	    scr_width = scr_height = c;
 	else
 	    usage("-S outputsquaresize\n");
 	    break;
-	case 'W'	: if ((c=atoi(optarg)) > 0)
+	case 'W'	: if ((c=atoi(bu_optarg)) > 0)
 	    scr_width = c;
 	else
 	    usage("-W outputwidth\n");
 	    break;
-	case 'X'	: if ((c=atoi(optarg)) >= 0)
+	case 'X'	: if ((c=atoi(bu_optarg)) >= 0)
 	    scr_xoff = c;
 	else
 	    usage("-X pageXoffset\n");
 	    break;
-	case 'Y'	: if ((c=atoi(optarg)) >= 0)
+	case 'Y'	: if ((c=atoi(bu_optarg)) >= 0)
 	    scr_yoff = c;
 	else
 	    usage("-X pageYoffset\n");
 	    break;
 	case 'V'	: dsdebug = ! dsdebug;
 	case 'v'	: ipu_debug = !ipu_debug; break;
-	case '#'	: c = atoi(optarg);
+	case '#'	: c = atoi(bu_optarg);
 	    switch(c)  {
 	    case 3:
 		ipu_filetype = IPU_RGB_FILE;
@@ -1409,7 +1409,7 @@ int parse_args(ac, av)
 	default		: fprintf(stderr, "Bad or help flag specified '%c'\n", c); break;
 	}
     }
-    return(optind);
+    return(bu_optind);
 }
 
 /*

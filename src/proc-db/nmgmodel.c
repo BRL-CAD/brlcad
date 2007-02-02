@@ -56,10 +56,8 @@ static struct vertex *vertl[256];
 static struct vertex **f_vertl[256];
 
 
-/* declarations to support use of getopt() system call */
+/* declarations to support use of bu_getopt() system call */
 char *options = "h3210";
-extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
 
 char *progname = "(noname)";
 char plotfilename[1024] = {0};
@@ -101,11 +99,11 @@ int parse_args(int ac, char **av)
 	strcpy(mfilename, progname);
 	strcat(mfilename, ".g");
 
-	/* Turn off getopt's error messages */
-	opterr = 0;
+	/* Turn off bu_getopt's error messages */
+	bu_opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,options)) != EOF)
 		switch (c) {
 		case '3'	: manifold[3] = 0; break;
 		case '2'	: manifold[2] = 0; break;
@@ -116,7 +114,7 @@ int parse_args(int ac, char **av)
 		default		: usage((char *)NULL); break;
 		}
 
-	return(optind);
+	return(bu_optind);
 }
 
 void

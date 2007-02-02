@@ -86,8 +86,8 @@ static struct vert_root *tree_root;
 
 static int verbose=0;
 
-extern char *optarg;
-extern int optind, opterr, optopt;
+extern char *bu_optarg;
+extern int bu_optind, bu_opterr, optopt;
 
 struct obj_info {
 	char obj_type;			/* type of this object (from defines below) */
@@ -666,16 +666,16 @@ main( int argc, char *argv[] )
 	local_tol_sq = local_tol * local_tol;
 	ident = 1000;
 
-	while( (c=getopt( argc, argv, "vi:t:n:l:" ) ) != EOF ) {
+	while( (c=bu_getopt( argc, argv, "vi:t:n:l:" ) ) != EOF ) {
 		switch( c ) {
 			case 'v':	/* verbose */
 				verbose = 1;
 				break;
 			case 'i':	/* starting ident number */
-				ident = atoi( optarg );
+				ident = atoi( bu_optarg );
 				break;
 			case 't':	/* tolerance */
-				tmp = atof( optarg );
+				tmp = atof( bu_optarg );
 				if( tmp <= 0.0 ) {
 					bu_log( "Illegal tolerance (%g), musy be > 0.0\n",
 						tmp );
@@ -683,11 +683,11 @@ main( int argc, char *argv[] )
 				}
 				break;
 			case 'n':	/* part name list */
-				part_name_file = optarg;
+				part_name_file = bu_optarg;
 				use_part_name_hash = 1;
 				break;
 			case 'l':	/* max name length */
-				max_name_len = atoi( optarg );
+				max_name_len = atoi( bu_optarg );
 				if( max_name_len < 5 ) {
 					bu_log( "Unreasonable name length limitation\n" );
 					exit( 1 );
@@ -700,14 +700,14 @@ main( int argc, char *argv[] )
 		}
 	}
 
-	if( argc - optind != 2 ) {
+	if( argc - bu_optind != 2 ) {
 		bu_log( "Not enough arguments!!\n" );
 		Usage();
 		exit( 1 );
 	}
 
-	input_file = bu_strdup( argv[optind] );
-	output_file = bu_strdup( argv[optind+1] );
+	input_file = bu_strdup( argv[bu_optind] );
+	output_file = bu_strdup( argv[bu_optind+1] );
 
 	if( (fd_in=fopen( input_file, "r" )) == NULL ) {
 		bu_log( "Cannot open %s for reading\n", input_file );

@@ -94,17 +94,17 @@ int main(int argc, char **argv) {
 #ifdef HAVE_GETOPT_LONG
 	getopt_long(argc, argv, shortopts, longopts, NULL)
 #else
-	getopt(argc, argv, shortopts)
+	bu_getopt(argc, argv, shortopts)
 #endif
 	)!= -1)
   {
 	  switch(c) {
 	    case 'p':
-	      port = atoi(optarg);
+	      port = atoi(bu_optarg);
 	      break;
 
 	    case 'H':
-	      strncpy(host, optarg, 64);
+	      strncpy(host, bu_optarg, 64);
 	      break;
 
 	    case 'h':
@@ -121,8 +121,8 @@ int main(int argc, char **argv) {
 	  }
   }
 
-  argc -= optind;
-  argv += optind;
+  argc -= bu_optind;
+  argv += bu_optind;
 
   if(argc)
     strncpy(host, argv[0], 64);

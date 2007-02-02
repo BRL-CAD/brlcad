@@ -99,8 +99,8 @@ struct pshell
 #define		CORD_RECT	'R'
 #define		CORD_SPH	'S'
 
-extern char *optarg;
-extern int optind, opterr, optopt;
+extern char *bu_optarg;
+extern int bu_optind, bu_opterr, optopt;
 
 #define		NAMESIZE	16	/* from db.h */
 
@@ -1193,22 +1193,22 @@ main(int argc, char **argv)
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
-	while( (c=getopt( argc, argv, "x:X:t:ni:o:m")) != EOF )
+	while( (c=bu_getopt( argc, argv, "x:X:t:ni:o:m")) != EOF )
 	{
 		switch( c )
 		{
 			case 'x':
-				sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
+				sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 				bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 				bu_log("\n");
 				break;
 			case 'X':
-				sscanf( optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+				sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 				bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 				bu_log("\n");
 				break;
 			case 't':		/* calculational tolerance */
-				tol.dist = atof( optarg );
+				tol.dist = atof( bu_optarg );
 				tol.dist_sq = tol.dist * tol.dist;
 			case 'n':
 				polysolids = 0;
@@ -1217,17 +1217,17 @@ main(int argc, char **argv)
 				units = MM;
 				break;
 			case 'i':
-				nastran_file = optarg;
-				fdin = fopen( optarg, "r" );
+				nastran_file = bu_optarg;
+				fdin = fopen( bu_optarg, "r" );
 				if( fdin == (FILE *)NULL )
 				{
-					bu_log( "Cannot open NASTRAN file (%s) for reading!!!\n", optarg );
+					bu_log( "Cannot open NASTRAN file (%s) for reading!!!\n", bu_optarg );
 					bu_log( "Usage", argv[0] );
 					exit( 1 );
 				}
 				break;
 			case 'o':
-				output_file = optarg;
+				output_file = bu_optarg;
 				break;
 		}
 	}

@@ -1940,10 +1940,10 @@ f_Set_Y_Pos(char *buf) /* Move cursor's Y location (image space). */
 STATIC int
 pars_Argv(int argc, register char **argv)
 {	register int c;
-		extern int optind;
-		extern char *optarg;
+		extern int bu_optind;
+		extern char *bu_optarg;
 	/* Parse options. */
-	while( (c = getopt( argc, argv, "hp" )) != EOF )
+	while( (c = bu_getopt( argc, argv, "hp" )) != EOF )
 		{
 		switch( c )
 			{
@@ -1957,7 +1957,7 @@ pars_Argv(int argc, register char **argv)
 			return 0;
 			}
 		}
-	if( argc != optind )
+	if( argc != bu_optind )
 		{
 		(void) fprintf( stderr, "Too many arguments!\n" );
 		return 0;

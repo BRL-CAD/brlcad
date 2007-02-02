@@ -68,7 +68,7 @@ static const char RCSid[] = "$Header$";
 
 static struct mater *mater_hd1=MATER_NULL, *mater_hd2=MATER_NULL;
 
-extern int optind;
+extern int bu_optind;
 extern int optopt;
 
 #define HUMAN	1
@@ -903,7 +903,7 @@ main(int argc, char **argv)
 
     invoked_as = argv[0];
 
-    while ((c = getopt(argc, argv, "mfv")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "mfv")) != EOF) {
 	switch( c ) {
 	    case 'm':	/* mged readable */
 		mode = MGED;
@@ -917,8 +917,8 @@ main(int argc, char **argv)
 	}
     }
 
-    argc -= optind;
-    argv+= optind;
+    argc -= bu_optind;
+    argv+= bu_optind;
 
     if( argc != 2 ) {
 	Usage( invoked_as );

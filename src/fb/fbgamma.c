@@ -144,7 +144,7 @@ main(int argc, char **argv)
 	onegamma = 0;
 
 	/* check for flags */
-	opterr = 0;
+	bu_opterr = 0;
 	while ((i=bu_getopt(argc, argv, options)) != EOF) {
 		switch(i) {
 		case 'h'	: fbsize = 1024; break;

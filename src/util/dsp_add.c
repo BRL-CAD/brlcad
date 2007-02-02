@@ -42,7 +42,7 @@
 /* declarations to support use of bu_getopt() system call */
 char *options = "h";
 extern char *bu_optarg;
-extern int bu_optind, opterr;
+extern int bu_optind, bu_opterr;
 
 /* , bu_getopt(int, char *const *, const char *);*/
 
@@ -78,7 +78,7 @@ int parse_args(int ac, char *av[])
 		++progname;
 
 	/* Turn off bu_getopt's error messages */
-	opterr = 0;
+	bu_opterr = 0;
 
 	/* get all the option flags from the command line */
 	while ((c=bu_getopt(ac,av,options)) != EOF)

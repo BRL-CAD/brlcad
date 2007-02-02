@@ -43,9 +43,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 #include <math.h>
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 char *progname = "(noname)";
 
 char	*file_name;
@@ -74,23 +71,23 @@ register char **argv;
 	register int c;
 	double	d;
 
-	while ( (c = getopt( argc, argv, "a:s:m:d:Ae:r:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:" )) != EOF )  {
 		switch( c )  {
 		case 'a':
 			op[ numop ] = ADD;
-			val[ numop++ ] = atof(optarg);
+			val[ numop++ ] = atof(bu_optarg);
 			break;
 		case 's':
 			op[ numop ] = ADD;
-			val[ numop++ ] = - atof(optarg);
+			val[ numop++ ] = - atof(bu_optarg);
 			break;
 		case 'm':
 			op[ numop ] = MULT;
-			val[ numop++ ] = atof(optarg);
+			val[ numop++ ] = atof(bu_optarg);
 			break;
 		case 'd':
 			op[ numop ] = MULT;
-			d = atof(optarg);
+			d = atof(bu_optarg);
 			if( d == 0.0 ) {
 				(void)fprintf( stderr, "bwmod: divide by zero!\n" );
 				exit( 2 );
@@ -103,11 +100,11 @@ register char **argv;
 			break;
 		case 'e':
 			op[ numop ] = POW;
-			val[ numop++ ] = atof(optarg);
+			val[ numop++ ] = atof(bu_optarg);
 			break;
 		case 'r':
 			op[ numop ] = POW;
-			d = atof(optarg);
+			d = atof(bu_optarg);
 			if( d == 0.0 ) {
 				(void)fprintf( stderr, "bwmod: zero root!\n" );
 				exit( 2 );
@@ -120,12 +117,12 @@ register char **argv;
 		}
 	}
 
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		if( isatty((int)fileno(stdin)) )
 			return(0);
 		file_name = "-";
 	} else {
-		file_name = argv[optind];
+		file_name = argv[bu_optind];
 		if( freopen(file_name, "r", stdin) == NULL )  {
 			(void)fprintf( stderr,
 				"bwmod: cannot open \"%s\" for reading\n",
@@ -134,7 +131,7 @@ register char **argv;
 		}
 	}
 
-	if ( argc > ++optind )
+	if ( argc > ++bu_optind )
 		(void)fprintf( stderr, "bwmod: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */

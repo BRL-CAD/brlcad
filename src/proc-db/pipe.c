@@ -676,10 +676,9 @@ main(int argc, char **argv)
 {
 	int done;
 	char units[16],fname[80];
-	extern int optind;
 	int optc;
 
-	while( (optc = getopt( argc,argv,"tsmnc" )) != -1)
+	while( (optc = bu_getopt( argc,argv,"tsmnc" )) != -1)
 	{
 		switch( optc )	/* Set joint type and cable option */
 		{
@@ -717,17 +716,17 @@ main(int argc, char **argv)
 		torus = 1;		/* default */
 	}
 
-	if( (argc - optind) != 2 ) {
+	if( (argc - bu_optind) != 2 ) {
 		Usage();
 		return 1;
 	}
 
-	strcpy( name , argv[optind++] ); /* Base name for objects */
+	strcpy( name , argv[bu_optind++] ); /* Base name for objects */
 
-	fdout = wdb_fopen( argv[optind] );
+	fdout = wdb_fopen( argv[bu_optind] );
 	if( fdout == NULL )
 	{
-		fprintf( stderr , "Cannot open %s\n" , argv[optind] );
+		fprintf( stderr , "Cannot open %s\n" , argv[bu_optind] );
 		perror( "Pipe" );
 		Usage();
 		return 1;
@@ -737,7 +736,7 @@ main(int argc, char **argv)
 	pi = atan2( 0.0 , -1.0 );	/* PI */
 
 	printf( "FLUID & PIPING V%d.%d 10 Mar 89\n\n" , VERSION , RELEASE );
-	printf( "append %s to your target description using 'concat' in mged\n" , argv[optind] );
+	printf( "append %s to your target description using 'concat' in mged\n" , argv[bu_optind] );
 
 	k = 0.0;
 	while( k == 0.0 )
