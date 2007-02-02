@@ -46,6 +46,8 @@ libdm_la_CFLAGS = ${X_CFLAGS} ${DM_X_CFLAGS} ${DM_OGL_CFLAGS} ${DM_WGL_CFLAGS}
 libdm_la_LIBADD = \
 	${TCL} \
 	${RT} \
+	${BN} \
+	${BU} \
 	${PNG} \
 	${X_LIBS}
 
