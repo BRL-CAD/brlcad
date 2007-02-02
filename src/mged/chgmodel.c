@@ -724,6 +724,7 @@ int
 f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     char *av[3];
+    int k;
 
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
