@@ -180,18 +180,22 @@ accuracy-oriented ray intersection, geometric analysis, and geometry
 representation library that supports a wide variety of geometric
 forms.  Geometry can be grouped into combinations and regions using
 CSG boolean operations.
+	Depends on: libbn libbu libtcl libregex libm (openNURBS)
 
 libbu: The BRL-CAD Utility library contains a wide variety of routines
 for memory allocation, threading, string handling, argument support,
 linked lists, and more.
+	Depends on: libtcl (threading) (malloc)
 
 libbn: The BRL-CAD Numerics library provides many floating-point math
 manipulation routines for vector and matrix math, a polynomial
 equation solver, noise functions, random number generators, complex
 number support, and more as well.
+	Depends on: libbu libtcl libm
 
 libcursor: The cursor library is a lightweight cursor manipulation
 library similar to curses but with less overhead.
+	Depends on: termlib
 
 libdm: The display manager library contains the logic for generalizing
 a drawable context.  This includes the ability to output
@@ -199,56 +203,75 @@ drawing/plotting instructions to a variety of devices such as X11,
 Postscript, OpenGL, plot files, textfiles, and more.  There is
 generally structured order to data going to a display manager (like
 the wireframe in the geometry editor).
+	Depends on: librt libbn libbu libtcl libpng (X11)
 
 libfb: The framebuffer library is an interface for managing a graphics
 context that consists of pixel data.  This library supports multiple
 devices directly, providing a generic device-independent method of
 using a frame buffer or files containing frame buffer images.
+	Depends on: libbu libpkg libtcl (X11) (OpenGL)
 
 libfft: The Fast-Fourier Transform library is a signal processing
 library for performing FFTs or inverse FFTs efficiently.
+	Depends on: libm
 
 libmultispectral: The multispectral optics library is a separate
 compilation mode of the optics library where support for additional
 bands of energy are added.  By providing a defined spectrum of energy,
 the raytrace library will produce different signal analyses for a
 given set of geometry.
+	Depends on: librt libbn libbu libtcl
 
 liboptical: The optical library is the basis for BRL-CAD's shaders.
 This includes shaders such as the Phong and Cook-Torrence lighting
 models, as well as various visual effects such as texturing, marble,
 wood graining, air, gravel, grass, clouds, fire, and more.
+	Depends on: librt libbn libbu libtcl
 
 liborle: The "old" run-length encoding library that will decode and
 encode University of Utah Raster Toolkit format Run-Length Encoded
 data.
+	Depends on nothing
 
 libpkg: The "Package" library is a network communications library that
 supports multiplexing and demultiplexing synchronous and asynchronous
 messages across stream connections.  The library supports a
 client-server communication model.
+	Depends on: libbu
 
 librtserver: The ray-trace server library is a thin interface over
 librt that simplifies the process of applying individual ray
 intersection tests against a given set of geometry.  The library
 supports communication with a BRL-CAD geometry repository and
 multithreaded ray dispatch.
+	Depends on: librt libbn libbu libtcl
+	Includes dependent libraries as part of this libaray
 
 libsysv: The System 5 compatibility library exists to support legacy
 systems that lack functionality required by BRL-CAD.  This library is
 deprecated and should generally not be used for new development.
+	Depends on nothing
 
 libtclcad: The Tcl-CAD library is a thin interface that assists in the
 binding of an image to a Tk graphics context.
+	Depends on: libbn libbu libfb libtcl libtk
 
 libtermio: The terminal I/O library is a TTY control library for
 managing a terminal interface.
+	Depends on nothing
 
 libwdb: The "write database" library provides a simple interface for
 the generation of BRL-CAD geometry files supporting a majority of the
 various primitives available as well as combination/region support.
 The library is a write-only interface (librt is necessary to read &
 write) and is useful for procedural geometry.
+	Depends on: librt libbn libbu
+
+libbrlcad: This "conglomerate" library provides the core geometry
+engine facilities in BRL-CAD by combining the numerics, ray-tracing,
+and geometry database processing libraries into one library.
+	Depends on: libwdb librt libbn libbu
+	Includes dependent libraries as part of this libaray
 
 
 FILESYSTEM ORGANIZATION
