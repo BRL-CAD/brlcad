@@ -51,12 +51,15 @@ EXTRA_DIST = \
 	README \
 	TODO \
 	Y2KINFO \
+	configure \
+	contrib \
 	example.c \
 	libpng.txt \
 	pngbar.jpg \
 	pngbar.png \
 	pngnow.png \
 	pngtest.png \
+	projects \
 	scripts
 
 .PHONY : test

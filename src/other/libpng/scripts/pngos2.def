@@ -2,7 +2,7 @@
 ; PNG.LIB module definition file for OS/2
 ;----------------------------------------
 
-; Version 1.2.8
+; Version 1.2.16
 
 LIBRARY		PNG
 DESCRIPTION	"PNG image compression library for OS/2"
@@ -88,7 +88,7 @@ EXPORTS
   png_read_end
   png_read_image
   png_read_info
-  png_read_init ; deprecated
+; png_read_init ; deprecated
   png_read_png
   png_read_row
   png_read_rows
@@ -118,7 +118,7 @@ EXPORTS
   png_set_gAMA
   png_set_gAMA_fixed
   png_set_gamma
-  png_set_gray_1_2_4_to_8
+; png_set_gray_1_2_4_to_8 ; deprecated as of libpng-1.2.9
   png_set_gray_to_rgb
   png_set_hIST
   png_set_iCCP
@@ -173,7 +173,7 @@ EXPORTS
   png_write_image
   png_write_info
   png_write_info_before_PLTE
-  png_write_init ; deprecated
+; png_write_init ; deprecated
   png_write_png
   png_write_row
   png_write_rows
@@ -212,6 +212,16 @@ EXPORTS
   png_get_user_width_max
 ; Added at version 1.2.7
   png_set_add_alpha
+
+; Added at version 1.2.9
+  png_get_uint_32
+  png_save_uint_32
+  png_get_uint_16
+  png_save_uint_16
+  png_get_int_32
+  png_save_int_32
+  png_get_uint_31
+  png_set_expand_gray_1_2_4_to_8
 
 ; These are not present when libpng is compiled with PNG_NO_GLOBAL_ARRAYS
   png_libpng_ver
