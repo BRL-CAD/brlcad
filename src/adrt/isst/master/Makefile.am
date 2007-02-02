@@ -20,6 +20,7 @@ isst_master_CFLAGS = @SDL_CFLAGS@ @PYTHON_CFLAGS@ -D__STRICT_ANSI__ -I.. \
 isst_master_LDADD = \
 	@PYTHON_LIBS@ \
 	@SDL_LIBS@ \
+	@BU@ \
 	${top_builddir}/src/adrt/libcommon/libcommon.la \
 	${top_builddir}/src/adrt/librender/librender.la \
 	${top_builddir}/src/adrt/libutil/libutil.la \

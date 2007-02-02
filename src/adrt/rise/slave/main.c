@@ -34,6 +34,9 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+
+#include <bu.h>
+
 #include "rise.h"
 #include "slave.h"
 #include "tienet.h"

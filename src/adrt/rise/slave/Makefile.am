@@ -11,6 +11,7 @@ rise_slave_SOURCES = \
 	slave.c
 
 rise_slave_LDADD = \
+	@BU@ \
 	${LIBTHREAD} \
 	${top_builddir}/src/adrt/libcommon/libcommon.la \
 	${top_builddir}/src/adrt/librender/librender.la \

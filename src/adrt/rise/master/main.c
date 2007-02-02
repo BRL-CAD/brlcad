@@ -34,6 +34,9 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+
+#include <bu.h>
+
 #include "rise.h"
 #include "master.h"
 #include "tienet.h"
