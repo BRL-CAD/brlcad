@@ -2243,7 +2243,7 @@ AC_MSG_CHECKING(whether to build the Utah Raster Toolkit)
 RLE=""
 if test "x$build_brlcad_urt" = "xyes" ; then
     RLE='${top_builddir}/src/other/libutahrle/libutahrle.la'
-    RLE_CPPFLAGS='${top_srcdir}/src/other/libutahrle'
+    RLE_CPPFLAGS='-I${top_srcdir}/src/other/libutahrle/include'
     AC_MSG_RESULT(yes)
 else
     if test "x$utahrle_link_works" = "xyes" ; then
@@ -2253,6 +2253,7 @@ else
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(RLE)
+AC_SUBST(RLE_CPPFLAGS)
 
 
 dnl *** openNURBS ***
@@ -3616,6 +3617,7 @@ AC_CONFIG_FILES([
 	src/other/libtk/unix/tkConfig.sh
 	src/other/libtkGLX/Makefile
 	src/other/libutahrle/Makefile
+	src/other/libutahrle/include/Makefile
 	src/other/libz/Makefile
 	src/other/openNURBS/Makefile
 	src/other/tkimg/Makefile

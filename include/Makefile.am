@@ -18,17 +18,6 @@ brlcadinclude_required = \
 	rtstring.h \
 	tclcad.h
 
-headers_libutahrle = \
-	colorquant.h \
-	exit_status.h \
-	pyramid.h \
-	rle.h \
-	rle_code.h \
-	rle_config.h \
-	rle_getraw.h \
-	rle_put.h \
-	rle_raw.h
-
 headers_libitcl = \
 	itcl.h \
 	itclDecls.h \
@@ -58,7 +47,6 @@ headers_libtermlib = \
 	libterm.h
 
 brlcadinclude_wanted = \
-	$(headers_libutahrle) \
 	$(headers_libitcl) \
 	$(headers_libtcl) \
 	$(headers_libtk) \

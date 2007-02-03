@@ -21,7 +21,7 @@ endif
 SRCS = rle.c
 
 vers.c: $(SRCS)
-	@SH@ $(top_srcdir)/sh/vers.sh  liborle_version "University of Utah RLE Library, Version 2" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh  liborle_version "University of Utah (Old) RLE Library, Version 2" > $@
 
 EXTRA_DIST = $(man_MANS)
 

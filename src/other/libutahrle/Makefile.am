@@ -1,5 +1,7 @@
 # $Id$
 
+SUBDIRS = include
+
 lib_LTLIBRARIES = libutahrle.la
 
 libutahrle_la_SOURCES = \
@@ -31,6 +33,7 @@ libutahrle_la_SOURCES = \
 	vaxshort.c
 
 libutahrle_la_LDFLAGS = -version-info 19:1
+libutahrle_la_CFLAGS = ${RLE_CPPFLAGS}
 libutahrle_la_LIBADD = ${LIBM}
 
 man_MANS = \
@@ -86,7 +89,9 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	getopt.c
+	colorquant.h \
+	getopt.c \
+	include
 
 include $(top_srcdir)/misc/Makefile.defs
 

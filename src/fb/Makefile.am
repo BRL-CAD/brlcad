@@ -101,9 +101,11 @@ fb_orle_LDADD = ${FB} ${ORLE}
 
 rle_fb_SOURCES = rle-fb.c
 rle_fb_LDADD = ${FB} ${RLE}
+rle_fb_CFLAGS = ${RLE_CPPFLAGS}
 
 fb_rle_SOURCES = fb-rle.c cmap-crunch.c
 fb_rle_LDADD = ${FB} ${RLE}
+fb_rle_CFLAGS = ${RLE_CPPFLAGS}
 
 fbcmap_SOURCES = fbcmap.c
 fbcmap_LDADD = ${FB}

@@ -11,7 +11,8 @@ noinst_HEADERS = font.h
 font.c: ${srcdir}/makeFont ${srcdir}/font.src
 	@SH@ ${srcdir}/makeFont ${srcdir}/font.src > font.c
 
-LDADD = ${RLE}
+rleClock_LDADD = ${RLE}
+rleClock_CFLAGS = ${RLE_CPPFLAGS}
 
 EXTRA_DIST = \
 	README \

@@ -9,7 +9,8 @@ rletogif_SOURCES = \
 
 noinst_HEADERS = rletogif.h
 
-LDADD = ${RLE}
+rletogif_LDADD = ${RLE}
+rletogif_CFLAGS = ${RLE_CPPFLAGS}
 
 MAINTAINERCLEANFILES = Makefile.in
 
