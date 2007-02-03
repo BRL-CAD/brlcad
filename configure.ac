@@ -2080,13 +2080,13 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included portable network graphics library)
 PNG=""
+PNG_CPPFLAGS=""
 if test "x$build_brlcad_png" = "xyes" ; then
     PNG='${top_builddir}/src/other/libpng/libpng.la'
     PNG_CPPFLAGS='-I${top_srcdir}/src/other/libpng'
     AC_MSG_RESULT(yes)
 else
     PNG="$LIBPNG"
-    PNG_CPPFLAGS=''
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(PNG)
@@ -2184,13 +2184,13 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included zlib compression library)
 LIBZ=""
+LIBZ_CPPFLAGS=""
 if test "x$build_brlcad_zlib" = "xyes" ; then
     LIBZ='${top_builddir}/src/other/libz/libz.la'
     LIBZ_CPPFLAGS='-I${top_srcdir}/src/other/libz'
     AC_MSG_RESULT(yes)
 else
     LIBZ="$LIBZLIB"
-    LIBZ_CPPFLAGS=''
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(LIBZ)
@@ -2241,6 +2241,7 @@ else
 fi
 AC_MSG_CHECKING(whether to build the Utah Raster Toolkit)
 RLE=""
+RLE_CPPFLAGS=""
 if test "x$build_brlcad_urt" = "xyes" ; then
     RLE='${top_builddir}/src/other/libutahrle/libutahrle.la'
     RLE_CPPFLAGS='-I${top_srcdir}/src/other/libutahrle/include'
@@ -2248,7 +2249,6 @@ if test "x$build_brlcad_urt" = "xyes" ; then
 else
     if test "x$utahrle_link_works" = "xyes" ; then
 	RLE="$UTAHRLE"
-	RLE_CPPFLAGS=''
     fi
     AC_MSG_RESULT(no)
 fi
@@ -2303,7 +2303,6 @@ if test "x$build_brlcad_opennurbs" = "xyes" ; then
     AC_MSG_RESULT(yes)
 else
     OPENNURBS="$LIBOPENNURBS $LIBSTDCXX"
-    OPENNURBS_CPPFLAGS=''
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(OPENNURBS)
@@ -2386,10 +2385,12 @@ TCL_PATCH_LEVEL=".6"
 AC_SUBST(TCL_PATCH_LEVEL)
 TCL=""
 TCLSTUB=""
+TCL_CPPFLAGS=""
 if test "x$build_brlcad_tcl" = "xyes" ; then
     AC_MSG_RESULT(yes)
     TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la '"${SOCKET}"
     TCLSTUB='${top_builddir}/src/other/libtcl/generic/libtclstub.la'
+    TCL_CPPFLAGS='-I${top_srcdir}/src/other/libtcl/generic'
 else
     AC_MSG_RESULT(no)
     if test "x$tcl_link_works" = "xyes" ; then
@@ -2405,6 +2406,7 @@ else
 fi
 AC_SUBST(TCL)
 AC_SUBST(TCLSTUB)
+AC_SUBST(TCL_CPPFLAGS)
 
 
 dnl *** Tk ***
@@ -2485,10 +2487,12 @@ TK_LIBRARY='${prefix}/lib/tk${TK_VERSION}'
 AC_SUBST(TK_LIBRARY)
 TK=""
 TKSTUB=""
+TK_CPPFLAGS=""
 if test "x$build_brlcad_tk" = "xyes" ; then
     AC_MSG_RESULT(yes)
     TK='${top_builddir}/src/other/libtk/libtk${TK_VERSION}.la'
     TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
+    TK_CPPFLAGS='-I${top_srcdir}/src/other/libtk/generic'
 else
     AC_MSG_RESULT(no)
     if test "x$tk_link_works" = "xyes" ; then
@@ -2504,6 +2508,7 @@ else
 fi
 AC_SUBST(TK)
 AC_SUBST(TKSTUB)
+AC_SUBST(TK_CPPFLAGS)
 
 
 dnl *** incrTcl ***
@@ -2567,9 +2572,14 @@ dnl itcl/itk
 ITCL_VERSION="3.3"
 AC_SUBST(ITCL_VERSION)
 ITCL=""
+ITK=""
+ITCL_CPPFLAGS=""
+ITK_CPPFLAGS=""
 if test "x$build_brlcad_itcl" = "xyes" ; then
     ITCL='${top_builddir}/src/other/incrTcl/libitcl${ITCL_VERSION}.la'
     ITK='${top_builddir}/src/other/incrTcl/libitk${ITCL_VERSION}.la'
+    ITCL_CPPFLAGS='-I${top_srcdir}/src/other/incrTcl/itcl/generic'
+    ITK_CPPFLAGS='-I${top_srcdir}/src/other/incrTcl/itk/generic'
     AC_MSG_RESULT(yes)
 else
     if test "x$itcl_link_works" = "xyes" ; then
@@ -2580,6 +2590,8 @@ else
 fi
 AC_SUBST(ITCL)
 AC_SUBST(ITK)
+AC_SUBST(ITCL_CPPFLAGS)
+AC_SUBST(ITK_CPPFLAGS)
 
 
 dnl *** iwidgets ***
@@ -2763,14 +2775,17 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included termlib library)
 TERMLIB=""
+TERMLIB_CPPFLAGS=""
 if test "x$build_brlcad_termlib" = "xyes" ; then
     TERMLIB='${top_builddir}/src/other/libtermlib/libtermlib.la'
+    TERMLIB_CPPFLAGS='-I${top_srcdir}/src/other/libtermlib'
     AC_MSG_RESULT(yes)
 else
     TERMLIB="$LIBTERMLIB"
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(TERMLIB)
+AC_SUBST(TERMLIB_CPPFLAGS)
 
 
 dnl *** libm ***
