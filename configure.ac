@@ -1218,13 +1218,15 @@ fi
 dnl check if utahrle library links
 utahrle_link_works=no
 UTAHRLE=""
-# checking for rle_hdr_init is NOT sufficient to get urt 3.x
-PRELIBS="$LIBS"
-LIBS="$LIBS $LIBM"
-AC_CHECK_LIB(utahrle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lutahrle $LIBM",
-    [AC_CHECK_LIB(rle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lrle $LIBM")]
-)
-LIBS="$PRELIBS"
+if test "x$bc_build_urt" != "xno" ; then
+    # checking for rle_hdr_init is NOT sufficient to get urt 3.x
+    PRELIBS="$LIBS"
+    LIBS="$LIBS $LIBM"
+    AC_CHECK_LIB(utahrle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lutahrle $LIBM",
+	[AC_CHECK_LIB(rle, rle_getraw, utahrle_link_works=yes ; UTAHRLE="-lrle $LIBM")]
+    )
+    LIBS="$PRELIBS"
+fi
 
 dnl check if openNURBS library links
 opennurbs_link_works=no
@@ -2047,47 +2049,45 @@ LDFLAGS="$LDFLAGS $LIBPNG"
 AC_TRY_RUN([
 #include <png.h>
 main() {
-	int i = png_access_version_number();
-	return 0;
+    int i = png_access_version_number();
+    return 0;
 }
-	],
-	[png_works=yes]
-)
+], [png_works=yes])
 LDFLAGS="$PRELDFLAGS"
 AC_MSG_RESULT($png_works)
 
 dnl figure out whether we need to build libpng
 build_brlcad_png="no (using system)"
 if test "x$bc_build_png" = "xyes" ; then
-	build_brlcad_png=yes
+    build_brlcad_png=yes
 else
-	if test "x$bc_build_png" = "xno" ; then
-		if test "x$png_works" != "xyes" ; then
-			AC_MSG_NOTICE([libpng was disabled, but no system png library was found])
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Try adding --enable-png-build])
-			AC_MSG_ERROR([*** Building libpng was disabled, yet no system png library was found ***])
-		fi
-	else
-		dnl automatic detection, we need to build if it won't run or won't link
-		if test "x$png_works" = "xno" ; then
-			build_brlcad_png=yes
-		elif test "x$png_link_works" = "xno" ; then
-			build_brlcad_png=yes
-		fi
+    if test "x$bc_build_png" = "xno" ; then
+	if test "x$png_works" != "xyes" ; then
+	    AC_MSG_NOTICE([libpng was disabled, but no system png library was found])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --enable-png-build])
+	    AC_MSG_ERROR([*** Building libpng was disabled, yet no system png library was found ***])
 	fi
+    else
+	dnl automatic detection, we need to build if it won't run or won't link
+	if test "x$png_works" = "xno" ; then
+	    build_brlcad_png=yes
+	elif test "x$png_link_works" = "xno" ; then
+	    build_brlcad_png=yes
+	fi
+    fi
 fi
 AC_MSG_CHECKING(whether to build the included portable network graphics library)
 PNG=""
 if test "x$build_brlcad_png" = "xyes" ; then
-	PNG='${top_builddir}/src/other/libpng/libpng.la'
-	PNG_CPPFLAGS='-I${top_srcdir}/src/other/libpng'
-	AC_MSG_RESULT(yes)
+    PNG='${top_builddir}/src/other/libpng/libpng.la'
+    PNG_CPPFLAGS='-I${top_srcdir}/src/other/libpng'
+    AC_MSG_RESULT(yes)
 else
-	PNG="$LIBPNG"
-	PNG_CPPFLAGS=''
-	AC_MSG_RESULT(no)
+    PNG="$LIBPNG"
+    PNG_CPPFLAGS=''
+    AC_MSG_RESULT(no)
 fi
 AC_SUBST(PNG)
 AC_SUBST(PNG_CPPFLAGS)
@@ -2105,45 +2105,43 @@ AC_TRY_RUN([
 #endif
 #include <regex.h>
 int main() {
-  regex_t re;
-  regcomp(&re, "abc", REG_EXTENDED);
-  regexec(&re, "", 0, 0, 0);
-  return 0;
+    regex_t re;
+    regcomp(&re, "abc", REG_EXTENDED);
+    regexec(&re, "", 0, 0, 0);
+    return 0;
 }
-	],
-	[regex_works=yes]
-)
+], [regex_works=yes])
 LDFLAGS="$PRELDFLAGS"
 AC_MSG_RESULT($regex_works)
 
 dnl figure out whether we need to build libregex
 build_brlcad_regex="no (using system)"
 if test "x$bc_build_regex" = "xyes" ; then
-	build_brlcad_regex=yes
+    build_brlcad_regex=yes
 else
-	if test "x$bc_build_regex" = "xno" ; then
-		if test "x$regex_works" != "xyes" ; then
-			AC_MSG_NOTICE([libregex was disabled, but no system regular expression library was found])
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Try adding --enable-regex-build])
-			AC_MSG_ERROR([*** Building libregex was disabled, yet no system regex was found ***])
-		fi
-	else
-		dnl automatic detection
-		if test "x$regex_works" = "xno" ; then
-			build_brlcad_regex=yes
-		fi
+    if test "x$bc_build_regex" = "xno" ; then
+	if test "x$regex_works" != "xyes" ; then
+	    AC_MSG_NOTICE([libregex was disabled, but no system regular expression library was found])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --enable-regex-build])
+	    AC_MSG_ERROR([*** Building libregex was disabled, yet no system regex was found ***])
 	fi
+    else
+	dnl automatic detection
+	if test "x$regex_works" = "xno" ; then
+	    build_brlcad_regex=yes
+	fi
+    fi
 fi
 AC_MSG_CHECKING(whether to build the included regular expression library)
 REGEX=""
 if test "x$build_brlcad_regex" = "xyes" ; then
-	REGEX='${top_builddir}/src/other/libregex/libregex.la'
-	AC_MSG_RESULT(yes)
+    REGEX='${top_builddir}/src/other/libregex/libregex.la'
+    AC_MSG_RESULT(yes)
 else
-	REGEX="$LIBREGEX"
-	AC_MSG_RESULT(no)
+    REGEX="$LIBREGEX"
+    AC_MSG_RESULT(no)
 fi
 AC_SUBST(REGEX)
 
@@ -2157,45 +2155,43 @@ LDFLAGS="$LDFLAGS $LIBZLIB"
 AC_TRY_RUN([
 #include <zlib.h>
 int main () {
-  char *zlibver = ZLIB_VERSION;
-  return 0;
+    char *zlibver = ZLIB_VERSION;
+    return 0;
 }
-	],
-	[zlib_works=yes]
-)
+], [zlib_works=yes])
 LDFLAGS="$PRELDFLAGS"
 AC_MSG_RESULT($zlib_works)
 
 dnl figure out whether we need to build libz
 build_brlcad_zlib="no (using system)"
 if test "x$bc_build_zlib" = "xyes" ; then
-	build_brlcad_zlib=yes
+    build_brlcad_zlib=yes
 else
-	if test "x$bc_build_zlib" = "xno" ; then
-		if test "x$zlib_works" != "xyes" ; then
-			AC_MSG_NOTICE([libz was disabled, but no system zlib compression library was found])
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Try adding --enable-zlib-build])
-			AC_MSG_ERROR([*** Building libz was disabled, yet no system zlib compression library was found ***])
-		fi
-	else
-		dnl automatic detection
-		if test "x$zlib_works" = "xno" ; then
-			build_brlcad_zlib=yes
-		fi
+    if test "x$bc_build_zlib" = "xno" ; then
+	if test "x$zlib_works" != "xyes" ; then
+	    AC_MSG_NOTICE([libz was disabled, but no system zlib compression library was found])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --enable-zlib-build])
+	    AC_MSG_ERROR([*** Building libz was disabled, yet no system zlib compression library was found ***])
 	fi
+    else
+	dnl automatic detection
+	if test "x$zlib_works" = "xno" ; then
+	    build_brlcad_zlib=yes
+	fi
+    fi
 fi
 AC_MSG_CHECKING(whether to build the included zlib compression library)
 LIBZ=""
 if test "x$build_brlcad_zlib" = "xyes" ; then
-	LIBZ='${top_builddir}/src/other/libz/libz.la'
-	LIBZ_CPPFLAGS='-I${top_srcdir}/src/other/libz'
-	AC_MSG_RESULT(yes)
+    LIBZ='${top_builddir}/src/other/libz/libz.la'
+    LIBZ_CPPFLAGS='-I${top_srcdir}/src/other/libz'
+    AC_MSG_RESULT(yes)
 else
-	LIBZ="$LIBZLIB"
-	LIBZ_CPPFLAGS=''
-	AC_MSG_RESULT(no)
+    LIBZ="$LIBZLIB"
+    LIBZ_CPPFLAGS=''
+    AC_MSG_RESULT(no)
 fi
 AC_SUBST(LIBZ)
 AC_SUBST(LIBZ_CPPFLAGS)
@@ -2207,7 +2203,7 @@ urt_works=no
 AC_MSG_CHECKING(for Utah Raster Toolkit library functionality)
 PRELIBS="$LIBS"
 if test "x$utahrle_link_works" = "xyes" ; then
-	LIBS="$LIBS $UTAHRLE"
+    LIBS="$LIBS $UTAHRLE"
 fi
 AC_TRY_RUN([
 #ifdef HAVE_RLE_H
@@ -2217,44 +2213,44 @@ int main () {
     rle_hdr header = *rle_hdr_init( NULL );
     return 0;
 }
-	],
-	[urt_works=yes]
-)
+], [urt_works=yes])
 if test "x$utahrle_link_works" = "xyes" ; then
-	LIBS="$PRELIBS"
+    LIBS="$PRELIBS"
 fi
 AC_MSG_RESULT($urt_works)
 
 dnl figure out whether we need to build urt
 build_brlcad_urt="no (using system)"
 if test "x$bc_build_urt" = "xyes" ; then
-	build_brlcad_urt=yes
+    build_brlcad_urt=yes
 else
-	if test "x$bc_build_urt" = "xno" ; then
-		if test "x$urt_works" != "xyes" ; then
-			AC_MSG_NOTICE([Utah Raster Toolkit was disabled, but no system URT/RLE library was found ***])
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Try adding --enable-urt-build])
-			AC_MSG_ERROR([*** Utah Raster Toolkit was disabled, yet no usable RLE system library was found ***])
-		fi
-	else
-		dnl automatic detection
-		if test "x$urt_works" = "xno" ; then
-			build_brlcad_urt=yes
-		fi
+    if test "x$bc_build_urt" = "xno" ; then
+	if test "x$urt_works" != "xyes" ; then
+	    AC_MSG_NOTICE([Utah Raster Toolkit was disabled, but no system URT/RLE library was found ***])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --enable-urt-build])
+	    AC_MSG_ERROR([*** Utah Raster Toolkit was disabled, yet no usable RLE system library was found ***])
 	fi
+    else
+	dnl automatic detection
+	if test "x$urt_works" = "xno" ; then
+	    build_brlcad_urt=yes
+	fi
+    fi
 fi
 AC_MSG_CHECKING(whether to build the Utah Raster Toolkit)
 RLE=""
 if test "x$build_brlcad_urt" = "xyes" ; then
-	RLE='${top_builddir}/src/other/libutahrle/libutahrle.la'
-	AC_MSG_RESULT(yes)
+    RLE='${top_builddir}/src/other/libutahrle/libutahrle.la'
+    RLE_CPPFLAGS='${top_srcdir}/src/other/libutahrle'
+    AC_MSG_RESULT(yes)
 else
-	if test "x$utahrle_link_works" = "xyes" ; then
-		RLE="$UTAHRLE"
-	fi
-	AC_MSG_RESULT(no)
+    if test "x$utahrle_link_works" = "xyes" ; then
+	RLE="$UTAHRLE"
+	RLE_CPPFLAGS=''
+    fi
+    AC_MSG_RESULT(no)
 fi
 AC_SUBST(RLE)
 
@@ -2262,55 +2258,52 @@ AC_SUBST(RLE)
 dnl *** openNURBS ***
 dnl See if openNURBS library support works
 opennurbs_works=no
-if test "x$bc_build_opennurbs" != "xno" ; then
-    AC_MSG_CHECKING(for openNURBS functionality)
-    PRELDFLAGS="$LDFLAGS"
-    LDFLAGS="$LDFLAGS $LIBOPENNURBS"
-    AC_LANG_PUSH([C++])
-    AC_TRY_RUN([
+AC_MSG_CHECKING(for openNURBS functionality)
+PRELDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $LIBOPENNURBS"
+AC_LANG_PUSH([C++])
+AC_TRY_RUN([
 #include <opennurbs.h>
 int main () {
-  int version = ON::Version();
-  return 0;
+    int version = ON::Version();
+    return 0;
 }
-		],
-		[opennurbs_works=yes])
-    AC_LANG_POP
-    LDFLAGS="$PRELDFLAGS"
-    AC_MSG_RESULT($opennurbs_works)
-fi
+], [opennurbs_works=yes])
+AC_LANG_POP
+LDFLAGS="$PRELDFLAGS"
+AC_MSG_RESULT($opennurbs_works)
 
 dnl figure out whether we need to build openNURBS
 build_brlcad_opennurbs="no (using system)"
 if test "x$bc_build_opennurbs" = "xyes" ; then
-	build_brlcad_opennurbs=yes
+    build_brlcad_opennurbs=yes
 else
-	if test "x$bc_build_opennurbs" = "xno" ; then
-		if test "x$opennurbs_works" != "xyes" ; then
-			AC_MSG_NOTICE([openNURBS was disabled, but no system openNURBS library was found])
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Try adding --enable-opennurbs-build and/or --enable-c++])
-			AC_MSG_ERROR([*** Building openNURBS was disabled, yet no system openNURBS library was found ***])
-		fi
-	else
-		dnl automatic detection
-		if test "x$opennurbs_works" = "xno" ; then
-			build_brlcad_opennurbs=yes
-		fi
+    if test "x$bc_build_opennurbs" = "xno" ; then
+	if test "x$opennurbs_works" != "xyes" ; then
+	    AC_MSG_NOTICE([openNURBS was disabled, but no system openNURBS library was found])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --enable-opennurbs-build and/or --enable-c++])
+	    AC_MSG_ERROR([*** Building openNURBS was disabled, yet no system openNURBS library was found ***])
 	fi
+    else
+	dnl automatic detection
+	if test "x$opennurbs_works" = "xno" ; then
+	    build_brlcad_opennurbs=yes
+	fi
+    fi
 fi
 AC_MSG_CHECKING(whether to build the included openNURBS library)
 OPENNURBS=""
 OPENNURBS_CPPFLAGS=""
 if test "x$build_brlcad_opennurbs" = "xyes" ; then
-	OPENNURBS='${top_builddir}/src/other/openNURBS/libopenNURBS.la ${LIBSTDCXX}'
-	OPENNURBS_CPPFLAGS='-I${top_srcdir}/src/other/openNURBS'
-	AC_MSG_RESULT(yes)
+    OPENNURBS='${top_builddir}/src/other/openNURBS/libopenNURBS.la ${LIBSTDCXX}'
+    OPENNURBS_CPPFLAGS='-I${top_srcdir}/src/other/openNURBS'
+    AC_MSG_RESULT(yes)
 else
-	OPENNURBS="$LIBOPENNURBS $LIBSTDCXX"
-	OPENNURBS_CPPFLAGS=''
-	AC_MSG_RESULT(no)
+    OPENNURBS="$LIBOPENNURBS $LIBSTDCXX"
+    OPENNURBS_CPPFLAGS=''
+    AC_MSG_RESULT(no)
 fi
 AC_SUBST(OPENNURBS)
 AC_SUBST(OPENNURBS_CPPFLAGS)
@@ -2322,7 +2315,7 @@ tcl_works=no
 AC_MSG_CHECKING(for Tcl library functionality)
 PRELIBS="$LIBS"
 if test "x$tcl_link_works" = "xyes" ; then
-	LIBS="$LIBS $LIBTCL"
+    LIBS="$LIBS $LIBTCL"
 fi
 AC_TRY_RUN([
 #ifdef HAVE_TCL_H
@@ -2354,33 +2347,31 @@ int main() {
 #endif
     return 0;
 }
-	],
-	[tcl_works=yes]
-)
+], [tcl_works=yes])
 if test "x$tcl_link_works" = "xyes" ; then
-	LIBS="$PRELIBS"
+    LIBS="$PRELIBS"
 fi
 AC_MSG_RESULT($tcl_works)
 
 dnl figure out whether we need to build Tcl
 build_brlcad_tcl="no (using system)"
 if test "x$bc_build_tcl" = "xyes" ; then
-	build_brlcad_tcl=yes
+    build_brlcad_tcl=yes
 else
-	if test "x$bc_build_tcl" = "xno" ; then
-		if test "x$tcl_works" = "xno" ; then
-			AC_MSG_NOTICE([libtcl was disabled, but no system Tcl library was found])
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Try adding --enable-tcl-build])
-			AC_MSG_ERROR([*** Tcl was disabled, yet no usable libtcl system library was found ***])
-		fi
-	else
-		dnl automatic detection
-		if test "x$tcl_works" = "xno" ; then
-			build_brlcad_tcl=yes
-		fi
+    if test "x$bc_build_tcl" = "xno" ; then
+	if test "x$tcl_works" = "xno" ; then
+	    AC_MSG_NOTICE([libtcl was disabled, but no system Tcl library was found])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --enable-tcl-build])
+	    AC_MSG_ERROR([*** Tcl was disabled, yet no usable libtcl system library was found ***])
 	fi
+    else
+	dnl automatic detection
+	if test "x$tcl_works" = "xno" ; then
+	    build_brlcad_tcl=yes
+	fi
+    fi
 fi
 AC_MSG_CHECKING(whether to build Tcl)
 TCL_VERSION="8.4"
@@ -2395,21 +2386,21 @@ AC_SUBST(TCL_PATCH_LEVEL)
 TCL=""
 TCLSTUB=""
 if test "x$build_brlcad_tcl" = "xyes" ; then
-	AC_MSG_RESULT(yes)
-	TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la '"${SOCKET}"
-	TCLSTUB='${top_builddir}/src/other/libtcl/generic/libtclstub.la'
+    AC_MSG_RESULT(yes)
+    TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la '"${SOCKET}"
+    TCLSTUB='${top_builddir}/src/other/libtcl/generic/libtclstub.la'
 else
-	AC_MSG_RESULT(no)
-	if test "x$tcl_link_works" = "xyes" ; then
-		TCL="$LIBTCL"
-	else
-		AC_MSG_WARN([Unable to link against a system Tcl library])
-	fi
-	if test "x$tclstub_link_works" = "xyes" ; then
-		TCLSTUB="$LIBTCLSTUB"
-	else
-		AC_MSG_WARN([Unable to link against a system Tclstub library])
-	fi
+    AC_MSG_RESULT(no)
+    if test "x$tcl_link_works" = "xyes" ; then
+	TCL="$LIBTCL"
+    else
+	AC_MSG_WARN([Unable to link against a system Tcl library])
+    fi
+    if test "x$tclstub_link_works" = "xyes" ; then
+	TCLSTUB="$LIBTCLSTUB"
+    else
+	AC_MSG_WARN([Unable to link against a system Tclstub library])
+    fi
 fi
 AC_SUBST(TCL)
 AC_SUBST(TCLSTUB)
@@ -2421,7 +2412,7 @@ tk_works=no
 AC_MSG_CHECKING(for Tk library functionality)
 PRELIBS="$LIBS"
 if test "x$tk_link_works" = "xyes" ; then
-	LIBS="$LIBS $LIBTK $LIBTCL"
+    LIBS="$LIBS $LIBTK $LIBTCL"
 fi
 AC_TRY_RUN([
 #ifdef HAVE_TCL_H
@@ -2458,33 +2449,31 @@ int main() {
 #endif
     return 0;
 }
-	],
-	[tk_works=yes]
-)
+], [tk_works=yes])
 if test "x$tk_link_works" = "xyes" ; then
-	LIBS="$PRELIBS"
+    LIBS="$PRELIBS"
 fi
 AC_MSG_RESULT($tk_works)
 
 dnl figure out whether we need to build Tk
 build_brlcad_tk="no (using system)"
 if test "x$bc_build_tk" = "xyes" ; then
-	build_brlcad_tk=yes
+    build_brlcad_tk=yes
 else
-	if test "x$bc_build_tk" = "xno" ; then
-		if test "x$tk_works" = "xno" ; then
-			AC_MSG_NOTICE([libtk was disabled, but no system Tk library was found])
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Try adding --enable-tk-build])
-			AC_MSG_ERROR([*** Tk was disabled, yet no usable libtk system library was found ***])
-		fi
-	else
-		dnl automatic detection
-		if test "x$tk_works" = "xno" ; then
-			build_brlcad_tk=yes
-		fi
+    if test "x$bc_build_tk" = "xno" ; then
+	if test "x$tk_works" = "xno" ; then
+	    AC_MSG_NOTICE([libtk was disabled, but no system Tk library was found])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --enable-tk-build])
+	    AC_MSG_ERROR([*** Tk was disabled, yet no usable libtk system library was found ***])
 	fi
+    else
+	dnl automatic detection
+	if test "x$tk_works" = "xno" ; then
+	    build_brlcad_tk=yes
+	fi
+    fi
 fi
 AC_MSG_CHECKING(whether to build Tk)
 dnl Need to update version number(s) in src/other/libtk/Makefile.am too
@@ -2496,21 +2485,21 @@ AC_SUBST(TK_LIBRARY)
 TK=""
 TKSTUB=""
 if test "x$build_brlcad_tk" = "xyes" ; then
-	AC_MSG_RESULT(yes)
-	TK='${top_builddir}/src/other/libtk/libtk${TK_VERSION}.la'
-	TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
+    AC_MSG_RESULT(yes)
+    TK='${top_builddir}/src/other/libtk/libtk${TK_VERSION}.la'
+    TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
 else
-	AC_MSG_RESULT(no)
-	if test "x$tk_link_works" = "xyes" ; then
-		TK="$LIBTK"
-	else
-		AC_MSG_WARN([Unable to link against a system Tk library])
-	fi
-	if test "x$tkstub_link_works" = "xyes" ; then
-		TKSTUB="$LIBTKSTUB"
-	else
-		AC_MSG_WARN([Unable to link against a system Tkstub library])
-	fi
+    AC_MSG_RESULT(no)
+    if test "x$tk_link_works" = "xyes" ; then
+	TK="$LIBTK"
+    else
+	AC_MSG_WARN([Unable to link against a system Tk library])
+    fi
+    if test "x$tkstub_link_works" = "xyes" ; then
+	TKSTUB="$LIBTKSTUB"
+    else
+	AC_MSG_WARN([Unable to link against a system Tkstub library])
+    fi
 fi
 AC_SUBST(TK)
 AC_SUBST(TKSTUB)
@@ -2522,7 +2511,7 @@ itcl_works=no
 AC_MSG_CHECKING(for incrTcl library functionality)
 PRELIBS="$LIBS"
 if test "x$itcl_link_works" = "xyes" ; then
-	LIBS="$LIBS $LIBITCL $LIBTCL"
+    LIBS="$LIBS $LIBITCL $LIBTCL"
 fi
 AC_TRY_RUN([
 #include <itcl.h>
@@ -2545,33 +2534,31 @@ int main() {
 #endif
     return 0;
 }
-	],
-	[itcl_works=yes]
-)
+], [itcl_works=yes])
 if test "x$itcl_link_works" = "xyes" ; then
-	LIBS="$PRELIBS"
+    LIBS="$PRELIBS"
 fi
 AC_MSG_RESULT($itcl_works)
 
 dnl figure out whether we need to build incrTcl
 build_brlcad_itcl="no (using system)"
 if test "x$bc_build_itcl" = "xyes" ; then
-	build_brlcad_itcl=yes
+    build_brlcad_itcl=yes
 else
-	if test "x$bc_build_itcl" = "xno" ; then
-		if test "x$itcl_works" = "xno" ; then
-			AC_MSG_NOTICE([incrTcl was disabled, but no system incrTcl library was found])
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Try adding --enable-itcl-build])
-			AC_MSG_ERROR([*** incrTcl was disabled, yet no usable libitcl system library was found ***])
-		fi
-	else
-		dnl automatic detection
-		if test "x$itcl_works" = "xno" ; then
-			build_brlcad_itcl=yes
-		fi
+    if test "x$bc_build_itcl" = "xno" ; then
+	if test "x$itcl_works" = "xno" ; then
+	    AC_MSG_NOTICE([incrTcl was disabled, but no system incrTcl library was found])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --enable-itcl-build])
+	    AC_MSG_ERROR([*** incrTcl was disabled, yet no usable libitcl system library was found ***])
 	fi
+    else
+	dnl automatic detection
+	if test "x$itcl_works" = "xno" ; then
+	    build_brlcad_itcl=yes
+	fi
+    fi
 fi
 AC_MSG_CHECKING(whether to build incrTcl)
 
@@ -2580,15 +2567,15 @@ ITCL_VERSION="3.3"
 AC_SUBST(ITCL_VERSION)
 ITCL=""
 if test "x$build_brlcad_itcl" = "xyes" ; then
-	ITCL='${top_builddir}/src/other/incrTcl/libitcl${ITCL_VERSION}.la'
-	ITK='${top_builddir}/src/other/incrTcl/libitk${ITCL_VERSION}.la'
-	AC_MSG_RESULT(yes)
+    ITCL='${top_builddir}/src/other/incrTcl/libitcl${ITCL_VERSION}.la'
+    ITK='${top_builddir}/src/other/incrTcl/libitk${ITCL_VERSION}.la'
+    AC_MSG_RESULT(yes)
 else
-	if test "x$itcl_link_works" = "xyes" ; then
-		ITCL="$LIBITCL"
-		ITK="$LIBITK"
-	fi
-	AC_MSG_RESULT(no)
+    if test "x$itcl_link_works" = "xyes" ; then
+	ITCL="$LIBITCL"
+	ITK="$LIBITK"
+    fi
+    AC_MSG_RESULT(no)
 fi
 AC_SUBST(ITCL)
 AC_SUBST(ITK)
@@ -2600,7 +2587,7 @@ iwidgets_works=no
 AC_MSG_CHECKING(for iwidgets functionality)
 PRELIBS="$LIBS"
 if test "x$tcl_link_works" = "xyes" ; then
-	LIBS="$LIBS $LIBTCL"
+    LIBS="$LIBS $LIBTCL"
 fi
 dnl this test is probably not sufficient if iwidgets is not locateable
 dnl in the tcl auto_path.
@@ -2620,33 +2607,31 @@ int main() {
     }
     return 0;
 }
-	],
-	[iwidgets_works=yes]
-)
+], [iwidgets_works=yes])
 if test "x$tcl_link_works" = "xyes" ; then
-	LIBS="$PRELIBS"
+    LIBS="$PRELIBS"
 fi
 AC_MSG_RESULT($iwidgets_works)
 
 dnl figure out whether we need to install the iwidgets package
 build_brlcad_iwidgets="no (using system)"
 if test "x$bc_build_iwidgets" = "xyes" ; then
-	build_brlcad_iwidgets=yes
+    build_brlcad_iwidgets=yes
 else
-	if test "x$bc_build_iwidgets" = "xno" ; then
-		if test "x$iwidgets_works" = "xno" ; then
-			AC_MSG_NOTICE([iwidgets was disabled, but no system iwidgets package was found])
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Try adding --enable-iwidgets-build])
-			AC_MSG_ERROR([*** iwidgets was disabled, yet no usable iwidgets system package was found ***])
-		fi
-	else
-		dnl automatic detection
-		if test "x$iwidgets_works" = "xno" ; then
-			build_brlcad_iwidgets=yes
-		fi
+    if test "x$bc_build_iwidgets" = "xno" ; then
+	if test "x$iwidgets_works" = "xno" ; then
+	    AC_MSG_NOTICE([iwidgets was disabled, but no system iwidgets package was found])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --enable-iwidgets-build])
+	    AC_MSG_ERROR([*** iwidgets was disabled, yet no usable iwidgets system package was found ***])
 	fi
+    else
+	dnl automatic detection
+	if test "x$iwidgets_works" = "xno" ; then
+	    build_brlcad_iwidgets=yes
+	fi
+    fi
 fi
 AC_MSG_CHECKING(whether to install iwidgets)
 AC_MSG_RESULT($build_brlcad_iwidgets)
@@ -2663,13 +2648,13 @@ BLT_LIBRARY='${prefix}/lib/blt${BLT_VERSION}'
 AC_SUBST(BLT_LIBRARY)
 AC_MSG_CHECKING(whether to build libblt)
 if test ! "x$bc_build_blt" = "xno" ; then
-   build_brlcad_blt=yes
-   BLT='${top_builddir}/src/other/blt/libblt${BLT_VERSION}.la'
-   AC_MSG_RESULT(yes)
+     build_brlcad_blt=yes
+     BLT='${top_builddir}/src/other/blt/libblt${BLT_VERSION}.la'
+     AC_MSG_RESULT(yes)
 else
-   build_brlcad_blt=no
-   BLT=""
-   AC_MSG_RESULT(no)
+     build_brlcad_blt=no
+     BLT=""
+     AC_MSG_RESULT(no)
 fi
 
 
@@ -2679,13 +2664,13 @@ TKIMG_VERSION="1.3"
 AC_SUBST(TKIMG_VERSION)
 AC_MSG_CHECKING(whether to build tkimg)
 if test ! "x$bc_build_tkimg" = "xno" ; then
-   build_brlcad_tkimg=yes
-   TKIMG='${top_builddir}/src/other/tkimg/tkimg${TKIMG_VERSION}.la'
-   AC_MSG_RESULT(yes)
+    build_brlcad_tkimg=yes
+    TKIMG='${top_builddir}/src/other/tkimg/tkimg${TKIMG_VERSION}.la'
+    AC_MSG_RESULT(yes)
 else
-   build_brlcad_tkimg=no
-   TKIMG=""
-   AC_MSG_RESULT(no)
+    build_brlcad_tkimg=no
+    TKIMG=""
+    AC_MSG_RESULT(no)
 fi
 
 
@@ -2701,17 +2686,15 @@ AC_TRY_RUN([
 #  include <pthread.h>
 #endif
 void *thread_hook(void *arg) {
-     return NULL;
+    return NULL;
 }
 main () {
-     pthread_t thread;
-     pthread_create(&thread, (void *)0, thread_hook, (void *)0);
-     pthread_join(thread, NULL);
-     return 0;
+    pthread_t thread;
+    pthread_create(&thread, (void *)0, thread_hook, (void *)0);
+    pthread_join(thread, NULL);
+    return 0;
 }
-	],
-	[thread_works=yes]
-)
+], [thread_works=yes])
 AC_MSG_RESULT($thread_works)
 
 
@@ -2749,44 +2732,42 @@ AC_TRY_RUN([
 #  endif
 #endif
 int main () {
-  char buffer[2048] = {0};
-  int result = tgetent(buffer, "vt100");
-  return 0;
+    char buffer[2048] = {0};
+    int result = tgetent(buffer, "vt100");
+    return 0;
 }
-	],
-	[termlib_works=yes]
-)
+], [termlib_works=yes])
 LDFLAGS="$PRELDFLAGS"
 AC_MSG_RESULT($termlib_works)
 
 dnl figure out whether we need to build libtermlib
 build_brlcad_termlib="no (using system)"
 if test "x$bc_build_termlib" = "xyes" ; then
-	build_brlcad_termlib=yes
+    build_brlcad_termlib=yes
 else
-	if test "x$bc_build_termlib" = "xno" ; then
-		if test "x$termlib_works" != "xyes" ; then
-			AC_MSG_NOTICE([termlib was disabled, but no system terminal library was found])
-			BC_RETRY_CONFIGURE([$this], [$args])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Try adding --enable-termlib-build])
-			AC_MSG_ERROR([*** Building termlib was disabled, yet no system termcap or curses library was found ***])
-		fi
-	else
-		dnl automatic detection
-		if test "x$termlib_works" = "xno" ; then
-			build_brlcad_termlib=yes
-		fi
+    if test "x$bc_build_termlib" = "xno" ; then
+	if test "x$termlib_works" != "xyes" ; then
+	    AC_MSG_NOTICE([termlib was disabled, but no system terminal library was found])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --enable-termlib-build])
+	    AC_MSG_ERROR([*** Building termlib was disabled, yet no system termcap or curses library was found ***])
 	fi
+    else
+	dnl automatic detection
+	if test "x$termlib_works" = "xno" ; then
+	    build_brlcad_termlib=yes
+	fi
+    fi
 fi
 AC_MSG_CHECKING(whether to build the included termlib library)
 TERMLIB=""
 if test "x$build_brlcad_termlib" = "xyes" ; then
-	TERMLIB='${top_builddir}/src/other/libtermlib/libtermlib.la'
-	AC_MSG_RESULT(yes)
+    TERMLIB='${top_builddir}/src/other/libtermlib/libtermlib.la'
+    AC_MSG_RESULT(yes)
 else
-	TERMLIB="$LIBTERMLIB"
-	AC_MSG_RESULT(no)
+    TERMLIB="$LIBTERMLIB"
+    AC_MSG_RESULT(no)
 fi
 AC_SUBST(TERMLIB)
 
@@ -2841,7 +2822,7 @@ AC_MSG_CHECKING(whether the SGI graphics library is available)
 AC_MSG_RESULT($sgigl_link_works)
 AC_SUBST(LIBSGIGL)
 if test "x$sgigl_link_works" = "xyes" ; then
-	AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.)
+    AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.)
 fi
 
 dnl *** libl Solaris lexer library ***
@@ -2859,47 +2840,47 @@ dnl *** 64-bit compilation ***
 dnl figure out whether we are building 64-bit
 build_brlcad_64bit="no"
 if test "x$bc_build_64bit" = "xyes" ; then
-	if test "x$pointer_size" != "x8" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_NOTICE([Try removing --enable-64bit-build or modifying the CFLAGS/LDFLAGS])
-		AC_MSG_ERROR([*** Building 64-bit was requested, yet the build seems to be non-64-bit ***])
-	fi
-	build_brlcad_64bit=yes
+    if test "x$pointer_size" != "x8" ; then
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	AC_MSG_NOTICE([Try removing --enable-64bit-build or modifying the CFLAGS/LDFLAGS])
+	AC_MSG_ERROR([*** Building 64-bit was requested, yet the build seems to be non-64-bit ***])
+    fi
+    build_brlcad_64bit=yes
 else
-	if test "x$bc_build_64bit" = "xno" ; then
-		if test "x$pointer_size" = "x8" ; then
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Try removing --disable-64bit-build or modifying the CFLAGS/LDFLAGS])
-			AC_MSG_ERROR([*** Building non-64-bit was requested, yet the build seems to be 64-bit ***])
-		fi
-	fi
-
-	dnl automatic detection
+    if test "x$bc_build_64bit" = "xno" ; then
 	if test "x$pointer_size" = "x8" ; then
-		build_brlcad_64bit="yes"
-	elif test "x$pointer_size" = "x4" ; then
-		build_brlcad_64bit="no (32-bit)"
-	elif test "x$pointer_size" = "x2" ; then
-		build_brlcad_64bit="no (16-bit)"
-	elif test "x$pointer_size" = "x1" ; then
-		build_brlcad_64bit="no (8-bit)"
-	else
-		AC_MSG_WARN([Unknown pointer size: $pointer_size])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try removing --disable-64bit-build or modifying the CFLAGS/LDFLAGS])
+	    AC_MSG_ERROR([*** Building non-64-bit was requested, yet the build seems to be 64-bit ***])
 	fi
+    fi
+
+    dnl automatic detection
+    if test "x$pointer_size" = "x8" ; then
+	build_brlcad_64bit="yes"
+    elif test "x$pointer_size" = "x4" ; then
+	build_brlcad_64bit="no (32-bit)"
+    elif test "x$pointer_size" = "x2" ; then
+	build_brlcad_64bit="no (16-bit)"
+    elif test "x$pointer_size" = "x1" ; then
+	build_brlcad_64bit="no (8-bit)"
+    else
+	AC_MSG_WARN([Unknown pointer size: $pointer_size])
+    fi
 fi
 
 
 dnl *** Jove compilation ***
 build_brlcad_jove=no
 if test "x$bc_build_jove" = "xyes" ; then
-	build_brlcad_jove=yes
+    build_brlcad_jove=yes
 elif test "x$bc_build_jove" = "xno" ; then
-	build_brlcad_jove=no	# body for the sake of body
+    build_brlcad_jove=no	# body for the sake of body
 else
-	# enable jove if no suitable system emacs/jove was found
-	if test "x$BCEDITOR" = "x" ; then
-		build_brlcad_jove=yes
-	fi
+    # enable jove if no suitable system emacs/jove was found
+    if test "x$BCEDITOR" = "x" ; then
+	build_brlcad_jove=yes
+    fi
 fi
 
 
@@ -2954,18 +2935,16 @@ if test "x$bc_with_opengl" != "xno" ; then
 #  include <GL/gl.h>
 #endif
 main(int argc, char *argv[]) {
-  GLboolean values;
-  void (*func)() = glBegin;
-  if (GL_FALSE || argc > 1) {
-    func(GL_POINTS);
-    glGetBooleanv(GL_DEPTH_TEST, &values);
-    glEnd();
-  }
-  return 0;
+    GLboolean values;
+    void (*func)() = glBegin;
+    if (GL_FALSE || argc > 1) {
+	func(GL_POINTS);
+	glGetBooleanv(GL_DEPTH_TEST, &values);
+	glEnd();
+    }
+    return 0;
 }
-	       ],
-	       [opengl_works=yes]
-	      )
+    ], [opengl_works=yes])
     LDFLAGS="$PRELDFLAGS"
     AC_MSG_RESULT($opengl_works)
 
@@ -3000,18 +2979,16 @@ if test "x$bc_with_wgl" != "xno" ; then
 #  include <GL/gl.h>
 #endif
 main(int argc, char *argv[]) {
-  GLboolean values;
-  void (*func)() = glBegin;
-  if (GL_FALSE || argc > 1) {
-    func(GL_POINTS);
-    glGetBooleanv(GL_DEPTH_TEST, &values);
-    glEnd();
-  }
-  return 0;
+    GLboolean values;
+    void (*func)() = glBegin;
+    if (GL_FALSE || argc > 1) {
+        func(GL_POINTS);
+	glGetBooleanv(GL_DEPTH_TEST, &values);
+	glEnd();
+    }
+    return 0;
 }
-	       ],
-	       [wgl_works=yes]
-	      )
+    ], [wgl_works=yes])
     LDFLAGS="$PRELDFLAGS"
     AC_MSG_RESULT($wgl_works)
 
@@ -3054,11 +3031,11 @@ if test "x$bc_with_x11" != "xno" ; then
 #  include <X11/Xlib.h>
 #endif
 main() {
-       XPoint pt;
-       pt.x = pt.y = 0;
-       return pt.x;
+    XPoint pt;
+    pt.x = pt.y = 0;
+    return pt.x;
 }
-		],[x11_works=yes])
+    ],[x11_works=yes])
     AC_MSG_RESULT($x11_works)
     if test "x$x11_works" = "xyes" ; then
 	AC_MSG_CHECKING(for X11 link functionality)
@@ -3067,11 +3044,11 @@ main() {
 #  include <X11/Xlib.h>
 #endif
 main() {
-	XModifierKeymap *xmkm;
-	xmkm=XNewModifiermap(1);
-	return xmkm==NULL;
+    XModifierKeymap *xmkm;
+    xmkm=XNewModifiermap(1);
+    return xmkm==NULL;
 }
-		    ],,x11_works=no)
+	],,x11_works=no)
 	AC_MSG_RESULT($x11_works)
     fi
     LDFLAGS="$PRELDFLAGS"
@@ -3103,12 +3080,12 @@ AC_MSG_RESULT($build_against_x11)
 dnl *** SDL availability  ***
 sdl_works="no"
 if test "x$bc_with_sdl" != "xno" ; then
-	if test "x$SDL_CONFIG" != "x" ; then
-		AM_PATH_SDL(1.2.0,,AC_MSG_ERROR([Cannot find SDL.]))
-		AC_SUBST(SDL_CFLAGS)
-		AC_SUBST(SDL_LIBS)
-		sdl_works="yes"
-	fi
+    if test "x$SDL_CONFIG" != "x" ; then
+	AM_PATH_SDL(1.2.0,,AC_MSG_ERROR([Cannot find SDL.]))
+	AC_SUBST(SDL_CFLAGS)
+	AC_SUBST(SDL_LIBS)
+	sdl_works="yes"
+    fi
 fi
 AC_MSG_CHECKING(for SDL functionality)
 AC_MSG_RESULT($sdl_works)
@@ -3118,9 +3095,9 @@ dnl *** Python availability ***
 python_works="no"
 AC_MSG_CHECKING(for Python functionality)
 if test "x$bc_with_python" != "xno" ; then
-	if test "x$PYTHON" != "x" ; then
-		python_works="yes"
-	fi
+    if test "x$PYTHON" != "x" ; then
+	python_works="yes"
+    fi
 fi
 AC_SUBST(PYTHON_CFLAGS)
 AC_SUBST(PYTHON_LIBS)
@@ -3132,34 +3109,34 @@ dnl figure out whether we have everything we need to build ADRT
 dnl requires sdl and python
 build_brlcad_adrt="no"
 if test "x$bc_build_adrt" = "xauto" ; then
-	if test "x$python_works" = "xyes" ; then
-		if test "x$sdl_works" = "xyes" ; then
-			build_brlcad_adrt="yes"
-		else
-			build_brlcad_adrt="no (need sdl)"
-		fi
+    if test "x$python_works" = "xyes" ; then
+	if test "x$sdl_works" = "xyes" ; then
+	    build_brlcad_adrt="yes"
 	else
-		if test "x$sdl_works" = "xyes" ; then
-			build_brlcad_adrt="no (need python)"
-		else
-			build_brlcad_adrt="no (need python and sdl)"
-		fi
+	    build_brlcad_adrt="no (need sdl)"
 	fi
+    else
+	if test "x$sdl_works" = "xyes" ; then
+	    build_brlcad_adrt="no (need python)"
+	else
+	    build_brlcad_adrt="no (need python and sdl)"
+	fi
+    fi
 elif test "x$bc_build_adrt" = "xyes" ; then
-	build_brlcad_adrt="yes"
-	if test "x$sdl_works" = "xno" ; then
-		AC_MSG_NOTICE([ADRT requires SDL (and Python)])
-		BC_RETRY_CONFIGURE([$this], [$args])
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_NOTICE([Try adding --disable-adrt-build])
-		AC_MSG_ERROR([*** Using ADRT was requested, yet no system SDL library was found ***])
-	elif test "x$python_works" = "xno" ; then
-		AC_MSG_NOTICE([ADRT requires Python (and SDL)])
-		BC_RETRY_CONFIGURE([$this], [$args])
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_NOTICE([Try adding --disable-adrt-build])
-		AC_MSG_ERROR([*** Using ADRT was requested, yet no system Python interpreter was found ***])
-	fi
+    build_brlcad_adrt="yes"
+    if test "x$sdl_works" = "xno" ; then
+	AC_MSG_NOTICE([ADRT requires SDL (and Python)])
+	BC_RETRY_CONFIGURE([$this], [$args])
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	AC_MSG_NOTICE([Try adding --disable-adrt-build])
+	AC_MSG_ERROR([*** Using ADRT was requested, yet no system SDL library was found ***])
+    elif test "x$python_works" = "xno" ; then
+	AC_MSG_NOTICE([ADRT requires Python (and SDL)])
+	BC_RETRY_CONFIGURE([$this], [$args])
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	AC_MSG_NOTICE([Try adding --disable-adrt-build])
+	AC_MSG_ERROR([*** Using ADRT was requested, yet no system Python interpreter was found ***])
+    fi
 fi
 
 
@@ -3176,24 +3153,22 @@ main () {
     }
     return 1;
 }
-	],
-	[dials_and_buttons=yes]
-)
+], [dials_and_buttons=yes])
 if test "x$dials_and_buttons" = "xyes" ; then
-	AC_DEFINE(IR_KNOBS, 8, [Turn on SGI knobs])
-	AC_DEFINE(IR_BUTTONS, 32, [Turn on SGI buttons])
+    AC_DEFINE(IR_KNOBS, 8, [Turn on SGI knobs])
+    AC_DEFINE(IR_BUTTONS, 32, [Turn on SGI buttons])
 fi
 AC_MSG_RESULT($dials_and_buttons)
 
 
 # XXX nasty temp hack for backwards cake compatibility. code needs to be fixed.
 if test "x$host_os" = "xirix6.5" ; then
-	# XXX the code that relies on this will be going away, but until then..
-	if test "x$build_brlcad_64bit" = "xyes" ; then
-		CFLAGS="$CFLAGS -DIRIX64=65"
-	else
-		CFLAGS="$CFLAGS -DIRIX=6"
-	fi
+    # XXX the code that relies on this will be going away, but until then..
+    if test "x$build_brlcad_64bit" = "xyes" ; then
+	CFLAGS="$CFLAGS -DIRIX64=65"
+    else
+	CFLAGS="$CFLAGS -DIRIX=6"
+    fi
 fi
 
 dnl search the BRL-CAD include directory (required for non-srcdir builds).
@@ -3203,12 +3178,12 @@ CPPFLAGS="$CPPFLAGS -DBRLCADBUILD=1 -I\$(top_srcdir)/include"
 
 # make sure ECHO and ECHO_N got defined and substituted
 if test "x$ECHO" = "x" ; then
-	ECHO=echo
-	AC_MSG_NOTICE([ECHO was not defined by configure so defining manually])
+    ECHO=echo
+    AC_MSG_NOTICE([ECHO was not defined by configure so defining manually])
 fi
 AC_SUBST(ECHO)
 if test "x$ECHO_N" = "x" ; then
-	ECHO_N=
+    ECHO_N=
 fi
 AC_SUBST(ECHO_N)
 
