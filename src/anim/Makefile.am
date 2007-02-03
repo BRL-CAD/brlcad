@@ -17,6 +17,8 @@ bin_PROGRAMS = \
 	chan_mult \
 	chan_permute
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 anim_cascade_SOURCES = anim_cascade.c
 anim_cascade_LDADD = ${BN}
 

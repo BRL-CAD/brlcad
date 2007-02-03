@@ -87,7 +87,9 @@ EXTRA_DIST = \
 	libbu.dsp \
 	vers_win.c
 
-AM_CFLAGS = -DPREFIX=\"$(prefix)\"
+AM_CPPFLAGS = \
+	-DPREFIX=\"$(prefix)\" \
+	${TCL_CPPFLAGS}
 
 BUILT_SOURCES = vers.c
 

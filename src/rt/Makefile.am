@@ -1,5 +1,6 @@
 # $Id$
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
 LDADD = ${RT} ${FB} ${OPTICAL} ${TCL}
 
 if ONLY_BENCHMARK

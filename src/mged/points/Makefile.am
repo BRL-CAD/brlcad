@@ -1,5 +1,7 @@
 noinst_LTLIBRARIES = libpoints.la
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 libpoints_la_LDFLAGS =
 libpoints_la_LIBADD = ${BU}
 libpoints_la_SOURCES = \

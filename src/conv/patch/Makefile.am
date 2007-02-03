@@ -4,6 +4,8 @@ bin_PROGRAMS = \
 	patch-g \
 	rpatch
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 patch_g_SOURCES = patch-g.c
 patch_g_LDADD = ${RT} ${WDB} ${BU}
 

@@ -2,6 +2,8 @@
 
 bin_PROGRAMS = vdeck
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 vdeck_LDADD = ${RT}
 vdeck_SOURCES = \
 	cgarbs.c \

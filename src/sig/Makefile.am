@@ -37,6 +37,8 @@ bin_PROGRAMS = \
 	umod \
 	ustat
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 noinst_HEADERS = complex.h
 
 a_d_SOURCES = a-d.c
@@ -52,8 +54,10 @@ d_f_SOURCES = d-f.c
 f_d_SOURCES = f-d.c
 f_i_SOURCES = f-i.c
 i_f_SOURCES = i-f.c
+
 c_d_SOURCES = c-d.c
 c_d_LDADD = ${LIBM}
+
 i_a_SOURCES = i-a.c
 u_a_SOURCES = u-a.c
 u_d_SOURCES = u-d.c
@@ -107,8 +111,10 @@ ustat_LDADD = ${BU} ${LIBM}
 #  Experimental
 
 dpeak_SOURCES = dpeak.c
+
 syn_SOURCES = syn.c
 syn_LDADD = ${LIBM}
+
 damdf_SOURCES = damdf.c
 dauto2_SOURCES = dauto2.c
 ihist_SOURCES = ihist.c

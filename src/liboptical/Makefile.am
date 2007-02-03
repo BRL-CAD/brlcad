@@ -2,6 +2,8 @@
 
 lib_LTLIBRARIES = liboptical.la
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 SRCS = \
 	init.c \
 	material.c \

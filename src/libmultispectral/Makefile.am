@@ -2,7 +2,9 @@
 
 lib_LTLIBRARIES = libmultispectral.la
 
-AM_CFLAGS = -DRT_MULTISPECTRAL
+AM_CPPFLAGS = \
+	-DRT_MULTISPECTRAL \
+	${TCL_CPPFLAGS}
 
 libmultispectral_la_LDFLAGS = -version-info 19:1
 libmultispectral_la_LIBADD = \

@@ -2,6 +2,8 @@
 
 bin_PROGRAMS = iges-g g-iges
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 man_MANS = g-iges.1 iges-g.1
 
 noinst_HEADERS = \

@@ -18,14 +18,6 @@ brlcadinclude_required = \
 	rtstring.h \
 	tclcad.h
 
-headers_libtcl = \
-	tcl.h \
-	tclDecls.h \
-	tclInt.h \
-	tclIntDecls.h \
-	tclIntPlatDecls.h \
-	tclPlatDecls.h
-
 headers_libtk = \
 	tk.h \
 	tkDecls.h \
@@ -36,7 +28,6 @@ headers_libtk = \
 	tkPlatDecls.h
 
 brlcadinclude_wanted = \
-	$(headers_libtcl) \
 	$(headers_libtk) \
 	XtndRunsv.h \
 	anim.h \

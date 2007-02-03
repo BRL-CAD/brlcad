@@ -2,6 +2,8 @@
 
 bin_PROGRAMS = comgeom-g
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 comgeom_g_SOURCES = \
 	cvt.c \
 	f2a.c \
@@ -10,10 +12,11 @@ comgeom_g_SOURCES = \
 	region.c \
 	solid.c \
 	tools.c
+comgeom_g_LDADD = \
+	${RT} \
+	${WDB}
 
 noinst_HEADERS = 3d.h ged_types.h
-
-comgeom_g_LDADD = ${RT} ${WDB}
 
 man_MANS = comgeom-g.1
 

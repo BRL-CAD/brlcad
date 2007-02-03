@@ -2,6 +2,8 @@
 
 bin_PROGRAMS = remrt rtsrv
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 dist_man_MANS = remrt.1
 
 remrt_LDADD = \

@@ -2,6 +2,8 @@
 
 bin_PROGRAMS = lgt
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 lgt_SOURCES = \
 	char.c \
 	do_options.c \

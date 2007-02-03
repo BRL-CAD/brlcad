@@ -44,6 +44,8 @@ bin_PROGRAMS = \
 	rle-fb \
 	spm-fb
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 fbanim_SOURCES = fbanim.c
 fbanim_LDADD = ${FB}
 

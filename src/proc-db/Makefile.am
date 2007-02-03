@@ -40,6 +40,8 @@ noinst_HEADERS = \
 
 man_MANS = picket_fence.1
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 
 # XXX does not compile?
 #apply_mdb_SOURCES = apply-mdb.c

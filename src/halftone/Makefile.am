@@ -2,6 +2,8 @@
 
 bin_PROGRAMS = halftone
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 halftone_SOURCES = \
 	main.c \
 	sharpen.c \

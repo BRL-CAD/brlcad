@@ -7,6 +7,8 @@ bin_PROGRAMS = \
 	ipuscan \
 	ipustat
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 noinst_HEADERS = \
 	canon.h \
 	chore.h

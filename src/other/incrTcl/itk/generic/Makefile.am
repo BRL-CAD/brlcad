@@ -6,6 +6,10 @@ lib_LTLIBRARIES = \
 
 noinst_LTLIBRARIES = libitg.la
 
+AM_CPPFLAGS = \
+	${TCL_CPPFLAGS} \
+	${ITCL_CPPFLAGS}
+
 libitkstub_la_SOURCES = itkStubLib.c
 libitkstub@ITCL_VERSION@_la_SOURCES = $(libitkstub_la_SOURCES)
 

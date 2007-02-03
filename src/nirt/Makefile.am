@@ -4,6 +4,8 @@ bin_PROGRAMS = \
 	nirt \
 	showshot
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 nirt_srcs = \
 	nirt.c \
 	command.c \

@@ -12,6 +12,7 @@ SRCS = \
 	strtok.c \
 	tcl.c
 
+libsysv_la_CFLAGS = ${TCL_CPPFLAGS}
 libsysv_la_LDFLAGS = -version-info 19:1
 libsysv_la_SOURCES = \
 	$(SRCS)

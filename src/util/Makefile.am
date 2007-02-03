@@ -122,6 +122,8 @@ bin_PROGRAMS = \
 	xyz-pl \
 	yuv-pix
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 # XXX - doesn't work, needs to be updated to newer dm interface
 # noinst_PROGRAMS = pl-dm
 noinst_PROGRAMS = roots_example

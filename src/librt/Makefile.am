@@ -159,10 +159,13 @@ librt_nil_la_SOURCES = \
 EXTRA_librt_nil_la_SOURCES = \
 	g_brep.cpp
 
-INCLUDES = ${BREP_CPPFLAGS}
+# cannot set per-target CPPFLAGS until automake 1.7+
+AM_CPPFLAGS = \
+	${BREP_CPPFLAGS} \
+	${TCL_CPPFLAGS}
+
 librt_la_SOURCES =
 librt_la_LDFLAGS = -version-info 19:1
-#librt_la_CPPFLAGS = ${BREP_CPPFLAGS}
 librt_la_LIBADD = \
 	librt_nil.la \
 	${BN} \

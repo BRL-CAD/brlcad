@@ -6,6 +6,8 @@ bin_PROGRAMS = \
 	ssamp-bw \
 	ssampview
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 dist_bin_SCRIPTS = ssampview.tcl
 
 man_MANS = \

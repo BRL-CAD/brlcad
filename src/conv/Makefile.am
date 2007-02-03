@@ -1,5 +1,7 @@
 # $Id$
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 if ONLY_BENCHMARK
 
 SUBDIRS =
@@ -86,6 +88,7 @@ asc2g_LDFLAGS = -static
 endif
 
 asc2g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${SYSV} ${TCL}
+
 asc_nmg_LDADD = ${WDB} ${RT} ${BN} ${BU}
 bot_bldxf_LDADD = ${RT} ${BN} ${BU}
 bot_raw_LDADD = ${RT} ${BN} ${BU}
@@ -93,11 +96,15 @@ bot_shell_vtk_LDADD = ${RT} ${BN} ${BU} ${SYSV}
 cy_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
 dbupgrade_LDADD = ${WDB} ${RT} ${BN} ${BU}
 dxf_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
 enf_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${SYSV} ${TCL}
+
 euclid_format_LDADD = ${RT} ${BN} ${BU}
 euclid_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
 fast4_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
 g2asc_LDADD = ${WDB} ${RT} ${BN} ${BU} ${TCL}
+
 g4_g5_LDADD = ${WDB} ${RT} ${BN} ${BU}
 g5_g4_LDADD = ${WDB} ${RT} ${BN} ${BU}
 g_acad_LDADD = ${WDB} ${RT} ${BN} ${BU}
@@ -122,7 +129,9 @@ nmg_rib_LDADD = ${WDB} ${RT} ${BN} ${BU}
 nmg_sgp_LDADD = ${WDB} ${RT} ${BN} ${BU}
 ply_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${SYSV}
 poly_bot_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
 proe_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${SYSV} ${TCL}
+
 stl_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${SYSV}
 tankill_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
 viewpoint_g_LDADD = ${WDB} ${RT} ${BN} ${BU}

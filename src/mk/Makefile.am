@@ -10,6 +10,7 @@ bin_PROGRAMS = \
 	mk_gastank \
 	mk_wire
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
 LDADD = ${WDB} ${RT}
 
 mk_bolt_SOURCES = mk_bolt.c

@@ -45,6 +45,8 @@ libbn_la_LIBADD = \
 	${TCL} \
 	${LIBM}
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 EXTRA_DIST = \
 	$(man_MANS) \
 	libbn.dsp \

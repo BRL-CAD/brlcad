@@ -10,6 +10,8 @@ bin_PROGRAMS = \
 noinst_PROGRAMS = \
 	g_transfer
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 g_diff_SOURCES = g_diff.c
 g_diff_LDADD = ${RT} ${TCL}
 

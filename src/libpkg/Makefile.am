@@ -4,6 +4,8 @@ lib_LTLIBRARIES = libpkg.la
 
 noinst_PROGRAMS = tpkg
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 SRCS = \
 	pkg.c \
 	tcl.c

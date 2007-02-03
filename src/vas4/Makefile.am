@@ -2,6 +2,8 @@
 
 bin_PROGRAMS = vas4
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 vas4_LDADD = ${FB} ${BU}
 vas4_SOURCES = \
 	record_seq.c \

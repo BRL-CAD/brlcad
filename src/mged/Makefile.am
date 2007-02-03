@@ -1,5 +1,7 @@
 # $Id$
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 if WITH_OPENGL
 OGL_SRCS = dm-ogl.c
 OGL_CFLAGS = -DDM_OGL -DIF_OGL

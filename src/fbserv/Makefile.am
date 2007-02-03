@@ -2,6 +2,8 @@
 
 bin_PROGRAMS = fbserv
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 fbserv_LDADD = ${FB}
 
 fbserv_SOURCES = \

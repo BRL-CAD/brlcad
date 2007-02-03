@@ -43,7 +43,13 @@ libdm_la_SOURCES = \
 
 libdm_la_LDFLAGS = -version-info 19:1
 # per-program CPPFLAGS wasn't added until automake 1.7
-libdm_la_CFLAGS = ${X_CFLAGS} ${DM_X_CFLAGS} ${DM_OGL_CFLAGS} ${DM_WGL_CFLAGS} ${PNG_CPPFLAGS}
+libdm_la_CFLAGS = \
+	${X_CFLAGS} \
+	${DM_X_CFLAGS} \
+	${DM_OGL_CFLAGS} \
+	${DM_WGL_CFLAGS} \
+	${PNG_CPPFLAGS} \
+	${TCL_CPPFLAGS}
 libdm_la_LIBADD = \
 	${TCL} \
 	${RT} \

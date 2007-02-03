@@ -3,6 +3,8 @@
 lib_LTLIBRARIES = libwdb.la
 noinst_LTLIBRARIES = libwdb_nil.la
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 SRCS = \
 	arbn.c \
 	ars.c \

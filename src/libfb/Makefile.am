@@ -48,7 +48,14 @@ libfb_la_SOURCES = \
 	vers.c
 
 libfb_la_LDFLAGS = -version-info 19:1
-libfb_la_CFLAGS = ${X_CFLAGS} -DIF_REMOTE -DIF_AB $(IF_X_CFLAGS)  $(IF_OGL_CFLAGS) $(IF_WGL_CFLAGS)
+libfb_la_CFLAGS = \
+	-DIF_REMOTE \
+	-DIF_AB \
+	${X_CFLAGS} \
+	$(IF_X_CFLAGS) \
+	$(IF_OGL_CFLAGS) \
+	$(IF_WGL_CFLAGS) \
+	${TCL_CPPFLAGS}
 libfb_la_LIBADD = \
 	${BU} \
 	${PKG} \
