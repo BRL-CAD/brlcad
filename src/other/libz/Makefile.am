@@ -10,7 +10,6 @@ libz_la_SOURCES = \
 	compress.c \
 	crc32.c \
 	deflate.c \
-	example.c \
 	gzio.c \
 	infback.c \
 	inffast.c \
