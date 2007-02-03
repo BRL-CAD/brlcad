@@ -1,6 +1,9 @@
 # $Id$
 
 lib_LTLIBRARIES = libz.la
+noinst_PROGRAMS = \
+	example \
+	minigzip
 
 libz_la_SOURCES = \
 	adler32.c \
@@ -32,6 +35,12 @@ include_HEADERS = \
 	zutil.h
 
 man_MANS = zlib.3
+
+example_SOURCES = example.c
+example_LDADD = libz.la
+
+minigzip_SOURCES = minigzip.c
+minigzip_LDADD = libz.la
 
 EXTRA_DIST = \
 	$(man_MANS) \
