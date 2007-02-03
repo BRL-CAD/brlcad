@@ -87,100 +87,137 @@ if LINK_STATIC_REQUIRED
 asc2g_LDFLAGS = -static
 endif
 
+asc2g_SOURCES = asc2g.c
 asc2g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${SYSV} ${TCL}
 
+asc2pix_SOURCES = asc2pix.c
+
+asc_nmg_SOURCES = asc-nmg.c
 asc_nmg_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+bot_bldxf_SOURCES = bot-bldxf.c
 bot_bldxf_LDADD = ${RT} ${BN} ${BU}
+
+bot_raw_SOURCES = bot-raw.c
 bot_raw_LDADD = ${RT} ${BN} ${BU}
+
+bot_shell_vtk_SOURCES = bot_shell-vtk.c
 bot_shell_vtk_LDADD = ${RT} ${BN} ${BU} ${SYSV}
+
+conv_vg2g_SOURCES = conv-vg2g.c
+
+cy_g_SOURCES = cy-g.c
 cy_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+dbupgrade_SOURCES = dbupgrade.c
 dbupgrade_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+dxf_g_SOURCES = dxf-g.c
 dxf_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
 
+enf_g_SOURCES = enf-g.c
 enf_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${SYSV} ${TCL}
 
+euclid_format_SOURCES = euclid_format.c
 euclid_format_LDADD = ${RT} ${BN} ${BU}
+
+euclid_g_SOURCES = euclid-g.c
 euclid_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+euclid_unformat_SOURCES = euclid_unformat.c
+
+fast4_g_SOURCES = fast4-g.c
 fast4_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
 
+g2asc_SOURCES = g2asc.c
 g2asc_LDADD = ${WDB} ${RT} ${BN} ${BU} ${TCL}
 
+g4_g5_SOURCES = g4-g5.c
 g4_g5_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+g5_g4_SOURCES = g5-g4.c
 g5_g4_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+g_acad_SOURCES = g-acad.c
 g_acad_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+g_adrt_SOURCES = g-adrt.c
 g_adrt_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+g_dxf_SOURCES = g-dxf.c
 g_dxf_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+g_euclid1_SOURCES = g-euclid1.c
 g_euclid1_LDADD = ${RT} ${BN} ${BU}
+
+g_euclid_SOURCES = g-euclid.c
 g_euclid_LDADD = ${RT} ${BN} ${BU}
-g_var_LDADD = ${RT} ${BN} ${BU}
+
+g_nff_SOURCES = g-nff.c
 g_nff_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+g_nmg_SOURCES = g-nmg.c
 g_nmg_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+g_obj_SOURCES = g-obj.c
 g_obj_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+g_shell_rect_SOURCES = g-shell.rect.c
 g_shell_rect_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+g_stl_SOURCES = g-stl.c
 g_stl_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+g_tankill_SOURCES = g-tankill.c
 g_tankill_LDADD = ${RT} ${BN} ${BU}
+
+g_var_SOURCES = g-var.c
+g_var_LDADD = ${RT} ${BN} ${BU}
+
+g_vrml_SOURCES = g-vrml.c
 g_vrml_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+g_x3d_SOURCES = g-x3d.c
 g_x3d_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+g_xxx_SOURCES = g-xxx.c
 g_xxx_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+g_xxx_facets_SOURCES = g-xxx_facets.c
 g_xxx_facets_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+nastran_g_SOURCES = nastran-g.c
 nastran_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+nmg_bot_SOURCES = nmg-bot.c
 nmg_bot_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+nmg_rib_SOURCES = nmg-rib.c
 nmg_rib_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+nmg_sgp_SOURCES = nmg-sgp.c
 nmg_sgp_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+pix2asc_SOURCES = pix2asc.c
+
+ply_g_SOURCES = ply-g.c
 ply_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${SYSV}
+
+poly_bot_SOURCES = poly-bot.c
 poly_bot_LDADD = ${WDB} ${RT} ${BN} ${BU}
 
+proe_g_SOURCES = proe-g.c
 proe_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${SYSV} ${TCL}
 
+stl_g_SOURCES = stl-g.c
 stl_g_LDADD = ${WDB} ${RT} ${BN} ${BU} ${SYSV}
+
+tankill_g_SOURCES = tankill-g.c
 tankill_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
+
+viewpoint_g_SOURCES = viewpoint-g.c
 viewpoint_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
 
-asc2g_SOURCES = asc2g.c
-asc2pix_SOURCES = asc2pix.c
-asc_nmg_SOURCES = asc-nmg.c
-bot_bldxf_SOURCES = bot-bldxf.c
-bot_raw_SOURCES = bot-raw.c
-bot_shell_vtk_SOURCES = bot_shell-vtk.c
-conv_vg2g_SOURCES = conv-vg2g.c
-cy_g_SOURCES = cy-g.c
-dbupgrade_SOURCES = dbupgrade.c
-dxf_g_SOURCES = dxf-g.c
-enf_g_SOURCES = enf-g.c
-euclid_format_SOURCES = euclid_format.c
-euclid_g_SOURCES = euclid-g.c
-euclid_unformat_SOURCES = euclid_unformat.c
-fast4_g_SOURCES = fast4-g.c
-g2asc_SOURCES = g2asc.c
-g4_g5_SOURCES = g4-g5.c
-g5_g4_SOURCES = g5-g4.c
-g_acad_SOURCES = g-acad.c
-g_adrt_SOURCES = g-adrt.c
-g_dxf_SOURCES = g-dxf.c
-g_euclid1_SOURCES = g-euclid1.c
-g_euclid_SOURCES = g-euclid.c
-g_var_SOURCES = g-var.c
-g_nff_SOURCES = g-nff.c
-g_nmg_SOURCES = g-nmg.c
-g_obj_SOURCES = g-obj.c
-g_shell_rect_SOURCES = g-shell.rect.c
-g_stl_SOURCES = g-stl.c
-g_tankill_SOURCES = g-tankill.c
-g_vrml_SOURCES = g-vrml.c
-g_x3d_SOURCES = g-x3d.c
-g_xxx_SOURCES = g-xxx.c
-g_xxx_facets_SOURCES = g-xxx_facets.c
-nastran_g_SOURCES = nastran-g.c
-nmg_bot_SOURCES = nmg-bot.c
-nmg_rib_SOURCES = nmg-rib.c
-nmg_sgp_SOURCES = nmg-sgp.c
-pix2asc_SOURCES = pix2asc.c
-ply_g_SOURCES = ply-g.c
-poly_bot_SOURCES = poly-bot.c
-proe_g_SOURCES = proe-g.c
-stl_g_SOURCES = stl-g.c
-tankill_g_SOURCES = tankill-g.c
-viewpoint_g_SOURCES = viewpoint-g.c
 
 dist_man_MANS = \
 	asc-nmg.1 \
@@ -238,9 +275,9 @@ FAST_OBJECTS = \
 else !ONLY_BENCHMARK
 
 FAST_OBJECTS = \
-	$(asc_nmg_OBJECTS) \
 	$(asc2g_OBJECTS) \
 	$(asc2pix_OBJECTS) \
+	$(asc_nmg_OBJECTS) \
 	$(bot_bldxf_OBJECTS) \
 	$(bot_raw_OBJECTS) \
 	$(bot_shell_vtk_OBJECTS) \
@@ -249,25 +286,29 @@ FAST_OBJECTS = \
 	$(dbupgrade_OBJECTS) \
 	$(dxf_g_OBJECTS) \
 	$(enf_g_OBJECTS) \
-	$(euclid_g_OBJECTS) \
 	$(euclid_format_OBJECTS) \
+	$(euclid_g_OBJECTS) \
 	$(euclid_unformat_OBJECTS) \
 	$(fast4_g_OBJECTS) \
+	$(g2asc_OBJECTS) \
+	$(g4_g5_OBJECTS) \
+	$(g5_g4_OBJECTS) \
 	$(g_acad_OBJECTS) \
 	$(g_adrt_OBJECTS) \
 	$(g_dxf_OBJECTS) \
-	$(g_euclid_OBJECTS) \
 	$(g_euclid1_OBJECTS) \
-	$(g_var_OBJECTS) \
+	$(g_euclid_OBJECTS) \
 	$(g_nff_OBJECTS) \
 	$(g_nmg_OBJECTS) \
+	$(g_obj_OBJECTS) \
 	$(g_shell.rect_OBJECTS) \
 	$(g_stl_OBJECTS) \
 	$(g_tankill_OBJECTS) \
+	$(g_var_OBJECTS) \
 	$(g_vrml_OBJECTS) \
-	$(g_obj_OBJECTS) \
 	$(g_x3d_OBJECTS) \
-	$(g2asc_OBJECTS) \
+	$(g_xxx_OBJECTS) \
+	$(g_xxx_facets_OBJECTS) \
 	$(nastran_g_OBJECTS) \
 	$(nmg_bot_OBJECTS) \
 	$(nmg_rib_OBJECTS) \
@@ -279,10 +320,6 @@ FAST_OBJECTS = \
 	$(stl_g_OBJECTS) \
 	$(tankill_g_OBJECTS) \
 	$(viewpoint_g_OBJECTS) \
-	$(g4_g5_OBJECTS) \
-	$(g5_g4_OBJECTS) \
-	$(g_xxx_OBJECTS) \
-	$(g_xxx_facets_OBJECTS) \
 	$(bin_PROGRAMS)
 
 endif
