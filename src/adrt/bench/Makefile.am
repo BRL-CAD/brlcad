@@ -2,7 +2,16 @@
 
 bin_PROGRAMS = adrt_bench
 
-adrt_bench_CFLAGS = -D__STRICT_ANSI__ -I.. -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil
+adrt_bench_CFLAGS = \
+	-D__STRICT_ANSI__ \
+	-I.. \
+	-I${top_srcdir}/src/adrt/libtie \
+	-I${top_srcdir}/src/adrt/libtienet \
+	-I${top_srcdir}/src/adrt/libtexture \
+	-I${top_srcdir}/src/adrt/libcommon \
+	-I${top_srcdir}/src/adrt/librender \
+	-I${top_srcdir}/src/adrt/libutil \
+	${LIBZ_CPPFLAGS}
 
 adrt_bench_LDFLAGS = -static
 

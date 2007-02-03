@@ -188,11 +188,11 @@ ON_SRC = \
 	opennurbs_xform.cpp \
 	opennurbs_zlib.cpp
 
-libopenNURBS_la_LIBADD = \
-	$(LIBZ)
 
-libopenNURBS_la_SOURCES = $(ON_SRC)
 include_HEADERS = $(ON_INC)
+libopenNURBS_la_SOURCES = $(ON_SRC)
+libopenNURBS_la_LIBADD = $(LIBZ)
+libopenNURBS_la_CFLAGS = ${LIBZ_CPPFLAGS}
 
 EXTRA_DIST = \
 	example_brep \

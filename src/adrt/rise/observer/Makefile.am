@@ -8,7 +8,18 @@ rise_observer_SOURCES = \
 
 rise_observer_LDFLAGS = -static
 
-rise_observer_CFLAGS = -D__STRICT_ANSI__ @SDL_CFLAGS@ -I.. -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil -I${top_srcdir}/src/adrt/rise
+rise_observer_CFLAGS = \
+	-D__STRICT_ANSI__ \
+	@SDL_CFLAGS@ \
+	-I.. \
+	-I${top_srcdir}/src/adrt/libtie \
+	-I${top_srcdir}/src/adrt/libtienet \
+	-I${top_srcdir}/src/adrt/libtexture \
+	-I${top_srcdir}/src/adrt/libcommon \
+	-I${top_srcdir}/src/adrt/librender \
+	-I${top_srcdir}/src/adrt/libutil \
+	-I${top_srcdir}/src/adrt/rise \
+	${LIBZ_CPPFLAGS}
 
 rise_observer_LDADD = \
 	@BU@ \

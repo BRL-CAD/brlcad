@@ -2,7 +2,17 @@
 
 bin_PROGRAMS = rise_slave
 
-rise_slave_CFLAGS = -D__STRICT_ANSI__ -I.. -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil -I${top_srcdir}/src/adrt/rise
+rise_slave_CFLAGS = \
+	-D__STRICT_ANSI__ \
+	-I.. \
+	-I${top_srcdir}/src/adrt/libtie \
+	-I${top_srcdir}/src/adrt/libtienet \
+	-I${top_srcdir}/src/adrt/libtexture \
+	-I${top_srcdir}/src/adrt/libcommon \
+	-I${top_srcdir}/src/adrt/librender \
+	-I${top_srcdir}/src/adrt/libutil \
+	-I${top_srcdir}/src/adrt/rise \
+	${LIBZ_CPPFLAGS}
 
 rise_slave_LDFLAGS = -static
 

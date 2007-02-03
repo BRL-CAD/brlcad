@@ -4,6 +4,7 @@ lib_LTLIBRARIES = libpng.la
 
 libpng_la_LDFLAGS = -version-info 3:5:2
 libpng_la_LIBADD = ${LIBZ}
+libpng_la_CFLAGS = ${LIBZ_CPPFLAGS}
 libpng_la_SOURCES = \
 	png.c \
 	pngerror.c \
@@ -26,7 +27,7 @@ libpng_la_SOURCES = \
 noinst_PROGRAMS = pngtest
 
 pngtest_SOURCES = pngtest.c
-
+pngtest_CFLAGS = ${LIBZ_CPPFLAGS}
 pngtest_LDADD = \
 	${lib_LTLIBRARIES} \
 	${LIBZ} \

@@ -115,9 +115,7 @@ brlcadinclude_wanted = \
 	vectfont.h \
 	vfont-if.h \
 	vmath.h \
-	wdb.h \
-	zconf.h \
-	zlib.h
+	wdb.h
 
 # headers used by multiple packages but still considered private
 noinst_HEADERS = \

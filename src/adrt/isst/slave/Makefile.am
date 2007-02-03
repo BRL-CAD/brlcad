@@ -8,7 +8,17 @@ isst_slave_SOURCES = \
 
 isst_slave_LDFLAGS = -static
 
-isst_slave_CFLAGS = -D__STRICT_ANSI__ -I.. -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil -I${top_srcdir}/src/adrt/isst
+isst_slave_CFLAGS = \
+	-D__STRICT_ANSI__ \
+	-I.. \
+	-I${top_srcdir}/src/adrt/libtie \
+	-I${top_srcdir}/src/adrt/libtienet \
+	-I${top_srcdir}/src/adrt/libtexture \
+	-I${top_srcdir}/src/adrt/libcommon \
+	-I${top_srcdir}/src/adrt/librender \
+	-I${top_srcdir}/src/adrt/libutil \
+	-I${top_srcdir}/src/adrt/isst \
+	${LIBZ_CPPFLAGS}
 
 isst_slave_LDADD = \
 	@BU@ \

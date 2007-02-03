@@ -1211,7 +1211,9 @@ AC_CHECK_LIB(png, png_access_version_number, LIBPNG="-lpng")
 
 dnl check if zlib library links
 LIBZLIB=""
-AC_CHECK_LIB(z, deflate, LIBZLIB="-lz")
+if test "x$bc_build_zlib" != "xno" ; then
+    AC_CHECK_LIB(z, deflate, LIBZLIB="-lz")
+fi
 
 dnl check if utahrle library links
 utahrle_link_works=no
@@ -2188,12 +2190,15 @@ AC_MSG_CHECKING(whether to build the included zlib compression library)
 LIBZ=""
 if test "x$build_brlcad_zlib" = "xyes" ; then
 	LIBZ='${top_builddir}/src/other/libz/libz.la'
+	LIBZ_CPPFLAGS='-I${top_srcdir}/src/other/libz'
 	AC_MSG_RESULT(yes)
 else
 	LIBZ="$LIBZLIB"
+	LIBZ_CPPFLAGS=''
 	AC_MSG_RESULT(no)
 fi
 AC_SUBST(LIBZ)
+AC_SUBST(LIBZ_CPPFLAGS)
 
 
 dnl *** utah raster toolkit ***

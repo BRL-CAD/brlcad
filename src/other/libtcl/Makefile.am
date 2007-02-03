@@ -11,7 +11,8 @@ AM_CPPFLAGS = \
 	-I${top_srcdir}/src/other/libtcl/generic \
 	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
-	-DUSE_TCLALLOC=0
+	-DUSE_TCLALLOC=0 \
+	${LIBZ_CPPFLAGS}
 
 lib_LTLIBRARIES = \
 	libtcl.la \

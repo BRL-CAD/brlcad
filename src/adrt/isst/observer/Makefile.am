@@ -6,7 +6,18 @@ isst_observer_SOURCES = \
 	main.c \
 	observer.c
 
-isst_observer_CFLAGS = -D__STRICT_ANSI__ @SDL_CFLAGS@ -I.. -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libutil -I${top_srcdir}/src/adrt/isst
+isst_observer_CFLAGS = \
+	-D__STRICT_ANSI__ \
+	@SDL_CFLAGS@ \
+	-I.. \
+	-I${top_srcdir}/src/adrt/libtie \
+	-I${top_srcdir}/src/adrt/libtienet \
+	-I${top_srcdir}/src/adrt/libtexture \
+	-I${top_srcdir}/src/adrt/libcommon \
+	-I${top_srcdir}/src/adrt/librender \
+	-I${top_srcdir}/src/adrt/libutil \
+	-I${top_srcdir}/src/adrt/isst \
+	${LIBZ_CPPFLAGS}
 
 # LDADD = @BRLCAD_LDFLAGS@ @SDL_LIBS@ ${top_builddir}/libtie/.libs/libtie.a ${top_builddir}/libtienet/.libs/libtienet.a ${top_builddir}/libtexture/.libs/libtexture.a ${top_builddir}/libcommon/.libs/libcommon.a ${top_builddir}/librender/.libs/librender.a -lpthread
 
