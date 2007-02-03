@@ -9,7 +9,11 @@ if LINK_STATIC_REQUIRED
 bwish_LDFLAGS = -static
 endif
 
-bwish_CFLAGS = ${X_CFLAGS} -DBWISH=1
+bwish_CFLAGS = \
+	-DBWISH=1 \
+	${X_CFLAGS} \
+	${ITCL_CPPFLAGS} \
+	${ITK_CPPFLAGS}
 
 bwish_SOURCES = \
 	cmd.c \
@@ -37,7 +41,7 @@ bwish_LDADD = \
 if LINK_STATIC_REQUIRED
 btclsh_LDFLAGS = -static
 endif
-
+btclsh_CFLAGS = ${ITCL_CPPFLAGS}
 btclsh_SOURCES = \
 	cmd.c \
 	input.c \
