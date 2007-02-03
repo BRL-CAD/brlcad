@@ -29,6 +29,7 @@ jove_SOURCES = \
 	version.c
 
 jove_LDADD = ${TERMLIB}
+jove_CFLAGS = ${TERMLIB_CPPFLAGS}
 
 findcom_SOURCES = \
 	findcom.c \

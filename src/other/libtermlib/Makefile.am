@@ -2,7 +2,9 @@
 
 lib_LTLIBRARIES = libtermlib.la
 
-AM_CFLAGS = -DCM_N -DCM_GT -DCM_B -DCM_D
+AM_CPPFLAGS = -DCM_N -DCM_GT -DCM_B -DCM_D ${TERMLIB_CPPFLAGS}
+
+include_HEADERS = libterm.h
 
 libtermlib_la_SOURCES = \
 	termcap.c \

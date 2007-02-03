@@ -21,6 +21,7 @@ burst_SOURCES = \
 	ui.c
 
 burst_LDADD = ${RT} ${FB} ${TERMIO} ${TERMLIB}
+burst_CFLAGS = ${TERMLIB_CPPFLAGS}
 
 noinst_HEADERS = \
 	ascii.h \

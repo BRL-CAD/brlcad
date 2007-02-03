@@ -28,6 +28,7 @@ noinst_HEADERS = \
 	std.h \
 	try.h
 
+fbed_CFLAGS = ${TERMLIB_CPPFLAGS}
 fbed_LDADD = \
 	${FB} \
 	${TERMIO} \
