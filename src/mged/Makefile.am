@@ -155,7 +155,8 @@ mged_CFLAGS = \
 	$(POINTS_CFLAGS) \
 	${PNG_CPPFLAGS}	\
 	${ITCL_CPPFLAGS} \
-	${ITK_CPPFLAGS}
+	${ITK_CPPFLAGS} \
+	${TK_CPPFLAGS}
 
 mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
 mged_LDADD = \

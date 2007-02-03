@@ -13,6 +13,12 @@ DIST_SUBDIRS = \
 	html \
 	man
 
+AM_CPPFLAGS = \
+	-I${top_srcdir}/src/other/blt/src \
+	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
+	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
+	-DUSE_TCLALLOC=0
+
 lib_LTLIBRARIES = \
 	libblt.la \
 	libblt@BLT_VERSION@.la
@@ -97,12 +103,6 @@ libblt_la_LIBADD = \
 libblt@BLT_VERSION@_la_SOURCES = $(libblt_la_SOURCES)
 libblt@BLT_VERSION@_la_LDFLAGS = $(libblt_la_LDFLAGS)
 libblt@BLT_VERSION@_la_LIBADD = $(libblt_la_LIBADD)
-
-AM_CPPFLAGS = \
-	-I${top_srcdir}/src/other/blt/src \
-	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
-	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
-	-DUSE_TCLALLOC=0
 
 MAINTAINERCLEANFILES = Makefile.in
 

@@ -1,12 +1,13 @@
 # $Id$
 
 AM_CPPFLAGS = \
-	-I${top_srcdir}/src/other/blt/src \
 	-DNO_MOUNTAIN \
 	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
 	-DUSE_TCLALLOC=0 \
-	${TCL_CPPFLAGS}
+	-I${top_srcdir}/src/other/blt/src \
+	${TCL_CPPFLAGS} \
+	${TK_CPPFLAGS}
 
 noinst_LTLIBRARIES = libblts.la
 

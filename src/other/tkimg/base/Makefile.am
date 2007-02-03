@@ -2,6 +2,16 @@
 
 noinst_LTLIBRARIES = tkimgb.la
 
+AM_CPPFLAGS = \
+	-DTKIMG_VERSION="\"${TKIMG_VERSION}\"" \
+	-DTKIMG_PACKAGE_NAME=\"Tkimg\" \
+	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
+	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
+	-DUSE_TCLALLOC=0 \
+	-I${top_srcdir}/src/other/tkimg/base \
+	${TCL_CPPFLAGS} \
+	${TK_CPPFLAGS}
+
 tkimgb_la_LDFLAGS = -module
 tkimgb_la_SOURCES = \
 	tkimg.c \
@@ -10,15 +20,6 @@ tkimgb_la_SOURCES = \
 	tkimgStubInit.c \
 	tkimgStubLib.c \
 	tkimgUtils.c
-
-AM_CPPFLAGS = \
-	-I${top_srcdir}/src/other/tkimg/base \
-	-DTKIMG_VERSION="\"${TKIMG_VERSION}\"" \
-	-DTKIMG_PACKAGE_NAME=\"Tkimg\" \
-	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
-	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
-	-DUSE_TCLALLOC=0 \
-	${TCL_CPPFLAGS}
 
 EXTRA_DIST = \
 	tclconfig \

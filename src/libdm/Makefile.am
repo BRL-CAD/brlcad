@@ -49,7 +49,8 @@ libdm_la_CFLAGS = \
 	${DM_OGL_CFLAGS} \
 	${DM_WGL_CFLAGS} \
 	${PNG_CPPFLAGS} \
-	${TCL_CPPFLAGS}
+	${TCL_CPPFLAGS} \
+	${TK_CPPFLAGS}
 libdm_la_LIBADD = \
 	${TCL} \
 	${RT} \

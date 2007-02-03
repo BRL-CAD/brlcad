@@ -2,15 +2,8 @@
 
 noinst_LTLIBRARIES = tkimgp.la
 
-tkimgp_la_LDFLAGS = -module
-tkimgp_la_SOURCES = \
-	png.c
-
 # per-program CPPFLAGS wasn't added until automake 1.7
 AM_CPPFLAGS = \
-	-I${top_srcdir}/src/other/tkimg/base \
-	-I${top_srcdir}/src/other/tkimg/png \
-	-I${top_srcdir}/src/other/tkimg/pngtcl \
 	-DPNG_PACKAGE_NAME=\"libpng\" \
 	-DPNGTCL_PACKAGE_NAME=\"pngtcl\" \
 	-DTKIMG_VERSION="\"${TKIMG_VERSION}\"" \
@@ -18,8 +11,16 @@ AM_CPPFLAGS = \
 	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
 	-DUSE_TCLALLOC=0 \
+	-I${top_srcdir}/src/other/tkimg/base \
+	-I${top_srcdir}/src/other/tkimg/png \
+	-I${top_srcdir}/src/other/tkimg/pngtcl \
 	${PNG_CPPFLAGS} \
-	${TCL_CPPFLAGS}
+	${TCL_CPPFLAGS} \
+	${TK_CPPFLAGS}
+
+tkimgp_la_LDFLAGS = -module
+tkimgp_la_SOURCES = \
+	png.c
 
 EXTRA_DIST = \
 	init.c \

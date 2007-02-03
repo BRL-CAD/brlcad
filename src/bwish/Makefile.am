@@ -14,7 +14,8 @@ bwish_CFLAGS = \
 	${X_CFLAGS} \
 	${ITCL_CPPFLAGS} \
 	${ITK_CPPFLAGS} \
-	${TCL_CPPFLAGS}
+	${TCL_CPPFLAGS} \
+	${TK_CPPFLAGS}
 
 bwish_SOURCES = \
 	cmd.c \

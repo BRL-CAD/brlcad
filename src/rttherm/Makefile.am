@@ -36,7 +36,9 @@ ssampview_SOURCES = \
 	spectrum.c \
 	ssampview.c
 
-ssampview_CFLAGS = @X_CFLAGS@
+ssampview_CFLAGS = \
+	${X_CFLAGS} \
+	${TK_CPPFLAGS}
 ssampview_LDADD = \
 	${FB} \
 	${RT} \

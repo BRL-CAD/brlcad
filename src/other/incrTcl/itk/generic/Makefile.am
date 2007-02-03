@@ -6,9 +6,11 @@ lib_LTLIBRARIES = \
 
 noinst_LTLIBRARIES = libitg.la
 
+AM_CFLAGS = ${X_CFLAGS}
 AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
-	${ITCL_CPPFLAGS}
+	${ITCL_CPPFLAGS} \
+	${TK_CPPFLAGS}
 
 libitkstub_la_SOURCES = itkStubLib.c
 libitkstub@ITCL_VERSION@_la_SOURCES = $(libitkstub_la_SOURCES)
@@ -27,10 +29,6 @@ include_HEADERS = \
 EXTRA_DIST = itk.decls
 
 MAINTAINERCLEANFILES = Makefile.in
-
-AM_CFLAGS = \
-	@X_CFLAGS@ \
-	${ITCL_CPPFLAGS}
 
 include $(top_srcdir)/misc/Makefile.defs
 
