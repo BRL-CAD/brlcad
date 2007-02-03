@@ -23,7 +23,8 @@ isst_master_CFLAGS = \
 	-I${top_srcdir}/src/adrt/librender \
 	-I${top_srcdir}/src/adrt/libutil \
 	-I${top_srcdir}/src/adrt/isst \
-	${LIBZ_CPPFLAGS}
+	${LIBZ_CPPFLAGS} \
+	${TCL_CPPFLAGS}
 
 isst_master_LDADD = \
 	@PYTHON_LIBS@ \

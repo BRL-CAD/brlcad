@@ -19,7 +19,8 @@ rise_observer_CFLAGS = \
 	-I${top_srcdir}/src/adrt/librender \
 	-I${top_srcdir}/src/adrt/libutil \
 	-I${top_srcdir}/src/adrt/rise \
-	${LIBZ_CPPFLAGS}
+	${LIBZ_CPPFLAGS} \
+	${TCL_CPPFLAGS}
 
 rise_observer_LDADD = \
 	@BU@ \

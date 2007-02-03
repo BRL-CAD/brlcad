@@ -11,7 +11,8 @@ adrt_bench_CFLAGS = \
 	-I${top_srcdir}/src/adrt/libcommon \
 	-I${top_srcdir}/src/adrt/librender \
 	-I${top_srcdir}/src/adrt/libutil \
-	${LIBZ_CPPFLAGS}
+	${LIBZ_CPPFLAGS} \
+	${TCL_CPPFLAGS}
 
 adrt_bench_LDFLAGS = -static
 
