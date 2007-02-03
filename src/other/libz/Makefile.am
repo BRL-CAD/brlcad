@@ -19,8 +19,6 @@ libz_la_SOURCES = \
 	uncompr.c \
 	zutil.c
 
-libz_la_LDFLAGS = -version-info 2:4:1
-
 include_HEADERS = \
 	crc32.h \
 	deflate.h \
@@ -32,6 +30,8 @@ include_HEADERS = \
 	zconf.h \
 	zlib.h \
 	zutil.h
+
+libz_la_LDFLAGS = -version-info 2:4:1
 
 man_MANS = zlib.3
 
