@@ -2,9 +2,13 @@
 
 lib_LTLIBRARIES = libpng.la
 
+# NOTE: either PNG_NO_MMX_CODE or PNG_NO_ASSEMBLER_CODE are required
+# for successful compilation on AMD64 Linux with gcc due to linking of
+# 32-bit assembly with 64-bit object files.  Compiling with -m32 also
+# avoids the problem.
+libpng_la_CFLAGS = ${LIBZ_CPPFLAGS} -DPNG_NO_MMX_CODE
 libpng_la_LDFLAGS = -version-info 3:5:2
 libpng_la_LIBADD = ${LIBZ}
-libpng_la_CFLAGS = ${LIBZ_CPPFLAGS}
 libpng_la_SOURCES = \
 	png.c \
 	pngerror.c \
