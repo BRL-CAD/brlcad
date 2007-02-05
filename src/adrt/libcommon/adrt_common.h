@@ -43,6 +43,10 @@
 #define COMMON_BIT_DEPTH_24	0
 #define	COMMON_BIT_DEPTH_128	1
 
+/* bit's used in common_mesh_t.flags */
+#define MESH_HIT	0x1
+#define MESH_SELECT	0x2
+
 /* Work */
 typedef struct common_work_s {
   short orig_x;

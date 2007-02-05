@@ -288,7 +288,7 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
 
       /* Reset all meshes hit flag */
       for(i = 0; i < db.mesh_num; i++)
-	db.mesh_list[i]->flags &= 0x2;
+	db.mesh_list[i]->flags &= MESH_SELECT;
 
       /* Read the data */
       ind = sizeof(short);
@@ -305,7 +305,7 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
 	/* set hit flag */
 	for(n = 0; n < db.mesh_num; n++) {
 	  if(!strcmp(db.mesh_list[n]->name, name)) {
-	    db.mesh_list[n]->flags |= 1;
+	    db.mesh_list[n]->flags |= MESH_HIT;
 	    continue;
 	  }
 	}
@@ -328,7 +328,7 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
       /* set select flag */
       for(n = 0; n < db.mesh_num; n++)
 	if(strstr(db.mesh_list[n]->name, string) || c == 1)
-	  db.mesh_list[n]->flags = (db.mesh_list[n]->flags & 0x1) | t<<1;
+	  db.mesh_list[n]->flags = (db.mesh_list[n]->flags & MESH_SELECT) | t<<1;
     }
     break;
 

@@ -197,10 +197,10 @@ void render_plane_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   dot = fabs(dot);
 
 
-  if(hit.mesh->flags & 0x3) {
-    color.v[0] = hit.mesh->flags & 0x1 ? 0.9 : 0.2;
+  if(hit.mesh->flags & (MESH_SELECT|MESH_HIT)) {
+    color.v[0] = hit.mesh->flags & MESH_HIT ? 0.9 : 0.2;
     color.v[1] = 0.2;
-    color.v[2] = hit.mesh->flags & 0x2 ? 0.9 : 0.2;
+    color.v[2] = hit.mesh->flags & MESH_SELECT ? 0.9 : 0.2;
   } else {
     /* Mix actual color with white 4:1, shade 50% darker */
 #if 0
