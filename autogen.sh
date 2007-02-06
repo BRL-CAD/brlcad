@@ -841,15 +841,8 @@ manual_autogen ( ) {
     $VERBOSE_ECHO "$autoconf_output"
 
     if [ ! $ret = 0 ] ; then
-	# retry without the -f and with backwards support for missing macros
-	configure_ac_changed="no"
-	configure_ac_backupd="no"
+	# retry without the -f and check for usage of macros that are too new
 	if test "x$HAVE_SED" = "xyes" ; then
-	    if test ! -f ${CONFIGURE}.backup ; then
-		$VERBOSE_ECHO cp $CONFIGURE ${CONFIGURE}.backup
-		cp $CONFIGURE ${CONFIGURE}.backup
-		configure_ac_backupd="yes"
-	    fi
 
 	    ac2_59_macros="AC_C_RESTRICT AC_INCLUDES_DEFAULT AC_LANG_ASSERT AC_LANG_WERROR AS_SET_CATFILE"
 	    ac2_55_macros="AC_COMPILER_IFELSE AC_FUNC_MBRTOWC AC_HEADER_STDBOOL AC_LANG_CONFTEST AC_LANG_SOURCE AC_LANG_PROGRAM AC_LANG_CALL AC_LANG_FUNC_TRY_LINK AC_MSG_FAILURE AC_PREPROC_IFELSE"
@@ -868,25 +861,33 @@ manual_autogen ( ) {
 		fi
 	    fi
 
-	    if [ -w $CONFIGURE ] ; then
-		for feature in $macros_to_search ; do
-		    $VERBOSE_ECHO "Searching for $feature in $CONFIGURE with sed"
-		    sed "s/^\($feature.*\)$/dnl \1/g" < $CONFIGURE > ${CONFIGURE}.sed
-		    if [ ! "x`cat $CONFIGURE`" = "x`cat ${CONFIGURE}.sed`" ] ; then
-			$VERBOSE_ECHO cp ${CONFIGURE}.sed $CONFIGURE
-			cp ${CONFIGURE}.sed $CONFIGURE
-			if [ "x$configure_ac_changed" = "xno" ] ; then
-			    configure_ac_changed="$feature"
-			else
-			    configure_ac_changed="$feature $configure_ac_changed"
-			fi
+	    for feature in $macros_to_search ; do
+		$VERBOSE_ECHO "Searching for $feature in $CONFIGURE"
+		found="`grep \"^$feature.*\"`"
+		if [ ! "x$found" = "x" ] ; then
+		    if [ "x$configure_ac_macros" = "xno" ] ; then
+			configure_ac_macros="$feature"
+		    else
+			configure_ac_macros="$feature $configure_ac_macros"
 		    fi
-		    rm -f ${CONFIGURE}.sed
-		done
-	    else
-		$VERBOSE_ECHO "$CONFIGURE is not writable so not attempting to edit"
-	    fi
+		fi
+	    done
 	fi
+	if [ ! "x$configure_ac_macros" = "xno" ] ; then
+	    $ECHO
+	    $ECHO "Warning:  Unsupported macros were found in $CONFIGURE"
+	    $ECHO
+	    $ECHO "The $CONFIGURE file was scanned in order to determine if any"
+	    $ECHO "unsupported macros are used that exceed the minimum version"
+	    $ECHO "settings specified within this file.  As such, the following macros"
+	    $ECHO "should be removed from configure.ac or the version numbers in this"
+	    $ECHO "file should be increased:"
+	    $ECHO
+	    $ECHO "$configure_ac_macros"
+	    $ECHO
+	    $ECHO $ECHO_N "Ignorantly continuing build preparation ... $ECHO_C"
+	fi
+
 	$VERBOSE_ECHO
 	$VERBOSE_ECHO "$AUTOCONF"
 	autoconf_output="`$AUTOCONF 2>&1`"
@@ -894,16 +895,6 @@ manual_autogen ( ) {
 	$VERBOSE_ECHO "$autoconf_output"
 
 	if [ ! $ret = 0 ] ; then
-
-	    # failed so restore the backup
-	    if test -f ${CONFIGURE}.backup ; then
-		# make sure we made the backup file
-		if test "x$configure_ac_backupd" = "xyes" ; then
-		    $VERBOSE_ECHO cp ${CONFIGURE}.backup $CONFIGURE
-		    cp ${CONFIGURE}.backup $CONFIGURE
-		fi
-	    fi
-
 	    # test if libtool is busted
 	    libtool_failure "$autoconf_output"
 
@@ -913,25 +904,24 @@ $autoconf_output
 EOF
 	    $ECHO "ERROR: $AUTOCONF failed"
 	    exit 2
-
 	else
-	    # autoconf sans -f and possibly sans unsupported options succeeded so warn verbosely
-
-	    if [ ! "x$configure_ac_changed" = "xno" ] ; then
-		$ECHO
-		$ECHO "Warning:  Unsupported macros were found and removed from $CONFIGURE"
-		$ECHO
-		$ECHO "The $CONFIGURE file was edited in an attempt to successfully run"
-		$ECHO "autoconf by commenting out the unsupported macros.  Since you are"
-		$ECHO "reading this, autoconf succeeded after the edits were made.  The"
-		$ECHO "original $CONFIGURE is saved as ${CONFIGURE}.backup but you should"
-		$ECHO "consider either increasing the minimum version of autoconf required"
-		$ECHO "by this script or removing the following macros from ${CONFIGURE}:"
-		$ECHO
-		$ECHO "$configure_ac_changed"
-		$ECHO
-		$ECHO $ECHO_N "Continuing build preparation ... $ECHO_C"
+	    # autoconf sans -f and possibly sans unsupported options succeed so warn verbosely
+	    $ECHO
+	    $ECHO "Warning: autoconf seems to have succeeded by removing the following options:"
+	    $ECHO "	AUTOCONF_OPTIONS=\"$AUTOCONF_OPTIONS\""
+	    $ECHO
+	    $ECHO "Removing those options should not be necessary and indicate some other"
+	    $ECHO "problem with the build system.  The build preparation is highly suspect"
+	    $ECHO "and may result in configuration or compilation errors.  Consider"
+	    if [ "x$VERBOSE_ECHO" = "x:" ] ; then
+		$ECHO "rerunning the build preparation with verbose output enabled."
+		$ECHO "	$AUTOGEN_SH --verbose"
+	    else
+		$ECHO "reviewing the minimum GNU Autotools version settings contained in"
+		$ECHO "this script along with the macros being used in your $CONFIGURE file."
 	    fi
+	    $ECHO
+	    $ECHO $ECHO_N "Continuing build preparation ... $ECHO_C"
 	fi
     fi
 
