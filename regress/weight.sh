@@ -23,7 +23,10 @@ cat >> weight.ref <<EOF
 RT Weight Program Output:
 
 Database Title: "Untitled BRL-CAD Database"
+Time Stamp: Day Mon  0 00:00:00 0000
 
+
+Density Table Used:/path/to/.density
 
 Material  Density(g/cm^3)  Name
     1         7.8295       steel
@@ -31,22 +34,23 @@ Material  Density(g/cm^3)  Name
 
   Weight Matl LOS  Material Name  Density Name
  ------- ---- --- --------------- ------- -------------
-   7.829    1 100 steel            7.8295 /box.r
+   7.829    1 100 steel            7.8295 /box.r                               
 Weight by item number (in grams):
 
 Item  Weight  Region Names
 ---- -------- --------------------
-1000    7.829 /box.r
+1000    7.829 /box.r                                                           
 RT Weight Program Output:
 
 Database Title: "Untitled BRL-CAD Database"
+Time Stamp: Day Mon  0 00:00:00 0000
 
 
 Total volume = 0.999991 cm.^3
 
 Centroid: X = 0.5 cm.
-	  Y = 0.5 cm.
-	  Z = 0.5 cm.
+          Y = 0.5 cm.
+          Z = 0.5 cm.
 
 Total mass = 7.82943 grams
 
