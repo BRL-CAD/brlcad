@@ -344,7 +344,7 @@ BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove], [auto])
 BC_ARG_ENABLE([build_ef], [ef-build], [Enable compilation of Endgame Framework module], [no])
 
 # pro/e plugin
-BC_ARG_ENABLE([build_proe], [proe-plugin-build], [Enable compilation of Pro/Engineer plugin], [no])
+#BC_ARG_ENABLE([build_proe], [proe-plugin-build], [Enable compilation of Pro/Engineer plugin], [no])
 
 # unigraphics plugin
 BC_ARG_ENABLE([build_ug], [unigraphics-build], [Enable compilation of Unigraphics importer], [no])
@@ -397,6 +397,9 @@ BC_ARG_WITH([with_sdl], [sdl], [Specify use of or path to SDL], [auto])
 
 # use python
 BC_ARG_WITH([with_python], [python], [Specify use of or path to python], [auto])
+
+# use pro/engineer
+BC_ARG_WITH([with_proe], [proe], [Specify build of Pro/ENGINEER plugin or path to Pro/ENGINEER installation], [no])
 
 ###
 # argument aliases
@@ -551,17 +554,17 @@ BC_ARG_ALIAS([build_ef], [endgameframework-build])
 BC_ARG_ALIAS([build_ef], [endgame-framework-build])
 
 # pro/e plugin aliases (help uses proe-plugin-build)
-BC_ARG_ALIAS([build_proe], [proe])
-BC_ARG_ALIAS([build_proe], [proe-build])
-BC_ARG_ALIAS([build_proe], [proe-plugin])
-BC_ARG_ALIAS([build_proe], [proengineer])
-BC_ARG_ALIAS([build_proe], [proengineer-plugin])
-BC_ARG_ALIAS([build_proe], [pro-engineer])
-BC_ARG_ALIAS([build_proe], [pro-engineer-plugin])
-BC_ARG_ALIAS([build_proe], [proengineer-build])
-BC_ARG_ALIAS([build_proe], [proengineer-plugin-build])
-BC_ARG_ALIAS([build_proe], [pro-engineer-build])
-BC_ARG_ALIAS([build_proe], [pro-engineer-plugin-build])
+#BC_ARG_ALIAS([build_proe], [proe])
+#BC_ARG_ALIAS([build_proe], [proe-build])
+#BC_ARG_ALIAS([build_proe], [proe-plugin])
+#BC_ARG_ALIAS([build_proe], [proengineer])
+#BC_ARG_ALIAS([build_proe], [proengineer-plugin])
+#BC_ARG_ALIAS([build_proe], [pro-engineer])
+#BC_ARG_ALIAS([build_proe], [pro-engineer-plugin])
+#BC_ARG_ALIAS([build_proe], [proengineer-build])
+#BC_ARG_ALIAS([build_proe], [proengineer-plugin-build])
+#BC_ARG_ALIAS([build_proe], [pro-engineer-build])
+#BC_ARG_ALIAS([build_proe], [pro-engineer-plugin-build])
 
 # unigraphics (NX) importer aliases (help uses unigraphics-build)
 BC_ARG_ALIAS([build_ug], [ug])
@@ -626,6 +629,9 @@ BC_ARG_ALIAS([build_progress], [progress-build])
 
 # with java aliases (help uses jdk)
 BC_ARG_WITH_ALIAS([with_java], [java])
+
+# with proe aliases
+BC_ARG_WITH_ALIAS([with_proe], [proe])
 
 # with x11 aliases (help uses x11)
 BC_ARG_WITH_ALIAS([with_x11], [x])
@@ -743,11 +749,11 @@ if test "x$set_everything" != "x" ; then
 	# Since the Pro/E plugin is primarily tested on only one
 	# platform and requires Pro/Toolkit, don't enable it even if
 	# requesting everything.  fine to disable, though.
-	if test "x$bc_build_proe" = "x$bc_build_proe_default" ; then
-		if test "x$set_everything" = "xno" ; then
-			bc_build_proe=no
-		fi
-	fi
+#	if test "x$bc_build_proe" = "x$bc_build_proe_default" ; then
+#		if test "x$set_everything" = "xno" ; then
+#			bc_build_proe=no
+#		fi
+#	fi
 	# Since the Unigraphics importer is primarily tested on only one
 	# platform and requires UGOPEN, don't enable it even if
 	# requesting everything.  fine to disable, though.
@@ -907,8 +913,8 @@ AC_MSG_RESULT($bc_build_jove)
 AC_MSG_CHECKING(whether to compile the Endgame Framework module)
 AC_MSG_RESULT($bc_build_ef)
 
-AC_MSG_CHECKING(whether to compile the Pro-Engineer plugin)
-AC_MSG_RESULT($bc_build_proe)
+#AC_MSG_CHECKING(whether to compile the Pro-Engineer plugin)
+#AC_MSG_RESULT($bc_build_proe)
 
 AC_MSG_CHECKING(whether to compile the Unigraphics importer)
 AC_MSG_RESULT($bc_build_ug)
@@ -954,6 +960,9 @@ AC_MSG_RESULT($bc_with_sdl)
 
 AC_MSG_CHECKING(whether to compile against Python for ADRT)
 AC_MSG_RESULT($bc_with_python)
+
+AC_MSG_CHECKING(whether to compile the Pro/ENGINEER plugin)
+AC_MSG_RESULT($bc_with_proe)
 
 
 dnl **************************
@@ -1396,6 +1405,15 @@ fi
 AC_SUBST(JAVA_CFLAGS)
 AC_SUBST(JAVA_LDFLAGS)
 
+dnl check for Pro/ENGINEER
+PRO_ENGINEER_DIR=
+if test "x$bc_with_proe" = "xyes" ; then
+   if test "x$bc_with_java_val" != "x" ; then
+      PRO_ENGINEER_DIR=$bc_with_java_val
+   fi
+fi
+AC_SUBST(PRO_ENGINEER_DIR)
+
 
 dnl *************************
 dnl *** Check for headers ***
@@ -1606,6 +1624,38 @@ if test "x$bc_with_java " != "xno" ; then
     CPPFLAGS="$PRECPPFLAGS"
 fi # bc_with_java
 
+# check for proe headers
+PROE_CFLAGS=""
+if test "x$bc_with_proe" != "xno" ; then
+   PRE_CFLAGS="$CFLAGS"
+   found_protk_h=no
+   if test "x$bc_with_proe" = "xyes" ; then
+      if test "x$bc_with_proe_val" = "x" ; then
+            found_proe_base=no
+	    proe_base=/usr/local/ptc/proeWildfire3.0
+	    if test -e "$proe_base" ; then
+	       found_proe_base=yes
+	       PROE_CFLAGS="-I$proe_base/protoolkit/includes -I$proe_base/prodevelop/includes"
+	       CFLAGS="$CFLAGS $PROE_CFLAGS"
+	       AC_CHECK_HEADER(ProToolkit.h,
+			 AC_DEFINE(HAVE_PROTOOLKIT,1,[Define to 1 if you have Pro/TOOLKIT header files])
+			 found_protk_h=yes)
+	       if test "x$found_protk_h" = "xyes" ; then
+		  bc_with_proe_val=$proe_base
+		  PRO_ENGINEER_DIR=$bc_with_proe_val
+		  AC_SUBST(PRO_ENGINEER_DIR)
+	       fi
+	    fi 
+      else	
+        PROE_CFLAGS="-I$bc_with_proe_val/protoolkit/includes -I$bc_with_proe_val/prodevelop/includes"
+        CFLAGS="$CFLAGS $PROE_CFLAGS"
+        AC_CHECK_HEADER(ProToolkit.h,
+		        AC_DEFINE(HAVE_PROTOOLKIT,1,[Define to 1 if you have Pro/TOOLKIT header files])
+		        found_protk_h=yes)      
+      fi
+   fi
+   CFLAGS="$PRE_CFLAGS"
+fi 
 
 dnl **********************************
 dnl *** Check for types/structures ***
@@ -2938,6 +2988,39 @@ if test "x$bc_with_java" != "xno" ; then
     fi # found_jni_h
 fi # bc_with_java
 
+dnl *** Pro/ENGINEER installation / plugin compilation ***
+build_against_proe=no
+if test "x$bc_with_proe" != "xno" ; then
+   if test "x$pointer_size" != "x4" ; then
+      AC_MSG_RESULT(no)
+      AC_MSG_WARN([The Pro/E plugin must be built as a 32-bit library. Please disable 64-bit builds and set appropriate C/CXXFLAGS])
+   else
+      AC_MSG_CHECKING(for Pro/ENGINEER installation)
+      if test "x$found_protk_h" = "xno" ; then
+	 if test "x$bc_with_proe" = "xyes" ; then
+	    AC_MSG_RESULT(no)
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_WARN([Unable to locate ProToolkit.h. Make sure your installation of Pro/E also has Pro/TOOLKIT])
+	 fi
+         if test "x$bc_with_proe" = "xauto" ; then
+	    AC_MSG_RESULT(no)
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_WARN([Pro/E was not installed in the standard place (/usr/local/ptc/proeWildfire3.0).])
+	    AC_MSG_WARN([Try adding --with-proe=/path/to/proe to find the ProToolkit.h])
+	    AC_MSG_WARN([Compilation of Pro/ENGINEER plugin will be disabled])
+	 fi
+	 AC_MSG_RESULT(no)	 
+      else
+         if test "x$bc_with_proe" = "xauto" ; then
+	    build_against_proe=yes
+	 else
+	    build_against_proe="yes ($bc_with_proe_val)"
+	 fi
+         AC_MSG_RESULT(yes)
+      fi
+   fi 
+fi
+
 
 dnl *** OpenGL interface compilation ***
 build_against_opengl="no"
@@ -3224,7 +3307,7 @@ AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$build_brlcad_jove" = "xyes"])
 AM_CONDITIONAL(BUILD_EF, [test "x$bc_build_ef" = "xyes"])
-AM_CONDITIONAL(BUILD_PROE, [test "x$bc_build_proe" = "xyes"])
+#AM_CONDITIONAL(BUILD_PROE, [test "x$bc_build_proe" = "xyes"])
 AM_CONDITIONAL(BUILD_UG, [test "x$bc_build_ug" = "xyes"])
 AM_CONDITIONAL(BUILD_ADRT, [test "x$build_brlcad_adrt" = "xyes"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
@@ -3235,6 +3318,7 @@ AM_CONDITIONAL(WITH_OPENGL, [test "x$build_against_opengl" != "xno"])
 AM_CONDITIONAL(WITH_WGL, [test "x$build_against_wgl" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
 AM_CONDITIONAL(WITH_OPENNURBS, [test "x$OPENNURBS" != "x"])
+AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
