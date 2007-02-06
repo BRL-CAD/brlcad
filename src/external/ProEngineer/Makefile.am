@@ -1,14 +1,17 @@
 # $Id$#
 
-EXTRA_PROGRAMS = proe-brl
-# EXTRA_LTLIBRARIES = libproe2brl.la
+lib_LTLIBRARIES = libproe2brl.la
 
-PRO_MACHINE_TYPE = sgi_mips4
-PROTOOL_SRC = /opt/ptc/proe2001/protoolkit
+# XXX this is different based on the platform
+PRO_MACHINE_TYPE = i486_linux
+
+# XXX this depends on local system configuration
+PRO_HOME = /usr/local/ptc/proeWildfire3.0
+PROTOOL_SRC = $(PRO_HOME)/protoolkit
 PROTOOL_SYS = $(PROTOOL_SRC)/$(PRO_MACHINE_TYPE)
-PRODEV_SRC  = /opt/ptc/proe2001/prodevelop
+PRODEV_SRC  = $(PRO_HOME)/prodevelop
 PRODEV_SYS  = $(PRODEV_SRC)/$(PRO_MACHINE_TYPE)
-PROTK_UNLOCK = /usr/proe/bin/protk_unlock
+PROTK_UNLOCK = $(PRO_HOME)/bin/protk_unlock
 
 PDLIB       = $(PRODEV_SYS)/obj/prodevelop.a
 PDLIB_DLL   = $(PRODEV_SYS)/obj/prodev_dll.a
@@ -16,38 +19,27 @@ PTLIB       = $(PROTOOL_SYS)/obj/protoolkit.a
 PTLIB_DLL   = $(PROTOOL_SYS)/obj/protk_dll.a
 PTCLIBS     = $(PTLIB) $(PDLIB)
 PTCLIBS_DLL = $(PTLIB_DLL) $(PDLIB_DLL)
-BRLLIBS     = $(BU) $(BN) $(TCL)
-SYSLIBS     = -lc -lm -lw
+BRLLIBS     = ../../libbu/.libs/libbu.a ../../libbn/.libs/libbn.a
 
-AM_CFLAGS = -Wl,-rpath -Wl,$(libdir) -Wl,-multigot -Wl,-T10000000 -Wl,-B,symbolic
-AM_LDFLAGS = $(BRLLIBS) $(SYSLIBS)
+# XXX this may be different based on the platform
+SYSLIBS     = -lc -lm -ldl
+
+# XXX this may be different based on the platform
+AM_CFLAGS = -m32 -fpic
+AM_LDFLAGS = -shared -Wl,-Bsymbolic -Wl,-noinhibit-exec -Wl,-E $(SYSLIBS)
+# XXX the PRO_MACHINE/PRO_OS depends on system/os (obviously). values defined by PTC, see their example makefiles for target system.
 AM_CPPFLAGS = \
-	-DPRO_MACHINE=23 -DPRO_OS=3 \
+	-DPRO_MACHINE=34 -DPRO_OS=3 \
 	-I$(PROTOOL_SRC)/protk_appls/includes \
 	-I$(PROTOOL_SRC)/includes \
 	-I$(PRODEV_SRC)/includes
 
-proe_brldir = $(BRLCAD_DATA)/pro-engineer/$(PRO_MACHINE_TYPE)
-proe_brl_CFLAGS = $(AM_CFLAGS)
-proe_brl_LDADD = $(PTLIB) $(PDLIB) $(SYSLIBS)
-proe_brl_SOURCES = proe-brl.c
+libproe2brl_ladir = $(BRLCAD_DATA)/pro-engineer/$(PRO_MACHINE_TYPE)
+libproe2brl_la_CFLAGS = $(AM_CFLAGS)
+libproe2brl_la_LIBADD = $(PDLIB_DLL) $(PTLIB_DLL) $(BRLLIBS) $(SYSLIBS)
+libproe2brl_la_SOURCES = proe-brl.c
 
-#cc -n32 -mips4 -woff 1521 -multigot -Wl,-wall  -rpath /usr/brlcad/lib -Wl,-hiddens_file,/dev/null -shared -T10000000 -B symbolic -o proe-brl.dll proe-brl.o /opt/ptc/proe2001/protoolkit/sgi_mips4/obj/protk_dll.a /opt/ptc/proe2001/prodevelop/sgi_mips4/obj/prodev_dll.a -L/usr/brlcad/lib -lbu -lbn -ltcl -lc -lm -lw
-
-#gcc -shared  libproe2brl_la-proe-brl.o   -L/vld/morrison/brlcad/src/libbu/.libs -L/vld/morrison/brlcad/src/other/libtcl/.libs /opt/ptc/proe2001/protoolkit/sgi_mips4/obj/protk_dll.a /opt/ptc/proe2001/prodevelop/sgi_mips4/obj/prodev_dll.a ../../src/libbu/.libs/libbu.so ../../src/libbn/.libs/libbn.so ../../src/other/libtcl/.libs/libtcl8.4.so -lc -lm -lw -lmx -lmalloc    -lc  -Wl,-soname -Wl,libproe2brl.so.1 `test -n "sgi1.0" && echo -Wl,-set_version -Wl,sgi1.0` -Wl,-update_registry -Wl,.libs/so_locations -o .libs/libproe2brl.so.1.0
-
-#/usr/bin/ld -n32 -shared  libproe2brl_la-proe-brl.o   -L/vld/morrison/brlcad/src/libbu/.libs -L/vld/morrison/brlcad/src/other/libtcl/.libs /opt/ptc/proe2001/protoolkit/sgi_mips4/obj/protk_dll.a /opt/ptc/proe2001/prodevelop/sgi_mips4/obj/prodev_dll.a ../../src/libbu/.libs/libbu.so ../../src/libbn/.libs/libbn.so ../../src/other/libtcl/.libs/libtcl8.4.so -lc -lm -lw -lmx -lmalloc    -lc  -soname libproe2brl.so.1 `test -n "sgi1.0" && echo -set_version sgi1.0` -update_registry .libs/so_locations -o .libs/libproe2brl.so.1.0
-
-# libproe2brl_la_SOURCES = proe-brl.c
-# libproe2brl_la_CFLAGS = $(AM_CFLAGS)
-# libproe2brl_la_LDFLAGS = -multigot -rpath $(libdir) -T10000000 -B symbolic
-# libproe2brl_la_LIBADD = $(PTLIB_DLL) $(PDLIB_DLL) $(BRLLIBS) $(SYSLIBS)
-# libproe2brl_sodir = $(BRLCAD_DATA)/pro-engineer/$(PRO_MACHINE_TYPE)
-
-libproe2brl.so: mk
-	make -f mk dll
-
-all-am: Makefile
+all-am: libproe2brl.la Makefile
 	@if test "x$(MAKECMDGOALS)" = "xall-am" -o "x$(.TARGETS)" = "xall-am" -o "x$(MAKECMDGOALS)" = "x" -a "x$(.TARGETS)" = "x" ; then \
 	  @ECHO@ "---" ; \
 	  @ECHO@ "Run 'make plugin' from misc/pro-engineer before 'make install' to build the Pro-Engineer plugin." ; \
@@ -63,12 +55,15 @@ install-data-local:
 		fi ; \
 		$(INSTALL) .libs/proe-brl $(DESTDIR)$(proe_brldir)/proe-brl ; \
 	fi
-	@if test -f libproe2brl.so ; then \
-		@ECHO@ "Installing libproe2brl.so" ; \
-		if ! test -d $(DESTDIR)$(proe_brldir) ; then \
-			mkdir -p $(DESTDIR)$(proe_brldir) ; \
+	@if test -f libproe2brl.la ; then \
+		@ECHO@ "Installing libproe2brl.la" ; \
+		if ! test -d $(DESTDIR)$(libproe2brl_ladir) ; then \
+			mkdir -p $(DESTDIR)$(libproe2brl_ladir) ; \
 		fi ; \
-		$(INSTALL) libproe2brl.so $(DESTDIR)$(proe_brldir)/libproe2brl.so ; \
+		if test -x $(PROTK_UNLOCK) ; then \
+			$(PROTK_UNLOCK) $(prefix)/lib/libproe2brl.so ; \
+		fi ; \
+		cp $(prefix)/lib/libproe2brl.so $(libproe2brl_ladir)/ ; \
 	fi
 
 unlock:
@@ -102,7 +97,7 @@ plugin: proe-brl
 	@@ECHO@ "You will need to edit protk.dat to use this plugin instead of libproe2brl.so"
 	@@ECHO@
 
-plugin2: libproe2brl.so
+plugin2: libproe2brl.la
 	@@ECHO@ "---"
 	@@ECHO@ "Run 'make unlock2' to unlock the Pro-Engineer .so plugin for distribution"
 	@@ECHO@ "Run 'make install' to install the Pro-Engineer .so plugin"
