@@ -21,11 +21,18 @@ else !BUILD_TCL
 TCL_NIL = ${TCL}
 endif
 
+if BUILD_OPENNURBS
+ONLIB = ${OPENNURBS}
+else
+ONLIB = 
+endif
+
 librtserver_la_LIBADD = \
 	$(top_builddir)/src/librt/librt_nil.la \
 	$(top_builddir)/src/libbn/libbn_nil.la \
 	$(top_builddir)/src/libbu/libbu_nil.la \
-	${TCL_NIL}
+	${TCL_NIL} \
+	${ONLIB}
 
 EXTRA_PROGRAMS = rtserverTest
 
