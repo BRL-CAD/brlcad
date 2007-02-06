@@ -1,8 +1,8 @@
 # $Id$
 
-if BUILD_PROE
+if WITH_PROE
 PROE_DIR = ProEngineer
-else !BUILD_PROE
+else !WITH_PROE
 PROE_DIR =
 endif
 
