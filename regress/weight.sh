@@ -3,7 +3,7 @@
 
 TOP_SRCDIR=$1
 
-rm -f weight.log .density wgt.out weight.g weight.ref weight.out
+rm -f weight.log .density weight.g weight.ref weight.out
 
 ../src/mged/mged -c > weight.log 2>&1 << EOF
 opendb weight.g y
@@ -16,7 +16,7 @@ cat > .density <<EOF
 1 7.8295        steel
 EOF
 
-../src/rt/rtweight -a 25 -e 35 -s128 -o wgt.out weight.g box.r > weight.log 2>&1
+../src/rt/rtweight -a 25 -e 35 -s128 -o weight.out weight.g box.r > weight.log 2>&1
 
 
 cat >> weight.ref <<EOF
@@ -57,15 +57,15 @@ Total mass = 7.82943 grams
 EOF
 
 tr -d ' \t' < weight.ref | grep -v DensityTableUsed | grep -v TimeStamp > weight.ref_ns
-tr -d ' \t' < wgt.out | grep -v DensityTableUsed | grep -v TimeStamp > wgt.out_ns
+tr -d ' \t' < weight.out | grep -v DensityTableUsed | grep -v TimeStamp > weight.out_ns
 
-cmp weight.ref_ns wgt.out_ns
+cmp weight.ref_ns weight.out_ns
 STATUS=$?
 if [ X$STATUS != X0 ] ; then
     echo "rtweight results differ $STATUS"
 fi
 
-rm -f wgt.out_ns weight.ref_ns
+rm -f weight.out_ns weight.ref_ns
 
 if [ X$STATUS = X0 ] ; then
     /bin/echo '-> weight.sh succeeded'
