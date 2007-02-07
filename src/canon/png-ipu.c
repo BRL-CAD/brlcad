@@ -73,9 +73,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <strings.h>
 #endif
 
+#include <png.h>
+
 #include "machine.h"
 #include "bu.h"
-#include "png.h"
 
 #include <fcntl.h>
 #include <stdlib.h>

@@ -47,6 +47,9 @@
 #  include <GL/gl.h>
 #endif
 
+#include <zlib.h>
+#include <png.h>
+
 #include "machine.h"
 #include "cmd.h"                  /* includes bu.h */
 #include "vmath.h"
@@ -59,8 +62,6 @@
 #include "nurb.h"
 #include "solid.h"
 #include "dm.h"
-#include "png.h"
-#include "zlib.h"
 #include "dm_xvars.h"
 
 #ifdef DM_X
