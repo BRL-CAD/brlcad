@@ -1,5 +1,5 @@
 
-.PHONY: fast fast-am fast-recursive noprod prodclean prodclean-recursive
+.PHONY: fast fast-am fast-recursive noprod prodclean prodclean-recursive depends
 
 #
 # compile all sources first, then link on a second pass.  requires 2x
@@ -53,3 +53,6 @@ prodclean-recursive:
 	@list='$(SUBDIRS)'; for subdir in $$list; do \
 	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) prodclean); \
 	done
+
+depends:
+	for dep in ${DEPS} ${DEPENDS} ; do (cd ${top_builddir}/$$dep && $(MAKE) depends all) ; done
