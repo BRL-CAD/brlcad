@@ -206,6 +206,8 @@ CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
+DEPS=src/librt src/libtermio src/libwdb src/libdm src/libsysv src/other/incrTcl src/libtclcad
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

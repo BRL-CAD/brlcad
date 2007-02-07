@@ -280,6 +280,8 @@ CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
+DEPS=src/librt src/libfb src/liboptical
+
 include $(top_srcdir)/misc/Makefile.defs
 
 if ONLY_BENCHMARK

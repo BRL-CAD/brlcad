@@ -229,6 +229,8 @@ CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
+DEPS=src/libbn src/other/openNURBS
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

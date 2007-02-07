@@ -49,7 +49,7 @@ libitk_la_SOURCES =
 libitk@ITCL_VERSION@_la_LIBADD = $(libitk_la_LIBADD)
 libitk@ITCL_VERSION@_la_SOURCES = $(libitk_la_SOURCES)
 
-
+DEPS=src/other/libtk
 
 MAINTAINERCLEANFILES = Makefile.in
 
