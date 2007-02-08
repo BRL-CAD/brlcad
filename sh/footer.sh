@@ -149,6 +149,20 @@ case $FILE in
 	wrap=1
 	commentchar="*"
 	;;
+    *.l )
+	echo "$FILE is a Lex/Flex lexer source file"
+	mode="C"
+	mode_vars="c-basic-offset"
+	wrap=1
+	commentchar="*"
+	;;
+    *.y )
+	echo "$FILE is a Yacc parser source file"
+	mode="C"
+	mode_vars="c-basic-offset"
+	wrap=1
+	commentchar="*"
+	;;
     *.tcl )
 	echo "$FILE is a Tcl source file"
 	mode="Tcl"
@@ -317,10 +331,10 @@ esac
 #################################
 # prepare emacs variable arrays #
 #################################
-variables=( ${variables[@]} mode )
-values=( ${values[@]} $mode )
-variables=( ${variables[@]} tab-width )
-values=( ${values[@]} $tab_width )
+variables=( mode ${variables[@]} )
+values=( $mode ${values[@]} )
+variables=( tab-width ${variables[@]} )
+values=( $tab_width ${values[@]} )
 for mv in $mode_vars ; do
     variables=( ${variables[@]} $mv )
     values=( ${values[@]} $indentation )
