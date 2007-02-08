@@ -1,5 +1,5 @@
 /*                   T I E N E T _ U T I L . H
- * BRL-CAD
+ * BRL-CAD / ADRT
  *
  * Copyright (c) 2002-2007 United States Government as represented by
  * the U.S. Army Research Laboratory.

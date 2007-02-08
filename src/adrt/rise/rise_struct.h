@@ -1,5 +1,5 @@
 /*                   R I S E _ S T R U C T . H
- * BRL-CAD
+ * BRL-CAD / ADRT
  *
  * Copyright (c) 2007 United States Government as represented by
  * the U.S. Army Research Laboratory.

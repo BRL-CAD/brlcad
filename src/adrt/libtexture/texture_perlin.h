@@ -1,5 +1,5 @@
 /*                     T E X T U R E _ P E R L I N . H
- * BRL-CAD
+ * BRL-CAD / ADRT
  *
  * Copyright (c) 2002-2007 United States Government as represented by
  * the U.S. Army Research Laboratory.
