@@ -212,18 +212,12 @@ case $FILE in
 	mode="autoconf"
 	wrap=0
 	commentchar="#"
-	# override any indent since 8 is required
-	indentation=8
-	tab_width=8
 	;;
     *.in )
 	echo "$FILE is an Autoconf template file"
 	mode="autoconf"
 	wrap=0
 	commentchar="#"
-	# override any indent since 8 is required
-	indentation=8
-	tab_width=8
 	;;
     *.m4 )
 	echo "$FILE is an m4 macro file"
