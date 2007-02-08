@@ -13,4 +13,4 @@ man_MANS = enigma.1
 
 bin_PROGRAMS = enigma
 
-engima_SOURCES = enigma.c
+engima_SOURCE = enigma.c
