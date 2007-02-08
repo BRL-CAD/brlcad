@@ -1,0 +1,26 @@
+Name,Importer,Exporter,Descr
+ADRT,,Y,Advanced Distributed RayTracer (included with BRL-CAD)
+BRL-CAD Ascii,Y,Y,ASCII form of BRL-CAD .g files
+CY,Y,,
+ComGeom,,,
+DXF,Y,Y,AutoCAD
+ENF,Y,,
+Euclid Ascii,Y,Y,
+Fastgen,Y,,
+IGES,Y,Y,"old ""common"" format"
+Jack,Y,Y,
+Lockheed ACAD,,Y,
+NFF,,Y,
+Nastran,Y,,
+OBJ,,Y,Wavefront OBJ
+OFF,Y,Y,
+PLY,Y,,stanford/unc
+Patch,Y,,
+Pro/Engineer,Y,,
+STEP,,,"""common"" format"
+STL,Y,Y,
+Tankill,Y,Y,
+Unigraphics,Y,,
+VRML,,Y,
+Viewpoint,Y,,
+X3D,,Y,
