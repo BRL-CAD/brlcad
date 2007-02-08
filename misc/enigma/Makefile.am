@@ -2,7 +2,7 @@ EXTRA_DIST = \
 	COPYING \
 	README \
 	build.sh \
-	configure.in
+	configure.ac
 
 SUFFIXES = .1
 
