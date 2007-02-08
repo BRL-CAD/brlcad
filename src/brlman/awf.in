@@ -102,3 +102,12 @@ if test -s $errs ; then
 else
 	exit 0
 fi
+
+# Local Variables:
+# tab-width: 8
+# mode: sh
+# sh-indentation: 4
+# sh-basic-offset: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8
