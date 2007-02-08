@@ -233,7 +233,7 @@ if BUILD_OPENNURBS
 DEPADD=src/other/opennurbs
 else
 DEPADD=
-endiffi
+endif
 DEPS=src/libbn $(DEPADD)
 
 include $(top_srcdir)/misc/Makefile.defs
