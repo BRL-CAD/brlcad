@@ -1,7 +1,10 @@
 EXTRA_DIST = \
+	AUTHORS \
 	COPYING \
+	ChangeLog \
+	INSTALL \
+	NEWS \
 	README \
-	build.sh \
 	configure.ac
 
 SUFFIXES = .1
