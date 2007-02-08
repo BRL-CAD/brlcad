@@ -158,6 +158,16 @@ case $FILE in
 	wrap=1
 	commentprefix=" *"
 	;;
+    *.l )
+	echo "$FILE is a Lex/Flex lexer source file"
+	wrap=1
+	commentprefix=" *"
+	;;
+    *.y )
+	echo "$FILE is a Yacc parser source file"
+	wrap=1
+	commentprefix=" *"
+	;;
     *.m )
 	echo "$FILE is an Objective-C source file"
 	wrap=1
