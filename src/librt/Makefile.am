@@ -229,7 +229,12 @@ CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
-DEPS=src/libbn src/other/openNURBS
+if BUILD_OPENNURBS
+DEPADD=src/other/opennurbs
+else
+DEPADD=
+endiffi
+DEPS=src/libbn $(DEPADD)
 
 include $(top_srcdir)/misc/Makefile.defs
 
