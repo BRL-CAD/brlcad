@@ -639,13 +639,18 @@ initialize ( ) {
     ########################################################
     # protect COPYING & INSTALL from overwrite by automake #
     ########################################################
-    for file in COPYING INSTALL ; do
-	if test ! -f $file ; then
-	    continue
-	fi
-	$VERBOSE_ECHO "cp -pf ${file} \"${_aux_dir}/${file}.backup\""
-	cp -pf ${file} "${_aux_dir}/${file}.backup"
-    done
+    COPYING_BACKUP=__none__
+    if test -f COPYING ; then
+	$VERBOSE_ECHO "Stashing an in-memory backup of COPYING"
+	COPYING_BACKUP="`cat COPYING`"
+	export COPYING_BACKUP
+    fi
+    INSTALL_BACKUP=__none__
+    if test -f INSTALL ; then
+	$VERBOSE_ECHO "Stashing an in-memory backup of INSTALL"
+	INSTALL_BACKUP="`cat INSTALL`"
+	export INSTALL_BACKUP
+    fi
 
 
     ##################################################
@@ -1003,30 +1008,38 @@ fi
 # restore COPYING & INSTALL from backup #
 #########################################
 spacer=no
-for file in COPYING INSTALL ; do
-    curr="$file"
-    if test ! -f "$curr" ; then
-	continue
-    fi
-    back="${_aux_dir}/${file}.backup"
-    if test ! -f "$back" ; then
-	continue
-    fi
-
-    # full contents for comparison
-    current="`cat $curr`"
-    backup="`cat $back`"
-    if test "x$current" != "x$backup" ; then
+if test -f COPYING ; then
+    # compare entire content
+    if test "x$COPYING_BACKUP" != "x__none__" -a "x`cat COPYING`" != "x$COPYING_BACKUP" ; then
 	if test "x$spacer" = "xno" ; then
 	    $VERBOSE_ECHO
 	    spacer=yes
 	fi
 	# restore the backup
-	$VERBOSE_ECHO "Restoring $file from backup (automake -f likely clobbered it)"
-	$VERBOSE_ECHO "cp -pf \"$back\" \"${curr}\""
-	cp -pf "$back" "$curr"
+	$VERBOSE_ECHO "Restoring COPYING from backup (automake -f likely clobbered it)"
+	$VERBOSE_ECHO "echo \"\$COPYING_BACKUP\" > COPYING"
+	echo "$COPYING_BACKUP" > COPYING
+	# release content
+	COPYING_BACKUP=""
+	export COPYING_BACKUP
     fi
-done
+fi
+if test -f INSTALL ; then
+    # compare entire content
+    if test "x$INSTALL_BACKUP" != "x__none__" -a "x`cat INSTALL`" != "x$INSTALL_BACKUP" ; then
+	if test "x$spacer" = "xno" ; then
+	    $VERBOSE_ECHO
+	    spacer=yes
+	fi
+	# restore the backup
+	$VERBOSE_ECHO "Restoring INSTALL from backup (automake -f likely clobbered it)"
+	$VERBOSE_ECHO "echo \"\$INSTALL_BACKUP\" > INSTALL"
+	echo "$INSTALL_BACKUP" > INSTALL
+	# release content
+	INSTALL_BACKUP=""
+	export INSTALL_BACKUP
+    fi
+fi
 
 
 #########################
