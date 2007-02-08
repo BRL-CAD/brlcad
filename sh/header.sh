@@ -402,12 +402,12 @@ $c"
 else
     if [ "x$LICE" = "xPD" ] ; then
         block="${block}
-$c Copyright (c) $copyright $COPY
+$c Published in $copyright by $COPY
+$c This work is in the public domain.
 $c"
     else
         block="${block}
-$c Published in $copyright by $COPY
-$c This work is in the public domain.
+$c Copyright (c) $copyright $COPY
 $c"
     fi
 fi
