@@ -209,7 +209,7 @@ case $FILE in
 	;;
     *.ac )
 	echo "$FILE is an Autoconf template file"
-	mode="Makefile"
+	mode="autoconf"
 	wrap=0
 	commentchar="#"
 	# override any indent since 8 is required
@@ -218,7 +218,7 @@ case $FILE in
 	;;
     *.in )
 	echo "$FILE is an Autoconf template file"
-	mode="Makefile"
+	mode="autoconf"
 	wrap=0
 	commentchar="#"
 	# override any indent since 8 is required
