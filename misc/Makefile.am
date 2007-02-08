@@ -18,7 +18,6 @@ EXTRA_DIST = \
 	batch-indent-region.el \
 	brlcad.spec \
 	brlcad.spec.in \
-	cvs2cl.pl \
 	enigma \
 	libtool.m4 \
 	rcs2log
