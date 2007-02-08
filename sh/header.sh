@@ -47,7 +47,7 @@
 #
 #   find src/lib* -type f \( -name \*.c -or -name \*.h \) -exec sh/header.sh LGPL {} \;
 #
-#   find src -type f \( -name \*.c -or -name \*.h \) -not -regex '.*src/lib.*' -exec sh/header.sh GPL {} \;
+#   find src -type f \( -name \*.c -or -name \*.h \) -not -regex '.*src/lib.*' -exec sh/header.sh BSD {} \;
 #
 # Author -
 #   Christopher Sean Morrison
@@ -71,7 +71,7 @@ USAGE="Usage: $0 LICENSE FILE [ProjectName] [CopyrightHolder]"
 # validate input #
 ##################
 if [ "x$LICE" = "x" ] ; then
-    echo "ERROR: must give a license type (BSD, BDL, LGPL)"
+    echo "ERROR: must give a license type (BSD, BDL, LGPL, PD)"
     echo "$USAGE"
     exit 1
 fi
@@ -79,15 +79,18 @@ case $LICE in
     bsd|BSD)
 	LICE=BSD
 	;;
-    bdl|BDL)
+    bdl|BDL|doc|docs|documentation)
 	LICE=BDL
 	;;
-    lgpl|LGPL)
+    lgpl|LGPL|lesser|library)
 	LICE=LGPL
+	;;
+    pd|PD|pdl|PDL|public|publicdomain)
+	LICE=PD
 	;;
     *)
 	echo "ERROR: Unknown or unsupported license type: $LICE"
-	echo "License should be one of BSD, BDL, LGPL"
+	echo "License should be one of BSD, BDL, LGPL, PD (public domain)"
 	echo "$USAGE"
 	exit 1
 	;;
@@ -119,7 +122,7 @@ if [ "x$COPY" = "x" ] ; then
 fi
 
 if [ "x$5" != "x" ] ; then
-    echo "ERROR: LICENSE should be one of BSD, BDL, LGPL"
+    echo "ERROR: LICENSE should be one of BSD, BDL, LGPL, or PD (public domain)"
     echo "No other arguments should follow."
     echo "$USAGE"
     exit 3
@@ -385,14 +388,28 @@ $c ${PROJ}
 $c"
 
 if [ "x$COPY" = "x" ] ; then
-    block="${block}
+    if [ "x$LICE" = "xPD" ] ; then
+        block="${block}
+$c Published in $copyright by the United States Government.
+$c This work is in the public domain.
+$c"
+    else
+        block="${block}
 $c Copyright (c) $copyright United States Government as represented by
 $c the U.S. Army Research Laboratory.
 $c"
+    fi
 else
-    block="${block}
+    if [ "x$LICE" = "xPD" ] ; then
+        block="${block}
 $c Copyright (c) $copyright $COPY
 $c"
+    else
+        block="${block}
+$c Published in $copyright by $COPY
+$c This work is in the public domain.
+$c"
+    fi
 fi
 
 
@@ -479,56 +496,8 @@ $c License along with this file; see the file named COPYING for more
 $c information.
 "
 	;;
-    xGPL)
-	block="${block}
-$c This program is free software; you can redistribute it and/or
-$c modify it under the terms of the GNU General Public License as
-$c published by the Free Software Foundation.
-$c
-$c This program is distributed in the hope that it will be useful, but
-$c WITHOUT ANY WARRANTY; without even the implied warranty of
-$c MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-$c General Public License for more details.
-$c
-$c You should have received a copy of the GNU General Public License
-$c along with this file; see the file named COPYING for more
-$c information.
-"
-	;;
-    xGFDL)
-	block="${block}
-$c Redistribution and use in source (Docbook format) and 'compiled'
- forms (PDF, PostScript, HTML, RTF, etc), with or without
- modification, are permitted provided that the following conditions
- are met:
-
- 1. Redistributions of source code (Docbook format) must retain the
- above copyright notice, this list of conditions and the following
- disclaimer.
-
- 2. Redistributions in compiled form (transformed to other DTDs,
- converted to PDF, PostScript, HTML, RTF, and other formats) must
- reproduce the above copyright notice, this list of conditions and
- the following disclaimer in the documentation and/or other
- materials provided with the distribution.
-
- 3. The name of the author may not be used to endorse or promote
- products derived from this documentation without specific prior
- written permission.
-
- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY
- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF
- SUCH DAMAGE.
-"
+    xPD)
+	echo "Public domain specified, no license applies."
 	;;
     *)
 	echo "ERROR: encountered unknown license type $LICE during processing"
