@@ -23,7 +23,6 @@ EXTRA_DIST = \
 	rcs2log
 
 DISTCLEANFILES = \
-	COPYING.backup \
 	brlcad.spec \
 	compile \
 	config.guess \
