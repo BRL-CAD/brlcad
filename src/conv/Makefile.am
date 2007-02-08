@@ -2,6 +2,10 @@
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
+COMMON_EXTRA = \
+	dbclean.sh \
+	Formats.csv
+
 if ONLY_BENCHMARK
 
 SUBDIRS =
@@ -13,7 +17,7 @@ bin_PROGRAMS = \
 	pix2asc
 
 EXTRA_DIST =
-	dbclean.sh \
+	$(COMMON_EXTRA) \
 	g-xxx.c \
 	g-xxx_facets.c \
 	g4-g5.c \
@@ -77,7 +81,8 @@ noinst_PROGRAMS = \
 	g-xxx \
 	g-xxx_facets
 
-EXTRA_DIST = dbclean.sh
+EXTRA_DIST = \
+	$(COMMON_EXTRA)
 
 endif
 # end ONLY_BENCHMARK
