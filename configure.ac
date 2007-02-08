@@ -2332,10 +2332,7 @@ else
     if test "x$bc_build_opennurbs" = "xno" ; then
 	if test "x$opennurbs_works" != "xyes" ; then
 	    AC_MSG_NOTICE([openNURBS was disabled, but no system openNURBS library was found])
-	    BC_RETRY_CONFIGURE([$this], [$args])
-	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	    AC_MSG_NOTICE([Try adding --enable-opennurbs-build and/or --enable-c++])
-	    AC_MSG_ERROR([*** Building openNURBS was disabled, yet no system openNURBS library was found ***])
+	    build_brlcad_opennurbs="no (doing without, BREP unsupported)"
 	fi
     else
 	dnl automatic detection
@@ -2352,7 +2349,7 @@ if test "x$build_brlcad_opennurbs" = "xyes" ; then
     OPENNURBS_CPPFLAGS='-I${top_srcdir}/src/other/openNURBS'
     AC_MSG_RESULT(yes)
 else
-    OPENNURBS="$LIBOPENNURBS $LIBSTDCXX"
+    OPENNURBS="$LIBOPENNURBS $LIBSTDCXX"	# produces " " if we're not using OpenNURBS
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(OPENNURBS)
@@ -3317,7 +3314,8 @@ AM_CONDITIONAL(WITH_X11, [test "x$build_against_x11" != "xno"])
 AM_CONDITIONAL(WITH_OPENGL, [test "x$build_against_opengl" != "xno"])
 AM_CONDITIONAL(WITH_WGL, [test "x$build_against_wgl" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
-AM_CONDITIONAL(WITH_OPENNURBS, [test "x$OPENNURBS" != "x"])
+### the echo is to remove leading or trailing whitespace.
+AM_CONDITIONAL(WITH_OPENNURBS, [test "`echo x$OPENNURBS`" != "x"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
