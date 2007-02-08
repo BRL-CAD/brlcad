@@ -1,0 +1,7 @@
+For help:
+  ./configure --help
+
+To compile and install:
+  ./configure
+  make
+  sudo make install

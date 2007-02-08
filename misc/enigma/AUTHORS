@@ -1,0 +1,6 @@
+This implementation of crypt, named enigma, was taken from the public
+domain Crypt Breaker's Workbench software by Joerg Wunsch.
+
+Modifications have been made by the U.S. Army Research Laboratory and
+the BRL-CAD open source project in support of 64-bit compilation,
+compilation warnings, and the provided build system.
