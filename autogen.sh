@@ -868,7 +868,7 @@ manual_autogen ( ) {
 
 	    for feature in $macros_to_search ; do
 		$VERBOSE_ECHO "Searching for $feature in $CONFIGURE"
-		found="`grep \"^$feature.*\"`"
+		found="`grep \"^$feature.*\" $CONFIGURE`"
 		if [ ! "x$found" = "x" ] ; then
 		    if [ "x$configure_ac_macros" = "xno" ] ; then
 			configure_ac_macros="$feature"
