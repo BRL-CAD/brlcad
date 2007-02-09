@@ -28,9 +28,13 @@
 #
 
 if {![info exists env(ARCHER_HOME)]} {
-  catch {
-    set env(ARCHER_HOME) [file normalize [file join [file dir $argv0] ..]]
-  }
+    if {[info exists argv0]} {
+	if [catch { set env(ARCHER_HOME) [file normalize [file join [file dir $argv0] ..]] }] {
+	    set env(ARCHER_HOME) .
+	}
+    } else {
+	set env(ARCHER_HOME) .
+    }
 }
 
 if {[info exists env(ARCHER_HOME)]} {
