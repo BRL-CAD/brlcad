@@ -866,31 +866,32 @@ manual_autogen ( ) {
 		fi
 	    fi
 
+	    configure_ac_macros=__none__
 	    for feature in $macros_to_search ; do
 		$VERBOSE_ECHO "Searching for $feature in $CONFIGURE"
 		found="`grep \"^$feature.*\" $CONFIGURE`"
 		if [ ! "x$found" = "x" ] ; then
-		    if [ "x$configure_ac_macros" = "xno" ] ; then
+		    if [ "x$configure_ac_macros" = "x__none__" ] ; then
 			configure_ac_macros="$feature"
 		    else
 			configure_ac_macros="$feature $configure_ac_macros"
 		    fi
 		fi
 	    done
-	fi
-	if [ ! "x$configure_ac_macros" = "xno" ] ; then
-	    $ECHO
-	    $ECHO "Warning:  Unsupported macros were found in $CONFIGURE"
-	    $ECHO
-	    $ECHO "The $CONFIGURE file was scanned in order to determine if any"
-	    $ECHO "unsupported macros are used that exceed the minimum version"
-	    $ECHO "settings specified within this file.  As such, the following macros"
-	    $ECHO "should be removed from configure.ac or the version numbers in this"
-	    $ECHO "file should be increased:"
-	    $ECHO
-	    $ECHO "$configure_ac_macros"
-	    $ECHO
-	    $ECHO $ECHO_N "Ignorantly continuing build preparation ... $ECHO_C"
+	    if [ ! "x$configure_ac_macros" = "x__none__" ] ; then
+		$ECHO
+		$ECHO "Warning:  Unsupported macros were found in $CONFIGURE"
+		$ECHO
+		$ECHO "The $CONFIGURE file was scanned in order to determine if any"
+		$ECHO "unsupported macros are used that exceed the minimum version"
+		$ECHO "settings specified within this file.  As such, the following macros"
+		$ECHO "should be removed from configure.ac or the version numbers in this"
+		$ECHO "file should be increased:"
+		$ECHO
+		$ECHO "$configure_ac_macros"
+		$ECHO
+		$ECHO $ECHO_N "Ignorantly continuing build preparation ... $ECHO_C"
+	    fi
 	fi
 
 	$VERBOSE_ECHO
