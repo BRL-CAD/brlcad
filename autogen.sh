@@ -93,6 +93,9 @@ usage ( ) {
     echo "variables (e.g. AUTORECONF_OPTIONS) may be used to override the"
     echo "default automatic detection behavior."
     echo
+    
+    __id="$Id$"
+
     echo "autogen.sh build preparation script by Christopher Sean Morrison"
     echo "POSIX shell script, BSD style license, copyright 2005-2006"
     return 0
