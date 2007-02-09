@@ -45,7 +45,7 @@
 # issues, and then simply run autoreconf for you.
 #
 # If autoreconf fails, which can happen for many valid configurations,
-# this script proceeds to run manual configuration steps effectively
+# this script proceeds to run manual preparation steps effectively
 # providing a POSIX shell script (mostly complete) reimplementation of
 # autoreconf.
 #
@@ -74,6 +74,29 @@ LIBTOOL_PATCH_VERSION=2
 
 
 ##################
+# ident function #
+##################
+ident ( ) {
+    # extract copyright from header
+    __copyright="`grep Copyright $AUTOGEN_SH | head -${HEAD_N}1 | awk '{print $4}'`"
+    if [ "x$__copyright" = "x" ] ; then
+	__copyright="`date +%Y`"
+    fi
+
+    # extract version from CVS Id string
+    __id="$Id$"
+    __version="`echo $__id | sed 's/.*\([0-9][0-9][0-9][0-9]\)\/\([0-9][0-9]\)\/\([0-9][0-9]\).*/\1\2\3/'`"
+    if [ "x$__version" = "x" ] ; then
+	__version=""
+    fi
+
+    echo "autogen.sh build preparation script by Christopher Sean Morrison"
+    echo "revised 3-clause BSD-style license, copyright (c) $__copyright"
+    echo "script version $__version, ISO/IEC 9945 POSIX shell script"
+}
+
+
+##################
 # USAGE FUNCTION #
 ##################
 usage ( ) {
@@ -86,19 +109,41 @@ usage ( ) {
     echo "Description: This script will validate that minimum versions of the"
     echo "GNU Build System tools are installed and then run autoreconf for you."
     echo "Should autoreconf fail, manual preparation steps will be run"
-    echo "potentially accounting for several common configuration issues.  The"
+    echo "potentially accounting for several common preparation issues.  The"
 
     echo "AUTORECONF, AUTOCONF, AUTOMAKE, LIBTOOLIZE, ACLOCAL, AUTOHEADER,"
     echo "PROJECT, & CONFIGURE environment variables and corresponding _OPTIONS"
     echo "variables (e.g. AUTORECONF_OPTIONS) may be used to override the"
     echo "default automatic detection behavior."
     echo
-    
-    __id="$Id$"
 
-    echo "autogen.sh build preparation script by Christopher Sean Morrison"
-    echo "POSIX shell script, BSD style license, copyright 2005-2006"
+    ident
+
     return 0
+}
+
+
+##########################
+# VERSION_ERROR FUNCTION #
+##########################
+version_error ( ) {
+    if [ "x$1" = "x" ] ; then
+	echo "INTERNAL ERROR: version_error was not provided a version"
+	exit 1
+    fi
+    if [ "x$2" = "x" ] ; then
+	echo "INTERNAL ERROR: version_error was not provided an application name"
+	exit 1
+    fi
+    $ECHO
+    $ECHO "ERROR:  To prepare the ${PROJECT} build system from scratch,"
+    $ECHO "        at least version $1 of $2 must be installed."
+    $ECHO
+    $ECHO "$NAME_OF_AUTOGEN does not need to be run on the same machine that will"
+    $ECHO "run configure or make.  Either the GNU Autotools will need to be installed"
+    $ECHO "or upgraded on this system, or $NAME_OF_AUTOGEN must be run on the source"
+    $ECHO "code on another system and then transferred to here. -- Cheers!"
+    $ECHO
 }
 
 
@@ -330,14 +375,7 @@ else
     fi
 fi
 if [ "x$_report_error" = "xyes" ] ; then
-    $ECHO
-    $ECHO "ERROR:  To prepare the ${PROJECT} build system from scratch,"
-    $ECHO "        at least version $AUTOCONF_MAJOR_VERSION.$AUTOCONF_MINOR_VERSION.$AUTOCONF_PATCH_VERSION of GNU Autoconf must be installed."
-    $ECHO
-    $ECHO "$NAME_OF_AUTOGEN_SH does not need to be run on the same machine that will"
-    $ECHO "run configure or make.  Either the GNU Autotools will need to be installed"
-    $ECHO "or upgraded on this system, or $NAME_OF_AUTOGEN_SH must be run on the source"
-    $ECHO "code on another system and then transferred to here. -- Cheers!"
+    version_error "$AUTOCONF_MAJOR_VERSION.$AUTOCONF_MINOR_VERSION.$AUTOCONF_PATCH_VERSION" "GNU Autoconf"
     exit 1
 fi
 
@@ -395,14 +433,7 @@ else
     fi
 fi
 if [ "x$_report_error" = "xyes" ] ; then
-    $ECHO
-    $ECHO "ERROR:  To prepare the ${PROJECT} build system from scratch,"
-    $ECHO "        at least version $AUTOMAKE_MAJOR_VERSION.$AUTOMAKE_MINOR_VERSION.$AUTOMAKE_PATCH_VERSION of GNU Automake must be installed."
-    $ECHO
-    $ECHO "$NAME_OF_AUTOGEN_SH does not need to be run on the same machine that will"
-    $ECHO "run configure or make.  Either the GNU Autotools will need to be installed"
-    $ECHO "or upgraded on this system, or $NAME_OF_AUTOGEN_SH must be run on the source"
-    $ECHO "code on another system and then transferred to here. -- Cheers!"
+    version_error "$AUTOMAKE_MAJOR_VERSION.$AUTOMAKE_MINOR_VERSION.$AUTOMAKE_PATCH_VERSION" "GNU Automake"
     exit 1
 fi
 
@@ -541,14 +572,7 @@ else
     fi
 fi
 if [ "x$_report_error" = "xyes" ] ; then
-    $ECHO
-    $ECHO "ERROR:  To prepare the ${PROJECT} build system from scratch,"
-    $ECHO "        at least version $LIBTOOL_MAJOR_VERSION.$LIBTOOL_MINOR_VERSION.$LIBTOOL_PATCH_VERSION of GNU Libtool must be installed."
-    $ECHO
-    $ECHO "$NAME_OF_AUTOGEN_SH does not need to be run on the same machine that will"
-    $ECHO "run configure or make.  Either the GNU Autotools will need to be installed"
-    $ECHO "or upgraded on this system, or $NAME_OF_AUTOGEN_SH must be run on the source"
-    $ECHO "code on another system and then transferred to here. -- Cheers!"
+    version_error "$LIBTOOL_MAJOR_VERSION.$LIBTOOL_MINOR_VERSION.$LIBTOOL_PATCH_VERSION" "GNU Libtool"
     exit 1
 fi
 
@@ -644,15 +668,24 @@ initialize ( ) {
     ########################################################
     COPYING_BACKUP=__none__
     if test -f COPYING ; then
-	$VERBOSE_ECHO "Stashing an in-memory backup of COPYING"
+        # determine if they actually fit in memory
 	COPYING_BACKUP="`cat COPYING`"
-	export COPYING_BACKUP
+	if [ "x$COPYING_BACKUP" = "x`cat COPYING`" ] ; then
+	    $VERBOSE_ECHO "Stashing an in-memory backup of COPYING"
+	    export COPYING_BACKUP
+	else
+	    COPYING_BACKUP="__none__"
+	fi
     fi
     INSTALL_BACKUP=__none__
     if test -f INSTALL ; then
-	$VERBOSE_ECHO "Stashing an in-memory backup of INSTALL"
 	INSTALL_BACKUP="`cat INSTALL`"
-	export INSTALL_BACKUP
+	if [ "x$INSTALL_BACKUP" = "x`cat INSTALL`" ] ; then
+	    $VERBOSE_ECHO "Stashing an in-memory backup of INSTALL"
+	    export INSTALL_BACKUP
+	else
+	    INSTALL_BACKUP="__none__"
+	fi
     fi
 
 
@@ -728,12 +761,13 @@ if [ "x$HAVE_AUTORECONF" = "xyes" ] ; then
 	    $ECHO "libtoolize being run by autoreconf is not creating ltmain.sh in the auxillary directory like it should"
 	fi
 
-	$ECHO "Attempting to run the configuration steps individually"
+	$ECHO "Attempting to run the preparation steps individually"
 	reconfigure_manually=yes
     fi
 else
     reconfigure_manually=yes
 fi
+
 
 ############################
 # LIBTOOL_FAILURE FUNCTION #
@@ -762,7 +796,7 @@ libtool_failure ( ) {
 	    export RUN_RECURSIVE
 
 	    $ECHO
-	    $ECHO "Restarting the configuration steps with a local libtool.m4"
+	    $ECHO "Restarting the preparation steps with a local libtool.m4"
 	    $VERBOSE_ECHO sh $AUTOGEN_SH "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
 	    sh "$AUTOGEN_SH" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
 	    exit $?
@@ -774,15 +808,16 @@ libtool_failure ( ) {
 ###########################
 # MANUAL_AUTOGEN FUNCTION #
 ###########################
-# Manual configuration steps taken are as follows:
-#  aclocal [-I m4]
-#  libtoolize --automake -c -f
-#  aclocal [-I m4]
-#  autoconf -f
-#  autoheader
-#  automake -a -c -f
-####
 manual_autogen ( ) {
+    ##################################################
+    # Manual preparation steps taken are as follows: #
+    #   aclocal [-I m4]                              #
+    #   libtoolize --automake -c -f                  #
+    #   aclocal [-I m4]                              #
+    #   autoconf -f                                  #
+    #   autoheader                                   #
+    #   automake -a -c -f                            #
+    ##################################################
     $ECHO
     $ECHO $ECHO_N "Preparing build ... $ECHO_C"
 
@@ -797,12 +832,18 @@ manual_autogen ( ) {
 	exit 1
     fi
 
+    ###########
+    # aclocal #
+    ###########
     $VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS $ACLOCAL_OPTIONS"
     aclocal_output="`$ACLOCAL $SEARCH_DIRS $ACLOCAL_OPTIONS 2>&1`"
     ret=$?
     $VERBOSE_ECHO "$aclocal_output"
-
     if [ ! $ret = 0 ] ; then $ECHO "ERROR: $ACLOCAL failed" && exit 2 ; fi
+
+    ##############
+    # libtoolize #
+    ##############
     if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
 	$VERBOSE_ECHO "$LIBTOOLIZE $LIBTOOLIZE_OPTIONS"
 	libtoolize_output="`$LIBTOOLIZE $LIBTOOLIZE_OPTIONS 2>&1`"
@@ -821,6 +862,9 @@ manual_autogen ( ) {
 	fi
     fi
 
+    ###########
+    # aclocal #
+    ###########
     # re-run again as instructed by libtoolize
     $VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS $ACLOCAL_OPTIONS"
     aclocal_output="`$ACLOCAL $SEARCH_DIRS $ACLOCAL_OPTIONS 2>&1`"
@@ -842,6 +886,9 @@ manual_autogen ( ) {
 	fi
     fi
 
+    ############
+    # autoconf #
+    ############
     $VERBOSE_ECHO
     $VERBOSE_ECHO "$AUTOCONF $AUTOCONF_OPTIONS"
     autoconf_output="`$AUTOCONF $AUTOCONF_OPTIONS 2>&1`"
@@ -897,6 +944,10 @@ manual_autogen ( ) {
 	    fi
 	fi
 
+
+	###################
+	# autoconf, retry #
+	###################
 	$VERBOSE_ECHO
 	$VERBOSE_ECHO "$AUTOCONF"
 	autoconf_output="`$AUTOCONF 2>&1`"
@@ -934,22 +985,30 @@ EOF
 	fi
     fi
 
+    ##############
+    # autoheader #
+    ##############
     $VERBOSE_ECHO "$AUTOHEADER $AUTOHEADER_OPTIONS"
     autoheader_output="`$AUTOHEADER $AUTOHEADER_OPTIONS 2>&1`"
     ret=$?
     $VERBOSE_ECHO "$autoheader_output"
-
     if [ ! $ret = 0 ] ; then $ECHO "ERROR: $AUTOHEADER failed" && exit 2 ; fi
 
+    ############
+    # automake #
+    ############
     $VERBOSE_ECHO "$AUTOMAKE $AUTOMAKE_OPTIONS"
     automake_output="`$AUTOMAKE $AUTOMAKE_OPTIONS 2>&1`"
     ret=$?
     $VERBOSE_ECHO "$automake_output"
 
     if [ ! $ret = 0 ] ; then
-	# retry without the -f
+	###################
+	# automake, retry #
+	###################
 	$VERBOSE_ECHO
 	$VERBOSE_ECHO "$AUTOMAKE $ALT_AUTOMAKE_OPTIONS"
+	# retry without the -f
 	automake_output="`$AUTOMAKE $ALT_AUTOMAKE_OPTIONS 2>&1`"
 	ret=$?
 	$VERBOSE_ECHO "$automake_output"
@@ -971,14 +1030,14 @@ EOF
 
 
 ##################################
-# run manual configuration steps #
+# run manual preparation steps #
 ##################################
 if [ "x$reconfigure_manually" = "xyes" ] ; then
 
     # XXX if this is a recursive configure, manual steps don't work
     # yet .. assume it's the libtool/glibtool problem.
     if [ ! "x$CONFIG_SUBDIRS" = "x" ] ; then
-	$ECHO "Running the configuration steps individually does not yet work"
+	$ECHO "Running the preparation steps individually does not yet work"
 	$ECHO "well with a recursive configure."
 	if [ ! "x$HAVE_ALT_LIBTOOLIZE" = "xyes" ] ; then
 	    exit 3
@@ -988,17 +1047,17 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
 	RUN_RECURSIVE=no
 	export RUN_RECURSIVE
 	$ECHO
-	$ECHO "Restarting the configuration steps with LIBTOOLIZE set to $LIBTOOLIZE"
+	$ECHO "Restarting the preparation steps with LIBTOOLIZE set to $LIBTOOLIZE"
 	$VERBOSE_ECHO sh $AUTOGEN_SH "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
 	sh "$AUTOGEN_SH" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
 	exit $?
     fi
 
-    # run the build configuration steps manually for this directory
+    # run the build preparation steps manually for this directory
     manual_autogen
 
     # for projects using recursive configure, run the build
-    # configuration steps for the subdirectories.
+    # preparation steps for the subdirectories.
     for dir in $CONFIG_SUBDIRS ; do
 	$VERBOSE_ECHO "Processing recursive configure in $dir"
 	cd "$_prev_path"
@@ -1013,7 +1072,7 @@ fi
 #########################################
 spacer=no
 if test -f COPYING ; then
-    # compare entire content
+    # compare entire content, restore if needed
     if test "x$COPYING_BACKUP" != "x__none__" -a "x`cat COPYING`" != "x$COPYING_BACKUP" ; then
 	if test "x$spacer" = "xno" ; then
 	    $VERBOSE_ECHO
@@ -1029,7 +1088,7 @@ if test -f COPYING ; then
     fi
 fi
 if test -f INSTALL ; then
-    # compare entire content
+    # compare entire content, restore if needed
     if test "x$INSTALL_BACKUP" != "x__none__" -a "x`cat INSTALL`" != "x$INSTALL_BACKUP" ; then
 	if test "x$spacer" = "xno" ; then
 	    $VERBOSE_ECHO
