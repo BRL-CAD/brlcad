@@ -100,6 +100,10 @@ CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
+if BUILD_TCL
 DEPS=src/other/libtcl
+else
+DEPS=
+endif
 
 include $(top_srcdir)/misc/Makefile.defs

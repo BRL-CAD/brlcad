@@ -151,7 +151,11 @@ AM_CPPFLAGS = \
 	-I${top_srcdir}/src/other/libtk/win \
 	@X_CFLAGS@
 
+if BUILD_TCL
 DEPS=src/other/libtcl
+else
+DEPS=
+endif
 
 MAINTAINERCLEANFILES = Makefile.in
 
