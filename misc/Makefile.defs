@@ -56,3 +56,6 @@ prodclean-recursive:
 
 depends:
 	for dep in ${DEPS} ${DEPENDS} ; do (cd ${top_builddir}/$$dep && $(MAKE) depends all) ; done
+
+install-depends:
+	for dep in ${DEPS} ${DEPENDS} ; do (cd ${top_builddir}/$$dep && $(MAKE) depends install) ; done
