@@ -58,4 +58,4 @@ depends:
 	for dep in ${DEPS} ${DEPENDS} ; do (cd ${top_builddir}/$$dep && $(MAKE) depends all) ; done
 
 install-depends:
-	for dep in ${DEPS} ${DEPENDS} ; do (cd ${top_builddir}/$$dep && $(MAKE) depends install) ; done
+	for dep in ${DEPS} ${DEPENDS} ; do (cd ${top_builddir}/$$dep && $(MAKE) install-depends install) ; done
