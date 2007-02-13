@@ -614,8 +614,10 @@ fi
 #########################
 $VERBOSE_ECHO "Checking whether to only output version information"
 if [ "x$VERSION_ONLY" = "xyes" ] ; then
+    $ECHO
+    ident
     $ECHO "---"
-    $ECHO "Version info requested.  No preparation or configuration will be performed."
+    $ECHO "Version requested.  No preparation or configuration will be performed."
     exit 0
 fi
 
