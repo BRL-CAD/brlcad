@@ -185,8 +185,9 @@ else
 	# allow a complete override
 	bc_prefix="$prefix"
 fi
-# compensate for autoconf inconsistencies
-AC_DEFINE_UNQUOTED([BRLCAD_ROOT], "`eval \"echo $bc_prefix\"`", "Location BRL-CAD will install to")
+# make sure the values are expanded (autoconf may set prefix to a variable)
+bc_prefix="`eval \"echo $bc_prefix\"`"
+AC_DEFINE_UNQUOTED([BRLCAD_ROOT], "$bc_prefix", "Location BRL-CAD will install to")
 AC_MSG_RESULT($bc_prefix)
 if test ! "x$BRLCAD_ROOT" = "x" ; then
 	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -201,7 +202,7 @@ if test ! "x$BRLCAD_ROOT" = "x" ; then
 	fi
 else
 	# compensate for autoconf inconsistencies
-	BRLCAD_ROOT="`eval \"echo $bc_prefix\"`"
+	BRLCAD_ROOT="$bc_prefix"
 fi
 AC_SUBST(BRLCAD_ROOT)
 
@@ -216,8 +217,9 @@ else
 	# allow a complete override
 	bc_data_dir="${datadir}"
 fi
-# compensate for autoconf inconsistencies
-AC_DEFINE_UNQUOTED([BRLCAD_DATA], "`eval \"echo $bc_data_dir\"`", "Location BRL-CAD resources will install to")
+# make sure the values are expanded (autoconf may set datadir to a variable)
+bc_data_dir="`eval \"echo $bc_data_dir\"`"
+AC_DEFINE_UNQUOTED([BRLCAD_DATA], "$bc_data_dir", "Location BRL-CAD resources will install to")
 AC_MSG_RESULT($bc_data_dir)
 if test ! "x$BRLCAD_DATA" = "x" ; then
 	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -232,7 +234,7 @@ if test ! "x$BRLCAD_DATA" = "x" ; then
 	fi
 else
 	# compensate for autoconf inconsistencies
-	BRLCAD_DATA="`eval \"echo $bc_data_dir\"`"
+	BRLCAD_DATA="$bc_data_dir"
 fi
 AC_SUBST(BRLCAD_DATA)
 
