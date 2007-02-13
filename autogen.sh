@@ -331,6 +331,25 @@ $ECHO "Preparing the $PROJECT build system...please wait"
 $ECHO
 
 
+########################
+# check for autoreconf #
+########################
+HAVE_AUTORECONF=no
+if [ "x$AUTORECONF" = "x" ] ; then
+    for AUTORECONF in autoreconf ; do
+	$VERBOSE_ECHO "Checking autoreconf version: $AUTORECONF --version"
+	$AUTORECONF --version > /dev/null 2>&1
+	if [ $? = 0 ] ; then
+	    HAVE_AUTORECONF=yes
+	    break
+	fi
+    done
+else
+    HAVE_AUTORECONF=yes
+    $ECHO "Using AUTORECONF environment variable override: $AUTORECONF"
+fi
+
+
 ##########################
 # autoconf version check #
 ##########################
@@ -435,25 +454,6 @@ fi
 if [ "x$_report_error" = "xyes" ] ; then
     version_error "$AUTOMAKE_MAJOR_VERSION.$AUTOMAKE_MINOR_VERSION.$AUTOMAKE_PATCH_VERSION" "GNU Automake"
     exit 1
-fi
-
-
-########################
-# check for autoreconf #
-########################
-HAVE_AUTORECONF=no
-if [ "x$AUTORECONF" = "x" ] ; then
-    for AUTORECONF in autoreconf ; do
-	$VERBOSE_ECHO "Checking autoreconf version: $AUTORECONF --version"
-	$AUTORECONF --version > /dev/null 2>&1
-	if [ $? = 0 ] ; then
-	    HAVE_AUTORECONF=yes
-	    break
-	fi
-    done
-else
-    HAVE_AUTORECONF=yes
-    $ECHO "Using AUTORECONF environment variable override: $AUTORECONF"
 fi
 
 
