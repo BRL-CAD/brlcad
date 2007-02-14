@@ -1,0 +1,96 @@
+.TH PIXCMP 1 BRL-CAD
+.\"                       P I X C M P . 1
+.\" BRL-CAD
+.\"
+.\" Copyright (c) 2005-2007 United States Government as represented by
+.\" the U.S. Army Research Laboratory.
+.\"
+.\" Redistribution and use in source (Docbook format) and 'compiled'
+.\" forms (PDF, PostScript, HTML, RTF, etc), with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code (Docbook format) must retain the
+.\" above copyright notice, this list of conditions and the following
+.\" disclaimer.
+.\"
+.\" 2. Redistributions in compiled form (transformed to other DTDs,
+.\" converted to PDF, PostScript, HTML, RTF, and other formats) must
+.\" reproduce the above copyright notice, this list of conditions and
+.\" the following disclaimer in the documentation and/or other
+.\" materials provided with the distribution.
+.\"
+.\" 3. The name of the author may not be used to endorse or promote
+.\" products derived from this documentation without specific prior
+.\" written permission.
+.\"
+.\" THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY
+.\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+.\" OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+.\" USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\".\".\"
+.SH NAME
+pixcmp \- compare two pix image files pixel by pixel
+.SH SYNOPSIS
+.B pixcmp
+.RB [\fIOPTIONS\fR]
+\fIFILE1\fR [\fIFILE2\fR [\fISKIP1\fR [\fISKIP2\fR]]]
+.SH DESCRIPTION
+.I pixcmp
+is a program to compare two BRL-CAD pix image files pixel by pixel.  The following \fIOPTIONS\fR are available:
+.TP
+\fB\-l\fR
+Output pixel numbers and values for all pixels that differ.
+.TP
+\fB\-i\fR \fISKIP\fR
+Skip the first SKIP pixels of input (for FILE1 and FILE2).
+.TP
+\fB\-i\fR \fISKIP1\fR:\fISKIP2\fR
+Skip the first SKIP1 pixels of FILE1 and the first SKIP2 pixels of FILE2.
+.TP
+\fB\-s\fR
+Silent output.  Only return an exit status.
+.PP
+SKIP1 and SKIP2 are the number of pixels to skip in each file.
+.PP
+If FILE is \`\fB\-\fR\' or missing,
+.I pixcmp
+reads from the standard input.
+.SH RETURN VALUES
+.PP
+The
+.I pixcmp
+utility returns \fB0\fR if there are no differences, \fB1\fR if there are only off-by-one differences, \fB2\fR if there are off-by-many errors, \fB126\fR if there are file processing problems, and \fB127\fR if there are argument processing or usage errors.
+.SH EXAMPLES
+.TP
+\fBpixcmp -l file1 file2\fR
+.br
+The two files are compared pixel by pixel with each difference printed instead of just the summary.
+.TP
+\fBpixdiff file1.pix file2.pix | pixcmp - file3.pix\fR
+.br
+The
+.I pixdiff
+tool compares the pixels in file1.pix with those in file2.pix and then outputs a resulting \`diff\' image which is then processed by
+.I pixcmp
+as input and compared against file3.pix, reporting on the differences.
+.SH SEE ALSO
+brlcad(1), pixdiff(1), pix(5), bw(5)
+.SH AUTHOR
+Charles M. Kennedy
+.br
+Michael John Muuss
+.br
+Christopher Sean Morrison
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <devs@brlcad.org>.
