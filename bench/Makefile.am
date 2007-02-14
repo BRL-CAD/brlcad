@@ -14,7 +14,8 @@ dist_bin_SCRIPTS = \
 	benchmark
 
 man_MANS = \
-	benchmark.1
+	benchmark.1 \
+	pixcmp.1
 
 EXTRA_DIST = \
 	$(man_MANS) \
