@@ -3327,9 +3327,6 @@ AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
 
-# XXX only irix can build libtkglx right now?
-AM_CONDITIONAL(BUILD_LIBTKGLX, [test "x$host_os" = "xirix6.5"])
-
 
 dnl Any combination of the different optimizations listed below may individually be
 dnl optionally turned off by commenting out the unwanted defines in the config file.
@@ -3718,7 +3715,6 @@ AC_CONFIG_FILES([
 	src/other/libtk/library/pkgIndex.tcl
 	src/other/libtk/unix/Makefile
 	src/other/libtk/unix/tkConfig.sh
-	src/other/libtkGLX/Makefile
 	src/other/libutahrle/Makefile
 	src/other/libutahrle/include/Makefile
 	src/other/libz/Makefile

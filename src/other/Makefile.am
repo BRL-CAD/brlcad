@@ -24,12 +24,6 @@ else !BUILD_JOVE
 JOVEDIR=
 endif
 
-if BUILD_LIBTKGLX
-TKGLXDIR=libtkGLX
-else !BUILD_LIBTKGLX
-TKGLXDIR=
-endif
-
 if BUILD_URT
 URTDIR=URToolkit
 UTAHRLEDIR=libutahrle
@@ -101,7 +95,6 @@ SUBDIRS = \
 	${ZDIR} \
 	${PNGDIR} \
 	${REGEXDIR} \
-	${TKGLXDIR} \
 	$(UTAHRLEDIR) \
 	$(URTDIR) \
 	${TCLDIR} \
