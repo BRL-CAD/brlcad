@@ -33,7 +33,7 @@ categories: 1) LGPL, 2) BSD/BDL, or 3) are in the public domain.  See
 the terms of each individual license as well as BRL-CAD's COPYING file
 for more details.
 
-* added options to pixcmp for improved diff reporting - Sean Morrison
+* rewrote pixcmp providing improved I/O format options - Sean Morrison
 * added new manual page for pixcmp utility - Sean Morrison
 * updated bundled zlib to version 1.2.3 - Sean Morrison
 * updated bundled libpng to version 1.2.16 - Sean Morrison
