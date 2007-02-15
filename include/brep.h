@@ -23,7 +23,7 @@
  *
  * @brief
  *	Define surface and curve structures for
- * 	Non Rational Uniform B-Spline (NURB)
+ * 	Non Rational Uniform B-Spline (NURBS)
  *	curves and surfaces. Uses openNURBS library.
  *
  * @author	Jason Owens
@@ -39,21 +39,29 @@
 #ifndef BREP_H
 #define BREP_H
 
-#ifdef __cplusplus
-#include "opennurbs.h"
-#else
-typedef struct _on_brep_placeholder {
-    int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
-} ON_Brep;
-#endif
 
 #ifdef __cplusplus
+extern "C++" {
+/* XXX ack. a hack. */
+#undef X
+#undef Y
+#undef Z
+#undef W
+#undef H
+#include "opennurbs.h"
+}
 extern "C" {
 #endif
 
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
+
+#ifndef __cplusplus
+typedef struct _on_brep_placeholder {
+    int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
+} ON_Brep;
+#endif
 
 /**
  * Bounding volume used as an acceleration data structure. It's
