@@ -1,9 +1,19 @@
 # $Id$
 
+
+if WITH_OPENNURBS
+BREP_CPPFLAGS=-DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
+BREP_PROGRAM=brep_cube
+else
+BREP_CPPFLAGS=
+BREP_PROGRAM=
+endif
+
 # apply-mdb was removed due to compile issues... should be readded once those are resolved...
 # nmgxplode was removed because nmgxplode.c doesn't seem to compile
 bin_PROGRAMS = \
 	bottest \
+	$(BREP_PROGRAM) \
 	brickwall \
 	clutter \
 	contours \
@@ -40,7 +50,7 @@ noinst_HEADERS = \
 
 man_MANS = picket_fence.1
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = ${TCL_CPPFLAGS} ${BREP_CPPFLAGS}
 
 
 # XXX does not compile?
@@ -49,6 +59,11 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 bottest_SOURCES = bottest.c
 bottest_LDADD = ${WDB}
+
+if WITH_OPENNURBS
+brep_cube_SOURCES = brep_cube.cpp
+brep_cube_LDADD = ${WDB}
+endif
 
 brickwall_SOURCES = brickwall.c
 brickwall_LDADD = ${WDB}
