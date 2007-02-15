@@ -121,11 +121,12 @@ handle_i_opt(const char *arg, long *skip1, long *skip2)
 int
 main(int argc, char *argv[])
 {
-    FILE *f1, *f2;
+    FILE *f1 = NULL;
+    FILE *f2 = NULL;
 
-    long matching;
-    long off1;
-    long offmany;
+    long matching = 0;
+    long off1 = 0;
+    long offmany = 0;
 
     int c;
     int list_pixel_values = 0;
