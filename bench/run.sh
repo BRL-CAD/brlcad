@@ -55,7 +55,7 @@
 #   DB - the directory containing the reference geometry (e.g. ../db)
 #   PIX - the directory containing the reference images (e.g. ../pix)
 #   LOG - the directory containing the reference logs (e.g. ../pix)
-#   CMP - the name of a pixcmp tool (e.g. ./pixcmp)
+#   CMP - the name of a pixcmp tool (e.g. ./pixcmp or cmp)
 #   ELP - the name of an elapsed time tool (e.g. ../sh/elapsed.sh)
 #   TIMEFRAME - the minimum number of seconds each trace needs to take
 #   MAXTIME - the maximum number of seconds to spend on any test
