@@ -35,7 +35,7 @@
 #   undef read
 #endif
 
-#include <sstream>
+#include <vector>
 
 #ifdef __cplusplus
 extern "C" {
@@ -225,6 +225,7 @@ class ON_CLASS RT_MemoryArchive : public ON_BinaryArchive
 {
 public:
   RT_MemoryArchive();
+  RT_MemoryArchive(genptr_t memory, size_t len);
   virtual ~RT_MemoryArchive();
 
   // ON_BinaryArchive overrides
@@ -233,18 +234,35 @@ public:
   bool SeekFromStart(size_t);
   bool AtEnd() const;
 
+  size_t Size() const;
+  /**
+   * Generate a byte-array copy of this memory archive.
+   * Allocates memory using bu_malloc, so must be freed with bu_free
+   */
+  genptr_t CreateCopy() const;
+
 protected:
   size_t Read(size_t, void*);
   size_t Write(size_t, const void*);
   bool Flush();
 
 private:
-  std::stringstream m_buffer;
+  size_t pos;
+  std::vector<char> m_buffer;
 };
 
 RT_MemoryArchive::RT_MemoryArchive()
-  : ON_BinaryArchive(ON::write), m_buffer(std::stringstream::out)
+  : ON_BinaryArchive(ON::write3dm), pos(0)
 {
+}
+
+RT_MemoryArchive::RT_MemoryArchive(genptr_t memory, size_t len)
+  : ON_BinaryArchive(ON::read3dm), pos(0)
+{
+  m_buffer.reserve(len);
+  for (int i = 0; i < len; i++) {
+    m_buffer.push_back(((char*)memory)[i]);
+  }
 }
 
 RT_MemoryArchive::~RT_MemoryArchive()
@@ -254,72 +272,122 @@ RT_MemoryArchive::~RT_MemoryArchive()
 size_t
 RT_MemoryArchive::CurrentPosition() const
 {
-  return 0; // XXX FIX me, because tellg() in std::istream is NOT const!!!! stupidity
+  return pos;
 }
 
 bool
 RT_MemoryArchive::SeekFromCurrentPosition(int seek_to)
 {
-  std::streampos p = seek_to;
-  m_buffer.seekg(m_buffer.tellg()+p);
-  m_buffer.seekp(m_buffer.tellp()+p);
-  return m_buffer.good();
+  if (pos + seek_to > m_buffer.size()) return false;
+  pos += seek_to;
+  return true;
 }
 
 bool
 RT_MemoryArchive::SeekFromStart(size_t seek_to)
 {
-  m_buffer.seekg(seek_to);
-  m_buffer.seekp(seek_to);
-  return m_buffer.good();
+  if (seek_to > m_buffer.size()) return false;
+  pos = seek_to;
+  return true;
 }
 
 bool
 RT_MemoryArchive::AtEnd() const
 {
-  return m_buffer.eof();
+  return pos == m_buffer.size();
+}
+
+size_t
+RT_MemoryArchive::Size() const
+{
+  return m_buffer.size();
+}
+
+genptr_t
+RT_MemoryArchive::CreateCopy() const
+{
+  genptr_t memory = (genptr_t)bu_malloc(m_buffer.size()*sizeof(char),"rt_memoryarchive createcopy");
+  const int size = m_buffer.size();
+  for (int i = 0; i < size; i++) {
+    ((char*)memory)[i] = m_buffer[i];
+  }
+  return memory;
 }
 
 size_t
 RT_MemoryArchive::Read(size_t amount, void* buf)
 {
-  m_buffer.read((char*)buf, amount);
-  return m_buffer.gcount();
+    const int read_amount = (pos + amount > m_buffer.size()) ? m_buffer.size()-(pos+amount) : amount;
+    const int start = pos;
+    for (; pos < (start+read_amount); pos++) {
+	((char*)buf)[pos-start] = m_buffer[pos];
+    }
+    return read_amount;
 }
 
 size_t
-RT_MemoryArchive::Write(size_t amount, const void* buf)
+RT_MemoryArchive::Write(const size_t amount, const void* buf)
 {
-  m_buffer.write((const char*)buf, amount);
-  return (m_buffer.good()) ? amount : 0;
+    const int start = pos;
+    for (; pos < (start+amount); pos++) {
+	m_buffer.push_back(((char*)buf)[pos-start]);
+    }
+    return amount;
 }
 
 bool
 RT_MemoryArchive::Flush()
 {
-  m_buffer.flush();
-  return m_buffer.good();
+  return true;
 }
 
-
+#include <iostream>
 /**
  *			R T _ B R E P _ E X P O R T 5
  */
 int
 rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    struct rt_brep_internal* oni;
+    struct rt_brep_internal* bi;
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_BREP) return -1;
-    oni = (struct rt_brep_internal*)ip->idb_ptr;
-    RT_BREP_CK_MAGIC(oni);
+    bi = (struct rt_brep_internal*)ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
 
     BU_INIT_EXTERNAL(ep);
-    ep->ext_nbytes = 0;
 
+    RT_MemoryArchive archive;
+    /* XXX what to do about the version */
+    ONX_Model model;
 
-    return 0;
+    { 
+	ON_Layer default_layer;
+	default_layer.SetLayerIndex(0);
+	default_layer.SetLayerName("Default");
+	model.m_layer_table.Reserve(1);
+	model.m_layer_table.Append(default_layer);
+    }
+
+    ONX_Model_Object& mo = model.m_object_table.AppendNew();
+    mo.m_object = bi->brep;
+    mo.m_attributes.m_layer_index = 0;
+    mo.m_attributes.m_name = "brep";
+    fprintf(stderr, "m_object_table count: %d\n", model.m_object_table.Count());
+
+    model.m_properties.m_RevisionHistory.NewRevision();
+    model.m_properties.m_Application.m_application_name = "BRL-CAD B-Rep primitive";
+    
+    model.Polish();
+    ON_TextLog err(stderr);
+    bool ok = model.Write(archive, 4, "export5", &err);
+    if (ok) {
+	ep->ext_nbytes = archive.Size();
+	ep->ext_buf = archive.CreateCopy();
+	return 0;
+    } else {
+	return -1;
+    }
 }
 
 
@@ -329,8 +397,43 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 int
 rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
+  struct rt_brep_internal* bi;
+  BU_CK_EXTERNAL(ep);
+  RT_CK_DB_INTERNAL(ip);
+  ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+  ip->idb_type = ID_BREP;
+  ip->idb_meth = &rt_functab[ID_BREP];
+  ip->idb_ptr = bu_malloc(sizeof(struct rt_brep_internal), "rt_brep_internal");
+  
+  bi = (struct rt_brep_internal*)ip->idb_ptr;
+  bi->magic = RT_BREP_INTERNAL_MAGIC;
 
-    return 0;
+  RT_MemoryArchive archive(ep->ext_buf, ep->ext_nbytes);
+  ONX_Model model;
+  ON_TextLog dump(stdout);
+  //archive.Dump3dmChunk(dump);
+  model.Read(archive, &dump);
+  
+  if (model.IsValid(&dump)) {
+      ONX_Model_Object mo = model.m_object_table[0];
+      // XXX does openNURBS force us to copy? it seems the answer is
+      // YES due to the const-ness
+      bi->brep = new ON_Brep(*dynamic_cast<const ON_Brep*>(mo.m_object)); 
+      delete mo.m_object;
+      return 0;
+  } else {
+      return -1;
+  }
+//   ON_Object* b;
+//   int rc = archive.ReadObject(&b);
+//   if (rc == 1) {
+//       bi->brep = dynamic_cast<ON_Brep*>(b);
+//       return 0;
+//   } else {
+//       fprintf(stderr, "Error reading brep: %s", ((rc == 3) ? "UUID not registered" : "file IO problems"));
+//       bi->brep = NULL;
+//       return -1;
+//   }
 }
 
 
@@ -340,6 +443,14 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 void
 rt_brep_ifree(struct rt_db_internal *ip)
 {
+    struct rt_brep_internal* bi;
+    RT_CK_DB_INTERNAL(ip);
+    bi = (struct rt_brep_internal*)ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+    if (bi->brep != NULL)
+	delete bi->brep;
+    bu_free(bi, "rt_brep_internal free");
+    ip->idb_ptr = GENPTR_NULL;
 }
 
 
@@ -375,7 +486,7 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 
 /*
  * Local Variables:
- * mode: C
+ * mode: C++
  * tab-width: 8
  * c-basic-offset: 4
  * indent-tabs-mode: t
