@@ -49,7 +49,10 @@ pixcmp \- compare two pix image files pixel by pixel
 is a program to compare two BRL-CAD pix image files pixel by pixel.  The following \fIOPTIONS\fR are available:
 .TP
 \fB\-l\fR
-Output pixel numbers and values for all pixels that differ.
+Output pixel numbers, counting from 1, and values for all pixels that differ.
+.TP
+\fB\-b\fR
+Use bytes instead of pixels for both processing and output.  With this option, the \fB-i\fR SKIP values should be specified as bytes instead of pixels.
 .TP
 \fB\-i\fR \fISKIP\fR
 Skip the first SKIP pixels of input (for FILE1 and FILE2).
@@ -86,11 +89,11 @@ as input and compared against file3.pix, reporting on the differences.
 .SH SEE ALSO
 brlcad(1), pixdiff(1), pix(5), bw(5)
 .SH AUTHOR
+Christopher Sean Morrison
+.br
 Charles M. Kennedy
 .br
 Michael John Muuss
-.br
-Christopher Sean Morrison
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
 mail to <devs@brlcad.org>.
