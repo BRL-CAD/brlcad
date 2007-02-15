@@ -3,12 +3,22 @@
 lib_LTLIBRARIES = libwdb.la
 noinst_LTLIBRARIES = libwdb_nil.la
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
+if WITH_OPENNURBS
+BREP_CPPFLAGS=-DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
+BREP_SRCS=brep.cpp
+else
+BREP_SRCS=
+BREP_CPPFLAGS=
+endif
+
+AM_CPPFLAGS = ${TCL_CPPFLAGS} ${BREP_CPPFLAGS}
 
 SRCS = \
 	arbn.c \
 	ars.c \
 	bot.c \
+	$(BREP_SRCS) \
 	cline.c \
 	dsp.c \
 	dynamic_geometry.c \
@@ -27,6 +37,9 @@ SRCS = \
 	units.c \
 	vol.c \
 	wdb.c
+
+EXTRA_libwdb_nil_la_SOURCES = \
+	g_brep.cpp
 
 libwdb_nil_la_SOURCES = \
 	$(SRCS) \
