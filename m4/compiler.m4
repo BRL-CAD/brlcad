@@ -54,8 +54,10 @@ bc_[$2]_works=yes
 __keep="$3"
 AC_MSG_CHECKING([if compiler and linker recognize $__flag])
 PRECFLAGS="$CFLAGS"
+PRECXXFLAGS="$CXXFLAGS"
 PRELDFLAGS="$LDFLAGS"
 CFLAGS="$CFLAGS $__flag"
+CXXFLAGS="$CXXFLAGS $__flag"
 LDFLAGS="$LDFLAGS $__flag"
 m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
 AC_TRY_COMPILE( [], [int i;], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
@@ -68,6 +70,7 @@ int main(){exit(0);}
 AC_MSG_RESULT($bc_[$2]_works)
 if test "x$bc_[$2]_works" = "xno" -o "x$__keep" != "x" ; then
 	CFLAGS="$PRECFLAGS"
+	CXXFLAGS="$PRECXXFLAGS"
 	LDFLAGS="$PRELDFLAGS"
 fi
 ])
@@ -83,7 +86,9 @@ AC_MSG_CHECKING([if compiler recognizes $__flag])
 bc_[$2]_works=yes
 __keep="$3"
 PRECFLAGS="$CFLAGS"
+PRECXXFLAGS="$CXXFLAGS"
 CFLAGS="$CFLAGS $__flag"
+CXXFLAGS="$CXXFLAGS $__flag"
 m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
 AC_TRY_COMPILE( [], [int i;], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
 m4_popdef([AC_TRY_EVAL])
@@ -91,6 +96,7 @@ rm -f conftest.err
 AC_MSG_RESULT($bc_[$2]_works)
 if test "x$bc_[$2]_works" = "xno" -o "x$__keep" != "x" ; then
 	CFLAGS="$PRECFLAGS"
+	CXXFLAGS="$PRECXXFLAGS"
 fi
 ])
 
@@ -127,7 +133,9 @@ AC_MSG_CHECKING([if preprocesser recognizes $__flag])
 bc_[$2]_works=yes
 __keep="$3"
 PRECPPFLAGS="$CPPFLAGS"
+PRECXXCPPFLAGS="$CXXCPPFLAGS"
 CPPFLAGS="$CPPFLAGS $__flag"
+CXXCPPFLAGS="$CXXCPPFLAGS $__flag"
 m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
 AC_TRY_COMPILE( [], [int i;], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then bc_[$2]_works=no ; fi], [bc_[$2]_works=no])
 m4_popdef([AC_TRY_EVAL])
@@ -135,6 +143,7 @@ rm -f conftest.err
 AC_MSG_RESULT($bc_[$2]_works)
 if test "x$bc_[$2]_works" = "xno" -o "x$__keep" = "x" ; then
 	CPPFLAGS="$PRECPPFLAGS"
+	CXXCPPFLAGS="$PRECXXCPPFLAGS"
 fi
 ])
 
