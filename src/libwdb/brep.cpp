@@ -35,10 +35,6 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 
 
@@ -57,9 +53,6 @@ extern "C" {
 #include "bn.h"
 #include "wdb.h"
 
-#ifdef __cplusplus
-}
-#endif
 
 /*
  *                        M K _ B R E P
@@ -75,4 +68,3 @@ mk_brep( struct rt_wdb* file, const char* name, ON_Brep* brep )
   bi->brep = brep;
   return wdb_export(file, name, (genptr_t)bi, ID_BREP, mk_conv2mm);
 }
-
