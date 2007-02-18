@@ -143,21 +143,16 @@ free_progname(void) {
  */
 const char *
 bu_getprogname(void) {
+    char *name;
+
     if (progname) {
 	return progname;
     }
 
-#ifdef HAVE_BASENAME
-    {
-	char *name;
-	if (!progname) {
-	    name = basename(bu_argv0(NULL));
-	    /* string returned by basename is not ours, get a copy */
-	    progname = strdup(name); 
-	    atexit(free_progname);
-	}
-    }
-#endif
+    name = basename(bu_argv0(NULL));
+    /* string returned by basename is not ours, get a copy */
+    progname = strdup(name); 
+    atexit(free_progname);
 
     return progname;
 }
@@ -172,11 +167,7 @@ bu_getprogname(void) {
 void
 bu_setprogname(const char *prog) {
 #ifdef HAVE_SETPROGNAME
-#  ifdef HAVE_BASENAME
     setprogname(basename(prog));
-#  else
-    setprogname(prog);
-#  endif
 #endif
 
     (void)bu_argv0(prog);
