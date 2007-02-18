@@ -23,11 +23,11 @@
 #endif
 #if defined(sgi)
 #  if !defined(mips) || defined(SGI4D_Rel2)
-		/* 3D systems, and Rel2 4D systems. */
+/* 3D systems, and Rel2 4D systems. */
 #    include <bsd/sys/types.h>
 #    include <bsd/sys/time.h>
 #  else
-		/* Rel3 4D systems got it right */
+/* Rel3 4D systems got it right */
 #    include <sys/types.h>
 #    include <sys/time.h>
 #  endif
@@ -46,26 +46,26 @@
 int
 bsdselect(long readfds, int sec, int us)
 {
-	fd_set	fdset;
-	int	width;
-	struct	timeval tv;
-	int	ret;
+    fd_set	fdset;
+    int	width;
+    struct	timeval tv;
+    int	ret;
 
-	tv.tv_sec = sec;
-	tv.tv_usec = us;
+    tv.tv_sec = sec;
+    tv.tv_usec = us;
 
-	if( (width = getdtablesize()) <= 0 )
-		width = 32;
-	FD_ZERO( &fdset );
-	fdset.fds_bits[0] = readfds;	/* peek inside! */
+    if( (width = getdtablesize()) <= 0 )
+	width = 32;
+    FD_ZERO( &fdset );
+    fdset.fds_bits[0] = readfds;	/* peek inside! */
 
-	if( (ret = select( width, &fdset, (fd_set *)0, (fd_set *)0, &tv )) <= 0 )  {
-		if( ret < 0 )  perror("bsdselect/select");
-		return(0);		/* no bits ready */
-	}
+    if( (ret = select( width, &fdset, (fd_set *)0, (fd_set *)0, &tv )) <= 0 )  {
+	if( ret < 0 )  perror("bsdselect/select");
+	return(0);		/* no bits ready */
+    }
 
-	readfds = fdset.fds_bits[0];
-	return( readfds );
+    readfds = fdset.fds_bits[0];
+    return( readfds );
 }
 
 /*

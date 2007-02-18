@@ -47,11 +47,11 @@ static const int unused = 0;
 char *
 strchr(register char *sp, register char c)
 {
-	do {
-		if( *sp == c )
-			return( sp );
-	}  while( *sp++ );
-	return( (char *)0 );
+    do {
+	if( *sp == c )
+	    return( sp );
+    }  while( *sp++ );
+    return( (char *)0 );
 }
 
 #endif

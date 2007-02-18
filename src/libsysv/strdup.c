@@ -59,15 +59,15 @@ static const int unused = 0;
 char *
 strdup(register const char *cp)
 {
-	register char	*base;
-	register int	len;
+    register char	*base;
+    register int	len;
 
-	len = strlen( cp )+2;
-	if( (base = (char *)malloc( len )) == (char *)0 )
-		return( (char *)0 );
+    len = strlen( cp )+2;
+    if( (base = (char *)malloc( len )) == (char *)0 )
+	return( (char *)0 );
 
-	bcopy( cp, base, len );
-	return(base);
+    bcopy( cp, base, len );
+    return(base);
 }
 
 #endif
