@@ -54,7 +54,8 @@ static const int unused = 0;
  *
  * If *stringp is NULL, strsep returns NULL.
  */
-char *strsep(register char **stringp, register const char *delim)
+char *
+strsep(register char **stringp, register const char *delim)
 {
     register char *s;
     register const char *spanp;
