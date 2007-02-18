@@ -3,6 +3,7 @@
 lib_LTLIBRARIES = libsysv.la
 
 SRCS = \
+	basename.c \
 	memset.c \
 	redata.c \
 	regex.c \
