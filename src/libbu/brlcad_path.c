@@ -46,6 +46,9 @@ static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
 #endif
+#ifdef HAVE_LIBGEN_H
+#  include <libgen.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"
@@ -62,6 +65,7 @@ static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 #endif
 
 
+
 /**
  *	b u _ i p w d
  * @brief
@@ -72,32 +76,33 @@ static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 static const char *
 bu_ipwd()
 {
-    static const char *pwd = NULL;
+    /* private stash */
+    static const char *ipwd = NULL;
 
-    if (pwd) {
-	return pwd;
+    if (ipwd) {
+	return ipwd;
     }
 
 #ifdef HAVE_GETENV
-    pwd = getenv("PWD");
-#else
-    pwd = (char *)NULL;
+    ipwd = getenv("PWD"); /* not our memory to free */
 #endif
 
-    return pwd;
+    return ipwd;
 }
 
 
 /**
  *		b u _ a r g v 0
  *
- * set the location of argv[0], used by the brlcad-path-finding
- * routines when attempting to locate binaries, libraries, and
- * resources.  This routine may only be called once to set argv0.
+ * this routine is used by the brlcad-path-finding routines when
+ * attempting to locate binaries, libraries, and resources.  This
+ * routine will set argv0 if path is provided and should generally be
+ * set early on by bu_setprogname().
  */
-static const char *
+const char *
 bu_argv0(const char *path)
 {
+    /* private stash */
     static const char *argv0 = NULL;
 
     /* set our initial pwd if we have not already */
@@ -107,18 +112,26 @@ bu_argv0(const char *path)
 	argv0 = path;
     }
 
-    if (argv0) {
-	return (argv0);
-    }
-
-    /* we were called without a bu_setprogname() so fallback to
-     * getprogname() before returning NULL.
-     */
 #ifdef HAVE_GETPROGNAME
-    argv0 = getprogname();
+    /* fallback to getprogname() before returning NULL. */
+    if (!argv0) {
+	argv0 = getprogname(); /* not malloc'd memory */
+    }
 #endif
 
     return argv0;
+}
+
+
+/* internal storage for bu_getprogname */
+static const char *progname = NULL;
+
+/* release memory for progname on application exit */
+static void
+free_progname(void) {
+    if (progname) {
+	free((char *)progname);
+    }
 }
 
 
@@ -130,7 +143,23 @@ bu_argv0(const char *path)
  */
 const char *
 bu_getprogname(void) {
-    return bu_argv0(NULL);
+    if (progname) {
+	return progname;
+    }
+
+#ifdef HAVE_BASENAME
+    {
+	char *name;
+	if (!progname) {
+	    name = basename(bu_argv0(NULL));
+	    /* string returned by basename is not ours, get a copy */
+	    progname = strdup(name); 
+	    atexit(free_progname);
+	}
+    }
+#endif
+
+    return progname;
 }
 
 
@@ -141,11 +170,16 @@ bu_getprogname(void) {
  * before main() for you, but necessary otherwise for portability.
  */
 void
-bu_setprogname(const char *progname) {
+bu_setprogname(const char *prog) {
 #ifdef HAVE_SETPROGNAME
-    setprogname(progname);
+#  ifdef HAVE_BASENAME
+    setprogname(basename(prog));
+#  else
+    setprogname(prog);
+#  endif
 #endif
-    (void)bu_argv0(progname);
+
+    (void)bu_argv0(prog);
     return;
 }
 
@@ -338,7 +372,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     bu_vls_init(&searched);
 
     if (bu_debug) {
-	bu_log("bu_brlcad_root: searching for [%s]\n", rhs);
+	bu_log("bu_brlcad_root: searching for [%s]\n", rhs?rhs:"");
     }
 
     /* BRLCAD_ROOT environment variable if set */
@@ -465,7 +499,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     bu_vls_init(&searched);
 
     if (bu_debug) {
-	bu_log("bu_brlcad_data: looking for [%s]\n", rhs);
+	bu_log("bu_brlcad_data: looking for [%s]\n", rhs?rhs:"");
     }
 
     /* BRLCAD_DATA environment variable if set */
