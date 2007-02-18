@@ -12,8 +12,8 @@ endif
 # apply-mdb was removed due to compile issues... should be readded once those are resolved...
 # nmgxplode was removed because nmgxplode.c doesn't seem to compile
 bin_PROGRAMS = \
-	bottest \
 	$(BREP_PROGRAM) \
+	bottest \
 	brickwall \
 	clutter \
 	contours \
