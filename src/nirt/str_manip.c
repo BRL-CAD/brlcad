@@ -89,23 +89,6 @@ int str_dbl(char *buf, double *Result)
 
 }
 
-#ifndef HAVE_BASENAME
-char *basename(char *string)
-{
-    char	*sp;
-    char        *sp2;
-
-    for (sp = string + strlen(string); (sp > string) && (*sp != '/'); --sp)
-	;
-    if (*sp == '/')
-	++sp;
-    sp2 = sp;
-    while (*sp2 != '{' && *sp2 != '\0')
-	++sp2;
-    *sp2 = '\0';
-    return (sp);
-}
-#endif
 
 /*
  * Local Variables:
