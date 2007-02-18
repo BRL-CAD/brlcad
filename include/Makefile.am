@@ -75,7 +75,8 @@ brlcadinclude_wanted = \
 
 # headers used by multiple packages but still considered private
 noinst_HEADERS = \
-	fbmsg.h
+	fbmsg.h \
+	sysv.h
 
 EXTRA_DIST = \
 	on_nurb.h \
