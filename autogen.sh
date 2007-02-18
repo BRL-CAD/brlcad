@@ -322,13 +322,9 @@ else
 fi
 
 _have_sed="`echo no | sed 's/no/yes/' 2>/dev/null`"
-HAVE_SED=no
-if [ $? = 0 ] ; then
-    [ "x$_have_sed" = "xyes" ] && HAVE_SED=yes
-fi
-if [ "x$HAVE_SED" = "xno" ] ; then
-    $ECHO "Warning:  sed does not appear to be available."
-    $ECHO "GNU Autotools version checks are disabled."
+if [ $? -ne 0 ] ; then
+    $ECHO "ERROR:  sed does not appear to be available."
+    exit 2
 fi
 
 # allow a recursive run to disable further recursions
@@ -340,10 +336,8 @@ fi
 ################################################
 # check for help arg and bypass version checks #
 ################################################
-if [ "x$HAVE_SED" = "xyes" ] ; then
-    if [ "x`echo $ARGS | sed 's/.*[hH][eE][lL][pP].*/help/'`" = "xhelp" ] ; then
-	HELP=yes
-    fi
+if [ "x`echo $ARGS | sed 's/.*[hH][eE][lL][pP].*/help/'`" = "xhelp" ] ; then
+    HELP=yes
 fi
 if [ "x$HELP" = "xyes" ] ; then
     usage
@@ -639,14 +633,11 @@ initialize ( ) {
     #####################
     # detect an aux dir #
     #####################
-    _aux_dir=.
-    if test "x$HAVE_SED" = "xyes" ; then
-	_aux_dir="`grep AC_CONFIG_AUX_DIR $CONFIGURE | grep -v '.*#.*AC_CONFIG_AUX_DIR' | tail -${TAIL_N}1 | sed 's/^[ 	]*AC_CONFIG_AUX_DIR(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
-	if test ! -d "$_aux_dir" ; then
-	    _aux_dir=.
-	else
-	    $VERBOSE_ECHO "Detected auxillary directory: $_aux_dir"
-	fi
+    _aux_dir="`grep AC_CONFIG_AUX_DIR $CONFIGURE | grep -v '.*#.*AC_CONFIG_AUX_DIR' | tail -${TAIL_N}1 | sed 's/^[ 	]*AC_CONFIG_AUX_DIR(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
+    if test ! -d "$_aux_dir" ; then
+	_aux_dir=.
+    else
+	$VERBOSE_ECHO "Detected auxillary directory: $_aux_dir"
     fi
 
 
@@ -908,53 +899,49 @@ manual_autogen ( ) {
 
     if [ ! $ret = 0 ] ; then
 	# retry without the -f and check for usage of macros that are too new
-	if test "x$HAVE_SED" = "xyes" ; then
+	ac2_59_macros="AC_C_RESTRICT AC_INCLUDES_DEFAULT AC_LANG_ASSERT AC_LANG_WERROR AS_SET_CATFILE"
+	ac2_55_macros="AC_COMPILER_IFELSE AC_FUNC_MBRTOWC AC_HEADER_STDBOOL AC_LANG_CONFTEST AC_LANG_SOURCE AC_LANG_PROGRAM AC_LANG_CALL AC_LANG_FUNC_TRY_LINK AC_MSG_FAILURE AC_PREPROC_IFELSE"
+	ac2_54_macros="AC_C_BACKSLASH_A AC_CONFIG_LIBOBJ_DIR AC_GNU_SOURCE AC_PROG_EGREP AC_PROG_FGREP AC_REPLACE_FNMATCH AC_FUNC_FNMATCH_GNU AC_FUNC_REALLOC AC_TYPE_MBSTATE_T"
 
-	    ac2_59_macros="AC_C_RESTRICT AC_INCLUDES_DEFAULT AC_LANG_ASSERT AC_LANG_WERROR AS_SET_CATFILE"
-	    ac2_55_macros="AC_COMPILER_IFELSE AC_FUNC_MBRTOWC AC_HEADER_STDBOOL AC_LANG_CONFTEST AC_LANG_SOURCE AC_LANG_PROGRAM AC_LANG_CALL AC_LANG_FUNC_TRY_LINK AC_MSG_FAILURE AC_PREPROC_IFELSE"
-	    ac2_54_macros="AC_C_BACKSLASH_A AC_CONFIG_LIBOBJ_DIR AC_GNU_SOURCE AC_PROG_EGREP AC_PROG_FGREP AC_REPLACE_FNMATCH AC_FUNC_FNMATCH_GNU AC_FUNC_REALLOC AC_TYPE_MBSTATE_T"
-
-	    macros_to_search=""
-	    if [ $AUTOCONF_MAJOR_VERSION -lt 2 ] ; then
+	macros_to_search=""
+	if [ $AUTOCONF_MAJOR_VERSION -lt 2 ] ; then
+	    macros_to_search="$ac2_59_macros $ac2_55_macros $ac2_54_macros"
+	else
+	    if [ $AUTOCONF_MINOR_VERSION -lt 54 ] ; then
 		macros_to_search="$ac2_59_macros $ac2_55_macros $ac2_54_macros"
-	    else
-		if [ $AUTOCONF_MINOR_VERSION -lt 54 ] ; then
-		    macros_to_search="$ac2_59_macros $ac2_55_macros $ac2_54_macros"
-		elif [ $AUTOCONF_MINOR_VERSION -lt 55 ] ; then
-		    macros_to_search="$ac2_59_macros $ac2_55_macros"
-		elif [ $AUTOCONF_MINOR_VERSION -lt 59 ] ; then
-		    macros_to_search="$ac2_59_macros"
-		fi
-	    fi
-
-	    configure_ac_macros=__none__
-	    for feature in $macros_to_search ; do
-		$VERBOSE_ECHO "Searching for $feature in $CONFIGURE"
-		found="`grep \"^$feature.*\" $CONFIGURE`"
-		if [ ! "x$found" = "x" ] ; then
-		    if [ "x$configure_ac_macros" = "x__none__" ] ; then
-			configure_ac_macros="$feature"
-		    else
-			configure_ac_macros="$feature $configure_ac_macros"
-		    fi
-		fi
-	    done
-	    if [ ! "x$configure_ac_macros" = "x__none__" ] ; then
-		$ECHO
-		$ECHO "Warning:  Unsupported macros were found in $CONFIGURE"
-		$ECHO
-		$ECHO "The $CONFIGURE file was scanned in order to determine if any"
-		$ECHO "unsupported macros are used that exceed the minimum version"
-		$ECHO "settings specified within this file.  As such, the following macros"
-		$ECHO "should be removed from configure.ac or the version numbers in this"
-		$ECHO "file should be increased:"
-		$ECHO
-		$ECHO "$configure_ac_macros"
-		$ECHO
-		$ECHO $ECHO_N "Ignorantly continuing build preparation ... $ECHO_C"
+	    elif [ $AUTOCONF_MINOR_VERSION -lt 55 ] ; then
+		macros_to_search="$ac2_59_macros $ac2_55_macros"
+	    elif [ $AUTOCONF_MINOR_VERSION -lt 59 ] ; then
+		macros_to_search="$ac2_59_macros"
 	    fi
 	fi
 
+	configure_ac_macros=__none__
+	for feature in $macros_to_search ; do
+	    $VERBOSE_ECHO "Searching for $feature in $CONFIGURE"
+	    found="`grep \"^$feature.*\" $CONFIGURE`"
+	    if [ ! "x$found" = "x" ] ; then
+		if [ "x$configure_ac_macros" = "x__none__" ] ; then
+		    configure_ac_macros="$feature"
+		else
+		    configure_ac_macros="$feature $configure_ac_macros"
+		fi
+	    fi
+	done
+	if [ ! "x$configure_ac_macros" = "x__none__" ] ; then
+	    $ECHO
+	    $ECHO "Warning:  Unsupported macros were found in $CONFIGURE"
+	    $ECHO
+	    $ECHO "The $CONFIGURE file was scanned in order to determine if any"
+	    $ECHO "unsupported macros are used that exceed the minimum version"
+	    $ECHO "settings specified within this file.  As such, the following macros"
+	    $ECHO "should be removed from configure.ac or the version numbers in this"
+	    $ECHO "file should be increased:"
+	    $ECHO
+	    $ECHO "$configure_ac_macros"
+	    $ECHO
+	    $ECHO $ECHO_N "Ignorantly continuing build preparation ... $ECHO_C"
+	fi
 
 	###################
 	# autoconf, retry #
