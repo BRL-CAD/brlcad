@@ -57,8 +57,7 @@ static const int unused = 0;
  * duplicate the strings, returns a pointer to the new string.
  */
 char *
-strdup( cp )
-register const char *cp;
+strdup(register const char *cp)
 {
 	register char	*base;
 	register int	len;

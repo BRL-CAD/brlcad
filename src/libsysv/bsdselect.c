@@ -43,8 +43,8 @@
 #endif
 
 /* The 4.3 BSD version */
-bsdselect( readfds, sec, us )
-long readfds;
+int
+bsdselect(long readfds, int sec, int us)
 {
 	fd_set	fdset;
 	int	width;
