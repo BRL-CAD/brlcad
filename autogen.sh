@@ -58,19 +58,17 @@
 ######################################################################
 
 # set to minimum acceptible version of autoconf
-AUTOCONF_MAJOR_VERSION=2
-AUTOCONF_MINOR_VERSION=52
-AUTOCONF_PATCH_VERSION=0
-
+if [ "x$AUTOCONF_VERSION" = "x" ] ; then
+    AUTOCONF_VERSION=2.52
+fi
 # set to minimum acceptible version of automake
-AUTOMAKE_MAJOR_VERSION=1
-AUTOMAKE_MINOR_VERSION=6
-AUTOMAKE_PATCH_VERSION=0
-
+if [ "x$AUTOMAKE_VERSION" = "x" ] ; then
+    AUTOMAKE_VERSION=1.6.0
+fi
 # set to minimum acceptible version of libtool
-LIBTOOL_MAJOR_VERSION=1
-LIBTOOL_MINOR_VERSION=4
-LIBTOOL_PATCH_VERSION=2
+if [ "x$LIBTOOL_VERSION" = "x" ] ; then
+    LIBTOOL_VERSION=1.4.2
+fi
 
 
 ##################
@@ -144,6 +142,62 @@ version_error ( ) {
     $ECHO "or upgraded on this system, or $NAME_OF_AUTOGEN must be run on the source"
     $ECHO "code on another system and then transferred to here. -- Cheers!"
     $ECHO
+}
+
+##########################
+# VERSION_CHECK FUNCTION #
+##########################
+version_check ( ) {
+    if [ "x$1" = "x" ] ; then
+	echo "INTERNAL ERROR: version_check was not provided a minimum version"
+	exit 1
+    fi
+    _min="$1"
+    if [ "x$2" = "x" ] ; then
+	echo "INTERNAL ERROR: version check was not provided a comparison version"
+	exit 1
+    fi
+    _cur="$2"
+
+    _min_major="`echo ${_min}. | cut -d. -f1 | sed 's/[^0-9]//g'`"
+    _min_minor="`echo ${_min}. | cut -d. -f2 | sed 's/[^0-9]//g'`"
+    _min_patch="`echo ${_min}. | cut -d. -f3 | sed 's/[^0-9]//g'`"
+
+    _cur_major="`echo ${_cur}. | cut -d. -f1 | sed 's/[^0-9]//g'`"
+    _cur_minor="`echo ${_cur}. | cut -d. -f2 | sed 's/[^0-9]//g'`"
+    _cur_patch="`echo ${_cur}. | cut -d. -f3 | sed 's/[^0-9]//g'`"
+
+    if [ "x$_min_major" = "x" ] ; then
+	_min_major=0
+    fi
+    if [ "x$_min_minor" = "x" ] ; then
+	_min_minor=0
+    fi
+    if [ "x$_min_patch" = "x" ] ; then
+	_min_patch=0
+    fi
+    if [ "x$_cur_minor" = "x" ] ; then
+	_cur_major=0
+    fi
+    if [ "x$_cur_minor" = "x" ] ; then
+	_cur_minor=0
+    fi
+    if [ "x$_cur_patch" = "x" ] ; then
+	_cur_patch=0
+    fi
+
+    if [ $_min_major -lt $_cur_major ] ; then
+	return 0
+    elif [ $_min_major -eq $_cur_major ] ; then
+	if [ $_min_minor -lt $_cur_minor ] ; then
+	    return 0
+	elif [ $_min_minor -eq $_cur_minor ] ; then
+	    if [ $_min_patch -lt $_cur_patch ] ; then
+		return 0
+	    fi
+	fi
+    fi
+    return 1
 }
 
 
@@ -373,28 +427,18 @@ if [ ! "x$_acfound" = "xyes" ] ; then
     $ECHO "ERROR:  Unable to locate GNU Autoconf."
     _report_error=yes
 else
-    _version_line="`$AUTOCONF --version | head -${HEAD_N}1`"
-    if [ "x$HAVE_SED" = "xyes" ] ; then
-	_maj_version="`echo $_version_line | sed 's/.* \([0-9]\)\.[0-9][0-9].*/\1/'`"
-	_maj_version="`echo $_maj_version | sed 's/.*[A-Z].*//'`"
-	[ "x$_maj_version" = "x" ] && _maj_version=0
-	_min_version="`echo $_version_line | sed 's/.* [0-9]\.\([0-9][0-9]\).*/\1/'`"
-	_min_version="`echo $_min_version | sed 's/.*[A-Z].*//'`"
-	[ "x$_min_version" = "x" ] && _min_version=0
-
-	if [ $_maj_version -lt $AUTOCONF_MAJOR_VERSION ] ; then
-	    _report_error=yes
-	elif [ $_maj_version -eq $AUTOCONF_MAJOR_VERSION ] ; then
-	    if [ $_min_version -lt $AUTOCONF_MINOR_VERSION ] ; then
-		_report_error=yes
-	    fi
-	fi
-
-	$ECHO "Found GNU Autoconf version $_maj_version.$_min_version"
+    _version="`$AUTOCONF --version | head -${HEAD_N}1 | sed 's/[^0-9]*\([0-9\.][0-9\.]*\)/\1/'`"
+    if [ "x$_version" = "x" ] ; then
+	_version="0.0.0"
+    fi
+    $ECHO "Found GNU Autoconf version $_version"
+    version_check "$AUTOCONF_VERSION" "$_version"
+    if [ $? -ne 0 ] ; then
+	_report_error=yes
     fi
 fi
 if [ "x$_report_error" = "xyes" ] ; then
-    version_error "$AUTOCONF_MAJOR_VERSION.$AUTOCONF_MINOR_VERSION.$AUTOCONF_PATCH_VERSION" "GNU Autoconf"
+    version_error "$AUTOCONF_VERSION" "GNU Autoconf"
     exit 1
 fi
 
@@ -424,35 +468,18 @@ if [ ! "x$_amfound" = "xyes" ] ; then
     $ECHO "ERROR: Unable to locate GNU Automake."
     _report_error=yes
 else
-    _version_line="`$AUTOMAKE --version | head -${HEAD_N}1`"
-    if [ "x$HAVE_SED" = "xyes" ] ; then
-	_maj_version="`echo $_version_line | sed 's/.* \([0-9]\)\.[0-9].*/\1/'`"
-	_maj_version="`echo $_maj_version | sed 's/.*[A-Z].*//'`"
-	[ "x$_maj_version" = "x" ] && _maj_version=0
-	_min_version="`echo $_version_line | sed 's/.* [0-9]\.\([0-9]\).*/\1/'`"
-	_min_version="`echo $_min_version | sed 's/.*[A-Z].*//'`"
-	[ "x$_min_version" = "x" ] && _min_version=0
-	_pat_version="`echo $_version_line | sed 's/.* [0-9]\.[0-9][\.-]p*\([0-9]*\).*/\1/'`"
-	_pat_version="`echo $_pat_version | sed 's/.*[A-Z].*//'`"
-	[ "x$_pat_version" = "x" ] && _pat_version=0
-
-	if [ $_maj_version -lt $AUTOMAKE_MAJOR_VERSION ] ; then
-	    _report_error=yes
-	elif [ $_maj_version -eq $AUTOMAKE_MAJOR_VERSION ] ; then
-	    if [ $_min_version -lt $AUTOMAKE_MINOR_VERSION ] ; then
-		_report_error=yes
-	    elif [ $_min_version -eq $AUTOMAKE_MINOR_VERSION ] ; then
-		if [ $_pat_version -lt $AUTOMAKE_PATCH_VERSION ] ; then
-		    _report_error=yes
-		fi
-	    fi
-	fi
-
-	$ECHO "Found GNU Automake version $_maj_version.$_min_version.$_pat_version"
+    _version="`$AUTOMAKE --version | head -${HEAD_N}1 | sed 's/[^0-9]*\([0-9\.][0-9\.]*\)/\1/'`"
+    if [ "x$_version" = "x" ] ; then
+	_version="0.0.0"
+    fi
+    $ECHO "Found GNU Automake version $_version"
+    version_check "$AUTOMAKE_VERSION" "$_version" 
+    if [ $? -ne 0 ] ; then
+	_report_error=yes
     fi
 fi
 if [ "x$_report_error" = "xyes" ] ; then
-    version_error "$AUTOMAKE_MAJOR_VERSION.$AUTOMAKE_MINOR_VERSION.$AUTOMAKE_PATCH_VERSION" "GNU Automake"
+    version_error "$AUTOMAKE_VERSION" "GNU Automake"
     exit 1
 fi
 
@@ -543,36 +570,18 @@ if [ ! "x$_ltfound" = "xyes" ] ; then
     $ECHO "ERROR: Unable to locate GNU Libtool."
     _report_error=yes
 else
-    _version_line="`$LIBTOOLIZE --version | head -${HEAD_N}1`"
-    if [ "x$HAVE_SED" = "xyes" ] ; then
-	_maj_version="`echo $_version_line | sed 's/.* \([0-9]\)\.[0-9].*/\1/'`"
-	_maj_version="`echo $_maj_version | sed 's/.*[A-Z].*//'`"
-	[ "x$_maj_version" = "x" ] && _maj_version=0
-	_min_version="`echo $_version_line | sed 's/.* [0-9]\.\([0-9]\).*/\1/'`"
-	_min_version="`echo $_min_version | sed 's/.*[A-Z].*//'`"
-	[ "x$_min_version" = "x" ] && _min_version=0
-	_pat_version="`echo $_version_line | sed 's/.* [0-9]\.[0-9][\.-]p*\([0-9]*\).*/\1/'`"
-	_pat_version="`echo $_pat_version | sed 's/.*[A-Z].*//'`"
-	[ "x$_pat_version" = "x" ] && _pat_version=0
-
-	if [ $_maj_version -lt $LIBTOOL_MAJOR_VERSION ] ; then
-	    _report_error=yes
-	elif [ $_maj_version -eq $LIBTOOL_MAJOR_VERSION ] ; then
-	    if [ $_min_version -lt $LIBTOOL_MINOR_VERSION ] ; then
-		_report_error=yes
-	    elif [ $_min_version -eq $LIBTOOL_MINOR_VERSION ] ; then
-		if [ $_pat_version -lt $LIBTOOL_PATCH_VERSION ] ; then
-		    _report_error=yes
-		fi
-	    fi
-	fi
-
-	$ECHO "Found GNU Libtool version $_maj_version.$_min_version.$_pat_version"
-
+    _version="`$LIBTOOLIZE --version | head -${HEAD_N}1 | sed 's/[^0-9]*\([0-9\.][0-9\.]*\)/\1/'`"
+    if [ "x$_version" = "x" ] ; then
+	_version="0.0.0"
+    fi
+    $ECHO "Found GNU Libtool version $_version"
+    version_check "$LIBTOOL_VERSION" "$_version" 
+    if [ $? -ne 0 ] ; then
+	_report_error=yes
     fi
 fi
 if [ "x$_report_error" = "xyes" ] ; then
-    version_error "$LIBTOOL_MAJOR_VERSION.$LIBTOOL_MINOR_VERSION.$LIBTOOL_PATCH_VERSION" "GNU Libtool"
+    version_error "$LIBTOOL_VERSION" "GNU Libtool"
     exit 1
 fi
 
