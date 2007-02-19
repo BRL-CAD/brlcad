@@ -71,7 +71,7 @@ else
     mkdir_p='$(install_sh) -d'
   fi
 fi
-AC_SUBST([mkdir_p])])
+AC_SUBST([mkdir_p])
 # automake 1.10+ seems to use uppercase instead
 MKDIR_P="$mkdir_p"
 AC_SUBST([MKDIR_P])])
