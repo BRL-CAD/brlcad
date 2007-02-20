@@ -302,6 +302,10 @@ SOURCE=.\dir.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\dspline.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\fortray.c
 # End Source File
 # Begin Source File
@@ -675,10 +679,6 @@ SOURCE=.\regionfix.c
 # Begin Source File
 
 SOURCE=.\roots.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\rt_dspline.c
 # End Source File
 # Begin Source File
 

@@ -695,6 +695,25 @@ copy &quot;$(TargetDir)&quot;librt_d.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\dspline.c">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						BasicRuntimeChecks="3"
+						BrowseInformation="1"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\fortray.c">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -2447,25 +2466,6 @@ copy &quot;$(TargetDir)&quot;librt_d.lib ..\..\..\lib
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\roots.c">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\rt_dspline.c">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool

@@ -42,6 +42,7 @@ SRCS = \
 	db_walk.c \
 	dg_obj.c \
 	dir.c \
+	dspline.c \
 	fortray.c \
 	g_arb.c \
 	g_arbn.c \
@@ -135,7 +136,6 @@ SRCS = \
 	qray.c \
 	regionfix.c \
 	roots.c \
-	rt_dspline.c \
 	shoot.c \
 	spectrum.c \
 	storage.c \
