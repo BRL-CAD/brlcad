@@ -47,8 +47,10 @@ typedef struct Tcl_CallFrameStruct *Tcl_CallFrame;
 #endif
 
 
+/*
 EXTERN Tcl_Command Tcl_FindCommand _ANSI_ARGS_((Tcl_Interp *interp,
 	char *name, Tcl_Namespace *nsPtr, int flags));
+*/
 
 #define NS_SEARCH_NONE		(0)
 #define NS_SEARCH_CURRENT	(1<<0)
@@ -64,17 +66,18 @@ EXTERN Tcl_Namespace *Tcl_GetCurrentNamespace _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN Tcl_Namespace *Tcl_GetGlobalNamespace _ANSI_ARGS_((Tcl_Interp *interp));
 
 #if (TCL_MAJOR_VERSION >= 8)
+/*
 EXTERN Tcl_Namespace *Tcl_CreateNamespace _ANSI_ARGS_((Tcl_Interp *interp,
 	char *name, ClientData clientData, Tcl_NamespaceDeleteProc *nsDelProc));
-
+*/
 EXTERN void Tcl_DeleteNamespace _ANSI_ARGS_((Tcl_Namespace *nsPtr));
-
+/*
 EXTERN Tcl_Namespace *Tcl_FindNamespace _ANSI_ARGS_((Tcl_Interp *interp,
 	char *name, Tcl_Namespace *context, int flags));
 
 EXTERN int Tcl_Export _ANSI_ARGS_((Tcl_Interp *interp, Tcl_Namespace *nsPtr,
 	char *name, int resetFlag));
-
+*/
 EXTERN Tcl_Var Tcl_FindNamespaceVar _ANSI_ARGS_((Tcl_Interp *interp, char *name,
 	Tcl_Namespace *contextNsPtr, int flags));
 
