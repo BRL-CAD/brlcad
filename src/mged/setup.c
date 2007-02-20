@@ -58,24 +58,20 @@ void
 mged_setup(void)
 {
     struct bu_vls str;
+    const char *name = bu_getprogname();
 
-#if 1
-    /* use old for now until bu_getprogname() is verified */
-#ifdef _WIN32
-#  ifdef _DEBUG
-	Tcl_FindExecutable("mged_d");
-#  else
+    /* locate our run-time binary */
+    if (name) {
+	Tcl_FindExecutable(name);
+    } else {
 	Tcl_FindExecutable("mged");
-#  endif
-#else
-	Tcl_FindExecutable("mged");
-#endif
-#else
-    Tcl_FindExecutable(bu_getprogname());
-#endif
+    }
 
     /* Create the interpreter */
     interp = Tcl_CreateInterp();
+
+    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
+    tclcad_auto_path(interp);
 
     /* This runs the init.tcl script */
     if( Tcl_Init(interp) == TCL_ERROR )
@@ -179,9 +175,6 @@ mged_setup(void)
 #if !TRY_NEW_MGED_VARS
     mged_variable_setup(interp);
 #endif
-
-    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-    tclcad_auto_path(interp);
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_init(&str);
