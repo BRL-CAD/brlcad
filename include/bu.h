@@ -1726,7 +1726,7 @@ BU_EXPORT BU_EXTERN(void bu_bitv_free,
 BU_EXPORT BU_EXTERN(void bu_bomb,
 		    (const char *str));
 
-/* bu_fgets.c */
+/* fgets.c */
 BU_EXPORT BU_EXTERN(char *bu_fgets,
 		    ( char *s, int size, FILE *stream));
 /** @} */

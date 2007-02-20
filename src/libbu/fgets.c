@@ -1,4 +1,4 @@
-/*                      B U _ F G E T S . C
+/*                         F G E T S . C
  * BRL-CAD
  *
  * Copyright (c) 2006-2007 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup bu_log */
 /** @{ */
-/** @file bu_fgets.c
+/** @file fgets.c
  *
  * @brief
  * fgets replacement function that also handles CR as an EOL marker

@@ -12,7 +12,6 @@ SRCS = \
 	bitv.c \
 	bomb.c \
 	brlcad_path.c \
-	bu_fgets.c \
 	bu_tcl.c \
 	cmd.c \
 	cmdhist.c \
@@ -20,6 +19,7 @@ SRCS = \
 	color.c \
 	convert.c \
 	dirname.c \
+	fgets.c \
 	fopen_uniq.c \
 	getopt.c \
 	hash.c \

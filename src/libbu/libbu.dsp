@@ -210,10 +210,6 @@ SOURCE=.\brlcad_path.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\bu_fgets.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\bu_tcl.c
 # End Source File
 # Begin Source File
@@ -239,6 +235,10 @@ SOURCE=.\convert.c
 # Begin Source File
 
 SOURCE=.\dirname.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\fgets.c
 # End Source File
 # Begin Source File
 
