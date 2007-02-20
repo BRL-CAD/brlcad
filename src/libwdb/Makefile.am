@@ -38,9 +38,6 @@ SRCS = \
 	vol.c \
 	wdb.c
 
-EXTRA_libwdb_nil_la_SOURCES = \
-	g_brep.cpp
-
 libwdb_nil_la_SOURCES = \
 	$(SRCS) \
 	vers.c
