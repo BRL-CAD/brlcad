@@ -489,7 +489,7 @@ $c
 $c This library is distributed in the hope that it will be useful, but
 $c WITHOUT ANY WARRANTY; without even the implied warranty of
 $c MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-$c Lesser Lesser General Public License for more details.
+$c Lesser General Public License for more details.
 $c
 $c You should have received a copy of the GNU Lesser General Public
 $c License along with this file; see the file named COPYING for more
