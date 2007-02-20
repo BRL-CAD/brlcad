@@ -89,7 +89,6 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	colorquant.h \
 	getopt.c \
 	include
 
