@@ -24,9 +24,11 @@
 # This is a comment \
 exit
 
-foreach arg $argv {
-    catch {pkg_mkIndex -verbose $arg *.tcl *.itcl *.itk *.sh}
-    puts $arg
+if {[info exists $argv]} {
+    foreach arg $argv {
+	catch {pkg_mkIndex -verbose $arg *.tcl *.itcl *.itk *.sh}
+	puts $arg
+    }
 }
 
 lappend pkgIndex

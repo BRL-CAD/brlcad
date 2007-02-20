@@ -25,9 +25,11 @@
 exit
 
 # make the tclIndex
-foreach arg $argv {
-    catch {auto_mkindex $arg *.tcl *.itcl *.itk *.sh}
-    puts $arg
+if {[info exists $argv]} {
+    foreach arg $argv {
+	catch {auto_mkindex $arg *.tcl *.itcl *.itk *.sh}
+	puts $arg
+    }
 }
 
 lappend tclIndex
