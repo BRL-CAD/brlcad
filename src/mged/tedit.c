@@ -917,7 +917,7 @@ editit(const char *file)
 		if (bu_file_exists(buffer)) {
 		    editor = buffer;
 		} else {
-		    const char *dirn = bu_dirname(bu_getprogname());
+		    const char *dirn = bu_dirname(bu_argv0());
 		    if (dirn) {
 			sprintf(buffer, "%s/%s", dirn, editor);
 			if (bu_file_exists(buffer)) {
