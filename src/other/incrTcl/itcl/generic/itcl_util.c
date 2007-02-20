@@ -767,19 +767,19 @@ Itcl_SaveInterpState(interp, status)
     /*
      *  If an error is in progress, preserve its state.
      */
-    if ((iPtr->flags & ERR_IN_PROGRESS) != 0) {
-        val = Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY);
-        if (val) {
-            info->errorInfo = ckalloc((unsigned)(strlen(val)+1));
-            strcpy(info->errorInfo, val);
-        }
+/* XXX     if ((iPtr->flags & ERR_IN_PROGRESS) != 0) { */
+/*         val = Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY); */
+/*         if (val) { */
+/*             info->errorInfo = ckalloc((unsigned)(strlen(val)+1)); */
+/*             strcpy(info->errorInfo, val); */
+/*         } */
 
-        val = Tcl_GetVar(interp, "errorCode", TCL_GLOBAL_ONLY);
-        if (val) {
-            info->errorCode = ckalloc((unsigned)(strlen(val)+1));
-            strcpy(info->errorCode, val);
-        }
-    }
+/*         val = Tcl_GetVar(interp, "errorCode", TCL_GLOBAL_ONLY); */
+/*         if (val) { */
+/*             info->errorCode = ckalloc((unsigned)(strlen(val)+1)); */
+/*             strcpy(info->errorCode, val); */
+/*         } */
+/*     } */
 
     /*
      *  Now, reset the interpreter to a clean state.
@@ -831,7 +831,7 @@ Itcl_RestoreInterpState(interp, state)
     if (info->errorCode) {
         (void) Tcl_SetVar2(interp, "errorCode", (char*)NULL,
             info->errorCode, TCL_GLOBAL_ONLY);
-        iPtr->flags |= ERROR_CODE_SET;
+/* XXX        iPtr->flags |= ERROR_CODE_SET; */
 
         ckfree(info->errorCode);
     }
