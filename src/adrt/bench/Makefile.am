@@ -21,7 +21,6 @@ adrt_bench_SOURCES = \
 	main.c
 
 adrt_bench_LDADD = \
-	@BU@ \
 	${top_builddir}/src/adrt/libcommon/libcommon.la \
 	${top_builddir}/src/adrt/librender/librender.la \
 	${top_builddir}/src/adrt/libutil/libutil.la \

@@ -22,7 +22,6 @@ isst_slave_CFLAGS = \
 	${TCL_CPPFLAGS}
 
 isst_slave_LDADD = \
-	@BU@ \
 	${LIBTHREAD} \
 	${top_builddir}/src/adrt/libcommon/libcommon.la \
 	${top_builddir}/src/adrt/librender/librender.la \

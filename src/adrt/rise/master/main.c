@@ -106,28 +106,28 @@ int main(int argc, char **argv) {
 #ifdef HAVE_GETOPT_LONG
 	getopt_long(argc, argv, shortopts, longopts, NULL)
 #else
-	bu_getopt(argc, argv, shortopts)
+	getopt(argc, argv, shortopts)
 #endif
 	)!= -1)
   {
 	  switch(c) {
 		  case 'o':
-			  obs_port = atoi(bu_optarg);
+			  obs_port = atoi(optarg);
 			  break;
 		  case 'p':
-			  port = atoi(bu_optarg);
+			  port = atoi(optarg);
 			  break;
 		  case 'e':
-			  strncpy(exec, bu_optarg, 64);
+			  strncpy(exec, optarg, 64);
 			  break;
 		  case 'i':
-			  strncpy(temp, bu_optarg, 4);
+			  strncpy(temp, optarg, 4);
 			  interval = atoi(temp);
 			  if(interval < 0) interval = 0;
 			  if(interval > 60) interval = 60;
 			  break;
 		  case 'l':
-			  strncpy(list, bu_optarg, 64);
+			  strncpy(list, optarg, 64);
 			  break;
 		  case 'h':
 			  help();
@@ -140,8 +140,8 @@ int main(int argc, char **argv) {
 			  return EXIT_FAILURE;
 	  }
   }
-  argc -= bu_optind;
-  argv += bu_optind;
+  argc -= optind;
+  argv += optind;
 
   strcpy(proj, argv[0]);
 

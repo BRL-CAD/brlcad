@@ -24,7 +24,6 @@ rise_master_SOURCES = \
 	post.c
 
 rise_master_LDADD = \
-	@BU@ \
 	${top_builddir}/src/adrt/libcommon/libcommon.la \
 	${top_builddir}/src/adrt/librender/librender.la \
 	${top_builddir}/src/adrt/libutil/libutil.la \

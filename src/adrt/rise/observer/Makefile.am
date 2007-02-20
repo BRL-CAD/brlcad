@@ -23,7 +23,6 @@ rise_observer_CFLAGS = \
 	${TCL_CPPFLAGS}
 
 rise_observer_LDADD = \
-	@BU@ \
 	@SDL_LIBS@ \
 	${top_builddir}/src/adrt/libtienet/libtienet.la \
 	${top_builddir}/src/adrt/libtie/libtie.la \

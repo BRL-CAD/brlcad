@@ -29,7 +29,6 @@ isst_master_CFLAGS = \
 isst_master_LDADD = \
 	@PYTHON_LIBS@ \
 	@SDL_LIBS@ \
-	@BU@ \
 	${top_builddir}/src/adrt/libcommon/libcommon.la \
 	${top_builddir}/src/adrt/librender/librender.la \
 	${top_builddir}/src/adrt/libutil/libutil.la \
