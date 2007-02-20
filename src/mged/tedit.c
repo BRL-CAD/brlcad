@@ -293,7 +293,7 @@ Get_next_line(FILE *fp)
 	int i;
 	int len;
 
-	if( fgets( line , sizeof( line ) , fp ) == NULL )
+	if( bu_fgets( line , sizeof( line ) , fp ) == NULL )
 		return( (char *)NULL );
 
 	len = strlen( line );
@@ -917,7 +917,7 @@ editit(const char *file)
 		if (bu_file_exists(buffer)) {
 		    editor = buffer;
 		} else {
-		    const char *dirn = bu_dirname(bu_argv0());
+		    const char *dirn = bu_dirname(bu_argv0(NULL));
 		    if (dirn) {
 			sprintf(buffer, "%s/%s", dirn, editor);
 			if (bu_file_exists(buffer)) {
