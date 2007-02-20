@@ -452,6 +452,7 @@ variables should be utilized instead of the standard C facility:
   bu_free() instead of free()
   bu_log() instead of printf()
   bu_bomb() instead of abort()
+  bu_dirname() instead of dirname()
   bu_getopt() instead of getopt()
   bu_opterr instead of opterr
   bu_optind instead of optind
