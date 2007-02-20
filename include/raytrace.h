@@ -5781,7 +5781,7 @@ RT_EXPORT BU_EXTERN(long nmg_find_max_index,
 
 /* From nmg_rt.c */
 
-/* From rt_dspline.c */
+/* From dspline.c */
 RT_EXPORT BU_EXTERN(void rt_dspline_matrix,
 		    (mat_t m,const char *type,
 		     const double	tension,

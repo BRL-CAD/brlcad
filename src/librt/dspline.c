@@ -1,4 +1,4 @@
-/*                    R T _ D S P L I N E . C
+/*                        D S P L I N E . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2007 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file rt_dspline.c
+/** @file dspline.c
  *
  * Simple data (double) spline package.
  *
