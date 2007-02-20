@@ -80,6 +80,8 @@ if {$tcl_platform(os) == "Windows NT"} {
 
 lappend auto_path $dir
 lappend auto_path [file join $env(ARCHER_HOME) lib]
+lappend auto_path [file join $env(ARCHER_HOME) lib tcl8.5]
+lappend auto_path [file join $env(ARCHER_HOME) lib tk8.5]
 lappend auto_path [file join $env(ARCHER_HOME) lib tcl8.4]
 lappend auto_path [file join $env(ARCHER_HOME) lib tk8.4]
 lappend auto_path [file join $env(ARCHER_HOME) lib itcl3.3]
