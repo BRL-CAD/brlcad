@@ -1,6 +1,7 @@
 # $Id$
 
 lib_LTLIBRARIES = libopenNURBS.la
+noinst_LTLIBRARIES = libopenNURBS_nil.la
 
 ON_INC = \
 	opennurbs.h \
@@ -190,9 +191,13 @@ ON_SRC = \
 
 
 include_HEADERS = $(ON_INC)
-libopenNURBS_la_SOURCES = $(ON_SRC)
-libopenNURBS_la_LIBADD = $(LIBZ)
-libopenNURBS_la_CFLAGS = ${LIBZ_CPPFLAGS}
+
+libopenNURBS_nil_la_SOURCES = $(ON_SRC)
+libopenNURBS_nil_la_CFLAGS = ${LIBZ_CPPFLAGS}
+libopenNURBS_nil_la_LIBADD = ${LIBZ}
+
+libopenNURBS_la_SOURCES = 
+libopenNURBS_la_LIBADD = libopenNURBS_nil.la
 
 EXTRA_DIST = \
 	example_brep \
