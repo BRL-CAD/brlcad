@@ -79,6 +79,13 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "fb.h"
 #include "tk.h"
 
+
+/* we need tk version numbers for compatibility compilation */
+#if !defined(TK_MAJOR_VERSION) || (TK_MAJOR_VERSION != 8)
+#  error "Expecting Tk 8"
+#endif
+
+
 /*
  * The format record for the PIX file format:
  */
@@ -245,7 +252,11 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
     block.width = width;
     block.pitch = block.pixelSize * fileWidth;
 
+#if TK_MINOR_VERSION < 5
     Tk_PhotoExpand(imageHandle, destX + width, destY + height);
+#else
+    Tk_PhotoExpand(interp, imageHandle, destX + width, destY + height);
+#endif
 
     if ((srcY + height) < fileHeight) {
 	Tcl_Seek( chan, (long) ((fileHeight - srcY - height) * block.pitch),
@@ -269,7 +280,11 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
 	    return TCL_ERROR;
 	}
 	block.height = 1;
+#if TK_MINOR_VERSION < 5
 	Tk_PhotoPutBlock(imageHandle, &block, destX, destY+h-1, width, height, 1);
+#else
+	Tk_PhotoPutBlock(interp, imageHandle, &block, destX, destY+h-1, width, height, 1);
+#endif
     }
 
     bu_free((char *) pixelPtr, "PIX image buffer");
