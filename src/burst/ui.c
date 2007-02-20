@@ -1577,7 +1577,7 @@ HmItem *itemp;
 		(void) fclose( cmdfp );
 		return;
 		}
-	while( fgets( scrbuf, LNBUFSZ, inpfp ) != NULL )
+	while( bu_fgets( scrbuf, LNBUFSZ, inpfp ) != NULL )
 		fputs( scrbuf, cmdfp );
 	(void) fclose( cmdfp );
 	(void) fclose( inpfp );

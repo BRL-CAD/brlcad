@@ -66,7 +66,7 @@ main(int argc, char **argv)
 
     /* copy any lines preceeding the first "start" command */
     last_pos = ftell(stdin);
-    while (fgets(line,MAXLEN,stdin)!=NULL){
+    while (bu_fgets(line,MAXLEN,stdin)!=NULL){
 	if (strncmp(line,"start",5)){
 	    printf("%s",line);
 	    last_pos = ftell(stdin);
@@ -80,7 +80,7 @@ main(int argc, char **argv)
 
     /* find the highest frame number in the file */
     maxnum = 0;
-    while(fgets(line,MAXLEN,stdin)!=NULL){
+    while(bu_fgets(line,MAXLEN,stdin)!=NULL){
 	if(!strncmp(line,"start",5)){
 	    sscanf(strpbrk(line,"0123456789"),"%d",&number);
 	    maxnum = (maxnum>number)?maxnum:number;
@@ -113,7 +113,7 @@ main(int argc, char **argv)
 	while (!feof(stdin)){
 
 	    /*read to next "start" command*/
-	    while (fgets(line,MAXLEN,stdin)!=NULL){
+	    while (bu_fgets(line,MAXLEN,stdin)!=NULL){
 		if (!strncmp(line,"start",5)){
 		    sscanf( strpbrk(line,"0123456789"),"%d", &number);
 		    break;
@@ -127,14 +127,14 @@ main(int argc, char **argv)
 		    last_pos = ftell(stdin);
 		}
 		/* print contents until next "end" */
-		while (fgets(line,MAXLEN,stdin)!=NULL){
+		while (bu_fgets(line,MAXLEN,stdin)!=NULL){
 		    if (!strncmp(line,"end;",4))
 			break;
 		    else if (strncmp(line,"clean",5))
 			printf("%s",line);
 		}
 		/* save contents until next "start" */
-		while (fgets(line,MAXLEN,stdin)!=NULL){
+		while (bu_fgets(line,MAXLEN,stdin)!=NULL){
 		    if(!strncmp(line,"start",5))
 			break;
 		    else {

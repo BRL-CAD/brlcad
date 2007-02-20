@@ -221,7 +221,7 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* read lines of region map file */
 	new_comp = (struct muves_comp *)NULL;
-	while( fgets( line, MUVES_LINE_LEN, muves_in ) != NULL )
+	while( bu_fgets( line, MUVES_LINE_LEN, muves_in ) != NULL )
 	{
 		char *ptr;
 
@@ -356,7 +356,7 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	new_sys = (struct muves_sys *)NULL;
 
 	/* read sysdef file */
-	while( fgets( line, MUVES_LINE_LEN, muves_in ) != NULL )
+	while( bu_fgets( line, MUVES_LINE_LEN, muves_in ) != NULL )
 	{
 		char *ptr;
 		char *c;

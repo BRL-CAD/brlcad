@@ -1269,7 +1269,7 @@ interactive_cmd(FILE *fp)
 
 	/* Get first line */
 	*pos = '\0';
-	(void)fgets( pos, sizeof(buf), fp );
+	(void)bu_fgets( pos, sizeof(buf), fp );
 	i = strlen(buf);
 
 	/* If continued, get more */
@@ -1277,7 +1277,7 @@ interactive_cmd(FILE *fp)
 		pos += i-2;	/* zap NL and backslash */
 		*pos = '\0';
 		bu_log("-> "); (void)fflush(stderr);
-		(void)fgets( pos, sizeof(buf)-strlen(buf), fp );
+		(void)bu_fgets( pos, sizeof(buf)-strlen(buf), fp );
 		i = strlen(pos);
 	}
 
@@ -2891,7 +2891,7 @@ host_helper(FILE *fp)
 
 	while(1)  {
 		line[0] = '\0';
-		(void)fgets( line, sizeof(line), fp );
+		(void)bu_fgets( line, sizeof(line), fp );
 		if( feof(fp) )  break;
 
 		loc_db[0] = '\0';

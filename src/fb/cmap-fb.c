@@ -98,7 +98,7 @@ main(int argc, char **argv)
 	if( overlay )
 		fb_rmap( fbp, &cm );
 
-	while( fgets(line, 511, fp) != NULL ) {
+	while( bu_fgets(line, 511, fp) != NULL ) {
 		str = line;
 		str = nextsym( buf, str );
 		if( ! isdigit(buf[0]) ) {

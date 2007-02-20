@@ -649,7 +649,7 @@ read_ply_header()
 	if( verbose ) {
 		bu_log( "Reading header...\n" );
 	}
-	if( fgets( line, LINELEN, ply_fp ) == NULL ) {
+	if( bu_fgets( line, LINELEN, ply_fp ) == NULL ) {
 		bu_log( "Unexpected EOF in input file!!!\n" );
 		return( 1 );
 	}
@@ -657,7 +657,7 @@ read_ply_header()
 		bu_log( "Input file does not appear to be a PLY file!!!\n" );
 		return( 1 );
 	}
-	while( fgets( line, LINELEN, ply_fp ) ) {
+	while( bu_fgets( line, LINELEN, ply_fp ) ) {
 		struct element *elem_ptr;
 		int len;
 

@@ -154,7 +154,7 @@ view_2init( struct application *ap, char *framename )
 		int i, j;
 
 		/* File exists, with partial results */
-		while( fgets( line, RT_MAXLINE, outfp ) ) {
+		while( bu_fgets( line, RT_MAXLINE, outfp ) ) {
 			if( !strncmp( line, "BOT:", 4 ) ) {
 				struct directory *dp;
 

@@ -100,7 +100,7 @@ main (int argc, char **argv)
 	return 1;
     }
 
-    for (line_nm = 1; fgets(buf, BUF_LEN - 1, fp[FP_IN]) != NULL; ++line_nm)
+    for (line_nm = 1; bu_fgets(buf, BUF_LEN - 1, fp[FP_IN]) != NULL; ++line_nm)
     {
 	for (bp = buf; *bp != '\0'; ++bp)
 	    ;

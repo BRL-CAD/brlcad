@@ -7958,7 +7958,7 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 					bu_log( "Hiding BRL-CAD geometry (%s) is generaly a bad idea.\n", dp->d_namep );
 					bu_log( "This may cause unexpected problems with other commands.\n" );
 					bu_log( "Are you sure you want to do this?? (y/n)\n" );
-					(void)fgets( line, sizeof( line ), stdin );
+					(void)bu_fgets( line, sizeof( line ), stdin );
 					if( line[0] == 'y' || line[0] == 'Y' ) break;
 					if( line[0] == 'n' || line[0] == 'N' ) {
 						no_hide = 1;

@@ -800,7 +800,7 @@ Input(register segment *inp)				/* input stroke record */
 {
 	char			inbuf[82];	/* record buffer */
 
-	while ( fgets( inbuf, (int)sizeof inbuf, stdin ) != NULL )
+	while ( bu_fgets( inbuf, (int)sizeof inbuf, stdin ) != NULL )
 	{			/* scan input record */
 		register int	cvt;	/* # fields converted */
 

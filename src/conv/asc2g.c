@@ -161,7 +161,7 @@ main(int argc, char **argv)
 
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
-	if( fgets( c1, 6, ifp ) == NULL ) {
+	if( bu_fgets( c1, 6, ifp ) == NULL ) {
 		bu_bomb( "Unexpected EOF\n" );
 	}
 
@@ -222,7 +222,7 @@ main(int argc, char **argv)
 	buf = (char *)bu_calloc( sizeof(char), BUFSIZE, "input buffer" );
 
 	/* Read ASCII input file, each record on a line */
-	while( ( fgets( buf, BUFSIZE, ifp ) ) != (char *)0 )  {
+	while( ( bu_fgets( buf, BUFSIZE, ifp ) ) != (char *)0 )  {
 
 after_read:
 		/* Clear the output record -- vital! */
@@ -473,7 +473,7 @@ sktbld(void)
 
 	verts = (point2d_t *)bu_calloc( vert_count, sizeof( point2d_t ), "verts" );
 
-	if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+	if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 	{
 		bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
 		exit( -1 );
@@ -522,7 +522,7 @@ sktbld(void)
 		double radius;
 		int k;
 
-		if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+		if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 		{
 			bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
 			exit( -1 );
@@ -551,7 +551,7 @@ sktbld(void)
 					&nsg->k.k_size, &nsg->c_size );
 				nsg->k.knots = (fastf_t *)bu_calloc( nsg->k.k_size, sizeof( fastf_t ), "knots" );
 				nsg->ctl_points = (int *)bu_calloc( nsg->c_size, sizeof( int ), "control points" );
-				if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+				if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 				{
 					bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
 					exit( -1 );
@@ -573,7 +573,7 @@ sktbld(void)
 						exit( 1 );
 					}
 				}
-				if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+				if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 				{
 					bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
 					exit( -1 );
@@ -681,7 +681,7 @@ nmgbld(void)
 	BU_ASSERT_LONG( version, ==, 1 );	/* DISK_MODEL_VERSION */
 
 	/* Get next line of input with the 26 counts on it */
-	if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )  {
+	if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )  {
 		bu_log( "Unexpected EOF while reading NMG %s data, line 2\n", name );
 		exit(-1);
 	}
@@ -703,7 +703,7 @@ nmgbld(void)
 		int k;
 		unsigned int cp_i;
 
-		if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+		if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 		{
 			bu_log( "Unexpected EOF while reading NMG %s data, hex line %d\n", name, j );
 			exit( -1 );
@@ -1008,13 +1008,13 @@ combbld(void)
 	}
 
 	if( temp_nflag )  {
-		fgets( buf, BUFSIZE, ifp );
+		bu_fgets( buf, BUFSIZE, ifp );
 		zap_nl();
 		bzero( matname, sizeof(matname) );
 		strncpy( matname, buf, sizeof(matname)-1 );
 	}
 	if( temp_pflag )  {
-		fgets( buf, BUFSIZE, ifp );
+		bu_fgets( buf, BUFSIZE, ifp );
 		zap_nl();
 		bzero( matparm, sizeof(matparm) );
 		strncpy( matparm, buf, sizeof(matparm)-1 );
@@ -1022,7 +1022,7 @@ combbld(void)
 
 	for(;;)  {
 		buf[0] = '\0';
-		if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+		if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 			break;
 
 		if( buf[0] != ID_MEMB )  break;
@@ -1230,7 +1230,7 @@ identbld(void)
 			version, ID_VERSION);
 	}
 
-	(void)fgets( buf, BUFSIZE, ifp);
+	(void)bu_fgets( buf, BUFSIZE, ifp);
 	zap_nl();
 	(void)strncpy( title, buf, sizeof(title)-1 );
 
@@ -1312,7 +1312,7 @@ polyhbld(void)
 	/* Count up the number of poly data lines which follow */
 	startpos = ftell(ifp);
 	for( nlines = 0; ; nlines++ )  {
-		if( fgets( buf, BUFSIZE, ifp ) == NULL )  break;
+		if( bu_fgets( buf, BUFSIZE, ifp ) == NULL )  break;
 		if( buf[0] != ID_P_DATA )  break;	/* 'Q' */
 	}
 	BU_ASSERT_LONG( nlines, >, 0 );
@@ -1332,7 +1332,7 @@ polyhbld(void)
 		register struct rt_pg_face_internal	*fp = &pg->poly[nlines];
 		register int	i;
 
-		if( fgets( buf, BUFSIZE, ifp ) == NULL )  break;
+		if( bu_fgets( buf, BUFSIZE, ifp ) == NULL )  break;
 		if( buf[0] != ID_P_DATA )  bu_bomb("mis-count of Q records?\n");
 
 		/* Input always has 5 points, even if all aren't significant */
@@ -1527,7 +1527,7 @@ bsurfbld(void)
 	/* Read the knot vector information */
 	count = record.d.d_kv_size[0] + record.d.d_kv_size[1];
 	for( i = 0; i < count; i++ )  {
-		fgets( buf, BUFSIZE, ifp );
+		bu_fgets( buf, BUFSIZE, ifp );
 		(void)sscanf( buf, "%f", vp++);
 	}
 	/* Write out the information */
@@ -1545,7 +1545,7 @@ bsurfbld(void)
 	count = record.d.d_ctl_size[0] * record.d.d_ctl_size[1] *
 		record.d.d_geom_type;
 	for( i = 0; i < count; i++ )  {
-		fgets( buf, BUFSIZE, ifp );
+		bu_fgets( buf, BUFSIZE, ifp );
 		(void)sscanf( buf, "%f", vp++);
 	}
 	/* Write out the information */
@@ -1640,7 +1640,7 @@ botbld(void)
 	vertices = (fastf_t *)bu_calloc( num_vertices * 3, sizeof( fastf_t ), "botbld: vertices" );
 	for( i=0 ; i<num_vertices ; i++ )
 	{
-		fgets( buf, BUFSIZE, ifp);
+		bu_fgets( buf, BUFSIZE, ifp);
 		sscanf( buf, "%d: %le %le %le", &j, &a[0], &a[1], &a[2] );
 		if( i != j )
 		{
@@ -1649,7 +1649,7 @@ botbld(void)
 			bu_free( (char *)vertices, "botbld: vertices" );
 			bu_log( "Skipping this solid!\n" );
 			while( buf[0] == '\t' )
-				fgets( buf, BUFSIZE, ifp);
+				bu_fgets( buf, BUFSIZE, ifp);
 			return;
 		}
 		VMOVE( &vertices[i*3], a );
@@ -1661,7 +1661,7 @@ botbld(void)
 		thick = (fastf_t *)bu_calloc( num_faces, sizeof( fastf_t ), "botbld thick" );
 	for( i=0 ; i<num_faces ; i++ )
 	{
-		fgets( buf, BUFSIZE, ifp);
+		bu_fgets( buf, BUFSIZE, ifp);
 		if( mode == RT_BOT_PLATE )
 			sscanf( buf, "%d: %d %d %d %le", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2], &a[0] );
 		else
@@ -1677,7 +1677,7 @@ botbld(void)
 				bu_free( (char *)thick, "botbld thick" );
 			bu_log( "Skipping this solid!\n" );
 			while( buf[0] == '\t' )
-				fgets( buf, BUFSIZE, ifp);
+				bu_fgets( buf, BUFSIZE, ifp);
 			return;
 		}
 
@@ -1688,7 +1688,7 @@ botbld(void)
 	if( mode == RT_BOT_PLATE )
 	{
 		/* get bit vector */
-		fgets( buf, BUFSIZE, ifp);
+		bu_fgets( buf, BUFSIZE, ifp);
 		facemode = bu_hex_to_bitv( &buf[1] );
 	}
 
@@ -1737,7 +1737,7 @@ pipebld(void)
 	/* Read data lines and process */
 
 	BU_LIST_INIT( &head );
-	fgets( buf, BUFSIZE, ifp);
+	bu_fgets( buf, BUFSIZE, ifp);
 	while( strncmp (buf , "END_PIPE", 8 ) )
 	{
 		double id,od,x,y,z,bendradius;
@@ -1756,7 +1756,7 @@ pipebld(void)
 		VSET( sp->pp_coord, x, y, z );
 
 		BU_LIST_INSERT( &head, &sp->l);
-		fgets( buf, BUFSIZE, ifp);
+		bu_fgets( buf, BUFSIZE, ifp);
 	}
 
 	mk_pipe(ofp, name, &head);
@@ -1849,7 +1849,7 @@ arbnbld(void)
 /*bu_log("starting to dump eqns\n");
  */
 	for( i = 0; i < neqn; i++ )  {
-		fgets( buf, BUFSIZE, ifp);
+		bu_fgets( buf, BUFSIZE, ifp);
 		(void)sscanf( buf, "%s %le %le %le %le", type,
 			&eqn[i][X], &eqn[i][Y], &eqn[i][Z], &eqn[i][3]);
 	}

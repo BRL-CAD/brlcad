@@ -93,7 +93,7 @@ main(int argc, char **argv)
 	/* read ASCII header section */
 	while( 1 )
 	{
-		if( fgets( line, LINE_LEN, infp ) == NULL )
+		if( bu_fgets( line, LINE_LEN, infp ) == NULL )
 		{
 			bu_log( "Unexpected EOF while loking for data\n" );
 			return 1;

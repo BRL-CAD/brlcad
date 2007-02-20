@@ -169,7 +169,7 @@ do_lines(FILE *fp, char *buffer)
 
 	for( line=0; /*NIL*/; line++ )  {
 		linebuf[0] = '\0';
-		(void)fgets( linebuf, sizeof(linebuf), fp );
+		(void)bu_fgets( linebuf, sizeof(linebuf), fp );
 		if( feof(fp) )
 			break;
 

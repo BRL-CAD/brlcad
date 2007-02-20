@@ -150,7 +150,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if (fgets(line, sizeof (line), fp) == NULL ||
+	if (bu_fgets(line, sizeof (line), fp) == NULL ||
 	    line[0] != hdr[0]) {
 		Tcl_AppendResult(interp, "Header line damaged, aborting\n", (char *)NULL);
 		return TCL_ERROR;
@@ -165,7 +165,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			bu_free((genptr_t)zot, "mater rec");
 		}
 
-		while (fgets(line, sizeof (line), fp) != NULL) {
+		while (bu_fgets(line, sizeof (line), fp) != NULL) {
 			int cnt;
 			int low, hi, r, g, b;
 
@@ -194,7 +194,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 		bu_vls_init(&vls);
 
-		while (fgets(line, sizeof (line), fp) != NULL) {
+		while (bu_fgets(line, sizeof (line), fp) != NULL) {
 			int cnt;
 			int low, hi, r, g, b;
 

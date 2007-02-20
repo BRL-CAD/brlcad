@@ -3844,7 +3844,7 @@ get_Input(char *inbuf, int bufsz, char *msg)
 #endif
 		{
 		prnt_Prompt( msg );
-		if( fgets( inbuf, bufsz, stdin ) == NULL )
+		if( bu_fgets( inbuf, bufsz, stdin ) == NULL )
 			return	NULL;
 		else	/* Clobber new-line. */
 			inbuf[strlen(inbuf)-1] = NUL;

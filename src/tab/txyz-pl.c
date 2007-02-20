@@ -63,7 +63,7 @@ char	*argv[];
 		t = xyz[0] = xyz[1] = xyz[2] = 0.0;
 
 		buf[0] = '\0';
-		fgets( buf, sizeof(buf), stdin );
+		bu_fgets( buf, sizeof(buf), stdin );
 		if( feof(stdin) )  break;
 
 		if( buf[0] == '#' )  continue;

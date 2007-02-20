@@ -200,7 +200,7 @@ main(int argc, char **argv)
 
 	/* count vertices */
 	no_of_verts = 1;
-	while( fgets( line , LINELEN , coords ) != NULL )
+	while( bu_fgets( line , LINELEN , coords ) != NULL )
 		no_of_verts++;
 
 	/* allocate memory to store vertex coordinates and normal coordinates and a pointer to
@@ -209,7 +209,7 @@ main(int argc, char **argv)
 
 	/* Now read the vertices again and store them */
 	rewind( coords );
-	while( fgets( line , LINELEN ,  coords ) != NULL )
+	while( bu_fgets( line , LINELEN ,  coords ) != NULL )
 	{
 		int number_scanned;
 		number_scanned = sscanf( line , "%d,%f,%f,%f,%f,%f,%f" , &i , &x , &z , &y , &nx , &ny , &nz );
@@ -242,7 +242,7 @@ main(int argc, char **argv)
 		/* Find an element name that has not already been processed */
 		curr_name = NULL;
 		done = 1;
-		while( fgets( line , LINELEN , elems ) != NULL )
+		while( bu_fgets( line , LINELEN , elems ) != NULL )
 		{
 			line[strlen(line)-1] = '\0';
 			name = strtok( line , tok_sep );
@@ -337,7 +337,7 @@ main(int argc, char **argv)
 			while( name == NULL || strcmp( name , curr_name ) )
 			{
 				/* check for enf of file */
-				if( fgets( line , LINELEN , elems ) == NULL )
+				if( bu_fgets( line , LINELEN , elems ) == NULL )
 				{
 					eof = 1;
 					break;

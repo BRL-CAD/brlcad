@@ -242,7 +242,7 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 
 		/* count lines */
-		while( fgets( aline, 256, f_srt ) ) {
+		while( bu_fgets( aline, 256, f_srt ) ) {
 			line_count++;
 		}
 
@@ -252,7 +252,7 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		/* read lines and save into the array */
 		rewind( f_srt );
 		line_count = 0;
-		while( fgets( aline, 256, f_srt ) ) {
+		while( bu_fgets( aline, 256, f_srt ) ) {
 			line_array[line_count] = bu_strdup( aline );
 			line_count++;
 		}
@@ -367,7 +367,7 @@ f_rcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  while(fgets( line , LINELEN, fp ) != NULL){
+  while(bu_fgets( line , LINELEN, fp ) != NULL){
 	  int changed;
 
     if(sscanf(line, "%d%d%d%d%s", &item, &air, &mat, &los, name) != 5)

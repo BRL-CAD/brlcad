@@ -742,7 +742,7 @@ main(int argc, char **argv)
 	while( k == 0.0 )
 	{
 		printf( "UNITS? (ft,in,m,cm, default is millimeters) ");
-		fgets(units, sizeof(units), stdin);
+		bu_fgets(units, sizeof(units), stdin);
 		switch (units[0])
 		{
 

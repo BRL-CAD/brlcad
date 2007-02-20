@@ -336,7 +336,7 @@ static long read_Cell_Data(void)
     if (lbp == NULL)
     {
 	lbp = linebuf;
-	fgets(lbp, MAX_LINE, filep);
+	bu_fgets(lbp, MAX_LINE, filep);
 	(void) strcpy(format, "%lf %lf");
 	(void) strcpy(format, "%lf %lf");
 	if (color_flag)
@@ -388,7 +388,7 @@ static long read_Cell_Data(void)
 		state = STATE_IN_HEADER;
 	    else if (state == STATE_IN_DATA)
 		state = STATE_BEYOND_DATA;
-	    if(feof(filep) || fgets(lbp, MAX_LINE, filep) == NULL)
+	    if(feof(filep) || bu_fgets(lbp, MAX_LINE, filep) == NULL)
 		return (gp - grid);
 	}
 	/*
@@ -426,7 +426,7 @@ static long read_Cell_Data(void)
 		gp->c_val.v_scalar = value.v_scalar;
 	    gp++;
 	}
-    } while (fgets(lbp, MAX_LINE, filep) != NULL);
+    } while (bu_fgets(lbp, MAX_LINE, filep) != NULL);
     return (gp - grid);
 }
 

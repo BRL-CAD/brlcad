@@ -1907,7 +1907,7 @@ int main(int argc, char **argv)
   if (interactive) {
     if (fenceFence) {
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nFence Name: [%s] ", fenceName);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceName");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceName");
       }
@@ -1924,7 +1924,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Start Position(x,y,z): [%f %f %f] ", fenceStartPosition[0], fenceStartPosition[1], fenceStartPosition[2]);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH * 3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH * 3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceStartPosition");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceStartPosition");
       }
@@ -1941,7 +1941,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "End Position(x,y,z): [%f %f %f] ", fenceEndPosition[0], fenceEndPosition[1], fenceEndPosition[2]);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceEndPosition");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceEndPosition");
       }
@@ -1958,7 +1958,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Fence Height(i,j,k): [%f %f %f] ", fenceHeight[0], fenceHeight[1], fenceHeight[2]);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceHeight");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceHeight");
       }
@@ -1986,7 +1986,7 @@ int main(int argc, char **argv)
       }
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Fence Material: [%s] ", fenceMaterial);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceMaterial");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceMaterial");
       }
@@ -2003,7 +2003,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Fence Material Parameters: [%s] ", fenceMaterialParams);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceMaterialParams");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceMaterialParams");
       }
@@ -2020,7 +2020,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Fence Material Color: [%d %d %d] ", fenceMaterialColor[0], fenceMaterialColor[1], fenceMaterialColor[2]);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceMaterialColor");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceMaterialColor");
       }
@@ -2056,7 +2056,7 @@ int main(int argc, char **argv)
 
     if (fencePoles) {
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nPole Name: [%s] ", poleName);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "poleName");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "poleName");
       }
@@ -2073,7 +2073,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Height: [%f] ", poleHeight);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "poleHeight");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "poleHeight");
       }
@@ -2090,7 +2090,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Radius: [%f] ", poleRadius);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "poleRadius");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "poleRadius");
       }
@@ -2107,7 +2107,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Spacing: [%f] ", fencePoleSpacing);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fencePoleSpacing");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fencePoleSpacing");
       }
@@ -2124,7 +2124,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Material: [%s] ", poleMaterial);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "poleMaterial");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "poleMaterial");
       }
@@ -2141,7 +2141,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Material Parameters: [%s] ", poleMaterialParams);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "poleMaterialParams");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "poleMaterialParams");
       }
@@ -2158,7 +2158,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Material Color: [%d %d %d] ", poleMaterialColor[0], poleMaterialColor[1], poleMaterialColor[2]);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "poleMaterialColor");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "poleMaterialColor");
       }
@@ -2194,7 +2194,7 @@ int main(int argc, char **argv)
 
     if (fenceMesh) {
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nMesh Name: [%s] ", meshName);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "meshName");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "meshName");
       }
@@ -2211,7 +2211,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Height: [%f] ", meshHeight);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "meshHeight");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "meshHeight");
       }
@@ -2228,7 +2228,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Width: [%f] ", meshWidth);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "meshWidth");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "meshWidth");
       }
@@ -2245,7 +2245,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Material: [%s] ", meshMaterial);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "meshMaterial");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "meshMaterial");
       }
@@ -2262,7 +2262,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Material Parameters: [%s] ", meshMaterialParams);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "meshMaterialParams");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "meshMaterialParams");
       }
@@ -2279,7 +2279,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Material Color: [%d %d %d] ", meshMaterialColor[0], meshMaterialColor[1], meshMaterialColor[2]);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "meshMaterialColor");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "meshMaterialColor");
       }
@@ -2315,7 +2315,7 @@ int main(int argc, char **argv)
 
     if (fenceWire) {
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nWire Name: [%s] ", wireName);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireName");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireName");
       }
@@ -2332,7 +2332,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Radius: [%f] ", wireRadius);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireRadius");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireRadius");
       }
@@ -2349,7 +2349,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Angle: [%f] ", wireAngle);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireAngle");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireAngle");
       }
@@ -2366,7 +2366,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Material: [%s] ", wireMaterial);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireMaterial");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireMaterial");
       }
@@ -2383,7 +2383,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Material Parameters: [%s] ", wireMaterialParams);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireMaterialParams");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireMaterialParams");
       }
@@ -2400,7 +2400,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Material Color: [%d %d %d] ", wireMaterialColor[0], wireMaterialColor[1], wireMaterialColor[2]);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireMaterialColor");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireMaterialColor");
       }
@@ -2433,7 +2433,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Segment Length: [%f] ", wireSegmentLength);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireSegmentLength");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireSegmentLength");
       }
@@ -2450,7 +2450,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Segment Separation: [%f] ", wireSegmentSeparation);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireSegmentSeparation");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireSegmentSeparation");
       }
@@ -2467,7 +2467,7 @@ int main(int argc, char **argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Segment Name: [%s] ", segmentName);
-      if ( ! fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+      if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "segmentName");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "segmentName");
       }

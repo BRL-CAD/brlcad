@@ -60,7 +60,7 @@ main(int argc, char *argv)
 		xyz[0] = xyz[1] = xyz[2] = 0.0;
 
 		buf[0] = '\0';
-		fgets( buf, sizeof(buf), stdin );
+		bu_fgets( buf, sizeof(buf), stdin );
 		if( feof(stdin) )  break;
 		i = sscanf( buf, "%lf %lf %lf",
 			&xyz[0], &xyz[1], &xyz[2] );

@@ -131,7 +131,7 @@ create_name_hash( FILE *fd )
 
 	Tcl_InitHashTable( &htbl, TCL_STRING_KEYS );
 
-	while( fgets( line, MAX_LINE_LEN, fd ) ) {
+	while( bu_fgets( line, MAX_LINE_LEN, fd ) ) {
 		char *part_no, *desc, *ptr;
 
 		ptr = strtok( line, " \t\n" );
@@ -419,7 +419,7 @@ Part_import( int id_start )
 	part = (struct obj_info *)bu_calloc( 1, sizeof( struct obj_info ), "part" );
 	part->obj_type = PART_TYPE;
 	part->obj_id = id_start;
-	while( fgets( line, MAX_LINE_LEN, fd_in ) ) {
+	while( bu_fgets( line, MAX_LINE_LEN, fd_in ) ) {
 		if( !strncmp( line, "PartName", 8 ) ) {
 			line[strlen( line ) - 1] = '\0';
 			part->obj_name = bu_strdup( &line[9] );
@@ -568,7 +568,7 @@ Assembly_import( int id_start )
 	this_assem->obj_id = id_start;
 	this_assem->part_count = 0;
 	this_assem->members = NULL;
-	while( fgets( line, MAX_LINE_LEN, fd_in ) ) {
+	while( bu_fgets( line, MAX_LINE_LEN, fd_in ) ) {
 		if( !strncmp( line, "AssemblyName", 12 ) ) {
 			line[strlen( line ) - 1] = '\0';
 			this_assem->obj_name = bu_strdup( &line[13] );
@@ -733,7 +733,7 @@ main( int argc, char *argv[] )
 	tree_root = create_vert_tree();
 
 	/* finally, start processing the input */
-	while( fgets( line, MAX_LINE_LEN, fd_in ) ) {
+	while( bu_fgets( line, MAX_LINE_LEN, fd_in ) ) {
 		if( !strncmp( line, "FileName", 8 ) ) {
 			bu_log( "Converting facets originally from %s",
 				&line[9] );

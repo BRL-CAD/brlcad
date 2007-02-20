@@ -44,12 +44,13 @@ static const char RCSid[] = "$Header$";
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+#include "bu.h"
 #include "../librt/debug.h"
 
 #define MAX_PTS	500
 
 int
-main(void)
+main(int argc, char *argv[])
 {
 	char str[10000] = {0};
 	int ident, face_type, npts, face_no;
@@ -60,14 +61,14 @@ main(void)
 
 	printf( "$03" );
 
-	while( fgets( str, sizeof(str), stdin ) )
+	while( bu_fgets( str, sizeof(str), stdin ) )
 	{
 		sscanf( str, "%d %d %d %d %d %f", &face_no, &npts, &face_type, &e, &ident, &a );
 
 		if( ident > 0 )
 			old_id = ident;
 
-		if( !fgets( str, sizeof(str), stdin ) )
+		if( !bu_fgets( str, sizeof(str), stdin ) )
 			break;
 
 		sscanf( str, "%f %f %f %f", &a, &b, &c, &d );
@@ -83,7 +84,7 @@ main(void)
 				fprintf( stderr , "Too many points, MAX is %d\n" , MAX_PTS );
 				return 1;
 			}
-			if( !fgets( str, sizeof(str), stdin ) )
+			if( !bu_fgets( str, sizeof(str), stdin ) )
 			{
 				fprintf( stderr, "Unexpected EOF\n" );
 				break;

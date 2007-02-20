@@ -467,7 +467,7 @@ bu_avail_cpus(void)
 	    ncpu = 1;
 	    perror (CPUINFO_FILE);
 	  } else {
-	    while (fgets (buf, 80, fp) != NULL) {
+	    while (bu_fgets(buf, 80, fp) != NULL) {
 	      if (strncmp (buf, "processor",9) == 0) {
 		++ ncpu;
 	      }

@@ -1067,7 +1067,7 @@ bn_read_table_and_tabdata(const char *filename)
 	/* First pass:  Count number of lines */
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	for(;;)  {
-		if( fgets( buf, sizeof(buf), fp ) == NULL )  break;
+		if( bu_fgets( buf, sizeof(buf), fp ) == NULL )  break;
 		count++;
 	}
 	fclose(fp);
@@ -1082,7 +1082,7 @@ bn_read_table_and_tabdata(const char *filename)
 	fp = fopen( filename, "r" );
 	for( i=0; i < count; i++ )  {
 		buf[0] = '\0';
-		if( fgets( buf, sizeof(buf), fp ) == NULL )  {
+		if( bu_fgets( buf, sizeof(buf), fp ) == NULL )  {
 			bu_log("bn_read_table_and_tabdata(%s) unexpected EOF on line %d\n", filename, i);
 			break;
 		}

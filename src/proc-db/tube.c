@@ -357,7 +357,7 @@ read_frame( FILE *fp )
 #ifdef never
 	/* Phils format */
 	for( nsamples=0;;nsamples++)  {
-		if( fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
+		if( bu_fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
 		if( buf[0] == '\0' || buf[0] == '\n' )
 			/* Blank line, marks break in implicit connection */
 			fprintf(stderr,"implicit break unimplemented\n");
@@ -394,7 +394,7 @@ read_frame( FILE *fp )
 		return(0);		/* OK, reuse last step's data */
 	/* Ferret out next time marker */
 	while(1)  {
-		if( fgets( buf, sizeof(buf), fp ) == NULL )  {
+		if( bu_fgets( buf, sizeof(buf), fp ) == NULL )  {
 			fprintf(stderr,"EOF?\n");
 			return(-1);
 		}
@@ -411,7 +411,7 @@ read_frame( FILE *fp )
 		float	kx, ky, kz;
 
 		buf[0] = '\0';
-		if( fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
+		if( bu_fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
 		/* center of mass #, +X, +Z, -Y (chg of coordinates) */
 		if( buf[0] == '\0' || buf[0] == '\n' )
 			break;		/* stop at a blank line */

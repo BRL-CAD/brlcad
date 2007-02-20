@@ -131,7 +131,7 @@ main (int argc, char **argv)
     (void) printf("g %s", rayname);
 
     /* Read the input */
-    while (fgets(buf, BUF_LEN, stdin) != NULL)
+    while (bu_fgets(buf, BUF_LEN, stdin) != NULL)
     {
 	++line_nm;
 	bp = buf;
@@ -167,7 +167,7 @@ main (int argc, char **argv)
     }
     if (! feof(stdin))
     {
-	(void) fputs("Error from fgets().  This shouldn't happen", stderr);
+	(void) fputs("Error from bu_fgets().  This shouldn't happen", stderr);
 	exit (1);
     }
 

@@ -2284,7 +2284,7 @@ get_line(void)
 
 	bzero( (void *)line , LINELEN );
 
-	if( fgets( line , LINELEN , fdin ) == (char *)NULL )
+	if( bu_fgets( line , LINELEN , fdin ) == (char *)NULL )
 		return( 0 );
 
 	len = strlen( line );
@@ -3405,7 +3405,7 @@ void read_fast4_colors(char *color_file) {
     return;
   }
 
-  while (fgets(line, COLOR_LINE_LEN, fp) != NULL) {
+  while (bu_fgets(line, COLOR_LINE_LEN, fp) != NULL) {
     if (sscanf(line, "%d %d %d %d %d", &low, &high, &r, &g, &b) != 5)
       continue;
 

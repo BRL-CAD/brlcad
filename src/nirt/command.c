@@ -424,7 +424,7 @@ com_table		*ctp;
 	    " To set useair=%d requires building/prepping another directory.\n",
 	    new_use);
 	bu_log(" Do you want to do that now (y|n)[n]? ");
-	fgets(response, sizeof(response), stdin);
+	bu_fgets(response, sizeof(response), stdin);
 	while ((*rp == ' ') || (*rp == '\t'))
 	    ++rp;
 	if ((*rp != 'y') && (*rp != 'Y'))

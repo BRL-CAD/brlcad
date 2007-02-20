@@ -119,7 +119,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 		for( i = 0; i < BUFF_LEN; i++ )  {
 			string[i] = '\0';
 		}
-		ret = fgets(string, BUFF_LEN, infp);
+		ret = bu_fgets(string, BUFF_LEN, infp);
 
 		if( ret == NULL )  {
 			/* There are two times when NULL might be seen:

@@ -999,7 +999,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* Read in knots from specified file *************/
     do {
-	fgets(line, 81, points);
+	bu_fgets(line, 81, points);
     } while (strcmp(strtok(line, ","), "112") != 0);
 
     strcpy(tok, strtok(NULL, ","));
@@ -1012,8 +1012,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     for (i = 0; i <= s.n_segs; i++) {
 	strcpy(tok, strtok(NULL, ","));
 	if (strstr(tok, "P") != NULL) {
-	    fgets(line, 81, points);
-	    fgets(line, 81, points);
+	    bu_fgets(line, 81, points);
+	    bu_fgets(line, 81, points);
 	    strcpy(tok, strtok(line, ","));
 	}
 	s.t[i] = atof(tok);
@@ -1023,8 +1023,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    for (k = 0; k < 4; k++) {
 		strcpy(tok, strtok(NULL, ","));
 		if (strstr(tok, "P") != NULL) {
-		    fgets(line, 81, points);
-		    fgets(line, 81, points);
+		    bu_fgets(line, 81, points);
+		    bu_fgets(line, 81, points);
 		    strcpy(tok, strtok(line, ","));
 		}
 		s.k[i].c[j][k] = atof(tok);

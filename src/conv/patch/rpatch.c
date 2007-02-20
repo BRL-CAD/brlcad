@@ -234,7 +234,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while( fgets(line, sizeof(line), stdin) )
+	while( bu_fgets(line, sizeof(line), stdin) )
 	{
 		if( strlen( line ) <= 1 )
 			continue;

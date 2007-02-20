@@ -226,7 +226,7 @@ readTrie( fp, triepp )
 FILE	*fp;
 Trie	**triepp;
 	{	static char	name_buf[MAX_TRIE_LEVEL+1];
-	while( fgets( name_buf, MAX_TRIE_LEVEL, fp ) != NULL )
+	while( bu_fgets( name_buf, MAX_TRIE_LEVEL, fp ) != NULL )
 		{
 		name_buf[strlen(name_buf)-1] = '\0'; /* Clobber new-line. */
 		(void) addTrie( name_buf, triepp );

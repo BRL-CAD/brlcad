@@ -64,7 +64,7 @@ getCommand( char *name, char *buf, int len, FILE *fp )
     assert( name != NULL );
     assert( buf != NULL );
     assert( fp != NULL );
-    while( fgets( buf, len, fp ) != NULL )
+    while( bu_fgets( buf, len, fp ) != NULL )
 	{
 	    if( buf[0] != CHAR_COMMENT )
 		{

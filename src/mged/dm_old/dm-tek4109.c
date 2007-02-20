@@ -161,7 +161,7 @@ T49_open()
 	char line[64], line2[64];
 
 	bu_log("Output tty [stdout]? ");
-	(void)fgets( line, sizeof(line), stdin ); /* \n, null terminated */
+	(void)bu_fgets( line, sizeof(line), stdin ); /* \n, null terminated */
 	line[strlen(line)-1] = '\0';		/* remove newline */
 	if( feof(stdin) )
 		quit();

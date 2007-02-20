@@ -3731,7 +3731,7 @@ sedit(void)
 				}
 				bu_log(") [%d]: ",arb_vertices[type][loc]);
 
-				(void)fgets( line, sizeof(line), stdin );
+				(void)bu_fgets( line, sizeof(line), stdin );
 				line[strlen(line)-1] = '\0';		/* remove newline */
 
 				if( feof(stdin) )  quit();

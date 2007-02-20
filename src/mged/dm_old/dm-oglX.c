@@ -343,7 +343,7 @@ Ogl_open()
 	}
 
 	bu_log("X Display [%s]? ", envp );
-	(void)fgets( line, sizeof(line), stdin );
+	(void)bu_fgets( line, sizeof(line), stdin );
 	line[strlen(line)-1] = '\0';		/* remove newline */
 	if( feof(stdin) )  quit();
 	if( line[0] != '\0' ) {

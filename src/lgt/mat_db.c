@@ -301,7 +301,7 @@ get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp)
 {	register char	*ptr;
 		int		items;
 		int		red, grn, blu, mode;
-	if( fgets( entry->name, MAX_MAT_NM, fp ) == NULL )
+	if( bu_fgets( entry->name, MAX_MAT_NM, fp ) == NULL )
 		return	0;
 	ptr = &entry->name[strlen(entry->name) - 1];
 	if( *ptr == '\n' )

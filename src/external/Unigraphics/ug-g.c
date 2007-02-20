@@ -258,7 +258,7 @@ create_name_hash( FILE *fd )
 
 	Tcl_InitHashTable( &htbl, TCL_STRING_KEYS );
 
-	while( fgets( line, MAX_LINE_LEN, fd ) ) {
+	while( bu_fgets( line, MAX_LINE_LEN, fd ) ) {
 		char *part_no, *desc, *ptr;
 
 		ptr = strtok( line, " \t\n" );

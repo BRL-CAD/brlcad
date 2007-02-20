@@ -178,7 +178,7 @@ Input(register point *coop)				/* input a coordinate record */
 {
 	char		inbuf[82];	/* input record buffer */
 
-	while ( fgets( inbuf, (int)sizeof inbuf, stdin ) != NULL )
+	while ( bu_fgets( inbuf, (int)sizeof inbuf, stdin ) != NULL )
 	{			/* scan input record */
 		register int	cvt;	/* # converted fields */
 

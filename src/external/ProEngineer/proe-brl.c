@@ -2829,7 +2829,7 @@ create_name_hash( FILE *name_fd )
 	if( logger ) {
 		fprintf( logger, "name hash created, now filling it:\n" );
 	}
-	while( fgets( line, MAX_LINE_LEN, name_fd ) ) {
+	while( bu_fgets( line, MAX_LINE_LEN, name_fd ) ) {
 		char *part_no, *part_name, *ptr;
 		line_no++;
 

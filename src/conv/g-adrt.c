@@ -423,7 +423,7 @@ void load_regmap(char *filename) {
 
   while(!feof(fh)) {
     /* read in the line */
-    fgets(line, 256, fh);
+    bu_fgets(line, 256, fh);
 
     /* strip off the new line */
     line[strlen(line)-1] = 0;

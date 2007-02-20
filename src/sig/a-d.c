@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 		/* get them from stdin */
 #if 0
 		char	s[80];
-		while( fgets(s, 80, stdin) != NULL ) {
+		while( bu_fgets(s, 80, stdin) != NULL ) {
 			d = atof( s );
 #else
 		/* XXX This one is slower but allows more than 1 per line */

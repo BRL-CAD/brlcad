@@ -276,7 +276,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
     /* prompt the user for some data */
     /* no error checking here.... */
     printf("\nPlease enter a filename for sphereflake output: [%s] ", p->fileName);
-    if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+    if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
       fprintf(stderr, "sphereflake: initializeInfo: fgets filename read error.\n");
       fprintf(stderr, "Continuing with default value.\n");
     }
@@ -290,7 +290,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
     fflush(stdin);
 
     printf("Initial position X Y Z: [%.2f %.2f %.2f] ", p->pos[X], p->pos[Y], p->pos[Z]);
-    if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+    if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
       fprintf(stderr, "sphereflake: initializeInfo: fgets position read error.\n");
       fprintf(stderr, "Continuing with default values.\n");
     }
@@ -304,7 +304,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
     fflush(stdin);
 
     printf("maxRadius: [%d] ", p->maxRadius);
-    if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+    if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
       fprintf(stderr, "sphereflake: initializeInfo: fgets maxradius read error.\n");
       fprintf(stderr, "Continuing with default value.\n");
     }
@@ -318,7 +318,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
     fflush(stdin);
 
     printf("deltaRadius: [%.2f] ", p->deltaRadius);
-    if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+    if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
       fprintf(stderr, "sphereflake: initializeInfo: fgets deltaradius read error.\n");
       fprintf(stderr, "Continuing with default value.\n");
     }
@@ -332,7 +332,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
     fflush(stdin);
 
     printf("maxDepth: [%d] ", p->maxDepth);
-    if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+    if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
       fprintf(stderr, "sphereflake: initializeInfo: fgets maxdepth read error.\n");
       fprintf(stderr, "Continuing with default value.\n");
     }
@@ -348,7 +348,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 
     for (i = 0; i <= p->maxDepth; i++) {
       printf("Material for depth %d: [%s] ", i, p->matArray[i].name);
-      if ( ! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+      if ( ! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
 	fprintf(stderr, "sphereflake: initializeInfo: fgets material read error.\n");
 	fprintf(stderr, "Continuing with default value.\n");
       }
@@ -362,7 +362,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
       fflush(stdin);
 
       printf("Mat. params for depth %d: [%s] ", i, p->matArray[i].params);
-      if ( ! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+      if ( ! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
 	fprintf(stderr, "sphereflake: initializeInfo: fgets params read error.\n");
 	fprintf(stderr, "Continuing with default value.\n");
       }
@@ -376,7 +376,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
       fflush(stdin);
 
       printf("Mat. color for depth %d: [%d %d %d] ", i, p->matArray[i].color[0], p->matArray[i].color[1], p->matArray[i].color[2]);
-      if (! fgets(input, MAX_INPUT_LENGTH, stdin) ) {
+      if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin) ) {
 	fprintf(stderr, "sphereflake: initializeInfo: fgets color read error.\n");
 	fprintf(stderr, "Continuing with default values.\n");
       }

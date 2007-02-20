@@ -144,7 +144,7 @@ main(int argc, char **argv)
 		}
 		if (Timeout) alarm(Timeout);
 
-		flag = fgets(line, 80, stdin);
+		flag = bu_fgets(line, 80, stdin);
 		if (Done) {
 			if (Loop) {
 				(void) fputs("\n\007", stderr);

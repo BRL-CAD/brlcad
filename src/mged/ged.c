@@ -2266,7 +2266,7 @@ do_rc(void)
 	char buf[80];
 
 	/* Get beginning of line */
-	fgets( buf, 80, fp );
+	bu_fgets( buf, 80, fp );
 	/* If the user has a set command with an equal sign, remember to warn */
 	if( strstr(buf, "set") != NULL )
 	    if( strchr(buf, '=') != NULL ){
@@ -2377,7 +2377,7 @@ f_opendb(
 	    if(mged_init_flag){
 		if(classic_mged){
 		    bu_log("Create new database (y|n)[n]? ");
-		    (void)fgets(line, sizeof(line), stdin);
+		    (void)bu_fgets(line, sizeof(line), stdin);
 		    if( line[0] != 'y' && line[0] != 'Y' ) {
 			bu_log("Warning: no database is currently opened!\n");
 			bu_vls_free(&vls);

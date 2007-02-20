@@ -170,9 +170,9 @@ reset_input(void)
 	fseek( fdin, start_off, SEEK_SET );
 	line_count = bulk_data_start_line;
 
-	tmp = fgets( next_line, MAXLINELEN, fdin );
+	tmp = bu_fgets( next_line, MAXLINELEN, fdin );
 	while( tmp && *tmp == '$' )
-		tmp = fgets( next_line, MAXLINELEN, fdin );
+		tmp = bu_fgets( next_line, MAXLINELEN, fdin );
 
 	if( tmp != (char *)NULL )
 		input_status = INPUT_OK;
@@ -463,7 +463,7 @@ get_next_record( FILE *fd, int call_input, int write_flag )
 	while( 1 )
 	{
 		line_count++;
-		tmp = fgets( prev_line, MAXLINELEN, fd );
+		tmp = bu_fgets( prev_line, MAXLINELEN, fd );
 		if( !tmp || prev_line[0] != '$' )
 			break;
 	}
@@ -1259,7 +1259,7 @@ main(int argc, char **argv)
 	/* first pass, find start of NASTRAN "bulk data" */
 	start_off = (-1);
 	bulk_data_start_line = 0;
-	while( fgets( line, MAXLINELEN, fdin ) )
+	while( bu_fgets( line, MAXLINELEN, fdin ) )
 	{
 		bulk_data_start_line++;
 		if( strncmp( line, "BEGIN BULK", 10 ) )
@@ -1295,7 +1295,7 @@ main(int argc, char **argv)
 
 	/* count grid points */
 	fseek( fdtmp, 0, SEEK_SET );
-	while( fgets( line, MAXLINELEN, fdtmp  ) )
+	while( bu_fgets( line, MAXLINELEN, fdtmp  ) )
 	{
 		if( !strncmp( line, "GRID", 4 ) )
 			grid_count++;

@@ -683,7 +683,7 @@ bu_vls_gets(register struct bu_vls *vp, register FILE *fp)
 	c = getc(fp);
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
-	/* XXX Alternatively, code up something with fgets(), chunking */
+	/* XXX Alternatively, code up something with bu_fgets(), chunking */
 
 	if( c == EOF || c == '\n' )  break;
 	bu_vls_putc( vp, c );

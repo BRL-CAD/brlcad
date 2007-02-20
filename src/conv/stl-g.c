@@ -244,7 +244,7 @@ char line[MAX_LINE_LEN];
 	if( RT_G_DEBUG & DEBUG_MEM || RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_prmem( "At start of Convert_part_ascii()" );
 
-	while( fgets( line1, MAX_LINE_LEN, fd_in ) != NULL )
+	while( bu_fgets( line1, MAX_LINE_LEN, fd_in ) != NULL )
 	{
 		start = (-1);
 		while( isspace( line1[++start] ) );
@@ -291,7 +291,7 @@ char line[MAX_LINE_LEN];
 
 			while( !endloop )
 			{
-				if( fgets( line1, MAX_LINE_LEN, fd_in ) == NULL )
+				if( bu_fgets( line1, MAX_LINE_LEN, fd_in ) == NULL )
 					bu_bomb( "Unexpected EOF while reading a loop in a part!!!\n" );
 
 				start = (-1);
@@ -594,7 +594,7 @@ Convert_input()
 		bu_log( "header data:\n%s\n\n", line );
 		Convert_part_binary();
 	} else {
-		while( fgets( line, MAX_LINE_LEN, fd_in ) != NULL ) {
+		while( bu_fgets( line, MAX_LINE_LEN, fd_in ) != NULL ) {
 		    int start = 0;
 		    while( line[start] != '\0' && isspace( line[start] ) ) {
 			start++;

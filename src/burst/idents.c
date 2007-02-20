@@ -107,7 +107,7 @@ FILE *fp;
 		register Ids *idp;
 	freeIdents( idlist ); /* free old list if it exists */
 	for(	idp = idlist;
-		fgets( input_buf, BUFSIZ, fp ) != NULL;
+		bu_fgets( input_buf, BUFSIZ, fp ) != NULL;
 		)
 		{	char *token;
 		token = strtok( input_buf, ",-:; \t" );
@@ -138,7 +138,7 @@ FILE	*fp;
 		int rgb[3];
 		register Colors	*colp;
 	for(	colp = colorlist;
-		fgets( input_buf, BUFSIZ, fp ) != NULL;
+		bu_fgets( input_buf, BUFSIZ, fp ) != NULL;
 		)
 		{	int items;
 		if( (items =

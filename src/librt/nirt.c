@@ -466,7 +466,7 @@ done:
 		BU_LIST_INIT(&HeadQRayData.l);
 
 		/* handle partitions */
-		while (fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
+		while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
 			if (line[0] == '\n') {
 				Tcl_AppendResult(interp, line+1, (char *)NULL);
 				break;
@@ -487,7 +487,7 @@ done:
 		rt_vlblock_free(vbp);
 
 		/* handle overlaps */
-		while (fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
+		while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
 			if (line[0] == '\n') {
 				Tcl_AppendResult(interp, line+1, (char *)NULL);
 				break;
@@ -517,13 +517,13 @@ done:
 	if (DG_QRAY_TEXT(dgop)) {
 		bu_vls_free(&t_vls);
 
-		while (fgets(line, RT_MAXLINE, fp_out) != (char *)NULL)
+		while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL)
 			Tcl_AppendResult(interp, line, (char *)NULL);
 	}
 
 	(void)fclose(fp_out);
 
-	while (fgets(line, RT_MAXLINE, fp_err) != (char *)NULL)
+	while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL)
 		Tcl_AppendResult(interp, line, (char *)NULL);
 	(void)fclose(fp_err);
 

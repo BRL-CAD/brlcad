@@ -137,7 +137,7 @@ points_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 		bu_log("points_setup: can't open \"%s\"\n", ptp->pt_file);
 		goto fail;
 	}
-	while( fgets(buf,512,fp) != NULL ) {
+	while( bu_fgets(buf,512,fp) != NULL ) {
 		double	u, v, mag;
 		struct points	*headp, *pp;
 

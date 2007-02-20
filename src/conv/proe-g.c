@@ -404,7 +404,7 @@ Convert_assy(char *line)
 	if( debug )
 		bu_log( "Convert_assy: %s x%x\n" , name , obj );
 
-	while( fgets( line1, MAX_LINE_LEN, fd_in ) )
+	while( bu_fgets( line1, MAX_LINE_LEN, fd_in ) )
 	{
 		/* skip leading blanks */
 		start = (-1);
@@ -454,7 +454,7 @@ Convert_assy(char *line)
 
 			for( j=0 ; j<4 ; j++ )
 			{
-				fgets( line1, MAX_LINE_LEN, fd_in );
+				bu_fgets( line1, MAX_LINE_LEN, fd_in );
 				sscanf( line1 , "%f %f %f %f" , &mat_col[0] , &mat_col[1] , &mat_col[2] , &mat_col[3] );
 				for( i=0 ; i<4 ; i++ )
 					wmem->wm_mat[4*i+j] = mat_col[i];
@@ -547,23 +547,23 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 			point_t arb_pt[8];
 			point_t rpp_corner;
 
-			fgets( line1, MAX_LINE_LEN, fd_in );
+			bu_fgets( line1, MAX_LINE_LEN, fd_in );
 			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
 			VSET( origin, x, y, z );
-			fgets( line1, MAX_LINE_LEN, fd_in );
+			bu_fgets( line1, MAX_LINE_LEN, fd_in );
 			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
 			VSET( e1, x, y, z );
-			fgets( line1, MAX_LINE_LEN, fd_in );
+			bu_fgets( line1, MAX_LINE_LEN, fd_in );
 			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
 			VSET( e2, x, y, z );
-			fgets( line1, MAX_LINE_LEN, fd_in );
+			bu_fgets( line1, MAX_LINE_LEN, fd_in );
 			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
 			VSET( plane, x, y, z );
-			fgets( line1, MAX_LINE_LEN, fd_in );
+			bu_fgets( line1, MAX_LINE_LEN, fd_in );
 			sscanf( line1, "%lf %lf", &u_min, &v_min );
-			fgets( line1, MAX_LINE_LEN, fd_in );
+			bu_fgets( line1, MAX_LINE_LEN, fd_in );
 			sscanf( line1, "%lf %lf", &u_max, &v_max );
-			fgets( line1, MAX_LINE_LEN, fd_in );
+			bu_fgets( line1, MAX_LINE_LEN, fd_in );
 			sscanf( line1, "%d", &orient );
 
 			plane[H] = VDOT( plane, origin );
@@ -651,7 +651,7 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 
 			}
 		}
-		fgets( line1, MAX_LINE_LEN, fd_in );
+		bu_fgets( line1, MAX_LINE_LEN, fd_in );
 		(*start) = (-1);
 		while( isspace( line1[++(*start)] ) );
 	}
@@ -797,7 +797,7 @@ Convert_part(char *line)
 	if( RT_G_DEBUG & DEBUG_MEM || RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_prmem( "At start of Convert_part()" );
 
-	while( fgets( line1, MAX_LINE_LEN, fd_in ) != NULL )
+	while( bu_fgets( line1, MAX_LINE_LEN, fd_in ) != NULL )
 	{
 		start = (-1);
 		while( isspace( line1[++start] ) );
@@ -844,7 +844,7 @@ Convert_part(char *line)
 
 			while( !endloop )
 			{
-				if( fgets( line1, MAX_LINE_LEN, fd_in ) == NULL )
+				if( bu_fgets( line1, MAX_LINE_LEN, fd_in ) == NULL )
 					bu_bomb( "Unexpected EOF while reading a loop in a part!!!\n" );
 
 				start = (-1);
@@ -1024,7 +1024,7 @@ Convert_input(void)
 
 	if( !stl_format )
 	{
-		if( !fgets( line, MAX_LINE_LEN, fd_in ) )
+		if( !bu_fgets( line, MAX_LINE_LEN, fd_in ) )
 			return;
 
 		sscanf( line, "%f", &conv_factor );
@@ -1033,7 +1033,7 @@ Convert_input(void)
 	if( !do_reorient && !stl_format )
 		conv_factor = 1.0;
 
-	while( fgets( line, MAX_LINE_LEN, fd_in ) != NULL )
+	while( bu_fgets( line, MAX_LINE_LEN, fd_in ) != NULL )
 	{
 		if( !strncmp( line , "assembly" , 8 ) || !strncmp( line , "ASSEMBLY" , 8 ) )
 			Convert_assy( line );

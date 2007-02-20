@@ -446,7 +446,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			 bu_units_string(dbip->dbi_local2base), ":\n", (char *)NULL);
 
 	/* Read result */
-	fgets(result, RT_MAXLINE, fp_r);
+	bu_fgets(result, RT_MAXLINE, fp_r);
 	Tcl_AppendResult(interp, result, "\n", (char *)NULL);
 
 	while ((rpid = wait(&retcode)) != pid1 && rpid != -1);

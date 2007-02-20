@@ -160,7 +160,7 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 
 	title[0] = geom_fname[0] = '\0';
 
-	fgets(buf, sizeof(buf), fpin);
+	bu_fgets(buf, sizeof(buf), fpin);
 	while (!feof(fpin)) {				/* Retrieve the important data */
 		if (sscanf(buf, "name %[^\n]s", buf2) > 0)
 			strncpy(title, buf2, sizeof(title));
@@ -173,7 +173,7 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 			if (strcmp(dtype, "indexed_poly") != 0)
 				rt_bomb("Unknown geometry data type. Must be \"indexed_poly\".");
 		}
-		fgets(buf, sizeof(buf), fpin);
+		bu_fgets(buf, sizeof(buf), fpin);
 	}
 
 	if (strlen(title) < (unsigned)1)

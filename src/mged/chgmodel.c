@@ -509,7 +509,7 @@ f_rmater(
     return TCL_ERROR;
   }
 
-  while(fgets( line , LINELEN, fp ) != NULL){
+  while(bu_fgets( line , LINELEN, fp ) != NULL){
 	if((extract_mater_from_line(line, name, shader,
 			    &r, &g, &b, &override, &inherit)) == TCL_ERROR)
 	continue;

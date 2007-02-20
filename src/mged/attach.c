@@ -433,7 +433,7 @@ get_attached(void)
     }
     bu_log(")[nu]? ");
 
-    ret = fgets(line, sizeof(line), stdin); /* \n, Null terminated */
+    ret = bu_fgets(line, sizeof(line), stdin); /* \n, Null terminated */
 
     /* handle EOF */
     if (!ret) {

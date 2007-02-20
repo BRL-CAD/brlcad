@@ -60,6 +60,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "db.h"
+#include "bu.h"
 
 
 void	mat_pr(char *title, float *mp);
@@ -134,13 +135,13 @@ main(int argc, char **argv)
 		rec.i.i_units = 100;
 		while( rec.i.i_units < ID_MM_UNIT || rec.i.i_units > ID_FT_UNIT )  {
 			printf("Units: 1=mm, 2=cm, 3=meters, 4=inches, 5=feet\nUnits? ");
-			fgets( line, sizeof(line), stdin );
+			bu_fgets( line, sizeof(line), stdin );
 			sscanf( line, "%d", &units );
 			rec.i.i_units = units;
 			printf("units=%d\n", rec.i.i_units);
 		}
 		printf("Title? "); fflush(stdout);
-		fgets( line, sizeof(line), stdin );
+		bu_fgets( line, sizeof(line), stdin );
 		line[strlen(line)-1] = '\0';		/* discard \n */
 		strncpy( rec.i.i_title, line, 71 );
 		rec.i.i_title[71] = '\0';

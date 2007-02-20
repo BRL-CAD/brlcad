@@ -389,7 +389,7 @@ main(int argc, char **argv)
 	if( mfp ) {
 		int eqlos, matcode;
 
-		while( fgets(s,132+2,mfp) != NULL ) {
+		while( bu_fgets(s,132+2,mfp) != NULL ) {
 
 			if( sscanf(s,"%6d%*66c%3d%5d",
 			    &i,&eqlos,&matcode) != 3 ) {

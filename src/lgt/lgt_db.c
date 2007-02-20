@@ -235,7 +235,7 @@ static int
 get_Lgt_Entry(register Lgt_Source *entry, FILE *fp)
 {	register char	*ptr;
 		int		red, grn, blu;
-	if( fgets( entry->name, MAX_LGT_NM, fp ) == NULL )
+	if( bu_fgets( entry->name, MAX_LGT_NM, fp ) == NULL )
 		return	0;
 	ptr = &entry->name[strlen(entry->name) - 1];
 	if( *ptr == '\n' )

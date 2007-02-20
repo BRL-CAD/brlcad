@@ -123,7 +123,7 @@ HP_open()
 
 	printf("\033*j1A");	/* set tablet on-line */
 	printf("\033*s1^");	/* request terminal name */
-	(void)fgets(s,16,stdin);	/* read name */
+	(void)bu_fgets(s,16,stdin);	/* read name */
 	if (!strcmp(s,"2627A\n")) {
 	    termtype = HP2627A;
 	    printf("\033*j1C");	/* asynchrous tablet mode */
