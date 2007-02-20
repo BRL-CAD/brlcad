@@ -449,6 +449,7 @@ logging routines, and more.  The following functions and global
 variables should be utilized instead of the standard C facility:
 
   bu_malloc() instead of malloc()
+  bu_fgets() instead of fgets()
   bu_free() instead of free()
   bu_log() instead of printf()
   bu_bomb() instead of abort()
