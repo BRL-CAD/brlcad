@@ -616,62 +616,6 @@ bu_strdupm(register const char *cp, const char *label)
 	return(base);
 }
 
-/**
- *			B U _ D I R N A M E
- *
- *  Given a filesystem pathname, return a pointer to a dynamic string
- *  which is the parent directory of that file/directory.
- *
- *	/usr/dir/file	/usr/dir
- * @n	/usr/dir/	/usr
- * @n	/usr/file	/usr
- * @n	/usr/		/
- * @n	/usr		/
- * @n	/		/
- * @n	.		.
- * @n	..		.
- * @n	usr		.
- * @n	a/b		a
- * @n	a/		.
- * @n	../a/b		../a
- */
-char *
-bu_dirname(const char *cp)
-{
-	char	*ret;
-	char	*slash;
-	int	len;
-
-	/* Special cases */
-	if( cp == NULL )  return bu_strdup(".");
-	if( strcmp( cp, "/" ) == 0 )
-		return bu_strdup("/");
-	if( strcmp( cp, "." ) == 0 ||
-	    strcmp( cp, ".." ) == 0 ||
-	    strrchr(cp, '/') == NULL )
-		return bu_strdup(".");
-
-	/* Make a duplicate copy of the string, and shorten it in place */
-	ret = bu_strdup(cp);
-
-	/* A trailing slash doesn't count */
-	len = strlen(ret);
-	if( ret[len-1] == '/' )  ret[len-1] = '\0';
-
-	/* If no slashes remain, return "." */
-	if( (slash = strrchr(ret, '/')) == NULL )  {
-		bu_free( ret, "bu_dirname" );
-		return bu_strdup(".");
-	}
-
-	/* Remove trailing slash, unless it's at front */
-	if( slash == ret )
-		ret[1] = '\0';		/* ret == "/" */
-	else
-		*slash = '\0';
-
-	return ret;
-}
 
 /**
  *  			B U _ M A L L O C _ L E N _ R O U N D U P
