@@ -238,6 +238,10 @@ SOURCE=.\convert.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\dirname.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\fopen_uniq.c
 # End Source File
 # Begin Source File
