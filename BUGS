@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged in console mode goes into an inf loop if you try to read from
+  stdin using Tcl routines (e.g. read stdin, fgets stdin blah).
+
+* mged in GUI mode rejects reads on stdin
+
 * solids.sh regression test fails on Mac OS X with one pixel
   off-by-many on the edge of the middle ARB8 when using an optimized
   -O3 compile (-fno-unsafe-math-optimizations makes no difference)
