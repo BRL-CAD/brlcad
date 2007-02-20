@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
+/** @addtogroup filesystem */
 /** @{ */
 /** @file brlcad_path.c
  *
