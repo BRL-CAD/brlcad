@@ -89,7 +89,9 @@ endif
 
 # static is required to avoid MIPSpro 7.3 long rpath linker bug
 if LINK_STATIC_REQUIRED
-asc2g_LDFLAGS = -static
+asc2g_LDFLAGS = -static ${EXCEPTIONS}
+else
+asc2g_LDFLAGS =
 endif
 
 asc2g_SOURCES = asc2g.c
@@ -110,6 +112,7 @@ bot_shell_vtk_SOURCES = bot_shell-vtk.c
 bot_shell_vtk_LDADD = ${RT} ${BN} ${BU} ${SYSV}
 
 conv_vg2g_SOURCES = conv-vg2g.c
+conv_vg2g_LDADD = ${BU}
 
 cy_g_SOURCES = cy-g.c
 cy_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
@@ -130,6 +133,7 @@ euclid_g_SOURCES = euclid-g.c
 euclid_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
 
 euclid_unformat_SOURCES = euclid_unformat.c
+euclid_unformat_LDADD = ${BU}
 
 fast4_g_SOURCES = fast4-g.c
 fast4_g_LDADD = ${WDB} ${RT} ${BN} ${BU}
