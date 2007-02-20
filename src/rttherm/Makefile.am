@@ -30,7 +30,8 @@ rttherm_LDADD = \
 	$(top_builddir)/src/rt/librttherm.a \
 	${MULTISPECTRAL} \
 	${OPTICAL} \
-	${FB}
+	${FB} \
+	${TCL}
 
 ssampview_SOURCES = \
 	spectrum.c \
