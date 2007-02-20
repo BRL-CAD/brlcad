@@ -52,6 +52,7 @@
 
 #include "machine.h"
 #include "fb.h"
+#include "bu.h"
 
 #include "./burst.h"
 #include "./trie.h"

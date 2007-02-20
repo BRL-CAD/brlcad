@@ -57,6 +57,7 @@ static const char RCSid[] = "$Header$";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "bu.h"
 
 
 #define		BUF_LEN		128
