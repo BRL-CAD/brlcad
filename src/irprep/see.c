@@ -364,7 +364,7 @@ main(void)
    }
 
    /*  Read width and height of window.  */
-   (void)fgets(line,150,fpr);
+   (void)bu_fgets(line,150,fpr);
    (void)sscanf(line,"%u %u",&wide,&high);
 
    /*  Check that width and height are not too big.  */
@@ -388,7 +388,7 @@ main(void)
    {
 	for(j=0; j<(int)wide; j++)
 	{
-	   (void)fgets(line,150,fpr);
+	   (void)bu_fgets(line,150,fpr);
 	   (void)sscanf(line,"%lf",&pixval[j][i]);
 	}
    }

@@ -391,7 +391,7 @@ int main(int argc, char **argv)
 
       for(i=0; i<41; i++)
 	{
-	  (void)fgets(line,150,fp4);
+	  (void)bu_fgets(line,150,fp4);
 	  (void)sscanf(line,"%*d%lf%lf%lf%lf%lf%25c",
 		       &matprop[i].d,&matprop[i].sh,&matprop[i].a,
 		       &matprop[i].e1,&matprop[i].tc,matprop[i].m);

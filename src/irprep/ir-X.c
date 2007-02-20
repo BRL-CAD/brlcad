@@ -57,6 +57,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include "machine.h"
+#include "bu.h"
+
+
 #define MAXFIL 26		/*  Maximum number of char in file name.  */
 #define MAXPIX 512		/*  Maximum number of pixels is (512*512).  */
 #define MAXARR 120000		/*  Maximum number of pixels that are the  */
@@ -366,7 +370,7 @@ main(void)
    }
 
    /*  Read width and height of window.  */
-   (void)fgets(line,150,fpr);
+   (void)bu_fgets(line,150,fpr);
    (void)sscanf(line,"%u %u",&wide,&high);
 
    /*  Check that width and height are not too big.  */
@@ -390,7 +394,7 @@ main(void)
    {
 	for(j=0; j<(int)wide; j++)
 	{
-	   (void)fgets(line,150,fpr);
+	   (void)bu_fgets(line,150,fpr);
 	   (void)sscanf(line,"%lf",&pixval[j][i]);
 	}
    }

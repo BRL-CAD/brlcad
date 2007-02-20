@@ -256,7 +256,7 @@ int main(int argc, char **argv)
       while(c != EOF)
 	{
 	  (void)ungetc(c,fp1);
-	  (void)fgets(line,200,fp1);
+	  (void)bu_fgets(line,200,fp1);
 	  (void)sscanf(line,"%d%s",&tmpreg,tmpname);
 	  for(i=0; i<150; i++)
 	    {

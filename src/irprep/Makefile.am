@@ -12,31 +12,31 @@ bin_PROGRAMS = \
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-all_sf_LDADD = ${RT} ${BN}
 all_sf_SOURCES = all_sf.c
+all_sf_LDADD = ${RT} ${BN}
 
-showtherm_LDADD = ${RT} ${BN}
 showtherm_SOURCES = showtherm.c
+showtherm_LDADD = ${RT} ${BN}
 
-firpass_LDADD = ${RT} ${BN}
 firpass_SOURCES = firpass.c subroutines.c
+firpass_LDADD = ${RT} ${BN}
 
-irdisp_LDADD = ${FB}
 irdisp_SOURCES = irdisp.c
 irdisp_CFLAGS = ${X_CFLAGS}
+irdisp_LDADD = ${FB}
 
-ir_sgi_LDADD = ${FB}
 ir_sgi_SOURCES = ir-sgi.c
+ir_sgi_LDADD = ${FB}
 
-ir_X_LDADD = ${X_LIBS}
 ir_X_SOURCES = ir-X.c
 ir_X_CFLAGS = ${X_CFLAGS}
+ir_X_LDADD = ${X_LIBS} ${BU}
 
-secpass_LDADD = ${RT} ${BN}
 secpass_SOURCES = secpass.c subroutines.c
+secpass_LDADD = ${RT} ${BN}
 
-shapefact_LDADD = ${RT} ${BN}
 shapefact_SOURCES = shapefact.c
+shapefact_LDADD = ${RT} ${BN}
 
 man_MANS = \
 	all_sf.1 \

@@ -319,7 +319,7 @@ int main(int argc, char **argv)
       fp5 = fopen(filemat,"r");
       for(i=0; i<41; i++)
 	{
-	  (void)fgets(line,151,fp5);
+	  (void)bu_fgets(line,151,fp5);
 	  (void)sscanf(line,"%*d%*f%*f%*f%*f%lf",&k[i]);
 	}
 

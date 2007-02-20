@@ -190,7 +190,7 @@ int main(int argc, char **argv)
       if(itype == 1)
 	{
 	  fpr = fopen(filetmp,"r");
-	  (void)fgets(line,150,fpr);
+	  (void)bu_fgets(line,150,fpr);
 	  (void)sscanf(line,"%d",&numreg);
 	}
 
@@ -220,7 +220,7 @@ int main(int argc, char **argv)
 	  fpr = fopen(filetmp,"r");
 
 	  /*  Read date and print out.  */
-	  (void)fgets(line,150,fpr);
+	  (void)bu_fgets(line,150,fpr);
 	  (void)sscanf(line,"%d %d %d %f %f",&mon,&day,&yr,&hr,&min);
 	  (void)printf("%d/%d/%d ",mon,day,yr);
 	  (void)printf(" %f:%f\n",hr,min);
@@ -239,7 +239,7 @@ int main(int argc, char **argv)
 	   */
 
 	  /*  Read first line & check if correct ellasped time.  */
-	  (void)fgets(line,150,fpr);
+	  (void)bu_fgets(line,150,fpr);
 	  (void)sscanf(line,"%lf %lf %lf %lf %lf %lf %lf %lf",&eltim_read,
 		       &r[0],&r[1],&r[2],&r[3],&r[4],&r[5],&r[6]);
 
@@ -251,10 +251,10 @@ int main(int argc, char **argv)
 	    {
 	      for(i=0; i<(full_line + 1); i++)
 		{
-		  (void)fgets(line,150,fpr);
+		  (void)bu_fgets(line,150,fpr);
 		}
 	      /*  Read next elapsed time.  */
-	      (void)fgets(line,150,fpr);
+	      (void)bu_fgets(line,150,fpr);
 	      (void)sscanf(line,"%lf %lf %lf %lf %lf %lf %lf %lf",&eltim_read,
 			   &r[0],&r[1],&r[2],&r[3],&r[4],&r[5],&r[6]);
 	    }
@@ -269,7 +269,7 @@ int main(int argc, char **argv)
 	  /*  Read full lines of data.  */
 	  for(i=0; i<full_line; i++)
 	    {
-	      (void)fgets(line,150,fpr);
+	      (void)bu_fgets(line,150,fpr);
 	      (void)sscanf(line,"%lf %lf %lf %lf %lf %lf %lf %lf",
 			   &r[0],&r[1],&r[2],&r[3],&r[4],&r[5],&r[6],&r[7]);
 	      for(j=0; j<(frst_line + 1); j++)
@@ -279,7 +279,7 @@ int main(int argc, char **argv)
 		}
 	    }
 	  /*  Read last line of data.  */
-	  (void)fgets(line,150,fpr);
+	  (void)bu_fgets(line,150,fpr);
 	  if(last_line == 1) (void)sscanf(line,"%lf",&r[0]);
 	  if(last_line == 2) (void)sscanf(line,"%lf %lf",&r[0],&r[1]);
 	  if(last_line == 3) (void)sscanf(line,"%lf %lf %lf",&r[0],&r[1],&r[2]);
@@ -310,23 +310,23 @@ int main(int argc, char **argv)
 	{							/*  START # 3  */
 	  /*  File is alread open.  */
 	  /*  Read elapsed time.  */
-	  (void)fgets(line,150,fpr);
+	  (void)bu_fgets(line,150,fpr);
 	  (void)sscanf(line,"%lf",&eltim_read);
 
 	  while(eltim_read != eltim)	/*  Page through to end of data.  */
 	    {
 	      for(i=0; i<numreg; i++)
 		{
-		  (void)fgets(line,150,fpr);
+		  (void)bu_fgets(line,150,fpr);
 		}
-	      (void)fgets(line,150,fpr);
+	      (void)bu_fgets(line,150,fpr);
 	      (void)sscanf(line,"%lf",&eltim_read);
 	    }
 
 	  /*  When correct ellasped time is found, read data.  */
 	  for(i=0; i<numreg; i++)
 	    {
-	      (void)fgets(line,150,fpr);
+	      (void)bu_fgets(line,150,fpr);
 	      (void)sscanf(line,"%lf",&r[0]);
 	      info[i].temp = r[0];
 	    }
@@ -344,7 +344,7 @@ int main(int argc, char **argv)
       while( (c != EOF) && (numreg_read < numreg) )
 	{
 	  (void)ungetc(c,fpr);
-	  (void)fgets(line,150,fpr);
+	  (void)bu_fgets(line,150,fpr);
 	  (void)sscanf(line,"%*d%s",tmpstrng);
 	  for(i=0; i<150; i++)
 	    {
