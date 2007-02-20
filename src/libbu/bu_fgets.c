@@ -1,7 +1,7 @@
-/*                   B U _ F G E T S
+/*                      B U _ F G E T S . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2007 United States Government as represented by
+ * Copyright (c) 2006-2007 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,6 +42,8 @@ static const char libbu_fgets_RCSid[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 #if HAVE_STRING_H
 #  include <string.h>
+#else
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -51,78 +53,78 @@ static const char libbu_fgets_RCSid[] = "@(#)$Header$ (ARL)";
 /**
  *			 B U _ F G E T S
  *
- *	    Reads in at most one less than size characters from stream and
- *      stores them into the buffer pointed to by s. Reading stops after an
- *      EOF, CR, LF, or a CR/LF combination. If a LF or CR is read,
- *	it is stored into the buffer. If a CR/LF is read, just a CR is
- *	stored into the buffer. A '\\0' is stored after the last
- *	character in the buffer. Returns s on success, and NULL on error or
- *	when end of file occurs while no characters have been read.
+ * Reads in at most one less than size characters from stream and
+ * stores them into the buffer pointed to by s. Reading stops after an
+ * EOF, CR, LF, or a CR/LF combination. If a LF or CR is read, * it is
+ * stored into the buffer. If a CR/LF is read, just a CR is * stored
+ * into the buffer. A '\\0' is stored after the last * character in
+ * the buffer. Returns s on success, and NULL on error or * when end
+ * of file occurs while no characters have been read.
  */
 
 char *
 bu_fgets(char *s, int size, FILE *stream)
 {
-  int totBytesRead = 0;
-  int isEOF = 0;
+    int totBytesRead = 0;
+    int isEOF = 0;
 
-  /* if we are not asked to read anything, just return */
-  if(size < 1) {
-      return s;
-  }
-
-  /* if the buffer size is one, we have no space (we add a null)
-   * so just return
-   */
-  if(size == 1) {
-    *s = '\0';
-    return s;
-  }
-
-  /* check for EOF or error */
-  if(feof(stream) || ferror(stream)) {
-      *s = '\0';
-      return (char *)NULL;
-  }
-
-  /* actually do some reading */
-  while(totBytesRead < size - 1) {
-    int c;
-
-    c = fgetc(stream);
-    if(c == EOF) {
-      isEOF = 1;
-      break;
+    /* if we are not asked to read anything, just return */
+    if(size < 1) {
+	return s;
     }
 
-    s[totBytesRead++] = c;
-
-    /* check for newline */
-    if(c == '\n') {
-      break;
+    /* if the buffer size is one, we have no space (we add a null)
+     * so just return
+     */
+    if(size == 1) {
+	*s = '\0';
+	return s;
     }
 
-    /* chech for CR */
-    if(c == '\r') {
+    /* check for EOF or error */
+    if(feof(stream) || ferror(stream)) {
+	*s = '\0';
+	return (char *)NULL;
+    }
 
-	/* check for CR/LF combination */
+    /* actually do some reading */
+    while(totBytesRead < size - 1) {
+	int c;
+
 	c = fgetc(stream);
-	if(c != '\n') {
-	    /* not a CR/LF, so unget the last char */
-	    ungetc(c, stream);
+	if(c == EOF) {
+	    isEOF = 1;
+	    break;
 	}
 
-	break;
+	s[totBytesRead++] = c;
+
+	/* check for newline */
+	if(c == '\n') {
+	    break;
+	}
+
+	/* chech for CR */
+	if(c == '\r') {
+
+	    /* check for CR/LF combination */
+	    c = fgetc(stream);
+	    if(c != '\n') {
+		/* not a CR/LF, so unget the last char */
+		ungetc(c, stream);
+	    }
+
+	    break;
+	}
     }
-  }
 
-  /* add our null */
-  s[totBytesRead] = '\0';
+    /* add our null */
+    s[totBytesRead] = '\0';
 
-  if(isEOF && totBytesRead == 0)
-    return (char *)NULL;
-  else
-    return s;
+    if(isEOF && totBytesRead == 0)
+	return (char *)NULL;
+    else
+	return s;
 }
 /** @} */
 /*
