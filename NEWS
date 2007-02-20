@@ -37,6 +37,7 @@ for more details.
 * added new manual page for pixcmp utility - Sean Morrison
 * updated bundled zlib to version 1.2.3 - Sean Morrison
 * updated bundled libpng to version 1.2.16 - Sean Morrison
+* fixed Windows line-ending bug in dxf-g - John Anderson
 * g_qa manual page documents the -t tolerance option - Lee Butler
 * dxf-g turns 2D entities into sketches instead of nmg - John Anderson
 * removed advertising clause from BSD code - Sean Morrison
