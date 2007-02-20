@@ -9,12 +9,19 @@ noinst_LTLIBRARIES = libbrlcad_nil.la
 # libbrlcad_la_LIBADD = \
 #	libbrlcad_nil.la
 
+if BUILD_OPENNURBS
+ON_NIL = $(top_builddir)/src/other/openNURBS/libopenNURBS_nil.la
+else
+ON_NIL =
+endif
+
 libbrlcad_nil_la_SOURCES =
 libbrlcad_nil_la_LIBADD = \
 	$(top_builddir)/src/libbu/libbu_nil.la \
 	$(top_builddir)/src/libbn/libbn_nil.la \
 	$(top_builddir)/src/librt/librt_nil.la \
-	$(top_builddir)/src/libwdb/libwdb_nil.la
+	$(top_builddir)/src/libwdb/libwdb_nil.la \
+	${ON_NIL}
 
 required_dirs = \
 	other \
