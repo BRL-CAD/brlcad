@@ -9,6 +9,7 @@ dist_tcl_DATA = \
 	closeall.png \
 	combination.png \
 	command.png \
+	compSelect.png \
 	configure.png \
 	edit_copy.png \
 	edit_cut.png \
@@ -25,6 +26,7 @@ dist_tcl_DATA = \
 	folder_closed_small_disabled.png \
 	folder_open_small.png \
 	folder_open_small_disabled.png \
+	measure.png \
 	open.png \
 	option_text.png \
 	option_tree.png \
@@ -44,6 +46,7 @@ dist_tcl_DATA = \
 	primitive_half.png \
 	primitive_list.png \
 	primitive_other.png \
+	primitive_part.png \
 	primitive_pipe.png \
 	primitive_rhc.png \
 	primitive_rpc.png \
