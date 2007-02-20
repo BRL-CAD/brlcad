@@ -57,6 +57,8 @@ btclsh_SOURCES = \
 btclsh_LDADD = \
 	${blib_LIBS}
 
+DEPS=src/libdm
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

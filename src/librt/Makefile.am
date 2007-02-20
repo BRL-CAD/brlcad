@@ -230,7 +230,7 @@ DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
 if BUILD_OPENNURBS
-DEPADD=src/other/opennurbs
+DEPADD=src/other/openNURBS
 else
 DEPADD=
 endif
