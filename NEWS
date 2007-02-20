@@ -8,7 +8,7 @@ see that file and the CVS log for more historic information.  The
 entire history of the project is available through CVS.
 
 ----------------------------------------------------------------------
---- 2006-12-XX  Release 7.9.0                                      ---
+--- 2007-02-XX  Release 7.9.0                                      ---
 ----------------------------------------------------------------------
 
 With this release marks several significant changes to BRL-CAD's
@@ -33,6 +33,7 @@ categories: 1) LGPL, 2) BSD/BDL, or 3) are in the public domain.  See
 the terms of each individual license as well as BRL-CAD's COPYING file
 for more details.
 
+* improved EOL processing in 70+ tools - Sean Morrison, John Anderson
 * rewrote pixcmp providing improved I/O format options - Sean Morrison
 * added new manual page for pixcmp utility - Sean Morrison
 * updated bundled zlib to version 1.2.3 - Sean Morrison
