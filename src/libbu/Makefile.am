@@ -19,6 +19,7 @@ SRCS = \
 	cmdhist_obj.c \
 	color.c \
 	convert.c \
+	dirname.c \
 	fopen_uniq.c \
 	getopt.c \
 	hash.c \
