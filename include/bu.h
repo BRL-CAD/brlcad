@@ -1983,14 +1983,11 @@ BU_EXPORT BU_EXTERN(genptr_t bu_calloc,
 		     const char *str));
 BU_EXPORT BU_EXTERN(void bu_prmem,
 		    (const char *str));
+
 BU_EXPORT BU_EXTERN(char *bu_strdupm,
 		    (const char *cp, const char *label));
-
 #define bu_strdup(s) bu_strdupm(s, "bu_srtdup " BU_FLSTR)
-#if 0
-BU_EXPORT BU_EXTERN(char *bu_strdup,
-		    (const char *cp));
-#endif
+
 BU_EXPORT BU_EXTERN(char *bu_dirname,
 		    (const char *cp));
 BU_EXPORT BU_EXTERN(int bu_malloc_len_roundup,

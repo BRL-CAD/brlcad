@@ -585,18 +585,14 @@ bu_prmem(const char *str)
 }
 
 /**
- *			B U _ S T R D U P
+ *		B U _ S T R D U P  / B U _ S T R D U P M
  *
  * Given a string, allocate enough memory to hold it using bu_malloc(),
  * duplicate the strings, returns a pointer to the new string.
+ *
+ * bu_strdup() is a macro that includes the current file name and line
+ * number that can be used when bu debugging is enabled.
  */
-#if 0
-char *
-bu_strdup(register const char *cp)
-{
-	return bu_strdupm(cp, bu_strdup_message);
-}
-#endif
 char *
 bu_strdupm(register const char *cp, const char *label)
 {
@@ -618,7 +614,7 @@ bu_strdupm(register const char *cp, const char *label)
 
 
 /**
- *  			B U _ M A L L O C _ L E N _ R O U N D U P
+ *  		B U _ M A L L O C _ L E N _ R O U N D U P
  *
  *  On systems with the CalTech malloc(), the amount of storage
  *  ACTUALLY ALLOCATED is the amount requested rounded UP to the
