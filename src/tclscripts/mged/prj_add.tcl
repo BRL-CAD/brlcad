@@ -19,8 +19,6 @@
 #
 ###
 #
-#			P R J _ A D D . T C L
-#
 # "more arguments needed::[lindex $prompts $i]"
 # Author -
 #	Lee A. Butler
@@ -45,91 +43,91 @@
 proc prj_add {args} {
     global local2base
 
-	set prompts {{shaderfile: } {image_file: } {width: } {height: }}
-	set usage "Usage:
+    set prompts {{shaderfile: } {image_file: } {width: } {height: }}
+    set usage "Usage:
 \tprj_add \[-t\] \[-n\] \[-b\] shaderfile \[image_file\] \[width\] \[height\]
 \tAppends image filename + current view parameters to shader"
 
-	set argc [llength $args]
-	if {$argc > 7} {
+    set argc [llength $args]
+    if {$argc > 7} {
+	error $usage
+    }
+
+    set through 0
+    set behind 0
+    set antialias 1
+
+    set n 0
+    foreach opt $args {
+	switch -- $opt {
+	    "-t" {
+		set through 1
+	    }
+	    "-b" {
+		set behind 1
+	    }
+	    "-n" {
+		set antialias 0
+	    }
+	    default {
+		break
+	    }
+	}
+
+	incr n
+    }
+
+    set i [expr {$argc - $n}]
+    switch -- $i {
+	0 {
 	    error $usage
 	}
-
-	set through 0
-	set behind 0
-	set antialias 1
-
-	set n 0
-	foreach opt $args {
-	    switch -- $opt {
-		"-t" {
-		    set through 1
-		}
-		"-b" {
-		    set behind 1
-		}
-		"-n" {
-		    set antialias 0
-		}
-		default {
-		    break
-		}
-	    }
-
-	    incr n
+	1 {
+	    error "more arguments needed::[lindex $prompts $i]"
 	}
-
-	set i [expr {$argc - $n}]
-	switch -- $i {
-	    0 {
-		error $usage
-	    }
-	    1 {
-		error "more arguments needed::[lindex $prompts $i]"
-	    }
-	    2 {
-		error "more arguments needed::[lindex $prompts $i]"
-	    }
-	    3 {
-		error "more arguments needed::[lindex $prompts $i]"
-	    }
+	2 {
+	    error "more arguments needed::[lindex $prompts $i]"
 	}
-
-	set shaderfile [lindex $args $n]
-	set image [lindex $args [expr {$n + 1}]]
-	set width [lindex $args [expr {$n + 2}]]
-	set height [lindex $args [expr {$n + 3}]]
-
-	if ![file exists $image] {
-		error "Image file $image does not exist"
+	3 {
+	    error "more arguments needed::[lindex $prompts $i]"
 	}
+    }
 
-	if [file exists $shaderfile] {
-		if [catch {open $shaderfile a} fd] {
-		    error "error appending to $shaderfile: $fd"
-		}
-	} else {
-		if [catch {open $shaderfile w} fd] {
-		    error "error opening $shaderfile: $fd"
-		}
+    set shaderfile [lindex $args $n]
+    set image [lindex $args [expr {$n + 1}]]
+    set width [lindex $args [expr {$n + 2}]]
+    set height [lindex $args [expr {$n + 3}]]
+
+    if ![file exists $image] {
+	error "Image file $image does not exist"
+    }
+
+    if [file exists $shaderfile] {
+	if [catch {open $shaderfile a} fd] {
+	    error "error appending to $shaderfile: $fd"
 	}
+    } else {
+	if [catch {open $shaderfile w} fd] {
+	    error "error opening $shaderfile: $fd"
+	}
+    }
 
-	puts $fd "image=\"$image\""
-	puts $fd "w=$width"
-	puts $fd "n=$height"
-	puts $fd "through=$through"
-	puts $fd "antialias=$antialias"
-	puts $fd "behind=$behind"
+    puts $fd "image=\"$image\""
+    puts $fd "w=$width"
+    puts $fd "n=$height"
+    puts $fd "through=$through"
+    puts $fd "antialias=$antialias"
+    puts $fd "behind=$behind"
 
 
-	puts $fd "viewsize=[expr [view size] * $local2base]"
-	regsub -all { } [vscale [view eye] $local2base] "," eye_pt
-	puts $fd "eye_pt=$eye_pt"
+    puts $fd "viewsize=[expr [view size] * $local2base]"
+    regsub -all { } [vscale [view eye] $local2base] "," eye_pt
+    puts $fd "eye_pt=$eye_pt"
 
-	regsub -all { } [view quat] "," orientation
-	puts $fd "orientation=$orientation"
+    regsub -all { } [view quat] "," orientation
+    puts $fd "orientation=$orientation"
 
-	close $fd
+    close $fd
 }
 
 # Local Variables:
