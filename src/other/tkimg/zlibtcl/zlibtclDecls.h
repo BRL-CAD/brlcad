@@ -109,7 +109,7 @@ EXTERN int		gzsetparams _ANSI_ARGS_((gzFile file, int level,
 EXTERN int		gzread _ANSI_ARGS_((gzFile file, voidp buf, 
 				unsigned len));
 /* 34 */
-EXTERN int		gzwrite _ANSI_ARGS_((gzFile file, const voidpc buf, 
+EXTERN int		gzwrite _ANSI_ARGS_((gzFile file, const void const *buf, 
 				unsigned len));
 /* Slot 35 is reserved */
 /* 36 */
@@ -174,7 +174,7 @@ typedef struct ZlibtclStubs {
     gzFile (*gzdopen) _ANSI_ARGS_((int fd, const char * mode)); /* 31 */
     int (*gzsetparams) _ANSI_ARGS_((gzFile file, int level, int strategy)); /* 32 */
     int (*gzread) _ANSI_ARGS_((gzFile file, voidp buf, unsigned len)); /* 33 */
-    int (*gzwrite) _ANSI_ARGS_((gzFile file, const voidpc buf, unsigned len)); /* 34 */
+    int (*gzwrite) _ANSI_ARGS_((gzFile file, const void const *buf, unsigned len)); /* 34 */
     void *reserved35;
     int (*gzputs) _ANSI_ARGS_((gzFile file, const char * s)); /* 36 */
     char* (*gzgets) _ANSI_ARGS_((gzFile file, char * buf, int len)); /* 37 */
