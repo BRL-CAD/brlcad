@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* running any of the various mged commands (e.g. clicking the raytrace
+  button many times quickly, or running rtarea on a large model) that
+  output a lot of data will hang mged (idle cpu utilization).
+
 * mged in console mode goes into an inf loop if you try to read from
   stdin using Tcl routines (e.g. read stdin, fgets stdin blah).
 
