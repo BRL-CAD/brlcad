@@ -21,6 +21,7 @@ brlcadinclude_required = \
 brlcadinclude_wanted = \
 	XtndRunsv.h \
 	anim.h \
+	brep.h \
 	brlcad.h \
 	cmd.h \
 	conf.h \
