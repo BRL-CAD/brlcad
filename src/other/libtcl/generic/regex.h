@@ -69,6 +69,9 @@
 extern "C" {
 #endif
 
+#ifndef VOID
+#define VOID void
+#endif
 
 
 /*
