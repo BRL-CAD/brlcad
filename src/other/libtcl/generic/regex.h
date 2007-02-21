@@ -73,6 +73,10 @@ extern "C" {
 #define VOID void
 #endif
 
+#ifndef CONST
+#define CONST const
+#endif
+
 
 /*
  * Add your own defines, if needed, here.
