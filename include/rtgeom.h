@@ -218,7 +218,6 @@ struct rt_nurb_internal {
 #define RT_NURB_GET_CONTROL_POINT(_s,_u,_v)	((_s)->ctl_points[ \
 	((_v)*(_s)->s_size[0]+(_u))*RT_NURB_EXTRACT_COORDS((_s)->pt_type)])
 
-#if OBJ_BREP /* are we compiling the b-rep/NURBS support? */
 #include "brep.h"
 /*
  * a b-rep solid consists of a
@@ -231,8 +230,6 @@ struct rt_brep_internal {
 
 #define RT_BREP_INTERNAL_MAGIC 0x42524550 /* BREP */
 #define RT_BREP_CK_MAGIC( _p) BU_CKMAG(_p,RT_BREP_INTERNAL_MAGIC,"rt_brep_internal");
-
-#endif
 
 /*
  *	ID_NMG
