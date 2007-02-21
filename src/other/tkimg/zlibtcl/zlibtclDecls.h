@@ -109,7 +109,7 @@ EXTERN int		gzsetparams _ANSI_ARGS_((gzFile file, int level,
 EXTERN int		gzread _ANSI_ARGS_((gzFile file, voidp buf, 
 				unsigned len));
 /* 34 */
-#if defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1230
+#if defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1200
 EXTERN int		gzwrite _ANSI_ARGS_((gzFile file, const voidpc buf, 
 				unsigned len));
 #else
@@ -179,7 +179,7 @@ typedef struct ZlibtclStubs {
     gzFile (*gzdopen) _ANSI_ARGS_((int fd, const char * mode)); /* 31 */
     int (*gzsetparams) _ANSI_ARGS_((gzFile file, int level, int strategy)); /* 32 */
     int (*gzread) _ANSI_ARGS_((gzFile file, voidp buf, unsigned len)); /* 33 */
-#if defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1230
+#if defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1200
     int (*gzwrite) _ANSI_ARGS_((gzFile file, const voidpc buf, unsigned len)); /* 34 */
 #else
     int (*gzwrite) _ANSI_ARGS_((gzFile file, const voidp buf, unsigned len)); /* 34 */
