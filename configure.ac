@@ -3778,7 +3778,7 @@ AC_OUTPUT
 # ac_output won't update the brlcad_config.h.in template timestamp if
 # the file is unchanged.  forcibly update the timestamp so autoheader
 # doesn't try to invoke.
-touch include/brlcad_config.h.in
+# touch include/brlcad_config.h.in
 
 
 #################
