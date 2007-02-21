@@ -109,8 +109,13 @@ EXTERN int		gzsetparams _ANSI_ARGS_((gzFile file, int level,
 EXTERN int		gzread _ANSI_ARGS_((gzFile file, voidp buf, 
 				unsigned len));
 /* 34 */
-EXTERN int		gzwrite _ANSI_ARGS_((gzFile file, const void const *buf, 
+#if defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1230
+EXTERN int		gzwrite _ANSI_ARGS_((gzFile file, const voidpc buf, 
 				unsigned len));
+#else
+EXTERN int		gzwrite _ANSI_ARGS_((gzFile file, const voidp buf, 
+				unsigned len));
+#endif
 /* Slot 35 is reserved */
 /* 36 */
 EXTERN int		gzputs _ANSI_ARGS_((gzFile file, const char * s));
@@ -174,7 +179,11 @@ typedef struct ZlibtclStubs {
     gzFile (*gzdopen) _ANSI_ARGS_((int fd, const char * mode)); /* 31 */
     int (*gzsetparams) _ANSI_ARGS_((gzFile file, int level, int strategy)); /* 32 */
     int (*gzread) _ANSI_ARGS_((gzFile file, voidp buf, unsigned len)); /* 33 */
-    int (*gzwrite) _ANSI_ARGS_((gzFile file, const void const *buf, unsigned len)); /* 34 */
+#if defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1230
+    int (*gzwrite) _ANSI_ARGS_((gzFile file, const voidpc buf, unsigned len)); /* 34 */
+#else
+    int (*gzwrite) _ANSI_ARGS_((gzFile file, const voidp buf, unsigned len)); /* 34 */
+#endif
     void *reserved35;
     int (*gzputs) _ANSI_ARGS_((gzFile file, const char * s)); /* 36 */
     char* (*gzgets) _ANSI_ARGS_((gzFile file, char * buf, int len)); /* 37 */
