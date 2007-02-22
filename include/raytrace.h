@@ -5317,6 +5317,7 @@ RT_EXPORT BU_EXTERN(union tree *nmg_booltree_leaf_tnurb,
 		     struct db_full_path *pathp,
 		     struct rt_db_internal *ip,
 		     genptr_t client_data));
+RT_EXPORT extern int nmg_bool_eval_silent;	/* quell output from nmg_booltree_evaluate */
 RT_EXPORT BU_EXTERN(union tree *nmg_booltree_evaluate,
 		    (union tree *tp,
 		     const struct bn_tol *tol,

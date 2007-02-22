@@ -53,7 +53,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-
 extern int nmg_class_nothing_broken;
 
 /* XXX Move to nmg_manif.c or nmg_ck.c */
@@ -1247,6 +1246,8 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, struct db_full_path *pathp, s
 	return(curtree);
 }
 
+/* quell the output of nmg_booltree_evaluate() to bu_log. */
+int nmg_bool_eval_silent=0; 
 /**
  *			N M G _ B O O L T R E E _ E V A L U A T E
  *
@@ -1340,7 +1341,8 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 	if( tl->tr_op != OP_NMG_TESS )  rt_bomb("nmg_booltree_evaluate() bad left tree\n");
 	if( tr->tr_op != OP_NMG_TESS )  rt_bomb("nmg_booltree_evaluate() bad right tree\n");
 
-bu_log(" {%s}%s{%s}\n", tl->tr_d.td_name, op_str, tr->tr_d.td_name );
+	if( ! nmg_bool_eval_silent )
+	    bu_log(" {%s}%s{%s}\n", tl->tr_d.td_name, op_str, tr->tr_d.td_name );
 
 	NMG_CK_REGION(tr->tr_d.td_r);
 	NMG_CK_REGION(tl->tr_d.td_r);
