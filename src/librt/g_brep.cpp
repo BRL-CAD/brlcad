@@ -214,7 +214,7 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 }
 
 
-/* XXX In order to facilitate exporting the ON_BRep object without a
+/* XXX In order to facilitate exporting the ON_Brep object without a
  * whole lot of effort, we're going to (for now) extend the
  * ON_BinaryArchive to support an "in-memory" representation of a
  * binary archive. Currently, the openNURBS library only supports
@@ -294,7 +294,7 @@ RT_MemoryArchive::SeekFromStart(size_t seek_to)
 bool
 RT_MemoryArchive::AtEnd() const
 {
-  return pos == m_buffer.size();
+  return pos >= m_buffer.size();
 }
 
 size_t
@@ -317,7 +317,7 @@ RT_MemoryArchive::CreateCopy() const
 size_t
 RT_MemoryArchive::Read(size_t amount, void* buf)
 {
-    const int read_amount = (pos + amount > m_buffer.size()) ? m_buffer.size()-(pos+amount) : amount;
+    const int read_amount = (pos + amount > m_buffer.size()) ? m_buffer.size()-pos : amount;
     const int start = pos;
     for (; pos < (start+read_amount); pos++) {
 	((char*)buf)[pos-start] = m_buffer[pos];
@@ -328,9 +328,14 @@ RT_MemoryArchive::Read(size_t amount, void* buf)
 size_t
 RT_MemoryArchive::Write(const size_t amount, const void* buf)
 {
+    // the write can come in at any position!
     const int start = pos;
+    // resize if needed to support new data
+    if (m_buffer.size() < (start+amount)) {
+	m_buffer.resize(start+amount);
+    }
     for (; pos < (start+amount); pos++) {
-	m_buffer.push_back(((char*)buf)[pos-start]);
+	m_buffer.at(pos) = ((char*)buf)[pos-start];
     }
     return amount;
 }
@@ -418,22 +423,11 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
       ONX_Model_Object mo = model.m_object_table[0];
       // XXX does openNURBS force us to copy? it seems the answer is
       // YES due to the const-ness
-      bi->brep = new ON_Brep(*dynamic_cast<const ON_Brep*>(mo.m_object)); 
-      delete mo.m_object;
+      bi->brep = new ON_Brep(*ON_Brep::Cast(mo.m_object));
       return 0;
   } else {
       return -1;
   }
-//   ON_Object* b;
-//   int rc = archive.ReadObject(&b);
-//   if (rc == 1) {
-//       bi->brep = dynamic_cast<ON_Brep*>(b);
-//       return 0;
-//   } else {
-//       fprintf(stderr, "Error reading brep: %s", ((rc == 3) ? "UUID not registered" : "file IO problems"));
-//       bi->brep = NULL;
-//       return -1;
-//   }
 }
 
 
