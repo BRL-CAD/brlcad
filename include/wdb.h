@@ -314,12 +314,8 @@ mk_bot_w_normals(
 	fastf_t		*normals,	/**<  array of floats for normals [num_normals*3] */
 	int		*face_normals );	/**<  array of ints (indices into normals array), must have 3*num_faces entries */
 
-#ifdef OBJ_BREP
 /* brep.cpp */
 WDB_EXPORT int mk_brep( struct rt_wdb* wdbp, const char* name, ON_Brep* brep );
-#else
-#define mk_brep(wdbp,name,brep) +++error_opennurbs_not_built+++
-#endif
 
 /* nurb.c */
 WDB_EXPORT int mk_bspline( struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs );
