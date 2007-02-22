@@ -1079,6 +1079,20 @@ const struct rt_functab rt_functab[] = {
 		rt_parsetab_tclget,	rt_parsetab_tcladjust,	rt_parsetab_tclform,
 		NULL,
 	},
+#else
+	{RT_FUNCTAB_MAGIC, "ID_BREP_PLACEHOLDER", "brep",
+		0,		/* this entry for sanity only */
+		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
+		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
+		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
+		rt_nul_import5, rt_nul_export5,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe,rt_nul_xform,	NULL,
+		0,				0,
+		rt_nul_tclget,	rt_nul_tcladjust, rt_nul_tclform,
+		rt_nul_make,
+	},
 #endif
 
 	{0L, ">ID_MAXIMUM", ">id_max",
