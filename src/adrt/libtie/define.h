@@ -37,8 +37,8 @@
 #ifndef	_TIE_DEFINE_H
 #define	_TIE_DEFINE_H
 
-#include <math.h>
 #include "common.h"
+#include <math.h>
 
 #define TIE_SINGLE_PREC		1		/* Use Single Precision Math */
 #define	TIE_TAB1		"\1\0\0\2\2\1"	/* Triangle Index Table */
