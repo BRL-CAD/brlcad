@@ -1079,6 +1079,7 @@ if test -f COPYING ; then
 	# restore the backup
 	$VERBOSE_ECHO "Restoring COPYING from backup (automake -f likely clobbered it)"
 	$VERBOSE_ECHO "echo \"\$COPYING_BACKUP\" > COPYING"
+	rm -f COPYING
 	echo "$COPYING_BACKUP" > COPYING
 	# release content
 	COPYING_BACKUP=""
@@ -1095,6 +1096,7 @@ if test -f INSTALL ; then
 	# restore the backup
 	$VERBOSE_ECHO "Restoring INSTALL from backup (automake -f likely clobbered it)"
 	$VERBOSE_ECHO "echo \"\$INSTALL_BACKUP\" > INSTALL"
+	rm -f INSTALL
 	echo "$INSTALL_BACKUP" > INSTALL
 	# release content
 	INSTALL_BACKUP=""
