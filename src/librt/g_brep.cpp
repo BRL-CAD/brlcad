@@ -200,6 +200,20 @@ rt_brep_free(register struct soltab *stp)
 int
 rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
+    struct rt_brep_internal* bi;
+
+    RT_CK_DB_INTERNAL(ip);
+    bi = (struct rt_brep_internal*)ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+    
+    ON_MeshParameters mp;
+    mp.JaggedAndFasterMeshParameters();
+
+    ON_SimpleArray<ON_Mesh*> mesh_list;
+    bi->brep->CreateMesh(mp, mesh_list);
+
+    
+
     return 0;
 }
 
