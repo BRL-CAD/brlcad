@@ -201,6 +201,27 @@ version_check ( ) {
 }
 
 
+######################################
+# LOCATE_CONFIGURE_TEMPLATE FUNCTION #
+######################################
+locate_configure_template ( ) {
+    _pwd="`pwd`"
+    if test -f "./configure.ac" ; then
+	echo "./configure.ac"
+    elif test -f "./configure.in" ; then
+	echo "./configure.in"
+    elif test -f "$_pwd/configure.ac" ; then
+	echo "$_pwd/configure.ac"
+    elif test -f "$_pwd/configure.in" ; then
+	echo "$_pwd/configure.in"
+    elif test -f "$PATH_TO_AUTOGEN/configure.ac" ; then
+	echo "$PATH_TO_AUTOGEN/configure.ac"
+    elif test -f "$PATH_TO_AUTOGEN/configure.in" ; then
+	echo "$PATH_TO_AUTOGEN/configure.in"
+    fi
+}
+
+
 ##################
 # argument check #
 ##################
@@ -351,12 +372,8 @@ fi
 # look for a configure file #
 #############################
 if [ "x$CONFIGURE" = "x" ] ; then
-    CONFIGURE=/dev/null
-    if test -f configure.ac ; then
-	CONFIGURE=configure.ac
-    elif test -f configure.in ; then
-	CONFIGURE=configure.in
-    fi
+    CONFIGURE="`locate_configure_template`"
+    $VERBOSE_ECHO "Found a configure template: $CONFIGURE"
 else
     $ECHO "Using CONFIGURE environment variable override: $CONFIGURE"
 fi
@@ -932,7 +949,7 @@ manual_autogen ( ) {
 	    $ECHO
 	    $ECHO "Warning:  Unsupported macros were found in $CONFIGURE"
 	    $ECHO
-	    $ECHO "The $CONFIGURE file was scanned in order to determine if any"
+	    $ECHO "The `echo $CONFIGURE | basename` file was scanned in order to determine if any"
 	    $ECHO "unsupported macros are used that exceed the minimum version"
 	    $ECHO "settings specified within this file.  As such, the following macros"
 	    $ECHO "should be removed from configure.ac or the version numbers in this"
@@ -976,7 +993,7 @@ EOF
 		$ECHO "	$AUTOGEN_SH --verbose"
 	    else
 		$ECHO "reviewing the minimum GNU Autotools version settings contained in"
-		$ECHO "this script along with the macros being used in your $CONFIGURE file."
+		$ECHO "this script along with the macros being used in your `echo $CONFIGURE | basename` file."
 	    fi
 	    $ECHO
 	    $ECHO $ECHO_N "Continuing build preparation ... $ECHO_C"
@@ -1109,11 +1126,28 @@ fi
 # restore and summarize #
 #########################
 cd "$_prev_path"
+config_ac="`locate_configure_template`"
+config="`echo $config_ac | sed 's/\.ac$//' | sed 's/\.in$//'`"
+if [ "x$config" = "x" ] ; then
+    $VERBOSE_ECHO "WARNING: path to configure could not be found"
+fi
+if [ ! -f "$config" ] ; then
+    $VERBOSE_ECHO "WARNING: expected configure file does not exist"
+    config=""
+fi
 $ECHO "done"
 $ECHO
-$ECHO "The $PROJECT build system is now prepared.  To build here, run:"
-$ECHO "  $PATH_TO_AUTOGEN/configure"
-$ECHO "  make"
+if [ "x$config" = "x" ] ; then
+    $ECHO "WARNING: The $PROJECT build system should now be prepared but there"
+    $ECHO "does not seem to be a resulting configure file.  This is unexpected"
+    $ECHO "and likely the result of an error.  You should run $NAME_OF_AUTOGEN"
+    $ECHO "with the --verbose option to get more details on a potential"
+    $ECHO "misconfiguration."
+else
+    $ECHO "The $PROJECT build system is now prepared.  To build here, run:"
+    $ECHO "  $config"
+    $ECHO "  make"
+fi
 
 
 # Local Variables:
