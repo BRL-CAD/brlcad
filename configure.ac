@@ -3795,7 +3795,7 @@ case $host_os in
 	    if test -w ${libtoolscript} ; then
 		# remove any -all_load option.
 		# provokes libtool linker bug with C++ libraries.
-		sed 's/-all_load[[ 	]]*[\\\]$convenience//g' < $libtoolscript > ${libtoolscript}.sed
+		sed 's/-all_load.*convenience//g' < $libtoolscript > ${libtoolscript}.sed
 		if test ! "x`cat ${libtoolscript}`" = "x`cat ${libtoolscript}.sed`" ; then
 		    AC_MSG_RESULT([Found -all_load in libtool script, removing])
 		    cp ${libtoolscript}.sed ${libtoolscript}
