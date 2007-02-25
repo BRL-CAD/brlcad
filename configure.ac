@@ -1878,6 +1878,10 @@ if test "x$bc_build_warnings" != "xno" ; then
 	fi
 fi
 
+dnl AC_C_PROTOTYPES
+AM_C_PROTOTYPES
+AC_DEFINE(USE_PROTOTYPES,1,heh)
+
 AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
@@ -1892,11 +1896,6 @@ else
 		AC_MSG_ERROR([*** Don't know the endian of this machine! ***])
 	fi
 fi
-
-dnl AC_C_PROTOTYPES
-AM_C_PROTOTYPES
-
-AC_DEFINE(USE_PROTOTYPES,1,heh)
 
 # figure out what size pointers the compiler is actually generating
 AC_CHECK_SIZEOF(int)
