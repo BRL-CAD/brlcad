@@ -150,6 +150,44 @@ bu_same_file(const char *fn1, const char *fn2)
 }
 
 
+/**
+ * b u _ s a m e _ f d
+ *
+ * returns truthfully as to whether or not the two provided file
+ * descriptors are the same file.  if either file does not exist, the
+ * result is false.
+ */
+int
+bu_same_fd(int fd1, int fd2)
+{
+    if (fd1<0 || fd2<0) {
+	return 0;
+    }
+
+    /* use HAVE_STAT configure test for now until we find a need to
+     * test for HAVE_FSTAT instead.
+     */
+#if defined(HAVE_STAT)
+#  define bu_same_file_method 1
+    {
+	struct stat sb1, sb2;
+	if ((fstat(fd1, &sb1) == 0) &&
+	    (fstat(fd2, &sb2) == 0) &&
+	    (sb1.st_dev == sb2.st_dev) &&
+	    (sb1.st_ino == sb2.st_ino)) {
+	    return 1;
+	}
+    }
+#endif
+
+#ifndef bu_same_file_method
+#  error "Do not know how to test if two files are the same on this system"
+#endif
+    
+    return 0;
+}
+
+
 /** @} */
 /*
  * Local Variables:
