@@ -1079,6 +1079,16 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
+    if (!dbip->dbi_filename) {
+	bu_log("Error: geometry file is not specified\n");
+	return TCL_ERROR;
+    }
+
+    if (!bu_file_exists(dbip->dbi_filename)) {
+	bu_log("Error: %s does not exist\n", dbip->dbi_filename);
+	return TCL_ERROR;
+    }
+
     base = basename_without_suffix( argv[1], ".sh" );
     (void)chmod( argv[1], 0755 );	/* executable */
     /* Do not specify -v option to rt; batch jobs must print everything. -Mike */
@@ -1144,7 +1154,7 @@ int
 f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     register FILE *fp;
-    char buffer[512];
+    char buffer[512] = {0};
 
     /* data pulled from script file */
     int perspective=-1;
@@ -1156,10 +1166,6 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
     /* save previous interactive state */
     int prevInteractive = interactive;
     int prevPerspective =  mged_variables->mv_perspective;
-
-    /* inodes used for database comparisons */
-    struct stat dbInode;
-    struct stat scriptInode;
 
 #if 0
     /* for view orientation */
@@ -1183,6 +1189,12 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 	bu_vls_printf(&vls, "help loadview");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    /* make sure the file exists */
+    if (!bu_file_exists(argv[1])) {
+	bu_log("Error: File %s does not exist\n", argv[1]);
 	return TCL_ERROR;
     }
 
@@ -1264,15 +1276,12 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 		interactive=prevInteractive;
 
 	    } else {
-		/* compare inode numbers */
-
-		stat(dbip->dbi_filename, &dbInode);
-		stat(dbName, &scriptInode);
-
-		/* stop here if they are not the same file, otherwise,
-		 * we may proceed as expected, and load the objects.
-		 */
-		if (dbInode.st_ino != scriptInode.st_ino) {
+		/* database is already open - compare inode numbers */
+		if (!bu_same_file(dbip->dbi_filename, dbName)) {
+		    /* stop here if they are not the same file,
+		     * otherwise, we may proceed as expected, and load
+		     * the objects.
+		     */
 		    Tcl_AppendResult(interp, "View script references a different database\nCannot load the view without closing the current database\n(i.e. run \"opendb ", dbName, "\")\n", (char *)NULL);
 
 		    /* restore state before leaving */
