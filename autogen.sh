@@ -801,7 +801,7 @@ if [ "x$HAVE_AUTORECONF" = "xyes" ] ; then
 
     if [ ! $ret = 0 ] ; then
 	if [ "x$HAVE_ALT_LIBTOOLIZE" = "xyes" ] ; then
-	    if [ ! "x`echo \"$autoreconf_output\" | grep \"failed to run libtoolize: No such file or directory\"`" = "x" ] ; then
+	    if [ ! "x`echo \"$autoreconf_output\" | grep libtoolize | grep \"No such file or directory\"`" = "x" ] ; then
 		$ECHO
 		$ECHO "Warning: autoreconf failed but for for a reason that seems to be"
 		$ECHO "a common libtool misconfiguration issue.  This problem is commonly"
