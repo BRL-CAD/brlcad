@@ -384,10 +384,15 @@ fi
 ####################
 if [ "x$PROJECT" = "x" ] ; then
     PROJECT="`grep AC_INIT $CONFIGURE | grep -v '.*#.*AC_INIT' | tail -${TAIL_N}1 | sed 's/^[ 	]*AC_INIT(\([^,)]*\).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
+    if [ "x$PROJECT" = "xAC_INIT" ] ; then
+	# projects might be using the older/deprecated arg-less AC_INIT .. look for AM_INIT_AUTOMAKE instead
+	PROJECT="`grep AM_INIT_AUTOMAKE $CONFIGURE | grep -v '.*#.*AM_INIT_AUTOMAKE' | tail -${TAIL_N}1 | sed 's/^[ 	]*AM_INIT_AUTOMAKE(\([^,)]*\).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
+    fi
+    if [ "x$PROJECT" = "xAM_INIT_AUTOMAKE" ] ; then
+	PROJECT="project"
+    fi
     if [ "x$PROJECT" = "x" ] ; then
 	PROJECT="project"
-    else
-	$VERBOSE_ECHO "Detected project name: $PROJECT"
     fi
 else
     $ECHO "Using PROJECT environment variable override: $PROJECT"
@@ -899,7 +904,7 @@ manual_autogen ( ) {
 	    break
 	fi
     done
-    if [ "x$need_libtoolize" = "x" ] ; then
+    if [ "x$need_libtoolize" = "xyes" ] ; then
 	if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
 	    $VERBOSE_ECHO "$LIBTOOLIZE $LIBTOOLIZE_OPTIONS"
 	    libtoolize_output="`$LIBTOOLIZE $LIBTOOLIZE_OPTIONS 2>&1`"
@@ -1051,7 +1056,7 @@ EOF
 	    break
 	fi
     done
-    if [ "x$need_autoheader" = "x" ] ; then
+    if [ "x$need_autoheader" = "xyes" ] ; then
 	$VERBOSE_ECHO "$AUTOHEADER $AUTOHEADER_OPTIONS"
 	autoheader_output="`$AUTOHEADER $AUTOHEADER_OPTIONS 2>&1`"
 	ret=$?
@@ -1071,7 +1076,7 @@ EOF
 	    break
 	fi
     done
-    if [ "x$need_automake" = "x" ] ; then
+    if [ "x$need_automake" = "xyes" ] ; then
 	$VERBOSE_ECHO "$AUTOMAKE $AUTOMAKE_OPTIONS"
 	automake_output="`$AUTOMAKE $AUTOMAKE_OPTIONS 2>&1`"
 	ret=$?
