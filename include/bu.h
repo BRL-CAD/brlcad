@@ -1778,6 +1778,7 @@ BU_EXPORT BU_EXTERN(void bu_printfile,
 
 /* stat.c */
 BU_EXPORT BU_EXTERN(int	bu_file_exists, (const char *path));
+BU_EXPORT BU_EXTERN(int	bu_same_file, (const char *fn1, const char *fn2));
 
 /* brlcad_path.c */
 BU_EXPORT BU_EXTERN(const char *bu_argv0, (const char *argv0));
