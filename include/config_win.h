@@ -78,6 +78,7 @@
 #define HAVE_MATH_H     1
 #define HAVE_MATHERR	1
 #define HAVE_MEMORY_H	1
+#define HAVE_MEMSET	1
 #define HAVE_OFF_T	1
 #if 0
 #define HAVE_PWD_H	1
@@ -92,6 +93,7 @@
 #define HAVE_STRDUP	1
 #define HAVE_STRDUP_DECL	1
 #define HAVE_STRING_H	1
+#define HAVE_STRTOK	1
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TIME	1
 #define HAVE_SYS_TYPES_H 1
