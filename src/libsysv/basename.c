@@ -23,6 +23,10 @@ static const int unused = 0;
 
 #ifndef HAVE_BASENAME
 
+#include <errno.h>
+#include "sysv.h"
+
+
 char *
 basename(const char *path)
 {
