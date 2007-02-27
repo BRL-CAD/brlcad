@@ -40,7 +40,7 @@
 
 #ifndef HAVE_BASENAME
 char *
-basename(const char *path)
+basename(const char *path);
 #endif
 
 #ifndef HAVE_BSDSELECT
@@ -61,6 +61,11 @@ strchr(char *sp, char c);
 #ifndef HAVE_STRDUP
 char *
 strdup(const char *cp);
+#endif
+
+#ifndef HAVE_STRLCPY
+size_t
+strlcpy(char *dst, const char *src, size_t siz);
 #endif
 
 #ifndef HAVE_STRSEP
