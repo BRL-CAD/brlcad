@@ -87,6 +87,9 @@ static pthread_mutex_t jobid_mutex = PTHREAD_MUTEX_INITIALIZER;
 /* mutex to protect the resources */
 static pthread_mutex_t resource_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+/* mutex to protect session opening and closing */
+static pthread_mutex_t session_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 /* mutexes to protect the input and output queues */
 static pthread_mutex_t *input_queue_mutex=NULL, *output_queue_mutex=NULL;
 
@@ -577,15 +580,18 @@ rts_open_session()
 {
 	int i;
 
+	pthread_mutex_lock( &session_mutex );
 	/* make sure we have some geometry */
 	if( num_geometries == 0 || rts_geometry[0] == NULL ) {
 		fprintf( stderr, "rtServer: ERROR: no geometry loaded!!\n" );
+		pthread_mutex_unlock( &session_mutex );
 		return -1;
 	}
 
 	/* if the initial session is not yet used, just return it */
 	if( !used_session_0 ) {
 		used_session_0 = 1;
+		pthread_mutex_unlock( &session_mutex );
 		return 0;
 	}
 
@@ -607,6 +613,8 @@ rts_open_session()
 
 	/* copy into slot #i from session 0 */
 	copy_geometry( i, 0 );
+
+	pthread_mutex_unlock( &session_mutex );
 
 	return( i );
 }
@@ -642,6 +650,7 @@ rts_close_session( int sessionid )
 {
 	int i,j;
 
+	pthread_mutex_lock( &session_mutex );
 	if( sessionid == 0 ) {
 		/* never eliminate sessionid 0 */
 		used_session_0 = 0;
@@ -649,14 +658,17 @@ rts_close_session( int sessionid )
 		/* reset any xforms */
 		reset_xforms( sessionid );
 
+		pthread_mutex_unlock( &session_mutex );
 		return;
 	}
 	if( sessionid >= num_geometries ) {
 		/* no such session */
+		pthread_mutex_unlock( &session_mutex );
 		return;
 	}
 	if( !rts_geometry[sessionid] ) {
 		/* this session has already been closed (or never opened) */
+		pthread_mutex_unlock( &session_mutex );
 		return;
 	}
 
@@ -688,6 +700,8 @@ rts_close_session( int sessionid )
 
 	/* mark this slot as unused */
 	rts_geometry[sessionid] = NULL;
+
+	pthread_mutex_unlock( &session_mutex );
 }
 
 
