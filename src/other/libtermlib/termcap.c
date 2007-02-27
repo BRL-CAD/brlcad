@@ -127,6 +127,8 @@ tnchktc(void)
 	p = tbuf;
 	while (*p) {
 		holdtc = p = tskip(p);
+		if (!p)
+		  return (0);
 		if (!*p)
 			break;
 		if (*p++ != 't' || *p == 0 || *p++ != 'c')
@@ -258,12 +260,15 @@ tgetent(char *bp, const char *name)
 static char *
 tskip(register const char *bp)
 {
+  if (!bp) {
+    return NULL;
+  }
 
-	while (*bp && *bp != ':')
-		bp++;
-	if (*bp == ':')
-		bp++;
-	return (char *)bp;
+  while (*bp && *bp != ':')
+    bp++;
+  if (*bp == ':')
+    bp++;
+  return (char *)bp;
 }
 
 /*
@@ -282,6 +287,8 @@ tgetnum(char *id)
 
 	for (;;) {
 		bp = tskip(bp);
+		if (!bp)
+		  return -1;
 		if (*bp == 0)
 			return (-1);
 		if (*bp++ != id[0] || *bp == 0 || *bp++ != id[1])
@@ -314,6 +321,8 @@ tgetflag(char *id)
 
 	for (;;) {
 		bp = tskip(bp);
+		if (!bp)
+		  return 0;
 		if (!*bp)
 			return (0);
 		if (*bp++ == id[0] && *bp != 0 && *bp++ == id[1]) {
@@ -340,6 +349,8 @@ tgetstr(char *id, char **area)
 
 	for (;;) {
 		bp = tskip(bp);
+		if (!bp)
+		  return 0;
 		if (!*bp)
 			return (0);
 		if (*bp++ != id[0] || *bp == 0 || *bp++ != id[1])
