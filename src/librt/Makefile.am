@@ -4,11 +4,16 @@ lib_LTLIBRARIES = librt.la
 noinst_LTLIBRARIES = librt_nil.la
 
 if WITH_OPENNURBS
-BREP_CPPFLAGS=-DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
+BREP_CPPFLAGS=-O3 -msse -msse2 -funroll-loops -DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
 BREP_SRCS = g_brep.cpp
+BREP_TEST = brep_test
+
+brep_test_LDADD = librt.la ${BU} ${BN}
+brep_test_SOURCES = brep_test.cpp
 else
 BREP_CPPFLAGS =
 BREP_SRCS =
+BREP_TEST = 
 endif
 
 SRCS = \
@@ -186,7 +191,8 @@ dist_man_MANS = librt.3
 
 noinst_PROGRAMS = \
 	comb \
-	nurb_example
+	nurb_example \
+	${BREP_TEST}
 
 comb_LDADD = librt.la ${BU}
 comb_SOURCES = comb.c
