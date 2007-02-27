@@ -63,6 +63,7 @@ typedef struct _on_brep_placeholder {
 } ON_Brep;
 #endif
 
+
 /**
  * Bounding volume used as an acceleration data structure. It's
  * implemented here as an axis-aligned bounding box containing the
@@ -89,6 +90,7 @@ struct brep_specific {
 };
 
 #ifdef __cplusplus
+#include "vector.h"
 }
 #endif
 
