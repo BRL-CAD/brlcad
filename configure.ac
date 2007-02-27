@@ -3686,6 +3686,7 @@ AC_CONFIG_FILES([
 	src/other/iwidgets/iwidgets.tcl
 	src/other/iwidgets/pkgIndex.tcl
 	src/other/jove/Makefile
+	src/other/jove/teach-jove
 	src/other/libpng/Makefile
 	src/other/libregex/Makefile
 	src/other/libtcl/Makefile
