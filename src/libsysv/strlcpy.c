@@ -23,6 +23,8 @@ static const int unused = 0;
 
 #ifndef HAVE_STRLCPY
 
+#include "sysv.h"
+
 
 /*
  * Copy src to string dst of size siz.  At most siz-1 characters
