@@ -4,7 +4,7 @@ lib_LTLIBRARIES = librt.la
 noinst_LTLIBRARIES = librt_nil.la
 
 if WITH_OPENNURBS
-BREP_CPPFLAGS=-O3 -msse -msse2 -funroll-loops -DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
+BREP_CPPFLAGS=-msse -msse2 -DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
 BREP_SRCS = g_brep.cpp
 BREP_TEST = brep_test
 
