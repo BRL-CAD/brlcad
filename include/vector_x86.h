@@ -7,6 +7,96 @@
 
 typedef double v2df __attribute__((vector_size(16)));
 
+
+template<int LEN>
+inline dvec<LEN>::dvec(double s)
+{
+  
+}
+
+template<int LEN>
+inline dvec<LEN>::dvec(const double* vals)
+{
+
+}
+
+template<int LEN>
+inline dvec<LEN>::dvec(const dvec<LEN>& p)
+{
+
+}
+
+template<int LEN>
+inline dvec<LEN>& 
+dvec<LEN>::operator=(const dvec<LEN>& p)
+{
+  return *this;
+}
+
+template<int LEN>
+inline double 
+dvec<LEN>::operator[](int index) const
+{
+  return 0.0;
+}
+
+template<int LEN>
+inline void 
+dvec<LEN>::u_store(double* arr) const
+{
+  return 0.0;
+}
+
+template<int LEN>
+inline void 
+dvec<LEN>::a_store(double* arr) const
+{
+
+}
+
+template<int LEN>
+inline dvec<LEN> 
+dvec<LEN>::operator+(const dvec<LEN>& b)
+{
+  return dvec<LEN>(0.0);
+}
+
+template<int LEN>
+inline dvec<LEN> 
+dvec<LEN>::operator-(const dvec<LEN>& b)
+{
+  return dvec<LEN>(0.0);
+}
+
+template<int LEN>
+inline dvec<LEN> 
+dvec<LEN>::operator*(const dvec<LEN>& b)
+{
+  return dvec<LEN>(0.0);
+}
+
+template<int LEN>
+inline dvec<LEN> 
+dvec<LEN>::operator/(const dvec<LEN>& b)
+{
+  return dvec<LEN>(0.0);
+}
+
+template<int LEN>
+inline dvec<LEN> 
+dvec<LEN>::madd(const dvec<LEN>& s, const dvec<LEN>& b)
+{
+  return dvec<LEN>(0.0);
+}
+
+template<int LEN>
+inline dvec<LEN> 
+dvec<LEN>::madd(const double s, const dvec<LEN>& b)
+{  
+  return dvec<LEN>(0.0);
+}
+
+
 class vec2d {
 public:
   
