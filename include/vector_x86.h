@@ -1,9 +1,23 @@
 #ifndef __VECTOR_X86
-#define __VECTOR_x86
-
-typedef double v2df __attribute__((mode(V2DF)));
+#define __VECTOR_X86
 
 #define ALIGN16(_m) (double*)((((long)(_m)) + 0x10L) & ~0xFL);
+
+typedef double v2df __attribute__((vector_size(16)));
+
+#if !defined(__builtin_ia32_storeapd) 
+static inline void __builtin_ia32_storeapd(double* v, v2df vector) 
+{
+    __builtin_ia32_storeupd(v, vector);
+}
+#endif
+
+#if !defined(__builtin_ia32_loadapd)
+static inline v2df __builtin_ia32_loadapd(double* v)
+{
+    return __builtin_ia32_loadupd(v);
+}
+#endif
 
 class vec2d {
 public:
@@ -16,7 +30,7 @@ public:
     _init(x,y);
   }
 
-  vec2d(const vec2d& proto) : v(NULL)
+  vec2d(const vec2d& proto)
   {
     v = ALIGN16(m);
     __builtin_ia32_storeapd(v,proto.vec());
@@ -70,12 +84,12 @@ private:
   double  m[4];
   double* v;
   
-  vec2d(v2df result)
-  {
-    v = ALIGN16(m);
-    __builtin_ia32_storeapd(v, result);
-  }
-
+    vec2d::vec2d(const v2df& result) 
+    {
+	v = ALIGN16(m);
+	__builtin_ia32_storeapd(v, result);
+    }
+    
   v2df vec() const {
     return __builtin_ia32_loadapd(v);
   }
@@ -95,7 +109,7 @@ operator<<(std::ostream& out, const vec2d& v)
   out << "<" << v.x() << "," << v.y() << ">";
   return out;
 }
-  
+
 #endif
 
 /*
