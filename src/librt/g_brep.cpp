@@ -26,6 +26,7 @@
 #include "brep.h"
 #include "raytrace.h"
 #include "rtgeom.h"
+#include "vector.h"
 
 #ifdef write
 #   undef write
@@ -77,6 +78,7 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 #ifdef __cplusplus
   }
 #endif
+
 
 /**
  *   			R T _ B R E P _ P R E P

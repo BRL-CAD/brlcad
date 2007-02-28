@@ -4,6 +4,7 @@
 #include <iostream>
 #include <assert.h>
 #include "brep.h"
+#include "vector.h"
 
 using namespace std;
 
