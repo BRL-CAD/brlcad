@@ -90,7 +90,6 @@ struct brep_specific {
 };
 
 #ifdef __cplusplus
-#include "vector.h"
 }
 #endif
 
