@@ -103,7 +103,7 @@ private:
   friend std::ostream& operator<<(std::ostream& out, const vec2d& v);
 };
   
-std::ostream& 
+inline std::ostream& 
 operator<<(std::ostream& out, const vec2d& v)
 {
   out << "<" << v.x() << "," << v.y() << ">";
