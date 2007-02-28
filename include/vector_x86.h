@@ -1,23 +1,11 @@
 #ifndef __VECTOR_X86
 #define __VECTOR_X86
 
+#include <emmintrin.h>
+
 #define ALIGN16(_m) (double*)((((long)(_m)) + 0x10L) & ~0xFL);
 
 typedef double v2df __attribute__((vector_size(16)));
-
-#if !defined(__builtin_ia32_storeapd) 
-static inline void __builtin_ia32_storeapd(double* v, v2df vector) 
-{
-    __builtin_ia32_storeupd(v, vector);
-}
-#endif
-
-#if !defined(__builtin_ia32_loadapd)
-static inline v2df __builtin_ia32_loadapd(double* v)
-{
-    return __builtin_ia32_loadupd(v);
-}
-#endif
 
 class vec2d {
 public:
@@ -32,41 +20,50 @@ public:
 
   vec2d(const vec2d& proto)
   {
-    v = ALIGN16(m);
-    __builtin_ia32_storeapd(v,proto.vec());
+    _vec = proto._vec;
   }
 
   vec2d& operator=(const vec2d& b) 
   {
-    __builtin_ia32_storeapd(v, b.vec());
+    _vec = b._vec;
     return *this;
   }
 
   double operator[](int index) const {
+    double  v[2] __attribute__((aligned(16)));
+    _mm_store_pd(v, _vec);
     return v[index];
   }
 
-  double x() const { return v[0]; }
-  double y() const { return v[1]; }
+  void ustore(double* arr) const {
+    // assume nothing about the alignment of arr
+    double  v[2] __attribute__((aligned(16)));    
+    _mm_store_pd(v, _vec);
+    arr[0] = v[0];
+    arr[1] = v[1];
+  }
+
+  double x() const { return (*this)[0]; }
+  double y() const { return (*this)[1]; }
 
   vec2d operator+(const vec2d& b) const
   {
-    return vec2d(__builtin_ia32_addpd(vec(),b.vec()));
+    return vec2d(_mm_add_pd(_vec,b._vec));
   }
   
   vec2d operator-(const vec2d& b) const
   {
-    return vec2d(__builtin_ia32_subpd(vec(),b.vec()));
+    return vec2d(_mm_sub_pd(vec(),b.vec()));
   }
   
   vec2d operator*(const vec2d& b) const
   {
-    return vec2d(__builtin_ia32_mulpd(vec(),b.vec()));
+    return vec2d(_mm_mul_pd(vec(),b.vec()));
   }
   
   vec2d operator/(const vec2d& b) const
   {
-    return vec2d(__builtin_ia32_divpd(vec(),b.vec()));
+    return vec2d(_mm_div_pd(vec(),b.vec()));
   }
 
   vec2d madd(const double& scalar, const vec2d& b) const
@@ -76,30 +73,28 @@ public:
 
   vec2d madd(const vec2d& s, const vec2d& b) const
   {
-    
-    return vec2d(__builtin_ia32_addpd(__builtin_ia32_mulpd(vec(),s.vec()),b.vec()));
+    return vec2d(_mm_add_pd(_mm_mul_pd(vec(),s.vec()),b.vec()));
   }
 
 private:
-  double  m[4];
-  double* v;
+  //double  v[2] __attribute__((aligned(16)));
+  v2df _vec;
   
-    vec2d::vec2d(const v2df& result) 
-    {
-	v = ALIGN16(m);
-	__builtin_ia32_storeapd(v, result);
-    }
-    
-  v2df vec() const {
-    return __builtin_ia32_loadapd(v);
+  vec2d::vec2d(const v2df& result) 
+  {
+    _vec = result;
   }
-
+   
+  v2df vec() const { return _vec; }
+ 
   void _init(double x, double y) 
   {
-    v = ALIGN16(m);
+    double  v[2] __attribute__((aligned(16)));
     v[0] = x;
     v[1] = y;
+    _vec = _mm_load_pd(v);
   }    
+
   friend std::ostream& operator<<(std::ostream& out, const vec2d& v);
 };
   
