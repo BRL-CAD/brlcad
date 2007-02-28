@@ -23,6 +23,10 @@ static const int unused = 0;
 
 #ifndef HAVE_STRLCPY
 
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
 #include "sysv.h"
 
 
