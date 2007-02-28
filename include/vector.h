@@ -1,9 +1,10 @@
 #ifndef __VECTOR
 #define __VECTOR
 
+extern "C++" {
 #include <iostream>
-
-const double VEQUALITY = 0.0000001;
+  
+  const double VEQUALITY = 0.0000001;
 
 #if defined(__SSE2__) && defined(__GNUC__)
 #define __x86_vector__
@@ -12,11 +13,12 @@ const double VEQUALITY = 0.0000001;
 #define __fpu_vector__
 #include "vector_fpu.h"
 #endif
-
-bool vequals(const vec2d& a, const vec2d& b) {
-  return 
-    (fabs(a.x()-b.x()) < VEQUALITY) &&
-    (fabs(a.y()-b.y()) < VEQUALITY);
+  
+  inline bool vequals(const vec2d& a, const vec2d& b) {
+    return 
+      (fabs(a.x()-b.x()) < VEQUALITY) &&
+      (fabs(a.y()-b.y()) < VEQUALITY);
+  }
 }
 
 #endif
