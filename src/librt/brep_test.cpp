@@ -19,6 +19,17 @@ main(int argc, char** argv)
   printf("using fpu vectorization\n");
 #endif
 
+  {
+    double _a[8] VEC_ALIGN = {0,1,2,3, 4, 5, 6, 7};
+    double _b[8] VEC_ALIGN = {2,4,6,8,10,12,14,16};
+    dvec<8> a(_a, true);
+    dvec<8> b(_b, true);
+    
+    dvec<8> c = a + b;
+    double _c[8] VEC_ALIGN = {2,5,8,11,14,17,20,23};
+    assert( c == dvec<8>(_c,true) );
+  }
+
   /* test correctness */
   vec2d a(100.0,-100.0);
   vec2d b(200.0,-200.0);
