@@ -10,6 +10,12 @@ extern "C++" {
   struct vec_internal;
   
   template<int LEN>
+  class dvec;
+
+  template<int LEN>
+  std::ostream& operator<<(std::ostream& out, const dvec<LEN>& v);
+
+  template<int LEN>
   class dvec {
   public:
     dvec(double s);
@@ -31,6 +37,7 @@ extern "C++" {
     dvec<LEN> madd(const dvec<LEN>& s, const dvec<LEN>& b);
     dvec<LEN> madd(const double s, const dvec<LEN>& b);
 
+    friend std::ostream& operator<< <>(std::ostream& out, const dvec<LEN>& v);
   private:
     struct vec_internal<LEN> data;
 
@@ -40,7 +47,7 @@ extern "C++" {
   // use this to create 16-byte aligned memory on platforms that support it
 #define VEC_ALIGN
 
-  //#undef __SSE2__
+  /*#undef __SSE2__*/ // Test FPU version
 #if defined(__SSE2__) && defined(__GNUC__)
 #define __x86_vector__
 #include "vector_x86.h"

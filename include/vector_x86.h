@@ -103,52 +103,81 @@ dvec<LEN>::operator==(const dvec<LEN>& b) const
   return true;
 }
 
+#define OP_IMPL(__op__) {                         \
+  struct vec_internal<LEN> result;                \
+  for (int i = 0; i < LEN/2; i++) {               \
+    result.v[i] = __op__(data.v[i], b.data.v[i]); \
+  }                                               \
+ return dvec<LEN>(result);                        \
+}
+   
 template<int LEN>
 inline dvec<LEN> 
 dvec<LEN>::operator+(const dvec<LEN>& b)
 {
-  struct vec_internal<LEN> result;
-  for (int i = 0; i < LEN/2; i++) {
-    result.v[i] = _mm_add_pd(data.v[i], b.data.v[i]);
-  }
-  return dvec<LEN>(result);
+  OP_IMPL(_mm_add_pd)
 }
 
 template<int LEN>
 inline dvec<LEN> 
 dvec<LEN>::operator-(const dvec<LEN>& b)
 {
-  return dvec<LEN>(0.0);
+  OP_IMPL(_mm_sub_pd)
 }
 
 template<int LEN>
 inline dvec<LEN> 
 dvec<LEN>::operator*(const dvec<LEN>& b)
 {
-  return dvec<LEN>(0.0);
+  OP_IMPL(_mm_mul_pd)
 }
 
 template<int LEN>
 inline dvec<LEN> 
 dvec<LEN>::operator/(const dvec<LEN>& b)
 {
-  return dvec<LEN>(0.0);
+  OP_IMPL(_mm_div_pd)
 }
 
 template<int LEN>
 inline dvec<LEN> 
 dvec<LEN>::madd(const dvec<LEN>& s, const dvec<LEN>& b)
 {
-  return dvec<LEN>(0.0);
+  struct vec_internal<LEN> r;
+  for (int i = 0; i < LEN/2; i++) {
+    r.v[i] = _mm_mul_pd(data.v[i], s.data.v[i]);
+  }
+  for (int i = 0; i < LEN/2; i++) {
+    r.v[i] = _mm_add_pd(r.v[i], b.data.v[i]);
+  }
+  return dvec<LEN>(r);
 }
 
 template<int LEN>
 inline dvec<LEN> 
 dvec<LEN>::madd(const double s, const dvec<LEN>& b)
 {  
-  return dvec<LEN>(0.0);
+  double _t[LEN] VEC_ALIGN;
+  for (int i = 0; i < LEN; i++) _t[i] = s;
+  dvec<LEN> t(_t,true);
+  return madd(t, b);
 }
 
+template <int LEN>
+inline std::ostream&
+operator<<(std::ostream& out, const dvec<LEN>& v)
+{
+  double _t[LEN] VEC_ALIGN;
+  v.a_store(_t);
+  out << "<";
+  for (int i = 0; i < LEN; i++) {
+    out << _t[i];
+    if (i != LEN-1) 
+      out << ",";
+  }
+  out << ">";
+  return out;
+}
 
 class vec2d {
 public:

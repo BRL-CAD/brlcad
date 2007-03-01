@@ -93,35 +93,64 @@ template<int LEN>
 inline dvec<LEN> 
 dvec<LEN>::operator-(const dvec<LEN>& b)
 {
-  return dvec<LEN>(0.0);
+  struct vec_internal<LEN> r;
+  for (int i = 0; i < LEN; i++) 
+    r.v[i] = data.v[i] - b.data.v[i];
+  return dvec<LEN>(r);
 }
 
 template<int LEN>
 inline dvec<LEN> 
 dvec<LEN>::operator*(const dvec<LEN>& b)
 {
-  return dvec<LEN>(0.0);
+  struct vec_internal<LEN> r;
+  for (int i = 0; i < LEN; i++) 
+    r.v[i] = data.v[i] * b.data.v[i];
+  return dvec<LEN>(r);
 }
 
 template<int LEN>
 inline dvec<LEN> 
 dvec<LEN>::operator/(const dvec<LEN>& b)
 {
-  return dvec<LEN>(0.0);
+  struct vec_internal<LEN> r;
+  for (int i = 0; i < LEN; i++) 
+    r.v[i] = data.v[i] / b.data.v[i];
+  return dvec<LEN>(r);
 }
 
 template<int LEN>
 inline dvec<LEN> 
 dvec<LEN>::madd(const dvec<LEN>& s, const dvec<LEN>& b)
 {
-  return dvec<LEN>(0.0);
+  struct vec_internal<LEN> r;
+  for (int i = 0; i < LEN; i++) 
+    r.v[i] = data.v[i] * s.data.v[i] + b.data.v[i];
+  return dvec<LEN>(r);
 }
 
 template<int LEN>
 inline dvec<LEN> 
 dvec<LEN>::madd(const double s, const dvec<LEN>& b)
 {  
-  return dvec<LEN>(0.0);
+  struct vec_internal<LEN> r;
+  for (int i = 0; i < LEN; i++) 
+    r.v[i] = data.v[i] * s +  b.data.v[i];
+  return dvec<LEN>(r);
+}
+
+template <int LEN>
+inline std::ostream&
+operator<<(std::ostream& out, const dvec<LEN>& v)
+{
+  out << "<";
+  for (int i = 0; i < LEN; i++) {
+    out << v.data.v[i];
+    if (i != LEN-1) 
+      out << ",";
+  }
+  out << ">";
+  return out;
 }
 
 class vec2d {
