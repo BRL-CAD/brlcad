@@ -3,62 +3,115 @@
 
 #include <emmintrin.h>
 
-#define ALIGN16(_m) (double*)((((long)(_m)) + 0x10L) & ~0xFL);
+//#define ALIGN16(_m) (double*)((((long)(_m)) + 0x10L) & ~0xFL);
+#undef VEC_ALIGN
+#define VEC_ALIGN __attribute__((aligned(16)))
 
 typedef double v2df __attribute__((vector_size(16)));
 
+template<int LEN>
+struct vec_internal {
+  v2df v[LEN/2];
+};
 
 template<int LEN>
 inline dvec<LEN>::dvec(double s)
 {
-  
+  double t[LEN] __attribute__((aligned(16)));
+  for (int i = 0; i < LEN/2; i++) {
+    t[i*2]   = s;
+    t[i*2+1] = s;
+    data.v[i] = _mm_load_pd(&t[i*2]);
+  }
 }
 
 template<int LEN>
-inline dvec<LEN>::dvec(const double* vals)
+inline dvec<LEN>::dvec(const double* vals, bool aligned)
 {
-
+  if (aligned) {
+    for (int i = 0; i < LEN/2; i++) {
+      data.v[i] = _mm_load_pd(&vals[i*2]);
+    }
+  } else {
+    for (int i = 0; i < LEN/2; i++) {
+      data.v[i] = _mm_loadu_pd(&vals[i*2]);
+    }
+  }
 }
 
 template<int LEN>
 inline dvec<LEN>::dvec(const dvec<LEN>& p)
 {
+  for (int i = 0; i < LEN/2; i++) {
+    data.v[i] = p.data.v[i];
+  }
+}
 
+template<int LEN>
+inline dvec<LEN>::dvec(const struct vec_internal<LEN>& d)
+{
+  for (int i = 0; i < LEN/2; i++) data.v[i] = d.v[i];
 }
 
 template<int LEN>
 inline dvec<LEN>& 
 dvec<LEN>::operator=(const dvec<LEN>& p)
 {
+  for (int i = 0; i < LEN/2; i++) {
+    data.v[i] = p.data.v[i];
+  }
   return *this;
 }
 
 template<int LEN>
 inline double 
-dvec<LEN>::operator[](int index) const
+dvec<LEN>::operator[](const int index) const
 {
-  return 0.0;
+  double t[2] __attribute__((aligned(16)));
+  _mm_store_pd(t, data.v[index/2]);
+  return t[index%2];
 }
 
 template<int LEN>
 inline void 
 dvec<LEN>::u_store(double* arr) const
 {
-  return 0.0;
+  for (int i = 0; i < LEN/2; i++) {
+    _mm_storeu_pd(&arr[i*2], data.v[i]);
+  }
 }
 
 template<int LEN>
 inline void 
 dvec<LEN>::a_store(double* arr) const
 {
+  for (int i = 0; i < LEN/2; i++) {
+    _mm_store_pd(&arr[i*2], data.v[i]);
+  }
+}
 
+template<int LEN>
+inline bool
+dvec<LEN>::operator==(const dvec<LEN>& b) const 
+{
+  double ta[LEN] VEC_ALIGN;
+  double tb[LEN] VEC_ALIGN;
+  a_store(ta);
+  b.a_store(tb);
+  for (int i = 0; i < LEN; i++) 
+    if (fabs(ta[i]-tb[i]) > VEQUALITY) return false;
+  return true;
 }
 
 template<int LEN>
 inline dvec<LEN> 
 dvec<LEN>::operator+(const dvec<LEN>& b)
 {
-  return dvec<LEN>(0.0);
+  struct vec_internal<LEN> result;
+  for (int i = 0; i < LEN/2; i++) {
+    result.v[i] = _mm_add_pd(data.v[i], b.data.v[i]);
+  }
+  return dvec<LEN>(result);
 }
 
 template<int LEN>

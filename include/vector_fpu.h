@@ -1,28 +1,50 @@
 #ifndef __VECTOR_FPU
 #define __VECTOR_FPU
 
+#ifdef __GNUC__
+#undef VEC_ALIGN
+#define VEC_ALIGN __attribute__((aligned(16)))
+#endif
+
+template<int LEN>
+struct vec_internal {
+  double v[LEN] VEC_ALIGN;
+};
+
 template<int LEN>
 inline dvec<LEN>::dvec(double s)
 {
-  
+  for (int i = 0; i < LEN; i++) 
+    data.v[i] = s;
 }
 
 template<int LEN>
-inline dvec<LEN>::dvec(const double* vals)
+inline dvec<LEN>::dvec(const double* vals, bool aligned)
 {
-
+  for (int i = 0; i < LEN; i++) 
+    data.v[i] = vals[i];
 }
 
 template<int LEN>
 inline dvec<LEN>::dvec(const dvec<LEN>& p)
 {
+  for (int i = 0; i < LEN; i++) 
+    data.v[i] = p.data.v[i];
+}
 
+template<int LEN>
+inline dvec<LEN>::dvec(const struct vec_internal<LEN>& d)
+{
+  for (int i = 0; i < LEN; i++) 
+    data.v[i] = d.v[i];
 }
 
 template<int LEN>
 inline dvec<LEN>& 
 dvec<LEN>::operator=(const dvec<LEN>& p)
 {
+  for (int i = 0; i < LEN; i++) 
+    data.v[i] = p.data.v[i];
   return *this;
 }
 
@@ -30,28 +52,41 @@ template<int LEN>
 inline double 
 dvec<LEN>::operator[](int index) const
 {
-  return 0.0;
+  return data.v[index];
 }
 
 template<int LEN>
 inline void 
 dvec<LEN>::u_store(double* arr) const
 {
-  return 0.0;
+  a_store(arr);
 }
 
 template<int LEN>
 inline void 
 dvec<LEN>::a_store(double* arr) const
 {
+  for (int i = 0; i < LEN; i++) 
+    arr[i] = data.v[i];
+}
 
+template<int LEN>
+inline bool 
+dvec<LEN>::operator==(const dvec<LEN>& b) const
+{
+  for (int i = 0; i < LEN; i++)
+    if (fabs(data.v[i]-b.data.v[i]) > VEQUALITY) return false;
+  return true;
 }
 
 template<int LEN>
 inline dvec<LEN> 
 dvec<LEN>::operator+(const dvec<LEN>& b)
 {
-  return dvec<LEN>(0.0);
+  struct vec_internal<LEN> r;
+  for (int i = 0; i < LEN; i++) 
+    r.v[i] = data.v[i] + b.data.v[i];
+  return dvec<LEN>(r);
 }
 
 template<int LEN>
