@@ -1,0 +1,77 @@
+#                     P K G B U I L D . I N
+# BRL-CAD
+#
+# Copyright (c) 2007 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
+#
+# This is the BRL-CAD package file for Arch Linux.
+#
+# Contributor: Loui Chang <louipc.ist@gmail.com>
+#
+###
+
+pkgname=@PACKAGE_NAME@
+pkgver=@MAJOR_VERSION@.@MINOR_VERSION@
+pkgrel=@PATCH_VERSION@
+pkgdesc="BRL-CAD is a powerful open source constructive solid geometry (CSG) solid modeling system that includes interactive geometry editing, ray-tracing for rendering & geometric analyses, network distributed framebuffer support, image & signal-processing tools."
+url="http://brlcad.org"
+license=("LGPL" "BSD" "BDL")
+install=brlcad.install
+depends=('libpng' 'tcl' 'tk' 'zlib' 'libgl')
+options=('NOLIBTOOL')
+source=( \
+    http://dl.sourceforge.net/sourceforge/@PACKAGE@/@PACKAGE@-@BRLCAD_VERSION@.tar.bz2 \
+    brlcad.sh \
+    brlcad.install \
+    )
+md5sums=( \
+    '01539c0045e8f6159d6aeea374641cde' \
+    'bb845cbd3cabb288c427cd0e9a0efee1' \
+    '09d5fa0be8ebc2b5495457b8459df2c7' \
+    )
+
+build() {
+    cd $startdir/src/@PACKAGE@-@BRLCAD_VERSION@
+    ./configure --enable-optimized --prefix=@BRLCAD_ROOT@
+    make || return 1
+    make DESTDIR=$startdir/pkg install || return 1
+    mkdir -p $startdir/pkg/etc/profile.d
+    install -m755 $startdir/src/brlcad.sh $startdir/pkg/etc/profile.d
+}
+
+# Local Variables:
+# tab-width: 8
+# mode: sh
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8
