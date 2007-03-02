@@ -60,7 +60,12 @@ mged_setup(void)
     struct bu_vls str;
     const char *name = bu_getprogname();
 
-    /* locate our run-time binary */
+    /* necessary in 8.4 and 8.5 to avoid a race-condition inside
+     * Tcl_FindExecutable() that can lead to a crash
+     */
+    TclInitEncodingSubsystem();
+
+    /* locate our run-time binary (must be called before Tcl_CreateInterp()) */
     if (name) {
 	Tcl_FindExecutable(name);
     } else {
