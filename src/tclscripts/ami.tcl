@@ -32,6 +32,11 @@ if {[info exists $argv]} {
     }
 }
 
+if {![file exists tclIndex]} {
+    puts "ERROR: tclIndex does not exist in [pwd]"
+    exit 1
+}
+
 lappend tclIndex
 lappend header
 
