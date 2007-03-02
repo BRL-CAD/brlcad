@@ -178,6 +178,7 @@ librt_la_LIBADD = \
 	${TCL} \
 	${REGEX} \
 	${LIBM} \
+	${SYSV} \
 	${OPENNURBS}
 
 include_HEADERS = \
@@ -194,10 +195,10 @@ noinst_PROGRAMS = \
 	nurb_example \
 	${BREP_TEST}
 
-comb_LDADD = librt.la ${BU}
+comb_LDADD = librt.la ${BU} ${SYSV}
 comb_SOURCES = comb.c
 
-nurb_example_LDADD = librt.la ${BU}
+nurb_example_LDADD = librt.la ${BU} ${SYSV}
 nurb_example_SOURCES = nurb_example.c
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
@@ -240,7 +241,7 @@ DEPADD=src/other/openNURBS
 else
 DEPADD=
 endif
-DEPS=src/libbn $(DEPADD)
+DEPS=src/libbn src/libsysv $(DEPADD)
 
 include $(top_srcdir)/misc/Makefile.defs
 

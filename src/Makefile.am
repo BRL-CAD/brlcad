@@ -27,6 +27,7 @@ required_dirs = \
 	other \
 	libbu \
 	libbn \
+	libsysv \
 	librt \
 	external
 
@@ -37,7 +38,6 @@ bench_dirs = \
 	libfb \
 	libwdb \
 	liboptical \
-	libsysv \
 	liborle \
 	conv \
 	fbserv \
