@@ -1,8 +1,9 @@
 # $Id$
 
 bin_PROGRAMS = jove findcom
-
 bin_SCRIPTS = teach-jove
+
+AM_CPPFLAGS = ${TERMLIB_CPPFLAGS}
 
 SRCS = \
 	jove_buf.c \
@@ -21,19 +22,17 @@ SRCS = \
 	jove_re.c \
 	jove_screen.c \
 	jove_term.c \
-	jove_wind.c \
-	tune.c
+	jove_tune.c \
+	jove_wind.c
 
+jove_LDADD = ${TERMLIB}
 jove_SOURCES = \
 	$(SRCS) \
 	version.c
 
-jove_LDADD = ${TERMLIB}
-jove_CFLAGS = ${TERMLIB_CPPFLAGS}
-
 findcom_SOURCES = \
 	findcom.c \
-	tune.c
+	jove_tune.c
 
 noinst_HEADERS = \
 	jove.h \
@@ -41,13 +40,12 @@ noinst_HEADERS = \
 	termcap.h
 
 dist_man_MANS = \
-	jove.1 \
-	describe.com.1 \
-	teach-jove.1
+	jove.1
 
-tune.c:	$(top_srcdir)/src/other/jove/jove_tune.c
-	rm -f tune.c
-	sed -e 's;BinDir;BINDIR;' -e 's;LibDir;LIBDIR;' < $(top_srcdir)/src/other/jove/jove_tune.c > tune.c
+descdir = $(BRLCAD_DATA)/jove
+desc_DATA = \
+	describe.com \
+	jove-tutorial
 
 version.c: $(SRCS) Makefile
 	sh $(top_srcdir)/src/other/jove/mkversion.sh
@@ -55,23 +53,15 @@ version.c: $(SRCS) Makefile
 version.o: version.c
 	$(COMPILE) -c version.c
 
-teach-jove:	$(top_srcdir)/src/other/jove/teach-jove.sh
-	sed -e 's;BinDir;BINDIR;' -e 's;LibDir;LIBDIR;' < $(top_srcdir)/src/other/jove/teach-jove.sh > teach-jove
-
-install-data-local:
-	$(INSTALL_DATA) $(srcdir)/describe.com.1 $(DESTDIR)$(libdir)/describe.com
-	$(INSTALL_DATA) $(srcdir)/teach-jove.1 $(DESTDIR)$(libdir)/teach-jove
-
 EXTRA_DIST = \
 	$(BUILT_SOURCES) \
-	describe.com.1 \
-	jove_tune.c \
+	describe.com \
 	mkversion.sh \
-	teach-jove.1 \
-	teach-jove.sh
+	teach-jove \
+	teach-jove.in
 
 BUILT_SOURCES = \
-	tune.c \
+	teach-jove \
 	version.c
 
 DISTCLEANFILES = \
