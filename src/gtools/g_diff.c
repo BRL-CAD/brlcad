@@ -928,19 +928,19 @@ main(int argc, char **argv)
     file1 = *argv++;
     file2 = *argv;
 
-    if( stat( file1, &stat1 ) ) {
+    if (!bu_file_exists(file1)) {
 	fprintf( stderr, "Cannot stat file %s\n", file1 );
 	perror( file1 );
 	exit( 1 );
     }
 
-    if( stat( file2, &stat2 ) ) {
+    if (!bu_file_exists(file2)) {
 	fprintf( stderr, "Cannot stat file %s\n", file2 );
 	perror( file2 );
 	exit( 1 );
     }
 
-    if( stat1.st_dev == stat2.st_dev && stat1.st_ino == stat2.st_ino ) {
+    if (bu_same_file(file1, file2)) {
 	fprintf( stderr, "%s and %s are the same file\n", file1, file2 );
 	exit( 1 );
     }
