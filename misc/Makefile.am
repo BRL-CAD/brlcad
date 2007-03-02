@@ -4,6 +4,7 @@ sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 sample_applications_DATA = fortran_example.f
 
 SUBDIRS = \
+	archlinux \
 	macosx \
 	vfont \
 	win32-msvc \
