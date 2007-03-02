@@ -23,6 +23,8 @@ static const int unused = 0;
 
 #ifndef HAVE_BASENAME
 
+#include <stdio.h>	/* for NULL */
+#include <sys/param.h>	/* for MAXPATHLEN */
 #include <errno.h>
 #include "sysv.h"
 
