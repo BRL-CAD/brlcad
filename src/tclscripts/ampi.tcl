@@ -24,7 +24,7 @@
 # This is a comment \
 exit
 
-if {[info exists $argv]} {
+if {[info exists argv]} {
     foreach arg $argv {
 	catch {pkg_mkIndex -verbose $arg *.tcl *.itcl *.itk *.sh}
 	puts $arg
