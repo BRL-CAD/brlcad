@@ -30,11 +30,12 @@ if {[info exists argv]} {
 	catch {auto_mkindex $arg *.tcl *.itcl *.itk *.sh}
 	puts $arg
     }
+} else {
+    return 0
 }
 
 if {![file exists tclIndex]} {
     puts "ERROR: tclIndex does not exist in [pwd]"
-    exit 1
 }
 
 lappend tclIndex

@@ -24,16 +24,18 @@
 # This is a comment \
 exit
 
+# make the pkgIndex.tcl
 if {[info exists argv]} {
     foreach arg $argv {
 	catch {pkg_mkIndex -verbose $arg *.tcl *.itcl *.itk *.sh}
 	puts $arg
     }
+} else {
+    return 0
 }
 
 if {![file exists pkgIndex.tcl]} {
     puts "ERROR: pkgIndex.tcl does not exist in [pwd]"
-    exit 1
 }
 
 lappend pkgIndex
