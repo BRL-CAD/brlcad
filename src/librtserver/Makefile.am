@@ -15,24 +15,18 @@ LIBRTSERVER_VERSION = ${MAJOR_VERSION}:${MINOR_VERSION}:${PATCH_VERSION}
 
 librtserver_la_LDFLAGS = -version-info ${LIBRTSERVER_VERSION} ${JAVA_LDFLAGS} -module
 
-if BUILD_TCL
-TCL_NIL = $(top_builddir)/src/other/libtcl/libtcl_nil.la
-else !BUILD_TCL
-TCL_NIL = ${TCL}
-endif
-
 if BUILD_OPENNURBS
-ONLIB = ${OPENNURBS}
+ON_NIL = $(top_builddir)/src/other/openNURBS/libopenNURBS_nil.la
 else
-ONLIB = 
+ON_NIL =
 endif
 
 librtserver_la_LIBADD = \
 	$(top_builddir)/src/librt/librt_nil.la \
 	$(top_builddir)/src/libbn/libbn_nil.la \
 	$(top_builddir)/src/libbu/libbu_nil.la \
-	${TCL_NIL} \
-	${ONLIB}
+	${ON_NIL} \
+	${TCL}
 
 EXTRA_PROGRAMS = rtserverTest
 

@@ -33,13 +33,13 @@ UTAHRLEDIR=
 endif
 
 if BUILD_TCL
-TCLDIR=libtcl
+TCLDIR=tcl
 else !BUILD_TCL
 TCLDIR=
 endif
 
 if BUILD_TK
-TKDIR=libtk
+TKDIR=tk
 else !BUILD_TK
 TKDIR=
 endif

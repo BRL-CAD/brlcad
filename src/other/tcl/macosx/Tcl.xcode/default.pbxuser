@@ -1,0 +1,174 @@
+// !$*UTF8*$!
+{
+	08FB7793FE84155DC02AAC07 = {
+		activeBuildStyle = 014CEA520018CE5811CA2923;
+		activeExecutable = F9E61D1C090A4282002B3151;
+		activeTarget = F9E61D16090A3E94002B3151;
+		codeSenseManager = F944EB9D08F798180049FDD4;
+		executables = (
+			F944EB8F08F798100049FDD4,
+			F9E61D1C090A4282002B3151,
+		);
+		perUserDictionary = {
+			com.apple.ide.smrt.PBXUserSmartGroupsKey.Rev10 = <040b747970656473747265616d8103e88401408484840e4e534d757461626c654172726179008484074e534172726179008484084e534f626a65637400858401690192848484134e534d757461626c6544696374696f6e6172790084840c4e5344696374696f6e6172790095960792848484084e53537472696e67019584012b195042585472616e7369656e744c6f636174696f6e4174546f708692849a9a06626f74746f6d8692849a9a146162736f6c75746550617468546f42756e646c658692849a9a008692849a9a046e616d658692849a9a14496d706c656d656e746174696f6e2046696c65738692849a9a03636c7a8692849a9a1550425846696c656e616d65536d61727447726f75708692849a9a0b6465736372697074696f6e8692849a9a103c6e6f206465736372697074696f6e3e8692849a9a08676c6f62616c49448692849a9a183143433045413430303433353045463930303434343130428692849a9a0b707265666572656e63657386928497960892849a9a05696d6167658692849a9a0b536d617274466f6c6465728692849a9a0763616e536176658692848484084e534e756d626572008484074e5356616c7565009584012a849696018692849a9a1250425850726f6a65637453636f70654b65798692849a9a035945538692849a9a0572656765788692849a9a063f2a5c2e63248692849a9a04726f6f748692849a9a093c50524f4a4543543e8692849a9a097265637572736976658692ab92849a9a0669734c656166869284ac9dae96008692849a9a07666e6d617463688692849a9a0086868686>;
+		};
+		sourceControlManager = F944EB9C08F798180049FDD4;
+		userBuildSettings = {
+			SYMROOT = "${SRCROOT}/../../build/tcl";
+		};
+	};
+	8DD76FA90486AB0100D96B5E = {
+		activeExec = 0;
+		executables = (
+			F944EB8F08F798100049FDD4,
+		);
+	};
+	F944EB8F08F798100049FDD4 = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+			NO,
+			NO,
+			NO,
+		);
+		argumentStrings = (
+			"${SRCROOT}/../../tcl/tests/all.tcl",
+			"-singleproc 1",
+			"-verbose \"\"",
+		);
+		configStateDict = {
+			"PBXLSLaunchAction-0" = {
+				PBXLSLaunchAction = 0;
+				PBXLSLaunchStartAction = 1;
+				PBXLSLaunchStdioStyle = 2;
+				PBXLSLaunchStyle = 0;
+				class = PBXLSRunLaunchConfig;
+				displayName = "Executable Runner";
+				identifier = com.apple.Xcode.launch.runConfig;
+				remoteHostInfo = "";
+				startActionInfo = "";
+			};
+			"PBXLSLaunchAction-1" = {
+				PBXLSLaunchAction = 1;
+				PBXLSLaunchStartAction = 1;
+				PBXLSLaunchStdioStyle = 2;
+				PBXLSLaunchStyle = 0;
+				class = PBXGDB_LaunchConfig;
+				displayName = GDB;
+				identifier = com.apple.Xcode.launch.GDBMI_Config;
+				remoteHostInfo = "";
+				startActionInfo = "";
+			};
+		};
+		cppStopOnCatchEnabled = 0;
+		cppStopOnThrowEnabled = 0;
+		customDataFormattersEnabled = 1;
+		debuggerPlugin = GDBDebugging;
+		disassemblyDisplayState = 0;
+		dylibVariantSuffix = _debug;
+		enableDebugStr = 0;
+		environmentEntries = (
+			{
+				active = YES;
+				name = TCL_LIBRARY;
+				value = "${SRCROOT}/../../tcl/library";
+			},
+			{
+				active = NO;
+				name = DYLD_PRINT_LIBRARIES;
+			},
+		);
+		isa = PBXExecutable;
+		libgmallocEnabled = 0;
+		name = tcltest;
+		savedGlobals = {
+		};
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	F944EB9C08F798180049FDD4 = {
+		fallbackIsa = XCSourceControlManager;
+		isSCMEnabled = 0;
+		isa = PBXSourceControlManager;
+		scmConfiguration = {
+		};
+		scmType = scm.cvs;
+	};
+	F944EB9D08F798180049FDD4 = {
+		indexTemplatePath = "";
+		isa = PBXCodeSenseManager;
+		usesDefaults = 1;
+		wantsCodeCompletion = 1;
+		wantsCodeCompletionAutoSuggestions = 1;
+		wantsCodeCompletionCaseSensitivity = 1;
+		wantsCodeCompletionListAlways = 1;
+		wantsCodeCompletionOnlyMatchingItems = 1;
+		wantsCodeCompletionParametersIncluded = 1;
+		wantsCodeCompletionPlaceholdersInserted = 1;
+		wantsCodeCompletionTabCompletes = 1;
+		wantsIndex = 1;
+	};
+	F9E61D16090A3E94002B3151 = {
+		activeExec = 0;
+	};
+	F9E61D1C090A4282002B3151 = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+			"PBXLSLaunchAction-0" = {
+				PBXLSLaunchAction = 0;
+				PBXLSLaunchStartAction = 1;
+				PBXLSLaunchStdioStyle = 2;
+				PBXLSLaunchStyle = 0;
+				class = PBXLSRunLaunchConfig;
+				displayName = "Executable Runner";
+				identifier = com.apple.Xcode.launch.runConfig;
+				remoteHostInfo = "";
+				startActionInfo = "";
+			};
+			"PBXLSLaunchAction-1" = {
+				PBXLSLaunchAction = 1;
+				PBXLSLaunchStartAction = 1;
+				PBXLSLaunchStdioStyle = 2;
+				PBXLSLaunchStyle = 0;
+				class = PBXGDB_LaunchConfig;
+				displayName = GDB;
+				identifier = com.apple.Xcode.launch.GDBMI_Config;
+				remoteHostInfo = "";
+				startActionInfo = "";
+			};
+		};
+		cppStopOnCatchEnabled = 0;
+		cppStopOnThrowEnabled = 0;
+		customDataFormattersEnabled = 1;
+		debuggerPlugin = GDBDebugging;
+		disassemblyDisplayState = 0;
+		dylibVariantSuffix = _debug;
+		enableDebugStr = 0;
+		environmentEntries = (
+			{
+				active = NO;
+				name = DYLD_PRINT_LIBRARIES;
+			},
+		);
+		isa = PBXExecutable;
+		launchableReference = F9E61D1D090A4282002B3151;
+		libgmallocEnabled = 0;
+		name = tclsh;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	F9E61D1D090A4282002B3151 = {
+		isa = PBXFileReference;
+		lastKnownFileType = "compiled.mach-o.executable";
+		path = tclsh8.5;
+		refType = 3;
+		sourceTree = BUILT_PRODUCTS_DIR;
+	};
+}

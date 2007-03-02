@@ -175,7 +175,6 @@ librt_la_LIBADD = \
 	librt_nil.la \
 	${BN} \
 	${BU} \
-	${TCL} \
 	${REGEX} \
 	${LIBM} \
 	${SYSV} \

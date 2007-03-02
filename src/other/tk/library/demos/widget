@@ -1,0 +1,645 @@
+#!/bin/sh
+# the next line restarts using wish \
+exec wish "$0" "$@"
+
+# widget --
+# This script demonstrates the various widgets provided by Tk,
+# along with many of the features of the Tk toolkit.  This file
+# only contains code to generate the main window for the
+# application, which invokes individual demonstrations.  The
+# code for the actual demonstrations is contained in separate
+# ".tcl" files is this directory, which are sourced by this script
+# as needed.
+#
+# RCS: @(#) $Id$
+
+package require Tcl	8.5
+package require Tk	8.5
+package require msgcat
+
+eval destroy [winfo child .]
+set tk_demoDirectory [file join [pwd] [file dirname [info script]]]
+::msgcat::mcload $tk_demoDirectory
+namespace import ::msgcat::mc
+wm title . [mc "Widget Demonstration"]
+if {[tk windowingsystem] eq "x11"} {
+    # This won't work everywhere, but there's no other way in core Tk
+    # at the moment to display a coloured icon.
+    image create photo TclPowered \
+	    -file [file join $tk_library images logo64.gif]
+    wm iconwindow . [toplevel ._iconWindow]
+    pack [label ._iconWindow.i -image TclPowered]
+    wm iconname . [mc "tkWidgetDemo"]
+}
+
+if {[lsearch -exact [font names] defaultFont] == -1} {
+    font create mainFont   -family Helvetica -size 12
+    font create fixedFont  -family Courier   -size 10
+    font create boldFont   -family Helvetica -size 12 -weight bold
+    font create titleFont  -family Helvetica -size 18 -weight bold
+    font create statusFont -family Helvetica -size 10
+    font create varsFont   -family Helvetica -size 14
+}
+
+set widgetDemo 1
+set font mainFont
+
+image create photo ::img::refresh -height 16 -format GIF -data {
+    R0lGODlhEAAQAPMAAMz/zCpnKdb/1z9mPypbKBtLGy9NMPL/9Or+6+P+4j1Y
+    PwQKBP7//xMLFAYBCAEBASH5BAEAAAAALAAAAAAQABAAAwR0EAD3Gn0Vyw0e
+    ++CncU7IIAezMA/nhUqSLJizvSdCEEjy2ZIV46AwDAoDHwPYGSoEiUJAAGJ6
+    EDHBNCFINW5OqABKSFk/B9lUa94IDwIFgewFMwQDQwCZQCztTgM9Sl8SOEMG
+    KSAthiaOjBMPDhQONBiXABEAOw==
+}
+
+image create photo ::img::view -height 16 -format GIF -data {
+    R0lGODlhEAAQAPMAAMz/zP///8DAwICAgH9/fwAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAAACH5BAEAAAAALAAAAAAQABAAAwRIcMhJB7h3hM33
+    KFjWdQQYap1QrCaGBmrRrS4nj5b53jOgbwXBKGACoYLDIuAoHCmZyYvR1rT5
+    RMAq8LqcIYGsrjPsW1XOmFUEADs=
+}
+
+image create photo ::img::delete -height 16 -format GIF -data {
+    R0lGODlhEAAOAKEAAIQAAO/n3v///////yH5BAEKAAIALAAAAAAQAA4AAAIm
+    lI9pAKHbIHNoVhYhTdjlJ2AWKG2g+CldmB6rxo2uybYhbS80eRQAOw==
+}
+
+image create photo ::img::print -height 19 -format GIF -data {
+    R0lGODlhGgATAPcAACEQOTEpQjEpUkIpc0IxY0I5c0oxjEo5SlJCY1JCe1JK
+    UlpChFpCjFpGkFpSc1paa2NKc2NKnGNja2tapWtjc29KnHNanHNjc3NjrXNr
+    jHNrnHNzc3tjpXtrtXtzhICAgIRzvYSEjIZzqox7tYyEnIyMjJSEtZSEvZSM
+    lJyMtZyMvZyUlJyUrZyUvZycnKWctaWlpa2czq2lzrWtvbWtzrW1tb21xr21
+    1sa9zs693s7OztbO3tbO597W1t7W7+fe7+fn5////+/n7+/v7+/v9////wAA
+    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAAACH5BAEAAEEALAAAAAAaABMAQAj/AIMIHBhkg0GC
+    CBMGIQEiQgseQT4oeCBBAokgRYYQ0JBixg8hRIiUUEBBYYmTByBwiCBCRYwH
+    CxY8cKFw4AogRXLqLAJkQ80gCBBg3BkxZswTNGh4MGqgQQUMJRHCwMkTSE+D
+    Pn8eCKBhxIMhO3ei2OHDBw6sWSlMMMoWgwwfMDZI8GBjx44NARZwEGGi5MkS
+    PcIWKRGz5YgLbAco+KkQBQoJIRgjdGEVq+SaJajqtNrzMgsPCmoIzqmDgmWE
+    KOBuUKAAwYabYTfs4OHjY0giGyhk4MAWRI4eKyRQqPgggYUXPH4A+XBAgwoK
+    DiIsCFxjA9sFEVQQCRJCAYAFDJxiKhAxvMTonEFimrhhYinTBgWiCvxLNX3M
+    DkkpsKV5OYhjBxCMYAICAigUEAA7
+}
+
+#----------------------------------------------------------------
+# The code below create the main window, consisting of a menu bar
+# and a text widget that explains how to use the program, plus lists
+# all of the demos as hypertext items.
+#----------------------------------------------------------------
+
+menu .menuBar -tearoff 0
+
+# On the Mac use the special .apple menu for the about item
+if {[tk windowingsystem] eq "aqua"} {
+    .menuBar add cascade -menu .menuBar.apple
+    menu .menuBar.apple -tearoff 0
+    .menuBar.apple add command -label [mc "About..."] -command {aboutBox}
+} else {
+    # This is a tk-internal procedure to make i18n easier
+    ::tk::AmpMenuArgs .menuBar add cascade -label [mc "&File"] \
+	    -menu .menuBar.file
+    menu .menuBar.file -tearoff 0
+    ::tk::AmpMenuArgs .menuBar.file add command -label [mc "&About..."] \
+	    -command {aboutBox} -accelerator [mc "<F1>"]
+    .menuBar.file add sep
+    ::tk::AmpMenuArgs .menuBar.file add command -label [mc "&Quit"] \
+	    -command {exit} -accelerator [mc "Meta-Q"]
+    bind . <[mc "Meta-q"]> {exit}
+    bind . <F1>     {aboutBox}
+}
+
+. configure -menu .menuBar
+
+frame .statusBar
+label .statusBar.lab -text "   " -relief sunken -bd 1 \
+	-font statusFont -anchor w
+label .statusBar.foo -width 8 -relief sunken -bd 1 \
+	-font statusFont -anchor w
+pack .statusBar.lab -side left -padx 2 -expand yes -fill both
+pack .statusBar.foo -side left -padx 2
+pack .statusBar -side bottom -fill x -pady 2
+
+frame .textFrame
+scrollbar .s -orient vertical -command {.t yview} -highlightthickness 0 \
+    -takefocus 1 -bd 1
+pack .s -in .textFrame -side right -fill y
+text .t -yscrollcommand {.s set}  -wrap word  -width 70  -height 30 \
+	-font mainFont  -setgrid 1  -highlightthickness 0 \
+	-padx 4  -pady 2  -takefocus 0 -bd 1
+pack .t -in .textFrame -expand y -fill both -padx 1
+pack  .textFrame -expand yes -fill both
+
+# Create a bunch of tags to use in the text widget, such as those for
+# section titles and demo descriptions.  Also define the bindings for
+# tags.
+
+.t tag configure title -font titleFont
+.t tag configure bold  -font boldFont
+
+# We put some "space" characters to the left and right of each demo description
+# so that the descriptions are highlighted only when the mouse cursor
+# is right over them (but not when the cursor is to their left or right)
+#
+.t tag configure demospace -lmargin1 1c -lmargin2 1c
+
+
+if {[winfo depth .] == 1} {
+    .t tag configure demo -lmargin1 1c -lmargin2 1c \
+	-underline 1
+    .t tag configure visited -lmargin1 1c -lmargin2 1c \
+	-underline 1
+    .t tag configure hot -background black -foreground white
+} else {
+    .t tag configure demo -lmargin1 1c -lmargin2 1c \
+	-foreground blue -underline 1
+    .t tag configure visited -lmargin1 1c -lmargin2 1c \
+	-foreground #303080 -underline 1
+    .t tag configure hot -foreground red -underline 1
+}
+.t tag bind demo <ButtonRelease-1> {
+    invoke [.t index {@%x,%y}]
+}
+set lastLine ""
+.t tag bind demo <Enter> {
+    set lastLine [.t index {@%x,%y linestart}]
+    .t tag add hot "$lastLine +1 chars" "$lastLine lineend -1 chars"
+    .t config -cursor hand2
+    showStatus [.t index {@%x,%y}]
+}
+.t tag bind demo <Leave> {
+    .t tag remove hot 1.0 end
+    .t config -cursor xterm
+    .statusBar.lab config -text ""
+}
+.t tag bind demo <Motion> {
+    set newLine [.t index {@%x,%y linestart}]
+    if {$newLine ne $lastLine} {
+	.t tag remove hot 1.0 end
+	set lastLine $newLine
+
+	set tags [.t tag names {@%x,%y}]
+	set i [lsearch -glob $tags demo-*]
+	if {$i >= 0} {
+	    .t tag add hot "$lastLine +1 chars" "$lastLine lineend -1 chars"
+	}
+    }
+    showStatus [.t index {@%x,%y}]
+}
+
+# Create the text for the text widget.
+
+# addFormattedText --
+#
+#	Add formatted text (but not hypertext) to the text widget after
+#	first passing it through the message catalog to allow for
+#	localization.  Lines starting with @@ are formatting directives
+#	(begin newline, or change style) and all other lines are literal
+#	strings to be inserted.  Blank lines are ignored.
+#
+proc addFormattedText {formattedText} {
+    set style normal
+    set isNL 1
+    foreach line [split [mc $formattedText] \n] {
+	set line [string trim $line]
+	if {$line eq ""} {
+	    continue
+	}
+	if {$line eq "@@newline"} {
+	    .t insert end \n $style
+	    set isNL 1
+	    continue
+	}
+	if {[string match @@* $line]} {
+	    set style [string range $line 2 end]
+	    continue
+	}
+	if {!$isNL} {
+	    .t insert end " " $style
+	}
+	set isNL 0
+	.t insert end $line $style
+    }
+}
+
+# addDemoSection --
+#
+#	Add a new section of demos with a title and a (stride-2) list of
+#	demo files and their descriptions.  Titles and descriptions are
+#	passed through the message catalog to allow for localization.
+#
+proc addDemoSection {title demos} {
+    .t insert end "\n" {} [mc $title] title " \n " demospace
+    set num 0
+    foreach {name description} $demos {
+	.t insert end "[incr num]. [mc $description]." [list demo demo-$name]
+	.t insert end " \n " demospace
+    }
+}
+
+addFormattedText {
+    @@title
+    Tk Widget Demonstrations
+    @@newline
+    @@normal
+    @@newline
+
+    This application provides a front end for several short scripts
+    that demonstrate what you can do with Tk widgets.  Each of the
+    numbered lines below describes a demonstration;  you can click on
+    it to invoke the demonstration.  Once the demonstration window
+    appears, you can click the
+    @@bold
+    See Code
+    @@normal
+    button to see the Tcl/Tk code that created the demonstration.  If
+    you wish, you can edit the code and click the
+    @@bold
+    Rerun Demo
+    @@normal
+    button in the code window to reinvoke the demonstration with the
+    modified code.
+    @@newline
+}
+addDemoSection "Labels, buttons, checkbuttons, and radiobuttons" {
+    label	"Labels (text and bitmaps)"
+    unicodeout	"Labels and UNICODE text"
+    button	"Buttons"
+    check	"Check-buttons (select any of a group)"
+    radio	"Radio-buttons (select one of a group)"
+    puzzle	"A 15-puzzle game made out of buttons"
+    icon	"Iconic buttons that use bitmaps"
+    image1	"Two labels displaying images"
+    image2	"A simple user interface for viewing images"
+    labelframe	"Labelled frames"
+}
+addDemoSection "Listboxes" {
+    states	"The 50 states"
+    colors	"Colors: change the color scheme for the application"
+    sayings	"A collection of famous and infamous sayings"
+}
+addDemoSection "Entries and Spin-boxes" {
+    entry1	"Entries without scrollbars"
+    entry2	"Entries with scrollbars"
+    entry3	"Validated entries and password fields"
+    spin	"Spin-boxes"
+    form	"Simple Rolodex-like form"
+}
+addDemoSection "Text" {
+    text	"Basic editable text"
+    style	"Text display styles"
+    bind	"Hypertext (tag bindings)"
+    twind	"A text widget with embedded windows and other features"
+    search	"A search tool built with a text widget"
+}
+addDemoSection "Canvases" {
+    items	"The canvas item types"
+    plot	"A simple 2-D plot"
+    ctext	"Text items in canvases"
+    arrow	"An editor for arrowheads on canvas lines"
+    ruler	"A ruler with adjustable tab stops"
+    floor	"A building floor plan"
+    cscroll	"A simple scrollable canvas"
+}
+addDemoSection "Scales" {
+    hscale	"Horizontal scale"
+    vscale	"Vertical scale"
+}
+addDemoSection "Paned Windows" {
+    paned1	"Horizontal paned window"
+    paned2	"Vertical paned window"
+}
+addDemoSection "Menus" {
+    menu	"Menus and cascades (sub-menus)"
+    menubu	"Menu-buttons"
+}
+addDemoSection "Common Dialogs" {
+    msgbox	"Message boxes"
+    filebox	"File selection dialog"
+    clrpick	"Color picker"
+}
+addDemoSection "Animation" {
+    anilabel	"Animated labels"
+    aniwave	"Animated wave"
+    pendulum	"Pendulum simulation"
+    goldberg	"A celebration of Rube Goldberg"
+}
+addDemoSection "Miscellaneous" {
+    bitmap	"The built-in bitmaps"
+    dialog1	"A dialog box with a local grab"
+    dialog2	"A dialog box with a global grab"
+}
+
+.t configure -state disabled
+focus .s
+
+# addSeeDismiss --
+# Add "See Code" and "Dismiss" button frame, with optional "See Vars"
+#
+# Arguments:
+# w -		The name of the frame to use.
+
+proc addSeeDismiss {w show {vars {}} {extra {}}} {
+    ## See Code / Dismiss buttons
+    frame $w
+    frame $w.sep -height 2 -relief sunken -bd 2
+    grid $w.sep -columnspan 4 -row 0 -sticky ew -pady 2
+    button $w.dismiss -text [mc "Dismiss"] \
+	-image ::img::delete -compound left \
+	-command [list destroy [winfo toplevel $w]]
+    button $w.code -text [mc "See Code"] \
+	-image ::img::view -compound left \
+	-command [list showCode $show]
+    set buttons [list x $w.code $w.dismiss]
+    if {[llength $vars]} {
+	button $w.vars -text [mc "See Variables"] \
+	    -image ::img::view -compound left \
+	    -command [concat [list showVars $w.dialog] $vars]
+	set buttons [linsert $buttons 1 $w.vars]
+    }
+    if {$extra ne ""} {
+	set buttons [linsert $buttons 1 [uplevel 1 $extra]]
+    }
+    eval grid $buttons -padx 4 -pady 4
+    grid columnconfigure $w 0 -weight 1
+    return $w
+}
+
+# positionWindow --
+# This procedure is invoked by most of the demos to position a
+# new demo window.
+#
+# Arguments:
+# w -		The name of the window to position.
+
+proc positionWindow w {
+    wm geometry $w +300+300
+}
+
+# showVars --
+# Displays the values of one or more variables in a window, and
+# updates the display whenever any of the variables changes.
+#
+# Arguments:
+# w -		Name of new window to create for display.
+# args -	Any number of names of variables.
+
+proc showVars {w args} {
+    catch {destroy $w}
+    toplevel $w
+    wm title $w [mc "Variable values"]
+
+    set f [labelframe $w.title -text [mc "Variable values:"] -font varsFont]
+    foreach var $args {
+	label $f.n$var -text "$var:" -anchor w
+	label $f.v$var -textvariable $var -anchor w
+	grid $f.n$var $f.v$var -padx 2 -pady 2 -sticky w
+    }
+    button $w.ok -width 8 -text [mc "OK"] \
+	-command [list destroy $w] -default active
+    bind $w <Return> [list $w.ok invoke]
+    bind $w <Escape> [list $w.ok invoke]
+
+    grid $f -sticky news -padx 4
+    grid $w.ok -sticky e -padx 4 -pady {6 4}
+    grid columnconfig $f 1 -weight 1
+    grid rowconfigure $f 100 -weight 1
+    grid columnconfig $w 0 -weight 1
+    grid rowconfigure $w 0 -weight 1
+}
+
+# invoke --
+# This procedure is called when the user clicks on a demo description.
+# It is responsible for invoking the demonstration.
+#
+# Arguments:
+# index -	The index of the character that the user clicked on.
+
+proc invoke index {
+    global tk_demoDirectory
+    set tags [.t tag names $index]
+    set i [lsearch -glob $tags demo-*]
+    if {$i < 0} {
+	return
+    }
+    set cursor [.t cget -cursor]
+    .t configure -cursor watch
+    update
+    set demo [string range [lindex $tags $i] 5 end]
+    uplevel [list source [file join $tk_demoDirectory $demo.tcl]]
+    update
+    .t configure -cursor $cursor
+
+    .t tag add visited "$index linestart +1 chars" "$index lineend -1 chars"
+}
+
+# showStatus --
+#
+#	Show the name of the demo program in the status bar. This procedure
+#	is called when the user moves the cursor over a demo description.
+#
+proc showStatus index {
+    set tags [.t tag names $index]
+    set i [lsearch -glob $tags demo-*]
+    set cursor [.t cget -cursor]
+    if {$i < 0} {
+	.statusBar.lab config -text " "
+	set newcursor xterm
+    } else {
+	set demo [string range [lindex $tags $i] 5 end]
+	.statusBar.lab config -text [mc "Run the \"%s\" sample program" $demo]
+	set newcursor hand2
+    }
+    if {$cursor ne $newcursor} {
+	.t config -cursor $newcursor
+    }
+}
+
+# evalShowCode --
+#
+# Arguments:
+# w -		Name of text widget containing code to eval
+
+proc evalShowCode {w} {
+    set code [$w get 1.0 end-1c]
+    uplevel #0 $code
+}
+
+# showCode --
+# This procedure creates a toplevel window that displays the code for
+# a demonstration and allows it to be edited and reinvoked.
+#
+# Arguments:
+# w -		The name of the demonstration's window, which can be
+#		used to derive the name of the file containing its code.
+
+proc showCode w {
+    global tk_demoDirectory
+    set file [string range $w 1 end].tcl
+    set top .code
+    if {![winfo exists $top]} {
+	toplevel $top
+
+	set t [frame $top.f]
+	set text [text $t.text -font fixedFont -height 30 -wrap word -bd 1 \
+		      -xscrollcommand [list $t.xscroll set] \
+		      -yscrollcommand [list $t.yscroll set] \
+		      -setgrid 1 -highlightthickness 0 -pady 2 -padx 3]
+	scrollbar $t.xscroll -command [list $t.text xview] \
+	    -highlightthickness 0 -orient horizontal -bd 1
+	scrollbar $t.yscroll -command [list $t.text yview] \
+	    -highlightthickness 0 -orient vertical -bd 1
+
+	grid $t.text $t.yscroll -sticky news
+	#grid $t.xscroll
+	grid rowconfigure $t 0 -weight 1
+	grid columnconfig $t 0 -weight 1
+
+	set btns [frame $top.btns]
+
+	button $btns.dismiss -text [mc "Dismiss"] \
+	    -default active -command [list destroy $top] \
+	    -image ::img::delete -compound left
+	button $btns.print   -text [mc "Print Code"] \
+	    -command [list printCode $text $file] \
+	    -image ::img::print -compound left
+	button $btns.rerun   -text [mc "Rerun Demo"] \
+	    -command [list evalShowCode $text] \
+	    -image ::img::refresh -compound left
+
+	grid x $btns.rerun $btns.print $btns.dismiss -padx 4 -pady {6 4}
+	grid columnconfigure $btns 0 -weight 1
+
+	grid $t    -sticky news
+	grid $btns -sticky ew
+	grid rowconfigure $top 0 -weight 1
+	grid columnconfig $top 0 -weight 1
+
+	bind $top <Return> {
+	    if {[winfo class %W] ne "Text"} { .code.btns.dismiss invoke }
+	}
+	bind $top <Escape> [bind $top <Return>]
+    } else {
+	wm deiconify $top
+	raise $top
+    }
+    wm title $top [mc "Demo code: %s" [file join $tk_demoDirectory $file]]
+    wm iconname $top $file
+    set id [open [file join $tk_demoDirectory $file]]
+    $top.f.text delete 1.0 end
+    $top.f.text insert 1.0 [read $id]
+    $top.f.text mark set insert 1.0
+    close $id
+}
+
+# printCode --
+# Prints the source code currently displayed in the See Code dialog.
+# Much thanks to Arjen Markus for this.
+#
+# Arguments:
+# w -		Name of text widget containing code to print
+# file -		Name of the original file (implicitly for title)
+
+proc printCode {w file} {
+    set code [$w get 1.0 end-1c]
+
+    set dir "."
+    if {[info exists ::env(HOME)]} {
+	set dir "$::env(HOME)"
+    }
+    if {[info exists ::env(TMP)]} {
+	set dir $::env(TMP)
+    }
+    if {[info exists ::env(TEMP)]} {
+	set dir $::env(TEMP)
+    }
+
+    set filename [file join $dir "tkdemo-$file"]
+    set outfile [open $filename "w"]
+    puts $outfile $code
+    close $outfile
+
+    switch -- $::tcl_platform(platform) {
+	unix {
+	    if {[catch {exec lp -c $filename} msg]} {
+		tk_messageBox -title "Print spooling failure" \
+			-message "Print spooling probably failed: $msg"
+	    }
+	}
+	windows {
+	    if {[catch {PrintTextWin32 $filename} msg]} {
+		tk_messageBox -title "Print spooling failure" \
+			-message "Print spooling probably failed: $msg"
+	    }
+	}
+	default {
+	    tk_messageBox -title "Operation not Implemented" \
+		    -message "Wow! Unknown platform: $::tcl_platform(platform)"
+	}
+    }
+
+    #
+    # Be careful to throw away the temporary file in a gentle manner ...
+    #
+    if {[file exists $filename]} {
+	catch {file delete $filename}
+    }
+}
+
+# PrintTextWin32 --
+#    Print a file under Windows using all the "intelligence" necessary
+#
+# Arguments:
+# filename -		Name of the file
+#
+# Note:
+# Taken from the Wiki page by Keith Vetter, "Printing text files
+# under Windows"
+# Note:
+# Do not execute the command in the background: that way we can dispose
+# of the file smoothly
+#
+proc PrintTextWin32 {filename} {
+    package require registry
+    set app [auto_execok notepad.exe]
+    set pcmd "$app /p %1"
+    catch {
+	set app [registry get {HKEY_CLASSES_ROOT\.txt} {}]
+	set pcmd [registry get \
+		{HKEY_CLASSES_ROOT\\$app\\shell\\print\\command} {}]
+    }
+
+    regsub -all {%1} $pcmd $filename pcmd
+    puts $pcmd
+
+    regsub -all {\\} $pcmd {\\\\} pcmd
+    set command "[auto_execok start] /min $pcmd"
+    eval exec $command
+}
+
+# aboutBox --
+#
+#	Pops up a message box with an "about" message
+#
+proc aboutBox {} {
+    tk_messageBox -icon info -type ok -title [mc "About Widget Demo"] \
+	-message "[mc {Tk widget demonstration application}]
+
+[mc {Copyright (c) %s} {1996-1997 Sun Microsystems, Inc.}]
+[mc {Copyright (c) %s} {1997-2000 Ajuba Solutions, Inc.}]
+[mc {Copyright (c) %s} {2001-2003 Donal K. Fellows}]"
+}
+
+# Local Variables:
+# mode: tcl
+# End:

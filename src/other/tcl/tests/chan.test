@@ -1,0 +1,104 @@
+# This file contains a collection of tests for the Tcl built-in 'chan'
+# command. Sourcing this file into Tcl runs the tests and generates
+# output for errors. No output means no errors were found.
+#
+# Copyright (c) 2005 Donal K. Fellows
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# RCS: @(#) $Id$
+
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest 2
+    namespace import -force ::tcltest::*
+}
+
+#
+# Note: The tests for the chan methods "create" and "postevent"
+# currently reside in the file "ioCmd.test".
+#
+
+test chan-1.1 {chan command general syntax} -body {
+    chan
+} -returnCodes error -result "wrong # args: should be \"chan subcommand ?argument ...?\""
+test chan-1.2 {chan command general syntax} -body {
+    chan FOOBAR
+} -returnCodes error -result "unknown or ambiguous subcommand \"FOOBAR\": must be blocked, close, configure, copy, create, eof, event, flush, gets, names, postevent, puts, read, seek, tell, or truncate"
+
+test chan-2.1 {chan command: blocked subcommand} -body {
+    chan blocked foo bar
+} -returnCodes error -result "wrong # args: should be \"chan blocked channelId\""
+
+test chan-3.1 {chan command: close subcommand} -body {
+    chan close foo bar
+} -returnCodes error -result "wrong # args: should be \"chan close channelId\""
+
+test chan-4.1 {chan command: configure subcommand} -body {
+    chan configure
+} -returnCodes error -result "wrong # args: should be \"chan configure channelId ?optionName? ?value? ?optionName value?...\""
+
+test chan-5.1 {chan command: copy subcommand} -body {
+    chan copy foo
+} -returnCodes error -result "wrong # args: should be \"chan copy input output ?-size size? ?-command callback?\""
+
+test chan-6.1 {chan command: eof subcommand} -body {
+    chan eof foo bar
+} -returnCodes error -result "wrong # args: should be \"chan eof channelId\""
+
+test chan-7.1 {chan command: event subcommand} -body {
+    chan event foo
+} -returnCodes error -result "wrong # args: should be \"chan event channelId event ?script?\""
+
+test chan-8.1 {chan command: flush subcommand} -body {
+    chan flush foo bar
+} -returnCodes error -result "wrong # args: should be \"chan flush channelId\""
+
+test chan-9.1 {chan command: gets subcommand} -body {
+    chan gets
+} -returnCodes error -result "wrong # args: should be \"chan gets channelId ?varName?\""
+
+test chan-10.1 {chan command: names subcommand} -body {
+    chan names foo bar
+} -returnCodes error -result "wrong # args: should be \"chan names ?pattern?\""
+
+test chan-11.1 {chan command: puts subcommand} -body {
+    chan puts foo bar foo bar
+} -returnCodes error -result "wrong # args: should be \"chan puts ?-nonewline? ?channelId? string\""
+
+test chan-12.1 {chan command: read subcommand} -body {
+    chan read
+} -returnCodes error -result "wrong # args: should be \"chan read channelId ?numChars?\" or \"chan read ?-nonewline? channelId\""
+
+test chan-13.1 {chan command: seek subcommand} -body {
+    chan seek foo bar foo bar
+} -returnCodes error -result "wrong # args: should be \"chan seek channelId offset ?origin?\""
+
+test chan-14.1 {chan command: tell subcommand} -body {
+    chan tell foo bar
+} -returnCodes error -result "wrong # args: should be \"chan tell channelId\""
+
+test chan-15.1 {chan command: truncate subcommand} -body {
+    chan truncate foo bar foo bar
+} -returnCodes error -result "wrong \# args: should be \"chan truncate channelId ?length?\""
+test chan-15.2 {chan command: truncate subcommand} -setup {
+    set file [makeFile {} testTruncate]
+    set f [open $file w+]
+    fconfigure $f -translation binary
+} -body {
+    seek $f 0
+    puts -nonewline $f 12345
+    seek $f 0
+    chan truncate $f 2
+    read $f
+} -result 12 -cleanup {
+    catch {close $f}
+    catch {removeFile $file}
+}
+
+cleanupTests
+return
+
+# Local Variables:
+# mode: tcl
+# End:

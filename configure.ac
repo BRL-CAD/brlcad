@@ -127,8 +127,8 @@ title="Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
 length="`echo x${title}x | wc -c`"
 separator=""
 while test $length -gt 1 ; do
-      separator="${separator}*"
-      length="`expr $length - 1`"
+separator="${separator}*"
+length="`expr $length - 1`"
 done
 
 BC_BOLD
@@ -1172,6 +1172,18 @@ AC_TRY_LINK([#include <pthread.h>], [
 LDFLAGS="$PRELDFLAGS"
 AC_MSG_RESULT($posix_threading)
 
+dnl check whether the CoreFoundation framework is available (used when
+dnl linking against static tcl)
+AC_MSG_CHECKING([whether -framework CoreFoundation is available])
+framework_cf=no
+FRAMEWORK_COREFOUNDATION=""
+PRELIBS="$LIBS"
+LIBS="$LIBS -framework CoreFoundation"
+AC_TRY_LINK([#include <CoreFoundation/CoreFoundation.h>], [
+CFBundleRef bref = CFBundleGetMainBundle();
+], [framework_cf=yes ; FRAMEWORK_COREFOUNDATION="-framework CoreFoundation"])
+LIBS="$PRELIBS"
+AC_MSG_RESULT($framework_cf)
 
 dnl find a curses or other terminal library
 LIBTERMLIB=""
@@ -1193,18 +1205,50 @@ dnl check if X11 libraries link
 LIBX11=""
 LIBXEXT=""
 LIBXI=""
-ice_link_works=no
-sm_link_works=no
-xt_link_works=no
-xmu_link_works=no
+LIBXSS=""
+LIBXT=""
+LIBXMU=""
+LIBSM=""
+LIBICE=""
 if test "x$bc_with_x11" != "xno" ; then
     AC_CHECK_LIB(X11, XCreateWindow, LIBX11="-lX11")
-    AC_CHECK_LIB(Xext, XShapeCombineMask, LIBEXT="-lXext")
-    AC_CHECK_LIB(Xi, XGetExtensionVersion, LIBXI="-lXi")
-    AC_CHECK_LIB(ICE, IceOpenConnection, ice_link_works=yes)
-    AC_CHECK_LIB(SM, SmcOpenConnection, sm_link_works=yes)
-    AC_CHECK_LIB(Xt, XtMalloc, xt_link_works=yes)
-    AC_CHECK_LIB(Xmu, XmuLookupStandardColormap, xmu_link_works=yes)
+
+    PRELIBS="$LIBS"
+    LIBS="$LIBS $LIBX11"
+    AC_CHECK_LIB(Xext, XShapeCombineMask, LIBXEXT="-lXext $LIBX11")
+    LIBS="$PRELIBS"
+
+    PRELIBS="$LIBS"
+    LIBS="$LIBS $LIBX11 $LIBXEXT"
+    AC_CHECK_LIB(Xi, XGetExtensionVersion, LIBXI="-lXi $LIBXEXT")
+    LIBS="$PRELIBS"
+
+    PRELIBS="$LIBS"
+    LIBS="$LIBS $LIBX11"
+    AC_CHECK_LIB(Xmu, XmuLookupStandardColormap, LIBXMU="-lXmu $LIBX11")
+    LIBS="$PRELIBS"
+    
+    PRELIBS="$LIBS"
+    LIBS="$LIBS"
+    AC_CHECK_LIB(ICE, IceOpenConnection, LIBICE="-lICE")
+    LIBS="$PRELIBS"
+
+    PRELIBS="$LIBS"
+    LIBS="$LIBS $LIBICE"
+    AC_CHECK_LIB(SM, SmcOpenConnection, LIBSM="-lSM $LIBICE")
+    LIBS="$PRELIBS"
+
+    PRELIBS="$LIBS"
+    LIBS="$LIBS $LIBX11 $LIBICE $LIBSM"
+    AC_CHECK_LIB(Xt, XtMalloc, LIBXT="-lXt $LIBX11 $LIBICE $LIBSM")
+    LIBS="$PRELIBS"
+
+    PRELIBS="$LIBS"
+    LIBS="$LIBS $LIBX11 $LIBXEXT"
+    dnl use something other than XScreenSaverQueryInfo to avoid having
+    dnl tk use a cached library check result.
+    AC_CHECK_LIB(Xss, XScreenSaverAllocInfo, LIBXSS="-lXss $LIBXEXT $LIBX11")
+    LIBS="$PRELIBS"
 fi # bc_with_x11
 
 dnl check if a math library links
@@ -1697,30 +1741,30 @@ AC_CHECK_TYPE(socklen_t, ,
 #endif
 ])
 
-dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped.
-AC_MSG_CHECKING([union wait])
-AC_CACHE_VAL(tcl_cv_union_wait,
-    AC_TRY_LINK([
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
-#include <sys/wait.h>], [
-union wait x;
- WIFEXITED(x);           /* Generates an error if WIFEXITED
-			 * uses an int. */
-    ], tcl_cv_union_wait=yes, tcl_cv_union_wait=no))
-AC_MSG_RESULT($tcl_cv_union_wait)
-if test $tcl_cv_union_wait = no; then
-    AC_DEFINE(NO_UNION_WAIT,, From Tcl -- Lacking a "union wait")
-fi
+dnl dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped.
+dnl AC_MSG_CHECKING([union wait])
+dnl AC_CACHE_VAL(tcl_cv_union_wait,
+dnl     AC_TRY_LINK([
+dnl #ifdef HAVE_SYS_TYPES_H
+dnl #  include <sys/types.h>
+dnl #endif
+dnl #include <sys/wait.h>], [
+dnl union wait x;
+dnl  WIFEXITED(x);           /* Generates an error if WIFEXITED
+dnl 			 * uses an int. */
+dnl     ], tcl_cv_union_wait=yes, tcl_cv_union_wait=no))
+dnl AC_MSG_RESULT($tcl_cv_union_wait)
+dnl if test $tcl_cv_union_wait = no; then
+dnl     AC_DEFINE(NO_UNION_WAIT,, From Tcl -- Lacking a "union wait")
+dnl fi
 
-dnl XXX -- need to really check for time zone
-AC_DEFINE(HAVE_TM_ZONE,,string in time zone)
+dnl dnl XXX -- need to really check for time zone
+dnl AC_DEFINE(HAVE_TM_ZONE,,string in time zone)
 
 dnl XXX -- necessary checks from tcl8.4 tcl.m4
-builtin(include,src/other/libtcl/unix/tcl.m4)
-SC_SERIAL_PORT
-SC_TCL_64BIT_FLAGS
+dnl builtin(include,src/other/libtcl/unix/tcl.m4)
+dnl SC_SERIAL_PORT
+dnl SC_TCL_64BIT_FLAGS
 
 
 dnl ******************************************
@@ -1743,7 +1787,7 @@ if test ! "x$bc_auto_flags" = "xno" ; then
     dnl check for -fexceptions
     dnl this is needed to resolve __Unwind_Resume when compiling and
     dnl linking against openNURBS in librt for some binaries, for
-    dnl example rttherm
+    dnl example rttherm (i.e. any -static binaries)
     BC_COMPILER_AND_LINKER_RECOGNIZES([-fexceptions], [fexceptions], [nokeep])
     if test "x$bc_fexceptions_works" = "xyes" ; then
        EXCEPTIONS="-fexceptions"
@@ -2038,19 +2082,19 @@ AC_CHECK_FUNCS(\
 )
 
 dnl XXX for tcl (some duplicate)
-AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,, Lacking fstatfs)])
-AC_CHECK_FUNC(strerror, , [AC_DEFINE(NO_STRERROR,, From Tcl -- No strerror)])
-AC_CHECK_FUNC(getwd, , [AC_DEFINE(NO_GETWD,, From Tcl -- No getwd)])
-AC_CHECK_FUNC(wait3, , [AC_DEFINE(NO_WAIT3,, From Tcl -- No wait3)])
-AC_CHECK_FUNC(uname, , [AC_DEFINE(NO_UNAME,, From Tcl -- No uname)])
-AC_CHECK_FUNC(realpath, , [AC_DEFINE(NO_REALPATH,, From Tcl -- No realpath)])
-AC_CHECK_FUNC(memmove, , [AC_DEFINE(NO_MEMMOVE,, From Tcl -- No memmove)
-			  AC_DEFINE(NO_STRING_H,, From Tcl -- No string)])
-AC_CHECK_FUNC(opendir, , [AC_DEFINE(USE_DIRENT2_H,, From Tcl -- use dirent2)])
-AH_VERBATIM([OUR_STRSEP],
-[#ifndef HAVE_STRSEP
-extern char *strsep(char **stringp, const char *delim);
-#endif])
+dnl AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,, Lacking fstatfs)])
+dnl AC_CHECK_FUNC(strerror, , [AC_DEFINE(NO_STRERROR,, From Tcl -- No strerror)])
+dnl AC_CHECK_FUNC(getwd, , [AC_DEFINE(NO_GETWD,, From Tcl -- No getwd)])
+dnl AC_CHECK_FUNC(wait3, , [AC_DEFINE(NO_WAIT3,, From Tcl -- No wait3)])
+dnl AC_CHECK_FUNC(uname, , [AC_DEFINE(NO_UNAME,, From Tcl -- No uname)])
+dnl AC_CHECK_FUNC(realpath, , [AC_DEFINE(NO_REALPATH,, From Tcl -- No realpath)])
+dnl AC_CHECK_FUNC(memmove, , [AC_DEFINE(NO_MEMMOVE,, From Tcl -- No memmove)
+dnl 			  AC_DEFINE(NO_STRING_H,, From Tcl -- No string)])
+dnl AC_CHECK_FUNC(opendir, , [AC_DEFINE(USE_DIRENT2_H,, From Tcl -- use dirent2)])
+dnl AH_VERBATIM([OUR_STRSEP],
+dnl [#ifndef HAVE_STRSEP
+dnl extern char *strsep(char **stringp, const char *delim);
+dnl #endif])
 
 
 dnl *********************************
@@ -2427,23 +2471,24 @@ else
     fi
 fi
 AC_MSG_CHECKING(whether to build Tcl)
-TCL_VERSION="8.4"
-AC_DEFINE_UNQUOTED([TCL_VERSION], "$TCL_VERSION", "Version of Tcl")
-AC_SUBST(TCL_VERSION)
-TCL_MAJOR_VERSION=8
-AC_SUBST(TCL_MAJOR_VERSION)
-TCL_MINOR_VERSION=4
-AC_SUBST(TCL_MINOR_VERSION)
-TCL_PATCH_LEVEL=".6"
-AC_SUBST(TCL_PATCH_LEVEL)
+
+bc_abs_top_builddir="`pwd`"
 TCL=""
 TCLSTUB=""
 TCL_CPPFLAGS=""
+TCL_VERSION="8.5"
 if test "x$build_brlcad_tcl" = "xyes" ; then
     AC_MSG_RESULT(yes)
-    TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la '"${SOCKET}"
-    TCLSTUB='${top_builddir}/src/other/libtcl/generic/libtclstub.la'
-    TCL_CPPFLAGS='-I${top_srcdir}/src/other/libtcl/generic'
+    case $host_os in
+	 darwin*)
+	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
+	     ;;
+	 *)
+	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION}"
+	     ;;
+    esac
+    TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
+    TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
 else
     AC_MSG_RESULT(no)
     if test "x$tcl_link_works" = "xyes" ; then
@@ -2460,6 +2505,7 @@ fi
 AC_SUBST(TCL)
 AC_SUBST(TCLSTUB)
 AC_SUBST(TCL_CPPFLAGS)
+AC_SUBST(TCL_VERSION)
 
 
 dnl *** Tk ***
@@ -2532,20 +2578,22 @@ else
     fi
 fi
 AC_MSG_CHECKING(whether to build Tk)
-dnl Need to update version number(s) in src/other/libtk/Makefile.am too
-TK_VERSION="8.4"
-AC_DEFINE_UNQUOTED([TK_VERSION], "$TK_VERSION", "Version of Tk")
-AC_SUBST(TK_VERSION)
-TK_LIBRARY='${prefix}/lib/tk${TK_VERSION}'
-AC_SUBST(TK_LIBRARY)
 TK=""
 TKSTUB=""
 TK_CPPFLAGS=""
+TK_VERSION="8.5"
 if test "x$build_brlcad_tk" = "xyes" ; then
     AC_MSG_RESULT(yes)
-    TK='${top_builddir}/src/other/libtk/libtk${TK_VERSION}.la'
-    TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
-    TK_CPPFLAGS='-I${top_srcdir}/src/other/libtk/generic'
+    case $host_os in
+	darwin*)
+	    TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION} $LIBXSS"
+	    ;;
+	*)
+	    TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
+	    ;;
+    esac
+    TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
+    TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix'
 else
     AC_MSG_RESULT(no)
     if test "x$tk_link_works" = "xyes" ; then
@@ -2562,6 +2610,7 @@ fi
 AC_SUBST(TK)
 AC_SUBST(TKSTUB)
 AC_SUBST(TK_CPPFLAGS)
+AC_SUBST(TK_VERSION)
 
 
 dnl *** incrTcl ***
@@ -3371,13 +3420,13 @@ else
 	AC_DEFINE(NDEBUG, 1, [Define to indicate non-debug code (assert utilizes)])
 fi
 
-BU='${top_builddir}/src/libbu/libbu.la'
+BU='${top_builddir}/src/libbu/libbu.la'" $FRAMEWORK_COREFOUNDATION"
 AC_SUBST(BU)
 
-BN='${top_builddir}/src/libbn/libbn.la'
+BN='${top_builddir}/src/libbn/libbn.la'" $FRAMEWORK_COREFOUNDATION"
 AC_SUBST(BN)
 
-RT='${top_builddir}/src/librt/librt.la'
+RT='${top_builddir}/src/librt/librt.la'" $FRAMEWORK_COREFOUNDATION"
 AC_SUBST(RT)
 
 WDB='${top_builddir}/src/libwdb/libwdb.la'
@@ -3392,26 +3441,26 @@ AC_SUBST(SYSV)
 CURSOR='${top_builddir}/src/libcursor/libcursor.la'
 AC_SUBST(CURSOR)
 
-FB='${top_builddir}/src/libfb/libfb.la'
+FB='${top_builddir}/src/libfb/libfb.la'" $FRAMEWORK_COREFOUNDATION"
 AC_SUBST(FB)
 
-DM='${top_builddir}/src/libdm/libdm.la'
+DM='${top_builddir}/src/libdm/libdm.la'" $FRAMEWORK_COREFOUNDATION"
 AC_SUBST(DM)
 AC_DEFINE_UNQUOTED([USE_FBSERV], [1], [Required for libdm/mged to allow direct fbserv render connections])
 
 FFT='${top_builddir}/src/libfft/libfft.la'
 AC_SUBST(FFT)
 
-MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
+MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'" $FRAMEWORK_COREFOUNDATION"
 AC_SUBST(MULTISPECTRAL)
 
-OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
+OPTICAL='${top_builddir}/src/liboptical/liboptical.la'" $FRAMEWORK_COREFOUNDATION"
 AC_SUBST(OPTICAL)
 
 ORLE='${top_builddir}/src/liborle/liborle.la'
 AC_SUBST(ORLE)
 
-TCLCAD='${top_builddir}/src/libtclcad/libtclcad.la'
+TCLCAD='${top_builddir}/src/libtclcad/libtclcad.la'" $FRAMEWORK_COREFOUNDATION"
 AC_SUBST(TCLCAD)
 
 TERMIO='${top_builddir}/src/libtermio/libtermio.la'
@@ -3419,80 +3468,96 @@ AC_SUBST(TERMIO)
 
 dnl tcl
 
+dnl dnl Need to update version number(s) in src/other/libtcl/Makefile.am
+dnl TCL_LIBRARY='${prefix}/lib/tcl${TCL_VERSION}'
+dnl AC_SUBST(TCL_LIBRARY)
+dnl TCL_PACKAGE_PATH="'${libdir}'"
+dnl AC_SUBST(TCL_PACKAGE_PATH)
+
+dnl dnl XXX -- hack to make unfixed libtk behave when reading tclConfig.sh
+dnl dnl EXTRA_CFLAGS='-DMAC_OSX_TCL -DHAVE_CFBUNDLE -DUSE_VFORK -DTCL_DEFAULT_ENCODING=\"utf-8\"'
+dnl AC_SUBST(CC)
+dnl AC_SUBST(DEFS)
+dnl AC_SUBST(TCL_DBGX)
+dnl CFLAGS_DEBUG="-g"
+dnl AC_SUBST(CFLAGS_DEBUG)
+dnl CFLAGS_OPTIMIZE="-Os"
+dnl AC_SUBST(CFLAGS_OPTIMIZE)
+dnl AC_SUBST(LDFLAGS_DEBUG)
+dnl AC_SUBST(LDFLAGS_OPTIMIZE)
+dnl TCL_SHARED_BUILD=1
+dnl AC_SUBST(TCL_SHARED_BUILD)
+dnl AC_SUBST(CFG_TCL_EXPORT_FILE_SUFFIX)
+dnl AC_SUBST(DL_LIBS)
+dnl AC_SUBST(LIBS)
+dnl AC_SUBST(MATH_LIBS)
+dnl TCL_LIB_FILE=libtcl8.4.so
+dnl AC_SUBST(TCL_LIB_FILE)
+dnl TCL_NEEDS_EXP_FILE=0
+dnl AC_SUBST(TCL_NEEDS_EXP_FILE)
+dnl AC_SUBST(SHLIB_CFLAGS)
+dnl AC_SUBST(CFLAGS_WARNING)
+dnl AC_SUBST(EXTRA_CFLAGS)
+dnl AC_SUBST(SHLIB_LD)
+dnl AC_SUBST(SHLIB_SUFFIX)
+dnl AC_SUBST(STLIB_LD)
+dnl AC_SUBST(SHLIB_LD_LIBS)
+dnl TCL_LIB_FLAG='-ltcl8.4'
+dnl AC_SUBST(TCL_LIB_FLAG)
+dnl TCL_BUILD_LIB_SPEC='-L../../libtcl/.libs -ltcl8.4 -Wl,--rpath -Wl,${libdir}'
+dnl AC_SUBST(TCL_BUILD_LIB_SPEC)
+dnl TCL_INCLUDE_SPEC='-I${prefix}/include -I../../libtcl/generic'
+dnl AC_SUBST(TCL_INCLUDE_SPEC)
+dnl TCL_LIB_VERSIONS_OK='ok'
+dnl AC_SUBST(TCL_LIB_VERSIONS_OK)
+dnl AC_SUBST(TCL_LIB_SPEC)
+dnl AC_SUBST(CFG_TCL_SHARED_LIB_SUFFIX)
+dnl AC_SUBST(CFG_TCL_UNSHARED_LIB_SUFFIX)
+dnl TCL_SRC_DIR='../../libtcl'
+dnl AC_SUBST(TCL_SRC_DIR)
+dnl TCL_STUB_LIB_FILE='libtclstub8.4.a'
+dnl AC_SUBST(TCL_STUB_LIB_FILE)
+dnl TCL_STUB_LIB_FLAG='-ltclstub8.4'
+dnl AC_SUBST(TCL_STUB_LIB_FLAG)
+dnl AC_SUBST(TCL_BUILD_STUB_LIB_SPEC)
+dnl AC_SUBST(TCL_STUB_LIB_SPEC)
+dnl TCL_BUILD_STUB_LIB_PATH="../../libtcl/.libs/libtclstub8.4.a"
+dnl AC_SUBST(TCL_BUILD_STUB_LIB_PATH)
+dnl TCL_STUB_LIB_PATH='${prefix}/lib/libtclstub8.4.a'
+dnl AC_SUBST(TCL_STUB_LIB_PATH)
+dnl TCL_THREADS=0
+dnl AC_SUBST(TCL_THREADS)
+
+
 # if compiling with the MIPSpro 7.3 compiler, there is a bug when
 # trying to link using an rpath longer than 256 that causes the linker
 # to core dump.
 AM_CONDITIONAL(LINK_STATIC_REQUIRED, [test "x$build_vendor" = "xsgi" -a "x$compiler" = "xsgi" ])
 
-dnl Need to update version number(s) in src/other/libtcl/Makefile.am
-TCL_LIBRARY='${prefix}/lib/tcl${TCL_VERSION}'
-AC_SUBST(TCL_LIBRARY)
-TCL_PACKAGE_PATH="'${libdir}'"
-AC_SUBST(TCL_PACKAGE_PATH)
-
 dnl XXX - hack for justins g.c file
 AM_CONDITIONAL(HAVE_BRLCAD, true)
 AM_CONDITIONAL(HAVE_DOXYGEN, false)
-
-dnl XXX -- hack to make unfixed libtk behave when reading tclConfig.sh
-dnl EXTRA_CFLAGS='-DMAC_OSX_TCL -DHAVE_CFBUNDLE -DUSE_VFORK -DTCL_DEFAULT_ENCODING=\"utf-8\"'
-AC_SUBST(CC)
-AC_SUBST(DEFS)
-AC_SUBST(TCL_DBGX)
-CFLAGS_DEBUG="-g"
-AC_SUBST(CFLAGS_DEBUG)
-CFLAGS_OPTIMIZE="-Os"
-AC_SUBST(CFLAGS_OPTIMIZE)
-AC_SUBST(LDFLAGS_DEBUG)
-AC_SUBST(LDFLAGS_OPTIMIZE)
-TCL_SHARED_BUILD=1
-AC_SUBST(TCL_SHARED_BUILD)
-AC_SUBST(CFG_TCL_EXPORT_FILE_SUFFIX)
-AC_SUBST(DL_LIBS)
-AC_SUBST(LIBS)
-AC_SUBST(MATH_LIBS)
-TCL_LIB_FILE=libtcl8.4.so
-AC_SUBST(TCL_LIB_FILE)
-TCL_NEEDS_EXP_FILE=0
-AC_SUBST(TCL_NEEDS_EXP_FILE)
-AC_SUBST(SHLIB_CFLAGS)
-AC_SUBST(CFLAGS_WARNING)
-AC_SUBST(EXTRA_CFLAGS)
-AC_SUBST(SHLIB_LD)
-AC_SUBST(SHLIB_SUFFIX)
-AC_SUBST(STLIB_LD)
-AC_SUBST(SHLIB_LD_LIBS)
-TCL_LIB_FLAG='-ltcl8.4'
-AC_SUBST(TCL_LIB_FLAG)
-TCL_BUILD_LIB_SPEC='-L../../libtcl/.libs -ltcl8.4 -Wl,--rpath -Wl,${libdir}'
-AC_SUBST(TCL_BUILD_LIB_SPEC)
-TCL_INCLUDE_SPEC='-I${prefix}/include -I../../libtcl/generic'
-AC_SUBST(TCL_INCLUDE_SPEC)
-TCL_LIB_VERSIONS_OK='ok'
-AC_SUBST(TCL_LIB_VERSIONS_OK)
-AC_SUBST(TCL_LIB_SPEC)
-AC_SUBST(CFG_TCL_SHARED_LIB_SUFFIX)
-AC_SUBST(CFG_TCL_UNSHARED_LIB_SUFFIX)
-TCL_SRC_DIR='../../libtcl'
-AC_SUBST(TCL_SRC_DIR)
-TCL_STUB_LIB_FILE='libtclstub8.4.a'
-AC_SUBST(TCL_STUB_LIB_FILE)
-TCL_STUB_LIB_FLAG='-ltclstub8.4'
-AC_SUBST(TCL_STUB_LIB_FLAG)
-AC_SUBST(TCL_BUILD_STUB_LIB_SPEC)
-AC_SUBST(TCL_STUB_LIB_SPEC)
-TCL_BUILD_STUB_LIB_PATH="../../libtcl/.libs/libtclstub8.4.a"
-AC_SUBST(TCL_BUILD_STUB_LIB_PATH)
-TCL_STUB_LIB_PATH='${prefix}/lib/libtclstub8.4.a'
-AC_SUBST(TCL_STUB_LIB_PATH)
-TCL_THREADS=0
-AC_SUBST(TCL_THREADS)
-
 
 dnl sample applications
 SAMPLE_APPLICATIONS_DIR='$(BRLCAD_DATA)/sample_applications'
 AC_SUBST(SAMPLE_APPLICATIONS_DIR)
 
+# stash the top builddir before configuring subdirectories
+bc_top_builddir="$ac_top_builddir"
+
+dnl configure Tcl
+ac_configure_args="$ac_configure_args --disable-shared"
+if test "x$bc_use_debug" != "xno" ; then
+   ac_configure_args="$ac_configure_args --enable-symbols"
+fi
+if test "x$build_brlcad_tcl" = "xyes" ; then
+    AC_CONFIG_SUBDIRS([src/other/tcl/unix])
+fi
+dnl configure Tk
+if test "x$build_brlcad_tk" = "xyes" ; then
+    AC_CONFIG_SUBDIRS([src/other/tk/unix])
+fi
+AC_CONFIG_SUBDIRS([misc/enigma])
 
 AC_CONFIG_FILES([
 	Makefile
@@ -3690,32 +3755,9 @@ AC_CONFIG_FILES([
 	src/other/jove/teach-jove
 	src/other/libpng/Makefile
 	src/other/libregex/Makefile
-	src/other/libtcl/Makefile
-	src/other/libtcl/doc/Makefile
-	src/other/libtcl/generic/Makefile
-	src/other/libtcl/library/Makefile
-	src/other/libtcl/library/dde/Makefile
-	src/other/libtcl/library/encoding/Makefile
-	src/other/libtcl/library/http/Makefile
-	src/other/libtcl/library/http1.0/Makefile
-	src/other/libtcl/library/msgcat/Makefile
-	src/other/libtcl/library/opt/Makefile
-	src/other/libtcl/library/reg/Makefile
-	src/other/libtcl/library/tcltest/Makefile
-	src/other/libtcl/unix/Makefile
-	src/other/libtcl/unix/tclConfig.sh
+	src/other/tcl/Makefile
+	src/other/tk/Makefile
 	src/other/libtermlib/Makefile
-	src/other/libtk/Makefile
-	src/other/libtk/doc/Makefile
-	src/other/libtk/generic/Makefile
-	src/other/libtk/library/Makefile
-	src/other/libtk/library/demos/Makefile
-	src/other/libtk/library/demos/images/Makefile
-	src/other/libtk/library/images/Makefile
-	src/other/libtk/library/msgs/Makefile
-	src/other/libtk/library/pkgIndex.tcl
-	src/other/libtk/unix/Makefile
-	src/other/libtk/unix/tkConfig.sh
 	src/other/libutahrle/Makefile
 	src/other/libutahrle/include/Makefile
 	src/other/libz/Makefile
@@ -3776,10 +3818,13 @@ AC_CONFIG_FILES([
 
 AC_OUTPUT
 
-# ac_output won't update the brlcad_config.h.in template timestamp if
+# AC_OUTPUT won't update the brlcad_config.h.in template timestamp if
 # the file is unchanged.  forcibly update the timestamp so autoheader
 # doesn't try to invoke.
 # touch include/brlcad_config.h.in
+
+# ac_top_builddir and other variables are modified after AC_OUTPUT so
+# plan accordingly and save them beforehand.
 
 
 #################
@@ -3894,3 +3939,12 @@ fi
 AC_MSG_RESULT([---])
 AC_MSG_RESULT([$0 complete, type 'make' to begin building])
 AC_MSG_RESULT([])
+
+# Local Variables:
+# tab-width: 8
+# mode: autoconf
+# sh-indentation: 4
+# sh-basic-offset: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

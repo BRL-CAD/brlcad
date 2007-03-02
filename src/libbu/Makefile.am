@@ -70,8 +70,7 @@ libbu_la_LDFLAGS = -version-info 19:1
 libbu_la_LIBADD = \
 	libbu_nil.la \
 	${LIBMALLOC} \
-	${LIBTHREAD} \
-	${TCL}
+	${LIBTHREAD}
 
 htester_SOURCES = htester.c
 htester_LDADD = libbu.la
@@ -102,7 +101,7 @@ DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
 if BUILD_TCL
-DEPS=src/other/libtcl
+DEPS=src/other/tcl
 else
 DEPS=
 endif

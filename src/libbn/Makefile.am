@@ -42,7 +42,6 @@ libbn_la_LDFLAGS = -version-info 19:1
 libbn_la_LIBADD = \
 	libbn_nil.la \
 	${BU} \
-	${TCL} \
 	${LIBM}
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}

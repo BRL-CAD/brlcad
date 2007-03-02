@@ -11,7 +11,9 @@ SRCS = \
 libtclcad_la_LDFLAGS = -version-info 19:1
 libtclcad_la_CFLAGS = \
 	${X_CFLAGS} \
-	-I${top_srcdir}/src/other/libtk/generic \
+	${ITK_CPPFLAGS} \
+	${ITCL_CPPFLAGS} \
+	${TK_CPPFLAGS} \
 	${TCL_CPPFLAGS}
 
 libtclcad_la_LIBADD = \
@@ -19,7 +21,7 @@ libtclcad_la_LIBADD = \
 	${BN} \
 	${BU} \
 	${TK} \
-	${TCL}
+	${TCLSTUB}
 
 libtclcad_la_SOURCES = \
 	$(SRCS) \
@@ -38,7 +40,7 @@ DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
 if BUILD_TCL
-DEPS=src/other/libtcl
+DEPS=src/other/tcl
 else
 DEPS=
 endif

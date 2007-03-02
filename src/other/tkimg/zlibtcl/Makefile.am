@@ -11,9 +11,6 @@ zlibtcl_la_SOURCES = \
 AM_CPPFLAGS = \
 	-I${top_srcdir}/src/other/tkimg/zlibtcl \
 	-DZLIBTCL_PACKAGE_NAME=\"zlibtcl\" \
-	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
-	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
-	-DUSE_TCLALLOC=0 \
 	${LIBZ_CPPFLAGS} \
 	${TCL_CPPFLAGS}
 

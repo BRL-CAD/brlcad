@@ -186,7 +186,7 @@ tgetent(char *bp, const char *name)
 
 	tbuf = bp;
 	tf = -1;
-#ifndef V6
+
 	cp = getenv("TERMCAP");
 	/*
 	 * TERMCAP can have one of two things in it. It can be the
@@ -210,9 +210,7 @@ tgetent(char *bp, const char *name)
 	}
 	if (tf < 0)
 		tf = open(E_TERMCAP, 0);
-#else
-	tf = open(E_TERMCAP, 0);
-#endif
+
 	if (tf < 0)
 		return (-1);
 	for (;;) {

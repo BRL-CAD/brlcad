@@ -4,7 +4,6 @@ AM_CPPFLAGS = \
 	-DNO_MOUNTAIN \
 	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
-	-DUSE_TCLALLOC=0 \
 	-I${top_srcdir}/src/other/blt/src \
 	${TCL_CPPFLAGS} \
 	${TK_CPPFLAGS}

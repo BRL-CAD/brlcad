@@ -59,7 +59,6 @@ libfb_la_CFLAGS = \
 libfb_la_LIBADD = \
 	${BU} \
 	${PKG} \
-	${TCL} \
 	${X_LIBS} \
 	${LIBGL}
 
