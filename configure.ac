@@ -3586,6 +3586,10 @@ AC_CONFIG_FILES([
 	include/Makefile
 	m4/Makefile
 	misc/Makefile
+	misc/archlinux/Makefile
+	misc/archlinux/PKGBUILD
+	misc/archlinux/brlcad.install
+	misc/archlinux/brlcad.sh
 	misc/brlcad.spec
 	misc/macosx/Makefile
 	misc/macosx/Resources/Makefile
