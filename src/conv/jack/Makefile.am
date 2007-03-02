@@ -5,10 +5,10 @@ bin_PROGRAMS = g-jack jack-g
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 g_jack_SOURCES = g-jack.c
-g_jack_LDADD = ${RT} ${WDB}
+g_jack_LDADD = ${RT} ${WDB} ${SYSV}
 
 jack_g_SOURCES = jack-g.c
-jack_g_LDADD = ${RT} ${WDB}
+jack_g_LDADD = ${RT} ${WDB} ${SYSV}
 
 include $(top_srcdir)/misc/Makefile.defs
 

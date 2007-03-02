@@ -7,10 +7,10 @@ bin_PROGRAMS = \
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 g_off_SOURCES = g-off.c
-g_off_LDADD = ${RT}
+g_off_LDADD = ${RT} ${SYSV}
 
 off_g_SOURCES = off-g.c
-off_g_LDADD = ${RT} ${WDB}
+off_g_LDADD = ${RT} ${WDB} ${SYSV}
 
 MAINTAINERCLEANFILES = Makefile.in
 

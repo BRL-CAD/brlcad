@@ -7,10 +7,10 @@ bin_PROGRAMS = \
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 patch_g_SOURCES = patch-g.c
-patch_g_LDADD = ${RT} ${WDB} ${BU}
+patch_g_LDADD = ${RT} ${WDB} ${BU} ${SYSV}
 
 rpatch_SOURCES = rpatch.c
-rpatch_LDADD = ${BU}
+rpatch_LDADD = ${BU} ${SYSV}
 
 noinst_HEADERS = patch-g.h
 
