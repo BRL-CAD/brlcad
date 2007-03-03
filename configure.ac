@@ -1720,7 +1720,6 @@ AC_C_CHAR_UNSIGNED
 AC_HEADER_STAT
 AC_HEADER_TIME
 AC_STRUCT_ST_BLOCKS
-dnl Tcl still uses HAVE_ST_BLKSIZE
 AC_STRUCT_ST_BLKSIZE
 AC_CHECK_MEMBERS([struct stat.st_blksize])
 AC_CHECK_MEMBERS([struct stat.st_rdev])
@@ -1740,31 +1739,6 @@ AC_CHECK_TYPE(socklen_t, ,
 #  include <sys/socket.h>
 #endif
 ])
-
-dnl dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped.
-dnl AC_MSG_CHECKING([union wait])
-dnl AC_CACHE_VAL(tcl_cv_union_wait,
-dnl     AC_TRY_LINK([
-dnl #ifdef HAVE_SYS_TYPES_H
-dnl #  include <sys/types.h>
-dnl #endif
-dnl #include <sys/wait.h>], [
-dnl union wait x;
-dnl  WIFEXITED(x);           /* Generates an error if WIFEXITED
-dnl 			 * uses an int. */
-dnl     ], tcl_cv_union_wait=yes, tcl_cv_union_wait=no))
-dnl AC_MSG_RESULT($tcl_cv_union_wait)
-dnl if test $tcl_cv_union_wait = no; then
-dnl     AC_DEFINE(NO_UNION_WAIT,, From Tcl -- Lacking a "union wait")
-dnl fi
-
-dnl dnl XXX -- need to really check for time zone
-dnl AC_DEFINE(HAVE_TM_ZONE,,string in time zone)
-
-dnl XXX -- necessary checks from tcl8.4 tcl.m4
-dnl builtin(include,src/other/libtcl/unix/tcl.m4)
-dnl SC_SERIAL_PORT
-dnl SC_TCL_64BIT_FLAGS
 
 
 dnl ******************************************
@@ -2080,21 +2054,6 @@ AC_CHECK_FUNCS(\
 	vprintf \
 	writev \
 )
-
-dnl XXX for tcl (some duplicate)
-dnl AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,, Lacking fstatfs)])
-dnl AC_CHECK_FUNC(strerror, , [AC_DEFINE(NO_STRERROR,, From Tcl -- No strerror)])
-dnl AC_CHECK_FUNC(getwd, , [AC_DEFINE(NO_GETWD,, From Tcl -- No getwd)])
-dnl AC_CHECK_FUNC(wait3, , [AC_DEFINE(NO_WAIT3,, From Tcl -- No wait3)])
-dnl AC_CHECK_FUNC(uname, , [AC_DEFINE(NO_UNAME,, From Tcl -- No uname)])
-dnl AC_CHECK_FUNC(realpath, , [AC_DEFINE(NO_REALPATH,, From Tcl -- No realpath)])
-dnl AC_CHECK_FUNC(memmove, , [AC_DEFINE(NO_MEMMOVE,, From Tcl -- No memmove)
-dnl 			  AC_DEFINE(NO_STRING_H,, From Tcl -- No string)])
-dnl AC_CHECK_FUNC(opendir, , [AC_DEFINE(USE_DIRENT2_H,, From Tcl -- use dirent2)])
-dnl AH_VERBATIM([OUR_STRSEP],
-dnl [#ifndef HAVE_STRSEP
-dnl extern char *strsep(char **stringp, const char *delim);
-dnl #endif])
 
 
 dnl *********************************
@@ -3465,68 +3424,6 @@ AC_SUBST(TCLCAD)
 
 TERMIO='${top_builddir}/src/libtermio/libtermio.la'
 AC_SUBST(TERMIO)
-
-dnl tcl
-
-dnl dnl Need to update version number(s) in src/other/libtcl/Makefile.am
-dnl TCL_LIBRARY='${prefix}/lib/tcl${TCL_VERSION}'
-dnl AC_SUBST(TCL_LIBRARY)
-dnl TCL_PACKAGE_PATH="'${libdir}'"
-dnl AC_SUBST(TCL_PACKAGE_PATH)
-
-dnl dnl XXX -- hack to make unfixed libtk behave when reading tclConfig.sh
-dnl dnl EXTRA_CFLAGS='-DMAC_OSX_TCL -DHAVE_CFBUNDLE -DUSE_VFORK -DTCL_DEFAULT_ENCODING=\"utf-8\"'
-dnl AC_SUBST(CC)
-dnl AC_SUBST(DEFS)
-dnl AC_SUBST(TCL_DBGX)
-dnl CFLAGS_DEBUG="-g"
-dnl AC_SUBST(CFLAGS_DEBUG)
-dnl CFLAGS_OPTIMIZE="-Os"
-dnl AC_SUBST(CFLAGS_OPTIMIZE)
-dnl AC_SUBST(LDFLAGS_DEBUG)
-dnl AC_SUBST(LDFLAGS_OPTIMIZE)
-dnl TCL_SHARED_BUILD=1
-dnl AC_SUBST(TCL_SHARED_BUILD)
-dnl AC_SUBST(CFG_TCL_EXPORT_FILE_SUFFIX)
-dnl AC_SUBST(DL_LIBS)
-dnl AC_SUBST(LIBS)
-dnl AC_SUBST(MATH_LIBS)
-dnl TCL_LIB_FILE=libtcl8.4.so
-dnl AC_SUBST(TCL_LIB_FILE)
-dnl TCL_NEEDS_EXP_FILE=0
-dnl AC_SUBST(TCL_NEEDS_EXP_FILE)
-dnl AC_SUBST(SHLIB_CFLAGS)
-dnl AC_SUBST(CFLAGS_WARNING)
-dnl AC_SUBST(EXTRA_CFLAGS)
-dnl AC_SUBST(SHLIB_LD)
-dnl AC_SUBST(SHLIB_SUFFIX)
-dnl AC_SUBST(STLIB_LD)
-dnl AC_SUBST(SHLIB_LD_LIBS)
-dnl TCL_LIB_FLAG='-ltcl8.4'
-dnl AC_SUBST(TCL_LIB_FLAG)
-dnl TCL_BUILD_LIB_SPEC='-L../../libtcl/.libs -ltcl8.4 -Wl,--rpath -Wl,${libdir}'
-dnl AC_SUBST(TCL_BUILD_LIB_SPEC)
-dnl TCL_INCLUDE_SPEC='-I${prefix}/include -I../../libtcl/generic'
-dnl AC_SUBST(TCL_INCLUDE_SPEC)
-dnl TCL_LIB_VERSIONS_OK='ok'
-dnl AC_SUBST(TCL_LIB_VERSIONS_OK)
-dnl AC_SUBST(TCL_LIB_SPEC)
-dnl AC_SUBST(CFG_TCL_SHARED_LIB_SUFFIX)
-dnl AC_SUBST(CFG_TCL_UNSHARED_LIB_SUFFIX)
-dnl TCL_SRC_DIR='../../libtcl'
-dnl AC_SUBST(TCL_SRC_DIR)
-dnl TCL_STUB_LIB_FILE='libtclstub8.4.a'
-dnl AC_SUBST(TCL_STUB_LIB_FILE)
-dnl TCL_STUB_LIB_FLAG='-ltclstub8.4'
-dnl AC_SUBST(TCL_STUB_LIB_FLAG)
-dnl AC_SUBST(TCL_BUILD_STUB_LIB_SPEC)
-dnl AC_SUBST(TCL_STUB_LIB_SPEC)
-dnl TCL_BUILD_STUB_LIB_PATH="../../libtcl/.libs/libtclstub8.4.a"
-dnl AC_SUBST(TCL_BUILD_STUB_LIB_PATH)
-dnl TCL_STUB_LIB_PATH='${prefix}/lib/libtclstub8.4.a'
-dnl AC_SUBST(TCL_STUB_LIB_PATH)
-dnl TCL_THREADS=0
-dnl AC_SUBST(TCL_THREADS)
 
 
 # if compiling with the MIPSpro 7.3 compiler, there is a bug when
