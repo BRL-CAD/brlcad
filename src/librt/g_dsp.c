@@ -3136,19 +3136,27 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
-	    if (! dsp_ip->dsp_mp ) {
-		bu_log("cannot find data for DSP\n");
+	    if (!dsp_ip->dsp_mp) {
+		if (dsp_ip->dsp_name) {
+		    bu_log("Cannot find data for DSP, data file [%s] not found\n", dsp_ip->dsp_name);
+		} else {
+		    bu_log("Cannot find data for DSP\n");
+		}
 		return 0;
 	    }
+	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 	    break;
 	case RT_DSP_SRC_OBJ:
-	    RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
-	    RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
-	    if (! dsp_ip->dsp_bip ) {
-		bu_log("cannot find data for DSP\n");
+	    if (!dsp_ip->dsp_bip) {
+		if (dsp_ip->dsp_name) {
+		    bu_log("Cannot find data for DSP, data object [%s] not found\n", dsp_ip->dsp_name);
+		} else {
+		    bu_log("Cannot find data for DSP\n");
+		}
 		return 0;
 	    }
+	    RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
+	    RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
 	    break;
     }
 
