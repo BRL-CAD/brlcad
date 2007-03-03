@@ -6,7 +6,8 @@ dnl	to configure the system for the local environment.
 # RCS: @(#) $Id$
 
 AC_INIT([tk],[8.5])
-AC_PREREQ(2.59)
+# AC_PREREQ(2.59)
+AC_PREREQ(2.52)
 
 dnl This is only used when included from macosx/configure.ac
 m4_ifdef([SC_USE_CONFIG_HEADERS], [
