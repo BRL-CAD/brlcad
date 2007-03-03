@@ -73,7 +73,10 @@ libbu_la_LIBADD = \
 	${LIBTHREAD}
 
 htester_SOURCES = htester.c
-htester_LDADD = libbu.la
+htester_LDADD = \
+	libbu.la \
+	${TCL} \
+	${LIBM}
 
 include_HEADERS = rb_internals.h
 
