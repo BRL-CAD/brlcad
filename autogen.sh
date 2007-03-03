@@ -965,14 +965,17 @@ manual_autogen ( ) {
 	ac2_54_macros="AC_C_BACKSLASH_A AC_CONFIG_LIBOBJ_DIR AC_GNU_SOURCE AC_PROG_EGREP AC_PROG_FGREP AC_REPLACE_FNMATCH AC_FUNC_FNMATCH_GNU AC_FUNC_REALLOC AC_TYPE_MBSTATE_T"
 
 	macros_to_search=""
-	if [ $AUTOCONF_MAJOR_VERSION -lt 2 ] ; then
+	ac_major="`echo ${AUTOCONF_VERSION}. | cut -d. -f1 | sed 's/[^0-9]//g'`"
+	ac_minor="`echo ${AUTOCONF_VERSION}. | cut -d. -f2 | sed 's/[^0-9]//g'`"
+	
+	if [ $ac_major -lt 2 ] ; then
 	    macros_to_search="$ac2_59_macros $ac2_55_macros $ac2_54_macros"
 	else
-	    if [ $AUTOCONF_MINOR_VERSION -lt 54 ] ; then
+	    if [ $ac_minor -lt 54 ] ; then
 		macros_to_search="$ac2_59_macros $ac2_55_macros $ac2_54_macros"
-	    elif [ $AUTOCONF_MINOR_VERSION -lt 55 ] ; then
+	    elif [ $ac_minor -lt 55 ] ; then
 		macros_to_search="$ac2_59_macros $ac2_55_macros"
-	    elif [ $AUTOCONF_MINOR_VERSION -lt 59 ] ; then
+	    elif [ $ac_minor -lt 59 ] ; then
 		macros_to_search="$ac2_59_macros"
 	    fi
 	fi
