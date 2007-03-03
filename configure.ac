@@ -2443,7 +2443,7 @@ if test "x$build_brlcad_tcl" = "xyes" ; then
 	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
 	     ;;
 	 *)
-	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION}"
+	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL}"
 	     ;;
     esac
     TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
