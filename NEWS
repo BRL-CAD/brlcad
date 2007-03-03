@@ -43,6 +43,7 @@ for more details.
 * updated bundled libpng to version 1.2.16 - Sean Morrison
 * fixed Windows line-ending bug in dxf-g - John Anderson
 * g_qa manual page documents the -t tolerance option - Lee Butler
+* updated bundled blt to blt2.4z-patch-2 - Sean Morrison
 * dxf-g turns 2D entities into sketches instead of nmg - John Anderson
 * removed advertising clause from BSD code - Sean Morrison
 * fix index bug, allow material ID of zero in rtweight - Karel Kulhavy
