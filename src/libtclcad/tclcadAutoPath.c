@@ -40,6 +40,11 @@
 #include "itk.h"
 /*#include "blt.h"*/
 
+/* incrTcl prior to 3.3 doesn't provide ITK_VERSION */
+#ifndef ITK_VERSION
+#  define ITK_VERSION ITCL_VERSION
+#endif
+
 #include "machine.h"
 #include "bu.h"
 
@@ -89,9 +94,11 @@ path_to_src(const char *path)
     path_to_src_buf = bu_strdupm(path, "allocate path_to_src_buf");
     atexit(free_pts_buf);
 
-    subpath = path;
+    subpath = path_to_src_buf;
     do {
-	name = basename(subpath);
+	char *temp = bu_strdup(subpath);
+	name = basename(temp);
+	bu_free(temp, "bu_strdup temp");
 	subpath = bu_dirname(subpath);
     } while (name &&
 	     (strlen(subpath) > 1) &&
