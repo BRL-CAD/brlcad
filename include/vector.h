@@ -1,6 +1,8 @@
 #ifndef __VECTOR
 #define __VECTOR
 
+#include "common.h"
+
 extern "C++" {
 #include <iostream>
   
@@ -48,7 +50,7 @@ extern "C++" {
 #define VEC_ALIGN
 
   /*#undef __SSE2__*/ // Test FPU version
-#if defined(__SSE2__) && defined(__GNUC__)
+#if defined(__SSE2__) && defined(__GNUC__) && defined(HAVE_EMMINTRIN_H)
 #define __x86_vector__
 #include "vector_x86.h"
 #else
