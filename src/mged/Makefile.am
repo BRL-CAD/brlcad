@@ -162,6 +162,7 @@ mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) 
 mged_LDADD = \
 	${POINTS_LDADD} \
 	${TERMIO} \
+	${TCLCAD} \
 	${WDB} \
 	${DM} \
 	${FB} \
@@ -171,7 +172,6 @@ mged_LDADD = \
 	${ITCL} \
 	${TK} \
 	${TCL} \
-	${TCLCAD} \
 	${PNG}
 
 cad_boundp_SOURCES = cad_boundp.c
