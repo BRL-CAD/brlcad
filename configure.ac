@@ -1571,6 +1571,13 @@ if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
     )
 fi # bc_with_opengl
 
+# optionally check for vectorization headers for opennurbs
+if test "x$bc_build_opennurbs" != "xno" ; then
+    AC_CHECK_HEADERS( \
+	emmintrin.h \
+    )
+fi # bc_build_opennurbs
+
 AC_CHECK_HEADER(sys/sched.h,
 		AC_DEFINE(HAVE_SYS_SCHED_H, 1, Define to 1 if you have the <sys/sched.h> header file.),,
 		[
@@ -2443,7 +2450,7 @@ if test "x$build_brlcad_tcl" = "xyes" ; then
 	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
 	     ;;
 	 *)
-	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL}"
+	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM}"
 	     ;;
     esac
     TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
@@ -2630,15 +2637,15 @@ fi
 AC_MSG_CHECKING(whether to build incrTcl)
 
 dnl itcl/itk
-ITCL_VERSION="3.3"
-AC_SUBST(ITCL_VERSION)
 ITCL=""
 ITK=""
 ITCL_CPPFLAGS=""
 ITK_CPPFLAGS=""
+ITCL_VERSION=3.3
+AC_SUBST(ITCL_VERSION)
 if test "x$build_brlcad_itcl" = "xyes" ; then
-    ITCL='${top_builddir}/src/other/incrTcl/libitcl${ITCL_VERSION}.la'
-    ITK='${top_builddir}/src/other/incrTcl/libitk${ITCL_VERSION}.la'
+    ITCL='${top_builddir}/src/other/incrTcl/libitcl.la'
+    ITK='${top_builddir}/src/other/incrTcl/libitk.la'
     ITCL_CPPFLAGS='-I${top_srcdir}/src/other/incrTcl/itcl/generic'
     ITK_CPPFLAGS='-I${top_srcdir}/src/other/incrTcl/itk/generic'
     AC_MSG_RESULT(yes)
@@ -3379,13 +3386,13 @@ else
 	AC_DEFINE(NDEBUG, 1, [Define to indicate non-debug code (assert utilizes)])
 fi
 
-BU='${top_builddir}/src/libbu/libbu.la'" $FRAMEWORK_COREFOUNDATION"
+BU='${top_builddir}/src/libbu/libbu.la'" $TCL $FRAMEWORK_COREFOUNDATION"
 AC_SUBST(BU)
 
-BN='${top_builddir}/src/libbn/libbn.la'" $FRAMEWORK_COREFOUNDATION"
+BN='${top_builddir}/src/libbn/libbn.la'" $TCL $FRAMEWORK_COREFOUNDATION"
 AC_SUBST(BN)
 
-RT='${top_builddir}/src/librt/librt.la'" $FRAMEWORK_COREFOUNDATION"
+RT='${top_builddir}/src/librt/librt.la'" $TCL $FRAMEWORK_COREFOUNDATION"
 AC_SUBST(RT)
 
 WDB='${top_builddir}/src/libwdb/libwdb.la'
