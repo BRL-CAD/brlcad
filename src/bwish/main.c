@@ -35,6 +35,8 @@
 
 #include "common.h"
 
+#include "tcl.h"
+
 #ifdef BWISH
 #  include "itk.h"
 #else
