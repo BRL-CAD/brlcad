@@ -3137,8 +3137,8 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
 	    if (!dsp_ip->dsp_mp) {
-		if (dsp_ip->dsp_name) {
-		    bu_log("Cannot find data for DSP, data file [%s] not found\n", dsp_ip->dsp_name);
+		if (bu_vls_addr(&dsp_ip->dsp_name)) {
+		    bu_log("Cannot find data for DSP, data file [%s] not found\n", bu_vls_addr(&dsp_ip->dsp_name));
 		} else {
 		    bu_log("Cannot find data for DSP\n");
 		}
@@ -3148,8 +3148,8 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {
-		if (dsp_ip->dsp_name) {
-		    bu_log("Cannot find data for DSP, data object [%s] not found\n", dsp_ip->dsp_name);
+		if (bu_vls_addr(&dsp_ip->dsp_name)) {
+		    bu_log("Cannot find data for DSP, data object [%s] not found\n", bu_vls_addr(&dsp_ip->dsp_name));
 		} else {
 		    bu_log("Cannot find data for DSP\n");
 		}
