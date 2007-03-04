@@ -2550,14 +2550,7 @@ TK_CPPFLAGS=""
 TK_VERSION="8.5"
 if test "x$build_brlcad_tk" = "xyes" ; then
     AC_MSG_RESULT(yes)
-    case $host_os in
-	darwin*)
-	    TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION} $LIBXSS"
-	    ;;
-	*)
-	    TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
-	    ;;
-    esac
+    TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION} $LIBXSS"
     TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
     TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix'
 else
