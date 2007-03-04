@@ -1,7 +1,11 @@
 #ifndef __VECTOR_X86
 #define __VECTOR_X86
 
-#include <emmintrin.h>
+#include "common.h"
+
+#ifdef HAVE_EMMINTRIN_H
+#  include <emmintrin.h>
+#endif
 
 //#define ALIGN16(_m) (double*)((((long)(_m)) + 0x10L) & ~0xFL);
 #undef VEC_ALIGN
