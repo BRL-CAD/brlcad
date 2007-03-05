@@ -15,7 +15,11 @@ bwish_CFLAGS = \
 	${ITCL_CPPFLAGS} \
 	${ITK_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
-	${TK_CPPFLAGS}
+	${TK_CPPFLAGS} \
+	-I$(top_srcdir)/src/other/tcl/generic \
+	-I$(top_srcdir)/src/other/tcl/unix \
+	-I$(top_srcdir)/src/other/tk/generic \
+	-I$(top_srcdir)/src/other/tk/unix
 
 bwish_SOURCES = \
 	cmd.c \
