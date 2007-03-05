@@ -156,7 +156,11 @@ mged_CFLAGS = \
 	${PNG_CPPFLAGS}	\
 	${ITCL_CPPFLAGS} \
 	${ITK_CPPFLAGS} \
-	${TK_CPPFLAGS}
+	${TK_CPPFLAGS} \
+	-I$(top_srcdir)/src/other/tcl/generic \
+	-I$(top_srcdir)/src/other/tcl/unix \
+	-I$(top_srcdir)/src/other/tk/generic \
+	-I$(top_srcdir)/src/other/tk/unix
 
 mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
 mged_LDADD = \
