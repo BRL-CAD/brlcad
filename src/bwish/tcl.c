@@ -47,10 +47,10 @@
 #else
 #  include "tcl.h"
 #endif
-#include "tclInt.h"
+#include "libtermio.h"
+
 #include "machine.h"
 #include "bu.h"
-#include "libtermio.h"
 
 /* defined in input.c */
 extern void initInput(void);

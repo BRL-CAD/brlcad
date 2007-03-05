@@ -41,7 +41,6 @@
 #  include "itk.h"
 #else
 #  include "itcl.h"
-#  include "tclInt.h"
 #endif
 
 #include "machine.h"
