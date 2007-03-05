@@ -7,10 +7,13 @@ lib_LTLIBRARIES = \
 noinst_LTLIBRARIES = libitg.la
 
 AM_CFLAGS = ${X_CFLAGS}
+# make sure we look in tcl's directory so we find private headers
 AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
 	${ITCL_CPPFLAGS} \
-	${TK_CPPFLAGS}
+	${TK_CPPFLAGS} \
+	-I$(top_srcdir)/src/other/tcl/generic \
+	-I$(top_srcdir)/src/other/tcl/unix
 
 libitkstub_la_SOURCES = itkStubLib.c
 libitkstub@ITCL_VERSION@_la_SOURCES = $(libitkstub_la_SOURCES)
