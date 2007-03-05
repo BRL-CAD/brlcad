@@ -5,7 +5,7 @@
 # "autoconf" program (constructs like "@foo@" will get replaced in the
 # actual Makefile.
 #
-# RCS: @(#) $Id$
+# RCS @(#) $Id$
 
 VERSION 		= @TCL_VERSION@
 MAJOR_VERSION		= @TCL_MAJOR_VERSION@
@@ -540,9 +540,11 @@ MAC_OSX_SRCS = \
 # files won't compile on the current machine, and they will cause
 # problems for things like "make depend".
 
+PLAT_SOURCES = @PLAT_SRCS@
+
 SRCS = $(GENERIC_SRCS) $(TOMMATH_SRCS) \
 	$(UNIX_SRCS) $(NOTIFY_SRCS) $(STUB_SRCS) \
-	@PLAT_SRCS@
+	$(PLAT_SOURCES)
 
 all: binaries libraries doc
 
@@ -1850,5 +1852,17 @@ package-generate:
 	pkgmk -o -d . -f prototype -a `arch`
 	pkgtrans -s . $(PACKAGE).`arch` $(PACKAGE)
 	rm -rf $(PACKAGE)
+
+.PHONY: all binaries libraries doc tclLibObjs objs test gdb-test runtest \
+	ro-test shell gdb ddd valgrind valgrindshell topDirName gendate \
+	dltest.marker $(INSTALL_TARGETS) install install-strip \
+	install-tzdata install-msgs install-private-headers clean distclean \
+	depend genstubs checkstubs checkdoc checkuchar checkexports rpm dist \
+	alldist allpatch html html-tcl html-tk package package-config \
+	package-common package-binaries package-generate
+
+# Tell versions [3.59,3.63) of GNU make to not export all variables.
+# Otherwise a system limit (for SysV at least) may be exceeded.
+.NOEXPORT:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

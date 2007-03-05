@@ -567,6 +567,8 @@ if test "`uname -s`" = "Darwin" ; then
     TCL_SHLIB_LD_EXTRAS="${TCL_SHLIB_LD_EXTRAS}"' -install_name ${DYLIB_INSTALL_DIR}/${TCL_LIB_FILE} -seg1addr 0xa000000'
 fi
 
+EXTRA_INSTALL_BINARIES=":"
+EXTRA_BUILD_HTML=":"
 if test "$FRAMEWORK_BUILD" = "1" ; then
     AC_DEFINE(TCL_FRAMEWORK, 1, [Is Tcl built as a framework?])
     AC_CONFIG_FILES([Tcl-Info.plist:../macosx/Tcl-Info.plist.in])
