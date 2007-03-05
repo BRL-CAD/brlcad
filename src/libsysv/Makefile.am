@@ -17,7 +17,7 @@ SRCS = \
 libsysv_la_CFLAGS = ${TCL_CPPFLAGS}
 libsysv_la_LDFLAGS = -version-info 19:1
 libsysv_la_SOURCES = \
-	$(SRCS)
+	$(SRCS) \
 	vers.c
 
 EXTRA_DIST = \
