@@ -114,7 +114,7 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
 	filename = Tcl_ExternalToUtfDString(NULL, filename, -1, &argString);
     }
 
-    TclFormatInt(buf, argc-1);
+    sprintf(buf, "%ld", (long)(argc-1));
     Tcl_SetVar(interp, "argc", buf, TCL_GLOBAL_ONLY);
     Tcl_SetVar(interp, "argv0", Tcl_DStringValue(&argString), TCL_GLOBAL_ONLY);
 
