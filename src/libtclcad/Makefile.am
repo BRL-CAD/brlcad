@@ -14,7 +14,11 @@ libtclcad_la_CFLAGS = \
 	${ITK_CPPFLAGS} \
 	${ITCL_CPPFLAGS} \
 	${TK_CPPFLAGS} \
-	${TCL_CPPFLAGS}
+	${TCL_CPPFLAGS} \
+	-I$(top_srcdir)/src/other/tcl/generic \
+	-I$(top_srcdir)/src/other/tcl/unix \
+	-I$(top_srcdir)/src/other/tk/generic \
+	-I$(top_srcdir)/src/other/tk/unix
 
 libtclcad_la_LIBADD = \
 	${FB} \
