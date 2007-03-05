@@ -159,13 +159,17 @@ version_check ( ) {
     fi
     _cur="$2"
 
-    _min_major="`echo ${_min}. | cut -d. -f1 | sed 's/[^0-9]//g'`"
-    _min_minor="`echo ${_min}. | cut -d. -f2 | sed 's/[^0-9]//g'`"
-    _min_patch="`echo ${_min}. | cut -d. -f3 | sed 's/[^0-9]//g'`"
+    # needed to handle versions like 1.10 and 1.4-p6
+    _min="`echo ${_min}. | sed 's/[^0-9]/./g' | sed 's/\.\././g'`"
+    _cur="`echo ${_cur}. | sed 's/[^0-9]/./g' | sed 's/\.\././g'`"
 
-    _cur_major="`echo ${_cur}. | cut -d. -f1 | sed 's/[^0-9]//g'`"
-    _cur_minor="`echo ${_cur}. | cut -d. -f2 | sed 's/[^0-9]//g'`"
-    _cur_patch="`echo ${_cur}. | cut -d. -f3 | sed 's/[^0-9]//g'`"
+    _min_major="`echo $_min | cut -d. -f1`"
+    _min_minor="`echo $_min | cut -d. -f2`"
+    _min_patch="`echo $_min | cut -d. -f3`"
+
+    _cur_major="`echo $_cur | cut -d. -f1`"
+    _cur_minor="`echo $_cur | cut -d. -f2`"
+    _cur_patch="`echo $_cur | cut -d. -f3`"
 
     if [ "x$_min_major" = "x" ] ; then
 	_min_major=0
@@ -185,6 +189,8 @@ version_check ( ) {
     if [ "x$_cur_patch" = "x" ] ; then
 	_cur_patch=0
     fi
+
+    $VERBOSE_ECHO "Checking if ${_cur_major}.${_cur_minor}.${_cur_patch} is greater than ${_min_major}.${_min_minor}.${_min_patch}"
 
     if [ $_min_major -lt $_cur_major ] ; then
 	return 0
