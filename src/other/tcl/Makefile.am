@@ -29,3 +29,5 @@ noprod:
 prodclean-recursive:
 
 prodclean:
+
+fast: all-am
