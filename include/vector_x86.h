@@ -256,7 +256,7 @@ private:
   //double  v[2] __attribute__((aligned(16)));
   v2df _vec;
   
-  vec2d::vec2d(const v2df& result) 
+  vec2d(const v2df& result) 
   {
     _vec = result;
   }
