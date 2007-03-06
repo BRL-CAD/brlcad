@@ -1427,6 +1427,11 @@ l_link_works=no
 LIBL=""
 AC_CHECK_LIB(l, yyless, l_link_works=yes ; LIBL="-ll")
 
+dnl check for the IRIX libgen library (for basename/dirname)
+gen_link_works=no
+LIGEN=""
+AC_CHECK_LIB(gen, basename, gen_link_works=yes ; LIBGEN="-lgen")
+
 dnl check if the standard c++ library links without checking for any particular symbol 
 dnl library is needed when linking c++ code against c code (e.g. openNURBS)
 stdcxx_link_works=no
@@ -1969,12 +1974,12 @@ dnl ***************************
 BC_CONFIGURE_STAGE([functions], [7 of 9])
 
 AC_TYPE_SIGNAL
+
 AC_CHECK_FUNCS(\
 	XQueryExtension \
 	access \
 	alarm \
 	atexit \
-	basename \
 	bzero \
 	calloc \
 	dlopen \
@@ -2061,6 +2066,42 @@ AC_CHECK_FUNCS(\
 	vprintf \
 	writev \
 )
+
+dnl *** check if basename() exists ***
+AC_MSG_CHECKING([for basename])
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBGEN"
+AC_TRY_RUN([
+#ifdef HAVE_LIBGEN_H
+#  include <libgen.h>
+#endif
+int main(int argc, char *argv[]) {
+  (void)basename(argv[0]);
+  return 0;
+}],
+[ AC_MSG_RESULT(yes)
+  AC_DEFINE([HAVE_BASENAME], [1], [Define to 1 if you have the `basename' function.])
+],
+[ AC_MSG_RESULT(no) ])
+LIBS="$PRELIBS"
+
+dnl *** check if dirname() exists ***
+AC_MSG_CHECKING([for dirname])
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBGEN"
+AC_TRY_RUN([
+#ifdef HAVE_LIBGEN_H
+#  include <libgen.h>
+#endif
+int main(int argc, char *argv[]) {
+  (void)dirname(argv[0]);
+  return 0;
+}],
+[ AC_MSG_RESULT(yes)
+  AC_DEFINE([HAVE_DIRNAME], [1], [Define to 1 if you have the `dirname' function.])
+],
+[ AC_MSG_RESULT(no) ])
+LIBS="$PRELIBS"
 
 
 dnl *********************************
@@ -2906,6 +2947,11 @@ dnl *** libl Solaris lexer library ***
 AC_MSG_CHECKING(whether the Solaris lexer library is available)
 AC_MSG_RESULT($l_link_works)
 AC_SUBST(LIBL)
+
+dnl *** libgen IRIX dirname/basename library ***
+AC_MSG_CHECKING(whether the libgen library is available)
+AC_MSG_RESULT($gen_link_works)
+AC_SUBST(LIBGEN)
 
 dnl *** libstdc++ C++ library ***
 AC_MSG_CHECKING(whether the Standard C++ library is available)
