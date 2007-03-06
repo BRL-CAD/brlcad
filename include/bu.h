@@ -1990,7 +1990,10 @@ BU_EXPORT BU_EXTERN(char *bu_strdupm,
 		    (const char *cp, const char *label));
 #define bu_strdup(s) bu_strdupm(s, "bu_strdup " BU_FLSTR)
 
+/* don't rely on non-constness of bu_dirname().. will change to const */
 BU_EXPORT BU_EXTERN(char *bu_dirname,
+		    (const char *cp));
+BU_EXPORT BU_EXTERN(const char *bu_basename,
 		    (const char *cp));
 BU_EXPORT BU_EXTERN(int bu_malloc_len_roundup,
 		    (int nbytes));
