@@ -32,7 +32,6 @@
 /* system headers */
 #include <stdlib.h>
 #include <tcl.h>
-#include <tclInt.h>
 #include <itcl.h>
 #include <string.h>
 

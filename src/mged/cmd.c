@@ -66,7 +66,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "tcl.h"
 #include "tk.h"
 
-#include "tclInt.h"
 #include "itcl.h"
 
 #include "machine.h"
