@@ -24,8 +24,18 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+# include "brlcad_config.h"
+#endif
+
 #include "compnet.h"
 #include <stdio.h>
+#include <stdlib.h>
+
+#ifdef HAVE_STRING_H
+# include <string.h>
+#endif
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>

@@ -33,8 +33,17 @@
  * $Id$
  */
 
+#ifdef HAVE_CONFIG_H
+# include "brlcad_config.h"
+#endif
+
 #include "texture_image.h"
 #include <stdlib.h>
+
+#ifdef HAVE_STRING_H
+# include <string.h>
+#endif
+
 #include "umath.h"
 
 
