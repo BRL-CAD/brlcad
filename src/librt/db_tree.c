@@ -2643,7 +2643,7 @@ db_shader_mat(
 	RT_CK_RTI(rtip);
 	RT_CK_RESOURCE(resp);
 
-	reg_name = rt_basename(rp->reg_name);
+	reg_name = bu_basename(rp->reg_name);
 #ifdef DEBUG_SHADER_MAT
 	bu_log("db_shader_mat(%s)\n", rp->reg_name);
 #endif
