@@ -27,3 +27,13 @@ prodclean-recursive:
 prodclean:
 
 fast: all-am
+
+DISTCLEANFILES = \
+	unix/autom4te.cache \
+	unix/config.log \
+	unix/config.status \
+	unix/configure \
+	unix/tkConfig.sh \
+	unix/wish
+
+MAINTAINERCLEANFILES = Makefile.in
