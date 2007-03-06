@@ -36,13 +36,11 @@ static const char RCSid[] = "$Header$";
 #else
 #  include <strings.h>
 #endif
-#ifdef HAVE_LIBGEN_H
-#  include <libgen.h>
-#endif
 
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "bu.h"
 
 #include "./nirt.h"
 #include "./usrfmt.h"
@@ -144,7 +142,7 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 	    part -> pt_regionp -> reg_los;
 	strncpy(regionPN, part->pt_regionp->reg_name, 512);
 	ValTab[VTI_PATH_NAME].value.sval = part->pt_regionp->reg_name;
-	ValTab[VTI_REG_NAME].value.sval = basename(regionPN);
+	ValTab[VTI_REG_NAME].value.sval = bu_basename(regionPN);
 	ValTab[VTI_REG_ID].value.ival = part -> pt_regionp -> reg_regionid;
 	ValTab[VTI_SURF_NUM_IN].value.ival = part -> pt_inhit -> hit_surfno;
 	ValTab[VTI_SURF_NUM_OUT].value.ival = part -> pt_outhit -> hit_surfno;
@@ -177,7 +175,7 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 		if (ValTab[VTI_CLAIMANT_COUNT].value.ival++)
 		    bu_vls_strcat(&claimant_list, " ");
 		strncpy(tmpcp, (*rpp)->reg_name, 512);
-		bu_vls_strcat(&claimant_list, basename(tmpcp));
+		bu_vls_strcat(&claimant_list, bu_basename(tmpcp));
 	    }
 	    ValTab[VTI_CLAIMANT_LIST].value.sval =
 		bu_vls_addr(&claimant_list);
@@ -227,8 +225,8 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 	    char *copy_ovlp_reg1 = bu_strdup(ovp->reg1->reg_name);
 	    char *copy_ovlp_reg2 = bu_strdup(ovp->reg2->reg_name);
 
-	    ValTab[VTI_OV_REG1_NAME].value.sval = basename(copy_ovlp_reg1);
-	    ValTab[VTI_OV_REG2_NAME].value.sval = basename(copy_ovlp_reg2);
+	    ValTab[VTI_OV_REG1_NAME].value.sval = bu_basename(copy_ovlp_reg1);
+	    ValTab[VTI_OV_REG2_NAME].value.sval = bu_basename(copy_ovlp_reg2);
 #endif
 	    ValTab[VTI_OV_REG1_ID].value.ival = ovp->reg1->reg_regionid;
 	    ValTab[VTI_OV_REG2_ID].value.ival = ovp->reg2->reg_regionid;
