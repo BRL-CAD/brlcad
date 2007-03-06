@@ -38,11 +38,6 @@
 #include "common.h"
 
 
-#ifndef HAVE_BASENAME
-char *
-basename(const char *path);
-#endif
-
 #ifndef HAVE_BSDSELECT
 int
 bsdselect(long readfds, int sec, int us);
