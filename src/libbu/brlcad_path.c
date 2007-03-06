@@ -46,9 +46,6 @@ static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
 #endif
-#ifdef HAVE_LIBGEN_H
-#  include <libgen.h>
-#endif
 
 #include "machine.h"
 #include "bu.h"
@@ -150,7 +147,7 @@ bu_getprogname(void) {
 	return progname;
     }
 
-    name = basename(bu_argv0(NULL));
+    name = bu_basename(bu_argv0(NULL));
     /* string returned by basename is not ours, get a copy */
     progname = strdup(name); 
     atexit(free_progname);
@@ -168,7 +165,7 @@ bu_getprogname(void) {
 void
 bu_setprogname(const char *prog) {
 #ifdef HAVE_SETPROGNAME
-    setprogname(basename(prog));
+    setprogname(bu_basename(prog));
 #endif
 
     (void)bu_argv0(prog);
