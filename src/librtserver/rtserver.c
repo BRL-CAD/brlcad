@@ -115,6 +115,12 @@ struct rts_resources {
 	struct bu_ptbl xrays;
 };
 
+static int rtserver_results_count=0;
+static int ray_results_count=0;
+static int ray_hits_count=0;
+static int rtserver_jobs_count=0;
+static int xrays_count=0;
+
 static struct rts_resources rts_resource;
 
 /* From here down should be combined into a single structure to
@@ -184,6 +190,7 @@ fillItemTree( jobject parent_node,
 		pthread_mutex_unlock( &resource_mutex ); \
 		bzero( (_p), sizeof( struct xray ) ); \
 	} else { \
+                xrays_count++; \
 		pthread_mutex_unlock( &resource_mutex ); \
 		_p = (struct xray *)bu_calloc( 1, sizeof( struct xray ), "xray" ); \
 	} \
@@ -204,6 +211,7 @@ fillItemTree( jobject parent_node,
 	       pthread_mutex_unlock( &resource_mutex ); \
 	       bzero( (_p), sizeof( struct rtserver_job ) ); \
 	} else { \
+                rtserver_jobs_count++; \
 		pthread_mutex_unlock( &resource_mutex ); \
 	       _p = (struct rtserver_job *)bu_calloc( 1, sizeof( struct rtserver_job ), "rtserver_job" ); \
 	} \
@@ -237,6 +245,7 @@ fillItemTree( jobject parent_node,
 	       bzero( (_p), sizeof( struct ray_hit ) ); \
 	       BU_LIST_INIT( &(_p)->l ); \
 	} else { \
+                ray_hits_count++; \
 		pthread_mutex_unlock( &resource_mutex ); \
 	       _p = (struct ray_hit *)bu_calloc( 1, sizeof( struct ray_hit ), "ray_hit" ); \
 		BU_LIST_INIT( &(_p)->l );\
@@ -274,6 +283,7 @@ fillItemTree( jobject parent_node,
 	       pthread_mutex_unlock( &resource_mutex ); \
 	       bzero( (_p), sizeof( struct ray_result ) ); \
 	} else { \
+                ray_results_count++; \
 		pthread_mutex_unlock( &resource_mutex ); \
 	       _p = (struct ray_result *)bu_calloc( 1, sizeof( struct ray_result ), "ray_result" ); \
 	} \
@@ -289,6 +299,7 @@ fillItemTree( jobject parent_node,
 	       pthread_mutex_unlock( &resource_mutex ); \
 	       bzero( (_p), sizeof( struct rtserver_result ) ); \
 	} else { \
+                rtserver_results_count++; \
 		pthread_mutex_unlock( &resource_mutex ); \
 	       _p = (struct rtserver_result *)bu_calloc( 1, sizeof( struct rtserver_result ), "rtserver_result" ); \
 	} \
@@ -588,6 +599,17 @@ rts_open_session()
 		return -1;
 	}
 
+	/* for now, just return the same session to everyone */
+	used_session_0 = 1;
+	pthread_mutex_unlock( &session_mutex );
+	return 0;
+
+#if 0
+	/* Better session management is needed. When a session is opened it needs to be 
+	 * to be associated with an analysis and a run. subsequent open session requests
+	 * should then return the appropriate session bases on a passed in analysis id and run number
+	 */
+
 	/* if the initial session is not yet used, just return it */
 	if( !used_session_0 ) {
 		used_session_0 = 1;
@@ -617,6 +639,7 @@ rts_open_session()
 	pthread_mutex_unlock( &session_mutex );
 
 	return( i );
+#endif
 }
 
 
@@ -2295,6 +2318,8 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env, j
 JNIEXPORT jint JNICALL
 Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_rtsInit(JNIEnv *env, jobject obj, jobjectArray args)
 {
+	pthread_mutex_lock( &session_mutex );
+
 	jsize len=(*env)->GetArrayLength(env, args);
 	jstring jfile_name, *jobj_name;
 	char *file_name;
@@ -2306,6 +2331,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_rtsInit(JNIEnv *env, jobje
 	int i;
 
 	if( num_threads > 0 ) {
+		pthread_mutex_unlock( &session_mutex );
 		return ret;
 	}
 
@@ -2314,6 +2340,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_rtsInit(JNIEnv *env, jobje
 
 	if( len < 4 ) {
 		bu_log( "wrong number of args\n" );
+		pthread_mutex_unlock( &session_mutex );
 		return( (jint) 1 );
 	}
 
@@ -2367,6 +2394,8 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_rtsInit(JNIEnv *env, jobje
 
 	bu_free( (char *)obj_list, "obj_list" );
 	bu_free( (char *)jobj_name, "jobj_name" );
+
+	pthread_mutex_unlock( &session_mutex );
 
 	return( ret );
 
