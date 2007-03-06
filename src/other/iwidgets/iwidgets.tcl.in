@@ -22,7 +22,7 @@ namespace eval ::iwidgets {
     namespace export *
 
     variable library [file dirname [info script]]
-    variable version @VERSION@
+    variable version @IWIDGETS_VERSION@
 }
 
 lappend auto_path $iwidgets::library \
