@@ -38,7 +38,8 @@ blib_LIBS = \
 	${ITCL} \
 	${TK} \
 	${TCL} \
-	${TERMIO}
+	${TERMIO} \
+	${SYSV}
 
 bwish_LDADD = \
 	${blib_LIBS}

@@ -13,22 +13,22 @@ noinst_PROGRAMS = \
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 g_diff_SOURCES = g_diff.c
-g_diff_LDADD = ${RT} ${TCL}
+g_diff_LDADD = ${RT} ${TCL} ${SYSV}
 
 g_transfer_SOURCES = g_transfer.c
-g_transfer_LDADD = ${RT} ${BU} ${PKG}
+g_transfer_LDADD = ${RT} ${BU} ${PKG} ${SYSV}
 
 g_lint_SOURCES = g_lint.c
-g_lint_LDADD = ${RT}
+g_lint_LDADD = ${RT} ${SYSV}
 
 g_qa_SOURCES = g_qa.c
-g_qa_LDADD = ${RT} ${SYSV}
+g_qa_LDADD = ${RT} ${SYSV} ${SYSV}
 
 solshoot_SOURCES = solshoot.c
-solshoot_LDADD = ${RT}
+solshoot_LDADD = ${RT} ${SYSV}
 
 testfree_SOURCES = testfree.c
-testfree_LDADD = ${RT}
+testfree_LDADD = ${RT} ${SYSV}
 
 man_MANS = \
 	g_diff.1 \

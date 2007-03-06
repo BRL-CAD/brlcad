@@ -11,7 +11,7 @@ bin_PROGRAMS = \
 	mk_wire
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
-LDADD = ${WDB} ${RT}
+LDADD = ${WDB} ${RT} ${SYSV}
 
 mk_bolt_SOURCES = mk_bolt.c
 mk_gastank_SOURCES = mk_gastank.c

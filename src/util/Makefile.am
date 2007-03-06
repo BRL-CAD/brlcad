@@ -491,7 +491,7 @@ query_SOURCES = query.c
 query_LDADD = ${BU}
 
 remapid_SOURCES = remapid.c
-remapid_LDADD = ${RT}
+remapid_LDADD = ${RT} ${SYSV}
 
 rle_pix_SOURCES = rle-pix.c
 rle_pix_LDADD = ${RLE} ${BU} ${SYSV}

@@ -1,7 +1,7 @@
 # $Id$
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
-LDADD = ${RT} ${FB} ${OPTICAL} ${TCL}
+LDADD = ${RT} ${FB} ${OPTICAL} ${TCL} ${SYSV}
 
 if ONLY_BENCHMARK
 bin_PROGRAMS = \

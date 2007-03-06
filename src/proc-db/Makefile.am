@@ -58,93 +58,93 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS} ${BREP_CPPFLAGS}
 #apply_mdb_LDADD = ${WDB}
 
 bottest_SOURCES = bottest.c
-bottest_LDADD = ${WDB}
+bottest_LDADD = ${WDB} ${SYSV}
 
 if WITH_OPENNURBS
 brep_cube_SOURCES = brep_cube.cpp
-brep_cube_LDADD = ${WDB}
+brep_cube_LDADD = ${WDB} ${SYSV}
 endif
 
 brickwall_SOURCES = brickwall.c
 brickwall_LDADD = ${WDB}
 
 clutter_SOURCES = clutter.c common.c
-clutter_LDADD = ${WDB}
+clutter_LDADD = ${WDB} ${SYSV}
 
 contours_SOURCES = contours.c
 contours_LDADD = ${WDB}
 
 fence_SOURCES = fence.c
-fence_LDADD = ${WDB}
+fence_LDADD = ${WDB} ${SYSV}
 
 globe_SOURCES = globe.c
-globe_LDADD = ${WDB}
+globe_LDADD = ${WDB} ${SYSV}
 
 kurt_SOURCES = kurt.c
-kurt_LDADD = ${WDB}
+kurt_LDADD = ${WDB} ${SYSV}
 
 molecule_SOURCES = molecule.c
-molecule_LDADD = ${WDB}
+molecule_LDADD = ${WDB} ${SYSV}
 
 nmgmodel_SOURCES = nmgmodel.c
-nmgmodel_LDADD = ${WDB}
+nmgmodel_LDADD = ${WDB} ${SYSV}
 
 #nmgxplode_SOURCES = nmgxplode.c
 #nmgxplode_LDADD = ${WDB}
 
 picket_fence_SOURCES = picket_fence.c
-picket_fence_LDADD = ${WDB}
+picket_fence_LDADD = ${WDB} ${SYSV}
 
 pipe_SOURCES = pipe.c
-pipe_LDADD = ${WDB}
+pipe_LDADD = ${WDB} ${SYSV}
 
 pipetest_SOURCES = pipetest.c
-pipetest_LDADD = ${WDB}
+pipetest_LDADD = ${WDB} ${SYSV}
 
 pix2g_SOURCES = pix2g.c
 pix2g_LDADD = ${WDB}
 
 pyramid_SOURCES = pyramid.c
-pyramid_LDADD = ${WDB}
+pyramid_LDADD = ${WDB} ${SYSV}
 
 rawbot_SOURCES = rawbot.c
-rawbot_LDADD = ${WDB}
+rawbot_LDADD = ${WDB} ${SYSV}
 
 room_SOURCES = room.c common.c
-room_LDADD = ${WDB}
+room_LDADD = ${WDB} ${SYSV}
 
 sketch_SOURCES = sketch.c
-sketch_LDADD = ${WDB}
+sketch_LDADD = ${WDB} ${SYSV}
 
 sphflake_SOURCES = sphflake.c
-sphflake_LDADD = ${WDB}
+sphflake_LDADD = ${WDB} ${SYSV}
 
 spltest_SOURCES = spltest.c
-spltest_LDADD = ${WDB}
+spltest_LDADD = ${WDB} ${SYSV}
 
 tea_SOURCES = tea.c
-tea_LDADD = ${WDB}
+tea_LDADD = ${WDB} ${SYSV}
 
 tea_nmg_SOURCES = tea_nmg.c
-tea_nmg_LDADD = ${WDB}
+tea_nmg_LDADD = ${WDB} ${SYSV}
 
 terrain_SOURCES = terrain.c
-terrain_LDADD = ${WDB}
+terrain_LDADD = ${WDB} ${SYSV}
 
 torii_SOURCES = torii.c
-torii_LDADD = ${WDB}
+torii_LDADD = ${WDB} ${SYSV}
 
 tube_SOURCES = tube.c
-tube_LDADD = ${WDB}
+tube_LDADD = ${WDB} ${SYSV}
 
 vegitation_SOURCES = vegitation.c
-vegitation_LDADD = ${WDB}
+vegitation_LDADD = ${WDB} ${SYSV}
 
 wall_SOURCES = wall.c
-wall_LDADD = ${WDB}
+wall_LDADD = ${WDB} ${SYSV}
 
 wdb_example_SOURCES = wdb_example.c
-wdb_example_LDADD = ${WDB}
+wdb_example_LDADD = ${WDB} ${SYSV}
 
 # XXX .c added until they compile
 EXTRA_DIST = \

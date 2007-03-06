@@ -31,7 +31,8 @@ rttherm_LDADD = \
 	${MULTISPECTRAL} \
 	${OPTICAL} \
 	${FB} \
-	${TCL}
+	${SYSV} \
+	${TCL} 
 
 ssampview_SOURCES = \
 	spectrum.c \
@@ -44,6 +45,7 @@ ssampview_LDADD = \
 	${FB} \
 	${RT} \
 	${OPTICAL} \
+	${SYSV} \
 	$(TK) \
 	${TCL}
 
@@ -53,7 +55,8 @@ ssamp_bw_SOURCES = \
 ssamp_bw_LDADD = \
 	${BU} \
 	${BN} \
-	${OPTICAL}
+	${OPTICAL} \
+	${SYSV}
 
 # pixtest removed, looks like an outdated sample_application
 #pixtest_SOURCES = \

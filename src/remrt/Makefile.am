@@ -10,7 +10,9 @@ remrt_LDADD = \
 	$(top_builddir)/src/rt/libremrt.a \
 	${OPTICAL} \
 	${FB} \
-	${RT}
+	${RT} \
+	${SYSV}
+
 remrt_SOURCES = \
 	ihost.c \
 	remrt.c \
@@ -21,7 +23,8 @@ rtsrv_LDADD = \
 	$(top_builddir)/src/rt/libremrt.a \
 	${OPTICAL} \
 	${PKG} \
-	${RT}
+	${RT} \
+	${SYSV}
 rtsrv_SOURCES = \
 	rtsrv.c \
 	vers.c
