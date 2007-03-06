@@ -30,9 +30,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_LIBGEN_H
-#  include <libgen.h>
-#endif
 
 #include "tcl.h"
 #include "tk.h"
@@ -97,7 +94,7 @@ path_to_src(const char *path)
     subpath = path_to_src_buf;
     do {
 	char *temp = bu_strdup(subpath);
-	name = basename(temp);
+	name = bu_basename(temp);
 	bu_free(temp, "bu_strdup temp");
 	subpath = bu_dirname(subpath);
     } while (name &&
