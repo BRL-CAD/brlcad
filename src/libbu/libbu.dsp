@@ -198,6 +198,10 @@ SOURCE=.\badmagic.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\basename.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\bitv.c
 # End Source File
 # Begin Source File
