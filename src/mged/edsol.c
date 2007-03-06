@@ -5853,6 +5853,7 @@ sedit(void)
 		{
 		    struct wdb_metaballpt *n = (struct wdb_metaballpt *)malloc(sizeof(struct wdb_metaballpt));
 		    VSETALL(n->coord, 0);
+		    n->l.magic = WDB_METABALLPT_MAGIC;
 		    n->fldstr = 1.0;
 		    BU_LIST_APPEND(&es_metaballpt->l, &n->l);
 		    es_metaballpt = n;
