@@ -9,6 +9,7 @@ SRCS = \
 	association.c \
 	avs.c \
 	badmagic.c \
+	basename.c \
 	bitv.c \
 	bomb.c \
 	brlcad_path.c \
