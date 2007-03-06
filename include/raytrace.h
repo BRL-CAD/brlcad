@@ -2481,8 +2481,6 @@ RT_EXPORT BU_EXTERN(void rt_default_logoverlap,
 RT_EXPORT BU_EXTERN(int rt_shootray,
 		    (struct application *ap));
 /* Get expr tree for object */
-RT_EXPORT BU_EXTERN(const char *rt_basename,
-		    (const char *str));
 RT_EXPORT BU_EXTERN(void rt_free_soltab,
 		    (struct soltab   *stp));
 RT_EXPORT BU_EXTERN(int rt_gettree,

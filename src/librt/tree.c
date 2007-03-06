@@ -1201,21 +1201,6 @@ rt_tree_elim_nops( register union tree *tp, struct resource *resp )
     return(0);
 }
 
-/*
- *			R T _ B A S E N A M E
- *
- *  Given a string containing slashes such as a pathname, return a
- *  pointer to the first character after the last slash.
- */
-const char *
-rt_basename(register const char *str)
-{
-    register const char	*p = str;
-    while( *p != '\0' )
-	if( *p++ == '/' )
-	    str = p;
-    return	str;
-}
 
 /*
  *			R T _ G E T R E G I O N
