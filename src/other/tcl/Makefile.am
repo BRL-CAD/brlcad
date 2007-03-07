@@ -32,7 +32,7 @@ prodclean:
 
 fast: all-am
 
-include $(top_srcdir)/misc/Makefile.defs
+depends: all-am
 
 DISTCLEANFILES = \
 	unix/autom4te.cache \
