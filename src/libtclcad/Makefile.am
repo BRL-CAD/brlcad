@@ -43,10 +43,6 @@ CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
-if BUILD_TCL
-DEPS=src/other/tcl
-else
-DEPS=
-endif
+DEPS=src/libfb
 
 include $(top_srcdir)/misc/Makefile.defs
