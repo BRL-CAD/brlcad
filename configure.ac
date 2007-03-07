@@ -1780,6 +1780,19 @@ if test ! "x$bc_auto_flags" = "xno" ; then
        AC_SUBST(EXCEPTIONS)
     fi
 
+    BC_COMPILER_AND_LINKER_RECOGNIZES([-msse], [msse], [nokeep])
+    MSSE=""
+    if test "x$bc_msse_works" = "xyes" ; then
+       MSSE="-msse"
+    fi
+    MSSE2=""
+    BC_COMPILER_AND_LINKER_RECOGNIZES([-msse2], [msse2], [nokeep])
+    if test "x$bc_msse2_works" = "xyes" ; then
+       MSSE2="-msse2"
+    fi
+    SSE="$MSSE $MSSE2"
+    AC_SUBST(SSE)
+
     dnl check for -search_paths_first linker flag.
     dnl prevent a false-positive where it can be treated as a -s and-e
     dnl linker option by adding a benign flag that should succeed.
