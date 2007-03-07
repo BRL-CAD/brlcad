@@ -28,6 +28,8 @@ prodclean:
 
 fast: all-am
 
+include $(top_srcdir)/misc/Makefile.defs
+
 DISTCLEANFILES = \
 	unix/autom4te.cache \
 	unix/config.log \
