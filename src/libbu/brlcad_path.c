@@ -141,7 +141,7 @@ free_progname(void) {
  */
 const char *
 bu_getprogname(void) {
-    char *name;
+    const char *name;
 
     if (progname) {
 	return progname;
