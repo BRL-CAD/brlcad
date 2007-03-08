@@ -366,7 +366,7 @@ RT_MemoryArchive::Write(const size_t amount, const void* buf)
 	m_buffer.resize(start+amount);
     }
     for (; pos < (start+amount); pos++) {
-	m_buffer.at(pos) = ((char*)buf)[pos-start];
+	m_buffer[pos] = ((char*)buf)[pos-start];
     }
     return amount;
 }
