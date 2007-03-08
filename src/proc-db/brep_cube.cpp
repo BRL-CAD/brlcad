@@ -51,8 +51,11 @@
 
 #include "common.h"
 
-
 #include <stdio.h>		/* Direct the output to stdout */
+
+/* without OBJ_BREP, this entire procedural example is disabled */
+#ifdef OBJ_BREP
+
 #include <unistd.h>
 
 #ifdef __cplusplus
@@ -68,7 +71,7 @@ extern "C" {
 #endif
 
 enum {
-    A,B,C,D,E,F,G,H
+    A, B, C, D, E, F, G, H
 };
 
 enum {
@@ -459,6 +462,18 @@ main(int argc, char** argv)
 
     return 0;
 }
+
+#else /* !OBJ_BREP */
+
+int
+main(int argc, char *argv[])
+{
+    printf("ERROR: Boundary Representation object support is not available with\n"
+	   "       this compilation of BRL-CAD.\n");
+    return 1;
+}
+
+#endif /* OBJ_BREP */
 
 /*
  * Local Variables:
