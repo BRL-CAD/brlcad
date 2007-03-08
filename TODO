@@ -34,9 +34,6 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * test pic/nonpic build problems with librtms/libmultispectral
 
-* run-time path identification of mged resources was never completed,
-  complete it.
-
 * use environ for run-time path lookups
 
 * modify the new tree traversal code to be generic
