@@ -17,14 +17,21 @@ nirt_srcs = \
 	str_manip.c \
 	parse_fmt.c
 
-nirt_LDADD = ${RT} ${BN} ${FB} ${BU} ${SYSV}
-nirt_CFLAGS = -DDFLT_SHELL=\"/bin/sh\"
 nirt_SOURCES = \
 	$(nirt_srcs) \
 	vers.c
+nirt_CFLAGS = -DDFLT_SHELL=\"/bin/sh\"
+nirt_LDADD = \
+	${RT} \
+	${BN} \
+	${FB} \
+	${BU} \
+	${SYSV}
 
-showshot_LDADD = ${BN}
 showshot_SOURCES = showshot.c
+showshot_LDADD = \
+	${BN} \
+	${BU}
 
 man_MANS = \
 	nirt.1 \

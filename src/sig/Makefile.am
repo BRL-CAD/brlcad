@@ -82,10 +82,10 @@ dconv_SOURCES = dconv.c
 dconv_LDADD = ${FFT}
 
 ddisp_SOURCES = ddisp.c
-ddisp_LDADD = ${FB}
+ddisp_LDADD = ${FB} ${PKG} ${BU}
 
 fhor_SOURCES = fhor.c
-fhor_LDADD = ${FB}
+fhor_LDADD = ${FB} ${PKG} ${BU}
 
 imod_SOURCES = imod.c
 imod_LDADD = ${BU} ${LIBM}

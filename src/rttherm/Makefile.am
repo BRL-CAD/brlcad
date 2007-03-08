@@ -32,6 +32,7 @@ rttherm_LDADD = \
 	${OPTICAL} \
 	${FB} \
 	${SYSV} \
+	${PKG} \
 	${TCL} 
 
 ssampview_SOURCES = \
@@ -42,20 +43,24 @@ ssampview_CFLAGS = \
 	${X_CFLAGS} \
 	${TK_CPPFLAGS}
 ssampview_LDADD = \
+	${OPTICAL} \
 	${FB} \
 	${RT} \
-	${OPTICAL} \
+	${BN} \
+	${BU} \
+	${PKG} \
 	${SYSV} \
-	$(TK) \
+	${TK} \
 	${TCL}
 
 
 ssamp_bw_SOURCES = \
 	ssamp-bw.c
 ssamp_bw_LDADD = \
-	${BU} \
-	${BN} \
 	${OPTICAL} \
+	${RT} \
+	${BN} \
+	${BU} \
 	${SYSV}
 
 # pixtest removed, looks like an outdated sample_application

@@ -46,137 +46,139 @@ bin_PROGRAMS = \
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-fbanim_SOURCES = fbanim.c
-fbanim_LDADD = ${FB}
+bw_fb_LDADD = ${FB} ${BN} ${BU} ${PKG}
+bw_fb_SOURCES = bw-fb.c
 
-pl_fb_SOURCES = pl-fb.c
-pl_fb_LDADD = ${FB} ${BN}
+cat_fb_LDADD = ${FB} ${BU} ${PKG}
+cat_fb_SOURCES = cat-fb.c
 
-fbcbars_SOURCES = fbcbars.c
-fbcbars_LDADD = ${FB}
+cell_fb_LDADD = ${FB} ${BN} ${BU} ${PKG}
+cell_fb_SOURCES = cell-fb.c
 
-png_fb_SOURCES = png-fb.c
-png_fb_LDADD = ${FB} ${PNG}
-# per-program CPPFLAGS wasn't added until automake 1.7
-png_fb_CFLAGS = ${PNG_CPPFLAGS}
+cmap_fb_LDADD = ${FB} ${BU} ${PKG}
+cmap_fb_SOURCES = cmap-fb.c
 
-fb_png_SOURCES = fb-png.c cmap-crunch.c
-fb_png_LDADD = ${FB} ${PNG}
+fb_bw_LDADD = ${FB} ${BU} ${PKG}
+fb_bw_SOURCES = fb-bw.c
+
+fb_cmap_LDADD = ${FB} ${BU} ${PKG}
+fb_cmap_SOURCES = fb-cmap.c
+
+fb_fb_LDADD = ${FB} ${BU} ${PKG}
+fb_fb_SOURCES = fb-fb.c
+
+fb_orle_LDADD = ${FB} ${ORLE} ${BU} ${PKG}
+fb_orle_SOURCES = fb-orle.c cmap-crunch.c
+
+fb_pix_LDADD = ${FB} ${BU} ${PKG} ${PKG}
+fb_pix_SOURCES = fb-pix.c cmap-crunch.c
+
 # per-program CPPFLAGS wasn't added until automake 1.7
 fb_png_CFLAGS = ${PNG_CPPFLAGS}
+fb_png_LDADD = ${FB} ${PNG} ${BU} ${PKG}
+fb_png_SOURCES = fb-png.c cmap-crunch.c
 
-pix_fb_SOURCES = pix-fb.c
-pix_fb_LDADD = ${FB} ${BN} ${BU}
-
-fb_pix_SOURCES = fb-pix.c cmap-crunch.c
-fb_pix_LDADD = ${FB}
-
-fb_fb_SOURCES = fb-fb.c
-fb_fb_LDADD = ${FB}
-
-pixflip_fb_SOURCES = pixflip-fb.c
-pixflip_fb_LDADD = ${FB}
-
-pp_fb_SOURCES = pp-fb.c
-pp_fb_LDADD = ${FB} ${TERMIO}
-
-fbclear_SOURCES = fbclear.c
-fbclear_LDADD = ${FB}
-
-fbfree_SOURCES = fbfree.c
-fbfree_LDADD = ${FB}
-
-fbhelp_SOURCES = fbhelp.c
-fbhelp_LDADD = ${FB}
-
-fbgrid_SOURCES = fbgrid.c
-fbgrid_LDADD = ${FB}
-
-pixautosize_SOURCES = pixautosize.c
-pixautosize_LDADD = ${FB} ${BN}
-
-orle_fb_SOURCES = orle-fb.c
-orle_fb_LDADD = ${FB} ${ORLE}
-
-fb_orle_SOURCES = fb-orle.c cmap-crunch.c
-fb_orle_LDADD = ${FB} ${ORLE}
-
-rle_fb_SOURCES = rle-fb.c
-rle_fb_LDADD = ${FB} ${RLE}
-rle_fb_CFLAGS = ${RLE_CPPFLAGS}
-
-fb_rle_SOURCES = fb-rle.c cmap-crunch.c
-fb_rle_LDADD = ${FB} ${RLE}
+# per-program CPPFLAGS wasn't added until automake 1.7
 fb_rle_CFLAGS = ${RLE_CPPFLAGS}
+fb_rle_LDADD = ${FB} ${RLE} ${BU} ${PKG}
+fb_rle_SOURCES = fb-rle.c cmap-crunch.c
 
+fbanim_LDADD = ${FB} ${BU} ${PKG}
+fbanim_SOURCES = fbanim.c
+
+fbcbars_LDADD = ${FB} ${BU} ${PKG}
+fbcbars_SOURCES = fbcbars.c
+
+fbclear_LDADD = ${FB} ${BU} ${PKG}
+fbclear_SOURCES = fbclear.c
+
+fbcmap_LDADD = ${FB} ${BU} ${PKG}
 fbcmap_SOURCES = fbcmap.c
-fbcmap_LDADD = ${FB}
 
-fb_cmap_SOURCES = fb-cmap.c
-fb_cmap_LDADD = ${FB}
-
-cmap_fb_SOURCES = cmap-fb.c
-cmap_fb_LDADD = ${FB}
-
-fbgamma_SOURCES = fbgamma.c
-fbgamma_LDADD = ${FB}
-
-fbgammamod_SOURCES = fbgammamod.c
-fbgammamod_LDADD = ${FB}
-
-fbscanplot_SOURCES = fbscanplot.c
-fbscanplot_LDADD = ${FB}
-
-fbzoom_SOURCES = fbzoom.c
-fbzoom_LDADD = ${FB} ${TERMIO}
-
-fbpoint_SOURCES = fbpoint.c
-fbpoint_LDADD = ${FB} ${TERMIO}
-
-fblabel_SOURCES = fblabel.c
-fblabel_LDADD = ${FB}
-
-fbline_SOURCES = fbline.c
-fbline_LDADD = ${FB}
-
-fbcolor_SOURCES = fbcolor.c
-fbcolor_LDADD = ${FB} ${TERMIO}
-
+fbcmrot_LDADD = ${FB} ${BU} ${PKG}
 fbcmrot_SOURCES = fbcmrot.c
-fbcmrot_LDADD = ${FB}
 
-fbframe_SOURCES = fbframe.c
-fbframe_LDADD = ${FB}
+fbcolor_LDADD = ${FB} ${TERMIO} ${BU} ${PKG}
+fbcolor_SOURCES = fbcolor.c
 
-bw_fb_SOURCES = bw-fb.c
-bw_fb_LDADD = ${FB} ${BN} ${BU}
-
-fb_bw_SOURCES = fb-bw.c
-fb_bw_LDADD = ${FB}
-
-cat_fb_SOURCES = cat-fb.c
-cat_fb_LDADD = ${FB} ${BU}
-
-gif2fb_SOURCES = gif2fb.c
-gif2fb_LDADD = ${FB}
-
+fbfade_LDADD = ${FB} ${BU} ${PKG}
 fbfade_SOURCES = fbfade.c
-fbfade_LDADD = ${FB}
 
+fbframe_LDADD = ${FB} ${BU} ${PKG}
+fbframe_SOURCES = fbframe.c
+
+fbfree_LDADD = ${FB} ${BU} ${PKG}
+fbfree_SOURCES = fbfree.c
+
+fbgamma_LDADD = ${FB} ${BU} ${PKG}
+fbgamma_SOURCES = fbgamma.c
+
+fbgammamod_LDADD = ${FB} ${BU} ${PKG}
+fbgammamod_SOURCES = fbgammamod.c
+
+fbgrid_LDADD = ${FB} ${BU} ${PKG}
+fbgrid_SOURCES = fbgrid.c
+
+fbhelp_LDADD = ${FB} ${BU} ${PKG}
+fbhelp_SOURCES = fbhelp.c
+
+fblabel_LDADD = ${FB} ${BU} ${PKG}
+fblabel_SOURCES = fblabel.c
+
+fbline_LDADD = ${FB} ${BU} ${PKG}
+fbline_SOURCES = fbline.c
+
+fbpoint_LDADD = ${FB} ${TERMIO} ${BU} ${PKG}
+fbpoint_SOURCES = fbpoint.c
+
+fbscanplot_LDADD = ${FB} ${BU} ${PKG}
+fbscanplot_SOURCES = fbscanplot.c
+
+fbstretch_LDADD = ${FB} ${BU} ${PKG}
 fbstretch_SOURCES = fbstretch.c
-fbstretch_LDADD = ${FB}
 
+fbzoom_LDADD = ${FB} ${TERMIO} ${BU} ${PKG}
+fbzoom_SOURCES = fbzoom.c
+
+gif2fb_LDADD = ${FB} ${BU} ${PKG}
+gif2fb_SOURCES = gif2fb.c
+
+gif_fb_LDADD = ${FB} ${BU} ${PKG}
 gif_fb_SOURCES = gif-fb.c
-gif_fb_LDADD = ${FB}
 
-spm_fb_SOURCES = spm-fb.c
-spm_fb_LDADD = ${RT} ${FB} ${BN}
+orle_fb_LDADD = ${FB} ${ORLE} ${BU} ${PKG}
+orle_fb_SOURCES = orle-fb.c
 
+pix_fb_LDADD = ${FB} ${BN} ${BU} ${PKG}
+pix_fb_SOURCES = pix-fb.c
+
+pixautosize_LDADD = ${FB} ${BN} ${BU} ${PKG}
+pixautosize_SOURCES = pixautosize.c
+
+pixflip_fb_LDADD = ${FB} ${BU} ${PKG}
+pixflip_fb_SOURCES = pixflip-fb.c
+
+pl_fb_LDADD = ${FB} ${BN} ${BU} ${PKG}
+pl_fb_SOURCES = pl-fb.c
+
+# per-program CPPFLAGS wasn't added until automake 1.7
+png_fb_CFLAGS = ${PNG_CPPFLAGS}
+png_fb_LDADD = ${FB} ${PNG} ${BU} ${PKG}
+png_fb_SOURCES = png-fb.c
+
+polar_fb_LDADD = ${FB} ${BU} ${PKG}
 polar_fb_SOURCES = polar-fb.c
-polar_fb_LDADD = ${FB}
 
-cell_fb_SOURCES = cell-fb.c
-cell_fb_LDADD = ${FB} ${BN}
+pp_fb_LDADD = ${FB} ${TERMIO} ${BU} ${PKG}
+pp_fb_SOURCES = pp-fb.c
+
+# per-program CPPFLAGS wasn't added until automake 1.7
+rle_fb_CFLAGS = ${RLE_CPPFLAGS}
+rle_fb_LDADD = ${FB} ${RLE} ${BU} ${PKG}
+rle_fb_SOURCES = rle-fb.c
+
+spm_fb_LDADD = ${RT} ${FB} ${BN} ${BU} ${PKG}
+spm_fb_SOURCES = spm-fb.c
 
 man_MANS = \
 	bw-fb.1 \

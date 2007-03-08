@@ -41,6 +41,9 @@ noinst_HEADERS = \
 lgt_LDADD = \
 	${RT} \
 	${FB} \
+	${BN} \
+	${BU} \
+	${PKG} \
 	${TERMIO} \
 	${CURSOR} \
 	${LIBSGIGL} \

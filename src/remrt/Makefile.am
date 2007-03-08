@@ -11,6 +11,9 @@ remrt_LDADD = \
 	${OPTICAL} \
 	${FB} \
 	${RT} \
+	${BN} \
+	${BU} \
+	${PKG} \
 	${SYSV}
 
 remrt_SOURCES = \
@@ -24,6 +27,9 @@ rtsrv_LDADD = \
 	${OPTICAL} \
 	${PKG} \
 	${RT} \
+	${BN} \
+	${BU} \
+	${PKG} \
 	${SYSV}
 rtsrv_SOURCES = \
 	rtsrv.c \

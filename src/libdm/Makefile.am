@@ -52,9 +52,6 @@ libdm_la_CFLAGS = \
 	${TCL_CPPFLAGS} \
 	${TK_CPPFLAGS}
 libdm_la_LIBADD = \
-	${RT} \
-	${BN} \
-	${BU} \
 	${PNG} \
 	${X_LIBS}
 

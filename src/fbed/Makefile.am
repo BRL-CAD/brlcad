@@ -31,6 +31,8 @@ noinst_HEADERS = \
 fbed_CFLAGS = ${TERMLIB_CPPFLAGS}
 fbed_LDADD = \
 	${FB} \
+	${BU} \
+	${PKG} \
 	${TERMIO} \
 	${CURSOR} \
 	${TERMLIB} \

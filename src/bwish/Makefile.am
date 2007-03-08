@@ -34,6 +34,7 @@ blib_LIBS = \
 	${FB} \
 	${BN} \
 	${BU} \
+	${PKG} \
 	${ITK} \
 	${ITCL} \
 	${TK} \

@@ -13,30 +13,54 @@ bin_PROGRAMS = \
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 all_sf_SOURCES = all_sf.c
-all_sf_LDADD = ${RT} ${BN} ${SYSV}
+all_sf_LDADD = \
+	${RT} \
+	${BN} \
+	${BU} \
+	${SYSV}
 
 showtherm_SOURCES = showtherm.c
-showtherm_LDADD = ${RT} ${BN} ${SYSV}
+showtherm_LDADD = \
+	${RT} \
+	${BN} \
+	${BU} \
+	${SYSV}
 
 firpass_SOURCES = firpass.c subroutines.c
-firpass_LDADD = ${RT} ${BN}  ${SYSV}
+firpass_LDADD = \
+	${RT} \
+	${BN} \
+	${BU} \
+	${SYSV}
 
 irdisp_SOURCES = irdisp.c
 irdisp_CFLAGS = ${X_CFLAGS}
-irdisp_LDADD = ${FB}
+irdisp_LDADD = \
+	${FB}
 
 ir_sgi_SOURCES = ir-sgi.c
-ir_sgi_LDADD = ${FB}
+ir_sgi_LDADD = \
+	${FB}
 
 ir_X_SOURCES = ir-X.c
 ir_X_CFLAGS = ${X_CFLAGS}
-ir_X_LDADD = ${X_LIBS} ${BU}
+ir_X_LDADD = \
+	${BU} \
+	${X_LIBS}
 
 secpass_SOURCES = secpass.c subroutines.c
-secpass_LDADD = ${RT} ${BN} ${SYSV}
+secpass_LDADD = \
+	${RT} \
+	${BN} \
+	${BU} \
+	${SYSV}
 
 shapefact_SOURCES = shapefact.c
-shapefact_LDADD = ${RT} ${BN} ${SYSV}
+shapefact_LDADD = \
+	${RT} \
+	${BN} \
+	${BU} \
+	${SYSV}
 
 man_MANS = \
 	all_sf.1 \

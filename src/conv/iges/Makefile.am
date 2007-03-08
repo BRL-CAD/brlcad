@@ -86,11 +86,20 @@ iges_g_srcs = \
 	wedge.c
 
 iges_g_SOURCES = $(iges_g_srcs) iges-g-vers.c
-iges_g_LDADD = ${RT} ${WDB} ${SYSV}
+iges_g_LDADD = \
+	${WDB} \
+	${RT} \
+	${BN} \
+	${BU} \
+	${SYSV}
 
 g_iges_srcs = g-iges.c iges.c
 g_iges_SOURCES = $(g_iges_srcs) g-iges-vers.c
-g_iges_LDADD = ${RT} ${SYSV}
+g_iges_LDADD = \
+	${RT} \
+	${BN} \
+	${BU} \
+	${SYSV}
 
 BUILT_SOURCES = \
 	iges-g-vers.c \

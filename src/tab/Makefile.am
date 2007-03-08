@@ -8,7 +8,7 @@ bin_PROGRAMS = \
 	script-tab
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
-LDADD = ${RT}
+LDADD = ${RT} ${BN} ${BU}
 
 scriptsort_SOURCES = scriptsort.c script.l
 noinst_HEADERS = tokens.h

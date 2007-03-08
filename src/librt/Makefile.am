@@ -173,8 +173,6 @@ librt_la_SOURCES =
 librt_la_LDFLAGS = -version-info 19:1
 librt_la_LIBADD = \
 	librt_nil.la \
-	${BN} \
-	${BU} \
 	${REGEX} \
 	${LIBM} \
 	${SYSV} \
@@ -194,11 +192,19 @@ noinst_PROGRAMS = \
 	nurb_example \
 	${BREP_TEST}
 
-comb_LDADD = librt.la ${BU} ${SYSV}
 comb_SOURCES = comb.c
+comb_LDADD = \
+	librt.la \
+	${BN} \
+	${BU} \
+	${SYSV}
 
-nurb_example_LDADD = librt.la ${BU} ${SYSV}
 nurb_example_SOURCES = nurb_example.c
+nurb_example_LDADD = \
+	librt.la \
+	${BN} \
+	${BU} \
+	${SYSV}
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 

@@ -21,10 +21,6 @@ libtclcad_la_CFLAGS = \
 	-I$(top_srcdir)/src/other/tk/unix
 
 libtclcad_la_LIBADD = \
-	${FB} \
-	${BN} \
-	${BU} \
-	${TK} \
 	${TCLSTUB}
 
 libtclcad_la_SOURCES = \

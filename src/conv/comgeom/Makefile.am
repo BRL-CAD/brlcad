@@ -13,8 +13,10 @@ comgeom_g_SOURCES = \
 	solid.c \
 	tools.c
 comgeom_g_LDADD = \
-	${RT} \
 	${WDB} \
+	${RT} \
+	${BN} \
+	${BU} \
 	${SYSV}
 
 noinst_HEADERS = 3d.h ged_types.h

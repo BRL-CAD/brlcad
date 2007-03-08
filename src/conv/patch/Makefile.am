@@ -7,7 +7,12 @@ bin_PROGRAMS = \
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 patch_g_SOURCES = patch-g.c
-patch_g_LDADD = ${RT} ${WDB} ${BU} ${SYSV}
+patch_g_LDADD = \
+	${WDB} \
+	${RT} \
+	${BN} \
+	${BU} \
+	${SYSV}
 
 rpatch_SOURCES = rpatch.c
 rpatch_LDADD = ${BU} ${SYSV}

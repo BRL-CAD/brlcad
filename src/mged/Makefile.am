@@ -168,9 +168,12 @@ mged_LDADD = \
 	${TERMIO} \
 	${TCLCAD} \
 	${WDB} \
+	${RT} \
 	${DM} \
 	${FB} \
+	${BN} \
 	${BU} \
+	${PKG} \
 	${SYSV} \
 	${ITK} \
 	${ITCL} \
