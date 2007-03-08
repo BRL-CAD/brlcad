@@ -8,6 +8,7 @@ proc_db_libs = \
 	${SYSV}
 
 LDADD = ${proc_db_libs}
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 bin_PROGRAMS = \
 	bottest \
@@ -55,6 +56,8 @@ brep_cube_LDADD = \
 brickwall_SOURCES = brickwall.c
 brickwall_LDADD = \
 	${WDB} \
+	${RT} \
+	${BN} \
 	${BU}
 
 clutter_SOURCES = clutter.c common.c
@@ -62,6 +65,7 @@ clutter_SOURCES = clutter.c common.c
 contours_SOURCES = contours.c
 contours_LDADD = \
 	${WDB} \
+	${RT} \
 	${BN} \
 	${BU}
 
