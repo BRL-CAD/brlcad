@@ -1,19 +1,17 @@
 # $Id$
 
+proc_db_libs = \
+	${WDB} \
+	${RT} \
+	${BN} \
+	${BU} \
+	${SYSV}
 
-if WITH_OPENNURBS
-BREP_CPPFLAGS=-DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
-BREP_PROGRAM=brep_cube
-else
-BREP_CPPFLAGS=
-BREP_PROGRAM=
-endif
+LDADD = ${proc_db_libs}
 
-# apply-mdb was removed due to compile issues... should be readded once those are resolved...
-# nmgxplode was removed because nmgxplode.c doesn't seem to compile
 bin_PROGRAMS = \
-	$(BREP_PROGRAM) \
 	bottest \
+	brep_cube \
 	brickwall \
 	clutter \
 	contours \
@@ -41,6 +39,56 @@ bin_PROGRAMS = \
 	wall \
 	wdb_example
 
+bottest_SOURCES = bottest.c
+
+brep_cube_SOURCES = brep_cube.cpp
+# per-target CPPFLAGS not available until automake 1.7+
+if WITH_OPENNURBS
+brep_cube_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
+else !WITH_OPENNURBS
+brep_cube_CXXFLAGS =
+endif
+brep_cube_LDADD = \
+	${proc_db_libs} \
+	${OPENNURBS}
+
+brickwall_SOURCES = brickwall.c
+brickwall_LDADD = \
+	${WDB} \
+	${BU}
+
+clutter_SOURCES = clutter.c common.c
+
+contours_SOURCES = contours.c
+contours_LDADD = \
+	${WDB} \
+	${BN} \
+	${BU}
+
+fence_SOURCES = fence.c
+globe_SOURCES = globe.c
+kurt_SOURCES = kurt.c
+molecule_SOURCES = molecule.c
+nmgmodel_SOURCES = nmgmodel.c
+picket_fence_SOURCES = picket_fence.c
+pipe_SOURCES = pipe.c
+pipetest_SOURCES = pipetest.c
+pix2g_SOURCES = pix2g.c
+pyramid_SOURCES = pyramid.c
+rawbot_SOURCES = rawbot.c
+room_SOURCES = room.c common.c
+sketch_SOURCES = sketch.c
+sphflake_SOURCES = sphflake.c
+spltest_SOURCES = spltest.c
+tea_SOURCES = tea.c
+tea_nmg_SOURCES = tea_nmg.c
+terrain_SOURCES = terrain.c
+torii_SOURCES = torii.c
+tube_SOURCES = tube.c
+vegitation_SOURCES = vegitation.c
+wall_SOURCES = wall.c
+wdb_example_SOURCES = wdb_example.c
+
 noinst_HEADERS = \
 	ducks.h \
 	fence.h \
@@ -50,107 +98,7 @@ noinst_HEADERS = \
 
 man_MANS = picket_fence.1
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS} ${BREP_CPPFLAGS}
-
-
-# XXX does not compile?
-#apply_mdb_SOURCES = apply-mdb.c
-#apply_mdb_LDADD = ${WDB}
-
-bottest_SOURCES = bottest.c
-bottest_LDADD = ${WDB} ${SYSV}
-
-if WITH_OPENNURBS
-brep_cube_SOURCES = brep_cube.cpp
-brep_cube_LDADD = ${WDB} ${SYSV}
-endif
-
-brickwall_SOURCES = brickwall.c
-brickwall_LDADD = ${WDB}
-
-clutter_SOURCES = clutter.c common.c
-clutter_LDADD = ${WDB} ${SYSV}
-
-contours_SOURCES = contours.c
-contours_LDADD = ${WDB}
-
-fence_SOURCES = fence.c
-fence_LDADD = ${WDB} ${SYSV}
-
-globe_SOURCES = globe.c
-globe_LDADD = ${WDB} ${SYSV}
-
-kurt_SOURCES = kurt.c
-kurt_LDADD = ${WDB} ${SYSV}
-
-molecule_SOURCES = molecule.c
-molecule_LDADD = ${WDB} ${SYSV}
-
-nmgmodel_SOURCES = nmgmodel.c
-nmgmodel_LDADD = ${WDB} ${SYSV}
-
-#nmgxplode_SOURCES = nmgxplode.c
-#nmgxplode_LDADD = ${WDB}
-
-picket_fence_SOURCES = picket_fence.c
-picket_fence_LDADD = ${WDB} ${SYSV}
-
-pipe_SOURCES = pipe.c
-pipe_LDADD = ${WDB} ${SYSV}
-
-pipetest_SOURCES = pipetest.c
-pipetest_LDADD = ${WDB} ${SYSV}
-
-pix2g_SOURCES = pix2g.c
-pix2g_LDADD = ${WDB}
-
-pyramid_SOURCES = pyramid.c
-pyramid_LDADD = ${WDB} ${SYSV}
-
-rawbot_SOURCES = rawbot.c
-rawbot_LDADD = ${WDB} ${SYSV}
-
-room_SOURCES = room.c common.c
-room_LDADD = ${WDB} ${SYSV}
-
-sketch_SOURCES = sketch.c
-sketch_LDADD = ${WDB} ${SYSV}
-
-sphflake_SOURCES = sphflake.c
-sphflake_LDADD = ${WDB} ${SYSV}
-
-spltest_SOURCES = spltest.c
-spltest_LDADD = ${WDB} ${SYSV}
-
-tea_SOURCES = tea.c
-tea_LDADD = ${WDB} ${SYSV}
-
-tea_nmg_SOURCES = tea_nmg.c
-tea_nmg_LDADD = ${WDB} ${SYSV}
-
-terrain_SOURCES = terrain.c
-terrain_LDADD = ${WDB} ${SYSV}
-
-torii_SOURCES = torii.c
-torii_LDADD = ${WDB} ${SYSV}
-
-tube_SOURCES = tube.c
-tube_LDADD = ${WDB} ${SYSV}
-
-vegitation_SOURCES = vegitation.c
-vegitation_LDADD = ${WDB} ${SYSV}
-
-wall_SOURCES = wall.c
-wall_LDADD = ${WDB} ${SYSV}
-
-wdb_example_SOURCES = wdb_example.c
-wdb_example_LDADD = ${WDB} ${SYSV}
-
-# XXX .c added until they compile
-EXTRA_DIST = \
-	$(man_MANS) \
-	apply-mdb.c \
-	nmgxplode.c
+EXTRA_DIST = $(man_MANS)
 
 include $(top_srcdir)/misc/Makefile.defs
 
