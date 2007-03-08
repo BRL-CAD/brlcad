@@ -16,18 +16,18 @@ noinst_HEADERS = \
 man_MANS = canonize.1
 
 canonize_SOURCES = canonize.c canonlib.c
-canonize_LDADD = ${FB} ${BU} ${LIBM} ${LIBDS}
+canonize_LDADD = ${FB} ${BU} ${PKG} ${LIBM} ${LIBDS}
 
 pix_ipu_SOURCES = pix-ipu.c canonlib.c
-pix_ipu_LDADD = ${FB} ${BU} ${LIBM} ${LIBDS}
+pix_ipu_LDADD = ${FB} ${BU} ${PKG} ${LIBM} ${LIBDS}
 
 png_ipu_SOURCES = png-ipu.c canonlib.c
-png_ipu_LDADD = ${FB} ${BU} ${LIBM} ${LIBDS} ${PNG}
+png_ipu_LDADD = ${FB} ${BU} ${PKG} ${LIBM} ${LIBDS} ${PNG}
 # per-program CPPFLAGS wasn't added until automake 1.7
 png_ipu_CFLAGS = ${PNG_CPPFLAGS}
 
 ipuscan_SOURCES = ipuscan.c canonlib.c
-ipuscan_LDADD = ${FB} ${BU} ${LIBM} ${LIBDS}
+ipuscan_LDADD = ${FB} ${BU} ${PKG} ${LIBM} ${LIBDS}
 
 ipustat_SOURCES = ipustat.c canonlib.c
 ipustat_LDADD = ${BU} ${LIBDS}
