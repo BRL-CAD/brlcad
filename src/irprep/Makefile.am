@@ -36,7 +36,7 @@ firpass_LDADD = \
 irdisp_SOURCES = irdisp.c
 irdisp_CFLAGS = ${X_CFLAGS}
 irdisp_LDADD = \
-	${FB}
+	${PKG}
 
 ir_sgi_SOURCES = ir-sgi.c
 ir_sgi_LDADD = \

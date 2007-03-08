@@ -14,6 +14,7 @@ halftone_SOURCES = \
 	tonescale.c
 
 halftone_LDADD = \
+	${PKG} \
 	${RT} \
 	${FB} \
 	${BN} \

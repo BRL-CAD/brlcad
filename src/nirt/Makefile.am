@@ -22,6 +22,7 @@ nirt_SOURCES = \
 	vers.c
 nirt_CFLAGS = -DDFLT_SHELL=\"/bin/sh\"
 nirt_LDADD = \
+	${PKG} \
 	${RT} \
 	${BN} \
 	${FB} \

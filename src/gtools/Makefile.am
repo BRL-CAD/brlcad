@@ -52,6 +52,7 @@ solshoot_LDADD = \
 testfree_SOURCES = testfree.c
 testfree_LDADD = \
 	${RT} \
+	${BN} \
 	${BU} \
 	${SYSV}
 

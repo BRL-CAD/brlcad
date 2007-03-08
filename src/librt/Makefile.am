@@ -176,7 +176,8 @@ librt_la_LIBADD = \
 	${REGEX} \
 	${LIBM} \
 	${SYSV} \
-	${OPENNURBS}
+	${OPENNURBS} \
+	${BU}
 
 include_HEADERS = \
 	bot.h \
