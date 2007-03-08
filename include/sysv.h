@@ -58,11 +58,6 @@ char *
 strdup(const char *cp);
 #endif
 
-#ifndef HAVE_STRLCPY
-size_t
-strlcpy(char *dst, const char *src, size_t siz);
-#endif
-
 #ifndef HAVE_STRSEP
 char *
 strsep(char **stringp, const char *delim);

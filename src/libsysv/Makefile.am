@@ -9,7 +9,6 @@ SRCS = \
 	strchr.c \
 	strdup.c \
 	strsep.c \
-	strlcpy.c \
 	strtok.c \
 	tcl.c
 

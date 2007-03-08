@@ -2059,7 +2059,6 @@ AC_CHECK_FUNCS(\
 	strdup \
 	strerror \
 	strerror_r \
-	strlcpy \
 	strncasecmp \
 	strpbrk \
 	strrchr \

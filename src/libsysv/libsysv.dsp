@@ -194,10 +194,6 @@ SOURCE=.\regex.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\strlcpy.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\strsep.c
 # End Source File
 # Begin Source File
