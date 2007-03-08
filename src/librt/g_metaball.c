@@ -422,7 +422,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 	BU_CK_EXTERNAL( ep );
 	metaball_count = bu_glong((unsigned char *)ep->ext_buf);
 	buf = (fastf_t *)bu_malloc((metaball_count*4+1)*SIZEOF_NETWORK_DOUBLE,"rt_metaball_import5: buf");
-	ntohd((unsigned char *)buf, (unsigned char *)ep->ext_buf+SIZEOF_NETWORK_LONG, metaball_count*4+1);
+	ntohd((unsigned char *)buf, (unsigned char *)ep->ext_buf+2*SIZEOF_NETWORK_LONG, metaball_count*4+1);
 
 	RT_CK_DB_INTERNAL( ip );
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -495,7 +495,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 		VSCALE(&buf[i], mbpt->coord, local2mm);
 		buf[i+3] = mbpt->fldstr * local2mm;
 	}
-	htond((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG, (unsigned char *)buf, 2 + 4 * metaball_count);
+	htond((unsigned char *)ep->ext_buf + 2*SIZEOF_NETWORK_LONG, (unsigned char *)buf, 2 + 4 * metaball_count);
 	bu_free((genptr_t)buf,"rt_metaball_export5: buf");
 	return 0;
 }
