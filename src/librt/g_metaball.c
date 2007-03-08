@@ -208,7 +208,7 @@ rt_metaball_point_value(point_t *p, struct bu_list *points)
 
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, points)) {
 		VSUB2(v, mbpt->coord, *p);
-		ret += (mbpt->fldstr*mbpt->fldstr) / MAGSQ(v);	/* f^2/r^2 */
+		ret += mbpt->fldstr / MAGSQ(v);	/* f/r^2 */
 	}
 	return ret;
 }
