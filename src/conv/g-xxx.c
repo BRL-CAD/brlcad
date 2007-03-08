@@ -103,14 +103,15 @@ main(int argc, char *argv[])
 	register int	c;
 	char idbuf[132];
 
-	bu_setlinebuf( stderr );
+	struct rt_i *rtip;
+	struct db_tree_state init_state;
+
 /*
 	rt_init_resource(&rt_uniresource, 0, NULL);
 	struct rt_db_internal intern;
 	struct directory *dp;
 */
-	struct rt_i *rtip;
-	struct db_tree_state init_state;
+	bu_setlinebuf( stderr );
 
 	/* calculational tolerances
 	 * mostly used by NMG routines
