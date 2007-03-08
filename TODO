@@ -116,8 +116,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * optimize CSG structures automatically, automatic simplification.
 
-* analyze command doesn't print values with enough precision.
-
 * option to mged make command or new command that enters solid edit
   mode, "med", "smake", "makes", "msed", etc.  same for cp command.
 
