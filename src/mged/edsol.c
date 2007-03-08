@@ -1710,7 +1710,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 
 			RT_METABALL_CK_MAGIC( metaball );
 
-			if(es_metaballpt->l.magic == BU_LIST_HEAD_MAGIC)
+			if( es_metaballpt==NULL )
 			    snprintf(buf, BUFSIZ, "WARNING: Metaball has no points defined! ");
 			else {
 			    VMOVE( mpt , es_metaballpt->coord );
@@ -2510,12 +2510,6 @@ init_sedit(void)
 		spl_ui = surf->s_size[1]/2;
 		spl_vi = surf->s_size[0]/2;
 	}
-	else if ( id == ID_METABALL )
-	{
-		struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)es_int.idb_ptr;
-		RT_METABALL_CK_MAGIC(metaball);
-		es_metaballpt = BU_LIST_FIRST( wdb_metaballpt , &metaball->metaball_ctrl_head );
-	}
 
 	/* Save aggregate path matrix */
 	pathHmat( illump, es_mat, illump->s_fullpath.fp_len-2 );
@@ -2529,6 +2523,7 @@ init_sedit(void)
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+	es_metaballpt = (struct wdb_metaballpt *)NULL; /* Reset es_metaballpt */
 	lu_copy = (struct loopuse *)NULL;
 	es_ars_crv = (-1);
 	es_ars_col = (-1);
@@ -3879,6 +3874,7 @@ sedit(void)
 
 			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 			es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+			es_metaballpt = (struct wdb_metaballpt *)NULL; /* Reset es_metaballpt */
 			bot_verts[0] = -1;
 			bot_verts[1] = -1;
 			bot_verts[2] = -1;
@@ -3906,6 +3902,7 @@ sedit(void)
 
 			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 			es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+			es_metaballpt = (struct wdb_metaballpt *)NULL; /* Reset es_metaballpt */
 			bot_verts[0] = -1;
 			bot_verts[1] = -1;
 			bot_verts[2] = -1;
@@ -3942,6 +3939,7 @@ sedit(void)
 		/* translate a vertex */
 		es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 		es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+		es_metaballpt = (struct wdb_metaballpt *)NULL; /* Reset es_metaballpt */
 		bot_verts[0] = -1;
 		bot_verts[1] = -1;
 		bot_verts[2] = -1;
@@ -4199,6 +4197,7 @@ sedit(void)
 		{
 			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 			es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+			es_metaballpt = (struct wdb_metaballpt *)NULL; /* Reset es_metaballpt */
 			bot_verts[0] = -1;
 			bot_verts[1] = -1;
 			bot_verts[2] = -1;
@@ -5834,8 +5833,8 @@ sedit(void)
 		{
 		    struct wdb_metaballpt *tmp = es_metaballpt, *p;
 
-		    if (BU_LIST_IS_EMPTY(&es_metaballpt->l)) {
-			bu_log("Cannot delete, this metaball has no point");
+		    if ( es_metaballpt == NULL ) {
+			bu_log("No point selected");
 			break;
 		    }
 		    p = BU_LIST_PREV(wdb_metaballpt, &es_metaballpt->l);
@@ -5851,8 +5850,13 @@ sedit(void)
 		break;
 	case ECMD_METABALL_PT_ADD:
 		{
+		    struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)es_int.idb_ptr;
 		    struct wdb_metaballpt *n = (struct wdb_metaballpt *)malloc(sizeof(struct wdb_metaballpt));
-		    VSETALL(n->coord, 0);
+
+		    if ( inpara != 3 ) { bu_log("Must provide x y z"); break; }
+
+		    es_metaballpt = BU_LIST_FIRST( wdb_metaballpt , &metaball->metaball_ctrl_head );
+		    VMOVE( n->coord, es_para );
 		    n->l.magic = WDB_METABALLPT_MAGIC;
 		    n->fldstr = 1.0;
 		    BU_LIST_APPEND(&es_metaballpt->l, &n->l);
@@ -8061,6 +8065,7 @@ sedit_apply(int accept_flag)
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+	es_metaballpt = (struct wdb_metaballpt *)NULL; /* Reset es_metaballpt */
 	bot_verts[0] = -1;
 	bot_verts[1] = -1;
 	bot_verts[2] = -1;
@@ -8181,6 +8186,7 @@ sedit_reject(void)
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+	es_metaballpt = (struct wdb_metaballpt *)NULL; /* Reset es_metaballpt */
 	bot_verts[0] = -1;
 	bot_verts[1] = -1;
 	bot_verts[2] = -1;
@@ -9684,6 +9690,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
   /* reset */
   es_pipept = (struct wdb_pipept *)NULL;
+  es_metaballpt = (struct wdb_metaballpt *)NULL;
   es_s = (struct shell *)NULL;
   es_eu = (struct edgeuse *)NULL;
 
