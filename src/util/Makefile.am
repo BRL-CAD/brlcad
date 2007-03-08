@@ -202,7 +202,7 @@ bwfilter_SOURCES = bwfilter.c
 bwfilter_LDADD = ${BU}
 
 bwhist_SOURCES = bwhist.c
-bwhist_LDADD = ${FB} ${PKG} ${BU} ${PKG}
+bwhist_LDADD = ${FB} ${PKG} ${BU}
 
 bwhisteq_SOURCES = bwhisteq.c
 bwhisteq_LDADD = ${BU}
@@ -238,7 +238,7 @@ decimate_SOURCES = decimate.c
 decimate_LDADD = ${BU}
 
 double_asc_SOURCES = double-asc.c
-double_asc_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PKG}
+double_asc_LDADD = ${FB} ${PKG} ${BN} ${BU}
 
 dpix_pix_SOURCES = dpix-pix.c
 dpix_pix_LDADD = ${BU}
@@ -250,7 +250,7 @@ dunncolor_SOURCES = dunncolor.c dunncomm.c
 dunncolor_LDADD = ${BU}
 
 dunnsnap_SOURCES = dunnsnap.c dunncomm.c
-dunnsnap_LDADD = ${FB} ${PKG} ${BU} ${PKG}
+dunnsnap_LDADD = ${FB} ${PKG} ${BU}
 
 files_tape_SOURCES = files-tape.c
 files_tape_LDADD = ${BU}
@@ -262,7 +262,7 @@ hd_SOURCES = hd.c
 hd_LDADD = ${BU}
 
 imgdims_SOURCES = imgdims.c
-imgdims_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PKG}
+imgdims_LDADD = ${FB} ${PKG} ${BN} ${BU}
 
 loop_SOURCES = loop.c
 loop_LDADD = ${BU}
@@ -283,7 +283,7 @@ op_bw_SOURCES = op-bw.c
 op_bw_LDADD = ${BU}
 
 orle_pix_SOURCES = orle-pix.c
-orle_pix_LDADD = ${FB} ${PKG} ${BN} ${BU} ${ORLE} ${PKG}
+orle_pix_LDADD = ${FB} ${PKG} ${BN} ${BU} ${ORLE}
 
 pcd_pix_SOURCES = pcd-pix.c
 pcd_pix_LDADD = ${BU}
@@ -301,15 +301,15 @@ pix_bw_SOURCES = pix-bw.c
 pix_bw_LDADD = ${BU}
 
 pix_orle_SOURCES = pix-orle.c
-pix_orle_LDADD = ${FB} ${PKG} ${BN} ${BU} ${ORLE} ${PKG}
+pix_orle_LDADD = ${FB} ${PKG} ${BN} ${BU} ${ORLE}
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 pix_png_SOURCES = pix-png.c
 pix_png_CFLAGS = ${PNG_CPPFLAGS}
-pix_png_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PNG} ${PKG}
+pix_png_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PNG}
 
 pix_ppm_SOURCES = pix-ppm.c
-pix_ppm_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PKG}
+pix_ppm_LDADD = ${FB} ${PKG} ${BN} ${BU}
 
 pix_ps_SOURCES = pix-ps.c
 pix_ps_LDADD = ${BU}
@@ -326,19 +326,19 @@ pix_sun_SOURCES = pix-sun.c
 pix_sun_LDADD = ${BU}
 
 pix_yuv_SOURCES = pix-yuv.c
-pix_yuv_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PKG}
+pix_yuv_LDADD = ${FB} ${PKG} ${BN} ${BU}
 
 pixbackgnd_SOURCES = pixbackgnd.c
 pixbackgnd_LDADD = ${BU}
 
 pixbgstrip_SOURCES = pixbgstrip.c
-pixbgstrip_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PKG}
+pixbgstrip_LDADD = ${FB} ${PKG} ${BN} ${BU}
 
 pixblend_SOURCES = pixblend.c
 pixblend_LDADD = ${BU}
 
 pixborder_SOURCES = pixborder.c
-pixborder_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PKG}
+pixborder_LDADD = ${FB} ${PKG} ${BN} ${BU}
 
 pixbustup_SOURCES = pixbustup.c
 pixbustup_LDADD =
@@ -353,7 +353,7 @@ pixcount_SOURCES = pixcount.c
 pixcount_LDADD = ${BU}
 
 pixcut_SOURCES = pixcut.c
-pixcut_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PKG}
+pixcut_LDADD = ${FB} ${PKG} ${BN} ${BU}
 
 pixdiff_SOURCES = pixdiff.c
 pixdiff_LDADD = ${BU}
@@ -380,16 +380,16 @@ pixfilter_SOURCES = pixfilter.c
 pixfilter_LDADD = ${BU}
 
 pixhalve_SOURCES = pixhalve.c
-pixhalve_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PKG}
+pixhalve_LDADD = ${FB} ${PKG} ${BN} ${BU}
 
 pixhist3d_SOURCES = pixhist3d.c
-pixhist3d_LDADD = ${FB} ${PKG} ${BU} ${PKG}
+pixhist3d_LDADD = ${FB} ${PKG} ${BU}
 
 pixhist3d_pl_SOURCES = pixhist3d-pl.c
 pixhist3d_pl_LDADD = ${BN} ${BU}
 
 pixhist_SOURCES = pixhist.c
-pixhist_LDADD = ${FB} ${PKG} ${BU} ${PKG}
+pixhist_LDADD = ${FB} ${PKG} ${BU}
 
 pixinterp2x_SOURCES = pixinterp2x.c
 pixinterp2x_LDADD = ${BU}
@@ -401,10 +401,10 @@ pixmerge_SOURCES = pixmerge.c
 pixmerge_LDADD = ${BU}
 
 pixmorph_SOURCES = pixmorph.c
-pixmorph_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PKG}
+pixmorph_LDADD = ${FB} ${PKG} ${BN} ${BU}
 
 pixpaste_SOURCES = pixpaste.c
-pixpaste_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PKG}
+pixpaste_LDADD = ${FB} ${PKG} ${BN} ${BU}
 
 pixrect_SOURCES = pixrect.c
 pixrect_LDADD = ${BU}
@@ -510,19 +510,19 @@ terrain_SOURCES = terrain.c
 terrain_LDADD = ${BN} ${BU}
 
 texturescale_SOURCES = texturescale.c
-texturescale_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PKG}
+texturescale_LDADD = ${FB} ${PKG} ${BN} ${BU}
 
 ttcp_SOURCES = ttcp.c
 ttcp_LDADD = ${LIBSOCKET} ${LIBNSL}
 
 wavelet_SOURCES = wavelet.c
-wavelet_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PKG}
+wavelet_LDADD = ${FB} ${PKG} ${BN} ${BU}
 
 xyz_pl_SOURCES = xyz-pl.c
 xyz_pl_LDADD = ${BN} ${BU}
 
 yuv_pix_SOURCES = yuv-pix.c
-yuv_pix_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PKG}
+yuv_pix_LDADD = ${FB} ${PKG} ${BN} ${BU}
 
 .PHONY : vers.c
 vers.c:
