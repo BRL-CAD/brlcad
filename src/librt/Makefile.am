@@ -1,20 +1,40 @@
 # $Id$
 
+
 lib_LTLIBRARIES = librt.la
 noinst_LTLIBRARIES = librt_nil.la
 
 if WITH_OPENNURBS
-BREP_CPPFLAGS=-msse -msse2 -DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
+
 BREP_SRCS = g_brep.cpp
 BREP_TEST = brep_test
+BREP_CPPFLAGS = -DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
 
-brep_test_LDADD = librt.la ${BU} ${BN}
 brep_test_SOURCES = brep_test.cpp
-else
-BREP_CPPFLAGS =
+# cannot set per-target CPPFLAGS until automake 1.7+
+brep_test_CXXFLAGS = ${SSE}
+brep_test_LDADD = \
+	librt.la \
+	${BN} \
+	${BU}
+
+else # !WITH_OPENNURBS
+
 BREP_SRCS =
-BREP_TEST = 
-endif
+BREP_TEST =
+BREP_CPPFLAGS =
+
+endif # WITH_OPENNURBS
+
+# cannot set per-target CPPFLAGS until automake 1.7+
+AM_CPPFLAGS = \
+	${TCL_CPPFLAGS} \
+	${BREP_CPPFLAGS}
+
+noinst_PROGRAMS = \
+	comb \
+	nurb_example \
+	${BREP_TEST}
 
 SRCS = \
 	$(BREP_SRCS) \
@@ -164,11 +184,6 @@ librt_nil_la_SOURCES = \
 EXTRA_librt_nil_la_SOURCES = \
 	g_brep.cpp
 
-# cannot set per-target CPPFLAGS until automake 1.7+
-AM_CPPFLAGS = \
-	${BREP_CPPFLAGS} \
-	${TCL_CPPFLAGS}
-
 librt_la_SOURCES =
 librt_la_LDFLAGS = -version-info 19:1
 librt_la_LIBADD = \
@@ -178,20 +193,6 @@ librt_la_LIBADD = \
 	${SYSV} \
 	${OPENNURBS} \
 	${BU}
-
-include_HEADERS = \
-	bot.h \
-	debug.h \
-	fixpt.h \
-	plane.h \
-	qray.h
-
-dist_man_MANS = librt.3
-
-noinst_PROGRAMS = \
-	comb \
-	nurb_example \
-	${BREP_TEST}
 
 comb_SOURCES = comb.c
 comb_LDADD = \
@@ -206,6 +207,15 @@ nurb_example_LDADD = \
 	${BN} \
 	${BU} \
 	${SYSV}
+
+include_HEADERS = \
+	bot.h \
+	debug.h \
+	fixpt.h \
+	plane.h \
+	qray.h
+
+dist_man_MANS = librt.3
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 
