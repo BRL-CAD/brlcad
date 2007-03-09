@@ -189,8 +189,8 @@ ON_SRC = \
 	opennurbs_xform.cpp \
 	opennurbs_zlib.cpp
 
-
-include_HEADERS = $(ON_INC)
+nurbincludedir = $(includedir)/openNURBS
+nurbinclude_HEADERS = $(ON_INC)
 
 libopenNURBS_nil_la_SOURCES = $(ON_SRC)
 libopenNURBS_nil_la_CFLAGS = ${LIBZ_CPPFLAGS}
