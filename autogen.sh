@@ -671,52 +671,6 @@ unescape ( ) {
 }
 
 
-##############################
-# RECURSIVE_PROTECT FUNCTION #
-##############################
-recursive_protect ( ) {
-
-    # for projects using recursive configure, run the build
-    # preparation steps for the subdirectories.  this function assumes
-    # _prev_path was set to pwd before recursion begins so that
-    # relative paths work.
-
-    # git 'r done, protect COPYING and INSTALL from being clobbered
-    protect_from_clobber
-
-    # find configure template
-    _configure="`locate_configure_template`"
-    if [ "x$_configure" = "x" ] ; then
-	return
-    elif ! test -f "$_configure" ; then
-	return
-    fi
-
-    # look for subdirs
-    _subdirs=""
-    _det_config_subdirs="`grep AC_CONFIG_SUBDIRS $_configure | grep -v '.*#.*AC_CONFIG_SUBDIRS' | sed 's/^[ 	]*AC_CONFIG_SUBDIRS(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
-    for dir in $_det_config_subdirs ; do
-	if test -d "$dir" ; then
-	    _subdirs="$_subdirs $dir"
-	fi
-    done
-
-    # process subdirs
-    if [ ! "x$_subdirs" = "x" ] ; then
-	$VERBOSE_ECHO "Recursively scanning the following directories:"
-	$VERBOSE_ECHO "  $_subdirs"
-	for dir in $_subdirs ; do
-	    $VERBOSE_ECHO "Protecting files from automake in $dir"
-	    cd "$_prev_path"
-	    cd "$dir"
-
-	    # recursively git 'r done
-	    recursive_protect
-	done
-    fi
-} # end of recursive_protect
-
-
 #################################
 # PROTECT_FROM_CLOBBER FUNCTION #
 #################################
@@ -766,6 +720,52 @@ protect_from_clobber ( ) {
     stash=""
     contents=""
 }
+
+
+##############################
+# RECURSIVE_PROTECT FUNCTION #
+##############################
+recursive_protect ( ) {
+
+    # for projects using recursive configure, run the build
+    # preparation steps for the subdirectories.  this function assumes
+    # _prev_path was set to pwd before recursion begins so that
+    # relative paths work.
+
+    # git 'r done, protect COPYING and INSTALL from being clobbered
+    protect_from_clobber
+
+    # find configure template
+    _configure="`locate_configure_template`"
+    if [ "x$_configure" = "x" ] ; then
+	return
+    elif ! test -f "$_configure" ; then
+	return
+    fi
+
+    # look for subdirs
+    _subdirs=""
+    _det_config_subdirs="`grep AC_CONFIG_SUBDIRS $_configure | grep -v '.*#.*AC_CONFIG_SUBDIRS' | sed 's/^[ 	]*AC_CONFIG_SUBDIRS(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
+    for dir in $_det_config_subdirs ; do
+	if test -d "$dir" ; then
+	    _subdirs="$_subdirs $dir"
+	fi
+    done
+
+    # process subdirs
+    if [ ! "x$_subdirs" = "x" ] ; then
+	$VERBOSE_ECHO "Recursively scanning the following directories:"
+	$VERBOSE_ECHO "  $_subdirs"
+	for dir in $_subdirs ; do
+	    $VERBOSE_ECHO "Protecting files from automake in $dir"
+	    cd "$_prev_path"
+	    cd "$dir"
+
+	    # recursively git 'r done
+	    recursive_protect
+	done
+    fi
+} # end of recursive_protect
 
 
 #######################
