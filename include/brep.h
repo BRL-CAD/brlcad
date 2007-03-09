@@ -63,19 +63,20 @@ typedef struct _on_brep_placeholder {
 } ON_Brep;
 #endif
 
+#define BREP_MAX_FT_DEPTH 8
 
 /**
  * Bounding volume used as an acceleration data structure. It's
  * implemented here as an axis-aligned bounding box containing the
  * parametric bounds of the surface enclosed by the box.
  */
-typedef struct _brep_hbv { /* b-rep hierarchical bounding volume */
+typedef struct _brep_bv { /* b-rep hierarchical bounding volume */
     struct bu_list l;
     point_t min;
     point_t max;
     fastf_t umin, umax, vmin, vmax;
     struct bu_list children;
-} brep_hbv;
+} brep_bv;
 
 typedef struct _brep_cdbitem {
     int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
@@ -86,7 +87,7 @@ typedef struct _brep_cdbitem {
  * acceleration data structure.
  */
 struct brep_specific {
-    brep_hbv* hbv;
+    brep_bv* bvh;
 };
 
 #ifdef __cplusplus
