@@ -79,13 +79,168 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
   }
 #endif
 
+/********************************************************************************
+ * Auxiliary functions
+ ********************************************************************************/
 
+//--------------------------------------------------------------------------------
+// bounding volume
+brep_bv* 
+brep_bv_new()
+{
+    brep_bv* bv = (brep_bv*)bu_malloc(sizeof(brep_bv), "brep_bv_new");
+    BU_LIST_INIT(&bv->l);
+    BU_LIST_INIT(&bv->children);
+}
+
+brep_bv*
+brep_bv_new(point_t min, point_t max)
+{
+    brep_bv* bv = brep_bv_new();
+    VMOVE(bv->min, min);
+    VMOVE(bv->max, max);
+}
+
+void 
+brep_bv_delete(brep_bv* bv)
+{
+    if (bv != NULL) {
+	brep_bv* child;
+	BU_LIST_EACH(&bv->children,child,brep_bv) {
+	    brep_bv_delete(child);
+	}
+	bu_free(bv, "brep_bv_delete");
+    }
+}
+
+//--------------------------------------------------------------------------------
+// specific
+struct brep_specific* 
+brep_specific_new()
+{
+    return (struct brep_specific*)bu_calloc(1, sizeof(struct brep_specific),"brep_specific_new");
+}
+
+void
+brep_specific_delete(struct brep_specific* bs)
+{
+    if (bs != NULL) {
+	brep_bv_delete(bs->bvh);
+	bu_free(bs,"brep_specific_delete");
+    }
+}
+
+//--------------------------------------------------------------------------------
+// prep
+
+void
+brep_bvh_subdivide(brep_bv* parent, struct bu_list* face_bvs)
+{
+    // XXX todo
+}
+
+bool
+brep_is_flat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
+{
+    // XXX todo
+    return true;
+}
+
+brep_bv* 
+brep_surface_bbox(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
+{
+    ON_3dPoint corners[4];
+    
+    if (!surf->EvPoint(u.Min(),v.Min(),corners[0]) ||
+	!surf->EvPoint(u.Max(),v.Min(),corners[1]) ||
+	!surf->EvPoint(u.Max(),v.Max(),corners[2]) ||
+	!surf->EvPoint(u.Min(),v.Max(),corners[3])) {
+	bu_bomb("Could not evaluate a point on surface"); // XXX fix this message
+    }
+    point_t min, max;
+    VMINMAX(min,max,((double*)corners[0]));
+    VMINMAX(min,max,((double*)corners[1]));
+    VMINMAX(min,max,((double*)corners[2]));
+    VMINMAX(min,max,((double*)corners[3]));
+    return brep_bv_new(min,max);    
+}
+
+brep_bv* 
+brep_surface_subdivide(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v, int depth)
+{
+    brep_bv* parent = brep_surface_bbox(surf, u, v);
+    if (brep_is_flat(surf, u, v) || depth >= BREP_MAX_FT_DEPTH) {
+	return parent;
+    } else {
+	brep_bv* quads[4];
+	ON_Interval first(0,0.5);
+	ON_Interval second(0.5,1.0);
+	quads[0] = brep_surface_subdivide(surf, u.ParameterAt(first),  v.ParameterAt(first),  depth+1);
+	quads[1] = brep_surface_subdivide(surf, u.ParameterAt(second), v.ParameterAt(first),  depth+1);
+	quads[2] = brep_surface_subdivide(surf, u.ParameterAt(second), v.ParameterAt(second), depth+1);
+	quads[3] = brep_surface_subdivide(surf, u.ParameterAt(first),  v.ParameterAt(second), depth+1);
+
+	for (int i = 0; i < 4; i++)
+	    BU_LIST_INSERT(&parent->children, &quads[i]->l);
+	return parent;
+    }
+}
+
+int
+brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
+{
+    ON_TextLog tl(stderr);
+    ON_Brep* brep = bi->brep;
+    if (brep == NULL || !brep->IsValid(&tl)) {
+	bu_log("brep is NOT valid");
+	return -1;
+    }
+    
+    point_t min, max;
+    brep->GetBBox(min, max);
+    
+    bs->bvh = brep_bv_new(min, max);
+    
+    // need to extract faces, and build bounding boxes for each face,
+    // then combine the face BBs back up, combining them together to
+    // better split the hierarchy
+    struct bu_list surface_bvs;
+    BU_LIST_INIT(&surface_bvs);
+    ON_BrepFaceArray& faces = brep->m_F;
+    for (int i = 0; i < faces.Count(); i++) {
+	ON_BrepFace& face = faces[i];
+	const ON_Surface* surf = face.SurfaceOf();
+
+	ON_Interval u = surf->Domain(0);
+	ON_Interval v = surf->Domain(1);
+	brep_bv* bv = brep_surface_subdivide(surf, u, v, 0);
+	
+	// add the surface bounding volumes to a list, so we can build
+	// down a hierarchy from the brep bounding volume
+	BU_LIST_INSERT(&surface_bvs, &bv->l);
+    }
+    
+    brep_bvh_subdivide(bs->bvh, &surface_bvs);
+    
+    return 0;
+}
+
+void
+brep_calculate_cdbitems(struct brep_specific* bs, struct rt_brep_internal* bi)
+{
+
+}
+
+
+/********************************************************************************
+ * BRL-CAD Primitive interface
+ ********************************************************************************/
 /**
  *   			R T _ B R E P _ P R E P
  *
- *  Given a pointer of a GED database record, and a transformation matrix,
- *  determine if this is a valid NURB, and if so, prepare the surface
- *  so the intersections will work.
+ *  Given a pointer of a GED database record, and a transformation
+ *  matrix, determine if this is a valid NURB, and if so, prepare the
+ *  surface so the intersections will work.
  */
 int
 rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
@@ -96,10 +251,25 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 
        Abert's paper (Direct and Fast Ray Tracing of NURBS Surfaces)
        suggests using a bounding volume hierarchy (instead of KD-tree)
-       and building it down to a satisfactory flatness criterion (which
-       they do not give information about).
+       and building it down to a satisfactory flatness criterion
+       (which they do not give information about).
     */
-    struct rt_brep_internal* sip;
+    struct rt_brep_internal* bi;
+    struct brep_specific* bs;
+    
+    RT_CK_DB_INTERNAL(ip);
+    bi = (struct rt_brep_internal*)ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+
+    if ((bs = (struct brep_specific*)stp->st_specific) == NULL) {
+	bs = (struct brep_specific*)bu_malloc(sizeof(struct brep_specific), "brep_specific");       
+	stp->st_specific = (genptr_t)bs;
+    }    
+    
+    if (brep_build_bvh(bs, bi) < 0) {
+	return -1; 
+    }
+    brep_calculate_cdbitems(bs, bi);
 
     return 0;
 }
@@ -193,6 +363,8 @@ rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 void
 rt_brep_free(register struct soltab *stp)
 {
+    struct brep_specific* bs = (struct brep_specific*)stp->st_specific;
+    brep_specific_delete(bs);
 }
 
 
