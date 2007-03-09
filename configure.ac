@@ -1298,10 +1298,14 @@ dnl check if libtcl library links
 tcl_link_works=no
 LIBTCL=""
 AC_CHECK_LIB(tcl8.6, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.6",
-    [AC_CHECK_LIB(tcl8.5, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.5",
-	[AC_CHECK_LIB(tcl8.4, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.4",
-	    [AC_CHECK_LIB(tcl84, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl84",
-		[AC_CHECK_LIB(tcl, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl")]
+    [AC_CHECK_LIB(tcl86, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl86",
+	[AC_CHECK_LIB(tcl8.5, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.5",
+	    [AC_CHECK_LIB(tcl85, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl85",
+		[AC_CHECK_LIB(tcl8.4, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.4",
+		    [AC_CHECK_LIB(tcl84, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl84",
+			[AC_CHECK_LIB(tcl, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl")]
+		    )]
+		)]
 	    )]
 	)]
     )]
@@ -1311,10 +1315,14 @@ dnl check if libtclstub library links
 tclstub_link_works=no
 LIBTCLSTUB=""
 AC_CHECK_LIB(tclstub8.6, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.6",
-    [AC_CHECK_LIB(tclstub8.5, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.5",
-	[AC_CHECK_LIB(tclstub8.4, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.4",
-	    [AC_CHECK_LIB(tclstub84, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub84",
-		[AC_CHECK_LIB(tclstub, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub")]
+    [AC_CHECK_LIB(tclstub86, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub86",
+	[AC_CHECK_LIB(tclstub8.5, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.5",
+	    [AC_CHECK_LIB(tclstub85, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub85",
+		[AC_CHECK_LIB(tclstub8.4, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.4",
+		    [AC_CHECK_LIB(tclstub84, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub84",
+			[AC_CHECK_LIB(tclstub, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub")]
+		    )]
+		)]
 	    )]
 	)]
     )]
@@ -1324,9 +1332,15 @@ dnl check if libtk library links
 tk_link_works=no
 LIBTK=""
 AC_CHECK_LIB(tk8.6, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.6",
-    [AC_CHECK_LIB(tk8.5, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.5",
-	[AC_CHECK_LIB(tk8.4, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.4",
-	    [AC_CHECK_LIB(tk, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk")]
+    [AC_CHECK_LIB(tk86, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk86",
+	[AC_CHECK_LIB(tk8.5, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.5",
+	    [AC_CHECK_LIB(tk85, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk85",
+		[AC_CHECK_LIB(tk8.4, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.4",
+		    [AC_CHECK_LIB(tk84, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk84",
+			[AC_CHECK_LIB(tk, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk")]
+		    )]
+		)]
+	    )]
 	)]
     )]
 )
@@ -1337,10 +1351,14 @@ LIBTKSTUB=""
 PRELIBS="$LIBS"
 LIBS="$LIBS $LIBTCLSTUB"
 AC_CHECK_LIB(tkstub8.6, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.6",
-    [AC_CHECK_LIB(tkstub8.5, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.5",
-	[AC_CHECK_LIB(tkstub8.4, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.4",
-	    [AC_CHECK_LIB(tkstub84, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub84",
-		[AC_CHECK_LIB(tkstub, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub")]
+    [AC_CHECK_LIB(tkstub86, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub86",
+	[AC_CHECK_LIB(tkstub8.5, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.5",
+	    [AC_CHECK_LIB(tkstub85, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub85",
+		[AC_CHECK_LIB(tkstub8.4, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.4",
+		    [AC_CHECK_LIB(tkstub84, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub84",
+			[AC_CHECK_LIB(tkstub, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub")]
+		    )]
+		)]
 	    )]
 	)]
     )]
@@ -1351,9 +1369,11 @@ dnl check if libitcl library links
 itcl_link_works=no
 LIBITCL=""
 AC_CHECK_LIB(itcl3.3, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.3",
-    [AC_CHECK_LIB(itcl3.2, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.2",
-	[AC_CHECK_LIB(itcl32, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl32",
-	    [AC_CHECK_LIB(itcl, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl")]
+    [AC_CHECK_LIB(itcl33, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl33",
+	[AC_CHECK_LIB(itcl3.2, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.2",
+	    [AC_CHECK_LIB(itcl32, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl32",
+		[AC_CHECK_LIB(itcl, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl")]
+	    )]
 	)]
     )]
 )
@@ -1362,9 +1382,11 @@ dnl check if libitk library links
 itk_link_works=no
 LIBITK=""
 AC_CHECK_LIB(itk3.3, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.3",
-    [AC_CHECK_LIB(itk3.2, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.2",
-	[AC_CHECK_LIB(itk32, Itk_Init, itk_link_works=yes ; LIBITK="-litk32",
-	    [AC_CHECK_LIB(itk, Itk_Init, itk_link_works=yes ; LIBITK="-litk")]
+    [AC_CHECK_LIB(itk33, Itk_Init, itk_link_works=yes ; LIBITK="-litk33",
+	[AC_CHECK_LIB(itk3.2, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.2",
+	    [AC_CHECK_LIB(itk32, Itk_Init, itk_link_works=yes ; LIBITK="-litk32",
+		[AC_CHECK_LIB(itk, Itk_Init, itk_link_works=yes ; LIBITK="-litk")]
+	    )]
 	)]
     )]
 )
@@ -2496,13 +2518,19 @@ TCL=""
 TCLSTUB=""
 TCL_CPPFLAGS=""
 TCL_VERSION="8.5"
+case $host_os in
+     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd*|*sunos4*)
+	 # some OS's don't like dots in the lib name
+	 TCL_VERSION="`echo ${TCL_VERSION} | tr -d .`"
+	 ;;
+esac
 if test "x$build_brlcad_tcl" = "xyes" ; then
     AC_MSG_RESULT(yes)
     case $host_os in
 	 darwin*)
 	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
 	     ;;
-	 *)
+    	 *)
 	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM}"
 	     ;;
     esac
@@ -2601,6 +2629,12 @@ TK=""
 TKSTUB=""
 TK_CPPFLAGS=""
 TK_VERSION="8.5"
+case $host_os in
+     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd*|*sunos4*)
+	 # some OS's don't like dots in the lib name
+	 TK_VERSION="`echo ${TK_VERSION} | tr -d .`"
+	 ;;
+esac
 if test "x$build_brlcad_tk" = "xyes" ; then
     AC_MSG_RESULT(yes)
     TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION} $LIBXSS"
@@ -2688,6 +2722,12 @@ ITK=""
 ITCL_CPPFLAGS=""
 ITK_CPPFLAGS=""
 ITCL_VERSION=3.3
+case $host_os in
+     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd*|*sunos4*)
+	 # some OS's don't like dots in the lib name
+	 ITCL_VERSION="`echo ${ITCL_VERSION} | tr -d .`"
+	 ;;
+esac
 AC_SUBST(ITCL_VERSION)
 if test "x$build_brlcad_itcl" = "xyes" ; then
     ITCL='${top_builddir}/src/other/incrTcl/libitcl.la'
@@ -2770,6 +2810,12 @@ AC_SUBST(IWIDGETS_VERSION)
 dnl *** BLT ***
 dnl figure out whether we need to build BLT
 BLT_VERSION="2.4"
+case $host_os in
+     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd*|*sunos4*)
+	 # some OS's don't like dots in the lib name
+	 BLT_VERSION="`echo ${BLT_VERSION} | tr -d .`"
+	 ;;
+esac
 AC_SUBST(BLT_VERSION)
 BLT_LIBRARY='${prefix}/lib/blt${BLT_VERSION}'
 AC_SUBST(BLT_LIBRARY)
@@ -2788,6 +2834,12 @@ fi
 dnl *** tkImg ***
 dnl figure out whether we need to build tkImg
 TKIMG_VERSION="1.3"
+case $host_os in
+     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd*|*sunos4*)
+	 # some OS's don't like dots in the lib name
+	 TKIMG_VERSION="`echo ${TKIMG_VERSION} | tr -d .`"
+	 ;;
+esac
 AC_SUBST(TKIMG_VERSION)
 AC_MSG_CHECKING(whether to build tkimg)
 if test ! "x$bc_build_tkimg" = "xno" ; then
