@@ -200,6 +200,8 @@ version_check ( ) {
 	elif [ $_min_minor -eq $_cur_minor ] ; then
 	    if [ $_min_patch -lt $_cur_patch ] ; then
 		return 0
+	    elif [ $_min_patch -eq $_cur_patch ] ; then
+		return 0
 	    fi
 	fi
     fi
