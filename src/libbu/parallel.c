@@ -44,6 +44,13 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 /* XXX header mess needs cleaned up */
 
 #include <stdio.h>
+
+#ifdef HAVE_STDLIB_H
+# include <stdlib.h>
+#elif defined(HAVE_MALLOC_H)
+# include <malloc.h>
+#endif
+
 #include <ctype.h>
 #include <math.h>
 #ifdef HAVE_SIGNAL_H
@@ -136,9 +143,6 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #endif
 #ifdef HAVE_SYS_SYSMP_H
 #  include <sys/sysmp.h> /* for sysmp() */
-#endif
-#ifdef HAVE_MALLOC_H
-#  include <malloc.h>
 #endif
 
 #ifdef HAVE_SYS_WAIT_H
