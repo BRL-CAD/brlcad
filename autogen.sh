@@ -857,6 +857,7 @@ initialize ( ) {
 	    SEARCH_DIRS="$SEARCH_DIRS -I $dir"
 	fi
     done
+    echo "done searching"
 
     ######################################
     # remove any previous build products #
@@ -889,11 +890,11 @@ _prev_path="`pwd`"
 # files from being clobbered even by autoreconf.
 recursive_protect
 
-# get ready to process
-initialize
-
 # start from where we started
 cd "$_prev_path"
+
+# get ready to process
+initialize
 
 
 ############################################
