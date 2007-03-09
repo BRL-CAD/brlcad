@@ -738,6 +738,12 @@ recursive_protect ( ) {
     # git 'r done, protect COPYING and INSTALL from being clobbered
     protect_from_clobber
 
+    if test -d autom4te.cache ; then
+	$VERBOSE_ECHO "Found an autom4te.cache directory, deleting it"
+	$VERBOSE_ECHO "rm -rf autom4te.cache"
+	rm -rf autom4te.cache
+    fi
+
     # find configure template
     _configure="`locate_configure_template`"
     if [ "x$_configure" = "x" ] ; then
