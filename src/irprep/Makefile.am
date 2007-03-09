@@ -35,12 +35,10 @@ firpass_LDADD = \
 
 irdisp_SOURCES = irdisp.c
 irdisp_CFLAGS = ${X_CFLAGS}
-irdisp_LDADD = \
-	${PKG}
 
 ir_sgi_SOURCES = ir-sgi.c
 ir_sgi_LDADD = \
-	${FB}
+	${BU}
 
 ir_X_SOURCES = ir-X.c
 ir_X_CFLAGS = ${X_CFLAGS}
@@ -83,6 +81,8 @@ EXTRA_DIST = \
 	see.c \
 	see2.1 \
 	see2.c
+
+DEPS=src/librt
 
 include $(top_srcdir)/misc/Makefile.defs
 
