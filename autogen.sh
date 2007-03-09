@@ -659,8 +659,7 @@ fi
 # ESCAPE_FUNCTION #
 ###################
 escape ( ) {
-    echo "$*" | sed 's/\$/[AG_D]/g' | sed 's/`/[AG_B]/g' | sed 's/"/[AG_Q]/g' | sed "s/'/[AG_S]/g"
-# | sed 's/[ ]/AG_S_AG/g'
+    echo "$*" | sed 's/\$/AG_D_SH/g' | sed 's/`/AG_B_SH/g' | sed 's/"/AG_Q_SH/g' | sed "s/'/AG_S_SH/g"
 }
 
 
@@ -668,7 +667,7 @@ escape ( ) {
 # UNESCAPE_FUNCTION #
 #####################
 unescape ( ) {
-    echo "$*" | sed "s/[AG_S]/'/g" | sed 's/[AG_Q]/"/g' | sed 's/[AG_B]/`/g' | sed 's/[AG_D]/$/g'
+    echo "$*" | sed "s/AG_S_SH/'/g" | sed 's/AG_Q_SH/"/g' | sed 's/AG_B_SH/`/g' | sed 's/AG_D_SH/$/g'
 }
 
 
