@@ -857,7 +857,6 @@ initialize ( ) {
 	    SEARCH_DIRS="$SEARCH_DIRS -I $dir"
 	fi
     done
-    echo "done searching"
 
     ######################################
     # remove any previous build products #
