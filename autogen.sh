@@ -659,7 +659,8 @@ fi
 # ESCAPE_FUNCTION #
 ###################
 escape ( ) {
-    echo "$*" | sed 's/\$/AUTOGEN_DOLLAR_AUTOGEN/g' | sed 's/`/AUTOGEN_BACKTICK_AUTOGEN/g' | sed 's/"/AUTOGEN_QUOTE_AUTOGEN/g' | sed "s/'/AUTOGEN_SQUOTE_AUTOGEN/g"
+    echo "$*" | sed 's/\$/[AG_D]/g' | sed 's/`/[AG_B]/g' | sed 's/"/[AG_Q]/g' | sed "s/'/[AG_S]/g"
+# | sed 's/[ ]/AG_S_AG/g'
 }
 
 
@@ -667,7 +668,7 @@ escape ( ) {
 # UNESCAPE_FUNCTION #
 #####################
 unescape ( ) {
-    echo "$*" | sed "s/AUTOGEN_SQUOTE_AUTOGEN/'/g" | sed 's/AUTOGEN_QUOTE_AUTOGEN/"/g' | sed 's/AUTOGEN_BACKTICK_AUTOGEN/`/g' | sed 's/AUTOGEN_DOLLAR_AUTOGEN/$/g'
+    echo "$*" | sed "s/[AG_S]/'/g" | sed 's/[AG_Q]/"/g' | sed 's/[AG_B]/`/g' | sed 's/[AG_D]/$/g'
 }
 
 
@@ -696,7 +697,9 @@ protect_from_clobber ( ) {
 	    if [ "x`echo \"$contents\"`" = "x`cat COPYING`" ] ; then
 		$VERBOSE_ECHO "Stashing an in-memory backup of COPYING"
 		stash="${COPYING_NAME}=\"`escape \"$contents\"`\""
+		contents=""
 		eval "$stash"
+		stash=""
 		eval "export $COPYING_NAME"
 	    fi
 	fi
@@ -712,12 +715,13 @@ protect_from_clobber ( ) {
 	    if [ "x`echo \"$contents\"`" = "x`cat INSTALL`" ] ; then
 		$VERBOSE_ECHO "Stashing an in-memory backup of INSTALL"
 		stash="${INSTALL_NAME}=\"`escape \"\$contents\"`\""
+		contents=""
 		eval "$stash"
+		stash=""
 		eval "export $INSTALL_NAME"
 	    fi
 	fi
     fi
-    stash=""
     contents=""
 }
 
