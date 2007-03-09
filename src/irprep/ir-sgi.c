@@ -48,6 +48,8 @@
 #include <math.h>
 #include <gl.h>
 
+#include "bu.h"
+
 #define MAXFIL 26		/*  Maximum number of char in file name.  */
 #define MAXPIX 512		/*  Maximum number of pixels is (512*512).  */
 #define MAXCOL 256		/*  Maximum number of colors.  */
