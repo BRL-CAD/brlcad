@@ -1,7 +1,5 @@
 # $Id$
 
-SUBDIRS = unix
-
 EXTRA_DIST = \
 	ChangeLog \
 	ChangeLog.2002 \
@@ -19,6 +17,12 @@ EXTRA_DIST = \
 	unix \
 	win \
 	xlib
+
+all-am:
+	cd unix && $(MAKE) $(AM_MAKEFLAGS) all
+
+clean-am:
+	cd unix && $(MAKE) $(AM_MAKEFLAGS) clean
 
 noprod:
 

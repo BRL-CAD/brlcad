@@ -1,7 +1,5 @@
 # $Id$
 
-SUBDIRS = unix
-
 EXTRA_DIST = \
 	ChangeLog \
 	ChangeLog.1999 \
@@ -23,6 +21,12 @@ EXTRA_DIST = \
 	tools \
 	unix \
 	win
+
+all-am:
+	cd unix && $(MAKE) $(AM_MAKEFLAGS) all
+
+clean-am:
+	cd unix && $(MAKE) $(AM_MAKEFLAGS) clean
 
 noprod:
 
