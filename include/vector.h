@@ -39,7 +39,7 @@ extern "C++" {
     dvec<LEN> madd(const dvec<LEN>& s, const dvec<LEN>& b);
     dvec<LEN> madd(const double s, const dvec<LEN>& b);
 
-    friend std::ostream& operator<< <>(std::ostream& out, const dvec<LEN>& v);
+    friend std::ostream& operator<<(std::ostream& out, const dvec<LEN>& v);
   private:
     struct vec_internal<LEN> data;
 
