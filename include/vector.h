@@ -43,7 +43,7 @@ extern "C++" {
   private:
     struct vec_internal<LEN> data;
 
-    dvec(const struct vec_internal<LEN>& d);
+    dvec(const vec_internal<LEN>& d);
   };
 
   // use this to create 16-byte aligned memory on platforms that support it

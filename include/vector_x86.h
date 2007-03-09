@@ -52,7 +52,7 @@ inline dvec<LEN>::dvec(const dvec<LEN>& p)
 }
 
 template<int LEN>
-inline dvec<LEN>::dvec(const struct vec_internal<LEN>& d)
+inline dvec<LEN>::dvec(const vec_internal<LEN>& d)
 {
   for (int i = 0; i < LEN/2; i++) data.v[i] = d.v[i];
 }
