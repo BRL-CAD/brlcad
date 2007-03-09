@@ -214,6 +214,7 @@ set mged_help_data(regions)	{{file object(s)}	{make ascii summary of regions}}
 set mged_help_data(reid)	{{assembly regionID}	{assign region IDs to all regions under some assembly/combination starting with the given region ID number}}
 set mged_help_data(release)	{{[name]}	{release display processor}}
 set mged_help_data(remat)	{{assembly GIFTmater}	{assign a given material ID number to all regions under some assembly/combination}}
+set mged_help_data(reset)	{{}	{Reset view such that all solids can be seen}}
 set mged_help_data(rfarb)	{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thickness}}
 set mged_help_data(rm)		$helplib_data(wdb_remove)
 set mged_help_data(rmater)	{{filename}	{read combination materials from filename}}
