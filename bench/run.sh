@@ -719,14 +719,23 @@ EOF
 	bench_hypersample="`expr \( \( $bench_hypersample + 1 \) / 2 \) - 1`"
     done
 
-    # hopefully the last run is a stable representative of the performance
+    # the last run should be a relatively stable representative of the performance
 
     if test -f gmon.out; then mv -f gmon.out gmon.${bench_testname}.out; fi
     ${CMP} ${PIX}/${bench_testname}.pix ${bench_testname}.pix
-    if test $? = 0 ; then
+    ret=$?
+    if test $ret = 0 ; then
+	# perfect match
 	echo ${bench_testname}.pix:  answers are RIGHT
-    else
+    elif test $ret = 1 ; then
+	# off by one, acceptable
+	echo ${bench_testname}.pix:  answers are RIGHT
+    elif test $ret = 2 ; then
+	# off by many, unacceptable
 	echo ${bench_testname}.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
+    else
+	# some other failure
+	echo ${bench_testname}.pix:  BENCHMARK COMPARISON FAILURE
     fi
 
     if test "x$DEBUG" != "x" ; then
