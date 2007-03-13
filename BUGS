@@ -15,6 +15,24 @@ on-going issues.
 Recent Bugs
 -----------
 
+* libfb cannot utilize standard output/error "device" files without
+  path trickery.  it recognizes the /dev/ prefix and presumes it's a
+  libfb device instead of a filesystem device.
+
+   OK: rt -F/./dev/stdout
+  BAD: rt -F/dev/stdout
+
+* libfb cannot open a file descriptor when piping/redirecting output.
+
+   OK: rt -F/./dev/stdout moss.g all.g
+  BAD: rt -F/./dev/stdout moss.g all.g > test.pix
+
+* ray-tracers assume a seekable output stream.  libfb reports numerous
+  fseek errors and outputs slightly corrupted pix data.
+
+   OK: rt -o test.pix moss.g all.g && pix-png test.pix > test.png && rm -f test.pix
+  BAD: rt -o /dev/stdout moss.g all.g | pix-png > test.png
+
 * running any of the various mged commands (e.g. clicking the raytrace
   button many times quickly, or running rtarea on a large model) that
   output a lot of data will hang mged (idle cpu utilization).
