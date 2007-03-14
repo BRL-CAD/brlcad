@@ -1,18 +1,22 @@
-/*	$NetBSD: tgoto.c,v 1.25 2006/08/27 08:47:40 christos Exp $	*/
-
 /*
+ * This code contains changes by
+ *      Gunnar Ritter, Freiburg i. Br., Germany, 2002. All rights reserved.
+ *
+ * The conditions and no-warranty notice below apply to these changes.
+ *
+ *
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 1. Redistributions of source code must retain the above copyright
+ *  * Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ *  * Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ *  * Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -29,26 +33,23 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
-#else
-/* __RCSID("$NetBSD: tgoto.c,v 1.25 2006/08/27 08:47:40 christos Exp $"); */
+#ifndef	lint
+#ifdef	DOSCCS
+static char *sccsid = "@(#)tgoto.c	1.3 (gritter) 11/23/04";
 #endif
-#endif /* not lint */
+#endif
 
-#include <assert.h>
-#include <errno.h>
-#include <termcap.h>
-#include <termcap_private.h>
-#include <stdlib.h>
-#include <stdio.h>
+/* from tgoto.c	5.1 (Berkeley) 6/5/85 */
+
+#include "termcap.h"
+
+#define	CTRL(c)	(c & 037)
+
+#define MAXRETURNSIZE 64
+
+#ifdef	__STDC__
 #include <string.h>
-
-#define	CTRL(c)	((c) & 037)
-
-#define MAXRETURNSIZE 128
+#endif
 
 char	*UP;
 char	*BC;
@@ -78,107 +79,60 @@ char	*BC;
  * all other characters are ``self-inserting''.
  */
 char *
-tgoto(const char *CM, int destcol, int destline)
+tgoto(char *CM, int destcol, int destline)
 {
 	static char result[MAXRETURNSIZE];
-
-	(void)t_goto(NULL, CM, destcol, destline, result, sizeof(result));
-	return result;
-}
-
-/*
- * New interface.  Functionally the same as tgoto but uses the tinfo struct
- * to set UP and BC.  The arg buffer is filled with the result string, limit
- * defines the maximum number of chars allowed in buffer.  The function
- * returns 0 on success, -1 otherwise, the result string contains an error
- * string on failure.
- */
-int
-t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
-    char *buffer, size_t limit)
-{
-	char added[32];
-	const char *cp = CM;
-	char *dp = buffer;
-	int c;
+	static char added[10];
+	char *cp = CM;
+	register char *dp = result;
+	register int c;
 	int oncol = 0;
-	int which = destline;
-	char *buf_lim = buffer + limit;
-	char dig_buf[64];
-	char *ap = added;
-	char *eap = &added[sizeof(added) / sizeof(added[0])];
-	int k;
-
-	/* CM is checked below */
-	_DIAGASSERT(buffer != NULL);
-
-	if (info != NULL) {
-		if (!UP)
-			UP = info->up;
-		if (!BC)
-			BC = info->bc;
-	}
+	register int which = destline;
 
 	if (cp == 0) {
-		(void)strlcpy(buffer, "no fmt", limit);
-		errno = EINVAL;
-		return -1;
+toohard:
+		/*
+		 * ``We don't do that under BOZO's big top''
+		 */
+		return ("OOPS");
 	}
-	added[0] = '\0';
-	while ((c = *cp++) != '\0') {
-		if (c != '%' || ((c = *cp++) == '%')) {
+	added[0] = 0;
+	while (c = *cp++) {
+		if (c != '%') {
 			*dp++ = c;
-			if (dp >= buf_lim) {
-				(void)strlcpy(buffer, "no space copying %",
-				    limit);
-				errno = E2BIG;
-				return -1;
-			}
 			continue;
 		}
-		switch (c) {
+		switch (c = *cp++) {
 
 #ifdef CM_N
 		case 'n':
 			destcol ^= 0140;
 			destline ^= 0140;
-			/* flip oncol here so it doesn't actually change */
-			oncol = 1 - oncol;
-			break;
+			goto setwhich;
 #endif
 
-		case '3':
-		case '2':
 		case 'd':
-			/* Generate digits into temp buffer in reverse order */
-			k = 0;
-			do
-				dig_buf[k++] = which % 10 | '0';
-			while ((which /= 10) != 0);
+			if (which < 10)
+				goto one;
+			if (which < 100)
+				goto two;
+			/* fall into... */
 
-			if (c != 'd') {
-				c -= '0';
-				if (k > c) {
-					(void)snprintf(buffer, limit,
-					    "digit buf overflow %d %d",
-					    k, c);
-					errno = EINVAL;
-					return -1;
-				}
-				while (k < c)
-					dig_buf[k++] = '0';
-			}
+		case '3':
+			*dp++ = (which / 100) | '0';
+			which %= 100;
+			/* fall into... */
 
-			if (dp + k >= buf_lim) {
-				(void)strlcpy(buffer, "digit buf copy", limit);
-				errno = E2BIG;
-				return -1;
-			}
-			/* then unwind into callers buffer */
-			do
-				*dp++ = dig_buf[--k];
-			while (k);
-			break;
+		case '2':
+two:	
+			*dp++ = which / 10 | '0';
+one:
+			*dp++ = which % 10 | '0';
+swap:
+			oncol = 1 - oncol;
+setwhich:
+			which = oncol ? destcol : destline;
+			continue;
 
 #ifdef CM_GT
 		case '>':
@@ -191,9 +145,10 @@ t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
 
 		case '+':
 			which += *cp++;
-			/* FALLTHROUGH */
+			/* fall into... */
 
 		case '.':
+/* casedot: */
 			/*
 			 * This code is worth scratching your head at for a
 			 * while.  The idea is that various weird things can
@@ -213,42 +168,23 @@ t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
 			 * because some terminals use ^I for other things,
 			 * like nondestructive space.
 			 */
-			if (which == 0 || which == CTRL('d') || 
-			    /* which == '\t' || */ which == '\n') {
-				if (oncol || UP) { /* Assumption: backspace works */
-					char *add = oncol ? (BC ? BC : "\b") : UP;
-
+			if (which == 0 || which == CTRL('d') || /* which == '\t' || */ which == '\n') {
+				if (oncol || UP) /* Assumption: backspace works */
 					/*
 					 * Loop needed because newline happens
 					 * to be the successor of tab.
 					 */
 					do {
-						char *as = add;
-
-						while ((*ap++ = *as++) != '\0')
-							if (ap >= eap) {
-								(void)strlcpy(
-								    buffer,
-								    "add ovfl",
-								    limit);
-								errno = E2BIG;
-								return -1;
-							}
+						strcat(added, oncol ? (BC ? BC : "\b") : UP);
 						which++;
 					} while (which == '\n');
-				}
 			}
 			*dp++ = which;
-			if (dp >= buf_lim) {
-				(void)strlcpy(buffer, "dot copy", limit);
-				errno = E2BIG;
-				return -1;
-			}
-			break;
+			goto swap;
 
 		case 'r':
-			oncol = 0;
-			break;
+			oncol = 1;
+			goto setwhich;
 
 		case 'i':
 			destcol++;
@@ -256,37 +192,26 @@ t_goto(struct tinfo *info, const char *CM, int destcol, int destline,
 			which++;
 			continue;
 
+		case '%':
+			*dp++ = c;
+			continue;
+
 #ifdef CM_B
 		case 'B':
-			which = (which / 10 << 4) + which % 10;
+			which = (which/10 << 4) + which%10;
 			continue;
 #endif
 
 #ifdef CM_D
 		case 'D':
-			which = which - 2 * (which % 16);
+			which = which - 2 * (which%16);
 			continue;
 #endif
 
 		default:
-			(void)snprintf(buffer, limit, "bad format `%c'", c);
-			errno = EINVAL;
-			return -1;
+			goto toohard;
 		}
-
-		/* flip to other number... */
-		oncol = 1 - oncol;
-		which = oncol ? destcol : destline;
 	}
-	if (dp + (ap - added) >= buf_lim) {
-		(void)strlcpy(buffer, "big added", limit);
-		errno = E2BIG;
-		return -1;
-	}
-
-	*ap = '\0';
-	for (ap = added; (*dp++ = *ap++) != '\0';)
-		continue;
-
-	return 0;
+	strcpy(dp, added);
+	return (result);
 }
