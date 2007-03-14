@@ -34,6 +34,7 @@ the terms of each individual license as well as BRL-CAD's COPYING file
 for more details.
 
 * fixed jove/termcap issues on Mac OS X - Sean Morrison
+* updated bundled libtermcap to NetBSD version 0.6 - Sean Morrison
 * increased output precision on mged 'analyze' command - Sean Morrison
 * prevent mged shutdown on DSP objects with no data - Sean Morrison
 * integration into the Arch Linux packaging system - Loui Chang
