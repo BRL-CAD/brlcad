@@ -114,20 +114,9 @@ vfont_get(char *font)
 		return(VFONT_NULL);
 	}
 
-	if( (vfp = (struct vfont *)bu_malloc(sizeof(struct vfont), "vfont")) == VFONT_NULL )  {
-		fprintf(stderr,"vfont_get(%s):  malloc failure 1\n", fname );
-		fclose(fp);
-		return(VFONT_NULL);
-	}
-
 	/* Read in the bit maps */
-	if( (vfp->vf_bits = (char *)bu_malloc(size, "vfont bits")) == (char *)0 )  {
-		fprintf(stderr,"vfont_get(%s):  malloc failure 2 (%d)\n",
-			fname, size);
-		fclose(fp);
-		bu_free( (char *)vfp, "vfont");
-		return(VFONT_NULL);
-	}
+	vfp = (struct vfont *)bu_malloc(sizeof(struct vfont), "vfont");
+	vfp->vf_bits = (char *)bu_malloc(size, "vfont bits");
 	if( fread( vfp->vf_bits, size, 1, fp ) != 1 )  {
 		fprintf(stderr,"vfont_get(%s):  bitmap read error\n", fname );
 		fclose(fp);

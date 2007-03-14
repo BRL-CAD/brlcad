@@ -535,10 +535,7 @@ rt_get_bitv(struct rt_i *rtip, struct resource *res)
 	size = rtip->rti_bv_bytes;
 	size = (size+sizeof(long)-1) & ~(sizeof(long)-1);
 	bytes = bu_malloc_len_roundup(16*size);
-	if( (cp = bu_malloc(bytes, "rt_get_bitv")) == (char *)0 )  {
-		bu_log("rt_get_bitv: malloc failure\n");
-		exit(17);
-	}
+	cp = bu_malloc(bytes, "rt_get_bitv");
 	while( bytes >= size )  {
 		((union bitv_elem *)cp)->be_next = res->re_bitv;
 		res->re_bitv = (union bitv_elem *)cp;
