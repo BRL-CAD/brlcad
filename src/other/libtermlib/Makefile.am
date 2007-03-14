@@ -11,6 +11,8 @@ libtermlib_la_SOURCES = \
 	tgoto.c \
 	tputs.c
 
+EXTRA_DIST = termcap.src
+
 MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
