@@ -9,10 +9,11 @@
 # public domain Crypt Breaker's Workbench software.
 ###
 
-AC_INIT(enigma.c)
+AC_INIT(Enigma, 0.0.2, [http://brlcad.org], enigma)
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(enigma, 0.0.2)
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_SRCDIR([enigma.c])
+AM_INIT_AUTOMAKE([1.6 dist-zip dist-bzip2])
+AM_CONFIG_HEADER([config.h])
 
 # check programs
 AC_PROG_CC
