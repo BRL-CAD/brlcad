@@ -16,8 +16,21 @@ libtermlib_la_SOURCES = \
 	tputs.c \
 	tputws.c
 
+termcapdir = $(BRLCAD_DATA)/etc
+termcap_DATA = termcap
+
 dist_man_MANS = termcap.3
-EXTRA_DIST = termcap.src
+
+termcap: termcap.src
+	cp $(top_srcdir)/src/other/libtermlib/termcap.src termcap
+
+EXTRA_DIST = \
+	termcap \
+	termcap.src
+
+BUILT_SOURCES = termcap
+
+DISTCLEANFILES = $(BUILT_SOURCES)
 
 MAINTAINERCLEANFILES = Makefile.in
 
