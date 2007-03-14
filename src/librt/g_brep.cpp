@@ -91,6 +91,8 @@ brep_bv_new()
     brep_bv* bv = (brep_bv*)bu_malloc(sizeof(brep_bv), "brep_bv_new");
     BU_LIST_INIT(&bv->l);
     BU_LIST_INIT(&bv->children);
+
+    return bv;
 }
 
 brep_bv*
@@ -99,6 +101,8 @@ brep_bv_new(point_t min, point_t max)
     brep_bv* bv = brep_bv_new();
     VMOVE(bv->min, min);
     VMOVE(bv->max, max);
+
+    return bv;
 }
 
 void 
@@ -157,7 +161,12 @@ brep_surface_bbox(const ON_Surface* surf, const ON_Interval& u, const ON_Interva
 	!surf->EvPoint(u.Min(),v.Max(),corners[3])) {
 	bu_bomb("Could not evaluate a point on surface"); // XXX fix this message
     }
+
     point_t min, max;
+
+    VSETALL(min, MAX_FASTF)
+    VSETALL(max, -MAX_FASTF)
+
     VMINMAX(min,max,((double*)corners[0]));
     VMINMAX(min,max,((double*)corners[1]));
     VMINMAX(min,max,((double*)corners[2]));
