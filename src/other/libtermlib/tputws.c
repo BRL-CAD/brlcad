@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.23 2005/05/15 21:11:13 christos Exp $	*/
+/*	$NetBSD: tputws.c,v 1.1 2005/05/15 21:11:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tputs.c,v 1.23 2005/05/15 21:11:13 christos Exp $");
+__RCSID("$NetBSD: tputws.c,v 1.1 2005/05/15 21:11:13 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <assert.h>
-#include <ctype.h>
+#include <wctype.h>
+#include <wchar.h>
 #include <termcap.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,22 +48,18 @@ __RCSID("$NetBSD: tputs.c,v 1.23 2005/05/15 21:11:13 christos Exp $");
 #undef ospeed
 
 /* internal functions */
-int _tputs_convert(const char **, int);
+int _tputws_convert(const wchar_t **, int);
 
 /*
  * The following array gives the number of tens of milliseconds per
  * character for each speed as returned by gtty.  Thus since 300
  * baud returns a 7, there are 33.3 milliseconds per char at 300 baud.
  */
-const short __tmspc10[TMSPC10SIZE] = {
-	0, 2000, 1333, 909, 743, 666, 500, 333, 166, 83, 55, 41, 20, 10, 5
-};
-
-short	ospeed;
-char	PC;
+extern short	ospeed;
+extern char	PC;
 
 int
-_tputs_convert(const char **ptr, int affcnt)
+_tputws_convert(const wchar_t **ptr, int affcnt)
 {
 	int i = 0;
 
@@ -72,20 +69,20 @@ _tputs_convert(const char **ptr, int affcnt)
 	/*
 	 * Convert the number representing the delay.
 	 */
-	if (isdigit(*(const unsigned char *)(*ptr))) {
+	if (iswdigit(**ptr)) {
 		do
 			i = i * 10 + *(*ptr)++ - '0';
-		while (isdigit(*(const unsigned char *)(*ptr)));
+		while (iswdigit(**ptr));
 	}
 	i *= 10;
 	if (*(*ptr) == '.') {
 		(*ptr)++;
-		if (isdigit(*(const unsigned char *)(*ptr)))
+		if (iswdigit(**ptr))
 			i += *(*ptr) - '0';
 		/*
 		 * Only one digit to the right of the decimal point.
 		 */
-		while (isdigit(*(const unsigned char *)(*ptr)))
+		while (iswdigit(**ptr))
 			(*ptr)++;
 	}
 
@@ -99,57 +96,9 @@ _tputs_convert(const char **ptr, int affcnt)
 	return i;
 }
 
-/*
- * Put the character string cp out, with padding.
- * The number of affected lines is affcnt, and the routine
- * used to output one character is outc.
- */
-void
-tputs(const char *cp, int affcnt, int (*outc)(int))
-{
-	int i = 0;
-	int mspc10;
-
-	_DIAGASSERT(outc != 0);
-
-	if (cp == 0)
-		return;
-
-	/* scan and convert delay digits (if any) */
-	i = _tputs_convert(&cp, affcnt);
-
-	/*
-	 * The guts of the string.
-	 */
-	while (*cp)
-		(void)(*outc)(*cp++);
-
-	/*
-	 * If no delay needed, or output speed is
-	 * not comprehensible, then don't try to delay.
-	 */
-	if (i == 0)
-		return;
-	if (ospeed <= 0 || ospeed >= TMSPC10SIZE)
-		return;
-
-	/*
-	 * Round up by a half a character frame,
-	 * and then do the delay.
-	 * Too bad there are no user program accessible programmed delays.
-	 * Transmitting pad characters slows many
-	 * terminals down and also loads the system.
-	 */
-	mspc10 = __tmspc10[ospeed];
-	i += mspc10 / 2;
-	for (i /= mspc10; i > 0; i--)
-		(void)(*outc)(PC);
-}
-
-
 int
-t_puts(struct tinfo *info, const char *cp, int affcnt,
-    void (*outc)(char, void *), void *args)
+t_putws(struct tinfo *info, const wchar_t *cp, int affcnt,
+    void (*outc)(wchar_t, void *), void *args)
 {
 	int i = 0;
 	size_t limit;
@@ -181,7 +130,7 @@ t_puts(struct tinfo *info, const char *cp, int affcnt,
 		return -1;
 
 	/* scan and convert delay digits (if any) */
-	i = _tputs_convert(&cp, affcnt);
+	i = _tputws_convert(&cp, affcnt);
 
 	/*
 	 * The guts of the string.

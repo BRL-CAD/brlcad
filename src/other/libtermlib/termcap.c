@@ -1,22 +1,18 @@
+/*	$NetBSD: termcap.c,v 1.54 2006/12/19 02:02:03 uwe Exp $	*/
+
 /*
- * This code contains changes by
- *      Gunnar Ritter, Freiburg i. Br., Germany, 2002. All rights reserved.
- *
- * The conditions and no-warranty notice below apply to these changes.
- *
- *
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- *  * Redistributions of source code must retain the above copyright
+ * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *  * Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -33,29 +29,30 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	lint
-#ifdef	DOSCCS
-static char *sccsid = "@(#)termcap.c	1.7 (gritter) 11/23/04";
-#endif
-#endif
-
-/* from termcap.c	5.1 (Berkeley) 6/5/85 */
-
-#if 0	/* GR */
-#define	TCBUFSIZE		1024
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-#include "libterm.h"
+__RCSID("$NetBSD: termcap.c,v 1.54 2006/12/19 02:02:03 uwe Exp $");
 #endif
-#define	E_TERMCAP	"/etc/termcap"
-#define MAXHOP		32	/* max number of tc= indirections */
+#endif /* not lint */
 
-#include <ctype.h>
-#include <string.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include <sys/param.h>
+#include <assert.h>
+#include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <termcap.h>
+#include <errno.h>
+#include "pathnames.h"
+#include "termcap_private.h"
+
+#define	PBUFSIZ		MAXPATHLEN	/* max length of filename path */
+#define	PVECSIZ		32		/* max number of names in path */
+#define CAPSIZ		256		/* max capability size */
 
 /*
  * termcap - routines for dealing with the terminal capability data base
@@ -71,202 +68,246 @@ static char *sccsid = "@(#)termcap.c	1.7 (gritter) 11/23/04";
  * doesn't, and because living w/o it is not hard.
  */
 
-static	char *tbuf;
-static	int hopcount;	/* detect infinite loops in termcap, init 0 */
-
-static int tnamatch(const char *);
-static int tnchktc(void);
-static char *tskip(register const char *);
-static char *tdecode(register char *, char **);
+static char *tbuf = NULL;		/* termcap buffer */
+static struct tinfo *fbuf = NULL;	/* untruncated termcap buffer */
 
 /*
- * Tnamatch deals with name matching.  The first field of the termcap
- * entry is a sequence of names separated by |'s, so we compare
- * against each such name.  The normal : terminator after the last
- * name (before the first field) stops us.
+ * Set the termcap entry to the arbitrary string passed in, this can
+ * be used to provide a "dummy" termcap entry if a real one does not
+ * exist.  This function will malloc the buffer and space for the
+ * string.  If an error occurs return -1 otherwise return 0.
  */
-static int
-tnamatch(const char *np)
+int
+t_setinfo(struct tinfo **bp, const char *entry)
 {
-	register const char *Np;
-	register char *Bp;
+	char capability[CAPSIZ], *cap_ptr;
+	size_t limit;
 
-	Bp = tbuf;
-	if (*Bp == '#')
-		return(0);
-	for (;;) {
-		for (Np = np; *Np && *Bp == *Np; Bp++, Np++)
-			continue;
-		if (*Np == 0 && (*Bp == '|' || *Bp == ':' || *Bp == 0))
-			return (1);
-		while (*Bp && *Bp != ':' && *Bp != '|')
-			Bp++;
-		if (*Bp == 0 || *Bp == ':')
-			return (0);
-		Bp++;
-	}
+	_DIAGASSERT(bp != NULL);
+	_DIAGASSERT(entry != NULL);
+
+	if ((*bp = malloc(sizeof(struct tinfo))) == NULL)
+		return -1;
+
+	if (((*bp)->info = (char *) malloc(strlen(entry) + 1)) == NULL)
+		return -1;
+
+	strcpy((*bp)->info, entry);
+
+	cap_ptr = capability;
+	limit = sizeof(capability) - 1;
+	(*bp)->up = t_getstr(*bp, "up", &cap_ptr, &limit);
+	if ((*bp)->up)
+		(*bp)->up = strdup((*bp)->up);
+	cap_ptr = capability;
+	limit = sizeof(capability) - 1;
+	(*bp)->bc = t_getstr(*bp, "bc", &cap_ptr, &limit);
+	if ((*bp)->bc)
+		(*bp)->bc = strdup((*bp)->bc);
+	(*bp)->tbuf = NULL;
+
+	return 0;
 }
 
 /*
- * tnchktc: check the last entry, see if it's tc=xxx. If so,
- * recursively find xxx and append that entry (minus the names)
- * to take the place of the tc=xxx entry. This allows termcap
- * entries to say "like an HP2621 but doesn't turn on the labels".
- * Note that this works because of the left to right scan.
+ * Get an extended entry for the terminal name.  This differs from
+ * tgetent only in a) the buffer is malloc'ed for the caller and
+ * b) the termcap entry is not truncated to 1023 characters.
  */
-static int
-tnchktc(void)
-{
-	register char *p, *q;
-	char tcname[16];	/* name of similar terminal */
-	char tcbuf[TCBUFSIZE];
-	char rmbuf[TCBUFSIZE];
-	char *holdtbuf = tbuf, *holdtc;
-	int l;
 
-	p = tbuf;
-	while (*p) {
-		holdtc = p = tskip(p);
-		if (!p)
-		  return (0);
-		if (!*p)
-			break;
-		if (*p++ != 't' || *p == 0 || *p++ != 'c')
-			continue;
-		if (*p++ != '=') {
-		bad:	write(2, "Bad termcap entry\n", 18);
-			return (0);
+int
+t_getent(struct tinfo **bp, const char *name)
+{
+	char  *p;
+	char  *cp;
+	char **fname;
+	char  *home;
+	int    i, did_getset;
+	size_t limit;
+	char   pathbuf[PBUFSIZ];	/* holds raw path of filenames */
+	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
+	char  *termpath;
+	char  capability[CAPSIZ], *cap_ptr;
+	int error;
+
+
+	_DIAGASSERT(bp != NULL);
+	_DIAGASSERT(name != NULL);
+
+	if ((*bp = malloc(sizeof(struct tinfo))) == NULL)
+		return 0;
+
+	fname = pathvec;
+	p = pathbuf;
+	cp = getenv("TERMCAP");
+	/*
+	 * TERMCAP can have one of two things in it. It can be the
+	 * name of a file to use instead of
+	 * /usr/share/misc/termcap. In this case it better start with
+	 * a "/". Or it can be an entry to use so we don't have to
+	 * read the file. In this case cgetset() withh crunch out the
+	 * newlines.  If TERMCAP does not hold a file name then a path
+	 * of names is searched instead.  The path is found in the
+	 * TERMPATH variable, or becomes _PATH_DEF ("$HOME/.termcap
+	 * /usr/share/misc/termcap") if no TERMPATH exists.
+	 */
+	if (!cp || *cp != '/') {	/* no TERMCAP or it holds an entry */
+		if ((termpath = getenv("TERMPATH")) != NULL)
+			(void)strlcpy(pathbuf, termpath, sizeof(pathbuf));
+		else {
+			if ((home = getenv("HOME")) != NULL) {
+				/* set up default */
+				p += strlen(home);	/* path, looking in */
+				(void)strlcpy(pathbuf, home,
+				    sizeof(pathbuf)); /* $HOME first */
+				if ((size_t)(p - pathbuf) < sizeof(pathbuf) - 1)
+				    *p++ = '/';
+			}	/* if no $HOME look in current directory */
+			if ((size_t)(p - pathbuf) < sizeof(pathbuf) - 1) {
+			    (void)strlcpy(p, _PATH_DEF,
+				sizeof(pathbuf) - (p - pathbuf));
+			}
 		}
-		for (q = tcname; *p && *p != ':'; p++) {
-			if (q >= &tcname[sizeof tcname - 1])
-				goto bad;
-			*q++ = *p;
-		}
-		*q = '\0';
-		if (++hopcount > MAXHOP) {
-			write(2, "Infinite tc= loop\n", 18);
-			return (0);
-		}
-		if (tgetent(tcbuf, tcname) != 1) {
-			hopcount = 0;		/* unwind recursion */
-			return(0);
-		}
-		hopcount--;
-		tbuf = holdtbuf;
-		strcpy(rmbuf, &p[1]);
-		for (q=tcbuf; *q != ':'; q++)
-			;
-		l = holdtc - holdtbuf + strlen(rmbuf) + strlen(q);
-		if (l > TCBUFSIZE) {
-			write(2, "Termcap entry too long\n", 23);
-			break;
-		}
-		q++;
-		for (p = holdtc; *q; q++)
-			*p++ = *q;
-		strcpy(p, rmbuf);
-		p = holdtc;
 	}
-	return(1);
+	else {
+		/* user-defined name in TERMCAP; still can be tokenized */
+		(void)strlcpy(pathbuf, cp, sizeof(pathbuf));
+	}
+
+	*fname++ = pathbuf;	/* tokenize path into vector of names */
+	while (*++p)
+		if (*p == ' ' || *p == ':') {
+			*p = '\0';
+			while (*++p)
+				if (*p != ' ' && *p != ':')
+					break;
+			if (*p == '\0')
+				break;
+			*fname++ = p;
+			if (fname >= pathvec + PVECSIZ) {
+				fname--;
+				break;
+			}
+		}
+	*fname = NULL;			/* mark end of vector */
+
+	/*
+	 * try ignoring TERMCAP if it has a ZZ in it, we do this
+	 * because a TERMCAP with ZZ in it indicates the entry has been
+	 * exported by another program using the "old" interface, the
+	 * termcap entry has been truncated and ZZ points to an address
+	 * in the exporting programs memory space which is of no use
+	 * here - anyone who is exporting the termcap entry and then
+	 * reading it back again in the same program deserves to be
+	 * taken out, beaten up, dragged about, shot and then hurt some
+	 * more.
+	 */
+	did_getset = 0;
+	if (cp && *cp && *cp != '/' && strstr(cp, ":ZZ") == NULL) {
+		did_getset = 1;
+		if (cgetset(cp) < 0) {
+			error = -2;
+			goto out;
+		}
+	}
+
+	/*
+	 * XXX potential security hole here in a set-id program if the
+	 * user had setup name to be built from a path they can not
+	 * normally read.
+	 */
+ 	(*bp)->info = NULL;
+ 	i = cgetent(&((*bp)->info), (const char *const *)pathvec, name);
+
+	/*
+	 * if we get an error and we skipped doing the cgetset before
+	 * we try with TERMCAP in place - we may be using a truncated
+	 * termcap entry but what else can one do?
+	 */
+	if ((i < 0) && (did_getset == 0)) {
+		if (cp && *cp && *cp != '/')
+			if (cgetset(cp) < 0) {
+				error = -2;
+				goto out;
+			}
+		i = cgetent(&((*bp)->info), (const char *const *)pathvec, name);
+	}
+
+	/* no tc reference loop return code in libterm XXX */
+	if (i == -3) {
+		error = -1;
+		goto out;
+	}
+
+	/*
+	 * fill in t_goto capabilities - this prevents memory leaks
+	 * and is more efficient than fetching these capabilities
+	 * every time t_goto is called.
+	 */
+	if (i >= 0) {
+		cap_ptr = capability;
+		limit = sizeof(capability) - 1;
+		(*bp)->up = t_getstr(*bp, "up", &cap_ptr, &limit);
+		if ((*bp)->up)
+			(*bp)->up = strdup((*bp)->up);
+		cap_ptr = capability;
+		limit = sizeof(capability) - 1;
+		(*bp)->bc = t_getstr(*bp, "bc", &cap_ptr, &limit);
+		if ((*bp)->bc)
+			(*bp)->bc = strdup((*bp)->bc);
+		(*bp)->tbuf = NULL;
+	} else {
+		error = i + 1;
+		goto out;
+	}
+
+	return (i + 1);
+out:
+	free(*bp);
+	*bp = NULL;
+	return error;
 }
 
 /*
- * Get an entry for terminal name in buffer bp,
- * from the termcap file.  Parse is very rudimentary;
- * we just notice escaped newlines.
+ * Get an entry for terminal name in buffer bp from the termcap file.
  */
 int
 tgetent(char *bp, const char *name)
 {
-	register char *cp;
-	register int c;
-	register int i = 0, cnt = 0;
-	char ibuf[TCBUFSIZE];
-	int tf;
+	int i, plen, elen, c;
+        char *ptrbuf = NULL;
 
-	tbuf = bp;
-	tf = -1;
+	i = t_getent(&fbuf, name);
 
-	cp = getenv("TERMCAP");
-	/*
-	 * TERMCAP can have one of two things in it. It can be the
-	 * name of a file to use instead of /etc/termcap. In this
-	 * case it better start with a "/". Or it can be an entry to
-	 * use so we don't have to read the file. In this case it
-	 * has to already have the newlines crunched out.
-	 */
-	if (cp && *cp) {
-		if (*cp == '/') {
-			tf = open(cp, 0);
-		} else {
-			tbuf = cp;
-			c = tnamatch(name);
-			tbuf = bp;
-			if (c) {
-				strcpy(bp,cp);
-				return(tnchktc());
-			}
-		}
-	}
-	if (tf < 0)
-		tf = open(E_TERMCAP, 0);
-
-	if (tf < 0)
-		return (-1);
-	for (;;) {
-		cp = bp;
-		for (;;) {
-			if (i == cnt) {
-				cnt = read(tf, ibuf, TCBUFSIZE);
-				if (cnt <= 0) {
-					close(tf);
-					return (0);
-				}
-				i = 0;
-			}
-			c = ibuf[i++];
-			if (c == '\n') {
-				if (cp > bp && cp[-1] == '\\'){
-					cp--;
-					continue;
-				}
-				break;
-			}
-			if (cp >= bp+TCBUFSIZE) {
-				write(2,"Termcap entry too long\n", 23);
-				break;
-			} else
-				*cp++ = c;
-		}
-		*cp = 0;
-
+	if (i == 1) {
 		/*
-		 * The real work for the match.
+		 * stash the full buffer pointer as the ZZ capability
+		 * in the termcap buffer passed.
 		 */
-		if (tnamatch(name)) {
-			close(tf);
-			return(tnchktc());
+                plen = asprintf(&ptrbuf, ":ZZ=%p", fbuf->info);
+		(void)strlcpy(bp, fbuf->info, 1024);
+                elen = strlen(bp);
+		/*
+		 * backup over the entry if the addition of the full
+		 * buffer pointer will overflow the buffer passed.  We
+		 * want to truncate the termcap entry on a capability
+		 * boundary.
+		 */
+                if ((elen + plen) > 1023) {
+			bp[1023 - plen] = '\0';
+			for (c = (elen - plen); c > 0; c--) {
+				if (bp[c] == ':') {
+					bp[c] = '\0';
+					break;
+				}
+			}
 		}
+
+		strcat(bp, ptrbuf);
+                tbuf = bp;
 	}
-}
 
-/*
- * Skip to the next field.  Notice that this is very dumb, not
- * knowing about \: escapes or any such.  If necessary, :'s can be put
- * into the termcap file in octal.
- */
-static char *
-tskip(register const char *bp)
-{
-  if (!bp) {
-    return NULL;
-  }
-
-  while (*bp && *bp != ':')
-    bp++;
-  if (*bp == ':')
-    bp++;
-  return (char *)bp;
+	return i;
 }
 
 /*
@@ -278,32 +319,23 @@ tskip(register const char *bp)
  * Note that we handle octal numbers beginning with 0.
  */
 int
-tgetnum(char *id)
+t_getnum(struct tinfo *info, const char *id)
 {
-	register int i, base;
-	register char *bp = tbuf;
+	long num;
 
-	for (;;) {
-		bp = tskip(bp);
-		if (!bp)
-		  return -1;
-		if (*bp == 0)
-			return (-1);
-		if (*bp++ != id[0] || *bp == 0 || *bp++ != id[1])
-			continue;
-		if (*bp == '@')
-			return(-1);
-		if (*bp != '#')
-			continue;
-		bp++;
-		base = 10;
-		if (*bp == '0')
-			base = 8;
-		i = 0;
-		while (isdigit((*bp & 0377)))
-			i *= base, i += *bp++ - '0';
-		return (i);
-	}
+	_DIAGASSERT(info != NULL);
+	_DIAGASSERT(id != NULL);
+
+	if (cgetnum(info->info, id, &num) == 0)
+		return (int)(num);
+	else
+		return (-1);
+}
+
+int
+tgetnum(const char *id)
+{
+	return fbuf ? t_getnum(fbuf, id) : -1;
 }
 
 /*
@@ -312,23 +344,70 @@ tgetnum(char *id)
  * of the buffer.  Return 1 if we find the option, or 0 if it is
  * not given.
  */
-int
-tgetflag(char *id)
+int t_getflag(struct tinfo *info, const char *id)
 {
-	register char *bp = tbuf;
+	_DIAGASSERT(info != NULL);
+	_DIAGASSERT(id != NULL);
 
-	for (;;) {
-		bp = tskip(bp);
-		if (!bp)
-		  return 0;
-		if (!*bp)
-			return (0);
-		if (*bp++ == id[0] && *bp != 0 && *bp++ == id[1]) {
-			if (!*bp || *bp == ':')
-				return (1);
-			else if (*bp == '@')
-				return(0);
+	return (cgetcap(info->info, id, ':') != NULL);
+}
+
+int
+tgetflag(const char *id)
+{
+	return fbuf ? t_getflag(fbuf, id) : 0;
+}
+
+/*
+ * Get a string valued option.
+ * These are given as
+ *	cl=^Z
+ * Much decoding is done on the strings, and the strings are
+ * placed in area, which is a ref parameter which is updated.
+ * limit is the number of characters allowed to be put into
+ * area, this is updated.
+ */
+char *
+t_getstr(struct tinfo *info, const char *id, char **area, size_t *limit)
+{
+	char *s;
+	int i;
+
+	_DIAGASSERT(info != NULL);
+	_DIAGASSERT(id != NULL);
+	/* area may be NULL */
+
+
+	if ((i = cgetstr(info->info, id, &s)) < 0) {
+		errno = ENOENT;
+		if ((area == NULL) && (limit != NULL))
+			*limit = 0;
+		return NULL;
+	}
+
+	if (area != NULL) {
+		/*
+		 * check if there is room for the new entry to be put into
+		 * area
+		 */
+		if (limit != NULL && (*limit < (size_t) i)) {
+			errno = E2BIG;
+			free(s);
+			return NULL;
 		}
+
+		(void)strcpy(*area, s);
+		free(s);
+		s = *area;
+		*area += i + 1;
+		if (limit != NULL)
+			*limit -= i;
+		return (s);
+	} else {
+		_DIAGASSERT(limit != NULL);
+		*limit = i;
+		free(s);
+		return NULL;
 	}
 }
 
@@ -341,74 +420,148 @@ tgetflag(char *id)
  * No checking on area overflow.
  */
 char *
-tgetstr(char *id, char **area)
+tgetstr(const char *id, char **area)
 {
-	register char *bp = tbuf;
+	struct tinfo dummy, *ti;
+	char ids[3];
 
-	for (;;) {
-		bp = tskip(bp);
-		if (!bp)
-		  return 0;
-		if (!*bp)
-			return (0);
-		if (*bp++ != id[0] || *bp == 0 || *bp++ != id[1])
-			continue;
-		if (*bp == '@')
-			return(0);
-		if (*bp != '=')
-			continue;
-		bp++;
-		return (tdecode(bp, area));
-	}
+	_DIAGASSERT(id != NULL);
+
+	if (fbuf == NULL)
+		return NULL;
+
+	/*
+	 * XXX
+	 * This is for all the boneheaded programs that relied on tgetstr
+	 * to look only at the first 2 characters of the string passed...
+	 */
+	ids[0] = id[0];
+	ids[1] = id[1];
+	ids[2] = '\0';
+
+	if ((id[0] == 'Z') && (id[1] == 'Z')) {
+		ti = &dummy;
+		dummy.info = tbuf;
+	} else
+		ti = fbuf;
+
+	if (area == NULL || *area == NULL) {
+		static char capability[CAPSIZ];
+		size_t limit = sizeof(capability) - 1;
+		char *ptr;
+
+		ptr = capability;
+		return t_getstr(ti, ids, &ptr, &limit);
+	} else
+		return t_getstr(ti, ids, area, NULL);
 }
 
 /*
- * Tdecode does the grung work to decode the
- * string capability escapes.
+ * Return a string valued option specified by id, allocating memory to
+ * an internal buffer as necessary. The memory allocated can be
+ * free'd by a call to t_freent().
+ *
+ * If the string is not found or memory allocation fails then NULL
+ * is returned.
  */
-static char *
-tdecode(register char *str, char **area)
+char *
+t_agetstr(struct tinfo *info, const char *id)
 {
-	register char *cp;
-	register int c;
-	register char *dp;
-	int i;
+	size_t new_size;
+	struct tbuf *tb;
 
-	cp = *area;
-	while ((c = *str++) && c != ':') {
-		switch (c) {
+	_DIAGASSERT(info != NULL);
+	_DIAGASSERT(id != NULL);
 
-		case '^':
-			c = *str++ & 037;
-			break;
+	t_getstr(info, id, NULL, &new_size);
 
-		case '\\':
-			dp = "E\033^^\\\\::n\nr\rt\tb\bf\f";
-			c = *str++;
-nextc:
-			if (*dp++ == c) {
-				c = *dp++;
-				break;
-			}
-			dp++;
-			if (*dp)
-				goto nextc;
-			if (isdigit(c)) {
-				c -= '0', i = 2;
-				do
-					c <<= 3, c |= *str++ - '0';
-				while (--i && isdigit(*str & 0377));
-			}
-			break;
+	/* either the string is empty or the capability does not exist. */
+	if (new_size == 0)
+		return NULL;
+
+	if ((tb = info->tbuf) == NULL ||
+	    (size_t) (tb->eptr - tb->ptr) < (new_size + 1)) {
+		if (new_size < CAPSIZ)
+			new_size = CAPSIZ;
+		else
+			new_size++;
+
+		if ((tb = malloc(sizeof(*info->tbuf))) == NULL)
+			return NULL;
+
+		if ((tb->data = tb->ptr = tb->eptr = malloc(new_size))
+		    == NULL) {
+			free(tb);
+			return NULL;
 		}
-		*cp++ = c;
+
+		tb->eptr += new_size;
+
+		if (info->tbuf != NULL)
+			tb->next = info->tbuf;
+		else
+			tb->next = NULL;
+
+		info->tbuf = tb;
 	}
-	*cp++ = 0;
-	str = *area;
-	*area = cp;
-	return (str);
+	return t_getstr(info, id, &tb->ptr, NULL);
 }
 
 /*
-*/
-static const char sccssl[] = "@(#)libterm.sl	1.7 (gritter) 11/23/04";
+ * Free the buffer allocated by t_getent
+ *
+ */
+void
+t_freent(struct tinfo *info)
+{
+	struct tbuf *tb, *wb;
+	_DIAGASSERT(info != NULL);
+	free(info->info);
+	if (info->up != NULL)
+		free(info->up);
+	if (info->bc != NULL)
+		free(info->bc);
+	for (tb = info->tbuf; tb;) {
+		wb = tb;
+		tb = tb->next;
+		free(wb->data);
+		free(wb);
+	}
+	free(info);
+}
+
+/*
+ * Get the terminal name string from the termcap entry.
+ *
+ */
+int
+t_getterm(struct tinfo *info, char **area, size_t *limit)
+{
+	char *endp;
+	size_t count;
+
+	_DIAGASSERT(info != NULL);
+	if ((endp = strchr(info->info, ':')) == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+
+
+	count = endp - info->info + 1;
+	if (area == NULL) {
+		_DIAGASSERT(limit != NULL);
+		*limit = count;
+		return 0;
+	} else {
+		if ((limit != NULL) && (count > *limit)) {
+			errno = E2BIG;
+			return -1;
+		}
+
+		(void)strlcpy(*area, info->info, count);
+		if (limit != NULL)
+			*limit -= count;
+	}
+
+	return 0;
+}
