@@ -1,4 +1,13 @@
+SUFFIXES = .1
+
+man_MANS = enigma.1
+
+bin_PROGRAMS = enigma
+
+engima_SOURCE = enigma.c
+
 EXTRA_DIST = \
+	$(man_MANS) \
 	AUTHORS \
 	COPYING \
 	ChangeLog \
@@ -7,10 +16,17 @@ EXTRA_DIST = \
 	README \
 	configure.ac
 
-SUFFIXES = .1
+DISTCLEANFILES = \
+	aclocal.m4 \
+	config.log \
+	config.status \
+	configure
 
-man_MANS = enigma.1
+MAINTAINERCLEANFILES = Makefile.in
 
-bin_PROGRAMS = enigma
-
-engima_SOURCE = enigma.c
+# Local Variables:
+# mode: Makefile
+# tab-width: 8
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=8 tabstop=8
