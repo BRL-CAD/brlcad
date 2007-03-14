@@ -1,13 +1,11 @@
-SUFFIXES = .1
-
-man_MANS = enigma.1
 
 bin_PROGRAMS = enigma
 
 engima_SOURCE = enigma.c
 
+dist_man_MANS = enigma.1
+
 EXTRA_DIST = \
-	$(man_MANS) \
 	AUTHORS \
 	COPYING \
 	ChangeLog \
