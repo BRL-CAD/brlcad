@@ -29,6 +29,8 @@
  * SUCH DAMAGE.
  */
 
+#include "common.h"
+
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
@@ -164,8 +166,14 @@ t_getent(struct tinfo **bp, const char *name)
 				    *p++ = '/';
 			}	/* if no $HOME look in current directory */
 			if ((size_t)(p - pathbuf) < sizeof(pathbuf) - 1) {
+			    /* Added for BRL-CAD, search BRLCAD_DATA/etc dir too */
+#ifdef BRLCAD_DATA
+			    (void)strlcpy(p, _PATH_DEF " " BRLCAD_DATA "/etc",
+				sizeof(pathbuf) - (p - pathbuf));
+#else
 			    (void)strlcpy(p, _PATH_DEF,
 				sizeof(pathbuf) - (p - pathbuf));
+#endif
 			}
 		}
 	}
@@ -217,7 +225,7 @@ t_getent(struct tinfo **bp, const char *name)
 	 * normally read.
 	 */
  	(*bp)->info = NULL;
- 	i = cgetent(&((*bp)->info), (const char *const *)pathvec, name);
+ 	i = cgetent(&((*bp)->info), pathvec, name);
 
 	/*
 	 * if we get an error and we skipped doing the cgetset before
@@ -230,7 +238,7 @@ t_getent(struct tinfo **bp, const char *name)
 				error = -2;
 				goto out;
 			}
-		i = cgetent(&((*bp)->info), (const char *const *)pathvec, name);
+		i = cgetent(&((*bp)->info), pathvec, name);
 	}
 
 	/* no tc reference loop return code in libterm XXX */
