@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tgoto.c,v 1.25 2006/08/27 08:47:40 christos Exp $");
+/* __RCSID("$NetBSD: tgoto.c,v 1.25 2006/08/27 08:47:40 christos Exp $"); */
 #endif
 #endif /* not lint */
 

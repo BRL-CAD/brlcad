@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.54 2006/12/19 02:02:03 uwe Exp $");
+/* __RCSID("$NetBSD: termcap.c,v 1.54 2006/12/19 02:02:03 uwe Exp $"); */
 #endif
 #endif /* not lint */
 
