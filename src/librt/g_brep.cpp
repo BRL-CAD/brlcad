@@ -83,43 +83,148 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
  * Auxiliary functions
  ********************************************************************************/
 
+#include <list>
+
 //--------------------------------------------------------------------------------
-// bounding volume
-brep_bv* 
-brep_bv_new()
-{
-    brep_bv* bv = (brep_bv*)bu_malloc(sizeof(brep_bv), "brep_bv_new");
-    BU_LIST_INIT(&bv->l);
-    BU_LIST_INIT(&bv->children);
+// Bounding volume classes
+namespace brep {
+    class BoundingVolume {	
+    public:
 
-    return bv;
-}
+	BoundingVolume(const point_t min, const point_t max);
+	BoundingVolume(const point_t mina, const point_t maxa, const point_t minb, const point_t maxb);
+	BoundingVolume(const BoundingVolume& bv);
+	virtual ~BoundingVolume();
 
-brep_bv*
-brep_bv_new(point_t min, point_t max)
-{
-    brep_bv* bv = brep_bv_new();
-    VMOVE(bv->min, min);
-    VMOVE(bv->max, max);
+	BoundingVolume& operator=(const BoundingVolume& bv);
 
-    return bv;
-}
+	virtual bool is_leaf() const;
 
-void 
-brep_bv_delete(brep_bv* bv)
-{
-    if (bv != NULL) {
-	brep_bv* child;
-	BU_LIST_EACH(&bv->children,child,brep_bv) {
-	    brep_bv_delete(child);
-	}
-	bu_free(bv, "brep_bv_delete");
+	fastf_t width() const;
+	fastf_t height() const;
+	fastf_t depth() const;
+	void get_bbox(point_t min, point_t max) const;
+
+	fastf_t surface_area() const;	
+	fastf_t combined_surface_area(const BoundingVolume& vol) const;
+	BoundingVolume combine(const BoundingVolume& vol) const;
+
+	// Goldsmith & Salmon "Automatic generation of trees"
+	BoundingVolume* gs_insert(BoundingVolume* node);
+	
+	std::list<BoundingVolume*> children;
+
+    private:
+	point_t _min;
+	point_t _max;
+	fastf_t _area;
+    };
+
+    class SurfaceBV : public BoundingVolume {
+    public:
+
+	SurfaceBV(const ON_BrepFace& face, point_t min, point_t max, const ON_Interval& u, const ON_Interval& v);
+	bool is_leaf() const; // override BoundingVolume::is_leaf();
+
+    private:
+	const ON_BrepFace& _face;
+	ON_Interval _u;
+	ON_Interval _v;
+    }; 
+    
+    //--------------------------------------------------------------------------------
+    // implementation
+    
+    inline
+    BoundingVolume::BoundingVolume(const point_t min, const point_t max)
+    {
+	VMOVE(_min, min);
+	VMOVE(_max, max);
+	_area = 2*width()*height() + 2*width()*depth() + 2*height()*depth();
     }
-}
+
+    inline
+    BoundingVolume::BoundingVolume(const point_t mina, const point_t maxa, const point_t minb, const point_t maxb)
+    {
+	VMOVE(_min,mina);
+	VMOVE(_max,maxa);
+	VMIN(_min,minb);
+	VMAX(_max,maxb);
+	_area = 2*width()*height() + 2*width()*depth() + 2*height()*depth();
+    }
+
+    inline BoundingVolume& 
+    BoundingVolume::operator=(const BoundingVolume& bv) {
+	VMOVE(_min,bv._min);
+	VMOVE(_max,bv._max);
+	_area = bv._area;
+    }
+
+    inline 
+    BoundingVolume::~BoundingVolume() {
+	for (std::list<BoundingVolume*>::iterator i = children.begin(); i != children.end(); i++) {
+	    delete *i;
+	}
+    }
+
+    inline bool
+    BoundingVolume::is_leaf() const { return false; }
+
+    inline fastf_t
+    BoundingVolume::width() const { return _max[X]-_min[X]; }	
+    inline fastf_t
+    BoundingVolume::height() const { return _max[Y]-_min[Y]; }
+    inline fastf_t
+    BoundingVolume::depth() const { return _max[Z]-_min[Z]; }
+
+    inline void 
+    BoundingVolume::get_bbox(point_t min, point_t max) const {
+	VMOVE(min, _min);
+	VMOVE(max, _max);
+    }
+    
+    inline fastf_t
+    BoundingVolume::surface_area() const { return _area; }
+    
+    inline fastf_t
+    BoundingVolume::combined_surface_area(const BoundingVolume& vol) const { 
+	BoundingVolume combined(_min,_max,vol._min,vol._max);
+	return combined.surface_area();
+    }
+
+    inline BoundingVolume
+    BoundingVolume::combine(const BoundingVolume& vol) const {
+	return BoundingVolume(_min,_max,vol._min,vol._max);
+    }
+
+    BoundingVolume*
+    BoundingVolume::gs_insert(BoundingVolume* node)
+    {
+	// XXX todo - later!
+	if (is_leaf()) {
+	    // create a new parent 
+	} else {
+
+	}
+    }
+
+    inline 
+    SurfaceBV::SurfaceBV(const ON_BrepFace& face, point_t min, point_t max, const ON_Interval& u, const ON_Interval& v) 
+	: BoundingVolume(min,max), _face(face), _u(u), _v(v)
+    {
+    }
+
+    inline bool
+    SurfaceBV::is_leaf() const { return true; }
+
+    typedef std::list<BoundingVolume*> BVList;
+};
+
+using namespace brep;
 
 //--------------------------------------------------------------------------------
 // specific
-struct brep_specific* 
+struct brep_specific*
 brep_specific_new()
 {
     return (struct brep_specific*)bu_calloc(1, sizeof(struct brep_specific),"brep_specific_new");
@@ -129,7 +234,7 @@ void
 brep_specific_delete(struct brep_specific* bs)
 {
     if (bs != NULL) {
-	brep_bv_delete(bs->bvh);
+	delete bs->bvh;
 	bu_free(bs,"brep_specific_delete");
     }
 }
@@ -137,24 +242,131 @@ brep_specific_delete(struct brep_specific* bs)
 //--------------------------------------------------------------------------------
 // prep
 
+/**
+ * Given a list of face bounding volumes for an entire brep, build up
+ * an appropriate hierarchy to make it efficient (binary may be a
+ * reasonable choice, for example).
+ */
 void
-brep_bvh_subdivide(brep_bv* parent, struct bu_list* face_bvs)
+brep_bvh_subdivide(BoundingVolume* parent, const BVList& face_bvs)
 {
-    // XXX todo
+    // XXX this needs to handle a threshold and some reasonable space
+    // partitioning
+//     for (BVList::const_iterator i = face_bvs.begin(); i != face_bvs.end(); i++) {
+// 	parent->gs_insert(*i);
+//     }
+    for (BVList::const_iterator i = face_bvs.begin(); i != face_bvs.end(); i++) {
+	parent->children.push_back(*i);
+    }
 }
 
+inline void distribute(const int count, const ON_3dVector* v, double x[], double y[], double z[])
+{
+    for (int i = 0; i < count; i++) {
+	x[i] = v[i].x;
+	y[i] = v[i].y;
+	z[i] = v[i].z;
+    }
+}
+
+/**
+ * Determine whether a given surface is flat enough, i.e. it falls
+ * beneath our simple flatness constraints. The flatness constraint in
+ * this case is a sampling of normals across the surface such that
+ * the product of their combined dot products is close to 1.
+ *
+ * \Product_{i=1}^{7} n_i \dot n_{i+1} = 1
+ *
+ * Would be a perfectly flat surface. Generally something in the range
+ * 0.8-0.9 should suffice (according to Abert, 2005).
+ *
+ *   	 +-------------------------+
+ *	 |           	           |
+ *	 |            +            |
+ *	 |                         |
+ *    V  |       +         +       |
+ *	 |                         |
+ *	 |            +            |
+ *	 |                         |
+ *	 +-------------------------+
+ *                    U
+ *                     
+ * The "+" indicates the normal sample.
+ */
 bool
 brep_is_flat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
 {
-    // XXX todo
-    return true;
+    ON_3dVector normals[8];    
+
+    bool fail = false;
+    // corners    
+    if (!surf->EvNormal(u.Min(),v.Min(),normals[0]) ||
+	!surf->EvNormal(u.Max(),v.Min(),normals[1]) ||
+	!surf->EvNormal(u.Max(),v.Max(),normals[2]) ||
+	!surf->EvNormal(u.Min(),v.Max(),normals[3]) ||
+
+	// interior
+	!surf->EvNormal(u.ParameterAt(0.5),v.ParameterAt(0.25),normals[4]) ||
+	!surf->EvNormal(u.ParameterAt(0.75),v.ParameterAt(0.5),normals[5]) ||
+	!surf->EvNormal(u.ParameterAt(0.5),v.ParameterAt(0.75),normals[6]) ||
+	!surf->EvNormal(u.ParameterAt(0.25),v.ParameterAt(0.5),normals[7])) {
+	bu_bomb("Could not evaluate a normal on the surface"); // XXX fix this
+    }
+
+    double product = 1.0;
+
+#ifdef DO_VECTOR    
+    double ax[4] VEC_ALIGN;
+    double ay[4] VEC_ALIGN;
+    double az[4] VEC_ALIGN;
+
+    double bx[4] VEC_ALIGN;
+    double by[4] VEC_ALIGN;
+    double bz[4] VEC_ALIGN;
+
+    distribute(4, normals, ax, ay, az);
+    distribute(4, &normals[1], bx, by, bz);
+    
+    // how to get the normals in here?
+    {
+	dvec<4> xa(ax);
+	dvec<4> ya(ay);
+	dvec<4> za(az);
+	dvec<4> xb(bx);
+	dvec<4> yb(by);
+	dvec<4> zb(bz);
+	dvec<4> dots = xa * xb + ya * yb + za * zb;
+	product *= dots.fold(1,dvec<4>::mul());
+	if (product < 0.0) return false;
+    }    
+    // try the next set of normals
+    {
+	distribute(3, &normals[4], ax, ay, az);
+	distribute(3, &normals[5], bx, by, bz);
+	dvec<4> xa(ax);
+	dvec<4> xb(bx);
+	dvec<4> ya(ay); 
+	dvec<4> yb(by);
+	dvec<4> za(az);
+	dvec<4> zb(bz);
+	dvec<4> dots = xa * xb + ya * yb + za * zb;
+	product *= dots.fold(1,dvec<4>::mul(),3);
+    }
+#else
+    for (int i = 0; i < 7; i++) {
+	product *= (normals[i] * normals[i+1]);
+    }
+#endif
+
+    return product >= BREP_SURFACE_FLATNESS;
 }
 
-brep_bv* 
-brep_surface_bbox(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
+BoundingVolume*
+brep_surface_bbox(const ON_BrepFace& face, const ON_Interval& u, const ON_Interval& v)
 {
     ON_3dPoint corners[4];
-    
+    const ON_Surface* surf = face.SurfaceOf();
+
     if (!surf->EvPoint(u.Min(),v.Min(),corners[0]) ||
 	!surf->EvPoint(u.Max(),v.Min(),corners[1]) ||
 	!surf->EvPoint(u.Max(),v.Max(),corners[2]) ||
@@ -163,34 +375,32 @@ brep_surface_bbox(const ON_Surface* surf, const ON_Interval& u, const ON_Interva
     }
 
     point_t min, max;
-
-    VSETALL(min, MAX_FASTF)
-    VSETALL(max, -MAX_FASTF)
-
-    VMINMAX(min,max,((double*)corners[0]));
-    VMINMAX(min,max,((double*)corners[1]));
-    VMINMAX(min,max,((double*)corners[2]));
-    VMINMAX(min,max,((double*)corners[3]));
-    return brep_bv_new(min,max);    
+    VSETALL(min, MAX_FASTF);
+    VSETALL(max, -MAX_FASTF);
+    for (int i = 0; i < 4; i++) 
+	VMINMAX(min,max,((double*)corners[i]));
+    return new SurfaceBV(face,min,max,u,v);
 }
 
-brep_bv* 
-brep_surface_subdivide(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v, int depth)
+BoundingVolume*
+brep_surface_subdivide(const ON_BrepFace& face, const ON_Interval& u, const ON_Interval& v, int depth)
 {
-    brep_bv* parent = brep_surface_bbox(surf, u, v);
+    const ON_Surface* surf = face.SurfaceOf();
+    BoundingVolume* parent = brep_surface_bbox(face, u, v);
     if (brep_is_flat(surf, u, v) || depth >= BREP_MAX_FT_DEPTH) {
 	return parent;
     } else {
-	brep_bv* quads[4];
+	BoundingVolume* quads[4];
 	ON_Interval first(0,0.5);
 	ON_Interval second(0.5,1.0);
-	quads[0] = brep_surface_subdivide(surf, u.ParameterAt(first),  v.ParameterAt(first),  depth+1);
-	quads[1] = brep_surface_subdivide(surf, u.ParameterAt(second), v.ParameterAt(first),  depth+1);
-	quads[2] = brep_surface_subdivide(surf, u.ParameterAt(second), v.ParameterAt(second), depth+1);
-	quads[3] = brep_surface_subdivide(surf, u.ParameterAt(first),  v.ParameterAt(second), depth+1);
+	quads[0] = brep_surface_subdivide(face, u.ParameterAt(first),  v.ParameterAt(first),  depth+1);
+	quads[1] = brep_surface_subdivide(face, u.ParameterAt(second), v.ParameterAt(first),  depth+1);
+	quads[2] = brep_surface_subdivide(face, u.ParameterAt(second), v.ParameterAt(second), depth+1);
+	quads[3] = brep_surface_subdivide(face, u.ParameterAt(first),  v.ParameterAt(second), depth+1);
 
 	for (int i = 0; i < 4; i++)
-	    BU_LIST_INSERT(&parent->children, &quads[i]->l);
+	    parent->children.push_back(quads[i]);
+
 	return parent;
     }
 }
@@ -204,17 +414,16 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 	bu_log("brep is NOT valid");
 	return -1;
     }
-    
+
     point_t min, max;
     brep->GetBBox(min, max);
-    
-    bs->bvh = brep_bv_new(min, max);
-    
+
+    bs->bvh = new BoundingVolume(min,max);
+
     // need to extract faces, and build bounding boxes for each face,
     // then combine the face BBs back up, combining them together to
     // better split the hierarchy
-    struct bu_list surface_bvs;
-    BU_LIST_INIT(&surface_bvs);
+    BVList surface_bvs;
     ON_BrepFaceArray& faces = brep->m_F;
     for (int i = 0; i < faces.Count(); i++) {
 	ON_BrepFace& face = faces[i];
@@ -222,15 +431,15 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 
 	ON_Interval u = surf->Domain(0);
 	ON_Interval v = surf->Domain(1);
-	brep_bv* bv = brep_surface_subdivide(surf, u, v, 0);
-	
+	BoundingVolume* bv = brep_surface_subdivide(face, u, v, 0);
+
 	// add the surface bounding volumes to a list, so we can build
 	// down a hierarchy from the brep bounding volume
-	BU_LIST_INSERT(&surface_bvs, &bv->l);
+	surface_bvs.push_back(bv);
     }
-    
-    brep_bvh_subdivide(bs->bvh, &surface_bvs);
-    
+
+    brep_bvh_subdivide(bs->bvh, surface_bvs);
+
     return 0;
 }
 
@@ -265,19 +474,29 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     */
     struct rt_brep_internal* bi;
     struct brep_specific* bs;
-    
+
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
     if ((bs = (struct brep_specific*)stp->st_specific) == NULL) {
-	bs = (struct brep_specific*)bu_malloc(sizeof(struct brep_specific), "brep_specific");       
+	bs = (struct brep_specific*)bu_malloc(sizeof(struct brep_specific), "brep_specific");
 	stp->st_specific = (genptr_t)bs;
-    }    
-    
-    if (brep_build_bvh(bs, bi) < 0) {
-	return -1; 
     }
+
+    if (brep_build_bvh(bs, bi) < 0) {
+	return -1;
+    }
+
+    bs->bvh->get_bbox(stp->st_min, stp->st_max);
+    VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
+    vect_t work;
+    VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
+    fastf_t f = fmax(work[X],work[Y]);
+    f = fmax(f,work[Z]);
+    stp->st_aradius = f;
+    stp->st_bradius = MAGNITUDE(work);
+
     brep_calculate_cdbitems(bs, bi);
 
     return 0;
@@ -296,7 +515,7 @@ rt_brep_print(register const struct soltab *stp)
 /**
  *  			R T _ B R E P _ S H O T
  *
- *  Intersect a ray with a nurb.
+ *  Intersect a ray with a brep.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
  *
@@ -307,6 +526,14 @@ rt_brep_print(register const struct soltab *stp)
 int
 rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    vect_t invdir;
+    struct brep_specific* bs = (struct brep_specific*)stp->st_specific;
+
+    // check the hierarchy to see if we have a hit at a leaf node    
+
+    // intersect with aabb
+    // rt_in_rpp(rp, invdir, 
+
     return 0;
 }
 
@@ -388,7 +615,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
-    
+
     // XXX currently not handling the tolerance
     ON_MeshParameters mp;
     mp.JaggedAndFasterMeshParameters();
@@ -407,7 +634,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    VSET(pt1, v1.Point().x, v1.Point().y, v1.Point().z);
 	    VSET(pt2, v2.Point().x, v2.Point().y, v2.Point().z);
 	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW); 
+	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
 	}
 	edges.Empty();
     }
@@ -578,7 +805,7 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     /* XXX what to do about the version */
     ONX_Model model;
 
-    { 
+    {
 	ON_Layer default_layer;
 	default_layer.SetLayerIndex(0);
 	default_layer.SetLayerName("Default");
@@ -594,7 +821,7 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     model.m_properties.m_RevisionHistory.NewRevision();
     model.m_properties.m_Application.m_application_name = "BRL-CAD B-Rep primitive";
-    
+
     model.Polish();
     ON_TextLog err(stderr);
     bool ok = model.Write(archive, 4, "export5", &err);
@@ -621,7 +848,7 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
   ip->idb_type = ID_BREP;
   ip->idb_meth = &rt_functab[ID_BREP];
   ip->idb_ptr = bu_malloc(sizeof(struct rt_brep_internal), "rt_brep_internal");
-  
+
   bi = (struct rt_brep_internal*)ip->idb_ptr;
   bi->magic = RT_BREP_INTERNAL_MAGIC;
 
@@ -630,7 +857,7 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
   ON_TextLog dump(stdout);
   //archive.Dump3dmChunk(dump);
   model.Read(archive, &dump);
-  
+
   if (model.IsValid(&dump)) {
       ONX_Model_Object mo = model.m_object_table[0];
       // XXX does openNURBS force us to copy? it seems the answer is
