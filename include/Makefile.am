@@ -19,7 +19,6 @@ brlcadinclude_required = \
 	tclcad.h
 
 brlcadinclude_wanted = \
-	XtndRunsv.h \
 	anim.h \
 	brep.h \
 	brlcad.h \
