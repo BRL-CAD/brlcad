@@ -223,6 +223,8 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * add support for levels of detail
 
+* modify the raytracers to use common fb and file output code
+
 
 ODDITIES
 --------
