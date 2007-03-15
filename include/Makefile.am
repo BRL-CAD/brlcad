@@ -70,6 +70,9 @@ brlcadinclude_wanted = \
 	svfb.h \
 	svfb_global.h \
 	vectfont.h \
+	vector_fpu.h \
+	vector.h \
+	vector_x86.h \
 	vfont-if.h \
 	vmath.h \
 	wdb.h
