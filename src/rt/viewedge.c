@@ -170,6 +170,8 @@ struct bu_vls occlusion_objects;
 struct rt_i *occlusion_rtip = NULL;
 struct application **occlusion_apps;
 
+static int lastlinedone;
+
 static int occlusion_hit (struct application *,
 			  struct partition *, struct seg *);
 static int occlusion_miss (struct application *);
@@ -690,8 +692,13 @@ view_eol( struct application *ap )
 	/*
 	 * Write to a file.
 	 */
+
+	/* if it's not our turn, surrender and spin */
+	while(lastlinedone != (ap->a_y-1))
+	    sleep(0);
 	bu_semaphore_acquire (BU_SEM_SYSCALL);
 	fwrite( scanline[cpu], pixsize, per_processor_chunk, outfp );
+	lastlinedone = ap->a_y;	/* mark that we've seen this line, so the next can proceed */
 	bu_semaphore_release (BU_SEM_SYSCALL);
     }
     if (fbp == FBIO_NULL && outfp == NULL) {
@@ -702,7 +709,7 @@ view_eol( struct application *ap )
 
 }
 
-void view_setup(void) { }
+void view_setup(void) { lastlinedone = -1; }
 
 /*
  * end of a frame, called after rt_clean()
