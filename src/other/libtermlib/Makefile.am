@@ -6,7 +6,6 @@ AM_CPPFLAGS = -DCM_N -DCM_GT -DCM_B -DCM_D ${TERMLIB_CPPFLAGS}
 
 noinst_HEADERS = termcap.h
 
-libtermlib_la_LDFLAGS = -version-info 0:6:0
 libtermlib_la_SOURCES = \
 	termcap.c \
 	tgoto.c \
