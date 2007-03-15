@@ -139,6 +139,19 @@ dvec<LEN>::madd(const double s, const dvec<LEN>& b)
   return dvec<LEN>(r);
 }
 
+template<int LEN>
+inline double 
+dvec<LEN>::fold(double identity, const dvec_op& op, int limit)
+{
+    double val = identity;
+    for (int i = 0; i < limit; i++) {
+	val = op(val,data.v[i]);
+    }
+    return val;
+}
+
+
+
 template <int LEN>
 inline std::ostream&
 operator<<(std::ostream& out, const dvec<LEN>& v)

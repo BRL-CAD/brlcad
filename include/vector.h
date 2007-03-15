@@ -17,11 +17,16 @@ extern "C++" {
   template<int LEN>
   std::ostream& operator<<(std::ostream& out, const dvec<LEN>& v);
 
+  class dvec_op {
+  public:   
+    virtual double operator()(double a, double b) const = 0;
+  };
+  
   template<int LEN>
   class dvec {
   public:
     dvec(double s);
-    dvec(const double* vals, bool aligned=false);
+    dvec(const double* vals, bool aligned=true);
     dvec(const dvec<LEN>& p);
     
     dvec<LEN>& operator=(const dvec<LEN>& p);
@@ -39,12 +44,19 @@ extern "C++" {
     dvec<LEN> madd(const dvec<LEN>& s, const dvec<LEN>& b);
     dvec<LEN> madd(const double s, const dvec<LEN>& b);
 
-    friend std::ostream& operator<<(std::ostream& out, const dvec<LEN>& v);
+    double fold(double proto, const dvec_op& operation, int limit = LEN);
+
+    friend std::ostream& operator<< <LEN>(std::ostream& out, const dvec<LEN>& v);   
+
+    class mul : public dvec_op {
+    public: 
+      double operator()(double a, double b) const { return a * b; }
+    };
   private:
     struct vec_internal<LEN> data;
 
     dvec(const vec_internal<LEN>& d);
-  };
+  };  
 
   // use this to create 16-byte aligned memory on platforms that support it
 #define VEC_ALIGN

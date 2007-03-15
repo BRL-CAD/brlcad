@@ -167,6 +167,19 @@ dvec<LEN>::madd(const double s, const dvec<LEN>& b)
   return madd(t, b);
 }
 
+template<int LEN>
+inline double 
+dvec<LEN>::fold(double identity, const dvec_op& op, int limit)
+{
+    double _t[LEN] VEC_ALIGN;
+    a_store(_t);
+    double val = identity;
+    for (int i = 0; i < limit; i++) {
+	val = op(val,_t[i]);
+    }
+    return val;
+}
+
 template <int LEN>
 inline std::ostream&
 operator<<(std::ostream& out, const dvec<LEN>& v)
