@@ -67,8 +67,6 @@ brlcadinclude_wanted = \
 	solid.h \
 	spectrum.h \
 	spm.h \
-	svfb.h \
-	svfb_global.h \
 	vectfont.h \
 	vector_fpu.h \
 	vector.h \
