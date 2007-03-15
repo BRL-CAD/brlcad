@@ -63,20 +63,25 @@ typedef struct _on_brep_placeholder {
 } ON_Brep;
 #endif
 
+    
+    /* Maximum per-surface BVH depth */
 #define BREP_MAX_FT_DEPTH 8
+    /* Surface flatness parameter, Abert says between 0.8-0.9 */
+#define BREP_SURFACE_FLATNESS 0.8
+    /* Use vector operations? For debugging */
+#define DO_VECTOR 1
+    
 
-/**
- * Bounding volume used as an acceleration data structure. It's
- * implemented here as an axis-aligned bounding box containing the
- * parametric bounds of the surface enclosed by the box.
- */
-typedef struct _brep_bv { /* b-rep hierarchical bounding volume */
-    struct bu_list l;
-    point_t min;
-    point_t max;
-    fastf_t umin, umax, vmin, vmax;
-    struct bu_list children;
-} brep_bv;
+#ifndef __cplusplus
+typedef struct _bounding_volume_placeholder {
+    int dummy;
+} BrepBoundingVolume;
+#else 
+namespace brep {
+    class BoundingVolume;
+};
+typedef class brep::BoundingVolume BrepBoundingVolume;
+#endif
 
 typedef struct _brep_cdbitem {
     int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
@@ -87,7 +92,7 @@ typedef struct _brep_cdbitem {
  * acceleration data structure.
  */
 struct brep_specific {
-    brep_bv* bvh;
+    BrepBoundingVolume* bvh;
 };
 
 #ifdef __cplusplus
