@@ -65,23 +65,12 @@ extern int cmdInit(Tcl_Interp *interp);
 extern void Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *interp);
 extern void Tk_CreateCanvasBezierType();
 
-static int Cad_AppInit(Tcl_Interp *interp);
 #ifdef BWISH
 Tk_Window tkwin;
 #endif
 
 Tcl_Interp *interp;
 
-
-int
-main(int argc, char **argv)
-{
-    /* Create the interpreter */
-    interp = Tcl_CreateInterp();
-    Cad_Main(argc, argv, Cad_AppInit, interp);
-
-    return 0;
-}
 
 static int
 Cad_AppInit(Tcl_Interp *interp)
@@ -216,6 +205,17 @@ Cad_AppInit(Tcl_Interp *interp)
 
     return TCL_OK;
 }
+
+int
+main(int argc, char **argv)
+{
+    /* Create the interpreter */
+    interp = Tcl_CreateInterp();
+    Cad_Main(argc, argv, Cad_AppInit, interp);
+
+    return 0;
+}
+
 
 /*
  * Local Variables:
