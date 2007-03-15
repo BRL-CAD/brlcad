@@ -5,6 +5,7 @@ sample_applications_DATA = fortran_example.f
 
 SUBDIRS = \
 	archlinux \
+	enigma \
 	macosx \
 	vfont \
 	win32-msvc \
@@ -19,7 +20,6 @@ EXTRA_DIST = \
 	batch-indent-region.el \
 	brlcad.spec \
 	brlcad.spec.in \
-	enigma \
 	libtool.m4 \
 	rcs2log
 
