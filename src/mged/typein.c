@@ -2689,7 +2689,7 @@ metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 		struct bu_vls tmp_vls;
 
 		bu_vls_init( &tmp_vls );
-		bu_vls_printf( &tmp_vls, "%s for point %d : ", prompt[7+(argc-9)%4], 1+(argc-5)/4 );
+		bu_vls_printf( &tmp_vls, "%s for point %d : ", prompt[6+(argc-9)%4], 1+(argc-5)/4 );
 		Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 
@@ -2706,6 +2706,11 @@ metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 	metaball->method = method;
 	BU_LIST_INIT( &metaball->metaball_ctrl_head );
 
+	/* 
+	 * since we use args instead of the num_points, it's possible to have
+	 * MORE points than the value in the num_points field if it's all on one
+	 * line. Is that a bug, or a feature?
+	 */
 	for( i=6 ; i<argc ; i+= 4 )
 	{
 		struct wdb_metaballpt *metaballpt;
