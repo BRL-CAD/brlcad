@@ -387,7 +387,9 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	/* cope with the case where 0 points are defined. */
 	if(rad<0)
 	    return 0;
+#if PLOT_THE_BIG_BOUNDING_SPHERE
 	rt_metaball_plot_sph(vhead, &bsc, rad);
+#endif
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
 		rt_metaball_plot_sph(vhead, &mbpt->coord, mbpt->fldstr / mb->threshold);
 	return 0;
