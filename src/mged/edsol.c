@@ -1710,8 +1710,9 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 
 			RT_METABALL_CK_MAGIC( metaball );
 
+			VSETALL(mpt, 0.0);
 			if( es_metaballpt==NULL )
-			    snprintf(buf, BUFSIZ, "WARNING: Metaball has no points defined! ");
+			    snprintf(buf, BUFSIZ, "no point selected");
 			else {
 			    VMOVE( mpt , es_metaballpt->coord );
 			    snprintf(buf, BUFSIZ, "V %f", es_metaballpt->fldstr);
@@ -5838,13 +5839,16 @@ sedit(void)
 			break;
 		    }
 		    p = BU_LIST_PREV(wdb_metaballpt, &es_metaballpt->l);
-		    if (p->l.magic == BU_LIST_HEAD_MAGIC)
+		    if (p->l.magic == BU_LIST_HEAD_MAGIC) {
 			es_metaballpt = BU_LIST_NEXT( wdb_metaballpt, &es_metaballpt->l );
-		    else
+			/* 0 point metaball... allow it for now. */
+			if (es_metaballpt->l.magic == BU_LIST_HEAD_MAGIC)
+			    es_metaballpt = NULL;
+		    } else
 			es_metaballpt = p;
 		    BU_LIST_DQ(&tmp->l);
 		    free(tmp);
-		    if (es_metaballpt->l.magic == BU_LIST_HEAD_MAGIC)
+		    if (!es_metaballpt)
 			bu_log("WARNING: Last point of this metaball has been deleted.");
 		}
 		break;
@@ -7768,7 +7772,6 @@ pscale(void)
 		break;
 	case MENU_METABALL_PT_FLDSTR:
 		{
-			bu_log("Want to scale %x by %g", es_metaballpt, inpara);
 			if( !es_metaballpt || !inpara) {
 			  Tcl_AppendResult(interp, "pscale: no metaball point selected for scaling\n", (char *)NULL);
 			  return;
