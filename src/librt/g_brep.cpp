@@ -206,6 +206,8 @@ namespace brep {
 	} else {
 
 	}
+
+        return this;
     }
 
     inline 
