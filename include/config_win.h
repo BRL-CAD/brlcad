@@ -146,6 +146,7 @@
 #endif
 #define fdopen _fdopen
 #define fileno _fileno
+#define fmax __max
 #define fstat _fstat
 #define getpid _getpid
 #define hypot _hypot
