@@ -20,6 +20,17 @@ DISTCLEANFILES = \
 	config.status \
 	configure
 
+noprod:
+
+prodclean-recursive:
+
+prodclean:
+
+fast: all-am
+
+depends: all-am
+
+
 MAINTAINERCLEANFILES = Makefile.in
 
 # Local Variables:
