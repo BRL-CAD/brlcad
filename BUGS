@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* "touch file.g && mged -c file.g units m" results in a BU_ASSERT
+  failure and bombs.
+
 * libfb cannot utilize standard output/error "device" files without
   path trickery.  it recognizes the /dev/ prefix and presumes it's a
   libfb device instead of a filesystem device.
