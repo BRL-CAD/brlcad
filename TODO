@@ -17,15 +17,17 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
+* continue verifying build, ship
+
+
+THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------
+
 * clone and tracker
 
 * Endgame Framework importer plugin
 
 * get archer working, ensure functionality cross-platform
-
-
-THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------
 
 * remove op-bw
 
