@@ -24,11 +24,13 @@ all-am:
 clean-am:
 	cd unix && $(MAKE) $(AM_MAKEFLAGS) clean
 
-noprod:
+noprod: prodclean
 
 prodclean-recursive:
 
-prodclean:
+prodclean: prodclean-recursive
+	cd unix && rm -f libtk* wish tktest Tk
+	cd unix/dltest && $(MAKE) $(AM_MAKEFLAGS) clean
 
 fast: all-am
 
