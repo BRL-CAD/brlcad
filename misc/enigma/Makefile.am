@@ -20,11 +20,12 @@ DISTCLEANFILES = \
 	config.status \
 	configure
 
-noprod:
+noprod: prodclean
 
 prodclean-recursive:
 
-prodclean:
+prodclean: prodclean-recursive
+	rm -f enigma
 
 fast: all-am
 
