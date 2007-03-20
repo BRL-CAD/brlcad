@@ -1301,11 +1301,7 @@ AC_CHECK_LIB(tcl8.6, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.6",
     [AC_CHECK_LIB(tcl86, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl86",
 	[AC_CHECK_LIB(tcl8.5, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.5",
 	    [AC_CHECK_LIB(tcl85, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl85",
-		[AC_CHECK_LIB(tcl8.4, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.4",
-		    [AC_CHECK_LIB(tcl84, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl84",
-			[AC_CHECK_LIB(tcl, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl")]
-		    )]
-		)]
+		[AC_CHECK_LIB(tcl, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl")]
 	    )]
 	)]
     )]
@@ -1318,11 +1314,7 @@ AC_CHECK_LIB(tclstub8.6, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-lt
     [AC_CHECK_LIB(tclstub86, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub86",
 	[AC_CHECK_LIB(tclstub8.5, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.5",
 	    [AC_CHECK_LIB(tclstub85, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub85",
-		[AC_CHECK_LIB(tclstub8.4, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.4",
-		    [AC_CHECK_LIB(tclstub84, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub84",
-			[AC_CHECK_LIB(tclstub, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub")]
-		    )]
-		)]
+		[AC_CHECK_LIB(tclstub, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub")]
 	    )]
 	)]
     )]
@@ -1335,11 +1327,7 @@ AC_CHECK_LIB(tk8.6, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.6",
     [AC_CHECK_LIB(tk86, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk86",
 	[AC_CHECK_LIB(tk8.5, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.5",
 	    [AC_CHECK_LIB(tk85, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk85",
-		[AC_CHECK_LIB(tk8.4, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.4",
-		    [AC_CHECK_LIB(tk84, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk84",
-			[AC_CHECK_LIB(tk, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk")]
-		    )]
-		)]
+		[AC_CHECK_LIB(tk, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk")]
 	    )]
 	)]
     )]
@@ -1354,11 +1342,7 @@ AC_CHECK_LIB(tkstub8.6, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstu
     [AC_CHECK_LIB(tkstub86, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub86",
 	[AC_CHECK_LIB(tkstub8.5, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.5",
 	    [AC_CHECK_LIB(tkstub85, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub85",
-		[AC_CHECK_LIB(tkstub8.4, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.4",
-		    [AC_CHECK_LIB(tkstub84, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub84",
-			[AC_CHECK_LIB(tkstub, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub")]
-		    )]
-		)]
+	    	[AC_CHECK_LIB(tkstub, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub")]
 	    )]
 	)]
     )]
@@ -2490,8 +2474,8 @@ int main() {
 #if TCL_MAJOR_VERSION < 8
     fprintf(stderr, "major version < 8\n");
     return 1;
-#elif TCl_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 4
-    fprintf(stderr, "minor version < 4\n");
+#elif TCl_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 5
+    fprintf(stderr, "minor version < 5\n");
     return 1;
 #endif
     return 0;
@@ -2603,8 +2587,8 @@ int main() {
 #if TK_MAJOR_VERSION < 8
     fprintf(stderr, "major version < 8\n");
     return 1;
-#elif TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 4
-    fprintf(stderr, "minor version < 4\n");
+#elif TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 5
+    fprintf(stderr, "minor version < 5\n");
     return 1;
 #endif
     return 0;
