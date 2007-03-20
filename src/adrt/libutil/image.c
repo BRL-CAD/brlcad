@@ -68,6 +68,10 @@ void util_image_load_raw(char *filename, void *image, int *w, int *h) {
     fread(h, sizeof(int), 1, fh);
 
     src = malloc(*w * *h * 4);
+    if (!src) {
+	perror("malloc");
+	exit(1);
+    }
 
     fread(src, *w * *h * 4, 1, fh);
 
@@ -106,6 +110,10 @@ void util_image_save_raw(char *filename, void *image, int w, int h) {
   long	dest_len;
 
   dest = malloc(w * h * 4 + 1024);
+  if (!dest) {
+      perror("malloc");
+      exit(1);
+  }
   dest_len = w * h * 4 + 1024;
 
   compress(dest, &dest_len, image, w * h * 4);

@@ -59,6 +59,10 @@ void math_mat_mult(TFLOAT *A, int Ar, int Ac, TFLOAT *B, int Br, int Bc, TFLOAT 
 
   if(Ac == Br) {
     M = (TFLOAT*)malloc(sizeof(TFLOAT)*Ar*Bc);
+    if (!M) {
+	perror("malloc");
+	exit(1);
+    }
     for (i = 0; i < Bc; i++)
       for (j = 0; j < Ar; j++) {
 	M[j*Bc+i] = 0;

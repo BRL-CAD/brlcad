@@ -195,6 +195,10 @@ void tienet_slave_worker(int port, char *host) {
       /* send this message to the application */
       tienet_recv(slave_socket, &mesg_len, sizeof(unsigned int), tienet_endian);
       mesg = malloc(mesg_len);
+      if (!mesg) {
+	  perror("malloc");
+	  exit(1);
+      }
       tienet_recv(slave_socket, mesg, mesg_len, 0);
       tienet_slave_fcb_mesg(mesg, mesg_len);
       free(mesg);
@@ -379,6 +383,10 @@ void tienet_slave_daemon(int port) {
 	  /* send this message to the application */
 	  tienet_recv(master_socket, &mesg_len, sizeof(unsigned int), tienet_endian);
 	  mesg = malloc(mesg_len);
+	  if (!mesg) {
+	      perror("malloc");
+	      exit(1);
+	  }
 	  tienet_recv(master_socket, mesg, mesg_len, 0);
 	  tienet_slave_fcb_mesg(mesg, mesg_len);
 	  free(mesg);

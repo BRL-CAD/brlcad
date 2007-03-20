@@ -58,6 +58,10 @@ void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, TFLOAT an
   render->free = render_spall_free;
 
   render->data = (render_spall_t *)malloc(sizeof(render_spall_t));
+  if (!render->data) {
+      perror("render->data");
+      exit(1);
+  }
   d = (render_spall_t *)render->data;
 
   d->ray_pos = ray_pos;
@@ -84,7 +88,15 @@ void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, TFLOAT an
   /* The spall Cone */
   /******************/
   vec_list = (TIE_3 *)malloc(sizeof(TIE_3) * TESSELATION);
+  if (!vec_list) {
+      perror("vec_list");
+      exit(1);
+  }
   tri_list = (TIE_3 *)malloc(sizeof(TIE_3) * TESSELATION * 3);
+  if (!tri_list) {
+      perror("tri_list");
+      exit(1);
+  }
 
   render_util_spall_vec(ray_dir, angle, TESSELATION, vec_list);
 

@@ -56,6 +56,10 @@ void texture_image_init(texture_t *texture, short w, short h, unsigned char *ima
   texture_image_t *td;
 
   texture->data = malloc(sizeof(texture_image_t));
+  if (!texture->data) {
+      perror("texture->data");
+      exit(1);
+  }
   texture->free = texture_image_free;
   texture->work = texture_image_work;
 
@@ -63,6 +67,10 @@ void texture_image_init(texture_t *texture, short w, short h, unsigned char *ima
   td->w = w;
   td->h = h;
   td->image = (unsigned char *)malloc(3*w*h);
+  if (!td->image) {
+      perror("td->image");
+      exit(1);
+  }
   memcpy(td->image, image, 3*w*h);
 }
 

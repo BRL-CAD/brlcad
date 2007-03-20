@@ -46,6 +46,10 @@ void texture_checker_init(texture_t *texture, int tile) {
   texture_checker_t   *td;
 
   texture->data = malloc(sizeof(texture_checker_t));
+  if (!texture->data) {
+      perror("texture->data");
+      exit(1);
+  }
   texture->free = texture_checker_free;
   texture->work = texture_checker_work;
 

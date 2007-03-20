@@ -40,6 +40,10 @@ int main(int argc, char *args[]) {
   int	i, ind[8], total;
 
   list = (Node8*)malloc(sizeof(Node8)*LIST_MAX);
+  if (!list) {
+      perror("list");
+      exit(1);
+  }
   for (i= 0; i < LIST_MAX; i++) {
     list[i].a = 2*i;
     list[i].b = 3*i;

@@ -74,6 +74,10 @@ my_strdup (char *str)
   if (str)
     {
       new_str = (char *)malloc ((strlen (str) + 1) * sizeof(char));
+      if (!new_str) {
+	perror("new_str");
+        exit(1);
+      }
       strcpy (new_str, str);
     }
   else

@@ -184,6 +184,10 @@ void render_util_spall_list(tie_t *tie, tie_ray_t *ray, TFLOAT angle, void **dat
 
   /* allocate memory for 32 spall rays */
   vec_list = (TIE_3 *)malloc(32 * sizeof(TIE_3));
+  if (!vec_list) {
+      perror("vec_list");
+      exit(1);
+  }
 
   /* Fire the 32 spall rays from the first in-hit at full angle */
   render_util_spall_vec(ray->dir, angle, 32, vec_list);

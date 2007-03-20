@@ -150,6 +150,10 @@ void tienet_master_init(int port, void fcb_result(void *res_buf, int res_len), c
   tienet_master_port = port;
   tienet_master_buffer_size = buffer_size;
   tienet_master_buffer = (tienet_master_data_t *)malloc(sizeof(tienet_master_data_t) * tienet_master_buffer_size);
+  if (!tienet_master_buffer) {
+      perror("malloc");
+      exit(1);
+  }
 
   tienet_master_fcb_result = fcb_result;
   tienet_master_active_slaves = 0;
@@ -470,6 +474,10 @@ void* tienet_master_listener(void *ptr) {
 
   /* Set first socket as master, rest are slaves - LIFO Stack - Always gets processed last */
   tienet_master_socket_list = (tienet_master_socket_t *)malloc(sizeof(tienet_master_socket_t));
+  if (!tienet_master_socke_list) {
+      perror("malloc");
+      exit(1);
+  }
   tienet_master_socket_list->next = NULL;
   tienet_master_socket_list->prev = NULL;
   tienet_master_socket_list->work.data = NULL;
@@ -515,6 +523,10 @@ void* tienet_master_listener(void *ptr) {
 /*            printf("The slave %s has connected on port: %d, sock_num: %d\n", inet_ntoa(slave.sin_addr), tienet_master_port, slave_socket); */
 	    tmp = tienet_master_socket_list;
 	    tienet_master_socket_list = (tienet_master_socket_t *)malloc(sizeof(tienet_master_socket_t));
+	    if (!tienet_master_socket_list) {
+		perror("malloc");
+		exit(1);
+	    }
 	    tienet_master_socket_list->next = tmp;
 	    tienet_master_socket_list->prev = NULL;
 	    tienet_master_socket_list->work.data = NULL;
@@ -814,6 +826,10 @@ void tienet_master_broadcast(void *mesg, int mesg_len) {
     if(socket->next) {
       socket->mesg.size = mesg_len;
       socket->mesg.data = malloc(mesg_len);
+      if (!socket->mesg.data) {
+	  perror("malloc");
+	  exit(1);
+      }
       memcpy(socket->mesg.data, mesg, mesg_len);
     }
   }

@@ -103,6 +103,10 @@ void rise_master(int port, int obs_port, char *proj, char *list, char *exec, int
   tienet_master_init(port, rise_master_result, list, exec, 10, RISE_VER_KEY);
 
   rise_master_frame = malloc(4 * sizeof(TFLOAT) * db.env.img_w * db.env.img_h);
+  if (!rise_master_frame) {
+      perror("rise_master_frame");
+      exit(1);
+  }
   memset(rise_master_frame, 0, 4 * sizeof(TFLOAT) * db.env.img_w * db.env.img_h);
 
   /* Launch a thread to handle networking */
@@ -129,6 +133,10 @@ void rise_master(int port, int obs_port, char *proj, char *list, char *exec, int
       unsigned char *image24;
 
       image24 = (unsigned char *)malloc(3 * db.env.img_w * db.env.img_h);
+      if (!image24) {
+	  perror("image24");
+	  exit(1);
+      }
       sprintf(image_name, "image_%.4d.ppm", i);
       rise_post_process(rise_master_frame, db.env.img_w, db.env.img_h);
       util_image_convert_128to24(image24, rise_master_frame, db.env.img_w, db.env.img_h);
@@ -217,10 +225,18 @@ void* rise_master_networking(void *ptr) {
 
   port = *(int *)ptr;
   frame24 = malloc(3 * db.env.img_w * db.env.img_h);
+  if (!frame24) {
+      perror("frame24");
+      exit(1);
+  }
 
 
 #if RISE_USE_COMPRESSION
   comp_buf = malloc(db.env.img_w * db.env.img_h*3);
+  if (!comp_buf) {
+      perror("comp_buf");
+      exit(1);
+  }
 #endif
 
   /* create a socket */
@@ -231,6 +247,10 @@ void* rise_master_networking(void *ptr) {
 
   /* initialize socket list */
   rise_master_socklist = (rise_master_socket_t *)malloc(sizeof(rise_master_socket_t));
+  if (!rise_master_socklist) {
+      perror("rise_master_socklist");
+      exit(1);
+  }
   rise_master_socklist->next = NULL;
   rise_master_socklist->prev = NULL;
   rise_master_socklist->num = master_socket;
@@ -271,6 +291,10 @@ void* rise_master_networking(void *ptr) {
 	  if(new_socket >= 0) {
 	    tmp = rise_master_socklist;
 	    rise_master_socklist = (rise_master_socket_t *)malloc(sizeof(rise_master_socket_t));
+	    if (!rise_master_socklist) {
+		perror("rise_master_socklist");
+		exit(1);
+	    }
 	    rise_master_socklist->num = new_socket;
 	    rise_master_socklist->next = tmp;
 	    rise_master_socklist->prev = NULL;

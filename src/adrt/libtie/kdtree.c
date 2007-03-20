@@ -142,6 +142,10 @@ static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, int tri_num) {
   /* Insert all triangles into the Head Node */
   if(!tie->kdtree) {
     tie->kdtree = (tie_kdtree_t *)malloc(sizeof(tie_kdtree_t));
+    if (!tie->kdtree) {
+	perror("tie->kdtree");
+	exit(1);
+    }
     tie->kdtree->data = (void *)malloc(sizeof(tie_geom_t));
     g = ((tie_geom_t *)(tie->kdtree->data));
     g->tri_num = 0;
@@ -149,6 +153,10 @@ static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, int tri_num) {
     MATH_BBOX(tie->min, tie->max, tri_list[0].data[0], tri_list[0].data[1], tri_list[0].data[2]);
 
     g->tri_list = (tie_tri_t **)malloc(sizeof(tie_tri_t *) * tri_num);
+    if (!g->tri_list) {
+	perror("g->tri_list");
+	exit(1);
+    }
 
     /* form bounding box of scene */
     for(i = 0; i < tri_num; i++) {
@@ -617,18 +625,38 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
 
   /* Allocate 2 children nodes for the parent node */
   node->data = (void *)malloc(2 * sizeof(tie_kdtree_t));
+  if (!node->data) {
+      perror("node->data");
+      exit(1);
+  }
 
   ((tie_kdtree_t *)(node->data))[0].data = malloc(sizeof(tie_geom_t));
+  if (!((tie_kdtree_t *)(node->data))[0].data) {
+      perror("malloc");
+      exit(1);
+  }
   ((tie_kdtree_t *)(node->data))[1].data = malloc(sizeof(tie_geom_t));
+  if (!((tie_kdtree_t *)(node->data))[1].data) {
+      perror("malloc");
+      exit(1);
+  }
 
   /* Initialize Triangle List */
   child[0] = ((tie_geom_t *)(((tie_kdtree_t *)(node->data))[0].data));
   child[1] = ((tie_geom_t *)(((tie_kdtree_t *)(node->data))[1].data));
 
   child[0]->tri_list = (tie_tri_t **)malloc(sizeof(tie_tri_t *) * node_gd->tri_num);
+  if (!child[0]->tri_list) {
+      perror("malloc");
+      exit(1);
+  }
   child[0]->tri_num = 0;
 
   child[1]->tri_list = (tie_tri_t **)malloc(sizeof(tie_tri_t *) * node_gd->tri_num);
+  if (!child[1]->tri_list) {
+      perror("malloc");
+      exit(1);
+  }
   child[1]->tri_num = 0;
 
 
@@ -738,6 +766,10 @@ void tie_kdtree_cache_free(tie_t *tie, void **cache) {
   */
   if(tie->kdtree) {
     *cache = malloc(2 * sizeof(unsigned int));
+    if (!*cache) {
+	perror("malloc");
+	exit(1);
+    }
     size = 2*sizeof(unsigned int);
     memcpy(*cache, &size, sizeof(unsigned int));
     memcpy(&((char *)*cache)[sizeof(unsigned int)], &size, sizeof(unsigned int));
@@ -776,12 +808,20 @@ void tie_kdtree_cache_load(tie_t *tie, void *cache) {
     if(type) {
       /* Geometry Node - Allocate a tie_geom_t and assign to node->data. */
       node->data = malloc(sizeof(tie_geom_t));
+      if (!*node->data) {
+	  perror("malloc");
+	  exit(1);
+      }
       geom = (tie_geom_t *)node->data;
 
       memcpy(&(geom->tri_num), &((char *)cache)[index], sizeof(unsigned int));
       index += sizeof(unsigned int);
 
       geom->tri_list = (tie_tri_t **)malloc(geom->tri_num * sizeof(tie_tri_t *));
+      if (!geom->tri_list) {
+	  perror("malloc");
+	  exit(1);
+      }
       for(i = 0; i < geom->tri_num; i++) {
 	memcpy(&tri_ind, &((char *)cache)[index], sizeof(unsigned int));
 	index += sizeof(unsigned int);
@@ -798,6 +838,10 @@ void tie_kdtree_cache_load(tie_t *tie, void *cache) {
       /* KD-Tree Node */
       if(!tie->kdtree) {
 	tie->kdtree = (tie_kdtree_t *)malloc(sizeof(tie_kdtree_t));
+	if (!tie->kdtree) {
+	    perror("malloc");
+	    exit(1);
+	}
 	node = tie->kdtree;
       }
 
@@ -811,6 +855,10 @@ void tie_kdtree_cache_load(tie_t *tie, void *cache) {
 
       /* Allocate memory for 2 child nodes */
       node->data = malloc(2 * sizeof(tie_kdtree_t));
+      if (!node->data) {
+	  perror("malloc");
+	  exit(1);
+      }
 
       /* Push B on the stack and Process A */
       stack[stack_ind] = &((tie_kdtree_t *)node->data)[1];

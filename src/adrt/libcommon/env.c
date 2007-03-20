@@ -72,7 +72,7 @@ void common_env_prep(common_env_t *env) {
 }
 
 
-void common_env_read(common_env_t *env, char *fpath) {
+void common_env_read(common_env_t *env, const char *fpath) {
   FILE *fh;
   char line[256], *token;
 

@@ -185,6 +185,10 @@ void bench(char *proj, int cache, int image) {
 
   /* Allocate memory for a frame */
   bench_frame = malloc(4 * sizeof(TFLOAT) * db.env.img_w * db.env.img_h);
+  if (!bench_frame) {
+      perror("bench_frame");
+      exit(1);
+  }
   memset(bench_frame, 0, 4 * sizeof(TFLOAT) * db.env.img_w * db.env.img_h);
 
   /* Render an image */

@@ -58,7 +58,15 @@ void texture_perlin_init(texture_perlin_t *P) {
   int i, j, k;
 
   P->PV = (int *)malloc(sizeof(int)*(2*B+2));
+  if (!P->PV) {
+      perror("P->PV");
+      exit(1);
+  }
   P->RV = (TIE_3 *)malloc(sizeof(TIE_3)*(2*B+2));
+  if (!P->RV) {
+      perror("P->RV");
+      exit(1);
+  }
 
   /* Generate Random Vectors */
   for (i = 0; i < B; i++) {

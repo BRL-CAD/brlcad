@@ -46,6 +46,10 @@ void texture_clouds_init(texture_t *texture, TFLOAT size, int octaves, int absol
   texture_clouds_t *td;
 
   texture->data = malloc(sizeof(texture_clouds_t));
+  if (!texture->data) {
+      perror("texture->data");
+      exit(1);
+  }
   texture->free = texture_clouds_free;
   texture->work = texture_clouds_work;
 

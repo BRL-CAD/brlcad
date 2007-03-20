@@ -45,6 +45,10 @@ void texture_blend_init(texture_t *texture, TIE_3 color1, TIE_3 color2) {
   texture_blend_t *sd;
 
   texture->data = malloc(sizeof(texture_blend_t));
+  if (!texture->data) {
+      perror("texture->data");
+      exit(1);
+  }
   texture->free = texture_blend_free;
   texture->work = texture_blend_work;
 

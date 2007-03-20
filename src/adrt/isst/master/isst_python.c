@@ -75,6 +75,10 @@ void isst_python_init() {
 
 
   isst_python_response = (char *)malloc(1024);
+  if (!isst_python_response) {
+      perror("isst_python_response");
+      exit(1);
+  }
 
   PyImport_AddModule("adrt");
   Py_InitModule("adrt", ISST_Methods);

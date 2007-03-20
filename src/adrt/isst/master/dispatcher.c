@@ -69,6 +69,10 @@ void isst_dispatcher_generate(common_db_t *db, void *data, int data_len) {
   void *mesg;
 
   mesg = malloc(sizeof(common_work_t) + data_len);
+  if (!mesg) {
+      perror("mesg");
+      exit(1);
+  }
   tienet_master_begin();
 
   work.size_x = db->env.tile_w;

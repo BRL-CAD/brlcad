@@ -100,21 +100,11 @@ if(modes == (SDL_Rect **)-1){
 
   util_display_buffer = SDL_CreateRGBSurface(SDL_HWSURFACE, util_display_screen_w, util_display_screen_h, 24,
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
-					     0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000);
+					     0x000000ff, 0x0000ff00, 0x00ff0000,
 #else
-					     0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000);
+					     0x00ff0000, 0x0000ff00, 0x000000ff,
 #endif
-
-
-#if 0
-{
-  const SDL_VideoInfo *foo;
-
-  foo = SDL_GetVideoInfo();
-  printf("hw: %d %d %d %d\n", foo->hw_available, foo->blit_hw, foo->blit_hw_CC, foo->blit_hw_A);
-}
-#endif
-
+					     0x00000000);
 
   util_display_rect.x = 0;
   util_display_rect.y = 0;
@@ -128,10 +118,11 @@ if(modes == (SDL_Rect **)-1){
 
   util_display_font = SDL_CreateRGBSurface(SDL_SWSURFACE, util_font.width, util_font.height, 32,
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
-					     0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
+					     0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000
 #else
-					     0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
+					     0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff
 #endif
+					   );
 
 /*  printf("util_font width: %d, %d\n", util_font.width, util_font.height); */
   memcpy(util_display_font->pixels, util_font.pixel_data, util_font.width * util_font.height * 4);
@@ -349,6 +340,10 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
 		    int n;
 
 		    code = (char *)malloc((*content_lines+1) * 80);
+		    if (!code) {
+			perror("code");
+			exit(1);
+		    }
 
 		    code[0] = 0;
 		    for(i = 0; i <= *content_lines; i++) {

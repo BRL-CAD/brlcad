@@ -159,8 +159,16 @@ void* rise_observer_networking(void *ptr) {
 
   /* Allocate memory for frame buffer */
   frame = malloc(screen_w*screen_h*3);
+  if (!frame) {
+      perror("frame");
+      exit(1);
+  }
 #if RISE_USE_COMPRESSION
   comp_buf = malloc(screen_w*screen_h*3);
+  if (!comp_buf) {
+      perror("comp_buf");
+      exit(1);
+  }
 #endif
 
   frame_num = 0;

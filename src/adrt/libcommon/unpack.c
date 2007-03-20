@@ -279,6 +279,10 @@ void common_unpack_texture(int socknum) {
 	texture_list = (common_unpack_texture_node_t *)realloc(texture_list, sizeof(common_unpack_texture_node_t)*texture_num);
 
 	texture_list[texture_num-1].texture = stack = (texture_t *)malloc(sizeof(texture_t));
+	if (!texture_list[texture_num-1].texture) {
+	    perror("texture_list[texture_num-1].texture");
+	    exit(1);
+	}
 	texture_stack_init(stack);
 
 	tienet_recv(socknum, &c, sizeof(char), 0);
@@ -295,6 +299,10 @@ void common_unpack_texture(int socknum) {
 	  texture_num++;
 	  texture_list = (common_unpack_texture_node_t*)realloc(texture_list, sizeof(common_unpack_texture_node_t)*texture_num);
 	  texture_list[texture_num-1].texture = (texture_t*)malloc(sizeof(texture_t));
+	  if (!texture_list[texture_num-1].texture) {
+	      perror("texture_list[texture_num-1].texture");
+	      exit(1);
+	  }
 	  tienet_recv(socknum, &c, sizeof(char), 0);
 	  tienet_recv(socknum, texture_list[texture_num-1].name, c, 0);
 	  ind += c + c+1;
@@ -317,6 +325,10 @@ void common_unpack_texture(int socknum) {
 	  TIE_3 color1, color2;
 
 	  texture = (texture_t*)malloc(sizeof(texture_t));
+	  if (!texture) {
+	      perror("texture");
+	      exit(1);
+	  }
 	  /* COLOR 1 */
 	  tienet_recv(socknum, &color1.v[0], sizeof(TFLOAT), tienet_endian);
 	  tienet_recv(socknum, &color1.v[1], sizeof(TFLOAT), tienet_endian);
@@ -337,6 +349,10 @@ void common_unpack_texture(int socknum) {
 	  TIE_3 coef;
 
 	  texture = (texture_t*)malloc(sizeof(texture_t));
+	  if (!texture) {
+	      perror("texture");
+	      exit(1);
+	  }
 	  tienet_recv(socknum, &coef.v[0], sizeof(TFLOAT), tienet_endian);
 	  tienet_recv(socknum, &coef.v[1], sizeof(TFLOAT), tienet_endian);
 	  tienet_recv(socknum, &coef.v[2], sizeof(TFLOAT), tienet_endian);
@@ -351,6 +367,10 @@ void common_unpack_texture(int socknum) {
 	  int tile;
 
 	  texture = (texture_t*)malloc(sizeof(texture_t));
+	  if (!texture) {
+	      perror("texture");
+	      exit(1);
+	  }
 	  tienet_recv(socknum, &tile, sizeof(int), tienet_endian);
 	  ind += sizeof(int);
 	  texture_checker_init(texture, tile);
@@ -365,6 +385,10 @@ void common_unpack_texture(int socknum) {
 	  TIE_3 color1, color2, color3;
 
 	  texture = (texture_t*)malloc(sizeof(texture_t));
+	  if (!texture) {
+	      perror("texture");
+	      exit(1);
+	  }
 	  tienet_recv(socknum, &size, sizeof(TFLOAT), tienet_endian);
 	  tienet_recv(socknum, &octaves, sizeof(int), tienet_endian);
 	  tienet_recv(socknum, &absolute, sizeof(int), tienet_endian);
@@ -390,6 +414,10 @@ void common_unpack_texture(int socknum) {
 	  TIE_3 scale, translate;
 
 	  texture = (texture_t*)malloc(sizeof(texture_t));
+	  if (!texture) {
+	      perror("texture");
+	      exit(1);
+	  }
 	  tienet_recv(socknum, &size, sizeof(TFLOAT), tienet_endian);
 	  tienet_recv(socknum, &octaves, sizeof(int), tienet_endian);
 	  tienet_recv(socknum, &absolute, sizeof(int), tienet_endian);
@@ -411,10 +439,18 @@ void common_unpack_texture(int socknum) {
 	  unsigned char *image;
 
 	  texture = (texture_t*)malloc(sizeof(texture_t));
+	  if (!texture) {
+	      perror("texture");
+	      exit(1);
+	  }
 	  tienet_recv(socknum, &w, sizeof(short), tienet_endian);
 	  tienet_recv(socknum, &h, sizeof(short), tienet_endian);
 	  ind += 2*sizeof(short);
 	  image = (unsigned char*)malloc(3*w*h);
+	  if (!image) {
+	      perror("image");
+	      exit(1);
+	  }
 	  tienet_recv(socknum, image, 3*w*h, 0);
 	  ind += 3*w*h;
 	  texture_image_init(texture, w, h, image);
@@ -428,6 +464,10 @@ void common_unpack_texture(int socknum) {
 	  int axis;
 
 	  texture = (texture_t*)malloc(sizeof(texture_t));
+	  if (!texture) {
+	      perror("texture");
+	      exit(1);
+	  }
 	  tienet_recv(socknum, &axis, sizeof(int), tienet_endian);
 	  ind += sizeof(int);
 	  texture_gradient_init(texture, axis);
@@ -471,6 +511,10 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
     db->mesh_num++;
     db->mesh_list = (common_mesh_t **)realloc(db->mesh_list, sizeof(common_mesh_t *)*db->mesh_num);
     db->mesh_list[db->mesh_num-1] = (common_mesh_t *)malloc(sizeof(common_mesh_t));
+    if (!db->mesh_list[db->mesh_num-1]) {
+	perror("db->mesh_list[db->mesh_num-1]");
+	exit(1);
+    }
     db->mesh_list[db->mesh_num-1]->flags = 0;
     db->mesh_list[db->mesh_num-1]->tri_num = 0;
     db->mesh_list[db->mesh_num-1]->tri_list = NULL;
@@ -562,6 +606,10 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
     /* Allocate memory for ADRT triangles */
     db->mesh_list[db->mesh_num-1]->tri_num = fnum;
     db->mesh_list[db->mesh_num-1]->tri_list = (common_triangle_t *)malloc(fnum * sizeof(common_triangle_t));
+    if (!db->mesh_list[db->mesh_num-1]->tri_list) {
+	perror("db->mesh_list[db->mesh_num-1]->tri_list");
+	exit(1);
+    }
 
     /* Build the triangle list */
     for(i = 0; i < fnum; i++) {
@@ -592,6 +640,10 @@ void common_unpack_kdtree_cache(int socknum, tie_t *tie) {
   /* retreive the data */
   if(size > 0) {
     kdcache = malloc(size);
+    if (!kdcache) {
+	perror("kdcache");
+	exit(1);
+    }
     tienet_recv(socknum, kdcache, size, 0);
 
     /* feed the kd-tree into libtie */

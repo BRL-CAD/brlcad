@@ -38,6 +38,10 @@ void render_path_init(render_t *render, int samples) {
   render->work = render_path_work;
   render->free = render_path_free;
   render->data = (render_path_t *)malloc(sizeof(render_path_t));
+  if (!render->data) {
+      perror("render->data");
+      exit(1);
+  }
   d = (render_path_t *)render->data;
   d->samples = samples;
   d->inv_samples = 1.0 / samples;

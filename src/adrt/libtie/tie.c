@@ -135,6 +135,10 @@ void tie_init(tie_t *tie, unsigned int tri_num) {
   tie->tri_num = 0;
   tie->tri_num_alloc = tri_num;
   tie->tri_list = (tie_tri_t *)malloc(sizeof(tie_tri_t) * tri_num);
+  if (!tie->tri_list) {
+      perror("malloc");
+      exit(1);
+  }
   tie->stat = 0;
   tie->rays_fired = 0;
 }
@@ -430,6 +434,10 @@ void tie_push(tie_t *tie, TIE_3 *tlist, int tnum, void *plist, int pstride) {
       tie->tri_list[tie->tri_num].ptr = NULL;
     }
     tie->tri_list[tie->tri_num].v = (TFLOAT *)malloc(2*sizeof(TFLOAT));
+    if (!tie->tri_list[tie->tri_num].v) {
+	perror("malloc");
+	exit(1);
+    }
     tie->tri_num++;
   }
 }

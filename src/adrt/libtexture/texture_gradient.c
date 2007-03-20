@@ -46,6 +46,10 @@ void texture_gradient_init(texture_t *texture, int axis) {
   texture_gradient_t *td;
 
   texture->data = malloc(sizeof(texture_gradient_t));
+  if (!texture->data) {
+      perror("texture->data");
+      exit(1);
+  }
   texture->free = texture_gradient_free;
   texture->work = texture_gradient_work;
 

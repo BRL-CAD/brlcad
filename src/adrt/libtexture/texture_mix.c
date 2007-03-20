@@ -46,6 +46,10 @@ void texture_mix_init(texture_t *texture, texture_t *texture1, texture_t *textur
   texture_mix_t *td;
 
   texture->data = malloc(sizeof(texture_mix_t));
+  if (!texture->data) {
+      perror("texture->data");
+      exit(1);
+  }
   texture->free = texture_mix_free;
   texture->work = texture_mix_work;
 

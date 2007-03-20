@@ -46,6 +46,10 @@ void texture_stack_init(texture_t *texture) {
   texture_stack_t *td;
 
   texture->data = malloc(sizeof(texture_stack_t));
+  if (!texture->data) {
+      perror("texture->data");
+      exit(1);
+  }
   texture->free = texture_stack_free;
   texture->work = texture_stack_work;
 

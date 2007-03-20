@@ -54,6 +54,10 @@ void render_plane_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
   render->free = render_plane_free;
 
   render->data = (render_plane_t *)malloc(sizeof(render_plane_t));
+  if (!render->data) {
+      perror("render->data");
+      exit(1);
+  }
   d = (render_plane_t *)render->data;
 
   d->ray_pos = ray_pos;

@@ -46,6 +46,10 @@ void texture_camo_init(texture_t *texture, TFLOAT size, int octaves, int absolut
   texture_camo_t   *sd;
 
   texture->data = malloc(sizeof(texture_camo_t));
+  if (!texture->data) {
+      perror("texture->data");
+      exit(1);
+  }
   texture->free = texture_camo_free;
   texture->work = texture_camo_work;
 

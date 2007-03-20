@@ -87,8 +87,17 @@ void util_camera_init(util_camera_t *camera, int threads) {
   /* The camera will use a thread for every cpu the machine has. */
   camera->thread_num = threads ? threads : get_nprocs();
 
-  if(camera->thread_num > 1)
+  if(camera->thread_num > 1) {
     util_tlist = (pthread_t *)malloc(sizeof(pthread_t) * camera->thread_num);
+    if (!util_tlist) {
+	perror("malloc");
+	exit(1);
+    }
+    if (!util_tlist) {
+	perror("util_tlist");
+	exit(1);
+    }
+  }
 }
 
 
@@ -116,6 +125,10 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
   if(camera->dof == 0.0) {
     camera->view_num = 1;
     camera->view_list = (util_camera_view_t *)malloc(sizeof(util_camera_view_t) * camera->view_num);
+    if (!camera->view_list) {
+	perror("view_list");
+	exit(1);
+    }
 
     /* Generate unitized look vector */
     MATH_VEC_SUB(fov_look, camera->focus, camera->pos);
@@ -255,6 +268,10 @@ void util_camera_prep(util_camera_t *camera, common_db_t *db) {
   /* Generate camera positions for depth of field */
   camera->view_num = UTIL_CAMERA_DOF_SAMPLES*UTIL_CAMERA_DOF_SAMPLES;
   camera->view_list = (util_camera_view_t *)malloc(sizeof(util_camera_view_t) * camera->view_num);
+  if (!camera->view_list) {
+      perror("view_list");
+      exit(1);
+  }
 
   for(i = 0; i < UTIL_CAMERA_DOF_SAMPLES; i++) {
     for(n = 0; n < UTIL_CAMERA_DOF_SAMPLES; n++) {

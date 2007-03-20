@@ -181,9 +181,21 @@ void* isst_observer_networking(void *ptr) {
 
   /* Allocate memory for frame buffer */
   magnify_buffer = malloc(screen_w*screen_h*3);
+  if (!magnify_buffer) {
+      perror("magnify_buffer");
+      exit(1);
+  }
   frame = malloc(screen_w*screen_h*3);
+  if (!frame) {
+      perror("frame");
+      exit(1);
+  }
 #if ISST_USE_COMPRESSION
   comp_buf = malloc(screen_w*screen_h*3);
+  if (!comp_buf) {
+      perror("comp_buf");
+      exit(1);
+  }
 #endif
 
 
@@ -365,10 +377,26 @@ void isst_observer_event_loop() {
   content_lines = 0;
   console_lines = 0;
   content_buffer = (char **)malloc(sizeof(char *) * 100);
+  if (!content_buffer) {
+      perror("content_buffer");
+      exit(1);
+  }
   console_buffer = (char **)malloc(sizeof(char *) * 100);
+  if (!console_buffer) {
+      perror("console_buffer");
+      exit(1);
+  }
   for(i = 0; i < 100; i++) {
     content_buffer[i] = (char *)malloc(80);
+    if (!content_buffer[i]) {
+	perror("content_buffer[i]");
+	exit(1);
+    }
     console_buffer[i] = (char *)malloc(80);
+    if (!console_buffer[i]) {
+	perror("console_buffer[i]");
+	exit(1);
+    }
   }
   content_buffer[0][0] = 0;
   console_buffer[0][0] = 0;
@@ -441,6 +469,10 @@ void isst_observer_event_loop() {
 
 	      /* Screen dump */
 	      image24 = malloc(3 * screen_w * screen_h);
+	      if (!image24) {
+		  perror("image24");
+		  exit(1);
+	      }
 	      util_image_convert_32to24(image24, util_display_screen->pixels, screen_w, screen_h, 0);
 	      util_image_save_ppm("screenshot.ppm", image24, screen_w, screen_h);
 	      free(image24);

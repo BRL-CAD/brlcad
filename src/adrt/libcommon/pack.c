@@ -681,6 +681,10 @@ void common_pack_kdtree_cache(common_db_t *db, void **app_data, int *app_ind, ch
   fseek(fh, 0, SEEK_SET);
 
   kdcache = malloc(size);
+  if (!kdcache) {
+      perror("kdcache");
+      exit(1);
+  }
   fread(kdcache, size, 1, fh);
   common_pack_write(app_data, app_ind, kdcache, size);
   fclose(fh);
@@ -712,6 +716,10 @@ void common_pack_mesh_map(void **app_data, int *app_ind, char *filename) {
   fseek(fh, 0, SEEK_SET);
 
   map = malloc(size);
+  if (!map) {
+      perror("map");
+      exit(1);
+  }
   fread(map, size, 1, fh);
   common_pack_write(app_data, app_ind, map, size);
   free(map);

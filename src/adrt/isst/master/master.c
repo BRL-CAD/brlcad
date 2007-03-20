@@ -136,9 +136,17 @@ static void isst_master_setup() {
   frame_ind = 0;
 
   rgb_frame = malloc(3 * db.env.img_w * db.env.img_h);
+  if (!rgb_frame) {
+      perror("rgb_frame");
+      exit(1);
+  }
   memset(rgb_frame, 0, 3 * db.env.img_w * db.env.img_h);
 
   isst_master_observer_frame = malloc(3 * db.env.img_w * db.env.img_h);
+  if (!isst_master_observer) {
+      perror("isst_master_observer");
+      exit(1);
+  }
 }
 
 
@@ -300,6 +308,10 @@ printf("component[%d]: %s\n", i, name);
 
     /* Send a message to update hitlist */
     mesg = malloc(sizeof(short) + res_len - sizeof(common_work_t) - 6*sizeof(TFLOAT));
+    if (!mesg) {
+	perror("mesg");
+	exit(1);
+    }
 
     ind = 0;
     slop = ISST_OP_SHOT;
@@ -366,6 +378,10 @@ void* isst_master_networking(void *ptr) {
 
 #if ISST_USE_COMPRESSION
   comp_buf = malloc(3 * db.env.img_w * db.env.img_h + 1024);
+  if (!comp_buf) {
+      perror("comp_buf");
+      exit(1);
+  }
 #endif
 
   /* create a socket */
@@ -376,6 +392,10 @@ void* isst_master_networking(void *ptr) {
 
   /* initialize socket list */
   isst_master_socklist = (isst_master_socket_t *)malloc(sizeof(isst_master_socket_t));
+  if (!isst_master_socklist) {
+      perror("isst_master_socklist");
+      exit(1);
+  }
   isst_master_socklist->next = NULL;
   isst_master_socklist->prev = NULL;
   isst_master_socklist->num = master_socket;
@@ -420,6 +440,10 @@ void* isst_master_networking(void *ptr) {
 	  if(new_socket >= 0) {
 	    tmp = isst_master_socklist;
 	    isst_master_socklist = (isst_master_socket_t *)malloc(sizeof(isst_master_socket_t));
+	    if (!isst_master_socklist) {
+		perror("isst_master_socklist");
+		exit(1);
+	    }
 	    isst_master_socklist->num = new_socket;
 	    isst_master_socklist->controller = isst_master_active_connections ? 0 : 1;
 	    isst_master_socklist->active = 1;
@@ -532,6 +556,10 @@ void* isst_master_networking(void *ptr) {
 		  int len;
 
 		  string = (char *)malloc(1024);
+		  if (!string) {
+		      perror("string");
+		      exit(1);
+		  }
 		  tienet_recv(sock->num, &len, 1, 0);
 		  tienet_recv(sock->num, string, len, 0);
 
@@ -728,6 +756,10 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
 	      void *image24;
 	      strcpy(filename, "frame.ppm");
 	      image24 = malloc(3 * screen_w * screen_h);
+	      if (!image24) {
+		  perror("image24");
+		  exit(1);
+	      }
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
 	      util_image_convert_32to24(image24, util_display_screen->pixels, screen_w, screen_h, 0);
 #else
@@ -836,6 +868,10 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
 
 	      /* Queue a work unit for a shot needed for the plane render method */
 	      mesg = malloc(sizeof(common_work_t) + 1 + 2*sizeof(TIE_3));
+	      if (!mesg) {
+		  perror("mesg");
+		  exit(1);
+	      }
 	      dlen = 0;
 
 	      work.orig_x = 0;
@@ -880,6 +916,10 @@ void isst_master_process_events(isst_event_t *event_queue, uint8_t event_num, is
 
 	      /* Queue a work unit for a shot needed for the plane render method */
 	      mesg = malloc(sizeof(common_work_t) + 1 + 2*sizeof(TIE_3) + sizeof(TFLOAT));
+	      if (!mesg) {
+		  perror("mesg");
+		  exit(1);
+	      }
 	      dlen = 0;
 
 	      work.orig_x = 0;
