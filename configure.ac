@@ -2474,7 +2474,7 @@ int main() {
 #if TCL_MAJOR_VERSION < 8
     fprintf(stderr, "major version < 8\n");
     return 1;
-#elif TCl_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 5
+#elif TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 5
     fprintf(stderr, "minor version < 5\n");
     return 1;
 #endif
@@ -2677,7 +2677,7 @@ int main() {
 #if ITCL_MAJOR_VERSION < 3
     fprintf(stderr, "major version < 3\n");
     return 1;
-#elif ITCl_MAJOR_VERSION == 3 && ITCL_MINOR_VERSION < 2
+#elif ITCL_MAJOR_VERSION == 3 && ITCL_MINOR_VERSION < 2
     fprintf(stderr, "minorversion < 2\n");
     return 1;
 #endif
@@ -3824,11 +3824,6 @@ AC_CONFIG_FILES([
 
 AC_OUTPUT
 
-# AC_OUTPUT won't update the brlcad_config.h.in template timestamp if
-# the file is unchanged.  forcibly update the timestamp so autoheader
-# doesn't try to invoke.
-# touch include/brlcad_config.h.in
-
 # ac_top_builddir and other variables are modified after AC_OUTPUT so
 # plan accordingly and save them beforehand.
 
@@ -3884,6 +3879,13 @@ else
 	time_elapsed="unknown"
 fi
 
+
+# AC_OUTPUT won't update the brlcad_config.h.in template timestamp if
+# the file is unchanged.  forcibly update the timestamp so autoheader
+# doesn't try to invoke.
+if test ! "x`cat include/brlcad_config.h.in`" = "x" ; then
+    touch include/brlcad_config.h.in
+fi
 
 dnl **********************
 dnl *** Report Summary ***
