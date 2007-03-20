@@ -1864,6 +1864,17 @@ if test ! "x$bc_auto_flags" = "xno" ; then
 	fi
     fi
 
+    dnl C++ specific flags
+    if test "x$bc_build_opennurbs" != "xno" ; then
+	# turn off bogus/annoying warning
+	AC_LANG_PUSH([C++])
+	BC_COMPILER_RECOGNIZES([-Wno-non-template-friend], [no_non_tempalte_friend], [no_keep])
+	if test "x$bc_no_non_template_friend" = "xyes" ; then
+	    CXXFLAGS="$CXXFLAGS -Wno-non-template-friend"
+	fi
+	AC_LANG_POP
+    fi
+
 # end check for automatic flags
 fi
 
@@ -3906,7 +3917,9 @@ AC_MSG_RESULT([Configuration files: ${sysconfdir}])
 AC_MSG_RESULT([       Manual pages: ${mandir}])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([CC       = ${CC}])
+AC_MSG_RESULT([CXX      = ${CXX}])
 AC_MSG_RESULT([CFLAGS   = ${CFLAGS}])
+AC_MSG_RESULT([CXXFLAGS = ${CXXFLAGS}])
 AC_MSG_RESULT([CPPFLAGS = ${CPPFLAGS}])
 AC_MSG_RESULT([LDFLAGS  = ${LDFLAGS}])
 AC_MSG_RESULT([LIBS     = ${LIBS}])
