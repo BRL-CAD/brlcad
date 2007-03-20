@@ -117,7 +117,7 @@ struct vrml_mat {
 #define PL_O(_m)	bu_offsetof(struct vrml_mat, _m)
 #define PL_OA(_m)	bu_offsetofarray(struct vrml_mat, _m)
 
-struct bu_structparse vrml_mat_parse[]={
+const struct bu_structparse vrml_mat_parse[]={
 	{"%s", TXT_NAME_LEN, "ma_shader", PL_OA(shader), 	FUNC_NULL },
 	{"%d", 1, "shine",		PL_O(shininess),	FUNC_NULL },
 	{"%d", 1, "sh",			PL_O(shininess),	FUNC_NULL },
