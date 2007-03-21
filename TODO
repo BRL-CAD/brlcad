@@ -46,6 +46,10 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* Use NSIS instead of InstallShield/MSI for Windows binary releases
+
+* Generate plain .zip files for Windows binary releases
+
 * fix the variety of ami.tcl and ampi.tcl tclscript warnings/errors
 
 * update adrt with latest changes being used by muves team
