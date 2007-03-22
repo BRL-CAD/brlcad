@@ -9,6 +9,12 @@ headers or libraries that are needed for compilation.
 Contents
 --------
 
+Cubit
+	This code is a CUBIT translator that will read a given BRL-CAD
+geometry file and convert the included 3D geometry to a CUBIT readable
+representation (.sat).  This code utilizes the CUBIT's CGM API and must be
+linked against CUBIT's CGM libraries and the ACIS CAD kernel.
+
 EndgameFramework
 	This code is a "Simulation Module" for the Endgame Framework
 that provides BRL-CAD import functionality for v4/v5 binary geometry

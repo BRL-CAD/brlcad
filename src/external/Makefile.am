@@ -1,5 +1,11 @@
 # $Id$
 
+if BUILD_CUBIT
+CUBIT_DIR = Cubit
+else !BUILD_CUBIT
+CUBIT_DIR =
+endif
+
 if WITH_PROE
 PROE_DIR = ProEngineer
 else !WITH_PROE
@@ -19,6 +25,7 @@ EF_DIR =
 endif
 
 SUBDIRS = \
+	$(CUBIT_DIR) \
 	$(EF_DIR) \
 	$(PROE_DIR) \
 	$(UG_DIR)
