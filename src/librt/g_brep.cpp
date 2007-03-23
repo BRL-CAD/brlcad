@@ -88,6 +88,12 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 //--------------------------------------------------------------------------------
 // Bounding volume classes
 namespace brep {
+    inline void swap(fastf_t& a, fastf_t& b) {
+	fastf_t t = b;
+	b = a;
+	a = t;
+    }
+    
     class BoundingVolume {	
     public:
 
@@ -109,6 +115,10 @@ namespace brep {
 	fastf_t combined_surface_area(const BoundingVolume& vol) const;
 	BoundingVolume combine(const BoundingVolume& vol) const;
 
+	// slab intersection routine
+	bool intersected_by(struct xray* r);
+	bool intersected_by(struct xray* r, fastf_t* tnear, fastf_t* far);
+
 	// Goldsmith & Salmon "Automatic generation of trees"
 	BoundingVolume* gs_insert(BoundingVolume* node);
 	
@@ -125,6 +135,9 @@ namespace brep {
 
 	SurfaceBV(const ON_BrepFace& face, point_t min, point_t max, const ON_Interval& u, const ON_Interval& v);
 	bool is_leaf() const; // override BoundingVolume::is_leaf();
+	const ON_BrepFace& face() const { return _face; }
+	const fastf_t u_center() const { return _u.Mid(); }
+	const fastf_t v_center() const { return _v.Mid(); }
 
     private:
 	const ON_BrepFace& _face;
@@ -183,6 +196,33 @@ namespace brep {
 	VMOVE(max, _max);
     }
     
+    inline bool 
+    BoundingVolume::intersected_by(struct xray* r) {
+	fastf_t tnear, tfar;
+	return intersected_by(r, &tnear, &tfar);
+    }
+
+    inline bool 
+    BoundingVolume::intersected_by(struct xray* r, fastf_t* tnear, fastf_t* tfar) {
+	*tnear = -MAX_FASTF;
+	*tfar = MAX_FASTF;
+	for (int i = 0; i < 3; i++) {
+	    if (NEAR_ZERO(r->r_dir[i],VUNITIZE_TOL)) 
+		if (r->r_pt[i] < _min[i] && r->r_pt[i] > _max[i])
+		    return false;
+		else {
+		    fastf_t t1 = (_min[i]-r->r_pt[i]) / r->r_dir[i];
+		    fastf_t t2 = (_max[i]-r->r_pt[i]) / r->r_dir[i];
+		    if (t1 > t2) swap(t1,t2);
+		    if (t1 > *tnear) *tnear = t1;
+		    if (t2 < *tfar) *tfar = t2;
+		    if (*tnear > *tfar) /* box is missed */ return false;
+		    if (*tfar < 0) /* box is behind ray */ return false;
+		}
+	}
+	return true;
+    }
+
     inline fastf_t
     BoundingVolume::surface_area() const { return _area; }
     
@@ -513,6 +553,161 @@ rt_brep_print(register const struct soltab *stp)
 {
 }
 
+//================================================================================
+// shot support
+
+class plane_ray {
+public:
+    vect_t n1;
+    fastf_t d1;
+    
+    vect_t n2;
+    fastf_t d2;
+};
+
+void brep_intersect_bv(BVList& inters, struct xray* r, BoundingVolume* bv) 
+{
+    bool intersects = bv->intersected_by(r);
+    if (intersects && bv->is_leaf()) {	
+	inters.push_back(bv);
+    }
+    else if (intersects)
+	for (BVList::iterator i = bv->children.begin(); i != bv->children.end(); i++) {
+	    brep_intersect_bv(inters, r, *i);
+	}
+}
+
+void brep_get_plane_ray(struct xray* r, plane_ray& pr)
+{
+    vect_t v1;
+    VMOVE(v1, r->r_dir);
+    fastf_t min = MAX_FASTF;
+    int index = -1;
+    for (int i = 0; i < 3; i++) { // find the smallest component
+	if (v1[i] < min) {
+	    min = v1[i];
+	    index = i;
+	}
+    }
+    v1[index] += 1; // alter the smallest component
+    VCROSS(pr.n1, v1, r->r_dir); // n1 is perpendicular to v1
+    VCROSS(pr.n2, v1, pr.n1);       // n2 is perpendicular to v1 and n1
+    // ??? do they need to be normalized - Ed doesn't think so...
+    pr.d1 = VDOT(pr.n1,r->r_pt);
+    pr.d2 = VDOT(pr.n2,r->r_pt);
+}
+
+
+
+// XXX put in VMATH?
+typedef fastf_t pt2d_t[2] VEC_ALIGN;
+typedef fastf_t mat2d_t[4] VEC_ALIGN; // row-major 
+inline
+void mat2d_inverse(mat2d_t inv, mat2d_t m) {
+    pt2d_t _a = {m[0],m[1]};
+    pt2d_t _b = {m[3],m[2]};
+    dvec<2> a(_a);
+    dvec<2> b(_b);
+    dvec<2> c = a*b;
+    fastf_t scale = 1.0 / c.fold(0,dvec<2>::sub());
+    double tmp[4] VEC_ALIGN = {m[3],-m[1],-m[2],m[0]};
+    dvec<4> iv(tmp);
+    dvec<4> sv(scale);
+    dvec<4> r = iv * sv;
+    r.a_store(inv);
+}
+inline 
+void mat2d_pt2d_mul(pt2d_t r, mat2d_t m, pt2d_t p) {
+    pt2d_t _a = {m[0],m[2]};
+    pt2d_t _b = {m[1],m[3]};
+    dvec<2> x(p[0]);
+    dvec<2> y(p[1]);
+    dvec<2> a(_a);
+    dvec<2> b(_b);
+    dvec<2> c = a*x + b*y;
+    c.a_store(r);
+}
+inline
+void pt2dsub(pt2d_t r, pt2d_t a, pt2d_t b) {
+    dvec<2> va(a);
+    dvec<2> vb(b);
+    dvec<2> vr = va - vb;
+    vr.a_store(r);
+}
+
+inline
+fastf_t v2mag(pt2d_t p) {
+    dvec<2> a(p);
+    dvec<2> sq = a*a;
+    return sqrt(sq.fold(0,dvec<2>::add()));
+}
+inline
+fastf_t move(pt2d_t a, pt2d_t b) {
+    a[0] = b[0];
+    a[1] = b[1];
+}
+
+class brep_hit {
+public:
+    const ON_BrepFace& face;
+    point_t point;
+    vect_t  normal;
+    pt2d_t  uv;
+    
+    brep_hit(const ON_BrepFace& f, point_t p, vect_t n, pt2d_t _uv) 
+	: face(f)
+    {
+	VMOVE(point, p);
+	VMOVE(normal, n);
+	move(uv, _uv);
+    }
+};
+typedef std::list<brep_hit*> HitList;
+
+void
+brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t old_uv, pt2d_t new_uv, pt2d_t new_R) {
+    ON_3dPoint _pt;
+    ON_3dVector _su, _sv;
+    surf->Ev1Der(old_uv[0], old_uv[1], _pt, _su, _sv);
+
+    new_R[0] = VDOT(pr.n1,((fastf_t*)_pt)) + pr.d1;
+    new_R[1] = VDOT(pr.n2,((fastf_t*)_pt)) + pr.d2;
+
+    mat2d_t jacob = { VDOT(pr.n1,((fastf_t*)_su)), VDOT(pr.n1,((fastf_t*)_sv)),
+		      VDOT(pr.n2,((fastf_t*)_su)), VDOT(pr.n2,((fastf_t*)_sv)) };
+    mat2d_t inv_jacob;
+    mat2d_inverse(inv_jacob, jacob);
+
+    pt2d_t tmp;
+    mat2d_pt2d_mul(tmp, inv_jacob, new_R);
+    pt2dsub(new_uv, old_uv, tmp);
+}
+
+bool 
+brep_intersect(const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv, plane_ray& pr, brep_hit** hit)
+{
+    bool found = false;
+    fastf_t Dlast = MAX_FASTF;
+    pt2d_t Rcurr;
+    pt2d_t new_uv;
+    for (int i = 0; i < BREP_MAX_ITERATIONS; i++) {
+	brep_newton_iterate(surf, pr, uv, new_uv, Rcurr);
+	fastf_t d = v2mag(Rcurr);
+	if (d < BREP_INTERSECTION_ROOT_EPSILON) {
+	    found = true; break; 
+	} else if (d > Dlast) {
+	    break;
+	}
+	move(uv, new_uv);
+    }
+    if (found) {
+	ON_3dPoint _pt;
+	ON_3dVector _norm;
+	surf->EvNormal(new_uv[0],new_uv[1],_pt,_norm);
+	*hit = new brep_hit(face, (fastf_t*)_pt,(fastf_t*)_norm, new_uv);
+    }    
+    return found;
+}
 
 /**
  *  			R T _ B R E P _ S H O T
@@ -531,12 +726,56 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     vect_t invdir;
     struct brep_specific* bs = (struct brep_specific*)stp->st_specific;
 
-    // check the hierarchy to see if we have a hit at a leaf node    
+    // check the hierarchy to see if we have a hit at a leaf node
+    BVList inters;
+    brep_intersect_bv(inters, rp, bs->bvh);
 
-    // intersect with aabb
-    // rt_in_rpp(rp, invdir, 
+    if (inters.size() == 0) return 0; // MISS
 
-    return 0;
+    plane_ray pr;
+    brep_get_plane_ray(rp, pr);    
+
+    HitList hits;
+    for (BVList::iterator i = inters.begin(); i != inters.end(); i++) {
+	const SurfaceBV* sbv = dynamic_cast<SurfaceBV*>((*i));
+	const ON_BrepFace& f = sbv->face();
+	const ON_Surface* surf = f.SurfaceOf();       
+	brep_hit* hit; 
+	pt2d_t uv = {sbv->u_center(),sbv->v_center()};
+	if (brep_intersect(f, surf, uv, pr, &hit)) {
+	    hits.push_back(hit);
+	}
+    }
+
+    if (hits.size() > 0) {
+	if (hits.size() % 2 == 0) {
+	    // take each pair as a segment
+	    for (HitList::iterator i = hits.begin(); i != hits.end(); i++) {
+		brep_hit* in = (*i)++;
+		brep_hit* out = *i;
+		register struct seg* segp;
+		RT_GET_SEG(segp, ap->a_resource);
+		segp->seg_stp = stp;
+
+		VMOVE(segp->seg_in.hit_point, in->point);
+		VMOVE(segp->seg_in.hit_normal, in->normal);
+		segp->seg_in.hit_dist = DIST_PT_PT(rp->r_pt,in->point);
+		segp->seg_in.hit_surfno = in->face.m_face_index;
+		VSET(segp->seg_in.hit_vpriv,in->uv[0],in->uv[1],0.0);
+
+		VMOVE(segp->seg_out.hit_point, out->point);
+		VMOVE(segp->seg_out.hit_normal, out->normal);
+		segp->seg_out.hit_dist = DIST_PT_PT(rp->r_pt,out->point);
+		segp->seg_out.hit_surfno = out->face.m_face_index;
+		VSET(segp->seg_out.hit_vpriv,out->uv[0],out->uv[1],0.0);
+	    }
+	} else {
+	    bu_log("ACK! found odd number of intersection points. XXX Handle this!");
+	    bu_log("It's really not acceptable to just print inane statements :-)");
+	}
+    }
+
+    return 0; // MISS
 }
 
 
@@ -548,6 +787,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 void
 rt_brep_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
+    /* no-op */
 }
 
 
@@ -559,6 +799,7 @@ rt_brep_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 void
 rt_brep_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
+    /* XXX todo */
 }
 
 /**
@@ -592,6 +833,8 @@ rt_brep_class()
 void
 rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
+    uvp->uv_u = hitp->hit_vpriv[0];
+    uvp->uv_v = hitp->hit_vpriv[1];
 }
 
 
