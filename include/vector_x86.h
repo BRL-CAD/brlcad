@@ -18,10 +18,17 @@ struct vec_internal {
   v2df v[LEN/2];
 };
 
+// inline dvec4::dvec4(double a, double b, double c, double d)
+//     : dvec<4>(
+// {
+//     double t[4] VEC_ALIGN = {a, b, c, d};
+    
+// }
+
 template<int LEN>
 inline dvec<LEN>::dvec(double s)
 {
-  double t[LEN] __attribute__((aligned(16)));
+  double t[LEN] VEC_ALIGN;
   for (int i = 0; i < LEN/2; i++) {
     t[i*2]   = s;
     t[i*2+1] = s;
@@ -179,6 +186,19 @@ dvec<LEN>::fold(double identity, const dvec_op& op, int limit)
     }
     return val;
 }
+
+template<int LEN>
+inline dvec<LEN>
+dvec<LEN>::map(const dvec_unop& op, int limit)
+{
+    double _t[LEN] VEC_ALIGN;
+    a_store(_t);
+    for (int i = 0; i < limit; i++) {
+	_t[i] = op(_t[i]);
+    }
+    return dvec<LEN>(_t);
+}
+
 
 template <int LEN>
 inline std::ostream&

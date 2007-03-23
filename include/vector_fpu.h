@@ -150,6 +150,16 @@ dvec<LEN>::fold(double identity, const dvec_op& op, int limit)
     return val;
 }
 
+template<int LEN>
+inline dvec<LEN>
+dvec<LEN>::map(const dvec_unop& op, int limit)
+{
+    struct vec_internal<LEN> r;
+    for (int i = 0; i < limit; i++) {
+	r.v[i] = op(data.v[i]);
+    }
+    return dvec<LEN>(r);
+}
 
 
 template <int LEN>

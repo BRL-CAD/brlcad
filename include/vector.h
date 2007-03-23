@@ -2,6 +2,7 @@
 #define __VECTOR
 
 #include "common.h"
+#include <math.h>
 
 extern "C++" {
 #include <iostream>
@@ -16,6 +17,11 @@ extern "C++" {
 
   template<int LEN>
   std::ostream& operator<<(std::ostream& out, const dvec<LEN>& v);
+
+  class dvec_unop {
+  public:
+    virtual double operator()(double a) const = 0;
+  };
 
   class dvec_op {
   public:   
@@ -44,6 +50,7 @@ extern "C++" {
     dvec<LEN> madd(const dvec<LEN>& s, const dvec<LEN>& b);
     dvec<LEN> madd(const double s, const dvec<LEN>& b);
 
+    dvec<LEN> map(const dvec_unop& operation, int limit = LEN);
     double fold(double proto, const dvec_op& operation, int limit = LEN);
 
     friend std::ostream& operator<< <LEN>(std::ostream& out, const dvec<LEN>& v);   
@@ -52,12 +59,29 @@ extern "C++" {
     public: 
       double operator()(double a, double b) const { return a * b; }
     };
+
+    class add : public dvec_op {
+    public:
+      double operator()(double a, double b) const { return a + b; }
+    };
+
+    class sub : public dvec_op {
+    public:
+      double operator()(double a, double b) const { return a - b; }
+    };
+
+    class sqrt : public dvec_unop {
+    public:
+      double operator()(double a) const { return sqrt(a); }
+    };
   private:
     struct vec_internal<LEN> data;
 
     dvec(const vec_internal<LEN>& d);
   };  
 
+  //#define DVEC4(V,t,a,b,c,d) double v#t[4] VEC_ALIGN = {(a),(b),(c),(d)}; V(v#t)
+  
   // use this to create 16-byte aligned memory on platforms that support it
 #define VEC_ALIGN
 
