@@ -68,6 +68,10 @@ typedef struct _on_brep_placeholder {
 #define BREP_MAX_FT_DEPTH 8
     /* Surface flatness parameter, Abert says between 0.8-0.9 */
 #define BREP_SURFACE_FLATNESS 0.8
+    /* Maximum number of newton iterations on root finding */
+#define BREP_MAX_ITERATIONS 10
+    /* Root finding threshold */
+#define BREP_INTERSECTION_ROOT_EPSILON 0.00001
     /* Use vector operations? For debugging */
 #define DO_VECTOR 1
     
