@@ -96,6 +96,7 @@ typedef struct _brep_cdbitem {
  * acceleration data structure.
  */
 struct brep_specific {
+    ON_Brep* brep;
     BrepBoundingVolume* bvh;
 };
 
