@@ -434,13 +434,20 @@ main(int argc, char** argv)
 
     ON::Begin();
   
-    printf("Writing a twisted cube b-rep...\n");
-    outfp = wdb_fopen("brep_cube.g");
-    mk_id(outfp, id_name);
-    brep = MakeTwistedCube(error_log);
-    mk_brep(outfp, geom_name, brep);
-    wdb_close(outfp);
+    if (argc > 1) {
+	printf("Writing a twisted cube b-rep...\n");
+	outfp = wdb_fopen("brep_cube1.g");
+	mk_id(outfp, id_name);
+	brep = MakeTwistedCube(error_log);
+	mk_brep(outfp, geom_name, brep);
 
+	//mk_comb1(outfp, "cube.r", geom_name, 1);
+	unsigned char rgb[] = {255,255,255};
+	mk_region1(outfp, "cube.r", geom_name, "flat", "", rgb);
+	
+	wdb_close(outfp);	
+    }
+    
     printf("Reading a twisted cube b-rep...\n");
     struct db_i* dbip = db_open("brep_cube.g", "r");
     db_dirbuild(dbip);
@@ -457,7 +464,7 @@ main(int argc, char** argv)
 	}
     }
     db_close(dbip);
-  
+    
     ON::End();
 
     return 0;
