@@ -12,6 +12,7 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 bin_PROGRAMS = \
 	bottest \
+	brep_simple \
 	brep_cube \
 	brickwall \
 	clutter \
@@ -43,13 +44,19 @@ bin_PROGRAMS = \
 bottest_SOURCES = bottest.c
 
 brep_cube_SOURCES = brep_cube.cpp
+brep_simple_SOURCES = brep_simple.cpp
 # per-target CPPFLAGS not available until automake 1.7+
 if WITH_OPENNURBS
 brep_cube_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
+brep_simple_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
 else !WITH_OPENNURBS
 brep_cube_CXXFLAGS =
+brep_simple_CXXFLAGS =
 endif
 brep_cube_LDADD = \
+	${proc_db_libs} \
+	${OPENNURBS}
+brep_simple_LDADD = \
 	${proc_db_libs} \
 	${OPENNURBS}
 
