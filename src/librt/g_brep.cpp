@@ -84,6 +84,9 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
  ********************************************************************************/
 
 #include <list>
+#include <iostream>
+
+#define TRACE(s) std::cout << "TRACE: " << s << std::endl
 
 //--------------------------------------------------------------------------------
 // Bounding volume classes
@@ -207,18 +210,19 @@ namespace brep {
 	*tnear = -MAX_FASTF;
 	*tfar = MAX_FASTF;
 	for (int i = 0; i < 3; i++) {
-	    if (NEAR_ZERO(r->r_dir[i],VUNITIZE_TOL)) 
-		if (r->r_pt[i] < _min[i] && r->r_pt[i] > _max[i])
+	    if (NEAR_ZERO(r->r_dir[i],VUNITIZE_TOL)) {
+		if (r->r_pt[i] < _min[i] || r->r_pt[i] > _max[i])
 		    return false;
-		else {
-		    fastf_t t1 = (_min[i]-r->r_pt[i]) / r->r_dir[i];
-		    fastf_t t2 = (_max[i]-r->r_pt[i]) / r->r_dir[i];
-		    if (t1 > t2) swap(t1,t2);
-		    if (t1 > *tnear) *tnear = t1;
-		    if (t2 < *tfar) *tfar = t2;
-		    if (*tnear > *tfar) /* box is missed */ return false;
-		    if (*tfar < 0) /* box is behind ray */ return false;
-		}
+	    }
+	    else {
+		fastf_t t1 = (_min[i]-r->r_pt[i]) / r->r_dir[i];
+		fastf_t t2 = (_max[i]-r->r_pt[i]) / r->r_dir[i];
+		if (t1 > t2) swap(t1,t2);
+		if (t1 > *tnear) *tnear = t1;
+		if (t2 < *tfar) *tfar = t2;
+		if (*tnear > *tfar) /* box is missed */ return false;
+		if (*tfar < 0) /* box is behind ray */ return false;
+	    }
 	}
 	return true;
     }
@@ -378,7 +382,7 @@ brep_is_flat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
 	dvec<4> yb(by);
 	dvec<4> zb(bz);
 	dvec<4> dots = xa * xb + ya * yb + za * zb;
-	product *= dots.fold(1,dvec<4>::mul());
+	product *= dots.foldr(1,dvec<4>::mul());
 	if (product < 0.0) return false;
     }    
     // try the next set of normals
@@ -392,7 +396,7 @@ brep_is_flat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
 	dvec<4> za(az);
 	dvec<4> zb(bz);
 	dvec<4> dots = xa * xb + ya * yb + za * zb;
-	product *= dots.fold(1,dvec<4>::mul(),3);
+	product *= dots.foldr(1,dvec<4>::mul(),3);
     }
 #else
     for (int i = 0; i < 7; i++) {
@@ -406,9 +410,11 @@ brep_is_flat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
 BoundingVolume*
 brep_surface_bbox(const ON_BrepFace& face, const ON_Interval& u, const ON_Interval& v)
 {
+    TRACE("brep_surface_bbox");
     ON_3dPoint corners[4];
     const ON_Surface* surf = face.SurfaceOf();
 
+    TRACE("  surf: " << surf);
     if (!surf->EvPoint(u.Min(),v.Min(),corners[0]) ||
 	!surf->EvPoint(u.Max(),v.Min(),corners[1]) ||
 	!surf->EvPoint(u.Max(),v.Max(),corners[2]) ||
@@ -427,6 +433,7 @@ brep_surface_bbox(const ON_BrepFace& face, const ON_Interval& u, const ON_Interv
 BoundingVolume*
 brep_surface_subdivide(const ON_BrepFace& face, const ON_Interval& u, const ON_Interval& v, int depth)
 {
+    TRACE("brep_surface_subdivide");
     const ON_Surface* surf = face.SurfaceOf();
     BoundingVolume* parent = brep_surface_bbox(face, u, v);
     if (brep_is_flat(surf, u, v) || depth >= BREP_MAX_FT_DEPTH) {
@@ -451,7 +458,7 @@ int
 brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 {
     ON_TextLog tl(stderr);
-    ON_Brep* brep = bi->brep;
+    ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
 	return -1;
@@ -468,8 +475,10 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
     BVList surface_bvs;
     ON_BrepFaceArray& faces = brep->m_F;
     for (int i = 0; i < faces.Count(); i++) {
+        TRACE("Face: " << i);
 	ON_BrepFace& face = faces[i];
 	const ON_Surface* surf = face.SurfaceOf();
+	TRACE("Surf: " << surf);
 
 	ON_Interval u = surf->Domain(0);
 	ON_Interval v = surf->Domain(1);
@@ -505,6 +514,7 @@ brep_calculate_cdbitems(struct brep_specific* bs, struct rt_brep_internal* bi)
 int
 rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 {
+    TRACE("rt_brep_prep");
     /* This prepares the NURBS specific data structures to be used
        during intersection... i.e. acceleration data structures and
        whatever else is needed.
@@ -523,6 +533,8 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 
     if ((bs = (struct brep_specific*)stp->st_specific) == NULL) {
 	bs = (struct brep_specific*)bu_malloc(sizeof(struct brep_specific), "brep_specific");
+	bs->brep = bi->brep;
+	bi->brep = NULL;
 	stp->st_specific = (genptr_t)bs;
     }
 
@@ -530,7 +542,12 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 	return -1;
     }
 
+    point_t adjust;
+    VSETALL(adjust,0.02);
     bs->bvh->get_bbox(stp->st_min, stp->st_max);
+    // expand outer bounding box...
+    VSUB2(stp->st_min,stp->st_min,adjust);
+    VADD2(stp->st_max,stp->st_max,adjust);
     VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
     vect_t work;
     VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
@@ -597,24 +614,29 @@ void brep_get_plane_ray(struct xray* r, plane_ray& pr)
     pr.d2 = VDOT(pr.n2,r->r_pt);
 }
 
-
+#define ON_PRINT4(p) "[" << (p)[0] << "," << (p)[1] << "," << (p)[2] << "," << (p)[3] << "]"
+#define ON_PRINT3(p) "(" << (p)[0] << "," << (p)[1] << "," << (p)[2] << ")"
+#define ON_PRINT2(p) "(" << (p)[0] << "," << (p)[1] << ")"
 
 // XXX put in VMATH?
 typedef fastf_t pt2d_t[2] VEC_ALIGN;
 typedef fastf_t mat2d_t[4] VEC_ALIGN; // row-major 
 inline
-void mat2d_inverse(mat2d_t inv, mat2d_t m) {
+bool mat2d_inverse(mat2d_t inv, mat2d_t m) {
     pt2d_t _a = {m[0],m[1]};
     pt2d_t _b = {m[3],m[2]};
     dvec<2> a(_a);
     dvec<2> b(_b);
     dvec<2> c = a*b;
-    fastf_t scale = 1.0 / c.fold(0,dvec<2>::sub());
+    fastf_t det = c.foldr(0,dvec<2>::sub());
+    if (NEAR_ZERO(det,VUNITIZE_TOL)) return false;
+    fastf_t scale = 1.0 / det;
     double tmp[4] VEC_ALIGN = {m[3],-m[1],-m[2],m[0]};
     dvec<4> iv(tmp);
     dvec<4> sv(scale);
     dvec<4> r = iv * sv;
     r.a_store(inv);
+    return true;
 }
 inline 
 void mat2d_pt2d_mul(pt2d_t r, mat2d_t m, pt2d_t p) {
@@ -639,13 +661,14 @@ inline
 fastf_t v2mag(pt2d_t p) {
     dvec<2> a(p);
     dvec<2> sq = a*a;
-    return sqrt(sq.fold(0,dvec<2>::add()));
+    return sqrt(sq.foldr(0,dvec<2>::add()));
 }
 inline
 fastf_t move(pt2d_t a, pt2d_t b) {
     a[0] = b[0];
     a[1] = b[1];
 }
+
 
 class brep_hit {
 public:
@@ -660,15 +683,19 @@ public:
 	VMOVE(point, p);
 	VMOVE(normal, n);
 	move(uv, _uv);
+	TRACE("hit: " << ON_PRINT3(p) << " " << ON_PRINT3(n));
     }
 };
 typedef std::list<brep_hit*> HitList;
 
 void
-brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t old_uv, pt2d_t new_uv, pt2d_t new_R) {
+brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t old_uv, pt2d_t new_uv, pt2d_t new_R) 
+{
+    TRACE("brep_newton_iterate: " << ON_PRINT2(old_uv));
     ON_3dPoint _pt;
     ON_3dVector _su, _sv;
     surf->Ev1Der(old_uv[0], old_uv[1], _pt, _su, _sv);
+    TRACE("\tpt" << ON_PRINT3(_pt) << ", su" << ON_PRINT3(_su) << ", sv" ON_PRINT3(_sv));
 
     new_R[0] = VDOT(pr.n1,((fastf_t*)_pt)) + pr.d1;
     new_R[1] = VDOT(pr.n2,((fastf_t*)_pt)) + pr.d2;
@@ -676,12 +703,24 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t old_uv, pt2d_t
     mat2d_t jacob = { VDOT(pr.n1,((fastf_t*)_su)), VDOT(pr.n1,((fastf_t*)_sv)),
 		      VDOT(pr.n2,((fastf_t*)_su)), VDOT(pr.n2,((fastf_t*)_sv)) };
     mat2d_t inv_jacob;
-    mat2d_inverse(inv_jacob, jacob);
-
-    pt2d_t tmp;
-    mat2d_pt2d_mul(tmp, inv_jacob, new_R);
-    pt2dsub(new_uv, old_uv, tmp);
+    if (mat2d_inverse(inv_jacob, jacob)) { // check inverse validity
+	pt2d_t tmp;
+	mat2d_pt2d_mul(tmp, inv_jacob, new_R);
+	pt2dsub(new_uv, old_uv, tmp);
+	fastf_t l,h;
+	surf->GetDomain(0,&l,&h);
+	if (new_uv[0] < l || new_uv[0] > h) move(new_uv,new_R);
+	else {
+	    surf->GetDomain(1,&l,&h);
+	    if (new_uv[1] < l || new_uv[1] > h) move(new_uv,new_R);
+	}
+    }
+    else {
+	move(new_uv,new_R);
+    }
+    TRACE("\t" << ON_PRINT2(new_R) << ", " << ON_PRINT2(new_uv));
 }
+
 
 bool 
 brep_intersect(const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv, plane_ray& pr, brep_hit** hit)
@@ -695,6 +734,8 @@ brep_intersect(const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv, plane
 	fastf_t d = v2mag(Rcurr);
 	if (d < BREP_INTERSECTION_ROOT_EPSILON) {
 	    found = true; break; 
+	} else if (d == Dlast) {
+	    found = true; break;
 	} else if (d > Dlast) {
 	    break;
 	}
@@ -723,12 +764,19 @@ brep_intersect(const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv, plane
 int
 rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    mat2d_t test = {2,3,4,5};
+    mat2d_t inv;
+    mat2d_inverse(inv, test);
+    TRACE("inverse: " << ON_PRINT4(inv));
+
+    TRACE("rt_brep_shot origin:" << ON_PRINT3(rp->r_pt) << " dir:" << ON_PRINT3(rp->r_dir));
     vect_t invdir;
     struct brep_specific* bs = (struct brep_specific*)stp->st_specific;
 
     // check the hierarchy to see if we have a hit at a leaf node
     BVList inters;
     brep_intersect_bv(inters, rp, bs->bvh);
+    TRACE("found " << inters.size() << " intersections!");
 
     if (inters.size() == 0) return 0; // MISS
 
@@ -751,7 +799,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	if (hits.size() % 2 == 0) {
 	    // take each pair as a segment
 	    for (HitList::iterator i = hits.begin(); i != hits.end(); i++) {
-		brep_hit* in = (*i)++;
+		brep_hit* in = *i;
+		i++;
 		brep_hit* out = *i;
 		register struct seg* segp;
 		RT_GET_SEG(segp, ap->a_resource);
@@ -768,10 +817,13 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		segp->seg_out.hit_dist = DIST_PT_PT(rp->r_pt,out->point);
 		segp->seg_out.hit_surfno = out->face.m_face_index;
 		VSET(segp->seg_out.hit_vpriv,out->uv[0],out->uv[1],0.0);
+
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	    }
+	    return hits.size();
 	} else {
-	    bu_log("ACK! found odd number of intersection points. XXX Handle this!");
-	    bu_log("It's really not acceptable to just print inane statements :-)");
+	    bu_log("ACK! found odd number of intersection points. XXX Handle this!\n");
+	    bu_log("It's really not acceptable to just print inane statements :-)\n");
 	}
     }
 
@@ -787,7 +839,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 void
 rt_brep_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
-    /* no-op */
+    
 }
 
 
@@ -844,6 +896,7 @@ rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 void
 rt_brep_free(register struct soltab *stp)
 {
+    TRACE("rt_brep_free");
     struct brep_specific* bs = (struct brep_specific*)stp->st_specific;
     brep_specific_delete(bs);
 }
@@ -855,6 +908,7 @@ rt_brep_free(register struct soltab *stp)
 int
 rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
+    TRACE("rt_brep_plot");
     struct rt_brep_internal* bi;
 
     RT_CK_DB_INTERNAL(ip);
@@ -1037,6 +1091,7 @@ RT_MemoryArchive::Flush()
 int
 rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
+    TRACE("rt_brep_export5");
     struct rt_brep_internal* bi;
 
     RT_CK_DB_INTERNAL(ip);
@@ -1086,32 +1141,34 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 int
 rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-  struct rt_brep_internal* bi;
-  BU_CK_EXTERNAL(ep);
-  RT_CK_DB_INTERNAL(ip);
-  ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-  ip->idb_type = ID_BREP;
-  ip->idb_meth = &rt_functab[ID_BREP];
-  ip->idb_ptr = bu_malloc(sizeof(struct rt_brep_internal), "rt_brep_internal");
-
-  bi = (struct rt_brep_internal*)ip->idb_ptr;
-  bi->magic = RT_BREP_INTERNAL_MAGIC;
-
-  RT_MemoryArchive archive(ep->ext_buf, ep->ext_nbytes);
-  ONX_Model model;
-  ON_TextLog dump(stdout);
-  //archive.Dump3dmChunk(dump);
-  model.Read(archive, &dump);
-
-  if (model.IsValid(&dump)) {
-      ONX_Model_Object mo = model.m_object_table[0];
-      // XXX does openNURBS force us to copy? it seems the answer is
-      // YES due to the const-ness
-      bi->brep = new ON_Brep(*ON_Brep::Cast(mo.m_object));
-      return 0;
-  } else {
-      return -1;
-  }
+    ON::Begin();
+    TRACE("rt_brep_import5");
+    struct rt_brep_internal* bi;
+    BU_CK_EXTERNAL(ep);
+    RT_CK_DB_INTERNAL(ip);
+    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    ip->idb_type = ID_BREP;
+    ip->idb_meth = &rt_functab[ID_BREP];
+    ip->idb_ptr = bu_malloc(sizeof(struct rt_brep_internal), "rt_brep_internal");
+    
+    bi = (struct rt_brep_internal*)ip->idb_ptr;
+    bi->magic = RT_BREP_INTERNAL_MAGIC;
+    
+    RT_MemoryArchive archive(ep->ext_buf, ep->ext_nbytes);
+    ONX_Model model;
+    ON_TextLog dump(stdout);
+    //archive.Dump3dmChunk(dump);
+    model.Read(archive, &dump);
+    
+    if (model.IsValid(&dump)) {
+	ONX_Model_Object mo = model.m_object_table[0];
+	// XXX does openNURBS force us to copy? it seems the answer is
+	// YES due to the const-ness
+	bi->brep = new ON_Brep(*ON_Brep::Cast(mo.m_object));
+	return 0;
+    } else {
+	return -1;
+    }
 }
 
 
@@ -1121,6 +1178,7 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 void
 rt_brep_ifree(struct rt_db_internal *ip)
 {
+    TRACE("rt_brep_ifree");
     struct rt_brep_internal* bi;
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*)ip->idb_ptr;
