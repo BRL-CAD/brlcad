@@ -176,7 +176,20 @@ dvec<LEN>::madd(const double s, const dvec<LEN>& b)
 
 template<int LEN>
 inline double 
-dvec<LEN>::fold(double identity, const dvec_op& op, int limit)
+dvec<LEN>::foldr(double identity, const dvec_op& op, int limit)
+{
+    double _t[LEN] VEC_ALIGN;
+    a_store(_t);
+    double val = identity;
+    for (int i = limit-1; i >= 0; i--) {
+	val = op(_t[i],val);
+    }
+    return val;
+}
+
+template<int LEN>
+inline double 
+dvec<LEN>::foldl(double identity, const dvec_op& op, int limit)
 {
     double _t[LEN] VEC_ALIGN;
     a_store(_t);
@@ -186,6 +199,7 @@ dvec<LEN>::fold(double identity, const dvec_op& op, int limit)
     }
     return val;
 }
+
 
 template<int LEN>
 inline dvec<LEN>

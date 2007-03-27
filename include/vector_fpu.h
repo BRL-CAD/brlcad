@@ -141,7 +141,17 @@ dvec<LEN>::madd(const double s, const dvec<LEN>& b)
 
 template<int LEN>
 inline double 
-dvec<LEN>::fold(double identity, const dvec_op& op, int limit)
+dvec<LEN>::foldr(double identity, const dvec_op& op, int limit)
+{
+    double val = identity;
+    for (int i = limit-1; i >= 0; i--) {
+	val = op(data.v[i],val);
+    }
+    return val;
+}
+template<int LEN>
+inline double 
+dvec<LEN>::foldl(double identity, const dvec_op& op, int limit)
 {
     double val = identity;
     for (int i = 0; i < limit; i++) {

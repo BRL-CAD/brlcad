@@ -51,7 +51,8 @@ extern "C++" {
     dvec<LEN> madd(const double s, const dvec<LEN>& b);
 
     dvec<LEN> map(const dvec_unop& operation, int limit = LEN);
-    double fold(double proto, const dvec_op& operation, int limit = LEN);
+    double foldr(double proto, const dvec_op& operation, int limit = LEN);
+    double foldl(double proto, const dvec_op& operation, int limit = LEN);
 
     friend std::ostream& operator<< <LEN>(std::ostream& out, const dvec<LEN>& v);   
 
