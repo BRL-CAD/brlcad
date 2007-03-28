@@ -349,16 +349,16 @@ MakeTwistedCube(ON_TextLog& error_log)
 {
     ON_3dPoint point[8] = {
 	// front 
-	ON_3dPoint( 0.0,  0.0,  0.0), // Point A
-	ON_3dPoint( 1.0,  0.0,  0.0), // Point B
-	ON_3dPoint( 1.0,  1.0,  0.0), // Point C
-	ON_3dPoint( 0.0,  1.0,  0.0), // Point D
+	ON_3dPoint( 0.0,  0.0,  1.0), // Point A
+	ON_3dPoint( 1.0,  0.0,  1.0), // Point B
+	ON_3dPoint( 1.0,  1.0,  1.0), // Point C
+	ON_3dPoint( 0.0,  1.0,  1.0), // Point D
 
 	// back
-	ON_3dPoint( 1.0,  0.0,  1.0), // Point E
-	ON_3dPoint( 0.0,  0.0,  1.0), // Point F
-	ON_3dPoint( 0.0,  1.0,  1.0), // Point G
-	ON_3dPoint( 1.0,  1.0,  1.0), // Point H
+	ON_3dPoint( 1.0,  0.0,  0.0), // Point E
+	ON_3dPoint( 0.0,  0.0,  0.0), // Point F
+	ON_3dPoint( 0.0,  1.0,  0.0), // Point G
+	ON_3dPoint( 1.0,  1.0,  0.0), // Point H
     };
   
     ON_Brep* brep = new ON_Brep();

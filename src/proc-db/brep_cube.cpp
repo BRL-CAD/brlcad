@@ -79,7 +79,7 @@ enum {
 };
 
 enum {
-    ABCD, BCGF, CDHG, ADHE, ABFE, EFGH
+    ABCD, BFGC, FEHG, EADH, EFBA, DCGH
 };
 
 ON_Curve* 
@@ -291,13 +291,13 @@ MakeTwistedCubeFaces(ON_Brep& brep)
 			AD, -1); // XXX ????
 
     MakeTwistedCubeFace(brep, 
-			BCGF, // index of surface geometry
-			-1,   // orientation of surface w.r.t. brep
-			B, C, G, F, // indices of vertices listed in order
-			BC, +1, // south edge, orientation w.r.t. trimming curve?
-			CG, +1, // east edge, orientation w.r.t. trimming curve?
-			FG, -1,
-			BF, -1); // XXX ????
+			BFGC, // index of surface geometry
+			+1,   // orientation of surface w.r.t. brep
+			B, F, G, C, // indices of vertices listed in order
+			BF, +1, // south edge, orientation w.r.t. trimming curve?
+			FG, +1, // east edge, orientation w.r.t. trimming curve?
+			CG, -1,
+			BC, -1); // XXX ????
 
     // ok, i think I understand the trimming curve orientation
     // thingie. maybe.  since the edge "directions" are arbitrary
@@ -307,40 +307,40 @@ MakeTwistedCubeFaces(ON_Brep& brep)
     // direction" and -1="in the opposite direction"
 
     MakeTwistedCubeFace(brep, 
-			CDHG, // index of surface geometry
-			-1,   // orientation of surface w.r.t. brep
-			C, D, H, G, // indices of vertices listed in order
-			CD, +1, // south edge, orientation w.r.t. trimming curve?
-			DH, +1, // east edge, orientation w.r.t. trimming curve?
+			FEHG, // index of surface geometry
+			+1,   // orientation of surface w.r.t. brep
+			F, E, H, G, // indices of vertices listed in order
+			EF, -1, // south edge, orientation w.r.t. trimming curve?
+			EH, +1, // east edge, orientation w.r.t. trimming curve?
 			GH, -1,
-			CG, -1); // XXX ????
+			FG, -1); // XXX ????
 
     MakeTwistedCubeFace(brep, 
-			ADHE, // index of surface geometry
+			EADH, // index of surface geometry
 			+1,   // orientation of surface w.r.t. brep
-			A, D, H, E, // indices of vertices listed in order
-			AD, +1, // south edge, orientation w.r.t. trimming curve?
-			DH, +1, // east edge, orientation w.r.t. trimming curve?
-			EH, -1,
-			AE, -1); // XXX ????
+			E, A, D, H, // indices of vertices listed in order
+			AE, -1, // south edge, orientation w.r.t. trimming curve?
+			AD, +1, // east edge, orientation w.r.t. trimming curve?
+			DH, +1,
+			EH, -1); // XXX ????
 
     MakeTwistedCubeFace(brep,
-			ABFE, // index of surface geometry
-			-1,   // orientation of surface w.r.t. brep
-			A, B, F, E, // indices of vertices listed in order
-			AB, +1, // south edge, orientation w.r.t. trimming curve?
-			BF, +1, // east edge, orientation w.r.t. trimming curve?
-			EF, -1,
-			AE, -1); // XXX ????
+			EFBA, // index of surface geometry
+			+1,   // orientation of surface w.r.t. brep
+			E, F, B, A, // indices of vertices listed in order
+			EF, +1, // south edge, orientation w.r.t. trimming curve?
+			BF, -1, // east edge, orientation w.r.t. trimming curve?
+			AB, -1,
+			AE, +1); // XXX ????
 
     MakeTwistedCubeFace(brep, 
-			EFGH, // index of surface geometry
-			-1,   // orientation of surface w.r.t. brep
-			E, F, G, H, // indices of vertices listed in order
-			EF, +1, // south edge, orientation w.r.t. trimming curve?
-			FG, +1, // east edge, orientation w.r.t. trimming curve?
+			DCGH, // index of surface geometry
+			+1,   // orientation of surface w.r.t. brep
+			D, C, G, H, // indices of vertices listed in order
+			CD, -1, // south edge, orientation w.r.t. trimming curve?
+			CG, +1, // east edge, orientation w.r.t. trimming curve?
 			GH, +1,
-			EH, -1); // XXX ????
+			DH, -1); // XXX ????
   
 }
 
@@ -348,14 +348,14 @@ ON_Brep*
 MakeTwistedCube(ON_TextLog& error_log)
 {
     ON_3dPoint point[8] = {
-	ON_3dPoint( 0.0,  0.0,  0.0), // Point A
-	ON_3dPoint(10.0,  0.0,  0.0), // Point B
-	ON_3dPoint(10.0,  8.0, -1.0), // Point C
-	ON_3dPoint( 0.0,  6.0,  0.0), // Point D
-	ON_3dPoint( 1.0,  2.0, 11.0), // Point E
-	ON_3dPoint(10.0,  0.0, 12.0), // Point F
-	ON_3dPoint(10.0,  7.0, 13.0), // Point G
-	ON_3dPoint( 0.0,  6.0, 12.0), // Point H
+	ON_3dPoint( 0.0,  0.0, 11.0), // Point A
+	ON_3dPoint(10.0,  0.0, 12.0), // Point B
+	ON_3dPoint(10.0,  8.0, 13.0), // Point C
+	ON_3dPoint( 0.0,  6.0, 12.0), // Point D
+	ON_3dPoint( 1.0,  2.0,  0.0), // Point E
+	ON_3dPoint(10.0,  0.0,  0.0), // Point F
+	ON_3dPoint(10.0,  7.0, -1.0), // Point G
+	ON_3dPoint( 0.0,  6.0,  0.0), // Point H
     };
   
     ON_Brep* brep = new ON_Brep();
@@ -389,11 +389,11 @@ MakeTwistedCube(ON_TextLog& error_log)
     // create the 3d surface geometry. the orientations are arbitrary so
     // some normals point into the cube and other point out... not sure why
     brep->m_S.Append(TwistedCubeSideSurface(point[A], point[B], point[C], point[D]));
-    brep->m_S.Append(TwistedCubeSideSurface(point[B], point[C], point[G], point[F]));
-    brep->m_S.Append(TwistedCubeSideSurface(point[C], point[D], point[H], point[G]));
-    brep->m_S.Append(TwistedCubeSideSurface(point[A], point[D], point[H], point[E]));
-    brep->m_S.Append(TwistedCubeSideSurface(point[A], point[B], point[F], point[E]));
-    brep->m_S.Append(TwistedCubeSideSurface(point[E], point[F], point[G], point[H]));
+    brep->m_S.Append(TwistedCubeSideSurface(point[B], point[F], point[G], point[C]));
+    brep->m_S.Append(TwistedCubeSideSurface(point[F], point[E], point[H], point[G]));
+    brep->m_S.Append(TwistedCubeSideSurface(point[E], point[A], point[D], point[H]));
+    brep->m_S.Append(TwistedCubeSideSurface(point[E], point[F], point[B], point[A]));
+    brep->m_S.Append(TwistedCubeSideSurface(point[D], point[C], point[G], point[H]));
   
     // create the faces
     MakeTwistedCubeFaces(*brep);
@@ -449,7 +449,7 @@ main(int argc, char** argv)
     }
     
     printf("Reading a twisted cube b-rep...\n");
-    struct db_i* dbip = db_open("brep_cube.g", "r");
+    struct db_i* dbip = db_open("brep_cube1.g", "r");
     db_dirbuild(dbip);
     struct directory* dirp;
     if (dirp = db_lookup(dbip, "cube.s", 0)) {
