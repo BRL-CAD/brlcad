@@ -474,7 +474,7 @@ void* tienet_master_listener(void *ptr) {
 
   /* Set first socket as master, rest are slaves - LIFO Stack - Always gets processed last */
   tienet_master_socket_list = (tienet_master_socket_t *)malloc(sizeof(tienet_master_socket_t));
-  if (!tienet_master_socke_list) {
+  if (!tienet_master_socket_list) {
       perror("malloc");
       exit(1);
   }
