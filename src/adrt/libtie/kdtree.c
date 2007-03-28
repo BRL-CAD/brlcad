@@ -808,7 +808,7 @@ void tie_kdtree_cache_load(tie_t *tie, void *cache) {
     if(type) {
       /* Geometry Node - Allocate a tie_geom_t and assign to node->data. */
       node->data = malloc(sizeof(tie_geom_t));
-      if (!*node->data) {
+      if (!node->data) {
 	  perror("malloc");
 	  exit(1);
       }
