@@ -143,8 +143,8 @@ static void isst_master_setup() {
   memset(rgb_frame, 0, 3 * db.env.img_w * db.env.img_h);
 
   isst_master_observer_frame = malloc(3 * db.env.img_w * db.env.img_h);
-  if (!isst_master_observer) {
-      perror("isst_master_observer");
+  if (!isst_master_observer_frame) {
+      perror("isst_master_observer_frame");
       exit(1);
   }
 }
