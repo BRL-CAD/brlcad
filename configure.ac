@@ -1227,7 +1227,7 @@ if test "x$bc_with_x11" != "xno" ; then
     LIBS="$LIBS $LIBX11"
     AC_CHECK_LIB(Xmu, XmuLookupStandardColormap, LIBXMU="-lXmu $LIBX11")
     LIBS="$PRELIBS"
-    
+
     PRELIBS="$LIBS"
     LIBS="$LIBS"
     AC_CHECK_LIB(ICE, IceOpenConnection, LIBICE="-lICE")
@@ -1438,7 +1438,7 @@ gen_link_works=no
 LIGEN=""
 AC_CHECK_LIB(gen, basename, gen_link_works=yes ; LIBGEN="-lgen")
 
-dnl check if the standard c++ library links without checking for any particular symbol 
+dnl check if the standard c++ library links without checking for any particular symbol
 dnl library is needed when linking c++ code against c code (e.g. openNURBS)
 stdcxx_link_works=no
 LIBSTDCXX=""
@@ -1713,17 +1713,17 @@ if test "x$bc_with_proe" != "xno" ; then
 		  PRO_ENGINEER_DIR=$bc_with_proe_val
 		  AC_SUBST(PRO_ENGINEER_DIR)
 	       fi
-	    fi 
-      else	
+	    fi
+      else
         PROE_CFLAGS="-I$bc_with_proe_val/protoolkit/includes -I$bc_with_proe_val/prodevelop/includes"
         CFLAGS="$CFLAGS $PROE_CFLAGS"
         AC_CHECK_HEADER(ProToolkit.h,
 		        AC_DEFINE(HAVE_PROTOOLKIT,1,[Define to 1 if you have Pro/TOOLKIT header files])
-		        found_protk_h=yes)      
+		        found_protk_h=yes)
       fi
    fi
    CFLAGS="$PRE_CFLAGS"
-fi 
+fi
 
 dnl **********************************
 dnl *** Check for types/structures ***
@@ -1846,17 +1846,6 @@ if test ! "x$bc_auto_flags" = "xno" ; then
 			found_64bit_flag=yes
 		fi
 	fi
-    fi
-
-    dnl C++ specific flags
-    if test "x$bc_build_opennurbs" != "xno" ; then
-	# turn off bogus/annoying warning
-	AC_LANG_PUSH([C++])
-	BC_COMPILER_RECOGNIZES([-Wno-non-template-friend], [no_non_tempalte_friend], [no_keep])
-	if test "x$bc_no_non_template_friend" = "xyes" ; then
-	    CXXFLAGS="$CXXFLAGS -Wno-non-template-friend"
-	fi
-	AC_LANG_POP
     fi
 
 # end check for automatic flags
@@ -3125,7 +3114,7 @@ if test "x$bc_with_proe" != "xno" ; then
 	    AC_MSG_WARN([Try adding --with-proe=/path/to/proe to find the ProToolkit.h])
 	    AC_MSG_WARN([Compilation of Pro/ENGINEER plugin will be disabled])
 	 fi
-	 AC_MSG_RESULT(no)	 
+	 AC_MSG_RESULT(no)
       else
          if test "x$bc_with_proe" = "xauto" ; then
 	    build_against_proe=yes
@@ -3134,7 +3123,7 @@ if test "x$bc_with_proe" != "xno" ; then
 	 fi
          AC_MSG_RESULT(yes)
       fi
-   fi 
+   fi
 fi
 
 
