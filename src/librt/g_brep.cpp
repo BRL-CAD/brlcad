@@ -85,6 +85,7 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 
 #include <list>
 #include <iostream>
+#include <algorithm>
 
 #define TRACE(s) std::cout << "TRACE: " << s << std::endl
 
@@ -263,7 +264,28 @@ namespace brep {
     inline bool
     SurfaceBV::is_leaf() const { return true; }
 
+    class IRecord {
+    public:
+	BoundingVolume* bv;
+	fastf_t dist;
+
+	IRecord()
+	    : bv(NULL), dist(0.0) {}
+
+	IRecord(BoundingVolume* bv, fastf_t dist) : bv(bv), dist(dist) {}
+	IRecord(const IRecord& r) : bv(r.bv), dist(r.dist) {}
+	
+	IRecord operator=(const IRecord& r) {
+	    bv = r.bv;
+	    dist = r.dist;
+	}
+	
+	bool operator<(const IRecord& r) {
+	    return dist < r.dist;
+	}	
+    };
     typedef std::list<BoundingVolume*> BVList;
+    typedef std::list<IRecord> IsectList;
 };
 
 using namespace brep;
@@ -582,17 +604,22 @@ public:
     fastf_t d2;
 };
 
-void brep_intersect_bv(BVList& inters, struct xray* r, BoundingVolume* bv) 
+void brep_intersect_bv(IsectList& inters, struct xray* r, BoundingVolume* bv) 
 {
-    bool intersects = bv->intersected_by(r);
+    fastf_t near, far;
+    bool intersects = bv->intersected_by(r,&near,&far);
     if (intersects && bv->is_leaf()) {	
-	inters.push_back(bv);
+	inters.push_back(IRecord(bv,near));
     }
     else if (intersects)
 	for (BVList::iterator i = bv->children.begin(); i != bv->children.end(); i++) {
 	    brep_intersect_bv(inters, r, *i);
 	}
 }
+
+#define ON_PRINT4(p) "[" << (p)[0] << "," << (p)[1] << "," << (p)[2] << "," << (p)[3] << "]"
+#define ON_PRINT3(p) "(" << (p)[0] << "," << (p)[1] << "," << (p)[2] << ")"
+#define ON_PRINT2(p) "(" << (p)[0] << "," << (p)[1] << ")"
 
 void brep_get_plane_ray(struct xray* r, plane_ray& pr)
 {
@@ -601,22 +628,20 @@ void brep_get_plane_ray(struct xray* r, plane_ray& pr)
     fastf_t min = MAX_FASTF;
     int index = -1;
     for (int i = 0; i < 3; i++) { // find the smallest component
-	if (v1[i] < min) {
-	    min = v1[i];
+	if (fabs(v1[i]) < min) {
+	    min = fabs(v1[i]);
 	    index = i;
 	}
     }
     v1[index] += 1; // alter the smallest component
     VCROSS(pr.n1, v1, r->r_dir); // n1 is perpendicular to v1
-    VCROSS(pr.n2, v1, pr.n1);       // n2 is perpendicular to v1 and n1
-    // ??? do they need to be normalized - Ed doesn't think so...
+    VUNITIZE(pr.n1);
+    VCROSS(pr.n2, pr.n1, r->r_dir);       // n2 is perpendicular to v1 and n1
+    VUNITIZE(pr.n2);
     pr.d1 = VDOT(pr.n1,r->r_pt);
     pr.d2 = VDOT(pr.n2,r->r_pt);
+    TRACE("n1:" << ON_PRINT3(pr.n1) << " n2:" << ON_PRINT3(pr.n2) << " d1:" << pr.d1 << " d2:" << pr.d2);
 }
-
-#define ON_PRINT4(p) "[" << (p)[0] << "," << (p)[1] << "," << (p)[2] << "," << (p)[3] << "]"
-#define ON_PRINT3(p) "(" << (p)[0] << "," << (p)[1] << "," << (p)[2] << ")"
-#define ON_PRINT2(p) "(" << (p)[0] << "," << (p)[1] << ")"
 
 // XXX put in VMATH?
 typedef fastf_t pt2d_t[2] VEC_ALIGN;
@@ -689,36 +714,39 @@ public:
 typedef std::list<brep_hit*> HitList;
 
 void
-brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t old_uv, pt2d_t new_uv, pt2d_t new_R) 
+brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R)
 {
-    TRACE("brep_newton_iterate: " << ON_PRINT2(old_uv));
-    ON_3dPoint _pt;
-    ON_3dVector _su, _sv;
-    surf->Ev1Der(old_uv[0], old_uv[1], _pt, _su, _sv);
-    TRACE("\tpt" << ON_PRINT3(_pt) << ", su" << ON_PRINT3(_su) << ", sv" ON_PRINT3(_sv));
+    surf->Ev1Der(uv[0], uv[1], pt, su, sv);
+    TRACE("\tpt" << ON_PRINT3(pt) << ", su" << ON_PRINT3(su) << ", sv" ON_PRINT3(sv));
+    R[0] = VDOT(pr.n1,((fastf_t*)pt)) - pr.d1;
+    R[1] = VDOT(pr.n2,((fastf_t*)pt)) - pr.d2;
+}
 
-    new_R[0] = VDOT(pr.n1,((fastf_t*)_pt)) + pr.d1;
-    new_R[1] = VDOT(pr.n2,((fastf_t*)_pt)) + pr.d2;
+void
+brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
+{
+    TRACE("brep_newton_iterate: " << ON_PRINT2(uv));
 
-    mat2d_t jacob = { VDOT(pr.n1,((fastf_t*)_su)), VDOT(pr.n1,((fastf_t*)_sv)),
-		      VDOT(pr.n2,((fastf_t*)_su)), VDOT(pr.n2,((fastf_t*)_sv)) };
+    mat2d_t jacob = { VDOT(pr.n1,((fastf_t*)su)), VDOT(pr.n1,((fastf_t*)sv)),
+		      VDOT(pr.n2,((fastf_t*)su)), VDOT(pr.n2,((fastf_t*)sv)) };
     mat2d_t inv_jacob;
     if (mat2d_inverse(inv_jacob, jacob)) { // check inverse validity
 	pt2d_t tmp;
-	mat2d_pt2d_mul(tmp, inv_jacob, new_R);
-	pt2dsub(new_uv, old_uv, tmp);
+	mat2d_pt2d_mul(tmp, inv_jacob, R);
+	TRACE("\tuv:"<<ON_PRINT2(uv)<<" tmp:"<<ON_PRINT2(tmp));
+	pt2dsub(out_uv, uv, tmp);
 	fastf_t l,h;
-	surf->GetDomain(0,&l,&h);
-	if (new_uv[0] < l || new_uv[0] > h) move(new_uv,new_R);
-	else {
-	    surf->GetDomain(1,&l,&h);
-	    if (new_uv[1] < l || new_uv[1] > h) move(new_uv,new_R);
-	}
+// 	surf->GetDomain(0,&l,&h);
+// 	if (new_uv[0] < l || new_uv[0] > h) move(new_uv,old_uv);
+// 	else {
+// 	    surf->GetDomain(1,&l,&h);
+// 	    if (new_uv[1] < l || new_uv[1] > h) move(new_uv,old_uv);
+// 	}
     }
     else {
-	move(new_uv,new_R);
+	TRACE("inverse failed");
+	move(out_uv,uv);
     }
-    TRACE("\t" << ON_PRINT2(new_R) << ", " << ON_PRINT2(new_uv));
 }
 
 
@@ -729,23 +757,27 @@ brep_intersect(const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv, plane
     fastf_t Dlast = MAX_FASTF;
     pt2d_t Rcurr;
     pt2d_t new_uv;
+    ON_3dPoint pt;
+    ON_3dVector su;
+    ON_3dVector sv;
     for (int i = 0; i < BREP_MAX_ITERATIONS; i++) {
-	brep_newton_iterate(surf, pr, uv, new_uv, Rcurr);
+	brep_r(surf,pr,uv,pt,su,sv,Rcurr);
 	fastf_t d = v2mag(Rcurr);
 	if (d < BREP_INTERSECTION_ROOT_EPSILON) {
+	    TRACE("R:"<<ON_PRINT2(Rcurr));
 	    found = true; break; 
-	} else if (d == Dlast) {
-	    found = true; break;
 	} else if (d > Dlast) {
 	    break;
-	}
+	}	
+	brep_newton_iterate(surf, pr, Rcurr, su, sv, uv, new_uv);
 	move(uv, new_uv);
+	Dlast = d;
     }
     if (found) {
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
-	surf->EvNormal(new_uv[0],new_uv[1],_pt,_norm);
-	*hit = new brep_hit(face, (fastf_t*)_pt,(fastf_t*)_norm, new_uv);
+	surf->EvNormal(uv[0],uv[1],_pt,_norm);
+	*hit = new brep_hit(face, (fastf_t*)_pt,(fastf_t*)_norm, uv);
     }    
     return found;
 }
@@ -774,8 +806,9 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     struct brep_specific* bs = (struct brep_specific*)stp->st_specific;
 
     // check the hierarchy to see if we have a hit at a leaf node
-    BVList inters;
+    IsectList inters;
     brep_intersect_bv(inters, rp, bs->bvh);
+    inters.sort();
     TRACE("found " << inters.size() << " intersections!");
 
     if (inters.size() == 0) return 0; // MISS
@@ -784,8 +817,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     brep_get_plane_ray(rp, pr);    
 
     HitList hits;
-    for (BVList::iterator i = inters.begin(); i != inters.end(); i++) {
-	const SurfaceBV* sbv = dynamic_cast<SurfaceBV*>((*i));
+    for (IsectList::iterator i = inters.begin(); i != inters.end(); i++) {	
+	const SurfaceBV* sbv = dynamic_cast<SurfaceBV*>((*i).bv);
 	const ON_BrepFace& f = sbv->face();
 	const ON_Surface* surf = f.SurfaceOf();       
 	brep_hit* hit; 
