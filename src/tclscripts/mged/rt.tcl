@@ -374,6 +374,17 @@ destination to the background color." } }
 	    -padx 0.5m -pady 0.5m
     hoc_register_data $top.dismissB "Dismiss"\
 	    { { summary "Dismiss/close the raytrace control panel." } }
+    # use the same font as the size label on the checkbutton
+    set tmp_font [$top.sizeL cget -font]
+    checkbutton $top.fbtoggle \
+		-text "Enable Framebuffer" \
+		-variable rt_control($id,fb) \
+		-command "rt_set_fb $id" \
+		-font $tmp_font \
+		-padx 0.5m -pady 0.5m
+    hoc_register_data $top.fbtoggle "Enable Framebuffer"\
+		{ { summary "Enable/Disable the 2D framebuffer overlay for displaying ray-traced images." } }
+
 
     grid $top.srcE $top.srcMB -sticky nsew -in $top.srcF
     grid columnconfigure $top.srcF 0 -weight 1
@@ -391,12 +402,14 @@ destination to the background color." } }
     grid $top.destL $top.destF - - - -pady 1 -sticky nsew -in $top.gridF1
     grid $top.sizeL $top.sizeF - - - -pady 1 -sticky nsew -in $top.gridF1
     grid $top.colorL $top.colorF - - - -pady 1 -sticky nsew -in $top.gridF1
+    grid $top.fbtoggle - - - - -pady 1 -sticky nsew -in $top.gridF1
     grid $top.raytraceB $top.abortB $top.clearB x $top.advancedB -sticky "ew" -in $top.gridF1
     grid columnconfigure $top.gridF1 3 -weight 1
     grid rowconfigure $top.gridF1 0 -weight 1
     grid rowconfigure $top.gridF1 1 -weight 1
     grid rowconfigure $top.gridF1 2 -weight 1
     grid rowconfigure $top.gridF1 3 -weight 1
+    grid rowconfigure $top.gridF1 4 -weight 1
 
     grid $top.gridF1 -padx 4 -pady 4 -sticky nsew -in $top.gridF2
     grid columnconfigure $top.gridF2 0 -weight 1
