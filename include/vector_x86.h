@@ -115,7 +115,7 @@ dvec<LEN>::operator==(const dvec<LEN>& b) const
 }
 
 #define OP_IMPL(__op__) {                         \
-  struct vec_internal<LEN> result;                \
+  vec_internal<LEN> result;                       \
   for (int i = 0; i < LEN/2; i++) {               \
     result.v[i] = __op__(data.v[i], b.data.v[i]); \
   }                                               \
@@ -154,7 +154,7 @@ template<int LEN>
 inline dvec<LEN> 
 dvec<LEN>::madd(const dvec<LEN>& s, const dvec<LEN>& b)
 {
-  struct vec_internal<LEN> r;
+  vec_internal<LEN> r;
   for (int i = 0; i < LEN/2; i++) {
     r.v[i] = _mm_mul_pd(data.v[i], s.data.v[i]);
   }
@@ -318,7 +318,6 @@ private:
     _vec = _mm_load_pd(v);
   }    
 
-  friend std::ostream& operator<<(std::ostream& out, const vec2d& v);
 };
   
 inline std::ostream& 

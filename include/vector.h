@@ -54,8 +54,6 @@ extern "C++" {
     double foldr(double proto, const dvec_op& operation, int limit = LEN);
     double foldl(double proto, const dvec_op& operation, int limit = LEN);
 
-    friend std::ostream& operator<< <LEN>(std::ostream& out, const dvec<LEN>& v);   
-
     class mul : public dvec_op {
     public: 
       double operator()(double a, double b) const { return a * b; }
@@ -73,10 +71,10 @@ extern "C++" {
 
     class sqrt : public dvec_unop {
     public:
-      double operator()(double a) const { return sqrt(a); }
+      double operator()(double a) const { return ::sqrt(a); }
     };
   private:
-    struct vec_internal<LEN> data;
+    vec_internal<LEN> data;
 
     dvec(const vec_internal<LEN>& d);
   };  
