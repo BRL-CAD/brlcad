@@ -664,7 +664,7 @@ fastf_t v2mag(pt2d_t p) {
     return sqrt(sq.foldr(0,dvec<2>::add()));
 }
 inline
-fastf_t move(pt2d_t a, pt2d_t b) {
+void move(pt2d_t a, pt2d_t b) {
     a[0] = b[0];
     a[1] = b[1];
 }
