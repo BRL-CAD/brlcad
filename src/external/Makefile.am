@@ -6,6 +6,12 @@ else !BUILD_CUBIT
 CUBIT_DIR =
 endif
 
+if BUILD_EF
+EF_DIR = EndgameFramework
+else !BUILD_EF
+EF_DIR =
+endif
+
 if WITH_PROE
 PROE_DIR = ProEngineer
 else !WITH_PROE
@@ -18,17 +24,17 @@ else !BUILD_UG
 UG_DIR =
 endif
 
-if BUILD_EF
-EF_DIR = EndgameFramework
-else !BUILD_EF
-EF_DIR =
-endif
-
 SUBDIRS = \
 	$(CUBIT_DIR) \
 	$(EF_DIR) \
 	$(PROE_DIR) \
 	$(UG_DIR)
+
+DIST_SUBDIRS = \
+	Cubit \
+	EndgameFramework \
+	ProEngineer \
+	Unigraphics
 
 EXTRA_DIST = README
 
