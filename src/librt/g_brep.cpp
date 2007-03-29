@@ -121,7 +121,7 @@ namespace brep {
 
 	// slab intersection routine
 	bool intersected_by(struct xray* r);
-	bool intersected_by(struct xray* r, fastf_t* tnear, fastf_t* far);
+	bool intersected_by(struct xray* r, fastf_t* tnear, fastf_t* tfar);
 
 	// Goldsmith & Salmon "Automatic generation of trees"
 	BoundingVolume* gs_insert(BoundingVolume* node);
@@ -175,6 +175,8 @@ namespace brep {
 	VMOVE(_min,bv._min);
 	VMOVE(_max,bv._max);
 	_area = bv._area;
+
+        return *this;
     }
 
     inline 
@@ -275,9 +277,11 @@ namespace brep {
 	IRecord(BoundingVolume* bv, fastf_t dist) : bv(bv), dist(dist) {}
 	IRecord(const IRecord& r) : bv(r.bv), dist(r.dist) {}
 	
-	IRecord operator=(const IRecord& r) {
+	IRecord& operator=(const IRecord& r) {
 	    bv = r.bv;
 	    dist = r.dist;
+
+            return *this;
 	}
 	
 	bool operator<(const IRecord& r) {
@@ -606,10 +610,10 @@ public:
 
 void brep_intersect_bv(IsectList& inters, struct xray* r, BoundingVolume* bv) 
 {
-    fastf_t near, far;
-    bool intersects = bv->intersected_by(r,&near,&far);
+    fastf_t tnear, tfar;
+    bool intersects = bv->intersected_by(r,&tnear,&tfar);
     if (intersects && bv->is_leaf()) {	
-	inters.push_back(IRecord(bv,near));
+	inters.push_back(IRecord(bv,tnear));
     }
     else if (intersects)
 	for (BVList::iterator i = bv->children.begin(); i != bv->children.end(); i++) {
