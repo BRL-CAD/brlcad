@@ -523,7 +523,7 @@ proc gui { args } {
 	hoc_register_menu_data "File" "Raytrace" "Raytrace View"\
 			{ { summary "Tool for raytracing the current view." }
 	{ see_also rt } }
-	.$id.menubar.file add cascade -label "Render View" -underline 0 -menu .$id.menubar.file.renderview
+	.$id.menubar.file add cascade -label "Render View" -menu .$id.menubar.file.renderview
 	.$id.menubar.file add separator
 	.$id.menubar.file add cascade -label "Preferences" -underline 0 -menu .$id.menubar.file.pref
 	.$id.menubar.file add separator
