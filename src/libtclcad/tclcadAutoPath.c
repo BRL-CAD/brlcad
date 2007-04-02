@@ -80,8 +80,8 @@ free_pts_buf()
 static const char *
 path_to_src(const char *path)
 {
-    const char *name;
-    const char *subpath;
+    const char *name = NULL;
+    const char *subpath = NULL;
 
     if (!path) {
 	return NULL;
@@ -92,6 +92,7 @@ path_to_src(const char *path)
     atexit(free_pts_buf);
 
     subpath = path_to_src_buf;
+
     do {
 	char *temp = bu_strdup(subpath);
 	name = bu_basename(temp);
@@ -105,6 +106,36 @@ path_to_src(const char *path)
 	return subpath;
     }
     return NULL;
+}
+
+
+/** debug printing routine for printing out the tcl_library value(s)
+ */
+void
+tclcad_tcl_library(void)
+{
+    int cnt = 0;
+    int pathcount = 0;
+    Tcl_Obj *dir = NULL;
+    Tcl_Obj *tclpath = NULL;
+
+    tclpath = TclGetLibraryPath();
+    Tcl_IncrRefCount(tclpath);
+    Tcl_ListObjLength(NULL, tclpath, &pathcount);
+    if (pathcount > 1) {
+	bu_log("WARNING: tcl_library is set to multiple paths?\n");
+    } else if (pathcount <= 0) {
+	bu_log("WARNING: tcl_library is unset\n");
+    }
+    for (cnt=0; cnt < pathcount; cnt++) {
+	Tcl_ListObjIndex(NULL, tclpath, cnt, &dir);
+	Tcl_IncrRefCount(dir);
+	if (dir) {
+	    bu_log("tcl_library is %s\n", Tcl_GetString(dir));
+	}
+	Tcl_DecrRefCount(dir);
+    }
+    Tcl_DecrRefCount(tclpath);
 }
 
 
@@ -156,6 +187,8 @@ tclcad_auto_path(Tcl_Interp *interp)
     int from_installed = 0;
     const char *srcpath = NULL;
     char *stp = NULL;
+    
+    Tcl_Obj *tclpath = NULL;
 
     bu_vls_init(&auto_path);
     bu_vls_init(&lappend);
@@ -211,6 +244,29 @@ tclcad_auto_path(Tcl_Interp *interp)
 	bu_vls_printf(&auto_path, ":%s/src/tclscripts/rtwizard", srcpath);
     }
 
+    /* add search paths for dist invocation */
+    srcpath = path_to_src(which_argv[0]);
+    if (srcpath) {
+	snprintf(buffer, MAX_BUF, "%s/../src/other/tcl/unix", srcpath);
+	if (bu_file_exists(buffer)) {
+	    bu_vls_printf(&auto_path, ":%s/../src/other/tcl/unix", srcpath);
+	    bu_vls_printf(&auto_path, ":%s/../src/other/tcl/library", srcpath);
+	    bu_vls_printf(&auto_path, ":%s/../src/other/tk/unix", srcpath);
+	    bu_vls_printf(&auto_path, ":%s/../src/other/tk/library", srcpath);
+	    bu_vls_printf(&auto_path, ":%s/../src/other/incrTcl", srcpath);
+	    bu_vls_printf(&auto_path, ":%s/../src/other/incrTcl/itcl/library", srcpath);
+	    bu_vls_printf(&auto_path, ":%s/../src/other/incrTcl/itk/library", srcpath);
+	    bu_vls_printf(&auto_path, ":%s/../src/other/iwidgets/library", srcpath);
+	    /*	bu_vls_printf(&auto_path, ":%s/../src/other/blt/library", srcpath); */
+	    bu_vls_printf(&auto_path, ":%s/../src/tclscripts", srcpath);
+	    bu_vls_printf(&auto_path, ":%s/../src/tclscripts/lib", srcpath);
+	    bu_vls_printf(&auto_path, ":%s/../src/tclscripts/util", srcpath);
+	    bu_vls_printf(&auto_path, ":%s/../src/tclscripts/mged", srcpath);
+	    bu_vls_printf(&auto_path, ":%s/../src/tclscripts/geometree", srcpath);
+	    bu_vls_printf(&auto_path, ":%s/../src/tclscripts/rtwizard", srcpath);
+	}
+    }
+
     /* be sure to check installation paths even if we aren't running from there */
     if (!from_installed) {
 	bu_vls_printf(&auto_path, ":%s/lib", root);
@@ -228,12 +284,41 @@ tclcad_auto_path(Tcl_Interp *interp)
 	bu_vls_printf(&auto_path, ":%s/tclscripts/rtwizard", data);
     }
 
+    /*    printf("AUTO_PATH IS %s\n", bu_vls_addr(&auto_path)); */
+
     /* iterate over the auto_path list and modify the real Tcl auto_path */
     for (srcpath = strtok_r(bu_vls_addr(&auto_path), ":", &stp);
 	 srcpath;
 	 srcpath = strtok_r(NULL, ":", &stp)) {
-	bu_vls_sprintf(&lappend, "lappend auto_path \"%s\"", srcpath);
-	(void)Tcl_Eval(interp, bu_vls_addr(&lappend));
+	Tcl_StatBuf stat;
+	Tcl_Obj *newpath = Tcl_NewStringObj(srcpath,-1);
+	Tcl_IncrRefCount(newpath);
+
+	/* make sure it exists as a directory before appending */
+	if ((0 == Tcl_FSStat(newpath, &stat)) && S_ISDIR(stat.st_mode)) {
+	    /*		printf("APPENDING: %s\n", srcpath); */
+	    bu_vls_sprintf(&lappend, "lappend auto_path \"%s\"", srcpath);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&lappend));
+	} else {
+	    /*		printf("NOT APPENDING: %s\n", srcpath); */
+	    continue;
+	}
+
+	/* specifically look for init.tcl so we can set tcl_library */
+	snprintf(buffer, MAX_BUF, "%s/init.tcl", srcpath);
+	if (bu_file_exists(buffer)) {
+	    /* these doesn't seem to do what one might expect
+	     * here, but call it anyways.
+	     */
+	    TclSetLibraryPath(newpath);
+
+	    /* this really sets it */
+	    snprintf(buffer, MAX_BUF, "set tcl_library \"%s\"", srcpath);
+	    if (Tcl_Eval(interp, buffer)) {
+		bu_log("Tcl_Eval ERROR:\n%s\n", interp->result);
+	    }
+	}
+	Tcl_DecrRefCount(newpath);
     }
 
     bu_vls_free(&auto_path);
