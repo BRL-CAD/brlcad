@@ -74,6 +74,7 @@ __BEGIN_DECLS
 
 TCLCAD_EXPORT TCLCAD_EXTERN(int tclcad_tk_setup, (Tcl_Interp *interp));
 TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_auto_path, (Tcl_Interp *interp));
+TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_tcl_library, (void));
 
 __END_DECLS
 
