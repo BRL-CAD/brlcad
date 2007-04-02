@@ -624,7 +624,7 @@ or group." } }
     # create text widget to hold the Boolean expression
     text $top.combT -relief sunken -bd 2 -width 40 -height 10\
 	    -yscrollcommand "$top.combS set" -setgrid true \
-	    -tab {3c}
+	    -tabs {3c}
     hoc_register_data $top.combT "Edit Boolean Expression" $hoc_data
 
     # may need a vertical scrollbar for complex expressions
