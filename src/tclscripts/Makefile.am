@@ -46,9 +46,9 @@ EXTRA_DIST = $(scripties)
 MAINTAINERCLEANFILES = Makefile.in
 
 pkgIndex.tcl:
-	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ampi.tcl $(top_srcdir)/src/$(this_dir)
+	TCL_LIBRARY=$(top_srcdir)/src/other/tcl/library $(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ampi.tcl $(top_srcdir)/src/$(this_dir)
 
 tclIndex:
-	$(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)
+	TCL_LIBRARY=$(top_srcdir)/src/other/tcl/library $(top_builddir)/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(top_srcdir)/src/$(this_dir)
 
 include $(top_srcdir)/misc/Makefile.defs
