@@ -198,7 +198,7 @@ proc HMinit_state {win} {
 
 array set HMparam_map {
 	-update S_update
-	-tab S_tab
+	-tabs S_tab
 	-unknown S_unknown
 	-stop S_stop
 	-size S_adjust_size
