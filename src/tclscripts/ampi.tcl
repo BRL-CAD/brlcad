@@ -25,42 +25,45 @@
 exit
 
 # make the pkgIndex.tcl
-if {[info exists argv]} {
-    foreach arg $argv {
-	catch {pkg_mkIndex -verbose $arg *.tcl *.itcl *.itk *.sh}
-	puts $arg
-    }
-} else {
+if {![info exists argv]} {
+    puts "No directory argument provided."
     return 0
 }
 
-if {![file exists pkgIndex.tcl]} {
-    puts "ERROR: pkgIndex.tcl does not exist in [pwd]"
-}
-
-lappend pkgIndex
-lappend header
-
-# sort the pkgIndex.tcl
-set fd [open pkgIndex.tcl]
-while {[gets $fd data] >= 0} {
-    if {[string compare -length 7 $data "package"] == 0} {
-	lappend pkgIndex $data
-    } else {
-	lappend header $data
+foreach arg $argv {
+    # generate a pkgIndex.tcl file in the arg dir
+    puts "Generating pkgIndex.tcl in $arg"
+    catch {pkg_mkIndex -verbose $arg *.tcl *.itcl *.itk *.sh}
+    
+    if {![file exists "$arg/pkgIndex.tcl"]} {
+	puts "ERROR: pkgIndex.tcl does not exist in $arg"
+	continue
     }
-}
-close $fd
 
-# write out the sorted pkgIndex.tcl
-set fd [open pkgIndex.tcl {WRONLY TRUNC CREAT}]
-foreach line $header {
-    puts $fd $line
+    set pkgIndex ""
+    set header ""
+
+    # sort the pkgIndex.tcl
+    set fd [open "$arg/pkgIndex.tcl"]
+    while {[gets $fd data] >= 0} {
+	if {[string compare -length 7 $data "package"] == 0} {
+	    lappend pkgIndex $data
+	} else {
+	    lappend header $data
+	}
+    }
+    close $fd
+    
+    # write out the sorted pkgIndex.tcl
+    set fd [open "$arg/pkgIndex.tcl" {WRONLY TRUNC CREAT}]
+    foreach line $header {
+	puts $fd $line
+    }
+    foreach line [lsort $pkgIndex] {
+	puts $fd $line
+    }
+    close $fd
 }
-foreach line [lsort $pkgIndex] {
-    puts $fd $line
-}
-close $fd
 
 # Local Variables:
 # mode: Tcl
