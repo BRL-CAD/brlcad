@@ -28,7 +28,7 @@ rise_observer_LDADD = \
 	${top_builddir}/src/adrt/libtexture/libtexture.la \
 	${top_builddir}/src/adrt/libcommon/libcommon.la \
 	${top_builddir}/src/adrt/librender/librender.la \
-	${top_builddir}/src/adrt/libutil/libutil.la \
+	${top_builddir}/src/adrt/libutil/libutil.a \
 	${SDL_LIBS} \
 	${LIBTHREAD} \
 	${LIBM} \

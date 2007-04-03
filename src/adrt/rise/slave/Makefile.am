@@ -25,7 +25,7 @@ rise_slave_LDADD = \
 	${LIBTHREAD} \
 	${top_builddir}/src/adrt/libcommon/libcommon.la \
 	${top_builddir}/src/adrt/librender/librender.la \
-	${top_builddir}/src/adrt/libutil/libutil.la \
+	${top_builddir}/src/adrt/libutil/libutil.a \
 	${top_builddir}/src/adrt/libtexture/libtexture.la \
 	${top_builddir}/src/adrt/libtienet/libtienet.la \
 	${top_builddir}/src/adrt/libtie/libtie.la \
