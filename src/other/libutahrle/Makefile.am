@@ -89,8 +89,7 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	getopt.c \
-	include
+	getopt.c
 
 include $(top_srcdir)/misc/Makefile.defs
 
