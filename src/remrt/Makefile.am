@@ -8,13 +8,13 @@ dist_man_MANS = remrt.1
 
 remrt_LDADD = \
 	$(top_builddir)/src/rt/libremrt.a \
-	${OPTICAL} \
-	${FB} \
-	${RT} \
-	${BN} \
-	${BU} \
-	${PKG} \
-	${SYSV}
+	${OPTICAL} ${OPTICAL_LIBS} \
+	${FB} ${FB_LIBS} \
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${PKG} ${PKG_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 remrt_SOURCES = \
 	ihost.c \
@@ -24,13 +24,13 @@ remrt_SOURCES = \
 rtsrv_CFLAGS = -DRTSRV
 rtsrv_LDADD = \
 	$(top_builddir)/src/rt/libremrt.a \
-	${OPTICAL} \
-	${PKG} \
-	${RT} \
-	${BN} \
-	${BU} \
-	${PKG} \
-	${SYSV}
+	${OPTICAL} ${OPTICAL_LIBS} \
+	${PKG} ${PKG_LIBS} \
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${PKG} ${PKG_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 rtsrv_SOURCES = \
 	rtsrv.c \
 	vers.c

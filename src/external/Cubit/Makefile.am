@@ -24,7 +24,7 @@ g_sat_LDFLAGS = \
 	-L${CGM_DIR}/geom \
 	-L${CGM_DIR}/util
 
-g_sat_LDADD = ${WDB} ${LIBRT} ${BN} ${BU} \
+g_sat_LDADD = ${WDB} ${WDB_LIBS} ${LIBRT} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} \
 	-lcubit_geom \
 	-lacisstep \
 	-lxstep \

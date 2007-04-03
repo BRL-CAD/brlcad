@@ -14,47 +14,47 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 g_diff_SOURCES = g_diff.c
 g_diff_LDADD = \
-	${RT} \
-	${BN} \
-	${BU} \
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
 	${TCL} \
-	${SYSV}
+	${SYSV} ${SYSV_LIBS}
 
 g_transfer_SOURCES = g_transfer.c
 g_transfer_LDADD = \
-	${RT} \
-	${BN} \
-	${BU} \
-	${PKG} \
-	${SYSV}
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${PKG} ${PKG_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 g_lint_SOURCES = g_lint.c
 g_lint_LDADD = \
-	${RT} \
-	${BN} \
-	${BU} \
-	${SYSV}
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 g_qa_SOURCES = g_qa.c
 g_qa_LDADD = \
-	${RT} \
-	${BN} \
-	${BU} \
-	${SYSV}
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 solshoot_SOURCES = solshoot.c
 solshoot_LDADD = \
-	${RT} \
-	${BN} \
-	${BU} \
-	${SYSV}
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 testfree_SOURCES = testfree.c
 testfree_LDADD = \
-	${RT} \
-	${BN} \
-	${BU} \
-	${SYSV}
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 man_MANS = \
 	g_diff.1 \

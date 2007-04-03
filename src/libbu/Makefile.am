@@ -69,15 +69,12 @@ libbu_nil_la_SOURCES = \
 libbu_la_SOURCES =
 libbu_la_LDFLAGS = -version-info 19:1
 libbu_la_LIBADD = \
-	libbu_nil.la \
-	${LIBMALLOC} \
-	${LIBTHREAD}
+	libbu_nil.la
 
 htester_SOURCES = htester.c
 htester_LDADD = \
 	libbu.la \
-	${TCL} \
-	${LIBM}
+	${BU} ${BU_LIBS}
 
 include_HEADERS = rb_internals.h
 

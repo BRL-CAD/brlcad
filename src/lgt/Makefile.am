@@ -39,15 +39,15 @@ noinst_HEADERS = \
 	vecmath.h
 
 lgt_LDADD = \
-	${RT} \
-	${FB} \
-	${BN} \
-	${BU} \
-	${PKG} \
-	${TERMIO} \
-	${CURSOR} \
+	${RT} ${RT_LIBS} \
+	${FB} ${FB_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${PKG} ${PKG_LIBS} \
+	${TERMIO} ${TERMIO_LIBS} \
+	${CURSOR} ${CURSOR_LIBS} \
 	${LIBSGIGL} \
-	${SYSV}
+	${SYSV} ${SYSV_LIBS}
 
 lgt_CFLAGS = -DBEHIND_ME_TOL=0.05
 

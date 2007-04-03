@@ -87,19 +87,19 @@ iges_g_srcs = \
 
 iges_g_SOURCES = $(iges_g_srcs) iges-g-vers.c
 iges_g_LDADD = \
-	${WDB} \
-	${RT} \
-	${BN} \
-	${BU} \
-	${SYSV}
+	${WDB} ${WDB_LIBS} \
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 g_iges_srcs = g-iges.c iges.c
 g_iges_SOURCES = $(g_iges_srcs) g-iges-vers.c
 g_iges_LDADD = \
-	${RT} \
-	${BN} \
-	${BU} \
-	${SYSV}
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 BUILT_SOURCES = \
 	iges-g-vers.c \

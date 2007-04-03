@@ -28,19 +28,19 @@ bwish_SOURCES = \
 	tcl.c
 
 blib_LIBS = \
-	${TCLCAD} \
-	${RT} \
-	${DM} \
-	${FB} \
-	${BN} \
-	${BU} \
-	${PKG} \
+	${TCLCAD} ${TCLCAD_LIBS} \
+	${RT} ${RT_LIBS} \
+	${DM} ${DM_LIBS} \
+	${FB} ${FB_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${PKG} ${PKG_LIBS} \
 	${ITK} \
 	${ITCL} \
 	${TK} \
 	${TCL} \
-	${TERMIO} \
-	${SYSV}
+	${TERMIO} ${TERMIO_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 bwish_LDADD = \
 	${blib_LIBS}

@@ -24,18 +24,18 @@ rttherm_SOURCES = \
 	viewtherm.c
 
 # have to link static due to librttherm.a, the aix linker, and duplicate symbols in optical/multispectral
-rttherm_LDFLAGS = -static ${EXCEPTIONS}
+rttherm_LDFLAGS = -static
 rttherm_CFLAGS = -DRT_MULTISPECTRAL
 rttherm_LDADD = \
 	$(top_builddir)/src/rt/librttherm.a \
-	${MULTISPECTRAL} \
-	${OPTICAL} \
-	${PKG} \
-	${RT} \
-	${FB} \
-	${SYSV} \
-	${BN} \
-	${BU} \
+	${MULTISPECTRAL} ${MULTISPECTRAL_LIBS} \
+	${OPTICAL} ${OPTICAL_LIBS} \
+	${PKG} ${PKG_LIBS} \
+	${RT} ${RT_LIBS} \
+	${FB} ${FB_LIBS} \
+	${SYSV} ${SYSV_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
 	${TCL} 
 
 ssampview_SOURCES = \
@@ -46,13 +46,13 @@ ssampview_CFLAGS = \
 	${X_CFLAGS} \
 	${TK_CPPFLAGS}
 ssampview_LDADD = \
-	${OPTICAL} \
-	${FB} \
-	${RT} \
-	${BN} \
-	${BU} \
-	${PKG} \
-	${SYSV} \
+	${OPTICAL} ${OPTICAL_LIBS} \
+	${FB} ${FB_LIBS} \
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${PKG} ${PKG_LIBS} \
+	${SYSV} ${SYSV_LIBS} \
 	${TK} \
 	${TCL}
 
@@ -60,11 +60,11 @@ ssampview_LDADD = \
 ssamp_bw_SOURCES = \
 	ssamp-bw.c
 ssamp_bw_LDADD = \
-	${OPTICAL} \
-	${RT} \
-	${BN} \
-	${BU} \
-	${SYSV}
+	${OPTICAL} ${OPTICAL_LIBS} \
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 # pixtest removed, looks like an outdated sample_application
 #pixtest_SOURCES = \

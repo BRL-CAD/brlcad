@@ -5,10 +5,10 @@ bin_PROGRAMS = vdeck
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 vdeck_LDADD = \
-	${RT} \
-	${BN} \
-	${BU} \
-	${SYSV}
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 vdeck_SOURCES = \
 	cgarbs.c \
 	match.c \

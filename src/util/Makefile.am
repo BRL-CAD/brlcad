@@ -137,7 +137,7 @@ dist_bin_SCRIPTS = rtwizard morphedit.tcl
 
 # XXX - example code doesn't work so disable for now
 # pl_dm_SOURCES = pl-dm.c
-# pl_dm_LDADD = ${BU} ${DM}
+# pl_dm_LDADD = ${BU} ${BU_LIBS} ${DM} ${DM_LIBS}
 #
 # pix_ci_SOURCES = pix-ci.c
 # pix_ci_LDADD = ${X_LIBS}
@@ -147,382 +147,382 @@ dist_bin_SCRIPTS = rtwizard morphedit.tcl
 # pl_starbase_SOURCES = pl-starbase.c
 
 alias_pix_SOURCES = alias-pix.c
-alias_pix_LDADD = ${BU}
+alias_pix_LDADD = ${BU} ${BU_LIBS}
 
 ap_pix_SOURCES = ap-pix.c
 ap_pix_LDADD =
 
 asc_pl_SOURCES = asc-pl.c
-asc_pl_LDADD = ${BN} ${BU} ${LIBM}
+asc_pl_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${LIBM}
 
 azel_SOURCES = azel.c
-azel_LDADD = ${BU} ${LIBM}
+azel_LDADD = ${BU} ${BU_LIBS} ${LIBM}
 
 bary_SOURCES = bary.c
-bary_LDADD = ${BU}
+bary_LDADD = ${BU} ${BU_LIBS}
 
 binfo_SOURCES = binfo.c
-binfo_LDADD = ${FB} ${PKG} ${BN} ${BU}
+binfo_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 buffer_SOURCES = buffer.c
-buffer_LDADD = ${BU}
+buffer_LDADD = ${BU} ${BU_LIBS}
 
 bw3_pix_SOURCES = bw3-pix.c
-bw3_pix_LDADD = ${BU}
+bw3_pix_LDADD = ${BU} ${BU_LIBS}
 
 bw_a_SOURCES = bw-a.c
-bw_a_LDADD = ${FB} ${PKG} ${BN} ${BU}
+bw_a_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 bw_imp_SOURCES = bw-imp.c
-bw_imp_LDADD = ${BU}
+bw_imp_LDADD = ${BU} ${BU_LIBS}
 
 bw_pix_SOURCES = bw-pix.c
-bw_pix_LDADD = ${BU}
+bw_pix_LDADD = ${BU} ${BU_LIBS}
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 bw_png_SOURCES = bw-png.c
-bw_png_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PNG}
+bw_png_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG}
 bw_png_CFLAGS = ${PNG_CPPFLAGS}
 
-bw_ps_LDADD = ${BU}
+bw_ps_LDADD = ${BU} ${BU_LIBS}
 bw_ps_SOURCES = bw-ps.c
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 bw_rle_SOURCES = bw-rle.c
-bw_rle_LDADD = ${RLE} ${BU} ${SYSV}
+bw_rle_LDADD = ${RLE} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
 bw_rle_CFLAGS = ${RLE_CPPFLAGS}
 
 bwcrop_SOURCES = bwcrop.c
-bwcrop_LDADD = ${BU}
+bwcrop_LDADD = ${BU} ${BU_LIBS}
 
 bwdiff_SOURCES = bwdiff.c
-bwdiff_LDADD = ${BU}
+bwdiff_LDADD = ${BU} ${BU_LIBS}
 
 bwfilter_SOURCES = bwfilter.c
-bwfilter_LDADD = ${BU}
+bwfilter_LDADD = ${BU} ${BU_LIBS}
 
 bwhist_SOURCES = bwhist.c
-bwhist_LDADD = ${FB} ${PKG} ${BU}
+bwhist_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BU} ${BU_LIBS}
 
 bwhisteq_SOURCES = bwhisteq.c
-bwhisteq_LDADD = ${BU}
+bwhisteq_LDADD = ${BU} ${BU_LIBS}
 
 bwmod_SOURCES = bwmod.c
-bwmod_LDADD = ${BU} ${LIBM}
+bwmod_LDADD = ${BU} ${BU_LIBS} ${LIBM}
 
 bwrect_SOURCES = bwrect.c
-bwrect_LDADD = ${BU}
+bwrect_LDADD = ${BU} ${BU_LIBS}
 
 bwrot_SOURCES = bwrot.c
-bwrot_LDADD = ${BU} ${LIBM}
+bwrot_LDADD = ${BU} ${BU_LIBS} ${LIBM}
 
 bwscale_SOURCES = bwscale.c
-bwscale_LDADD = ${BU}
+bwscale_LDADD = ${BU} ${BU_LIBS}
 
 bwshrink_SOURCES = bwshrink.c
-bwshrink_LDADD = ${BU}
+bwshrink_LDADD = ${BU} ${BU_LIBS}
 
 bwstat_SOURCES = bwstat.c
 bwstat_LDADD = ${LIBM}
 
 bwthresh_SOURCES = bwthresh.c
-bwthresh_LDADD = ${BU}
+bwthresh_LDADD = ${BU} ${BU_LIBS}
 
 cv_SOURCES = cv.c
-cv_LDADD = ${BU}
+cv_LDADD = ${BU} ${BU_LIBS}
 
 dbcp_SOURCES = dbcp.c
-dbcp_LDADD = ${BU}
+dbcp_LDADD = ${BU} ${BU_LIBS}
 
 decimate_SOURCES = decimate.c
-decimate_LDADD = ${BU}
+decimate_LDADD = ${BU} ${BU_LIBS}
 
 double_asc_SOURCES = double-asc.c
-double_asc_LDADD = ${FB} ${PKG} ${BN} ${BU}
+double_asc_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 dpix_pix_SOURCES = dpix-pix.c
-dpix_pix_LDADD = ${BU}
+dpix_pix_LDADD = ${BU} ${BU_LIBS}
 
 dsp_add_SOURCES = dsp_add.c
-dsp_add_LDADD = ${BU}
+dsp_add_LDADD = ${BU} ${BU_LIBS}
 
 dunncolor_SOURCES = dunncolor.c dunncomm.c
-dunncolor_LDADD = ${BU}
+dunncolor_LDADD = ${BU} ${BU_LIBS}
 
 dunnsnap_SOURCES = dunnsnap.c dunncomm.c
-dunnsnap_LDADD = ${FB} ${PKG} ${BU}
+dunnsnap_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BU} ${BU_LIBS}
 
 files_tape_SOURCES = files-tape.c
-files_tape_LDADD = ${BU}
+files_tape_LDADD = ${BU} ${BU_LIBS}
 
 gencolor_SOURCES = gencolor.c
-gencolor_LDADD = ${BU}
+gencolor_LDADD = ${BU} ${BU_LIBS}
 
 hd_SOURCES = hd.c
-hd_LDADD = ${BU}
+hd_LDADD = ${BU} ${BU_LIBS}
 
 imgdims_SOURCES = imgdims.c
-imgdims_LDADD = ${FB} ${PKG} ${BN} ${BU}
+imgdims_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 loop_SOURCES = loop.c
-loop_LDADD = ${BU}
+loop_LDADD = ${BU} ${BU_LIBS}
 
 lowp_SOURCES = lowp.c
-lowp_LDADD = ${BU}
+lowp_LDADD = ${BU} ${BU_LIBS}
 
 mac_pix_SOURCES = mac-pix.c
-mac_pix_LDADD = ${BU}
+mac_pix_LDADD = ${BU} ${BU_LIBS}
 
 msrandom_SOURCES = msrandom.c
-msrandom_LDADD = ${BN} ${BU}
+msrandom_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 mst_SOURCES = mst.c
-mst_LDADD = ${BU}
+mst_LDADD = ${BU} ${BU_LIBS}
 
 op_bw_SOURCES = op-bw.c
-op_bw_LDADD = ${BU}
+op_bw_LDADD = ${BU} ${BU_LIBS}
 
 orle_pix_SOURCES = orle-pix.c
-orle_pix_LDADD = ${FB} ${PKG} ${BN} ${BU} ${ORLE}
+orle_pix_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${ORLE} ${ORLE_LIBS}
 
 pcd_pix_SOURCES = pcd-pix.c
-pcd_pix_LDADD = ${BU}
+pcd_pix_LDADD = ${BU} ${BU_LIBS}
 
 pix3filter_SOURCES = pix3filter.c
-pix3filter_LDADD = ${BU}
+pix3filter_LDADD = ${BU} ${BU_LIBS}
 
 pix_alias_SOURCES = pix-alias.c
-pix_alias_LDADD = ${BU}
+pix_alias_LDADD = ${BU} ${BU_LIBS}
 
 pix_bw3_SOURCES = pix-bw3.c
-pix_bw3_LDADD = ${BU}
+pix_bw3_LDADD = ${BU} ${BU_LIBS}
 
 pix_bw_SOURCES = pix-bw.c
-pix_bw_LDADD = ${BU}
+pix_bw_LDADD = ${BU} ${BU_LIBS}
 
 pix_orle_SOURCES = pix-orle.c
-pix_orle_LDADD = ${FB} ${PKG} ${BN} ${BU} ${ORLE}
+pix_orle_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${ORLE} ${ORLE_LIBS}
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 pix_png_SOURCES = pix-png.c
 pix_png_CFLAGS = ${PNG_CPPFLAGS}
-pix_png_LDADD = ${FB} ${PKG} ${BN} ${BU} ${PNG}
+pix_png_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG}
 
 pix_ppm_SOURCES = pix-ppm.c
-pix_ppm_LDADD = ${FB} ${PKG} ${BN} ${BU}
+pix_ppm_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 pix_ps_SOURCES = pix-ps.c
-pix_ps_LDADD = ${BU}
+pix_ps_LDADD = ${BU} ${BU_LIBS}
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 pix_rle_SOURCES = pix-rle.c
-pix_rle_LDADD = ${RLE} ${BU} ${SYSV}
+pix_rle_LDADD = ${RLE} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
 pix_rle_CFLAGS = ${RLE_CPPFLAGS}
 
 pix_spm_SOURCES = pix-spm.c
-pix_spm_LDADD = ${BN} ${BU}
+pix_spm_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 pix_sun_SOURCES = pix-sun.c
-pix_sun_LDADD = ${BU}
+pix_sun_LDADD = ${BU} ${BU_LIBS}
 
 pix_yuv_SOURCES = pix-yuv.c
-pix_yuv_LDADD = ${FB} ${PKG} ${BN} ${BU}
+pix_yuv_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 pixbackgnd_SOURCES = pixbackgnd.c
-pixbackgnd_LDADD = ${BU}
+pixbackgnd_LDADD = ${BU} ${BU_LIBS}
 
 pixbgstrip_SOURCES = pixbgstrip.c
-pixbgstrip_LDADD = ${FB} ${PKG} ${BN} ${BU}
+pixbgstrip_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 pixblend_SOURCES = pixblend.c
-pixblend_LDADD = ${BU}
+pixblend_LDADD = ${BU} ${BU_LIBS}
 
 pixborder_SOURCES = pixborder.c
-pixborder_LDADD = ${FB} ${PKG} ${BN} ${BU}
+pixborder_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 pixbustup_SOURCES = pixbustup.c
 pixbustup_LDADD =
 
 pixclump_SOURCES = pixclump.c
-pixclump_LDADD = ${BU}
+pixclump_LDADD = ${BU} ${BU_LIBS}
 
 pixcolors_SOURCES = pixcolors.c
-pixcolors_LDADD = ${BU}
+pixcolors_LDADD = ${BU} ${BU_LIBS}
 
 pixcount_SOURCES = pixcount.c
-pixcount_LDADD = ${BU}
+pixcount_LDADD = ${BU} ${BU_LIBS}
 
 pixcut_SOURCES = pixcut.c
-pixcut_LDADD = ${FB} ${PKG} ${BN} ${BU}
+pixcut_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 pixdiff_SOURCES = pixdiff.c
-pixdiff_LDADD = ${BU}
+pixdiff_LDADD = ${BU} ${BU_LIBS}
 
 pixdsplit_SOURCES = pixdsplit.c
-pixdsplit_LDADD = ${BU}
+pixdsplit_LDADD = ${BU} ${BU_LIBS}
 
 pixelswap_SOURCES = pixelswap.c
-pixelswap_LDADD = ${BU}
+pixelswap_LDADD = ${BU} ${BU_LIBS}
 
 pixembed_SOURCES = pixembed.c
-pixembed_LDADD = ${BU}
+pixembed_LDADD = ${BU} ${BU_LIBS}
 
 pixfade_SOURCES = pixfade.c
-pixfade_LDADD = ${BN} ${BU}
+pixfade_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 pixfields_SOURCES = pixfields.c
-pixfields_LDADD = ${BU}
+pixfields_LDADD = ${BU} ${BU_LIBS}
 
 pixfieldsep_SOURCES = pixfieldsep.c
-pixfieldsep_LDADD = ${BU}
+pixfieldsep_LDADD = ${BU} ${BU_LIBS}
 
 pixfilter_SOURCES = pixfilter.c
-pixfilter_LDADD = ${BU}
+pixfilter_LDADD = ${BU} ${BU_LIBS}
 
 pixhalve_SOURCES = pixhalve.c
-pixhalve_LDADD = ${FB} ${PKG} ${BN} ${BU}
+pixhalve_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 pixhist3d_SOURCES = pixhist3d.c
-pixhist3d_LDADD = ${FB} ${PKG} ${BU}
+pixhist3d_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BU} ${BU_LIBS}
 
 pixhist3d_pl_SOURCES = pixhist3d-pl.c
-pixhist3d_pl_LDADD = ${BN} ${BU}
+pixhist3d_pl_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 pixhist_SOURCES = pixhist.c
-pixhist_LDADD = ${FB} ${PKG} ${BU}
+pixhist_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BU} ${BU_LIBS}
 
 pixinterp2x_SOURCES = pixinterp2x.c
-pixinterp2x_LDADD = ${BU}
+pixinterp2x_LDADD = ${BU} ${BU_LIBS}
 
 pixmatte_SOURCES = pixmatte.c
-pixmatte_LDADD = ${BU}
+pixmatte_LDADD = ${BU} ${BU_LIBS}
 
 pixmerge_SOURCES = pixmerge.c
-pixmerge_LDADD = ${BU}
+pixmerge_LDADD = ${BU} ${BU_LIBS}
 
 pixmorph_SOURCES = pixmorph.c
-pixmorph_LDADD = ${FB} ${PKG} ${BN} ${BU}
+pixmorph_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 pixpaste_SOURCES = pixpaste.c
-pixpaste_LDADD = ${FB} ${PKG} ${BN} ${BU}
+pixpaste_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 pixrect_SOURCES = pixrect.c
-pixrect_LDADD = ${BU}
+pixrect_LDADD = ${BU} ${BU_LIBS}
 
 pixrot_SOURCES = pixrot.c
-pixrot_LDADD = ${BU}
+pixrot_LDADD = ${BU} ${BU_LIBS}
 
 pixsaturate_SOURCES = pixsaturate.c
 
 pixscale_SOURCES = pixscale.c
-pixscale_LDADD = ${BU}
+pixscale_LDADD = ${BU} ${BU_LIBS}
 
 pixshrink_SOURCES = pixshrink.c
-pixshrink_LDADD = ${BU}
+pixshrink_LDADD = ${BU} ${BU_LIBS}
 
 pixstat_SOURCES = pixstat.c
-pixstat_LDADD = ${BU} ${LIBM}
+pixstat_LDADD = ${BU} ${BU_LIBS} ${LIBM}
 
 pixsubst_SOURCES = pixsubst.c
-pixsubst_LDADD = ${BU}
+pixsubst_LDADD = ${BU} ${BU_LIBS}
 
 pixtile_SOURCES = pixtile.c
-pixtile_LDADD = ${BU}
+pixtile_LDADD = ${BU} ${BU_LIBS}
 
 pixuntile_SOURCES = pixuntile.c
-pixuntile_LDADD = ${BU}
+pixuntile_LDADD = ${BU} ${BU_LIBS}
 
 pl_X_SOURCES = pl-X.c
-pl_X_LDADD = ${BU} ${X_LIBS}
+pl_X_LDADD = ${BU} ${BU_LIBS} ${X_LIBS}
 pl_X_CFLAGS = ${X_CFLAGS}
 
 pl_asc_SOURCES = pl-asc.c
-pl_asc_LDADD = ${BU}
+pl_asc_LDADD = ${BU} ${BU_LIBS}
 
 pl_hpgl_SOURCES = pl-hpgl.c
-pl_hpgl_LDADD = ${BU}
+pl_hpgl_LDADD = ${BU} ${BU_LIBS}
 
 pl_pl_SOURCES = pl-pl.c
-pl_pl_LDADD = ${BU}
+pl_pl_LDADD = ${BU} ${BU_LIBS}
 
 pl_ps_SOURCES = pl-ps.c
-pl_ps_LDADD = ${BU}
+pl_ps_LDADD = ${BU} ${BU_LIBS}
 
 pl_sgi_SOURCES = pl-sgi.c
-pl_sgi_LDADD = ${BU} ${LIBSGIGL}
+pl_sgi_LDADD = ${BU} ${BU_LIBS} ${LIBSGIGL}
 
 pl_tek_SOURCES = pl-tek.c
-pl_tek_LDADD = ${BU}
+pl_tek_LDADD = ${BU} ${BU_LIBS}
 
 plcolor_SOURCES = plcolor.c
-plcolor_LDADD = ${BN} ${BU}
+plcolor_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 pldebug_SOURCES = pldebug.c
-pldebug_LDADD = ${BU}
+pldebug_LDADD = ${BU} ${BU_LIBS}
 
 plgetframe_SOURCES = plgetframe.c
-plgetframe_LDADD = ${BU}
+plgetframe_LDADD = ${BU} ${BU_LIBS}
 
 plline2_SOURCES = plline2.c
-plline2_LDADD = ${BN} ${BU}
+plline2_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 plrot_SOURCES = plrot.c
-plrot_LDADD = ${BN} ${BU}
+plrot_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 plstat_SOURCES = plstat.c
-plstat_LDADD = ${BU}
+plstat_LDADD = ${BU} ${BU_LIBS}
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 png_bw_SOURCES = png-bw.c
 png_bw_CFLAGS = ${PNG_CPPFLAGS}
-png_bw_LDADD = ${BN} ${BU} ${PNG}
+png_bw_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG}
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 png_info_SOURCES = png_info.c
 png_info_CFLAGS = ${PNG_CPPFLAGS}
-png_info_LDADD = ${BN} ${BU} ${PNG}
+png_info_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG}
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 png_pix_SOURCES = png-pix.c
 png_pix_CFLAGS = ${PNG_CPPFLAGS}
-png_pix_LDADD = ${BN} ${BU} ${PNG}
+png_pix_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG}
 
 query_SOURCES = query.c
-query_LDADD = ${BU}
+query_LDADD = ${BU} ${BU_LIBS}
 
 remapid_SOURCES = remapid.c
-remapid_LDADD = ${RT} ${BN} ${BU} ${SYSV}
+remapid_LDADD = ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
 
 rle_pix_SOURCES = rle-pix.c
-rle_pix_LDADD = ${RLE} ${BU} ${SYSV}
+rle_pix_LDADD = ${RLE} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
 rle_pix_CFLAGS = ${RLE_CPPFLAGS}
 
 roots_example_SOURCES = roots_example.c
-roots_example_LDADD = ${RT} ${BN} ${BU}
+roots_example_LDADD = ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 sgi_pix_SOURCES = sgi-pix.c
 sgi_pix_LDADD = ${LIBSGIGL}
 
 sun_pix_SOURCES = sun-pix.c
-sun_pix_LDADD = ${BU}
+sun_pix_LDADD = ${BU} ${BU_LIBS}
 
 terrain_SOURCES = terrain.c
-terrain_LDADD = ${BN} ${BU}
+terrain_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 texturescale_SOURCES = texturescale.c
-texturescale_LDADD = ${FB} ${PKG} ${BN} ${BU}
+texturescale_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 ttcp_SOURCES = ttcp.c
 ttcp_LDADD = ${LIBSOCKET} ${LIBNSL}
 
 wavelet_SOURCES = wavelet.c
-wavelet_LDADD = ${FB} ${PKG} ${BN} ${BU}
+wavelet_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 xyz_pl_SOURCES = xyz-pl.c
-xyz_pl_LDADD = ${BN} ${BU}
+xyz_pl_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 yuv_pix_SOURCES = yuv-pix.c
-yuv_pix_LDADD = ${FB} ${PKG} ${BN} ${BU}
+yuv_pix_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 .PHONY : vers.c
 vers.c:

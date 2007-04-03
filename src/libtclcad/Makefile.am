@@ -9,6 +9,7 @@ SRCS = \
 	tkImgFmtPIX.c
 
 libtclcad_la_LDFLAGS = -version-info 19:1
+libtclcad_la_LIBADD = ${TCLCAD_LIBS}
 libtclcad_la_CFLAGS = \
 	${X_CFLAGS} \
 	${ITK_CPPFLAGS} \
@@ -19,9 +20,6 @@ libtclcad_la_CFLAGS = \
 	-I$(top_srcdir)/src/other/tcl/unix \
 	-I$(top_srcdir)/src/other/tk/generic \
 	-I$(top_srcdir)/src/other/tk/unix
-
-libtclcad_la_LIBADD = \
-	${TCLSTUB}
 
 libtclcad_la_SOURCES = \
 	$(SRCS) \

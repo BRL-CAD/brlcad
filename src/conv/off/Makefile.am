@@ -8,18 +8,18 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 g_off_SOURCES = g-off.c
 g_off_LDADD = \
-	${RT} \
-	${BN} \
-	${BU} \
-	${SYSV}
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 off_g_SOURCES = off-g.c
 off_g_LDADD = \
-	${WDB} \
-	${RT} \
-	${BN} \
-	${BU} \
-	${SYSV}
+	${WDB} ${WDB_LIBS} \
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 MAINTAINERCLEANFILES = Makefile.in
 

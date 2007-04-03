@@ -30,11 +30,11 @@ noinst_HEADERS = \
 
 fbed_CFLAGS = ${TERMLIB_CPPFLAGS}
 fbed_LDADD = \
-	${FB} \
-	${BU} \
-	${PKG} \
-	${TERMIO} \
-	${CURSOR} \
+	${FB} ${FB_LIBS} \
+	${BU} ${BU_LIBS} \
+	${PKG} ${PKG_LIBS} \
+	${TERMIO} ${TERMIO_LIBS} \
+	${CURSOR} ${CURSOR_LIBS} \
 	${TERMLIB} \
 	${LIBSGIGL}
 

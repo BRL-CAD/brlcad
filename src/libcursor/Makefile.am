@@ -11,7 +11,6 @@ libcursor_la_SOURCES = \
 	vers.c
 
 libcursor_la_LDFLAGS = -version-info 19:1
-libcursor_la_LIBADD = ${TERMLIB}
 libcursor_la_CFLAGS = ${TERMLIB_CPPFLAGS}
 
 BUILT_SOURCES = vers.c

@@ -56,9 +56,6 @@ libfb_la_CFLAGS = \
 	$(IF_OGL_CFLAGS) \
 	$(IF_WGL_CFLAGS) \
 	${TCL_CPPFLAGS}
-libfb_la_LIBADD = \
-	${X_LIBS} \
-	${LIBGL}
 
 noinst_HEADERS = \
 	adage.h \

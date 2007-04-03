@@ -1780,10 +1780,9 @@ if test ! "x$bc_auto_flags" = "xno" ; then
     dnl this is needed to resolve __Unwind_Resume when compiling and
     dnl linking against openNURBS in librt for some binaries, for
     dnl example rttherm (i.e. any -static binaries)
-    BC_COMPILER_AND_LINKER_RECOGNIZES([-fexceptions], [fexceptions], [nokeep])
-    if test "x$bc_fexceptions_works" = "xyes" ; then
-       EXCEPTIONS="-fexceptions"
-       AC_SUBST(EXCEPTIONS)
+    if test "x$bc_build_opennurbs" != "xno" ; then
+	dnl go ahead and enable for everyone regardless
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-fexceptions], [fexceptions])
     fi
 
     BC_COMPILER_AND_LINKER_RECOGNIZES([-msse], [msse], [nokeep])
@@ -3474,51 +3473,76 @@ else
 	AC_DEFINE(NDEBUG, 1, [Define to indicate non-debug code (assert utilizes)])
 fi
 
-BU='${top_builddir}/src/libbu/libbu.la'" $TCL $FRAMEWORK_COREFOUNDATION"
-AC_SUBST(BU)
-
-BN='${top_builddir}/src/libbn/libbn.la'" $TCL $FRAMEWORK_COREFOUNDATION"
-AC_SUBST(BN)
-
-RT='${top_builddir}/src/librt/librt.la'" $TCL $FRAMEWORK_COREFOUNDATION"
-AC_SUBST(RT)
-
-WDB='${top_builddir}/src/libwdb/libwdb.la'
-AC_SUBST(WDB)
-
-PKG='${top_builddir}/src/libpkg/libpkg.la'
-AC_SUBST(PKG)
-
-SYSV='${top_builddir}/src/libsysv/libsysv.la'
-AC_SUBST(SYSV)
-
-CURSOR='${top_builddir}/src/libcursor/libcursor.la'
-AC_SUBST(CURSOR)
-
-FB='${top_builddir}/src/libfb/libfb.la'" $FRAMEWORK_COREFOUNDATION"
-AC_SUBST(FB)
-
-DM='${top_builddir}/src/libdm/libdm.la'" $FRAMEWORK_COREFOUNDATION"
-AC_SUBST(DM)
 AC_DEFINE_UNQUOTED([USE_FBSERV], [1], [Required for libdm/mged to allow direct fbserv render connections])
 
+
+#
+# set up the BRL-CAD libraries
+#
+
+BN='${top_builddir}/src/libbn/libbn.la'
+BU='${top_builddir}/src/libbu/libbu.la'
+CURSOR='${top_builddir}/src/libcursor/libcursor.la'
+DM='${top_builddir}/src/libdm/libdm.la'
+FB='${top_builddir}/src/libfb/libfb.la'
 FFT='${top_builddir}/src/libfft/libfft.la'
-AC_SUBST(FFT)
-
-MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'" $FRAMEWORK_COREFOUNDATION"
-AC_SUBST(MULTISPECTRAL)
-
-OPTICAL='${top_builddir}/src/liboptical/liboptical.la'" $FRAMEWORK_COREFOUNDATION"
-AC_SUBST(OPTICAL)
-
+MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
+OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 ORLE='${top_builddir}/src/liborle/liborle.la'
-AC_SUBST(ORLE)
-
-TCLCAD='${top_builddir}/src/libtclcad/libtclcad.la'" $FRAMEWORK_COREFOUNDATION"
-AC_SUBST(TCLCAD)
-
+PKG='${top_builddir}/src/libpkg/libpkg.la'
+RT='${top_builddir}/src/librt/librt.la'
+SYSV='${top_builddir}/src/libsysv/libsysv.la'
+TCLCAD='${top_builddir}/src/libtclcad/libtclcad.la'
 TERMIO='${top_builddir}/src/libtermio/libtermio.la'
+WDB='${top_builddir}/src/libwdb/libwdb.la'
+
+BN_LIBS="${BU} ${TCL} ${LIBM}"
+BU_LIBS="${TCL} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
+CURSOR_LIBS="${TERMLIB}"
+DM_LIBS="${PNG} ${X_LIBS}"
+FB_LIBS="${BU} ${PKG} ${TCL} ${X_LIBS} ${LIBGL}"
+FFT_LIBS="${LIBM}"
+MULTISPECTRAL_LIBS="${RT} ${BN} ${BU}"
+OPTICAL_LIBS="${TCL}"
+ORLE_LIBS=
+PKG_LIBS=
+RT_LIBS="${REGEX} ${LIBM} ${SYSV} ${OPENNURBS} ${BU}"
+SYSV_LIBS=
+TCLCAD_LIBS="${TK} ${TCLSTUB}"
+TERMIO_LIBS=
+WDB_LIBS="${RT} ${BN} ${BU}"
+
+AC_SUBST(BN)
+AC_SUBST(BU)
+AC_SUBST(CURSOR)
+AC_SUBST(DM)
+AC_SUBST(FB)
+AC_SUBST(FFT)
+AC_SUBST(MULTISPECTRAL)
+AC_SUBST(OPTICAL)
+AC_SUBST(ORLE)
+AC_SUBST(PKG)
+AC_SUBST(RT)
+AC_SUBST(SYSV)
+AC_SUBST(TCLCAD)
 AC_SUBST(TERMIO)
+AC_SUBST(WDB)
+
+AC_SUBST(BN_LIBS)
+AC_SUBST(BU_LIBS)
+AC_SUBST(CURSOR_LIBS)
+AC_SUBST(DM_LIBS)
+AC_SUBST(FB_LIBS)
+AC_SUBST(FFT_LIBS)
+AC_SUBST(MULTISPECTRAL_LIBS)
+AC_SUBST(OPTICAL_LIBS)
+AC_SUBST(ORLE_LIBS)
+AC_SUBST(PKG_LIBS)
+AC_SUBST(RT_LIBS)
+AC_SUBST(SYSV_LIBS)
+AC_SUBST(TCLCAD_LIBS)
+AC_SUBST(TERMIO_LIBS)
+AC_SUBST(WDB_LIBS)
 
 
 # if compiling with the MIPSpro 7.3 compiler, there is a bug when

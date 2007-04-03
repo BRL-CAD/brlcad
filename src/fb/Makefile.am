@@ -46,138 +46,138 @@ bin_PROGRAMS = \
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-bw_fb_LDADD = ${FB} ${BN} ${BU} ${PKG}
+bw_fb_LDADD = ${FB} ${FB_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 bw_fb_SOURCES = bw-fb.c
 
-cat_fb_LDADD = ${FB} ${BU} ${PKG}
+cat_fb_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 cat_fb_SOURCES = cat-fb.c
 
-cell_fb_LDADD = ${FB} ${BN} ${BU} ${PKG}
+cell_fb_LDADD = ${FB} ${FB_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 cell_fb_SOURCES = cell-fb.c
 
-cmap_fb_LDADD = ${FB} ${BU} ${PKG}
+cmap_fb_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 cmap_fb_SOURCES = cmap-fb.c
 
-fb_bw_LDADD = ${FB} ${BU} ${PKG}
+fb_bw_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fb_bw_SOURCES = fb-bw.c
 
-fb_cmap_LDADD = ${FB} ${BU} ${PKG}
+fb_cmap_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fb_cmap_SOURCES = fb-cmap.c
 
-fb_fb_LDADD = ${FB} ${BU} ${PKG}
+fb_fb_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fb_fb_SOURCES = fb-fb.c
 
-fb_orle_LDADD = ${FB} ${ORLE} ${BU} ${PKG}
+fb_orle_LDADD = ${FB} ${FB_LIBS} ${ORLE} ${ORLE_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fb_orle_SOURCES = fb-orle.c cmap-crunch.c
 
-fb_pix_LDADD = ${FB} ${BU} ${PKG} ${PKG}
+fb_pix_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS} ${PKG} ${PKG_LIBS}
 fb_pix_SOURCES = fb-pix.c cmap-crunch.c
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 fb_png_CFLAGS = ${PNG_CPPFLAGS}
-fb_png_LDADD = ${FB} ${PNG} ${BU} ${PKG}
+fb_png_LDADD = ${FB} ${FB_LIBS} ${PNG} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fb_png_SOURCES = fb-png.c cmap-crunch.c
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 fb_rle_CFLAGS = ${RLE_CPPFLAGS}
-fb_rle_LDADD = ${FB} ${RLE} ${BU} ${PKG}
+fb_rle_LDADD = ${FB} ${FB_LIBS} ${RLE} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fb_rle_SOURCES = fb-rle.c cmap-crunch.c
 
-fbanim_LDADD = ${FB} ${BU} ${PKG}
+fbanim_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbanim_SOURCES = fbanim.c
 
-fbcbars_LDADD = ${FB} ${BU} ${PKG}
+fbcbars_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbcbars_SOURCES = fbcbars.c
 
-fbclear_LDADD = ${FB} ${BU} ${PKG}
+fbclear_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbclear_SOURCES = fbclear.c
 
-fbcmap_LDADD = ${FB} ${BU} ${PKG}
+fbcmap_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbcmap_SOURCES = fbcmap.c
 
-fbcmrot_LDADD = ${FB} ${BU} ${PKG}
+fbcmrot_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbcmrot_SOURCES = fbcmrot.c
 
-fbcolor_LDADD = ${FB} ${TERMIO} ${BU} ${PKG}
+fbcolor_LDADD = ${FB} ${FB_LIBS} ${TERMIO} ${TERMIO_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbcolor_SOURCES = fbcolor.c
 
-fbfade_LDADD = ${FB} ${BU} ${PKG}
+fbfade_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbfade_SOURCES = fbfade.c
 
-fbframe_LDADD = ${FB} ${BU} ${PKG}
+fbframe_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbframe_SOURCES = fbframe.c
 
-fbfree_LDADD = ${FB} ${BU} ${PKG}
+fbfree_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbfree_SOURCES = fbfree.c
 
-fbgamma_LDADD = ${FB} ${BU} ${PKG}
+fbgamma_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbgamma_SOURCES = fbgamma.c
 
-fbgammamod_LDADD = ${FB} ${BU} ${PKG}
+fbgammamod_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbgammamod_SOURCES = fbgammamod.c
 
-fbgrid_LDADD = ${FB} ${BU} ${PKG}
+fbgrid_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbgrid_SOURCES = fbgrid.c
 
-fbhelp_LDADD = ${FB} ${BU} ${PKG}
+fbhelp_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbhelp_SOURCES = fbhelp.c
 
-fblabel_LDADD = ${FB} ${BU} ${PKG}
+fblabel_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fblabel_SOURCES = fblabel.c
 
-fbline_LDADD = ${FB} ${BU} ${PKG}
+fbline_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbline_SOURCES = fbline.c
 
-fbpoint_LDADD = ${FB} ${TERMIO} ${BU} ${PKG}
+fbpoint_LDADD = ${FB} ${FB_LIBS} ${TERMIO} ${TERMIO_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbpoint_SOURCES = fbpoint.c
 
-fbscanplot_LDADD = ${FB} ${BU} ${PKG}
+fbscanplot_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbscanplot_SOURCES = fbscanplot.c
 
-fbstretch_LDADD = ${FB} ${BU} ${PKG}
+fbstretch_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbstretch_SOURCES = fbstretch.c
 
-fbzoom_LDADD = ${FB} ${TERMIO} ${BU} ${PKG}
+fbzoom_LDADD = ${FB} ${FB_LIBS} ${TERMIO} ${TERMIO_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 fbzoom_SOURCES = fbzoom.c
 
-gif2fb_LDADD = ${FB} ${BU} ${PKG}
+gif2fb_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 gif2fb_SOURCES = gif2fb.c
 
-gif_fb_LDADD = ${FB} ${BU} ${PKG}
+gif_fb_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 gif_fb_SOURCES = gif-fb.c
 
-orle_fb_LDADD = ${FB} ${ORLE} ${BU} ${PKG}
+orle_fb_LDADD = ${FB} ${FB_LIBS} ${ORLE} ${ORLE_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 orle_fb_SOURCES = orle-fb.c
 
-pix_fb_LDADD = ${FB} ${BN} ${BU} ${PKG}
+pix_fb_LDADD = ${FB} ${FB_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 pix_fb_SOURCES = pix-fb.c
 
-pixautosize_LDADD = ${FB} ${BN} ${BU} ${PKG}
+pixautosize_LDADD = ${FB} ${FB_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 pixautosize_SOURCES = pixautosize.c
 
-pixflip_fb_LDADD = ${FB} ${BU} ${PKG}
+pixflip_fb_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 pixflip_fb_SOURCES = pixflip-fb.c
 
-pl_fb_LDADD = ${FB} ${BN} ${BU} ${PKG}
+pl_fb_LDADD = ${FB} ${FB_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 pl_fb_SOURCES = pl-fb.c
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 png_fb_CFLAGS = ${PNG_CPPFLAGS}
-png_fb_LDADD = ${FB} ${PNG} ${BU} ${PKG}
+png_fb_LDADD = ${FB} ${FB_LIBS} ${PNG} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 png_fb_SOURCES = png-fb.c
 
-polar_fb_LDADD = ${FB} ${BU} ${PKG}
+polar_fb_LDADD = ${FB} ${FB_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 polar_fb_SOURCES = polar-fb.c
 
-pp_fb_LDADD = ${FB} ${TERMIO} ${BU} ${PKG}
+pp_fb_LDADD = ${FB} ${FB_LIBS} ${TERMIO} ${TERMIO_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 pp_fb_SOURCES = pp-fb.c
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 rle_fb_CFLAGS = ${RLE_CPPFLAGS}
-rle_fb_LDADD = ${FB} ${RLE} ${BU} ${PKG}
+rle_fb_LDADD = ${FB} ${FB_LIBS} ${RLE} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 rle_fb_SOURCES = rle-fb.c
 
-spm_fb_LDADD = ${RT} ${FB} ${BN} ${BU} ${PKG}
+spm_fb_LDADD = ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS}
 spm_fb_SOURCES = spm-fb.c
 
 man_MANS = \

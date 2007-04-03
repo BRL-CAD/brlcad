@@ -51,9 +51,6 @@ libdm_la_CFLAGS = \
 	${PNG_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
 	${TK_CPPFLAGS}
-libdm_la_LIBADD = \
-	${PNG} \
-	${X_LIBS}
 
 EXTRA_DIST = \
 	dm-glx.c \

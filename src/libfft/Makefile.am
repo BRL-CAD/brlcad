@@ -17,7 +17,6 @@ libfft_la_SOURCES = \
 	$(BUILT_SOURCES)
 
 libfft_la_LDFLAGS = -version-info 19:1
-libfft_la_LIBADD = ${LIBM}
 
 noinst_HEADERS = \
 	complex.h \

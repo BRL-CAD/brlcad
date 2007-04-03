@@ -14,9 +14,9 @@ brep_test_SOURCES = brep_test.cpp
 # cannot set per-target CPPFLAGS until automake 1.7+
 brep_test_CXXFLAGS = ${SSE}
 brep_test_LDADD = \
-	librt.la \
-	${BN} \
-	${BU}
+	librt.la ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS}
 
 else # !WITH_OPENNURBS
 
@@ -187,26 +187,21 @@ EXTRA_librt_nil_la_SOURCES = \
 librt_la_SOURCES =
 librt_la_LDFLAGS = -version-info 19:1
 librt_la_LIBADD = \
-	librt_nil.la \
-	${REGEX} \
-	${LIBM} \
-	${SYSV} \
-	${OPENNURBS} \
-	${BU}
+	librt_nil.la
 
 comb_SOURCES = comb.c
 comb_LDADD = \
-	librt.la \
-	${BN} \
-	${BU} \
-	${SYSV}
+	librt.la ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 nurb_example_SOURCES = nurb_example.c
 nurb_example_LDADD = \
-	librt.la \
-	${BN} \
-	${BU} \
-	${SYSV}
+	librt.la ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 include_HEADERS = \
 	bot.h \

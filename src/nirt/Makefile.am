@@ -22,17 +22,17 @@ nirt_SOURCES = \
 	vers.c
 nirt_CFLAGS = -DDFLT_SHELL=\"/bin/sh\"
 nirt_LDADD = \
-	${PKG} \
-	${RT} \
-	${BN} \
-	${FB} \
-	${BU} \
-	${SYSV}
+	${PKG} ${PKG_LIBS} \
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${FB} ${FB_LIBS} \
+	${BU} ${BU_LIBS} \
+	${SYSV} ${SYSV_LIBS}
 
 showshot_SOURCES = showshot.c
 showshot_LDADD = \
-	${BN} \
-	${BU}
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS}
 
 man_MANS = \
 	nirt.1 \

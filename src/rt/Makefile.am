@@ -2,14 +2,14 @@
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 LDADD = \
-	${OPTICAL} \
-	${RT} \
-	${FB} \
-	${BN} \
-	${BU} \
-	${PKG} \
+	${OPTICAL} ${OPTICAL_LIBS} \
+	${RT} ${RT_LIBS} \
+	${FB} ${FB_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${PKG} ${PKG_LIBS} \
 	${TCL} \
-	${SYSV}
+	${SYSV} ${SYSV_LIBS}
 
 if ONLY_BENCHMARK
 bin_PROGRAMS = \

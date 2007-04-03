@@ -165,16 +165,16 @@ mged_CFLAGS = \
 mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
 mged_LDADD = \
 	${POINTS_LDADD} \
-	${TERMIO} \
-	${TCLCAD} \
-	${WDB} \
-	${RT} \
-	${DM} \
-	${FB} \
-	${BN} \
-	${BU} \
-	${PKG} \
-	${SYSV} \
+	${TERMIO} ${TERMIO_LIBS} \
+	${TCLCAD} ${TCLCAD_LIBS} \
+	${WDB} ${WDB_LIBS} \
+	${RT} ${RT_LIBS} \
+	${DM} ${DM_LIBS} \
+	${FB} ${FB_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${PKG} ${PKG_LIBS} \
+	${SYSV} ${SYSV_LIBS} \
 	${ITK} \
 	${ITCL} \
 	${TK} \
@@ -182,10 +182,10 @@ mged_LDADD = \
 	${PNG}
 
 cad_boundp_SOURCES = cad_boundp.c
-cad_boundp_LDADD = ${BU}
+cad_boundp_LDADD = ${BU} ${BU_LIBS}
 
 cad_parea_SOURCES = cad_parea.c
-cad_parea_LDADD = ${BU}
+cad_parea_LDADD = ${BU} ${BU_LIBS}
 
 
 INCLUDES = \
