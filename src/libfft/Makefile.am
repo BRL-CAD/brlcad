@@ -27,7 +27,7 @@ fftc_SOURCES = \
 	fftc.c \
 	splitditc.c
 
-fftest_LDADD = libfft.la
+fftest_LDADD = libfft.la ${LIBM}
 fftest_SOURCES = fftest.c
 
 ifftc_LDADD = ${LIBM}
