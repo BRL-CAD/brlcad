@@ -577,8 +577,9 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
     vect_t work;
     VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
-    fastf_t f = fmax(work[X],work[Y]);
-    f = fmax(f,work[Z]);
+    fastf_t f = work[X];
+    V_MAX(f,work[Y]);
+    V_MAX(f,work[Z]);
     stp->st_aradius = f;
     stp->st_bradius = MAGNITUDE(work);
 
