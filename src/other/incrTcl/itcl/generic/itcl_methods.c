@@ -671,8 +671,10 @@ Itcl_CreateMemberCode(interp, cdefn, arglist, body, mcodePtr)
         procPtr->bodyPtr = Tcl_NewStringObj((CONST84 char *)body, -1);
         Tcl_IncrRefCount(procPtr->bodyPtr);
     } else {
-        procPtr->bodyPtr = NULL;
+        procPtr->bodyPtr = Tcl_NewStringObj((CONST84 char *)"", -1);
+	mcode->flags |= ITCL_IMPLEMENT_NONE;
     }
+    Tcl_IncrRefCount(procPtr->bodyPtr);
 
     /*
      *  Plug the argument list into the "compiled locals" list.
@@ -695,7 +697,7 @@ Itcl_CreateMemberCode(interp, cdefn, arglist, body, mcodePtr)
      *  as a symbolic name for a C procedure.
      */
     if (body == NULL) {
-        mcode->flags |= ITCL_IMPLEMENT_NONE;
+      /* No-op */
     }
     else if (*body == '@') {
         Tcl_CmdProc *argCmdProc;
@@ -751,11 +753,11 @@ Itcl_DeleteMemberCode(cdata)
 
     if (mcode->arglist) {
         Itcl_DeleteArgList(mcode->arglist);
+    } else if (mcode->procPtr && mcode->procPtr->firstLocalPtr) {
+        Itcl_DeleteArgList(mcode->procPtr->firstLocalPtr);
     }
     if (mcode->procPtr) {
         ckfree((char*) mcode->procPtr->cmdPtr);
-
-        /* don't free compiled locals -- that is handled by arglist above */
 
         if (mcode->procPtr->bodyPtr) {
             Tcl_DecrRefCount(mcode->procPtr->bodyPtr);
@@ -1669,6 +1671,24 @@ Itcl_PushContext(interp, member, contextClass, contextObj, contextPtr)
         framePtr->procPtr = procPtr;
         framePtr->numCompiledLocals = localCt;
         framePtr->compiledLocals = contextPtr->compiledLocals;
+
+        /*
+         * Invoking TclInitCompiledLocals with a framePtr->procPtr->bodyPtr
+         * that is not a compiled byte code type leads to a crash. So
+         * make sure that the body is compiled here. This needs to
+         * be done even if the body of the Itcl method is not implemented
+         * as a Tcl proc or has no implementation. The empty string should
+         * have been defined as the body if no implementation was defined.
+         */
+        assert(mcode->procPtr->bodyPtr != NULL);
+	
+        result = TclProcCompileProc(interp, mcode->procPtr,
+				    mcode->procPtr->bodyPtr, (Namespace*)member->classDefn->namesp,
+				    "body for", member->fullname);
+	
+        if (result != TCL_OK) {
+	  return result;
+	}
 
         TclInitCompiledLocals(interp, framePtr,
             (Namespace*)contextClass->namesp);
