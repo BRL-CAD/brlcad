@@ -33,6 +33,7 @@ categories: 1) LGPL, 2) BSD/BDL, or 3) are in the public domain.  See
 the terms of each individual license as well as BRL-CAD's COPYING file
 for more details.
 
+* fixed -i argument bug in g-acad, g-dxf, g-nff, g-obj - Shawn Baker
 * framebuffer toggle added to raytrace panel in mged - Sean Morrison
 * fixed rtedge multithreaded output render bug - Erik Greenwald
 * fixed jove/termcap issues on Mac OS X - Sean Morrison
