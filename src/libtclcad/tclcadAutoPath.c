@@ -290,12 +290,9 @@ tclcad_auto_path(Tcl_Interp *interp)
     for (srcpath = strtok_r(bu_vls_addr(&auto_path), ":", &stp);
 	 srcpath;
 	 srcpath = strtok_r(NULL, ":", &stp)) {
-	Tcl_StatBuf stat;
-	Tcl_Obj *newpath = Tcl_NewStringObj(srcpath,-1);
-	Tcl_IncrRefCount(newpath);
 
-	/* make sure it exists as a directory before appending */
-	if ((0 == Tcl_FSStat(newpath, &stat)) && S_ISDIR(stat.st_mode)) {
+	/* make sure it exists before appending */
+	if (bu_file_exists(srcpath)) {
 	    /*		printf("APPENDING: %s\n", srcpath); */
 	    bu_vls_sprintf(&lappend, "lappend auto_path \"%s\"", srcpath);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&lappend));
@@ -310,7 +307,10 @@ tclcad_auto_path(Tcl_Interp *interp)
 	    /* these doesn't seem to do what one might expect
 	     * here, but call it anyways.
 	     */
+	    Tcl_Obj *newpath = Tcl_NewStringObj(srcpath,-1);
+	    Tcl_IncrRefCount(newpath);
 	    TclSetLibraryPath(newpath);
+	    Tcl_DecrRefCount(newpath);
 
 	    /* this really sets it */
 	    snprintf(buffer, MAX_BUF, "set tcl_library \"%s\"", srcpath);
@@ -318,7 +318,6 @@ tclcad_auto_path(Tcl_Interp *interp)
 		bu_log("Tcl_Eval ERROR:\n%s\n", interp->result);
 	    }
 	}
-	Tcl_DecrRefCount(newpath);
     }
 
     bu_vls_free(&auto_path);
