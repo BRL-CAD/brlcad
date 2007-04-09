@@ -3561,6 +3561,10 @@ AC_SUBST(SAMPLE_APPLICATIONS_DIR)
 # stash the top builddir before configuring subdirectories
 bc_top_builddir="$ac_top_builddir"
 
+# stash the current configuration args before adding additional ones
+# for subconfigure
+bc_configure_args="$ac_configure_args"
+
 dnl configure Tcl
 ac_configure_args="$ac_configure_args --disable-shared"
 if test "x$bc_use_debug" != "xno" ; then
@@ -3573,6 +3577,8 @@ dnl configure Tk
 if test "x$build_brlcad_tk" = "xyes" ; then
     AC_CONFIG_SUBDIRS([src/other/tk/unix])
 fi
+
+dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
 
 AC_CONFIG_FILES([
@@ -3838,6 +3844,8 @@ AC_CONFIG_FILES([
 ])
 
 AC_OUTPUT
+
+ac_configure_args="$bc_configure_args"
 
 # ac_top_builddir and other variables are modified after AC_OUTPUT so
 # plan accordingly and save them beforehand.
