@@ -55,7 +55,7 @@ version.o: version.c
 
 EXTRA_DIST = \
 	$(BUILT_SOURCES) \
-	describe.com \
+	$(desc_DATA) \
 	mkversion.sh \
 	teach-jove \
 	teach-jove.in
