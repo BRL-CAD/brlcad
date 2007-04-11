@@ -557,6 +557,10 @@ option add *QuadDisplay.height 400 widgetDefault
 }
 
 ::itcl::body QuadDisplay::units {args} {
+    if {$args == ""} {
+	return [$itk_component(ul) units]
+    }
+
     eval $itk_component(ul) units $args
     eval $itk_component(ur) units $args
     eval $itk_component(ll) units $args
