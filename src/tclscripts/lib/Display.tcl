@@ -161,6 +161,7 @@
     # methods that override methods inherited from View
     public method slew {args}
     public method perspective_angle {args}
+    public method units {args}
 
     # methods that override methods inherited from Dm
     public method bounds {args}
@@ -1111,6 +1112,14 @@
 
     refresh
     return $perspective_angle
+}
+
+::itcl::body Display::units {args} {
+    # Call the view object directly, alteast
+    # until I can resolve an apparent timing
+    # issue with Itcl. This may well be a misuse
+    # of Itcl/Itk.
+    eval $view units $args
 }
 
 ::itcl::body Display::perspective {args} {
