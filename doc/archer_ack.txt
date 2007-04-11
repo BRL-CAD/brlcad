@@ -1,11 +1,11 @@
 
-Archer was developed by SURVICE Engineering under the Phase II Small Business Innovative Research (SBIR) grant AF03-141 (reference contract FA8651-04-C-0137) under the supervision of Lt. Edwin Rodriquez (AFRL/MNAL) (reference crossbow.survice.com).
+Archer was developed by SURVICE Engineering under the Phase II Small Business Innovative Research (SBIR) grant AF03-141 (reference contract FA8651-04-C-0137) under the supervision of Lt. Edwin Rodriguez (AFRL/MNAL) (reference crossbow.survice.com).
 
 Archer is built upon BRL-CAD.  SURVICE would like to acknowledge the contribution and support from the Army Research Laboratory (ARL) BRL-CAD Development Team, without which Archer would not be possible.
 
 The following is the Archer Development Team:
 - Bob Parker: Principal programmer
-- Doug Howard: Original coding and plug-in interface design
-- Keith Bowman: Architecture
+- Doug Howard: Original coding
+- Keith Bowman: Architecture 
 - Steve Phillips: Website and Software Change Request (SCR) tracking system
 - Mark Butkiewicz: Project Management
