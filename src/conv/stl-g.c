@@ -704,7 +704,11 @@ char	*argv[];
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	input_file = argv[bu_optind];
+#ifdef _WIN32
+	if( (fd_in=fopen( input_file, "rb")) == NULL )
+#else
 	if( (fd_in=fopen( input_file, "r")) == NULL )
+#endif
 	{
 		bu_log( "Cannot open input file (%s)\n" , input_file );
 		perror( argv[0] );
