@@ -90,7 +90,8 @@
     private method init {}
     private method help_init {}
 
-    private variable view
+    #private variable view
+    protected variable view
     private variable help
 }
 
@@ -369,8 +370,8 @@
 }
 
 ::itcl::body View::units {args} {
-    # get units
     if {$args == ""} {
+	set units [$view units]
 	return $units
     }
 
