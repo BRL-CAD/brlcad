@@ -36,6 +36,7 @@ set helplib_data(dm_drawPoint)		{{x y} {draw point at (x,y)}}
 set helplib_data(dm_drawLine)		{{x1 y1 x2 y2} {draw line from (x1,y1) to (x2,y2)}}
 set helplib_data(dm_drawVList)		{{vlp} {draw vlist represented by the given vlist pointer string}}
 set helplib_data(dm_drawSList)		{{slp} {draw solid list represented by the given solid list pointer string}}
+set helplib_data(dm_drawDataAxes)	{{vsize rmat v2m_mat pos size color lw} {draw data axes}}
 set helplib_data(dm_drawModelAxes)	{{vsize rmat apos asize acolor lcolor lw v2m_mat doticks tlen ti tcolor} {draw model axes with labels}}
 set helplib_data(dm_drawViewAxes)	{{vsize rmat apos asize acolor lcolor lw} {draw view axes with labels}}
 set helplib_data(dm_drawCenterDot)	{{color} {draw center dot using specified color}}
