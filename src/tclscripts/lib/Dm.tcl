@@ -40,10 +40,10 @@
     itk_option define -dmsize dmsize Dmsize {512 512}
     itk_option define -light light Light 0
     itk_option define -linestyle linestyle Linestyle 0
-    itk_option define -linewidth linewidth Linewidth 0
+    itk_option define -linewidth linewidth Linewidth 1
     itk_option define -perspective perspective Perspective 0
     itk_option define -transparency transparency Transparency 0
-    itk_option define -type type Type X
+    itk_option define -type type Type wgl
     itk_option define -zbuffer zbuffer Zbuffer 0
     itk_option define -zclip zclip Zclip 0
 
@@ -70,6 +70,7 @@
     public method drawLine {x1 y1 x2 y2}
     public method drawPoint {x y}
     public method drawString {str x y size use_aspect}
+    public method drawDataAxes {args}
     public method drawModelAxes {args}
     public method drawViewAxes {args}
     public method drawCenterDot {args}
@@ -314,6 +315,10 @@ if {$tcl_platform(os) != "Windows NT"} {
 
 ::itcl::body Dm::drawString {str x y size use_aspect} {
     $itk_component(dm) drawString $str $x $y $size $use_aspect
+}
+
+::itcl::body Dm::drawDataAxes {args} {
+    eval $itk_component(dm) drawDataAxes $args
 }
 
 ::itcl::body Dm::drawModelAxes {args} {
