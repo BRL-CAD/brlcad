@@ -344,6 +344,15 @@ DM_EXPORT BU_EXTERN(int vclip,
 		     register fastf_t *));
 
 /* axes.c */
+DM_EXPORT BU_EXTERN(void dmo_drawDataAxes_cmd,
+		    (struct dm *dmp,
+		     fastf_t viewSize,
+		     mat_t rmat,
+		     point_t axesPos,
+		     fastf_t axesSize,
+		     int *axesColor,
+		     int lineWidth));
+
 DM_EXPORT BU_EXTERN(void dmo_drawAxes_cmd,
 		    (struct dm *dmp,
 		     fastf_t viewSize,
