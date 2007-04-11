@@ -185,6 +185,7 @@ namespace eval Archer {
 	method abort               {args}
 	method adjust              {args}
 	method adjustNormals       {args}
+	method attr                {args}
 	method blast               {args}
 	method c                   {args}
 	method cd                  {args}
@@ -224,6 +225,7 @@ namespace eval Archer {
 	method killtree            {args}
 	method ls                  {args}
 	method make_bb             {args}
+	method make_name           {args}
 	method move                {args}
 	method mv                  {args}
 	method mvall               {args}
@@ -341,7 +343,7 @@ namespace eval Archer {
 
 	variable wizardXmlCallbacks ""
 
-	variable mArcherVersion "0.9.1"
+	variable mArcherVersion "0.9.2"
 	variable mLastSelectedDir ""
 
 	variable mFontArrowsName "arrowFont"
@@ -485,14 +487,14 @@ namespace eval Archer {
 	variable archerCommands { \
 	    cd clear copy cp dbExpand delete draw exit \
 	    g get group kill ls move mv ocenter orotate \
-	    otranslate packTree pwd rm units whichid who \
-	    unpackTree Z zap
+	    oscale otranslate packTree pwd rm units \
+	    whichid who unpackTree Z zap
 	}
 	variable mgedCommands { \
 	    bot2pipe \
-	    adjust blast c comb concat copyeval E erase_all \
+	    adjust attr blast c comb concat copyeval E erase_all \
 	    ev find hide importFg4Sections killall killtree \
-	    make_bb mvall push purgeHistory put r report track \
+	    make_bb make_name mvall push purgeHistory put r report track \
 	    unhide vdraw
 	}
 	variable sdbCommands { \
@@ -3052,7 +3054,12 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    set renderData [dbCmd how -b $obj]
+    if {[info exists itk_component(sdb)]} {
+	set renderData [dbCmd how -b "/$obj"]
+    } else {
+	set renderData [dbCmd how -b $obj]
+    }
+
     set renderMode [lindex $renderData 0]
     set renderTrans [lindex $renderData 1]
 
@@ -6014,8 +6021,8 @@ Popup Menu    Right or Ctrl-Left
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
-	::sdialogs::Stddlgs::errordlg "User Error" \
-		"You must first select an object to rotate!"
+	set mDefaultBindingMode $ROTATE_MODE
+	beginViewRotate
 	return
     }
 
@@ -6066,8 +6073,8 @@ Popup Menu    Right or Ctrl-Left
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
-	::sdialogs::Stddlgs::errordlg "User Error" \
-		"You must first select an object to scale!"
+	set mDefaultBindingMode $ROTATE_MODE
+	beginViewRotate
 	return
     }
 
@@ -6118,8 +6125,8 @@ Popup Menu    Right or Ctrl-Left
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
-	::sdialogs::Stddlgs::errordlg "User Error" \
-		"You must first select an object to translate!"
+	set mDefaultBindingMode $ROTATE_MODE
+	beginViewRotate
 	return
     }
 
@@ -6154,8 +6161,8 @@ Popup Menu    Right or Ctrl-Left
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
-	::sdialogs::Stddlgs::errordlg "User Error" \
-		"You must first select an object to move!"
+	set mDefaultBindingMode $ROTATE_MODE
+	beginViewRotate
 	return
     }
 
@@ -9243,7 +9250,6 @@ Popup Menu    Right or Ctrl-Left
 	} else {
 	    if {!$mRestoringTree} {
 	    _init_obj_edit_view
-
 	    switch -- $mDefaultBindingMode \
 		$OBJECT_ROTATE_MODE { \
 			beginObjRotate
@@ -9599,9 +9605,10 @@ Popup Menu    Right or Ctrl-Left
     switch -- $type {
 	"BRL-CAD" {
 	    if {[info exists itk_component(sdb)]} {
-		set oldSdb $itk_component(sdb)
-		itk_component delete sdb
-		rename $oldSdb ""
+#		set oldSdb $itk_component(sdb)
+#		itk_component delete sdb
+#		rename $oldSdb ""
+		rename $itk_component(sdb) ""
 	    }
 
 	    # load MGED database
@@ -9634,13 +9641,16 @@ Popup Menu    Right or Ctrl-Left
 	}
 	"IVAVIEW" {
 	    if {[info exists itk_component(mged)]} {
-		set oldMged $itk_component(mged)
-		itk_component delete mged
-		rename $oldMged ""
+#		set oldMged $itk_component(mged)
+#		itk_component delete mged
+#		rename $oldMged ""
 
-		set oldRtcntrl $itk_component(rtcntrl)
-		itk_component delete rtcntrl
-		rename $oldRtcntrl ""
+#		set oldRtcntrl $itk_component(rtcntrl)
+#		itk_component delete rtcntrl
+#		rename $oldRtcntrl ""
+
+		rename $itk_component(mged) ""
+		rename $itk_component(rtcntrl) ""
 	    }
 
 	    # load SDB database
@@ -10500,7 +10510,6 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    #_redraw_obj $mSelectedObjPath
     refreshDisplay
 }
 
@@ -10513,7 +10522,6 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    #_redraw_obj $mSelectedObjPath
     refreshDisplay
 }
 
@@ -10970,6 +10978,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::adjustNormals {args} {
     eval sdbWrapper adjustNormals 0 0 1 1 $args
+}
+
+::itcl::body Archer::attr {args} {
+    eval mgedWrapper attr 0 0 1 0 $args
 }
 
 ::itcl::body Archer::blast {args} {
@@ -11827,6 +11839,10 @@ Popup Menu    Right or Ctrl-Left
     eval mgedWrapper make_bb 0 0 1 1 $args
 }
 
+::itcl::body Archer::make_name {args} {
+    eval mgedWrapper make_name 0 0 0 0 $args
+}
+
 ::itcl::body Archer::move {args} {
     if {[info exists itk_component(sdb)]} {
 	eval archerWrapper move 0 1 1 $args
@@ -11845,16 +11861,23 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::ocenter {args} {
     if {[llength $args] == 4} {
+	set obj [lindex $args 0]
+
+	if {[info exists itk_component(sdb)]} {
+	    if {[$itk_component(sdb) pwd] != "/"} {
+		set pdata "[$itk_component(sdb) parsePath $obj]"
+		set obj "[lindex $pdata 0]/[lindex $pdata 1]"
+	    }
+	}
+
 	eval archerWrapper ocenter 0 0 1 0 $args
-	#_redraw_obj $mSelectedObjPath 0
-	_redraw_obj [lindex $args 0] 0
+	_redraw_obj $obj 0
     } else {
 	eval archerWrapper ocenter 0 0 0 0 $args
     }
 }
 
 ::itcl::body Archer::handleObjCenter {obj x y} {
-    set vcenter [dbCmd screen2view $x $y]
     if {[info exists itk_component(mged)]} {
 	set ocenter [dbCmd ocenter $obj]
     } else {
@@ -11862,12 +11885,15 @@ Popup Menu    Right or Ctrl-Left
 	cd /
 	set ocenter [dbCmd ocenter $obj]
     }
+
+    set ocenter [vscale $ocenter [dbCmd local2base]]
     set ovcenter [eval dbCmd m2vPoint $ocenter]
 
-    # This is the update view center (i.e. we keep the original view Z)
+    # This is the updated view center (i.e. we keep the original view Z)
+    set vcenter [dbCmd screen2view $x $y]
     set vcenter [list [lindex $vcenter 0] [lindex $vcenter 1] [lindex $ovcenter 2]]
 
-    set ocenter [eval dbCmd v2mPoint $vcenter]
+    set ocenter [vscale [eval dbCmd v2mPoint $vcenter] [dbCmd base2local]]
 
     if {[info exists itk_component(mged)]} {
 	eval archerWrapper ocenter 0 0 1 0 $obj $ocenter
@@ -11876,7 +11902,7 @@ Popup Menu    Right or Ctrl-Left
 	cd $savePwd
     }
 
-    _redraw_obj $mSelectedObjPath 0
+    _redraw_obj $obj 0
 }
 
 ::itcl::body Archer::handleObjRotate {obj rx ry rz kx ky kz} {
@@ -11889,7 +11915,7 @@ Popup Menu    Right or Ctrl-Left
 	cd $savePwd
     }
 
-    _redraw_obj $mSelectedObjPath 0
+    _redraw_obj $obj 0
 }
 
 ::itcl::body Archer::handleObjScale {obj sf kx ky kz} {
@@ -11902,7 +11928,7 @@ Popup Menu    Right or Ctrl-Left
 	cd $savePwd
     }
 
-    _redraw_obj $mSelectedObjPath 0
+    _redraw_obj $obj 0
 }
 
 ::itcl::body Archer::handleObjTranslate {obj dx dy dz} {
@@ -11915,24 +11941,21 @@ Popup Menu    Right or Ctrl-Left
 	cd $savePwd
     }
 
-    _redraw_obj $mSelectedObjPath 0
+    _redraw_obj $obj 0
 }
 
 ::itcl::body Archer::orotate {obj rx ry rz kx ky kz} {
     eval archerWrapper orotate 0 0 1 0 $obj $rx $ry $rz $kx $ky $kz
-    #_redraw_obj $mSelectedObjPath 0
     _redraw_obj $obj 0
 }
 
 ::itcl::body Archer::oscale {obj sf kx ky kz} {
     eval archerWrapper oscale 0 0 1 0 $obj $sf $kx $ky $kz
-    #_redraw_obj $mSelectedObjPath 0
     _redraw_obj $obj 0
 }
 
 ::itcl::body Archer::otranslate {obj dx dy dz} {
     eval archerWrapper otranslate 0 0 1 0 $obj $dx $dy $dz
-    #_redraw_obj $mSelectedObjPath 0
     _redraw_obj $obj 0
 }
 
