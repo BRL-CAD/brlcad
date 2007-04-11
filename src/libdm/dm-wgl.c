@@ -138,7 +138,7 @@ struct dm dm_wgl = {
   1,
   0,
   0,
-  0,
+  1,
   0,
   1.0, /* aspect ratio */
   0,
@@ -174,7 +174,11 @@ HIDDEN float wireColor[4];
 HIDDEN float ambientColor[4];
 HIDDEN float specularColor[4];
 HIDDEN float diffuseColor[4];
+#if 1
+HIDDEN float backColor[] = {1.0, 1.0, 0.0, 1.0}; /* yellow */
+#else
 HIDDEN float backColor[] = {0.1, 0.1, 0.1, 1.0}; /* dark gray */
+#endif
 
 void
 wgl_fogHint(dmp, fastfog)
