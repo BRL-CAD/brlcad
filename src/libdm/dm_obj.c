@@ -92,6 +92,7 @@ static int dmo_drawEnd_tcl(ClientData clientData, Tcl_Interp *interp, int argc, 
 static int dmo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_normal_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_loadmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dmo_drawDataAxes_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_drawModelAxes_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_drawViewAxes_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dmo_drawCenterDot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -158,6 +159,7 @@ static struct bu_cmdtab dmo_cmds[] = {
 	{"drawSList",		dmo_drawSList_tcl},
 	{"drawString",		dmo_drawString_tcl},
 	{"drawVList",		dmo_drawVList_tcl},
+	{"drawDataAxes",	dmo_drawDataAxes_tcl},
 	{"drawModelAxes",	dmo_drawModelAxes_tcl},
 	{"drawViewAxes",	dmo_drawViewAxes_tcl},
 	{"drawCenterDot",	dmo_drawCenterDot_tcl},
@@ -683,6 +685,141 @@ dmo_drawCenterDot_tcl(ClientData	clientData,
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     return dmo_drawCenterDot_cmd(dmop, interp, argc-1, argv+1);
+}
+
+static int
+dmo_parseDataAxesArgs(Tcl_Interp *interp,
+		      int argc,
+		      char **argv,
+		      fastf_t *viewSize,
+		      mat_t rmat,
+		      mat_t model2view,
+		      point_t axesPos,
+		      fastf_t *axesSize,
+		      int *axesColor,
+		      int *lineWidth,
+		      struct bu_vls *vlsp)
+{
+    if (sscanf(argv[2], "%lf", viewSize) != 1) {
+	bu_vls_printf(vlsp, "parseDataAxesArgs: bad view size - %s\n", argv[2]);
+	return TCL_ERROR;
+    }
+
+    if (bn_decode_mat(rmat, argv[3]) != 16) {
+	bu_vls_printf(vlsp, "parseDataAxesArgs: bad rmat - %s\n", argv[3]);
+	return TCL_ERROR;
+    }
+
+    /* parse model to view matrix */
+    if (bn_decode_mat(model2view, argv[4]) != 16) {
+	bu_vls_printf(vlsp, "parseDataAxesArgs: bad model2view - %s\n", argv[4]);
+	return TCL_ERROR;
+    }
+
+    if (bn_decode_vect(axesPos, argv[5]) != 3) {
+	bu_vls_printf(vlsp, "parseDataAxesArgs: bad axes position - %s\n", argv[5]);
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[6], "%lf", axesSize) != 1) {
+	bu_vls_printf(vlsp, "parseDataAxesArgs: bad axes size - %s\n", argv[6]);
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[7], "%d %d %d",
+	       &axesColor[0],
+	       &axesColor[1],
+	       &axesColor[2]) != 3) {
+	bu_vls_printf(vlsp, "parseDataAxesArgs: bad axes color - %s\n", argv[7]);
+	return TCL_ERROR;
+    }
+
+    /* validate color */
+    if (axesColor[0] < 0 || 255 < axesColor[0] ||
+	axesColor[1] < 0 || 255 < axesColor[1] ||
+	axesColor[2] < 0 || 255 < axesColor[2]) {
+
+	bu_vls_printf(vlsp, "parseDataAxesArgs: bad axes color - %s\n", argv[7]);
+	return TCL_ERROR;
+    }
+
+    if (sscanf(argv[8], "%d", lineWidth) != 1) {
+	bu_vls_printf(vlsp, "parseDataAxesArgs: bad line width - %s\n", argv[8]);
+	return TCL_ERROR;
+    }
+
+    /* validate lineWidth */
+    if (*lineWidth < 0) {
+	bu_vls_printf(vlsp, "parseDataAxesArgs: line width must be greater than 0\n");
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+
+/*
+ * Draw the data axes.
+ *
+ * Usage:
+ *	  objname drawDataAxes args
+ *
+ *XXX This needs to be modified to handle an array/list of data points
+ */
+static int
+dmo_drawDataAxes_tcl(ClientData	clientData,
+		     Tcl_Interp	*interp,
+		     int	argc,
+		     char	**argv)
+{
+    point_t modelAxesPos;
+    point_t viewAxesPos;
+    fastf_t viewSize;
+    mat_t rmat;
+    mat_t model2view;
+    fastf_t axesSize;
+    int axesColor[3];
+    int lineWidth;
+    struct bu_vls vls;
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+
+    bu_vls_init(&vls);
+
+    if (argc != 9) {
+	/* return help message */
+	bu_vls_printf(&vls, "helplib_alias dm_drawDataAxes %s", argv[1]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    if (dmo_parseDataAxesArgs(interp,
+			      argc,
+			      argv,
+			      &viewSize,
+			      rmat,
+			      model2view,
+			      modelAxesPos,
+			      &axesSize,
+			      axesColor,
+			      &lineWidth,
+			      &vls) == TCL_ERROR) {
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    MAT4X3PNT(viewAxesPos, model2view, modelAxesPos);
+
+    dmo_drawDataAxes_cmd(dmop->dmo_dmp,
+			 viewSize,
+			 rmat,
+			 viewAxesPos,
+			 axesSize,
+			 axesColor,
+			 lineWidth);
+
+    bu_vls_free(&vls);
+    return TCL_OK;
 }
 
 static int

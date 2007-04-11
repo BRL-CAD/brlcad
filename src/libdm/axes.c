@@ -43,6 +43,75 @@
 #include "raytrace.h"
 #include "dm.h"
 
+/*XXX This needs to be modified to handle an array/list of data points */
+void
+dmo_drawDataAxes_cmd(struct dm *dmp,
+		     fastf_t viewSize, /* in mm */
+		     mat_t rmat,       /* view rotation matrix */
+		     point_t axesPos,  /* in view coordinates */
+		     fastf_t axesSize, /* in view coordinates */
+		     int *axesColor,
+		     int lineWidth)    /* in pixels */
+{
+    register fastf_t halfAxesSize;		/* half the length of an axis */
+    point_t v2;
+    point_t rxv1, rxv2;
+    point_t ryv1, ryv2;
+    point_t rzv1, rzv2;
+    point_t o_rv2;
+    /* Save the line attributes */
+    int saveLineWidth = dmp->dm_lineWidth;
+    int saveLineStyle = dmp->dm_lineStyle;
+
+    halfAxesSize = axesSize * 0.5;
+
+    /* set color */
+    DM_SET_FGCOLOR(dmp, axesColor[0], axesColor[1], axesColor[2], 1, 1.0);
+
+    /* set linewidth */
+    DM_SET_LINE_ATTR(dmp, lineWidth, 0);  /* solid lines */
+
+    /* build X axis about view center */
+    VSET(v2, halfAxesSize, 0.0, 0.0);
+
+    /* rotate X axis into position */
+    MAT4X3PNT(rxv2, rmat, v2);
+    VSCALE(rxv1, rxv2, -1.0);
+
+    /* draw X axis with x/y offsets */
+    DM_DRAW_LINE_2D(dmp,
+		    rxv1[X] + axesPos[X], (rxv1[Y] + axesPos[Y]) * dmp->dm_aspect,
+		    rxv2[X] + axesPos[X], (rxv2[Y] + axesPos[Y]) * dmp->dm_aspect);
+
+    /* build Y axis about view center */
+    VSET(v2, 0.0, halfAxesSize, 0.0);
+
+    /* rotate Y axis into position */
+    MAT4X3PNT(ryv2, rmat, v2);
+    VSCALE(ryv1, ryv2, -1.0);
+
+    /* draw Y axis with x/y offsets */
+    DM_DRAW_LINE_2D(dmp,
+		    ryv1[X] + axesPos[X], (ryv1[Y] + axesPos[Y]) * dmp->dm_aspect,
+		    ryv2[X] + axesPos[X], (ryv2[Y] + axesPos[Y]) * dmp->dm_aspect);
+
+    /* build Z axis about view center */
+    VSET(v2, 0.0, 0.0, halfAxesSize);
+
+    /* rotate Z axis into position */
+    MAT4X3PNT(rzv2, rmat, v2);
+    VSCALE(rzv1, rzv2, -1.0);
+
+    /* draw Z axis with x/y offsets */
+    DM_DRAW_LINE_2D(dmp,
+		    rzv1[X] + axesPos[X], (rzv1[Y] + axesPos[Y]) * dmp->dm_aspect,
+		    rzv2[X] + axesPos[X], (rzv2[Y] + axesPos[Y]) * dmp->dm_aspect);
+
+    /* Restore the line attributes */
+    DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
+}
+
+
 void
 dmo_drawAxes_cmd(struct dm *dmp,
 		 fastf_t viewSize, /* in mm */
@@ -73,6 +142,9 @@ dmo_drawAxes_cmd(struct dm *dmp,
   point_t ryv1, ryv2;
   point_t rzv1, rzv2;
   point_t o_rv2;
+  /* Save the line attributes */
+  int saveLineWidth = dmp->dm_lineWidth;
+  int saveLineStyle = dmp->dm_lineStyle;
 
   halfAxesSize = axesSize * 0.5;
 
@@ -201,7 +273,10 @@ dmo_drawAxes_cmd(struct dm *dmp,
       int numMajorTicks = numTicks / ticksPerMajor;
 
       if (dmp->dm_width <= numMajorTicks / halfAxesSize * tickThreshold * 2) {
-	return;
+	  /* Restore the line attributes */
+	  DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
+
+	  return;
       }
 
       doMajorOnly = 1;
@@ -443,6 +518,9 @@ dmo_drawAxes_cmd(struct dm *dmp,
       }
     }
   }
+
+  /* Restore the line attributes */
+  DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
 }
 
 /*
