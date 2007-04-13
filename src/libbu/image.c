@@ -41,12 +41,19 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>	/* for file mode info in WRMODE */
 
 #include "machine.h"
 #include "bu.h"
+
+/*** bif flags ***/
+/* streaming output (like pix and bw) vs buffer output (like png) */
+#define BIF_STREAM 0x0
+#define BIF_BUFFER 0x1
+/*** end bif flags ***/
 
 /* this might be a little better than saying 0444 */
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
@@ -170,6 +177,7 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
     bif->width = width;
     bif->height = height;
     bif->depth = depth;
+    bif->data = (char *)bu_malloc(width*height*depth, "bu_image_file data");
     return bif;
 }
 
@@ -177,16 +185,17 @@ int
 bu_image_save_writeline(struct bu_image_file *bif, int y, char *data)
 {
     if(bif==NULL) { printf("trying to write a line with a null bif\n"); return -1; }
-    lseek(bif->fd, bif->width*bif->depth*y, SEEK_SET);
-    write(bif->fd, data, bif->width*bif->depth);
+    memcpy(bif->data + bif->width*bif->depth*y, data, bif->width*bif->depth);
     return 0;
 }
 
 int 
 bu_image_save_close(struct bu_image_file *bif)
 {
+    write(bif->fd, bif->data, bif->width*bif->height*bif->depth);
     close(bif->fd);
     bu_free(bif->filename,"bu_image_file filename");
+    bu_free(bif->data,"bu_image_file data");
     bu_free(bif,"bu_image_file");
     return 0;
 }
