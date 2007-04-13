@@ -12,6 +12,7 @@ entire history of the project is available through CVS.
 ----------------------------------------------------------------------
 
 * fixed bug in mged command prompt with page up/down - Sean Morrison
+* added attr and make_name commands to archer - Bob Parker
 
 
 ----------------------------------------------------------------------
