@@ -105,10 +105,6 @@ Recent Bugs
 
 * mged documentation doesn't open on OS X
 
-* mged command prompt will have the cursor reset to before the 'mged>'
-  prompt after certain actions like page up/down.  the cursor will
-  sometimes remain offset after issuing subsequent commands.
-
 * the findfont directive in gv postscript is reporting font not found
 
 * concave arbs give correct wireframe but do not raytrace correctly.
