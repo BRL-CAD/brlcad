@@ -75,7 +75,6 @@ libbu_la_LIBADD = \
 htester_SOURCES = htester.c
 htester_LDADD = \
 	libbu.la \
-	${PNG} \
 	${BU} ${BU_LIBS}
 
 include_HEADERS = rb_internals.h
