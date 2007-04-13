@@ -923,6 +923,14 @@ almost always require modification and customization tailored to the
 particular forum or audience.  If appropriate, notify and/or update
 the following information outlets with the details of the new release:
 
+Source or binary release:
+
+      Freshmeat  (anyone can submit update)
+      http://freshmeat.net/projects/BRL-CAD/
+	short without news details (sentence format)
+
+Binary release (any platform):
+
       News on the BRL-CAD website
       http://brlcad.org/
 	with news details
@@ -936,13 +944,17 @@ the following information outlets with the details of the new release:
       brlcad-users@lists.sourceforge.net
 	with news details
 
+Linux binary release:
+
       CAD on Linux mailing list
       cad-linux@freelists.org
 	with news details
 
-      Freshmeat  (anyone can submit update)
-      http://freshmeat.net/projects/BRL-CAD/
-	short without news details (sentence format)
+      Dutch CAD for Linux portal
+      news@cad4linux.nl
+	short without news details (preferably in Dutch)
+
+Mac OS X binary release:
 
       Versiontracker  (only 'brlcad' can update)
       http://www.versiontracker.com/dyn/moreinfo/macosx/26289
@@ -952,9 +964,7 @@ the following information outlets with the details of the new release:
       Fink package maintainer
       jack@krass.com
 
-      Dutch CAD for Linux portal
-      news@cad4linux.nl
-	short without news details (preferably in Dutch)
+Multiple platform binary release:
 
       upFront.ezine (if major)
       Ralph Grabowski
