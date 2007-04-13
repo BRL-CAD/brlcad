@@ -170,7 +170,7 @@ struct bu_vls occlusion_objects;
 struct rt_i *occlusion_rtip = NULL;
 struct application **occlusion_apps;
 
-static int lastlinedone;
+static struct bu_image_file *bif = NULL;
 
 static int occlusion_hit (struct application *,
 			  struct partition *, struct seg *);
@@ -424,6 +424,9 @@ void
 view_2init( struct application *ap )
 {
     int i;
+
+    if(outputfile)
+	bif = bu_image_save_open(outputfile,BU_IMAGE_AUTO,width,height,3);
 
     /*
      * Per_processor_chuck specifies the number of pixels rendered
@@ -688,20 +691,15 @@ view_eol( struct application *ap )
 	fb_write( fbp, 0, ap->a_y, scanline[cpu], per_processor_chunk );
 	bu_semaphore_release (BU_SEM_SYSCALL);
     }
-    if( outfp != NULL ) {
+    if( outputfile != NULL ) {
 	/*
 	 * Write to a file.
 	 */
-
-	/* if it's not our turn, surrender and spin */
-	while(lastlinedone != (ap->a_y-1))
-	    sleep(0);
 	bu_semaphore_acquire (BU_SEM_SYSCALL);
-	fwrite( scanline[cpu], pixsize, per_processor_chunk, outfp );
-	lastlinedone = ap->a_y;	/* mark that we've seen this line, so the next can proceed */
+	bu_image_save_writeline(bif,ap->a_y,scanline[cpu]);
 	bu_semaphore_release (BU_SEM_SYSCALL);
     }
-    if (fbp == FBIO_NULL && outfp == NULL) {
+    if (fbp == FBIO_NULL && outputfile == NULL) {
 	bu_log ("rtedge: strange, no end of line actions taken.\n");
     }
 
@@ -709,12 +707,12 @@ view_eol( struct application *ap )
 
 }
 
-void view_setup(void) { lastlinedone = -1; }
+void view_setup(void) {  }
 
 /*
  * end of a frame, called after rt_clean()
  */
-void view_cleanup(void) { }
+void view_cleanup(void) { if(bif)bu_image_save_close(bif); bif = NULL; }
 
 /*
  * end of each frame
