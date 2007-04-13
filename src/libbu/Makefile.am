@@ -28,6 +28,7 @@ SRCS = \
 	hook.c \
 	htond.c \
 	htonf.c \
+	image.c \
 	ispar.c \
 	lex.c \
 	linebuf.c \
