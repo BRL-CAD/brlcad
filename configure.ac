@@ -379,6 +379,8 @@ BC_ARG_ENABLE([build_warnings], [warnings], [Enable verbose compilation warnings
 # build progress status
 BC_ARG_ENABLE([build_progress], [progress], [Enable verbose compilation progress], [no])
 
+# restart configure when a wall is hit
+BC_ARG_ENABLE([configure_retry], [retry], [Enable automatic configure retry], [yes])
 
 dnl *** with options ***
 
@@ -854,7 +856,6 @@ if test "x$bc_build_verbose" = "xyes" ; then
 	fi
 fi
 
-
 ###
 # argument summary printing
 ###
@@ -948,6 +949,9 @@ AC_MSG_RESULT($bc_build_warnings)
 
 AC_MSG_CHECKING(whether to enable verbose compilation progress)
 AC_MSG_RESULT($bc_build_progress)
+
+AC_MSG_CHECKING(whether to retry configuration after failure)
+AC_MSG_RESULT($bc_configure_retry)
 
 AC_MSG_CHECKING(whether to compile with the Java Development Kit)
 AC_MSG_RESULT($bc_with_java)

@@ -107,7 +107,7 @@ fi
 AC_DEFUN([BC_RETRY_CONFIGURE], [
 bc_configure="$1"
 bc_configure_args="$2"
-if test "x$BC_RETRY" = "x" ; then
+if test "x$BC_RETRY" = "x" && test "x$bc_configure_retry" = "xyes"; then
 	if test "x$bc_configure" = "x" ; then
 		bc_configure="${srcdir}/configure"
 	fi
