@@ -19,6 +19,8 @@
 #
 ###
 #
+# Utility routines called by MGED's Tcl/Tk command window(s).
+#
 # Author -
 #	Bob Parker
 #
@@ -26,12 +28,7 @@
 #	The U. S. Army Ballistic Research Laboratory
 #	Aberdeen Proving Ground, Maryland  21005
 #
-#
-#
-# Description -
-#	Utility routines called by MGED's Tcl/Tk command window(s).
-#
-# $Revision
+# $Revision$
 #
 
 proc distribute_text { w cmd str } {
@@ -1823,6 +1820,25 @@ proc set_text_key_bindings { id } {
     bind $w <Alt-Key> {
 	::tk::TraverseToMenu %W %A
 	break
+    }
+
+    # must override the Text bindings that move the cursor via
+    # tk::TextSetCursor if we have not already so that we don't move
+    # the input cursor off the command prompt.  These include the
+    # following: <Left> <Right> <Up> <Down> <Control-Left>
+    # <Control-Right> <Control-Up> <Control-Down> <Prior> <Next>
+    # <Home> <End> <Control-Home> <Control-End> <Control-a>
+    # <Control-b> <Control-e> <Control-f> <Control-n> <Control-p>
+    # <Meta-b> <Meta-f> <Meta-less> <Meta-greater>
+
+    bind $w <Prior> {
+	tk::TextScrollPages %W -1
+ 	break
+    }
+
+    bind $w <Next> {
+	tk::TextScrollPages %W 1
+ 	break
     }
 }
 
