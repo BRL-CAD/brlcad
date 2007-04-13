@@ -70,7 +70,6 @@ libbu_nil_la_SOURCES = \
 libbu_la_SOURCES =
 libbu_la_LDFLAGS = -version-info 19:1
 libbu_la_LIBADD = \
-	${PNG} \
 	libbu_nil.la
 
 htester_SOURCES = htester.c

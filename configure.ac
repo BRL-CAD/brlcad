@@ -3497,7 +3497,7 @@ TERMIO='${top_builddir}/src/libtermio/libtermio.la'
 WDB='${top_builddir}/src/libwdb/libwdb.la'
 
 BN_LIBS="${BU} ${TCL} ${LIBM}"
-BU_LIBS="${TCL} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
+BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 CURSOR_LIBS="${TERMLIB}"
 DM_LIBS="${PNG} ${X_LIBS}"
 FB_LIBS="${BU} ${PKG} ${TCL} ${X_LIBS} ${LIBGL}"
