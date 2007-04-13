@@ -83,7 +83,7 @@ guess_file_format(char *filename, char *trimmedname)
     strncpy(trimmedname, filename, BUFSIZ);
 
     /* and guess based on extension */
-#define CMP(name,ext) if(!strncmp(filename+strlen(filename)-strlen(#name)-1,"."#ext,strlen(#name)+1)) return BU_IMAGE_PNG;
+#define CMP(name,ext) if(!strncmp(filename+strlen(filename)-strlen(#name)-1,"."#ext,strlen(#name)+1)) return BU_IMAGE_##name;
     CMP(PNG,png);
     CMP(BMP,bmp);
     CMP(BW,bw);
