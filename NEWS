@@ -44,7 +44,6 @@ for more details.
 * framebuffer toggle added to raytrace panel in mged - Sean Morrison
 * fixed rtedge multithreaded output render bug - Erik Greenwald
 * fixed jove/termcap issues on Mac OS X - Sean Morrison
-* updated bundled libtermcap to NetBSD version 0.6 - Sean Morrison
 * increased output precision on mged 'analyze' command - Sean Morrison
 * prevent mged shutdown on DSP objects with no data - Sean Morrison
 * integration into the Arch Linux packaging system - Loui Chang
