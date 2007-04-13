@@ -46,6 +46,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <fcntl.h>
 #include <sys/stat.h>	/* for file mode info in WRMODE */
 
+#include <png.h>
+
 #include "machine.h"
 #include "bu.h"
 
@@ -63,68 +65,91 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  * Attempt to guess the file type. Understands ImageMagick style 
  * FMT:filename as being preferred, but will attempt to guess
  * based on extension as well.
+ *
+ * I suck. I'll fix this later. Honest.
  */
-int 
-devine_file_format(char *filename, char *trimmedname)
+static int 
+guess_file_format(char *filename, char *trimmedname)
 {
+    /* look for the FMT: header */
+#define CMP(name) if(!strncmp(filename,#name":",strlen(#name))){strncpy(trimmedname,filename+strlen(#name)+1,BUFSIZ);return BU_IMAGE_##name; }
+    CMP(PIX);
+    CMP(PNG);
+    CMP(BMP);
+    CMP(BW);
+#undef CMP
+
+    /* no format header found, copy the name as it is */
     strncpy(trimmedname, filename, BUFSIZ);
+
+    /* and guess based on extension */
+#define CMP(name,ext) if(!strncmp(filename+strlen(filename)-strlen(#name)-1,"."#ext,strlen(#name)+1)) return BU_IMAGE_PNG;
+    CMP(PNG,png);
+    CMP(BMP,bmp);
+    CMP(BW,bw);
+#undef CMP
+    /* defaulting to PIX */
     return BU_IMAGE_PIX;
 }
 
-int 
-bw_save(char *data, int width, int height, int depth, char *filename)
+static int 
+png_save(int fd, char *rgb, int width, int height)
 {
-    int fd;
-    if(depth != 1) {
-	bu_log("BW must be fed 24 bit RGB data! Aborting.");
-	return -1;
+    png_structp png_ptr = NULL;
+    png_infop info_ptr = NULL;
+    int i = 0;
+    FILE *fh;
+
+    fh = fdopen(fd,"wb");
+    if(fh==NULL) {
+	perror("png_save trying to get FILE pointer for descriptor");
+	exit(-1);
+	return 0;
     }
-    fd = open(filename, O_CREAT|O_TRUNC|O_WRONLY, WRMODE);
-    if(fd<=0) {
-	perror("Unable to open file for writing");
-	return fd;
+    png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if(png_ptr == NULL) return 0;
+    info_ptr = png_create_info_struct (png_ptr);
+    if(info_ptr == NULL || setjmp (png_jmpbuf (png_ptr))) {
+	printf("Ohs Noes!\n"); fflush(stdout);
+	png_destroy_read_struct (&png_ptr, info_ptr ? &info_ptr : NULL, NULL);
+	return 0;
     }
-    if(write(fd,data,width*height*depth) != width*height*depth) {
-	perror("Unable to write to file");
-	close(fd);
-	return -1;
-    }
-    close(fd);
+
+    png_init_io (png_ptr, fh);
+    png_set_compression_level (png_ptr, Z_BEST_COMPRESSION);
+    png_set_IHDR (png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB,
+                  PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
+                  PNG_FILTER_TYPE_DEFAULT);
+    png_write_info (png_ptr, info_ptr);	/* causes badness, NULL write func... */
+    for (i = height; i > 0; --i)
+        png_write_row (png_ptr, (png_bytep) (rgb + width*3*i));
+    png_write_end (png_ptr, info_ptr);
+    png_destroy_read_struct(png_ptr, info_ptr, NULL);
+    return 1;
+}
+
+static int 
+bmp_save(int fd, char *rgb, int width, int height)
+{
     return 0;
 }
 
-int 
-png_save(char *data, int width, int height, int depth, char *filename)
-{
-    return 0;
-}
+static int 
+pix_save(int fd, char *rgb, int size) { return write(fd, rgb, size); }
 
-int 
-bmp_save(char *data, int width, int height, int depth, char *filename)
-{
-    return 0;
-}
-
-int 
-pix_save(char *data, int width, int height, int depth, char *filename)
-{
-    int fd;
-    if(depth != 3) {
-	bu_log("PIX must be fed 24 bit RGB data! Aborting.");
-	return -1;
+/* size is bytes of PIX data, bw output file will be 1/3 this size. 
+ * Also happens to munge up the contents of rgb. */
+static int 
+bw_save(int fd, char *rgb, int size) 
+{ 
+    int bwsize = size/3, i;
+    if(bwsize*3 != size) {
+	printf("Huh, size=%d is not a multiple of 3.\n", size);
+	exit(-1);	/* flaming death */
     }
-    fd = open(filename, O_CREAT|O_TRUNC|O_WRONLY, WRMODE);
-    if(fd<=0) {
-	perror("Unable to open file for writing");
-	return fd;
-    }
-    if(write(fd,data,width*height*depth) != width*height*depth) {
-	perror("Unable to write to file");
-	close(fd);
-	return -1;
-    }
-    close(fd);
-    return 0;
+    /* an ugly naïve pixel grey-scale hack. Does not take human color curves. */
+    for(i=0;i<bwsize;++i) rgb[i] = (int)((float)rgb[i*3]+(float)rgb[i*3+1]+(float)rgb[i*3+2]/3.0);
+    return write(fd, rgb, bwsize); 
 }
 
 /* end if private functions */
@@ -158,12 +183,13 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
     bif->magic = BU_IMAGE_FILE_MAGIC;
     if(format == BU_IMAGE_AUTO) {
 	char buf[BUFSIZ];
-	bif->format = devine_file_format(filename,buf);
+	bif->format = guess_file_format(filename,buf);
 	bif->filename = strdup(buf);
     } else {
 	bif->format = format;
 	bif->filename = strdup(filename);
     }
+
     /* if we want the ability to "continue" a stopped output, this would be
      * where to check for an existing "partial" file. */
     bif->fd = open(bif->filename,O_WRONLY|O_CREAT|O_TRUNC, WRMODE);
@@ -172,6 +198,7 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
 	snprintf(buf,BUFSIZ,"Opening output file \"%s\" for writing",bif->filename);
 	perror(buf);
 	free(bif);
+	exit(-1);
 	return NULL;
     }
     bif->width = width;
@@ -192,14 +219,18 @@ bu_image_save_writeline(struct bu_image_file *bif, int y, char *data)
 int 
 bu_image_save_close(struct bu_image_file *bif)
 {
-    write(bif->fd, bif->data, bif->width*bif->height*bif->depth);
+    switch(bif->format) {
+	case BU_IMAGE_BMP: bmp_save(bif->fd,bif->data,bif->width,bif->height); break;
+	case BU_IMAGE_PNG: png_save(bif->fd,bif->data,bif->width,bif->height); break;
+	case BU_IMAGE_PIX: pix_save(bif->fd,bif->data,bif->width*bif->height*bif->depth); break;
+	case BU_IMAGE_BW: bw_save(bif->fd, bif->data, bif->width*bif->height*bif->depth); break;
+    }
     close(bif->fd);
     bu_free(bif->filename,"bu_image_file filename");
     bu_free(bif->data,"bu_image_file data");
     bu_free(bif,"bu_image_file");
     return 0;
 }
-
 
 /*
  * Local Variables:
