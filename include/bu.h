@@ -2773,6 +2773,49 @@ BU_EXPORT BU_EXTERN(struct bu_hash_entry *bu_hash_tbl_first,
 BU_EXPORT BU_EXTERN(struct bu_hash_entry *bu_hash_tbl_next,
 		    (struct bu_hash_record *rec));
 
+
+/* image utilities */
+
+#define BU_IMAGE_AUTO	0x00
+#define BU_IMAGE_PIX	0x01
+#define BU_IMAGE_BW	0x02
+#define BU_IMAGE_PNG	0x03
+#define BU_IMAGE_BMP	0x04
+
+#define BU_IMAGE_FILE_MAGIC 0x6269666d /* bifm */
+
+struct bu_image_file {
+    int magic;
+    char *filename;
+    int fd;
+    int format;			/* BU_IMAGE_* */
+    int width, height, depth;	/* pixel, pixel, byte */
+    void *data;
+};
+
+BU_EXPORT BU_EXTERN(struct bu_image_file *bu_image_save_open,
+		    (char *filename,
+		     int format,
+		     int width,
+		     int height,
+		     int depth));
+
+BU_EXPORT BU_EXTERN(int bu_image_save_writeline,
+		    (struct bu_image_file *bif, int y, char *data));
+
+BU_EXPORT BU_EXTERN(int bu_image_save_close,
+		    (struct bu_image_file *bif));
+
+BU_EXPORT BU_EXTERN(int bu_image_save,
+		    (char *data,
+		     int width,
+		     int height,
+		     int depth,
+		     char *filename,
+		     int filetype));
+
+/* end image utilities */
+
 __END_DECLS
 
 #endif  /* __BU_H__ */
