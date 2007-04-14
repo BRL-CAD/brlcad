@@ -1,0 +1,264 @@
+#!/bin/sh
+#                B R L C A D - C O N F I G . I N
+# BRL-CAD
+#
+# Copyright (c) 2007 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
+
+prefix=@prefix@
+includedir=@includedir@
+libdir=@libdir@
+
+usage ( ) {
+    cat <<EOF
+Usage: brlcad-config [OPTIONS] [LIBRARIES]
+
+Options:
+    [ --help ]
+    [ --version ]
+    [ --cflags ]
+    [ --libs ]
+    [ --prefix[=DIR] ]
+
+Libraries:
+    bn
+    brlcad (default)
+    bu
+    dm
+    fb
+    fft
+    multispectral
+    optical
+    pkg
+    rt
+    wdb
+EOF
+    exit 1
+}
+
+if test $# -eq 0; then
+    usage 1>&2
+fi
+
+specified=no
+while test $# -gt 0; do
+    case "$1" in
+	-*=*) optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+	*) optarg= ;;
+    esac
+
+    case $1 in
+	--prefix=*)
+	    prefix="$optarg"
+	    includedir="${prefix}/include"
+	    libdir="${prefix}/lib"
+	    ;;
+	--prefix)
+	    echo_prefix=yes
+	    ;;
+	--version)
+	    echo_version=yes
+	    ;;
+	--cflags)
+	    echo_cflags=yes
+	    ;;
+	--libs)
+	    echo_libs=yes
+	    ;;
+	--help)
+	    usage 1>&2
+	    ;;
+	bn)
+	    libs="$libs -lbn"
+	    ;;
+	brlcad)
+	    libs="$libs -lbrlcad"
+	    ;;
+	bu)
+	    libs="$libs -lbu"
+	    ;;
+	dm)
+	    libs="$libs -ldm"
+	    ;;
+	fb)
+	    libs="$libs -lfb"
+	    ;;
+	fft)
+	    libs="$libs -lfft"
+	    ;;
+	multispectral)
+	    libs="$libs -lmultispectral"
+	    ;;
+	optical)
+	    libs="$libs -loptical"
+	    ;;
+	pkg)
+	    libs="$libs -lpkg"
+	    ;;
+	rt)
+	    libs="$libs -lrt"
+	    ;;
+	wdb)
+	    libs="$libs -lwdb"
+	    ;;
+	*)
+	    usage 1>&2
+	    ;;
+    esac
+    shift
+done
+
+if test "x$libs" = "x" ; then
+    # default lib
+    libs="-lbrlcad"
+fi
+
+if test "x$echo_version" = "xyes" ; then
+    echo @BRLCAD_VERSION@
+fi
+
+if test "x$echo_prefix" = "xyes"; then
+    echo ${prefix}
+fi
+
+if test "$echo_cflags" = "yes"; then
+    echo -I${includedir}/brlcad -I${includedir} @CPPFLAGS@ @CFLAGS@
+fi
+
+
+check ( ) {
+    __cadlibs="$1"
+    shift
+    __result=""
+    for l in $* ; do
+	__found=no
+	for c in $__cadlibs ; do
+	    if test "x$l" = "x$c" ; then
+		__found=yes
+		break
+	    fi
+	done
+	if test "x$__found" = "xno" ; then
+	    __result="$__result $l"
+	fi
+    done
+    echo $__result
+}
+
+cadlibs=""
+for lib in $libs ; do
+    case $lib in
+	-lbn)
+	    if test "x$bnadded" = "x" ; then
+		cadlibs="$cadlibs `check \"$cadlibs\" -lbn -lbu @LIBTCL@ @LIBM@`"
+		bnadded=yes
+	    fi
+	    ;;
+	-lbrlcad)
+	    if test "x$brlcadadded" = "x" ; then
+		cadlibs="$cadlibs `check \"$cadlibs\" -lbrlcad @LIBTCL@ @LIBM@`"
+		brlcadadded=yes
+	    fi
+	    ;;
+	-lbu)
+	    if test "x$buadded" = "x" ; then
+		cadlibs="$cadlibs `check \"$cadlibs\" -lbu @LIBTCL@ @LIBM@`"
+		buadded=yes
+	    fi
+	    ;;
+	-ldm)
+	    if test "x$dmadded" = "x" ; then
+		cadlibs="$cadlibs `check \"$cadlibs\" -ldm -lrt -lbn -lbu @LIBTCL@ @LIBPNG@ @X_LIBS@ @LIBM@`"
+		dmadded=yes
+	    fi
+	    ;;
+	-lfb)
+	    if test "x$fbadded" = "x" ; then
+		cadlibs="$cadlibs `check \"$cadlibs\" -lfb -lbu -lpkg @LIBTCL@ @X_LIBS@ @LIBM@`"
+		fbadded=yes
+	    fi
+	    ;;
+	-lfft)
+	    if test "x$fftadded" = "x" ; then
+		cadlibs="$cadlibs `check \"$cadlibs\" -lfft @LIBM@`"
+		fftadded=yes
+	    fi
+	    ;;
+	-lmultispectral)
+	    if test "x$multispectraladded" = "x" ; then
+		cadlibs="$cadlibs `check \"$cadlibs\" -lmultispectral -lrt -lbn -lbu @LIBTCL@ @LIBM@`"
+		multispectraladded=yes
+	    fi
+	    ;;
+	-loptical)
+	    if test "x$opticaladded" = "x" ; then
+		cadlibs="$cadlibs `check \"$cadlibs\" -optical -lrt -lbn -lbu @LIBTCL@ @LIBM@`"
+		opticaladded=yes
+	    fi
+	    ;;
+	-lpkg)
+	    if test "x$pkgadded" = "x" ; then
+		cadlibs="$cadlibs `check \"$cadlibs\" -lpkg -lbu @LIBTCL@ @LIBM@`"
+		pkgadded=yes
+	    fi
+	    ;;
+	-lrt)
+	    if test "x$rtadded" = "x" ; then
+		cadlibs="$cadlibs `check \"$cadlibs\" -lrt -lbn -lbu @LIBOPENNURBS@ @LIBSTDCXX@ @LIBTCL@ @LIBREGEX@ @LIBM@`"
+		rtadded=yes
+	    fi
+	    ;;
+	-lwdb)
+	    if test "x$wdbadded" = "x" ; then
+		cadlibs="$cadlibs `check \"$cadlibs\" -lwdb -lrt -lbn -lbu @LIBTCL@ @LIBM@`"
+		wdbadded=yes
+	    fi
+	    ;;
+	*)
+	    echo "Internal Error: improperly added library encountered"
+	    exit 2
+	    ;;
+    esac
+done
+
+# libs/ldflags
+if test "$echo_libs" = "yes"; then
+    echo -L${libdir} $cadlibs @LDFLAGS@ @LIBS@
+fi      
+
+# Local Variables:
+# tab-width: 8
+# mode: sh
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8
