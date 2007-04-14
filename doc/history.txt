@@ -1,5 +1,17 @@
 The History of BRL-CAD
 ======================
+
+WARNING ** NOTICE ** WARNING ** NOTICE ** WARNING ** NOTICE
+
+This information contained in this file is retained entirely for
+historic reference until someone gets around to writing up a proper
+"history" of BRL-CAD.  The numbers, features, and requirements quoted
+below were true when they are written but are very much no longer true
+today.  Do not rely on any information contained in this file.
+
+WARNING ** NOTICE ** WARNING ** NOTICE ** WARNING ** NOTICE
+
+
 			The BRL-CAD PACKAGE
 			   Short Summary
 
