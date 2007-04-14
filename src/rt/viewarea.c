@@ -73,7 +73,7 @@ static fastf_t cell_area=0.0;
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	{"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 
 const char usage[] = "\
@@ -116,36 +116,29 @@ int raymiss(register struct application *ap);
 
 /*
  *  			V I E W _ I N I T
- *
  */
 int
 view_init( register struct application *ap, char *file, char *obj )
 {
-#if defined(USE_FORKED_THREADS)
-    printf("\n*** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***\nLimiting the number of processors to 1 for proper area calculations\n\n");
-    npsw = 1;
-    rt_g.rtg_parallel = 0;
-#endif
-	ap->a_hit = rayhit;
-	ap->a_miss = raymiss;
-	ap->a_onehit = 0;
+    ap->a_hit = rayhit;
+    ap->a_miss = raymiss;
+    ap->a_onehit = 0;
 
-	if( !rpt_overlap )
-		 ap->a_logoverlap = rt_silent_logoverlap;
+    if( !rpt_overlap )
+	ap->a_logoverlap = rt_silent_logoverlap;
 
-	output_is_binary = 0;		/* output is printable ascii */
+    output_is_binary = 0;		/* output is printable ascii */
 
-	hit_count = 0;
+    hit_count = 0;
 
-	return(0);		/* No framebuffer needed */
+    return(0);		/* No framebuffer needed */
 }
 
 /*
  *			V I E W _ 2 I N I T
  *
  *  View_2init is called by do_frame(), which in turn is called by
- *  main().  It writes the view-specific COVART header.
- *
+ *  main().
  */
 void
 view_2init( struct application *ap )
@@ -161,7 +154,7 @@ view_2init( struct application *ap )
     assembly = (struct area *)bu_calloc(1, sizeof(struct area), "view_2init assembly allocation");
 
     /* allocate the initial areas and point them all to the same (empty) starting assembly list */
-    bu_semaphore_acquire( BU_SEM_SYSCALL );
+    bu_semaphore_acquire( RT_SEM_RESULTS );
     for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 	struct area *cell;
 	/* allocate memory first time through */
@@ -169,7 +162,7 @@ view_2init( struct application *ap )
 	cell->assembly = assembly;
 	rp->reg_udata = (genptr_t)cell;
     }
-    bu_semaphore_release( BU_SEM_SYSCALL );
+    bu_semaphore_release( RT_SEM_RESULTS );
 
     return;
 }
@@ -184,7 +177,7 @@ view_2init( struct application *ap )
 int
 raymiss(register struct application *ap)
 {
-	return(0);
+    return(0);
 }
 
 /*
@@ -195,7 +188,7 @@ raymiss(register struct application *ap)
 void
 view_pixel()
 {
-	return;
+    return;
 }
 
 
@@ -315,6 +308,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
     if( pp == PartHeadp )
 	return(0);		/* nothing was actually hit?? */
 
+    /* ugh, horrible block */
     bu_semaphore_acquire( RT_SEM_RESULTS );
 
     hit_count++;
@@ -477,9 +471,11 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 	cell = listp->cell;
 	if (type == PRESENTED_AREA) {
 	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cell->name, cell->hits, cell_area * (fastf_t)cell->hits, cell_area * (fastf_t)cell->hits / 1000000.0);
+	    fflush(stdout); fflush(stderr);
 	}
 	if (type == EXPOSED_AREA) {
 	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cell->name, cell->exposures, cell_area * (fastf_t)cell->exposures, cell_area * (fastf_t)cell->exposures / 1000000.0);
+	    fflush(stdout); fflush(stderr);
 	}
 	listp = listp->next;
 	bu_free(prev, "print_area_list area list node free");
@@ -578,9 +574,11 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 
 	if (type == PRESENTED_AREA) {
 	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cell->name, cell->hits, cell_area * (fastf_t)cell->hits, cell_area * (fastf_t)cell->hits / 1000000.0);
+	    fflush(stdout); fflush(stderr);
 	}
 	if (type == EXPOSED_AREA) {
 	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square mm\t(%.4lf square meters)\n", cell->name, cell->exposures, cell_area * (fastf_t)cell->exposures, cell_area * (fastf_t)cell->exposures / 1000000.0);
+	    fflush(stdout); fflush(stderr);
 	}
 
 	listp = listp->next;
