@@ -7,6 +7,7 @@ SUBDIRS = \
 	archlinux \
 	enigma \
 	macosx \
+	pkgconfig \
 	vfont \
 	win32-msvc \
 	win32-msvc7
