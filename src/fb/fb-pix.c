@@ -118,21 +118,12 @@ get_args(int argc, register char **argv)
 		outfp = stdout;
 	} else {
 		file_name = argv[bu_optind];
-#ifdef _WIN32
 		if( (outfp = fopen(file_name, "wb")) == NULL )  {
-#else
-		if( (outfp = fopen(file_name, "w")) == NULL )  {
-#endif
 			(void)fprintf( stderr,
 				"fb-pix: cannot open \"%s\" for writing\n",
 				file_name );
 			return(0);
 		}
-#if 0
-#ifdef _WIN32
-		_setmode(_fileno(outfp), _O_BINARY);
-#endif
-#endif
 		(void)chmod(file_name, 0444);
 	}
 

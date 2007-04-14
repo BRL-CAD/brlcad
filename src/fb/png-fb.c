@@ -159,11 +159,7 @@ get_args(int argc, register char **argv)
 		fp_in = stdin;
 	} else {
 		file_name = argv[bu_optind];
-#ifdef _WIN32
 		if( (fp_in = fopen(file_name, "rb")) == NULL )  {
-#else
-		if( (fp_in = fopen(file_name, "r")) == NULL )  {
-#endif
 			perror(file_name);
 			(void)fprintf( stderr,
 				"png-fb: cannot open \"%s\" for reading\n",

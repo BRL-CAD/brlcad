@@ -1053,12 +1053,7 @@ dgo_overlay_cmd(struct dg_obj	*dgop,
 	else
 		name = argv[3];
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  define PL_MODE "rb"
-#else
-#  define PL_MODE "r"
-#endif
-	if ((fp = fopen(argv[1], PL_MODE)) == NULL) {
+	if ((fp = fopen(argv[1], "rb")) == NULL) {
 		Tcl_AppendResult(interp, "dgo_overlay: failed to open file - ",
 				 argv[1], "\n", (char *)NULL);
 

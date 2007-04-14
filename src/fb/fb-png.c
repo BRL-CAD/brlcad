@@ -127,11 +127,7 @@ get_args(int argc, register char **argv)
 		outfp = stdout;
 	} else {
 		file_name = argv[bu_optind];
-#ifdef _WIN32
 		if( (outfp = fopen(file_name, "wb")) == NULL )  {
-#else
-		if( (outfp = fopen(file_name, "w")) == NULL )  {
-#endif
 			(void)fprintf( stderr,
 				"fb-png: cannot open \"%s\" for writing\n",
 				file_name );

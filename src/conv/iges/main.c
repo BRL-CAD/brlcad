@@ -262,11 +262,7 @@ char *argv[];
 		curr_file = BU_LIST_FIRST( file_list, &iges_list.l );
 		iges_file = curr_file->file_name;
 
-#ifdef _WIN32
 		fd = fopen( iges_file , "rb" );	/* open IGES file */
-#else
-		fd = fopen( iges_file , "r" );	/* open IGES file */
-#endif
 		if( fd == NULL )
 		{
 			bu_log( "Cannot open %s\n" , iges_file );

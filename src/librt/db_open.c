@@ -129,13 +129,8 @@ db_open(const char *name,
 		if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r" )) == NULL )
 			goto fail;
 #else /* HAVE_UNIX_IO */
-#if defined(_WIN32) && !defined(__CYGWIN__)
 		if( (dbip->dbi_fp = fopen( name, "rb")) == NULL )
 			goto fail;
-#else
-		if( (dbip->dbi_fp = fopen( name, "r")) == NULL )
-			goto fail;
-#endif
 		dbip->dbi_fd = -1;
 #endif
 		dbip->dbi_read_only = 1;

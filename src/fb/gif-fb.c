@@ -81,10 +81,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include	<strings.h>
 #endif
 #if defined(HAVE_STDARG_H)
-#  define	RBMODE	"rb"	/* "b" not really necessary for POSIX */
 #  include	<stdarg.h>
 #else
-#  define	RBMODE	"r"
 #  include	<varargs.h>
 #endif
 
@@ -613,7 +611,7 @@ main(int argc, char **argv)
 			Fatal( "Can't handle multiple GIF files" );
 			}
 
-		if ( (gfp = fopen( gif_file = argv[bu_optind], RBMODE )) == NULL )
+		if ( (gfp = fopen( gif_file = argv[bu_optind], "rb" )) == NULL )
 			Fatal( "Couldn't open GIF file \"%s\"", gif_file );
 		}
 	else

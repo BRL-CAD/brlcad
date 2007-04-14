@@ -316,11 +316,7 @@ main(int argc, char *argv[])
 		if( output_file == NULL )
 			fp_dir = stdout;
 		else {
-#ifdef _WIN32
 			if( (fp_dir=fopen( output_file , "wb" )) == NULL ) {
-#else
-			if( (fp_dir=fopen( output_file , "w" )) == NULL ) {
-#endif
 				bu_log( "Cannot open output file: %s\n" , output_file );
 				perror( output_file );
 				exit( 1 );
@@ -619,11 +615,7 @@ genptr_t		client_data;
 					strcat( multi_name, suffix );
 					strcat( multi_name, ".igs" );
 				}
-#ifdef _WIN32
 				if( (fp_dir=fopen( multi_name , "wb" )) == NULL ) {
-#else
-				if( (fp_dir=fopen( multi_name , "w" )) == NULL ) {
-#endif
 					bu_log( "Cannot open output file: %s\n" , multi_name );
 					perror( "g-iges" );
 					exit( 1 );
