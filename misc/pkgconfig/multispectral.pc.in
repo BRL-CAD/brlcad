@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+datadir=@datadir@
+
+Name: libmultispectral
+Description: BRL-CAD Multispectral Optics Library
+Version: @BRLCAD_VERSION@
+Requires: librt libbn libbu
+Libs: -L${libdir} -lmultispectral -lrt -lbn -lbu @LIBTCL@ @LIBM@
+Cflags: -I${includedir}/brlcad -I${includedir}
