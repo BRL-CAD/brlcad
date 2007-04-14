@@ -1261,21 +1261,24 @@ LIBM=""
 AC_CHECK_LIB(m, cos, m_link_works=yes ; LIBM="-lm")
 
 dnl detect a useable system regular expression library
+regex_link_works=no
 LIBREGEX=""
-AC_CHECK_LIB(c, regcomp, LIBREGEX="-lc",
-    [AC_CHECK_LIB(regex, regcomp, LIBREGEX="-lregex",
-	[AC_CHECK_LIB(compat, regcomp, LIBREGEX="-lcompat")]
+AC_CHECK_LIB(c, regcomp, regex_link_works=yes ; LIBREGEX="-lc",
+    [AC_CHECK_LIB(regex, regcomp, regex_link_works=yes ; LIBREGEX="-lregex",
+	[AC_CHECK_LIB(compat, regcomp, regex_link_works=yes ; LIBREGEX="-lcompat")]
     )]
 )
 
 dnl check if a png library links
+png_link_works=no
 LIBPNG=""
-AC_CHECK_LIB(png, png_access_version_number, LIBPNG="-lpng")
+AC_CHECK_LIB(png, png_access_version_number, png_link_works=yes ; LIBPNG="-lpng")
 
 dnl check if zlib library links
+z_link_works=no
 LIBZLIB=""
 if test "x$bc_build_zlib" != "xno" ; then
-    AC_CHECK_LIB(z, deflate, LIBZLIB="-lz")
+    AC_CHECK_LIB(z, deflate, z_link_works=yes ; LIBZLIB="-lz")
 fi
 
 dnl check if utahrle library links
@@ -2540,6 +2543,7 @@ AC_SUBST(TCL)
 AC_SUBST(TCLSTUB)
 AC_SUBST(TCL_CPPFLAGS)
 AC_SUBST(TCL_VERSION)
+AC_SUBST(LIBTCL)
 
 
 dnl *** Tk ***
@@ -2644,6 +2648,7 @@ AC_SUBST(TK)
 AC_SUBST(TKSTUB)
 AC_SUBST(TK_CPPFLAGS)
 AC_SUBST(TK_VERSION)
+AC_SUBST(LIBTK)
 
 
 dnl *** incrTcl ***
@@ -2733,6 +2738,8 @@ AC_SUBST(ITCL)
 AC_SUBST(ITK)
 AC_SUBST(ITCL_CPPFLAGS)
 AC_SUBST(ITK_CPPFLAGS)
+AC_SUBST(LIBITCL)
+AC_SUBST(LIBITK)
 
 
 dnl *** iwidgets ***
@@ -2977,17 +2984,17 @@ AC_MSG_RESULT([$ds_link_works])
 AC_SUBST(LIBDS)
 
 dnl *** libgl ***
-AC_MSG_CHECKING(whether an OpenGL library is available)
+AC_MSG_CHECKING(for OpenGL library availability)
 AC_MSG_RESULT($gl_link_works)
 AC_SUBST(LIBGL)
 
 dnl *** libopengl32 ***
-AC_MSG_CHECKING(whether the WindowsGL library is available)
+AC_MSG_CHECKING(for WindowsGL library availability)
 AC_MSG_RESULT($wgl_link_works)
 AC_SUBST(LIBWGL)
 
 dnl *** sgigl ***
-AC_MSG_CHECKING(whether the SGI graphics library is available)
+AC_MSG_CHECKING(for SGI graphics library availability)
 AC_MSG_RESULT($sgigl_link_works)
 AC_SUBST(LIBSGIGL)
 if test "x$sgigl_link_works" = "xyes" ; then
@@ -2995,14 +3002,29 @@ if test "x$sgigl_link_works" = "xyes" ; then
 fi
 
 dnl *** libl Solaris lexer library ***
-AC_MSG_CHECKING(whether the Solaris lexer library is available)
+AC_MSG_CHECKING(for Solaris lexer library availability)
 AC_MSG_RESULT($l_link_works)
 AC_SUBST(LIBL)
 
 dnl *** libgen IRIX dirname/basename library ***
-AC_MSG_CHECKING(whether the libgen library is available)
+AC_MSG_CHECKING(for libgen library availability)
 AC_MSG_RESULT($gen_link_works)
 AC_SUBST(LIBGEN)
+
+dnl *** libregex ***
+AC_MSG_CHECKING(for system regular expression library availability)
+AC_MSG_RESULT($regex_link_works)
+AC_SUBST(LIBREGEX)
+
+dnl *** libpng ***
+AC_MSG_CHECKING(for system portable network graphics availability)
+AC_MSG_RESULT($png_link_works)
+AC_SUBST(LIBPNG)
+
+dnl *** openNURBS library ***
+AC_MSG_CHECKING(for system openNURBS library availability)
+AC_MSG_RESULT($opennurbs_link_works)
+AC_SUBST(LIBOPENNURBS)
 
 dnl *** libstdc++ C++ library ***
 AC_MSG_CHECKING(whether the Standard C++ library is available)
@@ -3621,6 +3643,18 @@ AC_CONFIG_FILES([
 	misc/macosx/Resources/Makefile
 	misc/macosx/Resources/ReadMe.rtfd/Makefile
 	misc/macosx/Resources/Welcome.rtfd/Makefile
+	misc/pkgconfig/Makefile
+	misc/pkgconfig/bn.pc
+	misc/pkgconfig/brlcad.pc
+	misc/pkgconfig/bu.pc
+	misc/pkgconfig/dm.pc
+	misc/pkgconfig/fb.pc
+	misc/pkgconfig/fft.pc
+	misc/pkgconfig/multispectral.pc
+	misc/pkgconfig/optical.pc
+	misc/pkgconfig/pkg.pc
+	misc/pkgconfig/rt.pc
+	misc/pkgconfig/wdb.pc
 	misc/vfont/Makefile
 	misc/win32-msvc/Makefile
 	misc/win32-msvc/Dll/Makefile
