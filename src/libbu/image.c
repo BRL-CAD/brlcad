@@ -124,7 +124,7 @@ png_save(int fd, char *rgb, int width, int height)
     for (i = height; i > 0; --i)
         png_write_row (png_ptr, (png_bytep) (rgb + width*3*i));
     png_write_end (png_ptr, info_ptr);
-    png_destroy_read_struct(png_ptr, info_ptr, NULL);
+    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
     return 1;
 }
 
