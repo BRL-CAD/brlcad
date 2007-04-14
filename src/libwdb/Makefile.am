@@ -7,18 +7,20 @@ noinst_LTLIBRARIES = libwdb_nil.la
 if WITH_OPENNURBS
 BREP_CPPFLAGS=-DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
 BREP_SRCS=brep.cpp
+BREP_EXTRA=brep_stub.c
 else
-BREP_SRCS=brep_stub.c
 BREP_CPPFLAGS=
+BREP_SRCS=brep_stub.c
+BREP_EXTRA=brep.cpp
 endif
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS} ${BREP_CPPFLAGS}
 
 SRCS = \
+	$(BREP_SRCS) \
 	arbn.c \
 	ars.c \
 	bot.c \
-	$(BREP_SRCS) \
 	cline.c \
 	dsp.c \
 	dynamic_geometry.c \
@@ -52,6 +54,7 @@ man_MANS = libwdb.3
 # the C files here are deprecated
 EXTRA_DIST = \
 	$(man_MANS) \
+	$(BREP_EXTRA) \
 	libwdb.dsp \
 	poly.c \
 	reg4.c \
