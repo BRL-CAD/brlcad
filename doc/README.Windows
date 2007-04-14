@@ -37,3 +37,8 @@ the November 2001 Platform SDK or the platform SDK is not first in
 your includes list. The last SDK that will work with VC 6.0 is the
 February 2003 Edition, you can download it from
 http://www.microsoft.com/msdownload/platformsdk/sdkupdate/psdk-full.htm.
+
+Special thanks to Jonathan Bonomo for the new Windows installer that
+uses the Nullsoft Scriptable Install System (i.e. NSIS) that will
+replace the former InstallShield installer for BRL-CAD for Windows.
+The NSIS scripts files are in misc/nsis/.
