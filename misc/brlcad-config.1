@@ -1,0 +1,84 @@
+.TH BRLCAD-CONFIG 1 BRL-CAD
+.\"                  B R L C A D - C O N F I G . 1
+.\" BRL-CAD
+.\"
+.\" Copyright (c) 1984-2007 United States Government as represented by
+.\" the U.S. Army Research Laboratory.
+.\"
+.\" Redistribution and use in source (Docbook format) and 'compiled'
+.\" forms (PDF, PostScript, HTML, RTF, etc), with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code (Docbook format) must retain the
+.\" above copyright notice, this list of conditions and the following
+.\" disclaimer.
+.\"
+.\" 2. Redistributions in compiled form (transformed to other DTDs,
+.\" converted to PDF, PostScript, HTML, RTF, and other formats) must
+.\" reproduce the above copyright notice, this list of conditions and
+.\" the following disclaimer in the documentation and/or other
+.\" materials provided with the distribution.
+.\"
+.\" 3. The name of the author may not be used to endorse or promote
+.\" products derived from this documentation without specific prior
+.\" written permission.
+.\"
+.\" THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY
+.\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+.\" OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+.\" USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\".\".\"
+.SH NAME
+brlcad-config \- script to get information about the installed version of BRL-CAD
+.SH SYNOPSIS
+.B brlcad-config
+[ \-\-prefix\fI[=DIR]\fP ] [ \-\-libs ] [ \-\-cflags ] [ \-\-version ] [ \-\-help ]
+.SH DESCRIPTION
+.I brlcad-config
+is a script that describes the compile and linker flags that should be
+used to compile and link programs that use \fIBRL-CAD\fP's libraries.
+.SH OPTIONS
+.l
+.I brlcad-config
+accepts the following options:
+.TP
+.B \-\-prefix=PREFIX
+If specified, use the provided installation PREFIX instead of the
+prefix that \fIBRL-CAD\fP was compiled with when providing the output
+for the other \fIbrlcad-config\fP script options.
+.TP
+.B \-\-libs
+Prints out library linker flags that are generally needed when
+creating a program that links to \fIBRL-CAD\fP libraries.
+.TP
+.B \-\-cflags
+Prints out compilation flags that are generally needed when
+creating a program that refers to \fIBRL-CAD\fP headers.
+.TP
+.B \-\-version
+Prints out the version of \fIBRL-CAD\fP that is installed.
+.TP
+.B \-\-help
+Display usage.
+.SH "SEE ALSO"
+brlcad(1), libbu(3), libbn(3), librt(3), libwdb(3).
+.SH AUTHOR
+Christopher Sean Morrison
+.SH COPYRIGHT
+This software is Copyright (c) 1984-2007 United States Government as
+represented by the U.S. Army Research Laboratory. All rights reserved.
+.SH BUGS
+No bugs known for \fIbrlcad-config\fP.
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <devs@brlcad.org>, or via the "cadbug.sh" script.
