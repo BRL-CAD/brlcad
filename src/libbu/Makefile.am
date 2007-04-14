@@ -91,6 +91,7 @@ EXTRA_DIST = \
 
 AM_CPPFLAGS = \
 	-DPREFIX=\"$(prefix)\" \
+	${PNG_CPPFLAGS} \
 	${TCL_CPPFLAGS}
 
 BUILT_SOURCES = vers.c
