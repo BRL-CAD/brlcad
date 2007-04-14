@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-05-XX  Release 7.10.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed deadlock bug related to rtarea - Sean Morrison, John Anderson
 * fixed bug in mged command prompt with page up/down - Sean Morrison
 * added attr and make_name commands to archer - Bob Parker
 
