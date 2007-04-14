@@ -2058,6 +2058,7 @@ AC_CHECK_FUNCS(\
 	setlinebuf \
 	setlocale \
 	setpgid \
+	setpriority \
 	setprogname \
 	setvbuf \
 	socket \
