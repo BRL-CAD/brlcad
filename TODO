@@ -48,8 +48,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * script that checks a dist source tarball for missing files
 
-* add pkg-config scripts
-
 * design a mug :)
 
 * consider impact and/or rename 'wall' and 'hd' commands due to
