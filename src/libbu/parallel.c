@@ -212,39 +212,25 @@ struct taskcontrol {
 void
 bu_nice_set(int newnice)
 {
-#ifdef _WIN32
-  if (bu_debug)
-    bu_log("bu_nice_set() Priority NOT changed\n");
-
-  return;
-
-#else  /* not _WIN32 */
+#ifdef HAVE_SETPRIORITY
   int opri, npri;
 
-#  ifdef BSD
-#    ifndef PRIO_PROCESS  /* necessary for linux */
-#      define PRIO_PROCESS  0	/* From /usr/include/sys/resource.h */
-#    endif
+#  ifndef PRIO_PROCESS  /* necessary for linux */
+#    define PRIO_PROCESS  0	/* From /usr/include/sys/resource.h */
+#  endif
   opri = getpriority( PRIO_PROCESS, 0 );
   setpriority( PRIO_PROCESS, 0, newnice );
   npri = getpriority( PRIO_PROCESS, 0 );
 
-#  else  /* not BSD */
-  int bias, chg;
+  if( bu_debug ) {
+      bu_log("bu_nice_set() Priority changed from %d to %d\n", opri, npri);
+  }
 
-  /* " nice adds the value of incr to the nice value of the process" */
-  /* "The default nice value is 20" */
-  /* "Upon completion, nice returns the new nice value minus 20" */
-  bias = 0;
-  opri = nice(0) - bias;
-  chg = newnice - opri;
-  (void)nice(chg);
-  npri = nice(0) - bias;
-  if( npri != newnice )  bu_log("bu_nice_set() SysV error:  wanted nice %d! check bias=%d\n", newnice, bias );
-#  endif  /* BSD */
-
-  if( bu_debug ) bu_log("bu_nice_set() Priority changed from %d to %d\n", opri, npri);
-
+#else /* !HAVE_SETPRIORITY */
+  /* no known means to change the nice value */
+  if (bu_debug) {
+    bu_log("bu_nice_set() Priority NOT changed\n");
+  }
 #endif  /* _WIN32 */
 }
 
