@@ -165,9 +165,6 @@ Recent Bugs
 * vrml exporter (and probably others) doesn't export primitives
   directly as one might expect like the ray-tracers, only regions.
 
-* if you turn off compilation of tcl/itcl, btclsh/mged fail to find
-  their scripts.
-
 * sketches extruded with non-square AB vectors results in inner sketch
   components not getting scaled properly.
 
