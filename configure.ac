@@ -3638,6 +3638,7 @@ AC_CONFIG_FILES([
 	misc/archlinux/PKGBUILD
 	misc/archlinux/brlcad.install
 	misc/archlinux/brlcad.sh
+	misc/brlcad-config
 	misc/brlcad.spec
 	misc/macosx/Makefile
 	misc/macosx/Resources/Makefile
