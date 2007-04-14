@@ -8,5 +8,5 @@ Name: libfb
 Description: BRL-CAD Framebuffer Library
 Version: @BRLCAD_VERSION@
 Requires: libbu libpkg
-Libs: -L${libdir} -lfb -lbu -lpkg @LIBTCL@ @X_LIBS@
+Libs: -L${libdir} -lfb -lbu -lpkg @LIBTCL@ @X_LIBS@ @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}
