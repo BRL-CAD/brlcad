@@ -3645,6 +3645,7 @@ AC_CONFIG_FILES([
 	misc/macosx/Resources/Makefile
 	misc/macosx/Resources/ReadMe.rtfd/Makefile
 	misc/macosx/Resources/Welcome.rtfd/Makefile
+	misc/nsis/Makefile
 	misc/pkgconfig/Makefile
 	misc/pkgconfig/bn.pc
 	misc/pkgconfig/brlcad.pc
