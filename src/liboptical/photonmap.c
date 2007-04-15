@@ -1138,9 +1138,7 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 	/* Allocate Memory for Irradiance Cache and Initialize Pixel Map */
 	/*    bu_log("Image Size: %d,%d\n",width,height);*/
 	if (GPM_IH) {
-	    Map= (char*)bu_malloc(sizeof(char)*width*height, "Map");
-	    for (i= 0; i < width*height; i++)
-		Map[i]= 0;
+	    Map= (char*)bu_calloc(width*height, sizeof(char), "Map");
 	    IC= (struct IrradCache*)bu_malloc(sizeof(struct IrradCache)*width*height, "IrradCache");
 	    for (i= 0; i < width*height; i++) {
 		IC[i].List= (struct IrradNode*)bu_malloc(sizeof(struct IrradNode), "IrradNode");
@@ -1356,8 +1354,9 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
 
 	/* There is no precomputed irradiance for this point, allocate space
 	   for a new one if neccessary. */
-	if (IC[index].Num)
-	    IC[index].List= (struct IrradNode*)realloc(IC[index].List,sizeof(struct IrradNode)*(IC[index].Num+1));
+	if (IC[index].Num) {
+	    IC[index].List= (struct IrradNode*)bu_realloc(IC[index].List,sizeof(struct IrradNode)*(IC[index].Num+1), "List");
+	}
     }
 
     Search.Pos[0]= pos[0];
