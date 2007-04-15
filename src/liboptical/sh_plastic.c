@@ -368,9 +368,9 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 
 /* Photon Mapping */
 #ifndef RT_MULTISPECTRAL
-color[0]= swp -> sw_color[0];
-color[1]= swp -> sw_color[1];
-color[2]= swp -> sw_color[2];
+color[0]= swp->sw_color[0];
+color[1]= swp->sw_color[1];
+color[2]= swp->sw_color[2];
 #endif
 
 #ifndef RT_MULTISPECTRAL
@@ -476,15 +476,15 @@ if (!PM_Visualize)
 			/* Get Obj Hit Point For Attenuation */
 #ifndef RT_MULTISPECTRAL
 			if (pp && PM_Activated) {
-				VJOIN1(pt, ap -> a_ray.r_pt, pp -> pt_inhit -> hit_dist, ap -> a_ray.r_dir)
-				dist= sqrt((pt[0]-lp -> lt_pos[0])*(pt[0]-lp -> lt_pos[0]) + (pt[1]-lp -> lt_pos[1])*(pt[1]-lp -> lt_pos[1]) + (pt[2]-lp -> lt_pos[2])*(pt[2]-lp -> lt_pos[2]))/1000.0;
+				VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir)
+				dist= sqrt((pt[0]-lp->lt_pos[0])*(pt[0]-lp->lt_pos[0]) + (pt[1]-lp->lt_pos[1])*(pt[1]-lp->lt_pos[1]) + (pt[2]-lp->lt_pos[2])*(pt[2]-lp->lt_pos[2]))/1000.0;
 				dist= (1.0/(0.1 + 1.0*dist + 0.01*dist*dist));
-				refl= dist * ps -> wgt_diffuse * cosine * swp -> sw_lightfract[i] * lp -> lt_intensity;
+				refl= dist * ps->wgt_diffuse * cosine * swp->sw_lightfract[i] * lp->lt_intensity;
 /*				bu_log("pt: [%.3f][%.3f,%.3f,%.3f]\n",dist,pt[0],pt[1],pt[2]);*/
 			} else
 #endif
 			{
-				refl= ps -> wgt_diffuse * swp -> sw_lightfract[i] * cosine * lp -> lt_fraction;
+				refl= ps->wgt_diffuse * swp->sw_lightfract[i] * cosine * lp->lt_fraction;
 			}
 
 #ifdef RT_MULTISPECTRAL
@@ -540,23 +540,23 @@ if (!PM_Visualize)
 
 #ifndef RT_MULTISPECTRAL
   if (PM_Activated) {
-    IrradianceEstimate(ap, work, swp -> sw_hit.hit_point, swp -> sw_hit.hit_normal, 100, 100);
+    IrradianceEstimate(ap, work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
     VELMUL(work, work, color);
-    VADD2(swp -> sw_color, work, swp -> sw_color);
-    if (swp -> sw_color[0] > 1.0) swp -> sw_color[0]= 1.0;
-    if (swp -> sw_color[1] > 1.0) swp -> sw_color[1]= 1.0;
-    if (swp -> sw_color[2] > 1.0) swp -> sw_color[2]= 1.0;
+    VADD2(swp->sw_color, work, swp->sw_color);
+    if (swp->sw_color[0] > 1.0) swp->sw_color[0]= 1.0;
+    if (swp->sw_color[1] > 1.0) swp->sw_color[1]= 1.0;
+    if (swp->sw_color[2] > 1.0) swp->sw_color[2]= 1.0;
   }
 
 } else {
 
   if (PM_Activated) {
-/*  IrradianceEstimate(work, swp -> sw_hit.hit_point, swp -> sw_hit.hit_normal, 100, 100);
-  VELMUL(swp -> sw_color, work, color);*/
-    IrradianceEstimate(ap, swp -> sw_color, swp -> sw_hit.hit_point, swp -> sw_hit.hit_normal, 100, 100);
-    if (swp -> sw_color[0] > 1.0) swp -> sw_color[0]= 1.0;
-    if (swp -> sw_color[1] > 1.0) swp -> sw_color[1]= 1.0;
-    if (swp -> sw_color[2] > 1.0) swp -> sw_color[2]= 1.0;
+/*  IrradianceEstimate(work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
+  VELMUL(swp->sw_color, work, color);*/
+    IrradianceEstimate(ap, swp->sw_color, swp->sw_hit.hit_point, swp->sw_hit.hit_normal, 100, 100);
+    if (swp->sw_color[0] > 1.0) swp->sw_color[0]= 1.0;
+    if (swp->sw_color[1] > 1.0) swp->sw_color[1]= 1.0;
+    if (swp->sw_color[2] > 1.0) swp->sw_color[2]= 1.0;
   }
 #endif
 }
