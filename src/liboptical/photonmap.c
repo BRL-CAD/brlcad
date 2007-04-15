@@ -98,8 +98,8 @@ void BuildTree(struct Photon *EList, int ESize, struct PNode *Root) {
 
 
     /* Allocate memory for left and right lists */
-    LList= (struct Photon*)malloc(sizeof(struct Photon)*ESize);
-    RList= (struct Photon*)malloc(sizeof(struct Photon)*ESize);
+    LList= (struct Photon*)bu_calloc(ESize, sizeof(struct Photon), "LList");
+    RList= (struct Photon*)bu_calloc(ESize, sizeof(struct Photon), "RList");
 
     /* Find the Bounding volume of the Current list of photons */
     Min[0]= Max[0]= EList[0].Pos[0];
@@ -153,21 +153,21 @@ void BuildTree(struct Photon *EList, int ESize, struct PNode *Root) {
     /* With Left and Right if either contain any photons then repeat this process */
     /*  if (LInd) bu_log("Left Branch\n");*/
     if (LInd) {
-	Root->L= (struct PNode*)malloc(sizeof(struct PNode));
+	Root->L= (struct PNode*)bu_calloc(1, sizeof(struct PNode), "Root left");
 	Root->L->L= 0;
 	Root->L->R= 0;
 	BuildTree(LList,LInd,Root->L);
     }
     /*  if (RInd) bu_log("Right Branch\n");*/
     if (RInd) {
-	Root->R= (struct PNode*)malloc(sizeof(struct PNode));
+	Root->R= (struct PNode*)bu_calloc(1, sizeof(struct PNode), "Root right");
 	Root->R->L= 0;
 	Root->R->R= 0;
 	BuildTree(RList,RInd,Root->R);
     }
 
-    free(LList);
-    free(RList);
+    bu_free(LList, "LList");
+    bu_free(RList, "RList");
 }
 
 
@@ -190,24 +190,14 @@ void Store(point_t Pos, vect_t Dir, vect_t Normal, int Map) {
 	Search.Normal[1]= Normal[1];
 	Search.Normal[2]= Normal[2];
 
-	Search.List= (struct PSN*)malloc(sizeof(struct PSN)*Search.Max);
+	Search.List= (struct PSN*)bu_calloc(Search.Max, sizeof(struct PSN), "Search.List");
 	LocatePhotons(&Search,PMap[PM_IMPORTANCE]->Root);
-	free(Search.List);
+	bu_free(Search.List, "Search.List");
 
 	if (!Search.Found) {
 	    HitB++;
 	    return;
 	}
-	/*
-	  do {
-	  Search.RadSq*= 4.0;
-	  Search.Found= 0;
-	  LocatePhotons(&Search,PMap[map]->Root);
-	  if (!Search.Found && Search.RadSq > ScaleFactor*ScaleFactor/100.0)
-	  break;
-	  } while(Search.Found < Search.Max && Search.RadSq < max_rad*max_rad);
-	  free(Search.List);
-	*/
     }
 
 
@@ -315,7 +305,7 @@ void GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit) {
     struct	phong_specific	*phong_sp;
     struct	bu_vls		matparm;
 
-    phong_sp= (struct phong_specific*)malloc(sizeof(struct phong_specific));
+    phong_sp= (struct phong_specific*)bu_malloc(sizeof(struct phong_specific), "phong specific");
 
     /* Initialize spec and refi */
     spec[0]= spec[1]= spec[2]= *refi= *transmit= 0;
@@ -389,7 +379,7 @@ void GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit) {
 	*/
     }
 
-    free(phong_sp);
+    bu_free(phong_sp, "phong_specific");
 }
 
 
@@ -821,7 +811,7 @@ void Irradiance(int pid, struct Photon *P, struct application *ap) {
     double	theta,phi,Coef;
 
 
-    lap= (struct application*)malloc(sizeof(struct application));
+    lap = (struct application*)bu_malloc(sizeof(struct application), "app");
     RT_APPLICATION_INIT(lap);
     lap->a_rt_i= ap->a_rt_i;
     lap->a_hit= ap->a_hit;
@@ -863,7 +853,7 @@ void Irradiance(int pid, struct Photon *P, struct application *ap) {
     P->Irrad[1]*= Coef;
     P->Irrad[2]*= Coef;
 
-    free(lap);
+    bu_free(lap, "app");
 }
 
 
@@ -903,11 +893,11 @@ void IrradianceThread(int pid, genptr_t arg) {
 
 
 void Initialize(int MAP, int MapSize) {
-    PMap[MAP]= (struct PhotonMap*)malloc(sizeof(struct PhotonMap));
+    PMap[MAP]= (struct PhotonMap*)bu_malloc(sizeof(struct PhotonMap), "PhotoMap");
     PMap[MAP]->MaxPhotons= MapSize;
-    PMap[MAP]->Root= (struct PNode*)malloc(sizeof(struct PNode));
+    PMap[MAP]->Root= (struct PNode*)bu_malloc(sizeof(struct PNode), "PNode");
     PMap[MAP]->StoredPhotons= 0;
-    Emit[MAP]= (struct Photon*)malloc(sizeof(struct Photon)*MapSize);
+    Emit[MAP]= (struct Photon*)bu_malloc(sizeof(struct Photon)*MapSize, "Photon");
 }
 
 
@@ -1132,8 +1122,7 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 	ICSize= 0;
 
 	if (cpus > 1) {
-	    GPM_RTAB= (struct resource*)malloc(sizeof(struct resource)*cpus);
-	    bzero(GPM_RTAB,cpus*sizeof(struct resource));
+	    GPM_RTAB= (struct resource*)bu_calloc(cpus, sizeof(struct resource), "resource");
 	    for (i= 0; i < cpus; i++) {
 		GPM_RTAB[i].re_cpu= i;
 		GPM_RTAB[i].re_magic= RESOURCE_MAGIC;
@@ -1149,12 +1138,12 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 	/* Allocate Memory for Irradiance Cache and Initialize Pixel Map */
 	/*    bu_log("Image Size: %d,%d\n",width,height);*/
 	if (GPM_IH) {
-	    Map= (char*)malloc(sizeof(char)*width*height);
+	    Map= (char*)bu_malloc(sizeof(char)*width*height, "Map");
 	    for (i= 0; i < width*height; i++)
 		Map[i]= 0;
-	    IC= (struct IrradCache*)malloc(sizeof(struct IrradCache)*width*height);
+	    IC= (struct IrradCache*)bu_malloc(sizeof(struct IrradCache)*width*height, "IrradCache");
 	    for (i= 0; i < width*height; i++) {
-		IC[i].List= (struct IrradNode*)malloc(sizeof(struct IrradNode));
+		IC[i].List= (struct IrradNode*)bu_malloc(sizeof(struct IrradNode), "IrradNode");
 		IC[i].Num= 0;
 	    }
 	}
@@ -1167,11 +1156,14 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 
 	WritePhotonFile(pmfile);
 
-	for (i= 0; i < PM_MAPS; i++)
-	    free(Emit[i]);
+	for (i= 0; i < PM_MAPS; i++) {
+	    bu_free(Emit[i], "Photons");
+	    Emit[i] = NULL;
+	}
 
     }
-    free(GPM_RTAB);
+    bu_free(GPM_RTAB, "resource");
+    GPM_RTAB = NULL;
 }
 
 
@@ -1392,7 +1384,7 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
     Search.Normal[1]= normal[1];
     Search.Normal[2]= normal[2];
 
-    Search.List= (struct PSN*)malloc(sizeof(struct PSN)*Search.Max);
+    Search.List= (struct PSN*)bu_calloc(Search.Max, sizeof(struct PSN), "Search.List");
     do {
 	Search.Found= 0;
 	Search.RadSq*= 4.0;
@@ -1430,7 +1422,7 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
 	irrad[1]/= (double)Search.Found;
 	irrad[2]/= (double)Search.Found;
     }
-    free(Search.List);
+    bu_free(Search.List, "Search.List");
 
     /*  GetEstimate(cirrad, pos, normal, (int)(ScaleFactor/100.0),PMap[PM_CAUSTIC]->MaxPhotons/50,PM_CAUSTIC,1, 0);*/
     /*  GetEstimate(cirrad,pos,normal,(int)(ScaleFactor/pow(2,(log(PMap[PM_CAUSTIC]->MaxPhotons/2)/log(4)))),PMap[PM_CAUSTIC]->MaxPhotons / 50,PM_CAUSTIC,0,0);*/
@@ -1485,7 +1477,7 @@ void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, 
     Search.Normal[1]= normal[1];
     Search.Normal[2]= normal[2];
 
-    Search.List= (struct PSN*)malloc(sizeof(struct PSN)*Search.Max);
+    Search.List= (struct PSN*)bu_calloc(Search.Max, sizeof(struct PSN), "PSN");
     do {
 	Search.Found= 0;
 	Search.RadSq*= 4.0;
@@ -1496,7 +1488,7 @@ void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, 
 
     /*  bu_log("Found: %d\n",Search.Found);*/
     if (Search.Found < min_np) {
-	free(Search.List);
+	bu_free(Search.List, "Search.List");
 	return;
     }
 
@@ -1576,7 +1568,7 @@ void GetEstimate(vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np, 
       irrad[1]*= (1.0/M_PI)/NP.RadSq;
       irrad[2]*= (1.0/M_PI)/NP.RadSq;
     */
-    free(Search.List);
+    bu_free(Search.List, "Search.List");
     /*  bu_log("Radius: %.3f, Max Phot: %d, Found: %d, Power: [%.4f,%.4f,%.4f], Pos: [%.3f,%.3f,%.3f]\n",sqrt(NP.RadSq), NP.Max,NP.Found,irrad[0],irrad[1],irrad[2],pos[0],pos[1],pos[2]);*/
 }
 
