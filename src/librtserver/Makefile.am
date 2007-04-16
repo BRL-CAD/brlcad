@@ -11,9 +11,7 @@ librtserver_la_SOURCES = rtserver.c
 AM_CFLAGS = ${JAVA_CFLAGS}
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-LIBRTSERVER_VERSION = ${MAJOR_VERSION}:${MINOR_VERSION}:${PATCH_VERSION}
-
-librtserver_la_LDFLAGS = -version-info ${LIBRTSERVER_VERSION} ${JAVA_LDFLAGS} -module
+librtserver_la_LDFLAGS = -version-info 19:1 ${JAVA_LDFLAGS} -module
 
 if BUILD_OPENNURBS
 ON_NIL = $(top_builddir)/src/other/openNURBS/libopenNURBS_nil.la
