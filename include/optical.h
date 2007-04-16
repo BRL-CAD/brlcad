@@ -49,55 +49,41 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+
 /* defined in init.c */
-OPTICAL_EXPORT extern void optical_shader_init(struct mfuncs	**headp);
+OPTICAL_EXPORT extern void optical_shader_init(struct mfuncs **headp);
 
 /* stub functions useful for debugging */
 /* defined in sh_text.c */
-OPTICAL_EXPORT extern int mlib_zero(), mlib_one();
-OPTICAL_EXPORT extern void	mlib_void();
+OPTICAL_EXPORT extern int mlib_zero();
+OPTICAL_EXPORT extern int mlib_one();
+OPTICAL_EXPORT extern void mlib_void();
 
 
 /* defined in refract.c */
 OPTICAL_EXPORT extern int
-rr_render(register struct application *ap,
-	  struct partition	*pp,
-	  struct shadework	*swp);
+rr_render(register struct application *ap, struct partition *pp, struct shadework *swp);
 
 /* defined in shade.c */
 OPTICAL_EXPORT extern void
-shade_inputs(struct application		*ap,
-	     const struct partition	*pp,
-	     struct shadework		*swp,
-	     int			want);
+shade_inputs(struct application	*ap, const struct partition *pp, struct shadework *swp, int want);
 
 /* defined in wray.c */
 OPTICAL_EXPORT extern void
-wray(register struct partition *pp,
-     register struct application *ap,
-     FILE *fp,
-     const vect_t	inormal);
+wray(register struct partition *pp, register struct application *ap, FILE *fp, const vect_t inormal);
 
 OPTICAL_EXPORT extern void
-wraypts(vect_t	in,
-	vect_t	inorm,
-	vect_t	out,
-	int		id,
-	struct application *ap,
-	FILE	*fp);
+wraypts(vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FILE *fp);
 
-OPTICAL_EXPORT extern
-void wraypaint(vect_t start,
-	       vect_t norm,
-	       int paint,
-	       struct application *ap,
-	       FILE *fp);
+OPTICAL_EXPORT extern void
+wraypaint(vect_t start, vect_t norm, int paint, struct application *ap, FILE *fp);
 
-/* shade.c */
+/* defined in shade.c */
 OPTICAL_EXPORT extern int
-viewshade(struct application *ap,
-	  register const struct partition *pp,
-	  register struct shadework *swp);
+viewshade(struct application *ap, register const struct partition *pp, register struct shadework *swp);
+
+/* defined in vers.c */
+OPTICAL_EXPORT extern const char *optical_version(void);
 
 
 OPTICAL_EXPORT extern int	rdebug;
@@ -193,9 +179,6 @@ OPTICAL_EXPORT extern struct region env_region; /* environment map region */
 /* defined in refract.c */
 OPTICAL_EXPORT extern int max_bounces;
 OPTICAL_EXPORT extern int max_ireflect;
-
-/* defined in vers.c */
-OPTICAL_EXPORT extern const char liboptical_version[];
 
 struct floatpixel {
 	double	ff_dist;		/**< @brief range to ff_hitpt[], <-INFINITY for miss */

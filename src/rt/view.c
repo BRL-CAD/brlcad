@@ -1086,7 +1086,7 @@ int
 view_init(register struct application *ap, char *file, char *obj, int minus_o, int minus_F)
 {
 	if (rt_verbosity & VERBOSE_LIBVERSIONS)
-		bu_log("%s", liboptical_version+5);
+		bu_log("%s", optical_version());
 
 	optical_shader_init(&mfHead);	/* in liboptical/init.c */
 

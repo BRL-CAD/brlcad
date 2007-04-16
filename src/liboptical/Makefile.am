@@ -4,7 +4,7 @@ lib_LTLIBRARIES = liboptical.la
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-SRCS = \
+liboptical_la_SOURCES = \
 	init.c \
 	material.c \
 	photonmap.c \
@@ -39,12 +39,10 @@ SRCS = \
 	sh_xxx.c \
 	shade.c \
 	turb.c \
+	vers.c \
 	wray.c
 
 liboptical_la_LDFLAGS = -version-info 19:1
-liboptical_la_SOURCES = \
-	$(SRCS) \
-	vers.c
 
 # convenience library, must NOT be set to static in here
 noinst_LTLIBRARIES = librtms.la
@@ -59,18 +57,10 @@ librtms_la_SOURCES = \
 	shade.c
 
 EXTRA_DIST = \
-	liboptical.dsp \
-	vers_win.c
-
-BUILT_SOURCES = vers.c
-
-vers.c: $(SRCS)
-	@SH@ $(top_srcdir)/sh/vers.sh liboptical_version "The BRL-CAD Optical Shader Library" > $@
-
-CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = version
-MAINTAINERCLEANFILES = Makefile.in
+	liboptical.dsp
 
 DEPS=src/librt
+
+MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
