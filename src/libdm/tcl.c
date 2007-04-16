@@ -65,7 +65,6 @@ Dm_d_Init(Tcl_Interp *interp)
 Dm_Init(Tcl_Interp *interp)
 #endif
 {
-	const char		*version_number;
 	struct bu_vls	vls;
 
 	/* register commands */
@@ -80,10 +79,7 @@ Dm_Init(Tcl_Interp *interp)
 	/* initialize display manager object code */
 	Dmo_Init(interp);
 
-	Tcl_SetVar(interp, "dm_version", (char *)dm_version+5, TCL_GLOBAL_ONLY);
-	Tcl_Eval(interp, "lindex $dm_version 2");
-	version_number = Tcl_GetStringResult(interp);
-	Tcl_PkgProvide(interp,  "Dm", version_number);
+	Tcl_PkgProvide(interp,  "Dm", BRLCAD_VERSION);
 
 	return TCL_OK;
 }

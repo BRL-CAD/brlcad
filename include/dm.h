@@ -329,7 +329,7 @@ DM_EXPORT BU_EXTERN(unsigned Nu_unsign,
 		    ());
 
 /* vers.c */
-DM_EXPORT extern char dm_version[];
+DM_EXPORT BU_EXTERN(const char *dm_version, (void));
 
 /* clip.c */
 DM_EXPORT BU_EXTERN(int clip,

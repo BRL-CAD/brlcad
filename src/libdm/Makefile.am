@@ -20,7 +20,7 @@ else
 DM_X_CFLAGS =
 endif
 
-SRCS = \
+libdm_la_SOURCES = \
 	axes.c \
 	clip.c \
 	color.c \
@@ -35,10 +35,7 @@ SRCS = \
 	knob.c \
 	options.c \
 	query.c \
-	tcl.c
-
-libdm_la_SOURCES = \
-	$(SRCS) \
+	tcl.c \
 	vers.c
 
 libdm_la_LDFLAGS = -version-info 19:1
@@ -56,18 +53,10 @@ EXTRA_DIST = \
 	dm-glx.c \
 	dm-pex.c \
 	dm-tk.c \
-	libdm.dsp \
-	vers_win.c
-
-BUILT_SOURCES = vers.c
-
-vers.c: $(SRCS)
-	@SH@ $(top_srcdir)/sh/vers.sh dm_version "The BRL-CAD Display Manager Library" > $@
-
-CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = version
-MAINTAINERCLEANFILES = Makefile.in
+	libdm.dsp
 
 DEPS=src/librt
+
+MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
