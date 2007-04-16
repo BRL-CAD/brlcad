@@ -71,9 +71,6 @@ irfft256.c:	ifftc$(EXEEXT)
 irfft512.c:	ifftc$(EXEEXT)
 	./ifftc$(EXEEXT) 512 > irfft512.c
 
-vers.c: $(SRCS)
-	@SH@ $(top_srcdir)/sh/vers.sh fft_version "BRL-CAD FFT Library" > $@
-
 clean-local:
 	@RM@ -f ${BUILT_SOURCES}
 
@@ -87,12 +84,10 @@ BUILT_SOURCES = \
 	rfft16.c \
 	rfft256.c \
 	rfft32.c \
-	rfft64.c \
-	vers.c
+	rfft64.c
 
 DISTCLEANFILES = \
-	$(BUILT_SOURCES) \
-	version
+	$(BUILT_SOURCES)
 
 MAINTAINERCLEANFILES = Makefile.in
 

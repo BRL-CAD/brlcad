@@ -18,5 +18,3 @@ rfft256.c
 rfft32.c
 rfft512.c
 rfft64.c
-vers.c
-version
