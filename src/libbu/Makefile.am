@@ -5,7 +5,7 @@ noinst_LTLIBRARIES = libbu_nil.la
 
 noinst_PROGRAMS = htester
 
-SRCS = \
+libbu_nil_la_SOURCES = \
 	association.c \
 	avs.c \
 	badmagic.c \
@@ -57,15 +57,12 @@ SRCS = \
 	semaphore.c \
 	stat.c \
 	units.c \
+	vers.c \
 	vfont.c \
 	vls.c \
 	whereis.c \
 	which.c \
 	xdr.c
-
-libbu_nil_la_SOURCES = \
-	$(SRCS) \
-	vers.c
 
 libbu_la_SOURCES =
 libbu_la_LDFLAGS = -version-info 19:1
@@ -86,22 +83,12 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	libbu.dsp \
-	vers_win.c
+	libbu.dsp
 
 AM_CPPFLAGS = \
 	-DPREFIX=\"$(prefix)\" \
 	${PNG_CPPFLAGS} \
 	${TCL_CPPFLAGS}
-
-BUILT_SOURCES = vers.c
-
-vers.c: $(SRCS)
-	@SH@ $(top_srcdir)/sh/vers.sh bu_version "The BRL-CAD Utility Library" > $@
-
-CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = version
-MAINTAINERCLEANFILES = Makefile.in
 
 if BUILD_TCL
 DEPS=src/other/tcl
@@ -109,4 +96,12 @@ else
 DEPS=
 endif
 
+MAINTAINERCLEANFILES = Makefile.in
+
 include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(libbu_nil_la_OBJECTS) \
+	$(libbu_la_OBJECTS) \
+	$(htester_OBJECTS) \
+	$(noinst_PROGRAMS)

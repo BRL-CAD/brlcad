@@ -424,19 +424,13 @@ Fb_d_Init(Tcl_Interp *interp)
 Fb_Init(Tcl_Interp *interp)
 #endif
 {
-	const char *version_number;
-
 	/* register commands */
 	bu_register_cmds(interp, cmdtab);
 
 	/* initialize framebuffer object code */
 	Fbo_Init(interp);
 
-
-	Tcl_SetVar(interp, "fb_version", (char *)fb_version+5, TCL_GLOBAL_ONLY);
-	Tcl_Eval(interp, "lindex $fb_version 2");
-	version_number = Tcl_GetStringResult(interp);
-	Tcl_PkgProvide(interp,  "Fb", version_number);
+	Tcl_PkgProvide(interp,  "Fb", BRLCAD_VERSION);
 
 	return TCL_OK;
 }

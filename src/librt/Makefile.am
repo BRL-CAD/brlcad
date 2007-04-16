@@ -36,7 +36,7 @@ noinst_PROGRAMS = \
 	nurb_example \
 	${BREP_TEST}
 
-SRCS = \
+librt_nil_la_SOURCES = \
 	$(BREP_SRCS) \
 	bezier_2d_isect.c \
 	bigE.c \
@@ -171,15 +171,12 @@ SRCS = \
 	transform.c \
 	tree.c \
 	vdraw.c \
+	vers.c \
 	view_obj.c \
 	vlist.c \
 	wdb.c \
 	wdb_comb_std.c \
 	wdb_obj.c
-
-librt_nil_la_SOURCES = \
-	$(SRCS) \
-	vers.c
 
 EXTRA_librt_nil_la_SOURCES = \
 	g_brep.cpp
@@ -235,17 +232,7 @@ EXTRA_DIST = \
 	timercos.c \
 	timerhep.c \
 	timerunix.c \
-	vers_win.c \
 	vshoot.c
-
-BUILT_SOURCES = vers.c
-
-vers.c: $(SRCS)
-	@SH@ $(top_srcdir)/sh/vers.sh rt_version "The BRL-CAD Ray-Tracing Library" > $@
-
-CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = version
-MAINTAINERCLEANFILES = Makefile.in
 
 if BUILD_OPENNURBS
 DEPADD=src/other/openNURBS
@@ -254,9 +241,12 @@ DEPADD=
 endif
 DEPS=src/libbn src/libsysv $(DEPADD)
 
+MAINTAINERCLEANFILES = Makefile.in
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
+	$(librt_nil_la_OBJECTS) \
 	$(librt_la_OBJECTS) \
 	$(lib_LTLIBRARIES) \
 	$(comb_OBJECTS) \

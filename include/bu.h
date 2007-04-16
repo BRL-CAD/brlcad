@@ -349,6 +349,13 @@ __BEGIN_DECLS
 #endif
 /** @} */
 
+
+/**
+ * report version information about LIBBU
+ */
+BU_EXPORT BU_EXTERN(const char *bu_version, (void));
+
+
 /*----------------------------------------------------------------------*/
 /** @addtogroup hton */
 /** @{ */
@@ -2424,10 +2431,6 @@ BU_EXPORT BU_EXTERN(void bu_vls_prepend,
 
 /** @} */
 
-
-/* vers.c */
-BU_EXPORT extern const char		bu_version[];
-
 /** @addtogroup bu_log */
 /** @{ */
 /* units.c */
@@ -2443,8 +2446,8 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 		     char *base,
 		     const char *value));
 
-
 /** @} */
+
 /** @addtogroup hton */
 /** @{ */
 
@@ -2480,8 +2483,8 @@ BU_EXPORT BU_EXTERN(unsigned char *bu_plong,
 		    (register unsigned char *msgp,
 		     register unsigned long l));
 
-
 /** @} */
+
 /** @addtogroup bu_log */
 /** @{ */
 
@@ -2491,8 +2494,8 @@ BU_EXPORT BU_EXTERN(struct bu_vls *bu_association,
 		     const char *value,
 		     int field_sep));
 
-
 /** @} */
+
 /** @addtogroup butcl */
 /** @{ */
 

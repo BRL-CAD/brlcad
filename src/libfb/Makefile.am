@@ -20,7 +20,7 @@ else
 IF_X_CFLAGS =
 endif
 
-SRCS = \
+libfb_la_SOURCES = \
 	asize.c \
 	fb_generic.c \
 	fb_log.c \
@@ -41,10 +41,7 @@ SRCS = \
 	if_remote.c \
 	if_stack.c \
 	if_wgl.c \
-	tcl.c
-
-libfb_la_SOURCES = \
-	$(SRCS) \
+	tcl.c \
 	vers.c
 
 libfb_la_LDFLAGS = -version-info 19:1
@@ -85,16 +82,9 @@ EXTRA_DIST = \
 	if_ts.c \
 	if_ug.c \
 	libfb.dsp \
-	sgiselect.s \
-	vers_win.c
+	sgiselect.s
 
-BUILT_SOURCES = vers.c
 
-vers.c: $(SRCS)
-	@SH@ $(top_srcdir)/sh/vers.sh fb_version "The BRL-CAD Framebuffer Library" > $@
-
-CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
 DEPS=src/libpkg

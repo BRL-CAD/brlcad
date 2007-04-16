@@ -54,11 +54,6 @@ static const char RCSid[] = "@(#)$Header";
 #include "tcl.h"
 
 
-extern const char bu_version[];
-extern const char bn_version[];
-extern const char rt_version[];
-extern const char fb_version[];
-
 static char usage[] = "\
 Usage: binfo \
  returns information about the BRL-CAD runtime environment characteristics\n\
@@ -71,12 +66,10 @@ main(int argc, char *argv[])
     printf("%s", usage);
   }
 
-  printf("binfo: bu_version=[%s]\n", bu_version);
-  printf("binfo: bn_version=[%s]\n", bn_version);
-#if 0
-  printf("binfo: rt_version=[%s]\n", rt_version);
-#endif
-  printf("binfo: fb_version=[%s]\n", fb_version);
+  printf("bu_version=[%s]\n", bu_version());
+  printf("bn_version=[%s]\n", bn_version());
+  printf("rt_version=[%s]\n", rt_version());
+  printf("fb_version=[%s]\n", fb_version());
 
   exit(0);
 }

@@ -162,7 +162,7 @@ bary_SOURCES = bary.c
 bary_LDADD = ${BU} ${BU_LIBS}
 
 binfo_SOURCES = binfo.c
-binfo_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
+binfo_LDADD = ${RT} ${RTLIBS} ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 buffer_SOURCES = buffer.c
 buffer_LDADD = ${BU} ${BU_LIBS}

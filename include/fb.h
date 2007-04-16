@@ -244,8 +244,12 @@ FB_EXPORT extern int Fb_Init();
 #endif
 FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
 
-/* vers.c */
-FB_EXPORT extern char fb_version[];
+
+/**
+ * report version information about LIBFB
+ */
+FB_EXPORT extern const char *fb_version(void);
+
 
 #endif /* FB_H */
 /** @} */

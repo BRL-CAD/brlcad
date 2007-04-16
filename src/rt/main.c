@@ -214,9 +214,9 @@ int main(int argc, char **argv)
 	if (rt_verbosity & VERBOSE_LIBVERSIONS) {
 		(void)fprintf(stderr, "%s%s%s%s\n",
 			version+5,
-			rt_version+5,
-			bn_version+5,
-			bu_version+5
+			      rt_version(),
+			      bn_version(),
+			      bu_version()
 		      );	/* +5 to skip @(#) */
 	}
 #if defined(DEBUG)

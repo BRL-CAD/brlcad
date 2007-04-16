@@ -1,12 +1,13 @@
 # $Id$
 
+SUBDIRS = conf
+
 brlcadincludedir = $(includedir)/brlcad
 
 brlcadinclude_required = \
 	RtServerImpl.h \
 	bn.h \
 	brlcad_config.h \
-	brlcad_version.h \
 	bu.h \
 	common.h \
 	config_win.h \
@@ -76,6 +77,7 @@ brlcadinclude_wanted = \
 
 # headers used by multiple packages but still considered private
 noinst_HEADERS = \
+	brlcad_version.h \
 	fbmsg.h \
 	sysv.h
 
@@ -104,17 +106,6 @@ endif
 endif
 # end ONLY_BENCHMARK
 
-brlcad_version.h:
-	@sh $(top_srcdir)/sh/vers.sh brlcad_version "BRL-CAD" > $@
-
-# make sure that the build date/version is updated every time make is run
-all-local:
-	@sh $(top_srcdir)/sh/vers.sh brlcad_version "BRL-CAD" > brlcad_version.h
-
-DISTCLEANFILES = \
-	brlcad_version.h \
-	stamp-h1 \
-	version
 
 MAINTAINERCLEANFILES = Makefile.in
 

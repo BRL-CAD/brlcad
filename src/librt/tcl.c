@@ -1521,7 +1521,6 @@ rt_tcl_setup(Tcl_Interp *interp)
 	/* initialize view objects */
 	Vo_Init(interp);
 
-	Tcl_SetVar(interp, "rt_version", (char *)rt_version+5, TCL_GLOBAL_ONLY);
 	Tcl_LinkVar(interp, "rt_bot_minpieces", (char *)&rt_bot_minpieces, TCL_LINK_INT);
 
 	Tcl_LinkVar(interp, "rt_bot_tri_per_piece",
@@ -1544,8 +1543,6 @@ Rt_d_Init(Tcl_Interp *interp)
 Rt_Init(Tcl_Interp *interp)
 #endif
 {
-	const char *version_number;
-
 	/*XXX how much will this break? */
 	if (BU_LIST_UNINITIALIZED(&rt_g.rtg_vlfree)) {
 		if (bu_avail_cpus() > 1) {
@@ -1560,9 +1557,8 @@ Rt_Init(Tcl_Interp *interp)
 	}
 
 	rt_tcl_setup(interp);
-	Tcl_Eval(interp, "lindex $rt_version 2");
-	version_number = Tcl_GetStringResult(interp);
-	Tcl_PkgProvide(interp,  "Rt", version_number);
+
+	Tcl_PkgProvide(interp,  "Rt", BRLCAD_VERSION);
 
 	return TCL_OK;
 }

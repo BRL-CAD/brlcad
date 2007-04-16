@@ -5,7 +5,7 @@ noinst_LTLIBRARIES = libbn_nil.la
 
 man_MANS = libplot3.3
 
-SRCS = \
+libbn_nil_la_SOURCES = \
 	anim.c \
 	axis.c \
 	bn_tcl.c \
@@ -30,12 +30,9 @@ SRCS = \
 	tplot.c \
 	vectfont.c \
 	vector.c \
+	vers.c \
 	vert_tree.c \
 	wavelet.c
-
-libbn_nil_la_SOURCES = \
-	$(SRCS) \
-	vers.c
 
 libbn_la_SOURCES =
 libbn_la_LDFLAGS = -version-info 19:1
@@ -47,16 +44,8 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 EXTRA_DIST = \
 	$(man_MANS) \
 	libbn.dsp \
-	plot3.doc \
-	vers_win.c
+	plot3.doc
 
-BUILT_SOURCES = vers.c
-
-vers.c: $(SRCS)
-	@SH@ $(top_srcdir)/sh/vers.sh bn_version "The BRL-CAD Numerical Computation Library" > $@
-
-CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
 DEPS=src/libbu

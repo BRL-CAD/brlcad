@@ -899,6 +899,7 @@ bn_tcl_mat_print(Tcl_Interp		*interp,
 	Tcl_AppendResult(interp, obuf, "\n", (char *)NULL);
 }
 
+
 /**
  *			B N _ T C L _ S E T U P
  *@brief
@@ -936,10 +937,8 @@ bn_tcl_setup(Tcl_Interp *interp)
 	(void)Tcl_CreateCommand(interp, "bn_random",
 		(Tcl_CmdProc *)bn_cmd_random, (ClientData)NULL,
 		(Tcl_CmdDeleteProc *)NULL);
-
-
-	Tcl_SetVar(interp, "bn_version", (char *)bn_version+5, TCL_GLOBAL_ONLY);
 }
+
 
 /**
  *			B N _ I N I T

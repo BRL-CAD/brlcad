@@ -874,7 +874,7 @@ main (int argc, char **argv)
     extern int		bu_optind;			/* For use with getopt */
     extern char		*bu_optarg;
 
-    bu_log("%s\n", rt_version);
+    bu_log("%s\n", rt_version());
 
     control.glc_magic = G_LINT_CTRL_MAGIC;
     control.glc_debug = 0;

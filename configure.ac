@@ -84,22 +84,28 @@ dnl minimum version of autoconf required.  should coincide with
 dnl setting in autogen.sh script.
 AC_PREREQ(2.52)
 
-AC_INIT(BRL-CAD, 7.10.1, [http://brlcad.org], brlcad)
+dnl See HACKING for details on how to properly update the version
+define([MAJOR_VERSION], [patsubst(esyscmd([cat include/conf/MAJOR]), [
+])])
+define([MINOR_VERSION], [patsubst(esyscmd([cat include/conf/MINOR]), [
+])])
+define([PATCH_VERSION], [patsubst(esyscmd([cat include/conf/PATCH]), [
+])])
+define([CAD_VERSION], [patsubst([MAJOR_VERSION.MINOR_VERSION.PATCH_VERSION], [
+])])
+
+AC_INIT(BRL-CAD, [CAD_VERSION], [http://brlcad.org], brlcad)
 AC_REVISION($Revision$)
 
 AC_CONFIG_AUX_DIR(misc)
 
-dnl See HACKING for details on how to properly update the version
-MAJOR_VERSION=7
-MINOR_VERSION=10
-PATCH_VERSION=1
-AC_SUBST(MAJOR_VERSION)
-AC_SUBST(MINOR_VERSION)
-AC_SUBST(PATCH_VERSION)
-
 dnl just in case
 PACKAGE_NAME="BRL-CAD"
 AC_SUBST(PACKAGE_NAME)
+
+BRLCAD_VERSION=CAD_VERSION
+AC_DEFINE_UNQUOTED(BRLCAD_VERSION, "$BRLCAD_VERSION", "Version of BRL-CAD")
+AC_SUBST(BRLCAD_VERSION)
 
 # force locale setting to C so things like date output as expected
 LC_ALL=C
@@ -113,14 +119,11 @@ CONFIG_MONTH=`date +%m`
 CONFIG_YEAR=`date +%Y`
 CONFIG_DATE="${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}"
 CONFIG_TIME="`date '+%H %M %S'`"
-BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
-AC_DEFINE_UNQUOTED([BRLCAD_VERSION], "$BRLCAD_VERSION", "Version of BRL-CAD")
 AC_SUBST(CONFIG_DAY)
 AC_SUBST(CONFIG_MONTH)
 AC_SUBST(CONFIG_YEAR)
 AC_SUBST(CONFIG_DATE)
 AC_SUBST(CONFIG_TIME)
-AC_SUBST(BRLCAD_VERSION)
 
 # print out the title with a pretty box computed to wrap around
 title="Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
@@ -3633,6 +3636,7 @@ AC_CONFIG_FILES([
 	doc/legal/Makefile
 	doc/pad_file.xml
 	include/Makefile
+	include/conf/Makefile
 	m4/Makefile
 	misc/Makefile
 	misc/archlinux/Makefile

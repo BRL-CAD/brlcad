@@ -1765,11 +1765,10 @@ BN_EXPORT BU_EXTERN(void clean_vert_tree,
 BN_EXPORT BU_EXTERN(void tp_setup,
 		    ());
 
-
-/*----------------------------------------------------------------------*/
-/* vers.c */
-BN_EXPORT extern const char		bn_version[];
-/*----------------------------------------------------------------------*/
+/**
+ * report version information about LIBBN
+ */
+BN_EXPORT BU_EXTERN(const char *bn_version, (void));
 
 __END_DECLS
 
