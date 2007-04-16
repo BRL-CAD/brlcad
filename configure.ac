@@ -1433,7 +1433,7 @@ fi
 dnl check if the SGI graphics library links
 sgigl_link_works=no
 LIBSGIGL=""
-AC_CHECK_LIB(gl, getvideo, sgigl_link_works=yes ; LIBSGIGL="-lgl")
+AC_CHECK_LIB(gl, gconfig, sgigl_link_works=yes ; LIBSGIGL="-lgl")
 
 dnl check if the Solaris lexer library links
 l_link_works=no
