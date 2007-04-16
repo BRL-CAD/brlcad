@@ -12,16 +12,8 @@ libmultispectral_la_LIBADD = \
 
 libmultispectral_la_SOURCES = \
 	init.c \
-	sh_temp.c \
-	vers.c
+	sh_temp.c
 
-BUILT_SOURCES = vers.c
-
-vers.c: $(SRCS)
-	sh $(top_srcdir)/sh/vers.sh libmultispectral_version "The BRL-CAD MultiSpectral Library" > $@
-
-CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
