@@ -34,9 +34,14 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "common.h"
+
+/* private */
 #include "./iges_struct.h"
 #include "./iges_types.h"
 #include "../../librt/debug.h"
+#include "brlcad_version.h"
+
 
 int do_projection=1;
 char eor,eof,card[256];
@@ -65,7 +70,6 @@ char operator[]={
 
 mat_t *identity;
 
-extern char	version[];
 
 static int do_splines=0;
 static int do_drawings=0;
@@ -205,7 +209,7 @@ char *argv[];
 		bu_mem_barriercheck();
 	}
 
-	bu_log( "%s", version+5);
+	bu_log( "%s", brlcad_version("IGES to BRL-CAD Translator"));
 	bu_log( "Please direct bug reports to <bugs@brlcad.org>\n\n" );
 
 	/* Initialize some variables */

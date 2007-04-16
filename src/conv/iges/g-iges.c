@@ -64,11 +64,11 @@ static const char RCSrev[] = "$Revision$";
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
+
+/* private */
 #include "./iges.h"
 #include "../../librt/debug.h"
-
-
-extern char	version[];
+#include "brlcad_version.h"
 
 #define	CP_BUF_SIZE	4096	/* size of buffer for file copy */
 #define SUFFIX_LEN	10	/* max size of suffix for 'part' files (-m option) */
@@ -207,7 +207,7 @@ main(int argc, char *argv[])
 
 	bu_setlinebuf( stderr );
 
-	bu_log( "%s", version+5);
+	bu_log( "%s", brlcad_version("BRL-CAD to IGES Translator"));
 	bu_log( "Please direct bug reports to <bugs@brlcad.org>\n\n" );
 
 	tree_state = rt_initial_tree_state;	/* struct copy */

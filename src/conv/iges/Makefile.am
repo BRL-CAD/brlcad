@@ -12,7 +12,7 @@ noinst_HEADERS = \
 	iges_struct.h \
 	iges_types.h
 
-iges_g_srcs = \
+iges_g_SOURCES = \
 	add_face.c \
 	add_inner_shell.c \
 	add_loop.c \
@@ -85,7 +85,6 @@ iges_g_srcs = \
 	usage.c \
 	wedge.c
 
-iges_g_SOURCES = $(iges_g_srcs) iges-g-vers.c
 iges_g_LDADD = \
 	${WDB} ${WDB_LIBS} \
 	${RT} ${RT_LIBS} \
@@ -93,39 +92,27 @@ iges_g_LDADD = \
 	${BU} ${BU_LIBS} \
 	${SYSV} ${SYSV_LIBS}
 
-g_iges_srcs = g-iges.c iges.c
-g_iges_SOURCES = $(g_iges_srcs) g-iges-vers.c
+g_iges_SOURCES = \
+	g-iges.c \
+	iges.c
+
 g_iges_LDADD = \
 	${RT} ${RT_LIBS} \
 	${BN} ${BN_LIBS} \
 	${BU} ${BU_LIBS} \
 	${SYSV} ${SYSV_LIBS}
 
-BUILT_SOURCES = \
-	iges-g-vers.c \
-	g-iges-vers.c
-
-iges-g-vers.c: $(iges_g_srcs) Makefile.am
-	sh $(top_srcdir)/sh/vers.sh version "IGES to BRL-CAD Translator" > $@
-
-g-iges-vers.c: $(g_iges_srcs) Makefile.am
-	sh $(top_srcdir)/sh/vers.sh version "BRL-CAD to IGES Translator" > $@
-
 EXTRA_DIST = \
 	$(man_MANS) \
 	arrange.c \
 	bubbleup.c \
 	copytree.c \
-	g-iges-vers_win.c \
 	ge6.igs \
-	iges-g-vers_win.c \
 	spl.c \
 	treecheck.c \
 	wing128.igs \
 	woodie.igs
 
-CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
