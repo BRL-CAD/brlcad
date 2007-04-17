@@ -2,7 +2,7 @@
 
 lib_LTLIBRARIES = libtclcad.la
 
-SRCS = \
+libtclcad_la_SOURCES = \
 	tclcadAutoPath.c \
 	tclcadTkSetup.c \
 	tkCanvBezier.c \
@@ -21,22 +21,11 @@ libtclcad_la_CFLAGS = \
 	-I$(top_srcdir)/src/other/tk/generic \
 	-I$(top_srcdir)/src/other/tk/unix
 
-libtclcad_la_SOURCES = \
-	$(SRCS) \
-	vers.c
-
 EXTRA_DIST = \
-	libtclcad.dsp \
-	vers_win.c
-
-BUILT_SOURCES = vers.c
-vers.c: $(SRCS)
-	@SH@ $(top_srcdir)/sh/vers.sh tclcad_version "BRL-CAD Routines for Tcl/Tk" > $@
-
-CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = version
-MAINTAINERCLEANFILES = Makefile.in
+	libtclcad.dsp
 
 DEPS=src/libfb
+
+MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
