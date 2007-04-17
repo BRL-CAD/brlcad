@@ -3,6 +3,65 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
+Project: "aPrep"=".\aPrep\aPrep.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    aPrep
+    .\aPrep
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "brlcad"=".\Dll\brlcad.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    brlcad
+    .\dll
+    end source code control
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name aPrep
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libbn
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libbu
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libregex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name librt
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libsysv
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libwdb
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name opennurbs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libz
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "libbn"="..\..\src\libbn\libbn.dsp" - Package Owner=<4>
 
 Package=<5>
@@ -99,22 +158,6 @@ Package=<4>
 
 ###############################################################################
 
-Project: "opennurbs"="..\..\src\other\openNURBS\opennurbs.dsp" - Package Owner=<4>
-
-Package=<5>
-{{{
-    begin source code control
-    opennurbs
-    ..\..\src\other\openNURBS
-    end source code control
-}}}
-
-Package=<4>
-{{{
-}}}
-
-###############################################################################
-
 Project: "libz"="..\..\src\other\libz\libz.dsp" - Package Owner=<4>
 
 Package=<5>
@@ -131,42 +174,18 @@ Package=<4>
 
 ###############################################################################
 
-Project: "brlcad"=".\Dll\brlcad.dsp" - Package Owner=<4>
+Project: "opennurbs"="..\..\src\other\openNURBS\opennurbs.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
     begin source code control
-    brlcad
-    .\Dll
+    opennurbs
+    ..\..\src\other\opennurbs
     end source code control
 }}}
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name libbn
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libbu
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libregex
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name librt
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libsysv
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libwdb
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name opennurbs
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libz
-    End Project Dependency
 }}}
 
 ###############################################################################

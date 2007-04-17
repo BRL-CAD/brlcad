@@ -1,12 +1,7 @@
 # $Id$
 
-SUBDIRS = \
-	aPrep \
-	Dll
-
 EXTRA_DIST = \
-	brlcad.dsw \
-	vers.vbs
+	aPrep.dsp
 
 MAINTAINERCLEANFILES = Makefile.in
 
