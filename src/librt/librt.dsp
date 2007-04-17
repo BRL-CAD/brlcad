@@ -30,7 +30,6 @@ CFG=librt - Win32 Debug
 # PROP Scc_ProjName "librt"
 # PROP Scc_LocalPath "."
 CPP=cl.exe
-F90=df.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "librt - Win32 Release"
@@ -749,78 +748,5 @@ SOURCE=.\wdb_obj.c
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # End Group
-# Begin Source File
-
-SOURCE=..\..\configure.ac
-
-!IF  "$(CFG)" == "librt - Win32 Release"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs rt_version The BRL-CAD Ray-Tracing Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "librt - Win32 Release Multithreaded"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs rt_version The BRL-CAD Ray-Tracing Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "librt - Win32 Release Multithreaded DLL"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs rt_version The BRL-CAD Ray-Tracing Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "librt - Win32 Debug"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs rt_version The BRL-CAD Ray-Tracing Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "librt - Win32 Debug Multithreaded"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs rt_version The BRL-CAD Ray-Tracing Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "librt - Win32 Debug Multithreaded DLL"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs rt_version The BRL-CAD Ray-Tracing Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ENDIF
-
-# End Source File
 # End Target
 # End Project

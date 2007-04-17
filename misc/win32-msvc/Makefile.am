@@ -5,8 +5,7 @@ SUBDIRS = \
 	Dll
 
 EXTRA_DIST = \
-	brlcad.dsw \
-	vers.vbs
+	brlcad.dsw
 
 MAINTAINERCLEANFILES = Makefile.in
 

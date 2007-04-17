@@ -30,7 +30,6 @@ CFG=libbu - Win32 Debug
 # PROP Scc_ProjName "libbu"
 # PROP Scc_LocalPath "."
 CPP=cl.exe
-F90=df.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "libbu - Win32 Release"
@@ -413,78 +412,5 @@ SOURCE=.\xdr.c
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # End Group
-# Begin Source File
-
-SOURCE=..\..\configure.ac
-
-!IF  "$(CFG)" == "libbu - Win32 Release"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs bu_version The BRL-CAD Utility Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libbu - Win32 Release Multithreaded"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs bu_version The BRL-CAD Utility Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libbu - Win32 Release Multithreaded DLL"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs bu_version The BRL-CAD Utility Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libbu - Win32 Debug"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs bu_version The BRL-CAD Utility Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libbu - Win32 Debug Multithreaded"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs bu_version The BRL-CAD Utility Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libbu - Win32 Debug Multithreaded DLL"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs bu_version The BRL-CAD Utility Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ENDIF
-
-# End Source File
 # End Target
 # End Project

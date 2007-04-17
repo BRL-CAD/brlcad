@@ -29,7 +29,6 @@ CFG=libbn - Win32 Debug
 # PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName "libbn"
 # PROP Scc_LocalPath "."
-F90=df.exe
 CPP=cl.exe
 RSC=rc.exe
 
@@ -297,78 +296,5 @@ SOURCE=.\wavelet.c
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # End Group
-# Begin Source File
-
-SOURCE=..\..\configure.ac
-
-!IF  "$(CFG)" == "libbn - Win32 Release"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs bn_version The BRL-CAD Numerical Computation Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libbn - Win32 Release Multithreaded"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs bn_version The BRL-CAD Numerical Computation Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libbn - Win32 Release Multithreaded DLL"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs bn_version The BRL-CAD Numerical Computation Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libbn - Win32 Debug"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs bn_version The BRL-CAD Numerical Computation Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libbn - Win32 Debug Multithreaded"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs bn_version The BRL-CAD Numerical Computation Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libbn - Win32 Debug Multithreaded DLL"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs bn_version The BRL-CAD Numerical Computation Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ENDIF
-
-# End Source File
 # End Target
 # End Project

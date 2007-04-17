@@ -30,7 +30,6 @@ CFG=libsysv - Win32 Debug
 # PROP Scc_ProjName "libsysv"
 # PROP Scc_LocalPath "."
 CPP=cl.exe
-F90=df.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "libsysv - Win32 Release"
@@ -200,87 +199,10 @@ SOURCE=.\strsep.c
 
 SOURCE=.\tcl.c
 # End Source File
-# Begin Source File
-
-SOURCE=.\vers.c
-# End Source File
 # End Group
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # End Group
-# Begin Source File
-
-SOURCE=..\..\configure.ac
-
-!IF  "$(CFG)" == "libsysv - Win32 Release"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs libsysv_version The BRL-CAD System V Compatibility Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libsysv - Win32 Release Multithreaded"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs libsysv_version The BRL-CAD System V Compatibility Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libsysv - Win32 Release Multithreaded DLL"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs libsysv_version The BRL-CAD System V Compatibility Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libsysv - Win32 Debug"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs libsysv_version The BRL-CAD System V Compatibility Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libsysv - Win32 Debug Multithreaded"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs libsysv_version The BRL-CAD System V Compatibility Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "libsysv - Win32 Debug Multithreaded DLL"
-
-# Begin Custom Build
-ProjDir=.
-InputPath=..\..\configure.ac
-
-"$(ProjDir)\vers.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	cscript //nologo ..\..\misc\win32-msvc\vers.vbs libsysv_version The BRL-CAD System V Compatibility Library > $(ProjDir)\vers.c
-
-# End Custom Build
-
-!ENDIF
-
-# End Source File
 # End Target
 # End Project
