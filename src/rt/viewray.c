@@ -51,6 +51,7 @@ static const char RCSrayview[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 
+/* private */
 #include "rtprivate.h"
 
 int		use_air = 1;		/* Handling of air in librt */
@@ -64,7 +65,8 @@ struct bu_structparse view_parse[] = {
 
 extern FILE	*outfp;			/* optional output file */
 
-char usage[] = "\
+const char title[] = "RT Ray";
+const char usage[] = "\
 Usage:  rtray [options] model.g objects... >file.ray\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\
@@ -76,10 +78,11 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-void	view_pixel(void) {}
 
+void	view_pixel(void) {}
 void	view_setup(void) {}
 void	view_cleanup(void) {}
+
 
 /* "paint" types are negative ==> interpret as "special" air codes */
 #define PAINT_FIRST_ENTRY	(-999)

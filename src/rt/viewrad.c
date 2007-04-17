@@ -47,8 +47,11 @@ static const char RCSppview[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+
+/* private */
 #include "rtprivate.h"
 #include "./rad.h"
+
 
 #define	MAXREFLECT	16
 #define	DEFAULTREFLECT	8
@@ -86,11 +89,8 @@ struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-void		dumpray(struct rayinfo *rp);
-void		dumpall(struct application *ap, int depth);
-static int	isvisible(struct application *ap, struct hit *hitp, const fastf_t *norm);
-
-char usage[] = "\
+const char title[] = "RTRAD";
+const char usage[] = "\
 Usage:  rtrad [options] model.g objects... >file.rad\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\
@@ -111,8 +111,13 @@ static int	precindex = 0;
 static int	precnum = 0;	/* number of physical records written */
 static int	recnum = 0;	/* number of (useful) records written */
 
+
+void dumpray(struct rayinfo *rp);
+void dumpall(struct application *ap, int depth);
+static int isvisible(struct application *ap, struct hit *hitp, const fastf_t *norm);
 static int radhit(register struct application *ap, struct partition *PartHeadp, struct seg *segHeadp);
 static int radmiss(struct application *ap);
+
 
 /*
  *  			V I E W _ I N I T

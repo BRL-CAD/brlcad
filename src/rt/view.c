@@ -74,7 +74,8 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
 #include "plot3.h"
 #include "photonmap.h"
 
-char usage[] = "\
+const char title[] = "The BRL-CAD Raytracer RT";
+const char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
 Options:\n\
  -s #		Square grid size in pixels (default 512)\n\

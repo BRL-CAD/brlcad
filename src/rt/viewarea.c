@@ -76,6 +76,8 @@ struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 
+
+const char title[] = "RT Area";
 const char usage[] = "\
 Usage:  rtarea [options] model.g objects...\n\
 Options:\n\
@@ -90,6 +92,7 @@ Options:\n\
  -c \"set rt_cline_radius=radius\"      Additional radius to be added to CLINE solids\n\
  -x #		Set librt debug flags\n\
 ";
+
 
 struct area {
     struct area *assembly;	/* pointer to a linked list of assemblies */
@@ -113,6 +116,7 @@ typedef enum area_type {
 
 int rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp);
 int raymiss(register struct application *ap);
+
 
 /*
  *  			V I E W _ I N I T

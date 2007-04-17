@@ -50,7 +50,8 @@ static const char RCSppview[] = "@(#)$Header$ (BRL)";
 
 int		use_air = 0;		/* Handling of air in librt */
 
-char usage[] = "\
+const char title[] = "RT Pretty Picture";
+const char usage[] = "\
 Usage:  rtpp [options] model.g objects... >file.pp\n\
 Options:\n\
  -s #		Grid size in pixels, default 512, max 1024\n\

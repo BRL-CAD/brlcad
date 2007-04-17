@@ -61,7 +61,8 @@ struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL}
 };
 
-char usage[] = "\
+const char title[] = "RT Weight";
+const char usage[] = "\
 Usage:  rtweight [options] model.g objects...\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\

@@ -237,7 +237,9 @@ struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
-char usage[] = "\
+
+const char title[] = "RT Hidden-Line Renderer";
+const char usage[] = "\
 Usage:  rtedge [options] model.g objects... >file.pix\n\
 Options:\n\
  -s #               Grid size in pixels, (default 512)\n\
@@ -255,7 +257,8 @@ Options:\n\
  -T #/#             Tolerance: distance/angular\n\
  -r                 Report overlaps\n\
  -R                 Do not report overlaps\n\
- -c                 Auxillary commands (see man page)\n";
+ -c                 Auxillary commands (see man page)\n\
+";
 
 
 /*

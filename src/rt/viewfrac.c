@@ -66,10 +66,9 @@ struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
-/*
- *  The usage message for this application.
- */
-char usage[] = "\
+
+const char title[] = "RT Volume Fractions";
+const char usage[] = "\
 Usage:  rtfrac [options] model.g objects... >file.frac\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\
@@ -80,8 +79,10 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
+
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int	raymiss(register struct application *ap);
+
 
 /*
  *  			V I E W _ I N I T

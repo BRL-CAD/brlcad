@@ -49,12 +49,14 @@ static const char RCSviewxray[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtprivate.h"
 #include "fb.h"
+#include "rtprivate.h"
 
 
-int	use_air = 0;			/* Handling of air in librt */
-int	using_mlib = 0;			/* Material routines NOT used */
+/* lighting models */
+#define	LGT_BW		0
+#define	LGT_FLOAT	1
+
 
 extern	FBIO	*fbp;
 extern	FILE	*outfp;
@@ -75,7 +77,8 @@ struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
-char usage[] = "\
+const char title[] = "RT X-Ray";
+const char usage[] = "\
 Usage: rtxray [options] model.g objects... >stuff\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\
@@ -89,9 +92,9 @@ Options:\n\
  -l 1		Floating point X-Rays (path lengths in doubles)\n\
 ";
 
-/* lighting models */
-#define	LGT_BW		0
-#define	LGT_FLOAT	1
+int	use_air = 0;			/* Handling of air in librt */
+int	using_mlib = 0;			/* Material routines NOT used */
+
 
 /*
  *  Called at the start of a run.

@@ -79,6 +79,7 @@ struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 
+const char title[] = "RT BoT Faces";
 const char usage[] = "\
 Usage:  rt_bot_faces [options] model.g objects... >file.ray\n\
 Options:\n\
@@ -96,7 +97,10 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-int	rayhit(), raymiss();
+
+int rayhit();
+int raymiss();
+
 
 /*
  *  			V I E W _ I N I T

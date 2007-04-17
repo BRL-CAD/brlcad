@@ -101,6 +101,7 @@ static mat_t	model2hv;		/* model coords to GIFT h,v in inches */
 static FILE	*plotfp;		/* optional plotting file */
 static long	line_num;		/* count of lines output to shotline file */
 
+const char title[] = "RTG3";
 const char usage[] = "\
 Usage:  rtg3 [options] model.g objects... >file.ray\n\
 Options:\n\
@@ -119,8 +120,10 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
+
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int     raymiss(register struct application *ap);
+
 
 /*
  *  			V I E W _ I N I T

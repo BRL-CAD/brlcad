@@ -46,9 +46,11 @@ static const char RCSrayrange[] = "@(#)$Header$";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "plot3.h"
+
+/* private */
 #include "./ext.h"
 #include "rtprivate.h"
-#include "plot3.h"
 
 
 #define CELLNULL ( (struct cell *) 0)
@@ -73,7 +75,8 @@ struct bu_structparse view_parse[] = {
 };
 
 
-char usage[] = "\
+const char title[] = "RT Range Plot";
+const char usage[] = "\
 Usage:  rtrange [options] model.g objects... >file.ray\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\
@@ -85,8 +88,10 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
+
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int	raymiss(register struct application *ap);
+
 
 /*
  *  			V I E W _ I N I T

@@ -80,103 +80,10 @@ ALLSRCS = \
 	viewweight.c \
 	viewxray.c
 
-rt_SOURCES = \
-	$(COMMON) \
-	vers.c \
-	view.c
-
-rt_bot_faces_vers.c: view_bot_faces.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT BoT Faces" > $@
-rt_bot_faces_SOURCES = 	\
-	$(COMMON) \
-	view_bot_faces.c \
-	rt_bot_faces_vers.c
-
-rt_simple_vers.c: rt_simple.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT Simple" > $@
-rt_simple_SOURCES = \
-	rt_simple.c \
-	rt_simple_vers.c
-
-rtarea_vers.c: $(COMMON) viewarea.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT Area" > $@
-rtarea_SOURCES = \
-	$(COMMON) \
-	rtarea_vers.c \
-	viewarea.c
-
-rtcell_vers.c: $(COMMON) viewcell.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT Cell" > $@
-rtcell_SOURCES = \
-	$(COMMON) \
-	rtcell_vers.c \
-	viewcell.c
-
-rtcheck_vers.c: $(COMMON) viewcheck.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT Check" > $@
-rtcheck_SOURCES = \
-	$(COMMON) \
-	rtcheck_vers.c \
-	viewcheck.c
-
-rtedge_vers.c: $(COMMON) viewedge.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT LGT-Style Hidden-Line Renderer" > $@
-rtedge_SOURCES = \
-	$(COMMON) \
-	rtedge_vers.c \
-	viewedge.c
-
-rtexample_SOURCES = \
-	rtexample.c
-
-rtfrac_vers.c: $(COMMON) viewfrac.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT Volume Fractions" > $@
-rtfrac_SOURCES = \
-	$(COMMON) \
-	rtfrac_vers.c \
-	viewfrac.c
-
-rtg3_vers.c: $(COMMON) viewg3.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RTG3" > $@
-rtg3_SOURCES = \
-	$(COMMON) \
-	rtg3_vers.c \
-	viewg3.c
-
-rthide_vers.c: $(COMMON) viewhide.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT Hidden-Line Plot" > $@
-rthide_SOURCES = \
-	$(COMMON) \
-	rthide_vers.c \
-	viewhide.c
-
-rtpp_vers.c: $(COMMON) viewpp.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT Pretty Picture" > $@
-rtpp_SOURCES = \
-	$(COMMON) \
-	rtpp_vers.c \
-	viewpp.c
-
-rtrad_vers.c: $(COMMON) viewrad.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RTRAD" > $@
-rtrad_SOURCES = \
-	$(COMMON) \
-	rtrad_vers.c \
-	viewrad.c
-
-rtrange_vers.c: $(COMMON) viewrange.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT Range Plot" > $@
-rtrange_SOURCES = \
-	$(COMMON) \
-	rtrange_vers.c \
-	viewrange.c
-
-rtray_vers.c: $(COMMON) viewray.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT Ray" > $@
-rtray_SOURCES = \
-	$(COMMON) \
-	rtray_vers.c \
-	viewray.c
+rt_simple_SOURCES = rt_simple.c
+rtexample_SOURCES = rtexample.c
+rtwalk_SOURCES = rtwalk.c
+rtshot_SOURCES = rtshot.c
 
 rtregis_SOURCES = \
 	read-rtlog.c \
@@ -186,31 +93,69 @@ rtscale_SOURCES = \
 	read-rtlog.c \
 	rtscale.c
 
-rtshot_SOURCES = \
-	rtshot.c
 
-rtsil_vers.c: $(COMMON) viewsil.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT Simple Intersection Lightmap" > $@
+rt_SOURCES = \
+	$(COMMON) \
+	view.c
+
+rt_bot_faces_SOURCES = 	\
+	$(COMMON) \
+	view_bot_faces.c
+
+rtarea_SOURCES = \
+	$(COMMON) \
+	viewarea.c
+
+rtcell_SOURCES = \
+	$(COMMON) \
+	viewcell.c
+
+rtcheck_SOURCES = \
+	$(COMMON) \
+	viewcheck.c
+
+rtedge_SOURCES = \
+	$(COMMON) \
+	viewedge.c
+
+rtfrac_SOURCES = \
+	$(COMMON) \
+	viewfrac.c
+
+rtg3_SOURCES = \
+	$(COMMON) \
+	viewg3.c
+
+rthide_SOURCES = \
+	$(COMMON) \
+	viewhide.c
+
+rtpp_SOURCES = \
+	$(COMMON) \
+	viewpp.c
+
+rtrad_SOURCES = \
+	$(COMMON) \
+	viewrad.c
+
+rtrange_SOURCES = \
+	$(COMMON) \
+	viewrange.c
+
+rtray_SOURCES = \
+	$(COMMON) \
+	viewray.c
+
 rtsil_SOURCES = \
 	$(COMMON) \
-	rtsil_vers.c \
 	viewsil.c
 
-rtwalk_SOURCES = \
-	rtwalk.c
-
-rtweight_vers.c: $(COMMON) viewweight.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT Weight" > $@
 rtweight_SOURCES = \
 	$(COMMON) \
-	rtweight_vers.c \
 	viewweight.c
 
-rtxray_vers.c: $(COMMON) viewxray.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "RT X-Ray" > $@
 rtxray_SOURCES = \
 	$(COMMON) \
-	rtxray_vers.c \
 	viewxray.c
 
 
@@ -237,28 +182,6 @@ man_MANS = \
 	rtweight.1 \
 	rtxray.1
 
-BUILT_SOURCES = \
-	rt_bot_faces_vers.c \
-	rt_simple_vers.c \
-	rtarea_vers.c \
-	rtcell_vers.c \
-	rtcheck_vers.c \
-	rtedge_vers.c \
-	rtfrac_vers.c \
-	rtg3_vers.c \
-	rthide_vers.c \
-	rtpp_vers.c \
-	rtrad_vers.c \
-	rtrange_vers.c \
-	rtray_vers.c \
-	rtsil_vers.c \
-	rtweight_vers.c \
-	rtxray_vers.c \
-	vers.c
-
-vers.c: $(COMMON) view.c
-	@SH@ $(top_srcdir)/sh/vers.sh version "The BRL-CAD Raytracer RT" > $@
-
 noinst_LIBRARIES = \
 	libremrt.a \
 	librttherm.a
@@ -279,13 +202,8 @@ sample_applications_DATA = rtexample.c
 EXTRA_DIST = \
 	$(ALLSRCS) \
 	$(man_MANS) \
-	rt.dsp \
-	rtcheck_vers_win.c \
-	rtedge_vers_win.c \
-	vers_win.c
+	rt.dsp
 
-CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
 DEPS=src/librt src/libfb src/liboptical

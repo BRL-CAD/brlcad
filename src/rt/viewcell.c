@@ -69,7 +69,9 @@ struct bu_structparse view_parse[] = {
 
 static mat_t	model2hv;		/* model coords to GIFT h,v in inches */
 
-char usage[] = "\
+
+const char title[] = "RT Cell";
+const char usage[] = "\
 Usage:  rtcell [options] model.g objects... >file.cell\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\
@@ -84,8 +86,10 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
+
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int     raymiss(register struct application *ap);
+
 
 /*
  *  			V I E W _ I N I T

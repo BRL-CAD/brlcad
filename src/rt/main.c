@@ -63,12 +63,18 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "./ext.h"
-#include "rtprivate.h"
-#include "../librt/debug.h"
 #include "pkg.h"
 
-extern char	usage[];
+/* private */
+#include "./ext.h"
+#include "../librt/debug.h"
+#include "rtprivate.h"
+#include "brlcad_version.h"
+
+
+extern const char title[];
+extern const char usage[];
+
 
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
@@ -112,8 +118,6 @@ extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
 extern char	*framebuffer;		/* desired framebuffer */
 
 extern struct command_tab	rt_cmdtab[];
-
-extern char	version[];		/* From vers.c */
 
 extern struct resource	resource[];	/* from opt.c */
 
@@ -213,11 +217,11 @@ int main(int argc, char **argv)
 	/* Identify the versions of the libraries we are using. */
 	if (rt_verbosity & VERBOSE_LIBVERSIONS) {
 		(void)fprintf(stderr, "%s%s%s%s\n",
-			version+5,
+			      brlcad_version(title),
 			      rt_version(),
 			      bn_version(),
 			      bu_version()
-		      );	/* +5 to skip @(#) */
+		      );
 	}
 #if defined(DEBUG)
 	(void)fprintf(stderr, "Compile-time debug symbols are available\n");
@@ -228,8 +232,7 @@ int main(int argc, char **argv)
 
 	/* Identify what host we're running on */
 	if (rt_verbosity & VERBOSE_LIBVERSIONS) {
-		char	hostname[512];
-		hostname[0] = '\0';
+		char	hostname[512] = {0};
 #ifndef _WIN32
 		if( gethostname( hostname, sizeof(hostname) ) >= 0 &&
 		    hostname[0] != '\0' )

@@ -75,7 +75,9 @@ struct bu_structparse view_parse[] = {
 
 extern FILE	*outfp;
 
-char usage[] = "Usage:  rtcheck [options] model.g objects...\n\
+
+const char title[] = "RT Check";
+const char usage[] = "Usage:  rtcheck [options] model.g objects...\n\
 Options:\n\
  -s #       Square grid size in pixels (default 512)\n\
  -w # -n #  Grid size width and height in pixels\n\
