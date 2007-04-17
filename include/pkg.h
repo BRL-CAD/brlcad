@@ -149,6 +149,8 @@ PKG_EXPORT PKG_EXTERN(unsigned long pkg_glong, (char *buf));
 PKG_EXPORT PKG_EXTERN(char *pkg_pshort, (char *buf, short unsigned int s));
 PKG_EXPORT PKG_EXTERN(char *pkg_plong, (char *buf, long unsigned int l));
 
+PKG_EXPORT PKG_EXTERN(const char *pkg_version, (void));
+
 #ifdef __cplusplus
 }
 #endif
