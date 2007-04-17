@@ -82,9 +82,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "pkg.h"
 #include "rtprivate.h"
 
+/* private */
 #include "../librt/debug.h"
 #include "./protocol.h"
 #include "./ihost.h"
+#include "brlcad_version.h"
 
 
 #ifndef HAVE_VFORK
@@ -408,7 +410,6 @@ extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
 
 int		rem_debug;		/* dispatcher debugging flag */
 
-extern int	version[];	/* From vers.c */
 #define	OPT_FRAME	0	/* Free for all */
 #define OPT_LOAD	1	/* 10% per server per frame */
 #define OPT_MOVIE	2	/* one server per frame */
@@ -547,7 +548,7 @@ main(int argc, char **argv)
 
 	/* Random inits */
 	our_hostname = get_our_hostname();
-	fprintf(stderr,"%s %s %s\n", stamp(), our_hostname, (char *)(version+5) );
+	fprintf(stderr,"%s %s %s\n", stamp(), our_hostname, brlcad_version("Network-Distributed RT (REMRT)"));
 	fflush(stderr);
 
 	width = height = 512;			/* same size as RT */

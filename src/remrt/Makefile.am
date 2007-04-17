@@ -15,11 +15,9 @@ remrt_LDADD = \
 	${BU} ${BU_LIBS} \
 	${PKG} ${PKG_LIBS} \
 	${SYSV} ${SYSV_LIBS}
-
 remrt_SOURCES = \
 	ihost.c \
-	remrt.c \
-	vers.c
+	remrt.c
 
 rtsrv_CFLAGS = -DRTSRV
 rtsrv_LDADD = \
@@ -32,17 +30,10 @@ rtsrv_LDADD = \
 	${PKG} ${PKG_LIBS} \
 	${SYSV} ${SYSV_LIBS}
 rtsrv_SOURCES = \
-	rtsrv.c \
-	vers.c
-
-BUILT_SOURCES = vers.c
-vers.c: $(remrt_srcs) Makefile.am
-	@SH@ $(top_srcdir)/sh/vers.sh version "Network-Distributed RT (REMRT)" > $@
+	rtsrv.c
 
 noinst_HEADERS = ihost.h protocol.h
 
-CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
