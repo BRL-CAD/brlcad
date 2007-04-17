@@ -524,9 +524,6 @@ xyz_pl_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 yuv_pix_SOURCES = yuv-pix.c
 yuv_pix_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
-.PHONY : vers.c
-vers.c:
-	sh $(top_srcdir)/sh/vers.sh version "BRL-CAD info" > $@
 
 man_MANS = \
 	alias-pix.1 \
