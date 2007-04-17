@@ -14,13 +14,8 @@ man_MANS = \
 	rttherm.1 \
 	ssamp-bw.1
 
-BUILT_SOURCES = vers.c
-vers.c: $(ALLSRCS)
-	@SH@ $(top_srcdir)/sh/vers.sh version "Thermal Multi-Spectral RT" > $@
-
 rttherm_SOURCES = \
 	spectrum.c \
-	vers.c \
 	viewtherm.c
 
 # have to link static due to librttherm.a, the aix linker, and duplicate symbols in optical/multispectral
@@ -72,13 +67,10 @@ ssamp_bw_LDADD = \
 #	spectrum.c
 
 EXTRA_DIST = \
-	$(BUILT_SOURCES) \
 	$(man_MANS) \
 	std_day_1km.dat \
 	test.sh
 
-CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs

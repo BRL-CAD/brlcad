@@ -70,7 +70,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "plot3.h"
 #include "light.h"
 
+/* private */
 #include "../rt/ext.h"
+#include "brlcad_version.h"
 
 
 extern int viewshade(struct application *ap,
@@ -674,9 +676,7 @@ free_scanlines(void)
 int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
-	extern char	libmultispectral_version[];
-
-	bu_log("%s", libmultispectral_version+5);
+	bu_log("%s", brlcad_version("Thermal Multi-Spectral RT"));
 
 	multispectral_shader_init(&mfHead);	/* in libmultispectral/init.c */
 
