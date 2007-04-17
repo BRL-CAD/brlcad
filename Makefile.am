@@ -407,7 +407,7 @@ all-local:
 	  $(ECHO) "Run 'make benchmark' to run the BRL-CAD Benchmark Suite" ;\
 	elif test "x$(MAKECMDGOALS)" = "xinstall-am" -o "x$(.TARGETS)" = "xinstall-am" ; then \
 	  $(ECHO) $(ECHO_N) "Elapsed installation time: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/brlcad_version.h | grep Compilation` ;\
+	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_srcdir)/include/brlcad_version.h | grep Compilation` ;\
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@ ;\
 	  $(ECHO) "---" ;\
@@ -423,7 +423,7 @@ all-local:
 	  $(ECHO) "$${separator}****" ;\
 	elif test "x$(MAKECMDGOALS)" = "x" -a "x$(.TARGETS)" = "x" ; then \
 	  $(ECHO) $(ECHO_N) "Elapsed time: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/brlcad_version.h | grep Compilation` ;\
+	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_srcdir)/include/brlcad_version.h | grep Compilation` ;\
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@ ;\
 	  $(ECHO) "---" ;\
