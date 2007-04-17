@@ -97,12 +97,15 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #include "libtermio.h"
 #include "db.h"
 
+/* private */
 #include "./ged.h"
 #include "./titles.h"
 #include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
+#include "brlcad_version.h"
+
 
 #ifdef DEBUG
 #  ifndef _WIN32
@@ -213,7 +216,6 @@ static void     mged_insert_char(char ch);
 static void	mged_process_char(char ch);
 static int	do_rc(void);
 static void	log_event(char *event, char *arg);
-extern char	version[];		/* from vers.c */
 
 struct bn_tol		mged_tol;	/* calculation tolerance */
 struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
@@ -327,7 +329,7 @@ main(int argc, char **argv)
 	    interactive = 1;
 
 	if(interactive && classic_mged){
-	    fprintf(stdout, "%s\n", version+5);	/* skip @(#) */
+	    fprintf(stdout, "%s\n", brlcad_version("Geometry Editor (MGED)"));
 	    fflush(stdout);
 
 	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
@@ -523,7 +525,7 @@ main(int argc, char **argv)
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "set version \"%s\"", version+5);
+	bu_vls_printf(&vls, "set version \"%s\"", brlcad_version("Geometry Editor (MGED)"));
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }

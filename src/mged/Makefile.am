@@ -143,7 +143,6 @@ mged_SOURCES = \
 	utility1.c \
 	utility2.c \
 	vdraw.c \
-	vers.c \
 	vparse.c \
 	vrlink.c
 
@@ -192,10 +191,6 @@ INCLUDES = \
 	${X_CFLAGS} \
 	-I$(top_srcdir)/include
 
-BUILT_SOURCES = vers.c
-vers.c:
-	sh $(top_srcdir)/sh/vers.sh version "Geometry Editor (MGED)"> $@
-
 EXTRA_DIST = \
 	$(man_MANS) \
 	arb.c \
@@ -206,14 +201,11 @@ EXTRA_DIST = \
 	fbserv_win32.c \
 	hideline.c \
 	memalloc.c \
-	mged.dsp \
-	vers_win.c
-
-CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = version
-MAINTAINERCLEANFILES = Makefile.in
+	mged.dsp
 
 DEPS=src/librt src/libtermio src/libwdb src/libdm src/libsysv src/other/incrTcl src/libtclcad
+
+MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
 
