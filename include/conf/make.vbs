@@ -70,7 +70,7 @@ fileStream.Close
 
 'DATE
 fileName = scriptPath + "\DATE"
-myValue  = Now
+myValue  = """" + CStr(Now) + """"
 
 Set fileStream = fileSystem.CreateTextFile(fileName, True)
 fileStream.WriteLine(myValue)
@@ -79,7 +79,7 @@ fileStream.Close
 
 ' HOST
 fileName = scriptPath + "\HOST"
-myValue  = wshNetwork.ComputerName
+myValue  = """" + wshNetwork.ComputerName + """"
 
 Set fileStream = fileSystem.CreateTextFile(fileName, True)
 fileStream.WriteLine(myValue)
@@ -88,7 +88,7 @@ fileStream.Close
 
 ' PATH
 fileName = scriptPath + "\PATH"
-myValue  = Replace(wshEnvironment("ProgramFiles") + "\BRL-CAD", "\", "/")
+myValue  = """" + Replace(wshEnvironment("ProgramFiles") + "\BRL-CAD", "\", "/") + """"
 
 Set fileStream = fileSystem.CreateTextFile(fileName, True)
 fileStream.WriteLine(myValue)
@@ -97,7 +97,7 @@ fileStream.Close
 
 ' USER
 fileName = scriptPath + "\USER"
-myValue  = wshNetwork.UserName
+myValue  = """" + wshNetwork.UserName + """"
 
 Set fileStream = fileSystem.CreateTextFile(fileName, True)
 fileStream.WriteLine(myValue)
