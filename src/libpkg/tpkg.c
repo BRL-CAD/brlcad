@@ -77,6 +77,9 @@ usage(const char *msg, const char *argv0)
     }
     bu_log("Client Usage: %s [-t] [-p#] host file\n\t-p#\tport number to send to (default 2000)\n\thost\thostname or IP address of receiving server\n\tfile\tsome file to transfer\n", argv0 ? argv0 : MAGIC_ID);
     bu_log("Server Usage: %s -r [-p#]\n\t-p#\tport number to listen on (default 2000)\n", argv0 ? argv0 : MAGIC_ID);
+
+    bu_log("\n%s", pkg_version());
+
     exit(1);
 }
 
@@ -311,7 +314,7 @@ main(int argc, char *argv[]) {
     const char *file = NULL;
 
     if (argc < 2) {
-	usage("ERROR: Missing arguments", argv[0]);
+	usage("ERROR: Missing arguments\n", argv[0]);
     }
 
     /* process the command-line arguments after the application name */
@@ -337,7 +340,7 @@ main(int argc, char *argv[]) {
 	    usage(NULL, argv0);
 	    break;
 	default:
-	    usage("ERROR: Unknown argument", argv0);
+	    usage("ERROR: Unknown argument\n", argv0);
 	}
     }
 
@@ -346,7 +349,7 @@ main(int argc, char *argv[]) {
 
     if (server) {
 	if (argc > 0) {
-	    usage("ERROR: Unexpected extra server arguments", argv0);
+	    usage("ERROR: Unexpected extra server arguments\n", argv0);
 	}
 
 	/* ignore broken pipes */
@@ -361,11 +364,11 @@ main(int argc, char *argv[]) {
 
     /* prep up the client */
     if (argc < 1) {
-	usage("ERROR: Missing hostname and file arguments", argv0);
+	usage("ERROR: Missing hostname and file arguments\n", argv0);
     } else if (argc < 2) {
-	usage("ERROR: Missing file argument", argv0);
+	usage("ERROR: Missing file argument\n", argv0);
     } else if (argc > 2) {
-	usage("ERROR: Too many arguments provided", argv0);
+	usage("ERROR: Too many arguments provided\n", argv0);
     }
 
     server_name = *argv++;
