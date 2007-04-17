@@ -678,7 +678,7 @@ free_scanlines(void)
 int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
-	bu_log("%s", brlcad_version("Thermal Multi-Spectral RT"));
+	bu_log("%s", brlcad_version(title));
 
 	multispectral_shader_init(&mfHead);	/* in libmultispectral/init.c */
 
