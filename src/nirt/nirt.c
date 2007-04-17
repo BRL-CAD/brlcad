@@ -61,11 +61,13 @@ static const char RCSid[] = "$Header$";
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+
+/* private */
 #include "./nirt.h"
 #include "./usrfmt.h"
+#include "brlcad_version.h"
 
 
-extern char	version[];		/* from vers.c */
 extern void	cm_libdebug();
 extern void	cm_debug();
 extern void	cm_attr();
@@ -458,7 +460,7 @@ main (int argc, char **argv)
 	    silent_flag = SILENT_YES;
     }
     if (silent_flag != SILENT_YES)
-	(void) fputs(version + 5, stdout);	/* skip @(#) */
+	(void) fputs(brlcad_version("Natalie's Interactive Ray Tracer"), stdout);
 
     if (use_of_air && (use_of_air != 1))
     {

@@ -6,7 +6,7 @@ bin_PROGRAMS = \
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-nirt_srcs = \
+nirt_SOURCES = \
 	nirt.c \
 	command.c \
 	conversion.c \
@@ -17,9 +17,6 @@ nirt_srcs = \
 	str_manip.c \
 	parse_fmt.c
 
-nirt_SOURCES = \
-	$(nirt_srcs) \
-	vers.c
 nirt_CFLAGS = -DDFLT_SHELL=\"/bin/sh\"
 nirt_LDADD = \
 	${PKG} ${PKG_LIBS} \
@@ -45,15 +42,8 @@ noinst_HEADERS = \
 EXTRA_DIST = \
 	$(man_MANS) \
 	dist_def.c \
-	nirt.dsp \
-	vers_win.c
+	nirt.dsp
 
-BUILT_SOURCES = vers.c
-vers.c: $(nirt_srcs) Makefile.am
-	sh $(top_srcdir)/sh/vers.sh version "Natalie's Interactive Ray Tracer" > $@
-
-CLEANFILES = vers.c
-DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
