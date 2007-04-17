@@ -1,11 +1,11 @@
 # $Id$
 
-COUNT:
+COUNT: DATE HOST PATH USER
 	@test -f $(top_srcdir)/include/conf/COUNT || echo "1" > $@
 	@test -f $@ || cp $(top_srcdir)/include/conf/COUNT .
 	@expr `cat COUNT` + 1 > $@
 
-DATE:
+DATE: HOST PATH USER
 	@test -f $(top_srcdir)/include/conf/DATE || echo "\"`date`\"" > $@
 	@test -f $@ || cp $(top_srcdir)/include/conf/DATE .
 	@echo "\"`date`\"" > $@
@@ -25,18 +25,9 @@ USER:
 	@test -f $@ || cp $(top_srcdir)/include/conf/USER .
 	@echo "\"`whoami`\"" > $@
 
-# make sure that the build is updated every time make is run
+
 all-local: COUNT DATE HOST PATH USER
-	@test -f COUNT || cp $(top_srcdir)/include/conf/COUNT .
-	@expr `cat COUNT` + 1 > COUNT
-	@test -f DATE || cp $(top_srcdir)/include/conf/DATE .
-	@echo "\"`date`\"" > DATE
-	@test -f HOST || cp $(top_srcdir)/include/conf/HOST .
-	@echo "\"`hostname`\"" > HOST
-	@test -f PATH || cp $(top_srcdir)/include/conf/PATH .
-	@echo "\"$(DESTDIR)$(prefix)\"" > PATH
-	@test -f USER || cp $(top_srcdir)/include/conf/USER .
-	@echo "\"`whoami`\"" > USER
+
 
 BUILT_SOURCES = \
 	COUNT \
@@ -51,9 +42,15 @@ EXTRA_DIST = \
 	MINOR \
 	PATCH
 
-DISTCLEANFILES = \
-	$(BUILT_SOURCES)
-
-MAINTAINERCLEANFILES = Makefile.in
+# remove all except COUNT
+CLEANFILES = \
+	DATE \
+	HOST \
+	PATH \
+	USER
+DISTCLEANFILES = $(CLEANFILES)
+MAINTAINERCLEANFILES = \
+	COUNT \
+	Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
