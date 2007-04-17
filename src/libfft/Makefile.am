@@ -71,9 +71,6 @@ irfft256.c:	ifftc$(EXEEXT)
 irfft512.c:	ifftc$(EXEEXT)
 	./ifftc$(EXEEXT) 512 > irfft512.c
 
-clean-local:
-	@RM@ -f ${BUILT_SOURCES}
-
 BUILT_SOURCES = \
 	irfft128.c \
 	irfft16.c \
@@ -86,9 +83,8 @@ BUILT_SOURCES = \
 	rfft32.c \
 	rfft64.c
 
-DISTCLEANFILES = \
-	$(BUILT_SOURCES)
-
+CLEANFILES = $(BUILT_SOURCES)
+DISTCLEANFILES = $(CLEANFILES)
 MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
