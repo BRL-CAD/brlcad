@@ -36,6 +36,7 @@
 ###
 
 prefix=@prefix@
+exec_prefix=@exec_prefix@
 includedir=@includedir@
 libdir=@libdir@
 
@@ -80,6 +81,7 @@ while test $# -gt 0; do
     case $1 in
 	--prefix=*)
 	    prefix="$optarg"
+	    exec_prefix="$prefix"
 	    includedir="${prefix}/include"
 	    libdir="${prefix}/lib"
 	    ;;
