@@ -16,7 +16,7 @@ endif
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS} ${BREP_CPPFLAGS}
 
-SRCS = \
+libwdb_nil_la_SOURCES = \
 	$(BREP_SRCS) \
 	arbn.c \
 	ars.c \
@@ -40,10 +40,6 @@ SRCS = \
 	vol.c \
 	wdb.c
 
-libwdb_nil_la_SOURCES = \
-	$(SRCS) \
-	vers.c
-
 libwdb_la_SOURCES =
 libwdb_la_LDFLAGS = -version-info 19:1
 libwdb_la_LIBADD = \
@@ -58,15 +54,8 @@ EXTRA_DIST = \
 	libwdb.dsp \
 	poly.c \
 	reg4.c \
-	spl.c \
-	vers_win.c
+	spl.c
 
-BUILT_SOURCES = vers.c
-vers.c: $(SRCS)
-	@SH@ $(top_srcdir)/sh/vers.sh > $@
-
-CLEANFILES = $(BUILT_SOURCES)
-DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
