@@ -222,11 +222,11 @@ main( int argc, char *argv[] )
 	readBatchInput( stdin );
     if( tty )
 	(void) HmHit( mainhmenu );
-    exitCleanly( BURST_EXIT_SUCCESS );
+    exitCleanly( EXIT_SUCCESS );
  clean:
     (void) unlink( tmpfname );
  death:
-    return BURST_EXIT_FAILURE;
+    return EXIT_FAILURE;
 }
 
 /*

@@ -44,12 +44,6 @@
 typedef int boolean;
 typedef genptr_t pointer;			/* generic pointer */
 
-#ifndef BURST_EXIT_SUCCESS
-#  define BURST_EXIT_SUCCESS	0
-#endif
-#ifndef BURST_EXIT_FAILURE
-#  define BURST_EXIT_FAILURE	1
-#endif
 
 #define DEGRAD	57.2957795130823208767981548141051703324054724665642
 
