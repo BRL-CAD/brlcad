@@ -31,7 +31,6 @@ EXTRA_DIST = \
 	prior.sh \
 	shtool \
 	template.sh \
-	vers.sh \
 	ws.sh
 
 
