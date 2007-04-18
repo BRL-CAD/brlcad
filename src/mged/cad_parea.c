@@ -55,7 +55,7 @@ typedef struct
 	double	y;			/* Y coordinate */
 }	point;			/* polygon vertex */
 
-static bool	GetArgs(int argc, char **argv), Input(register point *coop);
+static bool_t	GetArgs(int argc, char **argv), Input(register point *coop);
 static void	Output(double result), Usage(void);
 
 
@@ -75,7 +75,7 @@ main(int argc, char **argv)			/* "cad_parea" entry point */
 	point		previous;	/* previous point */
 	point		current;	/* current point */
 	point		first;		/* saved first point */
-	register bool	saved;		/* "`first' valid" flag */
+	register bool_t	saved;		/* "`first' valid" flag */
 	double		sum;		/* accumulator */
 
 	if ( !GetArgs( argc, argv ) )	/* process command arguments */
@@ -109,13 +109,13 @@ main(int argc, char **argv)			/* "cad_parea" entry point */
 }
 
 
-static bool
+static bool_t
 GetArgs(int argc, char **argv)			/* process command arguments */
 				/* argument count */
 				/* argument strings */
 {
-	static bool	iflag = false;	/* set if "-i" option found */
-	static bool	oflag = false;	/* set if "-o" option found */
+	static bool_t	iflag = false;	/* set if "-i" option found */
+	static bool_t	oflag = false;	/* set if "-o" option found */
 	int		c;		/* option letter */
 
 	while ( (c = bu_getopt( argc, argv, "i:o:" )) != EOF )
@@ -172,7 +172,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 }
 
 
-static bool
+static bool_t
 Input(register point *coop)				/* input a coordinate record */
 				/* -> input coordinates */
 {

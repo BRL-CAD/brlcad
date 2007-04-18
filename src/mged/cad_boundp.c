@@ -98,11 +98,11 @@ typedef struct queue
 }	queue;			/* entry in list of endpoints */
 
 #ifdef HAVE_STDARG_H
-static bool	Mess(char *fmt, ...);
+static bool_t	Mess(char *fmt, ...);
 #else
-static bool	Mess();
+static bool_t	Mess();
 #endif
-static bool	Build(void), Chop(void), EndPoint(register coords *p, register segment *segp), GetArgs(int argc, char **argv), Input(register segment *inp),
+static bool_t	Build(void), Chop(void), EndPoint(register coords *p, register segment *segp), GetArgs(int argc, char **argv), Input(register segment *inp),
 Near(register coords *ap, register coords *bp), Search(void), Split(coords *p, register segment *oldp, register segment *listh), Usage(void);
 static coords	*Intersect(register segment *a, register segment *b);
 static point	*LookUp(register coords *coop), *NewPoint(register coords *coop), *PutList(register coords *coop);
@@ -110,8 +110,8 @@ static pointer	Alloc(unsigned int size);
 static queue	*Enqueue(register point *addp, register point *startp);
 static void	Output(register coords *coop), Toss(register pointer ptr);
 
-static bool	initial = true; 	/* false after first Output */
-static bool	vflag = false;		/* set if "-v" option found */
+static bool_t	initial = true; 	/* false after first Output */
+static bool_t	vflag = false;		/* set if "-v" option found */
 static double	tolerance = 0.0;	/* point matching slop */
 static double	tolsq = 0.0;		/* `tolerance' ^ 2 */
 static point	*headp = NULL;		/* head of list of points */
@@ -119,7 +119,7 @@ static segment	seghead = {
 	&seghead };	/* segment list head */
 
 
-static bool
+static bool_t
 Usage(void) 				/* print usage message */
 {
 	return
@@ -148,14 +148,14 @@ main(int argc, char **argv)			/* "cad_boundp" entry point */
 }
 
 
-static bool
+static bool_t
 GetArgs(int argc, char **argv)			/* process command arguments */
 				/* argument count */
 				/* argument strings */
 {
-	static bool	iflag = false;	/* set if "-i" option found */
-	static bool	oflag = false;	/* set if "-o" option found */
-	static bool	tflag = false;	/* set if "-t" option found */
+	static bool_t	iflag = false;	/* set if "-i" option found */
+	static bool_t	oflag = false;	/* set if "-o" option found */
+	static bool_t	tflag = false;	/* set if "-t" option found */
 	int		c;		/* option letter */
 
 #ifdef	DEBUG
@@ -221,7 +221,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 	process.  It is also hard to do right; thus the elaborateness.
 */
 
-static bool
+static bool_t
 Chop(void)					/* chop vectors into segments */
 {
 	segment *inp;			/* -> input whole segment */
@@ -327,7 +327,7 @@ Chop(void)					/* chop vectors into segments */
 }
 
 
-static bool
+static bool_t
 Split(coords *p, register segment *oldp, register segment *listh) 		/* split segment in two */
 				/* -> break point */
 				/* -> segment to be split */
@@ -354,7 +354,7 @@ Split(coords *p, register segment *oldp, register segment *listh) 		/* split seg
 }
 
 
-static bool
+static bool_t
 Build(void) 				/* build linked lists */
 {
 	register segment	*listp; /* -> segment list entry */
@@ -381,7 +381,7 @@ Build(void) 				/* build linked lists */
 }
 
 
-static bool
+static bool_t
 Search(void)				/* output bounding polygon */
 {
 	double		from;		/* backward edge direction */
@@ -698,7 +698,7 @@ Intersect(register segment *a, register segment *b)			/* determine intersection 
 }
 
 
-static bool
+static bool_t
 EndPoint(register coords *p, register segment *segp)			/* check for segment endpoint */
 				/* -> point being tested */
 				/* -> segment */
@@ -715,7 +715,7 @@ EndPoint(register coords *p, register segment *segp)			/* check for segment endp
 }
 
 
-static bool
+static bool_t
 Near(register coords *ap, register coords *bp)				/* check if within tolerance */
 				/* -> points being checked */
 {
@@ -762,7 +762,7 @@ Toss(register pointer ptr)				/* return storage to heap */
 
 
 /*VARARGS*/
-static bool
+static bool_t
 #ifdef HAVE_STDARG_H
 Mess( char *fmt, ... )			/* print error message */
 #else
@@ -794,7 +794,7 @@ va_dcl					/* format, optional arguments */
 }
 
 
-static bool
+static bool_t
 Input(register segment *inp)				/* input stroke record */
 				/* -> input segment */
 {
