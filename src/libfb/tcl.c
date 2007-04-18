@@ -49,6 +49,10 @@
 #include "fb.h"
 #include "bu.h"
 
+/* private headers */
+#include "brlcad_version.h"
+
+
 #define FB_TCL_CKMAG(_ptr, _magic, _str){ \
 	struct bu_vls _fb_vls; \
 \

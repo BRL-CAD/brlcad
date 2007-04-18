@@ -40,6 +40,10 @@
 #include "dm.h"
 #include "cmd.h"
 
+/* private headers */
+#include "brlcad_version.h"
+
+
 /* from libdm/query.c */
 extern int dm_validXType();
 extern char *dm_bestXType();
