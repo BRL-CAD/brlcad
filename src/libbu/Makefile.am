@@ -90,9 +90,10 @@ AM_CPPFLAGS = \
 	${PNG_CPPFLAGS} \
 	${TCL_CPPFLAGS}
 
-DEPS=include
 if BUILD_TCL
-DEPS+=src/other/tcl
+DEPS = include src/other/tcl
+else
+DEPS = include
 endif
 
 MAINTAINERCLEANFILES = Makefile.in
