@@ -3662,8 +3662,8 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/rt.pc
 	misc/pkgconfig/wdb.pc
 	misc/vfont/Makefile
-	misc/win32-msvc/Makefile
 	misc/win32-msvc/Dll/Makefile
+	misc/win32-msvc/Makefile
 	misc/win32-msvc/aPrep/Makefile
 	misc/win32-msvc7/Makefile
 	misc/win32-msvc7/all/Makefile
