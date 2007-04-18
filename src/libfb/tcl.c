@@ -430,7 +430,7 @@ Fb_Init(Tcl_Interp *interp)
 	/* initialize framebuffer object code */
 	Fbo_Init(interp);
 
-	Tcl_PkgProvide(interp,  "Fb", BRLCAD_VERSION);
+	Tcl_PkgProvide(interp,  "Fb", brlcad_version());
 
 	return TCL_OK;
 }

@@ -1558,7 +1558,7 @@ Rt_Init(Tcl_Interp *interp)
 
 	rt_tcl_setup(interp);
 
-	Tcl_PkgProvide(interp,  "Rt", BRLCAD_VERSION);
+	Tcl_PkgProvide(interp,  "Rt", brlcad_version());
 
 	return TCL_OK;
 }

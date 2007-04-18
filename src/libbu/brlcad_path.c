@@ -51,6 +51,10 @@ static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "sysv.h"
 
+/* private headers */
+#include "brlcad_version.h"
+
+
 /* defaults for configure-less compiles */
 #ifndef BRLCAD_ROOT
 #  define BRLCAD_ROOT "/usr/brlcad"
@@ -190,7 +194,7 @@ bu_root_missing(const char *paths)
 Unable to locate where BRL-CAD %s is installed while searching:\n\
 %s\n\
 This version of BRL-CAD was compiled to be installed at:\n\
-	%s\n\n", BRLCAD_VERSION, paths, BRLCAD_ROOT);
+	%s\n\n", brlcad_version(), paths, BRLCAD_ROOT);
 
 #ifndef _WIN32
     bu_log("\
@@ -220,7 +224,7 @@ Unable to locate where BRL-CAD %s data resources are installed\n\
 while searching:\n\
 %s\n\
 This release of BRL-CAD expects data resources to be at:\n\
-	%s\n\n", BRLCAD_VERSION, paths, brlcad_data());
+	%s\n\n", brlcad_version(), paths, brlcad_data());
 
 #ifndef _WIN32
     bu_log("\
@@ -527,7 +531,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     }
 
     /* bu_brlcad_root/share/brlcad/VERSION path */
-    snprintf(path, (size_t)MAXPATHLEN, "share/brlcad/%s", BRLCAD_VERSION);
+    snprintf(path, (size_t)MAXPATHLEN, "share/brlcad/%s", brlcad_version());
     lhs = bu_brlcad_root(path, 1);
     if (lhs) {
 	snprintf(where, (size_t)(MAXPATHLEN + 64), "\tBRLCAD_ROOT common data path  [%s]\n", path);

@@ -79,7 +79,7 @@ Dm_Init(Tcl_Interp *interp)
 	/* initialize display manager object code */
 	Dmo_Init(interp);
 
-	Tcl_PkgProvide(interp,  "Dm", BRLCAD_VERSION);
+	Tcl_PkgProvide(interp,  "Dm", brlcad_version());
 
 	return TCL_OK;
 }
