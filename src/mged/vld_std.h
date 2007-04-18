@@ -39,7 +39,7 @@
 
 /* Extended data types */
 
-typedef int	bool;			/* Boolean data */
+typedef int	bool_t;			/* Boolean data */
 #define 	false	0
 #define 	true	1
 
@@ -48,39 +48,8 @@ typedef int	bs_type;		/* 3-way "bug/status" result type */
 #define 	bs_bad	0
 #define 	bs_ugly	(-1)
 
-/* ANSI C definitions */
-
-/* Defense against some silly systems defining __STDC__ to random things. */
-#ifdef STD_C
-#undef STD_C
-#endif
-#ifdef __STDC__
-#if __STDC__ > 0
-#define	STD_C	__STDC__		/* use this instead of __STDC__ */
-#endif
-#endif
-
-#ifdef STD_C
 typedef void	*pointer;		/* generic pointer */
-#else
-typedef char	*pointer;		/* generic pointer */
-#define	const		/* nothing */	/* ANSI C type qualifier */
-/* There really is no substitute for the following, but these might work: */
-#define	signed		/* nothing */	/* ANSI C type specifier */
-#define	volatile	/* nothing */	/* ANSI C type qualifier */
-#endif
 
-#ifndef EXIT_SUCCESS
-#define	EXIT_SUCCESS	0
-#endif
-
-#ifndef EXIT_FAILURE
-#define	EXIT_FAILURE	1
-#endif
-
-#ifndef NULL
-#define NULL	0			/* null pointer constant, all types */
-#endif
 
 /* Universal constants */
 
