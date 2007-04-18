@@ -108,28 +108,18 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define	USAGE2	"\t[ -f in_fb_file ] [ -a ] [ -v ] [ -x x_sc ] [ -y y_sc ]"
 #define	USAGE3 "\t[ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
 #define	OPTSTR	"af:F:hn:N:s:S:vw:W:x:y:"
-
-#ifndef EXIT_SUCCESS
-#define	EXIT_SUCCESS	0
-#endif
-#ifndef EXIT_FAILURE
-#define	EXIT_FAILURE	1
-#endif
-
-typedef int	bool;
-#define	false	0
-#define	true	1
-
 #define	EPSILON	0.0001			/* fudge for converting float to int */
 
+typedef int bool_t;
+
 static char	*arg0;			/* argv[0] for error message */
-static bool	hires = false;		/* set for 1Kx1K; clear for 512x512 */
-static bool	sample = false;		/* set: sampling; clear: averaging */
-static bool	verbose = false;	/* set for size info printout */
+static bool_t	hires = 0;		/* set for 1Kx1K; clear for 512x512 */
+static bool_t	sample = 0;		/* set: sampling; clear: averaging */
+static bool_t	verbose = 0;	/* set for size info printout */
 static float	x_scale = -1.0;		/* horizontal scaling factor */
 static float	y_scale = -1.0;		/* vertical scaling factor */
-static bool	x_compress;		/* set iff compressing horizontally */
-static bool	y_compress;		/* set iff compressing vertically */
+static bool_t	x_compress;		/* set iff compressing horizontally */
+static bool_t	y_compress;		/* set iff compressing vertically */
 static char	*src_file = NULL;	/* source frame buffer name */
 static FBIO	*src_fbp = FBIO_NULL;	/* source frame buffer handle */
 static char	*dst_file = NULL;	/* destination frame buffer name */
@@ -269,17 +259,17 @@ main(int argc, char **argv)
 
 	{
 		register int	c;
-		register bool	errors = false;
+		register bool_t	errors = 0;
 
 		while ( (c = bu_getopt( argc, argv, OPTSTR )) != EOF )
 			switch( c )
 				{
 			default:	/* '?': invalid option */
-				errors = true;
+				errors = 1;
 				break;
 
 			case 'a':	/* -a */
-				sample = true;
+				sample = 1;
 				break;
 
 			case 'f':	/* -f in_fb */
@@ -291,18 +281,18 @@ main(int argc, char **argv)
 				break;
 
 			case 'h':	/* -h */
-				hires = true;
+				hires = 1;
 				break;
 
 			case 'n':	/* -n height */
 				if ( (src_height = atoi( bu_optarg )) <= 0 )
-					errors = true;
+					errors = 1;
 
 				break;
 
 			case 'N':	/* -N height */
 				if ( (dst_height = atoi( bu_optarg )) <= 0 )
-					errors = true;
+					errors = 1;
 
 				break;
 
@@ -310,7 +300,7 @@ main(int argc, char **argv)
 				if ( (src_height = src_width = atoi( bu_optarg ))
 				  <= 0
 				   )
-					errors = true;
+					errors = 1;
 
 				break;
 
@@ -318,23 +308,23 @@ main(int argc, char **argv)
 				if ( (dst_height = dst_width = atoi( bu_optarg ))
 				  <= 0
 				   )
-					errors = true;
+					errors = 1;
 
 				break;
 
 			case 'v':
-				verbose = true;
+				verbose = 1;
 				break;
 
 			case 'w':	/* -w width */
 				if ( (src_width = atoi( bu_optarg )) <= 0 )
-					errors = true;
+					errors = 1;
 
 				break;
 
 			case 'W':	/* -W width */
 				if ( (dst_width = atoi( bu_optarg )) <= 0 )
-					errors = true;
+					errors = 1;
 
 				break;
 
@@ -342,7 +332,7 @@ main(int argc, char **argv)
 				if ( (x_scale = atof( bu_optarg )) <= 0 )
 					{
 					Message( "Nonpositive x scale factor" );
-					errors = true;
+					errors = 1;
 					}
 
 				break;
@@ -351,7 +341,7 @@ main(int argc, char **argv)
 				if ( (y_scale = atof( bu_optarg )) <= 0 )
 					{
 					Message( "Nonpositive y scale factor" );
-					errors = true;
+					errors = 1;
 					}
 
 				break;

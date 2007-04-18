@@ -94,22 +94,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define	USAGE	"gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [-z] [gif_file]"
 #define	OPTSTR	"F:ci:ovz"
 
-#ifndef EXIT_SUCCESS
-#define	EXIT_SUCCESS	0
-#endif
-#ifndef EXIT_FAILURE
-#define	EXIT_FAILURE	1
-#endif
-
-typedef int	bool;
-#define	false	0
-#define	true	1
+typedef int	bool_t;
 
 static char	*arg0;			/* argv[0] for error message */
-static bool	clear = true;		/* set iff clear to background wanted */
-static bool	ign_cr = false;		/* set iff 8-bit color resoln. forced */
-static bool	verbose = false;	/* set for GIF-file info printout */
-static bool	do_zoom = false;	/* set to zoom framebuffer */
+static bool_t	clear = 1;		/* set iff clear to background wanted */
+static bool_t	ign_cr = 0;		/* set iff 8-bit color resoln. forced */
+static bool_t	verbose = 0;	/* set for GIF-file info printout */
+static bool_t	do_zoom = 0;	/* set to zoom framebuffer */
 static int	image = 0;		/* # of image to display (0 => all) */
 static char	*gif_file = NULL;	/* GIF file name */
 static FILE	*gfp = NULL;		/* GIF input stream handle */
@@ -119,8 +110,8 @@ static int	ht;			/* virtual frame buffer height */
 static int	width, height;		/* overall "screen" size */
 static int	write_width;		/* used width of screen, <= width */
 static int	left, top, right, bottom;	/* image boundary */
-static bool	M_bit;			/* set iff color map provided */
-static bool	I_bit;			/* set iff image interlaced */
+static bool_t	M_bit;			/* set iff color map provided */
+static bool_t	I_bit;			/* set iff image interlaced */
 static int	cr;			/* # bits of color resolution */
 static int	cr_mask;		/* mask to strip all but high cr bits */
 static int	g_pixel;		/* global # bits/pixel in image */
@@ -566,13 +557,13 @@ main(int argc, char **argv)
 
 	{
 		register int	c;
-		register bool	errors = false;
+		register bool_t	errors = 0;
 
 		while ( (c = bu_getopt( argc, argv, OPTSTR )) != EOF )
 			switch( c )
 				{
 			default:	/* '?': invalid option */
-				errors = true;
+				errors = 1;
 				break;
 
 			case 'F':	/* -F fb_file */
@@ -580,7 +571,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'c':	/* -c */
-				ign_cr = true;
+				ign_cr = 1;
 				break;
 
 			case 'i':	/* -i image# */
@@ -588,14 +579,14 @@ main(int argc, char **argv)
 				break;
 
 			case 'o':	/* -o */
-				clear = false;
+				clear = 0;
 				break;
 
 			case 'v':	/* -v */
-				verbose = true;
+				verbose = 1;
 				break;
 			case 'z':
-				do_zoom = true;
+				do_zoom = 1;
 				break;
 				}
 

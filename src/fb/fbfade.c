@@ -91,21 +91,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "fb.h"			/* BRL-CAD package libfb.a interface */
 
-#ifndef EXIT_SUCCESS
-#define	EXIT_SUCCESS	0
-#endif
-#ifndef EXIT_FAILURE
-#define	EXIT_FAILURE	1
-#endif
 
 #define SIZE_T size_t
-
-typedef int	bool;
-#define	false	0
-#define	true	1
+typedef int bool_t;
 
 static char	*arg0;			/* argv[0] for error message */
-static bool	hires = false;		/* set for 1Kx1K; clear for 512x512 */
+static bool_t	hires = 0;		/* set for 1Kx1K; clear for 512x512 */
 static char	*in_fb_file = NULL;	/* input image name */
 static char	*out_fb_file = NULL;	/* output frame buffer name */
 static FBIO	*fbp = FBIO_NULL;	/* libfb input/output handle */
@@ -248,13 +239,13 @@ main(int argc, char **argv)
 
 	{
 		register int	c;
-		register bool	errors = false;
+		register bool_t	errors = 0;
 
 		while ( (c = bu_getopt( argc, argv, OPTSTR )) != EOF )
 			switch( c )
 				{
 			default:	/* '?': invalid option */
-				errors = true;
+				errors = 1;
 				break;
 
 			case 'f':	/* -f in_fb_file */
@@ -266,18 +257,18 @@ main(int argc, char **argv)
 				break;
 
 			case 'h':	/* -h */
-				hires = true;
+				hires = 1;
 				break;
 
 			case 'n':	/* -n height */
 				if ( (src_height = atoi( bu_optarg )) <= 0 )
-					errors = true;
+					errors = 1;
 
 				break;
 
 			case 'N':	/* -N height */
 				if ( (dst_height = atoi( bu_optarg )) <= 0 )
-					errors = true;
+					errors = 1;
 
 				break;
 
@@ -285,7 +276,7 @@ main(int argc, char **argv)
 				if ( (src_height = src_width = atoi( bu_optarg ))
 				  <= 0
 				   )
-					errors = true;
+					errors = 1;
 
 				break;
 
@@ -293,19 +284,19 @@ main(int argc, char **argv)
 				if ( (dst_height = dst_width = atoi( bu_optarg ))
 				  <= 0
 				   )
-					errors = true;
+					errors = 1;
 
 				break;
 
 			case 'w':	/* -w width */
 				if ( (src_width = atoi( bu_optarg )) <= 0 )
-					errors = true;
+					errors = 1;
 
 				break;
 
 			case 'W':	/* -W width */
 				if ( (dst_width = atoi( bu_optarg )) <= 0 )
-					errors = true;
+					errors = 1;
 
 				break;
 				}
