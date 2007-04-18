@@ -64,7 +64,10 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtgeom.h"
 #include "raytrace.h"
 
+/* private headers */
 #include "./debug.h"
+#include "brlcad_version.h"
+
 
 /* defined in wdb_obj.c */
 extern int Wdb_Init(Tcl_Interp *interp);
