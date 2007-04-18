@@ -132,11 +132,28 @@ static const char BRLCAD_USER[256] = {
 
 
 /**
- * provides the version of BRL-CAD along with basic configuration and
- * compilation details.
+ * provides the version string in MAJOR.MINOR.PATCH triplet form.
  */
 static const char *
-brlcad_version(const char *title) {
+brlcad_version(void)
+{
+    static char version[32] = {0};
+
+    if (version[0] = 0) {
+	snprintf(version, 32, "%d.%d.%d", BRLCAD_MAJOR, BRLCAD_MINOR, BRLCAD_PATCH);
+    }
+
+    return version;
+}
+
+
+/**
+ * provides the release identifier details along with basic
+ * configuration and compilation information.
+ */
+static const char *
+brlcad_ident(const char *title)
+{
     static char version[1024] = {0};
     static char label[64] = {0};
     
@@ -154,9 +171,9 @@ brlcad_version(const char *title) {
 		 BRLCAD_USER, BRLCAD_HOST, BRLCAD_PATH
 		 );
     }
+
     return version;
 }
-
 
 
 /*
