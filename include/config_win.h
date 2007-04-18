@@ -125,6 +125,9 @@
 #define S_IFCHR _S_IFCHR
 #define S_IFREG _S_IFREG
 #define S_IREAD _S_IREAD
+#define S_IRGRP _S_IREAD
+#define S_IROTH _S_IREAD
+#define S_IRUSR _S_IREAD
 #define S_IWRITE _S_IWRITE
 #define S_IEXEC _S_IEXEC
 #define access _access
