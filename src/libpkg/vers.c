@@ -36,7 +36,7 @@
 const char *
 pkg_version(void)
 {
-    return brlcad_version("The BRL-CAD Network Package (PKG) Library");
+    return brlcad_ident("The BRL-CAD Network Package (PKG) Library");
 }
 
 /*

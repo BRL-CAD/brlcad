@@ -36,7 +36,7 @@
 const char *
 rt_version(void)
 {
-    return brlcad_version("The BRL-CAD Ray-Tracing Library");
+    return brlcad_ident("The BRL-CAD Ray-Tracing Library");
 }
 
 /*

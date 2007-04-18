@@ -329,7 +329,7 @@ main(int argc, char **argv)
 	    interactive = 1;
 
 	if(interactive && classic_mged){
-	    fprintf(stdout, "%s\n", brlcad_version("Geometry Editor (MGED)"));
+	    fprintf(stdout, "%s\n", brlcad_ident("Geometry Editor (MGED)"));
 	    fflush(stdout);
 
 	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
@@ -525,7 +525,7 @@ main(int argc, char **argv)
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "set version \"%s\"", brlcad_version("Geometry Editor (MGED)"));
+	bu_vls_printf(&vls, "set version \"%s\"", brlcad_ident("Geometry Editor (MGED)"));
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }

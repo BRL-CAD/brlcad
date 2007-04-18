@@ -36,7 +36,7 @@
 const char *
 optical_version(void)
 {
-    return brlcad_version("The BRL-CAD Optical Shader Library");
+    return brlcad_ident("The BRL-CAD Optical Shader Library");
 }
 
 /*

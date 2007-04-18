@@ -209,7 +209,7 @@ char *argv[];
 		bu_mem_barriercheck();
 	}
 
-	bu_log( "%s", brlcad_version("IGES to BRL-CAD Translator"));
+	bu_log( "%s", brlcad_ident("IGES to BRL-CAD Translator"));
 	bu_log( "Please direct bug reports to <bugs@brlcad.org>\n\n" );
 
 	/* Initialize some variables */

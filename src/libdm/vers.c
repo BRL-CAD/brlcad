@@ -36,7 +36,7 @@
 const char *
 dm_version(void)
 {
-    return brlcad_version("The BRL-CAD Display Manager Library");
+    return brlcad_ident("The BRL-CAD Display Manager Library");
 }
 
 /*

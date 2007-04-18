@@ -217,7 +217,7 @@ int main(int argc, char **argv)
 	/* Identify the versions of the libraries we are using. */
 	if (rt_verbosity & VERBOSE_LIBVERSIONS) {
 		(void)fprintf(stderr, "%s%s%s%s\n",
-			      brlcad_version(title),
+			      brlcad_ident(title),
 			      rt_version(),
 			      bn_version(),
 			      bu_version()

@@ -548,7 +548,7 @@ main(int argc, char **argv)
 
 	/* Random inits */
 	our_hostname = get_our_hostname();
-	fprintf(stderr,"%s %s %s\n", stamp(), our_hostname, brlcad_version("Network-Distributed RT (REMRT)"));
+	fprintf(stderr,"%s %s %s\n", stamp(), our_hostname, brlcad_ident("Network-Distributed RT (REMRT)"));
 	fflush(stderr);
 
 	width = height = 512;			/* same size as RT */

@@ -36,7 +36,7 @@
 const char *
 bu_version(void)
 {
-    return brlcad_version("The BRL-CAD Utility Library");
+    return brlcad_ident("The BRL-CAD Utility Library");
 }
 
 /*

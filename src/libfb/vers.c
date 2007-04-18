@@ -36,7 +36,7 @@
 const char *
 fb_version(void)
 {
-    return brlcad_version("The BRL-CAD Framebuffer Library");
+    return brlcad_ident("The BRL-CAD Framebuffer Library");
 }
 
 /*

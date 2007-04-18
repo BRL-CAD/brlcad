@@ -460,7 +460,7 @@ main (int argc, char **argv)
 	    silent_flag = SILENT_YES;
     }
     if (silent_flag != SILENT_YES)
-	(void) fputs(brlcad_version("Natalie's Interactive Ray Tracer"), stdout);
+	(void) fputs(brlcad_ident("Natalie's Interactive Ray Tracer"), stdout);
 
     if (use_of_air && (use_of_air != 1))
     {

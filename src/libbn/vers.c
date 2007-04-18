@@ -36,7 +36,7 @@
 const char *
 bn_version(void)
 {
-    return brlcad_version("The BRL-CAD Numerical Computation Library");
+    return brlcad_ident("The BRL-CAD Numerical Computation Library");
 }
 
 /*
