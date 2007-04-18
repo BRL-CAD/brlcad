@@ -54,9 +54,11 @@ SELF="$0"
 ARGS="$*"
 BASE="`dirname $0`/.."
 
-# obtain the version of BRL-CAD from configure.ac
-eval "`grep \"^[MP][AI][JNT][OC][RH]_VERSION=\" ${BASE}/configure.ac`"
-BRLCAD_VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
+# obtain the version of BRL-CAD from include/conf
+MAJOR="`cat ${BASE}/include/conf/MAJOR`"
+MINOR="`cat ${BASE}/include/conf/MINOR`"
+PATCH="`cat ${BASE}/include/conf/PATCH`"
+BRLCAD_VERSION="${MAJOR}.${MINOR}.${PATCH}"
 
 # force locale setting to C so things like date output as expected
 LC_ALL=C
