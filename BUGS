@@ -15,6 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged -c, select ogl display manager, crashes X11 -- tested on os x
+
 * crashes during photonmap raytrace of m35 where right node is invalid
   rt -o test.pix -V 1.0 -P4 -J0 -l7 -A0 ~/Desktop/m35.g all.g box.r sph.r
 
