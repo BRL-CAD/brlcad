@@ -443,7 +443,7 @@ main(int argc, char** argv)
 
 	//mk_comb1(outfp, "cube.r", geom_name, 1);
 	unsigned char rgb[] = {255,255,255};
-	mk_region1(outfp, "cube.r", geom_name, "flat", "", rgb);
+	mk_region1(outfp, "cube.r", geom_name, "plastic", "", rgb);
 	
 	wdb_close(outfp);	
     }
