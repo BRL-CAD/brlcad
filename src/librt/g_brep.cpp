@@ -87,7 +87,11 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 #include <iostream>
 #include <algorithm>
 
-#define TRACE(s) std::cout << "TRACE: " << s << std::endl
+//#define TRACE(s) std::cout << "TRACE: " << s << std::endl
+#define TRACE(s)
+#define ON_PRINT4(p) "[" << (p)[0] << "," << (p)[1] << "," << (p)[2] << "," << (p)[3] << "]"
+#define ON_PRINT3(p) "(" << (p)[0] << "," << (p)[1] << "," << (p)[2] << ")"
+#define ON_PRINT2(p) "(" << (p)[0] << "," << (p)[1] << ")"
 
 //--------------------------------------------------------------------------------
 // Bounding volume classes
@@ -453,6 +457,7 @@ brep_surface_bbox(const ON_BrepFace& face, const ON_Interval& u, const ON_Interv
     VSETALL(max, -MAX_FASTF);
     for (int i = 0; i < 4; i++) 
 	VMINMAX(min,max,((double*)corners[i]));
+    TRACE("bb: " << ON_PRINT3(min) << " -> " << ON_PRINT3(max));
     return new SurfaceBV(face,min,max,u,v);
 }
 
@@ -622,9 +627,6 @@ void brep_intersect_bv(IsectList& inters, struct xray* r, BoundingVolume* bv)
 	}
 }
 
-#define ON_PRINT4(p) "[" << (p)[0] << "," << (p)[1] << "," << (p)[2] << "," << (p)[3] << "]"
-#define ON_PRINT3(p) "(" << (p)[0] << "," << (p)[1] << "," << (p)[2] << ")"
-#define ON_PRINT2(p) "(" << (p)[0] << "," << (p)[1] << ")"
 
 void brep_get_plane_ray(struct xray* r, plane_ray& pr)
 {
@@ -740,20 +742,18 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
 	mat2d_pt2d_mul(tmp, inv_jacob, R);
 	TRACE("\tuv:"<<ON_PRINT2(uv)<<" tmp:"<<ON_PRINT2(tmp));
 	pt2dsub(out_uv, uv, tmp);
-	fastf_t l,h;
-// 	surf->GetDomain(0,&l,&h);
-// 	if (new_uv[0] < l || new_uv[0] > h) move(new_uv,old_uv);
-// 	else {
-// 	    surf->GetDomain(1,&l,&h);
-// 	    if (new_uv[1] < l || new_uv[1] > h) move(new_uv,old_uv);
-// 	}
     }
     else {
-	TRACE("inverse failed");
+	TRACE("inverse failed"); // XXX how to handle this?
 	move(out_uv,uv);
     }
 }
 
+bool
+brep_is_trimmed(const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv) 
+{
+
+}
 
 bool 
 brep_intersect(const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv, plane_ray& pr, brep_hit** hit)
@@ -779,6 +779,16 @@ brep_intersect(const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv, plane
 	Dlast = d;
     }
     if (found) {
+	fastf_t l,h;
+ 	surf->GetDomain(0,&l,&h);
+ 	if (uv[0] < l || uv[0] > h) { TRACE("out of U bounds"); return false; } // oob
+ 	else {
+ 	    surf->GetDomain(1,&l,&h);
+ 	    if (uv[1] < l || uv[1] > h) { TRACE("out of V bounds"); return false; } // oob
+ 	}
+
+	if (brep_is_trimmed(face, surf, uv)) return false; 
+
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
 	surf->EvNormal(uv[0],uv[1],_pt,_norm);
@@ -860,8 +870,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    }
 	    return hits.size();
 	} else {
-	    bu_log("ACK! found odd number of intersection points. XXX Handle this!\n");
-	    bu_log("It's really not acceptable to just print inane statements :-)\n");
+ 	    std::cout << "ACK! found " << hits.size() << " number of intersection points. XXX Handle this!\n" << std::endl;
+	    std::cout << "It's really not acceptable to just print inane statements :-)\n" << std::endl;
 	}
     }
 
