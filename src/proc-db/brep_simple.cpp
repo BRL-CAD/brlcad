@@ -351,7 +351,7 @@ MakeTwistedCube(ON_TextLog& error_log)
 	// front 
 	ON_3dPoint( 0.0,  0.0,  1.0), // Point A
 	ON_3dPoint( 1.0,  0.0,  1.0), // Point B
-	ON_3dPoint( 1.0,  1.0,  1.0), // Point C
+	ON_3dPoint( 1.0,  1.2,  1.0), // Point C
 	ON_3dPoint( 0.0,  1.0,  1.0), // Point D
 
 	// back
