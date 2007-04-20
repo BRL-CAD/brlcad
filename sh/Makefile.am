@@ -20,6 +20,7 @@ EXTRA_DIST = \
 	enumerate.sh \
 	footer.sh \
 	header.sh \
+	linkroot.sh \
 	make_deb.sh \
 	make_dmg.sh \
 	make_pkg.sh \
