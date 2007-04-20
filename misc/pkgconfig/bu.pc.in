@@ -3,6 +3,7 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 datadir=@datadir@
+datarootdir=@datarootdir@
 
 Name: libbu
 Description: BRL-CAD Utility Library
