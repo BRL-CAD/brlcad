@@ -243,7 +243,7 @@ MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
     
 	// the type gives metadata on the trim type in this case, "mated"
 	// means the trim is connected to an edge, is part of an
-	// outer/inner/slit loop, no other trim from the same edge is
+	// outer/inner/slit loop, no other trim from the same loop is
 	// connected to the edge, and at least one trim from a different
 	// loop is connected to the edge
 	trim.m_type = ON_BrepTrim::mated; // i.e. this b-rep is closed, so
