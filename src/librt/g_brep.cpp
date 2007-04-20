@@ -141,16 +141,25 @@ namespace brep {
     class SurfaceBV : public BoundingVolume {
     public:
 
-	SurfaceBV(const ON_BrepFace& face, point_t min, point_t max, const ON_Interval& u, const ON_Interval& v);
+	SurfaceBV(const ON_BrepFace& face, 
+		  point_t min, point_t max, 
+		  const ON_Interval& u, 
+		  const ON_Interval& v, 
+		  bool checkTrim, 
+		  bool trimmed);
 	bool is_leaf() const; // override BoundingVolume::is_leaf();
 	const ON_BrepFace& face() const { return _face; }
 	const fastf_t u_center() const { return _u.Mid(); }
 	const fastf_t v_center() const { return _v.Mid(); }
+	const bool doTrimming() const { return _doTrim; }
+	const bool isTrimmed() const { return _isTrimmed; }
 
     private:
 	const ON_BrepFace& _face;
 	ON_Interval _u;
 	ON_Interval _v;
+	bool _doTrim;
+	bool _isTrimmed;
     }; 
     
     //--------------------------------------------------------------------------------
@@ -262,8 +271,14 @@ namespace brep {
     }
 
     inline 
-    SurfaceBV::SurfaceBV(const ON_BrepFace& face, point_t min, point_t max, const ON_Interval& u, const ON_Interval& v) 
-	: BoundingVolume(min,max), _face(face), _u(u), _v(v)
+    SurfaceBV::SurfaceBV(const ON_BrepFace& face, 
+			 point_t min, 
+			 point_t max, 
+			 const ON_Interval& u, 
+			 const ON_Interval& v,
+			 bool checkTrim,
+			 bool isTrimmed) 
+	: BoundingVolume(min,max), _face(face), _u(u), _v(v), _doTrim(checkTrim), _isTrimmed(isTrimmed)
     {
     }
 
@@ -297,6 +312,60 @@ namespace brep {
 };
 
 using namespace brep;
+
+//--------------------------------------------------------------------------------
+// MATH / VECTOR ops
+// XXX put in VMATH?
+typedef fastf_t pt2d_t[2] VEC_ALIGN;
+typedef fastf_t mat2d_t[4] VEC_ALIGN; // row-major 
+inline
+bool mat2d_inverse(mat2d_t inv, mat2d_t m) {
+    pt2d_t _a = {m[0],m[1]};
+    pt2d_t _b = {m[3],m[2]};
+    dvec<2> a(_a);
+    dvec<2> b(_b);
+    dvec<2> c = a*b;
+    fastf_t det = c.foldr(0,dvec<2>::sub());
+    if (NEAR_ZERO(det,VUNITIZE_TOL)) return false;
+    fastf_t scale = 1.0 / det;
+    double tmp[4] VEC_ALIGN = {m[3],-m[1],-m[2],m[0]};
+    dvec<4> iv(tmp);
+    dvec<4> sv(scale);
+    dvec<4> r = iv * sv;
+    r.a_store(inv);
+    return true;
+}
+inline 
+void mat2d_pt2d_mul(pt2d_t r, mat2d_t m, pt2d_t p) {
+    pt2d_t _a = {m[0],m[2]};
+    pt2d_t _b = {m[1],m[3]};
+    dvec<2> x(p[0]);
+    dvec<2> y(p[1]);
+    dvec<2> a(_a);
+    dvec<2> b(_b);
+    dvec<2> c = a*x + b*y;
+    c.a_store(r);
+}
+inline
+void pt2dsub(pt2d_t r, pt2d_t a, pt2d_t b) {
+    dvec<2> va(a);
+    dvec<2> vb(b);
+    dvec<2> vr = va - vb;
+    vr.a_store(r);
+}
+
+inline
+fastf_t v2mag(pt2d_t p) {
+    dvec<2> a(p);
+    dvec<2> sq = a*a;
+    return sqrt(sq.foldr(0,dvec<2>::add()));
+}
+inline
+void move(pt2d_t a, pt2d_t b) {
+    a[0] = b[0];
+    a[1] = b[1];
+}
+
 
 //--------------------------------------------------------------------------------
 // specific
@@ -437,6 +506,31 @@ brep_is_flat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
     return product >= BREP_SURFACE_FLATNESS;
 }
 
+bool 
+brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
+    // for each loop
+    const ON_Surface* surf = face.SurfaceOf();
+    double umin, umax;
+    ON_2dPoint from, to;
+    from.x = pt[0];
+    from.y = to.y = pt[1];
+    surf->GetDomain(0, &umin, &umax);    
+    to.x = umax + 1;
+    ON_LineCurve ray(from,to);
+    ON_SimpleArray<ON_X_EVENT> intersections;
+    for (int i = 0; i < face.Brep()->m_L.Count(); i++) {
+	ON_BrepLoop& loop = face.Brep()->m_L[i];
+	// for each trim
+	for (int j = 0; j < loop.m_ti.Count(); j++) {	    
+	    ON_BrepTrim& trim = face.Brep()->m_T[loop.m_ti[j]];
+	    const ON_Curve* trimCurve = trim.TrimCurveOf();
+	    ray.IntersectCurve(trimCurve, intersections, 0.0001);
+	}
+    }
+    // the point is trimmed if the # of intersections is even
+    return intersections.Count() > 0 && (intersections.Count() % 2) == 0;
+}
+
 BoundingVolume*
 brep_surface_bbox(const ON_BrepFace& face, const ON_Interval& u, const ON_Interval& v)
 {
@@ -458,7 +552,34 @@ brep_surface_bbox(const ON_BrepFace& face, const ON_Interval& u, const ON_Interv
     for (int i = 0; i < 4; i++) 
 	VMINMAX(min,max,((double*)corners[i]));
     TRACE("bb: " << ON_PRINT3(min) << " -> " << ON_PRINT3(max));
-    return new SurfaceBV(face,min,max,u,v);
+    
+    // check to see if this portion of the surface needs to be checked for trims
+    pt2d_t test[] = {{u.Min(),v.Min()},
+		     {u.Max(),v.Min()},
+		     {u.Max(),v.Max()},
+		     {u.Min(),v.Max()}};
+    int count = 0; 
+    for (int i = 0; i < 4; i++) {
+	if (brep_pt_trimmed(test[0], face)) {
+	    count++;
+	}
+    }
+    // check to see if the bbox encloses a trim
+    ON_3dPoint uvmin(u.Min(),v.Min(),0);
+    ON_3dPoint uvmax(u.Max(),v.Max(),0);
+    ON_BoundingBox bb(uvmin,uvmax);
+    bool internalTrim = false;
+    for (int i = 0; i < face.Brep()->m_L.Count(); i++) {
+	ON_BrepLoop& loop = face.Brep()->m_L[i];
+	// for each trim
+	for (int j = 0; j < loop.m_ti.Count(); j++) {	    
+	    ON_BrepTrim& trim = face.Brep()->m_T[loop.m_ti[j]];
+	    if (bb.Intersection(trim.m_pbox)) internalTrim = true;
+	}
+    }
+    std::cout << "INTERNAL TRIM: " << internalTrim << std::endl;
+
+    return new SurfaceBV(face,min,max,u,v,count>0 || internalTrim, count==4);
 }
 
 BoundingVolume*
@@ -618,7 +739,7 @@ void brep_intersect_bv(IsectList& inters, struct xray* r, BoundingVolume* bv)
 {
     fastf_t tnear, tfar;
     bool intersects = bv->intersected_by(r,&tnear,&tfar);
-    if (intersects && bv->is_leaf()) {	
+    if (intersects && bv->is_leaf() && !dynamic_cast<SurfaceBV*>(bv)->isTrimmed()) {
 	inters.push_back(IRecord(bv,tnear));
     }
     else if (intersects)
@@ -650,56 +771,6 @@ void brep_get_plane_ray(struct xray* r, plane_ray& pr)
     TRACE("n1:" << ON_PRINT3(pr.n1) << " n2:" << ON_PRINT3(pr.n2) << " d1:" << pr.d1 << " d2:" << pr.d2);
 }
 
-// XXX put in VMATH?
-typedef fastf_t pt2d_t[2] VEC_ALIGN;
-typedef fastf_t mat2d_t[4] VEC_ALIGN; // row-major 
-inline
-bool mat2d_inverse(mat2d_t inv, mat2d_t m) {
-    pt2d_t _a = {m[0],m[1]};
-    pt2d_t _b = {m[3],m[2]};
-    dvec<2> a(_a);
-    dvec<2> b(_b);
-    dvec<2> c = a*b;
-    fastf_t det = c.foldr(0,dvec<2>::sub());
-    if (NEAR_ZERO(det,VUNITIZE_TOL)) return false;
-    fastf_t scale = 1.0 / det;
-    double tmp[4] VEC_ALIGN = {m[3],-m[1],-m[2],m[0]};
-    dvec<4> iv(tmp);
-    dvec<4> sv(scale);
-    dvec<4> r = iv * sv;
-    r.a_store(inv);
-    return true;
-}
-inline 
-void mat2d_pt2d_mul(pt2d_t r, mat2d_t m, pt2d_t p) {
-    pt2d_t _a = {m[0],m[2]};
-    pt2d_t _b = {m[1],m[3]};
-    dvec<2> x(p[0]);
-    dvec<2> y(p[1]);
-    dvec<2> a(_a);
-    dvec<2> b(_b);
-    dvec<2> c = a*x + b*y;
-    c.a_store(r);
-}
-inline
-void pt2dsub(pt2d_t r, pt2d_t a, pt2d_t b) {
-    dvec<2> va(a);
-    dvec<2> vb(b);
-    dvec<2> vr = va - vb;
-    vr.a_store(r);
-}
-
-inline
-fastf_t v2mag(pt2d_t p) {
-    dvec<2> a(p);
-    dvec<2> sq = a*a;
-    return sqrt(sq.foldr(0,dvec<2>::add()));
-}
-inline
-void move(pt2d_t a, pt2d_t b) {
-    a[0] = b[0];
-    a[1] = b[1];
-}
 
 
 class brep_hit {
@@ -749,14 +820,8 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
     }
 }
 
-bool
-brep_is_trimmed(const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv) 
-{
-
-}
-
 bool 
-brep_intersect(const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv, plane_ray& pr, brep_hit** hit)
+brep_intersect(const SurfaceBV* sbv, const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv, plane_ray& pr, brep_hit** hit)
 {
     bool found = false;
     fastf_t Dlast = MAX_FASTF;
@@ -787,7 +852,7 @@ brep_intersect(const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv, plane
  	    if (uv[1] < l || uv[1] > h) { TRACE("out of V bounds"); return false; } // oob
  	}
 
-	if (brep_is_trimmed(face, surf, uv)) return false; 
+	if (sbv->doTrimming() && brep_pt_trimmed(uv, face)) return false; 
 
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
@@ -838,7 +903,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	const ON_Surface* surf = f.SurfaceOf();       
 	brep_hit* hit; 
 	pt2d_t uv = {sbv->u_center(),sbv->v_center()};
-	if (brep_intersect(f, surf, uv, pr, &hit)) {
+	if (brep_intersect(sbv, f, surf, uv, pr, &hit)) {
 	    hits.push_back(hit);
 	}
     }
