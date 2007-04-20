@@ -954,12 +954,22 @@ Linux binary release:
       news@cad4linux.nl
 	short without news details (preferably in Dutch)
 
+      Linux Softpedia
+      http://linux.softpedia.com/get/Multimedia/Graphics/BRL-CAD-105.shtml
+      
+
 Mac OS X binary release:
 
       Versiontracker  (only 'brlcad' can update)
       http://www.versiontracker.com/dyn/moreinfo/macosx/26289
       http://www.versiontracker.com/dyn/moreinfo/win/64903
 	short without news details (list format)
+
+      Mac Softpedia (anyone can update)
+      http://mac.softpedia.com/user/pad.shtml
+      maceditor@softpedia.com
+	(either provide doc/pad_file.xml or e-mail)
+      http://mac.softpedia.com/get/Multimedia/BRLCAD.shtml
 
       Fink package maintainer
       jack@krass.com
