@@ -1652,8 +1652,6 @@ dnl AC_CHECK_TOOL(AR, ar)
 		fi
 	    fi
 	    AC_DEFINE(MAC_OSX_TCL, 1, [Is this a Mac I see before me?])
-	    AC_DEFINE(MODULE_SCOPE, __private_extern__,
-		[Linker support for module scope symbols])
 	    ;;
 	NEXTSTEP-*)
 	    SHLIB_CFLAGS=""
