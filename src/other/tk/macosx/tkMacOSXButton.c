@@ -828,7 +828,7 @@ TkMacOSXInitControl (
     procID           = kControlUserPaneProc;
     controlReference = (SInt32)mbPtr;
     mbPtr->userPane  = NewControl(mbPtr->windowRef,
-        paneRect, "\p",
+        paneRect, "\0",
         initiallyVisible,
         initialValue,
         minValue,
@@ -856,7 +856,7 @@ TkMacOSXInitControl (
     initiallyVisible = false;
     TkMacOSXComputeControlParams(butPtr,&mbPtr->params);
     mbPtr->control = NewControl(mbPtr->windowRef,
-        cntrRect, "\p",
+        cntrRect, "\0",
         initiallyVisible,
         mbPtr->params.initialValue,
         mbPtr->params.minValue,

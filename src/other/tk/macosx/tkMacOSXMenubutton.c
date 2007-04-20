@@ -627,7 +627,7 @@ MenuButtonInitControl (
     procID = kControlUserPaneProc;
     controlReference = (SInt32)mbPtr;
     mbPtr->userPane = NewControl(mbPtr->windowRef,
-            paneRect, "\p",
+            paneRect, "\0",
             initiallyVisible,
             initialValue,
             minValue,
@@ -655,7 +655,7 @@ MenuButtonInitControl (
     /* Do this only if we are using bevel buttons */
     ComputeControlTitleParams(butPtr,&mbPtr->titleParams);
     mbPtr->control = NewControl(mbPtr->windowRef,
-        cntrRect, "\p", //mbPtr->titleParams.title,
+        cntrRect, "\0", //mbPtr->titleParams.title,
         initiallyVisible,
         mbPtr->params.initialValue,
         mbPtr->params.minValue,
@@ -722,7 +722,7 @@ MenuButtonInitControl (
         }
         cfStr = CFStringCreateWithCString(NULL,
                 (char*) mbPtr->titleParams.title, kCFStringEncodingUTF8);
-        AppendMenuItemText(mbPtr->menuRef, "\px");
+	AppendMenuItemTextWithCFString(mbPtr->menuRef, CFSTR("x"), 0, 0, 0);
         if (cfStr) {
             SetMenuItemTextWithCFString(mbPtr->menuRef, 1, cfStr);
             CFRelease(cfStr);

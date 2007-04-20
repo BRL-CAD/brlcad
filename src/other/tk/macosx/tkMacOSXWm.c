@@ -5254,7 +5254,7 @@ TkMacOSXMakeRealWindowExist(
 	}
 
     } else {
-	newWindow = NewCWindow(NULL, &geometry, "\p", false,
+	newWindow = NewCWindow(NULL, &geometry, "\0", false,
 		(short) wmPtr->style, (WindowRef) -1, true, 0);
     }
 

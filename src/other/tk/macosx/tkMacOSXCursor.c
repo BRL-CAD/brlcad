@@ -362,7 +362,7 @@ TkMacOSXInstallCursor(
     gResizeOverride = resizeOverride;
 
     if (resizeOverride) {
-        cursor = (CursHandle) GetNamedResource('CURS', "\presize");
+        cursor = (CursHandle) GetNamedResource('CURS', "\6resize");
         if (cursor) {
             SetCursor(*cursor);
         } else {

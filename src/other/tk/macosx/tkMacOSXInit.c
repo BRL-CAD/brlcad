@@ -169,7 +169,7 @@ TkpInit(interp)
 #endif
 	    {
 	    /* Tk.framework not found, check if resource file is open */
-	    Handle rsrc = Get1NamedResource('CURS', "\phand");
+	    Handle rsrc = Get1NamedResource('CURS', "\4hand");
 	    if (rsrc) {
 		ReleaseResource(rsrc);
 	    } else {

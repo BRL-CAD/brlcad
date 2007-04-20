@@ -157,10 +157,14 @@ TkMacOSXInitMenus(
     if (err != noErr) {
         Tcl_Panic("CreateNewMenu failed !");
     }
-    SetMenuTitle(tkAppleMenu, "\p\024");
+
+    SetMenuTitleWithCFString(tkAppleMenu, CFSTR("\024"));
+
     InsertMenu(tkAppleMenu, 0);
-    AppendMenu(tkAppleMenu, "\pAbout Tcl & Tk…");
-    AppendMenu(tkAppleMenu, "\p(-");
+    AppendMenuItemTextWithCFString(tkAppleMenu,
+        CFSTR("About Tcl & Tk?"), 0, 0, 0);
+    AppendMenuItemTextWithCFString(tkAppleMenu, 
+        0, kMenuItemAttrSeparator, 0, 0);
 
     if (TkMacOSXUseMenuID(kFileMenu) != TCL_OK) {
 	Tcl_Panic("Menu ID %d is already in use!", kFileMenu);
@@ -170,10 +174,13 @@ TkMacOSXInitMenus(
     if (err != noErr) {
         Tcl_Panic("CreateNewMenu failed !");
     }
-    SetMenuTitle(tkFileMenu, "\pFile");
+    SetMenuTitleWithCFString(tkFileMenu, CFSTR("File"));
     InsertMenu(tkFileMenu, 0);
-    AppendMenu(tkFileMenu, "\pSource…");
-    AppendMenu(tkFileMenu, "\pClose/W");
+    AppendMenuItemTextWithCFString(tkFileMenu,
+        CFSTR("Source?"), 0, 0, 0);
+    AppendMenuItemTextWithCFString(tkFileMenu,
+        CFSTR("Close"), 0, 0, 0);
+    SetMenuItemCommandKey(tkFileMenu, 2, false, 'W');
 
     if (TkMacOSXUseMenuID(kEditMenu) != TCL_OK) {
 	Tcl_Panic("Menu ID %d is already in use!", kEditMenu);
@@ -183,12 +190,19 @@ TkMacOSXInitMenus(
     if (err != noErr) {
         Tcl_Panic("CreateNewMenu failed !");
     }
-    SetMenuTitle(tkEditMenu, "\pEdit");
+    SetMenuTitleWithCFString(tkEditMenu, CFSTR("Edit"));
     InsertMenu(tkEditMenu, 0);
-    AppendMenu(tkEditMenu, "\pCut/X");
-    AppendMenu(tkEditMenu, "\pCopy/C");
-    AppendMenu(tkEditMenu, "\pPaste/V");
-    AppendMenu(tkEditMenu, "\pClear");
+    AppendMenuItemTextWithCFString(tkEditMenu,
+        CFSTR("Cut"), 0, 0, 0);
+    SetMenuItemCommandKey(tkEditMenu, 1, false, 'X');
+    AppendMenuItemTextWithCFString(tkEditMenu,
+        CFSTR("Copy"), 0, 0, 0);
+    SetMenuItemCommandKey(tkEditMenu, 2, false, 'C');
+    AppendMenuItemTextWithCFString(tkEditMenu,
+        CFSTR("Paste"), 0, 0, 0);
+    SetMenuItemCommandKey(tkEditMenu, 3, false, 'V');
+    AppendMenuItemTextWithCFString(tkEditMenu,
+        CFSTR("Clear"), 0, 0, 0);
     if (TkMacOSXUseMenuID(kHMHelpMenuID) != TCL_OK) {
 	Tcl_Panic("Help menu ID %s is already in use!", kHMHelpMenuID);
     }

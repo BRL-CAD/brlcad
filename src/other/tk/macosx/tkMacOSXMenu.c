@@ -1738,12 +1738,18 @@ DrawMenuBarWhenIdle(
 		tkCurrentAppleMenu = tkAppleMenu;
 	    } else {
     		short appleID;
+		OSStatus err;
     	    	appleMenuPtr = menuBarPtr->entries[appleIndex]
     	    	    	->childMenuRefPtr->menuPtr;
 		TkpDestroyMenu(appleMenuPtr);
     		TkMacOSXGetNewMenuID(appleMenuPtr->interp, appleMenuPtr, 0, 
     			&appleID);
-    		macMenuHdl = NewMenu(appleID, "\p\024");
+    		err = CreateNewMenu(appleID, kMenuAttrDoNotUseUserCommandKeys, 
+			&macMenuHdl );
+		if (err != noErr) {
+		    Tcl_Panic("CreateNewMenu failed !");
+		}
+		SetMenuTitleWithCFString(tkAppleMenu, CFSTR("\024"));
     		appleMenuPtr->platformData = 
     			(TkMenuPlatformData) ckalloc(sizeof(MacMenu));
     		((MacMenu *)appleMenuPtr->platformData)->menuHdl

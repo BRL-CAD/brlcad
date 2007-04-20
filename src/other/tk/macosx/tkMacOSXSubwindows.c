@@ -1140,7 +1140,7 @@ TkMacOSXGetDrawablePort(
 	     * of the time, this is harmless...  However, we really need to
 	     * find why the embedding loses.
 	     */
-	    DebugStr("\pTkMacOSXGetDrawablePort couldn't find container");
+	    fprintf(stderr, "TkMacOSXGetDrawablePort couldn't find container");
     	    return NULL;
     	}	
 	    

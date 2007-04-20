@@ -278,7 +278,7 @@ fi
 if test $tk_aqua = yes; then
     AC_DEFINE(MAC_OSX_TK, 1, [Are we building TkAqua?])
     LIBS="$LIBS -framework Carbon -framework IOKit"
-    CFLAGS="$CFLAGS -fpascal-strings"
+    CFLAGS="$CFLAGS"
     TK_WINDOWINGSYSTEM=AQUA
     if test "${enable_symbols}" = yes; then
         AC_DEFINE(TK_MAC_DEBUG, 1, [Are TkAqua debug messages enabled?])
@@ -402,7 +402,7 @@ if test $tk_aqua = no; then
 		if test "$tcl_cv_ld_weak_l" = yes; then
 		    # On Darwin, weak link libXss if possible,
 		    # as it is only available on Tiger or later.
-		    XLIBSW="$XLIBSW -weak-lXss -lXext"
+		    XLIBSW="$XLIBSW -Wl,-weak-lXss -lXext"
 		else
 		    XLIBSW="$XLIBSW -lXss -lXext"
 		fi
