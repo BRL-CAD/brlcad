@@ -238,6 +238,9 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * modify the raytracers to use common fb and file output code
 
+* add missing manual pages (jra generated list on 04.2001):
+	a-d c-d d-a d-f d-i f-d f-i i-a i-d i-f mst syn u-a u-d u-f dsp_add bw-a bw-d d-bw dfft dmod dsel dwin fhor pixpaste imod spm-fb ttcp u-bw umod euclid_unformat jack-g msrandom asc2g dauto2 rtrad rtsil rtsrv bwish pixfieldsep asc2pix double-asc pixcount texturescale damdf dauto rtcell dconv ddisp rtedge rtfrac dpeak dstat g-euclid1 pixembed yuv-pix g-off g4-g5 g5-g4 pix-spm pix-ppm pix-yuv euclid_format sgi-pix ihist istat txyz-pl xyz-pl script-tab files-tape pixelswap fbgammamod plstat cakeinclude remapid g-jack chan_add pixfields findcom pix3filter pixflip-fb off-g
+
 
 ODDITIES
 --------
