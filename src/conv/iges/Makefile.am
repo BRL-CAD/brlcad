@@ -104,10 +104,13 @@ g_iges_LDADD = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	add_face.cpp \
 	arrange.c \
+	brep.cpp \
 	bubbleup.c \
 	copytree.c \
 	ge6.igs \
+	get_outer_shell.cpp \
 	spl.c \
 	treecheck.c \
 	wing128.igs \
