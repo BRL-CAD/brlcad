@@ -238,9 +238,8 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * modify the raytracers to use common fb and file output code
 
-* add missing manual pages (jra generated list on 04.2001):
-	a-d c-d d-a d-f d-i f-d f-i i-a i-d i-f mst syn u-a u-d u-f dsp_add bw-a bw-d d-bw dfft dmod dsel dwin fhor pixpaste imod spm-fb ttcp u-bw umod euclid_unformat jack-g msrandom asc2g dauto2 rtrad rtsil rtsrv bwish pixfieldsep asc2pix double-asc pixcount texturescale damdf dauto rtcell dconv ddisp rtedge rtfrac dpeak dstat g-euclid1 pixembed yuv-pix g-off g4-g5 g5-g4 pix-spm pix-ppm pix-yuv euclid_format sgi-pix ihist istat txyz-pl xyz-pl script-tab files-tape pixelswap fbgammamod plstat cakeinclude remapid g-jack chan_add pixfields findcom pix3filter pixflip-fb off-g
-
+* add missing manual pages (jra generated list on 04.2007):
+	a-d any-png.sh archer asc2g asc2pix binfo bot-bldxf bot-raw bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish cadbug.sh c-d chan_add clutter contours cray.sh d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin elapsed.sh euclid_format euclid_unformat facetall.sh fbgammamod f-d fence fhor f-i files-tape g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod indent.sh ipuscan ipustat istat jack-g kurt lowp molecule morphedit.tcl msrandom mst nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pixinfo.sh pix-ipu pixpaste pix-ppm pixread.sh pix-spm pixwrite.sh pix-yuv plstat png-ipu pyramid rawbot remapid rlesortmap rletovcr room rtcell rtfrac rtrad rtsil rt_simple rtsrv rtwizard script-tab sgi-pix sgisnap.sh show.sh sketch solshoot sphflake spltest spm-fb ssampview ssampview.tcl syn tclsh8.5 tea tea_nmg testfree texturescale torii tracker.sh ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example wish8.5 xbmtorle xyz-pl yuv-pix
 
 ODDITIES
 --------
