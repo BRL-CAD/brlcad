@@ -45,9 +45,6 @@
 #else
 #  include <strings.h>
 #endif
-#ifdef HAVE_X11_XLIB_H
-#  include <X11/Xutil.h>
-#endif
 
 #include "tcl.h"
 #include "tk.h"
@@ -80,8 +77,10 @@ struct bu_structparse dm_xvars_vparse[] = {
 	{"%x",	1,	"tkwin",		XVARS_MV_O(xtkwin),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1,	"depth",		XVARS_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%x",	1,	"cmap",			XVARS_MV_O(cmap),	BU_STRUCTPARSE_FUNC_NULL },
+#if defined(DM_X) || defined (DM_OGL) || defined (DM_WGL)
 	{"%x",	1,	"vip",			XVARS_MV_O(vip),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%x",	1,	"fontstruct",		XVARS_MV_O(fontstruct),	BU_STRUCTPARSE_FUNC_NULL },
+#endif
 	{"%d",	1,	"devmotionnotify",	XVARS_MV_O(devmotionnotify),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1,	"devbuttonpress",	XVARS_MV_O(devbuttonpress),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1,	"devbuttonrelease",	XVARS_MV_O(devbuttonrelease),	BU_STRUCTPARSE_FUNC_NULL },
@@ -606,7 +605,7 @@ end:
       width = atoi( argv[1] );
       height = atoi( argv[2] );
 
-#if defined(DM_X) || defined(DM_OGL) || defined(DM_WGL)
+#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
 #  if 0
       Tk_ResizeWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
 #  else
@@ -621,7 +620,7 @@ end:
     return TCL_ERROR;
   }
 
-#if defined(DM_X) || defined(DM_OGL) || defined(DM_WGL)
+#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
   if(!strcmp(argv[0], "getx")){
     if(argc == 1){
       struct bu_vls tmp_vls;

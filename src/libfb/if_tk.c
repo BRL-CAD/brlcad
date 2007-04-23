@@ -42,7 +42,7 @@ Tcl_Interp *fbinterp;
 Tk_Window fbwin;
 Tk_PhotoHandle fbphoto;
 
-_LOCAL_ int	tk_open(FBIO *ifp, char *file, int width, int height),
+HIDDEN int	tk_open(FBIO *ifp, char *file, int width, int height),
 		tk_close(FBIO *ifp),
 		tk_clear(FBIO *ifp, unsigned char *pp),
 		tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
@@ -108,7 +108,7 @@ FBIO tk_interface = {
 };
 
 
-_LOCAL_ int
+HIDDEN int
 tk_open(FBIO *ifp, char *file, int width, int height)
 {
 	FB_CK_FBIO(ifp);
@@ -197,7 +197,7 @@ tk_open(FBIO *ifp, char *file, int width, int height)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_close(FBIO *ifp)
 {
 	FB_CK_FBIO(ifp);
@@ -205,7 +205,7 @@ tk_close(FBIO *ifp)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_clear(FBIO *ifp, unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
@@ -219,7 +219,7 @@ tk_clear(FBIO *ifp, unsigned char *pp)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
 	FB_CK_FBIO(ifp);
@@ -229,7 +229,7 @@ tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	return	count;
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
 	int	i;
@@ -273,7 +273,7 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	return	count;
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_rmap(FBIO *ifp, ColorMap *cmp)
 {
 	FB_CK_FBIO(ifp);
@@ -282,7 +282,7 @@ tk_rmap(FBIO *ifp, ColorMap *cmp)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_wmap(FBIO *ifp, const ColorMap *cmp)
 {
 	int	i;
@@ -308,7 +308,7 @@ tk_wmap(FBIO *ifp, const ColorMap *cmp)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
 	FB_CK_FBIO(ifp);
@@ -318,7 +318,7 @@ tk_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 	FB_CK_FBIO(ifp);
@@ -330,7 +330,7 @@ tk_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
 	FB_CK_FBIO(ifp);
@@ -339,7 +339,7 @@ tk_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xor
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_cursor(FBIO *ifp, int mode, int x, int y)
 {
 	fb_log( "fb_cursor( 0x%lx, %d,%4d,%4d )\n",
@@ -348,7 +348,7 @@ tk_cursor(FBIO *ifp, int mode, int x, int y)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
 	FB_CK_FBIO(ifp);
@@ -359,7 +359,7 @@ tk_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
@@ -369,7 +369,7 @@ tk_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char 
 	return( width*height );
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
@@ -379,7 +379,7 @@ tk_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigne
 	return( width*height );
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
@@ -389,7 +389,7 @@ tk_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned cha
 	return( width*height );
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
 	FB_CK_FBIO(ifp);
@@ -399,7 +399,7 @@ tk_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsig
 	return( width*height );
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_poll(FBIO *ifp)
 {
 	FB_CK_FBIO(ifp);
@@ -408,7 +408,7 @@ tk_poll(FBIO *ifp)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_flush(FBIO *ifp)
 {
 	FB_CK_FBIO(ifp);
@@ -416,7 +416,7 @@ tk_flush(FBIO *ifp)
 	return	0;
 }
 
-_LOCAL_ int
+HIDDEN int
 tk_free(FBIO *ifp)
 {
 	FB_CK_FBIO(ifp);
@@ -425,7 +425,7 @@ tk_free(FBIO *ifp)
 }
 
 /*ARGSUSED*/
-_LOCAL_ int
+HIDDEN int
 tk_help(FBIO *ifp)
 {
 	FB_CK_FBIO(ifp);

@@ -74,6 +74,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 	IS_DM_TYPE_OGL(_type) || \
 	IS_DM_TYPE_GLX(_type) || \
 	IS_DM_TYPE_PEX(_type) || \
+	IS_DM_TYPE_TK(_type) || \
 	IS_DM_TYPE_X(_type) )
 
 /* All systems can compile these! */
@@ -84,6 +85,11 @@ extern int PS_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
 extern int X_dm_init();
 extern void X_fb_open();
 #endif /* DM_X */
+
+#ifdef DM_TK
+extern int tk_dm_init();
+extern void tk_fb_open();
+#endif /* DM_TK */
 
 #ifdef DM_WGL
 extern int Wgl_dm_init();
@@ -134,6 +140,9 @@ struct w_dm which_dm[] = {
 #ifdef DM_X
   { DM_TYPE_X, "X", X_dm_init },
 #endif /* DM_X */
+#ifdef DM_TK
+  { DM_TYPE_TK, "tk", tk_dm_init },
+#endif /* DM_TK */
 #ifdef DM_WGL
   { DM_TYPE_WGL, "wgl", Wgl_dm_init },
 #endif /* DM_WGL */
@@ -293,6 +302,10 @@ print_valid_dm(void)
     Tcl_AppendResult(interp, "X  ", (char *)NULL);
     i++;
 #endif /* DM_X */
+#ifdef DM_TK
+    Tcl_AppendResult(interp, "tk  ", (char *)NULL);
+    i++;
+#endif /* DM_TK */
 #ifdef DM_WGL
     Tcl_AppendResult(interp, "wgl  ", (char *)NULL);
     i++;
@@ -736,6 +749,10 @@ mged_fb_open(void)
   if(dmp->dm_type == DM_TYPE_X)
     X_fb_open();
 #endif /* DM_X */
+#ifdef DM_TK
+  if(dmp->dm_type == DM_TYPE_TK)
+    tk_fb_open();
+#endif /* DM_TK */
 #ifdef DM_WGL
   if(dmp->dm_type == DM_TYPE_WGL)
       Wgl_fb_open();

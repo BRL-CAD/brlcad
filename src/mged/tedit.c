@@ -971,7 +971,7 @@ editit(const char *file)
 		    return 0;
 #else /* !DM_WGL */
 
-#  if defined(DM_X) || defined(DM_OGL)
+#  if defined(DM_X) || defined(DM_TK) || defined(DM_OGL)
 		    /* if we have x support, pop open the editor in an
 		     * xterm.  otherwise, use whatever the user gave.
 		     */

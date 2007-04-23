@@ -40,13 +40,6 @@
 #include <math.h>
 #include "tcl.h"
 
-#ifdef HAVE_GL_GLX_H
-#  include <GL/glx.h>
-#endif
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
-
 #include <zlib.h>
 #include <png.h>
 
@@ -64,11 +57,18 @@
 #include "dm.h"
 #include "dm_xvars.h"
 
-#ifdef DM_X
+#if defined(DM_X) || defined(DM_TK)
 #  include "tk.h"
 #  include <X11/Xutil.h>
+#endif /* DM_X or DM_TK*/
+
+#ifdef DM_X
 #  include "dm-X.h"
 #endif /* DM_X */
+
+#ifdef DM_TK
+#  include "dm-tk.h"
+#endif /* DM_TK */
 
 #ifdef DM_OGL
 #  include "dm-ogl.h"
@@ -324,6 +324,11 @@ dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (argv[2][0] == 'X' || argv[2][0] == 'x')
 	    type = DM_TYPE_X;
 #endif /* DM_X */
+
+#ifdef DM_TK
+	if (!strcmp(argv[2], "tk"))
+	    type = DM_TYPE_TK;
+#endif /* DM_TK */
 
 #ifdef DM_OGL
 	if (!strcmp(argv[2], "ogl"))
@@ -3418,6 +3423,31 @@ dmo_openFb(dmop, interp)
 				   ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc);
 		break;
 #endif
+#ifdef DM_TK
+#if 0
+/* XXX TJM implement _tk_open_existing */
+	case DM_TYPE_TK:
+		*dmop->dmo_fbs.fbs_fbp = tk_interface; /* struct copy */
+
+		dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/tk") + 1, "if_name");
+		(void)strcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/tk");
+
+		/* Mark OK by filling in magic number */
+		dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
+
+		_tk_open_existing(dmop->dmo_fbs.fbs_fbp,
+				   ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
+				   ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->pix,
+				   ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
+				   ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
+				   ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
+				   dmop->dmo_dmp->dm_width,
+				   dmop->dmo_dmp->dm_height,
+				   ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc);
+		break;
+#endif
+#endif
+
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
 		*dmop->dmo_fbs.fbs_fbp = ogl_interface; /* struct copy */
@@ -3487,6 +3517,11 @@ dmo_closeFb(dmop)
 #ifdef DM_X
 	case DM_TYPE_X:
 		X24_close_existing(dmop->dmo_fbs.fbs_fbp);
+		break;
+#endif
+#ifdef DM_TK
+	case DM_TYPE_TK:
+		tk_close_existing(dmop->dmo_fbs.fbs_fbp);
 		break;
 #endif
 #ifdef DM_OGL

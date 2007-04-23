@@ -1,5 +1,13 @@
 # $Id$
 
+if WITH_X11
+PL_X = pl-X
+PL_X_EXTRA =
+else
+PL_X =
+PL_X_EXTRA = pl-X.c
+endif
+
 bin_PROGRAMS = \
 	alias-pix \
 	ap-pix \
@@ -94,7 +102,7 @@ bin_PROGRAMS = \
 	pixsubst \
 	pixtile \
 	pixuntile \
-	pl-X \
+	${PL_X} \
 	pl-asc \
 	pl-hpgl \
 	pl-pl \
@@ -432,9 +440,11 @@ pixtile_LDADD = ${BU} ${BU_LIBS}
 pixuntile_SOURCES = pixuntile.c
 pixuntile_LDADD = ${BU} ${BU_LIBS}
 
+if WITH_X11
 pl_X_SOURCES = pl-X.c
 pl_X_LDADD = ${BU} ${BU_LIBS} ${X_LIBS}
 pl_X_CFLAGS = ${X_CFLAGS}
+endif
 
 pl_asc_SOURCES = pl-asc.c
 pl_asc_LDADD = ${BU} ${BU_LIBS}
@@ -636,6 +646,7 @@ sample_applications_DATA = \
 EXTRA_DIST = \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
+	${PL_X_EXTRA}
 	fix_polysolids.c \
 	pix-both-ik.c \
 	pix-ci.c \

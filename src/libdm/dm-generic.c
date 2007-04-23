@@ -53,6 +53,10 @@ extern struct dm *ps_open(Tcl_Interp *interp, int argc, char **argv);
 extern struct dm *X_open_dm();
 #endif /* DM_X */
 
+#ifdef DM_TK
+extern struct dm *tk_open_dm();
+#endif /* DM_TK */
+
 #ifdef DM_OGL
 extern struct dm *ogl_open();
 extern void ogl_fogHint();
@@ -79,6 +83,10 @@ dm_open(Tcl_Interp *interp, int type, int argc, char **argv)
 #ifdef DM_X
 	case DM_TYPE_X:
 		return X_open_dm(interp, argc, argv);
+#endif
+#ifdef DM_TK
+	case DM_TYPE_TK:
+		return tk_open_dm(interp, argc, argv);
 #endif
 #ifdef DM_OGL
 	case DM_TYPE_OGL:

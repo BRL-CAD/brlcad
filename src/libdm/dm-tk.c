@@ -37,6 +37,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#ifdef DM_TK
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -74,13 +76,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm-Tk.h"
+#include "dm-tk.h"
 #include "dm-X.h"
 #include "dm_xvars.h"
 #include "solid.h"
 
 
-struct dm	*tk_open(Tcl_Interp *interp, int argc, char **argv);
+struct dm	*tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
 
 HIDDEN void	label();
 HIDDEN void	draw();
@@ -89,42 +91,42 @@ HIDDEN void     x_var_init();
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-HIDDEN int	Tk_close(struct dm *dmp);
-HIDDEN int	Tk_drawBegin(struct dm *dmp), Tk_drawEnd(struct dm *dmp);
-HIDDEN int	Tk_normal(struct dm *dmp), Tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-HIDDEN int      Tk_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
-HIDDEN int	Tk_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
-HIDDEN int      Tk_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-HIDDEN int	Tk_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int      Tk_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-HIDDEN int	Tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
-HIDDEN int	Tk_setLineAttr(struct dm *dmp, int width, int style);
-HIDDEN int	Tk_configureWin_guts(struct dm *dmp, int force);
-HIDDEN int	Tk_configureWin(struct dm *dmp);
-HIDDEN int	Tk_setLight(struct dm *dmp, int light_on);
-HIDDEN int	Tk_setZBuffer(struct dm *dmp, int zbuffer_on);
-HIDDEN int	Tk_setWinBounds(struct dm *dmp, register int *w), Tk_debug(struct dm *dmp, int lvl);
+HIDDEN int	tk_close(struct dm *dmp);
+HIDDEN int	tk_drawBegin(struct dm *dmp), tk_drawEnd(struct dm *dmp);
+HIDDEN int	tk_normal(struct dm *dmp), tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
+HIDDEN int      tk_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+HIDDEN int	tk_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
+HIDDEN int      tk_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
+HIDDEN int	tk_drawVList(struct dm *dmp, register struct bn_vlist *vp);
+HIDDEN int      tk_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
+HIDDEN int	tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
+HIDDEN int	tk_setLineAttr(struct dm *dmp, int width, int style);
+HIDDEN int	tk_configureWin_guts(struct dm *dmp, int force);
+HIDDEN int	tk_configureWin(struct dm *dmp);
+HIDDEN int	tk_setLight(struct dm *dmp, int light_on);
+HIDDEN int	tk_setZBuffer(struct dm *dmp, int zbuffer_on);
+HIDDEN int	tk_setWinBounds(struct dm *dmp, register int *w), tk_debug(struct dm *dmp, int lvl);
 
-struct dm dm_Tk = {
-  Tk_close,
-  Tk_drawBegin,
-  Tk_drawEnd,
-  Tk_normal,
-  Tk_loadMatrix,
-  Tk_drawString2D,
-  Tk_drawLine2D,
-  Tk_drawPoint2D,
-  Tk_drawVList,
-  Tk_setFGColor,
-  Tk_setBGColor,
-  Tk_setLineAttr,
-  Tk_configureWin,
-  Tk_setWinBounds,
-  Tk_setLight,
+struct dm dm_tk = {
+  tk_close,
+  tk_drawBegin,
+  tk_drawEnd,
+  tk_normal,
+  tk_loadMatrix,
+  tk_drawString2D,
+  tk_drawLine2D,
+  tk_drawPoint2D,
+  tk_drawVList,
+  tk_setFGColor,
+  tk_setBGColor,
+  tk_setLineAttr,
+  tk_configureWin,
+  tk_setWinBounds,
+  tk_setLight,
   Nu_int0,
   Nu_int0,
-  Tk_setZBuffer,
-  Tk_debug,
+  tk_setZBuffer,
+  tk_debug,
   Nu_int0,
   Nu_int0,
   Nu_int0,
@@ -217,7 +219,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
  *
  */
 struct dm *
-tk_open(Tcl_Interp *interp, int argc, char **argv)
+tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 {
   static int count = 0;
   int make_square = -1;
@@ -237,7 +239,7 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
   if(dmp == DM_NULL)
     return DM_NULL;
 
-  *dmp = dm_Tk; /* struct copy */
+  *dmp = dm_tk; /* struct copy */
   dmp->dm_interp = interp;
 
   dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "tk_open: dm_xvars");
@@ -246,7 +248,7 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
     return DM_NULL;
   }
 
-  dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct Tk_vars), "tk_open: Tk_vars");
+  dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct tk_vars), "tk_open: tk_vars");
   if(dmp->dm_vars.priv_vars == (genptr_t)NULL){
     bu_free(dmp->dm_vars.pub_vars, "tk_open: dmp->dm_vars.pub_vars");
     bu_free(dmp, "tk_open: dmp");
@@ -261,7 +263,7 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
   dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
   if(bu_vls_strlen(&dmp->dm_pathName) == 0) {
-      bu_vls_printf(&dmp->dm_pathName, ".dm_Tk%d", count);
+      bu_vls_printf(&dmp->dm_pathName, ".dm_tk%d", count);
   }
 
   ++count;
@@ -317,7 +319,7 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
 
   if(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL){
     bu_log("tk_open: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
-    (void)Tk_close(dmp);
+    (void)tk_close(dmp);
     return DM_NULL;
   }
 
@@ -331,7 +333,7 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
 
   if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
     bu_vls_free(&str);
-    (void)Tk_close(dmp);
+    (void)tk_close(dmp);
 
     return DM_NULL;
   }
@@ -345,7 +347,7 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
 
   /* make sure there really is a display before proceeding. */
   if (!dpy) {
-      (void)Tk_close(dmp);
+      (void)tk_close(dmp);
       return DM_NULL;
   }
 
@@ -383,7 +385,7 @@ tk_open(Tcl_Interp *interp, int argc, char **argv)
   /* must do this before MakeExist */
   if((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip = Tk_choose_visual(dmp)) == NULL){
     bu_log("Tk_open: Can't get an appropriate visual.\n");
-    (void)Tk_close(dmp);
+    (void)tk_close(dmp);
     return DM_NULL;
   }
 
@@ -495,7 +497,7 @@ Done:
 
 Skip_dials:
 #ifndef CRAY2
-  (void)Tk_configureWin_guts(dmp, 1);
+  (void)tk_configureWin_guts(dmp, 1);
 #endif
 /*
   Tk_SetWindowBackground(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
@@ -509,12 +511,12 @@ Skip_dials:
 }
 
 /**
- *  @proc Tk_close
+ *  @proc tk_close
  *
  *  Gracefully release the display.
  */
 HIDDEN int
-Tk_close(struct dm *dmp)
+tk_close(struct dm *dmp)
 {
   if(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy){
     if(((struct x_vars *)dmp->dm_vars.priv_vars)->gc)
@@ -538,24 +540,24 @@ Tk_close(struct dm *dmp)
   bu_vls_free(&dmp->dm_pathName);
   bu_vls_free(&dmp->dm_tkName);
   bu_vls_free(&dmp->dm_dName);
-  bu_free(dmp->dm_vars.priv_vars, "Tk_close: Tk_vars");
-  bu_free(dmp->dm_vars.pub_vars, "Tk_close: dm_Tkvars");
-  bu_free(dmp, "Tk_close: dmp");
+  bu_free(dmp->dm_vars.priv_vars, "tk_close: tk_vars");
+  bu_free(dmp->dm_vars.pub_vars, "tk_close: dm_tkvars");
+  bu_free(dmp, "tk_close: dmp");
 
   return TCL_OK;
 }
 
 /**
- * @proc Tk_drawBegin
+ * @proc tk_drawBegin
  * This white-washes the dm's pixmap with the background color.
  */
 HIDDEN int
-Tk_drawBegin(struct dm *dmp)
+tk_drawBegin(struct dm *dmp)
 {
   XGCValues       gcv;
 
   if (dmp->dm_debugLevel)
-    bu_log("Tk_drawBegin()\n");
+    bu_log("tk_drawBegin()\n");
 
   /* clear pixmap */
   gcv.foreground = ((struct x_vars *)dmp->dm_vars.priv_vars)->bg;
@@ -579,14 +581,14 @@ Tk_drawBegin(struct dm *dmp)
 }
 
 /**
- *  Tk_drawEnd
+ *  tk_drawEnd
  *  This copies the pixmap into the window.
  */
 HIDDEN int
-Tk_drawEnd(struct dm *dmp)
+tk_drawEnd(struct dm *dmp)
 {
   if (dmp->dm_debugLevel)
-    bu_log("Tk_drawEnd()\n");
+    bu_log("tk_drawEnd()\n");
 
   XCopyArea(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 	    ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
@@ -603,17 +605,17 @@ Tk_drawEnd(struct dm *dmp)
 }
 
 /**
- * @proc Tk_loadMatrix
+ * @proc tk_loadMatrix
  *
  *  Load a new transformation matrix.  This will be followed by
- *  many calls to Tk_drawVList().
+ *  many calls to tk_drawVList().
  */
 /* ARGSUSED */
 HIDDEN int
-Tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
+tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
   if(dmp->dm_debugLevel){
-    bu_log("Tk_loadMatrix()\n");
+    bu_log("tk_loadMatrix()\n");
 
     bu_log("which eye = %d\t", which_eye);
     bu_log("transformation matrix = \n");
@@ -635,12 +637,12 @@ Tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 }
 
 /**
- * Tk_drawVList
+ * tk_drawVList
  *
  */
 
 HIDDEN int
-Tk_drawVList(struct dm *dmp, register struct bn_vlist *vp)
+tk_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
 #if 1
 	static vect_t			spnt, lpnt, pnt;
@@ -654,7 +656,7 @@ Tk_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	static int			nvectors = 0;
 
 	if (dmp->dm_debugLevel) {
-		bu_log("Tk_drawVList()\n");
+		bu_log("tk_drawVList()\n");
 		bu_log("vp - %lu, perspective - %d\n", vp, dmp->dm_perspective);
 	}
 
@@ -851,7 +853,7 @@ Tk_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 		nvectors += nused;
 		if (nvectors >= vectorThreshold) {
 			if (dmp->dm_debugLevel)
-				bu_log("Tk_drawVList(): handle Tcl events\n");
+				bu_log("tk_drawVList(): handle Tcl events\n");
 
 			nvectors = 0;
 
@@ -877,10 +879,10 @@ Tk_drawVList(struct dm *dmp, register struct bn_vlist *vp)
  * (ie, not scaled, rotated, displaced, etc).
  */
 HIDDEN int
-Tk_normal(struct dm *dmp)
+tk_normal(struct dm *dmp)
 {
   if (dmp->dm_debugLevel)
-    bu_log("Tk_normal()\n");
+    bu_log("tk_normal()\n");
 
   return TCL_OK;
 }
@@ -893,12 +895,12 @@ Tk_normal(struct dm *dmp)
  */
 /* ARGSUSED */
 HIDDEN int
-Tk_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+tk_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
   int sx, sy;
 
   if (dmp->dm_debugLevel){
-    bu_log("Tk_drawString2D():\n");
+    bu_log("tk_drawString2D():\n");
     bu_log("\tstr - %s\n", str);
     bu_log("\tx - %g\n", x);
     bu_log("\ty - %g\n", y);
@@ -927,7 +929,7 @@ Tk_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int si
 }
 
 HIDDEN int
-Tk_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
+tk_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
   int	sx1, sy1, sx2, sy2;
 
@@ -937,7 +939,7 @@ Tk_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
   sy2 = dm_Normal2Xy(dmp, y2, 0);
 
   if (dmp->dm_debugLevel) {
-    bu_log("Tk_drawLine2D()\n");
+    bu_log("tk_drawLine2D()\n");
     bu_log("x1 = %g, y1 = %g\n", x1, y1);
     bu_log("x2 = %g, y2 = %g\n", x2, y2);
     bu_log("sx1 = %d, sy1 = %d\n", sx1, sy1);
@@ -954,7 +956,7 @@ Tk_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 }
 
 HIDDEN int
-Tk_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
+tk_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
   int   sx, sy;
 
@@ -962,7 +964,7 @@ Tk_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
   sy = dm_Normal2Xy(dmp, y, 0);
 
   if (dmp->dm_debugLevel) {
-    bu_log("Tk_drawPoint2D()\n");
+    bu_log("tk_drawPoint2D()\n");
     bu_log("x = %g, y = %g\n", x, y);
     bu_log("sx = %d, sy = %d\n", sx, sy);
   }
@@ -975,12 +977,12 @@ Tk_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 }
 
 HIDDEN int
-Tk_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+tk_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     XGCValues gcv;
 
     if (dmp->dm_debugLevel)
-	bu_log("Tk_setFGColor( %d %d %d)\n", r, g, b);
+	bu_log("tk_setFGColor( %d %d %d)\n", r, g, b);
 
     dmp->dm_fg[0] = r;
     dmp->dm_fg[1] = g;
@@ -1003,10 +1005,10 @@ Tk_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 }
 
 HIDDEN int
-Tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     if (dmp->dm_debugLevel)
-	bu_log("Tk_setBGColor()\n");
+	bu_log("tk_setBGColor()\n");
 
     dmp->dm_bg[0] = r;
     dmp->dm_bg[1] = g;
@@ -1028,12 +1030,12 @@ Tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 }
 
 HIDDEN int
-Tk_setLineAttr(struct dm *dmp, int width, int style)
+tk_setLineAttr(struct dm *dmp, int width, int style)
 {
   int linestyle;
 
   if (dmp->dm_debugLevel)
-    bu_log("Tk_setLineAttr( width: %d, style: %d)\n", width, style);
+    bu_log("tk_setLineAttr( width: %d, style: %d)\n", width, style);
 
   dmp->dm_lineWidth = width;
   dmp->dm_lineStyle = style;
@@ -1055,7 +1057,7 @@ Tk_setLineAttr(struct dm *dmp, int width, int style)
 
 /* ARGSUSED */
 HIDDEN int
-Tk_debug(struct dm *dmp, int lvl)
+tk_debug(struct dm *dmp, int lvl)
 {
   dmp->dm_debugLevel = lvl;
 
@@ -1063,10 +1065,10 @@ Tk_debug(struct dm *dmp, int lvl)
 }
 
 HIDDEN int
-Tk_setWinBounds(struct dm *dmp, register int *w)
+tk_setWinBounds(struct dm *dmp, register int *w)
 {
   if (dmp->dm_debugLevel)
-    bu_log("Tk_setWinBounds()\n");
+    bu_log("tk_setWinBounds()\n");
 
   dmp->dm_clipmin[0] = w[0];
   dmp->dm_clipmin[1] = w[2];
@@ -1079,7 +1081,7 @@ Tk_setWinBounds(struct dm *dmp, register int *w)
 }
 
 HIDDEN int
-Tk_configureWin_guts(struct dm *dmp, int force)
+tk_configureWin_guts(struct dm *dmp, int force)
 {
   XFontStruct     *newfontstruct;
   XGCValues       gcv;
@@ -1098,7 +1100,7 @@ Tk_configureWin_guts(struct dm *dmp, int force)
   dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 
   if (dmp->dm_debugLevel) {
-    bu_log("Tk_configureWin_guts()\n");
+    bu_log("tk_configureWin_guts()\n");
     bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
   }
 
@@ -1134,17 +1136,17 @@ Tk_configureWin_guts(struct dm *dmp, int force)
 }
 
 HIDDEN int
-Tk_configureWin(struct dm *dmp)
+tk_configureWin(struct dm *dmp)
 {
   /* don't force */
-  return Tk_configureWin_guts(dmp, 0);
+  return tk_configureWin_guts(dmp, 0);
 }
 
 HIDDEN int
-Tk_setLight(struct dm *dmp, int light_on)
+tk_setLight(struct dm *dmp, int light_on)
 {
   if (dmp->dm_debugLevel)
-    bu_log("Tk_setLight:\n");
+    bu_log("tk_setLight:\n");
 
   dmp->dm_light = light_on;
 
@@ -1152,16 +1154,17 @@ Tk_setLight(struct dm *dmp, int light_on)
 }
 
 HIDDEN int
-Tk_setZBuffer(struct dm *dmp, int zbuffer_on)
+tk_setZBuffer(struct dm *dmp, int zbuffer_on)
 {
   if (dmp->dm_debugLevel)
-    bu_log("Tk_setZBuffer:\n");
+    bu_log("tk_setZBuffer:\n");
 
   dmp->dm_zbuffer = zbuffer_on;
 
   return TCL_OK;
 }
 
+#endif
 
 /*
  * Local Variables:

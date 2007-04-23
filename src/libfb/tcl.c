@@ -105,6 +105,17 @@ extern int X24_close_existing();
 extern FBIO X24_interface;
 #endif
 
+#ifdef IF_TK
+#if 0
+/*XXX TJM implement this interface */
+extern void tk_configureWindow();
+extern int tk_refresh();
+extern int tk_open_existing();
+extern int tk_close_existing();
+extern FBIO tk_interface;
+#endif
+#endif
+
 int fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int fb_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -118,6 +129,7 @@ static struct bu_cmdtab cmdtab[] = {
 
 /* XXX this device list shouldn't be in here */
 static const char *X_device_name = "/dev/X";
+static const char *tk_device_name = "/dev/tk";
 static const char *ogl_device_name = "/dev/ogl";
 static const char *wgl_device_name = "/dev/wgl";
 
@@ -159,6 +171,30 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 	}
     }
 #endif  /* IF_X */
+
+#ifdef IF_TK
+#if 0
+/* XXX TJM implment tk_open_existing */
+    if(strcasecmp(argv[1], tk_device_name) == 0) {
+	found=1;
+	*ifp = tk_interface; /* struct copy */
+
+	ifp->if_name = malloc((unsigned)strlen(tk_device_name) + 1);
+	(void)strcpy(ifp->if_name, tk_device_name);
+
+	/* Mark OK by filling in magic number */
+	ifp->if_magic = FB_MAGIC;
+
+	if((tk_open_existing(ifp, argc - 1, argv + 1)) <= -1){
+	    ifp->if_magic = 0; /* sanity */
+	    free((void *) ifp->if_name);
+	    free((void *) ifp);
+	    Tcl_AppendResult(interp, "fb_open_existing: failed to open tk framebuffer\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+    }
+#endif
+#endif  /* IF_TK */
 
 #ifdef IF_WGL
     if(strcasecmp(argv[1], wgl_device_name) == 0) {
@@ -229,6 +265,10 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
     bu_vls_strcat(&vls, ogl_device_name);
     bu_vls_strcat( &vls, "\n" );
 #endif  /* IF_OGL */
+#ifdef IF_TK
+    bu_vls_strcat(&vls, tk_device_name);
+    bu_vls_strcat( &vls, "\n" );
+#endif  /* IF_TK */
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
@@ -312,6 +352,25 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
     }
 #endif  /* IF_OGL */
 
+#ifdef IF_TK
+    if(strcasecmp(ifp->if_name, tk_device_name) == 0) {
+	if((status = tk_close_existing(ifp)) <= -1){
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
+			  ifp->if_name, status);
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	    bu_vls_free(&vls);
+
+	    return TCL_ERROR;
+	}
+	if(ifp->if_pbase != PIXEL_NULL)
+	    free((void *)ifp->if_pbase);
+	free((void *)ifp->if_name);
+	free((void *)ifp);
+	return TCL_OK;
+    }
+#endif  /* IF_TK */
+
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "fb_close_existing: can not close device\nifp: %s    device name: %s\n",
 		  argv[1], ifp->if_name);
@@ -339,6 +398,14 @@ fb_configureWindow(FBIO *ifp, int width, int height)
 	ogl_configureWindow(ifp, width, height);
     }
 #endif  /* IF_OGL */
+#ifdef IF_TK
+#if 0
+/* XXX TJM implement tk_configureWindow */
+    if (!strncmp(ifp->if_name, tk_device_name, strlen(tk_device_name))) {
+	tk_configureWindow(ifp, width, height);
+    }
+#endif
+#endif  /* IF_TK */
 }
 
 int
@@ -374,6 +441,15 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 	status = ogl_refresh(ifp, x, y, w, h);
     }
 #endif  /* IF_OGL */
+#ifdef IF_TK
+#if 0
+/* XXX TJM implement tk_refresh */
+    status = -1;
+    if(!strncmp(ifp->if_name, tk_device_name, strlen( tk_device_name))) {
+	status = tk_refresh(ifp, x, y, w, h);
+    }
+#endif
+#endif  /* IF_TK */
 
     if(status < 0) {
 	return TCL_ERROR;

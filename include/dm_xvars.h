@@ -50,9 +50,13 @@ struct dm_xvars {
   PIXELFORMATDESCRIPTOR *vip;
   HFONT fontstruct;
   HDC  hdc;      // device context of device that OpenGL calls are to be drawn on
-#else
+#endif
+#if defined(DM_X) || defined (DM_OGL)
   XVisualInfo *vip;
   XFontStruct *fontstruct;
+#endif
+#ifdef DM_TK
+  Tk_Font *tkfontstruct;
 #endif
   int devmotionnotify;
   int devbuttonpress;

@@ -89,6 +89,7 @@
 #define DM_TYPE_PLOT	1
 #define DM_TYPE_PS	2
 #define DM_TYPE_X	3
+#define DM_TYPE_TK	8
 #define DM_TYPE_OGL	4
 #define DM_TYPE_GLX	5
 #define DM_TYPE_PEX	6
@@ -102,6 +103,7 @@
 #define IS_DM_TYPE_PLOT(_t) ((_t) == DM_TYPE_PLOT)
 #define IS_DM_TYPE_PS(_t) ((_t) == DM_TYPE_PS)
 #define IS_DM_TYPE_X(_t) ((_t) == DM_TYPE_X)
+#define IS_DM_TYPE_TK(_t) ((_t) == DM_TYPE_TK)
 #define IS_DM_TYPE_OGL(_t) ((_t) == DM_TYPE_OGL)
 #define IS_DM_TYPE_GLX(_t) ((_t) == DM_TYPE_GLX)
 #define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)

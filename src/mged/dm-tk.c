@@ -34,7 +34,6 @@
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*#ifdef DM_TK */
 #include "common.h"
 
 #include <stdlib.h>
@@ -55,26 +54,27 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "dm_xvars.h"
 #include "dm-tk.h"
+#include "fbio.h"
 
 #include "./ged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-extern int _Tk_open_existing();	/* defined in libfb/if_ogl.c */
+extern int _tk_open_existing();	/* XXX TJM will be defined in libfb/if_tk.c */
 extern int common_dm();			/* defined in dm-generic.c */
 extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 
-static int Tk_dm(int argc, char **argv);
+static int tk_dm(int argc, char **argv);
 static void dirty_hook(void);
 static void zclip_hook(void);
 
 #ifdef USE_PROTOTYPES
-static Tk_GenericProc Tk_doevent;
+static Tk_GenericProc tk_doevent;
 #else
-static int Tk_doevent();
+static int tk_doevent();
 #endif
 
-struct bu_structparse Tk_vparse[] = {
+struct bu_structparse tk_vparse[] = {
   {"%f",  1, "bound",		 DM_O(dm_bound),	dirty_hook},
   {"%d",  1, "useBound",	 DM_O(dm_boundFlag),	dirty_hook},
   {"%d",  1, "zclip",		 DM_O(dm_zclip),	zclip_hook},
@@ -83,7 +83,7 @@ struct bu_structparse Tk_vparse[] = {
 };
 
 int
-Tk_dm_init(struct dm_list	*o_dm_list,
+tk_dm_init(struct dm_list	*o_dm_list,
 	  int			argc,
 	  char			*argv[])
 {
@@ -92,7 +92,7 @@ Tk_dm_init(struct dm_list	*o_dm_list,
 	dm_var_init(o_dm_list);
 
 	/* register application provided routines */
-	cmd_hook = Tk_dm;
+	cmd_hook = tk_dm;
 
 	Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 	if ((dmp = dm_open(interp, DM_TYPE_TK, argc-1, argv)) == DM_NULL)
@@ -101,7 +101,7 @@ Tk_dm_init(struct dm_list	*o_dm_list,
 	/* keep display manager in sync */
 	dmp->dm_perspective = mged_variables->mv_perspective_mode;
 
-	eventHandler = Tk_doevent;
+	eventHandler = tk_doevent;
 	Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
 	(void)DM_CONFIGURE_WIN(dmp);
 
@@ -114,12 +114,12 @@ Tk_dm_init(struct dm_list	*o_dm_list,
 }
 
 void
-debug_fb_open(void)
+tk_fb_open(void)
 {
-	char *Tk_name = "/dev/TK";
+	char *Tk_name = "/dev/tk";
 
 	if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
-		Tcl_AppendResult(interp, "Tk_dm_init: failed to allocate framebuffer memory\n",
+		Tcl_AppendResult(interp, "tk_dm_init: failed to allocate framebuffer memory\n",
 				 (char *)NULL);
 		return;
 	}
@@ -131,7 +131,8 @@ debug_fb_open(void)
 	/* Mark OK by filling in magic number */
 	fbp->if_magic = FB_MAGIC;
 
-/*	_Tk_open_existing(fbp,
+/* XXX TJM implement _tk_open_existing
+	_tk_open_existing(fbp,
 			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			   ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
 			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
@@ -146,7 +147,7 @@ debug_fb_open(void)
    This routine is being called from doEvent() to handle Expose events.
 */
 static int
-Tk_doevent(ClientData	clientData,
+tk_doevent(ClientData	clientData,
 	  XEvent	*eventPtr)
 {
 	if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
@@ -161,7 +162,7 @@ Tk_doevent(ClientData	clientData,
 }
 
 static int
-Tk_dm(int	argc,
+tk_dm(int	argc,
      char	*argv[])
 {
 	  if (!strcmp(argv[0], "set")) {
@@ -171,9 +172,9 @@ Tk_dm(int	argc,
 
 		  if (argc < 2) {
 			  /* Bare set command, print out current settings */
-			  bu_vls_struct_print2(&vls, "dm_Tk internal variables", Tk_vparse, (const char *)dmp );
+			  bu_vls_struct_print2(&vls, "dm_Tk internal variables", tk_vparse, (const char *)dmp );
 		  } else if (argc == 2) {
-			  bu_vls_struct_item_named(&vls, Tk_vparse, argv[1], (const char *)dmp, ',');
+			  bu_vls_struct_item_named(&vls, tk_vparse, argv[1], (const char *)dmp, ',');
 		  } else {
 			  struct bu_vls tmp_vls;
 
@@ -181,7 +182,7 @@ Tk_dm(int	argc,
 			  bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 			  bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 			  bu_vls_putc(&tmp_vls, '\"');
-			  bu_struct_parse(&tmp_vls, Tk_vparse, (char *)dmp);
+			  bu_struct_parse(&tmp_vls, tk_vparse, (char *)dmp);
 			  bu_vls_free(&tmp_vls);
 		  }
 
@@ -206,7 +207,6 @@ zclip_hook(void)
 	view_state->vs_vop->vo_zclip = dmp->dm_zclip;
 	dirty_hook();
 }
-/*#endif*/
 /*
  * Local Variables:
  * mode: C

@@ -31,7 +31,7 @@
 #define NUM_PIXELS 216    /* CUBE_DIMENSION * CUBE_DIMENSION * CUBE_DIMENSION */
 #define ColormapNull (Colormap *)NULL
 
-struct Tk_vars {
+struct tk_vars {
   GC gc;
   Pixmap pix;
   mat_t xmat;

@@ -4,7 +4,7 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 if WITH_OPENGL
 OGL_SRCS = dm-ogl.c
-OGL_CFLAGS = -DDM_OGL -DIF_OGL
+OGL_CFLAGS = -DDM_OGL -DIF_OGL $(GL_CFLAGS)
 else
 OGL_SRCS =
 OGL_CFLAGS =
@@ -25,6 +25,14 @@ X11_CFLAGS = -DDM_X -DIF_X
 else
 X11_SRCS =
 X11_CFLAGS =
+endif
+
+if WITH_TK
+TK_SRCS = dm-tk.c
+TK_CFLAGS = -DDM_TK -DIF_TK
+else
+TK_SRCS =
+TK_CFLAGS =
 endif
 
 points_dir = points
@@ -101,6 +109,7 @@ mged_SOURCES = \
 	$(OGL_SRCS) \
 	$(WGL_SRCS) \
 	$(X11_SRCS) \
+	$(TK_SRCS) \
 	dm-generic.c \
 	dm-plot.c \
 	dm-ps.c \
@@ -151,6 +160,7 @@ mged_CFLAGS = \
 	$(OGL_CFLAGS) \
 	$(WGL_CFLAGS) \
 	$(X11_CFLAGS) \
+	$(TK_CFLAGS) \
 	$(POINTS_CFLAGS) \
 	${PNG_CPPFLAGS}	\
 	${ITCL_CPPFLAGS} \
@@ -197,7 +207,6 @@ EXTRA_DIST = \
 	bool_rewrite.c \
 	comb_bool_parse.y \
 	comb_bool_scan.l \
-	dm-tk.c \
 	fbserv_win32.c \
 	hideline.c \
 	memalloc.c \
@@ -214,3 +223,4 @@ FAST_OBJECTS = \
 	$(cad_parea_OBJECTS) \
 	$(mged_OBJECTS) \
 	$(bin_PROGRAMS)
+

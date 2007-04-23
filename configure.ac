@@ -188,7 +188,7 @@ else
 	bc_prefix="$prefix"
 fi
 # make sure the values are expanded (autoconf may set prefix to a variable)
-bc_prefix="`eval \"echo $bc_prefix\"`"
+eval "bc_prefix=\"$bc_prefix\""
 AC_DEFINE_UNQUOTED([BRLCAD_ROOT], "$bc_prefix", "Location BRL-CAD will install to")
 AC_MSG_RESULT($bc_prefix)
 if test ! "x$BRLCAD_ROOT" = "x" ; then
@@ -220,7 +220,7 @@ else
 	bc_data_dir="${datadir}"
 fi
 # make sure the values are expanded (autoconf may set datadir to a variable)
-bc_data_dir="`eval \"echo $bc_data_dir\"`"
+eval "bc_data_dir=\"$bc_data_dir\""
 AC_DEFINE_UNQUOTED([BRLCAD_DATA], "$bc_data_dir", "Location BRL-CAD resources will install to")
 AC_MSG_RESULT($bc_data_dir)
 if test ! "x$BRLCAD_DATA" = "x" ; then
@@ -238,6 +238,9 @@ else
 	# compensate for autoconf inconsistencies
 	BRLCAD_DATA="$bc_data_dir"
 fi
+
+eval "BRLCAD_DATA=\"$BRLCAD_DATA\""
+eval "BRLCAD_DATA=\"$BRLCAD_DATA\""
 AC_SUBST(BRLCAD_DATA)
 
 # if this is not a CVS checkout, disable dependency tracking for a
@@ -332,6 +335,8 @@ BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [auto])
 
 # force enable/disable building of Tk
 BC_ARG_ENABLE([build_tk], [tk-build], [Build the included Tk], [auto])
+
+BC_ARG_ENABLE([tk_aqua], [aqua], [Use Aqua windowing system on Mac OS X], [no])
 
 # force enable/disable building of incrTcl
 BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [auto])
@@ -664,21 +669,6 @@ BC_ARG_WITH_ALIAS([with_python], [py])
 # set up path searching
 ###
 
-dnl *** X11 ***
-if test "x$bc_with_x11_val" != "x" ; then
-	BC_RETRY_DIRECTORY([$bc_with_x11_val])
-elif test "x$bc_with_x11" = "xyes" -o "x$bc_with_x11" = "xauto" ; then
-	# search /usr/X11R6 for X11
-	BC_SEARCH_DIRECTORY([/usr/X11R6], [X11])
-
-	# if we hit a wall, retry configure with these
-	BC_RETRY_DIRECTORY([/opt/X11R6], [X11])
-	BC_RETRY_DIRECTORY([/opt/X11], [X11])
-	BC_RETRY_DIRECTORY([/usr/X11], [X11])
-fi
-AC_PATH_X
-AC_PATH_XTRA
-
 dnl automatically scan /usr/local (e.g. BSD uses /usr/local for ports)
 BC_SEARCH_DIRECTORY([/usr/local])
 
@@ -900,6 +890,9 @@ AC_MSG_RESULT($bc_build_tcl)
 
 AC_MSG_CHECKING(whether to build the Tk library)
 AC_MSG_RESULT($bc_build_tk)
+
+AC_MSG_CHECKING(whether to use Aqua windowing system in the built Tk library)
+AC_MSG_RESULT($bc_tk_aqua)
 
 AC_MSG_CHECKING(whether to build the incrTcl library)
 AC_MSG_RESULT($bc_build_itcl)
@@ -1207,55 +1200,33 @@ AC_CHECK_LIB(termlib, tputs, LIBTERMLIB="-ltermlib",
     )]
 )
 
-dnl check if X11 libraries link
-LIBX11=""
-LIBXEXT=""
-LIBXI=""
-LIBXSS=""
-LIBXT=""
-LIBXMU=""
-LIBSM=""
-LIBICE=""
+dnl *** X11 ***
 if test "x$bc_with_x11" != "xno" ; then
+
+    dnl find X11 libraries
+    AC_PATH_XTRA
+    if test "x$have_x" = "xyes" ; then
+	AC_DEFINE(HAVE_X11_XLIB_H, 1, Define to 1 if you have the <X11/Xlib.h> header file.)
+    fi
+
+    dnl add X11 libraries that link to X_LIBS
+    LIBX11=""
+    LIBXEXT=""
+    LIBXI=""
+
+    PRELIBS="$LIBS"
+    LIBS="$PRELIBS $X_LIBS"
     AC_CHECK_LIB(X11, XCreateWindow, LIBX11="-lX11")
 
-    PRELIBS="$LIBS"
     LIBS="$LIBS $LIBX11"
-    AC_CHECK_LIB(Xext, XShapeCombineMask, LIBXEXT="-lXext $LIBX11")
-    LIBS="$PRELIBS"
+    AC_CHECK_LIB(Xext, XShapeCombineMask, LIBXEXT="-lXext")
 
-    PRELIBS="$LIBS"
     LIBS="$LIBS $LIBX11 $LIBXEXT"
-    AC_CHECK_LIB(Xi, XGetExtensionVersion, LIBXI="-lXi $LIBXEXT")
-    LIBS="$PRELIBS"
+    AC_CHECK_LIB(Xi, XGetExtensionVersion, LIBXI="-lXi")
 
-    PRELIBS="$LIBS"
-    LIBS="$LIBS $LIBX11"
-    AC_CHECK_LIB(Xmu, XmuLookupStandardColormap, LIBXMU="-lXmu $LIBX11")
+    X_LIBS="$LIBS $LIBXI"
     LIBS="$PRELIBS"
-
-    PRELIBS="$LIBS"
-    LIBS="$LIBS"
-    AC_CHECK_LIB(ICE, IceOpenConnection, LIBICE="-lICE")
-    LIBS="$PRELIBS"
-
-    PRELIBS="$LIBS"
-    LIBS="$LIBS $LIBICE"
-    AC_CHECK_LIB(SM, SmcOpenConnection, LIBSM="-lSM $LIBICE")
-    LIBS="$PRELIBS"
-
-    PRELIBS="$LIBS"
-    LIBS="$LIBS $LIBX11 $LIBICE $LIBSM"
-    AC_CHECK_LIB(Xt, XtMalloc, LIBXT="-lXt $LIBX11 $LIBICE $LIBSM")
-    LIBS="$PRELIBS"
-
-    PRELIBS="$LIBS"
-    LIBS="$LIBS $LIBX11 $LIBXEXT"
-    dnl use something other than XScreenSaverQueryInfo to avoid having
-    dnl tk use a cached library check result.
-    AC_CHECK_LIB(Xss, XScreenSaverAllocInfo, LIBXSS="-lXss $LIBXEXT $LIBX11")
-    LIBS="$PRELIBS"
-fi # bc_with_x11
+fi
 
 dnl check if a math library links
 m_link_works=no
@@ -1420,9 +1391,26 @@ dnl check if an OpenGL graphics library links
 gl_link_works=no
 LIBGL=""
 if test "x$bc_with_opengl" != "xno" ; then
-    AC_CHECK_LIB(GL, glEnable, gl_link_works=yes ; LIBGL="-lGL",
-		 [AC_CHECK_LIB(GL2, glEnable, gl_link_works=yes ; LIBGL="-lGL2")]
+    AC_CHECK_LIB(GL, glEnable, gl_link_works=yes ; LIBGL="$LIBGL -lGL",
+	 [AC_CHECK_LIB(GL2, glEnable, gl_link_works=yes ; LIBGL="$LIBGL -lGL2")]
     )
+    if test "x$gl_link_works" = "xno" ; then
+	PRELDFLAGS="$LDFLAGS"
+	PRELIBS="$LIBS"
+	for bc_dir in "$ac_x_libraries" `echo "$ac_x_includes $ac_x_header_dirs" | 
+		sed s/include/lib/g` ; do
+
+	    LDFLAGS="$PRELDFLAGS -L$bc_dir"
+	    LIBS="$PRELIBS -lGL"
+	    AC_LINK_IFELSE([AC_LANG_CALL([],[glEnable])], 
+		gl_link_works=yes ; LIBGL="-L$bc_dir -lGL" ; break)
+	    LIBS="$PRELIBS -lGL2"
+	    AC_LINK_IFELSE([AC_LANG_CALL([],[glEnable])], 
+		gl_link_works=yes ; LIBGL="-L$bc_dir -lGL2" ; break)
+	done
+	LDFLAGS="$PRELDFLAGS"
+	LIBS="$PRELIBS"
+    fi
 fi
 
 dnl check if the Windows WGL graphics library links
@@ -1575,21 +1563,37 @@ AC_CHECK_HEADERS( \
 	winsock.h
 )
 
-# optionally check for X11 headers
-if test "x$bc_with_x11" != "xno" ; then
-    AC_CHECK_HEADERS( \
-	X11/Xlib.h \
-	X11/Xosdefs.h \
-    )
-fi # bc_with_x11
-
+GL_CPPFLAGS=""
 # optionally check for OpenGL headers
 if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
-    AC_CHECK_HEADERS( \
-	GL/gl.h \
-	GL/glx.h \
-    )
+    gl_include_works=no
+
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include <GL/gl.h>])],
+	[gl_include_works="yes"])
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include <GL/glx.h>])],
+	[gl_include_works="yes"])
+
+    PRECPPFLAGS="$CPPFLAGS"
+    if test "x$gl_include_works" = "xno" ; then
+	for bc_dir in "$ac_x_includes" `echo $ac_x_header_dirs` ; do
+	    CPPFLAGS="$PRECPPFLAGS -I$bc_dir"
+	    AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include <GL/gl.h>])],
+		[gl_include_works="yes"])
+	    AC_COMPILE_IFELSE([AC_LANG_SOURCE([@%:@include <GL/glx.h>])],
+		[gl_include_works="yes"])
+	    if test "x$gl_include_works" = "xyes" ; then
+		GL_CPPFLAGS="-I$bc_dir"
+		break
+	    fi
+	done
+    fi
+    AC_CHECK_HEADERS([GL/gl.h GL/glx.h])
+    CPPFLAGS="$PRECPPFLAGS"
+
 fi # bc_with_opengl
+
+GL_CFLAGS=$GL_CPPFLAGS
+AC_SUBST(GL_CFLAGS)
 
 # optionally check for vectorization headers for opennurbs
 if test "x$bc_build_opennurbs" != "xno" ; then
@@ -2600,6 +2604,7 @@ AC_MSG_RESULT($tk_works)
 
 dnl figure out whether we need to build Tk
 build_brlcad_tk="no (using system)"
+build_against_tk=$tk_works
 if test "x$bc_build_tk" = "xyes" ; then
     build_brlcad_tk=yes
 else
@@ -2630,10 +2635,14 @@ case $host_os in
 	 ;;
 esac
 if test "x$build_brlcad_tk" = "xyes" ; then
+    build_against_tk="yes"
     AC_MSG_RESULT(yes)
-    TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION} $LIBXSS"
+    TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
     TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
     TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix'
+    if test "x$bc_tk_aqua" = "xyes" ; then
+	TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
+    fi
 else
     AC_MSG_RESULT(no)
     if test "x$tk_link_works" = "xyes" ; then
@@ -3161,7 +3170,9 @@ if test "x$bc_with_opengl" != "xno" ; then
     AC_MSG_CHECKING(for OpenGL functionality)
     opengl_works=no
     PRELDFLAGS="$LDFLAGS"
+    PRECPPFLAGS="$CPPFLAGS"
     LDFLAGS="$LDFLAGS $LIBGL"
+    CPPFLAGS="$CPPFLAGS $GL_CPPFLAGS"
     AC_TRY_RUN([
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
@@ -3178,6 +3189,7 @@ main(int argc, char *argv[]) {
 }
     ], [opengl_works=yes])
     LDFLAGS="$PRELDFLAGS"
+    CPPFLAGS="$PRECPPFLAGS"
     AC_MSG_RESULT($opengl_works)
 
     dnl figure out whether we need to build against opengl
@@ -3246,22 +3258,13 @@ AC_MSG_RESULT($build_against_wgl)
 dnl *** X11 interface compilation ***
 build_against_x11="no"
 if test "x$bc_with_x11" != "xno" ; then
-    # XXX ugly hack (that needs to die)
-    X_PREFIX=/usr/X11R6
-    if test "x$bc_with_x11_val" != "x" ; then
-	X_PREFIX="$bc_with_x11_val"
-    fi
-    X_CFLAGS="-I${X_PREFIX}/include"
-    X_LIBS="-L${X_PREFIX}/lib $LIBX11 $LIBXI"
-
     x11_works=no
     AC_MSG_CHECKING(for X11 header functionality)
     PRELDFLAGS="$LDFLAGS"
-    LDFLAGS="$LDFLAGS $X_LIBS"
+    PRECPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
     AC_TRY_RUN([
-#ifdef HAVE_X11_XLIB_H
-#  include <X11/Xlib.h>
-#endif
+#include <X11/Xlib.h>
 main() {
     XPoint pt;
     pt.x = pt.y = 0;
@@ -3270,11 +3273,10 @@ main() {
     ],[x11_works=yes])
     AC_MSG_RESULT($x11_works)
     if test "x$x11_works" = "xyes" ; then
+	LDFLAGS="$LDFLAGS $X_LIBS"
 	AC_MSG_CHECKING(for X11 link functionality)
 	AC_TRY_RUN([
-#ifdef HAVE_X11_XLIB_H
-#  include <X11/Xlib.h>
-#endif
+#include <X11/Xlib.h>
 main() {
     XModifierKeymap *xmkm;
     xmkm=XNewModifiermap(1);
@@ -3284,20 +3286,31 @@ main() {
 	AC_MSG_RESULT($x11_works)
     fi
     LDFLAGS="$PRELDFLAGS"
+    CPPFLAGS="$PRECPPFLAGS"
 
     dnl figure out whether we need to build against X11
     if test "x$bc_with_x11" != "xno" ; then
-	if test "x$x11_works" = "xyes" ; then
-	    build_against_x11="yes"
-	else
+	if test "x$bc_tk_aqua" = "xyes" ; then
+	    X_LIBS=""
+	    LIBGL=""
+	    X_CFLAGS=""
+	    build_against_opengl="no"
 	    if test "x$bc_with_x11" = "xyes" ; then
-		BC_RETRY_CONFIGURE([$this], [$args])
-		AC_MSG_NOTICE([X11 was requested, but no system X11 libraries were found])
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_NOTICE([Try adding --without-x11])
-		AC_MSG_ERROR([*** Using X11 was requested, yet no system X11 was found ***])
+		AC_MSG_ERROR([*** X11 was requested, but tk is/will be built for aqua ***])
+	    fi
+	else
+	    if test "x$x11_works" = "xyes" ; then
+		build_against_x11="yes"
 	    else
-		AC_MSG_NOTICE([X11 does not appear to be functionally available])
+		if test "x$bc_with_x11" = "xyes" ; then
+		    BC_RETRY_CONFIGURE([$this], [$args])
+		    AC_MSG_NOTICE([X11 was requested, but no system X11 libraries were found])
+		    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		    AC_MSG_NOTICE([Try adding --without-x11])
+		    AC_MSG_ERROR([*** Using X11 was requested, yet no system X11 was found ***])
+		else
+		    AC_MSG_NOTICE([X11 does not appear to be functionally available])
+		fi
 	    fi
 	fi
     fi
@@ -3448,6 +3461,7 @@ AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 
 AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_X11, [test "x$build_against_x11" != "xno"])
+AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
 AM_CONDITIONAL(WITH_OPENGL, [test "x$build_against_opengl" != "xno"])
 AM_CONDITIONAL(WITH_WGL, [test "x$build_against_wgl" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
@@ -3528,8 +3542,8 @@ WDB='${top_builddir}/src/libwdb/libwdb.la'
 BN_LIBS="${BU} ${TCL} ${LIBM}"
 BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 CURSOR_LIBS="${TERMLIB}"
-DM_LIBS="${PNG} ${X_LIBS}"
-FB_LIBS="${BU} ${PKG} ${TCL} ${X_LIBS} ${LIBGL}"
+DM_LIBS="${PNG} ${TK} ${X_LIBS} "
+FB_LIBS="${BU} ${PKG} ${TCL} ${TK} ${X_LIBS} ${LIBGL}"
 FFT_LIBS="${LIBM}"
 MULTISPECTRAL_LIBS="${RT} ${BN} ${BU}"
 OPTICAL_LIBS="${TCL}"
@@ -3595,13 +3609,20 @@ bc_top_builddir="$ac_top_builddir"
 bc_configure_args="$ac_configure_args"
 
 dnl configure Tcl
-ac_configure_args="$ac_configure_args --disable-shared"
 if test "x$bc_use_debug" != "xno" ; then
    ac_configure_args="$ac_configure_args --enable-symbols"
 fi
 if test "x$build_brlcad_tcl" = "xyes" ; then
     AC_CONFIG_SUBDIRS([src/other/tcl/unix])
+    TCL_PATH="$PWD/${ac_top_builddir}/src/other/tcl/unix"
+    TCL_PATH="`echo $TCL_PATH | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
+    TK_PATH="$PWD/${ac_top_builddir}/src/other/tk/unix"
+    TK_PATH="`echo ${TK_PATH} | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
 fi
+
+AC_SUBST(TCL_PATH)
+AC_SUBST(TK_PATH)
+
 dnl configure Tk
 if test "x$build_brlcad_tk" = "xyes" ; then
     AC_CONFIG_SUBDIRS([src/other/tk/unix])
@@ -3912,11 +3933,13 @@ case $host_os in
 		    # remove any -all_load option.
 		    # provokes libtool linker bug with noinst libraries.
 		    sed 's/-all_load.*convenience//g' < $libtoolscript > ${libtoolscript}.sed
-		    if test ! "x`cat ${libtoolscript}`" = "x`cat ${libtoolscript}.sed`" ; then
+		    sed "s/temp_rpath=\$/temp_rpath=$TCL_PATH:$TK_PATH/g" < $libtoolscript.sed > ${libtoolscript}.sed2
+		    if test ! "x`cat ${libtoolscript}`" = "x`cat ${libtoolscript}.sed2`" ; then
 			AC_MSG_RESULT([Found -all_load in libtool script, removing])
-			cp ${libtoolscript}.sed ${libtoolscript}
+			cp ${libtoolscript}.sed2 ${libtoolscript}
 		    fi
 		    rm -f ${libtoolscript}.sed
+		    rm -f ${libtoolscript}.sed2
 		else
 		    AC_MSG_WARN([libtool script exists but is not writable so not attempting to edit])
 		fi

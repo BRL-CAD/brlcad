@@ -20,6 +20,12 @@ else
 IF_X_CFLAGS =
 endif
 
+if WITH_TK
+IF_TK_CFLAGS = -DIF_TK
+else
+IF_TK_CFLAGS =
+endif
+
 libfb_la_SOURCES = \
 	asize.c \
 	fb_generic.c \
@@ -40,6 +46,7 @@ libfb_la_SOURCES = \
 	if_ogl.c \
 	if_remote.c \
 	if_stack.c \
+	if_tk.c \
 	if_wgl.c \
 	tcl.c \
 	vers.c
@@ -49,7 +56,9 @@ libfb_la_CFLAGS = \
 	-DIF_REMOTE \
 	-DIF_AB \
 	${X_CFLAGS} \
+	${GL_CFLAGS} \
 	$(IF_X_CFLAGS) \
+	$(IF_TK_CFLAGS) \
 	$(IF_OGL_CFLAGS) \
 	$(IF_WGL_CFLAGS) \
 	${TCL_CPPFLAGS}
@@ -78,7 +87,6 @@ EXTRA_DIST = \
 	if_sgi.c \
 	if_sgiw.c \
 	if_sun.c \
-	if_tk.c \
 	if_ts.c \
 	if_ug.c \
 	libfb.dsp \

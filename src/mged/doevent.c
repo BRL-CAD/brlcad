@@ -36,18 +36,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#ifdef HAVE_X11_XLIB_H
-#  include <X11/Xutil.h>
-#  include <X11/extensions/XI.h>
-#  include <X11/extensions/XInput.h>
-#  include <X11/keysym.h>
-#endif
+
 #if HAVE_GL_DEVICE_H
 #  include <gl/device.h>
 #endif
 
 #include "tcl.h"
 #include "tk.h"
+
+#ifdef HAVE_X11_XLIB_H
+#  include <X11/Xutil.h>
+#  include <X11/extensions/XI.h>
+#  include <X11/extensions/XInput.h>
+#  include <X11/keysym.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"

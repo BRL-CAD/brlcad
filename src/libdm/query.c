@@ -80,6 +80,12 @@ dm_validXType(char *dpy_string, char *name)
     }
 #endif /* DM_X */
 
+#ifdef DM_TK
+    if (!strcmp(name, "tk")) {
+	return 1;
+    }
+#endif /* DM_TK */
+
     return 0;
 }
 
@@ -118,6 +124,10 @@ dm_bestXType(char *dpy_string)
 	    return "X";
 	}
     }
+#endif
+
+#ifdef DM_TK
+    return "tk";
 #endif
 
     return NULL;

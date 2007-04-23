@@ -1,10 +1,17 @@
 # $Id$
 
+if WITH_X11
+IR_X_BIN=ir-X
+IR_X_MAN=ir-X.1
+else
+IR_X_EXTRA=ir-X.c ir-X.1
+endif
+
 bin_PROGRAMS = \
 	all_sf \
 	showtherm \
 	firpass \
-	ir-X \
+	${IR_X_BIN} \
 	ir-sgi \
 	irdisp \
 	secpass \
@@ -40,11 +47,13 @@ ir_sgi_SOURCES = ir-sgi.c
 ir_sgi_LDADD = \
 	${BU} ${BU_LIBS}
 
+if WITH_X11
 ir_X_SOURCES = ir-X.c
 ir_X_CFLAGS = ${X_CFLAGS}
 ir_X_LDADD = \
 	${BU} ${BU_LIBS} \
 	${X_LIBS}
+endif
 
 secpass_SOURCES = secpass.c subroutines.c
 secpass_LDADD = \
@@ -72,6 +81,7 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	${IR_X_EXTRA} \
 	Compile.sgi \
 	pictsgi.1 \
 	pictsgi.c \

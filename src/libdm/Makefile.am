@@ -3,7 +3,7 @@
 lib_LTLIBRARIES = libdm.la
 
 if WITH_OPENGL
-DM_OGL_CFLAGS = -DDM_OGL -DIF_OGL
+DM_OGL_CFLAGS = -DDM_OGL -DIF_OGL $(GL_CFLAGS)
 else
 DM_OGL_CFLAGS =
 endif
@@ -15,9 +15,16 @@ DM_WGL_CFLAGS =
 endif
 
 if WITH_X11
-DM_X_CFLAGS = -DDM_X -DIF_X
+DM_X_CFLAGS = -DDM_X -DIF_X \
+	${X_CFLAGS}
 else
 DM_X_CFLAGS =
+endif
+
+if WITH_TK
+DM_TK_CFLAGS = -DDM_TK -DIF_TK
+else
+DM_TK_CFLAGS =
 endif
 
 libdm_la_SOURCES = \
@@ -26,6 +33,7 @@ libdm_la_SOURCES = \
 	color.c \
 	dm-Null.c \
 	dm-X.c \
+	dm-tk.c \
 	dm-generic.c \
 	dm-ogl.c \
 	dm-plot.c \
@@ -41,10 +49,10 @@ libdm_la_SOURCES = \
 libdm_la_LDFLAGS = -version-info 19:1
 # per-program CPPFLAGS wasn't added until automake 1.7
 libdm_la_CFLAGS = \
-	${X_CFLAGS} \
 	${DM_X_CFLAGS} \
-	${DM_OGL_CFLAGS} \
+	${DM_TK_CFLAGS} \
 	${DM_WGL_CFLAGS} \
+	${DM_OGL_CFLAGS} \
 	${PNG_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
 	${TK_CPPFLAGS}
@@ -52,7 +60,6 @@ libdm_la_CFLAGS = \
 EXTRA_DIST = \
 	dm-glx.c \
 	dm-pex.c \
-	dm-tk.c \
 	libdm.dsp
 
 DEPS=src/librt
