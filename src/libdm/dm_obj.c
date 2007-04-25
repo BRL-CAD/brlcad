@@ -3520,9 +3520,11 @@ dmo_closeFb(dmop)
 		break;
 #endif
 #ifdef DM_TK
+/* XXX TJM: not ready yet
 	case DM_TYPE_TK:
 		tk_close_existing(dmop->dmo_fbs.fbs_fbp);
 		break;
+*/
 #endif
 #ifdef DM_OGL
 	case DM_TYPE_OGL:

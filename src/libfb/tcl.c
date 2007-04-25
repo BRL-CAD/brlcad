@@ -353,6 +353,8 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 #endif  /* IF_OGL */
 
 #ifdef IF_TK
+#if 0
+/* XXX TJM: not yet */
     if(strcasecmp(ifp->if_name, tk_device_name) == 0) {
 	if((status = tk_close_existing(ifp)) <= -1){
 	    bu_vls_init(&vls);
@@ -369,6 +371,7 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 	free((void *)ifp);
 	return TCL_OK;
     }
+#endif
 #endif  /* IF_TK */
 
     bu_vls_init(&vls);
