@@ -1,8 +1,17 @@
 # $Id$
 
-bin_PROGRAMS = iges-g g-iges
+if BUILD_OPENNURBS
+ON_IGES = iges
+IGES_FLAGS = -g $(OPENNURBS_CPPFLAGS) 
+else
+ON_IGES = 
+IGES_FLAGS = 
+endif
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+bin_PROGRAMS = iges-g g-iges ${ON_IGES}
+EXTRA_PROGRAMS = iges
+
+AM_CPPFLAGS = ${TCL_CPPFLAGS} ${IGES_FLAGS}
 
 man_MANS = g-iges.1 iges-g.1
 
@@ -11,6 +20,17 @@ noinst_HEADERS = \
 	iges_extern.h \
 	iges_struct.h \
 	iges_types.h
+
+iges_SOURCES = \
+	n_iges.cpp  \
+	nmain.cpp
+
+iges_LDADD = \
+	${RT} ${RT_LIBS} \
+	${BN} ${BN_LIBS} \
+	${BU} ${BU_LIBS} \
+	${SYSV} ${SYSV_LIBS} \
+	${OPENNURBS}
 
 iges_g_SOURCES = \
 	add_face.c \
