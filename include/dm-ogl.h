@@ -26,6 +26,13 @@
 #define SEEN_DM_OGL
 
 #include "dm_color.h"
+
+#ifdef HAVE_GL_GLX_H
+#  include <GL/glx.h>
+#endif
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
 #define CMAP_BASE 40
 
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
