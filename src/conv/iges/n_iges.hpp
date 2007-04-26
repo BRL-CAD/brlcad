@@ -17,6 +17,12 @@
 
 #define DEBUG 1
 
+#if DEBUG
+#define debug(l) cout << l << endl;
+#else
+#define debug(l)
+#endif
+
 using namespace std;
 
 namespace brlcad {
@@ -78,7 +84,10 @@ namespace brlcad {
   
   class Real : public IgesDataType<double> {
   public:
+    Real();
+    Real(double v);
     Real(const string& field);
+    Real(const Real& real);
     FILE* read(FILE* in);
     string write(FILE* out);
   };
@@ -88,21 +97,20 @@ namespace brlcad {
     String();
     String(const string& field);
     String(const String& str);
+    String(const char* str);
     FILE* read(FILE* in);
     string write(FILE* out);
   };
   
-  class Logical : public IgesDataType<string> {
+  class Logical : public IgesDataType<bool> {
   public:
+    Logical();
     Logical(const string& field);
+    Logical(bool b);
+    Logical(const Logical& log);
     FILE* read(FILE* in);
     string write(FILE* out);
   };
-
-  class BrepHandler {
-
-  };
-
 
   class GlobalSection {
   public:
@@ -221,24 +229,24 @@ namespace brlcad {
     
     DirectoryEntry(const string& in);
 
-    Integer type() { return _type; }
-    Pointer paramData() { return _paramData; }
-    Pointer structure() { return _structure; }
-    Dual<Integer,Pointer> lineFontPattern() { return _lineFontPattern; }
-    Dual<Integer,Pointer> level() { return _level; }
-    Pointer view() { return _view; }
-    Pointer xform() { return _xform; }
-    Pointer label() { return _label; }
-    Visibility visible() { return _visible; }
-    Subordinate subordinate() { return _subordinate; }
-    EntityUse use() { return _use; }
-    Hierarchy hierarchy() { return _hierarchy; }
-    Integer lineWeight() { return _lineWeight; }
-    Dual<Integer,Pointer> color() { return _color; }
-    Integer parameterLineCount() { return _parameterLineCount; }
-    Integer formId() { return _formId; }
-    String entityLabel() { return _entityLabel; }
-    Integer entitySubscript() { return _entitySubscript; }    
+    Integer type() const { return _type; }
+    Pointer paramData() const { return _paramData; }
+    Pointer structure() const { return _structure; }
+    Dual<Integer,Pointer> lineFontPattern() const { return _lineFontPattern; }
+    Dual<Integer,Pointer> level() const { return _level; }
+    Pointer view() const { return _view; }
+    Pointer xform() const { return _xform; }
+    Pointer label() const { return _label; }
+    Visibility visible() const { return _visible; }
+    Subordinate subordinate() const { return _subordinate; }
+    EntityUse use() const { return _use; }
+    Hierarchy hierarchy() const { return _hierarchy; }
+    Integer lineWeight() const { return _lineWeight; }
+    Dual<Integer,Pointer> color() const { return _color; }
+    Integer parameterLineCount() const { return _parameterLineCount; }
+    Integer formId() const { return _formId; }
+    String entityLabel() const { return _entityLabel; }
+    Integer entitySubscript() const { return _entitySubscript; }    
     
     string toString();
 
@@ -267,6 +275,22 @@ namespace brlcad {
     Integer _formId;
     String _entityLabel;
     Integer _entitySubscript;
+  };
+
+
+  class ParameterData {
+  public:
+    ParameterData();
+    
+    Pointer getPointer(int index);
+    Integer getInteger(int index);
+    Logical getLogical(int index);
+    String  getString(int index);
+    Real    getReal(int index);
+
+  private:
+    void addParam(const string& param);
+    vector<string> params;
   };
 
   const int NRECS = 20;
@@ -322,18 +346,6 @@ namespace brlcad {
     void _readParameter(int id);
     
     string _field(int index);
-  };
-
-  class Geometry {
-
-  };
-
-  class Line : public Geometry {
-    
-  };
-
-  class Point : public Geometry {
-    
   };
 
 
@@ -433,6 +445,45 @@ namespace brlcad {
   } IGESEntity;
 
   typedef vector<DirectoryEntry*> DEVector;
+  class IGES; // forward declaration
+
+  //--------------------------------------------------------------------------------
+  // Extractors
+  class Extractor {
+  public:
+    virtual void extract(IGES* iges, const DirectoryEntry* de) = 0;
+    Extractor* cascadeDelete(Extractor* handler);
+
+  private:
+    list<Extractor*> handlers;
+  };
+
+  class FaceHandler : public Extractor {
+  public:
+    void extract(IGES* iges, const DirectoryEntry* de);
+  };
+
+  class ShellHandler : public Extractor {
+  public:
+    void extract(IGES* iges, const DirectoryEntry* de);
+    
+    // subclass responsibility
+    virtual FaceHandler* handleClosedShell(int numFaces);
+    virtual FaceHandler* handleOpenShell(int numFaces);
+  };
+
+  class BrepHandler : public Extractor {
+  public:    
+    BrepHandler();
+    virtual ~BrepHandler();
+
+    void extract(IGES* iges, const DirectoryEntry* de);
+
+    // subclass responsibility
+    virtual ShellHandler* handleBoundaryShell();
+    virtual ShellHandler* handleVoidShell();
+  };
+
 
   class IGES {
   public:
@@ -452,13 +503,10 @@ namespace brlcad {
     string getTypeName(IGESEntity id) const;    
     
     //--------------------------------------------------------------------------------
-    // write
-    bool write(const Geometry& geom);
-    
-    //--------------------------------------------------------------------------------
     // read
-    bool readBreps(BrepHandler& handler);
+    bool readBreps(Extractor* handler);
     void find(IGESEntity id, DEList& outList);
+    void getParameter(const Pointer& ptr, ParameterData& outParam);
     
   protected:
     void readStart(FILE* in);

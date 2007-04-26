@@ -1,11 +1,6 @@
 #include "n_iges.hpp"
 #include <list>
 
-#if DEBUG
-#define debug(l) cout << l << endl;
-#else
-#define debug(l)
-#endif
 
 namespace brlcad {
 
@@ -57,6 +52,8 @@ namespace brlcad {
     return "";
   }
 
+  Real::Real() { _val = 0.0; }
+  Real::Real(double v) { _val = v; }  
   Real::Real(const string& field) {
     string copy = field;
     int first = field.find_first_not_of(" \t\n\r");
@@ -67,6 +64,10 @@ namespace brlcad {
     _val = strtod(field.substr(first,field.length()-first).c_str(), NULL);
     debug("Real(" << _val << ")");
   }
+  Real::Real(const Real& r) {
+    _val = r._val;
+  }
+
   FILE* 
   Real::read(FILE* in) {
     return in;
@@ -98,6 +99,9 @@ namespace brlcad {
   String::String(const String& str) {
     _val = str._val;
   }
+  String::String(const char* str) {
+    _val = str;
+  }
 
   FILE* 
   String::read(FILE* in) {
@@ -109,9 +113,19 @@ namespace brlcad {
     return "";
   }
 
-  Logical::Logical(const string& field) {
-
+  Logical::Logical() {
+    _val = false;
   }
+  Logical::Logical(const string& field) {
+    // XXX: todo parse field
+  }
+  Logical::Logical(bool val) {
+    _val = val;
+  }
+  Logical::Logical(const Logical& p) {
+    _val = p._val;
+  }
+
   FILE* 
   Logical::read(FILE* in) {
     return in;
@@ -227,7 +241,7 @@ namespace brlcad {
       _card << _line.substr(0,72);
     }
     // push back the last line
-    _undoRead();
+    _undoRead(); _type = 'S';
     // output the start value
     printf("%s", _card.str().c_str());
     _valid = true;
@@ -239,7 +253,7 @@ namespace brlcad {
     while (_readLine() && isGlobal()) {
       _card << _line.substr(0,72);
     }
-    _undoRead();
+    _undoRead(); _type = 'G';
     printf("Read global section\n");
     _valid = true;
   }
@@ -266,7 +280,7 @@ namespace brlcad {
       }
       i++;
     }
-    _undoRead(); // should have read a parameter line!
+    _undoRead(); _type = 'D'; // should have read a parameter line!
     _valid = true;
 #if DEBUG
     for (list<string>::iterator i = _dirEntries.begin(); i != _dirEntries.end(); i++) {
@@ -277,7 +291,7 @@ namespace brlcad {
 
   void
   Record::_readParameter(int id) {
-    
+    // XXX: todo!
   }
 
   GlobalSection*
@@ -426,6 +440,35 @@ namespace brlcad {
   }
 
   //--------------------------------------------------------------------------------
+  // ParameterData definition
+  ParameterData::ParameterData() {
+    
+  }
+
+  Pointer 
+  ParameterData::getPointer(int index) {
+    return 0;
+  }
+
+  Integer 
+  ParameterData::getInteger(int index) {
+    return 0;
+  }
+  Logical 
+  ParameterData::getLogical(int index) {
+    return false;
+  }
+  String  
+  ParameterData::getString(int index) {
+    return "";
+  }
+  Real    
+  ParameterData::getReal(int index) {
+    return 0.0;
+  }
+
+
+  //--------------------------------------------------------------------------------
   // IGES definition
   IGES::IGES() {
   
@@ -548,20 +591,16 @@ namespace brlcad {
   }
 
 
-  bool 
-  IGES::write(const Geometry& geom) {
-    return false;
-  }
 
   bool
-  IGES::readBreps(BrepHandler& handler)
+  IGES::readBreps(Extractor* handler)
   {
     DEList breps;
     find(ManifoldSolidBRepObject, breps);
     debug("Found " << breps.size() << " breps!");
 
-    for (DEList::iterator i = breps.begin(); i != breps.end(); i++) {
-      // do something!
+    for (DEList::iterator i = breps.begin(); i != breps.end(); i++) {      
+      handler->extract(this, *i); // should be a BrepHandler subclass, but the code doesn't enforce it
     }
   }
 
@@ -606,6 +645,11 @@ namespace brlcad {
       cerr << "Param section not found! Aborting" << endl;
       exit(-1);
     }
+  }
+
+  void
+  IGES::getParameter(const Pointer& ptr, ParameterData& outParam) {
+
   }
 
 }
