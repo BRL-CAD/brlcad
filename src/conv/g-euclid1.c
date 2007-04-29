@@ -528,7 +528,10 @@ main(int argc, char **argv)
 		perror(argv[0]);
 		exit(1);
 	}
-	db_dirbuild( dbip );
+	if( db_dirbuild( dbip ) ) {
+	    bu_log( "db_dirbuild failed\n" );
+	    exit(1);
+	}
 	bu_optind++;
 
 	/* Walk indicated tree(s).  Each region will be output separately */

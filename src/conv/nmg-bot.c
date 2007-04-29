@@ -131,7 +131,10 @@ main(int argc, char **argv)
 		perror( argv[0] );
 		bu_bomb( "Cannot open output file\n" );
 	}
-	db_dirbuild( dbip );
+	if( db_dirbuild( dbip ) ) {
+	    bu_log( "db_dirbuild failed\n" );
+	    exit(1);
+	}
 
 	/* Visit all records in input database, and spew them out,
 	 * modifying NMG objects into BoTs.

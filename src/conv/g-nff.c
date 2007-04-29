@@ -237,7 +237,10 @@ char	*argv[];
 		perror(argv[0]);
 		exit(1);
 	}
-	db_dirbuild( dbip );
+	if( db_dirbuild( dbip ) ) {
+	    bu_log( "db_dirbuild failed\n" );
+	    exit(1);
+	}
 
 	BN_CK_TOL(tree_state.ts_tol);
 	RT_CK_TESS_TOL(tree_state.ts_ttol);

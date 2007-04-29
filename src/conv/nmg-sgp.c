@@ -206,7 +206,10 @@ char	*argv[];
 		edge_len_limits =
 	}
 #endif
-	db_dirbuild( dbip );
+	if( db_dirbuild( dbip ) ) {
+	    bu_log( "db_dirbuild failed\n" );
+	    exit(1);
+	}
 
 	if( out_file == NULL )
 		fp_out = stdout;

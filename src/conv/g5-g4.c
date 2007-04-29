@@ -103,7 +103,10 @@ main(int argc, char **argv)
 	}
 
 	RT_CK_DBI(dbip);
-	db_dirbuild( dbip );
+	if( db_dirbuild( dbip ) ) {
+	    bu_log( "db_dirbuild failed\n" );
+	    exit(1);
+	}
 
 	mk_id_units( fp, dbip->dbi_title, bu_units_string( dbip->dbi_local2base ) );
 
