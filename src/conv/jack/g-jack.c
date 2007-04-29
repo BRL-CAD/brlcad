@@ -197,7 +197,10 @@ main(int argc, char **argv)
 		perror(argv[0]);
 		exit(1);
 	}
-	db_dirbuild(dbip);
+	if( db_dirbuild( dbip ) ) {
+	    bu_log( "db_dirbuild failed\n" );
+	    exit(1);
+	}
 
 	/* Create .fig file name and open it. */
 	bu_vls_init( &fig_file );

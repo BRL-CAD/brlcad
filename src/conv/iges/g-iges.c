@@ -305,7 +305,10 @@ main(int argc, char *argv[])
 	}
 
 	/* Scan the database */
-	db_dirbuild( dbip );
+	if( db_dirbuild( dbip ) ) {
+	    bu_log( "db_dirbuild failed\n" );
+	    exit(1);
+	}
 
 	if( !multi_file )
 	{
