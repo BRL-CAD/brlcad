@@ -472,8 +472,12 @@ main(argc, argv)
     if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
 	perror(argv[0]);
 	exit(1);
+    } 
+
+    if( db_dirbuild( dbip ) ) {
+	bu_log( "db_dirbuild failed\n" );
+	exit(1);
     }
-    db_dirbuild( dbip );
 
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
