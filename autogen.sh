@@ -50,8 +50,24 @@
 # autoreconf.
 #
 # The AUTORECONF, AUTOCONF, AUTOMAKE, LIBTOOLIZE, ACLOCAL, AUTOHEADER
-# environment variables may be used to override the default detected
-# applications.
+# environment variables and corresponding _OPTIONS variables (e.g.
+# AUTORECONF_OPTIONS) may be used to override the default automatic
+# detection behaviors.  Similarly the _VERSION variables will override
+# the minimum required version numbers.
+#
+# Examples:
+#
+#   To obtain help on usage:
+#     ./autogen.sh --help
+#
+#   To obtain verbose output:
+#     ./autogen.sh --verbose
+#
+#   To skip autoreconf and prepare manually:
+#     AUTORECONF=false ./autogen.sh
+#
+#   To verbosely try running with an older (unsupported) autoconf:
+#     AUTOCONF_VERSION=2.50 ./autogen.sh --verbose
 #
 # Author: Christopher Sean Morrison
 #
@@ -83,7 +99,7 @@ ident ( ) {
 
     # extract version from CVS Id string
     __id="$Id$"
-    __version="`echo $__id | sed 's/.*\([0-9][0-9][0-9][0-9]\)\/\([0-9][0-9]\)\/\([0-9][0-9]\).*/\1\2\3/'`"
+    __version="`echo $__id | sed 's/.*\([0-9][0-9][0-9][0-9]\)[-\/]\([0-9][0-9]\)[-\/]\([0-9][0-9]\).*/\1\2\3/'`"
     if [ "x$__version" = "x" ] ; then
 	__version=""
     fi
@@ -751,24 +767,26 @@ recursive_protect ( ) {
     elif ! test -f "$_configure" ; then
 	return
     fi
+    # $VERBOSE_ECHO "Looking for configure template found `pwd`/$_configure"
 
     # look for subdirs
-    _subdirs=""
+    # $VERBOSE_ECHO "Looking for subdirs in `pwd`"
     _det_config_subdirs="`grep AC_CONFIG_SUBDIRS $_configure | grep -v '.*#.*AC_CONFIG_SUBDIRS' | sed 's/^[ 	]*AC_CONFIG_SUBDIRS(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
+    CHECK_DIRS=""
     for dir in $_det_config_subdirs ; do
-	if test -d "$dir" ; then
-	    _subdirs="$_subdirs $dir"
+	if test -d "`pwd`/$dir" ; then
+	    CHECK_DIRS="$CHECK_DIRS \"`pwd`/$dir\""
 	fi
     done
 
     # process subdirs
-    if [ ! "x$_subdirs" = "x" ] ; then
+    if [ ! "x$CHECK_DIRS" = "x" ] ; then
 	$VERBOSE_ECHO "Recursively scanning the following directories:"
-	$VERBOSE_ECHO "  $_subdirs"
-	for dir in $_subdirs ; do
+	$VERBOSE_ECHO "  $CHECK_DIRS"
+	for dir in $CHECK_DIRS ; do
 	    $VERBOSE_ECHO "Protecting files from automake in $dir"
 	    cd "$_prev_path"
-	    cd "$dir"
+	    eval "cd $dir"
 
 	    # recursively git 'r done
 	    recursive_protect
@@ -827,9 +845,9 @@ initialize ( ) {
     CONFIG_SUBDIRS=""
     _det_config_subdirs="`grep AC_CONFIG_SUBDIRS $CONFIGURE | grep -v '.*#.*AC_CONFIG_SUBDIRS' | sed 's/^[ 	]*AC_CONFIG_SUBDIRS(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
     for dir in $_det_config_subdirs ; do
-	if test -d "$dir" ; then
-	    $VERBOSE_ECHO "Detected recursive configure directory: $dir"
-	    CONFIG_SUBDIRS="$CONFIG_SUBDIRS $dir"
+	if test -d "`pwd`/$dir" ; then
+	    $VERBOSE_ECHO "Detected recursive configure directory: `pwd`/$dir"
+	    CONFIG_SUBDIRS="$CONFIG_SUBDIRS `pwd`/$dir"
 	fi
     done
 
@@ -1314,22 +1332,22 @@ recursive_restore ( ) {
     fi
 
     # look for subdirs
-    _subdirs=""
     _det_config_subdirs="`grep AC_CONFIG_SUBDIRS $_configure | grep -v '.*#.*AC_CONFIG_SUBDIRS' | sed 's/^[ 	]*AC_CONFIG_SUBDIRS(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
+    CHECK_DIRS=""
     for dir in $_det_config_subdirs ; do
-	if test -d "$dir" ; then
-	    _subdirs="$_subdirs $dir"
+	if test -d "`pwd`/$dir" ; then
+	    CHECK_DIRS="$CHECK_DIRS \"`pwd`/$dir\""
 	fi
     done
 
     # process subdirs
-    if [ ! "x$_subdirs" = "x" ] ; then
+    if [ ! "x$CHECK_DIRS" = "x" ] ; then
 	$VERBOSE_ECHO "Recursively scanning the following directories:"
-	$VERBOSE_ECHO "  $_subdirs"
-	for dir in $_subdirs ; do
+	$VERBOSE_ECHO "  $CHECK_DIRS"
+	for dir in $CHECK_DIRS ; do
 	    $VERBOSE_ECHO "Checking files for automake damage in $dir"
 	    cd "$_prev_path"
-	    cd "$dir"
+	    eval "cd $dir"
 
 	    # recursively git 'r undone
 	    recursive_restore
