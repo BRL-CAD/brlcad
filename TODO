@@ -46,6 +46,9 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* add an overlap depth reporting tolerance parameter to the
+  ray-tracers (similar to -R).
+
 * script that checks a dist source tarball for missing files
 
 * design a mug :)
