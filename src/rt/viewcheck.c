@@ -30,9 +30,7 @@
  *  for example, on a workstation.
  *
  *  ToDo: It would be nice if we could pass in (1) an overlap depth
- *  tolerance, (2) choose either region pair or solid pair grouping
- *  and (3) set the verbosity, e.g. whether to print *every* overlap
- *  or not.
+ *  tolerance, (2) choose either region pair or solid pair grouping.
  *
  *  Authors -
  *	Michael John Muuss
