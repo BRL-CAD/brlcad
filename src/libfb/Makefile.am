@@ -21,7 +21,7 @@ IF_X_CFLAGS =
 endif
 
 if WITH_TK
-IF_TK_CFLAGS = -DIF_TK
+IF_TK_CFLAGS = -DIF_TK $(TK_CPPFLAGS)
 else
 IF_TK_CFLAGS =
 endif
