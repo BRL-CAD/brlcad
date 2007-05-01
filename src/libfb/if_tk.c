@@ -268,7 +268,7 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 		}
 	};
 
-	Tk_PhotoPutBlock(fbphoto, &block, x, ifp->if_height-y, count, 1, TK_PHOTO_COMPOSITE_SET);
+	Tk_PhotoPutBlock(fbinterp, fbphoto, &block, x, ifp->if_height-y, count, 1, TK_PHOTO_COMPOSITE_SET);
 
 	return	count;
 }
