@@ -2706,6 +2706,8 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootArray( JNIEnv *env, j
 	    }
 	}
 
+	RTS_FREE_RTSERVER_RESULT( aresult );
+
 	/* return JAVA result */
 	return( resultsArray );
 }
