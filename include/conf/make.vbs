@@ -36,13 +36,13 @@
 ' Update the version info files in include/conf/
 '
 ' Optional args:
-'   none
+'   BrlcadDllRcDefines: create a header file containing the BRL-CAD version
+'                       numbers as defines to be used in brlcad.rc
 '
 ' Author -
 '   Daniel Rossberg
 '
 ' @(#)$Header$ (BRL)
-
 
 Set fileSystem     = CreateObject("Scripting.FileSystemObject")
 Set wshNetwork     = Wscript.CreateObject("Wscript.Network")
@@ -102,6 +102,47 @@ myValue  = """" + wshNetwork.UserName + """"
 Set fileStream = fileSystem.CreateTextFile(fileName, True)
 fileStream.WriteLine(myValue)
 fileStream.Close
+
+
+' optional features
+Set commandLineArguments = WScript.Arguments
+
+For i = 0 to commandLineArguments.Count - 1
+    ' ../../misc/win32-msvc/dll/brlcadrc_defines.h
+    If commandLineArguments.Item(i) = "BrlcadDllRcDefines" Then
+        fileName = scriptPath + "\..\..\misc\win32-msvc\dll\brlcadrc_defines.h"
+        majorFileName = scriptPath + "\MAJOR"
+        myMajorValue  = "0"
+        minorFileName = scriptPath + "\MINOR"
+        myMinorValue  = "0"
+        patchFileName = scriptPath + "\PATCH"
+        myPatchValue  = "0"
+
+        If fileSystem.FileExists(majorFileName) Then
+            Set fileStream = fileSystem.OpenTextFile(majorFileName)
+            myMajorValue   = fileStream.ReadLine
+            fileStream.Close
+        End If
+
+        If fileSystem.FileExists(minorFileName) Then
+            Set fileStream = fileSystem.OpenTextFile(minorFileName)
+            myMinorValue   = fileStream.ReadLine
+            fileStream.Close
+        End If
+
+        If fileSystem.FileExists(patchFileName) Then
+            Set fileStream = fileSystem.OpenTextFile(patchFileName)
+            myPatchValue   = fileStream.ReadLine
+            fileStream.Close
+        End If
+
+        Set fileStream = fileSystem.CreateTextFile(fileName, True)
+        fileStream.WriteLine("#define BRLCAD_DLL_RC_MAJOR " + myMajorValue)
+        fileStream.WriteLine("#define BRLCAD_DLL_RC_MINOR " + myMinorValue)
+        fileStream.WriteLine("#define BRLCAD_DLL_RC_PATCH " + myPatchValue)
+        fileStream.Close
+    End If
+Next
 
 
 ' Local Variables:

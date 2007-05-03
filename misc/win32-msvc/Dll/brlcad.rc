@@ -1,19 +1,29 @@
 #include <afxres.h>
 
-#include "common.h"
+#include "brlcadrc_defines.h"
+
+#ifndef EXPAND_IN_STRING
+#  define EXPAND_IN_STRING(x) EXPAND_IN_STRING_INTERN(x)
+#  define EXPAND_IN_STRING_INTERN(x) #x
+#endif
+
+#define BRLCAD_DLL_RC_VERSION EXPAND_IN_STRING(BRLCAD_DLL_RC_MAJOR) "." EXPAND_IN_STRING(BRLCAD_DLL_RC_MINOR) "." EXPAND_IN_STRING(BRLCAD_DLL_RC_PATCH)
+
 
 IDI_ICON1 ICON DISCARDABLE "../../../doc/html/manuals/small-eagleCAD.ico"
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION MAJOR_VERSION,MINOR_VERSION,PATCH_VERSION,0
- PRODUCTVERSION MAJOR_VERSION,MINOR_VERSION,PATCH_VERSION,0
+ FILEVERSION BRLCAD_DLL_RC_MAJOR,BRLCAD_DLL_RC_MINOR,BRLCAD_DLL_RC_PATCH,0
+ PRODUCTVERSION BRLCAD_DLL_RC_MAJOR,BRLCAD_DLL_RC_MINOR,BRLCAD_DLL_RC_PATCH,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
+
 #else
  FILEFLAGS 0x0L
+
 #endif
  FILEOS 0x40004L
  FILETYPE 0x2L
@@ -26,13 +36,13 @@ BEGIN
             VALUE "Comments", "BRL-CAD DLL\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "BRL-CAD for Windows Dynamic-Link Library\0"
-            VALUE "FileVersion", BRLCAD_VERSION
+            VALUE "FileVersion", BRLCAD_DLL_RC_VERSION
             VALUE "InternalName", "brlcad\0"
             VALUE "LegalCopyright", "Copyright (c) 1984-2007 United States Government as represented by the U.S. Army Research Laboratory. All Rights Reserved.\0"
             VALUE "LegalTrademarks", "The word mark ""BRL-CAD"" and the ""BRL-CAD Eagle"" image are registered trademarks of the Department of the Army, United States Government. All rights are reserved.\0"
             VALUE "OriginalFilename", "brlcad.dll\0"
             VALUE "ProductName", "BRL-CAD\0"
-            VALUE "ProductVersion", BRLCAD_VERSION
+            VALUE "ProductVersion", BRLCAD_DLL_RC_VERSION
         END
     END
     BLOCK "VarFileInfo"

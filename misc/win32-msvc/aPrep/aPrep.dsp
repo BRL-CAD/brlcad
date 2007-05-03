@@ -65,7 +65,7 @@ InputPath=.\Release\aPrep.exe
 SOURCE="$(InputPath)"
 
 "$(TargetName)" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	..\..\..\include\conf\make.vbs
+	..\..\..\include\conf\make.vbs BrlcadDllRcDefines
 
 # End Custom Build
 
@@ -100,7 +100,7 @@ InputPath=.\ReleaseMt\aPrep.exe
 SOURCE="$(InputPath)"
 
 "$(TargetName)" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	..\..\..\include\conf\make.vbs
+	..\..\..\include\conf\make.vbs BrlcadDllRcDefines
 
 # End Custom Build
 
@@ -135,7 +135,7 @@ InputPath=.\ReleaseMtDll\aPrep.exe
 SOURCE="$(InputPath)"
 
 "$(TargetName)" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	..\..\..\include\conf\make.vbs
+	..\..\..\include\conf\make.vbs BrlcadDllRcDefines
 
 # End Custom Build
 
@@ -170,7 +170,7 @@ InputPath=.\Debug\aPrep.exe
 SOURCE="$(InputPath)"
 
 "$(TargetName)" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	..\..\..\include\conf\make.vbs
+	..\..\..\include\conf\make.vbs BrlcadDllRcDefines
 
 # End Custom Build
 
@@ -205,7 +205,7 @@ InputPath=.\DebugMt\aPrep.exe
 SOURCE="$(InputPath)"
 
 "$(TargetName)" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	..\..\..\include\conf\make.vbs
+	..\..\..\include\conf\make.vbs BrlcadDllRcDefines
 
 # End Custom Build
 
@@ -240,7 +240,7 @@ InputPath=.\DebugMtDll\aPrep.exe
 SOURCE="$(InputPath)"
 
 "$(TargetName)" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	..\..\..\include\conf\make.vbs
+	..\..\..\include\conf\make.vbs BrlcadDllRcDefines
 
 # End Custom Build
 
