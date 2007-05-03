@@ -549,8 +549,8 @@ brep_surface_bbox(const ON_BrepFace& face, const ON_Interval& u, const ON_Interv
     point_t min, max;
     VSETALL(min, MAX_FASTF);
     VSETALL(max, -MAX_FASTF);
-    for (int i = 0; i < 4; i++) 
-	VMINMAX(min,max,((double*)corners[i]));
+    for (int i1 = 0; i1 < 4; i1++) 
+	VMINMAX(min,max,((double*)corners[i1]));
     TRACE("bb: " << ON_PRINT3(min) << " -> " << ON_PRINT3(max));
     
     // check to see if this portion of the surface needs to be checked for trims
@@ -559,7 +559,7 @@ brep_surface_bbox(const ON_BrepFace& face, const ON_Interval& u, const ON_Interv
 		     {u.Max(),v.Max()},
 		     {u.Min(),v.Max()}};
     int count = 0; 
-    for (int i = 0; i < 4; i++) {
+    for (int i2 = 0; i2 < 4; i2++) {
 	if (brep_pt_trimmed(test[0], face)) {
 	    count++;
 	}
@@ -569,8 +569,8 @@ brep_surface_bbox(const ON_BrepFace& face, const ON_Interval& u, const ON_Interv
     ON_3dPoint uvmax(u.Max(),v.Max(),0);
     ON_BoundingBox bb(uvmin,uvmax);
     bool internalTrim = false;
-    for (int i = 0; i < face.Brep()->m_L.Count(); i++) {
-	ON_BrepLoop& loop = face.Brep()->m_L[i];
+    for (int i3 = 0; i3 < face.Brep()->m_L.Count(); i3++) {
+	ON_BrepLoop& loop = face.Brep()->m_L[i3];
 	// for each trim
 	for (int j = 0; j < loop.m_ti.Count(); j++) {	    
 	    ON_BrepTrim& trim = face.Brep()->m_T[loop.m_ti[j]];
