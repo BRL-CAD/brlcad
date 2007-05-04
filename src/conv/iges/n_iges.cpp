@@ -4,6 +4,7 @@
 
 namespace brlcad {
 
+  ////////////////////////////////////////////////////////////////////////////////
   Integer::Integer() {
     _val = 0;
   }
@@ -27,6 +28,7 @@ namespace brlcad {
     return "";
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
   Pointer::Pointer() {
     _val = 0;
   }
@@ -52,6 +54,7 @@ namespace brlcad {
     return "";
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
   Real::Real() { _val = 0.0; }
   Real::Real(double v) { _val = v; }  
   Real::Real(const string& field) {
@@ -78,6 +81,7 @@ namespace brlcad {
     return "";
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
   String::String() {
     _val = "";
   }
@@ -113,6 +117,7 @@ namespace brlcad {
     return "";
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
   Logical::Logical() {
     _val = false;
   }
@@ -191,10 +196,10 @@ namespace brlcad {
     _read();
   }
 
-  Record::Record(FILE* in, int record) : _fp(in) {    
+  Record::Record(FILE* in, int paramStart, int record) : _fp(in) {    
     if (_reclen < 0) calcRecsize(in);
     int pos = (record-1)*_reclen;
-    fseek(_fp, pos, SEEK_SET);
+    fseek(_fp, paramStart + pos, SEEK_SET);
     _read();
   }  
 
@@ -291,7 +296,11 @@ namespace brlcad {
 
   void
   Record::_readParameter(int id) {
-    // XXX: todo!
+    _card << _line.substr(0,64);
+    while (_readLine() && isParameter() && (id == Integer(_field(8)))) {
+      _card << _line.substr(0,64);
+    }
+    _undoRead(); _type = 'P';
   }
 
   GlobalSection*
@@ -299,13 +308,16 @@ namespace brlcad {
     return new GlobalSection(_card.str());
   }
   
-  vector<DirectoryEntry*>*
-  Record::createDirectory() {
-    vector<DirectoryEntry*>* dir = new vector<DirectoryEntry*>();
+  void 
+  Record::createDirectory(vector<DirectoryEntry*>& dir) {
     for (list<string>::iterator i = _dirEntries.begin(); i != _dirEntries.end(); i++) {
-      dir->push_back(new DirectoryEntry(*i));
+      dir.push_back(new DirectoryEntry(*i));
     }
-    return dir;
+  }
+
+  string
+  Record::getParameterData() {
+    return _card.str();
   }
 
   //--------------------------------------------------------------------------------
@@ -441,30 +453,36 @@ namespace brlcad {
 
   //--------------------------------------------------------------------------------
   // ParameterData definition
-  ParameterData::ParameterData() {
-    
-  }
+  ParameterData::ParameterData() {}
 
-  Pointer 
+  Pointer
   ParameterData::getPointer(int index) {
-    return 0;
+    return Pointer(params[index]);
   }
 
-  Integer 
+  Integer
   ParameterData::getInteger(int index) {
-    return 0;
+    return Integer(params[index]);
   }
-  Logical 
+  
+  Logical
   ParameterData::getLogical(int index) {
-    return false;
+    return Logical(params[index]);
   }
-  String  
+  
+  String
   ParameterData::getString(int index) {
-    return "";
+    return String(params[index]);
   }
-  Real    
+  
+  Real
   ParameterData::getReal(int index) {
-    return 0.0;
+    return Real(params[index]);
+  }
+
+  void
+  ParameterData::addParam(const string& param) {
+    params.push_back(param);
   }
 
 
@@ -491,7 +509,9 @@ namespace brlcad {
 
   IGES::~IGES() {
     delete _global;
-    delete _dir;
+    for (vector<DirectoryEntry*>::iterator i = _dir.begin(); i != _dir.end(); i++) {
+      delete (*i);
+    }
   }
 
   const GlobalSection&
@@ -607,7 +627,7 @@ namespace brlcad {
   void 
   IGES::find(IGESEntity id, DEList& outList) {
     debug("ID: " << id);
-    for (DEVector::iterator i = _dir->begin(); i != _dir->end(); i++) {    
+    for (DEVector::iterator i = _dir.begin(); i != _dir.end(); i++) {    
       debug((*i)->toString());
       if (((long)id) == ((long)(*i)->type())) outList.push_back(*i);
     }
@@ -631,7 +651,7 @@ namespace brlcad {
   void
   IGES::readDirectory(FILE* in) {
     Record dir(in);
-    _dir = dir.createDirectory();
+    dir.createDirectory(_dir);
   }
 
   void
@@ -649,7 +669,33 @@ namespace brlcad {
 
   void
   IGES::getParameter(const Pointer& ptr, ParameterData& outParam) {
-
+    // hmm
+    Record r(_file, paramSectionStart, ptr());
+    string pd = r.getParameterData();
+    list<string> l;
+    split(l, pd, _global->paramDelim() + _global->recordDelim());
+    outParam.clear();
+    for (list<string>::iterator i = l.begin(); i != l.end(); i++) {
+      outParam.addParam(*i);
+    }
   }
 
+  DirectoryEntry*
+  IGES::getDirectoryEntry(const Pointer& ptr) {
+    return _dir[ptr+1/2];
+  }
+
+  //--------------------------------------------------------------------------------
+  // Extractor  
+  Extractor::~Extractor() {
+    for (list<Extractor*>::iterator i = handlers.begin(); i != handlers.end(); i++) {
+      delete (*i);
+    }
+  }
+  
+  Extractor*
+  Extractor::cascadeDelete(Extractor* handler) {
+    handlers.push_back(handler);
+    return handler;
+  }
 }
