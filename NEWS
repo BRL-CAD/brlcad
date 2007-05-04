@@ -1,5 +1,4 @@
-						 -*- coding: utf-8 -*-
-BRL-CAD Release Notes
+						 -*- coding: utf-8 -*-BRL-CAD Release Notes
 =====================
 
 Included below is the latest news pertaining to BRL-CAD releases.  The
@@ -11,7 +10,9 @@ entire history of the project is available through CVS.
 --- 2007-05-XX  Release 7.10.2                                     ---
 ----------------------------------------------------------------------
 
-* fixed versioning issue in source distributions - Sean Morrison
+* fixed memory leak in librtserver - John Anderson
+* converters abort early on corrupted input geometry - John Anderson
+* fixed versioning issues in source distributions - Sean Morrison
 * new BRL-CAD installer for Windows using NSIS - Jonathan Bonomo
 * added a brlcad-config configuration script - Sean Morrison
 * added pkg-config files for core libraries - Sean Morrison
