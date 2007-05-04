@@ -417,6 +417,11 @@ trap '
         SIGNAL=0
     fi
 
+    # start from the root
+    if test -d "$START_PATH" ; then
+	cd "$START_PATH"
+    fi
+
     # restore/delete backup files
     if test "x$PFC_INIT" = "x1" ; then
 	recursive_restore
@@ -848,6 +853,22 @@ restore_clobbered ( ) {
 	fi # -f INSTALL
     fi # -f INSTALL.$$.protect_from_automake.backup
 
+    CONFIGURE="`locate_configure_template`"
+    if [ "x$CONFIGURE" = "x" ] ; then
+	return
+    fi
+
+    _aux_dir="`grep AC_CONFIG_AUX_DIR $CONFIGURE | grep -v '.*#.*AC_CONFIG_AUX_DIR' | tail -${TAIL_N}1 | sed 's/^[ 	]*AC_CONFIG_AUX_DIR(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
+    if test ! -d "$_aux_dir" ; then
+	_aux_dir=.
+    fi
+
+    for file in config.guess config.sub ltmain.sh ; do
+	if test -f "${_aux_dir}/${file}" ; then
+	    $VERBOSE_ECHO "rm -f \"${_aux_dir}/${file}.backup\""
+	    rm -f "${_aux_dir}/${file}.backup"
+	fi
+    done
 } # end of restore_clobbered
 
 
