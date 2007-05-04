@@ -1,5 +1,5 @@
 #include "n_iges.hpp"
-#include "brlcad.hpp"
+//#include "brlcad.hpp"
 
 using namespace brlcad;
 
