@@ -176,19 +176,24 @@ if test "x$build_vendor" = "xsgi" ; then
    PATH="`echo $PATH | sed 's/\/brl\/bin/bin/g'`"
 fi
 
+# sanity check, make sure we have sources where we expect them
+AC_CONFIG_SRCDIR([src/librt/bool.c])
+
 # where are we coming from and where are we going to.
 # prefix is set to NONE until AC_OUTPUT unless --prefix is used
-AC_CONFIG_SRCDIR([src/librt/bool.c])
 AC_PREFIX_DEFAULT([/usr/brlcad])
+
+# set up the BRLCAD_ROOT installation path
 AC_MSG_CHECKING([where BRL-CAD is to be installed])
-if test "x$prefix" = "xNONE" ; then
-	bc_prefix="$ac_default_prefix"
-else
-	# allow a complete override
-	bc_prefix="$prefix"
-fi
-# make sure the values are expanded (autoconf may set prefix to a variable)
+bc_prefix="$prefix"
 eval "bc_prefix=\"$bc_prefix\""
+eval "bc_prefix=\"$bc_prefix\""
+if test "x$bc_prefix" = "xNONE" ; then
+    bc_prefix="$ac_default_prefix"
+    # should be /usr/brlcad, but just in case
+    eval "bc_prefix=\"$bc_prefix\""
+    eval "bc_prefix=\"$bc_prefix\""
+fi
 AC_DEFINE_UNQUOTED([BRLCAD_ROOT], "$bc_prefix", "Location BRL-CAD will install to")
 AC_MSG_RESULT($bc_prefix)
 if test ! "x$BRLCAD_ROOT" = "x" ; then
@@ -208,19 +213,15 @@ else
 fi
 AC_SUBST(BRLCAD_ROOT)
 
-# set up our default shared/non-shared data install directories
-#         e.g. /usr/local/share/brlcad/7.4.0
+# set up the BRLCAD_DATA install directory
+#   e.g. /usr/local/share/brlcad/7.4.0
 AC_MSG_CHECKING([where BRL-CAD resources are to be installed])
-if test "x$datadir" = "x\${prefix}/share" ; then
-	bc_data_dir="${bc_prefix}/share/brlcad/${BRLCAD_VERSION}"
-elif test "x$datadir" = "x${prefix}/share" ; then
-	bc_data_dir="${bc_prefix}/share/brlcad/${BRLCAD_VERSION}"
-else
-	# allow a complete override
-	bc_data_dir="${datadir}"
-fi
-# make sure the values are expanded (autoconf may set datadir to a variable)
+bc_data_dir="${datadir}"
 eval "bc_data_dir=\"$bc_data_dir\""
+eval "bc_data_dir=\"$bc_data_dir\""
+if test "x$datadir" = "xNONE/share" ; then
+	bc_data_dir="${bc_prefix}/share/brlcad/${BRLCAD_VERSION}"
+fi
 AC_DEFINE_UNQUOTED([BRLCAD_DATA], "$bc_data_dir", "Location BRL-CAD resources will install to")
 AC_MSG_RESULT($bc_data_dir)
 if test ! "x$BRLCAD_DATA" = "x" ; then
@@ -238,9 +239,6 @@ else
 	# compensate for autoconf inconsistencies
 	BRLCAD_DATA="$bc_data_dir"
 fi
-
-eval "BRLCAD_DATA=\"$BRLCAD_DATA\""
-eval "BRLCAD_DATA=\"$BRLCAD_DATA\""
 AC_SUBST(BRLCAD_DATA)
 
 # if this is not a CVS checkout, disable dependency tracking for a
