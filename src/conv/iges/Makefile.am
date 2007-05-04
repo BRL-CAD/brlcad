@@ -21,8 +21,9 @@ noinst_HEADERS = \
 	iges_struct.h \
 	iges_types.h
 
+# missing:
+#	brlcad_brep.cpp
 iges_SOURCES = \
-	brlcad_brep.cpp \
 	BrepHandler.cpp \
 	n_iges.cpp  \
 	nmain.cpp
