@@ -8,7 +8,7 @@ ON_IGES =
 IGES_FLAGS = 
 endif
 
-bin_PROGRAMS = iges-g g-iges ${ON_IGES}
+bin_PROGRAMS = iges-g g-iges
 EXTRA_PROGRAMS = iges
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS} ${IGES_FLAGS}
