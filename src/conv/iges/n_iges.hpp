@@ -52,8 +52,8 @@ namespace brlcad {
       return _val < v;
     }
 
-    T operator()() { return _val; }
-    operator T() { return _val; }        
+    T operator()() const { return _val; }
+    operator T() const { return _val; }        
 
     virtual FILE* read(FILE* in) = 0;
     virtual string write(FILE* out) = 0;
@@ -288,8 +288,10 @@ namespace brlcad {
     String  getString(int index);
     Real    getReal(int index);
 
-  private:
     void addParam(const string& param);
+    void    clear() { params.clear(); }
+
+  private:
     vector<string> params;
   };
 
@@ -306,7 +308,7 @@ namespace brlcad {
   class Record {
   public:
     Record(FILE* in);
-    Record(FILE* in, int record);
+    Record(FILE* in, int paramStart, int record);
 
     bool valid() { return _valid; }
 
@@ -320,7 +322,8 @@ namespace brlcad {
     long where() { return _start; }
   
     GlobalSection* createGlobalSection();
-    vector<DirectoryEntry*>* createDirectory();
+    void createDirectory(vector<DirectoryEntry*>& dir);
+    string getParameterData();
     
   private:    
     FILE* _fp;
@@ -451,25 +454,12 @@ namespace brlcad {
   // Extractors
   class Extractor {
   public:
+    virtual ~Extractor();
     virtual void extract(IGES* iges, const DirectoryEntry* de) = 0;
     Extractor* cascadeDelete(Extractor* handler);
 
   private:
     list<Extractor*> handlers;
-  };
-
-  class FaceHandler : public Extractor {
-  public:
-    void extract(IGES* iges, const DirectoryEntry* de);
-  };
-
-  class ShellHandler : public Extractor {
-  public:
-    void extract(IGES* iges, const DirectoryEntry* de);
-    
-    // subclass responsibility
-    virtual FaceHandler* handleClosedShell(int numFaces);
-    virtual FaceHandler* handleOpenShell(int numFaces);
   };
 
   class BrepHandler : public Extractor {
@@ -480,11 +470,51 @@ namespace brlcad {
     void extract(IGES* iges, const DirectoryEntry* de);
 
     // subclass responsibility
-    virtual ShellHandler* handleBoundaryShell();
-    virtual ShellHandler* handleVoidShell();
+    virtual void handleShell(bool isVoid, bool orient) = 0;
+    virtual int handleFace(bool orient, int surfIndex) = 0;
+    // surftype should be:
+    //   parametric spline surface
+    //   ruled surface
+    //   surface of revolution
+    //   tabulated cylinder
+    //   rational b-spline surface
+    //   offset surface
+    //   plane surface
+    //   rccyl surface
+    //   rccone surface
+    //   spherical surface
+    //   toroidal surface
+    virtual int handleSurface(IGESEntity surfType, const ParameterData& data) = 0;
+    virtual int handleLoop(bool isOuter, int faceIndex) = 0;
+    virtual void handleEdge(int edgeIndex) = 0;
+    virtual int handleCurve() = 0;
+    virtual int handleVertex(int pointIndex) = 0;
+    virtual int handlePoint(double x, double y, double z) = 0; // return index
+
+  protected:
+    IGES* _iges;
+    
+    DirectoryEntry* getEdge(Pointer& edgeList, int index);
+    virtual void extractBrep(const DirectoryEntry* de);
+    virtual void extractShell(const DirectoryEntry* de, bool isVoid, bool orientWithFace);
+    virtual void extractFace(const DirectoryEntry* de, bool orientWithSurface);
+    virtual int  extractSurface(const DirectoryEntry* de);
+    virtual void extractLoop(const DirectoryEntry* de, bool isOuter, int face);
+    virtual void extractEdge(const DirectoryEntry* de);
+    virtual void extractVertex(const DirectoryEntry* de);
+    virtual int  extractCurve(const DirectoryEntry* de, bool isIso);
+
+  private:
+    int shellIndex;
+    int faceIndex;
+    int surfaceIndex;
+    int curveIndex;
+    int edgeIndex;
   };
 
 
+  //--------------------------------------------------------------------------------
+  // IGES 
   class IGES {
   public:
     
@@ -507,6 +537,7 @@ namespace brlcad {
     bool readBreps(Extractor* handler);
     void find(IGESEntity id, DEList& outList);
     void getParameter(const Pointer& ptr, ParameterData& outParam);
+    DirectoryEntry* getDirectoryEntry(const Pointer& ptr);
     
   protected:
     void readStart(FILE* in);
@@ -518,7 +549,7 @@ namespace brlcad {
     FILE* _file;
     long paramSectionStart;
     GlobalSection* _global;
-    vector<DirectoryEntry*>* _dir;
+    vector<DirectoryEntry*> _dir;
   };
 
 
