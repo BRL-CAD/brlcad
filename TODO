@@ -17,7 +17,9 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* ship it!
+* verify memory usage of the auto_path and tcl setup/start-up code
+
+* update to tcl/tk 8.5a6
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -34,10 +36,6 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * fix potential buffer overflows and security issues detected by
   Pedro's run of FlawFinder
 
-* test pic/nonpic build problems with librtms/libmultispectral
-
-* use environ for run-time path lookups
-
 * modify the new tree traversal code to be generic
 
 * begin 8.0 branch for backwards-incompatible/complex changes
@@ -45,6 +43,8 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
+
+* use environ for run-time path lookups
 
 * add an overlap depth reporting tolerance parameter to the
   ray-tracers (similar to -R).
