@@ -22,6 +22,7 @@ noinst_HEADERS = \
 	iges_types.h
 
 iges_SOURCES = \
+	brlcad_brep.cpp \
 	BrepHandler.cpp \
 	n_iges.cpp  \
 	nmain.cpp
