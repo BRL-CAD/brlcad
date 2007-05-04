@@ -32,6 +32,11 @@ prodclean: prodclean-recursive
 	  echo "rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
+	@list='$(EXTRA_PROGRAMS)'; for p in $$list; do \
+	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  echo "rm -f $$p $$f"; \
+	  rm -f $$p $$f ; \
+	done
 	@if test ! -z "$(lib_LTLIBRARIES)" ; then echo rm -f $(lib_LTLIBRARIES) && rm -f $(lib_LTLIBRARIES) ; fi
 	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
 	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
