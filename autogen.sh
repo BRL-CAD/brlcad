@@ -403,6 +403,47 @@ else
 fi
 
 
+#######################
+# set up signal traps #
+#######################
+trap '
+    # do this cleanup whenever we exit.
+
+    if test "$SIGNAL" != 0 ; then
+	$ECHO ""
+	$ECHO "Aborting $NAME_OF_AUTOGEN: caught signal $SIGNAL"
+
+	# clear out the signal
+        SIGNAL=0
+    fi
+
+    # restore/delete backup files
+    if test "x$PFC_INIT" = "x1" ; then
+	recursive_restore
+    fi
+
+    # clean up on abnormal exit
+    if test "x$SIGNAL" != "x0" ; then
+	$VERBOSE_ECHO "rm -rf autom4te.cache"
+	rm -rf autom4te.cache
+
+	if test -f "acinclude.m4.$$.backup" ; then
+	    $VERBOSE_ECHO "cat acinclude.m4.$$.backup > acinclude.m4"
+	    cat acinclude.m4.$$.backup > acinclude.m4
+
+	    $VERBOSE_ECHO "rm -f acinclude.m4.$$.backup"
+	    rm -f acinclude.m4.$$.backup
+	fi
+    fi
+' 0
+
+# trap SIGHUP (1), SIGINT (2), SIGPIPE (13), SIGTERM (15)
+for sig in 1 2 13 15; do
+    trap 'SIGNAL='$sig'; { (exit 1); exit 1; }' $sig
+done
+SIGNAL=0
+
+
 ####################
 # get project name #
 ####################
@@ -671,26 +712,11 @@ if [ "x$VERSION_ONLY" = "xyes" ] ; then
 fi
 
 
-###################
-# ESCAPE_FUNCTION #
-###################
-escape ( ) {
-    echo "$*" | sed 's/\$/AG_D_SH/g' | sed 's/`/AG_B_SH/g' | sed 's/"/AG_Q_SH/g' | sed "s/'/AG_S_SH/g"
-}
-
-
-#####################
-# UNESCAPE_FUNCTION #
-#####################
-unescape ( ) {
-    echo "$*" | sed "s/AG_S_SH/'/g" | sed 's/AG_Q_SH/"/g' | sed 's/AG_B_SH/`/g' | sed 's/AG_D_SH/$/g'
-}
-
-
 #################################
 # PROTECT_FROM_CLOBBER FUNCTION #
 #################################
 protect_from_clobber ( ) {
+    PFC_INIT=1
 
     # protect COPYING & INSTALL from overwrite by automake.  the
     # automake force option will (inappropriately) ignore the existing
@@ -698,46 +724,26 @@ protect_from_clobber ( ) {
     # version) instead of just forcing *missing* files like it does
     # for AUTHORS, NEWS, and README. this is broken but extremely
     # prevalent behavior, so we protect against it by keeping a backup
-    # of the file contents (in a path-specific variable) that can
-    # later be restored.
+    # of the file that can later be restored.
 
-    COPYING_NAME="`pwd | sed 's/[^a-zA-Z]//g'`COPYING_BACKUP"
-    cmd="echo \"\$$COPYING_NAME\""
-    contents="`eval $cmd`"
-    if [ "x$contents" = "x" ] ; then
-	eval "${COPYING_NAME}=__none__"
-	if test -f COPYING ; then
-	    contents="`cat COPYING`"
-            # make sure the file actually fits in memory
-	    if [ "x`echo \"$contents\"`" = "x`cat COPYING`" ] ; then
-		$VERBOSE_ECHO "Stashing an in-memory backup of COPYING"
-		stash="${COPYING_NAME}=\"`escape \"$contents\"`\""
-		contents=""
-		eval "$stash"
-		stash=""
-		eval "export $COPYING_NAME"
-	    fi
+    if test -f COPYING ; then
+	if test -f COPYING.$$.protect_from_automake.backup ; then
+	    $VERBOSE_ECHO "Already backed up COPYING in `pwd`"
+	else
+	    $VERBOSE_ECHO "Backing up COPYING in `pwd`"
+	    $VERBOSE_ECHO "cp -p COPYING COPYING.$$.protect_from_automake.backup"
+	    cp -p COPYING COPYING.$$.protect_from_automake.backup
 	fi
     fi
-    INSTALL_NAME="`pwd | sed 's/[^a-zA-Z]//g'`INSTALL_BACKUP"
-    cmd="echo \"\$$INSTALL_NAME\""
-    contents="`eval $cmd`"
-    if [ "x$contents" = "x" ] ; then
-	eval "${INSTALL_NAME}=__none__"
-	if test -f INSTALL ; then
-	    contents="`cat INSTALL`"
-            # make sure the file actually fits in memory
-	    if [ "x`echo \"$contents\"`" = "x`cat INSTALL`" ] ; then
-		$VERBOSE_ECHO "Stashing an in-memory backup of INSTALL"
-		stash="${INSTALL_NAME}=\"`escape \"\$contents\"`\""
-		contents=""
-		eval "$stash"
-		stash=""
-		eval "export $INSTALL_NAME"
-	    fi
+    if test -f INSTALL ; then
+	if test -f INSTALL.$$.protect_from_automake.backup ; then
+	    $VERBOSE_ECHO "Already backed up INSTALL in `pwd`"
+	else
+	    $VERBOSE_ECHO "Backing up INSTALL in `pwd`"
+	    $VERBOSE_ECHO "cp -p INSTALL INSTALL.$$.protect_from_automake.backup"
+	    cp -p INSTALL INSTALL.$$.protect_from_automake.backup
 	fi
     fi
-    contents=""
 }
 
 
@@ -748,7 +754,7 @@ recursive_protect ( ) {
 
     # for projects using recursive configure, run the build
     # preparation steps for the subdirectories.  this function assumes
-    # _prev_path was set to pwd before recursion begins so that
+    # START_PATH was set to pwd before recursion begins so that
     # relative paths work.
 
     # git 'r done, protect COPYING and INSTALL from being clobbered
@@ -763,8 +769,6 @@ recursive_protect ( ) {
     # find configure template
     _configure="`locate_configure_template`"
     if [ "x$_configure" = "x" ] ; then
-	return
-    elif ! test -f "$_configure" ; then
 	return
     fi
     # $VERBOSE_ECHO "Looking for configure template found `pwd`/$_configure"
@@ -785,7 +789,7 @@ recursive_protect ( ) {
 	$VERBOSE_ECHO "  $CHECK_DIRS"
 	for dir in $CHECK_DIRS ; do
 	    $VERBOSE_ECHO "Protecting files from automake in $dir"
-	    cd "$_prev_path"
+	    cd "$START_PATH"
 	    eval "cd $dir"
 
 	    # recursively git 'r done
@@ -793,6 +797,100 @@ recursive_protect ( ) {
 	done
     fi
 } # end of recursive_protect
+
+
+#############################
+# RESTORE_CLOBBERED FUNCION #
+#############################
+restore_clobbered ( ) {
+
+    # The automake (and autoreconf by extension) -f/--force-missing
+    # option may overwrite COPYING and INSTALL even if they do exist.
+    # Here we restore the files if necessary.
+
+    spacer=no
+    if test -f COPYING.$$.protect_from_automake.backup ; then
+	if test -f COPYING ; then
+	    # compare entire content, restore if needed
+	    if test "x`cat COPYING`" != "x`cat COPYING.$$.protect_from_automake.backup`" ; then
+		if test "x$spacer" = "xno" ; then
+		    $VERBOSE_ECHO
+		    spacer=yes
+		fi
+		# restore the backup
+		$VERBOSE_ECHO "Restoring COPYING from backup (automake -f likely clobbered it)"
+		$VERBOSE_ECHO "cat COPYING.$$.protect_from_automake.backup > COPYING"
+		cat COPYING.$$.protect_from_automake.backup > COPYING
+	    fi # check contents
+	    rm -f COPYING.$$.protect_from_automake.backup
+	elif test -f COPYING.$$.protect_from_automake.backup ; then
+	    $VERBOSE_ECHO "mv COPYING.$$.protect_from_automake.backup COPYING"
+	    mv COPYING.$$.protect_from_automake.backup COPYING
+	fi # -f COPYING
+    fi # -f COPYING.$$.protect_from_automake.backup
+    if test -f INSTALL.$$.protect_from_automake.backup ; then
+	if test -f INSTALL ; then
+	    # compare entire content, restore if needed
+	    if test "x`cat INSTALL`" != "x`cat INSTALL.$$.protect_from_automake.backup`" ; then
+		if test "x$spacer" = "xno" ; then
+		    $VERBOSE_ECHO
+		    spacer=yes
+		fi
+		# restore the backup
+		$VERBOSE_ECHO "Restoring INSTALL from backup (automake -f likely clobbered it)"
+		$VERBOSE_ECHO "cat INSTALL.$$.protect_from_automake.backup > INSTALL"
+		cat INSTALL.$$.protect_from_automake.backup > INSTALL
+	    fi # check contents
+	    rm -f INSTALL.$$.protect_from_automake.backup
+	elif test -f INSTALL.$$.protect_from_automake.backup ; then
+	    $VERBOSE_ECHO "mv INSTALL.$$.protect_from_automake.backup INSTALL"
+	    mv INSTALL.$$.protect_from_automake.backup INSTALL
+	fi # -f INSTALL
+    fi # -f INSTALL.$$.protect_from_automake.backup
+
+} # end of restore_clobbered
+
+
+##############################
+# RECURSIVE_RESTORE FUNCTION #
+##############################
+recursive_restore ( ) {
+
+    # restore COPYING and INSTALL from backup if they were clobbered
+    # for each directory recursively.
+
+    # git 'r undone
+    restore_clobbered
+
+    # find configure template
+    _configure="`locate_configure_template`"
+    if [ "x$_configure" = "x" ] ; then
+	return
+    fi
+
+    # look for subdirs
+    _det_config_subdirs="`grep AC_CONFIG_SUBDIRS $_configure | grep -v '.*#.*AC_CONFIG_SUBDIRS' | sed 's/^[ 	]*AC_CONFIG_SUBDIRS(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
+    CHECK_DIRS=""
+    for dir in $_det_config_subdirs ; do
+	if test -d "`pwd`/$dir" ; then
+	    CHECK_DIRS="$CHECK_DIRS \"`pwd`/$dir\""
+	fi
+    done
+
+    # process subdirs
+    if [ ! "x$CHECK_DIRS" = "x" ] ; then
+	$VERBOSE_ECHO "Recursively scanning the following directories:"
+	$VERBOSE_ECHO "  $CHECK_DIRS"
+	for dir in $CHECK_DIRS ; do
+	    $VERBOSE_ECHO "Checking files for automake damage in $dir"
+	    cd "$START_PATH"
+	    eval "cd $dir"
+
+	    # recursively git 'r undone
+	    recursive_restore
+	done
+    fi
+} # end of recursive_restore
 
 
 #######################
@@ -813,13 +911,7 @@ initialize ( ) {
     # check for a configure template #
     ##################################
     CONFIGURE="`locate_configure_template`"
-    config_fail=no
     if [ "x$CONFIGURE" = "x" ] ; then
-	config_fail=yes
-    elif ! test -f $CONFIGURE ; then
-	config_fail=yes
-    fi
-    if [ "x$config_fail" = "xyes" ] ; then
 	$ECHO
 	$ECHO "A configure.ac or configure.in file could not be located implying"
 	$ECHO "that the GNU Build System is at least not used in this directory.  In"
@@ -905,7 +997,7 @@ initialize ( ) {
 ##############
 
 # stash path
-_prev_path="`pwd`"
+START_PATH="`pwd`"
 
 # Before running autoreconf or manual steps, some prep detection work
 # is necessary or useful.  Only needs to occur once per directory, but
@@ -914,7 +1006,7 @@ _prev_path="`pwd`"
 recursive_protect
 
 # start from where we started
-cd "$_prev_path"
+cd "$START_PATH"
 
 # get ready to process
 initialize
@@ -943,9 +1035,12 @@ if [ "x$HAVE_AUTORECONF" = "xyes" ] ; then
 		$ECHO "symbolic link or without setting the LIBTOOLIZE environment variable."
 		$ECHO
 		$ECHO "Restarting the preparation steps with LIBTOOLIZE set to $LIBTOOLIZE"
+
 		export LIBTOOLIZE
 		RUN_RECURSIVE=no
 		export RUN_RECURSIVE
+		trap - 0
+
 		$VERBOSE_ECHO sh $AUTOGEN_SH "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
 		sh "$AUTOGEN_SH" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
 		exit $?
@@ -988,20 +1083,20 @@ libtool_failure ( ) {
 	found_libtool="`$ECHO $_autoconf_output | grep AC_PROG_LIBTOOL`"
 	if test ! "x$found_libtool" = "x" ; then
 	    if test -f acinclude.m4 ; then
-		if test ! -f acinclude.m4.backup ; then
-		    $VERBOSE_ECHO cp acinclude.m4 acinclude.m4.backup
-		    cp acinclude.m4 acinclude.m4.backup
-		fi
+		rm -f acinclude.m4.$$.backup
+		$VERBOSE_ECHO "cat acinclude.m4 > acinclude.m4.$$.backup"
+		cat acinclude.m4 > acinclude.m4.$$.backup
 	    fi
-	    $VERBOSE_ECHO cat "$LIBTOOL_M4" >> acinclude.m4
+	    $VERBOSE_ECHO "cat \"$LIBTOOL_M4\" >> acinclude.m4"
 	    cat "$LIBTOOL_M4" >> acinclude.m4
 
 	    # don't keep doing this
 	    RUN_RECURSIVE=no
 	    export RUN_RECURSIVE
+	    trap - 0
 
 	    $ECHO
-	    $ECHO "Restarting the preparation steps with a local libtool.m4"
+	    $ECHO "Restarting the preparation steps with libtool macros in acinclude.m4"
 	    $VERBOSE_ECHO sh $AUTOGEN_SH "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
 	    sh "$AUTOGEN_SH" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
 	    exit $?
@@ -1083,8 +1178,8 @@ manual_autogen ( ) {
 		$ECHO "Fortunately, the problem can be worked around by simply copying the"
 		$ECHO "file to the appropriate location (${_aux_dir}/).  This has been done for you."
 		$ECHO
-		$VERBOSE_ECHO "cp ltmain.sh \"${_aux_dir}/ltmain.sh\""
-		cp ltmain.sh "${_aux_dir}/ltmain.sh"
+		$VERBOSE_ECHO "cp -p ltmain.sh \"${_aux_dir}/ltmain.sh\""
+		cp -p ltmain.sh "${_aux_dir}/ltmain.sh"
 		$ECHO $ECHO_N "Continuing build preparation ... $ECHO_C"
 	    fi
 	fi # ltmain.sh
@@ -1255,107 +1350,6 @@ EOF
 } # end of manual_autogen
 
 
-#############################
-# RESTORE_CLOBBERED FUNCION #
-#############################
-restore_clobbered ( ) {
-
-    # The automake (and autoreconf by extension) -f/--force-missing
-    # option may overwrite COPYING and INSTALL even if they do exist.
-    # We stashed a copy of those file contents into a
-    # directory-specific variable during 'initialize' just in case it
-    # is blown away.  Here we restore the contents if necessary.
-
-    spacer=no
-    if test -f COPYING ; then
-	# compare entire content, restore if needed
-	COPYING_NAME="`pwd | sed 's/[^a-zA-Z]//g'`COPYING_BACKUP"
-	cmd="echo \"\$$COPYING_NAME\""
-	contents="`eval $cmd`"
-	contents="`unescape \"$contents\"`"
-	if test "x$contents" != "x__none__" -a "x$contents" != "x`cat COPYING`" ; then
-	    if test "x$spacer" = "xno" ; then
-		$VERBOSE_ECHO
-		spacer=yes
-	    fi
-	    # restore the backup
-	    $VERBOSE_ECHO "Restoring COPYING from backup (automake -f likely clobbered it)"
-	    $VERBOSE_ECHO "echo \"\$$COPYING_NAME\" > COPYING"
-	    rm -f COPYING
-	    echo "$contents" > COPYING
-	    # release content
-	    eval "$COPYING_NAME=\"\""
-	    eval "export $COPYING_NAME"
-	fi # check contents
-    fi # -f COPYING
-    if test -f INSTALL ; then
-	INSTALL_NAME="`pwd | sed 's/[^a-zA-Z]//g'`INSTALL_BACKUP"
-	cmd="echo \"\$$INSTALL_NAME\""
-	contents="`eval $cmd`"
-	contents="`unescape \"$contents\"`"
-	# compare entire content, restore if needed
-	if test "x$contents" != "x__none__" -a "x$contents" != "x`cat INSTALL`" ; then
-	    if test "x$spacer" = "xno" ; then
-		$VERBOSE_ECHO
-		spacer=yes
-	    fi
-	    # restore the backup
-	    $VERBOSE_ECHO "Restoring INSTALL from backup (automake -f likely clobbered it)"
-	    $VERBOSE_ECHO "echo \"\$$INSTALL_NAME\" > INSTALL"
-	    rm -f INSTALL
-	    echo "$contents" > INSTALL
-	    # release content
-	    eval "$INSTALL_NAME=\"\""
-	    eval "export $INSTALL_NAME"
-	fi # check contents
-    fi # -f install
-} # end of restore_clobbered
-
-
-##############################
-# RECURSIVE_RESTORE FUNCTION #
-##############################
-recursive_restore ( ) {
-
-    # restore COPYING and INSTALL from backup if they were clobbered
-    # for each directory recursively.
-
-    # git 'r undone
-    restore_clobbered
-
-    # find configure template
-    _configure="`locate_configure_template`"
-    if [ "x$_configure" = "x" ] ; then
-	return
-    elif ! test -f "$_configure" ; then
-	return
-    fi
-
-    # look for subdirs
-    _det_config_subdirs="`grep AC_CONFIG_SUBDIRS $_configure | grep -v '.*#.*AC_CONFIG_SUBDIRS' | sed 's/^[ 	]*AC_CONFIG_SUBDIRS(\(.*\)).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/'`"
-    CHECK_DIRS=""
-    for dir in $_det_config_subdirs ; do
-	if test -d "`pwd`/$dir" ; then
-	    CHECK_DIRS="$CHECK_DIRS \"`pwd`/$dir\""
-	fi
-    done
-
-    # process subdirs
-    if [ ! "x$CHECK_DIRS" = "x" ] ; then
-	$VERBOSE_ECHO "Recursively scanning the following directories:"
-	$VERBOSE_ECHO "  $CHECK_DIRS"
-	for dir in $CHECK_DIRS ; do
-	    $VERBOSE_ECHO "Checking files for automake damage in $dir"
-	    cd "$_prev_path"
-	    eval "cd $dir"
-
-	    # recursively git 'r undone
-	    recursive_restore
-	done
-    fi
-} # end of recursive_restore
-
-
 #####################################
 # RECURSIVE_MANUAL_AUTOGEN FUNCTION #
 #####################################
@@ -1371,7 +1365,7 @@ recursive_manual_autogen ( ) {
 	$VERBOSE_ECHO "  $CONFIG_SUBDIRS"
 	for dir in $CONFIG_SUBDIRS ; do
 	    $VERBOSE_ECHO "Processing recursive configure in $dir"
-	    cd "$_prev_path"
+	    cd "$START_PATH"
 	    cd "$dir"
 
 	    # new directory, prepare
@@ -1398,7 +1392,7 @@ fi
 #########################
 # restore and summarize #
 #########################
-cd "$_prev_path"
+cd "$START_PATH"
 
 # restore COPYING and INSTALL from backup if necessary
 recursive_restore
@@ -1407,17 +1401,13 @@ recursive_restore
 config_ac="`locate_configure_template`"
 config="`echo $config_ac | sed 's/\.ac$//' | sed 's/\.in$//'`"
 if [ "x$config" = "x" ] ; then
-    $VERBOSE_ECHO "WARNING: path to configure could not be found"
-fi
-if [ ! -f "$config" ] ; then
-    $VERBOSE_ECHO "WARNING: expected configure file does not exist"
-    config=""
+    $VERBOSE_ECHO "Could not locate the configure template (from `pwd`)"
 fi
 
 # summarize
 $ECHO "done"
 $ECHO
-if [ "x$config" = "x" ] ; then
+if test "x$config" = "x" -o ! -f "$config" ; then
     $ECHO "WARNING: The $PROJECT build system should now be prepared but there"
     $ECHO "does not seem to be a resulting configure file.  This is unexpected"
     $ECHO "and likely the result of an error.  You should run $NAME_OF_AUTOGEN"
