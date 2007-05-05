@@ -61,6 +61,9 @@
 #   or
 # sh elapsed.sh `sh elapsed.sh --seconds $some_prev_date`
 #
+# Author -
+#   Christopher Sean Morrison
+#
 # $(#)$Header$ (BRL)
 
 ARGS="$*"
