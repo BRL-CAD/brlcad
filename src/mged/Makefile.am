@@ -59,35 +59,6 @@ bin_PROGRAMS = \
 	cad_parea \
 	mged
 
-noinst_HEADERS = \
-	cmd.h \
-	comb_bool.h \
-	editobjGui.h \
-	fbserv.h \
-	ged.h \
-	htmlLibraryUi.h \
-	icreateGui.h \
-	joints.h \
-	menu.h \
-	mgdev.h \
-	mged_dm.h \
-	mged_solid.h \
-	mgedtcl.h \
-	objdir.h \
-	qray.h \
-	scroll.h \
-	sedit.h \
-	sunicon.h \
-	titles.h \
-	vgdev.h \
-	vld_std.h \
-	vmathUi.h
-
-man_MANS = \
-	cad_boundp.1 \
-	cad_parea.1 \
-	mged.1
-
 mged_SOURCES = \
 	adc.c \
 	anal.c \
@@ -190,12 +161,46 @@ mged_LDADD = \
 	${TCL} \
 	${PNG}
 
+EXTRA_PROGRAMS = sged
+sged_SOURCES = $(mged_SOURCES)
+sged_LDFLAGS = -static
+sged_CFLAGS = $(mged_CFLAGS)
+sged_LDADD = $(mged_LDADD)
+
 cad_boundp_SOURCES = cad_boundp.c
 cad_boundp_LDADD = ${BU} ${BU_LIBS}
 
 cad_parea_SOURCES = cad_parea.c
 cad_parea_LDADD = ${BU} ${BU_LIBS}
 
+noinst_HEADERS = \
+	cmd.h \
+	comb_bool.h \
+	editobjGui.h \
+	fbserv.h \
+	ged.h \
+	htmlLibraryUi.h \
+	icreateGui.h \
+	joints.h \
+	menu.h \
+	mgdev.h \
+	mged_dm.h \
+	mged_solid.h \
+	mgedtcl.h \
+	objdir.h \
+	qray.h \
+	scroll.h \
+	sedit.h \
+	sunicon.h \
+	titles.h \
+	vgdev.h \
+	vld_std.h \
+	vmathUi.h
+
+man_MANS = \
+	cad_boundp.1 \
+	cad_parea.1 \
+	mged.1
 
 INCLUDES = \
 	${X_CFLAGS} \
