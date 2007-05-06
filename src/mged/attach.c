@@ -115,8 +115,6 @@ extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
 extern void predictor_init(void);	/* defined in predictor.c */
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 
-extern void Tk_CreateCanvasBezierType();
-
 extern struct _color_scheme default_color_scheme;
 
 int gui_setup(char *dstr);
@@ -513,9 +511,6 @@ gui_setup(char *dstr)
       bu_vls_free(&vls);
       return TCL_ERROR;
   }
-
-  /* Add Bezier Curves to the canvas widget */
-  Tk_CreateCanvasBezierType();
 
   /* Initialize [incr Tk] */
   if (Itk_Init(interp) == TCL_ERROR) {
