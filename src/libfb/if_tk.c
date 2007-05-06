@@ -42,8 +42,8 @@ Tcl_Interp *fbinterp;
 Tk_Window fbwin;
 Tk_PhotoHandle fbphoto;
 
-HIDDEN int	tk_open(FBIO *ifp, char *file, int width, int height),
-		tk_close(FBIO *ifp),
+HIDDEN int	fb_tk_open(FBIO *ifp, char *file, int width, int height),
+		fb_tk_close(FBIO *ifp),
 		tk_clear(FBIO *ifp, unsigned char *pp),
 		tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
 		tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
@@ -66,8 +66,8 @@ HIDDEN int	tk_open(FBIO *ifp, char *file, int width, int height),
 /* This is the ONLY thing that we "export" */
 FBIO tk_interface = {
 	0,
-	tk_open,
-	tk_close,
+	fb_tk_open,
+	fb_tk_close,
 	tk_clear,
 	tk_read,
 	tk_write,
@@ -109,7 +109,7 @@ FBIO tk_interface = {
 
 
 HIDDEN int
-tk_open(FBIO *ifp, char *file, int width, int height)
+fb_tk_open(FBIO *ifp, char *file, int width, int height)
 {
 	FB_CK_FBIO(ifp);
 	if( file == (char *)NULL )
@@ -198,7 +198,7 @@ tk_open(FBIO *ifp, char *file, int width, int height)
 }
 
 HIDDEN int
-tk_close(FBIO *ifp)
+fb_tk_close(FBIO *ifp)
 {
 	FB_CK_FBIO(ifp);
 	fb_log( "fb_close( 0x%lx )\n", (unsigned long)ifp );
