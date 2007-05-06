@@ -110,22 +110,11 @@ extern int Pex_dm_init();
 #endif /* DM_PEX */
 
 extern void set_port(void);		/* defined in fbserv.c */
-
 extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
 extern void predictor_init(void);	/* defined in predictor.c */
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 
 extern struct _color_scheme default_color_scheme;
-
-int gui_setup(char *dstr);
-void get_attached(void);
-void print_valid_dm(void);
-void dm_var_init(struct dm_list *initial_dm_list);
-void mged_slider_init_vls(struct dm_list *p);
-void mged_slider_free_vls(struct dm_list *p);
-
-void mged_fb_open(void);
-void mged_fb_close(void);
 
 int mged_default_dlist = 0;   /* This variable is available via Tcl for controlling use of display lists */
 struct dm_list head_dm_list;  /* list of active display managers */
@@ -155,6 +144,68 @@ struct w_dm which_dm[] = {
 #endif /* DM_PEX */
   { -1, (char *)NULL, (int (*)())NULL}
 };
+
+
+void
+mged_fb_open(void)
+{
+#ifdef DM_X
+  if(dmp->dm_type == DM_TYPE_X)
+    X_fb_open();
+#endif /* DM_X */
+#ifdef DM_TK
+  if(dmp->dm_type == DM_TYPE_TK)
+    tk_fb_open();
+#endif /* DM_TK */
+#ifdef DM_WGL
+  if(dmp->dm_type == DM_TYPE_WGL)
+      Wgl_fb_open();
+#endif /* DM_WGL */
+#ifdef DM_OGL
+  if(dmp->dm_type == DM_TYPE_OGL)
+      Ogl_fb_open();
+#endif /* DM_OGL */
+}
+
+
+void
+mged_fb_close(void)
+{
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "fb_close_existing %lu", fbp);
+  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+
+  fbp = (FBIO *)0;
+}
+
+
+void
+mged_slider_init_vls(struct dm_list *p)
+{
+  bu_vls_init(&p->dml_fps_name);
+  bu_vls_init(&p->dml_aet_name);
+  bu_vls_init(&p->dml_ang_name);
+  bu_vls_init(&p->dml_center_name);
+  bu_vls_init(&p->dml_size_name);
+  bu_vls_init(&p->dml_adc_name);
+}
+
+
+void
+mged_slider_free_vls(struct dm_list *p)
+{
+  if (BU_VLS_IS_INITIALIZED(&p->dml_fps_name)) {
+    bu_vls_free(&p->dml_fps_name);
+    bu_vls_free(&p->dml_aet_name);
+    bu_vls_free(&p->dml_ang_name);
+    bu_vls_free(&p->dml_center_name);
+    bu_vls_free(&p->dml_size_name);
+    bu_vls_free(&p->dml_adc_name);
+  }
+}
 
 
 int
@@ -261,36 +312,6 @@ f_release(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-int
-f_attach(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-  register struct w_dm *wp;
-
-  if(argc < 2){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help attach");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    print_valid_dm();
-    return TCL_ERROR;
-  }
-
-  /* Look at last argument, skipping over any options which preceed it */
-  for( wp = &which_dm[2]; wp->type != -1; wp++ )
-    if( strcmp(argv[argc - 1], wp->name ) == 0 )
-      break;
-
-  if(wp->type == -1){
-    Tcl_AppendResult(interp, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
-    print_valid_dm();
-    return TCL_ERROR;
-  }
-
-  return mged_attach(wp, argc, argv);
-}
-
 void
 print_valid_dm(void)
 {
@@ -321,6 +342,123 @@ print_valid_dm(void)
     }
     Tcl_AppendResult(interp, "\n", (char *)NULL);
 }
+
+
+int
+f_attach(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+  register struct w_dm *wp;
+
+  if(argc < 2){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help attach");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    print_valid_dm();
+    return TCL_ERROR;
+  }
+
+  /* Look at last argument, skipping over any options which preceed it */
+  for( wp = &which_dm[2]; wp->type != -1; wp++ )
+    if( strcmp(argv[argc - 1], wp->name ) == 0 )
+      break;
+
+  if(wp->type == -1){
+    Tcl_AppendResult(interp, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
+    print_valid_dm();
+    return TCL_ERROR;
+  }
+
+  return mged_attach(wp, argc, argv);
+}
+
+
+int
+gui_setup(char *dstr)
+{
+  struct bu_vls vls;
+
+  /* initialize only once */
+  if(tkwin != NULL)
+    return TCL_OK;
+
+  bu_vls_init(&vls);
+  Tcl_ResetResult(interp);
+
+  /* set DISPLAY to dstr */
+  if(dstr != (char *)NULL){
+    bu_vls_strcpy(&vls, "env(DISPLAY)");
+    Tcl_SetVar(interp, bu_vls_addr(&vls), dstr, TCL_GLOBAL_ONLY);
+    setenv("DISPLAY", dstr, 0);
+  }
+
+  /* This runs the tk.tcl script */
+  if(Tk_Init(interp) == TCL_ERROR){
+      /* hack to avoid a stupid Tk error */
+      if (strncmp(interp->result, "this isn't a Tk applicationcouldn't", 35) == 0) {
+	  interp->result = (interp->result + 27);
+      }
+      bu_vls_free(&vls);
+      return TCL_ERROR;
+  }
+
+  /* Initialize [incr Tk] */
+  if (Itk_Init(interp) == TCL_ERROR) {
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
+  /* Import [incr Tk] commands into the global namespace */
+  if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+		 "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
+  /* Initialize the Iwidgets package */
+  if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
+  /* Import iwidgets into the global namespace */
+  if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+		 "::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
+#ifdef BRLCAD_DEBUG
+  /* Initialize libdm */
+  (void)Dm_d_Init(interp);
+
+  /* Initialize libfb */
+  (void)Fb_d_Init(interp);
+#else
+  /* Initialize libdm */
+  (void)Dm_Init(interp);
+
+  /* Initialize libfb */
+  (void)Fb_Init(interp);
+#endif
+
+  if((tkwin = Tk_MainWindow(interp)) == NULL){
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
+  /* create the event handler */
+  Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+
+  bu_vls_strcpy(&vls, "wm withdraw . ; tk appname mged");
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+
+  return TCL_OK;
+}
+
 
 int
 mged_attach(
@@ -485,89 +623,6 @@ get_attached(void)
 }
 
 
-int
-gui_setup(char *dstr)
-{
-  struct bu_vls vls;
-
-  /* initialize only once */
-  if(tkwin != NULL)
-    return TCL_OK;
-
-  bu_vls_init(&vls);
-  Tcl_ResetResult(interp);
-
-  if(dstr != (char *)NULL){
-    bu_vls_strcpy(&vls, "env(DISPLAY)");
-    Tcl_SetVar(interp, bu_vls_addr(&vls), dstr, TCL_GLOBAL_ONLY);
-  }
-
-  /* This runs the tk.tcl script */
-  if(Tk_Init(interp) == TCL_ERROR){
-      /* hack to avoid a stupid Tk error */
-      if (strncmp(interp->result, "this isn't a Tk applicationcouldn't", 35) == 0) {
-	  interp->result = (interp->result + 27);
-      }
-      bu_vls_free(&vls);
-      return TCL_ERROR;
-  }
-
-  /* Initialize [incr Tk] */
-  if (Itk_Init(interp) == TCL_ERROR) {
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  /* Import [incr Tk] commands into the global namespace */
-  if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		 "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  /* Initialize the Iwidgets package */
-  if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  /* Import iwidgets into the global namespace */
-  if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		 "::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-#ifdef BRLCAD_DEBUG
-  /* Initialize libdm */
-  (void)Dm_d_Init(interp);
-
-  /* Initialize libfb */
-  (void)Fb_d_Init(interp);
-#else
-  /* Initialize libdm */
-  (void)Dm_Init(interp);
-
-  /* Initialize libfb */
-  (void)Fb_Init(interp);
-#endif
-
-  if((tkwin = Tk_MainWindow(interp)) == NULL){
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  /* create the event handler */
-  Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
-
-  bu_vls_strcpy(&vls, "wm withdraw . ; tk appname mged");
-  Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
-
-  return TCL_OK;
-}
-
-
 /*
  *			F _ D M
  *
@@ -608,6 +663,7 @@ is_dm_null(void)
 {
   return(curr_dm_list == &head_dm_list);
 }
+
 
 void
 dm_var_init(struct dm_list *initial_dm_list)
@@ -673,29 +729,6 @@ dm_var_init(struct dm_list *initial_dm_list)
   grid_auto_size = 1;
 }
 
-void
-mged_slider_init_vls(struct dm_list *p)
-{
-  bu_vls_init(&p->dml_fps_name);
-  bu_vls_init(&p->dml_aet_name);
-  bu_vls_init(&p->dml_ang_name);
-  bu_vls_init(&p->dml_center_name);
-  bu_vls_init(&p->dml_size_name);
-  bu_vls_init(&p->dml_adc_name);
-}
-
-void
-mged_slider_free_vls(struct dm_list *p)
-{
-  if (BU_VLS_IS_INITIALIZED(&p->dml_fps_name)) {
-    bu_vls_free(&p->dml_fps_name);
-    bu_vls_free(&p->dml_aet_name);
-    bu_vls_free(&p->dml_ang_name);
-    bu_vls_free(&p->dml_center_name);
-    bu_vls_free(&p->dml_size_name);
-    bu_vls_free(&p->dml_adc_name);
-  }
-}
 
 void
 mged_link_vars(struct dm_list *p)
@@ -735,40 +768,6 @@ f_get_dm_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendElement(interp, bu_vls_addr(&dlp->dml_dmp->dm_pathName));
 
   return TCL_OK;
-}
-
-void
-mged_fb_open(void)
-{
-#ifdef DM_X
-  if(dmp->dm_type == DM_TYPE_X)
-    X_fb_open();
-#endif /* DM_X */
-#ifdef DM_TK
-  if(dmp->dm_type == DM_TYPE_TK)
-    tk_fb_open();
-#endif /* DM_TK */
-#ifdef DM_WGL
-  if(dmp->dm_type == DM_TYPE_WGL)
-      Wgl_fb_open();
-#endif /* DM_WGL */
-#ifdef DM_OGL
-  if(dmp->dm_type == DM_TYPE_OGL)
-      Ogl_fb_open();
-#endif /* DM_OGL */
-}
-
-void
-mged_fb_close(void)
-{
-  struct bu_vls vls;
-
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "fb_close_existing %lu", fbp);
-  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
-
-  fbp = (FBIO *)0;
 }
 
 /*
