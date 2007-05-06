@@ -63,7 +63,6 @@
 
 extern int cmdInit(Tcl_Interp *interp);
 extern void Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *interp);
-extern void Tk_CreateCanvasBezierType();
 
 #ifdef BWISH
 Tk_Window tkwin;
@@ -203,9 +202,6 @@ Cad_AppInit(Tcl_Interp *interp)
 #ifdef BWISH
     if ((tkwin = Tk_MainWindow(interp)) == NULL)
 	return TCL_ERROR;
-
-    /* Add Bezier Curves to the canvas widget */
-    Tk_CreateCanvasBezierType();
 #endif
 
     /* register bwish/btclsh commands */
