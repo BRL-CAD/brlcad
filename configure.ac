@@ -3425,9 +3425,6 @@ if test "x$ECHO" = "x" ; then
     AC_MSG_NOTICE([ECHO was not defined by configure so defining manually])
 fi
 AC_SUBST(ECHO)
-if test "x$ECHO_N" = "x" ; then
-    ECHO_N=
-fi
 AC_SUBST(ECHO_N)
 
 
