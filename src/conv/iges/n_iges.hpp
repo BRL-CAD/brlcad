@@ -45,6 +45,15 @@ namespace brlcad {
       return _val == v;
     }
 
+    IgesDataType<T>& operator=(const IgesDataType<T>& p) {
+      _val = p._val;
+      return *this;
+    }
+    IgesDataType<T>& operator=(T v) {
+      _val = v;
+      return *this;
+    }
+
     bool operator<(const IgesDataType<T>& i) { 
       return  _val < i._val;
     }
@@ -319,7 +328,7 @@ namespace brlcad {
     bool isTerminal() { return _type == 'T'; }
     // reset the stream to the start of this record
     void reset() { fseek(_fp, _start, SEEK_SET); }
-    long where() { return _start; }
+    long where() { return ftell(_fp); }
   
     GlobalSection* createGlobalSection();
     void createDirectory(vector<DirectoryEntry*>& dir);
@@ -462,6 +471,8 @@ namespace brlcad {
     list<Extractor*> handlers;
   };
 
+  class EdgeUse;
+  class PSpaceCurve;
   class BrepHandler : public Extractor {
   public:    
     BrepHandler();
@@ -503,6 +514,9 @@ namespace brlcad {
     virtual void extractEdge(const DirectoryEntry* de);
     virtual void extractVertex(const DirectoryEntry* de);
     virtual int  extractCurve(const DirectoryEntry* de, bool isIso);
+
+    friend class EdgeUse;
+    friend class PSpaceCurve;
 
   private:
     int shellIndex;
