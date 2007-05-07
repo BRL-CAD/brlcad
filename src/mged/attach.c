@@ -391,7 +391,9 @@ gui_setup(char *dstr)
   if(dstr != (char *)NULL){
     bu_vls_strcpy(&vls, "env(DISPLAY)");
     Tcl_SetVar(interp, bu_vls_addr(&vls), dstr, TCL_GLOBAL_ONLY);
+#ifdef HAVE_SETENV
     setenv("DISPLAY", dstr, 0);
+#endif
   }
 
   /* This runs the tk.tcl script */
