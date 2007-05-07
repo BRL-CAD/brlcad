@@ -17,6 +17,7 @@ namespace brlcad {
 
   void 
   BrepHandler::extractBrep(const DirectoryEntry* de) {
+    debug("########################### E X T R A C T   B R E P");
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
     
@@ -38,6 +39,7 @@ namespace brlcad {
   
   void
   BrepHandler::extractShell(const DirectoryEntry* de, bool isVoid, bool orientWithFace) {
+    debug("########################### E X T R A C T   S H E L L");
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
     
@@ -54,6 +56,7 @@ namespace brlcad {
 
   void 
   BrepHandler::extractFace(const DirectoryEntry* de, bool orientWithSurface) {
+    debug("########################### E X T R A C T   F A C E"); 
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
         
@@ -73,24 +76,65 @@ namespace brlcad {
 
   int
   BrepHandler::extractSurface(const DirectoryEntry* de) {
+    debug("########################## E X T R A C T   S U R F A C E");
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
     return handleSurface((IGESEntity)(int)de->type(), params);
   }
 
-  class EdgeList {
+  class PSpaceCurve {
   public:
-    
-  };
+    PSpaceCurve(IGES* _iges, BrepHandler* _brep, Logical& iso, Pointer& c) 
+    {
+      DirectoryEntry* curveDE = _iges->getDirectoryEntry(c);
+      ParameterData param;
+      _iges->getParameter(curveDE->paramData(), param);
+    }
+    PSpaceCurve(const PSpaceCurve& ps) 
+      : isIso(ps.isIso), curveIndex(ps.curveIndex) {}
 
-  DirectoryEntry* 
-  BrepHandler::getEdge(Pointer& edgeList, int index) {    
-    DirectoryEntry* edgeListDE = _iges->getDirectoryEntry(edgeList);
+    Logical isIso;
+    int curveIndex;
+  };
+      
+
+  class EdgeUse {
+  public:
+    EdgeUse(IGES* _iges, BrepHandler* _brep, Pointer& edgeList, int index)
+    { 
+      debug("########################## E X T R A C T   E D G E  U S E");
+      DirectoryEntry* edgeListDE = _iges->getDirectoryEntry(edgeList);
+      ParameterData params;
+      _iges->getParameter(edgeListDE->paramData(), params);
+      int paramIndex = (index-1)*5 + 1;
+      Pointer msCurvePtr = params.getPointer(paramIndex);
+      initVertexList = params.getPointer(paramIndex+1);
+      initVertexIndex = params.getInteger(paramIndex+2);
+      termVertexList = params.getPointer(paramIndex+3);
+      termVertexIndex = params.getInteger(paramIndex+4);
+      
+      // extract the model space curves - is this even valid for MSBO?
+      mCurveIndex = _brep->extractCurve(_iges->getDirectoryEntry(msCurvePtr), false);
+    }
+    EdgeUse(const EdgeUse& eu) 
+      : mCurveIndex(eu.mCurveIndex),
+	pCurveIndices(eu.pCurveIndices),
+	initVertexList(eu.initVertexList), 
+	initVertexIndex(eu.initVertexIndex), 
+	termVertexList(eu.termVertexList), 
+	termVertexIndex(eu.termVertexIndex) {}
     
-  }
+    int mCurveIndex; // model space curve???
+    list<PSpaceCurve> pCurveIndices; // parameter space curves
+    Pointer initVertexList;
+    Integer initVertexIndex;
+    Pointer termVertexList;
+    Integer termVertexIndex;    
+  };
 
   void 
   BrepHandler::extractLoop(const DirectoryEntry* de, bool isOuter, int face) {
+    debug("########################## E X T R A C T   L O O P");
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
 
@@ -100,25 +144,26 @@ namespace brlcad {
 
     int i = 2; // extract the edge uses!
     for (int _i = 0; _i < numberOfEdges; _i++) {
-      bool isVertex = (1 == 
-params.getInteger(i)) ? true : false;
+      bool isVertex = (1 == params.getInteger(i)) ? true : false;
       Pointer edgePtr = params.getPointer(i+1);
-      int index = params.getPointer(i+2);
+      int index = params.getInteger(i+2);
+      // need to get the edge list, and extract the edge info
+      EdgeUse eu(_iges, this, edgePtr, index);
       bool orientWithCurve = params.getLogical(i+3);
-      int numCurves = params.getLogical(i+4);
+      int numCurves = params.getInteger(i+4);
+      debug("Num param-space curves in " << string((isOuter)?"outer":"inner") << " loop: " << numCurves);
       int j = i+5;
-      list<int> curve_list;
       for (int _j = 0; _j < numCurves; _j++) {	
-	bool isIso = params.getLogical(j);
-	Pointer curvePtr = params.getPointer(j+1);
-	curve_list.push_back(extractCurve(_iges->getDirectoryEntry(curvePtr), isIso));
+	Logical iso = params.getLogical(j);
+	Pointer ptr = params.getPointer(j+1);
+	eu.pCurveIndices.push_back(PSpaceCurve(_iges,
+					       this, 
+					       iso,
+					       ptr));
 	j += 2;
       }
       
-      // need to get the edge list, and extract the edge info
-      DirectoryEntry* edgeDE = getEdge(edgePtr, index);
-      //extractEdge(, isVertex, 
-
+      
 
       i = j;      
     }
@@ -136,7 +181,7 @@ params.getInteger(i)) ? true : false;
 
   int 
   BrepHandler::extractCurve(const DirectoryEntry* de, bool isISO) {
-
+    
   }
 
 }
