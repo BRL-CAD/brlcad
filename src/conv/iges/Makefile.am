@@ -8,7 +8,7 @@ ON_IGES =
 IGES_FLAGS = 
 endif
 
-bin_PROGRAMS = iges-g g-iges
+bin_PROGRAMS = iges-g g-iges ${ON_IGES}
 EXTRA_PROGRAMS = iges
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS} ${IGES_FLAGS}
@@ -21,9 +21,8 @@ noinst_HEADERS = \
 	iges_struct.h \
 	iges_types.h
 
-# missing:
-#	brlcad_brep.cpp
 iges_SOURCES = \
+	brlcad_brep.cpp \
 	BrepHandler.cpp \
 	n_iges.cpp  \
 	nmain.cpp
