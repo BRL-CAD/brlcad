@@ -234,7 +234,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	bu_vls_printf(&auto_path, ":%s/src/other/incrTcl", srcpath);
 	bu_vls_printf(&auto_path, ":%s/src/other/incrTcl/itcl/library", srcpath);
 	bu_vls_printf(&auto_path, ":%s/src/other/incrTcl/itk/library", srcpath);
-	bu_vls_printf(&auto_path, ":%s/src/other/iwidgets/library", srcpath);
+	bu_vls_printf(&auto_path, ":%s/src/other/iwidgets", srcpath);
 	/*	bu_vls_printf(&auto_path, ":%s/src/other/blt/library", srcpath); */
 	bu_vls_printf(&auto_path, ":%s/src/tclscripts", srcpath);
 	bu_vls_printf(&auto_path, ":%s/src/tclscripts/lib", srcpath);
@@ -256,7 +256,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	    bu_vls_printf(&auto_path, ":%s/../src/other/incrTcl", srcpath);
 	    bu_vls_printf(&auto_path, ":%s/../src/other/incrTcl/itcl/library", srcpath);
 	    bu_vls_printf(&auto_path, ":%s/../src/other/incrTcl/itk/library", srcpath);
-	    bu_vls_printf(&auto_path, ":%s/../src/other/iwidgets/library", srcpath);
+	    bu_vls_printf(&auto_path, ":%s/../src/other/iwidgets", srcpath);
 	    /*	bu_vls_printf(&auto_path, ":%s/../src/other/blt/library", srcpath); */
 	    bu_vls_printf(&auto_path, ":%s/../src/tclscripts", srcpath);
 	    bu_vls_printf(&auto_path, ":%s/../src/tclscripts/lib", srcpath);
@@ -290,6 +290,8 @@ tclcad_auto_path(Tcl_Interp *interp)
     for (srcpath = strtok_r(bu_vls_addr(&auto_path), ":", &stp);
 	 srcpath;
 	 srcpath = strtok_r(NULL, ":", &stp)) {
+	int found_init_tcl = 0;
+	int found_tk_tcl = 0;
 
 	/* make sure it exists before appending */
 	if (bu_file_exists(srcpath)) {
@@ -302,20 +304,38 @@ tclcad_auto_path(Tcl_Interp *interp)
 	}
 
 	/* specifically look for init.tcl so we can set tcl_library */
-	snprintf(buffer, MAX_BUF, "%s/init.tcl", srcpath);
-	if (bu_file_exists(buffer)) {
-	    /* these doesn't seem to do what one might expect
-	     * here, but call it anyways.
-	     */
-	    Tcl_Obj *newpath = Tcl_NewStringObj(srcpath,-1);
-	    Tcl_IncrRefCount(newpath);
-	    TclSetLibraryPath(newpath);
-	    Tcl_DecrRefCount(newpath);
+	if (!found_init_tcl) {
+	    snprintf(buffer, MAX_BUF, "%s/init.tcl", srcpath);
+	    if (bu_file_exists(buffer)) {
+		/* these doesn't seem to do what one might expect
+		 * here, but call it anyways.
+		 */
+		Tcl_Obj *newpath = Tcl_NewStringObj(srcpath,-1);
+		Tcl_IncrRefCount(newpath);
+		TclSetLibraryPath(newpath);
+		Tcl_DecrRefCount(newpath);
+		
+		/* this really sets it */
+		snprintf(buffer, MAX_BUF, "set tcl_library \"%s\"", srcpath);
+		if (Tcl_Eval(interp, buffer)) {
+		    bu_log("Tcl_Eval ERROR:\n%s\n", interp->result);
+		} else {
+		    found_init_tcl=1;
+		}
+	    }
+	}
 
-	    /* this really sets it */
-	    snprintf(buffer, MAX_BUF, "set tcl_library \"%s\"", srcpath);
-	    if (Tcl_Eval(interp, buffer)) {
-		bu_log("Tcl_Eval ERROR:\n%s\n", interp->result);
+	/* specifically look for tk.tcl so we can set tk_library */
+	if (!found_tk_tcl) {
+	    snprintf(buffer, MAX_BUF, "%s/tk.tcl", srcpath);
+	    if (bu_file_exists(buffer)) {
+		/* this really sets it */
+		snprintf(buffer, MAX_BUF, "set tk_library \"%s\"", srcpath);
+		if (Tcl_Eval(interp, buffer)) {
+		    bu_log("Tcl_Eval ERROR:\n%s\n", interp->result);
+		} else {
+		    found_tk_tcl=1;
+		}
 	    }
 	}
     }
