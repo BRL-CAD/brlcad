@@ -5,8 +5,9 @@ lib_LTLIBRARIES = libtclcad.la
 libtclcad_la_SOURCES = \
 	tclcadAutoPath.c \
 	tclcadTkSetup.c \
-	tkCanvBezier.c \
 	tkImgFmtPIX.c
+
+#	tkCanvBezier.c 
 
 libtclcad_la_LDFLAGS = -version-info 19:1
 libtclcad_la_LIBADD = ${TCLCAD_LIBS}
