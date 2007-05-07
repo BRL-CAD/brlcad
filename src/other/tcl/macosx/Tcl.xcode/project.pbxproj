@@ -74,6 +74,7 @@
 				F966C06F08F281DC005CB29B,
 				1AB674ADFE9D54B511CA2CBB,
 			);
+			comments = "Copyright (c) 2004-2007 Daniel A. Steffen <das@users.sourceforge.net>\n\nSee the file \"license.terms\" for information on usage and redistribution of\nthis file, and for a DISCLAIMER OF ALL WARRANTIES.\n\nRCS: @(#) $Id$\n";
 			isa = PBXGroup;
 			name = Tcl;
 			path = .;
@@ -130,12 +131,12 @@
 				GCC_MODEL_TUNING = G4;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_PREFIX_HEADER = "${DERIVED_FILE_DIR}/tcl/tclConfig.h";
-				GCC_PREPROCESSOR_DEFINITIONS = "HAVE_TCL_CONFIG_H TCL_TOMMATH MP_PREC=4";
+				GCC_PREPROCESSOR_DEFINITIONS = HAVE_TCL_CONFIG_H;
 				HEADER_SEARCH_PATHS = "${DERIVED_FILE_DIR}/tcl";
 				INCLUDEDIR = "${PREFIX}/include";
 				INSTALL_PATH = "${BINDIR}";
 				LIBDIR = "${PREFIX}/lib";
-				MACOSX_DEPLOYMENT_TARGET = 10.3;
+				MACOSX_DEPLOYMENT_TARGET = 10.2;
 				MANDIR = "${PREFIX}/man";
 				OTHER_LDFLAGS = "-headerpad_max_install_names";
 				PREFIX = /usr/local;
@@ -205,7 +206,6 @@
 				F96D45AC08F272BC004A47F5,
 				F96D45AD08F272BC004A47F5,
 				F96D45AE08F272BC004A47F5,
-				F96D45AF08F272BC004A47F5,
 				F96D45B008F272BC004A47F5,
 				F96D45B108F272BC004A47F5,
 				F96D45B208F272BC004A47F5,
@@ -312,6 +312,7 @@
 				F96D4AD308F272CA004A47F5,
 				F96D4AD408F272CA004A47F5,
 				F96D4AD608F272CA004A47F5,
+				F9DD11B20B3909D80017FBB9,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2326,7 +2327,6 @@
 				F96D3F0D08F272A7004A47F5,
 				F96D3F0E08F272A7004A47F5,
 				F96D3F0F08F272A7004A47F5,
-				F96D3F1008F272A7004A47F5,
 				F96D3F1108F272A7004A47F5,
 				F96D3F1208F272A7004A47F5,
 				F96D3F1308F272A7004A47F5,
@@ -2927,14 +2927,6 @@
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.c.c;
 			path = tclParse.c;
-			refType = 4;
-			sourceTree = "<group>";
-		};
-		F96D3F1008F272A7004A47F5 = {
-			fileEncoding = 4;
-			isa = PBXFileReference;
-			lastKnownFileType = sourcecode.c.c;
-			path = tclParseExpr.c;
 			refType = 4;
 			sourceTree = "<group>";
 		};
@@ -5971,7 +5963,6 @@
 				F96D442208F272B8004A47F5,
 				F96D442408F272B8004A47F5,
 				F96D442508F272B8004A47F5,
-				F96D442608F272B8004A47F5,
 				F96D442708F272B8004A47F5,
 				F96D442808F272B8004A47F5,
 				F96D442908F272B8004A47F5,
@@ -6044,14 +6035,6 @@
 			fileEncoding = 4;
 			isa = PBXFileReference;
 			path = genStubs.tcl;
-			refType = 4;
-			sourceTree = "<group>";
-		};
-		F96D442608F272B8004A47F5 = {
-			explicitFileType = text.script;
-			fileEncoding = 4;
-			isa = PBXFileReference;
-			path = genWinImage.tcl;
 			refType = 4;
 			sourceTree = "<group>";
 		};
@@ -6246,6 +6229,7 @@
 				F96D445D08F272B9004A47F5,
 				F96D445E08F272B9004A47F5,
 				F96D445F08F272B9004A47F5,
+				F9DD11B10B3909D80017FBB9,
 				F96D446008F272B9004A47F5,
 				F96D446108F272B9004A47F5,
 				F96D446208F272B9004A47F5,
@@ -6640,7 +6624,6 @@
 				F96D447808F272BA004A47F5,
 				F96D447908F272BA004A47F5,
 				F96D447A08F272BA004A47F5,
-				F96D447B08F272BA004A47F5,
 				F96D447C08F272BA004A47F5,
 				F96D447D08F272BA004A47F5,
 				F96D447E08F272BA004A47F5,
@@ -6762,14 +6745,6 @@
 			isa = PBXFileReference;
 			lastKnownFileType = text;
 			path = README;
-			refType = 4;
-			sourceTree = "<group>";
-		};
-		F96D447B08F272BA004A47F5 = {
-			fileEncoding = 4;
-			isa = PBXFileReference;
-			lastKnownFileType = text;
-			path = README.binary;
 			refType = 4;
 			sourceTree = "<group>";
 		};
@@ -7286,12 +7261,6 @@
 		};
 		F96D45AE08F272BC004A47F5 = {
 			fileRef = F96D3F0F08F272A7004A47F5;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		F96D45AF08F272BC004A47F5 = {
-			fileRef = F96D3F1008F272A7004A47F5;
 			isa = PBXBuildFile;
 			settings = {
 			};
@@ -7943,6 +7912,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "## tcl configure shell script phase\n\ncd \"${TCL_SRCROOT}\"/macosx &&\nif [ configure.ac -nt configure -o ../unix/configure.in -nt configure -o ../unix/tcl.m4 -nt configure -o ../unix/aclocal.m4 -nt configure ]; then\n    echo \"Running autoconf & autoheader in tcl/macosx\"\n    rm -rf autom4te.cache\n    ${AUTOCONF:-/usr/local/bin/autoconf-2.59} && ${AUTOHEADER:-/usr/local/bin/autoheader-2.59}\n    rm -rf autom4te.cache\nfi\n\ncd \"${DERIVED_FILE_DIR}\" && mkdir -p tcl && cd tcl &&\nif [ \"${TCL_SRCROOT}\"/macosx/configure -nt config.status ]; then\n    \"${TCL_SRCROOT}\"/macosx/configure --cache-file=../config.cache --prefix=${PREFIX} --bindir=${BINDIR} --libdir=${LIBDIR} --mandir=${MANDIR} --includedir=${INCLUDEDIR} --disable-shared ${CONFIGURE_ARGS}\nelse\n    ./config.status\nfi\n";
+		};
+		F9DD11B10B3909D80017FBB9 = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.c;
+			path = tclUnixCompat.c;
+			refType = 4;
+			sourceTree = "<group>";
+		};
+		F9DD11B20B3909D80017FBB9 = {
+			fileRef = F9DD11B10B3909D80017FBB9;
+			isa = PBXBuildFile;
+			settings = {
+			};
 		};
 		F9E61D16090A3E94002B3151 = {
 			buildArgumentsString = "-c \"cd \\\"${TCL_SRCROOT}/macosx\\\" && ACTION=${ACTION} && CFLAGS=\\\"${CFLAGS}\\\" gnumake \\${ACTION:+\\${ACTION/clean/distclean}-}${MAKE_TARGET} INSTALL_ROOT=\\\"${DSTROOT}\\\" INSTALL_PATH=\\\"${INSTALL_PATH}\\\" PREFIX=\\\"${PREFIX}\\\" BINDIR=\\\"${BINDIR}\\\" MANDIR=\\\"${MANDIR}\\\" \\${EXTRA_MAKE_FLAGS} ${ALL_SETTINGS} && touch -c dummy \\\"${OBJROOT}/${PROJECT_NAME}\\\".build/*.build/tcltest.build/Objects-*/*/tclAppInit.o 2>&-\"";

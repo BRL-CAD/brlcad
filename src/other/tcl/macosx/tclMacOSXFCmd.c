@@ -4,8 +4,7 @@
  *	This file implements the MacOSX specific portion of file manipulation
  *	subcommands of the "file" command.
  *
- * Copyright (c) 2003 Tcl Core Team.
- * Copyright (c) 2003-2006 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2003-2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -71,7 +70,7 @@ typedef u_int32_t OSType;
 
 static int		GetOSTypeFromObj(Tcl_Interp *interp,
 			    Tcl_Obj *objPtr, OSType *osTypePtr);
-static Tcl_Obj *	NewOSTypeObj(CONST OSType newOSType);
+static Tcl_Obj *	NewOSTypeObj(const OSType newOSType);
 static int		SetOSTypeFromAny(Tcl_Interp *interp, Tcl_Obj *objPtr);
 static void		UpdateStringOfOSType(Tcl_Obj *objPtr);
 
@@ -135,7 +134,7 @@ TclMacOSXGetFileAttribute(
     fileinfobuf finfo;
     finderinfo *finder = (finderinfo*)(&finfo.data);
     off_t *rsrcForkSize = (off_t*)(&finfo.data);
-    CONST char *native;
+    const char *native;
 
     result = TclpObjStat(fileName, &statBuf);
 
@@ -227,7 +226,7 @@ TclMacOSXSetFileAttribute(
     fileinfobuf finfo;
     finderinfo *finder = (finderinfo*)(&finfo.data);
     off_t *rsrcForkSize = (off_t*)(&finfo.data);
-    CONST char *native;
+    const char *native;
 
     result = TclpObjStat(fileName, &statBuf);
 
@@ -333,6 +332,17 @@ TclMacOSXSetFileAttribute(
 	    Tcl_DStringAppend(&ds, _PATH_RSRCFORKSPEC, -1);
 
 	    result = truncate(Tcl_DStringValue(&ds), (off_t)0);
+	    if (result != 0) {
+		/*
+		 * truncate() on a valid resource fork path may fail with
+		 * a permission error in some OS releases, try truncating
+		 * with open() instead:
+		 */
+		int fd = open(Tcl_DStringValue(&ds), O_WRONLY | O_TRUNC);
+		if (fd > 0) {
+		    result = close(fd);
+		}
+	    }
 
 	    Tcl_DStringFree(&ds);
 
@@ -574,7 +584,7 @@ GetOSTypeFromObj(
 
 static Tcl_Obj *
 NewOSTypeObj(
-    CONST OSType osType)    /* OSType used to initialize the new object. */
+    const OSType osType)    /* OSType used to initialize the new object. */
 {
     Tcl_Obj *objPtr;
 

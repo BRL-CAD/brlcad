@@ -84,13 +84,13 @@ static void		MaintainSlaveProc(ClientData clientData,
  */
 
 void
-Tk_ManageGeometry(tkwin, mgrPtr, clientData)
-    Tk_Window tkwin;		/* Window whose geometry is to be managed by
+Tk_ManageGeometry(
+    Tk_Window tkwin,		/* Window whose geometry is to be managed by
 				 * proc. */
-    Tk_GeomMgr *mgrPtr;		/* Static structure describing the geometry
+    CONST Tk_GeomMgr *mgrPtr,	/* Static structure describing the geometry
 				 * manager. This structure must never go
 				 * away. */
-    ClientData clientData;	/* Arbitrary one-word argument to pass to
+    ClientData clientData)	/* Arbitrary one-word argument to pass to
 				 * geometry manager procedures. */
 {
     register TkWindow *winPtr = (TkWindow *) tkwin;
@@ -129,10 +129,10 @@ Tk_ManageGeometry(tkwin, mgrPtr, clientData)
  */
 
 void
-Tk_GeometryRequest(tkwin, reqWidth, reqHeight)
-    Tk_Window tkwin;		/* Window that geometry information pertains
+Tk_GeometryRequest(
+    Tk_Window tkwin,		/* Window that geometry information pertains
 				 * to. */
-    int reqWidth, reqHeight;	/* Minimum desired dimensions for window, in
+    int reqWidth, int reqHeight)/* Minimum desired dimensions for window, in
 				 * pixels. */
 {
     register TkWindow *winPtr = (TkWindow *) tkwin;
@@ -180,10 +180,10 @@ Tk_GeometryRequest(tkwin, reqWidth, reqHeight)
  */
 
 void
-Tk_SetInternalBorderEx(tkwin, left, right, top, bottom)
-    Tk_Window tkwin;		/* Window that will have internal border. */
-    int left, right;		/* Width of internal border, in pixels. */
-    int top, bottom;
+Tk_SetInternalBorderEx(
+    Tk_Window tkwin,		/* Window that will have internal border. */
+    int left, int right,	/* Width of internal border, in pixels. */
+    int top, int bottom)
 {
     register TkWindow *winPtr = (TkWindow *) tkwin;
     register int changed = 0;
@@ -232,6 +232,7 @@ Tk_SetInternalBorderEx(tkwin, left, right, top, bottom)
 	Tk_ResizeWindow(tkwin, Tk_Width(tkwin), Tk_Height(tkwin));
     }
 }
+
 /*
  *----------------------------------------------------------------------
  *
@@ -252,9 +253,9 @@ Tk_SetInternalBorderEx(tkwin, left, right, top, bottom)
  */
 
 void
-Tk_SetInternalBorder(tkwin, width)
-    Tk_Window tkwin;		/* Window that will have internal border. */
-    int width;			/* Width of internal border, in pixels. */
+Tk_SetInternalBorder(
+    Tk_Window tkwin,		/* Window that will have internal border. */
+    int width)			/* Width of internal border, in pixels. */
 {
     Tk_SetInternalBorderEx(tkwin, width, width, width, width);
 }
@@ -278,9 +279,9 @@ Tk_SetInternalBorder(tkwin, width)
  */
 
 void
-Tk_SetMinimumRequestSize(tkwin, minWidth, minHeight)
-    Tk_Window tkwin;		/* Window that will have internal border. */
-    int minWidth, minHeight;	/* Minimum requested size, in pixels. */
+Tk_SetMinimumRequestSize(
+    Tk_Window tkwin,		/* Window that will have internal border. */
+    int minWidth, int minHeight)/* Minimum requested size, in pixels. */
 {
     register TkWindow *winPtr = (TkWindow *) tkwin;
 
@@ -331,12 +332,12 @@ Tk_SetMinimumRequestSize(tkwin, minWidth, minHeight)
  */
 
 void
-Tk_MaintainGeometry(slave, master, x, y, width, height)
-    Tk_Window slave;		/* Slave for geometry management. */
-    Tk_Window master;		/* Master for slave; must be a descendant of
+Tk_MaintainGeometry(
+    Tk_Window slave,		/* Slave for geometry management. */
+    Tk_Window master,		/* Master for slave; must be a descendant of
 				 * slave's parent. */
-    int x, y;			/* Desired position of slave within master. */
-    int width, height;		/* Desired dimensions for slave. */
+    int x, int y,		/* Desired position of slave within master. */
+    int width, int height)	/* Desired dimensions for slave. */
 {
     Tcl_HashEntry *hPtr;
     MaintainMaster *masterPtr;
@@ -479,9 +480,9 @@ Tk_MaintainGeometry(slave, master, x, y, width, height)
  */
 
 void
-Tk_UnmaintainGeometry(slave, master)
-    Tk_Window slave;		/* Slave for geometry management. */
-    Tk_Window master;		/* Master for slave; must be a descendant of
+Tk_UnmaintainGeometry(
+    Tk_Window slave,		/* Slave for geometry management. */
+    Tk_Window master)		/* Master for slave; must be a descendant of
 				 * slave's parent. */
 {
     Tcl_HashEntry *hPtr;
@@ -570,10 +571,10 @@ Tk_UnmaintainGeometry(slave, master)
  */
 
 static void
-MaintainMasterProc(clientData, eventPtr)
-    ClientData clientData;	/* Pointer to MaintainMaster structure for the
+MaintainMasterProc(
+    ClientData clientData,	/* Pointer to MaintainMaster structure for the
 				 * master window. */
-    XEvent *eventPtr;		/* Describes what just happened. */
+    XEvent *eventPtr)		/* Describes what just happened. */
 {
     MaintainMaster *masterPtr = (MaintainMaster *) clientData;
     MaintainSlave *slavePtr;
@@ -624,10 +625,10 @@ MaintainMasterProc(clientData, eventPtr)
  */
 
 static void
-MaintainSlaveProc(clientData, eventPtr)
-    ClientData clientData;	/* Pointer to MaintainSlave structure for
+MaintainSlaveProc(
+    ClientData clientData,	/* Pointer to MaintainSlave structure for
 				 * master-slave pair. */
-    XEvent *eventPtr;		/* Describes what just happened. */
+    XEvent *eventPtr)		/* Describes what just happened. */
 {
     MaintainSlave *slavePtr = (MaintainSlave *) clientData;
 
@@ -657,8 +658,8 @@ MaintainSlaveProc(clientData, eventPtr)
  */
 
 static void
-MaintainCheckProc(clientData)
-    ClientData clientData;	/* Pointer to MaintainMaster structure for the
+MaintainCheckProc(
+    ClientData clientData)	/* Pointer to MaintainMaster structure for the
 				 * master window. */
 {
     MaintainMaster *masterPtr = (MaintainMaster *) clientData;

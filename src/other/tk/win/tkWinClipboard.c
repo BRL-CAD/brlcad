@@ -275,7 +275,7 @@ TkWinClipboardRender(
      * Copy the data and change EOL characters.
      */
 
-    buffer = rawText = ckalloc(length + 1);
+    buffer = rawText = ckalloc((unsigned)length + 1);
     if (targetPtr != NULL) {
 	for (cbPtr = targetPtr->firstBufferPtr; cbPtr != NULL;
 		cbPtr = cbPtr->nextPtr) {
@@ -300,13 +300,14 @@ TkWinClipboardRender(
 	Tcl_UtfToUniCharDString(rawText, -1, &ds);
 	ckfree(rawText);
 	handle = GlobalAlloc(GMEM_MOVEABLE|GMEM_DDESHARE,
-		Tcl_DStringLength(&ds)+2);
+		(unsigned) Tcl_DStringLength(&ds) + 2);
 	if (!handle) {
 	    Tcl_DStringFree(&ds);
 	    return;
 	}
 	buffer = GlobalLock(handle);
-	memcpy(buffer, Tcl_DStringValue(&ds), Tcl_DStringLength(&ds) + 2);
+	memcpy(buffer, Tcl_DStringValue(&ds),
+		(unsigned) Tcl_DStringLength(&ds) + 2);
 	GlobalUnlock(handle);
 	Tcl_DStringFree(&ds);
 	SetClipboardData(CF_UNICODETEXT, handle);
@@ -314,13 +315,14 @@ TkWinClipboardRender(
 	Tcl_UtfToExternalDString(NULL, rawText, -1, &ds);
 	ckfree(rawText);
 	handle = GlobalAlloc(GMEM_MOVEABLE|GMEM_DDESHARE,
-		Tcl_DStringLength(&ds)+1);
+		(unsigned) Tcl_DStringLength(&ds) + 1);
 	if (!handle) {
 	    Tcl_DStringFree(&ds);
 	    return;
 	}
 	buffer = GlobalLock(handle);
-	memcpy(buffer, Tcl_DStringValue(&ds), Tcl_DStringLength(&ds) + 1);
+	memcpy(buffer, Tcl_DStringValue(&ds),
+		(unsigned) Tcl_DStringLength(&ds) + 1);
 	GlobalUnlock(handle);
 	Tcl_DStringFree(&ds);
 	SetClipboardData(CF_TEXT, handle);

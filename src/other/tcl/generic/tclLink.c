@@ -69,6 +69,17 @@ typedef struct Link {
 static char *		LinkTraceProc(ClientData clientData,Tcl_Interp *interp,
 			    CONST char *name1, CONST char *name2, int flags);
 static Tcl_Obj *	ObjValue(Link *linkPtr);
+
+/*
+ * Convenience macro for accessing the value of the C variable pointed to by a
+ * link. Note that this macro produces something that may be regarded as an
+ * lvalue or rvalue; it may be assigned to as well as read. Also note that
+ * this macro assumes the name of the variable being accessed (linkPtr); this
+ * is not strictly a good thing, but it keeps the code much shorter and
+ * cleaner.
+ */
+
+#define LinkedVar(type) (*(type *) linkPtr->addr)
 
 /*
  *----------------------------------------------------------------------
@@ -283,45 +294,40 @@ LinkTraceProc(
 	switch (linkPtr->type) {
 	case TCL_LINK_INT:
 	case TCL_LINK_BOOLEAN:
-	    changed = *(int *)(linkPtr->addr) != linkPtr->lastValue.i;
+	    changed = (LinkedVar(int) != linkPtr->lastValue.i);
 	    break;
 	case TCL_LINK_DOUBLE:
-	    changed = *(double *)(linkPtr->addr) != linkPtr->lastValue.d;
+	    changed = (LinkedVar(double) != linkPtr->lastValue.d);
 	    break;
 	case TCL_LINK_WIDE_INT:
-	    changed = *(Tcl_WideInt *)(linkPtr->addr) != linkPtr->lastValue.w;
+	    changed = (LinkedVar(Tcl_WideInt) != linkPtr->lastValue.w);
 	    break;
 	case TCL_LINK_WIDE_UINT:
-	    changed = *(Tcl_WideUInt *)(linkPtr->addr) !=
-		    linkPtr->lastValue.uw;
+	    changed = (LinkedVar(Tcl_WideUInt) != linkPtr->lastValue.uw);
 	    break;
 	case TCL_LINK_CHAR:
-	    changed = *(char *)(linkPtr->addr) != linkPtr->lastValue.c;
+	    changed = (LinkedVar(char) != linkPtr->lastValue.c);
 	    break;
 	case TCL_LINK_UCHAR:
-	    changed = *(unsigned char *)(linkPtr->addr) !=
-		    linkPtr->lastValue.uc;
+	    changed = (LinkedVar(unsigned char) != linkPtr->lastValue.uc);
 	    break;
 	case TCL_LINK_SHORT:
-	    changed = *(short *)(linkPtr->addr) != linkPtr->lastValue.s;
+	    changed = (LinkedVar(short) != linkPtr->lastValue.s);
 	    break;
 	case TCL_LINK_USHORT:
-	    changed = *(unsigned short *)(linkPtr->addr) !=
-		    linkPtr->lastValue.us;
+	    changed = (LinkedVar(unsigned short) != linkPtr->lastValue.us);
 	    break;
 	case TCL_LINK_UINT:
-	    changed = *(unsigned int *)(linkPtr->addr) !=
-		    linkPtr->lastValue.ui;
+	    changed = (LinkedVar(unsigned int) != linkPtr->lastValue.ui);
 	    break;
 	case TCL_LINK_LONG:
-	    changed = *(long *)(linkPtr->addr) != linkPtr->lastValue.l;
+	    changed = (LinkedVar(long) != linkPtr->lastValue.l);
 	    break;
 	case TCL_LINK_ULONG:
-	    changed = *(unsigned long *)(linkPtr->addr) !=
-		    linkPtr->lastValue.ul;
+	    changed = (LinkedVar(unsigned long) != linkPtr->lastValue.ul);
 	    break;
 	case TCL_LINK_FLOAT:
-	    changed = *(float *)(linkPtr->addr) != linkPtr->lastValue.f;
+	    changed = (LinkedVar(float) != linkPtr->lastValue.f);
 	    break;
 	case TCL_LINK_STRING:
 	    changed = 1;
@@ -355,6 +361,7 @@ LinkTraceProc(
 	/*
 	 * This shouldn't ever happen.
 	 */
+
 	return "internal error: linked variable couldn't be read";
     }
 
@@ -366,7 +373,7 @@ LinkTraceProc(
 		    TCL_GLOBAL_ONLY);
 	    return "variable must have integer value";
 	}
-	*(int *)(linkPtr->addr) = linkPtr->lastValue.i;
+	LinkedVar(int) = linkPtr->lastValue.i;
 	break;
 
     case TCL_LINK_WIDE_INT:
@@ -376,34 +383,34 @@ LinkTraceProc(
 		    TCL_GLOBAL_ONLY);
 	    return "variable must have integer value";
 	}
-	*(Tcl_WideInt *)(linkPtr->addr) = linkPtr->lastValue.w;
+	LinkedVar(Tcl_WideInt) = linkPtr->lastValue.w;
 	break;
 
     case TCL_LINK_DOUBLE:
 	if (Tcl_GetDoubleFromObj(NULL, valueObj, &linkPtr->lastValue.d)
 		!= TCL_OK) {
 #ifdef ACCEPT_NAN
-	  if (valueObj->typePtr != &tclDoubleType) {
+	    if (valueObj->typePtr != &tclDoubleType) {
 #endif
-	    Tcl_ObjSetVar2(interp, linkPtr->varName, NULL, ObjValue(linkPtr),
-		    TCL_GLOBAL_ONLY);
-	    return "variable must have real value";
+		Tcl_ObjSetVar2(interp, linkPtr->varName, NULL,
+			ObjValue(linkPtr), TCL_GLOBAL_ONLY);
+		return "variable must have real value";
 #ifdef ACCEPT_NAN
-	  }
-	  linkPtr->lastValue.d = valueObj->internalRep.doubleValue;
+	    }
+	    linkPtr->lastValue.d = valueObj->internalRep.doubleValue;
 #endif
 	}
-	*(double *)(linkPtr->addr) = linkPtr->lastValue.d;
+	LinkedVar(double) = linkPtr->lastValue.d;
 	break;
 
     case TCL_LINK_BOOLEAN:
 	if (Tcl_GetBooleanFromObj(NULL, valueObj, &linkPtr->lastValue.i)
-	    != TCL_OK) {
+		!= TCL_OK) {
 	    Tcl_ObjSetVar2(interp, linkPtr->varName, NULL, ObjValue(linkPtr),
 		    TCL_GLOBAL_ONLY);
 	    return "variable must have boolean value";
 	}
-	*(int *)(linkPtr->addr) = linkPtr->lastValue.i;
+	LinkedVar(int) = linkPtr->lastValue.i;
 	break;
 
     case TCL_LINK_CHAR:
@@ -414,7 +421,7 @@ LinkTraceProc(
 	    return "variable must have char value";
 	}
 	linkPtr->lastValue.c = (char)valueInt;
-	*(char *)(linkPtr->addr) = linkPtr->lastValue.c;
+	LinkedVar(char) = linkPtr->lastValue.c;
 	break;
 
     case TCL_LINK_UCHAR:
@@ -425,7 +432,7 @@ LinkTraceProc(
 	    return "variable must have unsigned char value";
 	}
 	linkPtr->lastValue.uc = (unsigned char) valueInt;
-	*(unsigned char *)(linkPtr->addr) = linkPtr->lastValue.uc;
+	LinkedVar(unsigned char) = linkPtr->lastValue.uc;
 	break;
 
     case TCL_LINK_SHORT:
@@ -436,7 +443,7 @@ LinkTraceProc(
 	    return "variable must have short value";
 	}
 	linkPtr->lastValue.s = (short)valueInt;
-	*(short *)(linkPtr->addr) = linkPtr->lastValue.s;
+	LinkedVar(short) = linkPtr->lastValue.s;
 	break;
 
     case TCL_LINK_USHORT:
@@ -447,7 +454,7 @@ LinkTraceProc(
 	    return "variable must have unsigned short value";
 	}
 	linkPtr->lastValue.us = (unsigned short)valueInt;
-	*(unsigned short *)(linkPtr->addr) = linkPtr->lastValue.us;
+	LinkedVar(unsigned short) = linkPtr->lastValue.us;
 	break;
 
     case TCL_LINK_UINT:
@@ -458,7 +465,7 @@ LinkTraceProc(
 	    return "variable must have unsigned int value";
 	}
 	linkPtr->lastValue.ui = (unsigned int)valueWide;
-	*(unsigned int *)(linkPtr->addr) = linkPtr->lastValue.ui;
+	LinkedVar(unsigned int) = linkPtr->lastValue.ui;
 	break;
 
     case TCL_LINK_LONG:
@@ -469,7 +476,7 @@ LinkTraceProc(
 	    return "variable must have long value";
 	}
 	linkPtr->lastValue.l = (long)valueWide;
-	*(long *)(linkPtr->addr) = linkPtr->lastValue.l;
+	LinkedVar(long) = linkPtr->lastValue.l;
 	break;
 
     case TCL_LINK_ULONG:
@@ -480,7 +487,7 @@ LinkTraceProc(
 	    return "variable must have unsigned long value";
 	}
 	linkPtr->lastValue.ul = (unsigned long)valueWide;
-	*(unsigned long *)(linkPtr->addr) = linkPtr->lastValue.ul;
+	LinkedVar(unsigned long) = linkPtr->lastValue.ul;
 	break;
 
     case TCL_LINK_WIDE_UINT:
@@ -493,28 +500,26 @@ LinkTraceProc(
 	    return "variable must have unsigned wide int value";
 	}
 	linkPtr->lastValue.uw = (Tcl_WideUInt)valueWide;
-	*(Tcl_WideUInt *)(linkPtr->addr) = linkPtr->lastValue.uw;
+	LinkedVar(Tcl_WideUInt) = linkPtr->lastValue.uw;
 	break;
 
     case TCL_LINK_FLOAT:
 	if (Tcl_GetDoubleFromObj(interp, valueObj, &valueDouble) != TCL_OK
-		|| valueDouble < FLT_MIN || valueDouble > FLT_MAX) {
+		|| valueDouble < -FLT_MAX || valueDouble > FLT_MAX) {
 	    Tcl_ObjSetVar2(interp, linkPtr->varName, NULL, ObjValue(linkPtr),
 		    TCL_GLOBAL_ONLY);
 	    return "variable must have float value";
 	}
 	linkPtr->lastValue.f = (float)valueDouble;
-	*(float *)(linkPtr->addr) = linkPtr->lastValue.f;
+	LinkedVar(float) = linkPtr->lastValue.f;
 	break;
 
     case TCL_LINK_STRING:
 	value = Tcl_GetStringFromObj(valueObj, &valueLength);
 	valueLength++;
-	pp = (char **)(linkPtr->addr);
-	if (*pp != NULL) {
-	    ckfree(*pp);
-	}
-	*pp = (char *) ckalloc((unsigned) valueLength);
+	pp = (char **) linkPtr->addr;
+
+	*pp = ckrealloc(*pp, valueLength);
 	memcpy(*pp, value, (unsigned) valueLength);
 	break;
 
@@ -547,54 +552,56 @@ ObjValue(
     Link *linkPtr)		/* Structure describing linked variable. */
 {
     char *p;
+    Tcl_Obj *resultObj;
 
     switch (linkPtr->type) {
     case TCL_LINK_INT:
-	linkPtr->lastValue.i = *(int *)(linkPtr->addr);
+	linkPtr->lastValue.i = LinkedVar(int);
 	return Tcl_NewIntObj(linkPtr->lastValue.i);
     case TCL_LINK_WIDE_INT:
-	linkPtr->lastValue.w = *(Tcl_WideInt *)(linkPtr->addr);
+	linkPtr->lastValue.w = LinkedVar(Tcl_WideInt);
 	return Tcl_NewWideIntObj(linkPtr->lastValue.w);
     case TCL_LINK_DOUBLE:
-	linkPtr->lastValue.d = *(double *)(linkPtr->addr);
+	linkPtr->lastValue.d = LinkedVar(double);
 	return Tcl_NewDoubleObj(linkPtr->lastValue.d);
     case TCL_LINK_BOOLEAN:
-	linkPtr->lastValue.i = *(int *)(linkPtr->addr);
+	linkPtr->lastValue.i = LinkedVar(int);
 	return Tcl_NewBooleanObj(linkPtr->lastValue.i != 0);
     case TCL_LINK_CHAR:
-	linkPtr->lastValue.c = *(char *)(linkPtr->addr);
+	linkPtr->lastValue.c = LinkedVar(char);
 	return Tcl_NewIntObj(linkPtr->lastValue.c);
     case TCL_LINK_UCHAR:
-	linkPtr->lastValue.uc = *(unsigned char *)(linkPtr->addr);
+	linkPtr->lastValue.uc = LinkedVar(unsigned char);
 	return Tcl_NewIntObj(linkPtr->lastValue.uc);
     case TCL_LINK_SHORT:
-	linkPtr->lastValue.s = *(short *)(linkPtr->addr);
+	linkPtr->lastValue.s = LinkedVar(short);
 	return Tcl_NewIntObj(linkPtr->lastValue.s);
     case TCL_LINK_USHORT:
-	linkPtr->lastValue.us = *(unsigned short *)(linkPtr->addr);
+	linkPtr->lastValue.us = LinkedVar(unsigned short);
 	return Tcl_NewIntObj(linkPtr->lastValue.us);
     case TCL_LINK_UINT:
-	linkPtr->lastValue.ui = *(unsigned int *)(linkPtr->addr);
-	return Tcl_NewWideIntObj((Tcl_WideInt)(linkPtr->lastValue.ui));
+	linkPtr->lastValue.ui = LinkedVar(unsigned int);
+	return Tcl_NewWideIntObj((Tcl_WideInt) linkPtr->lastValue.ui);
     case TCL_LINK_LONG:
-	linkPtr->lastValue.l = *(long *)(linkPtr->addr);
-	return Tcl_NewWideIntObj(linkPtr->lastValue.l);
+	linkPtr->lastValue.l = LinkedVar(long);
+	return Tcl_NewWideIntObj((Tcl_WideInt) linkPtr->lastValue.l);
     case TCL_LINK_ULONG:
-	linkPtr->lastValue.ul = *(unsigned long *)(linkPtr->addr);
-	return Tcl_NewWideIntObj((Tcl_WideInt)(linkPtr->lastValue.ul));
+	linkPtr->lastValue.ul = LinkedVar(unsigned long);
+	return Tcl_NewWideIntObj((Tcl_WideInt) linkPtr->lastValue.ul);
     case TCL_LINK_FLOAT:
-	linkPtr->lastValue.f = *(float *)(linkPtr->addr);
+	linkPtr->lastValue.f = LinkedVar(float);
 	return Tcl_NewDoubleObj(linkPtr->lastValue.f);
     case TCL_LINK_WIDE_UINT:
-	linkPtr->lastValue.uw = *(Tcl_WideUInt *)(linkPtr->addr);
+	linkPtr->lastValue.uw = LinkedVar(Tcl_WideUInt);
 	/*
 	 * FIXME: represent as a bignum.
 	 */
 	return Tcl_NewWideIntObj((Tcl_WideInt) linkPtr->lastValue.uw);
     case TCL_LINK_STRING:
-	p = *(char **)(linkPtr->addr);
+	p = LinkedVar(char *);
 	if (p == NULL) {
-	    return Tcl_NewStringObj("NULL", 4);
+	    TclNewLiteralStringObj(resultObj, "NULL");
+	    return resultObj;
 	}
 	return Tcl_NewStringObj(p, -1);
 
@@ -602,8 +609,10 @@ ObjValue(
      * This code only gets executed if the link type is unknown (shouldn't
      * ever happen).
      */
+
     default:
-	return Tcl_NewStringObj("??", 2);
+	TclNewLiteralStringObj(resultObj, "??");
+	return resultObj;
     }
 }
 

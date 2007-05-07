@@ -1,0 +1,90 @@
+'\"
+'\" Copyright (c) 2005 Joe English
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\" 
+.so man.macros
+.TH ttk_panedwindow n 8.5 Tk "Tk Themed Widget"
+.BS
+.\" Use _ instead of :: as the name becomes a filename on install
+.SH NAME
+ttk_panedwindow \- Multi-pane container window
+.SH SYNOPSIS
+.nf
+\fBttk::panedwindow\fR \fIpathName \fR?\fIoptions\fR?
+.br
+\fIpathName \fBadd\fR \fIpathName.subwindow\fR ?\fIoptions...\fR?
+\fIpathName \fBinsert\fR \fIindex\fR \fIpathName.subwindow\fR ?\fIoptions...\fR?
+.fi
+.BE
+
+.SH DESCRIPTION
+A \fBttk::panedwindow\fR widget displays a number of subwindows, stacked
+either vertically or horizontally.  The user may adjust the relative sizes
+of the subwindows by dragging the sash between panes.
+.SO
+\-class	\-cursor	\-takefocus	\-style
+.SE
+
+.SH "WIDGET-SPECIFIC OPTIONS"
+.OP \-orient orient Orient
+Specifies the orientation of the window.
+If \fBvertical\fR, subpanes are stacked top-to-bottom;
+if \fBhorizontal\fR, subpanes are stacked left-to-right.
+
+.SH "PANE OPTIONS"
+The following options may be specified for each pane:
+.OP \-weight weight Weight
+An integer specifying the relative stretchability of the pane.
+When the paned window is resized, the extra space is added
+or subracted to each pane proportionally to its \fB-weight\fR.
+
+.SH "WIDGET COMMAND"
+Supports the standard \fBconfigure\fR, \fBcget\fR, \fBstate\fR, 
+and \fBinstate\fR commands; see \fIttk_widget(n)\fR for details.
+Additional commands:
+.TP
+\fIpathname \fBadd\fR \fIsubwindow\fR \fIoptions...\fR
+Adds a new pane to the window.
+\fIsubwindow\fR must be a direct child of the paned window \fIpathname\fR.
+See \fBPANE OPTIONS\fR for the list of available options.
+.TP
+\fIpathname \fBforget\fR \fIpane\fR
+Removes the specified subpane from the widget.
+\fIpane\fR is either an integer index or the name of a managed subwindow.
+.TP
+\fIpathname \fBinsert\fR \fIpos\fR \fIsubwindow\fR \fIoptions...\fR
+Inserts a pane at the specified position.
+\fIpos\fR is either the string \fBend\fR, an integer index, 
+or the name of a managed subwindow.
+If \fIsubwindow\fR is already managed by the paned window, 
+moves it to the specified position.
+See \fBPANE OPTIONS\fR for the list of available options.
+.TP
+\fIpathname \fBpane\fR \fIpane -option \fR?\fIvalue \fR?\fI-option value...\fR
+Query or modify the options of the specified \fIpane\fR,
+where \fIpane\fR is either an integer index or the name of a managed subwindow.
+If no \fI-option\fR is specified, returns a dictionary of the pane 
+option values.
+If one \fI-option\fR is specified, returns the value of that \fIoption\fR.
+Otherwise, sets the \fI-option\fRs to the corresponding \fIvalue\fRs.
+
+.SH "INTERNAL ROUTINES"
+The following routines are used internally by the \fBpaned\fR widget
+binding code.
+.TP
+\fIpathname\fR \fBsashpos\fR \fIindex\fR ?\fInewpos\fR?
+If \fInewpos\fR is specified, sets the sash position 
+(subject to constraints).
+Returns the position of sash number \fIindex\fR.
+.TP
+\fIpathname\fR \fBidentify\fR \fIx y\fR
+Returns a list consisting of the sash index at point \fIx,y\fR
+and the name of the sash subelement at that point.
+Returns the empty list if \fIx,y\fR is not over a sash.
+
+.SH "SEE ALSO"
+ttk_widget(n), ttk_notebook(n), panedwindow(n)

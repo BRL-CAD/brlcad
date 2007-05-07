@@ -22,7 +22,7 @@ int
 int
 \fBTk_GetAnchor(\fIinterp, string, anchorPtr\fB)\fR
 .sp
-CONST char *
+const char *
 \fBTk_NameOfAnchor(\fIanchor\fB)\fR
 .SH ARGUMENTS
 .AS "Tk_Anchor" *anchorPtr
@@ -32,7 +32,7 @@ Interpreter to use for error reporting, or NULL.
 String value contains name of anchor point: \fBn\fR, \fBne\fR,
 \fBe\fR, \fBse\fR, \fBs\fR, \fBsw\fR, \fBw\fR, \fBnw\fR, or \fBcenter\fR;
 internal rep will be modified to cache corresponding Tk_Anchor.
-.AP "CONST char" *string in
+.AP "const char" *string in
 Same as \fIobjPtr\fR except description of anchor point is passed as
 a string.
 .AP int *anchorPtr out

@@ -586,7 +586,7 @@ static int flagArray[TK_LASTEVENT] = {
  * event should be queued and the string used to specify the location.
  */
 
-static TkStateMap queuePosition[] = {
+static const TkStateMap queuePosition[] = {
     {-1,			"now"},
     {TCL_QUEUE_HEAD,		"head"},
     {TCL_QUEUE_MARK,		"mark"},
@@ -601,7 +601,7 @@ static TkStateMap queuePosition[] = {
  * data from an XEvent to the user.
  */
 
-static TkStateMap notifyMode[] = {
+static const TkStateMap notifyMode[] = {
     {NotifyNormal,		"NotifyNormal"},
     {NotifyGrab,		"NotifyGrab"},
     {NotifyUngrab,		"NotifyUngrab"},
@@ -609,7 +609,7 @@ static TkStateMap notifyMode[] = {
     {-1, NULL}
 };
 
-static TkStateMap notifyDetail[] = {
+static const TkStateMap notifyDetail[] = {
     {NotifyAncestor,		"NotifyAncestor"},
     {NotifyVirtual,		"NotifyVirtual"},
     {NotifyInferior,		"NotifyInferior"},
@@ -621,20 +621,20 @@ static TkStateMap notifyDetail[] = {
     {-1, NULL}
 };
 
-static TkStateMap circPlace[] = {
+static const TkStateMap circPlace[] = {
     {PlaceOnTop,		"PlaceOnTop"},
     {PlaceOnBottom,		"PlaceOnBottom"},
     {-1, NULL}
 };
 
-static TkStateMap visNotify[] = {
+static const TkStateMap visNotify[] = {
     {VisibilityUnobscured,	  "VisibilityUnobscured"},
     {VisibilityPartiallyObscured, "VisibilityPartiallyObscured"},
     {VisibilityFullyObscured,	  "VisibilityFullyObscured"},
     {-1, NULL}
 };
 
-static TkStateMap configureRequestDetail[] = {
+static const TkStateMap configureRequestDetail[] = {
     {None,		"None"},
     {Above,		"Above"},
     {Below,		"Below"},
@@ -644,7 +644,7 @@ static TkStateMap configureRequestDetail[] = {
     {-1, NULL}
 };
 
-static TkStateMap propNotify[] = {
+static const TkStateMap propNotify[] = {
     {PropertyNewValue,	"NewValue"},
     {PropertyDelete,	"Delete"},
     {-1, NULL}
@@ -663,12 +663,12 @@ static int		DeleteVirtualEvent(Tcl_Interp *interp,
 			    VirtualEventTable *vetPtr, char *virtString,
 			    char *eventString);
 static void		DeleteVirtualEventTable(VirtualEventTable *vetPtr);
-static void		ExpandPercents(TkWindow *winPtr, CONST char *before,
+static void		ExpandPercents(TkWindow *winPtr, const char *before,
 			    XEvent *eventPtr,KeySym keySym,Tcl_DString *dsPtr);
 static void		FreeTclBinding(ClientData clientData);
 static PatSeq *		FindSequence(Tcl_Interp *interp,
 			    Tcl_HashTable *patternTablePtr, ClientData object,
-			    CONST char *eventString, int create,
+			    const char *eventString, int create,
 			    int allowVirtual, unsigned long *maskPtr);
 static void		GetAllVirtualEvents(Tcl_Interp *interp,
 			    VirtualEventTable *vetPtr);
@@ -679,7 +679,7 @@ static int		GetVirtualEvent(Tcl_Interp *interp,
 static Tk_Uid		GetVirtualEventUid(Tcl_Interp *interp,
 			    char *virtString);
 static int		HandleEventGenerate(Tcl_Interp *interp, Tk_Window main,
-			    int objc, Tcl_Obj *CONST objv[]);
+			    int objc, Tcl_Obj *const objv[]);
 static void		InitVirtualEventTable(VirtualEventTable *vetPtr);
 static PatSeq *		MatchPatterns(TkDisplay *dispPtr,
 			    BindingTable *bindPtr, PatSeq *psPtr,
@@ -688,7 +688,7 @@ static PatSeq *		MatchPatterns(TkDisplay *dispPtr,
 static int		NameToWindow(Tcl_Interp *interp, Tk_Window main,
 			    Tcl_Obj *objPtr, Tk_Window *tkwinPtr);
 static int		ParseEventDescription(Tcl_Interp *interp,
-			    CONST char **eventStringPtr, Pattern *patPtr,
+			    const char **eventStringPtr, Pattern *patPtr,
 			    unsigned long *eventMaskPtr);
 static void		DoWarp(ClientData clientData);
 
@@ -950,9 +950,9 @@ Tk_CreateBinding(
 				/* Table in which to create binding. */
     ClientData object,		/* Token for object with which binding is
 				 * associated. */
-    CONST char *eventString,	/* String describing event sequence that
+    const char *eventString,	/* String describing event sequence that
 				 * triggers binding. */
-    CONST char *command,	/* Contains Tcl command to execute when
+    const char *command,	/* Contains Tcl command to execute when
 				 * binding triggers. */
     int append)			/* 0 means replace any existing binding for
 				 * eventString; 1 means append to that
@@ -1051,7 +1051,7 @@ TkCreateBindingProcedure(
 				/* Table in which to create binding. */
     ClientData object,		/* Token for object with which binding is
 				 * associated. */
-    CONST char *eventString,	/* String describing event sequence that
+    const char *eventString,	/* String describing event sequence that
 				 * triggers binding. */
     TkBindEvalProc *eventProc,	/* Function to invoke when binding triggers.
 				 * Must not be NULL. */
@@ -1129,7 +1129,7 @@ Tk_DeleteBinding(
 				/* Table in which to delete binding. */
     ClientData object,		/* Token for object with which binding is
 				 * associated. */
-    CONST char *eventString)	/* String describing event sequence that
+    const char *eventString)	/* String describing event sequence that
 				 * triggers binding. */
 {
     BindingTable *bindPtr = (BindingTable *) bindingTable;
@@ -1217,14 +1217,14 @@ Tk_DeleteBinding(
  *--------------------------------------------------------------
  */
 
-CONST char *
+const char *
 Tk_GetBinding(
     Tcl_Interp *interp,		/* Interpreter for error reporting. */
     Tk_BindingTable bindingTable,
 				/* Table in which to look for binding. */
     ClientData object,		/* Token for object with which binding is
 				 * associated. */
-    CONST char *eventString)	/* String describing event sequence that
+    const char *eventString)	/* String describing event sequence that
 				 * triggers binding. */
 {
     BindingTable *bindPtr = (BindingTable *) bindingTable;
@@ -1237,7 +1237,7 @@ Tk_GetBinding(
 	return NULL;
     }
     if (psPtr->eventProc == EvalTclBinding) {
-	return (CONST char *) psPtr->clientData;
+	return (const char *) psPtr->clientData;
     }
     return "";
 }
@@ -2273,7 +2273,7 @@ static void
 ExpandPercents(
     TkWindow *winPtr,		/* Window where event occurred: needed to get
 				 * input context. */
-    CONST char *before,		/* Command containing percent expressions to
+    const char *before,		/* Command containing percent expressions to
 				 * be replaced. */
     XEvent *eventPtr,		/* X event containing information to be used
 				 * in % replacements. */
@@ -2286,7 +2286,7 @@ ExpandPercents(
 				 * list element. */
     int number, flags, length;
 #define NUM_SIZE 40
-    CONST char *string;
+    const char *string;
     Tcl_DString buf;
     char numStorage[NUM_SIZE+1];
 
@@ -2726,13 +2726,13 @@ Tk_EventObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     int index;
     Tk_Window tkwin;
     VirtualEventTable *vetPtr;
     TkBindInfo bindInfo;
-    static CONST char *optionStrings[] = {
+    static const char *optionStrings[] = {
 	"add",		"delete",	"generate",	"info",
 	NULL
     };
@@ -3051,7 +3051,7 @@ DeleteVirtualEvent(
 	eventPSPtr = FindSequence(interp, &vetPtr->patternTable, NULL,
 		eventString, 0, 0, &eventMask);
 	if (eventPSPtr == NULL) {
-	    CONST char *string;
+	    const char *string;
 
 	    string = Tcl_GetStringResult(interp);
 	    return (string[0] != '\0') ? TCL_ERROR : TCL_OK;
@@ -3287,10 +3287,10 @@ HandleEventGenerate(
     Tcl_Interp *interp,		/* Interp for errors return and name lookup. */
     Tk_Window mainWin,		/* Main window associated with interp. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     XEvent event;
-    CONST char *p;
+    const char *p;
     char *name, *windowName;
     int count, flags, synch, i, number, warp;
     Tcl_QueuePosition pos;
@@ -3299,7 +3299,7 @@ HandleEventGenerate(
     TkWindow *mainPtr;
     unsigned long eventMask;
     Tcl_Obj *userDataObj;
-    static CONST char *fieldStrings[] = {
+    static const char *fieldStrings[] = {
 	"-when",	"-above",	"-borderwidth",	"-button",
 	"-count",	"-data",	"-delta",	"-detail",
 	"-focus",	"-height",
@@ -3651,7 +3651,7 @@ HandleEventGenerate(
 	    }
 	    break;
 	case EVENT_SEND: {
-	    CONST char *value;
+	    const char *value;
 
 	    value = Tcl_GetString(valuePtr);
 	    if (isdigit(UCHAR(value[0]))) {
@@ -3985,7 +3985,7 @@ FindSequence(
     ClientData object,		/* For binding table, token for object with
 				 * which binding is associated. For virtual
 				 * event table, NULL. */
-    CONST char *eventString,	/* String description of pattern to match on.
+    const char *eventString,	/* String description of pattern to match on.
 				 * See user documentation for details. */
     int create,			/* 0 means don't create the entry if it
 				 * doesn't already exist. Non-zero means
@@ -3997,7 +3997,7 @@ FindSequence(
 {
     Pattern pats[EVENT_BUFFER_SIZE];
     int numPats, virtualFound;
-    CONST char *p;
+    const char *p;
     Pattern *patPtr;
     PatSeq *psPtr;
     Tcl_HashEntry *hPtr;
@@ -4150,7 +4150,7 @@ FindSequence(
 static int
 ParseEventDescription(
     Tcl_Interp *interp,		/* For error messages. */
-    CONST char **eventStringPtr,/* On input, holds a pointer to start of event
+    const char **eventStringPtr,/* On input, holds a pointer to start of event
 				 * string. On exit, gets pointer to rest of
 				 * string after parsed event. */
     Pattern *patPtr,		/* Filled with the pattern parsed from the

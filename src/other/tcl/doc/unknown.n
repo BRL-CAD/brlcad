@@ -85,7 +85,7 @@ rename \fBunknown\fR _original_unknown
 # Provide our own implementation
 proc \fBunknown\fR args {
     puts stderr "WARNING: unknown command: $args"
-    uplevel 1 [list _original_unknown {expand}$args]
+    uplevel 1 [list _original_unknown {*}$args]
 }
 .CE
 

@@ -1,10 +1,11 @@
-/* 
+/*
  * tkMacOSXRegion.c --
  *
- *        Implements X window calls for manipulating regions
+ *	Implements X window calls for manipulating regions
  *
  * Copyright (c) 1995-1996 Sun Microsystems, Inc.
  * Copyright 2001, Apple Computer, Inc.
+ * Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -14,31 +15,26 @@
 
 #include "tkMacOSXInt.h"
 
-/*
- * Temporary region that can be reused.
- */
-static RgnHandle tmpRgn = NULL;
-
 
 /*
  *----------------------------------------------------------------------
  *
  * TkCreateRegion --
  *
- *        Implements the equivelent of the X window function
- *        XCreateRegion.  See X window documentation for more details.
+ *	Implements the equivelent of the X window function
+ *	XCreateRegion. See X window documentation for more details.
  *
  * Results:
- *      Returns an allocated region handle.
+ *	Returns an allocated region handle.
  *
  * Side effects:
- *        None.
+ *	None.
  *
  *----------------------------------------------------------------------
  */
 
 TkRegion
-TkCreateRegion()
+TkCreateRegion(void)
 {
     RgnHandle rgn;
     rgn = NewRgn();
@@ -50,19 +46,19 @@ TkCreateRegion()
  *
  * TkDestroyRegion --
  *
- *        Implements the equivelent of the X window function
- *        XDestroyRegion.  See X window documentation for more details.
+ *	Implements the equivelent of the X window function
+ *	XDestroyRegion. See X window documentation for more details.
  *
  * Results:
- *        None.
+ *	None.
  *
  * Side effects:
- *        Memory is freed.
+ *	Memory is freed.
  *
  *----------------------------------------------------------------------
  */
 
-void 
+void
 TkDestroyRegion(
     TkRegion r)
 {
@@ -75,19 +71,19 @@ TkDestroyRegion(
  *
  * TkIntersectRegion --
  *
- *        Implements the equivilent of the X window function
- *        XIntersectRegion.  See X window documentation for more details.
+ *	Implements the equivilent of the X window function
+ *	XIntersectRegion. See X window documentation for more details.
  *
  * Results:
- *        None.
+ *	None.
  *
  * Side effects:
- *        None.
+ *	None.
  *
  *----------------------------------------------------------------------
  */
 
-void 
+void
 TkIntersectRegion(
     TkRegion sra,
     TkRegion srb,
@@ -104,20 +100,20 @@ TkIntersectRegion(
  *
  * TkUnionRectWithRegion --
  *
- *        Implements the equivelent of the X window function
- *        XUnionRectWithRegion.  See X window documentation for more
- *        details.
+ *	Implements the equivelent of the X window function
+ *	XUnionRectWithRegion. See X window documentation for more
+ *	details.
  *
  * Results:
- *        None.
+ *	None.
  *
  * Side effects:
- *        None.
+ *	None.
  *
  *----------------------------------------------------------------------
  */
 
-void 
+void
 TkUnionRectWithRegion(
     XRectangle* rectangle,
     TkRegion src_region,
@@ -126,12 +122,11 @@ TkUnionRectWithRegion(
     RgnHandle srcRgn = (RgnHandle) src_region;
     RgnHandle destRgn = (RgnHandle) dest_region_return;
 
-    if (tmpRgn == NULL) {
-        tmpRgn = NewRgn();
-    }
-    SetRectRgn(tmpRgn, rectangle->x, rectangle->y,
+    TkMacOSXCheckTmpRgnEmpty(1);
+    SetRectRgn(tkMacOSXtmpRgn1, rectangle->x, rectangle->y,
 	    rectangle->x + rectangle->width, rectangle->y + rectangle->height);
-    UnionRgn(srcRgn, tmpRgn, destRgn);
+    UnionRgn(srcRgn, tkMacOSXtmpRgn1, destRgn);
+    SetEmptyRgn(tkMacOSXtmpRgn1);
 }
 
 /*
@@ -139,19 +134,19 @@ TkUnionRectWithRegion(
  *
  * TkRectInRegion --
  *
- *        Implements the equivelent of the X window function
- *        XRectInRegion.  See X window documentation for more details.
+ *	Implements the equivelent of the X window function
+ *	XRectInRegion. See X window documentation for more details.
  *
  * Results:
- *        Returns one of: RectangleOut, RectangleIn, RectanglePart.
+ *	Returns one of: RectangleOut, RectangleIn, RectanglePart.
  *
  * Side effects:
- *        None.
+ *	None.
  *
  *----------------------------------------------------------------------
  */
 
-int 
+int
 TkRectInRegion(
     TkRegion region,
     int x,
@@ -160,22 +155,19 @@ TkRectInRegion(
     unsigned int height)
 {
     RgnHandle rgn = (RgnHandle) region;
-    RgnHandle rectRgn, destRgn;
     int result;
-    
-    rectRgn = NewRgn();
-    destRgn = NewRgn();
-    SetRectRgn(rectRgn, x,  y, x + width, y + height);
-    SectRgn(rgn, rectRgn, destRgn);
-    if (EmptyRgn(destRgn)) {
+
+    TkMacOSXCheckTmpRgnEmpty(1);
+    SetRectRgn(tkMacOSXtmpRgn1, x, y, x + width, y + height);
+    SectRgn(rgn, tkMacOSXtmpRgn1, tkMacOSXtmpRgn1);
+    if (EmptyRgn(tkMacOSXtmpRgn1)) {
 	result = RectangleOut;
-    } else if (EqualRgn(rgn, destRgn)) {
+    } else if (EqualRgn(rgn, tkMacOSXtmpRgn1)) {
 	result = RectangleIn;
     } else {
 	result = RectanglePart;
     }
-    DisposeRgn(rectRgn);
-    DisposeRgn(destRgn);
+    SetEmptyRgn(tkMacOSXtmpRgn1);
     return result;
 }
 
@@ -184,19 +176,19 @@ TkRectInRegion(
  *
  * TkClipBox --
  *
- *        Implements the equivelent of the X window function XClipBox.
- *        See X window documentation for more details.
+ *	Implements the equivelent of the X window function XClipBox.
+ *	See X window documentation for more details.
  *
  * Results:
- *        None.
+ *	None.
  *
  * Side effects:
- *        None.
+ *	None.
  *
  *----------------------------------------------------------------------
  */
 
-void 
+void
 TkClipBox(
     TkRegion r,
     XRectangle* rect_return)
@@ -218,7 +210,7 @@ TkClipBox(
  * TkSubtractRegion --
  *
  *	Implements the equivilent of the X window function
- *	XSubtractRegion.  See X window documentation for more details.
+ *	XSubtractRegion. See X window documentation for more details.
  *
  * Results:
  *	None.
@@ -229,7 +221,7 @@ TkClipBox(
  *----------------------------------------------------------------------
  */
 
-void 
+void
 TkSubtractRegion(
     TkRegion sra,
     TkRegion srb,
@@ -301,3 +293,34 @@ TkpBuildRegionFromAlphaData(
 	dataPtr += lineStride;
     }
 }
+
+#if 0
+int
+XSetClipRectangles(Display *d, GC gc, int clip_x_origin, int clip_y_origin,
+	XRectangle* rectangles, int n, int ordering)
+{
+    RgnHandle clipRgn;
+
+    if (gc->clip_mask && ((TkpClipMask*)gc->clip_mask)->type
+	    == TKP_CLIP_REGION) {
+	clipRgn = (RgnHandle) ((TkpClipMask*)gc->clip_mask)->value.region;
+	SetEmptyRgn(clipRgn);
+    } else {
+	clipRgn = NewRgn(); /* LEAK! */
+    }
+
+    TkMacOSXCheckTmpRgnEmpty(1);
+    while (n--) {
+	int x = clip_x_origin + rectangles->x;
+	int y = clip_y_origin + rectangles->y;
+
+	SetRectRgn(tkMacOSXtmpRgn1, x, y, x + rectangles->width,
+		y + rectangles->height);
+	UnionRgn(tkMacOSXtmpRgn1, clipRgn, clipRgn);
+	rectangles++;
+    }
+    SetEmptyRgn(tkMacOSXtmpRgn1);
+    TkSetRegion(d, gc, (TkRegion) clipRgn);
+    return 1;
+}
+#endif

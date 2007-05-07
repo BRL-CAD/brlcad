@@ -184,7 +184,7 @@ test safe-6.3 {test safe interpreters knowledge of the world} {
 	set r [lreplace $r $threaded $threaded]
     }
     set r
-} {byteOrder platform wordSize}
+} {byteOrder platform pointerSize wordSize}
 
 # more test should be added to check that hostname, nameofexecutable,
 # aren't leaking infos, but they still do...

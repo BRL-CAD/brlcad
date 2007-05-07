@@ -209,139 +209,139 @@ this value is at least 120 before it is reported.  However, higher
 resolution devices may be available in the future.  The sign of the
 value determines which direction your widget should scroll.  Positive
 values should scroll up and negative values should scroll down.
-.IP "\fBKeyPress\fP, \fBKeyRelease\fP" 5
-The \fBKeyPress\fP and \fBKeyRelease\fP events are generated
-whenever a key is pressed or released.  \fBKeyPress\fP and \fBKeyRelease\fP
+.IP "\fBKeyPress\fR, \fBKeyRelease\fR" 5
+The \fBKeyPress\fR and \fBKeyRelease\fR events are generated
+whenever a key is pressed or released.  \fBKeyPress\fR and \fBKeyRelease\fR
 events are sent to the window which currently has the keyboard focus.
-.IP "\fBButtonPress\fP, \fBButtonRelease\fP, \fBMotion\fP" 5
-The \fBButtonPress\fP and \fBButtonRelease\fP events
+.IP "\fBButtonPress\fR, \fBButtonRelease\fR, \fBMotion\fR" 5
+The \fBButtonPress\fR and \fBButtonRelease\fR events
 are generated when the user presses or releases a mouse button.
-\fBMotion\fP events are generated whenever the pointer is moved.
-\fBButtonPress\fP, \fBButtonRelease\fP, and \fBMotion\fP events are 
+\fBMotion\fR events are generated whenever the pointer is moved.
+\fBButtonPress\fR, \fBButtonRelease\fR, and \fBMotion\fR events are 
 normally sent to the window containing the pointer.
 .RS
 .PP
 When a mouse button is pressed, the window containing the pointer
 automatically obtains a temporary pointer grab.
-Subsequent \fBButtonPress\fP, \fBButtonRelease\fP, and \fBMotion\fP 
+Subsequent \fBButtonPress\fR, \fBButtonRelease\fR, and \fBMotion\fR 
 events will be sent to that window,
 regardless of which window contains the pointer,
 until all buttons have been released.
 .RE
-.IP \fBConfigure\fP 5
-A \fBConfigure\fP event is sent to a window whenever its
+.IP \fBConfigure\fR 5
+A \fBConfigure\fR event is sent to a window whenever its
 size, position, or border width changes, and sometimes
 when it has changed position in the stacking order.
-.IP "\fBMap\fP, \fBUnmap\fP" 5
-The \fBMap\fP and \fBUnmap\fP events are generated whenever the mapping
+.IP "\fBMap\fR, \fBUnmap\fR" 5
+The \fBMap\fR and \fBUnmap\fR events are generated whenever the mapping
 state of a window changes.
 .RS
 .PP
 Windows are created in the unmapped state.
 Top-level windows become mapped when they transition to the
-\fBnormal\fP state, and are unmapped in the \fBwithdrawn\fP
-and \fBiconic\fP states.
+\fBnormal\fR state, and are unmapped in the \fBwithdrawn\fR
+and \fBiconic\fR states.
 Other windows become mapped when they are placed under control
-of a geometry manager (for example \fBpack\fP or \fBgrid\fP).
+of a geometry manager (for example \fBpack\fR or \fBgrid\fR).
 .PP
-A window is \fIviewable\fP only if it and all of its ancestors are mapped.
+A window is \fIviewable\fR only if it and all of its ancestors are mapped.
 Note that geometry managers typically do not map their children until 
 they have been mapped themselves, and unmap all children
-when they become unmapped; hence in Tk \fBMap\fP and \fBUnmap\fP
+when they become unmapped; hence in Tk \fBMap\fR and \fBUnmap\fR
 events indicate whether or not a window is viewable.
 .RE
-.IP \fBVisibility\fP 5
-A window is said to be \fIobscured\fP when another window
+.IP \fBVisibility\fR 5
+A window is said to be \fIobscured\fR when another window
 above it in the stacking order fully or partially overlaps it.
-\fBVisibility\fP events are generated whenever a window's
-obscurity state changes; the \fIstate\fP field (\fB%s\fP)
+\fBVisibility\fR events are generated whenever a window's
+obscurity state changes; the \fIstate\fR field (\fB%s\fR)
 specifies the new state.
-.IP \fBExpose\fP 5
-An \fBExpose\fP event is generated whenever all or part of a
+.IP \fBExpose\fR 5
+An \fBExpose\fR event is generated whenever all or part of a
 window should be redrawn (for example, when a window is
 first mapped or if it becomes unobscured).
 It is normally not necessary for client applications to 
-handle \fBExpose\fP events, since Tk handles them internally.
-.IP \fBDestroy\fP 5
-A \fBDestroy\fP event is delivered to a window when 
+handle \fBExpose\fR events, since Tk handles them internally.
+.IP \fBDestroy\fR 5
+A \fBDestroy\fR event is delivered to a window when 
 it is destroyed.
 .RS
 .PP
-When the \fBDestroy\fP event is delivered
+When the \fBDestroy\fR event is delivered
 to a widget, it is in a ``half-dead'' state: the widget still exists,
 but most operations on it will fail.
 .RE
-.IP "\fBFocusIn\fP, \fBFocusOut\fP" 5
-The \fBFocusIn\fP and \fBFocusOut\fP events are generated
+.IP "\fBFocusIn\fR, \fBFocusOut\fR" 5
+The \fBFocusIn\fR and \fBFocusOut\fR events are generated
 whenever the keyboard focus changes.
-A \fBFocusOut\fP event is sent to the old focus window,
-and a \fBFocusIn\fP event is sent to the new one.
+A \fBFocusOut\fR event is sent to the old focus window,
+and a \fBFocusIn\fR event is sent to the new one.
 .RS
 .PP
 In addition,
 if the old and new focus windows do not share a common parent,
 ``virtual crossing'' focus events are sent to the intermediate
 windows in the hierarchy.
-Thus a \fBFocusIn\fP event indicates
+Thus a \fBFocusIn\fR event indicates
 that the target window or one of its descendants has acquired the focus,
-and a \fBFocusOut\fP event indicates that the focus 
+and a \fBFocusOut\fR event indicates that the focus 
 has been changed to a window outside the target window's hierarchy.
 .PP
-The keyboard focus may be changed explicitly by a call to \fBfocus\fP,
+The keyboard focus may be changed explicitly by a call to \fBfocus\fR,
 or implicitly by the window manager.  
 .RE
-.IP "\fBEnter\fP, \fBLeave\fP" 5
-An \fBEnter\fP event is sent to a window when the pointer
-enters that window, and a \fBLeave\fP event is sent when
+.IP "\fBEnter\fR, \fBLeave\fR" 5
+An \fBEnter\fR event is sent to a window when the pointer
+enters that window, and a \fBLeave\fR event is sent when
 the pointer leaves it.  
 .RS
 .PP
-If there is a pointer grab in effect, \fBEnter\fP and \fBLeave\fP
+If there is a pointer grab in effect, \fBEnter\fR and \fBLeave\fR
 events are only delivered to the window owning the grab.
 .PP
 In addition, when the pointer moves
-between two windows, \fBEnter\fP and \fBLeave\fP
+between two windows, \fBEnter\fR and \fBLeave\fR
 ``virtual crossing'' events are sent to intermediate windows
-in the hierarchy in the same manner as for \fBFocusIn\fP and
-\fBFocusOut\fP events.
+in the hierarchy in the same manner as for \fBFocusIn\fR and
+\fBFocusOut\fR events.
 .RE
-.IP \fBProperty\fP
-A \fBProperty\fP event is sent to a window whenever an X property
+.IP \fBProperty\fR
+A \fBProperty\fR event is sent to a window whenever an X property
 belonging to that window is changed or deleted.
-\fBProperty\fP events are not normally delivered to Tk applications as
+\fBProperty\fR events are not normally delivered to Tk applications as
 they are handled by the Tk core.
-.IP \fBColormap\fP
-A \fBColormap\fP event is generated whenever the colormap
+.IP \fBColormap\fR
+A \fBColormap\fR event is generated whenever the colormap
 associated with a window has been changed, installed, or uninstalled.
 .RS
 .PP
 Widgets may be assigned a private colormap by
-specifying a \fB-colormap\fP option; the window manager
+specifying a \fB-colormap\fR option; the window manager
 is responsible for installing and uninstalling colormaps
 as necessary.
 .PP
 Note that Tk provides no useful details for this event type.
 .RE
 '\" The following events were added in TIP#47
-.IP "\fBMapRequest\fP, \fBCirculateRequest\fP, \fBResizeRequest\fP, \fBConfigureRequest\fP, \fBCreate\fP" 5
+.IP "\fBMapRequest\fR, \fBCirculateRequest\fR, \fBResizeRequest\fR, \fBConfigureRequest\fR, \fBCreate\fR" 5
 These events are not normally delivered to Tk applications.
 They are included for completeness, to make it possible to
 write X11 window managers in Tk.
 (These events are only delivered when a client has
-selected \fBSubstructureRedirectMask\fP on a window;
+selected \fBSubstructureRedirectMask\fR on a window;
 the Tk core does not use this mask.)
-.IP "\fBGravity\fP, \fBReparent\fP, \fBCirculate\fP" 5
-The events \fBGravity\fP and \fBReparent\fP
+.IP "\fBGravity\fR, \fBReparent\fR, \fBCirculate\fR" 5
+The events \fBGravity\fR and \fBReparent\fR
 are not normally delivered to Tk applications.
 They are included for completeness.
 .RS
 .PP
-A \fBCirculate\fP event indicates that the window has moved
+A \fBCirculate\fR event indicates that the window has moved
 to the top or to the bottom of the stacking order as
-a result of an \fBXCirculateSubwindows\fP protocol request.
+a result of an \fBXCirculateSubwindows\fR protocol request.
 Note that the stacking order may be changed for other reasons
-which do not generate a \fBCirculate\fP event, and that
-Tk does not use \fBXCirculateSubwindows()\fP internally.
+which do not generate a \fBCirculate\fR event, and that
+Tk does not use \fBXCirculateSubwindows()\fR internally.
 This event type is included only for completeness;
 there is no reliable way to track changes to a window's
 position in the stacking order.
@@ -409,14 +409,14 @@ The \fIabove\fR field from the event,
 formatted as a hexadecimal number.
 Valid only for \fBConfigure\fR events.
 Indicates the sibling window immediately below the receiving window
-in the stacking order, or \fB0\fP if the receiving window is at the
+in the stacking order, or \fB0\fR if the receiving window is at the
 bottom.
 .IP \fB%b\fR 5
 The number of the button that was pressed or released.  Valid only
 for \fBButtonPress\fR and \fBButtonRelease\fR events.
 .IP \fB%c\fR 5
 The \fIcount\fR field from the event.  Valid only for \fBExpose\fR events.
-Indicates that there are \fIcount\fP pending \fBExpose\fP events which have not
+Indicates that there are \fIcount\fR pending \fBExpose\fR events which have not
 yet been delivered to the window.
 .IP \fB%d\fR 5
 The \fIdetail\fR
@@ -453,9 +453,9 @@ For events other than these, the substituted string is undefined.
 .RE
 .IP \fB%f\fR 5
 The \fIfocus\fR field from the event (\fB0\fR or \fB1\fR).  Valid only
-for \fBEnter\fR and \fBLeave\fR events.  \fB1\fP if the receiving 
+for \fBEnter\fR and \fBLeave\fR events.  \fB1\fR if the receiving 
 window is the focus window or a descendant of the focus window, 
-\fB0\fP otherwise.
+\fB0\fR otherwise.
 .IP \fB%h\fR 5
 The \fIheight\fR field from the event.  Valid for the \fBConfigure\fR,
 \fBConfigureRequest\fR, \fBCreate\fR, \fBResizeRequest\fR, and
@@ -486,9 +486,9 @@ The \fIstate\fR field from the event.  For \fBButtonPress\fR,
 is substituted.  For \fBVisibility\fR, one of the strings
 \fBVisibilityUnobscured\fR, \fBVisibilityPartiallyObscured\fR,
 and \fBVisibilityFullyObscured\fR is substituted.
-For \fBProperty\fP events, substituted with
-either the string \fBNewValue\fP (indicating that the property
-has been created or modified) or \fBDelete\fP (indicating that
+For \fBProperty\fR events, substituted with
+either the string \fBNewValue\fR (indicating that the property
+has been created or modified) or \fBDelete\fR (indicating that
 the property has been removed).
 .IP \fB%t\fR 5
 The \fItime\fR field from the event.
@@ -503,13 +503,13 @@ Valid only for
 \fBResizeRequest\fR, and \fBExpose\fR events.
 .IP "\fB%x\fR, \fB%y\fR" 5
 The \fIx\fR and \fIy\fR fields from the event.
-For \fBButtonPress\fP, \fBButtonRelease\fP, \fBMotion\fP, 
-\fBKeyPress\fP, \fBKeyRelease\fP, and \fBMouseWheel\fP events,
-\fB%x\fP and \fB%y\fP indicate the position of the mouse pointer
+For \fBButtonPress\fR, \fBButtonRelease\fR, \fBMotion\fR, 
+\fBKeyPress\fR, \fBKeyRelease\fR, and \fBMouseWheel\fR events,
+\fB%x\fR and \fB%y\fR indicate the position of the mouse pointer
 relative to the receiving window.
-For \fBEnter\fP and \fBLeave\fP events, the position where the 
+For \fBEnter\fR and \fBLeave\fR events, the position where the 
 mouse pointer crossed the window, relative to the receiving window.
-For \fBConfigure\fP and \fBCreate\fP requests, the \fIx\fP and \fIy\fP
+For \fBConfigure\fR and \fBCreate\fR requests, the \fIx\fR and \fIy\fR
 coordinates of the window relative to its parent window.
 .IP \fB%A\fR 5
 Substitutes the UNICODE character corresponding to the event, or
@@ -530,8 +530,8 @@ the delta.  The sign of the value represents the direction the mouse
 wheel was scrolled.
 .IP \fB%E\fR 5
 The \fIsend_event\fR field from the event.  Valid for all event types.
-\fB0\fP indicates that this is a ``normal'' event, \fB1\fP indicates
-that it is a ``synthetic'' event generated by \fBSendEvent\fP.
+\fB0\fR indicates that this is a ``normal'' event, \fB1\fR indicates
+that it is a ``synthetic'' event generated by \fBSendEvent\fR.
 .IP \fB%K\fR 5
 The keysym corresponding to the event, substituted as a textual
 string.  Valid only for \fBKeyPress\fR and \fBKeyRelease\fR events.
@@ -541,7 +541,7 @@ number.  Valid only for \fBKeyPress\fR and \fBKeyRelease\fR events.
 .IP \fB%P\fR 5
 The name of the property being updated or deleted (which
 may be converted to an XAtom using \fBwinfo atom\fR.) Valid
-only for \fBProperty\fP events.
+only for \fBProperty\fR events.
 .IP \fB%R\fR 5
 The \fIroot\fR window identifier from the event.  Valid only for
 events containing a \fIroot\fR field.
@@ -561,7 +561,7 @@ value is the corresponding x-coordinate in the virtual root.
 Valid only for
 \fBButtonPress\fR, \fBButtonRelease\fR, \fBKeyPress\fR, \fBKeyRelease\fR,
 and \fBMotion\fR events.
-Same meaning as \fB%x\fP, except relative to the (virtual) root window.
+Same meaning as \fB%x\fR, except relative to the (virtual) root window.
 .IP \fB%Y\fR 5
 The \fIy_root\fR field from the event.
 If a virtual-root window manager is being used then the substituted
@@ -569,7 +569,7 @@ value is the corresponding y-coordinate in the virtual root.
 Valid only for
 \fBButtonPress\fR, \fBButtonRelease\fR, \fBKeyPress\fR, \fBKeyRelease\fR,
 and \fBMotion\fR events.
-Same meaning as \fB%y\fP, except relative to the (virtual) root window.
+Same meaning as \fB%y\fR, except relative to the (virtual) root window.
 .LP
 The replacement string for a %-replacement is formatted as a proper
 Tcl list element.

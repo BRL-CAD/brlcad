@@ -622,7 +622,7 @@ declare 123 generic {
 
 declare 124 generic {
     void Tk_ManageGeometry (Tk_Window tkwin,
-	    Tk_GeomMgr *mgrPtr, ClientData clientData)
+	    CONST Tk_GeomMgr *mgrPtr, ClientData clientData)
 }
 
 declare 125 generic {

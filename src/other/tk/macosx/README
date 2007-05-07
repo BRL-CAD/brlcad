@@ -1,4 +1,4 @@
-Tcl/Tk Mac OS X README 
+Tcl/Tk Mac OS X README
 ----------------------
 
 RCS: @(#) $Id$
@@ -73,11 +73,11 @@ the Resources/Scripts directory of the framework.
 and bundles are also loaded more efficiently from VFS (no temporary copy to the
 native filesystem required).
 
-- The 'deploy' target of macosx/Makefile installs the html manpages into the
+- The 'deploy' target of macosx/GNUmakefile installs the html manpages into the
 standard documentation location in the Tcl/Tk frameworks:
 	Tcl.framework/Resources/Documentation/Reference/Tcl
 	Tk.framework/Resources/Documentation/Reference/Tk
-No nroff manpages are installed by default by the Makefiles.
+No nroff manpages are installed by default by the GNUmakefiles.
 
 - The Tcl and Tk frameworks can be installed in any of the system's standard
 framework directories:
@@ -91,14 +91,14 @@ framework directories:
 "-psn_XXXX" argument. This is the Wish's carbon process serial number, you may
 need to filter it out for cross platform compatibility of your scripts.
 
-- the env array is different when Wish is started from the Finder than when it
-(or tclsh) is invoked from the Terminal, in particular PATH may not be what you
-expect. (Wish started from the Finder inherits the Finder's environment
-variables, which are essentially those set in $HOME/.MacOSX/environment.plist
-and not those set by your shell configuration files).
+- the env array is different when Wish is started from the Finder (i.e. via
+LaunchServices) than when it (or tclsh) is invoked from the Terminal, in
+particular PATH may not be what you expect. (Wish started by LaunchServices
+inherits loginwindow's environment variables, which are essentially those set in
+$HOME/.MacOSX/environment.plist, and are unrelated to those set in your shell).
 
 - As of Tk 8.4.7, TkAqua has a version of the low-level drawing primitives using
-the CoreGraphics routines - the code is primarily due to James Tittle.  There
+the CoreGraphics routines - the code is primarily due to James Tittle. There
 were numerous problems with the QD version, mostly due to the different drawing
 model of QD & Tk. CG also trivially supports dashed lines, and the various end
 caps & miters. The old QD code is retained for now, just in case there are any
@@ -110,7 +110,7 @@ control whether a line/shape is drawn antialiased. The antialiasing threshold is
 0 by default (i.e. antialias everything), it can be changed by setting
 	set tk::mac::CGAntialiasLimit <limit>
 in your script before drawing, in which case lines (or shapes with outlines)
-thinner that <limit> pixels will not be antialiased.
+thinner than <limit> pixels will not be antialiased.
 
 - ATSUI text antialiasing by default uses the standard OS antialising settings.
 Setting the global variable '::tk::mac::antialiasedtext' allows to control text
@@ -118,7 +118,7 @@ antialiasing from Tcl: a value of 1 enables AA, 0 disables AA and -1 restores
 the default behaviour of respecting the OS settings.
 
 - Scrollbars: There are two scrollbar variants in Aqua, normal & small. The
-normal scrollbar has a small dimension of 16, the small variant 12. Access to
+normal scrollbar has a small dimension of 15, the small variant 11. Access to
 the small variant was added in Tk 8.4.2.
 
 - Cursors: You can now put up and spin the Classic MacOS spinner, and the
@@ -132,16 +132,15 @@ have a base name:
 Then to get the sequential variants, add an integer to the end of the base name.
 So, for instance this code will spin the spinner:
     proc spinCursor {widget count} {
-        $widget configure -cursor spinning$count
-        after 100 spinCursor [incr count]
+	$widget configure -cursor spinning$count
+	after 100 spinCursor [incr count]
     }
 This was added in Tk 8.4.2
 
-- If you want to use Remote Debugging with Xcode 1.5 or 2.2, then you need to
-set the environment variable XCNOSTDIN to 1 in the Executable editor for Wish.
-That will cause us to force closing stdin & stdout.  Otherwise, given how Xcode
-launches Wish remotely, they will be left open and then Wish & gdb will fight
-for stdin...
+- If you want to use Remote Debugging with Xcode 1.5 or 2.2, you need to set the
+environment variable XCNOSTDIN to 1 in the Executable editor for Wish. That will
+cause us to force closing stdin & stdout.  Otherwise, given how Xcode launches
+Wish remotely, they will be left open and then Wish & gdb will fight for stdin.
 
 
 3. Building Tcl/Tk on Mac OS X
@@ -155,10 +154,10 @@ installer is available on Mac OS X retail disks or is present in
 recent version can be downloaded from the ADC website http://connect.apple.com
 (after you register for free ADC membership).
 
-- Tcl/Tk are most easily built as Mac OS X frameworks via Makefile in
+- Tcl/Tk are most easily built as Mac OS X frameworks via GNUmakefile in
 tcl/macosx and tk/macosx (see below for details), but can also be built with the
 standard unix configure and make buildsystem in tcl/unix resp. tk/unix as on any
-other unix platform (indeed, the Makefiles are just wrappers around the unix
+other unix platform (indeed, the GNUmakefiles are just wrappers around the unix
 buildsystem).
 The Mac OS X specific configure flags are --enable-aqua, --enable-framework and
 --disable-corefoundation (which disables CF and notably reverts to the standard
@@ -174,9 +173,18 @@ take care to only use the project matching your DevTools and OS version:
 	target useful for debugging, this target's 'Development' buildstyle
 	has ZeroLink and Fix&Continue enabled, use the 'DevelNoFixZL' buildstyle
 	if you need a debug build without these features.
-    * Wish.xcodeproj for Xcode 2.2 on 10.4, this additionally has a
-	'ReleaseUniversal'configuration which builds both the 'Tk' and the
-	'tktest' targets as universal binaries for ppc and i386. 
+    * Wish.xcodeproj for Xcode 2.4 on 10.4, which has the following
+	additional configurations for the 'Tk' and 'tktest' targets:
+	'ReleaseUniversal': builds the targets as universal binaries for the
+		ppc and i386 architectures.
+	'ReleaseUniversal10.4uSDK': same as 'ReleaseUniversal' but builds
+		against the 10.4u SDK, required to build universal binaries on
+		PowerPC Tiger (where the system libraries are not universal).
+	'ReleasePPC10.3.9SDK': builds for PowerPC against the 10.3.9 SDK, useful
+		for verifying on Tiger that building on Panther would succeed.
+	'ReleasePPC10.2.8SDK': builds for PowerPC with gcc-3.3 against the
+		10.2.8 SDK, useful to verify on Tiger that building on Jaguar
+		would succeed.
 Notes about the native targets of the Xcode projects:
     * the Xcode projects refer to the tcl and tk source dirs with a relative
 	path of ../../tcl and ../../tk to the project location, if your source
@@ -200,9 +208,9 @@ Notes about the native targets of the Xcode projects:
     export CFLAGS="-arch ppc -arch i386 \
 	-isysroot /Developer/SDKs/MacOSX10.4u.sdk -mmacosx-version-min=10.4"
 This requires Mac OS X 10.4 and Xcode 2.2 (_not_ Xcode 2.1) and will work on any
-of the architectures (on intel Macs, the -isysroot may not be required). Note
-that it is not possible to configure universal builds correctly if the current
-architecture is not present in CFLAGS (i.e. -arch `arch` must be there).
+of the architectures (the -isysroot flag is only required on PowerPC Tiger).
+Note that configure requires CFLAGS to contain a least one architecture that can
+be run on the build machine (i.e. ppc on PowerPC, ppc or i386 on Intel).
 Universal builds of Tk TEA extensions are also possible with CFLAGS set as
 above, they will be [load]able by universal as well as thin binaries of Tk.
 Note that while Tcl can be built for 64-bit architectures, neither TkAqua nor
@@ -220,17 +228,17 @@ This requires Mac OS X 10.2 and gcc 3.1; if you have gcc 4 or later you can set
 CFLAGS instead:
     export CFLAGS="-mmacosx-version-min=10.2"
 The Wish.xcodeproj is setup to produce binaries that can run on 10.2 or later,
-except for the 'ReleaseUniversal'configuration, where they require 10.4.
+except for the 'ReleaseUniversal*' configurations, where they require 10.4.
 Support for weak-linking was added to the code for 8.4.14/8.5a5.
 
-Detailed Instructions for building with macosx/Makefile
--------------------------------------------------------
+Detailed Instructions for building with macosx/GNUmakefile
+----------------------------------------------------------
 
 - Unpack the Tcl and Tk source release archives and place the tcl and tk source
 trees in a common parent directory.
 [ If you don't want have the two source trees in one directory, you'll need to ]
 [ create the following symbolic link for the build to work as setup by default ]
-[      ln -fs /path_to_tcl/build /path_to_tk/build                             ]
+[      ln -fs /path_to_tcl/build /path_to_tk/build			       ]
 [ (where /path_to_{tcl,tk} is the directory containing the tcl resp. tk tree)  ]
 [ or you can pass an argument of BUILD_DIR=/somewhere to the tcl and tk make.  ]
 
@@ -239,12 +247,12 @@ trees in a common parent directory.
 containing the Tcl and Tk version number (for example '8.4.12').
 Setup the shell variable as follows:
 	set ver="8.4.12" ;: if your shell is csh
-	ver="8.4.12"     ;: if your shell is sh
+	ver="8.4.12"	 ;: if your shell is sh
 The source trees will be named this way only if you are building from a release
 archive, if you are building from CVS, the version numbers will be missing; so
 set ${ver} to the empty string instead:
-	set ver=""       ;: if your shell is csh
-	ver=""           ;: if your shell is sh
+	set ver=""	 ;: if your shell is csh
+	ver=""		 ;: if your shell is sh
 
 - The following steps will build Tcl and Tk from the Terminal, assuming you are
 located in the directory containing the tcl and tk source trees:
@@ -259,26 +267,26 @@ instead by passing an INSTALL_ROOT argument to make:
 	make -C tcl${ver}/macosx install INSTALL_ROOT="${HOME}/"
 	make -C tk${ver}/macosx  install INSTALL_ROOT="${HOME}/"
 
-- The default Makefile targets will build _both_ debug and optimized versions of
-the Tcl and Tk frameworks with the standard convention of naming the debug
+- The default GNUmakefile targets will build _both_ debug and optimized versions
+of the Tcl and Tk frameworks with the standard convention of naming the debug
 library Tcl.framework/Tcl_debug resp. Tk.framework/Tk_debug.
 This allows switching to the debug libraries at runtime by setting
 	export DYLD_IMAGE_SUFFIX=_debug
 (c.f. man dyld for more details)
 
 If you only want to build and install the debug or optimized build, use the
-'develop' or 'deploy' target variants of the Makefiles, respectively.
+'develop' or 'deploy' target variants of the GNUmakefiles, respectively.
 For example, to build and install only the optimized versions:
 	make -C tcl${ver}/macosx deploy
 	make -C tk${ver}/macosx deploy
 	sudo make -C tcl${ver}/macosx install-deploy
 	sudo make -C tk${ver}/macosx  install-deploy
 
-- The Makefiles can also build a version of 'Wish' that has the Tcl and Tk
+- The GNUmakefiles can also build a version of 'Wish' that has the Tcl and Tk
 frameworks embedded in its application package. This allows for standalone
 deployment of the application with no installation required, e.g. from read-only
 media. To build & install in this manner, use the 'embedded' target variants of
-the Makefiles. For example, to build a standalone 'Wish.app'
+the GNUmakefiles. For example, to build a standalone 'Wish.app'
 in ./embedded/Applications/Utilities:
 	make -C tcl${ver}/macosx embedded
 	make -C tk${ver}/macosx embedded
@@ -298,7 +306,7 @@ still need a tcl sourcetree in the location specified in TCL_SRC_DIR in
 Tcl.framework/tclConfig.sh. Also, linking with Tcl.framework has to work exactly
 as indicated in TCL_LIB_SPEC in Tcl.framework/tclConfig.sh.
 If you used non-default install locations for Tcl.framework, specify them as
-make overrides to the tk/macosx Makefile, e.g.
+make overrides to the tk/macosx GNUmakefile, e.g.
 	make -C tk${ver}/macosx \
 	    TCL_FRAMEWORK_DIR=$HOME/Library/Frameworks TCLSH_DIR=$HOME/usr/bin
 	sudo make -C tk${ver}/macosx install \

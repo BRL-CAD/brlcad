@@ -1,12 +1,13 @@
 /*
  * tkMacOSXPort.h --
  *
- *	This file is included by all of the Tk C files.  It contains
+ *	This file is included by all of the Tk C files. It contains
  *	information that may be configuration-dependent, such as
  *	#includes for system include files and a few other things.
  *
  * Copyright (c) 1994-1996 Sun Microsystems, Inc.
  * Copyright 2001, Apple Computer, Inc.
+ * Copyright (c) 2005-2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -19,16 +20,16 @@
 
 /*
  * Macro to use instead of "void" for arguments that must have
- * type "void *" in ANSI C;  maps them to type "char *" in
- * non-ANSI systems.  This macro may be used in some of the include
+ * type "void *" in ANSI C; maps them to type "char *" in
+ * non-ANSI systems. This macro may be used in some of the include
  * files below, which is why it is defined here.
  */
 
 #ifndef VOID
 #   ifdef __STDC__
-#       define VOID void
+#	define VOID void
 #   else
-#       define VOID char
+#	define VOID char
 #   endif
 #endif
 
@@ -54,9 +55,9 @@
 #   include <time.h>
 #else
 #   if HAVE_SYS_TIME_H
-#       include <sys/time.h>
+#	include <sys/time.h>
 #   else
-#       include <time.h>
+#	include <time.h>
 #   endif
 #endif
 #include <unistd.h>
@@ -114,20 +115,6 @@
 #endif
 
 /*
- * Declarations for various library procedures that may not be declared
- * in any other header file.
- */
-
-#ifndef strcasecmp
-extern int		strcasecmp _ANSI_ARGS_((CONST char *s1,
-			    CONST char *s2));
-#endif
-#ifndef strncasecmp			    
-extern int		strncasecmp _ANSI_ARGS_((CONST char *s1,
-			    CONST char *s2, size_t n));
-#endif
-
-/*
  * The following define causes Tk to use its internal keysym hash table
  */
 
@@ -176,7 +163,7 @@ extern int		strncasecmp _ANSI_ARGS_((CONST char *s1,
 
 #define TkpPrintWindowId(buf,w) \
 	sprintf((buf), "0x%x", (unsigned int) (w))
-	    
+
 /*
  * TkpScanWindowId is just an alias for Tcl_GetInt on Unix.
  */
@@ -185,9 +172,19 @@ extern int		strncasecmp _ANSI_ARGS_((CONST char *s1,
 	Tcl_GetInt((i),(s),(int *) (wp))
 
 /*
- * Magic pixel values for dynamic (or active) colors.
+ * Turn off Tk double-buffering as Aqua windows are already double-buffered.
  */
 
+#define TK_NO_DOUBLE_BUFFERING 1
+
+/*
+ * Magic pixel code values for system colors.
+ *
+ * NOTE: values must be kept in sync with indices into the
+ *	 systemColorMap array in tkMacOSXColor.c !
+ */
+
+#define TRANSPARENT_PIXEL		30
 #define HIGHLIGHT_PIXEL			31
 #define HIGHLIGHT_SECONDARY_PIXEL	32
 #define HIGHLIGHT_TEXT_PIXEL		33

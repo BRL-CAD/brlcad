@@ -35,13 +35,13 @@
 int
 TclSockGetPort(
     Tcl_Interp *interp,
-    char *string,		/* Integer or service name */
-    char *proto,		/* "tcp" or "udp", typically */
+    const char *string, /* Integer or service name */
+    const char *proto, /* "tcp" or "udp", typically */
     int *portPtr)		/* Return port number */
 {
     struct servent *sp;		/* Protocol info for named services */
     Tcl_DString ds;
-    CONST char *native;
+    const char *native;
 
     if (Tcl_GetInt(NULL, string, portPtr) != TCL_OK) {
 	/*

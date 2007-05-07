@@ -66,7 +66,7 @@ Tk_GetPixmap(
 	depth /= planes;
     }
     newTwdPtr->bitmap.handle =
-	    CreateBitmap(width, height, planes, depth, NULL);
+	    CreateBitmap(width, height, (DWORD) planes, (DWORD) depth, NULL);
 
     if (newTwdPtr->bitmap.handle == NULL) {
 	ckfree((char *) newTwdPtr);

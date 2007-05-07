@@ -12,7 +12,7 @@
  * The library is free for all purposes without any express
  * guarantee it works.
  *
- * Tom St Denis, tomstdenis@iahu.ca, http://math.libtomcrypt.org
+ * Tom St Denis, tomstdenis@gmail.com, http://math.libtomcrypt.com
  */
 
 /* single digit addition */
@@ -110,3 +110,5 @@ mp_add_d (mp_int * a, mp_digit b, mp_int * c)
 
 /* $Source$ */
 /* Tom's revision is 1.2 */
+/* $Revision$ */
+/* $Date$ */

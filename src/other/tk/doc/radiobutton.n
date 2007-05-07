@@ -257,7 +257,7 @@ The behavior of radiobuttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
 .SH "SEE ALSO"
-checkbutton(n), labelframe(n), listbox(n), options(n), scale(n)
+checkbutton(n), labelframe(n), listbox(n), options(n), scale(n), ttk_radiobutton(n)
 
 .SH KEYWORDS
 radiobutton, widget

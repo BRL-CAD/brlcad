@@ -19,13 +19,13 @@ Tk_GetCapStyle, Tk_NameOfCapStyle \- translate between strings and cap styles
 int
 \fBTk_GetCapStyle(\fIinterp, string, capPtr\fB)\fR
 .sp
-CONST char *
+const char *
 \fBTk_NameOfCapStyle(\fIcap\fB)\fR
 .SH ARGUMENTS
 .AS "Tcl_Interp" *capPtr
 .AP Tcl_Interp *interp in
 Interpreter to use for error reporting.
-.AP "CONST char" *string in
+.AP "const char" *string in
 String containing name of cap style: one of ```butt'', ``projecting'',
 or ``round''.
 .AP int *capPtr out

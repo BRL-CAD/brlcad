@@ -273,7 +273,7 @@ test iocmd-8.14 {fconfigure command} {
     fconfigure stdin -buffers
 } 4096
 test iocmd-8.15.1 {fconfigure command / tcp channel} -constraints {socket unixOrPc} -setup {
-    set srv [socket -server iocmdSRV 0]
+    set srv [socket -server iocmdSRV -myaddr 127.0.0.1 0]
     set port [lindex [fconfigure $srv -sockname] 2]
     proc iocmdSRV {sock ip port} {close $sock}
     set cli [socket 127.0.0.1 $port]
@@ -286,7 +286,7 @@ test iocmd-8.15.1 {fconfigure command / tcp channel} -constraints {socket unixOr
     rename iocmdSRV {}
 } -returnCodes error -result {bad option "-blah": should be one of -blocking, -buffering, -buffersize, -encoding, -eofchar, -translation, -peername, or -sockname}
 test iocmd-8.16 {fconfigure command / tcp channel} -constraints socket -setup {
-    set srv [socket -server iocmdSRV 0]
+    set srv [socket -server iocmdSRV -myaddr 127.0.0.1 0]
     set port [lindex [fconfigure $srv -sockname] 2]
     proc iocmdSRV {sock ip port} {close $sock}
     set cli [socket 127.0.0.1 $port]
@@ -299,7 +299,7 @@ test iocmd-8.16 {fconfigure command / tcp channel} -constraints socket -setup {
     rename iocmdSRV {}
 } -result 1
 test iocmd-8.17 {fconfigure command / tcp channel} -constraints nonPortable -setup {
-    set srv [socket -server iocmdSRV 0]
+    set srv [socket -server iocmdSRV -myaddr 127.0.0.1 0]
     set port [lindex [fconfigure $srv -sockname] 2]
     proc iocmdSRV {sock ip port} {close $sock}
     set cli [socket 127.0.0.1 $port]
@@ -628,7 +628,7 @@ test iocmd-20.0 {chan, wrong#args} {
 test iocmd-20.1 {chan, unknown method} {
     catch {chan foo} msg
     set msg
-} {unknown or ambiguous subcommand "foo": must be blocked, close, configure, copy, create, eof, event, flush, gets, names, postevent, puts, read, seek, tell, or truncate}
+} {unknown or ambiguous subcommand "foo": must be blocked, close, configure, copy, create, eof, event, flush, gets, names, pending, postevent, puts, read, seek, tell, or truncate}
 
 # --- --- --- --------- --------- ---------
 # chan create, and method "initalize"

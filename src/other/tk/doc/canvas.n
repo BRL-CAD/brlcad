@@ -1414,7 +1414,7 @@ should also be drawn as a curve but where the list of coordinates is
 such that the first coordinate pair (and every third coordinate pair
 thereafter) is a knot point on a cubic Bezier curve, and the other
 coordinates are control points on the cubic Bezier curve.  Straight
-line segments can be venerated within a curve by making control points
+line segments can be generated within a curve by making control points
 equal to their neighbouring knot points.  If the last point is a
 control point and not a knot point, the point is repeated (one or two
 times) so that it also becomes a knot point.

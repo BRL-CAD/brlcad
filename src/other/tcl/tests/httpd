@@ -1,3 +1,4 @@
+# -*- tcl -*-
 #
 # The httpd_ procedures implement a stub http server.
 #
@@ -27,7 +28,7 @@ array set httpdErrors {
     404 {Not Found}
     503 {Service Unavailable}
     504 {Service Temporarily Unavailable}
-    }
+}
 
 proc httpdError {sock code args} {
     global httpdErrors
@@ -56,8 +57,8 @@ proc httpdRead { sock } {
 	# Read the protocol line and parse out the URL and query
 
 	set readCount [gets $sock line]
-	if [regexp {(POST|GET|HEAD) ([^?]+)\??([^ ]*) HTTP/(1.[01])} \
-		$line x data(proto) data(url) data(query) data(httpversion)] {
+	if {[regexp {(POST|GET|HEAD) ([^?]+)\??([^ ]*) HTTP/(1.[01])} $line \
+		-> data(proto) data(url) data(query) data(httpversion)]} {
 	    set data(state) mime
 	    httpd_log $sock Query $line
 	} else {
@@ -96,7 +97,7 @@ proc httpdRead { sock } {
 	}
 	0,mime,HEAD	-
 	0,mime,GET	-
-	0,query,POST	{ 
+	0,query,POST	{
 	    # Empty line at end of headers,
 	    # or eof after query data
 	    httpdRespond $sock
@@ -192,7 +193,7 @@ proc httpdRespond { sock } {
 	    append html </body></html>
 	}
     }
-    
+
     # Catch errors from premature client closes
 
     catch {
@@ -215,5 +216,3 @@ proc httpdRespond { sock } {
     httpd_log $sock Done ""
     httpdSockDone $sock
 }
-
-

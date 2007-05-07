@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS:  @(#) tclUnixThrd.c 1.18 98/02/19 14:24:12
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -191,7 +191,7 @@ void
 TclpThreadExit(
     int status)
 {
-    pthread_exit((VOID *)status);
+    pthread_exit(INT2PTR(status));
 }
 #endif /* TCL_THREADS */
 
@@ -440,7 +440,8 @@ Tcl_Mutex *
 Tcl_GetAllocMutex(void)
 {
 #ifdef TCL_THREADS
-    return (Tcl_Mutex *)&allocLockPtr;
+    pthread_mutex_t **allocLockPtrPtr = &allocLockPtr;
+    return (Tcl_Mutex *) allocLockPtrPtr;
 #else
     return NULL;
 #endif
@@ -715,13 +716,9 @@ TclpInetNtoa(
 {
 #ifdef TCL_THREADS
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
-    union {
-	unsigned long l;
-	unsigned char b[4];
-    } u;
+    unsigned char *b = (unsigned char*) &addr.s_addr;
 
-    u.l = (unsigned long) addr.s_addr;
-    sprintf(tsdPtr->nabuf, "%u.%u.%u.%u", u.b[0], u.b[1], u.b[2], u.b[3]);
+    sprintf(tsdPtr->nabuf, "%u.%u.%u.%u", b[0], b[1], b[2], b[3]);
     return tsdPtr->nabuf;
 #else
     return inet_ntoa(addr);
@@ -746,12 +743,14 @@ Tcl_Mutex *
 TclpNewAllocMutex(void)
 {
     struct allocMutex *lockPtr;
+    register pthread_mutex_t *plockPtr;
 
     lockPtr = malloc(sizeof(struct allocMutex));
     if (lockPtr == NULL) {
 	Tcl_Panic("could not allocate lock");
     }
-    lockPtr->tlock = (Tcl_Mutex) &lockPtr->plock;
+    plockPtr = &lockPtr->plock;
+    lockPtr->tlock = (Tcl_Mutex) plockPtr;
     pthread_mutex_init(&lockPtr->plock, NULL);
     return &lockPtr->tlock;
 }

@@ -26,7 +26,7 @@ testConstraint testindexobj [expr {[info commands testindexobj] != {}}]
 
 test string-1.1 {error conditions} {
     list [catch {string gorp a b} msg] $msg
-} {1 {bad option "gorp": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, tolower, toupper, totitle, trim, trimleft, trimright, wordend, or wordstart}}
+} {1 {bad option "gorp": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, reverse, tolower, toupper, totitle, trim, trimleft, trimright, wordend, or wordstart}}
 test string-1.2 {error conditions} {
     list [catch {string} msg] $msg
 } {1 {wrong # args: should be "string option arg ?arg ...?"}}
@@ -311,10 +311,10 @@ test string-6.4 {string is, too many args} {
 } {1 {wrong # args: should be "string is class ?-strict? ?-failindex var? str"}}
 test string-6.5 {string is, class check} {
     list [catch {string is bogus str} msg] $msg
-} {1 {bad class "bogus": must be alnum, alpha, ascii, control, boolean, digit, double, false, graph, integer, lower, print, punct, space, true, upper, wideinteger, wordchar, or xdigit}}
+} {1 {bad class "bogus": must be alnum, alpha, ascii, control, boolean, digit, double, false, graph, integer, list, lower, print, punct, space, true, upper, wideinteger, wordchar, or xdigit}}
 test string-6.6 {string is, ambiguous class} {
     list [catch {string is al str} msg] $msg
-} {1 {ambiguous class "al": must be alnum, alpha, ascii, control, boolean, digit, double, false, graph, integer, lower, print, punct, space, true, upper, wideinteger, wordchar, or xdigit}}
+} {1 {ambiguous class "al": must be alnum, alpha, ascii, control, boolean, digit, double, false, graph, integer, list, lower, print, punct, space, true, upper, wideinteger, wordchar, or xdigit}}
 test string-6.7 {string is alpha, all ok} {
     string is alpha -strict -failindex var abc
 } 1
@@ -1351,7 +1351,7 @@ test string-20.1 {string trimright errors} {
 } {1 {wrong # args: should be "string trimright string ?chars?"}}
 test string-20.2 {string trimright errors} {
     list [catch {string trimg a} msg] $msg
-} {1 {bad option "trimg": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, tolower, toupper, totitle, trim, trimleft, trimright, wordend, or wordstart}}
+} {1 {bad option "trimg": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, reverse, tolower, toupper, totitle, trim, trimleft, trimright, wordend, or wordstart}}
 test string-20.3 {string trimright} {
     string trimright "    XYZ      "
 } {    XYZ}
@@ -1407,7 +1407,7 @@ test string-21.14 {string wordend, unicode} {
 
 test string-22.1 {string wordstart} {
     list [catch {string word a} msg] $msg
-} {1 {ambiguous option "word": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, tolower, toupper, totitle, trim, trimleft, trimright, wordend, or wordstart}}
+} {1 {ambiguous option "word": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, reverse, tolower, toupper, totitle, trim, trimleft, trimright, wordend, or wordstart}}
 test string-22.2 {string wordstart} {
     list [catch {string wordstart a} msg] $msg
 } {1 {wrong # args: should be "string wordstart string index"}}
@@ -1450,7 +1450,6 @@ test string-23.0 {string is boolean, Bug 1187123} testindexobj {
     catch {testindexobj $x foo bar soom}
     string is boolean $x
 } 0
-
 test string-23.1 {string is command with empty string} {
     set s ""
     list \
@@ -1474,7 +1473,6 @@ test string-23.1 {string is command with empty string} {
         [string is xdigit $s] \
 
 } {1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1}
-
 test string-23.2 {string is command with empty string} {
     set s ""
     list \
@@ -1498,6 +1496,98 @@ test string-23.2 {string is command with empty string} {
         [string is xdigit -strict $s] \
 
 } {0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0}
+
+test string-24.1 {string reverse command} -body {
+    string reverse
+} -returnCodes error -result "wrong # args: should be \"string reverse string\""
+test string-24.2 {string reverse command} -body {
+    string reverse a b
+} -returnCodes error -result "wrong # args: should be \"string reverse string\""
+test string-24.3 {string reverse command - shared string} {
+    set x abcde
+    string reverse $x
+} edcba
+test string-24.4 {string reverse command - unshared string} {
+    set x abc
+    set y de
+    string reverse $x$y
+} edcba
+test string-24.5 {string reverse command - shared unicode string} {
+    set x abcde\udead
+    string reverse $x
+} \udeadedcba
+test string-24.6 {string reverse command - unshared string} {
+    set x abc
+    set y de\udead
+    string reverse $x$y
+} \udeadedcba
+test string-24.7 {string reverse command - simple case} {
+    string reverse a
+} a
+test string-24.8 {string reverse command - simple case} {
+    string reverse \udead
+} \udead
+test string-24.9 {string reverse command - simple case} {
+    string reverse {}
+} {}
+test string-24.10 {string reverse command - corner case} {
+    set x \ubeef\udead
+    string reverse $x
+} \udead\ubeef
+test string-24.11 {string reverse command - corner case} {
+    set x \ubeef
+    set y \udead
+    string reverse $x$y
+} \udead\ubeef
+
+test string-25.1 {string is list} {
+    string is list {a b c}
+} 1
+test string-25.2 {string is list} {
+    string is list "a \{b c"
+} 0
+test string-25.3 {string is list} {
+    string is list {a {b c}d e}
+} 0
+test string-25.4 {string is list} {
+    string is list {}
+} 1
+test string-25.5 {string is list} {
+    string is list -strict {a b c}
+} 1
+test string-25.6 {string is list} {
+    string is list -strict "a \{b c"
+} 0
+test string-25.7 {string is list} {
+    string is list -strict {a {b c}d e}
+} 0
+test string-25.8 {string is list} {
+    string is list -strict {}
+} 1
+test string-25.9 {string is list} {
+    set x {}
+    list [string is list -failindex x {a b c}] $x
+} {1 {}}
+test string-25.10 {string is list} {
+    set x {}
+    list [string is list -failindex x "a \{b c"] $x
+} {0 2}
+test string-25.11 {string is list} {
+    set x {}
+    list [string is list -failindex x {a b {b c}d e}] $x
+} {0 4}
+test string-25.12 {string is list} {
+    set x {}
+    list [string is list -failindex x {}] $x
+} {1 {}}
+test string-25.13 {string is list} {
+    set x {}
+    list [string is list -failindex x {  {b c}d e}] $x
+} {0 2}
+test string-25.14 {string is list} {
+    set x {}
+    list [string is list -failindex x "\uabcd {b c}d e"] $x
+} {0 2}
 
 # cleanup
 ::tcltest::cleanupTests

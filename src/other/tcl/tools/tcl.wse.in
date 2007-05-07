@@ -12,7 +12,7 @@ item: Global
   Log Pathname=%MAINDIR%\INSTALL.LOG
   Message Font=MS Sans Serif
   Font Size=8
-  Disk Label=tcl8.5a5
+  Disk Label=tcl8.5a6
   Disk Filename=setup
   Patch Flags=0000000000000001
   Patch Threshold=85
@@ -162,7 +162,7 @@ item: Custom Dialog Set
     Title Danish=Velkommen
     Title Dutch=Welkom
     Title Norwegian=Velkommen
-    Title Swedish=Välkommen
+    Title Swedish=VÃ¤lkommen
     Width=273
     Height=250
     Font Name=Helv
@@ -235,7 +235,7 @@ item: Custom Dialog Set
     Title=%APPTITLE% Installation
     Title French=Installation de %APPTITLE%
     Title German=Installation von %APPTITLE%
-    Title Spanish=Instalación de %APPTITLE%
+    Title Spanish=InstalaciÃ³n de %APPTITLE%
     Title Italian=Installazione di %APPTITLE%
     Width=271
     Height=224
@@ -250,7 +250,7 @@ item: Custom Dialog Set
       Text=Welcome!
       Text French=Bienvenue !
       Text German=Willkommen!
-      Text Spanish=¡Bienvenido!
+      Text Spanish=Â¡Bienvenido!
       Text Italian=Benvenuti!
     end
     item: Push Button
@@ -271,8 +271,8 @@ item: Custom Dialog Set
       Create Flags=01010000000000010000000000000000
       Text=< &Back
       Text French=< &Retour
-      Text German=< &Zurück
-      Text Spanish=< &Atrás
+      Text German=< &ZurÃ¼ck
+      Text Spanish=< &AtrÃ¡s
       Text Italian=< &Indietro
     end
     item: Push Button
@@ -295,14 +295,14 @@ item: Custom Dialog Set
       Text=It is strongly recommended that you exit all Windows programs before running this installation program.
       Text French=Ce programme d'installation va installer %APPTITLE%.
       Text French=
-      Text French=Cliquez sur le bouton Suite pour démarrer l'installation. Vous pouvez cliquer sur le bouton Quitter l'installation si vous ne voulez pas installer %APPTITLE% tout de suite.
+      Text French=Cliquez sur le bouton Suite pour dÃ©marrer l'installation. Vous pouvez cliquer sur le bouton Quitter l'installation si vous ne voulez pas installer %APPTITLE% tout de suite.
       Text German=Mit diesem Installationsprogramm wird %APPTITLE% installiert.
       Text German=
       Text German=Klicken Sie auf "Weiter", um mit der Installation zu beginnen. Klicken Sie auf "Abbrechen", um die Installation von %APPTITLE% abzubrechen.
-      Text Spanish=Este programa de instalación instalará %APPTITLE%.
+      Text Spanish=Este programa de instalaciÃ³n instalarÃ¡ %APPTITLE%.
       Text Spanish=
-      Text Spanish=Presione el botón Siguiente para iniciar la instalación. Puede presionar el botón Salir de instalación si no desea instalar %APPTITLE% en este momento.
-      Text Italian=Questo programma installerà %APPTITLE%.
+      Text Spanish=Presione el botÃ³n Siguiente para iniciar la instalaciÃ³n. Puede presionar el botÃ³n Salir de instalaciÃ³n si no desea instalar %APPTITLE% en este momento.
+      Text Italian=Questo programma installerÃ  %APPTITLE%.
       Text Italian=
       Text Italian=Per avvviare l'installazione premere il pulsante Avanti. Se non si desidera installare %APPTITLE% ora, premere il pulsante Esci dall'installazione.
     end
@@ -320,7 +320,7 @@ item: Custom Dialog Set
     Title=%APPTITLE% Installation
     Title French=Installation de %APPTITLE%
     Title German=Installation von %APPTITLE%
-    Title Spanish=Instalación de %APPTITLE%
+    Title Spanish=InstalaciÃ³n de %APPTITLE%
     Title Italian=Installazione di %APPTITLE%
     Width=271
     Height=224
@@ -345,8 +345,8 @@ item: Custom Dialog Set
       Flags=0000000000000001
       Text=< &Back
       Text French=< &Retour
-      Text German=< &Zurück
-      Text Spanish=< &Atrás
+      Text German=< &ZurÃ¼ck
+      Text Spanish=< &AtrÃ¡s
       Text Italian=< &Indietro
     end
     item: Push Button
@@ -371,8 +371,8 @@ item: Custom Dialog Set
       Name=Times New Roman
       Font Style=-24 0 0 0 700 255 0 0 0 3 2 1 18
       Text=Select Destination Directory
-      Text French=Sélectionner le répertoire de destination
-      Text German=Zielverzeichnis wählen
+      Text French=SÃ©lectionner le rÃ©pertoire de destination
+      Text German=Zielverzeichnis wÃ¤hlen
       Text Spanish=Seleccione el directorio de destino
       Text Italian=Selezionare Directory di destinazione
     end
@@ -384,7 +384,7 @@ item: Custom Dialog Set
       Text=To install in the default directory below, click Next.
       Text=
       Text=To install in a different directory, click Browse and select another directory.
-      Text French=Veuillez sélectionner le répertoire dans lequel les fichiers %APPTITLE% doivent être installés.
+      Text French=Veuillez sÃ©lectionner le rÃ©pertoire dans lequel les fichiers %APPTITLE% doivent Ãªtre installÃ©s.
       Text German=Geben Sie an, in welchem Verzeichnis die %APPTITLE%-Dateien installiert werden sollen.
       Text Spanish=Por favor seleccione el directorio donde desee instalar los archivos de %APPTITLE%.
       Text Italian=Selezionare la directory dove verranno installati i file %APPTITLE%.
@@ -419,8 +419,8 @@ item: Custom Dialog Set
   end
   item: Dialog
     Title=Select Destination Directory
-    Title French=Sélectionner le répertoire de destination
-    Title German=Zielverzeichnis wählen
+    Title French=SÃ©lectionner le rÃ©pertoire de destination
+    Title German=Zielverzeichnis wÃ¤hlen
     Title Spanish=Seleccione el directorio de destino
     Title Italian=Selezionare Directory di destinazione
     Width=221
@@ -468,7 +468,7 @@ remarked item: Custom Dialog Set
     Title=%APPTITLE% Installation
     Title French=Installation de %APPTITLE%
     Title German=Installation von %APPTITLE%
-    Title Spanish=Instalación de %APPTITLE%
+    Title Spanish=InstalaciÃ³n de %APPTITLE%
     Title Italian=Installazione di %APPTITLE%
     Width=271
     Height=224
@@ -492,8 +492,8 @@ remarked item: Custom Dialog Set
       Create Flags=01010000000000010000000000000000
       Text=< &Back
       Text French=< &Retour
-      Text German=< &Zurück
-      Text Spanish=< &Atrás
+      Text German=< &ZurÃ¼ck
+      Text Spanish=< &AtrÃ¡s
       Text Italian=< &Indietro
     end
     item: Push Button
@@ -518,8 +518,8 @@ remarked item: Custom Dialog Set
       Name=Times New Roman
       Font Style=-24 0 0 0 700 255 0 0 0 3 2 1 18
       Text=Select Installation Type
-      Text French=Sélectionner les composants
-      Text German=Komponenten auswählen
+      Text French=SÃ©lectionner les composants
+      Text German=Komponenten auswÃ¤hlen
       Text Spanish=Seleccione componentes
       Text Italian=Selezionare i componenti
     end
@@ -562,7 +562,7 @@ remarked item: Custom Dialog Set
       Create Flags=01010000000000000000000000000000
       Text=Choose which type of installation to perform by selecting one of the buttons below.
       Text French=Choisissez les composants que vous voulez installer en cochant les cases ci-dessous.
-      Text German=Wählen Sie die zu installierenden Komponenten, indem Sie in die entsprechenden Kästchen klicken.
+      Text German=WÃ¤hlen Sie die zu installierenden Komponenten, indem Sie in die entsprechenden KÃ¤stchen klicken.
       Text Spanish=Elija los componentes que desee instalar marcando los cuadros de abajo.
       Text Italian=Scegliere quali componenti installare selezionando le caselle sottostanti.
     end
@@ -584,7 +584,7 @@ item: Custom Dialog Set
     Title=%APPTITLE% Installation
     Title French=Installation de %APPTITLE%
     Title German=Installation von %APPTITLE%
-    Title Spanish=Instalación de %APPTITLE%
+    Title Spanish=InstalaciÃ³n de %APPTITLE%
     Title Italian=Installazione di %APPTITLE%
     Width=271
     Height=224
@@ -608,8 +608,8 @@ item: Custom Dialog Set
       Create Flags=01010000000000010000000000000000
       Text=< &Back
       Text French=< &Retour
-      Text German=< &Zurück
-      Text Spanish=< &Atrás
+      Text German=< &ZurÃ¼ck
+      Text Spanish=< &AtrÃ¡s
       Text Italian=< &Indietro
     end
     item: Push Button
@@ -634,8 +634,8 @@ item: Custom Dialog Set
       Name=Times New Roman
       Font Style=-24 0 0 0 700 255 0 0 0 3 2 1 18
       Text=Select Components
-      Text French=Sélectionner les composants
-      Text German=Komponenten auswählen
+      Text French=SÃ©lectionner les composants
+      Text German=Komponenten auswÃ¤hlen
       Text Spanish=Seleccione componentes
       Text Italian=Selezionare i componenti
     end
@@ -709,7 +709,7 @@ item: Custom Dialog Set
       Create Flags=01010000000000000000000000000000
       Text=Choose which components to install by checking the boxes below.
       Text French=Choisissez les composants que vous voulez installer en cochant les cases ci-dessous.
-      Text German=Wählen Sie die zu installierenden Komponenten, indem Sie in die entsprechenden Kästchen klicken.
+      Text German=WÃ¤hlen Sie die zu installierenden Komponenten, indem Sie in die entsprechenden KÃ¤stchen klicken.
       Text Spanish=Elija los componentes que desee instalar marcando los cuadros de abajo.
       Text Italian=Scegliere quali componenti installare selezionando le caselle sottostanti.
     end
@@ -722,7 +722,7 @@ item: Custom Dialog Set
     Title=%APPTITLE% Installation
     Title French=Installation de %APPTITLE%
     Title German=Installation von %APPTITLE%
-    Title Spanish=Instalación de %APPTITLE%
+    Title Spanish=InstalaciÃ³n de %APPTITLE%
     Title Italian=Installazione di %APPTITLE%
     Width=271
     Height=224
@@ -747,8 +747,8 @@ item: Custom Dialog Set
       Flags=0000000000000001
       Text=< &Back
       Text French=< &Retour
-      Text German=< &Zurück
-      Text Spanish=< &Atrás
+      Text German=< &ZurÃ¼ck
+      Text Spanish=< &AtrÃ¡s
       Text Italian=< &Indietro
     end
     item: Push Button
@@ -773,7 +773,7 @@ item: Custom Dialog Set
       Name=Times New Roman
       Font Style=-24 0 0 0 700 255 0 0 0 3 2 1 18
       Text=Select ProgMan Group
-      Text French=Sélectionner le groupe du Gestionnaire de programme 
+      Text French=SÃ©lectionner le groupe du Gestionnaire de programme 
       Text German=Bestimmung der Programm-Managergruppe
       Text Spanish=Seleccione grupo del Administrador de programas
       Text Italian=Selezionare il gruppo ProgMan 
@@ -782,8 +782,8 @@ item: Custom Dialog Set
       Rectangle=86 44 256 68
       Create Flags=01010000000000000000000000000000
       Text=Enter the name of the Program Manager group to add the %APPTITLE% icons to:
-      Text French=Entrez le nom du groupe du Gestionnaire de programme dans lequel vous souhaitez ajouter les icônes de %APPTITLE% :
-      Text German=Geben Sie den Namen der Programmgruppe ein, der das Symbol %APPTITLE% hinzugefügt werden soll:
+      Text French=Entrez le nom du groupe du Gestionnaire de programme dans lequel vous souhaitez ajouter les icÃ´nes de %APPTITLE% :
+      Text German=Geben Sie den Namen der Programmgruppe ein, der das Symbol %APPTITLE% hinzugefÃ¼gt werden soll:
       Text Spanish=Escriba el nombre del grupo del Administrador de programas en el que desea agregar los iconos de %APPTITLE%:
       Text Italian=Inserire il nome del gruppo Program Manager per aggiungere le icone %APPTITLE% a:
     end
@@ -807,7 +807,7 @@ item: Custom Dialog Set
     Title=%APPTITLE% Installation
     Title French=Installation de %APPTITLE%
     Title German=Installation von %APPTITLE%
-    Title Spanish=Instalación de %APPTITLE%
+    Title Spanish=InstalaciÃ³n de %APPTITLE%
     Title Italian=Installazione di %APPTITLE%
     Width=271
     Height=224
@@ -831,8 +831,8 @@ item: Custom Dialog Set
       Create Flags=01010000000000010000000000000000
       Text=< &Back
       Text French=< &Retour
-      Text German=< &Zurück
-      Text Spanish=< &Atrás
+      Text German=< &ZurÃ¼ck
+      Text Spanish=< &AtrÃ¡s
       Text Italian=< &Indietro
     end
     item: Push Button
@@ -857,9 +857,9 @@ item: Custom Dialog Set
       Name=Times New Roman
       Font Style=-24 0 0 0 700 255 0 0 0 3 2 1 18
       Text=Ready to Install!
-      Text French=Prêt à installer !
+      Text French=PrÃªt Ã  installer !
       Text German=Installationsbereit!
-      Text Spanish=¡Preparado para la instalación!
+      Text Spanish=Â¡Preparado para la instalaciÃ³n!
       Text Italian=Pronto per l'installazione!
     end
     item: Static
@@ -868,16 +868,16 @@ item: Custom Dialog Set
       Text=You are now ready to install %APPTITLE%.
       Text=
       Text=Press the Next button to begin the installation or the Back button to reenter the installation information.
-      Text French=Vous êtes maintenant prêt à installer les fichiers %APPTITLE%.
+      Text French=Vous Ãªtes maintenant prÃªt Ã  installer les fichiers %APPTITLE%.
       Text French=
-      Text French=Cliquez sur le bouton Suite pour commencer l'installation ou sur le bouton Retour pour entrer les informations d'installation à nouveau.
-      Text German=Sie können %APPTITLE% nun installieren.
+      Text French=Cliquez sur le bouton Suite pour commencer l'installation ou sur le bouton Retour pour entrer les informations d'installation Ã  nouveau.
+      Text German=Sie kÃ¶nnen %APPTITLE% nun installieren.
       Text German=
-      Text German=Klicken Sie auf "Weiter", um mit der Installation zu beginnen. Klicken Sie auf "Zurück", um die Installationsinformationen neu einzugeben.
-      Text Spanish=Ya está listo para instalar %APPTITLE%.
+      Text German=Klicken Sie auf "Weiter", um mit der Installation zu beginnen. Klicken Sie auf "ZurÃ¼ck", um die Installationsinformationen neu einzugeben.
+      Text Spanish=Ya estÃ¡ listo para instalar %APPTITLE%.
       Text Spanish=
-      Text Spanish=Presione el botón Siguiente para comenzar la instalación o presione Atrás para volver a ingresar la información para la instalación.
-      Text Italian=Ora è possibile installare %APPTITLE%.
+      Text Spanish=Presione el botÃ³n Siguiente para comenzar la instalaciÃ³n o presione AtrÃ¡s para volver a ingresar la informaciÃ³n para la instalaciÃ³n.
+      Text Italian=Ora Ã¨ possibile installare %APPTITLE%.
       Text Italian=
       Text Italian=Premere il pulsante Avanti per avviare l'installazione o il pulsante Indietro per reinserire le informazioni di installazione.
     end
@@ -2257,7 +2257,7 @@ item: Custom Dialog Set
     Title=%APPTITLE% Installation
     Title French=Installation de %APPTITLE%
     Title German=Installation von %APPTITLE%
-    Title Spanish=Instalación de %APPTITLE%
+    Title Spanish=InstalaciÃ³n de %APPTITLE%
     Title Italian=Installazione di %APPTITLE%
     Width=271
     Height=224
@@ -2281,8 +2281,8 @@ item: Custom Dialog Set
       Create Flags=01010000000000010000000000000000
       Text=< &Back
       Text French=< &Retour
-      Text German=< &Zurück
-      Text Spanish=< &Atrás
+      Text German=< &ZurÃ¼ck
+      Text Spanish=< &AtrÃ¡s
       Text Italian=< &Indietro
     end
     item: Push Button
@@ -2309,9 +2309,9 @@ item: Custom Dialog Set
       Name=Times New Roman
       Font Style=-24 0 0 0 700 255 0 0 0 3 2 1 18
       Text=Installation Completed!
-      Text French=Installation terminée !
+      Text French=Installation terminÃ©e !
       Text German=Die Installation ist abgeschlossen!
-      Text Spanish=¡Instalación terminada!
+      Text Spanish=Â¡InstalaciÃ³n terminada!
       Text Italian=Installazione completata!
     end
     item: Static
@@ -2324,16 +2324,16 @@ item: Custom Dialog Set
       Text=You can learn more about Tcl/Tk %VER%, including release notes, updates, tutorials, and more at %URL%.  Check the box below to start your web browser and go there now.
       Text=
       Text=The installer may ask you to reboot your computer, this is to update your PATH and is not necessary to do immediately.
-      Text French=%APPTITLE% est maintenant installé.
+      Text French=%APPTITLE% est maintenant installÃ©.
       Text French=
       Text French=Cliquez sur le bouton Fin pour quitter l'installation.
       Text German=%APPTITLE% wurde erfolgreich installiert.
       Text German=
       Text German=Klicken Sie auf "Weiter", um die Installation zu beenden.
-      Text Spanish=%APPTITLE% se ha instalado con éxito.
+      Text Spanish=%APPTITLE% se ha instalado con Ã©xito.
       Text Spanish=
-      Text Spanish=Presione el botón Terminar para salir de esta instalación.
-      Text Italian=L'installazione %APPTITLE% è stata portata a termine con successo.
+      Text Spanish=Presione el botÃ³n Terminar para salir de esta instalaciÃ³n.
+      Text Italian=L'installazione %APPTITLE% Ã¨ stata portata a termine con successo.
       Text Italian=
       Text Italian=Premere il pulsante Fine per uscire dall'installazione.
     end

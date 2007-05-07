@@ -1,13 +1,13 @@
 /*
  * tkUnixEvent.c --
  *
- *	This file implements an event source for X displays for the
- *	UNIX version of Tk.
+ *	This file implements an event source for X displays for the UNIX
+ *	version of Tk.
  *
  * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
@@ -17,8 +17,8 @@
 #include <signal.h>
 
 /*
- * The following static indicates whether this module has been initialized
- * in the current thread.
+ * The following static indicates whether this module has been initialized in
+ * the current thread.
  */
 
 typedef struct ThreadSpecificData {
@@ -72,7 +72,7 @@ void
 TkCreateXEventSource(void)
 {
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
-            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (!tsdPtr->initialized) {
 	tsdPtr->initialized = 1;
@@ -103,7 +103,7 @@ DisplayExitHandler(
     ClientData clientData)	/* Not used. */
 {
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
-            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     Tcl_DeleteEventSource(DisplaySetupProc, DisplayCheckProc, NULL);
     tsdPtr->initialized = 0;
@@ -183,12 +183,12 @@ TkpCloseDisplay(
 	/*
 	 * Calling XCloseIM with an input context that has not been freed can
 	 * cause a crash. This crash has been reproduced under Linux systems
-	 * with XFree86 3.3 and may have also been seen under Solaris 2.3.
-	 * The crash is caused by a double free of memory inside the X
-	 * library. Memory that was already deallocated may be accessed again
-	 * inside XCloseIM. This bug can be avoided by making sure that a call
-	 * to XDestroyIC is made for each XCreateIC call. This bug has been
-	 * fixed in XFree86 4.2.99.2. The internal layout of the XIM structure
+	 * with XFree86 3.3 and may have also been seen under Solaris 2.3. The
+	 * crash is caused by a double free of memory inside the X library.
+	 * Memory that was already deallocated may be accessed again inside
+	 * XCloseIM. This bug can be avoided by making sure that a call to
+	 * XDestroyIC is made for each XCreateIC call. This bug has been fixed
+	 * in XFree86 4.2.99.2. The internal layout of the XIM structure
 	 * changed in the XFree86 4.2 release so the test should not be run
 	 * for with these new releases.
 	 */
@@ -199,25 +199,26 @@ TkpCloseDisplay(
 
 	if (strstr(ServerVendor(dispPtr->display), "XFree86")) {
 	    int vendrel = VendorRelease(dispPtr->display);
+
 	    if (vendrel < 336) {
-	        /* 3.3.4 and 3.3.5 */
-	        do_peek = 1;
+		/* 3.3.4 and 3.3.5 */
+		do_peek = 1;
 	    } else if (vendrel < 3900) {
-	        /* Other 3.3.x versions */
-	        do_peek = 1;
+		/* Other 3.3.x versions */
+		do_peek = 1;
 	    } else if (vendrel < 40000000) {
-	        /* 4.0.x versions */
-	        do_peek = 1;
+		/* 4.0.x versions */
+		do_peek = 1;
 	    } else {
-	        /* Newer than 4.0 */
-	        do_peek = 0;
+		/* Newer than 4.0 */
+		do_peek = 0;
 	    }
 	}
 
 	if (do_peek) {
 	    peek = (struct XIMPeek *) dispPtr->inputMethod;
 	    if (peek->ic_chain != NULL) {
-	        Tcl_Panic("input contexts not freed before XCloseIM");
+		Tcl_Panic("input contexts not freed before XCloseIM");
 	    }
 	}
 #endif
@@ -317,9 +318,9 @@ DisplaySetupProc(
 /*
  *----------------------------------------------------------------------
  *
- *  TransferXEventsToTcl
+ * TransferXEventsToTcl --
  *
- *      Transfer events from the X event queue to the Tk event queue.
+ *	Transfer events from the X event queue to the Tk event queue.
  *
  * Results:
  *	None.
@@ -337,11 +338,12 @@ TransferXEventsToTcl(
     XEvent event;
 
     /*
-     * Transfer events from the X event queue to the Tk event queue
-     * after XIM event filtering.  KeyPress and KeyRelease events
-     * are filtered in Tk_HandleEvent instead of here, so that Tk's
-     * focus management code can redirect them.
+     * Transfer events from the X event queue to the Tk event queue after XIM
+     * event filtering. KeyPress and KeyRelease events are filtered in
+     * Tk_HandleEvent instead of here, so that Tk's focus management code can
+     * redirect them.
      */
+
     while (QLength(display) > 0) {
 	XNextEvent(display, &event);
 	if (event.type != KeyPress && event.type != KeyRelease) {
@@ -477,7 +479,8 @@ TkUnixDoOneXEvent(
     static fd_mask readMask[MASK_SIZE];
     struct timeval blockTime, *timeoutPtr;
     Tcl_Time now;
-    int fd, index, bit, numFound, numFdBits = 0;
+    int fd, index, numFound, numFdBits = 0;
+    fd_mask bit;
 
     /*
      * Look for queued events first.
@@ -488,9 +491,9 @@ TkUnixDoOneXEvent(
     }
 
     /*
-     * Compute the next block time and check to see if we have timed out.
-     * Note that HP-UX defines tv_sec to be unsigned so we have to be careful
-     * in our arithmetic.
+     * Compute the next block time and check to see if we have timed out. Note
+     * that HP-UX defines tv_sec to be unsigned so we have to be careful in
+     * our arithmetic.
      */
 
     if (timePtr) {
@@ -517,9 +520,9 @@ TkUnixDoOneXEvent(
      * pending, then we want to poll instead of blocking.
      */
 
-    memset((VOID *) readMask, 0, MASK_SIZE*sizeof(fd_mask));
+    memset(readMask, 0, MASK_SIZE*sizeof(fd_mask));
     for (dispPtr = TkGetDisplayList(); dispPtr != NULL;
-	 dispPtr = dispPtr->nextPtr) {
+	    dispPtr = dispPtr->nextPtr) {
 	XFlush(dispPtr->display);
 	if (QLength(dispPtr->display) > 0) {
 	    blockTime.tv_sec = 0;
@@ -527,14 +530,14 @@ TkUnixDoOneXEvent(
 	}
 	fd = ConnectionNumber(dispPtr->display);
 	index = fd/(NBBY*sizeof(fd_mask));
-	bit = 1 << (fd%(NBBY*sizeof(fd_mask)));
+	bit = ((fd_mask)1) << (fd%(NBBY*sizeof(fd_mask)));
 	readMask[index] |= bit;
 	if (numFdBits <= fd) {
 	    numFdBits = fd+1;
 	}
     }
 
-    numFound = select(numFdBits, (SELECT_MASK *) &readMask[0], NULL, NULL,
+    numFound = select(numFdBits, (SELECT_MASK *) readMask, NULL, NULL,
 	    timeoutPtr);
     if (numFound <= 0) {
 	/*
@@ -542,7 +545,7 @@ TkUnixDoOneXEvent(
 	 * it here.
 	 */
 
-	memset((VOID *) readMask, 0, MASK_SIZE*sizeof(fd_mask));
+	memset(readMask, 0, MASK_SIZE*sizeof(fd_mask));
     }
 
     /*
@@ -553,7 +556,7 @@ TkUnixDoOneXEvent(
 	    dispPtr = dispPtr->nextPtr) {
 	fd = ConnectionNumber(dispPtr->display);
 	index = fd/(NBBY*sizeof(fd_mask));
-	bit = 1 << (fd%(NBBY*sizeof(fd_mask)));
+	bit = ((fd_mask)1) << (fd%(NBBY*sizeof(fd_mask)));
 	if ((readMask[index] & bit) || (QLength(dispPtr->display) > 0)) {
 	    DisplayFileProc((ClientData)dispPtr, TCL_READABLE);
 	}
@@ -659,6 +662,7 @@ OpenIM(
      * If we want to do over-the-spot XIM, we have to check that this mode is
      * supported. If not we will fall-through to the check below.
      */
+
     for (i = 0; i < stylePtr->count_styles; i++) {
 	if (stylePtr->supported_styles[i]
 		== (XIMPreeditPosition | XIMStatusNothing)) {
@@ -679,7 +683,6 @@ OpenIM(
     XFree(stylePtr);
 
   error:
-
     if (dispPtr->inputMethod) {
 	/*
 	 * This call should not suffer from any core dumping problems since we

@@ -110,7 +110,7 @@ typedef struct {
  * Information used for argv parsing.
  */
 
-static Tk_OptionSpec optionSpecs[] = {
+static const Tk_OptionSpec optionSpecs[] = {
     {TK_OPTION_ANCHOR, "-anchor", "anchor", "Anchor", DEF_MESSAGE_ANCHOR,
 	 -1, Tk_Offset(Message, anchor), 0, 0, 0},
     {TK_OPTION_INT, "-aspect", "aspect", "Aspect", DEF_MESSAGE_ASPECT,

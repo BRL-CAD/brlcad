@@ -1,10 +1,10 @@
-# 
+#
 # winPipe.test --
 #
 # This file contains a collection of tests for tclWinPipe.c
 #
-# Sourcing this file into Tcl runs the tests and generates output for 
-# errors.  No output means no errors were found.
+# Sourcing this file into Tcl runs the tests and generates output for errors.
+# No output (except for one message) means no errors were found.
 #
 # Copyright (c) 1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
@@ -18,18 +18,14 @@ package require tcltest
 namespace import -force ::tcltest::*
 unset -nocomplain path
 
-testConstraint exec [llength [info commands exec]]
 
 set bindir [file join [pwd] [file dirname [info nameofexecutable]]]
 set cat32 [file join $bindir cat32.exe]
 
-testConstraint cat32 [file exists $cat32]
-
-if {[catch {puts console1 ""}]} {
-    testConstraint AllocConsole 1
-} else {
-    testConstraint .console 1
-}
+testConstraint exec         [llength [info commands exec]]
+testConstraint cat32        [file exists $cat32]
+testConstraint AllocConsole [catch {puts console1 ""}]
+testConstraint RealConsole  [expr {![testConstraint AllocConsole]}]
 
 set big bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n
 append big $big
@@ -97,7 +93,7 @@ test winpipe-1.8 {32 bit comprehensive tests: from socket} {win cat32} {
     # doesn't work
 } {}
 test winpipe-1.9 {32 bit comprehensive tests: from nowhere} \
-	{win exec cat32 .console} {
+	{win exec cat32 RealConsole} {
     exec $cat32 > $path(stdout) 2> $path(stderr)
     list [contents $path(stdout)] [contents $path(stderr)]
 } {{} stderr32}
@@ -145,8 +141,8 @@ test winpipe-1.17 {32 bit comprehensive tests: to NUL} {win exec cat32} {
     set msg
 } stderr32
 test winpipe-1.18 {32 bit comprehensive tests: to nowhere} \
-	{win exec cat32 .console} {
-    exec $cat32 < $path(big) >&@stdout 
+	{win exec cat32 RealConsole} {
+    exec $cat32 < $path(big) >&@stdout
 } {}
 test winpipe-1.19 {32 bit comprehensive tests: to file handle} {win exec cat32} {
     set f1 [open $path(stdout) w]
@@ -200,28 +196,28 @@ test winpipe-4.1 {Tcl_WaitPid} {win nt exec cat32} {
     list $result $x [contents $path(stderr)]
 } "{$big} 1 stderr32"
 test winpipe-4.2 {Tcl_WaitPid: return of exception codes, SIGFPE} {win exec} {
-    set f [open "|[tcltest::interpreter]" w+]
+    set f [open "|[list [interpreter]]" w+]
     set pid [pid $f]
     puts $f "testexcept float_underflow"
     set status [catch {close $f}]
     list $status [expr {$pid == [lindex $::errorCode 1]}] [lindex $::errorCode 2]
 } {1 1 SIGFPE}
 test winpipe-4.3 {Tcl_WaitPid: return of exception codes, SIGSEGV} {win exec} {
-    set f [open "|[tcltest::interpreter]" w+]
+    set f [open "|[list [interpreter]]" w+]
     set pid [pid $f]
     puts $f "testexcept access_violation"
     set status [catch {close $f}]
     list $status [expr {$pid == [lindex $::errorCode 1]}] [lindex $::errorCode 2]
 } {1 1 SIGSEGV}
 test winpipe-4.4 {Tcl_WaitPid: return of exception codes, SIGILL} {win exec} {
-    set f [open "|[tcltest::interpreter]" w+]
+    set f [open "|[list [interpreter]]" w+]
     set pid [pid $f]
     puts $f "testexcept illegal_instruction"
     set status [catch {close $f}]
     list $status [expr {$pid == [lindex $::errorCode 1]}] [lindex $::errorCode 2]
 } {1 1 SIGILL}
 test winpipe-4.5 {Tcl_WaitPid: return of exception codes, SIGINT} {win exec} {
-    set f [open "|[tcltest::interpreter]" w+]
+    set f [open "|[list [interpreter]]" w+]
     set pid [pid $f]
     puts $f "testexcept ctrl+c"
     set status [catch {close $f}]
@@ -327,13 +323,13 @@ test winpipe-7.2 {BuildCommandLine: null arguments} {win exec} {
     exec $env(COMSPEC) /c echo foo {} bar
 } {foo "" bar}
 test winpipe-7.3 {BuildCommandLine: dbl quote quoting #1} {win exec} {
-    exec $env(COMSPEC) /c echo foo {"} bar
+    exec $env(COMSPEC) /c echo foo "\"" bar
 } {foo \" bar}
 test winpipe-7.4 {BuildCommandLine: dbl quote quoting #2} {win exec} {
     exec $env(COMSPEC) /c echo foo {""} bar
 } {foo \"\" bar}
 test winpipe-7.5 {BuildCommandLine: dbl quote quoting #3} {win exec} {
-    exec $env(COMSPEC) /c echo foo {" } bar
+    exec $env(COMSPEC) /c echo foo "\" " bar
 } {foo "\" " bar}
 test winpipe-7.6 {BuildCommandLine: dbl quote quoting #4} {win exec} {
     exec $env(COMSPEC) /c echo foo {a="b"} bar
@@ -342,7 +338,7 @@ test winpipe-7.7 {BuildCommandLine: dbl quote quoting #5} {win exec} {
     exec $env(COMSPEC) /c echo foo {a = "b"} bar
 } {foo "a = \"b\"" bar}
 test winpipe-7.8 {BuildCommandLine: dbl quote quoting #6} {win exec} {
-    exec $env(COMSPEC) /c echo {"hello"} {""hello""} {"""hello"""} {"\"hello\""} {he llo} {he " llo}
+    exec $env(COMSPEC) /c echo {"hello"} {""hello""} {"""hello"""} {"\"hello\""} {he llo} "he \" llo"
 } {\"hello\" \"\"hello\"\" \"\"\"hello\"\"\" \"\\\"hello\\\"\" "he llo" "he \" llo"}
 test winpipe-7.9 {BuildCommandLine: N backslashes followed a quote rule #1} {win exec} {
     exec $env(COMSPEC) /c echo foo \\ bar
@@ -384,14 +380,14 @@ test winpipe-8.2 {BuildCommandLine/parse_cmdline pass-thru: null arguments} {win
     exec [interpreter] $path(echoArgs.tcl) foo {} bar
 } [list $path(echoArgs.tcl) [list foo {} bar]]
 test winpipe-8.3 {BuildCommandLine/parse_cmdline pass-thru: dbl quote quoting #1} {win exec} {
-    exec [interpreter] $path(echoArgs.tcl) foo {"} bar
-} [list $path(echoArgs.tcl) [list foo {"} bar]]
+    exec [interpreter] $path(echoArgs.tcl) foo "\"" bar
+} [list $path(echoArgs.tcl) [list foo "\"" bar]]
 test winpipe-8.4 {BuildCommandLine/parse_cmdline pass-thru: dbl quote quoting #2} {win exec} {
     exec [interpreter] $path(echoArgs.tcl) foo {""} bar
 } [list $path(echoArgs.tcl) [list foo {""} bar]]
 test winpipe-8.5 {BuildCommandLine/parse_cmdline pass-thru: dbl quote quoting #3} {win exec} {
-    exec [interpreter] $path(echoArgs.tcl) foo {" } bar
-} [list $path(echoArgs.tcl) [list foo {" } bar]]
+    exec [interpreter] $path(echoArgs.tcl) foo "\" " bar
+} [list $path(echoArgs.tcl) [list foo "\" " bar]]
 test winpipe-8.6 {BuildCommandLine/parse_cmdline pass-thru: dbl quote quoting #4} {win exec} {
     exec [interpreter] $path(echoArgs.tcl) foo {a="b"} bar
 } [list $path(echoArgs.tcl) [list foo {a="b"} bar]]

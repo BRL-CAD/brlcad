@@ -568,6 +568,7 @@ TkpDisplayScale(
     }
     Tcl_Release((ClientData) scalePtr);
 
+#ifndef TK_NO_DOUBLE_BUFFERING
     /*
      * In order to avoid screen flashes, this function redraws the scale in a
      * pixmap, then copies the pixmap to the screen in a single operation.
@@ -577,6 +578,9 @@ TkpDisplayScale(
 
     pixmap = Tk_GetPixmap(scalePtr->display, Tk_WindowId(tkwin),
 	    Tk_Width(tkwin), Tk_Height(tkwin), Tk_Depth(tkwin));
+#else
+    pixmap = Tk_WindowId(tkwin);
+#endif /* TK_NO_DOUBLE_BUFFERING */
     drawnArea.x = 0;
     drawnArea.y = 0;
     drawnArea.width = Tk_Width(tkwin);
@@ -619,6 +623,7 @@ TkpDisplayScale(
 	}
     }
 
+#ifndef TK_NO_DOUBLE_BUFFERING
     /*
      * Copy the information from the off-screen pixmap onto the screen, then
      * delete the pixmap.
@@ -628,6 +633,7 @@ TkpDisplayScale(
 	    scalePtr->copyGC, drawnArea.x, drawnArea.y, drawnArea.width,
 	    drawnArea.height, drawnArea.x, drawnArea.y);
     Tk_FreePixmap(scalePtr->display, pixmap);
+#endif /* TK_NO_DOUBLE_BUFFERING */
 
   done:
     scalePtr->flags &= ~REDRAW_ALL;

@@ -2122,7 +2122,7 @@ test interp-26.6 {result code transmission: all combined--bug 1637} \
     proc MyTestAlias {interp args} {
 	global aliasTrace;
 	lappend aliasTrace $args;
-	interp invokehidden $interp {expand}$args
+	interp invokehidden $interp {*}$args
     }
     foreach c {return} {
 	interp hide $interp  $c;

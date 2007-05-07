@@ -316,7 +316,8 @@ dlerror(void)
 }
 
 int
-dlclose(void *handle)
+dlclose(
+    void *handle)
 {
     register ModulePtr mp = (ModulePtr)handle;
     int result;

@@ -122,8 +122,8 @@ Tcl_DriverHandlerProc *
 \fBTcl_ChannelHandlerProc\fR(\fItypePtr\fR)
 .sp
 .SH ARGUMENTS
-.AS Tcl_ChannelType *channelName
-.AP Tcl_ChannelType *typePtr in
+.AS "const Tcl_ChannelType" *channelName
+.AP "const Tcl_ChannelType" *typePtr in
 Points to a structure containing the addresses of procedures that
 can be called to perform I/O and other functions on the channel.
 .AP "const char" *channelName in

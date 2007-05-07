@@ -80,10 +80,10 @@ to the absence of a size modifier in the the conversion specifier.
 Either one indicates the integer range to be stored is limited to
 the same range produced by the \fBint()\fR function of the \fBexpr\fR
 command.  The \fBL\fR size modifier is equivalent to the \fBl\fR size
-modifer.  Either one indicates the integer range to be stored is
+modifier. Either one indicates the integer range to be stored is
 limited to the same range produced by the \fBwide()\fR function of
 the \fBexpr\fR command.  The \fBll\fR size modifier indicates that
-the integer range ro be stored is unlimited.
+the integer range to be stored is unlimited.
 .VE 8.5
 .PP
 The following conversion characters are supported:
@@ -108,8 +108,8 @@ The input substring must be a decimal integer.
 The integer value is truncated as required by the size modifier
 value, and the corresponding unsigned value for that truncated
 range is computed and stored in the variable as a decimal string.
-The conversion makes no sense without refernce to a truncation range,
-so the size modifer \fBll\fR is not permitted in combination
+The conversion makes no sense without reference to a truncation range,
+so the size modifier \fBll\fR is not permitted in combination
 with conversion character \fBu\fR.
 .TP 10
 \fBi\fR 
@@ -159,7 +159,7 @@ contains a sequence of the form \fIa\fB\-\fIb\fR then any
 character between \fIa\fR and \fIb\fR (inclusive) will be excluded
 from the set.
 If the first or last character between the brackets is a \fB\-\fR, then
-it is treated as part of \fIchars\fR rather than indicating a ranvaluege.
+it is treated as part of \fIchars\fR rather than indicating a range value.
 .TP 10
 \fBn\fR
 No input is consumed from the input string.  Instead, the total number

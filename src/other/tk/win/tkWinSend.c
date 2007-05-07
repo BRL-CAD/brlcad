@@ -51,10 +51,12 @@ typedef struct SendEvent {
     Tcl_Obj *cmdPtr;
 } SendEvent;
 
+#ifdef TK_SEND_ENABLED_ON_WINDOWS
 typedef struct {
     int initialized;
 } ThreadSpecificData;
 static Tcl_ThreadDataKey dataKey;
+#endif
 
 /*
  * Functions internal to this file.
@@ -116,14 +118,6 @@ Tk_SetAppName(
 				 * interpreter in later "send" commands. Must
 				 * be globally unique. */
 {
-    ThreadSpecificData *tsdPtr = NULL;
-    TkWindow *winPtr = (TkWindow *)tkwin;
-    RegisteredInterp *riPtr = NULL;
-    Tcl_Interp *interp;
-    HRESULT hr = S_OK;
-
-    interp = winPtr->mainPtr->interp;
-
 #ifndef TK_SEND_ENABLED_ON_WINDOWS
     /*
      * Temporarily disabled for bug #858822
@@ -131,6 +125,14 @@ Tk_SetAppName(
 
     return name;
 #else /* TK_SEND_ENABLED_ON_WINDOWS */
+
+    ThreadSpecificData *tsdPtr = NULL;
+    TkWindow *winPtr = (TkWindow *)tkwin;
+    RegisteredInterp *riPtr = NULL;
+    Tcl_Interp *interp;
+    HRESULT hr = S_OK;
+
+    interp = winPtr->mainPtr->interp;
 
     tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
@@ -207,12 +209,6 @@ TkGetInterpNames(
     Tk_Window tkwin)		/* Window whose display is to be used for the
 				 * lookup. */
 {
-    LPRUNNINGOBJECTTABLE pROT = NULL;
-    LPCOLESTR oleszStub = TKWINSEND_REGISTRATION_BASE;
-    HRESULT hr = S_OK;
-    Tcl_Obj *objList = NULL;
-    int result = TCL_OK;
-
 #ifndef TK_SEND_ENABLED_ON_WINDOWS
     /*
      * Temporarily disabled for bug #858822
@@ -220,6 +216,12 @@ TkGetInterpNames(
 
     return TCL_OK;
 #else /* TK_SEND_ENABLED_ON_WINDOWS */
+
+    LPRUNNINGOBJECTTABLE pROT = NULL;
+    LPCOLESTR oleszStub = TKWINSEND_REGISTRATION_BASE;
+    HRESULT hr = S_OK;
+    Tcl_Obj *objList = NULL;
+    int result = TCL_OK;
 
     hr = GetRunningObjectTable(0, &pROT);
     if (SUCCEEDED(hr)) {

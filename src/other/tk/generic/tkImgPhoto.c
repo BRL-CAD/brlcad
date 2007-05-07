@@ -403,11 +403,11 @@ static int		ImgPhotoCmd(ClientData clientData, Tcl_Interp *interp,
 static int		ParseSubcommandOptions(
 			    struct SubcommandOptions *optPtr,
 			    Tcl_Interp *interp, int allowedOptions,
-			    int *indexPtr, int objc, Tcl_Obj *CONST objv[]);
+			    int *indexPtr, int objc, Tcl_Obj *const objv[]);
 static void		ImgPhotoCmdDeletedProc(ClientData clientData);
 static int		ImgPhotoConfigureMaster(Tcl_Interp *interp,
 			    PhotoMaster *masterPtr, int objc,
-			    Tcl_Obj *CONST objv[], int flags);
+			    Tcl_Obj *const objv[], int flags);
 static void		ImgPhotoConfigureInstance(PhotoInstance *instancePtr);
 static int              ToggleComplexAlphaIfNeeded(PhotoMaster *mPtr);
 static void             ImgPhotoBlendComplexAlpha(XImage *bgImg,
@@ -423,7 +423,7 @@ static char *		ImgGetPhoto(PhotoMaster *masterPtr,
 			    Tk_PhotoImageBlock *blockPtr,
 			    struct SubcommandOptions *optPtr);
 static int		IsValidPalette(PhotoInstance *instancePtr,
-			    CONST char *palette);
+			    const char *palette);
 static int		CountBits(pixel mask);
 static void		GetColorTable(PhotoInstance *instancePtr);
 static void		FreeColorTable(ColorTable *colorPtr, int force);
@@ -647,7 +647,7 @@ ImgPhotoCmd(
     Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     int oldformat = 0;
-    static CONST char *photoOptions[] = {
+    static const char *photoOptions[] = {
 	"blank", "cget", "configure", "copy", "data", "get", "put",
 	"read", "redither", "transparency", "write", NULL
     };
@@ -1368,7 +1368,7 @@ ImgPhotoCmd(
 	return TCL_OK;
 
     case PHOTO_TRANS: {
-	static CONST char *photoTransOptions[] = {
+	static const char *photoTransOptions[] = {
 	    "get", "set", NULL
 	};
 	enum transOptions {
@@ -1640,7 +1640,7 @@ ParseSubcommandOptions(
 				 * index in objv; this variable is updated by
 				 * this function. */
     int objc,			/* Number of arguments in objv[]. */
-    Tcl_Obj *CONST objv[])	/* Arguments to be parsed. */
+    Tcl_Obj *const objv[])	/* Arguments to be parsed. */
 {
     int index, c, bit, currentBit;
     int length;
@@ -1755,9 +1755,8 @@ ParseSubcommandOptions(
 		 * constants.
 		 */
 
-		static CONST char *compositingRules[] = {
-		    "overlay", "set",
-		    NULL
+		static const char *compositingRules[] = {
+		    "overlay", "set", NULL
 		};
 
 		index++;
@@ -1908,12 +1907,12 @@ ImgPhotoConfigureMaster(
     PhotoMaster *masterPtr,	/* Pointer to data structure describing
 				 * overall photo image to (re)configure. */
     int objc,			/* Number of entries in objv. */
-    Tcl_Obj *CONST objv[],	/* Pairs of configuration options for image. */
+    Tcl_Obj *const objv[],	/* Pairs of configuration options for image. */
     int flags)			/* Flags to pass to Tk_ConfigureWidget, such
 				 * as TK_CONFIG_ARGV_ONLY. */
 {
     PhotoInstance *instancePtr;
-    CONST char *oldFileString, *oldPaletteString;
+    const char *oldFileString, *oldPaletteString;
     Tcl_Obj *oldData, *data = NULL, *oldFormat, *format = NULL;
     int length, i, j;
     double oldGamma;
@@ -1921,11 +1920,11 @@ ImgPhotoConfigureMaster(
     Tcl_Channel chan;
     Tk_PhotoImageFormat *imageFormat;
     int imageWidth, imageHeight;
-    CONST char **args;
+    const char **args;
     int oldformat;
     Tcl_Obj *tempdata, *tempformat;
 
-    args = (CONST char **) ckalloc((objc + 1) * sizeof(char *));
+    args = (const char **) ckalloc((objc + 1) * sizeof(char *));
     for (i = 0, j = 0; i < objc; i++,j++) {
 	args[j] = Tcl_GetStringFromObj(objv[i], &length);
 	if ((length > 1) && (args[j][0] == '-')) {
@@ -2365,7 +2364,7 @@ ImgPhotoGet(
      * between 3 and 15 bits/pixel.
      */
 
-    static int paletteChoice[13][3] = {
+    static const int paletteChoice[13][3] = {
 	/*  #red, #green, #blue */
 	 {2,  2,  2,		/* 3 bits, 8 colors */},
 	 {2,  3,  2,		/* 4 bits, 12 colors */},
@@ -2413,8 +2412,8 @@ ImgPhotoGet(
     }
 
     /*
-     * The image isn't already in use in a window with the same colormap.
-     * Make a new instance of the image.
+     * The image isn't already in use in a window with the same colormap. Make
+     * a new instance of the image.
      */
 
     instancePtr = (PhotoInstance *) ckalloc(sizeof(PhotoInstance));
@@ -2440,45 +2439,44 @@ ImgPhotoGet(
     visualInfo.visualid = XVisualIDFromVisual(Tk_Visual(tkwin));
     visInfoPtr = XGetVisualInfo(Tk_Display(tkwin),
 	    VisualScreenMask | VisualIDMask, &visualInfo, &numVisuals);
+    if (visInfoPtr == NULL) {
+	Tcl_Panic("ImgPhotoGet couldn't find visual for window");
+    }
+
     nRed = 2;
     nGreen = nBlue = 0;
     mono = 1;
-    if (visInfoPtr != NULL) {
-	instancePtr->visualInfo = *visInfoPtr;
-	switch (visInfoPtr->class) {
-	case DirectColor:
-	case TrueColor:
-	    nRed = 1 << CountBits(visInfoPtr->red_mask);
-	    nGreen = 1 << CountBits(visInfoPtr->green_mask);
-	    nBlue = 1 << CountBits(visInfoPtr->blue_mask);
+    instancePtr->visualInfo = *visInfoPtr;
+    switch (visInfoPtr->class) {
+    case DirectColor:
+    case TrueColor:
+	nRed = 1 << CountBits(visInfoPtr->red_mask);
+	nGreen = 1 << CountBits(visInfoPtr->green_mask);
+	nBlue = 1 << CountBits(visInfoPtr->blue_mask);
+	mono = 0;
+	break;
+    case PseudoColor:
+    case StaticColor:
+	if (visInfoPtr->depth > 15) {
+	    nRed = 32;
+	    nGreen = 32;
+	    nBlue = 32;
 	    mono = 0;
-	    break;
-	case PseudoColor:
-	case StaticColor:
-	    if (visInfoPtr->depth > 15) {
-		nRed = 32;
-		nGreen = 32;
-		nBlue = 32;
-		mono = 0;
-	    } else if (visInfoPtr->depth >= 3) {
-		int *ip = paletteChoice[visInfoPtr->depth - 3];
+	} else if (visInfoPtr->depth >= 3) {
+	    const int *ip = paletteChoice[visInfoPtr->depth - 3];
 
-		nRed = ip[0];
-		nGreen = ip[1];
-		nBlue = ip[2];
-		mono = 0;
-	    }
-	    break;
-	case GrayScale:
-	case StaticGray:
-	    nRed = 1 << visInfoPtr->depth;
-	    break;
+	    nRed = ip[0];
+	    nGreen = ip[1];
+	    nBlue = ip[2];
+	    mono = 0;
 	}
-	XFree((char *) visInfoPtr);
-
-    } else {
-	Tcl_Panic("ImgPhotoGet couldn't find visual for window");
+	break;
+    case GrayScale:
+    case StaticGray:
+	nRed = 1 << visInfoPtr->depth;
+	break;
     }
+    XFree((char *) visInfoPtr);
 
     sprintf(buf, ((mono) ? "%d": "%d/%d/%d"), nRed, nGreen, nBlue);
     instancePtr->defaultPalette = Tk_GetUid(buf);
@@ -3213,7 +3211,6 @@ ImgPhotoInstanceSetSize(
 		instancePtr->visualInfo.depth);
         if (!newPixmap) {
             Tcl_Panic("Fail to create pixmap with Tk_GetPixmap in ImgPhotoInstanceSetSize.\n");
-            return;
         }
 
 	/*
@@ -3330,7 +3327,7 @@ static int
 IsValidPalette(
     PhotoInstance *instancePtr,	/* Instance to which the palette specification
 				 * is to be applied. */
-    CONST char *palette)	/* Palette specification string. */
+    const char *palette)	/* Palette specification string. */
 {
     int nRed, nGreen, nBlue, mono, numColors;
     char *endp;
@@ -4910,9 +4907,10 @@ Tk_PhotoPutZoomedBlock(
 	    TkDestroyRegion(workRgn);
 	}
 
-	TkpBuildRegionFromAlphaData(masterPtr->validRegion, x,y, width,height,
+	TkpBuildRegionFromAlphaData(masterPtr->validRegion,
+		(unsigned)x, (unsigned)y, (unsigned)width, (unsigned)height,
 		&masterPtr->pix32[(y * masterPtr->width + x) * 4 + 3], 4,
-		masterPtr->width * 4);
+		(unsigned) masterPtr->width * 4);
     } else {
 	rect.x = x;
 	rect.y = y;

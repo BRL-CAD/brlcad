@@ -37,7 +37,7 @@ test winConsole-1.1 {Console file channel: non-blocking gets} {win interactive} 
 
     #cleanup the fileevent
     fileevent stdin readable {}
-    fconfigure stdin {expand}$oldmode
+    fconfigure stdin {*}$oldmode
 
     set result
 

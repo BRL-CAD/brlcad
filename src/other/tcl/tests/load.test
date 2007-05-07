@@ -19,9 +19,10 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 
 # Figure out what extension is used for shared libraries on this
 # platform.
-
+if {![info exists ext]} {
+    set ext [info sharedlibextension]
+}
 # Tests require the existence of one of the DLLs in the dltest directory.
-set ext [info sharedlibextension]
 set testDir [file join [file dirname [info nameofexecutable]] dltest]
 set x [file join $testDir pkga$ext]
 set dll "[file tail $x]Required"
@@ -195,7 +196,8 @@ test load-9.1 {Tcl_StaticPackage, load already-loaded package into another inter
     -result {{{{} Loadninepointone} {{} Tcltest}} {{{} Loadninepointone} {{} Tcltest}}} \
     -cleanup { interp delete child1 ; interp delete child2 }
 
-    
+
 # cleanup
+unset ext
 ::tcltest::cleanupTests
 return

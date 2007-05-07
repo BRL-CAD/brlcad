@@ -37,9 +37,9 @@ In the general case there can be more than one value list
 and each value list can be associated with a list of loop variables
 (e.g., \fIvarlist1\fR and \fIvarlist2\fR).
 During each iteration of the loop
-the variables of each \fIvarlist\fP are assigned
-consecutive values from the corresponding \fIlist\fP.
-Values in each \fIlist\fP are used in order from first to last,
+the variables of each \fIvarlist\fR are assigned
+consecutive values from the corresponding \fIlist\fR.
+Values in each \fIlist\fR are used in order from first to last,
 and each value is used exactly once.
 The total number of loop iterations is large enough to use
 up all the values from all the value lists.

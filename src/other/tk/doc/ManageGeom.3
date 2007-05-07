@@ -21,7 +21,7 @@ Tk_ManageGeometry \- arrange to handle geometry requests for a window
 .AS Tk_GeometryProc clientData
 .AP Tk_Window tkwin in
 Token for window to be managed.
-.AP Tk_GeomMgr *mgrPtr in
+.AP "const Tk_GeomMgr" *mgrPtr in
 Pointer to data structure containing information about the
 geometry manager, or NULL to indicate that \fItkwin\fR's geometry
 shouldn't be managed anymore.
@@ -45,7 +45,7 @@ The structure pointed to by \fImgrPtr\fR contains information about
 the geometry manager:
 .CS
 typedef struct {
-    char *\fIname\fR;
+    const char *\fIname\fR;
     Tk_GeomRequestProc *\fIrequestProc\fR;
     Tk_GeomLostSlaveProc *\fIlostSlaveProc\fR;
 } Tk_GeomMgr;

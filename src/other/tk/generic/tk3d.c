@@ -1321,7 +1321,7 @@ static void
 InitBorderObj(
     Tcl_Obj *objPtr)		/* The object to convert. */
 {
-    Tcl_ObjType *typePtr;
+    const Tcl_ObjType *typePtr;
 
     /*
      * Free the old internalRep before setting the new one.

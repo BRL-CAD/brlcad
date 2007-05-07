@@ -51,12 +51,12 @@ are performed on the characters between the quotes as described below.
 The double-quotes are not retained as part of the word.
 .VS 8.5 br
 .IP "[5] \fBArgument expansion.\fR"
-If a word starts with the string ``{expand}'' followed by a 
-non-whitespace character, then the leading ``{expand}'' is removed
+If a word starts with the string ``{*}'' followed by a 
+non-whitespace character, then the leading ``{*}'' is removed
 and the rest of the word is parsed and substituted as any other  
 word. After substitution, the word is parsed again without
 substitutions, and its words are added to the command being
-substituted. For instance, ``cmd a {expand}{b c} d {expand}{e f}'' is
+substituted. For instance, ``cmd a {*}{b c} d {*}{e f}'' is
 equivalent to ``cmd a b c d e f''. 
 .VE 8.5
 .IP "[6] \fBBraces.\fR"

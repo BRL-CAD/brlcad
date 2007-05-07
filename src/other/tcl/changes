@@ -6840,3 +6840,82 @@ URL validity checking against RFC 2986 (hobbs)
 2006-10-13 (platform support) get stack size on Darwin (steffen)
 
 --- Released 8.5a5, October 20, 2006 --- See ChangeLog for details ---
+
+2006-10-20 (configure change) Added autodetection for OS-supplied timezone
+files.
+
+2006-10-23 (enhancement)[1577278] Ensure the Tcl call stack always has a
+CallFrame, even at level 0.
+	*** POTENTIAL INCOMPATIBILITY for users of tclInt.h ***
+
+2006-10-23 (enhancement)[1577492] Tcl_PushCallFrame and [info level]
+enhanced for ensemble rewrites.
+	*** POTENTIAL INCOMPATIBILITY for [info level 0] on interp alias ***
+
+2006-11-02 (feature change)[TIP 293] Replace {expand} with {*}
+	*** POTENTIAL INCOMPATIBILITY with previous 8.5 alphas only ***
+
+2006-11-04 (new feature)[TIP 274] Expression operator is right associative.
+
+2006-11-09 (new feature)[TIP 272] Added [lreverse] and [string reverse]
+commands.
+
+2006-11-14 (new feature)[TIP 261] [namespace import] returns list of
+imported commands.
+
+2006-11-15 (new feature)[TIP 270] New C routines Tcl_ObjPrintf,
+Tcl_AppendObjToErrorInfo, Tcl_Format, Tcl_AppendLimitedToObj,
+Tcl_AppendFormatToObj, Tcl_AppendPrintfToObj.
+
+2006-11-22 (feature change) Moved TCL_REG_BOSONLY from tcl.h to tclInt.h
+
+2006-11-22 (new feature)[TIP 269] Added [string is list] classification
+command.
+
+2006-11-25 (new feature)[TIP 174] Added commands corresponding to most
+expr operators in ::tcl::mathop.
+
+2006-11-27 (bug fix)[1602208] Fix 64-bit handling of select() on unix where
+fd was greater than 32.
+
+2006-11-28 (new feature)[TIP 280] Added [info frame] command for more
+Tcl-level debugging information.
+
+2006-12-01 (feature change)[TIP 298] Change Tcl_GetBignumAndClearObj to
+Tcl_TakeBignumFromObj.
+
+2006-12-01 (new feature)[TIP 287] Added [chan pending] subcommand.
+
+2006-12-01 (new feature)[TIP 299] Added isqrt() expr operator.
+
+2006-12-04 (new feature)[TIP 267] Added -ignorestderr option to exec.
+
+2006-12-05 (new feature)[TIP 291] Added ::tcl_platform(pointerSize) key.
+
+2007-01-11 (configure change) Remove "-Wconversion" from default CFLAGS.
+
+2007-01-25 (configure change) Ensure CPPFLAGS env var is used when set.
+
+2007-02-19 (configure change) Use SHLIB_SUFFIX=".so" on HP-UX IA64 (was
+".sl").
+
+2007-02-20 (bug fix)[1479814] Handle Windows NT \\?\... extended paths.
+
+2007-03-01 (bug fix)[1671138] Fix infinite loop in compiled foreach with an
+empty list.
+
+2007-03-07 (enhancement) Improved Windows time zone tables to handle new US
+DST rules.
+
+2007-03-09 (enhancement) Improved Y2038 compliance of zoneinfo files.
+
+2007-04-02 (enhancement) Added bytecode compilation for global, variable,
+upvar and namespace upvar.
+
+2007-04-20 (bug fix) Improve clock localization for Japanese locale.
+
+2007-04-20 (enhancement) Documented Tcl_SetNotifier and Tcl_ServiceModeHook.
+
+2007-04-23 (bug fix) Workaround crashing bug in fts_open() on 64bit Darawin.
+
+--- Released 8.5a6, April 25, 2007 --- See ChangeLog for details ---

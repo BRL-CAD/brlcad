@@ -1758,7 +1758,7 @@ SerialSetOptionProc(
 	} else {
 	    if (interp != NULL) {
 		Tcl_AppendResult(interp, "bad value \"", value,
-			"\" for -handshake: must be one of xonxoff, rtscts, ",
+			"\" for -handshake: must be one of xonxoff, rtscts, "
 			"dtrdsr or none", NULL);
 	    }
 	    return TCL_ERROR;
@@ -1791,7 +1791,7 @@ SerialSetOptionProc(
 	if (argc != 2) {
 	badXchar:
 	    if (interp != NULL) {
-		Tcl_AppendResult(interp, "bad value for -xchar: should be ",
+		Tcl_AppendResult(interp, "bad value for -xchar: should be "
 			"a list of two elements with each a single character",
 			NULL);
 	    }
@@ -1850,7 +1850,7 @@ SerialSetOptionProc(
 	if ((argc % 2) == 1) {
 	    if (interp != NULL) {
 		Tcl_AppendResult(interp, "bad value \"", value,
-			"\" for -ttycontrol: should be a list of ",
+			"\" for -ttycontrol: should be a list of "
 			"signal,value pairs", NULL);
 	    }
 	    ckfree((char *) argv);
@@ -1931,7 +1931,7 @@ SerialSetOptionProc(
 	if ((argc < 1) || (argc > 2) || (inSize <= 0) || (outSize <= 0)) {
 	    if (interp != NULL) {
 		Tcl_AppendResult(interp, "bad value \"", value,
-			"\" for -sysbuffer: should be a list of one or two ",
+			"\" for -sysbuffer: should be a list of one or two "
 			"integers > 0", NULL);
 	    }
 	    return TCL_ERROR;

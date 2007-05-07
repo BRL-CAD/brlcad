@@ -4,7 +4,6 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
 '\"
 '\" RCS: @(#) $Id$
 '\" 
@@ -134,14 +133,53 @@ modifies the given widget option(s) to have the given value(s);  in
 this case the command returns an empty string.
 \fIOption\fR may have any of the values accepted by the \fBlabelframe\fR
 command.
-
 .SH BINDINGS
 .PP
 When a new labelframe is created, it has no default event bindings:
 labelframes are not intended to be interactive.
+.SH EXAMPLE
+This shows how to build part of a GUI for a hamburger vendor. The
+\fBlabelframe\fR widgets are used to organize the available choices by
+the kinds of things that the choices are being made over.
+.PP
+.CS
+grid [\fBlabelframe\fR .burger -text "Burger"] \\
+     [\fBlabelframe\fR .bun    -text "Bun"] -sticky news
+grid [\fBlabelframe\fR .cheese -text "Cheese Option"] \\
+     [\fBlabelframe\fR .pickle -text "Pickle Option"] -sticky news
+foreach {type name val} {
+    burger Beef    beef
+    burger Lamb    lamb
+    burger Vegetarian beans
+
+    bun    Plain   white
+    bun    Sesame  seeds
+    bun    Wholemeal brown
+
+    cheese None    none
+    cheese Cheddar cheddar
+    cheese Edam    edam
+    cheese Brie    brie
+    cheese Gruy\\u00e8re gruyere
+    cheese "Monterey Jack" jack
+
+    pickle None    none
+    pickle Gherkins gherkins
+    pickle Onions  onion
+    pickle Chili   chili
+} {
+    set w [radiobutton .$type.$val -text $name -anchor w \\
+            -variable $type -value $val]
+    pack $w -side top -fill x
+}
+set burger beef
+set bun    white
+set cheese none
+set pickle none
+.CE
 
 .SH "SEE ALSO"
-frame(n), label(n)
+frame(n), label(n), ttk_labelframe(n)
 
 .SH KEYWORDS
 labelframe, widget

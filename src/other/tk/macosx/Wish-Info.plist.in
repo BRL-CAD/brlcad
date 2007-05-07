@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+	Copyright (c) 2005-2007 Daniel A. Steffen <das@users.sourceforge.net>
+
+	See the file "license.terms" for information on usage and redistribution of
+	this file, and for a DISCLAIMER OF ALL WARRANTIES.
+
+	RCS: @(#) $Id$
+-->
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
@@ -9,13 +17,21 @@
 		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>
+				<string>tcl</string>
+				<string>TCL</string>
 				<string>*</string>
+			</array>
+			<key>CFBundleTypeMIMETypes</key>
+			<array>
+				<string>application/x-tcl</string>
+				<string>text/plain</string>
 			</array>
 			<key>CFBundleTypeName</key>
 			<string>NSStringPboardType</string>
 			<key>CFBundleTypeOSTypes</key>
 			<array>
 				<string>TEXT</string>
+				<string>****</string>
 			</array>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
@@ -24,8 +40,11 @@
 	<key>CFBundleExecutable</key>
 	<string>Wish</string>
 	<key>CFBundleGetInfoString</key>
-	<string>Wish Shell @TK_VERSION@, Copyright © @TK_YEAR@ Tcl Core Team.
-Initial MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Copyright © 2001-2002, Apple Computer, Inc.</string>
+	<string>Wish Shell @TK_VERSION@@TK_PATCH_LEVEL@,
+Copyright © @TK_YEAR@ Tcl Core Team,
+Copyright © 2002-@TK_YEAR@ Daniel A. Steffen,
+Initial MacOS X Port by Jim Ingham &amp; Ian Reid,
+Copyright © 2001-2002, Apple Computer, Inc.</string>
 	<key>CFBundleIconFile</key>
 	<string>Wish.icns</string>
 	<key>CFBundleIdentifier</key>
@@ -42,5 +61,11 @@ Initial MacOS X Port by Jim Ingham &lt;jingham@apple.com&gt; &amp; Ian Reid, Cop
 	<string>WiSH</string>
 	<key>CFBundleVersion</key>
 	<string>@TK_VERSION@@TK_PATCH_LEVEL@</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.2.0</string>
+	<key>LSRequiresCarbon</key>
+	<true/>
+	<key>NSAppleScriptEnabled</key>
+	<true/>
 </dict>
 </plist>

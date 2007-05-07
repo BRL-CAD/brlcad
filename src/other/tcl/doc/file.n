@@ -291,13 +291,13 @@ otherwise.
 .TP
 \fBfile pathtype \fIname\fR
 .
-Returns one of \fBabsolute\fR, \fBrelative\fR, \fBvolumerelative\fR.  If
-\fIname\fR refers to a specific file on a specific volume, the path type
-will be \fBabsolute\fR.  If \fIname\fR refers to a file relative to the
-current working directory, then the path type will be \fBrelative\fR.  If
-\fIname\fR refers to a file relative to the current working directory on
-a specified volume, or to a specific file on the current working volume, then
-the file type is \fBvolumerelative\fR.
+Returns one of \fBabsolute\fR, \fBrelative\fR, \fBvolumerelative\fR. If
+\fIname\fR refers to a specific file on a specific volume, the path type will
+be \fBabsolute\fR. If \fIname\fR refers to a file relative to the current
+working directory, then the path type will be \fBrelative\fR. If \fIname\fR
+refers to a file relative to the current working directory on a specified
+volume, or to a specific file on the current working volume, then the path
+type is \fBvolumerelative\fR.
 .TP
 \fBfile readable \fIname\fR
 .
@@ -468,8 +468,8 @@ if {![\fBfile isdirectory\fR [\fBfile dirname\fR $newName]]} {
 .CE
 
 .SH "SEE ALSO"
-filename(n), open(n), close(n), eof(n), gets(n), tell(n), seek(n),
-fblocked(n), flush(n)
+chan(n), close(n), eof(n), fblocked(n), filename(n), flush(n), gets(n),
+open(n), seek(n), tell(n)
 
 .SH KEYWORDS
 attributes, copy files, delete files, directory, file, move files, name, rename files, stat

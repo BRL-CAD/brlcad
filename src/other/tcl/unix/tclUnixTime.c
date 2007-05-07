@@ -193,7 +193,8 @@ TclpGetWideClicks(void)
  */
 
 Tcl_WideInt
-TclpWideClicksToNanoseconds(Tcl_WideInt clicks)
+TclpWideClicksToNanoseconds(
+    Tcl_WideInt clicks)
 {
     Tcl_WideInt nsec;
 
@@ -427,8 +428,7 @@ TclpGmtime(
     gmtime_r(timePtr, &(tsdPtr->gmtime_buf));
 #else
     Tcl_MutexLock(&tmMutex);
-    memcpy((VOID *) &(tsdPtr->gmtime_buf), (VOID *) gmtime(timePtr),
-	    sizeof(struct tm));
+    memcpy(&(tsdPtr->gmtime_buf), gmtime(timePtr), sizeof(struct tm));
     Tcl_MutexUnlock(&tmMutex);
 #endif
 
@@ -479,8 +479,7 @@ TclpLocaltime(
     localtime_r(timePtr, &(tsdPtr->localtime_buf));
 #else
     Tcl_MutexLock(&tmMutex);
-    memcpy((VOID *) &(tsdPtr->localtime_buf), (VOID *) localtime(timePtr),
-	    sizeof(struct tm));
+    memcpy(&(tsdPtr->localtime_buf), localtime(timePtr), sizeof(struct tm));
     Tcl_MutexUnlock(&tmMutex);
 #endif
 
@@ -646,7 +645,7 @@ SetTZIfNecessary(void)
 	} else {
 	    Tcl_Free(lastTZ);
 	}
-	lastTZ = Tcl_Alloc(strlen(newTZ) + 1);
+	lastTZ = ckalloc(strlen(newTZ) + 1);
 	strcpy(lastTZ, newTZ);
     }
     Tcl_MutexUnlock(&tmMutex);
@@ -673,7 +672,7 @@ static void
 CleanupMemory(
     ClientData ignored)
 {
-    Tcl_Free(lastTZ);
+    ckfree(lastTZ);
 }
 
 /*

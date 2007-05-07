@@ -22,12 +22,12 @@
  * somes systems (e.g. SunOS 4.1.4) stdlib.h doesn't declare strtod.
  */
 
-extern double strtod();
+extern double strtod(char *, char **);
 
 double
-fixstrtod(string, endPtr)
-    char *string;
-    char **endPtr;
+fixstrtod(
+    char *string,
+    char **endPtr)
 {
     double d;
     d = strtod(string, endPtr);

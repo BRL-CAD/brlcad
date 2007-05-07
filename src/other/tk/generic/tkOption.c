@@ -1195,8 +1195,8 @@ ExtendArray(
 	newPtr->arraySize = 2*arrayPtr->arraySize;
 	newPtr->numUsed = arrayPtr->numUsed;
 	newPtr->nextToUse = &newPtr->els[newPtr->numUsed];
-	memcpy((VOID *) newPtr->els, (VOID *) arrayPtr->els,
-		(arrayPtr->arraySize*sizeof(Element)));
+	memcpy(newPtr->els, arrayPtr->els,
+		arrayPtr->arraySize * sizeof(Element));
 	ckfree((char *) arrayPtr);
 	arrayPtr = newPtr;
     }
@@ -1316,9 +1316,9 @@ SetupStacks(
 	StackLevel *newLevels;
 
 	newLevels = (StackLevel *) ckalloc((unsigned)
-		(tsdPtr->numLevels*2*sizeof(StackLevel)));
-	memcpy((VOID *) newLevels, (VOID *) tsdPtr->levels,
-		(tsdPtr->numLevels*sizeof(StackLevel)));
+		(tsdPtr->numLevels * 2 * sizeof(StackLevel)));
+	memcpy(newLevels, tsdPtr->levels,
+		tsdPtr->numLevels * sizeof(StackLevel));
 	ckfree((char *) tsdPtr->levels);
 	tsdPtr->numLevels *= 2;
 	tsdPtr->levels = newLevels;

@@ -28,7 +28,6 @@ typedef struct {
     Display *display;		/* Display for colormap. */
 } ValueKey;
 
-
 /*
  * The structure below is used to allocate thread-local data.
  */
@@ -705,7 +704,7 @@ static void
 InitColorObj(
     Tcl_Obj *objPtr)		/* The object to convert. */
 {
-    Tcl_ObjType *typePtr;
+    const Tcl_ObjType *typePtr;
 
     /*
      * Free the old internalRep before setting the new one.
@@ -737,8 +736,8 @@ InitColorObj(
  */
 
 static void
-ColorInit(dispPtr)
-    TkDisplay *dispPtr;
+ColorInit(
+    TkDisplay *dispPtr)
 {
     if (!dispPtr->colorInit) {
 	dispPtr->colorInit = 1;

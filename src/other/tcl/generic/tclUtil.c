@@ -6,12 +6,12 @@
  *
  * Copyright (c) 1987-1993 The Regents of the University of California.
  * Copyright (c) 1994-1998 Sun Microsystems, Inc.
- * Copyright (c) 2001 by Kevin B. Kenny.  All rights reserved.
+ * Copyright (c) 2001 by Kevin B. Kenny. All rights reserved.
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- *  RCS: @(#) $Id$
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -215,17 +215,15 @@ TclFindElement(
 		 */
 
 		if (interp != NULL) {
-		    Tcl_Obj *objPtr = Tcl_NewObj();
 		    p2 = p;
 		    while ((p2 < limit)
 			    && (!isspace(UCHAR(*p2)))	/* INTL: ISO space. */
 			    && (p2 < p+20)) {
 			p2++;
 		    }
-		    TclObjPrintf(NULL, objPtr,
+		    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 			    "list element in braces followed by \"%.*s\" "
-			    "instead of space", (int) (p2-p), p);
-		    Tcl_SetObjResult(interp, objPtr);
+			    "instead of space", (int) (p2-p), p));
 		}
 		return TCL_ERROR;
 	    }
@@ -276,17 +274,15 @@ TclFindElement(
 		 */
 
 		if (interp != NULL) {
-		    Tcl_Obj *objPtr = Tcl_NewObj();
 		    p2 = p;
 		    while ((p2 < limit)
 			    && (!isspace(UCHAR(*p2)))	/* INTL: ISO space */
 			    && (p2 < p+20)) {
 			p2++;
 		    }
-		    TclObjPrintf(NULL, objPtr,
+		    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 			    "list element in quotes followed by \"%.*s\" "
-			    "instead of space", (int) (p2-p), p);
-		    Tcl_SetObjResult(interp, objPtr);
+			    "instead of space", (int) (p2-p), p));
 		}
 		return TCL_ERROR;
 	    }
@@ -414,11 +410,9 @@ Tcl_SplitList(
     CONST char ***argvPtr)	/* Pointer to place to store pointer to array
 				 * of pointers to list elements. */
 {
-    CONST char **argv;
-    CONST char *l;
+    CONST char **argv, *l, *element;
     char *p;
     int length, size, i, result, elSize, brace;
-    CONST char *element;
 
     /*
      * Figure out how much space to allocate. There must be enough space for
@@ -428,16 +422,21 @@ Tcl_SplitList(
      */
 
     for (size = 2, l = list; *l != 0; l++) {
-	if (isspace(UCHAR(*l))) { /* INTL: ISO space. */
+	if (isspace(UCHAR(*l))) {			/* INTL: ISO space. */
 	    size++;
-	    /* Consecutive space can only count as a single list delimiter */
+
+	    /*
+	     * Consecutive space can only count as a single list delimiter.
+	     */
+
 	    while (1) {
 		char next = *(l + 1);
+
 		if (next == '\0') {
 		    break;
 		}
 		++l;
-		if (isspace(UCHAR(next))) {
+		if (isspace(UCHAR(next))) {		/* INTL: ISO space. */
 		    continue;
 		}
 		break;
@@ -451,8 +450,8 @@ Tcl_SplitList(
 	    *list != 0;  i++) {
 	CONST char *prevList = list;
 
-	result = TclFindElement(interp, list, length, &element,
-				&list, &elSize, &brace);
+	result = TclFindElement(interp, list, length, &element, &list,
+		&elSize, &brace);
 	length -= (list - prevList);
 	if (result != TCL_OK) {
 	    ckfree((char *) argv);
@@ -483,6 +482,117 @@ Tcl_SplitList(
 
     argv[i] = NULL;
     *argvPtr = argv;
+    *argcPtr = i;
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclMarkList --
+ *
+ *	Marks the locations within a string where list elements start and
+ *	computes where they end.
+ *
+ * Results
+ *	The return value is normally TCL_OK, which means that the list was
+ *	successfully split up. If TCL_ERROR is returned, it means that "list"
+ *	didn't have proper list structure; the interp's result will contain a
+ *	more detailed error message.
+ *
+ *	*argvPtr will be filled in with the address of an array whose elements
+ *	point to the places where the elements of list start, in order.
+ *	*argcPtr will get filled in with the number of valid elements in the
+ *	array. *argszPtr will get filled in with the address of an array whose
+ *	elements are the lengths of the elements of the list, in order.
+ *	Note: *argvPtr, *argcPtr and *argszPtr are only modified if the
+ *	function returns normally.
+ *
+ * Side effects:
+ *	Memory is allocated.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclMarkList(
+    Tcl_Interp *interp,		/* Interpreter to use for error reporting. If
+				 * NULL, no error message is left. */
+    CONST char *list,		/* Pointer to string with list structure. */
+    CONST char *end,		/* Pointer to first char after the list. */
+    int *argcPtr,		/* Pointer to location to fill in with the
+				 * number of elements in the list. */
+    CONST int **argszPtr,	/* Pointer to place to store length of list
+				 * elements. */
+    CONST char ***argvPtr)	/* Pointer to place to store pointer to array
+				 * of pointers to list elements. */
+{
+    CONST char **argv, *l, *element;
+    int *argn, length, size, i, result, elSize, brace;
+
+    /*
+     * Figure out how much space to allocate. There must be enough space for
+     * the array of pointers and lengths. To estimate the number of pointers
+     * needed, count the number of whitespace characters in the list.
+     */
+
+    for (size=2, l=list ; l!=end ; l++) {
+	if (isspace(UCHAR(*l))) {			/* INTL: ISO space. */
+	    size++;
+
+	    /*
+	     * Consecutive space can only count as a single list delimiter.
+	     */
+
+	    while (1) {
+		char next = *(l + 1);
+
+		if ((l+1) == end) {
+		    break;
+		}
+		++l;
+		if (isspace(UCHAR(next))) {		/* INTL: ISO space. */
+		    continue;
+		}
+		break;
+	    }
+	}
+    }
+    length = l - list;
+    argv = (CONST char **) ckalloc((unsigned) size * sizeof(char *));
+    argn = (int *) ckalloc((unsigned) size * sizeof(int *));
+
+    for (i = 0; list != end;  i++) {
+	CONST char *prevList = list;
+
+	result = TclFindElement(interp, list, length, &element, &list,
+		&elSize, &brace);
+	length -= (list - prevList);
+	if (result != TCL_OK) {
+	    ckfree((char *) argv);
+	    ckfree((char *) argn);
+	    return result;
+	}
+	if (*element == 0) {
+	    break;
+	}
+	if (i >= size) {
+	    ckfree((char *) argv);
+	    ckfree((char *) argn);
+	    if (interp != NULL) {
+		Tcl_SetResult(interp, "internal error in TclMarkList",
+			TCL_STATIC);
+	    }
+	    return TCL_ERROR;
+	}
+	argv[i] = element;
+	argn[i] = elSize;
+    }
+
+    argv[i] = NULL;
+    argn[i] = 0;
+    *argvPtr = argv;
+    *argszPtr = argn;
     *argcPtr = i;
     return TCL_OK;
 }
@@ -1253,14 +1363,14 @@ Tcl_StringCaseMatch(
 
 	    if (UCHAR(*pattern) < 0x80) {
 		ch2 = (Tcl_UniChar)
-		    (nocase ? tolower(UCHAR(*pattern)) : UCHAR(*pattern));
+			(nocase ? tolower(UCHAR(*pattern)) : UCHAR(*pattern));
 	    } else {
 		Tcl_UtfToUniChar(pattern, &ch2);
 		if (nocase) {
 		    ch2 = Tcl_UniCharToLower(ch2);
 		}
-
 	    }
+
 	    while (1) {
 		/*
 		 * Optimization for matching - cruise through the string
@@ -1326,7 +1436,7 @@ Tcl_StringCaseMatch(
 	    pattern++;
 	    if (UCHAR(*str) < 0x80) {
 		ch1 = (Tcl_UniChar)
-		    (nocase ? tolower(UCHAR(*str)) : UCHAR(*str));
+			(nocase ? tolower(UCHAR(*str)) : UCHAR(*str));
 		str++;
 	    } else {
 		str += Tcl_UtfToUniChar(str, &ch1);
@@ -1339,8 +1449,8 @@ Tcl_StringCaseMatch(
 		    return 0;
 		}
 		if (UCHAR(*pattern) < 0x80) {
-		    startChar = (Tcl_UniChar)
-			(nocase ? tolower(UCHAR(*pattern)) : UCHAR(*pattern));
+		    startChar = (Tcl_UniChar) (nocase
+			    ? tolower(UCHAR(*pattern)) : UCHAR(*pattern));
 		    pattern++;
 		} else {
 		    pattern += Tcl_UtfToUniChar(pattern, &startChar);
@@ -1354,9 +1464,8 @@ Tcl_StringCaseMatch(
 			return 0;
 		    }
 		    if (UCHAR(*pattern) < 0x80) {
-			endChar = (Tcl_UniChar)
-			    (nocase ? tolower(UCHAR(*pattern))
-				    : UCHAR(*pattern));
+			endChar = (Tcl_UniChar) (nocase
+				? tolower(UCHAR(*pattern)) : UCHAR(*pattern));
 			pattern++;
 		    } else {
 			pattern += Tcl_UtfToUniChar(pattern, &endChar);
@@ -1489,9 +1598,7 @@ Tcl_DStringAppend(
     if (newSize >= dsPtr->spaceAvl) {
 	dsPtr->spaceAvl = newSize * 2;
 	if (dsPtr->string == dsPtr->staticSpace) {
-	    char *newString;
-
-	    newString = (char *) ckalloc((unsigned) dsPtr->spaceAvl);
+	    char *newString = ckalloc((unsigned) dsPtr->spaceAvl);
 	    memcpy((void *) newString, (void *) dsPtr->string,
 		    (size_t) dsPtr->length);
 	    dsPtr->string = newString;
@@ -1556,9 +1663,7 @@ Tcl_DStringAppendElement(
     if (newSize >= dsPtr->spaceAvl) {
 	dsPtr->spaceAvl = newSize * 2;
 	if (dsPtr->string == dsPtr->staticSpace) {
-	    char *newString;
-
-	    newString = (char *) ckalloc((unsigned) dsPtr->spaceAvl);
+	    char *newString = ckalloc((unsigned) dsPtr->spaceAvl);
 	    memcpy((void *) newString, (void *) dsPtr->string,
 		    (size_t) dsPtr->length);
 	    dsPtr->string = newString;
@@ -1640,9 +1745,7 @@ Tcl_DStringSetLength(
 	    dsPtr->spaceAvl = length + 1;
 	}
 	if (dsPtr->string == dsPtr->staticSpace) {
-	    char *newString;
-
-	    newString = (char *) ckalloc((unsigned) dsPtr->spaceAvl);
+	    char *newString = ckalloc((unsigned) dsPtr->spaceAvl);
 	    memcpy((void *) newString, (void *) dsPtr->string,
 		    (size_t) dsPtr->length);
 	    dsPtr->string = newString;
@@ -2483,7 +2586,7 @@ TclCheckBadOctal(
  *
  * ClearHash --
  *
- *      Remove all the entries in the hash table *tablePtr.
+ *	Remove all the entries in the hash table *tablePtr.
  *
  *----------------------------------------------------------------------
  */
@@ -2640,7 +2743,8 @@ TclSetProcessGlobalValue(
     Tcl_IncrRefCount(newValue);
     cacheMap = GetThreadHash(&pgvPtr->key);
     ClearHash(cacheMap);
-    hPtr = Tcl_CreateHashEntry(cacheMap, (char *)pgvPtr->epoch, &dummy);
+    hPtr = Tcl_CreateHashEntry(cacheMap,
+	    (char *) INT2PTR(pgvPtr->epoch), &dummy);
     Tcl_SetHashValue(hPtr, (ClientData) newValue);
     Tcl_MutexUnlock(&pgvPtr->mutex);
 }
@@ -2702,7 +2806,7 @@ TclGetProcessGlobalValue(
 	}
     }
     cacheMap = GetThreadHash(&pgvPtr->key);
-    hPtr = Tcl_FindHashEntry(cacheMap, (char *)epoch);
+    hPtr = Tcl_FindHashEntry(cacheMap, (char *) INT2PTR(epoch));
     if (NULL == hPtr) {
 	int dummy;
 
@@ -2727,7 +2831,7 @@ TclGetProcessGlobalValue(
 	    if (pgvPtr->value == NULL) {
 		Tcl_Panic("PGV Initializer did not initialize");
 	    }
-	    Tcl_CreateExitHandler(FreeProcessGlobalValue, (ClientData) pgvPtr);
+	    Tcl_CreateExitHandler(FreeProcessGlobalValue, (ClientData)pgvPtr);
 	}
 
 	/*
@@ -2735,7 +2839,8 @@ TclGetProcessGlobalValue(
 	 */
 
 	value = Tcl_NewStringObj(pgvPtr->value, pgvPtr->numBytes);
-	hPtr = Tcl_CreateHashEntry(cacheMap, (char *)pgvPtr->epoch, &dummy);
+	hPtr = Tcl_CreateHashEntry(cacheMap,
+		(char *) INT2PTR(pgvPtr->epoch), &dummy);
 	Tcl_MutexUnlock(&pgvPtr->mutex);
 	Tcl_SetHashValue(hPtr, (ClientData) value);
 	Tcl_IncrRefCount(value);

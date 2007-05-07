@@ -165,10 +165,10 @@ Tcl_ObjType tkOptionObjType = {
  */
 
 Tk_OptionTable
-Tk_CreateOptionTable(interp, templatePtr)
-    Tcl_Interp *interp;		/* Interpreter associated with the application
+Tk_CreateOptionTable(
+    Tcl_Interp *interp,		/* Interpreter associated with the application
 				 * in which this table will be used. */
-    CONST Tk_OptionSpec *templatePtr;
+    CONST Tk_OptionSpec *templatePtr)
 				/* Static information about the configuration
 				 * options. */
 {
@@ -331,8 +331,8 @@ Tk_CreateOptionTable(interp, templatePtr)
  */
 
 void
-Tk_DeleteOptionTable(optionTable)
-    Tk_OptionTable optionTable;	/* The option table to delete. */
+Tk_DeleteOptionTable(
+    Tk_OptionTable optionTable)	/* The option table to delete. */
 {
     OptionTable *tablePtr = (OptionTable *) optionTable;
     Option *optionPtr;
@@ -383,9 +383,9 @@ Tk_DeleteOptionTable(optionTable)
  */
 
 static void
-DestroyOptionHashTable(clientData, interp)
-    ClientData clientData;	/* The hash table we are destroying */
-    Tcl_Interp *interp;		/* The interpreter we are destroying */
+DestroyOptionHashTable(
+    ClientData clientData,	/* The hash table we are destroying */
+    Tcl_Interp *interp)		/* The interpreter we are destroying */
 {
     Tcl_HashTable *hashTablePtr = (Tcl_HashTable *) clientData;
     Tcl_HashSearch search;
@@ -438,16 +438,16 @@ DestroyOptionHashTable(clientData, interp)
  */
 
 int
-Tk_InitOptions(interp, recordPtr, optionTable, tkwin)
-    Tcl_Interp *interp;		/* Interpreter for error reporting. NULL means
+Tk_InitOptions(
+    Tcl_Interp *interp,		/* Interpreter for error reporting. NULL means
 				 * don't leave an error message. */
-    char *recordPtr;		/* Pointer to the record to configure. Note:
+    char *recordPtr,		/* Pointer to the record to configure. Note:
 				 * the caller should have properly initialized
 				 * the record with NULL pointers for each
 				 * option value. */
-    Tk_OptionTable optionTable;	/* The token which matches the config specs
+    Tk_OptionTable optionTable,	/* The token which matches the config specs
 				 * for the widget in question. */
-    Tk_Window tkwin;		/* Certain options types (such as
+    Tk_Window tkwin)		/* Certain options types (such as
 				 * TK_OPTION_COLOR) need fields out of the
 				 * window they are used in to be able to
 				 * calculate their values. Not needed unless
@@ -608,19 +608,19 @@ Tk_InitOptions(interp, recordPtr, optionTable, tkwin)
  */
 
 static int
-DoObjConfig(interp, recordPtr, optionPtr, valuePtr, tkwin, savedOptionPtr)
-    Tcl_Interp *interp;		/* Interpreter for error reporting. If NULL,
+DoObjConfig(
+    Tcl_Interp *interp,		/* Interpreter for error reporting. If NULL,
 				 * then no message is left if an error
 				 * occurs. */
-    char *recordPtr;		/* The record to modify to hold the new option
+    char *recordPtr,		/* The record to modify to hold the new option
 				 * value. */
-    Option *optionPtr;		/* Pointer to information about the option. */
-    Tcl_Obj *valuePtr;		/* New value for option. */
-    Tk_Window tkwin;		/* Window in which option will be used (needed
+    Option *optionPtr,		/* Pointer to information about the option. */
+    Tcl_Obj *valuePtr,		/* New value for option. */
+    Tk_Window tkwin,		/* Window in which option will be used (needed
 				 * to allocate resources for some options).
 				 * May be NULL if the option doesn't require
 				 * window-related resources. */
-    Tk_SavedOption *savedOptionPtr;
+    Tk_SavedOption *savedOptionPtr)
 				/* If NULL, the old value for the option will
 				 * be freed. If non-NULL, the old value will
 				 * be stored here, and it becomes the property
@@ -995,8 +995,8 @@ DoObjConfig(interp, recordPtr, optionPtr, valuePtr, tkwin, savedOptionPtr)
  */
 
 static int
-ObjectIsEmpty(objPtr)
-    Tcl_Obj *objPtr;		/* Object to test. May be NULL. */
+ObjectIsEmpty(
+    Tcl_Obj *objPtr)		/* Object to test. May be NULL. */
 {
     int length;
 
@@ -1031,10 +1031,10 @@ ObjectIsEmpty(objPtr)
  */
 
 static Option *
-GetOption(name, tablePtr)
-    CONST char *name;		/* String balue to be looked up in the option
+GetOption(
+    CONST char *name,		/* String balue to be looked up in the option
 				 * table. */
-    OptionTable *tablePtr;	/* Table in which to look up name. */
+    OptionTable *tablePtr)	/* Table in which to look up name. */
 {
     Option *bestPtr, *optionPtr;
     OptionTable *tablePtr2;
@@ -1117,12 +1117,12 @@ GetOption(name, tablePtr)
  */
 
 static Option *
-GetOptionFromObj(interp, objPtr, tablePtr)
-    Tcl_Interp *interp;		/* Used only for error reporting; if NULL no
+GetOptionFromObj(
+    Tcl_Interp *interp,		/* Used only for error reporting; if NULL no
 				 * message is left after an error. */
-    Tcl_Obj *objPtr;		/* Object whose string value is to be looked
+    Tcl_Obj *objPtr,		/* Object whose string value is to be looked
 				 * up in the option table. */
-    OptionTable *tablePtr;	/* Table in which to look up objPtr. */
+    OptionTable *tablePtr)	/* Table in which to look up objPtr. */
 {
     Option *bestPtr;
     char *name;
@@ -1132,7 +1132,7 @@ GetOptionFromObj(interp, objPtr, tablePtr)
      */
 
     if (objPtr->typePtr == &tkOptionObjType) {
-	if (objPtr->internalRep.twoPtrValue.ptr1 == (VOID *) tablePtr) {
+	if (objPtr->internalRep.twoPtrValue.ptr1 == (void *) tablePtr) {
 	    return (Option *) objPtr->internalRep.twoPtrValue.ptr2;
 	}
     }
@@ -1151,8 +1151,8 @@ GetOptionFromObj(interp, objPtr, tablePtr)
 	    && (objPtr->typePtr->freeIntRepProc != NULL)) {
 	objPtr->typePtr->freeIntRepProc(objPtr);
     }
-    objPtr->internalRep.twoPtrValue.ptr1 = (VOID *) tablePtr;
-    objPtr->internalRep.twoPtrValue.ptr2 = (VOID *) bestPtr;
+    objPtr->internalRep.twoPtrValue.ptr1 = (void *) tablePtr;
+    objPtr->internalRep.twoPtrValue.ptr2 = (void *) bestPtr;
     objPtr->typePtr = &tkOptionObjType;
     return bestPtr;
 
@@ -1187,9 +1187,9 @@ GetOptionFromObj(interp, objPtr, tablePtr)
  */
 
 CONST Tk_OptionSpec *
-TkGetOptionSpec(name, optionTable)
-    CONST char *name;		/* String value to be looked up. */
-    Tk_OptionTable optionTable;	/* Table in which to look up name. */
+TkGetOptionSpec(
+    CONST char *name,		/* String value to be looked up. */
+    Tk_OptionTable optionTable)	/* Table in which to look up name. */
 {
     Option *optionPtr;
 
@@ -1221,9 +1221,9 @@ TkGetOptionSpec(name, optionTable)
  */
 
 static int
-SetOptionFromAny(interp, objPtr)
-    Tcl_Interp *interp;		/* Used for error reporting if not NULL. */
-    register Tcl_Obj *objPtr;	/* The object to convert. */
+SetOptionFromAny(
+    Tcl_Interp *interp,		/* Used for error reporting if not NULL. */
+    register Tcl_Obj *objPtr)	/* The object to convert. */
 {
     Tcl_AppendToObj(Tcl_GetObjResult(interp),
 	    "can't convert value to option except via GetOptionFromObj API",
@@ -1258,21 +1258,20 @@ SetOptionFromAny(interp, objPtr)
  */
 
 int
-Tk_SetOptions(interp, recordPtr, optionTable, objc, objv, tkwin, savePtr,
-	maskPtr)
-    Tcl_Interp *interp;		/* Interpreter for error reporting. If NULL,
+Tk_SetOptions(
+    Tcl_Interp *interp,		/* Interpreter for error reporting. If NULL,
 				 * then no error message is returned.*/
-    char *recordPtr;	    	/* The record to configure. */
-    Tk_OptionTable optionTable;	/* Describes valid options. */
-    int objc;			/* The number of elements in objv. */
-    Tcl_Obj *CONST objv[];	/* Contains one or more name-value pairs. */
-    Tk_Window tkwin;		/* Window associated with the thing being
+    char *recordPtr,	    	/* The record to configure. */
+    Tk_OptionTable optionTable,	/* Describes valid options. */
+    int objc,			/* The number of elements in objv. */
+    Tcl_Obj *CONST objv[],	/* Contains one or more name-value pairs. */
+    Tk_Window tkwin,		/* Window associated with the thing being
 				 * configured; needed for some options (such
 				 * as colors). */
-    Tk_SavedOptions *savePtr;	/* If non-NULL, the old values of modified
+    Tk_SavedOptions *savePtr,	/* If non-NULL, the old values of modified
 				 * options are saved here so that they can be
 				 * restored after an error. */
-    int *maskPtr;		/* It non-NULL, this word is modified on a
+    int *maskPtr)		/* It non-NULL, this word is modified on a
 				 * successful return to hold the bit-wise OR
 				 * of the typeMask fields of all options that
 				 * were modified by this call. Used by the
@@ -1377,8 +1376,8 @@ Tk_SetOptions(interp, recordPtr, optionTable, objc, objv, tkwin, savePtr,
  */
 
 void
-Tk_RestoreSavedOptions(savePtr)
-    Tk_SavedOptions *savePtr;	/* Holds saved option information; must have
+Tk_RestoreSavedOptions(
+    Tk_SavedOptions *savePtr)	/* Holds saved option information; must have
 				 * been passed to Tk_SetOptions. */
 {
     int i;
@@ -1538,8 +1537,8 @@ Tk_RestoreSavedOptions(savePtr)
  */
 
 void
-Tk_FreeSavedOptions(savePtr)
-    Tk_SavedOptions *savePtr;	/* Contains options saved in a previous call
+Tk_FreeSavedOptions(
+    Tk_SavedOptions *savePtr)	/* Contains options saved in a previous call
 				 * to Tk_SetOptions. */
 {
     int count;
@@ -1581,11 +1580,11 @@ Tk_FreeSavedOptions(savePtr)
 
 	/* ARGSUSED */
 void
-Tk_FreeConfigOptions(recordPtr, optionTable, tkwin)
-    char *recordPtr;		/* Record whose fields contain current values
+Tk_FreeConfigOptions(
+    char *recordPtr,		/* Record whose fields contain current values
 				 * for options. */
-    Tk_OptionTable optionTable;	/* Describes legal options. */
-    Tk_Window tkwin;		/* Window associated with recordPtr; needed
+    Tk_OptionTable optionTable,	/* Describes legal options. */
+    Tk_Window tkwin)		/* Window associated with recordPtr; needed
 				 * for freeing some options. */
 {
     OptionTable *tablePtr;
@@ -1644,15 +1643,15 @@ Tk_FreeConfigOptions(recordPtr, optionTable, tkwin)
  */
 
 static void
-FreeResources(optionPtr, objPtr, internalPtr, tkwin)
-    Option *optionPtr;		/* Description of the configuration option. */
-    Tcl_Obj *objPtr;		/* The current value of the option, specified
+FreeResources(
+    Option *optionPtr,		/* Description of the configuration option. */
+    Tcl_Obj *objPtr,		/* The current value of the option, specified
 				 * as an object. */
-    char *internalPtr;		/* A pointer to an internal representation for
+    char *internalPtr,		/* A pointer to an internal representation for
 				 * the option's value, such as an int or
 				 * (XColor *). Only valid if
 				 * optionPtr->specPtr->internalOffset >= 0. */
-    Tk_Window tkwin;		/* The window in which this option is used. */
+    Tk_Window tkwin)		/* The window in which this option is used. */
 {
     int internalFormExists;
 
@@ -1768,17 +1767,17 @@ FreeResources(optionPtr, objPtr, internalPtr, tkwin)
  */
 
 Tcl_Obj *
-Tk_GetOptionInfo(interp, recordPtr, optionTable, namePtr, tkwin)
-    Tcl_Interp *interp;		/* Interpreter for error reporting. If NULL,
+Tk_GetOptionInfo(
+    Tcl_Interp *interp,		/* Interpreter for error reporting. If NULL,
 				 * then no error message is created. */
-    char *recordPtr;		/* Record whose fields contain current values
+    char *recordPtr,		/* Record whose fields contain current values
 				 * for options. */
-    Tk_OptionTable optionTable;	/* Describes all the legal options. */
-    Tcl_Obj *namePtr;		/* If non-NULL, the string value selects a
+    Tk_OptionTable optionTable,	/* Describes all the legal options. */
+    Tcl_Obj *namePtr,		/* If non-NULL, the string value selects a
 				 * single option whose info is to be returned.
 				 * Otherwise info is returned for all options
 				 * in optionTable. */
-    Tk_Window tkwin;		/* Window associated with recordPtr; needed to
+    Tk_Window tkwin)		/* Window associated with recordPtr; needed to
 				 * compute correct default value for some
 				 * options. */
 {
@@ -1838,12 +1837,12 @@ Tk_GetOptionInfo(interp, recordPtr, optionTable, namePtr, tkwin)
  */
 
 static Tcl_Obj *
-GetConfigList(recordPtr, optionPtr, tkwin)
-    char *recordPtr;		/* Pointer to record holding current values of
+GetConfigList(
+    char *recordPtr,		/* Pointer to record holding current values of
 				 * configuration options. */
-    Option *optionPtr;		/* Pointer to information describing a
+    Option *optionPtr,		/* Pointer to information describing a
 				 * particular option. */
-    Tk_Window tkwin;		/* Window corresponding to recordPtr. */
+    Tk_Window tkwin)		/* Window corresponding to recordPtr. */
 {
     Tcl_Obj *listPtr, *elementPtr;
 
@@ -1916,13 +1915,13 @@ GetConfigList(recordPtr, optionPtr, tkwin)
  */
 
 static Tcl_Obj *
-GetObjectForOption(recordPtr, optionPtr, tkwin)
-    char *recordPtr;		/* Pointer to record holding current values of
+GetObjectForOption(
+    char *recordPtr,		/* Pointer to record holding current values of
 				 * configuration options. */
-    Option *optionPtr;		/* Pointer to information describing an option
+    Option *optionPtr,		/* Pointer to information describing an option
 				 * whose internal value is stored in
 				 * *recordPtr. */
-    Tk_Window tkwin;		/* Window corresponding to recordPtr. */
+    Tk_Window tkwin)		/* Window corresponding to recordPtr. */
 {
     Tcl_Obj *objPtr;
     char *internalPtr;		/* Points to internal value of option in
@@ -2055,16 +2054,16 @@ GetObjectForOption(recordPtr, optionPtr, tkwin)
  */
 
 Tcl_Obj *
-Tk_GetOptionValue(interp, recordPtr, optionTable, namePtr, tkwin)
-    Tcl_Interp *interp;		/* Interpreter for error reporting. If NULL
+Tk_GetOptionValue(
+    Tcl_Interp *interp,		/* Interpreter for error reporting. If NULL
 				 * then no messages are provided for
 				 * errors. */
-    char *recordPtr;		/* Record whose fields contain current values
+    char *recordPtr,		/* Record whose fields contain current values
 				 * for options. */
-    Tk_OptionTable optionTable;	/* Describes legal options. */
-    Tcl_Obj *namePtr;		/* Gives the command-line name for the option
+    Tk_OptionTable optionTable,	/* Describes legal options. */
+    Tcl_Obj *namePtr,		/* Gives the command-line name for the option
 				 * whose value is to be returned. */
-    Tk_Window tkwin;		/* Window corresponding to recordPtr. */
+    Tk_Window tkwin)		/* Window corresponding to recordPtr. */
 {
     OptionTable *tablePtr = (OptionTable *) optionTable;
     Option *optionPtr;
@@ -2118,10 +2117,10 @@ Tk_GetOptionValue(interp, recordPtr, optionTable, namePtr, tkwin)
  */
 
 Tcl_Obj *
-TkDebugConfig(interp, table)
-    Tcl_Interp *interp;		/* Interpreter in which the table is
+TkDebugConfig(
+    Tcl_Interp *interp,		/* Interpreter in which the table is
 				 * defined. */
-    Tk_OptionTable table;	/* Table about which information is to be
+    Tk_OptionTable table)	/* Table about which information is to be
 				 * returned. May not necessarily exist in the
 				 * interpreter anymore. */
 {

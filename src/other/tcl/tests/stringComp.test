@@ -29,7 +29,7 @@ testConstraint testobj [expr {[info commands testobj] != {}}]
 test stringComp-1.1 {error conditions} {
     proc foo {} {string gorp a b}
     list [catch {foo} msg] $msg
-} {1 {bad option "gorp": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, tolower, toupper, totitle, trim, trimleft, trimright, wordend, or wordstart}}
+} {1 {bad option "gorp": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, reverse, tolower, toupper, totitle, trim, trimleft, trimright, wordend, or wordstart}}
 test stringComp-1.2 {error conditions} {
     proc foo {} {string}
     list [catch {foo} msg] $msg

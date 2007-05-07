@@ -95,7 +95,7 @@ suitable for reading data in a given file.
 .CS
 typedef int Tk_ImageFileMatchProc(
     Tcl_Channel \fIchan\fR,
-    CONST char *\fIfileName\fR,
+    const char *\fIfileName\fR,
     Tcl_Obj *\fIformat\fR,
     int *\fIwidthPtr\fR,
     int *\fIheightPtr\fR,
@@ -140,7 +140,7 @@ Tk to call to read data from an image file into a photo image.
 typedef int Tk_ImageFileReadProc(
     Tcl_Interp *\fIinterp\fR,
     Tcl_Channel \fIchan\fR,
-    CONST char *\fIfileName\fR,
+    const char *\fIfileName\fR,
     Tcl_Obj *\fIformat\fR,
     PhotoHandle \fIimageHandle\fR,
     int \fIdestX\fR, int \fIdestY\fR,
@@ -196,7 +196,7 @@ Tk to call to write data from a photo image to a file.
 .CS
 typedef int Tk_ImageFileWriteProc(
     Tcl_Interp *\fIinterp\fR,
-    CONST char *\fIfileName\fR,
+    const char *\fIfileName\fR,
     Tcl_Obj *\fIformat\fR,
     Tk_PhotoImageBlock *\fIblockPtr\fR);
 .CE

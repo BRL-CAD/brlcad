@@ -1409,50 +1409,50 @@ declare 397 generic {
     int Tcl_ChannelBuffered(Tcl_Channel chan)
 }
 declare 398 generic {
-    CONST84_RETURN char * Tcl_ChannelName(Tcl_ChannelType *chanTypePtr)
+    CONST84_RETURN char * Tcl_ChannelName(CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 399 generic {
-    Tcl_ChannelTypeVersion Tcl_ChannelVersion(Tcl_ChannelType *chanTypePtr)
+    Tcl_ChannelTypeVersion Tcl_ChannelVersion(CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 400 generic {
-    Tcl_DriverBlockModeProc * Tcl_ChannelBlockModeProc(Tcl_ChannelType
+    Tcl_DriverBlockModeProc * Tcl_ChannelBlockModeProc(CONST Tcl_ChannelType
 	    *chanTypePtr)
 }
 declare 401 generic {
-    Tcl_DriverCloseProc * Tcl_ChannelCloseProc(Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverCloseProc * Tcl_ChannelCloseProc(CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 402 generic {
-    Tcl_DriverClose2Proc * Tcl_ChannelClose2Proc(Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverClose2Proc * Tcl_ChannelClose2Proc(CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 403 generic {
-    Tcl_DriverInputProc * Tcl_ChannelInputProc(Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverInputProc * Tcl_ChannelInputProc(CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 404 generic {
-    Tcl_DriverOutputProc * Tcl_ChannelOutputProc(Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverOutputProc * Tcl_ChannelOutputProc(CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 405 generic {
-    Tcl_DriverSeekProc * Tcl_ChannelSeekProc(Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverSeekProc * Tcl_ChannelSeekProc(CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 406 generic {
-    Tcl_DriverSetOptionProc * Tcl_ChannelSetOptionProc(Tcl_ChannelType
+    Tcl_DriverSetOptionProc * Tcl_ChannelSetOptionProc(CONST Tcl_ChannelType
 	    *chanTypePtr)
 }
 declare 407 generic {
-    Tcl_DriverGetOptionProc * Tcl_ChannelGetOptionProc(Tcl_ChannelType
+    Tcl_DriverGetOptionProc * Tcl_ChannelGetOptionProc(CONST Tcl_ChannelType
 	    *chanTypePtr)
 }
 declare 408 generic {
-    Tcl_DriverWatchProc * Tcl_ChannelWatchProc(Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverWatchProc * Tcl_ChannelWatchProc(CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 409 generic {
-    Tcl_DriverGetHandleProc * Tcl_ChannelGetHandleProc(Tcl_ChannelType
+    Tcl_DriverGetHandleProc * Tcl_ChannelGetHandleProc(CONST Tcl_ChannelType
 	    *chanTypePtr)
 }
 declare 410 generic {
-    Tcl_DriverFlushProc * Tcl_ChannelFlushProc(Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverFlushProc * Tcl_ChannelFlushProc(CONST Tcl_ChannelType *chanTypePtr)
 }
 declare 411 generic {
-    Tcl_DriverHandlerProc * Tcl_ChannelHandlerProc(Tcl_ChannelType
+    Tcl_DriverHandlerProc * Tcl_ChannelHandlerProc(CONST Tcl_ChannelType
 	    *chanTypePtr)
 }
 
@@ -1752,7 +1752,7 @@ declare 492 generic {
 # New export due to TIP#91
 declare 493 generic {
     Tcl_DriverWideSeekProc * Tcl_ChannelWideSeekProc(
-	    Tcl_ChannelType *chanTypePtr)
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 
 # DICTIONARIES - TIP#111
@@ -1987,7 +1987,7 @@ declare 553 generic {
 }
 # TIP#218 (Driver Thread Actions) davygrvy/akupries ChannelType ver 4
 declare 554 generic {
-    Tcl_DriverThreadActionProc *Tcl_ChannelThreadActionProc(Tcl_ChannelType *chanTypePtr)
+    Tcl_DriverThreadActionProc *Tcl_ChannelThreadActionProc(CONST Tcl_ChannelType *chanTypePtr)
 }
 
 # TIP#237 (Arbitrary-precision Integers) kevin kenny
@@ -2005,7 +2005,7 @@ declare 558 generic {
     int Tcl_GetBignumFromObj( Tcl_Interp* interp, Tcl_Obj* obj, mp_int* value )
 }
 declare 559 generic {
-    int Tcl_GetBignumAndClearObj( Tcl_Interp* interp, Tcl_Obj* obj, mp_int* value )
+    int Tcl_TakeBignumFromObj( Tcl_Interp* interp, Tcl_Obj* obj, mp_int* value )
 }
 
 # TIP #208 ('chan' Command) jeffh
@@ -2014,7 +2014,7 @@ declare 560 generic {
 }
 declare 561 generic {
     Tcl_DriverTruncateProc *Tcl_ChannelTruncateProc(
-	    Tcl_ChannelType *chanTypePtr)
+	    CONST Tcl_ChannelType *chanTypePtr)
 }
 
 # TIP#219 (Tcl Channel Reflection API) akupries
@@ -2070,6 +2070,29 @@ declare 572 generic {
 declare 573 generic {
     int Tcl_PkgRequireProc(Tcl_Interp *interp, CONST char *name, 
 	    int objc, Tcl_Obj *CONST objv[], ClientData *clientDataPtr)
+}
+
+# TIP#270 Utility C Routines for String Formatting
+declare 574 generic {
+    void Tcl_AppendObjToErrorInfo(Tcl_Interp *interp, Tcl_Obj *objPtr)
+}
+declare 575 generic {
+    void Tcl_AppendLimitedToObj(Tcl_Obj *objPtr, CONST char *bytes, int length,
+	    int limit, CONST char *ellipsis)
+}
+declare 576 generic {
+    Tcl_Obj * Tcl_Format(Tcl_Interp *interp, CONST char *format, int objc,
+	    Tcl_Obj * CONST objv[])
+}
+declare 577 generic {
+    int Tcl_AppendFormatToObj(Tcl_Interp *interp, Tcl_Obj *objPtr,
+	    CONST char *format, int objc, Tcl_Obj * CONST objv[])
+}
+declare 578 generic {
+    Tcl_Obj * Tcl_ObjPrintf(CONST char *format, ...)
+}
+declare 579 generic {
+    void Tcl_AppendPrintfToObj(Tcl_Obj *objPtr, CONST char *format, ...)
 }
 
 ##############################################################################

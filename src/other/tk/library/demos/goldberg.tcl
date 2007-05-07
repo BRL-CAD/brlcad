@@ -50,8 +50,7 @@ wm iconname $w "goldberg"
 wm resizable $w 0 0
 #positionWindow $w
 
-set font {Arial 10}
-label $w.msg -font $font -wraplength 4i -justify left -text "This is a demonstration of just how complex you can make your animations become. Click the ball to start things moving!\n\n\"Man will always find a difficult means to perform a simple task\"\n - Rube Goldberg"
+label $w.msg -font {Arial 10} -wraplength 4i -justify left -text "This is a demonstration of just how complex you can make your animations become. Click the ball to start things moving!\n\n\"Man will always find a difficult means to perform a simple task\"\n - Rube Goldberg"
 pack $w.msg -side top
 
 if 0 {

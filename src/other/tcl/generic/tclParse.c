@@ -18,6 +18,13 @@
 #include "tclInt.h"
 
 /*
+ * For now, we enable the {expand} although it is deprecated - remove by final
+ */
+#ifndef ALLOW_EXPAND
+#define ALLOW_EXPAND 1
+#endif
+
+/*
  * The following table provides parsing information about each possible 8-bit
  * character. The table is designed to be referenced with either signed or
  * unsigned characters, so it has 384 entries. The first 128 entries
@@ -178,7 +185,6 @@ static int		ParseTokens(CONST char *src, int numBytes,
 			    int mask, int flags, Tcl_Parse *parsePtr);
 static int		ParseWhiteSpace(CONST char *src, int numBytes,
 			    Tcl_Parse *parsePtr, char *typePtr);
-
 
 /*
  *----------------------------------------------------------------------
@@ -359,8 +365,6 @@ Tcl_ParseCommand(
 	    src = termPtr;
 	    numBytes = parsePtr->end - src;
 	} else if (*src == '{') {
-	    static char expPfx[] = "expand";
-	    CONST size_t expPfxLen = sizeof(expPfx) - 1;
 	    int expIdx = wordIndex + 1;
 	    Tcl_Token *expPtr;
 
@@ -372,7 +376,7 @@ Tcl_ParseCommand(
 	    numBytes = parsePtr->end - src;
 
 	    /*
-	     * Check whether the braces contained the word expansion prefix.
+	     * Check whether the braces contained the word expansion prefix {*}
 	     */
 
 	    expPtr = &parsePtr->tokenPtr[expIdx];
@@ -381,14 +385,15 @@ Tcl_ParseCommand(
 		/* Haven't seen prefix already */
 		&& (1 == parsePtr->numTokens - expIdx)
 		/* Only one token */
-		&& (((expPfxLen == (size_t) expPtr->size)
+		&& (((1 == (size_t) expPtr->size)
 			    /* Same length as prefix */
-			    && (0 == strncmp(expPfx,expPtr->start,expPfxLen)))
-#ifdef ALLOW_EMPTY_EXPAND
+			    && (expPtr->start[0] == '*'))
+#if defined(ALLOW_EXPAND) && ALLOW_EXPAND == 1
 			/*
-			 * Allow {} in addition to {expand}
+			 * Allow {expand} in addition to {*}
 			 */
-			|| (0 == (size_t) expPtr->size)
+			|| ((6 == (size_t) expPtr->size)
+				&& (0 == memcmp("expand",expPtr->start,6)))
 #endif
 		    )
 		/* Is the prefix */
@@ -549,7 +554,7 @@ ParseWhiteSpace(
  *	including the command-terminating newline characters.
  *
  * Results:
- *	Returns the number of bytes recognized as white space. 
+ *	Returns the number of bytes recognized as white space.
  *
  *----------------------------------------------------------------------
  */
@@ -559,13 +564,15 @@ TclParseAllWhiteSpace(
     CONST char *src,		/* First character to parse. */
     int numBytes)		/* Max number of byes to scan */
 {
-    Tcl_Parse dummy;	/* Since we know ParseWhiteSpace() generates
-			 * no tokens, there's no need for a call to
-			 * Tcl_FreeParse() in this routine */
+    Tcl_Parse dummy;		/* Since we know ParseWhiteSpace() generates
+				 * no tokens, there's no need for a call to
+				 * Tcl_FreeParse() in this routine. */
     char type;
     CONST char *p = src;
+
     do {
 	int scanned = ParseWhiteSpace(p, numBytes, &dummy, &type);
+
 	p += scanned;
 	numBytes -= scanned;
     } while (numBytes && (*p == '\n') && (p++, --numBytes));
@@ -1175,17 +1182,18 @@ TclExpandTokenArray(
     Tcl_Parse *parsePtr)	/* Parse structure whose token space has
 				 * overflowed. */
 {
-    int newCount;
-    Tcl_Token *newPtr;
+    int newCount = parsePtr->tokensAvailable*2;
 
-    newCount = parsePtr->tokensAvailable*2;
-    newPtr = (Tcl_Token *) ckalloc((unsigned) (newCount * sizeof(Tcl_Token)));
-    memcpy((VOID *) newPtr, (VOID *) parsePtr->tokenPtr,
-	    (size_t) (parsePtr->tokensAvailable * sizeof(Tcl_Token)));
     if (parsePtr->tokenPtr != parsePtr->staticTokens) {
-	ckfree((char *) parsePtr->tokenPtr);
+	parsePtr->tokenPtr = (Tcl_Token *) ckrealloc ((char *)
+		(parsePtr->tokenPtr), newCount * sizeof(Tcl_Token));
+    } else {
+	Tcl_Token *newPtr = (Tcl_Token *) ckalloc(
+		newCount * sizeof(Tcl_Token));
+	memcpy(newPtr, parsePtr->tokenPtr,
+		(size_t) (parsePtr->tokensAvailable * sizeof(Tcl_Token)));
+	parsePtr->tokenPtr = newPtr;
     }
-    parsePtr->tokenPtr = newPtr;
     parsePtr->tokensAvailable = newCount;
 }
 
@@ -1454,7 +1462,7 @@ Tcl_ParseVar(
 	return "$";
     }
 
-    code = TclSubstTokens(interp, parse.tokenPtr, parse.numTokens, NULL);
+    code = TclSubstTokens(interp, parse.tokenPtr, parse.numTokens, NULL, 1);
     if (code != TCL_OK) {
 	return NULL;
     }
@@ -1526,7 +1534,6 @@ Tcl_ParseBraces(
 				 * store a pointer to the character just after
 				 * the terminating '}' if the parse was
 				 * successful. */
-
 {
     Tcl_Token *tokenPtr;
     register CONST char *src;
@@ -1967,7 +1974,7 @@ Tcl_SubstObj(
     endTokenPtr = parse.tokenPtr + parse.numTokens;
     tokensLeft = parse.numTokens;
     code = TclSubstTokens(interp, endTokenPtr - tokensLeft, tokensLeft,
-	    &tokensLeft);
+	    &tokensLeft, 1);
     if (code == TCL_OK) {
 	Tcl_FreeParse(&parse);
 	if (errMsg != NULL) {
@@ -2009,7 +2016,7 @@ Tcl_SubstObj(
 	}
 
 	code = TclSubstTokens(interp, endTokenPtr - tokensLeft, tokensLeft,
-		&tokensLeft);
+		&tokensLeft, 1);
     }
 }
 
@@ -2044,9 +2051,10 @@ TclSubstTokens(
 				 * evaluate and concatenate. */
     int count,			/* Number of tokens to consider at tokenPtr.
 				 * Must be at least 1. */
-    int *tokensLeftPtr)		/* If not NULL, points to memory where an
+    int *tokensLeftPtr,		/* If not NULL, points to memory where an
 				 * integer representing the number of tokens
 				 * left to be substituted will be written */
+    int line)                   /* The line the script starts on. */
 {
     Tcl_Obj *result;
     int code = TCL_OK;
@@ -2086,8 +2094,9 @@ TclSubstTokens(
 	    iPtr->numLevels++;
 	    code = TclInterpReady(interp);
 	    if (code == TCL_OK) {
-		code = Tcl_EvalEx(interp, tokenPtr->start+1, tokenPtr->size-2,
-			0);
+		/* TIP #280: Transfer line information to nested command */
+		code = TclEvalEx(interp, tokenPtr->start+1, tokenPtr->size-2,
+			0, line);
 	    }
 	    iPtr->numLevels--;
 	    appendObj = Tcl_GetObjResult(interp);
@@ -2104,7 +2113,7 @@ TclSubstTokens(
 		 */
 
 		code = TclSubstTokens(interp, tokenPtr+2,
-			tokenPtr->numComponents - 1, NULL);
+			tokenPtr->numComponents - 1, NULL, line);
 		arrayIndex = Tcl_GetObjResult(interp);
 		Tcl_IncrRefCount(arrayIndex);
 	    }
@@ -2354,6 +2363,54 @@ TclIsLocalScalar(
     }
 
     return 1;
+}
+
+#define TCL_TOKEN_WORD		1
+#define TCL_TOKEN_SIMPLE_WORD	2
+#define TCL_TOKEN_TEXT		4
+#define TCL_TOKEN_BS		8
+#define TCL_TOKEN_COMMAND	16
+#define TCL_TOKEN_VARIABLE	32
+#define TCL_TOKEN_SUB_EXPR	64
+#define TCL_TOKEN_OPERATOR	128
+#define TCL_TOKEN_EXPAND_WORD	256
+
+static void
+TclPrintToken(
+    Tcl_Token *token,
+    int idx,
+    int level)
+{
+    int i;
+
+    for (i=0 ; i<level ; i++) {
+	fprintf(stdout, " ");
+    }
+    level++;
+
+    fprintf(stdout, "[%3d] @%p/%4d", idx, token->start, token->size);
+    if (token->numComponents == 0) {
+	fprintf(stdout," <%.*s>\n", token->size, token->start);
+    } else {
+	fprintf(stdout,"\n");
+    }
+    fflush(stdout);
+    if (token->numComponents > 0) {
+	TclPrintTokens(token+1,token->numComponents, level);
+    }
+}
+
+void
+TclPrintTokens(
+    Tcl_Token *token,
+    int words,
+    int level)
+{
+    int k;
+
+    for (k=0 ; k<words ; k++, token += (1+token->numComponents)) {
+	TclPrintToken(token, k, level);
+    }
 }
 
 /*

@@ -294,7 +294,7 @@ XGetImageZPixmap(
     HDC hdc, hdcMem;
     HBITMAP hbmp, hbmpPrev;
     BITMAPINFO *bmInfo = NULL;
-    HPALETTE hPal, hPalPrev1, hPalPrev2;
+    HPALETTE hPal, hPalPrev1 = 0, hPalPrev2 = 0;
     int size;
     unsigned int n;
     unsigned int depth;
@@ -315,7 +315,7 @@ XGetImageZPixmap(
      * Need to do a Blt operation to copy into a new bitmap.
      */
 
-    hbmp = CreateCompatibleBitmap(hdc, width, height);
+    hbmp = CreateCompatibleBitmap(hdc, (int) width, (int) height);
     hdcMem = CreateCompatibleDC(hdc);
     hbmpPrev = SelectObject(hdcMem, hbmp);
     hPal = state.palette;
@@ -323,22 +323,23 @@ XGetImageZPixmap(
 	hPalPrev1 = SelectPalette(hdcMem, hPal, FALSE);
 	n = RealizePalette(hdcMem);
 	if (n > 0) {
-	    UpdateColors (hdcMem);
+	    UpdateColors(hdcMem);
 	}
 	hPalPrev2 = SelectPalette(hdc, hPal, FALSE);
 	n = RealizePalette(hdc);
 	if (n > 0) {
-	    UpdateColors (hdc);
+	    UpdateColors(hdc);
 	}
     }
 
-    ret = BitBlt(hdcMem, 0, 0, width, height, hdc, x, y, SRCCOPY);
+    ret = BitBlt(hdcMem, 0, 0, (int) width, (int) height, hdc, x, y, SRCCOPY);
     if (hPal) {
 	SelectPalette(hdc, hPalPrev2, FALSE);
     }
     SelectObject(hdcMem, hbmpPrev);
     TkWinReleaseDrawableDC(d, hdc, &state);
     if (ret == FALSE) {
+	ret_image = NULL;
 	goto cleanup;
     }
     if (twdPtr->type == TWD_WINDOW) {
@@ -351,7 +352,7 @@ XGetImageZPixmap(
     if (depth <= 8) {
 	size += sizeof(unsigned short) * (1 << depth);
     }
-    bmInfo = (BITMAPINFO *) ckalloc(size);
+    bmInfo = (BITMAPINFO *) ckalloc((unsigned)size);
 
     bmInfo->bmiHeader.biSize		= sizeof(BITMAPINFOHEADER);
     bmInfo->bmiHeader.biWidth		= width;
@@ -376,7 +377,7 @@ XGetImageZPixmap(
 	    goto cleanup;
 	}
 	ret_image = XCreateImage(display, NULL, depth, ZPixmap, 0, data,
-		width, height, 32, ((width + 31) >> 3) & ~1);
+		width, height, 32, (int) ((width + 31) >> 3) & ~1);
 	if (ret_image == NULL) {
 	    ckfree(data);
 	    goto cleanup;
@@ -412,7 +413,7 @@ XGetImageZPixmap(
 	    goto cleanup;
 	}
 	ret_image = XCreateImage(display, NULL, 8, ZPixmap, 0, data,
-		width, height, 8, width);
+		width, height, 8, (int) width);
 	if (ret_image == NULL) {
 	    ckfree((char *) data);
 	    goto cleanup;
@@ -454,7 +455,7 @@ XGetImageZPixmap(
 	 */
 
 	if (GetDIBits(hdcMem, hbmp, 0, height, ret_image->data, bmInfo,
-		    DIB_RGB_COLORS) == 0) {
+		DIB_RGB_COLORS) == 0) {
 	    ckfree((char *) ret_image->data);
 	    ckfree((char *) ret_image);
 	    ret_image = NULL;
@@ -469,7 +470,7 @@ XGetImageZPixmap(
 	    goto cleanup;
 	}
 	ret_image = XCreateImage(display, NULL, 32, ZPixmap, 0, data,
-		width, height, 0, width * 4);
+		width, height, 0, (int) width * 4);
 	if (ret_image == NULL) {
 	    ckfree((char *) data);
 	    goto cleanup;
@@ -484,7 +485,7 @@ XGetImageZPixmap(
 	    unsigned char *smallBitData, *smallBitBase, *bigBitData;
 	    unsigned int byte_width, h, w;
 
-	    byte_width = ((width * 3 + 3) & ~3);
+	    byte_width = ((width * 3 + 3) & ~(unsigned)3);
 	    smallBitBase = ckalloc(byte_width * height);
 	    if (!smallBitBase) {
 		ckfree((char *) ret_image->data);
@@ -624,7 +625,7 @@ XGetImage(
 		if (pixel == CLR_INVALID) {
 		    break;
 		}
-		PutPixel(imagePtr, xx, yy, pixel);
+		PutPixel(imagePtr, (int) xx, (int) yy, pixel);
 	    }
 	}
 
@@ -662,7 +663,8 @@ XGetImage(
 
 	imagePtr = XCreateImage(display, NULL, 1, XYBitmap, 0, NULL,
 		width, height, 32, 0);
-	imagePtr->data = ckalloc(imagePtr->bytes_per_line * imagePtr->height);
+	imagePtr->data =
+		ckalloc((unsigned) imagePtr->bytes_per_line*imagePtr->height);
 
 	dc = GetDC(NULL);
 

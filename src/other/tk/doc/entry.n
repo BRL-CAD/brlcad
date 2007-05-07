@@ -526,5 +526,8 @@ entry whatever the value of its \fB\-state\fR option.
 The behavior of entries can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
+.SH "SEE ALSO"
+ttk_entry(n)
+
 .SH KEYWORDS
 entry, widget

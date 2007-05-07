@@ -1912,13 +1912,13 @@ test binary-54.9 {Tcl_BinaryObjCmd: scan} littleEndian {
     set arg2 bar
     list [binary scan \x52\xa3\x53\x54\x05 t2c* arg1 arg2] $arg1 $arg2
 } {2 {-23726 21587} 5}
-test binary-55.10 {Tcl_BinaryObjCmd: scan} littleEndian  {
+test binary-54.10 {Tcl_BinaryObjCmd: scan} littleEndian  {
     catch {unset arg1 arg2}
     set arg1 foo
     set arg2 bar
     list [binary scan \x00\x80\x00\x80 tut arg1 arg2] $arg1 $arg2
 } {2 32768 -32768}
-test binary-55.11 {Tcl_BinaryObjCmd: scan} littleEndian  {
+test binary-54.11 {Tcl_BinaryObjCmd: scan} littleEndian  {
     catch {unset arg1 arg2}
     set arg1 foo
     set arg2 bar
@@ -2018,13 +2018,13 @@ test binary-56.9 {Tcl_BinaryObjCmd: scan} littleEndian  {
     set arg2 bar
     list [binary scan \x52\xa3\x53\x54\x01\x02\x03\x04\x05 n2c* arg1 arg2] $arg1 $arg2
 } {2 {1414767442 67305985} 5}
-test binary-57.10 {Tcl_BinaryObjCmd: scan} littleEndian  {
+test binary-56.10 {Tcl_BinaryObjCmd: scan} littleEndian  {
     catch {unset arg1 arg2}
     set arg1 foo
     set arg2 bar
     list [binary scan \x80\x00\x00\x00\x80\x00\x00\x00 nun arg1 arg2] $arg1 $arg2
 } {2 128 128}
-test binary-57.11 {Tcl_BinaryObjCmd: scan} littleEndian  {
+test binary-56.11 {Tcl_BinaryObjCmd: scan} littleEndian  {
     catch {unset arg1 arg2}
     set arg1 foo
     set arg2 bar

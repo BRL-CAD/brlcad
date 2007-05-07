@@ -11,54 +11,54 @@
  *	application event target.
  *
  * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2005 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2005-2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- *      The following terms apply to all files originating from Apple
- *      Computer, Inc. ("Apple") and associated with the software
- *      unless explicitly disclaimed in individual files.
+ *	The following terms apply to all files originating from Apple
+ *	Computer, Inc. ("Apple") and associated with the software
+ *	unless explicitly disclaimed in individual files.
  *
  *
- *      Apple hereby grants permission to use, copy, modify,
- *      distribute, and license this software and its documentation
- *      for any purpose, provided that existing copyright notices are
- *      retained in all copies and that this notice is included
- *      verbatim in any distributions. No written agreement, license,
- *      or royalty fee is required for any of the authorized
- *      uses. Modifications to this software may be copyrighted by
- *      their authors and need not follow the licensing terms
- *      described here, provided that the new terms are clearly
- *      indicated on the first page of each file where they apply.
+ *	Apple hereby grants permission to use, copy, modify,
+ *	distribute, and license this software and its documentation
+ *	for any purpose, provided that existing copyright notices are
+ *	retained in all copies and that this notice is included
+ *	verbatim in any distributions. No written agreement, license,
+ *	or royalty fee is required for any of the authorized
+ *	uses. Modifications to this software may be copyrighted by
+ *	their authors and need not follow the licensing terms
+ *	described here, provided that the new terms are clearly
+ *	indicated on the first page of each file where they apply.
  *
  *
- *      IN NO EVENT SHALL APPLE, THE AUTHORS OR DISTRIBUTORS OF THE
- *      SOFTWARE BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL,
- *      INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF
- *      THIS SOFTWARE, ITS DOCUMENTATION, OR ANY DERIVATIVES THEREOF,
- *      EVEN IF APPLE OR THE AUTHORS HAVE BEEN ADVISED OF THE
- *      POSSIBILITY OF SUCH DAMAGE.  APPLE, THE AUTHORS AND
- *      DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES, INCLUDING,
- *      BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY,
- *      FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS
- *      SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND APPLE,THE
- *      AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
- *      MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+ *	IN NO EVENT SHALL APPLE, THE AUTHORS OR DISTRIBUTORS OF THE
+ *	SOFTWARE BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL,
+ *	INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF
+ *	THIS SOFTWARE, ITS DOCUMENTATION, OR ANY DERIVATIVES THEREOF,
+ *	EVEN IF APPLE OR THE AUTHORS HAVE BEEN ADVISED OF THE
+ *	POSSIBILITY OF SUCH DAMAGE.  APPLE, THE AUTHORS AND
+ *	DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES, INCLUDING,
+ *	BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY,
+ *	FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.	 THIS
+ *	SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND APPLE,THE
+ *	AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
+ *	MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- *      GOVERNMENT USE: If you are acquiring this software on behalf
- *      of the U.S. government, the Government shall have only
- *      "Restricted Rights" in the software and related documentation
- *      as defined in the Federal Acquisition Regulations (FARs) in
- *      Clause 52.227.19 (c) (2).  If you are acquiring the software
- *      on behalf of the Department of Defense, the software shall be
- *      classified as "Commercial Computer Software" and the
- *      Government shall have only "Restricted Rights" as defined in
- *      Clause 252.227-7013 (c) (1) of DFARs.  Notwithstanding the
- *      foregoing, the authors grant the U.S. Government and others
- *      acting in its behalf permission to use and distribute the
- *      software in accordance with the terms specified in this
- *      license.
+ *	GOVERNMENT USE: If you are acquiring this software on behalf
+ *	of the U.S. government, the Government shall have only
+ *	"Restricted Rights" in the software and related documentation
+ *	as defined in the Federal Acquisition Regulations (FARs) in
+ *	Clause 52.227.19 (c) (2).  If you are acquiring the software
+ *	on behalf of the Department of Defense, the software shall be
+ *	classified as "Commercial Computer Software" and the
+ *	Government shall have only "Restricted Rights" as defined in
+ *	Clause 252.227-7013 (c) (1) of DFARs.  Notwithstanding the
+ *	foregoing, the authors grant the U.S. Government and others
+ *	acting in its behalf permission to use and distribute the
+ *	software in accordance with the terms specified in this
+ *	license.
  *
  * RCS: @(#) $Id$
  */
@@ -68,66 +68,79 @@
 #include "tkMacOSXDebug.h"
 
 /*
-#ifdef	TK_MAC_DEBUG
+#ifdef TK_MAC_DEBUG
 #define TK_MAC_DEBUG_CARBON_EVENTS
 #endif
 */
 
-/* Declarations of functions used only in this file */
+/*
+ * Declarations of functions used only in this file:
+ */
+
 static OSStatus CarbonEventHandlerProc(EventHandlerCallRef callRef,
-			      EventRef event, void *userData);
-static OSStatus InstallStandardApplicationEventHandler();
-static void ExitRaelEventHandlerProc (EventHandlerCallRef, EventRef, void*)
-	__attribute__ ((__noreturn__));
+	EventRef event, void *userData);
+static OSStatus InstallStandardApplicationEventHandler(void);
+static void ExitRaelEventHandlerProc(EventHandlerCallRef callRef,
+	EventRef event, void *userData) __attribute__ ((__noreturn__));
 static void CarbonTimerProc(EventLoopTimerRef timer, void *userData);
 
-/* Static data used by several functions in this file */
+/*
+ * Static data used by several functions in this file:
+ */
+
 static jmp_buf exitRaelJmpBuf;
 static EventLoopTimerRef carbonTimer = NULL;
 static int carbonTimerEnabled = 0;
+static EventHandlerUPP carbonEventHandlerUPP = NULL;
+static Tcl_Interp *carbonEventInterp = NULL;
+static int inTrackingLoop = 0;
 
+
 /*
  *----------------------------------------------------------------------
  *
  * CarbonEventHandlerProc --
  *
- *	  This procedure is the handler for all registered CarbonEvents.
+ *	This procedure is the handler for all registered CarbonEvents.
  *
  * Results:
- *	  OS status code.
+ *	OS status code.
  *
  * Side effects:
- *	  Dispatches CarbonEvents.
+ *	Dispatches CarbonEvents.
  *
  *----------------------------------------------------------------------
  */
 
 static OSStatus
-CarbonEventHandlerProc (
-	EventHandlerCallRef callRef,
-	EventRef event,
-	void *userData)
+CarbonEventHandlerProc(
+    EventHandlerCallRef callRef,
+    EventRef event,
+    void *userData)
 {
-    OSStatus	     result = eventNotHandledErr;
-    TkMacOSXEvent    macEvent;
-    MacEventStatus   eventStatus;
+    OSStatus err = eventNotHandledErr;
+    TkMacOSXEvent macEvent;
+    MacEventStatus eventStatus;
 
     macEvent.eventRef = event;
-    macEvent.eClass = GetEventClass(macEvent.eventRef);
-    macEvent.eKind = GetEventKind(macEvent.eventRef);
+    macEvent.eClass = GetEventClass(event);
+    macEvent.eKind = GetEventKind(event);
     macEvent.interp = (Tcl_Interp *) userData;
+    macEvent.callRef = callRef;
     bzero(&eventStatus, sizeof(eventStatus));
 
-#if defined(TK_MAC_DEBUG) && defined(TK_MAC_DEBUG_CARBON_EVENTS)
-    char buf [256];
+#ifdef TK_MAC_DEBUG_CARBON_EVENTS
     if (macEvent.eKind != kEventMouseMoved &&
 	    macEvent.eKind != kEventMouseDragged) {
-	CarbonEventToAscii(event, buf);
-	fprintf(stderr, "CarbonEventHandlerProc started handling %s\n", buf);
+	TkMacOSXDbgMsg("Started handling %s",
+		TkMacOSXCarbonEventToAscii(event));
 	TkMacOSXInitNamedDebugSymbol(HIToolbox, void, _DebugPrintEvent,
 		EventRef inEvent);
 	if (_DebugPrintEvent) {
-	    /* Carbon-internal event debugging (c.f. Technote 2124) */
+	    /*
+	     * Carbon-internal event debugging (c.f. Technote 2124)
+	     */
+
 	    _DebugPrintEvent(event);
 	}
     }
@@ -135,18 +148,18 @@ CarbonEventHandlerProc (
 
     TkMacOSXProcessEvent(&macEvent,&eventStatus);
     if (eventStatus.stopProcessing) {
-	result = noErr;
+	err = noErr;
     }
 
-#if defined(TK_MAC_DEBUG) && defined(TK_MAC_DEBUG_CARBON_EVENTS)
+#ifdef TK_MAC_DEBUG_CARBON_EVENTS
     if (macEvent.eKind != kEventMouseMoved &&
 	    macEvent.eKind != kEventMouseDragged) {
-	fprintf(stderr,
-		"CarbonEventHandlerProc finished handling %s: %s handled\n",
-		buf, eventStatus.stopProcessing ? "   " : "not");
+	TkMacOSXDbgMsg("Finished handling %s: %s handled",
+		TkMacOSXCarbonEventToAscii(event),
+		eventStatus.stopProcessing ? "   " : "not");
     }
 #endif /* TK_MAC_DEBUG_CARBON_EVENTS */
-    return result;
+    return err;
 }
 
 /*
@@ -154,104 +167,95 @@ CarbonEventHandlerProc (
  *
  * TkMacOSXInitCarbonEvents --
  *
- *	  This procedure initializes all CarbonEvent handlers.
+ *	This procedure initializes all CarbonEvent handlers.
  *
  * Results:
- *	  None.
+ *	None.
  *
  * Side effects:
- *	  Handlers for Carbon Events are registered.
+ *	Handlers for Carbon Events are registered.
  *
  *----------------------------------------------------------------------
  */
 
 MODULE_SCOPE void
-TkMacOSXInitCarbonEvents (
-	Tcl_Interp *interp)
+TkMacOSXInitCarbonEvents(
+    Tcl_Interp *interp)
 {
-    OSStatus err;
     const EventTypeSpec dispatcherEventTypes[] = {
-	    {kEventClassMouse,		kEventMouseDown},
-	    {kEventClassMouse,		kEventMouseUp},
-	    {kEventClassMouse,		kEventMouseMoved},
-	    {kEventClassMouse,		kEventMouseDragged},
-	    {kEventClassMouse,		kEventMouseWheelMoved},
-	    {kEventClassWindow,		kEventWindowUpdate},
-	    {kEventClassWindow,		kEventWindowActivated},
-	    {kEventClassWindow,		kEventWindowDeactivated},
-	    {kEventClassKeyboard,	kEventRawKeyDown},
-	    {kEventClassKeyboard,	kEventRawKeyRepeat},
-	    {kEventClassKeyboard,	kEventRawKeyUp},
-	    {kEventClassKeyboard,	kEventRawKeyModifiersChanged},
-	    {kEventClassKeyboard,	kEventRawKeyRepeat},
-	    {kEventClassApplication,	kEventAppActivated},
-	    {kEventClassApplication,	kEventAppDeactivated},
-	    {kEventClassApplication,	kEventAppQuit},
+	{kEventClassKeyboard,	 kEventRawKeyDown},
+	{kEventClassKeyboard,	 kEventRawKeyRepeat},
+	{kEventClassKeyboard,	 kEventRawKeyUp},
+	{kEventClassKeyboard,	 kEventRawKeyModifiersChanged},
+	{kEventClassKeyboard,	 kEventRawKeyRepeat},
     };
     const EventTypeSpec applicationEventTypes[] = {
-	    {kEventClassMenu,		kEventMenuBeginTracking},
-	    {kEventClassMenu,		kEventMenuEndTracking},
-	    {kEventClassCommand,	kEventCommandProcess},
-	    {kEventClassCommand,	kEventCommandUpdateStatus},
-	    {kEventClassMouse,		kEventMouseWheelMoved},
-	    {kEventClassWindow,		kEventWindowExpanded},
-	    {kEventClassApplication,	kEventAppHidden},
-	    {kEventClassApplication,	kEventAppShown},
-	    {kEventClassApplication,    kEventAppAvailableWindowBoundsChanged},
+	{kEventClassMenu,	 kEventMenuBeginTracking},
+	{kEventClassMenu,	 kEventMenuEndTracking},
+	{kEventClassMenu,	 kEventMenuOpening},
+	{kEventClassMenu,	 kEventMenuTargetItem},
+	{kEventClassCommand,	 kEventCommandProcess},
+	{kEventClassCommand,	 kEventCommandUpdateStatus},
+	{kEventClassApplication, kEventAppActivated},
+	{kEventClassApplication, kEventAppDeactivated},
+	{kEventClassApplication, kEventAppQuit},
+	{kEventClassApplication, kEventAppHidden},
+	{kEventClassApplication, kEventAppShown},
+	{kEventClassApplication, kEventAppAvailableWindowBoundsChanged},
+	{kEventClassAppearance,	 kEventAppearanceScrollBarVariantChanged},
     };
-    EventHandlerUPP handler = NewEventHandlerUPP(CarbonEventHandlerProc);
 
-    err = InstallStandardApplicationEventHandler();
-    if (err != noErr) {
-#ifdef TK_MAC_DEBUG
-	fprintf(stderr, "InstallStandardApplicationEventHandler failed, %d\n",
-		(int) err);
-#endif
-    }
-    err = InstallEventHandler(GetEventDispatcherTarget(), handler,
-	    GetEventTypeCount(dispatcherEventTypes), dispatcherEventTypes,
-	    (void *) interp, NULL);
-    if (err != noErr) {
-#ifdef TK_MAC_DEBUG
-	fprintf(stderr, "InstallEventHandler failed, %d\n", (int) err);
-#endif
-    }
-    err = InstallEventHandler(GetApplicationEventTarget(), handler,
-	    GetEventTypeCount(applicationEventTypes), applicationEventTypes,
-	    (void *) interp, NULL);
-    if (err != noErr) {
-#ifdef TK_MAC_DEBUG
-	fprintf(stderr, "InstallEventHandler failed, %d\n", (int) err);
-#endif
-    }
+    carbonEventHandlerUPP = NewEventHandlerUPP(CarbonEventHandlerProc);
+    carbonEventInterp = interp;
+    ChkErr(InstallStandardApplicationEventHandler);
+    ChkErr(InstallEventHandler, GetEventDispatcherTarget(),
+	    carbonEventHandlerUPP, GetEventTypeCount(dispatcherEventTypes),
+	    dispatcherEventTypes, (void *) carbonEventInterp, NULL);
+    ChkErr(InstallEventHandler, GetApplicationEventTarget(),
+	    carbonEventHandlerUPP, GetEventTypeCount(applicationEventTypes),
+	    applicationEventTypes, (void *) carbonEventInterp, NULL);
 
-#if defined(TK_MAC_DEBUG) && defined(TK_MAC_DEBUG_CARBON_EVENTS)
-    TkMacOSXInitNamedDebugSymbol(HIToolbox, void, TraceEventByName, char*);
-    if (TraceEventByName) {
+#ifdef TK_MAC_DEBUG_CARBON_EVENTS
+    TkMacOSXInitNamedDebugSymbol(HIToolbox, void, _TraceEventByName,
+	    CFStringRef);
+    if (_TraceEventByName) {
 	/* Carbon-internal event debugging (c.f. Technote 2124) */
-	TraceEventByName("kEventMouseDown");
-	TraceEventByName("kEventMouseUp");
-	TraceEventByName("kEventMouseWheelMoved");
-	TraceEventByName("kEventMouseScroll");
-	TraceEventByName("kEventWindowUpdate");
-	TraceEventByName("kEventWindowActivated");
-	TraceEventByName("kEventWindowDeactivated");
-	TraceEventByName("kEventRawKeyDown");
-	TraceEventByName("kEventRawKeyRepeat");
-	TraceEventByName("kEventRawKeyUp");
-	TraceEventByName("kEventRawKeyModifiersChanged");
-	TraceEventByName("kEventRawKeyRepeat");
-	TraceEventByName("kEventAppActivated");
-	TraceEventByName("kEventAppDeactivated");
-	TraceEventByName("kEventAppQuit");
-	TraceEventByName("kEventMenuBeginTracking");
-	TraceEventByName("kEventMenuEndTracking");
-	TraceEventByName("kEventCommandProcess");
-	TraceEventByName("kEventCommandUpdateStatus");
-	TraceEventByName("kEventWindowExpanded");
-	TraceEventByName("kEventAppHidden");
-	TraceEventByName("kEventAppShown");
-	TraceEventByName("kEventAppAvailableWindowBoundsChanged");
+	_TraceEventByName(CFSTR("kEventRawKeyDown"));
+	_TraceEventByName(CFSTR("kEventRawKeyRepeat"));
+	_TraceEventByName(CFSTR("kEventRawKeyUp"));
+	_TraceEventByName(CFSTR("kEventRawKeyModifiersChanged"));
+	_TraceEventByName(CFSTR("kEventRawKeyRepeat"));
+	_TraceEventByName(CFSTR("kEventMenuBeginTracking"));
+	_TraceEventByName(CFSTR("kEventMenuEndTracking"));
+	_TraceEventByName(CFSTR("kEventMenuOpening"));
+	_TraceEventByName(CFSTR("kEventMenuTargetItem"));
+	_TraceEventByName(CFSTR("kEventCommandProcess"));
+	_TraceEventByName(CFSTR("kEventCommandUpdateStatus"));
+	_TraceEventByName(CFSTR("kEventAppActivated"));
+	_TraceEventByName(CFSTR("kEventAppDeactivated"));
+	_TraceEventByName(CFSTR("kEventAppQuit"));
+	_TraceEventByName(CFSTR("kEventAppHidden"));
+	_TraceEventByName(CFSTR("kEventAppShown"));
+	_TraceEventByName(CFSTR("kEventAppAvailableWindowBoundsChanged"));
+	_TraceEventByName(CFSTR("kEventAppearanceScrollBarVariantChanged"));
+	_TraceEventByName(CFSTR("kEventMouseDown"));
+	_TraceEventByName(CFSTR("kEventMouseUp"));
+#if 0
+	_TraceEventByName(CFSTR("kEventMouseMoved"));
+	_TraceEventByName(CFSTR("kEventMouseDragged"));
+#endif
+	_TraceEventByName(CFSTR("kEventMouseWheelMoved"));
+	_TraceEventByName(CFSTR("kEventMouseScroll"));
+	_TraceEventByName(CFSTR("kEventWindowActivated"));
+	_TraceEventByName(CFSTR("kEventWindowDeactivated"));
+	_TraceEventByName(CFSTR("kEventWindowUpdate"));
+	_TraceEventByName(CFSTR("kEventWindowExpanded"));
+	_TraceEventByName(CFSTR("kEventWindowBoundsChanged"));
+	_TraceEventByName(CFSTR("kEventWindowDragStarted"));
+	_TraceEventByName(CFSTR("kEventWindowDragCompleted"));
+	_TraceEventByName(CFSTR("kEventWindowConstrain"));
+	_TraceEventByName(CFSTR("kEventWindowGetRegion"));
+	_TraceEventByName(CFSTR("kEventWindowDrawContent"));
     }
 #endif /* TK_MAC_DEBUG_CARBON_EVENTS */
 }
@@ -259,22 +263,66 @@ TkMacOSXInitCarbonEvents (
 /*
  *----------------------------------------------------------------------
  *
- * InstallStandardApplicationEventHandler --
+ * TkMacOSXInstallWindowCarbonEventHandler --
  *
- *	  This procedure installs the carbon standard application event
- *	  handler.
+ *	This procedure installs our window CarbonEvent handler.
  *
  * Results:
- *	  OS status code.
+ *	None.
  *
  * Side effects:
- *	  Standard handlers for application Carbon Events are registered.
+ *	Handler for Carbon Events is registered.
+ *
+ *----------------------------------------------------------------------
+ */
+
+MODULE_SCOPE void
+TkMacOSXInstallWindowCarbonEventHandler(
+	Tcl_Interp *interp, WindowRef window)
+{
+    const EventTypeSpec windowEventTypes[] = {
+	{kEventClassMouse,	 kEventMouseDown},
+	{kEventClassMouse,	 kEventMouseUp},
+	{kEventClassMouse,	 kEventMouseMoved},
+	{kEventClassMouse,	 kEventMouseDragged},
+	{kEventClassMouse,	 kEventMouseWheelMoved},
+	{kEventClassWindow,	 kEventWindowActivated},
+	{kEventClassWindow,	 kEventWindowDeactivated},
+	{kEventClassWindow,	 kEventWindowUpdate},
+	{kEventClassWindow,	 kEventWindowExpanded},
+	{kEventClassWindow,	 kEventWindowBoundsChanged},
+	{kEventClassWindow,	 kEventWindowDragStarted},
+	{kEventClassWindow,	 kEventWindowDragCompleted},
+	{kEventClassWindow,	 kEventWindowConstrain},
+	{kEventClassWindow,	 kEventWindowGetRegion},
+	{kEventClassWindow,	 kEventWindowDrawContent},
+    };
+
+    ChkErr(InstallEventHandler, GetWindowEventTarget(window),
+	    carbonEventHandlerUPP, GetEventTypeCount(windowEventTypes),
+	    windowEventTypes, (void *) (interp ? interp : carbonEventInterp),
+	    NULL);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * InstallStandardApplicationEventHandler --
+ *
+ *	This procedure installs the carbon standard application event
+ *	handler.
+ *
+ * Results:
+ *	OS status code.
+ *
+ * Side effects:
+ *	Standard handlers for application Carbon Events are registered.
  *
  *----------------------------------------------------------------------
  */
 
 static OSStatus
-InstallStandardApplicationEventHandler()
+InstallStandardApplicationEventHandler(void)
 {
    /*
     * This is a hack to workaround missing Carbon API to install the standard
@@ -286,9 +334,12 @@ InstallStandardApplicationEventHandler()
     * called first off from RAEL by posting a high priority dummy event.
     * This workaround is derived from a similar approach in Technical Q&A 1061.
     */
-    enum { kExitRaelEvent = 'ExiT' };
-    const EventTypeSpec exitRaelEventType =
-	    { kExitRaelEvent,		kExitRaelEvent};
+    enum {
+	kExitRaelEvent = 'ExiT'
+    };
+    const EventTypeSpec exitRaelEventType = {
+	kExitRaelEvent, kExitRaelEvent
+    };
     EventHandlerUPP exitRaelEventHandler;
     EventHandlerRef exitRaelEventHandlerRef = NULL;
     EventRef exitRaelEvent = NULL;
@@ -297,22 +348,26 @@ InstallStandardApplicationEventHandler()
     exitRaelEventHandler = NewEventHandlerUPP(
 	    (EventHandlerProcPtr) ExitRaelEventHandlerProc);
     if (exitRaelEventHandler) {
-	err = InstallEventHandler(GetEventDispatcherTarget(),
+	err = ChkErr(InstallEventHandler, GetEventDispatcherTarget(),
 		exitRaelEventHandler, 1, &exitRaelEventType, NULL,
 		&exitRaelEventHandlerRef);
     }
     if (err == noErr) {
-	err = CreateEvent(NULL, kExitRaelEvent, kExitRaelEvent, 
+	err = ChkErr(CreateEvent, NULL, kExitRaelEvent, kExitRaelEvent,
 		GetCurrentEventTime(), kEventAttributeNone, &exitRaelEvent);
     }
     if (err == noErr) {
-	err = PostEventToQueue(GetMainEventQueue(), exitRaelEvent,
+	err = ChkErr(PostEventToQueue, GetMainEventQueue(), exitRaelEvent,
 		kEventPriorityHigh);
     }
     if (err == noErr) {
 	if (!setjmp(exitRaelJmpBuf)) {
 	    RunApplicationEventLoop();
-	    /* This point should never be reached ! */
+
+	    /*
+	     * This point should never be reached!
+	     */
+
 	    Tcl_Panic("RunApplicationEventLoop exited !");
 	}
     }
@@ -333,23 +388,24 @@ InstallStandardApplicationEventHandler()
  *
  * ExitRaelEventHandlerProc --
  *
- *	  This procedure is the dummy event handler used to break out of
- *	  RAEL via longjmp, it is called as the first ever event handler
- *	  in RAEL by posting a high priority dummy event.
+ *	This procedure is the dummy event handler used to break out of
+ *	RAEL via longjmp, it is called as the first ever event handler
+ *	in RAEL by posting a high priority dummy event.
  *
  * Results:
- *	  None. Never returns !
+ *	None. Never returns !
  *
  * Side effects:
- *	  longjmp back to InstallStandardApplicationEventHandler().
+ *	longjmp back to InstallStandardApplicationEventHandler().
  *
  *----------------------------------------------------------------------
  */
 
 static void
-ExitRaelEventHandlerProc (
-	EventHandlerCallRef callRef,
-	EventRef event, void *userData)
+ExitRaelEventHandlerProc(
+    EventHandlerCallRef callRef,
+    EventRef event,
+    void *userData)
 {
     longjmp(exitRaelJmpBuf, 1);
 }
@@ -357,37 +413,57 @@ ExitRaelEventHandlerProc (
 /*
  *----------------------------------------------------------------------
  *
- * CarbonTimerProc --
+ * TkMacOSXRunTclEventLoop --
  *
- *	  This procedure is the carbon timer handler that runs the tcl
- *	  event loop periodically. It does not process TCL_WINDOW_EVENTS
- *	  to avoid reentry issues with Carbon, nor TCL_IDLE_EVENTS since
- *	  it is only intended to be called during short periods of busy
- *	  time such as during menu tracking.
+ *	Process a limited number of tcl events.
  *
  * Results:
- *	  None.
+ *	Returns 1 if events were handled and 0 otherwise.
  *
  * Side effects:
- *	  Runs the Tcl event loop.
+ *	Runs the Tcl event loop.
+ *
+ *----------------------------------------------------------------------
+ */
+
+MODULE_SCOPE int
+TkMacOSXRunTclEventLoop(void)
+{
+    int i = 4, result = 0;
+
+    /* Avoid starving main event loop: process at most 4 events. */
+    while(--i && Tcl_ServiceAll()) {
+	result = 1;
+    }
+    return result;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * CarbonTimerProc --
+ *
+ *	This procedure is the carbon timer handler that runs the tcl
+ *	event loop periodically.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Runs the Tcl event loop.
  *
  *----------------------------------------------------------------------
  */
 
 static void
-CarbonTimerProc (
-	EventLoopTimerRef timer,
-	void *userData)
+CarbonTimerProc(
+    EventLoopTimerRef timer,
+    void *userData)
 {
-    if(carbonTimerEnabled) {
-	/* Avoid starving main event loop: process at most 4 events. */
-	int i = 4;
-	while(--i && Tcl_DoOneEvent(
-		TCL_FILE_EVENTS|TCL_TIMER_EVENTS|TCL_DONT_WAIT)) {
-#if defined(TK_MAC_DEBUG) && defined(TK_MAC_DEBUG_CARBON_EVENTS)
-	    fprintf(stderr, "Processed tcl event from carbon timer\n");
+    if(carbonTimerEnabled > 0 && TkMacOSXRunTclEventLoop()) {
+#ifdef TK_MAC_DEBUG_CARBON_EVENTS
+	TkMacOSXDbgMsg("Processed tcl events from carbon timer");
 #endif /* TK_MAC_DEBUG_CARBON_EVENTS */
-	}
     }
 }
 
@@ -396,80 +472,183 @@ CarbonTimerProc (
  *
  * TkMacOSXStartTclEventLoopCarbonTimer --
  *
- *	  This procedure installs (if necessary) and starts a carbon
- *	  event timer that runs the tcl event loop periodically.
- *	  It should be called whenever a nested carbon event loop is
- *	  run by HIToolbox (e.g. during menutracking) to ensure that
- *	  non-window non-idle tcl events are processed.
+ *	This procedure installs (if necessary) and starts a carbon
+ *	event timer that runs the tcl event loop periodically.
+ *	It should be called whenever a nested carbon event loop might
+ *	run by HIToolbox (e.g. during mouse tracking) to ensure that
+ *	tcl events continue to be processed.
  *
  * Results:
- *	  OS status code.
+ *	OS status code.
  *
  * Side effects:
- *	  Carbon event timer is installed and started.
+ *	Carbon event timer is installed and started.
  *
  *----------------------------------------------------------------------
  */
 
 MODULE_SCOPE OSStatus
-TkMacOSXStartTclEventLoopCarbonTimer()
+TkMacOSXStartTclEventLoopCarbonTimer(void)
 {
-    OSStatus err;
+    OSStatus err = noErr;
 
-    if(!carbonTimer) {
-	EventLoopTimerUPP timerUPP = NewEventLoopTimerUPP(CarbonTimerProc);
-	err = InstallEventLoopTimer(GetMainEventLoop(), kEventDurationNoWait,
-		5 * kEventDurationMillisecond, timerUPP, NULL, &carbonTimer);
-	if (err != noErr) {
-#ifdef TK_MAC_DEBUG
-	    fprintf(stderr, "InstallEventLoopTimer failed, %d\n", (int) err);
-#endif
-	}
-    } else {
-	err = SetEventLoopTimerNextFireTime(carbonTimer, kEventDurationNoWait);
-	if (err != noErr) {
-#ifdef TK_MAC_DEBUG
-	    fprintf(stderr, "SetEventLoopTimerNextFireTime failed, %d\n",
-		    (int) err);
-#endif
+    if (++carbonTimerEnabled > 0) {
+	if(!carbonTimer) {
+	    EventLoopTimerUPP timerUPP = NewEventLoopTimerUPP(CarbonTimerProc);
+
+	    err = ChkErr(InstallEventLoopTimer, GetMainEventLoop(),
+		    5 * kEventDurationMillisecond,
+		    5 * kEventDurationMillisecond,
+		    timerUPP, NULL, &carbonTimer);
+	} else {
+	    err = ChkErr(SetEventLoopTimerNextFireTime, carbonTimer,
+		    5 * kEventDurationMillisecond);
 	}
     }
-    carbonTimerEnabled = 1;
     return err;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
  * TkMacOSXStopTclEventLoopCarbonTimer --
  *
- *	  This procedure stops the carbon event timer started by
- *	  TkMacOSXStartTclEventLoopCarbonTimer().
+ *	This procedure stops the carbon event timer started by
+ *	TkMacOSXStartTclEventLoopCarbonTimer().
  *
  * Results:
- *	  OS status code.
+ *	OS status code.
  *
  * Side effects:
- *	 Carbon event timer is stopped.
+ *	Carbon event timer is stopped.
  *
  *----------------------------------------------------------------------
  */
 
 MODULE_SCOPE OSStatus
-TkMacOSXStopTclEventLoopCarbonTimer()
+TkMacOSXStopTclEventLoopCarbonTimer(void)
 {
     OSStatus err = noErr;
 
-    if(carbonTimer) {
-	err = SetEventLoopTimerNextFireTime(carbonTimer, kEventDurationForever);
-	if (err != noErr) {
-#ifdef TK_MAC_DEBUG
-	    fprintf(stderr, "SetEventLoopTimerNextFireTime failed, %d\n",
-		    (int) err);
-#endif
+    if (--carbonTimerEnabled == 0) {
+	if(carbonTimer) {
+	    err = ChkErr(SetEventLoopTimerNextFireTime, carbonTimer,
+		    kEventDurationForever);
 	}
     }
-    carbonTimerEnabled = 0;
     return err;
 }
 
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkMacOSXTrackingLoop --
+ *
+ *	Call with 1 before entering a mouse tracking loop (e.g. window
+ *	resizing or menu tracking) to enable tcl event processing but
+ *	disable  carbon event processing (except for update events)
+ *	during the loop, and with 0 after exiting the loop to reset.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+MODULE_SCOPE void
+TkMacOSXTrackingLoop(int tracking)
+{
+    static int previousServiceMode = TCL_SERVICE_NONE;
+
+    if (tracking) {
+	inTrackingLoop++;
+	previousServiceMode = Tcl_SetServiceMode(TCL_SERVICE_ALL);
+	TkMacOSXStartTclEventLoopCarbonTimer();
+#ifdef TK_MAC_DEBUG_CARBON_EVENTS
+	TkMacOSXDbgMsg("Entering tracking loop");
+#endif /* TK_MAC_DEBUG_CARBON_EVENTS */
+    } else {
+	TkMacOSXStopTclEventLoopCarbonTimer();
+	previousServiceMode = Tcl_SetServiceMode(previousServiceMode);
+	inTrackingLoop--;
+#ifdef TK_MAC_DEBUG_CARBON_EVENTS
+	TkMacOSXDbgMsg("Exiting tracking loop");
+#endif /* TK_MAC_DEBUG_CARBON_EVENTS */
+    }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkMacOSXReceiveAndDispatchEvent --
+ *
+ *	This receives a carbon event and sends it to the carbon event
+ *	dispatcher.
+ *
+ * Results:
+ *	Mac OS status
+ *
+ * Side effects:
+ *	This receives and dispatches the next Carbon event.
+ *
+ *----------------------------------------------------------------------
+ */
+MODULE_SCOPE OSStatus
+TkMacOSXReceiveAndDispatchEvent(void)
+{
+    static EventTargetRef targetRef = NULL;
+    int numEventTypes = 0;
+    const EventTypeSpec *eventTypes = NULL;
+    EventRef eventRef;
+    OSStatus err;
+    const EventTypeSpec trackingEventTypes[] = {
+	{'dniw',		 kEventWindowUpdate},
+	{kEventClassWindow,	 kEventWindowUpdate},
+    };
+
+    if (inTrackingLoop > 0) {
+	eventTypes = trackingEventTypes;
+	numEventTypes = GetEventTypeCount(trackingEventTypes);
+    }
+
+    /*
+     * This is a poll, since we have already counted the events coming
+     * into this routine, and are guaranteed to have one waiting.
+     */
+
+    err = ReceiveNextEvent(numEventTypes, eventTypes,
+	    kEventDurationNoWait, true, &eventRef);
+    if (err == noErr) {
+#ifdef TK_MAC_DEBUG_CARBON_EVENTS
+	UInt32 kind = GetEventKind(eventRef);
+
+	if (kind != kEventMouseMoved && kind != kEventMouseDragged) {
+	    TkMacOSXDbgMsg("Dispatching %s", TkMacOSXCarbonEventToAscii(eventRef));
+	    TkMacOSXInitNamedDebugSymbol(HIToolbox, void, _DebugPrintEvent,
+		    EventRef inEvent);
+	    if (_DebugPrintEvent) {
+		/* Carbon-internal event debugging (c.f. Technote 2124) */
+		_DebugPrintEvent(eventRef);
+	    }
+	}
+#endif /* TK_MAC_DEBUG_CARBON_EVENTS */
+	if (!targetRef) {
+	    targetRef = GetEventDispatcherTarget();
+	}
+	TkMacOSXStartTclEventLoopCarbonTimer();
+	err = SendEventToEventTarget(eventRef, targetRef);
+	TkMacOSXStopTclEventLoopCarbonTimer();
+	if (err != noErr && err != eventLoopTimedOutErr
+		&& err != eventNotHandledErr) {
+	    TkMacOSXDbgMsg("SendEventToEventTarget(%s) failed: %ld",
+		    TkMacOSXCarbonEventToAscii(eventRef), err);
+	}
+	ReleaseEvent(eventRef);
+    } else if (err != eventLoopTimedOutErr) {
+	TkMacOSXDbgMsg("ReceiveNextEvent failed: %ld", err);
+    }
+    return err;
+}

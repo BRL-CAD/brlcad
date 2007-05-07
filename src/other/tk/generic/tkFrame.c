@@ -175,7 +175,7 @@ static char *labelAnchorStrings[] = {
  * table used by all and one table for each widget class.
  */
 
-static Tk_OptionSpec commonOptSpec[] = {
+static const Tk_OptionSpec commonOptSpec[] = {
     {TK_OPTION_BORDER, "-background", "background", "Background",
 	DEF_FRAME_BG_COLOR, -1, Tk_Offset(Frame, border),
 	TK_OPTION_NULL_OK, (ClientData) DEF_FRAME_BG_MONO, 0},
@@ -217,7 +217,7 @@ static Tk_OptionSpec commonOptSpec[] = {
     {TK_OPTION_END, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0}
 };
 
-static Tk_OptionSpec frameOptSpec[] = {
+static const Tk_OptionSpec frameOptSpec[] = {
     {TK_OPTION_SYNONYM, "-bd", NULL, NULL,
 	NULL, 0, -1, 0, (ClientData) "-borderwidth", 0},
     {TK_OPTION_PIXELS, "-borderwidth", "borderWidth", "BorderWidth",
@@ -230,7 +230,7 @@ static Tk_OptionSpec frameOptSpec[] = {
 	NULL, 0, 0, 0, (ClientData) commonOptSpec, 0}
 };
 
-static Tk_OptionSpec toplevelOptSpec[] = {
+static const Tk_OptionSpec toplevelOptSpec[] = {
     {TK_OPTION_SYNONYM, "-bd", NULL, NULL,
 	NULL, 0, -1, 0, (ClientData) "-borderwidth", 0},
     {TK_OPTION_PIXELS, "-borderwidth", "borderWidth", "BorderWidth",
@@ -252,7 +252,7 @@ static Tk_OptionSpec toplevelOptSpec[] = {
 	NULL, 0, 0, 0, (ClientData) commonOptSpec, 0}
 };
 
-static Tk_OptionSpec labelframeOptSpec[] = {
+static const Tk_OptionSpec labelframeOptSpec[] = {
     {TK_OPTION_SYNONYM, "-bd", NULL, NULL,
 	NULL, 0, -1, 0, (ClientData) "-borderwidth", 0},
     {TK_OPTION_PIXELS, "-borderwidth", "borderWidth", "BorderWidth",
@@ -291,7 +291,7 @@ static char *classNames[] = {"Frame", "Toplevel", "Labelframe"};
  * class of widgets.
  */
 
-static Tk_OptionSpec *optionSpecs[] = {
+static const Tk_OptionSpec * const optionSpecs[] = {
     frameOptSpec,
     toplevelOptSpec,
     labelframeOptSpec,
@@ -340,7 +340,7 @@ static Tk_ClassProcs frameClass = {
  * geometry manager:
  */
 
-static Tk_GeomMgr frameGeomType = {
+static const Tk_GeomMgr frameGeomType = {
     "labelframe",		/* name */
     FrameRequestProc,		/* requestProc */
     FrameLostSlaveProc		/* lostSlaveProc */
@@ -773,6 +773,8 @@ FrameWidgetObjCmd(
 			&& (strncmp(arg, "-use", (unsigned)length) == 0))
 		    || ((c == 'v')
 			&& (strncmp(arg, "-visual", (unsigned)length) == 0))) {
+
+		    #ifdef SUPPORT_CONFIG_EMBEDDED
 		    if (c == 'u') {
 			CONST char *string = Tcl_GetString(objv[i+1]);
 			if (TkpUseWindow(interp, framePtr->tkwin,
@@ -786,6 +788,12 @@ FrameWidgetObjCmd(
 			result = TCL_ERROR;
 			goto done;
 		    }
+		    #else
+			Tcl_AppendResult(interp, "can't modify ", arg,
+				" option after widget is created", NULL);
+			result = TCL_ERROR;
+			goto done;
+		    #endif
 		}
 	    }
 	    result = ConfigureFrame(interp, framePtr, objc-2, objv+2);
@@ -1419,6 +1427,7 @@ DisplayFrame(
 	    goto noLabel;
 	}
 
+#ifndef TK_NO_DOUBLE_BUFFERING
 	/*
 	 * In order to avoid screen flashes, this function redraws the frame
 	 * into off-screen memory, then copies it back on-screen in a single
@@ -1428,6 +1437,9 @@ DisplayFrame(
 
 	pixmap = Tk_GetPixmap(framePtr->display, Tk_WindowId(tkwin),
 		Tk_Width(tkwin), Tk_Height(tkwin), Tk_Depth(tkwin));
+#else
+	pixmap = Tk_WindowId(tkwin);
+#endif /* TK_NO_DOUBLE_BUFFERING */
 
 	/*
 	 * Clear the pixmap.
@@ -1541,6 +1553,7 @@ DisplayFrame(
 	}
 
 
+#ifndef TK_NO_DOUBLE_BUFFERING
 	/*
 	 * Everything's been redisplayed; now copy the pixmap onto the screen
 	 * and free up the pixmap.
@@ -1552,6 +1565,7 @@ DisplayFrame(
 		(unsigned) (Tk_Height(tkwin) - 2 * hlWidth),
 		hlWidth, hlWidth);
 	Tk_FreePixmap(framePtr->display, pixmap);
+#endif /* TK_NO_DOUBLE_BUFFERING */
     }
 
 }

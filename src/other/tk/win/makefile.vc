@@ -79,23 +79,27 @@ the build instructions.
 #		Any combination of the above may be used (comma separated).
 #		'none' will over-ride everything to nothing.
 #
-#		static  =  Builds a static library of the core instead of a
+#		static   = Builds a static library of the core instead of a
 #			   dll.  The shell will be static (and large), as well.
-#		msvcrt  =  Effects the static option only to switch it from
+#		msvcrt   = Effects the static option only to switch it from
 #			   using libcmt(d) as the C runtime [by default] to
 #			   msvcrt(d). This is useful for static embedding
 #			   support.
-#		staticpkg = Affects the static option only to switch wishXX.exe
+#		staticpkg= Affects the static option only to switch wishXX.exe
 #			   to have the dde and reg extension linked inside it.
-#		threads =  Turns on full multithreading support.
-#		thrdalloc = Use the thread allocator (shared global free pool).
-#		symbols =  Adds symbols for step debugging.
-#		profile =  Adds profiling hooks.  Map file is assumed.
-#		loimpact =  Adds a flag for how NT treats the heap to keep memory
-#			   in use, low.  This is said to impact alloc performance.
-#		unchecked = Allows a symbols build to not use the debug
+#		threads  = Turns on full multithreading support.
+#		thrdalloc= Use the thread allocator (shared global free pool).
+#		symbols  = Adds symbols for step debugging.
+#		profile  = Adds profiling hooks.  Map file is assumed.
+#		loimpact = Adds a flag for how NT treats the heap to keep
+#			   memory in use, low.  This is said to impact alloc
+#			   performance.
+#		unchecked= Allows a symbols build to not use the debug
 #			   enabled runtime (msvcrt.dll not msvcrtd.dll
 #			   or libcmt.lib not libcmtd.lib).
+#               noxp     = If you do not have the uxtheme.h header then you
+#                          cannot include support for XP themeing.
+#		square   = Include the demo square widget.
 #
 #	STATS=memdbg,compdbg,none
 #		Sets optional memory and bytecode compiler debugging code added
@@ -228,9 +232,9 @@ WISHOBJS = \
 	$(TMP_DIR)\wish.res
 
 TKTESTOBJS = \
-	$(TMP_DIR)\tkTest.obj \
-	$(TMP_DIR)\tkSquare.obj \
 	$(TMP_DIR)\testMain.obj \
+	$(TMP_DIR)\tkSquare.obj \
+	$(TMP_DIR)\tkTest.obj \
 	$(TMP_DIR)\tkWinTest.obj
 
 XLIBOBJS = \
@@ -343,9 +347,46 @@ TKOBJS = \
 	$(TMP_DIR)\tkStubInit.obj \
 	$(TMP_DIR)\tkStubLib.obj \
 	$(TMP_DIR)\tkWindow.obj \
+        $(TTK_OBJS) \
 !if !$(STATIC_BUILD)
 	$(TMP_DIR)\tk.res
 !endif
+
+TTK_OBJS = \
+        $(TMP_DIR)\ttkWinMonitor.obj \
+        $(TMP_DIR)\ttkWinTheme.obj \
+        $(TMP_DIR)\ttkWinXPTheme.obj \
+        $(TMP_DIR)\ttkBlink.obj \
+        $(TMP_DIR)\ttkButton.obj \
+        $(TMP_DIR)\ttkCache.obj \
+        $(TMP_DIR)\ttkClamTheme.obj \
+        $(TMP_DIR)\ttkClassicTheme.obj \
+        $(TMP_DIR)\ttkDefaultTheme.obj \
+        $(TMP_DIR)\ttkElements.obj \
+        $(TMP_DIR)\ttkEntry.obj \
+        $(TMP_DIR)\ttkFrame.obj \
+        $(TMP_DIR)\ttkImage.obj \
+        $(TMP_DIR)\ttkInit.obj \
+        $(TMP_DIR)\ttkLabel.obj \
+        $(TMP_DIR)\ttkLayout.obj \
+        $(TMP_DIR)\ttkManager.obj \
+        $(TMP_DIR)\ttkNotebook.obj \
+        $(TMP_DIR)\ttkPanedwindow.obj \
+        $(TMP_DIR)\ttkProgress.obj \
+        $(TMP_DIR)\ttkScale.obj \
+        $(TMP_DIR)\ttkScrollbar.obj \
+        $(TMP_DIR)\ttkScroll.obj \
+        $(TMP_DIR)\ttkSeparator.obj \
+        $(TMP_DIR)\ttkSquare.obj \
+        $(TMP_DIR)\ttkState.obj \
+        $(TMP_DIR)\ttkTagSet.obj \
+        $(TMP_DIR)\ttkTheme.obj \
+        $(TMP_DIR)\ttkTrace.obj \
+        $(TMP_DIR)\ttkTrack.obj \
+        $(TMP_DIR)\ttkTreeview.obj \
+        $(TMP_DIR)\ttkWidget.obj \
+        $(TMP_DIR)\ttkStubInit.obj \
+        $(TMP_DIR)\ttkStubLib.obj
 
 TKSTUBOBJS = \
 	$(TMP_DIR)\tkStubLib.obj \
@@ -355,6 +396,7 @@ TKSTUBOBJS = \
 WINDIR          = $(ROOT)\win
 GENERICDIR	= $(ROOT)\generic
 XLIBDIR		= $(ROOT)\xlib
+TTKDIR		= $(ROOT)\generic\ttk
 BITMAPDIR	= $(ROOT)\bitmaps
 DOCDIR		= $(ROOT)\doc
 RCDIR		= $(WINDIR)\rc
@@ -367,7 +409,18 @@ TCL_INCLUDES	= -I "$(_TCLDIR)\win" -I "$(_TCLDIR)\generic"
 TK_INCLUDES	= -I"$(WINDIR)" -I"$(GENERICDIR)" -I"$(BITMAPDIR)" -I"$(XLIBDIR)" \
 			$(TCL_INCLUDES)
 
-TK_DEFINES	= $(OPTDEFINES)
+CONFIG_DEFS     =-DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 \
+		 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 \
+		 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 \
+		 -DSUPPORT_CONFIG_EMBEDDED \
+!if $(HAVE_UXTHEME_H)
+		 -DHAVE_UXTHEME_H=1 \
+!endif
+!if [nmakehlp -f "$(OPTS)" "square"]
+		 -DTTK_SQUARE_WIDGET=1 \
+!endif
+
+TK_DEFINES	=-DBUILD_ttk $(OPTDEFINES)  $(CONFIG_DEFS)
 
 
 #---------------------------------------------------------------------
@@ -521,6 +574,13 @@ rundemo: setup $(TKTEST) $(TKLIB) $(CAT32)
 !endif
 	$(TKTEST) $(ROOT)\library\demos\widget
 
+shell: setup $(WISH)
+	set TCL_LIBRARY=$(TCL_LIBRARY)
+	set TK_LIBRARY=$(TK_LIBRARY)
+        $(WISH) <<
+        console show
+<<
+
 setup:
 	@if not exist $(OUT_DIR)\nul mkdir $(OUT_DIR)
 	@if not exist $(TMP_DIR)\nul mkdir $(TMP_DIR)
@@ -539,6 +599,7 @@ $**
 		$(TCLSTUBLIB) @<<
 $**
 <<
+	$(_VC_MANIFEST_EMBED_DLL)
 	-@del $*.exp
 !endif
 
@@ -549,17 +610,23 @@ $(TKSTUBLIB): $(TKSTUBOBJS)
 
 $(WISH): $(WISHOBJS) $(TKIMPLIB)
 	$(link32) $(guilflags) -stack:2300000 -out:$@ $(guilibs) $(TCLIMPLIB) $**
+	$(_VC_MANIFEST_EMBED_EXE)
+
 
 $(WISHC): $(WISHOBJS) $(TKIMPLIB)
 	$(link32) $(conlflags) -stack:2300000 -out:$@ $(guilibs) $(TCLIMPLIB) $**
+	$(_VC_MANIFEST_EMBED_EXE)
+
 
 $(TKTEST): $(TKTESTOBJS) $(TKIMPLIB)
 	$(link32) $(guilflags) -stack:2300000 -out:$@ $(guilibs) $(TCLIMPLIB) $**
+	$(_VC_MANIFEST_EMBED_EXE)
 
 
 $(CAT32): $(_TCLDIR)\win\cat.c
 	$(cc32) $(CON_CFLAGS) -Fo$(TMP_DIR)\ $?
 	$(link32) $(conlflags) -out:$@ -stack:16384 $(TMP_DIR)\cat.obj $(baselibs)
+	$(_VC_MANIFEST_EMBED_EXE)
 
 
 #---------------------------------------------------------------------
@@ -649,7 +716,9 @@ CreateButton(4, "FAQ", ExecFile("http://www.purl.org/NET/Tcl-FAQ/"))
 	$(CPY) "$(DOCTMP_DIR)\$(@B).cnt" "$(OUT_DIR)"
 
 $(MAN2TCL): $(TCLTOOLSDIR)\$$(@B).c
-	$(cc32) -nologo -G4 -ML -O2 -Fo$(@D)\ $(TCLTOOLSDIR)\$(@B).c -link -out:$@
+	$(cc32) $(TK_CFLAGS) -Fo$(@D)\ $(TCLTOOLSDIR)\$(@B).c
+	$(link32) $(conlflags) -out:$@ -stack:16384 $(@D)\man2tcl.obj
+	$(_VC_MANIFEST_EMBED_EXE)
 
 $(HELPRTF): $(MAN2TCL) $(MAN2HELP) $(MAN2HELP2) $(INDEX)
 	$(TCLSH) $(MAN2HELP) -bitmap $(BMP_NOPATH) $(PROJECT) $(VERSION) $(DOCDIR:\=/)
@@ -780,6 +849,36 @@ $(GENERICDIR)/tkMenu.c: $(GENERICDIR)/tkMenu.h
 $(GENERICDIR)/tkMenuDraw.c: $(GENERICDIR)/tkMenu.h
 $(WINDIR)/tkWinMenu.c: $(GENERICDIR)/tkMenu.h
 
+$(TTKDIR)/ttkBlink.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkButton.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkCache.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkClamTheme.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkClassicTheme.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkDefaultTheme.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkElements.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkEntry.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkFrame.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkImage.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkInit.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkLabel.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkLayout.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkManager.c: $(TTKDIR)/ttkTheme.h $(TTKDIR)/ttkManager.h
+$(TTKDIR)/ttkNotebook.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkPanedwindow.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkProgress.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkScroll.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkScrollbar.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkSeparator.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkSquare.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkState.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkTagSet.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkTheme.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkTrace.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkTrack.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkTreeview.c: $(TTKDIR)/ttkTheme.h
+$(TTKDIR)/ttkWidget.c: $(TTKDIR)/ttkTheme.h $(TTKDIR)/ttkWidget.h
+
+
 !if exist("$(OUT_DIR)\depend.mk")
 !include "$(OUT_DIR)\depend.mk"
 !message *** Dependency rules in effect.
@@ -800,6 +899,11 @@ $<
 <<
 
 {$(GENERICDIR)}.c{$(TMP_DIR)}.obj::
+	$(cc32) -DBUILD_tk $(TK_CFLAGS) -Fo$(TMP_DIR)\ @<<
+$<
+<<
+
+{$(TTKDIR)}.c{$(TMP_DIR)}.obj::
 	$(cc32) -DBUILD_tk $(TK_CFLAGS) -Fo$(TMP_DIR)\ @<<
 $<
 <<
@@ -833,6 +937,7 @@ $(TMP_DIR)\wish.res: $(TMP_DIR)\wish.exe.manifest
 #---------------------------------------------------------------------
 
 install-binaries:
+	@echo installing binaries
 	@$(CPY) "$(WISH)" "$(BIN_INSTALL_DIR)\"
 !if $(TKLIB) != $(TKIMPLIB)
 	@$(CPY) "$(TKLIB)" "$(BIN_INSTALL_DIR)\"
@@ -840,27 +945,37 @@ install-binaries:
 	@$(CPY) "$(TKIMPLIB)" "$(LIB_INSTALL_DIR)\"
 	@$(CPY) "$(TKSTUBLIB)" "$(LIB_INSTALL_DIR)\"
 !if !$(STATIC_BUILD)
-	@echo Creating package index "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
-	-del "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
-	echo if {![package vsatisfies [package provide Tcl] $(TCL_DOTVERSION)]} { return } > "$(OUT_DIR)\pkgIndex.tcl"
-	echo if {[package vcompare [package provide Tcl] $(TCL_DOTVERSION)$(TCL_PATCHLEVEL)] != 0} { return } >>"$(OUT_DIR)\pkgIndex.tcl"
-	echo package ifneeded Tk $(DOTVERSION)$(TCL_PATCHLEVEL) [list load [file join $$dir .. .. bin $(TKLIBNAME)] Tk] >>"$(OUT_DIR)\pkgIndex.tcl"
-	$(CPY) "$(OUT_DIR)\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\"
+	@echo creating package index
+	@type << > $(OUT_DIR)\pkgIndex.tcl
+if {![package vsatisfies [package provide Tcl] $(TCL_DOTVERSION)]} { return }
+if {[package vcompare [package provide Tcl] $(TCL_DOTVERSION)$(TCL_PATCHLEVEL)] != 0} { return }
+package ifneeded Tk $(DOTVERSION)$(TCL_PATCHLEVEL) [list load [file join $$dir .. .. bin $(TKLIBNAME)] Tk]
+<<
+	@$(CPY) $(OUT_DIR)\pkgIndex.tcl "$(SCRIPT_INSTALL_DIR)\"
 !endif
 
+#"
+
 install-libraries:
+	@echo installing Tk headers
 	@$(CPY) "$(GENERICDIR)\tk.h" "$(INCLUDE_INSTALL_DIR)\"
 	@$(CPY) "$(GENERICDIR)\tkDecls.h" "$(INCLUDE_INSTALL_DIR)\"
 	@$(CPY) "$(GENERICDIR)\tkPlatDecls.h" "$(INCLUDE_INSTALL_DIR)\"
 	@$(CPY) "$(GENERICDIR)\tkIntXlibDecls.h" "$(INCLUDE_INSTALL_DIR)\"
 	@$(CPY) "$(XLIBDIR)\X11\*.h" "$(INCLUDE_INSTALL_DIR)\X11\"
+	@echo installing script library
 	@$(CPY) "$(ROOT)\library\*" "$(SCRIPT_INSTALL_DIR)\"
-	@$(CPY) "$(ROOT)\library\*" "$(SCRIPT_INSTALL_DIR)\"
+	@echo installing theme library
+	@$(CPY) "$(ROOT)\library\ttk\*" "$(SCRIPT_INSTALL_DIR)\ttk\"
+	@echo installing demos
 	@$(CPY) "$(ROOT)\library\demos\*" "$(SCRIPT_INSTALL_DIR)\demos\"
 	@$(CPY) "$(ROOT)\library\demos\images\*" "$(SCRIPT_INSTALL_DIR)\demos\images\"
+	@echo installing images
 	@$(CPY) "$(ROOT)\library\images\*" "$(SCRIPT_INSTALL_DIR)\images\"
+	@echo installing language files
 	@$(CPY) "$(ROOT)\library\msgs\*" "$(SCRIPT_INSTALL_DIR)\msgs\"
 
+#"
 
 #---------------------------------------------------------------------
 # Clean up
@@ -883,6 +998,12 @@ tidy:
 clean:
 	@echo Cleaning $(TMP_DIR)\* ...
 	@if exist $(TMP_DIR)\nul $(RMDIR) $(TMP_DIR)
+	@echo Cleaning $(WINDIR)\nmakehlp.obj ...
+	@if exist $(WINDIR)\nmakehlp.obj del $(WINDIR)\nmakehlp.obj
+	@echo Cleaning $(WINDIR)\nmakehlp.exe ...
+	@if exist $(WINDIR)\nmakehlp.exe del $(WINDIR)\nmakehlp.exe
+	@echo Cleaning $(WINDIR)\_junk.pch ...
+	@if exist $(WINDIR)\_junk.pch del $(WINDIR)\_junk.pch
 
 hose:
 	@echo Hosing $(OUT_DIR)\* ...

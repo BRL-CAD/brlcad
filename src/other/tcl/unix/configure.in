@@ -6,8 +6,7 @@ dnl	to configure the system for the local environment.
 # RCS: @(#) $Id$
 
 AC_INIT([tcl],[8.5])
-# AC_PREREQ(2.59)
-AC_PREREQ(2.52)
+AC_PREREQ(2.59)
 
 dnl This is only used when included from macosx/configure.ac
 m4_ifdef([SC_USE_CONFIG_HEADERS], [
@@ -28,7 +27,7 @@ m4_ifdef([SC_USE_CONFIG_HEADERS], [
 TCL_VERSION=8.5
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=5
-TCL_PATCH_LEVEL="a5"
+TCL_PATCH_LEVEL="a6"
 VERSION=${TCL_VERSION}
 
 #------------------------------------------------------------------------
@@ -79,16 +78,15 @@ SC_MISSING_POSIX_HEADERS
 # It makes compiling go faster.  (This is only a performance feature.)
 #------------------------------------------------------------------------
 
-if test -z "$no_pipe"; then
-if test -n "$GCC"; then
-  AC_MSG_CHECKING([if the compiler understands -pipe])
-  OLDCC="$CC"  
-  CC="$CC -pipe"
-  AC_TRY_COMPILE(,,
-    AC_MSG_RESULT([yes]),
-    CC="$OLDCC"
-    AC_MSG_RESULT([no]))
-fi  
+if test -z "$no_pipe" && test -n "$GCC"; then
+    AC_CACHE_CHECK([if the compiler understands -pipe],
+	tcl_cv_cc_pipe, [
+	hold_cflags=$CFLAGS; CFLAGS="$CFLAGS -pipe"
+	AC_TRY_COMPILE(,, tcl_cv_cc_pipe=yes, tcl_cv_cc_pipe=no)
+	CFLAGS=$hold_cflags])
+    if test $tcl_cv_cc_pipe = yes; then
+	CFLAGS="$CFLAGS -pipe"
+    fi
 fi
 
 #------------------------------------------------------------------------
@@ -123,6 +121,9 @@ SC_ENABLE_SHARED
 SC_CONFIG_CFLAGS
 
 SC_ENABLE_SYMBOLS(bccdebug)
+
+AC_DEFINE(TCL_TOMMATH, 1, [Build libtommath?])
+AC_DEFINE(MP_PREC, 4, [Default libtommath precision.])
 
 #--------------------------------------------------------------------
 #	Detect what compiler flags to set for 64-bit support.
@@ -243,6 +244,7 @@ SC_TIME_HANDLER
 #	Some systems (e.g., IRIX 4.0.5) lack the st_blksize field
 #	in struct stat.  But we might be able to use fstatfs instead.
 #--------------------------------------------------------------------
+
 AC_STRUCT_ST_BLKSIZE
 AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS, 1, [Do we have fstatfs()?])])
 
@@ -250,6 +252,7 @@ AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS, 1, [Do we have fstatfs()?])])
 #       Some system have no memcmp or it does not work with 8 bit
 #       data, this checks it and add memcmp.o to LIBOBJS if needed
 #--------------------------------------------------------------------
+
 AC_FUNC_MEMCMP
 
 #--------------------------------------------------------------------
@@ -257,6 +260,7 @@ AC_FUNC_MEMCMP
 #       have no memmove (we assume they have bcopy instead).
 #       {The replacement define is in compat/string.h}
 #--------------------------------------------------------------------
+
 AC_CHECK_FUNC(memmove, , [
     AC_DEFINE(NO_MEMMOVE, 1, [Do we have memmove()?])
     AC_DEFINE(NO_STRING_H, 1, [Do we have <string.h>?]) ])
@@ -313,7 +317,7 @@ AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_TYPE_UID_T
 
-AC_CACHE_CHECK([for socklen_t], ac_cv_type_socklen_t, [
+AC_CACHE_CHECK([for socklen_t], tcl_cv_type_socklen_t, [
     AC_EGREP_CPP(changequote(<<,>>)dnl
 <<(^|[^a-zA-Z_0-9])socklen_t[^a-zA-Z_0-9]>>dnl
 changequote([,]),[
@@ -323,10 +327,42 @@ changequote([,]),[
     #include <stdlib.h>
     #include <stddef.h>
     #endif
-    ], ac_cv_type_socklen_t=yes, ac_cv_type_socklen_t=no)])
-if test $ac_cv_type_socklen_t = no; then
+    ], tcl_cv_type_socklen_t=yes, tcl_cv_type_socklen_t=no)])
+if test $tcl_cv_type_socklen_t = no; then
     AC_DEFINE(socklen_t, unsigned, [What is the type of socklen_t?])
 fi
+
+AC_CHECK_TYPE([intptr_t], [
+    AC_DEFINE([HAVE_INTPTR_T], 1, [Do we have the intptr_t type?])], [
+    AC_CACHE_CHECK([for pointer-size signed integer type], tcl_cv_intptr_t, [
+    for tcl_cv_intptr_t in "int" "long" "long long" none; do
+	if test "$tcl_cv_intptr_t" != none; then
+	    AC_COMPILE_IFELSE([AC_LANG_BOOL_COMPILE_TRY([AC_INCLUDES_DEFAULT],
+		    [[sizeof (void *) <= sizeof ($tcl_cv_intptr_t)]])], 
+		[tcl_ok=yes], [tcl_ok=no])
+	    test "$tcl_ok" = yes && break; fi
+    done])
+    if test "$tcl_cv_intptr_t" != none; then
+	AC_DEFINE_UNQUOTED([intptr_t], [$tcl_cv_intptr_t], [Signed integer
+	   type wide enough to hold a pointer.])
+    fi
+])
+AC_CHECK_TYPE([uintptr_t], [
+    AC_DEFINE([HAVE_UINTPTR_T], 1, [Do we have the uintptr_t type?])], [
+    AC_CACHE_CHECK([for pointer-size unsigned integer type], tcl_cv_uintptr_t, [
+    for tcl_cv_uintptr_t in "unsigned int" "unsigned long" "unsigned long long" \
+	    none; do
+	if test "$tcl_cv_uintptr_t" != none; then
+	    AC_COMPILE_IFELSE([AC_LANG_BOOL_COMPILE_TRY([AC_INCLUDES_DEFAULT],
+		    [[sizeof (void *) <= sizeof ($tcl_cv_uintptr_t)]])], 
+		[tcl_ok=yes], [tcl_ok=no])
+	    test "$tcl_ok" = yes && break; fi
+    done])
+    if test "$tcl_cv_uintptr_t" != none; then
+	AC_DEFINE_UNQUOTED([uintptr_t], [$tcl_cv_uintptr_t], [Unsigned integer
+	   type wide enough to hold a pointer.])
+    fi
+])
 
 #--------------------------------------------------------------------
 #	If a system doesn't have an opendir function (man, that's old!)
@@ -496,6 +532,12 @@ if test "`uname -s`" = "Darwin" ; then
 	    AC_DEFINE(HAVE_WEAK_IMPORT, 1, [Is weak import available?])
 	fi
     fi
+    # Build .bundle dltest binaries in addition to .dylib
+    DLTEST_LD='${CC} -bundle -Wl,-w ${CFLAGS} ${LDFLAGS}'
+    DLTEST_SUFFIX=".bundle"
+else
+    DLTEST_LD='${SHLIB_LD}'
+    DLTEST_SUFFIX=""
 fi
 
 #--------------------------------------------------------------------
@@ -537,6 +579,57 @@ if test $tcl_ok = yes; then
 fi
 AC_MSG_RESULT([$tcl_ok])
 
+#------------------------------------------------------------------------
+#	Check whether the timezone data is supplied by the OS or has
+#	to be installed by Tcl. The default is autodetection, but can
+#	be overriden on the configure command line either way.
+#------------------------------------------------------------------------
+AC_MSG_CHECKING([for timezone data])
+AC_ARG_WITH(tzdata,
+    AC_HELP_STRING([--with-tzdata],
+	[install timezone data (default: autodetect)]),
+    [tcl_ok=$withval], [tcl_ok=auto])
+#
+# Any directories that get added here must also be added to the
+# search path in ::tcl::clock::Initialize (library/clock.tcl).
+#
+case $tcl_ok in 
+    no)
+	AC_MSG_RESULT([supplied by OS vendor])
+    ;;
+    yes)
+	# nothing to do here
+    ;;
+    auto*)
+	AC_CACHE_VAL([tcl_cv_dir_zoneinfo], [
+	for dir in /usr/share/zoneinfo \
+		/usr/share/lib/zoneinfo \
+		/usr/lib/zoneinfo
+	do
+		if test -f $dir/UTC -o -f $dir/GMT
+		then
+			tcl_cv_dir_zoneinfo="$dir"
+			break
+		fi
+	done])
+	if test -n "$tcl_cv_dir_zoneinfo"; then
+	    tcl_ok=no
+	    AC_MSG_RESULT([$dir])
+	else
+	    tcl_ok=yes
+	fi
+    ;;
+    *)
+	AC_MSG_ERROR([invalid argument: $tcl_ok])	
+    ;;
+esac
+if test $tcl_ok = yes
+then
+    AC_MSG_RESULT([supplied by Tcl])
+    INSTALL_TZDATA=install-tzdata
+fi
+AC_SUBST(INSTALL_TZDATA)
+
 #--------------------------------------------------------------------
 #	The statements below define a collection of symbols related to
 #	building libtcl as a shared library instead of a static library.
@@ -567,8 +660,6 @@ if test "`uname -s`" = "Darwin" ; then
     TCL_SHLIB_LD_EXTRAS="${TCL_SHLIB_LD_EXTRAS}"' -install_name ${DYLIB_INSTALL_DIR}/${TCL_LIB_FILE} -seg1addr 0xa000000'
 fi
 
-EXTRA_INSTALL_BINARIES=":"
-EXTRA_BUILD_HTML=":"
 if test "$FRAMEWORK_BUILD" = "1" ; then
     AC_DEFINE(TCL_FRAMEWORK, 1, [Is Tcl built as a framework?])
     AC_CONFIG_FILES([Tcl-Info.plist:../macosx/Tcl-Info.plist.in])
@@ -598,6 +689,7 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
     EXTRA_INSTALL="install-private-headers html-tcl"
     EXTRA_BUILD_HTML='@ln -fs contents.htm $(HTML_INSTALL_DIR)/TclTOC.html' 
     EXTRA_INSTALL_BINARIES='@echo "Installing Info.plist to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) Tcl-Info.plist "$(LIB_INSTALL_DIR)/Resources/Info.plist"'
+    EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing license.terms to $(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) "$(TOP_DIR)/license.terms" "$(LIB_INSTALL_DIR)/Resources"'
     EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Finalizing Tcl.framework" && rm -f "$(LIB_INSTALL_DIR)/../Current" && ln -s "$(VERSION)" "$(LIB_INSTALL_DIR)/../Current" && for f in "$(LIB_FILE)" tclConfig.sh Resources Headers PrivateHeaders; do rm -f "$(LIB_INSTALL_DIR)/../../$$f" && ln -s "Versions/Current/$$f" "$(LIB_INSTALL_DIR)/../.."; done && f="$(STUB_LIB_FILE)" && rm -f "$(LIB_INSTALL_DIR)/../../$$f" && ln -s "Versions/$(VERSION)/$$f" "$(LIB_INSTALL_DIR)/../.."'
     TCL_YEAR="`date +%Y`"
     # Don't use AC_DEFINE for the following as the framework version define 
@@ -731,6 +823,9 @@ AC_SUBST(EXTRA_CC_SWITCHES)
 AC_SUBST(EXTRA_INSTALL)
 AC_SUBST(EXTRA_INSTALL_BINARIES)
 AC_SUBST(EXTRA_BUILD_HTML)
+
+AC_SUBST(DLTEST_LD)
+AC_SUBST(DLTEST_SUFFIX)
 
 dnl	Disable the automake-friendly normalization of LIBOBJS
 dnl	performed by autoconf 2.53 and later.  It's not correct for us.

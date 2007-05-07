@@ -71,6 +71,7 @@
  */
 
 typedef struct TkColormap TkColormap;
+typedef struct TkFontAttributes TkFontAttributes;
 typedef struct TkGrabEvent TkGrabEvent;
 typedef struct TkpCursor_ *TkpCursor;
 typedef struct TkRegion_ *TkRegion;
@@ -789,7 +790,7 @@ typedef struct TkWindow {
      * Information used by tkGeometry.c for geometry management.
      */
 
-    Tk_GeomMgr *geomMgrPtr;	/* Information about geometry manager for this
+    const Tk_GeomMgr *geomMgrPtr; /* Information about geometry manager for this
 				 * window. */
     ClientData geomData;	/* Argument for geometry manager functions. */
     int reqWidth, reqHeight;	/* Arguments from last call to
@@ -844,7 +845,7 @@ typedef struct TkWindow {
 
 typedef struct TkStateMap {
     int numKey;			/* Integer representation of a value. */
-    char *strKey;		/* String representation of a value. */
+    const char *strKey;		/* String representation of a value. */
 } TkStateMap;
 
 /*
@@ -945,6 +946,12 @@ MODULE_SCOPE Tcl_HashTable	tkPredefBitmapTable;
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLEXPORT
 #endif
+
+/*
+ * Themed widget set init function:
+ */
+
+MODULE_SCOPE int	Ttk_Init(Tcl_Interp *interp);
 
 /*
  * Internal functions shared among Tk modules but not exported to the outside
@@ -1174,6 +1181,9 @@ MODULE_SCOPE void	TkUnderlineCharsInContext(Display *display,
 			    Drawable drawable, GC gc, Tk_Font tkfont,
 			    const char *string, int numBytes, int x, int y,
 			    int firstByte, int lastByte);
+MODULE_SCOPE void	TkpGetFontAttrsForChar(Tk_Window tkwin, Tk_Font tkfont,
+					       Tcl_UniChar c, 
+					       struct TkFontAttributes *faPtr);
 
 /*
  * Unsupported commands.

@@ -63,7 +63,7 @@ enum validateType {
  * Information used for Entry objv parsing.
  */
 
-static Tk_OptionSpec entryOptSpec[] = {
+static const Tk_OptionSpec entryOptSpec[] = {
     {TK_OPTION_BORDER, "-background", "background", "Background",
 	DEF_ENTRY_BG_COLOR, -1, Tk_Offset(Entry, normalBorder),
 	0, (ClientData) DEF_ENTRY_BG_MONO, 0},
@@ -135,7 +135,7 @@ static Tk_OptionSpec entryOptSpec[] = {
 	0, (ClientData) DEF_ENTRY_SELECT_BD_MONO, 0},
     {TK_OPTION_COLOR, "-selectforeground", "selectForeground", "Background",
 	DEF_ENTRY_SELECT_FG_COLOR, -1, Tk_Offset(Entry, selFgColorPtr),
-	0, (ClientData) DEF_ENTRY_SELECT_FG_MONO, 0},
+	TK_CONFIG_NULL_OK, (ClientData) DEF_ENTRY_SELECT_FG_MONO, 0},
     {TK_OPTION_STRING, "-show", "show", "Show",
 	DEF_ENTRY_SHOW, -1, Tk_Offset(Entry, showChar),
 	TK_OPTION_NULL_OK, 0, 0},
@@ -180,7 +180,7 @@ static Tk_OptionSpec entryOptSpec[] = {
 #define DEF_SPINBOX_VALUES		""
 #define DEF_SPINBOX_WRAP		"0"
 
-static Tk_OptionSpec sbOptSpec[] = {
+static const Tk_OptionSpec sbOptSpec[] = {
     {TK_OPTION_BORDER, "-activebackground", "activeBackground", "Background",
 	DEF_BUTTON_ACTIVE_BG_COLOR, -1, Tk_Offset(Spinbox, activeBorder),
 	0, (ClientData) DEF_BUTTON_ACTIVE_BG_MONO, 0},
@@ -281,7 +281,7 @@ static Tk_OptionSpec sbOptSpec[] = {
 	0, (ClientData) DEF_ENTRY_SELECT_BD_MONO, 0},
     {TK_OPTION_COLOR, "-selectforeground", "selectForeground", "Background",
 	DEF_ENTRY_SELECT_FG_COLOR, -1, Tk_Offset(Entry, selFgColorPtr),
-	0, (ClientData) DEF_ENTRY_SELECT_FG_MONO, 0},
+	TK_CONFIG_NULL_OK, (ClientData) DEF_ENTRY_SELECT_FG_MONO, 0},
     {TK_OPTION_STRING_TABLE, "-state", "state", "State",
 	DEF_ENTRY_STATE, -1, Tk_Offset(Entry, state),
 	0, (ClientData) stateStrings, 0},
@@ -509,7 +509,7 @@ Tk_EntryObjCmd(
      */
 
     entryPtr			= (Entry *) ckalloc(sizeof(Entry));
-    memset((VOID *) entryPtr, 0, sizeof(Entry));
+    memset(entryPtr, 0, sizeof(Entry));
 
     entryPtr->tkwin		= tkwin;
     entryPtr->display		= Tk_Display(tkwin);
@@ -1449,7 +1449,9 @@ EntryWorldChanged(
     }
     entryPtr->textGC = gc;
 
-    gcValues.foreground = entryPtr->selFgColorPtr->pixel;
+    if (entryPtr->selFgColorPtr != NULL) {
+	gcValues.foreground = entryPtr->selFgColorPtr->pixel;
+    }
     gcValues.font = Tk_FontId(entryPtr->tkfont);
     mask = GCForeground | GCFont;
     gc = Tk_GetGC(entryPtr->tkwin, mask, &gcValues);
@@ -1583,6 +1585,7 @@ DisplayEntry(
 	Tcl_Release((ClientData) entryPtr);
     }
 
+#ifndef TK_NO_DOUBLE_BUFFERING
     /*
      * In order to avoid screen flashes, this function redraws the textual
      * area of the entry into off-screen memory, then copies it back on-screen
@@ -1592,6 +1595,9 @@ DisplayEntry(
 
     pixmap = Tk_GetPixmap(entryPtr->display, Tk_WindowId(tkwin),
 	    Tk_Width(tkwin), Tk_Height(tkwin), Tk_Depth(tkwin));
+#else
+    pixmap = Tk_WindowId(tkwin);
+#endif /* TK_NO_DOUBLE_BUFFERING */
 
     /*
      * Compute x-coordinate of the pixel just after last visible one, plus
@@ -1827,6 +1833,7 @@ DisplayEntry(
 	}
     }
 
+#ifndef TK_NO_DOUBLE_BUFFERING
     /*
      * Everything's been redisplayed; now copy the pixmap onto the screen and
      * free up the pixmap.
@@ -1836,6 +1843,7 @@ DisplayEntry(
 	    0, 0, (unsigned) Tk_Width(tkwin), (unsigned) Tk_Height(tkwin),
 	    0, 0);
     Tk_FreePixmap(entryPtr->display, pixmap);
+#endif /* TK_NO_DOUBLE_BUFFERING */
     entryPtr->flags &= ~BORDER_NEEDED;
 }
 
@@ -3523,7 +3531,7 @@ Tk_SpinboxObjCmd(
 
     sbPtr			= (Spinbox *) ckalloc(sizeof(Spinbox));
     entryPtr			= (Entry *) sbPtr;
-    memset((VOID *) sbPtr, 0, sizeof(Spinbox));
+    memset(sbPtr, 0, sizeof(Spinbox));
 
     entryPtr->tkwin		= tkwin;
     entryPtr->display		= Tk_Display(tkwin);

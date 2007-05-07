@@ -85,7 +85,7 @@ static Tcl_ThreadDataKey dataKey;
  * Declarations for functions used only in this file.
  */
 
-static TclRegexp *	CompileRegexp(Tcl_Interp *interp, CONST char *pattern,
+static TclRegexp *	CompileRegexp(Tcl_Interp *interp, const char *pattern,
 			    int length, int flags);
 static void		DupRegexpInternalRep(Tcl_Obj *srcPtr,
 			    Tcl_Obj *copyPtr);
@@ -93,7 +93,7 @@ static void		FinalizeRegexp(ClientData clientData);
 static void		FreeRegexp(TclRegexp *regexpPtr);
 static void		FreeRegexpInternalRep(Tcl_Obj *objPtr);
 static int		RegExpExecUniChar(Tcl_Interp *interp, Tcl_RegExp re,
-			    CONST Tcl_UniChar *uniString, int numChars,
+			    const Tcl_UniChar *uniString, int numChars,
 			    int nmatches, int flags);
 static int		SetRegexpFromAny(Tcl_Interp *interp, Tcl_Obj *objPtr);
 
@@ -136,7 +136,7 @@ Tcl_RegExp
 Tcl_RegExpCompile(
     Tcl_Interp *interp,		/* For use in error reporting and to access
 				 * the interp regexp cache. */
-    CONST char *pattern)	/* String for which to produce compiled
+    const char *pattern)	/* String for which to produce compiled
 				 * regular expression. */
 {
     return (Tcl_RegExp) CompileRegexp(interp, pattern, (int) strlen(pattern),
@@ -169,15 +169,15 @@ Tcl_RegExpExec(
     Tcl_RegExp re,		/* Compiled regular expression; must have been
 				 * returned by previous call to
 				 * Tcl_GetRegExpFromObj. */
-    CONST char *text,		/* Text against which to match re. */
-    CONST char *start)		/* If text is part of a larger string, this
+    const char *text,		/* Text against which to match re. */
+    const char *start)		/* If text is part of a larger string, this
 				 * identifies beginning of larger string, so
 				 * that "^" won't match. */
 {
     int flags, result, numChars;
     TclRegexp *regexp = (TclRegexp *)re;
     Tcl_DString ds;
-    CONST Tcl_UniChar *ustr;
+    const Tcl_UniChar *ustr;
 
     /*
      * If the starting point is offset from the beginning of the buffer, then
@@ -237,13 +237,13 @@ Tcl_RegExpRange(
     int index,			/* 0 means give the range of the entire match,
 				 * > 0 means give the range of a matching
 				 * subrange. */
-    CONST char **startPtr,	/* Store address of first character in
+    const char **startPtr,	/* Store address of first character in
 				 * (sub-)range here. */
-    CONST char **endPtr)	/* Store address of character just after last
+    const char **endPtr)	/* Store address of character just after last
 				 * in (sub-)range here. */
 {
     TclRegexp *regexpPtr = (TclRegexp *) re;
-    CONST char *string;
+    const char *string;
 
     if ((size_t) index > regexpPtr->re.re_nsub) {
 	*startPtr = *endPtr = NULL;
@@ -285,7 +285,7 @@ RegExpExecUniChar(
     Tcl_Interp *interp,		/* Interpreter to use for error reporting. */
     Tcl_RegExp re,		/* Compiled regular expression; returned by a
 				 * previous call to Tcl_GetRegExpFromObj */
-    CONST Tcl_UniChar *wString,	/* String against which to match re. */
+    const Tcl_UniChar *wString,	/* String against which to match re. */
     int numChars,		/* Length of Tcl_UniChar string (must be
 				 * >=0). */
     int nmatches,		/* How many subexpression matches (counting
@@ -390,8 +390,8 @@ TclRegExpRangeUniChar(
 int
 Tcl_RegExpMatch(
     Tcl_Interp *interp,		/* Used for error reporting. May be NULL. */
-    CONST char *text,		/* Text to search for pattern matches. */
-    CONST char *pattern)	/* Regular expression to match against text. */
+    const char *text,		/* Text to search for pattern matches. */
+    const char *pattern)	/* Regular expression to match against text. */
 {
     Tcl_RegExp re;
 
@@ -612,12 +612,12 @@ TclRegAbout(
     Tcl_Interp *interp,		/* For use in variable assignment. */
     Tcl_RegExp re)		/* The compiled regular expression. */
 {
-    TclRegexp *regexpPtr = (TclRegexp *)re;
-    char buf[TCL_INTEGER_SPACE];
-    static struct infoname {
+    TclRegexp *regexpPtr = (TclRegexp *) re;
+    struct infoname {
 	int bit;
-	char *text;
-    } infonames[] = {
+	const char *text;
+    };
+    static const struct infoname infonames[] = {
 	{REG_UBACKREF,		"REG_UBACKREF"},
 	{REG_ULOOKAHEAD,	"REG_ULOOKAHEAD"},
 	{REG_UBOUNDS,		"REG_UBOUNDS"},
@@ -632,38 +632,40 @@ TclRegAbout(
 	{REG_UEMPTYMATCH,	"REG_UEMPTYMATCH"},
 	{REG_UIMPOSSIBLE,	"REG_UIMPOSSIBLE"},
 	{REG_USHORTEST,		"REG_USHORTEST"},
-	{0,			""}
+	{0,			NULL}
     };
-    struct infoname *inf;
-    int n;
+    const struct infoname *inf;
+    Tcl_Obj *infoObj;
+
+    /*
+     * The reset here guarantees that the interpreter result is empty and
+     * unshared. This means that we can use Tcl_ListObjAppendElement on the
+     * result object quite safely.
+     */
 
     Tcl_ResetResult(interp);
 
-    sprintf(buf, "%u", (unsigned)(regexpPtr->re.re_nsub));
-    Tcl_AppendElement(interp, buf);
-
     /*
-     * Must count bits before generating list, because we must know whether {}
-     * are needed before we start appending names.
+     * Assume that there will never be more than INT_MAX subexpressions. This
+     * is a pretty reasonable assumption; the RE engine doesn't scale _that_
+     * well and Tcl has other limits that constrain things as well...
      */
 
-    n = 0;
-    for (inf = infonames; inf->bit != 0; inf++) {
-	if (regexpPtr->re.re_info&inf->bit) {
-	    n++;
+    Tcl_ListObjAppendElement(NULL, Tcl_GetObjResult(interp),
+	    Tcl_NewIntObj((int) regexpPtr->re.re_nsub));
+
+    /*
+     * Now append a list of all the bit-flags set for the RE.
+     */
+
+    TclNewObj(infoObj);
+    for (inf=infonames ; inf->bit != 0 ; inf++) {
+	if (regexpPtr->re.re_info & inf->bit) {
+	    Tcl_ListObjAppendElement(NULL, infoObj,
+		    Tcl_NewStringObj(inf->text, -1));
 	}
     }
-    if (n != 1) {
-	Tcl_AppendResult(interp, " {", NULL);
-    }
-    for (inf = infonames; inf->bit != 0; inf++) {
-	if (regexpPtr->re.re_info&inf->bit) {
-	    Tcl_AppendElement(interp, inf->text);
-	}
-    }
-    if (n != 1) {
-	Tcl_AppendResult(interp, "}", NULL);
-    }
+    Tcl_ListObjAppendElement(NULL, Tcl_GetObjResult(interp), infoObj);
 
     return 0;
 }
@@ -687,13 +689,13 @@ TclRegAbout(
 void
 TclRegError(
     Tcl_Interp *interp,		/* Interpreter for error reporting. */
-    CONST char *msg,		/* Message to prepend to error. */
+    const char *msg,		/* Message to prepend to error. */
     int status)			/* Status code to report. */
 {
     char buf[100];		/* ample in practice */
     char cbuf[100];		/* lots in practice */
     size_t n;
-    char *p;
+    const char *p;
 
     Tcl_ResetResult(interp);
     n = TclReError(status, NULL, buf, sizeof(buf));
@@ -822,15 +824,14 @@ SetRegexpFromAny(
 static TclRegexp *
 CompileRegexp(
     Tcl_Interp *interp,		/* Used for error reporting if not NULL. */
-    CONST char *string,		/* The regexp to compile (UTF-8). */
+    const char *string,		/* The regexp to compile (UTF-8). */
     int length,			/* The length of the string in bytes. */
     int flags)			/* Compilation flags. */
 {
     TclRegexp *regexpPtr;
-    CONST Tcl_UniChar *uniString;
-    int numChars;
+    const Tcl_UniChar *uniString;
+    int numChars, status, i;
     Tcl_DString stringBuf;
-    int status, i;
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
     if (!tsdPtr->initialized) {
@@ -912,8 +913,7 @@ CompileRegexp(
 	ckfree((char *)regexpPtr);
 	if (interp) {
 	    TclRegError(interp,
-		    "couldn't compile regular expression pattern: ",
-		    status);
+		    "couldn't compile regular expression pattern: ", status);
 	}
 	return NULL;
     }

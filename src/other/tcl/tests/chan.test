@@ -24,7 +24,7 @@ test chan-1.1 {chan command general syntax} -body {
 } -returnCodes error -result "wrong # args: should be \"chan subcommand ?argument ...?\""
 test chan-1.2 {chan command general syntax} -body {
     chan FOOBAR
-} -returnCodes error -result "unknown or ambiguous subcommand \"FOOBAR\": must be blocked, close, configure, copy, create, eof, event, flush, gets, names, postevent, puts, read, seek, tell, or truncate"
+} -returnCodes error -result "unknown or ambiguous subcommand \"FOOBAR\": must be blocked, close, configure, copy, create, eof, event, flush, gets, names, pending, postevent, puts, read, seek, tell, or truncate"
 
 test chan-2.1 {chan command: blocked subcommand} -body {
     chan blocked foo bar
@@ -93,6 +93,118 @@ test chan-15.2 {chan command: truncate subcommand} -setup {
     read $f
 } -result 12 -cleanup {
     catch {close $f}
+    catch {removeFile $file}
+}
+
+# TIP 287: chan pending
+test chan-16.1 {chan command: pending subcommand} -body {
+    chan pending
+} -returnCodes error -result "wrong # args: should be \"chan pending mode channelId\""
+test chan-16.2 {chan command: pending subcommand} -body {
+    chan pending stdin
+} -returnCodes error -result "wrong # args: should be \"chan pending mode channelId\""
+test chan-16.3 {chan command: pending subcommand} -body {
+    chan pending stdin stdout stderr
+} -returnCodes error -result "wrong # args: should be \"chan pending mode channelId\""
+test chan-16.4 {chan command: pending subcommand} -body {
+    chan pending {input output} stdout
+} -returnCodes error -result "bad mode \"input output\": must be input or output"
+test chan-16.5 {chan command: pending input subcommand} -body {
+    chan pending input stdout 
+} -result -1
+test chan-16.6 {chan command: pending input subcommand} -body {
+    chan pending input stdin
+} -result 0
+test chan-16.7 {chan command: pending input subcommand} -body {
+    chan pending input FOOBAR
+} -returnCodes error -result "can not find channel named \"FOOBAR\""
+test chan-16.8 {chan command: pending input subcommand} -setup {
+    set file [makeFile {} testAvailable]
+    set f [open $file w+]
+    chan configure $f -translation lf -buffering line
+} -body {
+    chan puts $f foo
+    chan puts $f bar
+    chan puts $f baz
+    chan seek $f 0
+    chan gets $f
+    chan pending input $f
+} -result 8 -cleanup {
+    catch {chan close $f}
+    catch {removeFile $file}
+}
+test chan-16.9 {chan command: pending input subcommand} -setup {
+    proc chan-16.9-accept {sock addr port} {
+        chan configure $sock -blocking 0 -buffering line -buffersize 32
+        chan event $sock readable [list chan-16.9-readable $sock]
+    }
+
+    proc chan-16.9-readable {sock} {
+        set r [chan gets $sock line]
+        set l [string length $line]
+        set e [chan eof $sock]
+        set b [chan blocked $sock]
+        set i [chan pending input $sock]
+
+        lappend ::chan-16.9-data $r $l $e $b $i
+
+        if {$r != -1 || $e || $l || !$b || $i > 128} {
+            set data [read $sock $i]
+            lappend ::chan-16.9-data [string range $data 0 2]
+            lappend ::chan-16.9-data [string range $data end-2 end]
+            set ::chan-16.9-done 1
+            chan event $sock readable {}
+        } else {
+	    after idle chan-16.9-client
+	}
+    }
+
+    proc chan-16.9-client {} {
+        chan puts -nonewline $::client ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
+        chan flush $::client
+    }
+
+    set ::server [socket -server chan-16.9-accept -myaddr 127.0.0.1 0]
+    set ::client [socket 127.0.0.1 [lindex [fconfigure $::server -sockname] 2]]
+    set ::chan-16.9-data [list]
+    set ::chan-16.9-done 0
+} -body {
+    after idle chan-16.9-client 
+    vwait ::chan-16.9-done
+    set ::chan-16.9-data
+} -result {-1 0 0 1 36 -1 0 0 1 72 -1 0 0 1 108 -1 0 0 1 144 ABC 890} -cleanup {
+    catch {chan close $client}
+    catch {chan close $server}
+    rename chan-16.9-accept {}
+    rename chan-16.9-readable {}
+    rename chan-16.9-client {}
+    unset -nocomplain ::chan-16.9-data
+    unset -nocomplain ::chan-16.9-done
+    unset -nocomplain ::server
+    unset -nocomplain ::client
+}
+test chan-16.10 {chan command: pending output subcommand} -body {
+    chan pending output stdin
+} -result -1
+test chan-16.11 {chan command: pending output subcommand} -body {
+    chan pending output stdout
+} -result 0
+test chan-16.12 {chan command: pending output subcommand} -body {
+    chan pending output FOOBAR
+} -returnCodes error -result "can not find channel named \"FOOBAR\""
+test chan-16.13 {chan command: pending output subcommand} -setup {
+    set file [makeFile {} testPendingOutput]
+    set f [open $file w+]
+    chan configure $f -translation lf -buffering full -buffersize 1024
+} -body {
+    set result [list]
+    chan puts $f [string repeat x 512]
+    lappend result [chan pending output $f]
+    chan flush $f
+    lappend result [chan pending output $f]
+} -result [list 513 0] -cleanup {
+    unset -nocomplain result
+    catch {chan close $f}
     catch {removeFile $file}
 }
 

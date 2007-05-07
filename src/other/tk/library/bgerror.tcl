@@ -18,6 +18,12 @@ namespace eval ::tk::dialog::error {
     option add *ErrorDialog.function.text [mc "Save To Log"] \
 	widgetDefault
     option add *ErrorDialog.function.command [namespace code SaveToLog]
+    if {[tk windowingsystem] eq "aqua"} {
+	option add *ErrorDialog*background systemAlertBackgroundActive \
+		widgetDefault
+	option add *ErrorDialog*Button.highlightBackground \
+		systemAlertBackgroundActive widgetDefault
+    }
 }
 
 proc ::tk::dialog::error::Return {} {
@@ -139,7 +145,7 @@ proc ::tk::dialog::error::bgerror err {
     wm protocol .bgerrorDialog WM_DELETE_WINDOW { }
 
     if {$windowingsystem eq "aqua"} {
-	::tk::unsupported::MacWindowStyle style .bgerrorDialog zoomDocProc
+	::tk::unsupported::MacWindowStyle style .bgerrorDialog moveableAlert {}
     }
 
     frame .bgerrorDialog.bot
@@ -161,6 +167,9 @@ proc ::tk::dialog::error::bgerror err {
 	    -relief $textRelief			\
 	    -highlightthickness $textHilight	\
 	    -wrap char
+    if {$windowingsystem eq "aqua"} {
+	$W.text configure -width 80 -background white
+    }
 
     scrollbar $W.scroll -command [list $W.text yview]
     pack $W.scroll -side right -fill y
@@ -218,6 +227,7 @@ proc ::tk::dialog::error::bgerror err {
 	    if {($name eq "ok") || ($name eq "dismiss")} {
 		grid columnconfigure .bgerrorDialog.bot $i -minsize 79
 	    }
+	    grid configure .bgerrorDialog.$name -pady 7
 	}
 	incr i
     }

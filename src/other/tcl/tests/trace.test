@@ -1422,7 +1422,7 @@ test trace-20.7 {trace add command delete in subinterp while being deleted} {
 } {}
 
 proc traceDelete {cmd old new op} {
-    trace remove command $cmd {expand}[lindex [trace info command $cmd] 0]
+    trace remove command $cmd {*}[lindex [trace info command $cmd] 0]
     global info
     set info [list $old $new $op]
 }
@@ -1610,7 +1610,7 @@ test trace-21.9 {trace execution: TCL_EVAL_GLOBAL} testevalobjv {
     trace remove execution foo enter soom
     set ::info
 } {SUCCESS 1 SUCCESS 1}
-    
+
 test trace-21.10 {trace execution: TCL_EVAL_GLOBAL} testevalobjv {
     trace add execution foo leave soom
     proc ::soom args {lappend ::info SUCCESS [info level]}
@@ -1626,6 +1626,24 @@ test trace-21.10 {trace execution: TCL_EVAL_GLOBAL} testevalobjv {
     trace remove execution foo leave soom
     set ::info
 } {SUCCESS 1 SUCCESS 1}
+
+test trace-21.11 {trace execution and alias} -setup {
+    set res {}
+    proc ::x {} {return ::}
+    namespace eval a {}
+    proc ::a::x {} {return ::a}
+    interp alias {} y {} x
+} -body {
+    lappend res [namespace eval ::a y]
+    trace add execution ::x enter {
+      rename ::x {}
+	proc ::x {} {return ::}
+    #}
+    lappend res [namespace eval ::a y]
+} -cleanup {
+    namespace delete a
+    rename ::x {}
+} -result {:: ::}
 
 proc factorial {n} {
     if {$n != 1} { return [expr {$n * [factorial [expr {$n -1 }]]}] }
@@ -1732,7 +1750,7 @@ test trace-23.3 {recursive(3) trace execution: enter, leave, enterstep, leaveste
 {factorial 3} 0 6 leave}
 
 proc traceDelete {cmd args} {
-    trace remove execution $cmd {expand}[lindex [trace info execution $cmd] 0]
+    trace remove execution $cmd {*}[lindex [trace info execution $cmd] 0]
     global info
     set info $args
 }

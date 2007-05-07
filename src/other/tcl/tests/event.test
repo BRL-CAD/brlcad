@@ -188,6 +188,23 @@ test event-5.2 {Tcl_BackgroundError, HandleBgErrors procedures} {
     rename bgerror {}
     set x
 } {{a simple error}}
+test event-5.3 {HandleBgErrors: [Bug 1670155]} -setup {
+    variable x
+    proc demo args {variable x done}
+    variable target [list [namespace which demo] x]
+    proc trial args {variable target; string length $target}
+    trace add execution demo enter [namespace code trial]
+    variable save [interp bgerror {}]
+    interp bgerror {} $target
+} -body {
+    after 0 {error bar}
+    vwait [namespace which -variable x]
+} -cleanup {
+    interp bgerror {} $save
+    unset x target save
+    rename demo {}
+    rename trial {}
+} -result {}
 
 test event-6.1 {BgErrorDeleteProc procedure} {
     catch {interp delete foo}
@@ -407,7 +424,7 @@ test event-11.5 {Tcl_VwaitCmd procedure: round robin scheduling, 2 sources} {soc
 	puts $s foobar
 	close $s
     }
-    catch {set s1 [socket -server accept 0]}
+    catch {set s1 [socket -server accept -myaddr 127.0.0.1 0]}
     after 1000
     catch {set s2 [socket 127.0.0.1 [lindex [fconfigure $s1 -sockname] 2]]}
     close $s1
@@ -585,6 +602,215 @@ test event-13.8 {Tcl_WaitForFile procedure, waiting indefinitely} testfilewait {
     close $f
     set result
 } {{} readable}
+
+
+test event-14.1 {Tcl_WaitForFile procedure, readable, big fd} \
+    -constraints {testfilehandler unix} \
+    -setup {
+	set chanList {}
+	for {set i 0} {$i < 32} {incr i} {
+	    lappend chanList [open /dev/null r]
+	}
+    } \
+    -body {
+	foreach i [after info] {
+	    after cancel $i
+	}
+	after 100 set x timeout
+	testfilehandler close
+	testfilehandler create 1 off off
+	set x "no timeout"
+	set result [testfilehandler wait 1 readable 0]
+	update
+	testfilehandler close
+	list $result $x
+    } \
+    -result {{} {no timeout}} \
+    -cleanup {
+	foreach chan $chanList {close $chan}
+    }
+
+test event-14.2 {Tcl_WaitForFile procedure, readable, big fd} \
+    -constraints {testfilehandler unix} \
+    -setup {
+	set chanList {}
+	for {set i 0} {$i < 32} {incr i} {
+	    lappend chanList [open /dev/null r]
+	}
+    } \
+    -body {
+	foreach i [after info] {
+	    after cancel $i
+	}
+	after 100 set x timeout
+	testfilehandler close
+	testfilehandler create 1 off off
+	set x "no timeout"
+	set result [testfilehandler wait 1 readable 100]
+	update
+	testfilehandler close
+	list $result $x
+    } \
+    -result {{} timeout} \
+    -cleanup {
+	foreach chan $chanList {close $chan}
+    }
+
+test event-14.3 {Tcl_WaitForFile procedure, readable, big fd} \
+    -constraints {testfilehandler unix} \
+    -setup {
+	set chanList {}
+	for {set i 0} {$i < 32} {incr i} {
+	    lappend chanList [open /dev/null r]
+	}
+    } \
+    -body {
+	foreach i [after info] {
+	    after cancel $i
+	}
+	after 100 set x timeout
+	testfilehandler close
+	testfilehandler create 1 off off
+	testfilehandler fillpartial 1
+	set x "no timeout"
+	set result [testfilehandler wait 1 readable 100]
+	update
+	testfilehandler close
+	list $result $x
+    } \
+    -result {readable {no timeout}} \
+    -cleanup {
+	foreach chan $chanList {close $chan}
+    }
+
+test event-14.4 {Tcl_WaitForFile procedure, writable, big fd} \
+    -constraints {testfilehandler unix nonPortable} \
+    -setup {
+	set chanList {}
+	for {set i 0} {$i < 32} {incr i} {
+	    lappend chanList [open /dev/null r]
+	}
+    } \
+    -body {
+	foreach i [after info] {
+	    after cancel $i
+	}
+	after 100 set x timeout
+	testfilehandler close
+	testfilehandler create 1 off off
+	testfilehandler fill 1
+	set x "no timeout"
+	set result [testfilehandler wait 1 writable 0]
+	update
+	testfilehandler close
+	list $result $
+    } \
+    -result {{} {no timeout}} \
+    -cleanup {
+	foreach chan $chanList {close $chan}
+    }
+
+test event-14.5 {Tcl_WaitForFile procedure, writable, big fd} \
+    -constraints {testfilehandler unix nonPortable} \
+    -setup {
+	set chanList {}
+	for {set i 0} {$i < 32} {incr i} {
+	    lappend chanList [open /dev/null r]
+	}
+    } \
+    -body {
+	foreach i [after info] {
+	    after cancel $i
+	}
+	after 100 set x timeout
+	testfilehandler close
+	testfilehandler create 1 off off
+	testfilehandler fill 1
+	set x "no timeout"
+	set result [testfilehandler wait 1 writable 100]
+	update
+	testfilehandler close
+	list $result $x
+    } \
+    -result {{} timeout} \
+    -cleanup {
+	foreach chan $chanList {close $chan}
+    }
+
+test event-14.6 {Tcl_WaitForFile procedure, writable, big fd} \
+    -constraints {testfilehandler unix} \
+    -setup {
+	set chanList {}
+	for {set i 0} {$i < 32} {incr i} {
+	    lappend chanList [open /dev/null r]
+	}
+    } \
+    -body {
+	foreach i [after info] {
+	    after cancel $i
+	}
+	after 100 set x timeout
+	testfilehandler close
+	testfilehandler create 1 off off
+	set x "no timeout"
+	set result [testfilehandler wait 1 writable 100]
+	update
+	testfilehandler close
+	list $result $x
+    } \
+    -result {writable {no timeout}} \
+    -cleanup {
+	foreach chan $chanList {close $chan}
+    }
+
+test event-14.7 {Tcl_WaitForFile, don't call other event handlers, big fd} \
+    -constraints {testfilehandler unix} \
+    -setup {
+	set chanList {}
+	for {set i 0} {$i < 32} {incr i} {
+	    lappend chanList [open /dev/null r]
+	}
+    } \
+    -body {
+	foreach i [after info] {
+	    after cancel $i
+	}
+	after 100 lappend x timeout
+	after idle lappend x idle
+	testfilehandler close
+	testfilehandler create 1 off off
+	set x ""
+	set result [list [testfilehandler wait 1 readable 200] $x]
+	update
+	testfilehandler close
+	lappend result $x
+    } \
+    -result {{} {} {timeout idle}} \
+    -cleanup {
+	foreach chan $chanList {close $chan}
+    }
+
+
+test event-14.8 {Tcl_WaitForFile procedure, waiting indefinitely, big fd} \
+    -constraints {testfilewait unix} \
+    -body {
+	set f [open "|sleep 2" r]
+	set result ""
+	lappend result [testfilewait $f readable 100]
+	lappend result [testfilewait $f readable -1]
+	close $f
+	set result
+    } \
+    -setup {
+	set chanList {}
+	for {set i 0} {$i < 32} {incr i} {
+	    lappend chanList [open /dev/null r]
+	}
+    } \
+    -result {{} readable} \
+    -cleanup {
+	foreach chan $chanList {close $chan}
+    }
 
 # cleanup
 foreach i [after info] {

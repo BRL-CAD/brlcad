@@ -111,39 +111,37 @@ set remoteProcChan ""
 set commandSocket ""
 if {$doTestsWithRemoteServer} {
     catch {close $commandSocket}
-    if {[catch {set commandSocket [socket $remoteServerIP \
-						$remoteServerPort]}] != 0} {
-	if {[info commands exec] == ""} {
-	    set noRemoteTestReason "can't exec"
-	    set doTestsWithRemoteServer 0
-	} else {
-	    set remoteServerIP 127.0.0.1
-	    # Be *extra* careful in case this file is sourced from
-	    # a directory other than the current one...
-	    set remoteFile [file join [pwd] [file dirname [info script]] \
-		    remote.tcl]
-	    if {[catch {set remoteProcChan \
-				[open "|[list [interpreter] $remoteFile \
-					-serverIsSilent \
-					-port $remoteServerPort \
-					-address $remoteServerIP]" \
-					w+]} \
-		   msg] == 0} {
-		after 1000
-		if {[catch {set commandSocket [socket $remoteServerIP \
-				$remoteServerPort]} msg] == 0} {
-		    fconfigure $commandSocket -translation crlf -buffering line
-		} else {
-		    set noRemoteTestReason $msg
-		    set doTestsWithRemoteServer 0
-		}
+    if {![catch {
+	set commandSocket [socket $remoteServerIP $remoteServerPort]
+    }]} then {
+	fconfigure $commandSocket -translation crlf -buffering line
+    } elseif {![testConstraint exec]} {
+	set noRemoteTestReason "can't exec"
+	set doTestsWithRemoteServer 0
+    } else {
+	set remoteServerIP 127.0.0.1
+	# Be *extra* careful in case this file is sourced from
+	# a directory other than the current one...
+	set remoteFile [file join [pwd] [file dirname [info script]] \
+		remote.tcl]
+	if {![catch {
+	    set remoteProcChan [open "|[list \
+		    [interpreter] $remoteFile -serverIsSilent \
+		    -port $remoteServerPort -address $remoteServerIP]" w+]
+	} msg]} then {
+	    after 1000
+	    if {[catch {
+		set commandSocket [socket $remoteServerIP $remoteServerPort]
+	    } msg] == 0} then {
+		fconfigure $commandSocket -translation crlf -buffering line
 	    } else {
-		set noRemoteTestReason "$msg [interpreter]"
+		set noRemoteTestReason $msg
 		set doTestsWithRemoteServer 0
 	    }
+	} else {
+	    set noRemoteTestReason "$msg [interpreter]"
+	    set doTestsWithRemoteServer 0
 	}
-    } else {
-	fconfigure $commandSocket -translation crlf -buffering line
     }
 }
 
@@ -169,7 +167,6 @@ if {[testConstraint doTestsWithRemoteServer]} {
 	if {[eof $commandSocket]} {
 	    error "remote server disappeared"
 	}
-
 	if {[catch {puts $commandSocket $c} msg]} {
 	    error "remote server disappaered: $msg"
 	}
@@ -583,7 +580,7 @@ test socket-3.1 {socket conflict} {socket stdio} {
     file delete $path(script)
     set f [open $path(script) w]
     puts $f {
-	set f [socket -server accept 0]
+	set f [socket -server accept -myaddr 127.0.0.1 0]
 	puts ready
 	puts [lindex [fconfigure $f -sockname] 2]
 	gets stdin
@@ -593,7 +590,7 @@ test socket-3.1 {socket conflict} {socket stdio} {
     set f [open "|[list [interpreter] $path(script)]" r+]
     gets $f
     gets $f listen
-    set x [list [catch {socket -server accept $listen} msg] \
+    set x [list [catch {socket -server accept -myaddr 127.0.0.1 $listen} msg] \
 		$msg]
     puts $f bye
     close $f
@@ -607,7 +604,7 @@ test socket-3.2 {server with several clients} {socket stdio} {
 	set t2 [after 31000 "set x timed_out"]
 	set t3 [after 32000 "set x timed_out"]
 	set counter 0
-	set s [socket -server accept 0]
+	set s [socket -server accept -myaddr 127.0.0.1 0]
 	proc accept {s a p} {
 	    fileevent $s readable [list echo $s]
 	    fconfigure $s -buffering line
@@ -698,7 +695,7 @@ test socket-4.1 {server with several clients} {socket stdio} {
     set t1 [after 30000 "set x timed_out"]
     set t2 [after 31000 "set x timed_out"]
     set t3 [after 32000 "set x timed_out"]
-    set s [socket -server accept 0]
+    set s [socket -server accept -myaddr 127.0.0.1 0]
     set listen [lindex [fconfigure $s -sockname] 2]
     puts $p1 $listen
     puts $p2 $listen
@@ -724,7 +721,7 @@ test socket-4.1 {server with several clients} {socket stdio} {
 } {{p1 bye done} {p2 bye done} {p3 bye done}}
 test socket-4.2 {byte order problems, socket numbers, htons} {socket} {
     set x ok
-    if {[catch {socket -server dodo 0x3000} msg]} {
+    if {[catch {socket -server dodo -myaddr 127.0.0.1 0x3000} msg]} {
 	set x $msg
     } else {
 	close $msg
@@ -775,7 +772,7 @@ test socket-6.1 {accept callback error} -constraints {socket stdio} -setup {
     close $f
     set f [open "|[list [interpreter] $path(script)]" r+]
     proc accept {s a p} {expr 10 / 0}
-    set s [socket -server accept 0]
+    set s [socket -server accept -myaddr 127.0.0.1 0]
     puts $f [lindex [fconfigure $s -sockname] 2]
     close $f
     set timer [after 10000 "set x timed_out"]
@@ -843,21 +840,21 @@ test socket-7.2 {testing socket specific options} {socket stdio} {
 	    [expr {[lindex $p 2] == $listen}]
 } {3 1 0}
 test socket-7.3 {testing socket specific options} {socket} {
-    set s [socket -server accept 0]
+    set s [socket -server accept -myaddr 127.0.0.1 0]
     set l [fconfigure $s]
     close $s
     update
     llength $l
 } 14
 test socket-7.4 {testing socket specific options} {socket} {
-    set s [socket -server accept 0]
+    set s [socket -server accept -myaddr 127.0.0.1 0]
     proc accept {s a p} {
 	global x
 	set x [fconfigure $s -sockname]
 	close $s
     }
     set listen [lindex [fconfigure $s -sockname] 2]
-    set s1 [socket [info hostname] $listen]
+    set s1 [socket 127.0.0.1 $listen]
     set timer [after 10000 "set x timed_out"]
     vwait x
     after cancel $timer
@@ -899,14 +896,14 @@ test socket-8.1 {testing -async flag on sockets} {socket} {
     # problem, please email jyl@eng.sun.com. We have not observed this
     # failure on Solaris 2.5, so another option (instead of installing
     # these patches) is to upgrade to Solaris 2.5.
-    set s [socket -server accept 0]
+    set s [socket -server accept -myaddr 127.0.0.1 0]
     proc accept {s a p} {
 	global x
 	puts $s bye
 	close $s
 	set x done
     }
-    set s1 [socket -async [info hostname] [lindex [fconfigure $s -sockname] 2]]
+    set s1 [socket -async 127.0.0.1 [lindex [fconfigure $s -sockname] 2]]
     vwait x
     set z [gets $s1]
     close $s
@@ -936,8 +933,8 @@ test socket-9.1 {testing spurious events} {socket} {
 	fconfigure $s -buffering none -blocking off
 	fileevent $s readable [list readlittle $s]
     }
-    set s [socket -server accept 0]
-    set c [socket [info hostname] [lindex [fconfigure $s -sockname] 2]]
+    set s [socket -server accept -myaddr 127.0.0.1 0]
+    set c [socket 127.0.0.1 [lindex [fconfigure $s -sockname] 2]]
     puts -nonewline $c 01234567890123456789012345678901234567890123456789
     close $c
     set timer [after 10000 "set done timed_out"]
@@ -953,7 +950,7 @@ test socket-9.2 {testing async write, fileevents, flush on close} {socket} {
     for {set i 0} {$i < 16} {incr i} {
 	set secondblock "b$secondblock$secondblock"
     }
-    set l [socket -server accept 0]
+    set l [socket -server accept -myaddr 127.0.0.1 0]
     proc accept {s a p} {
 	fconfigure $s -blocking 0 -translation lf -buffersize 16384 \
 		-buffering line
@@ -974,7 +971,7 @@ test socket-9.2 {testing async write, fileevents, flush on close} {socket} {
 	puts -nonewline $s $secondblock
 	close $s
     }
-    set s [socket [info hostname] [lindex [fconfigure $l -sockname] 2]]
+    set s [socket 127.0.0.1 [lindex [fconfigure $l -sockname] 2]]
     fconfigure $s -blocking 0 -trans lf -buffering line
     set count 0
     puts $s hello
@@ -1024,8 +1021,8 @@ test socket-9.3 {testing EOF stickyness} {socket} {
 	fconfigure $s -buffering line -translation lf
 	fileevent $s writable "write_then_close $s"
     }
-    set s [socket -server accept 0]
-    set c [socket [info hostname] [lindex [fconfigure $s -sockname] 2]]
+    set s [socket -server accept -myaddr 127.0.0.1 0]
+    set c [socket 127.0.0.1 [lindex [fconfigure $s -sockname] 2]]
     fconfigure $c -blocking off -buffering line -translation lf
     fileevent $c readable "count_to_eof $c"
     set timer [after 1000 timerproc]
@@ -1046,7 +1043,7 @@ test socket-10.1 {testing socket accept callback error handling} -constraints {
     set handler [interp bgerror {}]
     interp bgerror {} [namespace which myHandler]
 } -body {
-    set s [socket -server accept 0]
+    set s [socket -server accept -myaddr 127.0.0.1 0]
     proc accept {s a p} {close $s; error}
     set c [socket 127.0.0.1 [lindex [fconfigure $s -sockname] 2]]
     vwait goterror
@@ -1158,8 +1155,8 @@ test socket-11.5 {remote echo, 50 lines} {socket doTestsWithRemoteServer} {
     set cnt
 } 50
 test socket-11.6 {socket conflict} {socket doTestsWithRemoteServer} {
-    set s1 [socket -server accept 2836]
-    if {[catch {set s2 [socket -server accept 2836]} msg]} {
+    set s1 [socket -server accept -myaddr 127.0.0.1 2836]
+    if {[catch {set s2 [socket -server accept -myaddr 127.0.0.1 2836]} msg]} {
 	set result [list 1 $msg]
     } else {
 	set result [list 0 [lindex [fconfigure $s2 -sockname] 2]]
@@ -1310,7 +1307,6 @@ test socket-11.11 {testing spurious events} {socket doTestsWithRemoteServer} {
     sendCommand {close $socket10_13_test_server}
     list $spurious $len $done
 } {0 2690 1}
-
 test socket-11.12 {testing EOF stickyness} {socket doTestsWithRemoteServer} {
     set counter 0
     set done 0
@@ -1344,7 +1340,6 @@ test socket-11.12 {testing EOF stickyness} {socket doTestsWithRemoteServer} {
     sendCommand {close $socket10_14_test_server}
     set done
 } {EOF is sticky}
-
 test socket-11.13 {testing async write, async flush, async close} \
 	{socket doTestsWithRemoteServer} {
     proc readit {s} {
@@ -1423,7 +1418,7 @@ test socket-12.1 {testing inheritance of server sockets} {socket stdio exec} {
     set f [open $path(script2) w]
     puts $f [list set tcltest [interpreter]]
     puts -nonewline $f {
-	set f [socket -server accept 0]
+	set f [socket -server accept -myaddr 127.0.0.1 0]
 	puts [lindex [fconfigure $f -sockname] 2]
 	proc accept { file addr port } {
 	    close $file
@@ -1493,7 +1488,7 @@ test socket-12.2 {testing inheritance of client sockets} {socket stdio exec} {
 
     # Create the server socket
 
-    set server [socket -server accept 0]
+    set server [socket -server accept -myaddr 127.0.0.1 0]
     proc accept { file host port } {
 	# When the client connects, establish the read handler
 	global server
@@ -1559,7 +1554,7 @@ test socket-12.3 {testing inheritance of accepted sockets} {socket stdio exec} {
     set f [open $path(script2) w]
     puts $f [list set tcltest [interpreter]]
     puts -nonewline $f {
-	set server [socket -server accept 0]
+	set server [socket -server accept -myaddr 127.0.0.1 0]
 	puts stdout [lindex [fconfigure $server -sockname] 2]
 	proc accept { file host port } }
     puts $f \{
@@ -1629,11 +1624,9 @@ test socket-12.3 {testing inheritance of accepted sockets} {socket stdio exec} {
 
 test socket-13.1 {Testing use of shared socket between two threads} \
         -constraints {socket testthread} -setup {
-
     threadReap
-
     set path(script) [makeFile {
-        set f [socket -server accept 0]
+        set f [socket -server accept -myaddr 127.0.0.1 0]
         set listen [lindex [fconfigure $f -sockname] 2]
         proc accept {s a p} {
             fileevent $s readable [list echo $s]
@@ -1654,11 +1647,9 @@ test socket-13.1 {Testing use of shared socket between two threads} \
         set i 0
         vwait x
         close $f
-
         # thread cleans itself up.
         testthread exit
     } script]
-
 } -body {
     # create a thread
     set serverthread [testthread create [list source $path(script) ] ]
@@ -1682,7 +1673,6 @@ test socket-13.1 {Testing use of shared socket between two threads} \
 } -cleanup {
     removeFile script
 } -result {hello 1}
-
 
 removeFile script1
 removeFile script2

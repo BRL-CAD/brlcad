@@ -28,7 +28,7 @@ Pixmap
 int
 \fBTk_DefineBitmap(\fIinterp, name, source, width, height\fB)\fR
 .sp
-CONST char *
+const char *
 \fBTk_NameOfBitmap(\fIdisplay, bitmap\fB)\fR
 .sp
 \fBTk_SizeOfBitmap(\fIdisplay, bitmap, widthPtr, heightPtr\fB)\fR
@@ -46,12 +46,12 @@ Token for window in which the bitmap will be used.
 .AP Tcl_Obj *objPtr in/out
 String value describes desired bitmap; internal rep will be
 modified to cache pointer to corresponding Pixmap.
-.AP "CONST char" *info in
+.AP "const char" *info in
 Same as \fIobjPtr\fR except description of bitmap is passed as a string and
 resulting Pixmap isn't cached.
-.AP "CONST char" *name in
+.AP "const char" *name in
 Name for new bitmap to be defined.
-.AP "CONST char" *source in
+.AP "const char" *source in
 Data for bitmap, in standard bitmap format.
 Must be stored in static memory whose value will never change.
 .AP "int" width in

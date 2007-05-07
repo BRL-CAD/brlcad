@@ -1417,7 +1417,7 @@ TclCheckExecutionTraces(
 	return traceCode;
     }
 
-    curLevel = ((iPtr->varFramePtr == NULL) ? 0 : iPtr->varFramePtr->level);
+    curLevel = iPtr->varFramePtr->level;
 
     active.nextPtr = iPtr->activeCmdTracePtr;
     iPtr->activeCmdTracePtr = &active;
@@ -1657,7 +1657,7 @@ CallTraceFunction(
      * Copy the command characters into a new string.
      */
 
-    commandCopy = (char *) ckalloc((unsigned) (numChars + 1));
+    commandCopy = TclStackAlloc(interp, (unsigned) (numChars + 1));
     memcpy((void *) commandCopy, (void *) command, (size_t) numChars);
     commandCopy[numChars] = '\0';
 
@@ -1668,8 +1668,8 @@ CallTraceFunction(
     traceCode = (tracePtr->proc)(tracePtr->clientData, (Tcl_Interp*) iPtr,
 	    iPtr->numLevels, commandCopy, (Tcl_Command) cmdPtr, objc, objv);
 
-    ckfree((char *) commandCopy);
-    return(traceCode);
+    TclStackFree(interp);	/* commandCopy */
+    return traceCode;
 }
 
 /*
@@ -2230,8 +2230,8 @@ StringTraceProc(
      * which uses strings for everything.
      */
 
-    argv = (CONST char **)
-	    ckalloc((unsigned) ((objc + 1) * sizeof(CONST char *)));
+    argv = (CONST char **) TclStackAlloc(interp,
+	    (unsigned) ((objc + 1) * sizeof(CONST char *)));
     for (i = 0; i < objc; i++) {
 	argv[i] = Tcl_GetString(objv[i]);
     }
@@ -2245,7 +2245,7 @@ StringTraceProc(
 
     (data->proc)(data->clientData, interp, level, (char *) command,
 	    cmdPtr->proc, cmdPtr->clientData, objc, argv);
-    ckfree((char *) argv);
+    TclStackFree(interp);	/* argv */
 
     return TCL_OK;
 }
@@ -2612,9 +2612,9 @@ TclCallVarTraces(
 	if (leaveErrMsg) {
 	    CONST char *type = "";
 	    Tcl_Obj *options = Tcl_GetReturnOptions((Tcl_Interp *)iPtr, code);
-	    Tcl_Obj *errorInfoKey = Tcl_NewStringObj("-errorinfo", -1);
-	    Tcl_Obj *errorInfo;
+	    Tcl_Obj *errorInfoKey, *errorInfo;
 
+	    TclNewLiteralStringObj(errorInfoKey, "-errorinfo");
 	    Tcl_IncrRefCount(errorInfoKey);
 	    Tcl_DictObjGet(NULL, options, errorInfoKey, &errorInfo);
 	    Tcl_IncrRefCount(errorInfo);

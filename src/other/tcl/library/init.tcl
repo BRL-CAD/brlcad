@@ -17,7 +17,7 @@
 if {[info commands package] == ""} {
     error "version mismatch: library\nscripts expect Tcl version 7.5b1 or later but the loaded version is\nonly [info patchlevel]"
 }
-package require -exact Tcl 8.5a5
+package require -exact Tcl 8.5a6
 
 # Compute the auto path to use in this interpreter.
 # The values on the path come from several locations:
@@ -78,22 +78,24 @@ namespace eval tcl {
     # Set up the 'chan' ensemble (TIP #208).
     namespace eval chan {
         # TIP #219. Added methods: create, postevent.
+	# TIP 287.  Added method: pending.
         namespace ensemble create -command ::chan -map {
-            blocked     ::fblocked
-            close       ::close
-            configure   ::fconfigure
-            copy        ::fcopy
+            blocked     ::tcl::chan::blocked
+            close       ::tcl::chan::close
+            configure   ::tcl::chan::configure
+            copy        ::tcl::chan::copy
             create      ::tcl::chan::rCreate
-            eof         ::eof
-            event       ::fileevent
-            flush       ::flush
-            gets        ::gets
+            eof         ::tcl::chan::eof
+            event       ::tcl::chan::event
+            flush       ::tcl::chan::flush
+            gets        ::tcl::chan::gets
             names       {::file channels}
+	    pending	::tcl::chan::Pending
             postevent   ::tcl::chan::rPostevent
-            puts        ::puts
-            read        ::read
-            seek        ::seek
-            tell        ::tell
+            puts        ::tcl::chan::puts
+            read        ::tcl::chan::read
+            seek        ::tcl::chan::seek
+            tell        ::tcl::chan::tell
             truncate    ::tcl::chan::Truncate
         }
     }
@@ -266,7 +268,7 @@ proc unknown args {
 
     set cmd [lindex $args 0]
     if {[regexp "^:*namespace\[ \t\n\]+inscope" $cmd] && [llength $cmd] == 4} {
-	#return -code error "You need an {expand}"
+	#return -code error "You need an {*}"
         set arglist [lrange $args 1 end]
 	set ret [catch {uplevel 1 ::$cmd $arglist} result opts]
 	dict unset opts -errorinfo
@@ -809,7 +811,7 @@ proc tcl::CopyDirectory {action src dest} {
 	    # can be returned in various combinations.  Anyway,
 	    # if any other file is returned, we must signal an error.
 	    set existing [glob -nocomplain -directory $dest * .*]
-	    lappend existing {expand}[glob -nocomplain -directory $dest \
+	    lappend existing {*}[glob -nocomplain -directory $dest \
 		    -type hidden * .*]
 	    foreach s $existing {
 		if {([file tail $s] ne ".") && ([file tail $s] ne "..")} {

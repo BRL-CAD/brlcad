@@ -218,10 +218,10 @@ have any of the forms accepted by \fBTk_GetPixels\fR.
 If a window's pane is larger than the requested dimensions of the
 window, this option may be used to position (or stretch) the window
 within its pane.  \fIStyle\fR  is a string that contains zero or more
-of the characters \fBn\fP, \fBs\fP, \fBe\fP or \fBw\fP.  The string
+of the characters \fBn\fR, \fBs\fR, \fBe\fR or \fBw\fR.  The string
 can optionally contains spaces or commas, but they are ignored.  Each
 letter refers to a side (north, south, east, or west) that the window
-will "stick" to.  If both \fBn\fP and \fBs\fP (or \fBe\fP and \fBw\fP)
+will "stick" to.  If both \fBn\fR and \fBs\fR (or \fBe\fR and \fBw\fR)
 are specified, the window will be stretched to fill the entire height
 (or width) of its cavity.
 .TP
@@ -267,6 +267,7 @@ panedwindow.  \fISize\fR may be any value accepted by \fBTk_GetPixels\fR.
 .TP
 \fIpathName \fBpanes\fR
 Returns an ordered list of the widgets managed by \fIpathName\fR.
+
 .SH "RESIZING PANES"
 A pane is resized by grabbing the sash (or sash handle if present) and
 dragging with the mouse.  This is accomplished via mouse motion
@@ -277,6 +278,9 @@ adjusted.
 When a pane is resized from outside (e.g. it is packed to expand and
 fill, and the containing toplevel is resized), space is added to the final
 (rightmost or bottommost) pane in the window.
+
+.SH "SEE ALSO"
+ttk_panedwindow(n)
 
 .SH KEYWORDS
 panedwindow, widget, geometry management

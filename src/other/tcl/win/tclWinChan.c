@@ -1460,26 +1460,28 @@ FileThreadActionProc(
  */
 
 DWORD
-FileGetType(handle)
-    HANDLE handle; /* Opened file handle */
+FileGetType(
+    HANDLE handle)		/* Opened file handle */
 {
     DWORD type;
 
     type = GetFileType(handle);
 
     /*
-     * If the file is a character device, we need to try to figure out
-     * whether it is a serial port, a console, or something else.  We
-     * test for the console case first because this is more common.
+     * If the file is a character device, we need to try to figure out whether
+     * it is a serial port, a console, or something else. We test for the
+     * console case first because this is more common.
      */
 
     if ((type == FILE_TYPE_CHAR)
 	    || ((type == FILE_TYPE_UNKNOWN) && !GetLastError())) {
 	DWORD consoleParams;
+
 	if (GetConsoleMode(handle, &consoleParams)) {
 	    type = FILE_TYPE_CONSOLE;
 	} else {
 	    DCB dcb;
+
 	    dcb.DCBlength = sizeof(DCB);
 	    if (GetCommState(handle, &dcb)) {
 		type = FILE_TYPE_SERIAL;

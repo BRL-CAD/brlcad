@@ -570,7 +570,7 @@ test encoding-26.0 {Tcl_GetDefaultEncodingDir} -constraints {
      testsetdefenc $origDir
 } -result slappy
 
-file delete {expand}[glob -directory [temporaryDirectory] *.chars *.tcltestout]
+file delete {*}[glob -directory [temporaryDirectory] *.chars *.tcltestout]
 # ===> Cut here <===
 
 # EscapeFreeProc, GetTableEncoding, unilen

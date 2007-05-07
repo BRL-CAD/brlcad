@@ -66,7 +66,7 @@ to the list of paths to search.
 This command is used internally by the system to set up the
 system-specific default paths.
 .PP
-The command has been exposed to allow a buildsystem to define
+The command has been exposed to allow a build system to define
 additional root paths beyond those described by this document.
 .RE
 .SH "MODULE DEFINITION"

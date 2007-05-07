@@ -203,7 +203,7 @@ typedef struct TkWinProcs {
 	    UINT Msg, WPARAM wParam, LPARAM lParam);
     LRESULT (WINAPI *defWindowProc)(HWND hWnd, UINT Msg, WPARAM wParam,
 	    LPARAM lParam);
-    ATOM (WINAPI *registerClass)(CONST WNDCLASS *lpWndClass);
+    ATOM (WINAPI *registerClass)(const WNDCLASS *lpWndClass);
     BOOL (WINAPI *setWindowText)(HWND hWnd, LPCTSTR lpString);
     HWND (WINAPI *createWindowEx)(DWORD dwExStyle, LPCTSTR lpClassName,
 	    LPCTSTR lpWindowName, DWORD dwStyle, int x, int y,

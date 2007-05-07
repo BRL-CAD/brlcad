@@ -443,9 +443,9 @@ Tcl_Main(
 	    errChannel = Tcl_GetStdChannel(TCL_STDERR);
 	    if (errChannel) {
 		Tcl_Obj *options = Tcl_GetReturnOptions(interp, code);
-		Tcl_Obj *keyPtr = Tcl_NewStringObj("-errorinfo", -1);
-		Tcl_Obj *valuePtr;
+		Tcl_Obj *keyPtr, *valuePtr;
 
+		TclNewLiteralStringObj(keyPtr, "-errorinfo");
 		Tcl_IncrRefCount(keyPtr);
 		Tcl_DictObjGet(NULL, options, keyPtr, &valuePtr);
 		Tcl_DecrRefCount(keyPtr);
@@ -635,55 +635,54 @@ Tcl_Main(
 	 * If everything has gone OK so far, call the main loop proc, if it
 	 * exists. Packages (like Tk) can set it to start processing events at
 	 * this point.
-		 */
+	 */
 
-		(*mainLoopProc)();
-		mainLoopProc = NULL;
-	    }
-	    if (commandPtr != NULL) {
-		Tcl_DecrRefCount(commandPtr);
-	    }
+	(*mainLoopProc)();
+	mainLoopProc = NULL;
+    }
+    if (commandPtr != NULL) {
+	Tcl_DecrRefCount(commandPtr);
+    }
 
-	    /*
-	     * Rather than calling exit, invoke the "exit" command so that users can
-	     * replace "exit" with some other command to do additional cleanup on
-	     * exit. The Tcl_EvalObjEx call should never return.
-	     */
+    /*
+     * Rather than calling exit, invoke the "exit" command so that users can
+     * replace "exit" with some other command to do additional cleanup on
+     * exit. The Tcl_EvalObjEx call should never return.
+     */
 
-	    if (!Tcl_InterpDeleted(interp)) {
-		if (!Tcl_LimitExceeded(interp)) {
-		    Tcl_Obj *cmd = Tcl_NewObj();
-		    TclObjPrintf(NULL, cmd, "exit %d", exitCode);
-		    Tcl_IncrRefCount(cmd);
-		    Tcl_EvalObjEx(interp, cmd, TCL_EVAL_GLOBAL);
-		    Tcl_DecrRefCount(cmd);
-		}
-
-		/*
-		 * If Tcl_EvalObjEx returns, trying to eval [exit], something unusual
-		 * is happening. Maybe interp has been deleted; maybe [exit] was
-		 * redefined, maybe we've blown up because of an exceeded limit. We
-		 * still want to cleanup and exit.
-		 */
-
-		if (!Tcl_InterpDeleted(interp)) {
-		    Tcl_DeleteInterp(interp);
-		}
-	    }
-	    Tcl_SetStartupScript(NULL, NULL);
-
-	    /*
-	     * If we get here, the master interp has been deleted. Allow its
-	     * destruction with the last matching Tcl_Release.
-	     */
-
-	    Tcl_Release((ClientData) interp);
-	    Tcl_Exit(exitCode);
+    if (!Tcl_InterpDeleted(interp)) {
+	if (!Tcl_LimitExceeded(interp)) {
+	    Tcl_Obj *cmd = Tcl_ObjPrintf("exit %d", exitCode);
+	    Tcl_IncrRefCount(cmd);
+	    Tcl_EvalObjEx(interp, cmd, TCL_EVAL_GLOBAL);
+	    Tcl_DecrRefCount(cmd);
 	}
-	
+
 	/*
-	 *---------------------------------------------------------------
-	 *
+	 * If Tcl_EvalObjEx returns, trying to eval [exit], something unusual
+	 * is happening. Maybe interp has been deleted; maybe [exit] was
+	 * redefined, maybe we've blown up because of an exceeded limit. We
+	 * still want to cleanup and exit.
+	 */
+
+	if (!Tcl_InterpDeleted(interp)) {
+	    Tcl_DeleteInterp(interp);
+	}
+    }
+    Tcl_SetStartupScript(NULL, NULL);
+
+    /*
+     * If we get here, the master interp has been deleted. Allow its
+     * destruction with the last matching Tcl_Release.
+     */
+
+    Tcl_Release((ClientData) interp);
+    Tcl_Exit(exitCode);
+}
+
+/*
+ *---------------------------------------------------------------
+ *
  * Tcl_SetMainLoop --
  *
  *	Sets an alternative main loop function.

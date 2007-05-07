@@ -615,7 +615,7 @@ TclpRealloc(
 	if (maxSize < numBytes) {
 	    numBytes = maxSize;
 	}
-	memcpy((VOID *) newPtr, (VOID *) oldPtr, (size_t) numBytes);
+	memcpy(newPtr, oldPtr, (size_t) numBytes);
 	TclpFree(oldPtr);
 	return newPtr;
     }

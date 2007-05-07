@@ -50,7 +50,7 @@ test unixInit-1.2 {initialisation: standard channel type deduction} {unix stdio}
 	    close $channel
 	    exit
 	}
-	puts [fconfigure [socket -server accept 0] -sockname]
+	puts [fconfigure [socket -server accept -myaddr 127.0.0.1 0] -sockname]
 	vwait forever \
 	    }
     # Note the backslash above; this is important to make sure that the

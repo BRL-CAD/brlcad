@@ -97,7 +97,7 @@ test http-1.4 {http::config} {
 	-proxyfilter myFilter -useragent "Tcl Test Suite" \
 	-urlencoding iso8859-1
     set x [http::config]
-    http::config {expand}$savedconf
+    http::config {*}$savedconf
     set x
 } {-accept */* -proxyfilter myFilter -proxyhost nowhere.come -proxyport 8080 -urlencoding iso8859-1 -useragent {Tcl Test Suite}}
 test http-1.5 {http::config} {

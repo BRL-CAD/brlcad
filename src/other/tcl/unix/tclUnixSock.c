@@ -175,7 +175,7 @@ TclpHasSockets(
  */
 
 void
-TclpFinalizeSockets()
+TclpFinalizeSockets(void)
 {
     return;
 }

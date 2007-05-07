@@ -1,11 +1,10 @@
 /*
  * tkAboutDlg.r --
  *
- *	This file creates resources for use in most Tk applications.
- *	This is designed to be an example of using the Tcl/Tk 
- *	libraries in a Macintosh Application.
+ *	This file creates resources for the Tk "About Box" dialog.
  *
  * Copyright (c) 1996 Sun Microsystems, Inc.
+ * Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -26,15 +25,15 @@
 /*
  * The following two resources define the default "About Box" for Mac Tk.
  * This dialog appears if the "About Tk..." menu item is selected from
- * the Apple menu.  This dialog may be overridden by defining a Tcl procedure
- * with the name of "tkAboutDialog".  If this procedure is defined the
+ * the Apple menu. This dialog may be overridden by defining a Tcl procedure
+ * with the name of "tkAboutDialog". If this procedure is defined the
  * default dialog will not be shown and the Tcl procedure is expected to
  * create and manage an About Dialog box.
  */
- 
+
 resource 'DLOG' (128, "About Box", purgeable) {
     {60, 40, 332, 404},
-    movableDBoxProc,
+    kWindowMovableModalDialogProc,
     visible,
     noGoAway,
     0x0,
@@ -46,16 +45,23 @@ resource 'DLOG' (128, "About Box", purgeable) {
 resource 'DITL' (128, "About Box", purgeable) {
     {
 	{232, 147, 252, 217}, Button	    {enabled, "Ok"},
-	{ 20, 108, 212, 344}, StaticText    {disabled, 
-	    "Tcl " TCL_PATCH_LEVEL " & Tk " TK_PATCH_LEVEL "\n\n" 
-	    "© 2002-2006 Tcl Core Team." "\n\n" 
-	    "© 2002-2006 Daniel A. Steffen." "\n\n" 
+	{ 20, 108, 212, 344}, StaticText    {disabled,
+	    "Tcl " TCL_PATCH_LEVEL " & Tk " TK_PATCH_LEVEL "\n\n"
+	    "© 2002-2007 Tcl Core Team." "\n\n"
+	    "© 2002-2007 Daniel A. Steffen." "\n\n"
 	    "Jim Ingham & Ian Reid" "\n"
-	    "© 2001-2002 Apple Computer, Inc." "\n\n" 
+	    "© 2001-2002 Apple Computer, Inc." "\n\n"
 	    "Jim Ingham & Ray Johnson" "\n"
 	    "© 1998-2000 Scriptics Inc." "\n"
-	    "© 1996-1997 Sun Microsystems Inc."},	    
+	    "© 1996-1997 Sun Microsystems Inc."},
 	{ 20,  24, 120, 92}, Picture  {enabled, 128}
+    }
+};
+
+resource 'dlgx' (128, "About Box", purgeable) {
+    versionZero {
+	kDialogFlagsUseThemeBackground | kDialogFlagsUseControlHierarchy
+	| kDialogFlagsHandleMovableModal | kDialogFlagsUseThemeControls
     }
 };
 

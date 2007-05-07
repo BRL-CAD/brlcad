@@ -1,10 +1,9 @@
-/* 
+/*
  * tkMacOSXXCursors.r --
  *
  *	This file defines a set of Macintosh cursor resources that
- * 	emulate the X cursor set.  All of these cursors were
+ *	emulate the X cursor set. All of these cursors were
  *	constructed and donated by Grant Neufeld. (gneufeld@ccs.carleton.ca)
- *	
  *
  * Copyright (c) 1995-1996 Sun Microsystems, Inc.
  *
@@ -15,8 +14,8 @@
  */
 
 /*
- * All of the X cursors are defined as 'CURS' resources.  However, a
- * subset of the X cursors are also defined as 'crsr' resources.  Tk
+ * All of the X cursors are defined as 'CURS' resources. However, a
+ * subset of the X cursors are also defined as 'crsr' resources. Tk
  * will attempt to first use the color cursors ('crsr') if it doesn't
  * exist it will attempt to use the black & white cursor ('CURS').
  */
@@ -26,7 +25,7 @@ data 'CURS' (3000, "X_cursor") {
 	$"07E0 0FF0 1FF8 3E7C 7C3E F81F F00F E007"
 	$"0000 6006 700E 381C 1C38 0E70 07E0 03C0"
 	$"03C0 07E0 0E70 1C38 381C 700E 6006 0000"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3001, "arrow") {
@@ -34,7 +33,7 @@ data 'CURS' (3001, "arrow") {
 	$"03B0 0720 0E20 1C00 3800 7000 2000 0000"
 	$"0007 001F 007F 01FE 07FE 1FFC 7FFC 03F8"
 	$"07F8 0FF0 1F70 3E60 7C60 F840 7040 2000"
-	$"0001 000E"                              
+	$"0001 000E"
 };
 
 data 'CURS' (3002, "based_arrow_down") {
@@ -42,7 +41,7 @@ data 'CURS' (3002, "based_arrow_down") {
 	$"0300 0B40 0780 0300 0000 0000 0000 0000"
 	$"0000 0000 0000 1FE0 0000 1FE0 0780 0780"
 	$"3FF0 1FE0 0FC0 0780 0300 0000 0000 0000"
-	$"000B 0006"                              
+	$"000B 0006"
 };
 
 data 'CURS' (3003, "based_arrow_up") {
@@ -50,7 +49,7 @@ data 'CURS' (3003, "based_arrow_up") {
 	$"0300 0300 1FE0 0000 1FE0 0000 0000 0000"
 	$"0000 0000 0000 0300 0780 0FC0 1FE0 3FF0"
 	$"0780 0780 1FE0 0000 1FE0 0000 0000 0000"
-	$"0004 0006"                              
+	$"0004 0006"
 };
 
 data 'CURS' (3004, "boat") {
@@ -58,7 +57,7 @@ data 'CURS' (3004, "boat") {
 	$"0018 0020 0040 FFC0 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0100 03C0 87E0 FFFF"
 	$"FFF8 FFE0 FFC0 FFC0 0000 0000 0000 0000"
-	$"0007 000F"                              
+	$"0007 000F"
 };
 
 data 'CURS' (3005, "bogosity") {
@@ -66,7 +65,7 @@ data 'CURS' (3005, "bogosity") {
 	$"5114 5114 7FFC 1110 1110 1110 711C 0000"
 	$"0000 0000 0000 0000 0000 7FFC 7FFC 7FFC"
 	$"7FFC 7FFC 7FFC 0000 0000 0000 0000 0000"
-	$"0001 0007"                              
+	$"0001 0007"
 };
 
 data 'CURS' (3006, "bottom_left_corner") {
@@ -74,7 +73,7 @@ data 'CURS' (3006, "bottom_left_corner") {
 	$"C900 CA00 CC00 CFC0 C000 C000 FFF0 FFF0"
 	$"0000 0000 0000 0000 0000 0020 0840 0880"
 	$"0900 0A00 0C00 0FC0 0000 0000 0000 0000"
-	$"000F 0000"                              
+	$"000F 0000"
 };
 
 data 'CURS' (3007, "bottom_right_corner") {
@@ -82,7 +81,7 @@ data 'CURS' (3007, "bottom_right_corner") {
 	$"0093 0053 0033 03F3 0003 0003 0FFF 0FFF"
 	$"0000 0000 0000 0000 0000 0400 0210 0110"
 	$"0090 0050 0030 03F0 0000 0000 0000 0000"
-	$"000F 000F"                              
+	$"000F 000F"
 };
 
 data 'CURS' (3008, "bottom_side") {
@@ -90,7 +89,7 @@ data 'CURS' (3008, "bottom_side") {
 	$"0920 0540 0380 0100 0000 7FFC 7FFC 0000"
 	$"0000 0000 0100 0100 0100 0100 0100 1110"
 	$"0920 0540 0380 0100 0000 0000 0000 0000"
-	$"000B 0007"                              
+	$"000B 0007"
 };
 
 data 'CURS' (3009, "bottom_tee") {
@@ -98,7 +97,7 @@ data 'CURS' (3009, "bottom_tee") {
 	$"0180 0180 7FFE 7FFE 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
-	$"000B 0007"                              
+	$"000B 0007"
 };
 
 data 'CURS' (3010, "box_spiral") {
@@ -106,7 +105,7 @@ data 'CURS' (3010, "box_spiral") {
 	$"AAAA ABAA A82A AFEA A00A BFFA 8002 FFFE"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
-	$"0008 0008"                              
+	$"0008 0008"
 };
 
 data 'CURS' (3011, "center_ptr") {
@@ -114,7 +113,7 @@ data 'CURS' (3011, "center_ptr") {
 	$"1FE0 3330 2310 0300 0300 0300 0300 0000"
 	$"0300 0780 0780 0FC0 0FC0 1FE0 1FE0 3FF0"
 	$"3FF0 7FF8 77B8 6798 0780 0780 0780 0780"
-	$"0001 0006"                              
+	$"0001 0006"
 };
 
 data 'CURS' (3012, "circle") {
@@ -122,7 +121,7 @@ data 'CURS' (3012, "circle") {
 	$"700E 700E 381C 3C3C 1FF8 0FF0 03C0 0000"
 	$"03C0 0FF0 1FF8 3FFC 7FFE 7C3E F81F F81F"
 	$"F81F F81F 7C3E 7FFE 3FFC 1FF8 0FF0 03C0"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3013, "clock") {
@@ -130,7 +129,7 @@ data 'CURS' (3013, "clock") {
 	$"2994 2994 2994 2BD4 6996 781E 7FFE 7FFE"
 	$"1FF8 3FFC 7FFE 7FFE 7FFE 7FFE 7FFE 3FFC"
 	$"3FFC 3FFC 3FFC 3FFC 7FFE 7FFE 7FFE 7FFE"
-	$"0004 0008"                              
+	$"0004 0008"
 };
 
 data 'CURS' (3014, "coffee_mug") {
@@ -138,7 +137,7 @@ data 'CURS' (3014, "coffee_mug") {
 	$"960D DA55 7A55 36ED 10A1 1001 0802 07FC"
 	$"03F8 0FFE 1FFF 1FFF 3FFF 7FFF FFFF FFFF"
 	$"FFFF FFFF 7FFF 3FFF 1FFF 1FFF 0FFE 07FC"
-	$"0004 0003"                              
+	$"0004 0003"
 };
 
 data 'CURS' (3015, "cross") {
@@ -146,7 +145,7 @@ data 'CURS' (3015, "cross") {
 	$"FEFE 0280 0280 0280 0280 0280 0280 0000"
 	$"0380 0380 0380 0380 0380 0380 FFFE FFFE"
 	$"FFFE 0380 0380 0380 0380 0380 0380 0000"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3016, "cross_reverse") {
@@ -154,7 +153,7 @@ data 'CURS' (3016, "cross_reverse") {
 	$"FD7E 0AA0 16D0 2AA8 5294 A28A 4284 0000"
 	$"4384 E38E 739C 3BB8 1FF0 0FE0 FFFE FFFE"
 	$"FFFE 0FE0 1FF0 3BB8 739C E38E 4384 0000"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3017, "crosshair") {
@@ -162,7 +161,7 @@ data 'CURS' (3017, "crosshair") {
 	$"0100 0100 0100 0100 0100 0100 0100 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3018, "diamond_cross") {
@@ -170,7 +169,7 @@ data 'CURS' (3018, "diamond_cross") {
 	$"FEFE 4284 2288 1290 0AA0 06C0 0280 0000"
 	$"0280 06C0 0EE0 1EF0 3EF8 7EFC FEFE 0000"
 	$"FEFE 7EFC 3EF8 1EF0 0EE0 06C0 0280 0000"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3019, "dot") {
@@ -178,7 +177,7 @@ data 'CURS' (3019, "dot") {
 	$"3FF0 1FE0 1FE0 0780 0000 0000 0000 0000"
 	$"0000 0780 1FE0 3FF0 3FF0 7FF8 7FF8 7FF8"
 	$"7FF8 3FF0 3FF0 1FE0 0780 0000 0000 0000"
-	$"0006 0006"                              
+	$"0006 0006"
 };
 
 data 'CURS' (3020, "dotbox") {
@@ -186,7 +185,7 @@ data 'CURS' (3020, "dotbox") {
 	$"2184 2004 2004 2004 2004 3FFC 0000 0000"
 	$"0000 0000 3FFC 3FFC 300C 300C 318C 33CC"
 	$"33CC 318C 300C 300C 3FFC 3FFC 0000 0000"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3021, "double_arrow") {
@@ -194,7 +193,7 @@ data 'CURS' (3021, "double_arrow") {
 	$"0180 0180 1998 0DB0 07E0 03C0 0180 0000"
 	$"0180 03C0 07E0 0FF0 1FF8 3FFC 3BDC 03C0"
 	$"03C0 3BDC 3FFC 1FF8 0FF0 07E0 03C0 0180"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3022, "draft_large") {
@@ -202,7 +201,7 @@ data 'CURS' (3022, "draft_large") {
 	$"0160 0260 0440 0840 1000 2000 4000 0000"
 	$"0003 000F 003E 00FE 03FC 0FFC 3FF8 FFF8"
 	$"03F0 07F0 0EE0 1CE0 38C0 70C0 E080 4080"
-	$"0001 000E"                              
+	$"0001 000E"
 };
 
 data 'CURS' (3023, "draft_small") {
@@ -210,7 +209,7 @@ data 'CURS' (3023, "draft_small") {
 	$"0120 0220 0400 0800 1000 2000 4000 0000"
 	$"0003 000F 003E 00FE 03FC 0FFC 3FF8 01F8"
 	$"03F0 0770 0E60 1C60 3840 7040 E000 4000"
-	$"0001 000E"                              
+	$"0001 000E"
 };
 
 data 'CURS' (3024, "draped_box") {
@@ -218,7 +217,7 @@ data 'CURS' (3024, "draped_box") {
 	$"2184 381C 2C34 2664 2244 3FFC 0000 0000"
 	$"0000 0000 3FFC 3E7C 3E7C 3C3C 399C 23C4"
 	$"23C4 399C 3C3C 3E7C 3E7C 3FFC 0000 0000"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3025, "exchange") {
@@ -226,7 +225,7 @@ data 'CURS' (3025, "exchange") {
 	$"0000 00FC 0064 1024 187C 0FEC 07C4 0000"
 	$"C7C0 EFE0 FFF0 FFF8 FC38 FE10 FF00 FF80"
 	$"03FE 01FE 10FE 387E 3FFE 1FFE 0FEE 07C6"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3026, "fleur") {
@@ -234,7 +233,7 @@ data 'CURS' (3026, "fleur") {
 	$"7FFE 318C 1188 0180 07E0 03C0 0180 0000"
 	$"0180 03C0 07E0 0FF0 17E8 3BDC 7FFE FFFF"
 	$"FFFF 7FFE 3BDC 17E8 0FF0 07E0 03C0 0180"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3027, "gobbler") {
@@ -242,7 +241,7 @@ data 'CURS' (3027, "gobbler") {
 	$"3038 00F0 0FE0 0400 0400 0400 0F00 0000"
 	$"00FC 00FC E0FF FFFF FFFF FFF8 FFF8 FFF8"
 	$"FFFC 7FFC 3FF8 1FF0 0E00 1F80 1F80 1F80"
-	$"0003 000E"                              
+	$"0003 000E"
 };
 
 data 'CURS' (3028, "gumby") {
@@ -250,7 +249,7 @@ data 'CURS' (3028, "gumby") {
 	$"0826 0826 092E 0926 0920 1110 2108 3EF8"
 	$"3F00 1FC0 CFE0 EFE0 CFE0 CFE0 FFF8 3FFE"
 	$"0FE6 0FE6 0FEE 0FE6 0FE0 1FF0 3FF8 3EF8"
-	$"0000 0002"                              
+	$"0000 0002"
 };
 
 data 'CURS' (3029, "hand1") {
@@ -258,7 +257,7 @@ data 'CURS' (3029, "hand1") {
 	$"7FF0 5FF0 07E0 07C0 4A00 6200 3400 1800"
 	$"000C 003C 00F0 01E0 03C0 07E0 0FF0 2FE0"
 	$"7FF0 7FF0 7FE0 7FC0 7E00 7E00 3C00 1800"
-	$"0000 000D"                              
+	$"0000 000D"
 };
 
 data 'CURS' (3030, "hand2") {
@@ -266,7 +265,7 @@ data 'CURS' (3030, "hand2") {
 	$"0822 0641 0182 0124 0088 0050 0020 0000"
 	$"0000 3FC0 7FE0 3FF0 0FF8 07F8 0FF8 07FC"
 	$"0FFE 07FF 01FE 01FC 00F8 0070 0020 0000"
-	$"0002 0001"                              
+	$"0002 0001"
 };
 
 data 'CURS' (3031, "heart") {
@@ -274,7 +273,7 @@ data 'CURS' (3031, "heart") {
 	$"C006 600C 3018 1830 0C60 06C0 0380 0000"
 	$"0000 3EF8 7FFC FFFE FFFE FFFE FFFE FFFE"
 	$"FFFE 7FFC 3FF8 1FF0 0FE0 07C0 0380 0000"
-	$"0003 0007"                              
+	$"0003 0007"
 };
 
 data 'CURS' (3032, "icon") {
@@ -282,7 +281,7 @@ data 'CURS' (3032, "icon") {
 	$"A00B D005 A00B D005 AAAB D555 AAAB FFFF"
 	$"FFFF FFFF FFFF FFFF F00F F00F F00F F00F"
 	$"F00F F00F F00F F00F FFFF FFFF FFFF FFFF"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3033, "iron_cross") {
@@ -290,7 +289,7 @@ data 'CURS' (3033, "iron_cross") {
 	$"7FFE 799E 73CE 67E6 4FF2 1FF8 3FFC 0000"
 	$"7FFE 7FFE FFFF FFFF FFFF FFFF FFFF FFFF"
 	$"FFFF FFFF FFFF FFFF FFFF FFFF 7FFE 7FFE"
-	$"0007 0006"                              
+	$"0007 0006"
 };
 
 data 'CURS' (3034, "left_ptr") {
@@ -298,7 +297,7 @@ data 'CURS' (3034, "left_ptr") {
 	$"0FF0 0F80 0D80 08C0 00C0 0060 0060 0000"
 	$"1800 1C00 1E00 1F00 1F80 1FC0 1FE0 1FF0"
 	$"1FF8 1FFC 1FC0 1DE0 19E0 10F0 00F0 0070"
-	$"0001 0004"                              
+	$"0001 0004"
 };
 
 data 'CURS' (3035, "left_side") {
@@ -306,7 +305,7 @@ data 'CURS' (3035, "left_side") {
 	$"6400 6200 6100 6080 6000 6000 0000 0000"
 	$"0000 0000 0000 0080 0100 0200 0400 0FFC"
 	$"0400 0200 0100 0080 0000 0000 0000 0000"
-	$"0007 0004"                              
+	$"0007 0004"
 };
 
 data 'CURS' (3036, "left_tee") {
@@ -314,7 +313,7 @@ data 'CURS' (3036, "left_tee") {
 	$"0FF8 0C00 0C00 0C00 0C00 0C00 0C00 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
-	$"0007 0004"                              
+	$"0007 0004"
 };
 
 data 'CURS' (3037, "leftbutton") {
@@ -322,7 +321,7 @@ data 'CURS' (3037, "leftbutton") {
 	$"4444 7FFC 7FFC 7FFC 7FFC 7FFC 7FFC 8002"
 	$"FFFE FFFE FFFE FFFE FFFE FFFE FFFE FFFE"
 	$"FFFE FFFE FFFE FFFE FFFE FFFE FFFE FFFE"
-	$"0004 0003"                              
+	$"0004 0003"
 };
 
 data 'CURS' (3038, "ll_angle") {
@@ -330,7 +329,7 @@ data 'CURS' (3038, "ll_angle") {
 	$"0C00 0C00 0FF8 0FF8 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
-	$"000B 0004"                              
+	$"000B 0004"
 };
 
 data 'CURS' (3039, "lr_angle") {
@@ -338,7 +337,7 @@ data 'CURS' (3039, "lr_angle") {
 	$"0030 0030 1FF0 1FF0 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
-	$"000B 000B"                              
+	$"000B 000B"
 };
 
 data 'CURS' (3040, "man") {
@@ -346,7 +345,7 @@ data 'CURS' (3040, "man") {
 	$"0440 0280 0440 0920 1290 1450 783C F83F"
 	$"0380 1FF0 0380 8100 4387 27CB 1FF0 07C0"
 	$"07C0 0380 07C0 0FE0 1EF0 1C70 783C F83F"
-	$"0001 0007"                              
+	$"0001 0007"
 };
 
 data 'CURS' (3041, "middlebutton") {
@@ -354,7 +353,7 @@ data 'CURS' (3041, "middlebutton") {
 	$"4444 7FFC 7FFC 7FFC 7FFC 7FFC 7FFC 8002"
 	$"FFFE FFFE FFFE FFFE FFFE FFFE FFFE FFFE"
 	$"FFFE FFFE FFFE FFFE FFFE FFFE FFFE FFFE"
-	$"0004 0007"                              
+	$"0004 0007"
 };
 
 data 'CURS' (3042, "mouse") {
@@ -362,7 +361,7 @@ data 'CURS' (3042, "mouse") {
 	$"17E8 1008 1008 1008 1008 1008 1008 0FF0"
 	$"0600 0100 0180 0FF0 1FF8 1FF8 1FF8 1FF8"
 	$"1FF8 1FF8 1FF8 1FF8 1FF8 1FF8 1FF8 0FF0"
-	$"0000 0000"                              
+	$"0000 0000"
 };
 
 data 'CURS' (3043, "pencil") {
@@ -370,7 +369,7 @@ data 'CURS' (3043, "pencil") {
 	$"0440 0880 0880 1100 1E00 1C00 1800 1000"
 	$"0000 00F0 00F8 01F8 01F0 03F0 03E0 07C0"
 	$"07C0 0F80 0F80 1F00 1E00 1C00 1800 1000"
-	$"000F 0003"                              
+	$"000F 0003"
 };
 
 data 'CURS' (3044, "pirate") {
@@ -378,7 +377,7 @@ data 'CURS' (3044, "pirate") {
 	$"43C2 43C3 2184 1C38 03C0 0FF1 781F 4002"
 	$"07E0 0FF0 1FF8 3FFC 3FFC 1FF8 0FF0 47E2"
 	$"E7E7 E7E7 7FFF 3FFC 1FF9 7FFF FFFF F81F"
-	$"000A 0007"                              
+	$"000A 0007"
 };
 
 data 'CURS' (3045, "plus") {
@@ -386,7 +385,7 @@ data 'CURS' (3045, "plus") {
 	$"1FF8 0180 0180 0180 0180 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3046, "question_arrow") {
@@ -394,7 +393,7 @@ data 'CURS' (3046, "question_arrow") {
 	$"0380 0280 0280 0EE0 06C0 0380 0100 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
 	$"0000 0000 3FF8 1FF0 0FE0 07C0 0380 0100"
-	$"000E 0007"                              
+	$"000E 0007"
 };
 
 data 'CURS' (3047, "right_ptr") {
@@ -402,7 +401,7 @@ data 'CURS' (3047, "right_ptr") {
 	$"0FF0 01F0 01B0 0310 0300 0600 0600 0000"
 	$"0018 0038 0078 00F8 01F8 03F8 07F8 0FF8"
 	$"1FF8 3FF8 03F8 07B8 0798 0F08 0F00 0E00"
-	$"0001 000B"                              
+	$"0001 000B"
 };
 
 data 'CURS' (3048, "right_side") {
@@ -410,7 +409,7 @@ data 'CURS' (3048, "right_side") {
 	$"3FF6 0026 0046 0086 0106 0006 0006 0000"
 	$"0000 0000 0000 0000 0100 0080 0040 0020"
 	$"3FF0 0020 0040 0080 0100 0000 0000 0000"
-	$"0008 000B"                              
+	$"0008 000B"
 };
 
 data 'CURS' (3049, "right_tee") {
@@ -418,7 +417,7 @@ data 'CURS' (3049, "right_tee") {
 	$"1FF0 0030 0030 0030 0030 0030 0030 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
-	$"0007 000A"                              
+	$"0007 000A"
 };
 
 data 'CURS' (3050, "rightbutton") {
@@ -426,7 +425,7 @@ data 'CURS' (3050, "rightbutton") {
 	$"4444 7FFC 7FFC 7FFC 7FFC 7FFC 7FFC 8002"
 	$"FFFE FFFE FFFE FFFE FFFE FFFE FFFE FFFE"
 	$"FFFE FFFE FFFE FFFE FFFE FFFE FFFE FFFE"
-	$"0004 0003"                              
+	$"0004 0003"
 };
 
 data 'CURS' (3051, "rtl_logo") {
@@ -434,7 +433,7 @@ data 'CURS' (3051, "rtl_logo") {
 	$"4422 4422 47FE 4402 4402 4402 7FFE 0000"
 	$"0000 7FFE 7FFE 6076 7FF6 7FF6 7C36 6C36"
 	$"6C36 6C3E 6FFE 6FFE 6E06 7FFE 7FFE 0000"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3052, "sailboat") {
@@ -442,7 +441,7 @@ data 'CURS' (3052, "sailboat") {
 	$"0770 0F78 0F78 1F78 1F7C 3E38 0000 0000"
 	$"0040 00E0 01E0 03F0 03F0 07F0 07F8 0FF8"
 	$"0FF8 1FFC 1FFC 3FFC 3FFE 7F7C 7E38 0000"
-	$"000C 0008"                              
+	$"000C 0008"
 };
 
 data 'CURS' (3053, "sb_down_arrow") {
@@ -450,7 +449,7 @@ data 'CURS' (3053, "sb_down_arrow") {
 	$"0280 0280 0280 0FE0 07C0 0380 0100 0000"
 	$"0380 0380 0380 0380 0380 0380 0380 0380"
 	$"0380 0380 0380 1FF0 0FE0 07C0 0380 0100"
-	$"000E 0007"                              
+	$"000E 0007"
 };
 
 data 'CURS' (3054, "sb_h_double_arrow") {
@@ -458,7 +457,7 @@ data 'CURS' (3054, "sb_h_double_arrow") {
 	$"3FFC 1818 0810 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0810 1818 381C 7FFE FFFF"
 	$"7FFE 381C 1818 0810 0000 0000 0000 0000"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3055, "sb_left_arrow") {
@@ -466,7 +465,7 @@ data 'CURS' (3055, "sb_left_arrow") {
 	$"3FFF 1800 0800 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0800 1800 3800 7FFF FFFF"
 	$"7FFF 3800 1800 0800 0000 0000 0000 0000"
-	$"0007 0001"                              
+	$"0007 0001"
 };
 
 data 'CURS' (3056, "sb_right_arrow") {
@@ -474,7 +473,7 @@ data 'CURS' (3056, "sb_right_arrow") {
 	$"001E FFFC 0018 0010 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0010 0018 001C FFFE"
 	$"FFFF FFFE 001C 0018 0010 0000 0000 0000"
-	$"0008 000E"                              
+	$"0008 000E"
 };
 
 data 'CURS' (3057, "sb_up_arrow") {
@@ -482,7 +481,7 @@ data 'CURS' (3057, "sb_up_arrow") {
 	$"0140 0140 0140 0140 0140 0140 0140 0140"
 	$"0080 01C0 03E0 07F0 0FF8 01C0 01C0 01C0"
 	$"01C0 01C0 01C0 01C0 01C0 01C0 01C0 01C0"
-	$"0001 0008"                              
+	$"0001 0008"
 };
 
 data 'CURS' (3058, "sb_v_double_arrow") {
@@ -490,7 +489,7 @@ data 'CURS' (3058, "sb_v_double_arrow") {
 	$"0280 0280 0280 0FE0 07C0 0380 0100 0000"
 	$"0100 0380 07C0 0FE0 1FF0 0380 0380 0380"
 	$"0380 0380 0380 1FF0 0FE0 07C0 0380 0100"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3059, "shuttle") {
@@ -498,7 +497,7 @@ data 'CURS' (3059, "shuttle") {
 	$"11DE 11DE 31DE 71DE FDDE 1888 0078 0030"
 	$"0020 0070 00F8 01FE 07FE 0FFE 1FFE 1FFE"
 	$"1FFE 1FFE 3FFE 7FFE FFFE 18F8 0078 0030"
-	$"0000 000A"                              
+	$"0000 000A"
 };
 
 data 'CURS' (3060, "sizing") {
@@ -506,7 +505,7 @@ data 'CURS' (3060, "sizing") {
 	$"4422 0422 07E2 0012 000A 0006 01FE 0000"
 	$"FFC0 FFC0 FFC0 E000 EFF0 EFF0 EC37 EC37"
 	$"EC37 EC37 0FF7 0FFF 001F 03FF 03FF 03FF"
-	$"000E 000E"                              
+	$"000E 000E"
 };
 
 data 'CURS' (3061, "spider") {
@@ -514,7 +513,7 @@ data 'CURS' (3061, "spider") {
 	$"1FE0 6798 8787 0840 0840 1020 1020 2010"
 	$"7038 3870 3870 1CE0 9FE7 EFDF FFFF 7FF8"
 	$"7FF8 FFFF EFDF 9FE7 1CE0 3870 3870 7038"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3062, "spraycan") {
@@ -522,7 +521,7 @@ data 'CURS' (3062, "spraycan") {
 	$"2900 3900 2900 3900 3900 2100 2100 3F00"
 	$"0000 0000 0C00 1E00 1E00 3F00 3F00 3F00"
 	$"3F00 3F00 3F00 3F00 3F00 3F00 3F00 3F00"
-	$"0002 0007"                              
+	$"0002 0007"
 };
 
 data 'CURS' (3063, "star") {
@@ -530,7 +529,7 @@ data 'CURS' (3063, "star") {
 	$"C006 3838 0920 1290 2448 2828 3018 2008"
 	$"0100 0380 0380 0380 07C0 07C0 07C0 3FF8"
 	$"FFFE 3FF8 0FE0 1EF0 3C78 3838 3018 2008"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3064, "target") {
@@ -538,7 +537,7 @@ data 'CURS' (3064, "target") {
 	$"C106 600C 3018 1C70 0FE0 0380 0000 0000"
 	$"0000 0380 0FE0 1FF0 3C78 701C E38E E38E"
 	$"E38E 701C 3C78 1FF0 0FE0 0380 0000 0000"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3065, "tcross") {
@@ -546,7 +545,7 @@ data 'CURS' (3065, "tcross") {
 	$"0100 0100 0100 0100 0100 0100 0100 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
-	$"0007 0007"                              
+	$"0007 0007"
 };
 
 data 'CURS' (3066, "top_left_arrow") {
@@ -554,7 +553,7 @@ data 'CURS' (3066, "top_left_arrow") {
 	$"0C80 0440 0420 0010 0008 0004 0000 0000"
 	$"E000 F800 FE00 7F80 7FE0 3FF8 3FFE 1F80"
 	$"1FC0 0EE0 0E70 0638 061C 020E 0204 0000"
-	$"0001 0001"                              
+	$"0001 0001"
 };
 
 data 'CURS' (3067, "top_left_corner") {
@@ -562,7 +561,7 @@ data 'CURS' (3067, "top_left_corner") {
 	$"C880 C840 C020 C000 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0FC0 0C00 0A00 0900"
 	$"0880 0840 0020 0000 0000 0000 0000 0000"
-	$"0000 0000"                              
+	$"0000 0000"
 };
 
 data 'CURS' (3068, "top_right_corner") {
@@ -570,7 +569,7 @@ data 'CURS' (3068, "top_right_corner") {
 	$"0113 0213 0403 0003 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 03F0 0030 0050 0090"
 	$"0110 0210 0400 0000 0000 0000 0000 0000"
-	$"0000 000F"                              
+	$"0000 000F"
 };
 
 data 'CURS' (3069, "top_side") {
@@ -578,7 +577,7 @@ data 'CURS' (3069, "top_side") {
 	$"1110 0100 0100 0100 0100 0100 0000 0000"
 	$"0000 0000 0000 0000 0100 0380 0540 0920"
 	$"1110 0100 0100 0100 0100 0100 0000 0000"
-	$"0004 0007"                              
+	$"0004 0007"
 };
 
 data 'CURS' (3070, "top_tee") {
@@ -586,7 +585,7 @@ data 'CURS' (3070, "top_tee") {
 	$"0180 0180 0180 0180 0180 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
-	$"0004 0007"                              
+	$"0004 0007"
 };
 
 data 'CURS' (3071, "trek") {
@@ -594,7 +593,7 @@ data 'CURS' (3071, "trek") {
 	$"0380 0100 0BA0 0D60 0920 0820 0820 0000"
 	$"0000 0380 07C0 0FE0 1FF0 1FF0 1FF0 0FE0"
 	$"07C0 0BA0 1FF0 1FF0 1FF0 1D70 1C70 0820"
-	$"0000 0007"                              
+	$"0000 0007"
 };
 
 data 'CURS' (3072, "ul_angle") {
@@ -602,7 +601,7 @@ data 'CURS' (3072, "ul_angle") {
 	$"0C00 0C00 0C00 0C00 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
-	$"0003 0004"                              
+	$"0003 0004"
 };
 
 data 'CURS' (3073, "umbrella") {
@@ -610,7 +609,7 @@ data 'CURS' (3073, "umbrella") {
 	$"0100 0100 0100 0100 0140 0140 0080 0000"
 	$"0000 0FF0 1FF8 7FFE 7FFC FFFE FBBE E38E"
 	$"0380 0380 0380 03C0 03E0 03E0 01C0 0080"
-	$"0004 0007"                              
+	$"0004 0007"
 };
 
 data 'CURS' (3074, "ur_angle") {
@@ -618,7 +617,7 @@ data 'CURS' (3074, "ur_angle") {
 	$"0030 0030 0030 0030 0030 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
-	$"0004 000B"                              
+	$"0004 000B"
 };
 
 data 'CURS' (3075, "watch") {
@@ -626,7 +625,7 @@ data 'CURS' (3075, "watch") {
 	$"138C 1008 1008 0810 07E0 07E0 07E0 07E0"
 	$"07E0 07E0 07E0 07E0 0FF0 1FF8 1FF8 1FFC"
 	$"1FFC 1FF8 1FF8 0FF0 07E0 07E0 07E0 07E0"
-	$"0008 000D"                              
+	$"0008 000D"
 };
 
 data 'CURS' (3076, "xterm") {
@@ -634,12 +633,12 @@ data 'CURS' (3076, "xterm") {
 	$"0100 0100 0100 0100 0100 0100 0280 0C60"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
 	$"0000 0000 0000 0000 0000 0000 0000 0000"
-	$"000B 0007"                              
+	$"000B 0007"
 };
 
 /*
- * The following are color versions of some of the 
- * cursors defined above.  The color cursors will be
+ * The following are color versions of some of the
+ * cursors defined above. The color cursors will be
  * used if the exist in preference to the black & white
  * cursors.
  */
@@ -666,7 +665,7 @@ data 'crsr' (3004, "boat", purgeable) {
 	$"FFFF 0001 BBBB BBBB BBBB 0002 EEEE EEEE"
 	$"EEEE 0003 DDDD DDDD DDDD 0004 CCCC CCCC"
 	$"CCCC 0005 4444 4444 4444 0006 1111 1111"
-	$"1111 000F 0000 0000 0000"               
+	$"1111 000F 0000 0000 0000"
 };
 
 data 'crsr' (3013, "clock") {
@@ -691,7 +690,7 @@ data 'crsr' (3013, "clock") {
 	$"FFFF 0001 4444 4444 4444 0002 AAAA AAAA"
 	$"AAAA 0003 EEEE EEEE EEEE 0004 5555 5555"
 	$"5555 0005 DDDD DDDD DDDD 0006 7777 7777"
-	$"7777 000F 0000 0000 0000"               
+	$"7777 000F 0000 0000 0000"
 };
 
 data 'crsr' (3014, "coffee_mug") {
@@ -716,7 +715,7 @@ data 'crsr' (3014, "coffee_mug") {
 	$"FFFF 0001 CCCC 9999 6666 0002 CCCC CCCC"
 	$"FFFF 0003 3333 3333 6666 0004 9999 9999"
 	$"FFFF 0005 6666 6666 CCCC 000F 0000 0000"
-	$"0000"                                   
+	$"0000"
 };
 
 data 'crsr' (3027, "gobbler") {
@@ -741,7 +740,7 @@ data 'crsr' (3027, "gobbler") {
 	$"FFFF 0001 CCCC 9999 6666 0002 DDDD 0000"
 	$"0000 0003 FFFF 6666 3333 0004 CCCC CCCC"
 	$"CCCC 0005 8888 8888 8888 0006 FFFF CCCC"
-	$"9999"                                   
+	$"9999"
 };
 
 data 'crsr' (3028, "gumby") {
@@ -765,7 +764,7 @@ data 'crsr' (3028, "gumby") {
 	$"F000 0000 0000 0000 0005 0000 FFFF FFFF"
 	$"FFFF 0001 0000 BBBB 0000 0002 CCCC CCCC"
 	$"CCCC 0003 AAAA AAAA AAAA 0004 4444 4444"
-	$"4444 000F 0000 0000 0000"               
+	$"4444 000F 0000 0000 0000"
 };
 
 data 'crsr' (3031, "heart") {
@@ -784,7 +783,7 @@ data 'crsr' (3031, "heart") {
 	$"9700 00D6 5C00 0035 7000 000F C000 0000"
 	$"0000 0000 0000 0000 0003 0000 FFFF FFFF"
 	$"FFFF 0001 DDDD 0000 0000 0002 FFFF 6666"
-	$"CCCC 0003 0000 0000 0000"               
+	$"CCCC 0003 0000 0000 0000"
 };
 
 data 'crsr' (3042, "mouse", purgeable) {
@@ -811,7 +810,7 @@ data 'crsr' (3042, "mouse", purgeable) {
 	$"4444 0005 2222 2222 2222 0006 5555 5555"
 	$"5555 0007 AAAA AAAA AAAA 0008 BBBB BBBB"
 	$"BBBB 0009 7777 7777 7777 000A 1111 1111"
-	$"1111 000F 0000 0000 0000"               
+	$"1111 000F 0000 0000 0000"
 };
 
 data 'crsr' (3043, "pencil", purgeable) {
@@ -836,7 +835,7 @@ data 'crsr' (3043, "pencil", purgeable) {
 	$"FFFF 0001 CCCC CCCC CCCC 0002 8888 8888"
 	$"8888 0003 FFFF FFFF 0000 0004 DDDD 0000"
 	$"0000 0005 FFFF 6666 3333 000F 0000 0000"
-	$"0000"                                   
+	$"0000"
 };
 
 data 'crsr' (3059, "shuttle") {
@@ -861,7 +860,7 @@ data 'crsr' (3059, "shuttle") {
 	$"FFFF 0001 FFFF 6666 3333 0002 DDDD 0000"
 	$"0000 0003 4444 4444 4444 0004 8888 8888"
 	$"8888 0005 DDDD DDDD DDDD 000F 0000 0000"
-	$"0000"                                   
+	$"0000"
 };
 
 data 'crsr' (3062, "spraycan") {
@@ -888,7 +887,7 @@ data 'crsr' (3062, "spraycan") {
 	$"2222 0005 4444 4444 4444 0006 BBBB BBBB"
 	$"BBBB 0007 DDDD DDDD DDDD 0008 EEEE EEEE"
 	$"EEEE 0009 6666 6666 CCCC 000A CCCC CCCC"
-	$"FFFF 000F 0000 0000 0000"               
+	$"FFFF 000F 0000 0000 0000"
 };
 
 data 'crsr' (3063, "star") {
@@ -907,7 +906,7 @@ data 'crsr' (3063, "star") {
 	$"D700 0D70 35C0 0DC0 0DC0 0F00 03C0 0C00"
 	$"00C0 0000 0000 0000 0002 0000 FFFF FFFF"
 	$"FFFF 0001 FFFF FFFF 0000 0003 0000 0000"
-	$"0000"                                   
+	$"0000"
 };
 
 data 'crsr' (3071, "trek") {
@@ -932,7 +931,7 @@ data 'crsr' (3071, "trek") {
 	$"FFFF 0001 EEEE EEEE EEEE 0002 9999 9999"
 	$"FFFF 0003 DDDD DDDD DDDD 0004 3333 3333"
 	$"6666 0005 DDDD 0000 0000 000F 0000 0000"
-	$"0000"                                   
+	$"0000"
 };
 
 data 'crsr' (3075, "watch", purgeable) {
@@ -956,6 +955,6 @@ data 'crsr' (3075, "watch", purgeable) {
 	$"0000 0000 0000 0000 0004 0000 FFFF FFFF"
 	$"FFFF 0001 CCCC CCCC CCCC 0002 EEEE EEEE"
 	$"EEEE 0003 BBBB BBBB BBBB 000F 0000 0000"
-	$"0000"                                   
+	$"0000"
 };
 

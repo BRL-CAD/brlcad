@@ -134,7 +134,10 @@ InitBoxes(void)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     hrsrc = FindResource(module, "buttons", RT_BITMAP);
-    if (hrsrc) {
+    if (hrsrc == NULL) {
+	Tcl_Panic("FindResource() failed for buttons bitmap resource, "
+            "resources in tk_base.rc must be linked into Tk dll or static executable");
+    } else {
 	hblk = LoadResource(module, hrsrc);
 	tsdPtr->boxesPtr = (LPBITMAPINFOHEADER)LockResource(hblk);
     }
@@ -346,7 +349,7 @@ TkpDisplayButton(
 				 * warning. */
     int y, relief;
     register Tk_Window tkwin = butPtr->tkwin;
-    int width, height, haveImage = 0, haveText = 0, drawRing = 0;
+    int width = 0, height = 0, haveImage = 0, haveText = 0, drawRing = 0;
     RECT rect;
     int defaultWidth;		/* Width of default ring. */
     int offset;			/* 0 means this is a label widget. 1 means it
@@ -722,9 +725,10 @@ TkpDisplayButton(
 		border, TK_3D_FLAT_GC));
 
 	dc = TkWinGetDrawableDC(butPtr->display, pixmap, &state);
-	StretchDIBits(dc, x, y, tsdPtr->boxWidth, tsdPtr->boxHeight, xSrc,
-		ySrc, tsdPtr->boxWidth, tsdPtr->boxHeight, tsdPtr->boxesBits,
-		(LPBITMAPINFO) tsdPtr->boxesPtr, DIB_RGB_COLORS, SRCCOPY);
+	StretchDIBits(dc, x, y, (int)tsdPtr->boxWidth, (int)tsdPtr->boxHeight,
+		xSrc, ySrc, (int)tsdPtr->boxWidth, (int)tsdPtr->boxHeight,
+		tsdPtr->boxesBits, (LPBITMAPINFO) tsdPtr->boxesPtr,
+		DIB_RGB_COLORS, SRCCOPY);
 	TkWinReleaseDrawableDC(pixmap, dc, &state);
     }
 
@@ -778,15 +782,15 @@ TkpDisplayButton(
     if (defaultWidth != 0) {
 	dc = TkWinGetDrawableDC(butPtr->display, pixmap, &state);
 	TkWinFillRect(dc, 0, 0, Tk_Width(tkwin), defaultWidth,
-		butPtr->highlightColorPtr->pixel);
+		(int) butPtr->highlightColorPtr->pixel);
 	TkWinFillRect(dc, 0, 0, defaultWidth, Tk_Height(tkwin),
-		butPtr->highlightColorPtr->pixel);
+		(int) butPtr->highlightColorPtr->pixel);
 	TkWinFillRect(dc, 0, Tk_Height(tkwin) - defaultWidth,
 		Tk_Width(tkwin), defaultWidth,
-		butPtr->highlightColorPtr->pixel);
+		(int) butPtr->highlightColorPtr->pixel);
 	TkWinFillRect(dc, Tk_Width(tkwin) - defaultWidth, 0,
 		defaultWidth, Tk_Height(tkwin),
-		butPtr->highlightColorPtr->pixel);
+		(int) butPtr->highlightColorPtr->pixel);
 	TkWinReleaseDrawableDC(pixmap, dc, &state);
     }
 
@@ -1079,6 +1083,8 @@ TkpComputeButtonGeometry(
 	    if (imgHeight > height) {
 		height = imgHeight;
 	    }
+	    break;
+	case COMPOUND_NONE:
 	    break;
 	} /* switch */
 

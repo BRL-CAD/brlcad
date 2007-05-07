@@ -110,8 +110,8 @@ static void		EventuallyDeleteImage(ImageMaster *masterPtr,
  */
 
 void
-Tk_CreateOldImageType(typePtr)
-    Tk_ImageType *typePtr;	/* Structure describing the type. All of the
+Tk_CreateOldImageType(
+    Tk_ImageType *typePtr)	/* Structure describing the type. All of the
 				 * fields except "nextPtr" must be filled in
 				 * by caller. Must not have been passed to
 				 * Tk_CreateImageType previously. */
@@ -124,8 +124,8 @@ Tk_CreateOldImageType(typePtr)
 }
 
 void
-Tk_CreateImageType(typePtr)
-    Tk_ImageType *typePtr;	/* Structure describing the type. All of the
+Tk_CreateImageType(
+    Tk_ImageType *typePtr)	/* Structure describing the type. All of the
 				 * fields except "nextPtr" must be filled in
 				 * by caller. Must not have been passed to
 				 * Tk_CreateImageType previously. */
@@ -155,11 +155,11 @@ Tk_CreateImageType(typePtr)
  */
 
 int
-Tk_ImageObjCmd(clientData, interp, objc, objv)
-    ClientData clientData;	/* Main window associated with interpreter. */
-    Tcl_Interp *interp;		/* Current interpreter. */
-    int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument strings. */
+Tk_ImageObjCmd(
+    ClientData clientData,	/* Main window associated with interpreter. */
+    Tcl_Interp *interp,		/* Current interpreter. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *CONST objv[])	/* Argument strings. */
 {
     static CONST char *imageOptions[] = {
 	"create", "delete", "height", "inuse", "names", "type", "types",
@@ -170,7 +170,7 @@ Tk_ImageObjCmd(clientData, interp, objc, objv)
 	IMAGE_TYPE, IMAGE_TYPES, IMAGE_WIDTH
     };
     TkWindow *winPtr = (TkWindow *) clientData;
-    int i, isNew, firstOption,  index;
+    int i, isNew, firstOption, index;
     Tk_ImageType *typePtr;
     ImageMaster *masterPtr;
     Image *imagePtr;
@@ -464,16 +464,17 @@ Tk_ImageObjCmd(clientData, interp, objc, objv)
  */
 
 void
-Tk_ImageChanged(imageMaster, x, y, width, height, imageWidth, imageHeight)
-    Tk_ImageMaster imageMaster;	/* Image that needs redisplay. */
-    int x, y;			/* Coordinates of upper-left pixel of region
+Tk_ImageChanged(
+    Tk_ImageMaster imageMaster,	/* Image that needs redisplay. */
+    int x, int y,		/* Coordinates of upper-left pixel of region
 				 * of image that needs to be redrawn. */
-    int width, height;		/* Dimensions (in pixels) of region of image
+    int width, int height,	/* Dimensions (in pixels) of region of image
 				 * to redraw. If either dimension is zero then
 				 * the image doesn't need to be redrawn
 				 * (perhaps all that happened is that its size
 				 * changed). */
-    int imageWidth, imageHeight;/* New dimensions of image. */
+    int imageWidth, int imageHeight)
+				/* New dimensions of image. */
 {
     ImageMaster *masterPtr = (ImageMaster *) imageMaster;
     Image *imagePtr;
@@ -505,8 +506,8 @@ Tk_ImageChanged(imageMaster, x, y, width, height, imageWidth, imageHeight)
  */
 
 CONST char *
-Tk_NameOfImage(imageMaster)
-    Tk_ImageMaster imageMaster;	/* Token for image. */
+Tk_NameOfImage(
+    Tk_ImageMaster imageMaster)	/* Token for image. */
 {
     ImageMaster *masterPtr = (ImageMaster *) imageMaster;
 
@@ -539,16 +540,16 @@ Tk_NameOfImage(imageMaster)
  */
 
 Tk_Image
-Tk_GetImage(interp, tkwin, name, changeProc, clientData)
-    Tcl_Interp *interp;		/* Place to leave error message if image can't
+Tk_GetImage(
+    Tcl_Interp *interp,		/* Place to leave error message if image can't
 				 * be found. */
-    Tk_Window tkwin;		/* Token for window in which image will be
+    Tk_Window tkwin,		/* Token for window in which image will be
 				 * used. */
-    CONST char *name;		/* Name of desired image. */
-    Tk_ImageChangedProc *changeProc;
+    CONST char *name,		/* Name of desired image. */
+    Tk_ImageChangedProc *changeProc,
 				/* Function to invoke when redisplay is needed
 				 * because image's pixels or size changed. */
-    ClientData clientData;	/* One-word argument to pass to damageProc. */
+    ClientData clientData)	/* One-word argument to pass to damageProc. */
 {
     Tcl_HashEntry *hPtr;
     ImageMaster *masterPtr;
@@ -601,8 +602,8 @@ Tk_GetImage(interp, tkwin, name, changeProc, clientData)
  */
 
 void
-Tk_FreeImage(image)
-    Tk_Image image;		/* Token for image that is no longer needed by
+Tk_FreeImage(
+    Tk_Image image)		/* Token for image that is no longer needed by
 				 * a widget. */
 {
     Image *imagePtr = (Image *) image;
@@ -661,15 +662,15 @@ Tk_FreeImage(image)
  */
 
 int
-Tk_PostscriptImage(image, interp, tkwin, psinfo, x, y, width, height, prepass)
-    Tk_Image image;		/* Token for image to redisplay. */
-    Tcl_Interp *interp;
-    Tk_Window tkwin;
-    Tk_PostscriptInfo psinfo;	/* postscript info */
-    int x, y;			/* Upper-left pixel of region in image that
+Tk_PostscriptImage(
+    Tk_Image image,		/* Token for image to redisplay. */
+    Tcl_Interp *interp,
+    Tk_Window tkwin,
+    Tk_PostscriptInfo psinfo,	/* postscript info */
+    int x, int y,		/* Upper-left pixel of region in image that
 				 * needs to be redisplayed. */
-    int width, height;		/* Dimensions of region to redraw. */
-    int prepass;
+    int width, int height,	/* Dimensions of region to redraw. */
+    int prepass)
 {
     Image *imagePtr = (Image *) image;
     int result;
@@ -739,7 +740,7 @@ Tk_PostscriptImage(image, interp, tkwin, psinfo, x, y, width, height, prepass)
     XDestroyImage(ximage);
     return result;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -759,17 +760,17 @@ Tk_PostscriptImage(image, interp, tkwin, psinfo, x, y, width, height, prepass)
  */
 
 void
-Tk_RedrawImage(image, imageX, imageY, width, height, drawable,
-	drawableX, drawableY)
-    Tk_Image image;		/* Token for image to redisplay. */
-    int imageX, imageY;		/* Upper-left pixel of region in image that
+Tk_RedrawImage(
+    Tk_Image image,		/* Token for image to redisplay. */
+    int imageX, int imageY,	/* Upper-left pixel of region in image that
 				 * needs to be redisplayed. */
-    int width, height;		/* Dimensions of region to redraw. */
-    Drawable drawable;		/* Drawable in which to display image (window
+    int width, int height,	/* Dimensions of region to redraw. */
+    Drawable drawable,		/* Drawable in which to display image (window
 				 * or pixmap). If this is a pixmap, it must
 				 * have the same depth as the window used in
 				 * the Tk_GetImage call for the image. */
-    int drawableX, drawableY;	/* Coordinates in drawable that correspond to
+    int drawableX, int drawableY)
+				/* Coordinates in drawable that correspond to
 				 * imageX and imageY. */
 {
     Image *imagePtr = (Image *) image;
@@ -825,10 +826,10 @@ Tk_RedrawImage(image, imageX, imageY, width, height, drawable,
  */
 
 void
-Tk_SizeOfImage(image, widthPtr, heightPtr)
-    Tk_Image image;		/* Token for image whose size is wanted. */
-    int *widthPtr;		/* Return width of image here. */
-    int *heightPtr;		/* Return height of image here. */
+Tk_SizeOfImage(
+    Tk_Image image,		/* Token for image whose size is wanted. */
+    int *widthPtr,		/* Return width of image here. */
+    int *heightPtr)		/* Return height of image here. */
 {
     Image *imagePtr = (Image *) image;
 
@@ -854,10 +855,10 @@ Tk_SizeOfImage(image, widthPtr, heightPtr)
  */
 
 void
-Tk_DeleteImage(interp, name)
-    Tcl_Interp *interp;		/* Interpreter in which the image was
+Tk_DeleteImage(
+    Tcl_Interp *interp,		/* Interpreter in which the image was
 				 * created. */
-    CONST char *name;		/* Name of image. */
+    CONST char *name)		/* Name of image. */
 {
     Tcl_HashEntry *hPtr;
     TkWindow *winPtr;
@@ -892,8 +893,8 @@ Tk_DeleteImage(interp, name)
  */
 
 static void
-DeleteImage(masterPtr)
-    ImageMaster *masterPtr;	/* Pointer to main data structure for image. */
+DeleteImage(
+    ImageMaster *masterPtr)	/* Pointer to main data structure for image. */
 {
     Image *imagePtr;
     Tk_ImageType *typePtr;
@@ -903,9 +904,9 @@ DeleteImage(masterPtr)
     if (typePtr != NULL) {
 	for (imagePtr = masterPtr->instancePtr; imagePtr != NULL;
 		imagePtr = imagePtr->nextPtr) {
-	   (*typePtr->freeProc)(imagePtr->instanceData,
-		   imagePtr->display);
-	   (*imagePtr->changeProc)(imagePtr->widgetClientData, 0, 0,
+	    (*typePtr->freeProc)(imagePtr->instanceData,
+		    imagePtr->display);
+	    (*imagePtr->changeProc)(imagePtr->widgetClientData, 0, 0,
 		    masterPtr->width, masterPtr->height, masterPtr->width,
 		    masterPtr->height);
 	}
@@ -941,9 +942,9 @@ DeleteImage(masterPtr)
  */
 
 static void
-EventuallyDeleteImage(masterPtr, forgetImageHashNow)
-    ImageMaster *masterPtr;	/* Pointer to main data structure for image. */
-    int forgetImageHashNow;	/* Flag to say whether the hash table is about
+EventuallyDeleteImage(
+    ImageMaster *masterPtr,	/* Pointer to main data structure for image. */
+    int forgetImageHashNow)	/* Flag to say whether the hash table is about
 				 * to vanish. */
 {
     if (forgetImageHashNow) {
@@ -975,8 +976,8 @@ EventuallyDeleteImage(masterPtr, forgetImageHashNow)
  */
 
 void
-TkDeleteAllImages(mainPtr)
-    TkMainInfo *mainPtr;	/* Structure describing application that is
+TkDeleteAllImages(
+    TkMainInfo *mainPtr)	/* Structure describing application that is
 				 * going away. */
 {
     Tcl_HashSearch search;
@@ -1010,11 +1011,11 @@ TkDeleteAllImages(mainPtr)
  */
 
 ClientData
-Tk_GetImageMasterData(interp, name, typePtrPtr)
-    Tcl_Interp *interp;		/* Interpreter in which the image was
+Tk_GetImageMasterData(
+    Tcl_Interp *interp,		/* Interpreter in which the image was
 				 * created. */
-    CONST char *name;		/* Name of image. */
-    Tk_ImageType **typePtrPtr;	/* Points to location to fill in with pointer
+    CONST char *name,		/* Name of image. */
+    Tk_ImageType **typePtrPtr)	/* Points to location to fill in with pointer
 				 * to type information for image. */
 {
     Tcl_HashEntry *hPtr;
@@ -1035,7 +1036,7 @@ Tk_GetImageMasterData(interp, name, typePtrPtr)
     *typePtrPtr = masterPtr->typePtr;
     return masterPtr->masterData;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -1059,10 +1060,10 @@ Tk_GetImageMasterData(interp, name, typePtrPtr)
 
 /*ARGSUSED*/
 void
-Tk_SetTSOrigin(tkwin, gc, x, y)
-    Tk_Window tkwin;
-    GC gc;
-    int x, y;
+Tk_SetTSOrigin(
+    Tk_Window tkwin,
+    GC gc,
+    int x, int y)
 {
     while (!Tk_TopWinHierarchy(tkwin)) {
 	x -= Tk_X(tkwin) + Tk_Changes(tkwin)->border_width;

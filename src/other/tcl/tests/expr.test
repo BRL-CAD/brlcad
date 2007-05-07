@@ -980,6 +980,9 @@ test expr-23.46 {INST_EXPON: Bug 1561260} -body {
 test expr-23.47 {INST_EXPON: Bug 1561260} {
     expr 2**32*5**32
 } 1[string repeat 0 32]
+test expr-23.48 {INST_EXPON: TIP 274: right assoc} {
+expr 2**3**4
+} 2417851639229258349412352
 
 # Some compilers get this wrong; ensure that we work around it correctly
 test expr-24.1 {expr edge cases; shifting} {expr int(5)>>32} 0
@@ -5368,6 +5371,19 @@ test expr-32.2 {expr div basics} {
     -3 -2 -1 -1 -1 \
     ]
 
+test expr-32.3 {Bug 1585704} {
+    expr 1%(1<<63)
+} 1
+test expr-32.4 {Bug 1585704} {
+    expr -1%(1<<63)
+} [expr (1<<63)-1]
+test expr-32.5 {Bug 1585704} {
+    expr (1<<32)%(1<<63)
+} [expr 1<<32]
+test expr-32.6 {Bug 1585704} {
+    expr -(1<<32)%(1<<63)
+} [expr (1<<63)-(1<<32)]
+
 test expr-33.1 {parse largest long value} longIs32bit {
     set max_long_str 2147483647
     set max_long_hex "0x7FFFFFFF "
@@ -6540,6 +6556,107 @@ test expr-46.19 {round() handling of long/bignum boundary} {
     expr {round(double(0x7fffffffffffffff))}
 } 9223372036854775808
 
+test expr-47.1 {isqrt() - arg count} {
+    list [catch {expr {isqrt(1,2)}} result] $result
+} {1 {too many arguments for math function "isqrt"}}
+
+test expr-47.2 {isqrt() - non-number} {
+    list [catch {expr {isqrt({rubbish})}} result] $result
+} {1 {expected number but got "rubbish"}}
+
+test expr-47.3 {isqrt() - NaN} ieeeFloatingPoint {
+    list [catch {expr {isqrt(NaN)}} result] $result
+} {1 {floating point value is Not a Number}}
+
+test expr-47.4 {isqrt() of negative floating point number} {
+    list [catch {expr {isqrt(-1.0)}} result] $result
+} {1 {square root of negative argument}}
+
+test expr-47.5 {isqrt() of floating point zero} {
+    expr isqrt(0.0)
+} 0
+
+test expr-47.6 {isqrt() of exact floating point numbers} {
+    set trouble {}
+    for {set i 0} {$i < 16} {incr i} {
+	set root [expr {1 << $i}]
+	set rm1 [expr {$root - 1}]
+	set arg [expr {pow(2., (2 * $i))}]
+	if {isqrt($arg-1) != $rm1} {
+	    append trouble "i = " $i ": isqrt( " $arg "-1) != " $rm1 "\n"
+	}
+	if {isqrt($arg) != $root} {
+	    append trouble "i = " $i ": isqrt( " $arg ") != " $root "\n"
+	}
+	if {isqrt($arg+1) != $root} {
+	    append trouble "i = " $i ": isqrt( " $arg "+1) != " $root "\n"
+	}
+    }
+    set trouble
+} {}
+
+test expr-47.7 {isqrt() of exact floating point numbers} ieeeFloatingPoint {
+    set trouble {}
+    for {set i 17} {$i < 27} {incr i} {
+	set root [expr {1 << $i}]
+	set rm1 [expr {$root - 1}]
+	set arg [expr {pow(2., (2 * $i))}]
+	if {isqrt($arg-1.0) != $rm1} {
+	    append trouble "i = " $i ": isqrt( " $arg "-1) != " $rm1 "\n"
+	}
+	if {isqrt($arg) != $root} {
+	    append trouble "i = " $i ": isqrt( " $arg ") != " $root "\n"
+	}
+	if {isqrt($arg+1.0) != $root} {
+	    append trouble "i = " $i ": isqrt( " $arg "+1) != " $root "\n"
+	}
+    }
+    set trouble
+} {}
+
+test expr-47.8 {isqrt of inexact floating point number} ieeeFloatingPoint {
+    expr isqrt(2[string repeat 0 34])
+} 141421356237309504
+
+test expr-47.9 {isqrt of negative int} {
+    list [catch {expr isqrt(-1)} result] $result
+} {1 {square root of negative argument}}
+
+test expr-47.10 {isqrt of negative bignum} {
+    list [catch {expr isqrt(-1[string repeat 0 1000])} result] $result
+} {1 {square root of negative argument}}
+
+test expr-47.11 {isqrt of zero} {
+    expr {isqrt(0)}
+} 0
+
+test expr-47.12 {isqrt of various sizes of integer} {
+    set faults 0
+    for {set i 0} {$faults < 10 && $i <= 1024} {incr i} {
+	set root [expr {1 << $i}]
+	set rm1 [expr {$root - 1}]
+	set arg [expr {1 << (2 * $i)}]
+	set tval [expr {isqrt($arg-1)}]
+	if {$tval != $rm1} {
+	    append trouble "i = " $i ": isqrt(" $arg "-1) == " $tval \
+		" != " $rm1 "\n"
+	    incr faults
+	}
+	set tval [expr {isqrt($arg)}]
+	if {$tval != $root} {
+	    append trouble "i = " $i ": isqrt(" $arg ") == " $tval \
+		" != " $root "\n"
+	    incr faults
+	}
+	set tval [expr {isqrt($arg+1)}]
+	if {$tval != $root} {
+	    append trouble "i = " $i ": isqrt(" $arg "+1) == " $tval \
+		" != " $root "\n"
+	    incr faults
+	}
+    }
+    set trouble
+} {}
 
 # cleanup
 if {[info exists a]} {

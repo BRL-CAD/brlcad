@@ -228,6 +228,61 @@ foreach {testName cursor} {
     } -result {}
 }
 
+# Test cursor named "none", it is not defined in
+# the X cursor table. It is defined in a Tk specific
+# table of named cursors and should be available on
+# all platforms.
+
+test cursor-6.80 {} -setup {
+    button .b -text CButton
+} -body {
+    .b configure -cursor none
+    .b cget -cursor
+} -cleanup {
+    destroy .b
+} -result none
+
+test cursor-6.81 {} -setup {
+    button .b -text CButton
+} -body {
+    .b configure -cursor none
+    .b configure -cursor {}
+    .b cget -cursor
+} -cleanup {
+    destroy .b
+} -result {}
+
+test cursor-6.82 {} -setup {
+    button .b -text CButton
+} -body {
+    .b configure -cursor none
+    .b configure -cursor {}
+    .b configure -cursor none
+    .b cget -cursor
+} -cleanup {
+    destroy .b
+} -result none
+
+test cursor-6.83 {} -setup {
+    button .b -text CButton
+} -body {
+    # Setting fg and bg does nothing for the none cursor
+    # because it displays no fg or bg pixels.
+    set results [list]
+    .b configure -cursor none
+    lappend results [.b cget -cursor]
+    .b configure -cursor {none blue}
+    lappend results [.b cget -cursor]
+    .b configure -cursor {none blue green}
+    lappend results [.b cget -cursor]
+    .b configure -cursor {}
+    lappend results [.b cget -cursor]
+    set results
+} -cleanup {
+    destroy .b
+    unset results
+} -result {none {none blue} {none blue green} {}}
+
 # -------------------------------------------------------------------------
 # Check the Windows specific cursors
 

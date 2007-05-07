@@ -1,0 +1,42 @@
+#
+# $Id$
+#
+
+package require Tk 8.5
+package require tcltest ; namespace import -force tcltest::*
+loadTestedCommands
+
+test scrollbar-1.0 "Setup" -body {
+    ttk::scrollbar .tsb
+} -result .tsb
+
+test scrollbar-1.1 "Set method" -body {
+    .tsb set 0.2 0.4
+    .tsb get
+} -result [list 0.2 0.4]
+
+test scrollbar-1.2 "Set orientation" -body {
+    .tsb configure -orient vertical
+    set w [winfo reqwidth .tsb] ; set h [winfo reqheight .tsb]
+    expr {$h > $w}
+} -result 1
+
+test scrollbar-1.3 "Change orientation" -body {
+    .tsb configure -orient horizontal
+    set w [winfo reqwidth .tsb] ; set h [winfo reqheight .tsb]
+    expr {$h < $w}
+} -result 1
+
+#
+# Scale tests:
+#
+
+test scale-1.0 "Self-destruction" -body {
+    trace variable v w { destroy .s ;# }
+    ttk::scale .s -variable v
+    pack .s ; update
+    .s set 1 ; update
+} -returnCodes 1 -match glob -result "*"
+
+tcltest::cleanupTests
+

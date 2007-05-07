@@ -6,8 +6,8 @@
  *
  * Copyright (c) 2002 by David Gravereaux.
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * ----------------------------------------------------------------------------
  * RCS: @(#) $Id$
@@ -37,6 +37,7 @@ int		CheckForCompilerFeature(const char *option);
 int		CheckForLinkerFeature(const char *option);
 int		IsIn(const char *string, const char *substring);
 int		GrepForDefine(const char *file, const char *string);
+const char *    GetVersionFromFile(const char *filename, const char *match);
 DWORD WINAPI	ReadFromPipe(LPVOID args);
 
 /* globals */
@@ -131,10 +132,23 @@ main(
 		return 2;
 	    }
 	    return GrepForDefine(argv[2], argv[3]);
+	case 'V':
+	    if (argc != 4) {
+		chars = snprintf(msg, sizeof(msg) - 1,
+		    "usage: %s -V filename matchstring\n"
+		    "Extract a version from a file:\n"
+		    "eg: pkgIndex.tcl \"package ifneeded http\"",
+		    argv[0]);
+		WriteFile(GetStdHandle(STD_ERROR_HANDLE), msg, chars,
+		    &dwWritten, NULL);
+		return 0;
+	    }
+	    printf("%s\n", GetVersionFromFile(argv[2], argv[3]));
+	    return 0;
 	}
     }
     chars = snprintf(msg, sizeof(msg) - 1,
-	    "usage: %s -c|-l|-f ...\n"
+	    "usage: %s -c|-l|-f|-g|-V ...\n"
 	    "This is a little helper app to equalize shell differences between WinNT and\n"
 	    "Win9x and get nmake.exe to accomplish its job.\n",
 	    argv[0]);
@@ -193,7 +207,7 @@ CheckForCompilerFeature(
      * Base command line.
      */
 
-    lstrcpy(cmdline, "cl.exe -nologo -c -TC -Zs -X ");
+    lstrcpy(cmdline, "cl.exe -nologo -c -TC -Zs -X -Fp.\\_junk.pch ");
 
     /*
      * Append our option for testing
@@ -227,7 +241,7 @@ CheckForCompilerFeature(
 	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS|
 		FORMAT_MESSAGE_MAX_WIDTH_MASK, 0L, err, 0, (LPVOID)&msg[chars],
 		(300-chars), 0);
-	WriteFile(GetStdHandle(STD_ERROR_HANDLE), msg, lstrlen(msg), &err,NULL);
+	WriteFile(GetStdHandle(STD_ERROR_HANDLE), msg,lstrlen(msg), &err,NULL);
 	return 2;
     }
 
@@ -353,7 +367,7 @@ CheckForLinkerFeature(
 	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS|
 		FORMAT_MESSAGE_MAX_WIDTH_MASK, 0L, err, 0, (LPVOID)&msg[chars],
 		(300-chars), 0);
-	WriteFile(GetStdHandle(STD_ERROR_HANDLE), msg, lstrlen(msg), &err,NULL);
+	WriteFile(GetStdHandle(STD_ERROR_HANDLE), msg,lstrlen(msg), &err,NULL);
 	return 2;
     }
 
@@ -394,9 +408,9 @@ CheckForLinkerFeature(
      */
 
     return !(strstr(Out.buffer, "LNK1117") != NULL ||
-             strstr(Err.buffer, "LNK1117") != NULL ||
-             strstr(Out.buffer, "LNK4044") != NULL ||
-             strstr(Err.buffer, "LNK4044") != NULL);
+	    strstr(Err.buffer, "LNK1117") != NULL ||
+	    strstr(Out.buffer, "LNK4044") != NULL ||
+	    strstr(Err.buffer, "LNK4044") != NULL);
 }
 
 DWORD WINAPI
@@ -443,18 +457,16 @@ GrepForDefine(
     const char *file,
     const char *string)
 {
-    FILE *f;
     char s1[51], s2[51], s3[51];
-    int r = 0;
-    double d1;
+    FILE *f = fopen(file, "rt");
 
-    f = fopen(file, "rt");
     if (f == NULL) {
 	return 0;
     }
 
     do {
-	r = fscanf(f, "%50s", s1);
+	int r = fscanf(f, "%50s", s1);
+
 	if (r == 1 && !strcmp(s1, "#define")) {
 	    /*
 	     * Get next two words.
@@ -470,6 +482,8 @@ GrepForDefine(
 	     */
 
 	    if (!strcmp(s2, string)) {
+		double d1;
+
 		fclose(f);
 
 		/*
@@ -487,4 +501,59 @@ GrepForDefine(
 
     fclose(f);
     return 0;
+}
+
+/*
+ * GetVersionFromFile --
+ * 	Looks for a match string in a file and then returns the version
+ * 	following the match where a version is anything acceptable to *
+ * 	package provide or package ifneeded.
+ */
+
+const char *
+GetVersionFromFile(
+    const char *filename,
+    const char *match)
+{
+    size_t cbBuffer = 100;
+    static char szBuffer[100];
+    char *szResult = NULL;
+    FILE *fp = fopen(filename, "r");
+
+    if (fp != NULL) {
+	/*
+	 * Read data until we see our match string.
+	 */
+
+	while (fgets(szBuffer, cbBuffer, fp) != NULL) {
+	    LPSTR p, q;
+
+	    p = strstr(szBuffer, match);
+	    if (p != NULL) {
+		/*
+		 * Skip to first digit.
+		 */
+
+		while (*p && !isdigit(*p)) {
+		    ++p;
+		}
+
+		/*
+		 * Find ending whitespace.
+		 */
+
+		q = p;
+		while (*q && (isalnum(*q) || *q == '.')) {
+		    ++q;
+		}
+
+		memcpy(szBuffer, p, q - p);
+		szBuffer[q-p] = 0;
+		szResult = szBuffer;
+		break;
+	    }
+	}
+	fclose(fp);
+    }
+    return szResult;
 }

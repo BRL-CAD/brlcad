@@ -1,5 +1,6 @@
 '\"
 '\" Copyright (c) 1996 Sun Microsystems, Inc.
+'\" Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -22,7 +23,7 @@ fonts, such as defining named fonts and inspecting the actual attributes of
 a font.  The command has several different forms, determined by the
 first argument.  The following forms are currently supported:
 .TP
-\fBfont actual \fIfont\fR ?\fB\-displayof \fIwindow\fR? ?\fIoption\fR?  
+\fBfont actual \fIfont\fR ?\fB\-displayof \fIwindow\fR? ?\fIoption\fR? ?\fB--\fR? ?\fIchar\fR?
 .
 Returns information about the actual attributes that are obtained when
 \fIfont\fR is used on \fIwindow\fR's display; the actual attributes obtained
@@ -32,7 +33,12 @@ limitations, such as the availability of font families and pointsizes.
 \fIwindow\fR argument is omitted, it defaults to the main window.  If
 \fIoption\fR is specified, returns the value of that attribute; if it is
 omitted, the return value is a list of all the attributes and their values.
-See FONT OPTIONS below for a list of the possible attributes.
+See FONT OPTIONS below for a list of the possible attributes.  If the
+\fIchar\fR argument is supplied, it must be a single character. The font
+attributes returned will be those of the specific font used to render
+that character, which will be different from the base font if the base
+font does not contain the given character.  If \fIchar\fR may be a hyphen, it
+should be preceded by \fB--\fR to distinguish it from a misspelt \fIoption\fR.
 .TP 
 \fBfont configure \fIfontname\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?  
 .
@@ -269,10 +275,10 @@ MS Windows:
 systemfixed	ansifixed	oemfixed\fR
 .DE
 .TP
-Macintosh:
+Mac OS X:
 .DS
 .ta 3c 6c
-\fBsystem	application\fR
+\fBsystem	application	menu\fR
 .DE
 .RE
 .SH EXAMPLE

@@ -11,12 +11,12 @@
  * redistributions in source form retain this entire copyright notice and
  * indicate the origin and nature of any modifications.
  *
- * I'd appreciate being given credit for this package in the documentation
- * of software which uses it, but that is not a requirement.
+ * I'd appreciate being given credit for this package in the documentation of
+ * software which uses it, but that is not a requirement.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
  * HENRY SPENCER BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
@@ -114,6 +114,22 @@ typedef int celt;		/* type to hold chr, MCCE number, or NOCELT */
 /* enable/disable debugging code (by whether REG_DEBUG is defined or not) */
 #if 0		/* no debug unless requested by makefile */
 #define	REG_DEBUG	/* */
+#endif
+
+/* method of allocating a local workspace */
+#if 1
+#define AllocVars(vPtr) \
+    static Tcl_ThreadDataKey varsKey; \
+    register struct vars *vPtr = (struct vars *) \
+	Tcl_GetThreadData(&varsKey, sizeof(struct vars))
+#else
+/* This strategy for allocating workspace is "more proper" in some sense, but
+ * quite a bit slower. Using TSD (as above) leads to code that is quite a bit
+ * faster in practice. */
+#define AllocVars(vPtr) \
+    register struct vars *vPtr = (struct vars *) MALLOC(sizeof(struct vars))
+#define FreeVars(vPtr) \
+    FREE(vPtr)
 #endif
 
 /* and pick up the standard header */

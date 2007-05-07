@@ -1,16 +1,15 @@
 /* 
  * waitpid.c --
  *
- *	This procedure emulates the POSIX waitpid kernel call on
- *	BSD systems that don't have waitpid but do have wait3.
- *	This code is based on a prototype version written by
- *	Mark Diekhans and Karl Lehenbauer.
+ *	This procedure emulates the POSIX waitpid kernel call on BSD systems
+ *	that don't have waitpid but do have wait3. This code is based on a
+ *	prototype version written by Mark Diekhans and Karl Lehenbauer.
  *
  * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1994 Sun Microsystems, Inc.
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
@@ -22,40 +21,37 @@
 #endif
 
 /*
- * A linked list of the following structures is used to keep track
- * of processes for which we received notification from the kernel,
- * but the application hasn't waited for them yet (this can happen
- * because wait may not return the process we really want).  We
- * save the information here until the application finally does
- * wait for the process.
+ * A linked list of the following structures is used to keep track of
+ * processes for which we received notification from the kernel, but the
+ * application hasn't waited for them yet (this can happen because wait may
+ * not return the process we really want). We save the information here until
+ * the application finally does wait for the process.
  */
 
 typedef struct WaitInfo {
-    pid_t pid;				/* Pid of process that exited. */
-    WAIT_STATUS_TYPE status;		/* Status returned when child exited
-					 * or suspended. */
-    struct WaitInfo *nextPtr;		/* Next in list of exited processes. */
+    pid_t pid;			/* Pid of process that exited. */
+    WAIT_STATUS_TYPE status;	/* Status returned when child exited or
+				 * suspended. */
+    struct WaitInfo *nextPtr;	/* Next in list of exited processes. */
 } WaitInfo;
 
-static WaitInfo *deadList = NULL;	/* First in list of all dead
-					 * processes. */
+static WaitInfo *deadList = NULL;
+				/* First in list of all dead processes. */
 
 /*
  *----------------------------------------------------------------------
  *
  * waitpid --
  *
- *	This procedure emulates the functionality of the POSIX
- *	waitpid kernel call, using the BSD wait3 kernel call.
- *	Note:  it doesn't emulate absolutely all of the waitpid
- *	functionality, in that it doesn't support pid's of 0
- *	or < -1.
+ *	This procedure emulates the functionality of the POSIX waitpid kernel
+ *	call, using the BSD wait3 kernel call. Note: it doesn't emulate
+ *	absolutely all of the waitpid functionality, in that it doesn't
+ *	support pid's of 0 or < -1.
  *
  * Results:
- *	-1 is returned if there is an error in the wait kernel call.
- *	Otherwise the pid of an exited or suspended process is
- *	returned and *statusPtr is set to the status value of the
- *	process.
+ *	-1 is returned if there is an error in the wait kernel call. Otherwise
+ *	the pid of an exited or suspended process is returned and *statusPtr
+ *	is set to the status value of the process.
  *
  * Side effects:
  *	None.
@@ -68,12 +64,12 @@ static WaitInfo *deadList = NULL;	/* First in list of all dead
 #endif
 
 pid_t
-waitpid(pid, statusPtr, options)
-    pid_t pid;			/* The pid to wait on.  Must be -1 or
-				 * greater than zero. */
-    int *statusPtr;		/* Where to store wait status for the
+waitpid(
+    pid_t pid,			/* The pid to wait on. Must be -1 or greater
+				 * than zero. */
+    int *statusPtr,		/* Where to store wait status for the
 				 * process. */
-    int options;		/* OR'ed combination of WNOHANG and
+    int options)		/* OR'ed combination of WNOHANG and
 				 * WUNTRACED. */
 {
     register WaitInfo *waitPtr, *prevPtr;
@@ -86,9 +82,9 @@ waitpid(pid, statusPtr, options)
     }
 
     /*
-     * See if there's a suitable process that has already stopped or
-     * exited. If so, remove it from the list of exited processes and
-     * return its information.
+     * See if there's a suitable process that has already stopped or exited.
+     * If so, remove it from the list of exited processes and return its
+     * information.
      */
 
     for (waitPtr = deadList, prevPtr = NULL; waitPtr != NULL;
@@ -111,12 +107,12 @@ waitpid(pid, statusPtr, options)
     }
 
     /*
-     * Wait for any process to stop or exit.  If it's an acceptable one
-     * then return it to the caller;  otherwise store information about it
-     * in the list of exited processes and try again.  On systems that
-     * have only wait but not wait3, there are several situations we can't
-     * handle, but we do the best we can (e.g. can still handle some
-     * combinations of options by invoking wait instead of wait3).
+     * Wait for any process to stop or exit. If it's an acceptable one then
+     * return it to the caller; otherwise store information about it in the
+     * list of exited processes and try again. On systems that have only wait
+     * but not wait3, there are several situations we can't handle, but we do
+     * the best we can (e.g. can still handle some combinations of options by
+     * invoking wait instead of wait3).
      */
 
     while (1) {
@@ -149,13 +145,13 @@ waitpid(pid, statusPtr, options)
 	return result;
 
 	/*
-	 * Can't return this info to caller.  Save it in the list of
-	 * stopped or exited processes.  Tricky point: first check for
-	 * an existing entry for the process and overwrite it if it
-	 * exists (e.g. a previously stopped process might now be dead).
+	 * Can't return this info to caller. Save it in the list of stopped or
+	 * exited processes. Tricky point: first check for an existing entry
+	 * for the process and overwrite it if it exists (e.g. a previously
+	 * stopped process might now be dead).
 	 */
 
-	saveInfo:
+    saveInfo:
 	for (waitPtr = deadList; waitPtr != NULL; waitPtr = waitPtr->nextPtr) {
 	    if (waitPtr->pid == result) {
 		waitPtr->status = status;
@@ -168,6 +164,7 @@ waitpid(pid, statusPtr, options)
 	waitPtr->nextPtr = deadList;
 	deadList = waitPtr;
 
-	waitAgain: continue;
+    waitAgain:
+	continue;
     }
 }

@@ -1042,6 +1042,22 @@ test dict-21.13 {dict update command: compilation} {
     }
     getOrder [dicttest {a 1 c 2}] b c
 } {b 1 c 2 2}
+test dict-21.14 {dict update command: compilation} {
+    proc dicttest x {
+	set indices {2 3}
+	trace add variable aa write "string length \$indices ;#"
+	dict update x k aa l bb {}
+    }
+    dicttest {k 1 l 2}
+} {}
+test dict-21.15 {dict update command: compilation} {
+    proc dicttest x {
+	set indices {2 3}
+	trace add variable aa read "string length \$indices ;#"
+	dict update x k aa l bb {}
+    }
+    dicttest {k 1 l 2}
+} {}
 
 test dict-22.1 {dict with command} -body {
     dict with

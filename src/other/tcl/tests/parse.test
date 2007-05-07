@@ -50,6 +50,12 @@ test parse-1.7 {Tcl_ParseCommand procedure, missing continuation line in leading
 test parse-1.8 {Tcl_ParseCommand procedure, eof in leading space} testparser {
     testparser "      foo" 3
 } {- {} 0 {   foo}}
+test parse-1.9 {Tcl_ParseCommand procedure, backslash newline + newline} {
+    testparser "cmd1\\\n\ncmd2" 0
+} {- cmd1\\\n\n 1 simple cmd1 1 text cmd1 0 cmd2}
+test parse-1.10 {Tcl_ParseCommand procedure, backslash newline + newline} {
+    testparser "list \\\nA B\\\n\nlist C D" 0
+} {- list\ \\\nA\ B\\\n\n 3 simple list 1 text list 0 simple A 1 text A 0 simple B 1 text B 0 {list C D}}
 
 test parse-2.1 {Tcl_ParseCommand procedure, comments} testparser {
     testparser "# foo bar\n foo" 0
@@ -154,75 +160,75 @@ test parse-5.10 {Tcl_ParseCommand procedure, multiple deletion of non-static buf
     invoked from within
 \"testparser \"a \\\"\\\\1\\\\2\\\\3\\\\4\\\\5\\\\6\\\\7\\\\8\\\\9\\\\1\\\\2\\\\3\\\\4\\\\5\\\\6\\\\7\\\\8\" 0\"}"
 
-test parse-5.11 {Tcl_ParseCommand: {expand} parsing} testparser {
+test parse-5.11 {Tcl_ParseCommand: {*} parsing} testparser {
     testparser {{expan}} 0
 } {- {{expan}} 1 simple {{expan}} 1 text expan 0 {}}
-test parse-5.12 {Tcl_ParseCommand: {expand} parsing} -constraints {
+test parse-5.12 {Tcl_ParseCommand: {*} parsing} -constraints {
     testparser
 } -body {
     testparser {{expan}x} 0
 } -returnCodes error  -result {extra characters after close-brace}
-test parse-5.13 {Tcl_ParseCommand: {expand} parsing} testparser {
-    testparser {{expandy}} 0
-} {- {{expandy}} 1 simple {{expandy}} 1 text expandy 0 {}}
-test parse-5.14 {Tcl_ParseCommand: {expand} parsing} -constraints {
+test parse-5.13 {Tcl_ParseCommand: {*} parsing} testparser {
+    testparser {{**}} 0
+} {- {{**}} 1 simple {{**}} 1 text ** 0 {}}
+test parse-5.14 {Tcl_ParseCommand: {*} parsing} -constraints {
     testparser
 } -body {
-    testparser {{expandy}x} 0
+    testparser {{**}x} 0
 } -returnCodes error  -result {extra characters after close-brace}
-test parse-5.15 {Tcl_ParseCommand: {expand} parsing} -constraints {
+test parse-5.15 {Tcl_ParseCommand: {*} parsing} -constraints {
     testparser
 } -body {
-    testparser {{expand}{123456}x} 0
+    testparser {{*}{123456}x} 0
 } -returnCodes error  -result {extra characters after close-brace}
-test parse-5.16 {Tcl_ParseCommand: {expand} parsing} testparser {
+test parse-5.16 {Tcl_ParseCommand: {*} parsing} testparser {
     testparser {{123456\
 			}} 0
 } {- {{123456 }} 1 simple {{123456 }} 1 text {123456 } 0 {}}
-test parse-5.17 {Tcl_ParseCommand: {expand} parsing} -constraints {
+test parse-5.17 {Tcl_ParseCommand: {*} parsing} -constraints {
     testparser
 } -body {
     testparser {{123456\
 			}x} 0
 } -returnCodes error  -result {extra characters after close-brace}
-test parse-5.18 {Tcl_ParseCommand: {expand} parsing} testparser {
-    testparser {{expand\
+test parse-5.18 {Tcl_ParseCommand: {*} parsing} testparser {
+    testparser {{*\
 			}} 0
-} {- {{expand }} 1 simple {{expand }} 1 text {expand } 0 {}}
-test parse-5.19 {Tcl_ParseCommand: {expand} parsing} -constraints {
+} {- {{* }} 1 simple {{* }} 1 text {* } 0 {}}
+test parse-5.19 {Tcl_ParseCommand: {*} parsing} -constraints {
     testparser
 } -body {
-    testparser {{expand\
+    testparser {{*\
 			}x} 0
 } -returnCodes error  -result {extra characters after close-brace}
-test parse-5.20 {Tcl_ParseCommand: {expand} parsing} testparser {
+test parse-5.20 {Tcl_ParseCommand: {*} parsing} testparser {
     testparser {{123456}} 0
 } {- {{123456}} 1 simple {{123456}} 1 text 123456 0 {}}
-test parse-5.21 {Tcl_ParseCommand: {expand} parsing} -constraints {
+test parse-5.21 {Tcl_ParseCommand: {*} parsing} -constraints {
     testparser
 } -body {
     testparser {{123456}x} 0
 } -returnCodes error  -result {extra characters after close-brace}
-test parse-5.22 {Tcl_ParseCommand: {expand} parsing} testparser {
-    testparser {{expand}} 0
-} {- {{expand}} 1 simple {{expand}} 1 text expand 0 {}}
-test parse-5.23 {Tcl_ParseCommand: {expand} parsing} testparser {
-    testparser {{expand} } 0
-} {- {{expand} } 1 simple {{expand}} 1 text expand 0 {}}
-test parse-5.24 {Tcl_ParseCommand: {expand} parsing} testparser {
-    testparser {{expand}x} 0
-} {- {{expand}x} 1 expand {{expand}x} 1 text x 0 {}}
-test parse-5.25 {Tcl_ParseCommand: {expand} parsing} testparser {
-    testparser {{expand}
+test parse-5.22 {Tcl_ParseCommand: {*} parsing} testparser {
+    testparser {{*}} 0
+} {- {{*}} 1 simple {{*}} 1 text * 0 {}}
+test parse-5.23 {Tcl_ParseCommand: {*} parsing} testparser {
+    testparser {{*} } 0
+} {- {{*} } 1 simple {{*}} 1 text * 0 {}}
+test parse-5.24 {Tcl_ParseCommand: {*} parsing} testparser {
+    testparser {{*}x} 0
+} {- {{*}x} 1 expand {{*}x} 1 text x 0 {}}
+test parse-5.25 {Tcl_ParseCommand: {*} parsing} testparser {
+    testparser {{*}
 } 0
-} {- {{expand}
-} 1 simple {{expand}} 1 text expand 0 {}}
-test parse-5.26 {Tcl_ParseCommand: {expand} parsing} testparser {
-    testparser {{expand};} 0
-} {- {{expand};} 1 simple {{expand}} 1 text expand 0 {}}
-test parse-5.27 {Tcl_ParseCommand: {expand} parsing} testparser {
-    testparser "{expand}\\\n foo bar" 0
-} {- \{expand\}\\\n\ foo\ bar 3 simple {{expand}} 1 text expand 0 simple foo 1 text foo 0 simple bar 1 text bar 0 {}}
+} {- {{*}
+} 1 simple {{*}} 1 text * 0 {}}
+test parse-5.26 {Tcl_ParseCommand: {*} parsing} testparser {
+    testparser {{*};} 0
+} {- {{*};} 1 simple {{*}} 1 text * 0 {}}
+test parse-5.27 {Tcl_ParseCommand: {*} parsing} testparser {
+    testparser "{*}\\\n foo bar" 0
+} {- \{*\}\\\n\ foo\ bar 3 simple {{*}} 1 text * 0 simple foo 1 text foo 0 simple bar 1 text bar 0 {}}
 
 test parse-6.1 {ParseTokens procedure, empty word} testparser {
     testparser {""} 0

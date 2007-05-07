@@ -29,7 +29,7 @@ A number:  if positive, it refers to the event with
 that number (all events are numbered starting at 1).  If the number
 is negative, it selects an event relative to the current event
 (\fB\-1\fR refers to the previous event, \fB\-2\fR to the one before that, and
-so on).  Event \fB0\fP refers to the current event.
+so on).  Event \fB0\fR refers to the current event.
 .IP [2]
 A string:  selects the most recent event that matches the string.
 An event is considered to match the string either if the string is
@@ -89,16 +89,16 @@ revision:  see below for details.
 .PP
 Pre-8.0 Tcl had a complex history revision mechanism.
 The current mechanism is more limited, and the old
-history operations \fBsubstitute\fP and \fBwords\fP have been removed.
-(As a consolation, the \fBclear\fP operation was added.)
+history operations \fBsubstitute\fR and \fBwords\fR have been removed.
+(As a consolation, the \fBclear\fR operation was added.)
 .PP
 The history option \fBredo\fR results in much simpler ``history revision''.
 When this option is invoked then the most recent event
 is modified to eliminate the history command and replace it with
 the result of the history command.
 If you want to redo an event without modifying history, then use
-the \fBevent\fP operation to retrieve some event,
-and the \fBadd\fP operation to add it to history and execute it.
+the \fBevent\fR operation to retrieve some event,
+and the \fBadd\fR operation to add it to history and execute it.
 
 .SH KEYWORDS
 event, history, record

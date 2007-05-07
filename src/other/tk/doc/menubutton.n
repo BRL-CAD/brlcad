@@ -191,5 +191,8 @@ actions occur:  the menubutton is completely non-responsive.
 The behavior of menubuttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
+.SH "SEE ALSO"
+ttk_menubutton(n), menu(n)
+
 .SH KEYWORDS
 menubutton, widget

@@ -53,7 +53,7 @@ for {set i 0} {$i<10} {incr i} {
 .VS 8.5
 Note that in the most common case (where the script fragment is
 actually just a list of words forming a command prefix), it is better
-to use \fB{expand}$script\fR when doing this sort of invokation
+to use \fB{*}$script\fR when doing this sort of invocation
 pattern.  It is less general than the \fBeval\fR command, and hence
 easier to make robust in practice.
 .VE 8.5
@@ -73,7 +73,7 @@ proc lprepend {varName args} {
 However, the last line would now normally be written without
 \fBeval\fR, like this:
 .CS
-set var [linsert $var 0 {expand}$args]
+set var [linsert $var 0 {*}$args]
 .CE
 .VE 8.5
 

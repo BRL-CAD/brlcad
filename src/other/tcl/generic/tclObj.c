@@ -442,10 +442,11 @@ Tcl_RegisterObjType(
 				 * be statically allocated (must live
 				 * forever). */
 {
-    int new;
+    int isNew;
+
     Tcl_MutexLock(&tableMutex);
     Tcl_SetHashValue(
-	    Tcl_CreateHashEntry(&typeTable, typePtr->name, &new), typePtr);
+	    Tcl_CreateHashEntry(&typeTable, typePtr->name, &isNew), typePtr);
     Tcl_MutexUnlock(&tableMutex);
 }
 
@@ -482,14 +483,13 @@ Tcl_AppendAllObjTypes(
 {
     register Tcl_HashEntry *hPtr;
     Tcl_HashSearch search;
-    int objc;
-    Tcl_Obj **objv;
+    int numElems;
 
     /*
      * Get the test for a valid list out of the way first.
      */
 
-    if (Tcl_ListObjGetElements(interp, objPtr, &objc, &objv) != TCL_OK) {
+    if (Tcl_ListObjLength(interp, objPtr, &numElems) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -621,7 +621,7 @@ TclDbInitNewObj(
     if (!TclInExit()) {
 	Tcl_HashEntry *hPtr;
 	Tcl_HashTable *tablePtr;
-	int new;
+	int isNew;
 	ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
 	if (tsdPtr->objThreadMap == NULL) {
@@ -630,8 +630,8 @@ TclDbInitNewObj(
 	    Tcl_InitHashTable(tsdPtr->objThreadMap, TCL_ONE_WORD_KEYS);
 	}
 	tablePtr = tsdPtr->objThreadMap;
-	hPtr = Tcl_CreateHashEntry(tablePtr, (char *) objPtr, &new);
-	if (!new) {
+	hPtr = Tcl_CreateHashEntry(tablePtr, (char *) objPtr, &isNew);
+	if (!isNew) {
 	    Tcl_Panic("expected to create new entry for object map");
 	}
 	Tcl_SetHashValue(hPtr, NULL);
@@ -966,7 +966,8 @@ TclFreeObj(
  */
 
 int
-TclObjBeingDeleted(Tcl_Obj *objPtr)
+TclObjBeingDeleted(
+    Tcl_Obj *objPtr)
 {
     return (objPtr->length == -1);
 }
@@ -1402,9 +1403,10 @@ SetBooleanFromAny(
     if (interp != NULL) {
 	int length;
 	char *str = Tcl_GetStringFromObj(objPtr, &length);
-	Tcl_Obj *msg =
-		Tcl_NewStringObj("expected boolean value but got \"", -1);
-	TclAppendLimitedToObj(msg, str, length, 50, "");
+	Tcl_Obj *msg;
+
+	TclNewLiteralStringObj(msg, "expected boolean value but got \"");
+	Tcl_AppendLimitedToObj(msg, str, length, 50, "");
 	Tcl_AppendToObj(msg, "\"", -1);
 	Tcl_SetObjResult(interp, msg);
     }
@@ -2178,9 +2180,9 @@ Tcl_GetLongFromObj(
 #endif
         if (objPtr->typePtr == &tclDoubleType) {
             if (interp != NULL) {
-		Tcl_Obj *msg =
-			Tcl_NewStringObj("expected integer but got \"", -1);
+		Tcl_Obj *msg;
 
+		TclNewLiteralStringObj(msg, "expected integer but got \"");
 		Tcl_AppendObjToObj(msg, objPtr);
 		Tcl_AppendToObj(msg, "\"", -1);
 		Tcl_SetObjResult(interp, msg);
@@ -2480,8 +2482,9 @@ Tcl_GetWideIntFromObj(
 	}
         if (objPtr->typePtr == &tclDoubleType) {
             if (interp != NULL) {
-		Tcl_Obj *msg =
-			Tcl_NewStringObj("expected integer but got \"", -1);
+		Tcl_Obj *msg;
+
+		TclNewLiteralStringObj(msg, "expected integer but got \"");
 		Tcl_AppendObjToObj(msg, objPtr);
 		Tcl_AppendToObj(msg, "\"", -1);
 		Tcl_SetObjResult(interp, msg);
@@ -2634,7 +2637,7 @@ UpdateStringOfBignum(
 
 	Tcl_Panic("UpdateStringOfBignum: string length limit exceeded");
     }
-    stringVal = Tcl_Alloc((size_t) size);
+    stringVal = ckalloc((size_t) size);
     status = mp_toradix_n(&bignumVal, stringVal, 10, size);
     if (status != MP_OKAY) {
 	Tcl_Panic("conversion failure in UpdateStringOfBignum");
@@ -2744,12 +2747,6 @@ Tcl_DbNewBignumObj(
  *----------------------------------------------------------------------
  */
 
-/*
- * TODO: Consider a smarter Tcl_GetBignumAndClearObj() that doesn't
- * require caller to check for a shared Tcl_Obj, but falls back to
- * Tcl_GetBignumFromObj() when sharing is an issue.
- */
-
 static int
 GetBignumFromObj(
     Tcl_Interp *interp,		/* Tcl interpreter for error reporting */
@@ -2759,14 +2756,11 @@ GetBignumFromObj(
 {
     do {
 	if (objPtr->typePtr == &tclBignumType) {
-	    if (copy) {
+	    if (copy || Tcl_IsShared(objPtr)) {
 		mp_int temp;
 		UNPACK_BIGNUM(objPtr, temp);
 		mp_init_copy(bignumValue, &temp);
 	    } else {
-		if (Tcl_IsShared(objPtr)) {
-		    Tcl_Panic("Tcl_GetBignumAndClearObj called on shared Tcl_Obj");
-		}
 		UNPACK_BIGNUM(objPtr, *bignumValue);
 		objPtr->internalRep.ptrAndLongRep.ptr = NULL;
 		objPtr->internalRep.ptrAndLongRep.value = 0;
@@ -2790,9 +2784,9 @@ GetBignumFromObj(
 #endif
 	if (objPtr->typePtr == &tclDoubleType) {
 	    if (interp != NULL) {
-		Tcl_Obj *msg =
-			Tcl_NewStringObj("expected integer but got \"", -1);
+		Tcl_Obj *msg;
 
+		TclNewLiteralStringObj(msg, "expected integer but got \"");
 		Tcl_AppendObjToObj(msg, objPtr);
 		Tcl_AppendToObj(msg, "\"", -1);
 		Tcl_SetObjResult(interp, msg);
@@ -2841,7 +2835,7 @@ Tcl_GetBignumFromObj(
 /*
  *----------------------------------------------------------------------
  *
- * Tcl_GetBignumAndClearObj --
+ * Tcl_TakeBignumFromObj --
  *
  *	This function retrieves a 'bignum' value from a Tcl object, converting
  *	the object if necessary.
@@ -2865,7 +2859,7 @@ Tcl_GetBignumFromObj(
  */
 
 int
-Tcl_GetBignumAndClearObj(
+Tcl_TakeBignumFromObj(
     Tcl_Interp *interp,		/* Tcl interpreter for error reporting */
     Tcl_Obj *objPtr,		/* Object to read */
     mp_int *bignumValue)	/* Returned bignum value. */
@@ -3081,7 +3075,7 @@ Tcl_DbIncrRefCount(
 	hPtr = Tcl_FindHashEntry(tablePtr, (char *) objPtr);
 	if (!hPtr) {
 	    Tcl_Panic("%s%s",
-		    "Trying to incr ref count of ",
+		    "Trying to incr ref count of "
 		    "Tcl_Obj allocated in another thread");
 	}
     }
@@ -3146,7 +3140,7 @@ Tcl_DbDecrRefCount(
 	hPtr = Tcl_FindHashEntry(tablePtr, (char *) objPtr);
 	if (!hPtr) {
 	    Tcl_Panic("%s%s",
-		    "Trying to decr ref count of ",
+		    "Trying to decr ref count of "
 		    "Tcl_Obj allocated in another thread");
 	}
 
@@ -3216,7 +3210,7 @@ Tcl_DbIsShared(
 	hPtr = Tcl_FindHashEntry(tablePtr, (char *) objPtr);
 	if (!hPtr) {
 	    Tcl_Panic("%s%s",
-		    "Trying to check shared status of",
+		    "Trying to check shared status of"
 		    "Tcl_Obj allocated in another thread");
 	}
     }
@@ -3485,7 +3479,7 @@ Tcl_GetCommandFromObj(
     savedFramePtr = iPtr->varFramePtr;
     name = Tcl_GetString(objPtr);
     if ((*name++ == ':') && (*name == ':')) {
-	iPtr->varFramePtr = NULL;
+	iPtr->varFramePtr = iPtr->rootFramePtr;
     }
 
     /*
@@ -3507,11 +3501,7 @@ Tcl_GetCommandFromObj(
      * Get the current namespace.
      */
 
-    if (iPtr->varFramePtr != NULL) {
-	currNsPtr = iPtr->varFramePtr->nsPtr;
-    } else {
-	currNsPtr = iPtr->globalNsPtr;
-    }
+    currNsPtr = iPtr->varFramePtr->nsPtr;
 
     /*
      * Check the context namespace and the namespace epoch of the resolved
@@ -3599,18 +3589,14 @@ TclSetCmdNameObj(
     savedFramePtr = iPtr->varFramePtr;
     name = Tcl_GetString(objPtr);
     if ((*name++ == ':') && (*name == ':')) {
-	iPtr->varFramePtr = NULL;
+	iPtr->varFramePtr = iPtr->rootFramePtr;
     }
 
     /*
      * Get the current namespace.
      */
 
-    if (iPtr->varFramePtr != NULL) {
-	currNsPtr = iPtr->varFramePtr->nsPtr;
-    } else {
-	currNsPtr = iPtr->globalNsPtr;
-    }
+    currNsPtr = iPtr->varFramePtr->nsPtr;
 
     cmdPtr->refCount++;
     resPtr = (ResolvedCmdName *) ckalloc(sizeof(ResolvedCmdName));
@@ -3772,11 +3758,7 @@ SetCmdNameFromAny(
 	 * Get the current namespace.
 	 */
 
-	if (iPtr->varFramePtr != NULL) {
-	    currNsPtr = iPtr->varFramePtr->nsPtr;
-	} else {
-	    currNsPtr = iPtr->globalNsPtr;
-	}
+	currNsPtr = iPtr->varFramePtr->nsPtr;
 
 	cmdPtr->refCount++;
 	resPtr = (ResolvedCmdName *) ckalloc(sizeof(ResolvedCmdName));

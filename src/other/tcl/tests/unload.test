@@ -20,9 +20,11 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 
 # Figure out what extension is used for shared libraries on this
 # platform.
+if {![info exists ext]} {
+    set ext [info sharedlibextension]
+}
 
 # Tests require the existence of one of the DLLs in the dltest directory.
-set ext [info sharedlibextension]
 set testDir [file join [file dirname [info nameofexecutable]] dltest]
 set x [file join $testDir pkgua$ext]
 set dll "[file tail $x]Required"
@@ -214,5 +216,6 @@ test unload-4.6 {basic unloading of unloadable package from a safe interpreter, 
 # cleanup
 interp delete child
 interp delete child-trusted
+unset ext
 ::tcltest::cleanupTests
 return

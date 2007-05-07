@@ -1,16 +1,16 @@
-'\"
-'\" Copyright (c) 1993 The Regents of the University of California.
-'\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
-'\"
-'\" See the file "license.terms" for information on usage and redistribution
-'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
-'\" RCS: @(#) $Id$
-'\" 
+.\"
+.\" Copyright (c) 1993 The Regents of the University of California.
+.\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
+.\"
+.\" See the file "license.terms" for information on usage and redistribution
+.\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+.\" 
+.\" RCS: @(#) $Id$
+.\" 
 .so man.macros
 .TH string n 8.1 Tcl "Tcl Built-In Commands"
 .BS
-'\" Note:  do not modify the .SH NAME line immediately below!
+.\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
 string \- Manipulate strings
 .SH SYNOPSIS
@@ -142,6 +142,11 @@ Any Unicode printing character, except space.
 Any of the valid string formats for a 32-bit integer value in Tcl,
 with optional surrounding whitespace.  In case of under/overflow in
 the value, 0 is returned and the \fIvarname\fR will contain \-1.
+.IP \fBlist\fR 12
+Any proper list structure, with optional surrounding whitespace. In
+case of improper list structure, 0 is returned and the \fIvarname\fR
+will contain the index of the "element" where the list parsing fails,
+or \-1 if this cannot be determined.
 .IP \fBlower\fR 12
 Any Unicode lower case alphabet character.
 .IP \fBprint\fR 12
@@ -277,6 +282,12 @@ and if \fIlast\fR is greater than or equal to the length of the string
 then it is treated as if it were \fBend\fR.  If \fIfirst\fR is greater
 than \fIlast\fR or the length of the initial string, or \fIlast\fR is
 less than 0, then the initial string is returned untouched.
+.VS 8.5
+.TP
+\fBstring reverse \fIstring\fR
+Returns a string that is the same length as \fIstring\fR but with its
+characters in the reverse order.
+.VE 8.5
 .TP
 \fBstring tolower \fIstring\fR ?\fIfirst\fR? ?\fIlast\fR?
 Returns a value equal to \fIstring\fR except that all upper (or title)
@@ -345,7 +356,7 @@ set length [\fBstring length\fR $string]
 if {$length == 0} {
    set isPrefix 0
 } else {
-   set isPrefix [\fBstring equal\fR -length $string $string "foobar"]
+   set isPrefix [\fBstring equal\fR -length $length $string "foobar"]
 }
 .CE
 
@@ -353,8 +364,9 @@ if {$length == 0} {
 expr(n), list(n)
 
 .SH KEYWORDS
-case conversion, compare, index, match, pattern, string, word, equal, ctype
+case conversion, compare, index, match, pattern, string, word, equal,
+ctype, character, reverse
 
-'\" Local Variables:
-'\" mode: nroff
-'\" End:
+.\" Local Variables:
+.\" mode: nroff
+.\" End:

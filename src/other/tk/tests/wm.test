@@ -118,15 +118,15 @@ test wm-attributes-1.2.1 {usage} win {
     # This is the wrong error to output - unix has it right, but it's
     # not critical.
     list [catch {wm attributes . _} err] $err
-} {1 {wrong # args: should be "wm attributes window ?-alpha ?double?? ?-disabled ?bool?? ?-fullscreen ?bool?? ?-toolwindow ?bool?? ?-topmost ?bool??"}}
+} {1 {wrong # args: should be "wm attributes window ?-alpha ?double?? ?-transparentcolor ?color?? ?-disabled ?bool?? ?-fullscreen ?bool?? ?-toolwindow ?bool?? ?-topmost ?bool??"}}
 test wm-attributes-1.2.2 {usage} win {
     list [catch {wm attributes . -alpha 1.0 -disabled} err] $err
-} {1 {wrong # args: should be "wm attributes window ?-alpha ?double?? ?-disabled ?bool?? ?-fullscreen ?bool?? ?-toolwindow ?bool?? ?-topmost ?bool??"}}
+} {1 {wrong # args: should be "wm attributes window ?-alpha ?double?? ?-transparentcolor ?color?? ?-disabled ?bool?? ?-fullscreen ?bool?? ?-toolwindow ?bool?? ?-topmost ?bool??"}}
 test wm-attributes-1.2.3 {usage} win {
     # This is the wrong error to output - unix has it right, but it's
     # not critical.
     list [catch {wm attributes . -to} err] $err
-} {1 {wrong # args: should be "wm attributes window ?-alpha ?double?? ?-disabled ?bool?? ?-fullscreen ?bool?? ?-toolwindow ?bool?? ?-topmost ?bool??"}}
+} {1 {wrong # args: should be "wm attributes window ?-alpha ?double?? ?-transparentcolor ?color?? ?-disabled ?bool?? ?-fullscreen ?bool?? ?-toolwindow ?bool?? ?-topmost ?bool??"}}
 test wm-attributes-1.2.4 {usage} {unix notAqua} {
     list [catch {wm attributes . _} err] $err
 } {1 {bad attribute "_": must be -alpha, -topmost, -zoomed, or -fullscreen}}

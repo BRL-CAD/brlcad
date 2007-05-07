@@ -26,7 +26,7 @@ to 0.
 .SH EXAMPLE
 Since non-zero exit codes are usually interpreted as error cases by
 the calling process, the \fBexit\fR command is an important part of
-signalling that something fatal has gone wrong.  This code fragment is
+signaling that something fatal has gone wrong. This code fragment is
 useful in scripts to act as a general problem trap:
 .CS
 proc main {} {

@@ -162,6 +162,7 @@ Tk_3DVerticalBevel(
 	left = right = borderPtr->bgGC->foreground;
 	break;
     case TK_RELIEF_SOLID:
+    default:
 	left = right = RGB(0,0,0);
 	break;
     }
@@ -261,6 +262,7 @@ Tk_3DHorizontalBevel(
 	topColor = bottomColor = borderPtr->bgGC->foreground;
 	break;
     case TK_RELIEF_SOLID:
+    default:
 	topColor = bottomColor = RGB(0,0,0);
     }
 

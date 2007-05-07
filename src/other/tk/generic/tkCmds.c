@@ -31,8 +31,8 @@
 
 static TkWindow *	GetTopHierarchy(Tk_Window tkwin);
 static char *		WaitVariableProc(ClientData clientData,
-			    Tcl_Interp *interp, CONST char *name1,
-			    CONST char *name2, int flags);
+			    Tcl_Interp *interp, const char *name1,
+			    const char *name2, int flags);
 static void		WaitVisibilityProc(ClientData clientData,
 			    XEvent *eventPtr);
 static void		WaitWindowProc(ClientData clientData,
@@ -60,9 +60,9 @@ Tk_BellObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    static CONST char *bellOptions[] = {
+    static const char *bellOptions[] = {
 	"-displayof", "-nice", NULL
     };
     enum options { TK_BELL_DISPLAYOF, TK_BELL_NICE };
@@ -125,7 +125,7 @@ Tk_BindObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     Tk_Window tkwin = (Tk_Window) clientData;
     TkWindow *winPtr;
@@ -193,7 +193,7 @@ Tk_BindObjCmd(
 	    return TCL_ERROR;
 	}
     } else if (objc == 3) {
-	CONST char *command;
+	const char *command;
 
 	command = Tk_GetBinding(interp, winPtr->mainPtr->bindingTable,
 		object, Tcl_GetString(objv[2]));
@@ -311,7 +311,7 @@ Tk_BindtagsObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     Tk_Window tkwin = (Tk_Window) clientData;
     TkWindow *winPtr, *winPtr2;
@@ -454,7 +454,7 @@ Tk_DestroyObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     Tk_Window window;
     Tk_Window tkwin = (Tk_Window) clientData;
@@ -502,7 +502,7 @@ Tk_LowerObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     Tk_Window mainwin = (Tk_Window) clientData;
     Tk_Window tkwin, other;
@@ -556,7 +556,7 @@ Tk_RaiseObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     Tk_Window mainwin = (Tk_Window) clientData;
     Tk_Window tkwin, other;
@@ -609,11 +609,11 @@ Tk_TkObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     int index;
     Tk_Window tkwin;
-    static CONST char *optionStrings[] = {
+    static const char *optionStrings[] = {
 	"appname",	"caret",	"scaling",	"useinputmethods",
 	"windowingsystem",		"inactive",	NULL
     };
@@ -662,7 +662,7 @@ Tk_TkObjCmd(
 	Tcl_Obj *objPtr;
 	TkCaret *caretPtr;
 	Tk_Window window;
-	static CONST char *caretStrings[] = {
+	static const char *caretStrings[] = {
 	    "-x",	"-y", "-height", NULL
 	};
 	enum caretOptions {
@@ -831,7 +831,7 @@ Tk_TkObjCmd(
 	break;
     }
     case TK_WINDOWINGSYSTEM: {
-	CONST char *windowingsystem;
+	const char *windowingsystem;
 
 	if (objc != 2) {
 	    Tcl_WrongNumArgs(interp, 2, objv, NULL);
@@ -912,11 +912,11 @@ Tk_TkwaitObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     Tk_Window tkwin = (Tk_Window) clientData;
     int done, index;
-    static CONST char *optionStrings[] = {
+    static const char *optionStrings[] = {
 	"variable", "visibility", "window", NULL
     };
     enum options {
@@ -1017,8 +1017,8 @@ static char *
 WaitVariableProc(
     ClientData clientData,	/* Pointer to integer to set to 1. */
     Tcl_Interp *interp,		/* Interpreter containing variable. */
-    CONST char *name1,		/* Name of variable. */
-    CONST char *name2,		/* Second part of variable name. */
+    const char *name1,		/* Name of variable. */
+    const char *name2,		/* Second part of variable name. */
     int flags)			/* Information about what happened. */
 {
     int *donePtr = (int *) clientData;
@@ -1078,9 +1078,9 @@ Tk_UpdateObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    static CONST char *updateOptions[] = {"idletasks", NULL};
+    static const char *updateOptions[] = {"idletasks", NULL};
     int flags, index;
     TkDisplay *dispPtr;
 
@@ -1149,7 +1149,7 @@ Tk_WinfoObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     int index, x, y, width, height, useX, useY, class, skip;
     char *string;
@@ -1157,7 +1157,7 @@ Tk_WinfoObjCmd(
     Tk_Window tkwin;
     Tcl_Obj *resultPtr;
 
-    static TkStateMap visualMap[] = {
+    static const TkStateMap visualMap[] = {
 	{PseudoColor,	"pseudocolor"},
 	{GrayScale,	"grayscale"},
 	{DirectColor,	"directcolor"},
@@ -1166,7 +1166,7 @@ Tk_WinfoObjCmd(
 	{StaticGray,	"staticgray"},
 	{-1,		NULL}
     };
-    static CONST char *optionStrings[] = {
+    static const char *optionStrings[] = {
 	"cells",	"children",	"class",	"colormapfull",
 	"depth",	"geometry",	"height",	"id",
 	"ismapped",	"manager",	"name",		"parent",
@@ -1457,7 +1457,7 @@ Tk_WinfoObjCmd(
 	Tcl_SetLongObj(resultPtr, (long) Tk_InternAtom(tkwin, string));
 	break;
     case WIN_ATOMNAME: {
-	CONST char *name;
+	const char *name;
 	long id;
 
 	skip = TkGetDisplayOf(interp, objc - 2, objv + 2, &tkwin);
@@ -1721,12 +1721,12 @@ Tk_WmObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     Tk_Window tkwin;
     TkWindow *winPtr;
 
-    static CONST char *optionStrings[] = {
+    static const char *optionStrings[] = {
 	"aspect",	"client",	"command",	"deiconify",
 	"focusmodel",	"frame",	"geometry",	"grid",
 	"group",	"iconbitmap",	"iconify",	"iconmask",
@@ -1943,7 +1943,7 @@ int
 TkGetDisplayOf(
     Tcl_Interp *interp,		/* Interpreter for error reporting. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[],	/* Argument objects. If it is present,
+    Tcl_Obj *const objv[],	/* Argument objects. If it is present,
 				 * "-displayof" should be in objv[0] and
 				 * objv[1] the name of a window. */
     Tk_Window *tkwinPtr)	/* On input, contains main window of
@@ -2000,7 +2000,7 @@ TkDeadAppCmd(
     ClientData clientData,	/* Dummy. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    CONST char **argv)		/* Argument strings. */
+    const char **argv)		/* Argument strings. */
 {
     Tcl_AppendResult(interp, "can't invoke \"", argv[0],
 	    "\" command:  application has been destroyed", NULL);

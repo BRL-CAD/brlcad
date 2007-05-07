@@ -126,7 +126,7 @@ proc echoPut {c sock} {
 #fileevent stdin readable {exit ;#cut}
 
 # main
-socket -server newconn $port
+socket -server newconn -myaddr 127.0.0.1 $port
 vwait forever
 } __echo_srv__.tcl]
 
@@ -143,7 +143,7 @@ proc fevent {fdelay idelay blocks script data} {
     set port 4000
 
     exec tclsh __echo_srv__.tcl \
-	    $port $fdelay $idelay {expand}$blocks >@stdout &
+	    $port $fdelay $idelay {*}$blocks >@stdout &
 
     after 500
 

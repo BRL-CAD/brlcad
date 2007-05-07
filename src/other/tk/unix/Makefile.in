@@ -299,9 +299,11 @@ RANLIB			= @RANLIB@
 SRC_DIR			= @srcdir@
 TOP_DIR			= $(SRC_DIR)/..
 GENERIC_DIR		= $(TOP_DIR)/generic
+TTK_DIR			= $(GENERIC_DIR)/ttk
 UNIX_DIR		= $(TOP_DIR)/unix
 BMAP_DIR		= $(TOP_DIR)/bitmaps
 TOOL_DIR		= @TCL_SRC_DIR@/tools
+TEST_DIR		= $(TOP_DIR)/tests
 MAC_OSX_DIR		= $(TOP_DIR)/macosx
 XLIB_DIR		= $(TOP_DIR)/xlib
 
@@ -358,6 +360,17 @@ GENERIC_OBJS = tk3d.o tkArgv.o tkAtom.o tkBind.o tkBitmap.o tkClipboard.o \
 	tkGrid.o tkMain.o tkObj.o tkOldConfig.o tkOption.o tkPack.o tkPlace.o \
 	tkSelect.o tkStyle.o tkUndo.o tkUtil.o tkVisual.o tkWindow.o
 
+TTK_OBJS = \
+	ttkBlink.o ttkButton.o ttkCache.o ttkClamTheme.o ttkClassicTheme.o \
+	ttkDefaultTheme.o ttkElements.o ttkEntry.o ttkFrame.o ttkImage.o \
+	ttkInit.o ttkLabel.o ttkLayout.o ttkManager.o ttkNotebook.o \
+	ttkPanedwindow.o ttkProgress.o ttkScale.o ttkScrollbar.o ttkScroll.o \
+	ttkSeparator.o ttkSquare.o ttkState.o \
+	ttkTagSet.o ttkTheme.o ttkTrace.o ttkTrack.o ttkTreeview.o \
+	ttkWidget.o
+
+TTK_STUB_OBJS =  ttkStubInit.o ttkStubLib.o
+
 STUB_OBJS = tkStubInit.o tkStubLib.o
 
 STUB_LIB_OBJS = tkStubLib.o tkStubImg.o
@@ -378,16 +391,21 @@ AQUA_OBJS = tkMacOSXBitmap.o tkMacOSXButton.o tkMacOSXClipboard.o \
 	tkMacOSXSubwindows.o tkMacOSXWindowEvent.o \
 	tkMacOSXWm.o tkMacOSXXStubs.o tkMacOSXCarbonEvents.o \
 	tkFileFilter.o tkMacWinMenu.o tkPointer.o tkUnix3d.o tkUnixScale.o \
-	xcolors.o xdraw.o xgc.o ximage.o xutil.o
+	xcolors.o xdraw.o xgc.o ximage.o xutil.o \
+	ttkMacOSXTheme.o
 
 AQUA_TKTEST_OBJS = tkMacOSXTest.o
 
 OBJS =  $(GENERIC_OBJS) $(WIDG_OBJS) $(CANV_OBJS) $(IMAGE_OBJS) $(TEXT_OBJS) \
-	$(STUB_OBJS) $(@TK_WINDOWINGSYSTEM@_OBJS) @PLAT_OBJS@
+	$(STUB_OBJS) $(TTK_OBJS) $(TTK_STUB_OBJS) \
+	$(@TK_WINDOWINGSYSTEM@_OBJS) @PLAT_OBJS@
 
 TK_DECLS = \
 	$(GENERIC_DIR)/tk.decls \
 	$(GENERIC_DIR)/tkInt.decls
+
+TTK_DECLS = \
+	$(TTK_DIR)/ttk.decls
 
 GENERIC_SRCS = \
 	$(GENERIC_DIR)/tk3d.c $(GENERIC_DIR)/tkArgv.c \
@@ -429,6 +447,40 @@ GENERIC_SRCS = \
 	$(GENERIC_DIR)/tkSquare.c $(GENERIC_DIR)/tkTest.c \
 	$(GENERIC_DIR)/tkStubInit.c $(GENERIC_DIR)/tkStubLib.c
 
+TTK_SRCS = \
+	$(TTK_DIR)/ttkBlink.c \
+	$(TTK_DIR)/ttkButton.c \
+	$(TTK_DIR)/ttkCache.c \
+	$(TTK_DIR)/ttkClamTheme.c \
+	$(TTK_DIR)/ttkClassicTheme.c \
+	$(TTK_DIR)/ttkDefaultTheme.c \
+	$(TTK_DIR)/ttkElements.c \
+	$(TTK_DIR)/ttkEntry.c \
+	$(TTK_DIR)/ttkFrame.c \
+	$(TTK_DIR)/ttkImage.c \
+	$(TTK_DIR)/ttkInit.c \
+	$(TTK_DIR)/ttkLabel.c \
+	$(TTK_DIR)/ttkLayout.c \
+	$(TTK_DIR)/ttkManager.c \
+	$(TTK_DIR)/ttkNotebook.c \
+	$(TTK_DIR)/ttkPanedwindow.c \
+	$(TTK_DIR)/ttkProgress.c \
+	$(TTK_DIR)/ttkScale.c \
+	$(TTK_DIR)/ttkScrollbar.c \
+	$(TTK_DIR)/ttkScroll.c \
+	$(TTK_DIR)/ttkSeparator.c \
+	$(TTK_DIR)/ttkSquare.c \
+	$(TTK_DIR)/ttkState.c \
+	$(TTK_DIR)/ttkTagSet.c \
+	$(TTK_DIR)/ttkTheme.c \
+	$(TTK_DIR)/ttkTrace.c \
+	$(TTK_DIR)/ttkTrack.c \
+	$(TTK_DIR)/ttkTreeview.c \
+	$(TTK_DIR)/ttkWidget.c
+
+TTK_STUB_SRCS = \
+	$(TTK_DIR)/ttkStubInit.c $(TTK_DIR)/ttkStubLib.c
+
 X11_SRCS = \
 	$(UNIX_DIR)/tkAppInit.c $(UNIX_DIR)/tkUnix.c \
 	$(UNIX_DIR)/tkUnix3d.c \
@@ -467,13 +519,14 @@ AQUA_SRCS = \
 	$(GENERIC_DIR)/tkFileFilter.c $(GENERIC_DIR)/tkMacWinMenu.c \
 	$(GENERIC_DIR)/tkPointer.c $(UNIX_DIR)/tkUnix3d.c \
 	$(UNIX_DIR)/tkUnixScale.c $(XLIB_DIR)/xcolors.c $(XLIB_DIR)/xdraw.c \
-	$(XLIB_DIR)/xgc.c $(XLIB_DIR)/ximage.c $(XLIB_DIR)/xutil.c
+	$(XLIB_DIR)/xgc.c $(XLIB_DIR)/ximage.c $(XLIB_DIR)/xutil.c \
+	$(TTK_DIR)/ttkMacOSXTheme.c
 
 SRCS = $(GENERIC_SRCS) $(@TK_WINDOWINGSYSTEM@_SRCS) @PLAT_SRCS@
 
 AQUA_RESOURCES = \
 	$(MAC_OSX_DIR)/tkAboutDlg.r $(MAC_OSX_DIR)/tkMacOSXCursors.r \
-	$(MAC_OSX_DIR)/tkMacOSXMenu.r $(MAC_OSX_DIR)/tkMacOSXXCursors.r
+	$(MAC_OSX_DIR)/tkMacOSXXCursors.r
 
 AQUA_WISH_RESOURCES = $(MAC_OSX_DIR)/tkMacOSXAETE.r
 
@@ -490,6 +543,12 @@ HDRS = bltList.h \
 	tkPort.h tkScrollbar.h tkText.h
 
 DEMOPROGS = browse hello ixset rmt rolodex square tcolor timer widget
+
+SHELL_ENV = \
+	@LD_LIBRARY_PATH_VAR@=`pwd`:${TCL_BIN_DIR}:$${@LD_LIBRARY_PATH_VAR@}; \
+	export @LD_LIBRARY_PATH_VAR@; \
+	TCL_LIBRARY=@TCL_SRC_DIR@/library; export TCL_LIBRARY; \
+	TK_LIBRARY=@TK_SRC_DIR@/library; export TK_LIBRARY;
 
 all: binaries libraries doc
 
@@ -567,43 +626,37 @@ xttest: test.o tkTest.o tkSquare.o $(TK_LIB_FILE)
 # args to tcltest, ie:
 #	% make test TESTFLAGS="-verbose bps -file fileName.test"
 
-test: tktest
-	@LD_LIBRARY_PATH_VAR@=`pwd`:${TCL_BIN_DIR}:$${@LD_LIBRARY_PATH_VAR@}; \
-	export @LD_LIBRARY_PATH_VAR@; \
-	TCL_LIBRARY=@TCL_SRC_DIR@/library; export TCL_LIBRARY; \
-	TK_LIBRARY=@TK_SRC_DIR@/library; export TK_LIBRARY; \
-	./tktest $(TOP_DIR)/tests/all.tcl -geometry +0+0 \
+test: test-classic test-ttk
+	@
+
+test-classic: tktest
+	$(SHELL_ENV) ./tktest $(TEST_DIR)/all.tcl -geometry +0+0 $(TESTFLAGS)
+
+test-ttk: tktest
+	$(SHELL_ENV) ./tktest $(TEST_DIR)/ttk/all.tcl -geometry +0+0 \
 	$(TESTFLAGS)
 
 # Tests with different languages
 testlang: tktest
-	@LD_LIBRARY_PATH_VAR@=`pwd`:${TCL_BIN_DIR}:$${@LD_LIBRARY_PATH_VAR@}; \
-	export @LD_LIBRARY_PATH_VAR@; \
-	TCL_LIBRARY=@TCL_SRC_DIR@/library; export TCL_LIBRARY; \
-	TK_LIBRARY=@TK_SRC_DIR@/library; export TK_LIBRARY; \
+	$(SHELL_ENV) \
 	for lang in $(LOCALES) ;  \
 	do \
 	LANG=$(lang); export LANG; \
-	./tktest $(TOP_DIR)/tests/all.tcl -geometry +0+0 \
+	./tktest $(TEST_DIR)/all.tcl -geometry +0+0 \
 	$(TESTFLAGS); \
 	done
 
 # Useful target to launch a built tktest with the proper path,...
 runtest: tktest
-	@LD_LIBRARY_PATH_VAR@=`pwd`:${TCL_BIN_DIR}:$${@LD_LIBRARY_PATH_VAR@}; \
-	export @LD_LIBRARY_PATH_VAR@; \
-	TCL_LIBRARY=@TCL_SRC_DIR@/library; export TCL_LIBRARY; \
-	TK_LIBRARY=@TK_SRC_DIR@/library; export TK_LIBRARY; \
-	./tktest
+	$(SHELL_ENV) ./tktest
 
 # This target can be used to run wish from the build directory
 # via `make shell` or `make shell SCRIPT=/tmp/foo.tcl`
 shell: wish
-	@LD_LIBRARY_PATH_VAR@=`pwd`:${TCL_BIN_DIR}:$${@LD_LIBRARY_PATH_VAR@}; \
-	export @LD_LIBRARY_PATH_VAR@; \
-	TCL_LIBRARY=@TCL_SRC_DIR@/library; export TCL_LIBRARY; \
-	TK_LIBRARY=@TK_SRC_DIR@/library; export TK_LIBRARY; \
-	./wish $(SCRIPT)
+	$(SHELL_ENV) ./wish $(SCRIPT)
+
+demo:
+	$(SHELL_ENV) ./wish $(TOP_DIR)/library/demos/widget
 
 # This target can be used to run wish inside either gdb or insight
 gdb: wish
@@ -674,7 +727,7 @@ install-libraries: libraries
 	    XLIB_INCLUDE_INSTALL_DIR=$(INCLUDE_INSTALL_DIR)/X11; fi; \
 	for i in $(INCLUDE_INSTALL_DIR) $${XLIB_INCLUDE_INSTALL_DIR} \
 		$(SCRIPT_INSTALL_DIR) $(SCRIPT_INSTALL_DIR)/images \
-		$(SCRIPT_INSTALL_DIR)/msgs; \
+		$(SCRIPT_INSTALL_DIR)/msgs $(SCRIPT_INSTALL_DIR)/ttk; \
 	    do \
 	    if [ ! -d $$i ] ; then \
 		echo "Making directory $$i"; \
@@ -701,6 +754,13 @@ install-libraries: libraries
 	        $(TOP_DIR)/library/tclIndex $(UNIX_DIR)/tkAppInit.c; \
 	    do \
 	    $(INSTALL_DATA) $$i $(SCRIPT_INSTALL_DIR); \
+	    done;
+	@echo "Installing library ttk directory";
+	@for i in $(TOP_DIR)/library/ttk/*.tcl; \
+	    do \
+	    if [ -f $$i ] ; then \
+		$(INSTALL_DATA) $$i $(SCRIPT_INSTALL_DIR)/ttk; \
+	    fi; \
 	    done;
 	@echo "Installing library images directory";
 	@for i in $(TOP_DIR)/library/images/*; \
@@ -774,6 +834,7 @@ install-doc:
 
 	@echo "Installing and cross-linking command (.n) docs";
 	@for i in $(TOP_DIR)/doc/*.n; do \
+	    if [ "ttk_dialog.n" = `basename $$i` ] ; then continue ; fi ; \
 	    $(UNIX_DIR)/installManPage $(MAN_FLAGS) $$i $(MANN_INSTALL_DIR); \
 	done
 
@@ -1252,6 +1313,102 @@ ximage.o: $(XLIB_DIR)/ximage.c
 xutil.o: $(XLIB_DIR)/xutil.c
 	$(CC) -c $(CC_SWITCHES) $(XLIB_DIR)/xutil.c
 
+ttkBlink.o: $(TTK_DIR)/ttkBlink.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkBlink.c
+
+ttkButton.o: $(TTK_DIR)/ttkButton.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkButton.c
+
+ttkCache.o: $(TTK_DIR)/ttkCache.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkCache.c
+
+ttkClamTheme.o: $(TTK_DIR)/ttkClamTheme.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkClamTheme.c
+
+ttkClassicTheme.o: $(TTK_DIR)/ttkClassicTheme.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkClassicTheme.c
+
+ttkDefaultTheme.o: $(TTK_DIR)/ttkDefaultTheme.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkDefaultTheme.c
+
+ttkElements.o: $(TTK_DIR)/ttkElements.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkElements.c
+
+ttkEntry.o: $(TTK_DIR)/ttkEntry.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkEntry.c
+
+ttkFrame.o: $(TTK_DIR)/ttkFrame.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkFrame.c
+
+ttkImage.o: $(TTK_DIR)/ttkImage.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkImage.c
+
+ttkInit.o: $(TTK_DIR)/ttkInit.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkInit.c
+
+ttkLabel.o: $(TTK_DIR)/ttkLabel.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkLabel.c
+
+ttkLayout.o: $(TTK_DIR)/ttkLayout.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkLayout.c
+
+ttkManager.o: $(TTK_DIR)/ttkManager.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkManager.c
+
+ttkNotebook.o: $(TTK_DIR)/ttkNotebook.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkNotebook.c
+
+ttkPanedwindow.o: $(TTK_DIR)/ttkPanedwindow.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkPanedwindow.c
+
+ttkProgress.o: $(TTK_DIR)/ttkProgress.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkProgress.c
+
+ttkScale.o: $(TTK_DIR)/ttkScale.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkScale.c
+
+ttkScroll.o: $(TTK_DIR)/ttkScroll.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkScroll.c
+
+ttkScrollbar.o: $(TTK_DIR)/ttkScrollbar.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkScrollbar.c
+
+ttkSeparator.o: $(TTK_DIR)/ttkSeparator.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkSeparator.c
+
+ttkSquare.o: $(TTK_DIR)/ttkSquare.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkSquare.c
+
+ttkState.o: $(TTK_DIR)/ttkState.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkState.c
+
+ttkStubInit.o: $(TTK_DIR)/ttkStubInit.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkStubInit.c
+
+ttkStubLib.o: $(TTK_DIR)/ttkStubLib.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkStubLib.c
+
+ttkTagSet.o: $(TTK_DIR)/ttkTagSet.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkTagSet.c
+
+ttkTheme.o: $(TTK_DIR)/ttkTheme.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkTheme.c
+
+ttkTrace.o: $(TTK_DIR)/ttkTrace.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkTrace.c
+
+ttkTrack.o: $(TTK_DIR)/ttkTrack.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkTrack.c
+
+ttkTreeview.o: $(TTK_DIR)/ttkTreeview.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkTreeview.c
+
+ttkWidget.o: $(TTK_DIR)/ttkWidget.c
+	$(CC) -c $(CC_SWITCHES) $(TTK_DIR)/ttkWidget.c
+
+ttkMacOSXTheme.o: $(MAC_OSX_DIR)/ttkMacOSXTheme.c
+	$(CC) -c $(CC_SWITCHES) $(MAC_OSX_DIR)/ttkMacOSXTheme.c
+
 .c.o:
 	$(CC) -c $(CC_SWITCHES) $<
 
@@ -1265,9 +1422,15 @@ $(GENERIC_DIR)/tkStubInit.c: $(GENERIC_DIR)/tk.decls \
 	@echo "Developers may want to run \"make genstubs\" to regenerate."
 	@echo "This warning can be safely ignored, do not report as a bug!"
 
+$(TTK_DIR)/ttkStubInit.c: $(TTK_DIR)/ttk.decls
+	@echo "Warning: ttkStubInit.c may be out of date."
+	@echo "Developers may want to run \"make genstubs\" to regenerate."
+	@echo "This warning can be safely ignored, do not report as a bug!"
+
 genstubs:
 	$(TCL_EXE) $(TOOL_DIR)/genStubs.tcl $(GENERIC_DIR) \
 		$(GENERIC_DIR)/tk.decls $(GENERIC_DIR)/tkInt.decls
+	$(TCL_EXE) $(TTK_DIR)/ttkGenStubs.tcl $(TTK_DIR) $(TTK_DIR)/ttk.decls
 
 #
 # Target to check that all exported functions have an entry in the stubs
@@ -1279,7 +1442,7 @@ checkstubs: $(TK_LIB_FILE)
 		| awk '$$2 ~ /^[TDBCS]$$/ { sub("^_", "", $$3); print $$3 }' \
 		| sort -n`; do \
 		match=0; \
-		for j in $(TK_DECLS); do \
+		for j in $(TK_DECLS) $(TTK_DECLS); do \
 		    if [ `grep -c "$$i *(" $$j` -gt 0 ]; then \
 			match=1; \
 		    fi; \
@@ -1295,14 +1458,14 @@ checkuchar:
 	-egrep isalnum\|isalpha\|iscntrl\|isdigit\|islower\|isprint\|ispunct\|isspace\|isupper\|isxdigit\|toupper\|tolower $(SRCS) | grep -v UCHAR
 
 #
-# Target to make sure that only symbols with "Tk" prefixes are
-# exported.
+# Target to make sure that only symbols with "Tk", "tk", "Ttk", "ttk" or "X"
+# prefixes are exported.
 #
 
 checkexports: $(TK_LIB_FILE)
 	-@nm -p $(TK_LIB_FILE) \
 	| awk '$$2 ~ /^[TDBCS]$$/ { sub("^_", "", $$3); print $$3 }' \
-	| sort -n | grep -E -v '^([Tt]k|_?X)' || true
+	| sort -n | grep -E -v '^([Tt]t?k|_?X)' || true
 
 #
 # Target to create a Tk RPM for Linux.  Requires that you be on a Linux
@@ -1330,12 +1493,14 @@ DISTNAME = tk${VERSION}${PATCH_LEVEL}
 ZIPNAME	 = tk${MAJOR_VERSION}${MINOR_VERSION}${PATCH_LEVEL}-src.zip
 DISTDIR	 = $(DISTROOT)/$(DISTNAME)
 TCLDIR   = @TCL_SRC_DIR@
-$(UNIX_DIR)/configure: $(UNIX_DIR)/configure.in $(UNIX_DIR)/tcl.m4
+$(UNIX_DIR)/configure: $(UNIX_DIR)/configure.in $(UNIX_DIR)/tcl.m4 \
+		$(UNIX_DIR)/aclocal.m4
 	cd $(UNIX_DIR); autoconf
-$(UNIX_DIR)/tkConfig.h.in: $(UNIX_DIR)/configure.in $(UNIX_DIR)/tcl.m4
-	cd $(UNIX_DIR); autoheader
+$(UNIX_DIR)/tkConfig.h.in: $(UNIX_DIR)/configure.in $(UNIX_DIR)/tcl.m4 \
+		$(UNIX_DIR)/aclocal.m4 $(MAC_OSX_DIR)/configure.ac
+	cd $(MAC_OSX_DIR); autoconf; autoheader; touch $@
 
-dist:   $(UNIX_DIR)/configure
+dist:   $(UNIX_DIR)/configure $(UNIX_DIR)/tkConfig.h.in
 	rm -rf $(DISTDIR)
 	mkdir -p $(DISTDIR)/unix
 	cp -p $(UNIX_DIR)/*.c $(UNIX_DIR)/*.h $(DISTDIR)/unix
@@ -1344,7 +1509,8 @@ dist:   $(UNIX_DIR)/configure
 	cp $(UNIX_DIR)/configure $(UNIX_DIR)/configure.in $(UNIX_DIR)/tk.spec \
 		$(UNIX_DIR)/aclocal.m4 $(UNIX_DIR)/tcl.m4 \
 		$(UNIX_DIR)/tkConfig.sh.in $(TCLDIR)/unix/install-sh \
-		$(UNIX_DIR)/README $(UNIX_DIR)/installManPage $(DISTDIR)/unix
+		$(UNIX_DIR)/README $(UNIX_DIR)/installManPage \
+		$(UNIX_DIR)/tkConfig.h.in $(DISTDIR)/unix
 	chmod 775 $(DISTDIR)/unix/configure $(DISTDIR)/unix/configure.in
 	chmod +x $(DISTDIR)/unix/install-sh
 	mkdir $(DISTDIR)/bitmaps
@@ -1355,14 +1521,16 @@ dist:   $(UNIX_DIR)/configure
 	    fi; \
 	done;)
 	mkdir $(DISTDIR)/generic
-	cp -p $(GENERIC_DIR)/*.c $(GENERIC_DIR)/*.h $(GENERIC_DIR)/prolog.ps \
-		$(DISTDIR)/generic
+	cp -p $(GENERIC_DIR)/*.[ch] $(GENERIC_DIR)/prolog.ps $(DISTDIR)/generic
 	cp -p $(GENERIC_DIR)/*.decls $(DISTDIR)/generic
 	cp -p $(GENERIC_DIR)/README $(DISTDIR)/generic
 	cp -p $(TOP_DIR)/changes $(TOP_DIR)/ChangeLog \
 		$(TOP_DIR)/ChangeLog.2??? $(TOP_DIR)/README \
 		$(TOP_DIR)/license.terms $(DISTDIR)
 	rm -f $(DISTDIR)/generic/blt*.[ch]
+	mkdir $(DISTDIR)/generic/ttk
+	cp -p $(TTK_DIR)/*.[ch] $(TTK_DIR)/ttk.decls \
+		$(TTK_DIR)/ttkGenStubs.tcl $(DISTDIR)/generic/ttk
 	mkdir $(DISTDIR)/win
 	cp $(TOP_DIR)/win/Makefile.in $(DISTDIR)/win
 	cp $(TOP_DIR)/win/configure.in \
@@ -1370,8 +1538,7 @@ dist:   $(UNIX_DIR)/configure
 		$(TOP_DIR)/win/tkConfig.sh.in \
 		$(TOP_DIR)/win/aclocal.m4 $(TOP_DIR)/win/tcl.m4 \
 		$(DISTDIR)/win
-	cp -p $(TOP_DIR)/win/*.c $(TOP_DIR)/win/*.h $(DISTDIR)/win
-	cp -p $(TOP_DIR)/win/*.bat $(DISTDIR)/win
+	cp -p $(TOP_DIR)/win/*.[ch] $(TOP_DIR)/win/*.bat $(DISTDIR)/win
 	$(TCL_EXE) $(TOOL_DIR)/eolFix.tcl -crlf $(DISTDIR)/win/*.bat
 	cp -p $(TOP_DIR)/win/makefile.* $(DISTDIR)/win
 	$(TCL_EXE) $(TOOL_DIR)/eolFix.tcl -crlf $(DISTDIR)/win/makefile.*
@@ -1381,37 +1548,39 @@ dist:   $(UNIX_DIR)/configure
 	cp -p $(TOP_DIR)/license.terms $(DISTDIR)/win
 	mkdir $(DISTDIR)/win/rc
 	cp -p $(TOP_DIR)/win/wish.exe.manifest.in $(DISTDIR)/win/
-	cp -p $(TOP_DIR)/win/rc/*.rc $(TOP_DIR)/win/rc/*.cur \
-		$(TOP_DIR)/win/rc/*.ico $(TOP_DIR)/win/rc/*.bmp \
-		$(DISTDIR)/win/rc
+	cp -p $(TOP_DIR)/win/rc/*.{rc,cur,ico,bmp} $(DISTDIR)/win/rc
 	$(TCL_EXE) $(TOOL_DIR)/eolFix.tcl -crlf $(DISTDIR)/win/rc/*.rc
 	$(TCL_EXE) $(TOOL_DIR)/eolFix.tcl -crlf $(DISTDIR)/win/wish.exe.manifest.in
 	mkdir $(DISTDIR)/macosx
-	cp -p $(TOP_DIR)/macosx/GNUmakefile $(TOP_DIR)/macosx/README \
-		$(TOP_DIR)/macosx/Wish.icns $(TOP_DIR)/macosx/*.c \
-		$(TOP_DIR)/macosx/*.h $(TOP_DIR)/macosx/*.in \
-		$(TOP_DIR)/macosx/*.r $(TOP_DIR)/macosx/*.ac $(DISTDIR)/macosx
+	cp -p $(MAC_OSX_DIR)/GNUmakefile $(MAC_OSX_DIR)/README \
+		$(MAC_OSX_DIR)/Wish.icns $(MAC_OSX_DIR)/*.[chr] \
+		$(MAC_OSX_DIR)/*.in $(MAC_OSX_DIR)/*.ac \
+		$(MAC_OSX_DIR)/*.xcconfig $(MAC_OSX_DIR)/configure \
+		$(DISTDIR)/macosx
+	cp -p $(TOP_DIR)/license.terms $(DISTDIR)/macosx
 	mkdir $(DISTDIR)/macosx/Wish.pbproj
-	cp -p $(TOP_DIR)/macosx/Wish.pbproj/*.pbx* $(DISTDIR)/macosx/Wish.pbproj
+	cp -p $(MAC_OSX_DIR)/Wish.pbproj/*.pbx* $(DISTDIR)/macosx/Wish.pbproj
 	mkdir $(DISTDIR)/macosx/Wish.xcode
-	cp -p $(TOP_DIR)/macosx/Wish.xcode/*.pbx* $(DISTDIR)/macosx/Wish.xcode
+	cp -p $(MAC_OSX_DIR)/Wish.xcode/*.pbx* $(DISTDIR)/macosx/Wish.xcode
 	mkdir $(DISTDIR)/macosx/Wish.xcodeproj
-	cp -p $(TOP_DIR)/macosx/Wish.xcodeproj/*.pbx* \
+	cp -p $(MAC_OSX_DIR)/Wish.xcodeproj/*.pbx* \
 		$(DISTDIR)/macosx/Wish.xcodeproj
 	mkdir $(DISTDIR)/compat
 	cp -p $(TOP_DIR)/license.terms $(TCLDIR)/compat/unistd.h \
 		$(TCLDIR)/compat/stdlib.h $(TCLDIR)/compat/limits.h \
 		$(DISTDIR)/compat
 	mkdir $(DISTDIR)/xlib
-	cp -p $(TOP_DIR)/xlib/*.h $(TOP_DIR)/xlib/*.c $(DISTDIR)/xlib
+	cp -p $(XLIB_DIR)/*.[ch] $(DISTDIR)/xlib
 	cp -p $(TOP_DIR)/license.terms $(DISTDIR)/xlib
 	mkdir $(DISTDIR)/xlib/X11
-	cp -p $(TOP_DIR)/xlib/X11/*.h $(DISTDIR)/xlib/X11
+	cp -p $(XLIB_DIR)/X11/*.h $(DISTDIR)/xlib/X11
 	cp -p $(TOP_DIR)/license.terms $(DISTDIR)/xlib/X11
 	mkdir $(DISTDIR)/library
 	cp -p $(TOP_DIR)/license.terms $(TOP_DIR)/library/*.tcl \
 		$(TOP_DIR)/library/tclIndex \
 		$(DISTDIR)/library
+	mkdir $(DISTDIR)/library/ttk
+	cp -p $(TOP_DIR)/library/ttk/*.tcl $(DISTDIR)/library/ttk
 	mkdir $(DISTDIR)/library/images
 	@(cd $(TOP_DIR); for i in library/images/* ; do \
 	    if [ -f $$i ] ; then \
@@ -1447,11 +1616,11 @@ dist:   $(UNIX_DIR)/configure
 	cp -p $(TOP_DIR)/license.terms $(TOP_DIR)/doc/*.[13n] \
 		$(TCLDIR)/doc/man.macros $(DISTDIR)/doc
 	mkdir $(DISTDIR)/tests
-	cp -p $(TOP_DIR)/license.terms $(TOP_DIR)/tests/*.test \
-		$(TOP_DIR)/tests/*.tcl $(TOP_DIR)/tests/README \
-		$(TOP_DIR)/tests/*.gif $(TOP_DIR)/tests/*.ppm \
-		$(TOP_DIR)/tests/*.xbm \
-		$(TOP_DIR)/tests/option.file* $(DISTDIR)/tests
+	cp -p $(TOP_DIR)/license.terms $(TEST_DIR)/*.{test,tcl} \
+		$(TEST_DIR)/README $(TEST_DIR)/*.{gif,ppm,xbm} \
+		$(TEST_DIR)/option.file* $(DISTDIR)/tests
+	mkdir $(DISTDIR)/tests/ttk
+	cp -p $(TEST_DIR)/ttk/*.{test,tcl} $(DISTDIR)/tests/ttk
 
 #
 # The following target can only be used for non-patch releases.  Use
@@ -1500,9 +1669,7 @@ html-tk:
 
 BUILD_HTML = \
 	@if test -f "$(BUILD_TCLSH)"; then \
-	@LD_LIBRARY_PATH_VAR@=$(TCL_BIN_DIR):$${@LD_LIBRARY_PATH_VAR@}; export @LD_LIBRARY_PATH_VAR@; \
-	TCL_LIBRARY=@TCL_SRC_DIR@/library; export TCL_LIBRARY; \
-	TCLSH="$(BUILD_TCLSH)"; else \
+	$(SHELL_ENV) TCLSH="$(BUILD_TCLSH)"; else \
 	TCLSH="$(TCL_EXE)"; fi ;\
 	$${TCLSH} $(TOOL_DIR)/tcltk-man2html.tcl --htmldir=$(HTML_INSTALL_DIR) \
 		--srcdir=$(TOP_DIR)/.. $(BUILD_HTML_FLAGS)

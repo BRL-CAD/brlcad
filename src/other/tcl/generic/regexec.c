@@ -170,8 +170,7 @@ exec(
     regmatch_t pmatch[],
     int flags)
 {
-    struct vars var;
-    register struct vars *v = &var;
+    AllocVars(v);
     int st;
     size_t n;
     int backref;
@@ -185,9 +184,11 @@ exec(
      */
 
     if (re == NULL || string == NULL || re->re_magic != REMAGIC) {
+	FreeVars(v);
 	return REG_INVARG;
     }
     if (re->re_csize != sizeof(chr)) {
+	FreeVars(v);
 	return REG_MIXED;
     }
 
@@ -198,9 +199,11 @@ exec(
     v->re = re;
     v->g = (struct guts *)re->re_guts;
     if ((v->g->cflags&REG_EXPECT) && details == NULL) {
+	FreeVars(v);
 	return REG_INVARG;
     }
     if (v->g->info&REG_UIMPOSSIBLE) {
+	FreeVars(v);
 	return REG_NOMATCH;
     }
     backref = (v->g->info&REG_UBACKREF) ? 1 : 0;
@@ -221,6 +224,7 @@ exec(
 		    MALLOC((v->g->nsub + 1) * sizeof(regmatch_t));
 	}
 	if (v->pmatch == NULL) {
+	    FreeVars(v);
 	    return REG_ESPACE;
 	}
 	v->nmatch = v->g->nsub + 1;
@@ -247,6 +251,7 @@ exec(
 	    if (v->pmatch != pmatch && v->pmatch != mat) {
 		FREE(v->pmatch);
 	    }
+	    FreeVars(v);
 	    return REG_ESPACE;
 	}
     } else {
@@ -284,6 +289,7 @@ exec(
     if (v->mem != NULL && v->mem != mem) {
 	FREE(v->mem);
     }
+    FreeVars(v);
     return st;
 }
 

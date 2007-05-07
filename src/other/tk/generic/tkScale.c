@@ -42,7 +42,7 @@ static char *stateStrings[] = {
     "active", "disabled", "normal", NULL
 };
 
-static Tk_OptionSpec optionSpecs[] = {
+static const Tk_OptionSpec optionSpecs[] = {
     {TK_OPTION_BORDER, "-activebackground", "activeBackground", "Foreground",
 	DEF_SCALE_ACTIVE_BG_COLOR, -1, Tk_Offset(TkScale, activeBorder),
 	0, (ClientData) DEF_SCALE_ACTIVE_BG_MONO, 0},

@@ -28,8 +28,8 @@
  * the same as NULL. Note that this code is duplicated from tclUnixPipe.c
  */
 
-#define MakeFile(fd) ((TclFile)((fd)+1))
-#define GetFd(file) (((int)file)-1)
+#define MakeFile(fd)	((TclFile)INT2PTR(((int)(fd))+1))
+#define GetFd(file)	(PTR2INT(file)-1)
 
 /*
  * The stuff below is used to keep track of file handlers created and
@@ -275,7 +275,7 @@ TestfilehandlerCmd(
 	    return TCL_ERROR;
 	}
 
-	memset((VOID *) buffer, 'a', 4000);
+	memset(buffer, 'a', 4000);
         while (write(GetFd(pipePtr->writeFile), buffer, 4000) > 0) {
             /* Empty loop body. */
         }
@@ -288,7 +288,7 @@ TestfilehandlerCmd(
 	    return TCL_ERROR;
 	}
 
-	memset((VOID *) buffer, 'b', 10);
+	memset(buffer, 'b', 10);
 	TclFormatInt(buf, write(GetFd(pipePtr->writeFile), buffer, 10));
 	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else if (strcmp(argv[1], "oneevent") == 0) {
@@ -324,7 +324,7 @@ TestfilehandlerCmd(
 	Tcl_DoOneEvent(TCL_WINDOW_EVENTS|TCL_DONT_WAIT);
     } else {
 	Tcl_AppendResult(interp, "bad option \"", argv[1],
-		"\": must be close, clear, counts, create, empty, fill, ",
+		"\": must be close, clear, counts, create, empty, fill, "
 		"fillpartial, oneevent, wait, or windowevent", NULL);
 	return TCL_ERROR;
     }
@@ -402,7 +402,7 @@ TestfilewaitCmd(
 	Tcl_SetResult(interp, "couldn't get channel file", TCL_STATIC);
 	return TCL_ERROR;
     }
-    fd = (int) data;
+    fd = PTR2INT(data);
     if (Tcl_GetInt(interp, argv[3], &timeout) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -698,11 +698,11 @@ TestgotsigCmd(
  */
 
 static int
-TestchmodCmd(dummy, interp, argc, argv)
-    ClientData dummy;			/* Not used. */
-    Tcl_Interp *interp;			/* Current interpreter. */
-    int argc;				/* Number of arguments. */
-    CONST char **argv;			/* Argument strings. */
+TestchmodCmd(
+    ClientData dummy,			/* Not used. */
+    Tcl_Interp *interp,			/* Current interpreter. */
+    int argc,				/* Number of arguments. */
+    CONST char **argv)			/* Argument strings. */
 {
     int i, mode;
     char *rest;

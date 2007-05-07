@@ -68,7 +68,7 @@
 		customDataFormattersEnabled = 1;
 		debuggerPlugin = GDBDebugging;
 		disassemblyDisplayState = 0;
-		dylibVariantSuffix = _debug;
+		dylibVariantSuffix = "";
 		enableDebugStr = 0;
 		environmentEntries = (
 			{
@@ -163,7 +163,7 @@
 		customDataFormattersEnabled = 1;
 		debuggerPlugin = GDBDebugging;
 		disassemblyDisplayState = 0;
-		dylibVariantSuffix = _debug;
+		dylibVariantSuffix = "";
 		enableDebugStr = 0;
 		environmentEntries = (
 			{

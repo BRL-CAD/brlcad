@@ -28,17 +28,47 @@ TclPlatformType tclPlatform = TCL_PLATFORM_UNIX;
  * Prototypes for local procedures defined in this file:
  */
 
-static CONST char *	DoTildeSubst(Tcl_Interp *interp,
-			    CONST char *user, Tcl_DString *resultPtr);
-static CONST char *	ExtractWinRoot(CONST char *path,
+static const char *	DoTildeSubst(Tcl_Interp *interp,
+			    const char *user, Tcl_DString *resultPtr);
+static const char *	ExtractWinRoot(const char *path,
 			    Tcl_DString *resultPtr, int offset,
 			    Tcl_PathType *typePtr);
 static int		SkipToChar(char **stringPtr, int match);
-static Tcl_Obj*		SplitWinPath(CONST char *path);
-static Tcl_Obj*		SplitUnixPath(CONST char *path);
+static Tcl_Obj*		SplitWinPath(const char *path);
+static Tcl_Obj*		SplitUnixPath(const char *path);
 static int		DoGlob(Tcl_Interp *interp, Tcl_Obj *resultPtr,
-			    char *separators, Tcl_Obj *pathPtr, int flags,
+			    const char *separators, Tcl_Obj *pathPtr, int flags,
 			    char *pattern, Tcl_GlobTypeData *types);
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * SetResultLength --
+ *
+ *	Resets the result DString for ExtractWinRoot to accommodate
+ *	any NT extended path prefixes.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	May modify the Tcl_DString.
+ *----------------------------------------------------------------------
+ */
+
+static void
+SetResultLength(
+    Tcl_DString *resultPtr,
+    int offset,
+    int extended)
+{
+    Tcl_DStringSetLength(resultPtr, offset);
+    if (extended == 2) {
+	Tcl_DStringAppend(resultPtr, "//?/UNC/", 8);
+    } else if (extended == 1) {
+	Tcl_DStringAppend(resultPtr, "//?/", 4);
+    }
+}
 
 /*
  *----------------------------------------------------------------------
@@ -59,24 +89,39 @@ static int		DoGlob(Tcl_Interp *interp, Tcl_Obj *resultPtr,
  *----------------------------------------------------------------------
  */
 
-static CONST char *
+static const char *
 ExtractWinRoot(
-    CONST char *path,		/* Path to parse. */
+    const char *path,		/* Path to parse. */
     Tcl_DString *resultPtr,	/* Buffer to hold result. */
     int offset,			/* Offset in buffer where result should be
 				 * stored. */
     Tcl_PathType *typePtr)	/* Where to store pathType result */
 {
+    int extended = 0;
+
+    if (   (path[0] == '/' || path[0] == '\\')
+	&& (path[1] == '/' || path[1] == '\\')
+	&& (path[2] == '?')
+	&& (path[3] == '/' || path[3] == '\\')) {
+	extended = 1;
+	path = path + 4;
+	if (path[0] == 'U' && path[1] == 'N' && path[2] == 'C'
+	    && (path[3] == '/' || path[3] == '\\')) {
+	    extended = 2;
+	    path = path + 4;
+	}
+    }
+
     if (path[0] == '/' || path[0] == '\\') {
 	/*
 	 * Might be a UNC or Vol-Relative path.
 	 */
 
-	CONST char *host, *share, *tail;
+	const char *host, *share, *tail;
 	int hlen, slen;
 
 	if (path[1] != '/' && path[1] != '\\') {
-	    Tcl_DStringSetLength(resultPtr, offset);
+	    SetResultLength(resultPtr, offset, extended);
 	    *typePtr = TCL_PATH_VOLUME_RELATIVE;
 	    Tcl_DStringAppend(resultPtr, "/", 1);
 	    return &path[1];
@@ -111,7 +156,7 @@ ExtractWinRoot(
 	    Tcl_DStringAppend(resultPtr, "/", 1);
 	    return &path[2];
 	}
-	Tcl_DStringSetLength(resultPtr, offset);
+	SetResultLength(resultPtr, offset, extended);
 	share = &host[hlen];
 
 	/*
@@ -149,7 +194,7 @@ ExtractWinRoot(
 	 * Might be a drive separator.
 	 */
 
-	Tcl_DStringSetLength(resultPtr, offset);
+	SetResultLength(resultPtr, offset, extended);
 
 	if (path[2] != '/' && path[2] != '\\') {
 	    *typePtr = TCL_PATH_VOLUME_RELATIVE;
@@ -248,7 +293,7 @@ ExtractWinRoot(
 
 	if (abs != 0) {
 	    *typePtr = TCL_PATH_ABSOLUTE;
-	    Tcl_DStringSetLength(resultPtr, offset);
+	    SetResultLength(resultPtr, offset, extended);
 	    Tcl_DStringAppend(resultPtr, path, abs);
 	    return path + abs;
 	}
@@ -286,7 +331,7 @@ ExtractWinRoot(
 
 Tcl_PathType
 Tcl_GetPathType(
-    CONST char *path)
+    const char *path)
 {
     Tcl_PathType type;
     Tcl_Obj *tempObj = Tcl_NewStringObj(path,-1);
@@ -385,7 +430,7 @@ TclpGetNativePathType(
 	}
 	case TCL_PLATFORM_WINDOWS: {
 	    Tcl_DString ds;
-	    CONST char *rootEnd;
+	    const char *rootEnd;
 
 	    Tcl_DStringInit(&ds);
 	    rootEnd = ExtractWinRoot(path, &ds, 0, &type);
@@ -486,10 +531,10 @@ TclpNativeSplitPath(
 
 void
 Tcl_SplitPath(
-    CONST char *path,		/* Pointer to string containing a path. */
+    const char *path,		/* Pointer to string containing a path. */
     int *argcPtr,		/* Pointer to location to fill in with the
 				 * number of elements in the path. */
-    CONST char ***argvPtr)	/* Pointer to place to store pointer to array
+    const char ***argvPtr)	/* Pointer to place to store pointer to array
 				 * of pointers to path elements. */
 {
     Tcl_Obj *resultPtr = NULL;	/* Needed only to prevent gcc warnings. */
@@ -523,7 +568,7 @@ Tcl_SplitPath(
      * plus the argv pointers and the terminating NULL pointer.
      */
 
-    *argvPtr = (CONST char **) ckalloc((unsigned)
+    *argvPtr = (const char **) ckalloc((unsigned)
 	    ((((*argcPtr) + 1) * sizeof(char *)) + size));
 
     /*
@@ -535,7 +580,7 @@ Tcl_SplitPath(
     for (i = 0; i < *argcPtr; i++) {
 	Tcl_ListObjIndex(NULL, resultPtr, i, &eltPtr);
 	str = Tcl_GetStringFromObj(eltPtr, &len);
-	memcpy((VOID *) p, (VOID *) str, (size_t) len+1);
+	memcpy(p, str, (size_t) len+1);
 	p += len+1;
     }
 
@@ -577,10 +622,10 @@ Tcl_SplitPath(
 
 static Tcl_Obj *
 SplitUnixPath(
-    CONST char *path)		/* Pointer to string containing a path. */
+    const char *path)		/* Pointer to string containing a path. */
 {
     int length;
-    CONST char *p, *elementStart;
+    const char *p, *elementStart;
     Tcl_Obj *result = Tcl_NewObj();
 
     /*
@@ -621,7 +666,7 @@ SplitUnixPath(
 	if (length > 0) {
 	    Tcl_Obj *nextElt;
 	    if ((elementStart[0] == '~') && (elementStart != path)) {
-		nextElt = Tcl_NewStringObj("./",2);
+		TclNewLiteralStringObj(nextElt, "./");
 		Tcl_AppendToObj(nextElt, elementStart, length);
 	    } else {
 		nextElt = Tcl_NewStringObj(elementStart, length);
@@ -654,10 +699,10 @@ SplitUnixPath(
 
 static Tcl_Obj *
 SplitWinPath(
-    CONST char *path)		/* Pointer to string containing a path. */
+    const char *path)		/* Pointer to string containing a path. */
 {
     int length;
-    CONST char *p, *elementStart;
+    const char *p, *elementStart;
     Tcl_PathType type = TCL_PATH_ABSOLUTE;
     Tcl_DString buf;
     Tcl_Obj *result = Tcl_NewObj();
@@ -689,11 +734,10 @@ SplitWinPath(
 	length = p - elementStart;
 	if (length > 0) {
 	    Tcl_Obj *nextElt;
-	    if ((elementStart != path)
-		&& ((elementStart[0] == '~')
+	    if ((elementStart != path) && ((elementStart[0] == '~')
 		    || (isalpha(UCHAR(elementStart[0]))
 			&& elementStart[1] == ':'))) {
-		nextElt = Tcl_NewStringObj("./",2);
+		TclNewLiteralStringObj(nextElt, "./");
 		Tcl_AppendToObj(nextElt, elementStart, length);
 	    } else {
 		nextElt = Tcl_NewStringObj(elementStart, length);
@@ -732,7 +776,7 @@ Tcl_Obj *
 Tcl_FSJoinToPath(
     Tcl_Obj *pathPtr,		/* Valid path or NULL. */
     int objc,			/* Number of array elements to join */
-    Tcl_Obj *CONST objv[])	/* Path elements to join. */
+    Tcl_Obj *const objv[])	/* Path elements to join. */
 {
     int i;
     Tcl_Obj *lobj, *ret;
@@ -902,7 +946,7 @@ TclpNativeJoinPath(
 char *
 Tcl_JoinPath(
     int argc,
-    CONST char *CONST *argv,
+    const char *const *argv,
     Tcl_DString *resultPtr)	/* Pointer to previously initialized DString */
 {
     int i, len;
@@ -973,7 +1017,7 @@ char *
 Tcl_TranslateFileName(
     Tcl_Interp *interp,		/* Interpreter in which to store error message
 				 * (if necessary). */
-    CONST char *name,		/* File name, which may begin with "~" (to
+    const char *name,		/* File name, which may begin with "~" (to
 				 * indicate current user's home directory) or
 				 * "~<user>" (to indicate any user's home
 				 * directory). */
@@ -1030,11 +1074,11 @@ Tcl_TranslateFileName(
  *----------------------------------------------------------------------
  */
 
-CONST char *
+const char *
 TclGetExtension(
-    CONST char *name)		/* File name to parse. */
+    const char *name)		/* File name to parse. */
 {
-    CONST char *p, *lastSep;
+    const char *p, *lastSep;
 
     /*
      * First find the last directory separator.
@@ -1091,16 +1135,16 @@ TclGetExtension(
  *----------------------------------------------------------------------
  */
 
-static CONST char *
+static const char *
 DoTildeSubst(
     Tcl_Interp *interp,		/* Interpreter in which to store error message
 				 * (if necessary). */
-    CONST char *user,		/* Name of user whose home directory should be
+    const char *user,		/* Name of user whose home directory should be
 				 * substituted, or "" for current user. */
     Tcl_DString *resultPtr)	/* Initialized DString filled with name after
 				 * tilde substitution. */
 {
-    CONST char *dir;
+    const char *dir;
 
     if (*user == '\0') {
 	Tcl_DString dirString;
@@ -1109,7 +1153,7 @@ DoTildeSubst(
 	if (dir == NULL) {
 	    if (interp) {
 		Tcl_ResetResult(interp);
-		Tcl_AppendResult(interp, "couldn't find HOME environment ",
+		Tcl_AppendResult(interp, "couldn't find HOME environment "
 			"variable to expand path", (char *) NULL);
 	    }
 	    return NULL;
@@ -1150,14 +1194,15 @@ Tcl_GlobObjCmd(
     ClientData dummy,		/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     int index, i, globFlags, length, join, dir, result;
-    char *string, *separators;
+    char *string;
+    const char *separators;
     Tcl_Obj *typePtr, *resultPtr, *look;
     Tcl_Obj *pathOrDir = NULL;
     Tcl_DString prefix;
-    static CONST char *options[] = {
+    static const char *options[] = {
 	"-directory", "-join", "-nocomplain", "-path", "-tails",
 	"-types", "--", NULL
     };
@@ -1260,7 +1305,7 @@ Tcl_GlobObjCmd(
     }
     if ((globFlags & TCL_GLOBMODE_TAILS) && (pathOrDir == NULL)) {
 	Tcl_AppendResult(interp,
-		"\"-tails\" must be used with either ",
+		"\"-tails\" must be used with either "
 		"\"-directory\" or \"-path\"", NULL);
 	return TCL_ERROR;
     }
@@ -1367,7 +1412,8 @@ Tcl_GlobObjCmd(
 	 */
 
 	Tcl_ListObjLength(interp, typePtr, &length);
-	globTypes = (Tcl_GlobTypeData*) ckalloc(sizeof(Tcl_GlobTypeData));
+	globTypes = (Tcl_GlobTypeData*)
+		TclStackAlloc(interp,sizeof(Tcl_GlobTypeData));
 	globTypes->type = 0;
 	globTypes->perm = 0;
 	globTypes->macType = NULL;
@@ -1557,7 +1603,7 @@ Tcl_GlobObjCmd(
 		Tcl_AppendResult(interp, Tcl_DStringValue(&prefix),
 			(char *) NULL);
 	    } else {
-		char *sep = "";
+		const char *sep = "";
 		for (i = 0; i < objc; i++) {
 		    string = Tcl_GetString(objv[i]);
 		    Tcl_AppendResult(interp, sep, string, (char *) NULL);
@@ -1583,7 +1629,7 @@ Tcl_GlobObjCmd(
 	if (globTypes->macCreator != NULL) {
 	    Tcl_DecrRefCount(globTypes->macCreator);
 	}
-	ckfree((char *) globTypes);
+	TclStackFree(interp);	/* globTypes */
     }
     return result;
 }
@@ -1631,8 +1677,8 @@ TclGlob(
     Tcl_GlobTypeData *types)	/* Struct containing acceptable types. May be
 				 * NULL. */
 {
-    char *separators;
-    CONST char *head;
+    const char *separators;
+    const char *head;
     char *tail, *start;
     int result;
     Tcl_Obj *filenamesObj, *savedResultObj;
@@ -1894,7 +1940,7 @@ TclGlob(
 	int objc, i;
 	Tcl_Obj **objv;
 	int prefixLen;
-	CONST char *pre;
+	const char *pre;
 
 	/*
 	 * If this length has never been set, set it here.
@@ -1928,9 +1974,9 @@ TclGlob(
 	    if (len == prefixLen) {
 		if ((pattern[0] == '\0')
 			|| (strchr(separators, pattern[0]) == NULL)) {
-		    elems[0] = Tcl_NewStringObj(".", 1);
+		    TclNewLiteralStringObj(elems[0], ".");
 		} else {
-		    elems[0] = Tcl_NewStringObj("/", 1);
+		    TclNewLiteralStringObj(elems[0], "/");
 		}
 	    } else {
 		elems[0] = Tcl_NewStringObj(oldStr+prefixLen, len-prefixLen);
@@ -2050,7 +2096,7 @@ DoGlob(
 				 * resulting filenames. Caller allocates and
 				 * deallocates; DoGlob must not touch the
 				 * refCount of this object. */
-    char *separators,		/* String containing separator characters that
+    const char *separators, /* String containing separator characters that
 				 * should be used to identify globbing
 				 * boundaries. */
     Tcl_Obj *pathPtr,		/* Completely expanded prefix. */
@@ -2357,7 +2403,7 @@ DoGlob(
 
 #if defined(__CYGWIN__) && defined(__WIN32__)
 	    {
-		extern int cygwin_conv_to_win32_path(CONST char *, char *);
+		extern int cygwin_conv_to_win32_path(const char *, char *);
 		char winbuf[MAX_PATH+1];
 
 		cygwin_conv_to_win32_path(Tcl_DStringValue(&append), winbuf);
@@ -2396,7 +2442,7 @@ DoGlob(
 		 */
 
 		int len;
-		CONST char *joined = Tcl_GetStringFromObj(joinedPtr,&len);
+		const char *joined = Tcl_GetStringFromObj(joinedPtr,&len);
 
 		if (strchr(separators, joined[len-1]) == NULL) {
 		    Tcl_AppendToObj(joinedPtr, "/", 1);
@@ -2432,7 +2478,7 @@ DoGlob(
 	     */
 
 	    int len;
-	    CONST char *joined = Tcl_GetStringFromObj(joinedPtr,&len);
+	    const char *joined = Tcl_GetStringFromObj(joinedPtr,&len);
 
 	    if (strchr(separators, joined[len-1]) == NULL) {
 		if (Tcl_FSGetPathType(pathPtr) != TCL_PATH_VOLUME_RELATIVE) {

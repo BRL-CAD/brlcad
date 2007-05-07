@@ -108,20 +108,20 @@ TclpDlopen(
 	switch (lastError) {
 	case ERROR_MOD_NOT_FOUND:
 	case ERROR_DLL_NOT_FOUND:
-	    Tcl_AppendResult(interp, "this library or a dependent library",
+	    Tcl_AppendResult(interp, "this library or a dependent library"
 		    " could not be found in library path", NULL);
 	    break;
 	case ERROR_PROC_NOT_FOUND:
-	    Tcl_AppendResult(interp, "A function specified in the import",
-		    " table could not be resolved by the system.  Windows",
+	    Tcl_AppendResult(interp, "A function specified in the import"
+		    " table could not be resolved by the system.  Windows"
 		    " is not telling which one, I'm sorry.", NULL);
 	    break;
 	case ERROR_INVALID_DLL:
-	    Tcl_AppendResult(interp, "this library or a dependent library",
+	    Tcl_AppendResult(interp, "this library or a dependent library"
 		    " is damaged", NULL);
 	    break;
 	case ERROR_DLL_INIT_FAILED:
-	    Tcl_AppendResult(interp, "the library initialization",
+	    Tcl_AppendResult(interp, "the library initialization"
 		    " routine failed", NULL);
 	    break;
 	default:

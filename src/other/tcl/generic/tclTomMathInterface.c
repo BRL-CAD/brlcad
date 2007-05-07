@@ -66,7 +66,7 @@ TclTommath_Init(
  */
 
 int 
-TclBN_epoch()
+TclBN_epoch(void)
 {
     return TCLTOMMATH_EPOCH;
 }
@@ -88,7 +88,7 @@ TclBN_epoch()
  */
 
 int 
-TclBN_revision()
+TclBN_revision(void)
 {
     return TCLTOMMATH_REVISION;
 }

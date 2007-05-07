@@ -157,7 +157,7 @@ typedef struct CanUse {
  * represent the system fonts and the numbers used by Windows.
  */
 
-static TkStateMap systemMap[] = {
+static const TkStateMap systemMap[] = {
     {ANSI_FIXED_FONT,	    "ansifixed"},
     {ANSI_VAR_FONT,	    "ansi"},
     {DEVICE_DEFAULT_FONT,   "device"},
@@ -561,6 +561,62 @@ TkpGetSubFonts(
 }
 
 /*
+ *----------------------------------------------------------------------
+ *
+ * TkpGetFontAttrsForChar --
+ *
+ *	Retrieve the font attributes of the actual font used to render
+ *	a given character.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The font attributes are stored in *faPtr.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TkpGetFontAttrsForChar(
+    Tk_Window tkwin,		/* Window on the font's display */
+    Tk_Font tkfont,		/* Font to query */
+    Tcl_UniChar c,		/* Character of interest */
+    TkFontAttributes* faPtr)	/* Output: Font attributes */
+{
+    WinFont *fontPtr = (WinFont *) tkfont;
+				/* Structure describing the logical font */
+    HDC hdc = GetDC(fontPtr->hwnd);
+				/* GDI device context */
+    SubFont *lastSubFontPtr = &fontPtr->subFontArray[0];
+				/* Pointer to subfont array in case
+				 * FindSubFontForChar needs to fix up
+				 * the memory allocation */
+    SubFont *thisSubFontPtr = FindSubFontForChar(fontPtr, c,
+						 &lastSubFontPtr);
+				/* Pointer to the subfont to use for
+				 * the given character */
+    FontFamily *familyPtr = thisSubFontPtr->familyPtr;
+    HFONT oldfont;		/* Saved font from the device context */
+    TEXTMETRIC tm;		/* Font metrics of the selected subfont */
+
+  
+    /* Get the font attributes */
+
+    oldfont = SelectObject(hdc, thisSubFontPtr->hFont);
+    GetTextMetrics(hdc, &tm);
+    SelectObject(hdc, oldfont);
+    ReleaseDC(fontPtr->hwnd, hdc);
+    faPtr->family = familyPtr->faceName;
+    faPtr->size = TkFontGetPoints(tkwin,
+				  tm.tmInternalLeading - tm.tmHeight);
+    faPtr->weight = (tm.tmWeight > FW_MEDIUM) ? TK_FW_BOLD : TK_FW_NORMAL;
+    faPtr->slant = tm.tmItalic ? TK_FS_ITALIC : TK_FS_ROMAN;
+    faPtr->underline = (tm.tmUnderlined != 0);
+    faPtr->overstrike = fontPtr->font.fa.overstrike;
+}
+
+/*
  *---------------------------------------------------------------------------
  *
  *  Tk_MeasureChars --
@@ -616,7 +672,7 @@ Tk_MeasureChars(
     Tcl_DString runString;
     SubFont *thisSubFontPtr;
     SubFont *lastSubFontPtr;
-    CONST char *p, *end, *next, *start;
+    CONST char *p, *end, *next = NULL, *start;
 
     if (numBytes == 0) {
 	*lengthPtr = 0;
@@ -991,7 +1047,7 @@ Tk_DrawChars(
 
 	MultiFontTextOut(dcMem, fontPtr, source, numBytes, 0, tm.tmAscent);
 	BitBlt(dc, x, y - tm.tmAscent, size.cx, size.cy, dcMem,
-		0, 0, tkpWinBltModes[gc->function]);
+		0, 0, (DWORD) tkpWinBltModes[gc->function]);
 
 	/*
 	 * Destroy the temporary bitmap and restore the device context.
@@ -2407,7 +2463,8 @@ LoadFontRanges(
 	}
 	for (i = 0; i < cmapTable.numTables; i++) {
 	    offset = sizeof(cmapTable) + i * sizeof(encTable);
-	    GetFontData(hdc, cmapKey, offset, &encTable, sizeof(encTable));
+	    GetFontData(hdc, cmapKey, (DWORD) offset, &encTable,
+		    sizeof(encTable));
 	    if (swapped) {
 		SwapShort(&encTable.platform);
 		SwapShort(&encTable.encoding);
@@ -2426,7 +2483,7 @@ LoadFontRanges(
 		continue;
 	    }
 
-	    GetFontData(hdc, cmapKey, encTable.offset, &subTable,
+	    GetFontData(hdc, cmapKey, (DWORD) encTable.offset, &subTable,
 		    sizeof(subTable));
 	    if (swapped) {
 		SwapShort(&subTable.any.format);
@@ -2438,13 +2495,13 @@ LoadFontRanges(
 		segCount = subTable.segment.segCountX2 / 2;
 		cbData = segCount * sizeof(USHORT);
 
-		startCount = (USHORT *) ckalloc(cbData);
-		endCount = (USHORT *) ckalloc(cbData);
+		startCount = (USHORT *) ckalloc((unsigned)cbData);
+		endCount = (USHORT *) ckalloc((unsigned)cbData);
 
 		offset = encTable.offset + sizeof(subTable.segment);
-		GetFontData(hdc, cmapKey, offset, endCount, cbData);
+		GetFontData(hdc, cmapKey, (DWORD) offset, endCount, cbData);
 		offset += cbData + sizeof(USHORT);
-		GetFontData(hdc, cmapKey, offset, startCount, cbData);
+		GetFontData(hdc, cmapKey, (DWORD) offset, startCount, cbData);
 		if (swapped) {
 		    for (i = 0; i < segCount; i++) {
 			SwapShort(&endCount[i]);
@@ -2482,8 +2539,8 @@ LoadFontRanges(
 
 	segCount = 1;
 	cbData = segCount * sizeof(USHORT);
-	startCount = (USHORT *) ckalloc(cbData);
-	endCount = (USHORT *) ckalloc(cbData);
+	startCount = (USHORT *) ckalloc((unsigned) cbData);
+	endCount = (USHORT *) ckalloc((unsigned) cbData);
 	startCount[0] = 0x0000;
 	endCount[0] = 0x00ff;
     }

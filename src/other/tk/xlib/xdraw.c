@@ -1,13 +1,12 @@
-/* 
+/*
  * xdraw.c --
  *
- *	This file contains generic procedures related to X drawing
- *	primitives.
+ *	This file contains generic procedures related to X drawing primitives.
  *
  * Copyright (c) 1995 Sun Microsystems, Inc.
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
@@ -19,7 +18,7 @@
  *
  * XDrawLine --
  *
- *	Draw a single line between two points in a given drawable. 
+ *	Draw a single line between two points in a given drawable.
  *
  * Results:
  *	None.
@@ -31,11 +30,12 @@
  */
 
 void
-XDrawLine(display, d, gc, x1, y1, x2, y2)
-    Display* display;
-    Drawable d;
-    GC gc;
-    int x1, y1, x2, y2;		/* Coordinates of line segment. */
+XDrawLine(
+    Display *display,
+    Drawable d,
+    GC gc,
+    int x1, int y1,
+    int x2, int y2)		/* Coordinates of line segment. */
 {
     XPoint points[2];
 
@@ -51,8 +51,8 @@ XDrawLine(display, d, gc, x1, y1, x2, y2)
  *
  * XFillRectangle --
  *
- *	Fills a rectangular area in the given drawable.  This procedure
- *	is implemented as a call to XFillRectangles.
+ *	Fills a rectangular area in the given drawable. This procedure is
+ *	implemented as a call to XFillRectangles.
  *
  * Results:
  *	None
@@ -64,14 +64,14 @@ XDrawLine(display, d, gc, x1, y1, x2, y2)
  */
 
 void
-XFillRectangle(display, d, gc, x, y, width, height)
-    Display* display;
-    Drawable d;
-    GC gc;
-    int x;
-    int y;
-    unsigned int width;
-    unsigned int height;
+XFillRectangle(
+    Display *display,
+    Drawable d,
+    GC gc,
+    int x,
+    int y,
+    unsigned int width,
+    unsigned int height)
 {
     XRectangle rectangle;
     rectangle.x = x;
@@ -80,3 +80,11 @@ XFillRectangle(display, d, gc, x, y, width, height)
     rectangle.height = height;
     XFillRectangles(display, d, gc, &rectangle, 1);
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 78
+ * End:
+ */

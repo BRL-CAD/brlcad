@@ -19,8 +19,8 @@ lindex \- Retrieve an element from a list
 .BE
 .SH DESCRIPTION
 .PP
-The \fBlindex\fP command accepts a parameter, \fIlist\fP, which
-it treats as a Tcl list. It also accepts zero or more \fIindices\fP into
+The \fBlindex\fR command accepts a parameter, \fIlist\fR, which
+it treats as a Tcl list. It also accepts zero or more \fIindices\fR into
 the list.  The indices may be presented either consecutively on the
 command line, or grouped in a
 Tcl list and presented as a single argument.

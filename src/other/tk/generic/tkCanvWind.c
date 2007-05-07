@@ -143,7 +143,7 @@ Tk_ItemType tkWindowType = {
  * geometry manager):
  */
 
-static Tk_GeomMgr canvasGeomType = {
+static const Tk_GeomMgr canvasGeomType = {
     "canvas",				/* name */
     WinItemRequestProc,			/* requestProc */
     WinItemLostSlaveProc,		/* lostSlaveProc */

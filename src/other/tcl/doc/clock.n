@@ -88,7 +88,7 @@ have 59 or 61 seconds.
 \fIunit\fR
 One of the words, \fBseconds\fR, \fBminutes\fR, \fBhours\fR,
 \fBdays\fR, \fBweeks\fR, \fBmonths\fR, or \fByears\fR, or
-any unique prefix of such a word.  Used in conjuction with \fIcount\fR
+any unique prefix of such a word. Used in conjunction with \fIcount\fR
 to identify an interval of time, for example, \fI3 seconds\fR or
 \fI1 year\fR.
 .SH "OPTIONS"
@@ -267,7 +267,7 @@ representation that \fBclock seconds\fR returns.  There are three exceptions,
 which are all intended for use where higher-resolution times are required.
 \fBclock milliseconds\fR returns the count of milliseconds from the
 epoch time, and \fBclock microseconds\fR returns the count of microseconds
-from the epoch time.  In addition, there js a \fBclock clicks\fR command
+from the epoch time. In addition, there is a \fBclock clicks\fR command
 that returns a platform-dependent high-resolution timer.  Unlike
 \fBclock seconds\fR and \fBclock milliseconds\fR, the value
 of \fBclock clicks\fR is not guaranteed to be tied to any fixed
@@ -383,8 +383,9 @@ combined and used to determine the date.  If more than one complete
 set is present, the one at the rightmost position in the string is
 used.  The year is presumed to lie in the range 1938 to 2037 inclusive.
 .IP [5]
-If the string entirely lacks any specification for the year,
-but contains a set of format groups specifying month and day of month,
+If the string entirely lacks any specification for the year
+(or contains the year only on the locale's alternative calendar)
+and contains a set of format groups specifying month and day of month,
 day of year, or week of year and day of week, those groups are
 combined and used to determine the date.  If more than one complete
 set is present, the one at the rightmost position in the string is
@@ -587,17 +588,17 @@ without the '\fBO\fR', except that the string is produced and parsed in the
 locale-dependent alternative numerals.
 .TP
 \fB%p\fR
-On output, produces an indicator for the part of the day, \fBA.M.\fR
-or \fBP.M.\fR, appropriate to the given locale.  If the script of the
-given locale supports multiple letterforms, uppercase is preferred.
-On input, matches the representation \fBA.M.\fR or \fBP.M.\fR in
+On output, produces an indicator for the part of the day, \fBAM\fR
+or \fBPM\fR, appropriate to the given locale.  If the script of the
+given locale supports multiple letterforms, lowercase is preferred.
+On input, matches the representation \fBAM\fR or \fBPM\fR in
 the given locale, in either case.
 .TP
 \fB%P\fR
-On output, produces an indicator for the part of the day, \fBA.M.\fR
-or \fBP.M.\fR, appropriate to the given locale.  If the script of the
-given locale supports multiple letterforms, lowercase is preferred.
-On input, matches the representation \fBA.M.\fR or \fBP.M.\fR in
+On output, produces an indicator for the part of the day, \fBam\fR
+or \fBpm\fR, appropriate to the given locale.  If the script of the
+given locale supports multiple letterforms, uppercase is preferred.
+On input, matches the representation \fBAM\fR or \fBPM\fR in
 the given locale, in either case.
 .TP
 \fB%Q\fR
@@ -705,7 +706,7 @@ Brazilian Standard Time. It is recommended that date/time strings for
 use by computers use numeric time zones instead.
 .TP
 \fB%%\fR
-On output, produces a literal '\fB%\fR' charater. On input, matches
+On output, produces a literal '\fB%\fR' character. On input, matches
 a literal '\fB%\fR' character.
 .TP
 \fB%+\fR
@@ -730,10 +731,8 @@ The local time zone from the Control Panel on Windows systems.
 The C library's idea of the local time zone, as defined by the
 \fBmktime\fR and \fBlocaltime\fR functions.
 .PP
-Whatever the source of the time zone string, the same set of rules
-is used to parse it.  First, if it was obtained from a \fB%z\fR
-or \fB%Z\fR format group, it is checked to see if it is one of
-the strings,
+In case [1] \fIonly,\fR the string is tested to see if it is one 
+of the strings:
 .CS
  gmt     ut      utc     bst     wet     wat     at
  nft     nst     ndt     ast     adt     est     edt
@@ -748,7 +747,9 @@ the strings,
 If it is a string in the above list, it designates a known
 time zone, and is interpreted as such.
 .PP
-The next check is for a string beginning with a colon.
+For time zones in case [1] that do not match any of the above strings, 
+and always for cases [2]-[6], the following rules apply.
+.PP
 If the time zone begins with a colon, it is one of a
 standardized list of names like \fB:America/New_York\fR
 that give the rules for various locales.  A complete list
@@ -762,18 +763,18 @@ obtained from system files in "\fI/usr/share/zoneinfo\fR",
 As a special case, the name \fB:localtime\fR refers to
 the local time zone as defined by the C library.
 .PP
-A string consisting of a plus or minus sign followed by
+A time zone string consisting of a plus or minus sign followed by
 four or six decimal digits is interpreted as an offset in
 hours, minutes, and seconds (if six digits are present) from
 UTC.  The plus sign denotes a sign east of Greenwich;
 the minus sign one west of Greenwich.
 .PP
-A string conforming to the Posix specification of the \fBTZ\fR
+A time zone string conforming to the Posix specification of the \fBTZ\fR
 environment variable will be recognized.  The specification
 may be found at
 \fIhttp://www.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap08.html\fR.
 .PP
-Any other string is processed by prefixing a colon and attempting
+Any other time zone string is processed by prefixing a colon and attempting
 to use it as a location name, as above.
 .SH "LOCALIZATION"
 Developers wishing to localize the date and time formatting and parsing
@@ -859,18 +860,6 @@ used.  Finally, a correction is applied so that the correct hour of
 the day is produced after allowing for daylight savings time
 differences and the correct date is given when going from the end
 of a long month to a short month.
-.PP
-Daylight savings time correction is applied only when the relative time
-is specified in units of days or more, i.e.\ days, weeks, fortnights, months or
-years.  This means that when crossing the daylight savings time boundary,
-different results will be given for \fBclock scan "1 day"\fR and
-\fBclock scan "24 hours"\fR:
-.CS
-% \fBclock scan\fR "1 day" -base [\fBclock scan\fR 1999-10-31]
-941443200
-% \fBclock scan\fR "24 hours" -base [\fBclock scan\fR 1999-10-31]
-941439600
-.CE
 .SH "SEE ALSO"
 msgcat
 .SH "COPYRIGHT"

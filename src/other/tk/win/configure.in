@@ -16,7 +16,7 @@ SHELL=/bin/sh
 TK_VERSION=8.5
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=5
-TK_PATCH_LEVEL="a5"
+TK_PATCH_LEVEL="a6"
 VER=$TK_MAJOR_VERSION$TK_MINOR_VERSION
 
 #------------------------------------------------------------------------
@@ -136,6 +136,14 @@ SC_CONFIG_CFLAGS
 
 AC_CHECK_HEADER(errno.h, , MAN2TCLFLAGS="-DNO_ERRNO_H")
 AC_SUBST(MAN2TCLFLAGS)
+
+#--------------------------------------------------------------------
+# Windows XP theme engine header for Ttk
+#--------------------------------------------------------------------
+
+AC_CHECK_HEADER([uxtheme.h], [AC_DEFINE(HAVE_UXTHEME_H)],
+	[AC_MSG_NOTICE([xpnative theme will be unavailable])],
+	[#include <windows.h>])
 
 #--------------------------------------------------------------------
 # Set the default compiler switches based on the --enable-symbols 

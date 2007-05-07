@@ -208,7 +208,7 @@ TkpScanWindowId(
     Window *idPtr)		/* Place to store converted result. */
 {
     Tk_Window tkwin;
-    Window number;
+    Window number, *numberPtr = &number;
 
     /*
      * We want sscanf for the 64-bit check, but if that doesn't work, then
@@ -219,7 +219,7 @@ TkpScanWindowId(
 #ifdef _WIN64
 	    (sscanf(string, "0x%p", &number) != 1) &&
 #endif
-	    Tcl_GetInt(interp, string, (int *) &number) != TCL_OK) {
+	    Tcl_GetInt(interp, string, (int *) numberPtr) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -272,7 +272,7 @@ TkpMakeWindow(
      */
 
     hwnd = CreateWindowEx(WS_EX_NOPARENTNOTIFY, TK_WIN_CHILD_CLASS_NAME, NULL,
-	    style, Tk_X(winPtr), Tk_Y(winPtr), Tk_Width(winPtr),
+	    (DWORD) style, Tk_X(winPtr), Tk_Y(winPtr), Tk_Width(winPtr),
 	    Tk_Height(winPtr), parentWin, NULL, Tk_GetHINSTANCE(), NULL);
     SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0,
 	    SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);
@@ -512,7 +512,7 @@ XMoveResizeWindow(
     unsigned int width, unsigned int height)
 {
     display->request++;
-    MoveWindow(Tk_GetHWND(w), x, y, width, height, TRUE);
+    MoveWindow(Tk_GetHWND(w), x, y, (int) width, (int) height, TRUE);
 }
 
 /*
@@ -571,8 +571,8 @@ XResizeWindow(
 
     display->request++;
 
-    MoveWindow(Tk_GetHWND(w), winPtr->changes.x, winPtr->changes.y, width,
-	    height, TRUE);
+    MoveWindow(Tk_GetHWND(w), winPtr->changes.x, winPtr->changes.y, (int)width,
+	    (int)height, TRUE);
 }
 
 /*

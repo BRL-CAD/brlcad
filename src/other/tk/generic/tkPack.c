@@ -107,7 +107,7 @@ static void		PackReqProc(ClientData clientData, Tk_Window tkwin);
 static void		PackLostSlaveProc(ClientData clientData,
 			    Tk_Window tkwin);
 
-static Tk_GeomMgr packerType = {
+static const Tk_GeomMgr packerType = {
     "pack",			/* name */
     PackReqProc,		/* requestProc */
     PackLostSlaveProc,		/* lostSlaveProc */

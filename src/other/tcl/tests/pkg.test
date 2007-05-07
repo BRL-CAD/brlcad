@@ -26,7 +26,7 @@ interp eval $i [list package require tcltest 2]
 interp eval $i [list namespace import -force ::tcltest::*]
 interp eval $i {
 
-package forget {expand}[package names]
+package forget {*}[package names]
 set oldPkgUnknown [package unknown]
 package unknown {}
 set oldPath $auto_path
@@ -212,7 +212,7 @@ test pkg-2.15 {Tcl_PkgRequire procedure, "package unknown" support} {
     package require {a b}
     package unknown {}
     set x
-} {{a b}}
+} {{a b} 0-}
 test pkg-2.16 {Tcl_PkgRequire procedure, "package unknown" error} {
     proc pkgUnknown args {
 	error "testing package unknown"
@@ -227,7 +227,7 @@ test pkg-2.16 {Tcl_PkgRequire procedure, "package unknown" error} {
 "error "testing package unknown""
     (procedure "pkgUnknown" line 2)
     invoked from within
-"pkgUnknown t"
+"pkgUnknown t 0-"
     ("package unknown" script)
     invoked from within
 "package require t"}}
@@ -965,8 +965,24 @@ test package-vcompare-2.0 {package vcompare at 32bit boundary} {
     package vcompare [expr {1<<31}] [expr {(1<<31)-1}]
 } 1
 
+# Note: It is correct that the result of the very first test,
+# i.e. "5.0 5.0a0" is 1, i.e. that version 5.0a0 satisfies a 5.0
+# requirement.
+
+# The requirement "5.0" internally translates first to "5.0-6", and
+# then to its final form of "5.0a0-6a0". These translations are
+# explicitly specified by the TIP (Search for "padded/extended
+# internally with 'a0'"). This was done intentionally for exactly the
+# tested case, that an alpha package can satisfy a requirement for the
+# regular package. An example would be a package FOO requiring Tcl 8.X
+# for its operation. It can be used with Tcl 8.Xa0. Without our
+# translation that would not be possible.
+
 set n 0
 foreach {required provided satisfied} {
+    5.0 5.0a0 1
+    5.0a0 5.0 1
+
     8.5a0-   8.5a5    1
     8.5a0-   8.5b1    1
     8.5a0-   8.5.1    1

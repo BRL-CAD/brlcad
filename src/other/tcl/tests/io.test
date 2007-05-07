@@ -117,6 +117,66 @@ test io-1.8 {Tcl_WriteChars: WriteChars} {
     contents $path(test2)
 } "    \x1b\$B\$O\x1b(B"
 
+test io-1.9 {Tcl_WriteChars: WriteChars} {
+    # When closing a channel with an encoding that appends
+    # escape bytes, check for the case where the escape
+    # bytes overflow the current IO buffer. The bytes
+    # should be moved into a new buffer.
+
+    set data "1234567890 [format %c 12399]"
+
+    set sizes [list]
+
+    # With default buffer size
+    set f [open $path(test2) w]
+    fconfigure      $f -encoding iso2022-jp
+    puts -nonewline $f $data
+    close           $f
+    lappend sizes [file size $path(test2)]
+
+    # With buffer size equal to the length
+    # of the data, the escape bytes would
+    # go into the next buffer.
+
+    set f [open $path(test2) w]
+    fconfigure      $f -encoding iso2022-jp -buffersize 16
+    puts -nonewline $f $data
+    close           $f
+    lappend sizes [file size $path(test2)]
+
+    # With buffer size that is large enough
+    # to hold 1 byte of escaped data, but
+    # not all 3. This should not write
+    # the escape bytes to the first buffer
+    # and then again to the second buffer.
+
+    set f [open $path(test2) w]
+    fconfigure      $f -encoding iso2022-jp -buffersize 17
+    puts -nonewline $f $data
+    close           $f
+    lappend sizes [file size $path(test2)]
+
+    # With buffer size that can hold 2 out of
+    # 3 bytes of escaped data.
+
+    set f [open $path(test2) w]
+    fconfigure      $f -encoding iso2022-jp -buffersize 18
+    puts -nonewline $f $data
+    close           $f
+    lappend sizes [file size $path(test2)]
+
+    # With buffer size that can hold all the
+    # data and escape bytes.
+
+    set f [open $path(test2) w]
+    fconfigure      $f -encoding iso2022-jp -buffersize 19
+    puts -nonewline $f $data
+    close           $f
+    lappend sizes [file size $path(test2)]
+
+    set sizes
+} {19 19 19 19 19}
+
 test io-2.1 {WriteBytes} {
     # loop until all bytes are written
     
@@ -2138,7 +2198,7 @@ test io-28.4 {Tcl_Close} {testchannel} {
     close $f
     lappend l [lsort [testchannel open]]
     set x [list $consoleFileNames \
-		[lsort [list {expand}$consoleFileNames $f]] \
+		[lsort [list {*}$consoleFileNames $f]] \
 		$consoleFileNames]
     string compare $l $x
 } 0
@@ -2688,7 +2748,7 @@ test io-29.34 {Tcl_Close, async flush on close, using sockets} {socket tempNotMa
 	variable c
 	variable x
 	set l [gets $s]
-	
+
 	if {[eof $s]} {
 	    close $s
 	    set x done
@@ -2696,8 +2756,8 @@ test io-29.34 {Tcl_Close, async flush on close, using sockets} {socket tempNotMa
 	    incr c
 	}
     }
-    set ss [socket -server [namespace code accept] 0]
-    set cs [socket [info hostname] [lindex [fconfigure $ss -sockname] 2]]
+    set ss [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
+    set cs [socket 127.0.0.1 [lindex [fconfigure $ss -sockname] 2]]
     vwait [namespace which -variable x]
     fconfigure $cs -blocking off
     writelots $cs $l
@@ -2707,19 +2767,19 @@ test io-29.34 {Tcl_Close, async flush on close, using sockets} {socket tempNotMa
     set c
 } 2000
 test io-29.35 {Tcl_Close vs fileevent vs multiple interpreters} {socket tempNotMac fileevent} {
-    # On Mac, this test screws up sockets such that subsequent tests using port 2828 
+    # On Mac, this test screws up sockets such that subsequent tests using port 2828
     # either cause errors or panic().
-     
+
     catch {interp delete x}
     catch {interp delete y}
     interp create x
     interp create y
-    set s [socket -server [namespace code accept] 0]
+    set s [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
     proc accept {s a p} {
 	puts $s hello
 	close $s
     }
-    set c [socket [info hostname] [lindex [fconfigure $s -sockname] 2]]
+    set c [socket 127.0.0.1 [lindex [fconfigure $s -sockname] 2]]
     interp share {} $c x
     interp share {} $c y
     close $c
@@ -5030,7 +5090,7 @@ test io-39.17 {Tcl_SetChannelOption: -encoding, clearing CHANNEL_NEED_MORE_DATA}
 test io-39.18 {Tcl_SetChannelOption, setting read mode independently} \
 	{socket} {
     proc accept {s a p} {close $s}
-    set s1 [socket -server [namespace code accept] 0]
+    set s1 [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
     set port [lindex [fconfigure $s1 -sockname] 2]
     set s2 [socket 127.0.0.1 $port]
     update
@@ -5043,7 +5103,7 @@ test io-39.18 {Tcl_SetChannelOption, setting read mode independently} \
 test io-39.19 {Tcl_SetChannelOption, setting read mode independently} \
 	{socket} {
     proc accept {s a p} {close $s}
-    set s1 [socket -server [namespace code accept] 0]
+    set s1 [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
     set port [lindex [fconfigure $s1 -sockname] 2]
     set s2 [socket 127.0.0.1 $port]
     update
@@ -5056,7 +5116,7 @@ test io-39.19 {Tcl_SetChannelOption, setting read mode independently} \
 test io-39.20 {Tcl_SetChannelOption, setting read mode independently} \
 	{socket} {
     proc accept {s a p} {close $s}
-    set s1 [socket -server [namespace code accept] 0]
+    set s1 [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
     set port [lindex [fconfigure $s1 -sockname] 2]
     set s2 [socket 127.0.0.1 $port]
     update
@@ -5069,7 +5129,7 @@ test io-39.20 {Tcl_SetChannelOption, setting read mode independently} \
 test io-39.21 {Tcl_SetChannelOption, setting read mode independently} \
 	{socket} {
     proc accept {s a p} {close $s}
-    set s1 [socket -server [namespace code accept] 0]
+    set s1 [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
     set port [lindex [fconfigure $s1 -sockname] 2]
     set s2 [socket 127.0.0.1 $port]
     update
@@ -5106,7 +5166,7 @@ test io-39.22a {Tcl_SetChannelOption, invariance} {
 test io-39.23 {Tcl_GetChannelOption, server socket is not readable or
         writeable, it should still have valid -eofchar and -translation options } {
     set l [list]
-    set sock [socket -server [namespace code accept] 0]
+    set sock [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
     lappend l [fconfigure $sock -eofchar] [fconfigure $sock -translation]
     close $sock
     set l
@@ -5114,7 +5174,7 @@ test io-39.23 {Tcl_GetChannelOption, server socket is not readable or
 test io-39.24 {Tcl_SetChannelOption, server socket is not readable or
         writable so we can't change -eofchar or -translation } {
     set l [list]
-    set sock [socket -server [namespace code accept] 0]
+    set sock [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
     fconfigure $sock -eofchar D -translation lf
     lappend l [fconfigure $sock -eofchar] [fconfigure $sock -translation]
     close $sock
@@ -6391,27 +6451,29 @@ test io-51.1 {Test old socket deletion on Macintosh} {socket} {
 	close $s
 	set wait done
     }
-    set ss [socket -server [namespace code accept] 0]
+    set ss [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
+    set port [lindex [fconfigure $ss -sockname] 2]
+
     variable wait ""
-    set cs [socket [info hostname] [lindex [fconfigure $ss -sockname] 2]]
+    set cs [socket 127.0.0.1 $port]
     vwait [namespace which -variable wait]
     lappend result [gets $cs]
     close $cs
 
     set wait ""
-    set cs [socket [info hostname] [lindex [fconfigure $ss -sockname] 2]]
+    set cs [socket 127.0.0.1 $port]
     vwait [namespace which -variable wait]
     lappend result [gets $cs]
     close $cs
 
     set wait ""
-    set cs [socket [info hostname] [lindex [fconfigure $ss -sockname] 2]]
+    set cs [socket 127.0.0.1 $port]
     vwait [namespace which -variable wait]
     lappend result [gets $cs]
     close $cs
 
     set wait ""
-    set cs [socket [info hostname] [lindex [fconfigure $ss -sockname] 2]]
+    set cs [socket 127.0.0.1 $port]
     vwait [namespace which -variable wait]
     lappend result [gets $cs]
     close $cs
@@ -6735,7 +6797,7 @@ proc FcopyTestDone {bytes {error {}}} {
 }
 test io-53.5 {CopyData: error during fcopy} {socket fcopy} {
     variable fcopyTestDone
-    set listen [socket -server [namespace code FcopyTestAccept] 0]
+    set listen [socket -server [namespace code FcopyTestAccept] -myaddr 127.0.0.1 0]
     set in [open $thisScript]	;# 126 K
     set out [socket 127.0.0.1 [lindex [fconfigure $listen -sockname] 2]]
     catch {unset fcopyTestDone}
@@ -6838,14 +6900,14 @@ test io-54.1 {Recursive channel events} {socket fileevent} {
 	}
 	incr x
     }
-    set ss [socket -server [namespace code accept] 0]
+    set ss [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
 
     # We need to delay on some systems until the creation of the
     # server socket completes.
 
     set done 0
     for {set i 0} {$i < 10} {incr i} {
-	if {![catch {set cs [socket [info hostname] [lindex [fconfigure $ss -sockname] 2]]}]} {
+	if {![catch {set cs [socket 127.0.0.1 [lindex [fconfigure $ss -sockname] 2]]}]} {
 	    set done 1
 	    break
 	}
@@ -6874,7 +6936,7 @@ test io-54.1 {Recursive channel events} {socket fileevent} {
 test io-54.2 {Testing for busy-wait in recursive channel events} {socket fileevent} {
     set accept {}
     set after {}
-    variable s [socket -server [namespace code accept] 0]
+    variable s [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
     proc accept {s a p} {
 	variable counter
 	variable accept
@@ -6984,7 +7046,7 @@ test io-57.1 {buffered data and file events, gets} {fileevent} {
 	variable s2
 	set s2 $sock
     }
-    set server [socket -server [namespace code accept] 0]
+    set server [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
     set s [socket 127.0.0.1 [lindex [fconfigure $server -sockname] 2]]
     variable s2
     vwait [namespace which -variable s2]
@@ -7007,7 +7069,7 @@ test io-57.2 {buffered data and file events, read} {fileevent} {
 	variable s2
 	set s2 $sock
     }
-    set server [socket -server [namespace code accept] 0]
+    set server [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
     set s [socket 127.0.0.1 [lindex [fconfigure $server -sockname] 2]]
     variable s2
     vwait [namespace which -variable s2]

@@ -33,13 +33,13 @@ Tcl_Channel
 .AP Tcl_Interp *interp in
 Interpreter for error reporting.
 .AP Tcl_ChannelType *typePtr in
-The new channel I/O procedures to use for \fIchannel\fP.
+The new channel I/O procedures to use for \fIchannel\fR.
 .AP ClientData clientData in
 Arbitrary one-word value to pass to channel I/O procedures.
 .AP int mask in
 Conditions under which \fIchannel\fR will be used: OR-ed combination of
 \fBTCL_READABLE\fR, \fBTCL_WRITABLE\fR and \fBTCL_EXCEPTION\fR.
-This can be a subset of the operations currently allowed on \fIchannel\fP.
+This can be a subset of the operations currently allowed on \fIchannel\fR.
 .AP Tcl_Channel channel in
 An existing Tcl channel such as returned by \fBTcl_CreateChannel\fR.
 .BE
@@ -57,9 +57,9 @@ stacked channels.  Anyone using stacked channels or creating stacked
 channel drivers should update to the new \fBTCL_CHANNEL_VERSION_2\fR
 \fBTcl_ChannelType\fR structure.  See \fBTcl_CreateChannel\fR for details.
 .PP
-\fBTcl_StackChannel\fR stacks a new \fIchannel\fP on an existing channel
-with the same name that was registered for \fIchannel\fP by
-\fBTcl_RegisterChannel\fP.
+\fBTcl_StackChannel\fR stacks a new \fIchannel\fR on an existing channel
+with the same name that was registered for \fIchannel\fR by
+\fBTcl_RegisterChannel\fR.
 .PP
 \fBTcl_StackChannel\fR works by creating a new channel structure and
 placing itself on top of the channel stack.  EOL translation, encoding and
@@ -70,7 +70,7 @@ remain at the top of the channel stack.  A pointer to the new top channel
 structure is returned.  If an error occurs when stacking the channel, NULL
 is returned instead.
 .PP
-The \fImask\fP parameter specifies the operations that are allowed on the
+The \fImask\fR parameter specifies the operations that are allowed on the
 new channel.  These can be a subset of the operations allowed on the
 original channel.  For example, a read-write channel may become read-only
 after the \fBTcl_StackChannel\fR call.
@@ -79,10 +79,10 @@ Closing a channel closes the channels stacked below it.  The close of
 stacked channels is executed in a way that allows buffered data to be
 properly flushed.
 .PP
-\fBTcl_UnstackChannel\fP reverses the process.  The old channel is
+\fBTcl_UnstackChannel\fR reverses the process.  The old channel is
 associated with the channel name, and the processing module added by
 \fBTcl_StackChannel\fR is destroyed.  If there is no old channel, then
-\fBTcl_UnstackChannel\fP is equivalent to \fBTcl_Close\fP.  If an error
+\fBTcl_UnstackChannel\fR is equivalent to \fBTcl_Close\fR.  If an error
 occurs unstacking the channel, \fBTCL_ERROR\fR is returned, otherwise
 \fBTCL_OK\fR is returned.
 .PP

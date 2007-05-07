@@ -1,4 +1,4 @@
-/* 
+/*
  * tkMacOSXTest.c --
  *
  *	Contains commands for platform specific tests for
@@ -6,6 +6,7 @@
  *
  * Copyright (c) 1996 Sun Microsystems, Inc.
  * Copyright 2001, Apple Computer, Inc.
+ * Copyright (c) 2005-2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -20,7 +21,7 @@
  */
 
 static int		DebuggerCmd (ClientData dummy, Tcl_Interp *interp,
-			    int argc, CONST char **argv);
+			    int argc, const char **argv);
 MODULE_SCOPE int	TkplatformtestInit(Tcl_Interp *interp);
 
 /*
@@ -47,9 +48,9 @@ TkplatformtestInit(
     /*
      * Add commands for platform specific tests on MacOS here.
      */
-    
+
     Tcl_CreateCommand(interp, "debugger", DebuggerCmd,
-            (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+	    (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
 
     return TCL_OK;
 }
@@ -75,7 +76,7 @@ DebuggerCmd(
     ClientData clientData,		/* Not used. */
     Tcl_Interp *interp,			/* Not used. */
     int argc,				/* Not used. */
-    CONST char **argv)			/* Not used. */
+    const char **argv)			/* Not used. */
 {
     Debugger();
     return TCL_OK;

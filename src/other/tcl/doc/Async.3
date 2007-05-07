@@ -142,7 +142,6 @@ If new handlers become ready while handlers are executing,
 \fBTcl_AsyncInvoke\fR will invoke them all;  at each point it
 invokes the highest-priority (oldest) ready handler, repeating
 this over and over until there are no longer any ready handlers.
-
 .SH WARNING
 .PP
 It is almost always a bad idea for an asynchronous event
@@ -159,4 +158,4 @@ the interpreter's state by calling \fBTcl_RestoreInterpState\fR,
 and then returning the \fIcode\fR argument.
 
 .SH KEYWORDS
-asynchronous event, handler, signal, Tcl_SaveInterpState
+asynchronous event, handler, signal, Tcl_SaveInterpState, thread

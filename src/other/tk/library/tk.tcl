@@ -13,8 +13,8 @@
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 # Insist on running with compatible versions of Tcl and Tk.
-package require -exact Tk  8.5a5
-package require -exact Tcl 8.5a5
+package require -exact Tcl 8.5a6
+package require -exact Tk  8.5a6
 
 # Create a ::tk namespace
 namespace eval ::tk {
@@ -46,13 +46,20 @@ namespace eval ::tk {
     }
     namespace import ::tk::msgcat::*
 }
+# and a ::ttk namespace
+namespace eval ::ttk {
+    if {$::tk_library ne ""} {
+	# avoid file join to work in safe interps, but this is also x-plat ok
+	variable library $::tk_library/ttk
+    }
+}
 
-# Add Tk's directory to the end of the auto-load search path, if it
+# Add Ttk & Tk's directory to the end of the auto-load search path, if it
 # isn't already on the path:
 
-if {[info exists ::auto_path] && $::tk_library ne "" && \
-	[lsearch -exact $::auto_path $::tk_library] < 0} {
-    lappend ::auto_path $::tk_library
+if {[info exists ::auto_path] && ($::tk_library ne "")
+    && ($::tk_library ni $::auto_path)} {
+    lappend ::auto_path $::tk_library $::ttk::library
 }
 
 # Turn off strict Motif look and feel as a default.
@@ -121,7 +128,7 @@ proc ::tk::PlaceWindow {w {place ""} {anchor ""}} {
 	}
 	if {[tk windowingsystem] eq "aqua"} {
 	    # Avoid the native menu bar which sits on top of everything.
-	    if {$y < 20} { set y 20 }
+	    if {$y < 22} { set y 22 }
 	}
     }
     wm geometry $w +$x+$y
@@ -394,7 +401,7 @@ switch -- [tk windowingsystem] {
 if {$::tk_library ne ""} {
     proc ::tk::SourceLibFile {file} {
         namespace eval :: [list source [file join $::tk_library $file.tcl]]
-    }	
+    }
     namespace eval ::tk {
 	SourceLibFile button
 	SourceLibFile entry
@@ -472,7 +479,7 @@ proc ::tk::UnderlineAmpersand {text} {
     }
     if {$idx >= 0} {
 	regsub -all -- {&([^&])} $text {\1} text
-    } 
+    }
     return [list $text $idx]
 }
 
@@ -583,4 +590,9 @@ if {[tk windowingsystem] eq "aqua"} {
     namespace eval ::tk::mac {
 	set useCustomMDEF 0
     }
+}
+
+# Run the Ttk themed widget set initialization
+if {$::ttk::library ne ""} {
+    uplevel \#0 [list source $::ttk::library/ttk.tcl]
 }

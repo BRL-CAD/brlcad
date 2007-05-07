@@ -287,13 +287,12 @@ BumpCmdRefEpochs(
  *		  int flags, Tcl_Command *rPtr);
  *
  *	Whenever a command is executed or Tcl_FindCommand is invoked within
- *	the namespace, this function is called to resolve the command name.
- *	If this function is able to resolve the name, it should return the
- *	status code TCL_OK, along with the corresponding Tcl_Command in the
- *	rPtr argument. Otherwise, the function can return TCL_CONTINUE, and
- *	the command will be treated under the usual name resolution rules.
- *	Or, it can return TCL_ERROR, and the command will be considered
- *	invalid.
+ *	the namespace, this function is called to resolve the command name. If
+ *	this function is able to resolve the name, it should return the status
+ *	code TCL_OK, along with the corresponding Tcl_Command in the rPtr
+ *	argument. Otherwise, the function can return TCL_CONTINUE, and the
+ *	command will be treated under the usual name resolution rules. Or, it
+ *	can return TCL_ERROR, and the command will be considered invalid.
  *
  *	Variable resolution is handled by two functions. The first is called
  *	whenever a variable needs to be resolved at compile time:

@@ -1460,7 +1460,7 @@ MakeFilter(
 	if (valuePtr == NULL) {
 	    len = 0;
 	} else {
-	    CONST char* string = Tcl_GetStringFromObj(valuePtr, &len);
+	    (void) Tcl_GetStringFromObj(valuePtr, &len);
 	}
 
 	/*

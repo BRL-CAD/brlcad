@@ -31,7 +31,7 @@ _INSTALLDIR	= $(INSTALLDIR:/=\)
 !endif
 
 !ifndef MACHINE
-!if "$(CPU)" == ""
+!if "$(CPU)" == "" || "$(CPU)" == "i386"
 MACHINE		= IX86
 !else
 MACHINE         = $(CPU)
@@ -51,12 +51,15 @@ CFG_ENCODING	= \"cp1252\"
 !if "$(OS)" == "Windows_NT"
 RMDIR	= rmdir /S /Q
 !if ![ver | find "4.0" > nul]
-CPY	= echo y | xcopy /i
+CPY	= echo y | xcopy /i >NUL
+COPY	= copy >NUL
 !else
 CPY	= xcopy /i /y >NUL
+COPY	= copy /y >NUL
 !endif
-!else
-CPY	= xcopy /i
+!else # "$(OS)" != "Windows_NT"
+CPY	= xcopy /i >_JUNK.OUT # On Win98 NUL does not work here.
+COPY	= copy >_JUNK.OUT # On Win98 NUL does not work here.
 RMDIR	= deltree /Y
 !endif
 MKDIR   = mkdir
@@ -131,8 +134,11 @@ DEBUGFLAGS     = $(DEBUGFLAGS) -GZ
 
 COMPILERFLAGS  =-W3
 
+# In v13 -GL and -YX are incompatible.
 !if [nmakehlp -c -YX]
+!if ![nmakehlp -c -GL]
 OPTIMIZATIONS  = $(OPTIMIZATIONS) -YX
+!endif
 !endif
 
 !if "$(MACHINE)" == "IX86"
@@ -207,6 +213,7 @@ LOIMPACT	= 0
 TCL_USE_STATIC_PACKAGES	= 0
 USE_THREAD_ALLOC = 0
 UNCHECKED	= 0
+HAVE_UXTHEME_H  = 1
 !else
 !if [nmakehlp -f $(OPTS) "static"]
 !message *** Doing static
@@ -261,6 +268,12 @@ USE_THREAD_ALLOC = 0
 UNCHECKED = 1
 !else
 UNCHECKED = 0
+!endif
+!if [nmakehlp -f $(OPTS) "noxp"]
+!message *** Exclude support for XP theme
+HAVE_UXTHEME_H  = 0
+!else
+HAVE_UXTHEME_H  = 1
 !endif
 !endif
 

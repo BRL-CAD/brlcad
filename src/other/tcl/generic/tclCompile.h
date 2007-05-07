@@ -3,10 +3,10 @@
  *
  * Copyright (c) 1996-1998 Sun Microsystems, Inc.
  * Copyright (c) 1998-2000 by Scriptics Corporation.
- * Copyright (c) 2001 by Kevin B. Kenny.  All rights reserved.
+ * Copyright (c) 2001 by Kevin B. Kenny. All rights reserved.
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
@@ -15,6 +15,8 @@
 #define _TCLCOMPILATION 1
 
 #include "tclInt.h"
+
+struct ByteCode;		/* Forward declaration. */
 
 /*
  *------------------------------------------------------------------------
@@ -114,6 +116,33 @@ typedef struct CmdLocation {
 } CmdLocation;
 
 /*
+ * TIP #280
+ * Structure to record additional location information for byte code. This
+ * information is internal and not saved. i.e. tbcload'ed code will not have
+ * this information. It records the lines for all words of all commands found
+ * in the byte code. The association with a ByteCode structure BC is done
+ * through the 'lineBCPtr' HashTable in Interp, keyed by the address of BC.
+ * Also recorded is information coming from the context, i.e. type of the
+ * frame and associated information, like the path of a sourced file.
+ */
+
+typedef struct ECL {
+  int srcOffset;		/* Command location to find the entry. */
+  int nline;
+  int *line;			/* Line information for all words in the
+				 * command. */
+} ECL;
+
+typedef struct ExtCmdLoc {
+  int type;			/* Context type. */
+  Tcl_Obj *path;		/* Path of the sourced file the command is
+				 * in. */
+  ECL *loc;			/* Command word locations (lines). */
+  int nloc;			/* Number of allocated entries in 'loc'. */
+  int nuloc;			/* Number of used entries in 'loc'. */
+} ExtCmdLoc;
+
+/*
  * CompileProcs need the ability to record information during compilation that
  * can be used by bytecode instructions during execution. The AuxData
  * structure provides this "auxiliary data" mechanism. An arbitrary number of
@@ -130,6 +159,8 @@ typedef struct CmdLocation {
 
 typedef ClientData (AuxDataDupProc)  (ClientData clientData);
 typedef void       (AuxDataFreeProc) (ClientData clientData);
+typedef void	   (AuxDataPrintProc)(ClientData clientData,
+			    struct ByteCode *codePtr, unsigned int pcOffset);
 
 /*
  * We define a separate AuxDataType struct to hold type-related information
@@ -139,7 +170,7 @@ typedef void       (AuxDataFreeProc) (ClientData clientData);
  */
 
 typedef struct AuxDataType {
-    char *name;			/* the name of the type. Types can be
+    char *name;			/* The name of the type. Types can be
 				 * registered and found by name */
     AuxDataDupProc *dupProc;	/* Callback procedure to invoke when the aux
 				 * data is duplicated (e.g., when the ByteCode
@@ -150,6 +181,9 @@ typedef struct AuxDataType {
     AuxDataFreeProc *freeProc;	/* Callback procedure to invoke when the aux
 				 * data is freed. NULL means no proc need be
 				 * called. */
+    AuxDataPrintProc *printProc;/* Callback function to invoke when printing
+				 * the aux data as part of debugging. NULL
+				 * means that the data can't be printed. */
 } AuxDataType;
 
 /*
@@ -159,7 +193,7 @@ typedef struct AuxDataType {
  */
 
 typedef struct AuxData {
-    AuxDataType *type;		/* pointer to the AuxData type associated with
+    AuxDataType *type;		/* Pointer to the AuxData type associated with
 				 * this ClientData. */
     ClientData clientData;	/* The compilation data itself. */
 } AuxData;
@@ -253,6 +287,16 @@ typedef struct CompileEnv {
 				/* Initial storage for cmd location map. */
     AuxData staticAuxDataArraySpace[COMPILEENV_INIT_AUX_DATA_SIZE];
 				/* Initial storage for aux data array. */
+    /* TIP #280 */
+    ExtCmdLoc *extCmdMapPtr;	/* Extended command location information for
+				 * 'info frame'. */
+    int line;			/* First line of the script, based on the
+				 * invoking context, then the line of the
+				 * command currently compiled. */
+    int atCmdStart;		/* Flag to say whether an INST_START_CMD
+				 * should be issued; they should never be
+				 * issued repeatedly, as that is significantly
+				 * inefficient. */
 } CompileEnv;
 
 /*
@@ -267,6 +311,7 @@ typedef struct CompileEnv {
  * A PRECOMPILED bytecode struct is one that was generated from a compiled
  * image rather than implicitly compiled from source
  */
+
 #define TCL_BYTECODE_PRECOMPILED		0x0001
 
 /*
@@ -569,8 +614,17 @@ typedef struct ByteCode {
 
 #define INST_JUMP_TABLE			121
 
+/*
+ * Instructions to support compilation of global, variable, upvar and
+ * [namespace upvar].
+ */
+
+#define INST_UPVAR                      122
+#define INST_NSUPVAR                    123
+#define INST_VARIABLE                   124
+
 /* The last opcode */
-#define LAST_INST_OPCODE		121
+#define LAST_INST_OPCODE		124
 
 /*
  * Table describing the Tcl bytecode instructions: their name (for displaying
@@ -593,8 +647,10 @@ typedef enum InstOperandType {
 				 * integer, but displayed differently.) */
     OPERAND_LVT1,		/* One byte unsigned index into the local
 				 * variable table. */
-    OPERAND_LVT4		/* Four byte unsigned index into the local
+    OPERAND_LVT4,		/* Four byte unsigned index into the local
 				 * variable table. */
+    OPERAND_AUX4,		/* Four byte unsigned index into the aux data
+				 * table. */
 } InstOperandType;
 
 typedef struct InstructionDesc {
@@ -604,8 +660,7 @@ typedef struct InstructionDesc {
 				 * instruction, used for stack requirements
 				 * computations. The value INT_MIN signals
 				 * that the instruction's worst case effect is
-				 * (1-opnd1).
-				 */
+				 * (1-opnd1). */
     int numOperands;		/* Number of operands. */
     InstOperandType opTypes[MAX_INSTRUCTION_OPERANDS];
 				/* The type of each operand. */
@@ -715,6 +770,34 @@ typedef struct JumptableInfo {
 } JumptableInfo;
 
 MODULE_SCOPE AuxDataType	tclJumptableInfoType;
+
+/*
+ * Structure used to hold information about a [dict update] command that is
+ * needed during program execution. These structures are stored in CompileEnv
+ * and ByteCode structures as auxiliary data.
+ */
+
+typedef struct {
+    int length;			/* Size of array */
+    int varIndices[1];		/* Array of variable indices to manage when
+				 * processing the start and end of a [dict
+				 * update]. There is really more than one
+				 * entry, and the structure is allocated to
+				 * take account of this. MUST BE LAST FIELD IN
+				 * STRUCTURE. */
+} DictUpdateInfo;
+
+MODULE_SCOPE AuxDataType	tclDictUpdateInfoType;
+
+/*
+ * ClientData type used by the math operator commands.
+ */
+
+typedef struct {
+    const char *operator;
+    const char *expected;
+    int numArgs;
+} TclOpCmdClientData;
 
 /*
  *----------------------------------------------------------------
@@ -740,8 +823,8 @@ MODULE_SCOPE int	TclCompEvalObj(Tcl_Interp *interp, Tcl_Obj *objPtr);
 
 /*
  *----------------------------------------------------------------
- * Procedures shared among Tcl bytecode compilation and execution
- * modules but not used outside:
+ * Procedures shared among Tcl bytecode compilation and execution modules but
+ * not used outside:
  *----------------------------------------------------------------
  */
 
@@ -773,6 +856,8 @@ MODULE_SCOPE void	TclEmitForwardJump(CompileEnv *envPtr,
 MODULE_SCOPE ExceptionRange * TclGetExceptionRangeForPc(unsigned char *pc,
 			    int catchOnly, ByteCode* codePtr);
 MODULE_SCOPE void	TclExpandJumpFixupArray(JumpFixupArray *fixupArrayPtr);
+MODULE_SCOPE int	TclExecuteByteCode(Tcl_Interp *interp,
+			    ByteCode *codePtr);
 MODULE_SCOPE void	TclFinalizeAuxDataTypeTable(void);
 MODULE_SCOPE int	TclFindCompiledLocal(CONST char *name, int nameChars,
 			    int create, int flags, Proc *procPtr);
@@ -788,7 +873,8 @@ MODULE_SCOPE void	TclInitByteCodeObj(Tcl_Obj *objPtr,
 			    CompileEnv *envPtr);
 MODULE_SCOPE void	TclInitCompilation(void);
 MODULE_SCOPE void	TclInitCompileEnv(Tcl_Interp *interp,
-			    CompileEnv *envPtr, char *string, int numBytes);
+			    CompileEnv *envPtr, char *string, int numBytes,
+			    CONST CmdFrame* invoker, int word);
 MODULE_SCOPE void	TclInitJumpFixupArray(JumpFixupArray *fixupArrayPtr);
 MODULE_SCOPE void	TclInitLiteralTable(LiteralTable *tablePtr);
 #ifdef TCL_COMPILE_STATS
@@ -811,14 +897,25 @@ MODULE_SCOPE int	TclRegisterLiteral(CompileEnv *envPtr,
 MODULE_SCOPE void	TclReleaseLiteral(Tcl_Interp *interp, Tcl_Obj *objPtr);
 MODULE_SCOPE void	TclSetCmdNameObj(Tcl_Interp *interp, Tcl_Obj *objPtr,
 			    Command *cmdPtr);
+MODULE_SCOPE int	TclSingleOpCmd(ClientData clientData,
+			    Tcl_Interp *interp, int objc,
+			    Tcl_Obj *CONST objv[]);
+MODULE_SCOPE int	TclSortingOpCmd(ClientData clientData,
+			    Tcl_Interp *interp, int objc,
+			    Tcl_Obj *CONST objv[]);
+MODULE_SCOPE int	TclVariadicOpCmd(ClientData clientData,
+			    Tcl_Interp *interp, int objc,
+			    Tcl_Obj *CONST objv[]);
+MODULE_SCOPE int	TclNoIdentOpCmd(ClientData clientData,
+			    Tcl_Interp *interp, int objc,
+			    Tcl_Obj *CONST objv[]);
 #ifdef TCL_COMPILE_DEBUG
 MODULE_SCOPE void	TclVerifyGlobalLiteralTable(Interp *iPtr);
 MODULE_SCOPE void	TclVerifyLocalLiteralTable(CompileEnv *envPtr);
 #endif
-MODULE_SCOPE int	TclCompileVariableCmd(Tcl_Interp *interp,
-			    Tcl_Parse *parsePtr, CompileEnv *envPtr);
 MODULE_SCOPE int	TclWordKnownAtCompileTime(Tcl_Token *tokenPtr,
 			    Tcl_Obj *valuePtr);
+MODULE_SCOPE int	TclWordSimpleExpansion(Tcl_Token *tokenPtr);
 
 /*
  *----------------------------------------------------------------
@@ -898,9 +995,11 @@ MODULE_SCOPE int	TclWordKnownAtCompileTime(Tcl_Token *tokenPtr,
  */
 
 #define TclEmitOpcode(op, envPtr) \
-    if ((envPtr)->codeNext == (envPtr)->codeEnd) \
+    if ((envPtr)->codeNext == (envPtr)->codeEnd) { \
 	TclExpandCodeArray(envPtr); \
+    } \
     *(envPtr)->codeNext++ = (unsigned char) (op);\
+    (envPtr)->atCmdStart = ((op) == INST_START_CMD); \
     TclUpdateStackReqs(op, 0, envPtr)
 
 /*
@@ -912,8 +1011,9 @@ MODULE_SCOPE int	TclWordKnownAtCompileTime(Tcl_Token *tokenPtr,
  */
 
 #define TclEmitInt1(i, envPtr) \
-    if ((envPtr)->codeNext == (envPtr)->codeEnd) \
+    if ((envPtr)->codeNext == (envPtr)->codeEnd) { \
 	TclExpandCodeArray(envPtr); \
+    } \
     *(envPtr)->codeNext++ = (unsigned char) ((unsigned int) (i))
 
 #define TclEmitInt4(i, envPtr) \
@@ -945,6 +1045,7 @@ MODULE_SCOPE int	TclWordKnownAtCompileTime(Tcl_Token *tokenPtr,
     } \
     *(envPtr)->codeNext++ = (unsigned char) (op); \
     *(envPtr)->codeNext++ = (unsigned char) ((unsigned int) (i));\
+    (envPtr)->atCmdStart = ((op) == INST_START_CMD); \
     TclUpdateStackReqs(op, i, envPtr)
 
 #define TclEmitInstInt4(op, i, envPtr) \
@@ -960,6 +1061,7 @@ MODULE_SCOPE int	TclWordKnownAtCompileTime(Tcl_Token *tokenPtr,
 	(unsigned char) ((unsigned int) (i) >>  8); \
     *(envPtr)->codeNext++ = \
 	(unsigned char) ((unsigned int) (i)      );\
+    (envPtr)->atCmdStart = ((op) == INST_START_CMD); \
     TclUpdateStackReqs(op, i, envPtr)
 
 /*

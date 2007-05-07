@@ -51,6 +51,8 @@ package require \fBTcl 8.5\fR
 .br
 \fB::tcl::mathfunc::int\fR \fIarg\fR
 .br
+\fB::tcl::mathfunc::isqrt\fR \fIarg\fR
+.br
 \fB::tcl::mathfunc::log\fR \fIarg\fR
 .br
 \fB::tcl::mathfunc::log10\fR \fIarg\fR
@@ -99,10 +101,10 @@ of which work solely with floating-point numbers unless otherwise noted:
 \fBatan2\fR	\fBbool\fR	\fBceil\fR	\fBcos\fR
 \fBcosh\fR	\fBdouble\fR	\fBentier\fR	\fBexp\fR
 \fBfloor\fR	\fBfmod\fR	\fBhypot\fR	\fBint\fR
-\fBlog\fR	\fBlog10\fR	\fBmax\fR	\fBmin\fR
-\fBpow\fR	\fBrand\fR	\fBround\fR	\fBsin\fR
-\fBsinh\fR	\fBsqrt\fR	\fBsrand\fR	\fBtan\fR
-\fBtanh\fR	\fBwide\fR
+\fBisqrt\fR	\fBlog\fR	\fBlog10\fR	\fBmax\fR
+\fBmin\fR	\fBpow\fR	\fBrand\fR	\fBround\fR
+\fBsin\fR	\fBsinh\fR	\fBsqrt\fR	\fBsrand\fR
+\fBtan\fR	\fBtanh\fR	\fBwide\fR
 .DE
 .PP
 .TP
@@ -185,6 +187,12 @@ to the machine word size are returned as an integer value.  For reference,
 the number of bytes in the machine word are stored in
 \fBtcl_platform(wordSize)\fR.
 .TP
+\fBisqrt(\fIarg\fB)\fR
+Computes the integer part of the square root of \fIarg\fR.  \fIArg\fR must be
+a positive value, either an integer or a floating point number.
+Unlike \fBsqrt\fR, which is limited to the precision of a floating point
+number, \fIisqrt\fR will return a result of arbitrary precision.
+.TP
 \fBlog(\fIarg\fB)\fR
 Returns the natural logarithm of \fIarg\fR.  \fIArg\fR must be a
 positive value.
@@ -261,4 +269,4 @@ Copyright (c) 1993 The Regents of the University of California.
 .br
 Copyright (c) 1994-2000 Sun Microsystems Incorporated.
 .br
-Copyright (c) 2005 by Kevin B. Kenny <kennykb@acm.org>. All rights reserved.
+Copyright (c) 2005, 2006 by Kevin B. Kenny <kennykb@acm.org>.

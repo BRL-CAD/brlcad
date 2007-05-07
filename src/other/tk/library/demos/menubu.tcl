@@ -1,4 +1,4 @@
-# menubutton.tcl --
+# menubu.tcl --
 #
 # This demonstration script creates a window with a bunch of menus
 # and cascaded menus using menubuttons.
@@ -11,16 +11,16 @@ if {![info exists widgetDemo]} {
 
 package require Tk
 
-set w .menubutton
+set w .menubu
 catch {destroy $w}
 toplevel $w
 wm title $w "Menu Button Demonstration"
 wm iconname $w "menubutton"
 positionWindow $w
 
-
 frame $w.body
 pack $w.body -expand 1 -fill both
+if {[tk windowingsystem] eq "aqua"} {catch {set origUseCustomMDEF $::tk::mac::useCustomMDEF; set ::tk::mac::useCustomMDEF 1}}
 
 menubutton $w.body.below -text "Below" -underline 0 -direction below -menu $w.body.below.m -relief raised
 menu $w.body.below.m -tearoff 0 
@@ -57,8 +57,7 @@ pack $body.buttons -padx 25 -pady 25
 tk_optionMenu $body.buttons.options menubuttonoptions one two three
 pack $body.buttons.options -side left -padx 25 -pady 25
 set m [tk_optionMenu $body.buttons.colors paletteColor Black red4 DarkGreen NavyBlue gray75 Red Green Blue gray50 Yellow Cyan Magenta White Brown DarkSeaGreen DarkViolet]
-if {[string equal [tk windowingsystem] "classic"]
-	|| [string equal [tk windowingsystem] "aqua"]} {
+if {[tk windowingsystem] eq "aqua"} {
     set topBorderColor Black
     set bottomBorderColor Black
 } else {
@@ -90,5 +89,4 @@ foreach i {Black gray75 gray50 White} {
 
 pack $body.buttons.colors -side left -padx 25 -pady 25
 
-
-
+if {[tk windowingsystem] eq "aqua"} {catch {set ::tk::mac::useCustomMDEF $origUseCustomMDEF}}

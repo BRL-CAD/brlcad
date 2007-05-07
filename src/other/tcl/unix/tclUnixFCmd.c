@@ -234,6 +234,26 @@ MODULE_SCOPE long tclMacOSXDarwinRelease;
 #define haveRealpath 1
 #endif
 #endif /* NO_REALPATH */
+
+#ifdef HAVE_FTS
+#ifdef HAVE_STRUCT_STAT64
+/* fts doesn't do stat64 */
+#define noFtsStat 1
+#elif defined(__APPLE__) && defined(__LP64__) && \
+	defined(MAC_OS_X_VERSION_MIN_REQUIRED) && \
+	MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+/*
+ * prior to Darwin 9, 64bit fts_open() without FTS_NOSTAT may crash (due to a
+ * 64bit-unsafe ALIGN macro); if we could be running on pre-10.5 OSX, check
+ * Darwin release at runtime and do a separate stat() if necessary.
+ */
+MODULE_SCOPE long tclMacOSXDarwinRelease;
+#define noFtsStat (tclMacOSXDarwinRelease < 9)
+#else
+#define noFtsStat 0
+#endif
+#endif /* HAVE_FTS */
+
 
 /*
  *---------------------------------------------------------------------------
@@ -541,6 +561,16 @@ TclUnixCopyFile(
 #endif
 #endif
 
+    /* [SF Tcl Bug 1586470] Even if we HAVE_ST_BLKSIZE, there are
+     * filesystems which report a bogus value for the blocksize.  An
+     * example is the Andrew Filesystem (afs), reporting a blocksize
+     * of 0. When detecting such a situation we now simply fall back
+     * to a hardwired default size.
+     */
+
+    if (blockSize <= 0) {
+        blockSize = 4096;
+    }
     buffer = ckalloc(blockSize);
     while (1) {
 	nread = (size_t) read(srcFd, buffer, blockSize);
@@ -1010,13 +1040,8 @@ TraverseUnixTree(
     }
 #else /* HAVE_FTS */
     paths[0] = source;
-    fts = fts_open((char**)paths, FTS_PHYSICAL|FTS_NOCHDIR|
-#ifdef HAVE_STRUCT_STAT64
-	    FTS_NOSTAT,				/* fts doesn't do stat64 */
-#else
-	    (doRewind ? FTS_NOSTAT : 0),	/* no need to stat for delete */
-#endif
-	    NULL);
+    fts = fts_open((char**)paths, FTS_PHYSICAL | FTS_NOCHDIR |
+	    (noFtsStat || doRewind ? FTS_NOSTAT : 0),  NULL);
     if (fts == NULL) {
 	errfile = source;
 	goto end;
@@ -1054,15 +1079,15 @@ TraverseUnixTree(
 		break;
 	}
 	if (!doRewind) { /* no need to stat for delete */
-#ifdef HAVE_STRUCT_STAT64
-	    statBufPtr = &statBuf;
-	    if (TclOSlstat(ent->fts_path, statBufPtr) != 0) {
-		errfile = ent->fts_path;
-		break;
+	    if (noFtsStat) {
+		statBufPtr = &statBuf;
+		if (TclOSlstat(ent->fts_path, statBufPtr) != 0) {
+		    errfile = ent->fts_path;
+		    break;
+		}
+	    } else {
+		statBufPtr = ent->fts_statp;
 	    }
-#else
-	    statBufPtr = ent->fts_statp;
-#endif
 	}
 	result = (*traverseProc)(sourcePtr, targetPtr, statBufPtr, type,
 		errorPtr);
@@ -1413,10 +1438,8 @@ GetPermissionsAttribute(
 	return TCL_ERROR;
     }
 
-    *attributePtrPtr = Tcl_NewObj();
-    TclObjPrintf(NULL, *attributePtrPtr, "%0#5lo",
-	    (long) (statBuf.st_mode & 0x00007FFF));
-
+    *attributePtrPtr = Tcl_ObjPrintf(
+	    "%0#5lo", (long) (statBuf.st_mode & 0x00007FFF));
     return TCL_OK;
 }
 

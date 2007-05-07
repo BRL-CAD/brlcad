@@ -48,7 +48,7 @@ static char *compoundStrings[] = {
  * Information used for parsing configuration specs:
  */
 
-static Tk_OptionSpec optionSpecs[] = {
+static const Tk_OptionSpec optionSpecs[] = {
     {TK_OPTION_BORDER, "-activebackground", "activeBackground", "Foreground",
         DEF_MENUBUTTON_ACTIVE_BG_COLOR, -1,
         Tk_Offset(TkMenuButton, activeBorder), 0,

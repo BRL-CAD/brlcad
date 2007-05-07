@@ -115,11 +115,11 @@ test font-4.1 {font command: actual: arguments} {
 test font-4.2 {font command: actual: arguments} {
     # (objc < 3) 
     list [catch {font actual} msg] $msg
-} {1 {wrong # args: should be "font actual font ?-displayof window? ?option?"}}
+} {1 {wrong # args: should be "font actual font ?-displayof window? ?option? ?--? ?char?"}}
 test font-4.3 {font command: actual: arguments} {
     # (objc - skip > 4) when skip == 0
     list [catch {font actual xyz abc def} msg] $msg
-} {1 {wrong # args: should be "font actual font ?-displayof window? ?option?"}}
+} {1 {wrong # args: should be "font actual font ?-displayof window? ?option? ?--? ?char?"}}
 test font-4.4 {font command: actual: displayof specified, so skip to next} {
     catch {font actual xyz -displayof . -size}
 } {0}
@@ -129,7 +129,7 @@ test font-4.5 {font command: actual: displayof specified, so skip to next} {
 test font-4.6 {font command: actual: arguments} {
     # (objc - skip > 4) when skip == 2
     list [catch {font actual xyz -displayof . abc def} msg] $msg
-} {1 {wrong # args: should be "font actual font ?-displayof window? ?option?"}}
+} {1 {wrong # args: should be "font actual font ?-displayof window? ?option? ?--? ?char?"}}
 test font-4.7 {font command: actual: arguments} {noExceed} {
     # (tkfont == NULL)
     list [catch {font actual "\{xyz"} msg] $msg
@@ -1333,6 +1333,36 @@ test font-45.4 {TkFontGetAliasList: match} {unix noExceed} {
     # can fail on Unix systems that have a real "times new roman" font
     font actual {{times new roman} 10} -family
 } [font actual {times 10} -family]
+
+test font-46.1 {font actual, with character, no option, no --} \
+    -body {
+	font actual {times 10} a
+    } \
+    -match glob \
+    -result [list -family [font actual {times 10} -family] -size *\
+		 -slant roman -underline 0 -overstrike 0]
+
+test font-46.2 {font actual, with character introduced by --} \
+    -body {
+	font actual {times 10} -- -
+    } \
+    -match glob \
+    -result [list -family [font actual {times 10} -family] -size *\
+		 -slant roman -underline 0 -overstrike 0]
+
+test font-46.3 {font actual, with character and option} {
+    font actual {times 10} -family a
+} [font actual {times 10} -family]
+
+test font-46.4 {font actual, with character, option and --} {
+    font actual {times 10} -family -- -
+} [font actual {times 10} -family]
+
+test font-46.5 {font actual, too many chars} {
+    list [catch {
+	font actual {times 10} 123456789012345678901234567890123456789012345678901
+    } result] $result
+} {1 {expected a single character but got "1234567890123456789012345678901234567..."}}
 
 setup
 

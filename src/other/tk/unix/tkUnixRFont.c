@@ -248,11 +248,10 @@ FinishedWithFont(
     UnixFtFont *fontPtr)
 {
     Display *display = fontPtr->display;
-    Tk_ErrorHandler handler;
     int i;
-
-    handler = Tk_CreateErrorHandler(display, -1, -1, -1, NULL,
+    Tk_ErrorHandler handler = Tk_CreateErrorHandler(display, -1, -1, -1, NULL,
 	    (ClientData) NULL);
+
     for (i = 0; i < fontPtr->nfaces; i++) {
 	if (fontPtr->faces[i].ftFont) {
 	    XftFontClose(fontPtr->display, fontPtr->faces[i].ftFont);
@@ -469,6 +468,65 @@ TkpGetSubFonts(
     Tcl_SetObjResult(interp, resultPtr);
 }
 
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkpGetFontAttrsForChar --
+ *
+ *	Retrieve the font attributes of the actual font used to render
+ *	a given character.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The font attributes are stored in *faPtr.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TkpGetFontAttrsForChar(
+    Tk_Window tkwin,		/* Window on the font's display */
+    Tk_Font tkfont,		/* Font to query */
+    Tcl_UniChar c,		/* Character of interest */
+    TkFontAttributes *faPtr)	/* Output: Font attributes */
+{
+    UnixFtFont *fontPtr = (UnixFtFont *) tkfont;
+				/* Structure describing the logical font */
+    FcChar32 ucs4 = (FcChar32) c;
+				/* UCS-4 character to map */
+    XftFont *xftFontPtr = GetFont(fontPtr, ucs4);
+				/* Actual font used to render the character */
+    const char *family;		/* Font family name */
+    double size;		/* Font size */
+    int weight;			/* Font weight */
+    int slant;			/* Font slant */
+
+    if (XftPatternGetString(xftFontPtr->pattern, XFT_FAMILY, 0,
+	    &family) != XftResultMatch) {
+	family = "Unknown";
+    }
+    if (XftPatternGetDouble(xftFontPtr->pattern, XFT_SIZE, 0,
+	    &size) != XftResultMatch) {
+	size = 12.0;
+    }
+    if (XftPatternGetInteger(xftFontPtr->pattern, XFT_WEIGHT, 0,
+	    &weight) != XftResultMatch) {
+	weight = XFT_WEIGHT_MEDIUM;
+    }
+    if (XftPatternGetInteger(xftFontPtr->pattern, XFT_SLANT, 0,
+	    &slant) != XftResultMatch) {
+	slant = XFT_SLANT_ROMAN;
+    }
+    faPtr->family = Tk_GetUid(family);
+    faPtr->size = (int) size;
+    faPtr->weight = (weight > XFT_WEIGHT_MEDIUM) ? TK_FW_BOLD : TK_FW_NORMAL;
+    faPtr->slant = (slant > XFT_SLANT_ROMAN) ? TK_FS_ITALIC : TK_FS_ROMAN;
+    faPtr->underline = fontPtr->font.fa.underline;
+    faPtr->overstrike = fontPtr->font.fa.overstrike;
+}
+
 int
 Tk_MeasureChars(
     Tk_Font tkfont,		/* Font in which characters will be drawn. */
@@ -495,11 +553,9 @@ Tk_MeasureChars(
     UnixFtFont *fontPtr = (UnixFtFont *) tkfont;
     XftFont *ftFont;
     FcChar32 c;
-    int clen;
     XGlyphInfo extents;
-    int curX, newX;
+    int clen, curX, newX, curByte, newByte, sawNonSpace;
     int termByte = 0, termX = 0;
-    int curByte, newByte, sawNonSpace;
 #if DEBUG_FONTSEL
     char string[256];
     int len = 0;
@@ -568,11 +624,18 @@ Tk_MeasureChars(
 }
 
 int
-TkpMeasureCharsInContext(Tk_Font tkfont, CONST char * source, int numBytes,
-			 int rangeStart, int rangeLength, int maxLength,
-			 int flags, int * lengthPtr)
+TkpMeasureCharsInContext(
+    Tk_Font tkfont,
+    CONST char *source,
+    int numBytes,
+    int rangeStart,
+    int rangeLength,
+    int maxLength,
+    int flags,
+    int *lengthPtr)
 {
     (void) numBytes; /*unused*/
+
     return Tk_MeasureChars(tkfont, source + rangeStart, rangeLength,
 	    maxLength, flags, lengthPtr);
 }
@@ -597,13 +660,12 @@ Tk_DrawChars(
     int x, int y)		/* Coordinates at which to place origin of
 				 * string when drawing. */
 {
-    const int maxCoord = 0x7FFF;	/* Xft coordinates are 16 bit values */
+    const int maxCoord = 0x7FFF;/* Xft coordinates are 16 bit values */
     UnixFtFont *fontPtr = (UnixFtFont *) tkfont;
     XGCValues values;
     XColor xcolor;
-    int clen;
+    int clen, nspec;
     XftGlyphFontSpec specs[NUM_SPEC];
-    int nspec;
     XGlyphInfo metrics;
 
     if (fontPtr->ftDraw == 0) {
@@ -615,10 +677,9 @@ Tk_DrawChars(
 		DefaultColormap(display, fontPtr->screen));
 	fontPtr->drawable = drawable;
     } else {
-	Tk_ErrorHandler handler;
+	Tk_ErrorHandler handler = Tk_CreateErrorHandler(display, -1, -1, -1,
+		NULL, (ClientData) NULL);
 
-	handler = Tk_CreateErrorHandler(display, -1, -1, -1, NULL,
-		(ClientData) NULL);
 	XftDrawChange(fontPtr->ftDraw, drawable);
 	fontPtr->drawable = drawable;
 	Tk_DeleteErrorHandler(handler);

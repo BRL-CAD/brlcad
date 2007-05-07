@@ -249,6 +249,20 @@ test registry-4.8 {GetKeyNames: Unicode} {win reg nt} {
     registry delete HKEY_CLASSES_ROOT\\TclFoobar
     set result
 } "baz\u30b7bar blat"
+test registry-4.9 {GetKeyNames: very long key [Bug 1682211]} {*}{
+    -constraints {win reg}
+    -setup {
+	registry set HKEY_CLASSES_ROOT\\TclFoobar\\a
+	registry set HKEY_CLASSES_ROOT\\TclFoobar\\b[string repeat x 254]
+	registry set HKEY_CLASSES_ROOT\\TclFoobar\\c
+    }
+    -body {
+	lsort [registry keys HKEY_CLASSES_ROOT\\TclFoobar]
+    }
+    -cleanup {
+	registry delete HKEY_CLASSES_ROOT\\TclFoobar
+    }} \
+    -result [list a b[string repeat x 254] c]
 
 test registry-5.1 {GetType} {win reg english} {
     registry delete HKEY_CLASSES_ROOT\\TclFoobar
@@ -600,3 +614,9 @@ test registry-12.5 {BroadcastValue} {win reg} {
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# tcl-indent-level: 4
+# fill-column: 78
+# End:

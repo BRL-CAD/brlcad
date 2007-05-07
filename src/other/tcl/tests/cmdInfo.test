@@ -69,7 +69,7 @@ test cmdinfo-4.1 {Tcl_GetCommandName/Tcl_GetCommandFullName procedures} \
     rename x1 newName
     set y [testcmdtoken name $x]
     rename newName x1
-    lappend y {expand}[testcmdtoken name $x]
+    lappend y {*}[testcmdtoken name $x]
 } {newName ::newName x1 ::x1}
 
 catch {rename newTestCmd {}}
@@ -86,7 +86,7 @@ test cmdinfo-5.1 {Names for commands created when inside namespaces} \
     }]
     set y [testcmdtoken name $x]
     rename ::testCmd newTestCmd
-    lappend y {expand}[testcmdtoken name $x]
+    lappend y {*}[testcmdtoken name $x]
 } {testCmd ::testCmd newTestCmd ::newTestCmd}
 
 test cmdinfo-6.1 {Names for commands created when outside namespaces} \
@@ -94,7 +94,7 @@ test cmdinfo-6.1 {Names for commands created when outside namespaces} \
     set x [testcmdtoken create cmdInfoNs1::cmdInfoNs2::testCmd]
     set y [testcmdtoken name $x]
     rename cmdInfoNs1::cmdInfoNs2::testCmd newTestCmd2
-    lappend y {expand}[testcmdtoken name $x]
+    lappend y {*}[testcmdtoken name $x]
 } {testCmd ::cmdInfoNs1::cmdInfoNs2::testCmd newTestCmd2 ::newTestCmd2}
 
 # cleanup

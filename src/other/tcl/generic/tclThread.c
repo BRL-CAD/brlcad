@@ -87,14 +87,14 @@ Tcl_GetThreadData(
     result = TclpThreadDataKeyGet(keyPtr);
 
     if (result == NULL) {
-	result = (void *) ckalloc((size_t) size);
+	result = ckalloc((size_t) size);
 	memset(result, 0, (size_t) size);
 	TclpThreadDataKeySet(keyPtr, result);
     }
 #else /* TCL_THREADS */
     if (*keyPtr == NULL) {
-	result = (void *) ckalloc((size_t) size);
-	memset((char *) result, 0, (size_t) size);
+	result = ckalloc((size_t) size);
+	memset(result, 0, (size_t) size);
 	*keyPtr = (Tcl_ThreadDataKey)result;
 	RememberSyncObject((char *) keyPtr, &keyRecord);
     }
@@ -126,10 +126,10 @@ TclThreadDataKeyGet(
 				 * (pthread_key_t **) */
 {
 #ifdef TCL_THREADS
-    return (void *) TclpThreadDataKeyGet(keyPtr);
+    return TclpThreadDataKeyGet(keyPtr);
 #else /* TCL_THREADS */
     char *result = *(char **) keyPtr;
-    return (void *) result;
+    return result;
 #endif /* TCL_THREADS */
 }
 
@@ -358,7 +358,7 @@ void
 TclFinalizeSynchronization(void)
 {
 #ifdef TCL_THREADS
-    void* blockPtr;
+    void *blockPtr;
     Tcl_ThreadDataKey *keyPtr;
     Tcl_Mutex *mutexPtr;
     Tcl_Condition *condPtr;

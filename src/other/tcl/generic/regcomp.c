@@ -38,7 +38,7 @@
 /* =====^!^===== begin forwards =====^!^===== */
 /* automatically gathered by fwd; do not hand-edit */
 /* === regcomp.c === */
-int compile(regex_t *, CONST chr *, size_t, int);
+int compile(regex_t *, const chr *, size_t, int);
 static VOID moresubs(struct vars *, int);
 static int freev(struct vars *, int);
 static VOID makesearch(struct vars *, struct nfa *);
@@ -52,7 +52,7 @@ static VOID repeat(struct vars *, struct state *, struct state *, int, int);
 static VOID bracket(struct vars *, struct state *, struct state *);
 static VOID cbracket(struct vars *, struct state *, struct state *);
 static VOID brackpart(struct vars *, struct state *, struct state *);
-static chr *scanplain(struct vars *);
+static const chr *scanplain(struct vars *);
 static VOID leaders(struct vars *, struct cvec *);
 static VOID onechr(struct vars *, pchr, struct state *, struct state *);
 static VOID dovec(struct vars *, struct cvec *, struct state *, struct state *);
@@ -75,11 +75,11 @@ static VOID rfree(regex_t *);
 static VOID dump(regex_t *, FILE *);
 static VOID dumpst(struct subre *, FILE *, int);
 static VOID stdump(struct subre *, FILE *, int);
-static char *stid(struct subre *, char *, size_t);
+static const char *stid(struct subre *, char *, size_t);
 /* === regc_lex.c === */
 static VOID lexstart(struct vars *);
 static VOID prefixes(struct vars *);
-static VOID lexnest(struct vars *, chr *, chr *);
+static VOID lexnest(struct vars *, const chr *, const chr *);
 static VOID lexword(struct vars *);
 static int next(struct vars *);
 static int lexescape(struct vars *);
@@ -88,9 +88,9 @@ static int brenext(struct vars *, pchr);
 static VOID skip(struct vars *);
 static chr newline(NOPARMS);
 #ifdef REG_DEBUG
-static chr *ch(NOPARMS);
+static const chr *ch(NOPARMS);
 #endif
-static chr chrnamed(struct vars *, chr *, chr *, pchr);
+static chr chrnamed(struct vars *, const chr *, const chr *, pchr);
 /* === regc_color.c === */
 static VOID initcm(struct vars *, struct colormap *);
 static VOID freecm(struct colormap *);
@@ -176,7 +176,7 @@ static struct cvec *clearcvec(struct cvec *);
 static VOID addchr(struct cvec *, pchr);
 static VOID addrange(struct cvec *, pchr, pchr);
 #ifdef REGEXP_MCCE_ENABLED
-static VOID addmcce(struct cvec *, chr *, chr *);
+static VOID addmcce(struct cvec *, const chr *, const chr *);
 #endif
 static int haschr(struct cvec *, pchr);
 static struct cvec *getcvec(struct vars *, int, int, int);
@@ -185,24 +185,24 @@ static VOID freecvec(struct cvec *);
 static int nmcces(struct vars *);
 static int nleaders(struct vars *);
 static struct cvec *allmcces(struct vars *, struct cvec *);
-static celt element(struct vars *, chr *, chr *);
+static celt element(struct vars *, const chr *, const chr *);
 static struct cvec *range(struct vars *, celt, celt, int);
 static int before(celt, celt);
 static struct cvec *eclass(struct vars *, celt, int);
-static struct cvec *cclass(struct vars *, chr *, chr *, int);
+static struct cvec *cclass(struct vars *, const chr *, const chr *, int);
 static struct cvec *allcases(struct vars *, pchr);
-static int cmp(CONST chr *, CONST chr *, size_t);
-static int casecmp(CONST chr *, CONST chr *, size_t);
+static int cmp(const chr *, const chr *, size_t);
+static int casecmp(const chr *, const chr *, size_t);
 /* automatically gathered by fwd; do not hand-edit */
 /* =====^!^===== end forwards =====^!^===== */
 
 /* internal variables, bundled for easy passing around */
 struct vars {
     regex_t *re;
-    chr *now;			/* scan pointer into string */
-    chr *stop;			/* end of string */
-    chr *savenow;		/* saved now and stop for "subroutine call" */
-    chr *savestop;
+    const chr *now;		/* scan pointer into string */
+    const chr *stop;		/* end of string */
+    const chr *savenow;		/* saved now and stop for "subroutine call" */
+    const chr *savestop;
     int err;			/* error code (0 if none) */
     int cflags;			/* copy of compile flags */
     int lasttype;		/* type of previous token */
@@ -278,17 +278,16 @@ static struct fns functions = {
 
 /*
  - compile - compile regular expression
- ^ int compile(regex_t *, CONST chr *, size_t, int);
+ ^ int compile(regex_t *, const chr *, size_t, int);
  */
 int
 compile(
     regex_t *re,
-    CONST chr *string,
+    const chr *string,
     size_t len,
     int flags)
 {
-    struct vars var;
-    struct vars *v = &var;
+    AllocVars(v);
     struct guts *g;
     int i;
     size_t j;
@@ -300,12 +299,15 @@ compile(
      */
 
     if (re == NULL || string == NULL) {
+	FreeVars(v);
 	return REG_INVARG;
     }
     if ((flags&REG_QUOTE) && (flags&(REG_ADVANCED|REG_EXPANDED|REG_NEWLINE))) {
+	FreeVars(v);
 	return REG_INVARG;
     }
     if (!(flags&REG_EXTENDED) && (flags&REG_ADVF)) {
+	FreeVars(v);
 	return REG_INVARG;
     }
 
@@ -314,7 +316,7 @@ compile(
      */
 
     v->re = re;
-    v->now = (chr *)string;
+    v->now = string;
     v->stop = v->now + len;
     v->savenow = v->savestop = NULL;
     v->err = 0;
@@ -372,7 +374,7 @@ compile(
 	leaders(v, v->mcces);
 #ifdef REGEXP_MCCE_ENABLED
 	/* Function does nothing with NULL pointers */
-	addmcce(v->mcces, (chr *)NULL, (chr *)NULL);	/* dummy */
+	addmcce(v->mcces, (const chr *)NULL, (const chr *)NULL); /* dummy */
 #endif
     }
     CNOERR();
@@ -525,6 +527,8 @@ freev(
     struct vars *v,
     int err)
 {
+    register int ret;
+
     if (v->re != NULL) {
 	rfree(v->re);
     }
@@ -554,7 +558,9 @@ freev(
     }
     ERR(err);			/* nop if err==0 */
 
-    return v->err;
+    ret = v->err;
+    FreeVars(v);
+    return ret;
 }
 
 /*
@@ -1359,8 +1365,8 @@ repeat(
 #define	INF		3
 #define	PAIR(x, y)	((x)*4 + (y))
 #define	REDUCE(x)	( ((x) == INFINITY) ? INF : (((x) > 1) ? SOME : (x)) )
-    CONST int rm = REDUCE(m);
-    CONST int rn = REDUCE(n);
+    const int rm = REDUCE(m);
+    const int rn = REDUCE(n);
     struct state *s;
     struct state *s2;
 
@@ -1469,7 +1475,7 @@ cbracket(
     struct arc *ba;			/* arc from left, from bracket() */
     struct arc *pa;			/* MCCE-prototype arc */
     color co;
-    chr *p;
+    const chr *p;
     int i;
 
     NOERR();
@@ -1558,8 +1564,8 @@ brackpart(
     celt startc;
     celt endc;
     struct cvec *cv;
-    chr *startp;
-    chr *endp;
+    const chr *startp;
+    const chr *endp;
     chr c[1];
 
     /*
@@ -1666,13 +1672,13 @@ brackpart(
  - scanplain - scan PLAIN contents of [. etc.
  * Certain bits of trickery in lex.c know that this code does not try to look
  * past the final bracket of the [. etc.
- ^ static chr *scanplain(struct vars *);
+ ^ static const chr *scanplain(struct vars *);
  */
-static chr *			/* just after end of sequence */
+static const chr *		/* just after end of sequence */
 scanplain(
     struct vars *v)
 {
-    chr *endp;
+    const chr *endp;
 
     assert(SEE(COLLEL) || SEE(ECLASS) || SEE(CCLASS));
     NEXT();
@@ -1701,7 +1707,7 @@ leaders(
     struct cvec *cv)
 {
     int mcce;
-    chr *p;
+    const chr *p;
     chr leader;
     struct state *s;
     struct arc *a;
@@ -1767,9 +1773,9 @@ dovec(
     struct state *rp)
 {
     chr ch, from, to;
-    chr *p;
+    const chr *p;
     int i;
-    
+
     for (p = cv->chrs, i = cv->nchrs; i > 0; p++, i--) {
 	ch = *p;
 	newarc(v->nfa, PLAIN, subcolor(v->cm, ch), lp, rp);
@@ -1794,7 +1800,7 @@ dovec(
 {
     chr ch, from, to;
     celt ce;
-    chr *p;
+    const chr *p;
     int i;
     struct cvec *leads;
     color co;
@@ -1943,7 +1949,7 @@ nextleader(
     pchr to)
 {
     int i;
-    chr *p;
+    const chr *p;
     chr ch;
     celt it = NOCELT;
 
@@ -2460,7 +2466,7 @@ stdump(
  - stid - identify a subtree node for dumping
  ^ static char *stid(struct subre *, char *, size_t);
  */
-static char *			/* points to buf or constant string */
+static const char *			/* points to buf or constant string */
 stid(
     struct subre *t,
     char *buf,

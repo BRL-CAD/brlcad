@@ -12,7 +12,7 @@
  * The library is free for all purposes without any express
  * guarantee it works.
  *
- * Tom St Denis, tomstdenis@iahu.ca, http://math.libtomcrypt.org
+ * Tom St Denis, tomstdenis@gmail.com, http://math.libtomcrypt.com
  */
 
 /* Fast (comba) multiplier
@@ -78,10 +78,7 @@ int fast_s_mp_mul_digs (mp_int * a, mp_int * b, mp_int * c, int digs)
 
       /* make next carry */
       _W = _W >> ((mp_word)DIGIT_BIT);
-  }
-
-  /* store final carry */
-  W[ix] = (mp_digit)(_W & MP_MASK);
+ }
 
   /* setup dest */
   olduse  = c->used;

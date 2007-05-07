@@ -177,5 +177,8 @@ actions occur:  the button is completely non-responsive.
 The behavior of buttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
+.SH "SEE ALSO"
+ttk_button(n)
+
 .SH KEYWORDS
 button, widget

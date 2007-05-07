@@ -27,7 +27,7 @@ unsigned long
 int
 \fBTk_DeleteBinding(\fIinterp, bindingTable, object, eventString\fB)\fR
 .sp
-CONST char *
+const char *
 \fBTk_GetBinding(\fIinterp, bindingTable, object, eventString\fB)\fR
 .sp
 \fBTk_GetAllBindings(\fIinterp, bindingTable, object\fB)\fR
@@ -45,7 +45,7 @@ Token for binding table;  must have been returned by some previous
 call to \fBTk_CreateBindingTable\fR.
 .AP ClientData object in
 Identifies object with which binding is associated.
-.AP "CONST char" *eventString in
+.AP "const char" *eventString in
 String describing event sequence.
 .AP char *script in
 Tcl script to invoke when binding triggers.

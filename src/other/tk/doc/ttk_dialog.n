@@ -1,0 +1,134 @@
+'\"
+'\" Copyright (c) 2005 Joe English
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\" 
+.so man.macros
+.TH ttk_dialog n 8.5 Tk "Tk Themed Widget"
+.BS
+.\" Use _ instead of :: as the name becomes a filename on install
+.SH NAME
+ttk_dialog \- create a dialog box
+.SH "SYNOPSIS"
+\fBttk::dialog\fR \fIpathname\fR ?\fIoptions...\fR?
+\fBttk::dialog::define\fR \fIdialogType\fR ?\fIoptions...\fR?
+.BE
+
+.SH DESCRIPTION
+A dialog box is a transient top-level window 
+containing an icon, a short message, an optional, longer, detail message,
+and a row of command buttons.
+When the user presses any of the buttons,
+a callback function is invoked
+and then the dialog is destroyed.
+.PP
+Additional widgets may be added in the dialog \fIclient frame\fR.
+
+.SH "WIDGET-SPECIFIC OPTIONS"
+.OP \-title undefined undefined
+Specifies a string to use as the window manager title.
+.OP \-message undefined undefined
+Specifies the message to display in this dialog.
+.OP \-detail undefined undefined
+Specifies a longer auxilliary message.
+.OP \-command undefined undefined
+Specifies a command prefix to be invoked when the user presses
+one of the command buttons.  
+The symbolic name of the button is passed as an additional argument
+to the command.
+The dialog is dismissed after invoking the command.
+.OP \-parent undefined undefined
+Specifies a toplevel window for which the dialog is transient.
+If omitted, the default is the nearest ancestor toplevel.
+If set to the empty string, the dialog will not be a transient window.
+.OP \-type undefined undefined
+Specifies a built-in or user-defined dialog type.
+See \fBPREDEFINED DIALOG TYPES\fR, below.
+.OP \-icon undefined undefined
+Specifies one of the stock dialog icons,
+\fBinfo\fR, \fBquestion\fR, \fBwarning\fR, \fBerror\fR,
+\fBauth\fR, or \fBbusy\fR.
+If set to the empty string (the defalt), no icon is displayed.
+.OP \-buttons undefined undefined
+A list of symbolic button names.
+.OP \-labels undefined undefined
+A dictionary mapping symbolic button names to textual labels.
+May be omitted if all the buttons are predefined.
+.OP \-default undefined undefined
+The symbolic name of the default button.
+.OP \-cancel undefined undefined
+The symbolic name of the "cancel" button.
+The cancel button is invoked if the user presses the Escape key
+and when the dialog is closed from the window manager.
+If \fB-cancel\fR is not specified, 
+the dialog ignores window manager close commands (WM_DELETE_WINDOW).
+
+.SH "WIDGET COMMANDS"
+.TP
+\fBttk::dialog::clientframe \fIdlg\fR
+Returns the widget path of the client frame.
+Other widgets may be added to the client frame.
+The client frame appears between the detail message and the command buttons.
+
+.SH "PREDEFINED DIALOG TYPES"
+The \fB-type\fR option, if present, specifies default values 
+for other options.  \fBttk::dialog::define \fItype options...\fR
+specifies a new stock dialog \fItype\fR.  
+The following stock dialog types are predefined:
+.CS
+ttk::dialog::define ok \e
+    -icon info -buttons {ok} -default ok
+ttk::dialog::define okcancel \e
+    -icon info -buttons {ok cancel} -default ok -cancel cancel
+ttk::dialog::define yesno \e
+    -icon question -buttons {yes no}
+ttk::dialog::define yesnocancel \e
+    -icon question -buttons {yes no cancel} -cancel cancel
+ttk::dialog::define retrycancel \e
+    -icon question -buttons {retry cancel} -cancel cancel
+.CE
+
+.SH "STOCK BUTTONS"
+The following ``stock'' symbolic button names have predefined labels:
+\fByes\fR, \fBno\fR, \fBok\fR, \fBcancel\fR, and \fBretry\fR.
+.PP
+It is not necessary to list these in the \fB-labels\fR dictionary.
+.\" .SH "DIFFERENCES FROM MESSAGE BOXES"
+.\" The \fBttk::dialog\fR constructor is similar to
+.\" the Tk library procedure \fBtk_messageBox\fR,
+.\" but with the following notable differences:
+.\" .IP \(bu
+.\" The first argument to \fBttk::dialog\fR is the name of
+.\" the widget to create; \fBtk_messageBox\fR has
+.\" .IP \(bu
+.\" Ttk dialog boxes are non-modal by default.
+.\" .IP \(bu
+.\" The \fBtk_messageBox\fR command is blocking:
+.\" it does not return until the user presses one of the command buttons.
+.\" \fBttk::dialog\fR returns immediately after creating the dialog box.
+.SH EXAMPLE
+.CS
+proc saveFileComplete {button} {
+    switch -- $button {
+    	yes { # save file ... }
+	no  { exit }
+	cancel { # no-op }
+    }
+}
+
+ttk::dialog .saveFileDialog \e
+    -title "Save file?" \e
+    -icon question \e
+    -message "Save file before closing?" \e
+    -detail "If you do not save the file, your work will be lost" \e
+    -buttons [list yes no cancel] \e 
+    -labels [list yes "Save file" no "Don't save"] \e
+    -command saveFileComplete \e
+    ;
+.CE
+
+.SH "SEE ALSO"
+tk_messageBox(n), wm(n), toplevel(n)

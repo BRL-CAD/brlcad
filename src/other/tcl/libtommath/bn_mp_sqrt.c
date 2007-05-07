@@ -13,7 +13,7 @@
  * The library is free for all purposes without any express
  * guarantee it works.
  *
- * Tom St Denis, tomstdenis@iahu.ca, http://math.libtomcrypt.org
+ * Tom St Denis, tomstdenis@gmail.com, http://math.libtomcrypt.com
  */
 
 #ifndef NO_FLOATING_POINT
@@ -68,12 +68,18 @@ int mp_sqrt(mp_int *arg, mp_int *ret)
   dig = (mp_digit) ldexp(d, -DIGIT_BIT);
   if (dig) {
       t1.used = i+2;
-      t1.dp[i+1] = dig;
       d -= ldexp((double) dig, DIGIT_BIT);
+      if (d != 0.0) {
+	  t1.dp[i+1] = dig;
+	  t1.dp[i] = ((mp_digit) d) - 1;
+      } else {
+	  t1.dp[i+1] = dig-1;
+	  t1.dp[i] = MP_DIGIT_MAX;
+      }
   } else {
       t1.used = i+1;
+      t1.dp[i] = ((mp_digit) d) - 1;
   }
-  t1.dp[i] = (mp_digit) d;
 
 #else
 
@@ -119,5 +125,6 @@ E2: mp_clear(&t1);
 #endif
 
 /* $Source$ */
+/* Based on Tom's 1.3 */
 /* $Revision$ */
 /* $Date$ */

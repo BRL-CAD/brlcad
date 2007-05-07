@@ -845,9 +845,8 @@ ConvertLocalToUTCUsingC(
 
     if (localErrno != 0
 	    || (fields->seconds == -1 && timeVal.tm_yday == -1)) {
-	Tcl_SetObjResult(interp,
-		Tcl_NewStringObj("time value too large/small to represent",
-		-1));
+	Tcl_SetResult(interp, "time value too large/small to represent",
+		TCL_STATIC);
 	return TCL_ERROR;
     }
     return TCL_OK;
@@ -995,7 +994,7 @@ ConvertUTCToLocalUsingC(
     timeVal = ThreadSafeLocalTime(&tock);
     if (timeVal == NULL) {
 	Tcl_AppendResult(interp,
-		"localtime failed (clock value may be too ",
+		"localtime failed (clock value may be too "
 		"large/small to represent)", NULL);
 	Tcl_SetErrorCode(interp, "CLOCK", "localtimeFailed", NULL);
 	return TCL_ERROR;

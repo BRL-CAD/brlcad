@@ -12,13 +12,17 @@
  * The library is free for all purposes without any express
  * guarantee it works.
  *
- * Tom St Denis, tomstdenis@iahu.ca, http://math.libtomcrypt.org
+ * Tom St Denis, tomstdenis@gmail.com, http://math.libtomcrypt.com
  */
 
 static int s_is_power_of_two(mp_digit b, int *p)
 {
    int x;
 
+   /* quick out - if (b & (b-1)) isn't zero, b isn't a power of two */
+   if ((b & (b-1)) != 0) {
+       return 0;
+   }
    for (x = 1; x < DIGIT_BIT; x++) {
       if (b == (((mp_digit)1)<<x)) {
          *p = x;

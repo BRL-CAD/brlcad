@@ -1,6 +1,7 @@
 '\"
 '\" Copyright (c) 1993 The Regents of the University of California.
 '\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
+'\" Copyright (c) 2006 Donal K. Fellows.
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -29,6 +30,12 @@ If the initial arguments to \fBexec\fR start with \fB\-\fR then
 they are treated as command-line switches and are not part
 of the pipeline specification.  The following switches are
 currently supported:
+.TP 13
+\fB\-ignorestderr\fR
+.VS 8.5
+Stops the \fBexec\fR command from treating the output of messages to the
+pipeline's standard error channel as an error case.
+.VE 8.5
 .TP 13
 \fB\-keepnewline\fR
 Retains a trailing newline in the pipeline's output.
@@ -137,7 +144,10 @@ error messages describing the abnormal terminations; the
 \fB-errorcode\fR return option will contain additional information
 about the last abnormal termination encountered.
 If any of the commands writes to its standard error file and that
-standard error isn't redirected,
+standard error isn't redirected
+.VS 8.5
+and \fB\-ignorestderr\fR is not specified,
+.VE 8.5
 then \fBexec\fR will return an error;  the error message
 will include the pipeline's standard output, followed by messages
 about abnormal terminations (if any), followed by the standard error
@@ -367,7 +377,7 @@ remember that Tcl does not handle globbing or expand things into
 multiple arguments by default.  Instead you should write things like
 this:
 .CS
-\fBexec\fR ls -l {expand}[glob *.tcl]
+\fBexec\fR ls -l {*}[glob *.tcl]
 .CE
 .PP
 .SH "WINDOWS EXAMPLES"
@@ -407,7 +417,7 @@ applies especially when you want to run "internal" commands like
 \fIdir\fR from a Tcl script (if you just want to list filenames, use
 the \fBglob\fR command.)  To do that, use this:
 .CS
-\fBexec\fR {expand}[auto_execok dir] *.tcl
+\fBexec\fR {*}[auto_execok dir] *.tcl
 .CE
 
 .SH "SEE ALSO"

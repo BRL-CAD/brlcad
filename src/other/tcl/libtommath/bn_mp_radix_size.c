@@ -12,7 +12,7 @@
  * The library is free for all purposes without any express
  * guarantee it works.
  *
- * Tom St Denis, tomstdenis@iahu.ca, http://math.libtomcrypt.org
+ * Tom St Denis, tomstdenis@gmail.com, http://math.libtomcrypt.com
  */
 
 /* returns size of ASCII reprensentation */
@@ -83,4 +83,6 @@ int mp_radix_size (mp_int * a, int radix, int *size)
 #endif
 
 /* $Source$ */
-/* Tom's revision is 1.3 */
+/* Tom's revision is 1.4 */
+/* $Revision$ */
+/* $Date$ */

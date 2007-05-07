@@ -519,8 +519,8 @@ TkUndoInsertUndoSeparator(
  */
 
 int
-TkUndoRevert(stack)
-    TkUndoRedoStack *stack;
+TkUndoRevert(
+    TkUndoRedoStack *stack)
 {
     TkUndoAtom *elem;
 

@@ -32,7 +32,7 @@ other subcommands is optional.
 .TP
 \fIcmdPrefix \fBinitialize \fIchannelId mode\fR
 .
-An invokation of this subcommand will be the first call the
+An invocation of this subcommand will be the first call the
 \fIcmdPrefix\fR will receive for the specified new \fIchannelId\fR. It
 is the responsibility of this subcommand to set up any internal data
 structures required to keep track of the channel and its state.
@@ -62,7 +62,7 @@ supported by the \fIcmdPrefix\fR.
 .TP
 \fIcmdPrefix \fBfinalize \fIchannelId\fR
 .
-An invokation of this subcommand will be the last call the
+An invocation of this subcommand will be the last call the
 \fIcmdPrefix\fR will receive for the specified \fIchannelId\fR. It will
 be generated just before the destruction of the data structures of the
 channel held by the Tcl core. The command handler \fImust not\fR
@@ -98,7 +98,7 @@ custom return codes.
 .PP
 This subcommand interacts with \fBchan postevent\fR. Trying to post an
 event which was not listed in the last call to \fBwatch\fR will cause
-\fBchan postenvent\fR to throw an error.
+\fBchan postevent\fR to throw an error.
 .RE
 .SS "OPTIONAL SUBCOMMANDS"
 .TP
@@ -112,7 +112,7 @@ from the channel handled by the command.
 .PP
 The return value of this subcommand is taken as the requested data
 \fIbytes\fR. If the returned data contains more bytes than requested,
-an error will be signalled and later thrown by the command which
+an error will be signaled and later thrown by the command which
 performed the read (usually \fBgets\fR or \fBread\fR). However,
 returning fewer bytes than requested is acceptable.
 .PP

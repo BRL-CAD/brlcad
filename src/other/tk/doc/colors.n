@@ -1,6 +1,7 @@
 '\"
 '\" Copyright (c) 1998-2000 by Scriptics Corporation.
 '\" Copyright (c) 2003 ActiveState Corporation.
+'\" Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
 '\" 
 '\" RCS: @(#) $Id$
 '\" 
@@ -14,10 +15,11 @@ colors \- symbolic color names recognized by Tk
 .BE
 .SH DESCRIPTION
 .PP
-Tk recognizes many symbolic color names (eg, \fBred\fR) when
-specifying colors.  The symbolic names recognized by Tk and their
+Tk recognizes many symbolic color names (e.g., \fBred\fR) when
+specifying colors. The symbolic names recognized by Tk and their
 8-bit RGB values are:
 .CS
+\fIName\fR                       \fIRed\fR  \fIGreen\fR  \fIBlue\fR
 alice blue                 240   248   255
 AliceBlue                  240   248   255
 antique white              250   235   215
@@ -778,5 +780,153 @@ yellow4                    139   139     0
 YellowGreen                154   205    50
 .CE
 
+.SH "PORTABILITY ISSUES"
+
+.TP
+\fBMac OS X\fR
+On Mac OS X, the following additional system colors are available
+(note that the actual color values depend on the currently active OS theme,
+and typically many of these will in fact be patterns rather than pure colors):
+.RS
+.CS
+systemTransparent
+systemBlack
+systemWhite
+systemHighlight
+systemPrimaryHighlightColor
+systemHighlightSecondary
+systemSecondaryHighlightColor
+systemHighlightAlternate
+systemAlternatePrimaryHighlightColor
+systemHighlightText
+systemDialogBackgroundActive
+systemDialogBackgroundInactive
+systemAlertBackgroundActive
+systemAlertBackgroundInactive
+systemModelessDialogBackgroundActive
+systemModelessDialogBackgroundInactive
+systemUtilityWindowBackgroundActive
+systemUtilityWindowBackgroundInactive
+systemListViewSortColumnBackground
+systemListViewBackground
+systemIconLabelBackground
+systemListViewSeparator
+systemChasingArrows
+systemDragHilite
+systemWindowBody
+systemDocumentWindowBackground
+systemFinderWindowBackground
+systemScrollBarDelimiterActive
+systemScrollBarDelimiterInactive
+systemFocusHighlight
+systemPopupArrowActive
+systemPopupArrowPressed
+systemPopupArrowInactive
+systemAppleGuideCoachmark
+systemIconLabelBackgroundSelected
+systemStaticAreaFill
+systemActiveAreaFill
+systemButtonFrame
+systemButtonFrameActive
+systemButtonFrameInactive
+systemButtonFace
+systemButtonFaceActive
+systemButtonFaceInactive
+systemButtonFacePressed
+systemButtonActiveDarkShadow
+systemButtonActiveDarkHighlight
+systemButtonActiveLightShadow
+systemButtonActiveLightHighlight
+systemButtonInactiveDarkShadow
+systemButtonInactiveDarkHighlight
+systemButtonInactiveLightShadow
+systemButtonInactiveLightHighlight
+systemButtonPressedDarkShadow
+systemButtonPressedDarkHighlight
+systemButtonPressedLightShadow
+systemButtonPressedLightHighlight
+systemBevelActiveLight
+systemBevelActiveDark
+systemBevelInactiveLight
+systemBevelInactiveDark
+systemNotificationWindowBackground
+systemMovableModalBackground
+systemSheetBackground
+systemSheetBackgroundOpaque
+systemDrawerBackground
+systemToolbarBackground
+systemSheetBackgroundTransparent
+systemMenu
+systemMenuBackground
+systemMenuActive
+systemMenuBackgroundSelected
+systemListViewOddRowBackground
+systemListViewEvenRowBackground
+systemListViewColumnDivider
+systemTabPaneBackground
+systemPlacardBackground
+systemWindowHeaderBackground
+systemListViewWindowHeaderBackground
+systemSecondaryGroupBoxBackground
+systemMetalBackground
+systemBlackText
+systemWhiteText
+systemDialogActiveText
+systemDialogInactiveText
+systemAlertActiveText
+systemAlertInactiveText
+systemModelessDialogActiveText
+systemModelessDialogInactiveText
+systemWindowHeaderActiveText
+systemWindowHeaderInactiveText
+systemPlacardActiveText
+systemPlacardInactiveText
+systemPlacardPressedText
+systemButtonText
+systemPushButtonActiveText
+systemPushButtonInactiveText
+systemPushButtonPressedText
+systemBevelButtonActiveText
+systemBevelButtonInactiveText
+systemBevelButtonPressedText
+systemPopupButtonActiveText
+systemPopupButtonInactiveText
+systemPopupButtonPressedText
+systemIconLabelText
+systemListViewText
+systemDocumentWindowTitleActiveText
+systemDocumentWindowTitleInactiveText
+systemMovableModalWindowTitleActiveText
+systemMovableModalWindowTitleInactiveText
+systemUtilityWindowTitleActiveText
+systemUtilityWindowTitleInactiveText
+systemPopupWindowTitleActiveText
+systemPopupWindowTitleInactiveText
+systemRootMenuActiveText
+systemRootMenuSelectedText
+systemRootMenuDisabledText
+systemMenuText
+systemMenuItemActiveText
+systemMenuActiveText
+systemMenuItemSelectedText
+systemMenuDisabled
+systemMenuItemDisabledText
+systemPopupLabelActiveText
+systemPopupLabelInactiveText
+systemTabFrontActiveText
+systemTabNonFrontActiveText
+systemTabNonFrontPressedText
+systemTabFrontInactiveText
+systemTabNonFrontInactiveText
+systemIconLabelSelectedText
+systemBevelButtonStickyActiveText
+systemBevelButtonStickyInactiveText
+systemNotificationText
+systemSystemDetailText
+.CE
+.RE
+
+.SH "SEE ALSO"
+options(n), Tk_GetColor(3)
 .SH KEYWORDS
 color, option

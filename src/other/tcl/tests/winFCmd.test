@@ -50,7 +50,7 @@ proc cleanup {args} {
 	    set x [glob -directory $p tf* td*]
 	}
 	if {$x != ""} {
-	    catch {file delete -force -- {expand}$x}
+	    catch {file delete -force -- {*}$x}
 	}
     }
 }
@@ -1151,6 +1151,86 @@ test winFCmd-18.8 {Windows reserved path names} -constraints win -body {
     file normalize cOm1:
 } -result COM1
 
+
+test winFCmd-19.1 {Windows extended path names} -constraints nt -body {
+    file normalize //?/c:/windows/win.ini
+} -result //?/c:/windows/win.ini
+
+test winFCmd-19.2 {Windows extended path names} -constraints nt -body {
+    file normalize //?/c:/windows/../windows/win.ini
+} -result //?/c:/windows/win.ini
+
+test winFCmd-19.3 {Windows extended path names} -constraints nt -setup {
+    set tmpfile [file join $::env(TEMP) tcl[string repeat x 20].tmp]
+    set tmpfile [file normalize $tmpfile]
+} -body {
+    list [catch {
+        set f [open $tmpfile [list WRONLY CREAT]]
+        close $f
+    } res] $res
+} -cleanup {
+    catch {file delete $tmpfile}
+} -result [list 0 {}]
+
+test winFCmd-19.4 {Windows extended path names} -constraints nt -setup {
+    set tmpfile [file join $::env(TEMP) tcl[string repeat x 20].tmp]
+    set tmpfile //?/[file normalize $tmpfile]
+} -body {
+    list [catch {
+        set f [open $tmpfile [list WRONLY CREAT]]
+        close $f
+    } res] $res
+} -cleanup {
+    catch {file delete $tmpfile}
+} -result [list 0 {}]
+
+test winFCmd-19.5 {Windows extended path names} -constraints nt -setup {
+    set tmpfile [file join $::env(TEMP) tcl[string repeat x 248].tmp]
+    set tmpfile [file normalize $tmpfile]
+} -body {
+    list [catch {
+        set f [open $tmpfile [list WRONLY CREAT]]
+        close $f
+    } res] errormsg ;#$res
+} -cleanup {
+    catch {file delete $tmpfile}
+} -result [list 1 errormsg]
+
+test winFCmd-19.6 {Windows extended path names} -constraints nt -setup {
+    set tmpfile [file join $::env(TEMP) tcl[string repeat x 248].tmp]
+    set tmpfile //?/[file normalize $tmpfile]
+} -body {
+    list [catch {
+        set f [open $tmpfile [list WRONLY CREAT]]
+        close $f
+    } res] $res
+} -cleanup {
+    catch {file delete $tmpfile}
+} -result [list 0 {}]
+
+test winFCmd-19.7 {Windows extended path names} -constraints nt -setup {
+    set tmpfile [file join $::env(TEMP) "tcl[pid].tmp "]
+    set tmpfile [file normalize $tmpfile]
+} -body {
+    list [catch {
+        set f [open $tmpfile [list WRONLY CREAT]]
+        close $f
+    } res] $res [glob -directory $::env(TEMP) -tails tcl[pid].*]
+} -cleanup {
+    catch {file delete $tmpfile}
+} -result [list 0 {} [list tcl[pid].tmp]]
+
+test winFCmd-19.8 {Windows extended path names} -constraints nt -setup {
+    set tmpfile [file join $::env(TEMP) "tcl[pid].tmp "]
+    set tmpfile //?/[file normalize $tmpfile]
+} -body {
+    list [catch {
+        set f [open $tmpfile [list WRONLY CREAT]]
+        close $f
+    } res] $res [glob -directory $::env(TEMP) -tails tcl[pid].*]
+} -cleanup {
+    catch {file delete $tmpfile}
+} -result [list 0 {} [list "tcl[pid].tmp "]]
 
 # This block of code used to occur after the "return" call, so I'm
 # commenting it out and assuming that this code is still under construction.

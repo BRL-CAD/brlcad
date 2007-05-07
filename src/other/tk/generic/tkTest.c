@@ -653,7 +653,7 @@ TestobjconfigObjCmd(
 	Tcl_Obj *extension4ObjPtr;
 	Tcl_Obj *extension5ObjPtr;
     } ExtensionWidgetRecord;
-    static Tk_OptionSpec baseSpecs[] = {
+    static const Tk_OptionSpec baseSpecs[] = {
 	{TK_OPTION_STRING, "-one", "one", "One", "one",
 		Tk_Offset(ExtensionWidgetRecord, base1ObjPtr), -1},
 	{TK_OPTION_STRING, "-two", "two", "Two", "two",
@@ -697,7 +697,7 @@ TestobjconfigObjCmd(
 	static char *stringTable[] = {
 	    "one", "two", "three", "four", NULL
 	};
-	static Tk_OptionSpec typesSpecs[] = {
+	static const Tk_OptionSpec typesSpecs[] = {
 	    {TK_OPTION_BOOLEAN, "-boolean", "boolean", "Boolean", "1",
 		Tk_Offset(TypesRecord, booleanPtr), -1, 0, 0, 0x1},
 	    {TK_OPTION_INT, "-integer", "integer", "Integer", "7",
@@ -842,7 +842,7 @@ TestobjconfigObjCmd(
 
     case CHAIN2: {
 	ExtensionWidgetRecord *recordPtr;
-	static Tk_OptionSpec extensionSpecs[] = {
+	static const Tk_OptionSpec extensionSpecs[] = {
 	    {TK_OPTION_STRING, "-three", "three", "Three", "three",
 		Tk_Offset(ExtensionWidgetRecord, extension3ObjPtr), -1},
 	    {TK_OPTION_STRING, "-four", "four", "Four", "four",
@@ -899,7 +899,7 @@ TestobjconfigObjCmd(
 	    Tcl_Obj *intPtr;
 	} ErrorWidgetRecord;
 	ErrorWidgetRecord widgetRecord;
-	static Tk_OptionSpec errorSpecs[] = {
+	static const Tk_OptionSpec errorSpecs[] = {
 	    {TK_OPTION_INT, "-int", "integer", "Integer", "bogus",
 		Tk_Offset(ErrorWidgetRecord, intPtr)},
 	    {TK_OPTION_END}
@@ -970,7 +970,7 @@ TestobjconfigObjCmd(
 	static char *internalStringTable[] = {
 	    "one", "two", "three", "four", NULL
 	};
-	static Tk_OptionSpec internalSpecs[] = {
+	static const Tk_OptionSpec internalSpecs[] = {
 	    {TK_OPTION_BOOLEAN, "-boolean", "boolean", "Boolean", "1",
 		-1, Tk_Offset(InternalRecord, boolean), 0, 0, 0x1},
 	    {TK_OPTION_INT, "-integer", "integer", "Integer", "148962237",
@@ -1087,7 +1087,7 @@ TestobjconfigObjCmd(
 	    Tcl_Obj *five;
 	} FiveRecord;
 	FiveRecord *recordPtr;
-	static Tk_OptionSpec smallSpecs[] = {
+	static const Tk_OptionSpec smallSpecs[] = {
 	    {TK_OPTION_INT, "-one", "one", "One", "1",
 		Tk_Offset(FiveRecord, one), -1},
 	    {TK_OPTION_INT, "-two", "two", "Two", "2",
@@ -1141,7 +1141,7 @@ TestobjconfigObjCmd(
 	    Tcl_Obj *fooObjPtr;
 	} NotEnoughRecord;
 	NotEnoughRecord record;
-	static Tk_OptionSpec errorSpecs[] = {
+	static const Tk_OptionSpec errorSpecs[] = {
 	    {TK_OPTION_INT, "-foo", "foo", "Foo", "0",
 		Tk_Offset(NotEnoughRecord, fooObjPtr)},
 	    {TK_OPTION_END}
@@ -1172,7 +1172,7 @@ TestobjconfigObjCmd(
 	    Tcl_Obj *windowPtr;
 	} SlaveRecord;
 	SlaveRecord *recordPtr;
-	static Tk_OptionSpec slaveSpecs[] = {
+	static const Tk_OptionSpec slaveSpecs[] = {
 	    {TK_OPTION_WINDOW, "-window", "window", "Window", ".bar",
 		Tk_Offset(SlaveRecord, windowPtr), -1, TK_CONFIG_NULL_OK},
 	    {TK_OPTION_END}

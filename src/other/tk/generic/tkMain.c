@@ -99,7 +99,7 @@ Tk_MainEx(
 {
     Tcl_Obj *path, *argvPtr;
     CONST char *encodingName;
-    int code;
+    int code, nullStdin = 0;
     Tcl_Channel inChannel, outChannel;
     ThreadSpecificData *tsdPtr;
 #ifdef __WIN32__
@@ -206,6 +206,7 @@ Tk_MainEx(
      * Set the "tcl_interactive" variable.
      */
 
+#ifdef __WIN32__
     /*
      * For now, under Windows, we assume we are not running as a console mode
      * app, so we need to use the GUI console. In order to enable this, we
@@ -213,7 +214,6 @@ Tk_MainEx(
      * to do it.
      */
 
-#ifdef __WIN32__
     handle = GetStdHandle(STD_INPUT_HANDLE);
 
     if ((handle == INVALID_HANDLE_VALUE) || (handle == 0)
@@ -237,8 +237,22 @@ Tk_MainEx(
 #else
     tsdPtr->tty = isatty(0);
 #endif
+#if defined(MAC_OSX_TK)
+    /*
+     * On TkAqua, if we don't have a TTY and stdin is a special character file
+     * of length 0, (e.g. /dev/null, which is what Finder sets when double
+     * clicking Wish) then use the GUI console.
+     */
+    
+    if (!tsdPtr->tty) {
+	struct stat st;
+
+	nullStdin = fstat(0, &st) || (S_ISCHR(st.st_mode) && !st.st_blocks);
+    }
+#endif
     Tcl_SetVar(interp, "tcl_interactive",
-	    ((path == NULL) && tsdPtr->tty) ? "1" : "0", TCL_GLOBAL_ONLY);
+	    ((path == NULL) && (tsdPtr->tty || nullStdin)) ? "1" : "0",
+	    TCL_GLOBAL_ONLY);
 
     /*
      * Invoke application-specific initialization.

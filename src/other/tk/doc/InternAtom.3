@@ -19,13 +19,13 @@ Tk_InternAtom, Tk_GetAtomName \- manage cache of X atoms
 Atom
 \fBTk_InternAtom(\fItkwin, name\fR)
 .sp
-CONST char *
+const char *
 \fBTk_GetAtomName(\fItkwin, atom\fR)
 .SH ARGUMENTS
 .AS Tk_Window parent
 .AP Tk_Window tkwin in
 Token for window.  Used to map atom or name relative to a particular display.
-.AP "CONST char" *name in
+.AP "const char" *name in
 String name for which atom is desired.
 .AP Atom atom in
 Atom for which corresponding string name is desired.

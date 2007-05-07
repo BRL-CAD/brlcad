@@ -5,8 +5,8 @@
  *
  * Copyright (c) 1995 Sun Microsystems, Inc.
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
@@ -15,9 +15,8 @@
 #define _XBYTES
 
 /*
- * The bits in a byte can be reversed so the least significant becomes
- * the most significant by indexing xBitReverseTable with the byte
- * to be reversed.
+ * The bits in a byte can be reversed so the least significant becomes the
+ * most significant by indexing xBitReverseTable with the byte to be reversed.
  */
 
 static unsigned char xBitReverseTable[256] = {
@@ -56,3 +55,11 @@ static unsigned char xBitReverseTable[256] = {
 };
 
 #endif /* _XBYTES */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 78
+ * End:
+ */

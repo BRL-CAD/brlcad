@@ -119,7 +119,7 @@ Replace (in the string in variable \fIstring\fR) every instance of
 .CE
 .PP
 Insert double-quotes around the first instance of the word
-\fBinteresting\fR, however it is capitalised.
+\fBinteresting\fR, however it is capitalized.
 .CS
 \fBregsub\fR -nocase {\e<interesting\e>} $string {"&"} string
 .CE
@@ -128,7 +128,7 @@ Convert all non-ASCII and Tcl-significant characters into \eu escape
 sequences by using \fBregsub\fR and \fBsubst\fR in combination:
 .CS
 # This RE is just a character class for everything "bad"
-set RE {[][{}\e$\es\eu0100-\euffff]}
+set RE {[][{};#\e\e\e$\es\eu0100-\euffff]}
 
 # We will substitute with a fragment of Tcl script in brackets
 set substitution {[format \e\e\e\eu%04x [scan "\e\e&" %c]]}
@@ -143,7 +143,5 @@ regexp(n), re_syntax(n), subst(n),
 .VS 8.5
 string(n)
 .VE
-
-
 .SH KEYWORDS
 match, pattern, regular expression, substitute

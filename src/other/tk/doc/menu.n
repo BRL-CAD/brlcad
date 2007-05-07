@@ -118,21 +118,19 @@ Whenever a menu's active entry is changed, a <<MenuSelect>> virtual
 event is send to the menu. The active item can then be queried from
 the menu, and an action can be taken, such as setting
 context-sensitive help text for the entry.
-
-.SH "COMMAND ENTRIES"
+.SH "TYPES OF ENTRIES"
+.SS "COMMAND ENTRIES"
 .PP
 The most common kind of menu entry is a command entry, which
 behaves much like a button widget.  When a command entry is
 invoked, a Tcl command is executed.  The Tcl
 command is specified with the \fB\-command\fR option.
-
-.SH "SEPARATOR ENTRIES"
+.SS "SEPARATOR ENTRIES"
 .PP
 A separator is an entry that is displayed as a horizontal dividing
 line.  A separator may not be activated or invoked, and it has
 no behavior other than its display appearance.
-
-.SH "CHECKBUTTON ENTRIES"
+.SS "CHECKBUTTON ENTRIES"
 .PP
 A checkbutton menu entry behaves much like a checkbutton widget.
 When it is invoked it toggles back and forth between the selected
@@ -149,8 +147,7 @@ the menu.  If a \fB\-command\fR option is specified for a checkbutton
 entry, then its value is evaluated as a Tcl command each time the entry
 is invoked;  this happens after toggling the entry's
 selected state.
-
-.SH "RADIOBUTTON ENTRIES"
+.SS "RADIOBUTTON ENTRIES"
 .PP
 A radiobutton menu entry behaves much like a radiobutton widget.
 Radiobutton entries are organized in groups of which only one
@@ -173,8 +170,7 @@ otherwise the indicator's center is displayed in the background color for
 the menu.  If a \fB\-command\fR option is specified for a radiobutton
 entry, then its value is evaluated as a Tcl command each time the entry
 is invoked;  this happens after selecting the entry.
-
-.SH "CASCADE ENTRIES"
+.SS "CASCADE ENTRIES"
 .PP
 A cascade entry is one with an associated menu (determined
 by the \fB\-menu\fR option).  Cascade entries allow the construction
@@ -205,8 +201,7 @@ menu.
 If a \fB\-command\fR option is specified for a cascade entry then it is
 evaluated as a Tcl command whenever the entry is invoked. This is not
 supported on Windows.
-
-.SH "TEAR-OFF ENTRIES"
+.SS "TEAR-OFF ENTRIES"
 .PP
 A tear-off entry appears at the top of the menu if enabled with the
 \fBtearOff\fR option.  It is not like other menu entries in that
@@ -216,7 +211,6 @@ When a tear-off entry is created it appears as a dashed line at
 the top of the menu.  Under the default bindings, invoking the
 tear-off entry causes a torn-off copy to be made of the menu and
 all of its submenus.
-
 .SH "MENUBARS"
 .PP
 Any menu can be set as a menubar for a toplevel window (see
@@ -233,8 +227,7 @@ example of this concerns the handling of checkbuttons and radiobuttons
 within the menu.  While it is permitted to put these menu elements on
 menubars, they may not be drawn with indicators on some platforms, due
 to system restrictions.
-
-.SH "SPECIAL MENUS IN MENUBARS"
+.SS "SPECIAL MENUS IN MENUBARS"
 .PP
 Certain menus in a menubar will be treated specially.  On the Macintosh,
 access to the special Apple and Help menus is provided. On Windows,
@@ -274,7 +267,6 @@ system menu.
 .PP
 When Tk see a Help menu on X Windows, the menu is moved to be last in
 the menubar and is right justified.
-
 .SH "CLONES"
 .PP
 When a menu is set as a menubar for a toplevel window, or when a menu
@@ -285,7 +277,6 @@ clone. Additionally, any cascades that are pointed to are also cloned
 so that menu traversal will work right. Clones are destroyed when
 either the tearoff or menubar goes away, or when the original menu is
 destroyed. 
-
 .SH "WIDGET COMMAND"
 .PP
 The \fBmenu\fR command creates a new Tcl command whose
@@ -637,10 +628,15 @@ lower-level cascaded menu is posted, unpost that menu.  Returns an
 empty string. This subcommand does not work on Windows and the
 Macintosh, as those platforms have their own way of unposting menus.
 .TP
+\fIpathName \fBxposition \fIindex\fR
+.VS 8.5
+Returns a decimal string giving the x-coordinate within the menu
+window of the leftmost pixel in the entry specified by \fIindex\fR.
+.VE 8.5
+.TP
 \fIpathName \fByposition \fIindex\fR
 Returns a decimal string giving the y-coordinate within the menu
 window of the topmost pixel in the entry specified by \fIindex\fR.
-
 .SH "MENU CONFIGURATIONS"
 .PP
 The default bindings support four different ways of using menus:
@@ -683,7 +679,6 @@ the top of an existing menu.  The default bindings will create a new menu
 that is a copy of the original menu and leave it permanently
 posted as a top-level window.  The torn-off menu behaves just
 the same as the original menu.
-
 .SH "DEFAULT BINDINGS"
 .PP
 Tk automatically creates class bindings for menus that give them
@@ -744,12 +739,14 @@ argument, which is a menu widget.
 .PP
 The behavior of menus can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
-
 .SH BUGS
 .PP
 At present it isn't possible to use the
 option database to specify values for the options to individual
 entries.
+
+.SH "SEE ALSO"
+bind(n), menubutton(n), ttk_menubutton(n), toplevel(n)
 
 .SH KEYWORDS
 menu, widget

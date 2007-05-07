@@ -237,7 +237,7 @@ TestwineventCmd(
     UINT message;
     WPARAM wParam;
     LPARAM lParam;
-    static TkStateMap messageMap[] = {
+    static const TkStateMap messageMap[] = {
 	{WM_LBUTTONDOWN,	"WM_LBUTTONDOWN"},
 	{WM_LBUTTONUP,		"WM_LBUTTONUP"},
 	{WM_CHAR,		"WM_CHAR"},

@@ -51,7 +51,7 @@ and new commands appear (this is why it is essential to have
 in the files, as described above).
 If you have a package split among scripts and binary files, 
 or if you have dependencies among files,
-you may have to use the \fB\-load\fP option
+you may have to use the \fB\-load\fR option
 or adjust the order in which \fBpkg_mkIndex\fR processes
 the files.  See COMPLEX CASES below.
 
@@ -110,17 +110,17 @@ the use of \fIauto_reset\fR, and therefore its use is discouraged.
 .TP 15
 \fB\-load \fIpkgPat\fR
 The index process will pre-load any packages that exist in the
-current interpreter and match \fIpkgPat\fP into the slave interpreter used to
+current interpreter and match \fIpkgPat\fR into the slave interpreter used to
 generate the index.  The pattern match uses string match rules, but without
 making case distinctions.
 See COMPLEX CASES below.
 .TP 15
 \fB\-verbose\fR
 Generate output during the indexing process.  Output is via
-the \fBtclLog\fP procedure, which by default prints to stderr.
+the \fBtclLog\fR procedure, which by default prints to stderr.
 .TP 15
 \fB\-\-\fR
-End of the flags, in case \fIdir\fP begins with a dash.
+End of the flags, in case \fIdir\fR begins with a dash.
 
 .SH "PACKAGES AND THE AUTO-LOADER"
 .PP
@@ -188,28 +188,28 @@ with some glob patterns.
 .PP
 In general, it is OK for scripts to have dependencies on other
 packages.
-If scripts contain \fBpackage require\fP commands, these are
+If scripts contain \fBpackage require\fR commands, these are
 stubbed out in the interpreter used to process the scripts,
 so these do not cause problems.
 If scripts call into other packages in global code,
-these calls are handled by a stub \fBunknown\fP command.
+these calls are handled by a stub \fBunknown\fR command.
 However, if scripts make variable references to other package's
 variables in global code, these will cause errors.  That is
 also bad coding style.
 .PP
 If binary files have dependencies on other packages, things
 can become tricky because it is not possible to stub out
-C-level APIs such as \fBTcl_PkgRequire\fP API
+C-level APIs such as \fBTcl_PkgRequire\fR API
 when loading a binary file.
 For example, suppose the BLT package requires Tk, and expresses
-this with a call to \fBTcl_PkgRequire\fP in its \fBBlt_Init\fP routine.
+this with a call to \fBTcl_PkgRequire\fR in its \fBBlt_Init\fR routine.
 To support this, you must run \fBpkg_mkIndex\fR in an interpreter that
 has Tk loaded.  You can achieve this with the
 \fB\-load \fIpkgPat\fR option.  If you specify this option,
 \fBpkg_mkIndex\fR will load any packages listed by
-\fBinfo loaded\fP and that match \fIpkgPat\fP
+\fBinfo loaded\fR and that match \fIpkgPat\fR
 into the interpreter used to process files.
-In most cases this will satisfy the \fBTcl_PkgRequire\fP calls
+In most cases this will satisfy the \fBTcl_PkgRequire\fR calls
 made by binary files.
 .PP
 If you are indexing two binary files and one depends on the other,
@@ -219,14 +219,14 @@ and then the package it provides
 will be available when the second file is processed.
 You may also need to load the first package into the
 temporary interpreter used to create the index by using
-the \fB\-load\fP flag;
+the \fB\-load\fR flag;
 it won't hurt to specify package patterns that are not yet loaded.
 .PP
 If you have a package that is split across scripts and a binary file,
-then you should avoid the \fB\-load\fP flag. The problem is that
+then you should avoid the \fB\-load\fR flag. The problem is that
 if you load a package before computing the index it masks any
 other files that provide part of the same package.
-If you must use \fB\-load\fP,
+If you must use \fB\-load\fR,
 then you must specify the scripts first; otherwise the package loaded from
 the binary file may mask the package defined by the scripts.
 

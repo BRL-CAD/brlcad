@@ -1,13 +1,13 @@
-/* 
+/*
  * xcolors.c --
  *
- *	This file contains the routines used to map from X color
- *	names to RGB and pixel values.
+ *	This file contains the routines used to map from X color names to RGB
+ *	and pixel values.
  *
  * Copyright (c) 1996 by Sun Microsystems, Inc.
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
@@ -15,16 +15,27 @@
 #include <tkInt.h>
 
 /*
+ * This value will be set to the number of colors in the color table
+ * the first time it is needed.
+ */
+
+static int numXColors = 0;
+
+/*
+ * Forward declarations for functions used only in this file.
+ */
+
+static int	FindColor(const char *name, XColor *colorPtr);
+
+/*
  * Define an array that defines the mapping from color names to RGB values.
- * Note that this array must be kept sorted alphabetically so that the
- * binary search used in XParseColor will succeed.
+ * Note that this array must be kept sorted alphabetically so that the binary
+ * search used in XParseColor will succeed.
  */
 
 typedef struct {
     char *name;
-    unsigned char red;
-    unsigned char green;
-    unsigned char blue;
+    unsigned char red, green, blue;
 } XColorEntry;
 
 static XColorEntry xColors[] = {
@@ -782,32 +793,18 @@ static XColorEntry xColors[] = {
      { "YellowGreen", 154, 205, 50 },
      { NULL, 0, 0, 0 }
 };
-
-
-/*
- * This value will be set to the number of colors in the color table
- * the first time it is needed.
- */
-
-static int numXColors = 0;
-
-/*
- * Forward declarations for functions used only in this file.
- */
-
-static int	FindColor _ANSI_ARGS_((const char *name, XColor *colorPtr));
 
 /*
  *----------------------------------------------------------------------
  *
  * FindColor --
  *
- *	This routine finds the color entry that corresponds to the
- *	specified color.
+ *	This routine finds the color entry that corresponds to the specified
+ *	color.
  *
  * Results:
- *	Returns non-zero on success.  The RGB values of the XColor
- *	will be initialized to the proper values on success.
+ *	Returns non-zero on success. The RGB values of the XColor will be
+ *	initialized to the proper values on success.
  *
  * Side effects:
  *	None.
@@ -816,15 +813,15 @@ static int	FindColor _ANSI_ARGS_((const char *name, XColor *colorPtr));
  */
 
 static int
-FindColor(name, colorPtr)
-    const char *name;
-    XColor *colorPtr;
+FindColor(
+    const char *name,
+    XColor *colorPtr)
 {
     int l, u, r, i = 0;
 
     /*
-     * Count the number of elements in the color array if we haven't
-     * done so yet.
+     * Count the number of elements in the color array if we haven't done so
+     * yet.
      */
 
     if (numXColors == 0) {
@@ -877,11 +874,11 @@ FindColor(name, colorPtr)
  */
 
 Status
-XParseColor(display, map, spec, colorPtr)
-    Display *display;
-    Colormap map;
-    const char* spec;
-    XColor *colorPtr;
+XParseColor(
+    Display *display,
+    Colormap map,
+    const char *spec,
+    XColor *colorPtr)
 {
     if (spec[0] == '#') {
 	char fmt[16];
@@ -897,11 +894,11 @@ XParseColor(display, map, spec, colorPtr)
 	    return 0;
 	}
 	colorPtr->red = (((unsigned short) red) << (4 * (4 - i)))
-	    | ((unsigned short) red);
+		| ((unsigned short) red);
 	colorPtr->green = (((unsigned short) green) << (4 * (4 - i)))
-	    | ((unsigned short) green);
+		| ((unsigned short) green);
 	colorPtr->blue = (((unsigned short) blue) << (4 * (4 - i)))
-	    | ((unsigned short) blue);
+		| ((unsigned short) blue);
     } else {
 	if (!FindColor(spec, colorPtr)) {
 	    return 0;
@@ -912,3 +909,11 @@ XParseColor(display, map, spec, colorPtr)
     colorPtr->pad = 0;
     return 1;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 78
+ * End:
+ */

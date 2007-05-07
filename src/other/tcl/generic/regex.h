@@ -69,7 +69,6 @@ extern "C" {
 /*
  * Add your own defines, if needed, here.
  */
-#include "./tclInt.h"
 
 /*
  * Location where a chunk of regcustom.h is automatically spliced into this

@@ -130,11 +130,11 @@ newline character (\en).  However, in actual files and devices the end of
 a line may be represented differently on different platforms, or even for
 different devices on the same platform.  For example, under UNIX newlines
 are used in files, whereas carriage-return-linefeed sequences are
-normally used in network connections.  On input (i.e., with \fBgets\fP
-and \fBread\fP) the Tcl I/O system automatically translates the external
+normally used in network connections.  On input (i.e., with \fBgets\fR
+and \fBread\fR) the Tcl I/O system automatically translates the external
 end-of-line representation into newline characters.  Upon output (i.e.,
-with \fBputs\fP), the I/O system translates newlines to the external
-end-of-line representation.  The default translation mode, \fBauto\fP,
+with \fBputs\fR), the I/O system translates newlines to the external
+end-of-line representation.  The default translation mode, \fBauto\fR,
 handles all the common cases automatically, but the \fB\-translation\fR
 option provides explicit control over the end of line translations.
 .RS
@@ -152,8 +152,8 @@ currently supported:
 \fBauto\fR
 .
 As the input translation mode, \fBauto\fR treats any of newline
-(\fBlf\fP), carriage return (\fBcr\fP), or carriage return followed by a
-newline (\fBcrlf\fP) as the end of line representation.  The end of line
+(\fBlf\fR), carriage return (\fBcr\fR), or carriage return followed by a
+newline (\fBcrlf\fR) as the end of line representation.  The end of line
 representation can even change from line-to-line, and all cases are
 translated to a newline.  As the output translation mode, \fBauto\fR
 chooses a platform specific representation; for sockets on all platforms
@@ -164,7 +164,7 @@ setting for \fB\-translation\fR is \fBauto\fR for both input and output.
 \fBbinary\fR 
 .
 No end-of-line translations are performed.  This is nearly identical to
-\fBlf\fP mode, except that in addition \fBbinary\fP mode also sets the
+\fBlf\fR mode, except that in addition \fBbinary\fR mode also sets the
 end-of-file character to the empty string (which disables it) and sets the
 encoding to \fBbinary\fR (which disables encoding filtering).  See the
 description of \fB\-eofchar\fR and \fB\-encoding\fR for more information.
@@ -180,17 +180,17 @@ the translation.
 .
 The end of a line in the underlying file or device is represented by a
 single carriage return character.  As the input translation mode,
-\fBcr\fP mode converts carriage returns to newline characters.  As the
-output translation mode, \fBcr\fP mode translates newline characters to
+\fBcr\fR mode converts carriage returns to newline characters.  As the
+output translation mode, \fBcr\fR mode translates newline characters to
 carriage returns.
 .TP
 \fBcrlf\fR
 .
 The end of a line in the underlying file or device is represented by a
 carriage return character followed by a linefeed character.  As the input
-translation mode, \fBcrlf\fP mode converts carriage-return-linefeed
+translation mode, \fBcrlf\fR mode converts carriage-return-linefeed
 sequences to newline characters.  As the output translation mode,
-\fBcrlf\fP mode translates newline characters to carriage-return-linefeed
+\fBcrlf\fR mode translates newline characters to carriage-return-linefeed
 sequences.  This mode is typically used on Windows platforms and for
 network connections.
 .TP
@@ -256,7 +256,7 @@ set words {}
 while {[llength $words] < 3} {
    gets $f line
    if {[string match "#*" $line]} continue
-   lappend words {expand}[join [scan $line %d%d%d]]
+   lappend words {*}[join [scan $line %d%d%d]]
 }
 
 # Those words supply the size of the image and its

@@ -19,13 +19,13 @@ Tk_GetJoinStyle, Tk_NameOfJoinStyle \- translate between strings and join styles
 int
 \fBTk_GetJoinStyle(\fIinterp, string, joinPtr\fB)\fR
 .sp
-CONST char *
+const char *
 \fBTk_NameOfJoinStyle(\fIjoin\fB)\fR
 .SH ARGUMENTS
 .AS "Tcl_Interp" *joinPtr
 .AP Tcl_Interp *interp in
 Interpreter to use for error reporting.
-.AP "CONST char" *string in
+.AP "const char" *string in
 String containing name of join style: one of ``bevel'', ``miter'',
 or ``round''.
 .AP int *joinPtr out

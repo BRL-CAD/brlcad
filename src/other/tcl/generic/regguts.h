@@ -399,6 +399,19 @@ struct guts {
     struct subre *lacons;	/* lookahead-constraint vector */
     int nlacons;		/* size of lacons */
 };
+
+/*
+ * Magic for allocating a variable workspace.
+ */
+
+#ifndef AllocVars
+#define AllocVars(vPtr) \
+    struct vars var; \
+    register struct vars *vPtr = &var
+#endif
+#ifndef FreeVars
+#define FreeVars(vPtr) ((void) 0)
+#endif
 
 /*
  * Local Variables:

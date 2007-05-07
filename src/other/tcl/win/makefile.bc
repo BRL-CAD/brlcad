@@ -231,12 +231,12 @@ TCLOBJS	= \
 	$(TMPDIR)\tclListObj.obj \
 	$(TMPDIR)\tclLoad.obj \
 	$(TMPDIR)\tclMain.obj \
+	$(TMPDIR)\tclMathOp.obj \
 	$(TMPDIR)\tclNamesp.obj \
 	$(TMPDIR)\tclNotify.obj \
 	$(TMPDIR)\tclObj.obj \
 	$(TMPDIR)\tclPanic.obj \
 	$(TMPDIR)\tclParse.obj \
-	$(TMPDIR)\tclParseExpr.obj \
 	$(TMPDIR)\tclPipe.obj \
 	$(TMPDIR)\tclPkg.obj \
 	$(TMPDIR)\tclPkgConfig.obj \
@@ -439,6 +439,11 @@ install-libraries:
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\tcltest2.3"
 	-@copy "$(ROOT)\library\tcltest\tcltest.tcl"   "$(SCRIPT_INSTALL_DIR)\tcltest2.3"
 	-@copy "$(ROOT)\library\tcltest\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\tcltest2.3"
+	@echo installing platform1.0
+	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\platform1.0"
+	-@copy "$(ROOT)\library\platform\platform.tcl" "$(SCRIPT_INSTALL_DIR)\platform1.0"
+	-@copy "$(ROOT)\library\platform\shell.tcl"    "$(SCRIPT_INSTALL_DIR)\platform1.0"
+	-@copy "$(ROOT)\library\platform\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\platform1.0"
 	@echo installing $(TCLDDEDLLNAME)
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\dde1.3"
 	-@copy "$(TCLDDEDLL)" "$(SCRIPT_INSTALL_DIR)\dde1.3"

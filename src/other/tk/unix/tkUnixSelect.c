@@ -232,8 +232,8 @@ TkSelGetSelection(
  */
 
 void
-TkSelPropProc(eventPtr)
-    register XEvent *eventPtr;		/* X PropertyChange event. */
+TkSelPropProc(
+    register XEvent *eventPtr)	/* X PropertyChange event. */
 {
     register IncrInfo *incrPtr;
     register TkSelHandler *selPtr;
@@ -311,6 +311,7 @@ TkSelPropProc(eventPtr)
 		length = 0;
 	    } else {
 		TkSelInProgress ip;
+
 		ip.selPtr = selPtr;
 		ip.nextPtr = TkSelGetInProgress();
 		TkSelSetInProgress(&ip);
@@ -400,9 +401,8 @@ TkSelPropProc(eventPtr)
 		 */
 
 		while (1) {
-		    result = Tcl_UtfToExternal(NULL, encoding,
-			    src, srcLen, encodingCvtFlags,
-			    &incrPtr->converts[i].state,
+		    result = Tcl_UtfToExternal(NULL, encoding, src, srcLen,
+			    encodingCvtFlags, &incrPtr->converts[i].state,
 			    dst, dstLen, &srcRead, &dstWrote, NULL);
 		    soFar = dst + dstWrote - Tcl_DStringValue(&ds);
 		    encodingCvtFlags &= ~TCL_ENCODING_START;
@@ -450,8 +450,7 @@ TkSelPropProc(eventPtr)
 		 */
 
 		char *propPtr = (char *) SelCvtToX((char *) buffer,
-			formatType, (Tk_Window) incrPtr->winPtr,
-			&numItems);
+			formatType, (Tk_Window) incrPtr->winPtr, &numItems);
 
 		if (propPtr == NULL) {
 		    numItems = 0;
@@ -535,7 +534,7 @@ TkSelEventProc(
 
     if (eventPtr->type == SelectionNotify) {
 	register TkSelRetrievalInfo *retrPtr;
-	char *propInfo;
+	char *propInfo, **propInfoPtr = &propInfo;
 	Atom type;
 	int format, result;
 	unsigned long numItems, bytesAfter;
@@ -570,13 +569,13 @@ TkSelEventProc(
 		eventPtr->xselection.requestor, retrPtr->property,
 		0, MAX_PROP_WORDS, False, (Atom) AnyPropertyType,
 		&type, &format, &numItems, &bytesAfter,
-		(unsigned char **) &propInfo);
+		(unsigned char **) propInfoPtr);
 	if ((result != Success) || (type == None)) {
 	    return;
 	}
 	if (bytesAfter != 0) {
 	    Tcl_SetResult(retrPtr->interp, "selection property too large",
-		TCL_STATIC);
+		    TCL_STATIC);
 	    retrPtr->result = TCL_ERROR;
 	    XFree(propInfo);
 	    return;
@@ -755,7 +754,7 @@ SelTimeoutProc(
 	retrPtr->result = TCL_ERROR;
     } else {
 	retrPtr->timeout = Tcl_CreateTimerHandler(1000, SelTimeoutProc,
-	    (ClientData) retrPtr);
+		(ClientData) retrPtr);
     }
 }
 
@@ -824,8 +823,9 @@ ConvertSelection(
 
     for (infoPtr = winPtr->dispPtr->selectionInfoPtr; infoPtr != NULL;
 	    infoPtr = infoPtr->nextPtr) {
-	if (infoPtr->selection == eventPtr->selection)
+	if (infoPtr->selection == eventPtr->selection) {
 	    break;
+	}
     }
     if (infoPtr == NULL) {
 	goto refuse;
@@ -877,8 +877,8 @@ ConvertSelection(
      * below).
      */
 
-    incr.converts = (ConvertInfo *) ckalloc((unsigned)
-	    (incr.numConversions*sizeof(ConvertInfo)));
+    incr.converts = (ConvertInfo *)
+	    ckalloc((unsigned) incr.numConversions * sizeof(ConvertInfo));
     incr.numIncrs = 0;
     for (i = 0; i < incr.numConversions; i++) {
 	Atom target, property, type;
@@ -961,9 +961,8 @@ ConvertSelection(
 	     * allows us to pass our utf-8 information untouched.
 	     */
 
-	    XChangeProperty(reply.display, reply.requestor,
-		    property, type, 8, PropModeReplace,
-		    (unsigned char *) buffer, numItems);
+	    XChangeProperty(reply.display, reply.requestor, property, type, 8,
+		    PropModeReplace, (unsigned char *) buffer, numItems);
 	} else if ((type == XA_STRING)
 		|| (type == winPtr->dispPtr->compoundTextAtom)) {
 	    Tcl_DString ds;
@@ -980,7 +979,7 @@ ConvertSelection(
 	    } else {
 		encoding = Tcl_GetEncoding(NULL, "iso2022");
 	    }
-	    Tcl_UtfToExternalDString(encoding, (char*)buffer, -1, &ds);
+	    Tcl_UtfToExternalDString(encoding, (char *) buffer, -1, &ds);
 	    XChangeProperty(reply.display, reply.requestor, property, type, 8,
 		    PropModeReplace, (unsigned char *) Tcl_DStringValue(&ds),
 		    Tcl_DStringLength(&ds));
@@ -1111,7 +1110,7 @@ SelRcvIncrProc(
     register XEvent *eventPtr)	/* X PropertyChange event. */
 {
     register TkSelRetrievalInfo *retrPtr = (TkSelRetrievalInfo *) clientData;
-    char *propInfo;
+    char *propInfo, **propInfoPtr = &propInfo;
     Atom type;
     int format, result;
     unsigned long numItems, bytesAfter;
@@ -1126,7 +1125,7 @@ SelRcvIncrProc(
     result = XGetWindowProperty(eventPtr->xproperty.display,
 	    eventPtr->xproperty.window, retrPtr->property, 0, MAX_PROP_WORDS,
 	    True, (Atom) AnyPropertyType, &type, &format, &numItems,
-	    &bytesAfter, (unsigned char **) &propInfo);
+	    &bytesAfter, (unsigned char **) propInfoPtr);
     if ((result != Success) || (type == None)) {
 	return;
     }

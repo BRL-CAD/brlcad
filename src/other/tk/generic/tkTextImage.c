@@ -37,7 +37,7 @@ static void		EmbImageBboxProc(TkText *textPtr,
 			    int *widthPtr, int *heightPtr);
 static int		EmbImageConfigure(TkText *textPtr,
 			    TkTextSegment *eiPtr, int objc,
-			    Tcl_Obj *CONST objv[]);
+			    Tcl_Obj *const objv[]);
 static int		EmbImageDeleteProc(TkTextSegment *segPtr,
 			    TkTextLine *linePtr, int treeGone);
 static void		EmbImageDisplayProc(TkText *textPtr,
@@ -57,7 +57,7 @@ static void		EmbImageProc(ClientData clientData, int x, int y,
  * The following structure declares the "embedded image" segment type.
  */
 
-static Tk_SegType tkTextEmbImageType = {
+static const Tk_SegType tkTextEmbImageType = {
     "image",			/* name */
     0,				/* leftGravity */
     NULL,			/* splitProc */
@@ -84,7 +84,7 @@ typedef enum {
  * Information used for parsing image configuration options:
  */
 
-static Tk_OptionSpec optionSpecs[] = {
+static const Tk_OptionSpec optionSpecs[] = {
     {TK_OPTION_STRING_TABLE, "-align", NULL, NULL,
 	"center", -1, Tk_Offset(TkTextEmbImage, align),
 	0, (ClientData) alignStrings, 0},
@@ -124,14 +124,14 @@ TkTextImageCmd(
     register TkText *textPtr,	/* Information about text widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. Someone else has already
+    Tcl_Obj *const objv[])	/* Argument objects. Someone else has already
 				 * parsed this command enough to know that
 				 * objv[1] is "image". */
 {
     int idx;
     register TkTextSegment *eiPtr;
     TkTextIndex index;
-    static CONST char *optionStrings[] = {
+    static const char *optionStrings[] = {
 	"cget", "configure", "create", "names", NULL
     };
     enum opts {
@@ -319,7 +319,7 @@ EmbImageConfigure(
 				 * embedded image. */
     TkTextSegment *eiPtr,	/* Embedded image to be configured. */
     int objc,			/* Number of strings in objv. */
-    Tcl_Obj *CONST objv[])	/* Array of strings describing configuration
+    Tcl_Obj *const objv[])	/* Array of strings describing configuration
 				 * options. */
 {
     Tk_Image image;
@@ -773,7 +773,7 @@ EmbImageBboxProc(
 int
 TkTextImageIndex(
     TkText *textPtr,		/* Text widget containing image. */
-    CONST char *name,		/* Name of image. */
+    const char *name,		/* Name of image. */
     TkTextIndex *indexPtr)	/* Index information gets stored here. */
 {
     Tcl_HashEntry *hPtr;

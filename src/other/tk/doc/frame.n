@@ -5,7 +5,6 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\"
 '\" RCS: @(#) $Id$
 '\" 
 .so man.macros
@@ -136,7 +135,7 @@ When a new frame is created, it has no default event bindings:
 frames are not intended to be interactive.
 
 .SH "SEE ALSO"
-labelframe(n), toplevel(n)
+labelframe(n), toplevel(n), ttk_frame(n)
 
 .SH KEYWORDS
 frame, widget

@@ -2,57 +2,57 @@
  * tkMacOSXDebug.c --
  *
  *	Implementation of Macintosh specific functions for debugging MacOS events,
- *      regions, etc...
+ *	regions, etc...
  *
  * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2006 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- *      The following terms apply to all files originating from Apple
- *      Computer, Inc. ("Apple") and associated with the software
- *      unless explicitly disclaimed in individual files.
+ *	The following terms apply to all files originating from Apple
+ *	Computer, Inc. ("Apple") and associated with the software
+ *	unless explicitly disclaimed in individual files.
  *
  *
- *      Apple hereby grants permission to use, copy, modify,
- *      distribute, and license this software and its documentation
- *      for any purpose, provided that existing copyright notices are
- *      retained in all copies and that this notice is included
- *      verbatim in any distributions. No written agreement, license,
- *      or royalty fee is required for any of the authorized
- *      uses. Modifications to this software may be copyrighted by
- *      their authors and need not follow the licensing terms
- *      described here, provided that the new terms are clearly
- *      indicated on the first page of each file where they apply.
+ *	Apple hereby grants permission to use, copy, modify,
+ *	distribute, and license this software and its documentation
+ *	for any purpose, provided that existing copyright notices are
+ *	retained in all copies and that this notice is included
+ *	verbatim in any distributions. No written agreement, license,
+ *	or royalty fee is required for any of the authorized
+ *	uses. Modifications to this software may be copyrighted by
+ *	their authors and need not follow the licensing terms
+ *	described here, provided that the new terms are clearly
+ *	indicated on the first page of each file where they apply.
  *
  *
- *      IN NO EVENT SHALL APPLE, THE AUTHORS OR DISTRIBUTORS OF THE
- *      SOFTWARE BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL,
- *      INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF
- *      THIS SOFTWARE, ITS DOCUMENTATION, OR ANY DERIVATIVES THEREOF,
- *      EVEN IF APPLE OR THE AUTHORS HAVE BEEN ADVISED OF THE
- *      POSSIBILITY OF SUCH DAMAGE.  APPLE, THE AUTHORS AND
- *      DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES, INCLUDING,
- *      BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY,
- *      FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS
- *      SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND APPLE,THE
- *      AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
- *      MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+ *	IN NO EVENT SHALL APPLE, THE AUTHORS OR DISTRIBUTORS OF THE
+ *	SOFTWARE BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL,
+ *	INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF
+ *	THIS SOFTWARE, ITS DOCUMENTATION, OR ANY DERIVATIVES THEREOF,
+ *	EVEN IF APPLE OR THE AUTHORS HAVE BEEN ADVISED OF THE
+ *	POSSIBILITY OF SUCH DAMAGE.  APPLE, THE AUTHORS AND
+ *	DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES, INCLUDING,
+ *	BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY,
+ *	FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.	 THIS
+ *	SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, AND APPLE,THE
+ *	AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
+ *	MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
- *      GOVERNMENT USE: If you are acquiring this software on behalf
- *      of the U.S. government, the Government shall have only
- *      "Restricted Rights" in the software and related documentation
- *      as defined in the Federal Acquisition Regulations (FARs) in
- *      Clause 52.227.19 (c) (2).  If you are acquiring the software
- *      on behalf of the Department of Defense, the software shall be
- *      classified as "Commercial Computer Software" and the
- *      Government shall have only "Restricted Rights" as defined in
- *      Clause 252.227-7013 (c) (1) of DFARs.  Notwithstanding the
- *      foregoing, the authors grant the U.S. Government and others
- *      acting in its behalf permission to use and distribute the
- *      software in accordance with the terms specified in this
- *      license.
+ *	GOVERNMENT USE: If you are acquiring this software on behalf
+ *	of the U.S. government, the Government shall have only
+ *	"Restricted Rights" in the software and related documentation
+ *	as defined in the Federal Acquisition Regulations (FARs) in
+ *	Clause 52.227.19 (c) (2).  If you are acquiring the software
+ *	on behalf of the Department of Defense, the software shall be
+ *	classified as "Commercial Computer Software" and the
+ *	Government shall have only "Restricted Rights" as defined in
+ *	Clause 252.227-7013 (c) (1) of DFARs.  Notwithstanding the
+ *	foregoing, the authors grant the U.S. Government and others
+ *	acting in its behalf permission to use and distribute the
+ *	software in accordance with the terms specified in this
+ *	license.
  *
  * RCS: @(#) $Id$
  */
@@ -66,13 +66,13 @@
 #include <mach-o/nlist.h>
 
 typedef struct {
- EventKind kind;
- char     * name;
+    EventKind kind;
+    const char * name;
 } MyEventName;
 
 typedef struct {
- EventClass    c;
- MyEventName * names;
+    EventClass c;
+    MyEventName * names;
 } MyEventNameList;
 
 static MyEventName windowEventNames [] = {
@@ -161,7 +161,7 @@ static MyEventName keyboardEventNames [] = {
 
 static MyEventName appEventNames [] = {
  { kEventAppActivated, "Activated"},
- { kEventAppDeactivated, "Deactivated"},  
+ { kEventAppDeactivated, "Deactivated"},
  { kEventAppQuit, "Quit"},
  { kEventAppLaunchNotification, "LaunchNotification"},
  { kEventAppLaunched, "Launched"},
@@ -219,7 +219,6 @@ static MyEventName controlEventNames [] = {
  { 0, NULL }
 };
 
-
 static MyEventName commandEventNames [] = {
  { kEventCommandProcess, "Process" },
  { kEventCommandUpdateStatus, "UpdateStatus" },
@@ -237,7 +236,7 @@ static MyEventNameList eventNameList [] = {
  { 0, NULL}
 };
 
-
+#ifdef TK_MACOSXDEBUG_UNUSED
 static MyEventName classicEventNames [] = {
  { nullEvent,"nullEvent" },
  { mouseDown,"mouseDown" },
@@ -252,163 +251,160 @@ static MyEventName classicEventNames [] = {
  { kHighLevelEvent,"kHighLevelEvent" },
  { 0, NULL }
 };
+#endif /* TK_MACOSXDEBUG_UNUSED */
 
-MODULE_SCOPE char * 
-CarbonEventToAscii(EventRef eventRef, char * buf)
-{     
+MODULE_SCOPE char *
+TkMacOSXCarbonEventToAscii(EventRef eventRef)
+{
     EventClass eventClass;
-    EventKind  eventKind;
+    EventKind eventKind;
     MyEventNameList * list = eventNameList;
-    MyEventName     * names = NULL;
-    int *       iPtr = ( int * )buf;
-    char *      iBuf = buf;
+    MyEventName * names = NULL;
+    static char str[256];
+    char *buf = str;
+    int *iPtr = (int*)str;
     int found = 0;
 
     eventClass = GetEventClass(eventRef);
     eventKind = GetEventKind(eventRef);
 
     *iPtr = eventClass;
-    buf [ 4 ] = 0;
+    buf[4] = 0;
     strcat(buf, " ");
     buf += strlen(buf);
     while (list->names && (!names) ) {
-        if (eventClass == list->c) {
-            names = list -> names;
-        } else {
-            list++;
-        }
+	if (eventClass == list->c) {
+	    names = list -> names;
+	} else {
+	    list++;
+	}
     }
-    if (names) {
-       found = 0;
-       while (names->name && !found) {
-           if (eventKind == names->kind) {
-               sprintf(buf, "%-20s", names->name);
-               found = 1;
-           } else {
-               names++;
-           }
-        }
-        if (!found) {
-            sprintf(buf, "%-20d", eventKind );
-        }
-    } else {
-        sprintf(buf, "%-20d", eventKind );
+   while (names && names->name) {
+       if (eventKind == names->kind) {
+	   snprintf(buf, 250, "%-20s", names->name);
+	   break;
+       } else {
+	   names++;
+       }
     }
-    return iBuf;
+    if (!found) {
+	snprintf(buf, 250, "%-20d", eventKind);
+    }
+    return str;
 }
 
+#ifdef TK_MACOSXDEBUG_UNUSED
 MODULE_SCOPE char *
-CarbonEventKindToAscii(EventRef eventRef, char * buf )
-{     
+TkMacOSXCarbonEventKindToAscii(EventRef eventRef, char * buf )
+{
    EventClass eventClass;
    EventKind  eventKind;
    MyEventNameList * list = eventNameList;
-   MyEventName     * names = NULL;
-   int               found = 0;
+   MyEventName	   * names = NULL;
+   int		     found = 0;
    eventClass = GetEventClass(eventRef);
    eventKind = GetEventKind(eventRef);
    while (list->names && (!names) ) {
        if (eventClass == list -> c) {
-           names = list -> names;
+	   names = list -> names;
        } else {
-           list++;
+	   list++;
        }
    }
    if (names) {
        found = 0;
        while ( names->name && !found ) {
-           if (eventKind == names->kind) {
-               sprintf(buf,"%s",names->name);
-               found = 1;
-           } else {
-               names++;
-           }
+	   if (eventKind == names->kind) {
+	       sprintf(buf,"%s",names->name);
+	       found = 1;
+	   } else {
+	       names++;
+	   }
        }
     }
     if (!found) {
-        sprintf ( buf,"%d", eventKind );
+	sprintf ( buf,"%d", eventKind );
      } else {
-        sprintf ( buf,"%d", eventKind );
+	sprintf ( buf,"%d", eventKind );
      }
      return buf;
 }
 
 MODULE_SCOPE char *
-ClassicEventToAscii(EventRecord * eventPtr, char * buf )
+TkMacOSXClassicEventToAscii(EventRecord * eventPtr, char * buf )
 {
-    MyEventName     * names = NULL;
+    MyEventName	    * names = NULL;
     int found = 0;
     names = classicEventNames;
     while ( names -> name && !found )
-        if (eventPtr->what == names->kind) {
-            int * iPtr;
-            char cBuf[8];
-            iPtr=(int *) &cBuf;
-            *iPtr = eventPtr->message;
-            cBuf[4] = 0;
-            sprintf(buf, "%-16s %08x %04x %s", names->name,
-                    (int) eventPtr->message,
-                    eventPtr->modifiers, 
-                    cBuf);
-            found = 1;
-        } else {
-          names++;
-        }
+	if (eventPtr->what == names->kind) {
+	    int * iPtr;
+	    char cBuf[8];
+	    iPtr=(int *) &cBuf;
+	    *iPtr = eventPtr->message;
+	    cBuf[4] = 0;
+	    sprintf(buf, "%-16s %08x %04x %s", names->name,
+		    (int) eventPtr->message,
+		    eventPtr->modifiers,
+		    cBuf);
+	    found = 1;
+	} else {
+	  names++;
+	}
     if (!found) {
-               sprintf(buf,"%-16d %08x %08x, %s",
-                       eventPtr->what, (int) eventPtr->message,
-                       eventPtr->modifiers, buf);
+	       sprintf(buf,"%-16d %08x %08x, %s",
+		       eventPtr->what, (int) eventPtr->message,
+		       eventPtr->modifiers, buf);
     }
     return buf;
- 
+
 }
 
 MODULE_SCOPE void
-printPoint(char * tag, Point * p )
+TkMacOSXPrintPoint(char * tag, Point * p )
 {
-    fprintf(stderr,"%s %4d %4d\n",
-        tag,p->h,p->v );
+    TkMacOSXDbgMsg("%s %4d %4d", tag,p->h,p->v );
 }
 
 MODULE_SCOPE void
-printRect(char * tag, Rect * r )
+TkMacOSXPrintRect(char * tag, Rect * r )
 {
-    fprintf(stderr,"%s %4d %4d %4d %4d (%dx%d)\n",
-        tag, r->left, r->top, r->right, r->bottom,
-        r->right - r->left + 1, r->bottom - r->top + 1);
+    TkMacOSXDbgMsg("%s %4d %4d %4d %4d (%dx%d)",
+	tag, r->left, r->top, r->right, r->bottom,
+	r->right - r->left + 1, r->bottom - r->top + 1);
 }
 
 MODULE_SCOPE void
-printRegion(char * tag, RgnHandle rgn )
+TkMacOSXPrintRegion(char * tag, RgnHandle rgn )
 {
     Rect r;
     GetRegionBounds(rgn,&r);
-    printRect(tag,&r);
+    TkMacOSXPrintRect(tag,&r);
 }
 
 MODULE_SCOPE void
-printWindowTitle(char * tag, WindowRef window )
+TkMacOSXPrintWindowTitle(char * tag, WindowRef window )
 {
     Str255 title;
     GetWTitle(window,title);
     title [title[0] + 1] = 0;
-    fprintf(stderr, "%s %s\n", tag, title +1 );
+    TkMacOSXDbgMsg("%s %s", tag, title +1 );
 }
 
 typedef struct {
- int    msg;
+ int	msg;
  char * name;
 } MsgName;
 
 static MsgName msgNames [] = {
-    { kMenuDrawMsg,       "Draw"},
-    { kMenuSizeMsg,       "Size"},
-    { kMenuPopUpMsg,      "PopUp"},
-    { kMenuCalcItemMsg,   "CalcItem" },
+    { kMenuDrawMsg,	  "Draw"},
+    { kMenuSizeMsg,	  "Size"},
+    { kMenuPopUpMsg,	  "PopUp"},
+    { kMenuCalcItemMsg,	  "CalcItem" },
     { kMenuThemeSavvyMsg, "ThemeSavvy"},
-    { kMenuInitMsg,       "Init" },
-    { kMenuDisposeMsg,    "Dispose" },
-    { kMenuFindItemMsg,   "FindItem" },
+    { kMenuInitMsg,	  "Init" },
+    { kMenuDisposeMsg,	  "Dispose" },
+    { kMenuFindItemMsg,	  "FindItem" },
     { kMenuHiliteItemMsg, "HiliteItem" },
     { kMenuDrawItemsMsg,  "DrawItems" },
     { -1, NULL }
@@ -419,12 +415,12 @@ TkMacOSXMenuMessageToAscii(int msg, char * s)
 {
     MsgName * msgNamePtr;
     for (msgNamePtr = msgNames;msgNamePtr->name;) {
-        if (msgNamePtr->msg == msg) {
-           strcpy(s,msgNamePtr->name);
-           return s;
-        } else {
-            msgNamePtr++;
-        }
+	if (msgNamePtr->msg == msg) {
+	   strcpy(s,msgNamePtr->name);
+	   return s;
+	} else {
+	    msgNamePtr++;
+	}
     }
     sprintf(s,"unknown : %d", msg );
     return s;
@@ -433,28 +429,29 @@ TkMacOSXMenuMessageToAscii(int msg, char * s)
 static MsgName trackingNames [] = {
     { kMouseTrackingMousePressed  , "MousePressed  " },
     { kMouseTrackingMouseReleased , "MouseReleased " },
-    { kMouseTrackingMouseExited   , "MouseExited   " },
+    { kMouseTrackingMouseExited	  , "MouseExited   " },
     { kMouseTrackingMouseEntered  , "MouseEntered  " },
-    { kMouseTrackingMouseMoved    , "MouseMoved    " },
+    { kMouseTrackingMouseMoved	  , "MouseMoved	   " },
     { kMouseTrackingKeyModifiersChanged, "KeyModifiersChanged" },
     { kMouseTrackingUserCancelled , "UserCancelled " },
-    { kMouseTrackingTimedOut      , "TimedOut      " },
+    { kMouseTrackingTimedOut	  , "TimedOut	   " },
     { -1, NULL }
 };
 
 MODULE_SCOPE char *
-MouseTrackingResultToAscii(MouseTrackingResult r, char * buf) 
+TkMacOSXMouseTrackingResultToAscii(MouseTrackingResult r, char * buf)
 {
     MsgName * namePtr;
     for (namePtr = trackingNames; namePtr->name; namePtr++) {
-        if (namePtr->msg == r) {
-            strcpy(buf, namePtr->name);
-            return buf;
-        }
+	if (namePtr->msg == r) {
+	    strcpy(buf, namePtr->name);
+	    return buf;
+	}
     }
     sprintf(buf, "Unknown mouse tracking result : %d", r);
     return buf;
 }
+#endif /* TK_MACOSXDEBUG_UNUSED */
 
 /*
  *----------------------------------------------------------------------
@@ -462,24 +459,24 @@ MouseTrackingResultToAscii(MouseTrackingResult r, char * buf)
  * TkMacOSXGetNamedDebugSymbol --
  *
  *
- *	  Dynamically acquire address of a named symbol from a loaded
- *	  dynamic library, so that we can use API that may not be
- *	  available on all OS versions.
- *	  For debugging purposes, if we cannot find the symbol with the
- *	  usual dynamic library APIs, we manually walk the symbol table
- *	  of the loaded library. This allows access to unexported
- *	  symbols such as private_extern internal debugging functions.
- *	  If module is NULL or the empty string, search all loaded
- *	  libraries (could be very expensive and should be avoided).
+ *	Dynamically acquire address of a named symbol from a loaded
+ *	dynamic library, so that we can use API that may not be
+ *	available on all OS versions.
+ *	For debugging purposes, if we cannot find the symbol with the
+ *	usual dynamic library APIs, we manually walk the symbol table
+ *	of the loaded library. This allows access to unexported
+ *	symbols such as private_extern internal debugging functions.
+ *	If module is NULL or the empty string, search all loaded
+ *	libraries (could be very expensive and should be avoided).
  *
- *	  THIS FUCTION IS ONLY TO BE USED FOR DEBUGGING PURPOSES, IT MAY
- *	  BREAK UNEXPECTEDLY IN THE FUTURE !
- *	 
+ *	THIS FUCTION IS ONLY TO BE USED FOR DEBUGGING PURPOSES, IT MAY
+ *	BREAK UNEXPECTEDLY IN THE FUTURE !
+ *
  * Results:
- *	  Address of given symbol or NULL if unavailable.
+ *	Address of given symbol or NULL if unavailable.
  *
  * Side effects:
- *	  None.
+ *	None.
  *
  *----------------------------------------------------------------------
  */
@@ -492,7 +489,11 @@ TkMacOSXGetNamedDebugSymbol(const char* module, const char* symbol)
     if (!addr) {
 	const struct mach_header *mh = NULL;
 	uint32_t i, n = _dyld_image_count();
+	size_t module_len;
 
+	if (module && *module) {
+	    module_len = strlen(module);
+	}
 	for (i = 0; i < n; i++) {
 	    if (module && *module) {
 		/* Find image with given module name */
@@ -503,7 +504,7 @@ TkMacOSXGetNamedDebugSymbol(const char* module, const char* symbol)
 		    continue;
 		}
 		name = strrchr(path, '/') + 1;
-		if (strncmp(name, module, strlen(name)) != 0) {
+		if (strncmp(name, module, module_len) != 0) {
 		    continue;
 		}
 	    }
@@ -513,8 +514,8 @@ TkMacOSXGetNamedDebugSymbol(const char* module, const char* symbol)
 		struct symtab_command *st = NULL;
 		struct segment_command *sg = NULL;
 		uint32_t j, m, nsect = 0, txtsectx = 0;
-		
-		lc = (struct load_command*)((char *) mh +
+
+		lc = (struct load_command*)((const char*) mh +
 			sizeof(struct mach_header));
 		m = mh->ncmds;
 		for (j = 0; j < m; j++) {
@@ -525,12 +526,12 @@ TkMacOSXGetNamedDebugSymbol(const char* module, const char* symbol)
 			if (!txtsectx) {
 			    /* Count total sections until (__TEXT, __text) */
 			    uint32_t k, ns = sg->nsects;
-			    
+
 			    if (strcmp(sg->segname, SEG_TEXT) == 0) {
 				struct section *s = (struct section *)(
 					(char *)sg +
 					sizeof(struct segment_command));
-				
+
 				for(k = 0; k < ns; k++) {
 				    if (strcmp(s->sectname, SECT_TEXT) == 0) {
 					txtsectx = nsect+k+1;
@@ -553,7 +554,7 @@ TkMacOSXGetNamedDebugSymbol(const char* module, const char* symbol)
 		    struct nlist *sym;
 		    uint32_t strsize = st->strsize;
 		    int32_t strx;
-		    
+
 		    /* Offset file positions by difference to actual position
 		       in memory of last segment before symbol table: */
 		    base = (intptr_t) sg->vmaddr + slide - sg->fileoff;
@@ -567,7 +568,7 @@ TkMacOSXGetNamedDebugSymbol(const char* module, const char* symbol)
 				sym->n_sect == txtsectx &&
 				strx > 0 && (uint32_t) strx < strsize &&
 				strcmp(strings + strx, symbol) == 0) {
-			    addr = (void*) sym->n_value + slide;
+			    addr = (char*) sym->n_value + slide;
 			    break;
 			}
 			sym++;

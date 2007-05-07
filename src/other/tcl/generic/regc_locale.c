@@ -14,9 +14,9 @@
 
 /* ASCII character-name table */
 
-static struct cname {
-    char *name;
-    char code;
+static const struct cname {
+    const char *name;
+    const char code;
 } cnames[] = {
     {"NUL",		'\0'},
     {"SOH",		'\001'},
@@ -133,7 +133,7 @@ typedef struct crange {
 
 /* Unicode: alphabetic characters */
 
-static crange alphaRangeTable[] = {
+static const crange alphaRangeTable[] = {
     {0x0041, 0x005a}, {0x0061, 0x007a}, {0x00c0, 0x00d6}, {0x00d8, 0x00f6},
     {0x00f8, 0x021f}, {0x0222, 0x0233}, {0x0250, 0x02ad}, {0x02b0, 0x02b8},
     {0x02bb, 0x02c1}, {0x02e0, 0x02e4}, {0x0388, 0x038a}, {0x038e, 0x03a1},
@@ -181,7 +181,7 @@ static crange alphaRangeTable[] = {
 
 #define NUM_ALPHA_RANGE (sizeof(alphaRangeTable)/sizeof(crange))
 
-static chr alphaCharTable[] = {
+static const chr alphaCharTable[] = {
     0x00aa, 0x00b5, 0x00ba, 0x02d0, 0x02d1, 0x02ee, 0x037a, 0x0386, 0x038c,
     0x04c7, 0x04c8, 0x04cb, 0x04cc, 0x04f8, 0x04f9, 0x0559, 0x06d5, 0x06e5,
     0x06e6, 0x0710, 0x093d, 0x0950, 0x098f, 0x0990, 0x09b2, 0x09dc, 0x09dd,
@@ -203,7 +203,7 @@ static chr alphaCharTable[] = {
  * Unicode: decimal digit characters
  */
 
-static crange digitRangeTable[] = {
+static const crange digitRangeTable[] = {
     {0x0030, 0x0039}, {0x0660, 0x0669}, {0x06f0, 0x06f9}, {0x0966, 0x096f},
     {0x09e6, 0x09ef}, {0x0a66, 0x0a6f}, {0x0ae6, 0x0aef}, {0x0b66, 0x0b6f},
     {0x0be7, 0x0bef}, {0x0c66, 0x0c6f}, {0x0ce6, 0x0cef}, {0x0d66, 0x0d6f},
@@ -221,7 +221,7 @@ static crange digitRangeTable[] = {
  * Unicode: punctuation characters.
  */
 
-static crange punctRangeTable[] = {
+static const crange punctRangeTable[] = {
     {0x0021, 0x0023}, {0x0025, 0x002a}, {0x002c, 0x002f}, {0x005b, 0x005d},
     {0x055a, 0x055f}, {0x066a, 0x066d}, {0x0700, 0x070d}, {0x0f04, 0x0f12},
     {0x0f3a, 0x0f3d}, {0x104a, 0x104f}, {0x1361, 0x1368}, {0x16eb, 0x16ed},
@@ -233,7 +233,7 @@ static crange punctRangeTable[] = {
 
 #define NUM_PUNCT_RANGE (sizeof(punctRangeTable)/sizeof(crange))
 
-static chr punctCharTable[] = {
+static const chr punctCharTable[] = {
     0x003a, 0x003b, 0x003f, 0x0040, 0x005f, 0x007b, 0x007d, 0x00a1, 0x00ab,
     0x00ad, 0x00b7, 0x00bb, 0x00bf, 0x037e, 0x0387, 0x0589, 0x058a, 0x05be,
     0x05c0, 0x05c3, 0x05f3, 0x05f4, 0x060c, 0x061b, 0x061f, 0x06d4, 0x0964,
@@ -249,13 +249,13 @@ static chr punctCharTable[] = {
  * Unicode: white space characters.
  */
 
-static crange spaceRangeTable[] = {
+static const crange spaceRangeTable[] = {
     {0x0009, 0x000d}, {0x2000, 0x200b}
 };
 
 #define NUM_SPACE_RANGE (sizeof(spaceRangeTable)/sizeof(crange))
 
-static chr spaceCharTable[] = {
+static const chr spaceCharTable[] = {
     0x0020, 0x00a0, 0x1680, 0x2028, 0x2029, 0x202f, 0x3000
 };
 
@@ -265,7 +265,7 @@ static chr spaceCharTable[] = {
  * Unicode: lowercase characters
  */
 
-static crange lowerRangeTable[] = {
+static const crange lowerRangeTable[] = {
     {0x0061, 0x007a}, {0x00df, 0x00f6}, {0x00f8, 0x00ff}, {0x017e, 0x0180},
     {0x0199, 0x019b}, {0x01bd, 0x01bf}, {0x0250, 0x02ad}, {0x03ac, 0x03ce},
     {0x03d5, 0x03d7}, {0x03ef, 0x03f3}, {0x0430, 0x045f}, {0x0561, 0x0587},
@@ -278,7 +278,7 @@ static crange lowerRangeTable[] = {
 
 #define NUM_LOWER_RANGE (sizeof(lowerRangeTable)/sizeof(crange))
 
-static chr lowerCharTable[] = {
+static const chr lowerCharTable[] = {
     0x00aa, 0x00b5, 0x00ba, 0x0101, 0x0103, 0x0105, 0x0107, 0x0109, 0x010b,
     0x010d, 0x010f, 0x0111, 0x0113, 0x0115, 0x0117, 0x0119, 0x011b, 0x011d,
     0x011f, 0x0121, 0x0123, 0x0125, 0x0127, 0x0129, 0x012b, 0x012d, 0x012f,
@@ -327,7 +327,7 @@ static chr lowerCharTable[] = {
  * Unicode: uppercase characters.
  */
 
-static crange upperRangeTable[] = {
+static const crange upperRangeTable[] = {
     {0x0041, 0x005a}, {0x00c0, 0x00d6}, {0x00d8, 0x00de}, {0x0189, 0x018b},
     {0x018e, 0x0191}, {0x0196, 0x0198}, {0x01b1, 0x01b3}, {0x01f6, 0x01f8},
     {0x0388, 0x038a}, {0x0391, 0x03a1}, {0x03a3, 0x03ab}, {0x03d2, 0x03d4},
@@ -340,7 +340,7 @@ static crange upperRangeTable[] = {
 
 #define NUM_UPPER_RANGE (sizeof(upperRangeTable)/sizeof(crange))
 
-static chr upperCharTable[] = {
+static const chr upperCharTable[] = {
     0x0100, 0x0102, 0x0104, 0x0106, 0x0108, 0x010a, 0x010c, 0x010e, 0x0110,
     0x0112, 0x0114, 0x0116, 0x0118, 0x011a, 0x011c, 0x011e, 0x0120, 0x0122,
     0x0124, 0x0126, 0x0128, 0x012a, 0x012c, 0x012e, 0x0130, 0x0132, 0x0134,
@@ -389,7 +389,7 @@ static chr upperCharTable[] = {
  * Unicode: unicode print characters excluding space.
  */
 
-static crange graphRangeTable[] = {
+static const crange graphRangeTable[] = {
     {0x0021, 0x007e}, {0x00a0, 0x011f}, {0x0121, 0x021f}, {0x0222, 0x0233},
     {0x0250, 0x02ad}, {0x02b0, 0x02ee}, {0x0300, 0x031f}, {0x0321, 0x034e},
     {0x0360, 0x0362}, {0x0384, 0x038a}, {0x038e, 0x03a1}, {0x03a3, 0x03ce},
@@ -511,7 +511,7 @@ static crange graphRangeTable[] = {
 
 #define NUM_GRAPH_RANGE (sizeof(graphRangeTable)/sizeof(crange))
 
-static chr graphCharTable[] = {
+static const chr graphCharTable[] = {
     0x0374, 0x0375, 0x037a, 0x037e, 0x038c, 0x0488, 0x0489, 0x04c7, 0x04c8,
     0x04cb, 0x04cc, 0x04f8, 0x04f9, 0x0589, 0x058a, 0x060c, 0x061b, 0x061f,
     0x098f, 0x0990, 0x09b2, 0x09bc, 0x09c7, 0x09c8, 0x09d7, 0x09dc, 0x09dd,
@@ -535,7 +535,7 @@ static chr graphCharTable[] = {
  * L*), Numbers (N*), Punctuation (P*), Symbols (S*) and Spaces (Zs).
  */
 
-static crange printRangeTable[] = {
+static const crange printRangeTable[] = {
     {0x0020, 0x007E}, {0x00A0, 0x01F5}, {0x01FA, 0x0217}, {0x0250, 0x02A8},
     {0x02B0, 0x02DE}, {0x02E0, 0x02E9}, {0x0374, 0x0375}, {0x0384, 0x038A},
     {0x038E, 0x03A1}, {0x03A3, 0x03CE}, {0x03D0, 0x03D6}, {0x03E2, 0x03F3},
@@ -593,7 +593,7 @@ static crange printRangeTable[] = {
 
 #define NUM_PRINT_RANGE (sizeof(printRangeTable)/sizeof(crange))
 
-static chr printCharTable[] = {
+static const chr printCharTable[] = {
     0x037A, 0x037E, 0x038C, 0x03DA, 0x03DC, 0x03DE, 0x03E0, 0x0589, 0x05BE,
     0x05C0, 0x05C3, 0x060C, 0x061B, 0x061F, 0x06E9, 0x093D, 0x0950, 0x09B2,
     0x0A5E, 0x0A8D, 0x0ABD, 0x0AD0, 0x0AE0, 0x0B3D, 0x0B9C, 0x0CDE, 0x0E01,
@@ -649,18 +649,18 @@ allmcces(
 
 /*
  - element - map collating-element name to celt
- ^ static celt element(struct vars *, chr *, chr *);
+ ^ static celt element(struct vars *, const chr *, const chr *);
  */
 static celt
 element(
     struct vars *v,		/* context */
-    chr *startp,		/* points to start of name */
-    chr *endp)			/* points just past end of name */
+    const chr *startp,		/* points to start of name */
+    const chr *endp)		/* points just past end of name */
 {
-    struct cname *cn;
+    const struct cname *cn;
     size_t len;
     Tcl_DString ds;
-    CONST char *np;
+    const char *np;
 
     /*
      * Generic: one-chr names stand for themselves.
@@ -760,8 +760,8 @@ range(
  ^ static int before(celt, celt);
  */
 static int				/* predicate */
-before(x, y)
-    celt x, y;				/* collating elements */
+before(
+    celt x, celt y)			/* collating elements */
 {
     /*
      * trivial because no MCCEs.
@@ -779,11 +779,11 @@ before(x, y)
  ^ static struct cvec *eclass(struct vars *, celt, int);
  */
 static struct cvec *
-eclass(v, c, cases)
-    struct vars *v;			/* context */
-    celt c;				/* Collating element representing
-					 * the equivalence class. */
-    int cases;				/* all cases? */
+eclass(
+    struct vars *v,		/* context */
+    celt c,			/* Collating element representing the
+				 * equivalence class. */
+    int cases)			/* all cases? */
 {
     struct cvec *cv;
 
@@ -818,27 +818,27 @@ eclass(v, c, cases)
 /*
  - cclass - supply cvec for a character class
  * Must include case counterparts on request.
- ^ static struct cvec *cclass(struct vars *, chr *, chr *, int);
+ ^ static struct cvec *cclass(struct vars *, const chr *, const chr *, int);
  */
 static struct cvec *
 cclass(
     struct vars *v,		/* context */
-    chr *startp,		/* where the name starts */
-    chr *endp,			/* just past the end of the name */
+    const chr *startp,		/* where the name starts */
+    const chr *endp,		/* just past the end of the name */
     int cases)			/* case-independent? */
 {
     size_t len;
     struct cvec *cv = NULL;
     Tcl_DString ds;
-    CONST char *np;
-    char **namePtr;
+    const char *np;
+    const char **namePtr;
     int i, index;
 
     /*
      * The following arrays define the valid character class names.
      */
 
-    static char *classNames[] = {
+    static const char *classNames[] = {
 	"alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph",
 	"lower", "print", "punct", "space", "upper", "xdigit", NULL
     };
@@ -1075,11 +1075,11 @@ allcases(
  * Note that it does not need to report anything except equal/unequal.
  * Note also that the length is exact, and the comparison should not
  * stop at embedded NULs!
- ^ static int cmp(CONST chr *, CONST chr *, size_t);
+ ^ static int cmp(const chr *, const chr *, size_t);
  */
 static int			/* 0 for equal, nonzero for unequal */
 cmp(
-    CONST chr *x, CONST chr *y,	/* strings to compare */
+    const chr *x, const chr *y,	/* strings to compare */
     size_t len)			/* exact length of comparison */
 {
     return memcmp(VS(x), VS(y), len*sizeof(chr));
@@ -1091,11 +1091,11 @@ cmp(
  * Note that it does not need to report anything except equal/unequal.
  * Note also that the length is exact, and the comparison should not
  * stop at embedded NULs!
- ^ static int casecmp(CONST chr *, CONST chr *, size_t);
+ ^ static int casecmp(const chr *, const chr *, size_t);
  */
 static int			/* 0 for equal, nonzero for unequal */
 casecmp(
-    CONST chr *x, CONST chr *y,	/* strings to compare */
+    const chr *x, const chr *y,	/* strings to compare */
     size_t len)			/* exact length of comparison */
 {
     for (; len > 0; len--, x++, y++) {

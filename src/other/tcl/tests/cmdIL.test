@@ -118,6 +118,10 @@ test cmdIL-1.27 {Tcl_LsortObjCmd procedure, returning indices} {
 test cmdIL-1.28 {Tcl_LsortObjCmd procedure, returning indices} {
     lsort -indices -unique -decreasing -real {1.2 34.5 34.5 5.6}
 } {2 3 0}
+test cmdIL-1.29 {Tcl_LsortObjCmd procedure, loss of list rep during sorting} {
+    set l {1 2 3}
+    string length [lsort -command {apply {args {string length $::l}}} $l]
+} 5
 
 # Can't think of any good tests for the MergeSort and MergeLists
 # procedures, except a bunch of random lists to sort.
@@ -723,6 +727,43 @@ test cmdIL-6.26 {lassign command - shimmering protection} -body {
 } -result {c {a b c} a b} -cleanup {
     rename testLassign {}
 }
+
+test cmdIL-7.1 {lreverse command} -body {
+    lreverse
+} -returnCodes error -result "wrong # args: should be \"lreverse list\""
+test cmdIL-7.2 {lreverse command} -body {
+    lreverse a b
+} -returnCodes error -result "wrong # args: should be \"lreverse list\""
+test cmdIL-7.3 {lreverse command} -body {
+    lreverse "not \{a list"
+} -returnCodes error -result {unmatched open brace in list}
+test cmdIL-7.4 {lreverse command - shared object} {
+    set x {a b {c d} e f}
+    lreverse $x
+} {f e {c d} b a}
+test cmdIL-7.5 {lreverse command - unshared object} {
+    lreverse [list a b {c d} e f]
+} {f e {c d} b a}
+test cmdIL-7.6 {lreverse command - unshared object [Bug 1672585]} {
+    lreverse [set x {1 2 3}][unset x]
+} {3 2 1}
+
+testConstraint testobj [llength [info commands testobj]]
+test cmdIL-7.7 {lreverse command - shared intrep [Bug 1675044]} -setup {
+    teststringobj set 1 {1 2 3}
+    testobj convert 1 list
+    testobj duplicate 1 2
+    variable x [teststringobj get 1]
+    variable y [teststringobj get 2]
+    testobj freeallvars
+    proc K {a b} {return $a}
+} -constraints testobj -body {
+    lreverse [K $y [unset y]]
+    lindex $x 0
+} -cleanup {
+    unset -nocomplain x y
+    rename K {}
+} -result 1
 
 # cleanup
 ::tcltest::cleanupTests

@@ -43,8 +43,8 @@ static char unk[] = "*** unknown regex error code 0x%x ***";
 
 static struct rerr {
     int code;
-    char *name;
-    char *explain;
+    const char *name;
+    const char *explain;
 } rerrs[] = {
     /* The actual table is built from regex.h */
 #include "regerrs.h"
@@ -58,12 +58,12 @@ static struct rerr {
 size_t				/* Actual space needed (including NUL) */
 regerror(
     int code,			/* Error code, or REG_ATOI or REG_ITOA */
-    CONST regex_t *preg,	/* Associated regex_t (unused at present) */
+    const regex_t *preg,	/* Associated regex_t (unused at present) */
     char *errbuf,		/* Result buffer (unless errbuf_size==0) */
     size_t errbuf_size)		/* Available space in errbuf, can be 0 */
 {
     struct rerr *r;
-    char *msg;
+    const char *msg;
     char convbuf[sizeof(unk)+50]; /* 50 = plenty for int */
     size_t len;
     int icode;

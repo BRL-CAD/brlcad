@@ -11,7 +11,6 @@
  * RCS: @(#) $Id$
  */
 
-#define USE_COMPAT_CONST
 #include "tclInt.h"
 
 /*
@@ -34,20 +33,20 @@
 
 int			TclplatformtestInit(Tcl_Interp *interp);
 static int		TesteventloopCmd(ClientData dummy, Tcl_Interp *interp,
-			    int argc, CONST84 char **argv);
+			    int argc, const char **argv);
 static int		TestvolumetypeCmd(ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]);
+			    Tcl_Obj *const objv[]);
 static int		TestwinclockCmd(ClientData dummy, Tcl_Interp* interp,
-			    int objc, Tcl_Obj *CONST objv[]);
+			    int objc, Tcl_Obj *const objv[]);
 static int		TestwinsleepCmd(ClientData dummy, Tcl_Interp* interp,
-			    int objc, Tcl_Obj *CONST objv[]);
+			    int objc, Tcl_Obj *const objv[]);
 static Tcl_ObjCmdProc	TestExceptionCmd;
 static int		TestwincpuidCmd(ClientData dummy, Tcl_Interp* interp,
-			    int objc, Tcl_Obj *CONST objv[]);
-static int		TestplatformChmod(CONST char *nativePath, int pmode);
+			    int objc, Tcl_Obj *const objv[]);
+static int		TestplatformChmod(const char *nativePath, int pmode);
 static int		TestchmodCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, CONST84 char **argv);
+			    Tcl_Interp *interp, int argc, const char **argv);
 
 /*
  *----------------------------------------------------------------------
@@ -113,7 +112,7 @@ TesteventloopCmd(
     ClientData clientData,	/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    CONST84 char **argv)	/* Argument strings. */
+    const char **argv)	/* Argument strings. */
 {
     static int *framePtr = NULL;/* Pointer to integer on stack frame of
 				 * innermost invocation of the "wait"
@@ -190,7 +189,7 @@ TestvolumetypeCmd(
     ClientData clientData,	/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
 #define VOL_BUF_SIZE 32
     int found;
@@ -255,9 +254,9 @@ TestwinclockCmd(
     ClientData dummy,		/* Unused */
     Tcl_Interp* interp,		/* Tcl interpreter */
     int objc,			/* Argument count */
-    Tcl_Obj *CONST objv[])	/* Argument vector */
+    Tcl_Obj *const objv[])	/* Argument vector */
 {
-    CONST static FILETIME posixEpoch = { 0xD53E8000, 0x019DB1DE };
+    static const FILETIME posixEpoch = { 0xD53E8000, 0x019DB1DE };
 				/* The Posix epoch, expressed as a Windows
 				 * FILETIME */
     Tcl_Time tclTime;		/* Tcl clock */
@@ -327,7 +326,7 @@ TestwincpuidCmd(
     ClientData dummy,
     Tcl_Interp* interp,		/* Tcl interpreter */
     int objc,			/* Parameter count */
-    Tcl_Obj *CONST * objv)	/* Parameter vector */
+    Tcl_Obj *const * objv)	/* Parameter vector */
 {
     int status;
     int index;
@@ -383,7 +382,7 @@ TestwinsleepCmd(
     ClientData clientData,	/* Unused */
     Tcl_Interp* interp,		/* Tcl interpreter */
     int objc,			/* Parameter count */
-    Tcl_Obj * CONST * objv)	/* Parameter vector */
+    Tcl_Obj *const * objv)	/* Parameter vector */
 {
     int ms;
     if (objc != 2) {
@@ -425,9 +424,9 @@ TestExceptionCmd(
     ClientData dummy,			/* Unused */
     Tcl_Interp* interp,			/* Tcl interpreter */
     int objc,				/* Argument count */
-    Tcl_Obj *CONST objv[])		/* Argument vector */
+    Tcl_Obj *const objv[])		/* Argument vector */
 {
-    static char *cmds[] = {
+    static const char *cmds[] = {
 	    "access_violation",
 	    "datatype_misalignment",
 	    "array_bounds",
@@ -506,7 +505,9 @@ TestExceptionCmd(
 }
 
 static int 
-TestplatformChmod(CONST char *nativePath, int pmode)
+TestplatformChmod(
+    const char *nativePath,
+    int pmode)
 {
     SID_IDENTIFIER_AUTHORITY userSidAuthority =
     { SECURITY_WORLD_SID_AUTHORITY };
@@ -777,11 +778,11 @@ TestplatformChmod(CONST char *nativePath, int pmode)
  */
 
 static int
-TestchmodCmd(dummy, interp, argc, argv)
-    ClientData dummy;			/* Not used. */
-    Tcl_Interp *interp;			/* Current interpreter. */
-    int argc;				/* Number of arguments. */
-    CONST84 char **argv;			/* Argument strings. */
+TestchmodCmd(
+    ClientData dummy,			/* Not used. */
+    Tcl_Interp *interp,			/* Current interpreter. */
+    int argc,				/* Number of arguments. */
+    const char **argv)			/* Argument strings. */
 {
     int i, mode;
     char *rest;
@@ -800,7 +801,7 @@ TestchmodCmd(dummy, interp, argc, argv)
 
     for (i = 2; i < argc; i++) {
 	Tcl_DString buffer;
-	CONST char *translated;
+	const char *translated;
 
 	translated = Tcl_TranslateFileName(interp, argv[i], &buffer);
 	if (translated == NULL) {

@@ -6,8 +6,8 @@
  * Copyright (c) 1988-1993 The Regents of the University of California.
  * Copyright (c) 1995-1996 Sun Microsystems, Inc.
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
@@ -15,9 +15,9 @@
 #include "tclPort.h"
 
 /*
- * This array is designed for mapping upper and lower case letter
- * together for a case independent comparison.  The mappings are
- * based upon ASCII character sequences.
+ * This array is designed for mapping upper and lower case letter together for
+ * a case independent comparison. The mappings are based upon ASCII character
+ * sequences.
  */
 
 static unsigned char charmap[] = {
@@ -56,14 +56,11 @@ static unsigned char charmap[] = {
 };
 
 /*
- * Here are the prototypes just in case they are not included
- * in tclPort.h.
+ * Here are the prototypes just in case they are not included in tclPort.h.
  */
-int		strncasecmp _ANSI_ARGS_((CONST char *s1,
-			    CONST char *s2, size_t n));
 
-int		strcasecmp _ANSI_ARGS_((CONST char *s1,
-			    CONST char *s2));
+int		strncasecmp(CONST char *s1, CONST char *s2, size_t n);
+int		strcasecmp(CONST char *s1, CONST char *s2);
 
 /*
  *----------------------------------------------------------------------
@@ -73,9 +70,8 @@ int		strcasecmp _ANSI_ARGS_((CONST char *s1,
  *	Compares two strings, ignoring case differences.
  *
  * Results:
- *	Compares two null-terminated strings s1 and s2, returning -1, 0,
- *	or 1 if s1 is lexicographically less than, equal to, or greater
- *	than s2.
+ *	Compares two null-terminated strings s1 and s2, returning -1, 0, or 1
+ *	if s1 is lexicographically less than, equal to, or greater than s2.
  *
  * Side effects:
  *	None.
@@ -84,9 +80,9 @@ int		strcasecmp _ANSI_ARGS_((CONST char *s1,
  */
 
 int
-strcasecmp(s1, s2)
-    CONST char *s1;			/* First string. */
-    CONST char *s2;			/* Second string. */
+strcasecmp(
+    CONST char *s1,		/* First string. */
+    CONST char *s2)		/* Second string. */
 {
     unsigned char u1, u2;
 
@@ -108,9 +104,9 @@ strcasecmp(s1, s2)
  *	Compares two strings, ignoring case differences.
  *
  * Results:
- *	Compares up to length chars of s1 and s2, returning -1, 0, or 1
- *	if s1 is lexicographically less than, equal to, or greater
- *	than s2 over those characters.
+ *	Compares up to length chars of s1 and s2, returning -1, 0, or 1 if s1
+ *	is lexicographically less than, equal to, or greater than s2 over
+ *	those characters.
  *
  * Side effects:
  *	None.
@@ -119,10 +115,10 @@ strcasecmp(s1, s2)
  */
 
 int
-strncasecmp(s1, s2, length)
-    CONST char *s1;		/* First string. */
-    CONST char *s2;		/* Second string. */
-    size_t length;		/* Maximum number of characters to compare
+strncasecmp(
+    CONST char *s1,		/* First string. */
+    CONST char *s2,		/* Second string. */
+    size_t length)		/* Maximum number of characters to compare
 				 * (stop earlier if the end of either string
 				 * is reached). */
 {

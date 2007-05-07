@@ -28,6 +28,11 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * Notes:
+ * Only (selected) functions in _this_ file should treat chr* as non-constant.
+ */
 
 /*
  - newcvec - allocate a new cvec
@@ -39,14 +44,13 @@ newcvec(
     int nranges,		/* ... and this many ranges... */
     int nmcces)			/* ... and this many MCCEs */
 {
-    size_t n;
-    size_t nc;
+    size_t n, nc;
     struct cvec *cv;
 
     nc = (size_t)nchrs + (size_t)nmcces*(MAXMCCE+1) + (size_t)nranges*2;
     n = sizeof(struct cvec) + (size_t)(nmcces-1)*sizeof(chr *)
 	    + nc*sizeof(chr);
-    cv = (struct cvec *)MALLOC(n);
+    cv = (struct cvec *) MALLOC(n);
     if (cv == NULL) {
 	return NULL;
     }
@@ -120,19 +124,17 @@ addrange(
 
 /*
  - addmcce - add an MCCE to a cvec
- ^ static VOID addmcce(struct cvec *, chr *, chr *);
+ ^ static VOID addmcce(struct cvec *, const chr *, const chr *);
  */
 
 static void
 addmcce(
     struct cvec *cv,		/* character vector */
-    chr *startp,		/* beginning of text */
-    chr *endp)			/* just past end of text */
+    const chr *startp,		/* beginning of text */
+    const chr *endp)		/* just past end of text */
 {
-    int len;
-    int i;
-    chr *s;
-    chr *d;
+    int len, i;
+    const chr *s, *d;
 
     if (startp == NULL && endp == NULL) {
 	return;
@@ -162,7 +164,7 @@ haschr(
     pchr c)			/* character to test for */
 {
     int i;
-    chr *p;
+    const chr *p;
 
     for (p = cv->chrs, i = cv->nchrs; i > 0; p++, i--) {
 	if (*p == c) {

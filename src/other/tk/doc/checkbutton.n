@@ -263,7 +263,7 @@ The behavior of checkbuttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
 .SH "SEE ALSO"
-button(n), options(n), radiobutton(n)
+button(n), options(n), radiobutton(n), ttk_checkbutton(n)
 
 .SH KEYWORDS
 checkbutton, widget

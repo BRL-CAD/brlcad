@@ -1,4 +1,4 @@
-/* 
+/*
  * tkStubLib.c --
  *
  *	Stub object that will be statically linked into extensions that wish
@@ -7,17 +7,16 @@
  * Copyright (c) 1998 Paul Duffin.
  * Copyright (c) 1998-1999 by Scriptics Corporation.
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
 
-
 /*
- * We need to ensure that we use the stub macros so that this file contains
- * no references to any of the stub functions.  This will make it possible
- * to build an extension that references Tk_InitStubs but doesn't end up
+ * We need to ensure that we use the stub macros so that this file contains no
+ * references to any of the stub functions. This will make it possible to
+ * build an extension that references Tk_InitStubs but doesn't end up
  * including the rest of the stub functions.
  */
 
@@ -49,7 +48,7 @@
 #include "tkIntXlibDecls.h"
 
 /*
- * Ensure that Tk_InitStubs is built as an exported symbol.  The other stub
+ * Ensure that Tk_InitStubs is built as an exported symbol. The other stub
  * symbols should be built as non-exported symbols.
  */
 
@@ -67,19 +66,18 @@ TkPlatStubs *tkPlatStubsPtr;
 TkIntStubs *tkIntStubsPtr;
 TkIntPlatStubs *tkIntPlatStubsPtr;
 TkIntXlibStubs *tkIntXlibStubsPtr;
-
 
 /*
  *----------------------------------------------------------------------
  *
  * Tk_InitStubs --
  *
- *	Checks that the correct version of Tk is loaded and that it
- *	supports stubs. It then initialises the stub table pointers.
+ *	Checks that the correct version of Tk is loaded and that it supports
+ *	stubs. It then initialises the stub table pointers.
  *
  * Results:
- *	The actual version of Tk that satisfies the request, or
- *	NULL to indicate that an error occurred.
+ *	The actual version of Tk that satisfies the request, or NULL to
+ *	indicate that an error occurred.
  *
  * Side effects:
  *	Sets the stub table pointers.
@@ -92,15 +90,15 @@ TkIntXlibStubs *tkIntXlibStubsPtr;
 #endif
 
 MODULE_SCOPE CONST char *
-Tk_InitStubs(interp, version, exact)
-    Tcl_Interp *interp;
-    char *version;
-    int exact;
+Tk_InitStubs(
+    Tcl_Interp *interp,
+    CONST char *version,
+    int exact)
 {
     CONST char *actualVersion;
 
     actualVersion = Tcl_PkgRequireEx(interp, "Tk", version, exact,
-		(ClientData *) &tkStubsPtr);
+	    (ClientData *) &tkStubsPtr);
     if (!actualVersion) {
 	return NULL;
     }
@@ -111,11 +109,19 @@ Tk_InitStubs(interp, version, exact)
 		TCL_STATIC);
 	return NULL;
     }
-    
+
     tkPlatStubsPtr = tkStubsPtr->hooks->tkPlatStubs;
     tkIntStubsPtr = tkStubsPtr->hooks->tkIntStubs;
     tkIntPlatStubsPtr = tkStubsPtr->hooks->tkIntPlatStubs;
     tkIntXlibStubsPtr = tkStubsPtr->hooks->tkIntXlibStubs;
-    
+
     return actualVersion;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 78
+ * End:
+ */

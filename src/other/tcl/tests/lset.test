@@ -390,6 +390,23 @@ test lset-14.2 {lset, not compiled, flat args, is string rep preserved?} testeva
     list $a [lindex $a 1]
 } "{ { 1 2 } { 3 4 } } { 3 4 }"
 
+testConstraint testobj [llength [info commands testobj]]
+test lset-15.1 {lset: shared intrep [Bug 1677512]} -setup {
+    teststringobj set 1 {{1 2} 3}
+    testobj convert 1 list
+    testobj duplicate 1 2
+    variable x [teststringobj get 1]
+    variable y [teststringobj get 2]
+    testobj freeallvars
+    set l [list $y z]
+    unset y
+} -constraints testobj -body {
+    lset l 0 0 0 5
+    lindex $x 0 0
+} -cleanup {
+    unset -nocomplain x l
+} -result 1
+
 catch {unset noRead}
 catch {unset noWrite}
 catch {rename failTrace {}}

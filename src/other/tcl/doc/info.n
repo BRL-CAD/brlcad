@@ -82,6 +82,114 @@ into variable \fIvarname\fR.
 Returns \fB1\fR if the variable named \fIvarName\fR exists in the
 current context (either as a global or local variable) and has been
 defined by being given a value, returns \fB0\fR otherwise.
+
+.TP
+\fBinfo frame\fR ?\fInumber\fR?
+This command provides access to all frames on the stack, even those
+hidden from \fBinfo level\fR. If \fInumber\fR is not specified, this
+command returns a number giving the frame level of the command. This
+is 1 if the command is invoked at top-level. If \fInumber\fR is
+specified, then the result is a dictionary containing the location
+information for the command at the \fInumber\fRed level on the stack.
+.sp
+If \fInumber\fR is positive (> 0) then it selects a particular stack
+level (1 refers to the top-most active command, i.e., \fBinfo frame\fR
+itself, 2 to the command it was called from, and so on); otherwise it
+gives a level relative to the current command (0 refers to the current
+command, i.e., \fBinfo frame\fR itself, -1 to its caller, and so on).
+.sp
+This is similar to how \fBinfo level\fR works, except that this
+subcommand reports all frames, like \fBsource\fR'd scripts,
+\fBeval\fR's, \fBuplevel\fR's, etc.
+.sp
+Note that for nested commands, like "foo [[bar [[x]]]]" only "x" will
+be seen by an \fBinfo frame\fR invoked within "x". This is the same as
+for \fBinfo level\fR and error stack traces.
+.sp
+The result dictionary may contain the keys listed below, with the
+specified meanings for their values:
+.RS
+.TP
+\fItype\fR
+This entry is always present and describes the nature of the location
+for the command. The recognized values are \fBsource\fR, \fBproc\fR,
+\fBeval\fR, and \fBprecompiled\fR.
+.RS
+.TP
+\fBsource\fR
+means that the command is found in a script loaded by the \fBsource\fR
+command.
+.TP
+\fBproc\fR
+means that the command is found in dynamically created procedure body.
+.TP
+\fBeval\fR
+means that the command is executed by \fBeval\fR or \fBuplevel\fR.
+.TP
+\fBprecompiled\fR
+means that the command is found in a precompiled script (loadable by
+the package \fBtbcload\fR), and no further information will be
+available.
+.RE
+.TP
+\fIline\fR
+This entry provides the number of the line the command is at inside of
+the script it is a part of. This information is not present for type
+\fBprecompiled\fR. For type \fBsource\fR this information is counted
+relative to the beginning of the file, whereas for the last two types
+the line is counted relative to the start of the script.
+.TP
+\fIfile\fR
+This entry is present only for type \fBsource\fR. It provides the
+normalized path of the file the command is in.
+.TP
+\fIcmd\fR
+This entry provides the string representation of the command. This is
+usually the unsubstituted form, however for commands which are a pure
+list executed by eval it is the substituted form as they have no other
+string representation. Care is taken that the pure-List property of
+the latter is not spoiled.
+.TP
+\fIproc\fR
+This entry is present only if the command is found in the body of a
+regular Tcl procedure. It then provides the name of that procedure.
+.TP
+\fIlambda\fR
+This entry is present only if the command is found in the body of an
+anonymous Tcl procedure, i.e. a lambda. It then provides the entire
+definition of the lambda in question.
+.TP
+\fIlevel\fR
+This entry is present only if the queried frame has a corresponding
+frame returned by \fBinfo level\fR. It provides the index of this
+frame, relative to the current level (0 and negative numbers).
+.RE
+.sp
+.RS
+A thing of note is that for procedures statically defined in files the
+locations of commands in their bodies will be reported with type
+\fBsource\fR and absolute line numbers, and not as type
+\fBproc\fR. The same is true for procedures nested in statically
+defined procedures, and literal eval scripts in files or statically
+defined procedures.
+.sp
+In contrast, a procedure definition or \fBeval\fR within a dynamically
+\fBeval\fRuated environment count linenumbers relative to the start of
+their script, even if they would be able to count relative to the
+start of the outer dynamic script. That type of number usually makes
+more sense.
+.sp
+A different way of describing this behaviour is that file based
+locations are tracked as deeply as possible, and where this is not
+possible the lines are counted based on the smallest possible
+\fBeval\fR or procedure body, as that scope is usually easier to find
+than any dynamic outer scope.
+.sp
+The syntactic form \fB{expand}\fR is handled like \fBeval\fR. I.e. if it
+is given a literal list argument the system tracks the linenumber
+within the list words as well, and otherwise all linenumbers are
+counted relative to the start of each word (smallest scope)
+.RE
 .TP
 \fBinfo functions \fR?\fIpattern\fR?
 If \fIpattern\fR isn't specified, returns a list of all the math

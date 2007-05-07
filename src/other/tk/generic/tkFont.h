@@ -27,7 +27,7 @@
  * attributes gotten when the font was instantiated.
  */
 
-typedef struct TkFontAttributes {
+struct TkFontAttributes {
     Tk_Uid family;		/* Font family, or NULL to represent plaform-
 				 * specific default system font. */
     int size;			/* Pointsize of font, 0 for default size, or
@@ -36,7 +36,7 @@ typedef struct TkFontAttributes {
     int slant;			/* Slant flag; see below for def'n. */
     int underline;		/* Non-zero for underline font. */
     int overstrike;		/* Non-zero for overstrike font. */
-} TkFontAttributes;
+};
 
 /*
  * Possible values for the "weight" field in a TkFontAttributes structure.

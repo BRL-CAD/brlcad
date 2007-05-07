@@ -213,7 +213,7 @@ ValidateMemory(
 				 * been printed */
 {
     unsigned char *hiPtr;
-    int idx;
+    size_t idx;
     int guard_failed = FALSE;
     int byte;
 
@@ -223,7 +223,7 @@ ValidateMemory(
 	    guard_failed = TRUE;
 	    fflush(stdout);
 	    byte &= 0xff;
-	    fprintf(stderr, "low guard byte %d is 0x%x  \t%c\n", idx, byte,
+	    fprintf(stderr, "low guard byte %d is 0x%x  \t%c\n", (int)idx, byte,
 		    (isprint(UCHAR(byte)) ? byte : ' ')); /* INTL: bytes */
 	}
     }
@@ -244,7 +244,7 @@ ValidateMemory(
 	    guard_failed = TRUE;
 	    fflush(stdout);
 	    byte &= 0xff;
-	    fprintf(stderr, "hi guard byte %d is 0x%x  \t%c\n", idx, byte,
+	    fprintf(stderr, "hi guard byte %d is 0x%x  \t%c\n", (int)idx, byte,
 		    (isprint(UCHAR(byte)) ? byte : ' ')); /* INTL: bytes */
 	}
     }
@@ -261,8 +261,8 @@ ValidateMemory(
     }
 
     if (nukeGuards) {
-	memset((char *) memHeaderP->low_guard, 0, LOW_GUARD_SIZE);
-	memset((char *) hiPtr, 0, HIGH_GUARD_SIZE);
+	memset(memHeaderP->low_guard, 0, LOW_GUARD_SIZE);
+	memset(hiPtr, 0, HIGH_GUARD_SIZE);
     }
 
 }
@@ -397,10 +397,10 @@ Tcl_DbCkalloc(
      */
 
     if (init_malloced_bodies) {
-	memset((VOID *) result, GUARD_VALUE,
+	memset(result, GUARD_VALUE,
 		size + sizeof(struct mem_header) + HIGH_GUARD_SIZE);
     } else {
-	memset((char *) result->low_guard, GUARD_VALUE, LOW_GUARD_SIZE);
+	memset(result->low_guard, GUARD_VALUE, LOW_GUARD_SIZE);
 	memset(result->body + size, GUARD_VALUE, HIGH_GUARD_SIZE);
     }
     if (!ckallocInit) {
@@ -487,10 +487,10 @@ Tcl_AttemptDbCkalloc(
      * allocated list.
      */
     if (init_malloced_bodies) {
-	memset((VOID *) result, GUARD_VALUE,
+	memset(result, GUARD_VALUE,
 		size + sizeof(struct mem_header) + HIGH_GUARD_SIZE);
     } else {
-	memset((char *) result->low_guard, GUARD_VALUE, LOW_GUARD_SIZE);
+	memset(result->low_guard, GUARD_VALUE, LOW_GUARD_SIZE);
 	memset(result->body + size, GUARD_VALUE, HIGH_GUARD_SIZE);
     }
     if (!ckallocInit) {
@@ -603,7 +603,7 @@ Tcl_DbCkfree(
     Tcl_MutexLock(ckallocMutexPtr);
     ValidateMemory(memp, file, line, TRUE);
     if (init_malloced_bodies) {
-	memset((VOID *) ptr, GUARD_VALUE, (size_t) memp->length);
+	memset(ptr, GUARD_VALUE, (size_t) memp->length);
     }
 
     total_frees++;
@@ -656,7 +656,7 @@ Tcl_DbCkrealloc(
     CONST char *file,
     int line)
 {
-    char *new;
+    char *newPtr;
     unsigned int copySize;
     struct mem_header *memp;
 
@@ -674,10 +674,10 @@ Tcl_DbCkrealloc(
     if (copySize > (unsigned int) memp->length) {
 	copySize = memp->length;
     }
-    new = Tcl_DbCkalloc(size, file, line);
-    memcpy((VOID *) new, (VOID *) ptr, (size_t) copySize);
+    newPtr = Tcl_DbCkalloc(size, file, line);
+    memcpy(newPtr, ptr, (size_t) copySize);
     Tcl_DbCkfree(ptr, file, line);
-    return new;
+    return newPtr;
 }
 
 char *
@@ -687,7 +687,7 @@ Tcl_AttemptDbCkrealloc(
     CONST char *file,
     int line)
 {
-    char *new;
+    char *newPtr;
     unsigned int copySize;
     struct mem_header *memp;
 
@@ -705,13 +705,13 @@ Tcl_AttemptDbCkrealloc(
     if (copySize > (unsigned int) memp->length) {
 	copySize = memp->length;
     }
-    new = Tcl_AttemptDbCkalloc(size, file, line);
-    if (new == NULL) {
+    newPtr = Tcl_AttemptDbCkalloc(size, file, line);
+    if (newPtr == NULL) {
 	return NULL;
     }
-    memcpy((VOID *) new, (VOID *) ptr, (size_t) copySize);
+    memcpy(newPtr, ptr, (size_t) copySize);
     Tcl_DbCkfree(ptr, file, line);
-    return new;
+    return newPtr;
 }
 
 
@@ -842,14 +842,13 @@ MemoryCmd(
 	return TCL_OK;
     }
     if (strcmp(argv[1],"info") == 0) {
-	Tcl_Obj *objPtr = Tcl_NewObj();
-	TclObjPrintf(NULL, objPtr, "%-25s %10d\n%-25s %10d\n%-25s %10d\n%-25s %10d\n%-25s %10d\n%-25s %10d\n",
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"%-25s %10d\n%-25s %10d\n%-25s %10d\n%-25s %10d\n%-25s %10d\n%-25s %10d\n",
 		"total mallocs", total_mallocs, "total frees", total_frees,
 		"current packets allocated", current_malloc_packets,
 		"current bytes allocated", current_bytes_malloced,
 		"maximum packets allocated", maximum_malloc_packets,
-		"maximum bytes allocated", maximum_bytes_malloced);
-	Tcl_SetObjResult(interp, objPtr);
+		"maximum bytes allocated", maximum_bytes_malloced));
 	return TCL_OK;
     }
     if (strcmp(argv[1],"init") == 0) {
@@ -914,7 +913,7 @@ MemoryCmd(
     }
 
     Tcl_AppendResult(interp, "bad option \"", argv[1],
-	    "\": should be active, break_on_malloc, info, init, onexit, ",
+	    "\": should be active, break_on_malloc, info, init, onexit, "
 	    "tag, trace, trace_on_at_malloc, or validate", NULL);
     return TCL_ERROR;
 

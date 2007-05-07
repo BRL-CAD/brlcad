@@ -66,7 +66,7 @@ typedef struct Node {
     Summary *summaryPtr;	/* First in malloc-ed list of info about tags
 				 * in this subtree (NULL if no tag info in the
 				 * subtree). */
-    int level;			/* Level of this node in the B-tree.  0 refers
+    int level;			/* Level of this node in the B-tree. 0 refers
 				 * to the bottom of the tree (children are
 				 * lines, not nodes). */
     union {			/* First in linked list of children. */
@@ -76,7 +76,7 @@ typedef struct Node {
     int numChildren;		/* Number of children of this node. */
     int numLines;		/* Total number of lines (leaves) in the
 				 * subtree rooted here. */
-    int* numPixels;		/* Array containing total number of vertical
+    int *numPixels;		/* Array containing total number of vertical
 				 * display pixels in the subtree rooted here,
 				 * one entry for each peer widget. */
 } Node;
@@ -108,8 +108,8 @@ typedef struct BTree {
     int clients;		/* Number of clients of this B-tree. */
     int pixelReferences;	/* Number of clients of this B-tree which care
 				 * about pixel heights. */
-    int stateEpoch;             /* Updated each time any aspect of the B-tree
-                                 * changes. */
+    int stateEpoch;		/* Updated each time any aspect of the B-tree
+				 * changes. */
     TkSharedText *sharedTextPtr;/* Used to find tagTable in consistency
 				 * checking code, and to access list of all
 				 * B-tree clients. */
@@ -134,8 +134,7 @@ typedef struct TagInfo {
 } TagInfo;
 
 /*
- * Variable that indicates whether to enable consistency checks for
- * debugging.
+ * Variable that indicates whether to enable consistency checks for debugging.
  */
 
 int tkBTreeDebug = 0;
@@ -153,47 +152,44 @@ int tkBTreeDebug = 0;
  * Forward declarations for functions defined in this file:
  */
 
-static int		AdjustPixelClient _ANSI_ARGS_((BTree *treePtr,
-			    int defaultHeight, Node *nodePtr, TkTextLine *start,
-			    TkTextLine *end, int useReference,
-			    int newPixelReferences, int *counting));
-static void		ChangeNodeToggleCount _ANSI_ARGS_((Node *nodePtr,
-			    TkTextTag *tagPtr, int delta));
-static void		CharCheckProc _ANSI_ARGS_((TkTextSegment *segPtr,
-			    TkTextLine *linePtr));
-static int		CharDeleteProc _ANSI_ARGS_((TkTextSegment *segPtr,
-			    TkTextLine *linePtr, int treeGone));
-static TkTextSegment *	CharCleanupProc _ANSI_ARGS_((TkTextSegment *segPtr,
-			    TkTextLine *linePtr));
-static TkTextSegment *	CharSplitProc _ANSI_ARGS_((TkTextSegment *segPtr,
-			    int index));
-static void		CheckNodeConsistency _ANSI_ARGS_((Node *nodePtr,
-			    int references));
-static void		CleanupLine _ANSI_ARGS_((TkTextLine *linePtr));
-static void		DeleteSummaries _ANSI_ARGS_((Summary *tagPtr));
-static void		DestroyNode _ANSI_ARGS_((Node *nodePtr));
-static TkTextSegment *	FindTagEnd _ANSI_ARGS_((TkTextBTree tree,
-			    TkTextTag *tagPtr, TkTextIndex *indexPtr));
-static void		IncCount _ANSI_ARGS_((TkTextTag *tagPtr, int inc,
-			    TagInfo *tagInfoPtr));
-static void		Rebalance _ANSI_ARGS_((BTree *treePtr, Node *nodePtr));
-static void		RecomputeNodeCounts _ANSI_ARGS_((BTree *treePtr,
-			    Node *nodePtr));
-static void		RemovePixelClient _ANSI_ARGS_((BTree *treePtr,
-			    Node *nodePtr, int overwriteWithLast));
-static TkTextSegment *	SplitSeg _ANSI_ARGS_((TkTextIndex *indexPtr));
-static void		ToggleCheckProc _ANSI_ARGS_((TkTextSegment *segPtr,
-			    TkTextLine *linePtr));
-static TkTextSegment *	ToggleCleanupProc _ANSI_ARGS_((TkTextSegment *segPtr,
-			    TkTextLine *linePtr));
-static int		ToggleDeleteProc _ANSI_ARGS_((TkTextSegment *segPtr,
-			    TkTextLine *linePtr, int treeGone));
-static void		ToggleLineChangeProc _ANSI_ARGS_((TkTextSegment *segPtr,
-			    TkTextLine *linePtr));
-static TkTextSegment *	FindTagStart _ANSI_ARGS_((TkTextBTree tree,
-			    TkTextTag *tagPtr, TkTextIndex *indexPtr));
-static void		AdjustStartEndRefs _ANSI_ARGS_((BTree *treePtr,
-			    TkText *textPtr, int action));
+static int		AdjustPixelClient(BTree *treePtr, int defaultHeight,
+			    Node *nodePtr, TkTextLine *start, TkTextLine *end,
+			    int useReference, int newPixelReferences,
+			    int *counting);
+static void		ChangeNodeToggleCount(Node *nodePtr,
+			    TkTextTag *tagPtr, int delta);
+static void		CharCheckProc(TkTextSegment *segPtr,
+			    TkTextLine *linePtr);
+static int		CharDeleteProc(TkTextSegment *segPtr,
+			    TkTextLine *linePtr, int treeGone);
+static TkTextSegment *	CharCleanupProc(TkTextSegment *segPtr,
+			    TkTextLine *linePtr);
+static TkTextSegment *	CharSplitProc(TkTextSegment *segPtr, int index);
+static void		CheckNodeConsistency(Node *nodePtr, int references);
+static void		CleanupLine(TkTextLine *linePtr);
+static void		DeleteSummaries(Summary *tagPtr);
+static void		DestroyNode(Node *nodePtr);
+static TkTextSegment *	FindTagEnd(TkTextBTree tree, TkTextTag *tagPtr,
+			    TkTextIndex *indexPtr);
+static void		IncCount(TkTextTag *tagPtr, int inc,
+			    TagInfo *tagInfoPtr);
+static void		Rebalance(BTree *treePtr, Node *nodePtr);
+static void		RecomputeNodeCounts(BTree *treePtr, Node *nodePtr);
+static void		RemovePixelClient(BTree *treePtr, Node *nodePtr,
+			    int overwriteWithLast);
+static TkTextSegment *	SplitSeg(TkTextIndex *indexPtr);
+static void		ToggleCheckProc(TkTextSegment *segPtr,
+			    TkTextLine *linePtr);
+static TkTextSegment *	ToggleCleanupProc(TkTextSegment *segPtr,
+			    TkTextLine *linePtr);
+static int		ToggleDeleteProc(TkTextSegment *segPtr,
+			    TkTextLine *linePtr, int treeGone);
+static void		ToggleLineChangeProc(TkTextSegment *segPtr,
+			    TkTextLine *linePtr);
+static TkTextSegment *	FindTagStart(TkTextBTree tree, TkTextTag *tagPtr,
+			    TkTextIndex *indexPtr);
+static void		AdjustStartEndRefs(BTree *treePtr, TkText *textPtr,
+			    int action);
 
 /*
  * Actions for use by AdjustStartEndRefs
@@ -206,7 +202,7 @@ static void		AdjustStartEndRefs _ANSI_ARGS_((BTree *treePtr,
  * Type record for character segments:
  */
 
-Tk_SegType tkTextCharType = {
+const Tk_SegType tkTextCharType = {
     "character",		/* name */
     0,				/* leftGravity */
     CharSplitProc,		/* splitProc */
@@ -221,7 +217,7 @@ Tk_SegType tkTextCharType = {
  * Type record for segments marking the beginning of a tagged range:
  */
 
-Tk_SegType tkTextToggleOnType = {
+const Tk_SegType tkTextToggleOnType = {
     "toggleOn",			/* name */
     0,				/* leftGravity */
     NULL,			/* splitProc */
@@ -236,7 +232,7 @@ Tk_SegType tkTextToggleOnType = {
  * Type record for segments marking the end of a tagged range:
  */
 
-Tk_SegType tkTextToggleOffType = {
+const Tk_SegType tkTextToggleOffType = {
     "toggleOff",		/* name */
     1,				/* leftGravity */
     NULL,			/* splitProc */
@@ -265,8 +261,8 @@ Tk_SegType tkTextToggleOffType = {
  */
 
 TkTextBTree
-TkBTreeCreate(sharedTextPtr)
-    TkSharedText *sharedTextPtr;
+TkBTreeCreate(
+    TkSharedText *sharedTextPtr)
 {
     register BTree *treePtr;
     register Node *rootPtr;
@@ -294,7 +290,7 @@ TkBTreeCreate(sharedTextPtr)
 
     /*
      * The tree currently has no registered clients, so all pixel count
-     * pointers are simply NULL
+     * pointers are simply NULL.
      */
 
     rootPtr->numPixels = NULL;
@@ -357,8 +353,8 @@ TkBTreeCreate(sharedTextPtr)
  *
  * Results:
  *	The return value is the pixelReference used by the B-tree to refer to
- *	pixel counts for the new client. It should be stored by the caller.
- *	If defaultHeight was negative, then the return value will be -1.
+ *	pixel counts for the new client. It should be stored by the caller. If
+ *	defaultHeight was negative, then the return value will be -1.
  *
  * Side effects:
  *	Memory may be allocated and initialized.
@@ -367,13 +363,13 @@ TkBTreeCreate(sharedTextPtr)
  */
 
 void
-TkBTreeAddClient(tree, textPtr, defaultHeight)
-    TkTextBTree tree;		/* B-tree to add a client to */
-    TkText *textPtr;		/* Client to add */
-    int defaultHeight;		/* Default line height for the new client, or
+TkBTreeAddClient(
+    TkTextBTree tree,		/* B-tree to add a client to. */
+    TkText *textPtr,		/* Client to add. */
+    int defaultHeight)		/* Default line height for the new client, or
 				 * -1 if no pixel heights are to be kept. */
 {
-    register BTree *treePtr = (BTree*) tree;
+    register BTree *treePtr = (BTree *) tree;
 
     if (treePtr == NULL) {
 	Tcl_Panic("NULL treePtr in TkBTreeAddClient");
@@ -427,13 +423,13 @@ TkBTreeAddClient(tree, textPtr, defaultHeight)
  */
 
 void
-TkBTreeClientRangeChanged(textPtr, defaultHeight)
-    TkText *textPtr;		/* Client whose start, end have changed. */
-    int defaultHeight;		/* Default line height for the new client, or
+TkBTreeClientRangeChanged(
+    TkText *textPtr,		/* Client whose start, end have changed. */
+    int defaultHeight)		/* Default line height for the new client, or
 				 * -1 if no pixel heights are to be kept. */
 {
     TkTextLine *end;
-    BTree *treePtr = (BTree*) textPtr->sharedTextPtr->tree;
+    BTree *treePtr = (BTree *) textPtr->sharedTextPtr->tree;
 
     int counting = (textPtr->start == NULL ? 1 : 0);
     int useReference = textPtr->pixelReference;
@@ -472,8 +468,8 @@ TkBTreeClientRangeChanged(textPtr, defaultHeight)
  */
 
 void
-TkBTreeDestroy(tree)
-    TkTextBTree tree;		/* Tree to clean up */
+TkBTreeDestroy(
+    TkTextBTree tree)		/* Tree to clean up. */
 {
     BTree *treePtr = (BTree *) tree;
 
@@ -496,8 +492,8 @@ TkBTreeDestroy(tree)
  *
  * TkBTreeEpoch --
  *
- *	Return the epoch for the B-tree.  This number is incremented
- *	any time anything changes in the tree.
+ *	Return the epoch for the B-tree. This number is incremented any time
+ *	anything changes in the tree.
  *
  * Results:
  *	The epoch number.
@@ -509,8 +505,8 @@ TkBTreeDestroy(tree)
  */
 
 int
-TkBTreeEpoch(tree)
-    TkTextBTree tree;		/* Tree to get epoch for */
+TkBTreeEpoch(
+    TkTextBTree tree)		/* Tree to get epoch for. */
 {
     BTree *treePtr = (BTree *) tree;
     return treePtr->stateEpoch;
@@ -537,9 +533,9 @@ TkBTreeEpoch(tree)
  */
 
 void
-TkBTreeRemoveClient(tree, textPtr)
-    TkTextBTree tree;		/* Tree to remove client from. */
-    TkText *textPtr;		/* Client to remove. */
+TkBTreeRemoveClient(
+    TkTextBTree tree,		/* Tree to remove client from. */
+    TkText *textPtr)		/* Client to remove. */
 {
     BTree *treePtr = (BTree *) tree;
     int pixelReference = textPtr->pixelReference;
@@ -582,7 +578,7 @@ TkBTreeRemoveClient(tree, textPtr)
 
 	    adjustPtr = treePtr->sharedTextPtr->peers;
 	    while (adjustPtr != NULL) {
-		if (adjustPtr->pixelReference == (treePtr->pixelReferences-1)) {
+		if (adjustPtr->pixelReference == treePtr->pixelReferences-1) {
 		    adjustPtr->pixelReference = pixelReference;
 		    break;
 		}
@@ -618,11 +614,11 @@ TkBTreeRemoveClient(tree, textPtr)
  */
 
 static void
-AdjustStartEndRefs(treePtr, textPtr, action)
-    BTree *treePtr;		/* The entire B-tree */
-    TkText *textPtr;		/* The text widget for which we want to adjust
+AdjustStartEndRefs(
+    BTree *treePtr,		/* The entire B-tree. */
+    TkText *textPtr,		/* The text widget for which we want to adjust
 				 * it's start and end cache. */
-    int action;			/* Action to perform */
+    int action)			/* Action to perform. */
 {
     if (action & TEXT_REMOVE_REFS) {
 	int i = 0;
@@ -688,9 +684,9 @@ AdjustStartEndRefs(treePtr, textPtr, action)
  *	of a new peer widget based on this B-tree, or for the modification of
  *	the start, end lines of an existing peer widget.
  *
- *	Immediately _after_ calling this, treePtr->clients and
- *	treePtr->pixelReferences should be adjusted if needed (i.e. if this is
- *	a new peer).
+ *	Immediately _after_ calling this, treePtr->pixelReferences and
+ *	treePtr->clients should be adjusted if needed (i.e. if this is a new
+ *	peer).
  *
  * Results:
  *	None.
@@ -702,19 +698,18 @@ AdjustStartEndRefs(treePtr, textPtr, action)
  */
 
 static int
-AdjustPixelClient(treePtr, defaultHeight, nodePtr, start, end,
-	    useReference, newPixelReferences, counting)
-    BTree *treePtr;		/* Pointer to tree */
-    int defaultHeight;		/* Default pixel line height, which can be
+AdjustPixelClient(
+    BTree *treePtr,		/* Pointer to tree. */
+    int defaultHeight,		/* Default pixel line height, which can be
 				 * zero. */
-    Node *nodePtr;		/* Adjust from this node downwards */
-    TkTextLine *start;		/* First line for this pixel client */
-    TkTextLine *end;		/* Last line for this pixel client */
-    int useReference;		/* pixel reference for the client we are
-				 * adding or changing */
-    int newPixelReferences;	/* New number of pixel references to this
-				 * B-tree */
-    int *counting;		/* References an integer which is zero if
+    Node *nodePtr,		/* Adjust from this node downwards. */
+    TkTextLine *start,		/* First line for this pixel client. */
+    TkTextLine *end,		/* Last line for this pixel client. */
+    int useReference,		/* pixel reference for the client we are
+				 * adding or changing. */
+    int newPixelReferences,	/* New number of pixel references to this
+				 * B-tree. */
+    int *counting)		/* References an integer which is zero if
 				 * we're outside the relevant range for this
 				 * client, and 1 if we're inside. */
 {
@@ -730,6 +725,7 @@ AdjustPixelClient(treePtr, defaultHeight, nodePtr, start, end,
 
     if (nodePtr->level != 0) {
 	Node *loopPtr = nodePtr->children.nodePtr;
+
 	while (loopPtr != NULL) {
 	    pixelCount += AdjustPixelClient(treePtr, defaultHeight, loopPtr,
 		    start, end, useReference, newPixelReferences, counting);
@@ -756,7 +752,7 @@ AdjustPixelClient(treePtr, defaultHeight, nodePtr, start, end,
 	     */
 
 	    linePtr->pixels[2*useReference] = (*counting ? defaultHeight : 0);
-	    linePtr->pixels[1+2*useReference] = (*counting ? 0 : 1);
+	    linePtr->pixels[2*useReference+1] = (*counting ? 0 : 1);
 	    pixelCount += linePtr->pixels[2*useReference];
 
 	    linePtr = linePtr->nextPtr;
@@ -791,18 +787,18 @@ AdjustPixelClient(treePtr, defaultHeight, nodePtr, start, end,
  */
 
 static void
-RemovePixelClient(treePtr, nodePtr, overwriteWithLast)
-    BTree *treePtr;		/* Pointer to tree */
-    Node *nodePtr;		/* Adjust from this node downwards */
-    int overwriteWithLast;	/* Over-write this peer widget's information
+RemovePixelClient(
+    BTree *treePtr,		/* Pointer to tree. */
+    Node *nodePtr,		/* Adjust from this node downwards. */
+    int overwriteWithLast)	/* Over-write this peer widget's information
 				 * with the last one. */
 {
     /*
      * Traverse entire tree down from nodePtr, reallocating pixel structures
-     * for each Node and TkTextLine, removing space allocated for one peer.
-     * If 'overwriteWithLast' is not -1, then copy the information which was
-     * in the last slot on top of one of the others (i.e. it's not the last
-     * one we're deleting).
+     * for each Node and TkTextLine, removing space allocated for one peer. If
+     * 'overwriteWithLast' is not -1, then copy the information which was in
+     * the last slot on top of one of the others (i.e. it's not the last one
+     * we're deleting).
      */
 
     if (overwriteWithLast != -1) {
@@ -859,8 +855,8 @@ RemovePixelClient(treePtr, nodePtr, overwriteWithLast)
  */
 
 static void
-DestroyNode(nodePtr)
-    register Node *nodePtr;	/* Destroy from this node downwards */
+DestroyNode(
+    register Node *nodePtr)	/* Destroy from this node downwards. */
 {
     if (nodePtr->level == 0) {
 	TkTextLine *linePtr;
@@ -909,11 +905,12 @@ DestroyNode(nodePtr)
  */
 
 static void
-DeleteSummaries(summaryPtr)
-    register Summary *summaryPtr;
+DeleteSummaries(
+    register Summary *summaryPtr)
 				/* First in list of node's tag summaries. */
 {
     register Summary *nextPtr;
+
     while (summaryPtr != NULL) {
 	nextPtr = summaryPtr->nextPtr;
 	ckfree((char *) summaryPtr);
@@ -939,23 +936,24 @@ DeleteSummaries(summaryPtr)
  */
 
 int
-TkBTreeAdjustPixelHeight(textPtr, linePtr, newPixelHeight, mergedLogicalLines)
-    CONST TkText *textPtr;	/* Client of the B-tree */
-    register TkTextLine *linePtr;
+TkBTreeAdjustPixelHeight(
+    const TkText *textPtr,	/* Client of the B-tree. */
+    register TkTextLine *linePtr,
 				/* The logical line to update. */
-    int newPixelHeight;		/* The line's known height in pixels. */
-    int mergedLogicalLines;	/* The number of extra logical lines which
+    int newPixelHeight,		/* The line's known height in pixels. */
+    int mergedLogicalLines)	/* The number of extra logical lines which
 				 * have been merged with this one (due to
 				 * elided eols). They will have their pixel
 				 * height set to zero, and the total pixel
-				 * height associated with the given linePtr */
+				 * height associated with the given
+				 * linePtr. */
 {
     register Node *nodePtr;
     int changeToPixelCount;	/* Counts change to total number of pixels in
 				 * file. */
     int pixelReference = textPtr->pixelReference;
 
-    changeToPixelCount = newPixelHeight - linePtr->pixels[2*pixelReference];
+    changeToPixelCount = newPixelHeight - linePtr->pixels[2 * pixelReference];
 
     /*
      * Increment the pixel counts in all the parent nodes of the current line,
@@ -970,7 +968,7 @@ TkBTreeAdjustPixelHeight(textPtr, linePtr, newPixelHeight, mergedLogicalLines)
 	nodePtr->numPixels[pixelReference] += changeToPixelCount;
     }
 
-    linePtr->pixels[2*pixelReference] = newPixelHeight;
+    linePtr->pixels[2 * pixelReference] = newPixelHeight;
 
     /*
      * Any merged logical lines must have their height set to zero.
@@ -1007,14 +1005,14 @@ TkBTreeAdjustPixelHeight(textPtr, linePtr, newPixelHeight, mergedLogicalLines)
  */
 
 void
-TkBTreeInsertChars(tree, indexPtr, string)
-    TkTextBTree tree;		/* Tree to insert into */
-    register TkTextIndex *indexPtr;
+TkBTreeInsertChars(
+    TkTextBTree tree,		/* Tree to insert into. */
+    register TkTextIndex *indexPtr,
 				/* Indicates where to insert text. When the
 				 * function returns, this index is no longer
 				 * valid because of changes to the segment
 				 * structure. */
-    CONST char *string;		/* Pointer to bytes to insert (may contain
+    const char *string)		/* Pointer to bytes to insert (may contain
 				 * newlines, must be null-terminated). */
 {
     register Node *nodePtr;
@@ -1030,7 +1028,7 @@ TkBTreeInsertChars(tree, indexPtr, string)
     register TkTextSegment *segPtr;
     TkTextLine *newLinePtr;
     int chunkSize;		/* # characters in current chunk. */
-    register CONST char *eol;	/* Pointer to character just after last one in
+    register const char *eol;	/* Pointer to character just after last one in
 				 * current chunk. */
     int changeToLineCount;	/* Counts change to total number of lines in
 				 * file. */
@@ -1039,7 +1037,7 @@ TkBTreeInsertChars(tree, indexPtr, string)
     int ref;
     int pixels[PIXEL_CLIENTS];
 
-    BTree *treePtr = (BTree*)tree;
+    BTree *treePtr = (BTree *) tree;
     treePtr->stateEpoch++;
     prevPtr = SplitSeg(indexPtr);
     linePtr = indexPtr->linePtr;
@@ -1093,7 +1091,7 @@ TkBTreeInsertChars(tree, indexPtr, string)
 
 	newLinePtr = (TkTextLine *) ckalloc(sizeof(TkTextLine));
 	newLinePtr->pixels = (int *)
-		ckalloc(sizeof(int)*2*treePtr->pixelReferences);
+		ckalloc(sizeof(int) * 2 * treePtr->pixelReferences);
 
 	newLinePtr->parentPtr = linePtr->parentPtr;
 	newLinePtr->nextPtr = linePtr->nextPtr;
@@ -1101,14 +1099,14 @@ TkBTreeInsertChars(tree, indexPtr, string)
 	newLinePtr->segPtr = segPtr->nextPtr;
 
 	/*
-	 * Set up a starting default height, which will be re-adjusted
-	 * later. We need to do this for each referenced widget
+	 * Set up a starting default height, which will be re-adjusted later.
+	 * We need to do this for each referenced widget.
 	 */
 
 	for (ref = 0; ref < treePtr->pixelReferences; ref++) {
-	    newLinePtr->pixels[2*ref] = linePtr->pixels[2*ref];
-	    newLinePtr->pixels[1+2*ref] = 0;
-	    changeToPixelCount[ref] += newLinePtr->pixels[2*ref];
+	    newLinePtr->pixels[2 * ref] = linePtr->pixels[2 * ref];
+	    newLinePtr->pixels[2 * ref + 1] = 0;
+	    changeToPixelCount[ref] += newLinePtr->pixels[2 * ref];
 	}
 
 	segPtr->nextPtr = NULL;
@@ -1152,7 +1150,7 @@ TkBTreeInsertChars(tree, indexPtr, string)
 	}
     }
     if (treePtr->pixelReferences > PIXEL_CLIENTS) {
-	ckfree((char*)changeToPixelCount);
+	ckfree((char *) changeToPixelCount);
     }
 
     nodePtr = linePtr->parentPtr;
@@ -1193,14 +1191,14 @@ TkBTreeInsertChars(tree, indexPtr, string)
  */
 
 static TkTextSegment *
-SplitSeg(indexPtr)
-    TkTextIndex *indexPtr;	/* Index identifying position at which to
+SplitSeg(
+    TkTextIndex *indexPtr)	/* Index identifying position at which to
 				 * split a segment. */
 {
     TkTextSegment *prevPtr, *segPtr;
     TkTextLine *linePtr;
-
     int count = indexPtr->byteIndex;
+
     linePtr = indexPtr->linePtr;
     prevPtr = NULL;
     segPtr = linePtr->segPtr;
@@ -1228,12 +1226,14 @@ SplitSeg(indexPtr)
 	if (segPtr == NULL) {
 	    /*
 	     * Two logical lines merged into one display line through eliding
-	     * of a newline
+	     * of a newline.
 	     */
 
 	    linePtr = TkBTreeNextLine(NULL, linePtr);
 	    if (linePtr == NULL) {
-		/* Reached end of the text */
+		/*
+		 * Reached end of the text.
+		 */
 	    }
 	    segPtr = linePtr->segPtr;
 	}
@@ -1262,8 +1262,8 @@ SplitSeg(indexPtr)
  */
 
 static void
-CleanupLine(linePtr)
-    TkTextLine *linePtr;		/* Line to be cleaned up. */
+CleanupLine(
+    TkTextLine *linePtr)	/* Line to be cleaned up. */
 {
     TkTextSegment *segPtr, **prevPtrPtr;
     int anyChanges;
@@ -1316,12 +1316,12 @@ CleanupLine(linePtr)
  */
 
 void
-TkBTreeDeleteIndexRange(tree, index1Ptr, index2Ptr)
-    TkTextBTree tree;		/* Tree to delete from */
-    register TkTextIndex *index1Ptr;
+TkBTreeDeleteIndexRange(
+    TkTextBTree tree,		/* Tree to delete from. */
+    register TkTextIndex *index1Ptr,
 				/* Indicates first character that is to be
 				 * deleted. */
-    register TkTextIndex *index2Ptr;
+    register TkTextIndex *index2Ptr)
 				/* Indicates character just after the last one
 				 * that is to be deleted. */
 {
@@ -1334,7 +1334,8 @@ TkBTreeDeleteIndexRange(tree, index1Ptr, index2Ptr)
     Node *curNodePtr, *nodePtr;
     int changeToLineCount = 0;
     int ref;
-    BTree *treePtr = (BTree*)tree;
+    BTree *treePtr = (BTree *) tree;
+
     treePtr->stateEpoch++;
 
     /*
@@ -1345,7 +1346,7 @@ TkBTreeDeleteIndexRange(tree, index1Ptr, index2Ptr)
     lastPtr = SplitSeg(index2Ptr);
     if (lastPtr != NULL) {
 	lastPtr = lastPtr->nextPtr;
-    }  else {
+    } else {
 	lastPtr = index2Ptr->linePtr->segPtr;
     }
     prevPtr = SplitSeg(index1Ptr);
@@ -1426,8 +1427,8 @@ TkBTreeDeleteIndexRange(tree, index1Ptr, index2Ptr)
 	    segPtr = curLinePtr->segPtr;
 
 	    /*
-	     * If the node is empty then delete it and its parents,
-	     * recursively upwards until a non-empty node is found.
+	     * If the node is empty then delete it and its parents recursively
+	     * upwards until a non-empty node is found.
 	     */
 
 	    while (curNodePtr->numChildren == 0) {
@@ -1591,10 +1592,10 @@ TkBTreeDeleteIndexRange(tree, index1Ptr, index2Ptr)
  */
 
 TkTextLine *
-TkBTreeFindLine(tree, textPtr, line)
-    TkTextBTree tree;		/* B-tree in which to find line. */
-    CONST TkText *textPtr;	/* Relative to this client of the B-tree */
-    int line;			/* Index of desired line. */
+TkBTreeFindLine(
+    TkTextBTree tree,		/* B-tree in which to find line. */
+    const TkText *textPtr,	/* Relative to this client of the B-tree. */
+    int line)			/* Index of desired line. */
 {
     BTree *treePtr = (BTree *) tree;
     register Node *nodePtr;
@@ -1610,7 +1611,7 @@ TkBTreeFindLine(tree, textPtr, line)
     }
 
     /*
-     * Check for the any start/end offset for this text widget
+     * Check for the any start/end offset for this text widget.
      */
 
     if (textPtr != NULL) {
@@ -1680,11 +1681,11 @@ TkBTreeFindLine(tree, textPtr, line)
  */
 
 TkTextLine *
-TkBTreeFindPixelLine(tree, textPtr, pixels, pixelOffset)
-    TkTextBTree tree;		/* B-tree to use. */
-    CONST TkText *textPtr;	/* Relative to this client of the B-tree */
-    int pixels;			/* Pixel index of desired line. */
-    int *pixelOffset;		/* Used to return offset */
+TkBTreeFindPixelLine(
+    TkTextBTree tree,		/* B-tree to use. */
+    const TkText *textPtr,	/* Relative to this client of the B-tree. */
+    int pixels,			/* Pixel index of desired line. */
+    int *pixelOffset)		/* Used to return offset. */
 {
     BTree *treePtr = (BTree *) tree;
     register Node *nodePtr;
@@ -1721,12 +1722,12 @@ TkBTreeFindPixelLine(tree, textPtr, pixels, pixelOffset)
      */
 
     for (linePtr = nodePtr->children.linePtr;
-	    linePtr->pixels[2*pixelReference] < pixels;
+	    linePtr->pixels[2 * pixelReference] < pixels;
 	    linePtr = linePtr->nextPtr) {
 	if (linePtr == NULL) {
 	    Tcl_Panic("TkBTreeFindPixelLine ran out of lines");
 	}
-	pixels -= linePtr->pixels[2*pixelReference];
+	pixels -= linePtr->pixels[2 * pixelReference];
     }
     if (pixelOffset != NULL && linePtr != NULL) {
 	*pixelOffset = pixels;
@@ -1754,9 +1755,9 @@ TkBTreeFindPixelLine(tree, textPtr, pixels, pixelOffset)
  */
 
 TkTextLine *
-TkBTreeNextLine(textPtr, linePtr)
-    CONST TkText *textPtr;	/* Next line in the context of this client */
-    register TkTextLine *linePtr;
+TkBTreeNextLine(
+    const TkText *textPtr,	/* Next line in the context of this client. */
+    register TkTextLine *linePtr)
 				/* Pointer to existing line in B-tree. */
 {
     register Node *nodePtr;
@@ -1810,9 +1811,9 @@ TkBTreeNextLine(textPtr, linePtr)
  */
 
 TkTextLine *
-TkBTreePreviousLine(textPtr, linePtr)
-    TkText *textPtr;		/* Relative to this client of the B-tree */
-    register TkTextLine *linePtr;
+TkBTreePreviousLine(
+    TkText *textPtr,		/* Relative to this client of the B-tree. */
+    register TkTextLine *linePtr)
 				/* Pointer to existing line in B-tree. */
 {
     register Node *nodePtr;
@@ -1827,7 +1828,7 @@ TkBTreePreviousLine(textPtr, linePtr)
      * Find the line under this node just before the starting line.
      */
 
-    prevPtr = linePtr->parentPtr->children.linePtr;    /* First line at leaf */
+    prevPtr = linePtr->parentPtr->children.linePtr;   /* First line at leaf. */
     while (prevPtr != linePtr) {
 	if (prevPtr->nextPtr == linePtr) {
 	    return prevPtr;
@@ -1893,9 +1894,9 @@ TkBTreePreviousLine(textPtr, linePtr)
  */
 
 int
-TkBTreePixelsTo(textPtr, linePtr)
-    CONST TkText *textPtr;	/* Relative to this client of the B-tree */
-    TkTextLine *linePtr;	/* Pointer to existing line in B-tree. */
+TkBTreePixelsTo(
+    const TkText *textPtr,	/* Relative to this client of the B-tree. */
+    TkTextLine *linePtr)	/* Pointer to existing line in B-tree. */
 {
     register TkTextLine *linePtr2;
     register Node *nodePtr, *parentPtr;
@@ -1913,7 +1914,7 @@ TkBTreePixelsTo(textPtr, linePtr)
 	if (linePtr2 == NULL) {
 	    Tcl_Panic("TkBTreePixelsTo couldn't find line");
 	}
-	index += linePtr2->pixels[2*pixelReference];
+	index += linePtr2->pixels[2 * pixelReference];
     }
 
     /*
@@ -1924,6 +1925,7 @@ TkBTreePixelsTo(textPtr, linePtr)
     for (parentPtr = nodePtr->parentPtr ; parentPtr != NULL;
 	    nodePtr = parentPtr, parentPtr = parentPtr->parentPtr) {
 	register Node *nodePtr2;
+
 	for (nodePtr2 = parentPtr->children.nodePtr; nodePtr2 != nodePtr;
 		nodePtr2 = nodePtr2->nextPtr) {
 	    if (nodePtr2 == NULL) {
@@ -1954,9 +1956,9 @@ TkBTreePixelsTo(textPtr, linePtr)
  */
 
 int
-TkBTreeLinesTo(textPtr, linePtr)
-    CONST TkText *textPtr;	/* Relative to this client of the B-tree */
-    TkTextLine *linePtr;	/* Pointer to existing line in B-tree. */
+TkBTreeLinesTo(
+    const TkText *textPtr,	/* Relative to this client of the B-tree. */
+    TkTextLine *linePtr)	/* Pointer to existing line in B-tree. */
 {
     register TkTextLine *linePtr2;
     register Node *nodePtr, *parentPtr, *nodePtr2;
@@ -2015,11 +2017,11 @@ TkBTreeLinesTo(textPtr, linePtr)
 
 	/* ARGSUSED */
 void
-TkBTreeLinkSegment(segPtr, indexPtr)
-    TkTextSegment *segPtr;	/* Pointer to new segment to be added to
+TkBTreeLinkSegment(
+    TkTextSegment *segPtr,	/* Pointer to new segment to be added to
 				 * B-tree. Should be completely initialized by
 				 * caller except for nextPtr field. */
-    TkTextIndex *indexPtr;	/* Where to add segment: it gets linked in
+    TkTextIndex *indexPtr)	/* Where to add segment: it gets linked in
 				 * just before the segment indicated here. */
 {
     register TkTextSegment *prevPtr;
@@ -2036,7 +2038,7 @@ TkBTreeLinkSegment(segPtr, indexPtr)
     if (tkBTreeDebug) {
 	TkBTreeCheck(indexPtr->tree);
     }
-    ((BTree*)indexPtr->tree)->stateEpoch++;
+    ((BTree *)indexPtr->tree)->stateEpoch++;
 }
 
 /*
@@ -2058,9 +2060,9 @@ TkBTreeLinkSegment(segPtr, indexPtr)
 
 	/* ARGSUSED */
 void
-TkBTreeUnlinkSegment(segPtr, linePtr)
-    TkTextSegment *segPtr;	/* Segment to be unlinked. */
-    TkTextLine *linePtr;	/* Line that currently contains segment. */
+TkBTreeUnlinkSegment(
+    TkTextSegment *segPtr,	/* Segment to be unlinked. */
+    TkTextLine *linePtr)	/* Line that currently contains segment. */
 {
     register TkTextSegment *prevPtr;
 
@@ -2074,7 +2076,7 @@ TkBTreeUnlinkSegment(segPtr, linePtr)
 	    if (prevPtr == NULL) {
 		/*
 		 * Two logical lines merged into one display line through
-		 * eliding of a newline
+		 * eliding of a newline.
 		 */
 
 		linePtr = TkBTreeNextLine(NULL, linePtr);
@@ -2110,23 +2112,21 @@ TkBTreeUnlinkSegment(segPtr, linePtr)
  */
 
 int
-TkBTreeTag(index1Ptr, index2Ptr, tagPtr, add)
-    register TkTextIndex *index1Ptr;
+TkBTreeTag(
+    register TkTextIndex *index1Ptr,
 				/* Indicates first character in range. */
-    register TkTextIndex *index2Ptr;
+    register TkTextIndex *index2Ptr,
 				/* Indicates character just after the last one
 				 * in range. */
-    TkTextTag *tagPtr;		/* Tag to add or remove. */
-    int add;			/* One means add tag to the given range of
+    TkTextTag *tagPtr,		/* Tag to add or remove. */
+    int add)			/* One means add tag to the given range of
 				 * characters; zero means remove the tag from
 				 * the range. */
 {
     TkTextSegment *segPtr, *prevPtr;
     TkTextSearch search;
     TkTextLine *cleanupLinePtr;
-    int oldState;
-    int changed;
-    int anyChanges = 0;
+    int oldState, changed, anyChanges = 0;
 
     /*
      * See whether the tag is present at the start of the range. If the state
@@ -2232,7 +2232,7 @@ TkBTreeTag(index1Ptr, index2Ptr, tagPtr, add)
 	if (cleanupLinePtr != index2Ptr->linePtr) {
 	    CleanupLine(index2Ptr->linePtr);
 	}
-	((BTree*)index1Ptr->tree)->stateEpoch++;
+	((BTree *)index1Ptr->tree)->stateEpoch++;
     }
 
     if (tkBTreeDebug) {
@@ -2262,16 +2262,16 @@ TkBTreeTag(index1Ptr, index2Ptr, tagPtr, add)
  */
 
 static void
-ChangeNodeToggleCount(nodePtr, tagPtr, delta)
-    register Node *nodePtr;	/* Node whose toggle count for a tag must be
+ChangeNodeToggleCount(
+    register Node *nodePtr,	/* Node whose toggle count for a tag must be
 				 * changed. */
-    TkTextTag *tagPtr;		/* Information about tag. */
-    int delta;			/* Amount to add to current toggle count for
+    TkTextTag *tagPtr,		/* Information about tag. */
+    int delta)			/* Amount to add to current toggle count for
 				 * tag (may be negative). */
 {
     register Summary *summaryPtr, *prevPtr;
     register Node *node2Ptr;
-    int rootLevel;		/* Level of original tag root */
+    int rootLevel;		/* Level of original tag root. */
 
     tagPtr->toggleCount += delta;
     if (tagPtr->tagRootPtr == NULL) {
@@ -2323,7 +2323,7 @@ ChangeNodeToggleCount(nodePtr, tagPtr, delta)
 	    }
 
 	    /*
-	     * Zero toggle count;  must remove this tag from the list.
+	     * Zero toggle count; must remove this tag from the list.
 	     */
 
 	    if (prevPtr == NULL) {
@@ -2338,7 +2338,6 @@ ChangeNodeToggleCount(nodePtr, tagPtr, delta)
 	     */
 
 	    if (rootLevel == nodePtr->level) {
-
 		/*
 		 * The old tag root is at the same level in the tree as this
 		 * node, but it isn't at this node. Move the tag root up a
@@ -2350,6 +2349,7 @@ ChangeNodeToggleCount(nodePtr, tagPtr, delta)
 		 */
 
 		Node *rootNodePtr = tagPtr->tagRootPtr;
+
 		summaryPtr = (Summary *) ckalloc(sizeof(Summary));
 		summaryPtr->tagPtr = tagPtr;
 		summaryPtr->toggleCount = tagPtr->toggleCount - delta;
@@ -2444,10 +2444,10 @@ ChangeNodeToggleCount(nodePtr, tagPtr, delta)
  */
 
 static TkTextSegment *
-FindTagStart(tree, tagPtr, indexPtr)
-    TkTextBTree tree;		/* Tree to search within */
-    TkTextTag *tagPtr;		/* Tag to search for. */
-    TkTextIndex *indexPtr;	/* Return - index information */
+FindTagStart(
+    TkTextBTree tree,		/* Tree to search within. */
+    TkTextTag *tagPtr,		/* Tag to search for. */
+    TkTextIndex *indexPtr)	/* Return - index information. */
 {
     register Node *nodePtr;
     register TkTextLine *linePtr;
@@ -2525,10 +2525,10 @@ FindTagStart(tree, tagPtr, indexPtr)
  */
 
 static TkTextSegment *
-FindTagEnd(tree, tagPtr, indexPtr)
-    TkTextBTree tree;		/* Tree to search within */
-    TkTextTag *tagPtr;		/* Tag to search for. */
-    TkTextIndex *indexPtr;	/* Return - index information */
+FindTagEnd(
+    TkTextBTree tree,		/* Tree to search within. */
+    TkTextTag *tagPtr,		/* Tag to search for. */
+    TkTextIndex *indexPtr)	/* Return - index information. */
 {
     register Node *nodePtr, *lastNodePtr;
     register TkTextLine *linePtr ,*lastLinePtr;
@@ -2615,20 +2615,20 @@ FindTagEnd(tree, tagPtr, indexPtr)
  */
 
 void
-TkBTreeStartSearch(index1Ptr, index2Ptr, tagPtr, searchPtr)
-    TkTextIndex *index1Ptr;	/* Search starts here. Tag toggles at this
+TkBTreeStartSearch(
+    TkTextIndex *index1Ptr,	/* Search starts here. Tag toggles at this
 				 * position will not be returned. */
-    TkTextIndex *index2Ptr;	/* Search stops here. Tag toggles at this
+    TkTextIndex *index2Ptr,	/* Search stops here. Tag toggles at this
 				 * position *will* be returned. */
-    TkTextTag *tagPtr;		/* Tag to search for. NULL means search for
+    TkTextTag *tagPtr,		/* Tag to search for. NULL means search for
 				 * any tag. */
-    register TkTextSearch *searchPtr;
+    register TkTextSearch *searchPtr)
 				/* Where to store information about search's
 				 * progress. */
 {
     int offset;
-    TkTextIndex index0;		/* First index of the tag */
-    TkTextSegment *seg0Ptr;	/* First segment of the tag */
+    TkTextIndex index0;		/* First index of the tag. */
+    TkTextSegment *seg0Ptr;	/* First segment of the tag. */
 
     /*
      * Find the segment that contains the first toggle for the tag. This may
@@ -2650,12 +2650,12 @@ TkBTreeStartSearch(index1Ptr, index2Ptr, tagPtr, searchPtr)
     }
     if (TkTextIndexCmp(index1Ptr, &index0) < 0) {
 	/*
-	 * Adjust start of search up to the first range of the tag
+	 * Adjust start of search up to the first range of the tag.
 	 */
 
 	searchPtr->curIndex = index0;
 	searchPtr->segPtr = NULL;
-	searchPtr->nextPtr = seg0Ptr;	/* Will be returned by NextTag */
+	searchPtr->nextPtr = seg0Ptr;	/* Will be returned by NextTag. */
 	index1Ptr = &index0;
     } else {
 	searchPtr->curIndex = *index1Ptr;
@@ -2711,21 +2711,21 @@ TkBTreeStartSearch(index1Ptr, index2Ptr, tagPtr, searchPtr)
  */
 
 void
-TkBTreeStartSearchBack(index1Ptr, index2Ptr, tagPtr, searchPtr)
-    TkTextIndex *index1Ptr;	/* Search starts here. Tag toggles at this
+TkBTreeStartSearchBack(
+    TkTextIndex *index1Ptr,	/* Search starts here. Tag toggles at this
 				 * position will not be returned. */
-    TkTextIndex *index2Ptr;	/* Search stops here. Tag toggles at this
+    TkTextIndex *index2Ptr,	/* Search stops here. Tag toggles at this
 				 * position *will* be returned. */
-    TkTextTag *tagPtr;		/* Tag to search for. NULL means search for
+    TkTextTag *tagPtr,		/* Tag to search for. NULL means search for
 				 * any tag. */
-    register TkTextSearch *searchPtr;
-				/* Where to store information about
-				 * search's progress. */
+    register TkTextSearch *searchPtr)
+				/* Where to store information about search's
+				 * progress. */
 {
     int offset;
-    TkTextIndex index0;		/* Last index of the tag */
-    TkTextIndex backOne;	/* One character before starting index */
-    TkTextSegment *seg0Ptr;	/* Last segment of the tag */
+    TkTextIndex index0;		/* Last index of the tag. */
+    TkTextIndex backOne;	/* One character before starting index. */
+    TkTextSegment *seg0Ptr;	/* Last segment of the tag. */
 
     /*
      * Find the segment that contains the last toggle for the tag. This may
@@ -2770,7 +2770,7 @@ TkBTreeStartSearchBack(index1Ptr, index2Ptr, tagPtr, searchPtr)
     if ((TkBTreeLinesTo(NULL, index2Ptr->linePtr) == 0) &&
 	    (index2Ptr->byteIndex == 0)) {
 	backOne = *index2Ptr;
-	searchPtr->lastPtr = NULL;	/* Signals special case for 1.0 */
+	searchPtr->lastPtr = NULL;	/* Signals special case for 1.0. */
     } else {
 	TkTextIndexBackChars(NULL, index2Ptr, 1, &backOne, COUNT_INDICES);
 	searchPtr->lastPtr = TkTextIndexToSeg(&backOne, NULL);
@@ -2818,8 +2818,8 @@ TkBTreeStartSearchBack(index1Ptr, index2Ptr, tagPtr, searchPtr)
  */
 
 int
-TkBTreeNextTag(searchPtr)
-    register TkTextSearch *searchPtr;
+TkBTreeNextTag(
+    register TkTextSearch *searchPtr)
 				/* Information about search in progress; must
 				 * have been set up by call to
 				 * TkBTreeStartSearch. */
@@ -2983,8 +2983,8 @@ TkBTreeNextTag(searchPtr)
  */
 
 int
-TkBTreePrevTag(searchPtr)
-    register TkTextSearch *searchPtr;
+TkBTreePrevTag(
+    register TkTextSearch *searchPtr)
 				/* Information about search in progress; must
 				 * have been set up by call to
 				 * TkBTreeStartSearch. */
@@ -2993,9 +2993,8 @@ TkBTreePrevTag(searchPtr)
     register TkTextLine *linePtr, *prevLinePtr;
     register Node *nodePtr, *node2Ptr, *prevNodePtr;
     register Summary *summaryPtr;
-    int byteIndex;
-    int pastLast;		/* Saw last marker during scan */
-    int linesSkipped;
+    int byteIndex, linesSkipped;
+    int pastLast;		/* Saw last marker during scan. */
 
     if (searchPtr->linesLeft <= 0) {
 	goto searchOver;
@@ -3035,7 +3034,8 @@ TkBTreePrevTag(searchPtr)
 		searchPtr->curIndex.byteIndex = byteIndex;
 	    }
 	    if (segPtr == searchPtr->lastPtr) {
-		prevPtr = NULL;	  /* Segments earlier than last don't count */
+		prevPtr = NULL;		/* Segments earlier than last don't
+					 * count. */
 		pastLast = 1;
 	    }
 	    byteIndex += segPtr->size;
@@ -3197,10 +3197,10 @@ TkBTreePrevTag(searchPtr)
  */
 
 int
-TkBTreeCharTagged(indexPtr, tagPtr)
-    CONST TkTextIndex *indexPtr;/* Indicates a character position at which to
+TkBTreeCharTagged(
+    const TkTextIndex *indexPtr,/* Indicates a character position at which to
 				 * check for a tag. */
-    TkTextTag *tagPtr;		/* Tag of interest. */
+    TkTextTag *tagPtr)		/* Tag of interest. */
 {
     register Node *nodePtr;
     register TkTextLine *siblingLinePtr;
@@ -3308,13 +3308,13 @@ TkBTreeCharTagged(indexPtr, tagPtr)
 
 	/* ARGSUSED */
 TkTextTag **
-TkBTreeGetTags(indexPtr, textPtr, numTagsPtr)
-    CONST TkTextIndex *indexPtr;/* Indicates a particular position in the
+TkBTreeGetTags(
+    const TkTextIndex *indexPtr,/* Indicates a particular position in the
 				 * B-tree. */
-    CONST TkText *textPtr;	/* If non-NULL, then only return tags for this
+    const TkText *textPtr,	/* If non-NULL, then only return tags for this
 				 * text widget (when there are peer
 				 * widgets). */
-    int *numTagsPtr;		/* Store number of tags found at this
+    int *numTagsPtr)		/* Store number of tags found at this
 				 * location. */
 {
     register Node *nodePtr;
@@ -3327,10 +3327,10 @@ TkBTreeGetTags(indexPtr, textPtr, numTagsPtr)
 
     tagInfo.numTags = 0;
     tagInfo.arraySize = NUM_TAG_INFOS;
-    tagInfo.tagPtrs = (TkTextTag **) ckalloc((unsigned)
-	    NUM_TAG_INFOS*sizeof(TkTextTag *));
-    tagInfo.counts = (int *) ckalloc((unsigned)
-	    NUM_TAG_INFOS*sizeof(int));
+    tagInfo.tagPtrs = (TkTextTag **)
+	    ckalloc((unsigned) NUM_TAG_INFOS * sizeof(TkTextTag *));
+    tagInfo.counts = (int *)
+	    ckalloc((unsigned) NUM_TAG_INFOS * sizeof(int));
 
     /*
      * Record tag toggles within the line of indexPtr but preceding indexPtr.
@@ -3406,8 +3406,9 @@ TkBTreeGetTags(indexPtr, textPtr, numTagsPtr)
 
     for (src = 0, dst = 0; src < tagInfo.numTags; src++) {
 	if (tagInfo.counts[src] & 1) {
-	    CONST TkText *tagTextPtr = tagInfo.tagPtrs[src]->textPtr;
-	    if (tagTextPtr == NULL || textPtr == NULL || tagTextPtr == textPtr) {
+	    const TkText *tagTextPtr = tagInfo.tagPtrs[src]->textPtr;
+
+	    if (tagTextPtr==NULL || textPtr==NULL || tagTextPtr==textPtr) {
 		tagInfo.tagPtrs[dst] = tagInfo.tagPtrs[src];
 		dst++;
 	    }
@@ -3455,11 +3456,11 @@ TkBTreeGetTags(indexPtr, textPtr, numTagsPtr)
 
 	/* ARGSUSED */
 int
-TkTextIsElided(textPtr, indexPtr, elideInfo)
-    CONST TkText *textPtr;	/* Overall information about text widget. */
-    CONST TkTextIndex *indexPtr;/* The character in the text for which display
+TkTextIsElided(
+    const TkText *textPtr,	/* Overall information about text widget. */
+    const TkTextIndex *indexPtr,/* The character in the text for which display
 				 * information is wanted. */
-    TkTextElideInfo *elideInfo; /* NULL or a pointer to a structure in which
+    TkTextElideInfo *elideInfo)	/* NULL or a pointer to a structure in which
 				 * indexPtr's elide state will be stored and
 				 * returned. */
 {
@@ -3473,12 +3474,13 @@ TkTextIsElided(textPtr, indexPtr, elideInfo)
     int elide;
 
     if (elideInfo == NULL) {
-	infoPtr = (TkTextElideInfo*)ckalloc((unsigned)sizeof(TkTextElideInfo));
+	infoPtr = (TkTextElideInfo *)
+		ckalloc((unsigned) sizeof(TkTextElideInfo));
     } else {
 	infoPtr = elideInfo;
     }
 
-    infoPtr->elide = 0;		/* if nobody says otherwise, it's visible */
+    infoPtr->elide = 0;		/* If nobody says otherwise, it's visible. */
     infoPtr->tagCnts = infoPtr->deftagCnts;
     infoPtr->tagPtrs = infoPtr->deftagPtrs;
     infoPtr->numTags = textPtr->sharedTextPtr->numTags;
@@ -3491,7 +3493,7 @@ TkTextIsElided(textPtr, indexPtr, elideInfo)
 	infoPtr->tagCnts = (int *)
 		ckalloc((unsigned) sizeof(int) * infoPtr->numTags);
 	infoPtr->tagPtrs = (TkTextTag **)
-		ckalloc((unsigned)sizeof(TkTextTag *) * infoPtr->numTags);
+		ckalloc((unsigned) sizeof(TkTextTag *) * infoPtr->numTags);
     }
 
     for (i=0; i<infoPtr->numTags; i++) {
@@ -3585,7 +3587,7 @@ TkTextIsElided(textPtr, indexPtr, elideInfo)
 
     /*
      * Now traverse from highest priority to lowest, take elided value from
-     * first odd count (= on)
+     * first odd count (= on).
      */
 
     infoPtr->elidePriority = -1;
@@ -3624,7 +3626,7 @@ TkTextIsElided(textPtr, indexPtr, elideInfo)
 	    ckfree((char *) infoPtr->tagPtrs);
 	}
 
-	ckfree((char*) infoPtr);
+	ckfree((char *) infoPtr);
     }
 
     return elide;
@@ -3648,13 +3650,13 @@ TkTextIsElided(textPtr, indexPtr, elideInfo)
  */
 
 void
-TkTextFreeElideInfo(elideInfo)
-    TkTextElideInfo *elideInfo; /* Free any allocated memory in this
+TkTextFreeElideInfo(
+    TkTextElideInfo *elideInfo)	/* Free any allocated memory in this
 				 * structure. */
 {
     if (LOTSA_TAGS < elideInfo->numTags) {
-	ckfree((char*)elideInfo->tagCnts);
-	ckfree((char*)elideInfo->tagPtrs);
+	ckfree((char *) elideInfo->tagCnts);
+	ckfree((char *) elideInfo->tagPtrs);
     }
 }
 
@@ -3678,10 +3680,10 @@ TkTextFreeElideInfo(elideInfo)
  */
 
 static void
-IncCount(tagPtr, inc, tagInfoPtr)
-    TkTextTag *tagPtr;		/* Handle for tag. */
-    int inc;			/* Amount by which to increment tag count. */
-    TagInfo *tagInfoPtr;	/* Holds cumulative information about tags;
+IncCount(
+    TkTextTag *tagPtr,		/* Handle for tag. */
+    int inc,			/* Amount by which to increment tag count. */
+    TagInfo *tagInfoPtr)	/* Holds cumulative information about tags;
 				 * increment count here. */
 {
     register TkTextTag **tagPtrPtr;
@@ -3704,15 +3706,15 @@ IncCount(tagPtr, inc, tagInfoPtr)
 	TkTextTag **newTags;
 	int *newCounts, newSize;
 
-	newSize = 2*tagInfoPtr->arraySize;
-	newTags = (TkTextTag **) ckalloc((unsigned)
-		(newSize * sizeof(TkTextTag *)));
-	memcpy((VOID *) newTags, (VOID *) tagInfoPtr->tagPtrs,
+	newSize = 2 * tagInfoPtr->arraySize;
+	newTags = (TkTextTag **)
+		ckalloc((unsigned) newSize * sizeof(TkTextTag *));
+	memcpy(newTags, tagInfoPtr->tagPtrs,
 		tagInfoPtr->arraySize * sizeof(TkTextTag *));
 	ckfree((char *) tagInfoPtr->tagPtrs);
 	tagInfoPtr->tagPtrs = newTags;
-	newCounts = (int *) ckalloc((unsigned) (newSize*sizeof(int)));
-	memcpy((VOID *) newCounts, (VOID *) tagInfoPtr->counts,
+	newCounts = (int *) ckalloc((unsigned) newSize * sizeof(int));
+	memcpy(newCounts, tagInfoPtr->counts,
 		tagInfoPtr->arraySize * sizeof(int));
 	ckfree((char *) tagInfoPtr->counts);
 	tagInfoPtr->counts = newCounts;
@@ -3743,8 +3745,8 @@ IncCount(tagPtr, inc, tagInfoPtr)
  */
 
 void
-TkBTreeCheck(tree)
-    TkTextBTree tree;		/* Tree to check. */
+TkBTreeCheck(
+    TkTextBTree tree)		/* Tree to check. */
 {
     BTree *treePtr = (BTree *) tree;
     register Summary *summaryPtr;
@@ -3769,7 +3771,7 @@ TkBTreeCheck(tree)
 		Tcl_Panic("TkBTreeCheck found \"%s\" with toggles (%d) but no root",
 			tagPtr->name, tagPtr->toggleCount);
 	    }
-	    continue;		/* no ranges for the tag */
+	    continue;		/* No ranges for the tag. */
 	} else if (tagPtr->toggleCount == 0) {
 	    Tcl_Panic("TkBTreeCheck found root for \"%s\" with no toggles",
 		    tagPtr->name);
@@ -3885,9 +3887,9 @@ TkBTreeCheck(tree)
  */
 
 static void
-CheckNodeConsistency(nodePtr, references)
-    register Node *nodePtr;	/* Node whose subtree should be checked. */
-    int references;		/* Number of referring widgets which have
+CheckNodeConsistency(
+    register Node *nodePtr,	/* Node whose subtree should be checked. */
+    int references)		/* Number of referring widgets which have
 				 * pixel counts. */
 {
     register Node *childNodePtr;
@@ -3902,7 +3904,7 @@ CheckNodeConsistency(nodePtr, references)
 	minChildren = MIN_CHILDREN;
     } else if (nodePtr->level > 0) {
 	minChildren = 2;
-    } else  {
+    } else {
 	minChildren = 1;
     }
     if ((nodePtr->numChildren < minChildren)
@@ -3914,7 +3916,7 @@ CheckNodeConsistency(nodePtr, references)
     numChildren = 0;
     numLines = 0;
     if (references > PIXEL_CLIENTS) {
-	numPixels = (int*)ckalloc(sizeof(int)*references);
+	numPixels = (int *) ckalloc(sizeof(int) * references);
     } else {
 	numPixels = pixels;
     }
@@ -3950,7 +3952,7 @@ CheckNodeConsistency(nodePtr, references)
 	    numChildren++;
 	    numLines++;
 	    for (i = 0; i<references; i++) {
-		numPixels[i] += linePtr->pixels[2*i];
+		numPixels[i] += linePtr->pixels[2 * i];
 	    }
 	}
     } else {
@@ -3999,18 +4001,18 @@ CheckNodeConsistency(nodePtr, references)
     for (i = 0; i<references; i++) {
 	if (numPixels[i] != nodePtr->numPixels[i]) {
 	    Tcl_Panic("CheckNodeConsistency: mismatch in numPixels (%d %d) for widget (%d)",
-		  numPixels[i], nodePtr->numPixels[i], i);
+		    numPixels[i], nodePtr->numPixels[i], i);
 	}
     }
     if (references > PIXEL_CLIENTS) {
-	ckfree((char*)numPixels);
+	ckfree((char *) numPixels);
     }
 
     for (summaryPtr = nodePtr->summaryPtr; summaryPtr != NULL;
 	    summaryPtr = summaryPtr->nextPtr) {
 	if (summaryPtr->tagPtr->toggleCount == summaryPtr->toggleCount) {
 	    Tcl_Panic("CheckNodeConsistency: found unpruned root for \"%s\"",
-		summaryPtr->tagPtr->name);
+		    summaryPtr->tagPtr->name);
 	}
 	toggleCount = 0;
 	if (nodePtr->level == 0) {
@@ -4023,7 +4025,7 @@ CheckNodeConsistency(nodePtr, references)
 			continue;
 		    }
 		    if (segPtr->body.toggle.tagPtr == summaryPtr->tagPtr) {
-			toggleCount ++;
+			toggleCount++;
 		    }
 		}
 	    }
@@ -4073,9 +4075,9 @@ CheckNodeConsistency(nodePtr, references)
  */
 
 static void
-Rebalance(treePtr, nodePtr)
-    BTree *treePtr;		/* Tree that is being rebalanced. */
-    register Node *nodePtr;	/* Node that may be out of balance. */
+Rebalance(
+    BTree *treePtr,		/* Tree that is being rebalanced. */
+    register Node *nodePtr)	/* Node that may be out of balance. */
 {
     /*
      * Loop over the entire ancestral chain of the node, working up through
@@ -4270,8 +4272,8 @@ Rebalance(treePtr, nodePtr)
 	    }
 
 	    /*
-	     * The siblings can't be merged, so just divide their
-	     * children evenly between them.
+	     * The siblings can't be merged, so just divide their children
+	     * evenly between them.
 	     */
 
 	    if (nodePtr->level == 0) {
@@ -4309,9 +4311,9 @@ Rebalance(treePtr, nodePtr)
  */
 
 static void
-RecomputeNodeCounts(treePtr, nodePtr)
-    register BTree *treePtr;	/* The whole B-tree */
-    register Node *nodePtr;	/* Node whose tag summary information must be
+RecomputeNodeCounts(
+    register BTree *treePtr,	/* The whole B-tree. */
+    register Node *nodePtr)	/* Node whose tag summary information must be
 				 * recomputed. */
 {
     register Summary *summaryPtr, *summaryPtr2;
@@ -4347,7 +4349,7 @@ RecomputeNodeCounts(treePtr, nodePtr)
 	    nodePtr->numChildren++;
 	    nodePtr->numLines++;
 	    for (ref = 0; ref<treePtr->pixelReferences; ref++) {
-		nodePtr->numPixels[ref] += linePtr->pixels[2*ref];
+		nodePtr->numPixels[ref] += linePtr->pixels[2 * ref];
 	    }
 	    linePtr->parentPtr = nodePtr;
 	    for (segPtr = linePtr->segPtr; segPtr != NULL;
@@ -4430,8 +4432,8 @@ RecomputeNodeCounts(treePtr, nodePtr)
 	}
 	if (summaryPtr->toggleCount == summaryPtr->tagPtr->toggleCount) {
 	    /*
-	     * A node merge has collected all the toggles under one node.
-	     * Push the root down to this level.
+	     * A node merge has collected all the toggles under one node. Push
+	     * the root down to this level.
 	     */
 
 	    summaryPtr->tagPtr->tagRootPtr = nodePtr;
@@ -4468,9 +4470,9 @@ RecomputeNodeCounts(treePtr, nodePtr)
  */
 
 int
-TkBTreeNumLines(tree, textPtr)
-    TkTextBTree tree;		/* Information about tree. */
-    CONST TkText *textPtr;	/* Relative to this client of the B-tree */
+TkBTreeNumLines(
+    TkTextBTree tree,		/* Information about tree. */
+    const TkText *textPtr)	/* Relative to this client of the B-tree. */
 {
     BTree *treePtr = (BTree *) tree;
     int count;
@@ -4509,9 +4511,9 @@ TkBTreeNumLines(tree, textPtr)
  */
 
 int
-TkBTreeNumPixels(tree, textPtr)
-    TkTextBTree tree;		/* The B-tree */
-    CONST TkText *textPtr;	/* Relative to this client of the B-tree */
+TkBTreeNumPixels(
+    TkTextBTree tree,		/* The B-tree. */
+    const TkText *textPtr)	/* Relative to this client of the B-tree. */
 {
     BTree *treePtr = (BTree *) tree;
     return treePtr->rootPtr->numPixels[textPtr->pixelReference];
@@ -4535,9 +4537,9 @@ TkBTreeNumPixels(tree, textPtr)
  */
 
 static TkTextSegment *
-CharSplitProc(segPtr, index)
-    TkTextSegment *segPtr;	/* Pointer to segment to split. */
-    int index;			/* Position within segment at which to
+CharSplitProc(
+    TkTextSegment *segPtr,	/* Pointer to segment to split. */
+    int index)			/* Position within segment at which to
 				 * split. */
 {
     TkTextSegment *newPtr1, *newPtr2;
@@ -4554,7 +4556,7 @@ CharSplitProc(segPtr, index)
     newPtr2->nextPtr = segPtr->nextPtr;
     newPtr2->size = segPtr->size - index;
     strcpy(newPtr2->body.chars, segPtr->body.chars + index);
-    ckfree((char*) segPtr);
+    ckfree((char *) segPtr);
     return newPtr1;
 }
 
@@ -4578,10 +4580,10 @@ CharSplitProc(segPtr, index)
 
 	/* ARGSUSED */
 static TkTextSegment *
-CharCleanupProc(segPtr, linePtr)
-    TkTextSegment *segPtr;	/* Pointer to first of two adjacent segments
+CharCleanupProc(
+    TkTextSegment *segPtr,	/* Pointer to first of two adjacent segments
 				 * to join. */
-    TkTextLine *linePtr;	/* Line containing segments (not used). */
+    TkTextLine *linePtr)	/* Line containing segments (not used). */
 {
     TkTextSegment *segPtr2, *newPtr;
 
@@ -4596,8 +4598,8 @@ CharCleanupProc(segPtr, linePtr)
     newPtr->size = segPtr->size + segPtr2->size;
     strcpy(newPtr->body.chars, segPtr->body.chars);
     strcpy(newPtr->body.chars + segPtr->size, segPtr2->body.chars);
-    ckfree((char*) segPtr);
-    ckfree((char*) segPtr2);
+    ckfree((char *) segPtr);
+    ckfree((char *) segPtr2);
     return newPtr;
 }
 
@@ -4619,14 +4621,14 @@ CharCleanupProc(segPtr, linePtr)
 
 	/* ARGSUSED */
 static int
-CharDeleteProc(segPtr, linePtr, treeGone)
-    TkTextSegment *segPtr;	/* Segment to delete. */
-    TkTextLine *linePtr;	/* Line containing segment. */
-    int treeGone;		/* Non-zero means the entire tree is being
+CharDeleteProc(
+    TkTextSegment *segPtr,	/* Segment to delete. */
+    TkTextLine *linePtr,	/* Line containing segment. */
+    int treeGone)		/* Non-zero means the entire tree is being
 				 * deleted, so everything must get cleaned
 				 * up. */
 {
-    ckfree((char*) segPtr);
+    ckfree((char *) segPtr);
     return 0;
 }
 
@@ -4649,9 +4651,9 @@ CharDeleteProc(segPtr, linePtr, treeGone)
 
 	/* ARGSUSED */
 static void
-CharCheckProc(segPtr, linePtr)
-    TkTextSegment *segPtr;	/* Segment to check. */
-    TkTextLine *linePtr;	/* Line containing segment. */
+CharCheckProc(
+    TkTextSegment *segPtr,	/* Segment to check. */
+    TkTextLine *linePtr)	/* Line containing segment. */
 {
     /*
      * Make sure that the segment contains the number of characters indicated
@@ -4694,10 +4696,10 @@ CharCheckProc(segPtr, linePtr)
  */
 
 static int
-ToggleDeleteProc(segPtr, linePtr, treeGone)
-    TkTextSegment *segPtr;	/* Segment to check. */
-    TkTextLine *linePtr;	/* Line containing segment. */
-    int treeGone;		/* Non-zero means the entire tree is being
+ToggleDeleteProc(
+    TkTextSegment *segPtr,	/* Segment to check. */
+    TkTextLine *linePtr,	/* Line containing segment. */
+    int treeGone)		/* Non-zero means the entire tree is being
 				 * deleted, so everything must get cleaned
 				 * up. */
 {
@@ -4745,9 +4747,9 @@ ToggleDeleteProc(segPtr, linePtr, treeGone)
  */
 
 static TkTextSegment *
-ToggleCleanupProc(segPtr, linePtr)
-    TkTextSegment *segPtr;	/* Segment to check. */
-    TkTextLine *linePtr;	/* Line that now contains segment. */
+ToggleCleanupProc(
+    TkTextSegment *segPtr,	/* Segment to check. */
+    TkTextLine *linePtr)	/* Line that now contains segment. */
 {
     TkTextSegment *segPtr2, *prevPtr;
     int counts;
@@ -4809,9 +4811,9 @@ ToggleCleanupProc(segPtr, linePtr)
  */
 
 static void
-ToggleLineChangeProc(segPtr, linePtr)
-    TkTextSegment *segPtr;	/* Segment to check. */
-    TkTextLine *linePtr;	/* Line that used to contain segment. */
+ToggleLineChangeProc(
+    TkTextSegment *segPtr,	/* Segment to check. */
+    TkTextLine *linePtr)	/* Line that used to contain segment. */
 {
     if (segPtr->body.toggle.inNodeCounts) {
 	ChangeNodeToggleCount(linePtr->parentPtr,
@@ -4838,9 +4840,9 @@ ToggleLineChangeProc(segPtr, linePtr)
  */
 
 static void
-ToggleCheckProc(segPtr, linePtr)
-    TkTextSegment *segPtr;	/* Segment to check. */
-    TkTextLine *linePtr;	/* Line containing segment. */
+ToggleCheckProc(
+    TkTextSegment *segPtr,	/* Segment to check. */
+    TkTextLine *linePtr)	/* Line containing segment. */
 {
     register Summary *summaryPtr;
     int needSummary;
@@ -4851,7 +4853,7 @@ ToggleCheckProc(segPtr, linePtr)
     if (!segPtr->body.toggle.inNodeCounts) {
 	Tcl_Panic("ToggleCheckProc: toggle counts not updated in nodes");
     }
-    needSummary = (segPtr->body.toggle.tagPtr->tagRootPtr != linePtr->parentPtr);
+    needSummary = (segPtr->body.toggle.tagPtr->tagRootPtr!=linePtr->parentPtr);
     for (summaryPtr = linePtr->parentPtr->summaryPtr; ;
 	    summaryPtr = summaryPtr->nextPtr) {
 	if (summaryPtr == NULL) {
@@ -4869,3 +4871,11 @@ ToggleCheckProc(segPtr, linePtr)
 	}
     }
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 78
+ * End:
+ */

@@ -15,5 +15,5 @@
 package require Tcl 8.5
 package require tcltest 2.2
 namespace import tcltest::*
-configure {expand}$argv -testdir [file dir [info script]]
+configure {*}$argv -testdir [file dir [info script]]
 runAllTests

@@ -125,7 +125,7 @@ Tcl_LoadObjCmd(
     ClientData dummy,		/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     Tcl_Interp *target;
     LoadedPackage *pkgPtr, *defaultPtr;
@@ -134,7 +134,7 @@ Tcl_LoadObjCmd(
     Tcl_PackageInitProc *initProc, *safeInitProc, *unloadProc, *safeUnloadProc;
     InterpPackage *ipFirstPtr, *ipPtr;
     int code, namesMatch, filesMatch, offset;
-    CONST char *symbols[4];
+    const char *symbols[4];
     Tcl_PackageInitProc **procPtrs[4];
     ClientData clientData;
     char *p, *fullFileName, *packageName;
@@ -498,7 +498,7 @@ Tcl_UnloadObjCmd(
     ClientData dummy,		/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     Tcl_Interp *target;		/* Which interpreter to unload from. */
     LoadedPackage *pkgPtr, *defaultPtr;
@@ -507,8 +507,9 @@ Tcl_UnloadObjCmd(
     InterpPackage *ipFirstPtr, *ipPtr;
     int i, index, code, complain = 1, keepLibrary = 0;
     int trustedRefCount = -1, safeRefCount = -1;
-    char *fullFileName = "", *packageName;
-    static CONST char *options[] = {
+    const char *fullFileName = "";
+    char *packageName;
+    static const char *options[] = {
 	"-nocomplain", "-keeplibrary", "--", NULL
     };
     enum options {
@@ -918,7 +919,7 @@ Tcl_StaticPackage(
 				 * already been loaded into the given
 				 * interpreter by calling the appropriate init
 				 * proc. */
-    CONST char *pkgName,	/* Name of package (must be properly
+    const char *pkgName,	/* Name of package (must be properly
 				 * capitalized: first letter upper case,
 				 * others lower case). */
     Tcl_PackageInitProc *initProc,
@@ -1031,7 +1032,7 @@ TclGetLoadedPackages(
     Tcl_Interp *target;
     LoadedPackage *pkgPtr;
     InterpPackage *ipPtr;
-    char *prefix;
+    const char *prefix;
 
     if (targetName == NULL) {
 	/*

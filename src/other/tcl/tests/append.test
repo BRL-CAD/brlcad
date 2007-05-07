@@ -143,7 +143,7 @@ test append-4.20 {lappend command} {
     catch {unset x}
     lappend x(0) abc
 } {abc}
-unset x
+unset -nocomplain x
 test append-4.21 {lappend command} {
     set x \"
     list [catch {lappend x} msg] $msg

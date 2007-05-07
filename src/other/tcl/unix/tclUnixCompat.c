@@ -88,7 +88,11 @@ static Tcl_Mutex compatLock;
  */
 
 static int
-CopyArray(char **src, int elsize, char *buf, int buflen)
+CopyArray(
+    char **src,
+    int elsize,
+    char *buf,
+    int buflen)
 {
     int i, j, len = 0;
     char *p, **new;
@@ -147,7 +151,10 @@ CopyArray(char **src, int elsize, char *buf, int buflen)
 
 
 static int
-CopyString(char *src, char *buf, int buflen)
+CopyString(
+    char *src,
+    char *buf,
+    int buflen)
 {
     int len = 0;
 
@@ -187,7 +194,10 @@ CopyString(char *src, char *buf, int buflen)
  */
 
 static int
-CopyHostent(struct hostent *tgtPtr, char *buf, int buflen)
+CopyHostent(
+    struct hostent *tgtPtr,
+    char *buf,
+    int buflen)
 {
     char *p = buf;
     int copied, len = 0;
@@ -244,7 +254,10 @@ CopyHostent(struct hostent *tgtPtr, char *buf, int buflen)
  */
 
 static int
-CopyPwd(struct passwd *tgtPtr, char *buf, int buflen)
+CopyPwd(
+    struct passwd *tgtPtr,
+    char *buf,
+    int buflen)
 {
     char *p = buf;
     int copied, len = 0;
@@ -305,7 +318,10 @@ CopyPwd(struct passwd *tgtPtr, char *buf, int buflen)
  */
 
 static int
-CopyGrp(struct group *tgtPtr, char *buf, int buflen)
+CopyGrp(
+    struct group *tgtPtr,
+    char *buf,
+    int buflen)
 {
     register char *p = buf;
     register int copied, len = 0;
@@ -363,7 +379,8 @@ CopyGrp(struct group *tgtPtr, char *buf, int buflen)
  */
 
 struct passwd *
-TclpGetPwNam(const char *name)
+TclpGetPwNam(
+    const char *name)
 {
 #if !defined(TCL_THREADS)
     return getpwnam(name);
@@ -415,7 +432,8 @@ TclpGetPwNam(const char *name)
  */
 
 struct passwd *
-TclpGetPwUid(uid_t uid)
+TclpGetPwUid(
+    uid_t uid)
 {
 #if !defined(TCL_THREADS)
     return getpwuid(uid);
@@ -467,7 +485,8 @@ TclpGetPwUid(uid_t uid)
  */
 
 struct group *
-TclpGetGrNam(const char *name)
+TclpGetGrNam(
+    const char *name)
 {
 #if !defined(TCL_THREADS)
     return getgrnam(name);
@@ -519,7 +538,8 @@ TclpGetGrNam(const char *name)
  */
 
 struct group *
-TclpGetGrGid(gid_t gid)
+TclpGetGrGid(
+    gid_t gid)
 {
 #if !defined(TCL_THREADS)
     return getgrgid(gid);
@@ -571,7 +591,8 @@ TclpGetGrGid(gid_t gid)
  */
 
 struct hostent *
-TclpGetHostByName(const char *name)
+TclpGetHostByName(
+    const char *name)
 {
 #if !defined(TCL_THREADS) || defined(HAVE_MTSAFE_GETHOSTBYNAME)
     return gethostbyname(name);
@@ -632,7 +653,10 @@ TclpGetHostByName(const char *name)
  */
 
 struct hostent *
-TclpGetHostByAddr(const char *addr, int length, int type)
+TclpGetHostByAddr(
+    const char *addr,
+    int length,
+    int type)
 {
 #if !defined(TCL_THREADS) || defined(HAVE_MTSAFE_GETHOSTBYADDR)
     return gethostbyaddr(addr, length, type);

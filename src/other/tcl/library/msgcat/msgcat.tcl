@@ -35,7 +35,7 @@ namespace eval msgcat {
 
     # Map of language codes used in Windows registry to those of ISO-639
     if { $::tcl_platform(platform) eq "windows" } {
-	variable WinRegToISO639 [dict create  {expand}{
+	variable WinRegToISO639 [dict create  {*}{
 	    01 ar 0401 ar_SA 0801 ar_IQ 0c01 ar_EG 1001 ar_LY 1401 ar_DZ
 		  1801 ar_MA 1c01 ar_TN 2001 ar_OM 2401 ar_YE 2801 ar_SY
 		  2c01 ar_JO 3001 ar_LB 3401 ar_KW 3801 ar_AE 3c01 ar_BH
@@ -196,7 +196,7 @@ proc msgcat::mc {src args} {
 		if {[llength $args] == 0} {
 		    return [dict get $Msgs $loc $ns $src]
 		} else {
-		    return [format [dict get $Msgs $loc $ns $src] {expand}$args]
+		    return [format [dict get $Msgs $loc $ns $src] {*}$args]
 		}
 	    }
 	}
@@ -204,7 +204,7 @@ proc msgcat::mc {src args} {
     }
     # we have not found the translation
     return [uplevel 1 [list [namespace origin mcunknown] \
-	    $Locale $src {expand}$args]]
+	    $Locale $src {*}$args]]
 }
 
 # msgcat::mclocale --
@@ -382,7 +382,7 @@ proc msgcat::mcmset {locale pairs } {
 
 proc msgcat::mcunknown {locale src args} {
     if {[llength $args]} {
-	return [format $src {expand}$args]
+	return [format $src {*}$args]
     } else {
 	return $src
     }

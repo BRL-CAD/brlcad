@@ -182,7 +182,7 @@ illustration.)
 .PP
 For example, assume the collating sequence includes a \fBch\fR
 multi-character collating element.  Then the RE \fB[[.ch.]]*c\fR (zero
-or more \fBch\fP's followed by \fBc\fP) matches the first five
+or more \fBch\fR's followed by \fBc\fR) matches the first five
 characters of `\fBchchcc\fR'.  Also, the RE \fB[^c]b\fR matches all of
 `\fBchb\fR' (because \fB[^c]\fR matches the multi-character \fBch\fR).
 .PP
@@ -215,7 +215,7 @@ A hexadecimal digit.
 .IP \fBalnum\fR 8
 An alphanumeric (letter or digit).
 .IP \fBprint\fR 8
-An alphanumeric (same as alnum).
+A "printable" (same as graph, except also including space).
 .IP \fBblank\fR 8
 A space or tab character.
 .IP \fBspace\fR 8
@@ -223,7 +223,7 @@ A character producing white space in displayed text.
 .IP \fBpunct\fR 8
 A punctuation character.
 .IP \fBgraph\fR 8
-A character with a visible representation.
+A character with a visible representation (includes both alnum and punct).
 .IP \fBcntrl\fR 8
 A control character.
 .PP

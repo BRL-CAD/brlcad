@@ -135,7 +135,7 @@ AllocThreadStorageEntry(
     Tcl_HashEntry *hPtr;
 
     hPtr = (Tcl_HashEntry *) TclpSysAlloc(sizeof(Tcl_HashEntry), 0);
-    hPtr->key.oneWordValue = (char *)keyPtr;
+    hPtr->key.oneWordValue = keyPtr;
 
     return hPtr;
 }
@@ -189,7 +189,7 @@ static Tcl_HashTable *
 ThreadStorageGetHashTable(
     Tcl_ThreadId id)		/* Id of thread to get hash table for */
 {
-    int index = (unsigned) id % STORAGE_CACHE_SLOTS;
+    int index = PTR2UINT(id) % STORAGE_CACHE_SLOTS;
     Tcl_HashEntry *hPtr;
     int new;
 
@@ -299,7 +299,7 @@ TclInitThreadStorage(void)
      * We also initialize the cache.
      */
 
-    memset((ThreadStorage *)&threadStorageCache, 0,
+    memset((void*) &threadStorageCache, 0,
 	    sizeof(ThreadStorage) * STORAGE_CACHE_SLOTS);
 
     /*
@@ -338,7 +338,7 @@ TclpThreadDataKeyGet(
     if (hPtr == NULL) {
 	return NULL;
     }
-    return (void *) Tcl_GetHashValue(hPtr);
+    return Tcl_GetHashValue(hPtr);
 }
 
 /*
@@ -397,7 +397,7 @@ TclpFinalizeThreadDataThread(void)
 {
     Tcl_ThreadId id = Tcl_GetCurrentThread();
 				/* Id of the thread to finalize. */
-    int index = (unsigned int)id % STORAGE_CACHE_SLOTS;
+    int index = PTR2UINT(id) % STORAGE_CACHE_SLOTS;
     Tcl_HashEntry *hPtr;	/* Hash entry for current thread in master
 				 * table. */
     Tcl_HashTable* hashTablePtr;/* Pointer to the hash table holding TSD
@@ -529,7 +529,7 @@ TclFinalizeThreadStorage(void)
      * Clear out the thread storage cache as well.
      */
 
-    memset((ThreadStorage *)&threadStorageCache, 0,
+    memset((void*) &threadStorageCache, 0,
 	    sizeof(ThreadStorage) * STORAGE_CACHE_SLOTS);
 
     /*

@@ -581,7 +581,7 @@ test fCmd-6.26 {CopyRenameOneFile: doesn't use original name} \
     file attributes $td2name -permissions 0755
     file delete -force ~/td1
     set msg
-} "1 {error copying \"~/td1\" to \"td1\": \"[file join [file dirname ~] [file tail ~] td1 td2]\": permission denied}"
+} "1 {error copying \"~/td1\" to \"td1\": \"[file join $::env(HOME) td1 td2]\": permission denied}"
 test fCmd-6.27 {CopyRenameOneFile: TclpCopyDirectory failed} \
 	{unix notRoot xdev} {
     cleanup /tmp
@@ -2136,19 +2136,19 @@ test fCmd-27.4 {TclFileAttrsCmd - getting one option} {
     catch {file delete -force -- foo.tmp}
     createfile foo.tmp
     set attrs [file attributes foo.tmp]
-    list [catch {file attributes foo.tmp {expand}[lindex $attrs 0]}] [file delete -force -- foo.tmp]
+    list [catch {file attributes foo.tmp {*}[lindex $attrs 0]}] [file delete -force -- foo.tmp]
 } {0 {}}
 test fCmd-27.5 {TclFileAttrsCmd - setting one option} {foundGroup} {
     catch {file delete -force -- foo.tmp}
     createfile foo.tmp
     set attrs [file attributes foo.tmp]
-    list [catch {file attributes foo.tmp {expand}[lrange $attrs 0 1]} msg] $msg [file delete -force -- foo.tmp]
+    list [catch {file attributes foo.tmp {*}[lrange $attrs 0 1]} msg] $msg [file delete -force -- foo.tmp]
 } {0 {} {}}
 test fCmd-27.6 {TclFileAttrsCmd - setting more than one option} {foundGroup} {
     catch {file delete -force -- foo.tmp}
     createfile foo.tmp
     set attrs [file attributes foo.tmp]
-    list [catch {file attributes foo.tmp {expand}[lrange $attrs 0 3]} msg] $msg [file delete -force -- foo.tmp]
+    list [catch {file attributes foo.tmp {*}[lrange $attrs 0 3]} msg] $msg [file delete -force -- foo.tmp]
 } {0 {} {}}
 
 if {

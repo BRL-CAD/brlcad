@@ -180,7 +180,7 @@ typedef struct PipeEvent {
 static int		ApplicationType(Tcl_Interp *interp,
 			    const char *fileName, char *fullName);
 static void		BuildCommandLine(const char *executable, int argc,
-			    CONST char **argv, Tcl_DString *linePtr);
+			    const char **argv, Tcl_DString *linePtr);
 static BOOL		HasConsole(void);
 static int		PipeBlockModeProc(ClientData instanceData, int mode);
 static void		PipeCheckProc(ClientData clientData, int flags);
@@ -193,7 +193,7 @@ static void		PipeInit(void);
 static int		PipeInputProc(ClientData instanceData, char *buf,
 			    int toRead, int *errorCode);
 static int		PipeOutputProc(ClientData instanceData,
-			    CONST char *buf, int toWrite, int *errorCode);
+			    const char *buf, int toWrite, int *errorCode);
 static DWORD WINAPI	PipeReaderThread(LPVOID arg);
 static void		PipeSetupProc(ClientData clientData, int flags);
 static void		PipeWatchProc(ClientData instanceData, int mask);
@@ -549,13 +549,13 @@ TclpMakeFile(
 
 TclFile
 TclpOpenFile(
-    CONST char *path,		/* The name of the file to open. */
+    const char *path,		/* The name of the file to open. */
     int mode)			/* In what mode to open the file? */
 {
     HANDLE handle;
     DWORD accessMode, createMode, shareMode, flags;
     Tcl_DString ds;
-    CONST TCHAR *nativePath;
+    const TCHAR *nativePath;
 
     /*
      * Map the access bits to the NT access mode.
@@ -670,10 +670,10 @@ TclpOpenFile(
 
 TclFile
 TclpCreateTempFile(
-    CONST char *contents)	/* String to write into temp file, or NULL. */
+    const char *contents)	/* String to write into temp file, or NULL. */
 {
     WCHAR name[MAX_PATH];
-    CONST char *native;
+    const char *native;
     Tcl_DString dstring;
     HANDLE handle;
 
@@ -694,7 +694,7 @@ TclpCreateTempFile(
 
     if (contents != NULL) {
 	DWORD result, length;
-	CONST char *p;
+	const char *p;
 
 	/*
 	 * Convert the contents from UTF to native encoding
@@ -932,7 +932,7 @@ TclpCreateProcess(
 				 * Error messages from the child process
 				 * itself are sent to errorFile. */
     int argc,			/* Number of arguments in following array. */
-    CONST char **argv,		/* Array of argument strings. argv[0] contains
+    const char **argv,		/* Array of argument strings. argv[0] contains
 				 * the name of the executable converted to
 				 * native format (using the
 				 * Tcl_TranslateFileName call). Additional
@@ -1377,7 +1377,7 @@ ApplicationType(
     DWORD attr, read;
     IMAGE_DOS_HEADER header;
     Tcl_DString nameBuf, ds;
-    CONST TCHAR *nativeName;
+    const TCHAR *nativeName;
     WCHAR nativeFullPath[MAX_PATH];
     static char extensions[][5] = {"", ".com", ".exe", ".bat"};
 
@@ -1538,14 +1538,14 @@ ApplicationType(
 
 static void
 BuildCommandLine(
-    CONST char *executable,	/* Full path of executable (including
+    const char *executable,	/* Full path of executable (including
 				 * extension). Replacement for argv[0]. */
     int argc,			/* Number of arguments. */
-    CONST char **argv,		/* Argument strings in UTF. */
+    const char **argv,		/* Argument strings in UTF. */
     Tcl_DString *linePtr)	/* Initialized Tcl_DString that receives the
 				 * command line (TCHAR). */
 {
-    CONST char *arg, *start, *special;
+    const char *arg, *start, *special;
     int quote, i;
     Tcl_DString ds;
 
@@ -1770,7 +1770,7 @@ TclGetAndDetachPids(
     Tcl_Channel chan)
 {
     PipeInfo *pipePtr;
-    Tcl_ChannelType *chanTypePtr;
+    const Tcl_ChannelType *chanTypePtr;
     int i;
     char buf[TCL_INTEGER_SPACE];
 
@@ -2195,7 +2195,7 @@ PipeInputProc(
 static int
 PipeOutputProc(
     ClientData instanceData,	/* Pipe state. */
-    CONST char *buf,		/* The data buffer. */
+    const char *buf,		/* The data buffer. */
     int toWrite,		/* How many bytes to write? */
     int *errorCode)		/* Where to store error code. */
 {
@@ -2685,10 +2685,10 @@ Tcl_PidObjCmd(
     ClientData dummy,		/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST *objv)	/* Argument strings. */
+    Tcl_Obj *const *objv)	/* Argument strings. */
 {
     Tcl_Channel chan;
-    Tcl_ChannelType *chanTypePtr;
+    const Tcl_ChannelType *chanTypePtr;
     PipeInfo *pipePtr;
     int i;
     Tcl_Obj *resultPtr;

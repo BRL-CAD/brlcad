@@ -36,10 +36,10 @@ then \fI*interp\fR isn't modified.
 .AP Tk_Window parent in
 Token for the window that is to serve as the logical parent of
 the new window.
-.AP "CONST char" *name in
+.AP "const char" *name in
 Name to use for this window.  Must be unique among all children of
 the same \fIparent\fR.
-.AP "CONST char" *topLevScreen in
+.AP "const char" *topLevScreen in
 Has same format as \fIscreenName\fR.  If NULL, then new window is
 created as an internal window.  If non-NULL, new window is created as
 a top-level window on screen \fItopLevScreen\fR.  If \fItopLevScreen\fR
@@ -47,7 +47,7 @@ is an empty string (``'') then new
 window is created as top-level window of \fIparent\fR's screen.
 .AP Tk_Window tkwin in
 Token for window.
-.AP "CONST char" *pathName in
+.AP "const char" *pathName in
 Name of new window, specified as path name within application
 (e.g. \fB.a.b.c\fR).
 .BE

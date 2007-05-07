@@ -291,12 +291,12 @@ TCLOBJS = \
 	$(TMP_DIR)\tclLiteral.obj \
 	$(TMP_DIR)\tclLoad.obj \
 	$(TMP_DIR)\tclMain.obj \
+	$(TMP_DIR)\tclMathOp.obj \
 	$(TMP_DIR)\tclNamesp.obj \
 	$(TMP_DIR)\tclNotify.obj \
 	$(TMP_DIR)\tclObj.obj \
 	$(TMP_DIR)\tclPanic.obj \
 	$(TMP_DIR)\tclParse.obj \
-	$(TMP_DIR)\tclParseExpr.obj \
 	$(TMP_DIR)\tclPathObj.obj \
 	$(TMP_DIR)\tclPipe.obj \
 	$(TMP_DIR)\tclPkg.obj \
@@ -511,9 +511,9 @@ baselibs   = $(baselibs) bufferoverflowU.lib
 # TclTest flags
 #---------------------------------------------------------------------
 
-!IF "$(TESTPAT)" != ""
-TESTFLAGS = -file $(TESTPAT)
-!ENDIF
+!if "$(TESTPAT)" != ""
+TESTFLAGS = $(TESTFLAGS) -file $(TESTPAT)
+!endif
 
 
 #---------------------------------------------------------------------
@@ -546,8 +546,8 @@ test: setup $(TCLTEST) dlls $(CAT32)
 !endif
 
 runtest: setup $(TCLTEST) dlls $(CAT32)
-       set TCL_LIBRARY=$(ROOT)/library
-       $(TCLTEST)
+	set TCL_LIBRARY=$(ROOT)/library
+	$(TCLTEST)
 
 setup:
 	@if not exist $(OUT_DIR)\nul mkdir $(OUT_DIR)
@@ -619,7 +619,7 @@ $(CAT32): $(WINDIR)\cat.c
 	$(cc32) $(CON_CFLAGS) -Fo$(TMP_DIR)\ $?
 	$(link32) $(conlflags) -out:$@ -stack:16384 $(TMP_DIR)\cat.obj \
 		$(baselibs)
-        $(_VC_MANIFEST_EMBED_EXE)
+	$(_VC_MANIFEST_EMBED_EXE)
 
 #---------------------------------------------------------------------
 # Regenerate the stubs files.  [Development use only]
@@ -720,7 +720,9 @@ CreateButton(4, "FAQ", ExecFile("http://www.purl.org/NET/Tcl-FAQ/"))
 	@$(CPY) "$(DOCTMP_DIR)\$(@B).cnt" "$(OUT_DIR)"
 
 $(MAN2TCL): $(TOOLSDIR)\$$(@B).c
-	$(cc32) -nologo -G4 -ML -O2 -Fo$(@D)\ $(TOOLSDIR)\$(@B).c -link -out:$@
+	$(cc32) $(TCL_CFLAGS) -Fo$(@D)\ $(TOOLSDIR)\$(@B).c
+	$(link32) $(conlflags) -out:$@ -stack:16384 $(@D)\man2tcl.obj
+	$(_VC_MANIFEST_EMBED_EXE)
 
 $(HELPRTF): $(MAN2TCL) $(MAN2HELP) $(MAN2HELP2) $(INDEX) $(DOCDIR)\*
 	$(TCLSH) $(MAN2HELP) -bitmap $(BMP_NOPATH) $(PROJECT) $(VERSION) $(DOCDIR:\=/)
@@ -921,22 +923,22 @@ $(GENERICDIR)\regguts.h: $(GENERICDIR)\regcustom.h
 #---------------------------------------------------------------------
 
 {$(WINDIR)}.c{$(TMP_DIR)}.obj::
-    $(cc32) $(TCL_CFLAGS) -DBUILD_tcl -Fo$(TMP_DIR)\ @<<
+	$(cc32) $(TCL_CFLAGS) -DBUILD_tcl -Fo$(TMP_DIR)\ @<<
 $<
 <<
 
 {$(TOMMATHDIR)}.c{$(TMP_DIR)}.obj::
-    $(cc32) $(TCL_CFLAGS) -DBUILD_tcl -Fo$(TMP_DIR)\ @<<
+	$(cc32) $(TCL_CFLAGS) -DBUILD_tcl -Fo$(TMP_DIR)\ @<<
 $<
 <<
 
 {$(GENERICDIR)}.c{$(TMP_DIR)}.obj::
-    $(cc32) $(TCL_CFLAGS) -DBUILD_tcl -Fo$(TMP_DIR)\ @<<
+	$(cc32) $(TCL_CFLAGS) -DBUILD_tcl -Fo$(TMP_DIR)\ @<<
 $<
 <<
 
 {$(COMPATDIR)}.c{$(TMP_DIR)}.obj::
-    $(cc32) $(TCL_CFLAGS) -DBUILD_tcl -Fo$(TMP_DIR)\ @<<
+	$(cc32) $(TCL_CFLAGS) -DBUILD_tcl -Fo$(TMP_DIR)\ @<<
 $<
 <<
 
@@ -976,17 +978,19 @@ install-binaries:
 #" emacs fix
 
 install-libraries: tclConfig install-msgs install-tzdata
-	@if not exist "$(SCRIPT_INSTALL_DIR)" \
+	@if not exist "$(SCRIPT_INSTALL_DIR)$(NULL)" \
 		$(MKDIR) "$(SCRIPT_INSTALL_DIR)"
-	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8" \
+	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8$(NULL)" \
 		$(MKDIR) "$(SCRIPT_INSTALL_DIR)\..\tcl8"
-	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.2" \
+	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.2$(NULL)" \
 		$(MKDIR) "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.2"
-	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.3" \
+	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.3$(NULL)" \
 		$(MKDIR) "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.3"
-	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4" \
+	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4$(NULL)" \
 		$(MKDIR) "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4"
-	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.5" \
+	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4\platform$(NULL)" \
+		$(MKDIR) "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4\platform"
+	@if not exist "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.5$(NULL)" \
 		$(MKDIR) "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.5"
 	@echo Installing header files
 	@$(CPY) "$(GENERICDIR)\tcl.h"             "$(INCLUDE_INSTALL_DIR)\"
@@ -994,8 +998,8 @@ install-libraries: tclConfig install-msgs install-tzdata
 	@$(CPY) "$(GENERICDIR)\tclPlatDecls.h"    "$(INCLUDE_INSTALL_DIR)\"
 	@$(CPY) "$(GENERICDIR)\tclTomMath.h"      "$(INCLUDE_INSTALL_DIR)\"
 	@$(CPY) "$(GENERICDIR)\tclTomMathDecls.h" "$(INCLUDE_INSTALL_DIR)\"
-        @$(CPY) "$(TOMMATHDIR)\tommath_class.h"   "$(INCLUDE_INSTALL_DIR)\"
-        @$(CPY) "$(TOMMATHDIR)\tommath_superclass.h" "$(INCLUDE_INSTALL_DIR)\"
+	@$(CPY) "$(TOMMATHDIR)\tommath_class.h"   "$(INCLUDE_INSTALL_DIR)\"
+	@$(CPY) "$(TOMMATHDIR)\tommath_superclass.h" "$(INCLUDE_INSTALL_DIR)\"
 	@echo Installing library files to $(SCRIPT_INSTALL_DIR)
 	@$(CPY) "$(ROOT)\library\history.tcl"     "$(SCRIPT_INSTALL_DIR)\"
 	@$(CPY) "$(ROOT)\library\init.tcl"        "$(SCRIPT_INSTALL_DIR)\"
@@ -1010,19 +1014,25 @@ install-libraries: tclConfig install-msgs install-tzdata
 	@$(CPY) "$(OUT_DIR)\tclConfig.sh"         "$(LIB_INSTALL_DIR)\"
 	@echo Installing library http1.0 directory
 	@$(CPY) "$(ROOT)\library\http1.0\*.tcl" \
-		"$(SCRIPT_INSTALL_DIR)\http1.0\"
-	@echo Installing package http 2.5.2 as a Tcl Module
-	@$(COPY) "$(ROOT)\library\http\http.tcl" \
-		"$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4\http-2.5.2.tm"
+	    "$(SCRIPT_INSTALL_DIR)\http1.0\"
 	@echo Installing library opt0.4 directory
 	@$(CPY) "$(ROOT)\library\opt\*.tcl" \
-		"$(SCRIPT_INSTALL_DIR)\opt0.4\"
-	@echo Installing package msgcat 1.4 as a Tcl Module
+	    "$(SCRIPT_INSTALL_DIR)\opt0.4\"
+	@echo Installing package http $(PKG_HTTP_VER) as a Tcl Module
+	@$(COPY) "$(ROOT)\library\http\http.tcl" \
+	    "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4\http-$(PKG_HTTP_VER).tm"
+	@echo Installing package msgcat $(PKG_MSGCAT_VER) as a Tcl Module
 	@$(COPY) "$(ROOT)\library\msgcat\msgcat.tcl" \
-	    "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.5\msgcat-1.4.2.tm"
-	@echo Installing package tcltest 2.3a1 as a Tcl Module
+	    "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.5\msgcat-$(PKG_MSGCAT_VER).tm"
+	@echo Installing package tcltest $(PKG_TCLTEST_VER) as a Tcl Module
 	@$(COPY) "$(ROOT)\library\tcltest\tcltest.tcl" \
-	    "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.5\tcltest-2.3a1.tm"
+	    "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.5\tcltest-$(PKG_TCLTEST_VER).tm"
+	@echo Installing package platform $(PKG_PLATFORM_VER) as a Tcl Module
+	@$(COPY) "$(ROOT)\library\platform\platform.tcl" \
+	    "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4\platform-$(PKG_PLATFORM_VER).tm"
+	@echo Installing package platform::shell $(PKG_SHELL_VER) as a Tcl Module
+	@$(COPY) "$(ROOT)\library\platform\shell.tcl" \
+	    "$(SCRIPT_INSTALL_DIR)\..\tcl8\8.4\platform\shell-$(PKG_SHELL_VER).tm"
 	@echo Installing $(TCLDDELIBNAME)
 !if $(STATIC_BUILD)
 	@$(CPY) "$(TCLDDELIB)" "$(LIB_INSTALL_DIR)\"
@@ -1078,6 +1088,18 @@ tidy:
 clean:
 	@echo Cleaning $(TMP_DIR)\* ...
 	@if exist $(TMP_DIR)\nul $(RMDIR) $(TMP_DIR)
+	@echo Cleaning $(WINDIR)\nmakehlp.obj ...
+	@if exist $(WINDIR)\nmakehlp.obj del $(WINDIR)\nmakehlp.obj
+	@echo Cleaning $(WINDIR)\nmakehlp.exe ...
+	@if exist $(WINDIR)\nmakehlp.exe del $(WINDIR)\nmakehlp.exe
+	@echo Cleaning $(WINDIR)\_junk.pch ...
+	@if exist $(WINDIR)\_junk.pch del $(WINDIR)\_junk.pch
+	@echo Cleaning $(WINDIR)\vercl.x ...
+	@if exist $(WINDIR)\vercl.x del $(WINDIR)\vercl.x
+	@echo Cleaning $(WINDIR)\vercl.i ...
+	@if exist $(WINDIR)\vercl.i del $(WINDIR)\vercl.i
+	@echo Cleaning $(WINDIR)\versions.vc ...
+	@if exist $(WINDIR)\versions.vc del $(WINDIR)\versions.vc
 
 hose:
 	@echo Hosing $(OUT_DIR)\* ...

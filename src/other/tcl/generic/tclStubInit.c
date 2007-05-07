@@ -318,6 +318,11 @@ TclIntStubs tclIntStubs = {
     TclGetPlatform, /* 224 */
     TclTraceDictPath, /* 225 */
     TclObjBeingDeleted, /* 226 */
+    TclSetNsPath, /* 227 */
+    TclObjInterpProcCore, /* 228 */
+    TclPtrMakeUpvar, /* 229 */
+    TclObjLookupVar, /* 230 */
+    TclGetNamespaceFromObj, /* 231 */
 };
 
 TclIntPlatStubs tclIntPlatStubs = {
@@ -1057,7 +1062,7 @@ TclStubs tclStubs = {
     Tcl_DbNewBignumObj, /* 556 */
     Tcl_SetBignumObj, /* 557 */
     Tcl_GetBignumFromObj, /* 558 */
-    Tcl_GetBignumAndClearObj, /* 559 */
+    Tcl_TakeBignumFromObj, /* 559 */
     Tcl_TruncateChannel, /* 560 */
     Tcl_ChannelTruncateProc, /* 561 */
     Tcl_SetChannelErrorInterp, /* 562 */
@@ -1072,6 +1077,12 @@ TclStubs tclStubs = {
     Tcl_SetEncodingSearchPath, /* 571 */
     Tcl_GetEncodingNameFromEnvironment, /* 572 */
     Tcl_PkgRequireProc, /* 573 */
+    Tcl_AppendObjToErrorInfo, /* 574 */
+    Tcl_AppendLimitedToObj, /* 575 */
+    Tcl_Format, /* 576 */
+    Tcl_AppendFormatToObj, /* 577 */
+    Tcl_ObjPrintf, /* 578 */
+    Tcl_AppendPrintfToObj, /* 579 */
 };
 
 /* !END!: Do not edit above this line. */

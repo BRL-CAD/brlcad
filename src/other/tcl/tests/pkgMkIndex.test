@@ -89,7 +89,7 @@ proc pkgtest::parseIndex { filePath } {
 		    set ver [lindex $args 2]
 		    set ::PKGS($pkg:$ver) [lindex $args 3]
 		} else {
-		    return [package_original {expand}$args]
+		    return [package_original {*}$args]
 		}
 	    }
 	    array set ::PKGS {}
@@ -148,7 +148,7 @@ proc pkgtest::parseIndex { filePath } {
 #    1: the error result if element 0 was 1
 
 proc pkgtest::createIndex { args } {
-    set parsed [parseArgs {expand}$args]
+    set parsed [parseArgs {*}$args]
     set options [lindex $parsed 0]
     set dirPath [lindex $parsed 1]
     set patternList [lindex $parsed 2]
@@ -157,7 +157,7 @@ proc pkgtest::createIndex { args } {
 
     if {[catch {
 	file delete [file join $dirPath pkgIndex.tcl]
-	pkg_mkIndex {expand}$options $dirPath {expand}$patternList
+	pkg_mkIndex {*}$options $dirPath {*}$patternList
     } err]} {
 	return [list 1 $err]
     }
@@ -231,7 +231,7 @@ proc makePkgList { inList } {
 
 proc pkgtest::runCreatedIndex {rv args} {
     if {[lindex $rv 0] == 0} {
-	set parsed [parseArgs {expand}$args]
+	set parsed [parseArgs {*}$args]
 	set dirPath [lindex $parsed 1]
 	set idxFile [file join $dirPath pkgIndex.tcl]
 
@@ -248,8 +248,8 @@ proc pkgtest::runCreatedIndex {rv args} {
     return $result
 }
 proc pkgtest::runIndex { args } {
-    set rv [createIndex {expand}$args]
-    return [runCreatedIndex $rv {expand}$args]
+    set rv [createIndex {*}$args]
+    return [runCreatedIndex $rv {*}$args]
 }
 
 # If there is no match to the patterns, make sure the directory hasn't

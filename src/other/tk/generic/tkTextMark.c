@@ -41,19 +41,18 @@ static int		MarkLayoutProc(TkText *textPtr, TkTextIndex *indexPtr,
 			    int maxChars, int noCharsYet, TkWrapMode wrapMode,
 			    TkTextDispChunk *chunkPtr);
 static int		MarkFindNext(Tcl_Interp *interp,
-			    TkText *textPtr, CONST char *markName);
+			    TkText *textPtr, const char *markName);
 static int		MarkFindPrev(Tcl_Interp *interp,
-			    TkText *textPtr, CONST char *markName);
+			    TkText *textPtr, const char *markName);
 
 
 /*
- * The following structures declare the "mark" segment types.
- * There are actually two types for marks, one with left gravity
- * and one with right gravity.  They are identical except for
- * their gravity property.
+ * The following structures declare the "mark" segment types. There are
+ * actually two types for marks, one with left gravity and one with right
+ * gravity. They are identical except for their gravity property.
  */
 
-Tk_SegType tkTextRightMarkType = {
+const Tk_SegType tkTextRightMarkType = {
     "mark",			/* name */
     0,				/* leftGravity */
     NULL,			/* splitProc */
@@ -64,7 +63,7 @@ Tk_SegType tkTextRightMarkType = {
     MarkCheckProc		/* checkProc */
 };
 
-Tk_SegType tkTextLeftMarkType = {
+const Tk_SegType tkTextLeftMarkType = {
     "mark",			/* name */
     1,				/* leftGravity */
     NULL,			/* splitProc */
@@ -98,7 +97,7 @@ TkTextMarkCmd(
     register TkText *textPtr,	/* Information about text widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. Someone else has already
+    Tcl_Obj *const objv[])	/* Argument objects. Someone else has already
 				 * parsed this command enough to know that
 				 * objv[1] is "mark". */
 {
@@ -106,17 +105,14 @@ TkTextMarkCmd(
     TkTextSegment *markPtr;
     Tcl_HashSearch search;
     TkTextIndex index;
-    Tk_SegType *newTypePtr;
-
+    const Tk_SegType *newTypePtr;
     int optionIndex;
-
-    static CONST char *markOptionStrings[] = {
-	"gravity", "names", "next", "previous", "set",
-	"unset", NULL
+    static const char *markOptionStrings[] = {
+	"gravity", "names", "next", "previous", "set", "unset", NULL
     };
     enum markOptions {
-	MARK_GRAVITY, MARK_NAMES, MARK_NEXT, MARK_PREVIOUS,
-	MARK_SET, MARK_UNSET
+	MARK_GRAVITY, MARK_NAMES, MARK_NEXT, MARK_PREVIOUS, MARK_SET,
+	MARK_UNSET
     };
 
     if (objc < 3) {
@@ -128,7 +124,7 @@ TkTextMarkCmd(
 	return TCL_ERROR;
     }
 
-    switch ((enum markOptions)optionIndex) {
+    switch ((enum markOptions) optionIndex) {
     case MARK_GRAVITY: {
 	char c;
 	int length;
@@ -261,14 +257,13 @@ TkTextMarkCmd(
 TkTextSegment *
 TkTextSetMark(
     TkText *textPtr,		/* Text widget in which to create mark. */
-    CONST char *name,		/* Name of mark to set. */
+    const char *name,		/* Name of mark to set. */
     TkTextIndex *indexPtr)	/* Where to set mark. */
 {
     Tcl_HashEntry *hPtr = NULL;
     TkTextSegment *markPtr;
     TkTextIndex insertIndex;
-    int isNew;
-    int widgetSpecific;
+    int isNew, widgetSpecific;
 
     if (!strcmp(name, "insert")) {
 	widgetSpecific = 1;
@@ -406,7 +401,7 @@ TkTextMarkSegToIndex(
 int
 TkTextMarkNameToIndex(
     TkText *textPtr,		/* Text widget containing mark. */
-    CONST char *name,		/* Name of mark. */
+    const char *name,		/* Name of mark. */
     TkTextIndex *indexPtr)	/* Index information gets stored here. */
 {
     TkTextSegment *segPtr;
@@ -506,7 +501,6 @@ MarkCleanupProc(
  *--------------------------------------------------------------
  */
 
-	/*ARGSUSED*/
 static int
 MarkLayoutProc(
     TkText *textPtr,		/* Text widget being layed out. */
@@ -733,7 +727,7 @@ static int
 MarkFindNext(
     Tcl_Interp *interp,		/* For error reporting */
     TkText *textPtr,		/* The widget */
-    CONST char *string)		/* The starting index or mark name */
+    const char *string)		/* The starting index or mark name */
 {
     TkTextIndex index;
     Tcl_HashEntry *hPtr;
@@ -833,7 +827,7 @@ static int
 MarkFindPrev(
     Tcl_Interp *interp,		/* For error reporting */
     TkText *textPtr,		/* The widget */
-    CONST char *string)		/* The starting index or mark name */
+    const char *string)		/* The starting index or mark name */
 {
     TkTextIndex index;
     Tcl_HashEntry *hPtr;

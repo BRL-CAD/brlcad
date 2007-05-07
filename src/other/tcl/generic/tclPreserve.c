@@ -38,7 +38,7 @@ typedef struct {
  * These variables are protected by "preserveMutex".
  */
 
-static Reference *refArray;	/* First in array of references. */
+static Reference *refArray = NULL;	/* First in array of references. */
 static int spaceAvl = 0;	/* Total number of structures available at
 				 * *firstRefPtr. */
 static int inUse = 0;		/* Count of structures currently in use in
@@ -145,21 +145,9 @@ Tcl_Preserve(
      */
 
     if (inUse == spaceAvl) {
-	if (spaceAvl == 0) {
-	    refArray = (Reference *) ckalloc((unsigned)
-		    (INITIAL_SIZE*sizeof(Reference)));
-	    spaceAvl = INITIAL_SIZE;
-	} else {
-	    Reference *new;
-
-	    new = (Reference *) ckalloc((unsigned)
-		    (2*spaceAvl*sizeof(Reference)));
-	    memcpy((void *) new, (void *) refArray,
-                    spaceAvl*sizeof(Reference));
-	    ckfree((char *) refArray);
-	    refArray = new;
-	    spaceAvl *= 2;
-	}
+	spaceAvl = spaceAvl ? 2*spaceAvl : INITIAL_SIZE;
+	refArray = (Reference *) ckrealloc((char *) refArray,
+		spaceAvl * sizeof(Reference));
     }
 
     /*

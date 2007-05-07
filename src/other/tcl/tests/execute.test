@@ -21,7 +21,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import -force ::tcltest::*
 }
 
-catch {namespace delete {expand}[namespace children :: test_ns_*]}
+catch {namespace delete {*}[namespace children :: test_ns_*]}
 catch {rename foo ""}
 catch {unset x}
 catch {unset y}
@@ -506,7 +506,7 @@ test execute-3.77 {TclExecuteByteCode, INST_TRY_CVT_TO_NUMERIC, op is non-numeri
 # INST_PUSH_RETURN_CODE not tested
 
 test execute-4.1 {Tcl_GetCommandFromObj, convert to tclCmdNameType} {
-    catch {namespace delete {expand}[namespace children :: test_ns_*]}
+    catch {namespace delete {*}[namespace children :: test_ns_*]}
     catch {unset x}
     catch {unset y}
     namespace eval test_ns_1 {
@@ -524,7 +524,7 @@ test execute-4.1 {Tcl_GetCommandFromObj, convert to tclCmdNameType} {
          [catch {namespace which -command ${x}${y}:cmd2} msg] $msg
 } {::test_ns_1::test_ns_2::cmd1 0 {} 0 {}}
 test execute-4.2 {Tcl_GetCommandFromObj, check if cached tclCmdNameType is invalid} {
-    catch {namespace delete {expand}[namespace children :: test_ns_*]}
+    catch {namespace delete {*}[namespace children :: test_ns_*]}
     catch {rename foo ""}
     catch {unset l}
     proc foo {} {
@@ -546,7 +546,7 @@ test execute-4.2 {Tcl_GetCommandFromObj, check if cached tclCmdNameType is inval
     set l
 } {::foo ::test_ns_1::foo}
 test execute-4.3 {Tcl_GetCommandFromObj, command never found} {
-    catch {namespace delete {expand}[namespace children :: test_ns_*]}
+    catch {namespace delete {*}[namespace children :: test_ns_*]}
     catch {rename foo ""}
     namespace eval test_ns_1 {
         proc foo {} {
@@ -564,7 +564,7 @@ test execute-4.3 {Tcl_GetCommandFromObj, command never found} {
 } {::test_ns_1::foo {} 0 {}}
 
 test execute-5.1 {SetCmdNameFromAny, set cmd name to empty heap string if NULL} {
-    catch {namespace delete {expand}[namespace children :: test_ns_*]}
+    catch {namespace delete {*}[namespace children :: test_ns_*]}
     catch {unset l}
     proc {} {} {return {}}
     {}
@@ -778,7 +778,7 @@ test execute-9.1 {Interp result resetting [Bug 1522803]} {
 if {[info commands testobj] != {}} {
    testobj freeallvars
 }
-catch {namespace delete {expand}[namespace children :: test_ns_*]}
+catch {namespace delete {*}[namespace children :: test_ns_*]}
 catch {rename foo ""}
 catch {rename p ""}
 catch {rename {} ""}

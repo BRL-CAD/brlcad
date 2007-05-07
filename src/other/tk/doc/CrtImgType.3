@@ -30,7 +30,7 @@ Must be static: a
 pointer to this structure is retained by the image code.
 .AP Tcl_Interp *interp in
 Interpreter in which image was created.
-.AP "CONST char" *name in
+.AP "const char" *name in
 Name of existing image.
 .AP Tk_ImageType **typePtrPtr out
 Points to word in which to store a pointer to type information for
@@ -124,7 +124,7 @@ typedef int Tk_ImageCreateProc(
     Tcl_Interp *\fIinterp\fR,
     char *\fIname\fR,
     int \fIobjc\fR,
-    Tcl_Obj *CONST \fIobjv\fR[],
+    Tcl_Obj *const \fIobjv\fR[],
     Tk_ImageType *\fItypePtr\fR,
     Tk_ImageMaster \fImaster\fR,
     ClientData *\fImasterDataPtr\fR);

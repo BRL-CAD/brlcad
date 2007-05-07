@@ -733,7 +733,7 @@ proc ::tk::IconList_Goto {w text} {
 	return
     }
 
-    if {$text eq ""} {
+    if {$text eq "" || $data(numItems) == 0} {
 	return
     }
 

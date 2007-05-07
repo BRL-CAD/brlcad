@@ -104,6 +104,12 @@ EXTERN Tcl_WideUInt	strtoull _ANSI_ARGS_((CONST char *string,
 #ifndef NO_SYS_WAIT_H
 #   include <sys/wait.h>
 #endif
+#if HAVE_INTTYPES_H
+#   include <inttypes.h>
+#endif
+#if HAVE_STDINT_H
+#   include <stdint.h>
+#endif
 #ifdef HAVE_UNISTD_H
 #   include <unistd.h>
 #else
@@ -662,6 +668,10 @@ EXTERN int pthread_getattr_np _ANSI_ARGS_((pthread_t, pthread_attr_t *));
 
 #include <pwd.h>
 #include <grp.h>
+
+#ifndef MODULE_SCOPE
+#define MODULE_SCOPE extern
+#endif
 
 MODULE_SCOPE struct passwd*  TclpGetPwNam(const char *name);
 MODULE_SCOPE struct group*   TclpGetGrNam(const char *name);

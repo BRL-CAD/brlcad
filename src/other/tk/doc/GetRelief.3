@@ -22,7 +22,7 @@ int
 int
 \fBTk_GetRelief(\fIinterp, name, reliefPtr\fB)\fR
 .sp
-CONST char *
+const char *
 \fBTk_NameOfRelief(\fIrelief\fB)\fR
 .SH ARGUMENTS
 .AS "Tcl_Interp" *reliefPtr
@@ -38,7 +38,7 @@ a string.
 .AP int *reliefPtr out
 Pointer to location in which to store relief value corresponding to
 \fIobjPtr\fR or \fIname\fR.
-.AP "CONST char" *name
+.AP "const char" *name
 Name of the relief.
 .AP int relief in
 Relief value (one of \fBTK_RELIEF_FLAT\fR, \fBTK_RELIEF_RAISED\fR,

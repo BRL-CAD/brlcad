@@ -60,7 +60,7 @@ typedef struct {
  * Information used for argv parsing.
  */
 
-static Tk_OptionSpec optionSpecs[] = {
+static const Tk_OptionSpec optionSpecs[] = {
     {TK_OPTION_BORDER, "-background", "background", "Background",
 	    "#d9d9d9", Tk_Offset(Square, bgBorderPtr), -1, 0,
 	    (ClientData) "white"},

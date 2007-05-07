@@ -18,6 +18,7 @@ close $f
 
 set eat_endif 0
 set eat_semi 0
+set def_count 0
 foreach line [split $data \n] {
     if { !$eat_semi && !$eat_endif } {
 	switch -regexp -- $line {
@@ -27,6 +28,18 @@ foreach line [split $data \n] {
 		puts "\#include <tclTomMathDecls.h>"
 		puts "\#ifndef MODULE_SCOPE"
 		puts "\#define MODULE_SCOPE extern"
+		puts "\#endif"
+	    }
+	    {typedef\s+unsigned long\s+mp_digit;} {
+		# change the second 'typedef unsigned long mp
+		incr def_count
+		puts "\#ifndef MP_DIGIT_DECLARED"
+		if {$def_count == 2} {
+		    puts [string map {long int} $line]
+		} else {
+		    puts $line
+		}
+		puts "\#define MP_DIGIT_DECLARED"
 		puts "\#endif"
 	    }
 	    {typedef.*mp_digit;} {
@@ -61,6 +74,10 @@ foreach line [split $data \n] {
 		puts $line
 		puts "\#if 0 /* these are macros in tclTomMathDecls.h */"
 		set eat_endif 1
+	    }
+	    {__x86_64__} {
+		puts "[string map {__x86_64__ NEVER} $line]\
+                      /* 128-bit ints fail in too many places */"
 	    }
 	    default {
 		puts $line

@@ -264,7 +264,7 @@ proc ::tcl::tm::UnknownHandler {original name args} {
 
 		    if {
 			($pkgname eq $name) &&
-			[package vsatisfies $pkgversion {expand}$args]
+			[package vsatisfies $pkgversion {*}$args]
 		    } then {
 			set satisfied 1
 			# We do not abort the loop, and keep adding

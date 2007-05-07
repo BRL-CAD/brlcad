@@ -114,7 +114,7 @@ static char *compoundStrings[] = {
     "bottom", "center", "left", "none", "right", "top", NULL
 };
 
-static Tk_OptionSpec tkBasicMenuEntryConfigSpecs[] = {
+static const Tk_OptionSpec tkBasicMenuEntryConfigSpecs[] = {
     {TK_OPTION_BORDER, "-activebackground", NULL, NULL,
 	DEF_MENU_ENTRY_ACTIVE_BG, Tk_Offset(TkMenuEntry, activeBorderPtr), -1,
 	TK_OPTION_NULL_OK},
@@ -163,14 +163,14 @@ static Tk_OptionSpec tkBasicMenuEntryConfigSpecs[] = {
     {TK_OPTION_END}
 };
 
-static Tk_OptionSpec tkSeparatorEntryConfigSpecs[] = {
+static const Tk_OptionSpec tkSeparatorEntryConfigSpecs[] = {
     {TK_OPTION_BORDER, "-background", NULL, NULL,
 	DEF_MENU_ENTRY_BG,
 	Tk_Offset(TkMenuEntry, borderPtr), -1, TK_OPTION_NULL_OK},
     {TK_OPTION_END}
 };
 
-static Tk_OptionSpec tkCheckButtonEntryConfigSpecs[] = {
+static const Tk_OptionSpec tkCheckButtonEntryConfigSpecs[] = {
     {TK_OPTION_BOOLEAN, "-indicatoron", NULL, NULL,
 	DEF_MENU_ENTRY_INDICATOR,
 	-1, Tk_Offset(TkMenuEntry, indicatorOn)},
@@ -193,7 +193,7 @@ static Tk_OptionSpec tkCheckButtonEntryConfigSpecs[] = {
 	NULL, 0, -1, 0, (ClientData) tkBasicMenuEntryConfigSpecs}
 };
 
-static Tk_OptionSpec tkRadioButtonEntryConfigSpecs[] = {
+static const Tk_OptionSpec tkRadioButtonEntryConfigSpecs[] = {
     {TK_OPTION_BOOLEAN, "-indicatoron", NULL, NULL,
 	DEF_MENU_ENTRY_INDICATOR,
 	-1, Tk_Offset(TkMenuEntry, indicatorOn)},
@@ -213,7 +213,7 @@ static Tk_OptionSpec tkRadioButtonEntryConfigSpecs[] = {
 	NULL, 0, -1, 0, (ClientData) tkBasicMenuEntryConfigSpecs}
 };
 
-static Tk_OptionSpec tkCascadeEntryConfigSpecs[] = {
+static const Tk_OptionSpec tkCascadeEntryConfigSpecs[] = {
     {TK_OPTION_STRING, "-menu", NULL, NULL,
 	DEF_MENU_ENTRY_MENU,
 	Tk_Offset(TkMenuEntry, namePtr), -1, TK_OPTION_NULL_OK},
@@ -221,7 +221,7 @@ static Tk_OptionSpec tkCascadeEntryConfigSpecs[] = {
 	NULL, 0, -1, 0, (ClientData) tkBasicMenuEntryConfigSpecs}
 };
 
-static Tk_OptionSpec tkTearoffEntryConfigSpecs[] = {
+static const Tk_OptionSpec tkTearoffEntryConfigSpecs[] = {
     {TK_OPTION_BORDER, "-background", NULL, NULL,
 	DEF_MENU_ENTRY_BG,
 	Tk_Offset(TkMenuEntry, borderPtr), -1, TK_OPTION_NULL_OK},
@@ -231,7 +231,7 @@ static Tk_OptionSpec tkTearoffEntryConfigSpecs[] = {
     {TK_OPTION_END}
 };
 
-static Tk_OptionSpec *specsArray[] = {
+static const Tk_OptionSpec *specsArray[] = {
     tkCascadeEntryConfigSpecs, tkCheckButtonEntryConfigSpecs,
     tkBasicMenuEntryConfigSpecs, tkRadioButtonEntryConfigSpecs,
     tkSeparatorEntryConfigSpecs, tkTearoffEntryConfigSpecs
@@ -241,11 +241,11 @@ static Tk_OptionSpec *specsArray[] = {
  * Menu type strings for use with Tcl_GetIndexFromObj.
  */
 
-static CONST char *menuTypeStrings[] = {
+static const char *menuTypeStrings[] = {
     "normal", "tearoff", "menubar", NULL
 };
 
-static Tk_OptionSpec tkMenuConfigSpecs[] = {
+static const Tk_OptionSpec tkMenuConfigSpecs[] = {
     {TK_OPTION_BORDER, "-activebackground", "activeBackground",
 	"Foreground", DEF_MENU_ACTIVE_BG_COLOR,
 	Tk_Offset(TkMenu, activeBorderPtr), -1, 0,
@@ -313,13 +313,13 @@ static Tk_OptionSpec tkMenuConfigSpecs[] = {
 static CONST char *menuOptions[] = {
     "activate", "add", "cget", "clone", "configure", "delete", "entrycget",
     "entryconfigure", "index", "insert", "invoke", "post", "postcascade",
-    "type", "unpost", "yposition", NULL
+    "type", "unpost", "xposition", "yposition", NULL
 };
 enum options {
     MENU_ACTIVATE, MENU_ADD, MENU_CGET, MENU_CLONE, MENU_CONFIGURE,
     MENU_DELETE, MENU_ENTRYCGET, MENU_ENTRYCONFIGURE, MENU_INDEX,
     MENU_INSERT, MENU_INVOKE, MENU_POST, MENU_POSTCASCADE, MENU_TYPE,
-    MENU_UNPOST, MENU_YPOSITION
+    MENU_UNPOST, MENU_XPOSITION, MENU_YPOSITION
 };
 
 /*
@@ -344,6 +344,8 @@ static void		DestroyMenuEntry(char *memPtr);
 static int		GetIndexFromCoords(Tcl_Interp *interp, TkMenu *menuPtr,
 			    char *string, int *indexPtr);
 static int		MenuDoYPosition(Tcl_Interp *interp,
+			    TkMenu *menuPtr, Tcl_Obj *objPtr);
+static int		MenuDoXPosition(Tcl_Interp *interp,
 			    TkMenu *menuPtr, Tcl_Obj *objPtr);
 static int		MenuAddOrInsert(Tcl_Interp *interp,
 			    TkMenu *menuPtr, Tcl_Obj *indexPtr, int objc,
@@ -683,7 +685,7 @@ MenuWidgetObjCmd(
 	int index;
 
 	if (objc != 3) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "activate index");
+	    Tcl_WrongNumArgs(interp, 2, objv, "index");
 	    goto error;
 	}
 	if (TkGetMenuIndex(interp, menuPtr, objv[2], 0, &index) != TCL_OK) {
@@ -701,7 +703,7 @@ MenuWidgetObjCmd(
     }
     case MENU_ADD:
 	if (objc < 3) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "add type ?options?");
+	    Tcl_WrongNumArgs(interp, 2, objv, "type ?options?");
 	    goto error;
 	}
 
@@ -713,7 +715,7 @@ MenuWidgetObjCmd(
 	Tcl_Obj *resultPtr;
 
 	if (objc != 3) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "cget option");
+	    Tcl_WrongNumArgs(interp, 2, objv, "option");
 	    goto error;
 	}
 	resultPtr = Tk_GetOptionValue(interp, (char *) menuPtr,
@@ -727,7 +729,7 @@ MenuWidgetObjCmd(
     }
     case MENU_CLONE:
 	if ((objc < 3) || (objc > 4)) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "clone newMenuName ?menuType?");
+	    Tcl_WrongNumArgs(interp, 2, objv, "newMenuName ?menuType?");
 	    goto error;
 	}
 	result = CloneMenu(menuPtr, objv[2], (objc == 3) ? NULL : objv[3]);
@@ -767,7 +769,7 @@ MenuWidgetObjCmd(
 	int first, last;
 
 	if ((objc != 3) && (objc != 4)) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "delete first ?last?");
+	    Tcl_WrongNumArgs(interp, 2, objv, "first ?last?");
 	    goto error;
 	}
 	if (TkGetMenuIndex(interp, menuPtr, objv[2], 0, &first) != TCL_OK) {
@@ -798,7 +800,7 @@ MenuWidgetObjCmd(
 	Tcl_Obj *resultPtr;
 
 	if (objc != 4) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "entrycget index option");
+	    Tcl_WrongNumArgs(interp, 2, objv, "index option");
 	    goto error;
 	}
 	if (TkGetMenuIndex(interp, menuPtr, objv[2], 0, &index) != TCL_OK) {
@@ -823,8 +825,7 @@ MenuWidgetObjCmd(
 	Tcl_Obj *resultPtr;
 
 	if (objc < 3) {
-	    Tcl_WrongNumArgs(interp, 1, objv,
-		    "entryconfigure index ?option value ...?");
+	    Tcl_WrongNumArgs(interp, 2, objv, "index ?option value ...?");
 	    goto error;
 	}
 	if (TkGetMenuIndex(interp, menuPtr, objv[2], 0, &index) != TCL_OK) {
@@ -864,7 +865,7 @@ MenuWidgetObjCmd(
 	int index;
 
 	if (objc != 3) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "index string");
+	    Tcl_WrongNumArgs(interp, 2, objv, "string");
 	    goto error;
 	}
 	if (TkGetMenuIndex(interp, menuPtr, objv[2], 0, &index) != TCL_OK) {
@@ -879,7 +880,7 @@ MenuWidgetObjCmd(
     }
     case MENU_INSERT:
 	if (objc < 4) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "insert index type ?options?");
+	    Tcl_WrongNumArgs(interp, 2, objv, "index type ?options?");
 	    goto error;
 	}
 	if (MenuAddOrInsert(interp,menuPtr,objv[2],objc-3,objv+3) != TCL_OK) {
@@ -890,7 +891,7 @@ MenuWidgetObjCmd(
 	int index;
 
 	if (objc != 3) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "invoke index");
+	    Tcl_WrongNumArgs(interp, 2, objv, "index");
 	    goto error;
 	}
 	if (TkGetMenuIndex(interp, menuPtr, objv[2], 0, &index) != TCL_OK) {
@@ -906,7 +907,7 @@ MenuWidgetObjCmd(
 	int x, y;
 
 	if (objc != 4) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "post x y");
+	    Tcl_WrongNumArgs(interp, 2, objv, "x y");
 	    goto error;
 	}
 	if ((Tcl_GetIntFromObj(interp, objv[2], &x) != TCL_OK)
@@ -931,7 +932,7 @@ MenuWidgetObjCmd(
 	int index;
 
 	if (objc != 3) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "postcascade index");
+	    Tcl_WrongNumArgs(interp, 2, objv, "index");
 	    goto error;
 	}
 
@@ -949,7 +950,7 @@ MenuWidgetObjCmd(
 	int index;
 
 	if (objc != 3) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "type index");
+	    Tcl_WrongNumArgs(interp, 2, objv, "index");
 	    goto error;
 	}
 	if (TkGetMenuIndex(interp, menuPtr, objv[2], 0, &index) != TCL_OK) {
@@ -968,15 +969,22 @@ MenuWidgetObjCmd(
     }
     case MENU_UNPOST:
 	if (objc != 2) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "unpost");
+	    Tcl_WrongNumArgs(interp, 2, objv, NULL);
 	    goto error;
 	}
 	Tk_UnmapWindow(menuPtr->tkwin);
 	result = TkPostSubmenu(interp, menuPtr, NULL);
 	break;
+    case MENU_XPOSITION:
+	if (objc != 3) {
+	    Tcl_WrongNumArgs(interp, 2, objv, "index");
+	    goto error;
+	}
+	result = MenuDoXPosition(interp, menuPtr, objv[2]);
+	break;
     case MENU_YPOSITION:
 	if (objc != 3) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "yposition index");
+	    Tcl_WrongNumArgs(interp, 2, objv, "index");
 	    goto error;
 	}
 	result = MenuDoYPosition(interp, menuPtr, objv[2]);
@@ -2808,6 +2816,43 @@ CloneMenu(
     }
     Tcl_Release((ClientData) menuPtr);
     return returnResult;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * MenuDoXPosition --
+ *
+ *	Given arguments from an option command line, returns the X position.
+ *
+ * Results:
+ *	Returns TCL_OK or TCL_Error
+ *
+ * Side effects:
+ *	xPosition is set to the X-position of the menu entry.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+MenuDoXPosition(
+    Tcl_Interp *interp,
+    TkMenu *menuPtr,
+    Tcl_Obj *objPtr)
+{
+    int index;
+
+    TkRecomputeMenu(menuPtr);
+    if (TkGetMenuIndex(interp, menuPtr, objPtr, 0, &index) != TCL_OK) {
+	return TCL_ERROR;
+    }
+    Tcl_ResetResult(interp);
+    if (index < 0) {
+	Tcl_SetObjResult(interp, Tcl_NewIntObj(0));
+    } else {
+	Tcl_SetObjResult(interp, Tcl_NewIntObj(menuPtr->entries[index]->x));
+    }
+    return TCL_OK;
 }
 
 /*

@@ -1,5 +1,5 @@
-Tcl Mac OS X README 
------------------
+Tcl Mac OS X README
+-------------------
 
 RCS: @(#) $Id$
 
@@ -94,9 +94,20 @@ take care to only use the project matching your DevTools and OS version:
 	target useful for debugging, this target's 'Development' buildstyle
 	has ZeroLink and Fix&Continue enabled, use the 'DevelNoFixZL' buildstyle
 	if you need a debug build without these features.
-    * Tcl.xcodeproj for Xcode 2.4 on 10.4, this additionally has a
-	'ReleaseUniversal'configuration which builds both the 'Tcl' and the
-	'tcltest' targets as universal binaries for ppc, ppc64, i386 and x86_64.
+    * Tcl.xcodeproj for Xcode 2.4 on 10.4 or later, which has the following
+	additional configurations for the 'Tcl' and 'tcltest' targets:
+	'Debug64bit': builds the targets as 64bit with debugging enabled,
+		requires a 64bit capable processor (i.e. G5 or Core2/Xeon).
+	'ReleaseUniversal': builds the targets as universal binaries for the
+		ppc, ppc64, i386 and x86_64 architectures.
+	'ReleaseUniversal10.4uSDK': same as 'ReleaseUniversal' but builds
+		against the 10.4u SDK, required to build universal binaries on
+		PowerPC Tiger (where the system libraries are not universal).
+	'ReleasePPC10.3.9SDK': builds for PowerPC against the 10.3.9 SDK, useful
+		for verifying on Tiger that building on Panther would succeed.
+	'ReleasePPC10.2.8SDK': builds for PowerPC with gcc-3.3 against the
+		10.2.8 SDK, useful to verify on Tiger that building on Jaguar
+		would succeed.
 Notes about the native targets of the Xcode projects:
     * the Xcode projects refer to the tcl source directory with a relative path
 	of ../../tcl to the project location, if your source directory is named
@@ -118,10 +129,11 @@ Notes about the native targets of the Xcode projects:
     export CFLAGS="-arch ppc -arch ppc64 -arch i386 -arch x86_64 \
 	-isysroot /Developer/SDKs/MacOSX10.4u.sdk -mmacosx-version-min=10.4"
 This requires Mac OS X 10.4 and Xcode 2.4 (or Xcode 2.2 if -arch x86_64 is
-omitted, but _not_ Xcode 2.1) and will work on any of the architectures (on
-intel Macs, the -isysroot may not be required). Note that it is not possible to
-configure universal builds correctly if the current architecture is not present
-in CFLAGS  (i.e. -arch `arch` must be there).
+omitted, but _not_ Xcode 2.1) and will work on any of the architectures (the
+-isysroot flag is only required on PowerPC Tiger).
+Note that configure requires CFLAGS to contain a least one architecture that can
+be run on the build machine (i.e. ppc on G3/G4, ppc or ppc64 on G5, ppc or i386
+on Core and ppc, i386 or x86_64 on Core2/Xeon).
 Universal builds of Tcl TEA extensions are also possible with CFLAGS set as
 above, they will be [load]able by universal as well as thin binaries of Tcl.
 
@@ -132,7 +144,7 @@ This requires Mac OS X 10.2 and gcc 3.1; if you have gcc 4 or later you can set
 CFLAGS instead:
     export CFLAGS="-mmacosx-version-min=10.2"
 The Tcl.xcodeproj is setup to produce binaries that can run on 10.2 or later,
-except for the 'ReleaseUniversal'configuration, where they require 10.4.
+except for the 'ReleaseUniversal*' configurations, where they require 10.4.
 Support for weak-linking was added to the code for 8.4.14/8.5a5.
 
 Detailed Instructions for building with macosx/GNUmakefile
@@ -145,12 +157,12 @@ where ${ver} is a shell variable containing the tcl version number (for example
 '8.4.12').
 Setup the shell variable as follows:
 	set ver="8.4.12" ;: if your shell is csh
-	ver="8.4.12"     ;: if your shell is sh
+	ver="8.4.12"	 ;: if your shell is sh
 The source tree will be named this way only if you are building from a release
 archive, if you are building from CVS, the version numbers will be missing; so
 set ${ver} to the empty string instead:
-	set ver=""       ;: if your shell is csh
-	ver=""           ;: if your shell is sh
+	set ver=""	 ;: if your shell is csh
+	ver=""		 ;: if your shell is sh
 
 - The following steps will build Tcl from the Terminal, assuming you are located
 in the directory containing the tcl source tree:

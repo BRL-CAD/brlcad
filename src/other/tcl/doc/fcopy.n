@@ -19,47 +19,47 @@ fcopy \- Copy data from one channel to another
 
 .SH DESCRIPTION
 .PP
-The \fBfcopy\fP command copies data from one I/O channel, \fIinchan\fR to another I/O channel, \fIoutchan\fR.
-The \fBfcopy\fP command leverages the buffering in the Tcl I/O system to
+The \fBfcopy\fR command copies data from one I/O channel, \fIinchan\fR to another I/O channel, \fIoutchan\fR.
+The \fBfcopy\fR command leverages the buffering in the Tcl I/O system to
 avoid extra copies and to avoid buffering too much data in
 main memory when copying large files to slow destinations like
 network sockets.
 .PP
-The \fBfcopy\fP 
+The \fBfcopy\fR 
 command transfers data from \fIinchan\fR until end of file
-or \fIsize\fP bytes have been 
-transferred. If no \fB\-size\fP argument is given,
+or \fIsize\fR bytes have been 
+transferred. If no \fB\-size\fR argument is given,
 then the copy goes until end of file.
 All the data read from \fIinchan\fR is copied to \fIoutchan\fR.
-Without the \fB\-command\fP option, \fBfcopy\fP blocks until the copy is complete
+Without the \fB\-command\fR option, \fBfcopy\fR blocks until the copy is complete
 and returns the number of bytes written to \fIoutchan\fR.
 .PP
-The \fB\-command\fP argument makes \fBfcopy\fP work in the background.
-In this case it returns immediately and the \fIcallback\fP is invoked
+The \fB\-command\fR argument makes \fBfcopy\fR work in the background.
+In this case it returns immediately and the \fIcallback\fR is invoked
 later when the copy completes.
-The \fIcallback\fP is called with
+The \fIcallback\fR is called with
 one or two additional 
 arguments that indicates how many bytes were written to \fIoutchan\fR.
 If an error occurred during the background copy, the second argument is the
 error string associated with the error.
 With a background copy,
 it is not necessary to put \fIinchan\fR or \fIoutchan\fR into
-non-blocking mode; the \fBfcopy\fP command takes care of that automatically.
+non-blocking mode; the \fBfcopy\fR command takes care of that automatically.
 However, it is necessary to enter the event loop by using
-the \fBvwait\fP command or by using Tk.
+the \fBvwait\fR command or by using Tk.
 .PP
 You are not allowed to do other I/O operations with
-\fIinchan\fR or \fIoutchan\fR during a background fcopy.
+\fIinchan\fR or \fIoutchan\fR during a background \fBfcopy\fR.
 If either \fIinchan\fR or \fIoutchan\fR get closed
 while the copy is in progress, the current copy is stopped
-and the command callback is \fInot\fP made.
+and the command callback is \fInot\fR made.
 If \fIinchan\fR is closed,
 then all data already queued for \fIoutchan\fR is written out.
 .PP
 Note that \fIinchan\fR can become readable during a background copy.
-You should turn off any \fBfileevent\fP handlers during a background
+You should turn off any \fBfileevent\fR handlers during a background
 copy so those handlers do not interfere with the copy.
-Any I/O attempted by a \fBfileevent\fP handler will get a "channel busy" error.
+Any I/O attempted by a \fBfileevent\fR handler will get a "channel busy" error.
 .PP
 \fBFcopy\fR translates end-of-line sequences in \fIinchan\fR and \fIoutchan\fR
 according to the \fB\-translation\fR option
@@ -69,8 +69,8 @@ See the manual entry for \fBfconfigure\fR for details on the
 The translations mean that the number of bytes read from \fIinchan\fR
 can be different than the number of bytes written to \fIoutchan\fR.
 Only the number of bytes written to \fIoutchan\fR is reported,
-either as the return value of a synchronous \fBfcopy\fP or
-as the argument to the callback for an asynchronous \fBfcopy\fP.
+either as the return value of a synchronous \fBfcopy\fR or
+as the argument to the callback for an asynchronous \fBfcopy\fR.
 .PP
 \fBFcopy\fR obeys the encodings and character translations configured
 for the channels. This
@@ -127,7 +127,7 @@ in the command callback
 proc CopyMore {in out chunk bytes {error {}}} {
     global total done
     incr total $bytes
-    if {([string length $error] != 0) || [eof $in] {
+    if {([string length $error] != 0) || [eof $in]} {
 	set done $total
 	close $in
 	close $out

@@ -41,13 +41,13 @@ Tcl_Obj *
 int
 \fBTk_Offset(\fItype, field\fB)\fR
 .SH ARGUMENTS
-.AS Tk_SavedOptions "*CONST objv[]" in/out
+.AS Tk_SavedOptions "*const objv[]" in/out
 .AP Tcl_Interp *interp in
 A Tcl interpreter.  Most procedures use this only for returning error
 messages; if it is NULL then no error messages are returned.  For
 \fBTk_CreateOptionTable\fR the value cannot be NULL; it gives the
 interpreter in which the option table will be used.
-.AP Tk_OptionSpec *templatePtr in
+.AP "const Tk_OptionSpec" *templatePtr in
 Points to an array of static information that describes the configuration
 options that are supported.  Used to build a Tk_OptionTable.  The information
 pointed to by this argument must exist for the lifetime of the Tk_OptionTable.
@@ -65,7 +65,7 @@ no window-dependent options, then a NULL value may be supplied for
 this argument.
 .AP int objc in
 Number of values in \fIobjv\fR.
-.AP Tcl_Obj "*CONST objv[]" in
+.AP Tcl_Obj "*const objv[]" in
 Command-line arguments for setting configuring options.
 .AP Tk_SavedOptions *savePtr out
 If not NULL, the structure pointed to by this argument is filled
@@ -253,10 +253,10 @@ one configuration option and has the following fields:
 .CS
 typedef struct {
     Tk_OptionType \fItype\fR;
-    char *\fIoptionName\fR;
-    char *\fIdbName\fR;
-    char *\fIdbClass\fR;
-    char *\fIdefValue\fR;
+    const char *\fIoptionName\fR;
+    const char *\fIdbName\fR;
+    const char *\fIdbClass\fR;
+    const char *\fIdefValue\fR;
     int \fIobjOffset\fR;
     int \fIinternalOffset\fR;
     int \fIflags\fR;

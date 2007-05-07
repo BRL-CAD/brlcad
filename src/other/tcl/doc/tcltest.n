@@ -1057,7 +1057,7 @@ depends on usage of ::puts in your application code.  Output is
 intercepted by redefining the ::puts command while the defined test
 script is being run.  Errors thrown by C procedures or printed
 directly from C applications will not be caught by the test command.
-Therefore, usage of the \fB-output\fR and \fB-errorOuput\fR
+Therefore, usage of the \fB-output\fR and \fB-errorOutput\fR
 options to [\fBtest\fR] is useful only for pure Tcl applications
 that use [\fB::puts\fR] to produce output. 
 

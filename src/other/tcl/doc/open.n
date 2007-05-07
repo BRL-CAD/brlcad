@@ -88,7 +88,7 @@ Set the file pointer to the end of the file prior to each write.
 .VS 8.5
 .TP 15
 \fBBINARY\fR
-Configure the opened channed with the \fB-translation binary\fR option.
+Configure the opened channel with the \fB-translation binary\fR option.
 .VE 8.5
 .TP 15
 \fBCREAT\fR

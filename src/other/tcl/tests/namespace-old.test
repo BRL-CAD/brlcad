@@ -22,7 +22,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 }
 
 # Clear out any namespaces called test_ns_*
-catch {namespace delete {expand}[namespace children :: test_ns_*]}
+catch {namespace delete {*}[namespace children :: test_ns_*]}
 
 test namespace-old-1.1 {usage for "namespace" command} {
     list [catch {namespace} msg] $msg
@@ -252,7 +252,7 @@ test namespace-old-4.4 {command "namespace delete" handles multiple args} {
     set cmd {
         namespace eval test_ns_delete {
             namespace delete \
-                {expand}[namespace children [namespace current] ns?]
+                {*}[namespace children [namespace current] ns?]
         }
     }
     list [catch $cmd msg] $msg [namespace children test_ns_delete]
@@ -684,12 +684,8 @@ test namespace-old-9.4 {check export status} {
 } {::test_ns_import::cmd1 ::test_ns_import::cmd2 ::test_ns_import::cmd3}
 
 test namespace-old-9.5 {empty import list in "namespace import" command} {
-    namespace import
-} {}
-
-test namespace-old-9.6 {empty import list for "namespace import" command} {
-    namespace import
-} {}
+    lsort [namespace import]
+} {bytestring cleanupTests configure customMatch debug errorChannel errorFile getMatchingFiles interpreter limitConstraints loadFile loadScript loadTestedCommands mainThread makeDirectory makeFile match matchDirectories matchFiles normalizeMsg normalizePath outputChannel outputFile preserveCore removeDirectory removeFile restoreState runAllTests saveState singleProcess skip skipDirectories skipFiles temporaryDirectory test testConstraint testsDirectory threadReap verbose viewFile workingDirectory}
 
 test namespace-old-9.7 {empty forget list for "namespace forget" command} {
     namespace forget

@@ -2,13 +2,13 @@
 # built-in commands.  Sourcing this file into Tcl runs the tests and
 # generates output for errors.  No output means no errors were found.
 #
-# Copyright (c) 1998-1999 by Scriptics Corporation. 
+# Copyright (c) 1998-1999 by Scriptics Corporation.
 # Copyright (c) 2000 by Ajuba Solutions
 # All rights reserved.
 #
 # RCS: @(#) $Id$
 
-# Note that there are several places where the value of 
+# Note that there are several places where the value of
 # tcltest::currentFailure is stored/reset in the -setup/-cleanup
 # of a test that has a body that runs [test] that will fail.
 # This is a workaround of using the same tcltest code that we are
@@ -16,7 +16,7 @@
 #
 # It would be better to have the -body of the tests run the tcltest
 # commands in a slave interp so the [test] being tested would not
-# interfere with the [test] doing the testing.  
+# interfere with the [test] doing the testing.
 #
 
 if {[catch {package require tcltest 2.1}]} {
@@ -53,7 +53,7 @@ testConstraint exec [llength [info commands exec]]
 test tcltest-1.1 {tcltest -help} {exec} {
     set result [catch {exec [interpreter] test.tcl -help} msg]
     list $result [regexp Usage $msg]
-} {1 1} 
+} {1 1}
 test tcltest-1.2 {tcltest -help -something} {exec} {
     set result [catch {exec [interpreter] test.tcl -help -something} msg]
     list $result [regexp Usage $msg]
@@ -61,7 +61,7 @@ test tcltest-1.2 {tcltest -help -something} {exec} {
 test tcltest-1.3 {tcltest -h} {exec} {
     set result [catch {exec [interpreter] test.tcl -h} msg]
     list $result [regexp Usage $msg]
-} {1 0} 
+} {1 0}
 
 # -verbose, implicit & explicit testing of [verbose]
 proc slave {msgVar args} {
@@ -528,29 +528,28 @@ set normaldirectory [makeDirectory normaldirectory]
 normalizePath normaldirectory
 
 # -tmpdir, [temporaryDirectory]
-test tcltest-8.1 {tcltest a.tcl -tmpdir a} {unixOrPc} {
+test tcltest-8.1 {tcltest a.tcl -tmpdir a} -constraints unixOrPc -setup {
     file delete -force thisdirectorydoesnotexist
+} -body {
     slave msg $a -tmpdir thisdirectorydoesnotexist
-    list [file exists [file join thisdirectorydoesnotexist a.tmp]] \
-	    [file delete -force thisdirectorydoesnotexist] 
-} {1 {}}
+    file exists [file join thisdirectorydoesnotexist a.tmp]
+} -cleanup {
+    file delete -force thisdirectorydoesnotexist
+} -result 1
 test tcltest-8.2 {tcltest a.tcl -tmpdir thisdirectoryisafile} {
     -constraints unixOrPc
     -body {
 	slave msg $a -tmpdir $tdiaf
-	set msg
+	return $msg
     }
     -result {*not a directory*}
     -match glob
 }
-
 # Test non-writeable directories, non-readable directories with directory flags
 set notReadableDir [file join [temporaryDirectory] notreadable]
 set notWriteableDir [file join [temporaryDirectory] notwriteable]
-
 makeDirectory notreadable
 makeDirectory notwriteable
-
 switch -- $::tcl_platform(platform) {
     "unix" {
 	file attributes $notReadableDir -permissions 00333
@@ -561,25 +560,44 @@ switch -- $::tcl_platform(platform) {
 	catch {testchmod 000 $notWriteableDir}
     }
 }
-
-test tcltest-8.3 {tcltest a.tcl -tmpdir notReadableDir} {unix notRoot} {
-    slave msg $a -tmpdir $notReadableDir 
-    string match {*not readable*} $msg
-} {1}
-
-test tcltest-8.4 {tcltest a.tcl -tmpdir notWriteableDir} {unixOrPc notRoot} {
-    slave msg $a -tmpdir $notWriteableDir
-    string match {*not writeable*} $msg
-} {1}
-
-test tcltest-8.5 {tcltest a.tcl -tmpdir normaldirectory} {unixOrPc} {
-    slave msg $a -tmpdir $normaldirectory
-    # The join is necessary because the message can be split on multiple lines
-    list [file exists [file join $normaldirectory a.tmp]] \
-	    [file delete [file join $normaldirectory a.tmp]] 
-} {1 {}}   
+test tcltest-8.3 {tcltest a.tcl -tmpdir notReadableDir} {
+    -constraints {unix notRoot}
+    -body {
+	slave msg $a -tmpdir $notReadableDir
+	return $msg
+    }
+    -result {*not readable*}
+    -match glob
+}
+# This constraint doesn't go at the top of the file so that it doesn't
+# interfere with tcltest-5.5
+testConstraint notFAT [expr {
+    ![string match "FAT*" [lindex [file system $notWriteableDir] 1]]
+}]
+# FAT permissions are fairly hopeless; ignore this test if that FS is used
+test tcltest-8.4 {tcltest a.tcl -tmpdir notWriteableDir} {
+    -constraints {unixOrPc notRoot notFAT}
+    -body {
+	slave msg $a -tmpdir $notWriteableDir
+	return $msg
+    }
+    -result {*not writeable*}
+    -match glob
+}
+test tcltest-8.5 {tcltest a.tcl -tmpdir normaldirectory} {
+    -constraints unixOrPc
+    -body {
+	slave msg $a -tmpdir $normaldirectory
+	# The join is necessary because the message can be split on multiple
+	# lines
+	file exists [file join $normaldirectory a.tmp]
+    }
+    -cleanup {
+	catch {file delete [file join $normaldirectory a.tmp]}
+    }
+    -result 1
+}
 cd [workingDirectory]
-
 test tcltest-8.6 {temporaryDirectory}  {
     -setup {
 	set old $::tcltest::temporaryDirectory
@@ -596,7 +614,6 @@ test tcltest-8.6 {temporaryDirectory}  {
 	set ::tcltest::temporaryDirectory $old
     }
 }
-
 test tcltest-8.6a {temporaryDirectory - test format 2} -setup {
     set old $::tcltest::temporaryDirectory
     set ::tcltest::temporaryDirectory $normaldirectory
@@ -608,35 +625,53 @@ test tcltest-8.6a {temporaryDirectory - test format 2} -setup {
 } -cleanup {
     set ::tcltest::temporaryDirectory $old
 } -result [list $normaldirectory [workingDirectory] [workingDirectory]]
-
 cd [temporaryDirectory]
 # -testdir, [testsDirectory]
-test tcltest-8.10 {tcltest a.tcl -testdir thisdirectorydoesnotexist} {unixOrPc} {
-    file delete -force thisdirectorydoesnotexist
-    slave msg $a -testdir thisdirectorydoesnotexist
-    string match "*does not exist*" $msg
-} {1}
-
-test tcltest-8.11 {tcltest a.tcl -testdir thisdirectoryisafile} {unixOrPc} {
-    slave msg $a -testdir $tdiaf
-    string match "*not a directory*" $msg 
-} {1}
-
-test tcltest-8.12 {tcltest a.tcl -testdir notReadableDir} {unix notRoot} {
-    slave msg $a -testdir $notReadableDir 
-    string match {*not readable*} $msg
-} {1}
-
-
-test tcltest-8.13 {tcltest a.tcl -testdir normaldirectory} {unixOrPc} {
-    slave msg $a -testdir $normaldirectory
-    # The join is necessary because the message can be split on multiple lines
-    list [string first "testdir: $normaldirectory" [join $msg]] \
-	    [file exists [file join [temporaryDirectory] a.tmp]] \
-	    [file delete [file join [temporaryDirectory] a.tmp]] 
-} {0 1 {}} 
+test tcltest-8.10 {tcltest a.tcl -testdir thisdirectorydoesnotexist} {
+    -constraints unixOrPc
+    -setup {
+	file delete -force thisdirectorydoesnotexist
+    }
+    -body {
+	slave msg $a -testdir thisdirectorydoesnotexist
+	return $msg
+    }
+    -match glob
+    -result {*does not exist*}
+}
+test tcltest-8.11 {tcltest a.tcl -testdir thisdirectoryisafile} {
+    -constraints unixOrPc
+    -body {
+	slave msg $a -testdir $tdiaf
+	return $msg
+    }
+    -match glob
+    -result {*not a directory*}
+}
+test tcltest-8.12 {tcltest a.tcl -testdir notReadableDir} {
+    -constraints {unix notRoot}
+    -body {
+	slave msg $a -testdir $notReadableDir
+	return $msg
+    }
+    -match glob
+    -result {*not readable*}
+}
+test tcltest-8.13 {tcltest a.tcl -testdir normaldirectory} {
+    -constraints unixOrPc
+    -body {
+	slave msg $a -testdir $normaldirectory
+	# The join is necessary because the message can be split on multiple
+	# lines
+	list [string first "testdir: $normaldirectory" [join $msg]] \
+	    [file exists [file join [temporaryDirectory] a.tmp]]
+    }
+    -cleanup {
+	file delete [file join [temporaryDirectory] a.tmp]
+    }
+    -result {0 1}
+}
 cd [workingDirectory]
-
 set current [pwd]
 test tcltest-8.14 {testsDirectory} {
     -setup {
@@ -654,7 +689,6 @@ test tcltest-8.14 {testsDirectory} {
 	set ::tcltest::testsDirectory $old
     }
 }
-
 # [workingDirectory]
 test tcltest-8.60 {::workingDirectory}  {
     -setup {
@@ -667,7 +701,7 @@ test tcltest-8.60 {::workingDirectory}  {
 	set f1 [workingDirectory]
 	set f2 [pwd]
 	set f3 [workingDirectory $current]
-	set f4 [pwd] 
+	set f4 [pwd]
 	set f5 [workingDirectory]
 	list $f1 $f2 $f3 $f4 $f5
     }
@@ -705,7 +739,7 @@ test tcltest-9.1 {-file d*.tcl} -constraints {unixOrPc} -setup {
     testsDirectory [file dirname [info script]]
 } -body {
     slave msg [file join [testsDirectory] all.tcl] -file d*.test
-    set msg
+    return $msg
 } -cleanup {
     testsDirectory $old
 } -match regexp -result {dstring\.test}
@@ -814,17 +848,17 @@ test tcltest-10.4 {-preservecore 3} {unixOrPc} {
 removeFile makecore.tcl
 
 # -load, -loadfile, [loadScript], [loadFile]
-set contents { 
+set contents {
     package require tcltest
     namespace import tcltest::*
     puts [outputChannel] $::tcltest::loadScript
     exit
-} 
+}
 set loadfile [makeFile $contents load.tcl]
 
 test tcltest-12.1 {-load xxx} {unixOrPc} {
     slave msg $loadfile -load xxx
-    set msg
+    return $msg
 } {xxx}
 
 # Using child process because of -debug usage.
@@ -915,7 +949,7 @@ test tcltest-14.1 {-singleproc - single process} {
     -constraints {unixOrPc}
     -body {
 	slave msg $allfile -singleproc 0 -tmpdir [temporaryDirectory]
-	set msg
+	return $msg
     }
     -result {Test file error: can't unset .foo.: no such variable}
     -match regexp
@@ -925,7 +959,7 @@ test tcltest-14.2 {-singleproc - multiple process} {
     -constraints {unixOrPc}
     -body {
 	slave msg $allfile -singleproc 1 -tmpdir [temporaryDirectory]
-	set msg
+	return $msg
     }
     -result {single1.test.*single2.test.*all\-single.tcl:.*Total.*0.*Passed.*0.*Skipped.*0.*Failed.*0}
     -match regexp
@@ -1769,7 +1803,7 @@ test tcltest-26.1 {Bug/RFE 1017151} -setup {
     } test.tcl
 } -body {
     slave msg [file join [temporaryDirectory] test.tcl]
-    set msg
+    return $msg
 } -cleanup {
     removeFile test.tcl
 } -match glob -result {*
@@ -1789,7 +1823,7 @@ test tcltest-26.2 {Bug/RFE 1017151} -setup {
     } test.tcl
 } -body {
     slave msg [file join [temporaryDirectory] test.tcl]
-    set msg
+    return $msg
 } -cleanup {
     removeFile test.tcl
 } -match glob -result {*

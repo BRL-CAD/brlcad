@@ -135,7 +135,7 @@ proc pkg_mkIndex {args} {
     }
 
     if {[catch {
-	    glob -directory $dir -tails -types {r f} -- {expand}$patternList
+	    glob -directory $dir -tails -types {r f} -- {*}$patternList
     } fileList o]} {
 	return -options $o $fileList
     }
@@ -194,7 +194,7 @@ proc pkg_mkIndex {args} {
 	    proc package {what args} {
 		switch -- $what {
 		    require { return ; # ignore transitive requires }
-		    default { __package_orig $what {expand}$args }
+		    default { __package_orig $what {*}$args }
 		}
 	    }
 	    proc tclPkgUnknown args {}
@@ -252,7 +252,7 @@ proc pkg_mkIndex {args} {
 		proc ::tcl::GetAllNamespaces {{root ::}} {
 		    set list $root
 		    foreach ns [namespace children $root] {
-			lappend list {expand}[::tcl::GetAllNamespaces $ns]
+			lappend list {*}[::tcl::GetAllNamespaces $ns]
 		    }
 		    return $list
 		}

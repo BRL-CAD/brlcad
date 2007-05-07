@@ -73,8 +73,11 @@ catch {unset a}
 test foreach-1.14 {foreach errors} {
     catch {unset a}
     set a(0) 44
-    list [catch {foreach a {1 2 3} {}} msg] $msg
-} {1 {couldn't set loop variable: "a"}}
+    list [catch {foreach a {1 2 3} {}} msg o] $msg $::errorInfo
+} {1 {can't set "a": variable is array} {can't set "a": variable is array
+    (setting foreach loop variable "a"
+    invoked from within
+"foreach a {1 2 3} {}"}}
 test foreach-1.15 {foreach errors} {
     list [catch {foreach {} {} {}} msg] $msg
 } {1 {foreach varlist is empty}}
@@ -163,7 +166,7 @@ test foreach-3.1 {compiled foreach backward jump works correctly} {
 test foreach-4.1 {noncompiled foreach and shared variable or value list objects that are converted to another type} {
     catch {unset x}
     foreach {12.0} {a b c} {
-        set x 12.0  
+        set x 12.0
         set x [expr $x + 1]
     }
     set x
@@ -210,7 +213,7 @@ test foreach-6.4 {break tests} {
     catch {break foo} msg
     set msg
 } {wrong # args: should be "break"}
-# Check for bug #406709 
+# Check for bug #406709
 test foreach-6.5 {break tests} {
     proc a {} {
 	set a 1
@@ -221,7 +224,6 @@ test foreach-6.5 {break tests} {
 } {2}
 
 # Test for incorrect "double evaluation" semantics
-
 test foreach-7.1 {delayed substitution of body} {
     proc foo {} {
        set a 0
@@ -233,9 +235,7 @@ test foreach-7.1 {delayed substitution of body} {
     foo
 } {0}
 
-
 # Test for [Bug 1189274]; crash on failure
-
 test foreach-8.1 {empty list handling} {
     proc crash {} {
 	rename crash {}
@@ -245,6 +245,28 @@ test foreach-8.1 {empty list handling} {
     }
     crash
 } {}
+
+# [Bug 1671138]; infinite loop with empty var list in bytecompiled version
+test foreach-9.1 {compiled empty var list} {
+    proc foo {} {
+	foreach {} x {
+	    error "reached body"
+	}
+    }
+    list [catch { foo } msg] $msg
+} {1 {foreach varlist is empty}}
+
+test foreach-10.1 {foreach: [Bug 1671087]} -setup {
+    proc demo {} {
+	set vals {1 2 3 4}
+	trace add variable x write {string length $vals ;# }
+	foreach {x y} $vals {format $y}
+    }
+} -body {
+    demo
+} -cleanup {
+    rename demo {}
+} -result {}
 
 # cleanup
 catch {unset a}

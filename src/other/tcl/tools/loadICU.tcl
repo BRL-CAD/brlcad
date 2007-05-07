@@ -61,22 +61,22 @@ foreach zt $zhDigits {
 # Set format overrides for various locales.
 
 set format(zh,LOCALE_NUMERALS) $zhNumbers
-set format(ja,LOCALE_NUMERALS) $zhNumbers
 set format(ja,LOCALE_ERAS) [list \
 				[list -9223372036854775808 \u897f\u66a6 0 ] \
-				[list -3060979200 \u660e\u6cbb 1867] \
-				[list -1812153600 \u5927\u6b63 1911] \
-				[list -1357603200 \u662d\u548c 1925] \
-				[list 568512000 \u5e73\u6210 1987]]
+				[list -3061011600 \u660e\u6cbb 1867] \
+				[list -1812186000 \u5927\u6b63 1911] \
+				[list -1357635600 \u662d\u548c 1925] \
+				[list 600220800 \u5e73\u6210 1988]]
 set format(zh,LOCALE_DATE_FORMAT) "\u516c\u5143%Y\u5e74%B%Od\u65E5"
-set format(ja,LOCALE_DATE_FORMAT) "%EY\u5e74%B%Od\u65E5"
+set format(ja,LOCALE_DATE_FORMAT) "%EY\u5e74%m\u6708%d\u65E5"
 set format(ko,LOCALE_DATE_FORMAT) "%Y\ub144%B%Od\uc77c"
 set format(zh,LOCALE_TIME_FORMAT) "%OH\u65f6%OM\u5206%OS\u79d2"
-set format(ja,LOCALE_TIME_FORMAT) "%OH\u6642%OM\u5206%OS\u79d2"
+set format(ja,LOCALE_TIME_FORMAT) "%H\u6642%M\u5206%S\u79d2"
 set format(ko,LOCALE_TIME_FORMAT) "%H\uc2dc%M\ubd84%S\ucd08"
 set format(zh,LOCALE_DATE_TIME_FORMAT) "%A %Y\u5e74%B%Od\u65E5%OH\u65f6%OM\u5206%OS\u79d2 %z"
-set format(ja,LOCALE_DATE_TIME_FORMAT) "%A %EY\u5e74%B%Od\u65E5%OH\u6642%OM\u5206%OS\u79d2 %z"
+set format(ja,LOCALE_DATE_TIME_FORMAT) "%EY\u5e74%m\u6708%d\u65E5 (%a) %H\u6642%M\u5206%S\u79d2 %z"
 set format(ko,LOCALE_DATE_TIME_FORMAT) "%A %Y\ub144%B%Od\uc77c%H\uc2dc%M\ubd84%S\ucd08 %z"
+set format(ja,TIME_FORMAT_12) {%P %I:%M:%S}
 
 # The next set of format overrides were obtained from the glibc
 # localization strings.

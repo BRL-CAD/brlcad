@@ -1244,10 +1244,6 @@ SOURCE=..\generic\tclParse.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\generic\tclParseExpr.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\generic\tclPipe.c
 # End Source File
 # Begin Source File

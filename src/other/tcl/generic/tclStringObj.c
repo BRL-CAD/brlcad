@@ -51,9 +51,7 @@ static void		AppendUtfToUnicodeRep(Tcl_Obj *objPtr,
 static void		AppendUtfToUtfRep(Tcl_Obj *objPtr,
 			    CONST char *bytes, int numBytes);
 static void		FillUnicodeRep(Tcl_Obj *objPtr);
-static int		FormatObjVA(Tcl_Interp *interp, Tcl_Obj *objPtr,
-			    CONST char *format, va_list argList);
-static int		ObjPrintfVA(Tcl_Interp *interp, Tcl_Obj *objPtr,
+static void		AppendPrintfToObjVA(Tcl_Obj *objPtr,
 			    CONST char *format, va_list argList);
 static void		FreeStringInternalRep(Tcl_Obj *objPtr);
 static void		DupStringInternalRep(Tcl_Obj *objPtr,
@@ -763,25 +761,24 @@ Tcl_SetObjLength(
 
     if (length > (int) stringPtr->allocated &&
 	    (objPtr->bytes != NULL || stringPtr->hasUnicode == 0)) {
-	char *new;
 
 	/*
 	 * Not enough space in current string. Reallocate the string space and
 	 * free the old string.
 	 */
 
-	if (objPtr->bytes != tclEmptyStringRep && objPtr->bytes != NULL) {
-	    new = (char *) ckrealloc((char *)objPtr->bytes,
+	if (objPtr->bytes != tclEmptyStringRep) {
+	    objPtr->bytes = ckrealloc((char *)objPtr->bytes,
 		    (unsigned)(length+1));
 	} else {
-	    new = (char *) ckalloc((unsigned) (length+1));
+	    char *new = ckalloc((unsigned) (length+1));
 	    if (objPtr->bytes != NULL && objPtr->length != 0) {
 		memcpy((void *) new, (void *) objPtr->bytes,
 			(size_t) objPtr->length);
 		Tcl_InvalidateStringRep(objPtr);
 	    }
+	    objPtr->bytes = new;
 	}
-	objPtr->bytes = new;
 	stringPtr->allocated = length;
 
 	/*
@@ -886,14 +883,13 @@ Tcl_AttemptSetObjLength(
 	 * free the old string.
 	 */
 
-	if (objPtr->bytes != tclEmptyStringRep && objPtr->bytes != NULL) {
-	    new = (char *) attemptckrealloc((char *)objPtr->bytes,
-		    (unsigned)(length+1));
+	if (objPtr->bytes != tclEmptyStringRep) {
+	    new = attemptckrealloc(objPtr->bytes, (unsigned)(length+1));
 	    if (new == NULL) {
 		return 0;
 	    }
 	} else {
-	    new = (char *) attemptckalloc((unsigned) (length+1));
+	    new = attemptckalloc((unsigned) (length+1));
 	    if (new == NULL) {
 		return 0;
 	    }
@@ -1023,7 +1019,7 @@ Tcl_SetUnicodeObj(
 /*
  *----------------------------------------------------------------------
  *
- * TclAppendLimitedToObj --
+ * Tcl_AppendLimitedToObj --
  *
  *	This function appends a limited number of bytes from a sequence of
  *	bytes to an object, marking any limitation with an ellipsis.
@@ -1039,7 +1035,7 @@ Tcl_SetUnicodeObj(
  */
 
 void
-TclAppendLimitedToObj(
+Tcl_AppendLimitedToObj(
     register Tcl_Obj *objPtr,	/* Points to the object to append to. */
     CONST char *bytes,		/* Points to the bytes to append to the
 				 * object. */
@@ -1056,7 +1052,7 @@ TclAppendLimitedToObj(
     int toCopy = 0;
 
     if (Tcl_IsShared(objPtr)) {
-	Tcl_Panic("%s called with shared object", "TclAppendLimitedToObj");
+	Tcl_Panic("%s called with shared object", "Tcl_AppendLimitedToObj");
     }
 
     SetStringFromAny(NULL, objPtr);
@@ -1128,7 +1124,7 @@ Tcl_AppendToObj(
 				 * If < 0, then append all bytes up to NUL
 				 * byte. */
 {
-    TclAppendLimitedToObj(objPtr, bytes, length, INT_MAX, NULL);
+    Tcl_AppendLimitedToObj(objPtr, bytes, length, INT_MAX, NULL);
 }
 
 /*
@@ -1678,7 +1674,7 @@ Tcl_AppendStringsToObj(
 /*
  *----------------------------------------------------------------------
  *
- * TclAppendFormattedObjs --
+ * Tcl_AppendFormatToObj --
  *
  *	This function appends a list of Tcl_Obj's to a Tcl_Obj according to
  *	the formatting instructions embedded in the format string. The
@@ -1696,7 +1692,7 @@ Tcl_AppendStringsToObj(
  */
 
 int
-TclAppendFormattedObjs(
+Tcl_AppendFormatToObj(
     Tcl_Interp *interp,
     Tcl_Obj *appendObj,
     CONST char *format,
@@ -1717,7 +1713,7 @@ TclAppendFormattedObjs(
     };
 
     if (Tcl_IsShared(appendObj)) {
-	Tcl_Panic("%s called with shared object", "TclAppendFormattedObjs");
+	Tcl_Panic("%s called with shared object", "Tcl_AppendFormatToObj");
     }
     Tcl_GetStringFromObj(appendObj, &originalLength);
 
@@ -2293,56 +2289,10 @@ TclAppendFormattedObjs(
 /*
  *---------------------------------------------------------------------------
  *
- * FormatObjVA --
- *
- *	Populate the Unicode internal rep with the Unicode form of its string
- *	rep. The object must alread have a "String" internal rep.
+ * Tcl_Format--
  *
  * Results:
- *	None.
- *
- * Side effects:
- *	Reallocates the String internal rep.
- *
- *---------------------------------------------------------------------------
- */
-
-static int
-FormatObjVA(
-    Tcl_Interp *interp,
-    Tcl_Obj *objPtr,
-    CONST char *format,
-    va_list argList)
-{
-    int code, objc;
-    Tcl_Obj **objv, *element, *list = Tcl_NewObj();
-    CONST char *p = format;
-
-    Tcl_IncrRefCount(list);
-    while (*p != '\0') {
-	if (*p++ != '%') {
-	    continue;
-	}
-	if (*p == '%') {
-	    continue;
-	}
-	p++;
-	element = va_arg(argList, Tcl_Obj *);
-	Tcl_ListObjAppendElement(NULL, list, element);
-    }
-    Tcl_ListObjGetElements(NULL, list, &objc, &objv);
-    code = TclAppendFormattedObjs(interp, objPtr, format, objc, objv);
-    Tcl_DecrRefCount(list);
-    return code;
-}
-
-/*
- *---------------------------------------------------------------------------
- *
- * TclFormatObj --
- *
- * Results:
- *	A standard Tcl result.
+ *	A refcount zero Tcl_Obj.
  *
  * Side effects:
  * 	None.
@@ -2350,26 +2300,27 @@ FormatObjVA(
  *---------------------------------------------------------------------------
  */
 
-int
-TclFormatObj(
+Tcl_Obj *
+Tcl_Format(
     Tcl_Interp *interp,
-    Tcl_Obj *objPtr,
     CONST char *format,
-    ...)
+    int objc,
+    Tcl_Obj *CONST objv[])
 {
-    va_list argList;
     int result;
-
-    va_start(argList, format);
-    result = FormatObjVA(interp, objPtr, format, argList);
-    va_end(argList);
-    return result;
+    Tcl_Obj *objPtr = Tcl_NewObj();
+    result = Tcl_AppendFormatToObj(interp, objPtr, format, objc, objv);
+    if (result != TCL_OK) {
+	Tcl_DecrRefCount(objPtr);
+	return NULL;
+    }
+    return objPtr;
 }
 
 /*
  *---------------------------------------------------------------------------
  *
- * ObjPrintfVA --
+ * AppendPrintfToObjVA --
  *
  * Results:
  *
@@ -2378,9 +2329,8 @@ TclFormatObj(
  *---------------------------------------------------------------------------
  */
 
-static int
-ObjPrintfVA(
-    Tcl_Interp *interp,
+static void
+AppendPrintfToObjVA(
     Tcl_Obj *objPtr,
     CONST char *format,
     va_list argList)
@@ -2502,15 +2452,19 @@ ObjPrintfVA(
 	} while (seekingConversion);
     }
     Tcl_ListObjGetElements(NULL, list, &objc, &objv);
-    code = TclAppendFormattedObjs(interp, objPtr, format, objc, objv);
+    code = Tcl_AppendFormatToObj(NULL, objPtr, format, objc, objv);
+    if (code != TCL_OK) {
+	Tcl_AppendPrintfToObj(objPtr,
+		"Unable to format \"%s\" with supplied arguments: %s",
+		format, Tcl_GetString(list));
+    }
     Tcl_DecrRefCount(list);
-    return code;
 }
 
 /*
  *---------------------------------------------------------------------------
  *
- * TclObjPrintf --
+ * Tcl_AppendPrintfToObj --
  *
  * Results:
  *	A standard Tcl result.
@@ -2521,53 +2475,127 @@ ObjPrintfVA(
  *---------------------------------------------------------------------------
  */
 
-int
-TclObjPrintf(
-    Tcl_Interp *interp,
+void
+Tcl_AppendPrintfToObj(
     Tcl_Obj *objPtr,
     CONST char *format,
     ...)
 {
     va_list argList;
-    int result;
 
     va_start(argList, format);
-    result = ObjPrintfVA(interp, objPtr, format, argList);
+    AppendPrintfToObjVA(objPtr, format, argList);
     va_end(argList);
-    return result;
 }
 
 /*
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  *
- * TclFormatToErrorInfo --
+ * Tcl_ObjPrintf --
  *
  * Results:
+ *	A refcount zero Tcl_Obj.
  *
  * Side effects:
+ * 	None.
  *
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  */
 
-int
-TclFormatToErrorInfo(
-    Tcl_Interp *interp,
+Tcl_Obj *
+Tcl_ObjPrintf(
     CONST char *format,
     ...)
 {
-    int code;
     va_list argList;
     Tcl_Obj *objPtr = Tcl_NewObj();
 
     va_start(argList, format);
-    code = ObjPrintfVA(interp, objPtr, format, argList);
+    AppendPrintfToObjVA(objPtr, format, argList);
     va_end(argList);
-    if (code != TCL_OK) {
-        return code;
+    return objPtr;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TclStringObjReverse --
+ *
+ *	Implements the [string reverse] operation.
+ *
+ * Results:
+ *	An unshared Tcl value which is the [string reverse] of the argument
+ *	supplied.  When sharing rules permit, the returned value might be
+ *	the argument with modifications done in place.
+ *
+ * Side effects:
+ *	May allocate a new Tcl_Obj.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+Tcl_Obj *
+TclStringObjReverse(
+    Tcl_Obj *objPtr)
+{
+    String *stringPtr;
+    int numChars = Tcl_GetCharLength(objPtr);
+    int i = 0, lastCharIdx = numChars - 1;
+    char *bytes;
+
+    if (numChars <= 1) {
+	return objPtr;
     }
-    TclAppendObjToErrorInfo(interp, objPtr);
-    Tcl_DecrRefCount(objPtr);
-    return TCL_OK;
+
+    stringPtr = GET_STRING(objPtr);
+    if (stringPtr->hasUnicode) {
+	Tcl_UniChar *source = stringPtr->unicode;
+
+	if (Tcl_IsShared(objPtr)) {
+	    Tcl_UniChar *dest, ch = 0;
+
+	    /*
+	     * Create a non-empty, pure unicode value, so we can coax
+	     * Tcl_SetObjLength into growing the unicode rep buffer.
+	     */
+
+	    Tcl_Obj *resultPtr = Tcl_NewUnicodeObj(&ch, 1);
+	    Tcl_SetObjLength(resultPtr, numChars);
+	    dest = Tcl_GetUnicode(resultPtr);
+
+	    while (i < numChars) {
+		dest[i++] = source[lastCharIdx--];
+	    }
+	    return resultPtr;
+	}
+
+	while (i < lastCharIdx) {
+	    Tcl_UniChar tmp = source[lastCharIdx];
+	    source[lastCharIdx--] = source[i];
+	    source[i++] = tmp;
+	}
+	Tcl_InvalidateStringRep(objPtr);
+	return objPtr;
+    }
+
+    bytes = Tcl_GetString(objPtr);
+    if (Tcl_IsShared(objPtr)) {
+	char *dest;
+	Tcl_Obj *resultPtr = Tcl_NewObj();
+	Tcl_SetObjLength(resultPtr, numChars);
+	dest = Tcl_GetString(resultPtr);
+	while (i < numChars) {
+	    dest[i++] = bytes[lastCharIdx--];
+	}
+	return resultPtr;
+    }
+
+    while (i < lastCharIdx) {
+	char tmp = bytes[lastCharIdx];
+	bytes[lastCharIdx--] = bytes[i];
+	bytes[i++] = tmp;
+    }
+    return objPtr;
 }
 
 /*

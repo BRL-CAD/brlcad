@@ -37,7 +37,7 @@ Pointer to table specifying legal configuration options for this
 widget.
 .AP int argc in
 Number of arguments in \fIargv\fR.
-.AP "CONST char" **argv in
+.AP "const char" **argv in
 Command-line options for configuring widget.
 .AP char *widgRec in/out
 Points to widget record structure.  Fields in this structure get
@@ -52,7 +52,7 @@ selectively disable entries in \fIspecs\fR.
 The name of the type of a widget record.
 .AP "field name" field in
 The name of a field in records of type \fItype\fR.
-.AP "CONST char" *argvName in
+.AP "const char" *argvName in
 The name used on Tcl command lines to refer to a particular option
 (e.g. when creating a widget or invoking the \fBconfigure\fR widget
 command).  If non-NULL, then information is returned only for this
@@ -64,8 +64,8 @@ order to free up resources.
 .BE
 .SH DESCRIPTION
 .PP 
-Note: \fBTk_ConfigureWidget\fP should be replaced with the new
-\fBTcl_Obj\fP based API \fBTk_SetOptions\fP.  The old interface is
+Note: \fBTk_ConfigureWidget\fR should be replaced with the new
+\fBTcl_Obj\fR based API \fBTk_SetOptions\fR.  The old interface is
 retained for backward compatibility.
 .PP
 \fBTk_ConfigureWidget\fR is called to configure various aspects of a

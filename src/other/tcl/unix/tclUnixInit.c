@@ -332,7 +332,9 @@ static int		MacOSXGetLibraryPath(Tcl_Interp *interp,
 #endif /* HAVE_COREFOUNDATION */
 #if defined(__APPLE__) && (defined(TCL_LOAD_FROM_MEMORY) || ( \
 	defined(TCL_THREADS) && defined(MAC_OS_X_VERSION_MIN_REQUIRED) && \
-	MAC_OS_X_VERSION_MIN_REQUIRED < 1030))
+	MAC_OS_X_VERSION_MIN_REQUIRED < 1030) || ( \
+	defined(__LP64__) && defined(MAC_OS_X_VERSION_MIN_REQUIRED) && \
+	MAC_OS_X_VERSION_MIN_REQUIRED < 1050))
 /*
  * Need to check Darwin release at runtime in tclUnixFCmd.c and tclLoadDyld.c:
  * initialize release global at startup from uname().
@@ -560,7 +562,7 @@ TclpInitLibraryPath(
     *encodingPtr = Tcl_GetEncoding(NULL, NULL);
     str = Tcl_GetStringFromObj(pathPtr, lengthPtr);
     *valuePtr = ckalloc((unsigned int) (*lengthPtr)+1);
-    memcpy((VOID *) *valuePtr, (VOID *) str, (size_t)(*lengthPtr)+1);
+    memcpy(*valuePtr, str, (size_t)(*lengthPtr)+1);
     Tcl_DecrRefCount(pathPtr);
 }
 
@@ -1030,7 +1032,7 @@ TclpCheckStackSpace(void)
 				/* Most variables are actually in a
 				 * thread-specific data block to minimise the
 				 * impact on the stack. */
-    register ptrdiff_t stackUsed;
+    register size_t stackUsed;
     int localVar;		/* Reference to somewhere on the local stack.
 				 * This is declared last so it's as "deep" as
 				 * possible. */
@@ -1089,7 +1091,7 @@ TclpCheckStackSpace(void)
      * Now we perform the actual check. Are we about to blow our stack frame?
      */
 
-    if (stackUsed < (ptrdiff_t) tsdPtr->stackSize) {
+    if (stackUsed < tsdPtr->stackSize) {
 	STACK_DEBUG(("stack OK\tin:%p\tout:%p\tuse:%04X\tmax:%04X\n",
 		&localVar, tsdPtr->outerVarPtr, stackUsed, tsdPtr->stackSize));
 	return 1;

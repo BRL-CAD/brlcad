@@ -1055,12 +1055,12 @@ Tcl_OpenCommandChannel(
 
     if (flags & TCL_ENFORCE_MODE) {
 	if ((flags & TCL_STDOUT) && (outPipe == NULL)) {
-	    Tcl_AppendResult(interp, "can't read output from command:",
+	    Tcl_AppendResult(interp, "can't read output from command:"
 		    " standard output was redirected", NULL);
 	    goto error;
 	}
 	if ((flags & TCL_STDIN) && (inPipe == NULL)) {
-	    Tcl_AppendResult(interp, "can't write input to command:",
+	    Tcl_AppendResult(interp, "can't write input to command:"
 		    " standard input was redirected", NULL);
 	    goto error;
 	}

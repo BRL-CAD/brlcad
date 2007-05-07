@@ -206,7 +206,8 @@ TkpBuildRegionFromAlphaData(
 		 * Manipulate Win32 regions directly; it's more efficient.
 		 */
 
-		SetRectRgn(rectRgn, x+x1, y+y1, x+end, y+y1+1);
+		SetRectRgn(rectRgn, (int) (x+x1), (int) (y+y1),
+			(int) (x+end), (int) (y+y1+1));
 		CombineRgn((HRGN) region, (HRGN) region, rectRgn, RGN_OR);
 	    }
 	}

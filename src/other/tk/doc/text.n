@@ -283,8 +283,8 @@ Indicates the position of the embedded image whose name is
 This form generates an error if there is no embedded image
 by the given name.
 .PP
-If the \fIbase\fP could match more than one of the above forms, such
-as a \fImark\fP and \fIimageName\fP both having the same value, then
+If the \fIbase\fR could match more than one of the above forms, such
+as a \fImark\fR and \fIimageName\fR both having the same value, then
 the form earlier in the above list takes precedence.
 If modifiers follow the base index, each one of them must have one
 of the forms listed below.  Keywords such as \fBchars\fR and \fBwordend\fR
@@ -420,7 +420,7 @@ widget.  So, for example, the index ``\fB1.0 -1c +1c\fR'' refers to the
 index ``\fB2.0\fR''.
 .PP
 Where modifiers result in index changes by display lines, display chars
-or display indices, and the \fIbase\fP refers to an index inside an
+or display indices, and the \fIbase\fR refers to an index inside an
 elided tag,
 that base index is considered to be equivalent to the first following
 non-elided index.
@@ -812,22 +812,22 @@ unit's
 worth of index space
 in the text widget, and it may be referred to either by
 its position in the widget's index space, or the name it is assigned
-when the image is inserted into the text widget with \fBimage create\fP.
+when the image is inserted into the text widget with \fBimage create\fR.
 If the range of text containing the embedded image is deleted then
 that copy of the image is removed from the screen.
 .PP
 When an embedded image is added to a text widget with the \fBimage
 create\fR widget command, a name unique to this instance of the image
 is returned.  This name may then be used to refer to this image
-instance.  The name is taken to be the value of the \fB\-name\fP option
-(described below).  If the \fB\-name\fP option is not provided, the
-\fB\-image\fP name is used instead.  If the \fIimageName\fP is already
+instance.  The name is taken to be the value of the \fB\-name\fR option
+(described below).  If the \fB\-name\fR option is not provided, the
+\fB\-image\fR name is used instead.  If the \fIimageName\fR is already
 in use in the text widget, then \fB#\fInn\fR is added to the end of the
-\fIimageName\fP, where \fInn\fP is an arbitrary integer.  This insures
-the \fIimageName\fP is unique.
+\fIimageName\fR, where \fInn\fR is an arbitrary integer.  This insures
+the \fIimageName\fR is unique.
 Once this name is assigned to this instance of the image, it does not 
-change, even though the \fB\-image\fP or \fB\-name\fP values can be changed
-with \fBimage configure\fP.
+change, even though the \fB\-image\fR or \fB\-name\fR values can be changed
+with \fBimage configure\fR.
 .PP
 When an embedded image is added to a text widget with the
 \fBimage create\fR widget command, several configuration
@@ -848,13 +848,13 @@ of the line).
 .TP
 \fB\-image \fIimage\fR
 Specifies the name of the Tk image to display in the annotation.
-If \fIimage\fP is not a valid Tk image, then an error is returned.
+If \fIimage\fR is not a valid Tk image, then an error is returned.
 .TP
 \fB\-name \fIImageName\fR
 Specifies the name by which this image instance may be referenced in
-the text widget. If \fIImageName\fP is not supplied, then the
+the text widget. If \fIImageName\fR is not supplied, then the
 name of the Tk image is used instead.
-If the \fIimageName\fP is already in use, \fI#nn\fP is appended to
+If the \fIimageName\fR is already in use, \fI#nn\fR is appended to
 the end of the name as described above.
 .TP
 \fB\-padx \fIpixels\fR
@@ -1200,10 +1200,10 @@ in the following format:
 .RS
 \fIkey1 value1 index1 key2 value2 index2\fR ...
 .LP
-The possible \fIkey\fP values are \fBtext\fP, \fBmark\fP,
-\fBtagon\fP, \fBtagoff\fP, \fBimage\fP, and \fBwindow\fP.  The corresponding
-\fIvalue\fP is the text, mark name, tag name, image name, or window name.
-The \fIindex\fP information is the index of the
+The possible \fIkey\fR values are \fBtext\fR, \fBmark\fR,
+\fBtagon\fR, \fBtagoff\fR, \fBimage\fR, and \fBwindow\fR.  The corresponding
+\fIvalue\fR is the text, mark name, tag name, image name, or window name.
+The \fIindex\fR information is the index of the
 start of the text, mark, tag transition, image or window.
 One or more of the following switches (or abbreviations thereof)
 may be specified to control the dump:
@@ -1216,7 +1216,7 @@ This is the default.
 Instead of returning the information as the result of the dump operation,
 invoke the \fIcommand\fR on each element of the text widget within the range.
 The command has three arguments appended to it before it is evaluated:
-the \fIkey\fP, \fIvalue\fP, and \fIindex\fP.
+the \fIkey\fR, \fIvalue\fR, and \fIindex\fR.
 .TP
 \fB\-image\fR
 Include information about images in the dump results.
@@ -1226,7 +1226,7 @@ Include information about marks in the dump results.
 .TP
 \fB\-tag\fR
 Include information about tag transitions in the dump results. Tag
-information is returned as \fBtagon\fP and \fBtagoff\fP elements that
+information is returned as \fBtagon\fR and \fBtagoff\fR elements that
 indicate the begin and end of each range of each tag, respectively.
 .TP
 \fB\-text\fR
@@ -1396,11 +1396,11 @@ If \fIindex\fR is the name of a mark, then the search for
 the next mark begins immediately after that mark.
 This can still return a mark at the same position if
 there are multiple marks at the same index.
-These semantics mean that the \fBmark next\fP operation can be used to
+These semantics mean that the \fBmark next\fR operation can be used to
 step through all the marks in a text widget in the same order
-as the mark information returned by the \fBdump\fP operation.
-If a mark has been set to the special \fBend\fP index,
-then it appears to be \fIafter\fP \fBend\fP with respect to the \fBmark next\fP operation.
+as the mark information returned by the \fBdump\fR operation.
+If a mark has been set to the special \fBend\fR index,
+then it appears to be \fIafter\fR \fBend\fR with respect to the \fBmark next\fR operation.
 An empty string is returned if there are no marks after \fIindex\fR.
 .TP
 \fIpathName \fBmark previous \fIindex\fR
@@ -1411,9 +1411,9 @@ If \fIindex\fR is the name of a mark, then the search for
 the next mark begins immediately before that mark.
 This can still return a mark at the same position if
 there are multiple marks at the same index.
-These semantics mean that the \fBmark previous\fP operation can be used to
+These semantics mean that the \fBmark previous\fR operation can be used to
 step through all the marks in a text widget in the reverse order
-as the mark information returned by the \fBdump\fP operation.
+as the mark information returned by the \fBdump\fR operation.
 An empty string is returned if there are no marks before \fIindex\fR.
 .TP
 \fIpathName \fBmark set \fImarkName index\fR
@@ -2193,7 +2193,7 @@ especially if they have many marks and tags within them.
 .PP
 The display line with the insert cursor is redrawn each time the
 cursor blinks, which causes a steady stream of graphics traffic.
-Set the \fBinsertOffTime\fP attribute to 0 avoid this.
+Set the \fBinsertOffTime\fR attribute to 0 avoid this.
 .SH "KNOWN BUGS"
 .VS 8.5
 .PP

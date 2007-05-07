@@ -100,7 +100,7 @@ static int minDigits;		/* The maximum number of digits to the right
 				 * of the decimal point in a double. */
 static int mantDIGIT;		/* Number of mp_digit's needed to hold the
 				 * significand of a double. */
-static CONST double pow_10_2_n[] = {	/* Inexact higher powers of ten. */
+static const double pow_10_2_n[] = {	/* Inexact higher powers of ten. */
     1.0,
     100.0,
     10000.0,
@@ -244,12 +244,12 @@ int
 TclParseNumber(
     Tcl_Interp *interp,		/* Used for error reporting. May be NULL */
     Tcl_Obj *objPtr,		/* Object to receive the internal rep */
-    CONST char *expected,	/* Description of the type of number the caller
+    const char *expected,	/* Description of the type of number the caller
 				 * expects to be able to parse ("integer", 
 				 * "boolean value", etc.). */
-    CONST char *bytes,		/* Pointer to the start of the string to scan */
+    const char *bytes,		/* Pointer to the start of the string to scan */
     int numBytes,		/* Maximum number of bytes to scan, see above */
-    CONST char **endPtrPtr,	/* Place to store pointer to the character
+    const char **endPtrPtr,	/* Place to store pointer to the character
 				 * that terminated the scan */
     int flags)			/* Flags governing the parse */
 {
@@ -291,9 +291,9 @@ TclParseNumber(
     int exponentSignum = 0;	/* Signum of the exponent of a floating point
 				 * number */
     long exponent = 0;		/* Exponent of a floating point number */
-    CONST char *p;		/* Pointer to next character to scan */
+    const char *p;		/* Pointer to next character to scan */
     size_t len;			/* Number of characters remaining after p */
-    CONST char *acceptPoint;	/* Pointer to position after last character in
+    const char *acceptPoint;	/* Pointer to position after last character in
 				 * an acceptable number */
     size_t acceptLen;		/* Number of characters following that
 				 * point. */
@@ -1125,10 +1125,12 @@ TclParseNumber(
 
     if (status != TCL_OK) {
 	if (interp != NULL) {
-	    Tcl_Obj *msg = Tcl_NewStringObj("expected ", -1);
+	    Tcl_Obj *msg;
+
+	    TclNewLiteralStringObj(msg, "expected ");
 	    Tcl_AppendToObj(msg, expected, -1);
 	    Tcl_AppendToObj(msg, " but got \"", -1);
-	    TclAppendLimitedToObj(msg, bytes, numBytes, 50, "");
+	    Tcl_AppendLimitedToObj(msg, bytes, numBytes, 50, "");
 	    Tcl_AppendToObj(msg, "\"", -1);
 	    if (state == BAD_OCTAL) {
 		Tcl_AppendToObj(msg, " (looks like invalid octal number)", -1);
@@ -1180,32 +1182,42 @@ AccumulateDecimalDigit(
 				 * to this digit. */
 {
     int i, n;
+    Tcl_WideUInt w;
 
     /*
-     * Check if the number still fits in a wide.
-     */
-
-    if (!bignumFlag && *wideRepPtr!=0 && ((numZeros >= maxpow10_wide) ||
-	    *wideRepPtr > ((~(Tcl_WideUInt)0)-digit)/pow10_wide[numZeros+1])) {
-	/*
-	 * Oops, it's overflowed, have to allocate a bignum.
-	 */
-
-	TclBNInitBignumFromWideUInt (bignumRepPtr, *wideRepPtr);
-	bignumFlag = 1;
-    }
-
-    /*
-     * Multiply the number by 10**numZeros+1 and add in the new digit.
+     * Try wide multiplication first
      */
 
     if (!bignumFlag) {
-	/*
-	 * Wide multiplication.
-	 */
+	w = *wideRepPtr;
+	if (w == 0) {
+	    /*
+	     * There's no need to multiply if the multiplicand is zero.
+	     */
+	    *wideRepPtr = digit;
+	    return 0;
+	} else if (numZeros >= maxpow10_wide
+		  || w > ((~(Tcl_WideUInt)0)-digit)/pow10_wide[numZeros+1]) {
+	    /*
+	     * Wide multiplication will overflow.  Expand the
+	     * number to a bignum and fall through into the bignum case.
+	     */
+	    
+	    TclBNInitBignumFromWideUInt (bignumRepPtr, w);
+	} else {
+	    /*
+	     * Wide multiplication.
+	     */
+	    *wideRepPtr = w * pow10_wide[numZeros+1] + digit;
+	    return 0;
+	}
+    }
 
-	*wideRepPtr = *wideRepPtr * pow10_wide[numZeros+1] + digit;
-    } else if (numZeros < log10_DIGIT_MAX) {
+    /*
+     * Bignum multiplication.
+     */
+
+    if (numZeros < log10_DIGIT_MAX) {
 	/*
 	 * Up to about 8 zeros - single digit multiplication.
 	 */
@@ -1238,7 +1250,7 @@ AccumulateDecimalDigit(
 	mp_add_d(bignumRepPtr, (mp_digit) digit, bignumRepPtr);
     }
 
-    return bignumFlag;
+    return 1;
 }
 
 /*
@@ -2221,11 +2233,11 @@ TclInitDoubleConversion(void)
  */
 
 void
-TclFinalizeDoubleConversion()
+TclFinalizeDoubleConversion(void)
 {
     int i;
 
-    Tcl_Free((char*)pow10_wide);
+    Tcl_Free((char *) pow10_wide);
     for (i=0; i<9; ++i) {
 	mp_clear(pow5 + i);
     }
@@ -2264,7 +2276,8 @@ Tcl_InitBignumFromDouble(
 
     if (TclIsInfinite(d)) {
 	if (interp != NULL) {
-	    char *s = "integer value too large to represent";
+	    const char *s = "integer value too large to represent";
+
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(s, -1));
 	    Tcl_SetErrorCode(interp, "ARITH", "IOVERFLOW", s, NULL);
 	}
@@ -2309,9 +2322,7 @@ TclBignumToDouble(
     mp_int *a)			/* Integer to convert. */
 {
     mp_int b;
-    int bits;
-    int shift;
-    int i;
+    int bits, shift, i;
     double r;
 
     /*
@@ -2674,8 +2685,8 @@ TclFormatNaN(
 
 static Tcl_WideUInt
 Nokia770Twiddle(
-    Tcl_WideUInt w		/* Number to transpose */
-) {
+    Tcl_WideUInt w)		/* Number to transpose */
+{
     return (((w >> 32) & 0xffffffff) | (w << 32));
 }
 
@@ -2691,10 +2702,11 @@ Nokia770Twiddle(
  */
 
 int
-TclNokia770Doubles()
+TclNokia770Doubles(void)
 {
     return n770_fp;
 }
+
 /*
  * Local Variables:
  * mode: c

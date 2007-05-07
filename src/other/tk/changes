@@ -6179,7 +6179,7 @@ registered applevents (steffen)
 
 Documentation improvements [1224983,1247835,1151523,1357575,1083838]
 
----- Released 8.5a4, April 27, 2006 --- See ChangeLog for details ---
+--- Released 8.5a4, April 27, 2006 --- See ChangeLog for details ---
 
 2006-04-28 (bug fix)[1243318] Aqua: incorrect cursor pos in bindings (steffen)
 
@@ -6242,4 +6242,84 @@ Documentation improvements [1224983,1247835,1151523,1357575,1083838]
 
 2006-10-16 (bug fix)[1558051] Aqua: CG drawing matches X11 (steffen)
 
----- Released 8.5a5, October 20, 2006 --- See ChangeLog for details ---
+--- Released 8.5a5, October 20, 2006 --- See ChangeLog for details ---
+
+2006-10-30 (new feature)[TIP 48] Addition of themed tk widgets to Tk as Ttk
+(themed Tk).  Adds ttk::notebook, ttk::sizegrip, ttk::combobox,
+ttk::panedwindow, ttk::progressbar, ttk::menubutton, ttk::button,
+ttk::radiobutton, ttk::checkbutton, ttk::treeview, ttk::separator,
+ttk::scrollbar, ttk::entry, ttk::frame and ttk::labelframe widgets.  Adds
+ttk::style command.
+
+2006-11-02 (enhancement) Improve OS X Carbon event handling.
+
+2006-11-07 (configure change) Unix --enable-xft is enabled by default now.
+
+2006-11-23 (bug fix)[1599877] Fix unicode character underline in menus.
+
+2006-11-24 (bug fix)[1487701] Better handling of tcl_interactive on OS X to
+control display of console.
+
+2006-11-30 (bug fix) Fix handling of Escape binding on OS X dialogs.
+
+2006-12-01 (new feature) Add -transparentcolor wm attribute on Windows.
+
+2006-12-02 (new feature)[TIP 300] Added [font actual $font $char].
+
+2006-12-04 (new feature)[TIP 286] Added [$menu xposition] subcommand.
+
+2006-12-11 (enhancement) Improved EWMH support for _NET_WM_PID and
+_NET_WM_PING.
+
+2007-01-19 (configure change) Ensure CPPFLAGS env var is used when set.
+
+2007-02-19 (configure change) Use SHLIB_SUFFIX=".so" on HP-UX IA64 (was
+".sl").
+
+2007-04-10 (platform support) Correctly handle theming on Vista/Aero.
+
+2007-04-23 (enhancement) Allow empty value for -selectforeground option.
+
+2007-04-23 (platform support) Aqua: remove Tk-internal double buffering that is
+wasteful on Aqua; allows direct-to-window CoreGraphics drawing (e.g. adding 
+support for colors with alpha).
+
+2007-04-23 (platform support) Aqua: add all OS theme colors/brushes (patterns)
+as system colors.
+
+2007-04-23 (platform support) Aqua: use OS theme for tk_dialog and bgerror.
+
+2007-04-23 (platform support) Aqua: add 'none' cursor & missing theme cursors.
+
+2007-04-23 (platform support) Aqua: [tk_getOpenFile -parent] uses sheet dialog.
+
+2007-04-23 (bug fix) Aqua: fix custom MDEF and tearoff menu display.
+
+2007-04-23 (bug fix)[1620826] Aqua: fix <<MenuSelect>> support.
+
+2007-04-23 (platform support) Aqua: add support for live window resizing and
+asynchronous window dragging; prevent window from becoming inacessible
+offscreen or under Dock after dragging; use transparent grow box.
+
+2007-04-23 (platform support) Aqua: improve event processing during nested
+event loops (e.g. modal dialogs, menu tracking, window resizing etc).
+
+2007-04-23 (bug fix) Aqua: add support for all possible aqua scrollbar arrow
+positions, scrollbar variants and for "jump to here" scrollbar behaviour;
+correct scroll view size computation; enforce minimal scrollbar height.
+
+2007-04-23 (platform support) Aqua: add [wm attributes] -topmost, -fullscreen
+and -transparent (allows fully transparent window via -bg "systemTransparent").
+
+2007-04-23 (platform support) Aqua: determine win min/max sizes dynamically;
+correct size handling of gridded windows; improve computation of initial
+window bounds; correct window size handling on multi-headed systems.
+
+2007-04-23 (platform support) Aqua: correct composite attribute handling in
+[tk::unsupported::MacWindowStyle] and add new attributes; allow changing
+window class of already existing windows.
+
+2007-04-23 (platform support) Aqua: add tcl document extensions and mime type
+to Wish.app's Info.plist.
+
+--- Released 8.5a6, April 25, 2007 --- See ChangeLog for details ---

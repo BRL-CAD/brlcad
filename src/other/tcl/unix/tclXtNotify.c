@@ -111,8 +111,8 @@ EXTERN XtAppContext	TclSetAppContext(XtAppContext ctx);
  */
 
 XtAppContext
-TclSetAppContext(appContext)
-    XtAppContext appContext;
+TclSetAppContext(
+    XtAppContext appContext)
 {
     if (!initialized) {
 	InitNotifier();
@@ -178,7 +178,7 @@ TclSetAppContext(appContext)
  */
 
 void
-InitNotifier()
+InitNotifier(void)
 {
     Tcl_NotifierProcs notifier;
 
@@ -260,8 +260,8 @@ NotifierExitHandler(
  */
 
 static void
-SetTimer(timePtr)
-    Tcl_Time *timePtr;		/* Timeout value, may be NULL. */
+SetTimer(
+    Tcl_Time *timePtr)		/* Timeout value, may be NULL. */
 {
     long timeout;
 
@@ -299,9 +299,9 @@ SetTimer(timePtr)
  */
 
 static void
-TimerProc(data, id)
-    caddr_t data;		/* Not used. */
-    XtIntervalId *id;
+TimerProc(
+    caddr_t data,		/* Not used. */
+    XtIntervalId *id)
 {
     if (*id != notifier.currentTimeout) {
 	return;
@@ -329,15 +329,15 @@ TimerProc(data, id)
  */
 
 static void
-CreateFileHandler(fd, mask, proc, clientData)
-    int fd;			/* Handle of stream to watch. */
-    int mask;			/* OR'ed combination of TCL_READABLE,
+CreateFileHandler(
+    int fd,			/* Handle of stream to watch. */
+    int mask,			/* OR'ed combination of TCL_READABLE,
 				 * TCL_WRITABLE, and TCL_EXCEPTION: indicates
 				 * conditions under which proc should be
 				 * called. */
-    Tcl_FileProc *proc;		/* Procedure to call for each selected
+    Tcl_FileProc *proc,		/* Procedure to call for each selected
 				 * event. */
-    ClientData clientData;	/* Arbitrary data to pass to proc. */
+    ClientData clientData)	/* Arbitrary data to pass to proc. */
 {
     FileHandler *filePtr;
 
@@ -421,8 +421,8 @@ CreateFileHandler(fd, mask, proc, clientData)
  */
 
 static void
-DeleteFileHandler(fd)
-    int fd;			/* Stream id for which to remove callback
+DeleteFileHandler(
+    int fd)			/* Stream id for which to remove callback
 				 * procedure. */
 {
     FileHandler *filePtr, *prevPtr;
@@ -486,10 +486,10 @@ DeleteFileHandler(fd)
  */
 
 static void
-FileProc(clientData, fd, id)
-    caddr_t clientData;
-    int *fd;
-    XtInputId *id;
+FileProc(
+    caddr_t clientData,
+    int *fd,
+    XtInputId *id)
 {
     FileHandler *filePtr = (FileHandler *)clientData;
     FileHandlerEvent *fileEvPtr;
@@ -555,9 +555,9 @@ FileProc(clientData, fd, id)
  */
 
 static int
-FileHandlerEventProc(evPtr, flags)
-    Tcl_Event *evPtr;		/* Event to service. */
-    int flags;			/* Flags that indicate what events to handle,
+FileHandlerEventProc(
+    Tcl_Event *evPtr,		/* Event to service. */
+    int flags)			/* Flags that indicate what events to handle,
 				 * such as TCL_FILE_EVENTS. */
 {
     FileHandler *filePtr;

@@ -1,12 +1,12 @@
-/* 
+/*
  * xutil.c --
  *
  *	This function contains generic X emulation routines.
  *
  * Copyright (c) 1995-1996 Sun Microsystems, Inc.
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
@@ -22,10 +22,9 @@
  *
  * XInternAtom --
  *
- *	This procedure simulates the XInternAtom function by calling
- *	Tk_Uid to get a unique id for every atom.  This is only a
- *	partial implementation, since it doesn't work across
- *	applications.
+ *	This procedure simulates the XInternAtom function by calling Tk_Uid to
+ *	get a unique id for every atom. This is only a partial implementation,
+ *	since it doesn't work across applications.
  *
  * Results:
  *	A new Atom.
@@ -37,13 +36,13 @@
  */
 
 Atom
-XInternAtom(display, atom_name, only_if_exists)
-    Display* display;
-    _Xconst char* atom_name;
-    Bool only_if_exists;
+XInternAtom(
+    Display *display,
+    _Xconst char *atom_name,
+    Bool only_if_exists)
 {
     static Atom atom = XA_LAST_PREDEFINED;
-    
+
     display->request++;
     return ++atom;
 }
@@ -65,13 +64,13 @@ XInternAtom(display, atom_name, only_if_exists)
  */
 
 XVisualInfo *
-XGetVisualInfo(display, vinfo_mask, vinfo_template, nitems_return)
-    Display* display;
-    long vinfo_mask;
-    XVisualInfo* vinfo_template;
-    int* nitems_return;
+XGetVisualInfo(
+    Display *display,
+    long vinfo_mask,
+    XVisualInfo *vinfo_template,
+    int *nitems_return)
 {
-    XVisualInfo *info = (XVisualInfo *)ckalloc(sizeof(XVisualInfo));
+    XVisualInfo *info = (XVisualInfo *) ckalloc(sizeof(XVisualInfo));
     info->visual = DefaultVisual(display, 0);
     info->visualid = info->visual->visualid;
     info->screen = 0;
@@ -82,7 +81,7 @@ XGetVisualInfo(display, vinfo_mask, vinfo_template, nitems_return)
     info->red_mask = info->visual->red_mask;
     info->green_mask = info->visual->green_mask;
     info->blue_mask = info->visual->blue_mask;
-    
+
     if (((vinfo_mask & VisualIDMask)
 	    && (vinfo_template->visualid != info->visualid))
 	    || ((vinfo_mask & VisualScreenMask)
@@ -109,3 +108,11 @@ XGetVisualInfo(display, vinfo_mask, vinfo_template, nitems_return)
     *nitems_return = 1;
     return info;
 }
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 78
+ * End:
+ */

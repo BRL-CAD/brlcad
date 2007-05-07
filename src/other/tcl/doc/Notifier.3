@@ -66,9 +66,14 @@ int
 .sp
 int
 \fBTcl_SetServiceMode\fR(\fImode\fR)
-
+.sp
+void
+\fBTcl_ServiceModeHook\fR(\fImode\fR)
+.sp
+void
+\fBTcl_SetNotifier\fR(\fInotifierProcPtr\fR)
 .SH ARGUMENTS
-.AS Tcl_EventDeleteProc *deleteProc
+.AS Tcl_EventDeleteProc *notifierProcPtr
 .AP Tcl_EventSetupProc *setupProc in
 Procedure to invoke to prepare for event wait in \fBTcl_DoOneEvent\fR.
 .AP Tcl_EventCheckProc *checkProc in
@@ -100,6 +105,10 @@ passed to \fBTcl_DoOneEvent\fR.
 .AP int mode in
 Indicates whether events should be serviced by \fBTcl_ServiceAll\fR.
 Must be one of \fBTCL_SERVICE_NONE\fR or \fBTCL_SERVICE_ALL\fR.
+.AP Tcl_NotifierProcs* notifierProcPtr in
+Structure of function pointers describing notifier procedures that are
+to replace the ones installed in the executable.  See "REPLACING THE
+NOTIFIER" for details.
 .BE
 
 .SH INTRODUCTION
@@ -430,13 +439,13 @@ entry, plus \fBTcl_DoOneEvent\fR and \fBTcl_Sleep\fR, which are
 available on all platforms, and \fBTcl_CreateFileHandler\fR and
 \fBTcl_DeleteFileHandler\fR, which are Unix-specific.  Most of these
 procedures are generic, in that they are the same for all notifiers.
-However, eight of the procedures are notifier-dependent:
-\fBTcl_InitNotifier\fR, \fBTcl_AlertNotifier\fR, \fBTcl_FinalizeNotifier\fR, 
-\fBTcl_SetTimer\fR, \fBTcl_Sleep\fR, \fBTcl_WaitForEvent\fR,
-\fBTcl_CreateFileHandler\fR and \fBTcl_DeleteFileHandler\fR.  To
-support a new platform or to integrate Tcl with an
-application-specific event loop, you must write new versions of these
-procedures.
+However, none of the procedures are notifier-dependent:
+\fBTcl_InitNotifier\fR, \fBTcl_AlertNotifier\fR,
+\fBTcl_FinalizeNotifier\fR, \fBTcl_SetTimer\fR, \fBTcl_Sleep\fR,
+\fBTcl_WaitForEvent\fR, \fBTcl_CreateFileHandler\fR,
+\fBTcl_DeleteFileHandler\fR and \fBTcl_ServiceModeHook\fR.  To support a
+new platform or to integrate Tcl with an application-specific event loop,
+you must write new versions of these procedures.
 .PP
 \fBTcl_InitNotifier\fR initializes the notifier state and returns
 a handle to the notifier state.  Tcl calls this
@@ -495,6 +504,13 @@ event loop.  If the
 notifier will only be used from \fBTcl_DoOneEvent\fR, then
 \fBTcl_SetTimer\fR need not do anything.
 .PP
+\fBTcl_ServiceModeHook\fR is called by the platform-independent portion
+of the notifier when client code makes a call to
+\fBTcl_SetServiceMode\fR. This hook is provided to support operating
+systems that require special event handling when the application is in
+a modal loop (the Windows notifier, for instance, uses this hook to
+create a communication window).
+.PP
 On Unix systems, the file event source also needs support from the
 notifier.  The file event source consists of the
 \fBTcl_CreateFileHandler\fR and \fBTcl_DeleteFileHandler\fR
@@ -507,6 +523,38 @@ in their respective manual pages.
 The easiest way to create a new notifier is to look at the code
 for an existing notifier, such as the files \fBunix/tclUnixNotfy.c\fR
 or \fBwin/tclWinNotify.c\fR in the Tcl source distribution.
+
+.SH "REPLACING THE NOTIFIER"
+.PP
+A notifier that has been written according to the conventions above
+can also be installed in a running process in place of the standard
+notifier.  This mechanism is used so that a single executable can be
+used (with the standard notifier) as a stand-alone program and reused
+(with a replacement notifier in a loadable extension) as an extension
+to another program, such as a Web browser plugin.
+.PP
+To do this, the extension makes a call to \fBTcl_SetNotifier\fR
+passing a pointer to a \fBTcl_NotifierProcs\fR data structure.  The
+structure has the following layout:
+.CS
+typedef struct Tcl_NotifierProcs {
+    Tcl_SetTimerProc *setTimerProc;
+    Tcl_WaitForEventProc *waitForEventProc;
+    Tcl_CreateFileHandlerProc *createFileHandlerProc;
+    Tcl_DeleteFileHandlerProc *deleteFileHandlerProc;
+    Tcl_InitNotifierProc *initNotifierProc;
+    Tcl_FinalizeNotifierProc *finalizeNotifierProc;
+    Tcl_AlertNotifierProc *alertNotifierProc;
+    Tcl_ServiceModeHookProc *serviceModeHookProc;
+} Tcl_NotifierProcs;
+.CE
+Following the call to \fBTcl_SetNotifier\fR, the pointers given in
+the \fBTcl_NotifierProcs\fR structure replace whatever notifier had
+been installed in the process.
+.PP
+It is extraordinarily unwise to replace a running notifier. Normally,
+\fBTcl_SetNotifier\fR should be called at process initialization time
+before the first call to \fBTcl_InitNotifier\fR.
 
 .SH "EXTERNAL EVENT LOOPS"
 .PP

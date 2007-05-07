@@ -50,9 +50,9 @@ extern int		Tclxttest_Init _ANSI_ARGS_((Tcl_Interp *interp));
  */
 
 int
-main(argc, argv)
-    int argc;			/* Number of command-line arguments. */
-    char **argv;		/* Values of command-line arguments. */
+main(
+    int argc,			/* Number of command-line arguments. */
+    char **argv)		/* Values of command-line arguments. */
 {
     /*
      * The following #if block allows you to change the AppInit function by
@@ -109,8 +109,8 @@ main(argc, argv)
  */
 
 int
-Tcl_AppInit(interp)
-    Tcl_Interp *interp;		/* Interpreter for application. */
+Tcl_AppInit(
+    Tcl_Interp *interp)		/* Interpreter for application. */
 {
     if (Tcl_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;

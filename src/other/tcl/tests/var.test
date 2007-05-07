@@ -702,6 +702,18 @@ test var-16.1 {CallVarTraces: save/restore interp error state} {
     set ::errorInfo
 } bar
 
+test var-17.1 {TclArraySet [Bug 1669489]} -setup {
+    unset -nocomplain ::a
+} -body {
+    namespace eval :: {
+	set elements {1 2 3 4}
+	trace add variable a write {string length $elements ;#}
+	array set a $elements
+    }
+} -cleanup {
+    unset -nocomplain ::a ::elements
+} -result {}
+
 catch {namespace delete ns}
 catch {unset arr}
 catch {unset v}

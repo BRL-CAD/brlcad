@@ -247,7 +247,7 @@ integer calculations are performed exactly.  Note that in Tcl releases
 prior to 8.5, integer calculations were performed with one of the C types
 \fIlong int\fR or \fITcl_WideInt\fR, causing implicit range truncation
 in those calculations where values overflowed the range of those types.
-Any code that relied on these implicit trunctions will need to explicitly
+Any code that relied on these implicit truncations will need to explicitly
 add \fBint()\fR or \fBwide()\fR function calls to expressions at the points
 where such truncation is required to take place.
 .VE 8.5

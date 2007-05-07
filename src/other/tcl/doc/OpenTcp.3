@@ -114,24 +114,24 @@ replacement for the standard channel.
 .PP
 \fBTcl_OpenTcpServer\fR opens a TCP socket on the local host on a specified
 \fIport\fR and uses the Tcl event mechanism to accept requests from clients
-to connect to it.  The \fImyaddr\fP argument specifies the network interface.
-If \fImyaddr\fP is NULL the special address INADDR_ANY should be used to
+to connect to it. The \fImyaddr\fR argument specifies the network interface.
+If \fImyaddr\fR is NULL the special address INADDR_ANY should be used to
 allow connections from any network interface.
 Each time a client connects to this socket, Tcl creates a channel
 for the new connection and invokes \fIproc\fR with information about
-the channel.  \fIProc\fR must match the following prototype:
+the channel. \fIProc\fR must match the following prototype:
 .CS
 typedef void Tcl_TcpAcceptProc(
         ClientData \fIclientData\fR,
         Tcl_Channel \fIchannel\fR,
         char *\fIhostName\fR,
-        int \fIport\fP);
+        int \fIport\fR);
 .CE
 .PP
 The \fIclientData\fR argument will be the same as the \fIclientData\fR
 argument to \fBTcl_OpenTcpServer\fR, \fIchannel\fR will be the handle
 for the new channel, \fIhostName\fR points to a string containing
-the name of the client host making the connection, and \fIport\fP
+the name of the client host making the connection, and \fIport\fR
 will contain the client's port number.
 The new channel
 is opened for both input and output. 

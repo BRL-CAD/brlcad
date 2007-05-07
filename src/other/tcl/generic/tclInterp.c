@@ -1085,7 +1085,8 @@ Tcl_CreateAlias(
     int i;
     int result;
 
-    objv = (Tcl_Obj **) ckalloc((unsigned) sizeof(Tcl_Obj *) * argc);
+    objv = (Tcl_Obj **)
+	    TclStackAlloc(slaveInterp, (unsigned) sizeof(Tcl_Obj *) * argc);
     for (i = 0; i < argc; i++) {
 	objv[i] = Tcl_NewStringObj(argv[i], -1);
 	Tcl_IncrRefCount(objv[i]);
@@ -1103,7 +1104,7 @@ Tcl_CreateAlias(
     for (i = 0; i < argc; i++) {
 	Tcl_DecrRefCount(objv[i]);
     }
-    ckfree((char *) objv);
+    TclStackFree(slaveInterp);	/* objv */
     Tcl_DecrRefCount(targetObjPtr);
     Tcl_DecrRefCount(slaveObjPtr);
 
@@ -1494,7 +1495,7 @@ AliasCreate(
 	 * on the precise definition of these tokens.
 	 */
 
-	newToken = Tcl_NewStringObj("::",-1);
+	TclNewLiteralStringObj(newToken, "::");
 	Tcl_AppendObjToObj(newToken, aliasPtr->token);
 	Tcl_DecrRefCount(aliasPtr->token);
 	aliasPtr->token = newToken;
@@ -1691,12 +1692,12 @@ AliasObjCmd(
     Tcl_Obj *CONST objv[])	/* Argument vector. */
 {
 #define ALIAS_CMDV_PREALLOC 10
-    Alias *aliasPtr = (Alias *) clientData;
+    Alias *aliasPtr = clientData;
     Tcl_Interp *targetInterp = aliasPtr->targetInterp;
     int result, prefc, cmdc, i;
     Tcl_Obj **prefv, **cmdv;
     Tcl_Obj *cmdArr[ALIAS_CMDV_PREALLOC];
-    Interp *tPtr = (Interp *) targetInterp;	
+    Interp *tPtr = (Interp *) targetInterp;
     int isRootEnsemble = (tPtr->ensembleRewrite.sourceObjs == NULL);
 
     /*
@@ -1710,14 +1711,12 @@ AliasObjCmd(
     if (cmdc <= ALIAS_CMDV_PREALLOC) {
 	cmdv = cmdArr;
     } else {
-	cmdv = (Tcl_Obj **) ckalloc((unsigned) (cmdc * sizeof(Tcl_Obj *)));
+	cmdv = (Tcl_Obj **) TclStackAlloc(interp, cmdc*(int)sizeof(Tcl_Obj*));
     }
 
     prefv = &aliasPtr->objPtr;
-    memcpy((VOID *) cmdv, (VOID *) prefv,
-	    (size_t) (prefc * sizeof(Tcl_Obj *)));
-    memcpy((VOID *) (cmdv+prefc), (VOID *) (objv+1),
-	    (size_t) ((objc-1) * sizeof(Tcl_Obj *)));
+    memcpy(cmdv, prefv, (size_t) (prefc * sizeof(Tcl_Obj *)));
+    memcpy(cmdv+prefc, objv+1, (size_t) ((objc-1) * sizeof(Tcl_Obj *)));
 
     Tcl_ResetResult(targetInterp);
 
@@ -1726,10 +1725,10 @@ AliasObjCmd(
     }
 
     /*
-     * Use the ensemble rewriting machinery to insure correct error messages:
-     * only the source command should show, not the full target prefix. 
+     * Use the ensemble rewriting machinery to ensure correct error messages:
+     * only the source command should show, not the full target prefix.
      */
-    
+
     if (isRootEnsemble) {
 	tPtr->ensembleRewrite.sourceObjs = objv;
 	tPtr->ensembleRewrite.numRemovedObjs = 1;
@@ -1737,31 +1736,49 @@ AliasObjCmd(
     } else {
 	tPtr->ensembleRewrite.numInsertedObjs += prefc - 1;
     }
-    
+
+    /*
+     * Protect the target interpreter if it isn't the same as the source
+     * interpreter so that we can continue to work with it after the target
+     * command completes.
+     */
+
     if (targetInterp != interp) {
 	Tcl_Preserve((ClientData) targetInterp);
-	result = Tcl_EvalObjv(targetInterp, cmdc, cmdv, TCL_EVAL_INVOKE);
-	TclTransferResult(targetInterp, result, interp);
-    } else {
-	result = Tcl_EvalObjv(targetInterp, cmdc, cmdv, TCL_EVAL_INVOKE);
     }
+
+    /*
+     * Execute the target command in the target interpreter.
+     */
+
+    result = Tcl_EvalObjv(targetInterp, cmdc, cmdv, TCL_EVAL_INVOKE);
+
+    /*
+     * Clean up the ensemble rewrite info if we set it in the first place.
+     */
 
     if (isRootEnsemble) {
 	tPtr->ensembleRewrite.sourceObjs = NULL;
 	tPtr->ensembleRewrite.numRemovedObjs = 0;
 	tPtr->ensembleRewrite.numInsertedObjs = 0;
     }
-    
+
+    /*
+     * If it was a cross-interpreter alias, we need to transfer the result
+     * back to the source interpreter and release the lock we previously set
+     * on the target interpreter.
+     */
+
     if (targetInterp != interp) {
+	TclTransferResult(targetInterp, result, interp);
 	Tcl_Release((ClientData) targetInterp);
     }
 
     for (i=0; i<cmdc; i++) {
 	Tcl_DecrRefCount(cmdv[i]);
     }
-
     if (cmdv != cmdArr) {
-	ckfree((char *) cmdv);
+	TclStackFree(interp);
     }
     return result;
 #undef ALIAS_CMDV_PREALLOC
@@ -2174,9 +2191,10 @@ SlaveCreate(
      */
 
     if (safe) {
-	Tcl_Obj* clockObj = Tcl_NewStringObj("clock", -1);
+	Tcl_Obj *clockObj;
 	int status;
 
+	TclNewLiteralStringObj(clockObj, "clock");
 	Tcl_IncrRefCount(clockObj);
 	status = AliasCreate(interp, slaveInterp, masterInterp, clockObj,
 		clockObj, 0, (Tcl_Obj *CONST *) NULL);
@@ -2468,7 +2486,9 @@ SlaveEval(
     Tcl_AllowExceptions(slaveInterp);
 
     if (objc == 1) {
-	result = Tcl_EvalObjEx(slaveInterp, objv[0], 0);
+        /* TIP #280 : Make invoker available to eval'd script */
+        Interp* iPtr = (Interp*) interp;
+	result = TclEvalObjEx(slaveInterp, objv[0], 0, iPtr->cmdFramePtr,0);
     } else {
 	objPtr = Tcl_ConcatObj(objc, objv);
 	Tcl_IncrRefCount(objPtr);
@@ -2552,7 +2572,7 @@ SlaveRecursionLimit(
 
     if (objc) {
 	if (Tcl_IsSafe(interp)) {
-	    Tcl_AppendResult(interp, "permission denied: ",
+	    Tcl_AppendResult(interp, "permission denied: "
 		    "safe interpreters cannot change recursion limit",
 		    (char *) NULL);
 	    return TCL_ERROR;
@@ -4085,7 +4105,7 @@ SlaveCommandLimitCmd(
 		    return TCL_ERROR;
 		}
 		if (gran < 1) {
-		    Tcl_AppendResult(interp, "granularity must be at ",
+		    Tcl_AppendResult(interp, "granularity must be at "
 			    "least 1", NULL);
 		    return TCL_ERROR;
 		}
@@ -4100,7 +4120,7 @@ SlaveCommandLimitCmd(
 		    return TCL_ERROR;
 		}
 		if (limit < 0) {
-		    Tcl_AppendResult(interp, "command limit value must be at ",
+		    Tcl_AppendResult(interp, "command limit value must be at "
 			    "least 0", NULL);
 		    return TCL_ERROR;
 		}
@@ -4277,7 +4297,7 @@ SlaveTimeLimitCmd(
 		    return TCL_ERROR;
 		}
 		if (gran < 1) {
-		    Tcl_AppendResult(interp, "granularity must be at ",
+		    Tcl_AppendResult(interp, "granularity must be at "
 			    "least 1", NULL);
 		    return TCL_ERROR;
 		}
@@ -4324,12 +4344,12 @@ SlaveTimeLimitCmd(
 		 */
 
 		if (secObj != NULL && secLen == 0 && milliLen > 0) {
-		    Tcl_AppendResult(interp, "may only set -milliseconds ",
+		    Tcl_AppendResult(interp, "may only set -milliseconds "
 			    "if -seconds is not also being reset", NULL);
 		    return TCL_ERROR;
 		}
 		if (milliLen == 0 && (secObj == NULL || secLen > 0)) {
-		    Tcl_AppendResult(interp, "may only reset -milliseconds ",
+		    Tcl_AppendResult(interp, "may only reset -milliseconds "
 			    "if -seconds is also being reset", NULL);
 		    return TCL_ERROR;
 		}

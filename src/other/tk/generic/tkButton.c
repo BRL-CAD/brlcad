@@ -27,14 +27,14 @@ static Tcl_ThreadDataKey dataKey;
  * tkButton.h.
  */
 
-static char *classNames[] = {"Label", "Button", "Checkbutton", "Radiobutton"};
+static const char *classNames[] = {"Label", "Button", "Checkbutton", "Radiobutton"};
 
 /*
  * The following table defines the legal values for the -default option. It is
  * used together with the "enum defaultValue" declaration in tkButton.h.
  */
 
-static char *defaultStrings[] = {
+static const char *defaultStrings[] = {
     "active", "disabled", "normal", NULL
 };
 
@@ -43,7 +43,7 @@ static char *defaultStrings[] = {
  * It is used together with the "enum state" declaration in tkButton.h.
  */
 
-static char *stateStrings[] = {
+static const char *stateStrings[] = {
     "active", "disabled", "normal", NULL
 };
 
@@ -52,7 +52,7 @@ static char *stateStrings[] = {
  * It is used with the "enum compound" declaration in tkButton.h
  */
 
-static char *compoundStrings[] = {
+static const char *compoundStrings[] = {
     "bottom", "center", "left", "none", "right", "top", NULL
 };
 
@@ -477,7 +477,7 @@ static Tk_OptionSpec radiobuttonOptionSpecs[] = {
  * such as TYPE_LABEL, to the option template for that class of widgets.
  */
 
-static Tk_OptionSpec *optionSpecs[] = {
+static Tk_OptionSpec * const optionSpecs[] = {
     labelOptionSpecs,
     buttonOptionSpecs,
     checkbuttonOptionSpecs,
@@ -490,7 +490,7 @@ static Tk_OptionSpec *optionSpecs[] = {
  * enumerated type used to dispatch the widget command.
  */
 
-static CONST char *commandNames[][8] = {
+static const char *commandNames[][8] = {
     {"cget", "configure", NULL},
     {"cget", "configure", "flash", "invoke", NULL},
     {"cget", "configure", "deselect", "flash", "invoke", "select",
@@ -517,7 +517,7 @@ static enum command map[][8] = {
 static void		ButtonCmdDeletedProc(ClientData clientData);
 static int		ButtonCreate(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[], int type);
+			    Tcl_Obj *const objv[], int type);
 static void		ButtonEventProc(ClientData clientData,
 			    XEvent *eventPtr);
 static void		ButtonImageProc(ClientData clientData,
@@ -530,16 +530,16 @@ static void		ButtonTristateImageProc(ClientData clientData,
 			    int x, int y, int width, int height,
 			    int imgWidth, int imgHeight);
 static char *		ButtonTextVarProc(ClientData clientData,
-			    Tcl_Interp *interp, CONST char *name1,
-			    CONST char *name2, int flags);
+			    Tcl_Interp *interp, const char *name1,
+			    const char *name2, int flags);
 static char *		ButtonVarProc(ClientData clientData,
-			    Tcl_Interp *interp, CONST char *name1,
-			    CONST char *name2, int flags);
+			    Tcl_Interp *interp, const char *name1,
+			    const char *name2, int flags);
 static int		ButtonWidgetObjCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]);
+			    Tcl_Obj *const objv[]);
 static int		ConfigureButton(Tcl_Interp *interp, TkButton *butPtr,
-			    int objc, Tcl_Obj *CONST objv[]);
+			    int objc, Tcl_Obj *const objv[]);
 static void		DestroyButton(TkButton *butPtr);
 
 /*
@@ -566,7 +566,7 @@ Tk_ButtonObjCmd(
     ClientData clientData,	/* Either NULL or pointer to option table. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument values. */
+    Tcl_Obj *const objv[])	/* Argument values. */
 {
     return ButtonCreate(clientData, interp, objc, objv, TYPE_BUTTON);
 }
@@ -576,7 +576,7 @@ Tk_CheckbuttonObjCmd(
     ClientData clientData,	/* Either NULL or pointer to option table. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument values. */
+    Tcl_Obj *const objv[])	/* Argument values. */
 {
     return ButtonCreate(clientData, interp, objc, objv, TYPE_CHECK_BUTTON);
 }
@@ -586,7 +586,7 @@ Tk_LabelObjCmd(
     ClientData clientData,	/* Either NULL or pointer to option table. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument values. */
+    Tcl_Obj *const objv[])	/* Argument values. */
 {
     return ButtonCreate(clientData, interp, objc, objv, TYPE_LABEL);
 }
@@ -596,7 +596,7 @@ Tk_RadiobuttonObjCmd(
     ClientData clientData,	/* Either NULL or pointer to option table. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument values. */
+    Tcl_Obj *const objv[])	/* Argument values. */
 {
     return ButtonCreate(clientData, interp, objc, objv, TYPE_RADIO_BUTTON);
 }
@@ -624,7 +624,7 @@ ButtonCreate(
     ClientData clientData,	/* NULL. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[],	/* Argument values. */
+    Tcl_Obj *const objv[],	/* Argument values. */
     int type)			/* Type of button to create: TYPE_LABEL,
 				 * TYPE_BUTTON, TYPE_CHECK_BUTTON, or
 				 * TYPE_RADIO_BUTTON. */
@@ -780,7 +780,7 @@ ButtonWidgetObjCmd(
     ClientData clientData,	/* Information about button widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument values. */
+    Tcl_Obj *const objv[])	/* Argument values. */
 {
     TkButton *butPtr = (TkButton *) clientData;
     int index;
@@ -1029,7 +1029,7 @@ ConfigureButton(
     register TkButton *butPtr,	/* Information about widget;  may or may
 				 * not already have values for some fields. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument values. */
+    Tcl_Obj *const objv[])	/* Argument values. */
 {
     Tk_SavedOptions savedOptions;
     Tcl_Obj *errorResult = NULL;
@@ -1589,8 +1589,8 @@ static char *
 ButtonVarProc(
     ClientData clientData,	/* Information about button. */
     Tcl_Interp *interp,		/* Interpreter containing variable. */
-    CONST char *name1,		/* Name of variable. */
-    CONST char *name2,		/* Second part of variable name. */
+    const char *name1,		/* Name of variable. */
+    const char *name2,		/* Second part of variable name. */
     int flags)			/* Information about what happened. */
 {
     register TkButton *butPtr = (TkButton *) clientData;
@@ -1675,8 +1675,8 @@ static char *
 ButtonTextVarProc(
     ClientData clientData,	/* Information about button. */
     Tcl_Interp *interp,		/* Interpreter containing variable. */
-    CONST char *name1,		/* Not used. */
-    CONST char *name2,		/* Not used. */
+    const char *name1,		/* Not used. */
+    const char *name2,		/* Not used. */
     int flags)			/* Information about what happened. */
 {
     TkButton *butPtr = (TkButton *) clientData;

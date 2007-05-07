@@ -1,12 +1,12 @@
-/* 
+/*
  * tkMacOSXInit.c --
  *
- *        This file contains Mac OS X -specific interpreter initialization
- *        functions.
+ *	This file contains Mac OS X -specific interpreter initialization
+ *	functions.
  *
  * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2005-2006 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2005-2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -40,13 +40,13 @@
 /*
  * The following structures are used to map the script/language codes of a
  * font to the name that should be passed to Tcl_GetEncoding() to obtain
- * the encoding for that font.  The set of numeric constants is fixed and
+ * the encoding for that font. The set of numeric constants is fixed and
  * defined by Apple.
  */
 
 typedef struct Map {
     CFStringEncoding numKey;
-    char *strKey;
+    const char *strKey;
 } Map;
 
 static Map scriptMap[] = {
@@ -82,7 +82,7 @@ static Map scriptMap[] = {
     {smEastEurRoman,	"macCentEuro"},
     {smVietnamese,	"macVietnam"},
     {smExtArabic,	"macSindhi"},
-    {0, 		NULL}
+    {0,			NULL}
 };
 
 Tcl_Encoding TkMacOSXCarbonEncoding = NULL;
@@ -93,45 +93,194 @@ Tcl_Encoding TkMacOSXCarbonEncoding = NULL;
  */
 static char scriptPath[PATH_MAX + 1] = "";
 
+
 /*
  *----------------------------------------------------------------------
  *
  * TkpInit --
  *
- *        Performs Mac-specific interpreter initialization related to the
- *        tk_library variable.
+ *	Performs Mac-specific interpreter initialization related to the
+ *	tk_library variable.
  *
  * Results:
- *        Returns a standard Tcl result.  Leaves an error message or result
- *        in the interp's result.
+ *	Returns a standard Tcl result. Leaves an error message or result
+ *	in the interp's result.
  *
  * Side effects:
- *        Sets "tk_library" Tcl variable, runs "tk.tcl" script.
+ *	Sets "tk_library" Tcl variable, runs "tk.tcl" script.
  *
  *----------------------------------------------------------------------
  */
 
 int
-TkpInit(interp)
-    Tcl_Interp *interp;
+TkpInit(
+    Tcl_Interp *interp)
 {
     static char tkLibPath[PATH_MAX + 1];
-    static int tkMacOSXInitialized = false;
+    static int tkMacOSXInitialized = 0;
 
     Tk_MacOSXSetupTkNotifier();
 
-    /* 
+    /*
      * Since it is possible for TkInit to be called multiple times
-     * and we don't want to do the initialization multiple times
+     * and we don't want to do the following initialization multiple times
      * we protect against doing it more than once.
      */
 
-    if (tkMacOSXInitialized == false) {
+    if (!tkMacOSXInitialized) {
+	int bundledExecutable = 0;
+	CFBundleRef bundleRef;
+	CFURLRef bundleUrl = NULL;
 	CFStringEncoding encoding;
-	char *encodingStr = NULL;
+	const char *encodingStr = NULL;
 	int  i;
 
-	tkMacOSXInitialized = true;
+	tkMacOSXInitialized = 1;
+
+	/*
+	 * When Tk is in a framework, force tcl_findLibrary to look in the
+	 * framework scripts directory.
+	 * FIXME: Should we come up with a more generic way of doing this?
+	 */
+
+#ifdef TK_FRAMEWORK
+	if (Tcl_MacOSXOpenVersionedBundleResources(interp,
+		"com.tcltk.tklibrary", TK_FRAMEWORK_VERSION, 1, PATH_MAX,
+		tkLibPath) != TCL_OK)
+#endif
+	    {
+	    /* Tk.framework not found, check if resource file is open */
+	    Handle rsrc = Get1NamedResource('CURS', "\phand");
+	    if (rsrc) {
+		ReleaseResource(rsrc);
+	    } else {
+#ifndef __LP64__
+		const struct mach_header *image;
+		char *data = NULL;
+		uint32_t size;
+		int fd = -1;
+		char fileName[L_tmpnam + 15];
+		uint32_t i, n;
+
+		/* Get resource data from __tk_rsrc section of tk dylib file*/
+		n = _dyld_image_count();
+		for (i = 0; i < n; i++) {
+		    image = _dyld_get_image_header(i);
+		    if (image) {
+			data = getsectdatafromheader(image, SEG_TEXT,
+					"__tk_rsrc", (void*)&size);
+			if (data) {
+			    data += _dyld_get_image_vmaddr_slide(i);
+			    break;
+			}
+		    }
+		}
+		while (data) {
+		    FSRef ref;
+		    SInt16 refNum;
+
+		    /*
+		     * Write resource data to temporary file and open it.
+		     */
+
+		    strcpy(fileName, P_tmpdir);
+		    if (fileName[strlen(fileName) - 1] != '/') {
+			strcat(fileName, "/");
+		    }
+		    strcat(fileName, "tkMacOSX_XXXXXX");
+		    fd = mkstemp(fileName);
+		    if (fd == -1) {
+			break;
+		    }
+		    fcntl(fd, F_SETFD, FD_CLOEXEC);
+		    if (write(fd, data, size) == -1) {
+			break;
+		    }
+		    if(ChkErr(FSPathMakeRef, (unsigned char*)fileName, &ref,
+			    NULL) != noErr) {
+			break;
+		    }
+		    ChkErr(FSOpenResourceFile, &ref, 0, NULL, fsRdPerm,
+			    &refNum);
+		    break;
+		}
+		if (fd != -1) {
+		    unlink(fileName);
+		    close(fd);
+		}
+#endif /* __LP64__ */
+	    }
+	}
+
+	/*
+	 * If we are loaded into an executable that is not a bundled
+	 * application, the window server does not let us come to the
+	 * foreground. For such an executable, notify the window server that
+	 * we are now a full GUI application.
+	 */
+
+	/* Check whether we are a bundled executable: */
+	bundleRef = CFBundleGetMainBundle();
+	if (bundleRef) {
+	    bundleUrl = CFBundleCopyBundleURL(bundleRef);
+	}
+	if (bundleUrl) {
+	    /*
+	     * A bundled executable is two levels down from its main bundle
+	     * directory (e.g. Wish.app/Contents/MacOS/Wish), whereas an
+	     * unbundled executable's main bundle directory is just the
+	     * directory containing the executable. So to check whether we are
+	     * bundled, we delete the last three path components of the
+	     * executable's url and compare the resulting url with the main
+	     * bundle url.
+	     */
+	    int j = 3;
+	    CFURLRef url = CFBundleCopyExecutableURL(bundleRef);
+	    while (url && j--) {
+		CFURLRef parent = CFURLCreateCopyDeletingLastPathComponent(NULL,
+			url);
+		CFRelease(url);
+		url = parent;
+	    }
+	    if (url) {
+		bundledExecutable = CFEqual(bundleUrl, url);
+		CFRelease(url);
+	    }
+	    CFRelease(bundleUrl);
+	}
+
+	/* If we are not a bundled executable, notify the window server that
+	 * we are a foregroundable app. */
+	if (!bundledExecutable) {
+	    OSStatus err = procNotFound;
+	    ProcessSerialNumber psn = { 0, kCurrentProcess };
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1030
+	    if (1
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1030
+		    && TransformProcessType != NULL
+#endif
+	    ) {
+		err = ChkErr(TransformProcessType, &psn,
+			kProcessTransformToForegroundApplication);
+	    }
+#endif
+#if MAC_OSX_TK_USE_CPS_SPI
+	    if (err != noErr) {
+		/*
+		 * When building or running on 10.2 or when the above fails,
+		 * attempt to use undocumented CPS SPI to notify the window
+		 * server. Load the SPI symbol dynamically, so that we don't
+		 * break if it ever disappears or changes its name.
+		 */
+		TkMacOSXInitNamedSymbol(CoreGraphics, OSStatus,
+			CPSEnableForegroundOperation, ProcessSerialNumberPtr);
+		if (CPSEnableForegroundOperation) {
+		    ChkErr(CPSEnableForegroundOperation, &psn);
+		}
+	    }
+#endif /* MAC_OSX_TK_USE_CPS_SPI */
+	}
 
 	TkMacOSXInitAppleEvents(interp);
 	TkMacOSXInitCarbonEvents(interp);
@@ -152,174 +301,53 @@ TkpInit(interp)
 	    encodingStr = "macRoman";
 	}
 
-	TkMacOSXCarbonEncoding = Tcl_GetEncoding (NULL, encodingStr);
+	TkMacOSXCarbonEncoding = Tcl_GetEncoding(NULL, encodingStr);
 	if (TkMacOSXCarbonEncoding == NULL) {
-	    TkMacOSXCarbonEncoding = Tcl_GetEncoding (NULL, NULL);
+	    TkMacOSXCarbonEncoding = Tcl_GetEncoding(NULL, NULL);
 	}
 
 	/*
-	 * When Tk is in a framework, force tcl_findLibrary to look in the 
-	 * framework scripts directory.
-	 * FIXME: Should we come up with a more generic way of doing this?
+	 * REMOVE ME: Close stdin & stdout for remote debugging otherwise we
+	 * will fight with gdb for stdin & stdout
 	 */
 
-#ifdef TK_FRAMEWORK
-	if (Tcl_MacOSXOpenVersionedBundleResources(interp,
-		"com.tcltk.tklibrary", TK_FRAMEWORK_VERSION, 1, PATH_MAX, tkLibPath) != TCL_OK)
-#endif
-	    {
-	    /* Tk.framework not found, check if resource file is open */
-	    Handle rsrc = Get1NamedResource('CURS', "\4hand");
-	    if (rsrc) {
-		ReleaseResource(rsrc);
-	    } else {
-#ifndef __LP64__
-		const struct mach_header *image;
-		char *data = NULL;
-		uint32_t size;
-		int fd = -1;
-		char fileName[L_tmpnam + 15];
-		uint32_t i, n;
-
-		/* Get resource data from __tk_rsrc section of tk library file */
-		n = _dyld_image_count();
-		for (i = 0; i < n; i++) {
-		    image = _dyld_get_image_header(i);
-		    if (image) {
-			data = getsectdatafromheader(image, SEG_TEXT, "__tk_rsrc", &size);
-			if (data) {
-			    data += _dyld_get_image_vmaddr_slide(i);
-			    break;
-			}
-		    }
-		}
-		while (data) {
-		    OSStatus err;
-		    FSRef ref;
-		    SInt16 refNum;
-
-		    /* Write resource data to temporary file and open it */
-		    strcpy(fileName, P_tmpdir);
-		    if (fileName[strlen(fileName) - 1] != '/') {
-			strcat(fileName, "/");
-		    }
-		    strcat(fileName, "tkMacOSX_XXXXXX");
-		    fd = mkstemp(fileName);
-		    if (fd == -1) break;
-		    fcntl(fd, F_SETFD, FD_CLOEXEC);
-		    if (write(fd, data, size) == -1) break;
-		    err = FSPathMakeRef((unsigned char*)fileName, &ref, NULL);
-		    if (err != noErr) break;
-		    err = FSOpenResourceFile(&ref, 0, NULL, fsRdPerm, &refNum);
-#ifdef TK_MAC_DEBUG
-		    if (err != noErr) fprintf(stderr,"FSOpenResourceFile error %ld\n",err);
-#endif
-		    break;
-		}
-		if (fd != -1) {
-		    unlink(fileName);
-		    close(fd);
-		}
-#endif /* __LP64__ */
-	    }
+	if (getenv("XCNOSTDIN") != NULL) {
+	    close(0);
+	    close(1);
 	}
 
 	/*
-	 * If we don't have a TTY and stdin is a special character file of length 0,
-	 * (e.g. /dev/null, which is what Finder sets when double clicking Wish)
-	 * then use the Tk based console interpreter.
+	 * If we don't have a TTY and stdin is a special character file of
+	 * length 0, (e.g. /dev/null, which is what Finder sets when double
+	 * clicking Wish) then use the Tk based console interpreter.
 	 */
-
-	/* REMOVE ME: Close stdin & stdout for remote debugging otherwise we
-	 * will fight with gdb for stdin & stdout 
-	 */
-
-	if (getenv ("XCNOSTDIN") != NULL) {
-	    close (0);
-	    close (1);
-	}
 
 	if (!isatty(0)) {
 	    struct stat st;
+
 	    if (fstat(0, &st) || (S_ISCHR(st.st_mode) && st.st_blocks == 0)) {
 		Tk_InitConsoleChannels(interp);
 		Tcl_RegisterChannel(interp, Tcl_GetStdChannel(TCL_STDIN));
 		Tcl_RegisterChannel(interp, Tcl_GetStdChannel(TCL_STDOUT));
 		Tcl_RegisterChannel(interp, Tcl_GetStdChannel(TCL_STDERR));
-		/* Only show the console if we don't have a startup script */
+
+		/*
+		 * Only show the console if we don't have a startup script
+		 * and tcl_interactive hasn't been set already.
+		 */
+
 		if (Tcl_GetStartupScript(NULL) == NULL) {
-		    Tcl_SetVar(interp, "tcl_interactive", "1", TCL_GLOBAL_ONLY);
+		    const char *intvar = Tcl_GetVar(interp,
+			    "tcl_interactive", TCL_GLOBAL_ONLY);
+
+		    if (intvar == NULL) {
+			Tcl_SetVar(interp, "tcl_interactive", "1",
+				TCL_GLOBAL_ONLY);
+		    }
 		}
 		if (Tk_CreateConsoleWindow(interp) == TCL_ERROR) {
 		    return TCL_ERROR;
 		}
-	    }
-	}
-
-	/*
-	 * If we are loaded into an executable that is not a bundled application,
-	 * the window server does not let us come to the foreground.
-	 * For such an executable, notify the window server that we are now a
-	 * full GUI application.
-	 */
-	{
-	    /* Check whether we are a bundled executable: */
-	    int bundledExecutable = 0;
-	    CFBundleRef bundleRef = CFBundleGetMainBundle();
-	    CFURLRef bundleUrl = NULL;
-	    if (bundleRef) {
-		bundleUrl = CFBundleCopyBundleURL(bundleRef);
-	    }
-	    if (bundleUrl) {
-		/*
-		 * A bundled executable is two levels down from its main bundle
-		 * directory (e.g. Wish.app/Contents/MacOS/Wish), whereas
-		 * an unbundled executable's main bundle directory is just
-		 * the directory containing the executable.
-		 * So to check whether we are bundled, we delete the last three
-		 * path components of the executable's url and compare the
-		 * resulting url with the main bundle url.
-		 */
-		int j = 3;
-		CFURLRef url = CFBundleCopyExecutableURL(bundleRef);
-		while (url && j--) {
-		    CFURLRef parent = CFURLCreateCopyDeletingLastPathComponent(NULL, url);
-		    CFRelease(url);
-		    url = parent;
-		}
-		if (url) {
-		    bundledExecutable = CFEqual(bundleUrl, url);
-		    CFRelease(url);
-		}
-		CFRelease(bundleUrl);
-	    }
-
-	    /* If we are not a bundled executable, notify the window server that
-	     * we are a foregroundable app. */
-	    if (!bundledExecutable) {
-		OSStatus err = procNotFound;
-		ProcessSerialNumber psn = { 0, kCurrentProcess };
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1030
-		if (TransformProcessType != NULL) {
-		    err = TransformProcessType(&psn,
-			    kProcessTransformToForegroundApplication);
-		}
-#endif
-#if MAC_OSX_TK_USE_CPS_SPI
-		if (err != noErr) {
-		    /*
-		     * When building or running on 10.2 or when the above fails,
-		     * attempt to use undocumented CPS SPI to notify the window
-		     * server. Load the SPI symbol dynamically, so that we don't
-		     * break if it ever disappears or changes its name.
-		     */
-		    TkMacOSXInitNamedSymbol(CoreGraphics, OSErr,
-			    CPSEnableForegroundOperation, ProcessSerialNumberPtr);
-		    if (CPSEnableForegroundOperation) {
-			CPSEnableForegroundOperation(&psn);
-		    }
-		}
-#endif /* MAC_OSX_TK_USE_CPS_SPI */
 	    }
 	}
     }
@@ -333,7 +361,7 @@ TkpInit(interp)
 		TCL_GLOBAL_ONLY|TCL_LIST_ELEMENT|TCL_APPEND_VALUE);
     }
 
-    return Tcl_Eval(interp, initScript);
+    return Tcl_EvalEx(interp, initScript, -1, TCL_EVAL_GLOBAL);
 }
 
 /*
@@ -341,25 +369,25 @@ TkpInit(interp)
  *
  * TkpGetAppName --
  *
- *        Retrieves the name of the current application from a platform
- *        specific location.  For Unix, the application name is the tail
- *        of the path contained in the tcl variable argv0.
+ *	Retrieves the name of the current application from a platform
+ *	specific location. For Unix, the application name is the tail
+ *	of the path contained in the tcl variable argv0.
  *
  * Results:
- *        Returns the application name in the given Tcl_DString.
+ *	Returns the application name in the given Tcl_DString.
  *
  * Side effects:
- *        None.
+ *	None.
  *
  *----------------------------------------------------------------------
  */
 
 void
-TkpGetAppName(interp, namePtr)
-    Tcl_Interp *interp;
-    Tcl_DString *namePtr;        /* A previously initialized Tcl_DString. */
+TkpGetAppName(
+    Tcl_Interp *interp,
+    Tcl_DString *namePtr)	/* A previously initialized Tcl_DString. */
 {
-    CONST char *p, *name;
+    const char *p, *name;
 
     name = Tcl_GetVar(interp, "argv0", TCL_GLOBAL_ONLY);
     if ((name == NULL) || (*name == 0)) {
@@ -378,22 +406,22 @@ TkpGetAppName(interp, namePtr)
  *
  * TkpDisplayWarning --
  *
- *        This routines is called from Tk_Main to display warning
- *        messages that occur during startup.
+ *	This routines is called from Tk_Main to display warning
+ *	messages that occur during startup.
  *
  * Results:
- *        None.
+ *	None.
  *
  * Side effects:
- *        Generates messages on stdout.
+ *	Generates messages on stdout.
  *
  *----------------------------------------------------------------------
  */
 
 void
-TkpDisplayWarning(msg, title)
-    CONST char *msg;                  /* Message to be displayed. */
-    CONST char *title;                /* Title of warning. */
+TkpDisplayWarning(
+    CONST char *msg,		/* Message to be displayed. */
+    CONST char *title)		/* Title of warning. */
 {
     Tcl_Channel errChannel = Tcl_GetStdChannel(TCL_STDERR);
     if (errChannel) {
@@ -410,18 +438,18 @@ TkpDisplayWarning(msg, title)
  * TkMacOSXDefaultStartupScript --
  *
  *
- *        On MacOS X, we look for a file in the Resources/Scripts
- *        directory called AppMain.tcl and if found, we set argv[1] to
- *        that, so that the rest of the code will find it, and add the
- *        Scripts folder to the auto_path.  If we don't find the startup
- *        script, we just bag it, assuming the user is starting up some
- *        other way.
+ *	On MacOS X, we look for a file in the Resources/Scripts
+ *	directory called AppMain.tcl and if found, we set argv[1] to
+ *	that, so that the rest of the code will find it, and add the
+ *	Scripts folder to the auto_path. If we don't find the startup
+ *	script, we just bag it, assuming the user is starting up some
+ *	other way.
  *
  * Results:
- *        None.
+ *	None.
  *
  * Side effects:
- *        Tcl_SetStartupScript() called when AppMain.tcl found.
+ *	Tcl_SetStartupScript() called when AppMain.tcl found.
  *
  *----------------------------------------------------------------------
  */
@@ -435,9 +463,9 @@ TkMacOSXDefaultStartupScript(void)
 
     if (bundleRef != NULL) {
 	CFURLRef appMainURL;
-	appMainURL = CFBundleCopyResourceURL(bundleRef, 
-		CFSTR("AppMain"), 
-		CFSTR("tcl"), 
+	appMainURL = CFBundleCopyResourceURL(bundleRef,
+		CFSTR("AppMain"),
+		CFSTR("tcl"),
 		CFSTR("Scripts"));
 
 	if (appMainURL != NULL) {
@@ -450,7 +478,7 @@ TkMacOSXDefaultStartupScript(void)
 		scriptFldrURL = CFURLCreateCopyDeletingLastPathComponent(
 			NULL, appMainURL);
 		if (scriptFldrURL != NULL) {
-		    CFURLGetFileSystemRepresentation(scriptFldrURL, 
+		    CFURLGetFileSystemRepresentation(scriptFldrURL,
 			    true, (unsigned char*) scriptPath, PATH_MAX);
 		    CFRelease(scriptFldrURL);
 		}
@@ -466,23 +494,25 @@ TkMacOSXDefaultStartupScript(void)
  * TkMacOSXGetNamedSymbol --
  *
  *
- *        Dynamically acquire address of a named symbol from a loaded
- *        dynamic library, so that we can use API that may not be
- *        available on all OS versions.
- *        If module is non-NULL and not the empty string, use twolevel
- *        namespace lookup.
- *       
+ *	Dynamically acquire address of a named symbol from a loaded
+ *	dynamic library, so that we can use API that may not be
+ *	available on all OS versions.
+ *	If module is non-NULL and not the empty string, use twolevel
+ *	namespace lookup.
+ *
  * Results:
- *        Address of given symbol or NULL if unavailable.
+ *	Address of given symbol or NULL if unavailable.
  *
  * Side effects:
- *        None.
+ *	None.
  *
  *----------------------------------------------------------------------
  */
 
 MODULE_SCOPE void*
-TkMacOSXGetNamedSymbol(const char* module, const char* symbol)
+TkMacOSXGetNamedSymbol(
+    const char* module,
+    const char* symbol)
 {
     NSSymbol nsSymbol = NULL;
     if (module && *module) {
@@ -494,7 +524,7 @@ TkMacOSXGetNamedSymbol(const char* module, const char* symbol)
 	    nsSymbol = NSLookupAndBindSymbol(symbol);
 	}
     }
-    if(nsSymbol) {
+    if (nsSymbol) {
 	return NSAddressOfSymbol(nsSymbol);
     } else {
 	return NULL;

@@ -1922,6 +1922,36 @@ test grid-21.6 {anchor} {
            {37 50 225 150}]
 grid_reset 21.6
 
+test grid-21.7 {anchor} {
+    # Test with a non-symmetric internal border.
+    # This only tests vertically, there is currently no way to get
+    # it assymetric horizontally.
+    labelframe .f -bd 0
+    frame .f.x -width 20 -height 20
+    .f configure -labelwidget .f.x
+    pack .f -fill both -expand 1
+
+    foreach i {0 1 2} {
+    	frame .$i -bg gray  -width 75 -height 50 -bd 2 -relief ridge
+    	grid .$i -in .f -row $i -column $i -sticky nswe
+    }
+    pack propagate . 0
+    grid propagate .f 0
+    . configure -width 300 -height 250
+
+    set res {}
+    foreach a {n ne e se s sw w nw center} {
+        grid anchor .f $a
+        update
+        lappend res [grid bbox .f]
+    }
+    pack propagate . 1 ; wm geometry . {}
+    set res
+} [list {37 20 225 150} {75 20 225 150} {75 60 225 150} {75 100 225 150} \
+           {37 100 225 150} {0 100 225 150} {0 60 225 150} {0 20 225 150} \
+           {37 60 225 150}]
+grid_reset 21.7
+
 # cleanup
 cleanupTests
 return

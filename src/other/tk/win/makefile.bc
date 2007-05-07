@@ -243,7 +243,7 @@ RCDIR       = $(WINDIR)\rc
 TK_INCLUDES = -I$(WINDIR) -I$(GENERICDIR) -I$(BITMAPDIR) -I$(XLIBDIR) \
       -I$(TCLDIR)\generic -I$(TCLDIR)\win
 
-TK_DEFINES  = -D__WIN32__ $(DEBUGDEFINES) $(THREADDEFINES)
+TK_DEFINES  = -D__WIN32__ $(DEBUGDEFINES) $(THREADDEFINES) SUPPORT_CONFIG_EMBEDDED
 
 ######################################################################
 # Compile flags

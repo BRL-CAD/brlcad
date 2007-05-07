@@ -6,8 +6,7 @@ dnl	to configure the system for the local environment.
 # RCS: @(#) $Id$
 
 AC_INIT([tk],[8.5])
-# AC_PREREQ(2.59)
-AC_PREREQ(2.52)
+AC_PREREQ(2.59)
 
 dnl This is only used when included from macosx/configure.ac
 m4_ifdef([SC_USE_CONFIG_HEADERS], [
@@ -28,7 +27,7 @@ m4_ifdef([SC_USE_CONFIG_HEADERS], [
 TK_VERSION=8.5
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=5
-TK_PATCH_LEVEL="a5"
+TK_PATCH_LEVEL="a6"
 VERSION=${TK_VERSION}
 LOCALES="cs de el en en_gb eo es es_ES fr it nl pl pt ru"
 
@@ -104,16 +103,15 @@ fi
 # It makes compiling go faster.  (This is only a performance feature.)
 #------------------------------------------------------------------------
 
-if test -z "$no_pipe"; then
-if test -n "$GCC"; then
-  AC_MSG_CHECKING([if the compiler understands -pipe])
-  OLDCC="$CC"  
-  CC="$CC -pipe"
-  AC_TRY_COMPILE(,,
-    AC_MSG_RESULT([yes]),
-    CC="$OLDCC"
-    AC_MSG_RESULT([no]))
-fi  
+if test -z "$no_pipe" && test -n "$GCC"; then
+    AC_CACHE_CHECK([if the compiler understands -pipe],
+	tcl_cv_cc_pipe, [
+	hold_cflags=$CFLAGS; CFLAGS="$CFLAGS -pipe"
+	AC_TRY_COMPILE(,, tcl_cv_cc_pipe=yes, tcl_cv_cc_pipe=no)
+	CFLAGS=$hold_cflags])
+    if test $tcl_cv_cc_pipe = yes; then
+	CFLAGS="$CFLAGS -pipe"
+    fi
 fi
 
 #------------------------------------------------------------------------
@@ -278,9 +276,9 @@ fi
 if test $tk_aqua = yes; then
     AC_DEFINE(MAC_OSX_TK, 1, [Are we building TkAqua?])
     LIBS="$LIBS -framework Carbon -framework IOKit"
-    CFLAGS="$CFLAGS"
+    CFLAGS="$CFLAGS -fpascal-strings"
     TK_WINDOWINGSYSTEM=AQUA
-    if test "${enable_symbols}" = yes; then
+    if test "${enable_symbols}" != no; then
         AC_DEFINE(TK_MAC_DEBUG, 1, [Are TkAqua debug messages enabled?])
     fi
 else
@@ -402,7 +400,7 @@ if test $tk_aqua = no; then
 		if test "$tcl_cv_ld_weak_l" = yes; then
 		    # On Darwin, weak link libXss if possible,
 		    # as it is only available on Tiger or later.
-		    XLIBSW="$XLIBSW -Wl,-weak-lXss -lXext"
+		    XLIBSW="$XLIBSW -weak-lXss -lXext"
 		else
 		    XLIBSW="$XLIBSW -lXss -lXext"
 		fi
@@ -424,29 +422,66 @@ fi
 if test $tk_aqua = no; then
     AC_MSG_CHECKING([whether to use xft])
     AC_ARG_ENABLE(xft,
-        AC_HELP_STRING([--enable-xft],
-            [use freetype/fontconfig/xft (default: off)]),
-        [enable_xft=$enableval], [enable_xft="no"])
+	AC_HELP_STRING([--enable-xft],
+	    [use freetype/fontconfig/xft (default: on)]),
+	[enable_xft=$enableval], [enable_xft="default"])
     XFT_CFLAGS=""
     XFT_LIBS=""
-    if test "$enable_xft" = "yes" ; then
-        XFT_CFLAGS=`xft-config --cflags 2>/dev/null` || enable_xft="no"
-        XFT_LIBS=`xft-config --libs 2>/dev/null` || enable_xft="no"
-        if test "$enable_xft" = "no" ; then
-            enable_xft=yes
-            XFT_CFLAGS=`pkg-config --cflags xft 2>/dev/null` || enable_xft="no"
-            XFT_LIBS=`pkg-config --libs xft 2>/dev/null` || enable_xft="no"
-        fi
-        if test "$enable_xft" == "no" ; then
-            AC_MSG_WARN([Can't find xft configuration])
-        fi
-    fi
-    AC_MSG_RESULT([$enable_xft])
-    if test $enable_xft = "yes" ; then
-        UNIX_FONT_OBJS=tkUnixRFont.o
-        AC_DEFINE(HAVE_XFT, 1, [Have we turned on XFT (antialiased fonts)?])
+    if test "$enable_xft" = "no" ; then
+	AC_MSG_RESULT([$enable_xft])
     else
-        UNIX_FONT_OBJS=tkUnixFont.o
+	found_xft="yes"
+	dnl make sure package configurator (xft-config or pkg-config
+	dnl says that xft is present.
+	XFT_CFLAGS=`xft-config --cflags 2>/dev/null` || found_xft="no"
+	XFT_LIBS=`xft-config --libs 2>/dev/null` || found_xft="no"
+	if test "$found_xft" = "no" ; then
+	    found_xft=yes
+	    XFT_CFLAGS=`pkg-config --cflags xft 2>/dev/null` || found_xft="no"
+	    XFT_LIBS=`pkg-config --libs xft 2>/dev/null` || found_xft="no"
+	fi
+	AC_MSG_RESULT([$found_xft])
+	dnl make sure that compiling against Xft header file doesn't bomb
+	if test "$found_xft" = "yes" ; then
+	    tk_oldCFlags=$CFLAGS
+	    CFLAGS="$CFLAGS $XINCLUDES $XFT_CFLAGS"
+	    tk_oldLibs=$LIBS
+	    LIBS="$tk_oldLIBS $XFT_LIBS $XLIBSW"
+	    AC_CHECK_HEADER(X11/Xft/Xft.h, [], [
+		found_xft=no
+	    ],[#include <X11/Xlib.h>])
+	    CFLAGS=$tk_oldCFlags
+	    LIBS=$tk_oldLibs
+	fi
+	dnl make sure that linking against Xft libraries finds freetype
+	if test "$found_xft" = "yes" ; then
+	    tk_oldCFlags=$CFLAGS
+	    CFLAGS="$CFLAGS $XINCLUDES $XFT_CFLAGS"
+	    tk_oldLibs=$LIBS
+	    LIBS="$tk_oldLIBS $XFT_LIBS $XLIBSW"
+	    AC_CHECK_LIB(Xft, FT_New_Face, [], [
+		found_xft=no
+	    ])
+	    CFLAGS=$tk_oldCFlags
+	    LIBS=$tk_oldLibs
+	fi
+	dnl print a warning if xft is unusable and was specifically requested
+	if test "$found_xft" = "no" ; then
+	    if test "$enable_xft" = "yes" ; then
+		AC_MSG_WARN([Can't find xft configuration, or xft is unusable])
+	    fi
+	    enable_xft=no
+	    XFT_CFLAGS=""
+	    XFT_LIBS=""
+	else
+            enable_xft=yes
+	fi
+    fi
+    if test $enable_xft = "yes" ; then
+	UNIX_FONT_OBJS=tkUnixRFont.o
+	AC_DEFINE(HAVE_XFT, 1, [Have we turned on XFT (antialiased fonts)?])
+    else
+	UNIX_FONT_OBJS=tkUnixFont.o
     fi
     AC_SUBST(XFT_CFLAGS)
     AC_SUBST(XFT_LIBS)
@@ -530,6 +565,7 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
     EXTRA_INSTALL="install-private-headers html-tk"
     EXTRA_BUILD_HTML='@ln -fs contents.htm $(HTML_INSTALL_DIR)/TkTOC.html' 
     EXTRA_INSTALL_BINARIES='@echo "Installing Info.plist to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) Tk-Info.plist "$(LIB_INSTALL_DIR)/Resources/Info.plist"'
+    EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing license.terms to $(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) "$(TOP_DIR)/license.terms" "$(LIB_INSTALL_DIR)/Resources"'
     if test $tk_aqua = yes; then
         EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing ${TK_RSRC_FILE} to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) "${TK_RSRC_FILE}" "$(LIB_INSTALL_DIR)/Resources"'
         EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing wish$(VERSION) script to $(INSTALL_ROOT)/'"${bindir}"'" && mkdir -p "$(INSTALL_ROOT)/'"${bindir}"'" && printf > "$(INSTALL_ROOT)/'"${bindir}"'/wish$(VERSION)" "#!/bin/sh\n\"\$$(dirname \$$0)'"`eval d="${bindir}"; echo "$d" | sed -e 's#/[^/][^/]*#/..#g'`"'$(bindir)/Wish\" \"\$$@\"" && chmod +x "$(INSTALL_ROOT)/'"${bindir}"'/wish$(VERSION)"'

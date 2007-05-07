@@ -28,7 +28,7 @@ Tk_Cursor
 Tk_Cursor
 \fBTk_GetCursorFromData(\fIinterp, tkwin, source, mask, width, height, xHot, yHot, fg, bg\fB)\fR
 .sp
-CONST char *
+const char *
 \fBTk_NameOfCursor(\fIdisplay, cursor\fB)\fR
 .sp
 \fBTk_FreeCursorFromObj(\fItkwin, objPtr\fB)\fR
@@ -46,9 +46,9 @@ modified to cache pointer to corresponding Tk_Cursor.
 .AP char *name in
 Same as \fIobjPtr\fR except description of cursor is passed as a string and
 resulting Tk_Cursor isn't cached.
-.AP "CONST char" *source in
+.AP "const char" *source in
 Data for cursor cursor, in standard cursor format.
-.AP "CONST char" *mask in
+.AP "const char" *mask in
 Data for mask cursor, in standard cursor format.
 .AP "int" width in
 Width of \fIsource\fR and \fImask\fR.

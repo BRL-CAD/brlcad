@@ -73,7 +73,7 @@ namespace eval http {
 
 # http::register --
 #
-#     See documentaion for details.
+#     See documentation for details.
 #
 # Arguments:
 #     proto           URL protocol prefix, e.g. https
@@ -108,7 +108,7 @@ proc http::unregister {proto} {
 
 # http::config --
 #
-#	See documentaion for details.
+#	See documentation for details.
 #
 # Arguments:
 #	args		Options parsed by the procedure.
@@ -187,7 +187,7 @@ proc http::Finish { token {errormsg ""} {skipCB 0}} {
 
 # http::reset --
 #
-#	See documentaion for details.
+#	See documentation for details.
 #
 # Arguments:
 #	token	Connection token.
@@ -940,7 +940,7 @@ proc http::Eof {token} {
 
 # http::wait --
 #
-#	See documentaion for details.
+#	See documentation for details.
 #
 # Arguments:
 #	token	Connection token.
@@ -962,7 +962,7 @@ proc http::wait {token} {
 
 # http::formatQuery --
 #
-#	See documentaion for details. Call http::formatQuery with an even
+#	See documentation for details. Call http::formatQuery with an even
 #	number of arguments, where the first is a name, the second is a value,
 #	the third is another name, and so on.
 #

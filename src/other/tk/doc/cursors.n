@@ -2,6 +2,8 @@
 '\" Copyright (c) 1998-2000 by Scriptics Corporation.
 '\" All rights reserved.
 '\" 
+'\" Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
+'\" 
 '\" RCS: @(#) $Id$
 '\" 
 '\"
@@ -62,6 +64,7 @@ lr_angle
 man
 middlebutton
 mouse
+none
 pencil
 pirate
 plus
@@ -96,6 +99,8 @@ umbrella
 ur_angle
 watch
 xterm
+
+The \fBnone\fR cursor can be specified to eliminate the cursor.
 .CE
 
 .SH "PORTABILITY ISSUES"
@@ -111,6 +116,7 @@ crosshair
 fleur
 ibeam
 icon
+none
 sb_h_double_arrow
 sb_v_double_arrow
 watch
@@ -128,26 +134,44 @@ size_we
 uparrow
 wait
 .CE
-The \fBno\fR cursor can be specified to eliminate the cursor.
 .RE
 
 .TP
-\fBMacintosh\fR
-On Macintosh systems, the following cursors are mapped to native cursors:
+\fBMac OS X\fR
+On Mac OS X systems, the following cursors are mapped to native cursors:
 .RS
 .CS
 arrow
 cross
 crosshair
 ibeam
+none
 plus
 watch
 xterm
 .CE
-And the following additional cursors are available:
+And the following additional native cursors are available:
 .CS
+copyarrow
+aliasarrow
+contextualmenuarrow
 text
 cross-hair
+closedhand
+openhand
+pointinghand
+resizeleft
+resizeright
+resizeleftright
+resizeup
+resizedown
+resizeupdown
+notallowed
+poof
+countinguphand
+countingdownhand
+countingupanddownhand
+spinning
 .CE
 .RE
 

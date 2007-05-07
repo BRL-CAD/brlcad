@@ -1,11 +1,8 @@
 /*
  * tclMacAETE.r --
  *
- *	This file creates the Apple Event Terminology resources 
- *	for use Tcl and Tk.  It is not used in the Simple Tcl shell
- *      since SIOUX does not support AppleEvents.  An example of its
- *      use in Tcl is the TclBGOnly project.  And it is used in all the
- *      Tk Shells.
+ *	This file creates the Apple Event Terminology resources
+ *	for use by Wish.app.
  *
  * Copyright (c) 1997 Sun Microsystems, Inc.
  *
@@ -27,8 +24,8 @@
 resource 'aete' (0, "Wish Suite") {
     0x01, 0x00, english, roman,
     {
-	"Required Suite", 
-	"Events that every application should support", 
+	"Required Suite",
+	"Events that every application should support",
 	'reqd', 1, 1,
 	{},
 	{},
@@ -41,12 +38,12 @@ resource 'aete' (0, "Wish Suite") {
 	    'TEXT', "Result", replyOptional, singleItem,
 	    notEnumerated, reserved, reserved, reserved, reserved,
 	    reserved, reserved, reserved, reserved, reserved,
-	    reserved, reserved, reserved, reserved, 
+	    reserved, reserved, reserved, reserved,
 	    'TEXT', "Script to execute", directParamRequired,
 	    singleItem, notEnumerated, changesState, reserved,
 	    reserved, reserved, reserved, reserved, reserved,
 	    reserved, reserved, reserved, reserved, reserved,
-	    reserved, 
+	    reserved,
 	    {},
 	},
 	{},

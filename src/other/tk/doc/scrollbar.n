@@ -341,5 +341,8 @@ grid columnconfigure .tl 0 -weight 1
 grid rowconfigure .tl 0 -weight 1
 .CE
 
+.SH "SEE ALSO"
+ttk_scrollbar(n)
+
 .SH KEYWORDS
 scrollbar, widget

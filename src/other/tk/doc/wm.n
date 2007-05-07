@@ -50,38 +50,74 @@ returned).
 \fBwm attributes \fIwindow\fR ?\fBoption\fR?
 .TP
 \fBwm attributes \fIwindow\fR ?\fBoption value option value...\fR?
-.RS
 This subcommand returns or sets platform specific attributes associated
 with a window. The first form returns a list of the platform specific
 flags and their values. The second form returns the value for the
 specific option. The third form sets one or more of the values. The
 values are as follows:
 .PP
-On Windows, \fB\-disabled\fR gets or sets whether the window is in a
-disabled state. \fB\-toolwindow\fR gets or sets the style of the window
-to toolwindow (as defined in the MSDN). \fB\-topmost\fR gets or sets
-whether this is a topmost window (displays above all other windows).
+On Windows, the following attributes may be set.
+.RS
+.TP
+\fB\-disabled\fR
+Specifies whether the window is in a disabled state.
+.TP
+\fB\-toolwindow\fR
+Specifies a toolwindow style window (as defined in the MSDN).
+.TP
+\fB\-topmost\fR
+Specifies whether this is a topmost window (displays above all other windows).
 .VS 8.5
-The
-\fB\-alpha\fR sets the alpha transparency level of the toplevel.  It accepts
-a value from \fB0.0\fR (fully transparent) to \fB1.0\fR (opaque).  Values
-outside that range will be constrained.  This is supported on Windows
-2000/XP+.  Where not supported, the \fB\-alpha\fR value remains at
-\fB1.0\fR.
-The
-\fB\-fullscreen\fR attribute will place the window in a mode that
-takes up the entire screen, has no borders, and covers the Start
-menu and taskbar.
+.TP
+\fB\-alpha\fR
+Specifies the alpha transparency level of the toplevel.
+It accepts a value from \fB0.0\fR (fully transparent) to \fB1.0\fR
+(opaque).  Values outside that range will be constrained.  This is
+supported on Windows 2000/XP+.  Where not supported, the \fB\-alpha\fR
+value remains at \fB1.0\fR.
+.TP
+\fB\-transparentcolor\fR
+Specifies the transparent color index of the toplevel.  It takes any color
+value accepted by \fBTk_GetColor\fR.  If the empty string is specified
+(default), no transparent color is used.  This is supported on Windows
+2000/XP+.  Where not supported, the \fB\-transparentcolor\fR value remains
+at \fB{}\fR.
+.TP
+\fB\-fullscreen\fR
+Places the window in a mode that takes up the entire screen, has no
+borders, and covers the Start menu and taskbar.
+.RE
 .VE 8.5
 .PP
-On Mac OS X, \fB\-modified\fR gets or sets the modification state of the
-window (determines whether the window close widget contains the modification
-indicator and whether the proxy icon is draggable).
-\fB\-titlepath\fR gets or sets the path of the file referenced as
-the window proxy icon (which can be dragged and dropped in lieu of the file's
-finder icon). \fB\-alpha\fR sets the alpha transparency level of the window,
-it accepts a value from \fB0.0\fR (fully transparent) to \fB1.0\fR (opaque),
+On Mac OS X, the following attributes may be set.
+.RS
+.TP
+\fB\-modified\fR
+Specifies the modification state of the window (determines whether the
+window close widget contains the modification indicator and whether the
+proxy icon is draggable).
+.TP
+\fB\-titlepath\fR
+Specifies the path of the file referenced as the window proxy icon (which
+can be dragged and dropped in lieu of the file's finder icon).
+.TP
+\fB\-alpha\fR
+Specifies the alpha transparency level of the window.
+It accepts a value from \fB0.0\fR (fully transparent) to \fB1.0\fR (opaque),
 values outside that range will be constrained.
+.TP
+\fB\-topmost\fR
+Specifies whether this is a topmost window (displays above all other windows).
+.TP
+\fB\-transparent\fR
+Makes the window content area transparent and turns off the window shadow. For
+the transparency to be effecive, the toplevel background needs to be set to a
+color with some alpha, e.g. "systemTransparent".
+.TP
+\fB\-fullscreen\fR
+Places the window in a mode that takes up the entire main screen and hides
+the dock and menu bar.
+.RE
 .PP
 On X11, the following attributes may be set.
 These are not supported by all window managers,
@@ -89,16 +125,16 @@ and will have no effect under older WMs.
 .\" See http://www.freedesktop.org/Standards/wm-spec
 .RS
 .TP
-\fB-topmost\fP
+\fB-topmost\fR
 Requests that this window should be kept above
-all other windows that do not also have the \fB-topmost\fP
+all other windows that do not also have the \fB-topmost\fR
 attribute set.
 .TP
-\fB-zoomed\fP
+\fB-zoomed\fR
 Requests that the window should be maximized.
-This is the same as \fB[wm state zoomed]\fP on Windows and Mac OS X.
+This is the same as \fB[wm state zoomed]\fR on Windows and Mac OS X.
 .TP
-\fB-fullscreen\fP
+\fB-fullscreen\fR
 Requests that the window should fill the entire screen 
 and have no window decorations.
 .RE
@@ -108,7 +144,6 @@ Querying the value of an attribute returns the current state,
 which will not be the same as the value most recently set
 if the window manager has not yet processed the request
 or if it does not support the attribute.
-.RE
 .TP
 \fBwm client \fIwindow\fR ?\fIname\fR?
 If \fIname\fR is specified, this command stores \fIname\fR (which
@@ -322,7 +357,7 @@ If \fB\-default\fR is specified, this is applied to all future created
 toplevels as well.  The data in the images is taken as a snapshot at the
 time of invocation.  If the images are later changed, this is not
 reflected to the titlebar icons.  Multiple images are accepted to allow
-different images sizes (eg, 16x16 and 32x32) to be provided.  The window
+different images sizes (e.g., 16x16 and 32x32) to be provided. The window
 manager may scale provided icons to an appropriate size.
 .PP
 On Windows, the images are packed into a Windows icon structure.
@@ -334,7 +369,7 @@ most modern window managers support.  A \fBwm iconbitmap\fR may exist
 simultaneously.  It is recommended to use not more than 2 icons, placing
 the larger icon first.
 .PP
-On Macintosh, this is currently does nothing.
+On Macintosh, this currently does nothing.
 .VE 8.5
 .RE
 .TP
@@ -639,9 +674,7 @@ set y [expr {([winfo screenheight .]\-[winfo height .msg])/2}]
 \fBwm title\fR     .msg "Dialog demo"
 \fBwm deiconify\fR .msg
 .CE
-
 .SH "SEE ALSO"
 toplevel(n), winfo(n)
-
 .SH KEYWORDS
 aspect ratio, deiconify, focus model, geometry, grid, group, icon, iconify, increments, position, size, title, top-level window, units, window manager

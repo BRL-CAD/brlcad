@@ -242,28 +242,30 @@ proc ::safe::tkTopLevel {slave display} {
     set msg "Untrusted Tcl applet ($slave)"
     wm title $w $msg
 
-    # Control frame
+    # Control frame (we must create a style for it)
+    ttk::style layout TWarningFrame {WarningFrame.border -sticky nswe}
+    ttk::style configure TWarningFrame -background red
+
     set wc $w.fc
-    frame $wc -bg red -borderwidth 3 -relief ridge
+    ttk::frame $wc -relief ridge -borderwidth 4 -style TWarningFrame
 
     # We will destroy the interp when the window is destroyed
     bindtags $wc [concat Safe$wc [bindtags $wc]]
     bind Safe$wc <Destroy> [list ::safe::tkDelete %W $w $slave]
 
-    label $wc.l -text $msg -padx 2 -pady 0 -anchor w
+    ttk::label $wc.l -text $msg -anchor w
 
     # We want the button to be the last visible item
     # (so be packed first) and at the right and not resizing horizontally
 
     # frame the button so it does not expand horizontally
     # but still have the default background instead of red one from the parent
-    frame  $wc.fb -bd 0
-    button $wc.fb.b -text "Delete" \
-	    -bd 1  -padx 2 -pady 0 -highlightthickness 0 \
+    ttk::frame  $wc.fb -borderwidth 0
+    ttk::button $wc.fb.b -text "Delete" \
 	    -command [list ::safe::tkDelete $w $w $slave]
     pack $wc.fb.b -side right -fill both
     pack $wc.fb -side right -fill both -expand 1
-    pack $wc.l -side left  -fill both -expand 1
+    pack $wc.l -side left -fill both -expand 1 -ipady 2
     pack $wc -side bottom -fill x
 
     # Container frame

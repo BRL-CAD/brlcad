@@ -6,8 +6,8 @@
  * Copyright (c) 1988 The Regents of the University of California.
  * Copyright (c) 1994 Sun Microsystems, Inc.
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
@@ -15,9 +15,9 @@
 #include "tclInt.h"
 
 /*
- * The table below is used to convert from ASCII digits to a
- * numerical equivalent.  It maps from '0' through 'z' to integers
- * (100 for non-digit characters).
+ * The table below is used to convert from ASCII digits to a numerical
+ * equivalent. It maps from '0' through 'z' to integers (100 for non-digit
+ * characters).
  */
 
 static char cvtIn[] = {
@@ -39,11 +39,10 @@ static char cvtIn[] = {
  *	Convert an ASCII string into an integer.
  *
  * Results:
- *	The return value is the integer equivalent of string.  If endPtr
- *	is non-NULL, then *endPtr is filled in with the character
- *	after the last one that was part of the integer.  If string
- *	doesn't contain a valid integer value, then zero is returned
- *	and *endPtr is set to string.
+ *	The return value is the integer equivalent of string. If endPtr is
+ *	non-NULL, then *endPtr is filled in with the character after the last
+ *	one that was part of the integer. If string doesn't contain a valid
+ *	integer value, then zero is returned and *endPtr is set to string.
  *
  * Side effects:
  *	None.
@@ -52,20 +51,18 @@ static char cvtIn[] = {
  */
 
 unsigned long int
-strtoul(string, endPtr, base)
-    CONST char *string;		/* String of ASCII digits, possibly
-				 * preceded by white space.  For bases
-				 * greater than 10, either lower- or
-				 * upper-case digits may be used.
-				 */
-    char **endPtr;		/* Where to store address of terminating
+strtoul(
+    CONST char *string,		/* String of ASCII digits, possibly preceded
+				 * by white space. For bases greater than 10,
+				 * either lower- or upper-case digits may be
+				 * used. */
+    char **endPtr,		/* Where to store address of terminating
 				 * character, or NULL. */
-    int base;			/* Base for conversion.  Must be less
-				 * than 37.  If 0, then the base is chosen
-				 * from the leading characters of string:
-				 * "0x" means hex, "0" means octal, anything
-				 * else means decimal.
-				 */
+    int base)			/* Base for conversion.  Must be less than 37.
+				 * If 0, then the base is chosen from the
+				 * leading characters of string: "0x" means
+				 * hex, "0" means octal, anything else means
+				 * decimal. */
 {
     register CONST char *p;
     register unsigned long int result = 0;
@@ -92,31 +89,29 @@ strtoul(string, endPtr, base)
     }
 
     /*
-     * If no base was provided, pick one from the leading characters
-     * of the string.
+     * If no base was provided, pick one from the leading characters of the
+     * string.
      */
     
-    if (base == 0)
-    {
+    if (base == 0) {
 	if (*p == '0') {
 	    p += 1;
 	    if ((*p == 'x') || (*p == 'X')) {
 		p += 1;
 		base = 16;
 	    } else {
-
 		/*
-		 * Must set anyDigits here, otherwise "0" produces a
-		 * "no digits" error.
+		 * Must set anyDigits here, otherwise "0" produces a "no
+		 * digits" error.
 		 */
 
 		anyDigits = 1;
 		base = 8;
 	    }
+	} else {
+	    base = 10;
 	}
-	else base = 10;
     } else if (base == 16) {
-
 	/*
 	 * Skip a leading "0x" from hex numbers.
 	 */
@@ -127,12 +122,13 @@ strtoul(string, endPtr, base)
     }
 
     /*
-     * Sorry this code is so messy, but speed seems important.  Do
-     * different things for base 8, 10, 16, and other.
+     * Sorry this code is so messy, but speed seems important. Do different
+     * things for base 8, 10, 16, and other.
      */
 
     if (base == 8) {
 	unsigned long maxres = ULONG_MAX >> 3;
+
 	for ( ; ; p += 1) {
 	    digit = *p - '0';
 	    if (digit > 7) {
@@ -146,6 +142,7 @@ strtoul(string, endPtr, base)
 	}
     } else if (base == 10) {
 	unsigned long maxres = ULONG_MAX / 10;
+
 	for ( ; ; p += 1) {
 	    digit = *p - '0';
 	    if (digit > 9) {
@@ -159,6 +156,7 @@ strtoul(string, endPtr, base)
 	}
     } else if (base == 16) {
 	unsigned long maxres = ULONG_MAX >> 4;
+
 	for ( ; ; p += 1) {
 	    digit = *p - '0';
 	    if (digit > ('z' - '0')) {
@@ -174,8 +172,9 @@ strtoul(string, endPtr, base)
 	    result += digit;
 	    anyDigits = 1;
 	}
-    } else if ( base >= 2 && base <= 36 ) {
+    } else if (base >= 2 && base <= 36) {
 	unsigned long maxres = ULONG_MAX / base;
+
 	for ( ; ; p += 1) {
 	    digit = *p - '0';
 	    if (digit > ('z' - '0')) {

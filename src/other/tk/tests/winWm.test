@@ -235,7 +235,7 @@ test winWm-6.1 {wm attributes} win {
     destroy .t
     toplevel .t
     wm attributes .t
-} {-alpha 1.0 -disabled 0 -fullscreen 0 -toolwindow 0 -topmost 0}
+} {-alpha 1.0 -transparentcolor {} -disabled 0 -fullscreen 0 -toolwindow 0 -topmost 0}
 test winWm-6.2 {wm attributes} win {
     destroy .t
     toplevel .t
@@ -246,7 +246,7 @@ test winWm-6.3 {wm attributes} win {
     destroy .t
     toplevel .t
     list [catch {wm attributes .t -foo} msg] $msg
-} {1 {wrong # args: should be "wm attributes window ?-alpha ?double?? ?-disabled ?bool?? ?-fullscreen ?bool?? ?-toolwindow ?bool?? ?-topmost ?bool??"}}
+} {1 {wrong # args: should be "wm attributes window ?-alpha ?double?? ?-transparentcolor ?color?? ?-disabled ?bool?? ?-fullscreen ?bool?? ?-toolwindow ?bool?? ?-topmost ?bool??"}}
 
 test winWm-6.4 {wm attributes -alpha} win {
     # Expect this to return all 1.0 {} on pre-2K/XP
@@ -290,6 +290,27 @@ test winWm-6.6 {wm attributes -alpha} win {
 	}
     }
 } {}
+
+test winWm-6.7 {wm attributes -transparentcolor} win {
+    # Expect this to return all "" on pre-2K/XP
+    destroy .t
+    toplevel .t
+    set res {}
+    lappend res [wm attributes .t -transparentcolor]
+    # we don't return on set yet
+    lappend res [wm attributes .t -trans black]
+    lappend res [wm attributes .t -trans]
+    lappend res [wm attributes .t -trans "#FFFFFF"]
+    lappend res [wm attributes .t -trans]
+    destroy .t
+    set res
+} [list {} {} black {} "#FFFFFF"]
+
+test winWm-6.8 {wm attributes -transparentcolor} win {
+    destroy .t
+    toplevel .t
+    list [catch {wm attributes .t -tr foo} msg] $msg
+} {1 {unknown color name "foo"}}
 
 test winWm-7.1 {deiconify on an unmapped toplevel\
         will raise the window and set the focus} win {

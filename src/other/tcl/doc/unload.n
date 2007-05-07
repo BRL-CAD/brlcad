@@ -41,7 +41,7 @@ they are treated as switches.  The following switches are
 currently supported:
 .TP
 \fB\-nocomplain\fR
-Supresses all error messages. If this switch is given \fBunload\fR will
+Suppresses all error messages. If this switch is given, \fBunload\fR will
 never report an error.
 .TP
 \fB\-keeplibrary\fR
@@ -59,7 +59,7 @@ loaded into normal (trusted) interpreters while the second describes how many
 times the library has been loaded into safe interpreters. As a file containing
 a shared library can be loaded only once by Tcl (with the first \fBload\fR
 call on the file), these counters track how many interpreters use the library.
-Each subsequent call to \fBload\fR after the first, simply increaments the
+Each subsequent call to \fBload\fR after the first simply increments the
 proper reference count.
 .PP
 \fBunload\fR works in the opposite direction. As a first step, \fBunload\fR

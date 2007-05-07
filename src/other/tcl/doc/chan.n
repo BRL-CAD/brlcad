@@ -1,5 +1,5 @@
 '\" 
-'\" Copyright (c) 2005 Donal K. Fellows
+'\" Copyright (c) 2005-2006 Donal K. Fellows
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -184,11 +184,11 @@ of a line may be represented differently on different platforms, or
 even for different devices on the same platform.  For example, under
 UNIX newlines are used in files, whereas carriage-return-linefeed
 sequences are normally used in network connections.  On input (i.e.,
-with \fBchan gets\fP and \fBchan read\fP) the Tcl I/O system
+with \fBchan gets\fR and \fBchan read\fR) the Tcl I/O system
 automatically translates the external end-of-line representation into
-newline characters.  Upon output (i.e., with \fBchan puts\fP), the I/O
+newline characters.  Upon output (i.e., with \fBchan puts\fR), the I/O
 system translates newlines to the external end-of-line representation.
-The default translation mode, \fBauto\fP, handles all the common cases
+The default translation mode, \fBauto\fR, handles all the common cases
 automatically, but the \fB\-translation\fR option provides explicit
 control over the end of line translations.
 .RS
@@ -206,8 +206,8 @@ currently supported:
 \fBauto\fR
 .
 As the input translation mode, \fBauto\fR treats any of newline
-(\fBlf\fP), carriage return (\fBcr\fP), or carriage return followed by
-a newline (\fBcrlf\fP) as the end of line representation.  The end of
+(\fBlf\fR), carriage return (\fBcr\fR), or carriage return followed by
+a newline (\fBcrlf\fR) as the end of line representation.  The end of
 line representation can even change from line-to-line, and all cases
 are translated to a newline.  As the output translation mode,
 \fBauto\fR chooses a platform specific representation; for sockets on
@@ -219,7 +219,7 @@ for both input and output.
 \fBbinary\fR 
 .
 No end-of-line translations are performed.  This is nearly identical
-to \fBlf\fP mode, except that in addition \fBbinary\fP mode also sets
+to \fBlf\fR mode, except that in addition \fBbinary\fR mode also sets
 the end-of-file character to the empty string (which disables it) and
 sets the encoding to \fBbinary\fR (which disables encoding filtering).
 See the description of \fB\-eofchar\fR and \fB\-encoding\fR for more
@@ -229,17 +229,17 @@ information.
 .
 The end of a line in the underlying file or device is represented by a
 single carriage return character.  As the input translation mode,
-\fBcr\fP mode converts carriage returns to newline characters.  As the
-output translation mode, \fBcr\fP mode translates newline characters
+\fBcr\fR mode converts carriage returns to newline characters.  As the
+output translation mode, \fBcr\fR mode translates newline characters
 to carriage returns.
 .TP
 \fBcrlf\fR
 .
 The end of a line in the underlying file or device is represented by a
 carriage return character followed by a linefeed character.  As the
-input translation mode, \fBcrlf\fP mode converts
+input translation mode, \fBcrlf\fR mode converts
 carriage-return-linefeed sequences to newline characters.  As the
-output translation mode, \fBcrlf\fP mode translates newline characters
+output translation mode, \fBcrlf\fR mode translates newline characters
 to carriage-return-linefeed sequences.  This mode is typically used on
 Windows platforms and for network connections.
 .TP
@@ -262,38 +262,38 @@ buffering too much data in main memory when copying large files to
 slow destinations like network sockets.
 .RS
 .PP
-The \fBchan copy\fP command transfers data from \fIinputChan\fR until
-end of file or \fIsize\fP bytes have been transferred. If no
-\fB\-size\fP argument is given, then the copy goes until end of file.
+The \fBchan copy\fR command transfers data from \fIinputChan\fR until
+end of file or \fIsize\fR bytes have been transferred. If no
+\fB\-size\fR argument is given, then the copy goes until end of file.
 All the data read from \fIinputChan\fR is copied to \fIoutputChan\fR.
-Without the \fB\-command\fP option, \fBchan copy\fP blocks until the
+Without the \fB\-command\fR option, \fBchan copy\fR blocks until the
 copy is complete and returns the number of bytes written to
 \fIoutputChan\fR.
 .PP
-The \fB\-command\fP argument makes \fBchan copy\fP work in the
+The \fB\-command\fR argument makes \fBchan copy\fR work in the
 background.  In this case it returns immediately and the
-\fIcallback\fP is invoked later when the copy completes.  The
-\fIcallback\fP is called with one or two additional arguments that
+\fIcallback\fR is invoked later when the copy completes.  The
+\fIcallback\fR is called with one or two additional arguments that
 indicates how many bytes were written to \fIoutputChan\fR.  If an
 error occurred during the background copy, the second argument is the
 error string associated with the error.  With a background copy, it is
 not necessary to put \fIinputChan\fR or \fIoutputChan\fR into
-non-blocking mode; the \fBchan copy\fP command takes care of that
+non-blocking mode; the \fBchan copy\fR command takes care of that
 automatically.  However, it is necessary to enter the event loop by
-using the \fBvwait\fP command or by using Tk.
+using the \fBvwait\fR command or by using Tk.
 .PP
 You are not allowed to do other I/O operations with \fIinputChan\fR or
 \fIoutputChan\fR during a background \fBchan copy\fR.  If either
 \fIinputChan\fR or \fIoutputChan\fR get closed while the copy is in
 progress, the current copy is stopped and the command callback is
-\fInot\fP made.  If \fIinputChan\fR is closed, then all data already
+\fInot\fR made.  If \fIinputChan\fR is closed, then all data already
 queued for \fIoutputChan\fR is written out.
 .PP
 Note that \fIinputChan\fR can become readable during a background
-copy.  You should turn off any \fBchan event\fP or \fBfileevent\fR
+copy.  You should turn off any \fBchan event\fR or \fBfileevent\fR
 handlers during a background copy so those handlers do not interfere
 with the copy.  Any I/O attempted by a \fBchan event\fR or
-\fBfileevent\fP handler will get a "channel busy" error.
+\fBfileevent\fR handler will get a "channel busy" error.
 .PP
 \fBChan copy\fR translates end-of-line sequences in \fIinputChan\fR
 and \fIoutputChan\fR according to the \fB\-translation\fR option for
@@ -301,8 +301,8 @@ these channels (see \fBchan configure\fR above).  The translations
 mean that the number of bytes read from \fIinputChan\fR can be
 different than the number of bytes written to \fIoutputChan\fR.  Only
 the number of bytes written to \fIoutputChan\fR is reported, either as
-the return value of a synchronous \fBchan copy\fP or as the argument
-to the callback for an asynchronous \fBchan copy\fP.
+the return value of a synchronous \fBchan copy\fR or as the argument
+to the callback for an asynchronous \fBchan copy\fR.
 .PP
 \fBChan copy\fR obeys the encodings and character translations
 configured for the channels. This means that the incoming characters
@@ -352,7 +352,7 @@ interpreter, even if the channel was shared with and/or was moved into
 a different interpreter. Each reflected channel also knows the thread
 it was created in, and executes its handler command only in that
 thread, even if the channel was moved into a different thread. To this
-end all invokations of the handler are forwarded to the original
+end all invocations of the handler are forwarded to the original
 thread by posting special events to it. This means that the original
 thread (i.e. the thread that executed the \fBchan create\fR command)
 must have an active event loop, i.e. it must be able to process such
@@ -384,7 +384,7 @@ within the safe interpreter.
 .
 Test whether the last input operation on the channel called
 \fIchannelId\fR failed because the end of the data stream was reached,
-returning 1 if end-fo-file was reached, and 0 otherwise.
+returning 1 if end-of-file was reached, and 0 otherwise.
 .TP
 \fBchan event \fIchannelId event\fR ?\fIscript\fR?
 .
@@ -492,6 +492,16 @@ the partial-line-but-nonblocking case can be distinguished with the
 Produces a list of all channel names. If \fIpattern\fR is specified,
 only those channel names that match it (according to the rules of
 \fBstring match\fR) will be returned.
+.TP
+\fBchan pending \fImode channelId\fR
+.
+Depending on whether \fImode\fR is "input" or "output", returns the number of 
+bytes of input or output (respectively) currently buffered 
+internally for \fIchannelId\fR (especially useful in a readable event 
+callback to impose application-specific limits on input line lengths to avoid
+a potential denial-of-service attack where a hostile user crafts
+an extremely long line that exceeds the available memory to buffer it).
+Returns -1 if the channel was not opened for the mode in question.
 .TP
 \fBchan postevent \fIchannelId eventSpec\fR
 .
@@ -673,6 +683,38 @@ Sets the byte length of the underlying data stream for the channel
 named \fIchannelId\fR to be \fIlength\fR (or to the current byte
 offset within the underlying data stream if \fIlength\fR is
 omitted). The channel is flushed before truncation.
+.SH EXAMPLE
+This opens a file using a known encoding (CP1252, a very common encoding
+on Windows), searches for a string, rewrites that part, and truncates the
+file after a further two lines.
+.CS
+set f [open somefile.txt r+]
+\fBchan configure\fR $f -encoding cp1252
+set offset 0
+
+\fI# Search for string "FOOBAR" in the file\fR
+while {[\fBchan gets\fR $f line] >= 0} {
+   set idx [string first FOOBAR $line]
+   if {$idx > -1} {
+      \fI# Found it; rewrite line\fR
+
+      \fBchan seek\fR $f [expr {$offset + $idx}]
+      \fBchan puts\fR -nonewline $f BARFOO
+
+      \fI# Skip to end of following line, and truncate\fR
+      \fBchan gets\fR $f
+      \fBchan gets\fR $f
+      \fBchan truncate\fR $f
+
+      \fI# Stop searching the file now\fR
+      break
+   }
+
+   \fI# Save offset of start of next line for later\fR
+   set offset [\fBchan tell\fR $f]
+}
+\fBchan close\fR $f
+.CE
 .SH "SEE ALSO"
 close(n), eof(n), fblocked(n), fconfigure(n), fcopy(n), file(n),
 fileevent(n), flush(n), gets(n), open(n), puts(n), read(n), seek(n),

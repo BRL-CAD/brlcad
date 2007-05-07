@@ -24,7 +24,7 @@ static void	DupFsPathInternalRep(Tcl_Obj *srcPtr, Tcl_Obj *copyPtr);
 static void	FreeFsPathInternalRep(Tcl_Obj *pathPtr);
 static void	UpdateStringOfFsPath(Tcl_Obj *pathPtr);
 static int	SetFsPathFromAny(Tcl_Interp *interp, Tcl_Obj *pathPtr);
-static int	FindSplitPos(CONST char *path, int separator);
+static int	FindSplitPos(const char *path, int separator);
 static int	IsSeparatorOrNull(int ch);
 static Tcl_Obj* GetExtension(Tcl_Obj *pathPtr);
 
@@ -158,7 +158,7 @@ TclFSNormalizeAbsolutePath(
 				 * of normalization. */
 {
     ClientData clientData = NULL;
-    CONST char *dirSep, *oldDirSep;
+    const char *dirSep, *oldDirSep;
     int first = 1;		/* Set to zero once we've passed the first
 				 * directory separator - we can't use '..' to
 				 * remove the volume in a path. */
@@ -166,6 +166,21 @@ TclFSNormalizeAbsolutePath(
     dirSep = TclGetString(pathPtr);
 
     if (tclPlatform == TCL_PLATFORM_WINDOWS) {
+	if (   (dirSep[0] == '/' || dirSep[0] == '\\')
+	    && (dirSep[1] == '/' || dirSep[1] == '\\')
+	    && (dirSep[2] == '?')
+	    && (dirSep[3] == '/' || dirSep[3] == '\\')) {
+	    /* NT extended path */
+	    dirSep += 4;
+	    
+	    if (   (dirSep[0] == 'U' || dirSep[0] == 'u')
+		&& (dirSep[1] == 'N' || dirSep[1] == 'n')
+		&& (dirSep[2] == 'C' || dirSep[2] == 'c')
+		&& (dirSep[3] == '/' || dirSep[3] == '\\')) {
+		/* NT extended UNC path */
+		dirSep += 4;
+	    }
+	}
 	if (dirSep[0] != 0 && dirSep[1] == ':' &&
 		(dirSep[2] == '/' || dirSep[2] == '\\')) {
 	    /* Do nothing */
@@ -216,7 +231,7 @@ TclFSNormalizeAbsolutePath(
 		int curLen;
 
 		if (retVal == NULL) {
-		    CONST char *path = TclGetString(pathPtr);
+		    const char *path = TclGetString(pathPtr);
 		    retVal = Tcl_NewStringObj(path, dirSep - path);
 		    Tcl_IncrRefCount(retVal);
 		}
@@ -241,7 +256,7 @@ TclFSNormalizeAbsolutePath(
 		 */
 
 		if (retVal == NULL) {
-		    CONST char *path = TclGetString(pathPtr);
+		    const char *path = TclGetString(pathPtr);
 		    retVal = Tcl_NewStringObj(path, dirSep - path);
 		    Tcl_IncrRefCount(retVal);
 		}
@@ -266,7 +281,7 @@ TclFSNormalizeAbsolutePath(
 			     * the link onto the directory of the path so far.
 			     */
 
-			    CONST char *path =
+			    const char *path =
 				    Tcl_GetStringFromObj(retVal, &curLen);
 
 			    while (--curLen >= 0) {
@@ -382,7 +397,7 @@ TclFSNormalizeAbsolutePath(
 
     if (tclPlatform == TCL_PLATFORM_WINDOWS) {
 	int len;
-	CONST char *path = Tcl_GetStringFromObj(retVal, &len);
+	const char *path = Tcl_GetStringFromObj(retVal, &len);
 
 	if (len == 2 && path[0] != 0 && path[1] == ':') {
 	    if (Tcl_IsShared(retVal)) {
@@ -548,7 +563,7 @@ TclPathPart(
 		 * the standardPath code.
 		 */
 
-		CONST char *rest = TclGetString(fsPathPtr->normPathPtr);
+		const char *rest = TclGetString(fsPathPtr->normPathPtr);
 
 		if (strchr(rest, '/') != NULL) {
 		    goto standardPath;
@@ -573,7 +588,7 @@ TclPathPart(
 		 * we don't, and instead just use the standardPath code.
 		 */
 
-		CONST char *rest = TclGetString(fsPathPtr->normPathPtr);
+		const char *rest = TclGetString(fsPathPtr->normPathPtr);
 
 		if (strchr(rest, '/') != NULL) {
 		    goto standardPath;
@@ -588,7 +603,7 @@ TclPathPart(
 	    case TCL_PATH_EXTENSION:
 		return GetExtension(fsPathPtr->normPathPtr);
 	    case TCL_PATH_ROOT: {
-		CONST char *fileName, *extension;
+		const char *fileName, *extension;
 		int length;
 
 		fileName = Tcl_GetStringFromObj(fsPathPtr->normPathPtr,
@@ -658,7 +673,7 @@ TclPathPart(
 	    return GetExtension(pathPtr);
 	} else if (portion == TCL_PATH_ROOT) {
 	    int length;
-	    CONST char *fileName, *extension;
+	    const char *fileName, *extension;
 
 	    fileName = Tcl_GetStringFromObj(pathPtr, &length);
 	    extension = TclGetExtension(fileName);
@@ -716,7 +731,7 @@ TclPathPart(
 		resultPtr = Tcl_FSJoinPath(splitPtr, splitElements - 1);
 	    } else if (splitElements == 0 ||
 		    (Tcl_FSGetPathType(pathPtr) == TCL_PATH_RELATIVE)) {
-		resultPtr = Tcl_NewStringObj(".", 1);
+		TclNewLiteralStringObj(resultPtr, ".");
 	    } else {
 		Tcl_ListObjIndex(NULL, splitPtr, 0, &resultPtr);
 	    }
@@ -735,7 +750,7 @@ static Tcl_Obj *
 GetExtension(
     Tcl_Obj *pathPtr)
 {
-    CONST char *tail, *extension;
+    const char *tail, *extension;
     Tcl_Obj *ret;
 
     tail = TclGetString(pathPtr);
@@ -849,7 +864,7 @@ Tcl_FSJoinPath(
 	    Tcl_ListObjIndex(NULL, listObj, i+1, &tail);
 	    type = TclGetPathType(tail, NULL, NULL, NULL);
 	    if (type == TCL_PATH_RELATIVE) {
-		CONST char *str;
+		const char *str;
 		int len;
 
 		str = Tcl_GetStringFromObj(tail, &len);
@@ -902,7 +917,7 @@ Tcl_FSJoinPath(
 		}
 		return tail;
 	    } else {
-		CONST char *str;
+		const char *str;
 		int len;
 
 		str = Tcl_GetStringFromObj(tail, &len);
@@ -1175,7 +1190,7 @@ IsSeparatorOrNull(
 
 static int
 FindSplitPos(
-    CONST char *path,
+    const char *path,
     int separator)
 {
     int count = 0;
@@ -1226,7 +1241,7 @@ FindSplitPos(
 Tcl_Obj *
 TclNewFSPathObj(
     Tcl_Obj *dirPtr,
-    CONST char *addStrRep,
+    const char *addStrRep,
     int len)
 {
     FsPath *fsPathPtr;
@@ -1294,7 +1309,7 @@ TclFSMakePathRelative(
     Tcl_Obj *cwdPtr)		/* Make it relative to this. */
 {
     int cwdLen, len;
-    CONST char *tempStr;
+    const char *tempStr;
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&tclFsDataKey);
 
     if (pathPtr->typePtr == &tclFsPathType) {
@@ -1312,7 +1327,7 @@ TclFSMakePathRelative(
 		    if (pathPtr->typePtr->updateStringProc == NULL) {
 			if (interp != NULL) {
 			    Tcl_ResetResult(interp);
-			    Tcl_AppendResult(interp, "can't find object",
+			    Tcl_AppendResult(interp, "can't find object"
 				    "string representation", (char *) NULL);
 			}
 			return NULL;
@@ -1434,7 +1449,7 @@ TclFSMakePathFromNormalized(
 	    if (pathPtr->typePtr->updateStringProc == NULL) {
 		if (interp != NULL) {
 		    Tcl_ResetResult(interp);
-		    Tcl_AppendResult(interp, "can't find object",
+		    Tcl_AppendResult(interp, "can't find object"
 			    "string representation", (char *) NULL);
 		}
 		return TCL_ERROR;
@@ -1624,7 +1639,7 @@ Tcl_FSGetTranslatedPath(
  *---------------------------------------------------------------------------
  */
 
-CONST char *
+const char *
 Tcl_FSGetTranslatedStringPath(
     Tcl_Interp *interp,
     Tcl_Obj *pathPtr)
@@ -1633,11 +1648,12 @@ Tcl_FSGetTranslatedStringPath(
 
     if (transPtr != NULL) {
 	int len;
-	CONST char *result, *orig;
+	const char* orig;
+	char *result;
 
 	orig = Tcl_GetStringFromObj(transPtr, &len);
-	result = (char*) ckalloc((unsigned)(len+1));
-	memcpy((VOID*) result, (VOID*) orig, (size_t) (len+1));
+	result = (char *) ckalloc((unsigned)(len+1));
+	memcpy(result, orig, (size_t) (len+1));
 	TclDecrRefCount(transPtr);
 	return result;
     }
@@ -1685,7 +1701,7 @@ Tcl_FSGetNormalizedPath(
 	Tcl_Obj *dir, *copy;
 	int cwdLen;
 	int pathType;
-	CONST char *cwdStr;
+	const char *cwdStr;
 	ClientData clientData = NULL;
 
 	pathType = Tcl_FSGetPathType(fsPathPtr->cwdPtr);
@@ -1796,7 +1812,7 @@ Tcl_FSGetNormalizedPath(
 	} else if (fsPathPtr->normPathPtr == NULL) {
 	    int cwdLen;
 	    Tcl_Obj *copy;
-	    CONST char *cwdStr;
+	    const char *cwdStr;
 	    ClientData clientData = NULL;
 
 	    copy = Tcl_DuplicateObj(fsPathPtr->cwdPtr);
@@ -1849,7 +1865,7 @@ Tcl_FSGetNormalizedPath(
 	 */
 
 	Tcl_Obj *absolutePath = fsPathPtr->translatedPathPtr;
-	CONST char *path = TclGetString(absolutePath);
+	const char *path = TclGetString(absolutePath);
 
 	/*
 	 * We have to be a little bit careful here to avoid infinite loops
@@ -2026,7 +2042,7 @@ Tcl_FSGetInternalRep(
      */
 
     if (fsPtr != srcFsPathPtr->fsRecPtr->fsPtr) {
-	Tcl_Filesystem *actualFs = Tcl_FSGetFileSystemForPath(pathPtr);
+	const Tcl_Filesystem *actualFs = Tcl_FSGetFileSystemForPath(pathPtr);
 
 	if (actualFs == fsPtr) {
 	    return Tcl_FSGetInternalRep(pathPtr, fsPtr);
@@ -2291,7 +2307,7 @@ SetFsPathFromAny(
 	     * We have just '~'
 	     */
 
-	    CONST char *dir;
+	    const char *dir;
 	    Tcl_DString dirString;
 
 	    if (split != len) {
@@ -2302,7 +2318,7 @@ SetFsPathFromAny(
 	    if (dir == NULL) {
 		if (interp) {
 		    Tcl_ResetResult(interp);
-		    Tcl_AppendResult(interp, "couldn't find HOME environment ",
+		    Tcl_AppendResult(interp, "couldn't find HOME environment "
 			    "variable to expand path", (char *) NULL);
 		}
 		return TCL_ERROR;
@@ -2386,7 +2402,7 @@ SetFsPathFromAny(
 
 #if defined(__CYGWIN__) && defined(__WIN32__)
     {
-	extern int cygwin_conv_to_win32_path(CONST char *, char *);
+	extern int cygwin_conv_to_win32_path(const char *, char *);
 	char winbuf[MAX_PATH+1];
 
 	/*
@@ -2555,7 +2571,7 @@ UpdateStringOfFsPath(
     register Tcl_Obj *pathPtr)	/* path obj with string rep to update. */
 {
     FsPath* fsPathPtr = (FsPath*) PATHOBJ(pathPtr);
-    CONST char *cwdStr;
+    const char *cwdStr;
     int cwdLen;
     Tcl_Obj *copy;
 

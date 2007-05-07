@@ -21,6 +21,7 @@
 static char sccsid[] = "@(#) man2tcl.c 1.3 95/08/12 17:34:08";
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
@@ -135,7 +136,7 @@ main(
 	    }
 	    lineNumber++;
 
-	    if ((line[0] == '\'') && (line[1] == '\\') && (line[2] == '\"')) {
+	    if (((line[0] == '.') || (line[0] == '\'')) && (line[1] == '\\') && (line[2] == '\"')) {
 		/*
 		 * This line is a comment. Ignore it.
 		 */

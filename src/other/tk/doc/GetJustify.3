@@ -22,7 +22,7 @@ int
 int
 \fBTk_GetJustify(\fIinterp, string, justifyPtr\fB)\fR
 .sp
-CONST char *
+const char *
 \fBTk_NameOfJustify(\fIjustify\fB)\fR
 .SH ARGUMENTS
 .AS "Tk_Justify" *justifyPtr
@@ -32,7 +32,7 @@ Interpreter to use for error reporting, or NULL.
 String value contains name of justification style (\fBleft\fR, \fBright\fR, or
 \fBcenter\fR).  The
 internal rep will be modified to cache corresponding justify value.
-.AP "CONST char" *string in
+.AP "const char" *string in
 Same as \fIobjPtr\fR except description of justification style is passed as
 a string.
 .AP int *justifyPtr out

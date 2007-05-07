@@ -7,8 +7,7 @@
  *
  * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2005 Tcl Core Team.
- * Copyright (c) 2005-2006 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2005-2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -149,11 +148,12 @@ static int triggerPipe = -1;
 static int receivePipe = -1; /* Output end of triggerPipe */
 
 /*
- * We use Darwin-native spinlocks instead of pthread mutexes for notifier
- * locking: this radically simplifies the implementation and lowers overhead.
- * Note that these are not pure spinlocks, they employ various strategies to
- * back off, making them immune to most priority-inversion livelocks (c.f. man
- * 3 OSSpinLockLock).
+ * We use the Darwin-native spinlock API rather than pthread mutexes for
+ * notifier locking: this radically simplifies the implementation and lowers
+ * overhead. Note that these are not pure spinlocks, they employ various
+ * strategies to back off and relinquish the processor, making them immune to
+ * most priority-inversion livelocks (c.f. 'man 3 OSSpinLockLock' and Darwin
+ * sources: xnu/osfmk/{ppc,i386}/commpage/spinlocks.s).
  */
 
 #if defined(HAVE_LIBKERN_OSATOMIC_H) && defined(HAVE_OSSPINLOCKLOCK)
@@ -168,26 +168,42 @@ static int receivePipe = -1; /* Output end of triggerPipe */
  * Support for weakly importing spinlock API.
  */
 #define WEAK_IMPORT_SPINLOCKLOCK
-extern void	OSSpinLockLock(OSSpinLock *lock) WEAK_IMPORT_ATTRIBUTE;
-extern void	OSSpinLockUnlock(OSSpinLock *lock) WEAK_IMPORT_ATTRIBUTE;
-extern void	_spin_lock(OSSpinLock *lock) WEAK_IMPORT_ATTRIBUTE;
-extern void	_spin_unlock(OSSpinLock *lock) WEAK_IMPORT_ATTRIBUTE;
-static void (* lockLock)(OSSpinLock *lock) = NULL;
-static void (* lockUnlock)(OSSpinLock *lock) = NULL;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1050
+#define VOLATILE volatile
+#else
+#define VOLATILE
+#endif
+#ifndef bool
+#define bool int
+#endif
+extern void OSSpinLockLock(VOLATILE OSSpinLock *lock) WEAK_IMPORT_ATTRIBUTE;
+extern void OSSpinLockUnlock(VOLATILE OSSpinLock *lock) WEAK_IMPORT_ATTRIBUTE;
+extern bool OSSpinLockTry(VOLATILE OSSpinLock *lock) WEAK_IMPORT_ATTRIBUTE;
+extern void _spin_lock(VOLATILE OSSpinLock *lock) WEAK_IMPORT_ATTRIBUTE;
+extern void _spin_unlock(VOLATILE OSSpinLock *lock) WEAK_IMPORT_ATTRIBUTE;
+extern bool _spin_lock_try(VOLATILE OSSpinLock *lock) WEAK_IMPORT_ATTRIBUTE;
+static void (* lockLock)(VOLATILE OSSpinLock *lock) = NULL;
+static void (* lockUnlock)(VOLATILE OSSpinLock *lock) = NULL;
+static bool (* lockTry)(VOLATILE OSSpinLock *lock) = NULL;
+#undef VOLATILE
 static pthread_once_t spinLockLockInitControl = PTHREAD_ONCE_INIT;
 static void SpinLockLockInit(void) {
     lockLock   = OSSpinLockLock   != NULL ? OSSpinLockLock   : _spin_lock;
     lockUnlock = OSSpinLockUnlock != NULL ? OSSpinLockUnlock : _spin_unlock;
+    lockTry    = OSSpinLockTry    != NULL ? OSSpinLockTry    : _spin_lock_try;
     if (lockLock == NULL || lockUnlock == NULL) {
 	Tcl_Panic("SpinLockLockInit: no spinlock API available");
     }
 }
 #define SpinLockLock(p) 	lockLock(p)
 #define SpinLockUnlock(p)	lockUnlock(p)
+#define SpinLockTry(p)  	lockTry(p)
 #else
 #define SpinLockLock(p) 	OSSpinLockLock(p)
 #define SpinLockUnlock(p)	OSSpinLockUnlock(p)
+#define SpinLockTry(p)  	OSSpinLockTry(p)
 #endif /* HAVE_WEAK_IMPORT */
+#define SPINLOCK_INIT   	OS_SPINLOCK_INIT
 
 #else
 /*
@@ -195,10 +211,13 @@ static void SpinLockLockInit(void) {
  */
 
 typedef uint32_t OSSpinLock;
-extern void	_spin_lock(OSSpinLock *lock);
-extern void	_spin_unlock(OSSpinLock *lock);
+extern void _spin_lock(OSSpinLock *lock);
+extern void _spin_unlock(OSSpinLock *lock);
+extern int  _spin_lock_try(OSSpinLock *lock);
 #define SpinLockLock(p) 	_spin_lock(p)
 #define SpinLockUnlock(p)	_spin_unlock(p)
+#define SpinLockTry(p)  	_spin_lock_try(p)
+#define SPINLOCK_INIT   	0
 
 #endif /* HAVE_LIBKERN_OSATOMIC_H && HAVE_OSSPINLOCKLOCK */
 
@@ -206,8 +225,8 @@ extern void	_spin_unlock(OSSpinLock *lock);
  * These spinlocks lock access to the global notifier state.
  */
 
-static OSSpinLock notifierInitLock = 0;
-static OSSpinLock notifierLock = 0;
+static OSSpinLock notifierInitLock = SPINLOCK_INIT;
+static OSSpinLock notifierLock     = SPINLOCK_INIT;
 
 /*
  * Macros abstracting notifier locking/unlocking
@@ -217,6 +236,37 @@ static OSSpinLock notifierLock = 0;
 #define UNLOCK_NOTIFIER_INIT	SpinLockUnlock(&notifierInitLock)
 #define LOCK_NOTIFIER		SpinLockLock(&notifierLock)
 #define UNLOCK_NOTIFIER		SpinLockUnlock(&notifierLock)
+
+#ifdef TCL_MAC_DEBUG_NOTIFIER
+/*
+ * Debug version of SpinLockLock that logs the time spent waiting for the lock
+ */
+
+#define SpinLockLockDbg(p)	if(!SpinLockTry(p)) { \
+				    Tcl_WideInt s = TclpGetWideClicks(), e; \
+				    SpinLockLock(p); e = TclpGetWideClicks(); \
+				    fprintf(notifierLog, "tclMacOSXNotify.c:" \
+				    "%4d: thread %10p waited on %s for " \
+				    "%8llu ns\n", __LINE__, pthread_self(), \
+				    #p, TclpWideClicksToNanoseconds(e-s)); \
+				    fflush(notifierLog); \
+				}
+#undef LOCK_NOTIFIER_INIT
+#define LOCK_NOTIFIER_INIT	SpinLockLockDbg(&notifierInitLock)
+#undef LOCK_NOTIFIER
+#define LOCK_NOTIFIER		SpinLockLockDbg(&notifierLock)
+static FILE *notifierLog = stderr;
+#ifndef NOTIFIER_LOG
+#define NOTIFIER_LOG "/tmp/tclMacOSXNotify.log"
+#endif
+#define OPEN_NOTIFIER_LOG	if (notifierLog == stderr) { \
+				    notifierLog = fopen(NOTIFIER_LOG, "a"); \
+				}
+#define CLOSE_NOTIFIER_LOG	if (notifierLog != stderr) { \
+				    fclose(notifierLog); \
+				    notifierLog = stderr; \
+				}
+#endif /* TCL_MAC_DEBUG_NOTIFIER */
 
 /*
  * The pollState bits
@@ -254,7 +304,8 @@ static CFStringRef tclEventsOnlyRunLoopMode = NULL;
  * Static routines defined in this file.
  */
 
-static void	NotifierThreadProc(ClientData clientData);
+static void	NotifierThreadProc(ClientData clientData)
+	__attribute__ ((__noreturn__));
 static int	FileHandlerEventProc(Tcl_Event *evPtr, int flags);
 
 #ifdef HAVE_PTHREAD_ATFORK
@@ -380,6 +431,9 @@ Tcl_InitNotifier(void)
 	 */
 
 	notifierThread = 0;
+#ifdef TCL_MAC_DEBUG_NOTIFIER
+	OPEN_NOTIFIER_LOG;
+#endif
     }
     notifierCount++;
     UNLOCK_NOTIFIER_INIT;
@@ -450,6 +504,9 @@ Tcl_FinalizeNotifier(
 
 	close(receivePipe);
 	triggerPipe = -1;
+#ifdef TCL_MAC_DEBUG_NOTIFIER
+	CLOSE_NOTIFIER_LOG;
+#endif
     }
     UNLOCK_NOTIFIER_INIT;
 
@@ -853,6 +910,9 @@ Tcl_WaitForEvent(
      */
 
     LOCK_NOTIFIER_INIT;
+    if (!notifierCount) {
+        Tcl_Panic("Tcl_WaitForEvent: notifier not initialized");
+    }
     if (!notifierThread) {
 	int result;
 	pthread_attr_t attr;
@@ -876,7 +936,9 @@ Tcl_WaitForEvent(
      */
 
     LOCK_NOTIFIER;
-
+    if (!tsdPtr->runLoop) {
+        Tcl_Panic("Tcl_WaitForEvent: CFRunLoop not initialized");
+    }
     waitForFiles = (tsdPtr->numFdBits > 0);
     if (myTimePtr != NULL && myTimePtr->sec == 0 && myTimePtr->usec == 0) {
 	/*
@@ -1177,7 +1239,7 @@ NotifierThreadProc(
 	    }
 	}
     }
-    pthread_exit (0);
+    pthread_exit(0);
 }
 
 #ifdef HAVE_PTHREAD_ATFORK

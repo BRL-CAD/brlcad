@@ -1308,10 +1308,10 @@ LineDeleteCoords(
 
 	/* ARGSUSED */
 static double
-LineToPoint(canvas, itemPtr, pointPtr)
-    Tk_Canvas canvas;		/* Canvas containing item. */
-    Tk_Item *itemPtr;		/* Item to check against point. */
-    double *pointPtr;		/* Pointer to x and y coordinates. */
+LineToPoint(
+    Tk_Canvas canvas,		/* Canvas containing item. */
+    Tk_Item *itemPtr,		/* Item to check against point. */
+    double *pointPtr)		/* Pointer to x and y coordinates. */
 {
     Tk_State state = itemPtr->state;
     LineItem *linePtr = (LineItem *) itemPtr;

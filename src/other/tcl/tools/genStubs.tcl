@@ -272,8 +272,8 @@ proc genStubs::emitSlots {name textVar} {
 
 proc genStubs::parseDecl {decl} {
     if {![regexp {^(.*)\((.*)\)$} $decl all prefix args]} {
-	puts stderr "Malformed declaration: $decl"
-	return
+	set prefix $decl
+	set args {}
     }
     set prefix [string trim $prefix]
     if {![regexp {^(.+[ ][*]*)([^ *]+)$} $prefix all rtype fname]} {
@@ -281,19 +281,23 @@ proc genStubs::parseDecl {decl} {
 	return
     }
     set rtype [string trim $rtype]
+    if {$args == ""} {
+	return [list $rtype $fname {}]
+    }
     foreach arg [split $args ,] {
 	lappend argList [string trim $arg]
     }
     if {![string compare [lindex $argList end] "..."]} {
-	if {[llength $argList] != 2} {
-	    puts stderr "Only one argument is allowed in varargs form: $decl"
+	set args TCL_VARARGS
+	foreach arg [lrange $argList 0 end-1] {
+	    set argInfo [parseArg $arg]
+	    if {[llength $argInfo] == 2 || [llength $argInfo] == 3} {
+		lappend args $argInfo
+	    } else {
+		puts stderr "Bad argument: '$arg' in '$decl'"
+		return
+	    }
 	}
-	set arg [parseArg [lindex $argList 0]]
-	if {$arg == "" || ([llength $arg] != 2)} {
-	    puts stderr "Bad argument: '[lindex $argList 0]' in '$decl'"
-	    return
-	}
-	set args [list TCL_VARARGS $arg]
     } else {
 	set args {}
 	foreach arg $argList {
@@ -362,7 +366,13 @@ proc genStubs::makeDecl {name decl index} {
 	append line " "
 	set pad 0
     }
-    append line "$fname _ANSI_ARGS_("
+    if {$args == ""} {
+	append line $fname
+	append text $line
+	append text ";\n"
+	return $text
+    }
+    append line "$fname "
 
     set arg1 [lindex $args 0]
     switch -exact $arg1 {
@@ -370,8 +380,22 @@ proc genStubs::makeDecl {name decl index} {
 	    append line "(void)"
 	}
 	TCL_VARARGS {
-	    set arg [lindex $args 1]
-	    append line "([lindex $arg 0][lindex $arg 1], ...)"
+	    set sep "("
+	    foreach arg [lrange $args 1 end] {
+		append line $sep
+		set next {}
+		append next [lindex $arg 0] " " [lindex $arg 1] \
+			[lindex $arg 2]
+		if {[string length $line] + [string length $next] \
+			+ $pad > 76} {
+		    append text $line \n
+		    set line "\t\t\t\t"
+		    set pad 28
+		}
+		append line $next
+		set sep ", "
+	    }
+	    append line ", ...)"
 	}
 	default {
 	    set sep "("
@@ -394,7 +418,7 @@ proc genStubs::makeDecl {name decl index} {
     }
     append text $line
     
-    append text ");"
+    append text ";"
     format "#ifndef %s_TCL_DECLARED\n#define %s_TCL_DECLARED\n%s\n#endif\n" \
 	    $fname $fname $text
 }
@@ -418,22 +442,10 @@ proc genStubs::makeMacro {name decl index} {
     append lfname [string range $fname 1 end]
 
     set text "#ifndef $fname\n#define $fname"
-    set arg1 [lindex $args 0]
-    set argList ""
-    switch -exact $arg1 {
-	void {
-	    set argList "()"
-	}
-	TCL_VARARGS {
-	}
-	default {
-	    set sep "("
-	    foreach arg $args {
-		append argList $sep [lindex $arg 1]
-		set sep ", "
-	    }
-	    append argList ")"
-	}
+    if {$args == ""} {
+	append text " \\\n\t(*${name}StubsPtr->$lfname)"
+	append text " /* $index */\n#endif\n"
+	return $text
     }
     append text " \\\n\t(${name}StubsPtr->$lfname)"
     append text " /* $index */\n#endif\n"
@@ -524,7 +536,11 @@ proc genStubs::makeSlot {name decl index} {
     append lfname [string range $fname 1 end]
 
     set text "    "
-    append text $rtype " (*" $lfname ") _ANSI_ARGS_("
+    if {$args == ""} {
+	append text $rtype " *" $lfname "; /* $index */\n"
+	return $text
+    }
+    append text $rtype " (*" $lfname ") "
 
     set arg1 [lindex $args 0]
     switch -exact $arg1 {
@@ -532,8 +548,13 @@ proc genStubs::makeSlot {name decl index} {
 	    append text "(void)"
 	}
 	TCL_VARARGS {
-	    set arg [lindex $args 1]
-	    append text "([lindex $arg 0][lindex $arg 1], ...)"
+	    set sep "("
+	    foreach arg [lrange $args 1 end] {
+		append text $sep [lindex $arg 0] " " [lindex $arg 1] \
+			[lindex $arg 2]
+		set sep ", "
+	    }
+	    append text ", ...)"
 	}
 	default {
 	    set sep "("
@@ -546,7 +567,7 @@ proc genStubs::makeSlot {name decl index} {
 	}
     }
     
-    append text "); /* $index */\n"
+    append text "; /* $index */\n"
     return $text
 }
 
@@ -563,7 +584,11 @@ proc genStubs::makeSlot {name decl index} {
 #	Returns the formatted declaration string.
 
 proc genStubs::makeInit {name decl index} {
-    append text "    " [lindex $decl 1] ", /* " $index " */\n"
+    if {[lindex $decl 2] == ""} {
+	append text "    &" [lindex $decl 1] ", /* " $index " */\n"
+    } else {
+	append text "    " [lindex $decl 1] ", /* " $index " */\n"
+    }
     return $text
 }
 
@@ -958,6 +983,7 @@ proc genStubs::init {} {
 # Results:
 #	Returns any values that were not assigned to variables.
 
+if {[string length [namespace which lassign]] == 0} {
 proc lassign {valueList args} {
   if {[llength $args] == 0} {
       error "wrong # args: lassign list varname ?varname..?"
@@ -966,5 +992,6 @@ proc lassign {valueList args} {
   uplevel [list foreach $args $valueList {break}]
   return [lrange $valueList [llength $args] end]
 }
-
+}
+ 
 genStubs::init

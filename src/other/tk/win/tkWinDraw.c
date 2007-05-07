@@ -325,8 +325,8 @@ XCopyArea(
 	OffsetClipRgn(destDC, gc->clip_x_origin, gc->clip_y_origin);
     }
 
-    BitBlt(destDC, dest_x, dest_y, width, height, srcDC, src_x, src_y,
-	    tkpWinBltModes[gc->function]);
+    BitBlt(destDC, dest_x, dest_y, (int) width, (int) height, srcDC,
+	    src_x, src_y, (DWORD) tkpWinBltModes[gc->function]);
 
     SelectClipRgn(destDC, NULL);
 
@@ -399,8 +399,8 @@ XCopyPlane(
 	SetBkMode(destDC, OPAQUE);
 	SetBkColor(destDC, gc->foreground);
 	SetTextColor(destDC, gc->background);
-	BitBlt(destDC, dest_x, dest_y, width, height, srcDC, src_x, src_y,
-		SRCCOPY);
+	BitBlt(destDC, dest_x, dest_y, (int) width, (int) height, srcDC,
+		src_x, src_y, SRCCOPY);
 
 	SelectClipRgn(destDC, NULL);
     } else if (clipPtr->type == TKP_CLIP_PIXMAP) {
@@ -414,8 +414,8 @@ XCopyPlane(
 
 	    fgBrush = CreateSolidBrush(gc->foreground);
 	    oldBrush = SelectObject(destDC, fgBrush);
-	    BitBlt(destDC, dest_x, dest_y, width, height, srcDC, src_x, src_y,
-		    MASKPAT);
+	    BitBlt(destDC, dest_x, dest_y, (int) width, (int) height, srcDC,
+		    src_x, src_y, MASKPAT);
 	    SelectObject(destDC, oldBrush);
 	    DeleteObject(fgBrush);
 	} else {
@@ -435,7 +435,7 @@ XCopyPlane(
 	    maskDC = TkWinGetDrawableDC(display, clipPtr->value.pixmap,
 		    &maskState);
 	    memDC = CreateCompatibleDC(destDC);
-	    bitmap = CreateBitmap(width, height, 1, 1, NULL);
+	    bitmap = CreateBitmap((int) width, (int) height, 1, 1, NULL);
 	    SelectObject(memDC, bitmap);
 
 	    /*
@@ -444,27 +444,28 @@ XCopyPlane(
 	     * destination.
 	     */
 
-	    BitBlt(memDC, 0, 0, width, height, srcDC, src_x, src_y, SRCCOPY);
-	    BitBlt(memDC, 0, 0, width, height, maskDC,
+	    BitBlt(memDC, 0, 0, (int) width, (int) height, srcDC, src_x, src_y,
+		    SRCCOPY);
+	    BitBlt(memDC, 0, 0, (int) width, (int) height, maskDC,
 		    dest_x - gc->clip_x_origin, dest_y - gc->clip_y_origin,
 		    SRCAND);
 	    oldBrush = SelectObject(destDC, fgBrush);
-	    BitBlt(destDC, dest_x, dest_y, width, height, memDC, 0, 0,
-		    MASKPAT);
+	    BitBlt(destDC, dest_x, dest_y, (int) width, (int) height, memDC,
+		    0, 0, MASKPAT);
 
 	    /*
 	     * Set background bits. Same as foreground, except we use ((NOT
 	     * source) AND mask) and the background brush.
 	     */
 
-	    BitBlt(memDC, 0, 0, width, height, srcDC, src_x, src_y,
+	    BitBlt(memDC, 0, 0, (int) width, (int) height, srcDC, src_x, src_y,
 		    NOTSRCCOPY);
-	    BitBlt(memDC, 0, 0, width, height, maskDC,
+	    BitBlt(memDC, 0, 0, (int) width, (int) height, maskDC,
 		    dest_x - gc->clip_x_origin, dest_y - gc->clip_y_origin,
 		    SRCAND);
 	    SelectObject(destDC, bgBrush);
-	    BitBlt(destDC, dest_x, dest_y, width, height, memDC, 0, 0,
-		    MASKPAT);
+	    BitBlt(destDC, dest_x, dest_y, (int) width, (int) height, memDC,
+		    0, 0, MASKPAT);
 
 	    TkWinReleaseDrawableDC(clipPtr->value.pixmap, maskDC, &maskState);
 	    SelectObject(destDC, oldBrush);
@@ -589,7 +590,8 @@ TkPutImage(
 	return;
     }
     bitmap = SelectObject(dcMem, bitmap);
-    BitBlt(dc, dest_x, dest_y, width, height, dcMem, src_x, src_y, SRCCOPY);
+    BitBlt(dc, dest_x, dest_y, (int) width, (int) height, dcMem, src_x, src_y,
+	    SRCCOPY);
     DeleteObject(SelectObject(dcMem, bitmap));
     DeleteDC(dcMem);
     TkWinReleaseDrawableDC(d, dc, &state);
@@ -972,7 +974,7 @@ XDrawRectangle(
     oldBrush = SelectObject(dc, GetStockObject(NULL_BRUSH));
     SetROP2(dc, tkpWinRopModes[gc->function]);
 
-    Rectangle(dc, x, y, x+width+1, y+height+1);
+    Rectangle(dc, x, y, (int) x+width+1, (int) y+height+1);
 
     DeleteObject(SelectObject(dc, oldPen));
     SelectObject(dc, oldBrush);
@@ -1133,14 +1135,17 @@ DrawOrFillArc(
 	 */
 
 	SetBkMode(dc, TRANSPARENT);
-	Arc(dc, x, y, x+width+1, y+height+1, xstart, ystart, xend, yend);
+	Arc(dc, x, y, (int) (x+width+1), (int) (y+height+1), xstart, ystart,
+		xend, yend);
     } else {
 	brush = CreateSolidBrush(gc->foreground);
 	oldBrush = SelectObject(dc, brush);
 	if (gc->arc_mode == ArcChord) {
-	    Chord(dc, x, y, x+width+1, y+height+1, xstart, ystart, xend, yend);
-	} else if ( gc->arc_mode == ArcPieSlice ) {
-	    Pie(dc, x, y, x+width+1, y+height+1, xstart, ystart, xend, yend);
+	    Chord(dc, x, y, (int) (x+width+1), (int) (y+height+1),
+		    xstart, ystart, xend, yend);
+	} else if (gc->arc_mode == ArcPieSlice) {
+	    Pie(dc, x, y, (int) (x+width+1), (int) (y+height+1),
+		    xstart, ystart, xend, yend);
 	}
 	DeleteObject(SelectObject(dc, oldBrush));
     }
@@ -1197,7 +1202,7 @@ SetUpGraphicsPort(
 	style = PS_SOLID;
     }
     if (gc->line_width < 2) {
-	return CreatePen(style, gc->line_width, gc->foreground);
+	return CreatePen((int) style, gc->line_width, gc->foreground);
     } else {
 	LOGBRUSH lb;
 
@@ -1229,7 +1234,7 @@ SetUpGraphicsPort(
 	    style |= PS_JOIN_BEVEL;
 	    break;
 	}
-	return ExtCreatePen(style, gc->line_width, &lb, 0, NULL);
+	return ExtCreatePen(style, (DWORD) gc->line_width, &lb, 0, NULL);
     }
 }
 

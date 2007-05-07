@@ -293,7 +293,7 @@ TclCreateAbsoluteTimerHandler(
     timerHandlerPtr->proc = proc;
     timerHandlerPtr->clientData = clientData;
     tsdPtr->lastTimerId++;
-    timerHandlerPtr->token = (Tcl_TimerToken) tsdPtr->lastTimerId;
+    timerHandlerPtr->token = (Tcl_TimerToken) INT2PTR(tsdPtr->lastTimerId);
 
     /*
      * Add the event to the queue in the correct position
@@ -567,7 +567,7 @@ TimerHandlerEventProc(
 	 * Bail out if the next timer is of a newer generation.
 	 */
 
-	if ((currentTimerId - (int)timerHandlerPtr->token) < 0) {
+	if ((currentTimerId - PTR2INT(timerHandlerPtr->token)) < 0) {
 	    break;
 	}
 
@@ -781,7 +781,6 @@ Tcl_AfterObjCmd(
     static CONST char *afterSubCmds[] = {
 	"cancel", "idle", "info", NULL
     };
-    Tcl_Obj *objPtr;
     enum afterSubCmds {AFTER_CANCEL, AFTER_IDLE, AFTER_INFO};
     ThreadSpecificData *tsdPtr = InitTimer();
 
@@ -870,9 +869,7 @@ Tcl_AfterObjCmd(
 							(ClientData) afterPtr);
 	afterPtr->nextPtr = assocPtr->firstAfterPtr;
 	assocPtr->firstAfterPtr = afterPtr;
-	objPtr = Tcl_NewObj();
-	TclObjPrintf(NULL, objPtr, "after#%d", afterPtr->id);
-	Tcl_SetObjResult(interp, objPtr);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf("after#%d", afterPtr->id));
 	return TCL_OK;
     }
     case AFTER_CANCEL: {
@@ -935,9 +932,7 @@ Tcl_AfterObjCmd(
 	afterPtr->nextPtr = assocPtr->firstAfterPtr;
 	assocPtr->firstAfterPtr = afterPtr;
 	Tcl_DoWhenIdle(AfterProc, (ClientData) afterPtr);
-	objPtr = Tcl_NewObj();
-	TclObjPrintf(NULL, objPtr, "after#%d", afterPtr->id);
-	Tcl_SetObjResult(interp, objPtr);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf("after#%d", afterPtr->id));
 	break;
     case AFTER_INFO: {
 	Tcl_Obj *resultListPtr;

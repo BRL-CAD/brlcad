@@ -390,7 +390,8 @@ declare 93 generic {
 #    int TclpStat(CONST char *path, Tcl_StatBuf *buf)
 #}
 declare 96 generic {
-    int TclRenameCommand(Tcl_Interp *interp, char *oldName, char *newName)
+    int TclRenameCommand(Tcl_Interp *interp, CONST char *oldName,
+            CONST char *newName)
 }
 declare 97 generic {
     void TclResetShadowedCmdRefs(Tcl_Interp *interp, Command *newCmdPtr)
@@ -415,7 +416,7 @@ declare 102 generic {
     void TclSetupEnv(Tcl_Interp *interp)
 }
 declare 103 generic {
-    int TclSockGetPort(Tcl_Interp *interp, char *str, char *proto,
+    int TclSockGetPort(Tcl_Interp *interp, CONST char *str, CONST char *proto,
 	    int *portPtr)
 }
 declare 104 {unix win} {
@@ -803,7 +804,8 @@ declare 183 generic {
 # Added in tcl8.5a5 for compiler/executor experimentation.
 #
 declare 197 generic {
-    int TclCompEvalObj (Tcl_Interp *interp, Tcl_Obj *objPtr)
+    int TclCompEvalObj (Tcl_Interp *interp, Tcl_Obj *objPtr,
+		        CONST CmdFrame* invoker, int word)
 }
 
 declare 198 generic {
@@ -892,6 +894,30 @@ declare 225 generic {
 
 declare 226 generic {
     int TclObjBeingDeleted(Tcl_Obj *objPtr)
+}
+
+declare 227 generic {
+    void TclSetNsPath(Namespace *nsPtr, int pathLength,
+            Tcl_Namespace *pathAry[])
+}
+declare 228 generic {
+    int TclObjInterpProcCore(register Tcl_Interp *interp, CallFrame *framePtr,
+            Tcl_Obj *procNameObj, int isLambda, int skip,
+            ProcErrorProc errorProc)
+}
+declare 229 generic {
+    int	TclPtrMakeUpvar(Tcl_Interp *interp, Var *otherP1Ptr,
+	    CONST char *myName, int myFlags, int index)
+}
+declare 230 generic {
+    Var *TclObjLookupVar(Tcl_Interp *interp, Tcl_Obj *part1Ptr,
+	    CONST char *part2, int flags, CONST char *msg,
+	    CONST int createPart1, CONST int createPart2, Var **arrayPtrPtr)
+}
+
+declare 231 generic {
+    int	TclGetNamespaceFromObj(Tcl_Interp *interp, Tcl_Obj *objPtr, 
+	     Tcl_Namespace **nsPtrPtr)
 }
 
 ##############################################################################
@@ -1106,4 +1132,3 @@ declare 18 macosx {
 	    CONST char *fileName, Tcl_StatBuf *statBufPtr,
 	    Tcl_GlobTypeData *types)
 }
-

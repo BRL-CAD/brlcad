@@ -4,6 +4,11 @@
 #	uses the standard unix build system in tcl/unix (which can be used directly instead of this
 #	if you are not using the tk/macosx projects).
 #
+# Copyright (c) 2002-2007 Daniel A. Steffen <das@users.sourceforge.net>
+#
+# See the file "license.terms" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
 # RCS: @(#) $Id$
 #
 ########################################################################################################
@@ -18,8 +23,8 @@ BUILD_DIR		?= ${CURDIR}/../../build
 SYMROOT			?= ${BUILD_DIR}/${PROJECT}
 OBJROOT			?= ${SYMROOT}
 
-EXTRA_CONFIGURE_ARGS 	?= 
-EXTRA_MAKE_ARGS		?= 
+EXTRA_CONFIGURE_ARGS	?=
+EXTRA_MAKE_ARGS		?=
 
 INSTALL_PATH		?= /Library/Frameworks
 PREFIX			?= /usr/local
@@ -28,12 +33,12 @@ LIBDIR			?= ${INSTALL_PATH}
 MANDIR			?= ${PREFIX}/man
 
 # set to non-empty value to install manpages in addition to html help:
-INSTALL_MANPAGES 	?= 
+INSTALL_MANPAGES	?=
 
 #-------------------------------------------------------------------------------------------------------
 # meta targets
 
-meta 			:= all install embedded install-embedded clean distclean test
+meta			:= all install embedded install-embedded clean distclean test
 
 styles			:= develop deploy
 
@@ -75,7 +80,7 @@ deploy_make_args	:= BUILD_STYLE=Deployment INSTALL_TARGET=install-strip \
 embedded_make_args	:= EMBEDDED_BUILD=1
 install_make_args	:= INSTALL_BUILD=1
 
-${targets}: 
+${targets}:
 	${MAKE} ${action}${PROJECT} \
 	$(foreach s,${styles} embedded install,$(if $(findstring $s,$@),${${s}_make_args}))
 
@@ -122,7 +127,7 @@ ${PROJECT}:
 	${MAKE} install-${PROJECT} INSTALL_ROOT=${OBJ_DIR}/
 
 ${OBJ_DIR}/Makefile: ${UNIX_DIR}/Makefile.in ${UNIX_DIR}/configure \
-                     ${UNIX_DIR}/tclConfig.sh.in Tcl-Info.plist.in
+		     ${UNIX_DIR}/tclConfig.sh.in Tcl-Info.plist.in
 	mkdir -p ${OBJ_DIR} && cd ${OBJ_DIR} && \
 	if [ ${UNIX_DIR}/configure -nt config.status ]; then ${UNIX_DIR}/configure -C \
 	--prefix=${PREFIX} --bindir=${BINDIR} --libdir=${LIBDIR} \
@@ -188,7 +193,7 @@ clean-${PROJECT}: %-${PROJECT}:
 distclean-${PROJECT}: %-${PROJECT}: clean-${PROJECT}
 	${DO_MAKE}
 	rm -rf ${OBJ_DIR}
-	
+
 test-${PROJECT}: %-${PROJECT}: build-${PROJECT}
 	${DO_MAKE}
 

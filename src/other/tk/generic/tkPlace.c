@@ -81,7 +81,7 @@ typedef struct Slave {
 
 #define IN_MASK		1
 
-static Tk_OptionSpec optionSpecs[] = {
+static const Tk_OptionSpec optionSpecs[] = {
     {TK_OPTION_ANCHOR, "-anchor", NULL, NULL, "nw", -1,
 	 Tk_Offset(Slave, anchor), 0, 0, 0},
     {TK_OPTION_STRING_TABLE, "-bordermode", NULL, NULL, "inside", -1,
@@ -153,7 +153,7 @@ static void		PlaceRequestProc(ClientData clientData,
 static void		PlaceLostSlaveProc(ClientData clientData,
 			    Tk_Window tkwin);
 
-static Tk_GeomMgr placerType = {
+static const Tk_GeomMgr placerType = {
     "place",				/* name */
     PlaceRequestProc,			/* requestProc */
     PlaceLostSlaveProc,			/* lostSlaveProc */

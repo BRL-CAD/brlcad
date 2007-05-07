@@ -33,7 +33,7 @@
 static int		AddLocalLiteralEntry(CompileEnv *envPtr,
 			    LiteralEntry *globalPtr, int localHash);
 static void		ExpandLocalLiteralArray(CompileEnv *envPtr);
-static unsigned int	HashString(CONST char *bytes, int length);
+static unsigned int	HashString(const char *bytes, int length);
 static void		RebuildLiteralTable(LiteralTable *tablePtr);
 
 /*
@@ -104,7 +104,7 @@ TclCleanupLiteralTable(
     LiteralEntry* nextPtr;	/* Pointer to the next entry in the bucket. */
     Tcl_Obj* objPtr;		/* Pointer to a literal object whose internal
 				 * rep is being freed. */
-    Tcl_ObjType* typePtr;	/* Pointer to the object's type. */
+    const Tcl_ObjType* typePtr;	/* Pointer to the object's type. */
     int didOne;			/* Flag for whether we've removed a literal in
 				 * the current bucket. */
 
@@ -683,43 +683,44 @@ ExpandLocalLiteralArray(
     LiteralTable *localTablePtr = &(envPtr->localLitTable);
     int currElems = envPtr->literalArrayNext;
     size_t currBytes = (currElems * sizeof(LiteralEntry));
-    register LiteralEntry *currArrayPtr = envPtr->literalArrayPtr;
-    register LiteralEntry *newArrayPtr =
-	    (LiteralEntry *) ckalloc((unsigned) (2 * currBytes));
+    LiteralEntry *currArrayPtr = envPtr->literalArrayPtr;
+    LiteralEntry *newArrayPtr;
     int i;
 
-    /*
-     * Copy from the old literal array to the new, then update the local
-     * literal table's bucket array.
-     */
-
-    memcpy((void *) newArrayPtr, (void *) currArrayPtr, currBytes);
-    for (i=0 ; i<currElems ; i++) {
-	if (currArrayPtr[i].nextPtr == NULL) {
-	    newArrayPtr[i].nextPtr = NULL;
-	} else {
-	    newArrayPtr[i].nextPtr =
-		    newArrayPtr + (currArrayPtr[i].nextPtr - currArrayPtr);
-	}
-    }
-    for (i=0 ; i<localTablePtr->numBuckets ; i++) {
-	if (localTablePtr->buckets[i] != NULL) {
-	    localTablePtr->buckets[i] =
-		    newArrayPtr + (localTablePtr->buckets[i] - currArrayPtr);
-	}
-    }
-
-    /*
-     * Free the old literal array if needed, and mark the new literal array as
-     * malloced.
-     */
-
     if (envPtr->mallocedLiteralArray) {
-	ckfree((char *) currArrayPtr);
+	newArrayPtr = (LiteralEntry *) ckrealloc(
+		(char *)currArrayPtr, 2 * currBytes);
+    } else {
+	/*
+	 * envPtr->literalArrayPtr isn't a ckalloc'd pointer, so we must
+	 * code a ckrealloc equivalent for ourselves
+	 */
+	newArrayPtr = (LiteralEntry *) ckalloc(2 * currBytes);
+	memcpy(newArrayPtr, currArrayPtr, currBytes);
+	envPtr->mallocedLiteralArray = 1;
     }
+
+    /*
+     * Update the local literal table's bucket array.
+     */
+
+    if (currArrayPtr != newArrayPtr) {
+	for (i=0 ; i<currElems ; i++) {
+	    if (newArrayPtr[i].nextPtr != NULL) {
+		newArrayPtr[i].nextPtr = newArrayPtr 
+			+ (newArrayPtr[i].nextPtr - currArrayPtr);
+	    }
+	}
+	for (i=0 ; i<localTablePtr->numBuckets ; i++) {
+	    if (localTablePtr->buckets[i] != NULL) {
+		localTablePtr->buckets[i] = newArrayPtr
+			+ (localTablePtr->buckets[i] - currArrayPtr);
+	    }
+	}
+    }
+
     envPtr->literalArrayPtr = newArrayPtr;
     envPtr->literalArrayEnd = (2 * currElems);
-    envPtr->mallocedLiteralArray = 1;
 }
 
 /*
@@ -822,7 +823,7 @@ TclReleaseLiteral(
 
 static unsigned int
 HashString(
-    register CONST char *bytes,	/* String for which to compute hash value. */
+    register const char *bytes,	/* String for which to compute hash value. */
     int length)			/* Number of bytes in the string. */
 {
     register unsigned int result;

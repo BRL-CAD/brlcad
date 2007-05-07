@@ -682,6 +682,7 @@ Tk_CreateSmoothMethod(
     Tcl_SetAssocData(interp, "smoothMethod", SmoothMethodCleanupProc,
 	    (ClientData) ptr);
 }
+
 /*
  *----------------------------------------------------------------------
  *

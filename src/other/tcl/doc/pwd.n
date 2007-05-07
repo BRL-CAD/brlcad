@@ -24,7 +24,7 @@ Returns the absolute path name of the current working directory.
 Sometimes it is useful to change to a known directory when running
 some external command using \fBexec\fR, but it is important to keep
 the application usually running in the directory that it was started
-in (unless the user specifies otherwise) since that minimises user
+in (unless the user specifies otherwise) since that minimizes user
 confusion. The way to do this is to save the current directory while
 the external command is being run:
 .CS

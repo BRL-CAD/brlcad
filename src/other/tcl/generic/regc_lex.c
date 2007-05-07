@@ -207,13 +207,13 @@ prefixes(
  - lexnest - "call a subroutine", interpolating string at the lexical level
  * Note, this is not a very general facility.  There are a number of
  * implicit assumptions about what sorts of strings can be subroutines.
- ^ static VOID lexnest(struct vars *, chr *, chr *);
+ ^ static VOID lexnest(struct vars *, const chr *, const chr *);
  */
 static void
 lexnest(
     struct vars *v,
-    chr *beginp,		/* start of interpolation */
-    chr *endp)			/* one past end of interpolation */
+    const chr *beginp,		/* start of interpolation */
+    const chr *endp)		/* one past end of interpolation */
 {
     assert(v->savenow == NULL);	/* only one level of nesting */
     v->savenow = v->now;
@@ -226,47 +226,47 @@ lexnest(
  * string constants to interpolate as expansions of things like \d
  */
 
-static chr backd[] = {		/* \d */
+static const chr backd[] = {	/* \d */
     CHR('['), CHR('['), CHR(':'),
     CHR('d'), CHR('i'), CHR('g'), CHR('i'), CHR('t'),
     CHR(':'), CHR(']'), CHR(']')
 };
-static chr backD[] = {		/* \D */
+static const chr backD[] = {	/* \D */
     CHR('['), CHR('^'), CHR('['), CHR(':'),
     CHR('d'), CHR('i'), CHR('g'), CHR('i'), CHR('t'),
     CHR(':'), CHR(']'), CHR(']')
 };
-static chr brbackd[] = {	/* \d within brackets */
+static const chr brbackd[] = {	/* \d within brackets */
     CHR('['), CHR(':'),
     CHR('d'), CHR('i'), CHR('g'), CHR('i'), CHR('t'),
     CHR(':'), CHR(']')
 };
-static chr backs[] = {		/* \s */
+static const chr backs[] = {	/* \s */
     CHR('['), CHR('['), CHR(':'),
     CHR('s'), CHR('p'), CHR('a'), CHR('c'), CHR('e'),
     CHR(':'), CHR(']'), CHR(']')
 };
-static chr backS[] = {		/* \S */
+static const chr backS[] = {	/* \S */
     CHR('['), CHR('^'), CHR('['), CHR(':'),
     CHR('s'), CHR('p'), CHR('a'), CHR('c'), CHR('e'),
     CHR(':'), CHR(']'), CHR(']')
 };
-static chr brbacks[] = {	/* \s within brackets */
+static const chr brbacks[] = {	/* \s within brackets */
     CHR('['), CHR(':'),
     CHR('s'), CHR('p'), CHR('a'), CHR('c'), CHR('e'),
     CHR(':'), CHR(']')
 };
-static chr backw[] = {		/* \w */
+static const chr backw[] = {	/* \w */
     CHR('['), CHR('['), CHR(':'),
     CHR('a'), CHR('l'), CHR('n'), CHR('u'), CHR('m'),
     CHR(':'), CHR(']'), CHR('_'), CHR(']')
 };
-static chr backW[] = {		/* \W */
+static const chr backW[] = {	/* \W */
     CHR('['), CHR('^'), CHR('['), CHR(':'),
     CHR('a'), CHR('l'), CHR('n'), CHR('u'), CHR('m'),
     CHR(':'), CHR(']'), CHR('_'), CHR(']')
 };
-static chr brbackw[] = {	/* \w within brackets */
+static const chr brbackw[] = {	/* \w within brackets */
     CHR('['), CHR(':'),
     CHR('a'), CHR('l'), CHR('n'), CHR('u'), CHR('m'),
     CHR(':'), CHR(']'), CHR('_')
@@ -748,7 +748,7 @@ lexescape(
     static chr esc[] = {
 	CHR('E'), CHR('S'), CHR('C')
     };
-    chr *save;
+    const chr *save;
 
     assert(v->cflags&REG_ADVF);
 
@@ -1086,7 +1086,7 @@ static void
 skip(
     struct vars *v)
 {
-    chr *start = v->now;
+    const chr *start = v->now;
 
     assert(v->cflags&REG_EXPANDED);
 
@@ -1128,11 +1128,11 @@ newline(void)
  * This helps confine use of CHR to this source file.  Beware that the caller
  * knows how long the sequence is.
  ^ #ifdef REG_DEBUG
- ^ static chr *ch(NOPARMS);
+ ^ static const chr *ch(NOPARMS);
  ^ #endif
  */
 #ifdef REG_DEBUG
-static chr *
+static const chr *
 ch(void)
 {
     static chr chstr[] = { CHR('c'), CHR('h'), CHR('\0') };
@@ -1145,13 +1145,13 @@ ch(void)
  - chrnamed - return the chr known by a given (chr string) name
  * The code is a bit clumsy, but this routine gets only such specialized
  * use that it hardly matters.
- ^ static chr chrnamed(struct vars *, chr *, chr *, pchr);
+ ^ static chr chrnamed(struct vars *, const chr *, const chr *, pchr);
  */
 static chr
 chrnamed(
     struct vars *v,
-    chr *startp,		/* start of name */
-    chr *endp,			/* just past end of name */
+    const chr *startp,		/* start of name */
+    const chr *endp,		/* just past end of name */
     pchr lastresort)		/* what to return if name lookup fails */
 {
     celt c;

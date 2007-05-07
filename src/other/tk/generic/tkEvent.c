@@ -15,9 +15,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
 #include "tkInt.h"
-#include <signal.h>
 
 /*
  * There's a potential problem if a handler is deleted while it's current

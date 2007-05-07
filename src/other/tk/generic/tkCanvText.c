@@ -22,7 +22,7 @@
  * The structure below defines the record for each text item.
  */
 
-typedef struct TextItem  {
+typedef struct TextItem {
     Tk_Item header;		/* Generic stuff that's the same for all
 				 * types. MUST BE FIRST IN STRUCTURE. */
     Tk_CanvasTextInfo *textInfoPtr;
@@ -78,7 +78,7 @@ typedef struct TextItem  {
     GC cursorOffGC;		/* If not None, this gives a graphics context
 				 * to use to draw the insertion cursor when
 				 * it's off. Used if the selection and
-				 * insertion cursor colors are the same.  */
+				 * insertion cursor colors are the same. */
 } TextItem;
 
 /*
@@ -281,6 +281,7 @@ CreateText(
 	i = 1;
     } else {
 	char *arg = Tcl_GetString(objv[1]);
+
 	i = 2;
 	if ((arg[0] == '-') && (arg[1] >= 'a') && (arg[1] <= 'z')) {
 	    i = 1;
@@ -347,9 +348,10 @@ TextCoords(
 		return TCL_ERROR;
 	    }
 	}
-	if ((Tk_CanvasGetCoordFromObj(interp, canvas, objv[0], &textPtr->x) != TCL_OK)
+	if ((Tk_CanvasGetCoordFromObj(interp, canvas, objv[0],
+		    &textPtr->x) != TCL_OK)
 		|| (Tk_CanvasGetCoordFromObj(interp, canvas, objv[1],
-  		    &textPtr->y) != TCL_OK)) {
+		    &textPtr->y) != TCL_OK)) {
 	    return TCL_ERROR;
 	}
 	ComputeTextBbox(canvas, textPtr);
@@ -387,7 +389,7 @@ ConfigureText(
     Tcl_Interp *interp,		/* Interpreter for error reporting. */
     Tk_Canvas canvas,		/* Canvas containing itemPtr. */
     Tk_Item *itemPtr,		/* Rectangle item to reconfigure. */
-    int objc,			/* Number of elements in objv.  */
+    int objc,			/* Number of elements in objv. */
     Tcl_Obj *CONST objv[],	/* Arguments describing things to configure. */
     int flags)			/* Flags to pass to Tk_ConfigureWidget. */
 {
@@ -415,8 +417,7 @@ ConfigureText(
 
     state = itemPtr->state;
 
-    if (textPtr->activeColor != NULL ||
-	    textPtr->activeStipple != None) {
+    if (textPtr->activeColor != NULL || textPtr->activeStipple != None) {
 	itemPtr->redraw_flags |= TK_ITEM_STATE_DEPENDANT;
     } else {
 	itemPtr->redraw_flags &= ~TK_ITEM_STATE_DEPENDANT;
@@ -464,7 +465,9 @@ ConfigureText(
 	    gcValues.fill_style = FillStippled;
 	    mask |= GCStipple|GCFillStyle;
 	}
-	gcValues.foreground = textInfoPtr->selFgColorPtr->pixel;
+	if (textInfoPtr->selFgColorPtr != NULL) {
+	    gcValues.foreground = textInfoPtr->selFgColorPtr->pixel;
+	}
 	newSelGC = Tk_GetGC(tkwin, mask|GCForeground, &gcValues);
     }
     if (textPtr->gc != None) {
@@ -669,7 +672,7 @@ ComputeTextBbox(
 	break;
     }
 
-    textPtr->leftEdge  = leftX;
+    textPtr->leftEdge = leftX;
     textPtr->rightEdge = leftX + width;
 
     /*
@@ -1088,7 +1091,7 @@ TextToPoint(
 	state = ((TkCanvas *)canvas)->canvas_state;
     }
     textPtr = (TextItem *) itemPtr;
-    value =  (double) Tk_DistanceToTextLayout(textPtr->textLayout,
+    value = (double) Tk_DistanceToTextLayout(textPtr->textLayout,
 	    (int) pointPtr[0] - textPtr->leftEdge,
 	    (int) pointPtr[1] - textPtr->header.y1);
 
@@ -1124,7 +1127,7 @@ TextToArea(
     Tk_Item *itemPtr,		/* Item to check against rectangle. */
     double *rectPtr)		/* Pointer to array of four coordinates
 				 * (x1,y1,x2,y2) describing rectangular
-				 * area.  */
+				 * area. */
 {
     TextItem *textPtr;
     Tk_State state = itemPtr->state;
@@ -1334,7 +1337,7 @@ SetTextCursor(
 
     if (index < 0) {
 	textPtr->insertPos = 0;
-    } else  if (index > textPtr->numChars) {
+    } else if (index > textPtr->numChars) {
 	textPtr->insertPos = textPtr->numChars;
     } else {
 	textPtr->insertPos = index;

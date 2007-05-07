@@ -189,7 +189,7 @@ set oldpwd [pwd]
 cd [temporaryDirectory]
 
 test ioUtil-3.1 {TclOpenFileChannel: Check that none of the test procs are there.} {testopenfilechannelproc} {
-    catch {file delete -force {expand}[glob *testOpenFileChannel*]}
+    catch {file delete -force {*}[glob *testOpenFileChannel*]}
     catch {file exists testOpenFileChannel1%.fil} err1
     catch {file exists testOpenFileChannel2%.fil} err2
     catch {file exists testOpenFileChannel3%.fil} err3

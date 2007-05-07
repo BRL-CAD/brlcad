@@ -7,6 +7,7 @@
  * Copyright (c) 1991-1994 The Regents of the University of California.
  * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  * Copyright 2001, Apple Computer, Inc.
+ * Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -28,17 +29,16 @@
  * DISABLED -		Foreground color when widget is disabled.
  */
 
-#define BLACK		"Black"
-#define WHITE		"White"
-
-#define NORMAL_BG	"systemWindowBody"
-#define ACTIVE_BG	"#ececec"
-#define SELECT_BG	"systemHighlight"
-#define SELECT_FG	"systemHighlightText"
-#define INACTIVE_SELECT_BG "systemHighlightSecondary"
-#define TROUGH		"#c3c3c3"
-#define INDICATOR	"#b03060"
-#define DISABLED	"#a3a3a3"
+#define BLACK				"Black"
+#define WHITE				"White"
+#define NORMAL_BG			"systemWindowBody"
+#define ACTIVE_BG			"#ececec"
+#define SELECT_BG			"systemHighlight"
+#define SELECT_FG			None
+#define INACTIVE_SELECT_BG		"systemHighlightSecondary"
+#define TROUGH				"#c3c3c3"
+#define INDICATOR			"#b03060"
+#define DISABLED			"#a3a3a3"
 
 /*
  * Defaults for labels, buttons, checkbuttons, and radiobuttons:
@@ -50,7 +50,7 @@
 #define DEF_BUTTON_ACTIVE_FG_COLOR	"systemButtonFace"
 #define DEF_CHKRAD_ACTIVE_FG_COLOR	DEF_BUTTON_ACTIVE_FG_COLOR
 #define DEF_BUTTON_ACTIVE_FG_MONO	WHITE
-//IGR#define DEF_BUTTON_BG_COLOR		"systemButtonFace"
+/* #define DEF_BUTTON_BG_COLOR	"systemButtonFace"*/
 #define DEF_BUTTON_BG_COLOR		WHITE
 #define DEF_BUTTON_BG_MONO		WHITE
 #define DEF_BUTTON_BITMAP		""
@@ -61,8 +61,7 @@
 #define DEF_BUTTON_DEFAULT		"disabled"
 #define DEF_BUTTON_DISABLED_FG_COLOR	DISABLED
 #define DEF_BUTTON_DISABLED_FG_MONO	""
-//IGR#define DEF_BUTTON_FG			"systemButtonText"
-#define DEF_BUTTON_FG			BLACK
+#define DEF_BUTTON_FG			"systemButtonText"
 #define DEF_CHKRAD_FG			DEF_BUTTON_FG
 #define DEF_BUTTON_FONT			"system"
 #define DEF_BUTTON_HEIGHT		"0"
@@ -127,7 +126,7 @@
 #define DEF_CANVAS_SELECT_MONO		BLACK
 #define DEF_CANVAS_SELECT_BD_COLOR	"1"
 #define DEF_CANVAS_SELECT_BD_MONO	"0"
-#define DEF_CANVAS_SELECT_FG_COLOR	BLACK
+#define DEF_CANVAS_SELECT_FG_COLOR	SELECT_FG
 #define DEF_CANVAS_SELECT_FG_MONO	WHITE
 #define DEF_CANVAS_TAKE_FOCUS		(char *) NULL
 #define DEF_CANVAS_WIDTH		"10c"
@@ -139,14 +138,14 @@
 /*
  * Defaults for entries:
  */
- 
-/* 
+
+/*
  * I test the following two values in TkpDrawEntryBorderAndFocus
- * to determine whether to use the native entry widget.  So if 
+ * to determine whether to use the native entry widget. So if
  * you change the defaults to be different from these, then you
  * won't get the native widget by default.
  */
- 
+
 #define MAC_OSX_FOCUS_WIDTH		3
 #define MAC_OSX_ENTRY_BORDER		2
 #define MAC_OSX_ENTRY_RELIEF		TK_RELIEF_SUNKEN
@@ -289,29 +288,29 @@
  * Defaults for menus overall:
  */
 
-#define DEF_MENU_ACTIVE_BG_COLOR	"SystemMenuActive"
+#define DEF_MENU_ACTIVE_BG_COLOR	"systemMenuActive"
 #define DEF_MENU_ACTIVE_BG_MONO		BLACK
 #define DEF_MENU_ACTIVE_BORDER_WIDTH	"0"
-#define DEF_MENU_ACTIVE_FG_COLOR	"SystemMenuActiveText"
+#define DEF_MENU_ACTIVE_FG_COLOR	"systemMenuActiveText"
 #define DEF_MENU_ACTIVE_FG_MONO		WHITE
-#define DEF_MENU_BG_COLOR		"SystemMenu"
+#define DEF_MENU_BG_COLOR		"systemMenu"
 #define DEF_MENU_BG_MONO		WHITE
 #define DEF_MENU_BORDER_WIDTH		"0"
 #define DEF_MENU_CURSOR			"arrow"
-#define DEF_MENU_DISABLED_FG_COLOR	"SystemMenuDisabled"
+#define DEF_MENU_DISABLED_FG_COLOR	"systemMenuDisabled"
 #define DEF_MENU_DISABLED_FG_MONO	""
-#define DEF_MENU_FONT			"system"
-#define DEF_MENU_FG			"SystemMenuText"
+#define DEF_MENU_FONT			"menu"
+#define DEF_MENU_FG			"systemMenuText"
 #define DEF_MENU_POST_COMMAND		""
 #define DEF_MENU_RELIEF			"flat"
-#define DEF_MENU_SELECT_COLOR		"SystemMenuActive"
+#define DEF_MENU_SELECT_COLOR		"systemMenuActive"
 #define DEF_MENU_SELECT_MONO		BLACK
 #define DEF_MENU_TAKE_FOCUS		"0"
 
 /*
  * FIXME: Turn the default back to 1 when we make tearoff menus work again.
  */
- 
+
 #define DEF_MENU_TEAROFF		"0"
 #define DEF_MENU_TEAROFF_CMD		(char *) NULL
 #define DEF_MENU_TITLE			""
@@ -334,7 +333,7 @@
 #define DEF_MENUBUTTON_DIRECTION	"below"
 #define DEF_MENUBUTTON_DISABLED_FG_COLOR DISABLED
 #define DEF_MENUBUTTON_DISABLED_FG_MONO	""
-#define DEF_MENUBUTTON_FONT		"system"
+#define DEF_MENUBUTTON_FONT		"menu"
 #define DEF_MENUBUTTON_FG		BLACK
 #define DEF_MENUBUTTON_HEIGHT		"0"
 #define DEF_MENUBUTTON_HIGHLIGHT_BG_COLOR DEF_MENUBUTTON_BG_COLOR
@@ -483,8 +482,7 @@
 #define DEF_SCROLLBAR_TAKE_FOCUS	(char *) NULL
 #define DEF_SCROLLBAR_TROUGH_COLOR	TROUGH
 #define DEF_SCROLLBAR_TROUGH_MONO	WHITE
-/*#define DEF_SCROLLBAR_WIDTH		"15" */
-#define DEF_SCROLLBAR_WIDTH		"16"
+#define DEF_SCROLLBAR_WIDTH		"15"
 
 /*
  * Defaults for texts:
@@ -509,7 +507,7 @@
 #define DEF_TEXT_INSERT_OFF_TIME	"300"
 #define DEF_TEXT_INSERT_ON_TIME		"600"
 #define DEF_TEXT_INSERT_WIDTH		"1"
-#define DEF_TEXT_MAX_UNDO    	"0"
+#define DEF_TEXT_MAX_UNDO		"0"
 #define DEF_TEXT_PADX			"1"
 #define DEF_TEXT_PADY			"1"
 #define DEF_TEXT_RELIEF			"flat"
@@ -529,7 +527,7 @@
 #define DEF_TEXT_TABS			""
 #define DEF_TEXT_TABSTYLE		"tabular"
 #define DEF_TEXT_TAKE_FOCUS		(char *) NULL
-#define DEF_TEXT_UNDO    		"0"
+#define DEF_TEXT_UNDO			"0"
 #define DEF_TEXT_WIDTH			"80"
 #define DEF_TEXT_WRAP			"char"
 #define DEF_TEXT_XSCROLL_COMMAND	""

@@ -173,8 +173,8 @@ TkGetServerInfo(
 
     os.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
     GetVersionEx(&os);
-    sprintf(buffer, "Windows %d.%d %d %s", os.dwMajorVersion,
-	    os.dwMinorVersion, os.dwBuildNumber,
+    sprintf(buffer, "Windows %d.%d %d %s", (int)os.dwMajorVersion,
+	    (int)os.dwMinorVersion, (int)os.dwBuildNumber,
 #ifdef _WIN64
 	    "Win64"
 #else
@@ -316,7 +316,7 @@ TkWinXInit(
 	       LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
 	       (LPTSTR) &lpCP, sizeof(lpCP)/sizeof(TCHAR))
 	    && TranslateCharsetInfo((DWORD *)lpCP, &lpCs, TCI_SRCCODEPAGE)) {
-	UpdateInputLanguage(lpCs.ciCharset);
+	UpdateInputLanguage((int) lpCs.ciCharset);
     }
 
     /*
@@ -818,7 +818,7 @@ TkWinChildProc(
 
     switch (message) {
     case WM_INPUTLANGCHANGE:
-	UpdateInputLanguage(wParam);
+	UpdateInputLanguage((int) wParam);
 	result = 1;
 	break;
 
@@ -1263,7 +1263,7 @@ GenerateXEvent(
 	    event.type = KeyPress;
 	    event.xany.send_event = -3;
 	    event.xkey.keycode = wParam;
-	    event.xkey.nbytes = Tcl_UniCharToUtf(wParam, buffer);
+	    event.xkey.nbytes = Tcl_UniCharToUtf((int)wParam, buffer);
 	    for (i=0; i<event.xkey.nbytes && i<TCL_UTF_MAX; ++i) {
 		event.xkey.trans_chars[i] = buffer[i];
 	    }
@@ -1600,18 +1600,20 @@ HandleIMEComposition(
     }
 
     if (n > 0) {
-	char *buff = ckalloc(n);
+	char *buff = ckalloc((unsigned) n);
 	TkWindow *winPtr;
 	XEvent event;
 	int i;
 
 	if (isWinNT) {
-	    n = ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, buff, n);
+	    n = ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, buff,
+		    (unsigned) n);
 	} else {
 	    Tcl_DString utfString, unicodeString;
 	    Tcl_Encoding unicodeEncoding = TkWinGetUnicodeEncoding();
 
-	    n = ImmGetCompositionStringA(hIMC, GCS_RESULTSTR, buff, n);
+	    n = ImmGetCompositionStringA(hIMC, GCS_RESULTSTR, buff,
+		    (unsigned) n);
 	    Tcl_DStringInit(&utfString);
 	    Tcl_ExternalToUtfDString(keyInputEncoding, buff, n, &utfString);
 	    Tcl_UtfToExternalDString(unicodeEncoding,
@@ -1625,10 +1627,10 @@ HandleIMEComposition(
 		 */
 
 		ckfree((char *) buff);
-		buff = (char *) ckalloc(i);
+		buff = (char *) ckalloc((unsigned) i);
 	    }
 	    n = i;
-	    memcpy(buff, Tcl_DStringValue(&unicodeString), n);
+	    memcpy(buff, Tcl_DStringValue(&unicodeString), (unsigned) n);
 	    Tcl_DStringFree(&utfString);
 	    Tcl_DStringFree(&unicodeString);
 	}

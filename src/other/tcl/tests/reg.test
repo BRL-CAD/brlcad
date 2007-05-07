@@ -187,8 +187,8 @@ namespace eval RETest {
 	# if &, test as both BRE and ARE
 	if {[string match *&* $flags]} {
 	    set f [string map {& {}} $flags]
-	    MatchExpected $opts "$testid ARE" ${f}  $re $target {expand}$args
-	    MatchExpected $opts "$testid BRE" ${f}b $re $target {expand}$args
+	    MatchExpected $opts "$testid ARE" ${f}  $re $target {*}$args
+	    MatchExpected $opts "$testid BRE" ${f}b $re $target {*}$args
 	    return
 	}
 
@@ -207,8 +207,8 @@ namespace eval RETest {
 
 	set f [TestFlags $flags]
 	set infoflags [TestInfoFlags $flags]
-	set ccmd [list testregexp -about        {expand}$f $re]
-	set ecmd [list testregexp {expand}$opts {expand}$f $re $target]
+	set ccmd [list testregexp -about        {*}$f $re]
+	set ecmd [list testregexp {*}$opts {*}$f $re $target]
 
 	set nsub [expr {[llength $args] - 1}]
 	set names [list]
@@ -230,7 +230,7 @@ namespace eval RETest {
 	    incr nsub -1			;# the extra does not count
 	}
 	set erun "list \[[concat $ecmd $names]\] $refs"
-	set result [list [expr {![string match *!* $flags]}] {expand}$args]
+	set result [list [expr {![string match *!* $flags]}] {*}$args]
 	set info [list $nsub $infoflags]
 
 	::tcltest::test [TestNum $testid compile] [TestDesc $testid compile] \
@@ -262,7 +262,7 @@ namespace eval RETest {
 	    lappend constraints localeRegexp
 	}
 
-	set cmd [list testregexp -about {expand}[TestFlags $flags] $re]
+	set cmd [list testregexp -about {*}[TestFlags $flags] $re]
 	::tcltest::test [TestNum $testid error] [TestDesc $testid error] \
 		-constraints $constraints -result [list 1 REG_$err] -body \
 		"list \[catch \{$cmd\}\] \[lindex \$::errorCode 1\]"
@@ -273,8 +273,8 @@ namespace eval RETest {
 	# if &, test as both ARE and BRE
 	if {[string match *&* $flags]} {
 	    set f [string map {& {}} $flags]
-	    expectNomatch "$testid ARE" ${f}  $re $target {expand}$args
-	    expectNomatch "$testid BRE" ${f}b $re $target {expand}$args
+	    expectNomatch "$testid ARE" ${f}  $re $target {*}$args
+	    expectNomatch "$testid BRE" ${f}b $re $target {*}$args
 	    return
 	}
 
@@ -288,7 +288,7 @@ namespace eval RETest {
 
 	set f [TestFlags $flags]
 	set infoflags [TestInfoFlags $flags]
-	set ccmd [list testregexp -about {expand}$f $re]
+	set ccmd [list testregexp -about {*}$f $re]
 	set nsub [expr {[llength $args] - 1}]
 	if {$nsub == -1} {
 	    # didn't tell us number of subexps
@@ -297,7 +297,7 @@ namespace eval RETest {
 	} else {
 	    set info [list $nsub $infoflags]
 	}
-	set ecmd [list testregexp {expand}$f $re $target]
+	set ecmd [list testregexp {*}$f $re $target]
 
 	::tcltest::test [TestNum $testid compile] [TestDesc $testid compile] \
 		-constraints $constraints -body $ccmd -result $info
@@ -308,13 +308,13 @@ namespace eval RETest {
     # match expected (no missing, empty, or ambiguous submatches)
     # expectMatch testno flags re target mat submat ...
     proc expectMatch {args} {
-	MatchExpected {} {expand}$args
+	MatchExpected {} {*}$args
     }
 
     # match expected (full fanciness)
     # expectIndices testno flags re target mat submat ...
     proc expectIndices {args} {
-	MatchExpected -indices {expand}$args 
+	MatchExpected -indices {*}$args 
     }
 
     # partial match expected
@@ -322,7 +322,7 @@ namespace eval RETest {
     # Quirk:  number of ""s must be one more than number of subREs.
     proc expectPartial {args} {
 	lset args 1 ![lindex $args 1]	;# add ! flag
-	MatchExpected -indices {expand}$args
+	MatchExpected -indices {*}$args
     }
 
     # test is a knownBug

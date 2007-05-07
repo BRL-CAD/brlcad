@@ -1161,16 +1161,13 @@ test cmdAH-24.4 {Tcl_FileObjCmd: mtime} {
 test cmdAH-24.5 {Tcl_FileObjCmd: mtime} {
     # Under Unix, use a file in /tmp to avoid clock skew due to NFS.
     # On other platforms, just use a file in the local directory.
-
     if {[testConstraint unix]} {
 	set name /tmp/tcl.test.[pid]
     } else {
 	set name [file join [temporaryDirectory] tf]
     }
-
     # Make sure that a new file's time is correct.  10 seconds variance
     # is allowed used due to slow networks or clock skew on a network drive.
-
     file delete -force $name
     close [open $name w]
     set a [expr abs([clock seconds]-[file mtime $name])<10]
@@ -1230,7 +1227,6 @@ test cmdAH-24.11 {Tcl_FileObjCmd: mtime touch with non-ascii chars} win {
 } 1
 removeFile touch.me
 rename waitForEvenSecondForFAT {}
-
 test cmdAH-24.12 {Tcl_FileObjCmd: mtime and daylight savings} {
     set name [file join [temporaryDirectory] clockchange]
     file delete -force $name
@@ -1241,21 +1237,19 @@ test cmdAH-24.12 {Tcl_FileObjCmd: mtime and daylight savings} {
     file delete $name
     expr {$newmtime == $time ? 1 : "$newmtime != $time"}
 } {1}
-
 # bug 1420432: setting mtime fails for directories on windows.
-test cmdAH-24.13 {Tcl_FileObjCmd: directory mtime} {
+test cmdAH-24.13 {Tcl_FileObjCmd: directory mtime} -setup {
     set dirname [file join [temporaryDirectory] tmp[pid]]
     file delete -force $dirname
+} -constraints tempNotWin -body {
     file mkdir $dirname
-    set res [catch {
-        set old [file mtime $dirname]
-        file mtime $dirname 0
-        set new [file mtime $dirname]
-        list $new [expr {$old != $new}]
-    } err]
+    set old [file mtime $dirname]
+    file mtime $dirname 0
+    set new [file mtime $dirname]
+    list $new [expr {$old != $new}]
+} -cleanup {
     file delete -force $dirname
-    list $res $err
-} {0 {0 1}}
+} -result {0 1}
 
 # owned
 

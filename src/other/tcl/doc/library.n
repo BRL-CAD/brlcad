@@ -173,18 +173,18 @@ This is a standard search procedure for use by extensions during
 their initialization.  They call this procedure to look for their
 script library in several standard directories.
 The last component of the name of the library directory is 
-normally \fIbasenameversion\fP
+normally \fIbasenameversion\fR
 (e.g., tk8.0), but it might be "library" when in the build hierarchies.
 The \fIinitScript\fR file will be sourced into the interpreter
 once it is found.  The directory in which this file is found is
-stored into the global variable \fIvarName\fP.
+stored into the global variable \fIvarName\fR.
 If this variable is already defined (e.g., by C code during
 application initialization) then no searching is done.
 Otherwise the search looks in these directories:
-the directory named by the environment variable \fIenVarName\fP;
+the directory named by the environment variable \fIenVarName\fR;
 relative to the Tcl library directory;
 relative to the executable file in the standard installation
-bin or bin/\fIarch\fP directory;
+bin or bin/\fIarch\fR directory;
 relative to the executable file in the current build tree;
 relative to the executable file in a parallel build tree.
 .TP

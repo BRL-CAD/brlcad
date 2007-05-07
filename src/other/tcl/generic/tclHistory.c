@@ -134,8 +134,8 @@ Tcl_RecordAndEvalObj(
 	 * Do recording by eval'ing a tcl history command: history add $cmd. 
 	 */
 
-	list[0] = Tcl_NewStringObj("history", -1);
-	list[1] = Tcl_NewStringObj("add", -1);
+	TclNewLiteralStringObj(list[0], "history");
+	TclNewLiteralStringObj(list[1], "add");
 	list[2] = cmdPtr;
 	
 	objPtr = Tcl_NewListObj(3, list);

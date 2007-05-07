@@ -568,8 +568,10 @@ CopyRenameOneFile(
 	 */
 
 	{
-	    Tcl_Obj* perm = Tcl_NewStringObj("u+w",-1);
+	    Tcl_Obj *perm;
 	    int index;
+
+	    TclNewLiteralStringObj(perm, "u+w");
 	    Tcl_IncrRefCount(perm);
 	    if (TclFSFileAttrIndex(target, "-permissions", &index) == TCL_OK) {
 		Tcl_FSFileAttrsSet(NULL, index, target, perm);
@@ -587,7 +589,7 @@ CopyRenameOneFile(
 	if (errno == EINVAL) {
 	    Tcl_AppendResult(interp, "error renaming \"",
 		    TclGetString(source), "\" to \"", TclGetString(target),
-		    "\": trying to rename a volume or ",
+		    "\": trying to rename a volume or "
 		    "move a directory into itself", NULL);
 	    goto done;
 	} else if (errno != EXDEV) {
@@ -999,8 +1001,8 @@ TclFileAttrsCmd(
 	if (Tcl_ListObjLength(interp, objStrings, &numObjStrings) != TCL_OK) {
 	    goto end;
 	}
-	attributeStrings = (CONST char **)
-		ckalloc((1+numObjStrings) * sizeof(char*));
+	attributeStrings = (CONST char **) TclStackAlloc(interp,
+		(1+numObjStrings) * sizeof(char*));
 	for (index = 0; index < numObjStrings; index++) {
 	    Tcl_ListObjIndex(interp, objStrings, index, &objPtr);
 	    attributeStrings[index] = TclGetString(objPtr);
@@ -1110,7 +1112,7 @@ TclFileAttrsCmd(
 	 * Free up the array we allocated.
 	 */
 
-	ckfree((char*)attributeStrings);
+	TclStackFree(interp);	/* attributeStrings */
 
 	/*
 	 * We don't need this object that was passed to us any more.
