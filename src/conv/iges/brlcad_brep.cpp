@@ -13,12 +13,12 @@ namespace brlcad {
 
   void 
   BRLCADBrepHandler::handleShell(bool isVoid, bool orient) {
-
+    
   }
 
   int 
   BRLCADBrepHandler::handleFace(bool orient, int surfIndex) {
-
+    return 0;
   }
 
 
@@ -34,20 +34,19 @@ namespace brlcad {
   //   rccone surface
   //   spherical surface
   //   toroidal surface
-  void BRLCADBrepHandler::handleSurface(int surfIndex, 
-					IGESEntity surfType, 
-					const ParameterData& data) {
-
+  int BRLCADBrepHandler::handleSurface(IGESEntity surfType, 
+				       const ParameterData& data) {
+    return 0;
   }
 
   int 
   BRLCADBrepHandler::handleLoop(bool isOuter, int faceIndex) {
-
+    return 0;
   }
 
   void 
   BRLCADBrepHandler::handleEdge(int edgeIndex) {
-
+    
   }
 
   int 

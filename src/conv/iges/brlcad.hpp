@@ -24,7 +24,7 @@ namespace brlcad {
     //   rccone surface
     //   spherical surface
     //   toroidal surface
-    void handleSurface(int surfIndex, IGESEntity surfType, const ParameterData& data);
+    int handleSurface(IGESEntity surfType, const ParameterData& data);
     int handleLoop(bool isOuter, int faceIndex);
     void handleEdge(int edgeIndex);
     int handleCurve();
