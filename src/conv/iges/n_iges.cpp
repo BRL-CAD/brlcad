@@ -1,5 +1,6 @@
 #include "n_iges.hpp"
 #include <list>
+#include <assert.h>
 
 
 namespace brlcad {
@@ -36,9 +37,12 @@ namespace brlcad {
     _val = labs(val);
   }
   Pointer::Pointer(const string& field) {
-    int first = field.find_first_not_of(" \t\n\r");  
-    _val = strtol(field.substr(first,field.length()-first).c_str(), NULL, 0);
-    if (_val < 0) _val = labs(_val);
+    _val = 0;
+    int first = field.find_first_not_of(" \t\n\r");
+    if (first >= 0) {
+      _val = strtol(field.substr(first,field.length()-first).c_str(), NULL, 0);
+      if (_val < 0) _val = labs(_val);
+    }
     debug("Pointer(" << _val << ")");
   }
   Pointer::Pointer(const Pointer& ptr) {
@@ -122,7 +126,9 @@ namespace brlcad {
     _val = false;
   }
   Logical::Logical(const string& field) {
-    // XXX: todo parse field
+    int first = field.find_first_not_of(" \t\n\r");  
+    _val = strtol(field.substr(first,field.length()-first).c_str(), NULL, 0) != 0;
+    debug("Logical(" << _val << ")");
   }
   Logical::Logical(bool val) {
     _val = val;
@@ -171,7 +177,7 @@ namespace brlcad {
     if( k == (-1) )	/* We didn't encounter an early EOF */
       k = NRECS;
 
-    if( fseek(in, 0, 0) ) /* rewind file */ {
+    if( fseek(in, 0, SEEK_SET) ) /* rewind file */ {
       bu_log( "Cannot rewind file\n" );
       perror( "Recsize" );
       exit( 1 );
@@ -193,11 +199,13 @@ namespace brlcad {
 
   Record::Record(FILE* in) : _fp(in) {
     if (_reclen < 0) calcRecsize(in); // XXX: fixme
+    _start = ftell(in);
     _read();
   }
 
   Record::Record(FILE* in, int paramStart, int record) : _fp(in) {    
     if (_reclen < 0) calcRecsize(in);
+    _start = ftell(in);
     int pos = (record-1)*_reclen;
     fseek(_fp, paramStart + pos, SEEK_SET);
     _read();
@@ -271,6 +279,7 @@ namespace brlcad {
       _card << _line.substr(0,72);
     else {
       _valid = false;
+      _undoRead();
       return;
     }
     _dirEntries.push_back(_card.str());
@@ -391,9 +400,11 @@ namespace brlcad {
     int end = str.find_first_of(delim, start);
     while (end != string::npos) {
       if (end != string::npos) { 
-	if ((end - start) != 0) 
-	  els.push_back(str.substr(start, end-start));
-	else 
+	if ((end - start) != 0) {
+	  string s = str.substr(start, end-start);
+	  debug("__________" << s << "__________");
+	  els.push_back(s);
+	} else 
 	  els.push_back("");
       } 
       cout << els.back() << endl;
@@ -457,6 +468,7 @@ namespace brlcad {
 
   Pointer
   ParameterData::getPointer(int index) {
+    debug("passing to Pointer(): " << params[index]);
     return Pointer(params[index]);
   }
 
@@ -644,7 +656,7 @@ namespace brlcad {
   
   void
   IGES::readGlobal(FILE* in) {
-    Record global(in);
+    Record global(in); 
     _global = global.createGlobalSection();
   }
 
@@ -676,13 +688,14 @@ namespace brlcad {
     split(l, pd, _global->paramDelim() + _global->recordDelim());
     outParam.clear();
     for (list<string>::iterator i = l.begin(); i != l.end(); i++) {
+      debug("addingParam: " << *i);
       outParam.addParam(*i);
     }
   }
 
   DirectoryEntry*
   IGES::getDirectoryEntry(const Pointer& ptr) {
-    return _dir[ptr+1/2];
+    return _dir[(ptr-1)/2];
   }
 
   //--------------------------------------------------------------------------------
