@@ -1347,7 +1347,7 @@ EOF
 	$VERBOSE_ECHO "Searching for $feature in $CONFIGURE"
 	found="`grep \"^$feature.*\" $CONFIGURE`"
 	if [ ! "x$found" = "x" ] ; then
-	    config_header=yes
+	    need_automake=yes
 	    break
 	fi
     done
