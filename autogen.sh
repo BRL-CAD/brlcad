@@ -392,17 +392,6 @@ if [ "x$HELP" = "xyes" ] ; then
 fi
 
 
-#############################
-# look for a configure file #
-#############################
-if [ "x$CONFIGURE" = "x" ] ; then
-    CONFIGURE="`locate_configure_template`"
-    $VERBOSE_ECHO "Found a configure template: $CONFIGURE"
-else
-    $ECHO "Using CONFIGURE environment variable override: $CONFIGURE"
-fi
-
-
 #######################
 # set up signal traps #
 #######################
@@ -448,6 +437,31 @@ for sig in 1 2 13 15; do
 done
 SIGNAL=0
 
+
+#############################
+# look for a configure file #
+#############################
+if [ "x$CONFIGURE" = "x" ] ; then
+    CONFIGURE="`locate_configure_template`"
+    if [ ! "x$CONFIGURE" = "x" ] ; then
+	$VERBOSE_ECHO "Found a configure template: $CONFIGURE"
+    fi
+else
+    $ECHO "Using CONFIGURE environment variable override: $CONFIGURE"
+fi
+if [ "x$CONFIGURE" = "x" ] ; then
+    if [ "x$VERSION_ONLY" = "xyes" ] ; then
+	CONFIGURE=/dev/null
+    else
+	$ECHO
+	$ECHO "A configure.ac or configure.in file could not be located implying"
+	$ECHO "that the GNU Build System is at least not used in this directory.  In"
+	$ECHO "any case, there is nothing to do here without one of those files."
+	$ECHO
+	$ECHO "ERROR: No configure.in or configure.ac file found."
+	exit 1
+    fi
+fi
 
 ####################
 # get project name #
