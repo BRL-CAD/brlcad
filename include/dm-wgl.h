@@ -25,6 +25,10 @@
 #ifndef SEEN_DM_WGL
 #define SEEN_DM_WGL
 
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
+
 #include "dm_color.h"
 #define CMAP_BASE 40
 
