@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include "bn.h"
 #include "brlcad_version.h"
 
 
