@@ -22,6 +22,19 @@ namespace brlcad {
     int handleRuledSurface();
     int handleSurfaceOfRevolution();
     int handleTabulatedCylinder();
+    int handleRationalBSplineSurface(int num_control[2], 
+				     int degree[2], 
+				     bool u_closed, 
+				     bool v_closed, 
+				     bool rational, 
+				     bool u_periodic, 
+				     bool v_periodic, 
+				     int u_num_knots,
+				     int v_num_knots,
+				     double u_knots[],
+				     double v_knots[],
+				     double weights[],
+				     double* ctl_points);
     int handleRationalBSplineSurface();
     int handleOffsetSurface();
     int handlePlaneSurface();

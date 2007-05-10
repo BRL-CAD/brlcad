@@ -102,20 +102,88 @@ namespace brlcad {
       break;
     case TabulatedCylinder:
       break;
-    case RationalBSplineSurface:
+    case RationalBSplineSurface: {
       // possible to do optimization of form type???
       // see spec
-      int ui = params.getInteger(1);
-      int vi = params.getInteger(2);
+      const int ui = params.getInteger(1);
+      const int vi = params.getInteger(2);
       int u_degree = params.getInteger(3);
       int v_degree = params.getInteger(4);
       bool u_closed = params.getInteger(5)() == 1;
       bool v_closed = params.getInteger(6)() == 1;
       bool rational = params.getInteger(7)() == 0;
       bool u_periodic = params.getInteger(8)() == 1;
-      bool v_periodic = params.getInteger(9)() == 1;      
-	
-      break;
+      bool v_periodic = params.getInteger(9)() == 1;
+      
+      int n1 = 1+ui-u_degree;
+      int n2 = 1+vi-v_degree;
+      
+      const int u_num_knots = n1 + 2 * u_degree;
+      const int v_num_knots = n2 + 2 * v_degree;
+      const int num_weights = (1+ui)*(1+vi);
+      
+      // read the u knots
+      int i = 10; // first u knot
+      double* u_knots = new double[u_num_knots];
+      for (int _i = 0; _i < u_num_knots; _i++) {
+	u_knots[_i] = params.getReal(i);
+	i++;
+      }
+      i = 11 + u_num_knots; // first v knot
+      double* v_knots = new double[v_num_knots];
+      for (int _i = 0; _i < v_num_knots; _i++) {
+	v_knots[_i] = params.getReal(i);
+	i++;
+      }
+      
+      // read the weights (w)
+      i = 11 + u_num_knots + v_num_knots;
+      double* weights = new double[num_weights];
+      for (int _i = 0; _i < num_weights; _i++) {
+	weights[_i] = params.getReal(i);
+	i++;
+      }
+      
+      // read the control points
+      i = 12 + u_num_knots + v_num_knots + num_weights;
+      double* ctl_points = new double[CP_SIZE(ui+1, vi+1, 3)];
+      const int numu = ui+1;
+      const int numv = vi+1;
+      for (int _v = 0; _v < numv; _v++) {
+	for (int _u = 0; _u < numu; _u++) {
+	  ctl_points[CPI(_u,_v,0)] = params.getReal(i);
+	  ctl_points[CPI(_u,_v,1)] = params.getReal(i+1);
+	  ctl_points[CPI(_u,_v,2)] = params.getReal(i+2);
+	  i += 3;
+	}
+      }
+      
+      // read the domain intervals
+      double umin = params.getReal(i);
+      double umax = params.getReal(i+1);
+      double vmin = params.getReal(i+2);
+      double vmax = params.getReal(i+3);
+
+      int controls[] = {ui+1,vi+1};
+      int degrees[] = {u_degree,v_degree};
+      int index = handleRationalBSplineSurface( controls,
+						degrees,
+						u_closed,
+						v_closed,
+						rational,
+						u_periodic,
+						v_periodic,
+						u_num_knots,
+						v_num_knots,
+						u_knots,
+						v_knots,
+						weights,
+						ctl_points);
+      delete [] ctl_points;
+      delete [] weights;
+      delete [] v_knots;
+      delete [] u_knots;      
+    } break;
     case OffsetSurface:
       break;
     case PlaneSurface:

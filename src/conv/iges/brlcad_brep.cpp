@@ -56,7 +56,26 @@ namespace brlcad {
   BRLCADBrepHandler::handleTabulatedCylinder() { return 0; }
 
   int
-  BRLCADBrepHandler::handleRationalBSplineSurface() { return 0; }
+  BRLCADBrepHandler::handleRationalBSplineSurface(int num_control[2], 
+						  int degree[2], 
+						  bool u_closed, 
+						  bool v_closed, 
+						  bool rational, 
+						  bool u_periodic, 
+						  bool v_periodic, 
+						  int u_num_knots,
+						  int v_num_knots,
+						  double u_knots[],
+						  double v_knots[],
+						  double weights[],
+						  double* ctl_points) { 
+    debug("handleRationalBSplineSurface()");
+    debug("u controls: " << num_control[0]);
+    debug("v controls: " << num_control[1]);
+    debug("u degree  : " << degree[0]);
+    debug("v degree  : " << degree[1]);
+    return 0; 
+  }
 
   int
   BRLCADBrepHandler::handleOffsetSurface() { return 0; }

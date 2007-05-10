@@ -471,6 +471,9 @@ namespace brlcad {
     list<Extractor*> handlers;
   };
 
+#define CP_SIZE(u,v,i) (u)*(v)*(i)
+#define CPI(u,v,i) (u)*(v)+(i)
+
   class EdgeUse;
   class PSpaceCurve;
   class BrepHandler : public Extractor {
@@ -493,7 +496,19 @@ namespace brlcad {
     virtual int handleRuledSurface() = 0;
     virtual int handleSurfaceOfRevolution() = 0;
     virtual int handleTabulatedCylinder() = 0;
-    virtual int handleRationalBSplineSurface() = 0;
+    virtual int handleRationalBSplineSurface(int num_control[2], 
+					     int degree[2], 
+					     bool u_closed, 
+					     bool v_closed, 
+					     bool rational, 
+					     bool u_periodic, 
+					     bool v_periodic, 
+					     int u_num_knots,
+					     int v_num_knots,
+					     double u_knots[],
+					     double v_knots[],
+					     double weights[],
+					     double* ctl_points) = 0;
     virtual int handleOffsetSurface() = 0;
     virtual int handlePlaneSurface() = 0;
     virtual int handleRightCircularCylindricalSurface() = 0;
