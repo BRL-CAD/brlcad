@@ -56,6 +56,19 @@ namespace brlcad {
 
   void 
   BrepHandler::extractFace(const DirectoryEntry* de, bool orientWithSurface) {
+    // spec says the surface can be:
+    //   parametric spline surface
+    //   ruled surface
+    //   surface of revolution
+    //   tabulated cylinder
+    //   rational b-spline surface
+    //   offset surface
+    //   plane surface
+    //   rccyl surface
+    //   rccone surface
+    //   spherical surface
+    //   toroidal surface
+
     debug("########################### E X T R A C T   F A C E"); 
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
@@ -79,7 +92,44 @@ namespace brlcad {
     debug("########################## E X T R A C T   S U R F A C E");
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
-    return handleSurface((IGESEntity)(int)de->type(), params);
+    // determine the surface type to extract
+    switch (de->type()) {
+    case ParametricSplineSurface:      
+      break;
+    case RuledSurface:
+      break;
+    case SurfaceOfRevolution:
+      break;
+    case TabulatedCylinder:
+      break;
+    case RationalBSplineSurface:
+      // possible to do optimization of form type???
+      // see spec
+      int ui = params.getInteger(1);
+      int vi = params.getInteger(2);
+      int u_degree = params.getInteger(3);
+      int v_degree = params.getInteger(4);
+      bool u_closed = params.getInteger(5)() == 1;
+      bool v_closed = params.getInteger(6)() == 1;
+      bool rational = params.getInteger(7)() == 0;
+      bool u_periodic = params.getInteger(8)() == 1;
+      bool v_periodic = params.getInteger(9)() == 1;      
+	
+      break;
+    case OffsetSurface:
+      break;
+    case PlaneSurface:
+      break;
+    case RightCircularCylindricalSurface:
+      break;
+    case RightCircularConicalSurface:
+      break;
+    case SphericalSurface:
+      break;
+    case ToroidalSurface:
+      break;
+    }
+    return 0;
   }
 
   class PSpaceCurve {
@@ -113,7 +163,7 @@ namespace brlcad {
       termVertexList = params.getPointer(paramIndex+3);
       termVertexIndex = params.getInteger(paramIndex+4);
       
-      // extract the model space curves - is this even valid for MSBO?
+      // extract the model space curves
       mCurveIndex = _brep->extractCurve(_iges->getDirectoryEntry(msCurvePtr), false);
     }
     EdgeUse(const EdgeUse& eu) 
@@ -139,7 +189,6 @@ namespace brlcad {
     _iges->getParameter(de->paramData(), params);
 
     int loop = handleLoop(isOuter, face);
-
     int numberOfEdges = params.getInteger(1);
 
     int i = 2; // extract the edge uses!
@@ -153,7 +202,8 @@ namespace brlcad {
       int numCurves = params.getInteger(i+4);
       debug("Num param-space curves in " << string((isOuter)?"outer":"inner") << " loop: " << numCurves);
       int j = i+5;
-      for (int _j = 0; _j < numCurves; _j++) {	
+      for (int _j = 0; _j < numCurves; _j++) {
+	// handle the param-space curves, which are generally not included in MSBO
 	Logical iso = params.getLogical(j);
 	Pointer ptr = params.getPointer(j+1);
 	eu.pCurveIndices.push_back(PSpaceCurve(_iges,
@@ -162,10 +212,7 @@ namespace brlcad {
 					       ptr));
 	j += 2;
       }
-      
-      
-
-      i = j;      
+      i = j;
     }
   }
 
@@ -181,6 +228,18 @@ namespace brlcad {
 
   int 
   BrepHandler::extractCurve(const DirectoryEntry* de, bool isISO) {
+    // spec says the curve may be:
+    //   100 Circular Arc 
+    //   102 Composite Curve 
+    //   104 Conic Arc 
+    //   106/11 2D Path 
+    //   106/12 3D Path 
+    //   106/63 Simple Closed Planar Curve 
+    //   110 Line 
+    //   112 Parametric Spline Curve 
+    //   126 Rational B-Spline Curve 
+    //   130 Offset Curve 
+
     
   }
 

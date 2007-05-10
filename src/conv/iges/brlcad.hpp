@@ -12,25 +12,34 @@ namespace brlcad {
     
     void handleShell(bool isVoid, bool orient);
     int handleFace(bool orient, int surfIndex);
-    // surftype should be:
-    //   parametric spline surface
-    //   ruled surface
-    //   surface of revolution
-    //   tabulated cylinder
-    //   rational b-spline surface
-    //   offset surface
-    //   plane surface
-    //   rccyl surface
-    //   rccone surface
-    //   spherical surface
-    //   toroidal surface
-    int handleSurface(IGESEntity surfType, const ParameterData& data);
     int handleLoop(bool isOuter, int faceIndex);
-    void handleEdge(int edgeIndex);
-    int handleCurve();
+    int handleEdge(int edgeIndex);
     int handleVertex(int pointIndex);
     int handlePoint(double x, double y, double z); // return index
 
+
+    int handleParametricSplineSurface();
+    int handleRuledSurface();
+    int handleSurfaceOfRevolution();
+    int handleTabulatedCylinder();
+    int handleRationalBSplineSurface();
+    int handleOffsetSurface();
+    int handlePlaneSurface();
+    int handleRightCircularCylindricalSurface();
+    int handleRightCircularConicalSurface();
+    int handleSphericalSurface();
+    int handleToroidalSurface();    
+
+    int handleCircularArc();
+    int handleCompositeCurve();
+    int handleConicArc();
+    int handle2DPath();
+    int handle3DPath();
+    int handleSimpleClosedPlanarCurve();
+    int handleLine();
+    int handleParametricSplineCurve();
+    int handleRationalBSplineCurve();
+    int handleOffsetCurve();    
 
   private:
   };

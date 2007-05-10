@@ -335,34 +335,22 @@ namespace brlcad {
     _type = Integer(_field(1));
     _paramData = Pointer(_field(2));
     _structure = Pointer(_field(3));
-    
-    long lfp = Integer(_field(4));
+    long lfp   = Integer(_field(4));
     _lineFontPattern = (lfp >= 0) ? DualIP(Integer(lfp)) : DualIP(Pointer(lfp));
-
-    long lvl = Integer(_field(5));
-    _level = (lvl >= 0) ? DualIP(Integer(lvl)) : DualIP(Pointer(lvl));
-
-    _view = Pointer(_field(6));
-
-    _xform = Pointer(_field(7));
-
-    _label = Pointer(_field(8));
-
+    long lvl   = Integer(_field(5));
+    _level     = (lvl >= 0) ? DualIP(Integer(lvl)) : DualIP(Pointer(lvl));
+    _view      = Pointer(_field(6));
+    _xform     = Pointer(_field(7));
+    _label     = Pointer(_field(8));
     _parseStatus(_field(9));
-
     _lineWeight = Integer(_field(12));
-    
     long color = Integer(_field(13));
-    _color = (color > 0) ? DualIP(Integer(color)) : DualIP(Pointer(color));
-    
+    _color     = (color > 0) ? DualIP(Integer(color)) : DualIP(Pointer(color));
     _parameterLineCount = Integer(_field(14));
-    
-    _formId = Integer(_field(15));
-   
-    string el = _field(18);
+    _formId    = Integer(_field(15));
+    string el  = _field(18);
     el.replace(0, el.find_first_not_of(" "), "");
     _entityLabel = el;
-
     _entitySubscript = Integer(_field(19));
   }
 

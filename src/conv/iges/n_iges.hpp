@@ -483,24 +483,35 @@ namespace brlcad {
     // subclass responsibility
     virtual void handleShell(bool isVoid, bool orient) = 0;
     virtual int handleFace(bool orient, int surfIndex) = 0;
-    // surftype should be:
-    //   parametric spline surface
-    //   ruled surface
-    //   surface of revolution
-    //   tabulated cylinder
-    //   rational b-spline surface
-    //   offset surface
-    //   plane surface
-    //   rccyl surface
-    //   rccone surface
-    //   spherical surface
-    //   toroidal surface
-    virtual int handleSurface(IGESEntity surfType, const ParameterData& data) = 0;
     virtual int handleLoop(bool isOuter, int faceIndex) = 0;
-    virtual void handleEdge(int edgeIndex) = 0;
-    virtual int handleCurve() = 0;
+    virtual int handleEdge(int edgeIndex) = 0;
     virtual int handleVertex(int pointIndex) = 0;
     virtual int handlePoint(double x, double y, double z) = 0; // return index
+
+    // surface handlers (refactor to SurfaceHandler class?)
+    virtual int handleParametricSplineSurface() = 0;
+    virtual int handleRuledSurface() = 0;
+    virtual int handleSurfaceOfRevolution() = 0;
+    virtual int handleTabulatedCylinder() = 0;
+    virtual int handleRationalBSplineSurface() = 0;
+    virtual int handleOffsetSurface() = 0;
+    virtual int handlePlaneSurface() = 0;
+    virtual int handleRightCircularCylindricalSurface() = 0;
+    virtual int handleRightCircularConicalSurface() = 0;
+    virtual int handleSphericalSurface() = 0;
+    virtual int handleToroidalSurface() = 0;    
+
+    // curve handlers (refactor to CurveHandler class?)
+    virtual int handleCircularArc() = 0;
+    virtual int handleCompositeCurve() = 0;
+    virtual int handleConicArc() = 0;
+    virtual int handle2DPath() = 0;
+    virtual int handle3DPath() = 0;
+    virtual int handleSimpleClosedPlanarCurve() = 0;
+    virtual int handleLine() = 0;
+    virtual int handleParametricSplineCurve() = 0;
+    virtual int handleRationalBSplineCurve() = 0;
+    virtual int handleOffsetCurve() = 0;    
 
   protected:
     IGES* _iges;
