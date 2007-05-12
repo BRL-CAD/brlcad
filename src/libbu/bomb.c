@@ -59,12 +59,12 @@ static const char RCSbomb[] = "@(#)$Header$ (ARL)";
 
 
 struct bu_hook_list bu_bomb_hook_list = {
-	{	BU_LIST_HEAD_MAGIC,
-		&bu_bomb_hook_list.l,
-		&bu_bomb_hook_list.l
-	},
-	BUHOOK_NULL,
-	GENPTR_NULL
+    {	BU_LIST_HEAD_MAGIC,
+	&bu_bomb_hook_list.l,
+	&bu_bomb_hook_list.l
+    },
+    BUHOOK_NULL,
+    GENPTR_NULL
 };
 
 
@@ -90,75 +90,71 @@ void
 bu_bomb(const char *str)
 {
 
-	/* First thing, always always always try to print the string.
-	 * Avoid passing additional format arguments so as to avoid
-	 * buffer allocations inside fprintf().
-	 */
-	fprintf(stderr, "\n");
-	fprintf(stderr, str);
-	fprintf(stderr, "\n");
-	fflush(stderr);
+    /* First thing, always always always try to print the string.
+     * Avoid passing additional format arguments so as to avoid
+     * buffer allocations inside fprintf().
+     */
+    fprintf(stderr, "\n");
+    fprintf(stderr, str);
+    fprintf(stderr, "\n");
+    fflush(stderr);
 
-	/* MGED would like to be able to additional logging, do callbacks. */
-	if (BU_LIST_NON_EMPTY(&bu_bomb_hook_list.l)) {
-		bu_call_hook(&bu_bomb_hook_list, (genptr_t)str);
-	}
+    /* MGED would like to be able to additional logging, do callbacks. */
+    if (BU_LIST_NON_EMPTY(&bu_bomb_hook_list.l)) {
+	bu_call_hook(&bu_bomb_hook_list, (genptr_t)str);
+    }
 
-	if( bu_setjmp_valid )  {
-		/* Application is catching fatal errors */
-		if( bu_is_parallel() )  {
-			fprintf(stderr,"bu_bomb(): in parallel mode, could not longjmp up to application handler\n");
-		} else {
-			/* Application is non-parallel, so this is safe */
-			fprintf(stderr,"bu_bomb(): taking longjmp up to application handler\n");
-#if __STDC__
-			longjmp( (void *)(bu_jmpbuf), 1 );
-#else
-			longjmp( (int *)(bu_jmpbuf), 1 );
-#endif
-			/* NOTREACHED */
-		}
+    if( bu_setjmp_valid )  {
+	/* Application is catching fatal errors */
+	if( bu_is_parallel() )  {
+	    fprintf(stderr,"bu_bomb(): in parallel mode, could not longjmp up to application handler\n");
+	} else {
+	    /* Application is non-parallel, so this is safe */
+	    fprintf(stderr,"bu_bomb(): taking longjmp up to application handler\n");
+	    longjmp( (void *)(bu_jmpbuf), 1 );
+	    /* NOTREACHED */
 	}
+    }
 
 #if defined(HAVE_UNIX_IO)
-	/*
-	 * No application level error handling,
-	 * go to extra pains to ensure that user gets to see this message.
-	 * For example, mged hijacks output sent to stderr.
-	 */
-	{
-		int fd = open("/dev/tty", 1);
-		if (fd) {
-			write( fd, str, strlen(str) );
-			close(fd);
-		}
+    /*
+     * No application level error handling,
+     * go to extra pains to ensure that user gets to see this message.
+     * For example, mged hijacks output sent to stderr.
+     */
+    {
+	int fd = open("/dev/tty", 1);
+	if (fd) {
+	    write( fd, str, strlen(str) );
+	    close(fd);
 	}
+    }
 #endif
 
-	/* save a backtrace */
-	{
-	    FILE *fp = NULL;
-	    char tracefile[512] = {0};
-	    snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), getpid());
-	    fprintf(stderr, "Saving stack trace to %s\n", tracefile);
-	    fflush(stderr);
-	    fp = fopen(tracefile, "a");
-	    bu_backtrace(fp);
-	    (void)fclose(fp);
-	}
+    /* save a backtrace */
+    {
+	FILE *fp = NULL;
+	char tracefile[512] = {0};
+	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), getpid());
+	fprintf(stderr, "Saving stack trace to %s\n", tracefile);
+	fflush(stderr);
+	fp = fopen(tracefile, "a");
+	bu_backtrace(fp);
+	(void)fclose(fp);
+    }
 
-	/* If in parallel mode, try to signal the leader to die. */
-	bu_kill_parallel();
+    /* If in parallel mode, try to signal the leader to die. */
+    bu_kill_parallel();
 
-	/* try to save a core dump */
-	if( bu_debug & BU_DEBUG_COREDUMP )  {
-		fprintf(stderr,"Causing intentional core dump due to debug flag\n");
-		fflush(stdout);
-		fflush(stderr);
-		abort();	/* should dump if ulimit is non-zero */
-	}
+    /* try to save a core dump */
+    if( bu_debug & BU_DEBUG_COREDUMP )  {
+	fprintf(stderr,"Causing intentional core dump due to debug flag\n");
+	fflush(stdout);
+	fflush(stderr);
+	abort();	/* should dump if ulimit is non-zero */
+    }
 
-	exit(12);
+    exit(12);
 }
 /** @} */
 /*
