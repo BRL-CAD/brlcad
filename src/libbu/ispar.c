@@ -82,11 +82,16 @@ bu_is_parallel(void)
 void
 bu_kill_parallel(void)
 {
-#ifndef _WIN32
     if( bu_pid_of_initiating_thread == 0 )  return;
+
+#ifdef HAVE_UNISTD_H
     if( bu_pid_of_initiating_thread == getpid() )  return;
+#endif
+
+#ifdef HAVE_KILL
     (void)kill( bu_pid_of_initiating_thread, 9 );
 #endif
+
     return;
 }
 /** @} */
