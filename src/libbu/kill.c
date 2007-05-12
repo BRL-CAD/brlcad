@@ -48,7 +48,7 @@ bu_terminate(int process)
     successful = kill(process, SIGKILL);
     successful = !successful; 
 #else
-    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, process);
+    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, (DWORD)process);
     if(hProcess != NULL) {
 	successful = TerminateProcess(hProcess, 0);
     }
