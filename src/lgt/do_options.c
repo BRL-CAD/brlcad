@@ -3808,13 +3808,7 @@ pars_Argv(int argc, register char **argv)
 void
 stop_sig(int sig)
 {
-    int	pid;
-
-#ifdef HAVE_UNISTD_H
-    pid = getpid();
-#else
-    pid = (int)GetCurrentProcessId();
-#endif
+    int	pid = bu_process_id();
 
     EVENT_MOVE();
     (void) signal( sig, SIG_DFL );

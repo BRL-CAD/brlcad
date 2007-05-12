@@ -1339,11 +1339,7 @@ Catch(register int sig)
 
     (void)signal( sig, SIG_DFL );
 
-#ifdef HAVE_UNISTD_H
-    pid = getpid();
-#else
-    pid = (int)GetCurrentProcessId();
-#endif
+    pid = bu_process_id();
 
     if ( pid > 1 ) {
 #ifdef HAVE_KILL

@@ -799,19 +799,12 @@ f_Redraw(char *buf) /* Redraw screen. */
 STATIC int
 /*ARGSUSED*/
 f_Stop(char *buf) /* Stop program. */
+{
+    int sig = 17;
+    int pid = bu_process_id();
 
-	{
-#ifdef HAVE_UNISTD_H
-	    int pid = getpid();
-#else
-	    int pid = (int)GetCurrentProcessId();
-#endif
-
-	    int sig;
 #ifdef SIGSTOP
 	sig = SIGSTOP;
-#else
-	sig = 17;
 #endif
 
 	prnt_Event( "[%d] stopped.", pid );

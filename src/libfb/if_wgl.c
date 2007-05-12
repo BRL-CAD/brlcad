@@ -818,7 +818,7 @@ int	width, height;
 	ifp->if_yzoom = 1;	/* for zoom fakeout */
 	ifp->if_xcenter = width/2;
 	ifp->if_ycenter = height/2;
-	/* SGI(ifp)->mi_pid = getpid(); */
+	SGI(ifp)->mi_pid = bu_process_id();
 
 	/* Attach to shared memory, potentially with a screen repaint */
 	if( wgl_getmem(ifp) < 0 )
@@ -1000,7 +1000,7 @@ _wgl_open_existing(FBIO *ifp,
   ifp->if_yzoom = 1;	/* for zoom fakeout */
   ifp->if_xcenter = width/2;
   ifp->if_ycenter = height/2;
-  /* SGI(ifp)->mi_pid = getpid(); */
+  SGI(ifp)->mi_pid = bu_process_id();
 
   /* Attach to shared memory, potentially with a screen repaint */
   if(wgl_getmem(ifp) < 0)

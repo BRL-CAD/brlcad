@@ -257,7 +257,7 @@ main(int argc, char **argv)
 		    return 0;
 
 		/* Go into our own process group */
-		n = getpid();
+		n = bu_process_id();
 
 #ifdef HAVE_SETPGID
 		if( setpgid( n, n ) < 0 )

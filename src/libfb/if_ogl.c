@@ -788,7 +788,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 
     if( (ifp->if_mode & MODE_2MASK) == MODE_2LINGERING )  {
 	/* save parent pid for later signalling */
-	SGI(ifp)->mi_parent = getpid();
+	SGI(ifp)->mi_parent = bu_process_id();
 
 	signal( SIGUSR1, sigkid);
 
@@ -862,7 +862,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
     ifp->if_yzoom = 1;	/* for zoom fakeout */
     ifp->if_xcenter = width/2;
     ifp->if_ycenter = height/2;
-    SGI(ifp)->mi_pid = getpid();
+    SGI(ifp)->mi_pid = bu_process_id();
 
     /* Attach to shared memory, potentially with a screen repaint */
     if( ogl_getmem(ifp) < 0 )
@@ -1096,7 +1096,7 @@ _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
     ifp->if_yzoom = 1;	/* for zoom fakeout */
     ifp->if_xcenter = width/2;
     ifp->if_ycenter = height/2;
-    SGI(ifp)->mi_pid = getpid();
+    SGI(ifp)->mi_pid = bu_process_id();
 
     /* Attach to shared memory, potentially with a screen repaint */
     if(ogl_getmem(ifp) < 0)

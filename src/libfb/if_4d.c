@@ -925,7 +925,7 @@ int	width, height;
 	 */
 	if( (ifp->if_mode & MODE_2MASK) == MODE_2LINGERING )  {
 		/* save parent pid for later signalling */
-		SGI(ifp)->mi_parent = getpid();
+		SGI(ifp)->mi_parent = bu_process_id();
 
 		signal( SIGUSR1, sigkid);
 
@@ -1172,7 +1172,7 @@ int	width, height;
 	ifp->if_ycenter = height/2;
 	SGI(ifp)->mi_xoff = 0;
 	SGI(ifp)->mi_yoff = 0;
-	SGI(ifp)->mi_pid = getpid();
+	SGI(ifp)->mi_pid = bu_process_id();
 
 	/*
 	 *  In full screen mode, center the image on the screen.

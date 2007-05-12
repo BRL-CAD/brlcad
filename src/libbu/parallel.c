@@ -823,11 +823,7 @@ bu_parallel( func, ncpu, arg )
     if( bu_pid_of_initiating_thread )
 	bu_bomb("bu_parallel() called from within parallel section\n");
 
-#  ifdef HAVE_UNISTD_H
-    bu_pid_of_initiating_thread = getpid();
-#  else
-    bu_pid_of_initiating_thread = (int)GetCurrentProcessId();
-#  endif
+    bu_pid_of_initiating_thread = bu_process_id();
 
     if (ncpu > MAX_PSW) {
 	bu_log("WARNING: bu_parallel() ncpu(%d) > MAX_PSW(%d), adjusting ncpu\n", ncpu, MAX_PSW);
@@ -1234,11 +1230,7 @@ bu_parallel( func, ncpu, arg )
      * PID and open file table (kernel struct u).  If not, then any
      * output may be written into the wrong file.
      */
-#  ifdef HAVE_UNISTD_H
-    x = getpid();
-#  else
-    x = (int)GetCurrentProcessId();
-#  endif
+    x = bu_process_id();
     if (bu_pid_of_initiating_thread != x) {
 	bu_log("WARNING: bu_parallel():  PID of initiating thread changed from %d to %d, open file table may be botched!\n",
 	       bu_pid_of_initiating_thread, x );

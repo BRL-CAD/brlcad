@@ -135,7 +135,7 @@ bu_bomb(const char *str)
     {
 	FILE *fp = NULL;
 	char tracefile[512] = {0};
-	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), getpid());
+	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), bu_process_id());
 	fprintf(stderr, "Saving stack trace to %s\n", tracefile);
 	fflush(stderr);
 	fp = fopen(tracefile, "a");

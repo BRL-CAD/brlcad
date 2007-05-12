@@ -80,12 +80,14 @@ main (int argc, char **argv)
     int		i;		/* Index into rname */
     int		line_nm = 0;	/* Number of current line of input */
     int		opt;		/* Command-line option returned by bu_getopt */
-    int		pid = getpid();	/* Process ID for unique group name */
+    int		pid;		/* Process ID for unique group name */
 
     extern char *bu_optarg;
     extern int  bu_optind, bu_opterr;
 
     int         bu_getopt(int, char *const *, const char *);
+
+    pid = bu_process_id();
 
     *rayname = '\0';
     /* Handle command-line options */

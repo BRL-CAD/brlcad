@@ -54,7 +54,7 @@ main(int argc, char **argv)
 	extern int bu_optind;
 	extern char *bu_optarg;
 
-	int seed = getpid();
+	int seed = bu_process_id();
 	int high, low;
 	double  center = 0;
 	int verbose = 0;

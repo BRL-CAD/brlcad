@@ -86,10 +86,8 @@ bu_kill_parallel(void)
     if (bu_pid_of_initiating_thread == 0)
 	return;
 
-#ifdef HAVE_UNISTD_H
-    if (bu_pid_of_initiating_thread == getpid())
+    if (bu_pid_of_initiating_thread == bu_process_id())
 	return;
-#endif
 
     bu_terminate(bu_pid_of_initiating_thread);
 
