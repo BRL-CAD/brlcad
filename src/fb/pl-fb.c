@@ -1339,8 +1339,18 @@ Catch(register int sig)
 
     (void)signal( sig, SIG_DFL );
 
-    if ( (pid = getpid()) > 1 )
-	(void)kill( pid, sig ); /* resignal process */
+#ifdef HAVE_UNISTD_H
+    pid = getpid();
+#else
+    pid = (int)GetCurrentProcessId();
+#endif
+
+    if ( pid > 1 ) {
+#ifdef HAVE_KILL
+	/* (re)signal process */
+	(void)kill( pid, sig );
+#endif
+    }
 }
 
 

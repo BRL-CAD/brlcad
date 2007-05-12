@@ -800,21 +800,31 @@ STATIC int
 /*ARGSUSED*/
 f_Stop(char *buf) /* Stop program. */
 
-	{	int pid = getpid();
-		int sig;
+	{
+#ifdef HAVE_UNISTD_H
+	    int pid = getpid();
+#else
+	    int pid = (int)GetCurrentProcessId();
+#endif
+
+	    int sig;
 #ifdef SIGSTOP
 	sig = SIGSTOP;
 #else
 	sig = 17;
 #endif
+
 	prnt_Event( "[%d] stopped.", pid );
 	restore_Tty();
-	if( kill( pid, sig ) == -1 )
-		{
-		extern int errno;
-		perror( "(fbed.c) kill" );
-		exit( errno );
-		}
+
+#ifdef HAVE_KILL
+	if( kill( pid, sig ) == -1 ) {
+	    extern int errno;
+	    perror( "(fbed.c) kill" );
+	    exit( errno );
+	}
+#endif
+
 	init_Tty();
 	init_Status();
 	prnt_Event( "[%d] foreground.", pid );
