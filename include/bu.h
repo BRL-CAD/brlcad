@@ -2047,6 +2047,9 @@ BU_EXPORT BU_EXTERN(struct bu_mapped_file *bu_open_mapped_file_with_path,
 /* kill.c */
 BU_EXPORT BU_EXTERN(int bu_terminate, (int process));
 
+/* process.c */
+BU_EXPORT BU_EXTERN(int bu_process_id, ());
+
 /* parallel.c */
 BU_EXPORT BU_EXTERN(void bu_nice_set, (int newnice));
 BU_EXPORT BU_EXTERN(int bu_cpulimit_get, ());

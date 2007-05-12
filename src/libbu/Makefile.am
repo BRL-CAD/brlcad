@@ -45,6 +45,7 @@ libbu_nil_la_SOURCES = \
 	parallel.c \
 	parse.c \
 	printb.c \
+	process.c \
 	ptbl.c \
 	rb_create.c \
 	rb_delete.c \
