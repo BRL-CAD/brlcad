@@ -205,7 +205,9 @@ backtrace(char **args, int fd)
 #if 0
     bu_log("\nBacktrace complete.\nAttach debugger or interrupt to continue...\n");
 #else
+#  ifdef HAVE_KILL
     kill(getppid(), SIGINT);
+#  endif
 #endif
 
     close(input[0]);
@@ -302,9 +304,14 @@ bu_backtrace(FILE *fp)
      * debugger to be attached interactively if needed.
      */
     interrupt_wait = 0;
+#ifdef HAVE_KILL
     while (interrupt_wait == 0) {
 	/* do nothing */;
     }
+#else
+    /* FIXME: need something better here for win32 */
+    sleep(2);
+#endif
     signal(SIGINT, SIG_DFL);
     signal(SIGCONT, SIG_DFL);
     bu_log("\nContinuing.\n");
