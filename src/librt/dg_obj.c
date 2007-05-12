@@ -2497,7 +2497,6 @@ dgo_report_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-#ifndef _WIN32
 int
 dgo_rtabort_cmd(struct dg_obj	*dgop,
 		Tcl_Interp	*interp,
@@ -2507,32 +2506,19 @@ dgo_rtabort_cmd(struct dg_obj	*dgop,
 	struct run_rt	*rrp;
 
 	for (BU_LIST_FOR(rrp, run_rt, &dgop->dgo_headRunRt.l)) {
-		kill(rrp->pid, SIGKILL);
-		rrp->aborted = 1;
-	}
-
-	return TCL_OK;
-}
+#ifndef HAVE_KILL
+	    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, rrp->pid);
+	    if(hProcess != NULL)
+		TerminateProcess(hProcess, 0);
 #else
-int
-dgo_rtabort_cmd(struct dg_obj	*dgop,
-		Tcl_Interp	*interp,
-		int		argc,
-		char 		**argv)
-{
-	struct run_rt *rrp;
-	HANDLE hProcess;
-
-	for (BU_LIST_FOR(rrp, run_rt, &dgop->dgo_headRunRt.l)) {
-		hProcess= OpenProcess(PROCESS_ALL_ACCESS, TRUE,rrp->pid);
-		if(hProcess != NULL)
-			TerminateProcess(hProcess, 0);
-		rrp->aborted = 1;
+	    kill(rrp->pid, SIGKILL);
+#endif
+	    rrp->aborted = 1;
 	}
 
 	return TCL_OK;
 }
-#endif
+
 
 static int
 dgo_rtabort_tcl(ClientData clientData,
