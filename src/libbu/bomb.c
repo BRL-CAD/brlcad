@@ -129,16 +129,31 @@ bu_bomb(const char *str)
 	 */
 	{
 		int	fd = open("/dev/tty", 1);
-		if( fd >= 0 )  {
+		if (fd) {
 			write( fd, str, strlen(str) );
 			close(fd);
 		}
 	}
 #endif
 
+#if 0
+	/* save a backtrace */
+	{
+	    FILE *fp = NULL;
+	    char tracefile[512] = {0};
+	    snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), getpid());
+	    fprintf(stderr, "bu_bomb saving stack trace to %s\n", tracefile);
+	    fflush(stderr);
+	    fp = fopen(tracefile, "a");
+	    bu_backtrace(fp);
+	    (void)fclose(fp);
+	}
+#endif
+
 	/* If in parallel mode, try to signal the leader to die. */
 	bu_kill_parallel();
 
+	/* try to save a core dump */
 	if( bu_debug & BU_DEBUG_COREDUMP )  {
 		fprintf(stderr,"bu_bomb causing intentional core dump due to debug flag\n");
 		fflush(stdout);
