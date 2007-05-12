@@ -31,6 +31,7 @@ libbu_nil_la_SOURCES = \
 	htonf.c \
 	image.c \
 	ispar.c \
+	kill.c \
 	lex.c \
 	linebuf.c \
 	list.c \
