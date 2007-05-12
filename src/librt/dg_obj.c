@@ -2506,13 +2506,7 @@ dgo_rtabort_cmd(struct dg_obj	*dgop,
 	struct run_rt	*rrp;
 
 	for (BU_LIST_FOR(rrp, run_rt, &dgop->dgo_headRunRt.l)) {
-#ifndef HAVE_KILL
-	    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, rrp->pid);
-	    if(hProcess != NULL)
-		TerminateProcess(hProcess, 0);
-#else
-	    kill(rrp->pid, SIGKILL);
-#endif
+	    bu_terminate(rrp->pid);
 	    rrp->aborted = 1;
 	}
 
