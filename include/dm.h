@@ -29,6 +29,7 @@
 
 #include "machine.h"
 #include "bu.h"
+#include "vmath.h"
 #ifdef USE_FBSERV
 #  include "fbserv_obj.h"
 #endif
