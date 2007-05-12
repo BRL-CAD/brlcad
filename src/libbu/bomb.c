@@ -57,7 +57,7 @@ static const char RCSbomb[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "bu.h"
 
-#if 1
+
 struct bu_hook_list bu_bomb_hook_list = {
 	{	BU_LIST_HEAD_MAGIC,
 		&bu_bomb_hook_list.l,
@@ -66,9 +66,7 @@ struct bu_hook_list bu_bomb_hook_list = {
 	BUHOOK_NULL,
 	GENPTR_NULL
 };
-#else
-struct bu_hook_list bu_bomb_hook_list;
-#endif
+
 
 /*
  * These variables are global because BU_SETJUMP() *must* be a macro.
@@ -77,6 +75,7 @@ struct bu_hook_list bu_bomb_hook_list;
  */
 int		bu_setjmp_valid = 0;	/**< @brief !0 = bu_jmpbuf is valid */
 jmp_buf		bu_jmpbuf;		/**< @brief for BU_SETJMP() */
+
 
 /**
  *			B U _ B O M B
@@ -128,7 +127,7 @@ bu_bomb(const char *str)
 	 * For example, mged hijacks output sent to stderr.
 	 */
 	{
-		int	fd = open("/dev/tty", 1);
+		int fd = open("/dev/tty", 1);
 		if (fd) {
 			write( fd, str, strlen(str) );
 			close(fd);
@@ -136,26 +135,24 @@ bu_bomb(const char *str)
 	}
 #endif
 
-#if 0
 	/* save a backtrace */
 	{
 	    FILE *fp = NULL;
 	    char tracefile[512] = {0};
 	    snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), getpid());
-	    fprintf(stderr, "bu_bomb saving stack trace to %s\n", tracefile);
+	    fprintf(stderr, "Saving stack trace to %s\n", tracefile);
 	    fflush(stderr);
 	    fp = fopen(tracefile, "a");
 	    bu_backtrace(fp);
 	    (void)fclose(fp);
 	}
-#endif
 
 	/* If in parallel mode, try to signal the leader to die. */
 	bu_kill_parallel();
 
 	/* try to save a core dump */
 	if( bu_debug & BU_DEBUG_COREDUMP )  {
-		fprintf(stderr,"bu_bomb causing intentional core dump due to debug flag\n");
+		fprintf(stderr,"Causing intentional core dump due to debug flag\n");
 		fflush(stdout);
 		fflush(stderr);
 		abort();	/* should dump if ulimit is non-zero */

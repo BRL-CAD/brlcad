@@ -8,6 +8,7 @@ noinst_PROGRAMS = htester
 libbu_nil_la_SOURCES = \
 	association.c \
 	avs.c \
+	backtrace.c \
 	badmagic.c \
 	basename.c \
 	bitv.c \
