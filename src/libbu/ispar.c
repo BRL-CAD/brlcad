@@ -58,7 +58,7 @@ static const char RCSispar[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 
 
-int	bu_pid_of_initiating_thread = 0; /**< don't declare in include/bu.h */
+int bu_pid_of_initiating_thread = 0; /**< don't declare in include/bu.h */
 
 /**
  *			B U _ I S _ P A R A L L E L
@@ -69,7 +69,8 @@ int	bu_pid_of_initiating_thread = 0; /**< don't declare in include/bu.h */
 int
 bu_is_parallel(void)
 {
-    if( bu_pid_of_initiating_thread != 0 )  return 1;
+    if (bu_pid_of_initiating_thread != 0)
+	return 1;
     return 0;
 }
 
@@ -82,18 +83,19 @@ bu_is_parallel(void)
 void
 bu_kill_parallel(void)
 {
-    if( bu_pid_of_initiating_thread == 0 )  return;
+    if (bu_pid_of_initiating_thread == 0)
+	return;
 
 #ifdef HAVE_UNISTD_H
-    if( bu_pid_of_initiating_thread == getpid() )  return;
+    if (bu_pid_of_initiating_thread == getpid())
+	return;
 #endif
 
-#ifdef HAVE_KILL
-    (void)kill( bu_pid_of_initiating_thread, 9 );
-#endif
+    bu_terminate(bu_pid_of_initiating_thread);
 
     return;
 }
+
 /** @} */
 /*
  * Local Variables:
