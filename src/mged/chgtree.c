@@ -73,7 +73,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./cmd.h"
 
 
-extern void solid_list_callback(void); /* chgview.c */
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
 extern struct bn_tol		mged_tol;	/* from ged.c */
 extern struct rt_tess_tol	mged_ttol;	/* from ged.c */
@@ -83,7 +82,6 @@ static char *really_delete="tk_messageBox -icon question -title {Are you sure?}\
  -type yesno -message {If you delete the \"_GLOBAL\" object you will be losing some important information\
  such as your preferred units and the title of the database. Do you really want to do this?}";
 
-void	aexists(char *name);
 
 
 /* Remove an object or several from the description */
