@@ -3807,18 +3807,30 @@ pars_Argv(int argc, register char **argv)
 /*ARGSUSED*/
 void
 stop_sig(int sig)
-{	int	pid = getpid();
-	EVENT_MOVE();
-	(void) signal( sig, SIG_DFL );
-#if defined( SIGSTOP )
-	(void) kill( pid, SIGSTOP );
+{
+    int	pid;
+
+#ifdef HAVE_UNISTD_H
+    pid = getpid();
 #else
-	(void) kill( pid, sig );
+    pid = (int)GetCurrentProcessId();
 #endif
-	(void) signal( sig, stop_sig );
-	(void) f_Redraw( (HMitem *) 0, (char **) 0 );
-	return;
-	}
+
+    EVENT_MOVE();
+    (void) signal( sig, SIG_DFL );
+
+#ifdef HAVE_KILL
+#  if defined( SIGSTOP )
+    (void) kill( pid, SIGSTOP );
+#  else
+    (void) kill( pid, sig );
+#  endif
+#endif
+
+    (void) signal( sig, stop_sig );
+    (void) f_Redraw( (HMitem *) 0, (char **) 0 );
+    return;
+}
 
 /* Below are global entry points for getting to function table from
 	other modules.
