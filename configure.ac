@@ -2035,6 +2035,7 @@ AC_CHECK_FUNCS(\
 	inet_ntoa \
 	isascii \
 	isfinite \
+	kill \
 	localtime_r \
 	lrand48 \
 	lseek \
