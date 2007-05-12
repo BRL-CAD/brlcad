@@ -29,7 +29,12 @@
  */
 #include "common.h"
 
+/* system headers */
+#include <signal.h>
+
+/* common headers */
 #include "bu.h"
+
 
 /**
  * b u _ t e r m i n a t e
