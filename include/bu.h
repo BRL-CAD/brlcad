@@ -2044,21 +2044,17 @@ BU_EXPORT BU_EXTERN(struct bu_mapped_file *bu_open_mapped_file_with_path,
 /** @addtogroup thread */
 /** @{ */
 
+/* kill.c */
+BU_EXPORT BU_EXTERN(int bu_terminate, (int process));
+
 /* parallel.c */
-BU_EXPORT BU_EXTERN(void bu_nice_set,
-		    (int newnice));
-BU_EXPORT BU_EXTERN(int bu_cpulimit_get,
-		    ());
-BU_EXPORT BU_EXTERN(void bu_cpulimit_set,
-		    (int sec));
-BU_EXPORT BU_EXTERN(int bu_avail_cpus,
-		    ());
-BU_EXPORT BU_EXTERN(fastf_t bu_get_load_average,
-		    ());
-BU_EXPORT BU_EXTERN(int bu_get_public_cpus,
-		    ());
-BU_EXPORT BU_EXTERN(int bu_set_realtime,
-		    ());
+BU_EXPORT BU_EXTERN(void bu_nice_set, (int newnice));
+BU_EXPORT BU_EXTERN(int bu_cpulimit_get, ());
+BU_EXPORT BU_EXTERN(void bu_cpulimit_set, (int sec));
+BU_EXPORT BU_EXTERN(int bu_avail_cpus, ());
+BU_EXPORT BU_EXTERN(fastf_t bu_get_load_average, ());
+BU_EXPORT BU_EXTERN(int bu_get_public_cpus, ());
+BU_EXPORT BU_EXTERN(int bu_set_realtime, ());
 BU_EXPORT BU_EXTERN(void bu_parallel,
 		    (void (*func)BU_ARGS((int ncpu, genptr_t arg)),
 		     int ncpu,
