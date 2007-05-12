@@ -784,7 +784,7 @@ genptr_t	arg;
 	register int d7;	/* known to be in d7 */
 	register int d6 = ncpu;	/* known to be in d6 */
 #  endif
-	int	x;
+	int x;
 
 #  if defined(SGI_4D) || defined(CRAY)
 	int	new;
@@ -820,7 +820,11 @@ genptr_t	arg;
 	if( bu_pid_of_initiating_thread )
 		bu_bomb("bu_parallel() called from within parallel section\n");
 
+#  ifdef HAVE_UNISTD_H
 	bu_pid_of_initiating_thread = getpid();
+#  else
+	bu_pid_of_initiating_thread = (int)GetCurrentProcessId();
+#  endif
 
 	if (ncpu > MAX_PSW) {
 		bu_log("WARNING: bu_parallel() ncpu(%d) > MAX_PSW(%d), adjusting ncpu\n", ncpu, MAX_PSW);
@@ -1233,12 +1237,18 @@ genptr_t	arg;
 	 * PID and open file table (kernel struct u).  If not, then any
 	 * output may be written into the wrong file.
 	 */
-	if( bu_pid_of_initiating_thread != (x=getpid()) )  {
-		bu_log("WARNING: bu_parallel():  PID of initiating thread changed from %d to %d, open file table may be botched!\n",
-			bu_pid_of_initiating_thread, x );
+#  ifdef HAVE_UNISTD_H
+	x = getpid();
+#  else
+	x = (int)GetCurrentProcessId();
+#  endif
+	if (bu_pid_of_initiating_thread != x) {
+	    bu_log("WARNING: bu_parallel():  PID of initiating thread changed from %d to %d, open file table may be botched!\n",
+		   bu_pid_of_initiating_thread, x );
 	}
 #  endif
 	bu_pid_of_initiating_thread = 0;	/* No threads any more */
+
 #else	/* PARALLEL */
 	bu_log("bu_parallel( x%lx, %d., x%lx ):  Not compiled for PARALLEL machine, running single-threaded\n", (long)func, ncpu, (long)arg );
 	/* do the work anyways */
@@ -1247,6 +1257,7 @@ genptr_t	arg;
 
 	return;
 }
+
 
 #if defined(sgi) && !defined(mips)
 /* Horrible bug in 3.3.1 and 3.4 and 3.5 -- hypot ruins stack! */
