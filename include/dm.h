@@ -25,6 +25,15 @@
 #ifndef SEEN_DM_H
 #define SEEN_DM_H
 
+#include "common.h"
+
+#include "machine.h"
+#include "bu.h"
+#ifdef USE_FBSERV
+#  include "fbserv_obj.h"
+#endif
+
+
 #ifndef DM_EXPORT
 #if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #  ifdef DM_EXPORT_DLL
@@ -35,14 +44,6 @@
 #else
 #  define DM_EXPORT
 #endif
-#endif
-
-#ifndef SEEN_BU_H
-#  include <bu.h>
-#endif
-
-#ifdef USE_FBSERV
-#  include "fbserv_obj.h"
 #endif
 
 #define DM_NULL (struct dm *)NULL
