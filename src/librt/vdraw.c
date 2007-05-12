@@ -545,19 +545,6 @@ vdraw_send_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_OK;
 	}
 
-#if 0
-	{
-		char *av[4];
-
-		av[0] = "kill";
-		av[1] = "-f";
-		av[2] = solid_name;
-		av[3] = NULL;
-
-		(void)f_kill(clientData, interp, 3, av);
-	}
-#endif
-
 	/* 0 means OK, -1 means conflict with real solid name */
 	index = dgo_invent_solid(dgop,
 				 interp,
