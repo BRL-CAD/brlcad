@@ -1790,7 +1790,13 @@ pkg_timestamp(void)
     fprintf(pkg_debug, "%2.2d/%2.2d %2.2d:%2.2d:%2.2d [%5d] ",
 	    tmp->tm_mon+1, tmp->tm_mday,
 	    tmp->tm_hour, tmp->tm_min, tmp->tm_sec,
-	    getpid() );
+	    /* avoid libbu dependency */
+#ifdef HAVE_UNISTD_H
+	    getpid()
+#else
+	    (int)GetCurrentProcessId()
+#endif
+	    );
     /* Don't fflush here, wait for rest of line */
 }
 
