@@ -193,6 +193,10 @@ SOURCE=.\avs.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\backtrace.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\badmagic.c
 # End Source File
 # Begin Source File
@@ -278,6 +282,10 @@ SOURCE=.\image.c
 # Begin Source File
 
 SOURCE=.\ispar.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\kill.c
 # End Source File
 # Begin Source File
 
