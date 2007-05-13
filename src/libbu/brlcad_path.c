@@ -135,9 +135,10 @@ static const char *progname = NULL;
 
 /* release memory for progname on application exit */
 static void
-free_progname(void) {
+_free_progname(void) {
     if (progname) {
 	free((char *)progname);
+	progname = NULL;
     }
 }
 
@@ -159,7 +160,7 @@ bu_getprogname(void) {
     name = bu_basename(bu_argv0(NULL));
     /* string returned by basename is not ours, get a copy */
     progname = strdup(name); 
-    atexit(free_progname);
+    atexit(_free_progname);
 
     return progname;
 }
