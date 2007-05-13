@@ -1739,11 +1739,14 @@ BU_EXPORT BU_EXTERN(void bu_bitv_free,
 /** @addtogroup bu_log */
 /** @{ */
 
+/* backtrace.c */
+BU_EXPORT BU_EXTERN(int bu_backtrace, (FILE *fp));
+
 /* bomb.c */
 BU_EXPORT BU_EXTERN(void bu_bomb, (const char *str));
 
-/* backtrace.c */
-BU_EXPORT BU_EXTERN(int bu_backtrace, (FILE *fp));
+/* crashreport.c */
+BU_EXPORT BU_EXTERN(int bu_crashreport, (const char *filename));
 
 /* fgets.c */
 BU_EXPORT BU_EXTERN(char *bu_fgets, ( char *s, int size, FILE *stream));
@@ -1809,6 +1812,12 @@ BU_EXPORT BU_EXTERN(char *bu_brlcad_root,
 		    (const char *rhs, int fail_quietly));
 BU_EXPORT BU_EXTERN(char *bu_brlcad_data,
 		    (const char *rhs, int fail_quietly));
+
+/* bu_which.c */
+BU_EXPORT BU_EXTERN(const char *bu_which, (const char *cmd));
+
+/* bu_whereis.c */
+BU_EXPORT BU_EXTERN(const char *bu_whereis, (const char *cmd));
 
 /* fopen_uniq */
 BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq,
