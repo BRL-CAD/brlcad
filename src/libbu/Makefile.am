@@ -20,6 +20,7 @@ libbu_nil_la_SOURCES = \
 	cmdhist_obj.c \
 	color.c \
 	convert.c \
+	crashreport.c \
 	dirname.c \
 	fgets.c \
 	fopen_uniq.c \
