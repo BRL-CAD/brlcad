@@ -22,64 +22,51 @@
 /** @file which.c
  *
  * Routine to provide BSD "which" functionality, locating binaries of
- * specified programs from the user's PATH (i.e.  not necessarily the
- * system path).  This is useful to locate system binaries and
- * resources at run-time such as where the current binary is being
- * executed from.
+ * specified programs from the user's PATH. This is useful to locate
+ * binaries and resources at run-time.
  *
- *  Author -
- *	Christopher Sean Morrison
+ * Author -
+ *   Christopher Sean Morrison
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ * Source -
+ *   BRL-CAD Open Source
  */
 #include "common.h"
 
+/* system headers */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SYSCTL_H
-#  ifdef HAVE_SYS_PARAM_H
-#    include <sys/param.h>
-#  endif
-#  include <sys/sysctl.h>
-#endif
 
-#include "machine.h"
+/* common headers */
 #include "bu.h"
 
 
-/** b u _ w h i c h
+/* how big should PATH from getenv ever be */
+#define MAXPATHENV 32767
+
+/** container for path match results */
+static char bu_which_result[MAXPATHLEN] = {0};
+
+
+/**
+ * b u _ w h i c h
  *
- * Sets argv array of path matches to the given executable cmd name
- * returning up to lim number of occurances found.  the user path is
- * obtained getenv(PATH) or in its absense, via the sysctl
- * ``user.cs_path'' string.
+ * returns the first USER path match to a given executable cmd name.
  *
- * It is the callers responsibility to allocate sufficient memory to
- * the argv array itself (lim elements), memory for the array contents
- * will be automatically allocated as needed.  It is the callers
- * responsibility to free the array contents with bu_free_array() as
- * well as the argv array itself.
+ * caller should not free the result, though it will not be preserved
+ * between calls either.  the caller should strdup the result if they
+ * need to keep it around.
  */
-int bu_which(char *argv[], int lim, const char *cmd)
+const char *
+bu_which(const char *cmd)
 {
-    char *PATH = NULL;
-    int free_path = 0;
-    char *curr_path = NULL;
-    int max_length = 0;
+    static const char *gotpath = NULL;
+
+    char PATH[MAXPATHENV];
 
     char *directory = NULL;
-    char *fullname = NULL;
-
-    int found_it = 0;
-    int found_count = 0;
-
-    int i = 0;
+    char *position = NULL;
 
     if (bu_debug & BU_DEBUG_PATHS) {
 	bu_log("WHICH: [%s]\n", cmd);
@@ -89,129 +76,86 @@ int bu_which(char *argv[], int lim, const char *cmd)
 	return 0;
     }
 
-    if (lim <= 0) {
-	return 0;
-    }
+    /* start fresh */
+    memset(PATH, 0, MAXPATHENV);
+    memset(bu_which_result, 0, MAXPATHLEN);
 
-    if (!argv) {
-	bu_bomb("bu_which was given a null array?\n");
-    }
-
-    if (bu_file_exists(cmd)) {
-	/* add the finding */
-	argv[found_count] = bu_malloc(strlen(cmd) * sizeof(char) + 1, "bu_which argv entry");
-	strncpy(argv[found_count], cmd, strlen(cmd) + 1);
-	found_count++;
-    }
-
-    /* use getenv() if it is available to get the PATH */
-#ifdef HAVE_GETENV
-#  define bu_which_found_path 1
-    PATH = getenv("PATH");
-    goto found_path;
-#endif  /* HAVE_GETENV */
-
-    /* otherwise use sysctl() to get the PATH */
-#if defined(HAVE_SYSCTL) && defined(CTL_USER) && defined(USER_CS_PATH)
-#  define bu_which_found_path 1
-    {
-	int mib[2];
-	size_t len;
-	mib[0] = CTL_USER;
-	mib[1] = USER_CS_PATH;
-
-	if (sysctl(mib, 2, NULL, &len, NULL, 0) != 0) {
-	    perror("sysctl unable to read user.cs_path");
-	    return 0;
+    /* check for full/relative path match */
+    strncpy(bu_which_result, cmd, MAXPATHLEN);
+    if (strcmp(bu_which_result, cmd) != 0) {
+	if (bu_debug & BU_DEBUG_PATHS) {
+	    bu_log("command [%s] is too long\n", cmd);
 	}
-	if (len > 0) {
-	    PATH = bu_calloc(len, sizeof(char), "bu_which PATH");
-	    free_path = 1;
-	}
-	if (sysctl(mib, 2, PATH, &len, NULL, 0) != 0) {
-	    perror("sysctl unable to get user.cs_path");
-	    return 0;
-	}
-	goto found_path;
+	return NULL;
     }
-#endif  /* HAVE_SYSCTL */
-
-    /* sanity check, make sure we have _some_ means to get a PATH */
-#ifndef bu_which_found_path
-#  error "Do not know how to read the PATH environment variable on this system"
-#endif
-
- found_path:
-
-    if (!PATH) {
-	/* no path, no match */
-	bu_log("Unable to read the environment PATH\n");
-	return 0;
+    if (bu_file_exists(bu_which_result) && strchr(bu_which_result, BU_DIR_SEPARATOR)) {
+	return bu_which_result;
     }
 
-    /* something big enough to hold any path */
-    max_length = strlen(PATH) + strlen(cmd) + 1;
-    fullname = (char *)bu_calloc(max_length+1, sizeof(char), "bu_which fullname");
+    /* load up the PATH from the caller's user environment */
+    gotpath = getenv("PATH");
+    if (gotpath) {
+	strncpy(PATH, gotpath, MAXPATHENV);
 
-    /* search the PATH for the executable */
-    for (curr_path = PATH; ; *curr_path++ = BU_PATH_SEPARATOR) {
-	directory = curr_path;
-
-	if ((curr_path = strchr(curr_path, BU_PATH_SEPARATOR)) != NULL) {
-	    *curr_path = '\0';
-
-	    /* equal means empty, so use current directory */
-	    if (directory == curr_path) {
-		directory = ".";
-	    }
-	} else {
-	    /* did not find a path separator, so this is the last element in the list */
-	    if (strlen(directory) == 0) {
-		directory = ".";
-	    }
-	}
-
-	(void)snprintf(fullname, max_length, "%s/%s", directory, cmd);
-
-	if (bu_file_exists(fullname)) {
-	    found_it = 0;
-
-	    /* make sure it is a new unique path */
-	    for (i = 0; i < found_count; i++) {
-		if (strncmp(argv[i], fullname, max_length) == 0) {
-		    found_it = 1;
-		    break;
+	/* make sure it fit, we have a problem if it did not */
+	if (strcmp(PATH, gotpath) != 0) {
+	    position = strrchr(PATH, BU_PATH_SEPARATOR);
+	    if (position) {
+		position = '\0';
+	    } else {
+		/* too much and no separator? wtf. */
+		if (bu_debug & BU_DEBUG_PATHS) {
+		    bu_log("path contains invalid data?\n");
 		}
-	    }
-
-	    /* add the finding if not previously added result */
-	    if (!found_it) {
-		argv[found_count] = bu_malloc(max_length, "bu_which argv entry");
-		strncpy(argv[found_count], fullname, max_length);
-		found_count++;
+		return NULL;
 	    }
 	}
 
-	if (!curr_path) {
-	    break;
+	if (bu_debug & BU_DEBUG_PATHS) {
+	    bu_log("PATH is %s\n", PATH);
 	}
-	if (found_count >= lim) {
-	    break;
+    } else {
+	if (bu_debug & BU_DEBUG_PATHS) {
+	    bu_log("PATH is NULL\n");
 	}
-    } /* end loop over PATH directories */
-
-    bu_free(fullname, "bu_which fullname");
-    fullname = NULL;
-
-    /* free up the temporary resources */
-#ifdef HAVE_SYSCTL
-    if (free_path && PATH) {
-	bu_free(PATH, "bu_which PATH");
-	PATH = NULL;
+	return NULL;
     }
-#endif
 
-    return found_count;
+    /* search for the executable */
+    directory = PATH;
+    do {
+	position = strchr(directory, BU_PATH_SEPARATOR);
+	if (position) {
+	    *position = '\0';
+	}
+
+	/* empty means use current dir */
+	if (strlen(directory) == 0) {
+	    directory = ".";
+	}
+	
+	if (bu_debug & BU_DEBUG_PATHS) {
+	    bu_log("Checking [%s]\n", directory);
+	}
+
+	snprintf(bu_which_result, MAXPATHLEN, "%s/%s", directory, cmd);
+	if (bu_file_exists(bu_which_result)) {
+	    return bu_which_result;
+	}
+
+	if (position) {
+	    directory = position + 1;
+	} else {
+	    directory = NULL;
+	}
+    } while (directory); /* iterate over PATH directories */
+
+    /* no path or no match */
+    if (bu_debug & BU_DEBUG_PATHS) {
+	bu_log("no %s in %s\n", cmd, gotpath ? gotpath : "(no path)");
+    }
+
+    return NULL;
 }
 /** @} */
 /*
