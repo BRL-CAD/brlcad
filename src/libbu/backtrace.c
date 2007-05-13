@@ -17,9 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup bu_log */
+/** @{ */
 /** @file backtrace.c
  *
- * Print a backtrace of the current call stack.
+ * Extract a backtrace of the current call stack.
  *
  * Author -
  *   Christopher Sean Morrison
@@ -63,6 +65,7 @@ static void
 backtrace_sigchld(int signum)
 {
     backtrace_done = 1;
+    interrupt_wait = 1;
 }
 
 /* SIGINT handler for bu_backtrace() */
@@ -96,10 +99,15 @@ backtrace(char **args, int fd)
     backtrace_done = 0;
     signal(SIGCHLD, backtrace_sigchld);
 
+#ifdef HAVE_KILL
+    /* halt the parent until we are done */
+    //    kill(getppid(), SIGSTOP);
+#endif
+
     if ((pipe(input) == -1) || (pipe(output) == -1)) {
 	perror("unable to open pipe");
 	fflush(stderr);
-	exit(0); /* can't call bu_bomb() */
+	exit(1); /* can't call bu_bomb() */
     }
 
     pid = fork();
@@ -111,11 +119,11 @@ backtrace(char **args, int fd)
 	execvp(args[0], args); /* invoke debugger */
 	perror("exec failed");
 	fflush(stderr);
-	exit(0); /* can't call bu_bomb() */
+	exit(1); /* can't call bu_bomb() */
     } else if (pid == (pid_t) -1) {
 	perror("unable to fork");
 	fflush(stderr);
-	exit(0); /* can't call bu_bomb() */
+	exit(1); /* can't call bu_bomb() */
     }
 
     FD_ZERO(&fdset);
@@ -226,8 +234,9 @@ backtrace(char **args, int fd)
  * bu_bomb() with the appropriate bu_debug flags set.
  *
  * the routine waits indefinitely (in a spin loop) until a signal
- * (SIGINT) is received, at which point execution continues, or until
- * some other signal is received that terminates the application.
+ * (SIGINT or SIGCONT) is received, at which point execution
+ * continues, or until some other signal is received that terminates
+ * the application.
  *
  * the stack backtrace will be written to the provided 'fp' file
  * pointer.  it's the caller's responsibility to open and close
@@ -244,34 +253,37 @@ bu_backtrace(FILE *fp)
     int status = 0;
     char *locate_gdb = NULL;
     const char *program = bu_argv0(NULL);
+    int fd;
 
     if (!fp) {
 	fp = stdout;
     }
+    fd = fileno(fp);
 
     /* make sure the debugger exists */
     if (bu_which(&locate_gdb, 1, "gdb") == 1) {
 	args[0] = bu_strdup("gdb");
 	if (bu_debug & BU_DEBUG_BACKTRACE) {
-	    bu_log("Found gdb in user path: %s\n", locate_gdb);
+	    bu_log("Found gdb in USER path: %s\n", locate_gdb);
 	}
-	bu_free(locate_gdb, "deallocate locate_gdb");
     } else if (bu_whereis(&locate_gdb, 1, "gdb") == 1) {
 	args[0] = bu_strdup(locate_gdb);
 	if (bu_debug & BU_DEBUG_BACKTRACE) {
-	    bu_log("Found gdb in system path: %s\n", locate_gdb);
+	    bu_log("Found gdb in SYSTEM path: %s\n", locate_gdb);
 	}
-	bu_free(locate_gdb, "deallocate locate_gdb");
     } else {
 	if (bu_debug & BU_DEBUG_BACKTRACE) {
 	    bu_log("gdb was NOT found, no backtrace available\n");
 	}
 	return 0;
     }
+    if (locate_gdb) {
+	bu_free(locate_gdb, "deallocate locate_gdb");
+	locate_gdb = NULL;
+    }
 
     signal(SIGINT, backtrace_sigint);
-    signal(SIGCONT, backtrace_sigint);
-    sprintf(process, "%u", (unsigned int) getpid());
+    sprintf(process, "%d", bu_process_id());
 
     args[1] = (char*) program;
     args[2] = process;
@@ -287,17 +299,23 @@ bu_backtrace(FILE *fp)
     pid = fork();
     if (pid == 0) {
 	/* child */
-	backtrace(args, fileno(fp));
+	backtrace(args, fd);
 	bu_free(args[0], "gdb strdup");
+	args[0] = NULL;
 	exit(0);
     } else if (pid == (pid_t) -1) {
 	/* failure */
 	bu_free(args[0], "gdb strdup");
+	args[0] = NULL;
 	perror("unable to fork for gdb");
 	return 0;
     }
     /* parent */
-    bu_free(args[0], "gdb strdup");
+    if (args[0]) {
+	bu_free(args[0], "gdb strdup");
+	args[0] = NULL;
+    }
+    fflush(fp);
 
     /* could probably do something better than this to avoid hanging
      * indefinitely.  keeps the trace clean, though, and allows for a
@@ -308,26 +326,26 @@ bu_backtrace(FILE *fp)
     while (interrupt_wait == 0) {
 	/* do nothing */;
     }
+    if (bu_debug & BU_DEBUG_BACKTRACE) {
+	bu_log("\nContinuing.\n");
+    }
 #else
     /* FIXME: need something better here for win32 */
     sleep(2);
 #endif
     signal(SIGINT, SIG_DFL);
-    signal(SIGCONT, SIG_DFL);
-    bu_log("\nContinuing.\n");
+    //    signal(SIGCONT, SIG_DFL);
+    fflush(fp);
 
     return 1;
 }
+
 
 #ifdef TEST_BACKTRACE
 int bar(char **argv)
 {
     int moo = 5;
-    char *argv0 = bu_strdup(argv[0]);
-
     bu_backtrace(NULL);
-
-    bu_free(argv0, "argv0");
     return 0;
 }
 
@@ -346,10 +364,11 @@ main(int argc, char *argv[])
     } else {
 	(void)foo(argv);
     }
-
     return 0;
 }
-#endif
+#endif  /* TEST_BACKTRACE */
+
+/** @} */
 
 /*
  * Local Variables:
