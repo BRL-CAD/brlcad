@@ -68,18 +68,18 @@
  */
 int bu_whereis(char *argv[], int lim, const char *cmd)
 {
-    char *PATH = {0};
+    char *PATH = NULL;
     int free_path = 0;
-    char *curr_path;
-    int max_length;
+    char *curr_path = NULL;
+    int max_length = 0;
 
-    char *directory;
-    char *fullname = {0};
+    char *directory = NULL;
+    char *fullname = NULL;
 
-    int found_it;
+    int found_it = 0;
     int found_count = 0;
 
-    int i;
+    int i = 0;
 
     if (bu_debug & BU_DEBUG_PATHS) {
 	bu_log("WHEREIS: [%s]\n", cmd);
