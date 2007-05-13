@@ -241,6 +241,10 @@ SOURCE=.\convert.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\crashreport.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\dirname.c
 # End Source File
 # Begin Source File
