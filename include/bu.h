@@ -1740,16 +1740,17 @@ BU_EXPORT BU_EXTERN(void bu_bitv_free,
 /** @{ */
 
 /* bomb.c */
-BU_EXPORT BU_EXTERN(void bu_bomb,
-		    (const char *str));
+BU_EXPORT BU_EXTERN(void bu_bomb, (const char *str));
+
+/* backtrace.c */
+BU_EXPORT BU_EXTERN(int bu_backtrace, (FILE *fp));
 
 /* fgets.c */
-BU_EXPORT BU_EXTERN(char *bu_fgets,
-		    ( char *s, int size, FILE *stream));
+BU_EXPORT BU_EXTERN(char *bu_fgets, ( char *s, int size, FILE *stream));
+
 /** @} */
 /** @addtogroup color */
 /** @{ */
-
 
 /* color.c */
 BU_EXPORT BU_EXTERN(void bu_rgb_to_hsv,
