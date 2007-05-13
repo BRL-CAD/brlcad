@@ -239,6 +239,14 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 	register genptr_t ptr;
 	register unsigned long int size = cnt * sz;
 
+	extern int bu_bomb_failsafe_init();
+	static int failsafe_init = 0;
+
+	/* bu_bomb hook to recover from memory problems */
+	if (!failsafe_init) {
+	    failsafe_init = bu_bomb_failsafe_init();
+	}
+
 	if( size == 0 )  {
 		fprintf(stderr,"ERROR: bu_alloc size=0 (cnt=%d, sz=%d) %s\n", cnt, sz, str );
 		bu_bomb("ERROR: bu_malloc(0)\n");

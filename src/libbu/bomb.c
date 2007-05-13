@@ -77,6 +77,33 @@ int		bu_setjmp_valid = 0;	/**< @brief !0 = bu_jmpbuf is valid */
 jmp_buf		bu_jmpbuf;		/**< @brief for BU_SETJMP() */
 
 
+/** failsafe storage to help ensure graceful shutdown */
+static char *_bu_bomb_failsafe = NULL;
+
+/* release memory on application exit */
+static void
+_free_bu_bomb_failsafe()
+{
+    if (_bu_bomb_failsafe) {
+	free(_bu_bomb_failsafe);
+	_bu_bomb_failsafe = NULL;
+    }
+}
+
+
+int
+bu_bomb_failsafe_init()
+{
+    if (_bu_bomb_failsafe) {
+	return 1;
+    }
+    /* cannot use bu_*alloc here */
+    _bu_bomb_failsafe = malloc(65536);
+    atexit(_free_bu_bomb_failsafe);
+    return 1;
+}
+
+
 /**
  *			B U _ B O M B
  *@brief
@@ -98,6 +125,9 @@ bu_bomb(const char *str)
     fprintf(stderr, str);
     fprintf(stderr, "\n");
     fflush(stderr);
+
+    /* release the failsafe allocation to help get through to the end */
+    _free_bu_bomb_failsafe();
 
     /* MGED would like to be able to additional logging, do callbacks. */
     if (BU_LIST_NON_EMPTY(&bu_bomb_hook_list.l)) {
@@ -125,7 +155,8 @@ bu_bomb(const char *str)
     {
 	int fd = open("/dev/tty", 1);
 	if (fd) {
-	    write( fd, str, strlen(str) );
+	    write(fd, str, strlen(str));
+	    write(fd, "\n", 1);
 	    close(fd);
 	}
     }
