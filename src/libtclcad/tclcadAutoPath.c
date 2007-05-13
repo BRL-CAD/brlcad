@@ -183,7 +183,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     const char *data = bu_brlcad_data("", 1);
     char buffer[MAX_BUF] = {0};
 
-    char *which_argv[2] = {NULL, NULL};
+    char *which_argv = NULL;
     int from_installed = 0;
     const char *srcpath = NULL;
     char *stp = NULL;
@@ -201,13 +201,13 @@ tclcad_auto_path(Tcl_Interp *interp)
     }
 
     /* get string of invocation binary */
-    (void)bu_which(which_argv, 2, bu_argv0(NULL));
+    (void)bu_which(&which_argv, 1, bu_argv0(NULL));
 
     /* get name of installation binary */
     snprintf(buffer, MAX_BUF, "%s/bin/%s", root, bu_getprogname());
 
     /* are we running from an installed binary? if so add to path */
-    if (bu_file_exists(buffer) && bu_same_file(buffer, which_argv[0])) {
+    if (bu_file_exists(buffer) && bu_same_file(buffer, which_argv)) {
 	from_installed = 1;
 	bu_vls_printf(&auto_path, ":%s/lib", root);
 	bu_vls_printf(&auto_path, ":%s/lib/tcl%s", root, TCL_VERSION);
@@ -225,7 +225,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     }
 
     /* add search paths for source invocation */
-    srcpath = path_to_src(which_argv[0]);
+    srcpath = path_to_src(which_argv);
     if (srcpath) {
 	bu_vls_printf(&auto_path, ":%s/src/other/tcl/unix", srcpath);
 	bu_vls_printf(&auto_path, ":%s/src/other/tcl/library", srcpath);
@@ -245,7 +245,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     }
 
     /* add search paths for dist invocation */
-    srcpath = path_to_src(which_argv[0]);
+    srcpath = path_to_src(which_argv);
     if (srcpath) {
 	snprintf(buffer, MAX_BUF, "%s/../src/other/tcl/unix", srcpath);
 	if (bu_file_exists(buffer)) {
@@ -339,6 +339,9 @@ tclcad_auto_path(Tcl_Interp *interp)
 	    }
 	}
     }
+
+    bu_free(which_argv, "which_argv");
+    which_argv = NULL;
 
     bu_vls_free(&auto_path);
     bu_vls_free(&lappend);
