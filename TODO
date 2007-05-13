@@ -19,8 +19,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * verify memory usage of the auto_path and tcl setup/start-up code
 
-* update to tcl/tk 8.5a6
-
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
