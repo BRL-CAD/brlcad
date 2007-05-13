@@ -251,7 +251,7 @@ bu_backtrace(FILE *fp)
     char process[16] = {0};
     char *args[4] = { NULL, NULL, NULL, NULL };
     int status = 0;
-    char *locate_gdb = NULL;
+    const char *locate_gdb = NULL;
     const char *program = bu_argv0(NULL);
     int fd;
 
@@ -261,12 +261,12 @@ bu_backtrace(FILE *fp)
     fd = fileno(fp);
 
     /* make sure the debugger exists */
-    if (bu_which(&locate_gdb, 1, "gdb") == 1) {
-	args[0] = bu_strdup("gdb");
+    if ((locate_gdb = bu_which("gdb"))) {
+	args[0] = bu_strdup(locate_gdb);
 	if (bu_debug & BU_DEBUG_BACKTRACE) {
 	    bu_log("Found gdb in USER path: %s\n", locate_gdb);
 	}
-    } else if (bu_whereis(&locate_gdb, 1, "gdb") == 1) {
+    } else if ((locate_gdb = bu_whereis("gdb"))) {
 	args[0] = bu_strdup(locate_gdb);
 	if (bu_debug & BU_DEBUG_BACKTRACE) {
 	    bu_log("Found gdb in SYSTEM path: %s\n", locate_gdb);
@@ -277,10 +277,7 @@ bu_backtrace(FILE *fp)
 	}
 	return 0;
     }
-    if (locate_gdb) {
-	bu_free(locate_gdb, "deallocate locate_gdb");
-	locate_gdb = NULL;
-    }
+    locate_gdb = NULL;
 
     signal(SIGINT, backtrace_sigint);
     sprintf(process, "%d", bu_process_id());

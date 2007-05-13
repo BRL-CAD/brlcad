@@ -183,7 +183,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     const char *data = bu_brlcad_data("", 1);
     char buffer[MAX_BUF] = {0};
 
-    char *which_argv = NULL;
+    const char *which_argv = NULL;
     int from_installed = 0;
     const char *srcpath = NULL;
     char *stp = NULL;
@@ -201,7 +201,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     }
 
     /* get string of invocation binary */
-    (void)bu_which(&which_argv, 1, bu_argv0(NULL));
+    which_argv = bu_which(bu_argv0(NULL));
 
     /* get name of installation binary */
     snprintf(buffer, MAX_BUF, "%s/bin/%s", root, bu_getprogname());
@@ -340,9 +340,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	}
     }
 
-    bu_free(which_argv, "which_argv");
     which_argv = NULL;
-
     bu_vls_free(&auto_path);
     bu_vls_free(&lappend);
 
