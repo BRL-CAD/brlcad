@@ -60,7 +60,7 @@ int
 bu_file_exists(const char *path)
 {
     if (bu_debug & BU_DEBUG_PATHS) {
-	bu_log("Does %s exist? ", path);
+	bu_log("Does [%s] exist? ", path);
     }
 
     if(!path) {
