@@ -81,6 +81,10 @@ int bu_which(char *argv[], int lim, const char *cmd)
 
   int i;
 
+  if (bu_debug & BU_DEBUG_PATHS) {
+      bu_log("WHICH: [%s]\n", cmd);
+  }
+
   if (!cmd) {
     return 0;
   }

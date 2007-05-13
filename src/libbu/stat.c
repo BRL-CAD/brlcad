@@ -59,13 +59,13 @@ static const char RCS_stat[] = "@(#)$Header$";
 int
 bu_file_exists(const char *path)
 {
-    if (bu_debug) {
-	printf("Does %s exist? ", path);
+    if (bu_debug & BU_DEBUG_PATHS) {
+	bu_log("Does %s exist? ", path);
     }
 
     if(!path) {
-	if (bu_debug) {
-	    printf("NO\n");
+	if (bu_debug & BU_DEBUG_PATHS) {
+	    bu_log("NO\n");
 	}
 	/* FAIL */
 	return 0;
@@ -75,8 +75,8 @@ bu_file_exists(const char *path)
 #  define bu_file_exists_method 1
     /* access() is posix */
     if( access( path, F_OK )  == 0 ) {
-	if (bu_debug) {
-	    printf("YES\n");
+	if (bu_debug & BU_DEBUG_PATHS) {
+	    bu_log("YES\n");
 	}
 	/* OK */
 	return 1;
@@ -90,8 +90,8 @@ bu_file_exists(const char *path)
 	struct stat sbuf;
 	/* stat() is posix */
 	if( stat( path, &sbuf ) == 0 ) {
-	    if (bu_debug) {
-		printf("YES\n");
+	    if (bu_debug & BU_DEBUG_PATHS) {
+		bu_log("YES\n");
 	    }
 	    /* OK */
 	    return 1;
@@ -103,8 +103,8 @@ bu_file_exists(const char *path)
 #  error "Do not know how to check whether a file exists on this system"
 #endif
 
-    if (bu_debug) {
-	printf("NO\n");
+    if (bu_debug & BU_DEBUG_PATHS) {
+	bu_log("NO\n");
     }
     /* FAIL */
     return 0;

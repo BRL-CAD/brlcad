@@ -81,6 +81,10 @@ int bu_whereis(char *argv[], int lim, const char *cmd)
 
   int i;
 
+  if (bu_debug & BU_DEBUG_PATHS) {
+      bu_log("WHEREIS: [%s]\n", cmd);
+  }
+
   if (!cmd) {
     return 0;
   }
@@ -141,7 +145,7 @@ int bu_whereis(char *argv[], int lim, const char *cmd)
 
 
   /* something big enough to hold any path */
-  max_length = strlen(PATH) + strlen(cmd) + 1;
+  max_length = strlen(PATH) + strlen(cmd) + 2; /* one for slash, one for null */
   fullname = (char *)bu_calloc(max_length+1, sizeof(char), "bu_whereis fullname");
 
   /* search the PATH for the executable */
