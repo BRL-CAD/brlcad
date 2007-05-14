@@ -15,7 +15,6 @@ namespace brlcad {
   Integer::Integer(const string& field) {
     int first = field.find_first_not_of(" \t\n\r");  
     _val = strtol(field.substr(first,field.length()-first).c_str(), NULL, 0);
-    debug("Integer(" << _val << ")");
   }
   Integer::Integer(const Integer& intg) {
     _val = intg._val;
@@ -43,8 +42,7 @@ namespace brlcad {
       _val = strtol(field.substr(first,field.length()-first).c_str(), NULL, 0);
       if (_val < 0) _val = labs(_val);
     }
-    debug("Pointer(" << _val << ")");
-  }
+ }
   Pointer::Pointer(const Pointer& ptr) {
     _val = ptr._val;
   }
@@ -69,7 +67,6 @@ namespace brlcad {
       copy.replace(exp,exp+1,"e");
     }
     _val = strtod(field.substr(first,field.length()-first).c_str(), NULL);
-    debug("Real(" << _val << ")");
   }
   Real::Real(const Real& r) {
     _val = r._val;
@@ -102,7 +99,6 @@ namespace brlcad {
 	_val = field.substr(first,field.length()-first);
       }
     }
-    debug("String(" << _val << ")");
   }
   String::String(const String& str) {
     _val = str._val;
@@ -128,7 +124,6 @@ namespace brlcad {
   Logical::Logical(const string& field) {
     int first = field.find_first_not_of(" \t\n\r");  
     _val = strtol(field.substr(first,field.length()-first).c_str(), NULL, 0) != 0;
-    debug("Logical(" << _val << ")");
   }
   Logical::Logical(bool val) {
     _val = val;
@@ -193,7 +188,6 @@ namespace brlcad {
       }
     }
     Record::_reclen = recl;
-    debug("Record Length: " << _reclen);
   }
 
 
@@ -224,7 +218,6 @@ namespace brlcad {
     //char* str = fgets(buf, _reclen, _fp);
     _line = buf;
     _type = _line[72];
-    debug("Reading: " << _line);
     return true;
   }
   
@@ -390,12 +383,10 @@ namespace brlcad {
       if (end != string::npos) { 
 	if ((end - start) != 0) {
 	  string s = str.substr(start, end-start);
-	  debug("__________" << s << "__________");
 	  els.push_back(s);
 	} else 
 	  els.push_back("");
       } 
-      cout << els.back() << endl;
       start = end+1;     
       end = str.find_first_of(delim,start);
     }
@@ -455,28 +446,27 @@ namespace brlcad {
   ParameterData::ParameterData() {}
 
   Pointer
-  ParameterData::getPointer(int index) {
-    debug("passing to Pointer(): " << params[index]);
+  ParameterData::getPointer(int index) const {
     return Pointer(params[index]);
   }
 
   Integer
-  ParameterData::getInteger(int index) {
+  ParameterData::getInteger(int index) const {
     return Integer(params[index]);
   }
   
   Logical
-  ParameterData::getLogical(int index) {
+  ParameterData::getLogical(int index) const {
     return Logical(params[index]);
   }
   
   String
-  ParameterData::getString(int index) {
+  ParameterData::getString(int index) const {
     return String(params[index]);
   }
   
   Real
-  ParameterData::getReal(int index) {
+  ParameterData::getReal(int index) const {
     return Real(params[index]);
   }
 
@@ -676,7 +666,6 @@ namespace brlcad {
     split(l, pd, _global->paramDelim() + _global->recordDelim());
     outParam.clear();
     for (list<string>::iterator i = l.begin(); i != l.end(); i++) {
-      debug("addingParam: " << *i);
       outParam.addParam(*i);
     }
   }
