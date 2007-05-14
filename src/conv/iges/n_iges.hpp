@@ -13,6 +13,7 @@
 
 #include "machine.h"
 #include "vmath.h"
+#include "bn.h"
 #include "bu.h"
 #include "db.h"
 
