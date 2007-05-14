@@ -72,19 +72,18 @@ HIDDEN int	ab_get_reply(int fd);
 HIDDEN void	ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, int len);
 HIDDEN void	ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len);
 HIDDEN int	ab_yuvio(int, char *, char *, int, int, int);
-
-HIDDEN int	ab_open(register FBIO *ifp, register char *file, int width, int height),
-    ab_close(FBIO *ifp),
-    ab_clear(FBIO *ifp, unsigned char *bgpp),
-    ab_read(register FBIO *ifp, int x, register int y, unsigned char *pixelp, int count),
-    ab_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
-    ab_rmap(register FBIO *ifp, register ColorMap *cmap),
-    ab_wmap(register FBIO *ifp, const ColorMap *cmap),
-    ab_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
-    ab_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
-    ab_cursor(FBIO *ifp, int mode, int x, int y),
-    ab_getcursor(FBIO *ifp, int *mode, int *x, int *y),
-    ab_help(FBIO *ifp);
+HIDDEN int	ab_open(register FBIO *ifp, register char *file, int width, int height);
+HIDDEN int	ab_close(FBIO *ifp);
+HIDDEN int	ab_clear(FBIO *ifp, unsigned char *bgpp);
+HIDDEN int	ab_read(register FBIO *ifp, int x, register int y, unsigned char *pixelp, int count);
+HIDDEN int	ab_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int count);
+HIDDEN int	ab_rmap(register FBIO *ifp, register ColorMap *cmap);
+HIDDEN int	ab_wmap(register FBIO *ifp, const ColorMap *cmap);
+HIDDEN int	ab_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
+HIDDEN int	ab_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
+HIDDEN int	ab_cursor(FBIO *ifp, int mode, int x, int y);
+HIDDEN int	ab_getcursor(FBIO *ifp, int *mode, int *x, int *y);
+HIDDEN int	ab_help(FBIO *ifp);
 
 FBIO abekas_interface = {
     0,
