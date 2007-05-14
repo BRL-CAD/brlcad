@@ -28,7 +28,13 @@
 
 #include "bltVecInt.h"
 #include <ctype.h>
-#include <sys/errno.h>
+
+#ifdef HAVE_SYS_ERRNO_H
+#  include <sys/errno.h>
+#endif
+#ifdef HAVE_ERRNO_H
+#  include <errno.h>
+#endif
 
 /*
  * Three types of math functions:

@@ -37,7 +37,9 @@ static Tcl_Interp *gStdoutInterp = NULL;
 
 #if (TCL_VERSION_NUMBER >= _VERSION(8,1,1)) 
 #define HAVE_UTF 1
+#if 0
 extern void TclInitSubsystems _ANSI_ARGS_((CONST char *argv0));
+#endif
 #else 
 #endif
 

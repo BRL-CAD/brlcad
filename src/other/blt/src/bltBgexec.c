@@ -38,7 +38,13 @@
 #endif
 #include <sys/types.h>
 #include <ctype.h>
-#include <sys/errno.h>
+
+#ifdef HAVE_SYS_ERRNO_H
+#  include <sys/errno.h>
+#endif
+#ifdef HAVE_ERRNO_H
+#  include <errno.h>
+#endif
 
 #include "bltWait.h"
 #include "bltSwitch.h"
