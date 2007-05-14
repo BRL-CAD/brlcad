@@ -594,7 +594,7 @@ int main(int ac, char *av[])
 	mat_t mat;
 	int i;
 
-	mat_idn(mat);
+	MAT_IDN(mat);
 
 	/* dump all the bots */
 	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)

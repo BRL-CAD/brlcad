@@ -29,11 +29,11 @@
 #ifndef INCL_TRIE
 #define INCL_TRIE
 
-#ifdef FUNC_NULL
-#undef FUNC_NULL
+#ifdef NULL_FUNC
+#  undef NULL_FUNC
 #endif
 
-#define FUNC_NULL	((Func *) NULL)
+#define NULL_FUNC	((Func *) NULL)
 #define TRIE_NULL	((Trie *) NULL)
 
 /* Datum for trie leaves.  */

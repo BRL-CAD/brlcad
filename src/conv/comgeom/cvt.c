@@ -328,7 +328,7 @@ main(int argc, char **argv)
     wmp = (struct wmember *)bu_calloc(reg_total+2, sizeof( struct wmember ), "wmp");
 
     for( i=reg_total+1; i>=0; i-- )  {
-	RT_LIST_INIT( &wmp[i].l );
+	BU_LIST_INIT( &wmp[i].l );
     }
 
     cur_col = 0;

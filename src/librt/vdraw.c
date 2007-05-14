@@ -67,14 +67,14 @@ All textual arguments can be replaced by their first letter.
 
 In the above listing:
 "i" refers to an integer
-"c" is an integer representing one of the following rt_vlist commands:
-	 RT_VLIST_LINE_MOVE	0	/ begin new line /
-	 RT_VLIST_LINE_DRAW	1	/ draw line /
-	 RT_VLIST_POLY_START	2	/ pt[] has surface normal /
-	 RT_VLIST_POLY_MOVE	3	/ move to first poly vertex /
-	 RT_VLIST_POLY_DRAW	4	/ subsequent poly vertex /
-	 RT_VLIST_POLY_END	5	/ last vert (repeats 1st), draw poly /
-	 RT_VLIST_POLY_VERTNORM	6	/ per-vertex normal, for interpolation /
+"c" is an integer representing one of the following bn_vlist commands:
+	 BN_VLIST_LINE_MOVE	0	/ begin new line /
+	 BN_VLIST_LINE_DRAW	1	/ draw line /
+	 BN_VLIST_POLY_START	2	/ pt[] has surface normal /
+	 BN_VLIST_POLY_MOVE	3	/ move to first poly vertex /
+	 BN_VLIST_POLY_DRAW	4	/ subsequent poly vertex /
+	 BN_VLIST_POLY_END	5	/ last vert (repeats 1st), draw poly /
+	 BN_VLIST_POLY_VERTNORM	6	/ per-vertex normal, for interpolation /
 
 "x y z" refer to floating point values which represent a point or normal
 	vector. For commands 0,1,3,4, and 5, they represent a point, while
@@ -164,7 +164,7 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	int index, uind;
-	struct rt_vlist *vp, *cp;
+	struct bn_vlist *vp, *cp;
 
 	if (!dgop->dgo_currVHead) {
 		Tcl_AppendResult(interp, "vdraw write: no vlist is currently open.", (char *)NULL);
@@ -175,21 +175,21 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		return TCL_ERROR;
 	}
 	if (argv[1][0] == 'n') { /* next */
-		for (REV_BU_LIST_FOR(vp, rt_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
+		for (REV_BU_LIST_FOR(vp, bn_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
 			if (vp->nused > 0) {
 				break;
 			}
 		}
 		if (BU_LIST_IS_HEAD(vp,&(dgop->dgo_currVHead->vdc_vhd))) {
 				/* we went all the way through */
-			vp = BU_LIST_PNEXT(rt_vlist, vp);
+			vp = BU_LIST_PNEXT(bn_vlist, vp);
 			if (BU_LIST_IS_HEAD(vp,&(dgop->dgo_currVHead->vdc_vhd))) {
 				RT_GET_VLIST(vp);
 				BU_LIST_INSERT(&(dgop->dgo_currVHead->vdc_vhd), &(vp->l));
 			}
 		}
-		if (vp->nused >= RT_VLIST_CHUNK) {
-			vp = BU_LIST_PNEXT(rt_vlist, vp);
+		if (vp->nused >= BN_VLIST_CHUNK) {
+			vp = BU_LIST_PNEXT(bn_vlist, vp);
 			if (BU_LIST_IS_HEAD(vp,&(dgop->dgo_currVHead->vdc_vhd))) {
 				RT_GET_VLIST(vp);
 				BU_LIST_INSERT(&(dgop->dgo_currVHead->vdc_vhd),&(vp->l));
@@ -204,8 +204,8 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		/* uind holds user-specified index */
 		/* only allow one past the end */
 
-		for (BU_LIST_FOR(vp, rt_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
-			if (uind < RT_VLIST_CHUNK){
+		for (BU_LIST_FOR(vp, bn_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
+			if (uind < BN_VLIST_CHUNK){
 				/* this is the right vlist */
 				break;
 			}
@@ -262,7 +262,7 @@ int
 vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
-	struct rt_vlist *vp, *cp, *wp;
+	struct bn_vlist *vp, *cp, *wp;
 	int i;
 	int index;
 	int uind;
@@ -281,8 +281,8 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	}
 
 	/* uinds hold user specified index */
-	for (BU_LIST_FOR(vp, rt_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
-		if (uind < RT_VLIST_CHUNK) {
+	for (BU_LIST_FOR(vp, bn_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
+		if (uind < BN_VLIST_CHUNK) {
 				/* this is the right vlist */
 			break;
 		}
@@ -309,7 +309,7 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	cp = vp;
 	index = uind;
 
-	vp = BU_LIST_LAST(rt_vlist, &(dgop->dgo_currVHead->vdc_vhd));
+	vp = BU_LIST_LAST(bn_vlist, &(dgop->dgo_currVHead->vdc_vhd));
 	vp->nused++;
 
 	while (vp != cp) {
@@ -317,9 +317,9 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 			vp->cmd[i] = vp->cmd[i-1];
 			VMOVE(vp->pt[i],vp->pt[i-1]);
 		}
-		wp = BU_LIST_PLAST(rt_vlist,vp);
-		vp->cmd[0] = wp->cmd[RT_VLIST_CHUNK-1];
-		VMOVE(vp->pt[0],wp->pt[RT_VLIST_CHUNK-1]);
+		wp = BU_LIST_PLAST(bn_vlist,vp);
+		vp->cmd[0] = wp->cmd[BN_VLIST_CHUNK-1];
+		VMOVE(vp->pt[0],wp->pt[BN_VLIST_CHUNK-1]);
 		vp = wp;
 	}
 
@@ -346,7 +346,7 @@ int
 vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
-	struct rt_vlist *vp, *wp;
+	struct bn_vlist *vp, *wp;
 	int i;
 	int uind;
 
@@ -360,14 +360,14 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	}
 	if (argv[1][0] == 'a') {
 		/* delete all */
-		for (BU_LIST_FOR(vp, rt_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
+		for (BU_LIST_FOR(vp, bn_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
 			vp->nused = 0;
 		}
 		return TCL_OK;
 	}
 	if (argv[1][0] == 'l') {
 		/* delete last */
-		for (REV_BU_LIST_FOR(vp, rt_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
+		for (REV_BU_LIST_FOR(vp, bn_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
 			if (vp->nused > 0) {
 				vp->nused--;
 				break;
@@ -380,8 +380,8 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 		return TCL_ERROR;
 	}
 
-	for (BU_LIST_FOR(vp, rt_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
-		if (uind < RT_VLIST_CHUNK) {
+	for (BU_LIST_FOR(vp, bn_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
+		if (uind < BN_VLIST_CHUNK) {
 				/* this is the right vlist */
 			break;
 		}
@@ -402,21 +402,21 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 		VMOVE(vp->pt[i],vp->pt[i+1]);
 	}
 
-	wp = BU_LIST_PNEXT(rt_vlist, vp);
+	wp = BU_LIST_PNEXT(bn_vlist, vp);
 	while (BU_LIST_NOT_HEAD(wp, &(dgop->dgo_currVHead->vdc_vhd))) {
 		if (wp->nused == 0) {
 			break;
 		}
 
-		vp->cmd[RT_VLIST_CHUNK-1] = wp->cmd[0];
-		VMOVE(vp->pt[RT_VLIST_CHUNK-1],wp->pt[0]);
+		vp->cmd[BN_VLIST_CHUNK-1] = wp->cmd[0];
+		VMOVE(vp->pt[BN_VLIST_CHUNK-1],wp->pt[0]);
 
 		for (i=0; i< wp->nused - 1; i++) {
 			wp->cmd[i] = wp->cmd[i+1];
 			VMOVE(wp->pt[i],wp->pt[i+1]);
 		}
 		vp = wp;
-		wp = BU_LIST_PNEXT(rt_vlist, vp);
+		wp = BU_LIST_PNEXT(bn_vlist, vp);
 	}
 
 	if (vp->nused <= 0) {
@@ -437,7 +437,7 @@ static int
 vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
-	struct rt_vlist *vp;
+	struct bn_vlist *vp;
 	struct bu_vls vls;
 	int uind;
 	int length;
@@ -469,10 +469,10 @@ vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (argv[1][0] == 'l') {
 		/* return lenght of list */
 		length = 0;
-		vp = BU_LIST_FIRST(rt_vlist, &(dgop->dgo_currVHead->vdc_vhd));
+		vp = BU_LIST_FIRST(bn_vlist, &(dgop->dgo_currVHead->vdc_vhd));
 		while (!BU_LIST_IS_HEAD(vp, &(dgop->dgo_currVHead->vdc_vhd))) {
 			length += vp->nused;
-			vp = BU_LIST_PNEXT(rt_vlist, vp);
+			vp = BU_LIST_PNEXT(bn_vlist, vp);
 		}
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "%d", length);
@@ -485,8 +485,8 @@ vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_ERROR;
 	}
 
-	for (BU_LIST_FOR(vp, rt_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
-		if (uind < RT_VLIST_CHUNK) {
+	for (BU_LIST_FOR(vp, bn_vlist, &(dgop->dgo_currVHead->vdc_vhd))) {
+		if (uind < BN_VLIST_CHUNK) {
 				/* this is the right vlist */
 			break;
 		}
@@ -617,7 +617,7 @@ vdraw_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	struct vd_curve *rcp;
-	struct rt_vlist *vp;
+	struct bn_vlist *vp;
 	char temp_name[RT_VDRW_MAXNAME+1];
 
 	if (argc < 1 || 2 < argc) {

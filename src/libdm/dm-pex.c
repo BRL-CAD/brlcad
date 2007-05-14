@@ -557,12 +557,12 @@ mat_t mat;
 static int
 Pex_object( dmp, vp, m, linestyle, r, g, b )
 struct dm *dmp;
-register struct rt_vlist *vp;
+register struct bn_vlist *vp;
 fastf_t *m;
 int linestyle;
 register short r, g, b;
 {
-  register struct rt_vlist    *tvp;
+  register struct bn_vlist    *tvp;
   PEXCoord coord_buf[1024];
   PEXCoord *cp;                /* current coordinate */
   int first;
@@ -608,7 +608,7 @@ register short r, g, b;
     ncoord = 0;
     cp = coord_buf;
     first = 1;
-    for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
+    for( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
       register int	i;
       register int	nused = tvp->nused;
       register int	*cmd = tvp->cmd;
@@ -619,10 +619,10 @@ register short r, g, b;
       /* 2^(31-11) = 2^20 ~= 1e6 */
       for( i = 0; i < nused; i++,cmd++,pt++ )  {
 	switch( *cmd )  {
-	case RT_VLIST_POLY_START:
-	case RT_VLIST_POLY_VERTNORM:
+	case BN_VLIST_POLY_START:
+	case BN_VLIST_POLY_VERTNORM:
 	  break;
-	case RT_VLIST_LINE_MOVE:
+	case BN_VLIST_LINE_MOVE:
 	  /* Move, start line */
 	  if( first == 0 ){
 	    PEXPolyline(((struct pex_vars *)dmp->dmr_vars)->dpy,
@@ -638,14 +638,14 @@ register short r, g, b;
 	  ++cp;
 	  ++ncoord;
 	  break;
-	case RT_VLIST_LINE_DRAW:
-	case RT_VLIST_POLY_MOVE:
-	case RT_VLIST_POLY_DRAW:
+	case BN_VLIST_LINE_DRAW:
+	case BN_VLIST_POLY_MOVE:
+	case BN_VLIST_POLY_DRAW:
 	  Pex_VMOVE(*cp, *pt);
 	  ++cp;
 	  ++ncoord;
 	  break;
-	case RT_VLIST_POLY_END:
+	case BN_VLIST_POLY_END:
 	  Pex_VMOVE(*cp, *pt);
 	  ++ncoord;
 

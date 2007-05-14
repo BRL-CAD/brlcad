@@ -43,10 +43,8 @@ static const char libbu_rb_extreme_RCSid[] = "@(#) $Header$";
 #include <stdio.h>
 #include <math.h>
 
-#include "machine.h"
-#include "rtlist.h"
 #include "bu.h"
-#include "compat4.h"
+
 #include "./rb_internals.h"
 
 

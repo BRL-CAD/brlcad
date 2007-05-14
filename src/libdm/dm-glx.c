@@ -842,9 +842,9 @@ static float material_objdef[] = {
 static int
 glx_drawVList( dmp, vp )
 struct dm *dmp;
-register struct rt_vlist *vp;
+register struct bn_vlist *vp;
 {
-  register struct rt_vlist	*tvp;
+  register struct bn_vlist	*tvp;
   register int nvec;
   register float	*gtvec;
   char	gtbuf[16+3*sizeof(double)];
@@ -865,14 +865,14 @@ register struct rt_vlist *vp;
 
   /* Viewing region is from -1.0 to +1.0 */
   first = 1;
-  for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
+  for( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
     register int	i;
     register int	nused = tvp->nused;
     register int	*cmd = tvp->cmd;
     register point_t *pt = tvp->pt;
     for( i = 0; i < nused; i++,cmd++,pt++ )  {
       switch( *cmd )  {
-      case RT_VLIST_LINE_MOVE:
+      case BN_VLIST_LINE_MOVE:
 	/* Move, start line */
 	  if( first == 0 )
 	    endline();
@@ -880,11 +880,11 @@ register struct rt_vlist *vp;
 	  bgnline();
 	  v3d( *pt );
 	  break;
-      case RT_VLIST_LINE_DRAW:
+      case BN_VLIST_LINE_DRAW:
 	/* Draw line */
 	v3d( *pt );
 	break;
-      case RT_VLIST_POLY_START:
+      case BN_VLIST_POLY_START:
 	/* Start poly marker & normal */
 	if( first == 0 )
 	  endline();
@@ -894,21 +894,21 @@ register struct rt_vlist *vp;
 	VMOVE( gtvec, *pt );
 	n3f(gtvec);
 	break;
-      case RT_VLIST_POLY_MOVE:
+      case BN_VLIST_POLY_MOVE:
 	/* Polygon Move */
 	v3d( *pt );
 	break;
-      case RT_VLIST_POLY_DRAW:
+      case BN_VLIST_POLY_DRAW:
 	/* Polygon Draw */
 	v3d( *pt );
 	break;
-      case RT_VLIST_POLY_END:
+      case BN_VLIST_POLY_END:
 	/* Draw, End Polygon */
 	v3d( *pt );
 	endpolygon();
 	first = 1;
 	break;
-      case RT_VLIST_POLY_VERTNORM:
+      case BN_VLIST_POLY_VERTNORM:
 	/* Set per-vertex normal.  Given before vert. */
 	VMOVE( gtvec, *pt );
 	n3f(gtvec);

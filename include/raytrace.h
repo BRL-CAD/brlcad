@@ -65,15 +65,11 @@
 #ifndef RAYTRACE_H
 #define RAYTRACE_H seen
 
-/*
- *  Auto-include the BRL-CAD Utilities library, and compatability macros
- */
+/* interface headers */
+#include "tcl.h"
 #include "bu.h"
-#include "compat4.h"
 #include "bn.h"
 #include "db5.h"
-#include "tcl.h"
-
 #include "nmg.h"
 
 __BEGIN_DECLS
@@ -1519,7 +1515,7 @@ RT_EXPORT extern struct resource	rt_uniresource;	/**< @brief  default.  Defined 
 		(_tp)->tr_b.tb_left = TREE_NULL; \
 		(_res)->re_tree_get++; \
 	} else { \
-		GETUNION( _tp, tree ); \
+		BU_GETUNION( _tp, tree ); \
 		(_res)->re_tree_malloc++; \
 	}\
 	}

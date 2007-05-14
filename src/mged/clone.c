@@ -302,8 +302,8 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 		if (state->rpnt[W]) {
 		    VSUB2(rp->s.s_values, rp->s.s_values, state->rpnt);
 		}
-		mat_idn(r);
-		mat_angles(r, state->rot[X], state->rot[Y], state->rot[Z]);
+		MAT_IDN(r);
+		bn_mat_angles(r, state->rot[X], state->rot[Y], state->rot[Z]);
 		for (j = 0; j < 24; j+=3) {
 		    VMOVE(vec, rp->s.s_values+j);
 		    MAT4X3VEC(ovec, r, vec);

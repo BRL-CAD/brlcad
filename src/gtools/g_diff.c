@@ -1044,9 +1044,9 @@ main(int argc, char **argv)
     if( dbip1->dbi_local2base != dbip2->dbi_local2base ) {
 	different = 1;
 	if( mode == HUMAN ) {
-	    printf( "Units changed from %s to %s\n", rt_units_string(dbip1->dbi_local2base), rt_units_string(dbip2->dbi_local2base) );
+	    printf( "Units changed from %s to %s\n", bu_units_string(dbip1->dbi_local2base), bu_units_string(dbip2->dbi_local2base) );
 	} else {
-	    printf( "units %s\n", rt_units_string(dbip2->dbi_local2base) );
+	    printf( "units %s\n", bu_units_string(dbip2->dbi_local2base) );
 	}
     }
 

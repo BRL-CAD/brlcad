@@ -923,9 +923,9 @@ int which_eye;
 HIDDEN int
 wgl_drawVList(dmp, vp)
      struct dm			*dmp;
-     register struct rt_vlist	*vp;
+     register struct bn_vlist	*vp;
 {
-	register struct rt_vlist	*tvp;
+	register struct bn_vlist	*tvp;
 	int				first;
 #if USE_VECTOR_THRESHHOLD
 	static int			nvectors = 0;
@@ -938,7 +938,7 @@ wgl_drawVList(dmp, vp)
 
 	/* Viewing region is from -1.0 to +1.0 */
 	first = 1;
-	for (BU_LIST_FOR(tvp, rt_vlist, &vp->l)) {
+	for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
 		register int	i;
 		register int	nused = tvp->nused;
 		register int	*cmd = tvp->cmd;
@@ -947,7 +947,7 @@ wgl_drawVList(dmp, vp)
 			if (dmp->dm_debugLevel > 2)
 				bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
 			switch (*cmd) {
-			case RT_VLIST_LINE_MOVE:
+			case BN_VLIST_LINE_MOVE:
 				/* Move, start line */
 				if (first == 0)
 					glEnd();
@@ -967,7 +967,7 @@ wgl_drawVList(dmp, vp)
 				glBegin(GL_LINE_STRIP);
 				glVertex3dv(*pt);
 				break;
-			case RT_VLIST_POLY_START:
+			case BN_VLIST_POLY_START:
 				/* Start poly marker & normal */
 				if (first == 0)
 					glEnd();
@@ -996,18 +996,18 @@ wgl_drawVList(dmp, vp)
 				/* Set surface normal (vl_pnt points outward) */
 				glNormal3dv(*pt);
 				break;
-			case RT_VLIST_LINE_DRAW:
-			case RT_VLIST_POLY_MOVE:
-			case RT_VLIST_POLY_DRAW:
+			case BN_VLIST_LINE_DRAW:
+			case BN_VLIST_POLY_MOVE:
+			case BN_VLIST_POLY_DRAW:
 				glVertex3dv(*pt);
 				break;
-			case RT_VLIST_POLY_END:
+			case BN_VLIST_POLY_END:
 				/* Draw, End Polygon */
 				glVertex3dv(*pt);
 				glEnd();
 				first = 1;
 				break;
-			case RT_VLIST_POLY_VERTNORM:
+			case BN_VLIST_POLY_VERTNORM:
 				/* Set per-vertex normal.  Given before vert. */
 				glNormal3dv(*pt);
 				break;

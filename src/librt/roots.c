@@ -103,13 +103,13 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
 
 	while ( eqn->dgr > 2 ){
 		if ( eqn->dgr == 4 )  {
-			if( rt_poly_quartic_roots( eqn, &roots[n] ) )  {
+			if( bn_poly_quartic_roots( eqn, &roots[n] ) )  {
 				if( rt_poly_checkroots( eqn, &roots[n], 4 ) == 0 )  {
 					return( n+4 );
 				}
 			}
 		} else if ( eqn->dgr == 3 )  {
-			if( rt_poly_cubic_roots( eqn, &roots[n] ) )  {
+			if( bn_poly_cubic_roots( eqn, &roots[n] ) )  {
 				if ( rt_poly_checkroots( eqn, &roots[n], 3 ) == 0 )  {
 					return ( n+3 );
 				}
@@ -149,7 +149,7 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
 		roots[n].im = 0.0;
 		++n;
 	} else if ( eqn->dgr == 2 ){
-		rt_poly_quadratic_roots( eqn, &roots[n] );
+		bn_poly_quadratic_roots( eqn, &roots[n] );
 		n += 2;
 	}
 	return n;
@@ -388,7 +388,7 @@ rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
 	 * and the remainder (should be zero if the root was really a
 	 * root).
 	 */
-	rt_poly_synthetic_division( oldP, &div, oldP, &rem );
+	bn_poly_synthetic_division( oldP, &div, oldP, &rem );
 }
 
 /*

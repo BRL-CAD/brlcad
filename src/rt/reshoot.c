@@ -122,11 +122,11 @@ struct reg_hit {
 };
 
 static const struct bu_structparse reg_sp[] = {
-    {"%S", 1, "region", offsetof(struct reg_hit, regname) },
-    {"%S", 1, "in", offsetof(struct reg_hit, in_primitive)},
-    {"%S", 1, "out", offsetof(struct reg_hit, out_primitive)},
-    {"%f", 1, "indist", offsetof(struct reg_hit, indist)},
-    {"%f", 1, "outdist", offsetof(struct reg_hit, outdist)},
+    {"%S", 1, "region", bu_offsetof(struct reg_hit, regname) },
+    {"%S", 1, "in", bu_offsetof(struct reg_hit, in_primitive)},
+    {"%S", 1, "out", bu_offsetof(struct reg_hit, out_primitive)},
+    {"%f", 1, "indist", bu_offsetof(struct reg_hit, indist)},
+    {"%f", 1, "outdist", bu_offsetof(struct reg_hit, outdist)},
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -169,7 +169,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	double val;
     } vs;
     static struct bu_structparse val_sp[] = {
-	{"%f", 1, "val", offsetof(struct valstruct, val)},
+	{"%f", 1, "val", bu_offsetof(struct valstruct, val)},
     };
 
     bu_vls_init(&v);

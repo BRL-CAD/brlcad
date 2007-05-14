@@ -34,7 +34,7 @@
 
 /* Internal Host table */
 struct ihost {
-	struct rt_list	l;
+	struct bu_list	l;
 	char		*ht_name;	/* Official name of host */
 	int		ht_flags;	/* Control info about this host */
 #define HT_HOLD		0x1
@@ -57,9 +57,9 @@ struct ihost {
 	char		*ht_path;	/* remote directory to run in */
 };
 #define IHOST_MAGIC	0x69486f73
-#define CK_IHOST(_p)	RT_CKMAG(_p, IHOST_MAGIC, "ihost")
+#define CK_IHOST(_p)	BU_CKMAG(_p, IHOST_MAGIC, "ihost")
 
-extern struct rt_list	HostHead;
+extern struct bu_list	HostHead;
 
 #define IHOST_NULL	((struct ihost *)0)
 

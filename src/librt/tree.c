@@ -287,7 +287,7 @@ HIDDEN union tree *rt_gettree_region_end(register struct db_tree_state *tsp, str
 	if( tsp->ts_mat )
 	    bn_mat_inv( inv_mat, tsp->ts_mat );
 	else
-	    bn_mat_idn( inv_mat );
+	    MAT_IDN( inv_mat );
 
 	bu_semaphore_acquire( RT_SEM_RESULTS );	/* enter critical section */
 

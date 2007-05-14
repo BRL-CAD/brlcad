@@ -75,8 +75,8 @@ struct _grid_state default_grid_state = {
 /* gr_res_major_v */	5,
 };
 
-#define GRID_O(_m)        offsetof(struct _grid_state, _m)
-#define GRID_OA(_m)       offsetofarray(struct _grid_state, _m)
+#define GRID_O(_m)        bu_offsetof(struct _grid_state, _m)
+#define GRID_OA(_m)       bu_offsetofarray(struct _grid_state, _m)
 struct bu_structparse grid_vparse[] = {
 	{"%d",  1, "draw",		GRID_O(gr_draw),		set_grid_draw },
 	{"%d",  1, "snap",		GRID_O(gr_snap),		grid_set_dirty_flag },

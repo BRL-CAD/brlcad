@@ -38,8 +38,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
-#include "rtstring.h"
-#include "rtlist.h"
 #include "raytrace.h"
 #include "../librt/debug.h"
 
@@ -73,8 +71,8 @@ int sol_comp_name (void *v1, void *v2)
     struct sol_name_dist	*s1 = v1;
     struct sol_name_dist	*s2 = v2;
 
-    RT_CKMAG(s1, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
-    RT_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
+    BU_CKMAG(s1, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
+    BU_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
     return(strcmp(s1 -> name, s2 -> name));
 }
@@ -89,8 +87,8 @@ int sol_comp_dist (void *v1, void *v2)
     struct sol_name_dist	*s1 = v1;
     struct sol_name_dist	*s2 = v2;
 
-    RT_CKMAG(s1, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
-    RT_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
+    BU_CKMAG(s1, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
+    BU_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
     if (s1 -> dist > s2 -> dist)
 	return (1);
@@ -123,7 +121,7 @@ void free_solid (char *vp)
 {
     struct sol_name_dist	*sol = (struct sol_name_dist *) vp;
 
-    RT_CKMAG(sol, SOL_NAME_DIST_MAGIC, "solid name-and-dist");
+    BU_CKMAG(sol, SOL_NAME_DIST_MAGIC, "solid name-and-dist");
 
     bu_log("freeing solid (%s, %g)...\n", sol -> name, sol -> dist);
     bu_free((char *) sol, "solid name-and-dist");
@@ -136,7 +134,7 @@ void print_solid (void *vp, int depth)
 {
     struct sol_name_dist	*sol = vp;
 
-    RT_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
+    BU_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
     bu_log("solid %s at distance %g along ray\n", sol -> name, sol -> dist);
 }
 
@@ -164,7 +162,7 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *se
     /*
      *	Initialize the solid list
      */
-    if ((solids = bu_rb_create("Solid list", 2, orders)) == RB_TREE_NULL)
+    if ((solids = bu_rb_create("Solid list", 2, orders)) == BU_RB_TREE_NULL)
     {
 	bu_log("%s: %d: bu_rb_create() bombed\n", __FILE__, __LINE__);
 	exit (1);
@@ -176,13 +174,13 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *se
      *	Get the list of segments along this ray
      *	and seek to its head
      */
-    RT_CKMAG(ph, PT_HD_MAGIC, "partition head");
+    BU_CKMAG(ph, PT_HD_MAGIC, "partition head");
     pp = ph -> pt_forw;
-    RT_CKMAG(pp, PT_MAGIC, "partition structure");
+    BU_CKMAG(pp, PT_MAGIC, "partition structure");
     for (sh = pp -> pt_inseg;
-	    *((long *) sh) != RT_LIST_HEAD_MAGIC;
+	    *((long *) sh) != BU_LIST_HEAD_MAGIC;
 	    sh = (struct seg *) (sh -> l.forw))
-	RT_CKMAG(sh, RT_SEG_MAGIC, "segment structure");
+	BU_CKMAG(sh, RT_SEG_MAGIC, "segment structure");
 
     /*
      *	March down the list of segments
@@ -191,7 +189,7 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *se
 	    sp != sh;
 	    sp = (struct seg *) sp -> l.forw)
     {
-	RT_CKMAG(sp, RT_SEG_MAGIC, "seg structure");
+	BU_CKMAG(sp, RT_SEG_MAGIC, "seg structure");
 	bu_log("I saw solid %s at distance %g\n",
 	    sp -> seg_stp -> st_name,
 	    sp -> seg_in.hit_dist);
@@ -200,7 +198,7 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *se
 	if (bu_rb_insert(solids, (void *) sol) < 0)
 	{
 	    old_sol = (struct sol_name_dist *) bu_rb_curr(solids, ORDER_BY_NAME);
-	    RT_CKMAG(old_sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
+	    BU_CKMAG(old_sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 	    if (sol -> dist >= old_sol -> dist)
 		free_solid((char *) sol);
 	    else

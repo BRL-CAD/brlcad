@@ -646,7 +646,7 @@ main(int argc, char **argv)
 	pixels = (unsigned char *)bu_malloc( width * height * 3, "pixels[]" );
 
 	find_minmax();
-	rt_log("min = %g, max=%g Watts\n", minval, maxval );
+	bu_log("min = %g, max=%g Watts\n", minval, maxval );
 
 	Tk_Main( 1, argv, tcl_appinit );
 	/* NOTREACHED */
@@ -689,7 +689,7 @@ doit1(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_ERROR;
 	}
 
-	rt_log("doit1 %d: %g um to %g um\n",
+	bu_log("doit1 %d: %g um to %g um\n",
 		wl,
 		spectrum->x[wl] * 0.001,
 		spectrum->x[wl+1] * 0.001 );

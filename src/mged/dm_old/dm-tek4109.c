@@ -304,7 +304,7 @@ mat_t mat;
 double ratio;
 {
 	static vect_t last;
-	register struct rt_vlist	*vp;
+	register struct bn_vlist	*vp;
 	int useful = 0;
 
 	if(  sp->s_soldash )
@@ -312,7 +312,7 @@ double ratio;
 	else
 		fprintf(outfp,"%cMV0",ESC);		/* Solid Line  NRTC */
 
-	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
@@ -320,17 +320,17 @@ double ratio;
 		for( i = 0; i < nused; i++,cmd++,pt++ )  {
 			static vect_t	start, fin;
 			switch( *cmd )  {
-			case RT_VLIST_POLY_START:
-			case RT_VLIST_POLY_VERTNORM:
+			case BN_VLIST_POLY_START:
+			case BN_VLIST_POLY_VERTNORM:
 				continue;
-			case RT_VLIST_POLY_MOVE:
-			case RT_VLIST_LINE_MOVE:
+			case BN_VLIST_POLY_MOVE:
+			case BN_VLIST_LINE_MOVE:
 				/* Move, not draw */
 				MAT4X3PNT( last, model2view, *pt );
 				continue;
-			case RT_VLIST_POLY_DRAW:
-			case RT_VLIST_POLY_END:
-			case RT_VLIST_LINE_DRAW:
+			case BN_VLIST_POLY_DRAW:
+			case BN_VLIST_POLY_END:
+			case BN_VLIST_LINE_DRAW:
 				/* draw */
 				MAT4X3PNT( fin, model2view, *pt );
 				VMOVE( start, last );

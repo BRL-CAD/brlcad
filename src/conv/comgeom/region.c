@@ -276,7 +276,7 @@ region_register(int reg_num, int id, int air, int mat, int los)
 	register struct wmember	*wp;
 
 	wp = &wmp[reg_num];
-	if( RT_LIST_IS_EMPTY( &wp->l ) )  {
+	if( BU_LIST_IS_EMPTY( &wp->l ) )  {
 		if( verbose )  {
 			char	paren[32];
 
@@ -344,7 +344,7 @@ group_register(char *name, int lo, int hi)
 	sprintf( nbuf, "%s%s", name, name_it );
 	wp->wm_name = bu_strdup( nbuf );
 
-	RT_LIST_INIT( &wp->l );
+	BU_LIST_INIT( &wp->l );
 
 	groups[ngroups].grp_lo = lo;
 	groups[ngroups].grp_hi = hi;
@@ -375,12 +375,12 @@ group_write(void)
 	struct wmember		allhead;
 	register int	i;
 
-	RT_LIST_INIT( &allhead.l );
+	BU_LIST_INIT( &allhead.l );
 
 	for( i=0; i < ngroups; i++ )  {
 		wp = &groups[i].grp_wm;
 		/* Skip empty groups */
-		if( RT_LIST_IS_EMPTY( &wp->l ) )  continue;
+		if( BU_LIST_IS_EMPTY( &wp->l ) )  continue;
 
 		/* Make a non-region combination */
 		mk_lfcomb( outfp, wp->wm_name, wp, 0 );

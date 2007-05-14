@@ -157,7 +157,7 @@ char *ptr;
 	if( jtop == stklen )
 	{
 		stklen += STKBLK;
-		stk = (char **)rt_realloc( (char *)stk , stklen*sizeof( char *), "Apush: stk" );
+		stk = (char **)bu_realloc( (char *)stk , stklen*sizeof( char *), "Apush: stk" );
 		if( stk == NULL )
 		{
 			bu_log( "Cannot reallocate stack space\n" );
@@ -229,7 +229,7 @@ struct node *ptr;
 	if( sjtop == sstklen )
 	{
 		sstklen += STKBLK;
-		sstk_p = (struct node **)rt_realloc( (char *)sstk_p , sstklen*sizeof( struct node *), "Spush: sstk_p" );
+		sstk_p = (struct node **)bu_realloc( (char *)sstk_p , sstklen*sizeof( struct node *), "Spush: sstk_p" );
 		if( sstk_p == NULL )
 		{
 			bu_log( "Cannot reallocate stack space\n" );

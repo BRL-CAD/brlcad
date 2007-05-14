@@ -33,9 +33,7 @@ static const char RCSid[] = "$Id$";
 #endif
 
 #include "machine.h"
-#include "rtlist.h"
 #include "bu.h"
-#include "compat4.h"
 
 #include "./tokens.h"
 

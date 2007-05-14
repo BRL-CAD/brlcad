@@ -474,7 +474,7 @@ static int
 ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
   static vect_t			last;
-  register struct rt_vlist	*tvp;
+  register struct bn_vlist	*tvp;
   register point_t		*pt_prev=NULL;
   register fastf_t		dist_prev=1.0;
   register fastf_t		dist;
@@ -501,7 +501,7 @@ ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     if( delta < SQRT_SMALL_FASTF )
 	delta = SQRT_SMALL_FASTF;
 
-  for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
+  for( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
     register int	i;
     register int	nused = tvp->nused;
     register int	*cmd = tvp->cmd;
@@ -509,11 +509,11 @@ ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     for( i = 0; i < nused; i++,cmd++,pt++ )  {
       static vect_t	start, fin;
       switch( *cmd )  {
-      case RT_VLIST_POLY_START:
-      case RT_VLIST_POLY_VERTNORM:
+      case BN_VLIST_POLY_START:
+      case BN_VLIST_POLY_VERTNORM:
 	continue;
-      case RT_VLIST_POLY_MOVE:
-      case RT_VLIST_LINE_MOVE:
+      case BN_VLIST_POLY_MOVE:
+      case BN_VLIST_LINE_MOVE:
 	/* Move, not draw */
 		if (dmp->dm_perspective > 0)
 		{
@@ -537,9 +537,9 @@ ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 		else
 			MAT4X3PNT( last, psmat, *pt );
 	continue;
-      case RT_VLIST_POLY_DRAW:
-      case RT_VLIST_POLY_END:
-      case RT_VLIST_LINE_DRAW:
+      case BN_VLIST_POLY_DRAW:
+      case BN_VLIST_POLY_END:
+      case BN_VLIST_LINE_DRAW:
 	/* draw */
 		if (dmp->dm_perspective > 0)
 		{

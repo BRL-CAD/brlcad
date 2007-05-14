@@ -42,15 +42,16 @@ static const char RCSpg[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+
 #include "./debug.h"
 #include "./plane.h"
 
@@ -893,7 +894,7 @@ rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol, struct resour
 	int p, i;
 
 	RT_CK_DB_INTERNAL(ip);
-	RT_CK_TOL( tol );
+	BN_CK_TOL( tol );
 	RT_CK_RESOURCE( resp );
 
 	if( ip->idb_type != ID_POLY )

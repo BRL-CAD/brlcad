@@ -269,7 +269,7 @@ main(int argc, char **argv)
 		{
 			while( array_size < no_of_verts )
 				array_size += ARRAY_BLOCK_SIZE;
-			verts = (struct tankill_verts *)rt_realloc( (char *)verts , array_size*sizeof( struct tankill_verts ) , "tankill-g: vertex array" );
+			verts = (struct tankill_verts *)bu_realloc( (char *)verts , array_size*sizeof( struct tankill_verts ) , "tankill-g: vertex array" );
 		}
 
 		/* read the component code number */

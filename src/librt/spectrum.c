@@ -173,7 +173,7 @@ again:
 	/* Normalize the curves so that area under Y curve is 1.0 */
 	xyz_scale = bn_tabdata_area2( b );
 	if( fabs(xyz_scale) < VDIVIDE_TOL )  {
-		rt_log("rt_spect_make_CIE_XYZ(): Area = 0 (no luminance) in this part of the spectrum, skipping normalization step\n");
+		bu_log("rt_spect_make_CIE_XYZ(): Area = 0 (no luminance) in this part of the spectrum, skipping normalization step\n");
 		return;
 	}
 	xyz_scale = 1 / xyz_scale;

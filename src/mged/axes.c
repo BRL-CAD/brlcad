@@ -37,16 +37,18 @@
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+
 #include "./ged.h"
 #include "./mged_dm.h"
+
 
 extern point_t es_keypoint;
 extern point_t e_axes_pos;
@@ -71,8 +73,8 @@ struct _axes_state default_axes_state = {
 /* ax_edit_linewidth2 */	1
 };
 
-#define AX_O(_m)	offsetof(struct _axes_state, _m)
-#define AX_OA(_m)	offsetofarray(struct _axes_state, _m)
+#define AX_O(_m)	bu_offsetof(struct _axes_state, _m)
+#define AX_OA(_m)	bu_offsetofarray(struct _axes_state, _m)
 struct bu_structparse axes_vparse[] = {
 	{"%d",  1, "model_draw",	AX_O(ax_model_draw),		ax_set_dirty_flag },
 	{"%d",  1, "model_size",	AX_O(ax_model_size),		ax_set_dirty_flag },

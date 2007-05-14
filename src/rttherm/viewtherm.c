@@ -59,7 +59,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "vmath.h"
 #include "mater.h"
-#include "rtlist.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "bu.h"
@@ -147,10 +146,10 @@ struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	{"%f",  3, "spectrum",  (long)spectrum_param,		FUNC_NULL },
-	{"%f",  1, "bg_temp",	(long)&bg_temp,			FUNC_NULL },
-	{"%d",	1, "bounces",	(long)&max_bounces,		FUNC_NULL },
-	{"",	0, (char *)0,	0,				FUNC_NULL }
+	{"%f",  3, "spectrum",  (long)spectrum_param,		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "bg_temp",	(long)&bg_temp,			BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "bounces",	(long)&max_bounces,		BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
 };
 
 
@@ -232,7 +231,7 @@ view_pixel(register struct application *ap)
 		background_radiation(ap);
 	} else {
 		if( !ap->a_spectrum )
-			rt_bomb("view_pixel called with no spectral curve associated\n");
+			bu_bomb("view_pixel called with no spectral curve associated\n");
 		BN_CK_TABDATA(ap->a_spectrum);
 	}
 
@@ -251,12 +250,12 @@ view_pixel(register struct application *ap)
 		/* XXX in machine-specific format */
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		if( fseek( outfp, ap->a_y*(long)width*BN_SIZEOF_TABDATA(spectrum), 0 ) != 0 )
-			rt_log("fseek error\n");
+			bu_log("fseek error\n");
 		count = fwrite( scanline[ap->a_y].sl_buf,
 			BN_SIZEOF_TABDATA(spectrum), width, outfp );
 		bu_semaphore_release( BU_SEM_SYSCALL );
 		if( count != width )
-			rt_bomb("view_pixel:  fwrite failure\n");
+			bu_bomb("view_pixel:  fwrite failure\n");
 	}
 #ifdef MSWISS
 	if( fbp != FBIO_NULL ) {
@@ -356,11 +355,11 @@ view_setup(struct rt_i *rtip)
 		switch( mlib_setup( &mfHead, regp, rtip ) )  {
 		case -1:
 		default:
-			rt_log("mlib_setup failure on %s\n", regp->reg_name);
+			bu_log("mlib_setup failure on %s\n", regp->reg_name);
 			break;
 		case 0:
 			if(rdebug&RDEBUG_MATERIAL)
-				rt_log("mlib_setup: drop region %s\n", regp->reg_name);
+				bu_log("mlib_setup: drop region %s\n", regp->reg_name);
 			{
 				struct region *r = BU_LIST_NEXT( region, &regp->l );
 				/* zap reg_udata? beware of light structs */
@@ -450,25 +449,25 @@ hit_nothing(register struct application *ap)
 		u.sw.sw_inputs = MFI_NORMAL|MFI_UV;
 		VREVERSE( u.sw.sw_hit.hit_normal, ap->a_ray.r_dir );
 		/* U is azimuth, atan() range: -pi to +pi */
-		u.sw.sw_uv.uv_u = mat_atan2( ap->a_ray.r_dir[Y],
-			ap->a_ray.r_dir[X] ) * rt_inv2pi;
+		u.sw.sw_uv.uv_u = bn_atan2( ap->a_ray.r_dir[Y],
+			ap->a_ray.r_dir[X] ) * bn_inv2pi;
 		if( u.sw.sw_uv.uv_u < 0 )
 			u.sw.sw_uv.uv_u += 1.0;
 		/*
 		 *  V is elevation, atan() range: -pi/2 to +pi/2,
 		 *  because sqrt() ensures that X parameter is always >0
 		 */
-		u.sw.sw_uv.uv_v = mat_atan2( ap->a_ray.r_dir[Z],
+		u.sw.sw_uv.uv_v = bn_atan2( ap->a_ray.r_dir[Z],
 			sqrt( ap->a_ray.r_dir[X] * ap->a_ray.r_dir[X] +
 			ap->a_ray.r_dir[Y] * ap->a_ray.r_dir[Y]) ) *
-			rt_invpi + 0.5;
+			bn_invpi + 0.5;
 		u.sw.sw_uv.uv_du = u.sw.sw_uv.uv_dv = 0;
 
 		u.sw.msw_color = bn_tabdata_get_constval( 1.0, spectrum );
 		u.sw.msw_basecolor = bn_tabdata_get_constval( 1.0, spectrum );
 
 		if (rdebug&RDEBUG_SHADE)
-			rt_log("hit_nothing calling viewshade\n");
+			bu_log("hit_nothing calling viewshade\n");
 
 		(void)viewshade( ap, &u.part, &u.sw );
 
@@ -501,20 +500,20 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("colorview:  no hit out front?\n");
+		bu_log("colorview:  no hit out front?\n");
 		return(0);
 	}
 	hitp = pp->pt_inhit;
 	ap->a_uptr = (genptr_t)pp->pt_regionp;	/* note which region was shaded */
 
 	if(rdebug&RDEBUG_HITS)  {
-		rt_log("colorview: lvl=%d coloring %s\n",
+		bu_log("colorview: lvl=%d coloring %s\n",
 			ap->a_level,
 			pp->pt_regionp->reg_name);
 		rt_pr_pt( ap->a_rt_i, pp );
 	}
 	if( hitp->hit_dist >= INFINITY )  {
-		rt_log("colorview:  entry beyond infinity\n");
+		bu_log("colorview:  entry beyond infinity\n");
 		background_radiation(ap);	/* was VSET( ap->a_color, .5, 0, 0 ); */
 		ap->a_user = 1;		/* Signal view_pixel:  HIT */
 		ap->a_dist = hitp->hit_dist;
@@ -622,13 +621,13 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 		sw.sw_temperature = bg_temp;
 
 	if (rdebug&RDEBUG_SHADE)
-		rt_log("colorview calling viewshade, temp=%g\n", sw.sw_temperature);
+		bu_log("colorview calling viewshade, temp=%g\n", sw.sw_temperature);
 if (rdebug&RDEBUG_SHADE) pr_shadework( "shadework before viewshade", &sw);
 
 	(void)viewshade( ap, pp, &sw );
 if (rdebug&RDEBUG_SHADE) pr_shadework( "shadework after viewshade", &sw);
 	if (rdebug&RDEBUG_SHADE)
-		rt_log("after viewshade, temp=%g\n", sw.sw_temperature);
+		bu_log("after viewshade, temp=%g\n", sw.sw_temperature);
 
 	/* individual shaders must handle reflection & refraction */
 
@@ -740,7 +739,7 @@ view_2init(register struct application *ap, char *framename)
 
 	/* Check for existing file and checkpoint-restart? */
 
-	rt_log("Dynamic scanline buffering\n");
+	bu_log("Dynamic scanline buffering\n");
 	for( i=0; i<height; i++ )
 		scanline[i].sl_left = width;
 
@@ -748,14 +747,16 @@ view_2init(register struct application *ap, char *framename)
 	case 0:
 		ap->a_hit = colorview;
 		/* If present, use user-specified light solids */
-		if( RT_LIST_IS_EMPTY( &(LightHead.l) )  ||
-		    RT_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
-			if(rdebug&RDEBUG_SHOWERR)rt_log("No explicit light\n");
-			light_maker(1, view2model);
+		if( BU_LIST_IS_EMPTY( &(LightHead.l) )  ||
+		    BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
+		    if(rdebug&RDEBUG_SHOWERR) {
+			bu_log("No explicit light\n");
+		    }
+		    light_maker(1, view2model);
 		}
 		break;
 	default:
-		rt_bomb("bad lighting model #");
+		bu_bomb("bad lighting model #");
 	}
 	ap->a_rt_i->rti_nlights = light_init(ap);
 
@@ -802,7 +803,7 @@ rt_pixel_footprint(const struct application *ap, const struct hit *hitp, const s
 	 */
 	if( fabs(VDOT(ap->a_ray.r_dir, normal)) <= 1.0e-10 )  {
 parallel:
-		rt_log("rt_pixel_footprint() ray parallel to surface\n");	/* debug */
+		bu_log("rt_pixel_footprint() ray parallel to surface\n");	/* debug */
 		return 0;
 	}
 
@@ -810,7 +811,7 @@ parallel:
 	 *  a plane perpendicular to the ray direction.
 	 *  Find the 4 corners of the footprint on this perpendicular plane.
 	 */
-	mat_vec_perp( perp, ap->a_ray.r_dir );
+	bn_vec_perp( perp, ap->a_ray.r_dir );
 	perp[3] = VDOT( perp, hitp->hit_point );
 
 	h_radius = ap->a_rbeam + hitp->hit_dist * ap->a_diverge;
@@ -843,7 +844,7 @@ parallel:
 		/* XXX sanity check */
 		dist = DIST_PT_PT( corners[i], segp->seg_stp->st_center );
 		if( dist > segp->seg_stp->st_bradius )
-			rt_log(" rt_pixel_footprint() dist = %g > radius = %g\n", dist, segp->seg_stp->st_bradius );
+			bu_log(" rt_pixel_footprint() dist = %g > radius = %g\n", dist, segp->seg_stp->st_bradius );
 
 		VSUB2( dir, corners[i], ap->a_ray.r_pt );
 		VUNITIZE(dir);
@@ -859,8 +860,8 @@ parallel:
 	}
 
 	/* Find area of 012, and 230 triangles */
-	area = rt_area_of_triangle( corners[0], corners[1], corners[2] );
-	area += rt_area_of_triangle( corners[2], corners[3], corners[0] );
+	area = bn_area_of_triangle( corners[0], corners[1], corners[2] );
+	area += bn_area_of_triangle( corners[2], corners[3], corners[0] );
 	return area;
 }
 

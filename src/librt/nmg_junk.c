@@ -241,7 +241,7 @@ const struct bn_tol	*tol;
 
 		if (pts_this_face > vl_len) {
 			while (vl_len < pts_this_face) vl_len *= 2;
-			vl = (struct vertex **)rt_realloc( (char *)vl,
+			vl = (struct vertex **)bu_realloc( (char *)vl,
 				vl_len*sizeof(struct vertex *),
 				"vertex parameter list (realloc)");
 		}

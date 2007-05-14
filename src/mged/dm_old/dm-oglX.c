@@ -270,7 +270,7 @@ struct bu_structparse Ogl_vparse[] = {
 	{
 		"%d",  1, "max_scr_z",		(int)&max_scr_z,	refresh_hook 	},
 	{
-		"%d",  1, "debug",		(int)&ogl_debug,		FUNC_NULL 	},
+		"%d",  1, "debug",		(int)&ogl_debug,		BU_STRUCTPARSE_FUNC_NULL 	},
 	{
 		"%d",  1, "linewidth",		(int)&ogl_linewidth,	do_linewidth 	},
 	{
@@ -278,7 +278,7 @@ struct bu_structparse Ogl_vparse[] = {
 	{
 		"%d",   1, "fastfog",		(int)&ogl_fastfog,  do_fog	},
 	{
-		"",	0,  (char *)0,		0,			FUNC_NULL 	}
+		"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL 	}
 };
 
 /*int ogl_winx_size, ogl_winy_size;*/
@@ -686,7 +686,7 @@ mat_t mat;
 double ratio;
 int white_flag;
 {
-	register struct rt_vlist	*vp;
+	register struct bn_vlist	*vp;
 	register int nvec;
 	register float	*gtvec;
 	register float material[4];
@@ -782,14 +782,14 @@ int white_flag;
 
 	/* Viewing region is from -1.0 to +1.0 */
 	first = 1;
-	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
 		register point_t *pt = vp->pt;
 		for( i = 0; i < nused; i++,cmd++,pt++ )  {
 			switch( *cmd )  {
-			case RT_VLIST_LINE_MOVE:
+			case BN_VLIST_LINE_MOVE:
 				/* Move, start line */
 				if( first == 0 )
 					glEnd();
@@ -797,11 +797,11 @@ int white_flag;
 				glBegin(GL_LINE_STRIP);
 				glVertex3dv( *pt );
 				break;
-			case RT_VLIST_LINE_DRAW:
+			case BN_VLIST_LINE_DRAW:
 				/* Draw line */
 				glVertex3dv( *pt );
 				break;
-			case RT_VLIST_POLY_START:
+			case BN_VLIST_POLY_START:
 				/* Start poly marker & normal */
 				if( first == 0 )
 					glEnd();
@@ -810,21 +810,21 @@ int white_flag;
 				VMOVE( gtvec, *pt );
 				glNormal3fv(gtvec);
 				break;
-			case RT_VLIST_POLY_MOVE:
+			case BN_VLIST_POLY_MOVE:
 				/* Polygon Move */
 				glVertex3dv( *pt );
 				break;
-			case RT_VLIST_POLY_DRAW:
+			case BN_VLIST_POLY_DRAW:
 				/* Polygon Draw */
 				glVertex3dv( *pt );
 				break;
-			case RT_VLIST_POLY_END:
+			case BN_VLIST_POLY_END:
 				/* Draw, End Polygon */
 				glVertex3dv( *pt );
 				glEnd();
 				first = 1;
 				break;
-			case RT_VLIST_POLY_VERTNORM:
+			case BN_VLIST_POLY_VERTNORM:
 				/* Set per-vertex normal.  Given before vert. */
 				VMOVE( gtvec, *pt );
 				glNormal3fv(gtvec);
@@ -1011,7 +1011,7 @@ XEvent *eventPtr;
 	float inc;
     XComposeStatus compose_stat;
 	static int ogl_which_slid = OGL_XSLEW;
-	struct rt_vlist head, tail;
+	struct bn_vlist head, tail;
 	point_t point;
 
 
@@ -1123,17 +1123,17 @@ R		Rear view\n\
 	case 'w':
 	/* for temporary experimentation only */
 		bu_log("Attempting invent_solid\n");
-		RT_LIST_INIT( &(head.l) );
-		tail.cmd[0] = RT_VLIST_LINE_MOVE;
+		BU_LIST_INIT( &(head.l) );
+		tail.cmd[0] = BN_VLIST_LINE_MOVE;
 		(tail.pt)[0][0] = 0.0;
 		(tail.pt)[0][1] = 0.0;
 		(tail.pt)[0][2] = 0.0;
-		tail.cmd[1] = RT_VLIST_LINE_DRAW;
+		tail.cmd[1] = BN_VLIST_LINE_DRAW;
 		(tail.pt)[1][0] = 300.0;
 		(tail.pt)[1][1] = 30.0;
 		(tail.pt)[1][2] = 3.0;
 		tail.nused = 2;
-		RT_LIST_APPEND( &(head.l), &(tail.l) );
+		BU_LIST_APPEND( &(head.l), &(tail.l) );
 		invent_solid("Carl_solid", &(head.l), 0xfff, 1);
 		break;
 #endif

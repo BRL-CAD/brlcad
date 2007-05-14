@@ -245,7 +245,7 @@ refresh_hook()
 	dmaflag = 1;
 }
 
-#define IR_MV_O(_m) offsetof(struct modifiable_ir_vars, _m)
+#define IR_MV_O(_m) bu_offsetof(struct modifiable_ir_vars, _m)
 struct bu_structparse Ir_vparse[] = {
 	{"%d",  1, "depthcue",		IR_MV_O(cueing_on),	Ir_colorchange },
 	{"%d",  1, "zclip",		IR_MV_O(zclipping_on),	refresh_hook },
@@ -256,9 +256,9 @@ struct bu_structparse Ir_vparse[] = {
 	{"%d",  1, "has_doublebuffer",	IR_MV_O(doublebuffer), refresh_hook },
 	{"%d",  1, "min_scr_z",		IR_MV_O(min_scr_z),	refresh_hook },
 	{"%d",  1, "max_scr_z",		IR_MV_O(max_scr_z),	refresh_hook },
-	{"%d",  1, "debug",		IR_MV_O(debug),		FUNC_NULL },
+	{"%d",  1, "debug",		IR_MV_O(debug),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "linewidth",		IR_MV_O(linewidth),	refresh_hook },
-	{"",	0,  (char *)0,		0,			FUNC_NULL }
+	{"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
@@ -1029,7 +1029,7 @@ fastf_t		*m;
 double		ratio;
 int		white;
 {
-	register struct rt_vlist	*vp;
+	register struct bn_vlist	*vp;
 	register int nvec;
 	register float	*gtvec;
 	char	gtbuf[16+3*sizeof(double)];
@@ -1128,14 +1128,14 @@ int		white;
 
 	/* Viewing region is from -1.0 to +1.0 */
 	first = 1;
-	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
 		register point_t *pt = vp->pt;
 		for( i = 0; i < nused; i++,cmd++,pt++ )  {
 			switch( *cmd )  {
-			case RT_VLIST_LINE_MOVE:
+			case BN_VLIST_LINE_MOVE:
 				/* Move, start line */
 				if( first == 0 )
 					endline();
@@ -1143,11 +1143,11 @@ int		white;
 				bgnline();
 				v3d( *pt );
 				break;
-			case RT_VLIST_LINE_DRAW:
+			case BN_VLIST_LINE_DRAW:
 				/* Draw line */
 				v3d( *pt );
 				break;
-			case RT_VLIST_POLY_START:
+			case BN_VLIST_POLY_START:
 				/* Start poly marker & normal */
 				if( first == 0 )
 					endline();
@@ -1157,21 +1157,21 @@ int		white;
 				VMOVE( gtvec, *pt );
 				n3f(gtvec);
 				break;
-			case RT_VLIST_POLY_MOVE:
+			case BN_VLIST_POLY_MOVE:
 				/* Polygon Move */
 				v3d( *pt );
 				break;
-			case RT_VLIST_POLY_DRAW:
+			case BN_VLIST_POLY_DRAW:
 				/* Polygon Draw */
 				v3d( *pt );
 				break;
-			case RT_VLIST_POLY_END:
+			case BN_VLIST_POLY_END:
 				/* Draw, End Polygon */
 				v3d( *pt );
 				endpolygon();
 				first = 1;
 				break;
-			case RT_VLIST_POLY_VERTNORM:
+			case BN_VLIST_POLY_VERTNORM:
 				/* Set per-vertex normal.  Given before vert. */
 				VMOVE( gtvec, *pt );
 				n3f(gtvec);

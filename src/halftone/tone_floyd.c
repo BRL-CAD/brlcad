@@ -39,12 +39,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "msr.h"
+
 
 extern int Debug;
 extern int Levels;
 extern int width;
-extern struct msr_unif *RandomFlag;
+extern struct bn_unif *RandomFlag;
 
 /*	tone_floyd	floyd-steinberg dispersed error method.
  *
@@ -66,7 +66,7 @@ extern struct msr_unif *RandomFlag;
  *	RandomFlag - Should we toss random numbers?
  *
  * Calls:
- *	MSR_UNIF_DOUBLE()	Returns a random double between -0.5 and 0.5.
+ *	BN_UNIF_DOUBLE()	Returns a random double between -0.5 and 0.5.
  *
  * Author:
  *	Christopher T. Johnson	- 90/03/21
@@ -82,10 +82,10 @@ tone_floyd(int pix, int x, int y, int nx, int ny, int new)
 
 	if (RandomFlag) {
 		register double val;
-		val = MSR_UNIF_DOUBLE(RandomFlag)*1.0/16.0; /* slowest */
+		val = BN_UNIF_DOUBLE(RandomFlag)*1.0/16.0; /* slowest */
 		w1 = 1.0/16.0 + val;
 		w3 = 3.0/16.0 - val;
-		val = MSR_UNIF_DOUBLE(RandomFlag)*5.0/16.0; /* slowest */
+		val = BN_UNIF_DOUBLE(RandomFlag)*5.0/16.0; /* slowest */
 		w5 = 5.0/16.0 + val;
 		w7 = 7.0/16.0 - val;
 	} else {

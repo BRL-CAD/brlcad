@@ -411,7 +411,7 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
     }
 
     bu_log("Database title is:\n%s\n", dbip->dbi_title);
-    bu_log("Units: %s\n", rt_units_string(dbip->dbi_local2base));
+    bu_log("Units: %s\n", bu_units_string(dbip->dbi_local2base));
 
     /* send geometry to the server */
     if (geomc > 0) {

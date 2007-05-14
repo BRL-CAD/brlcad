@@ -107,8 +107,8 @@ struct _mged_variables default_mged_variables = {
 /* mv_difference lexeme */	"-"
 };
 
-#define MV_O(_m)	offsetof(struct _mged_variables, _m)
-#define MV_OA(_m)	offsetofarray(struct _mged_variables, _m)
+#define MV_O(_m)	bu_offsetof(struct _mged_variables, _m)
+#define MV_OA(_m)	bu_offsetofarray(struct _mged_variables, _m)
 struct bu_structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(mv_autosize),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "rateknobs",		MV_O(mv_rateknobs),	BU_STRUCTPARSE_FUNC_NULL },

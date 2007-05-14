@@ -40,7 +40,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtlist.h"
 
 
 struct site

@@ -61,7 +61,6 @@ static const char RCSid[] = "$Header$";
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "rtlist.h"
 #include "wdb.h"
 
 /* local headers */

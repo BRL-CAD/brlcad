@@ -55,7 +55,6 @@ static const char RCSmagic[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "msr.h"
 #include "wdb.h"
 #include "spm.h"
 #include "../libbu/rb_internals.h"

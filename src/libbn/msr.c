@@ -53,7 +53,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bn.h"
 
 /**
- * Note: BN_MSR_MAXTBL must be an even number.
+ * Note: BN_MSR_MAXTBL must be an even number, preferably a power of two.
  */
 #define	BN_MSR_MAXTBL	4096	/* Size of random number tables. */
 

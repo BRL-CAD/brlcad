@@ -72,7 +72,7 @@ int
 f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct solid		*sp;
-	register struct rt_vlist	*vp;
+	register struct bn_vlist	*vp;
 	register FILE *fp;
 	static vect_t clipmin, clipmax;
 	static vect_t last;		/* last drawn point */
@@ -220,24 +220,24 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				pl_linmod( fp, "solid");
 			Dashing = sp->s_soldash;
 		}
-		for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+		for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 			register int	i;
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;
 			register point_t *pt = vp->pt;
 			for( i = 0; i < nused; i++,cmd++,pt++ )  {
 				switch( *cmd )  {
-				case RT_VLIST_POLY_START:
-				case RT_VLIST_POLY_VERTNORM:
+				case BN_VLIST_POLY_START:
+				case BN_VLIST_POLY_VERTNORM:
 					continue;
-				case RT_VLIST_POLY_MOVE:
-				case RT_VLIST_LINE_MOVE:
+				case BN_VLIST_POLY_MOVE:
+				case BN_VLIST_LINE_MOVE:
 					/* Move, not draw */
 					MAT4X3PNT( last, view_state->vs_vop->vo_model2view, *pt );
 					continue;
-				case RT_VLIST_POLY_DRAW:
-				case RT_VLIST_POLY_END:
-				case RT_VLIST_LINE_DRAW:
+				case BN_VLIST_POLY_DRAW:
+				case BN_VLIST_POLY_END:
+				case BN_VLIST_LINE_DRAW:
 					/* draw */
 					MAT4X3PNT(fin, view_state->vs_vop->vo_model2view, *pt);
 					VMOVE( start, last );
@@ -284,7 +284,7 @@ int
 f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct solid		*sp;
-	register struct rt_vlist	*vp;
+	register struct bn_vlist	*vp;
 	static vect_t last;
 	static vect_t fin;
 	FILE *fp_r;
@@ -406,24 +406,24 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	 * and unscaled vectors
 	 */
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-	  for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	  for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 	    register int	i;
 	    register int	nused = vp->nused;
 	    register int	*cmd = vp->cmd;
 	    register point_t *pt = vp->pt;
 	    for( i = 0; i < nused; i++,cmd++,pt++ )  {
 	      switch( *cmd )  {
-	      case RT_VLIST_POLY_START:
-	      case RT_VLIST_POLY_VERTNORM:
+	      case BN_VLIST_POLY_START:
+	      case BN_VLIST_POLY_VERTNORM:
 		continue;
-	      case RT_VLIST_POLY_MOVE:
-	      case RT_VLIST_LINE_MOVE:
+	      case BN_VLIST_POLY_MOVE:
+	      case BN_VLIST_LINE_MOVE:
 		/* Move, not draw */
 		MAT4X3VEC(last, view_state->vs_vop->vo_rotation, *pt);
 		continue;
-	      case RT_VLIST_POLY_DRAW:
-	      case RT_VLIST_POLY_END:
-	      case RT_VLIST_LINE_DRAW:
+	      case BN_VLIST_POLY_DRAW:
+	      case BN_VLIST_POLY_END:
+	      case BN_VLIST_LINE_DRAW:
 		/* draw.  */
 		MAT4X3VEC(fin, view_state->vs_vop->vo_rotation, *pt);
 		break;

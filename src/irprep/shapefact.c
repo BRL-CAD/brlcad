@@ -80,7 +80,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "msr.h"
 
 
 #if !defined(PI)
@@ -176,6 +175,8 @@ int main(int argc, char **argv)
   double rcp_diff;	/*  Difference in reciprocity.  */
   double rcp_pdiff;	/*  Percent difference in reciprocity.  */
 
+  struct bn_unif *msr = NULL;
+
   /*  Check to see if arguments are implimented correctly.  */
   if( (argv[1] == NULL) || (argv[2] == NULL) )
     {
@@ -234,16 +235,8 @@ int main(int argc, char **argv)
 	  (void)fflush(stderr);
 	  (void)scanf("%ld",&seed);
 	}
-#ifdef MSRMAXTBL
-      msr = msr_unif_init(seed, 0);
-#else
-#  ifndef HAVE_SRAND48
-      (void) srandom(seed);
-#  else
-      (void) srand48(seed);
-#  endif
-#endif
-      rt_log("seed initialized\n");
+      msr = bn_unif_init(seed, 0);
+      bu_log("seed initialized\n");
 
       /*  Read region # & name file.  */
       rnnnum = 0;
@@ -410,21 +403,13 @@ int main(int argc, char **argv)
 	   *	   (void)printf("\n\nrho:  %f\n",rho);
 	   *	   (void)fflush(stdout);
 	   */
-#ifdef MSRMAXTBL
-	  q = MSR_UNIF_DOUBLE(msr) + 0.5;
-#else
-	  q = drand48();
-#endif
+	  q = BN_UNIF_DOUBLE(msr) + 0.5;
 	  theta = q * 2. * PI;
 	  /*
 	   *	   (void)printf("random number:  %f, theta:  %f\n",q,theta);
 	   *	   (void)fflush(stdout);
 	   */
-#ifdef MSRMAXTBL
-	  q = MSR_UNIF_DOUBLE(msr) + 0.5;
-#else
-	  q = drand48();
-#endif
+	  q = BN_UNIF_DOUBLE(msr) + 0.5;
 	  phi = ( q * 2.) - 1.;
 	  phi = acos(phi);
 	  /*
@@ -450,21 +435,13 @@ int main(int argc, char **argv)
 
 	  /*  Find vector in yz-plane.  */
 
-#ifdef MSRMAXTBL
-	  q = MSR_UNIF_DOUBLE(msr) + 0.5;
-#else
-	  q = drand48();
-#endif
+	  q = BN_UNIF_DOUBLE(msr) + 0.5;
 	  theta = q * 2. * PI;
 	  /*
 	   *	   (void)printf("random number:  %f, theta:  %f\n",q,theta);
 	   *	   (void)fflush(stdout);
 	   */
-#ifdef MSRMAXTBL
-	  q = MSR_UNIF_DOUBLE(msr) + 0.5;
-#else
-	  q = drand48();
-#endif
+	  q = BN_UNIF_DOUBLE(msr) + 0.5;
 	  rad = rho * sqrt( q );
 	  /*
 	   *	   (void)printf("random number:  %f, rad:  %f\n",q,rad);

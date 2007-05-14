@@ -2019,7 +2019,7 @@ rt_reldiff(double a, double b)
  *			R T _ G R O W _ B O O L S T A C K
  *
  *  Increase the size of re_boolstack to double the previous size.
- *  Depend on rt_realloc() to copy the previous data to the new area
+ *  Depend on bu_realloc() to copy the previous data to the new area
  *  when the size is increased.
  *  Return the new pointer for what was previously the last element.
  */
@@ -2033,7 +2033,7 @@ rt_grow_boolstack(register struct resource *resp)
 			"initial boolstack");
 	} else {
 		resp->re_boolslen <<= 1;
-		resp->re_boolstack = (union tree **)rt_realloc(
+		resp->re_boolstack = (union tree **)bu_realloc(
 			(char *)resp->re_boolstack,
 			sizeof(union tree *) * resp->re_boolslen,
 			"extend boolstack" );

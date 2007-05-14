@@ -53,7 +53,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "msr.h"
 
 
 extern int hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp);       /*  User supplied hit function.  */
@@ -118,6 +117,8 @@ int main(int argc, char **argv)
    FILE *fpw2;		/*  Allows a file to be written.  */
    char lwxfile[26];	/*  Longwave radiation exchange file for PRISM  */
 			/*  (not quite PRISM ready).  */
+
+   struct bn_unif *msr = NULL;
 
    /*  Check to see if arguments are implimented correctly.  */
    if( (argv[1] == NULL) || (argv[2] == NULL) )
@@ -316,15 +317,8 @@ int main(int argc, char **argv)
 	   (void)fflush(stdout);
 	   (void)scanf("%ld",&seed);
 	}
-#ifdef MSRMAXTBL
-	   msr = msr_unif_init(seed,0);
-#else
-#  ifndef HAVE_SRAND48
-	   (void)srandom(seed);
-#  else
-	   (void)srand48(seed);
-#  endif
-#endif
+	msr = bn_unif_init(seed,0);
+
 	(void)printf("Seed initialized\n");
 	(void)fflush(stdout);
 
@@ -353,18 +347,10 @@ int main(int argc, char **argv)
 		/*  Find point on the bounding sphere.  The negative  */
 		/*  of the unit vector of this point will be the  */
 		/*  firing direction.  */
-#		ifdef MSRMAXTBL
-		   q = MSR_UNIF_DOUBLE(msr) + 0.5;
-#		else
-		   q = drand48();
-#		endif
+	        q = BN_UNIF_DOUBLE(msr) + 0.5;
 		theta = q * 2. * M_PI;
 
-#		ifdef MSRMAXTBL
-		   q = MSR_UNIF_DOUBLE(msr) + 0.5;
-#		else
-		   q = drand48();
-#		endif
+		q = BN_UNIF_DOUBLE(msr) + 0.5;
 		phi = (q * 2.) - 1.;
 		phi = acos(phi);
 
@@ -379,18 +365,10 @@ int main(int argc, char **argv)
 		az = theta;
 
 		/*  Find vector in yz-plane.  */
-#		ifdef MSRMAXTBL
-		   q = MSR_UNIF_DOUBLE(msr) + 0.5;
-#		else
-		   q = drand48();
-#		endif
+		q = BN_UNIF_DOUBLE(msr) + 0.5;
 		theta = q * 2. * M_PI;
 
-#		ifdef MSRMAXTBL
-		   q = MSR_UNIF_DOUBLE(msr) + 0.5;
-#		else
-		   q = drand48();
-#		endif
+		q = BN_UNIF_DOUBLE(msr) + 0.5;
 		rds = rho * sqrt(q);
 		s[X] = 0.;
 		s[Y] = rds * cos(theta);

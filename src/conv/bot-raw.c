@@ -112,7 +112,7 @@ int main(int ac, char *av[])
 
 	fh = fopen(av[2], "w");
 
-	mat_idn(mat);
+	MAT_IDN(mat);
 
 	/* dump all the bots */
 	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)

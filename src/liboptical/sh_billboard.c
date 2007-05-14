@@ -245,7 +245,7 @@ bbd_setup( struct region *rp,
     }
 
 
-    mat_idn(mat);
+    MAT_IDN(mat);
     RT_INIT_DB_INTERNAL(&intern);
     s = rt_db_get_internal(&intern, rp->reg_treetop->tr_a.tu_stp->st_dp, rtip->rti_dbip,
 			   mat, &rt_uniresource);

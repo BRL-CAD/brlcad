@@ -92,7 +92,7 @@ char	*argv[];
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
-	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
 	while ((c = bu_getopt(argc, argv, "vx:X:")) != EOF) {
@@ -115,7 +115,7 @@ char	*argv[];
 
 	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
 	m = nmg_mmr();
-	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
 	while( 1 )
 	{
 		struct vertex *verts[5];
@@ -137,7 +137,7 @@ char	*argv[];
 				continue;
 				break;
 			case ID_P_HEAD:
-				rt_log( "Polysolid (%s)\n", rec.p.p_name );
+				bu_log( "Polysolid (%s)\n", rec.p.p_name );
 				s = nmg_msv( r );
 				nmg_tbl( &faces, TBL_RST, (long *)NULL );
 				while( !done )
@@ -159,18 +159,18 @@ char	*argv[];
 						verts[i] = (struct vertex *)NULL;
 
 					fu = nmg_cface( s, verts, rec2.q.q_count );
-					lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
-					eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+					lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
+					eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 					for( i=0 ; i<rec2.q.q_count ; i++ )
 					{
 						VMOVE( pt, &rec2.q.q_verts[i] )
 						nmg_vertex_gv( eu->vu_p->v_p, pt );
-						eu = RT_LIST_NEXT( edgeuse, &eu->l );
+						eu = BU_LIST_NEXT( edgeuse, &eu->l );
 					}
 
 					if( nmg_calc_face_g( fu ) )
 					{
-						rt_log( "\tEliminating degenerate face\n" );
+						bu_log( "\tEliminating degenerate face\n" );
 						nmg_kfu( fu );
 					}
 					else

@@ -101,7 +101,7 @@ struct bu_structparse Pex_vparse[] = {
 #endif
   {"%d",  1, "perspective",     Pex_MV_O(perspective_mode), establish_perspective },
   {"%d",  1, "set_perspective", Pex_MV_O(dummy_perspective),  set_perspective },
-  {"",    0,  (char *)0,          0,                      FUNC_NULL }
+  {"",    0,  (char *)0,          0,                      BU_STRUCTPARSE_FUNC_NULL }
 };
 
 #if !DO_XSELECTINPUT

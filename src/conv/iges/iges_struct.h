@@ -37,8 +37,6 @@
 
 #include "machine.h"
 #include "vmath.h"
-#include "rtlist.h"
-#include "rtstring.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"

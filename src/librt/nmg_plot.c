@@ -1865,7 +1865,7 @@ nmg_show_broken_classifier_stuff(long int *p, long int **classlist, int all_new,
 		if( broken_tab_len < m->maxindex+1 ) {
 			bu_log("nmg_show_broken_classifier_stuff() maxindex increased! was %d, now %d\n",
 				broken_tab_len, m->maxindex+1 );
-			broken_tab = (long *)rt_realloc( (char *)broken_tab,
+			broken_tab = (long *)bu_realloc( (char *)broken_tab,
 				(m->maxindex+1) * sizeof(long),
 				"nmg_vlblock_s tab[] enlargement");
 			broken_tab_len = m->maxindex+1;

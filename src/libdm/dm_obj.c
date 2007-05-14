@@ -1252,7 +1252,7 @@ static int
 dmo_drawVList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
-	struct rt_vlist *vp;
+	struct bn_vlist *vp;
 
 	if (argc != 3) {
 		struct bu_vls vls;
@@ -1294,7 +1294,7 @@ dmo_drawSolid(struct dm_obj	*dmop,
 			       (unsigned char)sp->s_color[1],
 			       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
 
-	DM_DRAW_VLIST(dmop->dmo_dmp, (struct rt_vlist *)&sp->s_vlist);
+	DM_DRAW_VLIST(dmop->dmo_dmp, (struct bn_vlist *)&sp->s_vlist);
 }
 
 /*

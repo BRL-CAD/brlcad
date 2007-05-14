@@ -56,10 +56,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
-#include "rtlist.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "bu.h"
+
 
 /* defined in read.c */
 extern int get_line(register char *cp, int buflen, char *title);
@@ -392,9 +392,9 @@ getsolid(void)
 		phi = dd[5];
 		h2 = dd[6];		/* height in +Z */
 
-		angle1 = (phi+theta-90) * rt_degtorad;
-		angle2 = (phi+theta) * rt_degtorad;
-		a2theta = a2 * tan(theta * rt_degtorad);
+		angle1 = (phi+theta-90) * bn_degtorad;
+		angle2 = (phi+theta) * bn_degtorad;
+		a2theta = a2 * tan(theta * bn_degtorad);
 
 		VSET( a, a2theta*cos(angle1), a2theta*sin(angle1), 0 );
 		VSET( b, -a2*cos(angle2), -a2*sin(angle2), 0 );
@@ -569,7 +569,7 @@ getsolid(void)
 		/* allocate nodes on a list and store all information in
 		 * the appropriate location.
 		 */
-		RT_LIST_INIT( &head );
+		BU_LIST_INIT( &head );
 		for( i = 0; i < numpts; i++ )  {
 			/* malloc a new structure */
 			ps = (struct wdb_pipept *)bu_malloc(sizeof( struct wdb_pipept), "ps");
@@ -579,7 +579,7 @@ getsolid(void)
 			ps->pp_id = 0;				/* solid */
 			ps->pp_od = dia;
 			ps->pp_bendradius = dia;
-			RT_LIST_INSERT( &head, &ps->l );
+			BU_LIST_INSERT( &head, &ps->l );
 		}
 
 		if( mk_pipe( outfp, name, &head ) < 0 )
@@ -675,9 +675,9 @@ getsolid(void)
 ell1:
 		r1 = dd[6];		/* R */
 		VMOVE( work, D(0) );
-		work[0] += rt_pi;
-		work[1] += rt_pi;
-		work[2] += rt_pi;
+		work[0] += bn_pi;
+		work[1] += bn_pi;
+		work[2] += bn_pi;
 		VCROSS( D(2), work, D(1) );
 		m1 = r1/MAGNITUDE( D(2) );
 		VSCALE( D(2), D(2), m1 );
@@ -753,10 +753,10 @@ read_arbn(char *name)
 	int	k;
 	register int	m;
 	point_t	cent;			/* centroid of arbn */
-	struct rt_tol	tol;
+	struct bn_tol	tol;
 
 	/* XXX The tolerance here is sheer guesswork */
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
@@ -833,7 +833,7 @@ bad:
 			} else {
 				VMOVE( c, &input_points[((s)-1)*3] );
 			}
-			if( rt_mk_plane_3pts( eqn[cur_eq], a,b,c, &tol ) < 0 )  {
+			if( bn_mk_plane_3pts( eqn[cur_eq], a,b,c, &tol ) < 0 )  {
 				printf("arbn degenerate plane\n");
 				VPRINT("a", a);
 				VPRINT("b", b);
@@ -880,8 +880,8 @@ bad:
 			double	cos_el;
 			point_t	pt;
 
-			az = getdouble( scard, 10+j*30+0*10, 10 ) * rt_degtorad;
-			el = getdouble( scard, 10+j*30+1*10, 10 ) * rt_degtorad;
+			az = getdouble( scard, 10+j*30+0*10, 10 ) * bn_degtorad;
+			el = getdouble( scard, 10+j*30+1*10, 10 ) * bn_degtorad;
 			vert_no = getint( scard, 10+j*30+2*10, 10 );
 			if( vert_no == 0 )  break;
 			cos_el = cos(el);
@@ -962,7 +962,7 @@ bad:
 			for( k=j+1; k<nface; k++ )  {
 				point_t	pt;
 
-				if( rt_mkpoint_3planes( pt, eqn[i], eqn[j], eqn[k] ) < 0 )  continue;
+				if( bn_mkpoint_3planes( pt, eqn[i], eqn[j], eqn[k] ) < 0 )  continue;
 
 				/* See if point is outside arb */
 				for( m=0; m<nface; m++ )  {

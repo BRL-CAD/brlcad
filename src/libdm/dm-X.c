@@ -671,7 +671,7 @@ HIDDEN int
 X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
     static vect_t			spnt, lpnt, pnt;
-    register struct rt_vlist	*tvp;
+    register struct bn_vlist	*tvp;
     XSegment			segbuf[1024];		/* XDrawSegments list */
     XSegment			*segp;			/* current segment */
     int				nseg;		        /* number of segments */
@@ -700,7 +700,7 @@ X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
     nseg = 0;
     segp = segbuf;
-    for (BU_LIST_FOR(tvp, rt_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
 	register int	i;
 	register int	nused = tvp->nused;
 	register int	*cmd = tvp->cmd;
@@ -713,12 +713,12 @@ X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	/* Integerize and let the X server do the clipping */
 	for (i = 0; i < nused; i++,cmd++,pt++) {
 	    switch (*cmd) {
-		case RT_VLIST_POLY_START:
+		case BN_VLIST_POLY_START:
 
-		case RT_VLIST_POLY_VERTNORM:
+		case BN_VLIST_POLY_VERTNORM:
 		    continue;
-		case RT_VLIST_POLY_MOVE:
-		case RT_VLIST_LINE_MOVE:
+		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_LINE_MOVE:
 		    /* Move, not draw */
 		    if (dmp->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
@@ -747,9 +747,9 @@ X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 		    lpnt[1] *= 2047 * dmp->dm_aspect;
 		    lpnt[2] *= 2047;
 		    continue;
-		case RT_VLIST_POLY_DRAW:
-		case RT_VLIST_POLY_END:
-		case RT_VLIST_LINE_DRAW:
+		case BN_VLIST_POLY_DRAW:
+		case BN_VLIST_POLY_END:
+		case BN_VLIST_LINE_DRAW:
 		    /* draw */
 		    if (dmp->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");

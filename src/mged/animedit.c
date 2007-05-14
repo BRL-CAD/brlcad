@@ -3545,7 +3545,7 @@ int
 f_jmesh(int argc, char **argv)
 {
 	char			*name;
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock*vbp;
 	register struct bu_list *vhead;
 	struct artic_joints	*jp;
 	struct artic_grips	*gp, *gpp;
@@ -3592,8 +3592,8 @@ f_jmesh(int argc, char **argv)
 			for (gpp=BU_LIST_NEXT(artic_grips, &(gp->l));
 			    BU_LIST_NOT_HEAD(gpp, &(jp->head));
 			    gpp=BU_LIST_NEXT(artic_grips, &(gpp->l))) {
-				RT_ADD_VLIST( vhead, gp->vert, RT_VLIST_LINE_MOVE);
-				RT_ADD_VLIST( vhead, gpp->vert, RT_VLIST_LINE_DRAW);
+				RT_ADD_VLIST( vhead, gp->vert, BN_VLIST_LINE_MOVE);
+				RT_ADD_VLIST( vhead, gpp->vert, BN_VLIST_LINE_DRAW);
 			}
 		}
 		if (joint_debug & DEBUG_J_MESH) {

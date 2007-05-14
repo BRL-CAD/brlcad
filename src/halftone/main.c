@@ -81,7 +81,6 @@ static const char RCSid[] = "$Header$";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "msr.h"
 
 
 long int width=512;		/* width of pixture */
@@ -97,7 +96,7 @@ int Method=M_FLOYD;	/* Method of halftoning */
 int Surpent=0;		/* use serpentine scan lines */
 int Levels=1;		/* Number of levels-1 */
 int Debug=0;
-struct msr_unif *RandomFlag=0;	/* Use random numbers ? */
+struct bn_unif *RandomFlag=0;	/* Use random numbers ? */
 
 void cubic_init(int n, int *x, int *y);
 void tonescale(unsigned char *map, float Slope, float B, int (*eqptr)() );
@@ -172,7 +171,7 @@ setup(int argc, char **argv)
 			Method = atoi(bu_optarg);
 		break;
 		case 'R':
-			RandomFlag = msr_unif_init(1,0);
+			RandomFlag = bn_unif_init(1,0);
 		break;
 		case 'S':
 			Surpent = 1;

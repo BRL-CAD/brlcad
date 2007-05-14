@@ -527,16 +527,16 @@ dgo_qray_data_to_vlist(struct dg_obj		*dgop,
 		VJOIN1(out_pt, in_pt, ndlp->los, dir);
 		VSCALE(in_pt, in_pt, dgop->dgo_wdbp->dbip->dbi_local2base);
 		VSCALE(out_pt, out_pt, dgop->dgo_wdbp->dbip->dbi_local2base);
-		RT_ADD_VLIST( vhead, in_pt, RT_VLIST_LINE_MOVE );
-		RT_ADD_VLIST( vhead, out_pt, RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, in_pt, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, out_pt, BN_VLIST_LINE_DRAW );
 
 		if (!do_overlaps && i > 1 && !VAPPROXEQUAL(last_out_pt,in_pt,SQRT_SMALL_FASTF)) {
 			vhead = rt_vlblock_find(vbp,
 						dgop->dgo_qray_void_color.r,
 						dgop->dgo_qray_void_color.g,
 						dgop->dgo_qray_void_color.b);
-			RT_ADD_VLIST( vhead, last_out_pt, RT_VLIST_LINE_MOVE );
-			RT_ADD_VLIST( vhead, in_pt, RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, last_out_pt, BN_VLIST_LINE_MOVE );
+			RT_ADD_VLIST( vhead, in_pt, BN_VLIST_LINE_DRAW );
 		}
 
 		VMOVE(last_out_pt, out_pt);

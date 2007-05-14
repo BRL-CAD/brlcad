@@ -76,7 +76,7 @@ noise_cvt_parse(register const struct bu_structparse *sdp, register const char *
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("%s value %s ", name, value);
 	/* reconvert with optional units */
-	*p = rt_mm_value(value);
+	*p = bu_mm_value(value);
 
 	if (rdebug&RDEBUG_SHADE)
 		bu_log(" %g\n", *p);

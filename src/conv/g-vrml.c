@@ -118,18 +118,18 @@ struct vrml_mat {
 #define PL_OA(_m)	bu_offsetofarray(struct vrml_mat, _m)
 
 const struct bu_structparse vrml_mat_parse[]={
-	{"%s", TXT_NAME_LEN, "ma_shader", PL_OA(shader), 	FUNC_NULL },
-	{"%d", 1, "shine",		PL_O(shininess),	FUNC_NULL },
-	{"%d", 1, "sh",			PL_O(shininess),	FUNC_NULL },
-	{"%f", 1, "transmit",		PL_O(transparency),	FUNC_NULL },
-	{"%f", 1, "tr",			PL_O(transparency),	FUNC_NULL },
-	{"%f",	1, "angle",		PL_O(lt_angle),		FUNC_NULL },
-	{"%f",	1, "fract",		PL_O(lt_fraction),	FUNC_NULL },
-	{"%f",	3, "aim",		PL_OA(lt_dir),		FUNC_NULL },
+	{"%s", TXT_NAME_LEN, "ma_shader", PL_OA(shader), 	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d", 1, "shine",		PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d", 1, "sh",			PL_O(shininess),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "transmit",		PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "tr",			PL_O(transparency),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "angle",		PL_O(lt_angle),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "fract",		PL_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	3, "aim",		PL_OA(lt_dir),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "w",         	PL_O(tx_w),             BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "n",         	PL_O(tx_n),             BU_STRUCTPARSE_FUNC_NULL },
-	{"%s",  TXT_NAME_LEN, "file",	PL_OA(tx_file), 	FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
+	{"%s",  TXT_NAME_LEN, "file",	PL_OA(tx_file), 	BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));

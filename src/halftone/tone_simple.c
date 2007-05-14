@@ -34,17 +34,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
 
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "msr.h"
+
 
 extern int Debug;
 extern int Levels;
-extern struct msr_unif *RandomFlag;
+extern struct bn_unif *RandomFlag;
 
 #define THRESHOLD	127
 
@@ -67,7 +66,7 @@ extern struct msr_unif *RandomFlag;
  *	RandomFlag - Use random threshold flag.
  *
  * Calls:
- *	MSR_UNIF_DOUBLE	- return a random number between -0.5 and 0.5;
+ *	BN_UNIF_DOUBLE	- return a random number between -0.5 and 0.5;
  *
  * Author:
  *	Christopher T. Johnson	- 90/03/21
@@ -77,7 +76,7 @@ tone_simple(int pix, int x, int y, int nx, int ny, int new)
 {
 	register int threshold;
 	if (RandomFlag) {
-		threshold = THRESHOLD + MSR_UNIF_DOUBLE(RandomFlag)*127;
+		threshold = THRESHOLD + BN_UNIF_DOUBLE(RandomFlag)*127;
 	} else {
 		threshold = THRESHOLD;
 	}

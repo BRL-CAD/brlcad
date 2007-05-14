@@ -84,7 +84,7 @@ db_add_node_to_full_path( struct db_full_path *pp, struct directory *dp )
 			"db_full_path array");
 	} else if( pp->fp_len >= pp->fp_maxlen )  {
 		pp->fp_maxlen *= 4;
-		pp->fp_names = (struct directory **)rt_realloc(
+		pp->fp_names = (struct directory **)bu_realloc(
 			(char *)pp->fp_names,
 			pp->fp_maxlen * sizeof(struct directory *),
 			"enlarged db_full_path array");
@@ -140,7 +140,7 @@ db_extend_full_path( struct db_full_path *pathp, int incr )
 	newlen = pathp->fp_len + incr;
 	if( pathp->fp_maxlen < newlen )  {
 		pathp->fp_maxlen = newlen+1;
-		pathp->fp_names = (struct directory **)rt_realloc(
+		pathp->fp_names = (struct directory **)bu_realloc(
 			(char *)pathp->fp_names,
 			pathp->fp_maxlen * sizeof(struct directory *),
 			"fp_names extension" );

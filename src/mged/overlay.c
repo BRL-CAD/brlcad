@@ -88,7 +88,7 @@ int
 f_labelvert(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	int	i;
-	struct rt_vlblock	*vbp;
+	struct bn_vlblock*vbp;
 	struct directory	*dp;
 	mat_t			mat;
 	fastf_t			scale;

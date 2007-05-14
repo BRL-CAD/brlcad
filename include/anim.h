@@ -28,10 +28,12 @@
  *      The U. S. Army Research Laboratory
  *@n      Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
- * 	Be sure to include vmath.h before this file.
  */
 
-#include "compat4.h"
+#ifndef __ANIM_H__
+#define __ANIM_H__
+
+#include "vmath.h"
 
 #define ANIM_STEER_NEW	0
 #define ANIM_STEER_END	1
@@ -126,6 +128,7 @@ typedef fastf_t  mat3_t[9];
 	(m)[3] = -(b)[0]; (m)[4] =  (a)[1]; (m)[5] = -(b)[2];\
 	(m)[6] = -(b)[1]; (m)[7] = -(b)[2]; (m)[8]=  (a)[2];}
 
+#endif  /* __ANIM_H__ */
 
 /** @} */
 /*

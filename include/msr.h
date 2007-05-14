@@ -21,7 +21,7 @@
 /** @{ */
 /** @file msr.h
  * @deprecated
- *  MSR.H has been absorbed into BN.H
+ *  msr.h has been absorbed into bn.h
  *  Compatability macros are provided in "compat4.h"
  *	-Mike
  */

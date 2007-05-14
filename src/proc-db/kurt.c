@@ -35,15 +35,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 
 mat_t	identity;
 double degtorad = 0.0174532925199433;
@@ -135,7 +136,7 @@ do_cell(struct val *vp, double xc, double yc)
 
 			/* center coordinates, z=0+ */
 {
-	LOCAL poly	polynom;
+	LOCAL bn_poly_t	polynom;
 	LOCAL bn_complex_t	roots[4];	/* roots of final equation */
 	int		l;
 	int		nroots;

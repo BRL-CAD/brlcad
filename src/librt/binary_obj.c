@@ -104,7 +104,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 	}
 
 	/* create the rt_binunif internal form */
-	GETSTRUCT( bip, rt_binunif_internal );
+	BU_GETSTRUCT( bip, rt_binunif_internal );
 	bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
 	bip->type = minor_type;
 

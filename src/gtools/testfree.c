@@ -21,12 +21,15 @@
  *
  */
 
+#include "common.h"
+
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
-#include "rtstring.h"
 #include "raytrace.h"
+
 
 struct whatsit
 {
@@ -37,7 +40,7 @@ struct whatsit
 
 void free_whatsit (struct whatsit *wp, char *s)
 {
-    RT_CKMAG(wp, WHATSIT_MAGIC, "whatsit");
+    BU_CKMAG(wp, WHATSIT_MAGIC, "whatsit");
 
     bu_free((char *) wp, "a whatsit");
 }
@@ -46,21 +49,21 @@ main (void)
 {
     struct whatsit	*wp;
 
-    rt_log("allocating a whatsit...\n");
+    bu_log("allocating a whatsit...\n");
     wp = (struct whatsit *) bu_malloc(sizeof(struct whatsit), "the whatsit");
 
-    rt_log("Before initializing, the whatsit = <%x> (%x, %g)\n",
+    bu_log("Before initializing, the whatsit = <%x> (%x, %g)\n",
 	    wp, wp -> w_magic, wp -> w_d);
     wp -> w_magic = WHATSIT_MAGIC;
     wp -> w_d = 4.96962656372528225336310;
-    rt_log("After initializing, the whatsit = <%x> (%x, %g)\n",
+    bu_log("After initializing, the whatsit = <%x> (%x, %g)\n",
 	    wp, wp -> w_magic, wp -> w_d);
 
     free_whatsit(wp, "the whatsit once");
-    rt_log("Freed it once\n");
+    bu_log("Freed it once\n");
 
     free_whatsit(wp, "the whatsit twice");
-    rt_log("Freed it again\n");
+    bu_log("Freed it again\n");
 }
 
 /*

@@ -18,25 +18,24 @@
  * information.
  */
 /** @file vproc.c
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
-*/
+ *
+ * Procedures for vproc.c
+ *
+ * Section 1:  Commands
+ *	3:  List Processing Routines
+ *	4:  String Processing Routines
+ *	5:  Input/Output Routines
+ *	6:  Interrupt Handlers
+ *
+ * Author:	Gary S. Moss
+ *		U. S. Army Ballistic Research Laboratory
+ *		Aberdeen Proving Ground
+ *		Maryland 21005-5066
+ *		(301)278-6647 or AV-298-6647
+ */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*
-	Procedures for vproc.c
-
-	Section 1:  Commands
-		3:  List Processing Routines
-		4:  String Processing Routines
-		5:  Input/Output Routines
-		6:  Interrupt Handlers
-
- */
 #include <stdio.h>
 #include <signal.h>
 #include <math.h>
@@ -91,7 +90,7 @@ register char *prefix;
 
 
 	/* Target units (a2,3x)						*/
-	ewrite( solfd, rt_units_string(dbip->dbi_local2base), 2 );
+	ewrite( solfd, bu_units_string(dbip->dbi_local2base), 2 );
 	blank_fill( solfd, 3 );
 
 	/* Title							*/

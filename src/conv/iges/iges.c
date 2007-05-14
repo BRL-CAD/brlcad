@@ -64,11 +64,10 @@ static const char RCSid[] = "$Header$";
 
 #include "machine.h"
 #include "vmath.h"
-#include "rtlist.h"
-#include "rtstring.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+
 #include "./iges.h"
 #include "../../librt/debug.h"
 

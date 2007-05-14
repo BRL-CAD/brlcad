@@ -548,7 +548,7 @@ double ratio;
 {
 	static Xgl_color		solid_color;
 	Xgl_color_index			color_index;
-	struct rt_vlist         	*vp;
+	struct bn_vlist         	*vp;
 	Xgl_pt_flag_f3d			*flag_f3d_ptr;
 	int				num_pts;
 	int				vnorm_flag;
@@ -591,7 +591,7 @@ double ratio;
 		flag_f3d_ptr = &(pl_solid_list.pts.flag_f3d[num_pts]);
 	}
 
-	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 		int    i;
 		int    nused = vp->nused;
 		int    *cmd = vp->cmd;
@@ -599,7 +599,7 @@ double ratio;
 
 		for( i = 0; i < nused; i++,cmd++,pt++ )  {
 			switch( *cmd )  {
-			case RT_VLIST_POLY_START:
+			case BN_VLIST_POLY_START:
 				FlushPgList();
 				/* Grab normal vector */
 				cn_facet.normal.x = pt[0][0];
@@ -609,8 +609,8 @@ double ratio;
 				/* Assume no vertex normals coming */
 				vnorm_flag = 0;
 				continue;
-			case RT_VLIST_POLY_MOVE:
-			case RT_VLIST_POLY_DRAW:
+			case BN_VLIST_POLY_MOVE:
+			case BN_VLIST_POLY_DRAW:
 				if (vnorm_flag) {
 					GrabPts(pg_vnorm_ptr, pt);
 					pg_vnorm_list.num_pts++;
@@ -619,10 +619,10 @@ double ratio;
 					pg_list.num_pts++;
 				}
 				continue;
-			case RT_VLIST_POLY_END:
+			case BN_VLIST_POLY_END:
 				FlushPgList();
 				continue;
-			case RT_VLIST_POLY_VERTNORM:
+			case BN_VLIST_POLY_VERTNORM:
 				/* Set flag indicating we have vert. normals */
 				vnorm_flag = 1;
 				pg_vnorm_ptr->normal.x = pt[0][0];
@@ -630,13 +630,13 @@ double ratio;
 				pg_vnorm_ptr->normal.z = pt[0][2];
 				/* The vertex comes next (POLY_MOVE/DRAW) */
 				continue;
-			case RT_VLIST_LINE_MOVE:
+			case BN_VLIST_LINE_MOVE:
 					/* Don't draw edge */
 				flag_f3d_ptr->flag = 0x00;
 				GrabPts(flag_f3d_ptr, pt);
 				BumpNumPts();
 				continue;
-			case RT_VLIST_LINE_DRAW:
+			case BN_VLIST_LINE_DRAW:
 					/* Draw Edge */
 				flag_f3d_ptr->flag = 0x01;
 				GrabPts(flag_f3d_ptr, pt);

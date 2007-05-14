@@ -92,12 +92,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
-#include "rtstring.h"
 #include "raytrace.h"
 #include "rtgeom.h"
 
 #include "./vextern.h"
-
 #include "../librt/debug.h"
 
 
@@ -154,7 +152,7 @@ jmp_buf	env;
 /* File names and descriptors.						*/
 char	*objfile;
 FILE	*regfp;
-struct bu_vls	rt_vls;
+struct bu_vls	bu_vls;
 struct bu_vls	st_vls;
 struct bu_vls	id_vls;
 char	*rt_file;
@@ -260,9 +258,9 @@ main( argc, argv )
 char	*argv[];
 {
 	setbuf( stdout, bu_malloc( BUFSIZ, "stdout buffer" ) );
-	RT_LIST_INIT( &(sol_hd.l) );
+	BU_LIST_INIT( &(sol_hd.l) );
 
-	bu_vls_init( &rt_vls );
+	bu_vls_init( &bu_vls );
 	bu_vls_init( &st_vls );
 	bu_vls_init( &id_vls );
 
@@ -393,39 +391,39 @@ out:
  */
 void
 flatten_tree( vls, tp, op, neg )
-struct rt_vls	*vls;
+struct bu_vls	*vls;
 union tree	*tp;
 char		*op;
 int		neg;
 {
 	int	bit;
 
-	RT_VLS_CHECK( vls );
+	BU_CK_VLS( vls );
 
 	switch( tp->tr_op )  {
 
 	case OP_NOP:
-		rt_log("NOP\n");
+		bu_log("NOP\n");
 		return;
 
 	case OP_SOLID:
 		bit = tp->tr_a.tu_stp->st_bit;
 		if( bit < 10000 )  {
 			/* Old way, just use negative number in I5 field */
-			rt_vls_strncat( vls, op, 2 );
+			bu_vls_strncat( vls, op, 2 );
 			if(neg) bit = -bit;
 		} else {
 			/* New way, due to Tom Sullivan of Sandia. */
 			/* "or" becomes "nr", "  " becomes "nn" */
 			if(neg)  {
 				if( *op == ' ' )
-					rt_vls_strncat( vls, "nn", 2 );
+					bu_vls_strncat( vls, "nn", 2 );
 				else if( *op == 'o' && op[1] == 'r' )
-					rt_vls_strncat( vls, "nr", 2 );
+					bu_vls_strncat( vls, "nr", 2 );
 				else
-					rt_vls_strncat( vls, "??", 2 );
+					bu_vls_strncat( vls, "??", 2 );
 			} else {
-				rt_vls_strncat( vls, op, 2 );
+				bu_vls_strncat( vls, op, 2 );
 			}
 		}
 		vls_itoa( vls, bit, 5 );
@@ -433,12 +431,12 @@ int		neg;
 		return;
 
 	case OP_REGION:
-		rt_log("REGION 'stp'=x%x\n",
+		bu_log("REGION 'stp'=x%x\n",
 		    tp->tr_a.tu_stp );
 		return;
 
 	default:
-		rt_log("Unknown op=x%x\n", tp->tr_op );
+		bu_log("Unknown op=x%x\n", tp->tr_op );
 		return;
 
 	case OP_UNION:
@@ -470,9 +468,9 @@ genptr_t		client_data;
 {
 	struct directory	*dp;
 	char			*fullname;
-	struct rt_vls		ident;
-	struct rt_vls		reg;
-	struct rt_vls		flat;
+	struct bu_vls		ident;
+	struct bu_vls		reg;
+	struct bu_vls		flat;
 	char			obuf[128];
 	char			*cp;
 	int			left;
@@ -481,9 +479,9 @@ genptr_t		client_data;
 	int			i;
 	int			first;
 
-	RT_VLS_INIT( &ident );
-	RT_VLS_INIT( &reg );
-	RT_VLS_INIT( &flat );
+	bu_vls_init( &ident );
+	bu_vls_init( &reg );
+	bu_vls_init( &flat );
 	fullname = db_path_to_string(pathp);
 
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
@@ -507,7 +505,7 @@ genptr_t		client_data;
 
 	/* Convert boolean tree into string of 7-char chunks */
 	if( curtree->tr_op == OP_NOP )  {
-		rt_vls_strcat( &flat, "" );
+		bu_vls_strcat( &flat, "" );
 	} else {
 		/* Rewrite tree so that all unions are at tree top */
 		db_non_union_push( curtree, &rt_uniresource );
@@ -515,8 +513,8 @@ genptr_t		client_data;
 	}
 
 	/* Output 9 of the 7-char chunks per region "card" */
-	cp = rt_vls_addr( &flat );
-	left = rt_vls_strlen( &flat );
+	cp = bu_vls_addr( &flat );
+	left = bu_vls_strlen( &flat );
 	first = 1;
 
 	do  {
@@ -560,7 +558,7 @@ genptr_t		client_data;
 	vls_itoa( &ident, tsp->ts_aircode, 5 );
 	vls_itoa( &ident, tsp->ts_gmater, 5 );
 	vls_itoa( &ident, tsp->ts_los, 5 );
-	rt_vls_strcat( &ident, "     " );		/* 5 spaces */
+	bu_vls_strcat( &ident, "     " );		/* 5 spaces */
 
 	length = strlen( fullname );
 	if( length > 50 )  {
@@ -568,17 +566,17 @@ genptr_t		client_data;
 
 		bp = fullname + (length - 50);
 		*bp = '*';
-		rt_vls_strcat( &ident, bp );
+		bu_vls_strcat( &ident, bp );
 	} else {
 		/* Omit leading slash, for compat with old version */
-		rt_vls_strcat( &ident, fullname+1 );
+		bu_vls_strcat( &ident, fullname+1 );
 	}
-	rt_vls_strcat( &ident, "\n" );
-	rt_vls_fwrite( ridfp, &ident );
+	bu_vls_strcat( &ident, "\n" );
+	bu_vls_fwrite( ridfp, &ident );
 
-	rt_vls_free( &ident );
-	rt_vls_free( &reg );
-	rt_vls_free( &flat );
+	bu_vls_free( &ident );
+	bu_vls_free( &reg );
+	bu_vls_free( &flat );
 	bu_free( fullname, "fullname" );
 
 	/*
@@ -606,18 +604,18 @@ genptr_t		client_data;
 	register struct soltab	*stp;
 	union tree		*curtree;
 	struct directory	*dp;
-	struct rt_vls		sol;
+	struct bu_vls		sol;
 	register int		i;
 	register matp_t		mat;
 
-	RT_VLS_INIT( &sol );
+	bu_vls_init( &sol );
 
 	RT_CK_DB_INTERNAL(ip);
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
 	/* Determine if this matrix is an identity matrix */
 	for( i=0; i<16; i++ )  {
-		f = tsp->ts_mat[i] - rt_identity[i];
+		f = tsp->ts_mat[i] - bn_mat_identity[i];
 		if( !NEAR_ZERO(f, 0.0001) )
 			break;
 	}
@@ -633,7 +631,7 @@ genptr_t		client_data;
 	 *  Check to see if this exact solid has already been processed.
 	 *  Match on leaf name and matrix.
 	 */
-	for( RT_LIST_FOR( stp, soltab, &(sol_hd.l) ) )  {
+	for( BU_LIST_FOR( stp, soltab, &(sol_hd.l) ) )  {
 		RT_CHECK_SOLTAB(stp);				/* debug */
 
 		/* Leaf solids must be the same */
@@ -642,7 +640,7 @@ genptr_t		client_data;
 		if( mat == (matp_t)0 )  {
 			if( stp->st_matp == (matp_t)0 )  {
 				if( debug )
-					rt_log("rt_gettree_leaf:  %s re-referenced (ident)\n",
+					bu_log("rt_gettree_leaf:  %s re-referenced (ident)\n",
 						dp->d_namep );
 				goto found_it;
 			}
@@ -657,7 +655,7 @@ genptr_t		client_data;
 		}
 		/* Success, we have a match! */
 		if( debug )  {
-			rt_log("rt_gettree_leaf:  %s re-referenced\n",
+			bu_log("rt_gettree_leaf:  %s re-referenced\n",
 			    dp->d_namep );
 		}
 		goto found_it;
@@ -665,7 +663,7 @@ next_one:
 		;
 	}
 
-	GETSTRUCT(stp, soltab);
+	BU_GETSTRUCT(stp, soltab);
 	stp->l.magic = RT_SOLTAB_MAGIC;
 	stp->st_id = ip->idb_type;
 	stp->st_dp = dp;
@@ -684,19 +682,19 @@ next_one:
 	RT_CK_DB_INTERNAL( ip );
 
 	if(debug)  {
-		struct rt_vls	str;
-		rt_vls_init( &str );
+		struct bu_vls	str;
+		bu_vls_init( &str );
 		/* verbose=1, mm2local=1.0 */
 		if( ip->idb_meth->ft_describe( &str, ip, 1, 1.0, &rt_uniresource, dbip ) < 0 )  {
-			rt_log("rt_gettree_leaf(%s):  solid describe failure\n",
+			bu_log("rt_gettree_leaf(%s):  solid describe failure\n",
 			    dp->d_namep );
 		}
-		bu_log( "%s:  %s", dp->d_namep, rt_vls_addr( &str ) );
+		bu_log( "%s:  %s", dp->d_namep, bu_vls_addr( &str ) );
 		bu_vls_free( &str );
 	}
 
 	/* For now, just link them all onto the same list */
-	RT_LIST_INSERT( &(sol_hd.l), &(stp->l) );
+	BU_LIST_INSERT( &(sol_hd.l), &(stp->l) );
 
 	stp->st_bit = ++nns;
 
@@ -739,18 +737,18 @@ next_one:
 		    "vdeck: '%s' Primitive type %s has no corresponding COMGEOM primitive, skipping\n",
 		    dp->d_namep, ip->idb_meth->ft_name );
 		vls_itoa( &sol, stp->st_bit+delsol, 5 );
-		rt_vls_strcat( &sol, ip->idb_meth->ft_name );
+		bu_vls_strcat( &sol, ip->idb_meth->ft_name );
 		vls_blanks( &sol, 5*10 );
-		rt_vls_strcat( &sol, dp->d_namep );
-		rt_vls_strcat( &sol, "\n");
+		bu_vls_strcat( &sol, dp->d_namep );
+		bu_vls_strcat( &sol, "\n");
 		break;
 	}
 
-	rt_vls_fwrite( solfp, &sol );
-	rt_vls_free( &sol );
+	bu_vls_fwrite( solfp, &sol );
+	bu_vls_free( &sol );
 
 found_it:
-	GETUNION( curtree, tree );
+	BU_GETUNION( curtree, tree );
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_SOLID;
 	curtree->tr_a.tu_stp = stp;
@@ -788,29 +786,29 @@ register double	*d1, *d2;
  */
 void
 addtor( v, gp, name, num )
-struct rt_vls		*v;
+struct bu_vls		*v;
 struct rt_tor_internal	*gp;
 char			*name;
 int			num;
 {
-	RT_VLS_CHECK(v);
+	BU_CK_VLS(v);
 	RT_TOR_CK_MAGIC(gp);
 
 	/* V, N, r1, r2 */
 	vls_itoa( v, num, 5 );
-	rt_vls_strcat( v, "tor  " );		/* 5 */
+	bu_vls_strcat( v, "tor  " );		/* 5 */
 	vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
 	vls_ftoa_vec( v, gp->h, 10, 4 );
-	rt_vls_strcat( v, name );
-	rt_vls_strcat( v, "\n" );
+	bu_vls_strcat( v, name );
+	bu_vls_strcat( v, "\n" );
 
 	vls_itoa( v, num, 5 );
 	vls_blanks( v, 5 );
 	vls_ftoa_cvt( v, gp->r_a, 10, 4 );
 	vls_ftoa_cvt( v, gp->r_h, 10, 4 );
 	vls_blanks( v, 4*10 );
-	rt_vls_strcat( v, name );
-	rt_vls_strcat( v, "\n");
+	bu_vls_strcat( v, name );
+	bu_vls_strcat( v, "\n");
 }
 
 /*
@@ -818,22 +816,22 @@ int			num;
  */
 void
 addhalf( v, gp, name, num )
-struct rt_vls		*v;
+struct bu_vls		*v;
 struct rt_half_internal	*gp;
 char			*name;
 int			num;
 {
-	RT_VLS_CHECK(v);
+	BU_CK_VLS(v);
 	RT_HALF_CK_MAGIC(gp);
 
 	/* N, d */
 	vls_itoa( v, num, 5 );
-	rt_vls_strcat( v, "haf  " );		/* 5 */
+	bu_vls_strcat( v, "haf  " );		/* 5 */
 	vls_ftoa_vec( v, gp->eqn, 10, 4 );
 	vls_ftoa_cvt( v, -(gp->eqn[3]), 10, 4 );
 	vls_blanks( v, 2*10 );
-	rt_vls_strcat( v, name );
-	rt_vls_strcat( v, "\n" );
+	bu_vls_strcat( v, name );
+	bu_vls_strcat( v, "\n" );
 }
 
 /*
@@ -841,26 +839,26 @@ int			num;
  */
 void
 addarbn( v, gp, name, num )
-struct rt_vls		*v;
+struct bu_vls		*v;
 struct rt_arbn_internal	*gp;
 char			*name;
 int			num;
 {
 	register int	i;
 
-	RT_VLS_CHECK(v);
+	BU_CK_VLS(v);
 	RT_ARBN_CK_MAGIC(gp);
 
 	/* nverts, nverts_index_nums, nplane_eqns, naz_el */
 	vls_itoa( v, num, 5 );
-	rt_vls_strcat( v, "arbn " );		/* 5 */
+	bu_vls_strcat( v, "arbn " );		/* 5 */
 	vls_itoa( v, 0, 10 );			/* vertex points, 2/card */
 	vls_itoa( v, 0, 10 );			/* vertex index #, 6/card */
 	vls_itoa( v, gp->neqn, 10 );		/* plane eqn, 1/card */
 	vls_itoa( v, 0, 10 );			/* az/el & index #, 2/card */
 	vls_blanks( v, 20 );
-	rt_vls_strcat( v, name );
-	rt_vls_strcat( v, "\n" );
+	bu_vls_strcat( v, name );
+	bu_vls_strcat( v, "\n" );
 
 	for( i=0; i < gp->neqn; i++ )  {
 		vls_itoa( v, num, 5 );
@@ -868,14 +866,14 @@ int			num;
 		vls_ftoa_vec( v, gp->eqn[i], 10, 4 );
 		vls_ftoa_cvt( v, gp->eqn[i][3], 10, 4 );
 		vls_blanks( v, 2*10 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n" );
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n" );
 	}
 }
 
 static void
 vls_solid_pts( v, pts, npts, name, num, kind )
-struct rt_vls	*v;
+struct bu_vls	*v;
 const point_t	pts[];
 const int	npts;
 const char	*name;
@@ -887,9 +885,9 @@ const char	*kind;
 	for( i = 0; i < npts; )  {
 		vls_itoa( v, num, 5 );
 		if( i == 0 )
-			rt_vls_strncat( v, kind, 5 );
+			bu_vls_strncat( v, kind, 5 );
 		else
-			rt_vls_strcat( v, "     " );
+			bu_vls_strcat( v, "     " );
 		vls_ftoa_vec_cvt( v, pts[i], 10, 4 );
 		if( ++i < npts )  {
 			vls_ftoa_vec_cvt( v, pts[i], 10, 4 );
@@ -897,8 +895,8 @@ const char	*kind;
 			vls_blanks( v, 3*10 );
 		}
 		i++;
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n");
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n");
 	}
 }
 
@@ -909,7 +907,7 @@ const char	*kind;
  */
 void
 addarb( v, gp, name, num )
-struct rt_vls		*v;
+struct bu_vls		*v;
 struct rt_arb_internal	*gp;
 char			*name;
 int			num;
@@ -925,10 +923,10 @@ int			num;
 	    redoarb( pts, gp, uniq_pts, samevecs, i, cgtype ) == 0 )  {
 		fprintf(stderr,"vdeck: addarb(%s): failure\n", name);
 		vls_itoa( v, num, 5 );
-		rt_vls_strncat( v, "arb??", 5 );
+		bu_vls_strncat( v, "arb??", 5 );
 		vls_blanks( v, 6*10 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n");
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n");
 		return;
 	}
 
@@ -971,7 +969,7 @@ int			num;
  */
 void
 addell( v, gp, name, num )
-struct rt_vls		*v;
+struct bu_vls		*v;
 struct rt_ell_internal	*gp;
 char			*name;
 int			num;
@@ -1009,40 +1007,40 @@ int			num;
 	vls_itoa( v, num, 5 );
 	switch( cgtype )  {
 	case GENELL:
-		rt_vls_strcat( v, "ellg " );		/* 5 */
+		bu_vls_strcat( v, "ellg " );		/* 5 */
 		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
 		vls_ftoa_vec_cvt( v, gp->a, 10, 4 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n" );
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n" );
 
 		vls_itoa( v, num, 5 );
 		vls_blanks( v, 5 );
 		vls_ftoa_vec_cvt( v, gp->b, 10, 4 );
 		vls_ftoa_vec_cvt( v, gp->c, 10, 4 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n");
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n");
 		break;
 	case ELL1:
-		rt_vls_strcat( v, "ell1 " );		/* 5 */
+		bu_vls_strcat( v, "ell1 " );		/* 5 */
 		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
 		vls_ftoa_vec_cvt( v, gp->a, 10, 4 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n" );
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n" );
 
 		vls_itoa( v, num, 5 );
 		vls_blanks( v, 5 );
 		vls_ftoa_cvt( v, mb, 10, 4 );
 		vls_blanks( v, 5*10 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n");
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n");
 		break;
 	case SPH:
-		rt_vls_strcat( v, "sph  " );		/* 5 */
+		bu_vls_strcat( v, "sph  " );		/* 5 */
 		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
 		vls_ftoa_cvt( v, ma, 10, 4 );
 		vls_blanks( v, 2*10 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n" );
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n" );
 		break;
 	default:
 		(void) fprintf( stderr,
@@ -1066,7 +1064,7 @@ int			num;
  */
 void
 addtgc( v, gp, name, num )
-struct rt_vls		*v;
+struct bu_vls		*v;
 struct rt_tgc_internal	*gp;
 char			*name;
 int			num;
@@ -1130,90 +1128,90 @@ int			num;
 	vls_itoa( v, num, 5 );
 	switch( cgtype )  {
 	case TGC:
-		rt_vls_strcat( v, "tgc  " );		/* 5 */
+		bu_vls_strcat( v, "tgc  " );		/* 5 */
 		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
 		vls_ftoa_vec_cvt( v, gp->h, 10, 4 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n" );
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n" );
 
 		vls_itoa( v, num, 5 );
 		vls_blanks( v, 5 );
 		vls_ftoa_vec_cvt( v, gp->a, 10, 4 );
 		vls_ftoa_vec_cvt( v, gp->b, 10, 4 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n");
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n");
 
 		vls_itoa( v, num, 5 );
 		vls_blanks( v, 5 );
 		vls_ftoa_cvt( v, mc, 10, 4 );
 		vls_ftoa_cvt( v, md, 10, 4 );
 		vls_blanks( v, 4*10 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n");
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n");
 		break;
 	case RCC:
-		rt_vls_strcat( v, "rcc  " );		/* 5 */
+		bu_vls_strcat( v, "rcc  " );		/* 5 */
 		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
 		vls_ftoa_vec_cvt( v, gp->h, 10, 4 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n" );
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n" );
 
 		vls_itoa( v, num, 5 );
 		vls_blanks( v, 5 );
 		vls_ftoa_cvt( v, ma, 10, 4 );
 		vls_blanks( v, 5*10 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n");
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n");
 		break;
 	case TRC:
-		rt_vls_strcat( v, "trc  " );		/* 5 */
+		bu_vls_strcat( v, "trc  " );		/* 5 */
 		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
 		vls_ftoa_vec_cvt( v, gp->h, 10, 4 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n" );
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n" );
 
 		vls_itoa( v, num, 5 );
 		vls_blanks( v, 5 );
 		vls_ftoa_cvt( v, ma, 10, 4 );
 		vls_ftoa_cvt( v, mc, 10, 4 );
 		vls_blanks( v, 4*10 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n");
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n");
 		break;
 	case TEC:
-		rt_vls_strcat( v, "tec  " );		/* 5 */
+		bu_vls_strcat( v, "tec  " );		/* 5 */
 		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
 		vls_ftoa_vec_cvt( v, gp->h, 10, 4 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n" );
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n" );
 
 		vls_itoa( v, num, 5 );
 		vls_blanks( v, 5 );
 		vls_ftoa_vec_cvt( v, gp->a, 10, 4 );
 		vls_ftoa_vec_cvt( v, gp->b, 10, 4 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n");
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n");
 
 		vls_itoa( v, num, 5 );
 		vls_blanks( v, 5 );
 		vls_ftoa( v, ma/mc, 10, 4 );	/* dimensionless ratio */
 		vls_blanks( v, 5*10 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n");
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n");
 		break;
 	case REC:
-		rt_vls_strcat( v, "rec  " );		/* 5 */
+		bu_vls_strcat( v, "rec  " );		/* 5 */
 		vls_ftoa_vec_cvt( v, gp->v, 10, 4 );
 		vls_ftoa_vec_cvt( v, gp->h, 10, 4 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n" );
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n" );
 
 		vls_itoa( v, num, 5 );
 		vls_blanks( v, 5 );
 		vls_ftoa_vec_cvt( v, gp->a, 10, 4 );
 		vls_ftoa_vec_cvt( v, gp->b, 10, 4 );
-		rt_vls_strcat( v, name );
-		rt_vls_strcat( v, "\n");
+		bu_vls_strcat( v, name );
+		bu_vls_strcat( v, "\n");
 		break;
 	default:
 		(void) fprintf( stderr,
@@ -1229,7 +1227,7 @@ int			num;
  */
 void
 ars_curve_out( v, fp, todo, curveno, num )
-struct rt_vls		*v;
+struct bu_vls		*v;
 fastf_t			*fp;
 int			todo;
 int			curveno;
@@ -1253,9 +1251,9 @@ int			num;
 			vls_blanks( v, 3*10 );
 		}
 
-		rt_vls_strcat( v, "curve " );
+		bu_vls_strcat( v, "curve " );
 		vls_itoa( v, curveno, 3 );
-		rt_vls_strcat( v, "\n" );
+		bu_vls_strcat( v, "\n" );
 	}
 }
 
@@ -1266,7 +1264,7 @@ int			num;
  */
 void
 addars( v, gp, name, num )
-struct rt_vls		*v;
+struct bu_vls		*v;
 struct rt_ars_internal	*gp;
 char			*name;
 int			num;
@@ -1276,12 +1274,12 @@ int			num;
 	RT_ARS_CK_MAGIC(gp);
 
 	vls_itoa( v, num, 5 );
-	rt_vls_strcat( v, "ars  " );		/* 5 */
+	bu_vls_strcat( v, "ars  " );		/* 5 */
 	vls_itoa( v, gp->ncurves, 10 );
 	vls_itoa( v, gp->pts_per_curve, 10 );
 	vls_blanks( v, 4*10 );
-	rt_vls_strcat( v, name );
-	rt_vls_strcat( v, "\n" );
+	bu_vls_strcat( v, name );
+	bu_vls_strcat( v, "\n" );
 
 	for( i=0; i < gp->ncurves; i++ )  {
 		/* Output the points on this curve */
@@ -1340,7 +1338,7 @@ register char *prefix;
 
 
 	/* Target units (a2,3x)						*/
-	ewrite( solfp, rt_units_string(dbip->dbi_local2base), 2 );
+	ewrite( solfp, bu_units_string(dbip->dbi_local2base), 2 );
 	blank_fill( solfp, 3 );
 
 	/* Title							*/
@@ -1358,12 +1356,12 @@ register char *prefix;
 	/* Create file for region table.				*/
 	if( prefix != 0 )
 	{
-		(void) bu_vls_strcpy( &rt_vls, prefix );
-		(void) bu_vls_strcat( &rt_vls, ".rt" );
+		(void) bu_vls_strcpy( &bu_vls, prefix );
+		(void) bu_vls_strcat( &bu_vls, ".rt" );
 	}
 	else
-		(void) bu_vls_strcpy( &rt_vls, "regions" );
-	rt_file = bu_vls_addr( &rt_vls );
+		(void) bu_vls_strcpy( &bu_vls, "regions" );
+	rt_file = bu_vls_addr( &bu_vls );
 	if( (regfp = fopen( rt_file, "w" )) == NULL )  {
 		perror( rt_file );
 		exit( 10 );
@@ -1390,7 +1388,7 @@ register char *prefix;
 	/* Initialize matrices.						*/
 	MAT_IDN( identity );
 
-	if( !sol_hd.l.magic )  RT_LIST_INIT( &sol_hd.l );
+	if( !sol_hd.l.magic )  BU_LIST_INIT( &sol_hd.l );
 
 	/*  Build the whole card deck.	*/
 	/*  '1' indicates one CPU.  This code isn't ready for parallelism */
@@ -1704,11 +1702,11 @@ int   n,    w;
 
 void
 vls_blanks( v, n )
-struct rt_vls	*v;
+struct bu_vls	*v;
 int		n;
 {
-	RT_VLS_CHECK(v);
-	rt_vls_strncat( v, "                                                                                                                                ",
+	BU_CK_VLS(v);
+	bu_vls_strncat( v, "                                                                                                                                ",
 	    n);
 }
 
@@ -1719,16 +1717,16 @@ int		n;
  */
 void
 vls_itoa( v, n, w )
-struct rt_vls	*v;
+struct bu_vls	*v;
 register int	n;
 register int	w;
 {
 	int	 c, i, j, sign;
 	register char	*s;
 
-	RT_VLS_CHECK(v);
-	rt_vls_strncat( v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
-	s = rt_vls_addr(v)+rt_vls_strlen(v)-w;
+	BU_CK_VLS(v);
+	bu_vls_strncat( v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
+	s = bu_vls_addr(v)+bu_vls_strlen(v)-w;
 
 	if( (sign = n) < 0 )	n = -n;
 	i = 0;
@@ -1754,7 +1752,7 @@ register int	w;
 
 void
 vls_ftoa_vec_cvt( v, vec, w, d )
-struct rt_vls	*v;
+struct bu_vls	*v;
 vect_t		vec;
 int		w;
 int		d;
@@ -1766,7 +1764,7 @@ int		d;
 
 void
 vls_ftoa_vec( v, vec, w, d )
-struct rt_vls	*v;
+struct bu_vls	*v;
 vect_t		vec;
 int		w;
 int		d;
@@ -1778,7 +1776,7 @@ int		d;
 
 void
 vls_ftoa_cvt( v, f, w, d )
-struct rt_vls	*v;
+struct bu_vls	*v;
 register double	f;
 register int	w, d;
 {
@@ -1792,7 +1790,7 @@ register int	w, d;
  */
 void
 vls_ftoa( v, f, w, d )
-struct rt_vls	*v;
+struct bu_vls	*v;
 register double	f;
 register int	w, d;
 {
@@ -1800,9 +1798,9 @@ register int	w, d;
 	register int	c, i, j;
 	long	n, sign;
 
-	RT_VLS_CHECK(v);
-	rt_vls_strncat( v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
-	s = rt_vls_addr(v)+rt_vls_strlen(v)-w;
+	BU_CK_VLS(v);
+	bu_vls_strncat( v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
+	s = bu_vls_addr(v)+bu_vls_strlen(v)-w;
 
 	if( w <= d + 2 )
 	{

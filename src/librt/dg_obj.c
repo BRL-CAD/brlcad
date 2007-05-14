@@ -1006,7 +1006,7 @@ static void
 dgo_overlay(struct dg_obj *dgop, Tcl_Interp *interp, FILE *fp, char *name, double char_size)
 {
 	int ret;
-	struct rt_vlblock *vbp;
+	struct bn_vlblock*vbp;
 
 	vbp = rt_vlblock_init();
 	ret = rt_uplot_to_vlist(vbp, fp, char_size, dgop->dgo_uplotOutputMode);

@@ -40,27 +40,28 @@
  * multiple interfaces to be simultaneously compiled.
  */
 struct dm_xvars {
-  Display *dpy;
-  Window win;
-  Tk_Window top;
-  Tk_Window xtkwin;
-  int depth;
-  Colormap cmap;
+    Display *dpy;
+    Window win;
+    Tk_Window top;
+    Tk_Window xtkwin;
+    int depth;
+    Colormap cmap;
 #ifdef IF_WGL
-  PIXELFORMATDESCRIPTOR *vip;
-  HFONT fontstruct;
-  HDC  hdc;      // device context of device that OpenGL calls are to be drawn on
+    PIXELFORMATDESCRIPTOR *vip;
+    HFONT fontstruct;
+    HDC  hdc;      // device context of device that OpenGL calls are to be drawn on
 #endif
 #if defined(DM_X) || defined (DM_OGL)
-  XVisualInfo *vip;
-  XFontStruct *fontstruct;
+    XVisualInfo *vip;
+    XFontStruct *fontstruct;
 #endif
 #ifdef DM_TK
-  Tk_Font *tkfontstruct;
+    int tkfontset;
+    Tk_Font tkfontstruct;
 #endif
-  int devmotionnotify;
-  int devbuttonpress;
-  int devbuttonrelease;
+    int devmotionnotify;
+    int devbuttonpress;
+    int devbuttonrelease;
 };
 
 #endif /* __DM_XVARS__ */

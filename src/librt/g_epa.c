@@ -549,7 +549,7 @@ rt_epa_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 		MAT4X3VEC( tmp, M1, v );
 		c = VDOT(v, tmp) * scale;
 
-		eigen2x2( &cvp->crv_c1, &cvp->crv_c2, vec1, vec2, a, b, c );
+		bn_eigen2x2( &cvp->crv_c1, &cvp->crv_c2, vec1, vec2, a, b, c );
 		VCOMB2( cvp->crv_pdir, vec1[X], u, vec1[Y], v );
 		VUNITIZE( cvp->crv_pdir );
 		break;

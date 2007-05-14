@@ -148,8 +148,8 @@ struct _color_scheme default_color_scheme = {
 
 #define CS_OFFSET 1	/* offset to start of colors in color_scheme_vparse */
 
-#define CS_O(_m)        offsetof(struct _color_scheme, _m)
-#define CS_OA(_m)	offsetofarray(struct _color_scheme, _m)
+#define CS_O(_m)        bu_offsetof(struct _color_scheme, _m)
+#define CS_OA(_m)	bu_offsetofarray(struct _color_scheme, _m)
 struct bu_structparse color_scheme_vparse[] = {
 	{"%d",	1, "mode",	CS_O(cs_mode),	cs_update },
 	{"%d",  3, "bg",	CS_OA(cs_bg),	cs_set_bg },

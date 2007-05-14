@@ -61,8 +61,8 @@ struct _rubber_band default_rubber_band = {
 /* rb_height */		0.0
 };
 
-#define RB_O(_m)        offsetof(struct _rubber_band, _m)
-#define RB_OA(_m)	offsetofarray(struct _rubber_band, _m)
+#define RB_O(_m)        bu_offsetof(struct _rubber_band, _m)
+#define RB_OA(_m)	bu_offsetofarray(struct _rubber_band, _m)
 struct bu_structparse rubber_band_vparse[] = {
 	{"%d",	1, "draw",	RB_O(rb_draw),		rb_set_dirty_flag },
 	{"%d",	1, "linewidth",	RB_O(rb_linewidth),	rb_set_dirty_flag },

@@ -71,14 +71,14 @@ All textual arguments can be replaced by their first letter.
 In the above listing:
 
 "i" refers to an integer
-"c" is an integer representing one of the following rt_vlist commands:
-	 RT_VLIST_LINE_MOVE	0	/ begin new line /
-	 RT_VLIST_LINE_DRAW	1	/ draw line /
-	 RT_VLIST_POLY_START	2	/ pt[] has surface normal /
-	 RT_VLIST_POLY_MOVE	3	/ move to first poly vertex /
-	 RT_VLIST_POLY_DRAW	4	/ subsequent poly vertex /
-	 RT_VLIST_POLY_END	5	/ last vert (repeats 1st), draw poly /
-	 RT_VLIST_POLY_VERTNORM	6	/ per-vertex normal, for interpoloation /
+"c" is an integer representing one of the following bn_vlist commands:
+	 BN_VLIST_LINE_MOVE	0	/ begin new line /
+	 BN_VLIST_LINE_DRAW	1	/ draw line /
+	 BN_VLIST_POLY_START	2	/ pt[] has surface normal /
+	 BN_VLIST_POLY_MOVE	3	/ move to first poly vertex /
+	 BN_VLIST_POLY_DRAW	4	/ subsequent poly vertex /
+	 BN_VLIST_POLY_END	5	/ last vert (repeats 1st), draw poly /
+	 BN_VLIST_POLY_VERTNORM	6	/ per-vertex normal, for interpoloation /
 
 "x y z" refer to floating point values which represent a point or normal
 	vector. For commands 0,1,3,4, and 5, they represent a point, while
@@ -152,9 +152,9 @@ struct rt_curve {
 int my_final_check(hp)
 struct bu_list *hp;
 {
-	struct rt_vlist *vp;
+	struct bn_vlist *vp;
 
-	for ( BU_LIST_FOR( vp, rt_vlist, hp) ) {
+	for ( BU_LIST_FOR( vp, bn_vlist, hp) ) {
 		RT_CK_VLIST( vp );
 		printf("num_used = %d\n", vp->nused);
 	}

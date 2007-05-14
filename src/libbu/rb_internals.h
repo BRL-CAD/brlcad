@@ -34,10 +34,10 @@
  *  $Header$
  */
 
-#include "compat4.h"
+#include "common.h"
 
 #ifndef SEEN_BU_H
-#include "bu.h"
+#  include "bu.h"
 #endif
 
 #ifndef BU_RB_INTERNALS_H

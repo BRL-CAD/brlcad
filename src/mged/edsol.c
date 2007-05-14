@@ -1357,7 +1357,7 @@ nmg_ed(int arg)
 		nmg_pr_fu_around_eu( es_eu, &mged_tol );
 		{
 			struct model		*m;
-			struct rt_vlblock	*vbp;
+			struct bn_vlblock*vbp;
 			long			*tab;
 
 			m = nmg_find_model( &es_eu->l.magic );
@@ -9097,17 +9097,17 @@ rt_vl_closest3d(struct bu_list *vhead, fastf_t *ref_pt, fastf_t *closest_pt)
 {
 	fastf_t		dist, cur_dist;
 	pointp_t	c_pt;
-	struct rt_vlist	*cur_vp;
+	struct bn_vlist	*cur_vp;
 
 	if (vhead == BU_LIST_NULL || BU_LIST_IS_EMPTY(vhead))
 		return(1);	/* fail */
 
 	/* initialize smallest distance using 1st point in list */
-	cur_vp = BU_LIST_FIRST(rt_vlist, vhead);
+	cur_vp = BU_LIST_FIRST(bn_vlist, vhead);
 	dist = DIST3D(ref_pt, cur_vp->pt[0]);
 	c_pt = cur_vp->pt[0];
 
-	for (BU_LIST_FOR(cur_vp, rt_vlist, vhead)) {
+	for (BU_LIST_FOR(cur_vp, bn_vlist, vhead)) {
 		register int	i;
 		register int	nused = cur_vp->nused;
 		register point_t *cur_pt = cur_vp->pt;
@@ -9139,7 +9139,7 @@ rt_vl_closest2d(struct bu_list *vhead, fastf_t *ref_pt, fastf_t *mat, fastf_t *c
 	fastf_t		dist, cur_dist;
 	point_t		cur_pt2d, ref_pt2d;
 	pointp_t	c_pt;
-	struct rt_vlist	*cur_vp;
+	struct bn_vlist	*cur_vp;
 
 	if (vhead == BU_LIST_NULL || BU_LIST_IS_EMPTY(vhead))
 		return(1);	/* fail */
@@ -9148,12 +9148,12 @@ rt_vl_closest2d(struct bu_list *vhead, fastf_t *ref_pt, fastf_t *mat, fastf_t *c
 	MAT4X3PNT(ref_pt2d, mat, ref_pt);
 
 	/* initialize smallest distance using 1st point in list */
-	cur_vp = BU_LIST_FIRST(rt_vlist, vhead);
+	cur_vp = BU_LIST_FIRST(bn_vlist, vhead);
 	MAT4X3PNT(cur_pt2d, mat, cur_vp->pt[0]);
 	dist = DIST2D(ref_pt2d, cur_pt2d);
 	c_pt = cur_vp->pt[0];
 
-	for (BU_LIST_FOR(cur_vp, rt_vlist, vhead)) {
+	for (BU_LIST_FOR(cur_vp, bn_vlist, vhead)) {
 		register int	i;
 		register int	nused = cur_vp->nused;
 		register point_t *cur_pt = cur_vp->pt;

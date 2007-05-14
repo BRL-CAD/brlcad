@@ -61,7 +61,7 @@ register Trie **triepp;
 			NewTrie( *triepp );
 			(*triepp)->l.t_altr = (*triepp)->l.t_next
 					    = TRIE_NULL;
-			(*triepp)->l.t_func = FUNC_NULL;
+			(*triepp)->l.t_func = NULL_FUNC;
 			}
 		else
 		if( (*triepp)->n.t_next != TRIE_NULL )
@@ -105,7 +105,7 @@ register Trie	*triep;
 			{ /* End of user-typed name. */
 			if( triep->n.t_altr != TRIE_NULL )
 				/* Ambiguous at this point. */
-				return	FUNC_NULL;
+				return	NULL_FUNC;
 			else	  /* Complete next character. */
 				{
 				*name++ = triep->n.t_char;
@@ -129,7 +129,7 @@ register Trie	*triep;
 				/* Non-existant name, truncate bad part. */
 				{
 				*name = NUL;
-				return	FUNC_NULL;
+				return	NULL_FUNC;
 				}
 			else
 				name++;
@@ -149,10 +149,10 @@ matchTrie( triep )
 register Trie	*triep;
 	{	Func	*func;
 	if( triep == TRIE_NULL )
-		func = FUNC_NULL;
+		func = NULL_FUNC;
 	else
 	if( triep->n.t_altr != TRIE_NULL )
-		func = FUNC_NULL;	/* Ambiguous root, no match.  */
+		func = NULL_FUNC;	/* Ambiguous root, no match.  */
 	else
 	if( triep->n.t_next == TRIE_NULL )
 		func = triep->l.t_func;	/* At leaf node, return datum.  */
@@ -299,7 +299,7 @@ Trie	**triepp;
 			{
 			if(	*triepp == TRIE_NULL
 			    ||	(funcp = getTrie( buffer, *triepp ))
-				== FUNC_NULL
+				== NULL_FUNC
 				)
 				(void) putchar( BEL );
 			for( ; p > buffer; p-- )
@@ -439,7 +439,7 @@ Trie	**triepp;
 		case EOF :
 			if(	*triepp == TRIE_NULL
 			    ||	(funcp = getTrie( buffer, *triepp ))
-				== FUNC_NULL
+				== NULL_FUNC
 				)
 				{
 				(void) putchar( BEL );

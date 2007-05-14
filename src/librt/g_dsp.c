@@ -2708,7 +2708,7 @@ compute_normal_at_gridpoint(vect_t N,
 
     if (RT_G_DEBUG & DEBUG_HF) {
 	bu_log("normal at %d %d\n", x, y);
-	mat_print("\tstom", dsp->dsp_i.dsp_stom);
+	bn_mat_print("\tstom", dsp->dsp_i.dsp_stom);
     }
     VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y));
 

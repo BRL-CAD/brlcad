@@ -246,9 +246,9 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 			if( is->mag_len )
 			{
 				is->mag_len *= 2;
-				is->mag1 = (fastf_t *)rt_realloc( (char *)is->mag1, is->mag_len*sizeof( fastf_t),
+				is->mag1 = (fastf_t *)bu_realloc( (char *)is->mag1, is->mag_len*sizeof( fastf_t),
 					"is->mag1" );
-				is->mag2 = (fastf_t *)rt_realloc( (char *)is->mag2, is->mag_len*sizeof( fastf_t),
+				is->mag2 = (fastf_t *)bu_realloc( (char *)is->mag2, is->mag_len*sizeof( fastf_t),
 					"is->mag2" );
 			}
 			else
@@ -276,9 +276,9 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 			if( is->mag_len )
 			{
 				is->mag_len *= 2;
-				is->mag1 = (fastf_t *)rt_realloc( (char *)is->mag1, is->mag_len*sizeof( fastf_t),
+				is->mag1 = (fastf_t *)bu_realloc( (char *)is->mag1, is->mag_len*sizeof( fastf_t),
 					"is->mag1" );
-				is->mag2 = (fastf_t *)rt_realloc( (char *)is->mag2, is->mag_len*sizeof( fastf_t),
+				is->mag2 = (fastf_t *)bu_realloc( (char *)is->mag2, is->mag_len*sizeof( fastf_t),
 					"is->mag2" );
 			}
 			else
@@ -356,9 +356,9 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 			if( is->mag_len )
 			{
 				is->mag_len *= 2;
-				is->mag1 = (fastf_t *)rt_realloc( (char *)is->mag1, is->mag_len*sizeof( fastf_t),
+				is->mag1 = (fastf_t *)bu_realloc( (char *)is->mag1, is->mag_len*sizeof( fastf_t),
 					"is->mag1" );
-				is->mag2 = (fastf_t *)rt_realloc( (char *)is->mag2, is->mag_len*sizeof( fastf_t),
+				is->mag2 = (fastf_t *)bu_realloc( (char *)is->mag2, is->mag_len*sizeof( fastf_t),
 					"is->mag2" );
 			}
 			else
@@ -378,9 +378,9 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 			if( is->mag_len )
 			{
 				is->mag_len *= 2;
-				is->mag1 = (fastf_t *)rt_realloc( (char *)is->mag1, is->mag_len*sizeof( fastf_t),
+				is->mag1 = (fastf_t *)bu_realloc( (char *)is->mag1, is->mag_len*sizeof( fastf_t),
 					"is->mag1" );
-				is->mag2 = (fastf_t *)rt_realloc( (char *)is->mag2, is->mag_len*sizeof( fastf_t),
+				is->mag2 = (fastf_t *)bu_realloc( (char *)is->mag2, is->mag_len*sizeof( fastf_t),
 					"is->mag2" );
 			}
 			else
@@ -492,7 +492,7 @@ bad:
 			bu_log("nmg_get_2d_vertex() extending vert2d array from %d to %d points (m max=%d)\n",
 				oldmax, is->maxindex, m->maxindex);
 		}
-		is->vert2d = (fastf_t *)rt_realloc( (char *)is->vert2d,
+		is->vert2d = (fastf_t *)bu_realloc( (char *)is->vert2d,
 			is->maxindex * 3 * sizeof(fastf_t), "vert2d[]");
 
 		/* Clear out the new part of the 2D vertex array, setting flag in [2] to -1 */
@@ -2364,9 +2364,9 @@ nmg_enlist_one_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, fastf
 			if( is->mag_len )
 			{
 				is->mag_len *= 2;
-				is->mag1 = (fastf_t *)rt_realloc( (char *)is->mag1, is->mag_len*sizeof( fastf_t),
+				is->mag1 = (fastf_t *)bu_realloc( (char *)is->mag1, is->mag_len*sizeof( fastf_t),
 					"is->mag1" );
-				is->mag2 = (fastf_t *)rt_realloc( (char *)is->mag2, is->mag_len*sizeof( fastf_t),
+				is->mag2 = (fastf_t *)bu_realloc( (char *)is->mag2, is->mag_len*sizeof( fastf_t),
 					"is->mag2" );
 			}
 			else
@@ -2386,9 +2386,9 @@ nmg_enlist_one_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, fastf
 			if( is->mag_len )
 			{
 				is->mag_len *= 2;
-				is->mag1 = (fastf_t *)rt_realloc( (char *)is->mag1, is->mag_len*sizeof( fastf_t),
+				is->mag1 = (fastf_t *)bu_realloc( (char *)is->mag1, is->mag_len*sizeof( fastf_t),
 					"is->mag1" );
-				is->mag2 = (fastf_t *)rt_realloc( (char *)is->mag2, is->mag_len*sizeof( fastf_t),
+				is->mag2 = (fastf_t *)bu_realloc( (char *)is->mag2, is->mag_len*sizeof( fastf_t),
 					"is->mag2" );
 			}
 			else

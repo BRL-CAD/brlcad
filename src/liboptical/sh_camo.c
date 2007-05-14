@@ -90,7 +90,7 @@ camo_cvt_parse(register const struct bu_structparse *sdp, register const char *n
 	double *p = (double *)(base+sdp->sp_offset);
 
 	/* reconvert with optional units */
-	*p = rt_mm_value(value);
+	*p = bu_mm_value(value);
 }
 
 

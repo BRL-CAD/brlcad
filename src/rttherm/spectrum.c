@@ -291,7 +291,7 @@ rt_make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
 
 	if( rt_clr__cspace_to_xyz( rgb_NTSC, rgb2xyz ) == 0 )
 		rt_bomb("rt_make_ntsc_xyz2rgb() can't initialize color space\n");
-	mat_inv( xyz2rgb, rgb2xyz );
+	bn_mat_inv( xyz2rgb, rgb2xyz );
 
 #if 1
 	/* Verify that it really works, I'm a skeptic */
@@ -360,9 +360,9 @@ rt_spect_curve_to_xyz(
 
 #if 0
 	tab_area = bn_tabdata_area2( tabp );
-rt_log(" tab_area = %g\n", tab_area);
+	bu_log(" tab_area = %g\n", tab_area);
 	if( fabs(tab_area) < VDIVIDE_TOL )  {
-		rt_log("rt_spect_curve_to_xyz(): Area = 0 (no luminance) in this part of the spectrum\n");
+		bu_log("rt_spect_curve_to_xyz(): Area = 0 (no luminance) in this part of the spectrum\n");
 		VSETALL( xyz, 0 );
 		return;
 	}

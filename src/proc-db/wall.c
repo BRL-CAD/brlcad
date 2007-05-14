@@ -309,7 +309,7 @@ int parse_args(int ac, char **av)
 		case 'u'	: if (units_lock)
 					bu_log(
 					"Warning: attempting to change units in mid-parse\n");
-				if ((dx=rt_units_conversion(bu_optarg)) != 0.0) {
+				if ((dx=bu_units_conversion(bu_optarg)) != 0.0) {
 					unit_conv = dx;
 					units = bu_optarg;
 				} else

@@ -34,17 +34,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
 
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "msr.h"
+
 
 extern int Debug;
 extern int Levels;
-extern struct msr_unif *RandomFlag;
+extern struct bn_unif *RandomFlag;
 /*
  * Clustered-Dot ordered dither at 45 degrees.
  *	Page 86 of Digital Halftoning.
@@ -85,7 +84,7 @@ tone_classic(int pix, int x, int y, int nx, int ny, int new)
 {
 	register int threshold = 14*ordered[( x + 3) % 6][ y % 6];
 	if (RandomFlag) {
-		threshold += MSR_UNIF_DOUBLE(RandomFlag)*63;
+		threshold += BN_UNIF_DOUBLE(RandomFlag)*63;
 	}
 	return ((pix*Levels + threshold)/255);
 }

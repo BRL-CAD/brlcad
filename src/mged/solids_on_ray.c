@@ -51,7 +51,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
-#include "redblack.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./mged_solid.h"
@@ -265,7 +264,7 @@ rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_se
 
     RT_CK_LIST_HEAD(&finished_segs->l);
 
-    for (RT_LIST_FOR(pp, partition, (struct bu_list *) &ph -> pt_magic))
+    for (BU_LIST_FOR(pp, partition, (struct bu_list *) &ph -> pt_magic))
     {
 	BU_CKMAG(pp, PT_MAGIC, "partition");
 	BU_CKMAG(pp -> pt_regionp, RT_REGION_MAGIC, "region");

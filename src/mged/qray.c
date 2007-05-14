@@ -513,16 +513,16 @@ qray_data_to_vlist(struct bn_vlblock *vbp, struct qray_dataList *headp, fastf_t 
     VJOIN1(out_pt, in_pt, ndlp->los, dir);
     VSCALE(in_pt, in_pt, local2base);
     VSCALE(out_pt, out_pt, local2base);
-    RT_ADD_VLIST( vhead, in_pt, RT_VLIST_LINE_MOVE );
-    RT_ADD_VLIST( vhead, out_pt, RT_VLIST_LINE_DRAW );
+    RT_ADD_VLIST( vhead, in_pt, BN_VLIST_LINE_MOVE );
+    RT_ADD_VLIST( vhead, out_pt, BN_VLIST_LINE_DRAW );
 
     if(!do_overlaps && i > 1 && !VAPPROXEQUAL(last_out_pt,in_pt,SQRT_SMALL_FASTF)){
       vhead = rt_vlblock_find(vbp,
 			      qray_void_color.r,
 			      qray_void_color.g,
 			      qray_void_color.b);
-      RT_ADD_VLIST( vhead, last_out_pt, RT_VLIST_LINE_MOVE );
-      RT_ADD_VLIST( vhead, in_pt, RT_VLIST_LINE_DRAW );
+      RT_ADD_VLIST( vhead, last_out_pt, BN_VLIST_LINE_MOVE );
+      RT_ADD_VLIST( vhead, in_pt, BN_VLIST_LINE_DRAW );
     }
 
     VMOVE(last_out_pt, out_pt);

@@ -269,7 +269,7 @@ main (int argc, char **argv)
     bu_debug = BU_DEBUG_MEM_CHECK | BU_DEBUG_MEM_LOG;
     bu_debug = 0;
 
-    RT_LIST_INIT(&(gp_locs.l));
+    BU_LIST_INIT(&(gp_locs.l));
     if (! pars_Argv(argc, argv))
     {
 	prnt_Usage();
@@ -289,10 +289,10 @@ main (int argc, char **argv)
 	    bu_log("cell-fb: failed to read view\n");
 	    return 1;
 	}
-	if (RT_LIST_NON_EMPTY(&(gp_locs.l)))
-	    while (RT_LIST_WHILE(lrp, locrec, (&(gp_locs.l))))
+	if (BU_LIST_NON_EMPTY(&(gp_locs.l)))
+	    while (BU_LIST_WHILE(lrp, locrec, (&(gp_locs.l))))
 	    {
-		RT_LIST_DEQUEUE(&(lrp->l));
+		BU_LIST_DEQUEUE(&(lrp->l));
 		bu_log("%g %g	%d %d\n", lrp -> h, lrp -> v,
 		    (int) H2SCRX(lrp -> h), (int) V2SCRY(lrp -> v));
 		bu_free((char *) lrp, "location record");
@@ -816,7 +816,7 @@ static bool pars_Argv (register int argc, register char **argv)
 			return (false);
 		    }
 		    lrp = mk_locrec(h, v);
-		    RT_LIST_INSERT(&(gp_locs.l), &(lrp -> l));
+		    BU_LIST_INSERT(&(gp_locs.l), &(lrp -> l));
 		}
 		break;
 	    case 'b':
@@ -1026,9 +1026,9 @@ static void log_Run(void)
 
 	/** mat_ae( model2hv, az, el ); **/
 	/* Formula from rt/do.c */
-	mat_angles( model2hv, 270.0+el, 0.0, 270.0-az );
+	bn_mat_angles( model2hv, 270.0+el, 0.0, 270.0-az );
 	model2hv[15] = 25.4;		/* input is in inches */
-	mat_inv( hv2model, model2hv);
+	bn_mat_inv( hv2model, model2hv);
 
 	quat_mat2quat( orient, model2hv );
 

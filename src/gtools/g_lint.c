@@ -1045,8 +1045,8 @@ main (int argc, char **argv)
      *	 each call copies exactly three elements of the array).
      */
     MAT_IDN(view2model);
-    mat_ae(view2model, azimuth, elevation);
-    mat_inv(model2view, view2model);
+    bn_mat_ae(view2model, azimuth, elevation);
+    bn_mat_inv(model2view, view2model);
     VMOVEN(unit_D, model2view, 3);
     VMOVEN(unit_H, model2view + 4, 3);
     VMOVEN(unit_V, model2view + 8, 3);

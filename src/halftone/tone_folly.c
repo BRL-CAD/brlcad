@@ -34,17 +34,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
 
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "msr.h"
+
 
 extern int Debug;
 extern int Levels;
-extern struct msr_unif *RandomFlag;
+extern struct bn_unif *RandomFlag;
 
 /*
  * Dispersed-Dot ordered Dither at 0 degrees (n=4)
@@ -75,7 +74,7 @@ static unsigned char	ordered[4][4] = {
  *	RandomFlag - should we toss some random numbers?
  *
  * Calls:
- *	MSR_UNIF_DOUBLE() - to get random numbers from -0.5 to 0.5
+ *	BN_UNIF_DOUBLE() - to get random numbers from -0.5 to 0.5
  *
  * Author:
  *	Christopher T. Johnson	- 90/03/21
@@ -86,7 +85,7 @@ tone_folly(int pix, int x, int y, int nx, int ny, int new)
 	register int threshold = 16*ordered[ x % 4][ y % 4];
 
 	if (RandomFlag) {
-		threshold += MSR_UNIF_DOUBLE(RandomFlag)*63;
+		threshold += BN_UNIF_DOUBLE(RandomFlag)*63;
 	}
 	return ((pix*Levels + threshold)/255);
 }

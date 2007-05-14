@@ -118,7 +118,7 @@ insert_id(int id)
 
 	if( ident_count == ident_length )
 	{
-		idents = (int *)rt_realloc( (char *)idents , (ident_length + IDENT_BLOCK)*sizeof( int ) , "insert_id: idents" );
+		idents = (int *)bu_realloc( (char *)idents , (ident_length + IDENT_BLOCK)*sizeof( int ) , "insert_id: idents" );
 		ident_length += IDENT_BLOCK;
 	}
 

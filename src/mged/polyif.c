@@ -63,12 +63,12 @@ struct polygon_header  {
 #define POLYGON_HEADER_MAGIC	0x8623bad2
 
 struct bu_structparse polygon_desc[] = {
-	{"%d", 1, "magic", offsetof(struct polygon_header, magic), BU_STRUCTPARSE_FUNC_NULL },
-	{"%d", 1, "ident", offsetof(struct polygon_header, ident), BU_STRUCTPARSE_FUNC_NULL },
-	{"%d", 1, "interior", offsetof(struct polygon_header, interior), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d", 1, "magic", bu_offsetof(struct polygon_header, magic), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d", 1, "ident", bu_offsetof(struct polygon_header, ident), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d", 1, "interior", bu_offsetof(struct polygon_header, interior), BU_STRUCTPARSE_FUNC_NULL },
 	{"%f", 3, "normal", bu_offsetofarray(struct polygon_header, normal), BU_STRUCTPARSE_FUNC_NULL },
 	{"%c", 3, "color", bu_offsetofarray(struct polygon_header, color), BU_STRUCTPARSE_FUNC_NULL },
-	{"%d", 1, "npts", offsetof(struct polygon_header, npts), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d", 1, "npts", bu_offsetof(struct polygon_header, npts), BU_STRUCTPARSE_FUNC_NULL },
 	{"",   0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 struct bu_structparse vertex_desc[] = {
@@ -78,12 +78,12 @@ struct bu_structparse vertex_desc[] = {
 
 #if 0
 struct rt_imexport  polygon_desc[] = {
-	{"%d",	offsetof(struct polygon_header, magic),		1 },
-	{"%d",	offsetof(struct polygon_header, ident),		1 },
-	{"%d",	offsetof(struct polygon_header, interior),	1 },
+	{"%d",	bu_offsetof(struct polygon_header, magic),		1 },
+	{"%d",	bu_offsetof(struct polygon_header, ident),		1 },
+	{"%d",	bu_offsetof(struct polygon_header, interior),	1 },
 	{"%f",	bu_offsetofarray(struct polygon_header, normal),	3 },
 	{"%c",	bu_offsetofarray(struct polygon_header, color),	3 },
-	{"%d",	offsetof(struct polygon_header, npts),		1 },
+	{"%d",	bu_offsetof(struct polygon_header, npts),		1 },
 	{"",	0,						0 }
 };
 struct rt_imexport vertex_desc[] = {
@@ -103,7 +103,7 @@ int
 f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register struct solid		*sp;
-	register struct rt_vlist	*vp;
+	register struct bn_vlist	*vp;
 	FILE	*fp;
 	int	pno = 1;
 	struct polygon_header ph;
@@ -128,7 +128,7 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-		for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+		for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 			register int	i;
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;
@@ -136,16 +136,16 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			for( i = 0; i < nused; i++,cmd++,pt++ )  {
 				/* For each polygon, spit it out.  Ignore vectors */
 				switch( *cmd )  {
-				case RT_VLIST_LINE_MOVE:
+				case BN_VLIST_LINE_MOVE:
 					/* Move, start line */
 					break;
-				case RT_VLIST_LINE_DRAW:
+				case BN_VLIST_LINE_DRAW:
 					/* Draw line */
 					break;
-				case RT_VLIST_POLY_VERTNORM:
+				case BN_VLIST_POLY_VERTNORM:
 					/* Ignore per-vertex normal */
 					break;
-				case RT_VLIST_POLY_START:
+				case BN_VLIST_POLY_START:
 					/* Start poly marker & normal, followed by POLY_MOVE */
 					ph.magic = POLYGON_HEADER_MAGIC;
 					ph.ident = pno++;
@@ -156,10 +156,10 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 					VMOVE( ph.normal, *pt );
 					need_normal = 0;
 					break;
-				case RT_VLIST_POLY_MOVE:
+				case BN_VLIST_POLY_MOVE:
 					/* Start of polygon, has first point */
 					/* fall through to... */
-				case RT_VLIST_POLY_DRAW:
+				case BN_VLIST_POLY_DRAW:
 					/* Polygon Draw */
 					if( ph.npts >= MAX_VERTS )  {
 					  Tcl_AppendResult(interp, "excess vertex skipped\n",
@@ -169,7 +169,7 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 					VMOVE( verts[ph.npts], *pt );
 					ph.npts++;
 					break;
-				case RT_VLIST_POLY_END:
+				case BN_VLIST_POLY_END:
 				  /*
 				   *  End Polygon.  Point given is repeat of
 				   *  first one, ignore it.

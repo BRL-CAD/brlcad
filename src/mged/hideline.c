@@ -167,7 +167,7 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct application a;
 	vect_t temp;
 	vect_t last,dir;
-	register struct rt_vlist	*vp;
+	register struct bn_vlist	*vp;
 
 	CHECK_DBI_NULL;
 
@@ -247,7 +247,7 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			continue;
 
 		Tcl_AppendResult(interp, "Primitive\n", (char *)NULL);
-		for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+		for( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
 			register int	i;
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;
@@ -255,18 +255,18 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			for( i = 0; i < nused; i++,cmd++,pt++ )  {
 			  Tcl_AppendResult(interp, "\tVector\n", (char *)NULL);
 				switch( *cmd )  {
-				case RT_VLIST_POLY_START:
-				case RT_VLIST_POLY_VERTNORM:
+				case BN_VLIST_POLY_START:
+				case BN_VLIST_POLY_VERTNORM:
 					break;
-				case RT_VLIST_POLY_MOVE:
-				case RT_VLIST_LINE_MOVE:
+				case BN_VLIST_POLY_MOVE:
+				case BN_VLIST_LINE_MOVE:
 					/* move */
 					VMOVE(last, *pt);
 					MOVE(last);
 					break;
-				case RT_VLIST_POLY_DRAW:
-				case RT_VLIST_POLY_END:
-				case RT_VLIST_LINE_DRAW:
+				case BN_VLIST_POLY_DRAW:
+				case BN_VLIST_POLY_END:
+				case BN_VLIST_LINE_DRAW:
 					/* setup direction && length */
 					VSUB2(dir, *pt, last);
 					len = MAGNITUDE(dir);
