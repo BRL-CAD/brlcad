@@ -386,10 +386,9 @@ ab_readframe(FBIO *ifp)
 	/* convert YUV to RGB */
 	ab_log(ifp, "Converting YUV to RGB");
 	for( y=0; y < 486; y++ )  {
-		ab_yuv_to_rgb(
-		    &ifp->if_rgb[(486-1-y)*720*3],
-		    &ifp->if_yuv[y*720*2],
-		    720 );
+	    unsigned char *rgb = (unsigned char *)&ifp->if_rgb[(486-1-y)*720*3];
+	    unsigned char *yuv = (unsigned char *)&ifp->if_yuv[y*720*2];
+	    ab_yuv_to_rgb(rgb, yuv, 720);
 	}
 	ab_log(ifp, "Conversion done");
 
@@ -411,10 +410,9 @@ ab_close(FBIO *ifp)
 		/* Convert RGB to YUV */
 		ab_log(ifp, "Converting RGB to YUV");
 		for( y=0; y < 486; y++ )  {
-			ab_rgb_to_yuv(
-			    &ifp->if_yuv[y*720*2],
-			    &ifp->if_rgb[(486-1-y)*720*3],
-			    720 );
+		    unsigned char *yuv = (unsigned char *)&ifp->if_yuv[y*720*2];
+		    unsigned char *rgb = (unsigned char *)&ifp->if_rgb[(486-1-y)*720*3];
+		    ab_rgb_to_yuv(yuv, rgb, 720);
 		}
 		ab_log(ifp, "Writing frame");
 
