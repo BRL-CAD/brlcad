@@ -63,14 +63,6 @@
 #include "vmath.h"
 #endif
 
-#ifndef SEEN_RTLIST_H
-#include "rtlist.h"
-#endif
-
-#ifndef SEEN_COMPAT4_H
-#include "compat4.h"
-#endif
-
 #ifndef SEEN_BU_H
 #include "bu.h"
 #endif
