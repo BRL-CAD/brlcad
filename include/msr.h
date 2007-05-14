@@ -25,9 +25,7 @@
  *  Compatability macros are provided in "compat4.h"
  *	-Mike
  */
-
-#include "compat4.h"
-
+#warning "The msr.h header is OBSOLETE -- use bn.h instead"
 /** @} */
 /*
  * Local Variables:
