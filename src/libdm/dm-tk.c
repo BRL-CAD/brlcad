@@ -286,7 +286,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonrelease = LASTEvent;
   dmp->dm_aspect = 1.0;
 
-  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct = NULL;
+  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontset = 0;
 
   if(dmp->dm_top){
     /* Make xtkwin a toplevel window */
@@ -646,7 +646,7 @@ tk_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
 #if 1
 	static vect_t			spnt, lpnt, pnt;
-	register struct rt_vlist	*tvp;
+	register struct bn_vlist	*tvp;
 	XSegment			segbuf[1024];		/* XDrawSegments list */
 	XSegment			*segp;			/* current segment */
 	int				nseg;		        /* number of segments */
@@ -672,7 +672,7 @@ tk_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
 	nseg = 0;
 	segp = segbuf;
-	for (BU_LIST_FOR(tvp, rt_vlist, &vp->l)) {
+	for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
 		register int	i;
 		register int	nused = tvp->nused;
 		register int	*cmd = tvp->cmd;
@@ -685,12 +685,12 @@ tk_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 		/* Integerize and let the X server do the clipping */
 		for (i = 0; i < nused; i++,cmd++,pt++) {
 			switch (*cmd) {
-			case RT_VLIST_POLY_START:
+			case BN_VLIST_POLY_START:
 
-			case RT_VLIST_POLY_VERTNORM:
+			case BN_VLIST_POLY_VERTNORM:
 				continue;
-			case RT_VLIST_POLY_MOVE:
-			case RT_VLIST_LINE_MOVE:
+			case BN_VLIST_POLY_MOVE:
+			case BN_VLIST_LINE_MOVE:
 				/* Move, not draw */
 				if (dmp->dm_debugLevel > 2) {
 					bu_log("before transformation:\n");
@@ -719,9 +719,9 @@ tk_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 				lpnt[1] *= 2047 * dmp->dm_aspect;
 				lpnt[2] *= 2047;
 				continue;
-			case RT_VLIST_POLY_DRAW:
-			case RT_VLIST_POLY_END:
-			case RT_VLIST_LINE_DRAW:
+			case BN_VLIST_POLY_DRAW:
+			case BN_VLIST_POLY_END:
+			case BN_VLIST_LINE_DRAW:
 				/* draw */
 				if (dmp->dm_debugLevel > 2) {
 					bu_log("before transformation:\n");
@@ -919,7 +919,7 @@ tk_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int si
   sy = dm_Normal2Xy(dmp, y, use_aspect);
 
 
-  Tk_DrawChars( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+  Tk_DrawChars(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 	       ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
 	       ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 	       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct,
@@ -1114,19 +1114,23 @@ tk_configureWin_guts(struct dm *dmp, int force)
 		 Tk_Depth(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
 
   /* First time through, load a font or quit */
-  if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct == NULL) {
-    if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct =
-	Tk_GetFont(dmp->dm_interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
-	FONT9)) == NULL ) {
+  if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontset == 0) {
 
-      /* Try hardcoded backup font */
-      if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct =
-	  Tk_GetFont(dmp->dm_interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
-	  FONTBACK)) == NULL ) {
-	bu_log("dm-Tk: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-	return TCL_ERROR;
+      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct =
+	  Tk_GetFont(dmp->dm_interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, FONT9);
+
+      if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct == NULL) {
+	  /* Try hardcoded backup font */
+
+	  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct =
+	      Tk_GetFont(dmp->dm_interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, FONTBACK);
+
+	  if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct == NULL) {
+	      bu_log("dm-Tk: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
+	      return TCL_ERROR;
+	  }
       }
-    }
+      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontset = 1;
   }
 
   /* XXX:  I removed the font-sizing routine from dm-X from here.  Something
