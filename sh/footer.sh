@@ -128,7 +128,7 @@ case $FILE in
 	wrap=1
 	commentchar="*"
 	;;
-    *.hh | *.H )
+    *.hh | *.hp | *.hxx | *.hpp | *.HPP | *.h++ | *.H )
 	echo "$FILE is a C++ header"
 	mode="C++"
 	mode_vars="c-basic-offset"

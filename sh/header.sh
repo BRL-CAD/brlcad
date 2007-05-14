@@ -151,12 +151,12 @@ case $FILE in
 	wrap=1
 	commentprefix=" *"
 	;;
-    *.cc | *.cp | *.cxx | *.cpp | *.cpp | *.CPP | *.c++ | *.C )
+    *.cc | *.cp | *.cxx | *.cpp | *.CPP | *.c++ | *.C )
 	echo "$FILE is a C++ source file"
 	wrap=1
 	commentprefix=" *"
 	;;
-    *.hh | *.H )
+    *.hh | *.hp | *.hxx | *.hpp | *.HPP | *.h++ | *.H )
 	echo "$FILE is a C++ header"
 	wrap=1
 	commentprefix=" *"
