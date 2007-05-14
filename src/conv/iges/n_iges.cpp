@@ -674,24 +674,6 @@ namespace brlcad {
   IGES::getDirectoryEntry(const Pointer& ptr) {
     return _dir[(ptr-1)/2];
   }
-  
-  // !! why isn't this in VMATH?
-  void matmult(mat_t a, mat_t b, mat_t c)
-  {
-    // vectorize?
-    mat_t tmp;
-    int i,j,k;
-    
-    for( i=0 ; i<4 ; i++ )
-      for( j=0 ; j<4 ; j++ ) {
-	tmp[i*4+j] = 0.0;
-	for( k=0 ; k<4 ; k++ )
-	  tmp[i*4+j] += a[i*4+k] * b[k*4+j];
-      }
-    for( i=0 ; i<4 ; i++ )
-      for( j=0 ; j<4 ; j++ )
-	c[i*4+j] = tmp[i*4+j];
-  }
 
   void
   IGES::getTransformation(const Pointer& ptr, mat_t out_xform)
@@ -713,7 +695,7 @@ namespace brlcad {
     if (xform_de->xform()() != 0) {
       MAT_IDN(parent_xform);
       getTransformation(xform_de->xform(), parent_xform);
-      matmult(parent_xform, xform, out_xform);
+      bn_mat_mul(out_xform, parent_xform, xform);
     } else {
       MAT_COPY(out_xform, xform);
     }
