@@ -446,9 +446,7 @@ namespace brlcad {
     
     vect_t unit_normal;
     if (planar) {
-      unit_normal[X] = params.getReal(i);
-      unit_normal[Y] = params.getReal(i+1);
-      unit_normal[Z] = params.getReal(i+2);
+      VSET(unit_normal, params.getReal(i), params.getReal(i+1), params.getReal(i+2));
       i += 3;
     }
         
