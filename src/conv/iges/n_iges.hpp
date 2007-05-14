@@ -291,11 +291,11 @@ namespace brlcad {
   public:
     ParameterData();
     
-    Pointer getPointer(int index);
-    Integer getInteger(int index);
-    Logical getLogical(int index);
-    String  getString(int index);
-    Real    getReal(int index);
+    Pointer getPointer(int index) const;
+    Integer getInteger(int index) const;
+    Logical getLogical(int index) const;
+    String  getString(int index) const;
+    Real    getReal(int index) const;
 
     void addParam(const string& param);
     void    clear() { params.clear(); }
@@ -494,7 +494,7 @@ namespace brlcad {
     // surface handlers (refactor to SurfaceHandler class?)
     virtual int handleParametricSplineSurface() = 0;
     virtual int handleRuledSurface() = 0;
-    virtual int handleSurfaceOfRevolution() = 0;
+    virtual int handleSurfaceOfRevolution(int line, int curve, double start, double end) = 0;
     virtual int handleTabulatedCylinder() = 0;
     virtual int handleRationalBSplineSurface(int num_control[2], 
 					     int degree[2], 
@@ -523,7 +523,7 @@ namespace brlcad {
     virtual int handle2DPath() = 0;
     virtual int handle3DPath() = 0;
     virtual int handleSimpleClosedPlanarCurve() = 0;
-    virtual int handleLine() = 0;
+    virtual int handleLine(point_t start, point_t end) = 0;
     virtual int handleParametricSplineCurve() = 0;
     virtual int handleRationalBSplineCurve() = 0;
     virtual int handleOffsetCurve() = 0;    
@@ -541,10 +541,15 @@ namespace brlcad {
     virtual void extractVertex(const DirectoryEntry* de);
     virtual int  extractCurve(const DirectoryEntry* de, bool isIso);
 
+    virtual int  extractLine(const Pointer& ptr, point_t start, point_t end);    
+    virtual int  extractSurfaceOfRevolution(const ParameterData& params);
+    virtual int  extractRationalBSplineSurface(const ParameterData& params);
+
     friend class EdgeUse;
     friend class PSpaceCurve;
 
   private:
+
     int shellIndex;
     int faceIndex;
     int surfaceIndex;

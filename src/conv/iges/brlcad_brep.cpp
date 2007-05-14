@@ -50,7 +50,14 @@ namespace brlcad {
   BRLCADBrepHandler::handleRuledSurface() { return 0; }
 
   int
-  BRLCADBrepHandler::handleSurfaceOfRevolution() { return 0; }
+  BRLCADBrepHandler::handleSurfaceOfRevolution(int lineIndex, int curveIndex, double startAngle, double endAngle) { 
+    debug("handleSurfaceOfRevolution");
+    debug("line  : " << lineIndex);
+    debug("curve : " << curveIndex);
+    debug("start : " << startAngle);
+    debug("end   : " << endAngle);
+    return 0; 
+  }
 
   int
   BRLCADBrepHandler::handleTabulatedCylinder() { return 0; }
@@ -114,7 +121,12 @@ namespace brlcad {
   BRLCADBrepHandler::handleSimpleClosedPlanarCurve() { return 0; }
 
   int
-  BRLCADBrepHandler::handleLine() { return 0; }
+  BRLCADBrepHandler::handleLine(point_t start, point_t end) {
+    debug("handleLine");
+    debug("start: " << start[0] << "," << start[1] << "," << start[2]);
+    debug("end  : " << end[0] << "," << end[1] << "," << end[2]);    
+    return 0; 
+  }
 
   int
   BRLCADBrepHandler::handleParametricSplineCurve() { return 0; }

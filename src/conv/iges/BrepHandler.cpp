@@ -88,113 +88,162 @@ namespace brlcad {
   }
 
   int
+  BrepHandler::extractLine(const Pointer& ptr, point_t start, point_t end) 
+  {
+    DirectoryEntry* de = _iges->getDirectoryEntry(ptr);
+    ParameterData params;
+    _iges->getParameter(de->paramData(), params);
+    start[0] = params.getReal(1);
+    start[1] = params.getReal(2);
+    start[2] = params.getReal(3);
+    end[0] = params.getReal(4);
+    end[1] = params.getReal(5);
+    end[2] = params.getReal(6);
+
+    return handleLine(start, end);
+  }
+
+  int
+  BrepHandler::extractSurfaceOfRevolution(const ParameterData& params) {
+      Pointer linePtr = params.getPointer(1);
+      Pointer curvePtr = params.getPointer(2);
+      double startAngle = params.getReal(3);
+      double endAngle = params.getReal(4);
+      
+      // load the line (axis of revolution)
+      point_t start, end;
+      int line = extractLine(linePtr, start, end);
+      
+      // load the curve (generatrix)
+      int curve = extractCurve(_iges->getDirectoryEntry(curvePtr), false);
+      
+      return handleSurfaceOfRevolution(line, curve, startAngle, endAngle);
+  }  
+
+  int
+  BrepHandler::extractRationalBSplineSurface(const ParameterData& params) {
+    // possible to do optimization of form type???
+    // see spec
+    const int ui = params.getInteger(1);
+    const int vi = params.getInteger(2);
+    int u_degree = params.getInteger(3);
+    int v_degree = params.getInteger(4);
+    bool u_closed = params.getInteger(5)() == 1;
+    bool v_closed = params.getInteger(6)() == 1;
+    bool rational = params.getInteger(7)() == 0;
+    bool u_periodic = params.getInteger(8)() == 1;
+    bool v_periodic = params.getInteger(9)() == 1;
+      
+    int n1 = 1+ui-u_degree;
+    int n2 = 1+vi-v_degree;
+      
+    const int u_num_knots = n1 + 2 * u_degree;
+    const int v_num_knots = n2 + 2 * v_degree;
+    const int num_weights = (1+ui)*(1+vi);
+      
+    // read the u knots
+    int i = 10; // first u knot
+    double* u_knots = new double[u_num_knots];
+    for (int _i = 0; _i < u_num_knots; _i++) {
+      u_knots[_i] = params.getReal(i);
+      i++;
+    }
+    i = 11 + u_num_knots; // first v knot
+    double* v_knots = new double[v_num_knots];
+    for (int _i = 0; _i < v_num_knots; _i++) {
+      v_knots[_i] = params.getReal(i);
+      i++;
+    }
+      
+    // read the weights (w)
+    i = 11 + u_num_knots + v_num_knots;
+    double* weights = new double[num_weights];
+    for (int _i = 0; _i < num_weights; _i++) {
+      weights[_i] = params.getReal(i);
+      i++;
+    }
+      
+    // read the control points
+    i = 12 + u_num_knots + v_num_knots + num_weights;
+    double* ctl_points = new double[CP_SIZE(ui+1, vi+1, 3)];
+    const int numu = ui+1;
+    const int numv = vi+1;
+    for (int _v = 0; _v < numv; _v++) {
+      for (int _u = 0; _u < numu; _u++) {
+	ctl_points[CPI(_u,_v,0)] = params.getReal(i);
+	ctl_points[CPI(_u,_v,1)] = params.getReal(i+1);
+	ctl_points[CPI(_u,_v,2)] = params.getReal(i+2);
+	i += 3;
+      }
+    }
+      
+    // read the domain intervals
+    double umin = params.getReal(i);
+    double umax = params.getReal(i+1);
+    double vmin = params.getReal(i+2);
+    double vmax = params.getReal(i+3);
+
+    int controls[] = {ui+1,vi+1};
+    int degrees[] = {u_degree,v_degree};
+    int index = handleRationalBSplineSurface( controls,
+					      degrees,
+					      u_closed,
+					      v_closed,
+					      rational,
+					      u_periodic,
+					      v_periodic,
+					      u_num_knots,
+					      v_num_knots,
+					      u_knots,
+					      v_knots,
+					      weights,
+					      ctl_points);
+    delete [] ctl_points;
+    delete [] weights;
+    delete [] v_knots;
+    delete [] u_knots;
+    return index;
+  }
+
+  int
   BrepHandler::extractSurface(const DirectoryEntry* de) {
     debug("########################## E X T R A C T   S U R F A C E");
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
     // determine the surface type to extract
     switch (de->type()) {
-    case ParametricSplineSurface:      
+    case ParametricSplineSurface:
+      debug("\tparametric spline surface");
       break;
     case RuledSurface:
+      debug("\truled surface");
       break;
     case SurfaceOfRevolution:
-      break;
+      debug("\tsurface of rev.");
+      return extractSurfaceOfRevolution(params);
     case TabulatedCylinder:
+      debug("\ttabulated cylinder");
       break;
-    case RationalBSplineSurface: {
-      // possible to do optimization of form type???
-      // see spec
-      const int ui = params.getInteger(1);
-      const int vi = params.getInteger(2);
-      int u_degree = params.getInteger(3);
-      int v_degree = params.getInteger(4);
-      bool u_closed = params.getInteger(5)() == 1;
-      bool v_closed = params.getInteger(6)() == 1;
-      bool rational = params.getInteger(7)() == 0;
-      bool u_periodic = params.getInteger(8)() == 1;
-      bool v_periodic = params.getInteger(9)() == 1;
-      
-      int n1 = 1+ui-u_degree;
-      int n2 = 1+vi-v_degree;
-      
-      const int u_num_knots = n1 + 2 * u_degree;
-      const int v_num_knots = n2 + 2 * v_degree;
-      const int num_weights = (1+ui)*(1+vi);
-      
-      // read the u knots
-      int i = 10; // first u knot
-      double* u_knots = new double[u_num_knots];
-      for (int _i = 0; _i < u_num_knots; _i++) {
-	u_knots[_i] = params.getReal(i);
-	i++;
-      }
-      i = 11 + u_num_knots; // first v knot
-      double* v_knots = new double[v_num_knots];
-      for (int _i = 0; _i < v_num_knots; _i++) {
-	v_knots[_i] = params.getReal(i);
-	i++;
-      }
-      
-      // read the weights (w)
-      i = 11 + u_num_knots + v_num_knots;
-      double* weights = new double[num_weights];
-      for (int _i = 0; _i < num_weights; _i++) {
-	weights[_i] = params.getReal(i);
-	i++;
-      }
-      
-      // read the control points
-      i = 12 + u_num_knots + v_num_knots + num_weights;
-      double* ctl_points = new double[CP_SIZE(ui+1, vi+1, 3)];
-      const int numu = ui+1;
-      const int numv = vi+1;
-      for (int _v = 0; _v < numv; _v++) {
-	for (int _u = 0; _u < numu; _u++) {
-	  ctl_points[CPI(_u,_v,0)] = params.getReal(i);
-	  ctl_points[CPI(_u,_v,1)] = params.getReal(i+1);
-	  ctl_points[CPI(_u,_v,2)] = params.getReal(i+2);
-	  i += 3;
-	}
-      }
-      
-      // read the domain intervals
-      double umin = params.getReal(i);
-      double umax = params.getReal(i+1);
-      double vmin = params.getReal(i+2);
-      double vmax = params.getReal(i+3);
-
-      int controls[] = {ui+1,vi+1};
-      int degrees[] = {u_degree,v_degree};
-      int index = handleRationalBSplineSurface( controls,
-						degrees,
-						u_closed,
-						v_closed,
-						rational,
-						u_periodic,
-						v_periodic,
-						u_num_knots,
-						v_num_knots,
-						u_knots,
-						v_knots,
-						weights,
-						ctl_points);
-      delete [] ctl_points;
-      delete [] weights;
-      delete [] v_knots;
-      delete [] u_knots;      
-    } break;
+    case RationalBSplineSurface: 
+      debug("\trational b-spline surface");
+      return extractRationalBSplineSurface(params);
     case OffsetSurface:
+      debug("\toffset surface");
       break;
     case PlaneSurface:
+      debug("\tplane surface");
       break;
     case RightCircularCylindricalSurface:
+      debug("\tright circular cylindrical surface");
       break;
     case RightCircularConicalSurface:
+      debug("\tright circular conical surface");
       break;
     case SphericalSurface:
+      debug("\tspherical surface");
       break;
     case ToroidalSurface:
+      debug("\ttoroidal surface");
       break;
     }
     return 0;
@@ -296,6 +345,11 @@ namespace brlcad {
 
   int 
   BrepHandler::extractCurve(const DirectoryEntry* de, bool isISO) {
+    ParameterData params;
+    _iges->getParameter(de->paramData(), params);
+    switch (de->type()) {
+
+    }
     // spec says the curve may be:
     //   100 Circular Arc 
     //   102 Composite Curve 
@@ -307,8 +361,7 @@ namespace brlcad {
     //   112 Parametric Spline Curve 
     //   126 Rational B-Spline Curve 
     //   130 Offset Curve 
-
-    
+    return 0;
   }
 
 }

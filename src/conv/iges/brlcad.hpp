@@ -20,7 +20,7 @@ namespace brlcad {
 
     int handleParametricSplineSurface();
     int handleRuledSurface();
-    int handleSurfaceOfRevolution();
+    int handleSurfaceOfRevolution(int line, int curve, double start, double end);
     int handleTabulatedCylinder();
     int handleRationalBSplineSurface(int num_control[2], 
 				     int degree[2], 
@@ -35,7 +35,6 @@ namespace brlcad {
 				     double v_knots[],
 				     double weights[],
 				     double* ctl_points);
-    int handleRationalBSplineSurface();
     int handleOffsetSurface();
     int handlePlaneSurface();
     int handleRightCircularCylindricalSurface();
@@ -49,7 +48,7 @@ namespace brlcad {
     int handle2DPath();
     int handle3DPath();
     int handleSimpleClosedPlanarCurve();
-    int handleLine();
+    int handleLine(point_t start, point_t end);
     int handleParametricSplineCurve();
     int handleRationalBSplineCurve();
     int handleOffsetCurve();    
