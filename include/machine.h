@@ -166,11 +166,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
  *
- *
- *  Include Sequencing -
- *	# include "machine.h"
- *@n	# include "bu.h"
- *
  *  Libraries Used -
  *	LIBBU LIBBU_LIBES -lm -lc
  *

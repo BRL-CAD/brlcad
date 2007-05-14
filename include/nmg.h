@@ -39,8 +39,6 @@
  *	# include <math.h>
  *	# include "machine.h"	/_* For fastf_t definition on this machine *_/
  *	# include "vmath.h"	/_* For vect_t definition *_/
- *	# include "rtlist.h"	/_* OPTIONAL, auto-included by raytrace.h *_/
- *	# include "rtstring.h"	/_* OPTIONAL, auto-included by raytrace.h *_/
  *	# include "nmg.h"
  *	# include "raytrace.h"
  *	# include "nurb.h"	/_* OPTIONAL, follows raytrace.h when used *_/

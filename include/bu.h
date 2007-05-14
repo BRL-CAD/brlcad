@@ -48,8 +48,6 @@
 @code
 	#include "common.h"
 	#include <stdio.h>
-	#include "machine.h"	/_* For fastf_t definition on this machine *_/
-	#include "rtlist.h"	/_* OPTIONAL, auto-included by bu.h *_/
 	#include "bu.h"
 @endcode
  *
@@ -1172,7 +1170,7 @@ struct bu_attribute_value_set {
 /** @addtogroup vls */
 /** @{ */
 /*
- *  Variable Length Strings: bu_vls support (formerly rt_vls in rtstring.h)
+ *  Variable Length Strings: bu_vls support
  */
 struct bu_vls  {
 	long	vls_magic;
