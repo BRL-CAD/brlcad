@@ -38,6 +38,8 @@
 
 #ifndef DONT_USE_COMPAT4_H	/* Define this to scrub out Release 4-isms */
 
+#warning "The compat4.h header provides support for DEPRECATED interface names.  Please update your sources and do not include this header."
+
 #ifndef SEEN_COMPAT4_H
 #define SEEN_COMPAT4_H seen
 
