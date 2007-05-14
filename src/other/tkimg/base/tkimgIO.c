@@ -21,6 +21,8 @@
 #include "tk.h"
 #include "tkimg.h"
 
+#include <string.h>
+
 /*
  * Prototypes for procedures defined later in this file:
  */
