@@ -1,6 +1,8 @@
 #ifndef N_IGES_H
 #define N_IGES_H
 
+#include "common.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
