@@ -15,7 +15,6 @@ bin_PROGRAMS = \
 	azel \
 	bary \
 	binfo \
-	bombardier \
 	buffer \
 	bw-a \
 	bw-imp \
