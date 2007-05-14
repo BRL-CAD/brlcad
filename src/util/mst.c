@@ -53,7 +53,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "machine.h"
 #include "bu.h"
-#include "redblack.h"
 
 
 /************************************************************************
@@ -585,7 +584,7 @@ main (int argc, char **argv)
     struct bridge	*bp;		/* The current bridge */
     struct vertex	*up;		/* An uncivilized neighbor of vup */
     struct vertex	*vcp;		/* The civilized vertex of bp */
-    struct vertex	*vup;		/* The uncvilized vertex of bp */
+    struct vertex	*vup;		/* The uncivilized vertex of bp */
     struct vertex	*vertex[2];	/* The current edge */
     struct neighbor	*neighbor[2];	/* Their neighbors */
     struct neighbor	*np;		/* A neighbor of vup */

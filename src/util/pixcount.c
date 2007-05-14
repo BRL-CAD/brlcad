@@ -43,7 +43,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "bu.h"
-#include "redblack.h"
 
 
 struct pixel {
