@@ -69,7 +69,7 @@ namespace brlcad {
     //   spherical surface
     //   toroidal surface
 
-    debug("########################### E X T R A C T   F A C E"); 
+    debug("########################## E X T R A C T   F A C E"); 
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
         
@@ -88,11 +88,9 @@ namespace brlcad {
   }
 
   int
-  BrepHandler::extractLine(const Pointer& ptr, point_t start, point_t end) 
+  BrepHandler::extractLine(const ParameterData& params) 
   {
-    DirectoryEntry* de = _iges->getDirectoryEntry(ptr);
-    ParameterData params;
-    _iges->getParameter(de->paramData(), params);
+    point_t start, end;
     start[0] = params.getReal(1);
     start[1] = params.getReal(2);
     start[2] = params.getReal(3);
@@ -104,6 +102,15 @@ namespace brlcad {
   }
 
   int
+  BrepHandler::extractLine(const Pointer& ptr) 
+  {
+    DirectoryEntry* de = _iges->getDirectoryEntry(ptr);
+    ParameterData params;
+    _iges->getParameter(de->paramData(), params);
+    return extractLine(params);
+  }
+
+  int
   BrepHandler::extractSurfaceOfRevolution(const ParameterData& params) {
       Pointer linePtr = params.getPointer(1);
       Pointer curvePtr = params.getPointer(2);
@@ -111,8 +118,7 @@ namespace brlcad {
       double endAngle = params.getReal(4);
       
       // load the line (axis of revolution)
-      point_t start, end;
-      int line = extractLine(linePtr, start, end);
+      int line = extractLine(linePtr);
       
       // load the curve (generatrix)
       int curve = extractCurve(_iges->getDirectoryEntry(curvePtr), false);
@@ -343,24 +349,71 @@ namespace brlcad {
 
   }
 
+  int
+  BrepHandler::extractCircularArc(const DirectoryEntry* de, const ParameterData& params) {
+    point_t center, start, end;
+    double offset_z = params.getReal(1);
+    center[X] = params.getReal(2);
+    center[Y] = params.getReal(3);
+    center[Z] = offset_z;
+    start[X]  = params.getReal(4);
+    start[Y]  = params.getReal(5);
+    start[Z]  = offset_z;
+    end[X]    = params.getReal(6);
+    end[Y]    = params.getReal(7);
+    end[Z]    = offset_z;
+
+    mat_t xform;
+    _iges->getTransformation(de->xform(), xform);
+
+    // choose the circle/interval representation
+    // so, calculate the circle params, and then the angle the arc subtends
+    double dx = start[X] - center[X];
+    double dy = start[Y] - center[Y];
+    double radius = sqrt(dx*dx + dy*dy);
+    
+    point_t tcenter, tstart, tend;
+    MAT4X3PNT(tcenter, xform, center);
+    MAT4X3PNT(tstart, xform, start);
+    MAT4X3PNT(tend, xform, end);
+    
+    return handleCircularArc(radius, tcenter, tstart, tend);
+  }
+
   int 
   BrepHandler::extractCurve(const DirectoryEntry* de, bool isISO) {
+    debug("########################## E X T R A C T   C U R V E");
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
     switch (de->type()) {
-
+    case CircularArc: 
+      debug("\tcircular arc");
+      return extractCircularArc(de, params);
+    case CompositeCurve:
+      debug("\tcomposite curve");
+      break;
+    case ConicArc:
+      debug("\tconic arc");
+      break;
+    case CopiousData:
+      debug("\tcopious data");
+      // 11: 2d path
+      // 12: 3d path
+      // 63: simple closed planar curve
+      break;
+    case Line: 
+      debug("\tline");
+      return extractLine(params);
+    case ParametricSplineCurve:
+      debug("\tparametric spline curve");
+      break;
+    case RationalBSplineCurve:
+      debug("\trational b-spline curve");
+      break;
+    case OffsetCurve:
+      debug("\toffset curve");
+      break;
     }
-    // spec says the curve may be:
-    //   100 Circular Arc 
-    //   102 Composite Curve 
-    //   104 Conic Arc 
-    //   106/11 2D Path 
-    //   106/12 3D Path 
-    //   106/63 Simple Closed Planar Curve 
-    //   110 Line 
-    //   112 Parametric Spline Curve 
-    //   126 Rational B-Spline Curve 
-    //   130 Offset Curve 
     return 0;
   }
 

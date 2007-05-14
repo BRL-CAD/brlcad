@@ -517,7 +517,7 @@ namespace brlcad {
     virtual int handleToroidalSurface() = 0;    
 
     // curve handlers (refactor to CurveHandler class?)
-    virtual int handleCircularArc() = 0;
+    virtual int handleCircularArc(double radius, point_t center, point_t start, point_t end) = 0;
     virtual int handleCompositeCurve() = 0;
     virtual int handleConicArc() = 0;
     virtual int handle2DPath() = 0;
@@ -540,8 +540,10 @@ namespace brlcad {
     virtual void extractEdge(const DirectoryEntry* de);
     virtual void extractVertex(const DirectoryEntry* de);
     virtual int  extractCurve(const DirectoryEntry* de, bool isIso);
-
-    virtual int  extractLine(const Pointer& ptr, point_t start, point_t end);    
+    
+    virtual int  extractCircularArc(const DirectoryEntry* de, const ParameterData& params);
+    virtual int  extractLine(const ParameterData& params);
+    virtual int  extractLine(const Pointer& ptr);    
     virtual int  extractSurfaceOfRevolution(const ParameterData& params);
     virtual int  extractRationalBSplineSurface(const ParameterData& params);
 
@@ -583,6 +585,7 @@ namespace brlcad {
     void find(IGESEntity id, DEList& outList);
     void getParameter(const Pointer& ptr, ParameterData& outParam);
     DirectoryEntry* getDirectoryEntry(const Pointer& ptr);
+    void getTransformation(const Pointer& ptr, mat_t xform);
     
   protected:
     void readStart(FILE* in);

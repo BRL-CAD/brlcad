@@ -1,6 +1,8 @@
 
 #include "brlcad.hpp"
 
+#define PT(p) p[X] << "," << p[Y] << "," << p[Z]
+
 namespace brlcad {
 
   BRLCADBrepHandler::BRLCADBrepHandler() {
@@ -103,7 +105,15 @@ namespace brlcad {
   BRLCADBrepHandler::handleToroidalSurface() { return 0; }    
 
   int
-  BRLCADBrepHandler::handleCircularArc() { return 0; }
+  BRLCADBrepHandler::handleCircularArc(double radius,
+				       point_t center,
+				       point_t start,
+				       point_t end) { 
+    debug("handleCircularArc");
+    debug("radius: " << radius);
+    debug("center: " << PT(center));
+    return 0; 
+  }
 
   int
   BRLCADBrepHandler::handleCompositeCurve() { return 0; }

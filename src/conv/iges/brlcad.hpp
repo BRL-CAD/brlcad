@@ -15,7 +15,7 @@ namespace brlcad {
     int handleLoop(bool isOuter, int faceIndex);
     int handleEdge(int edgeIndex);
     int handleVertex(int pointIndex);
-    int handlePoint(double x, double y, double z); // return index
+    int handlePoint(double x, double y, double z);
 
 
     int handleParametricSplineSurface();
@@ -42,7 +42,7 @@ namespace brlcad {
     int handleSphericalSurface();
     int handleToroidalSurface();    
 
-    int handleCircularArc();
+    int handleCircularArc(double radius, point_t center, point_t start, point_t end);
     int handleCompositeCurve();
     int handleConicArc();
     int handle2DPath();
