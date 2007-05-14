@@ -48,10 +48,9 @@
 static char buffer[CR_BUFSIZE] = {0};
 static FILE *fp = NULL;
 static FILE *popenfp = NULL;
-static int result;
 static time_t now;
-
 static const char *path = NULL;
+
 
 /**
  * b u _ c r a s h r e p o r t
@@ -78,24 +77,26 @@ bu_crashreport(const char *filename)
     }
 
     /* vat time ist? */
-    now = time(NULL);
+    (void)time(&now);
 
     path = bu_which(bu_argv0(NULL));
 
-    /* print the report header */
-    result = fprintf(fp, "******************************************\n\n"
-		     "%s\n"		/* version info */
-		     "Command: %s\n"	/* argv0 */
-		     "Process: %d\n"	/* pid */
-		     "Path: %s\n"	/* which binary */
-		     "Date: %s\n",	/* date/time */
-		     brlcad_ident("Crash Report"),
-		     bu_argv0(NULL),
-		     bu_process_id(),
-		     path ? path : "Unknown",
-		     ctime(&now));
+    /* do our own expansion to avoid heap allocation */
+    snprintf(buffer, CR_BUFSIZE, "******************************************\n\n"
+	     "%s\n"		/* version info */
+	     "Command: %s\n"	/* argv0 */
+	     "Process: %d\n"	/* pid */
+	     "Path: %s\n"	/* which binary */
+	     "Date: %s\n",	/* date/time */
+	     brlcad_ident("Crash Report"),
+	     bu_argv0(NULL),
+	     bu_process_id(),
+	     path ? path : "Unknown",
+	     ctime(&now));
 
-    if (result <= 0) {
+    /* print the report header */
+    if (fprintf(fp, buffer) <= 0) {
+	/* cannot bomb */
 	bu_log("ERROR: Unable to write to crash report file [%s]\n", filename);
 	(void)fclose(fp);
 	fp = NULL;
@@ -137,6 +138,9 @@ bu_crashreport(const char *filename)
 	} else {
 	    fprintf(fp, "\nSystem information:\n");
 	    while (bu_fgets(buffer, CR_BUFSIZE, popenfp)) {
+		if ((strlen(buffer) == 0) || ((strlen(buffer) == 1) && (buffer[0] = '\n'))) {
+		    continue;
+		}
 		fprintf(fp, "%s", buffer);
 	    }
 	}
@@ -145,11 +149,11 @@ bu_crashreport(const char *filename)
 	path = NULL;
     }
 
+    memset(buffer, 0, CR_BUFSIZE);
     fprintf(fp, "\n");
     fflush(fp);
     (void)fclose(fp);
     fp = NULL;
-    memset(buffer, 0, CR_BUFSIZE);
 
     /* success */
     return 1;
