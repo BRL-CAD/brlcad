@@ -213,7 +213,10 @@ extern Tcl_Interp *interp;
 extern int              tran(), irot();
 extern void             mged_setup(void);
 extern void		dir_build(), buildHrot(fastf_t *, double, double, double), dozoom(int which_eye),
-			pr_schain(struct solid *startp, int lvl), itoa(int n, char *s, int w);
+			pr_schain(struct solid *startp, int lvl);
+#ifndef _WIN32
+extern void itoa(int n, char *s, int w);
+#endif
 extern void		eraseobj(register struct directory **dpp), eraseobjall(register struct directory **dpp), mged_finish(int exitcode), slewview(fastf_t *view_pos),
 			mmenu_init(void), moveHinstance(struct directory *cdp, struct directory *dp, matp_t xlate), moveHobj(register struct directory *dp, matp_t xlate),
 			quit(void), refresh(void), rej_sedit(), sedit(void),
