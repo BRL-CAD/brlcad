@@ -29,7 +29,7 @@
 proc LoadArcherLibs {dir} {
     global tcl_platform
 
-    if {$tcl_platform(os) == "Windows NT"} {
+    if {$tcl_platform(platform) == "windows"} {
 	if {[info exists Archer::debug] && $Archer::debug} {
 	    load [file join $dir bin itcl33_d.dll]
 	    load [file join $dir bin itk33_d.dll]
@@ -48,12 +48,12 @@ proc LoadArcherLibs {dir} {
 	    load [file join $dir bin BLT24.dll]
 
 	    # Load Brlcad libraries
-	    load [file join $dir bin libbu]
-	    load [file join $dir bin libbn]
-	    load [file join $dir bin libsysv]
-	    load [file join $dir bin librt]
-	    load [file join $dir bin libdm]
-	    load [file join $dir bin tkimg]
+	    load [file join $dir bin libbu.dll]
+	    load [file join $dir bin libbn.dll]
+	    load [file join $dir bin libsysv.dll]
+	    load [file join $dir bin librt.dll]
+	    load [file join $dir bin libdm.dll]
+	    load [file join $dir bin tkimg.dll]
 	}
     } else {
 	if {[info exists $Archer::debug] && $Archer::debug} {

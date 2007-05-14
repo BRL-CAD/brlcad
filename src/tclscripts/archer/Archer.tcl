@@ -47,7 +47,7 @@ package provide Archer 1.0
 
 namespace eval Archer {
     if {![info exists parentClass]} {
-	if {$tcl_platform(os) == "Windows NT"} {
+	if {$tcl_platform(platform) == "windows"} {
 	    set parentClass itk::Toplevel
 	    set inheritFromToplevel 1
 	} else {
@@ -315,7 +315,7 @@ namespace eval Archer {
 
 	common MEASURING_STICK "archer_measuring_stick"
 
-	if {$tcl_platform(os) != "Windows NT"} {
+	if {$tcl_platform(platform) != "windows"} {
 	    set brlcadDataPath [bu_brlcad_data ""]
 	    set SystemWindowFont Helvetica
 	    set SystemWindowText black
@@ -6674,7 +6674,7 @@ Popup Menu    Right or Ctrl-Left
 
     after idle "$itk_component(aboutDialog) center; $itk_component(mouseOverridesDialog) center"
 
-#    if {$tcl_platform(os) == "Windows NT"} {
+#    if {$tcl_platform(platform) == "windows"} {
 #	wm attributes $itk_component(aboutDialog) -topmost 1
 #	wm attributes $itk_component(mouseOverridesDialog) -topmost 1
 #    }
@@ -7680,7 +7680,7 @@ Popup Menu    Right or Ctrl-Left
     global env
     global tcl_platform
 
-    if {$tcl_platform(os) == "Windows NT"} {
+    if {$tcl_platform(platform) == "windows"} {
 #	exec hh [file join $env(ARCHER_HOME) $brlcadDataPath doc html manuals archer Archer_Documentation.chm] &
 	exec hh [file join $brlcadDataPath doc html manuals archer Archer_Documentation.chm] &
     }
