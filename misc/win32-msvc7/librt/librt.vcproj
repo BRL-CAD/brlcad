@@ -22,7 +22,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include,../../../src/librt,../../../src/other/libtcl/generic,../../../src/other/libtcl/win"
+				AdditionalIncludeDirectories="../../../include;../../../src/librt;../../../src/other/tcl/generic;../../../src/other/tcl/win"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;RT_EXPORT_DLL;DB5_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;NEW_TOPS_BEHAVIOR;HAVE_CONFIG_H;BRLCADBUILD"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
@@ -39,7 +39,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84.lib libbu.lib libbn.lib libsysv.lib"
+				AdditionalDependencies="tcl84.lib libbu.lib libbn.lib libsysv.lib libregex.lib"
 				OutputFile=".\Release/librt.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -2617,6 +2617,9 @@ copy &quot;$(TargetDir)&quot;librt_d.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\transform.c">
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\tree.c">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -2655,7 +2658,7 @@ copy &quot;$(TargetDir)&quot;librt_d.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\vers_win.c">
+				RelativePath="..\..\..\src\librt\vers.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\view_obj.c">

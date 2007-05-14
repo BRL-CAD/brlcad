@@ -38,7 +38,6 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84_d.lib tclstub84_d.lib"
 				OutputFile="Debug/libz_d.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -108,7 +107,6 @@ copy &quot;$(TargetDir)&quot;libz_d.lib ..\..\..\lib
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84.lib tclstub84.lib"
 				OutputFile=".\Release/libz.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"

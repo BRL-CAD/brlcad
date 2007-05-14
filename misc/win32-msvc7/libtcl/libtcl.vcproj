@@ -21,7 +21,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../include,../../../src/other/libtcl/generic,../../../src/other/libtcl/win"
+				AdditionalIncludeDirectories="../../../include,../../../src/other/tcl/generic,../../../src/other/tcl/win"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;TCL_PIPE_DLL=\&quot;tclpipe.dll\&quot;;TCL_THREADS=1;BUILD_tcl;IGNORE_CONFIG_H"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -92,8 +92,8 @@ copy &quot;$(TargetDir)&quot;tcl84_d.lib ..\..\..\lib
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include,../../../src/other/libtcl/generic,../../../src/other/libtcl/win"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TCL_PIPE_DLL=\&quot;tclpipe.dll\&quot;;TCL_THREADS=1;BUILD_tcl;IGNORE_CONFIG_H"
+				AdditionalIncludeDirectories="../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tcl/libtommath;../../../include"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TCL_PIPE_DLL=\&quot;tclpipe.dll\&quot;;TCL_THREADS=1;BUILD_tcl;IGNORE_CONFIG_H;CFG_RUNTIME_BINDIR=0;CFG_RUNTIME_DOCDIR=0;CFG_RUNTIME_INCDIR=0;CFG_RUNTIME_LIBDIR=0;CFG_RUNTIME_SCRDIR=0;CFG_INSTALL_BINDIR=0;CFG_INSTALL_DOCDIR=0;CFG_INSTALL_INCDIR=0;CFG_INSTALL_LIBDIR=0;CFG_INSTALL_SCRDIR=0;TCL_CFGVAL_ENCODING=\&quot;UTF-8\&quot;"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
@@ -137,7 +137,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories="../../../include"/>
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tcl/win/rc"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -157,67 +157,190 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp">
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\regcomp.c">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_PIPE_DLL=\&quot;tclpipe.dll\&quot;;TCL_THREADS=1;BUILD_tcl;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""/>
-				</FileConfiguration>
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_fast_s_mp_mul_digs.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\regerror.c">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_PIPE_DLL=\&quot;tclpipe.dll\&quot;;TCL_THREADS=1;BUILD_tcl;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""/>
-				</FileConfiguration>
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_fast_s_mp_sqr.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\regexec.c">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;TCL_PIPE_DLL=\&quot;tclpipe.dll\&quot;;TCL_THREADS=1;BUILD_tcl;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""/>
-				</FileConfiguration>
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_add.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_add_d.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_and.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_clamp.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_clear.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_clear_multi.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_cmp.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_cmp_d.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_cmp_mag.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_copy.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_count_bits.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_div.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_div_2.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_div_2d.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_div_3.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_div_d.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_exch.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_expt_d.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_grow.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_init.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_init_copy.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_init_multi.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\regfree.c">
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_init_set.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_init_size.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_karatsuba_mul.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_karatsuba_sqr.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_lshd.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_mod.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_mod_2d.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_mul.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_mul_2.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_mul_2d.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_mul_d.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_neg.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_or.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_radix_size.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_radix_smap.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_read_radix.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_rshd.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_set.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_shrink.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_sqr.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_sqrt.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_sub.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_sub_d.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_to_unsigned_bin.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_to_unsigned_bin_n.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_toom_mul.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_toom_sqr.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_toradix_n.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_unsigned_bin_size.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_xor.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_mp_zero.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_reverse.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_s_mp_add.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_s_mp_mul_digs.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_s_mp_sqr.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bn_s_mp_sub.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\libtommath\bncore.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\generic\regcomp.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -237,7 +360,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\compat\strftime.c">
+				RelativePath="..\..\..\src\other\tcl\generic\regerror.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -257,7 +380,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\compat\strtoll.c">
+				RelativePath="..\..\..\src\other\tcl\generic\regexec.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -277,7 +400,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\compat\strtoull.c">
+				RelativePath="..\..\..\src\other\tcl\generic\regfree.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -297,7 +420,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclAlloc.c">
+				RelativePath="..\..\..\src\other\tcl\compat\strtoll.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -317,7 +440,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclAsync.c">
+				RelativePath="..\..\..\src\other\tcl\compat\strtoull.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -337,7 +460,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclBasic.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclAlloc.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -357,7 +480,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclBinary.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclAsync.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -377,7 +500,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclCkalloc.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclBasic.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -397,7 +520,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclClock.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclBinary.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -417,7 +540,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclCmdAH.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclCkalloc.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -437,7 +560,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclCmdIL.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclClock.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -457,7 +580,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclCmdMZ.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclCmdAH.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -477,7 +600,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclCompCmds.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclCmdIL.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -497,7 +620,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclCompExpr.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclCmdMZ.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -517,7 +640,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclCompile.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclCompCmds.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -537,7 +660,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclDate.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclCompExpr.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -557,7 +680,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclEncoding.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclCompile.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -575,9 +698,12 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\generic\tclConfig.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclEnv.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclDate.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -597,7 +723,10 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclEvent.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclDictObj.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\generic\tclEncoding.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -617,7 +746,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclExecute.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclEnv.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -637,7 +766,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclFCmd.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclEvent.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -657,7 +786,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclFileName.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclExecute.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -677,7 +806,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclGet.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclFCmd.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -697,7 +826,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclHash.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclFileName.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -717,7 +846,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclHistory.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclGet.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -737,7 +866,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclIndexObj.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclHash.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -757,7 +886,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclInterp.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclHistory.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -777,7 +906,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclIO.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclIndexObj.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -797,7 +926,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclIOCmd.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclInterp.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -817,7 +946,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclIOGT.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclIO.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -837,7 +966,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclIOSock.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclIOCmd.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -857,7 +986,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclIOUtil.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclIOGT.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -875,9 +1004,12 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\generic\tclIORChan.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclLink.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclIOSock.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -897,7 +1029,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclListObj.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclIOUtil.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -917,7 +1049,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclLiteral.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclLink.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -937,7 +1069,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclLoad.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclListObj.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -957,7 +1089,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclMain.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclLiteral.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -977,7 +1109,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclNamesp.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclLoad.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -997,7 +1129,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclNotify.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclMain.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1015,9 +1147,12 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\generic\tclMathOp.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclObj.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclNamesp.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1037,7 +1172,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclPanic.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclNotify.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1057,7 +1192,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclParse.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclObj.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1077,7 +1212,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclParseExpr.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclPanic.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1097,7 +1232,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclPipe.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclParse.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1117,7 +1252,10 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclPkg.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclPathObj.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\generic\tclPipe.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1137,7 +1275,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclPosixStr.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclPkg.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1155,9 +1293,12 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\generic\tclPkgConfig.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclPreserve.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclPosixStr.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1177,7 +1318,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclProc.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclPreserve.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1197,7 +1338,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclRegexp.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclProc.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1217,7 +1358,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclResolve.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclRegexp.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1237,7 +1378,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclResult.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclResolve.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1257,7 +1398,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclScan.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclResult.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1277,7 +1418,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclStringObj.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclScan.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1297,7 +1438,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclStubInit.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclStringObj.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1315,9 +1456,12 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\generic\tclStrToD.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclStubLib.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclStubInit.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1337,7 +1481,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclThread.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclStubLib.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1357,7 +1501,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclThreadAlloc.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclThread.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1377,7 +1521,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclThreadJoin.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclThreadAlloc.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1397,7 +1541,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclTimer.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclThreadJoin.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1417,7 +1561,10 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclUtf.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclThreadStorage.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\generic\tclTimer.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1435,9 +1582,15 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\generic\tclTomMathInterface.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tcl\generic\tclTrace.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclUtil.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclUtf.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1457,7 +1610,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclVar.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclUtil.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1477,7 +1630,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWin32Dll.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclVar.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1497,7 +1650,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWinChan.c">
+				RelativePath="..\..\..\src\other\tcl\win\tclWin32Dll.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1517,7 +1670,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWinConsole.c">
+				RelativePath="..\..\..\src\other\tcl\win\tclWinChan.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1537,7 +1690,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWinError.c">
+				RelativePath="..\..\..\src\other\tcl\win\tclWinConsole.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1557,7 +1710,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWinFCmd.c">
+				RelativePath="..\..\..\src\other\tcl\win\tclWinError.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1577,7 +1730,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWinFile.c">
+				RelativePath="..\..\..\src\other\tcl\win\tclWinFCmd.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1597,7 +1750,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWinInit.c">
+				RelativePath="..\..\..\src\other\tcl\win\tclWinFile.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1617,7 +1770,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWinLoad.c">
+				RelativePath="..\..\..\src\other\tcl\win\tclWinInit.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1637,7 +1790,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWinMtherr.c">
+				RelativePath="..\..\..\src\other\tcl\win\tclWinLoad.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1657,7 +1810,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWinNotify.c">
+				RelativePath="..\..\..\src\other\tcl\win\tclWinNotify.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1677,7 +1830,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWinPipe.c">
+				RelativePath="..\..\..\src\other\tcl\win\tclWinPipe.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1697,7 +1850,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWinSerial.c">
+				RelativePath="..\..\..\src\other\tcl\win\tclWinSerial.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1717,7 +1870,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWinSock.c">
+				RelativePath="..\..\..\src\other\tcl\win\tclWinSock.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1737,7 +1890,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWinThrd.c">
+				RelativePath="..\..\..\src\other\tcl\win\tclWinThrd.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1757,7 +1910,7 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclWinTime.c">
+				RelativePath="..\..\..\src\other\tcl\win\tclWinTime.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1781,20 +1934,20 @@ copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tcl.rc">
+				RelativePath="..\..\..\src\other\tcl\win\tcl.rc">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
 						Name="VCResourceCompilerTool"
 						PreprocessorDefinitions=""
-						AdditionalIncludeDirectories="\Documents and Settings\bob\src\Crossbow\Archer\brlcad\src\other\libtcl\win"/>
+						AdditionalIncludeDirectories="\Documents and Settings\bob\src\Crossbow\Archer\brlcad\src\other\tcl\win"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
 						Name="VCResourceCompilerTool"
 						PreprocessorDefinitions=""
-						AdditionalIncludeDirectories="\Documents and Settings\bob\src\Crossbow\Archer\brlcad\src\other\libtcl\win"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 		</Filter>

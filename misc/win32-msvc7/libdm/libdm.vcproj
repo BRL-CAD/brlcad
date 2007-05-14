@@ -22,7 +22,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../src/other/libtcl/generic,../../../src/other/libtcl/win,../../../src/other/libtk/generic,../../../src/other/libtk/win,../../../src/other/libtk/xlib,../../../include"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/libz;../../../src/other/libpng;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/xlib"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DM_EXPORT_DLL;DM_WGL;IF_WGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
@@ -232,25 +232,6 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libdm\dm-wgl.c">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;DM_EXPORT_DLL;DM_WGL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\..\src\libdm\dm-plot.c">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -287,6 +268,9 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;DM_EXPORT_DLL;DM_WGL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libdm\dm-wgl.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\libdm\dm_obj.c">
@@ -384,7 +368,7 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libdm\vers_win.c">
+				RelativePath="..\..\..\src\libdm\vers.c">
 			</File>
 		</Filter>
 		<Filter

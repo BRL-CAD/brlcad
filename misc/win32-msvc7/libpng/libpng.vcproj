@@ -38,7 +38,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libz_d.lib tcl84_d.lib tclstub84_d.lib"
+				AdditionalDependencies="libz_d.lib "
 				OutputFile="Debug/libpng_d.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -81,7 +81,7 @@ copy &quot;$(TargetDir)&quot;libpng_d.lib ..\..\..\lib
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/libz"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PNG_DLL;PNG_BUILD_DLL;PNG_NO_MODULEDEF;ZLIB_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;PACKAGE_NAME=\&quot;libpng\&quot;"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
@@ -99,7 +99,7 @@ copy &quot;$(TargetDir)&quot;libpng_d.lib ..\..\..\lib
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libz.lib tcl84.lib tclstub84.lib"
+				AdditionalDependencies="libz.lib "
 				OutputFile=".\Release/libpng.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"

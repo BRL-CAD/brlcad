@@ -21,7 +21,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../include,../../../src/other/libtk/generic,../../../src/other/libtk/win,../../../src/other/libtk/bitmaps,../../../src/other/libtk/xlib,../../../src/other/libtcl/generic,../../../src/other/libtcl/win"
+				AdditionalIncludeDirectories="../../../include,../../../src/other/tk/generic,../../../src/other/tk/win,../../../src/other/tk/bitmaps,../../../src/other/tk/xlib,../../../src/other/tcl/generic,../../../src/other/tcl/win"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -94,7 +94,7 @@ copy &quot;$(TargetDir)&quot;tk84_d.lib ..\..\..\lib
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include,../../../src/other/libtk/generic,../../../src/other/libtk/win,../../../src/other/libtk/bitmaps,../../../src/other/libtk/xlib,../../../src/other/libtcl/generic,../../../src/other/libtcl/win"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib;../../../src/other/tcl/generic;../../../src/other/tcl/win"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
@@ -141,7 +141,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories="../../../include"/>
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/win/rc;../../../src/other/tcl/generic"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -161,7 +161,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp">
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\stubs.c">
+				RelativePath="..\..\..\src\other\tk\win\stubs.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -181,7 +181,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tk3d.c">
+				RelativePath="..\..\..\src\other\tk\generic\tk3d.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -201,7 +201,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkArgv.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkArgv.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -221,7 +221,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkAtom.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkAtom.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -241,7 +241,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkBind.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkBind.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -261,7 +261,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkBitmap.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkBitmap.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -281,7 +281,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkButton.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkButton.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -301,7 +301,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkCanvArc.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkCanvArc.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -321,7 +321,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkCanvas.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkCanvas.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -341,7 +341,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkCanvBmap.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkCanvBmap.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -361,7 +361,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkCanvImg.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkCanvImg.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -381,7 +381,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkCanvLine.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkCanvLine.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -401,7 +401,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkCanvPoly.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkCanvPoly.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -421,7 +421,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkCanvPs.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkCanvPs.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -441,7 +441,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkCanvText.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkCanvText.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -461,7 +461,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkCanvUtil.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkCanvUtil.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -481,7 +481,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkCanvWind.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkCanvWind.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -501,7 +501,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkClipboard.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkClipboard.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -521,7 +521,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkCmds.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkCmds.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -541,7 +541,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkColor.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkColor.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -561,7 +561,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkConfig.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkConfig.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -581,7 +581,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkConsole.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkConsole.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -601,7 +601,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkCursor.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkCursor.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -621,7 +621,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkEntry.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkEntry.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -641,7 +641,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkError.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkError.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -661,7 +661,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkEvent.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkEvent.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -681,7 +681,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkFileFilter.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkFileFilter.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -701,7 +701,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkFocus.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkFocus.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -721,7 +721,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkFont.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkFont.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -741,7 +741,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkFrame.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkFrame.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -761,7 +761,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkGC.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkGC.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -781,7 +781,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkGeometry.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkGeometry.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -801,7 +801,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkGet.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkGet.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -821,7 +821,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkGrab.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkGrab.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -841,7 +841,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkGrid.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkGrid.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -861,7 +861,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkImage.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkImage.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -881,7 +881,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkImgBmap.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkImgBmap.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -901,7 +901,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkImgGIF.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkImgGIF.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -921,7 +921,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkImgPhoto.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkImgPhoto.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -941,7 +941,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkImgPPM.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkImgPPM.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -961,7 +961,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkImgUtil.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkImgUtil.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -981,7 +981,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkListbox.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkListbox.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1001,7 +1001,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkMacWinMenu.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkMacWinMenu.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1021,7 +1021,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkMain.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkMain.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1041,7 +1041,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkMenu.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkMenu.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1061,7 +1061,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkMenubutton.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkMenubutton.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1081,7 +1081,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkMenuDraw.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkMenuDraw.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1101,7 +1101,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkMessage.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkMessage.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1121,7 +1121,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkObj.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkObj.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1141,7 +1141,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkOldConfig.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkOldConfig.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1161,7 +1161,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkOption.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkOption.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1181,7 +1181,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkPack.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkPack.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1201,7 +1201,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkPanedWindow.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkPanedWindow.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1221,7 +1221,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkPlace.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkPlace.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1241,7 +1241,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkPointer.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkPointer.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1261,7 +1261,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkRectOval.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkRectOval.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1281,7 +1281,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkScale.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkScale.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1301,7 +1301,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkScrollbar.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkScrollbar.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1321,7 +1321,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkSelect.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkSelect.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1341,7 +1341,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkStubInit.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkStubInit.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1361,7 +1361,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkStubLib.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkStubLib.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1381,7 +1381,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkStyle.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkStyle.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1401,7 +1401,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkText.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkText.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1421,7 +1421,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkTextBTree.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkTextBTree.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1441,7 +1441,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkTextDisp.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkTextDisp.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1461,7 +1461,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkTextImage.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkTextImage.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1481,7 +1481,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkTextIndex.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkTextIndex.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1501,7 +1501,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkTextMark.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkTextMark.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1521,7 +1521,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkTextTag.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkTextTag.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1541,7 +1541,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkTextWind.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkTextWind.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1561,7 +1561,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkTrig.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkTrig.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1581,7 +1581,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkUndo.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkUndo.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1601,7 +1601,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\unix\tkUnixMenubu.c">
+				RelativePath="..\..\..\src\other\tk\unix\tkUnixMenubu.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1621,7 +1621,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\unix\tkUnixScale.c">
+				RelativePath="..\..\..\src\other\tk\unix\tkUnixScale.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1641,7 +1641,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkUtil.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkUtil.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1661,7 +1661,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkVisual.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkVisual.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1681,7 +1681,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWin32Dll.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWin32Dll.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1701,7 +1701,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWin3d.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWin3d.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1721,7 +1721,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinButton.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinButton.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1741,7 +1741,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinClipboard.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinClipboard.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1761,7 +1761,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinColor.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinColor.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1781,7 +1781,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinConfig.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinConfig.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1801,7 +1801,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinCursor.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinCursor.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1821,7 +1821,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinDialog.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinDialog.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1841,7 +1841,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\generic\tkWindow.c">
+				RelativePath="..\..\..\src\other\tk\generic\tkWindow.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1861,7 +1861,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinDraw.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinDraw.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1881,7 +1881,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinEmbed.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinEmbed.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1901,7 +1901,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinFont.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinFont.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1921,7 +1921,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinImage.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinImage.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1941,7 +1941,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinInit.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinInit.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1961,7 +1961,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinKey.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinKey.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -1981,7 +1981,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinMenu.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinMenu.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -2001,7 +2001,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinPixmap.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinPixmap.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -2021,7 +2021,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinPointer.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinPointer.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -2041,7 +2041,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinRegion.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinRegion.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -2061,7 +2061,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinScrlbr.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinScrlbr.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -2081,7 +2081,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinSend.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinSend.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -2101,7 +2101,10 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinWindow.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinSendCom.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\win\tkWinWindow.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -2121,7 +2124,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinWm.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinWm.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -2141,7 +2144,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\tkWinX.c">
+				RelativePath="..\..\..\src\other\tk\win\tkWinX.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -2159,9 +2162,111 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkBlink.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkButton.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkCache.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkClamTheme.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkClassicTheme.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkDefaultTheme.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkElements.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkEntry.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkFrame.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkImage.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkInit.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkLabel.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkLayout.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkManager.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkNotebook.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkPanedwindow.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkProgress.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkScale.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkScroll.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkScrollbar.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkSeparator.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkSquare.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkState.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkStubInit.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkStubLib.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkTagSet.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkTheme.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkTrace.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkTrack.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkTreeview.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\generic\ttk\ttkWidget.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\win\ttkWinMonitor.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\win\ttkWinTheme.c">
+			</File>
+			<File
+				RelativePath="..\..\..\src\other\tk\win\ttkWinXPTheme.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\xlib\xcolors.c">
+				RelativePath="..\..\..\src\other\tk\xlib\xcolors.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -2181,7 +2286,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\xlib\xdraw.c">
+				RelativePath="..\..\..\src\other\tk\xlib\xdraw.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -2201,7 +2306,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\xlib\xgc.c">
+				RelativePath="..\..\..\src\other\tk\xlib\xgc.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -2221,7 +2326,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\xlib\ximage.c">
+				RelativePath="..\..\..\src\other\tk\xlib\ximage.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -2241,7 +2346,7 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\xlib\xutil.c">
+				RelativePath="..\..\..\src\other\tk\xlib\xutil.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -2265,257 +2370,257 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\buttons.bmp">
+				RelativePath="..\..\..\src\other\tk\win\rc\buttons.bmp">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor00.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor00.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor02.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor02.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor04.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor04.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor06.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor06.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor08.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor08.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor0a.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor0a.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor0c.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor0c.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor0e.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor0e.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor10.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor10.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor12.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor12.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor14.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor14.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor16.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor16.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor18.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor18.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor1a.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor1a.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor1c.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor1c.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor1e.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor1e.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor20.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor20.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor22.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor22.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor24.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor24.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor26.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor26.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor28.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor28.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor2a.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor2a.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor2c.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor2c.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor2e.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor2e.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor30.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor30.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor32.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor32.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor34.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor34.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor36.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor36.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor38.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor38.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor3a.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor3a.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor3c.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor3c.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor3e.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor3e.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor40.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor40.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor42.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor42.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor44.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor44.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor46.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor46.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor48.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor48.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor4a.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor4a.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor4c.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor4c.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor4e.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor4e.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor50.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor50.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor52.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor52.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor54.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor54.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor56.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor56.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor58.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor58.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor5a.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor5a.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor5c.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor5c.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor5e.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor5e.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor60.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor60.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor62.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor62.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor64.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor64.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor66.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor66.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor68.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor68.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor6a.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor6a.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor6c.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor6c.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor6e.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor6e.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor70.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor70.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor72.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor72.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor74.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor74.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor76.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor76.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor78.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor78.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor7a.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor7a.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor7c.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor7c.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor7e.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor7e.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor80.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor80.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor82.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor82.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor84.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor84.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor86.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor86.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor88.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor88.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor8a.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor8a.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor8c.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor8c.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor8e.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor8e.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor90.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor90.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor92.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor92.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor94.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor94.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor96.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor96.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\cursor98.cur">
+				RelativePath="..\..\..\src\other\tk\win\rc\cursor98.cur">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\tk.ico">
+				RelativePath="..\..\..\src\other\tk\win\rc\tk.ico">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\tk.rc">
+				RelativePath="..\..\..\src\other\tk\win\rc\tk.rc">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
 						Name="VCResourceCompilerTool"
 						PreprocessorDefinitions=""
-						AdditionalIncludeDirectories="\Documents and Settings\bob\src\Crossbow\Archer\brlcad\src\other\libtk\win\rc"/>
+						AdditionalIncludeDirectories="\Documents and Settings\bob\src\Crossbow\Archer\brlcad\src\other\tk\win\rc"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
 						Name="VCResourceCompilerTool"
 						PreprocessorDefinitions=""
-						AdditionalIncludeDirectories="\Documents and Settings\bob\src\Crossbow\Archer\brlcad\src\other\libtk\win\rc"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 		</Filter>

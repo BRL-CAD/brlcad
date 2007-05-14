@@ -92,7 +92,7 @@ copy &quot;$(TargetDir)&quot;itcl33_d.lib ..\..\..\lib
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include,../../../src/other/libtcl/generic,../../../src/other/libtcl/win,../../../src/other/incrTcl/itcl/generic"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/incrTcl/itcl/generic"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TCL_THREADS=1;BUILD_itcl;IGNORE_CONFIG_H"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"

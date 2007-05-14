@@ -91,7 +91,7 @@ copy &quot;$(TargetDir)&quot;BLT24_d.lib ..\..\..\lib
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include,../../../src/other/blt/src,../../../src/other/libtk/generic,../../../src/other/libtk/win,../../../src/other/libtk/bitmaps,../../../src/other/libtk/xlib,../../../src/other/libtcl/generic,../../../src/other/libtcl/win"
+				AdditionalIncludeDirectories="../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib;../../../src/other/incrTcl/itcl/generic;../../../src/other/blt/src;../../../include"
 				PreprocessorDefinitions="WIN32;NDEBUG;CONSOLE;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"

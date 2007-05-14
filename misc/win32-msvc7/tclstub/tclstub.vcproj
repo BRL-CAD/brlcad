@@ -124,7 +124,7 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp">
 			<File
-				RelativePath="..\..\..\src\other\libtcl\generic\tclStubLib.c">
+				RelativePath="..\..\..\src\other\tcl\generic\tclStubLib.c">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool

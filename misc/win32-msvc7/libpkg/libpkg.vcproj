@@ -92,7 +92,7 @@ copy &quot;$(TargetDir)&quot;libpkg_d.lib ..\..\..\lib
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../src/other/libtcl/generic,../../../src/other/libtcl/win,../../../include"
+				AdditionalIncludeDirectories="../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PKG_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
@@ -197,7 +197,7 @@ copy &quot;$(TargetDir)&quot;libpkg.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libpkg\vers_win.c">
+				RelativePath="..\..\..\src\libpkg\vers.c">
 			</File>
 		</Filter>
 		<Filter

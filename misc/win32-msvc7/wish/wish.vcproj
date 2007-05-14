@@ -91,7 +91,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include,../../../src/other/libtk/generic,../../../src/other/libtk/win,../../../src/other/libtk/bitmaps,../../../src/other/libtk/xlib,../../../src/other/libtcl/generic,../../../src/other/libtcl/win"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;TCL_THREADS=1;IGNORE_CONFIG_H"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
@@ -135,7 +135,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories="../../../include"/>
+				AdditionalIncludeDirectories="../../../src/other/tcl/generic;../../../src/other/tk/generic;../../../src/other/tk/win"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -155,48 +155,22 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp">
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\winMain.c">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
+				RelativePath="..\..\..\src\other\tk\win\winMain.c">
 			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\wish.ico">
+				RelativePath="..\..\..\src\other\tk\win\rc\wish.ico">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtk\win\rc\wish.rc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCResourceCompilerTool"
-						PreprocessorDefinitions=""
-						AdditionalIncludeDirectories="\Documents and Settings\bob\src\Crossbow\Archer\brlcad\src\other\libtk\win\rc"/>
-				</FileConfiguration>
+				RelativePath="..\..\..\src\other\tk\win\rc\wish.rc">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
 						Name="VCResourceCompilerTool"
-						PreprocessorDefinitions=""
-						AdditionalIncludeDirectories="\Documents and Settings\bob\src\Crossbow\Archer\brlcad\src\other\libtk\win\rc"/>
+						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 		</Filter>

@@ -92,7 +92,7 @@ copy &quot;$(TargetDir)&quot;libbn_d.lib ..\..\..\lib
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../include"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
@@ -637,7 +637,7 @@ copy &quot;$(TargetDir)&quot;libbn.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libbn\vers_win.c">
+				RelativePath="..\..\..\src\libbn\vers.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\libbn\vert_tree.c">

@@ -85,7 +85,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include,../../../src/rt"
+				AdditionalIncludeDirectories="../../../include;../../../src/rt;../../../src/other/tcl/generic"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
@@ -202,9 +202,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\..\src\rt\rtedge_vers_win.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\rt\viewedge.c">

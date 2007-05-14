@@ -423,6 +423,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libpng", "..\libpng\libpng.
 		{02BD806D-906C-4B4A-98CA-165337BCD533} = {02BD806D-906C-4B4A-98CA-165337BCD533}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libregex", "..\libregex\libregex.vcproj", "{DCF397A2-A67E-45CA-9087-840BC223C3DD}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -609,6 +613,10 @@ Global
 		{6C09EE6B-A1A2-4F0D-B7B0-32647987B49A}.Debug.Build.0 = Debug|Win32
 		{6C09EE6B-A1A2-4F0D-B7B0-32647987B49A}.Release.ActiveCfg = Release|Win32
 		{6C09EE6B-A1A2-4F0D-B7B0-32647987B49A}.Release.Build.0 = Release|Win32
+		{DCF397A2-A67E-45CA-9087-840BC223C3DD}.Debug.ActiveCfg = Debug|Win32
+		{DCF397A2-A67E-45CA-9087-840BC223C3DD}.Debug.Build.0 = Debug|Win32
+		{DCF397A2-A67E-45CA-9087-840BC223C3DD}.Release.ActiveCfg = Release|Win32
+		{DCF397A2-A67E-45CA-9087-840BC223C3DD}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

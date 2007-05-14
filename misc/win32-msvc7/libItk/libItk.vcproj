@@ -93,7 +93,7 @@ copy &quot;$(TargetDir)&quot;itk33_d.lib ..\..\..\lib
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include,../../../src/other/libtk/generic,../../../src/other/libtk/win,../../../src/other/libtk/bitmaps,../../../src/other/libtk/xlib,../../../src/other/libtcl/generic,../../../src/other/libtcl/win,../.././brclad/src/other/incrTcl/itcl/generic,../.././brclad/src/other/incrTcl/itk/generic"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/incrTcl/itcl/generic;../../../src/other/incrTcl/itk/generic"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TCL_THREADS=1;BUILD_itk;IGNORE_CONFIG_H"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"

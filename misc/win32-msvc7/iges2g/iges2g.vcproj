@@ -22,7 +22,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../src/conv/iges;../../../include"
+				AdditionalIncludeDirectories="../../../src/conv/iges;../../../include;../../../src/other/tcl/generic"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
@@ -241,9 +241,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\conv\iges\getcurve.c">
-			</File>
-			<File
-				RelativePath="..\..\..\src\conv\iges\iges-g-vers_win.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\conv\iges\iges_types.c">

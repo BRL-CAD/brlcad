@@ -85,7 +85,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../src/conv/iges;../../../include"
+				AdditionalIncludeDirectories="../../../src/conv/iges;../../../include;../../../src/other/tcl/generic"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
@@ -143,9 +143,6 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp">
-			<File
-				RelativePath="..\..\..\src\conv\iges\g-iges-vers_win.c">
-			</File>
 			<File
 				RelativePath="..\..\..\src\conv\iges\g-iges.c">
 			</File>
