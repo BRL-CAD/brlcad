@@ -13,8 +13,9 @@ namespace brlcad {
     void handleShell(bool isVoid, bool orient);
     int handleFace(bool orient, int surfIndex);
     int handleLoop(bool isOuter, int faceIndex);
-    int handleEdge(int edgeIndex);
-    int handleVertex(int pointIndex);
+    int handleEdge(int curve, int initVertex, int endVertex);
+    int handleEdgeUse(int edge, bool orientWithCurve);
+    int handleVertex(point_t pt);
     int handlePoint(double x, double y, double z);
 
 

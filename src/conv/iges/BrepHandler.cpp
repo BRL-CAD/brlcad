@@ -88,15 +88,17 @@ namespace brlcad {
   }
 
   int
-  BrepHandler::extractLine(const ParameterData& params) 
+  BrepHandler::extractLine(const DirectoryEntry* de, const ParameterData& params)
   {
     point_t start, end;
-    start[0] = params.getReal(1);
-    start[1] = params.getReal(2);
-    start[2] = params.getReal(3);
-    end[0] = params.getReal(4);
-    end[1] = params.getReal(5);
-    end[2] = params.getReal(6);
+    start[X] = params.getReal(1);
+    start[Y] = params.getReal(2);
+    start[Z] = params.getReal(3);
+    end[X] = params.getReal(4);
+    end[Y] = params.getReal(5);
+    end[Z] = params.getReal(6);
+
+    // probably need to transform this line?
 
     return handleLine(start, end);
   }
@@ -107,7 +109,7 @@ namespace brlcad {
     DirectoryEntry* de = _iges->getDirectoryEntry(ptr);
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
-    return extractLine(params);
+    return extractLine(de, params);
   }
 
   int
@@ -271,12 +273,16 @@ namespace brlcad {
   };
       
 
-  class EdgeUse {
-  public:
-    EdgeUse(IGES* _iges, BrepHandler* _brep, Pointer& edgeList, int index)
-    { 
+  int
+  BrepHandler::extractEdge(const DirectoryEntry* edgeListDE, int index) { 
+    EdgeKey k = make_pair(edgeListDE, index);
+    EdgeMap::iterator i = edges.find(k);
+    if (i == edges.end()) {      
+      Pointer initVertexList;
+      Integer initVertexIndex;
+      Pointer termVertexList;
+      Integer termVertexIndex;    
       debug("########################## E X T R A C T   E D G E  U S E");
-      DirectoryEntry* edgeListDE = _iges->getDirectoryEntry(edgeList);
       ParameterData params;
       _iges->getParameter(edgeListDE->paramData(), params);
       int paramIndex = (index-1)*5 + 1;
@@ -287,25 +293,21 @@ namespace brlcad {
       termVertexIndex = params.getInteger(paramIndex+4);
       
       // extract the model space curves
-      mCurveIndex = _brep->extractCurve(_iges->getDirectoryEntry(msCurvePtr), false);
+      int mCurveIndex = extractCurve(_iges->getDirectoryEntry(msCurvePtr), false);
+      
+      // extract the vertices      
+      int initVertex = extractVertex(_iges->getDirectoryEntry(initVertexList), 
+					initVertexIndex);
+      int termVertex = extractVertex(_iges->getDirectoryEntry(termVertexList),
+					termVertexIndex);
+      
+      return handleEdge(mCurveIndex, initVertex, termVertex);
+    } else {
+      return i->second;
     }
-    EdgeUse(const EdgeUse& eu) 
-      : mCurveIndex(eu.mCurveIndex),
-	pCurveIndices(eu.pCurveIndices),
-	initVertexList(eu.initVertexList), 
-	initVertexIndex(eu.initVertexIndex), 
-	termVertexList(eu.termVertexList), 
-	termVertexIndex(eu.termVertexIndex) {}
-    
-    int mCurveIndex; // model space curve???
-    list<PSpaceCurve> pCurveIndices; // parameter space curves
-    Pointer initVertexList;
-    Integer initVertexIndex;
-    Pointer termVertexList;
-    Integer termVertexIndex;    
-  };
+  }
 
-  void 
+  int
   BrepHandler::extractLoop(const DirectoryEntry* de, bool isOuter, int face) {
     debug("########################## E X T R A C T   L O O P");
     ParameterData params;
@@ -320,33 +322,57 @@ namespace brlcad {
       Pointer edgePtr = params.getPointer(i+1);
       int index = params.getInteger(i+2);
       // need to get the edge list, and extract the edge info
-      EdgeUse eu(_iges, this, edgePtr, index);
+      int edge = extractEdge(_iges->getDirectoryEntry(edgePtr), index);
       bool orientWithCurve = params.getLogical(i+3);
+
+      // handle this edge
+      handleEdgeUse(edge, orientWithCurve);
+
+      // deal with param-space curves (not generally included from Pro/E)
       int numCurves = params.getInteger(i+4);
       debug("Num param-space curves in " << string((isOuter)?"outer":"inner") << " loop: " << numCurves);
       int j = i+5;
+      list<PSpaceCurve> pCurveIndices;
       for (int _j = 0; _j < numCurves; _j++) {
 	// handle the param-space curves, which are generally not included in MSBO
 	Logical iso = params.getLogical(j);
 	Pointer ptr = params.getPointer(j+1);
-	eu.pCurveIndices.push_back(PSpaceCurve(_iges,
-					       this, 
-					       iso,
-					       ptr));
+	pCurveIndices.push_back(PSpaceCurve(_iges,
+					    this, 
+					    iso,
+					    ptr));
 	j += 2;
       }
       i = j;
     }
+    return loop;
   }
 
-  void 
-  BrepHandler::extractEdge(const DirectoryEntry* de) {
-    
-  }
-  
-  void 
-  BrepHandler::extractVertex(const DirectoryEntry* de) {
-
+  int 
+  BrepHandler::extractVertex(const DirectoryEntry* de, int index) {
+    VertKey k = make_pair(de,index);
+    VertMap::iterator i = vertices.find(k);
+    if (i == vertices.end()) {
+      // XXX: fix this... 
+      
+      ParameterData params;
+      _iges->getParameter(de->paramData(), params);
+      int num_verts = params.getInteger(1);
+      assert(index <= num_verts);
+      
+      int i = 3*num_verts-1;
+      
+      point_t pt;
+      pt[X] = params.getReal(i);
+      pt[Y] = params.getReal(i+1);
+      pt[Z] = params.getReal(i+2);
+      
+      // XXX: xform matrix application?
+      vertices[k] = handleVertex(pt);
+      return vertices[k];
+    } else {
+      return i->second;
+    }
   }
 
   int
@@ -464,7 +490,7 @@ namespace brlcad {
       break;
     case Line: 
       debug("\tline");
-      return extractLine(params);
+      return extractLine(de, params);
     case ParametricSplineCurve:
       debug("\tparametric spline curve");
       break;

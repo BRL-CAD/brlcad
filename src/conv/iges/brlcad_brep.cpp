@@ -30,12 +30,26 @@ namespace brlcad {
   }
 
   int 
-  BRLCADBrepHandler::handleEdge(int edgeIndex) {
-    
+  BRLCADBrepHandler::handleEdge(int curve, int initVert, int termVert) {    
+    debug("handleEdge");
+    debug("curve: " << curve);
+    debug("init : " << initVert);
+    debug("term : " << termVert);
+    return 0;
   }
 
   int
-  BRLCADBrepHandler::handleVertex(int pointIndex) {
+  BRLCADBrepHandler::handleEdgeUse(int edge, bool orientWithCurve) {
+    debug("handleEdgeUse");
+    debug("edge  : " << edge);
+    debug("orient: " << orientWithCurve);
+    return 0;
+  }
+
+  int
+  BRLCADBrepHandler::handleVertex(point_t pt) {
+    debug("handleVertex");
+    debug("point: " << PT(pt));
     return 0;
   }
 

@@ -9,6 +9,7 @@
 #include <sstream>
 #include <vector>
 #include <list>
+#include <map>
 
 #include "machine.h"
 #include "vmath.h"
@@ -487,8 +488,9 @@ namespace brlcad {
     virtual void handleShell(bool isVoid, bool orient) = 0;
     virtual int handleFace(bool orient, int surfIndex) = 0;
     virtual int handleLoop(bool isOuter, int faceIndex) = 0;
-    virtual int handleEdge(int edgeIndex) = 0;
-    virtual int handleVertex(int pointIndex) = 0;
+    virtual int handleEdge(int curve, int initVertex, int termVertex) = 0;
+    virtual int handleEdgeUse(int edge, bool orientWithCurve) = 0;
+    virtual int handleVertex(point_t pt) = 0;
     virtual int handlePoint(double x, double y, double z) = 0; // return index
 
     // surface handlers (refactor to SurfaceHandler class?)
@@ -548,31 +550,37 @@ namespace brlcad {
     virtual void extractShell(const DirectoryEntry* de, bool isVoid, bool orientWithFace);
     virtual void extractFace(const DirectoryEntry* de, bool orientWithSurface);
     virtual int  extractSurface(const DirectoryEntry* de);
-    virtual void extractLoop(const DirectoryEntry* de, bool isOuter, int face);
-    virtual void extractEdge(const DirectoryEntry* de);
-    virtual void extractVertex(const DirectoryEntry* de);
+    virtual int  extractLoop(const DirectoryEntry* de, bool isOuter, int face);
+    virtual int  extractEdge(const DirectoryEntry* de, int index);
+    virtual int  extractVertex(const DirectoryEntry* de, int index);
     virtual int  extractCurve(const DirectoryEntry* de, bool isIso);
         
     virtual int  extractCircularArc(const DirectoryEntry* de, const ParameterData& params);
-    virtual int  extractLine(const ParameterData& params);
+    virtual int  extractLine(const DirectoryEntry* de, const ParameterData& params);
     virtual int  extractLine(const Pointer& ptr);    
     virtual int  extractRationalBSplineCurve(const DirectoryEntry* de, const ParameterData& params);
 
     virtual int  extractSurfaceOfRevolution(const ParameterData& params);
     virtual int  extractRationalBSplineSurface(const ParameterData& params);
 
-    friend class EdgeUse;
     friend class PSpaceCurve;
 
   private:
+    map<pair<const DirectoryEntry*,int>,int> vertices;
+    map<pair<const DirectoryEntry*,int>,int> edges;
 
     int shellIndex;
     int faceIndex;
     int surfaceIndex;
     int curveIndex;
     int edgeIndex;
-  };
+  };  
 
+  typedef pair<const DirectoryEntry*,int> VertKey;
+  typedef map<VertKey,int> VertMap;
+
+  typedef VertKey EdgeKey;
+  typedef VertMap EdgeMap;
 
   //--------------------------------------------------------------------------------
   // IGES 
