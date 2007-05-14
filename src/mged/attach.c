@@ -39,6 +39,10 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#ifdef _WIN32
+#  include <winsock2.h>
+#endif
+
 #include "common.h"
 
 #include <stdlib.h>
