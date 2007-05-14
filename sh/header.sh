@@ -292,7 +292,7 @@ case $FILE in
 		;;
 	    * )
 		echo "ERROR: $FILE has an unknown filetype"
-		exit 0
+		exit 4
 		;;
 	esac
 esac
@@ -304,14 +304,14 @@ esac
 basefilename=`basename $FILE`
 if [ "x$basefilename" = "x" ] ; then
     echo "ERROR: basename of $FILE failed"
-    exit 4
+    exit 5
 fi
 
 title="`echo $basefilename | tr [a-z] [A-Z] | sed 's/\(.\)/\1 /g' | sed 's/ $//'`"
 length="`echo $title | wc | awk '{print $3}'`"
 if [ "x$length" = "x" ] ; then
     echo "ERROR: could not determine title length??"
-    exit 5
+    exit 6
 fi
 titlesansext="`echo $title | sed 's/ \..*//'`"
 
@@ -321,7 +321,7 @@ if [ $length -lt `expr 69 - $prefixlen - 1` ] ; then
     position=`expr \( \( 69 - $prefixlen - 1 - $length \) / 2 \) - 1`
     if [ "x$position" = "x" ] ; then
 	echo "ERROR: could not determine title position??"
-	exit 6
+	exit 7
     fi
 fi
 
@@ -501,7 +501,7 @@ $c information.
 	;;
     *)
 	echo "ERROR: encountered unknown license type $LICE during processing"
-	exit 6
+	exit 8
 	;;
 esac
 
@@ -531,7 +531,7 @@ fi
 
 if [ "x$prepend" = "xno" ] ; then
     echo "ERROR: $FILE already has a license header"
-    exit 7
+    exit 9
 fi
 
 
@@ -540,7 +540,7 @@ fi
 #######################
 if [ -f ${FILE}.backup ] ; then
     echo "ERROR: backup file exists... ${FILE}.backup .. remove it"
-    exit 8
+    exit 10
 fi
 echo "$FILE ... appending"
 

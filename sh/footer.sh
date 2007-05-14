@@ -322,7 +322,7 @@ case $FILE in
 		;;
 	    * )
 		echo "ERROR: $FILE has an unknown filetype"
-		exit 0
+		exit 4
 		;;
 	esac
 esac
