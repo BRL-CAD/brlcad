@@ -37,15 +37,15 @@
 
 #include "common.h"
 
-#ifndef SYSV_EXPORT
+#ifndef REGEX_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef SYSV_EXPORT_DLL
-#      define SYSV_EXPORT __declspec(dllexport)
+#    ifdef REGEX_EXPORT_DLL
+#      define REGEX_EXPORT __declspec(dllexport)
 #    else
-#      define SYSV_EXPORT __declspec(dllimport)
+#      define REGEX_EXPORT __declspec(dllimport)
 #    endif
 #  else
-#    define SYSV_EXPORT
+#    define REGEX_EXPORT
 #  endif
 #endif
 
@@ -112,10 +112,10 @@ typedef struct {
 #define	REG_BACKR	02000	/* force use of backref code */
 
 __BEGIN_DECLS
-SYSV_EXPORT int	regcomp (regex_t *, const char *, int);
-SYSV_EXPORT size_t	regerror (int, const regex_t *, char *, size_t);
-SYSV_EXPORT int	regexec (const regex_t *, const char *, size_t, regmatch_t [], int);
-SYSV_EXPORT void	regfree (regex_t *);
+REGEX_EXPORT int	regcomp (regex_t *, const char *, int);
+REGEX_EXPORT size_t	regerror (int, const regex_t *, char *, size_t);
+REGEX_EXPORT int	regexec (const regex_t *, const char *, size_t, regmatch_t [], int);
+REGEX_EXPORT void	regfree (regex_t *);
 __END_DECLS
 
 #endif /* !_REGEX_H_ */
