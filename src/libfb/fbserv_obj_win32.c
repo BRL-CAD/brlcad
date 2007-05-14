@@ -51,6 +51,8 @@
 #include "raytrace.h"
 #include "dm.h"
 #include "fbmsg.h"
+#include "pkg.h"
+#include "fb.h"
 
 int fbs_open();
 int fbs_close();
