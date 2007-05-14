@@ -36,12 +36,10 @@
  *  $Header$
  */
 
-#ifndef DONT_USE_COMPAT4_H	/* Define this to scrub out Release 4-isms */
+#ifndef __COMPAT4_H__
+#define __COMPAT4_H__
 
 #warning "The compat4.h header provides support for DEPRECATED interface names.  Please update your sources and do not include this header."
-
-#ifndef SEEN_COMPAT4_H
-#define SEEN_COMPAT4_H seen
 
 __BEGIN_DECLS
 
@@ -475,9 +473,8 @@ __BEGIN_DECLS
 
 __END_DECLS
 
-#endif /* SEEN_COMPAT4_H */
+#endif  /* __COMPAT4_H__ */
 
-#endif /* DONT_USE_COMPAT4_H */
 /** @} */
 /*
  * Local Variables:
