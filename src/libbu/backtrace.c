@@ -56,8 +56,24 @@
 #define BT_BUFSIZE 2048
 static char buffer[BT_BUFSIZE] = {0};
 
+static pid_t pid = (pid_t)0;
 static int backtrace_done = 0;
 static int interrupt_wait = 0;
+
+/* avoid stack variables for backtrace() */
+static int input[2] = {0,0};
+static int output[2] = {0,0};
+static fd_set fdset;
+static fd_set readset;
+static struct timeval tv;
+static int result;
+static int position;
+static int processing_bt;
+static char c = 0;
+
+/* avoid stack variables for bu_backtrace() */
+static char *args[4] = { NULL, NULL, NULL, NULL };
+static const char *locate_gdb = NULL;
 
 
 /* SIGCHLD handler for backtrace() */
@@ -82,16 +98,6 @@ backtrace_sigint(int signum)
 static void
 backtrace(char **args, int fd)
 {
-    pid_t pid = (pid_t)0;
-    int input[2] = {0,0};
-    int output[2] = {0,0};
-    fd_set fdset;
-    fd_set readset;
-    struct timeval tv;
-    int result, index;
-    int processing_bt;
-    char c = 0;
-
     /* receiving a SIGCHLD signal indicates something happened to a
      * child process, which should be this backtrace since it is
      * invoked after a fork() call as the child.
@@ -139,7 +145,7 @@ backtrace(char **args, int fd)
      */
     write(input[1], "quit\n", 5);
 
-    index = 0;
+    position = 0;
     processing_bt = 0;
     memset(buffer, 0, BT_BUFSIZE);
 
@@ -162,9 +168,9 @@ backtrace(char **args, int fd)
 			if (bu_debug & BU_DEBUG_BACKTRACE) {
 			    bu_log("BACKTRACE DEBUG: [%s]\n", buffer);
 			}
-			if (index+1 < BT_BUFSIZE) {
-			    buffer[index++] = c;
-			    buffer[index] = '\0';
+			if (position+1 < BT_BUFSIZE) {
+			    buffer[position++] = c;
+			    buffer[position] = '\0';
 			}
 			if (strncmp(buffer, "No locals", 9) == 0) {
 			    /* skip it */
@@ -178,7 +184,7 @@ backtrace(char **args, int fd)
 				perror("error writing stack to file");
 			    }
 			}
-			index = 0;
+			position = 0;
 			continue;
 		    case '#':
 			/* once we find a # on the beginning of a
@@ -188,21 +194,21 @@ backtrace(char **args, int fd)
 			 * the output intentionally (because of the
 			 * gdb prompt).
 			 */
-			if (index == 0) {
+			if (position == 0) {
 			    processing_bt = 1;
 			}
 			break;
 		    default:
 			break;
 		}
-		if (index+1 < BT_BUFSIZE) {
-		    buffer[index++] = c;
-		    buffer[index] = '\0';
+		if (position+1 < BT_BUFSIZE) {
+		    buffer[position++] = c;
+		    buffer[position] = '\0';
 		} else {
 		    bu_log("Warning: debugger output overflow\n");
 		    bu_log("%s\n", buffer);
 		    processing_bt = 0;
-		    index = 0;
+		    position = 0;
 		}
 	    }
 	} else if (backtrace_done) {
@@ -247,18 +253,9 @@ backtrace(char **args, int fd)
 int
 bu_backtrace(FILE *fp)
 {
-    pid_t pid = (pid_t)0;
-    char process[16] = {0};
-    char *args[4] = { NULL, NULL, NULL, NULL };
-    int status = 0;
-    const char *locate_gdb = NULL;
-    const char *program = bu_argv0(NULL);
-    int fd;
-
     if (!fp) {
 	fp = stdout;
     }
-    fd = fileno(fp);
 
     /* make sure the debugger exists */
     if ((locate_gdb = bu_which("gdb"))) {
@@ -280,10 +277,10 @@ bu_backtrace(FILE *fp)
     locate_gdb = NULL;
 
     signal(SIGINT, backtrace_sigint);
-    sprintf(process, "%d", bu_process_id());
+    snprintf(buffer, BT_BUFSIZE, "%d", bu_process_id());
 
-    args[1] = (char*) program;
-    args[2] = process;
+    args[1] = (char*) bu_argv0(NULL);
+    args[2] = buffer;
 
     if (bu_debug & BU_DEBUG_BACKTRACE) {
 	bu_log("CALL STACK BACKTRACE REQUESTED\n");
@@ -296,7 +293,7 @@ bu_backtrace(FILE *fp)
     pid = fork();
     if (pid == 0) {
 	/* child */
-	backtrace(args, fd);
+	backtrace(args, fileno(fp));
 	bu_free(args[0], "gdb strdup");
 	args[0] = NULL;
 	exit(0);
