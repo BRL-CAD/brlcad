@@ -26,7 +26,7 @@
  *  Compatibility macros are provided in "compat4.h"
  *	-Mike
  */
-#warn "The rtlist.h header is OBSOLETE -- use bu.h instead"
+#warning "The rtlist.h header is OBSOLETE -- use bu.h instead"
 /** @} */
 /*
  * Local Variables:
