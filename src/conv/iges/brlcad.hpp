@@ -50,7 +50,20 @@ namespace brlcad {
     int handleSimpleClosedPlanarCurve();
     int handleLine(point_t start, point_t end);
     int handleParametricSplineCurve();
-    int handleRationalBSplineCurve();
+    int handleRationalBSplineCurve(int degree,
+				   double tmin,
+				   double tmax,
+				   bool planar,
+				   vect_t unit_normal,
+				   bool closed,
+				   bool rational,
+				   bool periodic,
+				   int num_knots,
+				   double* knots,
+				   int num_control_points,
+				   double* weights,
+				   double* ctl_points);
+
     int handleOffsetCurve();    
 
   private:

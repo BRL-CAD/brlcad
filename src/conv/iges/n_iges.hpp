@@ -525,7 +525,19 @@ namespace brlcad {
     virtual int handleSimpleClosedPlanarCurve() = 0;
     virtual int handleLine(point_t start, point_t end) = 0;
     virtual int handleParametricSplineCurve() = 0;
-    virtual int handleRationalBSplineCurve() = 0;
+    virtual int handleRationalBSplineCurve(int degree,
+					   double tmin,
+					   double tmax,
+					   bool planar,
+					   vect_t unit_normal,
+					   bool closed,
+					   bool rational,
+					   bool periodic,
+					   int num_knots,
+					   double* knots,
+					   int num_control_points,
+					   double* weights,
+					   double* ctl_points) = 0;
     virtual int handleOffsetCurve() = 0;    
 
   protected:
@@ -540,10 +552,12 @@ namespace brlcad {
     virtual void extractEdge(const DirectoryEntry* de);
     virtual void extractVertex(const DirectoryEntry* de);
     virtual int  extractCurve(const DirectoryEntry* de, bool isIso);
-    
+        
     virtual int  extractCircularArc(const DirectoryEntry* de, const ParameterData& params);
     virtual int  extractLine(const ParameterData& params);
     virtual int  extractLine(const Pointer& ptr);    
+    virtual int  extractRationalBSplineCurve(const DirectoryEntry* de, const ParameterData& params);
+
     virtual int  extractSurfaceOfRevolution(const ParameterData& params);
     virtual int  extractRationalBSplineSurface(const ParameterData& params);
 

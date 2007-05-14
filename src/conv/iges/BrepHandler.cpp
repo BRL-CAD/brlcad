@@ -364,6 +364,7 @@ namespace brlcad {
     end[Z]    = offset_z;
 
     mat_t xform;
+    MAT_IDN(xform);
     _iges->getTransformation(de->xform(), xform);
 
     // choose the circle/interval representation
@@ -378,6 +379,66 @@ namespace brlcad {
     MAT4X3PNT(tend, xform, end);
     
     return handleCircularArc(radius, tcenter, tstart, tend);
+  }
+
+  int
+  BrepHandler::extractRationalBSplineCurve(const DirectoryEntry* de, const ParameterData& params) {
+    int k       = params.getInteger(1);
+    int degree  = params.getInteger(2);
+    bool planar = (params.getInteger(3)() == 1) ? true : false;
+    bool closed = (params.getInteger(4)() == 1) ? true : false;
+    bool rational = (params.getInteger(5)() == 0) ? true : false;
+    bool periodic = (params.getInteger(6)() == 1) ? true : false;
+    
+    int num_control_points = k + 1;
+    int n = k + 1 - degree;
+    int num_knots = n + 2 * degree + 1;
+
+    double* knots = new double[num_knots];
+    int i = 7;
+    for (int _i = 0; _i < num_knots; _i++) {
+      knots[_i] = params.getReal(i);
+      i++;
+    }
+    
+    double* weights = new double[num_control_points];
+    for (int _i = 0; _i < num_control_points; _i++) {
+      weights[_i] = params.getReal(i);
+      i++;
+    }
+
+    double* ctl_points = new double[num_control_points * 3];
+    for (int _i = 0; _i < num_control_points; _i++) {
+      ctl_points[_i*3]   = params.getReal(i);
+      ctl_points[_i*3+1] = params.getReal(i+1);
+      ctl_points[_i*3+2] = params.getReal(i+2);
+      i += 3;
+    }
+    
+    double umin = params.getReal(i); i++;
+    double umax = params.getReal(i); i++;
+    
+    vect_t unit_normal;
+    if (planar) {
+      unit_normal[X] = params.getReal(i);
+      unit_normal[Y] = params.getReal(i+1);
+      unit_normal[Z] = params.getReal(i+2);
+      i += 3;
+    }
+        
+    return handleRationalBSplineCurve(degree,
+				      umin,
+				      umax,
+				      planar,
+				      unit_normal,
+				      closed,
+				      rational,
+				      periodic,
+				      num_knots,
+				      knots,
+				      num_control_points,
+				      weights,
+				      ctl_points);
   }
 
   int 
@@ -409,7 +470,7 @@ namespace brlcad {
       break;
     case RationalBSplineCurve:
       debug("\trational b-spline curve");
-      break;
+      return extractRationalBSplineCurve(de, params);
     case OffsetCurve:
       debug("\toffset curve");
       break;

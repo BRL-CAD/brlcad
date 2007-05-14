@@ -141,8 +141,27 @@ namespace brlcad {
   int
   BRLCADBrepHandler::handleParametricSplineCurve() { return 0; }
 
-  int
-  BRLCADBrepHandler::handleRationalBSplineCurve() { return 0; }
+  int 
+  BRLCADBrepHandler::handleRationalBSplineCurve(int degree,
+						double tmin,
+						double tmax,
+						bool planar,
+						vect_t unit_normal,
+						bool closed,
+						bool rational,
+						bool periodic,
+						int num_knots,
+						double* knots,
+						int num_control_points,
+						double* weights,
+						double* ctl_points) {
+    debug("handleRationalBSplineCurve");
+    debug("degree: " << degree);
+    debug("domain: " << tmin << " --> " << tmax);
+    debug("planar: " << planar);
+    debug("# ctls: " << num_control_points);
+    return 0;
+  }
 
   int
   BRLCADBrepHandler::handleOffsetCurve() { return 0; }    
