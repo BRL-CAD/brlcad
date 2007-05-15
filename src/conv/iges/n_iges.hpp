@@ -515,7 +515,7 @@ namespace brlcad {
     void extract(IGES* iges, const DirectoryEntry* de);
 
     // subclass responsibility
-    virtual void handleShell(bool isVoid, bool orient) = 0;
+    virtual int handleShell(bool isVoid, bool orient) = 0;
     virtual int handleFace(bool orient, int surfIndex) = 0;
     virtual int handleLoop(bool isOuter, int faceIndex) = 0;
     virtual int handleEdge(int curve, int initVertex, int termVertex) = 0;

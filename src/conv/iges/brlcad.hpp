@@ -1,6 +1,9 @@
 #ifndef __BRLCAD_HPP
 #define __BRLCAD_HPP
 
+
+#include "common.h"
+#include "brep.h"
 #include "n_iges.hpp"
 
 namespace brlcad {
@@ -10,7 +13,7 @@ namespace brlcad {
     BRLCADBrepHandler();
     ~BRLCADBrepHandler();
     
-    void handleShell(bool isVoid, bool orient);
+    int handleShell(bool isVoid, bool orient);
     int handleFace(bool orient, int surfIndex);
     int handleLoop(bool isOuter, int faceIndex);
     int handleEdge(int curve, int initVertex, int endVertex);
@@ -68,6 +71,17 @@ namespace brlcad {
     int handleOffsetCurve();    
 
   private:
+    vector<ON_Geometry*> _objects;    
+
+    // need to support outer and void shells!
+    ON_Brep* _brep;
+    ON_Surface* _surf;
+    ON_BrepFace* _face;
+    ON_BrepLoop* _loop;
+    ON_BrepEdge* _edge;
+    ON_BrepTrim* _trim;
+    ON_BrepVertex* _vertex;
+    ON_Point* _pt;
   };
 
 }

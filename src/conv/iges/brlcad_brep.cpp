@@ -1,31 +1,35 @@
 
 #include "brlcad.hpp"
+#include "bn.h"
 
 #define PT(p) p[X] << "," << p[Y] << "," << p[Z]
 
 namespace brlcad {
 
   BRLCADBrepHandler::BRLCADBrepHandler() {
-
   }
 
   BRLCADBrepHandler::~BRLCADBrepHandler() {
-
-  }
-
-  void 
-  BRLCADBrepHandler::handleShell(bool isVoid, bool orient) {
-    
   }
 
   int 
-  BRLCADBrepHandler::handleFace(bool orient, int surfIndex) {
-    return 0;
+  BRLCADBrepHandler::handleShell(bool isVoid, bool orient) {
+    _brep = ON_Brep::New();
+    _objects.push_back(_brep);
+    return _objects.size()-1;
+  }
+
+  int 
+  BRLCADBrepHandler::handleFace(bool orient, int surfIndex) {    
+    _face = &_brep->NewFace(surfIndex);
+    _objects.push_back(_face);
+    return _objects.size()-1;
   }
 
 
   int 
   BRLCADBrepHandler::handleLoop(bool isOuter, int faceIndex) {
+    
     return 0;
   }
 
@@ -50,12 +54,15 @@ namespace brlcad {
   BRLCADBrepHandler::handleVertex(point_t pt) {
     debug("handleVertex");
     debug("point: " << PT(pt));
-    return 0;
+    _vertex = &_brep->NewVertex(ON_3dPoint(pt));
+    _vertex->m_tolerance = 0.0; // XXX use exact tolerance?
+    _objects.push_back(_vertex);
+    return _objects.size()-1;
   }
 
   int 
   BRLCADBrepHandler::handlePoint(double x, double y, double z) {
-    // return index
+    // XXX may be deprecated
     return 0;
   }
 
@@ -126,7 +133,17 @@ namespace brlcad {
     debug("handleCircularArc");
     debug("radius: " << radius);
     debug("center: " << PT(center));
-    return 0; 
+
+    ON_Plane plane = ON_Plane(ON_3dPoint(center), ON_3dPoint(start), ON_3dPoint(end));
+    ON_Circle circle = ON_Circle(plane, ON_3dPoint(center), radius);
+    double a, b;
+    circle.ClosestPointTo(start, &a);
+    circle.ClosestPointTo(end, &b);
+    ON_Arc arc(circle, ON_Interval(a, b));    
+    ON_ArcCurve* curve = new ON_ArcCurve(arc);
+    _objects.push_back(curve);
+
+    return _objects.size()-1; 
   }
 
   int
@@ -147,9 +164,12 @@ namespace brlcad {
   int
   BRLCADBrepHandler::handleLine(point_t start, point_t end) {
     debug("handleLine");
-    debug("start: " << start[0] << "," << start[1] << "," << start[2]);
-    debug("end  : " << end[0] << "," << end[1] << "," << end[2]);    
-    return 0; 
+    debug("start: " << PT(start));
+    debug("end  : " << PT(end));
+    
+    ON_LineCurve* line = new ON_LineCurve(ON_3dPoint(start),ON_3dPoint(end));
+    _objects.push_back(line);
+    return _objects.size()-1;
   }
 
   int
@@ -174,7 +194,26 @@ namespace brlcad {
     debug("domain: " << tmin << " --> " << tmax);
     debug("planar: " << planar);
     debug("# ctls: " << num_control_points);
-    return 0;
+
+    ON_NurbsCurve* c = ON_NurbsCurve::New(3,
+					  rational,
+					  degree+1,
+					  num_control_points);
+    c->ReserveKnotCapacity(num_knots);
+    for (int i = 0; i < num_knots; i++) {
+      c->m_knot[i] = knots[i];
+    }
+    
+    int stride = c->m_cv_stride;
+    for (int i = 0; i < num_control_points; i++) {
+      c->m_cv[i*stride] = ctl_points[i*stride];
+      c->m_cv[i*stride+1] = ctl_points[i*stride+1];
+      c->m_cv[i*stride+2] = ctl_points[i*stride+2];
+      if (rational) c->m_cv[i*stride+3] = weights[i];
+    }
+
+    _objects.push_back(c);
+    return _objects.size()-1;
   }
 
   int
