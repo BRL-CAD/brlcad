@@ -315,7 +315,7 @@ mk_rcc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t
 		return -2;
 
 	/* Create two mutually perpendicular vectors, perpendicular to H */
-	mat_vec_ortho( cross1, height );
+	bn_vec_ortho( cross1, height );
 	VCROSS( cross2, cross1, height );
 	VUNITIZE( cross2 );
 
@@ -373,7 +373,7 @@ mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_
 
 	/* Now make a, b, c, and d vectors. */
 
-	mat_vec_ortho(a, h_unitv);
+	bn_vec_ortho(a, h_unitv);
 	VUNITIZE(a);
 	VCROSS(b, h_unitv, a);
 	VSCALE(avec, a, rad1);
@@ -403,7 +403,7 @@ mk_trc_h(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf
 		return -2;
 
 	/* Create two mutually perpendicular vectors, perpendicular to H */
-	vec_ortho( cross1, height );
+	bn_vec_ortho( cross1, height );
 	VCROSS( cross2, cross1, height );
 	VUNITIZE( cross2 );
 
