@@ -282,10 +282,10 @@ namespace brlcad {
       Integer initVertexIndex;
       Pointer termVertexList;
       Integer termVertexIndex;    
-      debug("########################## E X T R A C T   E D G E  U S E");
+      debug("########################## E X T R A C T   E D G E");
       ParameterData params;
       _iges->getParameter(edgeListDE->paramData(), params);
-      int paramIndex = (index-1)*5 + 1;
+      int paramIndex = (index-1)*5 + 2;
       Pointer msCurvePtr = params.getPointer(paramIndex);
       initVertexList = params.getPointer(paramIndex+1);
       initVertexIndex = params.getInteger(paramIndex+2);
@@ -358,9 +358,11 @@ namespace brlcad {
       ParameterData params;
       _iges->getParameter(de->paramData(), params);
       int num_verts = params.getInteger(1);
+      debug("num verts: " << num_verts);
+      debug("index    : " << index);
       assert(index <= num_verts);
       
-      int i = 3*num_verts-1;
+      int i = 3*index-1;
       
       point_t pt;
       pt[X] = params.getReal(i);
