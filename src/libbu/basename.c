@@ -51,9 +51,15 @@ const char *
 bu_basename(const char *str)
 {
     register const char	*p = str;
+
+    if (!str) {
+	return NULL;
+    }
+
     while( *p != '\0' )
 	if( *p++ == '/' )
 	    str = p;
+
     return str;
 }
 
