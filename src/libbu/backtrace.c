@@ -38,15 +38,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <sys/time.h>
-#include <sys/times.h>
-#include <sys/types.h>
+#ifdef HAVE_SYS_TIME_H
+#   include <sys/time.h>
+#endif
 
-#include <time.h>
-#include <unistd.h>
+#ifdef HAVE_SYS_TIMES_H
+#   include <sys/times.h>
+#endif
 
-#include <sys/select.h>
-#include <string.h>
+#ifdef HAVE_SYS_TYPES_H
+#   include <sys/types.h>
+#endif
+
+#ifdef HAVE_TIME_H
+#   include <time.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+#   include <unistd.h>
+#endif
+
+#ifdef HAVE_FCNTL_H
+#   include <fcntl.h>
+#endif
+
+#ifdef HAVE_PROCESS_H
+#   include <process.h>
+#endif
+
+#ifdef HAVE_SYS_SELECT_H
+#   include <sys/select.h>
+#endif
+
+#ifdef HAVE_STRING_H
+#   include <string.h>
+#endif
 
 /* common headers */
 #include "bu.h"
@@ -103,7 +129,10 @@ backtrace(char **args, int fd)
      * invoked after a fork() call as the child.
      */
     backtrace_done = 0;
+
+#ifdef SIGCHLD
     signal(SIGCHLD, backtrace_sigchld);
+#endif
 
 #ifdef HAVE_KILL
     /* halt the parent until we are done */
