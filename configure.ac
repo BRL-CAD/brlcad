@@ -1395,15 +1395,15 @@ if test "x$bc_with_opengl" != "xno" ; then
     if test "x$gl_link_works" = "xno" ; then
 	PRELDFLAGS="$LDFLAGS"
 	PRELIBS="$LIBS"
-	for bc_dir in "$ac_x_libraries" `echo "$ac_x_includes $ac_x_header_dirs" | 
+	for bc_dir in "$ac_x_libraries" `echo "$ac_x_includes $ac_x_header_dirs" |
 		sed s/include/lib/g` ; do
 
 	    LDFLAGS="$PRELDFLAGS -L$bc_dir"
 	    LIBS="$PRELIBS -lGL"
-	    AC_LINK_IFELSE([AC_LANG_CALL([],[glEnable])], 
+	    AC_LINK_IFELSE([AC_LANG_CALL([],[glEnable])],
 		gl_link_works=yes ; LIBGL="-L$bc_dir -lGL" ; break)
 	    LIBS="$PRELIBS -lGL2"
-	    AC_LINK_IFELSE([AC_LANG_CALL([],[glEnable])], 
+	    AC_LINK_IFELSE([AC_LANG_CALL([],[glEnable])],
 		gl_link_works=yes ; LIBGL="-L$bc_dir -lGL2" ; break)
 	done
 	LDFLAGS="$PRELDFLAGS"
@@ -1537,6 +1537,7 @@ AC_CHECK_HEADERS( \
 	sys/sysmp.h \
 	sys/time.h \
 	sys/timeb.h \
+	sys/times.h \
 	sys/types.h \
 	sys/un.h \
 	sys/unistd.h \
