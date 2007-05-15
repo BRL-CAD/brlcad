@@ -196,7 +196,9 @@ look_for executable "the BRL-CAD raytracer" RT \
 look_for directory "a benchmark geometry directory" DB \
     ${path_to_this}/../share/brlcad/*.*.*/db \
     ${path_to_this}/share/brlcad/*.*.*/db \
+    ${path_to_this}/../share/brlcad/db \
     ${path_to_this}/share/brlcad/db \
+    ${path_to_this}/../share/db \
     ${path_to_this}/share/db \
     ${path_to_this}/../db \
     ${path_to_this}/db \
@@ -205,7 +207,9 @@ look_for directory "a benchmark geometry directory" DB \
 look_for directory "a benchmark reference image directory" PIX \
     ${path_to_this}/../share/brlcad/*.*.*/pix \
     ${path_to_this}/share/brlcad/*.*.*/pix \
+    ${path_to_this}/../share/brlcad/pix \
     ${path_to_this}/share/brlcad/pix \
+    ${path_to_this}/../share/pix \
     ${path_to_this}/share/pix \
     ${path_to_this}/../pix \
     ${path_to_this}/pix \
@@ -215,7 +219,9 @@ look_for directory "a benchmark reference log directory" LOG \
     $PIX \
     ${path_to_this}/../share/brlcad/*.*.*/pix \
     ${path_to_this}/share/brlcad/*.*.*/pix \
+    ${path_to_this}/../share/brlcad/pix \
     ${path_to_this}/share/brlcad/pix \
+    ${path_to_this}/../share/pix \
     ${path_to_this}/share/pix \
     ${path_to_this}/../pix \
     ${path_to_this}/pix \
