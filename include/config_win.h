@@ -65,6 +65,7 @@
 #define HAVE_GETENV     1
 #define HAVE_PUTENV     1
 #define HAVE_GETHOSTNAME	1
+#define HAVE_GETPROGNAME        1
 #define HAVE_GL_GL_H	1
 #define HAVE_IO_H	1
 #define HAVE_LIMITS_H	1
@@ -73,6 +74,7 @@
 #define HAVE_MEMORY_H	1
 #define HAVE_MEMSET	1
 #define HAVE_OFF_T	1
+#define HAVE_PROCESS_H  1
 #if 0
 #define HAVE_PWD_H	1
 #endif
@@ -88,7 +90,6 @@
 #define HAVE_STRING_H	1
 #define HAVE_STRTOK	1
 #define HAVE_SYS_STAT_H 1
-#define HAVE_SYS_TIME	1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_TIME	1
 #define HAVE_TIME_H	1
@@ -140,10 +141,13 @@
 #if 0
 #define eof _eof
 #endif
+#define execvp _execvp
 #define fdopen _fdopen
 #define fileno _fileno
+#define fork() -1
 #define fstat _fstat
 #define getpid _getpid
+#define getprogname() _pgmptr
 #define hypot _hypot
 #define ioctl ioctlsocket
 #define isascii __isascii
@@ -154,12 +158,13 @@
 #define off_t _off_t
 #define open _open
 #define pclose _pclose
-#define pipe _pipe
+#define pipe(_FD) (_pipe((_FD), 256, _O_TEXT))
 #define popen _popen
 #define putenv _putenv
 #define read _read
 #define rint(_X) (floor((_X) + 0.5))
 #define setmode _setmode
+#define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
 #define snprintf _snprintf
 #define sopen _sopen
 #define stat _stat
@@ -177,6 +182,7 @@
 #undef complex
 #undef rad1
 #undef rad2
+#define pid_t int
 #define socklen_t int
 
 #endif /* if defined(_WIN32) */
