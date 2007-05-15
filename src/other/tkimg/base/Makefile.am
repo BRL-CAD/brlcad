@@ -9,6 +9,8 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
 	${TK_CPPFLAGS}
 
+AM_CFLAGS = ${X_CFLAGS}
+
 tkimgb_la_LDFLAGS = -module
 tkimgb_la_SOURCES = \
 	tkimg.c \

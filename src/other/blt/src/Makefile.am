@@ -8,6 +8,8 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
 	${TK_CPPFLAGS}
 
+AM_CFLAGS = ${X_CFLAGS}
+
 noinst_LTLIBRARIES = libblts.la
 
 # libblts_la_LDFLAGS = -module -static

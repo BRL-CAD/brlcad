@@ -15,6 +15,8 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
 	${TK_CPPFLAGS}
 
+AM_CFLAGS = ${X_CFLAGS}
+
 tkimgp_la_LDFLAGS = -module
 tkimgp_la_SOURCES = \
 	png.c

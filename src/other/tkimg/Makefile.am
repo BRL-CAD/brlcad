@@ -12,6 +12,8 @@ AM_CPPFLAGS = \
 	${LIBZ_CPPFLAGS} \
 	${TCL_CPPFLAGS}
 
+AM_CFLAGS = ${X_CFLAGS}
+
 tkimg_la_LDFLAGS = -module
 lib_LTLIBRARIES = tkimg.la
 
