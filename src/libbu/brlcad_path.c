@@ -124,6 +124,11 @@ bu_argv0(const char *path)
     if (!argv0) {
 	argv0 = getprogname(); /* not malloc'd memory */
     }
+#else
+#warning "Do not know how to get the name of a running executable on this sytem"
+    if (!argv0) {
+	argv0 = "unknown"; /* not malloc'd memory */
+    }
 #endif
 
     return argv0;
@@ -159,7 +164,11 @@ bu_getprogname(void) {
 
     name = bu_basename(bu_argv0(NULL));
     /* string returned by basename is not ours, get a copy */
-    progname = strdup(name); 
+    if (name) {
+	progname = bu_strdup(name); 
+    } else {
+	progname = bu_strdup("unknown");
+    }
     atexit(_free_progname);
 
     return progname;
@@ -175,7 +184,12 @@ bu_getprogname(void) {
 void
 bu_setprogname(const char *prog) {
 #ifdef HAVE_SETPROGNAME
-    setprogname(bu_basename(prog));
+    const char *base = bu_basename(prog);
+    if (base) {
+	setprogname(base);
+    } else {
+	setprogname("unknown");
+    }
 #endif
 
     (void)bu_argv0(prog);
