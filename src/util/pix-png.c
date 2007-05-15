@@ -57,7 +57,7 @@ static long int	file_height = 512L;		/* default input height */
 static int	autosize = 0;			/* !0 to autosize input */
 static int	fileinput = 0;			/* file of pipe on input? */
 static char	*file_name;
-static FILE	*infp;
+static FILE	*infp, *outfp;
 
 #define BYTESPERPIXEL 3
 
@@ -66,7 +66,7 @@ static FILE	*infp;
 
 static char usage[] = "\
 Usage: pix-png [-a] [-w file_width] [-n file_height]\n\
-	[-s square_file_size] [file.pix]\n";
+	[-s square_file_size] [file.pix] > file.png\n";
 
 int
 get_args(int argc, register char **argv)
@@ -97,21 +97,30 @@ get_args(int argc, register char **argv)
 		}
 	}
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
-			return(0);
-		file_name = "-";
-		infp = stdin;
+	if (bu_optind >= argc) {
+	    /* no more args */
+	    file_name = "-";
+	    infp = stdin;
 	} else {
-		file_name = argv[bu_optind];
-		if( (infp = fopen(file_name, "r")) == NULL )  {
-			perror(file_name);
-			(void)fprintf( stderr,
-				"pix-png: cannot open \"%s\" for reading\n",
-				file_name );
-			exit(1);
-		}
-		fileinput++;
+	    file_name = argv[bu_optind];
+	    if ((infp = fopen(file_name, "r")) == NULL) {
+		perror(file_name);
+		(void)fprintf(stderr,
+			      "pix-png: cannot open \"%s\" for reading\n",
+			      file_name);
+		exit(1);
+	    }
+	    fileinput++;
+	}
+
+	outfp = stdout;
+	if (isatty(fileno(infp))) {
+	    bu_log("ERROR: pix-png will not read pix data from a tty\n");
+	    return 0; /* not ok */
+	}
+	if (isatty(fileno(outfp))) {
+	    bu_log("ERROR: pix-png will not write png data to a tty\n");
+	    return 0; /* not ok */
 	}
 
 	if ( argc > ++bu_optind )
@@ -165,7 +174,7 @@ main(int argc, char **argv)
 	if( fread( scanbuf, SIZE, 1, infp ) != 1 )
 		bu_bomb( "pix-png: Short read\n");
 
-	png_init_io( png_p, stdout );
+	png_init_io( png_p, outfp );
 	png_set_filter( png_p, 0, PNG_FILTER_NONE );
 	png_set_compression_level( png_p, Z_BEST_COMPRESSION );
 	png_set_IHDR( png_p, info_p, file_width, file_height, 8,
