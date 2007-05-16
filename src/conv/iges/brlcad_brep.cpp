@@ -1,15 +1,32 @@
 
 #include "brlcad.hpp"
-#include "bn.h"
 
-#define PT(p) p[X] << "," << p[Y] << "," << p[Z]
+
+#define PT(p) p[0] << "," << p[1] << "," << p[2]
 
 namespace brlcad {
 
   BRLCADBrepHandler::BRLCADBrepHandler() {
-  }
+    id_name = "Test B-Rep from IGES";
+    geom_name = "piston";
+    ON::Begin();
+  }  
 
   BRLCADBrepHandler::~BRLCADBrepHandler() {
+    ON::End();
+  }
+
+  void
+  BRLCADBrepHandler::write() {
+    outfp = wdb_fopen("piston.g");
+    mk_id(outfp, id_name.c_str());
+
+    string sol = geom_name+".s";
+    string reg = geom_name+".r";
+    mk_brep(outfp, sol.c_str(), _brep);
+    unsigned char rgb[] = {200,180,180};
+    mk_region1(outfp, reg.c_str(), sol.c_str(), "plastic", "", rgb);    
+    wdb_close(outfp);
   }
 
   int 
@@ -21,7 +38,11 @@ namespace brlcad {
 
   int 
   BRLCADBrepHandler::handleFace(bool orient, int surfIndex) {    
-    _face = &_brep->NewFace(surfIndex);
+    ON_Surface* surf = ON_Surface::Cast(_objects[surfIndex]);
+    int sid = _brep->AddSurface(surf);
+
+    _face = &_brep->NewFace(sid);
+    _face->m_bRev = orient;
     _objects.push_back(_face);
     return _objects.size()-1;
   }
@@ -29,8 +50,14 @@ namespace brlcad {
 
   int 
   BRLCADBrepHandler::handleLoop(bool isOuter, int faceIndex) {
+
+    ON_BrepFace* face = ON_BrepFace::Cast(_objects[faceIndex]);    
+    ON_BrepLoop::TYPE type = (isOuter) ? ON_BrepLoop::outer : ON_BrepLoop::unknown;
+    ON_BrepLoop& loop = _brep->NewLoop(type, *face);
     
-    return 0;
+    _loop = &loop;
+    _objects.push_back(_loop);
+    return _objects.size()-1;
   }
 
   int 
@@ -39,7 +66,16 @@ namespace brlcad {
     debug("curve: " << curve);
     debug("init : " << initVert);
     debug("term : " << termVert);
-    return 0;
+
+    ON_BrepVertex& from = _brep->m_V[_vertices[initVert]];
+    ON_BrepVertex& to   = _brep->m_V[_vertices[termVert]];
+    ON_Curve* c = ON_Curve::Cast(_objects[curve]);
+    int curveIndex = _brep->AddEdgeCurve(c);
+    ON_BrepEdge& edge = _brep->NewEdge(from, to, curveIndex);
+    edge.m_tolerance = 0.0; // exact!?
+    
+    _objects.push_back(&edge);
+    return _objects.size()-1;
   }
 
   int
@@ -47,17 +83,38 @@ namespace brlcad {
     debug("handleEdgeUse");
     debug("edge  : " << edge);
     debug("orient: " << orientWithCurve);
-    return 0;
+
+    ON_BrepEdge* e = ON_BrepEdge::Cast(_objects[edge]);
+    // grab the curve for this edge
+    const ON_Curve* c = e->EdgeCurveOf();
+    // grab the surface for the face
+    const ON_Surface* s = _face->SurfaceOf();
+    
+    // get a 2d parameter-space curve that lies on the surface for this edge
+    // hopefully this works!
+    ON_Curve* c2d = s->Pullback(*c, 0.000001); // XXX: picked this tolerance out of my %ss
+
+    int trimCurve = _brep->AddTrimCurve(c2d);
+
+    ON_BrepTrim* trim = &_brep->NewTrim(*e, orientWithCurve, *_loop, trimCurve);
+    trim->m_type = ON_BrepTrim::mated; // closed solids!
+    trim->m_tolerance[0] = 0.0; // XXX: tolerance?
+    trim->m_tolerance[1] = 0.0;
+
+    _objects.push_back(trim);
+    return _objects.size()-1;
   }
 
   int
   BRLCADBrepHandler::handleVertex(point_t pt) {
     debug("handleVertex");
     debug("point: " << PT(pt));
-    _vertex = &_brep->NewVertex(ON_3dPoint(pt));
-    _vertex->m_tolerance = 0.0; // XXX use exact tolerance?
-    _objects.push_back(_vertex);
-    return _objects.size()-1;
+    int vi = _brep->m_V.Count();
+    ON_BrepVertex& b = _brep->NewVertex(ON_3dPoint(pt));
+    b.m_tolerance = 0.0; // XXX use exact tolerance?
+
+    _vertices.push_back(b.m_vertex_index);
+    return _vertices.size()-1;
   }
 
   int 

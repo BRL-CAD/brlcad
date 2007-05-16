@@ -9,6 +9,7 @@ main(int argc, char** argv) {
 
   BRLCADBrepHandler bh;
   iges.readBreps(&bh);
+  bh.write();
   
   return 0;
 }

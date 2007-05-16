@@ -3,8 +3,12 @@
 
 
 #include "common.h"
-#include "brep.h"
+#include "bn.h"
+#include "raytrace.h"
+#include "wdb.h"
 #include "n_iges.hpp"
+#include "brep.h"
+
 
 namespace brlcad {
 
@@ -70,8 +74,15 @@ namespace brlcad {
 
     int handleOffsetCurve();    
 
+    void write();
+
   private:
+    struct rt_wdb* outfp;
+    string id_name;
+    string geom_name;    
+
     vector<ON_Geometry*> _objects;    
+    vector<int> _vertices;
 
     // need to support outer and void shells!
     ON_Brep* _brep;
