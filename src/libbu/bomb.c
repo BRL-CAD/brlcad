@@ -162,23 +162,26 @@ bu_bomb(const char *str)
     }
 #endif
 
-    /* save a backtrace */
+#if defined(DEBUG)
+    /* save a backtrace, should hopefully have debug symbols */
     {
 	FILE *fp = NULL;
 	char tracefile[512] = {0};
 	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), bu_process_id());
-	fprintf(stderr, "Saving stack trace to %s\n", tracefile);
+	fprintf(stderr, "Saving stack trace to ");
+	fprintf(stderr, tracefile);
+	fprintf(stderr, "\n");
 	fflush(stderr);
-	fp = fopen(tracefile, "a");
-	bu_backtrace(fp);
-	(void)fclose(fp);
+	bu_crashreport(tracefile);
     }
+#endif
 
     /* If in parallel mode, try to signal the leader to die. */
     bu_kill_parallel();
 
     /* try to save a core dump */
     if( bu_debug & BU_DEBUG_COREDUMP )  {
+	fprintf(stdout,"Causing intentional core dump due to debug flag\n");
 	fprintf(stderr,"Causing intentional core dump due to debug flag\n");
 	fflush(stdout);
 	fflush(stderr);
