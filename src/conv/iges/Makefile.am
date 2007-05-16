@@ -31,6 +31,7 @@ iges_LDADD = \
 	${RT} ${RT_LIBS} \
 	${BN} ${BN_LIBS} \
 	${BU} ${BU_LIBS} \
+	${WDB} ${WDB_LIBS} \
 	${SYSV} ${SYSV_LIBS} \
 	${OPENNURBS}
 
