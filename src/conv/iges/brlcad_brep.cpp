@@ -79,7 +79,18 @@ namespace brlcad {
     debug("curve : " << curveIndex);
     debug("start : " << startAngle);
     debug("end   : " << endAngle);
-    return 0; 
+
+    // get the line and curve
+    ON_Line& line = ((ON_LineCurve*)_objects[lineIndex])->m_line;
+    ON_Curve* curve = (ON_Curve*)_objects[curveIndex];
+
+    ON_RevSurface* rev = ON_RevSurface::New();
+    rev->m_curve = curve;
+    rev->m_axis = line;
+    rev->SetAngleRadians(startAngle, endAngle);
+
+    _objects.push_back(rev);
+    return _objects.size()-1;
   }
 
   int
@@ -104,7 +115,32 @@ namespace brlcad {
     debug("v controls: " << num_control[1]);
     debug("u degree  : " << degree[0]);
     debug("v degree  : " << degree[1]);
-    return 0; 
+
+    ON_NurbsSurface* surf = ON_NurbsSurface::New(3, rational, degree[0]+1, degree[1]+1, num_control[0], num_control[1]);
+    
+    for (int i = 0; i < u_num_knots; i++) {
+      surf->m_knot[0][i] = u_knots[i];
+    }
+    for (int i = 0; i < v_num_knots; i++) {
+      surf->m_knot[1][i] = v_knots[i];
+    }
+
+    for (int u = 0; u < num_control[0]; u++) {
+      for (int v = 0; v < num_control[1]; v++) {
+	if (rational) 
+	  surf->SetCV(u,v,ON_4dPoint(ctl_points[CPI(u,v,0)],
+				     ctl_points[CPI(u,v,1)],
+				     ctl_points[CPI(u,v,2)],
+				     weights[v*num_control[0]+u]));
+	else 
+	  surf->SetCV(u,v,ON_3dPoint(ctl_points[CPI(u,v,0)],
+				     ctl_points[CPI(u,v,1)],
+				     ctl_points[CPI(u,v,2)]));
+      } 
+    }
+    
+    _objects.push_back(surf);
+    return _objects.size()-1;
   }
 
   int
