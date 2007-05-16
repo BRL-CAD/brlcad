@@ -4001,10 +4001,11 @@ BC_BOLD
 AC_MSG_RESULT([BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE])
 BC_UNBOLD
 AC_MSG_RESULT([])
-AC_MSG_RESULT([             Prefix: ${prefix}])
+AC_MSG_RESULT([             Prefix: ${bc_prefix}])
 AC_MSG_RESULT([           Binaries: ${bindir}])
-AC_MSG_RESULT([Configuration files: ${sysconfdir}])
 AC_MSG_RESULT([       Manual pages: ${mandir}])
+AC_MSG_RESULT([Configuration files: ${sysconfdir}])
+AC_MSG_RESULT([Data resource files: ${bc_data_dir}])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([CC       = ${CC}])
 AC_MSG_RESULT([CXX      = ${CXX}])
