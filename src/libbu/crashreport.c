@@ -131,6 +131,9 @@ bu_crashreport(const char *filename)
     /* write out kernel and hardware information */
     if (path = bu_which("sysctl")) {
 	snprintf(buffer, CR_BUFSIZE, "%s -a", path);
+	/* FIXME: really should fork and execve instead of popen to
+	 * catch stderr junk from sysctl.
+	 */
 	popenfp = popen(buffer, "r");
 	if (!popenfp) {
 	    perror("unable to popen sysctl");
