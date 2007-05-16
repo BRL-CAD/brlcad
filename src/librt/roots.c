@@ -388,7 +388,7 @@ rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
 	 * and the remainder (should be zero if the root was really a
 	 * root).
 	 */
-	bn_poly_synthetic_division( oldP, &div, oldP, &rem );
+	bn_poly_synthetic_division(oldP, &rem, oldP, &div);
 }
 
 /*
