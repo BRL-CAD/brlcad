@@ -568,7 +568,7 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 	A.cf[2] = X2_Y2.cf[2] + cor_pprime[Z] * cor_pprime[Z] +
 		  1.0 - pipe->bend_alpha_o * pipe->bend_alpha_o;
 
-	/* Inline expansion of (void) rt_poly_mul( &A, &A, &Asqr ) */
+	/* Inline expansion of (void) bn_poly_mul( &Asqr, &A, &A ) */
 	/* Both polys have degree two */
 	Asqr.dgr = 4;
 	Asqr.cf[0] = A.cf[0] * A.cf[0];
@@ -578,7 +578,7 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 	Asqr.cf[4] = A.cf[2] * A.cf[2];
 
 	/* Inline expansion of bn_poly_scale( &X2_Y2, 4.0 ) and
-	 * rt_poly_sub( &Asqr, &X2_Y2, &C ).
+	 * bn_poly_sub( &C, &Asqr, &X2_Y2 ).
 	 */
 	C.dgr   = 4;
 	C.cf[0] = Asqr.cf[0];
@@ -653,7 +653,7 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 	A.cf[2] = X2_Y2.cf[2] + cor_pprime[Z] * cor_pprime[Z] +
 		  1.0 - pipe->bend_alpha_i * pipe->bend_alpha_i;
 
-	/* Inline expansion of (void) rt_poly_mul( &A, &A, &Asqr ) */
+	/* Inline expansion of (void) bn_poly_mul( &Asqr, &A, &A ) */
 	/* Both polys have degree two */
 	Asqr.dgr = 4;
 	Asqr.cf[0] = A.cf[0] * A.cf[0];
@@ -663,7 +663,7 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 	Asqr.cf[4] = A.cf[2] * A.cf[2];
 
 	/* Inline expansion of bn_poly_scale( &X2_Y2, 4.0 ) and
-	 * rt_poly_sub( &Asqr, &X2_Y2, &C ).
+	 * bn_poly_sub( &C, &Asqr, &X2_Y2 ).
 	 */
 	C.dgr   = 4;
 	C.cf[0] = Asqr.cf[0];

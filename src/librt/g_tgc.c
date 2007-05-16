@@ -626,7 +626,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	/* A vector is unitized (tgc->tgc_A == 1.0) */
 	R.cf[1] = (cor_pprime[Z] * tgc->tgc_CdAm1) + 1.0;
 
-	/* (void) rt_poly_mul( &R, &R, &Rsqr ); */
+	/* (void) rt_poly_mul(&Rsqr, &R, &R); */
 	Rsqr.dgr = 2;
 	Rsqr.cf[0] = R.cf[0] * R.cf[0];
 	Rsqr.cf[1] = R.cf[0] * R.cf[1] * 2;
@@ -644,8 +644,8 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		FAST fastf_t roots;
 
 		/*
-		 *  (void) rt_poly_add( &Xsqr, &Ysqr, &sum );
-		 *  (void) rt_poly_sub( &sum, &Rsqr, &C );
+		 *  (void) bn_poly_add( &sum, &Xsqr, &Ysqr );
+		 *  (void) bn_poly_sub( &C, &sum, &Rsqr );
 		 */
 		C.dgr = 2;
 		C.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] - Rsqr.cf[1];
@@ -674,18 +674,18 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		/* B vector is unitized (tgc->tgc_B == 1.0) */
 		Q.cf[1] = (cor_pprime[Z] * tgc->tgc_DdBm1) + 1.0;
 
-		/* (void) rt_poly_mul( &Q, &Q, &Qsqr ); */
+		/* (void) bn_poly_mul( &Qsqr, &Q, &Q ); */
 		Qsqr.dgr = 2;
 		Qsqr.cf[0] = Q.cf[0] * Q.cf[0];
 		Qsqr.cf[1] = Q.cf[0] * Q.cf[1] * 2;
 		Qsqr.cf[2] = Q.cf[1] * Q.cf[1];
 
 		/*
-		 * (void) rt_poly_mul( &Qsqr, &Xsqr, &T1 );
-		 * (void) rt_poly_mul( &Rsqr, &Ysqr, &T2 );
-		 * (void) rt_poly_mul( &Rsqr, &Qsqr, &T3 );
-		 * (void) rt_poly_add( &T1, &T2, &sum );
-		 * (void) rt_poly_sub( &sum, &T3, &C );
+		 * (void) bn_poly_mul( &T1, &Qsqr, &Xsqr );
+		 * (void) bn_poly_mul( &T2 &Rsqr, &Ysqr );
+		 * (void) bn_poly_mul( &T1, &Rsqr, &Qsqr );
+		 * (void) bn_poly_add( &sum, &T1, &T2 );
+		 * (void) bn_poly_sub( &C, &sum, &T3 );
 		 */
 		C.dgr = 4;
 		C.cf[0] = Qsqr.cf[0] * Xsqr.cf[0] +
@@ -1008,7 +1008,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		/* A vector is unitized (tgc->tgc_A == 1.0) */
 		R.cf[1] = (cor_pprime[Z] * tgc->tgc_CdAm1) + 1.0;
 
-		/* (void) rt_poly_mul( &R, &R, &Rsqr ); inline expands to: */
+		/* (void) bn_poly_mul( &Rsqr, &R, &R ); inline expands to: */
 		Rsqr.dgr = 2;
 		Rsqr.cf[0] = R.cf[0] * R.cf[0];
 		Rsqr.cf[1] = R.cf[0] * R.cf[1] * 2;
@@ -1020,8 +1020,8 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	 *  form.  Otherwise it is a (gah!) quartic equation.
 	 */
 		if ( tgc->tgc_AD_CB ){
-			/* (void) rt_poly_add( &Xsqr, &Ysqr, &sum ); and */
-			/* (void) rt_poly_sub( &sum, &Rsqr, &C ); inline expand to */
+			/* (void) bn_poly_add( &sum, &Xsqr, &Ysqr ); and */
+			/* (void) bn_poly_sub( &C, &sum, &Rsqr ); inline expand to */
 			C[ix].dgr = 2;
 			C[ix].cf[0] = Xsqr.cf[0] + Ysqr.cf[0] - Rsqr.cf[0];
 			C[ix].cf[1] = Xsqr.cf[1] + Ysqr.cf[1] - Rsqr.cf[1];
@@ -1034,13 +1034,13 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 			/* B vector is unitized (tgc->tgc_B == 1.0) */
 			Q.cf[1] = (cor_pprime[Z] * tgc->tgc_DdBm1) + 1.0;
 
-			/* (void) rt_poly_mul( &Q, &Q, &Qsqr ); inline expands to */
+			/* (void) bn_poly_mul( &Qsqr, &Q, &Q ); inline expands to */
 			Qsqr.dgr = 2;
 			Qsqr.cf[0] = Q.cf[0] * Q.cf[0];
 			Qsqr.cf[1] = Q.cf[0] * Q.cf[1] * 2;
 			Qsqr.cf[2] = Q.cf[1] * Q.cf[1];
 
-			/* (void) rt_poly_mul( &Qsqr, &Xsqr, &T1 ); inline expands to */
+			/* (void) bn_poly_mul( &T1, &Qsqr, &Xsqr ); inline expands to */
 			C[ix].dgr = 4;
 			C[ix].cf[0] = Qsqr.cf[0] * Xsqr.cf[0];
 			C[ix].cf[1] = Qsqr.cf[0] * Xsqr.cf[1] +
@@ -1052,8 +1052,8 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 			    Qsqr.cf[2] * Xsqr.cf[1];
 			C[ix].cf[4] = Qsqr.cf[2] * Xsqr.cf[2];
 
-			/* (void) rt_poly_mul( &Rsqr, &Ysqr, &T2 ); and */
-			/* (void) rt_poly_add( &T1, &T2, &sum ); inline expand to */
+			/* (void) bn_poly_mul( &T2, &Rsqr, &Ysqr ); and */
+			/* (void) bn_poly_add( &sum, &T1, &T2 ); inline expand to */
 			C[ix].cf[0] += Rsqr.cf[0] * Ysqr.cf[0];
 			C[ix].cf[1] += Rsqr.cf[0] * Ysqr.cf[1] +
 			    Rsqr.cf[1] * Ysqr.cf[0];
@@ -1064,8 +1064,8 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 			    Rsqr.cf[2] * Ysqr.cf[1];
 			C[ix].cf[4] += Rsqr.cf[2] * Ysqr.cf[2];
 
-			/* (void) rt_poly_mul( &Rsqr, &Qsqr, &T3 ); and */
-			/* (void) rt_poly_sub( &sum, &T3, &C ); inline expand to */
+			/* (void) bn_poly_mul( &T3, &Rsqr, &Qsqr ); and */
+			/* (void) bn_poly_sub( &C, &sum, &T3 ); inline expand to */
 			C[ix].cf[0] -= Rsqr.cf[0] * Qsqr.cf[0];
 			C[ix].cf[1] -= Rsqr.cf[0] * Qsqr.cf[1] +
 			    Rsqr.cf[1] * Qsqr.cf[0];

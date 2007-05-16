@@ -418,7 +418,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	A.cf[2] = X2_Y2.cf[2] + cor_pprime[Z] * cor_pprime[Z] +
 		  1.0 - tor->tor_alpha * tor->tor_alpha;
 
-	/* Inline expansion of (void) rt_poly_mul( &A, &A, &Asqr ) */
+	/* Inline expansion of (void) bn_poly_mul( &Asqr, &A, &A ) */
 	/* Both polys have degree two */
 	Asqr.dgr = 4;
 	Asqr.cf[0] = A.cf[0] * A.cf[0];
@@ -428,7 +428,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	Asqr.cf[4] = A.cf[2] * A.cf[2];
 
 	/* Inline expansion of bn_poly_scale( &X2_Y2, 4.0 ) and
-	 * rt_poly_sub( &Asqr, &X2_Y2, &C ).
+	 * bn_poly_sub( &C, &Asqr, &X2_Y2 ).
 	 */
 	C.dgr   = 4;
 	C.cf[0] = Asqr.cf[0];
@@ -639,7 +639,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		A.cf[2] = X2_Y2.cf[2] + cor_pprime[Z] * cor_pprime[Z] +
 			  1.0 - tor->tor_alpha * tor->tor_alpha;
 
-		/* Inline expansion of (void) rt_poly_mul( &A, &A, &Asqr ) */
+		/* Inline expansion of (void) bn_poly_mul( &Asqr, &A, &A ) */
 		/* Both polys have degree two */
 		Asqr.dgr = 4;
 		Asqr.cf[0] = A.cf[0] * A.cf[0];
@@ -657,7 +657,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		X2_Y2.cf[1] *= 4.0;
 		X2_Y2.cf[2] *= 4.0;
 
-		/* Inline expansion of (void) rt_poly_sub( &Asqr, &X2_Y2, &C ) */
+		/* Inline expansion of (void) bn_poly_sub( &C, &Asqr, &X2_Y2 ) */
 		/* offset is know to be 2 */
 		C[i].dgr	= 4;
 		C[i].cf[0] = Asqr.cf[0];
