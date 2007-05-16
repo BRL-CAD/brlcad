@@ -28,10 +28,10 @@ iges_SOURCES = \
 	nmain.cpp
 
 iges_LDADD = \
+	${WDB} ${WDB_LIBS} \
 	${RT} ${RT_LIBS} \
 	${BN} ${BN_LIBS} \
 	${BU} ${BU_LIBS} \
-	${WDB} ${WDB_LIBS} \
 	${SYSV} ${SYSV_LIBS} \
 	${OPENNURBS}
 
