@@ -30,7 +30,6 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 /** @} */
 
@@ -40,20 +39,15 @@ static const char RCSroots[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 
-int	rt_poly_roots(register bn_poly_t *eqn, register bn_complex_t *roots, const char *name);
-void	rt_poly_eval_w_2derivatives(register bn_complex_t *cZ, register bn_poly_t *eqn, register bn_complex_t *b, register bn_complex_t *c, register bn_complex_t *d);
-void	rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root);
-int	rt_poly_findroot(register bn_poly_t *eqn, register bn_complex_t *nxZ, const char *str);
-int	rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nroots);
 
 /*
  *			R T _ P O L Y _ R O O T S
