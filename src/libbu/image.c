@@ -61,6 +61,15 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
 /* private functions */
+
+/* Save functions use the return value not only for success/failure, but also to
+ * note if further action is needed.
+ *   0 - failure.
+ *   1 - success, no further action needed.
+ *   2 - success, close() required on fd.
+ * This might be better just using the f* functions instead of mixing...
+ */
+
 /* 
  * Attempt to guess the file type. Understands ImageMagick style 
  * FMT:filename as being preferred, but will attempt to guess
@@ -106,25 +115,29 @@ png_save(int fd, char *rgb, int width, int height)
 	exit(-1);
 	return 0;
     }
-    png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+
+    png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if(png_ptr == NULL) return 0;
+
     info_ptr = png_create_info_struct (png_ptr);
     if(info_ptr == NULL || setjmp (png_jmpbuf (png_ptr))) {
 	printf("Ohs Noes!\n"); fflush(stdout);
 	png_destroy_read_struct (&png_ptr, info_ptr ? &info_ptr : NULL, NULL);
+	exit(-1);
 	return 0;
     }
 
     png_init_io (png_ptr, fh);
-    png_set_compression_level (png_ptr, Z_BEST_COMPRESSION);
     png_set_IHDR (png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB,
-                  PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
-                  PNG_FILTER_TYPE_DEFAULT);
-    png_write_info (png_ptr, info_ptr);	/* causes badness, NULL write func... */
-    for (i = height; i > 0; --i)
+                  PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
+                  PNG_FILTER_TYPE_BASE);
+    png_write_info (png_ptr, info_ptr);
+    for (i = height-1; i >= 0; --i)
         png_write_row (png_ptr, (png_bytep) (rgb + width*3*i));
     png_write_end (png_ptr, info_ptr);
-    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+
+    png_destroy_write_struct(&png_ptr, &info_ptr);
+    fclose(fh);
     return 1;
 }
 
@@ -135,7 +148,7 @@ bmp_save(int fd, char *rgb, int width, int height)
 }
 
 static int 
-pix_save(int fd, char *rgb, int size) { return write(fd, rgb, size); }
+pix_save(int fd, char *rgb, int size) { write(fd, rgb, size); return 2; }
 
 /* size is bytes of PIX data, bw output file will be 1/3 this size. 
  * Also happens to munge up the contents of rgb. */
@@ -149,7 +162,8 @@ bw_save(int fd, char *rgb, int size)
     }
     /* an ugly naïve pixel grey-scale hack. Does not take human color curves. */
     for(i=0;i<bwsize;++i) rgb[i] = (int)((float)rgb[i*3]+(float)rgb[i*3+1]+(float)rgb[i*3+2]/3.0);
-    return write(fd, rgb, bwsize); 
+    write(fd, rgb, bwsize); 
+    return 2;
 }
 
 /* end if private functions */
@@ -219,13 +233,18 @@ bu_image_save_writeline(struct bu_image_file *bif, int y, char *data)
 int 
 bu_image_save_close(struct bu_image_file *bif)
 {
+    int r = 0;
     switch(bif->format) {
-	case BU_IMAGE_BMP: bmp_save(bif->fd,bif->data,bif->width,bif->height); break;
-	case BU_IMAGE_PNG: png_save(bif->fd,bif->data,bif->width,bif->height); break;
-	case BU_IMAGE_PIX: pix_save(bif->fd,bif->data,bif->width*bif->height*bif->depth); break;
-	case BU_IMAGE_BW: bw_save(bif->fd, bif->data, bif->width*bif->height*bif->depth); break;
+	case BU_IMAGE_BMP: r = bmp_save(bif->fd,bif->data,bif->width,bif->height); break;
+	case BU_IMAGE_PNG: r = png_save(bif->fd,bif->data,bif->width,bif->height); break;
+	case BU_IMAGE_PIX: r = pix_save(bif->fd,bif->data,bif->width*bif->height*bif->depth); break;
+	case BU_IMAGE_BW: r = bw_save(bif->fd, bif->data, bif->width*bif->height*bif->depth); break;
     }
-    close(bif->fd);
+    switch(r) {
+	case 0: bu_log("Failed to write image\n"); break;
+	/* 1 signals success with no further action needed */
+	case 2: close(bif->fd); break;
+    }
     bu_free(bif->filename,"bu_image_file filename");
     bu_free(bif->data,"bu_image_file data");
     bu_free(bif,"bu_image_file");
