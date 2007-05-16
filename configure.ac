@@ -217,6 +217,11 @@ AC_SUBST(BRLCAD_ROOT)
 #   e.g. /usr/local/share/brlcad/7.4.0
 AC_MSG_CHECKING([where BRL-CAD resources are to be installed])
 bc_data_dir="${datadir}"
+if test "x$bc_data_dir" = "xNONE/share" ; then
+	bc_data_dir="${bc_prefix}/share/brlcad/${BRLCAD_VERSION}"
+elif test "x$bc_data_dir" = "x\${prefix}/share" ; then
+	bc_data_dir="${bc_prefix}/share/brlcad/${BRLCAD_VERSION}"
+fi
 eval "bc_data_dir=\"$bc_data_dir\""
 eval "bc_data_dir=\"$bc_data_dir\""
 if test "x$bc_data_dir" = "xNONE/share" ; then
