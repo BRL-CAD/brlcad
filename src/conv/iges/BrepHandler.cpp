@@ -1,6 +1,8 @@
 #include "n_iges.hpp"
 
 #include <iostream>
+#include <assert.h>
+
 using namespace std;
 
 namespace brlcad {
