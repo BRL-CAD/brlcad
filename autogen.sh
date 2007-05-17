@@ -431,6 +431,7 @@ for sig in 1 2 13 15; do
 
 	if test -f "acinclude.m4.$$.backup" ; then
 	    $VERBOSE_ECHO "cat acinclude.m4.$$.backup > acinclude.m4"
+	    chmod u+w acinclude.m4
 	    cat acinclude.m4.$$.backup > acinclude.m4
 
 	    $VERBOSE_ECHO "rm -f acinclude.m4.$$.backup"
@@ -832,6 +833,8 @@ restore_clobbered ( ) {
     # Here we restore the files if necessary.
 
     spacer=no
+
+    # COPYING
     if test -f COPYING.$$.protect_from_automake.backup ; then
 	if test -f COPYING ; then
 	    # compare entire content, restore if needed
@@ -842,16 +845,22 @@ restore_clobbered ( ) {
 		fi
 		# restore the backup
 		$VERBOSE_ECHO "Restoring COPYING from backup (automake -f likely clobbered it)"
-		$VERBOSE_ECHO "cat COPYING.$$.protect_from_automake.backup > COPYING"
-		cat COPYING.$$.protect_from_automake.backup > COPYING
+		$VERBOSE_ECHO "rm -f COPYING"
+		rm -f COPYING
+		$VERBOSE_ECHO "mv COPYING.$$.protect_from_automake.backup COPYING"
+		mv COPYING.$$.protect_from_automake.backup COPYING
 	    fi # check contents
-	    $VERBOSE_ECHO "rm -f COPYING.$$.protect_from_automake.backup"
-	    rm -f COPYING.$$.protect_from_automake.backup
 	elif test -f COPYING.$$.protect_from_automake.backup ; then
 	    $VERBOSE_ECHO "mv COPYING.$$.protect_from_automake.backup COPYING"
 	    mv COPYING.$$.protect_from_automake.backup COPYING
 	fi # -f COPYING
+
+	# just in case
+	$VERBOSE_ECHO "rm -f COPYING.$$.protect_from_automake.backup"
+	rm -f COPYING.$$.protect_from_automake.backup
     fi # -f COPYING.$$.protect_from_automake.backup
+
+    # INSTALL
     if test -f INSTALL.$$.protect_from_automake.backup ; then
 	if test -f INSTALL ; then
 	    # compare entire content, restore if needed
@@ -862,15 +871,19 @@ restore_clobbered ( ) {
 		fi
 		# restore the backup
 		$VERBOSE_ECHO "Restoring INSTALL from backup (automake -f likely clobbered it)"
-		$VERBOSE_ECHO "cat INSTALL.$$.protect_from_automake.backup > INSTALL"
-		cat INSTALL.$$.protect_from_automake.backup > INSTALL
+		$VERBOSE_ECHO "rm -f INSTALL"
+		rm -f INSTALL
+		$VERBOSE_ECHO "mv INSTALL.$$.protect_from_automake.backup INSTALL"
+		mv INSTALL.$$.protect_from_automake.backup INSTALL
 	    fi # check contents
-	    $VERBOSE_ECHO "rm -f INSTALL.$$.protect_from_automake.backup"
-	    rm -f INSTALL.$$.protect_from_automake.backup
 	elif test -f INSTALL.$$.protect_from_automake.backup ; then
 	    $VERBOSE_ECHO "mv INSTALL.$$.protect_from_automake.backup INSTALL"
 	    mv INSTALL.$$.protect_from_automake.backup INSTALL
 	fi # -f INSTALL
+
+	# just in case
+	$VERBOSE_ECHO "rm -f INSTALL.$$.protect_from_automake.backup"
+	rm -f INSTALL.$$.protect_from_automake.backup
     fi # -f INSTALL.$$.protect_from_automake.backup
 
     CONFIGURE="`locate_configure_template`"
@@ -1129,6 +1142,7 @@ libtool_failure ( ) {
 		cat acinclude.m4 > acinclude.m4.$$.backup
 	    fi
 	    $VERBOSE_ECHO "cat \"$LIBTOOL_M4\" >> acinclude.m4"
+	    chmod u+w acinclude.m4
 	    cat "$LIBTOOL_M4" >> acinclude.m4
 
 	    # don't keep doing this
