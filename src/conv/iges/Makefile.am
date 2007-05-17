@@ -2,7 +2,7 @@
 
 if BUILD_OPENNURBS
 ON_IGES = iges
-IGES_FLAGS = -g $(OPENNURBS_CPPFLAGS) 
+IGES_FLAGS = -g $(OPENNURBS_CPPFLAGS) $(TNT_CPPFLAGS)
 else
 ON_IGES = 
 IGES_FLAGS = 
@@ -25,6 +25,7 @@ iges_SOURCES = \
 	brlcad_brep.cpp \
 	BrepHandler.cpp \
 	n_iges.cpp  \
+	PullbackCurve.cpp \
 	nmain.cpp
 
 iges_LDADD = \
