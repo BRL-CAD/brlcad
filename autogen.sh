@@ -1117,7 +1117,7 @@ libtool_failure ( ) {
 
     if [ "x$RUN_RECURSIVE" = "xno" ] ; then
 	# we already tried the libtool.m4, don't try again
-	exit 5
+	return 1
     fi
 
     if test -f "$LIBTOOL_M4" ; then
@@ -1225,7 +1225,6 @@ manual_autogen ( ) {
 	    fi
 	fi # ltmain.sh
     fi # need_libtoolize
-
 
     ############
     # autoconf #
@@ -1357,6 +1356,7 @@ EOF
 	    break
 	fi
     done
+
     if [ "x$need_automake" = "xyes" ] ; then
 	$VERBOSE_ECHO "$AUTOMAKE $AUTOMAKE_OPTIONS"
 	automake_output="`$AUTOMAKE $AUTOMAKE_OPTIONS 2>&1`"
@@ -1364,6 +1364,7 @@ EOF
 	$VERBOSE_ECHO "$automake_output"
 	
 	if [ ! $ret = 0 ] ; then
+
 	    ###################
 	    # automake, retry #
 	    ###################
@@ -1375,7 +1376,6 @@ EOF
 	    $VERBOSE_ECHO "$automake_output"
 	    
 	    if [ ! $ret = 0 ] ; then
-		
 	 	# test if libtool is busted
 		libtool_failure "$automake_output"
 
@@ -1383,9 +1383,9 @@ EOF
 		cat <<EOF
 $automake_output
 EOF
-	    fi
-	    $ECHO "ERROR: $AUTOMAKE failed"
-	    exit 2
+		$ECHO "ERROR: $AUTOMAKE failed"
+		exit 2
+	    fi # automake retry
 	fi # automake ret = 0
     fi # need_automake
 } # end of manual_autogen
