@@ -49,6 +49,9 @@ static const char RCSroots[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 
+static const struct bn_poly	bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
+
+
 /**
  * R T _ P O L Y _ E V A L _ W _ 2 D E R I V A T I V E S
  *
@@ -253,7 +256,8 @@ rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nr
 void
 rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
 {
-	LOCAL bn_poly_t	div, rem;
+	LOCAL bn_poly_t	div = bn_Zero_poly;
+	LOCAL bn_poly_t rem = bn_Zero_poly;
 
 	/* Make a polynomial out of the given root:  Linear for a real
 	 * root, Quadratic for a complex root (since they come in con-
