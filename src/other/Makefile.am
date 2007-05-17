@@ -64,13 +64,13 @@ endif
 
 if BUILD_TKIMG
 TKIMGDIR=tkimg
-else
+else !BUILD_TKIMG
 TKIMGDIR=
 endif
 
 if BUILD_BLT
 BLTDIR=blt
-else
+else !BUILD_BLT
 BLTDIR=
 endif
 
@@ -78,6 +78,12 @@ if BUILD_OPENNURBS
 OPENNURBSDIR=openNURBS
 else !BUILD_OPENNURBS
 OPENNURBSDIR=
+endif
+
+if BUILD_TNT
+TNTDIR=tnt
+else !BUILD_TNT
+TNTDIR=
 endif
 
 
@@ -106,6 +112,7 @@ SUBDIRS = \
 	${TKIMGDIR} \
 	${BLTDIR} \
 	${OPENNURBSDIR} \
+	${TNTDIR} \
 	awf
 
 endif
@@ -113,6 +120,24 @@ endif
 
 endif
 # end ONLY_BENCHMARK
+
+DIST_SUBDIRS = \
+	URToolkit \
+	awf \
+	blt \
+	incrTcl \
+	iwidgets \
+	jove \
+	libpng \
+	libregex \
+	libtermlib \
+	libutahrle \
+	libz \
+	openNURBS \
+	tcl \
+	tk \
+	tkimg \
+	tnt
 
 MAINTAINERCLEANFILES = Makefile.in
 

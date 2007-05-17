@@ -353,6 +353,9 @@ BC_ARG_ENABLE([build_blt], [blt-build], [Build the included BLT], [auto])
 # tkimg
 BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
 
+# force enable/disable building of tnt
+BC_ARG_ENABLE([build_tnt], [tnt-build], [Build the included Template Numerical Toolkit], [auto])
+
 # jove
 BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove], [auto])
 
@@ -559,6 +562,11 @@ BC_ARG_ALIAS([build_termlib], [termcap-build])
 BC_ARG_ALIAS([build_termlib], [libtermlib-build])
 BC_ARG_ALIAS([build_termlib], [libtermcap-build])
 
+# aliases to force building tnt (help uses tnt-build)
+BC_ARG_ALIAS([build_tnt], [tnt])
+BC_ARG_ALIAS([build_tnt], [template-numerical-toolkit-build])
+BC_ARG_ALIAS([build_tnt], [template-numerical-toolkit])
+
 # jove aliases (help uses jove-build)
 BC_ARG_ALIAS([build_jove], [jove])
 
@@ -738,6 +746,9 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_tkimg" = "x$bc_build_tkimg_default" ; then
 		bc_build_tkimg="$set_everything"
 	fi
+	if test "x$bc_build_tnt" = "x$bc_build_tnt_default" ; then
+		bc_build_tnt="$set_everything"
+	fi
 	if test "x$bc_build_jove" = "x$bc_build_jove_default" ; then
 		bc_build_jove="$set_everything"
 	fi
@@ -911,6 +922,9 @@ AC_MSG_RESULT($bc_build_tkimg)
 
 AC_MSG_CHECKING(whether to build the termlib library)
 AC_MSG_RESULT($bc_build_termlib)
+
+AC_MSG_CHECKING(whether to build the Template Numerical Toolkit)
+AC_MSG_RESULT($bc_build_tnt)
 
 AC_MSG_CHECKING(whether to compile jove or not)
 AC_MSG_RESULT($bc_build_jove)
@@ -2875,6 +2889,58 @@ else
 fi
 
 
+dnl *** TNT ***
+dnl See if template numerical toolkit works
+tnt_works=no
+AC_MSG_CHECKING(for TNT w/JAMA functionality)
+AC_TRY_RUN([
+#include <stdio.h>
+#include <jama_lu.h>
+int main () {
+    Array2D<double> matrix = Array2D<double>(2,2);
+    matrix[0][0] = matrix[1][0] = 1.0;
+    matrix[0][1] = matrix[1][1] = 0.0;
+    JAMA::LU<double> decomposition = JAMA::LU<double>(matrix);
+    if (decomposition.isNonsingular()) {
+	printf("JAMA:LU decomposition returned non-singular on a singular matrix\n");
+	return 1;
+    }
+    return 0;
+}
+], [tnt_works=yes])
+AC_MSG_RESULT($tnt_works)
+
+dnl figure out whether we need to build libz
+build_brlcad_tnt="no (using system)"
+if test "x$bc_build_tnt" = "xyes" ; then
+    build_brlcad_tnt=yes
+else
+    if test "x$bc_build_tnt" = "xno" ; then
+	if test "x$tnt_works" != "xyes" ; then
+	    AC_MSG_NOTICE([TNT was disabled, but no suitable system TNT was found])
+	    BC_RETRY_CONFIGURE([$this], [$args])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --enable-tnt-build])
+	    AC_MSG_ERROR([*** Use of the included TNT was disabled, yet no system TNT was found ***])
+	fi
+    else
+	dnl automatic detection
+	if test "x$tnt_works" = "xno" ; then
+	    build_brlcad_tnt=yes
+	fi
+    fi
+fi
+AC_MSG_CHECKING(whether to use the included Template Numerical Toolkit)
+TNT_CPPFLAGS=""
+if test "x$build_brlcad_tnt" = "xyes" ; then
+    TNT_CPPFLAGS='-I${top_srcdir}/src/other/tnt'
+    AC_MSG_RESULT(yes)
+else
+    AC_MSG_RESULT(no)
+fi
+AC_SUBST(TNT_CPPFLAGS)
+
+
 dnl *** libthread ***
 AC_MSG_CHECKING(for threading library availability)
 AC_MSG_RESULT($thread_link_works)
@@ -3464,6 +3530,7 @@ AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
+AM_CONDITIONAL(BUILD_TNT, [test "x$build_brlcad_tnt" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$build_brlcad_jove" = "xyes"])
 AM_CONDITIONAL(BUILD_EF, [test "x$bc_build_ef" = "xyes"])
 AM_CONDITIONAL(BUILD_CUBIT, [test "x$bc_build_cubit" = "xyes"])
@@ -3873,6 +3940,7 @@ AC_CONFIG_FILES([
 	src/other/tkimg/png/Makefile
 	src/other/tkimg/pngtcl/Makefile
 	src/other/tkimg/zlibtcl/Makefile
+	src/other/tnt/Makefile
 	src/other/blt/Makefile
 	src/other/blt/cf/Makefile
 	src/other/blt/demos/Makefile
@@ -4026,6 +4094,7 @@ AC_MSG_RESULT([Build libregex .......................: $build_brlcad_regex])
 AC_MSG_RESULT([Build zlib ...........................: $build_brlcad_zlib])
 AC_MSG_RESULT([Build termlib ........................: $build_brlcad_termlib])
 AC_MSG_RESULT([Build Utah Raster Toolkit.............: $build_brlcad_urt])
+AC_MSG_RESULT([Build Template Numerical Toolkit......: $build_brlcad_tnt])
 AC_MSG_RESULT([Build openNURBS.......................: $build_brlcad_opennurbs])
 AC_MSG_RESULT([Build jove ...........................: $build_brlcad_jove])
 AC_MSG_RESULT([])
