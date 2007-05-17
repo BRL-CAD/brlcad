@@ -3,8 +3,8 @@
 
 #include "opennurbs.h"
 
-/*********************************************************************************
- * p u l l b a c k _ c u r v e
+
+/*                  p u l l b a c k _ c u r v e
  *
  * Pull an arbitrary model-space *curve* onto the given *surface* as a
  * curve within the surface's domain when, for each point c = C(t) on
@@ -26,7 +26,7 @@
  *    universal knot generation to build a B-Spline curve.
  *
  * 3. If the curve is a line or an arc (determined with openNURBS routines), 
- *    return the appropriate ON_Curve subclass (otherwise, return a ON_NurbsCurve).
+ *    return the appropriate ON_Curve subclass (otherwise, return an ON_NurbsCurve).
  *
  * 
  */
