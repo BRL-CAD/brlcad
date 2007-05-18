@@ -51,19 +51,25 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #undef rt_bomb		/* in case compat4.h defines one */
 
-/*
- *			R T _ B O M B
+
+/**
+ * R T _ B O M B
  *
- *  Compatibility routine
- *  If an RT program is going to dump core, make sure we check
- *  our debug flags too.
+ * @deprecated
+ *
+ * Do not use.  Use bu_bomb() instead.
  */
 void
 rt_bomb(const char *s)
 {
-	if(RT_G_DEBUG || rt_g.NMG_debug )
-		bu_debug |= BU_DEBUG_COREDUMP;
-	bu_bomb(s);
+    bu_log("\
+WARNING: rt_bomb() is deprecated and will likely disappear in\n\
+a future release of BRL-CAD.  Applications should utilize\n\
+bu_bomb() instead for fatal errors.\n\
+\n");
+    if(RT_G_DEBUG || rt_g.NMG_debug )
+	bu_debug |= BU_DEBUG_COREDUMP;
+    bu_bomb(s);
 }
 
 /*
