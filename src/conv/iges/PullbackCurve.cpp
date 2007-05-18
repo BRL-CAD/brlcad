@@ -2,6 +2,8 @@
 #include <assert.h>
 #include <vector>
 #include <limits>
+#include "tnt.h"
+#include "jama_lu.h"
 
 using namespace std;
 
@@ -96,12 +98,10 @@ getKnotInterval(BSpline& bspline, double u) {
 }
 
 int
-getCoefficients(BSpline& bspline, vector<double>& N, double u) {
+getCoefficients(BSpline& bspline, Array1D<double>& N, double u) {
   // evaluate the b-spline basis function for the given parameter u
   // place the results in N[]
-  for (int i = 0; i < bspline.n+1; i++) {
-    N[i] = 0.0;
-  }
+  N = 0.0;
   if (u == bspline.knots[0]) {
     N[0] = 1.0;
     return 0;
@@ -133,15 +133,11 @@ getCoefficients(BSpline& bspline, vector<double>& N, double u) {
 void
 generateParameters(BSpline& bspline) {
   double lastT = 0.0;
-  vector< vector<double> > N;
-  bspline.params.reserve(bspline.n+1);
-  N.reserve(UNIVERSAL_SAMPLE_COUNT);
-  for (int i = 0; i < UNIVERSAL_SAMPLE_COUNT; i++) {
-    N[i].reserve(bspline.n);
-  }
+  Array2D<double> N(UNIVERSAL_SAMPLE_COUNT, bspline.n+1);
   for (int i = 0; i < UNIVERSAL_SAMPLE_COUNT; i++) {
     double t = (double)i / (UNIVERSAL_SAMPLE_COUNT-1);
-    getCoefficients(bspline, N[i], t);
+    Array1D<double> n = Array1D<double>(N.dim2(), N[i]);
+    getCoefficients(bspline, n, t);
   }
   for (int i = 0; i < bspline.n+1; i++) {
     double max = real.min();
@@ -163,7 +159,26 @@ generateParameters(BSpline& bspline) {
 void
 generateControlPoints(BSpline& bspline, PBCData& data)
 {
-
+  Array2D<double> bigN(bspline.n+1, bspline.n+1);
+  for (int i = 0; i < bspline.n+1; i++) {
+    Array1D<double> n = Array1D<double>(bigN.dim2(), bigN[i]);
+    getCoefficients(bspline, n, bspline.params[i]);
+  }
+  Array2D<double> bigD(bspline.n+1, 2);
+  for (int i = 0; i < bspline.n+1; i++) {
+    bigD[i][0] = data.samples[i].x;
+    bigD[i][1] = data.samples[i].y;
+  }
+  JAMA::LU<double> lu(bigN);
+  assert(lu.isNonsingular() > 0);
+  Array2D<double> bigP = lu.solve(bigD); // big linear algebra black box here...
+  
+  // extract the control points
+  for (int i = 0; i < bspline.n+1; i++) {
+    ON_2dPoint& p = bspline.controls.AppendNew();
+    p.x = bigP[i][0];
+    p.y = bigP[i][1];
+  }
 }
 
 ON_NurbsCurve*
