@@ -79,17 +79,17 @@ char		*nxt_spc(register char *cp);
 void		strsolbld(void), nmgbld(void);
 
 static union record	record;			/* GED database record */
-char 		*buf;		/* Record input buffer */
-char		name[NAMESIZE + 2];
+char 		*buf = NULL;		/* Record input buffer */
+char		name[NAMESIZE + 2] = {0};
 
-FILE	*ifp;
-struct rt_wdb	*ofp;
-static int ars_ncurves=0;
-static int ars_ptspercurve=0;
-static int ars_curve=0;
-static int ars_pt=0;
-static char *ars_name;
-static fastf_t **ars_curves=NULL;
+FILE *ifp = NULL;
+struct rt_wdb *ofp = NULL;
+static int ars_ncurves = 0;
+static int ars_ptspercurve = 0;
+static int ars_curve = 0;
+static int ars_pt = 0;
+static char *ars_name = NULL;
+static fastf_t **ars_curves = NULL;
 static char *slave_name = "safe_interp";
 static char *db_name = "_db";
 
@@ -133,7 +133,7 @@ incr_ars_pt(void)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     char c1[3];
 #ifdef _WIN32
@@ -162,7 +162,8 @@ main(int argc, char **argv)
     rt_init_resource( &rt_uniresource, 0, NULL );
 
     if( bu_fgets( c1, 6, ifp ) == NULL ) {
-	fclose(ifp);
+	fclose(ifp); ifp = NULL;
+	wdb_close(ofp); ofp = NULL;
 	bu_bomb( "Unexpected EOF\n" );
     }
 
@@ -174,7 +175,7 @@ main(int argc, char **argv)
 	/* this is a Tcl script */
 
 #ifdef _WIN32
-	fclose(ifp);
+	fclose(ifp); ifp = NULL;
 #else
 	rewind( ifp );
 #endif
@@ -214,7 +215,12 @@ main(int argc, char **argv)
 	    exit( 1 );
 	}
 
-	exit( 0 );
+	/* free up our resources */
+	mk_write_color_table( ofp );
+	fclose(ifp); ifp = NULL;
+	wdb_close(ofp); ofp = NULL;
+
+	return 0;
     } else {
 	rewind( ifp );
     }
@@ -319,15 +325,18 @@ main(int argc, char **argv)
 	memset(buf, 0, sizeof(char) * BUFSIZE);
     }
 
-    bu_free(buf, "input buffer");
-
     /* Now, at the end of the database, dump out the entire
      * region-id-based color table.
      */
     mk_write_color_table( ofp );
-    wdb_close(ofp);
 
-    exit(0);
+    /* close up shop */
+    bu_free(buf, "input buffer");
+    buf = NULL; /* sanity */
+    fclose(ifp); ifp = NULL;
+    wdb_close(ofp); ofp = NULL;
+
+    return 0;
 }
 
 /*
