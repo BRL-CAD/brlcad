@@ -55,7 +55,24 @@ static const char RCSpoly[] = "@(#)$Header$ (ARL)";
 #endif
 #define PI_DIV_3	(M_PI/3.0)
 
+#define SQRT3			1.732050808
+#define THIRD			0.333333333333333333333333333
+#define INV_TWENTYSEVEN		0.037037037037037037037037037
+#define	CUBEROOT( a )	(( (a) >= 0.0 ) ? pow( a, THIRD ) : -pow( -(a), THIRD ))
+
 static const struct bn_poly	bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
+static int	bn_expecting_fpe = 0;
+static jmp_buf	bn_abort_buf;
+
+
+HIDDEN void bn_catch_FPE(int sig)
+{
+    if( !bn_expecting_fpe )
+	bu_bomb("bn_catch_FPE() unexpected SIGFPE!");
+    if( !bu_is_parallel() )
+	(void)signal(SIGFPE, bn_catch_FPE);	/* Renew handler */
+    longjmp(bn_abort_buf, 1);	/* return error code */
+}
 
 
 /**
@@ -199,7 +216,8 @@ bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1,
 }
 
 
-/**	s y n D i v ( )
+/**
+ *	s y n D i v
  * @brief
  *	Divides any polynomial into any other polynomial using synthetic
  *	division.  Both polynomials must have real coefficients.
@@ -231,10 +249,11 @@ bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly
 }
 
 
-/**	q u a d r a t i c ( )
+/**
+ * b n _ p o l y _ q u a d r a t i c _ r o o t s
  *@brief
- *	Uses the quadratic formula to find the roots (in `complex' form)
- *	of any quadratic equation with real coefficients.
+ * Uses the quadratic formula to find the roots (in `complex' form) of
+ * any quadratic equation with real coefficients.
  */
 int
 bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct bn_poly *quadrat)
@@ -270,12 +289,8 @@ bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct
 }
 
 
-#define SQRT3			1.732050808
-#define THIRD			0.333333333333333333333333333
-#define INV_TWENTYSEVEN		0.037037037037037037037037037
-#define	CUBEROOT( a )	(( (a) >= 0.0 ) ? pow( a, THIRD ) : -pow( -(a), THIRD ))
-
-/**	c u b i c ( )
+/**
+ *	b n _ p o l y _ c u b i c _ r o o t s
  *@brief
  *	Uses the cubic formula to find the roots ( in `complex' form )
  *	of any cubic equation with real coefficients.
@@ -303,20 +318,6 @@ bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct
  *	If D < 0, there will be three unequal real roots.
  *
  *	Returns 1 for success, 0 for fail.
- */
-static int	bn_expecting_fpe = 0;
-static jmp_buf	bn_abort_buf;
-HIDDEN void bn_catch_FPE(int sig)
-{
-    if( !bn_expecting_fpe )
-	bu_bomb("bn_catch_FPE() unexpected SIGFPE!");
-    if( !bu_is_parallel() )
-	(void)signal(SIGFPE, bn_catch_FPE);	/* Renew handler */
-    longjmp(bn_abort_buf, 1);	/* return error code */
-}
-
-/*
- *			B N _ P O L Y _ C U B I C _ R O O T S
  */
 int
 bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_poly *eqn)
@@ -417,7 +418,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 
 
 /**
- *			B N _ P O L Y _ Q U A R T I C _ R O O T S
+ *	b n _ p o l y _ q u a r t i c _ r o o t s
  *@brief
  *	Uses the quartic formula to find the roots ( in `complex' form )
  *	of any quartic equation with real coefficients.
@@ -501,7 +502,9 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
 
 
 /**
- *			B N _ P R _ P O L Y
+ *	b n _ p r _ p o l y
+ *
+ * Print out the polynomial.
  */
 void
 bn_pr_poly(const char *title, register const struct bn_poly *eqn)
@@ -543,8 +546,10 @@ bn_pr_poly(const char *title, register const struct bn_poly *eqn)
     bu_vls_free( &str );
 }
 
-/*
- *			B N _ P R _ R O O T S
+/**
+ * b n _ p r _ r o o t s
+ *
+ * Print out the roots of a given polynomial (complex numbers)
  */
 void
 bn_pr_roots(const char *title, const struct bn_complex *roots, int n)
