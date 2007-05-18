@@ -2205,7 +2205,7 @@ Popup Menu    Right or Ctrl-Left
     if {[namespace tail [$wizard info class]] != "TankWizardI"} {
     # Here we have the case where the name is being
     # changed to an object that already exists.
-    if {$oname != $name && ![catch {dbCmd get $name} stuff]} {
+    if {$oname != $name && ![catch {dbCmd get_type $name} stuff]} {
 	::sdialogs::Stddlgs::errordlg "User Error" \
 		"$name already exists!"
 	return
@@ -2589,7 +2589,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_init_obj_history {obj} {
     if {$obj == "" ||
-	[catch {dbCmd get $obj} stuff]} {
+	[catch {dbCmd get_type $obj} stuff]} {
 	return
     }
 
@@ -2601,7 +2601,7 @@ Popup Menu    Right or Ctrl-Left
     # the link to it is broken, so create
     # a new one.
     if {$hname == "" ||
-	[catch {dbCmd get $hname} stuff]} {
+	[catch {dbCmd get_type $hname} stuff]} {
 	dbCmd make_name -s 1
 	set hname [dbCmd make_name $obj.version]
 	#dbCmd attr set $obj history $hname
@@ -2751,7 +2751,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_finalize_obj_edit {obj path} {
     if {$obj == "" ||
-	[catch {dbCmd get $obj} stuff]} {
+	[catch {dbCmd get_type $obj} stuff]} {
 	return
     }
 
@@ -2761,7 +2761,7 @@ Popup Menu    Right or Ctrl-Left
 
     # No history
     if {$hname == "" ||
-	[catch {dbCmd get $hname} stuff]} {
+	[catch {dbCmd get_type $hname} stuff]} {
 	return
     }
 
@@ -2788,7 +2788,7 @@ Popup Menu    Right or Ctrl-Left
     set obj $mSelectedObj
 
     if {$obj == "" ||
-	[catch {dbCmd get $obj} stuff]} {
+	[catch {dbCmd get_type $obj} stuff]} {
 	return
     }
 
@@ -2797,7 +2797,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$hname == "" ||
-	[catch {dbCmd get $hname} stuff]} {
+	[catch {dbCmd get_type $hname} stuff]} {
 	return
     }
 
@@ -2816,10 +2816,13 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    set odata [dbCmd get $mSelectedObj]
-#    set mSelectedObjType [lindex $odata 0]
     set mSelectedObjType [dbCmd get_type $mSelectedObj]
-    set odata [lrange $odata 1 end]
+
+    if {$mSelectedObjType != "bot"} {
+	set odata [lrange [dbCmd get $mSelectedObj] 1 end]
+    } else {
+	set odata ""
+    }
 
     switch -- $mSelectedObjType {
 	"arb4" {
@@ -3072,7 +3075,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_update_prev_obj_button {obj} {
     if {$obj == "" ||
-	[catch {dbCmd get $obj} stuff]} {
+	[catch {dbCmd get_type $obj} stuff]} {
 	$itk_component(objEditToolbar) itemconfigure prev \
 	    -state disabled
 
@@ -3084,7 +3087,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$hname == "" ||
-	[catch {dbCmd get $hname} stuff]} {
+	[catch {dbCmd get_type $hname} stuff]} {
 	$itk_component(objEditToolbar) itemconfigure prev \
 	    -state disabled
 
@@ -3096,7 +3099,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$previous == "" ||
-	[catch {dbCmd get $previous} stuff]} {
+	[catch {dbCmd get_type $previous} stuff]} {
 	$itk_component(objEditToolbar) itemconfigure prev \
 	    -state disabled
     } else {
@@ -3107,7 +3110,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_update_next_obj_button {obj} {
     if {$obj == "" ||
-	[catch {dbCmd get $obj} stuff]} {
+	[catch {dbCmd get_type $obj} stuff]} {
 	$itk_component(objEditToolbar) itemconfigure next \
 	    -state disabled
 
@@ -3119,7 +3122,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$hname == "" ||
-	[catch {dbCmd get $hname} stuff]} {
+	[catch {dbCmd get_type $hname} stuff]} {
 	$itk_component(objEditToolbar) itemconfigure next \
 	    -state disabled
 
@@ -3131,7 +3134,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$next == "" ||
-	[catch {dbCmd get $next} stuff]} {
+	[catch {dbCmd get_type $next} stuff]} {
 	$itk_component(objEditToolbar) itemconfigure next \
 	    -state disabled
     } else {
@@ -3144,7 +3147,7 @@ Popup Menu    Right or Ctrl-Left
     set obj $mSelectedObj
 
     if {$obj == "" ||
-	[catch {dbCmd get $obj} stuff]} {
+	[catch {dbCmd get_type $obj} stuff]} {
 	return
     }
 
@@ -3153,7 +3156,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$hname == "" ||
-	[catch {dbCmd get $hname} stuff]} {
+	[catch {dbCmd get_type $hname} stuff]} {
 	return
     }
 
@@ -3162,7 +3165,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$previous == "" ||
-	[catch {dbCmd get $previous} stuff]} {
+	[catch {dbCmd get_type $previous} stuff]} {
 	return
     }
 
@@ -3179,7 +3182,7 @@ Popup Menu    Right or Ctrl-Left
     set obj $mSelectedObj
 
     if {$obj == "" ||
-	[catch {dbCmd get $obj} stuff]} {
+	[catch {dbCmd get_type $obj} stuff]} {
 	return
     }
 
@@ -3188,7 +3191,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$hname == "" ||
-	[catch {dbCmd get $hname} stuff]} {
+	[catch {dbCmd get_type $hname} stuff]} {
 	return
     }
 
@@ -3197,7 +3200,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$next == "" ||
-	[catch {dbCmd get $next} stuff]} {
+	[catch {dbCmd get_type $next} stuff]} {
 	return
     }
 
@@ -3212,7 +3215,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_update_obj_history {obj} {
     if {$obj == "" ||
-	[catch {dbCmd get $obj} stuff]} {
+	[catch {dbCmd get_type $obj} stuff]} {
 	return
     }
 
@@ -3226,7 +3229,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$old_hname != "" &&
-	![catch {dbCmd get $old_hname} stuff]} {
+	![catch {dbCmd get_type $old_hname} stuff]} {
 	# Insert into the history list
 
 	if {[catch {dbCmd attr get $old_hname next} next]} {
@@ -3235,14 +3238,14 @@ Popup Menu    Right or Ctrl-Left
 
 	# Delete the future
 	if {$next != "" &&
-	    ![catch {dbCmd get $next} stuff]} {
+	    ![catch {dbCmd get_type $next} stuff]} {
 
 	    while {$next != ""} {
 		set deadObj $next
 
 		if {[catch {dbCmd attr get $next next} next]} {
 		    set next ""
-		} elseif {[catch {dbCmd get $next} stuff]} {
+		} elseif {[catch {dbCmd get_type $next} stuff]} {
 		    set next ""
 		}
 
@@ -9236,7 +9239,7 @@ Popup Menu    Right or Ctrl-Left
 	set savePwd ""
     }
 
-    if {[catch {dbCmd get $node} ret]} {
+    if {[catch {dbCmd get_type $node} ret]} {
 	if {$savePwd != ""} {
 	    cd $savePwd
 	}
@@ -11647,7 +11650,7 @@ Popup Menu    Right or Ctrl-Left
 		set solidName "$lastName\.s"
 	    }
 
-	    if {![catch {$itk_component(mged) get $solidName} ret]} {
+	    if {![catch {$itk_component(mged) get_type $solidName} ret]} {
 		#$itk_component(mged) attachObservers
 		$itk_component(mged) units $savedUnits
 		error "importFg4Sections: $solidName already exists!"
@@ -11676,7 +11679,7 @@ Popup Menu    Right or Ctrl-Left
 
 	    set gmember $regionName
 	    foreach gname $reversedGnames {
-		if {[catch {$itk_component(mged) get $gname} ret]} {
+		if {[catch {$itk_component(mged) get_type $gname} ret]} {
 		    $itk_component(mged) g $gname $gmember
 		} else {
 		    if {[catch {$itk_component(mged) get $gname tree} tree]} {
