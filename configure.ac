@@ -1031,6 +1031,9 @@ if test "x$CXXCPP" = "x" ; then
 	fi
 fi
 
+dnl disable unnecessary libtool test for fortran
+define([AC_LIBTOOL_LANG_F77_CONFIG], [:])dnl
+
 # libtool shouldn't be generated until after LD is set
 # XXX went poof in libtool 1.9 -- AC_PROG_LIBTOOL
 # LT_INIT
