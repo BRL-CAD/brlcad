@@ -99,34 +99,34 @@ Usage: asc2g file.asc file.g\n\
 ";
 
 char *aliases[] = {
-	"attr",
-	"color",
-	"put",
-	"title",
-	"units",
-	"find",
-	"dbfind",
-	"rm",
-	(char *)0
+    "attr",
+    "color",
+    "put",
+    "title",
+    "units",
+    "find",
+    "dbfind",
+    "rm",
+    (char *)0
 };
 
 int
 incr_ars_pt(void)
 {
-	int ret=0;
+    int ret=0;
 
-	ars_pt++;
-	if( ars_pt >= ars_ptspercurve )
+    ars_pt++;
+    if( ars_pt >= ars_ptspercurve )
 	{
-		ars_curve++;
-		ars_pt = 0;
-		ret = 1;
+	    ars_curve++;
+	    ars_pt = 0;
+	    ret = 1;
 	}
 
-	if( ars_curve >= ars_ncurves )
-		return( 2 );
+    if( ars_curve >= ars_ncurves )
+	return( 2 );
 
-	return( ret );
+    return( ret );
 }
 
 /*
@@ -135,198 +135,199 @@ incr_ars_pt(void)
 int
 main(int argc, char **argv)
 {
-	char c1[3];
+    char c1[3];
 #ifdef _WIN32
-	_fmode = _O_BINARY;
+    _fmode = _O_BINARY;
 #endif
 
-	bu_debug = BU_DEBUG_COREDUMP;
+    bu_debug = BU_DEBUG_COREDUMP;
 
-	if( argc != 3 ) {
-		bu_log( "%s", usage );
-		exit( 1 );
-	}
+    if( argc != 3 ) {
+	bu_log( "%s", usage );
+	exit( 1 );
+    }
 
-	Tcl_FindExecutable(argv[0]);
+    Tcl_FindExecutable(argv[0]);
 
-	ifp = fopen(argv[1],"r");
-	if( !ifp )  perror(argv[1]);
+    ifp = fopen(argv[1],"r");
+    if( !ifp )  perror(argv[1]);
 
-	ofp = wdb_fopen(argv[2]);
-	if( !ofp )  perror(argv[2]);
-	if (ifp == NULL || ofp == NULL) {
-		(void)fprintf(stderr, "asc2g: can't open files.");
-		exit(1);
-	}
+    ofp = wdb_fopen(argv[2]);
+    if( !ofp )  perror(argv[2]);
+    if (ifp == NULL || ofp == NULL) {
+	(void)fprintf(stderr, "asc2g: can't open files.");
+	exit(1);
+    }
 
-	rt_init_resource( &rt_uniresource, 0, NULL );
+    rt_init_resource( &rt_uniresource, 0, NULL );
 
-	if( bu_fgets( c1, 6, ifp ) == NULL ) {
-		bu_bomb( "Unexpected EOF\n" );
-	}
+    if( bu_fgets( c1, 6, ifp ) == NULL ) {
+	fclose(ifp);
+	bu_bomb( "Unexpected EOF\n" );
+    }
 
-	/* new style ascii database */
-	if (!strncmp(c1, "title", 5) || !strncmp(c1, "put ", 4) ) {
-		Tcl_Interp     *interp;
-		Tcl_Interp     *safe_interp;
+    /* new style ascii database */
+    if (!strncmp(c1, "title", 5) || !strncmp(c1, "put ", 4) ) {
+	Tcl_Interp     *interp;
+	Tcl_Interp     *safe_interp;
 
-		/* this is a Tcl script */
+	/* this is a Tcl script */
 
 #ifdef _WIN32
-		fclose(ifp);
+	fclose(ifp);
 #else
-		rewind( ifp );
+	rewind( ifp );
 #endif
-		BU_LIST_INIT(&rt_g.rtg_headwdb.l);
+	BU_LIST_INIT(&rt_g.rtg_headwdb.l);
 
-		interp = Tcl_CreateInterp();
-		if (wdb_init_obj(interp, ofp, db_name) != TCL_OK ||
-		    wdb_create_cmd(interp, ofp, db_name) != TCL_OK) {
-		    bu_bomb( "Failed to initialize wdb_obj!\n" );
-		}
-
-		/* Create the safe interpreter */
-		if ((safe_interp = Tcl_CreateSlave(interp, slave_name, 1)) == NULL) {
-			bu_log("Failed to create safe interpreter");
-			exit(1);
-		}
-
-		/* Create aliases */
-		{
-			int	i;
-			int	ac = 1;
-			const char	*av[2];
-
-			av[1] = (char *)0;
-			for (i = 0; aliases[i] != (char *)0; ++i) {
-				av[0] = aliases[i];
-				Tcl_CreateAlias(safe_interp, aliases[i], interp, db_name, ac, av);
-			}
-			/* add "dbfind" separately */
-			av[0] = "find";
-			Tcl_CreateAlias(safe_interp, "dbfind", interp, db_name, ac, av);
-		}
-
-		if( Tcl_EvalFile( safe_interp, argv[1] ) != TCL_OK ) {
-			bu_log( "Failed to process input file (%s)!\n", argv[1] );
-			bu_log( "%s\n", Tcl_GetStringResult(safe_interp) );
-			exit( 1 );
-		}
-
-		exit( 0 );
-	} else {
-		rewind( ifp );
+	interp = Tcl_CreateInterp();
+	if (wdb_init_obj(interp, ofp, db_name) != TCL_OK ||
+	    wdb_create_cmd(interp, ofp, db_name) != TCL_OK) {
+	    bu_bomb( "Failed to initialize wdb_obj!\n" );
 	}
 
-	/* allocate our input buffer */
-	buf = (char *)bu_calloc( sizeof(char), BUFSIZE, "input buffer" );
-
-	/* Read ASCII input file, each record on a line */
-	while( ( bu_fgets( buf, BUFSIZE, ifp ) ) != (char *)0 )  {
-
-after_read:
-		/* Clear the output record -- vital! */
-		(void)bzero( (char *)&record, sizeof(record) );
-
-		/* Check record type */
-		switch( buf[0] )  {
-		case ID_SOLID:
-			solbld();
-			continue;
-
-		case ID_COMB:
-			if( combbld() > 0 )  goto after_read;
-			continue;
-
-		case ID_MEMB:
-			bu_log("Warning: unattached Member record, ignored\n");
-			continue;
-
-		case ID_ARS_A:
-			arsabld();
-			continue;
-
-		case ID_ARS_B:
-			arsbbld();
-			continue;
-
-		case ID_P_HEAD:
-			polyhbld();
-			continue;
-
-		case ID_P_DATA:
-			bu_log("Unattached POLY-solid P_DATA (Q) record, skipping\n");
-			continue;
-
-		case ID_IDENT:
-			identbld();
-			continue;
-
-		case ID_MATERIAL:
-			materbld();
-			continue;
-
-		case ID_BSOLID:
-			bsplbld();
-			continue;
-
-		case ID_BSURF:
-			bsurfbld();
-			continue;
-
-		case DBID_PIPE:
-			pipebld();
-			continue;
-
-		case DBID_STRSOL:
-			strsolbld();
-			continue;
-
-		case DBID_NMG:
-			nmgbld();
-			continue;
-
-		case DBID_PARTICLE:
-			particlebld();
-			continue;
-
-		case DBID_ARBN:
-			arbnbld();
-			continue;
-
-		case DBID_CLINE:
-			clinebld();
-			continue;
-
-		case DBID_BOT:
-			botbld();
-			continue;
-
-		case DBID_EXTR:
-			extrbld();
-			continue;
-
-		case DBID_SKETCH:
-			sktbld();
-			continue;
-
-		default:
-			bu_log("asc2g: bad record type '%c' (0%o), skipping\n", buf[0], buf[0]);
-			bu_log("%s\n", buf );
-			continue;
-		}
-		memset(buf, 0, sizeof(char) * BUFSIZE);
+	/* Create the safe interpreter */
+	if ((safe_interp = Tcl_CreateSlave(interp, slave_name, 1)) == NULL) {
+	    bu_log("Failed to create safe interpreter");
+	    exit(1);
 	}
 
-	bu_free(buf, "input buffer");
+	/* Create aliases */
+	{
+	    int	i;
+	    int	ac = 1;
+	    const char	*av[2];
 
-	/* Now, at the end of the database, dump out the entire
-	 * region-id-based color table.
-	 */
-	mk_write_color_table( ofp );
-	wdb_close(ofp);
+	    av[1] = (char *)0;
+	    for (i = 0; aliases[i] != (char *)0; ++i) {
+		av[0] = aliases[i];
+		Tcl_CreateAlias(safe_interp, aliases[i], interp, db_name, ac, av);
+	    }
+	    /* add "dbfind" separately */
+	    av[0] = "find";
+	    Tcl_CreateAlias(safe_interp, "dbfind", interp, db_name, ac, av);
+	}
 
-	exit(0);
+	if( Tcl_EvalFile( safe_interp, argv[1] ) != TCL_OK ) {
+	    bu_log( "Failed to process input file (%s)!\n", argv[1] );
+	    bu_log( "%s\n", Tcl_GetStringResult(safe_interp) );
+	    exit( 1 );
+	}
+
+	exit( 0 );
+    } else {
+	rewind( ifp );
+    }
+
+    /* allocate our input buffer */
+    buf = (char *)bu_calloc( sizeof(char), BUFSIZE, "input buffer" );
+
+    /* Read ASCII input file, each record on a line */
+    while( ( bu_fgets( buf, BUFSIZE, ifp ) ) != (char *)0 )  {
+
+    after_read:
+	/* Clear the output record -- vital! */
+	(void)bzero( (char *)&record, sizeof(record) );
+
+	/* Check record type */
+	switch( buf[0] )  {
+	    case ID_SOLID:
+		solbld();
+		continue;
+
+	    case ID_COMB:
+		if( combbld() > 0 )  goto after_read;
+		continue;
+
+	    case ID_MEMB:
+		bu_log("Warning: unattached Member record, ignored\n");
+		continue;
+
+	    case ID_ARS_A:
+		arsabld();
+		continue;
+
+	    case ID_ARS_B:
+		arsbbld();
+		continue;
+
+	    case ID_P_HEAD:
+		polyhbld();
+		continue;
+
+	    case ID_P_DATA:
+		bu_log("Unattached POLY-solid P_DATA (Q) record, skipping\n");
+		continue;
+
+	    case ID_IDENT:
+		identbld();
+		continue;
+
+	    case ID_MATERIAL:
+		materbld();
+		continue;
+
+	    case ID_BSOLID:
+		bsplbld();
+		continue;
+
+	    case ID_BSURF:
+		bsurfbld();
+		continue;
+
+	    case DBID_PIPE:
+		pipebld();
+		continue;
+
+	    case DBID_STRSOL:
+		strsolbld();
+		continue;
+
+	    case DBID_NMG:
+		nmgbld();
+		continue;
+
+	    case DBID_PARTICLE:
+		particlebld();
+		continue;
+
+	    case DBID_ARBN:
+		arbnbld();
+		continue;
+
+	    case DBID_CLINE:
+		clinebld();
+		continue;
+
+	    case DBID_BOT:
+		botbld();
+		continue;
+
+	    case DBID_EXTR:
+		extrbld();
+		continue;
+
+	    case DBID_SKETCH:
+		sktbld();
+		continue;
+
+	    default:
+		bu_log("asc2g: bad record type '%c' (0%o), skipping\n", buf[0], buf[0]);
+		bu_log("%s\n", buf );
+		continue;
+	}
+	memset(buf, 0, sizeof(char) * BUFSIZE);
+    }
+
+    bu_free(buf, "input buffer");
+
+    /* Now, at the end of the database, dump out the entire
+     * region-id-based color table.
+     */
+    mk_write_color_table( ofp );
+    wdb_close(ofp);
+
+    exit(0);
 }
 
 /*
@@ -441,201 +442,201 @@ strsolbld(void)
 void
 sktbld(void)
 {
-	register char *cp, *ptr;
-	int i, j;
-	int vert_count, seg_count;
-	float fV[3], fu[3], fv[3];
-	point_t V;
-	vect_t u, v;
-	point2d_t *verts;
-	char name[NAMESIZE+1];
-	struct rt_sketch_internal *skt;
-	struct curve *crv;
-	struct line_seg *lsg;
-	struct carc_seg *csg;
-	struct nurb_seg *nsg;
+    register char *cp, *ptr;
+    int i, j;
+    int vert_count, seg_count;
+    float fV[3], fu[3], fv[3];
+    point_t V;
+    vect_t u, v;
+    point2d_t *verts;
+    char name[NAMESIZE+1];
+    struct rt_sketch_internal *skt;
+    struct curve *crv;
+    struct line_seg *lsg;
+    struct carc_seg *csg;
+    struct nurb_seg *nsg;
 
-	cp = buf;
+    cp = buf;
 
-	cp++;
-	cp++;
+    cp++;
+    cp++;
 
-	(void)sscanf( cp, "%s %f %f %f %f %f %f %f %f %f %d %d",
-		name,
-		&fV[0], &fV[1], &fV[2],
-		&fu[0], &fu[1], &fu[2],
-		&fv[0], &fv[1], &fv[2],
-		&vert_count, &seg_count );
+    (void)sscanf( cp, "%s %f %f %f %f %f %f %f %f %f %d %d",
+		  name,
+		  &fV[0], &fV[1], &fV[2],
+		  &fu[0], &fu[1], &fu[2],
+		  &fv[0], &fv[1], &fv[2],
+		  &vert_count, &seg_count );
 
-	VMOVE( V, fV );
-	VMOVE( u, fu );
-	VMOVE( v, fv );
+    VMOVE( V, fV );
+    VMOVE( u, fu );
+    VMOVE( v, fv );
 
-	verts = (point2d_t *)bu_calloc( vert_count, sizeof( point2d_t ), "verts" );
+    verts = (point2d_t *)bu_calloc( vert_count, sizeof( point2d_t ), "verts" );
 
-	if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+    if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 	{
-		bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-		exit( -1 );
+	    bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
+	    exit( -1 );
 	}
 
-	verts = (point2d_t *)bu_calloc( vert_count, sizeof( point2d_t ), "verts" );
-	cp = buf;
-	ptr = strtok( buf, " " );
-	if( !ptr )
+    verts = (point2d_t *)bu_calloc( vert_count, sizeof( point2d_t ), "verts" );
+    cp = buf;
+    ptr = strtok( buf, " " );
+    if( !ptr )
 	{
-		bu_log( "ERROR: no vertices for sketch (%s)\n", name );
-		exit( 1 );
+	    bu_log( "ERROR: no vertices for sketch (%s)\n", name );
+	    exit( 1 );
 	}
-	for( i=0 ; i<vert_count ; i++ )
+    for( i=0 ; i<vert_count ; i++ )
 	{
-		verts[i][0] = atof( ptr );
-		ptr = strtok( (char *)NULL, " " );
-		if( !ptr )
+	    verts[i][0] = atof( ptr );
+	    ptr = strtok( (char *)NULL, " " );
+	    if( !ptr )
 		{
-			bu_log( "ERROR: not enough vertices for sketch (%s)\n", name );
-			exit( 1 );
+		    bu_log( "ERROR: not enough vertices for sketch (%s)\n", name );
+		    exit( 1 );
 		}
-		verts[i][1] = atof( ptr );
-		ptr = strtok( (char *)NULL, " " );
-		if( !ptr && i < vert_count-1 )
+	    verts[i][1] = atof( ptr );
+	    ptr = strtok( (char *)NULL, " " );
+	    if( !ptr && i < vert_count-1 )
 		{
-			bu_log( "ERROR: not enough vertices for sketch (%s)\n", name );
-			exit( 1 );
+		    bu_log( "ERROR: not enough vertices for sketch (%s)\n", name );
+		    exit( 1 );
 		}
 	}
 
-	skt = (struct rt_sketch_internal *)bu_calloc( 1, sizeof( struct rt_sketch_internal ), "sketch" );
-	skt->magic = RT_SKETCH_INTERNAL_MAGIC;
-	VMOVE( skt->V, V );
-	VMOVE( skt->u_vec, u );
-	VMOVE( skt->v_vec, v );
-	skt->vert_count = vert_count;
-	skt->verts = verts;
-	crv = &skt->skt_curve;
-	crv->seg_count = seg_count;
+    skt = (struct rt_sketch_internal *)bu_calloc( 1, sizeof( struct rt_sketch_internal ), "sketch" );
+    skt->magic = RT_SKETCH_INTERNAL_MAGIC;
+    VMOVE( skt->V, V );
+    VMOVE( skt->u_vec, u );
+    VMOVE( skt->v_vec, v );
+    skt->vert_count = vert_count;
+    skt->verts = verts;
+    crv = &skt->skt_curve;
+    crv->seg_count = seg_count;
 
-	crv->segments = (genptr_t *)bu_calloc( crv->seg_count, sizeof( genptr_t ), "segments" );
-	crv->reverse = (int *)bu_calloc( crv->seg_count, sizeof( int ), "reverse" );
-	for( j=0 ; j<crv->seg_count ; j++ )
+    crv->segments = (genptr_t *)bu_calloc( crv->seg_count, sizeof( genptr_t ), "segments" );
+    crv->reverse = (int *)bu_calloc( crv->seg_count, sizeof( int ), "reverse" );
+    for( j=0 ; j<crv->seg_count ; j++ )
 	{
-		double radius;
-		int k;
+	    double radius;
+	    int k;
 
-		if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+	    if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 		{
-			bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-			exit( -1 );
+		    bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
+		    exit( -1 );
 		}
 
-		cp = buf + 2;
-		switch( *cp )
+	    cp = buf + 2;
+	    switch( *cp )
 		{
-			case LSEG:
-				lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "line segment" );
-				sscanf( cp+1, "%d %d %d", &crv->reverse[j], &lsg->start, &lsg->end );
-				lsg->magic = CURVE_LSEG_MAGIC;
-				crv->segments[j] = lsg;
-				break;
-			case CARC:
-				csg = (struct carc_seg *)bu_malloc( sizeof( struct carc_seg ), "arc segment" );
-				sscanf( cp+1, "%d %d %d %lf %d %d", &crv->reverse[j], &csg->start, &csg->end,
-					&radius, &csg->center_is_left, &csg->orientation );
-				csg->radius = radius;
-				csg->magic = CURVE_CARC_MAGIC;
-				crv->segments[j] = csg;
-				break;
-			case NURB:
-				nsg = (struct nurb_seg *)bu_malloc( sizeof( struct nurb_seg ), "nurb segment" );
-				sscanf( cp+1, "%d %d %d %d %d", &crv->reverse[j], &nsg->order, &nsg->pt_type,
-					&nsg->k.k_size, &nsg->c_size );
-				nsg->k.knots = (fastf_t *)bu_calloc( nsg->k.k_size, sizeof( fastf_t ), "knots" );
-				nsg->ctl_points = (int *)bu_calloc( nsg->c_size, sizeof( int ), "control points" );
-				if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-				{
-					bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-					exit( -1 );
-				}
-				cp = buf + 3;
-				ptr = strtok( cp, " " );
-				if( !ptr )
-				{
+		    case LSEG:
+			lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "line segment" );
+			sscanf( cp+1, "%d %d %d", &crv->reverse[j], &lsg->start, &lsg->end );
+			lsg->magic = CURVE_LSEG_MAGIC;
+			crv->segments[j] = lsg;
+			break;
+		    case CARC:
+			csg = (struct carc_seg *)bu_malloc( sizeof( struct carc_seg ), "arc segment" );
+			sscanf( cp+1, "%d %d %d %lf %d %d", &crv->reverse[j], &csg->start, &csg->end,
+				&radius, &csg->center_is_left, &csg->orientation );
+			csg->radius = radius;
+			csg->magic = CURVE_CARC_MAGIC;
+			crv->segments[j] = csg;
+			break;
+		    case NURB:
+			nsg = (struct nurb_seg *)bu_malloc( sizeof( struct nurb_seg ), "nurb segment" );
+			sscanf( cp+1, "%d %d %d %d %d", &crv->reverse[j], &nsg->order, &nsg->pt_type,
+				&nsg->k.k_size, &nsg->c_size );
+			nsg->k.knots = (fastf_t *)bu_calloc( nsg->k.k_size, sizeof( fastf_t ), "knots" );
+			nsg->ctl_points = (int *)bu_calloc( nsg->c_size, sizeof( int ), "control points" );
+			if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+			    {
+				bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
+				exit( -1 );
+			    }
+			cp = buf + 3;
+			ptr = strtok( cp, " " );
+			if( !ptr )
+			    {
+				bu_log( "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
+				exit( 1 );
+			    }
+			for( k=0 ; k<nsg->k.k_size ; k++ )
+			    {
+				nsg->k.knots[k] = atof( ptr );
+				ptr = strtok( (char *)NULL, " " );
+				if( !ptr && k<nsg->k.k_size-1 )
+				    {
 					bu_log( "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
 					exit( 1 );
-				}
-				for( k=0 ; k<nsg->k.k_size ; k++ )
-				{
-					nsg->k.knots[k] = atof( ptr );
-					ptr = strtok( (char *)NULL, " " );
-					if( !ptr && k<nsg->k.k_size-1 )
-					{
-						bu_log( "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
-						exit( 1 );
-					}
-				}
-				if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-				{
-					bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-					exit( -1 );
-				}
-				cp = buf + 3;
-				ptr = strtok( cp, " " );
-				if( !ptr )
-				{
+				    }
+			    }
+			if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+			    {
+				bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
+				exit( -1 );
+			    }
+			cp = buf + 3;
+			ptr = strtok( cp, " " );
+			if( !ptr )
+			    {
+				bu_log( "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
+				exit( 1 );
+			    }
+			for( k=0 ; k<nsg->c_size ; k++ )
+			    {
+				nsg->ctl_points[k] = atoi( ptr );
+				ptr = strtok( (char *)NULL, " " );
+				if( !ptr && k<nsg->c_size-1 )
+				    {
 					bu_log( "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
 					exit( 1 );
-				}
-				for( k=0 ; k<nsg->c_size ; k++ )
-				{
-					nsg->ctl_points[k] = atoi( ptr );
-					ptr = strtok( (char *)NULL, " " );
-					if( !ptr && k<nsg->c_size-1 )
-					{
-						bu_log( "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
-						exit( 1 );
-					}
-				}
-				nsg->magic = CURVE_NURB_MAGIC;
-				crv->segments[j] = nsg;
-				break;
-			default:
-				bu_log( "Unrecognized segment type (%c) in sketch (%s)\n",
-					*cp, name );
-				exit( 1 );
+				    }
+			    }
+			nsg->magic = CURVE_NURB_MAGIC;
+			crv->segments[j] = nsg;
+			break;
+		    default:
+			bu_log( "Unrecognized segment type (%c) in sketch (%s)\n",
+				*cp, name );
+			exit( 1 );
 		}
 
 	}
 
-	(void)mk_sketch(ofp, name,  skt );
+    (void)mk_sketch(ofp, name,  skt );
 }
 
 void
 extrbld(void)
 {
-	register char *cp;
-	char name[NAMESIZE+1];
-	char sketch_name[NAMESIZE+1];
-	int keypoint;
-	float fV[3];
-	float fh[3];
-	float fu_vec[3], fv_vec[3];
-	point_t V;
-	vect_t h, u_vec, v_vec;
+    register char *cp;
+    char name[NAMESIZE+1];
+    char sketch_name[NAMESIZE+1];
+    int keypoint;
+    float fV[3];
+    float fh[3];
+    float fu_vec[3], fv_vec[3];
+    point_t V;
+    vect_t h, u_vec, v_vec;
 
-	cp = buf;
+    cp = buf;
 
-	cp++;
+    cp++;
 
-	cp++;
-	(void)sscanf( cp, "%s %s %d %f %f %f  %f %f %f %f %f %f %f %f %f",
-		name, sketch_name, &keypoint, &fV[0], &fV[1], &fV[2], &fh[0], &fh[1], &fh[2],
-		&fu_vec[0], &fu_vec[1], &fu_vec[2], &fv_vec[0], &fv_vec[1], &fv_vec[2] );
+    cp++;
+    (void)sscanf( cp, "%s %s %d %f %f %f  %f %f %f %f %f %f %f %f %f",
+		  name, sketch_name, &keypoint, &fV[0], &fV[1], &fV[2], &fh[0], &fh[1], &fh[2],
+		  &fu_vec[0], &fu_vec[1], &fu_vec[2], &fv_vec[0], &fv_vec[1], &fv_vec[2] );
 
-	VMOVE( V, fV );
-	VMOVE( h, fh );
-	VMOVE( u_vec, fu_vec );
-	VMOVE( v_vec, fv_vec );
-	(void)mk_extrusion( ofp, name, sketch_name, V, h, u_vec, v_vec, keypoint );
+    VMOVE( V, fV );
+    VMOVE( h, fh );
+    VMOVE( u_vec, fu_vec );
+    VMOVE( v_vec, fv_vec );
+    (void)mk_extrusion( ofp, name, sketch_name, V, h, u_vec, v_vec, keypoint );
 }
 
 /*
@@ -654,85 +655,85 @@ extrbld(void)
 void
 nmgbld(void)
 {
-	register char *cp;
-	int	version;
-	char	*name;
-	long	granules;
-	long	struct_count[26];
-	struct bu_external	ext;
-	struct rt_db_internal	intern;
-	int	j;
+    register char *cp;
+    int	version;
+    char	*name;
+    long	granules;
+    long	struct_count[26];
+    struct bu_external	ext;
+    struct rt_db_internal	intern;
+    int	j;
 
-	/* First, process the header line */
-	cp = strtok( buf, " " );
-	/* This is nmg_id, unused here. */
-	cp = strtok( NULL, " " );
-	version = atoi(cp);
-	cp = strtok( NULL, " " );
-	name = bu_strdup( cp );
-	cp = strtok( NULL, " " );
-	granules = atol( cp );
+    /* First, process the header line */
+    cp = strtok( buf, " " );
+    /* This is nmg_id, unused here. */
+    cp = strtok( NULL, " " );
+    version = atoi(cp);
+    cp = strtok( NULL, " " );
+    name = bu_strdup( cp );
+    cp = strtok( NULL, " " );
+    granules = atol( cp );
 
-	/* Allocate storage for external v5 form of the body */
-	BU_INIT_EXTERNAL(&ext);
-	ext.ext_nbytes = SIZEOF_NETWORK_LONG + 26*SIZEOF_NETWORK_LONG + 128 * granules;
-	ext.ext_buf = bu_malloc( ext.ext_nbytes, "nmg ext_buf" );
-	bu_plong( ext.ext_buf, version );
-	BU_ASSERT_LONG( version, ==, 1 );	/* DISK_MODEL_VERSION */
+    /* Allocate storage for external v5 form of the body */
+    BU_INIT_EXTERNAL(&ext);
+    ext.ext_nbytes = SIZEOF_NETWORK_LONG + 26*SIZEOF_NETWORK_LONG + 128 * granules;
+    ext.ext_buf = bu_malloc( ext.ext_nbytes, "nmg ext_buf" );
+    bu_plong( ext.ext_buf, version );
+    BU_ASSERT_LONG( version, ==, 1 );	/* DISK_MODEL_VERSION */
 
-	/* Get next line of input with the 26 counts on it */
-	if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )  {
-		bu_log( "Unexpected EOF while reading NMG %s data, line 2\n", name );
-		exit(-1);
-	}
+    /* Get next line of input with the 26 counts on it */
+    if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )  {
+	bu_log( "Unexpected EOF while reading NMG %s data, line 2\n", name );
+	exit(-1);
+    }
 
-	/* Second, process counts for each kind of structure */
-	cp = strtok( buf , " " );
-	for( j=0 ; j<26 ; j++ )
+    /* Second, process counts for each kind of structure */
+    cp = strtok( buf , " " );
+    for( j=0 ; j<26 ; j++ )
 	{
-		struct_count[j] = atol( cp );
-		bu_plong( ((unsigned char *)ext.ext_buf)+
-			SIZEOF_NETWORK_LONG*(j+1), struct_count[j] );
-		cp = strtok( (char *)NULL , " " );
+	    struct_count[j] = atol( cp );
+	    bu_plong( ((unsigned char *)ext.ext_buf)+
+		      SIZEOF_NETWORK_LONG*(j+1), struct_count[j] );
+	    cp = strtok( (char *)NULL , " " );
 	}
 
-	/* Remaining lines have 32 bytes per line, in hex */
-	/* There are 4 lines to make up one granule */
-	cp = ((char *)ext.ext_buf) + (26+1)*SIZEOF_NETWORK_LONG;
-	for( j=0; j < granules * 4; j++ )  {
-		int k;
-		unsigned int cp_i;
+    /* Remaining lines have 32 bytes per line, in hex */
+    /* There are 4 lines to make up one granule */
+    cp = ((char *)ext.ext_buf) + (26+1)*SIZEOF_NETWORK_LONG;
+    for( j=0; j < granules * 4; j++ )  {
+	int k;
+	unsigned int cp_i;
 
-		if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-		{
-			bu_log( "Unexpected EOF while reading NMG %s data, hex line %d\n", name, j );
-			exit( -1 );
-		}
-
-		for( k=0 ; k<32 ; k++ )
-		{
-			sscanf( &buf[k*2] , "%2x" , &cp_i );
-			*cp++ = cp_i;
-		}
-	}
-
-	/* Next, import this disk record into memory */
-	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[ID_NMG].ft_import5( &intern, &ext, bn_mat_identity, ofp->dbip, &rt_uniresource, ID_NMG ) < 0 )  {
-		bu_log("ft_import5 failed on NMG %s\n", name );
+	if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+	    {
+		bu_log( "Unexpected EOF while reading NMG %s data, hex line %d\n", name, j );
 		exit( -1 );
-	}
-	bu_free_external(&ext);
+	    }
 
-	/* Now we should have a good NMG in memory */
-	nmg_vmodel( (struct model *)intern.idb_ptr );
+	for( k=0 ; k<32 ; k++ )
+	    {
+		sscanf( &buf[k*2] , "%2x" , &cp_i );
+		*cp++ = cp_i;
+	    }
+    }
 
-	/* Finally, squirt it back out through LIBWDB */
-	mk_nmg( ofp, name, (struct model *)intern.idb_ptr );
-	/* mk_nmg() frees the intern.idp_ptr pointer */
-	RT_INIT_DB_INTERNAL(&intern);
+    /* Next, import this disk record into memory */
+    RT_INIT_DB_INTERNAL(&intern);
+    if( rt_functab[ID_NMG].ft_import5( &intern, &ext, bn_mat_identity, ofp->dbip, &rt_uniresource, ID_NMG ) < 0 )  {
+	bu_log("ft_import5 failed on NMG %s\n", name );
+	exit( -1 );
+    }
+    bu_free_external(&ext);
 
-	bu_free( name, "name" );
+    /* Now we should have a good NMG in memory */
+    nmg_vmodel( (struct model *)intern.idb_ptr );
+
+    /* Finally, squirt it back out through LIBWDB */
+    mk_nmg( ofp, name, (struct model *)intern.idb_ptr );
+    /* mk_nmg() frees the intern.idp_ptr pointer */
+    RT_INIT_DB_INTERNAL(&intern);
+
+    bu_free( name, "name" );
 }
 
 /*		S O L B L D
@@ -744,165 +745,165 @@ nmgbld(void)
 void
 solbld(void)
 {
-	register char *cp;
-	register char *np;
-	register int i;
+    register char *cp;
+    register char *np;
+    register int i;
 
-	char	s_type;			/* id for the type of primitive */
-	fastf_t	val[24];		/* array of values/parameters for solid */
-	point_t	center;			/* center; used by many solids */
-	point_t pnts[9];		/* array of points for the arbs */
-	point_t	norm;
-	vect_t	a, b, c, d, n;		/* various vectors required */
-	vect_t	height;			/* height vector for tgc */
-	vect_t	breadth;		/* breadth vector for rpc */
-	double	dd, rad1, rad2;
+    char	s_type;			/* id for the type of primitive */
+    fastf_t	val[24];		/* array of values/parameters for solid */
+    point_t	center;			/* center; used by many solids */
+    point_t pnts[9];		/* array of points for the arbs */
+    point_t	norm;
+    vect_t	a, b, c, d, n;		/* various vectors required */
+    vect_t	height;			/* height vector for tgc */
+    vect_t	breadth;		/* breadth vector for rpc */
+    double	dd, rad1, rad2;
 
-	cp = buf;
-	cp++;				/* ident */
-	cp = nxt_spc( cp );		/* skip the space */
-	s_type = atoi(cp);
+    cp = buf;
+    cp++;				/* ident */
+    cp = nxt_spc( cp );		/* skip the space */
+    s_type = atoi(cp);
 
+    cp = nxt_spc( cp );
+
+    np = name;
+    while( *cp != ' ' )  {
+	*np++ = *cp++;
+    }
+    *np = '\0';
+
+    cp = nxt_spc( cp );
+    /* Comgeom solid type */
+
+    for( i = 0; i < 24; i++ )  {
 	cp = nxt_spc( cp );
+	val[i] = atof( cp );
+    }
 
-	np = name;
-	while( *cp != ' ' )  {
-		*np++ = *cp++;
-	}
-	*np = '\0';
+    /* Switch on the record type to make the solids. */
 
-	cp = nxt_spc( cp );
-	/* Comgeom solid type */
+    switch( s_type ) {
 
-	for( i = 0; i < 24; i++ )  {
-		cp = nxt_spc( cp );
-		val[i] = atof( cp );
-	}
+	case GRP:
+	    VSET(center, val[0], val[1], val[2]);
+	    VSET(n, val[3], val[4], val[5]);
+	    (void)mk_grip( ofp, name, center, n, val[6] );
+	    break;
 
-	/* Switch on the record type to make the solids. */
+	case TOR:
+	    VSET(center, val[0], val[1], val[2]);
+	    VSET(n, val[3], val[4], val[5]);
+	    rad1 = MAGNITUDE(&val[6]);
+	    rad2 = MAGNITUDE(n);
+	    VUNITIZE(n);
 
-	switch( s_type ) {
+	    /* Prevent illegal torii from floating point fuzz */
+	    if( rad2 > rad1 )  rad2 = rad1;
 
-		case GRP:
-			VSET(center, val[0], val[1], val[2]);
-			VSET(n, val[3], val[4], val[5]);
-			(void)mk_grip( ofp, name, center, n, val[6] );
-			break;
+	    mk_tor(ofp, name, center, n, rad1, rad2);
+	    break;
 
-		case TOR:
-			VSET(center, val[0], val[1], val[2]);
-			VSET(n, val[3], val[4], val[5]);
-			rad1 = MAGNITUDE(&val[6]);
-			rad2 = MAGNITUDE(n);
-			VUNITIZE(n);
+	case GENTGC:
+	    VSET(center, val[0], val[1], val[2]);
+	    VSET(height, val[3], val[4], val[5]);
+	    VSET(a, val[6], val[7], val[8]);
+	    VSET(b, val[9], val[10], val[11]);
+	    VSET(c, val[12], val[13], val[14]);
+	    VSET(d, val[15], val[16], val[17]);
 
-			/* Prevent illegal torii from floating point fuzz */
-			if( rad2 > rad1 )  rad2 = rad1;
+	    mk_tgc(ofp, name, center, height, a, b, c, d);
+	    break;
 
-			mk_tor(ofp, name, center, n, rad1, rad2);
-			break;
+	case GENELL:
+	    VSET(center, val[0], val[1], val[2]);
+	    VSET(a, val[3], val[4], val[5]);
+	    VSET(b, val[6], val[7], val[8]);
+	    VSET(c, val[9], val[10], val[11]);
 
-		case GENTGC:
-			VSET(center, val[0], val[1], val[2]);
-			VSET(height, val[3], val[4], val[5]);
-			VSET(a, val[6], val[7], val[8]);
-			VSET(b, val[9], val[10], val[11]);
-			VSET(c, val[12], val[13], val[14]);
-			VSET(d, val[15], val[16], val[17]);
+	    mk_ell(ofp, name, center, a, b, c);
+	    break;
 
-			mk_tgc(ofp, name, center, height, a, b, c, d);
-			break;
+	case GENARB8:
+	    VSET(pnts[0], val[0], val[1], val[2]);
+	    VSET(pnts[1], val[3], val[4], val[5]);
+	    VSET(pnts[2], val[6], val[7], val[8]);
+	    VSET(pnts[3], val[9], val[10], val[11]);
+	    VSET(pnts[4], val[12], val[13], val[14]);
+	    VSET(pnts[5], val[15], val[16], val[17]);
+	    VSET(pnts[6], val[18], val[19], val[20]);
+	    VSET(pnts[7], val[21], val[22], val[23]);
 
-		case GENELL:
-			VSET(center, val[0], val[1], val[2]);
-			VSET(a, val[3], val[4], val[5]);
-			VSET(b, val[6], val[7], val[8]);
-			VSET(c, val[9], val[10], val[11]);
+	    /* Convert from vector notation to absolute points */
+	    for( i=1; i<8; i++ )  {
+		VADD2( pnts[i], pnts[i], pnts[0] );
+	    }
 
-			mk_ell(ofp, name, center, a, b, c);
-			break;
+	    mk_arb8(ofp, name, &pnts[0][X]);
+	    break;
 
-		case GENARB8:
-			VSET(pnts[0], val[0], val[1], val[2]);
-			VSET(pnts[1], val[3], val[4], val[5]);
-			VSET(pnts[2], val[6], val[7], val[8]);
-			VSET(pnts[3], val[9], val[10], val[11]);
-			VSET(pnts[4], val[12], val[13], val[14]);
-			VSET(pnts[5], val[15], val[16], val[17]);
-			VSET(pnts[6], val[18], val[19], val[20]);
-			VSET(pnts[7], val[21], val[22], val[23]);
+	case HALFSPACE:
+	    VSET(norm, val[0], val[1], val[2]);
+	    dd = val[3];
 
-			/* Convert from vector notation to absolute points */
-			for( i=1; i<8; i++ )  {
-				VADD2( pnts[i], pnts[i], pnts[0] );
-			}
+	    mk_half(ofp, name, norm, dd);
+	    break;
 
-			mk_arb8(ofp, name, &pnts[0][X]);
-			break;
+	case RPC:
+	    VSET( center, val[0], val[1], val[2] );
+	    VSET( height, val[3], val[4], val[5] );
+	    VSET( breadth, val[6], val[7], val[8] );
+	    dd = val[9];
 
-		case HALFSPACE:
-			VSET(norm, val[0], val[1], val[2]);
-			dd = val[3];
+	    mk_rpc( ofp, name, center, height, breadth, dd );
+	    break;
 
-			mk_half(ofp, name, norm, dd);
-			break;
+	case RHC:
+	    VSET( center, val[0], val[1], val[2] );
+	    VSET( height, val[3], val[4], val[5] );
+	    VSET( breadth, val[6], val[7], val[8] );
+	    rad1 = val[9];
+	    dd = val[10];
 
-		case RPC:
-			VSET( center, val[0], val[1], val[2] );
-			VSET( height, val[3], val[4], val[5] );
-			VSET( breadth, val[6], val[7], val[8] );
-			dd = val[9];
+	    mk_rhc( ofp, name, center, height, breadth, rad1, dd );
+	    break;
 
-			mk_rpc( ofp, name, center, height, breadth, dd );
-			break;
+	case EPA:
+	    VSET( center, val[0], val[1], val[2] );
+	    VSET( height, val[3], val[4], val[5] );
+	    VSET( a, val[6], val[7], val[8] );
+	    VUNITIZE( a );
+	    rad1 = val[9];
+	    rad2 = val[10];
 
-		case RHC:
-			VSET( center, val[0], val[1], val[2] );
-			VSET( height, val[3], val[4], val[5] );
-			VSET( breadth, val[6], val[7], val[8] );
-			rad1 = val[9];
-			dd = val[10];
+	    mk_epa( ofp, name, center, height, a, rad1, rad2 );
+	    break;
 
-			mk_rhc( ofp, name, center, height, breadth, rad1, dd );
-			break;
+	case EHY:
+	    VSET( center, val[0], val[1], val[2] );
+	    VSET( height, val[3], val[4], val[5] );
+	    VSET( a, val[6], val[7], val[8] );
+	    VUNITIZE( a );
+	    rad1 = val[9];
+	    rad2 = val[10];
+	    dd = val[11];
 
-		case EPA:
-			VSET( center, val[0], val[1], val[2] );
-			VSET( height, val[3], val[4], val[5] );
-			VSET( a, val[6], val[7], val[8] );
-			VUNITIZE( a );
-			rad1 = val[9];
-			rad2 = val[10];
+	    mk_ehy( ofp, name, center, height, a, rad1, rad2, dd );
+	    break;
 
-			mk_epa( ofp, name, center, height, a, rad1, rad2 );
-			break;
+	case ETO:
+	    VSET( center, val[0], val[1], val[2] );
+	    VSET( norm, val[3], val[4], val[5] );
+	    VSET( c, val[6], val[7], val[8] );
+	    rad1 = val[9];
+	    rad2 = val[10];
 
-		case EHY:
-			VSET( center, val[0], val[1], val[2] );
-			VSET( height, val[3], val[4], val[5] );
-			VSET( a, val[6], val[7], val[8] );
-			VUNITIZE( a );
-			rad1 = val[9];
-			rad2 = val[10];
-			dd = val[11];
+	    mk_eto( ofp, name, center, norm, c, rad1, rad2 );
+	    break;
 
-			mk_ehy( ofp, name, center, height, a, rad1, rad2, dd );
-			break;
-
-		case ETO:
-			VSET( center, val[0], val[1], val[2] );
-			VSET( norm, val[3], val[4], val[5] );
-			VSET( c, val[6], val[7], val[8] );
-			rad1 = val[9];
-			rad2 = val[10];
-
-			mk_eto( ofp, name, center, norm, c, rad1, rad2 );
-			break;
-
-		default:
-			bu_log("asc2g: bad solid %s s_type= %d, skipping\n",
-				name, s_type);
-	}
+	default:
+	    bu_log("asc2g: bad solid %s s_type= %d, skipping\n",
+		   name, s_type);
+    }
 
 }
 
@@ -923,126 +924,126 @@ solbld(void)
 int
 combbld(void)
 {
-	struct bu_list	head;
-	register char 	*cp;
-	register char 	*np;
-	int 		temp_nflag, temp_pflag;
+    struct bu_list	head;
+    register char 	*cp;
+    register char 	*np;
+    int 		temp_nflag, temp_pflag;
 
-	char		override;
-	char		reg_flags;	/* region flag */
-	int		is_reg;
-	short		regionid;
-	short		aircode;
-	short		material;	/* GIFT material code */
-	short		los;		/* LOS estimate */
-	unsigned char	rgb[3];		/* Red, green, blue values */
-	char		matname[32];	/* String of material name */
-	char		matparm[60];	/* String of material parameters */
-	char		inherit;	/* Inheritance property */
+    char		override;
+    char		reg_flags;	/* region flag */
+    int		is_reg;
+    short		regionid;
+    short		aircode;
+    short		material;	/* GIFT material code */
+    short		los;		/* LOS estimate */
+    unsigned char	rgb[3];		/* Red, green, blue values */
+    char		matname[32];	/* String of material name */
+    char		matparm[60];	/* String of material parameters */
+    char		inherit;	/* Inheritance property */
 
-	/* Set all flags initially. */
-	BU_LIST_INIT( &head );
+    /* Set all flags initially. */
+    BU_LIST_INIT( &head );
 
-	override = 0;
-	temp_nflag = temp_pflag = 0;	/* indicators for optional fields */
+    override = 0;
+    temp_nflag = temp_pflag = 0;	/* indicators for optional fields */
 
-	cp = buf;
-	cp++;				/* ID_COMB */
-	cp = nxt_spc( cp );		/* skip the space */
+    cp = buf;
+    cp++;				/* ID_COMB */
+    cp = nxt_spc( cp );		/* skip the space */
 
-	reg_flags = *cp++;		/* Y, N, or new P, F */
-	cp = nxt_spc( cp );
+    reg_flags = *cp++;		/* Y, N, or new P, F */
+    cp = nxt_spc( cp );
 
-	np = name;
-	while( *cp != ' ' )  {
-		*np++ = *cp++;
-	}
-	*np = '\0';
+    np = name;
+    while( *cp != ' ' )  {
+	*np++ = *cp++;
+    }
+    *np = '\0';
 
-	cp = nxt_spc( cp );
+    cp = nxt_spc( cp );
 
-	regionid = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	aircode = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	/* DEPRECTED: number of members expected */
-	cp = nxt_spc( cp );
-	/* DEPRECATED: Comgeom reference number */
-	cp = nxt_spc( cp );
-	material = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	los = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	override = (char)atoi( cp );
-	cp = nxt_spc( cp );
+    regionid = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    aircode = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    /* DEPRECTED: number of members expected */
+    cp = nxt_spc( cp );
+    /* DEPRECATED: Comgeom reference number */
+    cp = nxt_spc( cp );
+    material = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    los = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    override = (char)atoi( cp );
+    cp = nxt_spc( cp );
 
-	rgb[0] = (unsigned char)atoi( cp );
-	cp = nxt_spc( cp );
-	rgb[1] = (unsigned char)atoi( cp );
-	cp = nxt_spc( cp );
-	rgb[2] = (unsigned char)atoi( cp );
-	cp = nxt_spc( cp );
+    rgb[0] = (unsigned char)atoi( cp );
+    cp = nxt_spc( cp );
+    rgb[1] = (unsigned char)atoi( cp );
+    cp = nxt_spc( cp );
+    rgb[2] = (unsigned char)atoi( cp );
+    cp = nxt_spc( cp );
 
-	temp_nflag = atoi( cp );
-	cp = nxt_spc( cp );
-	temp_pflag = atoi( cp );
+    temp_nflag = atoi( cp );
+    cp = nxt_spc( cp );
+    temp_pflag = atoi( cp );
 
-	cp = nxt_spc( cp );
-	inherit = atoi( cp );
+    cp = nxt_spc( cp );
+    inherit = atoi( cp );
 
-	/* To support FASTGEN, different kinds of regions now exist. */
-	switch( reg_flags )  {
+    /* To support FASTGEN, different kinds of regions now exist. */
+    switch( reg_flags )  {
 	case 'Y':
 	case 'R':
-		is_reg = DBV4_REGION;
-		break;
+	    is_reg = DBV4_REGION;
+	    break;
 	case 'P':
-		is_reg = DBV4_REGION_FASTGEN_PLATE;
-		break;
+	    is_reg = DBV4_REGION_FASTGEN_PLATE;
+	    break;
 	case 'V':
-		is_reg = DBV4_REGION_FASTGEN_VOLUME;
-		break;
+	    is_reg = DBV4_REGION_FASTGEN_VOLUME;
+	    break;
 	case 'N':
 	default:
-		is_reg = 0;
-	}
+	    is_reg = 0;
+    }
 
-	if( temp_nflag )  {
-		bu_fgets( buf, BUFSIZE, ifp );
-		zap_nl();
-		bzero( matname, sizeof(matname) );
-		strncpy( matname, buf, sizeof(matname)-1 );
-	}
-	if( temp_pflag )  {
-		bu_fgets( buf, BUFSIZE, ifp );
-		zap_nl();
-		bzero( matparm, sizeof(matparm) );
-		strncpy( matparm, buf, sizeof(matparm)-1 );
-	}
+    if( temp_nflag )  {
+	bu_fgets( buf, BUFSIZE, ifp );
+	zap_nl();
+	bzero( matname, sizeof(matname) );
+	strncpy( matname, buf, sizeof(matname)-1 );
+    }
+    if( temp_pflag )  {
+	bu_fgets( buf, BUFSIZE, ifp );
+	zap_nl();
+	bzero( matparm, sizeof(matparm) );
+	strncpy( matparm, buf, sizeof(matparm)-1 );
+    }
 
-	for(;;)  {
-		buf[0] = '\0';
-		if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-			break;
+    for(;;)  {
+	buf[0] = '\0';
+	if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+	    break;
 
-		if( buf[0] != ID_MEMB )  break;
+	if( buf[0] != ID_MEMB )  break;
 
-		/* Process (and accumulate) the members */
-		membbld( &head );
-	}
+	/* Process (and accumulate) the members */
+	membbld( &head );
+    }
 
-	/* Spit them out, all at once.  Use GIFT semantics. */
-	if( mk_comb(ofp, name, &head, is_reg,
+    /* Spit them out, all at once.  Use GIFT semantics. */
+    if( mk_comb(ofp, name, &head, is_reg,
 		temp_nflag ? matname : (char *)0,
 		temp_pflag ? matparm : (char *)0,
 		override ? (unsigned char *)rgb : (unsigned char *)0,
 		regionid, aircode, material, los, inherit, 0, 1) < 0 )  {
-			fprintf(stderr,"asc2g: mk_lrcomb fail\n");
-			abort();
-	}
+	fprintf(stderr,"asc2g: mk_lrcomb fail\n");
+	abort();
+    }
 
-	if( buf[0] == '\0' )  return(0);
-	return(1);
+    if( buf[0] == '\0' )  return(0);
+    return(1);
 }
 
 
@@ -1054,34 +1055,34 @@ combbld(void)
 void
 membbld(struct bu_list *headp)
 {
-	register char 	*cp;
-	register char 	*np;
-	register int 	i;
-	char		relation;	/* boolean operation */
-	char		inst_name[NAMESIZE+2];
-	struct wmember	*memb;
+    register char 	*cp;
+    register char 	*np;
+    register int 	i;
+    char		relation;	/* boolean operation */
+    char		inst_name[NAMESIZE+2];
+    struct wmember	*memb;
 
-	cp = buf;
-	cp++;				/* ident */
-	cp = nxt_spc( cp );		/* skip the space */
+    cp = buf;
+    cp++;				/* ident */
+    cp = nxt_spc( cp );		/* skip the space */
 
-	relation = *cp++;
+    relation = *cp++;
+    cp = nxt_spc( cp );
+
+    np = inst_name;
+    while( *cp != ' ' )  {
+	*np++ = *cp++;
+    }
+    *np = '\0';
+
+    cp = nxt_spc( cp );
+
+    memb = mk_addmember( inst_name, headp, NULL, relation );
+
+    for( i = 0; i < 16; i++ )  {
+	memb->wm_mat[i] = atof( cp );
 	cp = nxt_spc( cp );
-
-	np = inst_name;
-	while( *cp != ' ' )  {
-		*np++ = *cp++;
-	}
-	*np = '\0';
-
-	cp = nxt_spc( cp );
-
-	memb = mk_addmember( inst_name, headp, NULL, relation );
-
-	for( i = 0; i < 16; i++ )  {
-		memb->wm_mat[i] = atof( cp );
-		cp = nxt_spc( cp );
-	}
+    }
 }
 
 
@@ -1093,33 +1094,33 @@ membbld(struct bu_list *headp)
 void
 arsabld(void)
 {
-	char *cp;
-	char *np;
-	int i;
+    char *cp;
+    char *np;
+    int i;
 
-	if( ars_name )
-		bu_free( (char *)ars_name, "ars_name" );
-	cp = buf;
-	cp = nxt_spc( cp );
-	cp = nxt_spc( cp );
+    if( ars_name )
+	bu_free( (char *)ars_name, "ars_name" );
+    cp = buf;
+    cp = nxt_spc( cp );
+    cp = nxt_spc( cp );
 
-	np = cp;
-	while( *(++cp) != ' ' );
-	*cp++ = '\0';
-	ars_name = bu_strdup( np );
-	ars_ncurves = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	ars_ptspercurve = (short)atoi( cp );
+    np = cp;
+    while( *(++cp) != ' ' );
+    *cp++ = '\0';
+    ars_name = bu_strdup( np );
+    ars_ncurves = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    ars_ptspercurve = (short)atoi( cp );
 
-	ars_curves = (fastf_t **)bu_calloc( (ars_ncurves+1), sizeof(fastf_t *), "ars_curves" );
-	for( i=0 ; i<ars_ncurves ; i++ )
+    ars_curves = (fastf_t **)bu_calloc( (ars_ncurves+1), sizeof(fastf_t *), "ars_curves" );
+    for( i=0 ; i<ars_ncurves ; i++ )
 	{
-		ars_curves[i] = (fastf_t *)bu_calloc( ars_ptspercurve + 1,
-			sizeof( fastf_t ) * ELEMENTS_PER_VECT, "ars_curve" );
+	    ars_curves[i] = (fastf_t *)bu_calloc( ars_ptspercurve + 1,
+						  sizeof( fastf_t ) * ELEMENTS_PER_VECT, "ars_curve" );
 	}
 
-	ars_pt = 0;
-	ars_curve = 0;
+    ars_pt = 0;
+    ars_curve = 0;
 }
 
 /*		A R S B L D
@@ -1130,41 +1131,41 @@ arsabld(void)
 void
 arsbbld(void)
 {
-	char *cp;
-	int i;
-	int incr_ret;
+    char *cp;
+    int i;
+    int incr_ret;
 
-	cp = buf;
-	cp = nxt_spc( cp );		/* skip the space */
+    cp = buf;
+    cp = nxt_spc( cp );		/* skip the space */
+    cp = nxt_spc( cp );
+    cp = nxt_spc( cp );
+    for( i = 0; i < 8; i++ )  {
 	cp = nxt_spc( cp );
+	ars_curves[ars_curve][ars_pt*3] = atof( cp );
 	cp = nxt_spc( cp );
-	for( i = 0; i < 8; i++ )  {
-		cp = nxt_spc( cp );
-		ars_curves[ars_curve][ars_pt*3] = atof( cp );
-		cp = nxt_spc( cp );
-		ars_curves[ars_curve][ars_pt*3 + 1] = atof( cp );
-		cp = nxt_spc( cp );
-		ars_curves[ars_curve][ars_pt*3 + 2] = atof( cp );
-		if( ars_curve > 0 || ars_pt > 0 )
-			VADD2( &ars_curves[ars_curve][ars_pt*3], &ars_curves[ars_curve][ars_pt*3], &ars_curves[0][0] )
+	ars_curves[ars_curve][ars_pt*3 + 1] = atof( cp );
+	cp = nxt_spc( cp );
+	ars_curves[ars_curve][ars_pt*3 + 2] = atof( cp );
+	if( ars_curve > 0 || ars_pt > 0 )
+	    VADD2( &ars_curves[ars_curve][ars_pt*3], &ars_curves[ars_curve][ars_pt*3], &ars_curves[0][0] )
 
 		incr_ret = incr_ars_pt();
-		if( incr_ret == 2 )
-		{
-			/* finished, write out the ARS solid */
-			if( mk_ars( ofp, ars_name, ars_ncurves, ars_ptspercurve, ars_curves ) )
-			{
-				bu_log( "Failed trying to make ARS (%s)\n", ars_name );
-				bu_bomb( "Failed trying to make ARS\n" );
-			}
-			return;
-		}
-		else if( incr_ret == 1 )
-		{
-			/* end of curve, ignore remainder of reocrd */
-			return;
-		}
-	}
+	if( incr_ret == 2 )
+	    {
+		/* finished, write out the ARS solid */
+		if( mk_ars( ofp, ars_name, ars_ncurves, ars_ptspercurve, ars_curves ) )
+		    {
+			bu_log( "Failed trying to make ARS (%s)\n", ars_name );
+			bu_bomb( "Failed trying to make ARS\n" );
+		    }
+		return;
+	    }
+	else if( incr_ret == 1 )
+	    {
+		/* end of curve, ignore remainder of reocrd */
+		return;
+	    }
+    }
 }
 
 
@@ -1177,16 +1178,16 @@ arsbbld(void)
 void
 zap_nl(void)
 {
-	register char *bp;
+    register char *bp;
 
-	bp = &buf[0];
+    bp = &buf[0];
 
-	while( *bp != '\0' )  {
-	    if(( *bp == '\n' ) || ( *bp == '\r' )) {
-		*bp = '\0';
-	    }
-	    bp++;
+    while( *bp != '\0' )  {
+	if(( *bp == '\n' ) || ( *bp == '\r' )) {
+	    *bp = '\0';
 	}
+	bp++;
+    }
 }
 
 
@@ -1198,89 +1199,89 @@ zap_nl(void)
 void
 identbld(void)
 {
-	register char	*cp;
-	register char	*np;
-	char		units;		/* units code number */
-	char		version[6] = {0};
-	char		title[255] = {0};
-	char		unit_str[8] = {0};
-	double		local2mm;
+    register char	*cp;
+    register char	*np;
+    char		units;		/* units code number */
+    char		version[6] = {0};
+    char		title[255] = {0};
+    char		unit_str[8] = {0};
+    double		local2mm;
 
-	strncpy(unit_str, "none", 4);
+    strncpy(unit_str, "none", 4);
 
-	cp = buf;
-	cp++;				/* ident */
-	cp = nxt_spc( cp );		/* skip the space */
+    cp = buf;
+    cp++;				/* ident */
+    cp = nxt_spc( cp );		/* skip the space */
 
-	units = (char)atoi( cp );
-	cp = nxt_spc( cp );
+    units = (char)atoi( cp );
+    cp = nxt_spc( cp );
 
-	/* Note that there is no provision for handing libwdb the version.
-	 * However, this is automatically provided when needed.
-	 */
+    /* Note that there is no provision for handing libwdb the version.
+     * However, this is automatically provided when needed.
+     */
 
-	np = version;
-	while( *cp != '\n' && *cp != '\r' && *cp != '\0' )  {
-		*np++ = *cp++;
-	}
-	*np = '\0';
+    np = version;
+    while( *cp != '\n' && *cp != '\r' && *cp != '\0' )  {
+	*np++ = *cp++;
+    }
+    *np = '\0';
 
-	if( strcmp( version, ID_VERSION ) != 0 )  {
-		bu_log("WARNING:  input file version (%s) is not %s\n",
-			version, ID_VERSION);
-	}
+    if( strcmp( version, ID_VERSION ) != 0 )  {
+	bu_log("WARNING:  input file version (%s) is not %s\n",
+	       version, ID_VERSION);
+    }
 
-	(void)bu_fgets( buf, BUFSIZE, ifp);
-	zap_nl();
-	(void)strncpy( title, buf, sizeof(title)-1 );
+    (void)bu_fgets( buf, BUFSIZE, ifp);
+    zap_nl();
+    (void)strncpy( title, buf, sizeof(title)-1 );
 
-/* XXX Should use db_conversions() for this */
-	switch(units)  {
+    /* XXX Should use db_conversions() for this */
+    switch(units)  {
 	case ID_NO_UNIT:
-	  strncpy(unit_str,"mm",4);
-	  break;
+	    strncpy(unit_str,"mm",4);
+	    break;
 	case ID_MM_UNIT:
-	  strncpy(unit_str,"mm",4);
-	  break;
+	    strncpy(unit_str,"mm",4);
+	    break;
 	case ID_UM_UNIT:
-	  strncpy(unit_str,"um",4);
-	  break;
+	    strncpy(unit_str,"um",4);
+	    break;
 	case ID_CM_UNIT:
-	  strncpy(unit_str,"cm",4);
-	  break;
+	    strncpy(unit_str,"cm",4);
+	    break;
 	case ID_M_UNIT:
-	  strncpy(unit_str,"m",4);
-	  break;
+	    strncpy(unit_str,"m",4);
+	    break;
 	case ID_KM_UNIT:
-	  strncpy(unit_str,"km",4);
-	  break;
+	    strncpy(unit_str,"km",4);
+	    break;
 	case ID_IN_UNIT:
-	  strncpy(unit_str,"in",4);
-	  break;
+	    strncpy(unit_str,"in",4);
+	    break;
 	case ID_FT_UNIT:
-	  strncpy(unit_str,"ft",4);
-	  break;
+	    strncpy(unit_str,"ft",4);
+	    break;
 	case ID_YD_UNIT:
-	  strncpy(unit_str,"yard",4);
-	  break;
+	    strncpy(unit_str,"yard",4);
+	    break;
 	case ID_MI_UNIT:
-	  strncpy(unit_str,"mile",4);
-	  break;
+	    strncpy(unit_str,"mile",4);
+	    break;
 	default:
-	  fprintf(stderr,"asc2g: unknown v4 units code = %d, defaulting to millimeters\n", units);
-	  strncpy(unit_str,"mm",4);
-	}
-	local2mm = bu_units_conversion(unit_str);
-	if( local2mm <= 0 )  {
-		fprintf(stderr, "asc2g: unable to convert v4 units string '%s', got local2mm=%g\n",
-			unit_str, local2mm);
-		exit(3);
-	}
+	    fprintf(stderr,"asc2g: unknown v4 units code = %d, defaulting to millimeters\n", units);
+	    strncpy(unit_str,"mm",4);
+    }
+    local2mm = bu_units_conversion(unit_str);
+    if( local2mm <= 0 )  {
+	fprintf(stderr, "asc2g: unable to convert v4 units string '%s', got local2mm=%g\n",
+		unit_str, local2mm);
+	exit(3);
+    }
 
-	if( mk_id_editunits(ofp, title, local2mm) < 0 )  {
-		bu_log("asc2g: unable to write database ID\n");
-		exit(2);
-	}
+    if( mk_id_editunits(ofp, title, local2mm) < 0 )  {
+	bu_log("asc2g: unable to write database ID\n");
+	exit(2);
+    }
 }
 
 
@@ -1297,93 +1298,93 @@ identbld(void)
 void
 polyhbld(void)
 {
-	char	*cp;
-	char	*name;
-	long	startpos;
-	long	nlines;
-	struct rt_pg_internal	*pg;
-	struct rt_db_internal	intern;
-	struct bn_tol	tol;
+    char	*cp;
+    char	*name;
+    long	startpos;
+    long	nlines;
+    struct rt_pg_internal	*pg;
+    struct rt_db_internal	intern;
+    struct bn_tol	tol;
 
-	(void)strtok( buf, " " );	/* skip the ident character */
-	cp = strtok( NULL, " \n" );
-	name = bu_strdup(cp);
+    (void)strtok( buf, " " );	/* skip the ident character */
+    cp = strtok( NULL, " \n" );
+    name = bu_strdup(cp);
 
-	/* Count up the number of poly data lines which follow */
-	startpos = ftell(ifp);
-	for( nlines = 0; ; nlines++ )  {
-		if( bu_fgets( buf, BUFSIZE, ifp ) == NULL )  break;
-		if( buf[0] != ID_P_DATA )  break;	/* 'Q' */
-	}
-	BU_ASSERT_LONG( nlines, >, 0 );
+    /* Count up the number of poly data lines which follow */
+    startpos = ftell(ifp);
+    for( nlines = 0; ; nlines++ )  {
+	if( bu_fgets( buf, BUFSIZE, ifp ) == NULL )  break;
+	if( buf[0] != ID_P_DATA )  break;	/* 'Q' */
+    }
+    BU_ASSERT_LONG( nlines, >, 0 );
 
-	/* Allocate storage for the faces */
-	BU_GETSTRUCT( pg, rt_pg_internal );
-	pg->magic = RT_PG_INTERNAL_MAGIC;
-	pg->npoly = nlines;
-	pg->poly = (struct rt_pg_face_internal *)bu_calloc( pg->npoly,
-		sizeof(struct rt_pg_face_internal), "poly[]" );
-	pg->max_npts = 0;
+    /* Allocate storage for the faces */
+    BU_GETSTRUCT( pg, rt_pg_internal );
+    pg->magic = RT_PG_INTERNAL_MAGIC;
+    pg->npoly = nlines;
+    pg->poly = (struct rt_pg_face_internal *)bu_calloc( pg->npoly,
+							sizeof(struct rt_pg_face_internal), "poly[]" );
+    pg->max_npts = 0;
 
-	/* Return to first 'Q' record */
-	fseek( ifp, startpos, 0 );
+    /* Return to first 'Q' record */
+    fseek( ifp, startpos, 0 );
 
-	for( nlines = 0; nlines < pg->npoly; nlines++ )  {
-		register struct rt_pg_face_internal	*fp = &pg->poly[nlines];
-		register int	i;
+    for( nlines = 0; nlines < pg->npoly; nlines++ )  {
+	register struct rt_pg_face_internal	*fp = &pg->poly[nlines];
+	register int	i;
 
-		if( bu_fgets( buf, BUFSIZE, ifp ) == NULL )  break;
-		if( buf[0] != ID_P_DATA )  bu_bomb("mis-count of Q records?\n");
+	if( bu_fgets( buf, BUFSIZE, ifp ) == NULL )  break;
+	if( buf[0] != ID_P_DATA )  bu_bomb("mis-count of Q records?\n");
 
-		/* Input always has 5 points, even if all aren't significant */
-		fp->verts = (fastf_t *)bu_malloc( 5*3*sizeof(fastf_t), "verts[]" );
-		fp->norms = (fastf_t *)bu_malloc( 5*3*sizeof(fastf_t), "norms[]" );
+	/* Input always has 5 points, even if all aren't significant */
+	fp->verts = (fastf_t *)bu_malloc( 5*3*sizeof(fastf_t), "verts[]" );
+	fp->norms = (fastf_t *)bu_malloc( 5*3*sizeof(fastf_t), "norms[]" );
 
-		cp = buf;
-		cp++;				/* ident */
-		cp = nxt_spc( cp );		/* skip the space */
+	cp = buf;
+	cp++;				/* ident */
+	cp = nxt_spc( cp );		/* skip the space */
 
-		fp->npts = (char)atoi( cp );
-		if( fp->npts > pg->max_npts )  pg->max_npts = fp->npts;
+	fp->npts = (char)atoi( cp );
+	if( fp->npts > pg->max_npts )  pg->max_npts = fp->npts;
 
-		for( i = 0; i < 5*3; i++ )  {
-			cp = nxt_spc( cp );
-			fp->verts[i] = atof( cp );
-		}
-
-		for( i = 0; i < 5*3; i++ )  {
-			cp = nxt_spc( cp );
-			fp->norms[i] = atof( cp );
-		}
+	for( i = 0; i < 5*3; i++ )  {
+	    cp = nxt_spc( cp );
+	    fp->verts[i] = atof( cp );
 	}
 
-	/* Convert the polysolid to a BoT */
-	RT_INIT_DB_INTERNAL(&intern);
-	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	intern.idb_type = ID_POLY;
-	intern.idb_meth = &rt_functab[ID_POLY];
-	intern.idb_ptr = pg;
+	for( i = 0; i < 5*3; i++ )  {
+	    cp = nxt_spc( cp );
+	    fp->norms[i] = atof( cp );
+	}
+    }
 
-	/* this tolerance structure is only used for converting polysolids to BOT's
-	 * use zero distance to avoid losing any polysolid facets
-	 */
-	tol.magic = BN_TOL_MAGIC;
-	tol.dist = 0.0;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
+    /* Convert the polysolid to a BoT */
+    RT_INIT_DB_INTERNAL(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_POLY;
+    intern.idb_meth = &rt_functab[ID_POLY];
+    intern.idb_ptr = pg;
 
-	if( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) < 0 )
-		bu_bomb("rt_pg_to_bot() failed\n");
-	/* The polysolid is freed by the converter */
+    /* this tolerance structure is only used for converting polysolids to BOT's
+     * use zero distance to avoid losing any polysolid facets
+     */
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.0;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-6;
+    tol.para = 1 - tol.perp;
 
-	/*
-	 * Since we already have an internal form, this is much simpler than
-	 * calling mk_bot().
-	 */
-	if( wdb_put_internal( ofp, name, &intern, mk_conv2mm ) < 0 )
-		bu_bomb("wdb_put_internal() failure on BoT from polysolid\n");
-	/* BoT internal has been freed */
+    if( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) < 0 )
+	bu_bomb("rt_pg_to_bot() failed\n");
+    /* The polysolid is freed by the converter */
+
+    /*
+     * Since we already have an internal form, this is much simpler than
+     * calling mk_bot().
+     */
+    if( wdb_put_internal( ofp, name, &intern, mk_conv2mm ) < 0 )
+	bu_bomb("wdb_put_internal() failure on BoT from polysolid\n");
+    /* BoT internal has been freed */
 }
 
 /*		M A T E R B L D
@@ -1394,28 +1395,28 @@ polyhbld(void)
 void
 materbld(void)
 {
-	register char *cp;
-	int	low, hi;
-	int	r,g,b;
+    register char *cp;
+    int	low, hi;
+    int	r,g,b;
 
-	cp = buf;
-	cp++;				/* skip ID_MATERIAL */
-	cp = nxt_spc( cp );		/* skip the space */
+    cp = buf;
+    cp++;				/* skip ID_MATERIAL */
+    cp = nxt_spc( cp );		/* skip the space */
 
-	/* flags = (char)atoi( cp ); */
-	cp = nxt_spc( cp );
-	low = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	hi = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	r = (unsigned char)atoi( cp);
-	cp = nxt_spc( cp );
-	g = (unsigned char)atoi( cp);
-	cp = nxt_spc( cp );
-	b = (unsigned char)atoi( cp);
+    /* flags = (char)atoi( cp ); */
+    cp = nxt_spc( cp );
+    low = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    hi = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    r = (unsigned char)atoi( cp);
+    cp = nxt_spc( cp );
+    g = (unsigned char)atoi( cp);
+    cp = nxt_spc( cp );
+    b = (unsigned char)atoi( cp);
 
-	/* Put it on a linked list for output later */
-	rt_color_addrec( low, hi, r, g, b, -1L );
+    /* Put it on a linked list for output later */
+    rt_color_addrec( low, hi, r, g, b, -1L );
 }
 
 /*		B S P L B L D
@@ -1427,29 +1428,29 @@ void
 bsplbld(void)
 {
 #if 0
-	register char	*cp;
-	register char	*np;
-	short		nsurf;		/* number of surfaces */
-	fastf_t		resolution;	/* resolution of flatness */
+    register char	*cp;
+    register char	*np;
+    short		nsurf;		/* number of surfaces */
+    fastf_t		resolution;	/* resolution of flatness */
 
-	cp = buf;
-	cp++;				/* ident */
-	cp = nxt_spc( cp );		/* skip the space */
+    cp = buf;
+    cp++;				/* ident */
+    cp = nxt_spc( cp );		/* skip the space */
 
-	np = name;
-	while( *cp != ' ' )  {
-		*np++ = *cp++;
-	}
-	*np = '\0';
-	cp = nxt_spc( cp );
+    np = name;
+    while( *cp != ' ' )  {
+	*np++ = *cp++;
+    }
+    *np = '\0';
+    cp = nxt_spc( cp );
 
-	nsurf = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	resolution = atof( cp );
+    nsurf = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    resolution = atof( cp );
 
-	mk_bsolid(ofp, name, nsurf, resolution);
+    mk_bsolid(ofp, name, nsurf, resolution);
 #else
-	bu_bomb("bsplbld() needs to be upgraded to v5\n");
+    bu_bomb("bsplbld() needs to be upgraded to v5\n");
 #endif
 }
 
@@ -1463,98 +1464,98 @@ bsurfbld(void)
 {
 #if 0
 
-/* HELP! This involves mk_bsurf(filep, bp) where bp is a ptr to struct */
+    /* HELP! This involves mk_bsurf(filep, bp) where bp is a ptr to struct */
 
-	register char	*cp;
-	register int	i;
-	register float	*vp;
-	int		nbytes, count;
-	float		*fp;
+    register char	*cp;
+    register int	i;
+    register float	*vp;
+    int		nbytes, count;
+    float		*fp;
 
-	cp = buf;
-	record.d.d_id = *cp++;
-	cp = nxt_spc( cp );		/* skip the space */
+    cp = buf;
+    record.d.d_id = *cp++;
+    cp = nxt_spc( cp );		/* skip the space */
 
-	record.d.d_order[0] = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	record.d.d_order[1] = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	record.d.d_kv_size[0] = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	record.d.d_kv_size[1] = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	record.d.d_ctl_size[0] = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	record.d.d_ctl_size[1] = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	record.d.d_geom_type = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	record.d.d_nknots = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	record.d.d_nctls = (short)atoi( cp );
+    record.d.d_order[0] = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    record.d.d_order[1] = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    record.d.d_kv_size[0] = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    record.d.d_kv_size[1] = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    record.d.d_ctl_size[0] = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    record.d.d_ctl_size[1] = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    record.d.d_geom_type = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    record.d.d_nknots = (short)atoi( cp );
+    cp = nxt_spc( cp );
+    record.d.d_nctls = (short)atoi( cp );
 
-	record.d.d_nknots =
-		ngran( record.d.d_kv_size[0] + record.d.d_kv_size[1] );
+    record.d.d_nknots =
+	ngran( record.d.d_kv_size[0] + record.d.d_kv_size[1] );
 
-	record.d.d_nctls =
-		ngran( record.d.d_ctl_size[0] * record.d.d_ctl_size[1]
-			* record.d.d_geom_type);
+    record.d.d_nctls =
+	ngran( record.d.d_ctl_size[0] * record.d.d_ctl_size[1]
+	       * record.d.d_geom_type);
 
-	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, ofp );
+    /* Write out the record */
+    (void)fwrite( (char *)&record, sizeof record, 1, ofp );
 
-	/*
-	 * The b_surf_head record is followed by
-	 * d_nknots granules of knot vectors (first u, then v),
-	 * and then by d_nctls granules of control mesh information.
-	 * Note that neither of these have an ID field!
-	 *
-	 * B-spline surface record, followed by
-	 *	d_kv_size[0] floats,
-	 *	d_kv_size[1] floats,
-	 *	padded to d_nknots granules, followed by
-	 *	ctl_size[0]*ctl_size[1]*geom_type floats,
-	 *	padded to d_nctls granules.
-	 *
-	 * IMPORTANT NOTE: granule == sizeof(union record)
-	 */
+    /*
+     * The b_surf_head record is followed by
+     * d_nknots granules of knot vectors (first u, then v),
+     * and then by d_nctls granules of control mesh information.
+     * Note that neither of these have an ID field!
+     *
+     * B-spline surface record, followed by
+     *	d_kv_size[0] floats,
+     *	d_kv_size[1] floats,
+     *	padded to d_nknots granules, followed by
+     *	ctl_size[0]*ctl_size[1]*geom_type floats,
+     *	padded to d_nctls granules.
+     *
+     * IMPORTANT NOTE: granule == sizeof(union record)
+     */
 
-	/* Malloc and clear memory for the KNOT DATA and read it */
-	nbytes = record.d.d_nknots * sizeof(union record);
-	vp = (float *)bu_malloc(nbytes, "vp");
-	fp = vp;
-	(void)bzero( (char *)vp, nbytes );
-	/* Read the knot vector information */
-	count = record.d.d_kv_size[0] + record.d.d_kv_size[1];
-	for( i = 0; i < count; i++ )  {
-		bu_fgets( buf, BUFSIZE, ifp );
-		(void)sscanf( buf, "%f", vp++);
-	}
-	/* Write out the information */
-	(void)fwrite( (char *)fp, nbytes, 1, ofp );
+    /* Malloc and clear memory for the KNOT DATA and read it */
+    nbytes = record.d.d_nknots * sizeof(union record);
+    vp = (float *)bu_malloc(nbytes, "vp");
+    fp = vp;
+    (void)bzero( (char *)vp, nbytes );
+    /* Read the knot vector information */
+    count = record.d.d_kv_size[0] + record.d.d_kv_size[1];
+    for( i = 0; i < count; i++ )  {
+	bu_fgets( buf, BUFSIZE, ifp );
+	(void)sscanf( buf, "%f", vp++);
+    }
+    /* Write out the information */
+    (void)fwrite( (char *)fp, nbytes, 1, ofp );
 
-	/* Free the knot data memory */
-	(void)bu_free( (char *)fp, "knot data" );
+    /* Free the knot data memory */
+    (void)bu_free( (char *)fp, "knot data" );
 
-	/* Malloc and clear memory for the CONTROL MESH data and read it */
-	nbytes = record.d.d_nctls * sizeof(union record);
-	vp = (float *)bu_malloc(nbytes, "vp");
-	fp = vp;
-	(void)bzero( (char *)vp, nbytes );
-	/* Read the control mesh information */
-	count = record.d.d_ctl_size[0] * record.d.d_ctl_size[1] *
-		record.d.d_geom_type;
-	for( i = 0; i < count; i++ )  {
-		bu_fgets( buf, BUFSIZE, ifp );
-		(void)sscanf( buf, "%f", vp++);
-	}
-	/* Write out the information */
-	(void)fwrite( (char *)fp, nbytes, 1, ofp );
+    /* Malloc and clear memory for the CONTROL MESH data and read it */
+    nbytes = record.d.d_nctls * sizeof(union record);
+    vp = (float *)bu_malloc(nbytes, "vp");
+    fp = vp;
+    (void)bzero( (char *)vp, nbytes );
+    /* Read the control mesh information */
+    count = record.d.d_ctl_size[0] * record.d.d_ctl_size[1] *
+	record.d.d_geom_type;
+    for( i = 0; i < count; i++ )  {
+	bu_fgets( buf, BUFSIZE, ifp );
+	(void)sscanf( buf, "%f", vp++);
+    }
+    /* Write out the information */
+    (void)fwrite( (char *)fp, nbytes, 1, ofp );
 
-	/* Free the control mesh memory */
-	(void)bu_free( (char *)fp, "mesh data" );
+    /* Free the control mesh memory */
+    (void)bu_free( (char *)fp, "mesh data" );
 #else
-	bu_bomb("bsrfbld() needs to be upgraded to v5\n");
+    bu_bomb("bsrfbld() needs to be upgraded to v5\n");
 #endif
 }
 
@@ -1564,57 +1565,57 @@ bsurfbld(void)
 void
 clinebld(void)
 {
-	char			my_name[NAME_LEN];
-	fastf_t			thickness;
-	fastf_t			radius;
-	point_t			V;
-	vect_t			height;
-	register char		*cp;
-	register char		*np;
+    char			my_name[NAME_LEN];
+    fastf_t			thickness;
+    fastf_t			radius;
+    point_t			V;
+    vect_t			height;
+    register char		*cp;
+    register char		*np;
 
-	cp = buf;
-	cp++;
-	cp = nxt_spc( cp );
+    cp = buf;
+    cp++;
+    cp = nxt_spc( cp );
 
-	np = my_name;
-	while( *cp != ' ' && *cp != '\n' && *cp != '\r' ) {
-	    *np++ = *cp++;
-	}
-	*np = '\0';
+    np = my_name;
+    while( *cp != ' ' && *cp != '\n' && *cp != '\r' ) {
+	*np++ = *cp++;
+    }
+    *np = '\0';
 
-	cp = nxt_spc( cp );
+    cp = nxt_spc( cp );
 
-	V[0] = atof( cp );
+    V[0] = atof( cp );
 
-	cp = nxt_spc( cp );
+    cp = nxt_spc( cp );
 
-	V[1] = atof( cp );
+    V[1] = atof( cp );
 
-	cp = nxt_spc( cp );
+    cp = nxt_spc( cp );
 
-	V[2] = atof( cp );
+    V[2] = atof( cp );
 
-	cp = nxt_spc( cp );
+    cp = nxt_spc( cp );
 
-	height[0] = atof( cp );
+    height[0] = atof( cp );
 
-	cp = nxt_spc( cp );
+    cp = nxt_spc( cp );
 
-	height[1] = atof( cp );
+    height[1] = atof( cp );
 
-	cp = nxt_spc( cp );
+    cp = nxt_spc( cp );
 
-	height[2] = atof( cp );
+    height[2] = atof( cp );
 
-	cp = nxt_spc( cp );
+    cp = nxt_spc( cp );
 
-	radius = atof( cp );
+    radius = atof( cp );
 
-	cp = nxt_spc( cp );
+    cp = nxt_spc( cp );
 
-	thickness = atof( cp );
+    thickness = atof( cp );
 
-	mk_cline( ofp, my_name, V, height, radius, thickness );
+    mk_cline( ofp, my_name, V, height, radius, thickness );
 }
 
 /*		B O T B L D
@@ -1623,84 +1624,84 @@ clinebld(void)
 void
 botbld(void)
 {
-	char			my_name[NAME_LEN];
-	char			type;
-	int			mode, orientation, error_mode, num_vertices, num_faces;
-	int			i,j;
-	double			a[3];
-	fastf_t			*vertices;
-	fastf_t			*thick=NULL;
-	int			*faces;
-	struct bu_bitv		*facemode=NULL;
+    char			my_name[NAME_LEN];
+    char			type;
+    int			mode, orientation, error_mode, num_vertices, num_faces;
+    int			i,j;
+    double			a[3];
+    fastf_t			*vertices;
+    fastf_t			*thick=NULL;
+    int			*faces;
+    struct bu_bitv		*facemode=NULL;
 
-	sscanf( buf, "%c %s %d %d %d %d %d", &type, my_name, &mode, &orientation,
-		&error_mode, &num_vertices, &num_faces );
+    sscanf( buf, "%c %s %d %d %d %d %d", &type, my_name, &mode, &orientation,
+	    &error_mode, &num_vertices, &num_faces );
 
-	/* get vertices */
-	vertices = (fastf_t *)bu_calloc( num_vertices * 3, sizeof( fastf_t ), "botbld: vertices" );
-	for( i=0 ; i<num_vertices ; i++ )
+    /* get vertices */
+    vertices = (fastf_t *)bu_calloc( num_vertices * 3, sizeof( fastf_t ), "botbld: vertices" );
+    for( i=0 ; i<num_vertices ; i++ )
 	{
-		bu_fgets( buf, BUFSIZE, ifp);
-		sscanf( buf, "%d: %le %le %le", &j, &a[0], &a[1], &a[2] );
-		if( i != j )
+	    bu_fgets( buf, BUFSIZE, ifp);
+	    sscanf( buf, "%d: %le %le %le", &j, &a[0], &a[1], &a[2] );
+	    if( i != j )
 		{
-			bu_log( "Vertices out of order in solid %s (expecting %d, found %d)\n",
-				my_name, i, j );
-			bu_free( (char *)vertices, "botbld: vertices" );
-			bu_log( "Skipping this solid!\n" );
-			while( buf[0] == '\t' )
-				bu_fgets( buf, BUFSIZE, ifp);
-			return;
+		    bu_log( "Vertices out of order in solid %s (expecting %d, found %d)\n",
+			    my_name, i, j );
+		    bu_free( (char *)vertices, "botbld: vertices" );
+		    bu_log( "Skipping this solid!\n" );
+		    while( buf[0] == '\t' )
+			bu_fgets( buf, BUFSIZE, ifp);
+		    return;
 		}
-		VMOVE( &vertices[i*3], a );
+	    VMOVE( &vertices[i*3], a );
 	}
 
-	/* get faces (and possibly thicknesses */
-	faces = (int *)bu_calloc( num_faces * 3, sizeof( int ), "botbld: faces" );
-	if( mode == RT_BOT_PLATE )
-		thick = (fastf_t *)bu_calloc( num_faces, sizeof( fastf_t ), "botbld thick" );
-	for( i=0 ; i<num_faces ; i++ )
+    /* get faces (and possibly thicknesses */
+    faces = (int *)bu_calloc( num_faces * 3, sizeof( int ), "botbld: faces" );
+    if( mode == RT_BOT_PLATE )
+	thick = (fastf_t *)bu_calloc( num_faces, sizeof( fastf_t ), "botbld thick" );
+    for( i=0 ; i<num_faces ; i++ )
 	{
-		bu_fgets( buf, BUFSIZE, ifp);
-		if( mode == RT_BOT_PLATE )
-			sscanf( buf, "%d: %d %d %d %le", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2], &a[0] );
-		else
-			sscanf( buf, "%d: %d %d %d", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2] );
+	    bu_fgets( buf, BUFSIZE, ifp);
+	    if( mode == RT_BOT_PLATE )
+		sscanf( buf, "%d: %d %d %d %le", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2], &a[0] );
+	    else
+		sscanf( buf, "%d: %d %d %d", &j, &faces[i*3], &faces[i*3+1], &faces[i*3+2] );
 
-		if( i != j )
+	    if( i != j )
 		{
-			bu_log( "Faces out of order in solid %s (expecting %d, found %d)\n",
-				my_name, i, j );
-			bu_free( (char *)vertices, "botbld: vertices" );
-			bu_free( (char *)faces, "botbld: faces" );
-			if( mode == RT_BOT_PLATE )
-				bu_free( (char *)thick, "botbld thick" );
-			bu_log( "Skipping this solid!\n" );
-			while( buf[0] == '\t' )
-				bu_fgets( buf, BUFSIZE, ifp);
-			return;
+		    bu_log( "Faces out of order in solid %s (expecting %d, found %d)\n",
+			    my_name, i, j );
+		    bu_free( (char *)vertices, "botbld: vertices" );
+		    bu_free( (char *)faces, "botbld: faces" );
+		    if( mode == RT_BOT_PLATE )
+			bu_free( (char *)thick, "botbld thick" );
+		    bu_log( "Skipping this solid!\n" );
+		    while( buf[0] == '\t' )
+			bu_fgets( buf, BUFSIZE, ifp);
+		    return;
 		}
 
-		if( mode == RT_BOT_PLATE )
-			thick[i] = a[0];
+	    if( mode == RT_BOT_PLATE )
+		thick[i] = a[0];
 	}
 
-	if( mode == RT_BOT_PLATE )
+    if( mode == RT_BOT_PLATE )
 	{
-		/* get bit vector */
-		bu_fgets( buf, BUFSIZE, ifp);
-		facemode = bu_hex_to_bitv( &buf[1] );
+	    /* get bit vector */
+	    bu_fgets( buf, BUFSIZE, ifp);
+	    facemode = bu_hex_to_bitv( &buf[1] );
 	}
 
-	mk_bot( ofp, my_name, mode, orientation, 0, num_vertices, num_faces,
-		vertices, faces, thick, facemode );
+    mk_bot( ofp, my_name, mode, orientation, 0, num_vertices, num_faces,
+	    vertices, faces, thick, facemode );
 
-	bu_free( (char *)vertices, "botbld: vertices" );
-	bu_free( (char *)faces, "botbld: faces" );
-	if( mode == RT_BOT_PLATE )
+    bu_free( (char *)vertices, "botbld: vertices" );
+    bu_free( (char *)faces, "botbld: faces" );
+    if( mode == RT_BOT_PLATE )
 	{
-		bu_free( (char *)thick, "botbld thick" );
-		bu_free( (char *)facemode, "botbld facemode" );
+	    bu_free( (char *)thick, "botbld thick" );
+	    bu_free( (char *)facemode, "botbld facemode" );
 	}
 
 }
@@ -1715,52 +1716,52 @@ void
 pipebld(void)
 {
 
-	char			name[NAME_LEN];
-	register char		*cp;
-	register char		*np;
-	struct wdb_pipept	*sp;
-	struct bu_list		head;
+    char			name[NAME_LEN];
+    register char		*cp;
+    register char		*np;
+    struct wdb_pipept	*sp;
+    struct bu_list		head;
 
-	/* Process the first buffer */
+    /* Process the first buffer */
 
-	cp = buf;
-	cp++;				/* ident, not used later */
-	cp = nxt_spc( cp );		/* skip spaces */
+    cp = buf;
+    cp++;				/* ident, not used later */
+    cp = nxt_spc( cp );		/* skip spaces */
 
-	np = name;
-	while( *cp != '\n' && *cp != '\r' && *cp != '\0' )  {
-		*np++ = *cp++;
-	}
-	*np = '\0';			/* null terminate the string */
+    np = name;
+    while( *cp != '\n' && *cp != '\r' && *cp != '\0' )  {
+	*np++ = *cp++;
+    }
+    *np = '\0';			/* null terminate the string */
 
 
-	/* Read data lines and process */
+    /* Read data lines and process */
 
-	BU_LIST_INIT( &head );
-	bu_fgets( buf, BUFSIZE, ifp);
-	while( strncmp (buf , "END_PIPE", 8 ) )
+    BU_LIST_INIT( &head );
+    bu_fgets( buf, BUFSIZE, ifp);
+    while( strncmp (buf , "END_PIPE", 8 ) )
 	{
-		double id,od,x,y,z,bendradius;
+	    double id,od,x,y,z,bendradius;
 
-		sp = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "pipe");
+	    sp = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "pipe");
 
-		(void)sscanf( buf, "%le %le %le %le %le %le",
-				&id, &od,
-				&bendradius, &x, &y, &z );
+	    (void)sscanf( buf, "%le %le %le %le %le %le",
+			  &id, &od,
+			  &bendradius, &x, &y, &z );
 
-		sp->l.magic = WDB_PIPESEG_MAGIC;
+	    sp->l.magic = WDB_PIPESEG_MAGIC;
 
-		sp->pp_id = id;
-		sp->pp_od = od;
-		sp->pp_bendradius = bendradius;
-		VSET( sp->pp_coord, x, y, z );
+	    sp->pp_id = id;
+	    sp->pp_od = od;
+	    sp->pp_bendradius = bendradius;
+	    VSET( sp->pp_coord, x, y, z );
 
-		BU_LIST_INSERT( &head, &sp->l);
-		bu_fgets( buf, BUFSIZE, ifp);
+	    BU_LIST_INSERT( &head, &sp->l);
+	    bu_fgets( buf, BUFSIZE, ifp);
 	}
 
-	mk_pipe(ofp, name, &head);
-	mk_pipe_free( &head );
+    mk_pipe(ofp, name, &head);
+    mk_pipe_free( &head );
 }
 
 /*			P A R T I C L E B L D
@@ -1773,29 +1774,29 @@ void
 particlebld(void)
 {
 
-	char		name[NAME_LEN];
-	char		ident;
-	point_t		vertex;
-	vect_t		height;
-	double		vrad;
-	double		hrad;
+    char		name[NAME_LEN];
+    char		ident;
+    point_t		vertex;
+    vect_t		height;
+    double		vrad;
+    double		hrad;
 
 
-	/* Read all the information out of the existing buffer.  Note that
-	 * particles fit into one granule.
-	 */
+    /* Read all the information out of the existing buffer.  Note that
+     * particles fit into one granule.
+     */
 
-	(void)sscanf(buf, "%c %s %le %le %le %le %le %le %le %le",
-		&ident, name,
-		&vertex[0],
-		&vertex[1],
-		&vertex[2],
-		&height[0],
-		&height[1],
-		&height[2],
-		&vrad, &hrad);
+    (void)sscanf(buf, "%c %s %le %le %le %le %le %le %le %le",
+		 &ident, name,
+		 &vertex[0],
+		 &vertex[1],
+		 &vertex[2],
+		 &height[0],
+		 &height[1],
+		 &height[2],
+		 &vrad, &hrad);
 
-	mk_particle( ofp, name, vertex, height, vrad, hrad);
+    mk_particle( ofp, name, vertex, height, vrad, hrad);
 }
 
 
@@ -1809,76 +1810,76 @@ void
 arbnbld(void)
 {
 
-	char		name[NAME_LEN] = {0};
-	char		type[TYPELEN] = {0};
-	int		i;
-	int		neqn;			/* number of eqn expected */
-	plane_t		*eqn;			/* pointer to plane equations for faces */
-	register char	*cp;
-	register char	*np;
+    char		name[NAME_LEN] = {0};
+    char		type[TYPELEN] = {0};
+    int		i;
+    int		neqn;			/* number of eqn expected */
+    plane_t		*eqn;			/* pointer to plane equations for faces */
+    register char	*cp;
+    register char	*np;
 
-	/* Process the first buffer */
+    /* Process the first buffer */
 
-	cp = buf;
-	cp++;					/* ident */
-	cp = nxt_spc(cp);			/* skip spaces */
+    cp = buf;
+    cp++;					/* ident */
+    cp = nxt_spc(cp);			/* skip spaces */
 
-	np = name;
-	while( *cp != ' ')  {
-		*np++ = *cp++;
-	}
-	*np = '\0';				/* null terminate the string */
+    np = name;
+    while( *cp != ' ')  {
+	*np++ = *cp++;
+    }
+    *np = '\0';				/* null terminate the string */
 
-	cp = nxt_spc(cp);
+    cp = nxt_spc(cp);
 
-	neqn = atoi(cp);			/* find number of eqns */
-/*bu_log("neqn = %d\n", neqn);
- */
-	/* Check to make sure plane equations actually came in. */
-	if( neqn <= 0 )  {
-		bu_log("asc2g: warning: %d equations counted for arbn %s\n", neqn, name);
-	}
+    neqn = atoi(cp);			/* find number of eqns */
+    /*bu_log("neqn = %d\n", neqn);
+     */
+    /* Check to make sure plane equations actually came in. */
+    if( neqn <= 0 )  {
+	bu_log("asc2g: warning: %d equations counted for arbn %s\n", neqn, name);
+    }
 
-/*bu_log("mallocing space for eqns\n");
- */
-	/* Malloc space for the in-coming plane equations */
-	eqn = (plane_t *)bu_malloc( sizeof( plane_t ) * neqn, "eqn" );
+    /*bu_log("mallocing space for eqns\n");
+     */
+    /* Malloc space for the in-coming plane equations */
+    eqn = (plane_t *)bu_malloc( sizeof( plane_t ) * neqn, "eqn" );
 
-	/* Now, read the plane equations and put in appropriate place */
+    /* Now, read the plane equations and put in appropriate place */
 
-/*bu_log("starting to dump eqns\n");
- */
-	for( i = 0; i < neqn; i++ )  {
-		bu_fgets( buf, BUFSIZE, ifp);
-		(void)sscanf( buf, "%s %le %le %le %le", type,
-			&eqn[i][X], &eqn[i][Y], &eqn[i][Z], &eqn[i][3]);
-	}
+    /*bu_log("starting to dump eqns\n");
+     */
+    for( i = 0; i < neqn; i++ )  {
+	bu_fgets( buf, BUFSIZE, ifp);
+	(void)sscanf( buf, "%s %le %le %le %le", type,
+		      &eqn[i][X], &eqn[i][Y], &eqn[i][Z], &eqn[i][3]);
+    }
 
-/*bu_log("sending info to mk_arbn\n");
- */
-	mk_arbn( ofp, name, neqn, eqn);
+    /*bu_log("sending info to mk_arbn\n");
+     */
+    mk_arbn( ofp, name, neqn, eqn);
 }
 
 char *
 nxt_spc(register char *cp)
 {
-	while( *cp != ' ' && *cp != '\t' && *cp !='\0' )  {
-		cp++;
-	}
-	if( *cp != '\0' )  {
-		cp++;
-	}
-	return( cp );
+    while( *cp != ' ' && *cp != '\t' && *cp !='\0' )  {
+	cp++;
+    }
+    if( *cp != '\0' )  {
+	cp++;
+    }
+    return( cp );
 }
 
 int
 ngran(int nfloat)
 {
-	register int gran;
-	/* Round up */
-	gran = nfloat + ((sizeof(union record)-1) / sizeof(float) );
-	gran = (gran * sizeof(float)) / sizeof(union record);
-	return(gran);
+    register int gran;
+    /* Round up */
+    gran = nfloat + ((sizeof(union record)-1) / sizeof(float) );
+    gran = (gran * sizeof(float)) / sizeof(union record);
+    return(gran);
 }
 
 /*
