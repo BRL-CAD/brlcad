@@ -47,11 +47,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "bu.h"
 
+#define AVS_ALLOCATION_INCREMENT 32
 
 /**
- *			B U _ A V S _ I N I T _ E M P T Y
+ *	B U _ A V S _ I N I T _ E M P T Y
  *
- * @brief
  *	initialize an empty avs
  */
 void
@@ -65,9 +65,8 @@ bu_avs_init_empty( struct bu_attribute_value_set *avsp )
 }
 
 /**
- *			B U _ A V S _ I N I T
+ *	B U _ A V S _ I N I T
  *
- * @brief
  *	initialize avs with storage for len entries
  */
 void
@@ -77,7 +76,7 @@ bu_avs_init(struct bu_attribute_value_set *avsp, int len, const char *str)
 		bu_log("bu_avs_init(%8x, len=%d, %s)\n", avsp, len, str);
 
 	avsp->magic = BU_AVS_MAGIC;
-	if( len <= 0 )  len = 32;
+	if( len <= 0 )  len = AVS_ALLOCATION_INCREMENT + AVS_ALLOCATION_INCREMENT;
 	avsp->count = 0;
 	avsp->max = len;
 	avsp->avp = (struct bu_attribute_value_pair *)bu_calloc(avsp->max,
@@ -85,9 +84,9 @@ bu_avs_init(struct bu_attribute_value_set *avsp, int len, const char *str)
 	avsp->readonly_min = avsp->readonly_max = NULL;
 }
 
-/**			B U _ A V S _ N E W
+/**
+ *	B U _ A V S _ N E W
  *
- *  @brief
  *	Allocate storage for a new attribute/value set, with at least
  *	'len' slots pre-allocated.
  */
@@ -106,38 +105,50 @@ bu_avs_new(int len, const char *str)
 }
 
 /**
- *			B U _ A V S _ A D D
+ *  B U _ A V S _ A D D
  *
  *  If the given attribute exists it will recieve the new value,
  *  othwise the set will be extended to have a new attribute/value pair.
  *
  *  Returns -
+ *      0	some error occured
  *	1	existing attribute updated with new value
  *	2	set extended with new attribute/value pair
  */
 int
-bu_avs_add(struct bu_attribute_value_set *avsp, const char *attribute, const char *value)
+bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *value)
 {
 	struct bu_attribute_value_pair *app;
 
 	BU_CK_AVS(avsp);
 
-	if( avsp->count ) {
-		for( BU_AVS_FOR(app, avsp) )  {
-			if( strcmp( app->name, attribute ) != 0 )  continue;
-			if( app->value && AVS_IS_FREEABLE(avsp, app->value) )
-				bu_free( (genptr_t)app->value, "app->value" );
-			if( value )
-				app->value = bu_strdup( value );
-			else
+	if (!name) {
+	    bu_log("WARNING: bu_avs_add() received a null attribute name\n");
+	    return 0;
+	}
+
+	if (avsp->count) {
+		for (BU_AVS_FOR(app, avsp)) {
+			if (strcmp(app->name, name) != 0) continue;
+
+			/* found a match, replace it fully */
+			if (app->name && AVS_IS_FREEABLE(avsp, app->name))
+				bu_free((genptr_t)app->name, "app->name");
+			if (app->value && AVS_IS_FREEABLE(avsp, app->value))
+				bu_free((genptr_t)app->value, "app->value");
+			app->name = bu_strdup(name);
+			if (value) {
+				app->value = bu_strdup(value);
+			} else {
 				app->value = (char *)NULL;
+			}
 			return 1;
 		}
 	}
 
 	if( avsp->count >= avsp->max )  {
 		/* Allocate more space first */
-		avsp->max += 4;
+		avsp->max += AVS_ALLOCATION_INCREMENT;
 		if( avsp->avp ) {
 			avsp->avp = (struct bu_attribute_value_pair *)bu_realloc(
 			  avsp->avp,  avsp->max * sizeof(struct bu_attribute_value_pair),
@@ -150,31 +161,34 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *attribute, const cha
 	}
 
 	app = &avsp->avp[avsp->count++];
-	app->name = bu_strdup(attribute);
-	if( value )
+	app->name = bu_strdup(name);
+	if( value ) {
 		app->value = bu_strdup(value);
-	else
+	} else {
 		app->value = (char *)NULL;
+	}
 	return 2;
 }
 
-/*
- *			B U _ A V S _ A D D _ V L S
+/**
+ * B U _ A V S _ A D D _ V L S
+ *
+ * Add a bu_vls string as an attribute to a given attribute set.
  */
 int
-bu_avs_add_vls(struct bu_attribute_value_set *avsp, const char *attribute, const struct bu_vls *value_vls)
+bu_avs_add_vls(struct bu_attribute_value_set *avsp, const char *name, const struct bu_vls *value_vls)
 {
 	BU_CK_AVS(avsp);
 	BU_CK_VLS(value_vls);
 
-	return bu_avs_add( avsp, attribute, bu_vls_addr(value_vls) );
+	return bu_avs_add( avsp, name, bu_vls_addr(value_vls) );
 }
 
 /**
- *			B U _ A V S _ M E R G E
+ *  B U _ A V S _ M E R G E
  *
- *  @brief
- *	Take all the attributes from 'src' and merge them into 'dest'.
+ *  Take all the attributes from 'src' and merge them into 'dest' by
+ *  replacing an attribute if it already exists.
  */
 void
 bu_avs_merge( struct bu_attribute_value_set *dest, const struct bu_attribute_value_set *src )
@@ -191,31 +205,37 @@ bu_avs_merge( struct bu_attribute_value_set *dest, const struct bu_attribute_val
 	}
 }
 
-/*
- *			B U _ A V S _ G E T
+/**
+ * B U _ A V S _ G E T
+ *
+ * Get the value of a given attribute from an attribute set.
  */
 const char *
-bu_avs_get( const struct bu_attribute_value_set *avsp, const char *attribute )
+bu_avs_get( const struct bu_attribute_value_set *avsp, const char *name )
 {
 	struct bu_attribute_value_pair *app;
 
 	BU_CK_AVS(avsp);
 
-	if( avsp->count < 1 )
-		return NULL;
+	if (avsp->count < 1)
+	    return NULL;
 
-	for( BU_AVS_FOR(app, avsp) )  {
-		if( strcmp( app->name, attribute ) != 0 )  continue;
-		return app->value;
+	if (!name)
+	    return NULL;
+
+	for (BU_AVS_FOR(app, avsp)) {
+	    if (strcmp( app->name, name ) != 0) {
+		continue;
+	    }
+	    return app->value;
 	}
 	return NULL;
 }
 
 /**
- *			B U _ A V S _ R E M O V E
+ * B U _ A V S _ R E M O V E
  *
- * @brief
- *	Remove the given attribute from the set
+ * Remove the given attribute from an attribute set.
  *
  * @Return
  *	-1	attribute not found in set
@@ -223,15 +243,19 @@ bu_avs_get( const struct bu_attribute_value_set *avsp, const char *attribute )
  *	 0	OK
  */
 int
-bu_avs_remove(struct bu_attribute_value_set *avsp, const char *attribute)
+bu_avs_remove(struct bu_attribute_value_set *avsp, const char *name)
 {
 	struct bu_attribute_value_pair *app, *epp;
 
 	BU_CK_AVS(avsp);
 
+	if (!name) {
+	    return -1;
+	}
+
 	if( avsp->count ) {
 		for( BU_AVS_FOR(app, avsp) )  {
-			if( strcmp( app->name, attribute ) != 0 )  continue;
+			if( strcmp( app->name, name ) != 0 )  continue;
 			if( app->name && AVS_IS_FREEABLE( avsp, app->name ) )
 				bu_free( (genptr_t)app->name, "app->name" );
 			app->name = NULL;	/* sanity */
@@ -252,8 +276,11 @@ bu_avs_remove(struct bu_attribute_value_set *avsp, const char *attribute)
 	return -1;
 }
 
-/*
- *			B U _ A V S _ F R E E
+
+/**
+ * B U _ A V S _ F R E E
+ *
+ * Release all attributes in an attribute set.
  */
 void
 bu_avs_free( struct bu_attribute_value_set *avsp )
@@ -286,8 +313,11 @@ bu_avs_free( struct bu_attribute_value_set *avsp )
 }
 
 
-/*
- *			B U _ A V S _ P R I N T
+/**
+ * B U _ A V S _ P R I N T
+ *
+ * Print all attributes in an attribute set in "name = value" form,
+ * using the provided title.
  */
 void
 bu_avs_print( const struct bu_attribute_value_set *avsp, const char *title )
@@ -297,31 +327,43 @@ bu_avs_print( const struct bu_attribute_value_set *avsp, const char *title )
 
 	BU_CK_AVS(avsp);
 
-	bu_log("bu_avs_print: %s\n", title);
+	if (title) {
+	    bu_log("%s: %d attributes:\n", title, avsp->count);
+	}
 
 	avpp = avsp->avp;
 	for( i = 0; i < avsp->count; i++, avpp++ )  {
-		bu_log(" %s = %s\n", avpp->name, avpp->value );
+	    bu_log("  %s = %s\n",
+		   avpp->name ? avpp->name : "NULL",
+		   avpp->value ? avpp->value : "NULL");
 	}
 }
 
+
 /**
- *			B U _ A V S _ A D D _ N O N U N I Q U E
+ * B U _ A V S _ A D D _ N O N U N I Q U E
  *
- * @brief
- *	Add a name/value pair even if the name already exists in this AVS
+ * Add a name/value pair even if the name already exists in this AVS.
  */
 void
-bu_avs_add_nonunique( struct bu_attribute_value_set *avsp, char *attribute, char *value )
+bu_avs_add_nonunique( struct bu_attribute_value_set *avsp, char *name, char *value )
 {
 	struct bu_attribute_value_pair *app;
 
 	BU_CK_AVS(avsp);
 
-	if( avsp->count >= avsp->max )  {
+	/* don't even try */
+	if (!name) {
+	    if (value) {
+		bu_log("WARNING: bu_avs_add_nonunique given NULL name and non-null value\n");
+	    }
+	    return;
+	}
+
+	if (avsp->count >= avsp->max) {
 		/* Allocate more space first */
-		avsp->max += 4;
-		if( avsp->avp ) {
+		avsp->max += AVS_ALLOCATION_INCREMENT;
+		if (avsp->avp) {
 			avsp->avp = (struct bu_attribute_value_pair *)bu_realloc(
 			  avsp->avp,  avsp->max * sizeof(struct bu_attribute_value_pair),
 				"attribute_value_pair.avp[] (add)" );
@@ -333,11 +375,12 @@ bu_avs_add_nonunique( struct bu_attribute_value_set *avsp, char *attribute, char
 	}
 
 	app = &avsp->avp[avsp->count++];
-	app->name = bu_strdup(attribute);
-	if( value )
+	app->name = bu_strdup(name);
+	if (value) {
 		app->value = bu_strdup(value);
-	else
+	} else {
 		app->value = (char *)NULL;
+	}
 }
 /** @} */
 /*
