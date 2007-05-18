@@ -984,6 +984,7 @@ db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp
 		if( db5_import_attributes( &old_avs, &raw.attributes ) < 0 )  {
 			bu_log("db5_update_attributes(%s):  mal-formed attributes in database\n",
 				dp->d_namep );
+			bu_avs_free( &old_avs );
 			bu_free_external( &ext );
 			return -8;
 		}
@@ -1004,8 +1005,9 @@ db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp
 
 	/* Write it */
 	ret = db_put_external5( &ext2, dp, dbip );
-	if( ret < 0 )  bu_log("db5_update_attributes(%s):  db_put_external5() failure\n",
-		dp->d_namep );
+	if( ret < 0 ) {
+	    bu_log("db5_update_attributes(%s):  db_put_external5() failure\n", dp->d_namep );
+	}
 
 	bu_free_external( &attr );
 	bu_free_external( &ext2 );
