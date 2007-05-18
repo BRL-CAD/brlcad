@@ -183,7 +183,21 @@ generateControlPoints(BSpline& bspline, PBCData& data)
 
 ON_NurbsCurve*
 newNURBSCurve(BSpline& spline) {
-  return NULL;
+  // we now have everything to complete our spline
+  ON_NurbsCurve* c = ON_NurbsCurve::New(3,
+					false,
+					spline.p+1,
+					spline.n+1);
+  c->ReserveKnotCapacity(spline.knots.size());
+  for (int i = 0; i < spline.knots.size(); i++) {
+    c->m_knot[i] = spline.knots[i];
+  }
+  
+  for (int i = 0; i < spline.controls.Count(); i++) {
+    c->SetCV(i, ON_3dPoint(spline.controls[i]));
+  }
+
+  return c;
 }
 
 ON_Curve* 
@@ -201,6 +215,10 @@ interpolateCurve(PBCData& data) {
     generateParameters(spline);
     generateControlPoints(spline, data);
     ON_NurbsCurve* nurbs = newNURBSCurve(spline);
+    
+    // XXX - attempt to simplify here!
+
+    return nurbs;
   }
 }
 
