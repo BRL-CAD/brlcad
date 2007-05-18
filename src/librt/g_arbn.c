@@ -476,7 +476,7 @@ Sort_edges(struct arbn_edges *edges, int *edge_count, const struct rt_arbn_inter
 				edges[LOC(face,edge1)].v2_no != edges[LOC(face,edge3)].v2_no );
 
 			if( edge3 == edge_count[face] )
-				rt_bomb( "rt_arbn_tess: Sort_edges: Cannot find next edge in loop\n" );
+				bu_bomb( "rt_arbn_tess: Sort_edges: Cannot find next edge in loop\n" );
 
 			if( edge2 != edge3 )
 			{

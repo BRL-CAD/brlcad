@@ -232,7 +232,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 				/* Get x value of vector. */
 				x = atof(token);
 				if (fscanf(fp, "%lf%lf", &y, &z) != 2)
-					rt_bomb("descr_to_nmg: messed up vector\n");
+					bu_bomb("descr_to_nmg: messed up vector\n");
 				VSET(Ext, x, y, z);
 
 				/* Get token for next trip through loop. */
@@ -272,7 +272,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 				if (!strcmp(token, "hole"))
 					dir = OT_OPPOSITE;
 				else
-					rt_bomb("descr_to_nmg: expected \"hole\"\n");
+					bu_bomb("descr_to_nmg: expected \"hole\"\n");
 				/* Get token for next trip through loop. */
 				stat = fscanf(fp, "%s", token);
 				break;
@@ -285,7 +285,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 
 		case 'v':		/* Vertex in current loop. */
 			if (token[1] == '\0')
-				rt_bomb("descr_to_nmg: vertices must be numbered.\n");
+				bu_bomb("descr_to_nmg: vertices must be numbered.\n");
 			vert_num = atoi(token+1);
 			stat = fscanf(fp, "%s", token);
 			switch (token[0]) {
@@ -305,7 +305,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 				/* Get coordinates of vertex. */
 				x = atof(token);
 				if (fscanf(fp, "%lf%lf", &y, &z) != 2)
-					rt_bomb("descr_to_nmg: messed up vertex\n");
+					bu_bomb("descr_to_nmg: messed up vertex\n");
 				/* Save vertex with others in current loop. */
 				pts[3*vert_num] = x;
 				pts[3*vert_num+1] = y;
@@ -313,7 +313,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 				/* Save vertex number. */
 				lu_verts[n] = vert_num;
 				if (++n > MAXV)
-					rt_bomb("descr_to_nmg: too many points in loop\n");
+					bu_bomb("descr_to_nmg: too many points in loop\n");
 				/* Get token for next trip through loop. */
 				stat = fscanf(fp, "%s", token);
 				break;
@@ -322,14 +322,14 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 				/* Use negative vert number to mark vertex as being reused. */
 				lu_verts[n] = -vert_num;
 				if (++n > MAXV)
-					rt_bomb("descr_to_nmg: too many points in loop\n");
+					bu_bomb("descr_to_nmg: too many points in loop\n");
 				break;
 			}
 			break;
 
 		default:
 			bu_log("descr_to_nmg: unexpected token \"%s\"\n", token);
-			rt_bomb("");
+			bu_bomb("");
 			break;
 		}
 	} while (stat != EOF);

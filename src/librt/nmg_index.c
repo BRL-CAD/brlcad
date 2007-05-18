@@ -135,7 +135,7 @@ nmg_index_of_struct(register const long int *p)
 static void
 nmg_mark_edge_g(long int *magic_p)
 {
-	if( !magic_p )  rt_bomb("nmg_mark_edge_g bad magic\n");
+	if( !magic_p )  bu_bomb("nmg_mark_edge_g bad magic\n");
 	switch( *magic_p )  {
 	case NMG_EDGE_G_LSEG_MAGIC:
 		{
@@ -150,7 +150,7 @@ nmg_mark_edge_g(long int *magic_p)
 			return;
 		}
 	}
-	rt_bomb("nmg_mark_edge_g() unknown magic\n");
+	bu_bomb("nmg_mark_edge_g() unknown magic\n");
 }
 
 /**
@@ -564,7 +564,7 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
 	if( (_p)->index > m->maxindex )  { \
 		bu_log("x%x (%s) has index %d, m->maxindex=%d\n", (_p), \
 			bu_identify_magic(*((long *)(_p))), (_p)->index, m->maxindex ); \
-		rt_bomb("nmg_m_struct_count index overflow\n"); \
+		bu_bomb("nmg_m_struct_count index overflow\n"); \
 	} \
 	if( ptrs[(_p)->index] == (long *)0 )  { \
 		ptrs[(_p)->index] = (long *)(_p); \

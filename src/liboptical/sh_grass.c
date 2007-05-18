@@ -506,7 +506,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 		bu_log("%s\n%s\n",
 		"*** WARNING: grass shader applied to non-air region!!! ***",
 		"Set air flag with 'edcodes' in mged");
-		rt_bomb("grass shader applied improperly");
+		bu_bomb("grass shader applied improperly");
 	}
 
 	/* parse the user's arguments for this use of the shader. */

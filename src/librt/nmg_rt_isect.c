@@ -124,13 +124,13 @@ nmg_ck_hitmiss_list(const struct bu_list *hd)
 				nmg_rt_state_str(state),
 				nmg_rt_inout_str(hmp->in_out),
 				nmg_rt_state_str(istate) );
-			rt_bomb("nmg_ck_hitmiss_list() NMG ray-tracer bad in/out state transition\n");
+			bu_bomb("nmg_ck_hitmiss_list() NMG ray-tracer bad in/out state transition\n");
 		}
 		state = ostate;
 	}
 	if( state != NMG_RAY_STATE_OUTSIDE )  {
 		bu_log("ray ending state was %s, should have been RS_OUT\n", nmg_rt_state_str(state));
-		rt_bomb("nmg_ck_hitmiss_list() NMG ray-tracer bad ending state\n");
+		bu_bomb("nmg_ck_hitmiss_list() NMG ray-tracer bad ending state\n");
 	}
 }
 
@@ -573,7 +573,7 @@ get_pole_dist_to_face(struct ray_data *rd, struct vertexuse *vu, fastf_t *Pole, 
 	default:
 		bu_log("%s %d: So-called 'Impossible' status codes\n",
 			__FILE__, __LINE__);
-		rt_bomb("get_pole_dist_to_face() Pretending NOT to bomb\n");
+		bu_bomb("get_pole_dist_to_face() Pretending NOT to bomb\n");
 		break;
 	}
 
@@ -956,7 +956,7 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 	default:
 		bu_log("%s %d: vertex_neighborhood() Bad vertex in_out state = x%x\n",
 			__FILE__, __LINE__, myhit->in_out);
-		rt_bomb("vertex_neighborhood() bad vertex in_out state\n");
+		bu_bomb("vertex_neighborhood() bad vertex in_out state\n");
 		break;
 
 	}
@@ -1309,7 +1309,7 @@ next_edgeuse:	eu_p = eu_p->eumate_p->radial_p;
 	NMG_GET_FU_NORMAL(norm, inb_fu);
 	VMOVE(myhit->inbound_norm, norm);
 	if (MAGSQ(norm) < VDIVIDE_TOL)
-		rt_bomb("edge_hit_ray_state() null normal!\n");
+		bu_bomb("edge_hit_ray_state() null normal!\n");
 
 	cos_angle = VDOT(norm, rd->rp->r_dir);
 
@@ -1395,7 +1395,7 @@ next_edgeuse:	eu_p = eu_p->eumate_p->radial_p;
 		break;
 	default:
 		bu_log("%s %d: Bad edge in/out state = x%x\n", __FILE__, __LINE__, myhit->in_out);
-		rt_bomb("edge_hit_ray_state() bad edge in_out state\n");
+		bu_bomb("edge_hit_ray_state() bad edge in_out state\n");
 		break;
 	}
 #ifndef FAST_NMG
@@ -1625,7 +1625,7 @@ isect_ray_edgeuse(struct ray_data *rd, struct edgeuse *eu_p)
 	}
 
 	if (eu_p->e_p != eu_p->eumate_p->e_p)
-		rt_bomb("isect_ray_edgeuse() edgeuse mate has step-father\n");
+		bu_bomb("isect_ray_edgeuse() edgeuse mate has step-father\n");
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log("\n\tLooking for previous hit on edge 0x%08x ...\n",
@@ -1646,7 +1646,7 @@ isect_ray_edgeuse(struct ray_data *rd, struct edgeuse *eu_p)
 				bu_log("\tedge previously missed\n");
 			return;
 		} else {
-			nmg_rt_bomb(rd, "what happened?\n");
+			nmg_bu_bomb(rd, "what happened?\n");
 		}
 	}
 
@@ -1692,7 +1692,7 @@ isect_ray_loopuse(struct ray_data *rd, struct loopuse *lu_p)
 
 	} else if (BU_LIST_FIRST_MAGIC(&lu_p->down_hd)!=NMG_VERTEXUSE_MAGIC) {
 		bu_log("in %s at %d", __FILE__, __LINE__);
-		nmg_rt_bomb(rd, " bad loopuse child magic");
+		nmg_bu_bomb(rd, " bad loopuse child magic");
 	}
 
 	/* loopuse child is vertexuse */
@@ -1832,7 +1832,7 @@ record_face_hit(struct ray_data *rd, struct hitmiss *myhit, fastf_t *plane_pt, d
 			/* perpendicular? */
 			bu_log("%s[%d]: Ray is in plane of face?\n",
 				__FILE__, __LINE__);
-				rt_bomb("record_face_hit() I quit\n");
+				bu_bomb("record_face_hit() I quit\n");
 		} else if (cos_angle > 0.0) {
 			myhit->in_out = HMG_HIT_IN_OUT;
 			VREVERSE(myhit->outbound_norm, norm);
@@ -1850,7 +1850,7 @@ record_face_hit(struct ray_data *rd, struct hitmiss *myhit, fastf_t *plane_pt, d
 			/* perpendicular? */
 			bu_log("%s[%d]: Ray is in plane of face?\n",
 				__FILE__, __LINE__);
-				rt_bomb("record_face_hit() I quit\n");
+				bu_bomb("record_face_hit() I quit\n");
 		} else if (cos_angle > 0.0) {
 			myhit->in_out = HMG_HIT_OUT_IN;
 			VREVERSE(myhit->inbound_norm, norm);
@@ -1866,7 +1866,7 @@ record_face_hit(struct ray_data *rd, struct hitmiss *myhit, fastf_t *plane_pt, d
 	default:
 		bu_log("%s %d:face orientation not SAME/OPPOSITE\n",
 			__FILE__, __LINE__);
-		rt_bomb("record_face_hit() Crash and burn\n");
+		bu_bomb("record_face_hit() Crash and burn\n");
 	}
 
 	hit_ins(rd, myhit);
@@ -2120,7 +2120,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 					/* perpendicular? */
 					bu_log("%s[%d]: Ray is in plane of face?\n",
 						__FILE__, __LINE__);
-						rt_bomb("record_face_hit() I quit\n");
+						bu_bomb("record_face_hit() I quit\n");
 				} else if (dot > 0.0) {
 					myhit->in_out = HMG_HIT_IN_OUT;
 					VMOVE(myhit->outbound_norm, myhit->hit.hit_normal);
@@ -2138,7 +2138,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 					/* perpendicular? */
 					bu_log("%s[%d]: Ray is in plane of face?\n",
 						__FILE__, __LINE__);
-						rt_bomb("record_face_hit() I quit\n");
+						bu_bomb("record_face_hit() I quit\n");
 				} else if (dot > 0.0) {
 					myhit->in_out = HMG_HIT_OUT_IN;
 					VREVERSE(myhit->inbound_norm, myhit->hit.hit_normal);
@@ -2154,7 +2154,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 			default:
 				bu_log("%s %d:face orientation not SAME/OPPOSITE\n",
 					__FILE__, __LINE__);
-				rt_bomb("record_face_hit() Crash and burn\n");
+				bu_bomb("record_face_hit() Crash and burn\n");
 			}
 
 			hit_ins( rd, myhit );
@@ -2193,7 +2193,7 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p, struct face_g_p
 	if (DIST_PT_PLANE(plane_pt, norm) > rd->tol->dist) {
 		bu_log("%s:%d plane_pt (%g %g %g) @ dist (%g)out of tolerance\n",
 			__FILE__, __LINE__, V3ARGS(plane_pt), dist);
-		rt_bomb("isect_ray_planar_face() dist out of tol\n");
+		bu_bomb("isect_ray_planar_face() dist out of tol\n");
 	}
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
@@ -2254,7 +2254,7 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p, struct face_g_p
 	case NMG_CLASS_Unknown	:
 		bu_log("%s[line:%d] ray/plane intercept point cannot be classified wrt face\n",
 			__FILE__, __LINE__);
-		rt_bomb("isect_ray_planar_face() class unknown\n");
+		bu_bomb("isect_ray_planar_face() class unknown\n");
 		break;
 	case NMG_CLASS_AinB	:
 	case NMG_CLASS_AonBshared :
@@ -2293,7 +2293,7 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p, struct face_g_p
 	default	:
 		bu_log("%s[line:%d] BIZZARE ray/plane intercept point classification\n",
 			__FILE__, __LINE__);
-		rt_bomb("isect_ray_planar_face() Bizz\n");
+		bu_bomb("isect_ray_planar_face() Bizz\n");
 	}
 
 	/* intersect the ray with the edges/verticies of the face */
@@ -2345,7 +2345,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 			bu_log("%s %d:\n\tBad magic %ld (0x%08x) for hitmiss struct for faceuse 0x%08x\n",
 				__FILE__, __LINE__,
 				myhit->l.magic, myhit->l.magic, fu_p);
-			nmg_rt_bomb(rd, "Was I hit or not?\n");
+			nmg_bu_bomb(rd, "Was I hit or not?\n");
 		}
 		return;
 	}
@@ -2650,7 +2650,7 @@ guess_class_from_hitlist_max(struct ray_data *rd, int *hari_kari, int in_or_out_
 			pt_class = NMG_CLASS_AonBshared;
 			break;
 		default:
-			rt_bomb("guess_class_from_hitlist_max() no-class hitpoint\n");
+			bu_bomb("guess_class_from_hitlist_max() no-class hitpoint\n");
 			pt_class = 0; /* shuts up compiler warning */
 			break;
 		}
@@ -2748,7 +2748,7 @@ guess_class_from_hitlist_min(struct ray_data *rd, int *hari_kari, int in_or_out_
 			pt_class = NMG_CLASS_AonBshared;
 			break;
 		default:
-			rt_bomb("guess_class_from_hitlist_min() no-class hitpoint\n");
+			bu_bomb("guess_class_from_hitlist_min() no-class hitpoint\n");
 			pt_class = 0; /* shuts up compiler warning */
 			break;
 		}
@@ -2910,11 +2910,11 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
 	 */
 	if (hari_kari_minus) {
 		if(hari_kari_plus)
-			rt_bomb("double hari kari");
+			bu_bomb("double hari kari");
 		if (plus_class == NMG_CLASS_Unknown) {
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				nmg_rt_print_hitlist(&rd.rd_hit);
-			rt_bomb("minus hari kari & plus unknown");
+			bu_bomb("minus hari kari & plus unknown");
 		}
 		minus_class = plus_class;
 
@@ -2922,7 +2922,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
 		if (plus_class == NMG_CLASS_Unknown) {
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				nmg_rt_print_hitlist(&rd.rd_hit);
-			rt_bomb("minus unknown & plus unknown");
+			bu_bomb("minus unknown & plus unknown");
 		}
 		minus_class = plus_class;
 	} else if (plus_class == NMG_CLASS_Unknown || hari_kari_plus) {
@@ -2937,7 +2937,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
 			nmg_class_name(minus_class) );
 
 		nmg_rt_print_hitlist(&rd.rd_hit);
-		rt_bomb("");
+		bu_bomb("");
 	}
 #else
 	/*

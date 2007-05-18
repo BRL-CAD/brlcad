@@ -212,11 +212,11 @@
 	    !(_p)->up.magic_p ) { \
 		bu_log("in %s at %d Bad edgeuse member pointer\n",\
 			 __FILE__, __LINE__);  nmg_pr_eu(_p, (char *)NULL); \
-			rt_bomb("Null pointer\n"); \
+			bu_bomb("Null pointer\n"); \
 	} else if ((_p)->vu_p->up.eu_p != (_p) || \
 	(_p)->eumate_p->vu_p->up.eu_p != (_p)->eumate_p) {\
 		bu_log("in %s at %d edgeuse lost vertexuse\n",\
-			 __FILE__, __LINE__); rt_bomb("bye");}
+			 __FILE__, __LINE__); bu_bomb("bye");}
 
 /**
  *			K N O T _ V E C T O R

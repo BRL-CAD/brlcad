@@ -226,7 +226,7 @@ Add_new_name(char *name, unsigned int obj, int type)
 	if( type != ASSEMBLY_TYPE && type != PART_TYPE && type != CUT_SOLID_TYPE )
 	{
 		bu_log( "Bad type for name (%s) in Add_new_name\n", name );
-		rt_bomb( "Add_new_name\n" );
+		bu_bomb( "Add_new_name\n" );
 	}
 
 
@@ -371,7 +371,7 @@ Convert_assy(char *line)
 	{
 		bu_log( "Barrier check at start of Convert_assy:\n" );
 		if( bu_mem_barriercheck() )
-			rt_bomb( "Barrier check failed!!!\n" );
+			bu_bomb( "Barrier check failed!!!\n" );
 	}
 
 	BU_LIST_INIT( &head.l );
@@ -517,7 +517,7 @@ Convert_assy(char *line)
 	{
 		bu_log( "Barrier check at end of Convet_assy:\n" );
 		if( bu_mem_barriercheck() )
-			rt_bomb( "Barrier check failed!!!\n" );
+			bu_bomb( "Barrier check failed!!!\n" );
 	}
 
 	top_level = 0;
@@ -704,7 +704,7 @@ Convert_part(char *line)
 	{
 		bu_log( "Barrier check at start of Convet_part:\n" );
 		if( bu_mem_barriercheck() )
-			rt_bomb( "Barrier check failed!!!\n" );
+			bu_bomb( "Barrier check failed!!!\n" );
 	}
 
 
@@ -1009,7 +1009,7 @@ Convert_part(char *line)
 	{
 		bu_log( "Barrier check at end of Convert_part:\n" );
 		if( bu_mem_barriercheck() )
-			rt_bomb( "Barrier check failed!!!\n" );
+			bu_bomb( "Barrier check failed!!!\n" );
 	}
 
 	top_level = 0;

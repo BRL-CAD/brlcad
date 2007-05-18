@@ -670,7 +670,7 @@ rt_free_soltab(struct soltab *stp)
 
     RT_CK_SOLTAB(stp);
     if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
-	rt_bomb("rt_free_soltab:  bad st_id");
+	bu_bomb("rt_free_soltab:  bad st_id");
     hash = db_dirhash(stp->st_dp->d_namep);
 
     ACQUIRE_SEMAPHORE_TREE(hash);		/* start critical section */
@@ -870,7 +870,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	       */
 	      if( rt_bound_tree( regp->reg_treetop, region_min, region_max ) < 0 )  {
 		  bu_log("rt_gettrees() %s\n", regp->reg_name );
-		  rt_bomb("rt_gettrees(): rt_bound_tree() fail\n");
+		  bu_bomb("rt_gettrees(): rt_bound_tree() fail\n");
 	      }
 	      if( region_max[X] < INFINITY )  {
 		  /* infinite regions are exempted from this */
@@ -1456,7 +1456,7 @@ rt_tree_region_assign(register union tree *tp, register const struct region *reg
 	return;
 
     default:
-	rt_bomb("rt_tree_region_assign: bad op\n");
+	bu_bomb("rt_tree_region_assign: bad op\n");
     }
 }
 

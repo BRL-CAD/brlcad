@@ -71,7 +71,7 @@ int read_faces(struct model *m, FILE *fgeom)
 
 		/* Get numbers of vertices and faces, and grab the appropriate amount of memory */
 	if (fscanf(fgeom, "%d %d %d", &nverts, &nfaces, &nedges) != 3)
-		rt_bomb("Cannot read number of vertices, faces, edges.\n");
+		bu_bomb("Cannot read number of vertices, faces, edges.\n");
 
 	pts = (fastf_t *) bu_malloc(sizeof(fastf_t) * 3 * nverts, "points list");
 	verts = (struct vertex **) bu_malloc(sizeof(struct vertex *) * nverts, "vertices");
@@ -80,7 +80,7 @@ int read_faces(struct model *m, FILE *fgeom)
 		/* Read in vertex geometry, store in geometry list */
 	for (i = 0; i < nverts; i++) {
 		if (fscanf(fgeom, "%lf %lf %lf", &pts[3*i], &pts[3*i+1], &pts[3*i+2]) != 3)
-			rt_bomb("Not enough data points in geometry file.\n");
+			bu_bomb("Not enough data points in geometry file.\n");
 
 		verts[i] = (struct vertex *) 0;
 		fscanf(fgeom, "%*[^\n]");
@@ -169,9 +169,9 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 */		if (sscanf(buf, "geometry %[^\n]s", buf2) > 0) {
 			char dtype[40], format[40];
 			if (sscanf(buf2, "%s %s %s", dtype, format, geom_fname) != 3)
-				rt_bomb("Incomplete geometry field in input file.");
+				bu_bomb("Incomplete geometry field in input file.");
 			if (strcmp(dtype, "indexed_poly") != 0)
-				rt_bomb("Unknown geometry data type. Must be \"indexed_poly\".");
+				bu_bomb("Unknown geometry data type. Must be \"indexed_poly\".");
 		}
 		bu_fgets(buf, sizeof(buf), fpin);
 	}
@@ -180,7 +180,7 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 		fprintf(stderr, "Warning: no title\n");
 
 	if (strlen(geom_fname) < (unsigned)1)
-		rt_bomb("Error: no geometry filename.");
+		bu_bomb("Error: no geometry filename.");
 
 	if ((fgeom = fopen(geom_fname, "r")) == NULL) {
 		fprintf(stderr, "off2nmg: cannot open %s (geometry description) for reading\n",

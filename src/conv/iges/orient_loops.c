@@ -145,7 +145,7 @@ struct faceuse *fu;
 	{
 		bu_log( "Orient_face_loops: fu x%x has orient %s and mate (x%x) has orient %s (no OT_SAME)\n",
 			fu , nmg_orientation(fu->orientation) , fu->fumate_p , nmg_orientation( fu->fumate_p->orientation ) );
-		rt_bomb( "Face with no OT_SAME use\n" );
+		bu_bomb( "Face with no OT_SAME use\n" );
 	}
 
 	loop_root = (struct loop_list *)NULL;
@@ -238,7 +238,7 @@ struct faceuse *fu;
 	flipped = f->flip;
 
 	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
-		rt_bomb( "Orient_nurb_face_loops: called with non-nurb faceuse\n" );
+		bu_bomb( "Orient_nurb_face_loops: called with non-nurb faceuse\n" );
 
 	fg = f->g.snurb_p;
 	NMG_CK_FACE_G_SNURB( fg );
@@ -273,7 +273,7 @@ struct faceuse *fu;
 			lu->lumate_p->orientation = OT_OPPOSITE;
 		}
 		else
-			rt_bomb( "Orient_nurb_face_loops: loop encloses no area in uv-space\n" );
+			bu_bomb( "Orient_nurb_face_loops: loop encloses no area in uv-space\n" );
 
 	}
 }
@@ -305,14 +305,14 @@ struct nmgregion *r;
 			NMG_CK_FACE( f );
 
 			if( !f->g.magic_p )
-				rt_bomb( "Face has no geometry!!\n" );
+				bu_bomb( "Face has no geometry!!\n" );
 
 			if( *f->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
 				Orient_face_loops( fu );
 			else if( *f->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
 				Orient_nurb_face_loops( fu );
 			else
-				rt_bomb( "Face has unrecognized geometry type\n" );
+				bu_bomb( "Face has unrecognized geometry type\n" );
 		}
 	}
 }

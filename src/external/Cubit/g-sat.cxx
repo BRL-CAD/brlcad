@@ -1368,8 +1368,8 @@ booltree_evaluate( tree *tp, resource *resp )
 	/* For sub and add, if rhs is 0, result is lhs */
 	return tl;
     }
-    if( tl->tr_op != OP_DB_LEAF )  rt_bomb("booltree_evaluate() bad left tree\n");
-    if( tr->tr_op != OP_DB_LEAF )  rt_bomb("booltree_evaluate() bad right tree\n");
+    if( tl->tr_op != OP_DB_LEAF )  bu_bomb("booltree_evaluate() bad left tree\n");
+    if( tr->tr_op != OP_DB_LEAF )  bu_bomb("booltree_evaluate() bad right tree\n");
 
     bu_log(" {%s}%s{%s}\n", tl->tr_d.td_name, op_str, tr->tr_d.td_name );
     cout << "******" << tl->tr_d.td_name << op_str << tr->tr_d.td_name << "***********" << endl;

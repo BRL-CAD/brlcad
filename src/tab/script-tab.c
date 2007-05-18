@@ -164,7 +164,7 @@ char	**argv;
 
 	/* If no matrix or az/el specified yet, use params from cmd line */
 	if( Viewrotscale[15] <= 0.0 )
-		rt_bomb("cm_end:  matrix not specified\n");
+		bu_bomb("cm_end:  matrix not specified\n");
 
 	quat_mat2quat( orient, Viewrotscale );
 
@@ -192,7 +192,7 @@ cm_multiview( argc, argv )
 int	argc;
 char	**argv;
 {
-	rt_bomb("cm_multiview: not supported\n");
+	bu_bomb("cm_multiview: not supported\n");
 	return( 0 );	/* for the compilers */
 }
 
@@ -248,7 +248,7 @@ cm_ae( argc, argv )
 int	argc;
 char	**argv;
 {
-	rt_bomb("cm_ae: Unable to compute model min/max RPP\n");
+	bu_bomb("cm_ae: Unable to compute model min/max RPP\n");
 	return(0);
 }
 

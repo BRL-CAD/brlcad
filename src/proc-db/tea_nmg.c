@@ -89,7 +89,7 @@ main(int argc, char **argv) 			/* really has no arguments */
 
 	outfp = wdb_fopen( "tea_nmg.g" );
 
-	rt_g.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on rt_bomb(), but no extra messages */
+	rt_g.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
 
 	while ((i=bu_getopt(argc, argv, "d")) != EOF) {
 		switch (i) {

@@ -407,7 +407,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
 	{
 		bu_log( "nmg_class_pt_euvu() called with eu (x%x) that isn't part of a loop\n", eu );
-		rt_bomb( "nmg_class_pt_euvu() called with eu that isn't part of a loop" );
+		bu_bomb( "nmg_class_pt_euvu() called with eu that isn't part of a loop" );
 	}
 	lu = eu->up.lu_p;
 	NMG_CK_LOOPUSE( lu );
@@ -494,7 +494,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	if( nmg_find_eu_leftvec( left,  eu ) )
 	{
 		bu_log( "nmg_class_pt_euvu: nmg_find_eu_leftvec() for eu=x%x failed!\n",eu );
-		rt_bomb( "nmg_class_pt_euvu: nmg_find_eu_leftvec() failed!" );
+		bu_bomb( "nmg_class_pt_euvu: nmg_find_eu_leftvec() failed!" );
 	}
 
 	if(rt_g.NMG_debug & DEBUG_PT_FU )
@@ -597,7 +597,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 			break;
 		default:
 			bu_log( "This can't happen (illegal quadrant %d)\n", quadpt );
-			rt_bomb( "This can't happen (illegal quadrant)\n" );
+			bu_bomb( "This can't happen (illegal quadrant)\n" );
 			break;
 	}
 	if(rt_g.NMG_debug & DEBUG_PT_FU )
@@ -777,7 +777,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 
 	case 5: /* PCA is along length of edge, but point is NOT on edge. */
 		if (nmg_find_eu_left_non_unit( left, eu ))
-			rt_bomb("can't find left vector\n");
+			bu_bomb("can't find left vector\n");
 		/* take dot product of v->pt vector with left to determine
 		 * if pt is inside/left of edge
 		 */
@@ -789,7 +789,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 		break;
 	default:
 		bu_log("%s:%d status = %d\n", __FILE__, __LINE__, ved->status);
-		rt_bomb("Why did this happen?");
+		bu_bomb("Why did this happen?");
 		break;
 	}
 
@@ -1024,7 +1024,7 @@ bu_log("dist:%g class:%s status:%d\n\tv1(%g %g %g) v2(%g %g %g)\n",
 		} else if (lu->orientation == OT_OPPOSITE) {
 			lu_class = NMG_CLASS_AinB;
 		} else
-			rt_bomb("bad lu orientation\n");
+			bu_bomb("bad lu orientation\n");
 
 		if (rt_g.NMG_debug & DEBUG_PT_FU ) {
 			bu_log("list was empty, so class is %s\n",
@@ -1061,7 +1061,7 @@ bu_log("dist:%g class:%s status:%d\n\tv1(%g %g %g) v2(%g %g %g)\n",
 		default:
 			bu_log("%s:%d status = %d\n",
 				__FILE__, __LINE__, ei->ved_p->status);
-			rt_bomb("Why did this happen?");
+			bu_bomb("Why did this happen?");
 			break;
 		}
 	}
@@ -1071,7 +1071,7 @@ bu_log("dist:%g class:%s status:%d\n\tv1(%g %g %g) v2(%g %g %g)\n",
 	} else {
 		bu_log("%s:%d ei_vdot_max not set\n",
 			__FILE__, __LINE__);
-		rt_bomb("How does this happen?\n");
+		bu_bomb("How does this happen?\n");
 	}
 departure:
 
@@ -1232,12 +1232,12 @@ nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only)
 		default:
 			bu_log("nmg_class_pt_lu() hit %s loop at vu=x%x\n",
 				nmg_orientation(lu->orientation), vu);
-			rt_bomb("nmg_class_pt_lu() Loop orientation error\n");
+			bu_bomb("nmg_class_pt_lu() Loop orientation error\n");
 			break;
 		}
 	} else {
 		bu_log("%s:%d bad child of loopuse\n", __FILE__, __LINE__);
-		rt_bomb("nmg_class_pt_lu() crash and burn\n");
+		bu_bomb("nmg_class_pt_lu() crash and burn\n");
 	}
 
 
@@ -1260,7 +1260,7 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt)
 	NMG_CK_FACEUSE(fu);
 
 	if (!(fp=fopen("pt_fu_parity_error.pl", "w")) )
-		rt_bomb("error opening pt_fu_parity_error.pl\n");
+		bu_bomb("error opening pt_fu_parity_error.pl\n");
 
 
 	bu_log("overlay pt_fu_parity_error.pl\n");
@@ -1350,7 +1350,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	if (rt_g.NMG_debug & DEBUG_PT_FU )
 		bu_log("nmg_class_pt_fu_except( pt=(%g %g %g), fu=x%x )\n", V3ARGS(pt), fu);
 
-	if(fu->orientation != OT_SAME) rt_bomb("nmg_class_pt_fu_except() not OT_SAME\n");
+	if(fu->orientation != OT_SAME) bu_bomb("nmg_class_pt_fu_except() not OT_SAME\n");
 
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACE(fu->f_p);
@@ -1407,7 +1407,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 		if( lu_class < 0 || lu_class > 3 )  {
 			bu_log("nmg_class_pt_fu_except() lu_class=%s %d\n",
 				nmg_class_name(lu_class), lu_class);
-			rt_bomb("nmg_class_pt_fu_except() bad lu_class\n");
+			bu_bomb("nmg_class_pt_fu_except() bad lu_class\n");
 		}
 
 		if (lu->orientation == OT_OPPOSITE)  {
@@ -1463,7 +1463,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 			lu_class = nmg_class_pt_lu(lu, &fpi, in_or_out_only);
 		}
 #endif
-		rt_bomb("nmg_class_pt_fu_except() loop classification parity error\n");
+		bu_bomb("nmg_class_pt_fu_except() loop classification parity error\n");
 	}
 
 	while (BU_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
@@ -1536,14 +1536,14 @@ nmg_class_pt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge 
 		else {
 			bu_log("What kind of loop is this anyway? %s?\n",
 				nmg_orientation(lu->orientation) );
-			rt_bomb("");
+			bu_bomb("");
 		}
 	}
 
 	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 		bu_log("%s:%d Improper use of nmg_class_pt_lu_except(pt(%g %g %g), vu)\n",
 			__FILE__, __LINE__, V3ARGS(pt));
-		rt_bomb("giving up\n");
+		bu_bomb("giving up\n");
 	}
 
 	BU_LIST_INIT(&edge_list.l);

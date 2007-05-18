@@ -274,7 +274,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	struct boxnode nu_xbox, nu_ybox, nu_zbox;
 
 	if( nugnp->nu_type != CUT_NUGRIDNODE )
-		rt_bomb( "rt_nugrid_cut: passed non-nugridnode" );
+		bu_bomb( "rt_nugrid_cut: passed non-nugridnode" );
 
 	/*
 	 *  Build histograms of solid RPP extent distribution
@@ -410,7 +410,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 		int	axi = 0;
 
 		if( shp->hg_min != ehp->hg_min )
-			rt_bomb("cut_it: hg_min error\n");
+			bu_bomb("cut_it: hg_min error\n");
 		pos = shp->hg_min;
 		nugnp->nu_axis[i][axi].nu_spos = pos;
 		for( hindex = 0; hindex < shp->hg_nbins; hindex++ )  {
@@ -525,7 +525,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 					bu_log(
 				      "NUgrid ran off end, axis=%d, axi=%d\n",
 					       i, axi);
-					rt_bomb( "rt_nugrid_cut: NUgrid ran off end" );
+					bu_bomb( "rt_nugrid_cut: NUgrid ran off end" );
 				}
 				nugnp->nu_axis[i][++axi].nu_spos = pos;
 				nstart = 0;
@@ -949,7 +949,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 
 		break; }
 	default:
-		rt_bomb( "rt_cut_it: unknown space partitioning method\n" );
+		bu_bomb( "rt_cut_it: unknown space partitioning method\n" );
 	}
 
 	bu_free( (genptr_t)finp, "finite solid box" );

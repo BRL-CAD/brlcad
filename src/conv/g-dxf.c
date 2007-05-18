@@ -762,7 +762,7 @@ nmg_to_dxf( r, pathp, region_id, color )
 		if( vert_count > 3 ) {
 		    bu_free( region_name, "region name" );
 		    bu_log( "lu x%x has %d vertices!!!!\n", lu, vert_count );
-		    rt_bomb( "LU is not a triangle" );
+		    bu_bomb( "LU is not a triangle" );
 		} else if( vert_count < 3 ) {
 		    continue;
 		} else {
@@ -865,7 +865,7 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 	return  curtree;
 
     regions_tried++;
-    /* Begin rt_bomb() protection */
+    /* Begin bu_bomb() protection */
     if( ncpu == 1 ) {
 	if( BU_SETJUMP )  {
 	    /* Error, bail out */
@@ -877,7 +877,7 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 	    bu_free( (char *)sofar, "sofar" );
 
 	    /* Sometimes the NMG library adds debugging bits when
-	     * it detects an internal error, before rt_bomb().
+	     * it detects an internal error, before bu_bomb().
 	     */
 	    rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
@@ -954,7 +954,7 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 		bu_free( (char *)sofar, "sofar" );
 
 		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before rt_bomb().
+		 * it detects an internal error, before bu_bomb().
 		 */
 		rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

@@ -186,10 +186,10 @@ rt_nmg_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 	/* check validity of nmg specific structure */
 	if (nmg->nmg_smagic != NMG_SPEC_START_MAGIC)
-		rt_bomb("start of NMG st_specific structure corrupted\n");
+		bu_bomb("start of NMG st_specific structure corrupted\n");
 
 	if (nmg->nmg_emagic != NMG_SPEC_END_MAGIC)
-		rt_bomb("end of NMG st_specific structure corrupted\n");
+		bu_bomb("end of NMG st_specific structure corrupted\n");
 
 	/* Compute the inverse of the direction cosines */
 	if( !NEAR_ZERO( rp->r_dir[X], SQRT_SMALL_FASTF ) )  {
@@ -414,7 +414,7 @@ rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	if( bu_glong(_cp) != _magic )  { \
 		bu_log("RT_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
 			bu_glong(_cp), _magic, __FILE__, __LINE__); \
-		rt_bomb("bad magic\n"); \
+		bu_bomb("bad magic\n"); \
 	}
 
 /*
@@ -777,7 +777,7 @@ rt_nmg_magic_to_kind(register long int magic)
 	}
 	/* default */
 	bu_log("magic = x%x\n", magic);
-	rt_bomb("rt_nmg_magic_to_kind: bad magic");
+	bu_bomb("rt_nmg_magic_to_kind: bad magic");
 	return -1;
 }
 
@@ -883,7 +883,7 @@ rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long
 		bu_log("subscript=%d, byte_offset=%d, kind=%d (expected %d)\n",
 			subscript, ecnt[subscript].byte_offset,
 			ecnt[subscript].kind, NMG_KIND_DOUBLE_ARRAY );
-		rt_bomb("rt_nmg_import_fastf() bad ecnt table\n");
+		bu_bomb("rt_nmg_import_fastf() bad ecnt table\n");
 	}
 
 
@@ -893,7 +893,7 @@ rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long
 			bu_glong(cp), DISK_DOUBLE_ARRAY_MAGIC, __FILE__, __LINE__);
 		bu_log("subscript=%d, byte_offset=%d\n",
 			 subscript, ecnt[subscript].byte_offset);
-		rt_bomb("rt_nmg_import_fastf() bad magic\n");
+		bu_bomb("rt_nmg_import_fastf() bad magic\n");
 	}
 
 	if( pt_type )
@@ -903,7 +903,7 @@ rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long
 	if( count != len )  {
 		bu_log("rt_nmg_import_fastf() subscript=%d, expected len=%d, got=%d\n",
 			subscript, len, count );
-		rt_bomb("rt_nmg_import_fastf()\n");
+		bu_bomb("rt_nmg_import_fastf()\n");
 	}
 	ret = (fastf_t *)bu_malloc( count * sizeof(fastf_t), "rt_nmg_import_fastf[]" );
 	if( !mat )  {
@@ -920,19 +920,19 @@ rt_nmg_import_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long
 	ntohd( (unsigned char *)tmp, cp + (4+4), count );
 	switch( RT_NURB_EXTRACT_COORDS(pt_type) )  {
 	case 3:
-		if( RT_NURB_IS_PT_RATIONAL(pt_type) )  rt_bomb("rt_nmg_import_fastf() Rational 3-tuple?\n");
+		if( RT_NURB_IS_PT_RATIONAL(pt_type) )  bu_bomb("rt_nmg_import_fastf() Rational 3-tuple?\n");
 		for( count -= 3 ; count >= 0; count -= 3 )  {
 			MAT4X3PNT( &ret[count], mat, &tmp[count] );
 		}
 		break;
 	case 4:
-		if( !RT_NURB_IS_PT_RATIONAL(pt_type) )  rt_bomb("rt_nmg_import_fastf() non-rational 4-tuple?\n");
+		if( !RT_NURB_IS_PT_RATIONAL(pt_type) )  bu_bomb("rt_nmg_import_fastf() non-rational 4-tuple?\n");
 		for( count -= 4 ; count >= 0; count -= 4 )  {
 			MAT4X4PNT( &ret[count], mat, &tmp[count] );
 		}
 		break;
 	default:
-		rt_bomb("rt_nmg_import_fastf() unsupported # of coords in ctl_point\n");
+		bu_bomb("rt_nmg_import_fastf() unsupported # of coords in ctl_point\n");
 	}
 	bu_free( (char *)tmp, "rt_nmg_import_fastf tmp[]" );
 	return ret;
@@ -963,12 +963,12 @@ rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 		if( index == -1 )  {
 			ret = DISK_INDEX_LISTHEAD; /* FLAG:  special list head */
 		} else if( index < -1 ) {
-			rt_bomb("rt_nmg_reindex(): unable to obtain struct index\n");
+			bu_bomb("rt_nmg_reindex(): unable to obtain struct index\n");
 		} else {
 			ret = ecnt[index].new_subscript;
 			if( ecnt[index].kind < 0 )  {
 				bu_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, index, ret, ecnt[index].kind);
-				rt_bomb("rt_nmg_reindex() This index not found in ecnt[]\n");
+				bu_bomb("rt_nmg_reindex() This index not found in ecnt[]\n");
 			}
 			/* ret == 0 on supressed loop_g ptrs, etc */
 			if( ret < 0 || ret > ecnt[0].byte_offset )  {
@@ -976,7 +976,7 @@ rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 					p,
 					bu_identify_magic(*(long *)p),
 					index, ret, ecnt[0].byte_offset);
-				rt_bomb("rt_nmg_reindex() subscript out of range\n");
+				bu_bomb("rt_nmg_reindex() subscript out of range\n");
 			}
 		}
 	}
@@ -1566,7 +1566,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, l
 			} else bu_log("bad loopuse up, index=%d, kind=%d\n", up_index, up_kind);
 			INDEXL_HD( d, lu, down_hd, lu->down_hd );
 			if( lu->down_hd.forw == BU_LIST_NULL )
-				rt_bomb("rt_nmg_idisk: null loopuse down_hd.forw\n");
+				bu_bomb("rt_nmg_idisk: null loopuse down_hd.forw\n");
 			NMG_CK_LOOP(lu->l_p);
 		}
 		return 0;
@@ -1796,7 +1796,7 @@ rt_nmg_ialloc(long int **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 			ecnt[subscript].per_struct_index = 0; /* unused on import */
 			switch( kind )  {
 			case NMG_KIND_MODEL:
-				if( m )  rt_bomb("multiple models?");
+				if( m )  bu_bomb("multiple models?");
 				m = nmg_mm();
 				/* Keep disk indices & new indices equal... */
 				m->maxindex++;

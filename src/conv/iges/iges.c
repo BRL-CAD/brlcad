@@ -288,7 +288,7 @@ nmg_to_winged_edge( r )
 
 				    /* kill the new edge (I only wanted it for its vertices) */
 				    if( nmg_keu( eu_new ) )
-					rt_bomb( "nmg_to_winged_edge: Can't happen nmg_keu resulted in empty shell!!!!\n" );
+					bu_bomb( "nmg_to_winged_edge: Can't happen nmg_keu resulted in empty shell!!!!\n" );
 
 				    /* move the other edgeuse to the same edge */
 				    if( eu2 == eu1 || eu2 == eu1->eumate_p )
@@ -1106,7 +1106,7 @@ nmg_loop_to_tcurve( lu , surf_de , u_dir , v_dir , u_max , v_max , base_pt , fp_
 	    vg = eu->vu_p->v_p->vg_p;
 
 	    if( i >= vert_count )
-		rt_bomb( "nmg_loop_to_tcurve: too many vertices in loop!!!!\n" );
+		bu_bomb( "nmg_loop_to_tcurve: too many vertices in loop!!!!\n" );
 
 	    VMOVE( model_pts[i] , vg->coord );
 

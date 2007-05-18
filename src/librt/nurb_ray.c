@@ -332,7 +332,7 @@ rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1,
 		}
 
 	}
-	if( new_knots.k_size >= 40 )  rt_bomb("rt_nurb_region_from_srf() local kv overflow\n");
+	if( new_knots.k_size >= 40 )  bu_bomb("rt_nurb_region_from_srf() local kv overflow\n");
 
 	region = rt_nurb_s_refine( srf, dir, &new_knots, res);
 

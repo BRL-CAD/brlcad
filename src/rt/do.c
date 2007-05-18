@@ -164,7 +164,7 @@ old_way(FILE *fp)
 		return(1);
 	}
 	if( ungetc( c, fp ) != c )
-		rt_bomb("do.c:old_way() ungetc failure\n");
+		bu_bomb("do.c:old_way() ungetc failure\n");
 
 	/*
 	 * Old format files start immediately with a %.9e format,
@@ -971,9 +971,9 @@ do_ae(double azim, double elev)
 	struct rt_i *rtip = ap.a_rt_i;
 
 	if( rtip->nsolids <= 0 )
-	    rt_bomb("do_ae: no solids active\n");
+	    bu_bomb("do_ae: no solids active\n");
 	if ( rtip->nregions <= 0 )
-	    rt_bomb("do_ae: no regions active\n");
+	    bu_bomb("do_ae: no regions active\n");
 
 	if( rtip->mdl_max[X] >= INFINITY ) {
 	    bu_log("do_ae: infinite model bounds? setting a unit minimum\n");

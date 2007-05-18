@@ -80,7 +80,7 @@ top:
 	if( magic_p == (long *)0 )  {
 		bu_log("nmg_find_model(x%x) enountered null pointer\n",
 			magic_p_arg );
-		rt_bomb("nmg_find_model() null pointer\n");
+		bu_bomb("nmg_find_model() null pointer\n");
 		/* NOTREACHED */
 	}
 
@@ -120,7 +120,7 @@ top:
 	default:
 		bu_log("nmg_find_model() can't get model for magic=x%x (%s)\n",
 			*magic_p, bu_identify_magic( *magic_p ) );
-		rt_bomb("nmg_find_model() failure\n");
+		bu_bomb("nmg_find_model() failure\n");
 	}
 	return( (struct model *)NULL );
 }
@@ -189,7 +189,7 @@ nmg_find_s_of_lu(const struct loopuse *lu)
 {
 	if (*lu->up.magic_p == NMG_SHELL_MAGIC) return(lu->up.s_p);
 	else if (*lu->up.magic_p != NMG_FACEUSE_MAGIC)
-		rt_bomb("nmg_find_s_of_lu() bad parent for loopuse\n");
+		bu_bomb("nmg_find_s_of_lu() bad parent for loopuse\n");
 
 	return(lu->up.fu_p->s_p);
 }
@@ -204,7 +204,7 @@ nmg_find_s_of_eu(const struct edgeuse *eu)
 {
 	if (*eu->up.magic_p == NMG_SHELL_MAGIC) return(eu->up.s_p);
 	else if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC)
-		rt_bomb("nmg_find_s_of_eu() bad parent for edgeuse\n");
+		bu_bomb("nmg_find_s_of_eu() bad parent for edgeuse\n");
 
 	return(nmg_find_s_of_lu(eu->up.lu_p));
 }
@@ -262,7 +262,7 @@ nmg_find_fu_of_lu(const struct loopuse *lu)
 	default:
 	    bu_log("Error at %s %d:\nInvalid loopuse parent magic (0x%x %d)\n",
 		__FILE__, __LINE__, *lu->up.magic_p, *lu->up.magic_p);
-	    rt_bomb("nmg_find_fu_of_lu() giving up on loopuse");
+	    bu_bomb("nmg_find_fu_of_lu() giving up on loopuse");
 	}
 	return (struct faceuse *)NULL;
 }
@@ -304,7 +304,7 @@ nmg_find_fu_of_vu(const struct vertexuse *vu)
 		break;
 	}
 	bu_log("How did I get here %s %d?\n", __FILE__, __LINE__);
-	rt_bomb("nmg_find_fu_of_vu()\n");
+	bu_bomb("nmg_find_fu_of_vu()\n");
 	return ((struct faceuse *)NULL);
 }
 /**
@@ -740,7 +740,7 @@ nmg_findeu(const struct vertex *v1, const struct vertex *v2, const struct shell 
 	for( BU_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )  {
 		NMG_CK_VERTEXUSE(vu);
 		if (!vu->up.magic_p)
-			rt_bomb("nmg_findeu() vertexuse in vu_hd list has null parent\n");
+			bu_bomb("nmg_findeu() vertexuse in vu_hd list has null parent\n");
 
 		/* Ignore self-loops and lone shell verts */
 		if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
@@ -836,7 +836,7 @@ nmg_find_eu_in_face(const struct vertex *v1, const struct vertex *v2, const stru
 	for( BU_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )  {
 		NMG_CK_VERTEXUSE(vu);
 		if (!vu->up.magic_p)
-			rt_bomb("nmg_find_eu_in_face() vertexuse in vu_hd list has null parent\n");
+			bu_bomb("nmg_find_eu_in_face() vertexuse in vu_hd list has null parent\n");
 
 		/* Ignore self-loops and lone shell verts */
 		if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
@@ -925,7 +925,7 @@ nmg_find_e(const struct vertex *v1, const struct vertex *v2, const struct shell 
 	for( BU_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )  {
 		NMG_CK_VERTEXUSE(vu);
 		if (!vu->up.magic_p)
-			rt_bomb("nmg_find_e() vertexuse in vu_hd list has null parent\n");
+			bu_bomb("nmg_find_e() vertexuse in vu_hd list has null parent\n");
 
 		/* Ignore self-loops and lone shell verts */
 		if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
@@ -1004,12 +1004,12 @@ nmg_find_eu_with_vu_in_lu(const struct loopuse *lu, const struct vertexuse *vu)
 	NMG_CK_LOOPUSE(lu);
 	NMG_CK_VERTEXUSE(vu);
 	if( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
-		rt_bomb("nmg_find_eu_with_vu_in_lu: loop has no edges!\n");
+		bu_bomb("nmg_find_eu_with_vu_in_lu: loop has no edges!\n");
 	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 		NMG_CK_EDGEUSE(eu);
 		if( eu->vu_p == vu )  return eu;
 	}
-	rt_bomb("nmg_find_eu_with_vu_in_lu:  Unable to find vu!\n");
+	bu_bomb("nmg_find_eu_with_vu_in_lu:  Unable to find vu!\n");
 	/* NOTREACHED */
 	return((struct edgeuse *)NULL);
 }
@@ -1146,7 +1146,7 @@ nmg_find_edge_between_2fu(const struct faceuse *fu1, const struct faceuse *fu2, 
 								/* See if there are any others. */
 								nmg_model_fuse( nmg_find_model(&eur->l.magic), tol );
 							} else {
-								rt_bomb("nmg_find_edge_between_2fu() 2 faces intersect with differing edge geometries?\n");
+								bu_bomb("nmg_find_edge_between_2fu() 2 faces intersect with differing edge geometries?\n");
 							}
 						}
 					}
@@ -1277,7 +1277,7 @@ nmg_eu_2vecs_perp(fastf_t *xvec, fastf_t *yvec, fastf_t *zvec, const struct edge
 	NMG_CK_VERTEX(v1);
 	v2 = eu->eumate_p->vu_p->v_p;
 	NMG_CK_VERTEX(v2);
-	if( v1 == v2 )  rt_bomb("nmg_eu_2vecs_perp() start&end vertex of edge are the same!\n");
+	if( v1 == v2 )  bu_bomb("nmg_eu_2vecs_perp() start&end vertex of edge are the same!\n");
 	BN_CK_TOL(tol);
 
 	NMG_CK_VERTEX_G(v1->vg_p);
@@ -1285,7 +1285,7 @@ nmg_eu_2vecs_perp(fastf_t *xvec, fastf_t *yvec, fastf_t *zvec, const struct edge
 	VSUB2( zvec, v2->vg_p->coord, v1->vg_p->coord );
 	len = MAGNITUDE(zvec);
 	/* See if v1 == v2, within tol */
-	if( len < tol->dist )  rt_bomb("nmg_eu_2vecs_perp(): 0-length edge (geometry)\n");
+	if( len < tol->dist )  bu_bomb("nmg_eu_2vecs_perp(): 0-length edge (geometry)\n");
 	len = 1 / len;
 	VSCALE( zvec, zvec, len );
 
@@ -1372,7 +1372,7 @@ nmg_find_eu_leftvec(fastf_t *left, const struct edgeuse *eu)
 		{
 			bu_log( "Cannot find edge (starting eu =x%x) that is not parallel to face normal!!!\n", eu );
 			nmg_pr_fu_briefly( fu, (char *)NULL );
-			rt_bomb( "Cannot find edge that is not parallel to face normal!!!\n" );
+			bu_bomb( "Cannot find edge that is not parallel to face normal!!!\n" );
 		}
 
 		VCROSS( next_left, Norm, other_edge );
@@ -1398,7 +1398,7 @@ nmg_find_eu_leftvec(fastf_t *left, const struct edgeuse *eu)
 		{
 			bu_log( "Cannot find edge (starting eu =x%x) that is not parallel to face normal!!!\n", eu );
 			nmg_pr_fu_briefly( fu, (char *)NULL );
-			rt_bomb( "Cannot find edge that is not parallel to face normal!!!\n" );
+			bu_bomb( "Cannot find edge that is not parallel to face normal!!!\n" );
 		}
 
 		VCROSS( prev_left, Norm, other_edge );
@@ -1586,7 +1586,7 @@ nmg_find_v_in_shell(const struct vertex *v, const struct shell *s, int edges_onl
 			continue;
 		}
 		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
-			rt_bomb("nmg_find_v_in_shell(): bad vu up ptr\n");
+			bu_bomb("nmg_find_v_in_shell(): bad vu up ptr\n");
 
 		/* vu is being used by an edgeuse */
 		if( nmg_find_s_of_eu( vu->up.eu_p ) == s )
@@ -1630,7 +1630,7 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
 		return ((struct vertexuse *)NULL);
 	}
 	if (magic1 != NMG_EDGEUSE_MAGIC) {
-		rt_bomb("nmg_find_pt_in_lu() Bogus child of loop\n");
+		bu_bomb("nmg_find_pt_in_lu() Bogus child of loop\n");
 	}
 
 	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
@@ -1840,7 +1840,7 @@ nmg_is_vertex_in_looplist(register const struct vertex *v, const struct bu_list 
 			if( nmg_is_vertex_in_edgelist( v, &lu->down_hd ) )
 				return(1);
 		} else {
-			rt_bomb("nmg_is_vertex_in_loopuse() bad magic\n");
+			bu_bomb("nmg_is_vertex_in_loopuse() bad magic\n");
 		}
 	}
 	return(0);
@@ -1977,7 +1977,7 @@ nmg_is_edge_in_looplist(const struct edge *e, const struct bu_list *hd)
 			if( nmg_is_edge_in_edgelist( e, &lu->down_hd ) )
 				return(1);
 		} else {
-			rt_bomb("nmg_is_edge_in_loopuse() bad magic\n");
+			bu_bomb("nmg_is_edge_in_loopuse() bad magic\n");
 		}
 	}
 	return(0);
@@ -2385,7 +2385,7 @@ nmg_edgeuse_with_eg_tabulate(struct bu_ptbl *tab, const struct edge_g_lseg *eg)
 		NMG_CKMAG(midway, NMG_EDGEUSE2_MAGIC, "edgeuse2 [l2]");
 		eu = BU_LIST_MAIN_PTR( edgeuse, midway, l2 );
 		NMG_CK_EDGEUSE(eu);
-		if( eu->g.lseg_p != eg )  rt_bomb("nmg_edgeuse_with_eg_tabulate() eu disavows eg\n");
+		if( eu->g.lseg_p != eg )  bu_bomb("nmg_edgeuse_with_eg_tabulate() eu disavows eg\n");
 		bu_ptbl_ins_unique( tab, (long *)eu );
 	}
 }

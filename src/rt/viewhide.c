@@ -163,7 +163,7 @@ view_2init(struct application *ap)
 {
 
 	if( outfp == NULL )
-		rt_bomb("outfp is NULL\n");
+		bu_bomb("outfp is NULL\n");
 
 	/*
 	 *  For now, RTHIDE does not operate in parallel, while ray-tracing.
@@ -254,7 +254,7 @@ raymiss(register struct application *ap)
 
 	/* Getting defensive.... just in case. */
 	if(ap->a_x > width)  {
-		rt_bomb("raymiss: pixels exceed width\n");
+		bu_bomb("raymiss: pixels exceed width\n");
 	}
 
 	posp = &(topp[ap->a_x + 1]);
@@ -316,7 +316,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 	/* Getting defensive.... just in case. */
 	if(ap->a_x > width)  {
-		rt_bomb("rayhit: pixels exceed width\n");
+		bu_bomb("rayhit: pixels exceed width\n");
 	}
 
 	posp = &(topp[ap->a_x + 1]);

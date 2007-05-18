@@ -286,7 +286,7 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
 			{
 				if( nmg_ks( s ) )
 				{
-					/* we killed it all!!! */
+					/* we killed it all! */
 					something_left = 0;
 					break;
 				}
@@ -307,14 +307,14 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
 	if( mk_addmember( sname, &head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
 	{
 		bu_log( "add_nmg_to_db: mk_addmember failed for solid %s\n" , sname );
-		rt_bomb( "add_nmg_to_db: FAILED\n" );
+		bu_bomb( "add_nmg_to_db: FAILED\n" );
 	}
 
 	if( mk_lrcomb( fpout, rname, &head, 1, (char *)NULL, (char *)NULL,
 	    (unsigned char *)NULL, gift_ident, 0, 0, 100, 0 ) )
 	{
 		bu_log( "add_nmg_to_db: mk_rlcomb failed for region %s\n" , rname );
-		rt_bomb( "add_nmg_to_db: FAILED\n" );
+		bu_bomb( "add_nmg_to_db: FAILED\n" );
 	}
 
 	bu_ptbl_ins( &groups[group_id] , (long *)rname );
@@ -347,7 +347,7 @@ build_groups(struct rt_wdb *fpout)
 			if( mk_addmember( region_name , &head.l , NULL, WMOP_UNION ) == WMEMBER_NULL )
 			{
 				bu_log( "build_groups: mk_addmember failed for region %s\n" , region_name );
-				rt_bomb( "build_groups: FAILED\n" );
+				bu_bomb( "build_groups: FAILED\n" );
 			}
 		}
 
@@ -360,19 +360,19 @@ build_groups(struct rt_wdb *fpout)
 		if( j )
 		{
 			bu_log( "build_groups: mk_lcomb failed for group %s\n" , group_name );
-			rt_bomb( "build_groups: mk_lcomb FAILED\n" );
+			bu_bomb( "build_groups: mk_lcomb FAILED\n" );
 		}
 
 		if( mk_addmember( group_name , &head_all.l , NULL, WMOP_UNION ) == WMEMBER_NULL )
 		{
 			bu_log( "build_groups: mk_addmember failed for group %s\n" , group_name );
-			rt_bomb( "build_groups: FAILED\n" );
+			bu_bomb( "build_groups: FAILED\n" );
 		}
 	}
 
 	j = mk_lfcomb( fpout , "all" , &head_all , 0 )
 	if( j )
-		rt_bomb( "build_groups: mk_lcomb failed for group 'all'\n" );
+		bu_bomb( "build_groups: mk_lcomb failed for group 'all'\n" );
 }
 
 /*
@@ -415,7 +415,7 @@ euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 
 	/* skip first string in file (what is it??) */
 	if( fscanf( fpin , "%s" , str ) == EOF )
-		rt_bomb( "Failed on first attempt to read input" );
+		bu_bomb( "Failed on first attempt to read input" );
 
 	/* Id of first region. */
 	if (fscanf(fpin, "%d", &reg_id) != 1) {
@@ -467,7 +467,7 @@ int reg_id;
 		if( mk_addmember( sol_name, &head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
 		{
 			bu_log( "add_shells_to_db: mk_addmember failed for solid %s\n" , sol_name );
-			rt_bomb( "add_shells_to_db: FAILED\n" );
+			bu_bomb( "add_shells_to_db: FAILED\n" );
 		}
 
 		if( polysolids )
@@ -509,7 +509,7 @@ int reg_id;
 	    (unsigned char *)NULL, gift_ident, 0, 0, 100, 0 ) )
 	{
 		bu_log( "add_nmg_to_db: mk_rlcomb failed for region %s\n" , reg_name );
-		rt_bomb( "add_nmg_to_db: FAILED\n" );
+		bu_bomb( "add_nmg_to_db: FAILED\n" );
 	}
 
 	bu_ptbl_ins( &groups[group_id] , (long *)reg_name );
@@ -895,7 +895,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 				bu_log( "\tCreating new faces to close region\n" );
 				nmg_close_shell( s , &tol );
 				if( nmg_check_closed_shell( s , &tol ) )
-					rt_bomb( "Cannot close shell\n" );
+					bu_bomb( "Cannot close shell\n" );
 			}
 		}
 
@@ -948,7 +948,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 							out++;
 							break;
 						default:
-							rt_bomb( "UNKNOWN CLASS!!!\n" );
+							bu_bomb( "UNKNOWN CLASS!\n" );
 							break;
 					}
 				}
@@ -1005,7 +1005,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 				continue;
 
 			if( !shell_inout[shell1_no] & INNER_SHELL )
-				rt_bomb( "Found a shell that is neither inner nor outer!!!\n" );
+				bu_bomb( "Found a shell that is neither inner nor outer!\n" );
 
 			/* Look for an outer shell to take this inner shell */
 			for( shell2_no=0 ; shell2_no < shell_count ; shell2_no++ )
@@ -1025,7 +1025,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 
 			}
 			if( !outer_shell )
-				rt_bomb( "Cannot find outer shell for inner shell!!!\n" );
+				bu_bomb( "Cannot find outer shell for inner shell!\n" );
 
 			/* Place this inner shell in the outer shell */
 			nmg_js( outer_shell, shells[shell1_no], &tol );
@@ -1039,13 +1039,13 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 				continue;
 
 			if( shell_inout[shell1_no] & INNER_SHELL )
-				rt_bomb( "An inner shell was not placed in an outer shell!!\n" );
+				bu_bomb( "An inner shell was not placed in an outer shell!\n" );
 
 			outer_shell_count++;
 		}
 
 		if( outer_shell_count < 1 )
-			rt_bomb( "No shells!!!!\n" );
+			bu_bomb( "No shells!\n" );
 		else if( outer_shell_count == 1 )
 			add_nmg_to_db( fpdb, m, reg_id );
 		else

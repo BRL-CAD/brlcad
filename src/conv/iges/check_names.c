@@ -173,7 +173,7 @@ char *name;
 	{
 		/* not likely */
 		bu_log( "Could not make name unique: (%s)\n", name );
-		rt_bomb( "Make_unique_brl_name: failed\n" );
+		bu_bomb( "Make_unique_brl_name: failed\n" );
 		return( (char *)NULL );		/* make the compilers happy */
 	}
 	else
@@ -537,20 +537,20 @@ int entityno;
 	char *name;
 
 	if( entityno >= totentities )
-		rt_bomb( "Get_subfig_name: entityno too big!!\n" );
+		bu_bomb( "Get_subfig_name: entityno too big!!\n" );
 
 	if( dir[entityno]->type != 308 )
 	{
 		bu_log( "Get_subfig_name called with entity type %s, should be Subfigure Definition\n",
 			iges_type( dir[entityno]->type  ) );
-		rt_bomb( "Get_subfig_name: bad type\n" );
+		bu_bomb( "Get_subfig_name: bad type\n" );
 	}
 
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
-		rt_bomb( "Get_subfig_name: Bad entity\n" );
+		bu_bomb( "Get_subfig_name: Bad entity\n" );
 	}
 
 	Readrec( dir[entityno]->param );
@@ -560,7 +560,7 @@ int entityno;
 	{
 		bu_log( "Get_subfig_name: Read entity type %s, should be Subfigure Definition\n",
 			iges_type( dir[entityno]->type  ) );
-		rt_bomb( "Get_subfig_name: bad type\n" );
+		bu_bomb( "Get_subfig_name: bad type\n" );
 	}
 
 	Readint( &i, "" );	/* ignore depth */

@@ -249,7 +249,7 @@ nmg_pr_fg(const long int *magic, char *h)
 		}
 		break;
 	default:
-		rt_bomb("nmg_pr_fg() bad magic\n");
+		bu_bomb("nmg_pr_fg() bad magic\n");
 	}
 
 	Return;
@@ -920,8 +920,8 @@ nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t 
 			if ((struct vertexuse *)vu->up.lu_p->down_hd.forw != vu) {
 				bu_log("ERROR vertexuse's parent disowns us!\n");
 				if (((struct vertexuse *)(vu->up.lu_p->lumate_p->down_hd.forw))->l.magic == NMG_VERTEXUSE_MAGIC)
-					rt_bomb("lumate has vertexuse\n");
-				rt_bomb("lumate has garbage\n");
+					bu_bomb("lumate has vertexuse\n");
+				bu_bomb("lumate has garbage\n");
 			}
 		} else {
 			bu_log("vu up UNKNOWN");

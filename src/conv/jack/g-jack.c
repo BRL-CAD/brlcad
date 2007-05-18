@@ -299,14 +299,14 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		return  curtree;
 
 	regions_tried++;
-	/* Begin rt_bomb() protection */
+	/* Begin bu_bomb() protection */
 	if( ncpu == 1 ) {
 		if( BU_SETJUMP )  {
 			/* Error, bail out */
 			BU_UNSETJUMP;		/* Relinquish the protection */
 
 			/* Sometimes the NMG library adds debugging bits when
-			 * it detects an internal error, before rt_bomb().
+			 * it detects an internal error, before bu_bomb().
 			 */
 			rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

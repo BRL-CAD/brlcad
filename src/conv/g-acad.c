@@ -386,7 +386,7 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 		/*XXX*/				bu_ptbl_free( &verts);
 		/*XXX*/				bu_free( region_name, "region name" );
 						bu_log( "Vertex from eu x%x is not in nmgregion x%x\n", eu, r );
-						rt_bomb( "Can't find vertex in list!!!" );
+						bu_bomb( "Can't find vertex in list!!!" );
 					}
 				}
 				if( vert_count > 3 )
@@ -394,7 +394,7 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 		/*XXX*/			bu_ptbl_free( &verts);
 		/*XXX*/			bu_free( region_name, "region name" );
 					bu_log( "lu x%x has %d vertices!!!!\n", lu, vert_count );
-					rt_bomb( "LU is not a triangle" );
+					bu_bomb( "LU is not a triangle" );
 				}
 				else if( vert_count < 3 )
 					continue;
@@ -473,7 +473,7 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 						bu_ptbl_free( &verts);
 						bu_log( "Vertex from eu x%x is not in nmgregion x%x\n", eu, r );
 		/*XXX*/				bu_free( region_name, "region name" );
-		/*XXX*/				rt_bomb( "Can't find vertex in list!!!" );
+		/*XXX*/				bu_bomb( "Can't find vertex in list!!!" );
 					}
 
 					fprintf( fp, " %d", i+1 );
@@ -489,7 +489,7 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 					bu_ptbl_free( &verts);
 					bu_free( region_name, "region name" );
 					bu_log( "lu x%x has %d vertices!!!!\n", lu, vert_count );
-					rt_bomb( "LU is not a triangle" );
+					bu_bomb( "LU is not a triangle" );
 				}
 				else if( vert_count < 3 )
 					continue;
@@ -540,7 +540,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		return  curtree;
 
 	regions_tried++;
-	/* Begin rt_bomb() protection */
+	/* Begin bu_bomb() protection */
 	if( ncpu == 1 ) {
 		if( BU_SETJUMP )  {
 			/* Error, bail out */
@@ -554,7 +554,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 			bu_free( (char *)sofar, "sofar" );
 
 			/* Sometimes the NMG library adds debugging bits when
-			 * it detects an internal error, before rt_bomb().
+			 * it detects an internal error, before bu_bomb().
 			 */
 			rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
@@ -643,7 +643,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 				bu_free( (char *)sofar, "sofar" );
 
 				/* Sometimes the NMG library adds debugging bits when
-				 * it detects an internal error, before rt_bomb().
+				 * it detects an internal error, before bu_bomb().
 				 */
 				rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

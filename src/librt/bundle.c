@@ -158,7 +158,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
 		VPRINT(" r_pt", ap->a_ray.r_pt);
 		VPRINT("r_dir", ap->a_ray.r_dir);
-		rt_bomb("rt_shootray_bundle() bad ray\n");
+		bu_bomb("rt_shootray_bundle() bad ray\n");
 	}
 
 	if( rtip->needprep )
@@ -208,7 +208,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 		FAST fastf_t f, diff;
 		f = MAGSQ(ap->a_ray.r_dir);
 		if( NEAR_ZERO(f, 0.0001) )  {
-			rt_bomb("rt_shootray_bundle:  zero length dir vector\n");
+			bu_bomb("rt_shootray_bundle:  zero length dir vector\n");
 			return(0);
 		}
 		diff = f - 1;

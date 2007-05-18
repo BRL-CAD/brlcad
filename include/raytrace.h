@@ -1690,7 +1690,7 @@ struct application  {
 #else
 #  define RT_AP_CHECK(_ap)	\
 	{if((_ap)->a_zero1||(_ap)->a_zero2) \
-		rt_bomb("corrupt application struct"); }
+		bu_bomb("corrupt application struct"); }
 #endif
 
 /**
@@ -2247,20 +2247,20 @@ struct hitmiss {
 	case NMG_MISS_LIST: \
 		bu_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n",\
 			__FILE__, __LINE__); \
-		rt_bomb("NMG_CK_HITMISS: going down in flames\n"); \
+		bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	case NMG_HIT_LIST: \
 		bu_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n",\
 			__FILE__, __LINE__); \
-		rt_bomb("NMG_CK_HITMISS: going down in flames\n"); \
+		bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	default: \
 		bu_log("%s[%d]: bad struct hitmiss magic: %d:(0x%08x)\n", \
 			__FILE__, __LINE__, hm->l.magic, hm->l.magic); \
-		rt_bomb("NMG_CK_HITMISS: going down in flames\n"); \
+		bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	}\
 	if (!hm->hit.hit_private) { \
 		bu_log("%s[%d]: NULL hit_private in hitmiss struct\n", \
 			__FILE__, __LINE__); \
-		rt_bomb("NMG_CK_HITMISS: going down in flames\n"); \
+		bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	} \
 }
 
@@ -2377,17 +2377,17 @@ struct ray_data {
 
 
 #ifdef NO_BOMBING_MACROS
-#  define nmg_rt_bomb(rd, str)
+#  define nmg_bu_bomb(rd, str)
 #else
-#  define nmg_rt_bomb(rd, str) { \
+#  define nmg_bu_bomb(rd, str) { \
 	bu_log("%s", str); \
-	if (rt_g.NMG_debug & DEBUG_NMGRT) rt_bomb("End of diagnostics"); \
+	if (rt_g.NMG_debug & DEBUG_NMGRT) bu_bomb("End of diagnostics"); \
 	BU_LIST_INIT(&rd->rd_hit); \
 	BU_LIST_INIT(&rd->rd_miss); \
 	rt_g.NMG_debug |= DEBUG_NMGRT; \
 	nmg_isect_ray_model(rd); \
 	(void) nmg_ray_segs(rd); \
-	rt_bomb("Should have bombed before this\n"); }
+	bu_bomb("Should have bombed before this\n"); }
 #endif
 
 
@@ -2677,8 +2677,6 @@ RT_EXPORT BU_EXTERN(int rt_rpp_region,
 		     const char *reg_name,
 		     fastf_t *min_rpp,
 		     fastf_t *max_rpp));
-RT_EXPORT BU_EXTERN(void rt_bomb,
-		    (const char *s));
 RT_EXPORT BU_EXTERN(int rt_in_rpp,
 		    (struct xray *rp,
 		     const fastf_t *invdir,
@@ -2933,7 +2931,7 @@ RT_EXPORT BU_EXTERN(int db5_get_raw_internal_fp,
 
 RT_EXPORT BU_EXTERN(int db5_header_is_valid,
 		    (const unsigned char *hp));
-#define rt_fwrite_internal5	+++__deprecated_rt_fwrite_internal5__+++
+
 RT_EXPORT BU_EXTERN(int db5_fwrite_ident,
 		    (FILE *,
 		     const char *,

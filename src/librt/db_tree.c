@@ -834,7 +834,7 @@ db_follow_path(
 
 	if( depth < 0 )  {
 		depth = new_path->fp_len-1 + depth;
-		if( depth < 0 ) rt_bomb("db_follow_path() depth exceeded provided path\n");
+		if( depth < 0 ) bu_bomb("db_follow_path() depth exceeded provided path\n");
 	} else if( depth >= new_path->fp_len )  {
 		depth = new_path->fp_len-1;
 	} else if( depth == 0 )  {
@@ -1101,7 +1101,7 @@ db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_pat
 
 	default:
 		bu_log("db_recurse_subtree: bad op %d\n", tp->tr_op);
-		rt_bomb("db_recurse_subtree\n");
+		bu_bomb("db_recurse_subtree\n");
 	}
 out:
 	db_free_db_tree_state( &memb_state );
@@ -1383,7 +1383,7 @@ db_dup_subtree( const union tree *tp, struct resource *resp )
 
 	default:
 		bu_log("db_dup_subtree: bad op %d\n", tp->tr_op);
-		rt_bomb("db_dup_subtree\n");
+		bu_bomb("db_dup_subtree\n");
 	}
 	return( TREE_NULL );
 }
@@ -1428,7 +1428,7 @@ db_ck_tree( const union tree *tp )
 
 	default:
 		bu_log("db_ck_tree: bad op %d\n", tp->tr_op);
-		rt_bomb("db_ck_tree\n");
+		bu_bomb("db_ck_tree\n");
 	}
 }
 
@@ -1542,7 +1542,7 @@ db_free_tree( register union tree *tp, struct resource *resp )
 
 	default:
 		bu_log("db_free_tree: bad op %d\n", tp->tr_op);
-		rt_bomb("db_free_tree\n");
+		bu_bomb("db_free_tree\n");
 	}
 	tp->tr_op = 0;		/* sanity */
 	RT_FREE_TREE( tp, resp );
@@ -1833,7 +1833,7 @@ db_count_tree_nodes( const union tree *tp, int count )
 
 	default:
 		bu_log("db_count_tree_nodes: bad op %d\n", tp->tr_op);
-		rt_bomb("db_count_tree_nodes\n");
+		bu_bomb("db_count_tree_nodes\n");
 	}
 	return( 0 );
 }
@@ -1874,7 +1874,7 @@ db_is_tree_all_unions( const union tree *tp )
 
 	default:
 		bu_log("db_is_tree_all_unions: bad op %d\n", tp->tr_op);
-		rt_bomb("db_is_tree_all_unions\n");
+		bu_bomb("db_is_tree_all_unions\n");
 	}
 	return 0;
 }
@@ -1912,7 +1912,7 @@ db_count_subtree_regions( const union tree *tp )
 
 	default:
 		bu_log("db_count_subtree_regions: bad op %d\n", tp->tr_op);
-		rt_bomb("db_count_subtree_regions\n");
+		bu_bomb("db_count_subtree_regions\n");
 	}
 	return( 0 );
 }
@@ -1932,7 +1932,7 @@ db_tally_subtree_regions(
 
 	RT_CK_TREE(tp);
 	RT_CK_RESOURCE(resp);
-	if( cur >= lim )  rt_bomb("db_tally_subtree_regions: array overflow\n");
+	if( cur >= lim )  bu_bomb("db_tally_subtree_regions: array overflow\n");
 
 	switch( tp->tr_op )  {
 	case OP_NOP:
@@ -1968,7 +1968,7 @@ db_tally_subtree_regions(
 
 	default:
 		bu_log("db_tally_subtree_regions: bad op %d\n", tp->tr_op);
-		rt_bomb("db_tally_subtree_regions\n");
+		bu_bomb("db_tally_subtree_regions\n");
 	}
 	return( cur );
 }
@@ -2484,7 +2484,7 @@ db_path_to_mat(
 
 	RT_CHECK_DBI(dbip);
 	RT_CK_FULL_PATH(pathp);
-	if( !mat ) rt_bomb("db_path_to_mat() NULL matrix pointer\n");
+	if( !mat ) bu_bomb("db_path_to_mat() NULL matrix pointer\n");
 
 	db_full_path_init( &null_path );
 	db_init_db_tree_state( &ts, dbip, resp );

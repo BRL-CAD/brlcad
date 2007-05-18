@@ -1314,7 +1314,7 @@ union tree *nmg_region_end(register struct db_tree_state *tsp, struct db_full_pa
 	bu_log( "Attempting %s\n", name );
 
 	regions_tried++;
-	/* Begin rt_bomb() protection */
+	/* Begin bu_bomb() protection */
 	if( BU_SETJUMP )
 	{
 		/* Error, bail out */
@@ -1322,7 +1322,7 @@ union tree *nmg_region_end(register struct db_tree_state *tsp, struct db_full_pa
 		bu_log( "conversion of %s FAILED!!!\n", name );
 
 		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before rt_bomb().
+		 * it detects an internal error, before bu_bomb().
 		 */
 		rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

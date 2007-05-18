@@ -290,7 +290,7 @@ rt_make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
 	point_t	tst, new;
 
 	if( rt_clr__cspace_to_xyz( rgb_NTSC, rgb2xyz ) == 0 )
-		rt_bomb("rt_make_ntsc_xyz2rgb() can't initialize color space\n");
+		bu_bomb("rt_make_ntsc_xyz2rgb() can't initialize color space\n");
 	bn_mat_inv( xyz2rgb, rgb2xyz );
 
 #if 1

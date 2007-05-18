@@ -124,7 +124,7 @@ main(int argc, char **argv)
 	elems = NULL;
 
 	if( argc < 2 )
-		rt_bomb( usage );
+		bu_bomb( usage );
 
 	/* get command line arguments */
 	while ((c = bu_getopt(argc, argv, "t:c:e:o:")) != EOF)
@@ -142,7 +142,7 @@ main(int argc, char **argv)
 				{
 					bu_log( "Cannot open %s\n" , coords_name );
 					perror( "viewpoint-g" );
-					rt_bomb( "Cannot open input file" );
+					bu_bomb( "Cannot open input file" );
 				}
 				break;
 			case 'e': /* input elements file name */
@@ -152,14 +152,14 @@ main(int argc, char **argv)
 				{
 					bu_log( "Cannot open %s\n" , elems_name );
 					perror( "viewpoint-g" );
-					rt_bomb( "Cannot open input file" );
+					bu_bomb( "Cannot open input file" );
 				}
 				break;
 			case 'o': /* output file name */
 				output_file = bu_optarg;
 				break;
 			default:
-				rt_bomb( usage );
+				bu_bomb( usage );
 				break;
 		}
 	}
@@ -167,12 +167,12 @@ main(int argc, char **argv)
 	{
 		perror( output_file );
 		bu_log( "tankill-g: Cannot open %s\n" , output_file );
-		rt_bomb( "Cannot open output file\n" );
+		bu_bomb( "Cannot open output file\n" );
 	}
 
 	/* Must have some input */
 	if( coords == NULL || elems == NULL )
-		rt_bomb( usage );
+		bu_bomb( usage );
 
 	/* build a title for the BRL-CAD database */
 	if ( !coords_name ) {

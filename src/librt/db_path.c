@@ -174,7 +174,7 @@ db_dup_path_tail(register struct db_full_path *newp, register const struct db_fu
 	RT_CK_FULL_PATH(newp);
 	RT_CK_FULL_PATH(oldp);
 
-	if( start < 0 || start > oldp->fp_len-1 )  rt_bomb("db_dup_path_tail: start offset out of range\n");
+	if( start < 0 || start > oldp->fp_len-1 )  bu_bomb("db_dup_path_tail: start offset out of range\n");
 
 	newp->fp_maxlen = newp->fp_len = oldp->fp_len - start;
 	if( newp->fp_len <= 0 )  {

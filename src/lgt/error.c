@@ -22,7 +22,7 @@
  *  Ray Tracing library and Framebuffer library, error handling routines.
  *
  *  Functions -
- *	rt_bomb		Called upon fatal RT library error.
+ *	bu_bomb		Called upon fatal RT library error.
  *	bu_log		Called to log RT library events.
  *	fb_log		Called to log FB library events.
  *

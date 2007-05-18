@@ -304,7 +304,7 @@ nmg_visit(const long int *magicp, const struct nmg_visit_handlers *htab, genptr_
 	switch( *magicp )  {
 	default:
 		bu_log("nmg_visit() Can't visit %s directly\n", bu_identify_magic( *magicp ));
-		rt_bomb("nmg_visit()\n");
+		bu_bomb("nmg_visit()\n");
 		/* NOTREACHED */
 	case NMG_MODEL_MAGIC:
 		nmg_visit_model( (struct model *)magicp, htab, state );

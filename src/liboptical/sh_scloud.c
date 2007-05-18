@@ -173,11 +173,11 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 	/* get transformation between world and "region" coordinates */
 	if (db_string_to_path( &full_path, rtip->rti_dbip, rp->reg_name) ) {
 		/* bad thing */
-		rt_bomb("db_string_to_path() error");
+		bu_bomb("db_string_to_path() error");
 	}
 	if(! db_path_to_mat(rtip->rti_dbip, &full_path, region_to_model, 0, &rt_uniresource)) {
 		/* bad thing */
-		rt_bomb("db_path_to_mat() error");
+		bu_bomb("db_path_to_mat() error");
 	}
 
 	/* get matrix to map points from model space to "region" space */

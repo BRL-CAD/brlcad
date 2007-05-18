@@ -226,7 +226,7 @@ main(int argc, char **argv)
 				{
 					fprintf( stderr , "Cannot open %s\n" , bu_optarg );
 					perror( "tankill-g" );
-					rt_bomb( "Cannot open input file" );
+					bu_bomb( "Cannot open input file" );
 				}
 				input_file = bu_malloc( sizeof( bu_optarg ) +1 , "tankill-g: input file name" );
 				strcpy( input_file , bu_optarg );
@@ -235,7 +235,7 @@ main(int argc, char **argv)
 				output_file = bu_optarg;
 				break;
 			default:
-				rt_bomb( usage );
+				bu_bomb( usage );
 				break;
 		}
 	}
@@ -244,7 +244,7 @@ main(int argc, char **argv)
 	{
 		perror( output_file );
 		fprintf( stderr , "tankill-g: Cannot open %s\n" , output_file );
-		rt_bomb( "Cannot open output file\n" );
+		bu_bomb( "Cannot open output file\n" );
 	}
 
 	/* use the input file name as the title (if available) */
@@ -465,7 +465,7 @@ main(int argc, char **argv)
 				(char *)NULL , (unsigned char *)NULL , 0 , 1 ,
 				0 , 0 , 0 ) )
 			{
-				rt_bomb( "tankill: Error in freeing region memory" );
+				bu_bomb( "tankill: Error in freeing region memory" );
 			}
 		}
 		else
@@ -474,7 +474,7 @@ main(int argc, char **argv)
 				(char *)NULL , (unsigned char *)NULL , ptr->ident , 0 ,
 				1 , 100 , 0 ) )
 			{
-				rt_bomb( "tankill: Error in freeing region memory" );
+				bu_bomb( "tankill: Error in freeing region memory" );
 			}
 		}
 		ptr = ptr->next;
@@ -512,7 +512,7 @@ main(int argc, char **argv)
 				(char *)NULL, (char *)NULL,
 				(unsigned char *)NULL, 0 ) )
 			{
-				rt_bomb( "tankill: Error in freeing region memory" );
+				bu_bomb( "tankill: Error in freeing region memory" );
 			}
 		}
 	}
@@ -546,7 +546,7 @@ main(int argc, char **argv)
 			if( mk_lcomb( out_fp , name , &reg_head , 0,
 			(char *)NULL, (char *)NULL, (unsigned char *)0, 0 ) )
 			{
-				rt_bomb( "tankill: Error in freeing region memory" );
+				bu_bomb( "tankill: Error in freeing region memory" );
 			}
 		}
 	}
@@ -585,7 +585,7 @@ main(int argc, char **argv)
 			bu_log( "Creating top level group 'all'\n" );
 		if( mk_lcomb( out_fp , "all" , &reg_head , 0,
 		    (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 ) )
-			rt_bomb( "tankill: Error in freeing region memory" );
+			bu_bomb( "tankill: Error in freeing region memory" );
 	}
 	wdb_close( out_fp );
 	return 0;

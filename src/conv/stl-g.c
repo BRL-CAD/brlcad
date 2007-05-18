@@ -168,7 +168,7 @@ char line[MAX_LINE_LEN];
 	{
 		bu_log( "Barrier check at start of Convet_part:\n" );
 		if( bu_mem_barriercheck() )
-			rt_bomb( "Barrier check failed!!!\n" );
+			bu_bomb( "Barrier check failed!!!\n" );
 	}
 
 
@@ -410,7 +410,7 @@ char line[MAX_LINE_LEN];
 	{
 		bu_log( "Barrier check at end of Convert_part_ascii:\n" );
 		if( bu_mem_barriercheck() )
-			rt_bomb( "Barrier check failed!!!\n" );
+			bu_bomb( "Barrier check failed!!!\n" );
 	}
 
 	bu_vls_free( &region_name );
@@ -568,7 +568,7 @@ Convert_part_binary()
 	{
 		bu_log( "Barrier check at end of Convert_part_ascii:\n" );
 		if( bu_mem_barriercheck() )
-			rt_bomb( "Barrier check failed!!!\n" );
+			bu_bomb( "Barrier check failed!!!\n" );
 	}
 
 	return;

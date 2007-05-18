@@ -225,9 +225,9 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 	if( eu1->e_p == eu2->e_p )  return;
 
 	if( !NMG_ARE_EUS_ADJACENT(eu1, eu2) )
-		rt_bomb("nmg_radial_join_eu() edgeuses don't share vertices.\n");
+		bu_bomb("nmg_radial_join_eu() edgeuses don't share vertices.\n");
 
-	if( eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p )  rt_bomb("nmg_radial_join_eu(): 0 length edge (topology)\n");
+	if( eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p )  bu_bomb("nmg_radial_join_eu(): 0 length edge (topology)\n");
 
 	if( bn_pt3_pt3_equal( eu1->vu_p->v_p->vg_p->coord,
 	    eu1->eumate_p->vu_p->v_p->vg_p->coord, tol ) )
@@ -239,7 +239,7 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 		bu_log( "\tvertex x%x ( %.12f %.12f %.12f )\n",
 			eu1->eumate_p->vu_p->v_p,
 			V3ARGS( eu1->eumate_p->vu_p->v_p->vg_p->coord ) );
-		rt_bomb("nmg_radial_join_eu(): 0 length edge (geometry)\n");
+		bu_bomb("nmg_radial_join_eu(): 0 length edge (geometry)\n");
 	}
 
 #if 1
@@ -255,7 +255,7 @@ return;
 			eu2 = eu2->eumate_p;
 			fu2 = nmg_find_fu_of_eu(eu2);
 			if( fu1->orientation != fu2->orientation )
-				rt_bomb( "nmg_radial_join_eu(): Cannot find matching orientations for faceuses\n" );
+				bu_bomb( "nmg_radial_join_eu(): Cannot find matching orientations for faceuses\n" );
 		}
 	}
 
@@ -372,7 +372,7 @@ bu_log("went all the way around\n");
 					rt_g.NMG_debug |= DEBUG_MESH;
 #endif
 					if( nmg_two_face_fuse(fu1->f_p, fur->f_p, tol) == 0 )
-						rt_bomb("faces didn't fuse?\n");
+						bu_bomb("faces didn't fuse?\n");
 					rt_g.NMG_debug = debug;
 				}
 				bu_log("  nmg_radial_join_eu() skipping this eu\n");
@@ -409,12 +409,12 @@ cont:
 				/* If all eu's were wires, here is fine */
 				if( wire_skip >= iteration2 )  break;
 				/* Nope, something bad happened */
-				rt_bomb("nmg_radial_join_eu():  went full circle, no face insertion point.\n");
+				bu_bomb("nmg_radial_join_eu():  went full circle, no face insertion point.\n");
 				break;
 			}
 		}
 		if(iteration2 >= 10000)  {
-			rt_bomb("nmg_radial_join_eu: infinite loop (2)\n");
+			bu_bomb("nmg_radial_join_eu: infinite loop (2)\n");
 		}
 
 		/* find the next use of the edge eu2 is on.  If eu2 and it's
@@ -467,7 +467,7 @@ insert:
 		/* Proceed to the next source edgeuse */
 		eu2 = nexteu;
 	}
-	if( iteration1 >= 10000 )  rt_bomb("nmg_radial_join_eu:  infinite loop (1)\n");
+	if( iteration1 >= 10000 )  bu_bomb("nmg_radial_join_eu:  infinite loop (1)\n");
 
 	NMG_CK_EDGEUSE(original_eu1);
 

@@ -969,7 +969,7 @@ struct face_g_snurb *srf;
 	NMG_CK_FACE( f );
 
 	if( f->g.snurb_p )
-		rt_bomb( "Assign_surface_to_fu: fu already has geometry\n" );
+		bu_bomb( "Assign_surface_to_fu: fu already has geometry\n" );
 
 	fu->orientation = OT_SAME;
 	fu->fumate_p->orientation = OT_OPPOSITE;

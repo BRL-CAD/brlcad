@@ -171,7 +171,7 @@ nmg_region_v_unique(struct nmgregion *r1, const struct bn_tol *tol)
 			bu_log("nmg_region_v_unique():  2 verts are the same, within tolerance\n");
 			nmg_pr_v( vi, 0 );
 			nmg_pr_v( vj, 0 );
-			rt_bomb("nmg_region_v_unique()\n");
+			bu_bomb("nmg_region_v_unique()\n");
 		}
 	}
 	bu_ptbl_free( &t);
@@ -283,7 +283,7 @@ const struct bn_tol	*tol;
 	NMG_CK_REGION(r2);
 	BN_CK_TOL(tol);
 
-	if( r1->m_p != r2->m_p )  rt_bomb("nmg_two_region_vertex_fuse:  regions not in same model\n");
+	if( r1->m_p != r2->m_p )  bu_bomb("nmg_two_region_vertex_fuse:  regions not in same model\n");
 
 	nmg_vertex_tabulate( &t1, &r1->l.magic );
 	nmg_vertex_tabulate( &t2, &r2->l.magic );
@@ -533,7 +533,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 		{
 			bu_log( "nmg_snurb_is_plana: Cannot calculate plane for snurb x%x\n" , srf );
 			rt_nurb_s_print( "", srf );
-			rt_bomb( "nmg_snurb_is_plana: Cannot calculate plane for snurb\n" );
+			bu_bomb( "nmg_snurb_is_plana: Cannot calculate plane for snurb\n" );
 		}
 	}
 
@@ -658,7 +658,7 @@ nmg_split_trim(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *snrb,
 	{
 		bu_log( "nmg_split_trim: split parameter (%g) is not between ends (%g and %g)\n",
 			t, pt0->t, pt1->t );
-		rt_bomb( "nmg_split_trim: split parameteris not between ends\n" );
+		bu_bomb( "nmg_split_trim: split parameteris not between ends\n" );
 	}
 
 	nmg_eval_trim_curve( cnrb, snrb, pt_new->t, pt_new->xyz );
@@ -862,7 +862,7 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 	{
 		bu_log( "nmg_cnurb_lseg_coincident: cnrb x%x isn't from eu x%x\n",
 			cnrb, eu1 );
-		rt_bomb( "nmg_cnurb_lseg_coincident: cnrb and eu1 disagree\n" );
+		bu_bomb( "nmg_cnurb_lseg_coincident: cnrb and eu1 disagree\n" );
 	}
 
 	if( snrb )
@@ -879,7 +879,7 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 		struct vertexuse_a_cnurb *vua2;
 
 		if( !snrb )
-			rt_bomb( "nmg_cnurb_lseg_coincident: No CNURB nor SNURB!!\n" );
+			bu_bomb( "nmg_cnurb_lseg_coincident: No CNURB nor SNURB!!\n" );
 
 		vu1 = eu1->vu_p;
 		NMG_CK_VERTEXUSE( vu1 );
@@ -887,14 +887,14 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 		{
 			bu_log( "nmg_cnurb_lseg_coincident: vu (x%x) has no attributes\n",
 				vu1 );
-			rt_bomb( "nmg_cnurb_lseg_coincident: vu has no attributes\n" );
+			bu_bomb( "nmg_cnurb_lseg_coincident: vu has no attributes\n" );
 		}
 
 		if( *vu1->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
 		{
 			bu_log( "nmg_cnurb_lseg_coincident: vu (x%x) from CNURB EU (x%x) is not CNURB\n",
 				vu1, eu1 );
-			rt_bomb( "nmg_cnurb_lseg_coincident: vu from CNURB EU is not CNURB\n" );
+			bu_bomb( "nmg_cnurb_lseg_coincident: vu from CNURB EU is not CNURB\n" );
 		}
 
 		vua1 = vu1->a.cnurb_p;
@@ -906,14 +906,14 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 		{
 			bu_log( "nmg_cnurb_lseg_coincident: vu (x%x) has no attributes\n",
 				vu2 );
-			rt_bomb( "nmg_cnurb_lseg_coincident: vu has no attributes\n" );
+			bu_bomb( "nmg_cnurb_lseg_coincident: vu has no attributes\n" );
 		}
 
 		if( *vu2->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
 		{
 			bu_log( "nmg_cnurb_lseg_coincident: vu (x%x) from CNURB EU (x%x) is not CNURB\n",
 				vu2, eu1 );
-			rt_bomb( "nmg_cnurb_lseg_coincident: vu from CNURB EU is not CNURB\n" );
+			bu_bomb( "nmg_cnurb_lseg_coincident: vu from CNURB EU is not CNURB\n" );
 		}
 
 		vua2 = vu2->a.cnurb_p;
@@ -1017,13 +1017,13 @@ nmg_cnurb_is_on_crv(const struct edgeuse *eu, const struct edge_g_cnurb *cnrb, c
 		{
 			bu_log( "nmg_cnurb_is_on_crv(): vu (x%x) on CNURB EU (x%x) has no attributes\n",
 				vu1, eu );
-			rt_bomb( "nmg_cnurb_is_on_crv(): vu on CNURB EU has no attributes\n" );
+			bu_bomb( "nmg_cnurb_is_on_crv(): vu on CNURB EU has no attributes\n" );
 		}
 		if( *vu1->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
 		{
 			bu_log( "nmg_cnurb_is_on_crv(): vu (x%x) on CNURB EU (x%x) is not CNURB\n",
 				vu1, eu );
-			rt_bomb( "nmg_cnurb_is_on_crv(): vu on CNURB EU is not CNURB\n" );
+			bu_bomb( "nmg_cnurb_is_on_crv(): vu on CNURB EU is not CNURB\n" );
 		}
 		vu1a = vu1->a.cnurb_p;
 		NMG_CK_VERTEXUSE_A_CNURB( vu1a );
@@ -1032,13 +1032,13 @@ nmg_cnurb_is_on_crv(const struct edgeuse *eu, const struct edge_g_cnurb *cnrb, c
 		{
 			bu_log( "nmg_cnurb_is_on_crv(): vu (x%x) on CNURB EU (x%x) has no attributes\n",
 				vu2, eu->eumate_p );
-			rt_bomb( "nmg_cnurb_is_on_crv(): vu on CNURB EU has no attributes\n" );
+			bu_bomb( "nmg_cnurb_is_on_crv(): vu on CNURB EU has no attributes\n" );
 		}
 		if( *vu2->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
 		{
 			bu_log( "nmg_cnurb_is_on_crv(): vu (x%x) on CNURB EU (x%x) is not CNURB\n",
 				vu2, eu->eumate_p );
-			rt_bomb( "nmg_cnurb_is_on_crv(): vu on CNURB EU is not CNURB\n" );
+			bu_bomb( "nmg_cnurb_is_on_crv(): vu on CNURB EU is not CNURB\n" );
 		}
 		vu2a = vu2->a.cnurb_p;
 		NMG_CK_VERTEXUSE_A_CNURB( vu2a );
@@ -1356,7 +1356,7 @@ nmg_model_edge_g_fuse(struct model *m, const struct bn_tol *tol)
 			eu2 = BU_LIST_MAIN_PTR( edgeuse, BU_LIST_FIRST( bu_list, &eg2->eu_hd2 ), l2 );
 			NMG_CK_EDGEUSE(eu2);
 
-			if( eg1 == eg2 )  rt_bomb("nmg_model_edge_g_fuse() edge_g listed twice in ptbl?\n");
+			if( eg1 == eg2 )  bu_bomb("nmg_model_edge_g_fuse() edge_g listed twice in ptbl?\n");
 
 			if( !nmg_2edgeuse_g_coincident( eu1, eu2, tol ) )  continue;
 
@@ -1418,7 +1418,7 @@ nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 
 			NMG_CK_VERTEX(v);
 			vg = v->vg_p;
-			if( !vg )  rt_bomb("nmg_ck_fu_verts(): vertex with no geometry?\n");
+			if( !vg )  bu_bomb("nmg_ck_fu_verts(): vertex with no geometry?\n");
 			NMG_CK_VERTEX_G(vg);
 
 			/* Geometry check */
@@ -1446,7 +1446,7 @@ nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 
 			NMG_CK_VERTEX(v);
 			vg = v->vg_p;
-			if( !vg )  rt_bomb("nmg_ck_fu_verts(): vertex with no geometry?\n");
+			if( !vg )  bu_bomb("nmg_ck_fu_verts(): vertex with no geometry?\n");
 			NMG_CK_VERTEX_G(vg);
 
 			/* Geometry check */
@@ -1715,7 +1715,7 @@ nmg_model_face_fuse(struct model *m, const struct bn_tol *tol)
 				PLPRINT(" f1", f1->g.plane_p->N);
 				nmg_pr_fu_briefly(f1->fu_p, 0);
 			}
-			rt_bomb("nmg_model_face_fuse(): verts not within tol of containing face\n");
+			bu_bomb("nmg_model_face_fuse(): verts not within tol of containing face\n");
 		}
 
 		for( j = i-1; j >= 0; j-- )  {
@@ -1759,7 +1759,7 @@ nmg_break_all_es_on_v(long int *magic_p, struct vertex *v, const struct bn_tol *
 	     !strcmp( magic_type, "Unknown_Magic" )  )
 	{
 		bu_log( "Bad magic pointer passed to nmg_break_all_es_on_v (%s)\n", magic_type );
-		rt_bomb( "Bad magic pointer passed to nmg_break_all_es_on_v()\n" );
+		bu_bomb( "Bad magic pointer passed to nmg_break_all_es_on_v()\n" );
 	}
 
 	nmg_edgeuse_tabulate( &eus, magic_p );
@@ -2075,20 +2075,20 @@ nmg_radial_verify_pointers(const struct bu_list *hd, const struct bn_tol *tol)
 		prev = BU_LIST_PPREV_CIRC(nmg_radial, rad);
 		next = BU_LIST_PNEXT_CIRC(nmg_radial, rad);
 		if( rad->eu != prev->eu->radial_p->eumate_p )
-			rt_bomb("nmg_radial_verify_pointers() eu not radial+mate forw from prev\n");
+			bu_bomb("nmg_radial_verify_pointers() eu not radial+mate forw from prev\n");
 		if( rad->eu->eumate_p != prev->eu->radial_p )
-			rt_bomb("nmg_radial_verify_pointers() eumate not radial from prev\n");
+			bu_bomb("nmg_radial_verify_pointers() eumate not radial from prev\n");
 		if( rad->eu != next->eu->eumate_p->radial_p )
-			rt_bomb("nmg_radial_verify_pointers() eu not mate+radial back from next\n");
+			bu_bomb("nmg_radial_verify_pointers() eu not mate+radial back from next\n");
 		if( rad->eu->eumate_p != next->eu->eumate_p->radial_p->eumate_p )
-			rt_bomb("nmg_radial_verify_pointers() eumate not mate+radial+mate back from next\n");
+			bu_bomb("nmg_radial_verify_pointers() eumate not mate+radial+mate back from next\n");
 
 		if( rad->fu == (struct faceuse *)NULL )  continue;
 		if( rad->ang < amin )  {
 			nmg_pr_radial_list( hd, tol );
 			bu_log(" previous angle=%g > current=%g\n",
 				amin*bn_radtodeg, rad->ang*bn_radtodeg);
-			rt_bomb("nmg_radial_verify_pointers() not monotone increasing\n");
+			bu_bomb("nmg_radial_verify_pointers() not monotone increasing\n");
 		}
 		amin = rad->ang;
 	}
@@ -2115,7 +2115,7 @@ nmg_radial_verify_monotone(const struct bu_list *hd, const struct bn_tol *tol)
 			nmg_pr_radial_list( hd, tol );
 			bu_log(" previous angle=%g > current=%g\n",
 				amin*bn_radtodeg, rad->ang*bn_radtodeg);
-			rt_bomb("nmg_radial_verify_monotone() not monotone increasing\n");
+			bu_bomb("nmg_radial_verify_monotone() not monotone increasing\n");
 		}
 		amin = rad->ang;
 	}
@@ -2360,7 +2360,7 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 			rmax->ang * bn_radtodeg, rmax->eu );
 		nmg_pr_radial_list( hd, tol );
 		nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec, tol );
-		rt_bomb("nmg_radial_build_list() min and max angle not adjacent in list (or list not monotone increasing)\n");
+		bu_bomb("nmg_radial_build_list() min and max angle not adjacent in list (or list not monotone increasing)\n");
 	}
 }
 
@@ -2473,7 +2473,7 @@ nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
 
 		tmp_tol = (*tol);
 		if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
-			rt_bomb( "Nmg_is_crack_outie called with non-face loop" );
+			bu_bomb( "Nmg_is_crack_outie called with non-face loop" );
 
 		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE( fu );
@@ -2495,7 +2495,7 @@ nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
 #else
 		rt_pr_tol(tol);
 		bu_log(" eu=x%x, len=%g\n", eu, MAGNITUDE(diff) );
-		rt_bomb("nmg_is_crack_outie() edge is too short to bisect.  Increase tolerance and re-run.\n");
+		bu_bomb("nmg_is_crack_outie() edge is too short to bisect.  Increase tolerance and re-run.\n");
 #endif
 	}
 	if( rt_g.NMG_debug & DEBUG_BASIC )  {
@@ -2523,7 +2523,7 @@ nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
 		nmg_class_name(class),
 		V3ARGS(midpt) );
 	nmg_pr_lu_briefly( lu, 0 );
-	rt_bomb("nmg_is_crack_outie() got unexpected midpt classification from nmg_class_pt_lu_except()\n");
+	bu_bomb("nmg_is_crack_outie() got unexpected midpt classification from nmg_class_pt_lu_except()\n");
 
 	return( -1 ); /* make the compiler happy */
 }
@@ -2544,7 +2544,7 @@ nmg_find_radial_eu(const struct bu_list *hd, const struct edgeuse *eu)
 		if( rad->eu->eumate_p == eu )  return rad;
 	}
 	bu_log("nmg_find_radial_eu() eu=x%x\n", eu);
-	rt_bomb("nmg_find_radial_eu() given edgeuse not found on list\n");
+	bu_bomb("nmg_find_radial_eu() given edgeuse not found on list\n");
 
 	return( (struct nmg_radial *)NULL );
 }
@@ -2685,7 +2685,7 @@ nmg_radial_mark_cracks(struct bu_list *hd, const struct edge *e1, const struct e
 			if( eu == rad->eu )  {
 				nmg_pr_lu_briefly( lu, 0 );
 				nmg_pr_radial_list( hd, tol );
-				rt_bomb("nmg_radial_mark_cracks() loop too short!\n");
+				bu_bomb("nmg_radial_mark_cracks() loop too short!\n");
 			}
 
 			other = nmg_find_radial_eu( hd, eu );
@@ -2699,7 +2699,7 @@ nmg_radial_mark_cracks(struct bu_list *hd, const struct edge *e1, const struct e
 		if( eu != rad->eu )  {
 			nmg_pr_lu_briefly( lu, 0 );
 			nmg_pr_radial_list( hd, tol );
-			rt_bomb("nmg_radial_mark_cracks() loop didn't return to start\n");
+			bu_bomb("nmg_radial_mark_cracks() loop didn't return to start\n");
 		}
 
 		rad->is_crack = 1;
@@ -2772,7 +2772,7 @@ nmg_radial_find_an_original(const struct bu_list *hd, const struct shell *s, con
 
 	bu_log("nmg_radial_find_an_original() shell=x%x\n", s);
 	nmg_pr_radial_list( hd, tol );
-	rt_bomb("nmg_radial_find_an_original() No entries from indicated shell\n");
+	bu_bomb("nmg_radial_find_an_original() No entries from indicated shell\n");
 
 	return( (struct nmg_radial *)NULL );
 }
@@ -2872,7 +2872,7 @@ nmg_radial_mark_flips(struct bu_list *hd, const struct shell *s, const struct bn
 	bu_log("nmg_radial_mark_flips() unable to establish proper orientation parity.\n  eu count=%d, shell=x%x, expectation=%d\n",
 		count, s, expected_ot);
 	nmg_pr_radial_list( hd, tol );
-	rt_bomb("nmg_radial_mark_flips() unable to establish proper orientation parity.\n");
+	bu_bomb("nmg_radial_mark_flips() unable to establish proper orientation parity.\n");
 
 	return( 0 ); /* for compiler */
 }
@@ -3302,13 +3302,13 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
 	if( eu1->e_p == eu2->e_p )  return;
 
 	if( !NMG_ARE_EUS_ADJACENT(eu1, eu2) )
-		rt_bomb("nmg_radial_join_eu_NEW() edgeuses don't share vertices.\n");
+		bu_bomb("nmg_radial_join_eu_NEW() edgeuses don't share vertices.\n");
 
-	if( eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p )  rt_bomb("nmg_radial_join_eu_NEW(): 0 length edge (topology)\n");
+	if( eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p )  bu_bomb("nmg_radial_join_eu_NEW(): 0 length edge (topology)\n");
 
 	if( bn_pt3_pt3_equal( eu1->vu_p->v_p->vg_p->coord,
 	    eu1->eumate_p->vu_p->v_p->vg_p->coord, tol ) )
-		rt_bomb("nmg_radial_join_eu_NEW(): 0 length edge (geometry)\n");
+		bu_bomb("nmg_radial_join_eu_NEW(): 0 length edge (geometry)\n");
 
 	/* Ensure faces are of same orientation, if both eu's have faces */
 	fu1 = nmg_find_fu_of_eu(eu1);
@@ -3318,7 +3318,7 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
 			eu2 = eu2->eumate_p;
 			fu2 = nmg_find_fu_of_eu(eu2);
 			if( fu1->orientation != fu2->orientation )
-				rt_bomb( "nmg_radial_join_eu_NEW(): Cannot find matching orientations for faceuses\n" );
+				bu_bomb( "nmg_radial_join_eu_NEW(): Cannot find matching orientations for faceuses\n" );
 		}
 	}
 
@@ -3598,7 +3598,7 @@ nmg_eu_radial_check(const struct edgeuse *eu, const struct shell *s, const struc
 
 	BU_LIST_INIT( &list );
 
-	/* In bad cases, this routine may rt_bomb() */
+	/* In bad cases, this routine may bu_bomb() */
 	nmg_radial_build_list( &list, NULL, 1, eu, xvec, yvec, zvec, tol );
 
 	nmg_radial_mark_cracks( &list, eu->e_p, NULL, tol );

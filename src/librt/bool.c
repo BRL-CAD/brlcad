@@ -110,7 +110,7 @@ rt_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap
 		segp->seg_out.hit_surfno );
 	}
 
-	if( PartHdp->pt_forw == PartHdp )  rt_bomb("rt_weave0seg() with empty partition list\n");
+	if( PartHdp->pt_forw == PartHdp )  bu_bomb("rt_weave0seg() with empty partition list\n");
 
 	/* See if this segment ends before start of first partition */
 	if( segp->seg_out.hit_dist < PartHdp->pt_forw->pt_inhit->hit_dist )  {
@@ -163,7 +163,7 @@ rt_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap
 			return;
 		}
 	}
-	rt_bomb("rt_weave0seg() fell out of partition loop?\n");
+	bu_bomb("rt_weave0seg() fell out of partition loop?\n");
 }
 
 /*
@@ -243,7 +243,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 			VPRINT(" OPoint", pt );
 			bu_log( "***********\n" );
 		}
-		if( segp->seg_stp->st_bit >= rtip->nsolids) rt_bomb("rt_boolweave: st_bit");
+		if( segp->seg_stp->st_bit >= rtip->nsolids) bu_bomb("rt_boolweave: st_bit");
 
 		BU_LIST_DEQUEUE( &(segp->l) );
 		BU_LIST_INSERT( &(out_hd->l), &(segp->l) );
@@ -1746,7 +1746,7 @@ out:
 		bu_log("rt_boolfinal() ret=%d, %s\n", ret, reason);
 		rt_pr_partitions( ap->a_rt_i, FinalHdp, "rt_boolfinal: Final partition list at return:" );
 		rt_pr_partitions( ap->a_rt_i, InputHdp, "rt_boolfinal: Input/pending partition list at return:" );
-		rt_bomb("rt_boolfinal() failed to process InputHdp list\n");
+		bu_bomb("rt_boolfinal() failed to process InputHdp list\n");
 	}
 #endif
 	return ret;
@@ -2059,7 +2059,7 @@ rt_partition_len( const struct partition *partheadp )
 			/* Partitions on the free queue have pt_magic = 0 */
 			RT_CK_PT(pp);
 		}
-		if( ++count > 1000000 )  rt_bomb("partition length > 10000000 elements\n");
+		if( ++count > 1000000 )  bu_bomb("partition length > 10000000 elements\n");
 	}
 	return( (int)count );
 }
@@ -2107,7 +2107,7 @@ rt_tree_test_ready(register const union tree *tp, register const struct bu_bitv 
 		return rt_tree_test_ready( tp->tr_b.tb_right, solidbits, regionp, pp );
 
 	default:
-		rt_bomb("rt_tree_test_ready: bad op\n");
+		bu_bomb("rt_tree_test_ready: bad op\n");
 	}
 	return 0;
 }

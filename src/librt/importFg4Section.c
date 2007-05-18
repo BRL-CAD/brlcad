@@ -245,7 +245,7 @@ do_grid(char *line)
 	if( grid_no < 1 )
 	{
 		bu_log( "ERROR: grid id number = %d\n" , grid_no );
-		rt_bomb( "BAD GRID ID NUMBER\n" );
+		bu_bomb( "BAD GRID ID NUMBER\n" );
 	}
 
 	strncpy( field , &line[24] , 8 );

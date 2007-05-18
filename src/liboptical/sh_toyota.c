@@ -210,11 +210,11 @@ toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, str
 	if ((fp = fopen(mfile, "r")) == NULL) {
 		perror(mfile);
 		bu_log("reflectance: cannot open %s for reading.", mfile);
-		rt_bomb("");
+		bu_bomb("");
 	}
 	if (fscanf(fp, "%d", &lines) != 1) {
 		bu_log("toyota_setup: no data in %s\n", mfile);
-		rt_bomb("");
+		bu_bomb("");
 	}
 	tp->refl_lines = lines;
 	tp->refl = (fastf_t *)bu_malloc(sizeof(fastf_t)*lines*3, "refl[]");
@@ -1438,7 +1438,7 @@ atmos_irradiance(fastf_t lambda)
 	};
 
 	if (lambda < 250. || lambda > 25000.)
-		rt_bomb("atmos_irradiance: bad wavelength.");
+		bu_bomb("atmos_irradiance: bad wavelength.");
 	{
 		/* Find index of lower lambda in table. */
 		lo = 0;
@@ -1524,7 +1524,7 @@ ozone_absorption(fastf_t lambda)
 	};
 
 	if (lambda < 200. || lambda > 750.) {
-		rt_bomb("ozone absorption: bad wavelength.");
+		bu_bomb("ozone absorption: bad wavelength.");
 	}
 	/* Find index of lower lambda in table. */
 	lo = 0;
@@ -1622,7 +1622,7 @@ spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2)
 	};
 
 	if (lambda < 300. || lambda > 830.) {
-		rt_bomb("spectral_dist_table: bad wavelength.");
+		bu_bomb("spectral_dist_table: bad wavelength.");
 	} else {
 		/* Do linear interpolation to find approximate values. */
 		j = ((int)lambda - 300)/10;
@@ -1713,7 +1713,7 @@ if (lum <= 0.) {/*bu_log("lum = %g\n", lum);*/ return(0.);}
 			+ 0.24748e3/t_cp
 			+ 0.237040;
 #if 0
-		rt_bomb("temp");
+		bu_bomb("temp");
 #endif
 	}
 	y = 2.870*x - 3.000*x*x - 0.275;
@@ -1849,7 +1849,7 @@ absorp_coeff(fastf_t lambda, char *material)
 	if ((fp = fopen(mfile, "r")) == NULL) {
 		fprintf(stderr,
 			"absorp_coeff: cannot open %s for reading.", mfile);
-		rt_bomb("");
+		bu_bomb("");
 	}
 
 	/* Find "nearby" values of lambda, absorption for interpolation. */
@@ -2190,7 +2190,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	refl = reflectance(lambda, alpha0, ts->refl, ts->refl_lines);
 	while (refl < MIKE_TOL) {
 		if (refl == -1.)
-			rt_bomb("toyota render: no reflectance data.");
+			bu_bomb("toyota render: no reflectance data.");
 		alpha0++;
 		refl = reflectance(lambda, alpha0, ts->refl, ts->refl_lines);
 	}

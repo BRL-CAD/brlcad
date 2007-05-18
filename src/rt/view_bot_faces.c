@@ -146,7 +146,7 @@ view_2init( struct application *ap, char *framename )
 #endif
 
 	if( outfp == NULL )
-		rt_bomb("outfp is NULL\n");
+		bu_bomb("outfp is NULL\n");
 
 #ifdef HAVE_UNIX_IO
 	/* read in any existing data */

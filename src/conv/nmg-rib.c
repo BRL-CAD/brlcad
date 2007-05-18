@@ -129,7 +129,7 @@ lu_to_rib(struct loopuse *lu, fastf_t *fu_normal, struct bu_vls *norms, struct b
 	    bu_vls_printf(norms, "%g %g %g  ",
 			  V3ARGS(fu_normal));
     } else {
-	rt_bomb("bad child of loopuse\n");
+	bu_bomb("bad child of loopuse\n");
     }
 }
 

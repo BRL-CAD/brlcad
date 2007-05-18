@@ -62,7 +62,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 			(p), (p)->forw, (p)->forw->back); \
 		bu_log("0x%08x->back(0x%08x)->forw = 0x%08x\n", \
 			(p), (p)->back, (p)->back->forw); \
-		rt_bomb("Goodbye\n"); \
+		bu_bomb("Goodbye\n"); \
 	}
 
 
@@ -254,7 +254,7 @@ static void set_loop_sub_manifold(char *tbl, struct loopuse *lu_p, char manifold
 			set_edge_sub_manifold(tbl, eu_p, manifold);
 		}
 	} else
-		rt_bomb("bad child of loopuse\n");
+		bu_bomb("bad child of loopuse\n");
 }
 static void set_face_sub_manifold(char *tbl, struct faceuse *fu_p, char manifold)
 {

@@ -540,7 +540,7 @@ Insert_region_name(char *name, int reg_id)
 	    bu_log( "Insert_region_name: name %s ident %d\n\tfound name is %d\n\tfound ident is %d\n",
 		    name, reg_id, foundn, foundr );
 	    List_names();
-	    rt_bomb( "\tCannot insert new node\n" );
+	    bu_bomb( "\tCannot insert new node\n" );
 	}
 
     /* Add to tree for entire model */
@@ -567,7 +567,7 @@ Insert_region_name(char *name, int reg_id)
 		    if( nptr_model->nright )
 			{
 			    bu_log( "Insert_region_name: nptr_model->nright not null\n" );
-			    rt_bomb( "\tCannot insert new node\n" );
+			    bu_bomb( "\tCannot insert new node\n" );
 			}
 		    nptr_model->nright = new_ptr;
 		}
@@ -576,7 +576,7 @@ Insert_region_name(char *name, int reg_id)
 		    if( nptr_model->nleft )
 			{
 			    bu_log( "Insert_region_name: nptr_model->nleft not null\n" );
-			    rt_bomb( "\tCannot insert new node\n" );
+			    bu_bomb( "\tCannot insert new node\n" );
 			}
 		    nptr_model->nleft = new_ptr;
 		}
@@ -589,7 +589,7 @@ Insert_region_name(char *name, int reg_id)
 		    if( rptr_model->rright )
 			{
 			    bu_log( "Insert_region_name: rptr_model->rright not null\n" );
-			    rt_bomb( "\tCannot insert new node\n" );
+			    bu_bomb( "\tCannot insert new node\n" );
 			}
 		    rptr_model->rright = new_ptr;
 		}
@@ -598,7 +598,7 @@ Insert_region_name(char *name, int reg_id)
 		    if( rptr_model->rleft )
 			{
 			    bu_log( "Insert_region_name: rptr_model->rleft not null\n" );
-			    rt_bomb( "\tCannot insert new node\n" );
+			    bu_bomb( "\tCannot insert new node\n" );
 			}
 		    rptr_model->rleft = new_ptr;
 		}
@@ -737,7 +737,7 @@ Insert_name(struct name_tree **root, char *name, int inner)
 	    if( ptr->nright )
 		{
 		    bu_log( "Insert_name: ptr->nright not null\n" );
-		    rt_bomb( "\tCannot insert new node\n" );
+		    bu_bomb( "\tCannot insert new node\n" );
 		}
 	    ptr->nright = new_ptr;
 	}
@@ -746,7 +746,7 @@ Insert_name(struct name_tree **root, char *name, int inner)
 	    if( ptr->nleft )
 		{
 		    bu_log( "Insert_name: ptr->nleft not null\n" );
-		    rt_bomb( "\tCannot insert new node\n" );
+		    bu_bomb( "\tCannot insert new node\n" );
 		}
 	    ptr->nleft = new_ptr;
 	}
@@ -847,7 +847,7 @@ Subtract_holes(struct wmember *head, int comp_id, int group_id)
 					bu_log( "\tSubtracting %s\n", ptr->name );
 
 				    if( mk_addmember( ptr->name , &(head->l), NULL , WMOP_SUBTRACT ) == (struct wmember *)NULL )
-					rt_bomb( "Subtract_holes: mk_addmember failed\n" );
+					bu_bomb( "Subtract_holes: mk_addmember failed\n" );
 
 				    ptr = ptr->rright;
 				}
@@ -1081,13 +1081,13 @@ Delete_name(struct name_tree **root, char *name)
     if( !found )
 	{
 	    bu_log( "name (%s) deleted from name tree, but not found in ident tree!!\n" , name );
-	    rt_bomb( "Delete_name\n" );
+	    bu_bomb( "Delete_name\n" );
 	}
 
     if( !parent )
 	{
 	    bu_log( "name (%s) is root of ident tree, but not name tree!!\n" , name );
-	    rt_bomb( "Delete_name\n" );
+	    bu_bomb( "Delete_name\n" );
 	}
 
 
@@ -1366,7 +1366,7 @@ f4_do_grid(void)
     if( grid_no < 1 )
 	{
 	    bu_log( "ERROR: grid id number = %d\n" , grid_no );
-	    rt_bomb( "BAD GRID ID NUMBER\n" );
+	    bu_bomb( "BAD GRID ID NUMBER\n" );
 	}
 
     strncpy( field , &line[24] , 8 );
@@ -1453,7 +1453,7 @@ f4_do_sphere(void)
 	    if( mk_addmember( name ,  &sphere_group.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
 		{
 		    bu_log( "f4_do_sphere: Error in adding %s to sphere group\n" , name );
-		    rt_bomb( "f4_do_sphere" );
+		    bu_bomb( "f4_do_sphere" );
 		}
 	    bu_free( name, "solid_name" );
 
@@ -1471,7 +1471,7 @@ f4_do_sphere(void)
 	    if( mk_addmember( name , &sphere_group.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 		{
 		    bu_log( "f4_do_sphere: Error in subtracting %s from sphere region\n" , name );
-		    rt_bomb( "f4_do_sphere" );
+		    bu_bomb( "f4_do_sphere" );
 		}
 	    bu_free( name, "solid_name" );
 
@@ -1580,7 +1580,7 @@ f4_do_ccone1(void)
 		    bu_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
 		    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			    group_id, comp_id, element_id );
-		    rt_bomb( "CCONE1\n" );
+		    bu_bomb( "CCONE1\n" );
 		}
 	    return;
 	}
@@ -1605,7 +1605,7 @@ f4_do_ccone1(void)
 	    bu_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
 		    group_id, comp_id, element_id , c1 );
-	    rt_bomb( "CCONE1\n" );
+	    bu_bomb( "CCONE1\n" );
 	}
 
     strncpy( field , line , 8 );
@@ -1700,7 +1700,7 @@ f4_do_ccone1(void)
 
 	    BU_LIST_INIT( &r_head.l );
 	    if( mk_addmember( outer_name , &r_head.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
-		rt_bomb( "CCONE1: mk_addmember failed\n" );
+		bu_bomb( "CCONE1: mk_addmember failed\n" );
 	    bu_free( outer_name, "solid_name" );
 
 	    length = MAGNITUDE( height );
@@ -1773,7 +1773,7 @@ f4_do_ccone1(void)
 		    mk_trc_h( fdout , inner_name , base , inner_height , inner_r1 , inner_r2 );
 
 		    if( mk_addmember( inner_name , &r_head.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
-			rt_bomb( "CCONE1: mk_addmember failed\n" );
+			bu_bomb( "CCONE1: mk_addmember failed\n" );
 		    bu_free( inner_name, "solid_name" );
 		}
 
@@ -1807,7 +1807,7 @@ f4_do_ccone2(void)
 		    bu_log( "Unexpected EOF while reading continuation card for CCONE2\n" );
 		    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			    group_id, comp_id, element_id );
-		    rt_bomb( "CCONE2\n" );
+		    bu_bomb( "CCONE2\n" );
 		}
 	    return;
 	}
@@ -1829,7 +1829,7 @@ f4_do_ccone2(void)
 	    bu_log( "Unexpected EOF while reading continuation card for CCONE2\n" );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
 		    group_id, comp_id, element_id , c1 );
-	    rt_bomb( "CCONE2\n" );
+	    bu_bomb( "CCONE2\n" );
 	}
 
     strncpy( field , line , 8 );
@@ -1889,7 +1889,7 @@ f4_do_ccone2(void)
 	    mk_trc_h( fdout , name , grid_points[pt1] , height , ro1 , ro2 );
 
 	    if( mk_addmember( name , &r_head.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
-		rt_bomb( "mk_addmember failed!\n" );
+		bu_bomb( "mk_addmember failed!\n" );
 	    bu_free( name, "solid_name" );
 
 	    if( ri1 < min_radius )
@@ -1902,7 +1902,7 @@ f4_do_ccone2(void)
 	    mk_trc_h( fdout , name , grid_points[pt1] , height , ri1 , ri2 );
 
 	    if( mk_addmember( name , &r_head.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
-		rt_bomb( "mk_addmember failed!\n" );
+		bu_bomb( "mk_addmember failed!\n" );
 	    bu_free( name, "solid_name" );
 
 	    name = make_solid_name( CCONE2 , element_id , comp_id , group_id , 0 );
@@ -1933,7 +1933,7 @@ f4_do_ccone3(void)
 		    bu_log( "Unexpected EOF while reading continuation card for CCONE3\n" );
 		    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			    group_id, comp_id, element_id );
-		    rt_bomb( "CCONE3\n" );
+		    bu_bomb( "CCONE3\n" );
 		}
 	    return;
 	}
@@ -1957,7 +1957,7 @@ f4_do_ccone3(void)
 	    bu_log( "Unexpected EOF while reading continuation card for CCONE3\n" );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %8.8s\n",
 		    group_id, comp_id, element_id , field );
-	    rt_bomb( "CCONE3\n" );
+	    bu_bomb( "CCONE3\n" );
 	}
 
     if( strncmp( field, line, 8 ) )
@@ -2747,7 +2747,7 @@ f4_do_hex1(void)
 		    bu_log( "Unexpected EOF while reading continuation card for CHEX1\n" );
 		    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			    group_id, comp_id, element_id );
-		    rt_bomb( "CHEX1\n" );
+		    bu_bomb( "CHEX1\n" );
 		}
 	    return;
 	}
@@ -2775,7 +2775,7 @@ f4_do_hex1(void)
 	    bu_log( "Unexpected EOF while reading continuation card for CHEX1\n" );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
 		    group_id, comp_id, element_id , cont1 );
-	    rt_bomb( "CHEX1\n" );
+	    bu_bomb( "CHEX1\n" );
 	}
 
     strncpy( field , line , 8 );
@@ -2851,7 +2851,7 @@ f4_do_hex2(void)
 		    bu_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
 		    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			    group_id, comp_id, element_id );
-		    rt_bomb( "CHEX2\n" );
+		    bu_bomb( "CHEX2\n" );
 		}
 	    return;
 	}
@@ -2870,7 +2870,7 @@ f4_do_hex2(void)
 	    bu_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
 		    group_id, comp_id, element_id , cont1 );
-	    rt_bomb( "CHEX2\n" );
+	    bu_bomb( "CHEX2\n" );
 	}
 
     strncpy( field , line , 8 );
@@ -3006,7 +3006,7 @@ Process_input(int pass_number)
     if( pass_number != 0 && pass_number != 1 )
 	{
 	    bu_log( "Process_input: illegal pass number %d\n" , pass_number );
-	    rt_bomb( "Process_input" );
+	    bu_bomb( "Process_input" );
 	}
 
     region_id = 0;
@@ -3516,7 +3516,7 @@ main(int argc, char **argv)
 			break;
 		    default:
 			bu_log( "Unrecognzed option (%c)\n", c );
-			rt_bomb( usage );
+			bu_bomb( usage );
 			break;
 		}
 	}

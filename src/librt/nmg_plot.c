@@ -573,7 +573,7 @@ static void nmg_eu_coords(const struct edgeuse *eu, fastf_t *base, fastf_t *tip6
 			face_normal, 1);
 
 	} else
-		rt_bomb("nmg_eu_coords: bad edgeuse up. What's going on?\n");
+		bu_bomb("nmg_eu_coords: bad edgeuse up. What's going on?\n");
 
 	VBLEND2( tip60, 0.4, base, 0.6, tip );
 }
@@ -1407,7 +1407,7 @@ nmg_pl_isect(const char *filename, const struct shell *s, const struct bn_tol *t
 			} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
 				;
 			} else {
-				rt_bomb("nmg_pl_isect() bad loopuse down\n");
+				bu_bomb("nmg_pl_isect() bad loopuse down\n");
 			}
 		}
 	}
@@ -2199,7 +2199,7 @@ nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const stru
 	if ((fd = fopen(name, "w")) == (FILE *)NULL) {
 		perror(name);
 		bu_log("plot_ray_face cannot open %s", name);
-		rt_bomb("aborting");
+		bu_bomb("aborting");
 	}
 
 	b = (long *)bu_calloc( fu->s_p->r_p->m_p->maxindex, sizeof(long), "bit vec");

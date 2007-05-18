@@ -86,13 +86,13 @@ nmg_vvertex(const struct vertex *v, const struct vertexuse *vup)
 	for( BU_LIST_FOR( vu, vertexuse, &v->vu_hd ) )  {
 		NMG_CK_VERTEXUSE(vu);
 		if (vu->v_p != v)
-			rt_bomb("nmg_vvertex() a vertexuse in my list doesn't share my vertex\n");
+			bu_bomb("nmg_vvertex() a vertexuse in my list doesn't share my vertex\n");
 		if (vu == vup)
 			vup_is_in_list = 1;
 	}
 	if (v->vg_p) nmg_vvg(v->vg_p);
 	if ( ! vup_is_in_list )
-		rt_bomb("nmg_vvertex() vup not found in list of vertexuses\n");
+		bu_bomb("nmg_vvertex() vup not found in list of vertexuses\n");
 }
 
 /* Verify vertex attributes */
@@ -117,18 +117,18 @@ nmg_vvu(const struct vertexuse *vu, const long int *up_magic_p)
 		bu_log("nmg_vvu() up is %s, s/b %s\n",
 			bu_identify_magic( *vu->up.magic_p ),
 			bu_identify_magic( *up_magic_p ) );
-		rt_bomb("nmg_vvu() vertexuse denies parent\n");
+		bu_bomb("nmg_vvu() vertexuse denies parent\n");
 	}
 
 	if (!vu->l.forw)
-		rt_bomb("nmg_vvu() vertexuse has null forw pointer\n");
+		bu_bomb("nmg_vvu() vertexuse has null forw pointer\n");
 
 	magic = BU_LIST_FIRST_MAGIC( &vu->l );
 	if( magic != NMG_VERTEXUSE_MAGIC && magic != BU_LIST_HEAD_MAGIC )
-		rt_bomb("nmg_vvu() vertexuse forw is bad vertexuse\n");
+		bu_bomb("nmg_vvu() vertexuse forw is bad vertexuse\n");
 
 	if (BU_LIST_PNEXT_PLAST(vertexuse,vu) != vu )
-		rt_bomb("nmg_vvu() vertexuse not back of next vertexuse\n");
+		bu_bomb("nmg_vvu() vertexuse not back of next vertexuse\n");
 
 	nmg_vvertex(vu->v_p, vu);
 
@@ -161,7 +161,7 @@ nmg_veg(const long int *eg)
 
 		if( eu2 == NULL)
 		{
-			 rt_bomb("nmg_veg null eu2\n");
+			 bu_bomb("nmg_veg null eu2\n");
 		}
 		eu = BU_LIST_MAIN_PTR( edgeuse, eu2, l2 );
 		NMG_CK_EDGEUSE(eu);
@@ -190,7 +190,7 @@ nmg_vedge(const struct edge *e, const struct edgeuse *eup)
 	NMG_CK_VERTEXUSE(eup->eumate_p->vu_p);
 	NMG_CK_VERTEX(eup->eumate_p->vu_p->v_p);
 
-	if (!e->eu_p) rt_bomb("nmg_vedge() edge has null edgeuse pointer\n");
+	if (!e->eu_p) bu_bomb("nmg_vedge() edge has null edgeuse pointer\n");
 
 	NMG_CK_EDGEUSE( e->eu_p );
 
@@ -211,7 +211,7 @@ nmg_vedge(const struct edge *e, const struct edgeuse *eup)
 					eu, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
 				bu_log( "(eup=x%x, eup->vu_p->v_p=x%x, eup->eumate_p->vu_p->v_p=x%x)\n",
 					eup, eup->vu_p->v_p, eup->eumate_p->vu_p->v_p);
-				rt_bomb("nmg_vedge() edgeuse mate does not have correct vertex\n");
+				bu_bomb("nmg_vedge() edgeuse mate does not have correct vertex\n");
 			}
 		} else if (eu->vu_p->v_p == eup->eumate_p->vu_p->v_p) {
 			if (eu->eumate_p->vu_p->v_p != eup->vu_p->v_p)
@@ -221,7 +221,7 @@ nmg_vedge(const struct edge *e, const struct edgeuse *eup)
 					eu, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
 				bu_log( "(eup=x%x, eup->vu_p->v_p=x%x, eup->eumate_p->vu_p->v_p=x%x)\n",
 					eup, eup->vu_p->v_p, eup->eumate_p->vu_p->v_p);
-				rt_bomb("nmg_vedge() edgeuse does not have correct vertex\n");
+				bu_bomb("nmg_vedge() edgeuse does not have correct vertex\n");
 			}
 		} else
 		{
@@ -230,14 +230,14 @@ nmg_vedge(const struct edge *e, const struct edgeuse *eup)
 				eu, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
 			bu_log( "(eup=x%x, eup->vu_p->v_p=x%x, eup->eumate_p->vu_p->v_p=x%x)\n",
 				eup, eup->vu_p->v_p, eup->eumate_p->vu_p->v_p);
-			rt_bomb("nmg_vedge() edgeuse does not share vertex endpoint\n");
+			bu_bomb("nmg_vedge() edgeuse does not share vertex endpoint\n");
 		}
 
 		eu = eu->eumate_p->radial_p;
 	} while (eu != eup);
 
 	if (!is_use)
-		rt_bomb("nmg_vedge() Cannot get from edge to parent edgeuse\n");
+		bu_bomb("nmg_vedge() Cannot get from edge to parent edgeuse\n");
 }
 
 /**
@@ -261,30 +261,30 @@ nmg_veu(const struct bu_list *hp, const long int *up_magic_p)
 	case NMG_LOOPUSE_MAGIC:
 		break;
 	default:
-		rt_bomb("nmg_veu() bad up_magic_p\n");
+		bu_bomb("nmg_veu() bad up_magic_p\n");
 	}
 	for( BU_LIST_FOR( eu, edgeuse, hp ) )  {
 		NMG_CK_EDGEUSE(eu);
 
 		if (eu->up.magic_p != up_magic_p)
-			rt_bomb("nmg_veu() edgeuse denies parentage\n");
+			bu_bomb("nmg_veu() edgeuse denies parentage\n");
 
 		if (!eu->l.forw)
-			rt_bomb("nmg_veu() edgeuse has Null \"forw\" pointer\n");
+			bu_bomb("nmg_veu() edgeuse has Null \"forw\" pointer\n");
 		eunext = BU_LIST_PNEXT_CIRC( edgeuse, eu );
 		eulast = BU_LIST_PPREV_CIRC(edgeuse, &eu->l);
 		if (eunext->l.magic != NMG_EDGEUSE_MAGIC)
-			rt_bomb("nmg_veu() edgeuse forw is bad edgeuse\n");
+			bu_bomb("nmg_veu() edgeuse forw is bad edgeuse\n");
 		if (eulast->l.magic != NMG_EDGEUSE_MAGIC)
-			rt_bomb("nmg_veu() edgeuse back is bad edgeuse\n");
+			bu_bomb("nmg_veu() edgeuse back is bad edgeuse\n");
 		NMG_CK_EDGEUSE(eunext);
 		NMG_CK_EDGEUSE(eulast);
 
 		/* Check that forw->back is us */
 		if (BU_LIST_PPREV_CIRC(edgeuse,eunext) != eu )  {
 		    if (eunext->l.back)
-			rt_bomb("nmg_veu() next edgeuse has back that points elsewhere\n");
-		    rt_bomb("nmg_veu() next edgeuse has NULL back\n");
+			bu_bomb("nmg_veu() next edgeuse has back that points elsewhere\n");
+		    bu_bomb("nmg_veu() next edgeuse has NULL back\n");
 		}
 
 		/*
@@ -309,7 +309,7 @@ nmg_veu(const struct bu_list *hp, const long int *up_magic_p)
 				V3ARGS(eulast->eumate_p->vu_p->v_p->vg_p->coord) );
 			nmg_pr_lu_briefly(eu->up.lu_p, (char *)NULL);
 			nmg_pr_lu_briefly(eu->up.lu_p->lumate_p, (char *)NULL);
-			rt_bomb("nmg_veu() discontinuous edgeloop mine/last\n");
+			bu_bomb("nmg_veu() discontinuous edgeloop mine/last\n");
 		}
 		if ( up_magic == NMG_LOOPUSE_MAGIC &&
 		     eunext->vu_p->v_p != eu->eumate_p->vu_p->v_p) {
@@ -329,31 +329,31 @@ nmg_veu(const struct bu_list *hp, const long int *up_magic_p)
 				V3ARGS(eunext->vu_p->v_p->vg_p->coord) );
 			nmg_pr_lu_briefly(eu->up.lu_p, (char *)NULL);
 			nmg_pr_lu_briefly(eu->up.lu_p->lumate_p, (char *)NULL);
-			rt_bomb("nmg_veu() discontinuous edgeloop next/mate\n");
+			bu_bomb("nmg_veu() discontinuous edgeloop next/mate\n");
 		}
 
 		/* Check mate and radial */
 		if (eu->eumate_p->l.magic != NMG_EDGEUSE_MAGIC)
-			rt_bomb("nmg_veu() edgeuse mate is bad edgeuse\n");
+			bu_bomb("nmg_veu() edgeuse mate is bad edgeuse\n");
 		if (eu->eumate_p->eumate_p != eu)
-			rt_bomb("nmg_veu() edgeuse mate spurns edgeuse\n");
+			bu_bomb("nmg_veu() edgeuse mate spurns edgeuse\n");
 
 		if (eu->radial_p->l.magic != NMG_EDGEUSE_MAGIC)
-			rt_bomb("nmg_veu() edgeuse radial is bad edgeuse\n");
+			bu_bomb("nmg_veu() edgeuse radial is bad edgeuse\n");
 		if (eu->radial_p->radial_p != eu)
-			rt_bomb("nmg_veu() edgeuse radial denies knowing edgeuse\n");
+			bu_bomb("nmg_veu() edgeuse radial denies knowing edgeuse\n");
 
 		nmg_vedge(eu->e_p, eu);
 
 		if( eu->vu_p->v_p != eu->eumate_p->vu_p->v_p )
 		{
 			if( !eu->l2.forw )
-				rt_bomb("nmg_veu() l2.forw is NULL\n");
+				bu_bomb("nmg_veu() l2.forw is NULL\n");
 			if( !eu->l2.back )
-				rt_bomb("nmg_veu() l2.back is NULL\n");
+				bu_bomb("nmg_veu() l2.back is NULL\n");
 
 			if( eu->g.magic_p != eu->eumate_p->g.magic_p )
-				rt_bomb("nmg_veu() edgeuse and mate don't share geometry\n");
+				bu_bomb("nmg_veu() edgeuse and mate don't share geometry\n");
 			if(eu->g.magic_p) nmg_veg(eu->g.magic_p);
 		}
 
@@ -362,7 +362,7 @@ nmg_veu(const struct bu_list *hp, const long int *up_magic_p)
 		case OT_SAME	: break;
 		case OT_OPPOSITE: break;
 		case OT_UNSPEC	: break;
-		default		: rt_bomb("nmg_veu() unknown loopuse orintation\n");
+		default		: bu_bomb("nmg_veu() unknown loopuse orintation\n");
 					break;
 		}
 
@@ -384,7 +384,7 @@ nmg_vlg(const struct loop_g *lg)
 
 	for (i=0 ; i < ELEMENTS_PER_PT ; ++i)
 		if (lg->min_pt[i] > lg->max_pt[i])
-			rt_bomb("nmg_vlg() loop geom min_pt greater than max_pt\n");
+			bu_bomb("nmg_vlg() loop geom min_pt greater than max_pt\n");
 }
 
 /**
@@ -399,7 +399,7 @@ nmg_vloop(const struct loop *l, const struct loopuse *lup)
 	NMG_CK_LOOP(l);
 	NMG_CK_LOOPUSE(lup);
 
-	if (!l->lu_p) rt_bomb("nmg_vloop() null loopuse pointer\n");
+	if (!l->lu_p) bu_bomb("nmg_vloop() null loopuse pointer\n");
 
 #if 0
 	{
@@ -409,7 +409,7 @@ nmg_vloop(const struct loop *l, const struct loopuse *lup)
 	if (l->lu_p != lu)
 		for (lu=lup->lumate_p ; lu && lu != l->lu_p && lu->next != lup->lumate_p ; lu = lu->next);
 
-	if (l->lu_p != lu) rt_bomb("nmg_vloop() can't get to parent loopuse from loop\n");
+	if (l->lu_p != lu) bu_bomb("nmg_vloop() can't get to parent loopuse from loop\n");
 	}
 #endif
 
@@ -432,22 +432,22 @@ nmg_vlu(const struct bu_list *hp, const long int *up)
 		if (lu->up.magic_p != up)  {
 			bu_log("nmg_vlu() up is x%x, s/b x%x\n",
 				lu->up.magic_p, up );
-			rt_bomb("nmg_vlu() loopuse denies parentage\n");
+			bu_bomb("nmg_vlu() loopuse denies parentage\n");
 		}
 
 		if (!lu->l.forw)
-			rt_bomb("nmg_vlu() loopuse has null forw pointer\n");
+			bu_bomb("nmg_vlu() loopuse has null forw pointer\n");
 		if (BU_LIST_PNEXT_PLAST(loopuse,lu) != lu )
-			rt_bomb("nmg_vlu() forw loopuse has back pointing somewhere else\n");
+			bu_bomb("nmg_vlu() forw loopuse has back pointing somewhere else\n");
 
 		if (!lu->lumate_p)
-			rt_bomb("nmg_vlu() loopuse has null mate pointer\n");
+			bu_bomb("nmg_vlu() loopuse has null mate pointer\n");
 
 		if (lu->lumate_p->l.magic != NMG_LOOPUSE_MAGIC)
-			rt_bomb("nmg_vlu() loopuse mate is bad loopuse\n");
+			bu_bomb("nmg_vlu() loopuse mate is bad loopuse\n");
 
 		if (lu->lumate_p->lumate_p != lu)
-			rt_bomb("nmg_vlu() lumate spurns loopuse\n");
+			bu_bomb("nmg_vlu() lumate spurns loopuse\n");
 
 		switch (lu->orientation) {
 		case OT_NONE	: break;
@@ -457,14 +457,14 @@ nmg_vlu(const struct bu_list *hp, const long int *up)
 		case OT_BOOLPLACE:	break;
 		default:
 			bu_log("lu=x%x, orientation=%d\n", lu, lu->orientation);
-			rt_bomb("nmg_vlu() unknown loopuse orintation\n");
+			bu_bomb("nmg_vlu() unknown loopuse orintation\n");
 			break;
 		}
 		if (lu->lumate_p->orientation != lu->orientation)
-			rt_bomb("nmg_vlu() loopuse and mate have different orientation\n");
+			bu_bomb("nmg_vlu() loopuse and mate have different orientation\n");
 
 		if (!lu->l_p)
-			rt_bomb("nmg_vlu() loopuse has Null loop pointer\n");
+			bu_bomb("nmg_vlu() loopuse has Null loop pointer\n");
 		nmg_vloop(lu->l_p, lu);
 
 		if( BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC)
@@ -472,7 +472,7 @@ nmg_vlu(const struct bu_list *hp, const long int *up)
 		else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC)
 			nmg_vvu(BU_LIST_FIRST(vertexuse,&lu->down_hd), &lu->l.magic);
 		else
-			rt_bomb("nmg_vlu() bad down_hd magic\n");
+			bu_bomb("nmg_vlu() bad down_hd magic\n");
 	}
 }
 
@@ -492,7 +492,7 @@ nmg_vfg(const struct face_g_plane *fg)
 		    fg->N[H]!=0.0) {
 			bu_log("bad NMG plane equation %fX + %fY + %fZ = %f\n",
 				fg->N[X], fg->N[Y], fg->N[Z], fg->N[H]);
-			rt_bomb("nmg_vfg() Bad NMG geometry\n");
+			bu_bomb("nmg_vfg() Bad NMG geometry\n");
 		    }
 	}
 	if( fg->magic == NMG_FACE_G_SNURB_MAGIC )
@@ -515,12 +515,12 @@ nmg_vface(const struct face *f, const struct faceuse *fup)
 	NMG_CK_FACEUSE(fup);
 
 	/* make sure we can get back to the parent faceuse from the face */
-	if (!f->fu_p) rt_bomb("nmg_vface() null faceuse pointer\n");
+	if (!f->fu_p) bu_bomb("nmg_vface() null faceuse pointer\n");
 
 #if 0
 	for (fu = fup; fu && fu != f->fu_p && fu->forw != fup; fu = fu->forw);
 
-	if (f->fu_p != fu) rt_bomb("nmg_vface() can't get to parent faceuse from face\n");
+	if (f->fu_p != fu) bu_bomb("nmg_vface() can't get to parent faceuse from face\n");
 #endif
 
 	for (i=0 ; i < ELEMENTS_PER_PT ; ++i)
@@ -529,7 +529,7 @@ nmg_vface(const struct face *f, const struct faceuse *fup)
 				i, f->min_pt[i], i, f->max_pt[i]);
 			bu_log("min_pt(%g %g %g)  ", V3ARGS(f->min_pt));
 			bu_log("max_pt(%g %g %g)\n", V3ARGS(f->max_pt));
-			rt_bomb("Invalid NMG\n");
+			bu_bomb("Invalid NMG\n");
 		}
 	if (f->g.plane_p) nmg_vfg(f->g.plane_p);
 }
@@ -551,34 +551,34 @@ nmg_vfu(const struct bu_list *hp, const struct shell *s)
 		if (fu->s_p != s) {
 			bu_log("faceuse claims shell parent (%8x) instead of (%8x)\n",
 				fu->s_p, s);
-			rt_bomb("nmg_vfu()\n");
+			bu_bomb("nmg_vfu()\n");
 		}
 
 		if (!fu->l.forw) {
-			rt_bomb("nmg_vfu() faceuse forw is NULL\n");
+			bu_bomb("nmg_vfu() faceuse forw is NULL\n");
 		} else if (fu->l.forw->back != (struct bu_list *)fu) {
-			rt_bomb("nmg_vfu() faceuse->forw->back != faceuse\n");
+			bu_bomb("nmg_vfu() faceuse->forw->back != faceuse\n");
 		}
 
 		if (!fu->fumate_p)
-			rt_bomb("nmg_vfu() null faceuse fumate_p pointer\n");
+			bu_bomb("nmg_vfu() null faceuse fumate_p pointer\n");
 
 		if (fu->fumate_p->l.magic != NMG_FACEUSE_MAGIC)
-			rt_bomb("nmg_vfu() faceuse mate is bad faceuse ptr\n");
+			bu_bomb("nmg_vfu() faceuse mate is bad faceuse ptr\n");
 
 		if (fu->fumate_p->fumate_p != fu)
-			rt_bomb("nmg_vfu() faceuse mate spurns faceuse!\n");
+			bu_bomb("nmg_vfu() faceuse mate spurns faceuse!\n");
 
 		switch (fu->orientation) {
 		case OT_NONE	: break;
 		case OT_SAME	: if (fu->fumate_p->orientation != OT_OPPOSITE)
-					rt_bomb("nmg_vfu() faceuse of \"SAME\" orientation has mate that is not \"OPPOSITE\" orientation\n");
+					bu_bomb("nmg_vfu() faceuse of \"SAME\" orientation has mate that is not \"OPPOSITE\" orientation\n");
 				break;
 		case OT_OPPOSITE:  if (fu->fumate_p->orientation != OT_SAME)
-					rt_bomb("nmg_vfu() faceuse of \"OPPOSITE\" orientation has mate that is not \"SAME\" orientation\n");
+					bu_bomb("nmg_vfu() faceuse of \"OPPOSITE\" orientation has mate that is not \"SAME\" orientation\n");
 				break;
 		case OT_UNSPEC	: break;
-		default		: rt_bomb("nmg_vfu() unknown faceuse orintation\n"); break;
+		default		: bu_bomb("nmg_vfu() unknown faceuse orintation\n"); break;
 		}
 
 		NMG_CK_FACE(fu->f_p);
@@ -607,15 +607,15 @@ nmg_vshell(const struct bu_list *hp, const struct nmgregion *r)
 		if (s->r_p != r) {
 			bu_log("shell's r_p (%8x) doesn't point to parent (%8x)\n",
 				s->r_p, r);
-			rt_bomb("nmg_vshell()\n");
+			bu_bomb("nmg_vshell()\n");
 		}
 
 		if (!s->l.forw) {
-			rt_bomb("nmg_vshell(): Shell's forw ptr is null\n");
+			bu_bomb("nmg_vshell(): Shell's forw ptr is null\n");
 		} else if (s->l.forw->back != (struct bu_list *)s) {
 			bu_log("forw shell's back(%8x) is not me (%8x)\n",
 				s->l.forw->back, s);
-			rt_bomb("nmg_vshell()\n");
+			bu_bomb("nmg_vshell()\n");
 		}
 
 		if (s->sa_p) {
@@ -644,7 +644,7 @@ nmg_vshell(const struct bu_list *hp, const struct nmgregion *r)
 			    BU_LIST_NON_EMPTY( &s->eu_hd ) )  {
 				bu_log("shell (%8x) with vertexuse (%8x) has other children\n",
 					s, s->vu_p);
-				rt_bomb("nmg_vshell()\n");
+				bu_bomb("nmg_vshell()\n");
 			}
 		}
 
@@ -670,7 +670,7 @@ nmg_vregion(const struct bu_list *hp, const struct model *m)
 		if (r->m_p != m) {
 			bu_log("nmgregion pointer m_p %8x should be %8x\n",
 				r->m_p, m);
-			rt_bomb("nmg_vregion()\n");
+			bu_bomb("nmg_vregion()\n");
 		}
 		if (r->ra_p) {
 			NMG_CK_REGION_A(r->ra_p);
@@ -679,7 +679,7 @@ nmg_vregion(const struct bu_list *hp, const struct model *m)
 		nmg_vshell( &r->s_hd, r);
 
 		if( BU_LIST_PNEXT_PLAST(nmgregion, r) != r )  {
-			rt_bomb("nmg_vregion() forw nmgregion's back is not me\n");
+			bu_bomb("nmg_vregion() forw nmgregion's back is not me\n");
 		}
 	}
 }
@@ -727,7 +727,7 @@ nmg_ck_e(const struct edgeuse *eu, const struct edge *e, const char *str)
 		eparent = eparent->radial_p->eumate_p;
 	} while (eparent != e->eu_p);
 
-	if (eparent != eu && eparent->eumate_p != eu) rt_bomb(
+	if (eparent != eu && eparent->eumate_p != eu) bu_bomb(
 		strcat(errstr, "nmg_ck_e() Edge denies edgeuse parentage\n"));
 
 	bu_free(errstr, "nmg_ck_e error str");
@@ -744,7 +744,7 @@ nmg_ck_vu(const long int *parent, const struct vertexuse *vu, const char *str)
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_vu error str");
 	(void)sprintf(errstr, "%svertexuse %8lx\n", str, (unsigned long)vu);
 
-	if (vu->up.magic_p != parent) rt_bomb(
+	if (vu->up.magic_p != parent) bu_bomb(
 		strcat(errstr, "nmg_ck_vu() Vertexuse denies parentage\n"));
 
 	bu_free(errstr, "nmg_ck_vu error str");
@@ -764,46 +764,46 @@ nmg_ck_eu(const long int *parent, const struct edgeuse *eu, const char *str)
 
 	NMG_CK_EDGEUSE(eu);
 
-	if (eu->up.magic_p != parent) rt_bomb(
+	if (eu->up.magic_p != parent) bu_bomb(
 		strcat(errstr, "nmg_ck_eu() Edgeuse child denies parentage\n"));
 
-	if (*eu->eumate_p->up.magic_p != *eu->up.magic_p) rt_bomb(
+	if (*eu->eumate_p->up.magic_p != *eu->up.magic_p) bu_bomb(
 		strcat(errstr, "nmg_ck_eu() eumate has differnt kind of parent\n"));
 	if (*eu->up.magic_p == NMG_SHELL_MAGIC) {
-		if (eu->eumate_p->up.s_p != eu->up.s_p) rt_bomb(
+		if (eu->eumate_p->up.s_p != eu->up.s_p) bu_bomb(
 			strcat(errstr, "nmg_ck_eu() eumate in different shell\n"));
 
 		eur = eu->radial_p;
 		while (eur && eur != eu && eur != eu->eumate_p)
 			eur = eur->eumate_p->radial_p;
 
-		if (!eur) rt_bomb(strcat(errstr,
+		if (!eur) bu_bomb(strcat(errstr,
 			"nmg_ck_eu() Radial trip from eu ended in null pointer\n"));
 
 
 	} else if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-		if (eu->eumate_p->up.lu_p != eu->up.lu_p->lumate_p) rt_bomb(
+		if (eu->eumate_p->up.lu_p != eu->up.lu_p->lumate_p) bu_bomb(
 			strcat(errstr, "nmg_ck_eu() eumate not in same loop\n"));
 
 		eur = eu->radial_p;
 		while (eur && eur != eu->eumate_p && eur != eu)
 			eur = eur->eumate_p->radial_p;
 
-		if (!eur) rt_bomb(
+		if (!eur) bu_bomb(
 			strcat(errstr, "nmg_ck_eu() radial path leads to null ptr\n"));
-		if (eur == eu) rt_bomb(
+		if (eur == eu) bu_bomb(
 			strcat(errstr, "nmg_ck_eu() Never saw eumate\n"));
 
 		eu_next = BU_LIST_PNEXT_CIRC(edgeuse, eu);
 		if (eu_next->vu_p->v_p != eu->eumate_p->vu_p->v_p)
-			rt_bomb("nmg_ck_eu: next and mate don't share vertex\n");
+			bu_bomb("nmg_ck_eu: next and mate don't share vertex\n");
 
 		eu_last = BU_LIST_PPREV_CIRC(edgeuse, eu);
 		if (eu_last->eumate_p->vu_p->v_p != eu->vu_p->v_p)
-			rt_bomb("nmg_ck_eu: edge and last-mate don't share vertex\n");
+			bu_bomb("nmg_ck_eu: edge and last-mate don't share vertex\n");
 
 	} else {
-		rt_bomb(strcat(errstr, "nmg_ck_eu() Bad edgeuse parent\n"));
+		bu_bomb(strcat(errstr, "nmg_ck_eu() Bad edgeuse parent\n"));
 	}
 
 	NMG_CK_EDGE(eu->e_p);
@@ -844,7 +844,7 @@ nmg_ck_l(const struct loopuse *lu, const struct loop *l, const char *str)
 	NMG_CK_LOOP(l);
 	NMG_CK_LOOPUSE(lu);
 
-	if (l->lu_p != lu && l->lu_p->lumate_p != lu) rt_bomb(
+	if (l->lu_p != lu && l->lu_p->lumate_p != lu) bu_bomb(
 		strcat(errstr, "nmg_ck_l() Cannot get from loop to loopuse\n"));
 
 	if (l->lg_p) nmg_ck_lg(l, l->lg_p, errstr);
@@ -870,22 +870,22 @@ nmg_ck_lu(const long int *parent, const struct loopuse *lu, const char *str)
 
 	NMG_CK_LOOPUSE(lu);
 
-	if (lu->up.magic_p != parent) rt_bomb(
+	if (lu->up.magic_p != parent) bu_bomb(
 		strcat(errstr, "nmg_ck_lu() loopuse child denies parentage\n") );
 
 	/* check the parent of lu and lumate WRT each other */
 	NMG_CK_LOOPUSE(lu->lumate_p);
-	if (*lu->lumate_p->up.magic_p != *lu->up.magic_p) rt_bomb(
+	if (*lu->lumate_p->up.magic_p != *lu->up.magic_p) bu_bomb(
 		strcat(errstr,"nmg_ck_lu() loopuse mate has different kind of parent\n"));
 
 	if (*lu->up.magic_p == NMG_SHELL_MAGIC) {
-		if (lu->lumate_p->up.s_p != lu->up.s_p) rt_bomb(
+		if (lu->lumate_p->up.s_p != lu->up.s_p) bu_bomb(
 			strcat(errstr, "nmg_ck_lu() Lumate not in same shell\n") );
 	} else if (*lu->up.magic_p == NMG_FACEUSE_MAGIC) {
-		if (lu->lumate_p->up.fu_p != lu->up.fu_p->fumate_p) rt_bomb(
+		if (lu->lumate_p->up.fu_p != lu->up.fu_p->fumate_p) bu_bomb(
 			strcat(errstr, "nmg_ck_lu() lumate part of different face\n"));
 	} else {
-		rt_bomb(strcat(errstr, "nmg_ck_lu() Bad loopuse parent type\n"));
+		bu_bomb(strcat(errstr, "nmg_ck_lu() Bad loopuse parent type\n"));
 	}
 
 	NMG_CK_LOOP(lu->l_p);
@@ -906,7 +906,7 @@ nmg_ck_lu(const long int *parent, const struct loopuse *lu, const char *str)
 			nmg_ck_eu(&lu->l.magic, eu, errstr);
 		}
 	} else {
-		rt_bomb(strcat(errstr, "nmg_ck_lu() Bad loopuse down pointer\n") );
+		bu_bomb(strcat(errstr, "nmg_ck_lu() Bad loopuse down pointer\n") );
 	}
 	bu_free(errstr, "nmg_ck_lu error str");
 }
@@ -926,7 +926,7 @@ nmg_ck_fg(const struct face *f, const struct face_g_plane *fg, const char *str)
 		(void)sprintf(&errstr[strlen(errstr)],
 			"nmg_ck_fg() bad NMG plane equation %fX + %fY + %fZ = %f\n",
 			fg->N[X], fg->N[Y], fg->N[Z], fg->N[H]);
-		rt_bomb(errstr);
+		bu_bomb(errstr);
 	}
 
 	bu_free(errstr, "nmg_ck_fg error str");
@@ -945,7 +945,7 @@ nmg_ck_f(const struct faceuse *fu, const struct face *f, const char *str)
 	NMG_CK_FACE(f);
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACE_G_PLANE(f->g.plane_p);
-	if (f->fu_p != fu && f->fu_p->fumate_p != fu) rt_bomb(
+	if (f->fu_p != fu && f->fu_p->fumate_p != fu) bu_bomb(
 		strcat(errstr,"nmg_ck_f() Cannot get from face to \"parent faceuse\"\n"));
 
 	if (f->g.plane_p) nmg_ck_fg(f, f->g.plane_p, errstr);
@@ -970,20 +970,20 @@ nmg_ck_fu(const struct shell *s, const struct faceuse *fu, const char *str)
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_fu error str");
 	(void)sprintf(errstr, "%sFaceuse %8lx\n", str, (unsigned long)fu);
 
-	if (fu->s_p != s) rt_bomb(
+	if (fu->s_p != s) bu_bomb(
 		strcat(errstr, "nmg_ck_fu() faceuse child denies shell parentage\n") );
 
 	if( BU_LIST_PNEXT_PLAST( faceuse, fu ) )
-		rt_bomb( strcat(errstr, "nmg_ck_fu() Faceuse not lastward of next faceuse\n") );
+		bu_bomb( strcat(errstr, "nmg_ck_fu() Faceuse not lastward of next faceuse\n") );
 
 	if( BU_LIST_PLAST_PNEXT( faceuse, fu ) )
-		rt_bomb( strcat(errstr, "nmg_ck_fu() Faceuse not nextward from last faceuse\n") );
+		bu_bomb( strcat(errstr, "nmg_ck_fu() Faceuse not nextward from last faceuse\n") );
 
 	NMG_CK_FACEUSE(fu->fumate_p);
-	if (fu->fumate_p->fumate_p != fu) rt_bomb(
+	if (fu->fumate_p->fumate_p != fu) bu_bomb(
 		strcat(errstr, "nmg_ck_fu() Faceuse not fumate of fumate\n") );
 
-	if (fu->fumate_p->s_p != s) rt_bomb(
+	if (fu->fumate_p->s_p != s) bu_bomb(
 		strcat(errstr, "nmg_ck_fu() faceuse mates not in same shell\n") );
 
 	nmg_ck_f(fu, fu->f_p, errstr);
@@ -1141,9 +1141,9 @@ nmg_ck_face_worthless_edges(const struct faceuse *fu)
 			struct edgeuse		*neu;
 			neu = BU_LIST_PNEXT_CIRC( edgeuse, eu );
 			if( eu == neu )
-				rt_bomb("nmg_ck_face_worthless_edges() lu has only one edge?\n");
+				bu_bomb("nmg_ck_face_worthless_edges() lu has only one edge?\n");
 			if( eu->vu_p == neu->vu_p )
-				rt_bomb("nmg_ck_face_worthless_edges() edge runs between two copies of vu??\n");
+				bu_bomb("nmg_ck_face_worthless_edges() edge runs between two copies of vu??\n");
 			if( eu->vu_p->v_p == neu->vu_p->v_p )  {
 #if 0
 				nmg_pr_eu( eu, NULL );
@@ -1151,7 +1151,7 @@ nmg_ck_face_worthless_edges(const struct faceuse *fu)
 #endif
 				bu_log("eu=x%x, neu=x%x, v=x%x\n", eu, neu, eu->vu_p->v_p);
 				bu_log("eu=x%x, neu=x%x, v=x%x\n", eu->eumate_p, neu->eumate_p, eu->eumate_p->vu_p->v_p);
-				rt_bomb("nmg_ck_face_worthless_edges() edge runs from&to same vertex\n");
+				bu_bomb("nmg_ck_face_worthless_edges() edge runs from&to same vertex\n");
 				return 1;
 			}
 		}
@@ -1172,18 +1172,18 @@ void nmg_ck_lueu(const struct loopuse *cklu, const char *s)
 	struct edgeuse *eu;
 
 	if (BU_LIST_FIRST_MAGIC(&cklu->down_hd) == NMG_VERTEXUSE_MAGIC)
-		rt_bomb("NMG nmg_ck_lueu.  I got a vertex loop!\n");
+		bu_bomb("NMG nmg_ck_lueu.  I got a vertex loop!\n");
 
 	eu = BU_LIST_FIRST(edgeuse, &cklu->down_hd);
 	if (eu->l.back != &cklu->down_hd) {
-		rt_bomb("nmg_ck_lueu first element in list doesn't point back to head\n");
+		bu_bomb("nmg_ck_lueu first element in list doesn't point back to head\n");
 	}
 
 	for (BU_LIST_FOR(eu, edgeuse, &cklu->down_hd)) {
 		NMG_CK_EDGEUSE(eu);
 		if (eu->up.lu_p != cklu) {
 			bu_log("nmg_cl_lueu() edgeuse of %s (going next) has lost proper parent\n", s);
-			rt_bomb("nmg_ck_lueu\n");
+			bu_bomb("nmg_ck_lueu\n");
 		}
 		if ((struct edgeuse *)eu->l.forw->back != eu) {
 			bu_log("nmg_cl_lueu() %s next edge (%8x) doesn't point back to me (%8x)!\n", s, eu->l.forw, eu);
@@ -1199,14 +1199,14 @@ void nmg_ck_lueu(const struct loopuse *cklu, const char *s)
 
 	eu = BU_LIST_FIRST(edgeuse, &cklu->down_hd);
 	if (eu->l.back != &cklu->down_hd) {
-		rt_bomb("nmg_ck_lueu first element in lumate list doesn't point back to head\n");
+		bu_bomb("nmg_ck_lueu first element in lumate list doesn't point back to head\n");
 	}
 
 	for (BU_LIST_FOR(eu, edgeuse, &cklu->down_hd)) {
 		NMG_CK_EDGEUSE(eu);
 		if (eu->up.lu_p != cklu) {
 			bu_log("nmg_cl_lueu() edgeuse of %s (lumate going next) has lost proper parent\n", s);
-			rt_bomb("nmg_ck_lueu\n");
+			bu_bomb("nmg_ck_lueu\n");
 		}
 		if ((struct edgeuse *)eu->l.forw->back != eu) {
 			bu_log("nmg_cl_lueu() %s next edge (%8x) doesn't point back to me (%8x)!\n", s, eu->l.forw, eu);
@@ -1293,7 +1293,7 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 			/* Advance to next eur */
 			NMG_CK_EDGEUSE(eur->eumate_p);
 			if (eur->eumate_p->eumate_p != eur) {
-				rt_bomb("nmg_check_radial: bad edgeuse mate\n");
+				bu_bomb("nmg_check_radial: bad edgeuse mate\n");
 			}
 			eur = eur->eumate_p->radial_p;
 			NMG_CK_EDGEUSE(eur);
@@ -1431,7 +1431,7 @@ next_eu:
 			/* Advance to next eur */
 			NMG_CK_EDGEUSE(eur->eumate_p);
 			if (eur->eumate_p->eumate_p != eur)
-				rt_bomb("nmg_eu_2s_orient_bad: bad edgeuse mate\n");
+				bu_bomb("nmg_eu_2s_orient_bad: bad edgeuse mate\n");
 
 			eur = eur->eumate_p->radial_p;
 			NMG_CK_EDGEUSE(eur);
@@ -1549,7 +1549,7 @@ nmg_ck_closed_region(const struct nmgregion *r, const struct bn_tol *tol)
  *	Checks if the vertex is in both faceuses (topologically
  *	and geometrically within tolerance of plane).
  *
- *	Calls rt_bomb if vertex is not in the faceuses topology or
+ *	Calls bu_bomb if vertex is not in the faceuses topology or
  *	out of tolerance of either face.
  *
  */
@@ -1589,7 +1589,7 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
 			bu_vls_printf( &str , " faceuse x%lx" , (long)fu1 );
 		if( !found2 )
 			bu_vls_printf( &str , " faceuse x%lx" , (long)fu2 );
-		rt_bomb( bu_vls_addr( &str ) );
+		bu_bomb( bu_vls_addr( &str ) );
 	}
 
 	/* geometry check */
@@ -1607,7 +1607,7 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
 			bu_vls_printf( &str , " faceuse x%lx (off by %g)" , (long)fu1 , dist1 );
 		if( !NEAR_ZERO( dist2 , tol->dist ) )
 			bu_vls_printf( &str , " faceuse x%lx (off by %g)" , (long)fu2 , dist2 );
-		rt_bomb( bu_vls_addr( &str ) );
+		bu_bomb( bu_vls_addr( &str ) );
 	}
 
 }

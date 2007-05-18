@@ -408,7 +408,7 @@ again:				t0 = ssp->tv[out_axis];
 			cutp = curcut;
 			break;
 		default:
-			rt_bomb(
+			bu_bomb(
 		       "rt_advance_to_next_cell: unknown high-level cutnode" );
 		}
 
@@ -486,7 +486,7 @@ pop_space_stack:
 		}
 
 		if( cutp == CUTTER_NULL )
-			rt_bomb( "rt_advance_to_next_cell: leaf is NULL!" );
+			bu_bomb( "rt_advance_to_next_cell: leaf is NULL!" );
 
 		switch( cutp->cut_type ) {
 		case CUT_BOXNODE:
@@ -648,10 +648,10 @@ done_return_cutp:	ssp->lastcut = cutp;
 				 ssp->curcut->nugn.nu_axis[Z][ssp->curcut->nugn.nu_cells_per_axis[Z]-1].nu_epos );
 			break; }
 		case CUT_CUTNODE:
-			rt_bomb( "rt_advance_to_next_cell: impossible: cutnote as leaf!" );
+			bu_bomb( "rt_advance_to_next_cell: impossible: cutnote as leaf!" );
 			break;
 		default:
-			rt_bomb( "rt_advance_to_next_cell: unknown spt node" );
+			bu_bomb( "rt_advance_to_next_cell: unknown spt node" );
 			break;
 		}
 
@@ -867,7 +867,7 @@ rt_shootray(register struct application *ap)
 			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
 		VPRINT(" r_pt", ap->a_ray.r_pt);
 		VPRINT("r_dir", ap->a_ray.r_dir);
-		rt_bomb("rt_shootray() bad ray\n");
+		bu_bomb("rt_shootray() bad ray\n");
 	}
 #endif
 
@@ -927,7 +927,7 @@ rt_shootray(register struct application *ap)
 		/* Fancy version of BN_VEC_NON_UNIT_LEN() */
 		f = MAGSQ(ap->a_ray.r_dir);
 		if( NEAR_ZERO(f, 0.0001) )  {
-			rt_bomb("rt_shootray:  zero length dir vector\n");
+			bu_bomb("rt_shootray:  zero length dir vector\n");
 			return(0);
 		}
 		diff = f - 1;
@@ -1523,7 +1523,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
 		VPRINT(" r_pt", ap->a_ray.r_pt);
 		VPRINT("r_dir", ap->a_ray.r_dir);
-		rt_bomb("rt_cell_n_on_ray() bad ray\n");
+		bu_bomb("rt_cell_n_on_ray() bad ray\n");
 	}
 #endif
 
@@ -1551,7 +1551,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 		/* Fancy version of BN_VEC_NON_UNIT_LEN() */
 		f = MAGSQ(ap->a_ray.r_dir);
 		if( NEAR_ZERO(f, 0.0001) )  {
-			rt_bomb("rt_cell_n_on_ray:  zero length dir vector\n");
+			bu_bomb("rt_cell_n_on_ray:  zero length dir vector\n");
 			return CUTTER_NULL;
 		}
 		diff = f - 1;

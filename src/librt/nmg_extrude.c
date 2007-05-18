@@ -80,7 +80,7 @@ verts_in_nmg_loop(struct loopuse *lu)
 		NMG_CK_VERTEX(v);
 		cnt++;
 	} else
-		rt_bomb("verts_in_nmg_loop: bad loopuse\n");
+		bu_bomb("verts_in_nmg_loop: bad loopuse\n");
 	return(cnt);
 }
 
@@ -152,7 +152,7 @@ nmg_translate_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *
 			NMG_CK_VERTEX(v);
 			VADD2(v->vg_p->coord, v->vg_p->coord, Vec);
 		} else
-			rt_bomb("nmg_translate_face: bad loopuse\n");
+			bu_bomb("nmg_translate_face: bad loopuse\n");
 	}
 
 	fu_tmp = fu;
@@ -184,7 +184,7 @@ nmg_translate_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *
 
 	if(nmg_loop_plane_area( BU_LIST_FIRST( loopuse , &fu_tmp->lu_hd ) , pl ) < 0.0 )
 	{
-		rt_bomb( "nmg_translate_face: Cannot calculate plane equation for face\n" );
+		bu_bomb( "nmg_translate_face: Cannot calculate plane equation for face\n" );
 	}
 	nmg_face_g( fu_tmp , pl );
 	bu_free((char *)verts, "verts");
@@ -224,7 +224,7 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
 	NMG_GET_FU_PLANE( n, fu );
 	cosang = VDOT(Vec, n);
 	if (NEAR_ZERO(cosang, MIKE_TOL))
-		rt_bomb("extrude_nmg_face: extrusion cannot be parallel to face\n");
+		bu_bomb("extrude_nmg_face: extrusion cannot be parallel to face\n");
 	if (cosang > 0.)
 		nmg_translate_face(fu, Vec, tol);
 	else if (cosang < 0.)
@@ -730,7 +730,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 			if( BU_LIST_IS_EMPTY( &lu1->down_hd ) )
 			{
 				if( nmg_klu( lu1 ) )
-					rt_bomb( "nmg_fix_overlapping_loops: Emptied faceuse!!\n" );
+					bu_bomb( "nmg_fix_overlapping_loops: Emptied faceuse!!\n" );
 			}
 			lu1 = next_lu;
 		}
@@ -933,7 +933,7 @@ nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *to
 
 	/* kill the unused, newly created shell */
 	if( nmg_ks( s_tmp ) )
-		rt_bomb( "nmg_extrude_shell: Nothing got moved to new region\n" );
+		bu_bomb( "nmg_extrude_shell: Nothing got moved to new region\n" );
 
 	/* now decompose our shell, count number of inside shells */
 	if( (nmg_decompose_shell( is , tol )) < 2 )
@@ -1169,7 +1169,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 						{
 							/* move this vertex */
 							if( nmg_in_vert( new_v , approximate , tol ) )
-								rt_bomb( "Failed to get a new point from nmg_inside_vert\n" );
+								bu_bomb( "Failed to get a new point from nmg_inside_vert\n" );
 						}
 					}
 				}

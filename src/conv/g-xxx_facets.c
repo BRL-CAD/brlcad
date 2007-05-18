@@ -356,7 +356,7 @@ genptr_t		client_data;
 		return  curtree;
 
 	regions_tried++;
-	/* Begin rt_bomb() protection */
+	/* Begin bu_bomb() protection */
 	if( ncpu == 1 ) {
 		if( BU_SETJUMP )  {
 			/* Error, bail out */
@@ -368,7 +368,7 @@ genptr_t		client_data;
 			bu_free( (char *)sofar, "sofar" );
 
 			/* Sometimes the NMG library adds debugging bits when
-			 * it detects an internal error, before rt_bomb().
+			 * it detects an internal error, before bu_bomb().
 			 */
 			rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
@@ -452,7 +452,7 @@ genptr_t		client_data;
 				bu_free( (char *)sofar, "sofar" );
 
 				/* Sometimes the NMG library adds debugging bits when
-				 * it detects an internal error, before rt_bomb().
+				 * it detects an internal error, before bu_bomb().
 				 */
 				rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

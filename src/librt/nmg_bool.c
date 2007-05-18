@@ -787,7 +787,7 @@ nmg_s_radial_check( sB, tol );
 #endif
 		if( (i = nmg_model_fuse( m, tol )) > 0 )  {
 			bu_log("NOTICE: nmg_bool: fused %d entities while cracking shells\n", i);
-			rt_bomb("nmg_bool() entities unfused after nmg_crackshells()\n");
+			bu_bomb("nmg_bool() entities unfused after nmg_crackshells()\n");
 		}
 	}
 #if 1
@@ -988,7 +988,7 @@ nmg_s_radial_check( sB, tol );
 		nmg_vmodel(m);
 		if( (i = nmg_model_fuse( m, tol )) > 0 )  {
 			bu_log("ERROR: nmg_bool: fused %d entities after BOOLEAN.  Isect bug.\n", i);
-			rt_bomb("nmg_bool() entities unfused after nmg_evaluate_boolean()\n");
+			bu_bomb("nmg_bool() entities unfused after nmg_evaluate_boolean()\n");
 		}
 	}
 
@@ -1009,7 +1009,7 @@ nmg_s_radial_check( sA, tol );
 		if( nmg_has_dangling_faces( (long *)m, (char *)NULL ) )  {
 			if(rt_g.NMG_debug)
 				nmg_stash_model_to_file( "dangle.g", m, "After Boolean" );
-			rt_bomb("nmg_bool() Dangling faces detected after boolean\n");
+			bu_bomb("nmg_bool() Dangling faces detected after boolean\n");
 		}
 
 		/* Do this before table size changes */
@@ -1046,7 +1046,7 @@ nmg_s_radial_check( sA, tol );
 			if( rt_g.NMG_debug )
 				bu_log("nmg_bool() WARNING: sA unclosed at return, barging on.\n");
 			else
-				rt_bomb("nmg_bool() sA unclosed at return, aborting.\n");
+				bu_bomb("nmg_bool() sA unclosed at return, aborting.\n");
 		}
 nmg_s_radial_check( sA, tol );
 
@@ -1115,7 +1115,7 @@ nmg_region_v_unique( rB, tol );
 		nmg_ks(s);
 		if( BU_LIST_NON_EMPTY( &r->s_hd ) )
 		{
-			rt_bomb( "nmg_do_bool: Result of Boolean is an empty shell, but region is not empty!!!\n" );
+			bu_bomb( "nmg_do_bool: Result of Boolean is an empty shell, but region is not empty!!!\n" );
 		}
 		nmg_kr( r );
 		return( (struct nmgregion *)NULL );
@@ -1338,8 +1338,8 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 		/* For sub and add, if rhs is 0, result is lhs */
 		return tl;
 	}
-	if( tl->tr_op != OP_NMG_TESS )  rt_bomb("nmg_booltree_evaluate() bad left tree\n");
-	if( tr->tr_op != OP_NMG_TESS )  rt_bomb("nmg_booltree_evaluate() bad right tree\n");
+	if( tl->tr_op != OP_NMG_TESS )  bu_bomb("nmg_booltree_evaluate() bad left tree\n");
+	if( tr->tr_op != OP_NMG_TESS )  bu_bomb("nmg_booltree_evaluate() bad right tree\n");
 
 	if( ! nmg_bool_eval_silent )
 	    bu_log(" {%s}%s{%s}\n", tl->tr_d.td_name, op_str, tr->tr_d.td_name );
@@ -1444,7 +1444,7 @@ nmg_boolean( union tree *tp, struct model *m, const struct bn_tol *tol, struct r
 	 */
 	result = nmg_booltree_evaluate( tp, tol, resp );
 	RT_CK_TREE( result );
-	if( result != tp )  rt_bomb("nmg_boolean() result of nmg_booltree_evaluate() isn't tp\n");
+	if( result != tp )  bu_bomb("nmg_boolean() result of nmg_booltree_evaluate() isn't tp\n");
 	if( tp->tr_op != OP_NMG_TESS )  {
 		bu_log("nmg_boolean() result of nmg_booltree_evaluate() op != OP_NMG_TESS\n");
 		rt_pr_tree( tp, 0 );

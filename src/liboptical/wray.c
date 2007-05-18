@@ -154,7 +154,7 @@ wray( struct partition *pp, struct application *ap, FILE *fp, const vect_t inorm
 	WRAY_TAG( vldray, ap );
 
 	if( fwrite( &vldray, sizeof(struct vldray), 1, fp ) != 1 )
-		rt_bomb("rway:  write error");
+		bu_bomb("rway:  write error");
 }
 
 /*

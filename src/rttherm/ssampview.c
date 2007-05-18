@@ -619,7 +619,7 @@ main(int argc, char **argv)
 	first_command = "doit1 42";
 
 	if( (fbp = fb_open( NULL, width, height )) == FBIO_NULL )  {
-		rt_bomb("Unable to open fb\n");
+		bu_bomb("Unable to open fb\n");
 	}
 	fb_view( fbp, width/2, height/2, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
 
@@ -627,7 +627,7 @@ main(int argc, char **argv)
 	sprintf( spectrum_name, "%s.spect", datafile_basename );
 	spectrum = (struct bn_table *)bn_table_read( spectrum_name );
 	if( spectrum == NULL )  {
-		rt_bomb("Unable to read spectrum\n");
+		bu_bomb("Unable to read spectrum\n");
 	}
 	BN_CK_TABLE(spectrum);
 	bu_log("spectrum has %d samples\n", spectrum->nx);

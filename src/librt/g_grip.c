@@ -162,7 +162,7 @@ rt_grp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_grp_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
-	rt_bomb("rt_grp_norm: grips should never be hit.\n");
+	bu_bomb("rt_grp_norm: grips should never be hit.\n");
 }
 /**
  *			R T _ G R P _ C U R V E
@@ -172,7 +172,7 @@ rt_grp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 void
 rt_grp_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
-	rt_bomb("rt_grp_curve: nobody should be asking for curve of a grip.\n");
+	bu_bomb("rt_grp_curve: nobody should be asking for curve of a grip.\n");
 }
 
 /**
@@ -188,7 +188,7 @@ rt_grp_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 void
 rt_grp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
-	rt_bomb("rt_grp_uv: nobody should be asking for UV of a grip.\n");
+	bu_bomb("rt_grp_uv: nobody should be asking for UV of a grip.\n");
 }
 
 /**
@@ -302,7 +302,7 @@ rt_grp_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	MAT4X3PNT( gip->center, mat, &orig_eqn[0] );
 	MAT4X3VEC( gip->normal, mat, &orig_eqn[3] );
 	if ( NEAR_ZERO(mat[15], 0.001) ) {
-		rt_bomb("rt_grip_import, scale factor near zero.");
+		bu_bomb("rt_grip_import, scale factor near zero.");
 	}
 	gip->mag = orig_eqn[6]/mat[15];
 
@@ -377,7 +377,7 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	MAT4X3PNT( gip->center, mat, &vec[0] );
 	MAT4X3VEC( gip->normal, mat, &vec[3] );
 	if ( NEAR_ZERO(mat[15], 0.001) ) {
-		rt_bomb("rt_grip_import5, scale factor near zero.");
+		bu_bomb("rt_grip_import5, scale factor near zero.");
 	}
 	gip->mag = vec[6]/mat[15];
 

@@ -68,7 +68,7 @@ nmg_merge_regions(struct nmgregion *r1, struct nmgregion *r2, const struct bn_to
 	NMG_CK_MODEL( m );
 
 	if( r2->m_p != m )
-		rt_bomb( "nmg_merge_regions: Tried to merge regions from different models!!" );
+		bu_bomb( "nmg_merge_regions: Tried to merge regions from different models!!" );
 
 	/* move all of r2's faces into r1 */
 	while( BU_LIST_NON_EMPTY( &r2->s_hd ) )
@@ -162,7 +162,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 			NMG_CK_FACE_G_PLANE(fg2);
 
 			if( fu2->fumate_p == fu1 || fu1->fumate_p == fu2 )
-				rt_bomb("nmg_shell_coplanar_face_merge() mate confusion\n");
+				bu_bomb("nmg_shell_coplanar_face_merge() mate confusion\n");
 
 			/* See if face geometry is shared & same direction */
 			if( fg1 != fg2 || f1->flip != f2->flip )  {
@@ -196,7 +196,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 				prev_fu = BU_LIST_PREV(faceuse, &fu2->l);
 				/* The prev_fu can never be the head */
 				if( BU_LIST_IS_HEAD(prev_fu, &s->fu_hd) )
-					rt_bomb("prev is head?\n");
+					bu_bomb("prev is head?\n");
 
 				nmg_jf( fu1, fu2 );
 
@@ -918,16 +918,16 @@ nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol
 	}
 
 	if( BU_LIST_NON_EMPTY( &s2->fu_hd ) )  {
-		rt_bomb("nmg_js():  s2 still has faces!\n");
+		bu_bomb("nmg_js():  s2 still has faces!\n");
 	}
 	if( BU_LIST_NON_EMPTY( &s2->lu_hd ) )  {
-		rt_bomb("nmg_js():  s2 still has wire loops!\n");
+		bu_bomb("nmg_js():  s2 still has wire loops!\n");
 	}
 	if( BU_LIST_NON_EMPTY( &s2->eu_hd ) )  {
-		rt_bomb("nmg_js():  s2 still has wire edges!\n");
+		bu_bomb("nmg_js():  s2 still has wire edges!\n");
 	}
 	if(s2->vu_p) {
-		rt_bomb("nmg_js():  s2 still has verts!\n");
+		bu_bomb("nmg_js():  s2 still has verts!\n");
 	}
 
 	/* s2 is completely empty now, which is an invalid condition */
@@ -1061,14 +1061,14 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
 	if (n < 1) {
 		bu_log("nmg_cmface(s=x%x, verts=x%x, n=%d.)\n",
 			s, verts, n );
-		rt_bomb("nmg_cmface() trying to make bogus face\n");
+		bu_bomb("nmg_cmface() trying to make bogus face\n");
 	}
 
 	/* make sure verts points to some real storage */
 	if (!verts) {
 		bu_log("nmg_cmface(s=x%x, verts=x%x, n=%d.) null pointer to array start\n",
 			s, verts, n );
-		rt_bomb("nmg_cmface\n");
+		bu_bomb("nmg_cmface\n");
 	}
 
 	/* validate each of the pointers in verts */
@@ -1081,7 +1081,7 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
 		} else {
 			bu_log("nmg_cmface(s=x%x, verts=x%x, n=%d.) verts[%d]=NULL\n",
 				s, verts, n, i );
-			rt_bomb("nmg_cmface\n");
+			bu_bomb("nmg_cmface\n");
 		}
 	}
 
@@ -1159,7 +1159,7 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
 					i, *verts[i], euold->vu_p->v_p);
 				euold = BU_LIST_PNEXT_CIRC( edgeuse, &euold->l );
 			}
-			rt_bomb("nmg_cmface() bogus eu ordering\n");
+			bu_bomb("nmg_cmface() bogus eu ordering\n");
 		}
 	}
 
@@ -1210,7 +1210,7 @@ nmg_cface(struct shell *s, struct vertex **verts, int n)
 	if (n < 1) {
 		bu_log("nmg_cface(s=x%x, verts=x%x, n=%d.)\n",
 			s, verts, n );
-		rt_bomb("nmg_cface() trying to make bogus face\n");
+		bu_bomb("nmg_cface() trying to make bogus face\n");
 	}
 
 	if (verts) {
@@ -1289,7 +1289,7 @@ nmg_add_loop_to_face(struct shell *s, struct faceuse *fu, struct vertex **verts,
 	if (n < 1) {
 		bu_log("nmg_add_loop_to_face(s=x%x, verts=x%x, n=%d.)\n",
 			s, verts, n );
-		rt_bomb("nmg_add_loop_to_face: request to make 0 faces\n");
+		bu_bomb("nmg_add_loop_to_face: request to make 0 faces\n");
 	}
 
 	if (verts) {
@@ -1502,7 +1502,7 @@ nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
 		if (fu->s_p != s) {
 			bu_log("nmg_gluefaces() in %s at %d. faceuses don't share parent\n",
 				__FILE__, __LINE__);
-			rt_bomb("nmg_gluefaces\n");
+			bu_bomb("nmg_gluefaces\n");
 		}
 	}
 
@@ -1634,7 +1634,7 @@ nmg_reverse_face(register struct faceuse *fu)
 		if (fumate->orientation != OT_OPPOSITE)  {
 			bu_log("nmg_reverse_face(fu=x%x) fu:SAME, fumate:%d\n",
 				fu, fumate->orientation);
-			rt_bomb("nmg_reverse_face() orientation clash\n");
+			bu_bomb("nmg_reverse_face() orientation clash\n");
 		} else {
 			fu->orientation = OT_OPPOSITE;
 			fumate->orientation = OT_SAME;
@@ -1643,7 +1643,7 @@ nmg_reverse_face(register struct faceuse *fu)
 		if (fumate->orientation != OT_SAME)  {
 			bu_log("nmg_reverse_face(fu=x%x) fu:OPPOSITE, fumate:%d\n",
 				fu, fumate->orientation);
-			rt_bomb("nmg_reverse_face() orientation clash\n");
+			bu_bomb("nmg_reverse_face() orientation clash\n");
 		} else {
 			fu->orientation = OT_SAME;
 			fumate->orientation = OT_OPPOSITE;
@@ -1804,7 +1804,7 @@ nmg_pr_fu_around_eu(eu, tol );
 			if( rt_g.NMG_debug )  {
 nmg_pr_fu_around_eu(eu, tol );
 				if( nmg_check_radial( eu, tol ) )
-					rt_bomb("nmg_face_fix_radial_parity(): nmg_check_radial failed\n");
+					bu_bomb("nmg_face_fix_radial_parity(): nmg_check_radial failed\n");
 			}
 #endif
 		}
@@ -1835,12 +1835,12 @@ nmg_mv_fu_between_shells(struct shell *dest, register struct shell *src, registe
 	if (fu->s_p != src) {
 		bu_log("nmg_mv_fu_between_shells(dest=x%x, src=x%x, fu=x%x), fu->s_p=x%x isnt src shell\n",
 			dest, src, fu, fu->s_p );
-		rt_bomb("fu->s_p isnt source shell\n");
+		bu_bomb("fu->s_p isnt source shell\n");
 	}
 	if (fumate->s_p != src) {
 		bu_log("nmg_mv_fu_between_shells(dest=x%x, src=x%x, fu=x%x), fumate->s_p=x%x isn't src shell\n",
 			dest, src, fu, fumate->s_p );
-		rt_bomb("fumate->s_p isnt source shell\n");
+		bu_bomb("fumate->s_p isnt source shell\n");
 	}
 
 	/* Remove fu from src shell */
@@ -1849,7 +1849,7 @@ nmg_mv_fu_between_shells(struct shell *dest, register struct shell *src, registe
 		/* This was the last fu in the list, bad news */
 		bu_log("nmg_mv_fu_between_shells(dest=x%x, src=x%x, fu=x%x), fumate=x%x not in src shell\n",
 			dest, src, fu, fumate );
-		rt_bomb("src shell emptied before finding fumate\n");
+		bu_bomb("src shell emptied before finding fumate\n");
 	}
 
 	/* Remove fumate from src shell */
@@ -1890,7 +1890,7 @@ nmg_move_fu_fu(register struct faceuse *dest_fu, register struct faceuse *src_fu
 	NMG_CK_FACEUSE(src_fu);
 
 	if( dest_fu->orientation != src_fu->orientation )
-		rt_bomb("nmg_move_fu_fu: differing orientations\n");
+		bu_bomb("nmg_move_fu_fu: differing orientations\n");
 
 	/* Move all loopuses from src to dest faceuse */
 	while( BU_LIST_WHILE( lu, loopuse, &src_fu->lu_hd ) )  {
@@ -1924,7 +1924,7 @@ nmg_jf(register struct faceuse *dest_fu, register struct faceuse *src_fu)
 	}
 
 	if( src_fu->f_p == dest_fu->f_p )
-		rt_bomb("nmg_jf() src and dest faces are the same\n");
+		bu_bomb("nmg_jf() src and dest faces are the same\n");
 
 	if( dest_fu->orientation == src_fu->orientation )  {
 		nmg_move_fu_fu(dest_fu, src_fu);
@@ -2093,23 +2093,23 @@ nmg_jl(struct loopuse *lu, struct edgeuse *eu)
 	}
 
 	if (eu->up.lu_p != lu)
-		rt_bomb("nmg_jl: edgeuse is not child of loopuse?\n");
+		bu_bomb("nmg_jl: edgeuse is not child of loopuse?\n");
 
 	if (lu2->l.magic != NMG_LOOPUSE_MAGIC)
-		rt_bomb("nmg_jl: radial edgeuse not part of loopuse\n");
+		bu_bomb("nmg_jl: radial edgeuse not part of loopuse\n");
 
 	if (lu2 == lu)
-		rt_bomb("nmg_jl: trying to join a loop to itself\n");
+		bu_bomb("nmg_jl: trying to join a loop to itself\n");
 
 	if (lu->up.magic_p != lu2->up.magic_p)
-		rt_bomb("nmg_jl: loopuses do not share parent\n");
+		bu_bomb("nmg_jl: loopuses do not share parent\n");
 
 	if (lu2->orientation != lu->orientation)  {
 		if( lu->orientation != OT_SAME || lu2->orientation != OT_OPPOSITE )  {
 			bu_log("nmg_jl: lu2 = %s, lu = %s\n",
 				nmg_orientation(lu2->orientation),
 				nmg_orientation(lu->orientation) );
-			rt_bomb("nmg_jl: can't join loops of different orientation!\n");
+			bu_bomb("nmg_jl: can't join loops of different orientation!\n");
 		} else {
 			/* Consuming an OPPOSITE into a SAME is OK */
 		}
@@ -2117,7 +2117,7 @@ nmg_jl(struct loopuse *lu, struct edgeuse *eu)
 
 	if (eu->radial_p->eumate_p->radial_p->eumate_p != eu ||
 	    eu->eumate_p->radial_p->eumate_p->radial_p != eu)
-		rt_bomb("nmg_jl: edgeuses must be sole uses of edge to join loops\n");
+		bu_bomb("nmg_jl: edgeuses must be sole uses of edge to join loops\n");
 
 	/*
 	 * Remove all the edgeuses "ahead" of our radial and insert them
@@ -2147,7 +2147,7 @@ nmg_jl(struct loopuse *lu, struct edgeuse *eu)
 	 * Kill the one remaining use of the (formerly) "shared" edge in lu
 	 * and voila: one contiguous loop.
 	 */
-	if( nmg_keu(eu) )  rt_bomb("nmg_jl() loop vanished?\n");
+	if( nmg_keu(eu) )  bu_bomb("nmg_jl() loop vanished?\n");
 
 	nmg_lu_reorient( lu );
 }
@@ -2195,10 +2195,10 @@ nmg_join_2loops(struct vertexuse *vu1, struct vertexuse *vu2)
 	}
 
 	if( lu1 == lu2 || lu1->l_p == lu2->l_p )
-		rt_bomb("nmg_join_2loops: can't join loop to itself\n");
+		bu_bomb("nmg_join_2loops: can't join loop to itself\n");
 
 	if( lu1->up.fu_p != lu2->up.fu_p )
-		rt_bomb("nmg_join_2loops: can't join loops in different faces\n");
+		bu_bomb("nmg_join_2loops: can't join loops in different faces\n");
 
 	if( vu1->v_p != vu2->v_p )  {
 		/*
@@ -2224,7 +2224,7 @@ nmg_join_2loops(struct vertexuse *vu1, struct vertexuse *vu2)
 	}
 	/* second_new_eu is eu that departs from shared vertex */
 	vu2 = second_new_eu->vu_p;	/* replacement for original vu2 */
-	if( vu1->v_p != vu2->v_p )  rt_bomb("nmg_join_2loops: jaunt failed\n");
+	if( vu1->v_p != vu2->v_p )  bu_bomb("nmg_join_2loops: jaunt failed\n");
 
 	/*
 	 *  Gobble edges off of loop2 (starting with eu2),
@@ -2279,9 +2279,9 @@ nmg_join_singvu_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 	}
 
 	if( *vu2->up.magic_p != NMG_LOOPUSE_MAGIC ||
-	    *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )  rt_bomb("nmg_join_singvu_loop bad args\n");
+	    *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )  bu_bomb("nmg_join_singvu_loop bad args\n");
 
-	if( vu1->v_p == vu2->v_p )  rt_bomb("nmg_join_singvu_loop same vertex\n");
+	if( vu1->v_p == vu2->v_p )  bu_bomb("nmg_join_singvu_loop same vertex\n");
 
 	/* Take jaunt from vu1 to vu2 and back */
 	eu1 = vu1->up.eu_p;
@@ -2328,9 +2328,9 @@ nmg_join_2singvu_loops(struct vertexuse *vu1, struct vertexuse *vu2)
 	NMG_CK_VERTEXUSE( vu2 );
 
 	if( *vu2->up.magic_p != NMG_LOOPUSE_MAGIC ||
-	    *vu1->up.magic_p != NMG_LOOPUSE_MAGIC )  rt_bomb("nmg_join_2singvu_loops bad args\n");
+	    *vu1->up.magic_p != NMG_LOOPUSE_MAGIC )  bu_bomb("nmg_join_2singvu_loops bad args\n");
 
-	if( vu1->v_p == vu2->v_p )  rt_bomb("nmg_join_2singvu_loops same vertex\n");
+	if( vu1->v_p == vu2->v_p )  bu_bomb("nmg_join_2singvu_loops same vertex\n");
 
 	/* Take jaunt from vu1 to vu2 and back */
 	/* Make a 0 length edge on vu1 */
@@ -2433,7 +2433,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 	NMG_CK_LOOPUSE(oldlu);
 
 	if (eu2->up.lu_p != oldlu) {
-		rt_bomb("nmg_cut_loop() vertices not decendants of same loop\n");
+		bu_bomb("nmg_cut_loop() vertices not decendants of same loop\n");
 	}
 
 	if( vu1->v_p == vu2->v_p )  {
@@ -2636,7 +2636,7 @@ nmg_split_lu_at_vu(struct loopuse *lu, struct vertexuse *split_vu)
 		NMG_CK_VERTEXUSE(vu);
 		if( vu->v_p == split_v )  break;
 	}
-	if( iteration >= 10000 )  rt_bomb("nmg_split_lu_at_vu:  infinite loop\n");
+	if( iteration >= 10000 )  bu_bomb("nmg_split_lu_at_vu:  infinite loop\n");
 out:
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		bu_log("nmg_split_lu_at_vu( lu=x%x, split_vu=x%x ) newlu=x%x\n",
@@ -3229,7 +3229,7 @@ top:
 	if( jaunt_count < 0 )
 	{
 		bu_log( "nmg_loop_split_at_touching_jaunt: nmg_get_touching_jaunts() returned %d for lu x%x\n", jaunt_count, lu );
-		rt_bomb( "nmg_loop_split_at_touching_jaunt: bad jaunt count\n" );
+		bu_bomb( "nmg_loop_split_at_touching_jaunt: bad jaunt count\n" );
 	}
 
 	if( jaunt_count == 0 )
@@ -3415,7 +3415,7 @@ top:
 	bu_log( "nmg_loop_split_at_touching_jaunt: Could not find a way to split lu x%x\n", lu );
 	nmg_pr_lu_briefly( lu, " " );
 	nmg_stash_model_to_file( "jaunt.g", nmg_find_model( &lu->l.magic ), "Can't split lu" );
-	rt_bomb( "nmg_loop_split_at_touching_jaunt: Can't split lu\n" );
+	bu_bomb( "nmg_loop_split_at_touching_jaunt: Can't split lu\n" );
 
 	/* This return will never execute, but the compilers like it */
 	return( count );
@@ -3594,12 +3594,12 @@ nmg_mv_lu_between_shells(struct shell *dest, register struct shell *src, registe
 	if( lu->up.s_p != src )  {
 		bu_log("nmg_mv_lu_between_shells(dest=x%x, src=x%x, lu=x%x), lu->up.s_p=x%x isn't source shell\n",
 			dest, src, lu, lu->up.s_p );
-		rt_bomb("lu->up.s_p isn't source shell\n");
+		bu_bomb("lu->up.s_p isn't source shell\n");
 	}
 	if( lumate->up.s_p != src )  {
 		bu_log("nmg_mv_lu_between_shells(dest=x%x, src=x%x, lu=x%x), lumate->up.s_p=x%x isn't source shell\n",
 			dest, src, lu, lumate->up.s_p );
-		rt_bomb("lumate->up.s_p isn't source shell\n");
+		bu_bomb("lumate->up.s_p isn't source shell\n");
 	}
 
 	/* Remove lu from src shell */
@@ -3608,7 +3608,7 @@ nmg_mv_lu_between_shells(struct shell *dest, register struct shell *src, registe
 		/* This was the last lu in the list */
 		bu_log("nmg_mv_lu_between_shells(dest=x%x, src=x%x, lu=x%x), lumate=x%x not in src shell\n",
 			dest, src, lu, lumate );
-		rt_bomb("src shell emptied before finding lumate\n");
+		bu_bomb("src shell emptied before finding lumate\n");
 	}
 
 	/* Remove lumate from src shell */
@@ -3702,7 +3702,7 @@ nmg_dup_loop(struct loopuse *lu, long int *parent, long int **trans_tbl)
 				__FILE__, __LINE__,
 				nmg_orientation(lu->orientation),
 				nmg_orientation(new_lu->orientation));
-			rt_bomb("bombing\n");
+			bu_bomb("bombing\n");
 		}
 		if( new_v )  {
 			/* the new vertex already exists in the new model */
@@ -3752,7 +3752,7 @@ nmg_dup_loop(struct loopuse *lu, long int *parent, long int **trans_tbl)
 					__FILE__, __LINE__,
 					nmg_orientation(lu->orientation),
 					nmg_orientation(new_lu->orientation));
-				rt_bomb("bombing\n");
+				bu_bomb("bombing\n");
 			}
 
 			new_vu = BU_LIST_FIRST(vertexuse, &new_lu->down_hd);
@@ -3908,7 +3908,7 @@ nmg_lu_reorient(struct loopuse *lu)
 		if (rt_g.NMG_debug & DEBUG_BASIC)
 			bu_log("nmg_lu_reorient() selecting other fu=x%x, lu=x%x\n", fu, lu);
 		if( fu->orientation != OT_SAME )
-			rt_bomb("nmg_lu_reorient() no OT_SAME fu?\n");
+			bu_bomb("nmg_lu_reorient() no OT_SAME fu?\n");
 	}
 
 
@@ -4082,7 +4082,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
 	else if (*oldeu->up.magic_p != NMG_LOOPUSE_MAGIC) {
 		bu_log("nmg_eusplit() in %s at %d invalid edgeuse parent\n",
 			__FILE__, __LINE__);
-		rt_bomb("nmg_eusplit\n");
+		bu_bomb("nmg_eusplit\n");
 	}
 
 	/* now we know we are in a loop */
@@ -4096,7 +4096,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
 	else if (*lu->up.magic_p == NMG_FACEUSE_MAGIC)
 		s = lu->up.fu_p->s_p;
 	else
-		rt_bomb("nmg_eusplit() bad lu->up\n");
+		bu_bomb("nmg_eusplit() bad lu->up\n");
 	NMG_CK_SHELL(s);
 
 	/* Make a new wire edge in the shell */
@@ -4193,7 +4193,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
 		oldeumate->l2.magic = NMG_EDGEUSE2_MAGIC;
 		eu1->l2.magic = NMG_EDGEUSE2_MAGIC;
 	}
-	if( oldeu->g.magic_p != oldeu->eumate_p->g.magic_p )  rt_bomb("nmg_eusplit() unshared geom\n");
+	if( oldeu->g.magic_p != oldeu->eumate_p->g.magic_p )  bu_bomb("nmg_eusplit() unshared geom\n");
 
 out:
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
@@ -4289,7 +4289,7 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
 
 	if( v && ( v == vA || v == vB ) )  {
 		bu_log("WARNING: nmg_esplit(v=x%x) vertex is already an edge vertex\n", v);
-		rt_bomb("nmg_esplit() new vertex is already an edge vertex\n");
+		bu_bomb("nmg_esplit() new vertex is already an edge vertex\n");
 	}
 
 	/* one at a time, we peel out & split an edgeuse pair of this edge.
@@ -4341,7 +4341,7 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
 		} else {
 			bu_log("nmg_esplit(v=x%x, e=x%x)\n", v, e);
 			bu_log("nmg_esplit: teuX->vu_p->v_p=x%x, vA=x%x, vB=x%x\n", teuX->vu_p->v_p, vA, vB );
-			rt_bomb("nmg_esplit() teuX->vu_p->v_p is neither vA nor vB\n");
+			bu_bomb("nmg_esplit() teuX->vu_p->v_p is neither vA nor vB\n");
 		}
 	} while (notdone);
 	/* Here, "e" pointer is invalid -- it no longer exists */
@@ -4362,7 +4362,7 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
 		return neu1;
 	}
 
-	rt_bomb("nmg_esplit() unable to find eu starting at new v\n");
+	bu_bomb("nmg_esplit() unable to find eu starting at new v\n");
 	/* NOTREACHED */
 	return (struct edgeuse *)NULL;
 }
@@ -4393,7 +4393,7 @@ nmg_ebreak(struct vertex *v, struct edgeuse *eu)
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGEUSE(new_eu);
 
-	if( eu->e_p == new_eu->e_p )  rt_bomb("nmb_ebreak() same edges?\n");
+	if( eu->e_p == new_eu->e_p )  bu_bomb("nmb_ebreak() same edges?\n");
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		bu_log("nmg_ebreak( v=x%x, eu=x%x ) new_eu=x%x\n",
@@ -4555,7 +4555,7 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 	NMG_CK_EDGE( e1 );
 
 	if( eu1_first->g.magic_p != eu1_first->eumate_p->g.magic_p )
-		rt_bomb("nmg_unbreak_edge() eu and mate don't share geometry\n");
+		bu_bomb("nmg_unbreak_edge() eu and mate don't share geometry\n");
 
 	eg = eu1_first->g.lseg_p;
 	if( !eg )  {
@@ -4665,18 +4665,18 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 			bu_log( "nmg_unbreak_edge: eu1 does not got to/from correct vertices, x%x, %x\n",
 				eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p );
 			nmg_pr_eu_briefly( eu1, " " );
-			rt_bomb( "nmg_unbreak_edge 1\n" );
+			bu_bomb( "nmg_unbreak_edge 1\n" );
 		}
 		eu2 = BU_LIST_PNEXT_CIRC( edgeuse, eu1 );
 		NMG_CK_EDGEUSE(eu2);
 		if( eu2->g.lseg_p != eg )  {
-			rt_bomb("nmg_unbreak_edge:  eu2 geometry is wrong\n");
+			bu_bomb("nmg_unbreak_edge:  eu2 geometry is wrong\n");
 		}
 		if( eu2->vu_p->v_p != vb || eu2->eumate_p->vu_p->v_p != vc )  {
 			bu_log( "nmg_unbreak_edge: about to kill eu2, but does not got to/from correct vertices, x%x, x%x\n",
 				eu2->vu_p->v_p, eu2->eumate_p->vu_p->v_p );
 			nmg_pr_eu_briefly( eu2, " " );
-			rt_bomb( "nmg_unbreak_edge 3\n" );
+			bu_bomb( "nmg_unbreak_edge 3\n" );
 		}
 
 		/* revector eu1mate's start vertex from B to C */
@@ -4686,21 +4686,21 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 			bu_log( "nmg_unbreak_edge: extended eu1 does not got to/from correct vertices, x%x, x%x\n",
 				eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p );
 			nmg_pr_eu_briefly( eu1, " " );
-			rt_bomb( "nmg_unbreak_edge 2\n" );
+			bu_bomb( "nmg_unbreak_edge 2\n" );
 		}
 
 		if( eu2 != BU_LIST_PNEXT_CIRC( edgeuse, eu1 ) )
-			rt_bomb("nmg_unbreak_edge eu2 unexpected altered\n");
+			bu_bomb("nmg_unbreak_edge eu2 unexpected altered\n");
 
 		/* Now kill off the unnecessary eu2 associated w/ cur eu1 */
 		if( nmg_keu( eu2 ) )
-			rt_bomb( "nmg_unbreak_edge: edgeuse parent is now empty!!\n" );
+			bu_bomb( "nmg_unbreak_edge: edgeuse parent is now empty!!\n" );
 
 		if( eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vc )  {
 			bu_log( "nmg_unbreak_edge: unbroken eu1 (after eu2 killed) does not got to/from correct vertices, x%x, x%x\n",
 				eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p );
 			nmg_pr_eu_briefly( eu1, " " );
-			rt_bomb( "nmg_unbreak_edge 4\n" );
+			bu_bomb( "nmg_unbreak_edge 4\n" );
 		}
 		eu1 = eu1->eumate_p->radial_p;
 		if( eu1 == eu1_first )  break;
@@ -4881,18 +4881,18 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 			bu_log( "nmg_unbreak_edge: eu1 does not got to/from correct vertices, x%x, %x\n",
 				eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p );
 			nmg_pr_eu_briefly( eu1, " " );
-			rt_bomb( "nmg_unbreak_edge 1\n" );
+			bu_bomb( "nmg_unbreak_edge 1\n" );
 		}
 		eu2 = BU_LIST_PNEXT_CIRC( edgeuse, eu1 );
 		NMG_CK_EDGEUSE(eu2);
 		if( eu2->g.lseg_p != eg )  {
-			rt_bomb("nmg_unbreak_edge:  eu2 geometry is wrong\n");
+			bu_bomb("nmg_unbreak_edge:  eu2 geometry is wrong\n");
 		}
 		if( eu2->vu_p->v_p != vb || eu2->eumate_p->vu_p->v_p != vc )  {
 			bu_log( "nmg_unbreak_edge: about to kill eu2, but does not got to/from correct vertices, x%x, x%x\n",
 				eu2->vu_p->v_p, eu2->eumate_p->vu_p->v_p );
 			nmg_pr_eu_briefly( eu2, " " );
-			rt_bomb( "nmg_unbreak_edge 3\n" );
+			bu_bomb( "nmg_unbreak_edge 3\n" );
 		}
 
 		/* revector eu1mate's start vertex from B to C */
@@ -4902,21 +4902,21 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 			bu_log( "nmg_unbreak_edge: extended eu1 does not got to/from correct vertices, x%x, x%x\n",
 				eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p );
 			nmg_pr_eu_briefly( eu1, " " );
-			rt_bomb( "nmg_unbreak_edge 2\n" );
+			bu_bomb( "nmg_unbreak_edge 2\n" );
 		}
 
 		if( eu2 != BU_LIST_PNEXT_CIRC( edgeuse, eu1 ) )
-			rt_bomb("nmg_unbreak_edge eu2 unexpected altered\n");
+			bu_bomb("nmg_unbreak_edge eu2 unexpected altered\n");
 
 		/* Now kill off the unnecessary eu2 associated w/ cur eu1 */
 		if( nmg_keu( eu2 ) )
-			rt_bomb( "nmg_unbreak_edge: edgeuse parent is now empty!!\n" );
+			bu_bomb( "nmg_unbreak_edge: edgeuse parent is now empty!!\n" );
 
 		if( eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vc )  {
 			bu_log( "nmg_unbreak_edge: unbroken eu1 (after eu2 killed) does not got to/from correct vertices, x%x, x%x\n",
 				eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p );
 			nmg_pr_eu_briefly( eu1, " " );
-			rt_bomb( "nmg_unbreak_edge 4\n" );
+			bu_bomb( "nmg_unbreak_edge 4\n" );
 		}
 		eu1 = eu1->eumate_p->radial_p;
 		if( eu1 == eu1_first )  break;
@@ -5000,7 +5000,7 @@ nmg_eins(struct edgeuse *eu)
 		eu2->up.lu_p = eumate->up.lu_p;
 	}
 	else {
-		rt_bomb("nmg_eins() Cannot yet insert null edge in shell\n");
+		bu_bomb("nmg_eins() Cannot yet insert null edge in shell\n");
 	}
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		bu_log("nmg_eins(eu=x%x) eu1=x%x\n", eu, eu1);
@@ -5025,12 +5025,12 @@ nmg_mv_eu_between_shells(struct shell *dest, register struct shell *src, registe
 	if (eu->up.s_p != src) {
 		bu_log("nmg_mv_eu_between_shells(dest=x%x, src=x%x, eu=x%x), eu->up.s_p=x%x isnt src shell\n",
 			dest, src, eu, eu->up.s_p );
-		rt_bomb("eu->up.s_p isnt source shell\n");
+		bu_bomb("eu->up.s_p isnt source shell\n");
 	}
 	if (eumate->up.s_p != src) {
 		bu_log("nmg_mv_eu_between_shells(dest=x%x, src=x%x, eu=x%x), eumate->up.s_p=x%x isn't src shell\n",
 			dest, src, eu, eumate->up.s_p );
-		rt_bomb("eumate->up.s_p isnt source shell\n");
+		bu_bomb("eumate->up.s_p isnt source shell\n");
 	}
 
 	/* Remove eu from src shell */
@@ -5039,7 +5039,7 @@ nmg_mv_eu_between_shells(struct shell *dest, register struct shell *src, registe
 		/* This was the last eu in the list, bad news */
 		bu_log("nmg_mv_eu_between_shells(dest=x%x, src=x%x, eu=x%x), eumate=x%x not in src shell\n",
 			dest, src, eu, eumate );
-		rt_bomb("src shell emptied before finding eumate\n");
+		bu_bomb("src shell emptied before finding eumate\n");
 	}
 
 	/* Remove eumate from src shell */

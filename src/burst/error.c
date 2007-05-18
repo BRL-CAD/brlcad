@@ -33,7 +33,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  Ray Tracing library and Framebuffer library, error handling routines.
  *
  *  Functions -
- *	rt_bomb		Called upon fatal RT library error.
  *	brst_log		Called to log RT library events.
  *	fb_log		Called to log FB library events.
  *
@@ -45,20 +44,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./Sc.h"
 #include "./extern.h"
 
-/*
- *  		R T _ B O M B
- *
- *  Abort the RT library
- */
-void
-rt_bomb(str)
-char *str;
-	{
-	brst_log( "%s (librt.a) : Fatal error, aborting!\n", str );
-	(void) fflush( stdout );
-	(void) abort();			  /* Should dump.		*/
-	/* exit(12); XXX - this shouldn't be needed */
-	}
 
 /*
  *  		B R S T _  L O G

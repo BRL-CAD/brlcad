@@ -139,7 +139,7 @@ db_tree_nleaves( const union tree *tp )
 
 	default:
 		bu_log("db_tree_nleaves: bad op %d\n", tp->tr_op);
-		rt_bomb("db_tree_nleaves\n");
+		bu_bomb("db_tree_nleaves\n");
 	}
 	return( -1 );	/* for the compiler */
 }

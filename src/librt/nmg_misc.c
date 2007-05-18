@@ -74,16 +74,16 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 	NMG_CK_LOOPUSE( lu );
 
 	if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-		rt_bomb( "nmg_snurb_calc_lu_uv_orient: LU has no edges\n" );
+		bu_bomb( "nmg_snurb_calc_lu_uv_orient: LU has no edges\n" );
 
 	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
-		rt_bomb( "nmg_snurb_calc_lu_uv_orient: LU is not part of a faceuse\n" );
+		bu_bomb( "nmg_snurb_calc_lu_uv_orient: LU is not part of a faceuse\n" );
 
 	NMG_CK_FACEUSE( lu->up.fu_p );
 	NMG_CK_FACE( lu->up.fu_p->f_p );
 
 	if( *lu->up.fu_p->f_p->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
-		rt_bomb( "nmg_snurb_calc_lu_uv_orient: LU is not part of a SNURB face\n" );
+		bu_bomb( "nmg_snurb_calc_lu_uv_orient: LU is not part of a SNURB face\n" );
 
 	/* count "psuedo-vertices" in loop */
 	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
@@ -93,7 +93,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 		NMG_CK_EDGEUSE( eu );
 
 		if( *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC )
-			rt_bomb( "nmg_snurb_calc_lu_uv_orient: EU on NURB face does not have edge_g_cnurb geometry\n" );
+			bu_bomb( "nmg_snurb_calc_lu_uv_orient: EU on NURB face does not have edge_g_cnurb geometry\n" );
 
 		eg = eu->g.cnurb_p;
 		NMG_CK_EDGE_G_CNURB( eg );
@@ -122,7 +122,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 			vu = eu->vu_p;
 			NMG_CK_VERTEXUSE( vu );
 			if( *vu->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
-				rt_bomb( "Orient_nurb_face_loops: vertexuse in face_g_snurb faceuse doesn't have edge_g_cnurb attribute\n" );
+				bu_bomb( "Orient_nurb_face_loops: vertexuse in face_g_snurb faceuse doesn't have edge_g_cnurb attribute\n" );
 			vg1 = vu->a.cnurb_p;
 			VMOVE( pts[edge_no], vg1->param )
 			edge_no++;
@@ -196,12 +196,12 @@ nmg_snurb_fu_eval(const struct faceuse *fu, const fastf_t u, const fastf_t v, fa
 	if( !f->g.magic_p )
 	{
 		bu_log( "nmg_snurb_fu_get_norm: face has no geometry (x%x)\n", f );
-		rt_bomb( "nmg_snurb_fu_get_norm: bad face\n" );
+		bu_bomb( "nmg_snurb_fu_get_norm: bad face\n" );
 	}
 	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
 	{
 		bu_log( "nmg_snurb_fu_get_norm: face is not a NURB face (x%x)\n", f );
-		rt_bomb( "nmg_snurb_fu_get_norm: bad face\n" );
+		bu_bomb( "nmg_snurb_fu_get_norm: bad face\n" );
 	}
 
 	VSETALLN( tmp_pt, 0.0, 4 );
@@ -230,12 +230,12 @@ nmg_snurb_fu_get_norm(const struct faceuse *fu, const fastf_t u, const fastf_t v
 	if( !f->g.magic_p )
 	{
 		bu_log( "nmg_snurb_fu_get_norm: face has no geometry (x%x)\n", f );
-		rt_bomb( "nmg_snurb_fu_get_norm: bad face\n" );
+		bu_bomb( "nmg_snurb_fu_get_norm: bad face\n" );
 	}
 	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
 	{
 		bu_log( "nmg_snurb_fu_get_norm: face is not a NURB face (x%x)\n", f );
-		rt_bomb( "nmg_snurb_fu_get_norm: bad face\n" );
+		bu_bomb( "nmg_snurb_fu_get_norm: bad face\n" );
 	}
 
 	rt_nurb_s_norm( f->g.snurb_p, u, v, norm );
@@ -255,13 +255,13 @@ nmg_snurb_fu_get_norm_at_vu(const struct faceuse *fu, const struct vertexuse *vu
 	if( !vu->a.magic_p )
 	{
 		bu_log( "nmg_snurb_fu_get_norm_at_vu: vertexuse does not have an attribute (x%x)\n", vu );
-		rt_bomb( "nmg_snurb_fu_get_norm_at_vu: bad VU\n" );
+		bu_bomb( "nmg_snurb_fu_get_norm_at_vu: bad VU\n" );
 	}
 
 	if( *vu->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
 	{
 		bu_log( "nmg_snurb_fu_get_norm_at_vu: vertexuse does not have a cnurb attribute (x%x)\n", vu );
-		rt_bomb( "nmg_snurb_fu_get_norm_at_vu: bad VU\n" );
+		bu_bomb( "nmg_snurb_fu_get_norm_at_vu: bad VU\n" );
 	}
 
 	va = vu->a.cnurb_p;
@@ -739,7 +739,7 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const s
 			}
 		}
 		if( void_f == (struct face *)NULL )
-			rt_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
+			bu_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
 
 		if( normal[dir] < 0.0)
 		{
@@ -795,7 +795,7 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const s
 				}
 			}
 			if( int_f == (struct face *)NULL )
-				rt_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
+				bu_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
 
 			/* Make sure there are no other external shells between these two */
 			for( BU_LIST_FOR( test_s , shell , &r->s_hd ) )
@@ -821,7 +821,7 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const s
 					}
 				}
 				if( test_f == (struct face *)NULL )
-					rt_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
+					bu_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
 
 				/* skip test shells that are void shells */
 				if( test_norm[test_dir] < 0.0)
@@ -918,7 +918,7 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, co
 			if( fu->orientation != OT_SAME )
 				fu = fu->fumate_p;
 			if( fu->orientation != OT_SAME )
-				rt_bomb( "nmg_find_outer_and_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
+				bu_bomb( "nmg_find_outer_and_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
 
 			NMG_GET_FU_NORMAL( normal , fu );
 			if( normal[dir] >= 0.0)	{
@@ -1176,10 +1176,10 @@ nmg_next_radial_eu(const struct edgeuse *eu, const struct shell *s, const int wi
 		NMG_CK_SHELL( s );
 
 	if( s && nmg_find_s_of_eu( eu ) != s )
-		rt_bomb( "nmg_find_radial_eu: eu is not in specified shell\n" );
+		bu_bomb( "nmg_find_radial_eu: eu is not in specified shell\n" );
 
 	if( !wires && !nmg_find_fu_of_eu( eu ) )
-		rt_bomb( "nmg_find_radial_eu: wire edges not specified, but eu is a wire!!\n" );
+		bu_bomb( "nmg_find_radial_eu: wire edges not specified, but eu is a wire!!\n" );
 
 	ret_eu = eu->eumate_p->radial_p;
 	while(
@@ -1216,10 +1216,10 @@ nmg_prev_radial_eu(const struct edgeuse *eu, const struct shell *s, const int wi
 		NMG_CK_SHELL( s );
 
 	if( s && nmg_find_s_of_eu( eu ) != s )
-		rt_bomb( "nmg_find_radial_eu: eu is not in specified shell\n" );
+		bu_bomb( "nmg_find_radial_eu: eu is not in specified shell\n" );
 
 	if( !wires && !nmg_find_fu_of_eu( eu ) )
-		rt_bomb( "nmg_find_radial_eu: wire edges not specified, but eu is a wire!!\n" );
+		bu_bomb( "nmg_find_radial_eu: wire edges not specified, but eu is a wire!!\n" );
 
 	ret_eu = eu->radial_p->eumate_p;
 	while( ( !wires & (nmg_find_fu_of_eu( ret_eu ) == (struct faceuse *)NULL)) ||
@@ -1338,7 +1338,7 @@ nmg_move_lu_between_fus(struct faceuse *dest, struct faceuse *src, struct loopus
 	if( lu->up.fu_p != src )
 	{
 		bu_log( "nmg_move_lu_between_fus( dest=x%x, src=x%x, lu=x%x)\n", dest, src, lu );
-		rt_bomb( "\tlu is not in src faceuse\n" );
+		bu_bomb( "\tlu is not in src faceuse\n" );
 	}
 
 	if( dest == src )
@@ -1357,8 +1357,8 @@ nmg_move_lu_between_fus(struct faceuse *dest, struct faceuse *src, struct loopus
 	{
 		bu_log( "nmg_move_lu_between_fus( dest=x%x, src=x%x, lu=x%x)\n", dest, src, lu );
 		if( src_is_empty )
-			rt_bomb( "\tsrc faceuse contains only lu, but src->fumate_p has more!!\n" );
-		rt_bomb( "\tsrc->fumate_p faceuse contains only lu->lumate_p, but src has more!!\n" );
+			bu_bomb( "\tsrc faceuse contains only lu, but src->fumate_p has more!!\n" );
+		bu_bomb( "\tsrc->fumate_p faceuse contains only lu->lumate_p, but src has more!!\n" );
 	}
 
 	/* add lu to dest faceuse */
@@ -1969,13 +1969,13 @@ rt_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const f
 	if( !NEAR_ZERO( MAGSQ( d1 ) - 1.0 , tol_dist_sq ) )
 	{
 		bu_log( "rt_dist_line3_line3: non-unit length direction vector ( %f %f %f )\n" , V3ARGS( d1 ) );
-		rt_bomb( "rt_dist_line3_line3\n" );
+		bu_bomb( "rt_dist_line3_line3\n" );
 	}
 
 	if( !NEAR_ZERO( MAGSQ( d2 ) - 1.0 , tol_dist_sq ) )
 	{
 		bu_log( "rt_dist_line3_line3: non-unit length direction vector ( %f %f %f )\n" , V3ARGS( d2 ) );
-		rt_bomb( "rt_dist_line3_line3\n" );
+		bu_bomb( "rt_dist_line3_line3\n" );
 	}
 
 	d1_d2 = VDOT( d1 , d2 );
@@ -2979,9 +2979,9 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
 	bu_ptbl_init( &faces , 64, " &faces ");
 
 	new_s = nmg_msv( s->r_p );
-	if( s->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+	if( s->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 	NMG_INDEX_ASSIGN( (*trans_tbl) , s , (long *)new_s );
-	if( new_s->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+	if( new_s->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 	NMG_INDEX_ASSIGN( (*trans_tbl) , new_s , (long *)s );
 
 	/* copy face uses */
@@ -2997,17 +2997,17 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
 				if( new_fu )
 				{
 					new_lu = nmg_dup_loop( lu , &new_fu->l.magic , (*trans_tbl) );
-					if( lu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					if( lu->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , lu , (long *)new_lu );
-					if( new_lu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					if( new_lu->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , new_lu , (long *)lu );
 				}
 				else
 				{
 					new_lu = nmg_dup_loop( lu , &new_s->l.magic , (*trans_tbl) );
-					if( new_lu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					if( new_lu->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , lu , (long *)new_lu );
-					if( lu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					if( lu->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , new_lu , (long *)lu );
 					new_fu = nmg_mf( new_lu );
 					if( lu->orientation == OT_OPPOSITE )
@@ -3016,17 +3016,17 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
 						new_lu->orientation = OT_OPPOSITE;
 						new_lu->lumate_p->orientation = OT_OPPOSITE;
 					}
-					if( fu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					if( fu->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , fu , (long *)new_fu );
-					if( new_fu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					if( new_fu->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , new_fu , (long *)fu );
-					if( fu->fumate_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					if( fu->fumate_p->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , fu->fumate_p , (long *)new_fu->fumate_p );
-					if( new_fu->fumate_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					if( new_fu->fumate_p->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , new_fu->fumate_p , (long *)fu->fumate_p );
-					if( fu->f_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					if( fu->f_p->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , fu->f_p , (long *)new_fu->f_p );
-					if( new_fu->f_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+					if( new_fu->f_p->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 					NMG_INDEX_ASSIGN( (*trans_tbl) , new_fu->f_p , (long *)fu->f_p );
 				}
 			}
@@ -3043,9 +3043,9 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
 #endif
 
 				/* XXX Perhaps this should be new_fu->f_p->g.plane_p ? */
-				if( fu->f_p->g.plane_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+				if( fu->f_p->g.plane_p->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 				NMG_INDEX_ASSIGN( (*trans_tbl) , fu->f_p->g.plane_p , (long *)new_fu->f_p->g.plane_p );
-				if( new_fu->f_p->g.plane_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+				if( new_fu->f_p->g.plane_p->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 				NMG_INDEX_ASSIGN( (*trans_tbl) , new_fu->f_p->g.plane_p , (long *)fu->f_p->g.plane_p );
 			}
 			new_fu->orientation = fu->orientation;
@@ -3063,9 +3063,9 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
 	{
 		NMG_CK_LOOPUSE( lu );
 		new_lu = nmg_dup_loop( lu , &new_s->l.magic , (*trans_tbl) );
-		if( lu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+		if( lu->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 		NMG_INDEX_ASSIGN( (*trans_tbl) , lu , (long *)new_lu );
-		if( new_lu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+		if( new_lu->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 		NMG_INDEX_ASSIGN( (*trans_tbl) , new_lu , (long *)lu );
 	}
 
@@ -3089,36 +3089,36 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
 
 		/* make the wire edge */
 		new_eu = nmg_me( new_v1 , new_v2 , new_s );
-		if( eu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+		if( eu->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 		NMG_INDEX_ASSIGN( (*trans_tbl) , eu , (long *)new_eu );
-		if( new_eu->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+		if( new_eu->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 		NMG_INDEX_ASSIGN( (*trans_tbl) , new_eu , (long *)eu );
 
 		new_v1 = new_eu->vu_p->v_p;
-		if( old_v1->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+		if( old_v1->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 		NMG_INDEX_ASSIGN( (*trans_tbl) , old_v1 , (long *)new_v1 );
-		if( new_v1->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+		if( new_v1->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 		NMG_INDEX_ASSIGN( (*trans_tbl) , new_v1 , (long *)old_v1 );
 		if( !new_v1->vg_p )
 		{
 			nmg_vertex_gv( new_v1 , old_v1->vg_p->coord );
-			if( old_v1->vg_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+			if( old_v1->vg_p->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 			NMG_INDEX_ASSIGN( (*trans_tbl) , old_v1->vg_p , (long *)new_v1->vg_p );
-			if( new_v1->vg_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+			if( new_v1->vg_p->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 			NMG_INDEX_ASSIGN( (*trans_tbl) , new_v1->vg_p , (long *)old_v1->vg_p );
 		}
 
 		new_v2 = new_eu->eumate_p->vu_p->v_p;
-		if( old_v2->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+		if( old_v2->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 		NMG_INDEX_ASSIGN( (*trans_tbl) , old_v2 , (long *)new_v2 );
-		if( new_v2->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+		if( new_v2->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 		NMG_INDEX_ASSIGN( (*trans_tbl) , new_v2 , (long *)old_v2 );
 		if( !new_v2->vg_p )
 		{
 			nmg_vertex_gv( new_v2 , old_v2->vg_p->coord );
-			if( old_v2->vg_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+			if( old_v2->vg_p->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 			NMG_INDEX_ASSIGN( (*trans_tbl) , old_v2->vg_p , (long *)new_v2->vg_p );
-			if( new_v2->vg_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+			if( new_v2->vg_p->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 			NMG_INDEX_ASSIGN( (*trans_tbl) , new_v2->vg_p , (long *)old_v2->vg_p );
 		}
 
@@ -3150,16 +3150,16 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
 			new_v = new_s->vu_p->v_p;
 
 			/* put entry in table */
-			if( old_v->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+			if( old_v->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 			NMG_INDEX_ASSIGN( (*trans_tbl) , old_v , (long *)new_v );
-			if( new_v->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+			if( new_v->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 			NMG_INDEX_ASSIGN( (*trans_tbl) , new_v , (long *)old_v );
 
 			/* assign the same geometry as the old copy */
 			nmg_vertex_gv( new_v , old_v->vg_p->coord );
-			if( old_v->vg_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+			if( old_v->vg_p->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 			NMG_INDEX_ASSIGN( (*trans_tbl) , old_v->vg_p , (long *)new_v->vg_p );
-			if( new_v->vg_p->index >= tbl_size ) rt_bomb( "nmg_dup_shell: trans table exceeded\n" );
+			if( new_v->vg_p->index >= tbl_size ) bu_bomb( "nmg_dup_shell: trans table exceeded\n" );
 			NMG_INDEX_ASSIGN( (*trans_tbl) , new_v->vg_p , (long *)old_v->vg_p );
 		}
 	}
@@ -3459,7 +3459,7 @@ nmg_propagate_normals(struct faceuse *fu_in, long int *flags, const struct bn_to
 			{
 				bu_log( "nmg_propagate_normals: found an unoriented face!!!!\n" );
 				nmg_pr_fu_briefly( fu, "" );
-				rt_bomb( "nmg_propagate_normals: found an unoriented face!!!!\n" );
+				bu_bomb( "nmg_propagate_normals: found an unoriented face!!!!\n" );
 			}
 
 			/* make sure we are dealing with an OT_SAME faceuse */
@@ -3766,7 +3766,7 @@ missed:
 	{
 		bu_log( "nmg_fix_decomposed_shell_normals: missed %d faces in shell x%x (was it decomposed?)\n",
 			missed_faces, s );
-		rt_bomb( "nmg_fix_decomposed_shell_normals: missed faces in shell (was it decomposed?)\n" );
+		bu_bomb( "nmg_fix_decomposed_shell_normals: missed faces in shell (was it decomposed?)\n" );
 	}
 
 	bu_free( (char *)flags, "flags" );
@@ -4531,7 +4531,7 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
 	if( fu->orientation != OT_SAME )
 		fu = fu->fumate_p;
 	if( fu->orientation != OT_SAME )
-		rt_bomb( "First face in shell has no OT_SAME uses!!!!\n" );
+		bu_bomb( "First face in shell has no OT_SAME uses!!!!\n" );
 
 	/* put all edguses of first faceuse on the stack */
 	for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
@@ -4825,7 +4825,7 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
 
 		}
 		else
-			rt_bomb( "nmg_decompose_shell: Missed face wasn't missed???\n" );
+			bu_bomb( "nmg_decompose_shell: Missed face wasn't missed???\n" );
 
 		/* now pop edgeuse of the stack and visit faces radial to edgeuse */
 		while( (eu1 = nmg_pop_eu( &stack )) != (struct edgeuse *)NULL )
@@ -5236,7 +5236,7 @@ nmg_mv_shell_to_region(struct shell *s, struct nmgregion *r)
 	}
 
 	if( nmg_find_model( &s->l.magic ) != nmg_find_model( &r->l.magic ) )
-		rt_bomb( "nmg_mv_shell_to_region: Cannot move shell to a different model\n" );
+		bu_bomb( "nmg_mv_shell_to_region: Cannot move shell to a different model\n" );
 
 	BU_LIST_DEQUEUE( &s->l );
 	if( BU_LIST_IS_EMPTY( &s->r_p->s_hd ) )
@@ -5827,7 +5827,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 					fu1, fu2, fu1->f_p, fu2->f_p );
 				nmg_pr_fu_briefly( fu1 , "fu1: " );
 				nmg_pr_fu_briefly( fu2 , "fu2: " );
-				rt_bomb( "Can't find plane intersection\n" );
+				bu_bomb( "Can't find plane intersection\n" );
 			}
 			/* Make the start point at closest approach to old vertex */
 			(void)rt_dist_pt3_line3( &dist , start , start , dir , new_v->vg_p->coord , tol );
@@ -6483,7 +6483,7 @@ nmg_simplify_inter(const struct vertex *new_v, struct bu_ptbl *int_faces, const 
 			j_dist = MAGSQ( j_dist_to_new_v );
 
 			if( i_dist < tol->dist_sq || j_dist < tol->dist_sq )
-				rt_bomb( "nmg_simplify_inter: vertex within tolerance of new_v\n" );
+				bu_bomb( "nmg_simplify_inter: vertex within tolerance of new_v\n" );
 
 			if( rt_g.NMG_debug & DEBUG_BASIC )
 				bu_log( "\tCollinear vertices x%x, x%x, and x%x\n",
@@ -6736,7 +6736,7 @@ nmg_make_faces_at_vert(struct vertex *new_v, struct bu_ptbl *int_faces, const st
 			bu_log( "new_v = x%x\n" , new_v );
 			bu_log( "old_lu = x%x , new_lu = x%x\n" , old_lu , new_lu );
 			nmg_pr_fu_briefly( fu , (char *)NULL );
-			rt_bomb( "nmg_make_faces_at_vert: can't find loop for new face\n" );
+			bu_bomb( "nmg_make_faces_at_vert: can't find loop for new face\n" );
 		}
 
 		/* make the new face from the new loop */
@@ -8537,7 +8537,7 @@ nmg_make_connect_faces(struct shell *dst, struct vertex *vpa, struct vertex *vpb
 				bu_log( "Bad lu:\n" );
 				nmg_pr_lu_briefly( lu, " " );
 				nmg_kfu( new_fu );
-				rt_bomb( "nmg_make_connect_faces: Failed to calculate plane eqn\n" );
+				bu_bomb( "nmg_make_connect_faces: Failed to calculate plane eqn\n" );
 			}
 			else
 			{
@@ -9249,7 +9249,7 @@ again:
 						/* this is a problem!!! */
 						bu_log( "nmg_kill_cracks: found a strange crack at eu1=x%x, eu2=x%x\n", eu, eu2 );
 						nmg_pr_lu_briefly( lu, "" );
-						rt_bomb( "nmg_kill_cracks: found a strange crack\n" );
+						bu_bomb( "nmg_kill_cracks: found a strange crack\n" );
 					}
 
 					new_lu1 = nmg_split_lu_at_vu( lu, eu->vu_p );
@@ -9516,7 +9516,7 @@ nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
 			if( nmg_calc_face_plane( fu, pl ) )
 			{
 				bu_log( "nmg_make_faces_within_tol(): nmg_calc_face_plane() failed\n" );
-				rt_bomb( "nmg_make_faces_within_tol(): nmg_calc_face_plane() failed" );
+				bu_bomb( "nmg_make_faces_within_tol(): nmg_calc_face_plane() failed" );
 			}
 			nmg_face_new_g( fu, pl );
 		}
@@ -9535,7 +9535,7 @@ nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
 		if( nmg_calc_face_plane( fu, pl ) )
 		{
 			bu_log( "nmg_make_faces_within_tol(): nmg_calc_face_plane() failed\n" );
-			rt_bomb( "nmg_make_faces_within_tol(): nmg_calc_face_plane() failed" );
+			bu_bomb( "nmg_make_faces_within_tol(): nmg_calc_face_plane() failed" );
 		}
 
 		nmg_face_new_g( fu, pl );
@@ -9739,7 +9739,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 
 		/* This curve must have its order raised to max_order */
 		/* XXXX Need a routine to raise order of a curve */
-		rt_bomb( "rt_join_cnurbs: Need to raise order of curve\n" );
+		bu_bomb( "rt_join_cnurbs: Need to raise order of curve\n" );
 	}
 
 	/* Check that endponts match */
@@ -10557,7 +10557,7 @@ nmg_to_arb( const struct model *m, struct rt_arb_internal *arb_int )
 			ret_val = 1;
 			break;
 		default:
-			rt_bomb( "Shell_is_arb screwed up" );
+			bu_bomb( "Shell_is_arb screwed up" );
 			break;
 	}
 	if( ret_val )

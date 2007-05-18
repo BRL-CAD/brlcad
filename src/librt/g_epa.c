@@ -911,7 +911,7 @@ rt_ell_norms(register fastf_t *ov, fastf_t *A, fastf_t *B, fastf_t *h_vec, fastf
 
 	sqrt_1mt = sqrt( 1.0 - t );
 	if( sqrt_1mt < SMALL_FASTF )
-		rt_bomb( "rt_epa_tess: rt_ell_norms: sqrt( 1.0 -t ) is zero\n" );
+		bu_bomb( "rt_epa_tess: rt_ell_norms: sqrt( 1.0 -t ) is zero\n" );
 	theta = 2 * bn_pi / sides;
 	ang = 0.;
 

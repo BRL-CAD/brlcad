@@ -68,11 +68,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 	if ( ! BU_LIST_PREV(bu_list, &(_p)->l) ) {\
 		bu_log("%s %d bad prev pointer of trapezoid 0x%08x\n",\
 			__FILE__, __LINE__, &(_p)->l);\
-		rt_bomb("NMG_CK_TRAP: aborting");\
+		bu_bomb("NMG_CK_TRAP: aborting");\
 	} else if (! BU_LIST_NEXT(bu_list, &(_p)->l) ) {\
 		bu_log("%s %d bad next pointer of trapezoid 0x%08x\n",\
 			__FILE__, __LINE__, &(_p)->l);\
-		rt_bomb("NMG_CL_TRAP: aborting");\
+		bu_bomb("NMG_CL_TRAP: aborting");\
 	}}
 
 #define NMG_TBL2D_MAGIC 0x3e3e3e3e
@@ -299,7 +299,7 @@ pt2d_pn(struct bu_list *tbl, struct pt2d *pt, int dir)
 				bu_log("can't find next of %g %g\n",
 					pt->coord[X],
 					pt->coord[Y]);
-			rt_bomb("goodbye\n");
+			bu_bomb("goodbye\n");
 		}
 		NMG_CK_PT2D( new_pt );
 		return new_pt;
@@ -309,7 +309,7 @@ pt2d_pn(struct bu_list *tbl, struct pt2d *pt, int dir)
 		bu_log("%s %d Bad vertexuse parent (%g %g %g)\n",
 			__FILE__, __LINE__,
 			V3ARGS( (pt)->vu_p->v_p->vg_p->coord ) );
-		rt_bomb("goodbye\n");
+		bu_bomb("goodbye\n");
 	}
 
 	return pt;
@@ -486,7 +486,7 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat)
 						V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord));
 				map_vu_to_2d(vu, tbl2d, TformMat, fu);
 			}
-		} else rt_bomb("bad magic of loopuse child\n");
+		} else bu_bomb("bad magic of loopuse child\n");
 	}
 
 	return(tbl2d);
@@ -590,7 +590,7 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 			else {
 				bu_log("%s: %d loopuse is not OT_SAME or OT_OPPOSITE\n",
 					__FILE__, __LINE__);
-				rt_bomb("bombing\n");
+				bu_bomb("bombing\n");
 			}
 		}
 
@@ -616,7 +616,7 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 			else {
 				bu_log("%s: %d loopuse is not OT_SAME or OT_OPPOSITE\n",
 					__FILE__, __LINE__);
-				rt_bomb("bombing\n");
+				bu_bomb("bombing\n");
 			}
 		}
 
@@ -742,7 +742,7 @@ poly_side_vertex(struct pt2d *pt, struct pt2d *tbl2d, struct bu_list *tlist)
 	}
 
 	if (BU_LIST_MAGIC_WRONG(&tp->l, NMG_TRAP_MAGIC))
-		rt_bomb ("didn't find trapezoid parent\n");
+		bu_bomb ("didn't find trapezoid parent\n");
 
 	/* complete trapezoid */
 	tp->bot = pt;
@@ -759,7 +759,7 @@ poly_side_vertex(struct pt2d *pt, struct pt2d *tbl2d, struct bu_list *tlist)
 		new_trap->e_right = lower_edge;
 		new_trap->e_left = tp->e_left;
 	} else	/* how did I get here? */
-		rt_bomb("Why me?  Always me!\n");
+		bu_bomb("Why me?  Always me!\n");
 
 	BU_LIST_INSERT(tlist, &new_trap->l);
 	NMG_CK_TRAP(new_trap);
@@ -791,7 +791,7 @@ poly_end_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 	/* get the two edges which end at this point */
 	pprev = PT2D_PREV(tbl2d, pt);
 	if (pprev == pt)
-		rt_bomb("pprev == pt!\n");
+		bu_bomb("pprev == pt!\n");
 
 	e_left = pprev->vu_p->up.eu_p;
 	e_right = pt->vu_p->up.eu_p;
@@ -812,7 +812,7 @@ poly_end_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 		}
 	}
 
-	rt_bomb("Didn't find trapezoid to close!\n");
+	bu_bomb("Didn't find trapezoid to close!\n");
 
 	/* Complete the trapezoid. */
 trap_found:
@@ -931,7 +931,7 @@ hole_start_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 		nmg_find_model(&pt->vu_p->l.magic),
 		"lone hole start");
 
-	rt_bomb("bombing\n");
+	bu_bomb("bombing\n");
 gotit:
 	/* complete existing trapezoid */
 	tp->bot = pt;
@@ -1024,7 +1024,7 @@ hole_end_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 			goto gotem;
 	}
 
-	rt_bomb("couldn't find both trapezoids of hole closing vertex\n");
+	bu_bomb("couldn't find both trapezoids of hole closing vertex\n");
 gotem:
 	NMG_CK_TRAP(tpnext);
 	NMG_CK_TRAP(tpprev);
@@ -1045,7 +1045,7 @@ gotem:
 		tp->e_left = tpnext->e_left;
 		tp->e_right = tpprev->e_right;
 	} else
-		rt_bomb("Which is my left and which is my right?\n");
+		bu_bomb("Which is my left and which is my right?\n");
 
 	BU_LIST_MAGIC_SET(&tp->l, NMG_TRAP_MAGIC);
 	BU_LIST_APPEND(&tpprev->l, &tp->l);
@@ -1128,7 +1128,7 @@ map_new_vertexuse(struct bu_list *tbl2d, struct vertexuse *vu_p)
 		return;
 	}
 
-	rt_bomb("Couldn't find mapped vertexuse of vertex!\n");
+	bu_bomb("Couldn't find mapped vertexuse of vertex!\n");
 }
 
 /** Support routine for
@@ -1174,7 +1174,7 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 		NMG_CK_VERTEX_G(vu->v_p->vg_p);
 
 		if (vu->v_p != v)
-			rt_bomb("vertexuse does not acknoledge parents\n");
+			bu_bomb("vertexuse does not acknoledge parents\n");
 
 		if (nmg_find_fu_of_vu(vu) != fu ||
 		    *vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
@@ -1324,7 +1324,7 @@ pick_eu(struct edgeuse *eu_p, struct faceuse *fu, fastf_t *dir, int find_max)
 			/* compute the "left" vector for this edgeuse */
 			if (nmg_find_eu_leftvec(left, eu)) {
 				bu_log("%s %d: edgeuse no longer in faceuse?\n", __FILE__, __LINE__);
-				rt_bomb("bombing");
+				bu_bomb("bombing");
 			}
 
 			euleft_dot = VDOT(left, dir);
@@ -1410,11 +1410,11 @@ nmg_find_first_last_use_of_v_in_fu(struct vertex *v, struct vertexuse **first_vu
 	NMG_CK_FACEUSE(fu);
 	if (first_vu == (struct vertexuse **)(NULL)) {
 		bu_log("%s: %d first_vu is null ptr\n", __FILE__, __LINE__);
-		rt_bomb("terminating\n");
+		bu_bomb("terminating\n");
 	}
 	if (last_vu == (struct vertexuse **)(NULL)) {
 		bu_log("%s: %d last_vu is null ptr\n", __FILE__, __LINE__);
-		rt_bomb("terminating\n");
+		bu_bomb("terminating\n");
 	}
 
 	VUNITIZE(dir);
@@ -1451,7 +1451,7 @@ nmg_find_first_last_use_of_v_in_fu(struct vertex *v, struct vertexuse **first_vu
 		eu_p = vu_first->up.eu_p;
 		break;
 	default:
-		rt_bomb("bad max_dir\n");
+		bu_bomb("bad max_dir\n");
 		break;
 	}
 
@@ -1494,7 +1494,7 @@ nmg_find_first_last_use_of_v_in_fu(struct vertex *v, struct vertexuse **first_vu
 			bu_log("I got eu_first: %g %g %g -> %g %g %g but...\n",
 				V3ARGS(eu_first->vu_p->v_p->vg_p->coord),
 				V3ARGS(eu_first->eumate_p->vu_p->v_p->vg_p->coord));
-			rt_bomb("I can't find the right vertex\n");
+			bu_bomb("I can't find the right vertex\n");
 		}
 	}
 
@@ -1508,7 +1508,7 @@ nmg_find_first_last_use_of_v_in_fu(struct vertex *v, struct vertexuse **first_vu
 		eu_p = vu_last->up.eu_p;
 		break;
 	default:
-		rt_bomb("bad min_dir\n");
+		bu_bomb("bad min_dir\n");
 		break;
 	}
 
@@ -1550,7 +1550,7 @@ nmg_find_first_last_use_of_v_in_fu(struct vertex *v, struct vertexuse **first_vu
 			bu_log("I got eu_last: %g %g %g -> %g %g %g but...\n",
 				V3ARGS(eu_last->vu_p->v_p->vg_p->coord),
 				V3ARGS(eu_last->eumate_p->vu_p->v_p->vg_p->coord));
-			rt_bomb("I can't find the right vertex\n");
+			bu_bomb("I can't find the right vertex\n");
 		}
 	}
 
@@ -1594,7 +1594,7 @@ pick_pt2d_for_cutjoin(struct bu_list *tbl2d, struct pt2d **p1, struct pt2d **p2,
 
 	if ( ! (fu = nmg_find_fu_of_vu(cut_vu1)) ) {
 		bu_log("%s: %d no faceuse parent of vu\n", __FILE__, __LINE__);
-		rt_bomb("Bye now\n");
+		bu_bomb("Bye now\n");
 	}
 
 	nmg_find_first_last_use_of_v_in_fu((*p1)->vu_p->v_p,
@@ -1671,7 +1671,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 
 	if (p1->vu_p->up.eu_p->up.lu_p != p2->vu_p->up.eu_p->up.lu_p) {
 		bu_log("parent loops are not the same %s %d\n", __FILE__, __LINE__);
-		rt_bomb("cut_mapped_loop() goodnight 1\n");
+		bu_bomb("cut_mapped_loop() goodnight 1\n");
 	}
 
 	pick_pt2d_for_cutjoin(tbl2d, &p1, &p2, tol);
@@ -1699,7 +1699,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 
 			sprintf(name, "bad_tri_cut%d.g", iter++);
 			if ((fd=fopen("bad_tri_cut.pl", "w")) == (FILE *)NULL)
-				rt_bomb("cut_mapped_loop() goodnight 2\n");
+				bu_bomb("cut_mapped_loop() goodnight 2\n");
 
 			VSUB2(cut_vect, p2->vu_p->v_p->vg_p->coord, p1->vu_p->v_p->vg_p->coord);
 			/* vector goes past end point by 50% */
@@ -1718,7 +1718,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 			nmg_stash_model_to_file( "bad_tri_cut.g",
 						 nmg_find_model(&p1->vu_p->l.magic), buf );
 
-			rt_bomb("cut_mapped_loop() goodnight 2\n");
+			bu_bomb("cut_mapped_loop() goodnight 2\n");
 		}
 	}
 
@@ -1862,10 +1862,10 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
 		bu_log("%s %d: Attempting to join loop to itself at (%g %g %g)?\n",
 			__FILE__, __LINE__,
 			V3ARGS(p1->vu_p->v_p->vg_p->coord) );
-		rt_bomb("bombing\n");
+		bu_bomb("bombing\n");
 	} else if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
 		bu_log("parent loops are the same %s %d\n", __FILE__, __LINE__);
-		rt_bomb("goodnight\n");
+		bu_bomb("goodnight\n");
 	}
 	/* check to see if we're joining two loops that share a vertex */
 	if (p1->vu_p->v_p == p2->vu_p->v_p) {
@@ -2005,7 +2005,7 @@ skip_cut(struct bu_list *tbl2d, struct pt2d *top, struct pt2d *bot)
 		if (!vu->up.magic_p) {
 			bu_log("NULL vertexuse up %s %d\n",
 				__FILE__, __LINE__);
-			rt_bomb("");
+			bu_bomb("");
 		}
 		if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC) continue;
 		eu = vu->up.eu_p;
@@ -2027,7 +2027,7 @@ skip_cut(struct bu_list *tbl2d, struct pt2d *top, struct pt2d *bot)
 		if (!vu->up.magic_p) {
 			bu_log("NULL vertexuse up %s %d\n",
 				__FILE__, __LINE__);
-			rt_bomb("");
+			bu_bomb("");
 		}
 		if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC) continue;
 		eu = vu->up.eu_p;
@@ -2076,7 +2076,7 @@ cut_diagonals(struct bu_list *tbl2d, struct bu_list *tlist, const struct faceuse
 				if( tp->bot )
 					bu_log( "tp->bot is (%g %g %g)\n", V3ARGS( tp->bot->vu_p->v_p->vg_p->coord ) );
 			}
-			rt_bomb( "tp->top and/or tp->bot is/are NULL" );
+			bu_bomb( "tp->top and/or tp->bot is/are NULL" );
 		}
 		if (nmg_find_eu_in_face(tp->top->vu_p->v_p, tp->bot->vu_p->v_p, fu,
 		    (struct edgeuse *)NULL, 0) != (struct edgeuse *)NULL) {
@@ -2221,7 +2221,7 @@ cut_diagonals(struct bu_list *tbl2d, struct bu_list *tlist, const struct faceuse
 
 			if (toplu->orientation == OT_OPPOSITE &&
 				botlu->orientation == OT_OPPOSITE)
-					rt_bomb("trying to join 2 interior loops in triangulator?\n");
+					bu_bomb("trying to join 2 interior loops in triangulator?\n");
 
 			if (rt_g.NMG_debug & DEBUG_TRI)
 				bu_log("joining 2 loops @ %g %g -> %g %g\n",
@@ -2284,7 +2284,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct bu_list *tlist, struct loopuse *lu
 		if (!new) {
 			bu_log("why can't I find a 2D point for %g %g %g?\n",
 			V3ARGS(eu->vu_p->v_p->vg_p->coord));
-			rt_bomb("bombing\n");
+			bu_bomb("bombing\n");
 		}
 
 		if (rt_g.NMG_debug & DEBUG_TRI)
@@ -2311,7 +2311,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct bu_list *tlist, struct loopuse *lu
 			V3ARGS(min->vu_p->v_p->vg_p->coord),
 			V3ARGS(max->vu_p->v_p->vg_p->coord) );
 
-		rt_bomb("aborting\n");
+		bu_bomb("aborting\n");
 	}
 
 	/* */
@@ -2329,7 +2329,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct bu_list *tlist, struct loopuse *lu
 		if( loop_count > vert_count_sq )
 		{
 			bu_log( "Cut_unimontone is in an infinite loop!!!\n" );
-			rt_bomb( "Cut_unimontone is in an infinite loop" );
+			bu_bomb( "Cut_unimontone is in an infinite loop" );
 		}
 
 		prev = PT2D_PREV(tbl2d, current);
@@ -2426,7 +2426,7 @@ nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
 			pl_color(plot_fd, 200, 200, 100);
 
 			if (! (p=find_pt2d(tbl2d, vu)) )
-				rt_bomb("didn't find vertexuse in list!\n");
+				bu_bomb("didn't find vertexuse in list!\n");
 
 			pdv_3point(plot_fd, p->coord);
 			sprintf(buf, "%g, %g", p->coord[0], p->coord[1]);
@@ -2447,10 +2447,10 @@ nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
 
 #endif
 			if (! (p=find_pt2d(tbl2d, eu->vu_p)) )
-				rt_bomb("didn't find vertexuse in list!\n");
+				bu_bomb("didn't find vertexuse in list!\n");
 
 			if (! (pn=find_pt2d(tbl2d, eu_pnext->vu_p)) )
-				rt_bomb("didn't find vertexuse in list!\n");
+				bu_bomb("didn't find vertexuse in list!\n");
 
 
 			VSUB2(pt, pn->coord, p->coord);
@@ -2618,7 +2618,7 @@ triangulate:
 			bu_log("How did I miss this vertex loop %g %g %g?\n%s\n",
 				V3ARGS(vu->v_p->vg_p->coord),
 				"I'm supposed to be dealing with unimonotone loops now");
-			rt_bomb("aborting\n");
+			bu_bomb("aborting\n");
 
 		} else if (BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC) {
 			vert_count = 0;

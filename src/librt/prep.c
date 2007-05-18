@@ -247,11 +247,11 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 		       rtip->rti_dbip->dbi_filename,
 		       rtip->rti_dbip->dbi_uses,
 		       rtip->rti_air_discards );
-	    rt_bomb("rt_prep_parallel:  no primitives left to prep\n");
+	    bu_bomb("rt_prep_parallel:  no primitives left to prep\n");
 	}
 
 	if ( rtip->nregions <= 0 )  {
-	    rt_bomb("rt_prep_parallel:  no regions left to prep\n");
+	    bu_bomb("rt_prep_parallel:  no regions left to prep\n");
 	}
 
 	/* In case everything is a halfspace, set a minimum space */

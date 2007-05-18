@@ -428,7 +428,7 @@ rt_tgc_shear(const fastf_t *vect, int axis, fastf_t *Shr, fastf_t *Trn, fastf_t 
 	MAT_IDN( Inv );
 
 	if( NEAR_ZERO( vect[axis], SMALL_FASTF ) )
-		rt_bomb("rt_tgc_shear() divide by zero\n");
+		bu_bomb("rt_tgc_shear() divide by zero\n");
 
 	if ( axis == X ){
 		Inv[4] = -(Shr[4] = Trn[1] = -vect[Y]/vect[X]);
@@ -2244,7 +2244,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			else	/* no MAX??? */
 			{
 				bu_log( "rt_tgc_tess: Should never get here!!\n" );
-				rt_bomb( "rt_tgc_tess: Should never get here!!\n" );
+				bu_bomb( "rt_tgc_tess: Should never get here!!\n" );
 			}
 
 			nells++;

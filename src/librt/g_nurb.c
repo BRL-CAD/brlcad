@@ -432,7 +432,7 @@ rt_nurb_free(register struct soltab *stp)
 	register struct nurb_specific *next;
 
 	if( nurb == (struct nurb_specific *)0)
-		rt_bomb("rt_nurb_free: no surfaces\n");
+		bu_bomb("rt_nurb_free: no surfaces\n");
 
 	for( ; nurb != (struct nurb_specific *)0; nurb = next)  {
 		register struct face_g_snurb	*s;

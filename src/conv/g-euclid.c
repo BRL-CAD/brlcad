@@ -129,7 +129,7 @@ fastf_print(FILE *fp_out, int length, fastf_t f)
 	if( (ptr - buffer) > length )
 	{
 		bu_log( "Value (%f) too large for format length (%d)\n" , f, length );
-		rt_bomb( "fastf_print\n" );
+		bu_bomb( "fastf_print\n" );
 	}
 
 	for( i=0 ; i<length ; i++ )
@@ -182,7 +182,7 @@ static union tree *
 region_stub(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
 	bu_log( "region stub called, this shouldn't happen\n" );
-	rt_bomb( "region_stub\n" );
+	bu_bomb( "region_stub\n" );
 
 	return( (union tree *)NULL ); /* just to keep the compilers happy */
 }
@@ -191,7 +191,7 @@ static union tree *
 leaf_stub(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
 	bu_log( "leaf stub called, this shouldn't happen\n" );
-	rt_bomb( "leaf_stub\n" );
+	bu_bomb( "leaf_stub\n" );
 
 	return( (union tree *)NULL ); /* just to keep the compilers happy */
 }
@@ -719,14 +719,14 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		return  curtree;
 
 	regions_tried++;
-	/* Begin rt_bomb() protection */
+	/* Begin bu_bomb() protection */
 	if( BU_SETJUMP )
 	{
 		/* Error, bail out */
 		BU_UNSETJUMP;		/* Relinquish the protection */
 
 		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before rt_bomb().
+		 * it detects an internal error, before bu_bomb().
 		 */
 		rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

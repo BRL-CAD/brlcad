@@ -682,7 +682,7 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
 		(*hp)->hit_dist = inout;
 		(*hp)->hit_surfno = plane;
 		(*hp)++;
-		if ((*nhits)++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+		if ((*nhits)++>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 		return;
 	}
 
@@ -759,7 +759,7 @@ bu_log("inout: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
 		(*hp)->hit_surfno = plane;
 		VJOIN1((*hp)->hit_point, rp->r_pt, inout, rp->r_dir);
 		(*hp)++;
-		if ((*nhits)++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+		if ((*nhits)++>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 	}
 }
 
@@ -968,7 +968,7 @@ bzero(hits,sizeof(hits));
 		xCell = tmp[X]/hf->hf_Xlen*hf->hf_w;
 		yCell = tmp[Y]/hf->hf_Ylen*hf->hf_n;
 		if (  (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) ) {
-			if ((nhits+=r)>MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+			if ((nhits+=r)>MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 			hp+=r;
 		}
 	} else if (cosine*cosine > 0.5) {
@@ -1156,7 +1156,7 @@ bu_log("aray[Y]/aray[X]=%g\n", delta);
 #endif
 				int r;
 				if ( (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) ) {
-					if ((nhits+=r)>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+					if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 					hp+=r;
 				}
 			}
@@ -1225,7 +1225,7 @@ skip_first:
 					int r;
 					/* DO HIT */
 					if ( (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) ) {
-						if ((nhits+=r)>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+						if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 						hp+=r;
 					}
 				}
@@ -1416,7 +1416,7 @@ bu_log("aray[X]/aray[Y]=%g\n", delta);
 #endif
 				int r;
 				if ( (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) ) {
-					if ((nhits+=r)>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+					if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 					hp+=r;
 				}
 			}
@@ -1485,7 +1485,7 @@ skip_2nd:
 					int r;
 					/* DO HIT */
 					if ( (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) ) {
-						if ((nhits+=r)>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+						if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 						hp+=r;
 					}
 				}
@@ -1531,7 +1531,7 @@ skip_2nd:
 		}
 #if 0
 rt_g.debug |= DEBUG_HF;
-rt_bomb("Odd number of hits.");
+bu_bomb("Odd number of hits.");
 #endif
 	}
 	/* nhits is even, build segments */

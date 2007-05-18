@@ -85,7 +85,7 @@ rt_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *fi
 		bu_log( "rt_nurb_s_eval: u value outside parameter range\n");
 		bu_log( "\tUV = (%g %g )\n", u,v );
 		rt_nurb_s_print( "", srf );
-		rt_bomb( "rt_nurb_s_eval: u value outside parameter range\n");
+		bu_bomb( "rt_nurb_s_eval: u value outside parameter range\n");
 	}
 
 	curves = (fastf_t * ) bu_malloc( col_size * sizeof(fastf_t) * coords,

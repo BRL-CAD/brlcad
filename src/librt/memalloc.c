@@ -193,7 +193,7 @@ rt_memget(struct mem_map **pp, register unsigned int size, unsigned int place)
 
 	prevp = MAP_NULL;		/* special for first pass through */
 	if( size == 0 )
-		rt_bomb("rt_memget() size==0\n");
+		bu_bomb("rt_memget() size==0\n");
 
 	curp = *pp;
 	while( curp )  {

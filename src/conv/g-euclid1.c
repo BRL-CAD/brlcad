@@ -125,7 +125,7 @@ fastf_print(FILE *fp_out, int length, fastf_t f)
 	if( (ptr - buffer) > length )
 	{
 		bu_log( "Value (%f) too large for format length (%d)\n" , f, length );
-		rt_bomb( "fastf_print\n" );
+		bu_bomb( "fastf_print\n" );
 	}
 
 	for( i=0 ; i<length ; i++ )
@@ -135,7 +135,7 @@ fastf_print(FILE *fp_out, int length, fastf_t f)
 void
 handler(int code)
 {
-	rt_bomb( "ALARM boolean evaluation aborted\n" );
+	bu_bomb( "ALARM boolean evaluation aborted\n" );
 }
 
 static void
@@ -619,13 +619,13 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	{
 		bu_log(" Cannot open file %s\n" , dir->d_namep );
 		perror( "g-euclid" );
-		rt_bomb( "g-euclid: Cannot open output file\n" );
+		bu_bomb( "g-euclid: Cannot open output file\n" );
 	}
 
 	bu_log( "\n\nProcessing region %s:\n" , dir->d_namep );
 
 	regions_tried++;
-	/* Begin rt_bomb() protection */
+	/* Begin bu_bomb() protection */
 	if( BU_SETJUMP )
 	{
 		/* Error, bail out */
@@ -634,7 +634,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		(void)alarm( 0 );
 
 		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before rt_bomb().
+		 * it detects an internal error, before bu_bomb().
 		 */
 		rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

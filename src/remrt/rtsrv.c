@@ -943,13 +943,13 @@ jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
 void
 bu_bomb(const char *str)
 {
-	char	*bomb = "RTSRV terminated by rt_bomb()\n";
+	char	*bomb = "RTSRV terminated by bu_bomb()\n";
 
 	if( pkg_send( MSG_PRINT, str, strlen(str)+1, pcsrv ) < 0 )  {
-		fprintf(stderr,"rt_bomb MSG_PRINT failed\n");
+		fprintf(stderr,"bu_bomb MSG_PRINT failed\n");
 	}
 	if( pkg_send( MSG_PRINT, bomb, strlen(bomb)+1, pcsrv ) < 0 )  {
-		fprintf(stderr,"rt_bomb MSG_PRINT failed\n");
+		fprintf(stderr,"bu_bomb MSG_PRINT failed\n");
 	}
 
 	if(debug)  fprintf(stderr,"\n%s\n", str);

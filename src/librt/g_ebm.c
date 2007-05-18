@@ -1278,7 +1278,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 		}
 
 		if( !start )
-			rt_bomb( "rt_ebm_tess: rt_ebm_sort_edges: no vertical edges left!\n" );
+			bu_bomb( "rt_ebm_tess: rt_ebm_sort_edges: no vertical edges left!\n" );
 
 		/* put starting edge on the loop list */
 		BU_LIST_DEQUEUE( &start->l );
@@ -1311,11 +1311,11 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 				    (e->x2 == to_x && e->y2 == to_y) )
 					e_poss[poss++] = e;
 				if( poss > 2 )
-					rt_bomb( "rt_ebm_tess: rt_ebm_sort_edges: too many edges at one point\n" );
+					bu_bomb( "rt_ebm_tess: rt_ebm_sort_edges: too many edges at one point\n" );
 			}
 
 			if( poss == 0 )
-				rt_bomb( "rt_ebm_tess: rt_ebm_sort_edges: no edge to continue loop\n" );
+				bu_bomb( "rt_ebm_tess: rt_ebm_sort_edges: no edge to continue loop\n" );
 			if( poss == 1 )
 			{
 				next = e_poss[0];

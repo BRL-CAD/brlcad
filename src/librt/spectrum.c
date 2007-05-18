@@ -153,11 +153,11 @@ rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_ta
 
 again:
 		if( j >= tabp->nx )  break;
-		if( tabp->x[j] < rt_CIE_XYZ[i][0] ) rt_bomb("rt_spect_make_CIE_XYZ assertion1 failed\n");
+		if( tabp->x[j] < rt_CIE_XYZ[i][0] ) bu_bomb("rt_spect_make_CIE_XYZ assertion1 failed\n");
 		if( tabp->x[j] >= rt_CIE_XYZ[i+1][0] )  continue;
 		/* The CIE table has 5nm spacing */
 		fract = (tabp->x[j] - rt_CIE_XYZ[i][0] ) / 5;
-		if( fract < 0 || fract > 1 )  rt_bomb("rt_spect_make_CIE_XYZ assertion2 failed\n");
+		if( fract < 0 || fract > 1 )  bu_bomb("rt_spect_make_CIE_XYZ assertion2 failed\n");
 		a->y[j] = (1-fract) * rt_CIE_XYZ[i][1] + fract * rt_CIE_XYZ[i+1][1];
 		b->y[j] = (1-fract) * rt_CIE_XYZ[i][2] + fract * rt_CIE_XYZ[i+1][2];
 		c->y[j] = (1-fract) * rt_CIE_XYZ[i][3] + fract * rt_CIE_XYZ[i+1][3];

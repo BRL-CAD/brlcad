@@ -80,7 +80,7 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 
 	if( cpu >= MAX_PSW )  {
 		bu_log("rt_shoot_many_rays_worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
-		rt_bomb("rt_shoot_many_rays_worker() cpu > MAX_PSW, array overrun\n");
+		bu_bomb("rt_shoot_many_rays_worker() cpu > MAX_PSW, array overrun\n");
 	}
 
 	RT_CK_RMI(rmip);

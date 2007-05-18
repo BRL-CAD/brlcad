@@ -751,7 +751,7 @@ linear_pipe_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	if( pipe->pipe_is_bend )
 	{
 		bu_log( "linear_pipe_shot called for pipe bend\n" );
-		rt_bomb( "linear_pipe_shot\n" );
+		bu_bomb( "linear_pipe_shot\n" );
 	}
 
 	*hit_count = 0;
@@ -1849,7 +1849,7 @@ tesselate_pipe_start(struct wdb_pipept *pipe, int arc_segs, double sin_del, doub
 	}
 
 	if( nmg_calc_face_g( fu ) )
-		rt_bomb( "tesselate_pipe_start: nmg_calc_face_g failed\n" );
+		bu_bomb( "tesselate_pipe_start: nmg_calc_face_g failed\n" );
 
 	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
@@ -2772,7 +2772,7 @@ shell *s, const struct bn_tol *tol, const struct rt_tess_tol *ttol)
 			if( (fu=nmg_cmface( s, verts, 3 )) == NULL )
 			{
 				bu_log( "tesselate_pipe_bend(): nmg_cmface failed\n" );
-				rt_bomb( "tesselate_pipe_bend\n" );
+				bu_bomb( "tesselate_pipe_bend\n" );
 			}
 			VJOIN2( pt, center, x, r1, y, r2 );
 			if( !new_outer_loop[i]->vg_p )
@@ -2842,7 +2842,7 @@ shell *s, const struct bn_tol *tol, const struct rt_tess_tol *ttol)
 			if( (fu=nmg_cmface( s, verts, 3 )) == NULL )
 			{
 				bu_log( "tesselate_pipe_bend(): nmg_cmface failed\n" );
-				rt_bomb( "tesselate_pipe_bend\n" );
+				bu_bomb( "tesselate_pipe_bend\n" );
 			}
 			VJOIN2( pt, center, x, r1, y, r2 );
 			if( !(*verts[2])->vg_p )
@@ -2952,7 +2952,7 @@ shell *s, const struct bn_tol *tol, const struct rt_tess_tol *ttol)
 			if( (fu=nmg_cmface( s, verts, 3 )) == NULL )
 			{
 				bu_log( "tesselate_pipe_bend(): nmg_cmface failed\n" );
-				rt_bomb( "tesselate_pipe_bend\n" );
+				bu_bomb( "tesselate_pipe_bend\n" );
 			}
 			VJOIN2( pt, center, x, r1, y, r2 );
 			if( !new_inner_loop[i]->vg_p )
@@ -3022,7 +3022,7 @@ shell *s, const struct bn_tol *tol, const struct rt_tess_tol *ttol)
 			if( (fu=nmg_cmface( s, verts, 3 )) == NULL )
 			{
 				bu_log( "tesselate_pipe_bend(): nmg_cmface failed\n" );
-				rt_bomb( "tesselate_pipe_bend\n" );
+				bu_bomb( "tesselate_pipe_bend\n" );
 			}
 			VJOIN2( pt, center, x, r1, y, r2 );
 			if( !(*verts[2])->vg_p )

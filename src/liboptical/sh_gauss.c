@@ -199,7 +199,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 
 		if (sol_id < 0 || sol_id > rt_nfunctab ) {
 			bu_log("Primitive ID %ld out of bounds\n", sol_id);
-			rt_bomb("");
+			bu_bomb("");
 		}
 
 
@@ -293,7 +293,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 		return;
 
 	default:
-		rt_bomb("rt_tree_region_assign: bad op\n");
+		bu_bomb("rt_tree_region_assign: bad op\n");
 	}
 }
 
@@ -324,7 +324,7 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 		bu_log("gauss_setup(%s)\n", rp->reg_name);
 
 	if (! rtip->useair)
-		rt_bomb("gauss shader used and useair not set\n");
+		bu_bomb("gauss shader used and useair not set\n");
 
 
 	/* Get memory for the shader parameters and shader-specific data */

@@ -377,7 +377,7 @@ main(int argc, char *argv[])
 			(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
 		if( ret )
-			rt_bomb( "g-iges: Could not facetize anything!!!" );
+			bu_bomb( "g-iges: Could not facetize anything!!!" );
 
 		if( !multi_file )
 		{
@@ -423,7 +423,7 @@ main(int argc, char *argv[])
 			(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
 		if( ret )
-			rt_bomb( "g-iges: Could not facetize anything!!!" );
+			bu_bomb( "g-iges: Could not facetize anything!!!" );
 
 	}
 
@@ -512,7 +512,7 @@ genptr_t		client_data;
 		return  curtree;
 
 	regions_tried++;
-	/* Begin rt_bomb() protection */
+	/* Begin bu_bomb() protection */
 	if( BU_SETJUMP )  {
 		char *sofar;
 
@@ -524,7 +524,7 @@ genptr_t		client_data;
 		bu_free( sofar, "path string" );
 
 		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before rt_bomb().
+		 * it detects an internal error, before bu_bomb().
 		 */
 		rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

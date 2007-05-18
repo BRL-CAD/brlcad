@@ -125,7 +125,7 @@ nmg_ck_lu_orientation(struct loopuse *lu, const struct bn_tol *tolp)
 			nmg_orientation(fu->orientation),
 			nmg_orientation(lu->orientation)
 		);
-		rt_bomb("nmg_ck_lu_orientation() loop orientation flags do not match geometry\n");
+		bu_bomb("nmg_ck_lu_orientation() loop orientation flags do not match geometry\n");
 	}
 }
 
@@ -231,7 +231,7 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, long int **clas
 	default:
 		actions = union_actions;	/* shut up lint */
 		bu_log("ERROR nmg_evaluate_boolean() op=%d.\n", op);
-		rt_bomb("bad boolean\n");
+		bu_bomb("bad boolean\n");
 	}
 
 	bool_state.bs_dest = sA;
@@ -440,7 +440,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 				loops_retained++;
 				break;
 			default:
-				rt_bomb("nmg_eval_shell() bad BACTION\n");
+				bu_bomb("nmg_eval_shell() bad BACTION\n");
 			}
 			lu = nextlu;
 		}
@@ -457,7 +457,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 		 *  then any remaining loops, edges, etc, will die too.
 		 */
 		if( BU_LIST_IS_EMPTY( &fu->lu_hd ) )  {
-			if( loops_retained )  rt_bomb("nmg_eval_shell() empty faceuse with retained loops?\n");
+			if( loops_retained )  bu_bomb("nmg_eval_shell() empty faceuse with retained loops?\n");
 			/* faceuse is empty, face & mate die */
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 				bu_log("faceuse x%x empty, kill\n", fu);
@@ -471,7 +471,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 
 		if( loops_retained <= 0 )  {
 			nmg_pr_fu(fu, (char *)NULL);
-			rt_bomb("nmg_eval_shell() non-empty faceuse, no loops retained?\n");
+			bu_bomb("nmg_eval_shell() non-empty faceuse, no loops retained?\n");
 		}
 		fu = nextfu;
 	}
@@ -508,7 +508,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 		case BACTION_RETAIN:
 			break;
 		default:
-			rt_bomb("nmg_eval_shell() bad BACTION\n");
+			bu_bomb("nmg_eval_shell() bad BACTION\n");
 		}
 		lu = nextlu;
 	}
@@ -538,7 +538,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 		case BACTION_RETAIN:
 			break;
 		default:
-			rt_bomb("nmg_eval_shell() bad BACTION\n");
+			bu_bomb("nmg_eval_shell() bad BACTION\n");
 		}
 		eu = nexteu;
 	}
@@ -580,7 +580,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 		case BACTION_RETAIN:
 			break;
 		default:
-			rt_bomb("nmg_eval_shell() bad BACTION\n");
+			bu_bomb("nmg_eval_shell() bad BACTION\n");
 		}
 		lu = nextlu;
 	}
@@ -602,7 +602,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 		case BACTION_RETAIN:
 			break;
 		default:
-			rt_bomb("nmg_eval_shell() bad BACTION\n");
+			bu_bomb("nmg_eval_shell() bad BACTION\n");
 		}
 	}
 	if( rt_g.NMG_debug & DEBUG_VERIFY )

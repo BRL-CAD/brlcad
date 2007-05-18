@@ -200,7 +200,7 @@ const struct bn_tol	*tol;
 
 	/* get number of points & number of facets in file */
 	if (fscanf(fp, "%d %d", &num_pts, &num_facets) != 2)
-		rt_bomb("polytonmg() Error in first line of poly file\n");
+		bu_bomb("polytonmg() Error in first line of poly file\n");
 	else
 		if (rt_g.NMG_debug & DEBUG_POLYTO)
 			bu_log("points: %d  facets: %d\n",
@@ -219,7 +219,7 @@ const struct bn_tol	*tol;
 	/* read in the coordinates of the vertices */
 	for (i=0 ; i < num_pts ; ++i) {
 		if (fscanf(fp, "%lg %lg %lg", &p[0], &p[1], &p[2]) != 3)
-			rt_bomb("polytonmg() Error reading point");
+			bu_bomb("polytonmg() Error reading point");
 		else
 			if (rt_g.NMG_debug & DEBUG_POLYTO)
 				bu_log("read vertex #%d (%g %g %g)\n",
@@ -233,7 +233,7 @@ const struct bn_tol	*tol;
 
 	for (facet = 0 ; facet < num_facets ; ++facet) {
 		if (fscanf(fp, "%d", &pts_this_face) != 1)
-			rt_bomb("polytonmg() error getting pt count for this face");
+			bu_bomb("polytonmg() error getting pt count for this face");
 
 		if (rt_g.NMG_debug & DEBUG_POLYTO)
 			bu_log("facet %d pts in face %d\n",
@@ -248,7 +248,7 @@ const struct bn_tol	*tol;
 
 		for (i=0 ; i < pts_this_face ; ++i) {
 			if (fscanf(fp, "%d", &j) != 1)
-				rt_bomb("polytonmg() error getting point index for v in f");
+				bu_bomb("polytonmg() error getting point index for v in f");
 			vl[i] = v[j-1];
 		}
 
@@ -262,7 +262,7 @@ const struct bn_tol	*tol;
 		    BU_LIST_PLAST(edgeuse,eu)->vu_p->v_p->vg_p->coord,
 		    tol ) )  {
 			bu_log("At %d in %s\n", __LINE__, __FILE__);
-			rt_bomb("polytonmg() cannot make plane equation\n");
+			bu_bomb("polytonmg() cannot make plane equation\n");
 		}
 		else nmg_face_g(fu, plane);
 	}
@@ -306,7 +306,7 @@ int	n;
 		bu_malloc(1 + n*sizeof(struct vertex *), "heap");
 	if (heap == (struct vertex **)NULL) {
 		bu_log("init_heap: no mem\n");
-		rt_bomb("");
+		bu_bomb("");
 	}
 	return(heap);
 }
@@ -327,7 +327,7 @@ int	*n;
 	big_heap = (struct vertex **)
 		bu_malloc(1 + 3 * (*n) * sizeof(struct vertex *), "heap");
 	if (big_heap == (struct vertex **)NULL)
-		rt_bomb("heap_increase: no mem\n");
+		bu_bomb("heap_increase: no mem\n");
 	for (i = 1; i <= *n; i++)
 		big_heap[i] = h[0][i];
 	*n *= 3;

@@ -940,7 +940,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 				prev_fu = BU_LIST_PREV(faceuse, &fu2->l);
 				/* The prev_fu can never be the head */
 				if( BU_LIST_IS_HEAD(prev_fu, &s->fu_hd) )
-					rt_bomb("prev is head?\n");
+					bu_bomb("prev is head?\n");
 
 				nmg_jf( fu1, fu2 );
 
@@ -1200,7 +1200,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 			if( face_count >= 2*l )
 			{
 				bu_log( "Face count = %d, only allowed for %d\n" , face_count , 2*l );
-				rt_bomb( "Build_solid\n" );
+				bu_bomb( "Build_solid\n" );
 			}
 
 			/* Assign geometry */
@@ -1361,7 +1361,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		if( fu->orientation != OT_SAME )
 			fu = fu->fumate_p;
 		if( fu->orientation != OT_SAME )
-			rt_bomb( "Neither faceuse nor mate have an OT_SAME side\n" );
+			bu_bomb( "Neither faceuse nor mate have an OT_SAME side\n" );
 		NMG_GET_FU_NORMAL( normal , fu );
 
 		if( !planar )
@@ -1445,7 +1445,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		if( !fu )
 		{
 			bu_log( "No fu in duplicate shell corresponding to fu #%d (x%x) in original\n" , i , p_faces[i].fu );
-			rt_bomb( "patch-g\n" );
+			bu_bomb( "patch-g\n" );
 		}
 
 		NMG_CK_FACEUSE( fu );
@@ -1455,7 +1455,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 			NMG_CK_FACEUSE( fu );
 		}
 		if( fu->orientation != OT_SAME )
-			rt_bomb( "patch-g: neither faceuse nor mate has orientation of OT_SAME\n" );
+			bu_bomb( "patch-g: neither faceuse nor mate has orientation of OT_SAME\n" );
 
 		fg_p = fu->f_p->g.plane_p;
 		NMG_CK_FACE_G_PLANE( fg_p );
@@ -2142,7 +2142,7 @@ proc_plate(int cnt)
 				if( thk[l] < tol.dist )
 				{
 					bu_log( "Proc_plate: Found a bad thickness, should have been fixed by now!!!\n" );
-					rt_bomb( "Proc_plate: thickness less tahn tolerance.\n" );
+					bu_bomb( "Proc_plate: thickness less tahn tolerance.\n" );
 				}
 				l= l+1;
 			}

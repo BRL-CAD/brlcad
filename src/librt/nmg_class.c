@@ -152,7 +152,7 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, const fastf_t
 		bu_log("joint_hitmiss2\n");
 	}
 	if( eu_rinf == eu )  {
-		rt_bomb("joint_hitmiss2: radial eu is me?\n");
+		bu_bomb("joint_hitmiss2: radial eu is me?\n");
 	}
 	/* If eu_rinf == eu->eumate_p, thats OK, this is a dangling face,
 	 * or a face that has not been fully hooked up yet.
@@ -165,7 +165,7 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, const fastf_t
 			closest->class = NMG_CLASS_AoutB;
 		} else {
 			nmg_pr_lu_briefly(eu->up.lu_p, (char *)0);
-			rt_bomb("joint_hitmiss2: bad loop orientation\n");
+			bu_bomb("joint_hitmiss2: bad loop orientation\n");
 		}
 		closest->dist = 0.0;
 		switch(code)  {
@@ -187,7 +187,7 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, const fastf_t
 	}
 
 	/* XXX What goes here? */
-	rt_bomb("nmg_class.c/joint_hitmiss2() unable to resolve ray/edge hit\n");
+	bu_bomb("nmg_class.c/joint_hitmiss2() unable to resolve ray/edge hit\n");
 	bu_log("joint_hitmiss2: NO CODE HERE, assuming miss\n");
 
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_NMGRT) )  {
@@ -343,7 +343,7 @@ nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse
 	 * left, towards the interior of the loop, regardless of
 	 * whether it's an interior (OT_OPPOSITE) or exterior (OT_SAME) loop.
 	 */
-	if( nmg_find_eu_leftvec( left, eu ) < 0 )  rt_bomb("nmg_class_pt_e() bad LEFT vector\n");
+	if( nmg_find_eu_leftvec( left, eu ) < 0 )  bu_bomb("nmg_class_pt_e() bad LEFT vector\n");
 
 	VSUB2(ptvec, pt, pca);		/* pt - pca */
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)  {
@@ -387,7 +387,7 @@ out:
 		fu = eu->up.lu_p->up.fu_p;
 		bits = (long *)bu_calloc( nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
 		sprintf(buf,"faceclass%d.pl", num++);
-		if( (fp = fopen(buf, "w")) == NULL) rt_bomb(buf);
+		if( (fp = fopen(buf, "w")) == NULL) bu_bomb(buf);
 		nmg_pl_fu( fp, fu, bits, 0, 0, 255 );	/* blue */
 		pl_color( fp, 0, 255, 0 );	/* green */
 		pdv_3line( fp, pca, pt );
@@ -471,7 +471,7 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
 				closest->class = NMG_CLASS_AonBshared;
 			} else {
 				nmg_pr_orient(lu->orientation, "\t");
-				rt_bomb("nmg_class_pt_l: bad orientation for face loopuse\n");
+				bu_bomb("nmg_class_pt_l: bad orientation for face loopuse\n");
 			}
 			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 				bu_log("\t\t closer to loop pt (%g, %g, %g)\n",
@@ -481,7 +481,7 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
 			closest->p.vu = vu;
 		}
 	} else {
-		rt_bomb("nmg_class_pt_l() bad child of loopuse\n");
+		bu_bomb("nmg_class_pt_l() bad child of loopuse\n");
 	}
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		bu_log("nmg_class_pt_l\treturning, closest=%g %s\n",
@@ -715,7 +715,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 	try = 0;
 retry:
 	VMOVE( projection_dir, nmg_good_dirs[try] );
-	if( ++try > 10 )  rt_bomb("nmg_class_pt_s() retry count exhausted\n");
+	if( ++try > 10 )  bu_bomb("nmg_class_pt_s() retry count exhausted\n");
 	VUNITIZE(projection_dir);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY )
@@ -810,7 +810,7 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, long int **classlist, cons
 			status = ON_SURF;
 			goto out;
 		} else {
-			rt_bomb("class_vu_vs_s() bad vertex UP pointer\n");
+			bu_bomb("class_vu_vs_s() bad vertex UP pointer\n");
 		}
 	}
 
@@ -832,7 +832,7 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, long int **classlist, cons
 		if( (sv = nmg_find_pt_in_shell( sB, pt, tol ) ) )  {
 			bu_log("vu=x%x, v=x%x, sv=x%x, pt=(%g,%g,%g)\n",
 				vu, vu->v_p, sv, V3ARGS(pt) );
-			rt_bomb("nmg_class_pt_s() vertex topology not shared properly\n");
+			bu_bomb("nmg_class_pt_s() vertex topology not shared properly\n");
 		}
 	}
 
@@ -851,7 +851,7 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, long int **classlist, cons
 	}  else  {
 		bu_log("class=%s\n", nmg_class_name(class) );
 		VPRINT("pt", pt);
-		rt_bomb("class_vu_vs_s: nmg_class_pt_s() failure\n");
+		bu_bomb("class_vu_vs_s: nmg_class_pt_s() failure\n");
 	}
 
 out:
@@ -916,7 +916,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const s
 		FILE	*fp;
 
 		sprintf(buf, "class%d.pl", num++ );
-		if( (fp = fopen(buf, "w")) == NULL ) rt_bomb(buf);
+		if( (fp = fopen(buf, "w")) == NULL ) bu_bomb(buf);
 		nmg_pl_s( fp, s );
 		/* A yellow line for the angry edge */
 		pl_color(fp, 255, 255, 0);
@@ -942,7 +942,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const s
 		}
 
 		bu_log("wrote %s\n", buf);
-		rt_bomb("class_eu_vs_s:  edge didn't get cut\n");
+		bu_bomb("class_eu_vs_s:  edge didn't get cut\n");
 	}
 
 	if (euv_cl == ON_SURF && matev_cl == ON_SURF) {
@@ -1047,7 +1047,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const s
 				/* This is obviously a GOOF!!! */
 				bu_log( "loop crosses shell boundary!!!\n" );
 				nmg_pr_fu_briefly( nmg_find_fu_of_eu( eu ), "" );
-				rt_bomb( "loop crosses shell boundary!!!" );
+				bu_bomb( "loop crosses shell boundary!!!" );
 			}
 
 			if( on )
@@ -1135,7 +1135,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const s
 					else
 					{
 						bu_log( "FU (x%x) has bad orientation (%s)\n", fu_rad, nmg_orientation( fu_rad->orientation ) );
-						rt_bomb( "FU has bad orientation" );
+						bu_bomb( "FU has bad orientation" );
 					}
 					if (rt_g.NMG_debug & DEBUG_CLASSIFY &&
 						class_topo != NMG_CLASS_Unknown )
@@ -1227,11 +1227,11 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const s
 			if(!eup) bu_log("Unable to find it\n");
 		}
 #endif
-			rt_bomb("class_eu_vs_s:  classifier found edge midpoint ON, edge topology should have been shared\n");
+			bu_bomb("class_eu_vs_s:  classifier found edge midpoint ON, edge topology should have been shared\n");
 		}  else  {
 			bu_log("class=%s\n", nmg_class_name(class) );
 			nmg_euprint("Why wasn't this edge in or out?", eu);
-			rt_bomb("class_eu_vs_s: nmg_class_pt_s() midpoint failure\n");
+			bu_bomb("class_eu_vs_s: nmg_class_pt_s() midpoint failure\n");
 		}
 		goto out;
 	}
@@ -1257,7 +1257,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const s
 	}
 	bu_log("eu's vert is %s, mate's vert is %s\n",
 		nmg_class_status(euv_cl), nmg_class_status(matev_cl) );
-	rt_bomb("class_eu_vs_s() inconsistent edgeuse\n");
+	bu_bomb("class_eu_vs_s() inconsistent edgeuse\n");
 out:
 	if (rt_g.NMG_debug & DEBUG_GRAPHCL)
 		nmg_show_broken_classifier_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
@@ -1297,13 +1297,13 @@ nmg_2lu_identical(const struct edgeuse *eu1, const struct edgeuse *eu2)
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu2);
 
-	if( eu1->e_p != eu2->e_p )  rt_bomb("nmg_2lu_identical() differing edges?\n");
+	if( eu1->e_p != eu2->e_p )  bu_bomb("nmg_2lu_identical() differing edges?\n");
 
 	/* get the starting vertex of each edgeuse to be the same. */
 	if (eu2->vu_p->v_p != eu1->vu_p->v_p) {
 		eu2 = eu2->eumate_p;
 		if (eu2->vu_p->v_p != eu1->vu_p->v_p)
-			rt_bomb("nmg_2lu_identical() radial edgeuse doesn't share verticies\n");
+			bu_bomb("nmg_2lu_identical() radial edgeuse doesn't share verticies\n");
 	}
 
 	lu1 = eu1->up.lu_p;
@@ -1412,7 +1412,7 @@ nmg_reclassify_lu_eu(struct loopuse *lu, long int **classlist, int newclass)
 	}
 
 	if( newclass != NMG_CLASS_AonBshared && newclass != NMG_CLASS_AonBanti )
-		rt_bomb("nmg_reclassify_lu_eu() bad newclass\n");
+		bu_bomb("nmg_reclassify_lu_eu() bad newclass\n");
 
 	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC)  {
 		vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
@@ -1422,7 +1422,7 @@ nmg_reclassify_lu_eu(struct loopuse *lu, long int **classlist, int newclass)
 
 		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], v) ||
 		    NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], v) )
-			rt_bomb("nmg_reclassify_lu_eu() changing in/out vert of lone vu loop to ON?\n");
+			bu_bomb("nmg_reclassify_lu_eu() changing in/out vert of lone vu loop to ON?\n");
 
 		/* Clear out other classifications */
 		NMG_INDEX_CLEAR(classlist[NMG_CLASS_AonBshared], v);
@@ -1440,7 +1440,7 @@ nmg_reclassify_lu_eu(struct loopuse *lu, long int **classlist, int newclass)
 
 		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], e) ||
 		    NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], e) )
-			rt_bomb("nmg_reclassify_lu_eu() changing in/out edge to ON?\n");
+			bu_bomb("nmg_reclassify_lu_eu() changing in/out edge to ON?\n");
 
 		/* Clear out other edge classifications */
 		NMG_INDEX_CLEAR(classlist[NMG_CLASS_AonBshared], e);
@@ -1456,7 +1456,7 @@ nmg_reclassify_lu_eu(struct loopuse *lu, long int **classlist, int newclass)
 
 		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], v) ||
 		    NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], v) )
-			rt_bomb("nmg_reclassify_lu_eu() changing in/out vert to ON?\n");
+			bu_bomb("nmg_reclassify_lu_eu() changing in/out vert to ON?\n");
 
 		/* Clear out other classifications */
 		NMG_INDEX_CLEAR(classlist[NMG_CLASS_AonBshared], v);
@@ -1524,18 +1524,18 @@ class_shared_lu(const struct loopuse *lu, const struct loopuse *lu_ref, const st
 	{
 		bu_log( "class_shared_lu() couldn't find a shared EU between LU's x%x and x%x\n",
 			lu, lu_ref );
-		rt_bomb( "class_shared_lu() couldn't find a shared EU between LU's\n" );
+		bu_bomb( "class_shared_lu() couldn't find a shared EU between LU's\n" );
 	}
 
 	if( nmg_find_eu_leftvec( left, eu ) )
 	{
 		bu_log( "class_shared_lu() couldn't get a left vector for EU x%x\n", eu );
-		rt_bomb( "class_shared_lu() couldn't get a left vector for EU\n" );
+		bu_bomb( "class_shared_lu() couldn't get a left vector for EU\n" );
 	}
 	if( nmg_find_eu_leftvec( left_ref, eu_ref ) )
 	{
 		bu_log( "class_shared_lu() couldn't get a left vector for EU x%x\n", eu_ref );
-		rt_bomb( "class_shared_lu() couldn't get a left vector for EU\n" );
+		bu_bomb( "class_shared_lu() couldn't get a left vector for EU\n" );
 	}
 
 	if( VDOT( left, left_ref ) > 0.0 )
@@ -1679,7 +1679,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, long int **classlist, const s
 	{
 		bu_log( "class_lu_vs_s() is trying to classify lu x%x vs its own shell (x%x)\n",
 			lu, s );
-		rt_bomb( "class_lu_vs_s() is trying to classify lu vs its own shell" );
+		bu_bomb( "class_lu_vs_s() is trying to classify lu vs its own shell" );
 	}
 
 	/* check to see if loop is already in one of the lists */
@@ -1728,12 +1728,12 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, long int **classlist, const s
 			NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], lu->l_p);
 			break;
 		default:
-			rt_bomb("class_lu_vs_s: bad vertexloop classification\n");
+			bu_bomb("class_lu_vs_s: bad vertexloop classification\n");
 		}
 		status = class;
 		goto out;
 	} else if (magic1 != NMG_EDGEUSE_MAGIC) {
-		rt_bomb("class_lu_vs_s: bad child of loopuse\n");
+		bu_bomb("class_lu_vs_s: bad child of loopuse\n");
 	}
 
 	/* loop is collection of edgeuses */
@@ -1749,7 +1749,7 @@ retry:
 				break;
 		case ON_SURF	: ++on;
 				break;
-		default		: rt_bomb("class_lu_vs_s: bad class for edgeuse\n");
+		default		: bu_bomb("class_lu_vs_s: bad class for edgeuse\n");
 		}
 	}
 
@@ -1793,7 +1793,7 @@ retry:
 			bu_free( (char *)b, "nmg_pl_lu flag[]" );
 		}
 		if(seen_error)
-			rt_bomb("class_lu_vs_s: loop transits plane of shell/face?\n");
+			bu_bomb("class_lu_vs_s: loop transits plane of shell/face?\n");
 		seen_error = 1;
 		goto retry;
 	}
@@ -1810,7 +1810,7 @@ retry:
 		status = INSIDE;
 		goto out;
 	} else if (on == 0)
-		rt_bomb("class_lu_vs_s: alright, who's the wiseguy that stole my edgeuses?\n");
+		bu_bomb("class_lu_vs_s: alright, who's the wiseguy that stole my edgeuses?\n");
 
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
@@ -1908,7 +1908,7 @@ retry:
 			status = ON_SURF;
 			goto out;
 		case 3:
-			rt_bomb("class_lu_vs_s() unexpected wire ON\n");
+			bu_bomb("class_lu_vs_s() unexpected wire ON\n");
 		}
 	}
 #else
@@ -2009,7 +2009,7 @@ retry:
 			{
 				bu_log( "class_lu_vs_s: FU x%x for lu x%x matching lu x%x has bad orientation (%s)\n",
 					fu_qlu, lu, q_lu, nmg_orientation( fu_qlu->orientation ) );
-				rt_bomb( "class_lu_vs_s: FU has bad orientation\n" );
+				bu_bomb( "class_lu_vs_s: FU has bad orientation\n" );
 			}
 
 			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
@@ -2085,7 +2085,7 @@ retry:
 					status = OUTSIDE;
 					goto out;
 				} else {
-					rt_bomb("class_lu_vs_s() bad fu orientation\n");
+					bu_bomb("class_lu_vs_s() bad fu orientation\n");
 				}
 			}
 			p = p->eumate_p->radial_p;
@@ -2707,7 +2707,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 		return( NMG_CLASS_AoutB );
 
 	bu_log( "nmg_classify_lu_lu: ERROR, Should not get here!!!\n" );
-	rt_bomb(  "nmg_classify_lu_lu: ERROR, Should not get here!!!\n" );
+	bu_bomb(  "nmg_classify_lu_lu: ERROR, Should not get here!!!\n" );
 
 	return( -1); /* to make the compilers happy */
 }

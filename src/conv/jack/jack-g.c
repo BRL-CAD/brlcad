@@ -213,7 +213,7 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
 	if( bomb )
 	{
 		bu_log( "Dataset contains %d data points, code is dimensioned for %d\n", i, MAX_NUM_PTS );
-		rt_bomb( "jack-g\n" );
+		bu_bomb( "jack-g\n" );
 	}
 
 	return(i);
