@@ -69,7 +69,7 @@
 #   To verbosely try running with an older (unsupported) autoconf:
 #     AUTOCONF_VERSION=2.50 ./autogen.sh --verbose
 #
-# Author: Christopher Sean Morrison
+# Author: Christopher Sean Morrison <morrison@brlcad.org>
 #
 ######################################################################
 
