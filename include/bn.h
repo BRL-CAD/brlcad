@@ -358,15 +358,6 @@ BN_EXPORT BU_EXTERN(void bn_mat_print_guts,
 BN_EXPORT BU_EXTERN(double bn_atan2,
 		    (double x, double y));
 
-#if 0 /* deprecated for macros below (which were deprecated for vmath.h) */
-BN_EXPORT BU_EXTERN(void bn_mat_zero,
-		    (mat_t m));
-BN_EXPORT BU_EXTERN(void bn_mat_idn,
-		    (mat_t m));
-BN_EXPORT BU_EXTERN(void bn_mat_copy,
-		    (register mat_t dest,
-		     register const mat_t src));
-#else
 #define bn_mat_zero( _m )	{ \
 	bu_log("%s:%d bn_mat_zero() is deprecated, use MAT_ZERO()\n", \
 			__FILE__, __LINE__); \
@@ -410,7 +401,7 @@ BN_EXPORT BU_EXTERN(void bn_mat_copy,
   /*
 #define bn_mat_copy(_d,_s)	(void)memcpy( (void *)_d, (const void *)(_s), sizeof(mat_t))
   */
-#endif /* deprecated */
+
 
 BN_EXPORT BU_EXTERN(void bn_mat_mul,
 		    (register mat_t o,
