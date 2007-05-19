@@ -143,7 +143,7 @@ __BEGIN_DECLS
  *  in parens.
  *  The setting of USE_PROTOTYPES is determined during configure
  */
-#if USE_PROTOTYPES
+#if __STDC__ || USE_PROTOTYPES
 #	define	BU_EXTERN(type_and_name,args)	extern type_and_name args
 #	define	BU_ARGS(args)			args
 #else

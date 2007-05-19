@@ -57,9 +57,8 @@
  *  the compiler understands them or not.
  *  It is vital that the argument list given for "args" be enclosed
  *  in parens.
- *  The setting of USE_PROTOTYPES is done in machine.h
  */
-#if USE_PROTOTYPES
+#if __STDC__ || USE_PROTOTYPES
 #	define	PKG_EXTERN(type_and_name,args)	extern type_and_name args
 #	define	PKG_ARGS(args)			args
 #else

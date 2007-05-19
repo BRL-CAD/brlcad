@@ -33,7 +33,7 @@
 #ifndef __FBIO_H__
 #define __FBIO_H__
 
-#ifdef USE_PROTOTYPES
+#if __STDC__ || USE_PROTOTYPES
 #  define	FB_ARGS(args)			args
 #else
 #  define	FB_ARGS(args)			()

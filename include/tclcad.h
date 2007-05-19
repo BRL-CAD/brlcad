@@ -61,9 +61,8 @@ __BEGIN_DECLS
  *  the compiler understands them or not.
  *  It is vital that the argument list given for "args" be enclosed
  *  in parens.
- *  The setting of USE_PROTOTYPES is done in machine.h
  */
-#ifdef USE_PROTOTYPES
+#if __STDC__ || USE_PROTOTYPES
 #	define	TCLCAD_EXTERN(type_and_name,args)	extern type_and_name args
 #	define	TCLCAD_ARGS(args)			args
 #else

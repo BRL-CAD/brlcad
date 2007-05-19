@@ -90,7 +90,7 @@
 		(*_ifp->if_bwwriterect)(_ifp,_xmin,_ymin,_width,_height,_pp)
 
 /* Library entry points which are true functions. */
-#ifdef USE_PROTOTYPES
+#if __STDC__ || USE_PROTOTYPES
 FB_EXPORT extern void 	fb_configureWindow(FBIO *, int, int);
 FB_EXPORT extern FBIO	*fb_open(char *file, int width, int height);
 FB_EXPORT extern int	fb_close(FBIO *ifp);
