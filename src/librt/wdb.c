@@ -403,9 +403,12 @@ wdb_close( struct rt_wdb *wdbp )
 	/* XXX Flush any unwritten "struct matter" records here */
 
 	db_close( wdbp->dbip );
+	wdbp->dbip = NULL;
 
 	bu_vls_free( &wdbp->wdb_prestr );
+
 	bu_free( (genptr_t)wdbp, "struct rt_wdb");
+	wdbp = NULL;
 }
 
 /*
