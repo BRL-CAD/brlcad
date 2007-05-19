@@ -601,7 +601,9 @@ rt_plot_solid(
  *  initialize memory resources.
  *	This routine should initialize all the same resources
  *	that rt_clean_resource() releases.
- *	It shouldn't allocate any dynamic memory, just init pointers & lists.
+ *
+ *	It shouldn't (but does for ptbl) allocate any dynamic memory,
+ *	just init pointers & lists.
  *
  *  if( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )
  *  indicates that this initialization is needed.
