@@ -28,7 +28,7 @@ EXTRA_DIST = \
 benchmark: run.sh
 	cp $(top_srcdir)/bench/run.sh benchmark
 
-.PHONY : run bench
+.PHONY : clobber run bench
 
 run: all
 	${SH} run.sh
