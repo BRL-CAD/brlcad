@@ -352,7 +352,6 @@ db_close(register struct db_i *dbip)
 			 * nodes on the freelist except the first.
 			 * (so don't do it)
 			 */
-			/* dp->d_forw = NULL; */
 
 			dp = nextdp;
 		}
@@ -361,9 +360,9 @@ db_close(register struct db_i *dbip)
 
 	if (dbip->dbi_filepath != NULL) {
 	  if (dbip->dbi_filepath[0] != NULL)
-	    bu_free((char *)dbip->dbi_filepath[0], "dbip->dbi_filepath");
+	    bu_free((char *)dbip->dbi_filepath[0], "dbip->dbi_filepath[0]");
 	  if (dbip->dbi_filepath[1] != NULL)
-	    bu_free((char *)dbip->dbi_filepath[1], "dbip->dbi_filepath");
+	    bu_free((char *)dbip->dbi_filepath[1], "dbip->dbi_filepath[1]");
 	  bu_free((char *)dbip->dbi_filepath, "dbip->dbi_filepath");
 	}
 
