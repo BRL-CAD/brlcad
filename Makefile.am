@@ -239,7 +239,14 @@ $(PACKAGE)-$(VERSION).bin.zip:
 # the rules #
 #############
 
-.PHONY : benchmark bench regression regress test pkg dmg rpm deb zip tgz tbz
+.PHONY : clobber benchmark bench regression regress test pkg dmg rpm deb zip tgz tbz
+
+clobber:
+	@$(ECHO) "About to wipe out all pictures and binary files in this directory"
+	@$(ECHO) "Send SIGINT (type ^C) within 3 seconds to abort"
+	@sleep 3
+	rm -f *.log.* *.pix.*	# old versions
+	rm -f *.log *.pix	# last try
 
 benchmark: all
 	${SH} $(top_srcdir)/bench/run.sh
