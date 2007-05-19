@@ -581,11 +581,7 @@ register struct rt_pm_res *pmem;
 		register Size n;
 		n = length - sizeof(struct overhead);
 		nbytes = (nbytes < n) ? nbytes: n;
-		(void)bcopy(mem,newmem,nbytes);
-		/* note:
-		 * it is assumed that bcopy does the right thing on overlapping
-		 * extents (true on the vax)
-		 */
+		(void)memmove(newmem,mem,nbytes);
 	}
 
 	if (endfree)

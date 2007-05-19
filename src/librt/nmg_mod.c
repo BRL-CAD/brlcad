@@ -145,7 +145,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 
 		/* For this face, visit all remaining faces in the shell. */
 		/* Don't revisit any faces already considered. */
-		bcopy( flags1, flags2, len );
+		memcpy(flags2, flags1, len);
 		for( fu2 = BU_LIST_NEXT(faceuse, &fu1->l);
 		     BU_LIST_NOT_HEAD(fu2, &s->fu_hd);
 		     fu2 = BU_LIST_NEXT(faceuse,&fu2->l)
@@ -2028,10 +2028,10 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
 				NULL );
 			new = new_fu->f_p->g.snurb_p;
 			/* Copy knots */
-			bcopy( old->u.knots, new->u.knots, old->u.k_size*sizeof(fastf_t) );
-			bcopy( old->v.knots, new->v.knots, old->v.k_size*sizeof(fastf_t) );
+			memcpy( new->u.knots, old->u.knots, old->u.k_size*sizeof(fastf_t) );
+			memcpy( new->v.knots, old->v.knots, old->v.k_size*sizeof(fastf_t) );
 			/* Copy mesh */
-			bcopy( old->ctl_points, new->ctl_points,
+			memcpy( new->ctl_points, old->ctl_points,
 				old->s_size[0] * old->s_size[1] *
 				RT_NURB_EXTRACT_COORDS(old->pt_type) *
 				sizeof(fastf_t) );

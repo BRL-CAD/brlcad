@@ -678,7 +678,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 			stp->st_specific = (genptr_t)arbp;
 		}
 		arbp->arb_nmfaces = pa.pa_faces;
-		bcopy( (char *)pa.pa_face, (char *)arbp->arb_face,
+		memcpy( (char *)arbp->arb_face, (char *)pa.pa_face,
 			pa.pa_faces * sizeof(struct aface) );
 
 		if( uv_wanted )  {
@@ -691,7 +691,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 			 */
 			ofp = (struct oface *)bu_malloc(
 				pa.pa_faces * sizeof(struct oface), "arb_opt");
-			bcopy( (char *)pa.pa_opt, (char *)ofp,
+			memcpy( (char *)ofp, (char *)pa.pa_opt,
 				pa.pa_faces * sizeof(struct oface) );
 			arbp->arb_opt = ofp;
 		} else {

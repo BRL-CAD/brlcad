@@ -416,7 +416,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	rip->buf = (unsigned char *)bu_malloc( rip->object_length, "raw v5 object" );
 
 	*((struct db5_ondisk_header *)rip->buf) = header;	/* struct copy */
-	bcopy( lenbuf, rip->buf+sizeof(header), count );
+	memcpy( rip->buf+sizeof(header), lenbuf, count );
 
 	cp = rip->buf+used;
 	want = rip->object_length-used;
@@ -584,7 +584,7 @@ db5_export_object3(
 
 	if( name )  {
 		cp = db5_encode_length( cp, namelen, n_width );
-		bcopy( name, cp, namelen );	/* includes null */
+		memcpy( cp, name, namelen );	/* includes null */
 		cp += namelen;
 	}
 
@@ -595,13 +595,13 @@ db5_export_object3(
 		 */
 BU_ASSERT_PTR( attrib->ext_nbytes, >=, 4 );
 		cp = db5_encode_length( cp, attrib->ext_nbytes, a_width );
-		bcopy( attrib->ext_buf, cp, attrib->ext_nbytes );
+		memcpy( cp, attrib->ext_buf, attrib->ext_nbytes );
 		cp += attrib->ext_nbytes;
 	}
 
 	if( body )  {
 		cp = db5_encode_length( cp, body->ext_nbytes, b_width );
-		bcopy( body->ext_buf, cp, body->ext_nbytes );
+		memcpy( cp, body->ext_buf, body->ext_nbytes );
 		cp += body->ext_nbytes;
 	}
 
@@ -1393,7 +1393,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 	BU_ASSERT_LONG( ep->ext_nbytes, ==, dp->d_len );
 
 	if( dp->d_flags & RT_DIR_INMEM )  {
-		bcopy( (char *)ep->ext_buf, dp->d_un.ptr, ep->ext_nbytes );
+		memcpy( dp->d_un.ptr, (char *)ep->ext_buf, ep->ext_nbytes );
 		return 0;
 	}
 
@@ -1452,7 +1452,7 @@ rt_db_put_internal5(
 	BU_ASSERT_LONG( ext.ext_nbytes, ==, dp->d_len );
 
 	if( dp->d_flags & RT_DIR_INMEM )  {
-		bcopy( (char *)ext.ext_buf, dp->d_un.ptr, ext.ext_nbytes );
+		bcopy( dp->d_un.ptr, (char *)ext.ext_buf, ext.ext_nbytes );
 		goto ok;
 	}
 

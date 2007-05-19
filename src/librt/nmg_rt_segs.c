@@ -264,7 +264,7 @@ set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struc
 	}
 
 	/* copy the "in" hit */
-	bcopy(&a_hit->hit, &(*seg_p)->seg_in, sizeof(struct hit));
+	memcpy(&(*seg_p)->seg_in, &a_hit->hit, sizeof(struct hit));
 
 	/* copy the normal */
 	VMOVE((*seg_p)->seg_in.hit_normal, a_hit->inbound_norm);
@@ -297,7 +297,7 @@ set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
 		nmg_rt_segs_exit("bad seg pointer\n");
 
 	/* copy the "out" hit */
-	bcopy(&a_hit->hit, &(*seg_p)->seg_out, sizeof(struct hit));
+	memcpy(&(*seg_p)->seg_out, &a_hit->hit, sizeof(struct hit));
 
 	/* copy the normal */
 	VMOVE((*seg_p)->seg_out.hit_normal, a_hit->outbound_norm);

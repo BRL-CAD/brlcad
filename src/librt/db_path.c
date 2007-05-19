@@ -110,8 +110,7 @@ db_dup_full_path(register struct db_full_path *newp, register const struct db_fu
 	newp->fp_names = (struct directory **)bu_malloc(
 		newp->fp_maxlen * sizeof(struct directory *),
 		"db_full_path array (duplicate)" );
-	bcopy( (char *)oldp->fp_names, (char *)newp->fp_names,
-		newp->fp_len * sizeof(struct directory *) );
+	memcpy((char *)newp->fp_names, (char *)oldp->fp_names,	newp->fp_len * sizeof(struct directory *) );
 }
 
 /**
@@ -157,9 +156,9 @@ db_append_full_path( struct db_full_path *dest, const struct db_full_path *src )
 	RT_CK_FULL_PATH(src);
 
 	db_extend_full_path( dest, src->fp_len );
-	bcopy( (char *)&src->fp_names[0],
-		(char *)&dest->fp_names[dest->fp_len],
-		src->fp_len * sizeof(struct directory *) );
+	memcpy((char *)&dest->fp_names[dest->fp_len],
+	       (char *)&src->fp_names[0],
+	       src->fp_len * sizeof(struct directory *) );
 	dest->fp_len += src->fp_len;
 }
 
@@ -184,8 +183,7 @@ db_dup_path_tail(register struct db_full_path *newp, register const struct db_fu
 	newp->fp_names = (struct directory **)bu_malloc(
 		newp->fp_maxlen * sizeof(struct directory *),
 		"db_full_path array (duplicate)" );
-	bcopy( (char *)&oldp->fp_names[start], (char *)newp->fp_names,
-		newp->fp_len * sizeof(struct directory *) );
+	memcpy((char *)newp->fp_names, (char *)&oldp->fp_names[start], newp->fp_len * sizeof(struct directory *) );
 }
 
 /**

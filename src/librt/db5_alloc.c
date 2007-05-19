@@ -82,7 +82,7 @@ db5_write_free( struct db_i *dbip, struct directory *dp, long length )
 		db5_make_free_object( &ext, length );
 
 		if( dp->d_flags & RT_DIR_INMEM )  {
-			bcopy( (char *)ext.ext_buf, dp->d_un.ptr, ext.ext_nbytes );
+			memcpy( dp->d_un.ptr, (char *)ext.ext_buf, ext.ext_nbytes );
 			bu_free_external( &ext );
 			return 0;
 		}
@@ -101,7 +101,7 @@ db5_write_free( struct db_i *dbip, struct directory *dp, long length )
 	db5_make_free_object_hdr( &ext, length );
 
 	if( dp->d_flags & RT_DIR_INMEM )  {
-		bcopy( (char *)ext.ext_buf, dp->d_un.ptr, ext.ext_nbytes );
+		memcpy( dp->d_un.ptr, (char *)ext.ext_buf, ext.ext_nbytes );
 		((char *)ext.ext_buf)[length-1] = DB5HDR_MAGIC2;
 		bu_free_external( &ext );
 		return 0;

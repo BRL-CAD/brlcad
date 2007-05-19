@@ -137,7 +137,7 @@ rt_nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
 	 * make a local copy.
 	 * This creates the final ctl_points[] array.
 	 */
-	bcopy( (char *)data, (char *)local_data, n * 3 * sizeof(fastf_t) );
+	memcpy( (char *)local_data, (char *)data, n * 3 * sizeof(fastf_t) );
 	rt_nurb_solve( interp_mat, local_data, crv->ctl_points, n, 3);
 
 	/* Free up node and interp_mat storage */

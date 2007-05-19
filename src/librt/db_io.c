@@ -166,7 +166,7 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
 		"db_getmrec record[]");
 
 	if( dp->d_flags & RT_DIR_INMEM )  {
-		bcopy( dp->d_un.ptr, (char *)where, dp->d_len * sizeof(union record) );
+		memcpy( (char *)where, dp->d_un.ptr, dp->d_len * sizeof(union record) );
 		return where;
 	}
 
@@ -210,10 +210,10 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 	}
 
 	if( dp->d_flags & RT_DIR_INMEM )  {
-		bcopy( ((char *)dp->d_un.ptr) + offset * sizeof(union record),
-			(char *)where,
-			len * sizeof(union record) );
-		return 0;		/* OK */
+	    memcpy((char *)where,
+		   ((char *)dp->d_un.ptr) + offset * sizeof(union record),
+		   len * sizeof(union record) );
+	    return 0;		/* OK */
 	}
 
 	if( db_read( dbip, (char *)where, (long)len * sizeof(union record),
@@ -304,10 +304,10 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, int o
 	}
 
 	if( dp->d_flags & RT_DIR_INMEM )  {
-		bcopy( (char *)where,
-			((char *)dp->d_un.ptr) + offset * sizeof(union record),
-			len * sizeof(union record) );
-		return 0;		/* OK */
+	    memcpy(((char *)dp->d_un.ptr) + offset * sizeof(union record),
+		   (char *)where,
+		   len * sizeof(union record) );
+	    return 0;		/* OK */
 	}
 
 	if( dbip->dbi_read_only )  {
@@ -357,7 +357,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "db_get_ext ext_buf");
 
 	if( dp->d_flags & RT_DIR_INMEM )  {
-		bcopy( dp->d_un.ptr, (char *)ep->ext_buf, ep->ext_nbytes );
+		memcpy( (char *)ep->ext_buf, dp->d_un.ptr, ep->ext_nbytes );
 		return 0;
 	}
 
@@ -436,7 +436,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 		bu_bomb("db_put_external(): unknown dbi_version\n");
 
 	if( dp->d_flags & RT_DIR_INMEM )  {
-		bcopy( (char *)ep->ext_buf, dp->d_un.ptr, ep->ext_nbytes );
+		memcpy( dp->d_un.ptr, (char *)ep->ext_buf, ep->ext_nbytes );
 		return 0;
 	}
 

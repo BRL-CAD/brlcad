@@ -213,7 +213,7 @@ rt_binunif_import5( struct rt_db_internal	*ip,
 		bip->count = ep->ext_nbytes;
 		bip->u.uint8 = (unsigned char *) bu_malloc( ep->ext_nbytes,
 		    "rt_binunif_internal" );
-		bcopy( (char *) ep->ext_buf, (char *) bip->u.uint8, ep->ext_nbytes );
+		memcpy( (char *) bip->u.uint8, (char *) ep->ext_buf, ep->ext_nbytes );
 		break;
 	    case DB5_MINORTYPE_BINU_16BITINT:
 	    case DB5_MINORTYPE_BINU_16BITINT_U:
@@ -241,8 +241,9 @@ rt_binunif_import5( struct rt_db_internal	*ip,
 			bu_bomb("\n");
 		    }
 		} else
-		    bcopy( (char *) ep->ext_buf, (char *) bip->u.uint8,
-			ep->ext_nbytes );
+		    memcpy((char *) bip->u.uint8,
+			   (char *) ep->ext_buf,
+			   ep->ext_nbytes );
 		break;
 	    case DB5_MINORTYPE_BINU_32BITINT:
 	    case DB5_MINORTYPE_BINU_32BITINT_U:
@@ -398,7 +399,7 @@ rt_binunif_export5( struct bu_external		*ep,
 		ep->ext_nbytes = bip->count;
 		ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes,
 		    "binunif external");
-		bcopy( (char *) bip->u.uint8, (char *) ep->ext_buf, bip->count );
+		memcpy( (char *) ep->ext_buf, (char *) bip->u.uint8, bip->count );
 		break;
 	    case DB5_MINORTYPE_BINU_16BITINT:
 	    case DB5_MINORTYPE_BINU_16BITINT_U:
@@ -419,8 +420,9 @@ rt_binunif_export5( struct bu_external		*ep,
 			bu_bomb("\n");
 		    }
 		} else {
-		    bcopy( (char *) bip->u.uint8, (char *) ep->ext_buf,
-			ep->ext_nbytes );
+		    memcpy((char *) ep->ext_buf,
+			   (char *) bip->u.uint8, 
+			   ep->ext_nbytes );
 		}
 		break;
 	    case DB5_MINORTYPE_BINU_32BITINT:

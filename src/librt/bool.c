@@ -1031,9 +1031,9 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 		pp->pt_overlap_reg = (struct region **)bu_calloc(
 			BU_PTBL_LEN(regiontable)+1, sizeof(struct region *),
 			"pt_overlap_reg" );
-		bcopy( (char *)BU_PTBL_BASEADDR(regiontable),
-			(char *)pp->pt_overlap_reg,
-			BU_PTBL_LEN(regiontable) * sizeof(struct region *) );
+		memcpy((char *)pp->pt_overlap_reg,
+		       (char *)BU_PTBL_BASEADDR(regiontable),
+		       BU_PTBL_LEN(regiontable) * sizeof(struct region *) );
 	}
 
 	/* Examine the overlapping regions, pairwise */
