@@ -809,7 +809,7 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
  *
  *  The on-disk encoding is:
  *
- *	aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL
+ *	name1 NULL value1 NULL ... nameN NULL valueN NULL NULL
  *
  *  'ext' is initialized on behalf of the caller.
  */
@@ -948,7 +948,7 @@ db5_replace_attributes( struct directory *dp, struct bu_attribute_value_set *avs
 
 	/* Write it */
 	ret = db_put_external5( &ext2, dp, dbip );
-	if( ret < 0 )  bu_log("db5_update_attributes(%s):  db_put_external5() failure\n",
+	if( ret < 0 )  bu_log("db5_replace_attributes(%s):  db_put_external5() failure\n",
 		dp->d_namep );
 
 	bu_free_external( &attr );
@@ -1009,7 +1009,9 @@ db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp
 		return -3;
 	}
 
-	bu_avs_init( &old_avs, 4, "db5_update_attributes" );
+	/* db5_import_attributes will allocate space */
+	bu_avs_init_empty( &old_avs );
+
 	if( raw.attributes.ext_buf )  {
 		if( db5_import_attributes( &old_avs, &raw.attributes ) < 0 )  {
 			bu_log("db5_update_attributes(%s):  mal-formed attributes in database\n",
@@ -1058,7 +1060,7 @@ db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp
  *	<0 on error
  */
 int
-db5_update_attribute( const char *obj_name, const char *aname, const char *value, struct db_i *dbip )
+db5_update_attribute( const char *obj_name, const char *name, const char *value, struct db_i *dbip )
 {
 	struct directory	*dp;
 	struct bu_attribute_value_set avs;
@@ -1068,7 +1070,7 @@ db5_update_attribute( const char *obj_name, const char *aname, const char *value
 		return -1;
 
 	bu_avs_init( &avs, 2, "db5_update_attribute" );
-	bu_avs_add( &avs, aname, value );
+	bu_avs_add( &avs, name, value );
 
 	return db5_update_attributes( dp, &avs, dbip );
 }
