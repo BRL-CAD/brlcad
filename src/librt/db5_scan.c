@@ -134,7 +134,7 @@ db5_scan(
     return 0;			/* success */
 
  fatal:
-    dbip->dbi_read_only = 1;	/* Writing would corrupt it worse */
+    dbip->dbi_read_only = 1;	/* Writing could corrupt it worse */
     return -1;			/* fatal error */
 }
 
@@ -237,7 +237,7 @@ db5_diradd(struct db_i			*dbip,
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
     /* Duplicates the guts of db_diradd() */
-    RT_GET_DIRECTORY( dp, &rt_uniresource );
+    RT_GET_DIRECTORY( dp, &rt_uniresource ); /* allocates a new dir */
     RT_CK_DIR(dp);
     BU_LIST_INIT( &dp->d_use_hd );
     RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
