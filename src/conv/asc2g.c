@@ -156,7 +156,7 @@ main(int argc, char *argv[])
     if( !ofp )  perror(argv[2]);
     if (ifp == NULL || ofp == NULL) {
 	(void)fprintf(stderr, "asc2g: can't open files.");
-	exit(1);
+	Tcl_Exit(1);
     }
 
     rt_init_resource( &rt_uniresource, 0, NULL );
@@ -190,7 +190,7 @@ main(int argc, char *argv[])
 	/* Create the safe interpreter */
 	if ((safe_interp = Tcl_CreateSlave(interp, slave_name, 1)) == NULL) {
 	    bu_log("Failed to create safe interpreter");
-	    exit(1);
+	    Tcl_Exit(1);
 	}
 
 	/* Create aliases */
@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 	if( Tcl_EvalFile( safe_interp, argv[1] ) != TCL_OK ) {
 	    bu_log( "Failed to process input file (%s)!\n", argv[1] );
 	    bu_log( "%s\n", Tcl_GetStringResult(safe_interp) );
-	    exit( 1 );
+	    Tcl_Exit(1);
 	}
 
 	/* free up our resources */
@@ -220,7 +220,7 @@ main(int argc, char *argv[])
 	fclose(ifp); ifp = NULL;
 	wdb_close(ofp); ofp = NULL;
 
-	return 0;
+	Tcl_Exit(0);
     } else {
 	rewind( ifp );
     }
@@ -336,6 +336,7 @@ main(int argc, char *argv[])
     fclose(ifp); ifp = NULL;
     wdb_close(ofp); ofp = NULL;
 
+    Tcl_Exit(0);
     return 0;
 }
 
