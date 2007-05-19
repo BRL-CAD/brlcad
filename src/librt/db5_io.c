@@ -822,35 +822,65 @@ db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_
 	int	i;
 
 	BU_CK_AVS( avs );
-	avpp = avs->avp;
-
 	BU_INIT_EXTERNAL(ext);
-	if( avs->count <= 0 )  return;
-if(bu_debug & BU_DEBUG_AVS)  bu_avs_print(avs, "db5_export_attributes");
+
+	if (avs->count <= 0) {
+	    return;
+	}
+
+	if (bu_debug & BU_DEBUG_AVS) {
+	    bu_avs_print(avs, "db5_export_attributes");
+	}
 
 	/* First pass -- determine how much space is required */
+	need = 0;
+	avpp = avs->avp;
 	for( i = 0; i < avs->count; i++, avpp++ )  {
-		need += strlen( avpp->name ) + strlen( avpp->value ) + 2;
+	    if (avpp->name) {
+		need += strlen(avpp->name) + 1; /* include room for NULL */
+	    } else {
+		need += 1;
+	    }
+	    if (avpp->value) {
+		need += strlen(avpp->value) + 1; /* include room for NULL */
+	    } else {
+		need += 1;
+	    }
 	}
-	if( need <= 0 )  return;
-	need += 1;		/* for final null */
+	/* include final null */
+	need += 1;
+
+	if( need <= 1 ) {
+	    /* nothing to do */
+	    return;
+	}
 
 	ext->ext_nbytes = need;
-	ext->ext_buf = bu_malloc( need, "external attributes" );
+	ext->ext_buf = bu_calloc(1, need, "external attributes");
 
 	/* Second pass -- store in external form */
 	cp = (char *)ext->ext_buf;
 	avpp = avs->avp;
-	for( i = 0; i < avs->count; i++, avpp++ )  {
-		need = strlen( avpp->name ) + 1;
-		bcopy( avpp->name, cp, need );
-		cp += need;
+	for (i = 0; i < avs->count; i++, avpp++) {
+	    int len;
 
-		need = strlen( avpp->value ) + 1;
-		bcopy( avpp->value, cp, need );
-		cp += need;
+	    if (avpp->name) {
+		len = strlen(avpp->name);
+		memcpy(cp, avpp->name, len);
+		cp += len + 1;
+	    }
+	    *cp = '\0'; /* pad null */
+
+	    if (avpp->value) {
+		len = strlen(avpp->value);
+		memcpy(cp, avpp->value, strlen(avpp->value));
+		cp += len + 1;
+	    }
+	    *cp = '\0'; /* pad null */
 	}
-	*cp++ = '\0';
+	*(cp++) = '\0'; /* final null */
+
+	/* sanity check */
 	need = cp - ((char *)ext->ext_buf);
 	BU_ASSERT_LONG( need, ==, ext->ext_nbytes );
 }
