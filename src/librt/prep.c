@@ -698,8 +698,9 @@ rt_init_resource(struct resource *resp,
  *  or otherwise allocated by a LIBRT application) but any dynamic
  *  memory pointed to by it is freed.
  *
- *  One exception to this is that the re_directory_hd and re_directory_blocks
- *  are not touched, because the "directory" structures (which are really
+ *  One exception to this is that the re_directory_hd and
+ *  re_directory_blocks are not touched unless there is no raytrace
+ *  instance, because the "directory" structures (which are really
  *  part of the db_i) continue to be in use.
  */
 void
@@ -726,8 +727,22 @@ rt_clean_resource(struct rt_i *rtip, struct resource *resp)
 
 	/*
 	 *  The 'struct directory' guys are malloc()ed in big blocks,
-	 *  but CAN'T BE FREED HERE!  We are not done with the db_i yet.
+	 *  but CAN'T BE FREED HERE unless there is no rt instance!
+	 *  We are not done with the db_i yet if there is an rtip.
 	 */
+#if 0
+	if (!rtip) {
+	    if( BU_LIST_IS_INITIALIZED( &resp->re_directory_blocks.l ) )  {
+		struct directory **dpp;
+		BU_CK_PTBL( &resp->re_directory_blocks );
+		for( BU_PTBL_FOR( dpp, (struct directory **), &resp->re_directory_blocks ) )  {
+		    RT_CK_DIR(*dpp);	/* Head of block will be a valid seg */
+		    bu_free( (genptr_t)(*dpp), "struct directory block" );
+		}
+		bu_ptbl_free( &resp->re_directory_blocks );
+	    }
+	}
+#endif
 
 	/* The "struct hitmiss' guys are individually malloc()ed */
 	if( BU_LIST_IS_INITIALIZED( &resp->re_nmgfree ) )  {
