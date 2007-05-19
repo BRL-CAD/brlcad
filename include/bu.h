@@ -1964,19 +1964,9 @@ BU_EXPORT BU_EXTERN(void bu_log_add_hook,
 BU_EXPORT BU_EXTERN(void bu_log_delete_hook,
 		    (bu_hook_t func,
 		     genptr_t clientdata));
-BU_EXPORT BU_EXTERN(void bu_putchar,
-		    (int c));
-#if defined(HAVE_STDARG_H)
-BU_EXPORT BU_EXTERN(void bu_log,
-		    (char *, ... ));
-BU_EXPORT BU_EXTERN(void bu_flog,
-		    (FILE *, char *, ... ));
-#else
-BU_EXPORT BU_EXTERN(void bu_log,
-		    ());
-BU_EXPORT BU_EXTERN(void bu_flog,
-		    ());
-#endif
+BU_EXPORT BU_EXTERN(void bu_putchar, (int c));
+BU_EXPORT BU_EXTERN(void bu_log, (char *, ... ));
+BU_EXPORT BU_EXTERN(void bu_flog, (FILE *, char *, ... ));
 
 /** @} */
 /** @addtogroup magic */
@@ -2400,12 +2390,11 @@ BU_EXPORT BU_EXTERN(void bu_vls_putc,
 		     int c));
 BU_EXPORT BU_EXTERN(void bu_vls_trimspace,
 		    (struct bu_vls *vp));
-#if defined(HAVE_VARARGS_H) || defined(HAVE_STDARG_H)
+
 BU_EXPORT BU_EXTERN(void bu_vls_vprintf,
 		    (struct bu_vls *vls,
 		     const char *fmt,
 		     va_list ap));
-#endif
 
 #if defined(HAVE_STDARG_H)
 BU_EXPORT BU_EXTERN(void bu_vls_printf,
