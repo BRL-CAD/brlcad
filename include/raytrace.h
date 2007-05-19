@@ -449,17 +449,6 @@ struct bound_rpp {
 	point_t max;
 };
 
-#if 0
-/**
- *  Compare two bounding RPPs;  return true if disjoint.
- */
-#define RT_2RPP_DISJOINT(_l1, _h1, _l2, _h2) \
-	V3RPP_DISJOINT(_l1, _h1, _l2, _h2)
-
-/** Test for point being inside or on an RPP */
-#define RT_POINT_IN_RPP(_pt, _min, _max)	\
-	V3PT_IN_RPP(_pt, _min, _max)
-#endif
 
 /**
  *			S O L T A B
@@ -892,19 +881,16 @@ struct directory  {
 		bu_free((_dp)->d_namep, "d_namep"); \
 	(_dp)->d_namep = NULL; }
 
-#if 1
-/** The efficient way */
+
+/**
+ * allocate and link in a new directory entry to the resource
+ * structure's freelist
+ */
 #define RT_GET_DIRECTORY(_p,_res)    { \
 	while( ((_p) = (_res)->re_directory_hd) == NULL ) \
 		db_get_directory(_res); \
 	(_res)->re_directory_hd = (_p)->d_forw; \
 	(_p)->d_forw = NULL; }
-#else
-/* XXX Conservative, for testing parallel problems with Ft. AP Hill */
-#define RT_GET_DIRECTORY(_p,_res)    {BU_GETSTRUCT(_p, directory); \
-	(_p)->d_magic = RT_DIR_MAGIC; \
-	BU_LIST_INIT( &((_p)->d_use_hd) ); }
-#endif
 
 
 /**
@@ -5336,60 +5322,16 @@ RT_EXPORT BU_EXTERN(double nmg_vu_angle_measure,
 		     vect_t y_dir,
 		     int assessment,
 		     int in));
-#if 0
-RT_EXPORT BU_EXTERN(int nmg_is_v_on_rs_list,
-		    (const struct nmg_ray_state *rs,
-		     const struct vertex		*v));
-RT_EXPORT BU_EXTERN(int nmg_assess_eu,
-		    (struct edgeuse *eu,
-		     int			forw,
-		     struct nmg_ray_state	*rs,
-		     int			pos));
-RT_EXPORT BU_EXTERN(int nmg_assess_vu,
-		    (struct nmg_ray_state	*rs,
-		     int			pos));
-RT_EXPORT BU_EXTERN(void nmg_pr_vu_stuff,
-		    (const struct nmg_vu_stuff *vs));
-#endif
 RT_EXPORT BU_EXTERN(int nmg_wedge_class,
 		    (int	ass,	/* assessment of two edges forming wedge */
 		     double	a,
 		     double	b));
-#if 0
-RT_EXPORT BU_EXTERN(int nmg_face_coincident_vu_sort,
-		    (struct nmg_ray_state	*rs,
-		     int			start,
-		     int			end));
-#endif
 RT_EXPORT BU_EXTERN(void nmg_sanitize_fu,
 		    (struct faceuse	*fu));
-#if 0
-RT_EXPORT BU_EXTERN(void nmg_face_rs_init,
-		    (struct nmg_ray_state	*rs,
-		     struct bu_ptbl	*b,
-		     struct faceuse	*fu1,
-		     struct faceuse	*fu2,
-		     point_t		pt,
-		     vect_t		dir,
-		     struct edge_g_lseg		*eg,
-		     const struct bn_tol	*tol));
-RT_EXPORT BU_EXTERN(void nmg_edge_geom_isect_line,
-		    (struct edgeuse		*eu,
-		     struct nmg_ray_state	*rs,
-		     const char		*reason));
-#endif
 RT_EXPORT BU_EXTERN(void nmg_unlist_v,
 		    (struct bu_ptbl	*b,
 		     fastf_t *mag,
 		     struct vertex	*v));
-#if 0
-RT_EXPORT BU_EXTERN(int mg_onon_fix,
-		    (struct nmg_ray_state	*rs,
-		     struct bu_ptbl		*b,
-		     struct bu_ptbl		*ob,
-		     fastf_t			*mag,
-		     fastf_t			*omag));
-#endif
 RT_EXPORT BU_EXTERN(struct edge_g_lseg *nmg_face_cutjoin,
 		    (struct bu_ptbl *b1,
 		     struct bu_ptbl *b2,
@@ -5428,12 +5370,13 @@ RT_EXPORT BU_EXTERN(void nmg_evaluate_boolean,
 		     int		op,
 		     long		*classlist[8],
 		     const struct bn_tol	*tol));
-#if 0
-/* These can't be included because struct nmg_bool_state is in nmg_eval.c */
+
+/* The following functions cannot be publicly declared because struct
+ * nmg_bool_state is private to nmg_eval.c
+ */
 /* nmg_eval_shell */
 /* nmg_eval_action */
 /* nmg_eval_plot */
-#endif
 
 
 /* From nmg_rt_isect.c */
@@ -5451,17 +5394,6 @@ RT_EXPORT BU_EXTERN(int nmg_class_ray_vs_shell,
 
 RT_EXPORT BU_EXTERN(void nmg_isect_ray_model,
 		    (struct ray_data *rd));
-
-/* From nmg_rt_segs.c */
-#if 0
-/* Don't have "nmg_specific" */
-RT_EXPORT BU_EXTERN(int nmg_ray_isect_segs,
-		    (struct soltab *stp,
-		     struct xray *rp,
-		     struct application *ap,
-		     struct seg *seghead,
-		     struct nmg_specific *nmg_spec));
-#endif
 
 /* From nmg_ck.c */
 RT_EXPORT BU_EXTERN(void nmg_vvg,
