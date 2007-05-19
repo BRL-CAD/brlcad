@@ -1248,19 +1248,23 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(a)[W] = (b) * (c)[W] + (d) * (e)[W]; }
 #endif /* SHORT_VECTORS */
 
-/** @brief
- *  Macros for dealing with 3-D "extents" represented as axis-aligned
- *  right parallelpipeds (RPPs).
- *  This is stored as two points:  a min point, and a max point.
- *  RPP 1 is defined by lo1, hi1, RPP 2 by lo2, hi2.
+/**
+ *  Macros for dealing with 3-D "extents", aka bounding boxes, that
+ *  are represented as axis-aligned right parallelpipeds (RPPs).  This
+ *  is stored as two points: a min point, and a max point.  RPP 1 is
+ *  defined by lo1, hi1, RPP 2 by lo2, hi2.
  */
 
-/** @brief Compare two extents represented as RPPs. If they are disjoint, return true */
+/**
+ * Compare two bounding boxes and return true if they are disjoint.
+ */
 #define V3RPP_DISJOINT(_l1, _h1, _l2, _h2) \
       ( (_l1)[X] > (_h2)[X] || (_l1)[Y] > (_h2)[Y] || (_l1)[Z] > (_h2)[Z] || \
 	(_l2)[X] > (_h1)[X] || (_l2)[Y] > (_h1)[Y] || (_l2)[Z] > (_h1)[Z] )
 
-/** @brief Compare two extents represented as RPPs. If they overlap, return true */
+/**
+ * Compare two bounding boxes and return true If they overlap.
+ */
 #define V3RPP_OVERLAP(_l1, _h1, _l2, _h2) \
     (! ((_l1)[X] > (_h2)[X] || (_l1)[Y] > (_h2)[Y] || (_l1)[Z] > (_h2)[Z] || \
 	(_l2)[X] > (_h1)[X] || (_l2)[Y] > (_h1)[Y] || (_l2)[Z] > (_h1)[Z]) )
