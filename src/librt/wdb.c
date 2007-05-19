@@ -39,6 +39,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -50,7 +51,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "wdb.h"
 
-/*
+
+/**
  *			W D B _ F O P E N
  *
  *  Create a libwdb output stream destined for a disk file.
@@ -66,8 +68,9 @@ wdb_fopen_v( const char *filename, int version )
 {
 	struct db_i	*dbip;
 
-	if( rt_uniresource.re_magic != RESOURCE_MAGIC )
+	if( rt_uniresource.re_magic != RESOURCE_MAGIC ) {
 		rt_init_resource( &rt_uniresource, 0, NULL );
+	}
 
 	if( (dbip = db_create( filename, version )) == DBI_NULL )
 		return RT_WDB_NULL;
@@ -82,8 +85,8 @@ wdb_fopen( const char *filename)
 }
 
 
-/*
- *			W D B _ D B O P E N
+/**
+ *  W D B _ D B O P E N
  *
  *  Create a libwdb output stream destined for an existing BRL-CAD database,
  *  already opened via a db_open() call.
@@ -141,7 +144,7 @@ wdb_dbopen( struct db_i *dbip, int mode )
 
 }
 
-/*
+/**
  *			W D B _ I M P O R T
  *
  *  Returns -
@@ -164,7 +167,7 @@ wdb_import(struct rt_wdb *wdbp,	struct rt_db_internal *internp,	const char *name
 	return rt_db_get_internal( internp, dp, wdbp->dbip, mat, &rt_uniresource );
 }
 
-/*
+/**
  *			W D B _ E X P O R T _ E X T E R N A L
  *
  *  The caller must free "ep".
@@ -283,7 +286,7 @@ wdb_export_external(
 	return 0;
 }
 
-/*
+/**
  *			W D B _ P U T _ I N T E R N A L
  *
  *  Convert the internal representation of a solid to the external one,
@@ -342,7 +345,8 @@ out:
 	return ret;
 }
 
-/*
+
+/**
  *			W D B _ E X P O R T
  *
  *  Export an in-memory representation of an object,
@@ -389,7 +393,7 @@ wdb_export(
 	return wdb_put_internal( wdbp, name, &intern, local2mm );
 }
 
-/*
+/**
  *			W D B _ C L O S E
  *
  *  Release from associated database "file", destroy dynamic data structure.
