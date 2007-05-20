@@ -79,7 +79,7 @@ bu_crashreport(const char *filename)
     /* vat time ist? */
     (void)time(&now);
 
-    path = bu_which(bu_argv0(NULL));
+    path = bu_which(bu_argv0());
 
     /* do our own expansion to avoid heap allocation */
     snprintf(buffer, CR_BUFSIZE, "******************************************\n\n"
@@ -89,7 +89,7 @@ bu_crashreport(const char *filename)
 	     "Path: %s\n"	/* which binary */
 	     "Date: %s\n",	/* date/time */
 	     brlcad_ident("Crash Report"),
-	     bu_argv0(NULL),
+	     bu_argv0(),
 	     bu_process_id(),
 	     path ? path : "Unknown",
 	     ctime(&now));

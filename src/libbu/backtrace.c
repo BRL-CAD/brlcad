@@ -308,7 +308,7 @@ bu_backtrace(FILE *fp)
     signal(SIGINT, backtrace_sigint);
     snprintf(buffer, BT_BUFSIZE, "%d", bu_process_id());
 
-    args[1] = (char*) bu_argv0(NULL);
+    args[1] = (char*) bu_argv0();
     args[2] = buffer;
 
     if (bu_debug & BU_DEBUG_BACKTRACE) {

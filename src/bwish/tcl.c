@@ -92,7 +92,7 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
     int status;
     Tcl_DString argString;
 
-    bu_argv0(argv[0]);
+    bu_setprogname(argv[0]);
 
     if ((argc > 1) && (argv[1][0] != '-')) {
 	filename = argv[1];
