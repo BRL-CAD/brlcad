@@ -69,10 +69,10 @@ bu_which(const char *cmd)
     char *position = NULL;
 
     if (bu_debug & BU_DEBUG_PATHS) {
-	bu_log("WHICH: [%s]\n", cmd);
+	bu_log("bu_which: [%s]\n", cmd);
     }
 
-    if (!cmd) {
+    if (!cmd || (strlen(cmd) == 0)) {
 	return 0;
     }
 
@@ -88,6 +88,7 @@ bu_which(const char *cmd)
 	}
 	return NULL;
     }
+
     if (bu_file_exists(bu_which_result) && strchr(bu_which_result, BU_DIR_SEPARATOR)) {
 	return bu_which_result;
     }
@@ -134,10 +135,6 @@ bu_which(const char *cmd)
 	    directory = ".";
 	}
 	
-	if (bu_debug & BU_DEBUG_PATHS) {
-	    bu_log("Checking [%s]\n", directory);
-	}
-
 	snprintf(bu_which_result, MAXPATHLEN, "%s/%s", directory, cmd);
 	if (bu_file_exists(bu_which_result)) {
 	    return bu_which_result;

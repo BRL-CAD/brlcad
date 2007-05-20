@@ -78,7 +78,7 @@ bu_whereis(const char *cmd)
     char *position = NULL;
 
     if (bu_debug & BU_DEBUG_PATHS) {
-	bu_log("WHEREIS: [%s]\n", cmd);
+	bu_log("bu_whereis: [%s]\n", cmd);
     }
 
     if (!cmd) {
@@ -132,10 +132,6 @@ bu_whereis(const char *cmd)
 	/* empty means use current dir */
 	if (strlen(directory) == 0) {
 	    directory = ".";
-	}
-	
-	if (bu_debug & BU_DEBUG_PATHS) {
-	    bu_log("Checking [%s]\n", directory);
 	}
 
 	snprintf(bu_whereis_result, MAXPATHLEN, "%s/%s", directory, cmd);
