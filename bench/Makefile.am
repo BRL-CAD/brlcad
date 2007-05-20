@@ -7,8 +7,10 @@ clobber:
 	@$(ECHO) "About to wipe out all pictures and binary files in this directory"
 	@$(ECHO) "Send SIGINT (type ^C) within 5 seconds to abort"
 	@sleep 5
-	rm -f *.log.[0-9]* *.pix.[0-9]*	# old versions
-	rm -f *.log *.pix	# last try
+	@for i in moss world star bldg391 m35 sphflake ; do \
+		echo rm -f $$i.log $$i.pix $$i.log.[0-9]* $$i.pix.[0-9]* ;\
+		rm -f $$i.log $$i.pix $$i.log.[0-9]* $$i.pix.[0-9]* ;\
+	done
 
 dist_bin_SCRIPTS = \
 	benchmark
