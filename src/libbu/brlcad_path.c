@@ -443,6 +443,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	    if (bu_debug & BU_DEBUG_PATHS) {
 		bu_log("Found: BRLCAD_ROOT environment variable [%s]\n", result);
 	    }
+	    bu_vls_free(&searched);
 	    return result;
 	}
     } else {
@@ -458,6 +459,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	    if (bu_debug & BU_DEBUG_PATHS) {
 		bu_log("Found: BRLCAD_ROOT compile-time path [%s]\n", result);
 	    }
+	    bu_vls_free(&searched);
 	    return result;
 	}
     } else {
@@ -488,6 +490,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	    if (bu_debug & BU_DEBUG_PATHS) {
 		bu_log("Found: Run-time path identification [%s]\n", result);
 	    }
+	    bu_vls_free(&searched);
 	    return result;
 	}
     } else {
@@ -501,6 +504,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	    if (bu_debug & BU_DEBUG_PATHS) {
 		bu_log("Found: /usr/brlcad default path [%s]\n", result);
 	    }
+	    bu_vls_free(&searched);
 	    return result;
 	}
     }
@@ -510,6 +514,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	if (bu_debug & BU_DEBUG_PATHS) {
 	    bu_log("Found: current directory [%s]\n", result);
 	}
+	bu_vls_free(&searched);
 	return result;
     }
 
@@ -521,6 +526,8 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	    bu_log("Unable to find the BRL-CAD software installation.\nThis copy of BRL-CAD may not be properly installed.\n\n");
 	}
     }
+
+    bu_vls_free(&searched);
     return NULL;
 }
 
@@ -568,6 +575,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	    if (bu_debug & BU_DEBUG_PATHS) {
 		bu_log("Found: BRLCAD_DATA environment variable [%s]\n", result);
 	    }
+	    bu_vls_free(&searched);
 	    return result;
 	}
     } else {
@@ -583,6 +591,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	    if (bu_debug & BU_DEBUG_PATHS) {
 		bu_log("Found: BRLCAD_DATA compile-time path [%s]\n", result);
 	    }
+	    bu_vls_free(&searched);
 	    return result;
 	}
     } else {
@@ -599,6 +608,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	    if (bu_debug & BU_DEBUG_PATHS) {
 		bu_log("Found: BRLCAD_ROOT common data path [%s]\n", result);
 	    }
+	    bu_vls_free(&searched);
 	    return result;
 	}
     }
@@ -611,6 +621,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	    if (bu_debug & BU_DEBUG_PATHS) {
 		bu_log("Found: BRLCAD_ROOT common data path [%s]\n", result);
 	    }
+	    bu_vls_free(&searched);
 	    return result;
 	}
     }
@@ -623,6 +634,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	    if (bu_debug & BU_DEBUG_PATHS) {
 		bu_log("Found: BRLCAD_ROOT common data path [%s]\n", result);
 	    }
+	    bu_vls_free(&searched);
 	    return result;
 	}
     }
@@ -635,6 +647,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	    if (bu_debug & BU_DEBUG_PATHS) {
 		bu_log("Found: BRLCAD_ROOT common data path [%s]\n", result);
 	    }
+	    bu_vls_free(&searched);
 	    return result;
 	}
     }
@@ -644,6 +657,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	if (bu_debug & BU_DEBUG_PATHS) {
 	    bu_log("Found: current directory [%s]\n", result);
 	}
+	bu_vls_free(&searched);
 	return result;
     }
 
@@ -655,6 +669,8 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 	    bu_log("Unable to find the BRL-CAD software installation.\nThis copy of BRL-CAD may not be properly installed.\n\n");
 	}
     }
+
+    bu_vls_free(&searched);
     return NULL;
 }
 
