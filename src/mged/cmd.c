@@ -119,6 +119,7 @@ void cmd_setup(void);
 void mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first);
 void mged_print_result(int status);
 void mged_global_variable_setup(Tcl_Interp *interp);
+void mged_global_variable_teardown(Tcl_Interp *interp);
 int f_bot_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int f_bot_condense(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -1943,6 +1944,21 @@ mged_global_variable_setup(Tcl_Interp *interp)
 	Tcl_LinkVar(interp, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);
 	Tcl_LinkVar(interp, "edit_object_flag", (char *)&edobj, TCL_LINK_INT);
 }
+
+
+void
+mged_global_variable_teardown(Tcl_Interp *interp)
+{
+    Tcl_UnlinkVar(interp, "mged_default(dlist)");
+    Tcl_UnlinkVar(interp, "mged_default(db_warn)");
+    Tcl_UnlinkVar(interp, "mged_default(db_upgrade)");
+    Tcl_UnlinkVar(interp, "mged_default(db_version)");
+    
+    Tcl_UnlinkVar(interp, "edit_class");
+    Tcl_UnlinkVar(interp, "edit_solid_flag");
+    Tcl_UnlinkVar(interp, "edit_object_flag");
+}
+
 
 int
 f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)

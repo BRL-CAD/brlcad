@@ -122,6 +122,7 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #endif
 
 extern void mged_setup(void); /* setup.c */
+extern void mged_global_variable_setup(Tcl_Interp *interp); /* cmd.c */
 
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 
@@ -2104,7 +2105,12 @@ mged_finish(int exitcode)
 #endif
 
     pkg_terminate();
-    exit( exitcode );
+
+    mged_global_variable_teardown();
+
+    Tcl_DeleteInterp(interp);
+
+    Tcl_Exit(exitcode);
 }
 
 
