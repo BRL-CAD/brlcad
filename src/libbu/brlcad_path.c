@@ -60,6 +60,11 @@ static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 #  define BRLCAD_ROOT "/usr/brlcad"
 #endif
 
+
+/* internal storage for bu_getprogname/bu_setprogname */
+static char bu_progname[MAXPATHLEN] = {0};
+
+
 static const char *
 brlcad_data()
 {
@@ -74,8 +79,8 @@ brlcad_data()
 
 
 /**
- *	b u _ i p w d
- * @brief
+ * b u _ i p w d
+ *
  * set/return the path to the initial working directory.
  * bu_setprogname() must be called on app startup for the correct pwd to
  * be acquired/set.
@@ -85,21 +90,34 @@ bu_ipwd()
 {
     /* private stash */
     static const char *ipwd = NULL;
+    static char buffer[MAXPATHLEN] = {0};
 
     if (ipwd) {
 	return ipwd;
     }
 
-#ifdef HAVE_GETENV
     ipwd = getenv("PWD"); /* not our memory to free */
-#endif
+
+    if (!ipwd) {
+	FILE *fp;
+	fp = popen("pwd", "r");
+	if (fp) {
+	    if (bu_fgets(buffer, MAXPATHLEN, fp)) {
+		ipwd = buffer;
+	    } else {
+		ipwd = ".";
+	    }
+	} else {
+	    ipwd = ".";
+	}
+    }
 
     return ipwd;
 }
 
 
 /**
- *		b u _ a r g v 0
+ * b u _ a r g v 0
  *
  * this routine is used by the brlcad-path-finding routines when
  * attempting to locate binaries, libraries, and resources.  This
@@ -107,27 +125,22 @@ bu_ipwd()
  * set early on by bu_setprogname().
  */
 const char *
-bu_argv0(const char *path)
+bu_argv0(void)
 {
     /* private stash */
     static const char *argv0 = NULL;
 
-    /* set our initial pwd if we have not already */
+    /* set initial pwd if we have not already */
     (void)bu_ipwd();
 
-    if (path) {
-	argv0 = path;
+    if (bu_progname[0] != '\0') {
+	argv0 = bu_progname;
     }
 
 #ifdef HAVE_GETPROGNAME
-    /* fallback to getprogname() before returning NULL. */
     if (!argv0) {
+	/* do not call bu_getgrogname() */
 	argv0 = getprogname(); /* not malloc'd memory */
-    }
-#else
-#warning "Do not know how to get the name of a running executable on this sytem"
-    if (!argv0) {
-	argv0 = "unknown"; /* not malloc'd memory */
     }
 #endif
 
@@ -135,16 +148,48 @@ bu_argv0(const char *path)
 }
 
 
-/* internal storage for bu_getprogname */
-static const char *progname = NULL;
+/**
+ * b u _ a r g v 0 _ f u l l _ p a t h
+ *
+ * returns the full path to argv0, regardless of how the application
+ * was invoked.
+ */
+const char *
+bu_argv0_full_path(void)
+{
+    static char buffer[MAXPATHLEN] = {0};
 
-/* release memory for progname on application exit */
-static void
-_free_progname(void) {
-    if (progname) {
-	free((char *)progname);
-	progname = NULL;
+    const char *argv0 = bu_argv0();
+    const char *ipwd = bu_ipwd();
+
+    const char *which = bu_which(argv0);
+
+    if (argv0[0] == BU_DIR_SEPARATOR) {
+	/* seems to be a full path */
+	snprintf(buffer, MAXPATHLEN, "%s", argv0);
+	return buffer;
     }
+
+    if (argv0[0] == '.' && argv0[1] == BU_DIR_SEPARATOR) {
+	/* remove a ./ if present */
+	argv0 += 2;
+    }
+
+    /* running from installed */
+    if (which) {
+	snprintf(buffer, MAXPATHLEN, "%s", which);
+	return buffer;
+    }
+
+    /* running from source dir */
+    snprintf(buffer, MAXPATHLEN, "%s%c%s", ipwd, BU_DIR_SEPARATOR, argv0);
+    if (bu_file_exists(buffer)) {
+	return buffer;
+    }
+
+    /* give up */
+    snprintf(buffer, MAXPATHLEN, "%s", argv0);
+    return buffer;
 }
 
 
@@ -156,22 +201,24 @@ _free_progname(void) {
  */
 const char *
 bu_getprogname(void) {
-    const char *name;
+    const char *name = NULL;
 
-    if (progname) {
-	return progname;
+    if (bu_progname[0] != '\0') {
+	return bu_basename(bu_progname);
     }
 
-    name = bu_basename(bu_argv0(NULL));
-    /* string returned by basename is not ours, get a copy */
-    if (name) {
-	progname = bu_strdup(name); 
-    } else {
-	progname = bu_strdup("unknown");
-    }
-    atexit(_free_progname);
+#ifdef HAVE_GETPROGNAME
+    name = getprogname(); /* not malloc'd memory */
+#endif
 
-    return progname;
+    if (!name) {
+	name = bu_argv0();
+    }
+
+    snprintf(bu_progname, MAXPATHLEN, name ? name : "unknown");
+
+
+    return bu_basename(bu_progname);
 }
 
 
@@ -182,17 +229,19 @@ bu_getprogname(void) {
  * before main() for you, but necessary otherwise for portability.
  */
 void
-bu_setprogname(const char *prog) {
+bu_setprogname(const char *argv0) {
+    const char *base = bu_basename(argv0);
+
 #ifdef HAVE_SETPROGNAME
-    const char *base = bu_basename(prog);
-    if (base) {
-	setprogname(base);
-    } else {
-	setprogname("unknown");
-    }
+    setprogname(argv0);
 #endif
 
-    (void)bu_argv0(prog);
+    if (argv0) {
+	snprintf(bu_progname, MAXPATHLEN, argv0);
+    }
+
+    (void)bu_ipwd();
+    
     return;
 }
 
