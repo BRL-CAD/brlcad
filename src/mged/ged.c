@@ -2064,6 +2064,7 @@ mged_finish(int exitcode)
 {
     char place[64];
     register struct dm_list *p;
+    register struct cmd_list *c;
 
     (void)sprintf(place, "exit_status=%d", exitcode );
     log_event( "CEASE", place );
@@ -2075,6 +2076,11 @@ mged_finish(int exitcode)
 	if (curr_dm_list && dmp) {
 	    DM_CLOSE(dmp);
 	}
+    }
+
+    for (BU_LIST_FOR(c, cmd_list, &head_cmd_list.l)) {
+	bu_vls_free(&c->cl_name);
+	bu_vls_free(&c->cl_more_default);
     }
 
     /* Be certain to close the database cleanly before exiting */
