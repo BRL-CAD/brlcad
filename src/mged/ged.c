@@ -165,7 +165,7 @@ extern struct _axes_state default_axes_state;
 extern struct _rubber_band default_rubber_band;
 
 
-Tcl_Interp *interp = NULL;
+Tcl_Interp *interp = (Tcl_Interp *)NULL;
 
 int pipe_out[2];
 int pipe_err[2];
@@ -2099,16 +2099,20 @@ mged_finish(int exitcode)
 	db_close(dbip);
 #endif
 
+    if( bu_avail_cpus() > 1 )  {
+	bu_semaphore_release( RT_SEM_LAST );
+    }
+
+    pkg_terminate();
+
+    mged_global_variable_teardown(interp);
+
+    Tcl_DeleteInterp(interp);
+
 #ifndef _WIN32
     if (cbreak_mode > 0)
 	reset_Tty(fileno(stdin));
 #endif
-
-    pkg_terminate();
-
-    mged_global_variable_teardown();
-
-    Tcl_DeleteInterp(interp);
 
     Tcl_Exit(exitcode);
 }
