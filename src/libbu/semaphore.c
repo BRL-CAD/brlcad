@@ -273,9 +273,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 	int	i;
 
 	if( bu_nsemaphores != 0 )  return;	/* Already called */
-	bu_semaphores = (struct bu_semaphores *)calloc(
-		nsemaphores,
-		sizeof(struct bu_semaphores) );
+	bu_semaphores = (struct bu_semaphores *)calloc(nsemaphores, sizeof(struct bu_semaphores) );
 	if( !bu_semaphores )  {
 		fprintf(stderr, "bu_semaphore_init(): could not allocate space for %d semaphores of len %ld\n",
 			nsemaphores, (long)sizeof(struct bu_semaphores));
@@ -504,6 +502,11 @@ bu_semaphore_release(unsigned int i)
 		abort();
 	}
 #	endif
+
+	if (bu_semaphores) {
+	    free(bu_semaphores);
+	    bu_semaphores = (struct bu_semaphores *)NULL;
+	}
 #endif
 }
 /** @} */
