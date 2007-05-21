@@ -5,11 +5,14 @@ SUBDIRS = include
 A2G=$(top_builddir)/src/conv/asc2g
 G2A=$(top_builddir)/src/conv/g2asc
 
-# the shell script fu is to cope with gmake vs irix make weirdness...
+# the shell script test -e fu is to cope with gmake vs irix make weirdness...
 # gmake seems to prefix the src with the appropriate srcdir automagically...
+# the library path is set since libtool won't do it for us for non libtool libs
 .asc.g:
 	@if test -x $(A2G) ; then \
 		echo $(A2G) $< $@ ; \
+		LD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$LD_LIBRARY_PATH \
+		DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_buildir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
 		$(A2G) `if test -e $< ; then echo $< ; else echo $(top_srcdir)/db/$< ; fi` $@ ; \
 	else \
 		echo "$(A2G) does not exist" ; \
