@@ -205,6 +205,16 @@ main(int argc, char **argv)
 	png_write_image( png_p, rows );
 	png_write_end( png_p, NULL );
 
+
+	/* release resources */
+
+	png_destroy_write_struct(&png_p, &info_p);
+	bu_free(scanbuf, "scanbuf");
+	bu_free(rows, "rows");
+	
+	(void)fclose(infp);
+	(void)fclose(outfp);
+
 	return 0;
 }
 
