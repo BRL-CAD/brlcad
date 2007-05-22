@@ -158,15 +158,15 @@ BU_FILE *bu_fopen (register char *fname, register char *type)
 
     bfp = (BU_FILE *) bu_malloc(sizeof(BU_FILE), "bu_file struct");
 
-    bfp -> file_magic = BU_FILE_MAGIC;
-    bfp -> file_ptr = fp;
-    bfp -> file_name = fname;
-    bu_vls_init(&(bfp -> file_buf));
-    bfp -> file_bp = bu_vls_addr(&(bfp -> file_buf));
-    bfp -> file_needline = 1;
-    bfp -> file_linenm = 0;
-    bfp -> file_comment = '#';
-    bfp -> file_buflen = -1;
+    bfp->file_magic = BU_FILE_MAGIC;
+    bfp->file_ptr = fp;
+    bfp->file_name = fname;
+    bu_vls_init(&(bfp->file_buf));
+    bfp->file_bp = bu_vls_addr(&(bfp->file_buf));
+    bfp->file_needline = 1;
+    bfp->file_linenm = 0;
+    bfp->file_comment = '#';
+    bfp->file_buflen = -1;
 
     return (bfp);
 }
@@ -182,15 +182,15 @@ int bu_fclose (register BU_FILE *bfp)
 
     BU_CK_FILE(bfp);
 
-    close_status = fclose(bfp -> file_ptr);
+    close_status = fclose(bfp->file_ptr);
 
     if (bfp != bu_stdin)
     {
-	bfp -> file_magic = 0;
-	bfp -> file_ptr = NULL;
-	bfp -> file_name = (char *) 0;
-	bfp -> file_bp = (char *) 0;
-	bu_vls_free(&(bfp -> file_buf));
+	bfp->file_magic = 0;
+	bfp->file_ptr = NULL;
+	bfp->file_name = (char *) 0;
+	bfp->file_bp = (char *) 0;
+	bu_vls_free(&(bfp->file_buf));
 	bu_free((genptr_t) bfp, "bu_file struct");
     }
     return (close_status);
@@ -208,47 +208,47 @@ int bu_fgetc (register BU_FILE *bfp)
 
     BU_CK_FILE(bfp);
 
-    strip_comments = isprint(comment_char = bfp -> file_comment);
+    strip_comments = isprint(comment_char = bfp->file_comment);
 
     /*
      *	If buffer is empty, note that it's time for a new line of input
      */
-    if ((*(bfp -> file_bp) == '\0') && ! (bfp -> file_needline))
+    if ((*(bfp->file_bp) == '\0') && ! (bfp->file_needline))
     {
-	bfp -> file_needline = 1;
+	bfp->file_needline = 1;
 	return ('\n');
     }
 
     /*
      *    If it's time to grab a line of input from the file, do so.
      */
-    while (bfp -> file_needline)
+    while (bfp->file_needline)
     {
-	bu_vls_trunc(&(bfp -> file_buf), 0);
-	if (bu_vls_gets(&(bfp -> file_buf), bfp -> file_ptr) == -1)
+	bu_vls_trunc(&(bfp->file_buf), 0);
+	if (bu_vls_gets(&(bfp->file_buf), bfp->file_ptr) == -1)
 	    return (EOF);
-	bfp -> file_bp = bu_vls_addr(&(bfp -> file_buf));
-	++(bfp -> file_linenm);
-	if (bu_vls_strlen(&(bfp -> file_buf)) == 0)
+	bfp->file_bp = bu_vls_addr(&(bfp->file_buf));
+	++(bfp->file_linenm);
+	if (bu_vls_strlen(&(bfp->file_buf)) == 0)
 	    continue;
 
 	if (strip_comments)
 	{
-	    bfp -> file_buflen = -1;
-	    for (cp = bfp -> file_bp; *cp != '\0'; ++cp)
+	    bfp->file_buflen = -1;
+	    for (cp = bfp->file_bp; *cp != '\0'; ++cp)
 		if (*cp == comment_char)
 		{
-		    bfp -> file_buflen = (bfp -> file_buf).vls_len;
-		    bu_vls_trunc(&(bfp -> file_buf), cp - bfp -> file_bp);
+		    bfp->file_buflen = (bfp->file_buf).vls_len;
+		    bu_vls_trunc(&(bfp->file_buf), cp - bfp->file_bp);
 		    break;
 		}
 	}
-	if (cp == bfp -> file_bp)
+	if (cp == bfp->file_bp)
 	    return ('\n');
-	bfp -> file_needline = 0;
+	bfp->file_needline = 0;
     }
 
-    return (*(bfp -> file_bp)++);
+    return (*(bfp->file_bp)++);
 }
 
 /*
@@ -260,16 +260,16 @@ void bu_printfile (register BU_FILE *bfp)
 {
     BU_CK_FILE(bfp);
 
-    bu_log("File     '%s'...\n", bfp -> file_name);
-    bu_log("  ptr      %x\n", bfp -> file_ptr);
-    bu_log("  buf      '%s'\n", bu_vls_addr(&(bfp -> file_buf)));
-    bu_log("  bp       %d", bfp -> file_bp - bu_vls_addr(&(bfp -> file_buf)));
-    bu_log(": '%c' (%03o)\n", *(bfp -> file_bp), *(bfp -> file_bp));
-    bu_log("  needline %d\n", bfp -> file_needline);
-    bu_log("  linenm   %d\n", bfp -> file_linenm);
+    bu_log("File     '%s'...\n", bfp->file_name);
+    bu_log("  ptr      %x\n", bfp->file_ptr);
+    bu_log("  buf      '%s'\n", bu_vls_addr(&(bfp->file_buf)));
+    bu_log("  bp       %d", bfp->file_bp - bu_vls_addr(&(bfp->file_buf)));
+    bu_log(": '%c' (%03o)\n", *(bfp->file_bp), *(bfp->file_bp));
+    bu_log("  needline %d\n", bfp->file_needline);
+    bu_log("  linenm   %d\n", bfp->file_linenm);
     bu_log("  comment  '%c' (%d)\n",
-	bfp -> file_comment, bfp -> file_comment);
-    bu_log("  buflen   %d\n", bfp -> file_buflen);
+	bfp->file_comment, bfp->file_comment);
+    bu_log("  buflen   %d\n", bfp->file_buflen);
 }
 
 /*
@@ -289,12 +289,12 @@ void bu_file_err (register BU_FILE *bfp, register char *text1, register char *te
     /*
      *	Show any trailing comments
      */
-    if ((buflen = bfp -> file_buflen) > -1)
+    if ((buflen = bfp->file_buflen) > -1)
     {
-	stripped_length = (bfp -> file_buf).vls_len;
-	*(bu_vls_addr(&(bfp -> file_buf)) + stripped_length) =
-	    bfp -> file_comment;
-	(bfp -> file_buf).vls_len = buflen;
+	stripped_length = (bfp->file_buf).vls_len;
+	*(bu_vls_addr(&(bfp->file_buf)) + stripped_length) =
+	    bfp->file_comment;
+	(bfp->file_buf).vls_len = buflen;
     }
     else
 	stripped_length = -1;
@@ -305,16 +305,16 @@ void bu_file_err (register BU_FILE *bfp, register char *text1, register char *te
     if (text1 && (*text1 != '\0'))
 	bu_log("%s: ", text1);
     bu_log("Error: file %s, line %d: %s\n",
-	bfp -> file_name, bfp -> file_linenm, text2);
-    bu_log("%s\n", bu_vls_addr(&(bfp -> file_buf)));
+	bfp->file_name, bfp->file_linenm, text2);
+    bu_log("%s\n", bu_vls_addr(&(bfp->file_buf)));
 
     /*
      *	Print out position-indicating arrow, if requested
      */
     if ((cursor_pos >= 0)
-     && (cursor_pos < bu_vls_strlen(&(bfp -> file_buf))))
+     && (cursor_pos < bu_vls_strlen(&(bfp->file_buf))))
     {
-	cp = bu_vls_addr(&(bfp -> file_buf));
+	cp = bu_vls_addr(&(bfp->file_buf));
 	for (i = 0; i < cursor_pos; ++i)
 	    if (*cp++ == '\t')
 		bu_log("\t");
@@ -327,7 +327,7 @@ void bu_file_err (register BU_FILE *bfp, register char *text1, register char *te
      *	Hide the comments again
      */
     if (stripped_length > -1)
-	bu_vls_trunc(&(bfp -> file_buf), stripped_length);
+	bu_vls_trunc(&(bfp->file_buf), stripped_length);
 }
 
 /*
@@ -445,10 +445,10 @@ struct curr_id *mk_curr_id (int region_id)
 
     cip = (struct curr_id *) bu_malloc(sizeof(struct curr_id), "curr_id");
 
-    cip -> ci_magic = CURR_ID_MAGIC;
-    cip -> ci_id = region_id;
-    BU_LIST_INIT(&(cip -> ci_regions));
-    cip -> ci_newid = region_id;
+    cip->ci_magic = CURR_ID_MAGIC;
+    cip->ci_id = region_id;
+    BU_LIST_INIT(&(cip->ci_regions));
+    cip->ci_newid = region_id;
 
     return (cip);
 }
@@ -465,12 +465,12 @@ void print_curr_id (void *v, int depth)
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
 
     bu_log(" curr_id <x%x> %d %d...\n",
-	cip, cip -> ci_id, cip -> ci_newid);
-    for (BU_LIST_FOR(rp, remap_reg, &(cip -> ci_regions)))
+	cip, cip->ci_id, cip->ci_newid);
+    for (BU_LIST_FOR(rp, remap_reg, &(cip->ci_regions)))
     {
 	BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
 
-	bu_log("  %s\n", rp -> rr_name);
+	bu_log("  %s\n", rp->rr_name);
     }
 }
 
@@ -485,15 +485,15 @@ void print_nonempty_curr_id (void *v, int depth)
 
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
 
-    if (BU_LIST_NON_EMPTY(&(cip -> ci_regions)))
+    if (BU_LIST_NON_EMPTY(&(cip->ci_regions)))
     {
 	bu_log(" curr_id <x%x> %d %d...\n",
-	    cip, cip -> ci_id, cip -> ci_newid);
-	for (BU_LIST_FOR(rp, remap_reg, &(cip -> ci_regions)))
+	    cip, cip->ci_id, cip->ci_newid);
+	for (BU_LIST_FOR(rp, remap_reg, &(cip->ci_regions)))
 	{
 	    BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
 
-	    bu_log("  %s\n", rp -> rr_name);
+	    bu_log("  %s\n", rp->rr_name);
 	}
     }
 }
@@ -559,13 +559,13 @@ struct remap_reg *mk_remap_reg (char *region_name)
 
     rp = (struct remap_reg *) bu_malloc(sizeof(struct remap_reg), "remap_reg");
 
-    rp -> rr_magic = REMAP_REG_MAGIC;
+    rp->rr_magic = REMAP_REG_MAGIC;
 
-    rp -> rr_name = (char *) bu_malloc(strlen(region_name) + 1, "region name");
-    strcpy(rp -> rr_name, region_name);
+    rp->rr_name = (char *) bu_malloc(strlen(region_name) + 1, "region name");
+    strcpy(rp->rr_name, region_name);
 
-    rp -> rr_dp = DIR_NULL;
-    rp -> rr_ip = (struct rt_db_internal *) 0;
+    rp->rr_dp = DIR_NULL;
+    rp->rr_ip = (struct rt_db_internal *) 0;
 
     return (rp);
 }
@@ -577,8 +577,8 @@ struct remap_reg *mk_remap_reg (char *region_name)
 void free_remap_reg (struct remap_reg *rp)
 {
     BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
-    bu_free((genptr_t) rp -> rr_name, "region name");
-    bu_free((genptr_t) rp -> rr_ip, "rt_db_internal");
+    bu_free((genptr_t) rp->rr_name, "region name");
+    bu_free((genptr_t) rp->rr_ip, "rt_db_internal");
     bu_free((genptr_t) rp, "remap_reg");
 }
 
@@ -599,7 +599,7 @@ int compare_curr_ids (void *v1, void *v2)
     BU_CKMAG(id1, CURR_ID_MAGIC, "curr_id");
     BU_CKMAG(id2, CURR_ID_MAGIC, "curr_id");
 
-    return (id1 -> ci_id  -  id2 -> ci_id);
+    return (id1->ci_id  -  id2->ci_id);
 }
 
 /************************************************************************
@@ -643,7 +643,7 @@ int read_int (BU_FILE *sfp, int *ch, int *n)
     else
 	bu_file_err(sfp, "remapid:read_int()",
 	    "Encountered nondigit",
-	(int)(    (sfp -> file_bp) - bu_vls_addr(&(sfp -> file_buf)) - 1));
+	(int)(    (sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1));
     return (-1);
 }
 
@@ -673,7 +673,7 @@ int read_block (BU_FILE *sfp, int *ch, int *n1, int *n2)
 	default:
 	    bu_file_err(sfp, "remapid:read_block()",
 		"Syntax error",
-	(int)(	(sfp -> file_bp) - bu_vls_addr(&(sfp -> file_buf)) - 1) );
+	(int)(	(sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1) );
 	    return (-1);
     }
 }
@@ -714,21 +714,21 @@ int read_spec (BU_FILE *sfp, char *sf_name)
 	    {
 		case 1:
 		    cip = lookup_curr_id(num1);
-		    BU_LIST_INSERT(&cids, &(cip -> l));
+		    BU_LIST_INSERT(&cids, &(cip->l));
 		    break;
 		case 2:
 		    if (num1 >= num2)
 		    {
 			bu_file_err(sfp, "remapid:read_spec()",
 			    "Range out of order",
-			(int)(    (sfp -> file_bp) - bu_vls_addr(&(sfp -> file_buf))
+			(int)(    (sfp->file_bp) - bu_vls_addr(&(sfp->file_buf))
 			    - 1) );
 			exit (-1);
 		    }
 		    for (i = num1; i <= num2; ++i)
 		    {
 			cip = lookup_curr_id(i);
-			BU_LIST_INSERT(&cids, &(cip -> l));
+			BU_LIST_INSERT(&cids, &(cip->l));
 		    }
 		    break;
 		default:
@@ -749,7 +749,7 @@ int read_spec (BU_FILE *sfp, char *sf_name)
 		default:
 		    bu_file_err(sfp, "remapid:read_spec()",
 			"Syntax error",
-			(int)((sfp -> file_bp) - bu_vls_addr(&(sfp -> file_buf))
+			(int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf))
 			- 1) );
 		    exit (-1);
 	    }
@@ -762,8 +762,8 @@ int read_spec (BU_FILE *sfp, char *sf_name)
 	 */
 	while (BU_LIST_WHILE(cip, curr_id, &cids))
 	{
-	    cip -> ci_newid = newid;
-	    BU_LIST_DEQUEUE(&(cip -> l));
+	    cip->ci_newid = newid;
+	    BU_LIST_DEQUEUE(&(cip->l));
 	}
     }
 }
@@ -781,9 +781,9 @@ void record_region (char *region_name, int region_id, struct directory *dp, stru
 
     cip = lookup_curr_id(region_id);
     rp = mk_remap_reg(region_name);
-    rp -> rr_dp = dp;
-    rp -> rr_ip = ip;
-    BU_LIST_INSERT(&(cip -> ci_regions), &(rp -> l));
+    rp->rr_dp = dp;
+    rp->rr_ip = ip;
+    BU_LIST_INSERT(&(cip->ci_regions), &(rp->l));
 }
 
 void db_init(char *db_name)
@@ -800,18 +800,18 @@ void db_init(char *db_name)
     db_dirbuild(dbip);
 
     FOR_ALL_DIRECTORY_START(dp, dbip) {
-	if (!(dp -> d_flags & DIR_REGION))
+	if (!(dp->d_flags & DIR_REGION))
 	    continue;
 	ip = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "rt_db_internal");
 	if (rt_db_get_internal(ip, dp, dbip, (fastf_t *) NULL, &rt_uniresource) < 0) {
 	    bu_log("remapid: rt_db_get_internal(%s) failed.  ",
-		   dp -> d_namep);
+		   dp->d_namep);
 	    bu_log("This shouldn't happen\n");
 	    exit (1);
 	}
-	comb = (struct rt_comb_internal *) (ip -> idb_ptr);
+	comb = (struct rt_comb_internal *) (ip->idb_ptr);
 	RT_CK_COMB(comb);
-	record_region(dp -> d_namep, comb -> region_id, dp, ip);
+	record_region(dp->d_namep, comb->region_id, dp, ip);
     } FOR_ALL_DIRECTORY_END;
 }
 
@@ -828,21 +828,21 @@ void write_assignment (void *v, int depth)
 
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
 
-    if (BU_LIST_NON_EMPTY(&(cip -> ci_regions)))
+    if (BU_LIST_NON_EMPTY(&(cip->ci_regions)))
     {
-	region_id = cip -> ci_newid;
-	for (BU_LIST_FOR(rp, remap_reg, &(cip -> ci_regions)))
+	region_id = cip->ci_newid;
+	for (BU_LIST_FOR(rp, remap_reg, &(cip->ci_regions)))
 	{
 	    BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
-	    RT_CK_DB_INTERNAL(rp -> rr_ip);
+	    RT_CK_DB_INTERNAL(rp->rr_ip);
 
-	    comb = (struct rt_comb_internal *) rp -> rr_ip -> idb_ptr;
+	    comb = (struct rt_comb_internal *) rp->rr_ip->idb_ptr;
 	    RT_CK_COMB(comb);
-	    comb -> region_id = region_id;
-	    if (rt_db_put_internal(rp -> rr_dp, dbip, rp -> rr_ip, &rt_uniresource) < 0)
+	    comb->region_id = region_id;
+	    if (rt_db_put_internal(rp->rr_dp, dbip, rp->rr_ip, &rt_uniresource) < 0)
 	    {
 		bu_log("remapid: rt_db_put_internal(%s) failed.  ",
-		    rp -> rr_dp -> d_namep);
+		    rp->rr_dp->d_namep);
 		bu_log("This shouldn't happen\n");
 		exit (1);
 	    }
