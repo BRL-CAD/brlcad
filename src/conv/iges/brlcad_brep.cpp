@@ -1,6 +1,6 @@
 
 #include "brlcad.hpp"
-
+#include "PullbackCurve.h"
 
 #define PT(p) p[0] << "," << p[1] << "," << p[2]
 
@@ -92,7 +92,7 @@ namespace brlcad {
     
     // get a 2d parameter-space curve that lies on the surface for this edge
     // hopefully this works!
-    ON_Curve* c2d = s->Pullback(*c, 0.000001); // XXX: picked this tolerance out of my %ss
+    ON_Curve* c2d = pullback_curve(s, c, 1.0e-4, 1.0e-3);
 
     int trimCurve = _brep->AddTrimCurve(c2d);
 

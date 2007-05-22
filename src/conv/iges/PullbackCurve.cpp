@@ -21,6 +21,16 @@ typedef struct pbc_data {
   ON_2dPointArray samples;
 } PBCData;
 
+typedef struct _bspline {  
+  int p; // degree
+  int m; // num_knots-1
+  int n; // num_samples-1 (aka number of control points)
+  vector<double> params;
+  vector<double> knots;
+  ON_2dPointArray controls;
+} BSpline;
+
+
 bool
 isFlat(const ON_2dPoint& p1, const ON_2dPoint& m, const ON_2dPoint& p2, double flatness) {
   ON_Line line = ON_Line(ON_3dPoint(p1), ON_3dPoint(p2));
@@ -29,7 +39,7 @@ isFlat(const ON_2dPoint& p1, const ON_2dPoint& m, const ON_2dPoint& p2, double f
 
 bool 
 toUV(PBCData& data, ON_2dPoint& out_pt, double t) {
-  double u,v;
+  double u = 0, v = 0;
   ON_3dPoint pointOnCurve = data.curve->PointAt(t);
   if (data.surf->GetClosestPoint(pointOnCurve, &u, &v, data.tolerance)) {
     out_pt.Set(u,v);
@@ -44,7 +54,7 @@ randomPointFromRange(PBCData& data, ON_2dPoint& out, double lo, double hi)
   assert(lo < hi);
   double random_pos = drand48() * (RANGE_HI - RANGE_LO) + RANGE_LO;
   double newt = random_pos * (hi - lo) + lo; 
-  toUV(data, out, newt);
+  assert(toUV(data, out, newt));
   return newt;
 }
 
@@ -64,15 +74,6 @@ sample(PBCData& data,
     sample(data, t, t2, m, p2);
   }
 }
-
-typedef struct _bspline {  
-  int p; // degree
-  int m; // num_knots-1
-  int n; // num_samples-1 (aka number of control points)
-  vector<double> params;
-  vector<double> knots;
-  ON_2dPointArray controls;
-} BSpline;
 
 void
 generateKnots(BSpline& bspline) {
@@ -133,6 +134,7 @@ getCoefficients(BSpline& bspline, Array1D<double>& N, double u) {
 void
 generateParameters(BSpline& bspline) {
   double lastT = 0.0;
+  bspline.params.reserve(bspline.n+1);
   Array2D<double> N(UNIVERSAL_SAMPLE_COUNT, bspline.n+1);
   for (int i = 0; i < UNIVERSAL_SAMPLE_COUNT; i++) {
     double t = (double)i / (UNIVERSAL_SAMPLE_COUNT-1);
@@ -157,6 +159,17 @@ generateParameters(BSpline& bspline) {
 }
 
 void
+printMatrix(Array2D<double>& m) {
+  printf("---\n");
+  for (int i = 0; i < m.dim1(); i++) {
+    for (int j = 0; j < m.dim2(); j++) {
+      printf("% 5.5f ", m[i][j]);
+    }
+    printf("\n");
+  }  
+}
+
+void
 generateControlPoints(BSpline& bspline, PBCData& data)
 {
   Array2D<double> bigN(bspline.n+1, bspline.n+1);
@@ -164,11 +177,15 @@ generateControlPoints(BSpline& bspline, PBCData& data)
     Array1D<double> n = Array1D<double>(bigN.dim2(), bigN[i]);
     getCoefficients(bspline, n, bspline.params[i]);
   }
-  Array2D<double> bigD(bspline.n+1, 2);
+  Array2D<double> bigD(bspline.n+1,2);
   for (int i = 0; i < bspline.n+1; i++) {
     bigD[i][0] = data.samples[i].x;
     bigD[i][1] = data.samples[i].y;
   }
+  
+  printMatrix(bigD);
+  printMatrix(bigN);
+
   JAMA::LU<double> lu(bigN);
   assert(lu.isNonsingular() > 0);
   Array2D<double> bigP = lu.solve(bigD); // big linear algebra black box here...
@@ -244,6 +261,10 @@ pullback_curve(const ON_Surface* surface,
   toUV(data, p2, tmax);
   if (!sample(data, tmin, tmax, p1, p2)) {
     return NULL;
+  }
+
+  for (int i = 0; i < data.samples.Count(); i++) {
+    cerr << data.samples[i].x << "," << data.samples[i].y << endl;
   }
 
   return interpolateCurve(data);
