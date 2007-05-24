@@ -46,6 +46,10 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* enhance dxf-g to create more than just one combination per layer,
+  creating multiple objects for the individual objects in the dxf file
+  (instead of one conglomerate BoT)
+
 * change root solver to have coefficients in the right order (!)
 
 * remove obsolete headers
