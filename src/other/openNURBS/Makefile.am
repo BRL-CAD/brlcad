@@ -93,7 +93,8 @@ ON_INC = \
 	opennurbs_workspace.h \
 	opennurbs_x.h \
 	opennurbs_xform.h \
-	brlcad_boundingvolume.h
+	brlcad_boundingvolume.h \
+	brlcad_surfacetree.h
 
 ON_SRC = \
 	opennurbs_3dm_attributes.cpp \
@@ -189,7 +190,8 @@ ON_SRC = \
 	opennurbs_wstring.cpp \
 	opennurbs_xform.cpp \
 	opennurbs_zlib.cpp \
-	brlcad_boundingvolume.cpp
+	brlcad_boundingvolume.cpp \
+	brlcad_surfacetree.cpp
 
 nurbincludedir = $(includedir)/openNURBS
 nurbinclude_HEADERS = $(ON_INC)
