@@ -61,6 +61,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+#include "brlcad_version.h"
 
 /* local headers */
 #include "../librt/debug.h"
@@ -79,7 +80,29 @@ BU_EXTERN(union tree *get_layer, (struct db_tree_state *tsp, struct db_full_path
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
-static char	usage[] = "Usage: %s [-v][-i][-p][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\n[-D dist_calc_tol] [-o output_file_name.dxf] brlcad_db.g object(s)\n";
+static char	usage[] = "\
+Usage: %s [-v] [-i] [-p] [-xX lvl] \n\
+       [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] \n\
+       [-o output_file_name.dxf] brlcad_db.g object(s)\n\
+\n\
+Options:\n\
+ -v	Verbose output\n\
+ -i	Output using inches (instead of default mm)\n\
+ -p	Output POLYFACE MESH (instead of default 3DFACE) entities\n\
+\n\
+ -x #	Specifies an RT debug flag\n\
+ -X #	Specifies an NMG debug flag\n\
+\n\
+ -a #	Specify an absolute tessellation tolerance (in mm)\n\
+ -r #	Specify a relative tessellation tolerance (in mm)\n\
+ -n #	Specify a surface normal tessellation tolerance (in degrees)\n\
+ -D #	Specify a calculation distance tolerance (in mm)\n\
+\n\
+ -o dxf	Output to the specified dxf filename\n\
+\n\
+---\n\
+%s\n\
+";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -444,14 +467,14 @@ main(argc, argv)
 		inches = 1;
 		break;
 	    default:
-		bu_log(  usage, argv[0]);
+		bu_log(usage, argv[0], brlcad_ident("BRL-CAD to DXF Exporter"));
 		exit(1);
 		break;
 	}
     }
 
     if (bu_optind+1 >= argc) {
-	bu_log( usage, argv[0]);
+	bu_log(usage, argv[0], brlcad_ident("BRL-CAD to DXF Exporter"));
 	exit(1);
     }
 
