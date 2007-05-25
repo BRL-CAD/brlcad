@@ -349,17 +349,24 @@ db_dirbuild( struct db_i *dbip )
 {
     unsigned char	header[8];
 
-    RT_CK_DBI(dbip);
-
-    /* First, determine what version database this is */
-    rewind(dbip->dbi_fp);
-    if( fread( header, sizeof header, 1, dbip->dbi_fp ) != 1  )  {
-	bu_log("db_dirbuild(%s) ERROR, file too short to be BRL-CAD database\n",
-	       dbip->dbi_filename);
+    if (!dbip) {
 	return -1;
     }
 
-    if( db5_header_is_valid( header ) )  {
+    RT_CK_DBI(dbip);
+
+    if (!dbip->dbi_fp) {
+	return -1;
+    }
+
+    /* First, determine what version database this is */
+    rewind(dbip->dbi_fp);
+    if (fread(header, sizeof(header), 1, dbip->dbi_fp) != 1) {
+	bu_log("db_dirbuild(%s) ERROR, file too short to be BRL-CAD database\n", dbip->dbi_filename);
+	return -1;
+    }
+
+    if (db5_header_is_valid(header)) {
 	struct directory	*dp;
 	struct bu_external	ext;
 	struct db5_raw_internal	raw;
@@ -370,14 +377,13 @@ db_dirbuild( struct db_i *dbip )
 
 	/* File is v5 format */
 	dbip->dbi_version = 5;
-	if( db5_scan( dbip, db5_diradd_handler, NULL ) < 0 )  {
-	    bu_log("db_dirbuild(%s): db5_scan() failed\n",
-		   dbip->dbi_filename);
+	if (db5_scan(dbip, db5_diradd_handler, NULL) < 0) {
+	    bu_log("db_dirbuild(%s): db5_scan() failed\n", dbip->dbi_filename);
 	    return -1;
 	}
 
 	/* Need to retrieve _GLOBAL object and obtain title and units */
-	if( (dp = db_lookup( dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY )) == DIR_NULL )  {
+	if ((dp = db_lookup( dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY)) == DIR_NULL) {
 	    bu_log("db_dirbuild(%s): improper database, no %s object\n",
 		   dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
 	    dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
@@ -386,58 +392,56 @@ db_dirbuild( struct db_i *dbip )
 	    return 0;	/* not a fatal error, user may have deleted it */
 	}
 	BU_INIT_EXTERNAL(&ext);
-	if( db_get_external( &ext, dp, dbip ) < 0 ||
-	    db5_get_raw_internal_ptr( &raw, ext.ext_buf ) == NULL )  {
+	if (db_get_external( &ext, dp, dbip) < 0 ||
+	    db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
 	    bu_log("db_dirbuild(%s): improper database, unable to read %s object\n",
-		   dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
+		   dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME);
 	    return -1;
 	}
-	if( raw.major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY )  {
+	if (raw.major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 	    bu_log("db_dirbuild(%s): improper database, %s exists but is not an attribute-only object\n",
-		   dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
+		   dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME);
 	    dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
 	    return 0;	/* not a fatal error, need to let user proceed to fix it */
 	}
-	if( db5_import_attributes( &avs, &raw.attributes ) < 0 )  {
+	if (db5_import_attributes( &avs, &raw.attributes) < 0) {
 	    bu_log("db_dirbuild(%s): improper database, corrupted attribute-only %s object\n",
-		   dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
+		   dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME);
 	    bu_free_external(&ext);
 	    return -1;	/* this is fatal */
 	}
-	BU_CK_AVS( &avs );
+	BU_CK_AVS(&avs);
 
 	/* Parse out the attributes */
-	if( (cp = bu_avs_get( &avs, "title" )) != NULL )  {
-	    dbip->dbi_title = bu_strdup( cp );
+	if ((cp = bu_avs_get( &avs, "title" )) != NULL) {
+	    dbip->dbi_title = bu_strdup(cp);
 	} else {
-	    dbip->dbi_title = bu_strdup( "Untitled BRL-CAD database" );
+	    dbip->dbi_title = bu_strdup("Untitled BRL-CAD database");
 	}
-	if( (cp = bu_avs_get( &avs, "units" )) != NULL )  {
+	if ((cp = bu_avs_get(&avs, "units")) != NULL) {
 	    double	dd;
-	    if( sscanf( cp, "%lf", &dd ) != 1 ||
-		NEAR_ZERO( dd, VUNITIZE_TOL ) )  {
+	    if (sscanf( cp, "%lf", &dd) != 1 || NEAR_ZERO(dd, VUNITIZE_TOL))  {
 		bu_log("db_dirbuild(%s): improper database, %s object attribute 'units'=%s is invalid\n",
-		       dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME,
-		       cp );
+		       dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME, cp);
 		/* Not fatal, just stick with default value from db_open() */
 	    } else {
 		dbip->dbi_local2base = dd;
 		dbip->dbi_base2local = 1/dd;
 	    }
 	}
-	if( (cp = bu_avs_get( &avs, "regionid_colortable")) != NULL )  {
+	if ((cp = bu_avs_get( &avs, "regionid_colortable")) != NULL) {
 	    /* Import the region-id coloring table */
-	    db5_import_color_table( (char *)cp);
+	    db5_import_color_table((char *)cp);
 	}
-	bu_avs_free( &avs );
+	bu_avs_free(&avs);
 	bu_free_external(&ext);	/* not until after done with avs! */
 	return 0;
     }
 
     /* Make a very simple check for a v4 database */
-    if( header[0] == 'I' )  {
+    if (header[0] == 'I') {
 	dbip->dbi_version = 4;
-	if( db_scan( dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
+	if (db_scan( dbip, (int (*)())db_diradd, 1, NULL) < 0) {
 	    dbip->dbi_version = 0;
 	    return -1;
 	}
