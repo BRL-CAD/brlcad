@@ -61,16 +61,14 @@ if { [info exists tk_strictMotif] == 0 } {
 # html_library.tcl  :  Stephen Uhler's routines for processing HTML
 #==============================================================================
 
-# XXX what MGED html manual directory search order precedence should be:
+# MGED html manual directory search order precedence should be:
 #   MGED_HTML_DIR
 #   bu_brlcad_data/html/manuals/mged
-#   bu_brlcad_root/html/manuals/mged
-#
 
 if ![info exists mged_default(html_dir)] {
     set mged_default(html_dir) [bu_brlcad_data "html/manuals/mged"]
     if {![file exists $mged_default(html_dir)]} {
-	set mged_default(html_dir) [bu_brlcad_data doc/html/manuals/mged]
+	set mged_default(html_dir) [bu_brlcad_data "doc/html/manuals/mged"]
     }
 }
 
