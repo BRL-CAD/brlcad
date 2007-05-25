@@ -2119,6 +2119,7 @@ AC_CHECK_FUNCS(\
 	strtol \
 	strtoul \
 	strtoull \
+	sync \
 	sysctl \
 	sysmp \
 	tzset \
