@@ -139,7 +139,7 @@ brlcad_version(void)
 {
     static char version[32] = {0};
 
-    if (version[0] = 0) {
+    if (version[0] == 0) {
 	snprintf(version, 32, "%d.%d.%d", BRLCAD_MAJOR, BRLCAD_MINOR, BRLCAD_PATCH);
     }
 
