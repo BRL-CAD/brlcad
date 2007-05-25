@@ -455,20 +455,29 @@ db_get_version(struct db_i *dbip)
 {
     unsigned char	header[8];
 
-    rewind(dbip->dbi_fp);
-    if( fread( header, sizeof header, 1, dbip->dbi_fp ) != 1  )  {
-	bu_log("db_get_version ERROR, file (%s) too short to be BRL-CAD database\n",
-	       dbip->dbi_filename);
+    if (!dbip) {
 	return -1;
     }
 
-    if( db5_header_is_valid( header ) )
-	return( 5 );
-    else if( header[0] == 'I' )
-	return( 4 );
-    else
-	return( -1 );
+    RT_CK_DBI(dbip);
 
+    if (!dbip->dbi_fp) {
+	return -1;
+    }
+
+    rewind(dbip->dbi_fp);
+    if (fread( header, sizeof(header), 1, dbip->dbi_fp) != 1) {
+	bu_log("db_get_version ERROR, file (%s) too short to be BRL-CAD database\n", dbip->dbi_filename);
+	return -1;
+    }
+
+    if (db5_header_is_valid(header)) {
+	return 5;
+    } else if (header[0] == 'I') {
+	return 4;
+    }
+
+    return( -1 );
 }
 
 /** @} */
