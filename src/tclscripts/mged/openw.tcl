@@ -59,9 +59,9 @@ if {![info exists mged_default(tran_factor)]} {
 }
 
 if {![info exists mged_default(html_dir)]} {
-    set mged_default(html_dir) [bu_brlcad_data html/manuals/mged]
+    set mged_default(html_dir) [bu_brlcad_data "html/manuals/mged"]
     if {![file exists $mged_default(html_dir)]} {
-	set mged_default(html_dir) [bu_brlcad_data doc/html/manuals/mged]
+	set mged_default(html_dir) [bu_brlcad_data "doc/html/manuals/mged"]
     }
 }
 
