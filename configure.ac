@@ -1281,14 +1281,14 @@ AC_CHECK_LIB(png, png_access_version_number, png_link_works=yes ; LIBPNG="-lpng"
 dnl check if zlib library links
 z_link_works=no
 LIBZLIB=""
-if test "x$bc_build_zlib" != "xno" ; then
+if test "x$bc_build_zlib" != "xyes" ; then
     AC_CHECK_LIB(z, deflate, z_link_works=yes ; LIBZLIB="-lz")
 fi
 
 dnl check if utahrle library links
 utahrle_link_works=no
 UTAHRLE=""
-if test "x$bc_build_urt" != "xno" ; then
+if test "x$bc_build_urt" != "xyes" ; then
     # checking for rle_hdr_init is NOT sufficient to get urt 3.x
     PRELIBS="$LIBS"
     LIBS="$LIBS $LIBM"
@@ -1301,7 +1301,7 @@ fi
 dnl check if openNURBS library links
 opennurbs_link_works=no
 LIBOPENNURBS=""
-if test "x$bc_build_opennurbs" != "xno" ; then
+if test "x$bc_build_opennurbs" != "xyes" ; then
     AC_CHECK_LIB(openNURBS, onmalloc, opennurbs_link_works=yes ; LIBOPENNURBS="-lopenNURBS")
 fi
 
@@ -1470,9 +1470,7 @@ dnl check if the standard c++ library links without checking for any particular 
 dnl library is needed when linking c++ code against c code (e.g. openNURBS)
 stdcxx_link_works=no
 LIBSTDCXX=""
-if test "x$bc_build_opennurbs" != "xno" ; then
-    AC_CHECK_LIB(stdc++, main, stdcxx_link_works=yes ; LIBSTDCXX="-lstdc++")
-fi
+AC_CHECK_LIB(stdc++, main, stdcxx_link_works=yes ; LIBSTDCXX="-lstdc++")
 
 dnl check for java
 JAVA_CFLAGS=
@@ -1627,7 +1625,7 @@ fi # bc_with_opengl
 GL_CFLAGS=$GL_CPPFLAGS
 AC_SUBST(GL_CFLAGS)
 
-# optionally check for vectorization headers for opennurbs
+# optionally (yes or auto) check for vectorization headers for opennurbs
 if test "x$bc_build_opennurbs" != "xno" ; then
     AC_CHECK_HEADERS( \
 	emmintrin.h \
@@ -1821,7 +1819,7 @@ if test ! "x$bc_auto_flags" = "xno" ; then
     dnl check for -fno-common (libtcl needs it on darwin)
     BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-common])
 
-    dnl check for -fexceptions
+    dnl check for -fexceptions (if yes or auto).
     dnl this is needed to resolve __Unwind_Resume when compiling and
     dnl linking against openNURBS in librt for some binaries, for
     dnl example rttherm (i.e. any -static binaries)
@@ -1960,7 +1958,7 @@ if test "x$bc_use_optimized" != "xno" ; then
 	fi
 fi
 
-dnl verbose warning flags
+dnl verbose warning flags (if yes or auto)
 if test "x$bc_build_warnings" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline -Wconversion], [warning])
 	# XXX also of interest
