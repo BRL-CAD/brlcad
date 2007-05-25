@@ -94,97 +94,97 @@ struct db_i *
 db_open(const char *name,
 	const char *mode)
 {
-	register struct db_i	*dbip = DBI_NULL;
-	register int		i;
-	char **argv;
+    register struct db_i	*dbip = DBI_NULL;
+    register int		i;
+    char **argv;
 
-	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_open(%s, %s)\n", name, mode );
+    if(RT_G_DEBUG&DEBUG_DB) bu_log("db_open(%s, %s)\n", name, mode );
 
-	if( mode && mode[0] == 'r' && mode[1] == '\0' )  {
-		struct bu_mapped_file	*mfp;
-		/* Read-only mode */
-		mfp = bu_open_mapped_file( name, "db_i" );
-		if( mfp == NULL )  goto fail;
+    if( mode && mode[0] == 'r' && mode[1] == '\0' )  {
+	struct bu_mapped_file	*mfp;
+	/* Read-only mode */
+	mfp = bu_open_mapped_file( name, "db_i" );
+	if( mfp == NULL )  goto fail;
 
-		/* Is this a re-use of a previously mapped file? */
-		if( mfp->apbuf )  {
-			dbip = (struct db_i *)mfp->apbuf;
-			RT_CK_DBI(dbip);
-			dbip->dbi_uses++;
-			if(RT_G_DEBUG&DEBUG_DB)
-				bu_log("db_open(%s) dbip=x%x: reused previously mapped file\n", name, dbip);
-			return dbip;
-		}
-
-		BU_GETSTRUCT( dbip, db_i );
-		dbip->dbi_mf = mfp;
-		dbip->dbi_eof = mfp->buflen;
-		dbip->dbi_inmem = mfp->buf;
-		dbip->dbi_mf->apbuf = (genptr_t)dbip;
-
-#ifdef HAVE_UNIX_IO
-		/* Do this too, so we can seek around on the file */
-		if( (dbip->dbi_fd = open( name, O_RDONLY )) < 0 )
-			goto fail;
-		if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "rb" )) == NULL )
-			goto fail;
-#else /* HAVE_UNIX_IO */
-		if( (dbip->dbi_fp = fopen( name, "rb")) == NULL )
-			goto fail;
-		dbip->dbi_fd = -1;
-#endif
-		dbip->dbi_read_only = 1;
-	}  else  {
-		/* Read-write mode */
-		BU_GETSTRUCT( dbip, db_i );
-		dbip->dbi_eof = -1L;
-
-#		ifdef HAVE_UNIX_IO
-			if( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
-				goto fail;
-			if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
-				goto fail;
-#		else /* HAVE_UNIX_IO */
-			if( (dbip->dbi_fp = fopen( name, "r+b")) == NULL )
-				goto fail;
-			dbip->dbi_fd = -1;
-#		endif
-		dbip->dbi_read_only = 0;
+	/* Is this a re-use of a previously mapped file? */
+	if( mfp->apbuf )  {
+	    dbip = (struct db_i *)mfp->apbuf;
+	    RT_CK_DBI(dbip);
+	    dbip->dbi_uses++;
+	    if(RT_G_DEBUG&DEBUG_DB)
+		bu_log("db_open(%s) dbip=x%x: reused previously mapped file\n", name, dbip);
+	    return dbip;
 	}
 
-	/* Initialize fields */
-	for( i=0; i<RT_DBNHASH; i++ )
-		dbip->dbi_Head[i] = DIR_NULL;
+	BU_GETSTRUCT( dbip, db_i );
+	dbip->dbi_mf = mfp;
+	dbip->dbi_eof = mfp->buflen;
+	dbip->dbi_inmem = mfp->buf;
+	dbip->dbi_mf->apbuf = (genptr_t)dbip;
 
-	dbip->dbi_local2base = 1.0;		/* mm */
-	dbip->dbi_base2local = 1.0;
-	dbip->dbi_title = (char *)0;
-	dbip->dbi_uses = 1;
+#ifdef HAVE_UNIX_IO
+	/* Do this too, so we can seek around on the file */
+	if( (dbip->dbi_fd = open( name, O_RDONLY )) < 0 )
+	    goto fail;
+	if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "rb" )) == NULL )
+	    goto fail;
+#else /* HAVE_UNIX_IO */
+	if( (dbip->dbi_fp = fopen( name, "rb")) == NULL )
+	    goto fail;
+	dbip->dbi_fd = -1;
+#endif
+	dbip->dbi_read_only = 1;
+    }  else  {
+	/* Read-write mode */
+	BU_GETSTRUCT( dbip, db_i );
+	dbip->dbi_eof = -1L;
 
-	/* Record the filename and file path */
-	dbip->dbi_filename = bu_strdup(name);
+#		ifdef HAVE_UNIX_IO
+	if( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
+	    goto fail;
+	if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
+	    goto fail;
+#		else /* HAVE_UNIX_IO */
+	if( (dbip->dbi_fp = fopen( name, "r+b")) == NULL )
+	    goto fail;
+	dbip->dbi_fd = -1;
+#		endif
+	dbip->dbi_read_only = 0;
+    }
 
-	/* XXX At some point, expand with getenv("BRLCAD_FILE_PATH"); */
-	argv = (char **)bu_malloc( 3 * sizeof(char *), "dbi_filepath[3]" );
-	argv[0] = bu_strdup( "." );
-	argv[1] = bu_dirname( name );
-	argv[2] = NULL;
-	dbip->dbi_filepath = argv;
+    /* Initialize fields */
+    for( i=0; i<RT_DBNHASH; i++ )
+	dbip->dbi_Head[i] = DIR_NULL;
 
-	/* determine version */
-	dbip->dbi_version = db_get_version( dbip );
+    dbip->dbi_local2base = 1.0;		/* mm */
+    dbip->dbi_base2local = 1.0;
+    dbip->dbi_title = (char *)0;
+    dbip->dbi_uses = 1;
 
-	bu_ptbl_init( &dbip->dbi_clients, 128, "dbi_clients[]" );
-	dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
+    /* Record the filename and file path */
+    dbip->dbi_filename = bu_strdup(name);
 
-	if(RT_G_DEBUG&DEBUG_DB)
-		bu_log("db_open(%s) dbip=x%x\n", dbip->dbi_filename, dbip);
-	return dbip;
-fail:
-	if(RT_G_DEBUG&DEBUG_DB)
-		bu_log("db_open(%s) FAILED\n", name);
-	if(dbip) bu_free( (char *)dbip, "struct db_i" );
-	return DBI_NULL;
+    /* XXX At some point, expand with getenv("BRLCAD_FILE_PATH"); */
+    argv = (char **)bu_malloc( 3 * sizeof(char *), "dbi_filepath[3]" );
+    argv[0] = bu_strdup( "." );
+    argv[1] = bu_dirname( name );
+    argv[2] = NULL;
+    dbip->dbi_filepath = argv;
+
+    /* determine version */
+    dbip->dbi_version = db_get_version( dbip );
+
+    bu_ptbl_init( &dbip->dbi_clients, 128, "dbi_clients[]" );
+    dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
+
+    if(RT_G_DEBUG&DEBUG_DB)
+	bu_log("db_open(%s) dbip=x%x\n", dbip->dbi_filename, dbip);
+    return dbip;
+ fail:
+    if(RT_G_DEBUG&DEBUG_DB)
+	bu_log("db_open(%s) FAILED\n", name);
+    if(dbip) bu_free( (char *)dbip, "struct db_i" );
+    return DBI_NULL;
 }
 
 /**
@@ -206,42 +206,42 @@ struct db_i *
 db_create(const char *name,
 	  int	     version)
 {
-	FILE	*fp;
-	struct db_i	*dbip;
-	int result;
+    FILE	*fp;
+    struct db_i	*dbip;
+    int result;
 
-	if (RT_G_DEBUG & DEBUG_DB)
-	    bu_log("db_create(%s, %d)\n", name, version );
+    if (RT_G_DEBUG & DEBUG_DB)
+	bu_log("db_create(%s, %d)\n", name, version );
 
-	fp = fopen( name, "w+b" );
+    fp = fopen( name, "w+b" );
 
-	if (fp == NULL )  {
-	    perror(name);
-	    return(DBI_NULL);
-	}
+    if (fp == NULL )  {
+	perror(name);
+	return(DBI_NULL);
+    }
 
-	if (version == 5) {
-	    result = db5_fwrite_ident(fp, DEFAULT_DB_TITLE, 1.0);
-	} else if (version == 4) {
-	    result = db_fwrite_ident(fp, DEFAULT_DB_TITLE, 1.0);
-	} else {
-	    bu_log("WARNING: db_create() was provided an unrecognized version number: %d\n", version);
-	    result = db5_fwrite_ident(fp, DEFAULT_DB_TITLE, 1.0);
-	}
+    if (version == 5) {
+	result = db5_fwrite_ident(fp, DEFAULT_DB_TITLE, 1.0);
+    } else if (version == 4) {
+	result = db_fwrite_ident(fp, DEFAULT_DB_TITLE, 1.0);
+    } else {
+	bu_log("WARNING: db_create() was provided an unrecognized version number: %d\n", version);
+	result = db5_fwrite_ident(fp, DEFAULT_DB_TITLE, 1.0);
+    }
 
-	(void)fclose(fp);
+    (void)fclose(fp);
 
-	if (result < 0)
-	    return DBI_NULL;
+    if (result < 0)
+	return DBI_NULL;
 
-	if( (dbip = db_open( name, "r+w" ) ) == DBI_NULL )
-	    return DBI_NULL;
+    if( (dbip = db_open( name, "r+w" ) ) == DBI_NULL )
+	return DBI_NULL;
 
-	/* Do a quick scan to determine version, find _GLOBAL, etc. */
-	if( db_dirbuild( dbip ) < 0 )
-	    return DBI_NULL;
+    /* Do a quick scan to determine version, find _GLOBAL, etc. */
+    if( db_dirbuild( dbip ) < 0 )
+	return DBI_NULL;
 
-	return dbip;
+    return dbip;
 }
 
 /**
@@ -253,11 +253,11 @@ db_create(const char *name,
 void
 db_close_client(struct db_i *dbip, long int *client)
 {
-	RT_CK_DBI(dbip);
-	if (client) {
-	    (void)bu_ptbl_rm( &dbip->dbi_clients, client );
-	}
-	db_close(dbip);
+    RT_CK_DBI(dbip);
+    if (client) {
+	(void)bu_ptbl_rm( &dbip->dbi_clients, client );
+    }
+    db_close(dbip);
 }
 
 /**
@@ -269,96 +269,96 @@ db_close_client(struct db_i *dbip, long int *client)
 void
 db_close(register struct db_i *dbip)
 {
-	register int		i;
-	register struct directory *dp, *nextdp;
+    register int		i;
+    register struct directory *dp, *nextdp;
 
-	RT_CK_DBI(dbip);
-	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
-		dbip->dbi_filename, dbip, dbip->dbi_uses );
+    RT_CK_DBI(dbip);
+    if(RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
+				   dbip->dbi_filename, dbip, dbip->dbi_uses );
 
-	bu_semaphore_acquire(BU_SEM_LISTS);
-	if( (--dbip->dbi_uses) > 0 )  {
-	    bu_semaphore_release(BU_SEM_LISTS);
-	    /* others are still using this database */
-	    return;
-	}
+    bu_semaphore_acquire(BU_SEM_LISTS);
+    if( (--dbip->dbi_uses) > 0 )  {
 	bu_semaphore_release(BU_SEM_LISTS);
+	/* others are still using this database */
+	return;
+    }
+    bu_semaphore_release(BU_SEM_LISTS);
 
-	/* ready to free the database -- use count is now zero */
+    /* ready to free the database -- use count is now zero */
 
-	/* free up any mapped files */
-	if( dbip->dbi_mf )  {
-		/*
-		 *  We're using an instance of a memory mapped file.
-		 *  We have two choices:
-		 *  Either deassociate from the memory mapped file
-		 *  by clearing dbi_mf->apbuf, or
-		 *  keeping our already-scanned dbip ready for
-		 *  further use, with our dbi_uses counter at 0.
-		 *  For speed of re-open, at the price of some address space,
-		 *  the second choice is taken.
-		 */
-		bu_close_mapped_file( dbip->dbi_mf );
-		bu_free_mapped_files( 0 );
-		dbip->dbi_mf = (struct bu_mapped_file *)NULL;
-	}
+    /* free up any mapped files */
+    if( dbip->dbi_mf )  {
+	/*
+	 *  We're using an instance of a memory mapped file.
+	 *  We have two choices:
+	 *  Either deassociate from the memory mapped file
+	 *  by clearing dbi_mf->apbuf, or
+	 *  keeping our already-scanned dbip ready for
+	 *  further use, with our dbi_uses counter at 0.
+	 *  For speed of re-open, at the price of some address space,
+	 *  the second choice is taken.
+	 */
+	bu_close_mapped_file( dbip->dbi_mf );
+	bu_free_mapped_files( 0 );
+	dbip->dbi_mf = (struct bu_mapped_file *)NULL;
+    }
 
-	/* try to ensure/encourage that the file is written out */
-	db_sync(dbip);
+    /* try to ensure/encourage that the file is written out */
+    db_sync(dbip);
 
 #ifdef HAVE_UNIX_IO
-	(void)close( dbip->dbi_fd );
+    (void)close( dbip->dbi_fd );
 #endif
-	if (dbip->dbi_fp) {
-	    fclose( dbip->dbi_fp );
+    if (dbip->dbi_fp) {
+	fclose( dbip->dbi_fp );
+    }
+    if( dbip->dbi_title )
+	bu_free( dbip->dbi_title, "dbi_title" );
+    if( dbip->dbi_filename )
+	bu_free( dbip->dbi_filename, "dbi_filename" );
+
+    db_free_anim( dbip );
+    rt_color_free();		/* Free MaterHead list */
+
+    /* Release map of database holes */
+    rt_mempurge( &(dbip->dbi_freep) );
+    rt_memclose();
+
+    dbip->dbi_inmem = NULL;		/* sanity */
+
+    bu_ptbl_free(&dbip->dbi_clients);
+
+    /* Free all directory entries */
+    for( i=0; i < RT_DBNHASH; i++ )  {
+	for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; )  {
+	    RT_CK_DIR(dp);
+	    nextdp = dp->d_forw;
+	    RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
+
+	    /* Put 'dp' back on the freelist */
+	    dp->d_forw = rt_uniresource.re_directory_hd;
+	    rt_uniresource.re_directory_hd = dp;
+
+	    /* null'ing the forward pointer here is a huge
+	     * memory leak as it causes the loss of all
+	     * nodes on the freelist except the first.
+	     * (so don't do it)
+	     */
+
+	    dp = nextdp;
 	}
-	if( dbip->dbi_title )
-		bu_free( dbip->dbi_title, "dbi_title" );
-	if( dbip->dbi_filename )
-		bu_free( dbip->dbi_filename, "dbi_filename" );
+	dbip->dbi_Head[i] = DIR_NULL;	/* sanity*/
+    }
 
-	db_free_anim( dbip );
-	rt_color_free();		/* Free MaterHead list */
-
-	/* Release map of database holes */
-	rt_mempurge( &(dbip->dbi_freep) );
-	rt_memclose();
-
-	dbip->dbi_inmem = NULL;		/* sanity */
-
-	bu_ptbl_free(&dbip->dbi_clients);
-
-	/* Free all directory entries */
-	for( i=0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; )  {
-			RT_CK_DIR(dp);
-			nextdp = dp->d_forw;
-			RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
-
-			/* Put 'dp' back on the freelist */
-			dp->d_forw = rt_uniresource.re_directory_hd;
-			rt_uniresource.re_directory_hd = dp;
-
-			/* null'ing the forward pointer here is a huge
-			 * memory leak as it causes the loss of all
-			 * nodes on the freelist except the first.
-			 * (so don't do it)
-			 */
-
-			dp = nextdp;
-		}
-		dbip->dbi_Head[i] = DIR_NULL;	/* sanity*/
-	}
-
-	if (dbip->dbi_filepath != NULL) {
-	  if (dbip->dbi_filepath[0] != NULL)
+    if (dbip->dbi_filepath != NULL) {
+	if (dbip->dbi_filepath[0] != NULL)
 	    bu_free((char *)dbip->dbi_filepath[0], "dbip->dbi_filepath[0]");
-	  if (dbip->dbi_filepath[1] != NULL)
+	if (dbip->dbi_filepath[1] != NULL)
 	    bu_free((char *)dbip->dbi_filepath[1], "dbip->dbi_filepath[1]");
-	  bu_free((char *)dbip->dbi_filepath, "dbip->dbi_filepath");
-	}
+	bu_free((char *)dbip->dbi_filepath, "dbip->dbi_filepath");
+    }
 
-	bu_free( (char *)dbip, "struct db_i" );
+    bu_free( (char *)dbip, "struct db_i" );
 }
 
 /**
@@ -375,34 +375,34 @@ db_close(register struct db_i *dbip)
  */
 int
 db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
-				/* output */
-				/* input */
+     /* output */
+     /* input */
 {
-	register int		i;
-	register struct directory *dp;
-	struct bu_external	ext;
+    register int		i;
+    register struct directory *dp;
+    struct bu_external	ext;
 
-	RT_CK_DBI(dbip);
-	RT_CK_WDB(wdbp);
+    RT_CK_DBI(dbip);
+    RT_CK_WDB(wdbp);
 
-	/* Output all directory entries */
-	for( i=0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			RT_CK_DIR(dp);
-/* XXX Need to go to internal form, if database versions don't match */
-			if( db_get_external( &ext, dp, dbip ) < 0 )  {
-				bu_log("db_dump() read failed on %s, skipping\n", dp->d_namep );
-				continue;
-			}
-			if( wdb_export_external( wdbp, &ext, dp->d_namep, dp->d_flags, dp->d_minor_type ) < 0 )  {
-				bu_log("db_dump() write failed on %s, aborting\n", dp->d_namep);
-				bu_free_external( &ext );
-				return -1;
-			}
-			bu_free_external( &ext );
-		}
+    /* Output all directory entries */
+    for( i=0; i < RT_DBNHASH; i++ )  {
+	for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+	    RT_CK_DIR(dp);
+	    /* XXX Need to go to internal form, if database versions don't match */
+	    if( db_get_external( &ext, dp, dbip ) < 0 )  {
+		bu_log("db_dump() read failed on %s, skipping\n", dp->d_namep );
+		continue;
+	    }
+	    if( wdb_export_external( wdbp, &ext, dp->d_namep, dp->d_flags, dp->d_minor_type ) < 0 )  {
+		bu_log("db_dump() write failed on %s, aborting\n", dp->d_namep);
+		bu_free_external( &ext );
+		return -1;
+	    }
+	    bu_free_external( &ext );
 	}
-	return 0;
+    }
+    return 0;
 }
 
 /**
@@ -414,13 +414,13 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 struct db_i *
 db_clone_dbi(struct db_i *dbip, long int *client)
 {
-	RT_CK_DBI(dbip);
+    RT_CK_DBI(dbip);
 
-	dbip->dbi_uses++;
-	if (client) {
-	    bu_ptbl_ins_unique( &dbip->dbi_clients, client );
-	}
-	return dbip;
+    dbip->dbi_uses++;
+    if (client) {
+	bu_ptbl_ins_unique( &dbip->dbi_clients, client );
+    }
+    return dbip;
 }
 
 /**
@@ -432,24 +432,24 @@ db_clone_dbi(struct db_i *dbip, long int *client)
 void
 db_sync(struct db_i *dbip)
 {
-	RT_CK_DBI(dbip);
+    RT_CK_DBI(dbip);
 
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
 
-	/* flush the file */
-	(void)fflush(dbip->dbi_fp);
+    /* flush the file */
+    (void)fflush(dbip->dbi_fp);
 
 #ifdef HAVE_FSYNC
-	/* make sure it's written out */
-	(void)fsync(dbip->dbi_fd);
+    /* make sure it's written out */
+    (void)fsync(dbip->dbi_fd);
 #else
 #  ifdef HAVE_SYNC
-	/* try the whole filesystem if sans fsync() */
-	sync();
+    /* try the whole filesystem if sans fsync() */
+    sync();
 #  endif
 #endif
 
-	bu_semaphore_release(BU_SEM_SYSCALL);
+    bu_semaphore_release(BU_SEM_SYSCALL);
 }
 
 /** @} */
