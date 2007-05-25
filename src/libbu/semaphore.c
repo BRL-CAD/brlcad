@@ -502,13 +502,20 @@ bu_semaphore_release(unsigned int i)
 		abort();
 	}
 #	endif
-
-	if (bu_semaphores) {
-	    free(bu_semaphores);
-	    bu_semaphores = (struct bu_semaphores *)NULL;
-	}
 #endif
 }
+
+/* XXX need a routine to pair up with _init() to delete the semaphore structures */
+#if 0
+void
+bu_semaphore_free() {
+    if (bu_semaphores) {
+        free(bu_semaphores);
+	bu_semaphores = (struct bu_semaphores *)NULL;
+    }
+}
+#endif
+
 /** @} */
 /*
  * Local Variables:
