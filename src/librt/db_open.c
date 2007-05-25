@@ -126,7 +126,7 @@ db_open(const char *name,
 		/* Do this too, so we can seek around on the file */
 		if( (dbip->dbi_fd = open( name, O_RDONLY )) < 0 )
 			goto fail;
-		if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r" )) == NULL )
+		if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "rb" )) == NULL )
 			goto fail;
 #else /* HAVE_UNIX_IO */
 		if( (dbip->dbi_fp = fopen( name, "rb")) == NULL )
@@ -145,13 +145,8 @@ db_open(const char *name,
 			if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
 				goto fail;
 #		else /* HAVE_UNIX_IO */
-#if defined(_WIN32) && !defined(__CYGWIN__)
 			if( (dbip->dbi_fp = fopen( name, "r+b")) == NULL )
 				goto fail;
-#else
-			if( (dbip->dbi_fp = fopen( name, "r+w")) == NULL )
-				goto fail;
-#endif
 			dbip->dbi_fd = -1;
 #		endif
 		dbip->dbi_read_only = 0;
@@ -218,11 +213,8 @@ db_create(const char *name,
 	if (RT_G_DEBUG & DEBUG_DB)
 	    bu_log("db_create(%s, %d)\n", name, version );
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	fp = fopen( name, "w+b" );
-#else
-	fp = fopen( name, "w" );
-#endif
+
 	if (fp == NULL )  {
 	    perror(name);
 	    return(DBI_NULL);
@@ -451,10 +443,10 @@ db_sync(struct db_i *dbip)
 	/* make sure it's written out */
 	(void)fsync(dbip->dbi_fd);
 #else
-#  ifndef _WIN32
+#  ifdef HAVE_SYNC
 	/* try the whole filesystem if sans fsync() */
 	sync();
-#  endif /* _WIN32 */
+#  endif
 #endif
 
 	bu_semaphore_release(BU_SEM_SYSCALL);
