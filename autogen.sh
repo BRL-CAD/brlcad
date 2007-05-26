@@ -324,7 +324,7 @@ fi
 LC_ALL=C
 
 # commands that this script expects
-for __cmd in echo head tail ; do
+for __cmd in echo head tail sed pwd ; do
     echo "test" | $__cmd > /dev/null 2>&1
     if [ $? != 0 ] ; then
 	echo "INTERNAL ERROR: '${__cmd}' command is required"
@@ -366,11 +366,6 @@ else
     fi
 fi
 
-_have_sed="`echo no | sed 's/no/yes/' 2>/dev/null`"
-if [ $? -ne 0 ] ; then
-    $ECHO "ERROR:  sed does not appear to be available."
-    exit 2
-fi
 
 # allow a recursive run to disable further recursions
 if [ "x$RUN_RECURSIVE" = "x" ] ; then
