@@ -35,22 +35,19 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSid[] = "";
-#endif
-
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
+#include <errno.h>
+#include <time.h>
+#include <ctype.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else
 #  include <strings.h>
 #endif
-#include <errno.h>
-#include <time.h>
 
 #include "machine.h"
 #include "bu.h"
@@ -59,7 +56,7 @@ static const char RCSid[] = "";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "solid.h"
-#include <ctype.h>
+
 /* #define debug 1 */
 
 struct dg_client_data {
