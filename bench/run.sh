@@ -120,7 +120,7 @@ fi
 LC_ALL=C
 
 # commands that this script expects
-for __cmd in echo sed ; do
+for __cmd in echo sed pwd ; do
     echo "test" | $__cmd > /dev/null 2>&1
     if test ! x$? = x0 ; then
 	echo "INTERNAL ERROR: $__cmd command is required"
@@ -168,7 +168,7 @@ $ECHO "================================="
 # recognize a cleanup command
 if test "x$1" = "xclobber" ; then
     $ECHO
-    $ECHO "About to wipe out all pictures and binary files in this directory"
+    $ECHO "About to wipe out all pictures and binary files in `pwd`"
     $ECHO "Send SIGINT (type ^C) within 5 seconds to abort"
     sleep 5
     $ECHO
