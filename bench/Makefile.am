@@ -4,13 +4,7 @@ bin_PROGRAMS = pixcmp
 pixcmp_SOURCES = pixcmp.c
 
 clobber:
-	@$(ECHO) "About to wipe out all pictures and binary files in this directory"
-	@$(ECHO) "Send SIGINT (type ^C) within 5 seconds to abort"
-	@sleep 5
-	@for i in moss world star bldg391 m35 sphflake ; do \
-		echo rm -f $$i.log $$i.pix $$i.log.[0-9]* $$i.pix.[0-9]* ;\
-		rm -f $$i.log $$i.pix $$i.log.[0-9]* $$i.pix.[0-9]* ;\
-	done
+	@${SH} run.sh clobber
 
 dist_bin_SCRIPTS = \
 	benchmark
@@ -37,6 +31,7 @@ run: all
 	@$(ECHO) "---"
 	@$(ECHO) "Run 'make clobber' to delete the log and image files generated"
 	@$(ECHO) "during the benchmark analysis."
+	@$(ECHO)
 
 bench: run
 
