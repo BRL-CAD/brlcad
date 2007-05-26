@@ -91,28 +91,34 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *	db_i *		success
  */
 struct db_i *
-db_open(const char *name,
-	const char *mode)
+db_open(const char *name, const char *mode)
 {
     register struct db_i	*dbip = DBI_NULL;
     register int		i;
     char **argv;
 
-    if(RT_G_DEBUG&DEBUG_DB) bu_log("db_open(%s, %s)\n", name, mode );
+    if (RT_G_DEBUG & DEBUG_DB) {
+	bu_log("db_open(%s, %s)\n", name, mode );
+    }
 
-    if( mode && mode[0] == 'r' && mode[1] == '\0' )  {
+    if (mode && mode[0] == 'r' && mode[1] == '\0') {
 	struct bu_mapped_file	*mfp;
+
 	/* Read-only mode */
 	mfp = bu_open_mapped_file( name, "db_i" );
-	if( mfp == NULL )  goto fail;
+	if (mfp == NULL)
+	    goto fail;
 
 	/* Is this a re-use of a previously mapped file? */
-	if( mfp->apbuf )  {
+	if (mfp->apbuf) {
 	    dbip = (struct db_i *)mfp->apbuf;
 	    RT_CK_DBI(dbip);
 	    dbip->dbi_uses++;
-	    if(RT_G_DEBUG&DEBUG_DB)
+
+	    if (RT_G_DEBUG & DEBUG_DB) {
 		bu_log("db_open(%s) dbip=x%x: reused previously mapped file\n", name, dbip);
+	    }
+
 	    return dbip;
 	}
 
@@ -171,19 +177,36 @@ db_open(const char *name,
     argv[2] = NULL;
     dbip->dbi_filepath = argv;
 
-    /* determine version */
-    dbip->dbi_version = db_get_version( dbip );
-
     bu_ptbl_init( &dbip->dbi_clients, 128, "dbi_clients[]" );
     dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
-    if(RT_G_DEBUG&DEBUG_DB)
-	bu_log("db_open(%s) dbip=x%x\n", dbip->dbi_filename, dbip);
+    /* determine version */
+    dbip->dbi_version = db_get_version( dbip );
+
+    if (RT_G_DEBUG & DEBUG_DB) {
+	bu_log("db_open(%s) dbip=x%x version=%d\n", dbip->dbi_filename, dbip, dbip->dbi_version);
+    }
+
     return dbip;
+
  fail:
-    if(RT_G_DEBUG&DEBUG_DB)
+    if (RT_G_DEBUG & DEBUG_DB) {
 	bu_log("db_open(%s) FAILED\n", name);
-    if(dbip) bu_free( (char *)dbip, "struct db_i" );
+    }
+
+    if (dbip->dbi_fd >= 0) {
+	(void)close(dbip->dbi_fd);
+	dbip->dbi_fd = -1;
+    }
+    if (dbip->dbi_fp) {
+	(void)fclose(dbip->dbi_fp);
+	dbip->dbi_fp = (FILE *)NULL;
+    }
+
+    if (dbip) {
+	bu_free( (char *)dbip, "struct db_i" );
+    }
+
     return DBI_NULL;
 }
 
