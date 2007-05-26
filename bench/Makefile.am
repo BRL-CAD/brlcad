@@ -33,7 +33,10 @@ benchmark: run.sh
 .PHONY : clobber run bench
 
 run: all
-	${SH} run.sh
+	@${SH} run.sh
+	@$(ECHO) "---"
+	@$(ECHO) "Run 'make clobber' to delete the log and image files generated"
+	@$(ECHO) "during the benchmark analysis."
 
 bench: run
 
