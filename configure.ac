@@ -3539,18 +3539,22 @@ AM_CONDITIONAL(BUILD_CUBIT, [test "x$bc_build_cubit" = "xyes"])
 #AM_CONDITIONAL(BUILD_PROE, [test "x$bc_build_proe" = "xyes"])
 AM_CONDITIONAL(BUILD_UG, [test "x$bc_build_ug" = "xyes"])
 AM_CONDITIONAL(BUILD_ADRT, [test "x$build_brlcad_adrt" = "xyes"])
-AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 
-AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
+# libfb and libdm interfaces
 AM_CONDITIONAL(WITH_X11, [test "x$build_against_x11" != "xno"])
-AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
 AM_CONDITIONAL(WITH_OPENGL, [test "x$build_against_opengl" != "xno"])
 AM_CONDITIONAL(WITH_WGL, [test "x$build_against_wgl" != "xno"])
+AM_CONDITIONAL(WITH_TK, [test "xyes" = "xno"])
+#AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
+
+AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
+
 ### the echo is to remove leading or trailing whitespace.
 AM_CONDITIONAL(WITH_OPENNURBS, [test "`echo x$OPENNURBS`" != "x"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 
+AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
 
