@@ -60,8 +60,8 @@
  *	LIBRT LIBRT_LIBES -lm -lc
  */
 
-#ifndef RAYTRACE_H
-#define RAYTRACE_H seen
+#ifndef __RAYTRACE_H__
+#define __RAYTRACE_H__
 
 /* interface headers */
 #include "tcl.h"
@@ -3503,7 +3503,7 @@ RT_EXPORT BU_EXTERN(int rt_arb_3face_intersect,
 		     const plane_t		planes[6],
 		     int			type,		/* 4..8 */
 		     int			loc));
-#ifdef SEEN_RTGEOM_H
+#ifdef __RTGEOM_H__
 RT_EXPORT BU_EXTERN(int rt_arb_calc_planes,
 		    (Tcl_Interp			*interp,
 		     struct rt_arb_internal	*arb,
@@ -3848,7 +3848,7 @@ RT_EXPORT BU_EXTERN(void rt_label_vlist_verts,
 		     double sz,
 		     double mm2local));
 
-#ifdef SEEN_RTGEOM_H
+#ifdef __RTGEOM_H__
 /* g_sketch.c */
 RT_EXPORT BU_EXTERN(void rt_sketch_ifree,
 		    (struct rt_db_internal	*ip));
@@ -4790,7 +4790,7 @@ RT_EXPORT BU_EXTERN(int nmg_break_edges,
 RT_EXPORT BU_EXTERN(int nmg_lu_is_convex,
 		    (struct loopuse *lu,
 		     const struct bn_tol *tol));
-#ifdef SEEN_RTGEOM_H
+#ifdef __RTGEOM_H__
 RT_EXPORT BU_EXTERN(int nmg_to_arb,
 		    (const struct model *m,
 		     struct rt_arb_internal *arb_int));
@@ -4832,7 +4832,7 @@ RT_EXPORT BU_EXTERN(int rt_bot_plot_poly,
 		     struct rt_db_internal	*ip,
 		     const struct rt_tess_tol *ttol,
 		     const struct bn_tol	*tol));
-#ifdef SEEN_RTGEOM_H
+#ifdef __RTGEOM_H__
 RT_EXPORT BU_EXTERN(int rt_bot_find_v_nearest_pt2,
 		    (const struct rt_bot_internal *bot,
 		     const point_t	pt2,
@@ -6784,7 +6784,7 @@ RT_EXPORT BU_EXTERN(const char *rt_version, (void));
 
 __END_DECLS
 
-#endif /* RAYTRACE_H */
+#endif /* __RAYTRACE_H__ */
 /** @} */
 /*
  * Local Variables:

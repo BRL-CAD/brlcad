@@ -22,8 +22,9 @@
 /** @file dm-plot.h
  *
  */
-#ifndef SEEN_DM_PLOT
-#define SEEN_DM_PLOT
+
+#ifndef __DM_PLOT__
+#define __DM_PLOT__
 
 /*
  * Display coordinate conversion:
@@ -50,7 +51,7 @@ struct plot_vars {
 
 extern struct plot_vars head_plot_vars;
 
-#endif /* SEEN_DM_PLOT */
+#endif /* __DM_PLOT__ */
 
 /** @} */
 /*

@@ -22,8 +22,9 @@
 /** @file dm-ps.h
  *
  */
-#ifndef SEEN_DM_PS
-#define SEEN_DM_PS
+
+#ifndef __DM_PS__
+#define __DM_PS__
 
 /*
  * Display coordinate conversion:
@@ -50,7 +51,8 @@ struct ps_vars {
 
 extern struct ps_vars head_ps_vars;
 
-#endif /* SEEN_DM_PS */
+#endif /* __DM_PS__ */
+
 /** @} */
 /*
  * Local Variables:

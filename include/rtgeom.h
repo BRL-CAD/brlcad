@@ -51,8 +51,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
 
-#ifndef SEEN_RTGEOM_H
-#define SEEN_RTGEOM_H seen
+#ifndef __RTGEOM_H__
+#define __RTGEOM_H__
 
 #include "common.h"
 
@@ -200,15 +200,11 @@ struct rt_pg_internal {
 #define RT_PG_CK_MAGIC(_p)	BU_CKMAG(_p,RT_PG_INTERNAL_MAGIC,"rt_pg_internal")
 
 /* ID_BSPLINE */
-#ifdef NMG_H				/* Only if we have seen struct face_g_snurb */
-#ifndef SEEN_RT_NURB_INTERNAL
-#define SEEN_RT_NURB_INTERNAL
 struct rt_nurb_internal {
 	long		magic;
 	int	 	nsrf;		/**< @brief  number of surfaces */
 	struct face_g_snurb **srfs;	/**< @brief  The surfaces themselves */
 };
-#endif
 
 #define RT_NURB_INTERNAL_MAGIC	0x002b2bdd
 #define RT_NURB_CK_MAGIC( _p) BU_CKMAG(_p,RT_NURB_INTERNAL_MAGIC,"rt_nurb_internal");
@@ -575,7 +571,8 @@ struct rt_bot_internal
 
 __END_DECLS
 
-#endif /* SEEN_RTGEOM_H */
+#endif /* __RTGEOM_H__ */
+
 /** @} */
 /*
  * Local Variables:

@@ -22,8 +22,9 @@
 /** @file dm-glx.h
  *
  */
-#ifndef SEEN_DM_GLX
-#define SEEN_DM_GLX
+
+#ifndef __DM_GLX__
+#define __DM_GLX__
 
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
@@ -66,7 +67,8 @@ struct glx_vars {
 extern void glx_clearToBlack();
 extern struct glx_vars head_glx_vars;
 
-#endif /* SEEN_DM_GLX */
+#endif /* __DM_GLX__ */
+
 /** @} */
 /*
  * Local Variables:

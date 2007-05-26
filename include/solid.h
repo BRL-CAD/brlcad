@@ -31,8 +31,9 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
  */
-#ifndef SEEN_SOLID_H
-#define SEEN_SOLID_H
+
+#ifndef __SOLID_H__
+#define __SOLID_H__
 
 struct solid  {
   struct bu_list l;
@@ -100,7 +101,9 @@ struct solid  {
 	(p1)=BU_LIST_PNEXT(structure,p2); \
 	BU_LIST_NOT_HEAD(p1,hp);\
 	(p1)=BU_LIST_PNEXT(structure,p1)
-#endif
+
+#endif /* __SOLID_H__ */
+
 /** @} */
 /*
  * Local Variables:

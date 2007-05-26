@@ -22,8 +22,8 @@
 /** @file config_win.h
  *
  */
-#ifndef CONFIG_H
-#define CONFIG_H seen
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
 
 #ifndef IGNORE_CONFIG_H
 #if defined(_WIN32)
@@ -188,7 +188,7 @@
 #endif /* if defined(_WIN32) */
 #endif /* ifndef IGNORE_CONFIG_H */
 
-#endif /* CONFIG_H */
+#endif /* __CONFIG_H__ */
 /** @} */
 /*
  * Local Variables:

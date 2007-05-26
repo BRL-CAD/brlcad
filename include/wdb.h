@@ -51,24 +51,17 @@
  *  Libraries Used -
  *	LIBWDB LIBRT LIBRT_LIBES -lm -lc
  */
-#ifndef WDB_H
-#define WDB_H seen
 
-#ifndef SEEN_BU_H
-# include "bu.h"
-#endif
+#ifndef __WDB_H__
+#define __WDB_H__
 
-#ifndef SEEN_BN_H
-# include "bn.h"
-#endif
+#include "common.h"
 
-#ifndef RAYTRACE_H
-# include "raytrace.h"
-#endif
-
-#ifndef SEEN_RTGEOM_H
-# include "rtgeom.h"
-#endif
+/* interface headers */
+#include "bu.h"
+#include "bn.h"
+#include "raytrace.h"
+#include "rtgeom.h"
 
 __BEGIN_DECLS
 
@@ -504,7 +497,8 @@ WDB_EXPORT WDB_EXTERN( int make_hole_in_prepped_regions, ( struct rt_wdb *wdbp,
 
 __END_DECLS
 
-#endif /* WDB_H */
+#endif /* __WDB_H__ */
+
 /** @} */
 /*
  * Local Variables:

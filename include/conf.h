@@ -24,13 +24,13 @@
  * @deprecated
  * The conf.h header is deprecated -- use common.h instead
  */
-#ifndef CONF_H
-#define CONF_H seen
+#ifndef __CONF_H__
+#define __CONF_H__
 
 #warning "The conf.h header is deprecated -- use common.h instead"
 #include "common.h"
 
-#endif /* CONF_H */
+#endif /* __CONF_H__ */
 /** @} */
 /*
  * Local Variables:

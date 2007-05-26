@@ -22,12 +22,13 @@
 /** @file dm-Null.h
  *
  */
-#ifndef SEEN_DM_NULL
-#define SEEN_DM_NULL
+#ifndef __DM_NULL__
+#define __DM_NULL__
 
 /* yep, nothing to declare */
 
-#endif  /* SEEN_DM_NULL */
+#endif  /* __DM_NULL__ */
+
 /** @} */
 /*
  * Local Variables:

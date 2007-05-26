@@ -22,8 +22,9 @@
 /** @file dm-tk.h
  *
  */
-#ifndef SEEN_DM_TK
-#define SEEN_DM_TK
+
+#ifndef __DM_TK__
+#define __DM_TK__
 
 #include "dm_color.h"
 #define CMAP_BASE 40
@@ -39,7 +40,9 @@ struct tk_vars {
   unsigned long bd, bg, fg;   /* color of border, background, foreground */
   unsigned long pixels[NUM_PIXELS];
 };
-#endif /* SEEN_DM_TK */
+
+#endif /* __DM_TK__ */
+
 /** @} */
 /*
  * Local Variables:

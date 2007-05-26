@@ -33,8 +33,8 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
 
-#ifndef SEEN_SPM_H
-#define SEEN_SPM_H seen
+#ifndef __SPM_H__
+#define __SPM_H__
 
 #ifndef BN_EXPORT
 #   if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
@@ -81,7 +81,7 @@ BN_EXPORT extern void	spm_dump();
 /* sphmap.c */
 BN_EXPORT extern int spm_px_load( spm_map_t *mapp, char *filename, int nx, int ny);
 
-#endif /* SEEN_SPM_H */
+#endif /* __SPM_H__ */
 
 /** @} */
 /*

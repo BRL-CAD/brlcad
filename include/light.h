@@ -30,8 +30,8 @@
  *  @n	Aberdeen Proving Ground, Maryland  21005-5066
  */
 
-#ifndef SEEN_LIGHT_H
-#define SEEN_LIGHT_H seen
+#ifndef __LIGHT_H__
+#define __LIGHT_H__
 
 #include "common.h"
 
@@ -107,7 +107,8 @@ OPTICAL_EXPORT extern void light_obs(struct application *ap, struct shadework *s
 
 __END_DECLS
 
-#endif /* SEEN_LIGHT_H */
+#endif /* __LIGHT_H__ */
+
 /** @} */
 /*
  * Local Variables:

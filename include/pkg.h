@@ -33,8 +33,9 @@
  *	The U. S. Army Research Laboratory
  * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef PKG_H_SEENYET
-#define PKG_H_SEENYET
+
+#ifndef __PKG_H__
+#define __PKG_H__
 
 #ifndef PKG_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
@@ -150,7 +151,8 @@ PKG_EXPORT PKG_EXTERN(const char *pkg_version, (void));
 }
 #endif
 
-#endif /* PKG_H_SEENYET */
+#endif /* __PKG_H__ */
+
 /** @} */
 /*
  * Local Variables:

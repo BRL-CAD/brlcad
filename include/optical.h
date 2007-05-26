@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef SEEN_OPTICAL_H
-#define SEEN_OPTICAL_H seen
+#ifndef __OPTICAL_H__
+#define __OPTICAL_H__
 
 #include "common.h"
 
@@ -192,7 +192,8 @@ struct floatpixel {
 
 __END_DECLS
 
-#endif /* SEEN_OPTICAL_H */
+#endif /* __OPTICAL_H__ */
+
 /** @} */
 /*
  * Local Variables:

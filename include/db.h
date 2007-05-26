@@ -68,8 +68,8 @@
  *@n	Aberdeen Proving Ground, Maryland  21005
  */
 
-#ifndef DB_H
-#define DB_H seen
+#ifndef __DB_H__
+#define __DB_H__
 
 #define NAMESIZE		16
 
@@ -466,7 +466,8 @@ void rt_fastf_float DB_ARGS( (fastf_t *ff, const dbfloat_t *fp, int n) );
 void rt_mat_dbmat DB_ARGS( (fastf_t *ff, const dbfloat_t *dbp) );
 void rt_dbmat_mat DB_ARGS( (dbfloat_t *dbp, const fastf_t *ff) );
 
-#endif	/* DB_H */
+#endif	/* __DB_H__ */
+
 /** @} */
 /*
  * Local Variables:

@@ -170,8 +170,8 @@
  *	LIBBU LIBBU_LIBES -lm -lc
  */
 
-#ifndef MACHINE_H
-#define MACHINE_H seen
+#ifndef __MACHINE_H__
+#define __MACHINE_H__
 
 #include "common.h"
 
@@ -822,7 +822,8 @@ typedef long	bitv_t;		/* largest integer type */
 	extern double hypot(double, double);
 #endif
 
-#endif  /* MACHINE_H */
+#endif  /* __MACHINE_H__ */
+
 /** @} */
 /*
  * Local Variables:

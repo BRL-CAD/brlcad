@@ -22,8 +22,9 @@
 /** @file dm-pex.h
  *
  */
-#ifndef SEEN_DM_PEX
-#define SEEN_DM_PEX
+
+#ifndef __DM_PEX__
+#define __DM_PEX__
 
 /*
  * Display coordinate conversion:
@@ -75,7 +76,8 @@ extern void Pex_establish_perspective();
 extern void Pex_set_perspective();
 extern struct pex_vars head_pex_vars;
 
-#endif /* SEEN_DM_PEX */
+#endif /* __DM_PEX__ */
+
 /** @} */
 /*
  * Local Variables:

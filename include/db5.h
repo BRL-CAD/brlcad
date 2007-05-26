@@ -32,8 +32,9 @@
  *	The U. S. Army Research Laboratory
  *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef DB5_H
-#define DB5_H seen
+
+#ifndef __DB5_H__
+#define __DB5_H__
 
 __BEGIN_DECLS
 
@@ -222,8 +223,7 @@ DB5_EXPORT BU_EXTERN(const unsigned char *db5_get_raw_internal_ptr,
 
 __END_DECLS
 
-#endif	/* DB5_H */
-
+#endif	/* __DB5_H__ */
 
 /** @} */
 /*

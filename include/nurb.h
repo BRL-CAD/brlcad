@@ -35,8 +35,8 @@
  *@n 	Aberdeen Proving Ground, Maryland 21005
  */
 
-#ifndef NURB_H
-#define NURB_H seen
+#ifndef __NURB_H__
+#define __NURB_H__
 
 #include "common.h"
 
@@ -306,7 +306,7 @@ RT_EXPORT BU_EXTERN( int FindRoots, (point2d_t *w, int degree, point2d_t **inter
 			   int depth, fastf_t epsilon) );
 RT_EXPORT BU_EXTERN( struct bezier_2d_list *subdivide_bezier, (struct bezier_2d_list *bezier_hd, int degree,
 							fastf_t epsilon, int depth) );
-#endif
+#endif /* __NURB_H__ */
 
 /** @} */
 /*

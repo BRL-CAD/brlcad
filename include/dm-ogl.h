@@ -22,8 +22,9 @@
 /** @file dm-ogl.h
  *
  */
-#ifndef SEEN_DM_OGL
-#define SEEN_DM_OGL
+
+#ifndef __DM_OGL__
+#define __DM_OGL__
 
 #include "dm_color.h"
 
@@ -71,7 +72,8 @@ struct ogl_vars {
 
 extern void ogl_fogHint();
 
-#endif /* SEEN_DM_OGL */
+#endif /* __DM_OGL__ */
+
 /** @} */
 /*
  * Local Variables:

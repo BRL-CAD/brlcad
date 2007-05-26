@@ -31,8 +31,8 @@
  * @n	Aberdeen Proving Ground, Maryland  21005-5066
  */
 
-#ifndef FB_H
-#define FB_H seen
+#ifndef __FB_H__
+#define __FB_H__
 
 #include "fbio.h"
 
@@ -248,8 +248,8 @@ FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
  */
 FB_EXPORT extern const char *fb_version(void);
 
+#endif /* __FB_H__ */
 
-#endif /* FB_H */
 /** @} */
 /*
  * Local Variables:

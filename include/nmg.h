@@ -46,27 +46,19 @@
  *  @par Libraries Used -
  *	LIBRT LIBRT_LIBES -lm -lc
  */
-#ifndef NMG_H
-#define NMG_H seen
+
+#ifndef __NMG_H__
+#define __NMG_H__
 
 #include "common.h"
 
-/* make sure all the prerequisite include files have been included
- */
-#ifndef MACHINE_H
+/* interface headers */
 #include "machine.h"
-#endif
-
-#ifndef VMATH_H
 #include "vmath.h"
-#endif
-
-#ifndef SEEN_BU_H
 #include "bu.h"
-#endif
 
 #ifndef NULL
-#define NULL 0
+#  define NULL 0
 #endif
 
 #define	NMG_EXTERN(type_and_name,args)	RT_EXTERN(type_and_name,args)
@@ -848,7 +840,8 @@ struct nmg_visit_handlers {
 	void	(*vis_vertex_g) NMG_ARGS((long *, genptr_t, int));
 };
 
-#endif
+#endif /* __NMG_H__ */
+
 /** @} */
 /*
  * Local Variables:

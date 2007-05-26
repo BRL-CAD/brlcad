@@ -85,8 +85,8 @@
  *	-lm -lc
  */
 
-#ifndef VMATH_H
-#define VMATH_H seen
+#ifndef __VMATH_H__
+#define __VMATH_H__
 
 #include "common.h"
 
@@ -1299,7 +1299,8 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 __END_DECLS
 
-#endif /* VMATH_H */
+#endif /* __VMATH_H__ */
+
 /** @} */
 /*
  * Local Variables:

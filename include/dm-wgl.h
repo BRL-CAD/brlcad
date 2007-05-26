@@ -22,8 +22,9 @@
 /** @file dm-wgl.h
  *
  */
-#ifndef SEEN_DM_WGL
-#define SEEN_DM_WGL
+
+#ifndef __DM_WGL__
+#define __DM_WGL__
 
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
@@ -68,7 +69,8 @@ struct wgl_vars {
 
 extern void wgl_fogHint();
 
-#endif /* SEEN_DM_WGL */
+#endif /* __DM_WGL__ */
+
 /** @} */
 /*
  * Local Variables:

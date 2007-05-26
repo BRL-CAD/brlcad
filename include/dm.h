@@ -22,8 +22,9 @@
 /** @file dm.h
  *
  */
-#ifndef SEEN_DM_H
-#define SEEN_DM_H
+
+#ifndef __DM_H__
+#define __DM_H__
 
 #include "common.h"
 
@@ -377,7 +378,8 @@ DM_EXPORT BU_EXTERN(void dmo_drawAxes_cmd,
 		     int *majorTickColor,
 		     int tickThreshold));
 
-#endif /* SEEN_DM_H */
+#endif /* __DM_H__ */
+
 /** @} */
 /*
  * Local Variables:

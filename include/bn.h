@@ -63,6 +63,7 @@
  *  @par Libraries Used -
  *	-lm -lc
  */
+
 #ifndef __BN_H__
 #define __BN_H__
 
@@ -1758,7 +1759,8 @@ BN_EXPORT BU_EXTERN(const char *bn_version, (void));
 
 __END_DECLS
 
-#endif /* SEEN_BN_H */
+#endif /* __BN_H__ */
+
 /** @} */
 /*
  * Local Variables:
