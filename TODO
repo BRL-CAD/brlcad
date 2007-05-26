@@ -17,6 +17,8 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
+* investigate/fix db_walk_dispather crash in rt (really recent)
+
 * do something about the sketch editor (bezier support)
 
 
