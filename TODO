@@ -289,6 +289,8 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 		rt_overlap_quietly() -> struct application.a_logoverlap
 	include/compat4.h (pre 7.0)
 		compat4.h -> bu.h && bn.h
+	include/shortvect.h (pre 7.0)
+	include/shortvect-pr.h (pre 7.0)
 	include/bn.h (7.0)
 		bn_mat_zero() -> MAT_ZERO()
 		bn_mat_idn() -> MAT_IDN()

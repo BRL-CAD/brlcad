@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libbn */
+/** @addtogroup deprecated */
 /** @{ */
 /** @file shortvect.h
  *
@@ -51,11 +51,9 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
-#if __STDC__
-#	include "shortvect-pr.h"		/* limit 14 chars */
-#else
-	/* convex? */
-#endif
+
+#warning "The shortvect.h header is OBSOLETE -- if it is needed, configure.ac modifications will need to be made."
+
 /** @} */
 /*
  * Local Variables:

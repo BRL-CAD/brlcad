@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libbn */
+/** @addtogroup deprecated */
 /** @{ */
 /** @file shortvect-pr.h
  *			S H O R T V E C T - P R A G . H
@@ -38,14 +38,9 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  */
-#if __STDC__
-#	if defined(CRAY)
-#		pragma shortloop
-#	endif
-#	if defined(alliant)
-		/* ??? */
-#	endif
-#endif
+
+#warning "The shortvect-pr.h header is OBSOLETE -- if it is needed, configure.ac modifications will need to be made."
+
 /** @} */
 /*
  * Local Variables:
