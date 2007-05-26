@@ -61,7 +61,8 @@
 #   MAXTIME - the maximum number of seconds to spend on any test
 #   DEVIATION - the minimum sufficient % deviation from the average
 #   AVERAGE - how many frames to average together
-#   DEBUG - turn on extra debug output for testing/development
+#   VERBOSE - turn on extra debug output for testing/development
+#   QUIET - turn off all printing output (writes results to summary)
 #
 # The TIMEFRAME, MAXTIME, DEVIATION, and AVERAGE options control how
 # the benchmark will proceed including how long it should take.  Each
@@ -97,42 +98,88 @@
 #
 #  @(#)$Header$ (BRL)
 
-
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
-name_of_this=`basename $0`
-path_to_this=`dirname $0`
 
+# save the precious args
+ARGS="$*"
+NAME_OF_THIS=`basename $0`
+PATH_TO_THIS=`dirname $0`
+THIS="$PATH_TO_THIS/$NAME_OF_THIS"
 
-echo "B R L - C A D   B E N C H M A R K"
-echo "================================="
+# sanity check
+if [ ! -f "$THIS" ] ; then
+    echo "INTERNAL ERROR: $THIS does not exist"
+    if [ ! "x$0" = "x$THIS" ] ; then
+	echo "INTERNAL ERROR: dirname/basename inconsistency: $0 != $THIS"
+    fi
+    exit 1
+fi
 
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
-# save the precious args
-ARGS="$*"
-
-# allow a debug hook, but don't announce it
-if test "x${DEBUG}" = "x" ; then
-#    DEBUG=1
-    :
+# commands that this script expects
+for __cmd in echo sed ; do
+    echo "test" | $__cmd > /dev/null 2>&1
+    if test ! x$? = x0 ; then
+	echo "INTERNAL ERROR: $__cmd command is required"
+	exit 1
+    fi
+done
+echo "test" | grep "test" > /dev/null 2>&1
+if test ! x$? = x0 ; then
+    echo "INTERNAL ERROR: grep command is required"
+    exit 1
 fi
+echo "test" | tr "test" "test" > /dev/null 2>&1
+if test ! x$? = x0 ; then
+    echo "INTERNAL ERROR: tr command is required"
+    exit 1
+fi
+
+# determine the behavior of echo
+case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
+    *c*,-n*) ECHO_N= ECHO_C='
+' ECHO_T='	' ;;
+    *c*,*  ) ECHO_N=-n ECHO_C= ECHO_T= ;;
+    *)       ECHO_N= ECHO_C='\c' ECHO_T= ;;
+esac
+
+VERBOSE_ECHO=:
+ECHO=:
+if [ "x$QUIET" = "xyes" ] ; then
+    if [ "x$VERBOSE" = "xyes" ] ; then
+	echo "Verbose output quelled by quiet option.  Further output disabled."
+    fi
+else
+    ECHO=echo
+    if [ "x$VERBOSE" = "xyes" ] ; then
+	echo "Verbose output enabled"
+	VERBOSE_ECHO=echo
+    fi
+fi
+
+
+$ECHO "B R L - C A D   B E N C H M A R K"
+$ECHO "================================="
 
 
 ########################
 # search for resources #
 ########################
-
-# utility function to search for a certain filesystem object in a list of paths
 look_for ( ) {
+
+    # utility function to search for a certain filesystem object in a
+    # list of paths.
+
     look_for_type="$1" ; shift
     look_for_label="$1" ; shift
     look_for_var="$1" ; shift
     look_for_dirs="$*"
 
     if test "x$look_for_label" != "x" ; then
-	echo  "Looking for $look_for_label"
+	$ECHO  "Looking for $look_for_label"
     fi
 
     # get the value of the variable
@@ -143,7 +190,7 @@ look_for ( ) {
 	for look_for_dir in $look_for_dirs ; do
 
 	    if test "x$DEBUG" != "x" ; then
-		echo "searching ${look_for_dir}"
+		$ECHO "searching ${look_for_dir}"
 		ls -lad ${look_for_dir}
 	    fi
 	    opts="-r"
@@ -171,7 +218,7 @@ look_for ( ) {
 	    done
 	    if test "x$look_for_failed" = "xno" ; then
 		if test "x$look_for_label" != "x" ; then
-		    echo "...found $look_for_type ${look_for_dir}"
+		    $ECHO "...found $look_for_type ${look_for_dir}"
 		fi
 		look_for_var_var="${look_for_var}=\"${look_for_dir}\""
 		eval $look_for_var_var
@@ -181,67 +228,67 @@ look_for ( ) {
 	done
     else
 	if test "x$look_for_label" != "x" ; then
-	    echo "...using $look_for_var_val from $look_for_var variable setting"
+	    $ECHO "...using $look_for_var_val from $look_for_var variable setting"
 	fi
     fi
 }
 
 look_for executable "the BRL-CAD raytracer" RT \
-    ${path_to_this}/rt \
-    ${path_to_this}/../bin/rt \
-    ${path_to_this}/../src/rt/rt \
-    ${path_to_this}/src/rt/rt \
+    ${PATH_TO_THIS}/rt \
+    ${PATH_TO_THIS}/../bin/rt \
+    ${PATH_TO_THIS}/../src/rt/rt \
+    ${PATH_TO_THIS}/src/rt/rt \
     ./rt
 
 look_for directory "a benchmark geometry directory" DB \
-    ${path_to_this}/../share/brlcad/*.*.*/db \
-    ${path_to_this}/share/brlcad/*.*.*/db \
-    ${path_to_this}/../share/brlcad/db \
-    ${path_to_this}/share/brlcad/db \
-    ${path_to_this}/../share/db \
-    ${path_to_this}/share/db \
-    ${path_to_this}/../db \
-    ${path_to_this}/db \
+    ${PATH_TO_THIS}/../share/brlcad/*.*.*/db \
+    ${PATH_TO_THIS}/share/brlcad/*.*.*/db \
+    ${PATH_TO_THIS}/../share/brlcad/db \
+    ${PATH_TO_THIS}/share/brlcad/db \
+    ${PATH_TO_THIS}/../share/db \
+    ${PATH_TO_THIS}/share/db \
+    ${PATH_TO_THIS}/../db \
+    ${PATH_TO_THIS}/db \
     ./db
 
 look_for directory "a benchmark reference image directory" PIX \
-    ${path_to_this}/../share/brlcad/*.*.*/pix \
-    ${path_to_this}/share/brlcad/*.*.*/pix \
-    ${path_to_this}/../share/brlcad/pix \
-    ${path_to_this}/share/brlcad/pix \
-    ${path_to_this}/../share/pix \
-    ${path_to_this}/share/pix \
-    ${path_to_this}/../pix \
-    ${path_to_this}/pix \
+    ${PATH_TO_THIS}/../share/brlcad/*.*.*/pix \
+    ${PATH_TO_THIS}/share/brlcad/*.*.*/pix \
+    ${PATH_TO_THIS}/../share/brlcad/pix \
+    ${PATH_TO_THIS}/share/brlcad/pix \
+    ${PATH_TO_THIS}/../share/pix \
+    ${PATH_TO_THIS}/share/pix \
+    ${PATH_TO_THIS}/../pix \
+    ${PATH_TO_THIS}/pix \
     ./pix
 
 look_for directory "a benchmark reference log directory" LOG \
     $PIX \
-    ${path_to_this}/../share/brlcad/*.*.*/pix \
-    ${path_to_this}/share/brlcad/*.*.*/pix \
-    ${path_to_this}/../share/brlcad/pix \
-    ${path_to_this}/share/brlcad/pix \
-    ${path_to_this}/../share/pix \
-    ${path_to_this}/share/pix \
-    ${path_to_this}/../pix \
-    ${path_to_this}/pix \
+    ${PATH_TO_THIS}/../share/brlcad/*.*.*/pix \
+    ${PATH_TO_THIS}/share/brlcad/*.*.*/pix \
+    ${PATH_TO_THIS}/../share/brlcad/pix \
+    ${PATH_TO_THIS}/share/brlcad/pix \
+    ${PATH_TO_THIS}/../share/pix \
+    ${PATH_TO_THIS}/share/pix \
+    ${PATH_TO_THIS}/../pix \
+    ${PATH_TO_THIS}/pix \
     ./pix
 
 look_for executable "a pixel comparison utility" CMP \
-    ${path_to_this}/pixcmp \
-    ${path_to_this}/../bin/pixcmp \
-    ${path_to_this}/../bench/pixcmp \
+    ${PATH_TO_THIS}/pixcmp \
+    ${PATH_TO_THIS}/../bin/pixcmp \
+    ${PATH_TO_THIS}/../bench/pixcmp \
     ./pixcmp
 
 look_for script "a time elapsed utility" ELP \
-    ${path_to_this}/elapsed.sh \
-    ${path_to_this}/../bin/elapsed.sh \
-    ${path_to_this}/sh/elapsed.sh \
-    ${path_to_this}/../sh/elapsed.sh \
+    ${PATH_TO_THIS}/elapsed.sh \
+    ${PATH_TO_THIS}/../bin/elapsed.sh \
+    ${PATH_TO_THIS}/sh/elapsed.sh \
+    ${PATH_TO_THIS}/../sh/elapsed.sh \
     ./elapsed.sh
 
 # end of searching, separate the output
-echo
+$ECHO
 
 
 #####################
@@ -250,40 +297,40 @@ echo
 
 # sanity check, output all the final settings together
 if test "x${RT}" = "x" ; then
-    echo "ERROR:  Could not find the BRL-CAD raytracer"
+    $ECHO "ERROR:  Could not find the BRL-CAD raytracer"
     exit 1
 else
-    echo "Using [$RT] for RT"
+    $ECHO "Using [$RT] for RT"
 fi
 if test "x${DB}" = "x" ; then
-    echo "ERROR:  Could not find the BRL-CAD database directory"
+    $ECHO "ERROR:  Could not find the BRL-CAD database directory"
     exit 1
 else
-    echo "Using [$DB] for DB"
+    $ECHO "Using [$DB] for DB"
 fi
 if test "x${PIX}" = "x" ; then
-    echo "ERROR:  Could not find the BRL-CAD reference images"
+    $ECHO "ERROR:  Could not find the BRL-CAD reference images"
     exit 1
 else
-    echo "Using [$PIX] for PIX"
+    $ECHO "Using [$PIX] for PIX"
 fi
 if test "x${LOG}" = "x" ; then
-    echo "ERROR:  Could not find the BRL-CAD reference logs"
+    $ECHO "ERROR:  Could not find the BRL-CAD reference logs"
     exit 1
 else
-    echo "Using [$LOG] for LOG"
+    $ECHO "Using [$LOG] for LOG"
 fi
 if test "x${CMP}" = "x" ; then
-    echo "ERROR:  Could not find the BRL-CAD pixel comparison utility"
+    $ECHO "ERROR:  Could not find the BRL-CAD pixel comparison utility"
     exit 1
 else
-    echo "Using [$CMP] for CMP"
+    $ECHO "Using [$CMP] for CMP"
 fi
 if test "x${ELP}" = "x" ; then
-    echo "ERROR:  Could not find the BRL-CAD time elapsed script"
+    $ECHO "ERROR:  Could not find the BRL-CAD time elapsed script"
     exit 1
 else
-    echo "Using [$ELP] for ELP"
+    $ECHO "Using [$ELP] for ELP"
 fi
 
 # utility function to set a variable if it's not already set to something
@@ -296,7 +343,7 @@ set_if_unset ( ) {
     if test "x${set_if_unset_var_val}" = "x" ; then
 	set_if_unset_var="${set_if_unset_name}=\"${set_if_unset_val}\""
 	if test "x$DEBUG" != "x" ; then
-	    echo $set_if_unset_var
+	    $ECHO $set_if_unset_var
 	fi
 	eval $set_if_unset_var
 	export $set_if_unset_name
@@ -304,7 +351,7 @@ set_if_unset ( ) {
 
     set_if_unset_var="echo \"\$$set_if_unset_name\""
     set_if_unset_val="`eval ${set_if_unset_var}`"
-    echo "Using [${set_if_unset_val}] for $set_if_unset_name"
+    $ECHO "Using [${set_if_unset_val}] for $set_if_unset_name"
 }
 
 # determine the minimum time requirement in seconds for a single test run
@@ -313,7 +360,7 @@ set_if_unset TIMEFRAME 32
 # approximate maximum time in seconds that a given test is allowed to take
 set_if_unset MAXTIME 300
 if test $MAXTIME -lt $TIMEFRAME ; then
-    echo "ERROR: MAXTIME must be greater or equal to TIMEFRAME"
+    $ECHO "ERROR: MAXTIME must be greater or equal to TIMEFRAME"
     exit 1
 fi
 
@@ -324,7 +371,7 @@ set_if_unset DEVIATION 3
 set_if_unset AVERAGE 3
 
 # end of settings, separate the output
-echo
+$ECHO
 
 
 ##########################
@@ -332,32 +379,32 @@ echo
 ##########################
 
 # determine raytracer version
-echo "RT reports the following version information:"
+$ECHO "RT reports the following version information:"
 versions="`$RT 2>&1 | grep BRL-CAD`"
 if test "x$versions" = "x" ; then
-    echo "Unknown"
+    $ECHO "Unknown"
 else
     cat <<EOF
 $versions
 EOF
 fi
-echo
+$ECHO
 
 # if expr works, let the user know about how long this might take
 if test "x`expr 1 - 1 2>/dev/null`" = "x0" ; then
     mintime="`expr $TIMEFRAME \* 6`"
-    echo "Minimum run time is `$ELP $mintime`"
+    $ECHO "Minimum run time is `$ELP $mintime`"
     maxtime="`expr $MAXTIME \* 6`"
-    echo "Maximum run time is `$ELP $maxtime`"
+    $ECHO "Maximum run time is `$ELP $maxtime`"
     estimate="`expr $mintime \* 3`"
     if test $estimate -gt $maxtime ; then
 	estimate="$maxtime"
     fi
-    echo "Estimated   time is `$ELP $estimate`"
-    echo
+    $ECHO "Estimated   time is `$ELP $estimate`"
+    $ECHO
 else
-    echo "WARNING: expr is unavailable, unable to compute statistics"
-    echo
+    $ECHO "WARNING: expr is unavailable, unable to compute statistics"
+    $ECHO
 fi
 
 
@@ -382,7 +429,7 @@ run ( ) {
     run_view="`cat`"
 
     if test "x$DEBUG" != "x" ; then
-	echo "DEBUG: Running $RT -B -M -s512 -H${run_hypersample} -J0 ${run_args} -o ${run_geomname}.pix ${DB}/${run_geomname}.g ${run_geometry}"
+	$ECHO "DEBUG: Running $RT -B -M -s512 -H${run_hypersample} -J0 ${run_args} -o ${run_geomname}.pix ${DB}/${run_geomname}.g ${run_geometry}"
     fi
 
     $RT -B -M -s512 -H${run_hypersample} -J0 ${run_args} \
@@ -392,7 +439,7 @@ $run_view
 EOF
     retval=$?
     if test "x$DEBUG" != "x" ; then
-	echo "DEBUG: Running $RT returned $retval"
+	$ECHO "DEBUG: Running $RT returned $retval"
     fi
     return $retval
 }
@@ -406,7 +453,7 @@ average ( ) {
     average_nums="$*"
 
     if test "x$average_nums" = "x" ; then
-	echo "ERROR: no numbers provided to average" 1>&2
+	$ECHO "ERROR: no numbers provided to average" 1>&2
 	exit 1
     fi
 
@@ -418,7 +465,7 @@ average ( ) {
     done
 
     if test $count -eq 0 ; then
-	echo "ERROR: unexpected count in average" 1>&2
+	$ECHO "ERROR: unexpected count in average" 1>&2
 	exit 1
     fi
 
@@ -476,12 +523,12 @@ variance ( ) {
     if test "x$variance_count" = "x" ; then
 	variance_count=10000
     elif test $variance_count -eq 0 ; then
-	echo "ERROR: cannot compute variance of zero numbers" 1>&2
+	$ECHO "ERROR: cannot compute variance of zero numbers" 1>&2
 	exit 1
     fi
 
     if test "x$variance_nums" = "x" ; then
-	echo "ERROR: cannot compute variance of nothing" 1>&2
+	$ECHO "ERROR: cannot compute variance of nothing" 1>&2
 	exit 1
     fi
 
@@ -490,10 +537,10 @@ variance ( ) {
     variance_counted="$?"
 
     if test $variance_counted -eq 0 ; then
-	echo "ERROR: unexpected zero count of numbers in variance" 1>&2
+	$ECHO "ERROR: unexpected zero count of numbers in variance" 1>&2
 	exit 1
     elif test $variance_counted -lt 0 ; then
-	echo "ERROR: unexpected negative count of numbers in variance" 1>&2
+	$ECHO "ERROR: unexpected negative count of numbers in variance" 1>&2
 	exit 1
     fi
 
@@ -525,15 +572,15 @@ sqrt ( ) {
     sqrt_number="$1"
 
     if test "x$sqrt_number" = "x" ; then
-	echo "ERROR: cannot compute the square root of nothing" 1>&2
+	$ECHO "ERROR: cannot compute the square root of nothing" 1>&2
 	exit 1
     elif test $sqrt_number -lt 0 > /dev/null 2>&1 ; then
-	echo "ERROR: square root of negative numbers is only in your imagination" 1>&2
+	$ECHO "ERROR: square root of negative numbers is only in your imagination" 1>&2
 	exit 1
     fi
 
     sqrt_have_dc=yes
-    echo "1 1 + p" | dc 2>&1 >/dev/null
+    echo "1 1 + p" | dc >/dev/null 2>&1
     if test ! x$? = x0 ; then
 	sqrt_have_dc=no
     fi
@@ -543,7 +590,7 @@ sqrt ( ) {
 	sqrt_root=`echo "$sqrt_number v p" | dc`
     else
 	sqrt_have_bc=yes
-	echo "1 + 1" | bc 2>&1 >/dev/null
+	echo "1 + 1" | bc >/dev/null 2>&1
 	if test ! "x$?" = "x0" ; then
 	    sqrt_have_bc=no
 	fi
@@ -575,20 +622,20 @@ bench ( ) {
     bench_args="$*"
 
     if test "x$bench_testname" = "x" ; then
-	echo "ERROR: argument mismatch, bench is missing the test name"
+	$ECHO "ERROR: argument mismatch, bench is missing the test name"
 	return 1
     fi
     if test "x$bench_geometry" = "x" ; then
-	echo "ERROR: argument mismatch, bench is missing the test geometry"
+	$ECHO "ERROR: argument mismatch, bench is missing the test geometry"
 	return 1
     fi
     if test "x$DEBUG" != "x" ; then
-	echo "DEBUG: Beginning bench testing on $bench_testname using $bench_geometry"
+	$ECHO "DEBUG: Beginning bench testing on $bench_testname using $bench_geometry"
     fi
 
     bench_view="`cat`"
 
-    echo +++++ ${bench_testname}
+    $ECHO +++++ ${bench_testname}
     bench_hypersample=0
     bench_frame=0
     bench_rtfms=""
@@ -628,13 +675,13 @@ EOF
 
 		# just finished the first frame
 		if test "x$DEBUG" != "x" ; then
-		    echo "DEBUG: ${bench_elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $bench_elapsed` pixels/s (inexact wallclock)"
+		    $ECHO "DEBUG: ${bench_elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $bench_elapsed` pixels/s (inexact wallclock)"
 		fi
 		bench_hypersample=1
 		bench_frame="`expr $bench_frame + 1`"
 	    else
 		if test "x$DEBUG" != "x" ; then
-		    echo "DEBUG: ${bench_elapsed}s real elapsed,	`expr $bench_hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $bench_hypersample + 1 \) / $bench_elapsed \)` pixels/s (inexact wallclock)"
+		    $ECHO "DEBUG: ${bench_elapsed}s real elapsed,	`expr $bench_hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $bench_hypersample + 1 \) / $bench_elapsed \)` pixels/s (inexact wallclock)"
 		fi
 
 
@@ -671,12 +718,12 @@ EOF
 	    fi
 	    bench_rtfms="$bench_rtfm $bench_rtfms"
 	    if test ! "x$bench_rtfm_line" = "x" ; then
-		echo "$bench_rtfm_line"
+		$ECHO "$bench_rtfm_line"
 	    fi
 
 	    # did we fail?
 	    if test $retval != 0 ; then
-		echo "RAYTRACE ERROR"
+		$ECHO "RAYTRACE ERROR"
 		break
 	    fi
 
@@ -711,7 +758,7 @@ EOF
 	    else
 		bench_avgpercent=`echo $bench_deviation $bench_avg | awk '{print $1 / $2 * 100}'`
 	    fi
-	    echo "DEBUG: average=$bench_avg ; variance=$bench_variance ; deviation=$bench_deviation ($bench_avgpercent%) ; last run was ${bench_percent}%"
+	    $ECHO "DEBUG: average=$bench_avg ; variance=$bench_variance ; deviation=$bench_deviation ($bench_avgpercent%) ; last run was ${bench_percent}%"
 	fi
 
 	# early exit if we have a stable number
@@ -732,20 +779,20 @@ EOF
     ret=$?
     if test $ret = 0 ; then
 	# perfect match
-	echo ${bench_testname}.pix:  answers are RIGHT
+	$ECHO ${bench_testname}.pix:  answers are RIGHT
     elif test $ret = 1 ; then
 	# off by one, acceptable
-	echo ${bench_testname}.pix:  answers are RIGHT
+	$ECHO ${bench_testname}.pix:  answers are RIGHT
     elif test $ret = 2 ; then
 	# off by many, unacceptable
-	echo ${bench_testname}.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
+	$ECHO ${bench_testname}.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
     else
 	# some other failure
-	echo ${bench_testname}.pix:  BENCHMARK COMPARISON FAILURE
+	$ECHO ${bench_testname}.pix:  BENCHMARK COMPARISON FAILURE
     fi
 
     if test "x$DEBUG" != "x" ; then
-	echo "DEBUG: Done benchmark testing on $bench_testname"
+	$ECHO "DEBUG: Done benchmark testing on $bench_testname"
     fi
     return $retval
 }
@@ -759,7 +806,7 @@ perf ( ) {
     perf_args="$*"
 
     if test "x$perf_tests" = "x" ; then
-	echo "ERROR: no tests specified for calculating performance" 1>&2
+	$ECHO "ERROR: no tests specified for calculating performance" 1>&2
 	exit 1
     fi
 
@@ -787,7 +834,7 @@ perf ( ) {
 	for perf_log in "$perf_cur_log" "$perf_ref_log" ; do
 	    if test ! "x$perf_log" = "x" ; then
 		if test ! -f "$perf_log" ; then
-		    echo "ERROR: file $perf_log does not exist" 1>&2
+		    $ECHO "ERROR: file $perf_log does not exist" 1>&2
 		fi
 	    fi
 	done
@@ -798,12 +845,15 @@ perf ( ) {
     # extract the RTFM values from the log files, use TR to convert
     # newlines to tabs.  the trailing tab is signficant in case there
     # are not enough results.
+    #
+    # FIXME: should really iterate one file at a time so we don't
+    # just zero-pad at the end
     perf_VGRREF=`grep RTFM $perf_ref_files | sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | tr '\012' '\011' `
     perf_CURVALS=`grep RTFM $perf_cur_files | sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | tr '\012' '\011' `
 
     # if there were no reference values, we cannot compute timings
     if test "x$perf_VGRREF" = "x" ; then
-	echo "ERROR: Cannot locate VGR reference values" 1>&2
+	$ECHO "ERROR: Cannot locate VGR reference values" 1>&2
     fi
 
     # report 0 if no RTFM values were found in the current run (likely
@@ -820,14 +870,14 @@ perf ( ) {
     set $perf_CURVALS
 
     while test $# -lt 6 ; do
-	echo "WARNING: only $# RTFM times found, adding a zero result." 1>&2
+	$ECHO "WARNING: only $# RTFM times found, adding a zero result." 1>&2
 	perf_CURVALS="${perf_CURVALS}0	"
 	set $perf_CURVALS
     done
 
     # see if we have a calculator
     perf_have_dc=yes
-    echo "1 1 + p" | dc 2>&1 >/dev/null
+    echo "1 1 + p" | dc >/dev/null 2>&1
     if test ! x$? = x0 ; then
 	perf_have_dc=no
     fi
@@ -879,8 +929,8 @@ perf ( ) {
 ########################
 
 start="`date '+%H %M %S'`"
-echo "Running the BRL-CAD Benchmark tests... please wait ..."
-echo
+$ECHO "Running the BRL-CAD Benchmark tests... please wait ..."
+$ECHO
 
 bench moss all.g $ARGS << EOF
 viewsize 1.572026215e+02;
@@ -933,10 +983,10 @@ orientation 4.406810841785839e-01 4.005093234738861e-01 5.226451688385938e-01 6.
 eye_pt 2.418500583758302e+04 -3.328563644344796e+03 8.489926952850350e+03;
 EOF
 
-echo
-echo "... Done."
-echo
-echo "Total testing time elapsed: `$ELP $start`"
+$ECHO
+$ECHO "... Done."
+$ECHO
+$ECHO "Total testing time elapsed: `$ELP $start`"
 
 
 ##############################
@@ -951,16 +1001,16 @@ $performance
 EOF
 fi
 
-echo
-echo "The following files have been generated and/or modified:"
-echo "  *.log ..... final log files for each individual raytrace test"
-echo "  *.pix ..... final pix image files for each individual raytrace test"
-echo "  *.log.* ... log files for previous frames and raytrace tests"
-echo "  *.pix.* ... pix image files for previous frames and raytrace tests"
-echo "  summary ... performance results summary, 2 lines per run"
-echo
+$ECHO
+$ECHO "The following files have been generated and/or modified:"
+$ECHO "  *.log ..... final log files for each individual raytrace test"
+$ECHO "  *.pix ..... final pix image files for each individual raytrace test"
+$ECHO "  *.log.* ... log files for previous frames and raytrace tests"
+$ECHO "  *.pix.* ... pix image files for previous frames and raytrace tests"
+$ECHO "  summary ... performance results summary, 2 lines per run"
+$ECHO
 
-echo "Summary:"
+$ECHO "Summary:"
 cat <<EOF
 $performance
 EOF
@@ -969,41 +1019,41 @@ vgr="`cat <<EOF | grep vgr | awk '{print int($9+0.5)}'
 $performance
 EOF`"
 if test ! "x$vgr" = "x" ; then
-    echo
-    echo "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
-    echo "Benchmark results indicate an approximate VGR performance metric of $vgr"
+    $ECHO
+    $ECHO "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
+    $ECHO "Benchmark results indicate an approximate VGR performance metric of $vgr"
     ln=`echo $vgr | awk '{printf "%.2f", log($1)}'`
     log=`echo $vgr | awk '{printf "%.2f", log($1) / log(10)}'`
-    echo "Logarithmic VGR metric is $log  (natural logarithm is $ln)"
-    echo "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
-    echo
-    echo "These numbers seem to indicate that this machine is approximately $vgr times"
-    echo "faster than the reference machine being used for comparison, a VAX 11/780"
-    echo "running 4.3 BSD named VGR.  These results are in fact approximately $log"
-    echo "orders of magnitude faster than the reference."
-    echo
+    $ECHO "Logarithmic VGR metric is $log  (natural logarithm is $ln)"
+    $ECHO "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
+    $ECHO
+    $ECHO "These numbers seem to indicate that this machine is approximately $vgr times"
+    $ECHO "faster than the reference machine being used for comparison, a VAX 11/780"
+    $ECHO "running 4.3 BSD named VGR.  These results are in fact approximately $log"
+    $ECHO "orders of magnitude faster than the reference."
+    $ECHO
 
-    echo "Here are some other approximated VGR results for perspective:"
-    echo "   120 on a 200MHz R5000 running IRIX 6.5"
-    echo "   250 on a 500 MHz Pentium III running RedHat 7.1"
-    echo "   550 on a dual 450 MHz UltraSPARC II running SunOS 5.8"
-    echo "  1000 on a dual 500 MHz G4 PowerPC running Mac OS X 10.2"
-    echo "  1500 on a dual 1.66 GHz Athlon MP 2000+ running RedHat 7.3"
-    echo "  9000 on an 8 CPU 1.3 GHz Power4 running AIX 5.1"
-    echo " 65000 on a 512 CPU 400 MHz R12000 Running IRIX 6.5"
-    echo
+    $ECHO "Here are some other approximated VGR results for perspective:"
+    $ECHO "   120 on a 200MHz R5000 running IRIX 6.5"
+    $ECHO "   250 on a 500 MHz Pentium III running RedHat 7.1"
+    $ECHO "   550 on a dual 450 MHz UltraSPARC II running SunOS 5.8"
+    $ECHO "  1000 on a dual 500 MHz G4 PowerPC running Mac OS X 10.2"
+    $ECHO "  1500 on a dual 1.66 GHz Athlon MP 2000+ running RedHat 7.3"
+    $ECHO "  9000 on an 8 CPU 1.3 GHz Power4 running AIX 5.1"
+    $ECHO " 65000 on a 512 CPU 400 MHz R12000 Running IRIX 6.5"
+    $ECHO
 fi
 
 
 encourage_submission=yes
 options=""
-if test -f "${path_to_this}/Makefile" ; then
+if test -f "${PATH_TO_THIS}/Makefile" ; then
     # See if this looks like an optimized build from a source distribution
-    optimized=`grep O3 "${path_to_this}/Makefile" | wc | awk '{print $1}'`
+    optimized=`grep O3 "${PATH_TO_THIS}/Makefile" | wc | awk '{print $1}'`
     if test $optimized -eq 0 ; then
-	echo "WARNING: This may not be an optimized compilation of BRL-CAD."
-	echo "Performance results may not be optimal."
-	echo
+	$ECHO "WARNING: This may not be an optimized compilation of BRL-CAD."
+	$ECHO "Performance results may not be optimal."
+	$ECHO
 	options="$options --enable-optimized"
 	encourage_submission=no
     fi
@@ -1013,11 +1063,11 @@ if test -f moss.log ; then
     # See if this looks like a run-time disabled compilation
     runtime=`grep "debugging is disabled" moss.log | wc | awk '{print $1}'`
     if test $runtime -gt 0 ; then
-	echo "WARNING: This appears to be a compilation of BRL-CAD that has run-time"
-	echo "debugging disabled.  While this will generally give the best"
-	echo "performance results and is useful for long render tasks, it is"
-	echo "generally not utilized when comparing benchmark performance metrics."
-	echo
+	$ECHO "WARNING: This appears to be a compilation of BRL-CAD that has run-time"
+	$ECHO "debugging disabled.  While this will generally give the best"
+	$ECHO "performance results and is useful for long render tasks, it is"
+	$ECHO "generally not utilized when comparing benchmark performance metrics."
+	$ECHO
 	options="$options --enable-runtime-debug"
 	encourage_submission=no
     fi
@@ -1025,55 +1075,55 @@ if test -f moss.log ; then
     # See if this looks like a compile-time debug compilation
     runtime=`grep "debugging is enabled" moss.log | wc | awk '{print $1}'`
     if test $runtime -gt 0 ; then
-	echo "This appears to be a debug compilation of BRL-CAD."
-	echo
+	$ECHO "This appears to be a debug compilation of BRL-CAD."
+	$ECHO
 	options="$options --disable-debug"
     fi
 fi
 
 if test "x$encourage_submission" = "xno" ; then
-    echo "Official benchmark results are optimized builds with all run-time"
-    echo "features enabled and optionally without compile-time debug symbols."
-    echo
-    if test -f "${path_to_this}/Makefile" ; then
-	echo "For proper results, run 'make clean' and recompile with the"
-	echo "following configure options added:"
+    $ECHO "Official benchmark results are optimized builds with all run-time"
+    $ECHO "features enabled and optionally without compile-time debug symbols."
+    $ECHO
+    if test -f "${PATH_TO_THIS}/Makefile" ; then
+	$ECHO "For proper results, run 'make clean' and recompile with the"
+	$ECHO "following configure options added:"
     else
-	echo "For proper results, you will need to install a version of the"
-	echo "benchmark that has been compiled with the following configure"
-	echo "options added:"
+	$ECHO "For proper results, you will need to install a version of the"
+	$ECHO "benchmark that has been compiled with the following configure"
+	$ECHO "options added:"
     fi
-    echo " $options"
-    echo
+    $ECHO " $options"
+    $ECHO
 fi
 
 # tell about the benchmark document
 look_for file "" BENCHMARK_TR \
-    ${path_to_this}/../share/brlcad/*.*.*/doc/benchmark.tr \
-    ${path_to_this}/share/brlcad/*.*.*/doc/benchmark.tr \
-    ${path_to_this}/share/brlcad/doc/benchmark.tr \
-    ${path_to_this}/share/doc/benchmark.tr \
-    ${path_to_this}/doc/benchmark.tr \
-    ${path_to_this}/../doc/benchmark.tr \
+    ${PATH_TO_THIS}/../share/brlcad/*.*.*/doc/benchmark.tr \
+    ${PATH_TO_THIS}/share/brlcad/*.*.*/doc/benchmark.tr \
+    ${PATH_TO_THIS}/share/brlcad/doc/benchmark.tr \
+    ${PATH_TO_THIS}/share/doc/benchmark.tr \
+    ${PATH_TO_THIS}/doc/benchmark.tr \
+    ${PATH_TO_THIS}/../doc/benchmark.tr \
     ./benchmark.tr
 
-echo "Read the benchmark.tr document for more details on the BRL-CAD Benchmark."
+$ECHO "Read the benchmark.tr document for more details on the BRL-CAD Benchmark."
 if test "x$BENCHMARK_TR" = "x" ; then
-    echo "The document should be available in the 'doc' directory of any source"
-    echo "or complete binary distribution of BRL-CAD."
+    $ECHO "The document should be available in the 'doc' directory of any source"
+    $ECHO "or complete binary distribution of BRL-CAD."
 else
-    echo "The document is available at $BENCHMARK_TR"
+    $ECHO "The document is available at $BENCHMARK_TR"
 fi
-echo
+$ECHO
 
 # if this was a valid benchmark run, encourage submission of results.
 if test "x$encourage_submission" = "xyes" ; then
-    echo "You are encouraged to submit your benchmark results and system"
-    echo "configuration information to benchmark@brlcad.org"
-    echo
+    $ECHO "You are encouraged to submit your benchmark results and system"
+    $ECHO "configuration information to benchmark@brlcad.org"
+    $ECHO
 fi
 
-echo "Benchmark testing complete."
+$ECHO "Benchmark testing complete."
 
 # Local Variables:
 # mode: sh
