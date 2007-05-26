@@ -208,7 +208,6 @@ struct rt_nurb_internal {
 
 #define RT_NURB_INTERNAL_MAGIC	0x002b2bdd
 #define RT_NURB_CK_MAGIC( _p) BU_CKMAG(_p,RT_NURB_INTERNAL_MAGIC,"rt_nurb_internal");
-#endif
 #define RT_NURB_GET_CONTROL_POINT(_s,_u,_v)	((_s)->ctl_points[ \
 	((_v)*(_s)->s_size[0]+(_u))*RT_NURB_EXTRACT_COORDS((_s)->pt_type)])
 
