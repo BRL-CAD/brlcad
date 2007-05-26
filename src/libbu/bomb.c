@@ -80,6 +80,12 @@ jmp_buf		bu_jmpbuf;		/**< @brief for BU_SETJMP() */
 /** failsafe storage to help ensure graceful shutdown */
 static char *_bu_bomb_failsafe = NULL;
 
+/* used for tty printing */
+static int fd = -1;
+
+/* used for crash reporting */
+static char tracefile[512] = {0};
+
 /* release memory on application exit */
 static void
 _free_bu_bomb_failsafe()
@@ -153,8 +159,8 @@ bu_bomb(const char *str)
      * For example, mged hijacks output sent to stderr.
      */
     {
-	int fd = open("/dev/tty", 1);
-	if (fd) {
+	fd = open("/dev/tty", 1);
+	if (fd > 0) {
 	    write(fd, str, strlen(str));
 	    write(fd, "\n", 1);
 	    close(fd);
@@ -165,12 +171,25 @@ bu_bomb(const char *str)
 #if defined(DEBUG)
     /* save a backtrace, should hopefully have debug symbols */
     {
-	FILE *fp = NULL;
-	char tracefile[512] = {0};
 	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), bu_process_id());
+	fd = open("/dev/tty", 1);
+
 	fprintf(stderr, "Saving stack trace to ");
+	if (fd > 0) {
+	    write(fd, "Saving stack trace to ", 22);
+	}
+
 	fprintf(stderr, tracefile);
+	if (fd > 0) {
+	    write(fd, tracefile, strlen(tracefile));
+	}
+
 	fprintf(stderr, "\n");
+	if (fd > 0) {
+	    write(fd, "\n", 1);
+	    close(fd);
+	}
+
 	fflush(stderr);
 	bu_crashreport(tracefile);
     }
@@ -185,6 +204,11 @@ bu_bomb(const char *str)
 	fprintf(stderr,"Causing intentional core dump due to debug flag\n");
 	fflush(stdout);
 	fflush(stderr);
+	fd = open("/dev/tty", 1);
+	if (fd > 0) {
+	    write(fd, "Causing intentional core dump due to debug flag\n", 48);
+	    close(fd);
+	}
 	abort();	/* should dump if ulimit is non-zero */
     }
 
