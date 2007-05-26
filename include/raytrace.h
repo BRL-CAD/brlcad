@@ -3908,7 +3908,7 @@ RT_EXPORT BU_EXTERN(struct hit *rt_htbl_get,
  *			N M G Support Function Declarations		*
  *									*
  ************************************************************************/
-#if defined(NMG_H)
+#if defined(__NMG_H__)
 
 /* From file nmg_mk.c */
 /*	MAKE routines */
@@ -4805,7 +4805,7 @@ RT_EXPORT BU_EXTERN(int nmg_to_poly,
 RT_EXPORT BU_EXTERN(struct rt_bot_internal *nmg_bot,
 		    (struct shell *s,
 		     const struct bn_tol *tol));
-#endif
+#endif /* __NMG_H__ */
 
 RT_EXPORT BU_EXTERN(int nmg_simplify_shell_edges,
 		    (struct shell *s,

@@ -209,7 +209,7 @@ BN_EXPORT BU_EXTERN(void pd_box,
 		     double y2));
 
 /* Double 3-D both in vector and enumerated versions */
-#ifdef VMATH_H
+#ifdef __VMATH_H__
 BN_EXPORT BU_EXTERN(void pdv_3space,
 		    (FILE *plotfp,
 		     const vect_t min,
@@ -231,7 +231,7 @@ BN_EXPORT BU_EXTERN(void pdv_3box,
 		    (FILE *plotfp,
 		     const vect_t a,
 		     const vect_t b));
-#endif /* VMATH_H */
+#endif /* __VMATH_H__ */
 BN_EXPORT BU_EXTERN(void pd_3space,
 		    (FILE *plotfp,
 		     double x1,
