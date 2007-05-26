@@ -84,17 +84,6 @@
 
 #define HIDE_MGEDS_ARB_ROUTINES 1
 
-/* A hack around a compilation issue.  No need in fixing it now as the build
-   process is about to be redone - RFH */
-#ifndef SEEN_RT_NURB_INTERNAL
-#define SEEN_RT_NURB_INTERNAL
-struct rt_nurb_internal {
-	long		magic;
-	int	 	nsrf;		/* number of surfaces */
-	struct face_g_snurb **srfs;	/* The surfaces themselves */
-};
-#endif
-
 #define MGED_DB_NAME "db"
 #define MGED_INMEM_NAME ".inmem"
 #define MGED_DG_NAME "dg"
