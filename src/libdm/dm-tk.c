@@ -22,6 +22,9 @@
  *  A Display Manager that should work wherever tk does.
  *
  *  Author -
+ *      Tim J. Myers
+ *
+ *  Derived from display managers written by -
  *	Phillip Dykstra
  *	Robert G. Parker
  *
@@ -29,11 +32,7 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -1168,7 +1167,7 @@ tk_setZBuffer(struct dm *dmp, int zbuffer_on)
     return TCL_OK;
 }
 
-#endif
+#endif /* DM_TK */
 
 /*
  * Local Variables:
