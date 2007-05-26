@@ -134,11 +134,6 @@ backtrace(char **args, int fd)
     signal(SIGCHLD, backtrace_sigchld);
 #endif
 
-#ifdef HAVE_KILL
-    /* halt the parent until we are done */
-    //    kill(getppid(), SIGSTOP);
-#endif
-
     if ((pipe(input) == -1) || (pipe(output) == -1)) {
 	perror("unable to open pipe");
 	fflush(stderr);
@@ -245,13 +240,17 @@ backtrace(char **args, int fd)
 	}
     }
 
-#if 0
-    bu_log("\nBacktrace complete.\nAttach debugger or interrupt to continue...\n");
-#else
+    if (bu_debug & BU_DEBUG_ATTACH) {
+	bu_log("\nBacktrace complete.\nAttach debugger or interrupt to continue...\n");
+    } else {
 #  ifdef HAVE_KILL
-    kill(getppid(), SIGINT);
+	/* not attaching, so let the parent continue */
+	kill(getppid(), SIGINT);
 #  endif
-#endif
+    }
+
+    fflush(stdout);
+    fflush(stderr);
 
     close(input[0]);
     close(input[1]);
@@ -347,17 +346,19 @@ bu_backtrace(FILE *fp)
     interrupt_wait = 0;
 #ifdef HAVE_KILL
     while (interrupt_wait == 0) {
-	/* do nothing */;
-    }
-    if (bu_debug & BU_DEBUG_BACKTRACE) {
-	bu_log("\nContinuing.\n");
+	/* do nothing, wait for debugger to attach */;
     }
 #else
     /* FIXME: need something better here for win32 */
-    sleep(2);
+    sleep(10);
 #endif
+
+    if (bu_debug & BU_DEBUG_BACKTRACE) {
+	bu_log("\nContinuing.\n");
+    }
+
     signal(SIGINT, SIG_DFL);
-    //    signal(SIGCONT, SIG_DFL);
+    /*    signal(SIGCONT, SIG_DFL); */
     fflush(fp);
 
     return 1;
