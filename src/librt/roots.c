@@ -49,7 +49,7 @@ static const char RCSroots[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 
-static const struct bn_poly	bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
+static const bn_poly_t bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 
 
 /**
@@ -121,13 +121,13 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 		 register bn_complex_t *nxZ, /* initial guess for root	*/
 		 const char *str)
 {
-    LOCAL bn_complex_t  p0, p1, p2;	/* evaluated polynomial+derivatives */
-    LOCAL bn_complex_t  p1_H;		/* p1 - H, temporary */
-    LOCAL bn_complex_t  cZ, cH;		/* 'Z' and H(Z) in comment	*/
-    LOCAL bn_complex_t  T;		/* temporary for making H */
-    FAST fastf_t	diff=0.0;		/* test values for convergence	*/
-    FAST fastf_t	b=0.0;		/* floating temps */
-    LOCAL int	n;
+    bn_complex_t  p0, p1, p2;	/* evaluated polynomial+derivatives */
+    bn_complex_t  p1_H;		/* p1 - H, temporary */
+    bn_complex_t  cZ, cH;		/* 'Z' and H(Z) in comment	*/
+    bn_complex_t  T;		/* temporary for making H */
+    fastf_t	diff=0.0;		/* test values for convergence	*/
+    fastf_t	b=0.0;		/* floating temps */
+    int	n;
     register int	i;		/* iteration counter		*/
 
     for( i=0; i < 20; i++ ) {
@@ -256,8 +256,8 @@ rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nr
 void
 rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
 {
-    LOCAL bn_poly_t	div = bn_Zero_poly;
-    LOCAL bn_poly_t rem = bn_Zero_poly;
+    bn_poly_t div = bn_Zero_poly;
+    bn_poly_t rem = bn_Zero_poly;
 
     /* Make a polynomial out of the given root:  Linear for a real
      * root, Quadratic for a complex root (since they come in con-
@@ -301,7 +301,7 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
 	      const char *name) /* name of the primitive being checked */
 {
     register int	n;		/* number of roots found	*/
-    LOCAL fastf_t	factor;		/* scaling factor for copy	*/
+    fastf_t	factor;		/* scaling factor for copy	*/
 
     /* Remove leading coefficients which are too close to zero,
      * to prevent the polynomial factoring from blowing up, below.
