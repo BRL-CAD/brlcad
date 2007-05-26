@@ -37,8 +37,6 @@
 @endcode
  *
  *  although not doing this should not be fatal.
- *
- *	$Header$
  */
 #ifndef	PLOT3_H
 #define	PLOT3_H

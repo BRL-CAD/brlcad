@@ -33,10 +33,6 @@
  *	The U. S. Army Research Laboratory
  * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-#define PKG_H_VERSION "@(#)$Header$ (ARL)"
-#endif
-
 #ifndef PKG_H_SEENYET
 #define PKG_H_SEENYET
 

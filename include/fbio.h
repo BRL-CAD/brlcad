@@ -26,8 +26,6 @@
  *
  * @par Source
  *	BRL-CAD Open Source
- *
- *  $Header$
  */
 
 #ifndef __FBIO_H__

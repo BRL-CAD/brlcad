@@ -45,8 +45,6 @@
  *
  *  @par Libraries Used -
  *	LIBRT LIBRT_LIBES -lm -lc
- *
- *  $Header$
  */
 #ifndef NMG_H
 #define NMG_H seen

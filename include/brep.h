@@ -32,8 +32,6 @@
  * 	SECAD/VLD Computing Consortium, Bldg 394
  *@n	The U.S. Army Ballistic Research Laboratory
  *@n 	Aberdeen Proving Ground, Maryland 21005
- *
- *  $Header$
  */
 
 #ifndef BREP_H

@@ -31,8 +31,6 @@
  *  @par Source
  *	The U. S. Army Research Laboratory
  *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *  $Header$
  */
 #ifndef DB5_H
 #define DB5_H seen

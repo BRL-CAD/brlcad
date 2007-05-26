@@ -58,8 +58,6 @@
  *
  *  Libraries Used -
  *	LIBRT LIBRT_LIBES -lm -lc
- *
- *  $Header$
  */
 
 #ifndef RAYTRACE_H
@@ -85,8 +83,6 @@ __BEGIN_DECLS
 #    define RT_EXPORT
 #  endif
 #endif
-
-#define RAYTRACE_H_VERSION	"@(#)$Header$ (BRL)"
 
 /*
  *				D E B U G
@@ -2160,8 +2156,6 @@ struct rt_shootray_status {
  *  @par Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *  $Header$
  */
 
 /* defining the following flag will improve NMG raytrace speed by eliminating some checking

@@ -83,8 +83,6 @@
  *
  * @par  Libraries Used
  *	-lm -lc
- *
- *  $Header$
  */
 
 #ifndef VMATH_H

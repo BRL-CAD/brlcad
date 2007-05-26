@@ -168,8 +168,6 @@
  *
  *  Libraries Used -
  *	LIBBU LIBBU_LIBES -lm -lc
- *
- *  $Header$
  */
 
 #ifndef MACHINE_H

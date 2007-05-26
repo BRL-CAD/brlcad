@@ -53,8 +53,6 @@
  *
  *  @par Libraries Used -
  *	-lm -lc
- *
- *  $Header$
  */
 #ifndef __BU_H__
 #define __BU_H__
@@ -80,9 +78,6 @@ __BEGIN_DECLS
 #    define BU_EXPORT
 #  endif
 #endif
-
-#define BU_H_VERSION	"@(#)$Header$ (BRL)"
-
 
 /** @def BU_DIR_SEPARATOR
  * define BU_DIR_SEPARATOR to the directory separator character

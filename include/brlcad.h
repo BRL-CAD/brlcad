@@ -32,8 +32,6 @@
  *
  *  @par Source
  *	BRL-CAD Open Source
- *
- *  $Header$
  */
 
 #ifndef __BRLCAD_H__

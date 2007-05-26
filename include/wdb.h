@@ -50,9 +50,10 @@
  *
  *  Libraries Used -
  *	LIBWDB LIBRT LIBRT_LIBES -lm -lc
- *
- *  $Header$
  */
+#ifndef WDB_H
+#define WDB_H seen
+
 #ifndef SEEN_BU_H
 # include "bu.h"
 #endif
@@ -68,9 +69,6 @@
 #ifndef SEEN_RTGEOM_H
 # include "rtgeom.h"
 #endif
-
-#ifndef WDB_H
-#define WDB_H seen
 
 __BEGIN_DECLS
 

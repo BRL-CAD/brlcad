@@ -36,7 +36,6 @@
 	#include <stdio.h>
 	#include "termio.h"
 @endcode
- *  $Header$
  */
 
 void clr_Cbreak( int fd );

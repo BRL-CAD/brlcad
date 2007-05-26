@@ -62,8 +62,6 @@
  *
  *  @par Libraries Used -
  *	-lm -lc
- *
- *  $Header$
  */
 #ifndef __BN_H__
 #define __BN_H__
@@ -89,9 +87,6 @@ __BEGIN_DECLS
 #    define BN_EXPORT
 #  endif
 #endif
-
-#define BN_H_VERSION	"@(#)$Header$ (BRL)"
-
 
 #define BN_AZIMUTH 0
 #define BN_ELEVATION 1
