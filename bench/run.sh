@@ -211,10 +211,9 @@ look_for ( ) {
     if test "x${look_for_var_val}" = "x" ; then
 	for look_for_dir in $look_for_dirs ; do
 
-	    if test "x$DEBUG" != "x" ; then
-		$ECHO "searching ${look_for_dir}"
-		ls -lad ${look_for_dir}
-	    fi
+	    $VERBOSE_ECHO "searching ${look_for_dir}"
+	    $VERBOSE_ECHO "`ls -lad ${look_for_dir}`"
+
 	    opts="-r"
 	    case "x$look_for_type" in
 		xfile)
@@ -364,9 +363,7 @@ set_if_unset ( ) {
     set_if_unset_var_val="`eval ${set_if_unset_var}`"
     if test "x${set_if_unset_var_val}" = "x" ; then
 	set_if_unset_var="${set_if_unset_name}=\"${set_if_unset_val}\""
-	if test "x$DEBUG" != "x" ; then
-	    $ECHO $set_if_unset_var
-	fi
+	$VERBOSE_ECHO $set_if_unset_var
 	eval $set_if_unset_var
 	export $set_if_unset_name
     fi
@@ -450,9 +447,7 @@ run ( ) {
     run_args="$*"
     run_view="`cat`"
 
-    if test "x$DEBUG" != "x" ; then
-	$ECHO "DEBUG: Running $RT -B -M -s512 -H${run_hypersample} -J0 ${run_args} -o ${run_geomname}.pix ${DB}/${run_geomname}.g ${run_geometry}"
-    fi
+    $VERBOSE_ECHO "DEBUG: Running $RT -B -M -s512 -H${run_hypersample} -J0 ${run_args} -o ${run_geomname}.pix ${DB}/${run_geomname}.g ${run_geometry}"
 
     $RT -B -M -s512 -H${run_hypersample} -J0 ${run_args} \
 	-o ${run_geomname}.pix \
@@ -460,9 +455,7 @@ run ( ) {
 $run_view
 EOF
     retval=$?
-    if test "x$DEBUG" != "x" ; then
-	$ECHO "DEBUG: Running $RT returned $retval"
-    fi
+    $VERBOSE_ECHO "DEBUG: Running $RT returned $retval"
     return $retval
 }
 
@@ -651,9 +644,7 @@ bench ( ) {
 	$ECHO "ERROR: argument mismatch, bench is missing the test geometry"
 	return 1
     fi
-    if test "x$DEBUG" != "x" ; then
-	$ECHO "DEBUG: Beginning bench testing on $bench_testname using $bench_geometry"
-    fi
+    $VERBOSE_ECHO "DEBUG: Beginning bench testing on $bench_testname using $bench_geometry"
 
     bench_view="`cat`"
 
@@ -696,15 +687,11 @@ EOF
 	    if test "x$bench_hypersample" = "x0" ; then
 
 		# just finished the first frame
-		if test "x$DEBUG" != "x" ; then
-		    $ECHO "DEBUG: ${bench_elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $bench_elapsed` pixels/s (inexact wallclock)"
-		fi
+		$VERBOSE_ECHO "DEBUG: ${bench_elapsed}s real elapsed,	1 ray/pixel,	`expr 262144 / $bench_elapsed` pixels/s (inexact wallclock)"
 		bench_hypersample=1
 		bench_frame="`expr $bench_frame + 1`"
 	    else
-		if test "x$DEBUG" != "x" ; then
-		    $ECHO "DEBUG: ${bench_elapsed}s real elapsed,	`expr $bench_hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $bench_hypersample + 1 \) / $bench_elapsed \)` pixels/s (inexact wallclock)"
-		fi
+		$VERBOSE_ECHO "DEBUG: ${bench_elapsed}s real elapsed,	`expr $bench_hypersample + 1` rays/pixel,	`expr \( 262144 \* \( $bench_hypersample + 1 \) / $bench_elapsed \)` pixels/s (inexact wallclock)"
 
 
 		# increase the number of rays exponentially if we are
@@ -772,7 +759,7 @@ EOF
 	    bench_percent=`echo $bench_deviation $bench_rtfm | awk '{print int(($1 / $2 * 100)+0.5)}'`
 	fi
 
-	if test "x$DEBUG" != "x" ; then
+	if test "x$VERBOSE" != "x" ; then
 	    bench_vals="`getvals $AVERAGE $bench_rtfms`"
 	    bench_avg="`average $bench_vals`"
 	    if test $bench_avg -eq 0 ; then
@@ -780,7 +767,7 @@ EOF
 	    else
 		bench_avgpercent=`echo $bench_deviation $bench_avg | awk '{print $1 / $2 * 100}'`
 	    fi
-	    $ECHO "DEBUG: average=$bench_avg ; variance=$bench_variance ; deviation=$bench_deviation ($bench_avgpercent%) ; last run was ${bench_percent}%"
+	    $VERBOSE_ECHO "DEBUG: average=$bench_avg ; variance=$bench_variance ; deviation=$bench_deviation ($bench_avgpercent%) ; last run was ${bench_percent}%"
 	fi
 
 	# early exit if we have a stable number
@@ -813,9 +800,7 @@ EOF
 	$ECHO ${bench_testname}.pix:  BENCHMARK COMPARISON FAILURE
     fi
 
-    if test "x$DEBUG" != "x" ; then
-	$ECHO "DEBUG: Done benchmark testing on $bench_testname"
-    fi
+    $VERBOSE_ECHO "DEBUG: Done benchmark testing on $bench_testname"
     return $retval
 }
 
