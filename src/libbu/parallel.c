@@ -814,7 +814,7 @@ bu_parallel( func, ncpu, arg )
 #  endif	/* SUNOS */
 
 #  ifdef sgi
-    memset(worker_pid_tbl, 0, MAX_PSW * sizeof(rt_thread_t));
+    memset(worker_pid_tbl, 0, MAX_PSW * sizeof(int));
 #  endif
 
     if( bu_debug & BU_DEBUG_PARALLEL )
