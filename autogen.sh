@@ -336,7 +336,7 @@ if test ! x$? = x0 ; then
     echo "INTERNAL ERROR: grep command is required"
     exit 1
 fi
-echo "test" | sed "s/test/test" > /dev/null 2>&1
+echo "test" | sed "s/test/test/" > /dev/null 2>&1
 if test ! x$? = x0 ; then
     echo "INTERNAL ERROR: sed command is required"
     exit 1
