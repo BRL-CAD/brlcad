@@ -59,7 +59,7 @@ environment:
 .PP
 \&
 .B RT
-\- the rt binary (e.g. ../src/rt/rt or /usr/brlcad/bin/rt)
+\- the ray-trace binary (e.g. ../src/rt/rt or /usr/brlcad/bin/rt)
 .br
 \&
 .B DB
@@ -75,7 +75,7 @@ environment:
 .br
 \&
 .B CMP
-\- the name of a pixcmp tool (e.g. ./pixcmp or cmp)
+\- the name of a pixel comparison tool (e.g. ./pixcmp or cmp)
 .br
 \&
 .B ELP
@@ -83,7 +83,7 @@ environment:
 .br
 \&
 .B TIMEFRAME
-\- the minimum number of seconds each trace needs to take
+\- the minimum number of seconds each ray-trace frame should take
 .br
 \&
 .B MAXTIME
@@ -98,8 +98,12 @@ environment:
 \- how many frames to average together
 .br
 \&
-.B DEBUG
-\- turn on extra debug output for testing/development
+.B VERBOSE
+\- turn on extra debug output for testing/development (set to 'yes')
+.br
+\&
+.B QUIET
+\- turn off all output (set to 'yes')
 .PP
 The \fITIMEFRAME\fR, \fIMAXTIME\fR, \fIDEVIATION\fR, and \fIAVERAGE\fR options control how the
 benchmark will proceed including how long it should take.  Each
@@ -118,14 +122,17 @@ frame.
 Plese send your BRL-CAD Benchmark results to the developers along with
 detailed system information to <devs@brlcad.org>.  Include at least:
 .PP
-   0) Operating system type and version (e.g. uname -a)
-   1) Compiler name and version (e.g. gcc --version)
-   2) CPU configuration (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
-   3) Cache (data and/or instruction) details for L1/L2/L3 and system
+   0) Compiler name and version (e.g. gcc --version)
+   1) CPU configuration (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
+   2) Cache (data and/or instruction) details for L1/L2/L3 and system
       (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
-   4) Output from this script (e.g. ./run.sh > run.sh.log 2>&1)
-   5) All generated log files (e.g. *.log* after running run.sh)
-   6) Anything else you think might be relevant to performance
+   3) All generated log files (i.e. *.log* after benchmark completes)
+   4) Anything else you think might be relevant to performance
+.PP
+When the benchmark completes, output should be saved to several log
+files including a 'summary' file containing tabulated results, a
+'*benchmark.log' file containing the output from a given run, and
+multiple log files for each test frame.
 .SH "SEE ALSO"
 brlcad(1), rt(1), pix-fb(1), librt(3), pix(5).
 .SH AUTHOR

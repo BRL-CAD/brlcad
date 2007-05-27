@@ -82,14 +82,12 @@
 # with detailed system information to <devs@brlcad.org>.  Include at
 # least:
 #
-#   0) Operating system type and version (e.g. uname -a)
-#   1) Compiler name and version (e.g. gcc --version)
-#   2) CPU configuration (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
-#   3) Cache (data and/or instruction) details for L1/L2/L3 and system
+#   0) Compiler name and version (e.g. gcc --version)
+#   1) CPU configuration (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
+#   2) Cache (data and/or instruction) details for L1/L2/L3 and system
 #      (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
-#   4) Output from this script (e.g. ./run.sh > run.sh.log 2>&1)
-#   5) All generated log files (e.g. *.log* after running run.sh)
-#   6) Anything else you think might be relevant to performance
+#   3) All generated log files (i.e. *.log* after benchmark completes)
+#   4) Anything else you think might be relevant to performance
 #
 # Authors -
 #  Mike Muuss
@@ -151,6 +149,16 @@ case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
     *)       ECHO_N= ECHO_C='\c' ECHO_T= ;;
 esac
 
+# where to write results
+LOGFILE=run-$$-benchmark.log
+touch "$LOGFILE"
+if test ! -w "$LOGFILE" ; then
+    if test ! "x$LOGFILE" = "x/dev/null" ; then
+	echo "ERROR: Unable to log to $LOGFILE"
+    fi
+    LOGFILE=/dev/null
+fi
+
 VERBOSE_ECHO=:
 ECHO=:
 if [ "x$QUIET" = "xyes" ] ; then
@@ -158,12 +166,25 @@ if [ "x$QUIET" = "xyes" ] ; then
 	echo "Verbose output quelled by quiet option.  Further output disabled."
     fi
 else
-    ECHO=echo
+    ECHO=log
     if [ "x$VERBOSE" = "xyes" ] ; then
 	echo "Verbose output enabled"
 	VERBOSE_ECHO=echo
     fi
 fi
+
+
+#######################
+# log to tty and file #
+#######################
+log ( ) {
+
+    # this routine writes the provided argument(s) to a log file as
+    # well as echoing them too.
+
+    echo "$*" >> "$LOGFILE"
+    echo "$*"
+}
 
 
 $ECHO "B R L - C A D   B E N C H M A R K"
@@ -172,13 +193,14 @@ $ECHO "================================="
 
 # recognize a cleanup command
 if test "x$1" = "xclobber" ; then
+    ECHO=echo
     $ECHO
     $ECHO "About to wipe out all pictures and binary files in `pwd`"
     $ECHO "Send SIGINT (type ^C) within 5 seconds to abort"
     sleep 5
     $ECHO
     for i in moss world star bldg391 m35 sphflake ; do
-	echo rm -f $i.log $i.pix $i.log.[0-9]* $i.pix.[0-9]*
+	$ECHO rm -f $i.log $i.pix $i.log.[0-9]* $i.pix.[0-9]*
 	rm -f $i.log $i.pix $i.log.[0-9]* $i.pix.[0-9]*
     done
     $ECHO
@@ -186,6 +208,10 @@ if test "x$1" = "xclobber" ; then
     exit 0
 fi
 
+$ECHO "Running $THIS on `date`"
+$ECHO "Logging output to $LOGFILE"
+$ECHO "`uname -a 2>&1`"
+$ECHO
 
 ########################
 # search for resources #
@@ -201,7 +227,7 @@ look_for ( ) {
     look_for_dirs="$*"
 
     if test "x$look_for_label" != "x" ; then
-	$ECHO  "Looking for $look_for_label"
+	$VERBOSE_ECHO  "Looking for $look_for_label"
     fi
 
     # get the value of the variable
@@ -210,9 +236,6 @@ look_for ( ) {
 
     if test "x${look_for_var_val}" = "x" ; then
 	for look_for_dir in $look_for_dirs ; do
-
-	    $VERBOSE_ECHO "searching ${look_for_dir}"
-	    $VERBOSE_ECHO "`ls -lad ${look_for_dir}`"
 
 	    opts="-r"
 	    case "x$look_for_type" in
@@ -239,7 +262,7 @@ look_for ( ) {
 	    done
 	    if test "x$look_for_failed" = "xno" ; then
 		if test "x$look_for_label" != "x" ; then
-		    $ECHO "...found $look_for_type ${look_for_dir}"
+		    $VERBOSE_ECHO "...found $look_for_type ${look_for_dir}"
 		fi
 		look_for_var_var="${look_for_var}=\"${look_for_dir}\""
 		eval $look_for_var_var
@@ -249,7 +272,7 @@ look_for ( ) {
 	done
     else
 	if test "x$look_for_label" != "x" ; then
-	    $ECHO "...using $look_for_var_val from $look_for_var variable setting"
+	    $VERBOSE_ECHO "...using $look_for_var_val from $look_for_var variable setting"
 	fi
     fi
 }
@@ -307,9 +330,6 @@ look_for script "a time elapsed utility" ELP \
     ${PATH_TO_THIS}/sh/elapsed.sh \
     ${PATH_TO_THIS}/../sh/elapsed.sh \
     ./elapsed.sh
-
-# end of searching, separate the output
-$ECHO
 
 
 #####################
@@ -1130,6 +1150,7 @@ if test "x$encourage_submission" = "xyes" ; then
     $ECHO
 fi
 
+$ECHO "Output was saved to $LOGFILE"
 $ECHO "Benchmark testing complete."
 
 # Local Variables:
