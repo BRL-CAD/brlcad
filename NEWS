@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-05-XX  Release 7.10.2                                     ---
 ----------------------------------------------------------------------
 
+* benchmark tool automatically logs all output to file - Sean Morrison
 * added 'clobber' cleanup command to benchmark tool - Sean Morrison
 * added NIST's Template Numerical Toolkit - Sean Morrison
 * prevent pix-png from writing png data to a tty - Sean Morrison
