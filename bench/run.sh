@@ -120,7 +120,7 @@ fi
 LC_ALL=C
 
 # commands that this script expects
-for __cmd in echo sed pwd ; do
+for __cmd in echo pwd ; do
     echo "test" | $__cmd > /dev/null 2>&1
     if test ! x$? = x0 ; then
 	echo "INTERNAL ERROR: $__cmd command is required"
@@ -135,6 +135,11 @@ fi
 echo "test" | tr "test" "test" > /dev/null 2>&1
 if test ! x$? = x0 ; then
     echo "INTERNAL ERROR: tr command is required"
+    exit 1
+fi
+echo "test" | sed "s/test/test/" > /dev/null 2>&1
+if test ! x$? = x0 ; then
+    echo "INTERNAL ERROR: sed command is required"
     exit 1
 fi
 

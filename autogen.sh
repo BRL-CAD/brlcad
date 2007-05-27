@@ -324,13 +324,24 @@ fi
 LC_ALL=C
 
 # commands that this script expects
-for __cmd in echo head tail sed pwd ; do
+for __cmd in echo head tail pwd ; do
     echo "test" | $__cmd > /dev/null 2>&1
     if [ $? != 0 ] ; then
 	echo "INTERNAL ERROR: '${__cmd}' command is required"
 	exit 2
     fi
 done
+echo "test" | grep "test" > /dev/null 2>&1
+if test ! x$? = x0 ; then
+    echo "INTERNAL ERROR: grep command is required"
+    exit 1
+fi
+echo "test" | sed "s/test/test" > /dev/null 2>&1
+if test ! x$? = x0 ; then
+    echo "INTERNAL ERROR: sed command is required"
+    exit 1
+fi
+
 
 # determine the behavior of echo
 case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
