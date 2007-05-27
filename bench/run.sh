@@ -192,19 +192,62 @@ $ECHO "================================="
 
 
 # recognize a cleanup command
-if test "x$1" = "xclobber" ; then
+case "x$1" in
+    xclean)
+	CLEAN=1
+	;;
+    xclobber)
+	CLEAN=1
+	CLOBBER=1
+	;;
+esac
+
+if test "x$CLEAN" = "x1" ; then
     ECHO=echo
+    rm -f "$LOGFILE"
     $ECHO
-    $ECHO "About to wipe out all pictures and binary files in `pwd`"
-    $ECHO "Send SIGINT (type ^C) within 5 seconds to abort"
-    sleep 5
+    if test "x$CLOBBER" = "x1" ; then
+	$ECHO "About to wipe out all benchmark images and log files in `pwd`"
+	$ECHO "Send SIGINT (type ^C) within 5 seconds to abort"
+	sleep 5
+    else
+	$ECHO "Deleting most benchmark images and log files in `pwd`"
+    fi
     $ECHO
+
     for i in moss world star bldg391 m35 sphflake ; do
 	$ECHO rm -f $i.log $i.pix $i.log.[0-9]* $i.pix.[0-9]*
 	rm -f $i.log $i.pix $i.log.[0-9]* $i.pix.[0-9]*
     done
+    if test "x$CLOBBER" = "x1" ; then
+	# NEVER automatically delete the summary file, but go ahead with the rest
+	for i in run-[0-9]*-benchmark.log ; do
+	    $ECHO rm -f $i
+	    rm -f $i
+	done
+    fi
+
+    printed=no
+    for i in summary run-[0-9]*-benchmark.log ; do
+	if test -f "$i" ; then
+	    if test "x$printed" = "xno" ; then
+		$ECHO
+		$ECHO "The following files must be removed manually:"
+		printed=yes
+	    fi
+	    $ECHO $ECHO_N "$i " $ECHO_C
+	fi
+    done
+    if test "x$printed" = "xyes" ; then
+	$ECHO
+    fi
+
     $ECHO
-    $ECHO "Benchmark clobber complete."
+    if test "x$CLOBBER" = "x1" ; then
+	$ECHO "Benchmark clobber complete."
+    else
+	$ECHO "Benchmark clean complete."
+    fi
     exit 0
 fi
 

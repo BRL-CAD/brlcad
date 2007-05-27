@@ -53,6 +53,13 @@ number is a simplified metric from which one may qualitatively compare
 cpu and cache performance, versions of BRL-CAD, and different compiler
 characteristics.
 .PP
+
+Run without any arguments or variables set, the benchmark suite will
+run a series of tests where it renders several image frames.  By
+default, the benchmark suite will attempt to calibrate the intensity
+of the test frames with the performance characteristics of the machine
+running the tests.
+.PP
 There are several environment variables that will modify how the
 BRL-CAD benchmark behaves so that it may be run in a stand-alone
 environment:
@@ -132,7 +139,15 @@ detailed system information to <devs@brlcad.org>.  Include at least:
 When the benchmark completes, output should be saved to several log
 files including a 'summary' file containing tabulated results, a
 '*benchmark.log' file containing the output from a given run, and
-multiple log files for each test frame.
+multiple log files for each test frame. Use the \fIclean\fR and
+\fIclobber\fR commands during execution to remove the files generated
+during the benchmark.
+.PP
+Clean removes the test pix and log files.  Clobber removes those same
+files as well as any *benchmark.log files encountered, prompting the
+user beforehand.  The generated tabular \fIsummary\fR file will not be
+removed automatically regardless of invocation command.  The
+\fIsummary\fR file must be manually deleted.
 .SH "SEE ALSO"
 brlcad(1), rt(1), pix-fb(1), librt(3), pix(5).
 .SH AUTHOR
