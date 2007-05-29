@@ -37,6 +37,7 @@
 #endif
 
 #include <vector>
+#include <list>
 
 #ifdef __cplusplus
 extern "C" {
@@ -95,223 +96,224 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 
 //--------------------------------------------------------------------------------
 // Bounding volume classes
-namespace brep {
-    inline void swap(fastf_t& a, fastf_t& b) {
-	fastf_t t = b;
-	b = a;
-	a = t;
-    }
+// namespace brep {
+//     inline void swap(fastf_t& a, fastf_t& b) {
+// 	fastf_t t = b;
+// 	b = a;
+// 	a = t;
+//     }
     
-    class BoundingVolume {	
-    public:
+//     class BoundingVolume {	
+//     public:
 
-	BoundingVolume(const point_t min, const point_t max);
-	BoundingVolume(const point_t mina, const point_t maxa, const point_t minb, const point_t maxb);
-	BoundingVolume(const BoundingVolume& bv);
-	virtual ~BoundingVolume();
+// 	BoundingVolume(const point_t min, const point_t max);
+// 	BoundingVolume(const point_t mina, const point_t maxa, const point_t minb, const point_t maxb);
+// 	BoundingVolume(const BoundingVolume& bv);
+// 	virtual ~BoundingVolume();
 
-	BoundingVolume& operator=(const BoundingVolume& bv);
+// 	BoundingVolume& operator=(const BoundingVolume& bv);
 
-	virtual bool is_leaf() const;
+// 	virtual bool is_leaf() const;
 
-	fastf_t width() const;
-	fastf_t height() const;
-	fastf_t depth() const;
-	void get_bbox(point_t min, point_t max) const;
+// 	fastf_t width() const;
+// 	fastf_t height() const;
+// 	fastf_t depth() const;
+// 	void get_bbox(point_t min, point_t max) const;
 
-	fastf_t surface_area() const;	
-	fastf_t combined_surface_area(const BoundingVolume& vol) const;
-	BoundingVolume combine(const BoundingVolume& vol) const;
+// 	fastf_t surface_area() const;	
+// 	fastf_t combined_surface_area(const BoundingVolume& vol) const;
+// 	BoundingVolume combine(const BoundingVolume& vol) const;
 
-	// slab intersection routine
-	bool intersected_by(struct xray* r);
-	bool intersected_by(struct xray* r, fastf_t* tnear, fastf_t* tfar);
+// 	// slab intersection routine
+// 	bool intersected_by(struct xray* r);
+// 	bool intersected_by(struct xray* r, fastf_t* tnear, fastf_t* tfar);
 
-	// Goldsmith & Salmon "Automatic generation of trees"
-	BoundingVolume* gs_insert(BoundingVolume* node);
+// 	// Goldsmith & Salmon "Automatic generation of trees"
+// 	BoundingVolume* gs_insert(BoundingVolume* node);
 	
-	std::list<BoundingVolume*> children;
+// 	std::list<BoundingVolume*> children;
 
-    private:
-	point_t _min;
-	point_t _max;
-	fastf_t _area;
-    };
+//     private:
+// 	point_t _min;
+// 	point_t _max;
+// 	fastf_t _area;
+//     };
 
-    class SurfaceBV : public BoundingVolume {
-    public:
+//     class SurfaceBV : public BoundingVolume {
+//     public:
 
-	SurfaceBV(const ON_BrepFace& face, 
-		  point_t min, point_t max, 
-		  const ON_Interval& u, 
-		  const ON_Interval& v, 
-		  bool checkTrim, 
-		  bool trimmed);
-	bool is_leaf() const; // override BoundingVolume::is_leaf();
-	const ON_BrepFace& face() const { return _face; }
-	const fastf_t u_center() const { return _u.Mid(); }
-	const fastf_t v_center() const { return _v.Mid(); }
-	const bool doTrimming() const { return _doTrim; }
-	const bool isTrimmed() const { return _isTrimmed; }
+// 	SurfaceBV(const ON_BrepFace& face, 
+// 		  point_t min, point_t max, 
+// 		  const ON_Interval& u, 
+// 		  const ON_Interval& v, 
+// 		  bool checkTrim, 
+// 		  bool trimmed);
+// 	bool is_leaf() const; // override BoundingVolume::is_leaf();
+// 	const ON_BrepFace& face() const { return _face; }
+// 	const fastf_t u_center() const { return _u.Mid(); }
+// 	const fastf_t v_center() const { return _v.Mid(); }
+// 	const bool doTrimming() const { return _doTrim; }
+// 	const bool isTrimmed() const { return _isTrimmed; }
 
-    private:
-	const ON_BrepFace& _face;
-	ON_Interval _u;
-	ON_Interval _v;
-	bool _doTrim;
-	bool _isTrimmed;
-    }; 
+//     private:
+// 	const ON_BrepFace& _face;
+// 	ON_Interval _u;
+// 	ON_Interval _v;
+// 	bool _doTrim;
+// 	bool _isTrimmed;
+//     }; 
     
-    //--------------------------------------------------------------------------------
-    // implementation
+//     //--------------------------------------------------------------------------------
+//     // implementation
     
-    inline
-    BoundingVolume::BoundingVolume(const point_t min, const point_t max)
-    {
-	VMOVE(_min, min);
-	VMOVE(_max, max);
-	_area = 2*width()*height() + 2*width()*depth() + 2*height()*depth();
-    }
+//     inline
+//     BoundingVolume::BoundingVolume(const point_t min, const point_t max)
+//     {
+// 	VMOVE(_min, min);
+// 	VMOVE(_max, max);
+// 	_area = 2*width()*height() + 2*width()*depth() + 2*height()*depth();
+//     }
 
-    inline
-    BoundingVolume::BoundingVolume(const point_t mina, const point_t maxa, const point_t minb, const point_t maxb)
-    {
-	VMOVE(_min,mina);
-	VMOVE(_max,maxa);
-	VMIN(_min,minb);
-	VMAX(_max,maxb);
-	_area = 2*width()*height() + 2*width()*depth() + 2*height()*depth();
-    }
+//     inline
+//     BoundingVolume::BoundingVolume(const point_t mina, const point_t maxa, const point_t minb, const point_t maxb)
+//     {
+// 	VMOVE(_min,mina);
+// 	VMOVE(_max,maxa);
+// 	VMIN(_min,minb);
+// 	VMAX(_max,maxb);
+// 	_area = 2*width()*height() + 2*width()*depth() + 2*height()*depth();
+//     }
 
-    inline BoundingVolume& 
-    BoundingVolume::operator=(const BoundingVolume& bv) {
-	VMOVE(_min,bv._min);
-	VMOVE(_max,bv._max);
-	_area = bv._area;
+//     inline BoundingVolume& 
+//     BoundingVolume::operator=(const BoundingVolume& bv) {
+// 	VMOVE(_min,bv._min);
+// 	VMOVE(_max,bv._max);
+// 	_area = bv._area;
 
-        return *this;
-    }
+//         return *this;
+//     }
 
-    inline 
-    BoundingVolume::~BoundingVolume() {
-	for (std::list<BoundingVolume*>::iterator i = children.begin(); i != children.end(); i++) {
-	    delete *i;
-	}
-    }
+//     inline 
+//     BoundingVolume::~BoundingVolume() {
+// 	for (std::list<BoundingVolume*>::iterator i = children.begin(); i != children.end(); i++) {
+// 	    delete *i;
+// 	}
+//     }
 
-    inline bool
-    BoundingVolume::is_leaf() const { return false; }
+//     inline bool
+//     BoundingVolume::is_leaf() const { return false; }
 
-    inline fastf_t
-    BoundingVolume::width() const { return _max[X]-_min[X]; }	
-    inline fastf_t
-    BoundingVolume::height() const { return _max[Y]-_min[Y]; }
-    inline fastf_t
-    BoundingVolume::depth() const { return _max[Z]-_min[Z]; }
+//     inline fastf_t
+//     BoundingVolume::width() const { return _max[X]-_min[X]; }	
+//     inline fastf_t
+//     BoundingVolume::height() const { return _max[Y]-_min[Y]; }
+//     inline fastf_t
+//     BoundingVolume::depth() const { return _max[Z]-_min[Z]; }
 
-    inline void 
-    BoundingVolume::get_bbox(point_t min, point_t max) const {
-	VMOVE(min, _min);
-	VMOVE(max, _max);
-    }
+//     inline void 
+//     BoundingVolume::get_bbox(point_t min, point_t max) const {
+// 	VMOVE(min, _min);
+// 	VMOVE(max, _max);
+//     }
     
-    inline bool 
-    BoundingVolume::intersected_by(struct xray* r) {
-	fastf_t tnear, tfar;
-	return intersected_by(r, &tnear, &tfar);
-    }
+//     inline bool 
+//     BoundingVolume::intersected_by(struct xray* r) {
+// 	fastf_t tnear, tfar;
+// 	return intersected_by(r, &tnear, &tfar);
+//     }
 
-    inline bool 
-    BoundingVolume::intersected_by(struct xray* r, fastf_t* tnear, fastf_t* tfar) {
-	*tnear = -MAX_FASTF;
-	*tfar = MAX_FASTF;
-	for (int i = 0; i < 3; i++) {
-	    if (NEAR_ZERO(r->r_dir[i],VUNITIZE_TOL)) {
-		if (r->r_pt[i] < _min[i] || r->r_pt[i] > _max[i])
-		    return false;
-	    }
-	    else {
-		fastf_t t1 = (_min[i]-r->r_pt[i]) / r->r_dir[i];
-		fastf_t t2 = (_max[i]-r->r_pt[i]) / r->r_dir[i];
-		if (t1 > t2) swap(t1,t2);
-		if (t1 > *tnear) *tnear = t1;
-		if (t2 < *tfar) *tfar = t2;
-		if (*tnear > *tfar) /* box is missed */ return false;
-		if (*tfar < 0) /* box is behind ray */ return false;
-	    }
-	}
-	return true;
-    }
+//     inline bool 
+//     BoundingVolume::intersected_by(struct xray* r, fastf_t* tnear, fastf_t* tfar) {
+// 	*tnear = -MAX_FASTF;
+// 	*tfar = MAX_FASTF;
+// 	for (int i = 0; i < 3; i++) {
+// 	    if (NEAR_ZERO(r->r_dir[i],VUNITIZE_TOL)) {
+// 		if (r->r_pt[i] < _min[i] || r->r_pt[i] > _max[i])
+// 		    return false;
+// 	    }
+// 	    else {
+// 		fastf_t t1 = (_min[i]-r->r_pt[i]) / r->r_dir[i];
+// 		fastf_t t2 = (_max[i]-r->r_pt[i]) / r->r_dir[i];
+// 		if (t1 > t2) swap(t1,t2);
+// 		if (t1 > *tnear) *tnear = t1;
+// 		if (t2 < *tfar) *tfar = t2;
+// 		if (*tnear > *tfar) /* box is missed */ return false;
+// 		if (*tfar < 0) /* box is behind ray */ return false;
+// 	    }
+// 	}
+// 	return true;
+//     }
 
-    inline fastf_t
-    BoundingVolume::surface_area() const { return _area; }
+//     inline fastf_t
+//     BoundingVolume::surface_area() const { return _area; }
     
-    inline fastf_t
-    BoundingVolume::combined_surface_area(const BoundingVolume& vol) const { 
-	BoundingVolume combined(_min,_max,vol._min,vol._max);
-	return combined.surface_area();
-    }
+//     inline fastf_t
+//     BoundingVolume::combined_surface_area(const BoundingVolume& vol) const { 
+// 	BoundingVolume combined(_min,_max,vol._min,vol._max);
+// 	return combined.surface_area();
+//     }
 
-    inline BoundingVolume
-    BoundingVolume::combine(const BoundingVolume& vol) const {
-	return BoundingVolume(_min,_max,vol._min,vol._max);
-    }
+//     inline BoundingVolume
+//     BoundingVolume::combine(const BoundingVolume& vol) const {
+// 	return BoundingVolume(_min,_max,vol._min,vol._max);
+//     }
 
-    BoundingVolume*
-    BoundingVolume::gs_insert(BoundingVolume* node)
-    {
-	// XXX todo - later!
-	if (is_leaf()) {
-	    // create a new parent 
-	} else {
+//     BoundingVolume*
+//     BoundingVolume::gs_insert(BoundingVolume* node)
+//     {
+// 	// XXX todo - later!
+// 	if (is_leaf()) {
+// 	    // create a new parent 
+// 	} else {
 
-	}
+// 	}
 
-        return this;
-    }
+//         return this;
+//     }
 
-    inline 
-    SurfaceBV::SurfaceBV(const ON_BrepFace& face, 
-			 point_t min, 
-			 point_t max, 
-			 const ON_Interval& u, 
-			 const ON_Interval& v,
-			 bool checkTrim,
-			 bool isTrimmed) 
-	: BoundingVolume(min,max), _face(face), _u(u), _v(v), _doTrim(checkTrim), _isTrimmed(isTrimmed)
-    {
-    }
+//     inline 
+//     SurfaceBV::SurfaceBV(const ON_BrepFace& face, 
+// 			 point_t min, 
+// 			 point_t max, 
+// 			 const ON_Interval& u, 
+// 			 const ON_Interval& v,
+// 			 bool checkTrim,
+// 			 bool isTrimmed) 
+// 	: BoundingVolume(min,max), _face(face), _u(u), _v(v), _doTrim(checkTrim), _isTrimmed(isTrimmed)
+//     {
+//     }
 
-    inline bool
-    SurfaceBV::is_leaf() const { return true; }
+//     inline bool
+//     SurfaceBV::is_leaf() const { return true; }
 
-    class IRecord {
-    public:
-	BoundingVolume* bv;
-	fastf_t dist;
+//     class IRecord {
+//     public:
+// 	BoundingVolume* bv;
+// 	fastf_t dist;
 
-	IRecord()
-	    : bv(NULL), dist(0.0) {}
+// 	IRecord()
+// 	    : bv(NULL), dist(0.0) {}
 
-	IRecord(BoundingVolume* bv, fastf_t dist) : bv(bv), dist(dist) {}
-	IRecord(const IRecord& r) : bv(r.bv), dist(r.dist) {}
+// 	IRecord(BoundingVolume* bv, fastf_t dist) : bv(bv), dist(dist) {}
+// 	IRecord(const IRecord& r) : bv(r.bv), dist(r.dist) {}
 	
-	IRecord& operator=(const IRecord& r) {
-	    bv = r.bv;
-	    dist = r.dist;
+// 	IRecord& operator=(const IRecord& r) {
+// 	    bv = r.bv;
+// 	    dist = r.dist;
 
-            return *this;
-	}
+//             return *this;
+// 	}
 	
-	bool operator<(const IRecord& r) {
-	    return dist < r.dist;
-	}	
-    };
-    typedef std::list<BoundingVolume*> BVList;
-    typedef std::list<IRecord> IsectList;
-};
+// 	bool operator<(const IRecord& r) {
+// 	    return dist < r.dist;
+// 	}	
+//     };
+//     typedef std::list<BoundingVolume*> BVList;
+//     typedef std::list<IRecord> IsectList;
+// };
 
-using namespace brep;
+// using namespace brep;
+using namespace brlcad;
 
 //--------------------------------------------------------------------------------
 // MATH / VECTOR ops
@@ -366,6 +368,11 @@ void move(pt2d_t a, pt2d_t b) {
     a[1] = b[1];
 }
 
+ON_Ray toXRay(struct xray* rp) {
+    ON_3dPoint pt(rp->r_pt);
+    ON_3dVector dir(rp->r_dir);
+    return ON_Ray(pt, dir);
+}
 
 //--------------------------------------------------------------------------------
 // specific
@@ -384,6 +391,9 @@ brep_specific_delete(struct brep_specific* bs)
     }
 }
 
+
+
+
 //--------------------------------------------------------------------------------
 // prep
 
@@ -393,19 +403,20 @@ brep_specific_delete(struct brep_specific* bs)
  * reasonable choice, for example).
  */
 void
-brep_bvh_subdivide(BoundingVolume* parent, const BVList& face_bvs)
+brep_bvh_subdivide(BBNode* parent, const std::list<SurfaceTree*>& face_trees)
 {
     // XXX this needs to handle a threshold and some reasonable space
     // partitioning
 //     for (BVList::const_iterator i = face_bvs.begin(); i != face_bvs.end(); i++) {
 // 	parent->gs_insert(*i);
 //     }
-    for (BVList::const_iterator i = face_bvs.begin(); i != face_bvs.end(); i++) {
-	parent->children.push_back(*i);
+    for (std::list<SurfaceTree*>::const_iterator i = face_trees.begin(); i != face_trees.end(); i++) {
+	parent->addChild((*i)->getRootNode());
     }
 }
 
-inline void distribute(const int count, const ON_3dVector* v, double x[], double y[], double z[])
+inline void 
+distribute(const int count, const ON_3dVector* v, double x[], double y[], double z[])
 {
     for (int i = 0; i < count; i++) {
 	x[i] = v[i].x;
@@ -414,97 +425,6 @@ inline void distribute(const int count, const ON_3dVector* v, double x[], double
     }
 }
 
-/**
- * Determine whether a given surface is flat enough, i.e. it falls
- * beneath our simple flatness constraints. The flatness constraint in
- * this case is a sampling of normals across the surface such that
- * the product of their combined dot products is close to 1.
- *
- * \Product_{i=1}^{7} n_i \dot n_{i+1} = 1
- *
- * Would be a perfectly flat surface. Generally something in the range
- * 0.8-0.9 should suffice (according to Abert, 2005).
- *
- *   	 +-------------------------+
- *	 |           	           |
- *	 |            +            |
- *	 |                         |
- *    V  |       +         +       |
- *	 |                         |
- *	 |            +            |
- *	 |                         |
- *	 +-------------------------+
- *                    U
- *                     
- * The "+" indicates the normal sample.
- */
-bool
-brep_is_flat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
-{
-    ON_3dVector normals[8];    
-
-    bool fail = false;
-    // corners    
-    if (!surf->EvNormal(u.Min(),v.Min(),normals[0]) ||
-	!surf->EvNormal(u.Max(),v.Min(),normals[1]) ||
-	!surf->EvNormal(u.Max(),v.Max(),normals[2]) ||
-	!surf->EvNormal(u.Min(),v.Max(),normals[3]) ||
-
-	// interior
-	!surf->EvNormal(u.ParameterAt(0.5),v.ParameterAt(0.25),normals[4]) ||
-	!surf->EvNormal(u.ParameterAt(0.75),v.ParameterAt(0.5),normals[5]) ||
-	!surf->EvNormal(u.ParameterAt(0.5),v.ParameterAt(0.75),normals[6]) ||
-	!surf->EvNormal(u.ParameterAt(0.25),v.ParameterAt(0.5),normals[7])) {
-	bu_bomb("Could not evaluate a normal on the surface"); // XXX fix this
-    }
-
-    double product = 1.0;
-
-#ifdef DO_VECTOR    
-    double ax[4] VEC_ALIGN;
-    double ay[4] VEC_ALIGN;
-    double az[4] VEC_ALIGN;
-
-    double bx[4] VEC_ALIGN;
-    double by[4] VEC_ALIGN;
-    double bz[4] VEC_ALIGN;
-
-    distribute(4, normals, ax, ay, az);
-    distribute(4, &normals[1], bx, by, bz);
-    
-    // how to get the normals in here?
-    {
-	dvec<4> xa(ax);
-	dvec<4> ya(ay);
-	dvec<4> za(az);
-	dvec<4> xb(bx);
-	dvec<4> yb(by);
-	dvec<4> zb(bz);
-	dvec<4> dots = xa * xb + ya * yb + za * zb;
-	product *= dots.foldr(1,dvec<4>::mul());
-	if (product < 0.0) return false;
-    }    
-    // try the next set of normals
-    {
-	distribute(3, &normals[4], ax, ay, az);
-	distribute(3, &normals[5], bx, by, bz);
-	dvec<4> xa(ax);
-	dvec<4> xb(bx);
-	dvec<4> ya(ay); 
-	dvec<4> yb(by);
-	dvec<4> za(az);
-	dvec<4> zb(bz);
-	dvec<4> dots = xa * xb + ya * yb + za * zb;
-	product *= dots.foldr(1,dvec<4>::mul(),3);
-    }
-#else
-    for (int i = 0; i < 7; i++) {
-	product *= (normals[i] * normals[i+1]);
-    }
-#endif
-
-    return product >= BREP_SURFACE_FLATNESS;
-}
 
 bool 
 brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
@@ -531,36 +451,16 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
     return intersections.Count() > 0 && (intersections.Count() % 2) == 0;
 }
 
-BoundingVolume*
-brep_surface_bbox(const ON_BrepFace& face, const ON_Interval& u, const ON_Interval& v)
-{
-    TRACE("brep_surface_bbox");
-    ON_3dPoint corners[4];
-    const ON_Surface* surf = face.SurfaceOf();
-
-    TRACE("  surf: " << surf);
-    if (!surf->EvPoint(u.Min(),v.Min(),corners[0]) ||
-	!surf->EvPoint(u.Max(),v.Min(),corners[1]) ||
-	!surf->EvPoint(u.Max(),v.Max(),corners[2]) ||
-	!surf->EvPoint(u.Min(),v.Max(),corners[3])) {
-	bu_bomb("Could not evaluate a point on surface"); // XXX fix this message
-    }
-
-    point_t min, max;
-    VSETALL(min, MAX_FASTF);
-    VSETALL(max, -MAX_FASTF);
-    for (int i1 = 0; i1 < 4; i1++) 
-	VMINMAX(min,max,((double*)corners[i1]));
-    TRACE("bb: " << ON_PRINT3(min) << " -> " << ON_PRINT3(max));
-    
+void 
+brep_preprocess_trims(const ON_BrepFace& face, const ON_Interval& u, const ON_Interval& v) {
     // check to see if this portion of the surface needs to be checked for trims
     pt2d_t test[] = {{u.Min(),v.Min()},
 		     {u.Max(),v.Min()},
 		     {u.Max(),v.Max()},
 		     {u.Min(),v.Max()}};
     int count = 0; 
-    for (int i2 = 0; i2 < 4; i2++) {
-	if (brep_pt_trimmed(test[0], face)) {
+    for (int i = 0; i < 4; i++) {
+	if (brep_pt_trimmed(test[i], face)) {
 	    count++;
 	}
     }
@@ -569,41 +469,15 @@ brep_surface_bbox(const ON_BrepFace& face, const ON_Interval& u, const ON_Interv
     ON_3dPoint uvmax(u.Max(),v.Max(),0);
     ON_BoundingBox bb(uvmin,uvmax);
     bool internalTrim = false;
-    for (int i3 = 0; i3 < face.Brep()->m_L.Count(); i3++) {
-	ON_BrepLoop& loop = face.Brep()->m_L[i3];
+    for (int i = 0; i < face.Brep()->m_L.Count(); i++) {
+	ON_BrepLoop& loop = face.Brep()->m_L[i];
 	// for each trim
 	for (int j = 0; j < loop.m_ti.Count(); j++) {	    
 	    ON_BrepTrim& trim = face.Brep()->m_T[loop.m_ti[j]];
 	    if (bb.Intersection(trim.m_pbox)) internalTrim = true;
 	}
     }
-    std::cout << "INTERNAL TRIM: " << internalTrim << std::endl;
-
-    return new SurfaceBV(face,min,max,u,v,count>0 || internalTrim, count==4);
-}
-
-BoundingVolume*
-brep_surface_subdivide(const ON_BrepFace& face, const ON_Interval& u, const ON_Interval& v, int depth)
-{
-    TRACE("brep_surface_subdivide");
-    const ON_Surface* surf = face.SurfaceOf();
-    BoundingVolume* parent = brep_surface_bbox(face, u, v);
-    if (brep_is_flat(surf, u, v) || depth >= BREP_MAX_FT_DEPTH) {
-	return parent;
-    } else {
-	BoundingVolume* quads[4];
-	ON_Interval first(0,0.5);
-	ON_Interval second(0.5,1.0);
-	quads[0] = brep_surface_subdivide(face, u.ParameterAt(first),  v.ParameterAt(first),  depth+1);
-	quads[1] = brep_surface_subdivide(face, u.ParameterAt(second), v.ParameterAt(first),  depth+1);
-	quads[2] = brep_surface_subdivide(face, u.ParameterAt(second), v.ParameterAt(second), depth+1);
-	quads[3] = brep_surface_subdivide(face, u.ParameterAt(first),  v.ParameterAt(second), depth+1);
-
-	for (int i = 0; i < 4; i++)
-	    parent->children.push_back(quads[i]);
-
-	return parent;
-    }
+    std::cout << "INTERNAL TRIM: " << internalTrim << std::endl;    
 }
 
 int
@@ -616,32 +490,31 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 	return -1;
     }
 
-    point_t min, max;
-    brep->GetBBox(min, max);
-
-    bs->bvh = new BoundingVolume(min,max);
+    bs->bvh = new BBNode(brep->BoundingBox());
 
     // need to extract faces, and build bounding boxes for each face,
     // then combine the face BBs back up, combining them together to
     // better split the hierarchy
-    BVList surface_bvs;
+    std::list<SurfaceTree*> surface_trees;
     ON_BrepFaceArray& faces = brep->m_F;
     for (int i = 0; i < faces.Count(); i++) {
         TRACE("Face: " << i);
 	ON_BrepFace& face = faces[i];
-	const ON_Surface* surf = face.SurfaceOf();
-	TRACE("Surf: " << surf);
+// 	const ON_Surface* surf = face.SurfaceOf();
+// 	TRACE("Surf: " << surf);
 
-	ON_Interval u = surf->Domain(0);
-	ON_Interval v = surf->Domain(1);
-	BoundingVolume* bv = brep_surface_subdivide(face, u, v, 0);
+// 	ON_Interval u = surf->Domain(0);
+// 	ON_Interval v = surf->Domain(1);
+// 	BoundingVolume* bv = brep_surface_subdivide(face, u, v, 0);
+
+	SurfaceTree* st = new SurfaceTree(&face);
 
 	// add the surface bounding volumes to a list, so we can build
 	// down a hierarchy from the brep bounding volume
-	surface_bvs.push_back(bv);
+	surface_trees.push_back(st);
     }
 
-    brep_bvh_subdivide(bs->bvh, surface_bvs);
+    brep_bvh_subdivide(bs->bvh, surface_trees);
 
     return 0;
 }
@@ -696,7 +569,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 
     point_t adjust;
     VSETALL(adjust,0.02);
-    bs->bvh->get_bbox(stp->st_min, stp->st_max);
+    bs->bvh->GetBBox(stp->st_min, stp->st_max);
     // expand outer bounding box...
     VSUB2(stp->st_min,stp->st_min,adjust);
     VADD2(stp->st_max,stp->st_max,adjust);
@@ -735,21 +608,22 @@ public:
     fastf_t d2;
 };
 
-void brep_intersect_bv(IsectList& inters, struct xray* r, BoundingVolume* bv) 
-{
-    fastf_t tnear, tfar;
-    bool intersects = bv->intersected_by(r,&tnear,&tfar);
-    if (intersects && bv->is_leaf() && !dynamic_cast<SurfaceBV*>(bv)->isTrimmed()) {
-	inters.push_back(IRecord(bv,tnear));
-    }
-    else if (intersects)
-	for (BVList::iterator i = bv->children.begin(); i != bv->children.end(); i++) {
-	    brep_intersect_bv(inters, r, *i);
-	}
-}
+// void 
+// brep_intersect_bv(IsectList& inters, struct xray* r, BoundingVolume* bv) 
+// {
+//     fastf_t tnear, tfar;
+//     bool intersects = bv->intersected_by(r,&tnear,&tfar);
+//     if (intersects && bv->is_leaf() && !dynamic_cast<SurfaceBV*>(bv)->isTrimmed()) {
+// 	inters.push_back(IRecord(bv,tnear));
+//     }
+//     else if (intersects)
+// 	for (BVList::iterator i = bv->children.begin(); i != bv->children.end(); i++) {
+// 	    brep_intersect_bv(inters, r, *i);
+// 	}
+// }
 
-
-void brep_get_plane_ray(struct xray* r, plane_ray& pr)
+void 
+brep_get_plane_ray(struct xray* r, plane_ray& pr)
 {
     vect_t v1;
     VMOVE(v1, r->r_dir);
@@ -821,7 +695,7 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
 }
 
 bool 
-brep_intersect(const SurfaceBV* sbv, const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv, plane_ray& pr, brep_hit** hit)
+brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv, plane_ray& pr, brep_hit** hit)
 {
     bool found = false;
     fastf_t Dlast = MAX_FASTF;
@@ -886,8 +760,10 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     struct brep_specific* bs = (struct brep_specific*)stp->st_specific;
 
     // check the hierarchy to see if we have a hit at a leaf node
-    IsectList inters;
-    brep_intersect_bv(inters, rp, bs->bvh);
+    BBNode::IsectList inters;
+    ON_Ray r = toXRay(rp);
+    bs->bvh->intersectsHierarchy(r, &inters);
+    //brep_intersect_bv( inters, rp, bs->bvh);
     inters.sort();
     TRACE("found " << inters.size() << " intersections!");
 
@@ -897,12 +773,12 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     brep_get_plane_ray(rp, pr);    
 
     HitList hits;
-    for (IsectList::iterator i = inters.begin(); i != inters.end(); i++) {	
-	const SurfaceBV* sbv = dynamic_cast<SurfaceBV*>((*i).bv);
-	const ON_BrepFace& f = sbv->face();
+    for (BBNode::IsectList::iterator i = inters.begin(); i != inters.end(); i++) {
+	const SubsurfaceBBNode* sbv = dynamic_cast<SubsurfaceBBNode*>((*i).m_node);
+	const ON_BrepFace& f = sbv->m_face;
 	const ON_Surface* surf = f.SurfaceOf();       
 	brep_hit* hit; 
-	pt2d_t uv = {sbv->u_center(),sbv->v_center()};
+	pt2d_t uv = {sbv->m_u.Mid(),sbv->m_v.Mid()};
 	if (brep_intersect(sbv, f, surf, uv, pr, &hit)) {
 	    hits.push_back(hit);
 	}
