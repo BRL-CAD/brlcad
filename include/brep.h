@@ -47,6 +47,7 @@ extern "C++" {
 #undef W
 #undef H
 #include "opennurbs.h"
+#include "opennurbs_ext.h"
 }
 extern "C" {
 #endif
@@ -62,10 +63,6 @@ typedef struct _on_brep_placeholder {
 #endif
 
     
-    /* Maximum per-surface BVH depth */
-#define BREP_MAX_FT_DEPTH 8
-    /* Surface flatness parameter, Abert says between 0.8-0.9 */
-#define BREP_SURFACE_FLATNESS 0.8
     /* Maximum number of newton iterations on root finding */
 #define BREP_MAX_ITERATIONS 10
     /* Root finding threshold */
@@ -79,10 +76,10 @@ typedef struct _bounding_volume_placeholder {
     int dummy;
 } BrepBoundingVolume;
 #else 
-namespace brep {
-    class BoundingVolume;
-};
-typedef class brep::BoundingVolume BrepBoundingVolume;
+/* namespace brlcad { */
+/*     class BBNode; */
+/* }; */
+typedef brlcad::BBNode BrepBoundingVolume;
 #endif
 
 typedef struct _brep_cdbitem {
@@ -97,6 +94,8 @@ struct brep_specific {
     ON_Brep* brep;
     BrepBoundingVolume* bvh;
 };
+
+
 
 #ifdef __cplusplus
 }
