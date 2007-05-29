@@ -4350,7 +4350,7 @@ int ON_Round(double x){
   return (x>=0.0) ? ((int)(x+0.5)) : -((int)(0.5-x));
 }
 
-inline bool
+bool
 ON_NearZero(double x, double tolerance) {
   return (x > -tolerance) && (x < tolerance);
 }

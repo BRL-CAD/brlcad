@@ -1488,5 +1488,6 @@ ON_DECL int ON_Min(int a, int b);
 
 ON_DECL int ON_Round(double x);
 
-ON_DECL bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
+ON_DECL 
+bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE); 
 #endif
