@@ -1,6 +1,5 @@
 
 #include "brlcad.hpp"
-#include "PullbackCurve.h"
 
 #define PT(p) p[0] << "," << p[1] << "," << p[2]
 
