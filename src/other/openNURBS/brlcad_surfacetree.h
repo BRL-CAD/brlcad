@@ -8,7 +8,7 @@ namespace brlcad {
   
   class SurfaceTree {
   public:
-    SurfaceTree(ON_Surface* surf);
+    SurfaceTree(ON_BrepFace* surf);
     ~SurfaceTree();
 
     BBNode* getRootNode();    
@@ -20,7 +20,7 @@ namespace brlcad {
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
     
   private:
-    ON_Surface* m_surf;
+    ON_BrepFace* m_face;
     BBNode* m_root;
   };
 

@@ -2,12 +2,14 @@
 
 namespace brlcad {
   
-  SurfaceTree::SurfaceTree(ON_Surface* surf) {
-
+  SurfaceTree::SurfaceTree(ON_BrepFace* surf) 
+    : m_face(surf)
+  {
+    // build the surface bounding volume hierarchy
   }
   
   SurfaceTree::~SurfaceTree() {
-
+    
   }
 
   BBNode* 
