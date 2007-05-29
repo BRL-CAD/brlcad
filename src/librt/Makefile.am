@@ -6,9 +6,10 @@ noinst_LTLIBRARIES = librt_nil.la
 
 if WITH_OPENNURBS
 
-BREP_SRCS = g_brep.cpp
+BREP_SRCS = g_brep.cpp opennurbs_ext.cpp
 BREP_TEST = brep_test
-BREP_CPPFLAGS = -DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
+BREP_CPPFLAGS = -msse -msse2 -DOBJ_BREP=1 $(TNT_CPPFLAGS) $(OPENNURBS_CPPFLAGS)
+BREP_LIBADD = $(OPENNURBS)
 
 brep_test_SOURCES = brep_test.cpp
 # cannot set per-target CPPFLAGS until automake 1.7+
@@ -16,13 +17,14 @@ brep_test_CXXFLAGS = ${SSE}
 brep_test_LDADD = \
 	librt.la ${RT_LIBS} \
 	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS}
+	${BU} ${BU_LIBS} 
 
 else # !WITH_OPENNURBS
 
 BREP_SRCS =
 BREP_TEST =
 BREP_CPPFLAGS =
+BREP_LIBADD = 
 
 endif # WITH_OPENNURBS
 
@@ -181,10 +183,12 @@ librt_nil_la_SOURCES = \
 EXTRA_librt_nil_la_SOURCES = \
 	g_brep.cpp
 
+librt_nil_la_LIBADD = ${BREP_LIBADD}
+
 librt_la_SOURCES =
 librt_la_LDFLAGS = -version-info 19:1
 librt_la_LIBADD = \
-	librt_nil.la
+	librt_nil.la 
 
 comb_SOURCES = comb.c
 comb_LDADD = \
