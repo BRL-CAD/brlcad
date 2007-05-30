@@ -29,6 +29,7 @@ namespace brlcad {
     ON_Interval u = surf->Domain(0);
     ON_Interval v = surf->Domain(1);
     m_root = subdivideSurface(*m_face, u, v, 0);
+    TRACE("m_root: " << m_root);
   }
   
   SurfaceTree::~SurfaceTree() {
@@ -36,7 +37,7 @@ namespace brlcad {
   }
 
   BBNode* 
-  SurfaceTree::getRootNode() {
+  SurfaceTree::getRootNode() const {
     return m_root;
   }
 
@@ -123,7 +124,7 @@ namespace brlcad {
    *	 |            +            |
    *	 |                         |
    *	 +-------------------------+
-   *                    U
+   *                  U
    *                     
    * The "+" indicates the normal sample.
    */
