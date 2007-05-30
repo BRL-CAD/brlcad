@@ -81,12 +81,12 @@ namespace brlcad {
     void addChild(BVNode<BV>* child);
     void removeChild(const BV& child);
     void removeChild(BVNode<BV>* child);
-    virtual bool isLeaf();
+    virtual bool isLeaf() const;
 
     void GetBBox(double* min, double* max);
 
     virtual bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
-    bool intersectsHierarchy(ON_Ray& ray, std::list<BVNode<BV>::segment>* results = 0);
+    virtual bool intersectsHierarchy(ON_Ray& ray, std::list<BVNode<BV>::segment>* results = 0);
   };
 
   template<class BV>
@@ -134,29 +134,41 @@ namespace brlcad {
 
   template<class BV>
   inline void 
-  BVNode<BV>::addChild(const BV& child) {}
+  BVNode<BV>::addChild(const BV& child) {
+    m_children.push_back(new BVNode<BV>(child));
+  }
 
   template<class BV>
   inline void 
-  BVNode<BV>::addChild(BVNode<BV>* child) {}
+  BVNode<BV>::addChild(BVNode<BV>* child) {
+    m_children.push_back(child);
+  }
 
   template<class BV>
   inline void 
-  BVNode<BV>::removeChild(const BV& child) {}
+  BVNode<BV>::removeChild(const BV& child) {
+    // XXX implement
+  }
 
   template<class BV>
   inline void 
-  BVNode<BV>::removeChild(BVNode<BV>* child) {}
+  BVNode<BV>::removeChild(BVNode<BV>* child) {
+    // XXX implement
+  }
 
   template<class BV>
   inline bool 
-  BVNode<BV>::isLeaf() { return false; }
+  BVNode<BV>::isLeaf() const { return false; }
   
   template<class BV>
   inline void
   BVNode<BV>::GetBBox(double* min, double* max) {
-    min = (double*)m_node.m_min;
-    max = (double*)m_node.m_max;
+    min[0] = m_node.m_min[0];
+    min[1] = m_node.m_min[1];
+    min[2] = m_node.m_min[2];
+    max[0] = m_node.m_max[0];
+    max[1] = m_node.m_max[1];
+    max[2] = m_node.m_max[2];
   }
 
   
@@ -185,7 +197,7 @@ namespace brlcad {
   }
 
   template<class BV>
-  inline bool
+  bool
   BVNode<BV>::intersectsHierarchy(ON_Ray& ray, std::list<BVNode<BV>::segment>* results_opt) {
     double tnear, tfar;
     bool intersects = intersectedBy(ray, &tnear, &tfar);
@@ -271,7 +283,7 @@ namespace brlcad {
     SurfaceTree(ON_BrepFace* face);
     ~SurfaceTree();
 
-    BBNode* getRootNode();    
+    BBNode* getRootNode() const;    
     /** 
      * Calculate, using the surface bounding volume hierarchy, a uv
      * estimate for the closest point on the surface to the point in
