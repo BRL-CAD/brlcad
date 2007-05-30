@@ -2781,11 +2781,23 @@ BU_EXPORT BU_EXTERN(struct bu_hash_entry *bu_hash_tbl_next,
 
 /* image utilities */
 
-#define BU_IMAGE_AUTO	0x00
-#define BU_IMAGE_PIX	0x01
-#define BU_IMAGE_BW	0x02
-#define BU_IMAGE_PNG	0x03
-#define BU_IMAGE_BMP	0x04
+enum {
+    BU_IMAGE_AUTO,
+    BU_IMAGE_PIX,
+    BU_IMAGE_BW,
+    BU_IMAGE_ALIAS,
+    BU_IMAGE_BMP,
+    BU_IMAGE_CI,
+    BU_IMAGE_ORLE,
+    BU_IMAGE_PNG,
+    BU_IMAGE_PPM,
+    BU_IMAGE_PS,
+    BU_IMAGE_RLE,
+    BU_IMAGE_SPM,
+    BU_IMAGE_SUN,
+    BU_IMAGE_YUV
+};
+
 
 #define BU_IMAGE_FILE_MAGIC 0x6269666d /* bifm */
 
