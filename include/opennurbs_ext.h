@@ -65,13 +65,13 @@ namespace brlcad {
   template<class BV>
   class BVNode {
   public:
-    BV m_node;
-
     typedef vector<BVNode<BV>*> ChildList;
-    ChildList m_children;
-    
     typedef BVSegment<BV> segment;
     typedef list<BVSegment<BV> > IsectList;
+
+    ChildList m_children;
+    BV m_node;
+    ON_3dPoint m_estimate;
 
     BVNode();
     BVNode(const BV& node);
@@ -83,10 +83,14 @@ namespace brlcad {
     void removeChild(BVNode<BV>* child);
     virtual bool isLeaf() const;
 
+    virtual ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
     void GetBBox(double* min, double* max);
 
     virtual bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
     virtual bool intersectsHierarchy(ON_Ray& ray, std::list<BVNode<BV>::segment>* results = 0);
+    
+  private:
+    BVNode<BV>* closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right);
   };
 
   template<class BV>
@@ -102,6 +106,7 @@ namespace brlcad {
     bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
     bool isLeaf() const;
     bool doTrimming() const;
+    ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
     
     const ON_BrepFace& m_face;
     ON_Interval m_u;
@@ -213,6 +218,27 @@ namespace brlcad {
       }
     }
   }
+  
+  template<class BV>
+  BVNode<BV>*
+  BVNode<BV>::closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right) {
+    double dist = pt.DistanceTo(left->m_estimate);
+    if (dist < pt.DistanceTo(right->m_estimate)) return left;
+    else return right;
+  }
+
+  template<class BV>
+  ON_2dPoint
+  BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt) {
+    if (m_children.size() > 0) {
+      BBNode* closestNode = m_children[0];
+      for (int i = 1; i < m_children.size(); i++) {
+	closestNode = closer(pt, closestNode, m_children[i]);
+      }
+      return closestNode->getClosestPointEstimate(pt);
+    } 
+    throw new exception();
+  }
 
   template<class BV>
   inline SubsurfaceBVNode<BV>::SubsurfaceBVNode(const BV& node, 
@@ -242,6 +268,41 @@ namespace brlcad {
   SubsurfaceBVNode<BV>::doTrimming() const {
     return m_checkTrim;
   }
+
+  template<class BV>
+  ON_2dPoint
+  SubsurfaceBVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt) {
+    double uvs[5][2] = {{m_u.Min(),m_v.Min()},  // include the corners for an easy refinement
+			{m_u.Max(),m_v.Min()},
+			{m_u.Max(),m_v.Max()},
+			{m_u.Min(),m_v.Max()},
+			{m_u.Mid(),m_v.Mid()}}; // include the estimate
+    ON_3dPoint corners[5];
+    const ON_Surface* surf = m_face.SurfaceOf();
+    
+    // XXX - pass these in from SurfaceTree::surfaceBBox() to avoid this recalculation?
+    if (!surf->EvPoint(uvs[0][0],uvs[0][1],corners[0]) ||
+	!surf->EvPoint(uvs[1][0],uvs[1][1],corners[1]) ||
+	!surf->EvPoint(uvs[2][0],uvs[2][1],corners[2]) ||
+	!surf->EvPoint(uvs[3][0],uvs[3][1],corners[3])) {
+      throw new exception(); // XXX - fix this
+    }
+    corners[4] = BVNode<BV>::m_estimate;
+			
+    // find the point on the surface closest to pt
+    int mini = 0;
+    double mindist = pt.DistanceTo(corners[mini]);
+    double tmpdist;
+    for (int i = 1; i < 5; i++) {      
+      tmpdist = pt.DistanceTo(corners[i]);
+      if (tmpdist < mindist) {
+	mini = i;
+	mindist = tmpdist;
+      }
+    }
+    return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
+  }
+
 
   /*                  p u l l b a c k _ c u r v e
    *

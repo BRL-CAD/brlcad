@@ -17,7 +17,7 @@ using namespace std;
 
 #define TRACE(m) cerr << m << endl;
 
-namespace brlcad {
+namespace brlcad {  
 
   //--------------------------------------------------------------------------------
   // SurfaceTree
@@ -41,10 +41,10 @@ namespace brlcad {
     return m_root;
   }
 
+
   ON_2dPoint
   SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt) {
-
-    return ON_2dPoint(0,0);
+    return m_root->getClosestPointEstimate(pt);
   }
 
   BBNode*
@@ -67,14 +67,27 @@ namespace brlcad {
     for (int i = 0; i < 4; i++) 
       VMINMAX(min,max,((double*)corners[i]));
             
+    // calculate the estimate point on the surface: i.e. use the point
+    // on the surface defined by (u.Mid(), v.Mid()) as a heuristic for
+    // finding the uv domain bounding a portion of the surface close
+    // to an arbitrary model-space point (see
+    // getClosestPointEstimate())
+    ON_3dPoint estimate;
+    if (!surf->EvPoint(u.Mid(),v.Mid(),estimate)) {
+      bu_bomb("Could not evaluate estimate point on surface");
+    }
+
+    BBNode* node;
     if (isLeaf) 
-      return new SubsurfaceBBNode(ON_BoundingBox(ON_3dPoint(min),
+      node = new SubsurfaceBBNode(ON_BoundingBox(ON_3dPoint(min),
 						 ON_3dPoint(max)), 
 				  face, 
 				  u, v);
     else 
-      return new BBNode(ON_BoundingBox(ON_3dPoint(min),
+      node = new BBNode(ON_BoundingBox(ON_3dPoint(min),
 				       ON_3dPoint(max)));
+    node->m_estimate = estimate;
+    return node;
   }
 
   BBNode*
