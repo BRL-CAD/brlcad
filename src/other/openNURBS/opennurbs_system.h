@@ -69,6 +69,15 @@
 #define ON_COMPILER_BORLAND
 #endif
 
+#if defined(sgi)
+#define ON_COMPILER_IRIX
+#endif
+
+#if defined(SUNOS)
+#define ON_COMPILER_SUN
+#endif
+
+
 /*
 // Define ON_NO_WINDOWS if you are compiling on a Windows system but want
 // to explicitly exclude inclusion of windows.h.
@@ -132,7 +141,7 @@
 #include <limits.h>
 #include <ctype.h>
 
-#if defined(ON_COMPILER_IRIX)
+#if defined(ON_COMPILER_IRIX) || defined(ON_COMPILER_SUN)
 #include <alloca.h>
 #endif
 
