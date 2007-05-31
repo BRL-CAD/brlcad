@@ -46,6 +46,8 @@ static const char RCSbadmagic[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "bu.h"
 
+#define MAGICBUFSIZ 512
+
 /**
  *			B U _ B A D M A G I C
  *@brief
@@ -54,20 +56,20 @@ static const char RCSbadmagic[] = "@(#)$Header$ (ARL)";
 void
 bu_badmagic(const long int *ptr, unsigned long int magic, const char *str, const char *file, int line)
 {
-	char	buf[512];
+	char	buf[MAGICBUFSIZ];
 
 	if( !(ptr) )  {
-		sprintf(buf, "ERROR: NULL %s pointer, file %s, line %d\n",
+		snprintf(buf, MAGICBUFSIZ, "ERROR: NULL %s pointer, file %s, line %d\n",
 			str, file, line );
 		bu_bomb(buf);
 	}
 	if( ((size_t)(ptr)) & (sizeof(long)-1) )  {
-		sprintf(buf, "ERROR: x%lx mis-aligned %s pointer, file %s, line %d\n",
+		snprintf(buf, MAGICBUFSIZ, "ERROR: x%lx mis-aligned %s pointer, file %s, line %d\n",
 			(long)ptr, str, file, line );
 		bu_bomb(buf);
 	}
 	if( *(ptr) != (long int)(magic) )  {
-		sprintf(buf, "ERROR: bad pointer x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
+		snprintf(buf, MAGICBUFSIZ, "ERROR: bad pointer x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
 			(long)ptr,
 			str, magic,
 			bu_identify_magic( *(ptr) ), *(ptr),

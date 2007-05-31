@@ -57,6 +57,8 @@ static const char libbu_bu_tcl_RCSid[] = "@(#)$Header$ (ARL)";
 #include "bn.h"
 #include "bu.h"
 
+#define TINYBUFSIZ	32
+#define SMALLBUFSIZ	256
 
 /* defined in libbu/cmdhist_obj.c */
 extern int Cho_Init(Tcl_Interp *interp);
@@ -110,16 +112,16 @@ bu_badmagic_tcl(Tcl_Interp	*interp,
 		const char	*file,
 		int		line)
 {
-	char	buf[256];
+	char	buf[SMALLBUFSIZ];
 
 	if (!(ptr)) {
-		sprintf(buf, "ERROR: NULL %s pointer in TCL interface, file %s, line %d\n",
+		snprintf(buf, SMALLBUFSIZ, "ERROR: NULL %s pointer in TCL interface, file %s, line %d\n",
 			str, file, line);
 		Tcl_AppendResult(interp, buf, NULL);
 		return;
 	}
 	if (*((long *)(ptr)) != (magic)) {
-		sprintf(buf, "ERROR: bad pointer in TCL interface x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
+		snprintf(buf, SMALLBUFSIZ, "ERROR: bad pointer in TCL interface x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
 			(long)ptr,
 			str, magic,
 			bu_identify_magic( *(ptr) ), *(ptr),
@@ -820,8 +822,8 @@ bu_get_value_by_keyword(ClientData	clientData,
 	int	i;
 
 	if( argc < 3 )  {
-		char	buf[32];
-		sprintf(buf, "%d", argc);
+		char	buf[TINYBUFSIZ];
+		snprintf(buf, TINYBUFSIZ, "%d", argc);
 		Tcl_AppendResult( interp,
 			"bu_get_value_by_keyword: wrong # of args (", buf, ").\n",
 			"Usage: bu_get_value_by_keyword iwant {list}\n",
@@ -848,8 +850,8 @@ bu_get_value_by_keyword(ClientData	clientData,
 	}
 
 	if( (listc & 1) != 0 )  {
-		char	buf[32];
-		sprintf(buf, "%d", listc);
+		char	buf[TINYBUFSIZ];
+		snprintf(buf, TINYBUFSIZ, "%d", listc);
 		Tcl_AppendResult( interp,
 			"bu_get_value_by_keyword: odd # of items in list (", buf, ").\n",
 			(char *)NULL );
@@ -941,8 +943,8 @@ bu_get_all_keyword_values(ClientData	clientData,
 	int	i;
 
 	if( argc < 2 )  {
-		char	buf[32];
-		sprintf(buf, "%d", argc);
+		char	buf[TINYBUFSIZ];
+		snprintf(buf, TINYBUFSIZ, "%d", argc);
 		Tcl_AppendResult( interp,
 			"bu_get_all_keyword_values: wrong # of args (", buf, ").\n",
 			"Usage: bu_get_all_keyword_values {list}\n",
@@ -966,8 +968,8 @@ bu_get_all_keyword_values(ClientData	clientData,
 	}
 
 	if( (listc & 1) != 0 )  {
-		char	buf[32];
-		sprintf(buf, "%d", listc);
+		char	buf[TINYBUFSIZ];
+		snprintf(buf, TINYBUFSIZ, "%d", listc);
 		Tcl_AppendResult( interp,
 			"bu_get_all_keyword_values: odd # of items in list (",
 			buf, "), aborting.\n",
