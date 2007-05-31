@@ -1,7 +1,7 @@
 # $Id$
 
 EXTRA_DIST = \
-	brlcad.iso \
+	brlcad.ico \
 	brlcad.nsi \
 	copying.txt \
 	header.bmp \
