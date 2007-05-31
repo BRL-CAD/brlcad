@@ -231,14 +231,6 @@ preparations.
 CONFIGURATION OPTIONS
 ---------------------
 
-By default, BRL-CAD is configured to build the entire package and will
-install completely isolated into the /usr/brlcad directory.
-Configuration will prepare the build for an unoptimized compilation by
-default and will attempt to utilize required system libraries if they
-are available, otherwise compiling the required library dependencies
-as needed.  Run `./configure --help' for a list of all of the possible
-configuration options.
-
 Variables can be set in the environment passed to `configure'.
 However, the build may run configure again during the build, and the
 customized values of these variables may be lost.  In order to avoid
@@ -249,6 +241,343 @@ using `VAR=value'.  For example:
 
 will cause the specified executable program to be used as the C
 compiler.
+
+By default, BRL-CAD is configured to build the entire package and will
+install completely isolated into the /usr/brlcad directory.
+Configuration will prepare the build for an unoptimized compilation by
+default and will attempt to utilize required system libraries if they
+are available, otherwise compiling the required library dependencies
+as needed.  Run `./configure --help' for a list of all of the possible
+configuration options.  See the ENABLE OPTIONS and WITH OPTIONS lists
+below for the arguments presently available to configure in more
+descriptive detail.
+
+ENABLE OPTIONS:
+
+The below --enable-* options can be used to enable or disable aspects
+of compilation that relate to what and how BRL-CAD will be compiled.
+Using --disable-* is the same as --enable-*=no and either can be used
+interchangably.  As BRL-CAD is a large bazaar of functionality, there
+are a lot of options and configurations possible.  See the section
+labeled WITH OPTIONS below for a list of options that enable/disable
+optional system functionality.
+
+--enable-almost-everything enables compilation of all 3rd party
+sources that are provided within a BRL-CAD source distribution.  If
+used, this option effectively turns on all of the below documented
+--enable-*-build options.  Default is "auto", 3rd party sources are
+compiled only if they are not detected as being available and
+functioning as expected.  Aliases:
+	--enable-all
+	--enable-all-build
+	--enable-build-all
+	--enable-all-builds
+	--enable-everything
+	--enable-everything-build
+	--enable-build-everything
+
+--enable-automatic-flags tells configure whether it is allowed to
+automatically modify compilation flags (e.g. extra optimization flags
+and other CFLAGS).  Default is "yes".  Aliases:
+	--enable-auto-flags
+	--enable-auto-flag
+	--enable-automatic-flag
+
+--enable-only-benchmark prepares the build system to only compile and
+install the minimal set of libraries and binaries needed to run the
+BRL-CAD Benchmark suite.  Default is "no".  Aliases:
+	--enable-only-bench
+	--enable-only-benchmarks
+	--enable-bench-only
+	--enable-benchmark-only
+	--enable-benchmarks-only
+
+--enable-only-rtserver prepares the build system to only compile and
+install the minimal set of libraries needed for the Java-interfacing
+"rtserver" interface (used by ARL for analysis purposes).  Default is
+"no".  Aliases:
+	--enable-only-rts
+	--enable-only-librtserver
+	--enable-rts-only
+	--enable-rtserver-only
+	--enable-librtserver-only
+
+--enable-runtime-debug enables support for application and library
+debugging facilities.  Disabling the run-time debugging facilities can
+provide a significant (10%-30%) performance boost at the expense of
+extensive error checking (that in turn help prevent corruption of your
+data).  Default is "yes", and should only be disabled for read-only
+render work where performance is critical.  Alises:
+	--enable-run-time-debug
+	--enable-runtime-debugging
+	--enable-run-time-debugging
+
+--enable-64bit-build attempts to force compilation to produce 64-bit
+binaries and libraries.  Default is "auto", where the default
+compilation mode as set by the compiler will be utilized.  Aliases:
+	--enable-64bit
+	--enable-64
+	--enable-64-build
+	--enable-64-bit
+	--enable-64-bit-build
+
+--enable-regex-build turns on compilation of the regular expression
+library that is provided in a BRL-CAD source distribution.  Default is
+"auto", meaning that libregex will be compiled and installed only if a
+suitable system regex library is not found.  Aliases:
+	--enable-regex
+	--enable-libregex
+	--enable-libregex-build
+
+--enable-png-build turns on compilation of the Portable Network
+Graphics library that is provided in a BRL-CAD source distribution.
+Default is "auto", meaning that libpng will be compiled and installed
+only if a suitable system PNG library is not found.  Aliases:
+	--enable-png
+	--enable-libpng
+	--enable-libpng-build
+
+--enable-zlib-build turns on compilation of the zlib library that is
+provided in a BRL-CAD source distribution.  Default is "auto", meaning
+that libz will be compiled and installed only if a suitable system
+zlib is not found.  Aliases:
+	--enable-zlib
+	--enable-libz
+	--enable-libz-build
+
+--enable-urt-build turns on compilation of the Utah Raster Toolkit
+that is provided in a BRL-CAD source distribution.  Default is "auto",
+meaning that libutahrle will be compiled and installed only if a
+suitable system rle library is not found.  Aliases:
+	--enable-urt
+	--enable-urtoolkit
+	--enable-urtoolkit-build
+	--enable-utahrle
+	--enable-utahrle-build
+	--enable-libutahrle
+	--enable-libutahrle-build
+	--enable-utah-raster-toolkit
+	--enable-utah-raster-toolkit-build
+
+--enable-opennurbs-build turns on compilation of the openNURBS library
+that is provided in a BRL-CAD source distribution.  Default is "auto",
+meaning that libopenNURBS will be compiled and installed only if a
+suitable system openNURBS library is not found.  Aliases:
+	--enable-opennurbs
+	--enable-libopennurbs
+	--enable-libopennurbs-build
+	--enable-open-nurbs
+	--enable-open-nurbs-build
+
+--enable-tcl-build turns on compilation of the Tcl library that is
+provided in a BRL-CAD source distribution.  Default is "auto", meaning
+that libtcl will be compiled and installed only if a suitable system
+Tcl library is not found.  Aliases:
+	--enable-tcl
+	--enable-libtcl
+	--enable-libtcl-build
+
+--enable-tk-build turns on compilation of the Tk library that is
+provided in a BRL-CAD source distribution.  Default is "auto", meaning
+that libtk will be compiled and installed only if a suitable system Tk
+library is not found.  Aliases:
+	--enable-tk
+	--enable-libtk
+	--enable-libtk-build
+
+--enable-itcl-build turns on compilation of the Incr Tcl/Tk library
+that is provided in a BRL-CAD source distribution.  Default is "auto",
+meaning that libitcl and libitk will be compiled and installed only if
+a suitable system library (for either) is not found.  Aliases:
+	--enable-itcl
+	--enable-itk
+	--enable-itk-build
+	--enable-libitcl
+	--enable-libitcl-build
+	--enable-libitk
+	--enable-libitk-build
+	--enable-incrtcl
+	--enable-incrtcl-build
+
+--enable-iwidgets-install turns on installation of the Iwidgets
+library that is provided in a BRL-CAD source distribution.  Default is
+"auto", meaning that the iwidgets tcl scripts will be installed only
+if a suitable system Iwidgets functionality is not found.  Aliases:
+	--enable-iwidgets
+	--enable-iwidgets-build
+
+--enable-blt-build turns on compilation of the Blt library that is
+provided in a BRL-CAD source distribution.  Default is "auto", meaning
+that libblt will be compiled and installed only if a suitable system
+Blt library is not found.  Aliases:
+	--enable-blt
+	--enable-libblt
+	--enable-libblt-build
+
+--enable-tkimg-build turns on compilation of the tkimg library that is
+provided in a BRL-CAD source distribution.  Default is "auto", meaning
+that libtkimg will be compiled and installed only if a suitable system
+tkimg library is not found.  Aliases:
+	--enable-tkimg
+	--enable-libtkimg
+	--enable-libtkimg-build
+
+--enable-termlib-build turns on compilation of the termlib library
+that is provided in a BRL-CAD source distribution.  Default is "auto",
+meaning that libtermlib will be compiled and installed only if a
+suitable system termcap or termlib library is not found.  Aliases:
+	--enable-termlib
+	--enable-termcap
+	--enable-termcap-build
+	--enable-libtermlib
+	--enable-libtermlib-build
+	--enable-libtermcap
+	--enable-libtermcap-build
+
+--enable-tnt-install turns on installation of the Template Numerical
+Toolkit that is provided in a BRL-CAD source distribution.  Default is
+"auto", meaning that the TNT headers will be installed only if
+suitable system TNT functionality is not found.  Aliases:
+	--enable-tnt
+	--enable-tnt-build
+	--enable-template-numerical-toolkit
+	--enable-template-numerical-toolkit-build
+	--enable-template-numerical-toolkit-install
+
+--enable-jove-build turns on compilation of Jonathan's Own Version of
+Emacs (jove), a lightweight text editor with functionality similar to
+Emacs but with different key bindings that is included in a BRL-CAD
+source distribution.  Default is "auto", meaning that jove will be
+compiled and installed only if suitable system editor functionality is
+not found.  Aliases:
+	--enable-jove
+
+--enable-ef-build turns on compilation of the Endgame Framework module
+used to provide BRL-CAD geometry import support to the Endgame
+Framework application development environment.  Default is "no".
+Aliases:
+	--enable-ef
+	--enable-endgameframework
+	--enable-endgameframework-build
+	--enable-endgame-framework
+	--enable-endgame-framework-build
+
+--enable-ug-build turns on compilation of the Unigraphics (NX)
+importer used to provide conversion support from Unigraphics format to
+a tessellated BRL-CAD geometry format.  Default is "no".  Aliases:
+	--enable-unigraphics
+	--enable-ug
+	--enable-ug-build
+	--enable-nx
+	--enable-nx-build
+
+--enable-adrt-build turns on compilation of the Advanced Distributed
+Ray-Tracer (ADRT), a high-performance triangle ray-tracer.  Default is
+"auto", depending on whether SDL and Python are detected during
+configuration.  Aliases:
+	--enable-adrt
+
+--enable-models-install turns on installation of provided example
+geometry models.  Default is "yes".  Aliases:
+	--enable-models
+	--enable-models-build
+	--enable-geometry
+	--enable-geometry-build
+	--enable-geometry-install
+
+--enable-optimized turns on optimized compilation.  Default is "no".
+Aliases:
+	--enable-opt
+	--enable-optimize
+	--enable-optimization
+	--enable-optimizations
+
+--enable-debug turns on debug compilation (debugging symbols).
+Default is "yes".  Aliases:
+	--enable-debugging
+
+--enable-profiling turns on profile compilation.  Default is "no".
+Aliases:
+	--enable-profile
+	--enable-profiled
+
+--enable-verbose turns on verbose compilation output effectively
+implying --enable-warnings and --enable-progress as described below.
+Default is "no".  Aliases:
+	--enable-verbosity
+	--enable-output-verbose
+	--enable-verbose-output
+	--enable-build-verbose
+	--enable-verbose-build
+
+--enable-warnings turns on verbose compilation warnings, causing
+additional compilation flags to be given to the compiler in order to
+provoke additional compilation warnings.  Default is "no".  Aliases:
+	--enable-warning
+	--enable-verbose-warnings
+	--enable-warnings-verbose
+	--enable-build-warnings
+	--enable-warnings-build
+
+--enable-progress turns on verbose compilation progress status,
+showing unquelled libtool compilation steps.  Default is "no".
+Aliases:
+	--enable-verbose-progress
+	--enable-progress-verbose
+	--enable-build-progress
+	--enable-progress-build
+
+WITH OPTIONS:
+
+The below --with-* options enable/disable/locate OPTIONAL SYSTEM
+FUNCTIONALITY that should be compiled against.  Contrary to the
+--enable-* options, none of the --with-* options are required to
+obtain a fully functional BRL-CAD install.  Using --without-* is the
+same as --with-*=no and either can be used interchangably (though be
+careful of options that expect a PATH instead of "no").  See the
+section labeled ENABLE OPTIONS above for a list of options that
+enable/disable all other aspects of BRL-CAD compilation.
+
+--with-jdk[=PATH] turns on compilation of code that requires the Java
+Development Kit.  The specified PATH should be provided.  Default is
+"auto" meaning that if suitable Java functionality is detected, then
+code that uses Java will be compiled (librtserver).  Aliases:
+	--with-java
+
+--with-proe is in flux with --enable-proe-build.  Consult the help for
+current information.
+
+--with-x11[=PATH] informs configure where X11 headers/libraries may be
+located.  Default is "auto" meaning that standard/common paths will be
+searched for X11 functionality.  Aliases:
+	--with-x
+
+--with-ogl informs configure that the OpenGL framebuffer and
+display manager interfaces should be compiled (and hence they should
+link against a system OpenGL library).  This option has absolutely
+nothing to do with shaded displays of geometry in MGED.  Default is
+"auto" meaning the interfaces will be automatically compiled if
+suitable OpenGL headers and libraries are found.  Aliases:
+	--with-opengl
+
+--with-wgl informs configure that it should attempt to compile the
+Windows GL framebuffer and display manager interfaces.  This option is
+hard-enabled in the MSVC build files for BRL-CAD.  Default is "auto"
+for configure meaning that the wgl interfaces will be compiled if the
+Windows opengl32 dll is found.  Aliases:
+	--with-windowsgl
+
+--with-sdl informs configure that it should run sdl-config to locate
+SDL functionality.  SDL IS ONLY USED BY ADRT (see above).  Default is
+"auto", and if Python is also found then compilation of ADRT can be
+enabled.  Aliases:
+	--with-libsdl
+
+--with-python informs configure that it should run python to locate
+Python functionality.  PYTHON IS ONLY USED BY ADRT (see above).
+Default is "auto", and if SDL is also found then compilation of ADRT
+can be enabled.  Aliases:
+	--with-libpython
 
 
 COMPILATION OPTIONS
