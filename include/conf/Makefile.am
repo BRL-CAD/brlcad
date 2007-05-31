@@ -7,7 +7,7 @@ COUNT: DATE HOST PATH USER
 	else \
 		test -f $@ || echo "1" > $@ ;\
 	fi
-	expr `cat COUNT` + 1 > $@
+	expr "`cat COUNT`" + 1 > $@
 
 DATE: HOST PATH USER
 	if test -f $(top_srcdir)/include/conf/DATE ; then \
