@@ -63,7 +63,7 @@ libfb_la_CFLAGS = \
 	$(IF_WGL_CFLAGS) \
 	${TCL_CPPFLAGS}
 
-libfb_la_LIBADD = @LIBSOCKET@ @LIBNSL@
+libfb_la_LIBADD = ${LIBSOCKET} ${LIBNSL}
 
 noinst_HEADERS = \
 	adage.h \
