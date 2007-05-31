@@ -1190,7 +1190,7 @@ bu_parallel( func, ncpu, arg )
 
 	if ( (ret = pthread_join(thread_tbl[x], NULL)) != 0) {
 	    /* badness happened */
-	    fprintf(stderr, "pthread_join(thread_tbl[%d]=0x%x) ret=%d\n", x, (unsigned int)thread_tbl[x], ret);
+	    fprintf(stderr, "pthread_join(thread_tbl[%d]=0x%x) ret=%d\n", x, (size_t)thread_tbl[x], ret);
 	}
 	nthreade++;
 	thread_tbl[x] = (rt_thread_t)-1;
