@@ -98,6 +98,59 @@ extern "C++" {
       (fabs(a.x()-b.x()) < VEQUALITY) &&
       (fabs(a.y()-b.y()) < VEQUALITY);
   }
+
+  //--------------------------------------------------------------------------------
+  // MATH / VECTOR ops
+  // XXX put in VMATH?
+  typedef fastf_t pt2d_t[2] VEC_ALIGN;
+  typedef fastf_t mat2d_t[4] VEC_ALIGN; // row-major 
+  inline
+  bool mat2d_inverse(mat2d_t inv, mat2d_t m) {
+    pt2d_t _a = {m[0],m[1]};
+    pt2d_t _b = {m[3],m[2]};
+    dvec<2> a(_a);
+    dvec<2> b(_b);
+    dvec<2> c = a*b;
+    fastf_t det = c.foldr(0,dvec<2>::sub());
+    if (NEAR_ZERO(det,VUNITIZE_TOL)) return false;
+    fastf_t scale = 1.0 / det;
+    double tmp[4] VEC_ALIGN = {m[3],-m[1],-m[2],m[0]};
+    dvec<4> iv(tmp);
+    dvec<4> sv(scale);
+    dvec<4> r = iv * sv;
+    r.a_store(inv);
+    return true;
+  }
+  inline 
+  void mat2d_pt2d_mul(pt2d_t r, mat2d_t m, pt2d_t p) {
+    pt2d_t _a = {m[0],m[2]};
+    pt2d_t _b = {m[1],m[3]};
+    dvec<2> x(p[0]);
+    dvec<2> y(p[1]);
+    dvec<2> a(_a);
+    dvec<2> b(_b);
+    dvec<2> c = a*x + b*y;
+    c.a_store(r);
+  }
+  inline
+  void pt2dsub(pt2d_t r, pt2d_t a, pt2d_t b) {
+    dvec<2> va(a);
+    dvec<2> vb(b);
+    dvec<2> vr = va - vb;
+    vr.a_store(r);
+  }
+  
+  inline
+  fastf_t v2mag(pt2d_t p) {
+    dvec<2> a(p);
+    dvec<2> sq = a*a;
+    return sqrt(sq.foldr(0,dvec<2>::add()));
+  }
+  inline
+  void move(pt2d_t a, pt2d_t b) {
+    a[0] = b[0];
+    a[1] = b[1];
+  }    
 }
 
 #endif
