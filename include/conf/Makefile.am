@@ -1,34 +1,47 @@
 # $Id$
 
 COUNT: DATE HOST PATH USER
-	@test -f $(top_srcdir)/include/conf/COUNT || echo "1" > $@
-	@test -f $@ || cp $(top_srcdir)/include/conf/COUNT .
-	@expr `cat COUNT` + 1 > $@
+	if test -f $(top_srcdir)/include/conf/COUNT ; then \
+		cp $(top_srcdir)/include/conf/COUNT $@ ;\
+		chmod ug+w $@ ;\
+	else \
+		test -f $@ || echo "1" > $@ ;\
+	fi
+	expr `cat COUNT` + 1 > $@
 
 DATE: HOST PATH USER
-	@test -f $(top_srcdir)/include/conf/DATE || echo "\"`date`\"" > $@
-	@test -f $@ || cp $(top_srcdir)/include/conf/DATE .
-	@echo "\"`date`\"" > $@
+	if test -f $(top_srcdir)/include/conf/DATE ; then \
+		cp $(top_srcdir)/include/conf/DATE $@ ;\
+		chmod ug+w $@ ;\
+	else \
+		test -f $@ || echo "\"`date`\"" > $@ ;\
+	fi
 
 HOST:
-	@test -f $(top_srcdir)/include/conf/HOST || echo "\"`hostname`\"" > $@
-	@test -f $@ || cp $(top_srcdir)/include/conf/HOST .
-	@echo "\"`hostname`\"" > $@
+	if test -f $(top_srcdir)/include/conf/HOST ; then \
+		cp $(top_srcdir)/include/conf/HOST $@ ;\
+		chmod ug+w $@ ;\
+	else \
+		test -f $@ || echo "\"`hostname`\"" > $@ ;\
+	fi
 
 PATH:
-	@test -f $(top_srcdir)/include/conf/PATH || echo "\"$(DESTDIR)$(prefix)\"" > $@
-	@test -f $@ || cp $(top_srcdir)/include/conf/PATH .
-	@echo "\"$(DESTDIR)$(prefix)\"" > $@
+	if test -f $(top_srcdir)/include/conf/PATH ; then \
+		cp $(top_srcdir)/include/conf/PATH $@ ;\
+		chmod ug+w $@ ;\
+	else \
+		test -f $@ || echo "\"$(DESTDIR)$(prefix)\"" > $@ ;\
+	fi
 
 USER:
-	@test -f $(top_srcdir)/include/conf/USER || echo "\"`whoami`\"" > $@
-	@test -f $@ || cp $(top_srcdir)/include/conf/USER .
-	@echo "\"`whoami`\"" > $@
+	if test -f $(top_srcdir)/include/conf/USER ; then \
+		cp $(top_srcdir)/include/conf/USER $@ ;\
+		chmod ug+w $@ ;\
+	else \
+		test -f $@ || echo "\"`whoami`\"" > $@ ;\
+	fi
 
-
-all-local: COUNT DATE HOST PATH USER
-
-
+# this causes them to be dependencies on the 'all' target
 BUILT_SOURCES = \
 	COUNT \
 	DATE \
