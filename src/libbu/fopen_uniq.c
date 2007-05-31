@@ -84,7 +84,7 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
 	bu_bomb("bu_uniq_file called with null string\n");
 
     bu_semaphore_acquire( BU_SEM_SYSCALL);
-    sprintf(filename, namefmt, n);
+    snprintf(filename, MAXPATHLEN, namefmt, n);
     if ((fd = open(filename, O_RDWR|O_CREAT|O_EXCL, 0600)) < 0) {
 	fprintf(stderr, "Cannot open %s, %s\n", filename, strerror(errno));
 	exit(-1);

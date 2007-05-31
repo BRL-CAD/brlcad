@@ -754,7 +754,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
     int flags;
     int fieldlen=-1;
-    char fbuf[64] = {0}, buf[1024] = {0};			/* % format buffer */
+    char fbuf[64] = {0}, buf[BUFSIZ] = {0};			/* % format buffer */
 
     BU_CK_VLS(vls);
     bu_vls_extend(vls, 96);
@@ -892,9 +892,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 		    ld = va_arg(ap, long double);
 		    if (flags & FIELDLEN)
-			sprintf(buf, fbuf, fieldlen, ld);
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, ld);
 		    else
-			sprintf(buf, fbuf, ld);
+			snprintf(buf, BUFSIZ, fbuf, ld);
 		    bu_vls_strcat(vls, buf);
 		} else
 #endif
@@ -903,9 +903,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 			d = va_arg(ap, double);
 			if (flags & FIELDLEN)
-			    sprintf(buf, fbuf, fieldlen, d);
+			    snprintf(buf, BUFSIZ, fbuf, fieldlen, d);
 			else
-			    sprintf(buf, fbuf, d);
+			    snprintf(buf, BUFSIZ, fbuf, d);
 			bu_vls_strcat(vls, buf);
 		    }
 		break;
@@ -917,18 +917,18 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 		    ll = va_arg(ap, long);
 		    if (flags & FIELDLEN)
-			sprintf(buf, fbuf, fieldlen, ll);
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, ll);
 		    else
-			sprintf(buf, fbuf, ll);
+			snprintf(buf, BUFSIZ, fbuf, ll);
 		    bu_vls_strcat(vls, buf);
 		} else if (flags & SHORTINT) {
 		    /* short int */
 		    register short int sh;
 		    sh = (short int)va_arg(ap, int);
 		    if (flags & FIELDLEN)
-			sprintf(buf, fbuf, fieldlen, sh);
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, sh);
 		    else
-			sprintf(buf, fbuf, sh);
+			snprintf(buf, BUFSIZ, fbuf, sh);
 		    bu_vls_strcat(vls, buf);
 		} else {
 		    /* Regular int */
@@ -936,9 +936,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 		    j = va_arg(ap, int);
 		    if (flags & FIELDLEN)
-			sprintf(buf, fbuf, fieldlen, j);
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
 		    else
-			sprintf(buf, fbuf, j);
+			snprintf(buf, BUFSIZ, fbuf, j);
 		    bu_vls_strcat(vls, buf);
 		}
 		break;
@@ -954,9 +954,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 		    j = va_arg(ap, int);
 		    if (flags & FIELDLEN)
-			sprintf(buf, fbuf, fieldlen, j);
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
 		    else
-			sprintf(buf, fbuf, j);
+			snprintf(buf, BUFSIZ, fbuf, j);
 		    bu_vls_strcat(vls, buf);
 		    break;
 		}
@@ -1013,7 +1013,7 @@ bu_vls_printf(struct bu_vls *vls, char *fmt, int a, int b, int c, int d, int e, 
     char append_buf[65536] = {0};   /* yuck -- fixed length buffer. */
 
     BU_CK_VLS(vls);
-    sprintf(append_buf, fmt, a,b,c,d,e,f,g,h,i,j);
+    snprintf(append_buf, 65536, fmt, a,b,c,d,e,f,g,h,i,j);
     if (append_buf[sizeof(append_buf)-1] != '\0') {
 	/* Attempting to bu_log() the WHOLE append_buf would just overflow again */
 	append_buf[120] = '\0';

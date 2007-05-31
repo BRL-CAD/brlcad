@@ -187,7 +187,7 @@ bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
 		return;
 	}
 
-	sprintf( cp, "%d", cookie & CV_CHANNEL_MASK );
+	snprintf( cp, buflen, "%d", cookie & CV_CHANNEL_MASK );
 	len = strlen(cp);
 	cp += len;
 	if( buflen < len )
