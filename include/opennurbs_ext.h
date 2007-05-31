@@ -1,12 +1,13 @@
 #ifndef __OPENNURBS_EXT
 #define __OPENNURBS_EXT
 
-//--------------------------------------------------------------------------------
-// brep/surface utilities
-//
-// XXX: these should probably be migrated to openNURBS package proper
-// but there are a lot of dependency issues (e.g. where do the math
-// routines go?)
+/**-------------------------------------------------------------------------------
+ // brep/surface utilities
+ //
+ // XXX: these should probably be migrated to openNURBS package proper
+ // but there are a lot of dependency issues (e.g. where do the math
+ // routines go?)
+ */
 
 #include "opennurbs.h"
 #include <vector>
@@ -17,6 +18,10 @@
 #define BREP_MAX_FT_DEPTH 8
 /* Surface flatness parameter, Abert says between 0.8-0.9 */
 #define BREP_SURFACE_FLATNESS 0.8
+/* Max newton iterations when finding closest point */
+#define BREP_MAX_FCP_ITERATIONS 10
+/* Root finding epsilon */
+#define BREP_FCP_ROOT_EPSILON 0.00001
 
 static std::numeric_limits<double> real;
 
@@ -97,7 +102,7 @@ namespace brlcad {
   class SubsurfaceBVNode : public BVNode<BV> {
   public:
     SubsurfaceBVNode(const BV& node, 
-		     const ON_BrepFace& face, 
+		     const ON_BrepFace* face, 
 		     const ON_Interval& u, 
 		     const ON_Interval& v,
 		     bool checkTrim = true,
@@ -108,7 +113,7 @@ namespace brlcad {
     bool doTrimming() const;
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
     
-    const ON_BrepFace& m_face;
+    const ON_BrepFace* m_face;
     ON_Interval m_u;
     ON_Interval m_v;
     bool m_checkTrim;
@@ -242,7 +247,7 @@ namespace brlcad {
 
   template<class BV>
   inline SubsurfaceBVNode<BV>::SubsurfaceBVNode(const BV& node, 
-						const ON_BrepFace& face, 
+						const ON_BrepFace* face, 
 						const ON_Interval& u, 
 						const ON_Interval& v,
 						bool checkTrim,
@@ -278,7 +283,7 @@ namespace brlcad {
 			{m_u.Min(),m_v.Max()},
 			{m_u.Mid(),m_v.Mid()}}; // include the estimate
     ON_3dPoint corners[5];
-    const ON_Surface* surf = m_face.SurfaceOf();
+    const ON_Surface* surf = m_face->SurfaceOf();
     
     // XXX - pass these in from SurfaceTree::surfaceBBox() to avoid this recalculation?
     if (!surf->EvPoint(uvs[0][0],uvs[0][1],corners[0]) ||
@@ -303,8 +308,57 @@ namespace brlcad {
     return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
   }
 
+  //--------------------------------------------------------------------------------
+  // SurfaceTree declaration
+  class SurfaceTree {
+  public:
+    SurfaceTree(ON_BrepFace* face);
+    ~SurfaceTree();
 
-  /*                  p u l l b a c k _ c u r v e
+    BBNode* getRootNode() const;    
+    /** 
+     * Calculate, using the surface bounding volume hierarchy, a uv
+     * estimate for the closest point on the surface to the point in
+     * 3-space.
+     */
+    ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
+        
+  private:
+    bool isFlat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v);
+    BBNode* subdivideSurface(const ON_Interval& u, const ON_Interval& v, int depth);
+    BBNode* surfaceBBox(bool leaf, const ON_Interval& u, const ON_Interval& v);
+
+    ON_BrepFace* m_face;
+    BBNode* m_root;
+  };
+
+
+  /**-------------------------------------------------------------------------------
+   *                    g e t _ c l o s e s t _ p o i n t
+   *
+   * approach: 
+   * 
+   * - get an estimate using the surface tree (if non-null, create
+   * one otherwise)
+   * 
+   * - find a point (u,v) for which S(u,v) is closest to _point_
+   *                                                     _      __
+   *   -- minimize the distance function: D(u,v) = sqrt(|S(u,v)-pt|^2)
+   *                                       _      __
+   *   -- simplify by minimizing f(u,v) = |S(u,v)-pt|^2
+   *   
+   *   -- minimum occurs when the gradient is zero, i.e.
+   *     \f[ \nabla f(u,v) = |\vec{S}(u,v)-\vec{p}|^2 = 0 \f]
+   */
+  bool  
+  get_closest_point(ON_2dPoint& outpt,
+		    ON_BrepFace* face,
+		    const ON_3dPoint& point,
+		    SurfaceTree* tree = NULL,
+		    double tolerance = -1.0);
+
+    
+  /**                  p u l l b a c k _ c u r v e
    *
    * Pull an arbitrary model-space *curve* onto the given *surface* as a
    * curve within the surface's domain when, for each point c = C(t) on
@@ -331,35 +385,13 @@ namespace brlcad {
    * 
    */
   extern ON_Curve*
-  pullback_curve(const ON_Surface* surface, 
+  pullback_curve(ON_BrepFace* face, 
 		 const ON_Curve* curve, 
+		 SurfaceTree* tree = NULL,
 		 double tolerance = 1.0e-6, 
 		 double flatness = 1.0e-3);
   
 
-  //--------------------------------------------------------------------------------
-  // SurfaceTree declaration
-  class SurfaceTree {
-  public:
-    SurfaceTree(ON_BrepFace* face);
-    ~SurfaceTree();
-
-    BBNode* getRootNode() const;    
-    /** 
-     * Calculate, using the surface bounding volume hierarchy, a uv
-     * estimate for the closest point on the surface to the point in
-     * 3-space.
-     */
-    ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
-        
-  private:
-    bool isFlat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v);
-    BBNode* subdivideSurface(const ON_BrepFace& face, const ON_Interval& u, const ON_Interval& v, int depth);
-    BBNode* surfaceBBox(bool leaf, const ON_BrepFace& face, const ON_Interval& u, const ON_Interval& v);
-
-    ON_BrepFace* m_face;
-    BBNode* m_root;
-  };
 
 }
 
