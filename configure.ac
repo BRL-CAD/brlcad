@@ -293,6 +293,10 @@ dnl ***********************
 dnl *** Check arguments ***
 dnl ***********************
 
+#
+# DOCUMENT NEW ARGUMENTS AND ALIASES IN THE "INSTALL" FILE.
+#
+
 BC_CONFIGURE_STAGE([arguments], [1 of 9])
 
 dnl *** enable options ***
@@ -345,7 +349,7 @@ BC_ARG_ENABLE([tk_aqua], [aqua], [Use Aqua windowing system on Mac OS X], [no])
 BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [auto])
 
 # force enable/disable building of iwidgets
-BC_ARG_ENABLE([build_iwidgets], [iwidgets-build], [Install the included iwidgets], [auto])
+BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidgets], [auto])
 
 # force enable/disable building of blt
 BC_ARG_ENABLE([build_blt], [blt-build], [Build the included BLT], [auto])
@@ -354,7 +358,7 @@ BC_ARG_ENABLE([build_blt], [blt-build], [Build the included BLT], [auto])
 BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
 
 # force enable/disable building of tnt
-BC_ARG_ENABLE([build_tnt], [tnt-build], [Build the included Template Numerical Toolkit], [auto])
+BC_ARG_ENABLE([build_tnt], [tnt-install], [Install the included Template Numerical Toolkit], [auto])
 
 # jove
 BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove], [auto])
@@ -363,7 +367,7 @@ BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove], [auto])
 BC_ARG_ENABLE([build_ef], [ef-build], [Enable compilation of Endgame Framework module], [no])
 
 # pro/e plugin
-#BC_ARG_ENABLE([build_proe], [proe-plugin-build], [Enable compilation of Pro/Engineer plugin], [no])
+#BC_ARG_ENABLE([build_proe], [proe-build], [Enable compilation of Pro/Engineer plugin], [no])
 
 # unigraphics plugin
 BC_ARG_ENABLE([build_ug], [unigraphics-build], [Enable compilation of Unigraphics importer], [no])
@@ -408,7 +412,7 @@ BC_ARG_WITH([with_java], [jdk], [Specify use of or path to the Java Development 
 BC_ARG_WITH([with_x11], [x11], [Specify use of or path to X11], [auto])
 
 # use opengl
-BC_ARG_WITH([with_opengl], [opengl], [Specify use of or path to OpenGL], [auto])
+BC_ARG_WITH([with_opengl], [ogl], [Specify use of or path to OpenGL], [auto])
 
 # use wgl
 BC_ARG_WITH([with_wgl], [wgl], [Specify use of or path to WindowsGL], [auto])
@@ -425,7 +429,9 @@ BC_ARG_WITH([with_proe], [proe], [Specify build of Pro/ENGINEER plugin or path t
 ###
 # argument aliases
 # they need to go below here in order for --help to consolidate the
-# blank line that it inserts to exactly one line in the right place
+# blank line that it inserts to exactly one line in the right place.
+#
+# DOCUMENT NEW ARGUMENTS AND ALIASES IN THE "INSTALL" FILE.
 ###
 
 # aliases for enabling configuration of everything (help uses almost-everything)
@@ -462,10 +468,10 @@ BC_ARG_ALIAS([build_runtime_debug], [runtime-debugging])
 BC_ARG_ALIAS([build_runtime_debug], [run-time-debugging])
 
 # 64-bit compilation (help uses 64bit-build)
-BC_ARG_ALIAS([build_64bit], [64])
 BC_ARG_ALIAS([build_64bit], [64bit])
-BC_ARG_ALIAS([build_64bit], [64-bit])
+BC_ARG_ALIAS([build_64bit], [64])
 BC_ARG_ALIAS([build_64bit], [64-build])
+BC_ARG_ALIAS([build_64bit], [64-bit])
 BC_ARG_ALIAS([build_64bit], [64-bit-build])
 
 # force building libregex (help uses regex-build)
@@ -486,37 +492,20 @@ BC_ARG_ALIAS([build_zlib], [libz-build])
 # aliases to force building urt (help uses urt-build)
 BC_ARG_ALIAS([build_urt], [urt])
 BC_ARG_ALIAS([build_urt], [urtoolkit])
-BC_ARG_ALIAS([build_urt], [rle])
-BC_ARG_ALIAS([build_urt], [utah])
-BC_ARG_ALIAS([build_urt], [utahrle])
-BC_ARG_ALIAS([build_urt], [libutah])
-BC_ARG_ALIAS([build_urt], [librle])
-BC_ARG_ALIAS([build_urt], [libutahrle])
-BC_ARG_ALIAS([build_urt], [utahrastertoolkit])
-BC_ARG_ALIAS([build_urt], [utah-raster-toolkit])
 BC_ARG_ALIAS([build_urt], [urtoolkit-build])
-BC_ARG_ALIAS([build_urt], [rle-build])
-BC_ARG_ALIAS([build_urt], [utah-build])
+BC_ARG_ALIAS([build_urt], [utahrle])
 BC_ARG_ALIAS([build_urt], [utahrle-build])
-BC_ARG_ALIAS([build_urt], [libutah-build])
-BC_ARG_ALIAS([build_urt], [librle-build])
+BC_ARG_ALIAS([build_urt], [libutahrle])
 BC_ARG_ALIAS([build_urt], [libutahrle-build])
-BC_ARG_ALIAS([build_urt], [utahrastertoolkit-build])
+BC_ARG_ALIAS([build_urt], [utah-raster-toolkit])
 BC_ARG_ALIAS([build_urt], [utah-raster-toolkit-build])
 
 # aliases to force building openNURBS (help uses opennurbs-build)
+BC_ARG_ALIAS([build_opennurbs], [opennurbs])
 BC_ARG_ALIAS([build_opennurbs], [libopennurbs])
-BC_ARG_ALIAS([build_opennurbs], [libopenurbs])
-BC_ARG_ALIAS([build_opennurbs], [libnurbs])
-BC_ARG_ALIAS([build_opennurbs], [open-nurbs])
-BC_ARG_ALIAS([build_opennurbs], [openurbs])
-BC_ARG_ALIAS([build_opennurbs], [nurbs])
 BC_ARG_ALIAS([build_opennurbs], [libopennurbs-build])
-BC_ARG_ALIAS([build_opennurbs], [libopenurbs-build])
-BC_ARG_ALIAS([build_opennurbs], [libnurbs-build])
+BC_ARG_ALIAS([build_opennurbs], [open-nurbs])
 BC_ARG_ALIAS([build_opennurbs], [open-nurbs-build])
-BC_ARG_ALIAS([build_opennurbs], [openurbs-build])
-BC_ARG_ALIAS([build_opennurbs], [nurbs-build])
 
 # aliases to force building tcl (help uses tcl-build)
 BC_ARG_ALIAS([build_tcl], [tcl])
@@ -531,17 +520,17 @@ BC_ARG_ALIAS([build_tk], [libtk-build])
 # aliases to force building itcl (help uses itcl-build)
 BC_ARG_ALIAS([build_itcl], [itcl])
 BC_ARG_ALIAS([build_itcl], [itk])
-BC_ARG_ALIAS([build_itcl], [libitcl])
-BC_ARG_ALIAS([build_itcl], [libitk])
-BC_ARG_ALIAS([build_itcl], [incrtcl])
 BC_ARG_ALIAS([build_itcl], [itk-build])
+BC_ARG_ALIAS([build_itcl], [libitcl])
 BC_ARG_ALIAS([build_itcl], [libitcl-build])
+BC_ARG_ALIAS([build_itcl], [libitk])
 BC_ARG_ALIAS([build_itcl], [libitk-build])
+BC_ARG_ALIAS([build_itcl], [incrtcl])
 BC_ARG_ALIAS([build_itcl], [incrtcl-build])
 
-# aliases to force building iwidgets (help uses iwidgets-build)
+# aliases to force building iwidgets (help uses iwidgets-install)
 BC_ARG_ALIAS([build_iwidgets], [iwidgets])
-BC_ARG_ALIAS([build_iwidgets], [install-iwidgets])
+BC_ARG_ALIAS([build_iwidgets], [iwidgets-build])
 
 # aliases to force building blt (help uses blt-build)
 BC_ARG_ALIAS([build_blt], [blt])
@@ -556,69 +545,52 @@ BC_ARG_ALIAS([build_tkimg], [libtkimg-build])
 # aliases to force building termlib (help uses termlib-build)
 BC_ARG_ALIAS([build_termlib], [termlib])
 BC_ARG_ALIAS([build_termlib], [termcap])
-BC_ARG_ALIAS([build_termlib], [libtermlib])
-BC_ARG_ALIAS([build_termlib], [libtermcap])
 BC_ARG_ALIAS([build_termlib], [termcap-build])
+BC_ARG_ALIAS([build_termlib], [libtermlib])
 BC_ARG_ALIAS([build_termlib], [libtermlib-build])
+BC_ARG_ALIAS([build_termlib], [libtermcap])
 BC_ARG_ALIAS([build_termlib], [libtermcap-build])
 
-# aliases to force building tnt (help uses tnt-build)
+# aliases to force building tnt (help uses tnt-install)
 BC_ARG_ALIAS([build_tnt], [tnt])
-BC_ARG_ALIAS([build_tnt], [template-numerical-toolkit-build])
+BC_ARG_ALIAS([build_tnt], [tnt-build])
 BC_ARG_ALIAS([build_tnt], [template-numerical-toolkit])
+BC_ARG_ALIAS([build_tnt], [template-numerical-toolkit-build])
+BC_ARG_ALIAS([build_tnt], [template-numerical-toolkit-install])
 
 # jove aliases (help uses jove-build)
 BC_ARG_ALIAS([build_jove], [jove])
 
 # endgame framework module aliases (help uses ef-build)
 BC_ARG_ALIAS([build_ef], [ef])
-BC_ARG_ALIAS([build_ef], [endgame])
 BC_ARG_ALIAS([build_ef], [endgameframework])
-BC_ARG_ALIAS([build_ef], [endgame-framework])
-BC_ARG_ALIAS([build_ef], [endgame-build])
 BC_ARG_ALIAS([build_ef], [endgameframework-build])
+BC_ARG_ALIAS([build_ef], [endgame-framework])
 BC_ARG_ALIAS([build_ef], [endgame-framework-build])
 
-# pro/e plugin aliases (help uses proe-plugin-build)
+# pro/e plugin aliases (help uses proe-build)
 #BC_ARG_ALIAS([build_proe], [proe])
-#BC_ARG_ALIAS([build_proe], [proe-build])
-#BC_ARG_ALIAS([build_proe], [proe-plugin])
 #BC_ARG_ALIAS([build_proe], [proengineer])
-#BC_ARG_ALIAS([build_proe], [proengineer-plugin])
-#BC_ARG_ALIAS([build_proe], [pro-engineer])
-#BC_ARG_ALIAS([build_proe], [pro-engineer-plugin])
 #BC_ARG_ALIAS([build_proe], [proengineer-build])
-#BC_ARG_ALIAS([build_proe], [proengineer-plugin-build])
+#BC_ARG_ALIAS([build_proe], [pro-engineer])
 #BC_ARG_ALIAS([build_proe], [pro-engineer-build])
-#BC_ARG_ALIAS([build_proe], [pro-engineer-plugin-build])
 
 # unigraphics (NX) importer aliases (help uses unigraphics-build)
+BC_ARG_ALIAS([build_ug], [unigraphics])
 BC_ARG_ALIAS([build_ug], [ug])
 BC_ARG_ALIAS([build_ug], [ug-build])
-BC_ARG_ALIAS([build_ug], [unigraphics])
-BC_ARG_ALIAS([build_ug], [unigraphics-importer-build])
-BC_ARG_ALIAS([build_ug], [ug-importer])
-BC_ARG_ALIAS([build_ug], [ug-importer-build])
 BC_ARG_ALIAS([build_ug], [nx])
 BC_ARG_ALIAS([build_ug], [nx-build])
-BC_ARG_ALIAS([build_ug], [nx-importer])
-BC_ARG_ALIAS([build_ug], [nx-importer-build])
 
-# ADRT (help uses adrt-build)
+# ADRT aliases (help uses adrt-build)
 BC_ARG_ALIAS([build_adrt], [adrt])
 
 # install geometry aliases (help uses models-install)
 BC_ARG_ALIAS([install_geometry], [models])
-BC_ARG_ALIAS([install_geometry], [install-models])
-BC_ARG_ALIAS([install_geometry], [geometry-install])
+BC_ARG_ALIAS([install_geometry], [models-build])
 BC_ARG_ALIAS([install_geometry], [geometry])
-BC_ARG_ALIAS([install_geometry], [install-geometry])
-BC_ARG_ALIAS([install_geometry], [example-models-install])
-BC_ARG_ALIAS([install_geometry], [example-models])
-BC_ARG_ALIAS([install_geometry], [install-example-models])
-BC_ARG_ALIAS([install_geometry], [example-geometry-install])
-BC_ARG_ALIAS([install_geometry], [example-geometry])
-BC_ARG_ALIAS([install_geometry], [install-example-geometry])
+BC_ARG_ALIAS([install_geometry], [geometry-build])
+BC_ARG_ALIAS([install_geometry], [geometry-install])
 
 # optimized aliases (help uses optimized)
 BC_ARG_ALIAS([use_optimized], [opt])
@@ -642,8 +614,8 @@ BC_ARG_ALIAS([build_verbose], [verbose-build])
 
 # verbose warning aliases (help uses warnings)
 BC_ARG_ALIAS([build_warnings], [warning])
-BC_ARG_ALIAS([build_warnings], [warnings-verbose])
 BC_ARG_ALIAS([build_warnings], [verbose-warnings])
+BC_ARG_ALIAS([build_warnings], [warnings-verbose])
 BC_ARG_ALIAS([build_warnings], [build-warnings])
 BC_ARG_ALIAS([build_warnings], [warnings-build])
 
@@ -662,9 +634,8 @@ BC_ARG_WITH_ALIAS([with_proe], [proe])
 # with x11 aliases (help uses x11)
 BC_ARG_WITH_ALIAS([with_x11], [x])
 
-# with opengl aliases (help uses opengl)
-BC_ARG_WITH_ALIAS([with_opengl], [ogl])
-BC_ARG_WITH_ALIAS([with_opengl], [gl])
+# with opengl aliases (help uses ogl)
+BC_ARG_WITH_ALIAS([with_opengl], [opengl])
 
 # with wgl aliases (help uses wgl)
 BC_ARG_WITH_ALIAS([with_wgl], [windowsgl])
@@ -673,7 +644,7 @@ BC_ARG_WITH_ALIAS([with_wgl], [windowsgl])
 BC_ARG_WITH_ALIAS([with_sdl], [libsdl])
 
 # with python aliases (help uses python)
-BC_ARG_WITH_ALIAS([with_python], [py])
+BC_ARG_WITH_ALIAS([with_python], [libpython])
 
 
 ###
