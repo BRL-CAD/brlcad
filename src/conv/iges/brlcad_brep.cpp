@@ -91,7 +91,7 @@ namespace brlcad {
     
     // get a 2d parameter-space curve that lies on the surface for this edge
     // hopefully this works!
-    ON_Curve* c2d = pullback_curve(s, c, 1.0e-4, 1.0e-3);
+    ON_Curve* c2d = pullback_curve(_face, c);
 
     int trimCurve = _brep->AddTrimCurve(c2d);
 
