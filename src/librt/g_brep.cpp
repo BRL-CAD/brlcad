@@ -96,59 +96,6 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 
 using namespace brlcad;
 
-//--------------------------------------------------------------------------------
-// MATH / VECTOR ops
-// XXX put in VMATH?
-typedef fastf_t pt2d_t[2] VEC_ALIGN;
-typedef fastf_t mat2d_t[4] VEC_ALIGN; // row-major 
-inline
-bool mat2d_inverse(mat2d_t inv, mat2d_t m) {
-    pt2d_t _a = {m[0],m[1]};
-    pt2d_t _b = {m[3],m[2]};
-    dvec<2> a(_a);
-    dvec<2> b(_b);
-    dvec<2> c = a*b;
-    fastf_t det = c.foldr(0,dvec<2>::sub());
-    if (NEAR_ZERO(det,VUNITIZE_TOL)) return false;
-    fastf_t scale = 1.0 / det;
-    double tmp[4] VEC_ALIGN = {m[3],-m[1],-m[2],m[0]};
-    dvec<4> iv(tmp);
-    dvec<4> sv(scale);
-    dvec<4> r = iv * sv;
-    r.a_store(inv);
-    return true;
-}
-inline 
-void mat2d_pt2d_mul(pt2d_t r, mat2d_t m, pt2d_t p) {
-    pt2d_t _a = {m[0],m[2]};
-    pt2d_t _b = {m[1],m[3]};
-    dvec<2> x(p[0]);
-    dvec<2> y(p[1]);
-    dvec<2> a(_a);
-    dvec<2> b(_b);
-    dvec<2> c = a*x + b*y;
-    c.a_store(r);
-}
-inline
-void pt2dsub(pt2d_t r, pt2d_t a, pt2d_t b) {
-    dvec<2> va(a);
-    dvec<2> vb(b);
-    dvec<2> vr = va - vb;
-    vr.a_store(r);
-}
-
-inline
-fastf_t v2mag(pt2d_t p) {
-    dvec<2> a(p);
-    dvec<2> sq = a*a;
-    return sqrt(sq.foldr(0,dvec<2>::add()));
-}
-inline
-void move(pt2d_t a, pt2d_t b) {
-    a[0] = b[0];
-    a[1] = b[1];
-}
-
 ON_Ray toXRay(struct xray* rp) {
     ON_3dPoint pt(rp->r_pt);
     ON_3dVector dir(rp->r_dir);
@@ -476,7 +423,7 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
 }
 
 bool 
-brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace& face, const ON_Surface* surf, pt2d_t uv, plane_ray& pr, brep_hit** hit)
+brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, plane_ray& pr, brep_hit** hit)
 {
     bool found = false;
     fastf_t Dlast = MAX_FASTF;
@@ -507,12 +454,12 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace& face, const ON_Su
  	    if (uv[1] < l || uv[1] > h) { TRACE("out of V bounds"); return false; } // oob
  	}
 
-	if (sbv->doTrimming() && brep_pt_trimmed(uv, face)) return false; 
+	if (sbv->doTrimming() && brep_pt_trimmed(uv, *face)) return false; 
 
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
 	surf->EvNormal(uv[0],uv[1],_pt,_norm);
-	*hit = new brep_hit(face, (fastf_t*)_pt,(fastf_t*)_norm, uv);
+	*hit = new brep_hit(*face, (fastf_t*)_pt,(fastf_t*)_norm, uv);
     }    
     return found;
 }
@@ -556,8 +503,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     HitList hits;
     for (BBNode::IsectList::iterator i = inters.begin(); i != inters.end(); i++) {
 	const SubsurfaceBBNode* sbv = dynamic_cast<SubsurfaceBBNode*>((*i).m_node);
-	const ON_BrepFace& f = sbv->m_face;
-	const ON_Surface* surf = f.SurfaceOf();       
+	const ON_BrepFace* f = sbv->m_face;
+	const ON_Surface* surf = f->SurfaceOf();       
 	brep_hit* hit; 
 	pt2d_t uv = {sbv->m_u.Mid(),sbv->m_v.Mid()};
 	TRACE("uv: " << ON_PRINT2(uv));
