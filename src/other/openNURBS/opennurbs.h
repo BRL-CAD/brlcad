@@ -24,6 +24,8 @@
 #if !defined(OPENNURBS_INC_)
 #define OPENNURBS_INC_
 
+#include "brlcad_config.h"
+
 /* 
  * cribbed from the autoconf manual, putting it here instead of the 17
  * files that SHOULD have it.
