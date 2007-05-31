@@ -69,7 +69,7 @@ BRL-CAD is correctly pronounced as "be are el cad".
 
 The origins of the project name "BRL-CAD" comes from the
 computer-aided design (CAD) software package's origins at the
-U.S. Army Ballistics Research Laboratory (BRL).  BRL was later renamed
+U.S. Army Ballistic Research Laboratory (BRL).  BRL was later renamed
 and reorganized into the U.S. Army Research Laboratory to reflect the
 diverse technological and scientific research being conducted at the
 laboratory.  The project name continues to this day with the BRL
