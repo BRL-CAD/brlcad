@@ -24,6 +24,27 @@
 #if !defined(OPENNURBS_INC_)
 #define OPENNURBS_INC_
 
+/* 
+ * cribbed from the autoconf manual, putting it here instead of the 17
+ * files that SHOULD have it.
+ */
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+# define alloca __builtin_alloca
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+# ifdef  __cplusplus
+extern "C"
+# endif
+void *alloca (size_t);
+#endif
+
 #include "opennurbs_system.h"       /* system headers used by openNURBS code */
 
 #include "opennurbs_3dm.h"          /* 3DM typecode (TCODE) definitions */

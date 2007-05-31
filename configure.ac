@@ -1086,6 +1086,8 @@ fi
 
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
+AC_FUNC_ALLOCA
+
 # test for sdl-config, auto for with-sdl is 'no'
 SDL_CONFIG=""
 if test "x$bc_with_sdl" = "xyes" ; then
