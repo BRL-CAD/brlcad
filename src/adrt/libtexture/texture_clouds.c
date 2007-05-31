@@ -51,7 +51,7 @@ void texture_clouds_init(texture_t *texture, TFLOAT size, int octaves, int absol
       exit(1);
   }
   texture->free = texture_clouds_free;
-  texture->work = texture_clouds_work;
+  texture->work = (texture_work_t *)texture_clouds_work;
 
   td = (texture_clouds_t*)texture->data;
   td->size = size;

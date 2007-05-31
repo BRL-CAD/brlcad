@@ -39,7 +39,7 @@ void rise_slave(int port, char *host, int threads);
 void rise_slave_init(tie_t *tie, int socknum);
 void rise_slave_free(void);
 void rise_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, unsigned int *res_len);
-void rise_slave_mesg(void *mesg, int mesg_len);
+void rise_slave_mesg(void *mesg, unsigned int mesg_len);
 
 int rise_slave_threads;
 int rise_slave_completed;
@@ -85,7 +85,7 @@ void rise_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
 }
 
 
-void rise_slave_mesg(void *mesg, int mesg_len) {
+void rise_slave_mesg(void *mesg, unsigned int mesg_len) {
   short		op;
 
   memcpy(&op, mesg, sizeof(short));

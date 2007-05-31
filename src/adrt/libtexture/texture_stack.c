@@ -51,7 +51,7 @@ void texture_stack_init(texture_t *texture) {
       exit(1);
   }
   texture->free = texture_stack_free;
-  texture->work = texture_stack_work;
+  texture->work = (texture_work_t *)texture_stack_work;
 
   td = (texture_stack_t *)texture->data;
   td->num = 0;
@@ -75,7 +75,7 @@ void texture_stack_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray,
   td = (texture_stack_t *)texture->data;
 
   for(i = td->num-1; i >= 0; i--)
-    td->list[i]->work(td->list[i], mesh, ray, id, pixel);
+    td->list[i]->work(td->list[i], (struct mesh_s *)mesh, ray, id, pixel);
 }
 
 

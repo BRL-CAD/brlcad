@@ -51,7 +51,7 @@ void texture_checker_init(texture_t *texture, int tile) {
       exit(1);
   }
   texture->free = texture_checker_free;
-  texture->work = texture_checker_work;
+  texture->work = (texture_work_t *)texture_checker_work;
 
   td = (texture_checker_t *)texture->data;
   td->tile = tile;

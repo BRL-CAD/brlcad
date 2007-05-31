@@ -336,9 +336,9 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
   /****************************************
   * Justin's Aggressive KD-Tree Algorithm *
   *****************************************/
-  int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice;
+  int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice = 0;
   int side[3][MAX_SLICES+MIN_SLICES][2], d, s, k, smax[3], smin, slice_num;
-  TFLOAT coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min, d_max;
+  TFLOAT coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min = 0, d_max = 0;
   tie_tri_t *tri;
 
   /*
@@ -786,7 +786,7 @@ void tie_kdtree_cache_free(tie_t *tie, void **cache) {
 
 
 void tie_kdtree_cache_load(tie_t *tie, void *cache) {
-  tie_kdtree_t *node, *temp_node, *stack[64];
+  tie_kdtree_t *node = NULL, *temp_node, *stack[64];
   tie_geom_t *geom;
   TIE_3 min, max;
   unsigned int i, size, index, tri_ind, stack_ind;

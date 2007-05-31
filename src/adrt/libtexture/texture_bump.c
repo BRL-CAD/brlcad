@@ -51,7 +51,7 @@ void texture_bump_init(texture_t *texture, TIE_3 coef) {
       exit(1);
   }
   texture->free = texture_bump_free;
-  texture->work = texture_bump_work;
+  texture->work = (texture_work_t *)texture_bump_work;
 
   sd = (texture_bump_t *)texture->data;
   sd->coef = coef;

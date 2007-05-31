@@ -61,7 +61,7 @@ void texture_image_init(texture_t *texture, short w, short h, unsigned char *ima
       exit(1);
   }
   texture->free = texture_image_free;
-  texture->work = texture_image_work;
+  texture->work = (texture_work_t *)texture_image_work;
 
   td = (texture_image_t *)texture->data;
   td->w = w;

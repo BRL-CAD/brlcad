@@ -51,7 +51,7 @@ void texture_mix_init(texture_t *texture, texture_t *texture1, texture_t *textur
       exit(1);
   }
   texture->free = texture_mix_free;
-  texture->work = texture_mix_work;
+  texture->work = (texture_work_t *)texture_mix_work;
 
   td = (texture_mix_t *)texture->data;
   td->texture1 = texture1;
@@ -73,8 +73,8 @@ void texture_mix_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, t
 
   td = (texture_mix_t *)texture->data;
 
-  td->texture1->work(td->texture1, mesh, ray, id, pixel);
-  td->texture2->work(td->texture2, mesh, ray, id, &t);
+  td->texture1->work(td->texture1, (struct mesh_s *)mesh, ray, id, pixel);
+  td->texture2->work(td->texture2, (struct mesh_s *)mesh, ray, id, &t);
   MATH_VEC_MUL_SCALAR((*pixel), (*pixel), td->coef);
   MATH_VEC_MUL_SCALAR(t, t, (1.0 - td->coef));
   MATH_VEC_ADD((*pixel), (*pixel), t);

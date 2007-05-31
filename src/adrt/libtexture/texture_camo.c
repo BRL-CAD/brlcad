@@ -51,7 +51,7 @@ void texture_camo_init(texture_t *texture, TFLOAT size, int octaves, int absolut
       exit(1);
   }
   texture->free = texture_camo_free;
-  texture->work = texture_camo_work;
+  texture->work = (texture_work_t *)texture_camo_work;
 
   sd = (texture_camo_t *)texture->data;
   sd->size = size;

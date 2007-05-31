@@ -83,7 +83,7 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 	  propogate = 0;
 	} else {	/* Diffuse */
 	  if(new_mesh->texture) {
-	    new_mesh->texture->work(new_mesh->texture, new_mesh, &new_ray, &new_id, &T);
+	    new_mesh->texture->work(new_mesh->texture, (struct mesh_s *)new_mesh, &new_ray, &new_id, &T);
 	  } else {
 	    T = new_mesh->prop->color;
 	  }

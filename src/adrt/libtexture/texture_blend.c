@@ -50,7 +50,7 @@ void texture_blend_init(texture_t *texture, TIE_3 color1, TIE_3 color2) {
       exit(1);
   }
   texture->free = texture_blend_free;
-  texture->work = texture_blend_work;
+  texture->work = (texture_work_t *)texture_blend_work;
 
   sd = (texture_blend_t *)texture->data;
   sd->color1 = color1;

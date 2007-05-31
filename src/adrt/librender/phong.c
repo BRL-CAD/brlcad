@@ -49,7 +49,7 @@ void render_phong_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   if((m = (common_mesh_t*)tie_work(tie, ray, &id, render_hit, NULL))) {
     *pixel = m->prop->color;
     if(m->texture)
-      m->texture->work(m->texture, m, ray, &id, pixel);
+      m->texture->work(m->texture, (struct mesh_s *)m, ray, &id, pixel);
   } else {
     return;
   }
