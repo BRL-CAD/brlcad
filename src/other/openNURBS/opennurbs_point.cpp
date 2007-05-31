@@ -16,6 +16,13 @@
 
 #include "opennurbs.h"
 
+/* for finite() in ON_IsFinite() */
+#ifdef HAVE_IEEEFP_H
+# include <ieeefp.h>
+#else
+# include <math.h>
+#endif
+
 bool ON_IsFinite(double x)
 {
   // Returns true if x is a finite double.  Specifically,
