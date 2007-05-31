@@ -806,9 +806,11 @@ convention.
 VERSION NUMBERS & COMPATIBILITY
 -------------------------------
 
-The BRL-CAD version number is in the configure.ac file.  The README,
-ChangeLog, HISTORY files as well as a variety of documents in the doc/
-directory may also make references to version numbers.
+The BRL-CAD version number is in the include/conf directory in the
+MAJOR, MINOR, and PATCH files.  The README, ChangeLog, HISTORY files
+as well as a variety of documents in the doc/ directory may also make
+references to version numbers.  See the MAKING A RELEASE steps listed
+below for a more concise list of what needs to be updated.
 
 Starting with release 7.0.0, BRL-CAD has adopted a three-digit version
 number convention for identifying and tracking future releases.  This
