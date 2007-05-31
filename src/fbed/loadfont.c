@@ -20,12 +20,12 @@
  */
 /** @file loadfont.c
  *
- * loadfont.c - Load a new font by reading in the header and directory.
+ * Load a new font by reading in the header and directory.
  *
- * Original Author:	Paul R. Stay
- * 			Ballistics Research Labratory
- * 			APG, Md.
- * Date:		Tue Jan  8 1985
+ * Author -
+ *	Paul R. Stay
+ * Date -
+ *	Tue Jan  8 1985
  */
 
 #include "common.h"
