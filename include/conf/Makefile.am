@@ -2,8 +2,8 @@
 
 COUNT: DATE HOST PATH USER
 	if test -f $(top_srcdir)/include/conf/COUNT ; then \
-		cp $(top_srcdir)/include/conf/COUNT $@ ;\
-		chmod ug+w $@ ;\
+		touch $@ ; chmod ug+w $@ ;\
+		cat $(top_srcdir)/include/conf/COUNT > $@ ;\
 	else \
 		test -f $@ || echo "1" > $@ ;\
 	fi
@@ -11,32 +11,32 @@ COUNT: DATE HOST PATH USER
 
 DATE: HOST PATH USER
 	if test -f $(top_srcdir)/include/conf/DATE ; then \
-		cp $(top_srcdir)/include/conf/DATE $@ ;\
-		chmod ug+w $@ ;\
+		touch $@ ; chmod ug+w $@ ;\
+		cat $(top_srcdir)/include/conf/DATE > $@ ;\
 	else \
 		test -f $@ || echo "\"`date`\"" > $@ ;\
 	fi
 
 HOST:
 	if test -f $(top_srcdir)/include/conf/HOST ; then \
-		cp $(top_srcdir)/include/conf/HOST $@ ;\
-		chmod ug+w $@ ;\
+		touch $@ ; chmod ug+w $@ ;\
+		cat $(top_srcdir)/include/conf/HOST > $@ ;\
 	else \
 		test -f $@ || echo "\"`hostname`\"" > $@ ;\
 	fi
 
 PATH:
 	if test -f $(top_srcdir)/include/conf/PATH ; then \
-		cp $(top_srcdir)/include/conf/PATH $@ ;\
-		chmod ug+w $@ ;\
+		touch $@ ; chmod ug+w $@ ;\
+		cat $(top_srcdir)/include/conf/PATH > $@ ;\
 	else \
 		test -f $@ || echo "\"$(DESTDIR)$(prefix)\"" > $@ ;\
 	fi
 
 USER:
 	if test -f $(top_srcdir)/include/conf/USER ; then \
-		cp $(top_srcdir)/include/conf/USER $@ ;\
-		chmod ug+w $@ ;\
+		touch $@ ; chmod ug+w $@ ;\
+		cat $(top_srcdir)/include/conf/USER > $@ ;\
 	else \
 		test -f $@ || echo "\"`whoami`\"" > $@ ;\
 	fi
