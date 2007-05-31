@@ -8,6 +8,7 @@
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
+#include "vector.h"
 
 #define RANGE_HI 0.55
 #define RANGE_LO 0.45
@@ -28,7 +29,7 @@ namespace brlcad {
     const ON_Surface* surf = face->SurfaceOf();
     ON_Interval u = surf->Domain(0);
     ON_Interval v = surf->Domain(1);
-    m_root = subdivideSurface(*m_face, u, v, 0);
+    m_root = subdivideSurface(u, v, 0);
     TRACE("m_root: " << m_root);
   }
   
@@ -41,18 +42,17 @@ namespace brlcad {
     return m_root;
   }
 
-
   ON_2dPoint
   SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt) {
     return m_root->getClosestPointEstimate(pt);
   }
 
   BBNode*
-  SurfaceTree::surfaceBBox(bool isLeaf, const ON_BrepFace& face, const ON_Interval& u, const ON_Interval& v)
+  SurfaceTree::surfaceBBox(bool isLeaf, const ON_Interval& u, const ON_Interval& v)
   {
     TRACE("brep_surface_bbox");
     ON_3dPoint corners[4];
-    const ON_Surface* surf = face.SurfaceOf();
+    const ON_Surface* surf = m_face->SurfaceOf();
 
     if (!surf->EvPoint(u.Min(),v.Min(),corners[0]) ||
 	!surf->EvPoint(u.Max(),v.Min(),corners[1]) ||
@@ -81,7 +81,7 @@ namespace brlcad {
     if (isLeaf) 
       node = new SubsurfaceBBNode(ON_BoundingBox(ON_3dPoint(min),
 						 ON_3dPoint(max)), 
-				  face, 
+				  m_face, 
 				  u, v);
     else 
       node = new BBNode(ON_BoundingBox(ON_3dPoint(min),
@@ -91,24 +91,23 @@ namespace brlcad {
   }
 
   BBNode*
-  SurfaceTree::subdivideSurface(const ON_BrepFace& face, 
-				const ON_Interval& u, 
+  SurfaceTree::subdivideSurface(const ON_Interval& u, 
 				const ON_Interval& v, 
 				int depth)
   {
     TRACE("brep_surface_subdivide");
-    const ON_Surface* surf = face.SurfaceOf();
+    const ON_Surface* surf = m_face->SurfaceOf();
     if (isFlat(surf, u, v) || depth >= BREP_MAX_FT_DEPTH) {
-      return surfaceBBox(true, face, u, v);
+      return surfaceBBox(true, u, v);
     } else {
-      BBNode* parent = surfaceBBox(false, face, u, v);
+      BBNode* parent = surfaceBBox(false, u, v);
       BBNode* quads[4];
       ON_Interval first(0,0.5);
       ON_Interval second(0.5,1.0);
-      quads[0] = subdivideSurface(face, u.ParameterAt(first),  v.ParameterAt(first),  depth+1);
-      quads[1] = subdivideSurface(face, u.ParameterAt(second), v.ParameterAt(first),  depth+1);
-      quads[2] = subdivideSurface(face, u.ParameterAt(second), v.ParameterAt(second), depth+1);
-      quads[3] = subdivideSurface(face, u.ParameterAt(first),  v.ParameterAt(second), depth+1);
+      quads[0] = subdivideSurface(u.ParameterAt(first),  v.ParameterAt(first),  depth+1);
+      quads[1] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(first),  depth+1);
+      quads[2] = subdivideSurface(u.ParameterAt(second), v.ParameterAt(second), depth+1);
+      quads[3] = subdivideSurface(u.ParameterAt(first),  v.ParameterAt(second), depth+1);
 
       for (int i = 0; i < 4; i++)
 	parent->addChild(quads[i]);
@@ -147,6 +146,18 @@ namespace brlcad {
     ON_3dVector normals[8];    
 
     bool fail = false;
+    
+    if (surf->IsAtSingularity(u.Min(), v.Min()) ||
+	surf->IsAtSingularity(u.Max(), v.Min()) ||
+	surf->IsAtSingularity(u.Max(), v.Max()) ||
+	surf->IsAtSingularity(u.Min(), v.Max())) {
+      TRACE("singularity! --------------------------");
+      TRACE("umin: " << u.Min());
+      TRACE("umax: " << u.Max());
+      TRACE("vmin: " << v.Min());
+      TRACE("vmax: " << v.Max());
+    }
+
     // corners    
     if (!surf->EvNormal(u.Min(),v.Min(),normals[0]) ||
 	!surf->EvNormal(u.Max(),v.Min(),normals[1]) ||
@@ -209,6 +220,113 @@ namespace brlcad {
     return product >= BREP_SURFACE_FLATNESS;
   }
 
+  //--------------------------------------------------------------------------------
+  // get_closest_point implementation
+
+  typedef struct _gcp_data {
+    const ON_Surface* surf;
+    ON_3dPoint  pt;
+
+    // for newton iteration
+    ON_3dPoint  S;
+    ON_3dVector du;
+    ON_3dVector dv;
+    ON_3dVector duu;
+    ON_3dVector dvv;
+    ON_3dVector duv;
+  } GCPData;
+
+  bool
+  gcp_gradient(pt2d_t out_grad, GCPData& data, pt2d_t uv) {
+    bool evaluated = data.surf->Ev2Der(uv[0], 
+				       uv[1], 
+				       data.S, 
+				       data.du, 
+				       data.dv, 
+				       data.duu, 
+				       data.duv, 
+				       data.dvv); // calc S(u,v) dS/du dS/dv d2S/du2 d2S/dv2 d2S/dudv
+    if (!evaluated) return false;   
+    out_grad[0] = 2 * (data.du * (data.S - data.pt));
+    out_grad[1] = 2 * (data.dv * (data.S - data.pt));
+    return true;
+  }
+
+  bool
+  gcp_newton_iteration(pt2d_t out_uv, GCPData& data, pt2d_t grad, pt2d_t in_uv) {
+    ON_3dVector delta = data.S - data.pt;
+    double g1du = 2 * (data.duu  * delta) + 2 * (data.du * data.du);
+    double g2du = 2 * (data.duv  * delta) + 2 * (data.dv * data.du);
+    double g1dv = g2du;
+    double g2dv = 2 * (data.dvv  * delta) + 2 * (data.dv * data.dv); 
+    mat2d_t jacob = { g1du, g1dv,
+		      g2du, g2dv };
+    mat2d_t inv_jacob;
+    if (mat2d_inverse(inv_jacob, jacob)) {
+      pt2d_t tmp;
+      mat2d_pt2d_mul(tmp, inv_jacob, grad);
+      pt2dsub(out_uv, in_uv, tmp);
+      return true;
+    } else {
+      cerr << "inverse failed!" << endl; // XXX fix the error handling
+      return false;
+    }   
+  }
+
+  bool
+  get_closest_point(ON_2dPoint& outpt,
+		    ON_BrepFace* face,
+		    const ON_3dPoint& point,
+		    SurfaceTree* tree,
+		    double tolerance) {
+    
+    bool found = false;
+    double d_last = real.max();
+    pt2d_t curr_grad;
+    pt2d_t new_uv;
+    GCPData data;
+    data.surf = face->SurfaceOf();
+    data.pt = point;
+
+    // get initial estimate
+    SurfaceTree* a_tree = (tree == NULL) ? new SurfaceTree(face) : tree;
+    ON_2dPoint est = a_tree->getClosestPointEstimate(point);
+    pt2d_t uv = { est[0], est[1] };
+
+    // do the newton iterations 
+    // terminates on 1 of 3 conditions:
+    // 1. if the gradient falls below an epsilon (preferred :-)
+    // 2. if the gradient diverges
+    // 3. iterated MAX_FCP_ITERATIONS
+    for (int i = 0; i < BREP_MAX_FCP_ITERATIONS; i++) {
+      gcp_gradient(curr_grad, data, uv);
+      double d = v2mag(curr_grad);
+      if (d < BREP_FCP_ROOT_EPSILON) {
+	found = true; break;
+      } else if (d > d_last) {
+	break;
+      }
+      gcp_newton_iteration(new_uv, data, curr_grad, uv);
+      move(uv, new_uv);
+      d_last = d;
+    }
+    if (found) {
+      // check to see if we've left the surface domain
+      double l, h;
+      data.surf->GetDomain(0,&l,&h);
+      if (uv[0] < l) uv[0] = l; // clamp if out of range!
+      if (uv[0] > h) uv[0] = h;
+      data.surf->GetDomain(1,&l,&h);
+      if (uv[1] < l) uv[1] = l;
+      if (uv[1] > h) uv[1] = h;
+      
+      outpt[0] = uv[0];
+      outpt[1] = uv[1];
+    }
+
+    return found;
+  }
+
 
   //--------------------------------------------------------------------------------
   // pullback_curve implementation
@@ -217,6 +335,8 @@ namespace brlcad {
     double flatness;
     const ON_Curve* curve;
     const ON_Surface* surf;
+    ON_BrepFace* face;
+    SurfaceTree* tree;
     ON_2dPointArray samples;
   } PBCData;
 
@@ -237,13 +357,8 @@ namespace brlcad {
 
   bool 
   toUV(PBCData& data, ON_2dPoint& out_pt, double t) {
-    double u = 0, v = 0;
     ON_3dPoint pointOnCurve = data.curve->PointAt(t);
-    if (data.surf->GetClosestPoint(pointOnCurve, &u, &v, data.tolerance)) {
-      out_pt.Set(u,v);
-      return true;
-    } else
-      return false;
+    return get_closest_point(out_pt, data.face, pointOnCurve, data.tree);
   }
 
   double
@@ -438,15 +553,18 @@ namespace brlcad {
   }
 
   ON_Curve*
-  pullback_curve(const ON_Surface* surface, 
-		 const ON_Curve* curve, 
+  pullback_curve(ON_BrepFace* face,		 
+		 const ON_Curve* curve,
+		 SurfaceTree* tree,
 		 double tolerance, 
 		 double flatness) {
     PBCData data;
     data.tolerance = tolerance;
     data.flatness = flatness;
     data.curve = curve;
-    data.surf = surface;
+    data.face = face;
+    data.surf = face->SurfaceOf();
+    data.tree = tree;
 
     // Step 1 - adaptively sample the curve
     double tmin, tmax;
