@@ -28,7 +28,9 @@ rtsrv_LDADD = \
 	${BN} ${BN_LIBS} \
 	${BU} ${BU_LIBS} \
 	${PKG} ${PKG_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+	${SYSV} ${SYSV_LIBS} \
+	${LIBSOCKET} ${LIBNSL}
+
 rtsrv_SOURCES = \
 	rtsrv.c
 
