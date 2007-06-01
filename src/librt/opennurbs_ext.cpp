@@ -27,9 +27,14 @@ namespace brlcad {
   {
     // build the surface bounding volume hierarchy
     const ON_Surface* surf = face->SurfaceOf();
+    TRACE("Creating surface tree for: ");
+    ON_TextLog tl;
+    surf->Dump(tl);
     ON_Interval u = surf->Domain(0);
     ON_Interval v = surf->Domain(1);
     m_root = subdivideSurface(u, v, 0);
+    TRACE("u: [" << u[0] << "," << u[1] << "]");
+    TRACE("v: [" << v[0] << "," << v[1] << "]");
     TRACE("m_root: " << m_root);
   }
   
@@ -205,7 +210,7 @@ namespace brlcad {
       dvec<4> xa(ax);
       dvec<4> xb(bx);
       dvec<4> ya(ay); 
-      dvec<4> yb(by);
+      dvec<4> yb(by); 
       dvec<4> za(az);
       dvec<4> zb(bz);
       dvec<4> dots = xa * xb + ya * yb + za * zb;
@@ -298,18 +303,25 @@ namespace brlcad {
     // 1. if the gradient falls below an epsilon (preferred :-)
     // 2. if the gradient diverges
     // 3. iterated MAX_FCP_ITERATIONS
-    for (int i = 0; i < BREP_MAX_FCP_ITERATIONS; i++) {
+    int diverge_count = 0;
+    for (int i = 0; i < BREP_MAX_FCP_ITERATIONS; i++) {      
       gcp_gradient(curr_grad, data, uv);
       double d = v2mag(curr_grad);
       if (d < BREP_FCP_ROOT_EPSILON) {
 	found = true; break;
       } else if (d > d_last) {
-	break;
-      }
+	TRACE("diverged!");
+	diverge_count++;
+	if (diverge_count > 1)
+	  break;
+      }      
       gcp_newton_iteration(new_uv, data, curr_grad, uv);
+      TRACE("gcp_newton_iteration: " << curr_grad[0] << "," << curr_grad[1]);
+      TRACE("gcp_newton_iteration: " << uv[0] << "," << uv[1]);
+      TRACE("gcp_newton_iteration: " << new_uv[0] << "," << new_uv[1]);
       move(uv, new_uv);
       d_last = d;
-    }
+    }    
     if (found) {
       // check to see if we've left the surface domain
       double l, h;
