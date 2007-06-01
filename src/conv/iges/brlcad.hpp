@@ -82,16 +82,22 @@ namespace brlcad {
     string geom_name;    
 
     vector<ON_Geometry*> _objects;    
-    vector<int> _vertices;
+    vector<int> _topology;
+
+    ON_BrepFace&   face() { return _brep->m_F[_face]; }
+    ON_BrepLoop&   loop() { return _brep->m_L[_loop]; }
+    ON_BrepEdge&   edge() { return _brep->m_E[_edge]; }
+    ON_BrepEdge&   edge(int i) { return _brep->m_E[_topology[i]]; }
+    ON_BrepVertex& vertex() { return _brep->m_V[_vertex]; }
+    ON_BrepVertex& vertex(int i) { return _brep->m_V[_topology[i]]; }
 
     // need to support outer and void shells!
     ON_Brep* _brep;
-    ON_Surface* _surf;
-    ON_BrepFace* _face;
-    ON_BrepLoop* _loop;
-    ON_BrepEdge* _edge;
-    ON_BrepTrim* _trim;
-    ON_BrepVertex* _vertex;
+    int _face;
+    int _loop;
+    int _edge;
+    int _trim;
+    int _vertex;
     ON_Point* _pt;
   };
 
