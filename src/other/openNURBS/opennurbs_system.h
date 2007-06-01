@@ -73,7 +73,7 @@
 #define ON_COMPILER_IRIX
 #endif
 
-#if defined(SUNOS)
+#if defined(SUNOS) || defined(__sun) 
 #define ON_COMPILER_SUN
 #endif
 
