@@ -37,26 +37,23 @@ namespace brlcad {
 
   int 
   BRLCADBrepHandler::handleFace(bool orient, int surfIndex) {    
-    ON_Surface* surf = ON_Surface::Cast(_objects[surfIndex]);
-    int sid = _brep->AddSurface(surf);
+    ON_BrepFace& face = _brep->NewFace(_topology[surfIndex]);
+    face.m_bRev = orient;
 
-    _face = &_brep->NewFace(sid);
-    _face->m_bRev = orient;
-    _objects.push_back(_face);
-    return _objects.size()-1;
+    _face = face.m_face_index;
+    _topology.push_back(_face);
+    return _topology.size()-1;
   }
 
 
   int 
   BRLCADBrepHandler::handleLoop(bool isOuter, int faceIndex) {
-
-    ON_BrepFace* face = ON_BrepFace::Cast(_objects[faceIndex]);    
     ON_BrepLoop::TYPE type = (isOuter) ? ON_BrepLoop::outer : ON_BrepLoop::unknown;
-    ON_BrepLoop& loop = _brep->NewLoop(type, *face);
+    ON_BrepLoop& loop = _brep->NewLoop(type, face());
     
-    _loop = &loop;
-    _objects.push_back(_loop);
-    return _objects.size()-1;
+    _loop = loop.m_loop_index;
+    _topology.push_back(_loop);
+    return _topology.size()-1;
   }
 
   int 
@@ -66,42 +63,44 @@ namespace brlcad {
     debug("init : " << initVert);
     debug("term : " << termVert);
 
-    ON_BrepVertex& from = _brep->m_V[_vertices[initVert]];
-    ON_BrepVertex& to   = _brep->m_V[_vertices[termVert]];
+    ON_BrepVertex& from = vertex(initVert);
+    ON_BrepVertex& to   = vertex(initVert);
     ON_Curve* c = ON_Curve::Cast(_objects[curve]);
     int curveIndex = _brep->AddEdgeCurve(c);
     ON_BrepEdge& edge = _brep->NewEdge(from, to, curveIndex);
     edge.m_tolerance = 0.0; // exact!?
-    
-    _objects.push_back(&edge);
-    return _objects.size()-1;
+    _edge = edge.m_edge_index;
+
+    _topology.push_back(_edge);
+    return _topology.size()-1;
   }
 
   int
-  BRLCADBrepHandler::handleEdgeUse(int edge, bool orientWithCurve) {
+  BRLCADBrepHandler::handleEdgeUse(int edgeIndex, bool orientWithCurve) {
     debug("handleEdgeUse");
-    debug("edge  : " << edge);
+    debug("edge  : " << edgeIndex);
     debug("orient: " << orientWithCurve);
-
-    ON_BrepEdge* e = ON_BrepEdge::Cast(_objects[edge]);
+    
+    ON_BrepEdge& e = edge(edgeIndex);
     // grab the curve for this edge
-    const ON_Curve* c = e->EdgeCurveOf();
+    const ON_Curve* c = e.EdgeCurveOf();
     // grab the surface for the face
-    const ON_Surface* s = _face->SurfaceOf();
+    const ON_Surface* s = face().SurfaceOf();
     
     // get a 2d parameter-space curve that lies on the surface for this edge
     // hopefully this works!
-    ON_Curve* c2d = pullback_curve(_face, c);
+    ON_Curve* c2d = pullback_curve(&face(), c);
 
     int trimCurve = _brep->AddTrimCurve(c2d);
 
-    ON_BrepTrim* trim = &_brep->NewTrim(*e, orientWithCurve, *_loop, trimCurve);
-    trim->m_type = ON_BrepTrim::mated; // closed solids!
-    trim->m_tolerance[0] = 0.0; // XXX: tolerance?
-    trim->m_tolerance[1] = 0.0;
+    ON_BrepTrim& trim = _brep->NewTrim(e, orientWithCurve, loop(), trimCurve);
+    trim.m_type = ON_BrepTrim::mated; // closed solids!
+    trim.m_tolerance[0] = 0.0; // XXX: tolerance?
+    trim.m_tolerance[1] = 0.0;
 
-    _objects.push_back(trim);
-    return _objects.size()-1;
+    _trim = trim.m_trim_index;
+    _topology.push_back(_trim);
+    return _topology.size()-1;
   }
 
   int
@@ -112,8 +111,8 @@ namespace brlcad {
     ON_BrepVertex& b = _brep->NewVertex(ON_3dPoint(pt));
     b.m_tolerance = 0.0; // XXX use exact tolerance?
 
-    _vertices.push_back(b.m_vertex_index);
-    return _vertices.size()-1;
+    _topology.push_back(b.m_vertex_index);
+    return _topology.size()-1;
   }
 
   int 
@@ -145,8 +144,9 @@ namespace brlcad {
     rev->m_axis = line;
     rev->SetAngleRadians(startAngle, endAngle);
 
-    _objects.push_back(rev);
-    return _objects.size()-1;
+    int sid = _brep->AddSurface(rev);
+    _topology.push_back(sid);
+    return _topology.size()-1;
   }
 
   int
@@ -174,29 +174,72 @@ namespace brlcad {
 
     ON_NurbsSurface* surf = ON_NurbsSurface::New(3, rational, degree[0]+1, degree[1]+1, num_control[0], num_control[1]);
     
-    for (int i = 0; i < u_num_knots; i++) {
-      surf->m_knot[0][i] = u_knots[i];
+    debug("Num u knots: " << surf->KnotCount(0));
+    debug("Num v knots: " << surf->KnotCount(1));
+    debug("Mult u knots: " << surf->KnotMultiplicity(0,0) << "," << surf->KnotMultiplicity(0,1));
+    debug("Mult v knots: " << surf->KnotMultiplicity(1,0) << "," << surf->KnotMultiplicity(1,1));
+
+    // openNURBS handles the knots differently (than most other APIs
+    // I've seen, which is admittedly not many) 
+    // 
+    // it implicitly represents multiplicities based on a "base" knot
+    // vector. IOW, if you had a degree 3 surface, then you'd have a
+    // multiplicity of 3 for the first and last knots if it was
+    // clamped... (most I've seen are...) Well, openNURBS let's you
+    // specify the SINGLE knot value and then you tell it the
+    // multiplicity is 3. IGES on the other hand (and Pro/E as well),
+    // represent the multiplicities explicitly, i.e. they have 3 of
+    // the same value (which means I need to handle the conversion
+    // here!)
+    int u_offset = degree[0];
+    int u_count  = u_num_knots - 2*degree[0];
+
+    int v_offset = degree[1];
+    int v_count  = v_num_knots - 2*degree[1];
+
+    for (int i = 0; i < u_count; i++) {
+      surf->SetKnot(0, i, u_knots[i+u_offset]);
+      //surf->SetKnot(0, i, u_knots[i]);
     }
-    for (int i = 0; i < v_num_knots; i++) {
-      surf->m_knot[1][i] = v_knots[i];
+    for (int i = 0; i < v_count; i++) {
+      surf->SetKnot(1, i, v_knots[i+v_offset]);
+      //surf->SetKnot(1, i, v_knots[i]);
     }
+
+    surf->ClampEnd(0,2);
+    surf->ClampEnd(1,2);
+
+    debug("Num u knots: " << surf->KnotCount(0));
+    debug("Num v knots: " << surf->KnotCount(1));
+    debug("Mult u knots: " << surf->KnotMultiplicity(0,0) << "," << surf->KnotMultiplicity(0,1));
+    debug("Mult v knots: " << surf->KnotMultiplicity(1,0) << "," << surf->KnotMultiplicity(1,1));
 
     for (int u = 0; u < num_control[0]; u++) {
       for (int v = 0; v < num_control[1]; v++) {
+	int index = v*num_control[0]*3 + u*3;
 	if (rational) 
-	  surf->SetCV(u,v,ON_4dPoint(ctl_points[CPI(u,v,0)],
-				     ctl_points[CPI(u,v,1)],
-				     ctl_points[CPI(u,v,2)],
+	  surf->SetCV(u,v,ON_4dPoint(ctl_points[index+0],
+				     ctl_points[index+1],
+				     ctl_points[index+2],
 				     weights[v*num_control[0]+u]));
-	else 
-	  surf->SetCV(u,v,ON_3dPoint(ctl_points[CPI(u,v,0)],
-				     ctl_points[CPI(u,v,1)],
-				     ctl_points[CPI(u,v,2)]));
+	else {
+	  surf->SetCV(u,v,ON_3dPoint(ctl_points[index+0],
+				     ctl_points[index+1],
+				     ctl_points[index+2]));
+	  double* p = &ctl_points[index];
+	  debug("ctl: " << PT(p));
+	}
       } 
     }
+
+    ON_Interval u = surf->Domain(0);
+    ON_Interval v = surf->Domain(1);
+    debug("u: [" << u[0] << "," << u[1] << "]");
+    debug("v: [" << v[0] << "," << v[1] << "]");
     
-    _objects.push_back(surf);
-    return _objects.size()-1;
+    int sid = _brep->AddSurface(surf);
+    _topology.push_back(sid);
+    return _topology.size()-1;
   }
 
   int
