@@ -1,45 +1,19 @@
 # $Id$
 
 COUNT: DATE HOST PATH USER
-	if test -f $(top_srcdir)/include/conf/COUNT ; then \
-		touch $@ ; chmod ug+w $@ ;\
-		cat $(top_srcdir)/include/conf/COUNT > $@ ;\
-	else \
-		test -f $@ || echo "1" > $@ ;\
-	fi
 	expr "`cat COUNT`" + 1 > $@
 
 DATE: HOST PATH USER
-	if test -f $(top_srcdir)/include/conf/DATE ; then \
-		touch $@ ; chmod ug+w $@ ;\
-		cat $(top_srcdir)/include/conf/DATE > $@ ;\
-	else \
-		test -f $@ || echo "\"`date`\"" > $@ ;\
-	fi
+	echo "\"`date`\"" > $@
 
 HOST:
-	if test -f $(top_srcdir)/include/conf/HOST ; then \
-		touch $@ ; chmod ug+w $@ ;\
-		cat $(top_srcdir)/include/conf/HOST > $@ ;\
-	else \
-		test -f $@ || echo "\"`hostname`\"" > $@ ;\
-	fi
+	echo "\"`hostname`\"" > $@
 
 PATH:
-	if test -f $(top_srcdir)/include/conf/PATH ; then \
-		touch $@ ; chmod ug+w $@ ;\
-		cat $(top_srcdir)/include/conf/PATH > $@ ;\
-	else \
-		test -f $@ || echo "\"$(DESTDIR)$(prefix)\"" > $@ ;\
-	fi
+	echo "\"$(DESTDIR)$(prefix)\"" > $@
 
 USER:
-	if test -f $(top_srcdir)/include/conf/USER ; then \
-		touch $@ ; chmod ug+w $@ ;\
-		cat $(top_srcdir)/include/conf/USER > $@ ;\
-	else \
-		test -f $@ || echo "\"`whoami`\"" > $@ ;\
-	fi
+	echo "\"`whoami`\"" > $@
 
 # this causes them to be dependencies on the 'all' target
 BUILT_SOURCES = \
