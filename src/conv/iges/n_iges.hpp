@@ -502,9 +502,6 @@ namespace brlcad {
     list<Extractor*> handlers;
   };
 
-#define CP_SIZE(u,v,i) (u)*(v)*(i)
-#define CPI(u,v,i) (u)*(v)+(i)
-
   class EdgeUse;
   class PSpaceCurve;
   class BrepHandler : public Extractor {
