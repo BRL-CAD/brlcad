@@ -1,7 +1,7 @@
 # $Id$
 
 COUNT: DATE HOST PATH USER
-	expr "`cat COUNT`" + 1 > $@
+	test -f $@ && expr `cat COUNT` + 1 > $@ || echo "1" > $@
 
 DATE: HOST PATH USER
 	echo "\"`date`\"" > $@
