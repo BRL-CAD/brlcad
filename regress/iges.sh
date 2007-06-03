@@ -1,6 +1,8 @@
 #!/bin/sh
 
-set +
+LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$DYLD_LIBRARY_PATH
+export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 rm -f iges.log iges.g iges_file.iges iges_stdout_new.g iges_new.g iges_stdout.iges iges_file.iges
 

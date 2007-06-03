@@ -1,5 +1,9 @@
 #!/bin/sh
 
+LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$DYLD_LIBRARY_PATH
+export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
+
 TOP_SRCDIR=$1
 EAGLECAD=eagleCAD-512x438.pix
 
