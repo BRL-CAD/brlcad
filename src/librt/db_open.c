@@ -145,16 +145,16 @@ db_open(const char *name, const char *mode)
 	BU_GETSTRUCT( dbip, db_i );
 	dbip->dbi_eof = -1L;
 
-#		ifdef HAVE_UNIX_IO
+#ifdef HAVE_UNIX_IO
 	if( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
 	    goto fail;
 	if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
 	    goto fail;
-#		else /* HAVE_UNIX_IO */
+#else /* HAVE_UNIX_IO */
 	if( (dbip->dbi_fp = fopen( name, "r+b")) == NULL )
 	    goto fail;
 	dbip->dbi_fd = -1;
-#		endif
+#endif
 	dbip->dbi_read_only = 0;
     }
 
@@ -194,11 +194,11 @@ db_open(const char *name, const char *mode)
 	bu_log("db_open(%s) FAILED\n", name);
     }
 
-    if (dbip->dbi_fd >= 0) {
+    if (dbip && dbip->dbi_fd >= 0) {
 	(void)close(dbip->dbi_fd);
 	dbip->dbi_fd = -1;
     }
-    if (dbip->dbi_fp) {
+    if (dbip && dbip->dbi_fp) {
 	(void)fclose(dbip->dbi_fp);
 	dbip->dbi_fp = (FILE *)NULL;
     }
