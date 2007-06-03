@@ -77,7 +77,6 @@ CLEANFILES = \
 	lights.pix \
 	lights_diff.pix \
 	lights_ref.pix \
-	mged_shaders.log \
 	moss-diff.log \
 	moss-png.log \
 	moss.asc \
@@ -93,6 +92,7 @@ CLEANFILES = \
 	shaders.dat \
 	shaders.g \
 	shaders.log \
+	shaders.mged \
 	shaders.pix \
 	shaders.pix.diff \
 	shaders.rt \
@@ -106,6 +106,7 @@ CLEANFILES = \
 	solids-diff.log \
 	solids.g \
 	solids.log \
+	solids.mged \
 	solids.pix \
 	solids.pix.diff \
 	solids_ref.pix \
