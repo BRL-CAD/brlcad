@@ -1,5 +1,9 @@
 #!/bin/sh
 
+LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$DYLD_LIBRARY_PATH
+export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
+
 rm -f dsp.dat ebm.bw solids solids.g solids.log solids.pix
 
 ../src/conv/asc2pix > dsp.dat << EOF
@@ -733,9 +737,9 @@ EOF
 
 
 # Trim 1025 byte sequence down to exactly 1024.
-../src/util/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1 > mged_solids.log 2>&1
+../src/util/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1 > solids.log 2>&1
 
-../src/mged/mged -c >> mged_solids.log 2>&1 << EOF
+cat > solids.mged <<EOF
 opendb solids.g y
 
 
@@ -872,6 +876,10 @@ size 1600
 ae 25 45
 saveview solids
 q
+EOF
+
+../src/mged/mged -c >> solids.log 2>&1 << EOF
+`cat solids.mged`
 EOF
 
 if [ ! -f solids ] ; then
