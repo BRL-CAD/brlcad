@@ -4,14 +4,14 @@ LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$LD_LIBRARY_PATH
 DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$DYLD_LIBRARY_PATH
 export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
-TOP_SRCDIR=$1
 EAGLECAD=eagleCAD-512x438.pix
+rm -f shaders.rt shaders.g shaders.rt.pix shaders.pixdiff.log shaders.rt.log shaders.log shaders.txt shaders.dat $EAGLECAD shaders.mged
+
+TOP_SRCDIR=$1
 
 if [ ! -f ebm.bw ] ; then
 	../src/util/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1
 fi
-
-rm -f shaders.rt shaders.g shaders.rt.pix shaders.pixdiff.log shaders.rt.log shaders.log shaders.txt shaders.dat $EAGLECAD
 
 
 ../src/conv/asc2pix > $EAGLECAD << EOF
@@ -224276,7 +224276,8 @@ EOF
 export ITCL_LIBRARY=$TOP_SRCDIR/src/other/incrTcl/itcl/library/
 export TCL_LIBRARY=$TOP_SRCDIR/src/other/libtcl/library/
 export BRLCAD_DATA=$TOP_SRCDIR/src
-../src/mged/mged -c > shaders.log 2>&1 << EOF
+
+cat > shaders.mged <<EOF
 opendb shaders.g y
 
 
@@ -224409,7 +224410,11 @@ saveview shaders.rt
 q
 EOF
 
-if [ ! -f shaders.rt ] ; then
+if ../src/mged/mged -c > shaders.log 2>&1 << EOF
+`cat shaders.mged`
+EOF
+
+[ ! -f shaders.rt ] ; then
 	echo 'mged failed'
 	exit 1
 fi
