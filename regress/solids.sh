@@ -4,7 +4,7 @@ LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$LD_LIBRARY_PATH
 DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$DYLD_LIBRARY_PATH
 export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
-rm -f dsp.dat ebm.bw solids solids.g solids.log solids.pix
+rm -f dsp.dat ebm.bw solids solids.g solids.log solids.pix solids.mged
 
 ../src/conv/asc2pix > dsp.dat << EOF
 01BF01
