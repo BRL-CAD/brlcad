@@ -649,7 +649,7 @@ sample_applications_DATA = \
 EXTRA_DIST = \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
-	${PL_X_EXTRA}
+	${PL_X_EXTRA} \
 	fix_polysolids.c \
 	pix-both-ik.c \
 	pix-ci.c \
