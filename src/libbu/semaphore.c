@@ -198,8 +198,9 @@ bu_semaphore_sgi_init()
 	 *  Use this opportunity to tune malloc().  It needs it!
 	 *  Default for M_BLKSZ is 8k.
 	 */
-	if( mallopt( M_BLKSZ, 128*1024 ) != 0 )
-		fprintf(stderr, "bu_semaphore_sgi_init: mallopt() failed\n");
+    if (mallopt( M_BLKSZ, 128*1024) != 0) {
+	fprintf(stderr, "bu_semaphore_sgi_init: mallopt() failed\n");
+    }
 
 	/* Now, set up the lock arena */
 	(void)mktemp(bu_lockfile);
@@ -230,7 +231,7 @@ bu_semaphore_sgi_init()
 	if (bu_lockstuff == 0) {
 		perror("usinit");
 		fprintf(stderr, "bu_semaphore_sgi_init: usinit(%s) failed, unable to allocate lock space\n", bu_lockfile);
-		exit(2);
+		bu_bomb("fatal semaphore initialization failure");
 	}
 }
 #endif
@@ -332,8 +333,8 @@ bu_semaphore_init(unsigned int nsemaphores)
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		if( (bu_semaphores[i].ltp = usnewlock(bu_lockstuff)) == NULL )  {
 			perror("usnewlock");
-			fprintf(stderr, "bu_semaphore_init: usnewlock() failed, unable to allocate lock %d\n", i);
-			exit(2);
+			fprintf(stderr, "bu_semaphore_init: usnewlock() failed, unable to allocate lock [%d]\n", i);
+			bu_bomb("fatal semaphore initialization failure");
 		}
 	}
 #	endif
@@ -342,8 +343,8 @@ bu_semaphore_init(unsigned int nsemaphores)
 	for( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		if (mutex_init( &bu_semaphores[i].mu, USYNC_THREAD, NULL)) {
-			fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on %d\n", i);
-			abort();
+			fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on [%d]\n", i);
+			bu_bomb("fatal semaphore acquisition failure");
 		}
 
 	}
@@ -352,8 +353,8 @@ bu_semaphore_init(unsigned int nsemaphores)
 	for( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
 		if (pthread_mutex_init( &bu_semaphores[i].mu,  NULL)) {
-			fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on %d\n", i);
-			abort();
+			fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on [%d]\n", i);
+			bu_bomb("fatal semaphore acquisition failure");
 		}
 	}
 #	endif
@@ -376,17 +377,17 @@ bu_semaphore_acquire(unsigned int i)
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
 	return;					/* No support on this hardware */
 #else
-	if( bu_semaphores == NULL )  {
+	if (bu_semaphores == NULL) {
 		/* Semaphores not initialized yet.  Must be non-parallel */
 		return;
 	}
 
 	BU_CKMAG(bu_semaphores, BU_SEMAPHORE_MAGIC, "bu_semaphore");
 
-	if( i >= bu_nsemaphores )  {
+	if (i >= bu_nsemaphores) {
 		fprintf(stderr, "bu_semaphore_acquire(%d): semaphore # exceeds max of %d\n",
-			i, bu_nsemaphores);
-		abort();
+			i, bu_nsemaphores - 1);
+		bu_bomb("fatal semaphore acquisition failure");
 	}
 
 	BU_CKMAG(&bu_semaphores[i], BU_SEMAPHORE_MAGIC, "bu_semaphore");
@@ -423,15 +424,15 @@ bu_semaphore_acquire(unsigned int i)
 #	endif
 
 #	if SUNOS
-	if( mutex_lock( &bu_semaphores[i].mu ) )  {
-		fprintf(stderr, "bu_semaphore_acquire(): mutex_lock() failed on %d\n", i);
-		abort();
+	if (mutex_lock(&bu_semaphores[i].mu)) {
+		fprintf(stderr, "bu_semaphore_acquire(): mutex_lock() failed on [%d]\n", i);
+		bu_bomb("fatal semaphore acquisition failure");
 	}
 #	endif
 #	if defined(HAVE_PTHREAD_H) && !defined(sgi)
-	if( pthread_mutex_lock( &bu_semaphores[i].mu ) )  {
-		fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on %d\n", i);
-		abort();
+	if (pthread_mutex_lock(&bu_semaphores[i].mu)) {
+		fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on [%d]\n", i);
+		bu_bomb("fatal semaphore acquisition failure");
 	}
 #	endif
 
@@ -456,7 +457,7 @@ bu_semaphore_release(unsigned int i)
 
 	if( i >= bu_nsemaphores )  {
 		fprintf(stderr, "bu_semaphore_release(%d): semaphore # exceeds max of %d\n",
-			i, bu_nsemaphores);
+			i, bu_nsemaphores - 1);
 		exit(3);
 	}
 
@@ -492,14 +493,14 @@ bu_semaphore_release(unsigned int i)
 
 #	if SUNOS
 	if( mutex_unlock( &bu_semaphores[i].mu ) )  {
-		fprintf(stderr, "bu_semaphore_acquire(): mutex_unlock() failed on %d\n", i);
-		abort();
+		fprintf(stderr, "bu_semaphore_acquire(): mutex_unlock() failed on [%d]\n", i);
+		bu_bomb("fatal semaphore acquisition failure");
 	}
 #	endif
 #	if defined(HAVE_PTHREAD_H) && !defined (sgi)
 	if( pthread_mutex_unlock( &bu_semaphores[i].mu ) )  {
-		fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on %d\n", i);
-		abort();
+		fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on [%d]\n", i);
+		bu_bomb("fatal semaphore acquisition failure");
 	}
 #	endif
 #endif
