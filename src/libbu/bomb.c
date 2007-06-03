@@ -21,18 +21,19 @@
 /** @{ */
 /** @file ./libbu/bomb.c
  *
- *  This routine is called on a fatal
- *  error, where no recovery is possible.
+ *  The bu_bomb routine is called on a fatal error, generally where no
+ *  recovery is possible.  Error handlers may, however, be registered
+ *  with BU_SETJMP.  This routine intentionally limits calls to other
+ *  functions and intentionally uses no stack variables.  Just in case
+ *  the application is out of memory, bu_bomb deallocates a small
+ *  buffer of memory.
  *
  *  @par Functions -
- *	bu_bomb		Called upon fatal error.
+ *    bu_bomb		Called upon fatal error.
  *
- *  @author	Michael John Muuss
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory			@n
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
+ *  @author -
+ *    Michael John Muuss
+ *    Christopher Sean Morrison
  */
 
 #ifndef lint
