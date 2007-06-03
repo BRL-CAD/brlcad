@@ -66,6 +66,9 @@ CLEANFILES = \
 	exp_air.pl \
 	gaps.pl \
 	gqa.g \
+	gqa.log \
+	gqa.mged \
+	gqa_mged.log \
 	iges.g \
 	iges.log \
 	iges_file.iges \
@@ -113,6 +116,7 @@ CLEANFILES = \
 	spdi \
 	spdi.g \
 	spdi.log \
+	spdi.mged \
 	spdi.pix \
 	spdi_diff.pix \
 	spdi_mged.log \
@@ -120,6 +124,7 @@ CLEANFILES = \
 	volume.pl \
 	weight.g \
 	weight.log \
+	weight.mged \
 	weight.out \
 	weight.ref \
 	wgt.out

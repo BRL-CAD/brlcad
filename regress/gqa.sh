@@ -4,13 +4,12 @@ LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$LD_LIBRARY_PATH
 DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$DYLD_LIBRARY_PATH
 export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
-rm -f gqa.g density_table.txt gqa.log
+rm -f gqa.g density_table.txt gqa.log gqa_mged.log gqa.mged
 
 echo "5 1 stuff" > density_table.txt
 echo "2 1 gas" >> density_table.txt
 
-../src/mged/mged -c gqa.g <<EOF > /dev/null 2>&1
-
+cat > gqa.mged <<EOF
 units m
 dbbinary -i u c _DENSITIES density_table.txt
 
@@ -58,6 +57,10 @@ g overlaps closed_box.r overlap_obj.r
 
 
 q
+EOF
+
+../src/mged/mged -c gqa.g <<EOF > gqa_mged.log 2>&1
+`cat gqa.mged`
 EOF
 
 #

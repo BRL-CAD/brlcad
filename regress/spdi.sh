@@ -4,10 +4,9 @@ LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$LD_LIBRARY_PATH
 DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$DYLD_LIBRARY_PATH
 export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
-rm -f spdi.g spdi.log spdi spdi.pix
+rm -f spdi.g spdi.log spdi spdi.pix spdi_mged.log spdi.mged
 
-../src/mged/mged -c spdi.g << EOF > spdi_mged.log 2>&1
-
+cat > spdi.mged <<EOF
 
 set glob_compat_mode 0
 
@@ -43,6 +42,10 @@ mater light1.r "light i 1 s 1 v 0" 255 255 255 0
 g all.g light1.r
 
 q
+EOF
+
+../src/mged/mged -c spdi.g << EOF > spdi_mged.log 2>&1
+`cat spdi.mged`
 EOF
 
 echo "rendering..."

@@ -6,13 +6,17 @@ export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 TOP_SRCDIR=$1
 
-rm -f weight.log .density weight.g weight.ref weight.out
+rm -f weight.log .density weight.g weight.ref weight.out weight.mged
 
-../src/mged/mged -c > weight.log 2>&1 << EOF
+cat > weight.mged <<EOF
 opendb weight.g y
 units cm
 in box rpp 0 1 0 1 0 1
 r box.r u box
+EOF
+
+../src/mged/mged -c > weight.log 2>&1 << EOF
+`cat weight.mged`
 EOF
 
 cat > .density <<EOF
