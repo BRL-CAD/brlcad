@@ -88,11 +88,14 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 #include <iostream>
 #include <algorithm>
 
+#ifndef TRACE
 //#define TRACE(s) std::cout << "TRACE: " << s << std::endl
 #define TRACE(s)
+#endif
 #define ON_PRINT4(p) "[" << (p)[0] << "," << (p)[1] << "," << (p)[2] << "," << (p)[3] << "]"
 #define ON_PRINT3(p) "(" << (p)[0] << "," << (p)[1] << "," << (p)[2] << ")"
 #define ON_PRINT2(p) "(" << (p)[0] << "," << (p)[1] << ")"
+
 
 using namespace brlcad;
 

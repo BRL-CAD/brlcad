@@ -16,7 +16,6 @@
 
 using namespace std;
 
-#define TRACE(m) cerr << m << endl;
 
 namespace brlcad {  
 
@@ -398,6 +397,7 @@ namespace brlcad {
       sample(data, t1, t, p1, m);
       sample(data, t, t2, m, p2);
     }
+    return true;
   }
 
   void
@@ -526,7 +526,7 @@ namespace brlcad {
   ON_NurbsCurve*
   newNURBSCurve(BSpline& spline) {
     // we now have everything to complete our spline
-    ON_NurbsCurve* c = ON_NurbsCurve::New(3,
+    ON_NurbsCurve* c = ON_NurbsCurve::New(2,
 					  false,
 					  spline.p+1,
 					  spline.n+1);
@@ -544,9 +544,11 @@ namespace brlcad {
 
   ON_Curve* 
   interpolateCurve(PBCData& data) {
+    ON_Curve* curve;
     if (data.samples.Count() == 2) {
       // build a line
-      return new ON_LineCurve(data.samples[0], data.samples[1]);
+      curve = new ON_LineCurve(data.samples[0], data.samples[1]);
+      curve->SetDomain(0.0,1.0);
     } else {
       // build a NURBS curve, then see if it can be simplified!
       BSpline spline;
@@ -556,12 +558,13 @@ namespace brlcad {
       generateKnots(spline);
       generateParameters(spline);
       generateControlPoints(spline, data);
-      ON_NurbsCurve* nurbs = newNURBSCurve(spline);
-    
+      curve = newNURBSCurve(spline);    
       // XXX - attempt to simplify here!
-
-      return nurbs;
     }
+    ON_TextLog tl;
+    curve->Dump(tl);
+    assert(curve->IsValid(&tl));
+    return curve;
   }
 
   ON_Curve*
@@ -582,14 +585,12 @@ namespace brlcad {
     double tmin, tmax;
     data.curve->GetDomain(&tmin, &tmax);
     ON_2dPoint& start = data.samples.AppendNew(); // new point is added to samples and returned
-    if (toUV(data, start, tmin)) { return NULL; } // fails if first point is out of tolerance!
+    assert(toUV(data,start,tmin));
 
     ON_2dPoint p1, p2;
     toUV(data, p1, tmin);
     toUV(data, p2, tmax);
-    if (!sample(data, tmin, tmax, p1, p2)) {
-      return NULL;
-    }
+    assert(sample(data, tmin, tmax, p1, p2));
 
     for (int i = 0; i < data.samples.Count(); i++) {
       cerr << data.samples[i].x << "," << data.samples[i].y << endl;

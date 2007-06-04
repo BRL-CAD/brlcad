@@ -13,6 +13,7 @@
 #include <vector>
 #include <list>
 #include <limits>
+#include <iostream>
 
 /* Maximum per-surface BVH depth */
 #define BREP_MAX_FT_DEPTH 8
@@ -24,6 +25,10 @@
 #define BREP_FCP_ROOT_EPSILON 0.00001
 
 static std::numeric_limits<double> real;
+
+#define PT(p) "(" << (p)[0] << "," << (p)[1] << "," << (p)[2] << ")"
+#define PT2(p) "(" << (p)[0] << "," << (p)[1] << ")"
+#define TRACE(s) std::cerr << s << endl;
 
 namespace brlcad {
   
@@ -227,18 +232,22 @@ namespace brlcad {
   template<class BV>
   BVNode<BV>*
   BVNode<BV>::closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right) {
-    double dist = pt.DistanceTo(left->m_estimate);
-    if (dist < pt.DistanceTo(right->m_estimate)) return left;
+    double ldist = pt.DistanceTo(left->m_estimate);
+    double rdist = pt.DistanceTo(right->m_estimate);
+    TRACE("\t" << ldist << " < " << rdist);
+    if (ldist < rdist) return left;
     else return right;
   }
 
   template<class BV>
   ON_2dPoint
   BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt) {
+    TRACE("getClosestPointEstimate(" << PT(pt) << ")");
     if (m_children.size() > 0) {
       BBNode* closestNode = m_children[0];
       for (int i = 1; i < m_children.size(); i++) {
 	closestNode = closer(pt, closestNode, m_children[i]);
+	TRACE("\t" << PT(closestNode->m_estimate));
       }
       return closestNode->getClosestPointEstimate(pt);
     } 
@@ -298,13 +307,15 @@ namespace brlcad {
     int mini = 0;
     double mindist = pt.DistanceTo(corners[mini]);
     double tmpdist;
-    for (int i = 1; i < 5; i++) {      
+    for (int i = 1; i < 5; i++) {
       tmpdist = pt.DistanceTo(corners[i]);
+      TRACE("\t" << mindist << " < " << tmpdist);
       if (tmpdist < mindist) {
 	mini = i;
 	mindist = tmpdist;
       }
     }
+    TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
     return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
   }
 

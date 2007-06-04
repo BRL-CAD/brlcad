@@ -1,8 +1,6 @@
 
 #include "brlcad.hpp"
 
-#define PT(p) p[0] << "," << p[1] << "," << p[2]
-
 namespace brlcad {
 
   BRLCADBrepHandler::BRLCADBrepHandler() {
@@ -48,7 +46,7 @@ namespace brlcad {
 
   int 
   BRLCADBrepHandler::handleLoop(bool isOuter, int faceIndex) {
-    ON_BrepLoop::TYPE type = (isOuter) ? ON_BrepLoop::outer : ON_BrepLoop::unknown;
+    ON_BrepLoop::TYPE type = (isOuter) ? ON_BrepLoop::outer : ON_BrepLoop::inner;
     ON_BrepLoop& loop = _brep->NewLoop(type, face());
     
     _loop = loop.m_loop_index;
@@ -64,7 +62,7 @@ namespace brlcad {
     debug("term : " << termVert);
 
     ON_BrepVertex& from = vertex(initVert);
-    ON_BrepVertex& to   = vertex(initVert);
+    ON_BrepVertex& to   = vertex(termVert);
     ON_Curve* c = ON_Curve::Cast(_objects[curve]);
     int curveIndex = _brep->AddEdgeCurve(c);
     ON_BrepEdge& edge = _brep->NewEdge(from, to, curveIndex);
@@ -77,7 +75,7 @@ namespace brlcad {
 
   int
   BRLCADBrepHandler::handleEdgeUse(int edgeIndex, bool orientWithCurve) {
-    debug("handleEdgeUse");
+    debug("************* handleEdgeUse *************");
     debug("edge  : " << edgeIndex);
     debug("orient: " << orientWithCurve);
     
@@ -91,12 +89,17 @@ namespace brlcad {
     // hopefully this works!
     ON_Curve* c2d = pullback_curve(&face(), c);
 
-    int trimCurve = _brep->AddTrimCurve(c2d);
+    int trimCurve = _brep->m_C2.Count();
+    _brep->m_C2.Append(c2d);
 
-    ON_BrepTrim& trim = _brep->NewTrim(e, orientWithCurve, loop(), trimCurve);
+    ON_BrepTrim& trim = _brep->NewTrim(e, !orientWithCurve, loop(), trimCurve);
     trim.m_type = ON_BrepTrim::mated; // closed solids!
     trim.m_tolerance[0] = 0.0; // XXX: tolerance?
     trim.m_tolerance[1] = 0.0;
+    trim.m_iso = ON_Surface::not_iso;
+
+    ON_TextLog tl;
+    trim.IsValid(&tl);
 
     _trim = trim.m_trim_index;
     _topology.push_back(_trim);

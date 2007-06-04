@@ -81,9 +81,9 @@ namespace brlcad {
     int face = handleFace(orientWithSurface, surf);
 
     int numLoops = params.getInteger(2);
-    bool isOuter = params.getLogical(3);    
+    bool isOuter = params.getLogical(3) || true; // outer is not set in IGES from Pro/E!
     for (int i = 4; (i-4) < numLoops; i++) {
-      Pointer loopDE = params.getPointer(i);
+      Pointer loopDE = params.getPointer(i);      
       extractLoop(_iges->getDirectoryEntry(loopDE), isOuter, face);
       isOuter = false;
     }
@@ -307,7 +307,8 @@ namespace brlcad {
       int termVertex = extractVertex(_iges->getDirectoryEntry(termVertexList),
 					termVertexIndex);
       
-      return handleEdge(mCurveIndex, initVertex, termVertex);
+      edges[k] = handleEdge(mCurveIndex, initVertex, termVertex);
+      return edges[k];
     } else {
       return i->second;
     }
@@ -327,16 +328,15 @@ namespace brlcad {
       bool isVertex = (1 == params.getInteger(i)) ? true : false;
       Pointer edgePtr = params.getPointer(i+1);
       int index = params.getInteger(i+2);
-      // need to get the edge list, and extract the edge info
-      int edge = extractEdge(_iges->getDirectoryEntry(edgePtr), index);
-      bool orientWithCurve = params.getLogical(i+3);
+      // need to get the edge list, and extract the edge info     
+      int edge = extractEdge(_iges->getDirectoryEntry(edgePtr), index);      
+      bool orientWithCurve = params.getLogical(i+3);      
 
       // handle this edge
       handleEdgeUse(edge, orientWithCurve);
 
-      // deal with param-space curves (not generally included from Pro/E)
+      // deal with param-space curves (not generally included in Pro/E output)
       int numCurves = params.getInteger(i+4);
-      debug("Num param-space curves in " << string((isOuter)?"outer":"inner") << " loop: " << numCurves);
       int j = i+5;
       list<PSpaceCurve> pCurveIndices;
       for (int _j = 0; _j < numCurves; _j++) {
