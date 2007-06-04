@@ -17,7 +17,10 @@
 #include "opennurbs.h"
 
 /* for finite() in ON_IsFinite() */
-#include "brlcad_config.h"
+
+/* ugh, included just to get HAVE_IEEEFP_H */
+#include "common.h"
+
 #ifdef HAVE_IEEEFP_H
 # include <ieeefp.h>
 #else
