@@ -25,7 +25,6 @@ iges_SOURCES = \
 	brlcad_brep.cpp \
 	BrepHandler.cpp \
 	n_iges.cpp  \
-	PullbackCurve.cpp \
 	nmain.cpp
 
 iges_LDADD = \
