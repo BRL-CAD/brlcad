@@ -69,11 +69,11 @@
 #define ON_COMPILER_BORLAND
 #endif
 
-#if defined(sgi)
+#if defined(sgi) || defined(__sgi)
 #define ON_COMPILER_IRIX
 #endif
 
-#if defined(SUNOS) || defined(__sun) 
+#if defined(sun) || defined(__sun) 
 #define ON_COMPILER_SUN
 #endif
 
