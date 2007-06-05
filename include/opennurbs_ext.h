@@ -28,7 +28,7 @@ static std::numeric_limits<double> real;
 
 #define PT(p) "(" << (p)[0] << "," << (p)[1] << "," << (p)[2] << ")"
 #define PT2(p) "(" << (p)[0] << "," << (p)[1] << ")"
-#define TRACE(s) std::cerr << s << endl;
+#define TRACE(s) std::cout << s << endl;
 
 namespace brlcad {
   
