@@ -636,29 +636,46 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
+    // XXX below does NOT work for non-trivial faces, in addition to
+    // the fact that openNURBS does NOT support meshes! 
+    //
     // XXX currently not handling the tolerance
-    ON_MeshParameters mp;
-    mp.JaggedAndFasterMeshParameters();
+    //     ON_MeshParameters mp;
+    //     mp.JaggedAndFasterMeshParameters();
+    
+    //     ON_SimpleArray<ON_Mesh*> mesh_list;
+    //     bi->brep->CreateMesh(mp, mesh_list);
+    
+    //     point_t pt1, pt2;
+    //     ON_SimpleArray<ON_2dex> edges;
+    //     for (int i = 0; i < mesh_list.Count(); i++) {
+    // 	const ON_Mesh* mesh = mesh_list[i];
+    // 	mesh->GetMeshEdges(edges);
+    // 	for (int j = 0; j < edges.Count(); j++) {
+    // 	    ON_MeshVertexRef v1 = mesh->VertexRef(edges[j].i);
+    // 	    ON_MeshVertexRef v2 = mesh->VertexRef(edges[j].j);
+    // 	    VSET(pt1, v1.Point().x, v1.Point().y, v1.Point().z);
+    // 	    VSET(pt2, v2.Point().x, v2.Point().y, v2.Point().z);
+    // 	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+    // 	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+    // 	}
+    // 	edges.Empty();
+    //     }
 
-    ON_SimpleArray<ON_Mesh*> mesh_list;
-    bi->brep->CreateMesh(mp, mesh_list);
-
+    // So we'll do it by hand by grabbing each topological edge from
+    // the brep and rendering it that way...
+    ON_Brep* brep = bi->brep;    
     point_t pt1, pt2;
-    ON_SimpleArray<ON_2dex> edges;
-    for (int i = 0; i < mesh_list.Count(); i++) {
-	const ON_Mesh* mesh = mesh_list[i];
-	mesh->GetMeshEdges(edges);
-	for (int j = 0; j < edges.Count(); j++) {
-	    ON_MeshVertexRef v1 = mesh->VertexRef(edges[j].i);
-	    ON_MeshVertexRef v2 = mesh->VertexRef(edges[j].j);
-	    VSET(pt1, v1.Point().x, v1.Point().y, v1.Point().z);
-	    VSET(pt2, v2.Point().x, v2.Point().y, v2.Point().z);
-	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-	}
-	edges.Empty();
+    for (int i = 0; i < bi->brep->m_E.Count(); i++) {
+	ON_BrepEdge& e = brep->m_E[i];
+	ON_BrepVertex& v1 = brep->m_V[e.m_vi[0]];
+	ON_BrepVertex& v2 = brep->m_V[e.m_vi[1]];
+	VMOVE(pt1, v1.Point());
+	VMOVE(pt2, v2.Point());
+	RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
     }
-
+    
     return 0;
 }
 
