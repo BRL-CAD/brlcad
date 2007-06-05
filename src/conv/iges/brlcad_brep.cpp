@@ -46,6 +46,7 @@ namespace brlcad {
 
   int 
   BRLCADBrepHandler::handleLoop(bool isOuter, int faceIndex) {
+    debug("handleLoop");
     ON_BrepLoop::TYPE type = (isOuter) ? ON_BrepLoop::outer : ON_BrepLoop::inner;
     ON_BrepLoop& loop = _brep->NewLoop(type, face());
     
@@ -75,11 +76,15 @@ namespace brlcad {
 
   int
   BRLCADBrepHandler::handleEdgeUse(int edgeIndex, bool orientWithCurve) {
-    debug("************* handleEdgeUse *************");
-    debug("edge  : " << edgeIndex);
-    debug("orient: " << orientWithCurve);
+    ON_TextLog tl;
+
+    debug("handleEdgeUse: edge  : " << edgeIndex);
+    debug("handleEdgeUse: orient: " << orientWithCurve);
     
-    ON_BrepEdge& e = edge(edgeIndex);
+    ON_BrepEdge& e = edge(edgeIndex);    
+
+    debug("handleEdgeUse: " << e.m_vi[0] << " --> " << e.m_vi[1]);    
+
     // grab the curve for this edge
     const ON_Curve* c = e.EdgeCurveOf();
     // grab the surface for the face
@@ -88,17 +93,21 @@ namespace brlcad {
     // get a 2d parameter-space curve that lies on the surface for this edge
     // hopefully this works!
     ON_Curve* c2d = pullback_curve(&face(), c);
+    if (!orientWithCurve) {
+      c2d->Reverse();
+    }
 
     int trimCurve = _brep->m_C2.Count();
     _brep->m_C2.Append(c2d);
 
     ON_BrepTrim& trim = _brep->NewTrim(e, !orientWithCurve, loop(), trimCurve);
+    debug("handleEdgeUse: trim " << (orientWithCurve ? "is not " : "is ") << "reversed"); 
     trim.m_type = ON_BrepTrim::mated; // closed solids!
     trim.m_tolerance[0] = 0.0; // XXX: tolerance?
     trim.m_tolerance[1] = 0.0;
-    trim.m_iso = ON_Surface::not_iso;
+    ON_Interval PD = trim.ProxyCurveDomain();
+    trim.m_iso = s->IsIsoparametric(*c2d, &PD);
 
-    ON_TextLog tl;
     trim.IsValid(&tl);
 
     _trim = trim.m_trim_index;
@@ -109,7 +118,7 @@ namespace brlcad {
   int
   BRLCADBrepHandler::handleVertex(point_t pt) {
     debug("handleVertex");
-    debug("point: " << PT(pt));
+    debug("handleVertex point: " << PT(pt));
     int vi = _brep->m_V.Count();
     ON_BrepVertex& b = _brep->NewVertex(ON_3dPoint(pt));
     b.m_tolerance = 0.0; // XXX use exact tolerance?
@@ -148,6 +157,7 @@ namespace brlcad {
     rev->SetAngleRadians(startAngle, endAngle);
 
     int sid = _brep->AddSurface(rev);
+    assert(sid != -1);
     _topology.push_back(sid);
     return _topology.size()-1;
   }
@@ -241,6 +251,7 @@ namespace brlcad {
     debug("v: [" << v[0] << "," << v[1] << "]");
     
     int sid = _brep->AddSurface(surf);
+    assert(sid != -1);
     _topology.push_back(sid);
     return _topology.size()-1;
   }
