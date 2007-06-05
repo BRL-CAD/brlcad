@@ -93,10 +93,12 @@ namespace brlcad {
     string copy = field;
     int first = field.find_first_not_of(" \t\n\r");
     int exp = field.find_first_of("DF");
-    if (exp != string::npos) {
-      copy.replace(exp,exp+1,"e");
+    if (exp != string::npos) { 
+      copy.replace(exp,1,"e");     
+      debug("Real(" << copy << ")");
     }
-    _val = strtod(field.substr(first,field.length()-first).c_str(), NULL);
+    _val = strtod(copy.substr(first,field.length()-first).c_str(), NULL);
+    debug("Real(" << _val << ")");
   }
   Real::Real(const Real& r) {
     _val = r._val;
