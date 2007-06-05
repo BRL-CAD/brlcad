@@ -26,9 +26,9 @@ namespace brlcad {
   {
     // build the surface bounding volume hierarchy
     const ON_Surface* surf = face->SurfaceOf();
-    TRACE("Creating surface tree for: ");
-    ON_TextLog tl;
-    surf->Dump(tl);
+//     TRACE("Creating surface tree for: ");
+//     ON_TextLog tl;
+//     surf->Dump(tl);
     ON_Interval u = surf->Domain(0);
     ON_Interval v = surf->Domain(1);
     m_root = subdivideSurface(u, v, 0);
@@ -54,7 +54,6 @@ namespace brlcad {
   BBNode*
   SurfaceTree::surfaceBBox(bool isLeaf, const ON_Interval& u, const ON_Interval& v)
   {
-    TRACE("brep_surface_bbox");
     ON_3dPoint corners[4];
     const ON_Surface* surf = m_face->SurfaceOf();
 
@@ -80,6 +79,7 @@ namespace brlcad {
     if (!surf->EvPoint(u.Mid(),v.Mid(),estimate)) {
       bu_bomb("Could not evaluate estimate point on surface");
     }
+    TRACE("brep_surface_bbox: estimate at " << PT(estimate));
 
     BBNode* node;
     if (isLeaf) 
@@ -291,6 +291,8 @@ namespace brlcad {
     GCPData data;
     data.surf = face->SurfaceOf();
     data.pt = point;
+
+    TRACE("get_closest_point: " << PT(point));
 
     // get initial estimate
     SurfaceTree* a_tree = (tree == NULL) ? new SurfaceTree(face) : tree;
@@ -562,6 +564,7 @@ namespace brlcad {
       // XXX - attempt to simplify here!
     }
     ON_TextLog tl;
+    TRACE("************** interpolateCurve");
     curve->Dump(tl);
     assert(curve->IsValid(&tl));
     return curve;
@@ -581,6 +584,15 @@ namespace brlcad {
     data.surf = face->SurfaceOf();
     data.tree = tree;
 
+    double u[2], v[2];
+    data.surf->GetDomain(0, &u[0], &u[1]);
+    data.surf->GetDomain(1, &v[0], &v[1]);
+    TRACE("pullback_curve: " << PT2(u) << " | " << PT2(v));
+    TRACE("pullback_curve: ");
+    ON_TextLog tl;
+    curve->Dump(tl);
+    data.surf->Dump(tl);
+
     // Step 1 - adaptively sample the curve
     double tmin, tmax;
     data.curve->GetDomain(&tmin, &tmax);
@@ -593,7 +605,7 @@ namespace brlcad {
     assert(sample(data, tmin, tmax, p1, p2));
 
     for (int i = 0; i < data.samples.Count(); i++) {
-      cerr << data.samples[i].x << "," << data.samples[i].y << endl;
+      cout << data.samples[i].x << "," << data.samples[i].y << endl;
     }
 
     return interpolateCurve(data);
