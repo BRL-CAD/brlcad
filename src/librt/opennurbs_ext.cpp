@@ -48,9 +48,19 @@ namespace brlcad {
     return m_root;
   }
 
+  int
+  SurfaceTree::depth() {
+    return m_root->depth();
+  }
+
   ON_2dPoint
   SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt) {
     return m_root->getClosestPointEstimate(pt);
+  }
+
+  void
+  SurfaceTree::getLeaves(list<BBNode*> out_leaves) {
+    m_root->getLeaves(out_leaves);
   }
 
   BBNode*
