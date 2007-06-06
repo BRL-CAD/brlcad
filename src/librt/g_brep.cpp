@@ -156,9 +156,46 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
     }
 }
 
+const int CASE_A = 1;
+const int CASE_B = 2;
+const int CASE_C = 3;
+
+int 
+brep_process_caseb(const ON_LineCurve& ray, const ON_Curve* trim_curve) {
+    // XXX todo
+    return 0;
+}
+
+int 
+brep_process_casec(const ON_LineCurve& ray, const ON_Curve* trim_curve) {
+    // XXX todo
+    return 0;
+}
+
+int 
+brep_classify_trim(const ON_LineCurve& ray, const ON_Curve* trim_curve) {
+    // XXX todo
+    return CASE_A;
+}
+
+
+int
+brep_count_intersections(const ON_LineCurve& ray, const ON_Curve* trim_curve) {
+    int quad_case = brep_classify_trim(ray, trim_curve);
+    switch (quad_case) {
+    case CASE_A:
+	return 0;
+    case CASE_B:
+	return brep_process_caseb(ray, trim_curve);
+    case CASE_C:
+	return brep_process_casec(ray, trim_curve);	
+    }
+    throw new exception();
+}
 
 bool 
 brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
+    TRACE("brep_pt_trimmed: " << PT2(pt));
     // for each loop
     const ON_Surface* surf = face.SurfaceOf();
     double umin, umax;
@@ -168,47 +205,64 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
     surf->GetDomain(0, &umin, &umax);    
     to.x = umax + 1;
     ON_LineCurve ray(from,to);
-    ON_SimpleArray<ON_X_EVENT> intersections;
-    for (int i = 0; i < face.Brep()->m_L.Count(); i++) {
-	ON_BrepLoop& loop = face.Brep()->m_L[i];
+    int intersections = 0;
+    for (int i = 0; i < face.LoopCount(); i++) {
+	ON_BrepLoop* loop = face.Loop(i);
 	// for each trim
-	for (int j = 0; j < loop.m_ti.Count(); j++) {	    
-	    ON_BrepTrim& trim = face.Brep()->m_T[loop.m_ti[j]];
+	for (int j = 0; j < loop->m_ti.Count(); j++) {
+	    ON_BrepTrim& trim = face.Brep()->m_T[loop->m_ti[j]];
 	    const ON_Curve* trimCurve = trim.TrimCurveOf();
-	    ray.IntersectCurve(trimCurve, intersections, 0.0001);
+	    intersections += brep_count_intersections(ray, trimCurve);
+	    //ray.IntersectCurve(trimCurve, intersections, 0.0001);
 	}
     }
     // the point is trimmed if the # of intersections is even
-    return intersections.Count() > 0 && (intersections.Count() % 2) == 0;
+    return (intersections % 2) == 0;
 }
 
 void 
-brep_preprocess_trims(const ON_BrepFace& face, const ON_Interval& u, const ON_Interval& v) {
-    // check to see if this portion of the surface needs to be checked for trims
-    pt2d_t test[] = {{u.Min(),v.Min()},
-		     {u.Max(),v.Min()},
-		     {u.Max(),v.Max()},
-		     {u.Min(),v.Max()}};
-    int count = 0; 
-    for (int i = 0; i < 4; i++) {
-	if (brep_pt_trimmed(test[i], face)) {
-	    count++;
+brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
+
+    list<BBNode*> leaves;
+    tree->getLeaves(leaves);
+
+    for (list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
+	SubsurfaceBBNode* bb = dynamic_cast<SubsurfaceBBNode*>(*i);
+	
+	
+	// check to see if this portion of the surface needs to be checked for trims
+	pt2d_t test[] = {{bb->m_u.Min(),bb->m_v.Min()},
+			 {bb->m_u.Max(),bb->m_v.Min()},
+			 {bb->m_u.Max(),bb->m_v.Max()},
+			 {bb->m_u.Min(),bb->m_v.Max()}};
+	int count = 0; 
+	for (int i = 0; i < 4; i++) {
+	    if (brep_pt_trimmed(test[i], face)) {
+		count++;
+	    }
 	}
-    }
-    // check to see if the bbox encloses a trim
-    ON_3dPoint uvmin(u.Min(),v.Min(),0);
-    ON_3dPoint uvmax(u.Max(),v.Max(),0);
-    ON_BoundingBox bb(uvmin,uvmax);
-    bool internalTrim = false;
-    for (int i = 0; i < face.Brep()->m_L.Count(); i++) {
-	ON_BrepLoop& loop = face.Brep()->m_L[i];
-	// for each trim
-	for (int j = 0; j < loop.m_ti.Count(); j++) {	    
-	    ON_BrepTrim& trim = face.Brep()->m_T[loop.m_ti[j]];
-	    if (bb.Intersection(trim.m_pbox)) internalTrim = true;
+	// check to see if the bbox encloses a trim
+	ON_3dPoint uvmin(bb->m_u.Min(),bb->m_v.Min(),0);
+	ON_3dPoint uvmax(bb->m_u.Max(),bb->m_v.Max(),0);
+	ON_BoundingBox bbox(uvmin,uvmax);
+	bool internalTrim = false;
+	for (int i = 0; i < face.Brep()->m_L.Count(); i++) {
+	    ON_BrepLoop& loop = face.Brep()->m_L[i];
+	    // for each trim
+	    for (int j = 0; j < loop.m_ti.Count(); j++) {	    
+		ON_BrepTrim& trim = face.Brep()->m_T[loop.m_ti[j]];
+		if (bbox.Intersection(trim.m_pbox)) internalTrim = true;
+	    }
 	}
+	std::cout << "INTERNAL TRIM: " << internalTrim << std::endl;
+	bb->m_checkTrim = internalTrim;
+	// for this node to be completely trimmed, all for corners
+	// must be trimmed and the depth of the tree needs to be > 0,
+	// since 0 means there is just a single leaf - and since
+	// "internal" outer loops will be make a single node seem
+	// trimmed, we must account for it.
+	bb->m_trimmed = count == 4 && tree->depth() > 0; 
     }
-    std::cout << "INTERNAL TRIM: " << internalTrim << std::endl;    
 }
 
 int
@@ -239,6 +293,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 // 	BoundingVolume* bv = brep_surface_subdivide(face, u, v, 0);
 
 	SurfaceTree* st = new SurfaceTree(&face);
+	brep_preprocess_trims(face, st);
 
 	// add the surface bounding volumes to a list, so we can build
 	// down a hierarchy from the brep bounding volume
