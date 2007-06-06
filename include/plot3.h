@@ -445,7 +445,7 @@ BN_EXPORT BU_EXTERN(void tp_sep,
 BN_EXPORT BU_EXTERN(double tp_ipow,
 		    (double x,
 		     int n));
-#ifdef VMATH_H
+#ifdef __VMATH_H__
 BN_EXPORT BU_EXTERN(void tp_3axis,
 		    (FILE *fp,
 		     char *string,
@@ -494,7 +494,7 @@ BN_EXPORT BU_EXTERN(void BU_FORTRAN(f3vect, F3VECT),
 		     float *tz,
 		     float *fl,
 		     float *tl));
-#endif /* VMATH_H */
+#endif /* __VMATH_H__ */
 
 #endif /* PLOT3_H */
 /** @} */
