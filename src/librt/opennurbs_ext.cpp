@@ -1,3 +1,5 @@
+#include "common.h"
+
 #include "opennurbs_ext.h"
 #include <assert.h>
 #include <vector>
@@ -378,7 +380,13 @@ namespace brlcad {
   randomPointFromRange(PBCData& data, ON_2dPoint& out, double lo, double hi)
   {
     assert(lo < hi);
+
+#ifdef HAVE_DRAND48
     double random_pos = drand48() * (RANGE_HI - RANGE_LO) + RANGE_LO;
+#else
+    double random_pos = rand() * (RANGE_HI - RANGE_LO) / (RAND_MAX + 1.) + RANGE_LO;
+#endif
+
     double newt = random_pos * (hi - lo) + lo; 
     assert(toUV(data, out, newt));
     return newt;
