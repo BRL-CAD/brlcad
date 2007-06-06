@@ -185,6 +185,10 @@
 #define pid_t int
 #define socklen_t int
 
+#if defined(_MSC_VER) && (_MSC_VER <= 1200) /* MSVC 6.0 and before */
+#   define for if (0) {} else for           /* proper for-scope */
+#endif
+
 #endif /* if defined(_WIN32) */
 #endif /* ifndef IGNORE_CONFIG_H */
 
