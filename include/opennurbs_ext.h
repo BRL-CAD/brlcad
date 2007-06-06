@@ -93,6 +93,8 @@ namespace brlcad {
     void removeChild(BVNode<BV>* child);
     virtual bool isLeaf() const;
 
+    virtual int depth();
+    virtual void getLeaves(list<BVNode<BV>*> out_leaves);
     virtual ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
     void GetBBox(double* min, double* max);
 
@@ -228,6 +230,29 @@ namespace brlcad {
       }
     }
   }
+
+  template<class BV>
+  int 
+  BVNode<BV>::depth() {
+    int d = 0;
+    for (int i = 0; i < m_children.size(); i++) {
+      d = 1 + max(d, m_children[i]->depth());
+    }
+    return d;
+  }
+
+  template<class BV>
+  void 
+  BVNode<BV>::getLeaves(list<BVNode<BV>*> out_leaves) {
+    if (m_children.size() > 0) {
+      for (int i = 0; i < m_children.size(); i++) {
+	m_children[i]->getLeaves(out_leaves);
+      }
+    } else {
+      out_leaves.push_back(this);
+    }
+  }
+  
   
   template<class BV>
   BVNode<BV>*
@@ -333,6 +358,11 @@ namespace brlcad {
      * 3-space.
      */
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
+    /**
+     * Return just the leaves of the surface tree
+     */
+    void getLeaves(list<BBNode*> out_leaves);
+    int depth();
         
   private:
     bool isFlat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v);
