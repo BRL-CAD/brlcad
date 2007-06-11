@@ -710,6 +710,7 @@ main(int argc, char **argv)
 #else
     {
 #endif
+	ClientData out, err;
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -718,18 +719,20 @@ main(int argc, char **argv)
 	bu_vls_free(&vls);
 
 #ifndef _WIN32
+	out = (ClientData)(size_t)pipe_out[0];
+	err = (ClientData)(size_t)pipe_err[0];
+
 	/* to catch output from routines that do not use bu_log */
-	Tcl_CreateFileHandler(pipe_out[0], TCL_READABLE,
-			      std_out_or_err, (ClientData)pipe_out[0]);
-	Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE,
-			      std_out_or_err, (ClientData)pipe_err[0]);
+	Tcl_CreateFileHandler(pipe_out[0], TCL_READABLE, std_out_or_err, out);
+	Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE, std_out_or_err, err);
 #else
+	out = (ClientData)GetStdHandle(STD_OUTPUT_HANDLE);
+	err = (ClientData)GetStdHandle(STD_ERROR_HANDLE);
+
 	chan = Tcl_MakeFileChannel(GetStdHandle(STD_OUTPUT_HANDLE),TCL_READABLE);
-	Tcl_CreateChannelHandler(chan,TCL_READABLE,
-				 std_out_or_err, (ClientData)GetStdHandle(STD_OUTPUT_HANDLE));
+	Tcl_CreateChannelHandler(chan,TCL_READABLE, std_out_or_err, out);
 	chan = Tcl_MakeFileChannel(GetStdHandle(STD_ERROR_HANDLE),TCL_READABLE);
-	Tcl_CreateChannelHandler(chan,TCL_READABLE,
-				 std_out_or_err, (ClientData)GetStdHandle(STD_ERROR_HANDLE));
+	Tcl_CreateChannelHandler(chan,TCL_READABLE, std_out_or_err, err);
 #endif
     }
 
@@ -2084,12 +2087,17 @@ mged_finish(int exitcode)
 	bu_vls_free(&c->cl_more_default);
     }
 
+
     /* Be certain to close the database cleanly before exiting */
+    Tcl_Preserve((ClientData)interp);
 #if 0
-    Tcl_Eval(interp, "db close; .inmem close");
+    Tcl_Eval(interp, "db close");
+    Tcl_Eval(interp, ".inmem close");
 #else
-    Tcl_Eval(interp, "rename db \"\"; rename .inmem \"\"");
+    Tcl_Eval(interp, "rename db \"\"");
+    Tcl_Eval(interp, "rename .inmem \"\"");
 #endif
+    Tcl_Release((ClientData)interp);
 
 #if 0
     if (wdbp)
@@ -2099,15 +2107,14 @@ mged_finish(int exitcode)
 	db_close(dbip);
 #endif
 
-    if( bu_avail_cpus() > 1 )  {
-	bu_semaphore_release( RT_SEM_LAST );
-    }
+    /* XXX should deallocate libbu semaphores */
 
     pkg_terminate();
 
     mged_global_variable_teardown(interp);
 
-    Tcl_DeleteInterp(interp);
+    /* 8.5 seems to have some bugs in their reference counting */
+    /* Tcl_DeleteInterp(interp); */
 
 #ifndef _WIN32
     if (cbreak_mode > 0)
