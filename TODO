@@ -63,8 +63,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * script that checks a dist source tarball for missing files
 
-* design a mug :)
-
 * consider impact and/or rename 'wall' and 'hd' commands due to
   conflict with other tools
 
@@ -158,17 +156,8 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * center of presented area
 
-* short introductory documentation on using various BRL-CAD command
-  line tools such as rt, mged, nirt, fbserv, converters, etc.
-
 * short introductory documentation on using mged, covering a majority
   of the various commands.
-
-* reference sheet of useful BRL-CAD command-line tools grouped
-  categorically.
-
-* reference sheet of common mged commands, keybindings, gui elements
-  and scripting facilities.
 
 * support to the raytracers for multiple image file formats,
   recognizing an option and/or the file suffix of the -o filename.
@@ -183,9 +172,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * getexecname, "/proc/self/cmdline", program_invocation_short_name.
   separate out into new file.
-
-* write an introduction to brl-cad document that overviews the primary
-  tools and how they can be used together.
 
 * test out -Wfloat-equal
 
@@ -208,8 +194,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * add callback data parameters to libpkg hook functions
 
 * add performance options for the intel compiler on Altix
-
-* pix-png should make sure output is not to a terminal
 
 * investigate performance impact of using sched_setaffinity and/or
   pthread_attr_setaffinity_np for linux threading affinity in librt.
@@ -238,8 +222,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * fix reference to a "Create Solid" submenu on pdf page 18 (page 6) of
   volume II
-
-* write up the history of brlcad
 
 * obliterate verbose compilation warnings
 
@@ -317,6 +299,12 @@ DOCUMENTATION
 
 * MGED Quick Reference
 	Complted, but not integrated
+
+* MGED Interface Reference
+	Keybindings, GUI elements, scripting
+
+* Introduction to BRL-CAD Tutorial
+	mged, rt, pix-png, rtcheck rtarea, rtweight, g_qa, fbserv, nirt
 
 * DoD V/L M&S Industry Diagram
 	Similar to existing Industry Diagram
