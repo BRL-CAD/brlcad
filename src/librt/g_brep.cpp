@@ -172,16 +172,14 @@ brep_process_casec(const ON_LineCurve& ray, const ON_Curve* trim_curve) {
     return 0;
 }
 
-int 
-brep_classify_trim(const ON_LineCurve& ray, const ON_Curve* trim_curve) {
-    // XXX todo
+int
+brep_classify_curve(const ON_LineCurve& ray, const ON_Curve* trim_curve) {
     return CASE_A;
 }
 
-
 int
 brep_count_intersections(const ON_LineCurve& ray, const ON_Curve* trim_curve) {
-    int quad_case = brep_classify_trim(ray, trim_curve);
+    int quad_case = brep_classify_curve(ray, trim_curve);
     switch (quad_case) {
     case CASE_A:
 	return 0;
@@ -204,7 +202,7 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
     from.y = to.y = pt[1];
     surf->GetDomain(0, &umin, &umax);    
     to.x = umax + 1;
-    ON_LineCurve ray(from,to);
+    ON_Line ray(from,to);
     int intersections = 0;
     for (int i = 0; i < face.LoopCount(); i++) {
 	ON_BrepLoop* loop = face.Loop(i);
@@ -212,8 +210,9 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
 	for (int j = 0; j < loop->m_ti.Count(); j++) {
 	    ON_BrepTrim& trim = face.Brep()->m_T[loop->m_ti[j]];
 	    const ON_Curve* trimCurve = trim.TrimCurveOf();
-	    intersections += brep_count_intersections(ray, trimCurve);
+	    // intersections += brep_count_intersections(ray, trimCurve);	    
 	    //ray.IntersectCurve(trimCurve, intersections, 0.0001);
+	    intersections += trimCurve->NumIntersectionsWith(ray);
 	}
     }
     // the point is trimmed if the # of intersections is even
