@@ -545,6 +545,10 @@ public:
          double* v
          ) const;
 
+  // virtual ON_Curve override
+  int NumIntersectionsWith(const ON_Line& segment) const;
+
+
   // Description:
   //   Get ON_NurbsCurve form of a bezier.
   // Parameters:

@@ -722,6 +722,9 @@ public:
         double* // nurbs_t
         ) const;
 
+  /// virtual ON_Curve override
+  int NumIntersectionsWith(const ON_Line& segment) ;    
+
 public:
 
   /////////////////////////////////////////////////////////////////
@@ -1010,6 +1013,15 @@ public:
   bool MakePiecewiseBezier( 
         bool bSetEndWeightsToOne = false
         );
+  
+
+  int BezierSpanCount() const;
+  bool CopyBezierSpan(int span, ON_BezierCurve& b);  
+  const ON_BezierCurve* BezierSpan(int span) const;
+
+private:
+  // XXX: ensure the cache is reset if the curve is modified!
+  ON_BezierCurve* m_cached_bez;
 
   /////////////////////////////////////////////////////////////////
   // Implementation

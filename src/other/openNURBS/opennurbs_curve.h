@@ -851,6 +851,24 @@ public:
           const ON_Interval* curveB_domain = 0
           ) const;
 
+  /**
+     Description: 
+
+       Returns the number of 2D intersections of this curve
+       with the line defined by segment. Does not calculate actual
+       intersection points, so is faster than a general intersection
+       algorithm.
+
+     Parameters:
+
+       segment - [in] the segment to intersect with
+
+     Return:
+
+       number of intersections
+   */
+  int NumIntersectionsWith(const ON_Line& segment) const;
+
   /*
   Description:
     Intersect this curve with surfaceB.

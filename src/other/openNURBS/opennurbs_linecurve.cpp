@@ -512,6 +512,27 @@ BOOL ON_LineCurve::GetLocalClosestPoint( const ON_3dPoint& test_point,
   return rc;
 }
 
+int ON_LineCurve::NumIntersectionsWith( const ON_Line& segment ) const
+{
+  // segment is assumed to be horizontal at this point
+  // and first point is the "left" point
+  if (((m_line[0].y < segment[0].y) && (m_line[1].y < segment[0].y)) ||
+      ((m_line[0].y > segment[0].y) && (m_line[1].y > segment[0].y)) ||
+      (m_line[0].x < segment[0].x && m_line[1].x < segment[0].x)) {
+    return 0; 
+  } else if (m_line[0].x > segment[0].x && m_line[1].x > segment[0].x) {
+    return 1; 
+  } else {
+    // use the two point form of a line to solve for x at the y of the segment
+    double x = 
+      (segment[0].y-m_line[0].y)*(m_line[1].x-m_line[0].x) / 
+      (m_line[1].y-m_line[0].y) + 
+      m_line[0].x;
+    if (x < segment[0].x) return 0;
+    else return 1;
+  }
+}
+
 BOOL ON_LineCurve::GetLength(
         double* length,               // length returned here
         double fractional_tolerance,  // default = 1.0e-8

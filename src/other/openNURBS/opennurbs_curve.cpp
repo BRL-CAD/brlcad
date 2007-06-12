@@ -1,4 +1,5 @@
 #include "opennurbs.h"
+#include <assert.h>
 
 ON_VIRTUAL_OBJECT_IMPLEMENT(ON_Curve,ON_Geometry,"4ED7D4D7-E947-11d3-BFE5-0010830122F0");
 
@@ -3144,6 +3145,13 @@ bool ON_Curve::ParameterSearch(double t, int& index, bool bEnableSnap,
 	}
 	return rc;
 }
+
+int
+ON_Curve::NumIntersectionsWith(const ON_Line& segment) const {
+  // XXX - todo - subclass responsibility (make pure virtual?)
+  assert(false);
+}
+
 
 bool ON_SortLines( 
         int line_count, 

@@ -1106,6 +1106,48 @@ bool ON_BezierCurve::Evaluate( // returns false if unable to evaluate
                             der_count, t, v_stride, v )?true:false;
 }
 
+#define QUAD1 0
+#define QUAD2 1
+#define QUAD3 2
+#define QUAD4 3
+
+#define CASE_A 		0
+#define CASE_B 		2
+#define CASE_C 		3
+
+int case_table[16]  = {		/* A = 0, B = 2, C = 3 */
+0,0,0,0,0,3,0,3,0,2,3,3,0,3,3,3
+};
+
+int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
+{
+  int quadrant;
+  int qstats;  
+  double u = segment[0].x;
+  double v = segment[0].y;
+  if (IsRational()) {
+    for (int i = 0; i < CVCount(); i++) {
+      if (CV(i)[0] / Weight(i) > u)
+	quadrant = (CV(i)[1]/Weight(i) >= v) ? QUAD1 : QUAD4;
+      else
+	quadrant = (CV(i)[1]/Weight(i) >= v) ? QUAD2 : QUAD3;
+      qstats |= (1 << quadrant);      
+    }
+  } 
+  else {
+    for (int i = 0; i < CVCount(); i++) {
+      if (CV(i)[0] > u)
+	quadrant = (CV(i)[1] >= v) ? QUAD1 : QUAD4;
+      else
+	quadrant = (CV(i)[1] >= v) ? QUAD2 : QUAD3;
+      qstats |= (1 << quadrant);      
+    }
+  }
+  int curve_case = case_table[qstats];
+  
+  
+}
+
 bool ON_BezierCurve::GetNurbForm( ON_NurbsCurve& n ) const
 {
   bool rc = false;

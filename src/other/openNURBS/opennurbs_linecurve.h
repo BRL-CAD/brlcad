@@ -307,6 +307,9 @@ public:
           const ON_Interval* curve_domain = 0
           ) const;
 
+  // virtual ON_Curve override
+  int NumIntersectionsWith(const ON_Line& segment) const;
+
   // Description:
   //   virtual ON_Curve::GetLength override.
   //   Get the length of the line.

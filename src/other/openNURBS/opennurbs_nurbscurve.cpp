@@ -15,6 +15,7 @@
 */
 
 #include "opennurbs.h"
+#include <assert.h>
 
 ON_OBJECT_IMPLEMENT(ON_NurbsCurve,ON_Curve,"4ED7D4DD-E947-11d3-BFE5-0010830122F0");
 
@@ -273,6 +274,8 @@ void ON_NurbsCurve::Destroy()
     onfree(cv);
   if ( knot )
     onfree(knot);
+  if ( m_cached_bez )
+    delete m_cached_bez; // matches new in MakePiecewiseBezier
 }
 
 void ON_NurbsCurve::EmergencyDestroy()
@@ -292,6 +295,7 @@ void ON_NurbsCurve::Initialize()
   m_cv_stride = 0;
   m_cv_capacity = 0;
   m_cv = 0;
+  m_cached_bez = 0;
 }
 
 
@@ -2019,41 +2023,58 @@ bool ON_NurbsCurve::ConvertSpanToBezier( int span_index, ON_BezierCurve& bez ) c
 {
   bool rc = false;
   if ( span_index >= 0 && span_index <= m_cv_count-m_order && m_knot && m_cv ) 
-  {
-    const int cvdim = CVSize();
-    const int sizeof_cv = cvdim*sizeof(*bez.m_cv);
-    int i;
-    rc = bez.ReserveCVCapacity( cvdim*m_order );
-    if ( rc ) {
-      bez.m_dim = m_dim;
-      bez.m_is_rat = m_is_rat;
-      bez.m_order = m_order;
-      bez.m_cv_stride = cvdim;
-      if ( bez.m_cv_stride == m_cv_stride )
-      {
-        memcpy( bez.m_cv, CV(span_index), bez.m_order*sizeof_cv );
+    {
+      const int cvdim = CVSize();
+      const int sizeof_cv = cvdim*sizeof(*bez.m_cv);
+      int i;
+      rc = bez.ReserveCVCapacity( cvdim*m_order );
+      if ( rc ) {
+	bez.m_dim = m_dim;
+	bez.m_is_rat = m_is_rat;
+	bez.m_order = m_order;
+	bez.m_cv_stride = cvdim;
+	if ( bez.m_cv_stride == m_cv_stride ) {
+	  memcpy( bez.m_cv, CV(span_index), bez.m_order*sizeof_cv );
+	}
+	else {
+	  for ( i = 0; i < m_order; i++ ) {
+	    memcpy( bez.CV(i), CV(span_index+i), sizeof_cv );
+	  }
+	}
+	const double* knot = m_knot + span_index;
+	if( knot[m_order-2] < knot[m_order-1] )
+	  ON_ConvertNurbSpanToBezier( cvdim, bez.m_order, bez.m_cv_stride, bez.m_cv,
+				      knot, knot[m_order-2], knot[m_order-1] );
+	else
+	  rc = false;
       }
-      else
-      {
-        for ( i = 0; i < m_order; i++ ) {
-          memcpy( bez.CV(i), CV(span_index+i), sizeof_cv );
-        }
-      }
-      const double* knot = m_knot + span_index;
-			if( knot[m_order-2] < knot[m_order-1] )
-				ON_ConvertNurbSpanToBezier( cvdim, bez.m_order, bez.m_cv_stride, bez.m_cv,
-																		knot, knot[m_order-2], knot[m_order-1] );
-			else
-				rc = false;
     }
-  }
   return rc;
 }
-
 
 bool ON_NurbsCurve::HasBezierSpans() const
 {
   return ON_KnotVectorHasBezierSpans( m_order, m_cv_count, m_knot );
+}
+
+int ON_NurbsCurve::BezierSpanCount() const 
+{
+  return m_cv_count-m_order+1;
+}
+
+bool ON_NurbsCurve::CopyBezierSpan(int span, ON_BezierCurve& b) {
+  bool rc = MakePiecewiseBezier();
+  if (rc && m_cached_bez != NULL) {
+    b = m_cached_bez[span];
+    return true;
+  } 
+  else return false;
+}
+
+const ON_BezierCurve* ON_NurbsCurve::BezierSpan(int span) const
+{
+  if (m_cached_bez != NULL) return &m_cached_bez[span];
+  return NULL;
 }
 
 bool ON_NurbsCurve::MakePiecewiseBezier( bool bSetEndWeightsToOne )
@@ -2072,7 +2093,7 @@ bool ON_NurbsCurve::MakePiecewiseBezier( bool bSetEndWeightsToOne )
     double* t = ws.GetDoubleMemory( span_count+1);
     GetSpanVector( t );
     int cvdim = CVSize();
-    ON_BezierCurve* bez = new ON_BezierCurve[span_count];
+    ON_BezierCurve* bez = m_cached_bez = new ON_BezierCurve[span_count];
     int ki, spani, i;
     for ( ki = m_order-2, spani = 0; ki < m_cv_count-1 && spani < span_count; ki++ ) {
       if ( m_knot[ki] < m_knot[ki+1] ) {
@@ -2094,7 +2115,7 @@ bool ON_NurbsCurve::MakePiecewiseBezier( bool bSetEndWeightsToOne )
     }
     for ( ki = 0; ki < m_order-1; ki++ )
       m_knot[ki+span_count*(m_order-1)] = t[spani];
-    delete[] bez;
+    //delete[] bez;
     rc = true;
   }
   if ( rc && bSetEndWeightsToOne && m_is_rat )
@@ -2130,6 +2151,16 @@ bool ON_NurbsCurve::MakePiecewiseBezier( bool bSetEndWeightsToOne )
   return rc;
 }
 
+int ON_NurbsCurve::NumIntersectionsWith(const ON_Line& segment) {
+  bool rc = MakePiecewiseBezier();
+  assert(rc);
+  int xcount = 0;
+  for (int i = 0; i < BezierSpanCount(); i++) {
+    const ON_BezierCurve* b = BezierSpan(i);
+    xcount += b->NumIntersectionsWith(segment);
+  }
+  return xcount;
+}
 
 double ON_NurbsCurve::ControlPolygonLength() const
 {
@@ -3108,3 +3139,4 @@ bool ON_Brep::IsDuplicate(
   // OBSOLETE FUNCTION - REMOVE
   return false;
 }
+
