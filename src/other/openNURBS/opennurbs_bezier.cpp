@@ -1119,33 +1119,79 @@ int case_table[16]  = {		/* A = 0, B = 2, C = 3 */
 0,0,0,0,0,3,0,3,0,2,3,3,0,3,3,3
 };
 
+inline 
+int quadrant(const ON_3dPoint& axis, double* pt, double weight = 1.0) {
+  double u = axis.x;
+  double v = axis.y;
+  if (pt[0] / weight > u) 
+    return (pt[1] / weight >= v) ? QUAD1 : QUAD4;
+  else
+    return (pt[1] / weight >= v) ? QUAD2 : QUAD3;
+}
+
+inline
+int sign(double num) {
+  return (num >= 0) ? 1 : -1;
+}
+
+inline
+int next(int i, int max) {
+  if (i == (max-1)) return 0;
+  else i++;
+}
+
 int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
 {
-  int quadrant;
+  // XXX - assumes the segment is horizontal and to the "right"
+
   int qstats;  
+  ON_Interval dom = Domain();
   double u = segment[0].x;
   double v = segment[0].y;
-  if (IsRational()) {
-    for (int i = 0; i < CVCount(); i++) {
-      if (CV(i)[0] / Weight(i) > u)
-	quadrant = (CV(i)[1]/Weight(i) >= v) ? QUAD1 : QUAD4;
-      else
-	quadrant = (CV(i)[1]/Weight(i) >= v) ? QUAD2 : QUAD3;
-      qstats |= (1 << quadrant);      
-    }
-  } 
-  else {
-    for (int i = 0; i < CVCount(); i++) {
-      if (CV(i)[0] > u)
-	quadrant = (CV(i)[1] >= v) ? QUAD1 : QUAD4;
-      else
-	quadrant = (CV(i)[1] >= v) ? QUAD2 : QUAD3;
-      qstats |= (1 << quadrant);      
-    }
+  // determine the case (a la Nishita bezier intersection algorithm)
+  for (int i = 0; i < CVCount(); i++) {
+    qstats |= (1 << quadrant(segment[0], CV(i), IsRational() ? Weight(i) : 1.0));
   }
   int curve_case = case_table[qstats];
   
-  
+  // handle the specific cases
+  switch (curve_case) {
+  case CASE_A: // there is no possibility of intersection
+    return 0;
+  case CASE_B: // there is either an even or odd number of intersections
+    { 
+      // check the endpoints of the curve to determine if they are in
+      // the same or different quadrants
+      int quad1 = quadrant(segment[0], PointAt(dom.Min()));
+      int quad2 = quadrant(segment[0], PointAt(dom.Max()));
+      // if they are in the same quadrant, then the num intersections is even
+      // otherwise the number of intersections is odd
+      return (quad1 == quad2) ? 0 : 1;
+    }
+  case CASE_C:
+    {
+      // use Bezier clipping to eliminate segments of the curve that
+      // cannot intersect the segment
+      ON_2dPoint d[m_order]; // control points for the explicit Bezier curve
+      for (int i = 0; i < m_order; i++) {
+	d[i].x = i/(m_order-1);
+	d[i].y = CV(i)[1] - segment[0].y; // dist from the segment
+      }
+            
+      // calculate the trimming points
+      // XXX - ack - make sure this handles all cases
+      double tmin = 10e40;
+      double tmax = -10e40;
+      for (int i = 0; i < m_order; i++) {
+	int i1 = next(i,m_order);
+	if (sign(d[i].y) != sign(d[i1].y)) {
+	  double t = d[i].y * (d[i1].x - d[i].x) / (d[i1].y - d[i].y);
+	  if (t < tmin) tmin = t;
+	  if (t > tmax) tmax = t;
+	}
+      }
+    }
+  }
 }
 
 bool ON_BezierCurve::GetNurbForm( ON_NurbsCurve& n ) const
