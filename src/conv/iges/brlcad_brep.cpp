@@ -278,19 +278,25 @@ namespace brlcad {
   int
   BRLCADBrepHandler::handleCircularArc(double radius,
 				       point_t center,
+				       vect_t normal,
 				       point_t start,
 				       point_t end) { 
     debug("handleCircularArc");
     debug("radius: " << radius);
     debug("center: " << PT(center));
 
-    ON_Plane plane = ON_Plane(ON_3dPoint(center), ON_3dPoint(start), ON_3dPoint(end));
+    ON_Plane plane = ON_Plane(ON_3dPoint(center), ON_3dVector(normal));
     ON_Circle circle = ON_Circle(plane, ON_3dPoint(center), radius);
     double a, b;
-    circle.ClosestPointTo(start, &a);
-    circle.ClosestPointTo(end, &b);
+    circle.ClosestPointTo(start, &a); // !
+    circle.ClosestPointTo(end, &b);   // !
+    ON_TextLog tl;
+
     ON_Arc arc(circle, ON_Interval(a, b));    
-    ON_ArcCurve* curve = new ON_ArcCurve(arc);
+    debug("arc valid: " << arc.IsValid());
+    ON_ArcCurve* curve = new ON_ArcCurve(arc, arc.Domain().Min(), arc.Domain().Max());
+    curve->IsValid(&tl);
+
     _objects.push_back(curve);
 
     return _objects.size()-1; 
