@@ -546,7 +546,7 @@ namespace brlcad {
     virtual int handleToroidalSurface() = 0;    
 
     // curve handlers (refactor to CurveHandler class?)
-    virtual int handleCircularArc(double radius, point_t center, point_t start, point_t end) = 0;
+    virtual int handleCircularArc(double radius, point_t center, vect_t normal, point_t start, point_t end) = 0;
     virtual int handleCompositeCurve() = 0;
     virtual int handleConicArc() = 0;
     virtual int handle2DPath() = 0;
