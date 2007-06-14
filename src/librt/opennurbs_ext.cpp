@@ -423,7 +423,7 @@ namespace brlcad {
   void
   generateKnots(BSpline& bspline) {
     int num_knots = bspline.m + 1;
-    bspline.knots.reserve(num_knots);
+    bspline.knots.resize(num_knots);
     for (int i = 0; i <= bspline.p; i++) {
       bspline.knots[i] = 0.0;    
     }
@@ -431,8 +431,10 @@ namespace brlcad {
       bspline.knots[i] = 1.0;    
     }
     for (int i = 1; i <= bspline.n-bspline.p; i++) {
-      bspline.knots[bspline.p+i] = (double)i / (bspline.n-bspline.p+1.0);
+      bspline.knots[bspline.p+i] = ((double)i) / (bspline.n-bspline.p+1.0);
+      TRACE("knot: " << bspline.knots[bspline.p+i]);
     }
+    TRACE("knot size: " << bspline.knots.size());
   }
 
   int 
@@ -478,29 +480,40 @@ namespace brlcad {
   // XXX: this function sucks...
   void
   generateParameters(BSpline& bspline) {
+    TRACE("generateParameters");
     double lastT = 0.0;
-    bspline.params.reserve(bspline.n+1);
+    bspline.params.resize(bspline.n+1);
     Array2D<double> N(UNIVERSAL_SAMPLE_COUNT, bspline.n+1);
     for (int i = 0; i < UNIVERSAL_SAMPLE_COUNT; i++) {
       double t = (double)i / (UNIVERSAL_SAMPLE_COUNT-1);
+      TRACE("t = " << t);
       Array1D<double> n = Array1D<double>(N.dim2(), N[i]);
       getCoefficients(bspline, n, t);
+      TRACE("n = " << n);
     }
+    TRACE("N = " << N);
     for (int i = 0; i < bspline.n+1; i++) {
-      double max = real.min();
+      double max = -real.max();
       for (int j = 0; j < UNIVERSAL_SAMPLE_COUNT; j++) {
 	double f = N[j][i];
-	double t = (double)j/(UNIVERSAL_SAMPLE_COUNT-1);
+	double t = ((double)j)/(UNIVERSAL_SAMPLE_COUNT-1);
+	TRACE("f = " << f << ", t = " << t);
+	TRACE(f << " > " << max);
 	if (f > max) {
 	  max = f;
 	  if (j == UNIVERSAL_SAMPLE_COUNT-1) bspline.params[i] = t;
 	} else if (f < max) {
-	  bspline.params[i] = lastT;
+	  TRACE(f << " < " << max);
+	  bspline.params[i] = lastT;	  
 	  break;
 	}
 	lastT = t;
       }
     }
+    for (int i = 0; i < bspline.n+1; i++) {
+      TRACE("parameter " << i << ": " << bspline.params[i]);
+    }
+    TRACE(bspline.params.size());
   }
 
   void
@@ -545,15 +558,22 @@ namespace brlcad {
 
   ON_NurbsCurve*
   newNURBSCurve(BSpline& spline) {
+    TRACE("newNURBSCurve!");
     // we now have everything to complete our spline
     ON_NurbsCurve* c = ON_NurbsCurve::New(2,
 					  false,
 					  spline.p+1,
 					  spline.n+1);
-    c->ReserveKnotCapacity(spline.knots.size());
-    for (int i = 0; i < spline.knots.size(); i++) {
-      c->m_knot[i] = spline.knots[i];
+
+    int num_knots = spline.knots.size()-2*spline.p;
+    c->ReserveKnotCapacity(num_knots);
+    for (int i = 0; i < num_knots; i++) {
+//       c->m_knot[i] = spline.knots[i];
+      double knot = spline.knots[i+spline.p]; 
+      TRACE("knot: " << knot);
+      c->SetKnot(i,knot);
     }
+    c->ClampEnd(2);
   
     for (int i = 0; i < spline.controls.Count(); i++) {
       c->SetCV(i, ON_3dPoint(spline.controls[i]));
@@ -596,7 +616,9 @@ namespace brlcad {
 		 double flatness) {
     PBCData data;
     data.tolerance = tolerance;
-    data.flatness = flatness;
+    double len;
+    curve->GetLength(&len);
+    data.flatness = flatness * len;
     data.curve = curve;
     data.face = face;
     data.surf = face->SurfaceOf();
