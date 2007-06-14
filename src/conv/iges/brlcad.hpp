@@ -50,7 +50,7 @@ namespace brlcad {
     int handleSphericalSurface();
     int handleToroidalSurface();    
 
-    int handleCircularArc(double radius, point_t center, point_t start, point_t end);
+    int handleCircularArc(double radius, point_t center, vect_t normal, point_t start, point_t end);
     int handleCompositeCurve();
     int handleConicArc();
     int handle2DPath();
