@@ -1182,14 +1182,28 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
       // XXX - ack - make sure this handles all cases
       double tmin = 10e40;
       double tmax = -10e40;
-      for (int i = 0; i < m_order; i++) {
-	int i1 = next(i,m_order);
-	if (sign(d[i].y) != sign(d[i1].y)) {
-	  double t = d[i].y * (d[i1].x - d[i].x) / (d[i1].y - d[i].y);
-	  if (t < tmin) tmin = t;
-	  if (t > tmax) tmax = t;
+      for (int i = 0; i < (m_order-1); i++) {
+	for (int j = i+1; j < m_order; j++) {
+	  int a = i;
+	  int b = next(j,m_order);
+	  if (sign(d[a].y) != sign(d[b].y)) {
+	    double t = d[a].y * (d[b].x - d[a].x) / (d[b].y - d[a].y);
+	    if (t < tmin) tmin = t * 0.99; // XXX why offsets?
+	    if (t > tmax) tmax = t * 1.01; 
+	  }
 	}
       }
+
+      double tleft = dom.Min() + tmin * (dom.Length());
+      double tright = dom.Min() + tmax * (dom.Length());
+
+      ON_BezierCurve left, middle, right;
+      Split(tleft, left, middle);
+      middle.Split(tright, middle, right);
+      
+      // since we are limited to horizontal segments for now
+      // we know that left and right are CASE_A...
+      return middle.NumIntersectionsWith(segment);
     }
   }
 }
