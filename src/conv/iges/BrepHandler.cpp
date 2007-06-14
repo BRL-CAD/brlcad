@@ -407,12 +407,15 @@ namespace brlcad {
     double dy = start[Y] - center[Y];
     double radius = sqrt(dx*dx + dy*dy);
     
-    point_t tcenter, tstart, tend;
+    point_t tcenter, tstart, tend;    
     MAT4X3PNT(tcenter, xform, center);
     MAT4X3PNT(tstart, xform, start);
     MAT4X3PNT(tend, xform, end);
-    
-    return handleCircularArc(radius, tcenter, tstart, tend);
+    vect_t normal = {0,0,1};
+    vect_t tnormal;
+    MAT4X3VEC(tnormal, xform, normal);
+
+    return handleCircularArc(radius, tcenter, tnormal, tstart, tend);
   }
 
   int
