@@ -867,7 +867,8 @@ public:
 
        number of intersections
    */
-  int NumIntersectionsWith(const ON_Line& segment) const;
+  virtual int NumIntersectionsWith(const ON_Line& segment) const;
+
 
   /*
   Description:
