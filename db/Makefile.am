@@ -41,6 +41,7 @@ MODELS = \
 	kman.asc \
 	ktank.asc \
 	lgt-test.asc \
+	operators.asc \
 	pic.asc \
 	prim.asc \
 	tank_car.asc \
