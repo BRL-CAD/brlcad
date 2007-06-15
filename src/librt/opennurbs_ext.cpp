@@ -419,20 +419,26 @@ namespace brlcad {
     }
     return true;
   }
-
+  
+  // this is uniform knot generation, not recommended for use with
+  // chord-length parameter method... but we're not using
+  // that. considering using the average method described at
+  // http://www.cs.mtu.edu/~shene/COURSES/cs3621/NOTES/
   void
   generateKnots(BSpline& bspline) {
     int num_knots = bspline.m + 1;
     bspline.knots.resize(num_knots);
     for (int i = 0; i <= bspline.p; i++) {
       bspline.knots[i] = 0.0;    
-    }
-    for (int i = bspline.m-bspline.p; i <= bspline.m; i++) {
-      bspline.knots[i] = 1.0;    
+      TRACE("knot: " << bspline.knots[i]);
     }
     for (int i = 1; i <= bspline.n-bspline.p; i++) {
       bspline.knots[bspline.p+i] = ((double)i) / (bspline.n-bspline.p+1.0);
       TRACE("knot: " << bspline.knots[bspline.p+i]);
+    }
+    for (int i = bspline.m-bspline.p; i <= bspline.m; i++) {
+      bspline.knots[i] = 1.0;    
+      TRACE("knot: " << bspline.knots[i]);
     }
     TRACE("knot size: " << bspline.knots.size());
   }
@@ -559,21 +565,28 @@ namespace brlcad {
   ON_NurbsCurve*
   newNURBSCurve(BSpline& spline) {
     TRACE("newNURBSCurve!");
+
+    TRACE("n: " << spline.n);
+    TRACE("p: " << spline.p);
+
     // we now have everything to complete our spline
     ON_NurbsCurve* c = ON_NurbsCurve::New(2,
 					  false,
 					  spline.p+1,
 					  spline.n+1);
 
-    int num_knots = spline.knots.size()-2*spline.p;
-    c->ReserveKnotCapacity(num_knots);
-    for (int i = 0; i < num_knots; i++) {
-//       c->m_knot[i] = spline.knots[i];
-      double knot = spline.knots[i+spline.p]; 
+    // truly - i don't know WTF openNURBS is doing here
+    // when it prints out the knots, they only have multiplicity 3,
+    // but yet the order of the curve is 4!!! 
+    int num_knots = spline.knots.size();
+    TRACE("num_knots: " << num_knots);
+    TRACE("KnotCount: " << c->KnotCount());
+    for (int i = 1; i < num_knots-1; i++) {
+      double knot = spline.knots[i];
       TRACE("knot: " << knot);
-      c->SetKnot(i,knot);
+      c->SetKnot(i-1,knot);
     }
-    c->ClampEnd(2);
+    //c->ClampEnd(2);
   
     for (int i = 0; i < spline.controls.Count(); i++) {
       c->SetCV(i, ON_3dPoint(spline.controls[i]));
