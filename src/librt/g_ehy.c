@@ -21,7 +21,7 @@
 /** @{ */
 /** @file g_ehy.c
  *
- *	Intersect a ray with a Right Hyperbolic Cylinder.
+ *	Intersect a ray with an Elliptical Hyperboloid.
  *
  *  Algorithm -
  *
@@ -151,7 +151,6 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *
  */
 
 #ifndef lint
