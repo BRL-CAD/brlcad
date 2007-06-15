@@ -253,19 +253,24 @@ main(int argc, char **argv)
 				int list_len;
 				struct bu_attribute_value_set g_avs;
 
-				/* get region colortable */
+				/* get _GLOBAL attributes */
 				if( db5_get_attributes( dbip, &g_avs, dp ) ) {
 					bu_log( "Failed to find any attributes on _GLOBAL\n" );
 					continue;
 				}
 
-				/* save the rest of the associated attributes of _GLOBAL*/
+				/* save the associated attributes of
+				 * _GLOBAL (except for title and units
+				 * which were already written out)
+				 */
 				if (g_avs.count) {
 				    fprintf(ofp, "attr set {_GLOBAL}");
 				    for (i=0; i < g_avs.count; i++) {
 					if (strncmp(g_avs.avp[i].name, "title", 6) == 0) {
 					    continue;
 					} else if (strncmp(g_avs.avp[i].name, "units", 6) == 0) {
+					    continue;
+					} else if (strlen(g_avs.avp[i].name) <= 0) {
 					    continue;
 					}
 					fprintf(ofp, " {%s} {%s}", g_avs.avp[i].name, g_avs.avp[i].value);
@@ -329,8 +334,11 @@ main(int argc, char **argv)
 
 				fprintf( ofp, "attr set {%s}", tclify_name( dp->d_namep ) );
 				for( i=0 ; i<avs->count ; i++ ) {
-					fprintf( ofp, " {%s}", avs->avp[i].name );
-					fprintf( ofp, " {%s}", avs->avp[i].value );
+				    if (strlen(avs->avp[i].name) <= 0) {
+					continue;
+				    }
+				    fprintf( ofp, " {%s}", avs->avp[i].name );
+				    fprintf( ofp, " {%s}", avs->avp[i].value );
 				}
 				fprintf( ofp, "\n" );
 			}
