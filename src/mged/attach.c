@@ -382,19 +382,15 @@ f_attach(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 gui_setup(char *dstr)
 {
-  struct bu_vls vls;
-
   /* initialize only once */
   if(tkwin != NULL)
     return TCL_OK;
 
-  bu_vls_init(&vls);
   Tcl_ResetResult(interp);
 
   /* set DISPLAY to dstr */
   if(dstr != (char *)NULL){
-    bu_vls_strcpy(&vls, "env(DISPLAY)");
-    Tcl_SetVar(interp, bu_vls_addr(&vls), dstr, TCL_GLOBAL_ONLY);
+    Tcl_SetVar(interp, "env(DISPLAY)", dstr, TCL_GLOBAL_ONLY);
 #ifdef HAVE_SETENV
     setenv("DISPLAY", dstr, 0);
 #endif
@@ -406,33 +402,28 @@ gui_setup(char *dstr)
       if (strncmp(interp->result, "this isn't a Tk applicationcouldn't", 35) == 0) {
 	  interp->result = (interp->result + 27);
       }
-      bu_vls_free(&vls);
       return TCL_ERROR;
   }
 
   /* Initialize [incr Tk] */
   if (Itk_Init(interp) == TCL_ERROR) {
-    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
   /* Import [incr Tk] commands into the global namespace */
   if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
 		 "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
-    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
   /* Initialize the Iwidgets package */
   if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
-    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
   /* Import iwidgets into the global namespace */
   if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
 		 "::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
-    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -451,16 +442,14 @@ gui_setup(char *dstr)
 #endif
 
   if((tkwin = Tk_MainWindow(interp)) == NULL){
-    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
   /* create the event handler */
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
 
-  bu_vls_strcpy(&vls, "wm withdraw . ; tk appname mged");
-  Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
+  Tcl_Eval(interp, "wm withdraw .");
+  Tcl_Eval(interp, "tk appname mged");
 
   return TCL_OK;
 }
