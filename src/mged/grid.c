@@ -431,7 +431,7 @@ update_grids(fastf_t sf)
   bu_vls_init(&save_result);
   bu_vls_init(&cmd);
 
-  bu_vls_strcpy(&save_result, interp->result);
+  bu_vls_strcpy(&save_result, Tcl_GetStringResult(interp));
 
   bu_vls_printf(&cmd, "grid_control_update %lf\n", sf);
   (void)Tcl_Eval(interp, bu_vls_addr(&cmd));

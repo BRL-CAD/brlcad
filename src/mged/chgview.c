@@ -1842,7 +1842,7 @@ bail_out:
 
       bu_vls_init(&vls);
 
-      bu_vls_printf(&vls, "%s", interp->result);
+      bu_vls_printf(&vls, "%s", Tcl_GetStringResult(interp));
       button(BE_REJECT);
       Tcl_ResetResult(interp);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);

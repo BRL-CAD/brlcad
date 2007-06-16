@@ -2754,7 +2754,7 @@ get_rotation_vertex(void)
   return fixv;
 }
 
-char *
+const char *
 get_file_name(char *str)
 {
 	struct bu_vls cmd;
@@ -2791,10 +2791,10 @@ get_file_name(char *str)
 		bu_vls_free( &cmd );
 		return( (char *)NULL );
 	}
-	else if( interp->result[0] != '\0' )
+	else if( Tcl_GetStringResult(interp)[0] != '\0' )
 	{
 		bu_vls_free( &cmd );
-		return( interp->result );
+		return( Tcl_GetStringResult(interp) );
 	}
 	else
 	{
@@ -2887,7 +2887,7 @@ sedit(void)
 		{
 			struct rt_dsp_internal *dsp =
 				(struct rt_dsp_internal *)es_int.idb_ptr;
-			char *fname;
+			const char *fname;
 			struct stat stat_buf;
 			off_t need_size;
 			struct bu_vls message;
@@ -2962,7 +2962,7 @@ sedit(void)
 		{
 			struct rt_ebm_internal *ebm =
 				(struct rt_ebm_internal *)es_int.idb_ptr;
-			char *fname;
+			const char *fname;
 			struct stat stat_buf;
 			off_t need_size;
 
@@ -3146,7 +3146,7 @@ sedit(void)
 		{
 			struct rt_vol_internal *vol =
 				(struct rt_vol_internal *)es_int.idb_ptr;
-			char *fname;
+			const char *fname;
 			struct stat stat_buf;
 			off_t need_size;
 
@@ -3267,7 +3267,7 @@ sedit(void)
 					"{Cannot edit face thickness in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
 					(char *)NULL ) != TCL_OK )
 				{
-					bu_log( "cad_dialog failed!!!!: %s\n", interp->result );
+					bu_log( "cad_dialog failed!!!!: %s\n", Tcl_GetStringResult(interp) );
 				}
 				break;
 			}
@@ -3282,7 +3282,7 @@ sedit(void)
 					"$mged_gui(mged,screen) ", "{Setting Thickness for All Faces} ",
 					"{No face is selected, so this operation will modify all the faces in this BOT} ",
 					"\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL );
-				if( atoi( interp->result) )
+				if( atoi( Tcl_GetStringResult(interp)) )
 					break;
 
 				for( i=0 ; i<bot->num_faces ; i++ )
@@ -3348,7 +3348,7 @@ sedit(void)
 					       (char *)NULL );
 			if( ret_tcl != TCL_OK )
 			{
-				bu_log( "ERROR: cad_list_buts: %s\n", interp->result );
+				bu_log( "ERROR: cad_list_buts: %s\n", Tcl_GetStringResult(interp) );
 				break;
 			}
 			dialog_result = Tcl_GetVar( interp, "_bot_flags_result", TCL_GLOBAL_ONLY );
@@ -3391,7 +3391,7 @@ sedit(void)
 					"$mged_gui(mged,screen) ", "{Setting Mode for All Faces} ",
 					"{No face is selected, so this operation will modify all the faces in this BOT} ",
 					"\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL );
-				if( atoi( interp->result) )
+				if( atoi( Tcl_GetStringResult(interp)) )
 					break;
 
 				face_no = -2;
@@ -3431,7 +3431,7 @@ sedit(void)
 					       (char *)NULL );
 			if( ret_tcl != TCL_OK )
 			{
-				bu_log( "ERROR: cad_radio: %s\n", interp->result );
+				bu_log( "ERROR: cad_radio: %s\n", Tcl_GetStringResult(interp) );
 				break;
 			}
 			radio_result = Tcl_GetVar( interp, "_bot_fmode_result", TCL_GLOBAL_ONLY );
@@ -6219,7 +6219,7 @@ sedit_mouse( const vect_t mousevec )
 			bu_vls_free( &vls );
 			if( ret_tcl != TCL_OK )
 			{
-			  bu_log( "bot_face_select failed: %s\n", interp->result );
+			  bu_log( "bot_face_select failed: %s\n", Tcl_GetStringResult(interp) );
 			  bot_verts[0] = -1;
 			  bot_verts[1] = -1;
 			  bot_verts[2] = -1;

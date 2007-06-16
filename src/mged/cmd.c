@@ -634,7 +634,7 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	status = Tcl_Eval(interp, bu_vls_addr(&infocommand));
 	bu_vls_free(&infocommand);
 
-	if (status != TCL_OK || interp->result[0] == '\0') {
+	if (status != TCL_OK || Tcl_GetStringResult(interp)[0] == '\0') {
 		Tcl_AppendResult(interp, "command does not exist", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -700,9 +700,9 @@ cmd_setup(void)
 		bu_vls_strcpy(&temp, "info commands ");
 		bu_vls_strcat(&temp, ctp->ct_name);
 		if (Tcl_Eval(interp, bu_vls_addr(&temp)) != TCL_OK ||
-		    interp->result[0] != '\0') {
+		    Tcl_GetStringResult(interp)[0] != '\0') {
 			bu_log("WARNING:  '%s' name collision (%s)\n", ctp->ct_name,
-			       interp->result);
+			       Tcl_GetStringResult(interp));
 		}
 #endif
 		bu_vls_strcpy(&temp, "_mged_");
@@ -1183,6 +1183,7 @@ cmdline( struct bu_vls *vp, int record )
 	size_t len;
 	extern struct bu_vls mged_prompt;
 	char *cp;
+	const char *result;
 
 	BU_CK_VLS(vp);
 
@@ -1212,6 +1213,7 @@ cmdline( struct bu_vls *vp, int record )
 	gettimeofday(&start, (struct timezone *)NULL);
 	status = Tcl_Eval(interp, bu_vls_addr(&globbed));
 	gettimeofday(&finish, (struct timezone *)NULL);
+	result = Tcl_GetStringResult(interp);
 
 	/* Contemplate the result reported by the Tcl interpreter. */
 
@@ -1219,14 +1221,14 @@ cmdline( struct bu_vls *vp, int record )
 	case TCL_RETURN:
 	case TCL_OK:
 		if( setjmp( jmp_env ) == 0 ){
-			len = strlen(interp->result);
+			len = strlen(result);
 
 			/* If the command had something to say, print it out. */
 			if (len > 0){
 				(void)signal( SIGINT, sig3);  /* allow interupts */
 
-				bu_log("%s%s", interp->result,
-				       interp->result[len-1] == '\n' ? "" : "\n");
+				bu_log("%s%s", result,
+				       result[len-1] == '\n' ? "" : "\n");
 
 				(void)signal( SIGINT, SIG_IGN );
 			}
@@ -1235,7 +1237,7 @@ cmdline( struct bu_vls *vp, int record )
 			   it in the history. */
 			if (record && tkwin != NULL) {
 				bu_vls_printf(&tmp_vls, "distribute_text {} {%s} {%s}",
-					      bu_vls_addr(&save_vp), interp->result);
+					      bu_vls_addr(&save_vp), result);
 				Tcl_Eval(interp, bu_vls_addr(&tmp_vls));
 				Tcl_SetResult(interp, "", TCL_STATIC);
 			}
@@ -1258,17 +1260,17 @@ cmdline( struct bu_vls *vp, int record )
 
 		/* First check to see if it's a secret message. */
 
-		if ((cp = strstr(interp->result, MORE_ARGS_STR)) != NULL) {
-			if(cp == interp->result){
+		if ((cp = strstr(result, MORE_ARGS_STR)) != NULL) {
+			if(cp == result){
 				bu_vls_trunc(&mged_prompt, 0);
 				bu_vls_printf(&mged_prompt, "\r%s",
-					      interp->result+sizeof(MORE_ARGS_STR)-1);
+					      result+sizeof(MORE_ARGS_STR)-1);
 			}else{
-				len = cp - interp->result;
-				bu_log("%*s%s", len, interp->result, interp->result[len-1] == '\n' ? "" : "\n");
+				len = cp - result;
+				bu_log("%*s%s", len, result, result[len-1] == '\n' ? "" : "\n");
 				bu_vls_trunc(&mged_prompt, 0);
 				bu_vls_printf(&mged_prompt, "\r%s",
-					      interp->result+sizeof(MORE_ARGS_STR)-1+len);
+					      result+sizeof(MORE_ARGS_STR)-1+len);
 			}
 
 			status = CMD_MORE;
@@ -1277,9 +1279,9 @@ cmdline( struct bu_vls *vp, int record )
 
 		/* Otherwise, it's just a regular old error. */
 
-		len = strlen(interp->result);
-		if (len > 0) bu_log("%s%s", interp->result,
-				    interp->result[len-1] == '\n' ? "" : "\n");
+		len = strlen(result);
+		if (len > 0) bu_log("%s%s", result,
+				    result[len-1] == '\n' ? "" : "\n");
 
 		if (record)
 			history_record(&save_vp, &start, &finish, CMD_BAD);
@@ -1304,16 +1306,17 @@ mged_print_result(int status)
 {
 	int len;
 	extern void pr_prompt(void);
+	const char *result = Tcl_GetStringResult(interp);
 
 #if 0
 	switch (status) {
 	case TCL_OK:
-		len = strlen(interp->result);
+		len = strlen(result);
 
 		/* If the command had something to say, print it out. */
 		if (len > 0){
-			bu_log("%s%s", interp->result,
-			       interp->result[len-1] == '\n' ? "" : "\n");
+			bu_log("%s%s", result,
+			       result[len-1] == '\n' ? "" : "\n");
 
 			pr_prompt();
 		}
@@ -1322,10 +1325,10 @@ mged_print_result(int status)
 
 	case TCL_ERROR:
 	default:
-		len = strlen(interp->result);
+		len = strlen(result);
 		if (len > 0){
-			bu_log("%s%s", interp->result,
-			       interp->result[len-1] == '\n' ? "" : "\n");
+			bu_log("%s%s", result,
+			       result[len-1] == '\n' ? "" : "\n");
 
 			pr_prompt();
 		}
@@ -1333,10 +1336,10 @@ mged_print_result(int status)
 		break;
 	}
 #else
-	len = strlen(interp->result);
+	len = strlen(result);
 	if (len > 0){
-		bu_log("%s%s", interp->result,
-		       interp->result[len-1] == '\n' ? "" : "\n");
+		bu_log("%s%s", result,
+		       result[len-1] == '\n' ? "" : "\n");
 
 		pr_prompt();
 	}
@@ -3040,7 +3043,7 @@ cmd_copy(ClientData	clientData,
  *                C M D _ E X P A N D
  *
  * Performs wildcard expansion (matched to the database elements)
- * on its given arguments.  The result is returned in interp->result.
+ * on its given arguments.  The result is returned by Tcl_GetStringResult(interp).
  */
 int
 cmd_expand(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)

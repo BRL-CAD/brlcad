@@ -549,7 +549,7 @@ main(int argc, char **argv)
 	    bu_vls_strcpy(&vls, "loadtk");
 
 	status = Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_strcpy(&error, interp->result);
+	bu_vls_strcpy(&error, Tcl_GetStringResult(interp));
 	bu_vls_free(&vls);
 
 	if (status != TCL_OK) {
@@ -624,11 +624,11 @@ main(int argc, char **argv)
 		if (use_pipe) {
 		    /* too late to fall back to classic, we forked and detached already */
 		    bu_log("Unable to initialize an MGED graphical user interface.\nTry using foreground (-f) or classic-mode (-c) options to MGED.\n");
-		    bu_log("%s\nMGED aborted.\n", interp->result);
+		    bu_log("%s\nMGED aborted.\n", Tcl_GetStringResult(interp));
 		    pkg_terminate();
 		    mged_finish(1);
 		}
-		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", interp->result);
+		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", Tcl_GetStringResult(interp));
 		classic_mged=1;
 #ifndef _WIN32
 		cbreak_mode = COMMAND_LINE_EDITING;
@@ -2421,13 +2421,13 @@ f_opendb(
 
 		    status = Tcl_Eval(interp, bu_vls_addr(&vls));
 
-		    if(status != TCL_OK || interp->result[0] == '2') {
+		    if(status != TCL_OK || Tcl_GetStringResult(interp)[0] == '2') {
 			bu_vls_free(&vls);
 			bu_vls_free(&msg);
 			return TCL_ERROR;
 		    }
 
-		    if(interp->result[0] == '1') {
+		    if(Tcl_GetStringResult(interp)[0] == '1') {
 			bu_log("opendb: no database is currently opened!\n");
 			bu_vls_free(&vls);
 			bu_vls_free(&msg);
@@ -2538,7 +2538,7 @@ f_opendb(
     /* Establish LIBWDB TCL access to both disk and in-memory databases */
     if (wdb_init_obj(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
 	bu_vls_printf(&msg, "%s\n%s\n",
-		      interp->result,
+		      Tcl_GetStringResult(interp),
 		      Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
 	Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
 	bu_vls_free(&vls);
@@ -2549,7 +2549,7 @@ f_opendb(
     /* This creates a "db" command object */
     if (wdb_create_cmd(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
 	bu_vls_printf(&msg, "%s\n%s\n",
-		      interp->result,
+		      Tcl_GetStringResult(interp),
 		      Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
 	Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
 	bu_vls_free(&vls);
@@ -2562,7 +2562,7 @@ f_opendb(
     bu_vls_printf(&vls, "wdb_open %s inmem [get_dbip]", MGED_INMEM_NAME);
     if (Tcl_Eval( interp, bu_vls_addr(&vls) ) != TCL_OK) {
 	bu_vls_printf(&msg, "%s\n%s\n",
-		      interp->result,
+		      Tcl_GetStringResult(interp),
 		      Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
 	Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
 	bu_vls_free(&vls);

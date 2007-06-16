@@ -74,16 +74,16 @@ mged_setup(void)
 
     /* This runs the init.tcl script */
     if( Tcl_Init(interp) == TCL_ERROR )
-	bu_log("Tcl_Init error %s\n", interp->result);
+	bu_log("Tcl_Init error %s\n", Tcl_GetStringResult(interp));
 
     /* Initialize [incr Tcl] */
     if (Itcl_Init(interp) == TCL_ERROR)
-	bu_log("Itcl_Init error %s\n", interp->result);
+	bu_log("Itcl_Init error %s\n", Tcl_GetStringResult(interp));
 
     /* Import [incr Tcl] commands into the global namespace. */
     if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
 		   "::itcl::*", /* allowOverwrite */ 1) != TCL_OK)
-	bu_log("Tcl_Import error %s\n", interp->result);
+	bu_log("Tcl_Import error %s\n", Tcl_GetStringResult(interp));
 
 #if 0 /* FIXME: disabled.  defined(HAVE_GETENV) */
     /* append our own bin dir to (the end of) our search path.
@@ -140,7 +140,7 @@ mged_setup(void)
 
     /* Initialize librt (includes database, drawable geometry and view objects) */
     if (Rt_d_Init(interp) == TCL_ERROR) {
-	bu_log("Rt_d_Init error %s\n", interp->result);
+	bu_log("Rt_d_Init error %s\n", Tcl_GetStringResult(interp));
     }
 #else
     /* Initialize libbu */
@@ -151,7 +151,7 @@ mged_setup(void)
 
     /* Initialize librt (includes database, drawable geometry and view objects) */
     if (Rt_Init(interp) == TCL_ERROR) {
-	bu_log("Rt_Init error %s\n", interp->result);
+	bu_log("Rt_Init error %s\n", Tcl_GetStringResult(interp));
     }
 #endif
 
