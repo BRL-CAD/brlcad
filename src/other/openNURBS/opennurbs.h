@@ -24,6 +24,9 @@
 #if !defined(OPENNURBS_INC_)
 #define OPENNURBS_INC_
 
+#include <iostream>
+#define ON_TRACE(m) std::cout << m << std::endl
+
 #include "opennurbs_system.h"       /* system headers used by openNURBS code */
 
 #include "opennurbs_3dm.h"          /* 3DM typecode (TCODE) definitions */
