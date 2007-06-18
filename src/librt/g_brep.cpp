@@ -454,7 +454,7 @@ void
 brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R)
 {
     surf->Ev1Der(uv[0], uv[1], pt, su, sv);
-    TRACE("\tpt" << ON_PRINT3(pt) << ", su" << ON_PRINT3(su) << ", sv" ON_PRINT3(sv));
+//     TRACE("\tpt" << ON_PRINT3(pt) << ", su" << ON_PRINT3(su) << ", sv" ON_PRINT3(sv));
     R[0] = VDOT(pr.n1,((fastf_t*)pt)) - pr.d1;
     R[1] = VDOT(pr.n2,((fastf_t*)pt)) - pr.d2;
 }
@@ -462,7 +462,7 @@ brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVe
 void
 brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
 {
-    TRACE("brep_newton_iterate: " << ON_PRINT2(uv));
+//     TRACE("brep_newton_iterate: " << ON_PRINT2(uv));
 
     mat2d_t jacob = { VDOT(pr.n1,((fastf_t*)su)), VDOT(pr.n1,((fastf_t*)sv)),
 		      VDOT(pr.n2,((fastf_t*)su)), VDOT(pr.n2,((fastf_t*)sv)) };
@@ -470,7 +470,7 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
     if (mat2d_inverse(inv_jacob, jacob)) { // check inverse validity
 	pt2d_t tmp;
 	mat2d_pt2d_mul(tmp, inv_jacob, R);
-	TRACE("\tuv:"<<ON_PRINT2(uv)<<" tmp:"<<ON_PRINT2(tmp));
+// 	TRACE("\tuv:"<<ON_PRINT2(uv)<<" tmp:"<<ON_PRINT2(tmp));
 	pt2dsub(out_uv, uv, tmp);
     }
     else {
@@ -521,6 +521,19 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
     return found;
 }
 
+class HitSorter 
+{
+    point_t m_origin;
+public:
+    HitSorter(point_t origin) {
+	VMOVE(m_origin, origin);
+    }
+    
+    bool operator()(brep_hit*& left, brep_hit*& right) {
+	return DIST_PT_PT(left->point, m_origin) < DIST_PT_PT(right->point, m_origin);
+    }
+};
+
 /**
  *  			R T _ B R E P _ S H O T
  *
@@ -535,11 +548,6 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 int
 rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    mat2d_t test = {2,3,4,5};
-    mat2d_t inv;
-    mat2d_inverse(inv, test);
-    TRACE("inverse: " << ON_PRINT4(inv));
-
     TRACE("rt_brep_shot origin:" << ON_PRINT3(rp->r_pt) << " dir:" << ON_PRINT3(rp->r_dir));
     vect_t invdir;
     struct brep_specific* bs = (struct brep_specific*)stp->st_specific;
@@ -570,6 +578,10 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	}
     }
 
+    // sort the hits
+    HitSorter hs(rp->r_pt);
+    hits.sort(hs);
+    
     if (hits.size() > 0) {
 	if (hits.size() % 2 == 0) {
 	    // take each pair as a segment
