@@ -723,7 +723,7 @@ public:
         ) const;
 
   /// virtual ON_Curve override
-  int NumIntersectionsWith(const ON_Line& segment) ;    
+  int NumIntersectionsWith(const ON_Line& segment) const;    
 
 public:
 

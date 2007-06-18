@@ -2151,12 +2151,14 @@ bool ON_NurbsCurve::MakePiecewiseBezier( bool bSetEndWeightsToOne )
   return rc;
 }
 
-int ON_NurbsCurve::NumIntersectionsWith(const ON_Line& segment) {
-  bool rc = MakePiecewiseBezier();
+int ON_NurbsCurve::NumIntersectionsWith(const ON_Line& segment) const {
+  ON_TRACE("ON_NurbsCurve::NumIntersectionsWith");
+  ON_NurbsCurve copy(*this);
+  bool rc = copy.MakePiecewiseBezier();
   assert(rc);
   int xcount = 0;
   for (int i = 0; i < BezierSpanCount(); i++) {
-    const ON_BezierCurve* b = BezierSpan(i);
+    const ON_BezierCurve* b = copy.BezierSpan(i);
     xcount += b->NumIntersectionsWith(segment);
   }
   return xcount;
