@@ -1116,7 +1116,7 @@ bool ON_BezierCurve::Evaluate( // returns false if unable to evaluate
 #define CASE_C 		3
 
 int case_table[16]  = {		/* A = 0, B = 2, C = 3 */
-0,0,0,0,0,3,0,3,0,2,3,3,0,3,3,3
+  0,0,0,0,0,3,0,3,0,2,3,3,0,3,3,3
 };
 
 inline 
@@ -1142,6 +1142,7 @@ int next(int i, int max) {
 
 int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
 {
+  ON_TRACE("ON_BezierCurve::NumIntersectionsWith");
   // XXX - assumes the segment is horizontal and to the "right"
 
   int qstats;  
@@ -1157,9 +1158,11 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
   // handle the specific cases
   switch (curve_case) {
   case CASE_A: // there is no possibility of intersection
+    ON_TRACE("\tCASE A");
     return 0;
   case CASE_B: // there is either an even or odd number of intersections
     { 
+      ON_TRACE("\tCASE B");
       // check the endpoints of the curve to determine if they are in
       // the same or different quadrants
       int quad1 = quadrant(segment[0], PointAt(dom.Min()));
@@ -1170,6 +1173,7 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
     }
   case CASE_C:
     {
+     ON_TRACE("\tCASE C");
       // use Bezier clipping to eliminate segments of the curve that
       // cannot intersect the segment
       ON_2dPoint d[m_order]; // control points for the explicit Bezier curve
@@ -1199,6 +1203,7 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
 
       ON_BezierCurve left, middle, right;
       Split(tleft, left, middle);
+      ON_TRACE("middle domain: " << middle.Domain().Min() << " --> " << middle.Domain().Max());
       middle.Split(tright, middle, right);
       
       // since we are limited to horizontal segments for now

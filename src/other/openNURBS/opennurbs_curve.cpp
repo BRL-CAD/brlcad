@@ -3145,10 +3145,12 @@ bool ON_Curve::ParameterSearch(double t, int& index, bool bEnableSnap,
 	}
 	return rc;
 }
-
+ 
 int
 ON_Curve::NumIntersectionsWith(const ON_Line& segment) const {
   // XXX - todo - subclass responsibility (make pure virtual?)
+  ON_TextLog tl;
+  Dump(tl);
   assert(false);
 }
 
