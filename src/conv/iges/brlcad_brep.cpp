@@ -15,8 +15,8 @@ namespace brlcad {
   }
 
   void
-  BRLCADBrepHandler::write() {
-    outfp = wdb_fopen("piston.g");
+  BRLCADBrepHandler::write(const string& filename) {
+    outfp = wdb_fopen(filename.c_str());
     mk_id(outfp, id_name.c_str());
 
     string sol = geom_name+".s";

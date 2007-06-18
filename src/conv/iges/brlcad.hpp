@@ -74,7 +74,7 @@ namespace brlcad {
 
     int handleOffsetCurve();    
 
-    void write();
+    void write(const string& filename);
 
   private:
     struct rt_wdb* outfp;
