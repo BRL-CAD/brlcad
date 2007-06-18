@@ -469,7 +469,7 @@ if [ "x$CONFIGURE" = "x" ] ; then
 	$ECHO "that the GNU Build System is at least not used in this directory.  In"
 	$ECHO "any case, there is nothing to do here without one of those files."
 	$ECHO
-	$ECHO "ERROR: No configure.in or configure.ac file found."
+	$ECHO "ERROR: No configure.in or configure.ac file found in `pwd`"
 	exit 1
     fi
 fi
@@ -977,7 +977,7 @@ initialize ( ) {
 	$ECHO "that the GNU Build System is at least not used in this directory.  In"
 	$ECHO "any case, there is nothing to do here without one of those files."
 	$ECHO
-	$ECHO "ERROR: No configure.in or configure.ac file found."
+	$ECHO "ERROR: No configure.in or configure.ac file found in `pwd`"
 	exit 1
     fi
 
