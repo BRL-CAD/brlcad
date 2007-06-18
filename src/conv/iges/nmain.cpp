@@ -7,8 +7,8 @@ using namespace brlcad;
 int
 main(int argc, char** argv) {
   cout << argc << endl;
-  if (argc != 2) {
-    cerr << "need an IGES file..." << endl;
+  if (argc != 3) {
+    cerr << "iges <iges_filename> <output_filename>" << endl;
     exit(0);
   } 
   
@@ -17,7 +17,8 @@ main(int argc, char** argv) {
 
   BRLCADBrepHandler bh;
   iges.readBreps(&bh);
-  bh.write();
+  string out(argv[2]);
+  bh.write(out);
   
   return 0;
 }
