@@ -197,13 +197,15 @@ processChar(char ch)
 	if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
 	    int status;
 	    struct timeval start, finish;
+	    const char *result;
 
 	    reset_Tty(fileno(stdin));
 	    gettimeofday(&start, (struct timezone *)NULL);
 	    status = Tcl_Eval(interp, bu_vls_addr(&input_str_prefix));
 	    gettimeofday(&finish, (struct timezone *)NULL);
-	    if (strlen(interp->result))
-		bu_log("%s\n", interp->result);
+	    result = Tcl_GetStringResult(interp);
+	    if (strlen(result))
+		bu_log("%s\n", result);
 
 	    history_record(&input_str_prefix, &start, &finish, status);
 	    bu_vls_trunc(&input_str_prefix, 0);

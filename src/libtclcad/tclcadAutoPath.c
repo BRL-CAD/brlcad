@@ -376,7 +376,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 		/* this really sets it */
 		snprintf(buffer, MAX_BUF, "set tcl_library \"%s\"", srcpath);
 		if (Tcl_Eval(interp, buffer)) {
-		    bu_log("Tcl_Eval ERROR:\n%s\n", interp->result);
+		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		} else {
 		    found_init_tcl=1;
 		}
@@ -390,7 +390,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 		/* this really sets it */
 		snprintf(buffer, MAX_BUF, "set tk_library \"%s\"", srcpath);
 		if (Tcl_Eval(interp, buffer)) {
-		    bu_log("Tcl_Eval ERROR:\n%s\n", interp->result);
+		    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		} else {
 		    found_tk_tcl=1;
 		}

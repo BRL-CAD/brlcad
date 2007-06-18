@@ -691,7 +691,7 @@ bn_cmd_noise_perlin(ClientData clientData,
 	pt[Z] = atof(argv[3]);
 
 	v = bn_noise_perlin( pt );
-	sprintf(interp->result, "%g", v );
+	Tcl_SetObjResult( interp, Tcl_NewDoubleObj(v) );
 
 	return TCL_OK;
 }
@@ -731,10 +731,10 @@ bn_cmd_noise(ClientData clientData,
 	if (!strcmp("bn_noise_turb", argv[0])) {
 		val = bn_noise_turb(pt, h_val, lacunarity, octaves);
 
-		sprintf(interp->result, "%g", val );
+		Tcl_SetObjResult( interp, Tcl_NewDoubleObj(val) );
 	} else 	if (!strcmp("bn_noise_fbm", argv[0])) {
 		val = bn_noise_fbm(pt, h_val, lacunarity, octaves);
-		sprintf(interp->result, "%g", val );
+		Tcl_SetObjResult( interp, Tcl_NewDoubleObj(val) );
 	} else {
 		Tcl_AppendResult(interp, "Unknown noise type \"",
 				 argv[0], "\"",	 NULL);
@@ -830,11 +830,10 @@ bn_cmd_noise_slice(ClientData clientData,
 
 	if (!strcmp("bn_noise_turb", argv[0])) {
 		val = bn_noise_turb(pt, h_val, lacunarity, octaves);
-
-		sprintf(interp->result, "%g", val );
+		Tcl_SetObjResult( interp, Tcl_NewDoubleObj(val) );
 	} else 	if (!strcmp("bn_noise_fbm", argv[0])) {
 		val = bn_noise_fbm(pt, h_val, lacunarity, octaves);
-		sprintf(interp->result, "%g", val );
+		Tcl_SetObjResult( interp, Tcl_NewDoubleObj(val) );
 	} else {
 		Tcl_AppendResult(interp, "Unknown noise type \"",
 				 argv[0], "\"",	 NULL);

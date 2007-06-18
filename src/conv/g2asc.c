@@ -220,7 +220,7 @@ main(int argc, char **argv)
 		interp = Tcl_CreateInterp();
 		/* This runs the init.tcl script */
 		if( Tcl_Init(interp) == TCL_ERROR )
-			bu_log("Tcl_Init error %s\n", interp->result);
+			bu_log("Tcl_Init error %s\n", Tcl_GetStringResult(interp));
 
 		if( (dbip = db_open( iname, "rb" )) == NULL )  {
 			bu_log("Unable to db_open() file '%s', aborting\n", iname );
@@ -312,11 +312,11 @@ main(int argc, char **argv)
 				if( dp->d_flags & DIR_REGION ) {
 					fprintf( ofp, "put {%s} comb region yes tree {%s}\n",
 						 tclify_name( dp->d_namep ),
-						 interp->result );
+						 Tcl_GetStringResult(interp) );
 				} else {
 					fprintf( ofp, "put {%s} comb region no tree {%s}\n",
 						 tclify_name( dp->d_namep ),
-						 interp->result );
+						 Tcl_GetStringResult(interp) );
 				}
 			} else {
 				if( intern.idb_meth->ft_tclget( interp, &intern, NULL ) != TCL_OK )  {
@@ -326,7 +326,7 @@ main(int argc, char **argv)
 				}
 				fprintf( ofp, "put {%s} %s\n",
 					 tclify_name( dp->d_namep ),
-					 interp->result );
+					 Tcl_GetStringResult(interp) );
 			}
 			avs = &intern.idb_avs;
 			if( avs->magic == BU_AVS_MAGIC && avs->count > 0 ) {

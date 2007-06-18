@@ -284,7 +284,7 @@ void
 ph_cmd(register struct pkg_conn *pc, char *buf)
 {
 	int		status;
-	char		*result;
+	const char	*result;
 
 	status = Tcl_Eval(interp, buf);
 	result = Tcl_GetStringResult(interp);

@@ -368,7 +368,7 @@ Tcl_Interp *_interp;
 
   /* Evaluates init.tcl */
   if(Tcl_Init(interp) == TCL_ERROR){
-    bu_log("Tcl_Init error %s\n", interp->result);
+    bu_log("Tcl_Init error %s\n", Tcl_GetStringResult(interp));
     exit(1);
   }
 
@@ -377,7 +377,7 @@ Tcl_Interp *_interp;
    * into the interpreter.
    */
   if (Tk_Init(interp) == TCL_ERROR){
-    bu_log("Tk_Init error %s\n", interp->result);
+    bu_log("Tk_Init error %s\n", Tcl_GetStringResult(interp));
     exit(1);
   }
 
