@@ -243,6 +243,20 @@ compare_external(struct directory *dp1, struct directory *dp2)
 }
 
 int
+isNumber( char *s )
+{
+    while( *s != '\0' ) {
+	if( isdigit( *s ) || *s == '.' || *s == '-' || *s == '+' || *s == 'e' || *s == 'E' ) {
+	    s++;
+	} else {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+int
 compare_values( int type, Tcl_Obj *val1, Tcl_Obj *val2 )
 {
     int len1, len2;
@@ -253,8 +267,9 @@ compare_values( int type, Tcl_Obj *val1, Tcl_Obj *val2 )
 
     str_ret = strcmp( Tcl_GetStringFromObj( val1, NULL ), Tcl_GetStringFromObj( val2, NULL ) );
 
-    if( str_ret == 0 || type == ATTRS || !use_floats )
+    if( str_ret == 0 || type == ATTRS ) {
 	return 0;
+    }
 
     if( Tcl_ListObjLength( interp, val1, &len1 ) == TCL_ERROR ) {
 	fprintf( stderr, "Error getting length of TCL object!!!\n" );
@@ -268,10 +283,14 @@ compare_values( int type, Tcl_Obj *val1, Tcl_Obj *val2 )
 	exit ( 1 );
     }
 
-    if( len1 != len2 )
+    if( len1 != len2 ) {
 	return 1;
+    }
 
     for( i=0 ; i<len1 ; i++ ) {
+	char *str1;
+	char *str2;
+
 	if( Tcl_ListObjIndex( interp, val1, i, &obj1 ) == TCL_ERROR ) {
 	    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj( val1, NULL ) );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
@@ -282,11 +301,20 @@ compare_values( int type, Tcl_Obj *val1, Tcl_Obj *val2 )
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
 	    exit ( 1 );
 	}
-	a = atof( Tcl_GetStringFromObj( obj1, NULL ) );
-	b = atof( Tcl_GetStringFromObj( obj2, NULL ) );
+	str1 = Tcl_GetString( obj1 );
+	str2 = Tcl_GetString( obj2 );
 
-	if( a != b ) {
-	    return 1;
+	if( use_floats && (isNumber(str1) && isNumber(str2)) ) {
+	    a = atof( str1 );
+	    b = atof( str2 );
+
+	    if( a != b ) {
+		return 1;
+	    }
+	} else {
+	    if( !strcmp( str1, str2 ) ) {
+		return 1;
+	    }
 	}
     }
 
@@ -835,8 +863,9 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 
 	if( (dp1->d_flags & DIR_COMB) && (dp2->d_flags & DIR_COMB ) ) {
 	    /* both are combinations */
+	    int len;
 	    compare_tcl_combs( obj1, dp1, obj2, dp2 );
-	    if( !pre_5_vers != 2 ) {
+	    if( pre_5_vers != 2 ) {
 		has_diff += compare_attrs( dp1, dp2 );
 	    }
 	    continue;
@@ -868,7 +897,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	    /* need to add this object */
 	    has_diff += 1;
 	    argv[2] = dp2->d_namep;
-	    if( wdb_get_tcl( (ClientData)(wdb2), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) ) {
+	    if( wdb_get_tcl( (ClientData)(wdb2), interp, 3, argv ) == TCL_ERROR || !strncmp( Tcl_GetStringResult(interp), "invalid", 7 ) ) {
 		/* could not get TCL version */
 		if( mode == HUMAN )
 		    printf( "Import %s from %s\n",
@@ -947,7 +976,7 @@ main(int argc, char **argv)
 
     interp = Tcl_CreateInterp();
     if( Tcl_Init(interp) == TCL_ERROR ) {
-	fprintf( stderr, "Tcl_Init error %s\n", interp->result);
+	fprintf( stderr, "Tcl_Init error %s\n", Tcl_GetStringResult(interp));
 	exit( 1 );
     }
 
@@ -975,6 +1004,12 @@ main(int argc, char **argv)
     if( wdb_init_obj( interp, wdb1, "_db1") != TCL_OK ) {
 	wdb_close( wdb1 );
 	fprintf( stderr, "wdb_init_obj failed on %s\n", file1 );
+	exit( 1 );
+    }
+
+    if( wdb_create_cmd( interp, wdb1, "_db1" ) != TCL_OK ) {
+	wdb_close( wdb1 );
+	fprintf( stderr, "wdb_create_cmd failed on %s\n", file1 );
 	exit( 1 );
     }
 
@@ -1012,6 +1047,12 @@ main(int argc, char **argv)
 	wdb_close( wdb1 );
 	wdb_close( wdb2 );
 	fprintf( stderr, "wdb_init_obj failed on %s\n", file2 );
+	exit( 1 );
+    }
+
+    if( wdb_create_cmd( interp, wdb2, "_db2" ) != TCL_OK ) {
+	wdb_close( wdb1 );
+	fprintf( stderr, "wdb_create_cmd failed on %s\n", file2 );
 	exit( 1 );
     }
 
