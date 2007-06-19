@@ -99,7 +99,7 @@ namespace brlcad {
     void GetBBox(double* min, double* max);
 
     virtual bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
-    virtual bool intersectsHierarchy(ON_Ray& ray, std::list<BVNode<BV>::segment>* results = 0);
+    virtual bool intersectsHierarchy(ON_Ray& ray, std::list<segment>* results = 0);
     
   private:
     BVNode<BV>* closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right);
@@ -229,6 +229,8 @@ namespace brlcad {
 	m_children[i]->intersectsHierarchy(ray, results_opt);
       }
     }
+
+    return intersects;
   }
 
   template<class BV>

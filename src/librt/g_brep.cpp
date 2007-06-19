@@ -23,6 +23,7 @@
  *
  */
 
+#include "common.h"
 #include "brep.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -521,7 +522,7 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
     return found;
 }
 
-class HitSorter 
+class HitSorter : public std::greater<brep_hit*>
 {
     point_t m_origin;
 public:
