@@ -284,15 +284,24 @@ namespace brlcad {
     debug("handleCircularArc");
     debug("radius: " << radius);
     debug("center: " << PT(center));
+    debug("start : " << PT(start));
+    debug("end   : " << PT(end));
+    debug("normal: " << PT(normal));
 
     ON_Plane plane = ON_Plane(ON_3dPoint(center), ON_3dVector(normal));
     ON_Circle circle = ON_Circle(plane, ON_3dPoint(center), radius);
     double a, b;
     circle.ClosestPointTo(start, &a); // !
     circle.ClosestPointTo(end, &b);   // !
-    ON_TextLog tl;
+    debug("a = " << a);
+    debug("b = " << b);
+    if (b < a) {
+      b = 2*PI+b;
+    }
+    ON_Arc arc(circle, ON_Interval(a, b));
 
-    ON_Arc arc(circle, ON_Interval(a, b));    
+    ON_TextLog tl;        
+    arc.Dump(tl);
     debug("arc valid: " << arc.IsValid());
     ON_ArcCurve* curve = new ON_ArcCurve(arc, arc.Domain().Min(), arc.Domain().Max());
     curve->IsValid(&tl);
