@@ -559,7 +559,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     bs->bvh->intersectsHierarchy(r, &inters);
     //brep_intersect_bv( inters, rp, bs->bvh);
     inters.sort();
-    TRACE("found " << inters.size() << " intersections!");
+    TRACE("found " << inters.size() << " intersections!");    
 
     if (inters.size() == 0) return 0; // MISS
 
@@ -580,8 +580,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     }
 
     // sort the hits
-    HitSorter hs(rp->r_pt);
-    hits.sort(hs);
+//     HitSorter hs(rp->r_pt);
+//     hits.sort(hs);
     
     if (hits.size() > 0) {
 	if (hits.size() % 2 == 0) {
@@ -735,12 +735,29 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     point_t pt1, pt2;
     for (int i = 0; i < bi->brep->m_E.Count(); i++) {
 	ON_BrepEdge& e = brep->m_E[i];
-	ON_BrepVertex& v1 = brep->m_V[e.m_vi[0]];
-	ON_BrepVertex& v2 = brep->m_V[e.m_vi[1]];
-	VMOVE(pt1, v1.Point());
-	VMOVE(pt2, v2.Point());
-	RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	const ON_Curve* crv = e.EdgeCurveOf();
+
+	if (crv->IsLinear()) {
+	    ON_BrepVertex& v1 = brep->m_V[e.m_vi[0]];
+	    ON_BrepVertex& v2 = brep->m_V[e.m_vi[1]];
+	    VMOVE(pt1, v1.Point());
+	    VMOVE(pt2, v2.Point());
+	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	} else {
+	    ON_Interval dom = crv->Domain();
+	    // XXX todo: dynamically sample the curve
+	    for (int i = 0; i <= 10; i++) {
+		ON_3dPoint p = crv->PointAt(dom.ParameterAt((double)i/10.0));
+		VMOVE(pt1, p);
+		if (i == 0) {
+		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		}
+		else {
+		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
+		}
+	    }
+	}
     }
     
     return 0;
