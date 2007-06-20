@@ -89,15 +89,6 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 #include <iostream>
 #include <algorithm>
 
-#ifndef TRACE
-//#define TRACE(s) std::cout << "TRACE: " << s << std::endl
-#define TRACE(s)
-#endif
-#define ON_PRINT4(p) "[" << (p)[0] << "," << (p)[1] << "," << (p)[2] << "," << (p)[3] << "]"
-#define ON_PRINT3(p) "(" << (p)[0] << "," << (p)[1] << "," << (p)[2] << ")"
-#define ON_PRINT2(p) "(" << (p)[0] << "," << (p)[1] << ")"
-
-
 using namespace brlcad;
 
 ON_Ray toXRay(struct xray* rp) {
@@ -194,7 +185,7 @@ brep_count_intersections(const ON_LineCurve& ray, const ON_Curve* trim_curve) {
 
 bool 
 brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
-    TRACE("brep_pt_trimmed: " << PT2(pt));
+    TRACE1("brep_pt_trimmed: " << PT2(pt));
     // for each loop
     const ON_Surface* surf = face.SurfaceOf();
     double umin, umax;
@@ -283,10 +274,10 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
     std::list<SurfaceTree*> surface_trees;
     ON_BrepFaceArray& faces = brep->m_F;
     for (int i = 0; i < faces.Count(); i++) {
-        TRACE("Face: " << i);
+        TRACE1("Face: " << i);
 	ON_BrepFace& face = faces[i];
 // 	const ON_Surface* surf = face.SurfaceOf();
-// 	TRACE("Surf: " << surf);
+// 	TRACE1("Surf: " << surf);
 
 // 	ON_Interval u = surf->Domain(0);
 // 	ON_Interval v = surf->Domain(1);
@@ -325,7 +316,7 @@ brep_calculate_cdbitems(struct brep_specific* bs, struct rt_brep_internal* bi)
 int
 rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 {
-    TRACE("rt_brep_prep");
+    TRACE1("rt_brep_prep");
     /* This prepares the NURBS specific data structures to be used
        during intersection... i.e. acceleration data structures and
        whatever else is needed.
@@ -428,11 +419,11 @@ brep_get_plane_ray(struct xray* r, plane_ray& pr)
     VUNITIZE(pr.n2);
     pr.d1 = VDOT(pr.n1,r->r_pt);
     pr.d2 = VDOT(pr.n2,r->r_pt);
-    TRACE("n1:" << ON_PRINT3(pr.n1) << " n2:" << ON_PRINT3(pr.n2) << " d1:" << pr.d1 << " d2:" << pr.d2);
+    TRACE1("n1:" << ON_PRINT3(pr.n1) << " n2:" << ON_PRINT3(pr.n2) << " d1:" << pr.d1 << " d2:" << pr.d2);
 }
 
 
-
+// XXX - todo: use static allocation instead
 class brep_hit {
 public:
     const ON_BrepFace& face;
@@ -446,7 +437,7 @@ public:
 	VMOVE(point, p);
 	VMOVE(normal, n);
 	move(uv, _uv);
-	TRACE("hit: " << ON_PRINT3(p) << " " << ON_PRINT3(n));
+	TRACE1("hit: " << ON_PRINT3(p) << " " << ON_PRINT3(n));
     }
 };
 typedef std::list<brep_hit*> HitList;
@@ -455,7 +446,7 @@ void
 brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R)
 {
     surf->Ev1Der(uv[0], uv[1], pt, su, sv);
-//     TRACE("\tpt" << ON_PRINT3(pt) << ", su" << ON_PRINT3(su) << ", sv" ON_PRINT3(sv));
+//     TRACE1("\tpt" << ON_PRINT3(pt) << ", su" << ON_PRINT3(su) << ", sv" ON_PRINT3(sv));
     R[0] = VDOT(pr.n1,((fastf_t*)pt)) - pr.d1;
     R[1] = VDOT(pr.n2,((fastf_t*)pt)) - pr.d2;
 }
@@ -463,7 +454,7 @@ brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVe
 void
 brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
 {
-//     TRACE("brep_newton_iterate: " << ON_PRINT2(uv));
+//     TRACE1("brep_newton_iterate: " << ON_PRINT2(uv));
 
     mat2d_t jacob = { VDOT(pr.n1,((fastf_t*)su)), VDOT(pr.n1,((fastf_t*)sv)),
 		      VDOT(pr.n2,((fastf_t*)su)), VDOT(pr.n2,((fastf_t*)sv)) };
@@ -471,11 +462,11 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
     if (mat2d_inverse(inv_jacob, jacob)) { // check inverse validity
 	pt2d_t tmp;
 	mat2d_pt2d_mul(tmp, inv_jacob, R);
-// 	TRACE("\tuv:"<<ON_PRINT2(uv)<<" tmp:"<<ON_PRINT2(tmp));
+// 	TRACE1("\tuv:"<<ON_PRINT2(uv)<<" tmp:"<<ON_PRINT2(tmp));
 	pt2dsub(out_uv, uv, tmp);
     }
     else {
-	TRACE("inverse failed"); // XXX how to handle this?
+	TRACE1("inverse failed"); // XXX how to handle this?
 	move(out_uv,uv);
     }
 }
@@ -494,7 +485,7 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	brep_r(surf,pr,uv,pt,su,sv,Rcurr);
 	fastf_t d = v2mag(Rcurr);
 	if (d < BREP_INTERSECTION_ROOT_EPSILON) {
-	    TRACE("R:"<<ON_PRINT2(Rcurr));
+	    TRACE1("R:"<<ON_PRINT2(Rcurr));
 	    found = true; break; 
 	} else if (d > Dlast) {
 	    break;
@@ -506,10 +497,10 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
     if (found) {
 	fastf_t l,h;
  	surf->GetDomain(0,&l,&h);
- 	if (uv[0] < l || uv[0] > h) { TRACE("out of U bounds"); return false; } // oob
+ 	if (uv[0] < l || uv[0] > h) { TRACE1("out of U bounds"); return false; } // oob
  	else {
  	    surf->GetDomain(1,&l,&h);
- 	    if (uv[1] < l || uv[1] > h) { TRACE("out of V bounds"); return false; } // oob
+ 	    if (uv[1] < l || uv[1] > h) { TRACE1("out of V bounds"); return false; } // oob
  	}
 
 	if (sbv->doTrimming() && brep_pt_trimmed(uv, *face)) return false; 
@@ -549,7 +540,7 @@ public:
 int
 rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    TRACE("rt_brep_shot origin:" << ON_PRINT3(rp->r_pt) << " dir:" << ON_PRINT3(rp->r_dir));
+    TRACE1("rt_brep_shot origin:" << ON_PRINT3(rp->r_pt) << " dir:" << ON_PRINT3(rp->r_dir));
     vect_t invdir;
     struct brep_specific* bs = (struct brep_specific*)stp->st_specific;
 
@@ -557,9 +548,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     BBNode::IsectList inters;
     ON_Ray r = toXRay(rp);
     bs->bvh->intersectsHierarchy(r, &inters);
-    //brep_intersect_bv( inters, rp, bs->bvh);
     inters.sort();
-    TRACE("found " << inters.size() << " intersections!");    
+    TRACE1("found " << inters.size() << " intersections!");    
 
     if (inters.size() == 0) return 0; // MISS
 
@@ -573,16 +563,22 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	const ON_Surface* surf = f->SurfaceOf();       
 	brep_hit* hit; 
 	pt2d_t uv = {sbv->m_u.Mid(),sbv->m_v.Mid()};
-	TRACE("uv: " << ON_PRINT2(uv));
+	TRACE1("uv: " << ON_PRINT2(uv));	
 	if (brep_intersect(sbv, f, surf, uv, pr, &hit)) {
+	    if (VAPPROXEQUAL(hits.back()->point, hit->point, 1)) continue;
+	    else {
+		TRACE("last point: " << ON_PRINT3(hits.back()->point));
+		TRACE("curr point: " << ON_PRINT3(hit->point));
+	    }
 	    hits.push_back(hit);
 	}
     }
 
     // sort the hits
-//     HitSorter hs(rp->r_pt);
-//     hits.sort(hs);
+    HitSorter hs(rp->r_pt);
+    hits.sort(hs);
     
+    bool hit = false;
     if (hits.size() > 0) {
 	if (hits.size() % 2 == 0) {
 	    // take each pair as a segment
@@ -590,6 +586,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		brep_hit* in = *i;
 		i++;
 		brep_hit* out = *i;
+		
 		register struct seg* segp;
 		RT_GET_SEG(segp, ap->a_resource);
 		segp->seg_stp = stp;
@@ -606,16 +603,24 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		segp->seg_out.hit_surfno = out->face.m_face_index;
 		VSET(segp->seg_out.hit_vpriv,out->uv[0],out->uv[1],0.0);
 
-		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );		
 	    }
-	    return hits.size();
-	} else {
- 	    std::cout << "ACK! found " << hits.size() << " number of intersection points. XXX Handle this!\n" << std::endl;
-	    std::cout << "It's really not acceptable to just print inane statements :-)\n" << std::endl;
+	    hit = true;
+	} 
+	else {
+	    int num = 0;
+	    for (HitList::iterator i = hits.begin(); i != hits.end(); i++) {
+	        TRACE("hit " << num << ": " << ON_PRINT3((*i)->point));
+		num++;
+	    }
 	}
     }
-
-    return 0; // MISS
+    
+    int num_hits = hits.size();
+    for (HitList::iterator i = hits.begin(); i != hits.end(); i++) {
+	delete (*i);
+    }
+    return (hit) ? num_hits : 0; // MISS
 }
 
 
@@ -684,11 +689,44 @@ rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
 void
 rt_brep_free(register struct soltab *stp)
 {
-    TRACE("rt_brep_free");
+    TRACE1("rt_brep_free");
     struct brep_specific* bs = (struct brep_specific*)stp->st_specific;
     brep_specific_delete(bs);
 }
 
+
+void
+plot_bbnode(BBNode* node, struct bu_list* vhead) {
+  ON_3dPoint min = node->m_node.m_min;
+  ON_3dPoint max = node->m_node.m_max;
+  point_t verts[] = {{min[0],min[1],min[2]},
+		     {min[0],max[1],min[2]},
+		     {min[0],max[1],max[2]},
+		     {min[0],min[1],max[2]},
+		     {max[0],min[1],min[2]},
+		     {max[0],max[1],min[2]},
+		     {max[0],max[1],max[2]},
+		     {max[0],min[1],max[2]}};
+
+  if (node->isLeaf()) {
+
+  for (int i = 0; i <= 4; i++) {
+    RT_ADD_VLIST(vhead, verts[i%4], (i == 0) ? BN_VLIST_LINE_MOVE : BN_VLIST_LINE_DRAW);
+  }
+  for (int i = 0; i <= 4; i++) {
+    RT_ADD_VLIST(vhead, verts[(i%4)+4], (i == 0) ? BN_VLIST_LINE_MOVE : BN_VLIST_LINE_DRAW);
+  }
+  for (int i = 0; i < 4; i++) {
+    RT_ADD_VLIST(vhead, verts[i], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, verts[i+4], BN_VLIST_LINE_DRAW);
+  }
+
+  }
+
+  for (int i = 0; i < node->m_children.size(); i++) {
+    plot_bbnode(node->m_children[i], vhead);
+  }
+}
 
 /**
  *			R T _ B R E P _ P L O T
@@ -696,7 +734,7 @@ rt_brep_free(register struct soltab *stp)
 int
 rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    TRACE("rt_brep_plot");
+    TRACE1("rt_brep_plot");
     struct rt_brep_internal* bi;
 
     RT_CK_DB_INTERNAL(ip);
@@ -732,7 +770,14 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     // So we'll do it by hand by grabbing each topological edge from
     // the brep and rendering it that way...
     ON_Brep* brep = bi->brep;    
+
     point_t pt1, pt2;
+    for (int i = 0; i < brep->m_F.Count(); i++) {
+      ON_BrepFace& f = brep->m_F[i];
+      SurfaceTree st(&f);
+      plot_bbnode(st.getRootNode(), vhead);
+    }
+
     for (int i = 0; i < bi->brep->m_E.Count(); i++) {
 	ON_BrepEdge& e = brep->m_E[i];
 	const ON_Curve* crv = e.EdgeCurveOf();
@@ -913,7 +958,7 @@ RT_MemoryArchive::Flush()
 int
 rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    TRACE("rt_brep_export5");
+    TRACE1("rt_brep_export5");
     struct rt_brep_internal* bi;
 
     RT_CK_DB_INTERNAL(ip);
@@ -964,7 +1009,7 @@ int
 rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     ON::Begin();
-    TRACE("rt_brep_import5");
+    TRACE1("rt_brep_import5");
     struct rt_brep_internal* bi;
     BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
@@ -1000,7 +1045,7 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 void
 rt_brep_ifree(struct rt_db_internal *ip)
 {
-    TRACE("rt_brep_ifree");
+    TRACE1("rt_brep_ifree");
     struct rt_brep_internal* bi;
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*)ip->idb_ptr;
