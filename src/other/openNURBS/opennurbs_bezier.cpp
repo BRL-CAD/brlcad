@@ -1204,16 +1204,27 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
       ON_TRACE("tright: " << tright);
       assert( tleft < tright );
 
-      ON_BezierCurve middle(*this);
-//       Split(tleft, left, middle);
-//       middle.Split(tright, middle, right);
-      middle.Trim(ON_Interval(tleft,tright));
-      ON_TRACE("After trim:");
-      ON_TRACE("middle domain: " << middle.Domain().Min() << " --> " << middle.Domain().Max());
+      if (ON_NearZero(tleft, ON_ZERO_TOLERANCE) ||
+	  ON_NearZero(tright-1.0, ON_ZERO_TOLERANCE)) {
+	tleft = 0.3;
+	tright = 0.7;
+	ON_BezierCurve left, middle, right;
+	Split(tleft, left, middle);
+	middle.Split((tright-tleft)/(1.0-tleft), middle, right);
+	left.NumIntersectionsWith(segment);
+	middle.NumIntersectionsWith(segment);
+	right.NumIntersectionsWith(segment);
+      } 
+      else {
+	ON_BezierCurve middle(*this);
+	middle.Trim(ON_Interval(tleft,tright));
+	ON_TRACE("After trim:");
+	ON_TRACE("middle domain: " << middle.Domain().Min() << " --> " << middle.Domain().Max());
       
-      // since we are limited to horizontal segments for now
-      // we know that left and right are CASE_A...
-      return middle.NumIntersectionsWith(segment);
+	// since we are limited to horizontal segments for now
+	// we know that left and right are CASE_A...
+	return middle.NumIntersectionsWith(segment);
+      }
     }
   }
 }
