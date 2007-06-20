@@ -2644,7 +2644,7 @@ if test "x$build_brlcad_tk" = "xyes" ; then
     AC_MSG_RESULT(yes)
     TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
     TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
-    TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix'
+    TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
     if test "x$bc_tk_aqua" = "xyes" ; then
 	TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
     fi
