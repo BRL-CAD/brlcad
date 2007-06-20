@@ -127,7 +127,7 @@ CHECKING OUT SOURCES
 
     Anonymous users will need to login first:
 
-	cvs -d :pserver:anonymous@cvs.sf.net:/cvsroot/brlcad login
+	cvs -d :pserver:anonymous@brlcad.brlcad.cvs.sf.net:/cvsroot/brlcad login
 
     Once logged in, the access method for anonymous users will be via
     :pserver: (provide an empty password if prompted).  Developers
@@ -140,10 +140,10 @@ CHECKING OUT SOURCES
     FROM HEAD:
 
     As anonymous:
-	cvs -z9 -d :pserver:anonymous@cvs.sf.net:/cvsroot/brlcad checkout -P brlcad
+	cvs -z9 -d :pserver:anonymous@brlcad.cvs.sf.net:/cvsroot/brlcad checkout -P brlcad
 
     As a developer:
-	cvs -z9 -d <username>@cvs.sf.net:/cvsroot/brlcad checkout -P brlcad
+	cvs -z9 -d <username>@brlcad.cvs.sf.net:/cvsroot/brlcad checkout -P brlcad
 
 
     FROM STABLE:
@@ -152,10 +152,10 @@ CHECKING OUT SOURCES
     revision or branch -- provide the tag name upon checkout:
 
     As anonymous:
-	cvs -z9 -d :pserver:anonymous@cvs.sf.net:/cvsroot/brlcad checkout -P -r STABLE brlcad
+	cvs -z9 -d :pserver:anonymous@brlcad.cvs.sf.net:/cvsroot/brlcad checkout -P -r STABLE brlcad
 
     As a developer:
-	cvs -z9 -d <username>@cvs.sf.net:/cvsroot/brlcad checkout -P -r STABLE brlcad
+	cvs -z9 -d <username>@brlcad.cvs.sf.net:/cvsroot/brlcad checkout -P -r STABLE brlcad
 
 
     FROM A BRANCH/REVISION:
@@ -165,10 +165,10 @@ CHECKING OUT SOURCES
     then checking out with that symbolic tag name:
 
     As anonymous:
-	cvs -z9 -d :pserver:anonymous@cvs.sf.net:/cvsroot/brlcad checkout -P -r <tagname> brlcad
+	cvs -z9 -d :pserver:anonymous@brlcad.cvs.sf.net:/cvsroot/brlcad checkout -P -r <tagname> brlcad
 
     As a developer:
-	cvs -z9 -d <username>@cvs.sf.net:/cvsroot/brlcad checkout -P -r <tagname> brlcad
+	cvs -z9 -d <username>@brlcad.cvs.sf.net:/cvsroot/brlcad checkout -P -r <tagname> brlcad
 
     If the tag names are not known, you can check out HEAD or STABLE
     and perform a "cvs log" on any file to see the known tag names:
@@ -681,10 +681,10 @@ USAGE TIPS
        the repository:
 
        For anonymous users:
-	   export CVSROOT=:pserver:anonymous@cvs.sf.net:/cvsroot/brlcad
+	   export CVSROOT=:pserver:anonymous@brlcad.cvs.sf.net:/cvsroot/brlcad
 
        For developers with accounts:
-	   export CVSROOT=<username>@cvs.sf.net:/cvsroot/brlcad
+	   export CVSROOT=<username>@brlcad.cvs.sf.net:/cvsroot/brlcad
 
     5) CVS does not manage directories so care must be taken when
        creating new directories or moving things around.  Do NOT add
