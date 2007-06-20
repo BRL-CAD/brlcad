@@ -26,9 +26,15 @@
 
 static std::numeric_limits<double> real;
 
-#define PT(p) "(" << (p)[0] << "," << (p)[1] << "," << (p)[2] << ")"
-#define PT2(p) "(" << (p)[0] << "," << (p)[1] << ")"
+// XXX debugging crapola (clean up later)
+#define ON_PRINT4(p) "[" << (p)[0] << "," << (p)[1] << "," << (p)[2] << "," << (p)[3] << "]"
+#define ON_PRINT3(p) "(" << (p)[0] << "," << (p)[1] << "," << (p)[2] << ")"
+#define ON_PRINT2(p) "(" << (p)[0] << "," << (p)[1] << ")"
+#define PT(p) ON_PRINT3(p)
+#define PT2(p) ON_PRINT2(p)
 #define TRACE(s) std::cout << s << endl;
+#define TRACE1(s) 
+//#define TRACE(s) 
 
 namespace brlcad {
   
@@ -40,6 +46,11 @@ namespace brlcad {
     ON_3dVector m_dir;
 
     ON_Ray(ON_3dPoint& origin, ON_3dVector& dir) : m_origin(origin), m_dir(dir) {}
+    ON_Ray(const ON_Ray& r) : m_origin(r.m_origin), m_dir(r.m_dir)  {}
+    ON_Ray& operator=(const ON_Ray& r) {
+      m_origin = r.m_origin;
+      m_dir = r.m_dir;
+    }
   };  
 
   template<class BV>
@@ -192,8 +203,8 @@ namespace brlcad {
   template<class BV>
   inline bool
   BVNode<BV>::intersectedBy(ON_Ray& ray, double* tnear_opt, double* tfar_opt) {
-    double tnear = real.min();
-    double tfar = real.max();
+    double tnear = -real.infinity();
+    double tfar = real.infinity();
     for (int i = 0; i < 3; i++) {
       if (ON_NearZero(ray.m_dir[i])) {
     	if (ray.m_origin[i] < m_node.m_min[i] || ray.m_origin[i] > m_node.m_max[i])
@@ -216,6 +227,7 @@ namespace brlcad {
   template<class BV>
   bool
   BVNode<BV>::intersectsHierarchy(ON_Ray& ray, std::list<BVNode<BV>::segment>* results_opt) {
+    TRACE("intersectsHierarchy ");
     double tnear, tfar;
     bool intersects = intersectedBy(ray, &tnear, &tfar);
     if (intersects && isLeaf()) {
