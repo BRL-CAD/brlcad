@@ -28,9 +28,7 @@ namespace brlcad {
   {
     // build the surface bounding volume hierarchy
     const ON_Surface* surf = face->SurfaceOf();
-//     TRACE("Creating surface tree for: ");
-//     ON_TextLog tl;
-//     surf->Dump(tl);
+    TRACE("Creating surface tree for: " << face->m_face_index);
     ON_Interval u = surf->Domain(0);
     ON_Interval v = surf->Domain(1);
     m_root = subdivideSurface(u, v, 0);
@@ -91,17 +89,30 @@ namespace brlcad {
     if (!surf->EvPoint(u.Mid(),v.Mid(),estimate)) {
       bu_bomb("Could not evaluate estimate point on surface");
     }
-    TRACE("brep_surface_bbox: estimate at " << PT(estimate));
-
     BBNode* node;
-    if (isLeaf) 
+    if (isLeaf) {      
+      TRACE("creating leaf: u(" << u.Min() << "," << u.Max() << 
+	    ") v(" << v.Min() << "," << v.Max() << ")");
       node = new SubsurfaceBBNode(ON_BoundingBox(ON_3dPoint(min),
 						 ON_3dPoint(max)), 
 				  m_face, 
 				  u, v);
+    }
     else 
       node = new BBNode(ON_BoundingBox(ON_3dPoint(min),
 				       ON_3dPoint(max)));
+    node->m_estimate = estimate;
+    return node;
+  }
+
+  BBNode* initialBBox(const ON_Surface* surf)
+  {
+    ON_BoundingBox bb = surf->BoundingBox();
+    BBNode* node = new BBNode(bb);
+    ON_3dPoint estimate;
+    if (!surf->EvPoint(surf->Domain(0).Mid(),surf->Domain(1).Mid(),estimate)) {
+      bu_bomb("Could not evaluate estimate point on surface");
+    }    
     node->m_estimate = estimate;
     return node;
   }
@@ -111,12 +122,11 @@ namespace brlcad {
 				const ON_Interval& v, 
 				int depth)
   {
-    TRACE("brep_surface_subdivide");
     const ON_Surface* surf = m_face->SurfaceOf();
     if (isFlat(surf, u, v) || depth >= BREP_MAX_FT_DEPTH) {
       return surfaceBBox(true, u, v);
     } else {
-      BBNode* parent = surfaceBBox(false, u, v);
+      BBNode* parent = (depth == 0) ? initialBBox(surf) : surfaceBBox(false, u, v);
       BBNode* quads[4];
       ON_Interval first(0,0.5);
       ON_Interval second(0.5,1.0);
