@@ -437,10 +437,24 @@ public:
 	VMOVE(point, p);
 	VMOVE(normal, n);
 	move(uv, _uv);
-	TRACE1("hit: " << ON_PRINT3(p) << " " << ON_PRINT3(n));
+    }
+
+    brep_hit(const brep_hit& h) 
+	: face(h.face)
+    {
+	VMOVE(point, h.point);
+	VMOVE(normal, h.normal);
+	move(uv, h.uv);
+    }
+
+    brep_hit& operator=(const brep_hit& h) {
+	const_cast<ON_BrepFace&>(face) = h.face;
+	VMOVE(point, h.point);
+	VMOVE(normal, h.normal);
+	move(uv, h.uv);
     }
 };
-typedef std::list<brep_hit*> HitList;
+typedef std::list<brep_hit> HitList;
 
 void
 brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R)
@@ -472,7 +486,7 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
 }
 
 bool 
-brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, plane_ray& pr, brep_hit** hit)
+brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, plane_ray& pr, HitList& hits)
 {
     bool found = false;
     fastf_t Dlast = MAX_FASTF;
@@ -496,24 +510,21 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
     }
     if (found) {
 	fastf_t l,h;
- 	surf->GetDomain(0,&l,&h);
- 	if (uv[0] < l || uv[0] > h) { TRACE1("out of U bounds"); return false; } // oob
- 	else {
- 	    surf->GetDomain(1,&l,&h);
- 	    if (uv[1] < l || uv[1] > h) { TRACE1("out of V bounds"); return false; } // oob
- 	}
+
+	if (!sbv->m_u.Includes(uv[0])) return false;
+	if (!sbv->m_v.Includes(uv[1])) return false;
 
 	if (sbv->doTrimming() && brep_pt_trimmed(uv, *face)) return false; 
 
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
 	surf->EvNormal(uv[0],uv[1],_pt,_norm);
-	*hit = new brep_hit(*face, (fastf_t*)_pt,(fastf_t*)_norm, uv);
+	hits.push_back(brep_hit(*face, (fastf_t*)_pt,(fastf_t*)_norm, uv));
     }    
     return found;
 }
 
-class HitSorter : public std::greater<brep_hit*>
+class HitSorter : public std::greater<brep_hit>
 {
     point_t m_origin;
 public:
@@ -521,8 +532,8 @@ public:
 	VMOVE(m_origin, origin);
     }
     
-    bool operator()(brep_hit*& left, brep_hit*& right) {
-	return DIST_PT_PT(left->point, m_origin) < DIST_PT_PT(right->point, m_origin);
+    bool operator()(brep_hit& left, brep_hit& right) {
+	return DIST_PT_PT(left.point, m_origin) < DIST_PT_PT(right.point, m_origin);
     }
 };
 
@@ -548,7 +559,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     BBNode::IsectList inters;
     ON_Ray r = toXRay(rp);
     bs->bvh->intersectsHierarchy(r, &inters);
-    inters.sort();
+    //inters.sort();
     TRACE1("found " << inters.size() << " intersections!");    
 
     if (inters.size() == 0) return 0; // MISS
@@ -556,6 +567,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     plane_ray pr;
     brep_get_plane_ray(rp, pr);    
 
+    // find all the hits (XXX very inefficient right now!)
     HitList hits;
     for (BBNode::IsectList::iterator i = inters.begin(); i != inters.end(); i++) {
 	const SubsurfaceBBNode* sbv = dynamic_cast<SubsurfaceBBNode*>((*i).m_node);
@@ -564,44 +576,55 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	brep_hit* hit; 
 	pt2d_t uv = {sbv->m_u.Mid(),sbv->m_v.Mid()};
 	TRACE1("uv: " << ON_PRINT2(uv));	
-	if (brep_intersect(sbv, f, surf, uv, pr, &hit)) {
-	    if (VAPPROXEQUAL(hits.back()->point, hit->point, 1)) continue;
-	    else {
-		TRACE("last point: " << ON_PRINT3(hits.back()->point));
-		TRACE("curr point: " << ON_PRINT3(hit->point));
-	    }
-	    hits.push_back(hit);
-	}
+	brep_intersect(sbv, f, surf, uv, pr, hits);
     }
 
     // sort the hits
     HitSorter hs(rp->r_pt);
     hits.sort(hs);
+//     if (hits.size() > 1) {
+// 	TRACE("num hits: " << hits.size());
+// 	brep_hit* a = hits.front();
+// 	HitList::iterator i = hits.begin();
+// 	for (++i; i != hits.end(); ++i) {
+// 	    assert(i != NULL);
+// 	    brep_hit* b = *i;
+// 	    while (VAPPROXEQUAL(a->point, b->point, 1e-1)) {
+// 		delete b;
+// 		i = hits.erase(i);
+// 		b = *i;
+// 	    }
+// 	    TRACE("last point: " << ON_PRINT3(a->point));
+// 	    TRACE("curr point: " << ON_PRINT3(b->point));
+// 	    a = b;
+// 	}
+//     }
+
     
     bool hit = false;
     if (hits.size() > 0) {
 	if (hits.size() % 2 == 0) {
 	    // take each pair as a segment
-	    for (HitList::iterator i = hits.begin(); i != hits.end(); i++) {
-		brep_hit* in = *i;
+	    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+		brep_hit& in = *i;
 		i++;
-		brep_hit* out = *i;
+		brep_hit& out = *i;
 		
 		register struct seg* segp;
 		RT_GET_SEG(segp, ap->a_resource);
 		segp->seg_stp = stp;
 
-		VMOVE(segp->seg_in.hit_point, in->point);
-		VMOVE(segp->seg_in.hit_normal, in->normal);
-		segp->seg_in.hit_dist = DIST_PT_PT(rp->r_pt,in->point);
-		segp->seg_in.hit_surfno = in->face.m_face_index;
-		VSET(segp->seg_in.hit_vpriv,in->uv[0],in->uv[1],0.0);
+		VMOVE(segp->seg_in.hit_point, in.point);
+		VMOVE(segp->seg_in.hit_normal, in.normal);
+		segp->seg_in.hit_dist = DIST_PT_PT(rp->r_pt,in.point);
+		segp->seg_in.hit_surfno = in.face.m_face_index;
+		VSET(segp->seg_in.hit_vpriv,in.uv[0],in.uv[1],0.0);
 
-		VMOVE(segp->seg_out.hit_point, out->point);
-		VMOVE(segp->seg_out.hit_normal, out->normal);
-		segp->seg_out.hit_dist = DIST_PT_PT(rp->r_pt,out->point);
-		segp->seg_out.hit_surfno = out->face.m_face_index;
-		VSET(segp->seg_out.hit_vpriv,out->uv[0],out->uv[1],0.0);
+		VMOVE(segp->seg_out.hit_point, out.point);
+		VMOVE(segp->seg_out.hit_normal, out.normal);
+		segp->seg_out.hit_dist = DIST_PT_PT(rp->r_pt,out.point);
+		segp->seg_out.hit_surfno = out.face.m_face_index;
+		VSET(segp->seg_out.hit_vpriv,out.uv[0],out.uv[1],0.0);
 
 		BU_LIST_INSERT( &(seghead->l), &(segp->l) );		
 	    }
@@ -610,17 +633,13 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	else {
 	    int num = 0;
 	    for (HitList::iterator i = hits.begin(); i != hits.end(); i++) {
-	        TRACE("hit " << num << ": " << ON_PRINT3((*i)->point));
+	        TRACE("hit " << num << ": " << ON_PRINT3(i->point));
 		num++;
 	    }
 	}
     }
     
-    int num_hits = hits.size();
-    for (HitList::iterator i = hits.begin(); i != hits.end(); i++) {
-	delete (*i);
-    }
-    return (hit) ? num_hits : 0; // MISS
+    return (hit) ? hits.size() : 0; // MISS
 }
 
 
@@ -772,11 +791,11 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     ON_Brep* brep = bi->brep;    
 
     point_t pt1, pt2;
-    for (int i = 0; i < brep->m_F.Count(); i++) {
-      ON_BrepFace& f = brep->m_F[i];
-      SurfaceTree st(&f);
-      plot_bbnode(st.getRootNode(), vhead);
-    }
+//     for (int i = 0; i < brep->m_F.Count(); i++) {
+//       ON_BrepFace& f = brep->m_F[i];
+//       SurfaceTree st(&f);
+//       plot_bbnode(st.getRootNode(), vhead);
+//     }
 
     for (int i = 0; i < bi->brep->m_E.Count(); i++) {
 	ON_BrepEdge& e = brep->m_E[i];
