@@ -147,7 +147,7 @@ extern "C++" {
     return sqrt(sq.foldr(0,dvec<2>::add()));
   }
   inline
-  void move(pt2d_t a, pt2d_t b) {
+  void move(pt2d_t a, const pt2d_t b) {
     a[0] = b[0];
     a[1] = b[1];
   }    
