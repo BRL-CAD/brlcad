@@ -3314,8 +3314,10 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
       //    Added relative tol check so cases with huge
       //    coordinate values that agreed to 10 places
       //    didn't get flagged as bad.
-      double xtol = (fabs(P0.x) + fabs(P1.x))*1.0e-10;
-      double ytol = (fabs(P0.y) + fabs(P1.y))*1.0e-10;
+//       double xtol = (fabs(P0.x) + fabs(P1.x))*1.0e-10; XXX - not using our tolerance? WTF?
+//       double ytol = (fabs(P0.y) + fabs(P1.y))*1.0e-10;
+      double xtol = (fabs(P0.x) + fabs(P1.x))*trim0.m_tolerance[0]; 
+      double ytol = (fabs(P0.y) + fabs(P1.y))*trim0.m_tolerance[1];
       if ( xtol < ON_ZERO_TOLERANCE )
         xtol = ON_ZERO_TOLERANCE;
       if ( ytol < ON_ZERO_TOLERANCE )
