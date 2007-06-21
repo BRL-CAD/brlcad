@@ -339,9 +339,6 @@ namespace brlcad {
 	  break;
       }      
       gcp_newton_iteration(new_uv, data, curr_grad, uv);
-      TRACE("gcp_newton_iteration: " << curr_grad[0] << "," << curr_grad[1]);
-      TRACE("gcp_newton_iteration: " << uv[0] << "," << uv[1]);
-      TRACE("gcp_newton_iteration: " << new_uv[0] << "," << new_uv[1]);
       move(uv, new_uv);
       d_last = d;
     }    
@@ -502,24 +499,18 @@ namespace brlcad {
     Array2D<double> N(UNIVERSAL_SAMPLE_COUNT, bspline.n+1);
     for (int i = 0; i < UNIVERSAL_SAMPLE_COUNT; i++) {
       double t = (double)i / (UNIVERSAL_SAMPLE_COUNT-1);
-      TRACE("t = " << t);
       Array1D<double> n = Array1D<double>(N.dim2(), N[i]);
       getCoefficients(bspline, n, t);
-      TRACE("n = " << n);
     }
-    TRACE("N = " << N);
     for (int i = 0; i < bspline.n+1; i++) {
       double max = -real.max();
       for (int j = 0; j < UNIVERSAL_SAMPLE_COUNT; j++) {
 	double f = N[j][i];
 	double t = ((double)j)/(UNIVERSAL_SAMPLE_COUNT-1);
-	TRACE("f = " << f << ", t = " << t);
-	TRACE(f << " > " << max);
 	if (f > max) {
 	  max = f;
 	  if (j == UNIVERSAL_SAMPLE_COUNT-1) bspline.params[i] = t;
 	} else if (f < max) {
-	  TRACE(f << " < " << max);
 	  bspline.params[i] = lastT;	  
 	  break;
 	}
@@ -527,9 +518,7 @@ namespace brlcad {
       }
     }
     for (int i = 0; i < bspline.n+1; i++) {
-      TRACE("parameter " << i << ": " << bspline.params[i]);
     }
-    TRACE(bspline.params.size());
   }
 
   void
@@ -588,13 +577,11 @@ namespace brlcad {
     // truly - i don't know WTF openNURBS is doing here
     // when it prints out the knots, they only have multiplicity 3,
     // but yet the order of the curve is 4!!! 
-    int num_knots = spline.knots.size();
-    TRACE("num_knots: " << num_knots);
-    TRACE("KnotCount: " << c->KnotCount());
-    for (int i = 1; i < num_knots-1; i++) {
-      double knot = spline.knots[i];
+    int num_knots = spline.knots.size() - 2;
+    for (int i = 0; i < num_knots; i++) {
+      double knot = spline.knots[i+1];
       TRACE("knot: " << knot);
-      c->SetKnot(i-1,knot);
+      c->SetKnot(i,knot);
     }
     //c->ClampEnd(2);
   
@@ -632,7 +619,7 @@ namespace brlcad {
   }
 
   ON_Curve*
-  pullback_curve(ON_BrepFace* face,		 
+  pullback_curve(ON_BrepFace* face,
 		 const ON_Curve* curve,
 		 SurfaceTree* tree,
 		 double tolerance, 
@@ -640,8 +627,8 @@ namespace brlcad {
     PBCData data;
     data.tolerance = tolerance;
     double len;
-    curve->GetLength(&len);
-    data.flatness = flatness * len;
+    curve->GetLength(&len);    
+    data.flatness = (len < 1.0) ? flatness : flatness * len;
     data.curve = curve;
     data.face = face;
     data.surf = face->SurfaceOf();
@@ -666,10 +653,6 @@ namespace brlcad {
     toUV(data, p1, tmin);
     toUV(data, p2, tmax);
     assert(sample(data, tmin, tmax, p1, p2));
-
-    for (int i = 0; i < data.samples.Count(); i++) {
-      cout << data.samples[i].x << "," << data.samples[i].y << endl;
-    }
 
     return interpolateCurve(data);
   }
