@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* permute (in mged) requires apply or save before 'new' vertex values
+  will function properly as keypoints.
+
+* facedef then move face undoes the facedef in mged
+
 * dsp primitive is going into what seems to be an unbounded memory
   allocation loop during prep, inside dsp_layers().
 
