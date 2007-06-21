@@ -3847,6 +3847,7 @@ AC_CONFIG_FILES([
 	src/fbed/Makefile
 	src/fbserv/Makefile
 	src/gtools/Makefile
+	src/gtools/beset/Makefile
 	src/halftone/Makefile
 	src/irprep/Makefile
 	src/java/Makefile
