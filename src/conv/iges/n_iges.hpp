@@ -46,7 +46,8 @@
 #include "bu.h"
 #include "db.h"
 
-#define DEBUG 1
+#undef DEBUG
+#define DEBUG 0
 
 #if DEBUG
 #define debug(l) cout << l << endl;
