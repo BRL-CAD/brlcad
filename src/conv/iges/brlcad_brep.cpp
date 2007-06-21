@@ -68,7 +68,7 @@ namespace brlcad {
     ON_Curve* c = ON_Curve::Cast(_objects[curve]);
     int curveIndex = _brep->AddEdgeCurve(c);
     ON_BrepEdge& edge = _brep->NewEdge(from, to, curveIndex);
-    edge.m_tolerance = 0.0; // exact!?
+    edge.m_tolerance = 1e-3; // XXX - look into it
     _edge = edge.m_edge_index;
 
     _topology.push_back(_edge);
@@ -104,8 +104,8 @@ namespace brlcad {
     ON_BrepTrim& trim = _brep->NewTrim(e, !orientWithCurve, loop(), trimCurve);
     debug("handleEdgeUse: trim " << (orientWithCurve ? "is not " : "is ") << "reversed"); 
     trim.m_type = ON_BrepTrim::mated; // closed solids!
-    trim.m_tolerance[0] = 0.0; // XXX: tolerance?
-    trim.m_tolerance[1] = 0.0;
+    trim.m_tolerance[0] = 1e-3; // XXX: tolerance?
+    trim.m_tolerance[1] = 1e-3;
     ON_Interval PD = trim.ProxyCurveDomain();
     trim.m_iso = s->IsIsoparametric(*c2d, &PD);
 
@@ -122,7 +122,7 @@ namespace brlcad {
     debug("handleVertex point: " << PT(pt));
     int vi = _brep->m_V.Count();
     ON_BrepVertex& b = _brep->NewVertex(ON_3dPoint(pt));
-    b.m_tolerance = 0.0; // XXX use exact tolerance?
+    b.m_tolerance = 1e-3; // XXX use exact tolerance?
 
     _topology.push_back(b.m_vertex_index);
     return _topology.size()-1;
@@ -364,9 +364,9 @@ namespace brlcad {
 					  rational,
 					  degree+1,
 					  num_control_points);
-    c->ReserveKnotCapacity(num_knots);
-    for (int i = 0; i < num_knots; i++) {
-      c->m_knot[i] = knots[i];
+    //c->ReserveKnotCapacity(num_knots);
+    for (int i = 0; i < num_knots-2; i++) {
+      c->m_knot[i] = knots[i+1];
     }
     
     int stride = c->m_cv_stride;
