@@ -48,6 +48,12 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* preserve an arb8 as an arb8 (instead of writing as arb6 or arb5) and
+  similarly for the other arb# sizes
+
+* validate primitives during export so that it is guaranteed that
+  illegal primitives will not be written to file
+
 * implement a region annointment command where the user can turn an
   assembly into a region and change all lower or higher regions into
   combinations
