@@ -20,12 +20,11 @@
 /** @file fitness.c
  *
  * Compare rays of source and population 
- *
- * PROGRAM MODEL
- * 1) read source  and convert to struct part 
- * 2) when done, call function to compare a given population object to source
- *    and return a number representative of the fitness (in terms of closeness
- *    to the source)
+ * usage: global variable struct fitness_state *fstate must exist
+ *	fit_prep(db, rows, cols);
+ *	fit_store(source_object);
+ *	int linear_difference = fit_linDiff(test_object);
+ *	fit_clear();
  * Author - Ben Poole
  * 
  */
@@ -50,96 +49,45 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"
+
 #define SEM_WORK RT_SEM_LAST
-#define SEM_SHOTS RT_SEM_LAST+1
-#define SEM_STATS RT_SEM_LAST+2 /* semaphore for statistics */
-#define SEM_LIST RT_SEM_LAST+3
-#define TOTAL_SEMAPHORES SEM_LIST+1
+#define TOTAL_SEMAPHORES SEM_WORK+1
 
-#define U_AXIS 0
-#define V_AXIS 1
-#define I_AXIS 2
-
-char *options = "c:r:d:p:t:?:h:";
-char *progname = "(noname)";
-char *usage_msg = "Usage: %s database model pop\n";
+#include "fitness.h"
 
 
-//struct resource resource[MAX_PSW]; /* memory resources for multi-cpup processing */
+extern struct fitness_state *fstate;
 
-
-/* linked list of partitions of a ray*/
-struct part {
-    struct bu_list  l;
-    fastf_t	    inhit_dist;
-    fastf_t	    outhit_dist;
-};
-
-/* stored model ray */
-struct fitness_state {
-    char *name;
-    struct part **rays; /* internal representation of raytraced source */
-    struct db_i *db; /* the database the source and population are a part of */
-    struct rt_i *rtip; /* current objects to be raytraced */
-
-    struct resource resource[MAX_PSW]; /* memory resource for multi-cpu processing */
-    int ncpu;
-    int max_cpus;
-
-    int res[2]; /*  ray resolution on u and v axes */
-    double gridSpacing[2]; /* grid spacing on u and v axes */
-    int row; /* current v axis index *///IS IT?
-    
-    int capture; /* flags whether to store the object */
-    fastf_t diff; /* linear difference between source and object */
-};
-
-struct fitness_state *fstate;
-
-
-
-
-
-/**
- *	U S A G E --- tell users how to invoke this program, then exit
- */
 void
-usage(char *s)
+rays_clear(void)
 {
-    if(s) fputs(s,stderr);
-    fprintf(stderr, usage_msg, progname);
-    exit(1);
+    int i;
+    struct part *p;
+    for(i = 0; i < fstate->res[U_AXIS] * fstate->res[V_AXIS]; i++){
+	while(BU_LIST_WHILE(p, part, &fstate->rays[i]->l)) {
+	    BU_LIST_DEQUEUE(&p->l);
+	    //	    printf("[%g %g]\n", p->inhit_dist, p->outhit_dist);
+	    bu_free(p, "part");
+	}
+	bu_free(fstate->rays[i], "part");
+    }
+    bu_free(fstate->rays, "fstate->rays");
 }
 
+	
+
+
 /**
- *	P A R S E _ A R G S --- Parse through command line flags
+ *	F I T _ S T O R E  --- store an object as the "source" to compare with
  */
-int
-parse_args(int ac, char *av[])
+
+void
+fit_store (char *obj)
 {
-    char c;
-    if( ! (progname=strrchr(*av, '/')) )
-	progname = *av;
-    else
-	++progname;
 
-    bu_opterr = 0;
-
-    while((c=bu_getopt(ac,av,options)) != EOF) {
-	switch(c){
-	    case 'c'	: fstate->res[U_AXIS] = atoi(bu_optarg);break;
-	    case 'r'	: fstate->res[V_AXIS] = atoi(bu_optarg);break;
-	    case 'p'	: if((c=atoi(bu_optarg)) > 0 && c <= fstate->max_cpus) fstate->ncpu = c;
-			  break;
-	    case '?'	:
-	    case 'h'	:
-	    default	:
-			  fprintf(stderr, "Bad or help flag '%c' specified\n",c);
-			  usage("");
-			  break;
-	}
-    }
-    return bu_optind;
+    fstate->capture = 1;
+    fit_rt(obj);
+    fstate->capture = 0;
 }
 
 /**
@@ -156,11 +104,9 @@ capture_hit(register struct application *ap, struct partition *partHeadp, struct
 	add = bu_malloc(sizeof(struct part), "part");
 	add->inhit_dist = pp->pt_inhit->hit_dist;
 	add->outhit_dist = pp->pt_outhit->hit_dist;
-	bu_semaphore_acquire(SEM_LIST);
 	BU_LIST_INSERT(&fstate->rays[ap->a_user]->l, &add->l);
-	bu_semaphore_release(SEM_LIST);
     }
-
+    return 1;
 }
 
 /**
@@ -171,9 +117,8 @@ capture_miss(register struct application *ap)
 {
     struct part *add = bu_malloc(sizeof(struct part), "part");
     add->inhit_dist = add->outhit_dist = 0;
-    bu_semaphore_acquire(SEM_LIST);
     BU_LIST_INSERT(&fstate->rays[ap->a_user]->l, &add->l);
-    bu_semaphore_release(SEM_LIST);
+    return 0;
 }
 
 /**
@@ -186,16 +131,12 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
     register struct part *mp;
     fastf_t xp, yp, lastpt;
     int status = 0;
-    //some if(partHeadp == NULL)...
     
     
     if(partHeadp!=NULL)
-    pp = partHeadp->pt_forw;
-    mp = BU_LIST_FORW(part, &fstate->rays[ap->a_user]->l);
-#define STATUS_PP 1
-#define STATUS_MP 2
-#define STATUS_EMPTY 0
+	pp = partHeadp->pt_forw;
 
+    mp = BU_LIST_FORW(part, &fstate->rays[ap->a_user]->l);
 
     while(pp != partHeadp && mp != fstate->rays[ap->a_user]) {
 	if(status & STATUS_PP)	xp = pp->pt_outhit->hit_dist;
@@ -292,7 +233,7 @@ int
 compare_miss(register struct application *ap)
 {
     compare_hit(ap, NULL, NULL);
-    return 1;
+    return 0;
 }
 
 /**
@@ -313,12 +254,11 @@ get_next_row(void)
 }
 
 /**
- *	C A P T U R E _ R T _  P L A N E --- capture and store raytraced object
+ *	R T _ W O R K E R --- raytraces an object in parallel and stores or compares it to source
  *
  */
-
 void
-store_source_rt(int cpu, genptr_t g)
+rt_worker(int cpu, genptr_t g)
 {
     struct application ap;
     int u, v;
@@ -358,25 +298,18 @@ store_source_rt(int cpu, genptr_t g)
 }
 
 /**
- *	C O M P A R E _ R T _ S O U R C E --- compare raytrace of object to source
- */
-void
-compare_rt_source(int cpu, genptr_t g)
-{
-
-}
-/**
- *	R T _ O B J --- raytrace an object optionally storing the rays
+ *	F I T _ R T --- raytrace an object optionally storing the rays
  *
  */
 int
-rt_obj(char *obj) {//use function pointers?
-
+fit_rt(char *obj)
+{
     int i;
+    double span[3];
     
     fstate->rtip = rt_new_rti(fstate->db);
     if(rt_gettree(fstate->rtip, obj) < 0){
-	fprintf(stderr, "%s: rt_gettree failed to read %s\n", progname, obj);
+	fprintf(stderr, "rt_gettree failed to read %s\n", obj);
 	exit(2);
     }
 
@@ -386,8 +319,7 @@ rt_obj(char *obj) {//use function pointers?
 	bn_rand_init(fstate->resource[i].re_randptr, i);
     }
     rt_prep_parallel(fstate->rtip,fstate->ncpu);
-    
-    double span[3];
+
     VSUB2(span, fstate->rtip->mdl_max, fstate->rtip->mdl_min);
     fstate->gridSpacing[U_AXIS] = span[U_AXIS] / (fstate->res[U_AXIS] + 1);
     fstate->gridSpacing[V_AXIS] = span[V_AXIS] / (fstate->res[V_AXIS] + 1 );
@@ -396,36 +328,52 @@ rt_obj(char *obj) {//use function pointers?
     if(fstate->capture){
 	fstate->name = obj;
 	fstate->rays = bu_malloc(sizeof(struct part *) * fstate->res[U_AXIS] * fstate->res[V_AXIS], "rays");
-	bu_parallel(store_source_rt, fstate->ncpu, NULL);
+	bu_parallel(rt_worker, fstate->ncpu, NULL);
     }
     else{
-	bu_parallel(store_source_rt, fstate->ncpu, NULL);
+	bu_parallel(rt_worker, fstate->ncpu, NULL);
     }
 
-    /* cleanup */
     rt_clean(fstate->rtip);
 }
 
-
-int main(int ac, char *av[])
+/**
+ *	F I T _ L I N D I F F --- returns the total linear difference between the rays of obj and source
+ */
+fastf_t
+fit_linDiff(char *obj)
 {
-    fstate = bu_malloc(sizeof(struct fitness_state), "fstate");
-    int arg_count;
-    //struct rt_i *rtip; /* reset for each object */
-#define IDBUFSIZE 2048
-    char idbuf[IDBUFSIZE];
+    fit_rt(obj);
+    return fstate->diff;
+}
+
+/**
+ *	F I T _ U P D A T E R E S --- change ray grid resolution
+ */
+void
+fit_updateRes(int rows, int cols){
+    if( fstate->rays != NULL){
+	rays_clear();
+    }
+    fstate->res[U_AXIS] = rows;
+    fstate->res[V_AXIS] = cols;
+    fit_store(fstate->name);
+
+}
+
+
+/**
+ *	F I T _ P R E P --- load database and prepare for raytracing
+ */
+int 
+fit_prep(char *db, int rows, int cols)
+{
     int i;
-    int start_objs; /*index in command line args where geom object list starts */
-    int num_objects; 
     struct part *p; /* used to free stored source */
 
-    fstate->max_cpus = fstate->ncpu = bu_avail_cpus();
 
-    /*parse command line arguments*/
-    arg_count = parse_args(ac, av);
-    if((ac - arg_count) < 2) {
-	usage("Error: Must specify model and objects on command line\n");
-    }
+    fstate = bu_malloc(sizeof(struct fitness_state), "fstate");
+    fstate->max_cpus = fstate->ncpu = bu_avail_cpus();
 
     bu_semaphore_init(TOTAL_SEMAPHORES);
 
@@ -435,49 +383,41 @@ int main(int ac, char *av[])
     /* 
      * Load databse into db_i 
      */
-    if( (fstate->db = db_open(av[arg_count], "r")) == DBI_NULL) {
-	fprintf(stderr, "%s: db_open failure on %s\n", progname, av[arg_count]);
-	exit(2);
+    if( (fstate->db = db_open(db, "r")) == DBI_NULL) {
+	bu_free(fstate, "fstate");
+	return DB_OPEN_FAILURE;
     }
     RT_CK_DBI(fstate->db);
 
     if( db_dirbuild(fstate->db) < 0) {
 	db_close(fstate->db);
-	fprintf(stderr, "db_dirbuild failed on %s\n", av[arg_count]);
-	exit(2);
+	bu_free(fstate, "fstate");
+	return DB_DIRBUILD_FAILURE;
     }
 
-    start_objs = ++arg_count;
-    num_objects = ac - arg_count;
-
-    /* 
-     * capture source ray trace
-     */
-    fstate->capture = 1;
-    rt_obj(av[arg_count]); 
-
-    /*
-     * compare source ray trace to an object
-     */
     fstate->capture = 0;
-    rt_obj(av[arg_count+1]);
-
-    printf("Total linear difference between %s and %s: %g\n", av[arg_count], av[arg_count+1], fstate->diff);
-
-    db_close(fstate->db);
-    for(i = 0; i < fstate->res[U_AXIS] * fstate->res[V_AXIS]; i++){
-	while(BU_LIST_WHILE(p, saved_partitition, &fstate->rays[i]->l)) {
-	    BU_LIST_DEQUEUE(&p->l);
-//	    printf("[%g %g]\n", p->inhit_dist, p->outhit_dist);
-	    bu_free(p, "part");
-	}
-	bu_free(fstate->rays[i], "part");
-    }
-    bu_free(fstate->rays, "fstate->rays");
+    fstate->res[U_AXIS] = rows;
+    fstate->res[V_AXIS] = cols;
+    fstate->rays = NULL;
     return 0;
-
 }
 
+/**
+ *	F I T _ C L E A N --- cleanup
+ */
+void
+fit_clean()
+{
+    int i;
+    struct part *p;
+    db_close(fstate->db);
+    db_close(fstate->db);
+    rays_clear();
+    bu_free(fstate, "fstate");
+}
+
+
+    
 	    
 
 
