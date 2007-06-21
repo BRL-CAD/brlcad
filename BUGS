@@ -15,6 +15,17 @@ on-going issues.
 Recent Bugs
 -----------
 
+* interactive mouse edits in mged can go haywire on Mac OS X with
+  snap-to-grid enabled
+
+* overlap tool in mged encourages very inefficient CSG operations
+  (e.g. a simple bolt with an entire hull armor subtracted)
+
+* BoT values are always listed in mm when a point is selected instead
+  of in current editing units.
+
+* a character is (still) sometimes captured by the cursor box
+
 * permute (in mged) requires apply or save before 'new' vertex values
   will function properly as keypoints.
 
