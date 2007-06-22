@@ -552,8 +552,8 @@ main(int argc, char **argv)
 	bu_vls_strcpy(&error, Tcl_GetStringResult(interp));
 	bu_vls_free(&vls);
 
-	if (status != TCL_OK) {
-	    /* failed to load tk, try localhost X11 */
+	if (status != TCL_OK && !dpy_string) {
+	    /* failed to load tk, try localhost X11 if DISPLAY was not set */
 	    status = Tcl_Eval(interp, "loadtk :0");
 	}
 
