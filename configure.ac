@@ -1177,6 +1177,27 @@ CFBundleRef bref = CFBundleGetMainBundle();
 LIBS="$PRELIBS"
 AC_MSG_RESULT($framework_cf)
 
+dnl check whether the Carbon framework is available (used for X11 focus)
+AC_MSG_CHECKING([whether -framework Carbon is available])
+framework_carbon=no
+FRAMEWORK_CARBON=""
+PRELIBS="$LIBS"
+LIBS="$LIBS -framework Carbon"
+AC_TRY_LINK([#include <Carbon/Carbon.h>], [
+OSStatus status;
+ProcessSerialNumber psn = {kNoProcess, kNoProcess};
+CFStringRef processName = NULL;
+GetCurrentProcess(&psn);
+CopyProcessName(&psn, &processName);
+if (processName != NULL) {
+   CFShow(processName);
+}
+], [framework_carbon=yes ; FRAMEWORK_CARBON="-framework Carbon"])
+LIBS="$PRELIBS"
+AC_MSG_RESULT($framework_carbon)
+AC_SUBST(FRAMEWORK_CARBON)
+
+
 dnl find a curses or other terminal library
 LIBTERMLIB=""
 AC_CHECK_LIB(termlib, tputs, LIBTERMLIB="-ltermlib",
@@ -1485,6 +1506,7 @@ AC_HEADER_STDC
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS( \
+	Carbon/Carbon.h \
 	arpa/inet.h \
 	curses.h \
 	dslib.h \
