@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged's plot tool (the gui one, not the 'plot' command) outputs a
+  plot file that has an erase as the last command, causing empty plots
+
 * interactive mouse edits in mged can go haywire on Mac OS X with
   snap-to-grid enabled
 
