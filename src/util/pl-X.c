@@ -41,7 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#ifdef __APPLE__
+#ifdef HAVE_CARBON_CARBON_H
 #  define Cursor MyCursor
 #  include <Carbon/Carbon.h>
 #  undef Cursor
@@ -262,7 +262,7 @@ label(double x, double y, char *str)
 
 
 void focus_x11() {
-#ifdef __APPLE__
+#ifdef HAVE_CARBON_CARBON_H
     OSStatus status;
     ProcessSerialNumber psn = {kNoProcess, kNoProcess};
     CFStringRef processName = NULL;
