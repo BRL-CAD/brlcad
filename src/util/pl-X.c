@@ -57,7 +57,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define	TCHAR	4	/* unsigned chars */
 #define	TSTRING	5	/* linefeed terminated string */
 
-#define	FONT	"vtsingle"
+#define	FONT	"fixed"
 
 XWMHints xwmh = {
 	(InputHint|StateHint),		/* flags */
