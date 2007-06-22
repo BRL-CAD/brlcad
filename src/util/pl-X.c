@@ -37,8 +37,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+
+#ifdef __APPLE__
+#  define Cursor MyCursor
+#  include <Carbon/Carbon.h>
+#  undef Cursor
+#endif
 
 #ifdef HAVE_STRING_H
 #  include <string.h>
@@ -160,7 +167,7 @@ getstring(void)
 	char	*cp;
 
 	cp = strarg;
-	while( (c = getchar()) != '\n' && c != EOF )
+	while( (c = getchar()) != '\n' && c != '\r' && c != EOF )
 		*cp++ = c;
 	*cp = 0;
 }
@@ -254,6 +261,30 @@ label(double x, double y, char *str)
 }
 
 
+void focus_x11() {
+#ifdef __APPLE__
+    OSStatus status;
+    ProcessSerialNumber psn = {kNoProcess, kNoProcess};
+    CFStringRef processName = NULL;
+
+    do {
+	status = GetNextProcess(&psn);
+	
+	/* Is this the psn for X11? */
+	CopyProcessName(&psn, &processName);
+	if (processName == NULL) {
+	    break;
+	}
+	
+	if (CFStringCompare(processName, CFSTR("X11"), 0) == kCFCompareEqualTo) {
+	    /* focus X11 */
+	    SetFrontProcess(&psn);
+	}
+    } while (status == noErr);
+#endif
+}
+
+
 void
 xsetup(int argc, char **argv)
 {
@@ -320,8 +351,8 @@ xsetup(int argc, char **argv)
 	gcv.background = bg;
 	gc = XCreateGC( dpy, win, (GCFont|GCForeground|GCBackground), &gcv );
 
-	XSelectInput( dpy, win, ExposureMask );
-	XMapWindow( dpy, win );
+	XSelectInput( dpy, win, ExposureMask | ButtonPressMask | KeyPressMask);
+	XMapWindow( dpy, win ); /* show the window */
 
 	while( 1 ) {
 		XNextEvent( dpy, &event );
@@ -339,6 +370,9 @@ xsetup(int argc, char **argv)
 			break;
 		}
 	}
+	XSetInputFocus(dpy, win, RevertToNone, CurrentTime);
+
+	focus_x11();
 }
 
 
@@ -347,6 +381,8 @@ main(int argc, char **argv)
 {
 	register int	c;
 	struct	uplot *up;
+	int erase = 0;
+	int waiting = 1;
 
 	while( argc > 1 ) {
 		if( strcmp(argv[1], "-v") == 0 ) {
@@ -365,15 +401,25 @@ main(int argc, char **argv)
 
 	while( (c = getchar()) != EOF ) {
 		/* look it up */
-		if( c < 'A' || c > 'z' ) {
-			up = &uerror;
+
+		if (c == '\n' || c == '\r') {
+		    /* ignore blank lines */
+		    continue;
+		} else if( c < 'A' || c > 'z' ) {
+		    up = &uerror;
 		} else {
-			up = &letters[ c - 'A' ];
+		    up = &letters[ c - 'A' ];
 		}
 
 		if( up->targ == TBAD ) {
 			fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
 			continue;
+		}
+
+		/* was the previous command an erase? */
+		if (erase) {
+		    XClearWindow( dpy, win );
+		    erase = 0;
 		}
 
 		if( up->narg > 0 )
@@ -441,16 +487,45 @@ main(int argc, char **argv)
 			XFlush( dpy );
 			break;
 		case 'e':
-			XClearWindow( dpy, win );
-			break;
+		    /* erase might be the last command in the file
+		     * which makes pl-X pointless so don't erase
+		     * unless this isn't the last command (check
+		     * during the next loop iteration)
+		     */
+		    erase = 1;
+		    break;
 		}
 
-		if( verbose )
-			printf( "%s\n", up->desc );
+		if (verbose) {
+		    printf( "%s\n", up->desc );
+		}
 	}
+	XFlush(dpy);
 
-	XFlush( dpy );
-	sleep( 1 );
+	printf("Press any key to quit...\n");
+	do {
+	    XEvent event;
+	    XNextEvent( dpy, &event );
+	    switch (event.type) {
+		case ButtonPress:
+		case ButtonRelease:
+		    /* ignore */
+		    break;
+		case KeyPress:
+		case KeyRelease:
+		    waiting = 0;
+		    break;
+		case Expose:
+		    
+		default:
+		    printf("unhandled event: %d\n", event.type);
+	    }
+	} while (waiting);
+
+	/* clean up */
+	XFreeGC(dpy, gc);
+	XCloseDisplay(dpy);
+
 	return 0;
 }
 
