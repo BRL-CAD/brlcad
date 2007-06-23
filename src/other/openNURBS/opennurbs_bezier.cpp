@@ -16,6 +16,7 @@
 
 #include "opennurbs.h"
 #include <limits>
+#include <assert.h>
 
 ON_PolynomialCurve::ON_PolynomialCurve()
                    : m_dim(0), m_is_rat(0), m_order(0), m_domain(0.0,1.0)
