@@ -148,41 +148,6 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
     }
 }
 
-const int CASE_A = 1;
-const int CASE_B = 2;
-const int CASE_C = 3;
-
-int 
-brep_process_caseb(const ON_LineCurve& ray, const ON_Curve* trim_curve) {
-    // XXX todo
-    return 0;
-}
-
-int 
-brep_process_casec(const ON_LineCurve& ray, const ON_Curve* trim_curve) {
-    // XXX todo
-    return 0;
-}
-
-int
-brep_classify_curve(const ON_LineCurve& ray, const ON_Curve* trim_curve) {
-    return CASE_A;
-}
-
-int
-brep_count_intersections(const ON_LineCurve& ray, const ON_Curve* trim_curve) {
-    int quad_case = brep_classify_curve(ray, trim_curve);
-    switch (quad_case) {
-    case CASE_A:
-	return 0;
-    case CASE_B:
-	return brep_process_caseb(ray, trim_curve);
-    case CASE_C:
-	return brep_process_casec(ray, trim_curve);	
-    }
-    throw new exception();
-}
-
 bool 
 brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
     TRACE1("brep_pt_trimmed: " << PT2(pt));
@@ -211,6 +176,8 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
     return (intersections % 2) == 0;
 }
 
+// XXX - most of this function is broken :-( except for the bezier span caching
+// need to fix it! - could provide real performance benefits...
 void 
 brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
 
@@ -221,17 +188,14 @@ brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
 	SubsurfaceBBNode* bb = dynamic_cast<SubsurfaceBBNode*>(*i);
 	
 	
-	// check to see if this portion of the surface needs to be checked for trims
+	// XXX - TODO: check to see if this portion of the surface
+	// needs to be checked for trims
 	pt2d_t test[] = {{bb->m_u.Min(),bb->m_v.Min()},
 			 {bb->m_u.Max(),bb->m_v.Min()},
 			 {bb->m_u.Max(),bb->m_v.Max()},
 			 {bb->m_u.Min(),bb->m_v.Max()}};
-	int count = 0; 
-	for (int i = 0; i < 4; i++) {
-	    if (brep_pt_trimmed(test[i], face)) {
-		count++;
-	    }
-	}
+
+
 	// check to see if the bbox encloses a trim
 	ON_3dPoint uvmin(bb->m_u.Min(),bb->m_v.Min(),0);
 	ON_3dPoint uvmax(bb->m_u.Max(),bb->m_v.Max(),0);
@@ -243,16 +207,22 @@ brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
 	    for (int j = 0; j < loop.m_ti.Count(); j++) {	    
 		ON_BrepTrim& trim = face.Brep()->m_T[loop.m_ti[j]];
 		if (bbox.Intersection(trim.m_pbox)) internalTrim = true;
+		
+		// tell the NURBS curves to cache their Bezier spans
+		// (used in trimming routines, and not thread safe)
+		const ON_Curve* c = trim.TrimCurveOf();
+		if (c->ClassId()->IsDerivedFrom(&ON_NurbsCurve::m_ON_NurbsCurve_class_id)) {
+		    ON_NurbsCurve::Cast(c)->CacheBezierSpans();
+		}
 	    }
 	}
-	std::cout << "INTERNAL TRIM: " << internalTrim << std::endl;
-	bb->m_checkTrim = internalTrim;
+	bb->m_checkTrim = true; // XXX - ack, hardcode for now
 	// for this node to be completely trimmed, all for corners
 	// must be trimmed and the depth of the tree needs to be > 0,
 	// since 0 means there is just a single leaf - and since
 	// "internal" outer loops will be make a single node seem
 	// trimmed, we must account for it.
-	bb->m_trimmed = count == 4 && tree->depth() > 0; 
+	bb->m_trimmed = false; // XXX - ack, hardcode for now
     }
 }
 
@@ -361,6 +331,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 
     brep_calculate_cdbitems(bs, bi);
 
+    
     return 0;
 }
 
@@ -485,10 +456,23 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
     }
 }
 
-bool 
+#define BREP_INTERSECT_ROOT_ITERATION_LIMIT  	-3
+#define BREP_INTERSECT_ROOT_DIVERGED            -2
+#define BREP_INTERSECT_OOB       		-1
+#define BREP_INTERSECT_TRIMMED     		0
+#define BREP_INTERSECT_FOUND   	    		1
+
+static const char* BREP_INTERSECT_REASONS[] = {"hit root iteration limit",
+					       "root diverged",
+					       "out of subsurface bounds",
+					       "trimmed",
+					       "found"};
+#define BREP_INTERSECT_GET_REASON(i) BREP_INTERSECT_REASONS[(i)+3]
+
+int 
 brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, plane_ray& pr, HitList& hits)
 {
-    bool found = false;
+    int found = BREP_INTERSECT_ROOT_ITERATION_LIMIT;
     fastf_t Dlast = MAX_FASTF;
     pt2d_t Rcurr;
     pt2d_t new_uv;
@@ -500,21 +484,21 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	fastf_t d = v2mag(Rcurr);
 	if (d < BREP_INTERSECTION_ROOT_EPSILON) {
 	    TRACE1("R:"<<ON_PRINT2(Rcurr));
-	    found = true; break; 
+	    found = BREP_INTERSECT_FOUND; break; 
 	} else if (d > Dlast) {
-	    break;
+	    found = BREP_INTERSECT_ROOT_DIVERGED; break;
 	}	
 	brep_newton_iterate(surf, pr, Rcurr, su, sv, uv, new_uv);
 	move(uv, new_uv);
 	Dlast = d;
-    }
-    if (found) {
+    }    
+    if (found > 0) {
 	fastf_t l,h;
 
-	if (!sbv->m_u.Includes(uv[0])) return false;
-	if (!sbv->m_v.Includes(uv[1])) return false;
+	if (!sbv->m_u.Includes(uv[0])) return BREP_INTERSECT_OOB;
+	if (!sbv->m_v.Includes(uv[1])) return BREP_INTERSECT_OOB;
 
-	if (sbv->doTrimming() && brep_pt_trimmed(uv, *face)) return false; 
+	if (sbv->doTrimming() && brep_pt_trimmed(uv, *face)) return BREP_INTERSECT_TRIMMED;
 
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
@@ -575,31 +559,15 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	const ON_Surface* surf = f->SurfaceOf();       
 	brep_hit* hit; 
 	pt2d_t uv = {sbv->m_u.Mid(),sbv->m_v.Mid()};
-	TRACE1("uv: " << ON_PRINT2(uv));	
-	brep_intersect(sbv, f, surf, uv, pr, hits);
+	int status = brep_intersect(sbv, f, surf, uv, pr, hits);
+	if (status < 0 && status > BREP_INTERSECT_ROOT_ITERATION_LIMIT) {
+	    TRACE("no intersection: " << BREP_INTERSECT_GET_REASON(status));
+	}
     }
 
     // sort the hits
     HitSorter hs(rp->r_pt);
     hits.sort(hs);
-//     if (hits.size() > 1) {
-// 	TRACE("num hits: " << hits.size());
-// 	brep_hit* a = hits.front();
-// 	HitList::iterator i = hits.begin();
-// 	for (++i; i != hits.end(); ++i) {
-// 	    assert(i != NULL);
-// 	    brep_hit* b = *i;
-// 	    while (VAPPROXEQUAL(a->point, b->point, 1e-1)) {
-// 		delete b;
-// 		i = hits.erase(i);
-// 		b = *i;
-// 	    }
-// 	    TRACE("last point: " << ON_PRINT3(a->point));
-// 	    TRACE("curr point: " << ON_PRINT3(b->point));
-// 	    a = b;
-// 	}
-//     }
-
     
     bool hit = false;
     if (hits.size() > 0) {
