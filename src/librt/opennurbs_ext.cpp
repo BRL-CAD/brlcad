@@ -57,7 +57,7 @@ namespace brlcad {
   }
 
   void
-  SurfaceTree::getLeaves(list<BBNode*> out_leaves) {
+  SurfaceTree::getLeaves(list<BBNode*>& out_leaves) {
     m_root->getLeaves(out_leaves);
   }
 
