@@ -275,7 +275,7 @@ void ON_NurbsCurve::Destroy()
   if ( knot )
     onfree(knot);
   if ( m_cached_bez )
-    delete m_cached_bez; // matches new in MakePiecewiseBezier
+    delete [] m_cached_bez; // matches new in MakePiecewiseBezier
 }
 
 void ON_NurbsCurve::EmergencyDestroy()
@@ -2093,7 +2093,7 @@ bool ON_NurbsCurve::MakePiecewiseBezier( bool bSetEndWeightsToOne )
     double* t = ws.GetDoubleMemory( span_count+1);
     GetSpanVector( t );
     int cvdim = CVSize();
-    ON_BezierCurve* bez = m_cached_bez = new ON_BezierCurve[span_count];
+    ON_BezierCurve* bez = new ON_BezierCurve[span_count];
     int ki, spani, i;
     for ( ki = m_order-2, spani = 0; ki < m_cv_count-1 && spani < span_count; ki++ ) {
       if ( m_knot[ki] < m_knot[ki+1] ) {
@@ -2115,7 +2115,7 @@ bool ON_NurbsCurve::MakePiecewiseBezier( bool bSetEndWeightsToOne )
     }
     for ( ki = 0; ki < m_order-1; ki++ )
       m_knot[ki+span_count*(m_order-1)] = t[spani];
-    //delete[] bez;
+    delete[] bez;
     rc = true;
   }
   if ( rc && bSetEndWeightsToOne && m_is_rat )
@@ -2151,14 +2151,48 @@ bool ON_NurbsCurve::MakePiecewiseBezier( bool bSetEndWeightsToOne )
   return rc;
 }
 
+// XXX - Hack...
+bool ON_NurbsCurve::MakePiecewiseBezier(ON_BezierCurve* cache, bool bSetEndWeightsToOne) const
+{
+  bool rc = HasBezierSpans();
+  if ( !rc && IsValid() ) 
+  {
+    if ( !IsClamped(2) )
+      return false;
+    int span_count = SpanCount(); 
+    int cvdim = CVSize();
+    ON_BezierCurve* bez = cache; // fill in the cache
+    int ki, spani, i;
+    for ( ki = m_order-2, spani = 0; ki < m_cv_count-1 && spani < span_count; ki++ ) {
+      if ( m_knot[ki] < m_knot[ki+1] ) {
+        bez[spani].Create(m_dim,m_is_rat,m_order);
+        for ( i = 0; i < m_order; i++ )
+          bez[spani].SetCV(  i, ON::intrinsic_point_style, CV( i + ki - m_order + 2 ) );
+        ON_ConvertNurbSpanToBezier( cvdim, bez[spani].m_order, bez[spani].m_cv_stride, bez[spani].m_cv,
+                                    m_knot+ki-m_order+2, m_knot[ki], m_knot[ki+1] );
+        spani++;
+      }
+    }
+    rc = true;
+  }
+  return rc;
+}
+
+void ON_NurbsCurve::CacheBezierSpans() const {
+  if (m_cached_bez == NULL) {
+    ON_NurbsCurve copy(*this);
+    m_cached_bez = new ON_BezierCurve[SpanCount()];
+    bool rc = copy.MakePiecewiseBezier(m_cached_bez, false);
+    assert(rc);
+  }
+}
+
+// XXX - this is not (*&^(*&^% thread-safe
 int ON_NurbsCurve::NumIntersectionsWith(const ON_Line& segment) const {
-  ON_TRACE("ON_NurbsCurve::NumIntersectionsWith");
-  ON_NurbsCurve copy(*this);
-  bool rc = copy.MakePiecewiseBezier();
-  assert(rc);
+  ON_TRACE("ON_NurbsCurve::NumIntersectionsWith");  
   int xcount = 0;
   for (int i = 0; i < BezierSpanCount(); i++) {
-    const ON_BezierCurve* b = copy.BezierSpan(i);
+    const ON_BezierCurve* b = BezierSpan(i);
     xcount += b->NumIntersectionsWith(segment);
   }
   return xcount;
