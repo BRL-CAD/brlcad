@@ -20,7 +20,7 @@
 /* Surface flatness parameter, Abert says between 0.8-0.9 */
 #define BREP_SURFACE_FLATNESS 0.8
 /* Max newton iterations when finding closest point */
-#define BREP_MAX_FCP_ITERATIONS 10
+#define BREP_MAX_FCP_ITERATIONS 50
 /* Root finding epsilon */
 #define BREP_FCP_ROOT_EPSILON 0.00001
 
