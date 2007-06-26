@@ -39,6 +39,10 @@
 
 #include <vector>
 #include <list>
+#include <iostream>
+#include <algorithm>
+#include <set>
+#include <utility>
 
 #ifdef __cplusplus
 extern "C" {
@@ -85,9 +89,6 @@ rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
  * Auxiliary functions
  ********************************************************************************/
 
-#include <list>
-#include <iostream>
-#include <algorithm>
 
 using namespace brlcad;
 
@@ -246,14 +247,9 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
     for (int i = 0; i < faces.Count(); i++) {
         TRACE1("Face: " << i);
 	ON_BrepFace& face = faces[i];
-// 	const ON_Surface* surf = face.SurfaceOf();
-// 	TRACE1("Surf: " << surf);
-
-// 	ON_Interval u = surf->Domain(0);
-// 	ON_Interval v = surf->Domain(1);
-// 	BoundingVolume* bv = brep_surface_subdivide(face, u, v, 0);
 
 	SurfaceTree* st = new SurfaceTree(&face);
+	face.m_face_user.p = st;
 	brep_preprocess_trims(face, st);
 
 	// add the surface bounding volumes to a list, so we can build
@@ -269,7 +265,7 @@ brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
 void
 brep_calculate_cdbitems(struct brep_specific* bs, struct rt_brep_internal* bi)
 {
-
+    
 }
 
 
@@ -371,10 +367,10 @@ public:
 // }
 
 void 
-brep_get_plane_ray(struct xray* r, plane_ray& pr)
+brep_get_plane_ray(ON_Ray& r, plane_ray& pr)
 {
     vect_t v1;
-    VMOVE(v1, r->r_dir);
+    VMOVE(v1, r.m_dir);
     fastf_t min = MAX_FASTF;
     int index = -1;
     for (int i = 0; i < 3; i++) { // find the smallest component
@@ -384,12 +380,12 @@ brep_get_plane_ray(struct xray* r, plane_ray& pr)
 	}
     }
     v1[index] += 1; // alter the smallest component
-    VCROSS(pr.n1, v1, r->r_dir); // n1 is perpendicular to v1
+    VCROSS(pr.n1, v1, r.m_dir); // n1 is perpendicular to v1
     VUNITIZE(pr.n1);
-    VCROSS(pr.n2, pr.n1, r->r_dir);       // n2 is perpendicular to v1 and n1
+    VCROSS(pr.n2, pr.n1, r.m_dir);       // n2 is perpendicular to v1 and n1
     VUNITIZE(pr.n2);
-    pr.d1 = VDOT(pr.n1,r->r_pt);
-    pr.d2 = VDOT(pr.n2,r->r_pt);
+    pr.d1 = VDOT(pr.n1,r.m_origin);
+    pr.d2 = VDOT(pr.n2,r.m_origin);
     TRACE1("n1:" << ON_PRINT3(pr.n1) << " n2:" << ON_PRINT3(pr.n2) << " d1:" << pr.d1 << " d2:" << pr.d2);
 }
 
@@ -431,7 +427,6 @@ void
 brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R)
 {
     surf->Ev1Der(uv[0], uv[1], pt, su, sv);
-//     TRACE1("\tpt" << ON_PRINT3(pt) << ", su" << ON_PRINT3(su) << ", sv" ON_PRINT3(sv));
     R[0] = VDOT(pr.n1,((fastf_t*)pt)) - pr.d1;
     R[1] = VDOT(pr.n2,((fastf_t*)pt)) - pr.d2;
 }
@@ -439,15 +434,12 @@ brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVe
 void
 brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
 {
-//     TRACE1("brep_newton_iterate: " << ON_PRINT2(uv));
-
     mat2d_t jacob = { VDOT(pr.n1,((fastf_t*)su)), VDOT(pr.n1,((fastf_t*)sv)),
 		      VDOT(pr.n2,((fastf_t*)su)), VDOT(pr.n2,((fastf_t*)sv)) };
     mat2d_t inv_jacob;
     if (mat2d_inverse(inv_jacob, jacob)) { // check inverse validity
 	pt2d_t tmp;
 	mat2d_pt2d_mul(tmp, inv_jacob, R);
-// 	TRACE1("\tuv:"<<ON_PRINT2(uv)<<" tmp:"<<ON_PRINT2(tmp));
 	pt2dsub(out_uv, uv, tmp);
     }
     else {
@@ -469,8 +461,70 @@ static const char* BREP_INTERSECT_REASONS[] = {"hit root iteration limit",
 					       "found"};
 #define BREP_INTERSECT_GET_REASON(i) BREP_INTERSECT_REASONS[(i)+3]
 
+int
+brep_edge_check(int reason,
+		const SubsurfaceBBNode* sbv, 
+		const ON_BrepFace* face, 
+		const ON_Surface* surf, 
+		const ON_Ray& r,
+		HitList& hits)
+{
+    // if the intersection was not found for any reason, we need to
+    // check and see if we are close to any topological edges; we may
+    // have hit a crack...
+    
+    // the proper way to do this is to only look at edges
+    // interesecting with the subsurface bounding box... but for
+    // now, we'll look at the edges associated with the face for the bounding box...
+    
+    // XXX - optimize this
+
+//     set<ON_BrepEdge*> edges;
+//     ON_3dPoint pt;
+//     for (int i = 0; i < face->LoopCount(); i++) {
+// 	ON_BrepLoop* loop = face->Loop(i);
+// 	for (int j = 0; j < loop->TrimCount(); j++) {
+// 	    ON_BrepTrim* trim = loop->Trim(j);
+// 	    ON_BrepEdge* edge = trim->Edge();
+// 	    pair<set<ON_BrepEdge*>::iterator, bool> res = edges.insert(edge);
+// 	    if (res.second) {
+// 		// only check if its the first time we've seen this
+// 		// edge
+// 		const ON_Curve* curve = edge->EdgeCurveOf();
+// 		double curve_t, ray_t;
+// 		if (curve->CloseTo(r, BREP_EDGE_MISS_TOLERANCE, curve_t, ray_t)) {
+// 		    // since the ray is within tolerance, we need to
+// 		    // find out on which side of the curve it
+// 		    // passes. If it's on the left side, then we've
+// 		    // hit the surface
+// 		    double curve_t_forward = curve_t + curve.Domain().Length() * 1e-2;
+// 		    ON_3dPoint c1 = curve->PointAt(curve_t);
+// 		    ON_3dPoint c2 = curve->PointAt(curve_t_forward);
+// 		    double ray_t_forward = ray_t + 1e-2;
+// 		    ON_3dPoint r1 = r.PointAt(ray_t);
+// 		    ON_3dPoint r2 = r.PointAt(ray_t_forward);
+// 		    ON_3dVector cv(c1, c2);
+// 		    ON_3dVector rv(r1, r2);
+// 		    if (cv.Cross(rv) < 0) { // rv is left of cv
+// 			// now we need to find the closest point on the surface
+// 			ON_2dPoint uv;
+// 			get_closest_point(uv, 
+// 					  const_cast<ON_BrepFace*>(face), 
+// 					  r1,
+// 					  (SurfaceTree*)face->m_face_user.p);
+// 			face->SurfaceOf()->PointAt(uv[0],uv[1]);
+// 		    }
+// 		}
+// 	    }
+// 	}
+//     }
+    
+    return reason;
+}
+
+
 int 
-brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, plane_ray& pr, HitList& hits)
+brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
 {
     int found = BREP_INTERSECT_ROOT_ITERATION_LIMIT;
     fastf_t Dlast = MAX_FASTF;
@@ -479,6 +533,8 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
     ON_3dPoint pt;
     ON_3dVector su;
     ON_3dVector sv;
+    plane_ray pr;
+    brep_get_plane_ray(ray, pr);
     for (int i = 0; i < BREP_MAX_ITERATIONS; i++) {
 	brep_r(surf,pr,uv,pt,su,sv,Rcurr);
 	fastf_t d = v2mag(Rcurr);
@@ -495,16 +551,18 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
     if (found > 0) {
 	fastf_t l,h;
 
-	if (!sbv->m_u.Includes(uv[0])) return BREP_INTERSECT_OOB;
-	if (!sbv->m_v.Includes(uv[1])) return BREP_INTERSECT_OOB;
-
-	if (sbv->doTrimming() && brep_pt_trimmed(uv, *face)) return BREP_INTERSECT_TRIMMED;
+	if (!sbv->m_u.Includes(uv[0]) || !sbv->m_v.Includes(uv[1])) 
+	    return brep_edge_check(BREP_INTERSECT_OOB, sbv, face, surf, ray, hits);
+	if (sbv->doTrimming() && brep_pt_trimmed(uv, *face)) 
+	    return brep_edge_check(BREP_INTERSECT_TRIMMED, sbv, face, surf, ray, hits);
 
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
 	surf->EvNormal(uv[0],uv[1],_pt,_norm);
 	hits.push_back(brep_hit(*face, (fastf_t*)_pt,(fastf_t*)_norm, uv));
-    }    
+    } 
+
+
     return found;
 }
 
@@ -543,13 +601,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     BBNode::IsectList inters;
     ON_Ray r = toXRay(rp);
     bs->bvh->intersectsHierarchy(r, &inters);
-    //inters.sort();
-    TRACE1("found " << inters.size() << " intersections!");    
 
     if (inters.size() == 0) return 0; // MISS
-
-    plane_ray pr;
-    brep_get_plane_ray(rp, pr);    
 
     // find all the hits (XXX very inefficient right now!)
     HitList hits;
@@ -559,7 +612,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	const ON_Surface* surf = f->SurfaceOf();       
 	brep_hit* hit; 
 	pt2d_t uv = {sbv->m_u.Mid(),sbv->m_v.Mid()};
-	int status = brep_intersect(sbv, f, surf, uv, pr, hits);
+	int status = brep_intersect(sbv, f, surf, uv, r, hits);
+	
 	if (status < 0 && status > BREP_INTERSECT_ROOT_ITERATION_LIMIT) {
 	    TRACE("no intersection: " << BREP_INTERSECT_GET_REASON(status));
 	}
