@@ -43,8 +43,11 @@ namespace brlcad {
     _val = val;
   }
   Integer::Integer(const string& field) {
-    int first = field.find_first_not_of(" \t\n\r");  
-    _val = strtol(field.substr(first,field.length()-first).c_str(), NULL, 0);
+      if (field.length() == 0) _val = 0;
+      else {
+	  int first = field.find_first_not_of(" \t\n\r");  
+	  _val = strtol(field.substr(first,field.length()-first).c_str(), NULL, 0);
+      }
   }
   Integer::Integer(const Integer& intg) {
     _val = intg._val;
@@ -90,15 +93,18 @@ namespace brlcad {
   Real::Real() { _val = 0.0; }
   Real::Real(double v) { _val = v; }  
   Real::Real(const string& field) {
-    string copy = field;
-    int first = field.find_first_not_of(" \t\n\r");
-    int exp = field.find_first_of("DF");
-    if (exp != string::npos) { 
-      copy.replace(exp,1,"e");     
-      debug("Real(" << copy << ")");
-    }
-    _val = strtod(copy.substr(first,field.length()-first).c_str(), NULL);
-    debug("Real(" << _val << ")");
+      if (field.length() == 0) _val = 0.0;
+      else {
+	  string copy = field;
+	  int first = field.find_first_not_of(" \t\n\r");
+	  int exp = field.find_first_of("DF");
+	  if (exp != string::npos) { 
+	      copy.replace(exp,1,"e");     
+	      debug("Real(" << copy << ")");
+	  }
+	  _val = strtod(copy.substr(first,field.length()-first).c_str(), NULL);
+      }
+      debug("Real(" << _val << ")");
   }
   Real::Real(const Real& r) {
     _val = r._val;
