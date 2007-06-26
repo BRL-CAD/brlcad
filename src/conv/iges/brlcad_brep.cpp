@@ -205,23 +205,24 @@ namespace brlcad {
     // represent the multiplicities explicitly, i.e. they have 3 of
     // the same value (which means I need to handle the conversion
     // here!)
-    int u_offset = degree[0];
-    int u_count  = u_num_knots - 2*degree[0];
 
-    int v_offset = degree[1];
-    int v_count  = v_num_knots - 2*degree[1];
+//     int u_offset = degree[0];
+//     int u_count  = u_num_knots - 2*degree[0];
 
-    for (int i = 0; i < u_count; i++) {
-      surf->SetKnot(0, i, u_knots[i+u_offset]);
+//     int v_offset = degree[1];
+//     int v_count  = v_num_knots - 2*degree[1];
+
+    for (int i = 0; i < (u_num_knots-2); i++) {
+      surf->SetKnot(0, i, u_knots[i+1]);
       //surf->SetKnot(0, i, u_knots[i]);
     }
-    for (int i = 0; i < v_count; i++) {
-      surf->SetKnot(1, i, v_knots[i+v_offset]);
+    for (int i = 0; i < (v_num_knots-2); i++) {
+      surf->SetKnot(1, i, v_knots[i+1]);
       //surf->SetKnot(1, i, v_knots[i]);
     }
 
-    surf->ClampEnd(0,2);
-    surf->ClampEnd(1,2);
+    //surf->ClampEnd(0,2);
+    //surf->ClampEnd(1,2);
 
     debug("Num u knots: " << surf->KnotCount(0));
     debug("Num v knots: " << surf->KnotCount(1));
