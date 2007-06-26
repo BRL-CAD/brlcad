@@ -166,6 +166,11 @@ namespace brlcad {
    *                     
    * The "+" indicates the normal sample.
    */
+
+#define NE 1
+#define NW 2
+#define SW 3
+#define SE 4
   bool
   SurfaceTree::isFlat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
   {
@@ -185,16 +190,16 @@ namespace brlcad {
     }
 
     // corners    
-    if (!surf->EvNormal(u.Min(),v.Min(),normals[0]) ||
-	!surf->EvNormal(u.Max(),v.Min(),normals[1]) ||
-	!surf->EvNormal(u.Max(),v.Max(),normals[2]) ||
-	!surf->EvNormal(u.Min(),v.Max(),normals[3]) ||
+    if (!surf->EvNormal(u.Min(),v.Min(),normals[0], SW) ||
+	!surf->EvNormal(u.Max(),v.Min(),normals[1], SE) ||
+	!surf->EvNormal(u.Max(),v.Max(),normals[2], NE) ||
+	!surf->EvNormal(u.Min(),v.Max(),normals[3], NW) ||
 
 	// interior
-	!surf->EvNormal(u.ParameterAt(0.5),v.ParameterAt(0.25),normals[4]) ||
-	!surf->EvNormal(u.ParameterAt(0.75),v.ParameterAt(0.5),normals[5]) ||
-	!surf->EvNormal(u.ParameterAt(0.5),v.ParameterAt(0.75),normals[6]) ||
-	!surf->EvNormal(u.ParameterAt(0.25),v.ParameterAt(0.5),normals[7])) {
+	!surf->EvNormal(u.ParameterAt(0.5),v.ParameterAt(0.25),normals[4], SW) ||
+	!surf->EvNormal(u.ParameterAt(0.75),v.ParameterAt(0.5),normals[5], NE) ||
+	!surf->EvNormal(u.ParameterAt(0.5),v.ParameterAt(0.75),normals[6], NE) ||
+	!surf->EvNormal(u.ParameterAt(0.25),v.ParameterAt(0.5),normals[7], SW)) {
       bu_bomb("Could not evaluate a normal on the surface"); // XXX fix this
     }
 
@@ -307,7 +312,7 @@ namespace brlcad {
 		    double tolerance) {
     
     bool found = false;
-    double d_last = real.max();
+    double d_last = real.infinity();
     pt2d_t curr_grad;
     pt2d_t new_uv;
     GCPData data;
@@ -320,6 +325,7 @@ namespace brlcad {
     SurfaceTree* a_tree = (tree == NULL) ? new SurfaceTree(face) : tree;
     ON_2dPoint est = a_tree->getClosestPointEstimate(point);
     pt2d_t uv = { est[0], est[1] };
+    pt2d_t orig_uv = {est[0],est[1]};
 
     // do the newton iterations 
     // terminates on 1 of 3 conditions:
@@ -327,16 +333,20 @@ namespace brlcad {
     // 2. if the gradient diverges
     // 3. iterated MAX_FCP_ITERATIONS
     int diverge_count = 0;
-    for (int i = 0; i < BREP_MAX_FCP_ITERATIONS; i++) {      
-      gcp_gradient(curr_grad, data, uv);
+    for (int i = 0; i < BREP_MAX_FCP_ITERATIONS; i++) {       
+      ON_3dPoint p = data.surf->PointAt(uv[0],uv[1]);
+      TRACE("dist: " << p.DistanceTo(point));     
+      assert(gcp_gradient(curr_grad, data, uv));
       double d = v2mag(curr_grad);
       if (d < BREP_FCP_ROOT_EPSILON) {
 	found = true; break;
       } else if (d > d_last) {
 	TRACE("diverged!");
 	diverge_count++;
-	if (diverge_count > 1)
-	  break;
+// 	uv[0] = orig_uv[0] + (((double)rand()/RAND_MAX)-.5) * 1e-3;
+// 	uv[1] = orig_uv[1] + (((double)rand()/RAND_MAX)-.5) * 1e-3;
+// 	i = 0;
+	//if (diverge_count > BREP_MAX_FCP_ITERATIONS) break;
       }      
       gcp_newton_iteration(new_uv, data, curr_grad, uv);
       move(uv, new_uv);
@@ -354,6 +364,8 @@ namespace brlcad {
       
       outpt[0] = uv[0];
       outpt[1] = uv[1];
+    } else {
+      TRACE("FAILED TO FIND CLOSEST POINT!");
     }
 
     return found;
@@ -405,6 +417,7 @@ namespace brlcad {
 #endif
 
     double newt = random_pos * (hi - lo) + lo; 
+    assert(newt >= lo && newt <= hi);
     assert(toUV(data, out, newt));
     return newt;
   }
