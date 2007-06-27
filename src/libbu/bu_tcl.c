@@ -718,7 +718,7 @@ bu_tcl_malloc_len_roundup(ClientData	clientData,
 		return TCL_ERROR;
 	}
 	val = bu_malloc_len_roundup(atoi(argv[1]));
-	sprintf(interp->result, "%d", val);
+	Tcl_SetObjResult( interp, Tcl_NewIntObj(val) );
 	return TCL_OK;
 }
 

@@ -482,7 +482,12 @@ fb_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, cha
     }
 
     if (fb_common_file_size(&width, &height, argv[1], pixel_size) > 0) {
-	sprintf(interp->result, "%lu %lu", width, height);
+	struct bu_vls vls;
+	bu_vls_init( &vls );
+	bu_vls_printf( &vls, "%lu %lu", width, height );
+	Tcl_SetObjResult( interp,
+	    Tcl_NewStringObj(bu_vls_addr( &vls ), bu_vls_strlen(&vls)) );
+	bu_vls_free( &vls );
 	return TCL_OK;
     }
 
