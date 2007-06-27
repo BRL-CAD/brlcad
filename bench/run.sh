@@ -1193,7 +1193,7 @@ if test "x$encourage_submission" = "xyes" ; then
     $ECHO
 fi
 
-$ECHO "Output was saved to $LOGFILE"
+$ECHO "Output was saved to $LOGFILE from `pwd`"
 $ECHO "Benchmark testing complete."
 
 # Local Variables:
