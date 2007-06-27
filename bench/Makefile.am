@@ -1,10 +1,9 @@
 # $Id$
 
+.PHONY : clean clobber run bench
+
 bin_PROGRAMS = pixcmp
 pixcmp_SOURCES = pixcmp.c
-
-clobber:
-	@${SH} run.sh clobber
 
 dist_bin_SCRIPTS = \
 	benchmark
@@ -24,16 +23,20 @@ EXTRA_DIST = \
 benchmark: run.sh
 	cp $(top_srcdir)/bench/run.sh benchmark
 
-.PHONY : clobber run bench
-
 run: all
 	@${SH} run.sh
 	@$(ECHO) "---"
-	@$(ECHO) "Run 'make clobber' to delete the log and image files generated"
-	@$(ECHO) "during the benchmark analysis."
+	@$(ECHO) "Run 'make clean' in the bench directory to delete the log"
+	@$(ECHO) "and image files generated during the benchmark analysis."
 	@$(ECHO)
 
 bench: run
+
+clean:
+	@${SH} run.sh clean
+
+clobber:
+	@${SH} run.sh clobber
 
 CLEANFILES = \
 	benchmark
