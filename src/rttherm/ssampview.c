@@ -240,26 +240,36 @@ getntsccurves(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 int
 getspectrum(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 {
-	int	wl;
+    struct bu_vls vls;
+    int	wl;
 
 	BN_CK_TABLE(spectrum);
 
+	bu_vls_init(&vls);
+	Tcl_ResetResult(interp);
+
 	if( argc <= 1 )  {
-		sprintf( interp->result, "%d", spectrum->nx );
-		return TCL_OK;
+	    bu_vls_printf(&vls, "%d", spectrum->nx);
+	    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+	    bu_vls_free(&vls);
+	    return TCL_OK;
 	}
 	if( argc != 2 )  {
-		interp->result = "Usage: getspectrum [wl]";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "Usage: getspectrum [wl]", (char *)NULL);
+	    return TCL_ERROR;
 	}
 	wl = atoi(argv[2]);
 
 	if( wl < 0 || wl > spectrum->nx )  {
-		sprintf( interp->result, "getspectrum: wavelength %d out of range 0..%d",
-			wl, spectrum->nx);
-		return TCL_ERROR;
+	    bu_vls_printf(&vls, "getspectrum: wavelength %d out of range 0..%d", wl, spectrum->nx);
+	    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
 	}
-	sprintf( interp->result, "%g", spectrum->x[wl] );
+
+	bu_vls_printf(&vls, interp->result, "%g", spectrum->x[wl]);
+	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+	bu_vls_free(&vls);
 	return TCL_OK;
 }
 
@@ -270,10 +280,13 @@ getspectval(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	int	x, y, wl;
 	char	*cp;
 	fastf_t	val;
+	struct bu_vls vls;
+
+	Tcl_ResetResult(interp);
 
 	if( argc != 4 )  {
-		interp->result = "Usage: getspect x y wl";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "Usage: getspect x y wl", (char *)NULL);
+	    return TCL_ERROR;
 	}
 	x = atoi(argv[1]);
 	y = atoi(argv[2]);
@@ -282,21 +295,21 @@ getspectval(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	BN_CK_TABLE(spectrum);
 
 	if( x < 0 || x >= width )  {
-		interp->result = "x out of range";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp,"x out of range", (char *)NULL);
+	    return TCL_ERROR;
 	}
 	if( y < 0 || y >= height )  {
-		interp->result = "y out of range";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "y out of range", (char *)NULL);
+	    return TCL_ERROR;
 	}
 	if( wl < 0 || wl >= spectrum->nx )  {
-		interp->result = "wavelength index out of range";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "wavelength index out of range", (char *)NULL);
+	    return TCL_ERROR;
 	}
 
 	if( !data )  {
-		interp->result = "pixel data table not loaded yet";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "pixel data table not loaded yet", (char *)NULL);
+	    return TCL_ERROR;
 	}
 
 	cp = (char *)data;
@@ -306,7 +319,11 @@ getspectval(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	val = sp->y[wl];
 	if( use_atmosphere )
 		val *= atmosphere->y[wl];
-	sprintf( interp->result, "%g", val );
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "%g", val);
+	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+	bu_vls_free(&vls);
 	return TCL_OK;
 }
 
@@ -324,9 +341,11 @@ getspectxy(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	char	*cp;
 	struct bu_vls	str;
 
+	Tcl_ResetResult(interp);
+
 	if( argc != 3 )  {
-		interp->result = "Usage: getspectxy x y";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "Usage: getspectxy x y", (char *)NULL);
+	    return TCL_ERROR;
 	}
 	x = atoi(argv[1]);
 	y = atoi(argv[2]);
@@ -334,13 +353,13 @@ getspectxy(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	BN_CK_TABLE(spectrum);
 
 	if( x < 0 || x >= width || y < 0 || y >= height )  {
-		interp->result = "x or y out of range";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "x or y out of range", (char *)NULL);
+	    return TCL_ERROR;
 	}
 
 	if( !data )  {
-		interp->result = "pixel data table not loaded yet";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "pixel data table not loaded yet", (char *)NULL);
+	    return TCL_ERROR;
 	}
 	cp = (char *)data;
 	cp = cp + (y * width + x) * BN_SIZEOF_TABDATA(spectrum);
@@ -365,9 +384,11 @@ tcl_fb_cursor(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	FBIO	*ifp;
 	long	mode, x, y;
 
+	Tcl_ResetResult(interp);
+
 	if( argc != 5 )  {
-		interp->result = "Usage: fb_cursor fbp mode x y";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "Usage: fb_cursor fbp mode x y", (char *)NULL);
+	    return TCL_ERROR;
 	}
 	ifp = (FBIO *)atol(argv[1]);
 	mode = atol(argv[2]);
@@ -378,8 +399,8 @@ tcl_fb_cursor(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 
 	FB_CK_FBIO(ifp);
 	if( fb_cursor( ifp, mode, x, y ) < 0 )  {
-		interp->result = "fb_cursor got error from library";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "fb_cursor got error from library", (char *)NULL);
+	    return TCL_ERROR;
 	}
 	return TCL_OK;
 }
@@ -393,10 +414,13 @@ tcl_fb_readpixel(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	FBIO	*ifp;
 	long	mode, x, y;
 	unsigned char	pixel[4];
+	struct bu_vls vls;
+	
+	Tcl_ResetResult(interp);
 
 	if( argc != 4 )  {
-		interp->result = "Usage: fb_readpixel fbp x y";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "Usage: fb_readpixel fbp x y", (char *)NULL);
+	    return TCL_ERROR;
 	}
 	ifp = (FBIO *)atol(argv[1]);
 	x = atol(argv[2]);
@@ -406,10 +430,14 @@ tcl_fb_readpixel(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 
 	FB_CK_FBIO(ifp);
 	if( fb_read( ifp, x, y, pixel, 1 ) < 0 )  {
-		interp->result = "fb_readpixel got error from library";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "fb_readpixel got error from library", (char *)NULL);
+	    return TCL_ERROR;
 	}
-	sprintf(interp->result, "%d %d %d", pixel[RED], pixel[GRN], pixel[BLU] );
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "%d %d %d", pixel[RED], pixel[GRN], pixel[BLU]);
+	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+	bu_vls_free(&vls);
 	return TCL_OK;
 }
 
@@ -674,19 +702,21 @@ doit1(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	char	buf[32];
 	int	got;
 
+	Tcl_ResetResult(interp);
+
 	if( argc != 2 )  {
-		interp->result = "Usage: doit1 wavel#";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "Usage: doit1 wavel#", (char *)NULL);
+	    return TCL_ERROR;
 	}
 	wl = atoi(argv[1]);
 	if( wl < 0 || wl >= spectrum->nx )  {
-		interp->result = "Wavelength number out of range";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "Wavelength number out of range", (char *)NULL);
+	    return TCL_ERROR;
 	}
 
 	if( !data )  {
-		interp->result = "pixel data table not loaded yet";
-		return TCL_ERROR;
+	    Tcl_AppendResult(interp, "pixel data table not loaded yet", (char *)NULL);
+	    return TCL_ERROR;
 	}
 
 	bu_log("doit1 %d: %g um to %g um\n",

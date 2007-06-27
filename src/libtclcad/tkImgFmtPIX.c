@@ -186,7 +186,7 @@ FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *width
  *
  * Results:
  *	A standard TCL completion code.  If TCL_ERROR is returned
- *	then an error message is left in interp->result.
+ *	then an error message is left in interp.
  *
  * Side effects:
  *	The access position in file f is changed, and new data is
@@ -301,7 +301,7 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
  *
  * Results:
  *	A standard TCL completion code.  If TCL_ERROR is returned
- *	then an error message is left in interp->result.
+ *	then an error message is left in interp.
  *
  * Side effects:
  *	Data is written to the file given by "fileName".

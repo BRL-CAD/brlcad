@@ -893,7 +893,7 @@ out:
 /*
  *			R T _ C O M B _ T C L G E T
  *
- *  Sets the interp->result string to a description of the given combination.
+ *  Sets the result string to a description of the given combination.
  *  Entered via rt_functab[].ft_tclget().
  */
 int

@@ -510,7 +510,7 @@ done:
 	/*
 	 * Notify observers, if any, before generating textual output since
 	 * such an act (observer notification) wipes out whatever gets stuffed
-	 * into interp->result.
+	 * into the result.
 	 */
 	dgo_notify(dgop, interp);
 

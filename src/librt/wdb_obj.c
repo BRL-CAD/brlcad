@@ -852,10 +852,9 @@ wdb_match_cmd(struct rt_wdb	*wdbp,
 /**
  *			W D B _ M A T C H _ T C L
  *@brief
- * Returns (in interp->result) a list (possibly empty) of all matches to
- * the (possibly wildcard-containing) arguments given.
- * Does *NOT* return tokens that do not match anything, unlike the
- * "expand" command.
+ * Returns (via interp) a list (possibly empty) of all matches to the
+ * (possibly wildcard-containing) arguments given.  Does *NOT* return
+ * tokens that do not match anything, unlike the "expand" command.
  */
 
 static int
@@ -2673,7 +2672,7 @@ wdb_expand_cmd(struct rt_wdb	*wdbp,
 /**
  * @brief
  * Performs wildcard expansion (matched to the database elements)
- * on its given arguments.  The result is returned in interp->result.
+ * on its given arguments.  The result is returned via interp result.
  *
  * @par Usage:
  *        procname expand [args]
@@ -10665,10 +10664,9 @@ wdb_move_arb_edge_cmd(struct rt_wdb	*wdbp,
     return TCL_OK;
 }
 
-/*
- * Move an arb's edge so that it intersects the
- * given point. The new vertices are returned
- * in interp->result.
+/**
+ * Move an arb's edge so that it intersects the given point. The new
+ * vertices are returned via interp result.
  *
  * Usage:
  *        procname move_arb_face arb face pt
@@ -10803,10 +10801,9 @@ wdb_move_arb_face_cmd(struct rt_wdb	*wdbp,
     return TCL_OK;
 }
 
-/*
- * Move an arb's face so that its plane intersects
- * the given point. The new vertices are returned
- * in interp->result.
+/**
+ * Move an arb's face so that its plane intersects the given
+ * point. The new vertices are returned via interp result.
  *
  * Usage:
  *        procname move_arb_face arb face pt
@@ -11008,9 +11005,9 @@ wdb_rotate_arb_face_cmd(struct rt_wdb	*wdbp,
     return TCL_OK;
 }
 
-/*
- * Rotate an arb's face to the given point. The new
- * vertices are returned in interp->result.
+/**
+ * Rotate an arb's face to the given point. The new vertices are
+ * returned via interp result.
  *
  * Usage:
  *        procname rotate_arb_face arb face pt

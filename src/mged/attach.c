@@ -397,10 +397,13 @@ gui_setup(char *dstr)
   }
 
   /* This runs the tk.tcl script */
-  if(Tk_Init(interp) == TCL_ERROR){
+  if (Tk_Init(interp) == TCL_ERROR) {
+      const char *result = Tcl_GetStringResult(interp);
       /* hack to avoid a stupid Tk error */
-      if (strncmp(interp->result, "this isn't a Tk applicationcouldn't", 35) == 0) {
-	  interp->result = (interp->result + 27);
+      if (strncmp(result, "this isn't a Tk applicationcouldn't", 35) == 0) {
+	  result = (result + 27);
+	  Tcl_ResetResult(interp);
+	  Tcl_AppendResult(interp, result, (char *)NULL);
       }
       return TCL_ERROR;
   }
