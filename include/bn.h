@@ -985,7 +985,8 @@ BN_EXPORT BU_EXTERN(void quat_log,
 /** @addtogroup rnd */
 /** @{ */
 /*  A supply of fast pseudo-random numbers from table in bn/rand.c.
- *  The values are in the range 0..1
+ *  The values are in the open interval (i.e. exclusive) of 0.0 to 1.0
+ *  range with a period of 4096.
  *
  * @par Usage:
 @code
@@ -1008,37 +1009,39 @@ BN_EXPORT BU_EXTERN(void quat_log,
 #define BN_RANDSEED( _i, _seed )  _i = ((unsigned)_seed) % BN_RAND_TABSIZE
 BN_EXPORT extern const float bn_rand_table[BN_RAND_TABSIZE];
 
-/** BN_RANDOM always gives numbers between 0.0 and 1.0 */
+/** BN_RANDOM always gives numbers between the open interval 0.0 to 1.0 */
 #define BN_RANDOM( _i )	bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]
 
-/** BN_RANDHALF always gives numbers between -0.5 and 0.5 */
+/** BN_RANDHALF always gives numbers between the open interval -0.5 and 0.5 */
 #define BN_RANDHALF( _i ) (bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]-0.5)
 #define BN_RANDHALF_INIT(_p) _p = bn_rand_table
 
-/* XXX This should move to compat4 */
-/* # define rand_half bn_rand_half */
-/* #define rand_init bn_rand_init */
-/* #define rand0to1  bn_rand0to1 */
-
-/* random numbers between -0.5 and 0.5, except when benchmark flag is set,
- * when this becomes a constant 0.0
- */
 #define BN_RANDHALFTABSIZE	16535	/* Powers of two give streaking */
 BN_EXPORT extern int bn_randhalftabsize;
 BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 
+/**
+ * random numbers between the closed interval -0.5 to 0.5 inclusive,
+ * except when benchmark flag is set, when this becomes a constant 0.0
+ */
 #define bn_rand_half(_p)	\
 	( (++(_p) >= &bn_rand_halftab[bn_randhalftabsize] || \
 	     (_p) < bn_rand_halftab) ? \
 		*((_p) = bn_rand_halftab) : *(_p))
 
+/**
+ * initialize the seed for the large random number table (halftab)
+ */
 #define bn_rand_init(_p, _seed)	\
 	(_p) = &bn_rand_halftab[ \
 		(int)( \
 		      (bn_rand_halftab[(_seed)%bn_randhalftabsize] + 0.5) * \
 		      (bn_randhalftabsize-1)) ]
 
-/** random numbers 0..1 except when benchmarking, when this is always 0.5 */
+/**
+ * random numbers in the closed interval 0.0 to 1.0 range (inclusive)
+ * except when benchmarking, when this is always 0.5
+ */
 #define bn_rand0to1(_q)	(bn_rand_half(_q)+0.5)
 
 #define	BN_SINTABSIZE		2048

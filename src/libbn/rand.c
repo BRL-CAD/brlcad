@@ -35,9 +35,12 @@
 #include "bn.h"
 
 /**
- * This is our table of random numbers.  Rather than calling drand48() or
- * random() or rand() we just pick numbers out of this table.  This table
- * has 4096 unique entries.  Macros for accessing are in "bn.h"
+ * This is our table of random numbers.  Rather than calling drand48()
+ * or random() or rand() we just pick numbers out of this table.  This
+ * table has 4096 unique entries with floating point values ranging
+ * from the open interval (i.e. exclusive) 0.0 to 1.0 range.
+ *
+ * There are convenience macros for access in the bn.h header.
  */
 const float bn_rand_table[BN_RAND_TABSIZE] = {
     0.39646477f, 0.84048537f, 0.35333610f, 0.44658343f, 0.31869277f, 0.88642843f,
@@ -727,12 +730,11 @@ const float bn_rand_table[BN_RAND_TABSIZE] = {
 
 
 double bn_sin_scale = 325.949323452232;	/**< @brief SINTABSIZE / TWOPI */
-/**
- * @brief table of sine values.
- *
- *  from rt/mathtab.c
- */
 
+/**
+ * table of floating point sine values in the closed (i.e. inclusive)
+ * interval -1.0 to 1.0 range.
+ */
 const float bn_sin_table[BN_SINTABSIZE] = {
 0.0f,		0.00306796f,	0.00613588f,	0.00920375f,
 0.0122715f,	0.0153392f,	0.0184067f,	0.0214741f,
@@ -1251,7 +1253,8 @@ const float bn_sin_table[BN_SINTABSIZE] = {
 int bn_randhalftabsize = BN_RANDHALFTABSIZE;
 
 /**
- *  The actual table of random numbers, range -0.5 to +0.5
+ *  The actual table of random floating point numbers with values in
+ *  the closed interval (i.e. inclusive) -0.5 to +0.5 range.
  *
  *  For benchmarking purposes, this table is zeroed.
  */
