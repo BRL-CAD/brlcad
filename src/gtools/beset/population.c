@@ -19,7 +19,7 @@
  */
 /** @file population.c
  *
- * Brief description
+ * routines to manipulate the population
  *
  * Author -
  *   Ben Poole
@@ -45,28 +45,46 @@
 #include "population.h"
 #include "beset.h" // GOP options
 
+//cut when pop_random() updated
 unsigned int idx;
 
-void pop_init (struct population **p, int size)
+/**
+ *	P O P _ I N I T --- initialize a population of a given size
+ */
+void 
+pop_init (struct population **p, int size)
 {
     *p = bu_malloc(sizeof(struct population), "population");
 
     (*p)->individual = bu_malloc(sizeof(struct individual) * size, "individuals");
     (*p)->offspring  = bu_malloc(sizeof(struct individual) * size, "offspring");
     (*p)->size = size;
-#define SEED 33
 
+    //remove when pop_rand() is updated
+    //-------8<--------
+#define SEED 33
     BN_RANDSEED(idx, SEED);
+    //-----------------
 }
 
-void pop_clean (struct population *p)
+/**
+ *	P O P _ C L E A N  --- cleanup population struct
+ */
+void 
+pop_clean (struct population *p)
 {
     bu_free(p->individual, "individuals");
     bu_free(p->offspring, "offspring");
     bu_free(p, "population");
 }
 
-void pop_spawn(struct population *p, struct rt_wdb *db_fp)
+/**
+ *	P O P _ S P A W N --- spawn a new population
+ *	TODO: generalize/modularize somehow to allow adding more shapes and primitives
+ *	also use variable/defined rates, intersection with bounding box, etc...
+ */
+void 
+pop_spawn (struct population *p, struct rt_wdb *db_fp)
 {
     int i;
     point_t p1 = {0.0, 0.0, 0.0};
@@ -75,13 +93,16 @@ void pop_spawn(struct population *p, struct rt_wdb *db_fp)
 	VSET(p->individual[i].p, 1.0, 5.0, 0.0);
 	snprintf(p->individual[i].id, 256, "i%d.s", i);
 	p->individual[i].fitness = 0.0;
-	p->individual[i].r = 5.0;//1 + (10.0 * BN_RANDOM(idx));
-	printf("p->individual[i].r = %g\n", p->individual[i].r);
+	p->individual[i].r = 1.0+i;//1 + (10.0 * BN_RANDOM(idx));
 	p->individual[i].type = GEO_SPHERE;
 	mk_sph(db_fp, p->individual[i].id, p->individual[i].p, p->individual[i].r);
     }
 }
 
+/**
+ *	P O P _ A D D --- add an individual to othe database
+ *	TODO: Don't overwrite previous individuals, one .g file per generation
+ */
 void 
 pop_add(struct individual *i, struct rt_wdb *db_fp)
 {
@@ -113,6 +134,10 @@ pop_wrand_ind(struct individual *i, int size, fastf_t total_fitness)
     return size-1;
 }
 
+/**
+ *	P O P _ R A N D --- random number (0,1)
+ *	TODO: change to bn_rand0t01() or bn_rand_half()
+ */
 fastf_t
 pop_rand (void)
 {
@@ -121,6 +146,7 @@ pop_rand (void)
 
 /**
  *	P O P _ R A N D _ G O P --- return a random genetic operation
+ *	TODO: implement other operations, weighted (like wrand) op selection
  */
 int 
 pop_wrand_gop(void)

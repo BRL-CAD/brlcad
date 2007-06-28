@@ -19,7 +19,7 @@
  */
 /** @file population.h
  *
- * Brief description
+ * prototypes and population structs
  *
  * Author -
  *   Ben Poole
@@ -35,8 +35,6 @@ struct individual {
     int type;
     fastf_t fitness;
 
-    /* for raytracing */
-    double gs[2]; //grid spacing
 };
 
 struct population {
@@ -45,12 +43,13 @@ struct population {
     int size;
 };
 
-void pop_init (struct population **p, int size);
-void pop_spawn(struct population *p, struct rt_wdb *db_fp);
-void pop_clean(struct population *p);
-int  pop_wrand_ind(struct individual *i, int size, fastf_t total_fitness);
-int  pop_wrand_gop(void);
-fastf_t pop_rand(void);
+void pop_init	    (struct population **p, int size);
+void pop_spawn	    (struct population *p, struct rt_wdb *db_fp);
+void pop_clean	    (struct population *p);
+void pop_add	    (struct individual *i, struct rt_wdb *db);
+int  pop_wrand_ind  (struct individual *i, int size, fastf_t total_fitness);
+int  pop_wrand_gop  (void);
+fastf_t pop_rand    (void);
 
 
 /*

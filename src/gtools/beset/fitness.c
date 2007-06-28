@@ -56,10 +56,9 @@
 #include "fitness.h"
 
 
-extern struct fitness_state *fstate;
 
 void
-rays_clear(void)
+rays_clear(struct fitness_state *fstate)
 {
     int i;
     struct part *p;
@@ -82,11 +81,11 @@ rays_clear(void)
  */
 
 void
-fit_store (char *obj)
+fit_store (char *obj, struct fitness_state *fstate)
 {
 
     fstate->capture = 1;
-    fit_rt(obj);
+    fit_rt(obj, fstate);
     fstate->capture = 0;
 }
 
@@ -102,9 +101,10 @@ capture_hit(register struct application *ap, struct partition *partHeadp, struct
     struct part *add;
     for(pp = partHeadp->pt_forw; pp != partHeadp; pp = pp->pt_forw){
 	add = bu_malloc(sizeof(struct part), "part");
-	add->inhit_dist = pp->pt_inhit->hit_dist;
-	add->outhit_dist = pp->pt_outhit->hit_dist;
-	BU_LIST_INSERT(&fstate->rays[ap->a_user]->l, &add->l);
+	add->inhit_dist =   pp->pt_inhit->hit_dist   / (((struct fitness_state *)ap->a_uptr)->rtip->rti_radius * 2);
+	add->outhit_dist =  pp->pt_outhit->hit_dist  / (((struct fitness_state *)ap->a_uptr)->rtip->rti_radius * 2);
+//	printf("[%.5g\t%.5g]\n", add->inhit_dist, add->outhit_dist);
+	BU_LIST_INSERT(&((struct fitness_state *)ap->a_uptr)->rays[ap->a_user]->l, &add->l);
     }
     return 1;
 }
@@ -117,7 +117,7 @@ capture_miss(register struct application *ap)
 {
     struct part *add = bu_malloc(sizeof(struct part), "part");
     add->inhit_dist = add->outhit_dist = 0;
-    BU_LIST_INSERT(&fstate->rays[ap->a_user]->l, &add->l);
+    BU_LIST_INSERT(&((struct fitness_state *)ap->a_uptr)->rays[ap->a_user]->l, &add->l);
     return 0;
 }
 
@@ -129,7 +129,8 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 {
     register struct partition *pp=NULL;
     register struct part *mp;
-    fastf_t xp, yp, lastpt;
+    struct fitness_state *fstate = (struct fitness_state *) ap->a_uptr;
+    fastf_t xp, yp, lastpt=0.0;
     int status = 0;
     
     
@@ -139,13 +140,16 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
     mp = BU_LIST_FORW(part, &fstate->rays[ap->a_user]->l);
 
     while(pp != partHeadp && mp != fstate->rays[ap->a_user]) {
-	if(status & STATUS_PP)	xp = pp->pt_outhit->hit_dist;
-	else			xp = pp->pt_inhit->hit_dist;
+	printf("[%g\t%g] [%g\t%g]\n", mp->inhit_dist, mp->outhit_dist,   pp->pt_inhit->hit_dist/(fstate->rtip->rti_radius *2.0), pp->pt_outhit->hit_dist/(fstate->rtip->rti_radius *2.0));
+	if(status & STATUS_PP)	xp = pp->pt_outhit->hit_dist/(fstate->rtip->rti_radius *2.0);
+	else			xp = pp->pt_inhit->hit_dist/(fstate->rtip->rti_radius *2.0);
 	if(status & STATUS_MP)	yp = mp->outhit_dist;
 	else			yp = mp->inhit_dist;
     	
 	if(status==STATUS_EMPTY){ //neither
-	    if(xp < yp){
+	    if(NEAR_ZERO(xp-yp, 1.0e-5))
+		status = (STATUS_PP | STATUS_MP);
+	    else if(xp < yp){
 		lastpt = xp;
 		status = STATUS_PP;
 	    }
@@ -153,12 +157,15 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 		lastpt = yp;
 		status = STATUS_MP;
 	    }
-	    else{
-		status = (STATUS_PP | STATUS_MP);
-	    }
 	}
 	else if(status == (STATUS_MP | STATUS_PP)){
-	    if(xp < yp){
+	    if(NEAR_ZERO(xp-yp, 1.0e-5)){
+		status = STATUS_EMPTY;
+		pp = pp->pt_forw;
+		mp = BU_LIST_FORW(part, &mp->l);
+	    }
+
+	    else if(xp < yp){
 		lastpt = xp;
 		status = STATUS_MP;
 		pp=pp->pt_forw;
@@ -168,39 +175,34 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 		status = STATUS_PP;
 		mp = BU_LIST_FORW(part, &mp->l);
 	    }
-	    else{
-		status = STATUS_EMPTY;
-		pp = pp->pt_forw;
-		mp = BU_LIST_FORW(part, &mp->l);
-	    }
 	}
 	else if(status == STATUS_PP){
+	    if(NEAR_ZERO(xp-yp, 1.0e-5) || yp < xp){
+		fstate->diff += yp - lastpt;
+		status = STATUS_PP | STATUS_MP;
+		lastpt = xp;
+	    }
 	    if(xp < yp){
 		fstate->diff += xp - lastpt;
 		status = STATUS_EMPTY;
 		pp = pp ->pt_forw;
 	    }
-	    if(yp < xp || yp == xp){
-		fstate->diff += yp - lastpt;
-		status = STATUS_PP | STATUS_MP;
-		lastpt = xp;
-	    }
 	}
 	else if(status == STATUS_MP){
+	    if(NEAR_ZERO(xp-yp, 1.0e-5) || xp < yp){
+		fstate->diff += xp - lastpt;
+		status = STATUS_PP | STATUS_MP;
+		lastpt = yp;
+	    }
 	    if(yp < xp){
 		fstate->diff += yp - lastpt;
 		status = STATUS_EMPTY;
 		mp = BU_LIST_FORW(part, &mp->l);
 	    }
-	    if(xp < yp || xp == yp){
-		fstate->diff += xp - lastpt;
-		status = STATUS_PP | STATUS_MP;
-		lastpt = yp;
-	    }
 	}
     }
     if(status == STATUS_PP){
-	fstate->diff+= pp->pt_outhit->hit_dist - lastpt;
+	fstate->diff+= pp->pt_outhit->hit_dist/(fstate->rtip->rti_radius*2) - lastpt;
 	pp = pp->pt_forw;
     }
     if(status == STATUS_MP){
@@ -216,7 +218,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
     }
     else if (pp != partHeadp){
 	while(pp != partHeadp){
-	    fstate->diff += pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+	    fstate->diff += (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist) / (fstate->rtip->rti_radius * 2);
 	    pp = pp->pt_forw;
 	}
     }
@@ -232,6 +234,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 int
 compare_miss(register struct application *ap)
 {
+    printf("miss\n");
     compare_hit(ap, NULL, NULL);
     return 0;
 }
@@ -240,7 +243,7 @@ compare_miss(register struct application *ap)
  *	G E T _ N E X T _ R O W --- grab the next row of rays to be evaluated
  */
 int
-get_next_row(void)
+get_next_row(struct fitness_state *fstate)
 {
     int r;
     bu_semaphore_acquire(SEM_WORK);
@@ -261,8 +264,9 @@ void
 rt_worker(int cpu, genptr_t g)
 {
     struct application ap;
+    struct fitness_state *fstate = (struct fitness_state *)g;
     int u, v;
-    
+
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = fstate->rtip;
     if(fstate->capture){
@@ -277,10 +281,11 @@ rt_worker(int cpu, genptr_t g)
 
     ap.a_ray.r_dir[U_AXIS] = ap.a_ray.r_dir[V_AXIS] = 0.0;
     ap.a_ray.r_dir[I_AXIS] = 1.0;
+    ap.a_uptr = (void *) g;
 
     u = -1;
 
-    while((v = get_next_row())) {
+    while((v = get_next_row(fstate))) {
 	for(u = 1; u <= fstate->res[U_AXIS]; u++) {
 	    ap.a_ray.r_pt[U_AXIS] = ap.a_rt_i->mdl_min[U_AXIS] + u * fstate->gridSpacing[U_AXIS];
 	    ap.a_ray.r_pt[V_AXIS] = ap.a_rt_i->mdl_min[V_AXIS] + v * fstate->gridSpacing[V_AXIS];
@@ -302,7 +307,7 @@ rt_worker(int cpu, genptr_t g)
  *
  */
 int
-fit_rt(char *obj)
+fit_rt(char *obj, struct fitness_state *fstate)
 {
     int i;
     double span[3];
@@ -329,10 +334,10 @@ fit_rt(char *obj)
     if(fstate->capture){
 	fstate->name = obj;
 	fstate->rays = bu_malloc(sizeof(struct part *) * fstate->res[U_AXIS] * fstate->res[V_AXIS], "rays");
-	bu_parallel(rt_worker, fstate->ncpu, NULL);
+	bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);
     }
     else{
-	bu_parallel(rt_worker, fstate->ncpu, NULL);
+	bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);
     }
 
     rt_clean(fstate->rtip);
@@ -342,24 +347,25 @@ fit_rt(char *obj)
  *	F I T _ L I N D I F F --- returns the total linear difference between the rays of obj and source
  */
 fastf_t
-fit_linDiff(char *obj)
+fit_linDiff(char *obj, struct fitness_state *fstate)
 {
-    fit_rt(obj);
-    printf("linDiff: %g\n", fstate->diff);
+    fit_rt(obj, fstate);
     return fstate->diff;
 }
 
 /**
  *	F I T _ U P D A T E R E S --- change ray grid resolution
+ *	Note: currently not in use, will be used to refine grid as 
+ *	fitness increases
  */
 void
-fit_updateRes(int rows, int cols){
+fit_updateRes(int rows, int cols, struct fitness_state *fstate){
     if( fstate->rays != NULL){
-	rays_clear();
+	rays_clear(fstate);
     }
     fstate->res[U_AXIS] = rows;
     fstate->res[V_AXIS] = cols;
-    fit_store(fstate->name);
+    fit_store(fstate->name, fstate);
 
 }
 
@@ -367,14 +373,11 @@ fit_updateRes(int rows, int cols){
 /**
  *	F I T _ P R E P --- load database and prepare for raytracing
  */
-int 
+struct fitness_state * 
 fit_prep(char *db, int rows, int cols)
 {
-    int i;
-    struct part *p; /* used to free stored source */
 
-
-    fstate = bu_malloc(sizeof(struct fitness_state), "fstate");
+    struct fitness_state *fstate = bu_malloc(sizeof(struct fitness_state), "fstate");
     fstate->max_cpus = fstate->ncpu = 1;//bu_avail_cpus();
 
     bu_semaphore_init(TOTAL_SEMAPHORES);
@@ -402,19 +405,17 @@ fit_prep(char *db, int rows, int cols)
     fstate->res[U_AXIS] = rows;
     fstate->res[V_AXIS] = cols;
     fstate->rays = NULL;
-    return 0;
+    return fstate;
 }
 
 /**
  *	F I T _ C L E A N --- cleanup
  */
 void
-fit_clean()
+fit_clean(struct fitness_state *fstate)
 {
-    int i;
-    struct part *p;
     db_close(fstate->db); 
-    rays_clear();
+    rays_clear(fstate);
     bu_free(fstate, "fstate");
 }
 

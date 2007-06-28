@@ -19,7 +19,9 @@
  */
 /** @file beset.c
  *
- * Program to test functionality of fitness.c (temporary)
+ * Ben's Evolutionary Shape Tool
+ *
+ * CURRENT STATUS: single spheres with a whole radius work
  *
  * Author - Ben Poole
  *
@@ -36,7 +38,6 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <math.h>
-#include <limits.h>                     /* home of INT_MAX aka MAXINT */
 
 #include "machine.h"
 #include "bu.h"
@@ -51,7 +52,6 @@
 
 #define _L pop->individual[0]
 
-struct fitness_state *fstate;
 struct population *pop;
 
 /* fitness of a given object compared to source */
@@ -74,24 +74,24 @@ int main(int argc, char **argv){
     int ind;
     int gop;
     fastf_t total_fitness;
+    struct fitness_state *fstate;
 
     if(argc != 6){
 	fprintf(stderr, "Usage: ./fitness database rows cols source_object test_object\n");
 	return 1;
     }
 
-    fit_prep(argv[1], atoi(argv[2]), atoi(argv[3]));
+    fstate = fit_prep(argv[1], atoi(argv[2]), atoi(argv[3]));
     fstate->db->dbi_wdbp = wdb_dbopen(fstate->db, RT_WDB_TYPE_DB_DISK);
 
-    fit_store(argv[4]);
+    fit_store(argv[4], fstate);
 
-    pop_init(&pop, 50);
+    pop_init(&pop, 2);
     pop_spawn(pop, fstate->db->dbi_wdbp);
 
-    for(g = 0; g < 2; g++){
-	printf("%d: ", g);
+    for(g = 0; g < 1; g++){
 	for(i = 0; i < pop->size; i++) {
-	   pop->individual[i].fitness = fit_linDiff(pop->individual[i].id);
+	   pop->individual[i].fitness = 1.0-fit_linDiff(pop->individual[i].id, fstate);
 	}
 	qsort(pop->individual, pop->size, sizeof(struct individual), cmp_ind);
 
@@ -99,13 +99,12 @@ int main(int argc, char **argv){
 	/* calculate total fitness */
 	total_fitness = 0;
 
-	    printf("%d: %g\n", 0, pop->individual[0].r);
 	for (i = 0; i < pop->size; i++) {
 
 	    total_fitness += pop->individual[i].fitness;
 	}
 	for(i = 0; i < pop->size; i++){
-	    printf("%d: r:%g\tf:%g\n", i, pop->individual[i].r, pop->individual[i].fitness);
+	    printf("%s\tr:%g\tf:%g\n", pop->individual[i].id, pop->individual[i].r, pop->individual[i].fitness);
 	    ind = pop_wrand_ind(pop->individual, pop->size, total_fitness);
 	    gop = pop_wrand_gop(); // to be implemented...
 	    //going to need random node calculation for these too ...
@@ -113,7 +112,7 @@ int main(int argc, char **argv){
 	    pop->offspring[i] = pop->individual[ind];
 
 	    //printf("ind: %g -- %g\n", pop->offspring[i].r, pop->individual[ind].r);
-	    switch(MUTATE_RAND){
+	    switch(CROSSOVER){
 		case MUTATE_MOD:  // mutate but do not replace values, modify them by +- MOD_RATE
 		    pop->offspring[i].r += -.1 + (.2 * (pop_rand()));
 		    printf("off: %g\n", pop->offspring[i].r);
@@ -138,11 +137,10 @@ int main(int argc, char **argv){
     }
 
 
-    fit_store(argv[4]);
 
     //fit_updateRes(atoi(argv[2])*2, atoi(argv[3])*2);
 
-    fit_clean();
+    fit_clean(fstate);
     pop_clean(pop);
     return 0;
 }
