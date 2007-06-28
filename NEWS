@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-05-XX  Release 7.10.2                                     ---
 ----------------------------------------------------------------------
 
+* mged and pl-X automatically focus to X11 on Mac OS X - Sean Morrison
 * pl-X functionality enhancements for displaying plots - Sean Morrison
 * fixed g_diff bug where -f option missed differences- John Anderson
 * fixed mged 'units' command, reports current setting - John Anderson
