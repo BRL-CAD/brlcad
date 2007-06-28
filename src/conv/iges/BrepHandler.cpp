@@ -461,19 +461,23 @@ namespace brlcad {
       i += 3;
     }
         
-    return handleRationalBSplineCurve(degree,
-				      umin,
-				      umax,
-				      planar,
-				      unit_normal,
-				      closed,
-				      rational,
-				      periodic,
-				      num_knots,
-				      knots,
-				      num_control_points,
-				      weights,
-				      ctl_points);
+    int val = handleRationalBSplineCurve(degree,
+					 umin,
+					 umax,
+					 planar,
+					 unit_normal,
+					 closed,
+					 rational,
+					 periodic,
+					 num_knots,
+					 knots,
+					 num_control_points,
+					 weights,
+					 ctl_points);
+    delete [] knots;
+    delete [] weights;
+    delete [] ctl_points;
+    return val;
   }
 
   int 
