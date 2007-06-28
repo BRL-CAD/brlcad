@@ -56,6 +56,11 @@ namespace brlcad {
     return m_root->getClosestPointEstimate(pt);
   }
 
+  ON_2dPoint
+  SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v) {
+    return m_root->getClosestPointEstimate(pt, u, v);
+  }
+
   void
   SurfaceTree::getLeaves(list<BBNode*>& out_leaves) {
     m_root->getLeaves(out_leaves);
@@ -310,7 +315,9 @@ namespace brlcad {
 		    const ON_3dPoint& point,
 		    SurfaceTree* tree,
 		    double tolerance) {
-    
+
+    int try_count = 0;
+    bool delete_tree = false;
     bool found = false;
     double d_last = real.infinity();
     pt2d_t curr_grad;
@@ -322,8 +329,13 @@ namespace brlcad {
     TRACE("get_closest_point: " << PT(point));
 
     // get initial estimate
-    SurfaceTree* a_tree = (tree == NULL) ? new SurfaceTree(face) : tree;
-    ON_2dPoint est = a_tree->getClosestPointEstimate(point);
+    SurfaceTree* a_tree = tree;
+    if (a_tree == NULL) {
+      a_tree = new SurfaceTree(face);
+      delete_tree = true;
+    }
+    ON_Interval u, v;
+    ON_2dPoint est = a_tree->getClosestPointEstimate(point, u, v);
     pt2d_t uv = { est[0], est[1] };
     pt2d_t orig_uv = {est[0],est[1]};
 
@@ -332,21 +344,20 @@ namespace brlcad {
     // 1. if the gradient falls below an epsilon (preferred :-)
     // 2. if the gradient diverges
     // 3. iterated MAX_FCP_ITERATIONS
+  try_again:
     int diverge_count = 0;
     for (int i = 0; i < BREP_MAX_FCP_ITERATIONS; i++) {       
-      ON_3dPoint p = data.surf->PointAt(uv[0],uv[1]);
-      TRACE("dist: " << p.DistanceTo(point));     
       assert(gcp_gradient(curr_grad, data, uv));
-      double d = v2mag(curr_grad);
-      if (d < BREP_FCP_ROOT_EPSILON) {
+
+      ON_3dPoint p = data.surf->PointAt(uv[0],uv[1]);
+      double d = p.DistanceTo(point);
+      TRACE("dist: " << d);
+
+      if (NEAR_ZERO((d-d_last),BREP_FCP_ROOT_EPSILON)) {
 	found = true; break;
       } else if (d > d_last) {
 	TRACE("diverged!");
 	diverge_count++;
-// 	uv[0] = orig_uv[0] + (((double)rand()/RAND_MAX)-.5) * 1e-3;
-// 	uv[1] = orig_uv[1] + (((double)rand()/RAND_MAX)-.5) * 1e-3;
-// 	i = 0;
-	//if (diverge_count > BREP_MAX_FCP_ITERATIONS) break;
       }      
       gcp_newton_iteration(new_uv, data, curr_grad, uv);
       move(uv, new_uv);
@@ -366,8 +377,16 @@ namespace brlcad {
       outpt[1] = uv[1];
     } else {
       TRACE("FAILED TO FIND CLOSEST POINT!");
+      // XXX: try the mid point of the domain -- HACK! but it seems to work!?
+      if (try_count == 0) {
+	uv[0] = u.Mid();
+	uv[1] = v.Mid();
+	++try_count;
+	goto try_again;
+      }
     }
 
+    if (delete_tree) delete a_tree;
     return found;
   }
 
@@ -621,6 +640,7 @@ namespace brlcad {
       generateKnots(spline);
       generateParameters(spline);
       generateControlPoints(spline, data);
+      assert(spline.controls.Count() >= 4);
       curve = newNURBSCurve(spline);    
       // XXX - attempt to simplify here!
     }
@@ -642,6 +662,7 @@ namespace brlcad {
     double len;
     curve->GetLength(&len);    
     data.flatness = (len < 1.0) ? flatness : flatness * len;
+
     data.curve = curve;
     data.face = face;
     data.surf = face->SurfaceOf();
