@@ -41,12 +41,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#ifdef HAVE_CARBON_CARBON_H
-#  define Cursor MyCursor
-#  include <Carbon/Carbon.h>
-#  undef Cursor
-#endif
-
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #endif
@@ -56,6 +50,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "dm.h" /* for dm_applicationfocus() */
+
 
 #define	TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
@@ -261,30 +257,6 @@ label(double x, double y, char *str)
 }
 
 
-void focus_x11() {
-#ifdef HAVE_CARBON_CARBON_H
-    OSStatus status;
-    ProcessSerialNumber psn = {kNoProcess, kNoProcess};
-    CFStringRef processName = NULL;
-
-    do {
-	status = GetNextProcess(&psn);
-	
-	/* Is this the psn for X11? */
-	CopyProcessName(&psn, &processName);
-	if (processName == NULL) {
-	    break;
-	}
-	
-	if (CFStringCompare(processName, CFSTR("X11"), 0) == kCFCompareEqualTo) {
-	    /* focus X11 */
-	    SetFrontProcess(&psn);
-	}
-    } while (status == noErr);
-#endif
-}
-
-
 void
 xsetup(int argc, char **argv)
 {
@@ -372,7 +344,7 @@ xsetup(int argc, char **argv)
 	}
 	XSetInputFocus(dpy, win, RevertToNone, CurrentTime);
 
-	focus_x11();
+	dm_applicationfocus();
 }
 
 
