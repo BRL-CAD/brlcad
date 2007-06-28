@@ -22,7 +22,7 @@
 /* Max newton iterations when finding closest point */
 #define BREP_MAX_FCP_ITERATIONS 50
 /* Root finding epsilon */
-#define BREP_FCP_ROOT_EPSILON 0.00001
+#define BREP_FCP_ROOT_EPSILON 1e-5
 
 static std::numeric_limits<double> real;
 
@@ -96,6 +96,7 @@ namespace brlcad {
     virtual int depth();
     virtual void getLeaves(list<BVNode<BV>*>& out_leaves);
     virtual ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
+    virtual ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
     void GetBBox(double* min, double* max);
 
     virtual bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
@@ -119,6 +120,7 @@ namespace brlcad {
     bool isLeaf() const;
     bool doTrimming() const;
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
+    ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
     
     const ON_BrepFace* m_face;
     ON_Interval m_u;
@@ -269,6 +271,13 @@ namespace brlcad {
   template<class BV>
   ON_2dPoint
   BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt) {
+    ON_Interval u, v;
+    return getClosestPointEstimate(pt, u, v);
+  }
+
+  template<class BV>
+  ON_2dPoint
+  BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v) {
     TRACE("getClosestPointEstimate(" << PT(pt) << ")");
     if (m_children.size() > 0) {
       BBNode* closestNode = m_children[0];
@@ -276,7 +285,7 @@ namespace brlcad {
 	closestNode = closer(pt, closestNode, m_children[i]);
 	TRACE("\t" << PT(closestNode->m_estimate));
       }
-      return closestNode->getClosestPointEstimate(pt);
+      return closestNode->getClosestPointEstimate(pt, u, v);
     } 
     throw new exception();
   }
@@ -313,6 +322,13 @@ namespace brlcad {
   template<class BV>
   ON_2dPoint
   SubsurfaceBVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt) {
+    ON_Interval u, v;
+    return getClosestPointEstimate(pt, u, v);
+  }
+
+  template<class BV>
+  ON_2dPoint
+  SubsurfaceBVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v) {
     double uvs[5][2] = {{m_u.Min(),m_v.Min()},  // include the corners for an easy refinement
 			{m_u.Max(),m_v.Min()},
 			{m_u.Max(),m_v.Max()},
@@ -320,6 +336,9 @@ namespace brlcad {
 			{m_u.Mid(),m_v.Mid()}}; // include the estimate
     ON_3dPoint corners[5];
     const ON_Surface* surf = m_face->SurfaceOf();
+
+    u = m_u;
+    v = m_v;
     
     // XXX - pass these in from SurfaceTree::surfaceBBox() to avoid this recalculation?
     if (!surf->EvPoint(uvs[0][0],uvs[0][1],corners[0]) ||
@@ -360,6 +379,7 @@ namespace brlcad {
      * 3-space.
      */
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
+    ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
     /**
      * Return just the leaves of the surface tree
      */
