@@ -1,15 +1,28 @@
 # $Id$
-noinst_PROGRAMS = \
-	beset
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-beset_SOURCES = fitness.c beset.c
+noinst_PROGRAMS = beset
+
+beset_SOURCES = \
+	beset.c \
+	fitness.c \
+	population.c
+
+noinst_HEADERS = \
+	beset.h \
+	fitness.h \
+	population.h
+
 beset_LDADD = \
+	${WDB} ${WDB_LIBS} \
 	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+	${BU} ${BU_LIBS}
+
+# man_MANS = beset.1
+
+# EXTRA_DIST = $(man_MANS)
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
