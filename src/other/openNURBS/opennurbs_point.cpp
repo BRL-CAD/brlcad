@@ -413,6 +413,13 @@ bool ON_Interval::Union( // this = union of two args
   return rc;
 }
 
+// Bounds the given value to within the interval
+void
+ON_Interval::Bound(double& val) const
+{
+  if (val < m_t[0]) { val = m_t[0]; return; }
+  if (val > m_t[1]) val = m_t[1];
+}
 
 bool ON_3dVector::Decompose( // Computes a, b, c such that this vector = a*X + b*Y + c*Z
        //
