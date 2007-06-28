@@ -3619,6 +3619,7 @@ SYSV='${top_builddir}/src/libsysv/libsysv.la'
 TCLCAD='${top_builddir}/src/libtclcad/libtclcad.la'
 TERMIO='${top_builddir}/src/libtermio/libtermio.la'
 WDB='${top_builddir}/src/libwdb/libwdb.la'
+BRLCAD='${top_builddir}/src/libbrlcad.la'
 
 ORLE_LIBS=
 PKG_LIBS=
@@ -3635,6 +3636,7 @@ MULTISPECTRAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 DM_LIBS="${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
+BRLCAD_LIBS="${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 
 AC_SUBST(BN)
 AC_SUBST(BU)
@@ -3651,6 +3653,7 @@ AC_SUBST(SYSV)
 AC_SUBST(TCLCAD)
 AC_SUBST(TERMIO)
 AC_SUBST(WDB)
+AC_SUBST(BRLCAD)
 
 AC_SUBST(BN_LIBS)
 AC_SUBST(BU_LIBS)
@@ -3667,6 +3670,7 @@ AC_SUBST(SYSV_LIBS)
 AC_SUBST(TCLCAD_LIBS)
 AC_SUBST(TERMIO_LIBS)
 AC_SUBST(WDB_LIBS)
+AC_SUBST(BRLCAD_LIBS)
 
 
 # if compiling with the MIPSpro 7.3 compiler, there is a bug when
