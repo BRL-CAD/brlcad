@@ -324,6 +324,7 @@ fit_rt(char *obj)
     fstate->gridSpacing[U_AXIS] = span[U_AXIS] / (fstate->res[U_AXIS] + 1);
     fstate->gridSpacing[V_AXIS] = span[V_AXIS] / (fstate->res[V_AXIS] + 1 );
     fstate->row = 0;
+    fstate->diff = 0;
 
     if(fstate->capture){
 	fstate->name = obj;
@@ -344,6 +345,7 @@ fastf_t
 fit_linDiff(char *obj)
 {
     fit_rt(obj);
+    printf("linDiff: %g\n", fstate->diff);
     return fstate->diff;
 }
 
@@ -373,17 +375,18 @@ fit_prep(char *db, int rows, int cols)
 
 
     fstate = bu_malloc(sizeof(struct fitness_state), "fstate");
-    fstate->max_cpus = fstate->ncpu = bu_avail_cpus();
+    fstate->max_cpus = fstate->ncpu = 1;//bu_avail_cpus();
 
     bu_semaphore_init(TOTAL_SEMAPHORES);
 
     rt_init_resource(&rt_uniresource, fstate->max_cpus, NULL);
     bn_rand_init(rt_uniresource.re_randptr, 0);
 
+
     /* 
      * Load databse into db_i 
      */
-    if( (fstate->db = db_open(db, "r")) == DBI_NULL) {
+    if( (fstate->db = db_open(db, "r+w")) == DBI_NULL) {
 	bu_free(fstate, "fstate");
 	return DB_OPEN_FAILURE;
     }
@@ -410,8 +413,7 @@ fit_clean()
 {
     int i;
     struct part *p;
-    db_close(fstate->db);
-    db_close(fstate->db);
+    db_close(fstate->db); 
     rays_clear();
     bu_free(fstate, "fstate");
 }
