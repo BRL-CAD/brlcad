@@ -64,9 +64,9 @@ typedef struct _on_brep_placeholder {
 
     
     /* Maximum number of newton iterations on root finding */
-#define BREP_MAX_ITERATIONS 15
+#define BREP_MAX_ITERATIONS 100
     /* Root finding threshold */
-#define BREP_INTERSECTION_ROOT_EPSILON 0.00001
+#define BREP_INTERSECTION_ROOT_EPSILON 1e-6
     /* Jungle Gym epsilon */
 #define BREP_EDGE_MISS_TOLERANCE 1e-5
     /* Use vector operations? For debugging */
