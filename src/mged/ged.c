@@ -565,6 +565,9 @@ main(int argc, char **argv)
 	    mged_finish(1);
 	}
 	bu_vls_free(&error);
+
+	/* bring application to focus if needed (Mac OS X only) */
+	dm_applicationfocus();
     }
 
     if(argc >= 2){
