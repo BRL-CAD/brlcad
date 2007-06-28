@@ -499,65 +499,68 @@ brep_edge_check(int reason,
     
     // XXX - optimize this
 
-//     set<ON_BrepEdge*> edges;
-//     ON_3dPoint pt;
-//     for (int i = 0; i < face->LoopCount(); i++) {
-// 	ON_BrepLoop* loop = face->Loop(i);
-// 	for (int j = 0; j < loop->TrimCount(); j++) {
-// 	    ON_BrepTrim* trim = loop->Trim(j);
-// 	    ON_BrepEdge* edge = trim->Edge();
-// 	    pair<set<ON_BrepEdge*>::iterator, bool> res = edges.insert(edge);
-// 	    if (res.second) {
-// 		// only check if its the first time we've seen this
-// 		// edge
-// 		const ON_Curve* curve = edge->EdgeCurveOf();
-// 		double curve_t, ray_t;
-// 		if (curve->CloseTo(r, BREP_EDGE_MISS_TOLERANCE, curve_t, ray_t)) {
-// 		    // since the ray is within tolerance, we need to
-// 		    // find out on which side of the curve it
-// 		    // passes. If it's on the left side, then we've
-// 		    // hit the surface
+    set<ON_BrepEdge*> edges;
+    ON_3dPoint pt;
+    for (int i = 0; i < face->LoopCount(); i++) {
+	ON_BrepLoop* loop = face->Loop(i);
+	for (int j = 0; j < loop->TrimCount(); j++) {
+	    ON_BrepTrim* trim = loop->Trim(j);
+	    ON_BrepEdge* edge = trim->Edge();
+	    pair<set<ON_BrepEdge*>::iterator, bool> res = edges.insert(edge);
+	    if (res.second) {
+		// only check if its the first time we've seen this
+		// edge
+		const ON_Curve* curve = edge->EdgeCurveOf();
+		double curve_t, ray_t;
+		if (curve->CloseTo(r, BREP_EDGE_MISS_TOLERANCE, curve_t, ray_t)) {
+		    // since the ray is within tolerance, we need to
+		    // find out on which side of the curve it
+		    // passes. If it's on the left side, then we've
+		    // hit the surface
 
-// 		    // XXX - should probably use the gradient here
-// 		    double curve_t_forward = 
-// 			(trim->m_bRev3d) ? (curve_t - curve->Domain().Length() * 1e-2) : (curve_t + curve->Domain().Length() * 1e-2);
-// 		    ON_3dPoint c1 = curve->PointAt(curve_t);
-// 		    ON_3dPoint c2 = curve->PointAt(curve_t_forward);
-// 		    double ray_t_forward = ray_t + 1e-2;
-// 		    ON_3dPoint r1 = r.PointAt(ray_t);
-// 		    ON_3dPoint r2 = r.PointAt(ray_t_forward);
-// 		    ON_3dVector a = c2 - c1;
-// 		    ON_3dVector b = r2 - r1;
+		    // XXX - should probably use the gradient here
+		    double curve_t_forward = 
+			(trim->m_bRev3d) ? 
+			(curve_t - curve->Domain().Length() * 1e-2) 
+			: (curve_t + curve->Domain().Length() * 1e-2);
+		    ON_3dPoint c1 = curve->PointAt(curve_t);
+		    ON_3dPoint c2 = curve->PointAt(curve_t_forward);
+		    double ray_t_forward = ray_t + 1e-2;
+		    ON_3dPoint r1 = r.PointAt(ray_t);
+		    ON_3dPoint r2 = r.PointAt(ray_t_forward);
+		    ON_3dVector a = c2 - c1;
+		    ON_3dVector b = r2 - r1;
 		    
-// 		    // neg: right
-// 		    // pos: left
+		    // neg: right
+		    // pos: left
 		    
-// 		    // below is the simplified version of:
-// 		    //   b \dot (a \cross ( a \cross b ) )
-// 		    // or
-// 		    //   b * (a x (a x b))		    
-// 		    double dir = 
-// 			4 * a[0] * a[1] * b[0] * b[1] - (a[1] * b[0] + a[0] * b[1]) * (a[1] * b[0] + a[0] * b[1]) +
-// 			4 * a[0] * a[2] * b[0] * b[2] - (a[2] * b[0] + a[0] * b[2]) * (a[2] * b[0] + a[0] * b[2]) +
-// 			4 * a[1] * a[2] * b[1] * b[2] - (a[2] * b[1] + a[1] * b[2]) * (a[2] * b[1] + a[1] * b[2]);		    
+		    // below is the simplified version of:
+		    //   b \dot (a \cross ( a \cross b ) )
+		    // or
+		    //   b * (a x (a x b))		    
+		    // XXX - vectorize?
+		    double dir = 
+			4 * a[0] * a[1] * b[0] * b[1] - (a[1] * b[0] + a[0] * b[1]) * (a[1] * b[0] + a[0] * b[1]) +
+			4 * a[0] * a[2] * b[0] * b[2] - (a[2] * b[0] + a[0] * b[2]) * (a[2] * b[0] + a[0] * b[2]) +
+			4 * a[1] * a[2] * b[1] * b[2] - (a[2] * b[1] + a[1] * b[2]) * (a[2] * b[1] + a[1] * b[2]);		    
 
-// 		    if (dir > 0) { // rv is left of cv
-// 			// now we need to find the closest point on the surface
-// 			ON_2dPoint uv;
-// 			get_closest_point(uv, 
-// 					  const_cast<ON_BrepFace*>(face), 
-// 					  r1,
-// 					  (SurfaceTree*)face->m_face_user.p);
-// 			ON_3dPoint hit;
-// 			ON_3dVector norm;
-// 			face->SurfaceOf()->EvNormal(uv[0],uv[1], hit, norm);
-// 			hits.insert(brep_hit(*face, (const fastf_t*)r.m_origin, (const fastf_t*)hit, (const fastf_t*)norm, (const fastf_t*)uv));
-// 			return BREP_INTERSECT_FOUND;
-// 		    }
-// 		}
-// 	    }
-// 	}
-//     }    
+		    if (dir > 0) { // rv is left of cv
+			// now we need to find the closest point on the surface
+			ON_2dPoint uv;
+			get_closest_point(uv, 
+					  const_cast<ON_BrepFace*>(face), 
+					  r1,
+					  (SurfaceTree*)face->m_face_user.p);
+			ON_3dPoint hit;
+			ON_3dVector norm;
+			face->SurfaceOf()->EvNormal(uv[0],uv[1], hit, norm);
+			hits.push_back(brep_hit(*face, (const fastf_t*)r.m_origin, (const fastf_t*)hit, (const fastf_t*)norm, (const fastf_t*)uv));
+			return BREP_INTERSECT_FOUND;
+		    }
+		}
+	    }
+	}
+    }    
     return reason;
 }
 
