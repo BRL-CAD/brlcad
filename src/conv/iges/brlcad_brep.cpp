@@ -11,6 +11,9 @@ namespace brlcad {
   }  
 
   BRLCADBrepHandler::~BRLCADBrepHandler() {
+    for (vector<ON_Geometry*>::iterator i = _objects.begin(); i != _objects.end(); ++i) {
+      delete *i;
+    }
     ON::End();
   }
 
