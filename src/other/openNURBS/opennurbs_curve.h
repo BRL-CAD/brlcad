@@ -32,6 +32,22 @@ class ON_CurveTree;
 
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
+class ON_Ray {
+public:
+  ON_3dPoint m_origin;
+  ON_3dVector m_dir;
+  
+  ON_Ray(ON_3dPoint& origin, ON_3dVector& dir) : m_origin(origin), m_dir(dir) {}
+  ON_Ray(const ON_Ray& r) : m_origin(r.m_origin), m_dir(r.m_dir)  {}
+  ON_Ray& operator=(const ON_Ray& r) {
+    m_origin = r.m_origin;
+    m_dir = r.m_dir;
+  }
+
+  ON_3dPoint PointAt(double t) const {
+    return m_origin + m_dir * t;
+  }
+};  
 
 
 typedef int (*ON_MassPropertiesCurve)( const ON_Curve&, void*, int, ON_3dPoint, ON_3dVector, ON_MassProperties&, bool, bool, bool, bool, double, double );
@@ -869,6 +885,17 @@ public:
    */
   virtual int NumIntersectionsWith(const ON_Line& segment) const;
 
+
+  /**
+     Description: 
+     
+     Return whether the given ray is close to the curve. The "close
+     to" relation is defined in terms of the distance between the
+     closest points on the curve and the ray... if this distance is
+     less than epsilon, then the ray is close to the edge.
+
+  */
+  virtual bool CloseTo(const ON_Ray& ray, double epsilon, double& curve_t, double& ray_t) const;
 
   /*
   Description:
