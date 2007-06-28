@@ -40,6 +40,7 @@ libdm_la_SOURCES = \
 	dm-ps.c \
 	dm-wgl.c \
 	dm_obj.c \
+	focus.c \
 	knob.c \
 	options.c \
 	query.c \

@@ -378,6 +378,9 @@ DM_EXPORT BU_EXTERN(void dmo_drawAxes_cmd,
 		     int *majorTickColor,
 		     int tickThreshold));
 
+/* focus.c */
+DM_EXPORT BU_EXTERN(void dm_applicationfocus, (void));
+
 #endif /* __DM_H__ */
 
 /** @} */
