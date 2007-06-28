@@ -238,6 +238,9 @@ public:
          const ON_Interval&, 
          const ON_Interval&
          );
+
+  void Bound(double& val) const;
+
 };
 
 ////////////////////////////////////////////////////////////////
