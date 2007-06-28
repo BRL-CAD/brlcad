@@ -3154,10 +3154,51 @@ ON_Curve::NumIntersectionsWith(const ON_Line& segment) const {
   assert(false);
 }
 
+#include <list>
+
+class Sample {
+public:
+  ON_Curve* c;
+  ON_3dPoint pt;
+  ON_3dVector tangent;
+  double t;
+  double dist;
+
+  Sample(ON_Curve* curve, double param) : c(curve), t(param), dist(0.0) {
+    c->Ev1Der(t, pt, tangent);
+  }
+  Sample(const Sample& s) :
+    c(s.c), pt(s.pt), tangent(s.tangent), t(s.t) {}
+  Sample& operator=(const Sample& s) {
+    c = s.c;
+    pt = s.pt;
+    tangent = s.tangent;
+    t = s.t;
+  }
+
+  bool operator<(const Sample& s) {
+    return (ON_NearZero(dist-s.dist,ON_ZERO_TOLERANCE)) ? t < s.t : dist < s.dist;
+  }
+};
+
+bool 
+isFlat(const Sample& p1, const Sample& m, const Sample& p2, double chord_tol, double der_tol)
+{
+  ON_Line line = ON_Line(p1.pt, p2.pt);
+  double chord = line.DistanceTo(m.pt);  
+  double der = (p1.tangent * m.tangent) * (m.tangent * p2.tangent);
+  return (der >= der_tol) && (chord <= chord_tol);
+}
+
+void sample(ON_Curve* c, std::list<Sample>& out_samples) {
+  
+}
+
 bool
 ON_Curve::CloseTo(const ON_Ray& ray, double epsilon, double& curve_t, double& ray_t) const
 {  
-  // XXX - finish
+  
+
   return false;
 }
 
