@@ -41,18 +41,6 @@ namespace brlcad {
   
   //--------------------------------------------------------------------------------
   // Bounding volume hierarchy classes
-  class ON_Ray {
-  public:
-    ON_3dPoint m_origin;
-    ON_3dVector m_dir;
-
-    ON_Ray(ON_3dPoint& origin, ON_3dVector& dir) : m_origin(origin), m_dir(dir) {}
-    ON_Ray(const ON_Ray& r) : m_origin(r.m_origin), m_dir(r.m_dir)  {}
-    ON_Ray& operator=(const ON_Ray& r) {
-      m_origin = r.m_origin;
-      m_dir = r.m_dir;
-    }
-  };  
 
   template<class BV>
   class BVNode;
