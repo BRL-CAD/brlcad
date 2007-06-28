@@ -218,7 +218,7 @@ brep_preprocess_trims(const ON_BrepFace& face, SurfaceTree* tree) {
 	    }
 	}
 	bb->m_checkTrim = true; // XXX - ack, hardcode for now
-	// for this node to be completely trimmed, all for corners
+	// for this node to be completely trimmed, all four corners
 	// must be trimmed and the depth of the tree needs to be > 0,
 	// since 0 means there is just a single leaf - and since
 	// "internal" outer loops will be make a single node seem
@@ -390,17 +390,18 @@ brep_get_plane_ray(ON_Ray& r, plane_ray& pr)
 }
 
 
-// XXX - todo: use static allocation instead
 class brep_hit {
 public:
     const ON_BrepFace& face;
+    point_t origin;
     point_t point;
     vect_t  normal;
     pt2d_t  uv;
     
-    brep_hit(const ON_BrepFace& f, point_t p, vect_t n, pt2d_t _uv) 
+    brep_hit(const ON_BrepFace& f, const point_t orig, const point_t p, const vect_t n, const pt2d_t _uv) 
 	: face(f)
     {
+	VMOVE(origin, orig); 
 	VMOVE(point, p);
 	VMOVE(normal, n);
 	move(uv, _uv);
@@ -409,6 +410,7 @@ public:
     brep_hit(const brep_hit& h) 
 	: face(h.face)
     {
+	VMOVE(origin, h.origin);
 	VMOVE(point, h.point);
 	VMOVE(normal, h.normal);
 	move(uv, h.uv);
@@ -416,12 +418,30 @@ public:
 
     brep_hit& operator=(const brep_hit& h) {
 	const_cast<ON_BrepFace&>(face) = h.face;
+	VMOVE(origin, h.origin);
 	VMOVE(point, h.point);
 	VMOVE(normal, h.normal);
 	move(uv, h.uv);
     }
+
+    bool operator<(const brep_hit& h) {
+	return DIST_PT_PT(point,origin) < DIST_PT_PT(h.point,origin);
+    }
 };
 typedef std::list<brep_hit> HitList;
+
+// class HitSorter : public std::less<brep_hit>
+// {
+//     point_t origin;
+// public:
+//     HitSorter(point_t o) {
+// 	VMOVE(origin, o);
+//     }
+
+//     bool operator()(const brep_hit& left, const brep_hit& right) {
+// 	return DIST_PT_PT(left.point,origin) < DIST_PT_PT(right.point,origin);
+//     }
+// };
 
 void
 brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R)
@@ -497,28 +517,47 @@ brep_edge_check(int reason,
 // 		    // find out on which side of the curve it
 // 		    // passes. If it's on the left side, then we've
 // 		    // hit the surface
-// 		    double curve_t_forward = curve_t + curve.Domain().Length() * 1e-2;
+
+// 		    // XXX - should probably use the gradient here
+// 		    double curve_t_forward = 
+// 			(trim->m_bRev3d) ? (curve_t - curve->Domain().Length() * 1e-2) : (curve_t + curve->Domain().Length() * 1e-2);
 // 		    ON_3dPoint c1 = curve->PointAt(curve_t);
 // 		    ON_3dPoint c2 = curve->PointAt(curve_t_forward);
 // 		    double ray_t_forward = ray_t + 1e-2;
 // 		    ON_3dPoint r1 = r.PointAt(ray_t);
 // 		    ON_3dPoint r2 = r.PointAt(ray_t_forward);
-// 		    ON_3dVector cv(c1, c2);
-// 		    ON_3dVector rv(r1, r2);
-// 		    if (cv.Cross(rv) < 0) { // rv is left of cv
+// 		    ON_3dVector a = c2 - c1;
+// 		    ON_3dVector b = r2 - r1;
+		    
+// 		    // neg: right
+// 		    // pos: left
+		    
+// 		    // below is the simplified version of:
+// 		    //   b \dot (a \cross ( a \cross b ) )
+// 		    // or
+// 		    //   b * (a x (a x b))		    
+// 		    double dir = 
+// 			4 * a[0] * a[1] * b[0] * b[1] - (a[1] * b[0] + a[0] * b[1]) * (a[1] * b[0] + a[0] * b[1]) +
+// 			4 * a[0] * a[2] * b[0] * b[2] - (a[2] * b[0] + a[0] * b[2]) * (a[2] * b[0] + a[0] * b[2]) +
+// 			4 * a[1] * a[2] * b[1] * b[2] - (a[2] * b[1] + a[1] * b[2]) * (a[2] * b[1] + a[1] * b[2]);		    
+
+// 		    if (dir > 0) { // rv is left of cv
 // 			// now we need to find the closest point on the surface
 // 			ON_2dPoint uv;
 // 			get_closest_point(uv, 
 // 					  const_cast<ON_BrepFace*>(face), 
 // 					  r1,
 // 					  (SurfaceTree*)face->m_face_user.p);
-// 			face->SurfaceOf()->PointAt(uv[0],uv[1]);
+// 			ON_3dPoint hit;
+// 			ON_3dVector norm;
+// 			face->SurfaceOf()->EvNormal(uv[0],uv[1], hit, norm);
+// 			hits.insert(brep_hit(*face, (const fastf_t*)r.m_origin, (const fastf_t*)hit, (const fastf_t*)norm, (const fastf_t*)uv));
+// 			return BREP_INTERSECT_FOUND;
 // 		    }
 // 		}
 // 	    }
 // 	}
-//     }
-    
+//     }    
     return reason;
 }
 
@@ -528,6 +567,7 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 {
     int found = BREP_INTERSECT_ROOT_ITERATION_LIMIT;
     fastf_t Dlast = MAX_FASTF;
+    int diverge_iter = 0;
     pt2d_t Rcurr;
     pt2d_t new_uv;
     ON_3dPoint pt;
@@ -537,12 +577,16 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
     brep_get_plane_ray(ray, pr);
     for (int i = 0; i < BREP_MAX_ITERATIONS; i++) {
 	brep_r(surf,pr,uv,pt,su,sv,Rcurr);
-	fastf_t d = v2mag(Rcurr);
-	if (d < BREP_INTERSECTION_ROOT_EPSILON) {
+	//fastf_t d = v2mag(Rcurr);	
+	fastf_t d = DIST_PT_PT(pt,ray.m_origin);
+	//	if (d < BREP_INTERSECTION_ROOT_EPSILON) {
+	if (NEAR_ZERO(d-Dlast,BREP_INTERSECTION_ROOT_EPSILON)) {
 	    TRACE1("R:"<<ON_PRINT2(Rcurr));
 	    found = BREP_INTERSECT_FOUND; break; 
 	} else if (d > Dlast) {
-	    found = BREP_INTERSECT_ROOT_DIVERGED; break;
+	    found = BREP_INTERSECT_ROOT_DIVERGED; //break;
+	    diverge_iter++;
+	    if (diverge_iter > 5) break;
 	}	
 	brep_newton_iterate(surf, pr, Rcurr, su, sv, uv, new_uv);
 	move(uv, new_uv);
@@ -559,25 +603,34 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
 	surf->EvNormal(uv[0],uv[1],_pt,_norm);
-	hits.push_back(brep_hit(*face, (fastf_t*)_pt,(fastf_t*)_norm, uv));
+	hits.push_back(brep_hit(*face,(const fastf_t*)ray.m_origin,(const fastf_t*)_pt,(const fastf_t*)_norm, uv));
     } 
 
 
     return found;
 }
 
-class HitSorter : public std::greater<brep_hit>
+
+void 
+opposite(const SubsurfaceBBNode* sbv, pt2d_t uv) 
 {
-    point_t m_origin;
-public:
-    HitSorter(point_t origin) {
-	VMOVE(m_origin, origin);
+    if (uv[1] > sbv->m_v.Mid()) {
+	// quadrant I or II
+	uv[1] = sbv->m_v.Min();
+	if (uv[0] > sbv->m_u.Mid())
+	    // quad I
+	    uv[0] = sbv->m_u.Min();
+	else
+	    // quad II
+	    uv[0] = sbv->m_u.Max();
+    } else {
+	uv[1] = sbv->m_v.Max();
+	if (uv[0] > sbv->m_u.Mid())
+	    uv[0] = sbv->m_u.Min();
+	else
+	    uv[0] = sbv->m_u.Max();
     }
-    
-    bool operator()(brep_hit& left, brep_hit& right) {
-	return DIST_PT_PT(left.point, m_origin) < DIST_PT_PT(right.point, m_origin);
-    }
-};
+}
 
 /**
  *  			R T _ B R E P _ S H O T
@@ -593,7 +646,8 @@ public:
 int
 rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    TRACE1("rt_brep_shot origin:" << ON_PRINT3(rp->r_pt) << " dir:" << ON_PRINT3(rp->r_dir));
+    //TRACE1("rt_brep_shot origin:" << ON_PRINT3(rp->r_pt) << " dir:" << ON_PRINT3(rp->r_dir));
+    TRACE1("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
     vect_t invdir;
     struct brep_specific* bs = (struct brep_specific*)stp->st_specific;
 
@@ -603,6 +657,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     bs->bvh->intersectsHierarchy(r, &inters);
 
     if (inters.size() == 0) return 0; // MISS
+    TRACE1("bboxes: " << inters.size());
 
     // find all the hits (XXX very inefficient right now!)
     HitList hits;
@@ -613,15 +668,52 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	brep_hit* hit; 
 	pt2d_t uv = {sbv->m_u.Mid(),sbv->m_v.Mid()};
 	int status = brep_intersect(sbv, f, surf, uv, r, hits);
-	
-	if (status < 0 && status > BREP_INTERSECT_ROOT_ITERATION_LIMIT) {
-	    TRACE("no intersection: " << BREP_INTERSECT_GET_REASON(status));
+	if (status == BREP_INTERSECT_FOUND) {
+	    TRACE1("INTERSECTION: " << PT(hits.back().point));
+	} else {
+	    TRACE1("NO INTERSECTION: " << BREP_INTERSECT_GET_REASON(status));
 	}
+	
+	// XXX - how to minimize this extra intersection???
+	// perhaps compare to the normal of the surface
+// 	if (status == BREP_INTERSECT_FOUND) {
+// 	    opposite(sbv, uv);
+// 	    int status_b = brep_intersect(sbv, f, surf, uv, r, hits);
+// 	    if (status_b == BREP_INTERSECT_FOUND) {
+// 		TRACE("INTERSECTION: " << PT(hits.back().point));
+// 	    } else {
+// 		TRACE("NO INTERSECTION: " << BREP_INTERSECT_GET_REASON(status_b));
+// 	    }
+// 	}
+	
+	//	if (status < 0 && status > BREP_INTERSECT_ROOT_ITERATION_LIMIT) {
+	//	    TRACE("no intersection: " << BREP_INTERSECT_GET_REASON(status));
+	//	}       
     }
 
     // sort the hits
-    HitSorter hs(rp->r_pt);
-    hits.sort(hs);
+    hits.sort();
+    int num = 0;
+//     TRACE1("____");
+//     for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+// 	TRACE1("hit " << num << ": " << ON_PRINT3(i->point));
+// 	num++;
+//     }
+//     TRACE1("----");
+//     HitList::iterator i = hits.begin();
+//     brep_hit last = *i;
+//     ++i;
+//     while (i != hits.end()) {
+// 	brep_hit curr = *i;
+// 	TRACE("comparing " << PT(last.point) << " to " << PT(curr.point));
+// 	if (VAPPROXEQUAL(last.point,curr.point,BREP_INTERSECTION_ROOT_EPSILON)) {
+// 	    TRACE("removing curr");
+// 	    i = hits.erase(i);
+// 	} else {
+// 	    last = *i;
+// 	    ++i;
+// 	}
+//     }
     
     bool hit = false;
     if (hits.size() > 0) {
