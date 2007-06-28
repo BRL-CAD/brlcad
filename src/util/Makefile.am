@@ -150,8 +150,6 @@ dist_bin_SCRIPTS = rtwizard morphedit.tcl
 # pix_ci_SOURCES = pix-ci.c
 # pix_ci_LDADD = ${X_LIBS}
 #
-# pl_X10_SOURCES = pl-X10.c
-#
 # pl_starbase_SOURCES = pl-starbase.c
 
 alias_pix_SOURCES = alias-pix.c
@@ -617,7 +615,6 @@ man_MANS = \
 	pixtile.1 \
 	pixuntile.1 \
 	pl-X.1 \
-	pl-X10.1 \
 	pl-asc.1 \
 	pl-hpgl.1 \
 	pl-pl.1 \
@@ -658,7 +655,6 @@ EXTRA_DIST = \
 	pix-ikr.c \
 	pix-lowp-ik.c \
 	pixt-ik.c \
-	pl-X10.c \
 	pl-starbase.c
 
 MAINTAINERCLEANFILES = Makefile.in
