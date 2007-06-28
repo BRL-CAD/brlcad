@@ -204,6 +204,7 @@ nurb_example_LDADD = \
 	${BU} ${BU_LIBS} \
 	${SYSV} ${SYSV_LIBS}
 
+# XXX this should be noinst or moved to include
 include_HEADERS = \
 	bot.h \
 	debug.h \
