@@ -3154,6 +3154,12 @@ ON_Curve::NumIntersectionsWith(const ON_Line& segment) const {
   assert(false);
 }
 
+bool
+ON_Curve::CloseTo(const ON_Ray& ray, double epsilon, double& curve_t, double& ray_t) const
+{  
+  // XXX - finish
+  return false;
+}
 
 bool ON_SortLines( 
         int line_count, 
