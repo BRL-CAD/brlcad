@@ -46,6 +46,10 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* decouple libdm from librt -- just one file in libdm uses librt,
+  including a whole nasty primitive switch statement.  need to push
+  that back over into librt.
+
 * Implement an optical shader for the new "pixelated" military
   camouflage style
 
