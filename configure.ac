@@ -3620,21 +3620,21 @@ TCLCAD='${top_builddir}/src/libtclcad/libtclcad.la'
 TERMIO='${top_builddir}/src/libtermio/libtermio.la'
 WDB='${top_builddir}/src/libwdb/libwdb.la'
 
-BN_LIBS="${BU} ${TCL} ${LIBM}"
-BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
-CURSOR_LIBS="${TERMLIB}"
-RT_LIBS="${REGEX} ${LIBM} ${SYSV} ${OPENNURBS} ${BU}"
-DM_LIBS="${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
-FB_LIBS="${BU} ${PKG} ${TCL} ${TK} ${X_LIBS} ${LIBGL}"
-FFT_LIBS="${LIBM}"
-MULTISPECTRAL_LIBS="${RT} ${BN} ${BU}"
-OPTICAL_LIBS="${TCL}"
 ORLE_LIBS=
 PKG_LIBS=
 SYSV_LIBS=
-TCLCAD_LIBS="${TK} ${TCLSTUB}"
 TERMIO_LIBS=
-WDB_LIBS="${RT} ${BN} ${BU}"
+CURSOR_LIBS="${TERMLIB}"
+FFT_LIBS="${LIBM}"
+TCLCAD_LIBS="${TK} ${TCLSTUB}"
+BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
+BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
+FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL} ${TK} ${X_LIBS} ${LIBGL}"
+OPTICAL_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
+MULTISPECTRAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
+RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
+WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
+DM_LIBS="${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
 
 AC_SUBST(BN)
 AC_SUBST(BU)
