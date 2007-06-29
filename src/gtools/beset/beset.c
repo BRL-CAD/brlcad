@@ -77,7 +77,7 @@ int main(int argc, char **argv){
     struct fitness_state *fstate;
 
     if(argc != 6){
-	fprintf(stderr, "Usage: ./fitness database rows cols source_object test_object\n");
+	fprintf(stderr, "Usage: %s database rows cols source_object test_object\n", argv[0]);
 	return 1;
     }
 

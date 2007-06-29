@@ -25,7 +25,6 @@
  *   Ben Poole
  */
 
-
 #ifndef __FITNESS_H__
 #define __FITNESS_H__
 
@@ -67,36 +66,44 @@ struct fitness_state {
 
 /* store a ray that hit */
 int capture_hit(register struct application *ap, struct partition *partHeadp, struct seg *segs);
+
 /* store a ray that missed */
 int capture_miss(register struct application *ap);
+
 /* compare a ray that hit to the same ray from source */
 int compare_hit(register struct application *ap, struct partition *partHeadp, struct seg *segs);
+
 /* compare a ray that missed to the same ray from source */
 int compare_miss(register struct application *ap);
+
 /* grab the next row of rays to be evaluated */
 int get_next_row(struct fitness_state *fstate);
+
 /* raytrace an object stored in fstate  either storing the rays or comparing them to the source */
 void rt_worker(int cpu, genptr_t g);
+
 /* prep for raytracing object, and call rt_worker for parallel processing */
 int fit_rt (char *obj, struct fitness_state *fstate);
+
 /* load database and prepare fstate for work */
 struct fitness_state * fit_prep(char *db, int rows, int cols);
+
 /* cleanup */
 void fit_clean(struct fitness_state *fstate);
+
 /* store a given object as the source  */
 void fit_store(char *obj, struct fitness_state *fstate);
+
 /* update grid resolution */
 void fit_updateRes(int rows, int cols, struct fitness_state *fstate);
+
 /* returns total linear difference between object and source */
 fastf_t fit_linDiff(char *obj, struct fitness_state *fstate);
+
 /* clear the stored rays */
 void rays_clean (struct fitness_state *fstate);
 
-
-
-#endif
-
-
+#endif /* __FITNESS_H__ */
 
 /*
  * Local Variables:

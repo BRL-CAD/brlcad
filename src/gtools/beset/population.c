@@ -25,8 +25,8 @@
  *   Ben Poole
  */
 
-
 #include "common.h"
+
 #include <strings.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -156,15 +156,6 @@ pop_wrand_gop(void)
 	return MUTATE_MOD;
     //return MUTATE_RAND;
 }
-
-
-
-
-
-
-
-   
-
 
 /*
  * Local Variables:

@@ -25,6 +25,8 @@
  *   Ben Poole
  */
 
+#ifndef __POPULATION_H__
+#define __POPULATION_H__
 
 #define GEO_SPHERE 1
 
@@ -51,6 +53,7 @@ int  pop_wrand_ind  (struct individual *i, int size, fastf_t total_fitness);
 int  pop_wrand_gop  (void);
 fastf_t pop_rand    (void);
 
+#endif /* __POPULATION_H__ */
 
 /*
  * Local Variables:
