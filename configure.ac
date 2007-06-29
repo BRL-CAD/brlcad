@@ -396,8 +396,6 @@ BC_ARG_ENABLE([build_warnings], [warnings], [Enable verbose compilation warnings
 # build progress status
 BC_ARG_ENABLE([build_progress], [progress], [Enable verbose compilation progress], [no])
 
-# restart configure when a wall is hit
-BC_ARG_ENABLE([configure_retry], [retry], [Enable automatic configure retry], [yes])
 
 dnl *** with options ***
 
@@ -653,12 +651,6 @@ BC_ARG_WITH_ALIAS([with_python], [libpython])
 
 dnl automatically scan /usr/local (e.g. BSD uses /usr/local for ports)
 BC_SEARCH_DIRECTORY([/usr/local])
-
-dnl search several additional locations if configure happens to fail
-dnl to find a required component
-BC_RETRY_DIRECTORY([/usr/freeware], [freeware])
-BC_RETRY_DIRECTORY([/opt])
-BC_RETRY_DIRECTORY([/sw], [fink])
 
 
 ###
@@ -933,9 +925,6 @@ AC_MSG_RESULT($bc_build_warnings)
 AC_MSG_CHECKING(whether to enable verbose compilation progress)
 AC_MSG_RESULT($bc_build_progress)
 
-AC_MSG_CHECKING(whether to retry configuration after failure)
-AC_MSG_RESULT($bc_configure_retry)
-
 AC_MSG_CHECKING(whether to compile with the Java Development Kit)
 AC_MSG_RESULT($bc_with_java)
 
@@ -1095,7 +1084,6 @@ if test "x$bc_with_sdl" = "xyes" ; then
 	if test "x$SDL_CONFIG" = "x" ; then
 		if test "x$bc_with_sdl" = "xyes" ; then
 			AC_MSG_NOTICE([sdl-config is presently required, searching more extensively])
-			BC_RETRY_CONFIGURE([$this], [$args])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_WARN([Unable to find sdl-config])
 		fi
@@ -2229,7 +2217,6 @@ else
     if test "x$bc_build_png" = "xno" ; then
 	if test "x$png_works" != "xyes" ; then
 	    AC_MSG_NOTICE([libpng was disabled, but no system png library was found])
-	    BC_RETRY_CONFIGURE([$this], [$args])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --enable-png-build])
 	    AC_MSG_ERROR([*** Building libpng was disabled, yet no system png library was found ***])
@@ -2287,7 +2274,6 @@ else
     if test "x$bc_build_regex" = "xno" ; then
 	if test "x$regex_works" != "xyes" ; then
 	    AC_MSG_NOTICE([libregex was disabled, but no system regular expression library was found])
-	    BC_RETRY_CONFIGURE([$this], [$args])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --enable-regex-build])
 	    AC_MSG_ERROR([*** Building libregex was disabled, yet no system regex was found ***])
@@ -2335,7 +2321,6 @@ else
     if test "x$bc_build_zlib" = "xno" ; then
 	if test "x$zlib_works" != "xyes" ; then
 	    AC_MSG_NOTICE([libz was disabled, but no system zlib compression library was found])
-	    BC_RETRY_CONFIGURE([$this], [$args])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --enable-zlib-build])
 	    AC_MSG_ERROR([*** Building libz was disabled, yet no system zlib compression library was found ***])
@@ -2392,7 +2377,6 @@ else
     if test "x$bc_build_urt" = "xno" ; then
 	if test "x$urt_works" != "xyes" ; then
 	    AC_MSG_NOTICE([Utah Raster Toolkit was disabled, but no system URT/RLE library was found ***])
-	    BC_RETRY_CONFIGURE([$this], [$args])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --enable-urt-build])
 	    AC_MSG_ERROR([*** Utah Raster Toolkit was disabled, yet no usable RLE system library was found ***])
@@ -2523,7 +2507,6 @@ else
     if test "x$bc_build_tcl" = "xno" ; then
 	if test "x$tcl_works" = "xno" ; then
 	    AC_MSG_NOTICE([libtcl was disabled, but no system Tcl library was found])
-	    BC_RETRY_CONFIGURE([$this], [$args])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --enable-tcl-build])
 	    AC_MSG_ERROR([*** Tcl was disabled, yet no usable libtcl system library was found ***])
@@ -2638,7 +2621,6 @@ else
     if test "x$bc_build_tk" = "xno" ; then
 	if test "x$tk_works" = "xno" ; then
 	    AC_MSG_NOTICE([libtk was disabled, but no system Tk library was found])
-	    BC_RETRY_CONFIGURE([$this], [$args])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --enable-tk-build])
 	    AC_MSG_ERROR([*** Tk was disabled, yet no usable libtk system library was found ***])
@@ -2733,7 +2715,6 @@ else
     if test "x$bc_build_itcl" = "xno" ; then
 	if test "x$itcl_works" = "xno" ; then
 	    AC_MSG_NOTICE([incrTcl was disabled, but no system incrTcl library was found])
-	    BC_RETRY_CONFIGURE([$this], [$args])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --enable-itcl-build])
 	    AC_MSG_ERROR([*** incrTcl was disabled, yet no usable libitcl system library was found ***])
@@ -2821,7 +2802,6 @@ else
     if test "x$bc_build_iwidgets" = "xno" ; then
 	if test "x$iwidgets_works" = "xno" ; then
 	    AC_MSG_NOTICE([iwidgets was disabled, but no system iwidgets package was found])
-	    BC_RETRY_CONFIGURE([$this], [$args])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --enable-iwidgets-build])
 	    AC_MSG_ERROR([*** iwidgets was disabled, yet no usable iwidgets system package was found ***])
@@ -2915,7 +2895,6 @@ else
     if test "x$bc_build_tnt" = "xno" ; then
 	if test "x$tnt_works" != "xyes" ; then
 	    AC_MSG_NOTICE([TNT was disabled, but no suitable system TNT was found])
-	    BC_RETRY_CONFIGURE([$this], [$args])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --enable-tnt-build])
 	    AC_MSG_ERROR([*** Use of the included TNT was disabled, yet no system TNT was found ***])
@@ -3012,7 +2991,6 @@ else
     if test "x$bc_build_termlib" = "xno" ; then
 	if test "x$termlib_works" != "xyes" ; then
 	    AC_MSG_NOTICE([termlib was disabled, but no system terminal library was found])
-	    BC_RETRY_CONFIGURE([$this], [$args])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --enable-termlib-build])
 	    AC_MSG_ERROR([*** Building termlib was disabled, yet no system termcap or curses library was found ***])
@@ -3179,7 +3157,6 @@ if test "x$bc_with_java" != "xno" ; then
 	if test "x$bc_only_rts" != "xno" ; then
 	    AC_MSG_RESULT(no)
 	    AC_MSG_NOTICE([searching more extensively])
-	    BC_RETRY_CONFIGURE([$this], [$args])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
 	    AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
@@ -3187,7 +3164,6 @@ if test "x$bc_with_java" != "xno" ; then
 	if test "x$bc_with_java" = "xyes" ; then
 	    AC_MSG_RESULT(no)
 	    AC_MSG_NOTICE([searching more extensively])
-	    BC_RETRY_CONFIGURE([$this], [$args])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_ERROR([Failed to locate a functioning jni.h for Java])
 	fi
@@ -3277,7 +3253,6 @@ main(int argc, char *argv[]) {
     else
 	if test "x$bc_with_opengl" = "xyes" ; then
 	    AC_MSG_NOTICE([OpenGL was requested, but no system OpenGL libraries were found])
-	    BC_RETRY_CONFIGURE([$this], [$args])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --without-opengl])
 	    AC_MSG_ERROR([*** Using OpenGL was requested, yet no system OpenGL was found ***])
@@ -3321,7 +3296,6 @@ main(int argc, char *argv[]) {
     else
 	if test "x$bc_with_wgl" = "xyes" ; then
 	    AC_MSG_NOTICE([WindowsGL was requested, but no system WGL OpenGL libraries were found])
-	    BC_RETRY_CONFIGURE([$this], [$args])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --without-wgl])
 	    AC_MSG_ERROR([*** Using WindowsGL was requested, yet no system WGL OpenGL was found ***])
@@ -3382,7 +3356,6 @@ main() {
 		build_against_x11="yes"
 	    else
 		if test "x$bc_with_x11" = "xyes" ; then
-		    BC_RETRY_CONFIGURE([$this], [$args])
 		    AC_MSG_NOTICE([X11 was requested, but no system X11 libraries were found])
 		    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		    AC_MSG_NOTICE([Try adding --without-x11])
@@ -3450,13 +3423,11 @@ elif test "x$bc_build_adrt" = "xyes" ; then
     build_brlcad_adrt="yes"
     if test "x$sdl_works" = "xno" ; then
 	AC_MSG_NOTICE([ADRT requires SDL (and Python)])
-	BC_RETRY_CONFIGURE([$this], [$args])
 	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	AC_MSG_NOTICE([Try adding --disable-adrt-build])
 	AC_MSG_ERROR([*** Using ADRT was requested, yet no system SDL library was found ***])
     elif test "x$python_works" = "xno" ; then
 	AC_MSG_NOTICE([ADRT requires Python (and SDL)])
-	BC_RETRY_CONFIGURE([$this], [$args])
 	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	AC_MSG_NOTICE([Try adding --disable-adrt-build])
 	AC_MSG_ERROR([*** Using ADRT was requested, yet no system Python interpreter was found ***])
