@@ -76,18 +76,20 @@ int main(int argc, char **argv){
     fastf_t total_fitness;
     struct fitness_state *fstate;
 
-    if(argc != 6){
-	fprintf(stderr, "Usage: %s database rows cols source_object test_object\n", argv[0]);
+    if(argc != 5){
+	fprintf(stderr, "Usage: %s database rows cols source_object\n", argv[0]);
 	return 1;
     }
 
     fstate = fit_prep(argv[1], atoi(argv[2]), atoi(argv[3]));
     fstate->db->dbi_wdbp = wdb_dbopen(fstate->db, RT_WDB_TYPE_DB_DISK);
 
+    printf("____STORED MODEL____\n");
     fit_store(argv[4], fstate);
 
-    pop_init(&pop, 2);
+    pop_init(&pop, 1);
     pop_spawn(pop, fstate->db->dbi_wdbp);
+    printf("___POPULATION_MODEL___\n");
 
     for(g = 0; g < 1; g++){
 	for(i = 0; i < pop->size; i++) {
@@ -95,7 +97,6 @@ int main(int argc, char **argv){
 	}
 	qsort(pop->individual, pop->size, sizeof(struct individual), cmp_ind);
 
-	printf("%s:\t%.5g\t%.5g\n", _L.id, _L.fitness, _L.r);
 	/* calculate total fitness */
 	total_fitness = 0;
 
@@ -104,7 +105,6 @@ int main(int argc, char **argv){
 	    total_fitness += pop->individual[i].fitness;
 	}
 	for(i = 0; i < pop->size; i++){
-	    printf("%s\tr:%g\tf:%g\n", pop->individual[i].id, pop->individual[i].r, pop->individual[i].fitness);
 	    ind = pop_wrand_ind(pop->individual, pop->size, total_fitness);
 	    gop = pop_wrand_gop(); // to be implemented...
 	    //going to need random node calculation for these too ...
@@ -115,7 +115,6 @@ int main(int argc, char **argv){
 	    switch(CROSSOVER){
 		case MUTATE_MOD:  // mutate but do not replace values, modify them by +- MOD_RATE
 		    pop->offspring[i].r += -.1 + (.2 * (pop_rand()));
-		    printf("off: %g\n", pop->offspring[i].r);
 		    break;
 		case MUTATE_RAND:
 		    pop->offspring[i].r = 1+pop_rand() * SCALE;

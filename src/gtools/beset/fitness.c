@@ -101,9 +101,10 @@ capture_hit(register struct application *ap, struct partition *partHeadp, struct
     struct part *add;
     for(pp = partHeadp->pt_forw; pp != partHeadp; pp = pp->pt_forw){
 	add = bu_malloc(sizeof(struct part), "part");
+	printf("hit values: [%.5g\t%.5g]\n", pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
 	add->inhit_dist =   pp->pt_inhit->hit_dist   / (((struct fitness_state *)ap->a_uptr)->rtip->rti_radius * 2);
 	add->outhit_dist =  pp->pt_outhit->hit_dist  / (((struct fitness_state *)ap->a_uptr)->rtip->rti_radius * 2);
-//	printf("[%.5g\t%.5g]\n", add->inhit_dist, add->outhit_dist);
+	printf("normalized: [%.5g\t%.5g]\n", add->inhit_dist, add->outhit_dist);
 	BU_LIST_INSERT(&((struct fitness_state *)ap->a_uptr)->rays[ap->a_user]->l, &add->l);
     }
     return 1;
@@ -139,8 +140,9 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 
     mp = BU_LIST_FORW(part, &fstate->rays[ap->a_user]->l);
 
+	printf("hit values: [%g\t%g]\nnormalized: [%g\t%g]\n",pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist,pp->pt_inhit->hit_dist/(fstate->rtip->rti_radius *2.0), pp->pt_outhit->hit_dist/(fstate->rtip->rti_radius *2.0));
+
     while(pp != partHeadp && mp != fstate->rays[ap->a_user]) {
-	printf("[%g\t%g] [%g\t%g]\n", mp->inhit_dist, mp->outhit_dist,   pp->pt_inhit->hit_dist/(fstate->rtip->rti_radius *2.0), pp->pt_outhit->hit_dist/(fstate->rtip->rti_radius *2.0));
 	if(status & STATUS_PP)	xp = pp->pt_outhit->hit_dist/(fstate->rtip->rti_radius *2.0);
 	else			xp = pp->pt_inhit->hit_dist/(fstate->rtip->rti_radius *2.0);
 	if(status & STATUS_MP)	yp = mp->outhit_dist;
@@ -234,7 +236,6 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 int
 compare_miss(register struct application *ap)
 {
-    printf("miss\n");
     compare_hit(ap, NULL, NULL);
     return 0;
 }
@@ -324,6 +325,10 @@ fit_rt(char *obj, struct fitness_state *fstate)
 	bn_rand_init(fstate->resource[i].re_randptr, i);
     }
     rt_prep_parallel(fstate->rtip,fstate->ncpu);
+
+    printf("radius: %g\n", fstate->rtip->rti_radius);
+    VPRINT("min", fstate->rtip->mdl_min);
+    VPRINT("max", fstate->rtip->mdl_max);
 
     VSUB2(span, fstate->rtip->mdl_max, fstate->rtip->mdl_min);
     fstate->gridSpacing[U_AXIS] = span[U_AXIS] / (fstate->res[U_AXIS] + 1);
