@@ -101,10 +101,8 @@ capture_hit(register struct application *ap, struct partition *partHeadp, struct
     struct part *add;
     for(pp = partHeadp->pt_forw; pp != partHeadp; pp = pp->pt_forw){
 	add = bu_malloc(sizeof(struct part), "part");
-	printf("hit values: [%.5g\t%.5g]\n", pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
-	add->inhit_dist =   pp->pt_inhit->hit_dist   / (((struct fitness_state *)ap->a_uptr)->rtip->rti_radius * 2);
-	add->outhit_dist =  pp->pt_outhit->hit_dist  / (((struct fitness_state *)ap->a_uptr)->rtip->rti_radius * 2);
-	printf("normalized: [%.5g\t%.5g]\n", add->inhit_dist, add->outhit_dist);
+	add->inhit_dist =   ((((struct fitness_state *)ap->a_uptr)->bbox[0])+ pp->pt_inhit->hit_dist) / (((struct fitness_state *)ap->a_uptr)->bbox[1]);
+	add->outhit_dist =   ((((struct fitness_state *)ap->a_uptr)->bbox[0])+ pp->pt_outhit->hit_dist) / (((struct fitness_state *)ap->a_uptr)->bbox[1]);
 	BU_LIST_INSERT(&((struct fitness_state *)ap->a_uptr)->rays[ap->a_user]->l, &add->l);
     }
     return 1;
@@ -140,11 +138,10 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 
     mp = BU_LIST_FORW(part, &fstate->rays[ap->a_user]->l);
 
-	printf("hit values: [%g\t%g]\nnormalized: [%g\t%g]\n",pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist,pp->pt_inhit->hit_dist/(fstate->rtip->rti_radius *2.0), pp->pt_outhit->hit_dist/(fstate->rtip->rti_radius *2.0));
 
     while(pp != partHeadp && mp != fstate->rays[ap->a_user]) {
-	if(status & STATUS_PP)	xp = pp->pt_outhit->hit_dist/(fstate->rtip->rti_radius *2.0);
-	else			xp = pp->pt_inhit->hit_dist/(fstate->rtip->rti_radius *2.0);
+	if(status & STATUS_PP)	xp = (fstate->bbox[0] + pp->pt_outhit->hit_dist)/(fstate->bbox[1]);
+	else			xp = (fstate->bbox[0] + pp->pt_inhit->hit_dist)/(fstate->bbox[1]);
 	if(status & STATUS_MP)	yp = mp->outhit_dist;
 	else			yp = mp->inhit_dist;
     	
@@ -204,7 +201,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 	}
     }
     if(status == STATUS_PP){
-	fstate->diff+= pp->pt_outhit->hit_dist/(fstate->rtip->rti_radius*2) - lastpt;
+	fstate->diff+= (fstate->bbox[0] +  pp->pt_outhit->hit_dist)/fstate->bbox[1] - lastpt;
 	pp = pp->pt_forw;
     }
     if(status == STATUS_MP){
@@ -220,7 +217,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
     }
     else if (pp != partHeadp){
 	while(pp != partHeadp){
-	    fstate->diff += (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist) / (fstate->rtip->rti_radius * 2);
+	    fstate->diff += (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist) / (fstate->bbox[1]);
 	    pp = pp->pt_forw;
 	}
     }
@@ -323,15 +320,17 @@ fit_rt(char *obj, struct fitness_state *fstate)
 	rt_init_resource(&fstate->resource[i], i, fstate->rtip);
 	bn_rand_init(fstate->resource[i].re_randptr, i);
     }
+
+    
+
+       fstate->bbox[0] = fstate->rtip->mdl_min[Z];
+    fstate->bbox[1] = fstate->rtip->mdl_max[Z] - fstate->bbox[0];
     rt_prep_parallel(fstate->rtip,fstate->ncpu);
-
-    printf("radius: %g\n", fstate->rtip->rti_radius);
-    VPRINT("min", fstate->rtip->mdl_min);
-    VPRINT("max", fstate->rtip->mdl_max);
-
+    fstate->bbox[0] = fstate->rtip->mdl_min[Z] - fstate->bbox[0];
+ 
     VSUB2(span, fstate->rtip->mdl_max, fstate->rtip->mdl_min);
-    fstate->gridSpacing[U_AXIS] = span[U_AXIS] / (fstate->res[U_AXIS] + 1);
-    fstate->gridSpacing[V_AXIS] = span[V_AXIS] / (fstate->res[V_AXIS] + 1 );
+    fstate->gridSpacing[U_AXIS] = (fstate->rtip->mdl_max[U_AXIS]-fstate->rtip->mdl_min[U_AXIS])/ (fstate->res[U_AXIS] + 1);
+    fstate->gridSpacing[V_AXIS] = (fstate->rtip->mdl_max[V_AXIS] - fstate->rtip->mdl_min[V_AXIS]) / (fstate->res[V_AXIS] + 1 );
     fstate->row = 0;
     fstate->diff = 0;
 

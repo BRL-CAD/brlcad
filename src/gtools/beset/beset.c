@@ -68,8 +68,6 @@ static int cmp_ind(const void *p1, const void *p2)
 
 
 int main(int argc, char *argv[]){
-    /* general inint stuff, parallel stuff, break into parallel function */
-    point_t p1;
     int i, g; /* generation and individual counters */
     int ind;
     int gop;
@@ -111,24 +109,23 @@ int main(int argc, char *argv[]){
     }
     fstate->db->dbi_wdbp = wdb_dbopen(fstate->db, RT_WDB_TYPE_DB_DISK);
 
-    printf("____STORED MODEL____\n");
     fit_store(argv[3], fstate);
 
-    pop_init(&pop, 1);
+    pop_init(&pop, 10);
     pop_spawn(pop, fstate->db->dbi_wdbp);
-    printf("___POPULATION_MODEL___\n");
 
-    for(g = 0; g < 1; g++){
+    for(g = 0; g < 10; g++){
 	for(i = 0; i < pop->size; i++) {
 	   pop->individual[i].fitness = 1.0-fit_linDiff(pop->individual[i].id, fstate);
 	}
-	qsort(pop->individual, pop->size, sizeof(struct individual), cmp_ind);
+	//qsort(pop->individual, pop->size, sizeof(struct individual), cmp_ind);
 
 	/* calculate total fitness */
 	total_fitness = 0;
 
 	for (i = 0; i < pop->size; i++) {
 
+	    //printf("%s\tr:%g\tf:%g\n", pop->individual[i].id, pop->individual[i].r, pop->individual[i].fitness);
 	    total_fitness += pop->individual[i].fitness;
 	}
 	for(i = 0; i < pop->size; i++){
@@ -138,8 +135,7 @@ int main(int argc, char *argv[]){
 
 	    pop->offspring[i] = pop->individual[ind];
 
-	    //printf("ind: %g -- %g\n", pop->offspring[i].r, pop->individual[ind].r);
-	    switch(CROSSOVER){
+	    switch(gop){
 		case MUTATE_MOD:  // mutate but do not replace values, modify them by +- MOD_RATE
 		    pop->offspring[i].r += -.1 + (.2 * (pop_rand()));
 		    break;
@@ -161,6 +157,10 @@ int main(int argc, char *argv[]){
 	printf("GENERATION %d COMPLETE\n", g);
 
     }
+    printf("\nFINAL POPULATION\n----------------\n");
+    for(i = 0; i < pop->size; i++)
+	printf("%s\tr:%5g\tf:%.5g\n", pop->offspring[i].id, 
+		pop->offspring[i].r, pop->offspring[i].fitness);
 
     //fit_updateRes(atoi(argv[1])*2, atoi(argv[2])*2);
 

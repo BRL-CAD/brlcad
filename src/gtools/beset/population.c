@@ -93,7 +93,7 @@ pop_spawn (struct population *p, struct rt_wdb *db_fp)
 	VSET(p->individual[i].p, 1.0, 5.0, 0.0);
 	snprintf(p->individual[i].id, 256, "i%d.s", i);
 	p->individual[i].fitness = 0.0;
-	p->individual[i].r = 1.0+i;//1 + (10.0 * BN_RANDOM(idx));
+	p->individual[i].r = 1 + (10.0 * BN_RANDOM(idx));
 	p->individual[i].type = GEO_SPHERE;
 	mk_sph(db_fp, p->individual[i].id, p->individual[i].p, p->individual[i].r);
     }

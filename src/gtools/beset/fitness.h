@@ -62,6 +62,8 @@ struct fitness_state {
     
     int capture; /* flags whether to store the object */
     fastf_t diff; /* linear difference between source and object */
+
+    fastf_t bbox[3]; /* z-min/max bounding line */
 };
 
 /* store a ray that hit */
