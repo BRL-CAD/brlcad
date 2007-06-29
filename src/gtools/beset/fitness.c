@@ -318,7 +318,6 @@ fit_rt(char *obj, struct fitness_state *fstate)
 	fprintf(stderr, "rt_gettree failed to read %s\n", obj);
 	exit(2);
     }
-
     
     for(i = 0; i < fstate->max_cpus; i++) {
 	rt_init_resource(&fstate->resource[i], i, fstate->rtip);
@@ -396,14 +395,14 @@ fit_prep(char *db, int rows, int cols)
      */
     if( (fstate->db = db_open(db, "r+w")) == DBI_NULL) {
 	bu_free(fstate, "fstate");
-	return DB_OPEN_FAILURE;
+	return (struct fitness_state *)DB_OPEN_FAILURE;
     }
     RT_CK_DBI(fstate->db);
 
     if( db_dirbuild(fstate->db) < 0) {
 	db_close(fstate->db);
 	bu_free(fstate, "fstate");
-	return DB_DIRBUILD_FAILURE;
+	return (struct fitness_state *)DB_DIRBUILD_FAILURE;
     }
 
     fstate->capture = 0;
