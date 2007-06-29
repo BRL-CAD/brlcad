@@ -307,7 +307,7 @@ rt_worker(int cpu, genptr_t g)
  *	F I T _ R T --- raytrace an object optionally storing the rays
  *
  */
-int
+void
 fit_rt(char *obj, struct fitness_state *fstate)
 {
     int i;
@@ -395,14 +395,16 @@ fit_prep(char *db, int rows, int cols)
      */
     if( (fstate->db = db_open(db, "r+w")) == DBI_NULL) {
 	bu_free(fstate, "fstate");
-	return (struct fitness_state *)DB_OPEN_FAILURE;
+	fprintf(stderr, "Failed to open database %s\n", db);
+	exit(1); 
     }
     RT_CK_DBI(fstate->db);
 
     if( db_dirbuild(fstate->db) < 0) {
 	db_close(fstate->db);
 	bu_free(fstate, "fstate");
-	return (struct fitness_state *)DB_DIRBUILD_FAILURE;
+	fprintf(stderr, "Failed to build directory structure on %s\n", db);
+	exit(1);
     }
 
     fstate->capture = 0;

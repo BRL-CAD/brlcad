@@ -83,7 +83,7 @@ int get_next_row(struct fitness_state *fstate);
 void rt_worker(int cpu, genptr_t g);
 
 /* prep for raytracing object, and call rt_worker for parallel processing */
-int fit_rt (char *obj, struct fitness_state *fstate);
+void fit_rt (char *obj, struct fitness_state *fstate);
 
 /* load database and prepare fstate for work */
 struct fitness_state * fit_prep(char *db, int rows, int cols);
