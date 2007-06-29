@@ -512,7 +512,8 @@ brep_edge_check(int reason,
 		// edge
 		const ON_Curve* curve = edge->EdgeCurveOf();
 		double curve_t, ray_t;
-		if (curve->CloseTo(r, BREP_EDGE_MISS_TOLERANCE, curve_t, ray_t)) {
+		Sample s;
+		if (curve->CloseTo(r, BREP_EDGE_MISS_TOLERANCE, s)) {
 		    // since the ray is within tolerance, we need to
 		    // find out on which side of the curve it
 		    // passes. If it's on the left side, then we've
