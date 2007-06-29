@@ -34,11 +34,19 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
+#
+# BRL-CAD configuration script for determining compilation
+# characteristics of a given install.
+# 
+# Author -
+#   Christopher Sean Morrison
+###
 
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 includedir=@includedir@
 libdir=@libdir@
+
 
 usage ( ) {
     cat <<EOF
@@ -48,8 +56,11 @@ Options:
     [ --help ]
     [ --version ]
     [ --cflags ]
+    [ --ldflags ]
     [ --libs ]
     [ --prefix[=DIR] ]
+    [ --libdir[=DIR] ]
+    [ --includedir[=DIR] ]
 
 Libraries:
     bn
@@ -67,10 +78,12 @@ EOF
     exit 1
 }
 
+# need at least a library or an action
 if test $# -eq 0; then
     usage 1>&2
 fi
 
+libs=""
 specified=no
 while test $# -gt 0; do
     case "$1" in
@@ -79,23 +92,45 @@ while test $# -gt 0; do
     esac
 
     case $1 in
+	--prefix)
+	    echo_prefix=yes
+	    specified=yes
+	    ;;
 	--prefix=*)
 	    prefix="$optarg"
 	    exec_prefix="$prefix"
 	    includedir="${prefix}/include"
 	    libdir="${prefix}/lib"
 	    ;;
-	--prefix)
-	    echo_prefix=yes
+	--includedir)
+	    echo_includedir=yes
+	    specified=yes
+	    ;;
+	--includedir=*)
+	    includedir="$optarg"
+	    ;;
+	--libdir)
+	    echo_libdir=yes
+	    specified=yes
+	    ;;
+	--libdir=*)
+	    libdir="$optarg"
 	    ;;
 	--version)
 	    echo_version=yes
+	    specified=yes
 	    ;;
 	--cflags)
 	    echo_cflags=yes
+	    specified=yes
+	    ;;
+	--ldflags)
+	    echo_ldflags=yes
+	    specified=yes
 	    ;;
 	--libs)
 	    echo_libs=yes
+	    specified=yes
 	    ;;
 	--help)
 	    usage 1>&2
@@ -140,123 +175,201 @@ while test $# -gt 0; do
     shift
 done
 
+# determine the behavior of echo
+case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
+    *c*,-n*) ECHO_N= ECHO_C='
+' ECHO_T='	' ;;
+    *c*,*  ) ECHO_N=-n ECHO_C= ECHO_T= ;;
+    *)       ECHO_N= ECHO_C='\c' ECHO_T= ;;
+esac
+
+# default action is libs and ldflags
+if test "x$specified" = "xno" ; then
+    echo_libs=yes
+    echo_ldflags=yes
+fi
+
 if test "x$libs" = "x" ; then
-    # default lib
+    # default lib is libbrlcad
     libs="-lbrlcad"
 fi
 
 if test "x$echo_version" = "xyes" ; then
-    echo @BRLCAD_VERSION@
+    echo "@BRLCAD_VERSION@"
 fi
 
 if test "x$echo_prefix" = "xyes"; then
-    echo ${prefix}
+    echo "${prefix}"
 fi
 
-if test "$echo_cflags" = "yes"; then
-    echo -I${includedir}/brlcad -I${includedir} @CPPFLAGS@ @CFLAGS@
+if test "x$echo_libdir" = "xyes"; then
+    echo "${libdir}"
+fi
+
+if test "x$echo_includedir" = "xyes"; then
+    echo "${includedir}"
 fi
 
 
 check ( ) {
-    __cadlibs="$1"
-    shift
+    __cadlibs="$*"
     __result=""
-    for l in $* ; do
+    for new in $__cadlibs ; do
+	case "x$new" in
+	    x/*)
+		new="`basename \"$new\"`"
+		new="-l`echo $new | sed 's/^lib//' | sed 's/\.la$//'`"
+		;;
+	    *)
+		;;
+	esac
+		
 	__found=no
-	for c in $__cadlibs ; do
-	    if test "x$l" = "x$c" ; then
+	for already in $__result ; do
+	    if test "x$new" = "x$already" ; then
 		__found=yes
 		break
 	    fi
 	done
 	if test "x$__found" = "xno" ; then
-	    __result="$__result $l"
+	    __result="$__result $new"
 	fi
     done
-    echo $__result
+    echo $__result 
 }
+
+
+# stash the info
+BN="@BN@ @BN_LIBS@"
+BRLCAD="@BRLCAD@ @BRLCAD_LIBS@"
+BU="@BU@ @BU_LIBS@"
+DM="@DM@ @DM_LIBS@"
+FB="@FB@ @FB_LIBS@"
+FFT="@FFT@ @FFT_LIBS@"
+MULTISPECTRAL="@MULTISPECTRAL@ @MULTISPECTRAL_LIBS@"
+OPTICAL="@OPTICAL@ @OPTICAL_LIBS@"
+PKG="@PKG@ @PKG_LIBS@"
+RT="@RT@ @RT_LIBS@"
+WDB="@WDB@ @WDB_LIBS@"
+
 
 cadlibs=""
 for lib in $libs ; do
     case $lib in
 	-lbn)
 	    if test "x$bnadded" = "x" ; then
-		cadlibs="$cadlibs `check \"$cadlibs\" -lbn -lbu @LIBTCL@ @LIBM@`"
+		cadlibs="$cadlibs $BN"
+		cadlibs="`check \"$cadlibs\"`"
 		bnadded=yes
 	    fi
 	    ;;
 	-lbrlcad)
 	    if test "x$brlcadadded" = "x" ; then
-		cadlibs="$cadlibs `check \"$cadlibs\" -lbrlcad @LIBTCL@ @LIBM@`"
+		cadlibs="$cadlibs $BRLCAD"
+		cadlibs="`check \"$cadlibs\"`"
 		brlcadadded=yes
 	    fi
 	    ;;
 	-lbu)
 	    if test "x$buadded" = "x" ; then
-		cadlibs="$cadlibs `check \"$cadlibs\" -lbu @LIBTCL@ @LIBM@`"
+		cadlibs="$cadlibs $BU"
+		cadlibs="`check \"$cadlibs\"`"
 		buadded=yes
 	    fi
 	    ;;
 	-ldm)
 	    if test "x$dmadded" = "x" ; then
-		cadlibs="$cadlibs `check \"$cadlibs\" -ldm -lrt -lbn -lbu @LIBTCL@ @LIBPNG@ @X_LIBS@ @LIBM@`"
+		cadlibs="$cadlibs $DM"
+		cadlibs="`check \"$cadlibs\"`"
 		dmadded=yes
 	    fi
 	    ;;
 	-lfb)
 	    if test "x$fbadded" = "x" ; then
-		cadlibs="$cadlibs `check \"$cadlibs\" -lfb -lbu -lpkg @LIBTCL@ @X_LIBS@ @LIBM@`"
+		cadlibs="$cadlibs $FB"
+		cadlibs="`check \"$cadlibs\"`"
 		fbadded=yes
 	    fi
 	    ;;
 	-lfft)
 	    if test "x$fftadded" = "x" ; then
-		cadlibs="$cadlibs `check \"$cadlibs\" -lfft @LIBM@`"
+		cadlibs="$cadlibs $FFT"
+		cadlibs="`check \"$cadlibs\"`"
 		fftadded=yes
 	    fi
 	    ;;
 	-lmultispectral)
 	    if test "x$multispectraladded" = "x" ; then
-		cadlibs="$cadlibs `check \"$cadlibs\" -lmultispectral -lrt -lbn -lbu @LIBTCL@ @LIBM@`"
+		cadlibs="$cadlibs $MULTISPECTRAL"
+		cadlibs="`check \"$cadlibs\"`"
 		multispectraladded=yes
 	    fi
 	    ;;
 	-loptical)
 	    if test "x$opticaladded" = "x" ; then
-		cadlibs="$cadlibs `check \"$cadlibs\" -optical -lrt -lbn -lbu @LIBTCL@ @LIBM@`"
+		cadlibs="$cadlibs $OPTICAL"
+		cadlibs="`check \"$cadlibs\"`"
 		opticaladded=yes
 	    fi
 	    ;;
 	-lpkg)
 	    if test "x$pkgadded" = "x" ; then
-		cadlibs="$cadlibs `check \"$cadlibs\" -lpkg -lbu @LIBTCL@ @LIBM@`"
+		cadlibs="$cadlibs $PKG"
+		cadlibs="`check \"$cadlibs\"`"
 		pkgadded=yes
 	    fi
 	    ;;
 	-lrt)
 	    if test "x$rtadded" = "x" ; then
-		cadlibs="$cadlibs `check \"$cadlibs\" -lrt -lbn -lbu @LIBOPENNURBS@ @LIBSTDCXX@ @LIBTCL@ @LIBREGEX@ @LIBM@`"
+		cadlibs="$cadlibs $RT"
+		cadlibs="`check \"$cadlibs\"`"
 		rtadded=yes
 	    fi
 	    ;;
 	-lwdb)
 	    if test "x$wdbadded" = "x" ; then
-		cadlibs="$cadlibs `check \"$cadlibs\" -lwdb -lrt -lbn -lbu @LIBTCL@ @LIBM@`"
+		cadlibs="$cadlibs $WDB"
+		cadlibs="`check \"$cadlibs\"`"
 		wdbadded=yes
 	    fi
 	    ;;
 	*)
+	    if test "x$need_newline" = "xyes" ; then
+		echo ""
+	    fi
 	    echo "Internal Error: improperly added library encountered"
 	    exit 2
 	    ;;
     esac
 done
 
-# libs/ldflags
-if test "$echo_libs" = "yes"; then
-    echo -L${libdir} $cadlibs @LDFLAGS@ @LIBS@
+
+CPPFLAGS="@CPPFLAGS"
+CFLAGS="@CFLAGS@"
+LDFLAGS="@LDFLAGS@"
+LIBS="@LIBS@"
+
+# keep track of whether we need a trailing newline
+need_newline=no
+
+if test "x$echo_cflags" = "xyes"; then
+    echo $ECHO_N "-I${includedir}/brlcad -I${includedir} $CPPFLAGS $CFLAGS $ECHO_C"
+    need_newline=yes
+fi
+
+if test "x$echo_ldflags" = "xyes"; then
+    echo $ECHO_N "-L${libdir} $LDFLAGS $ECHO_C"
+    need_newline=yes
 fi      
+
+if test "x$echo_libs" = "xyes"; then
+    echo $ECHO_N "-L${libdir} $cadlibs $LIBS $ECHO_C"
+    need_newline=yes
+fi      
+
+if test "x$need_newline" = "xyes" ; then
+    echo ""
+fi
 
 # Local Variables:
 # tab-width: 8
