@@ -47,7 +47,20 @@ public:
   ON_3dPoint PointAt(double t) const {
     return m_origin + m_dir * t;
   }
+
+  double DistanceTo(const ON_3dPoint& pt, double* out_t = NULL) const {
+    ON_3dVector w = pt - m_origin;
+    double c1 = w * m_dir;
+    if (c1 <= 0) return pt.DistanceTo(m_origin);
+    double c2 = m_dir * m_dir;
+    double b = c1 / c2;
+    ON_3dPoint p = m_dir * b + m_origin;
+    if (out_t != NULL) *out_t = b;
+    return p.DistanceTo(pt);
+  }
 };  
+
+class Sample;
 
 
 typedef int (*ON_MassPropertiesCurve)( const ON_Curve&, void*, int, ON_3dPoint, ON_3dVector, ON_MassProperties&, bool, bool, bool, bool, double, double );
@@ -895,7 +908,7 @@ public:
      less than epsilon, then the ray is close to the edge.
 
   */
-  virtual bool CloseTo(const ON_Ray& ray, double epsilon, double& curve_t, double& ray_t) const;
+  virtual bool CloseTo(const ON_Ray& ray, double epsilon, Sample& closest) const;
 
   /*
   Description:
@@ -1586,6 +1599,38 @@ bool ON_SortCurves(
           ON_SimpleArray<int>& index, 
           ON_SimpleArray<bool>& bReverse 
           );
+
+
+#define CLOSETO_CHORD_TOL 1e-3
+#define CLOSETO_DER_TOL 0.85 // the min value of the product of the dot products
+
+class Sample {
+public:
+  const ON_Curve* c;
+  ON_3dPoint pt;
+  ON_3dVector tangent;
+  double t;
+  double dist;
+  double ray_t;
+
+  Sample() {}
+
+  Sample(const ON_Curve* curve, double param) : c(curve), t(param), dist(0.0) {
+    c->Ev1Der(t, pt, tangent);
+  }
+  Sample(const Sample& s) :
+    c(s.c), pt(s.pt), tangent(s.tangent), t(s.t) {}
+  Sample& operator=(const Sample& s) {
+    c = s.c;
+    pt = s.pt;
+    tangent = s.tangent;
+    t = s.t;
+  }
+
+  bool operator<(const Sample& s) {
+    return (ON_NearZero(dist-s.dist,ON_ZERO_TOLERANCE)) ? t < s.t : dist < s.dist;
+  }
+};
 
 
 #endif

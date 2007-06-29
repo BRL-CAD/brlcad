@@ -1,5 +1,7 @@
 #include "opennurbs.h"
 #include <assert.h>
+#include <list>
+
 
 ON_VIRTUAL_OBJECT_IMPLEMENT(ON_Curve,ON_Geometry,"4ED7D4D7-E947-11d3-BFE5-0010830122F0");
 
@@ -3154,32 +3156,6 @@ ON_Curve::NumIntersectionsWith(const ON_Line& segment) const {
   assert(false);
 }
 
-#include <list>
-
-class Sample {
-public:
-  ON_Curve* c;
-  ON_3dPoint pt;
-  ON_3dVector tangent;
-  double t;
-  double dist;
-
-  Sample(ON_Curve* curve, double param) : c(curve), t(param), dist(0.0) {
-    c->Ev1Der(t, pt, tangent);
-  }
-  Sample(const Sample& s) :
-    c(s.c), pt(s.pt), tangent(s.tangent), t(s.t) {}
-  Sample& operator=(const Sample& s) {
-    c = s.c;
-    pt = s.pt;
-    tangent = s.tangent;
-    t = s.t;
-  }
-
-  bool operator<(const Sample& s) {
-    return (ON_NearZero(dist-s.dist,ON_ZERO_TOLERANCE)) ? t < s.t : dist < s.dist;
-  }
-};
 
 bool 
 isFlat(const Sample& p1, const Sample& m, const Sample& p2, double chord_tol, double der_tol)
@@ -3190,16 +3166,91 @@ isFlat(const Sample& p1, const Sample& m, const Sample& p2, double chord_tol, do
   return (der >= der_tol) && (chord <= chord_tol);
 }
 
-void sample(ON_Curve* c, std::list<Sample>& out_samples) {
-  
+double
+randomMidrange(double lo, double hi)
+{
+  assert(lo < hi);
+#ifdef HAVE_DRAND48
+  double random_pos = drand48() * .1 + .45;
+#else
+  double random_pos = rand() * .1 / (RAND_MAX+1.) + .45;
+#endif
+  return random_pos * (hi - lo) + lo;
 }
 
-bool
-ON_Curve::CloseTo(const ON_Ray& ray, double epsilon, double& curve_t, double& ray_t) const
-{  
-  
+void 
+sample(const ON_Curve* c, 
+       Sample& s1, 
+       Sample& s2,
+       std::list<Sample>& out_samples, 
+       double chord_tol, double der_tol) 
+{
+  Sample m(c, randomMidrange(s1.t,s2.t));
+  if (isFlat(s1,m,s2,chord_tol,der_tol)) {
+    out_samples.push_back(s2);
+  } else {
+    sample(c, s1, m, out_samples, chord_tol, der_tol);
+    sample(c, m, s2, out_samples, chord_tol, der_tol);
+  }
+}
 
-  return false;
+#define MAX_CLOSENESS_SEARCH_DEPTH 10
+
+Sample sample_arg_min(Sample& x, Sample& y, Sample& z) { 
+  if (x.dist < y.dist) {
+    if (x.dist < z.dist) return x;
+    else z;
+  } else {
+    if (y.dist < z.dist) return y;
+    else z;
+  }
+}
+
+Sample
+search(const ON_Curve* c,
+       const ON_Ray& ray,
+       Sample& left,
+       Sample& right,
+       double dist_tol = 1e-10, int depth = 0)
+{
+  Sample m(c, (right.t-left.t) * 0.5 + left.t);
+  if (depth > MAX_CLOSENESS_SEARCH_DEPTH) return sample_arg_min(left, m, right);
+
+  m.dist = ray.DistanceTo(m.pt, &m.ray_t);
+  if (m.dist < dist_tol) return m;
+
+  return search(c, ray, (left.dist < right.dist) ? left : right, m, dist_tol, ++depth);
+}
+
+//--------------------------------------------------------------------------------
+//Generally calculate the shortest distance (binary search) between
+//the curve and the given ray and determine if it is within a distance
+//epsilon
+bool
+ON_Curve::CloseTo(const ON_Ray& ray, double epsilon, Sample& closest) const
+{  
+  std::list<Sample> samples;
+  ON_Interval dom = Domain();
+  Sample left(this, dom.Min());
+  Sample right(this, dom.Max());
+  samples.push_back(left);
+  sample(this, left, right, samples, CLOSETO_CHORD_TOL, CLOSETO_DER_TOL);
+  
+  for (std::list<Sample>::iterator i = samples.begin(); i != samples.end(); ++i) {
+    i->dist = ray.DistanceTo(i->pt, &i->ray_t);
+  }  
+  samples.sort();  
+  // after sorting, we have the closest 2 sampled points, which
+  // *should* bound the closest point.
+
+  // use these to find the closest point through a 'binary' search 
+  std::list<Sample>::iterator i = samples.begin();
+  Sample s1 = *i;
+  Sample s2 = *++i;
+  if (s1.dist < epsilon) return true;
+  closest = search(this, ray, s1, s2, epsilon);
+
+  return closest.dist < epsilon;
 }
 
 bool ON_SortLines( 
