@@ -220,6 +220,15 @@ check ( ) {
 		new="`basename \"$new\"`"
 		new="-l`echo $new | sed 's/^lib//' | sed 's/\.la$//'`"
 		;;
+	    x-L/src/other*)
+		new=""
+		;;
+	    x-I/src/other*)
+		new=""
+		;;
+	    x-I/include)
+		new=""
+		;;
 	    *)
 		;;
 	esac
@@ -344,10 +353,14 @@ for lib in $libs ; do
 done
 
 
-CPPFLAGS="@CPPFLAGS"
+CPPFLAGS="@CPPFLAGS@"
+CPPFLAGS="`check $CPPFLAGS`"
 CFLAGS="@CFLAGS@"
+CFLAGS="`check $CFLAGS`"
 LDFLAGS="@LDFLAGS@"
+LDFLAGS="`check $LDFLAGS`"
 LIBS="@LIBS@"
+LIBS="`check $LIBS`"
 
 # keep track of whether we need a trailing newline
 need_newline=no
