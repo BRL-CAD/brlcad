@@ -82,6 +82,10 @@ int main(int argc, char **argv){
     }
 
     fstate = fit_prep(argv[1], atoi(argv[2]), atoi(argv[3]));
+    if (!fstate || fstate < 0) {
+	fprintf(stderr, "Error preparing %s\n", argv[1]);
+	return 2;
+    }
     fstate->db->dbi_wdbp = wdb_dbopen(fstate->db, RT_WDB_TYPE_DB_DISK);
 
     printf("____STORED MODEL____\n");
