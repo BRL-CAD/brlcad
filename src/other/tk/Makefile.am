@@ -125,7 +125,6 @@ prodclean-recursive:
 
 prodclean: prodclean-recursive
 	cd unix && rm -f libtk* wish tktest Tk
-	cd unix/dltest && $(MAKE) $(AM_MAKEFLAGS) clean
 
 fast: all-am
 
