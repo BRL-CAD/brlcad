@@ -85,15 +85,14 @@ int main(int argc, char *argv[]){
     argv++; argc--;
     while (argv[0][0] == '-') {
 	c = bu_getopt(argc, argv, "x:");
-	if (c == EOF) {
-	    break;
-	}
 	switch (c) {
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 		argc -= 2;
 		argv += 2;
 		continue;
+	    case EOF:
+		break;
 	    default:
 		fprintf(stderr, "Unrecognized option: -%c\n", c);
 		return 1;
