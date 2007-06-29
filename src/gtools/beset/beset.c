@@ -67,7 +67,7 @@ static int cmp_ind(const void *p1, const void *p2)
 
 
 
-int main(int argc, char **argv){
+int main(int argc, char *argv[]){
     /* general inint stuff, parallel stuff, break into parallel function */
     point_t p1;
     int i, g; /* generation and individual counters */
@@ -75,21 +75,45 @@ int main(int argc, char **argv){
     int gop;
     fastf_t total_fitness;
     struct fitness_state *fstate;
+    int c;
 
-    if(argc != 5){
-	fprintf(stderr, "Usage: %s database rows cols source_object\n", argv[0]);
+    bu_setprogname(argv[0]);
+
+    /* handle options */
+    bu_opterr = 0;
+    bu_optind = 0;
+    argv++; argc--;
+    while (argv[0][0] == '-') {
+	c = bu_getopt(argc, argv, "x:");
+	if (c == EOF) {
+	    break;
+	}
+	switch (c) {
+	    case 'x':
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		argc -= 2;
+		argv += 2;
+		continue;
+	    default:
+		fprintf(stderr, "Unrecognized option: -%c\n", c);
+		return 1;
+	}
+    }
+
+    if (argc != 4) {
+	fprintf(stderr, "Usage: %s [options] database rows cols source_object\n", bu_getprogname());
 	return 1;
     }
 
-    fstate = fit_prep(argv[1], atoi(argv[2]), atoi(argv[3]));
+    fstate = fit_prep(argv[0], atoi(argv[1]), atoi(argv[2]));
     if (!fstate || fstate < 0) {
-	fprintf(stderr, "Error preparing %s\n", argv[1]);
+	fprintf(stderr, "Error preparing %s\n", argv[0]);
 	return 2;
     }
     fstate->db->dbi_wdbp = wdb_dbopen(fstate->db, RT_WDB_TYPE_DB_DISK);
 
     printf("____STORED MODEL____\n");
-    fit_store(argv[4], fstate);
+    fit_store(argv[3], fstate);
 
     pop_init(&pop, 1);
     pop_spawn(pop, fstate->db->dbi_wdbp);
@@ -139,9 +163,7 @@ int main(int argc, char **argv){
 
     }
 
-
-
-    //fit_updateRes(atoi(argv[2])*2, atoi(argv[3])*2);
+    //fit_updateRes(atoi(argv[1])*2, atoi(argv[2])*2);
 
     fit_clean(fstate);
     pop_clean(pop);
