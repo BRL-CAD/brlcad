@@ -261,7 +261,7 @@ done:
 		bu_vls_init(&t_vls);
 
 		/* load vp with formats for printing */
-		for(; dgop->dgo_qray_fmts[i].type != (char)NULL; ++i)
+		for(; dgop->dgo_qray_fmts[i].type != (char)0; ++i)
 			bu_vls_printf(&t_vls, "fmt %c %s; ",
 				      dgop->dgo_qray_fmts[i].type,
 				      bu_vls_addr(&dgop->dgo_qray_fmts[i].fmt));

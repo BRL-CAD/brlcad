@@ -66,7 +66,7 @@ static struct dg_qray_fmt_data def_qray_fmt_data[] = {
   {'f', "\"\""},
   {'m', "\"You missed the target\\n\""},
   {'o', "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"},
-  {(char)NULL, (char *)NULL}
+  {(char)0, (char *)NULL}
 };
 
 static char qray_syntax[] = "\
@@ -89,7 +89,7 @@ qray_print_fmts(struct dg_obj	*dgop,
 {
 	int i;
 
-	for (i = 0; dgop->dgo_qray_fmts[i].type != (char)NULL; ++i)
+	for (i = 0; dgop->dgo_qray_fmts[i].type != (char)0; ++i)
 		Tcl_AppendResult(interp, bu_vls_addr(&dgop->dgo_qray_fmts[i].fmt),
 				 "\n", (char *)NULL);
 }
@@ -125,7 +125,7 @@ qray_get_fmt_index(struct dg_obj	*dgop,
 {
 	int i;
 
-	for (i = 0; dgop->dgo_qray_fmts[i].type != (char)NULL; ++i)
+	for (i = 0; dgop->dgo_qray_fmts[i].type != (char)0; ++i)
 		if (c == dgop->dgo_qray_fmts[i].type)
 			return i;
 
@@ -478,7 +478,7 @@ dgo_init_qray(struct dg_obj	*dgop)
 		bu_vls_strcpy(&dgop->dgo_qray_fmts[i].fmt, def_qray_fmt_data[i].fmt);
 	}
 
-	dgop->dgo_qray_fmts[i].type = (char)NULL;
+	dgop->dgo_qray_fmts[i].type = (char)0;
 }
 
 void
@@ -488,7 +488,7 @@ dgo_free_qray(struct dg_obj     *dgop)
 
 	bu_vls_free(&dgop->dgo_qray_basename);
 	bu_vls_free(&dgop->dgo_qray_script);
-	for (i = 0; dgop->dgo_qray_fmts[i].type != (char)NULL; ++i)
+	for (i = 0; dgop->dgo_qray_fmts[i].type != (char)0; ++i)
 		bu_vls_free(&dgop->dgo_qray_fmts[i].fmt);
 	bu_free(dgop->dgo_qray_fmts, "dgo_free_qray");
 }

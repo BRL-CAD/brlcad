@@ -600,7 +600,7 @@ vdraw_params_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 		}
 		/* otherwise name not yet used */
 		strncpy(dgop->dgo_currVHead->vdc_name, argv[2], RT_VDRW_MAXNAME);
-		dgop->dgo_currVHead->vdc_name[RT_VDRW_MAXNAME] = (char) NULL;
+		dgop->dgo_currVHead->vdc_name[RT_VDRW_MAXNAME] = (char)0;
 		Tcl_AppendResult(interp,"0",(char *)NULL);
 		return TCL_OK;
 	}
@@ -642,7 +642,7 @@ vdraw_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	strncpy(temp_name, argv[1], RT_VDRW_MAXNAME);
-	temp_name[RT_VDRW_MAXNAME] = (char) NULL;
+	temp_name[RT_VDRW_MAXNAME] = (char)0;
 	dgop->dgo_currVHead = (struct vd_curve *) NULL;
 	for (BU_LIST_FOR(rcp, vd_curve, &dgop->dgo_headVDraw)) {
 		if (!strncmp(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME)) {
@@ -655,7 +655,7 @@ vdraw_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		BU_GETSTRUCT(rcp, vd_curve);
 		BU_LIST_APPEND(&dgop->dgo_headVDraw, &(rcp->l));
 		strcpy(rcp->vdc_name, temp_name);
-		rcp->vdc_name[RT_VDRW_MAXNAME] = (char) NULL;
+		rcp->vdc_name[RT_VDRW_MAXNAME] = (char)0;
 		rcp->vdc_rgb = RT_VDRW_DEF_COLOR;
 		BU_LIST_INIT(&(rcp->vdc_vhd));
 		RT_GET_VLIST(vp);
@@ -669,7 +669,7 @@ vdraw_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			RT_GET_VLIST(vp);
 			BU_LIST_APPEND(&(dgop->dgo_currVHead->vdc_vhd), &(vp->l));
 		}
-		dgop->dgo_currVHead->vdc_name[RT_VDRW_MAXNAME] = (char) NULL; /*safety*/
+		dgop->dgo_currVHead->vdc_name[RT_VDRW_MAXNAME] = (char)0; /*safety*/
 		/* 0 means entry already existed*/
 		Tcl_AppendResult(interp, "0", (char *)NULL);
 		return TCL_OK;
