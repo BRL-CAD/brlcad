@@ -53,6 +53,9 @@ rfft256.c:	fftc$(EXEEXT)
 rfft512.c:	fftc$(EXEEXT)
 	./fftc$(EXEEXT) 512 > rfft512.c
 
+rfft1024.c:	fftc$(EXEEXT)
+	./fftc$(EXEEXT) 1024 > rfft1024.c
+
 irfft16.c:	ifftc$(EXEEXT)
 	./ifftc$(EXEEXT) 16 > irfft16.c
 
@@ -71,17 +74,20 @@ irfft256.c:	ifftc$(EXEEXT)
 irfft512.c:	ifftc$(EXEEXT)
 	./ifftc$(EXEEXT) 512 > irfft512.c
 
+irfft1024.c:	ifftc$(EXEEXT)
+	./ifftc$(EXEEXT) 1024 > irfft1024.c
+
 BUILT_SOURCES = \
-	irfft128.c \
 	irfft16.c \
-	irfft256.c \
 	irfft32.c \
 	irfft64.c \
-	rfft128.c \
+	irfft128.c \
+	irfft256.c \
 	rfft16.c \
-	rfft256.c \
 	rfft32.c \
-	rfft64.c
+	rfft64.c \
+	rfft128.c \
+	rfft256.c
 
 CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = $(CLEANFILES)
