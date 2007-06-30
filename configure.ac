@@ -99,6 +99,12 @@ AC_REVISION($Revision$)
 
 AC_CONFIG_AUX_DIR(misc)
 
+# keep track of cmd-line options for later
+BC_ARG0="$0"
+AC_SUBST(BC_ARG0)
+BC_ARGS="$*"
+AC_SUBST(BC_ARGS)
+
 dnl just in case
 PACKAGE_NAME="BRL-CAD"
 AC_SUBST(PACKAGE_NAME)
@@ -3469,7 +3475,7 @@ fi
 dnl search the BRL-CAD include directory (required for non-srcdir builds).
 dnl should come after the system services checks otherwise or our headers
 dnl may conflict.
-CPPFLAGS="$CPPFLAGS -DBRLCADBUILD=1 -I\$(top_srcdir)/include"
+CPPFLAGS="$CPPFLAGS -DBRLCADBUILD=1 -I\${top_srcdir}/include"
 
 # make sure ECHO and ECHO_N got defined and substituted
 if test "x$ECHO" = "x" ; then
@@ -3485,6 +3491,13 @@ dnl *** Configure Makefiles and output ***
 dnl **************************************
 
 BC_CONFIGURE_STAGE([output], [9 of 9])
+
+# remove surrounding whitspace
+CFLAGS="`echo $CFLAGS`"
+CXXFLAGS="`echo $CXXFLAGS`"
+CPPFLAGS="`echo $CPPFLAGS`"
+LDFLAGS="`echo $LDFLAGS`"
+LIBS="`echo $LIBS`"
 
 AM_CONDITIONAL(BUILD_TCL, [test "x$build_brlcad_tcl" = "xyes"])
 AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
@@ -3654,7 +3667,7 @@ AM_CONDITIONAL(HAVE_BRLCAD, true)
 AM_CONDITIONAL(HAVE_DOXYGEN, false)
 
 dnl sample applications
-SAMPLE_APPLICATIONS_DIR='$(BRLCAD_DATA)/sample_applications'
+SAMPLE_APPLICATIONS_DIR='${BRLCAD_DATA}/sample_applications'
 AC_SUBST(SAMPLE_APPLICATIONS_DIR)
 
 # stash the top builddir before configuring subdirectories
@@ -4036,6 +4049,7 @@ if test ! "x`cat include/brlcad_config.h.in`" = "x" ; then
     touch include/brlcad_config.h.in
 fi
 
+
 dnl **********************
 dnl *** Report Summary ***
 dnl **********************
@@ -4051,14 +4065,27 @@ AC_MSG_RESULT([           Binaries: ${bindir}])
 AC_MSG_RESULT([       Manual pages: ${mandir}])
 AC_MSG_RESULT([Configuration files: ${sysconfdir}])
 AC_MSG_RESULT([Data resource files: ${bc_data_dir}])
+if test ! "x$BC_ARGS" = "x" ; then
+AC_MSG_RESULT([Options & variables: $BC_ARGS])
+fi
 AC_MSG_RESULT([])
 AC_MSG_RESULT([CC       = ${CC}])
 AC_MSG_RESULT([CXX      = ${CXX}])
+if test ! "x$CFLAGS" = "x" ; then
 AC_MSG_RESULT([CFLAGS   = ${CFLAGS}])
+fi
+if test ! "x$CXXFLAGS" = "x" ; then
 AC_MSG_RESULT([CXXFLAGS = ${CXXFLAGS}])
+fi
+if test ! "x$CPPFLAGS" = "x" ; then
 AC_MSG_RESULT([CPPFLAGS = ${CPPFLAGS}])
+fi
+if test ! "x$LDFLAGS" = "x" ; then
 AC_MSG_RESULT([LDFLAGS  = ${LDFLAGS}])
+fi
+if test ! "x$LIBS" = "x" ; then
 AC_MSG_RESULT([LIBS     = ${LIBS}])
+fi
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Build Tcl ............................: $build_brlcad_tcl])
 AC_MSG_RESULT([Build Tk .............................: $build_brlcad_tk])
