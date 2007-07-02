@@ -1601,8 +1601,8 @@ bool ON_SortCurves(
           );
 
 
-#define CLOSETO_CHORD_TOL 1e-3
-#define CLOSETO_DER_TOL 0.85 // the min value of the product of the dot products
+#define CLOSETO_CHORD_TOL 1e-1
+#define CLOSETO_DER_TOL 0.75 // the min value of the product of the dot products
 
 class Sample {
 public:
@@ -1617,6 +1617,7 @@ public:
 
   Sample(const ON_Curve* curve, double param) : c(curve), t(param), dist(0.0) {
     c->Ev1Der(t, pt, tangent);
+    assert(tangent.Unitize());
   }
   Sample(const Sample& s) :
     c(s.c), pt(s.pt), tangent(s.tangent), t(s.t) {}
