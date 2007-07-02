@@ -1,7 +1,7 @@
 #include "opennurbs.h"
 #include <assert.h>
 #include <list>
-
+#include "opennurbs_ext.h"
 
 ON_VIRTUAL_OBJECT_IMPLEMENT(ON_Curve,ON_Geometry,"4ED7D4D7-E947-11d3-BFE5-0010830122F0");
 
@@ -3163,6 +3163,7 @@ isFlat(const Sample& p1, const Sample& m, const Sample& p2, double chord_tol, do
   ON_Line line = ON_Line(p1.pt, p2.pt);
   double chord = line.DistanceTo(m.pt);  
   double der = (p1.tangent * m.tangent) * (m.tangent * p2.tangent);
+  //  TRACE("isFlat " << der << "," << chord);
   return (der >= der_tol) && (chord <= chord_tol);
 }
 
@@ -3170,6 +3171,7 @@ double
 randomMidrange(double lo, double hi)
 {
   assert(lo < hi);
+  //  TRACE("randomMidrange( " << lo << "," << hi << ")");
 #ifdef HAVE_DRAND48
   double random_pos = drand48() * .1 + .45;
 #else
@@ -3219,7 +3221,11 @@ search(const ON_Curve* c,
   m.dist = ray.DistanceTo(m.pt, &m.ray_t);
   if (m.dist < dist_tol) return m;
 
-  return search(c, ray, (left.dist < right.dist) ? left : right, m, dist_tol, ++depth);
+  Sample& side = (left.dist < right.dist) ? left : right;
+  if (side.t < m.t) 
+    return search(c, ray, side, m, dist_tol, ++depth);
+  else
+    return search(c, ray, m, side, dist_tol, ++depth);
 }
 
 //--------------------------------------------------------------------------------
@@ -3234,7 +3240,10 @@ ON_Curve::CloseTo(const ON_Ray& ray, double epsilon, Sample& closest) const
   Sample left(this, dom.Min());
   Sample right(this, dom.Max());
   samples.push_back(left);
-  sample(this, left, right, samples, CLOSETO_CHORD_TOL, CLOSETO_DER_TOL);
+  double l;
+  GetLength(&l);
+  double tol = (l < 1) ? CLOSETO_CHORD_TOL : CLOSETO_CHORD_TOL * l;
+  sample(this, left, right, samples, tol, CLOSETO_DER_TOL);
   
   for (std::list<Sample>::iterator i = samples.begin(); i != samples.end(); ++i) {
     i->dist = ray.DistanceTo(i->pt, &i->ray_t);
