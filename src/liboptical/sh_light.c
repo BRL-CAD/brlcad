@@ -70,8 +70,7 @@ extern const struct bn_table	*spectrum;
 BU_EXTERN(void	aim_set, (const struct bu_structparse *sdp, const char *name,
 			  const char *base, char *value));
 
-/***********************************************************************
- *
+/**
  *  light_cvt_visible()
  *
  *  Convert "visible" flag to "invisible" variable
@@ -101,8 +100,8 @@ light_cvt_visible(register const struct bu_structparse *sdp, register const char
     }
 }
 
-/*
- *
+/**
+ * allocate a set of light point samples
  */
 static void
 light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
@@ -201,7 +200,7 @@ struct mfuncs light_mfuncs[] = {
 };
 
 
-/*
+/**
  * This is a container for all the stuff that must be carried around when
  * doing the light obscuration/visibility calculations.
  */
@@ -223,7 +222,7 @@ struct light_obs_stuff {
 };
 
 
-/*
+/**
  *			A I M _ S E T
  *
  *  This routine is called by bu_struct_parse() if the "aim"
@@ -239,7 +238,7 @@ HIDDEN void aim_set (const struct bu_structparse *sdp, const char *name, const c
     lsp->lt_exaim = 1;
 }
 
-/*
+/**
  *			L I G H T _ R E N D E R
  *
  *  If we have a direct view of the light, return it's color.
@@ -291,10 +290,10 @@ light_render(struct application *ap, struct partition *pp, struct shadework *swp
     return(1);
 }
 
-/*
+
+/**
  * When shooting grids of rays to generate the points on the light, we
  * add the hit point(s) to the list of points on the light.
- *
  */
 static int
 gen_hit(register struct application *ap,
@@ -305,6 +304,8 @@ gen_hit(register struct application *ap,
     struct soltab *stp;
     struct light_pt *lpt;
     struct partition *pp, *prev, *next;
+
+    RT_CK_LIGHT(lsp);
 
     if ((pp=PartHeadp->pt_forw) == PartHeadp) return 0;
 
@@ -332,9 +333,18 @@ gen_hit(register struct application *ap,
 	/* The inbound point is not against another object, so
 	 * light will be emitted in this direction
 	 */
-	lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
+	if (&lsp->lt_sample_pts) {
+	    lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
+	} else {
+	    /* no sample points? */
+	    break;
+	}
 
 	stp = pp->pt_inseg->seg_stp;
+
+	if (!lpt || !stp) {
+	    break;
+	}
 
 	VJOIN1( lpt->lp_pt, ap->a_ray.r_pt,
 		pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
@@ -361,9 +371,18 @@ gen_hit(register struct application *ap,
 	/* The out point isn't against another object, so light
 	 * will be emitted in this direction
 	 */
-	lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
+	if (&lsp->lt_sample_pts) {
+	    lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
+	} else {
+	    /* no sample points? */
+	    break;
+	}
 
 	stp = pp->pt_outseg->seg_stp;
+
+	if (!lpt || !stp) {
+	    break;
+	}
 
 	VJOIN1( lpt->lp_pt, ap->a_ray.r_pt,
 		pp->pt_outhit->hit_dist, ap->a_ray.r_dir );
@@ -374,7 +393,8 @@ gen_hit(register struct application *ap,
     return 1;
 }
 
-/*
+
+/**
  * When shooting the grids for building light pts, if we miss the light just
  * return;
  */
@@ -384,9 +404,9 @@ gen_miss(register struct application *ap)
     return 0;
 }
 
+
 #if 0
-/*
- *
+/**
  *  Shoot rays in each of the axis directions looking for hit points
  *  on a light.
  */
@@ -521,10 +541,11 @@ ray_setup(struct application *ap,
 }
 
 
-/*	L I G H T _ G E N _ S A M P L E _ P T S
+/**
+ * L I G H T _ G E N _ S A M P L E _ P T S
  *
- *  Generate a set of sample points on the surface of the light with surface
- *  normals.
+ * Generate a set of sample points on the surface of the light with
+ * surface normals.
  */
 void
 light_gen_sample_pts(struct application    *upap,
@@ -551,12 +572,10 @@ light_gen_sample_pts(struct application    *upap,
     /* get the bounding box of the light source */
     rt_bound_tree(lsp->lt_rp->reg_treetop, tree_min, tree_max);
 
-
     if (rdebug & RDEBUG_LIGHT ) {
 	bu_log("\tlight bb (%g %g %g), (%g %g %g)\n",
 	       V3ARGS(tree_min), V3ARGS(tree_max) );
     }
-
 
     /* if there is no space occupied by the light source, then
      * just give up
@@ -594,7 +613,8 @@ light_gen_sample_pts(struct application    *upap,
 #endif
 }
 
-/*
+
+/**
  *			L I G H T _ S E T U P
  *
  *  Called once for each light-emitting region.
@@ -742,7 +762,8 @@ light_setup(register struct region *rp,
     return(1);
 }
 
-/*
+
+/**
  *			L I G H T _ P R I N T
  */
 HIDDEN void
@@ -751,7 +772,8 @@ light_print(register struct region *rp, char *dp)
     bu_struct_print(rp->reg_name, light_print_tab, (char *)dp);
 }
 
-/*
+
+/**
  *			L I G H T _ F R E E
  */
 void
@@ -772,7 +794,8 @@ light_free(char *cp)
     bu_free( (char *)lsp, "light_specific" );
 }
 
-/*
+
+/**
  *			L I G H T _ M A K E R
  *
  *  Special hook called by view_2init to build 1 or 3 debugging lights.
@@ -858,7 +881,8 @@ light_maker(int num, mat_t v2m)
     }
 }
 
-/*
+
+/**
  *			L I G H T _ I N I T
  *
  *  Special routine called by view_2init() to determine the relative
@@ -957,7 +981,7 @@ light_init(struct application *ap)
 }
 
 
-/*
+/**
  *			L I G H T _ C L E A N U P
  *
  *  Called from view_end().
@@ -986,8 +1010,9 @@ light_cleanup(void)
 	light_free( (genptr_t)zaplsp );
     }
 }
-/**********************************************************************/
-/*
+
+
+/**
  *			L I G H T _ H I T
  *
  *  A light visibility test ray hit something.  Determine what this means.
@@ -1011,7 +1036,6 @@ light_cleanup(void)
  *  Would also be nice to return an actual energy level, rather than
  *  a boolean, which could account for distance, etc.
  */
-
 int
 light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs)
 {
@@ -1369,13 +1393,13 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     return(light_visible);
 }
 
-/*
+
+/**
  *  			L I G H T _ M I S S
  *
  *  If there is no explicit light solid in the model, we will always "miss"
  *  the light, so return light_visible = TRUE.
  */
-/* ARGSUSED */
 int
 light_miss(register struct application *ap)
 {
@@ -1401,14 +1425,13 @@ light_miss(register struct application *ap)
     return(-1);			/* light_visible = 0 */
 }
 
+
 #define VF_SEEN 1
 #define VF_BACKFACE 2
-/***********************************************************************
- *
+/**
  *	light_vis
  *
  *	Compute 1 light visibility ray from a hit point to the light.
- *
  */
 static int
 light_vis(struct light_obs_stuff *los, char *flags)
@@ -1747,7 +1770,8 @@ light_vis(struct light_obs_stuff *los, char *flags)
     return 0;
 }
 
-/*
+
+/**
  *			L I G H T _ O B S C U R A T I O N
  *
  *	Determine the visibility of each light source in the scene from a
