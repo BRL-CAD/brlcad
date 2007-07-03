@@ -8,22 +8,24 @@ namespace brlcad {
     id_name = "Test B-Rep from IGES";
     geom_name = "piston";
     ON::Begin();
+    _written = false;
   }  
 
   BRLCADBrepHandler::~BRLCADBrepHandler() {
-    for (vector<ON_Geometry*>::iterator i = _objects.begin(); i != _objects.end(); ++i) {
-      delete *i;
-    }
+    if (!_written) delete _brep;
+    // can only call delete here if write wasn't called! 
     ON::End();
   }
 
   void
   BRLCADBrepHandler::write(const string& filename) {
+    _written = true;
     outfp = wdb_fopen(filename.c_str());
     mk_id(outfp, id_name.c_str());
 
     string sol = geom_name+".s";
-    string reg = geom_name+".r";
+    string reg = geom_name+".r";    
+    if (_brep_flip) _brep->Flip();
     mk_brep(outfp, sol.c_str(), _brep);
     unsigned char rgb[] = {200,180,180};
     mk_region1(outfp, reg.c_str(), sol.c_str(), "plastic", "", rgb);    
@@ -32,6 +34,7 @@ namespace brlcad {
 
   int 
   BRLCADBrepHandler::handleShell(bool isVoid, bool orient) {
+    _brep_flip = !orient;
     _brep = ON_Brep::New();
     _objects.push_back(_brep);
     return _objects.size()-1;
@@ -40,7 +43,7 @@ namespace brlcad {
   int 
   BRLCADBrepHandler::handleFace(bool orient, int surfIndex) {    
     ON_BrepFace& face = _brep->NewFace(_topology[surfIndex]);
-    face.m_bRev = orient;
+    face.m_bRev = !orient;
 
     _face = face.m_face_index;
     _topology.push_back(_face);
