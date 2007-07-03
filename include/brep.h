@@ -48,6 +48,9 @@ extern "C++" {
 #undef H
 #include "opennurbs.h"
 #include "opennurbs_ext.h"
+#include <iostream>
+#include <fstream>
+
 }
 extern "C" {
 #endif
@@ -68,7 +71,7 @@ typedef struct _on_brep_placeholder {
     /* Root finding threshold */
 #define BREP_INTERSECTION_ROOT_EPSILON 1e-6
     /* Jungle Gym epsilon */
-#define BREP_EDGE_MISS_TOLERANCE 1e-5
+#define BREP_EDGE_MISS_TOLERANCE 1e-8
     /* Use vector operations? For debugging */
 #define DO_VECTOR 1
     
@@ -96,8 +99,6 @@ struct brep_specific {
     ON_Brep* brep;
     BrepBoundingVolume* bvh;
 };
-
-
 
 #ifdef __cplusplus
 }
