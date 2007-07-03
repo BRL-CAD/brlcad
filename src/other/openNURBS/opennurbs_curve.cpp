@@ -3228,6 +3228,74 @@ search(const ON_Curve* c,
     return search(c, ray, m, side, dist_tol, ++depth);
 }
 
+Sample
+search(const ON_Curve* c,
+       const ON_3dPoint& pt,
+       Sample& s1,
+       Sample& s2,
+       double dist_tol = 1e-10, int depth = 0)
+{
+  Sample left, right;
+  if (s1.t < s2.t) {
+    left = s1; right = s2;
+  } else {
+    left = s2; right = s1;
+  }
+  assert(left.t < right.t);
+  Sample m(c, (right.t-left.t) * 0.5 + left.t);
+  m.dist = pt.DistanceTo(m.pt);
+  if (m.dist < dist_tol) return m;
+  if (depth > MAX_CLOSENESS_SEARCH_DEPTH) return sample_arg_min(left, m, right);
+
+  Sample& side = (left.dist < right.dist) ? left : right;
+  if (side.t < m.t) 
+    return search(c, pt, side, m, dist_tol, ++depth);
+  else
+    return search(c, pt, m, side, dist_tol, ++depth);
+}
+
+//--------------------------------------------------------------------------------
+//Generally calculate the shortest distance (binary search) between
+//the curve and the given ray and determine if it is within a distance
+//epsilon
+bool
+ON_Curve::CloseTo(const ON_3dPoint& pt, double epsilon, Sample& closest) const
+{  
+  std::list<Sample> samples;
+  ON_Interval dom = Domain();
+  Sample left(this, dom.Min());
+  Sample right(this, dom.Max());
+  samples.push_back(left);
+  double l;
+  GetLength(&l);
+  double tol = (l < 1) ? CLOSETO_CHORD_TOL : CLOSETO_CHORD_TOL * l;
+  sample(this, left, right, samples, tol, CLOSETO_DER_TOL);
+  
+  assert(samples.size() >= 2);
+
+  for (std::list<Sample>::iterator i = samples.begin(); i != samples.end(); ++i) {
+    i->dist = pt.DistanceTo(i->pt);
+  }  
+  samples.sort();  
+  // after sorting, we have the closest 2 sampled points, which
+  // *should* bound the closest point.
+
+  // use these to find the closest point through a 'binary' search 
+  std::list<Sample>::iterator i = samples.begin();
+  Sample s1 = samples.front(); samples.pop_front();
+  Sample s2 = samples.front();
+  
+//   return samples.front().dist < epsilon;
+
+  if (i->dist < epsilon) return true;
+  
+  closest = search(this, pt, s1, s2);
+//   Sample m(this, (s2.t-s1.t) * 0.5 + s1.t);
+//   return pt.DistanceTo(m.pt) < epsilon;  
+  return closest.dist < epsilon;
+}
+
+
 //--------------------------------------------------------------------------------
 //Generally calculate the shortest distance (binary search) between
 //the curve and the given ray and determine if it is within a distance
@@ -3261,6 +3329,8 @@ ON_Curve::CloseTo(const ON_Ray& ray, double epsilon, Sample& closest) const
 
   return closest.dist < epsilon;
 }
+
+
 
 bool ON_SortLines( 
         int line_count, 
