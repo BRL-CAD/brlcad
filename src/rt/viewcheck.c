@@ -292,8 +292,8 @@ static void print_overlap_summary(void) {
 		bu_log("==========================================\n");
 		bu_log("SUMMARY\n");
 
-		bu_log("\t%d overlap%c detected\n", noverlaps, (noverlaps==1)?(char)NULL:'s');
-		bu_log("\t%d unique overlapping pair%c (%d ordered pair%c)\n", unique_overlap_count, (unique_overlap_count==1)?(char)NULL:'s', overlap_count, (overlap_count==1)?(char)NULL:'s');
+		bu_log("\t%d overlap%s detected\n", noverlaps, (noverlaps==1)?"":"s");
+		bu_log("\t%d unique overlapping pair%s (%d ordered pair%s)\n", unique_overlap_count, (unique_overlap_count==1)?"":"s", overlap_count, (overlap_count==1)?"":"s");
 
 		if (olist)	{
 			bu_log("\tOverlapping objects: ");
@@ -320,11 +320,11 @@ static void print_overlap_summary(void) {
 					object_counter++;
 				}
 			}
-			bu_log("\n\t%d unique overlapping object%c detected\n", object_counter, (object_counter==1)?(char)NULL:'s');
+			bu_log("\n\t%d unique overlapping object%s detected\n", object_counter, (object_counter==1)?"":"s");
 		}
 	}
 	else {
-		bu_log("%d overlap%c detected\n\n", noverlaps, (noverlaps==1)?(char)NULL:'s');
+		bu_log("%d overlap%s detected\n\n", noverlaps, (noverlaps==1)?"":"s");
 	}
 }
 
