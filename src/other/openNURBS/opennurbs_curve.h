@@ -909,6 +909,7 @@ public:
 
   */
   virtual bool CloseTo(const ON_Ray& ray, double epsilon, Sample& closest) const;
+  virtual bool CloseTo(const ON_3dPoint& pt, double epsilon, Sample& closest) const;
 
   /*
   Description:
@@ -1620,16 +1621,18 @@ public:
     assert(tangent.Unitize());
   }
   Sample(const Sample& s) :
-    c(s.c), pt(s.pt), tangent(s.tangent), t(s.t) {}
+    c(s.c), pt(s.pt), tangent(s.tangent), t(s.t), dist(s.dist) {}
   Sample& operator=(const Sample& s) {
     c = s.c;
     pt = s.pt;
     tangent = s.tangent;
     t = s.t;
+    dist = s.dist;
   }
 
   bool operator<(const Sample& s) {
-    return (ON_NearZero(dist-s.dist,ON_ZERO_TOLERANCE)) ? t < s.t : dist < s.dist;
+    //    return (ON_NearZero(dist-s.dist,ON_ZERO_TOLERANCE)) ? t < s.t : dist < s.dist;
+    return dist < s.dist;
   }
 };
 
