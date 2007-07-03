@@ -79,7 +79,8 @@ namespace brlcad {
   private:
     struct rt_wdb* outfp;
     string id_name;
-    string geom_name;    
+    string geom_name;
+    bool _written;
 
     vector<ON_Geometry*> _objects;    
     vector<int> _topology;
@@ -92,6 +93,7 @@ namespace brlcad {
     ON_BrepVertex& vertex(int i) { return _brep->m_V[_topology[i]]; }
 
     // need to support outer and void shells!
+    bool _brep_flip;
     ON_Brep* _brep;
     int _face;
     int _loop;
