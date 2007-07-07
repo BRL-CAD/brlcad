@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #                       F O O T E R . S H
 # BRL-CAD
 #
