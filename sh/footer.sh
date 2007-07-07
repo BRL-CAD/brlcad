@@ -39,17 +39,13 @@
 # the requested indentation settings.
 #
 # The script assumes one file as the argument, so example use might be:
-#   find . -type f -and \( -name \*.sh -or -name \*.c -or -name \*.h -or -name \*.tcl -or -name \*.tk -or -name \*.itcl -or -name \*.itk -or -name \*.pl -or -name \*.py \) -not -regex '.*src/other.*' -exec sh/footer.sh {} \;
+#   find . -type f -and \( -name \*.cxx -or -or -name \*.h \) -not -regex '.*src/other.*' -exec sh/footer.sh {} \;
 #
 # bash arrays are actually used for convenience, hence why bash and
 # not sh.
 #
 # Author -
 #   Christopher Sean Morrison
-#
-# Source -
-#   The U.S. Army Research Laboratory
-#   Aberdeen Proving Ground, Maryland 21005-5068  USA
 ###
 
 FILE="$1"
@@ -118,22 +114,22 @@ case $FILE in
 	echo "$FILE is a C header"
 	mode="C"
 	mode_vars="c-basic-offset"
-	wrap=1
-	commentchar="*"
+	wrap=0
+	commentchar="//"
 	;;
     *.cc | *.cp | *.cxx | *.cpp | *.CPP | *.c++ | *.C )
 	echo "$FILE is a C++ source file"
 	mode="C++"
 	mode_vars="c-basic-offset"
-	wrap=1
-	commentchar="*"
+	wrap=0
+	commentchar="//"
 	;;
     *.hh | *.hp | *.hxx | *.hpp | *.HPP | *.h++ | *.H )
 	echo "$FILE is a C++ header"
 	mode="C++"
 	mode_vars="c-basic-offset"
-	wrap=1
-	commentchar="*"
+	wrap=0
+	commentchar="//"
 	;;
     *.m )
 	echo "$FILE is an Objective C-source file"
@@ -389,8 +385,8 @@ matching_found=0
 index=0
 for var in ${variables[@]} ; do
     if [ ! "x$commentchar" = "x" ] ; then
-	existing_var=`cat $FILE | grep -i "${prefixspace}[${commentchar}] ${var}:" | sed 's/:/ /g' | awk '{print $3}'`
-	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}] ${var}:" | sed 's/:/ /g' | awk '{print $4}'`
+	existing_var=`cat $FILE | grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${var}:" | sed 's/:/ /g' | awk '{print $3}'`
+	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${var}:" | sed 's/:/ /g' | awk '{print $4}'`
     fi
 
     if [ "x$existing_var" = "x" ] ; then
@@ -401,10 +397,10 @@ for var in ${variables[@]} ; do
 #    echo "found $var=$existing_var"
 	if [ "x$existing_var" != "x${values[$index]}" ] ; then
 	    echo "$var does not match ... fixing"
-	    perl -pi -e "s/(${prefixspace}[${commentchar}] ${var}:.*)/${prefixspace}${commentchar} ${var}: ${values[$index]}/i" $FILE
+	    perl -pi -e "s,(${prefixspace}[${commentchar}]+ ${var}:.*),${prefixspace}${commentchar} ${var}: ${values[$index]},i" $FILE
 	elif [ "x$existing_suffix" != "x" ] ; then
 	    echo "$var has trailing goo ... fixing"
-	    perl -pi -e "s/(${prefixspace}[${commentchar}] ${var}:.*)/${prefixspace}${commentchar} ${var}: ${values[$index]}/i" $FILE
+	    perl -pi -e "s,(${prefixspace}[${commentchar}]+ ${var}:.*),${prefixspace}${commentchar} ${var}: ${values[$index]},i" $FILE
 	fi
 
     fi
@@ -422,7 +418,7 @@ else
     vi_line="${prefixspace}${commentchar} ex: shiftwidth=$indentation tabstop=$tab_width"
     if [ "x$existing_vi" != "x$vi_line" ] ; then
 	echo "vi line is wrong ... fixing"
-	perl -pi -e "s/(${prefixspace}[${commentchar}] ex:.*)/${prefixspace}${commentchar} ex: shiftwidth=${indentation} tabstop=${tab_width}/i" $FILE
+	perl -pi -e "s,(${prefixspace}[${commentchar}]+ ex:.*),${prefixspace}${commentchar} ex: shiftwidth=${indentation} tabstop=${tab_width},i" $FILE
     fi
 fi
 
@@ -451,18 +447,18 @@ else
     match="Variables"
 
     if [ ! "x$commentchar" = "x" ] ; then
-	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}] ${do_not} ${match}:" | sed 's/:/ /g' | awk '{print $4}'`
+	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}][${commentchar}]* ${do_not} ${match}:" | sed 's/:/ /g' | awk '{print $4}'`
     fi
     if [ "x$existing_suffix" != "x" ] ; then
 	echo "loc. var has trailing goo ... fixing"
-	perl -pi -e "s/(${prefixspace}[${commentchar}] ${do_not} ${match}:.*)/${prefixspace}${commentchar} ${do_not} ${match}:/i" $FILE
+	perl -pi -e "s,(${prefixspace}[${commentchar}]+ ${do_not} ${match}:.*),${prefixspace}${commentchar} ${do_not} ${match}:,i" $FILE
     fi
     if [ ! "x$commentchar" = "x" ] ; then
-	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}] End:" | sed 's/:/ /g' | awk '{print $3}'`
+	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}][${commentchar}]* End:" | sed 's/:/ /g' | awk '{print $3}'`
     fi
     if [ "x$existing_suffix" != "x" ] ; then
 	echo "end has trailing goo ... fixing"
-	perl -pi -e "s/(${prefixspace}[${commentchar}] End:.*)/${prefixspace}${commentchar} End:/i" $FILE
+	perl -pi -e "s,(${prefixspace}[${commentchar}]+ End:.*),${prefixspace}${commentchar} End:,i" $FILE
     fi
 fi
 
