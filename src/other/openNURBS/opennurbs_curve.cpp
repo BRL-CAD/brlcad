@@ -3201,10 +3201,10 @@ sample(const ON_Curve* c,
 Sample sample_arg_min(Sample& x, Sample& y, Sample& z) { 
   if (x.dist < y.dist) {
     if (x.dist < z.dist) return x;
-    else z;
+    else return z;
   } else {
     if (y.dist < z.dist) return y;
-    else z;
+    else return z;
   }
 }
 
@@ -3244,10 +3244,18 @@ search(const ON_Curve* c,
   assert(left.t < right.t);
   Sample m(c, (right.t-left.t) * 0.5 + left.t);
   m.dist = pt.DistanceTo(m.pt);
-  if (m.dist < dist_tol) return m;
-  if (depth > MAX_CLOSENESS_SEARCH_DEPTH) return sample_arg_min(left, m, right);
+  TRACE1("\tdepth: " << depth << ", " << m.dist);
+  if (m.dist < dist_tol) {
+    TRACE1("return 1");
+    return m;
+  }
+  if (depth > MAX_CLOSENESS_SEARCH_DEPTH) {
+    TRACE1("hit max depth " << left.dist << ", " << m.dist << ", " << right.dist);
+    Sample min = sample_arg_min(left, m, right);
+    return min;
+  }
 
-  Sample& side = (left.dist < right.dist) ? left : right;
+  Sample side = (left.dist < right.dist) ? left : right;
   if (side.t < m.t) 
     return search(c, pt, side, m, dist_tol, ++depth);
   else
@@ -3261,6 +3269,7 @@ search(const ON_Curve* c,
 bool
 ON_Curve::CloseTo(const ON_3dPoint& pt, double epsilon, Sample& closest) const
 {  
+  TRACE1("CloseTo(" << PT(pt) << ")");
   std::list<Sample> samples;
   ON_Interval dom = Domain();
   Sample left(this, dom.Min());
@@ -3287,11 +3296,19 @@ ON_Curve::CloseTo(const ON_3dPoint& pt, double epsilon, Sample& closest) const
   
 //   return samples.front().dist < epsilon;
 
-  if (i->dist < epsilon) return true;
+  closest.dist = real.infinity();
+  if (s1.dist < epsilon) {
+    closest = s1;
+    TRACE1("1:" << s1.dist << " < " << epsilon);
+    return true;
+  }
   
-  closest = search(this, pt, s1, s2);
+  Sample blah = search(this, pt, s1, s2);
+  TRACE1("blah: " << blah.dist);
+  closest = blah;
 //   Sample m(this, (s2.t-s1.t) * 0.5 + s1.t);
 //   return pt.DistanceTo(m.pt) < epsilon;  
+  TRACE1("2:" << closest.dist << " < " << epsilon);
   return closest.dist < epsilon;
 }
 
