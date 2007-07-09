@@ -510,6 +510,7 @@ brep_edge_check(int reason,
 
     set<ON_BrepEdge*> edges;
     ON_3dPoint pt;
+    bool close = false;
     for (int i = 0; i < face->LoopCount(); i++) {
 	ON_BrepLoop* loop = face->Loop(i);
 	for (int j = 0; j < loop->TrimCount(); j++) {
@@ -517,72 +518,23 @@ brep_edge_check(int reason,
 	    ON_BrepEdge* edge = trim->Edge();
 	    pair<set<ON_BrepEdge*>::iterator, bool> res = edges.insert(edge);
 	    //	    if (res.second) {
-		// only check if its the first time we've seen this
-		// edge
-		const ON_Curve* curve = edge->EdgeCurveOf();
-		Sample s;
-		if (!curve->CloseTo(ON_3dPoint(hits.back().point), BREP_EDGE_MISS_TOLERANCE, s)) {
-		    hits.pop_back();
-		    return reason;
-		}
-
-// 		    // since the ray is within tolerance, we need to
-// 		    // find out on which side of the curve it
-// 		    // passes. If it's on the left side, then we've
-// 		    // hit the surface
-// 		    double curve_t = s.t, ray_t = s.ray_t;
-// 		    // XXX - should probably use the gradient here		    
-// // 		    double curve_t_forward = 
-// // 			(trim->m_bRev3d) ? 
-// // 			(curve_t - curve->Domain().Length() * 1e-2) 
-// // 			: (curve_t + curve->Domain().Length() * 1e-2);
-// // 		    ON_3dPoint c1 = curve->PointAt(curve_t);
-// // 		    ON_3dPoint c2 = curve->PointAt(curve_t_forward);
-// // 		    double ray_t_forward = ray_t + 1e-2;
-//  		    ON_3dPoint r1 = r.PointAt(ray_t);
-// // 		    ON_3dPoint r2 = r.PointAt(ray_t_forward);
-// 		    ON_3dVector a = curve->TangentAt(curve_t);
-// 		    if (trim->m_bRev3d) a.Reverse();
-// 		    ON_3dVector b = r1 - s.pt;
-// 		    b.Unitize();
-// 		    ON_3dVector n = ON_CrossProduct(a,b);
-// 		    // neg: right
-// 		    // pos: left
-		    
-// 		    // below is the simplified version of:
-// 		    //   b \dot (a \cross ( a \cross b ) )
-// 		    // or
-// 		    //   b * (a x (a x b))		    
-// 		    // XXX - vectorize?
-// // 		    double dir = 
-// // 			4 * a[0] * a[1] * b[0] * b[1] - (a[1] * b[0] + a[0] * b[1]) * (a[1] * b[0] + a[0] * b[1]) +
-// // 			4 * a[0] * a[2] * b[0] * b[2] - (a[2] * b[0] + a[0] * b[2]) * (a[2] * b[0] + a[0] * b[2]) +
-// // 			4 * a[1] * a[2] * b[1] * b[2] - (a[2] * b[1] + a[1] * b[2]) * (a[2] * b[1] + a[1] * b[2]);		    
-
-// 		    // if (dir < 0) { // rv is left of cv
-// 		    if ((n * r.m_dir) > 0) {
-// 			// now we need to find the closest point on the surface
-// 			ON_2dPoint uv;
-// 			get_closest_point(uv, 
-// 					  const_cast<ON_BrepFace*>(face), 
-// 					  r.PointAt(ray_t),
-// 					  (SurfaceTree*)face->m_face_user.p);
-// 			ON_3dPoint hit;
-// 			ON_3dVector norm;
-// 			face->SurfaceOf()->EvNormal(uv[0],uv[1], hit, norm);
-// 			hits.push_back(brep_hit(*face, (const fastf_t*)r.m_origin, (const fastf_t*)hit, (const fastf_t*)norm, (const fastf_t*)uv));
-// 			return BREP_INTERSECT_FOUND;
-// 		    } else 
-// 			return BREP_INTERSECT_RIGHT_OF_EDGE;
-// 		} else {
-// 		    return BREP_INTERSECT_MISSED_EDGE;
-// 		}
-		// }
-
-
+	    // only check if its the first time we've seen this
+	    // edge
+	    const ON_Curve* curve = edge->EdgeCurveOf();
+	    Sample s;
+	    if (curve->CloseTo(ON_3dPoint(hits.back().point), BREP_EDGE_MISS_TOLERANCE, s)) {
+		TRACE1("NOT CLOSE TO EDGE");
+		close = true;
+	    } else {
+		TRACE1("CLOSE TO EDGE");
+	    }
 	}
     }    
-    return reason;
+    if (!close) {
+	hits.pop_back();
+	return BREP_INTERSECT_TRIMMED;
+    }
+    return BREP_INTERSECT_FOUND;
 }
 
 
@@ -624,16 +576,18 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	if (!sbv->m_u.Includes(uv[0]) || !sbv->m_v.Includes(uv[1])) 
 	    return BREP_INTERSECT_OOB;
 
-
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
 	surf->EvNormal(uv[0],uv[1],_pt,_norm);
 	if (face->m_bRev) _norm.Reverse();
 	hits.push_back(brep_hit(*face,(const fastf_t*)ray.m_origin,(const fastf_t*)_pt,(const fastf_t*)_norm, uv));
 
-	if (sbv->doTrimming() && brep_pt_trimmed(uv, *face)) 
+	if (sbv->doTrimming() && brep_pt_trimmed(uv, *face)) {
+	    TRACE1("Should be TRIMMED!");
 	    // if the point was trimmed, see if it is close to the edge before removing it
 	    return brep_edge_check(BREP_INTERSECT_TRIMMED, sbv, face, surf, ray, hits);
+	    //return BREP_INTERSECT_TRIMMED;
+	}
     } 
 
 
@@ -665,6 +619,12 @@ opposite(const SubsurfaceBBNode* sbv, pt2d_t uv)
 typedef std::pair<int,int> ip_t;
 typedef std::list<ip_t> MissList;
 
+int
+sign(double val) {
+    if (val >= 0.0) return 1;
+    else return -1;
+}
+
 /**
  *  			R T _ B R E P _ S H O T
  *
@@ -695,12 +655,14 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     // find all the hits (XXX very inefficient right now!)
     HitList hits;
     MissList misses;
+    int s = 0;
     for (BBNode::IsectList::iterator i = inters.begin(); i != inters.end(); i++) {
 	const SubsurfaceBBNode* sbv = dynamic_cast<SubsurfaceBBNode*>((*i).m_node);
 	const ON_BrepFace* f = sbv->m_face;
 	const ON_Surface* surf = f->SurfaceOf();       
 	brep_hit* hit; 
 	pt2d_t uv = {sbv->m_u.Mid(),sbv->m_v.Mid()};
+	TRACE1("surface: " << s);
 	int status = brep_intersect(sbv, f, surf, uv, r, hits);
 	if (status == BREP_INTERSECT_FOUND) {
 	    TRACE1("INTERSECTION: " << PT(hits.back().point));
@@ -711,7 +673,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 //  	    TRACE("NO INTERSECTION: " << BREP_INTERSECT_GET_REASON(status));
 	    misses.push_back(ip_t(hits.size()-1,status));
 	}
-	
+	s++;
     }
 
 
@@ -727,13 +689,32 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     // remove "duplicate" points      
     HitList::iterator new_end = unique(hits.begin(), hits.end());
     hits.erase(new_end, hits.end());
+
+    TRACE("---");
+    num = 0;
+    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+	TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal,rp->r_dir) << "]");
+	++num;
+    }    
     
+    // check signs
     if (hits.size() > 0 && (hits.size() % 2) != 0) {
 	cerr << "WTF???" << endl;
 	num = 0;
+	int lastSign = 0;
 	MissList::iterator m = misses.begin();
 	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	    TRACE("hit " << num << ": " << ON_PRINT3(i->point) << " [" << VDOT(i->normal,rp->r_dir) << "]");
+	    double dot = VDOT(i->normal,rp->r_dir);
+// 	    if ((num == 0 && dot > 0) || sign(dot) == lastSign) { // remove hits with "bad" normals
+// 		i = hits.erase(i);
+// 		--i;
+// 		TRACE("removed a hit!");
+// 		continue;
+// 	    } else {
+// 		lastSign = sign(dot);
+// 	    }
+
+	    TRACE("hit " << num << ": " << ON_PRINT3(i->point) << " [" << dot << "]");
 	    while (m->first == num) {
 		TRACE("miss " << num << ": " << BREP_INTERSECT_GET_REASON(m->second));
 		++m;
@@ -776,6 +757,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    hit = true;
 	} 
 	else {
+	    TRACE("screen xy: " << ap->a_x << "," << ap->a_y);
 	}
     }
     
