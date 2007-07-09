@@ -1144,8 +1144,6 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
   // XXX - assumes the segment is horizontal and to the "right"
 
   int qstats = 0;  
-  double u = segment[0].x;
-  double v = segment[0].y;  
   ON_Interval dom = Domain();
   assert(CVCount() > 0);
   // determine the case (a la Nishita bezier intersection algorithm)
@@ -1203,20 +1201,19 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
       double tright = tmax;
       ON_TRACE("tleft : " << tleft);
       ON_TRACE("tright: " << tright);
-      assert( tleft < tright );
+      //assert( tleft <= tright );
+      if (tleft > tright) return 0; // XXX - todo: handle this
 
-      if (ON_NearZero(tleft, ON_ZERO_TOLERANCE) ||
+      if (ON_NearZero(tleft, ON_ZERO_TOLERANCE) &&
 	  ON_NearZero(tright-1.0, ON_ZERO_TOLERANCE)) {
 	tleft = 0.3;
 	tright = 0.7;
 	ON_BezierCurve left, middle, right;
 	Split(tleft, left, middle);
 	middle.Split((tright-tleft)/(1.0-tleft), middle, right);
-	left.NumIntersectionsWith(segment);
-	middle.NumIntersectionsWith(segment);
-	right.NumIntersectionsWith(segment);
-      } 
-      else {
+	//return left.NumIntersectionsWith(segment) + middle.NumIntersectionsWith(segment) + right.NumIntersectionsWith(segment);	
+	return 0;
+      } else {
 	ON_BezierCurve middle(*this);
 	middle.Trim(ON_Interval(tleft,tright));
 	ON_TRACE("After trim:");
@@ -1227,6 +1224,8 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
 	return middle.NumIntersectionsWith(segment);
       }
     }
+  default:
+    assert(false);
   }
 }
 
