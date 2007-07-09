@@ -33,7 +33,7 @@ static std::numeric_limits<double> real;
 #define PT(p) ON_PRINT3(p)
 #define PT2(p) ON_PRINT2(p)
 //#define TRACE(s)
-#define TRACE(s) std::cout << s << endl;
+#define TRACE(s) std::cerr << s << std::endl;
 #define TRACE1(s) 
 //#define TRACE(s) 
 
@@ -85,7 +85,7 @@ namespace brlcad {
 
     BVNode();
     BVNode(const BV& node);
-    ~BVNode();
+    virtual ~BVNode();
 
     void addChild(const BV& child);
     void addChild(BVNode<BV>* child);
