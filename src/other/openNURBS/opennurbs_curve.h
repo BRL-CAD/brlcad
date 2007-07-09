@@ -42,6 +42,7 @@ public:
   ON_Ray& operator=(const ON_Ray& r) {
     m_origin = r.m_origin;
     m_dir = r.m_dir;
+    return *this;
   }
 
   ON_3dPoint PointAt(double t) const {
@@ -1627,7 +1628,8 @@ public:
     pt = s.pt;
     tangent = s.tangent;
     t = s.t;
-    dist = s.dist;
+    dist = s.dist;    
+    return *this;
   }
 
   bool operator<(const Sample& s) {
