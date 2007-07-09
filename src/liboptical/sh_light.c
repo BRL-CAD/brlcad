@@ -58,88 +58,24 @@ extern const struct bn_table	*spectrum;
 #endif
 
 
-#if !defined(M_PI)
-#define M_PI            3.14159265358979323846
-#define	M_PI_2		1.57079632679489661923
-#endif
-
-
 #define LIGHT_O(m)	bu_offsetof(struct light_specific, m)
 #define LIGHT_OA(m)	bu_offsetofarray(struct light_specific, m)
 
-BU_EXTERN(void	aim_set, (const struct bu_structparse *sdp, const char *name,
-			  const char *base, char *value));
 
-/**
- *  light_cvt_visible()
- *
- *  Convert "visible" flag to "invisible" variable
- */
-void
-light_cvt_visible(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-     /* structure description */
-     /* struct member name */
-     /* begining of structure */
-     /* string containing value */
-{
-    struct light_specific *lsp = (struct light_specific *)base;
+/** Heads linked list of lights */
+struct light_specific LightHead;
 
-    if (rdebug & RDEBUG_LIGHT) {
-	bu_log("light_cvt_visible(%s, %d)\n", name, sdp->sp_offset);
-	bu_log("visible: %d invisible: %d\n",
-	       LIGHT_O(lt_visible),
-	       LIGHT_O(lt_invisible));
-    }
-    switch (sdp->sp_offset) {
-    case LIGHT_O(lt_invisible):
-	lsp->lt_visible = !lsp->lt_invisible;
-	break;
-    case LIGHT_O(lt_visible):
-	lsp->lt_invisible = !lsp->lt_visible;
-	break;
-    }
-}
 
-/**
- * allocate a set of light point samples
- */
-static void
-light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-     /* structure description */
-     /* struct member name */
-     /* begining of structure */
-     /* string containing value */
-{
-    struct light_specific *lsp = (struct light_specific *)base;
-    fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
+/* for light_print_tab and light_parse callbacks */
+HIDDEN void aim_set(const struct bu_structparse *sdp, const char *name, const char *base, char *value);
+HIDDEN void light_cvt_visible(const struct bu_structparse *sdp, const char *name, char *base, const char *value);
+HIDDEN void light_pt_set(const struct bu_structparse *sdp, const char *name, char *base, const char *value);
 
-    /* make sure we have enough room, allocate in batches of SOME_LIGHT_SAMPLES */
-    if ( lsp->lt_pt_count % SOME_LIGHT_SAMPLES == 0) {
-	if (lsp->lt_pt_count == 0) {
-	    /* assumes initialized to NULL */
-	    if (lsp->lt_sample_pts) {
-		bu_free(lsp->lt_sample_pts, "free light samples array");
-	    }
-	    lsp->lt_sample_pts = (struct light_pt *)bu_calloc(lsp->lt_pt_count + SOME_LIGHT_SAMPLES, sizeof(struct light_pt), "callocate light sample points");
-	} else {
-	    lsp->lt_sample_pts = (struct light_pt *)bu_realloc(lsp->lt_sample_pts, (lsp->lt_pt_count + SOME_LIGHT_SAMPLES) * sizeof(struct light_pt), "reallocate light sample points");
-	}
-    }
+HIDDEN int light_setup(struct region *rp, struct bu_vls *matparm, genptr_t *dpp, struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void light_print(register struct region *rp, char *dp);
+HIDDEN void light_free(char *cp);
 
-    if (! strcmp("pt", name) ) {
-	/* user just specified point, set normal to zeros */
-	p[3] = p[4] = p[5] = 0.0;
-    } else if ( strcmp("pn", name) ) {
-	bu_log("*********** unknown option in light_pt_set %s:%d\n", __FILE__, __LINE__);
-	return;
-    }
-
-    memcpy( &lsp->lt_sample_pts[ lsp->lt_pt_count++ ], p, sizeof( struct light_pt ) );
-
-    if (rdebug & RDEBUG_LIGHT ) {
-	bu_log("set light point %g %g %g   N %g %g %g\n", p[0], p[1], p[2], p[3], p[4], p[5]);
-    }
-}
 
 struct bu_structparse light_print_tab[] = {
     {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
@@ -183,22 +119,10 @@ struct bu_structparse light_parse[] = {
 
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
-
-
-struct light_specific	LightHead;	/* Heads linked list of lights */
-
-
-HIDDEN int	light_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, struct mfuncs *mfp, struct rt_i *rtip), light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	light_print(register struct region *rp, char *dp);
-void		light_free(char *cp);
-
 struct mfuncs light_mfuncs[] = {
-    {MF_MAGIC,	"light",	0,		MFI_NORMAL,	0,
-     light_setup,	light_render,	light_print,	light_free },
-    {0,		(char *)0,	0,		0,		0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"light",	0,		MFI_NORMAL,	0,     light_setup,	light_render,	light_print,	light_free },
+    {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
-
 
 /**
  * This is a container for all the stuff that must be carried around when
@@ -228,8 +152,8 @@ struct light_obs_stuff {
  *  This routine is called by bu_struct_parse() if the "aim"
  *  qualifier is encountered, and causes lt_exaim to be set.
  */
-
-HIDDEN void aim_set (const struct bu_structparse *sdp, const char *name, const char *base, char *value)
+HIDDEN void 
+aim_set (const struct bu_structparse *sdp, const char *name, const char *base, char *value)
 {
     register struct light_specific *lsp = (struct light_specific *)base;
     if (rdebug & RDEBUG_LIGHT )  {
@@ -237,6 +161,80 @@ HIDDEN void aim_set (const struct bu_structparse *sdp, const char *name, const c
     }
     lsp->lt_exaim = 1;
 }
+
+
+/**
+ *  light_cvt_visible()
+ *
+ *  Convert "visible" flag to "invisible" variable
+ */
+HIDDEN void
+light_cvt_visible(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+     /* structure description */
+     /* struct member name */
+     /* begining of structure */
+     /* string containing value */
+{
+    struct light_specific *lsp = (struct light_specific *)base;
+
+    if (rdebug & RDEBUG_LIGHT) {
+	bu_log("light_cvt_visible(%s, %d)\n", name, sdp->sp_offset);
+	bu_log("visible: %d invisible: %d\n",
+	       LIGHT_O(lt_visible),
+	       LIGHT_O(lt_invisible));
+    }
+    switch (sdp->sp_offset) {
+	case LIGHT_O(lt_invisible):
+	    lsp->lt_visible = !lsp->lt_invisible;
+	    break;
+	case LIGHT_O(lt_visible):
+	    lsp->lt_invisible = !lsp->lt_visible;
+	    break;
+    }
+}
+
+
+/**
+ * allocate a set of light point samples
+ */
+HIDDEN void
+light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+     /* structure description */
+     /* struct member name */
+     /* begining of structure */
+     /* string containing value */
+{
+    struct light_specific *lsp = (struct light_specific *)base;
+    fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
+
+    /* make sure we have enough room, allocate in batches of SOME_LIGHT_SAMPLES */
+    if ( lsp->lt_pt_count % SOME_LIGHT_SAMPLES == 0) {
+	if (lsp->lt_pt_count == 0) {
+	    /* assumes initialized to NULL */
+	    if (lsp->lt_sample_pts) {
+		bu_free(lsp->lt_sample_pts, "free light samples array");
+	    }
+	    lsp->lt_sample_pts = (struct light_pt *)bu_calloc(lsp->lt_pt_count + SOME_LIGHT_SAMPLES, sizeof(struct light_pt), "callocate light sample points");
+	} else {
+	    lsp->lt_sample_pts = (struct light_pt *)bu_realloc(lsp->lt_sample_pts, (lsp->lt_pt_count + SOME_LIGHT_SAMPLES) * sizeof(struct light_pt), "reallocate light sample points");
+	}
+    }
+
+    if (! strcmp("pt", name) ) {
+	/* user just specified point, set normal to zeros */
+	p[3] = p[4] = p[5] = 0.0;
+    } else if ( strcmp("pn", name) ) {
+	bu_log("*********** unknown option in light_pt_set %s:%d\n", __FILE__, __LINE__);
+	return;
+    }
+
+    memcpy( &lsp->lt_sample_pts[ lsp->lt_pt_count++ ], p, sizeof( struct light_pt ) );
+
+    if (rdebug & RDEBUG_LIGHT ) {
+	bu_log("set light point %g %g %g   N %g %g %g\n", p[0], p[1], p[2], p[3], p[4], p[5]);
+    }
+}
+
 
 /**
  *			L I G H T _ R E N D E R
@@ -296,9 +294,7 @@ light_render(struct application *ap, struct partition *pp, struct shadework *swp
  * add the hit point(s) to the list of points on the light.
  */
 static int
-gen_hit(register struct application *ap,
-	struct partition	    *PartHeadp,
-	struct seg		    *sp)
+gen_hit(register struct application *ap, struct partition *PartHeadp, struct seg *sp)
 {
     struct light_specific *lsp = (struct light_specific *)ap->a_uptr;
     struct soltab *stp;
@@ -395,8 +391,8 @@ gen_hit(register struct application *ap,
 
 
 /**
- * When shooting the grids for building light pts, if we miss the light just
- * return;
+ * When shooting the grids for building light pts, if we miss the
+ * light then do nothing.
  */
 static int
 gen_miss(register struct application *ap)
@@ -480,6 +476,7 @@ shoot_grids(struct application *ap,
 
 }
 #endif
+
 static void
 ray_setup(struct application *ap,
 	  point_t tree_min,
@@ -624,7 +621,7 @@ light_setup(register struct region *rp,
 	    struct bu_vls	   *matparm,
 	    genptr_t		   *dpp,
 	    struct mfuncs          *mfp,
-	    struct rt_i            *rtip)  /* New since 4.4 release */
+	    struct rt_i            *rtip)
 {
     register struct light_specific *lsp;
     register struct soltab *stp;
@@ -846,16 +843,16 @@ light_maker(int num, mat_t v2m)
 
 	BU_GETSTRUCT( lsp, light_specific );
 	lsp->l.magic = LIGHT_MAGIC;
-#ifdef RT_MULTISPECTRAL
 
+#ifdef RT_MULTISPECTRAL
 	BN_GET_TABDATA(lsp->lt_spectrum, spectrum);
 	VMOVE(fcolor, color);
 	rt_spect_reflectance_rgb( lsp->lt_spectrum, fcolor );
 	bn_tabdata_scale( lsp->lt_spectrum, lsp->lt_spectrum, 1000.0 );
-
 #else
 	VMOVE( lsp->lt_color, color );
 #endif
+
 	MAT4X3PNT( lsp->lt_pos, v2m, temp );
 	VMOVE( lsp->lt_vec, lsp->lt_pos );
 	VUNITIZE( lsp->lt_vec );
@@ -1044,16 +1041,17 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     struct application	sub_ap;
     struct shadework	sw;
     const struct light_specific	*lsp;
-    extern int	light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+
+    int	light_visible = 0;
+    int	air_sols_seen = 0;
+    int 	is_proc;
+    char	*reason = "???";
+
 #ifdef RT_MULTISPECTRAL
     struct bn_tabdata	*ms_filter_color = BN_TABDATA_NULL;
 #else
     vect_t	filter_color;
 #endif
-    int	light_visible = 0;
-    int	air_sols_seen = 0;
-    int 	is_proc;
-    char	*reason = "???";
 
     RT_CK_PT_HD(PartHeadp);
 
@@ -1436,6 +1434,7 @@ light_miss(register struct application *ap)
 static int
 light_vis(struct light_obs_stuff *los, char *flags)
 {
+    const double cosine89_99deg = 0.0001745329;
     struct application sub_ap;
     double radius = 0.0;
     double angle = 0.0;
@@ -1512,7 +1511,6 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	     * on the light source which machine floating-point
 	     * inaccuracies would cause the ray to miss.
 	     */
-#define COSINE89_99DEG 0.0001745329
 
 	    VisRayvsSurfN
 		= VDOT(los->swp->sw_hit.hit_normal, dir);
@@ -1524,8 +1522,8 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	    }
 
 
-	    if ( VisRayvsLightN > COSINE89_99DEG &&
-		   VisRayvsSurfN > COSINE89_99DEG ) {
+	    if ( VisRayvsLightN > cosine89_99deg &&
+		   VisRayvsSurfN > cosine89_99deg ) {
 
 		/* ok, we can shoot at this sample point */
 		if (rdebug & RDEBUG_LIGHT )
@@ -1536,7 +1534,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
 		goto done;
 	    }
-#undef COSINE89DEG
+
 	    if (rdebug & RDEBUG_LIGHT ) {
 		bu_log("\tbackfacing\n");
 		bu_log("VisRayvsLightN %g\n", VisRayvsLightN);
@@ -1628,13 +1626,11 @@ light_vis(struct light_obs_stuff *los, char *flags)
 		   V3ARGS(shoot_pt));
 	}
 	VSUB2(shoot_dir, shoot_pt, los->swp->sw_hit.hit_point);
-
     }
 
     if (rdebug & RDEBUG_LIGHT) {
 	VPRINT("shoot_dir", shoot_dir);
     }
-
 
     if (rdebug& RDEBUG_RAYPLOT) {
 	point_t ray_endpt;
@@ -1648,7 +1644,6 @@ light_vis(struct light_obs_stuff *los, char *flags)
     }
 
     VUNITIZE( shoot_dir );
-
 
     /*
      * See if ray from hit point to light lies within light beam
@@ -1668,6 +1663,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	if (rdebug & RDEBUG_LIGHT)
 	    bu_log("fill light, no shadow, visible: %s\n",
 		   los->lsp->lt_name);
+
 #ifdef RT_MULTISPECTRAL
 	/* XXX Need a power level for this! */
 	bn_tabdata_constval( ((struct bn_tabdata *)los->inten), 1.0);
@@ -1761,8 +1757,10 @@ light_vis(struct light_obs_stuff *los, char *flags)
 #else
 	VMOVE( los->inten, sub_ap.a_color );
 #endif
+
 	return 1;
     }
+
     /* dark (light obscured) */
     if (rdebug & RDEBUG_LIGHT)
 	bu_log("light obscured: %s\n", los->lsp->lt_name);
