@@ -94,9 +94,7 @@ fit_store (char *obj, char *dbname, struct fitness_state *fstate)
 
     fstate->capture = 1;
  
-    printf("rt: storing ray\n");
     fit_rt(obj, db, fstate);
-    printf("ray stored\n");
     fstate->capture = 0;
 }
 
@@ -347,41 +345,6 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     fstate->gridSpacing[V_AXIS] = (fstate->rtip->mdl_max[V_AXIS] - fstate->rtip->mdl_min[V_AXIS]) / (fstate->res[V_AXIS] + 1 );
     fstate->row = 0;
     fstate->diff = 0;
-
-
-    printf("fstate->rtip->nregions: %ld\tfstate->rtip->nsolids: %ld\n", fstate->rtip->nregions, fstate->rtip->nsolids);
-    printf("%p  - %p\n", fstate->rtip->Regions, fstate->rtip->Regions[0]);
-    struct region *regp;
-    /* safer but ... needed? */
-    for(BU_LIST_FOR(regp, region, &(fstate->rtip->HeadRegion) )){
-	printf("should be a tree here: %p\n", fstate->rtip->Regions[regp->reg_bit]);
-	printf("i lied, tree is here:%p\n", fstate->rtip->Regions[regp->reg_bit]->reg_treetop);
-	printf("db_tree_nleaves: %d\n", db_tree_nleaves(fstate->rtip->Regions[regp->reg_bit]->reg_treetop));
-	union tree *tp = fstate->rtip->Regions[regp->reg_bit]->reg_treetop;
-	switch(tp->tr_op){
-	    case OP_SOLID:
-		printf("SOLID\n");
-		tp->tr_a.tu_stp->st_meth->ft_print(tp->tr_a.tu_stp);
-		switch(tp->tr_a.tu_stp->st_id){
-		    case ID_ELL:
-		    case ID_SPH:
-			printf("ID_ELL\n");
-			VSET( ((struct rt_ell_internal *)tp->tr_a.tu_stp->st_specific)->v, 0.0, 0.0, 0.0);
-			break;
-		    case ID_ARBN:
-			printf("ID_ARBN\n");
-			break;
-		    case ID_TGC:
-			printf("ID_TGC\n");
-			break;
-		}
-
-		break;
-	}
-    }
-
-
-
 
 
     if(fstate->capture){

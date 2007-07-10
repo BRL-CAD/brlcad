@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include <string.h>
 #include <strings.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -125,7 +126,7 @@ pop_spawn (struct population *p, struct rt_wdb *db_fp)
 
 
 	snprintf(p->parent[i].id, 256, "gen%.3dind%.3d", 0, i);
-	mk_lcomb(db_fp, p->parent[i].id, &wm_hd, 0, NULL, NULL, NULL, 0);
+	mk_lcomb(db_fp, p->parent[i].id, &wm_hd, 1, NULL, NULL, NULL, 0);
     }
 }
 
@@ -204,24 +205,25 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
     switch( tp->tr_op )  {
 
 	case OP_DB_LEAF:
-	    printf("leaf\n");
-	    if( (dp=db_lookup( dbi_p, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
+	    if( (dp=db_lookup( dbi_p, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL ){
+		printf("failed to look up %s\n", tp->tr_l.tl_name);
 		return;
+	    }
 	    //rename tree
 	    snprintf(shape, 256, "%s-%d", name, shape_number++);
-	    printf("he\n");
 	    bu_free(tp->tr_l.tl_name, "bu_strdup");
 	    tp->tr_l.tl_name = bu_strdup(shape);
-	    printf("%s\n", shape);
-
-	    db_rename(dbi_p, dp, shape);
+	    
+	   //	    db_rename(dbi_p, dp, shape);
 
 	    if( rt_db_get_internal(&intern, dp, dbi_p, NULL, resp) < 0)
 		bu_bomb("failed to read a leaf");
+	    RT_DIR_FREE_NAMEP(dp);
+	    RT_DIR_SET_NAMEP(dp,shape);
+
 	    if(rt_db_put_internal(dp, dbi_c, &intern, resp) < 0)
 		bu_bomb("failed to write leaf");
 	    rt_db_free_internal(&intern, resp);
-	    printf("copied leaf\n");
 	    break;
 
 	case OP_UNION:
@@ -248,18 +250,22 @@ pop_dup(char *parent, char *child, struct db_i *dbi_p, struct db_i *dbi_c, struc
     struct rt_comb_internal *comb;
     struct directory *dp;
 
-    printf("looking up %s\n", parent);
-    if( (dp = db_lookup(dbi_p, parent, LOOKUP_NOISY)) == DIR_NULL)
+    if( (dp = db_lookup(dbi_p, parent, LOOKUP_NOISY)) == DIR_NULL){
+	printf("PARENT LOOKUP FAILED, EXITING\n");
+	exit(1);
 	bu_bomb("db_lookup(parent) failed");
+    }
     if(rt_db_get_internal(&in, dp, dbi_p, NULL, resp) < 0 )
 	bu_bomb("pop_dup: faled to load");
 
     shape_number = 0;
     comb = (struct rt_comb_internal *)in.idb_ptr;
     //rename combination
-    db_rename(dbi_p, dp, child);
-    printf("calling pop_functree\n");
     pop_functree(dbi_p, dbi_c, comb->tree, resp, child);
+
+    RT_DIR_FREE_NAMEP(dp);
+    RT_DIR_SET_NAMEP(dp,child);
+    
     rt_db_put_internal(dp, dbi_c, &in, resp);
     rt_db_free_internal(&in, resp);
 }

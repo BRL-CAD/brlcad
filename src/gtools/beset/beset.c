@@ -134,10 +134,7 @@ int main(int argc, char *argv[]){
     struct directory *dp;
     //pop_spawn = gen00
     for(g = 1; g < 10; g++){
-	if((dp = db_lookup(pop->db_p, "gen000ind005", LOOKUP_NOISY)) == DIR_NULL)
-	    printf("ERROR LOOKING UP PARENT");
-
-	//create a new db for each generation
+		//create a new db for each generation
 	snprintf(dbname, 256, "gen%.2d", g);
 	pop->db_c = db_create(dbname, 5);
 	pop->db_c->dbi_wdbp = wdb_dbopen(pop->db_c,RT_WDB_TYPE_DB_DISK);
@@ -145,6 +142,8 @@ int main(int argc, char *argv[]){
 	//evaluate fitness of parents
 	total_fitness = 0;
 	
+
+
 	for(i = 0; i < pop->size; i++) {
 	   pop->parent[i].fitness = 1.0-fit_linDiff(pop->parent[i].id, pop->db_p, fstate);
 	   total_fitness += pop->parent[i].fitness;
@@ -153,13 +152,23 @@ int main(int argc, char *argv[]){
 	//qsort(pop->parent, pop->size, sizeof(struct individual), cmp_ind);
 
 	for(i = 0; i < pop->size; i++){
+	    printf("-----Generating Individual %d-----\n", i);
+
+	    /*
+
+	    if((dp = db_lookup(pop->db_p, "gen000ind004", LOOKUP_NOISY)) == DIR_NULL)
+		printf("ERROR LOOKING UP PARENT\n");
+	    else
+		printf("SUCCESFULLY LOOKED UP gen000ind004\n");
+		*/
+
+
 	    ind = pop_wrand_ind(pop->parent, pop->size, total_fitness);
 	    gop = pop_wrand_gop(); // to be implemented...
 	    //going to need random node calculation for these too ...
 
 	    pop->child[i] = pop->parent[ind]; //struct copy
 	    snprintf(pop->child[i].id, 256, "gen%.3dind%.3d", g, i);
-	    printf("copying %s to %s\n", pop->parent[ind].id, pop->child[i].id);
 
 	    switch(REPRODUCE){
 		case MUTATE_MOD:  // mutate but do not replace values, modify them by +- MOD_RATE
@@ -173,11 +182,15 @@ int main(int argc, char *argv[]){
 		    //perform crossover on tree
 		    break;
 		case REPRODUCE:
+
+		    printf("copying %s to %s\n", pop->parent[ind].id, pop->child[i].id);
 		    pop_dup(pop->parent[ind].id, pop->child[i].id, pop->db_p, pop->db_c, &rt_uniresource );
+		    break;
 	    }
 	  	 //   snprintf(pop->child[i].id, 256, "g%di%d.s", g, i);
 	//    pop_add(&pop->child[i], fstate->db->dbi_wdbp);
 	}
+	printf("CLOSING DB_P\n");
   wdb_close(pop->db_p->dbi_wdbp);
 	    pop->db_p = pop->db_c;
 
