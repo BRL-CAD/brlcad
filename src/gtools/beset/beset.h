@@ -32,6 +32,7 @@
 #define MUTATE_RAND 2
 #define MUTATE_OP 4
 #define CROSSOVER 8
+#define REPRODUCE 16
 
 #define SCALE 10
 

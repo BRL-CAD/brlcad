@@ -30,18 +30,26 @@
 
 #define GEO_SPHERE 1
 
-struct individual {
-    point_t p;
-    fastf_t r;
-    char id[256];
-    int type;
-    fastf_t fitness;
+struct name{
+    char n[256];
+    int i;
+};
 
+struct individual {
+    char id[256];//the nameeeeee
+    fastf_t fitness;
 };
 
 struct population {
-    struct individual *individual;
-    struct individual *offspring;
+    struct individual *parent;
+    struct individual *child;
+
+    struct db_i *db_p; // parent database
+    struct db_i *db_c; // chld database
+
+
+
+
     int size;
 };
 
@@ -52,6 +60,16 @@ void pop_add	    (struct individual *i, struct rt_wdb *db);
 int  pop_wrand_ind  (struct individual *i, int size, fastf_t total_fitness);
 int  pop_wrand_gop  (void);
 fastf_t pop_rand    (void);
+
+//void pop_dup_functree(struct db_i *dbi_p, struct db_i *dbi_c,
+//		      union tree *tp, struct resource *resp, 
+//		      char *name );
+void pop_dup(char *parent, char * child, struct db_i *dbi_p, 
+	     struct db_i *dbi_c, struct resource *resp);
+
+
+
+
 
 #endif /* __POPULATION_H__ */
 

@@ -49,6 +49,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"
+#include "rtgeom.h"
 
 #define SEM_WORK RT_SEM_LAST
 #define TOTAL_SEMAPHORES SEM_WORK+1
@@ -81,11 +82,21 @@ rays_clear(struct fitness_state *fstate)
  */
 
 void
-fit_store (char *obj, struct fitness_state *fstate)
+fit_store (char *obj, char *dbname, struct fitness_state *fstate)
 {
+    struct db_i *db;
+
+    if( (db=db_open(dbname, "r")) == DBI_NULL)
+	bu_bomb("Failed to open model database");
+    if(db_dirbuild(db) < 0)
+	bu_bomb("Failed to build directory sturcutre");
+
 
     fstate->capture = 1;
-    fit_rt(obj, fstate);
+ 
+    printf("rt: storing ray\n");
+    fit_rt(obj, db, fstate);
+    printf("ray stored\n");
     fstate->capture = 0;
 }
 
@@ -305,12 +316,15 @@ rt_worker(int cpu, genptr_t g)
  *
  */
 void
-fit_rt(char *obj, struct fitness_state *fstate)
+fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 {
     int i;
     double span[3];
     
-    fstate->rtip = rt_new_rti(fstate->db);
+    fstate->rtip = rt_new_rti(db);
+
+
+
     if(rt_gettree(fstate->rtip, obj) < 0){
 	fprintf(stderr, "rt_gettree failed to read %s\n", obj);
 	exit(2);
@@ -334,6 +348,42 @@ fit_rt(char *obj, struct fitness_state *fstate)
     fstate->row = 0;
     fstate->diff = 0;
 
+
+    printf("fstate->rtip->nregions: %ld\tfstate->rtip->nsolids: %ld\n", fstate->rtip->nregions, fstate->rtip->nsolids);
+    printf("%p  - %p\n", fstate->rtip->Regions, fstate->rtip->Regions[0]);
+    struct region *regp;
+    /* safer but ... needed? */
+    for(BU_LIST_FOR(regp, region, &(fstate->rtip->HeadRegion) )){
+	printf("should be a tree here: %p\n", fstate->rtip->Regions[regp->reg_bit]);
+	printf("i lied, tree is here:%p\n", fstate->rtip->Regions[regp->reg_bit]->reg_treetop);
+	printf("db_tree_nleaves: %d\n", db_tree_nleaves(fstate->rtip->Regions[regp->reg_bit]->reg_treetop));
+	union tree *tp = fstate->rtip->Regions[regp->reg_bit]->reg_treetop;
+	switch(tp->tr_op){
+	    case OP_SOLID:
+		printf("SOLID\n");
+		tp->tr_a.tu_stp->st_meth->ft_print(tp->tr_a.tu_stp);
+		switch(tp->tr_a.tu_stp->st_id){
+		    case ID_ELL:
+		    case ID_SPH:
+			printf("ID_ELL\n");
+			VSET( ((struct rt_ell_internal *)tp->tr_a.tu_stp->st_specific)->v, 0.0, 0.0, 0.0);
+			break;
+		    case ID_ARBN:
+			printf("ID_ARBN\n");
+			break;
+		    case ID_TGC:
+			printf("ID_TGC\n");
+			break;
+		}
+
+		break;
+	}
+    }
+
+
+
+
+
     if(fstate->capture){
 	fstate->name = obj;
 	fstate->rays = bu_malloc(sizeof(struct part *) * fstate->res[U_AXIS] * fstate->res[V_AXIS], "rays");
@@ -350,9 +400,9 @@ fit_rt(char *obj, struct fitness_state *fstate)
  *	F I T _ L I N D I F F --- returns the total linear difference between the rays of obj and source
  */
 fastf_t
-fit_linDiff(char *obj, struct fitness_state *fstate)
+fit_linDiff(char *obj, struct db_i *db, struct fitness_state *fstate)
 {
-    fit_rt(obj, fstate);
+    fit_rt(obj, db, fstate);
     return fstate->diff;
 }
 
@@ -361,6 +411,7 @@ fit_linDiff(char *obj, struct fitness_state *fstate)
  *	Note: currently not in use, will be used to refine grid as 
  *	fitness increases
  */
+/*
 void
 fit_updateRes(int rows, int cols, struct fitness_state *fstate){
     if( fstate->rays != NULL){
@@ -371,13 +422,14 @@ fit_updateRes(int rows, int cols, struct fitness_state *fstate){
     fit_store(fstate->name, fstate);
 
 }
+*/
 
 
 /**
  *	F I T _ P R E P --- load database and prepare for raytracing
  */
 struct fitness_state * 
-fit_prep(char *db, int rows, int cols)
+fit_prep(int rows, int cols)
 {
 
     struct fitness_state *fstate = bu_malloc(sizeof(struct fitness_state), "fstate");
@@ -392,6 +444,7 @@ fit_prep(char *db, int rows, int cols)
     /* 
      * Load databse into db_i 
      */
+    /*
     if( (fstate->db = db_open(db, "r+w")) == DBI_NULL) {
 	bu_free(fstate, "fstate");
 	fprintf(stderr, "Failed to open database %s\n", db);
@@ -405,6 +458,7 @@ fit_prep(char *db, int rows, int cols)
 	fprintf(stderr, "Failed to build directory structure on %s\n", db);
 	exit(1);
     }
+    */
 
     fstate->capture = 0;
     fstate->res[U_AXIS] = rows;
@@ -419,7 +473,7 @@ fit_prep(char *db, int rows, int cols)
 void
 fit_clean(struct fitness_state *fstate)
 {
-    db_close(fstate->db); 
+    //db_close(fstate->db); 
     rays_clear(fstate);
     bu_free(fstate, "fstate");
 }

@@ -49,7 +49,7 @@ struct part {
 struct fitness_state {
     char *name;
     struct part **rays; /* internal representation of raytraced source */
-    struct db_i *db; /* the database the source and population are a part of */
+    //struct db_i *db; /* the database the source and population are a part of */
     struct rt_i *rtip; /* current objects to be raytraced */
 
     struct resource resource[MAX_PSW]; /* memory resource for multi-cpu processing */
@@ -85,22 +85,22 @@ int get_next_row(struct fitness_state *fstate);
 void rt_worker(int cpu, genptr_t g);
 
 /* prep for raytracing object, and call rt_worker for parallel processing */
-void fit_rt (char *obj, struct fitness_state *fstate);
+void fit_rt (char *obj, struct db_i *db, struct fitness_state *fstate);
 
 /* load database and prepare fstate for work */
-struct fitness_state * fit_prep(char *db, int rows, int cols);
+struct fitness_state * fit_prep(int rows, int cols);
 
 /* cleanup */
 void fit_clean(struct fitness_state *fstate);
 
 /* store a given object as the source  */
-void fit_store(char *obj, struct fitness_state *fstate);
+void fit_store(char *obj, char *dbname, struct fitness_state *fstate);
 
 /* update grid resolution */
 void fit_updateRes(int rows, int cols, struct fitness_state *fstate);
 
 /* returns total linear difference between object and source */
-fastf_t fit_linDiff(char *obj, struct fitness_state *fstate);
+fastf_t fit_linDiff(char *obj, struct db_i *db, struct fitness_state *fstate);
 
 /* clear the stored rays */
 void rays_clean (struct fitness_state *fstate);
