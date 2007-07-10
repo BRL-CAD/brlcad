@@ -112,7 +112,7 @@ bu_crashreport(const char *filename)
 
     /* write out operating system information */
     if ((path = bu_which("uname"))) {
-	snprintf(buffer, CR_BUFSIZE, "%s -a", path);
+	snprintf(buffer, CR_BUFSIZE, "%s -a 2>&1", path);
 	popenfp = popen(buffer, "r");
 	if (!popenfp) {
 	    perror("unable to popen uname");
@@ -130,10 +130,8 @@ bu_crashreport(const char *filename)
 
     /* write out kernel and hardware information */
     if (path = bu_which("sysctl")) {
-	snprintf(buffer, CR_BUFSIZE, "%s -a", path);
-	/* FIXME: really should fork and execve instead of popen to
-	 * catch stderr junk from sysctl.
-	 */
+	/* need 2>&1 to capture stderr junk from sysctl on Mac OS X for kern.exec */
+	snprintf(buffer, CR_BUFSIZE, "%s -a 2>&1", path);
 	popenfp = popen(buffer, "r");
 	if (!popenfp) {
 	    perror("unable to popen sysctl");
