@@ -156,6 +156,7 @@ MGED_EXTERN(int f_area, (ClientData clientData, Tcl_Interp *interp, int argc, ch
 MGED_EXTERN(int f_attach, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_bev, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_binary, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_bomb, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 MGED_EXTERN(int f_clone, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_closedb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_comb_color, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

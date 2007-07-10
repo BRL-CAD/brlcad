@@ -170,9 +170,6 @@ int f_test_bomb_hook(ClientData clientData, Tcl_Interp *interp, int argc, char *
 #endif
 
 static struct cmdtab cmdtab[] = {
-#if 1
-	{"test_bomb_hook", f_test_bomb_hook},
-#endif
 	{"%", f_comm},
 	{"35,25",	bv_35_25},
 	{"3ptarb", f_3ptarb},
@@ -196,6 +193,7 @@ static struct cmdtab cmdtab[] = {
 	{"import_body", cmd_import_body},
 	{"export_body", cmd_export_body},
 #endif
+	{"bomb", f_bomb},
 	{"bot_condense", f_bot_condense},
 	{"bot_decimate", cmd_bot_decimate},
 	{"bot_face_fuse", f_bot_face_fuse},
@@ -2353,16 +2351,27 @@ f_bot_condense(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
 }
 
-#if 1
 int
-f_test_bomb_hook(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_bomb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-	bu_bomb("\nTesting MGED's bomb hook!\n");
+    char buffer[1024] = {0};
+    struct bu_vls vls;
 
-	/* This is never reached */
-	return TCL_OK;
+    if (argc > 1) {
+	argc--; argv++;
+
+	bu_vls_init(&vls);
+	bu_vls_from_argv(&vls, argc, argv);
+	snprintf(buffer, 1024, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+    }
+
+    bu_bomb(buffer);
+
+    /* This is never reached */
+
+    return TCL_OK;
 }
-#endif
 
 int
 cmd_adjust(ClientData	clientData,
