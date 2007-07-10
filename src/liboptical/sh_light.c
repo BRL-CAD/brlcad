@@ -77,6 +77,13 @@ HIDDEN void light_print(register struct region *rp, char *dp);
 HIDDEN void light_free(char *cp);
 
 
+/** callback registration table for this shader in optical_shader_init() */
+struct mfuncs light_mfuncs[] = {
+    {MF_MAGIC,	"light",	0,		MFI_NORMAL,	0,     light_setup,	light_render,	light_print,	light_free },
+    {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
+};
+
+/** for printing out light values */
 struct bu_structparse light_print_tab[] = {
     {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
     {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
@@ -88,6 +95,8 @@ struct bu_structparse light_print_tab[] = {
     {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
+
+/** for actually parsing light values */
 struct bu_structparse light_parse[] = {
 
     {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
@@ -111,17 +120,14 @@ struct bu_structparse light_parse[] = {
     {"%d",	1, "i",		LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
 
     {"%d",	1, "visible",	LIGHT_O(lt_visible),	light_cvt_visible },
-    {"%d",  1, "invisible",	LIGHT_O(lt_invisible),	light_cvt_visible },
     {"%d",	1, "v",		LIGHT_O(lt_visible),	light_cvt_visible },
+
+    {"%d",	1, "invisible",	LIGHT_O(lt_invisible),	light_cvt_visible },
 
     {"%f",	3, "pt",	LIGHT_OA(lt_parse_pt), light_pt_set },
     {"%f",	6, "pn",	LIGHT_OA(lt_parse_pt), light_pt_set },
 
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
-};
-struct mfuncs light_mfuncs[] = {
-    {MF_MAGIC,	"light",	0,		MFI_NORMAL,	0,     light_setup,	light_render,	light_print,	light_free },
-    {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
 /**
@@ -237,15 +243,15 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
 
 
 /**
- *			L I G H T _ R E N D E R
+ *  L I G H T _ R E N D E R
  *
- *  If we have a direct view of the light, return it's color.
- *  A cosine term is needed in the shading of the light source,
- *  to make it have dimension and shape.  However, just a simple
- *  cosine of the angle between the normal and the direction vector
- *  leads to a pretty dim looking light.  Therefore, a cos/2 + 0.5
- *  term is used when the viewer is within the beam, and a cos/2 term
- *  when the beam points away.
+ *  If we have a direct view of the light, return it's color.  A
+ *  cosine term is needed in the shading of the light source, to make
+ *  it have dimension and shape.  However, just a simple cosine of the
+ *  angle between the normal and the direction vector leads to a
+ *  pretty dim looking light.  Therefore, a cos/2 + 0.5 term is used
+ *  when the viewer is within the beam, and a cos/2 term when the beam
+ *  points away.
  */
 HIDDEN int
 light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
@@ -290,11 +296,77 @@ light_render(struct application *ap, struct partition *pp, struct shadework *swp
 
 
 /**
- * When shooting grids of rays to generate the points on the light, we
+ * preparation routine for light_gen_sample_pts() that sets up a
+ * sample point ray.
+ */
+static void
+ray_setup(struct application *ap,
+	  point_t tree_min,
+	  point_t tree_max,
+	  point_t span)
+{
+    int face;
+    point_t pt;
+    static int idx = 0;
+
+    /* pick a face of the bounding RPP at which we will start the ray */
+    face = BN_RANDOM(idx) * 2.9999;
+
+    switch (face) {
+    case 0: /* XMIN */
+	VSET(ap->a_ray.r_pt,
+	     tree_min[X] - 10.0,
+	     tree_min[Y] + BN_RANDOM(idx) * span[Y],
+	     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
+	VSET(pt,
+	     tree_max[X],
+	     tree_min[Y] + BN_RANDOM(idx) * span[Y],
+	     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
+	break;
+
+    case 1: /* YMIN */
+	VSET(ap->a_ray.r_pt,
+	     tree_min[X] + BN_RANDOM(idx) * span[X],
+	     tree_min[Y] - 10.0,
+	     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
+	VSET(pt,
+	     tree_min[X] + BN_RANDOM(idx) * span[X],
+	     tree_max[Y],
+	     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
+	break;
+
+    case 2: /* ZMIN */
+	VSET(ap->a_ray.r_pt,
+	     tree_min[X] +
+	     BN_RANDOM(idx) * span[X],
+
+	     tree_min[Y] +
+	     BN_RANDOM(idx) * span[Y],
+
+	     tree_min[Z] - 10.0);
+	VSET(pt,
+	     tree_min[X] +
+	     BN_RANDOM(idx) * span[X],
+
+	     tree_min[Y] +
+	     BN_RANDOM(idx) * span[Y],
+
+	     tree_max[Z]);
+	break;
+    }
+    VSUB2(ap->a_ray.r_dir, pt, ap->a_ray.r_pt);
+    VUNITIZE(ap->a_ray.r_dir);
+
+}
+
+
+/**
+ * this is the hit callback function when shooting grids of rays to
+ * generate the points on the light (in light_gen_sample_pts()), we
  * add the hit point(s) to the list of points on the light.
  */
 static int
-gen_hit(register struct application *ap, struct partition *PartHeadp, struct seg *sp)
+light_gen_sample_pts_hit(register struct application *ap, struct partition *PartHeadp, struct seg *sp)
 {
     struct light_specific *lsp = (struct light_specific *)ap->a_uptr;
     struct soltab *stp;
@@ -391,150 +463,14 @@ gen_hit(register struct application *ap, struct partition *PartHeadp, struct seg
 
 
 /**
- * When shooting the grids for building light pts, if we miss the
- * light then do nothing.
+ * this is the callback miss function when shooting the grids for
+ * building light pts (in light_gen_sample_pts()). if we miss the
+ * light, then do nothing.
  */
 static int
-gen_miss(register struct application *ap)
+light_gen_sample_pts_miss(register struct application *ap)
 {
     return 0;
-}
-
-
-#if 0
-/**
- *  Shoot rays in each of the axis directions looking for hit points
- *  on a light.
- */
-static void
-shoot_grids(struct application *ap,
-	    vect_t step,
-	    point_t tree_min,
-	    point_t tree_max)
-{
-    double x, y, z;
-    struct light_specific *lsp = (struct light_specific *)ap->a_uptr;
-
-    if (rdebug & RDEBUG_LIGHT )
-	bu_log("shoot_grids Z, step=(%g, %g, %g)\n", V3ARGS(step) );
-
-    /* shoot through the X,Y plane */
-#define MIN_GRID_STEP_MM	0.1		/* had been 10.0 */
-
-    if (step[Y] > MIN_GRID_STEP_MM && step[X] > MIN_GRID_STEP_MM) {
-	z = tree_min[Z];
-
-	VSET(ap->a_ray.r_dir, 0.0, 0.0, 1.0);
-	z = tree_min[Z];
-
-	for (y = tree_min[Y] + step[Y] * 0.5;
-	     y < tree_max[Y] ; y += step[Y])
-
-	    for (x = tree_min[X] + step[X] * 0.5;
-		 x < tree_max[X] ; x += step[X]) {
-		VSET(ap->a_ray.r_pt, x, y, z);
-		(void)rt_shootray( ap );
-	    }
-    }
-
-    if (rdebug & RDEBUG_LIGHT )
-	bu_log("shoot_grids Y\n");
-
-    /* shoot through the X, Z plane */
-    if (step[Z] > MIN_GRID_STEP_MM && step[X] > MIN_GRID_STEP_MM) {
-	y = tree_min[Y];
-
-	VSET(ap->a_ray.r_dir, 0.0, 1.0, 0.0);
-	z = tree_min[Z];
-
-	for (z = tree_min[Z] + step[Z] * 0.5;
-	     z < tree_max[Z] ; z += step[Z])
-
-	    for (x = tree_min[X] + step[X] * 0.5;
-		 x < tree_max[X] ; x += step[X]) {
-		VSET(ap->a_ray.r_pt, x, y, z);
-		(void)rt_shootray( ap );
-	    }
-    }
-
-    /* shoot through the Y, Z plane */
-    if (rdebug & RDEBUG_LIGHT )
-	bu_log("shoot_grids X\n");
-    if (step[Z] > MIN_GRID_STEP_MM && step[Y] > MIN_GRID_STEP_MM) {
-	VSET(ap->a_ray.r_dir, 1.0, 0.0, 0.0);
-	x = tree_min[X];
-
-	for (z = tree_min[Z] + step[Z] * 0.5;
-	     z < tree_max[Z] ; z += step[Z])
-
-	    for (y = tree_min[Y] + step[Y] * 0.5;
-		 y < tree_max[Y] ; y += step[Y]) {
-		VSET(ap->a_ray.r_pt, x, y, z);
-		(void)rt_shootray( ap );
-	    }
-    }
-
-}
-#endif
-
-static void
-ray_setup(struct application *ap,
-	  point_t tree_min,
-	  point_t tree_max,
-	  point_t span)
-{
-    int face;
-    point_t pt;
-    static int idx = 0;
-
-    /* pick a face of the bounding RPP at which we will start the ray */
-    face = BN_RANDOM(idx) * 2.9999;
-
-    switch (face) {
-    case 0: /* XMIN */
-	VSET(ap->a_ray.r_pt,
-	     tree_min[X] - 10.0,
-	     tree_min[Y] + BN_RANDOM(idx) * span[Y],
-	     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
-	VSET(pt,
-	     tree_max[X],
-	     tree_min[Y] + BN_RANDOM(idx) * span[Y],
-	     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
-	break;
-
-    case 1: /* YMIN */
-	VSET(ap->a_ray.r_pt,
-	     tree_min[X] + BN_RANDOM(idx) * span[X],
-	     tree_min[Y] - 10.0,
-	     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
-	VSET(pt,
-	     tree_min[X] + BN_RANDOM(idx) * span[X],
-	     tree_max[Y],
-	     tree_min[Z] + BN_RANDOM(idx) * span[Z]);
-	break;
-
-    case 2: /* ZMIN */
-	VSET(ap->a_ray.r_pt,
-	     tree_min[X] +
-	     BN_RANDOM(idx) * span[X],
-
-	     tree_min[Y] +
-	     BN_RANDOM(idx) * span[Y],
-
-	     tree_min[Z] - 10.0);
-	VSET(pt,
-	     tree_min[X] +
-	     BN_RANDOM(idx) * span[X],
-
-	     tree_min[Y] +
-	     BN_RANDOM(idx) * span[Y],
-
-	     tree_max[Z]);
-	break;
-    }
-    VSUB2(ap->a_ray.r_dir, pt, ap->a_ray.r_pt);
-    VUNITIZE(ap->a_ray.r_dir);
-
 }
 
 
@@ -542,7 +478,8 @@ ray_setup(struct application *ap,
  * L I G H T _ G E N _ S A M P L E _ P T S
  *
  * Generate a set of sample points on the surface of the light with
- * surface normals.
+ * surface normals.  calling during shader init to generate samples
+ * for all lights.
  */
 void
 light_gen_sample_pts(struct application    *upap,
@@ -562,8 +499,8 @@ light_gen_sample_pts(struct application    *upap,
     memset(&ap, 0, sizeof(ap));
     ap.a_rt_i = upap->a_rt_i;
     ap.a_onehit = 0;
-    ap.a_hit = gen_hit;
-    ap.a_miss = gen_miss;
+    ap.a_hit = light_gen_sample_pts_hit;
+    ap.a_miss = light_gen_sample_pts_miss;
     ap.a_uptr = (genptr_t)lsp;
 
     /* get the bounding box of the light source */
@@ -591,7 +528,10 @@ light_gen_sample_pts(struct application    *upap,
 	ray_setup(&ap, tree_min, tree_max, span);
 	(void)rt_shootray( &ap );
     }
-#if 0
+
+    /* debugging for the light sample points. output a plot line for
+     * each sample point.
+     */
     if (rdebug & RDEBUG_LIGHT ) {
 	int l;
 	point_t p;
@@ -607,7 +547,38 @@ light_gen_sample_pts(struct application    *upap,
 		   V3ARGS(lpt->lp_pt), V3ARGS(p));
 	}
     }
-#endif
+}
+
+
+/**
+ *			L I G H T _ P R I N T
+ */
+HIDDEN void
+light_print(register struct region *rp, char *dp)
+{
+    bu_struct_print(rp->reg_name, light_print_tab, (char *)dp);
+}
+
+
+/**
+ *			L I G H T _ F R E E
+ */
+void
+light_free(char *cp)
+{
+    register struct light_specific *lsp = (struct light_specific *)cp;
+
+    RT_CK_LIGHT(lsp);
+    BU_LIST_DEQUEUE( &(lsp->l) );
+    if (lsp->lt_name )  {
+	bu_free( lsp->lt_name, "light name" );
+	lsp->lt_name = (char *)0;
+    }
+    if (lsp->lt_sample_pts) {
+	bu_free(lsp->lt_sample_pts, "free light samples array");
+    }
+    lsp->l.magic = 0;	/* sanity */
+    bu_free( (char *)lsp, "light_specific" );
 }
 
 
@@ -633,11 +604,11 @@ light_setup(register struct region *rp,
 
     BU_LIST_MAGIC_SET( &(lsp->l), LIGHT_MAGIC );
     lsp->lt_intensity = 1.0;	/* Lumens */
-    lsp->lt_fraction = -1.0;		/* Recomputed later */
-    lsp->lt_visible = 1;		/* explicitly modeled */
-    lsp->lt_invisible = 0;		/* explicitly modeled */
-    lsp->lt_shadows = 1;		/* by default, casts shadows */
-    lsp->lt_angle = 180;		/* spherical emission by default */
+    lsp->lt_fraction = -1.0;	/* Recomputed later */
+    lsp->lt_visible = 1;	/* explicitly modeled */
+    lsp->lt_invisible = 0;	/* explicitly modeled */
+    lsp->lt_shadows = 1;	/* by default, casts shadows */
+    lsp->lt_angle = 180;	/* spherical emission by default */
     lsp->lt_exaim = 0;		/* use default aiming mechanism */
     lsp->lt_infinite = 0;
     lsp->lt_rp = rp;
@@ -672,6 +643,7 @@ light_setup(register struct region *rp,
 		   lsp->lt_name );
 	    return(-1);
 	}
+
 	VADD2SCALE( lsp->lt_pos, min_rpp, max_rpp, 0.5 );
 	VSUB2( rad, max_rpp, lsp->lt_pos );
 	/* Use smallest radius from center to max as light radius */
@@ -757,125 +729,6 @@ light_setup(register struct region *rp,
 
     *dpp = (genptr_t)lsp;	/* Associate lsp with reg_udata */
     return(1);
-}
-
-
-/**
- *			L I G H T _ P R I N T
- */
-HIDDEN void
-light_print(register struct region *rp, char *dp)
-{
-    bu_struct_print(rp->reg_name, light_print_tab, (char *)dp);
-}
-
-
-/**
- *			L I G H T _ F R E E
- */
-void
-light_free(char *cp)
-{
-    register struct light_specific *lsp = (struct light_specific *)cp;
-
-    RT_CK_LIGHT(lsp);
-    BU_LIST_DEQUEUE( &(lsp->l) );
-    if (lsp->lt_name )  {
-	bu_free( lsp->lt_name, "light name" );
-	lsp->lt_name = (char *)0;
-    }
-    if (lsp->lt_sample_pts) {
-	bu_free(lsp->lt_sample_pts, "free light samples array");
-    }
-    lsp->l.magic = 0;	/* sanity */
-    bu_free( (char *)lsp, "light_specific" );
-}
-
-
-/**
- *			L I G H T _ M A K E R
- *
- *  Special hook called by view_2init to build 1 or 3 debugging lights.
- */
-void
-light_maker(int num, mat_t v2m)
-{
-    register struct light_specific *lsp;
-    register int i;
-    vect_t	temp;
-    vect_t	color;
-    char	name[64];
-#ifdef RT_MULTISPECTRAL
-    float	fcolor[3];
-#endif
-    /* Determine the Light location(s) in view space */
-    for( i=0; i<num; i++ )  {
-	switch(i)  {
-	case 0:
-	    /* 0:  At left edge, 1/2 high */
-	    VSET( color, 1,  1,  1 );	/* White */
-	    VSET( temp, -1, 0, 1 );
-	    break;
-
-	case 1:
-	    /* 1: At right edge, 1/2 high */
-	    VSET( color,  1, 1, 1 );
-	    VSET( temp, 1, 0, 1 );
-	    break;
-
-	case 2:
-	    /* 2:  Behind, and overhead */
-	    VSET( color, 1, 1,  1 );
-	    VSET( temp, 0, 1, -0.5 );
-	    break;
-
-	default:
-	    return;
-	}
-#if 0
-	{  /* debugging ascii plot commands drawing from point location to origin */
-	    vect_t tmp;
-	    static vect_t pt = {0.0, 0.0, 0.0};
-	    MAT4X3PNT(tmp, v2m, temp); bu_log("C 0 255 255\nO %g %g %g\n", V3ARGS(tmp));
-	    MAT4X3PNT(tmp, v2m, pt); bu_log("Q %g %g %g\n", V3ARGS(tmp));
-	}
-#endif
-
-	BU_GETSTRUCT( lsp, light_specific );
-	lsp->l.magic = LIGHT_MAGIC;
-
-#ifdef RT_MULTISPECTRAL
-	BN_GET_TABDATA(lsp->lt_spectrum, spectrum);
-	VMOVE(fcolor, color);
-	rt_spect_reflectance_rgb( lsp->lt_spectrum, fcolor );
-	bn_tabdata_scale( lsp->lt_spectrum, lsp->lt_spectrum, 1000.0 );
-#else
-	VMOVE( lsp->lt_color, color );
-#endif
-
-	MAT4X3PNT( lsp->lt_pos, v2m, temp );
-	VMOVE( lsp->lt_vec, lsp->lt_pos );
-	VUNITIZE( lsp->lt_vec );
-
-	sprintf(name, "Implicit light %d", i);
-	lsp->lt_name = bu_strdup(name);
-
-	/* XXX Is it bogus to set lt_aim? */
-	VSET( lsp->lt_aim, 0, 0, -1 );	/* any direction: spherical */
-	lsp->lt_intensity = 1.0;
-	lsp->lt_radius = 0.1;		/* mm, "point" source */
-	lsp->lt_visible = 0;		/* NOT explicitly modeled */
-	lsp->lt_invisible = 1;		/* NOT explicitly modeled */
-	lsp->lt_shadows = 0;		/* no shadows for speed */
-	lsp->lt_angle = 180;		/* spherical emission */
-	lsp->lt_cosangle = -1;		/* cos(180) */
-	lsp->lt_infinite = 0;
-	lsp->lt_rp = REGION_NULL;
-	if (BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
-	    BU_LIST_INIT( &(LightHead.l) );
-	}
-	BU_LIST_INSERT( &(LightHead.l), &(lsp->l) );
-    }
 }
 
 
@@ -1427,9 +1280,10 @@ light_miss(register struct application *ap)
 #define VF_SEEN 1
 #define VF_BACKFACE 2
 /**
- *	light_vis
+ * l i g h t _ v i s
  *
- *	Compute 1 light visibility ray from a hit point to the light.
+ * Compute 1 light visibility ray from a hit point to the light.
+ * Called by light_obs() to determine light visibility.
  */
 static int
 light_vis(struct light_obs_stuff *los, char *flags)
@@ -1770,7 +1624,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
 
 /**
- *			L I G H T _ O B S C U R A T I O N
+ *	L I G H T _ O B S C U R A T I O N
  *
  *	Determine the visibility of each light source in the scene from a
  *	particular location.
@@ -1928,6 +1782,94 @@ light_obs(struct application *ap, struct shadework *swp, int have)
     }
 
     if (rdebug & RDEBUG_LIGHT ) bu_log("computing Light obscruration: end\n");
+}
+
+
+/**
+ * L I G H T _ M A K E R
+ *
+ * Special hook called by view_2init to build 1 or 3 debugging lights.
+ */
+void
+light_maker(int num, mat_t v2m)
+{
+    register struct light_specific *lsp;
+    register int i;
+    vect_t	temp;
+    vect_t	color;
+    char	name[64];
+#ifdef RT_MULTISPECTRAL
+    float	fcolor[3];
+#endif
+
+    /* Determine the Light location(s) in view space */
+    for( i=0; i<num; i++ )  {
+	switch(i)  {
+	case 0:
+	    /* 0:  At left edge, 1/2 high */
+	    VSET( color, 1,  1,  1 );	/* White */
+	    VSET( temp, -1, 0, 1 );
+	    break;
+
+	case 1:
+	    /* 1: At right edge, 1/2 high */
+	    VSET( color,  1, 1, 1 );
+	    VSET( temp, 1, 0, 1 );
+	    break;
+
+	case 2:
+	    /* 2:  Behind, and overhead */
+	    VSET( color, 1, 1,  1 );
+	    VSET( temp, 0, 1, -0.5 );
+	    break;
+
+	default:
+	    return;
+	}
+
+	if (rdebug & RDEBUG_LIGHT) {  
+	    /* debugging ascii plot commands drawing from point location to origin */
+	    vect_t tmp;
+	    static vect_t pt = {0.0, 0.0, 0.0};
+	    MAT4X3PNT(tmp, v2m, temp); bu_log("C 0 255 255\nO %g %g %g\n", V3ARGS(tmp));
+	    MAT4X3PNT(tmp, v2m, pt); bu_log("Q %g %g %g\n", V3ARGS(tmp));
+	}
+
+	BU_GETSTRUCT( lsp, light_specific );
+	lsp->l.magic = LIGHT_MAGIC;
+
+#ifdef RT_MULTISPECTRAL
+	BN_GET_TABDATA(lsp->lt_spectrum, spectrum);
+	VMOVE(fcolor, color);
+	rt_spect_reflectance_rgb( lsp->lt_spectrum, fcolor );
+	bn_tabdata_scale( lsp->lt_spectrum, lsp->lt_spectrum, 1000.0 );
+#else
+	VMOVE( lsp->lt_color, color );
+#endif
+
+	MAT4X3PNT( lsp->lt_pos, v2m, temp );
+	VMOVE( lsp->lt_vec, lsp->lt_pos );
+	VUNITIZE( lsp->lt_vec );
+
+	sprintf(name, "Implicit light %d", i);
+	lsp->lt_name = bu_strdup(name);
+
+	/* XXX Is it bogus to set lt_aim? */
+	VSET( lsp->lt_aim, 0, 0, -1 );	/* any direction: spherical */
+	lsp->lt_intensity = 1.0;
+	lsp->lt_radius = 0.1;		/* mm, "point" source */
+	lsp->lt_visible = 0;		/* NOT explicitly modeled */
+	lsp->lt_invisible = 1;		/* NOT explicitly modeled */
+	lsp->lt_shadows = 0;		/* no shadows for speed */
+	lsp->lt_angle = 180;		/* spherical emission */
+	lsp->lt_cosangle = -1;		/* cos(180) */
+	lsp->lt_infinite = 0;
+	lsp->lt_rp = REGION_NULL;
+	if (BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
+	    BU_LIST_INIT( &(LightHead.l) );
+	}
+	BU_LIST_INSERT( &(LightHead.l), &(lsp->l) );
+    }
 }
 
 
