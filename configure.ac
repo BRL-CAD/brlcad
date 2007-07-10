@@ -1458,7 +1458,13 @@ dnl check if the standard c++ library links without checking for any particular 
 dnl library is needed when linking c++ code against c code (e.g. openNURBS)
 stdcxx_link_works=no
 LIBSTDCXX=""
-AC_CHECK_LIB(stdc++, main, stdcxx_link_works=yes ; LIBSTDCXX="-lstdc++")
+AC_CHECK_LIB(stdc++, main, stdcxx_link_works=yes ; LIBSTDCXX="-lstdc++",
+	[PRELIBS="$LIBS"
+	 LIBS="$LIBS $LIBM" 
+	 AC_CHECK_LIB(stdc++, main, stdcxx_link_works=yes ; LIBSTDCXX="-lstdc++ $LIBM"
+	 LIBS="$PRELIBS"
+	 )]
+)
 
 dnl check for java
 JAVA_CFLAGS=
