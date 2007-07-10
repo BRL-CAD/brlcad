@@ -272,10 +272,7 @@ main(int argc, char **argv)
     int	use_pipe = 0;
     int run_in_foreground=0;
 
-#ifdef _WIN32
     Tcl_Channel chan;
-#endif
-
 
 #ifdef _WIN32
     _fmode = _O_BINARY;
@@ -644,7 +641,7 @@ main(int argc, char **argv)
 #ifdef HAVE_PIPE
 		(void)pipe(pipe_out);
 		(void)pipe(pipe_err);
-
+#if 0
 		/* Redirect stdout */
 		(void)close(1);
 		(void)dup(pipe_out[1]);
@@ -654,6 +651,7 @@ main(int argc, char **argv)
 		(void)close(2);
 		(void)dup(pipe_err[1]);
 		(void)close(pipe_err[1]);
+#endif
 #endif  /* HAVE_PIPE */
 
 		bu_add_hook(&bu_bomb_hook_list, mged_bomb_hook, GENPTR_NULL);
@@ -688,13 +686,13 @@ main(int argc, char **argv)
     if(classic_mged || !interactive){
 
 #ifndef _WIN32
-	Tcl_CreateFileHandler(STDIN_FILENO, TCL_READABLE,
-			      stdin_input, (ClientData)STDIN_FILENO);
+	ClientData stdin_file = STDIN_FILENO;
 #else
-	chan = Tcl_MakeFileChannel(GetStdHandle(STD_INPUT_HANDLE),TCL_READABLE);
-	Tcl_CreateChannelHandler(chan,TCL_READABLE,
-				 stdin_input, (ClientData)GetStdHandle(STD_INPUT_HANDLE));
+	ClientData stdin_file = GetStdHandle(STD_INPUT_HANDLE);
 #endif
+
+	chan = Tcl_MakeFileChannel(stdin_file, TCL_READABLE);
+	Tcl_CreateChannelHandler(chan,TCL_READABLE, stdin_input, stdin_file);
 
 #ifdef HAVE_SIGNAL
 	(void)signal( SIGINT, SIG_IGN );
@@ -724,19 +722,15 @@ main(int argc, char **argv)
 #ifndef _WIN32
 	out = (ClientData)(size_t)pipe_out[0];
 	err = (ClientData)(size_t)pipe_err[0];
-
-	/* to catch output from routines that do not use bu_log */
-	Tcl_CreateFileHandler(pipe_out[0], TCL_READABLE, std_out_or_err, out);
-	Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE, std_out_or_err, err);
 #else
 	out = (ClientData)GetStdHandle(STD_OUTPUT_HANDLE);
 	err = (ClientData)GetStdHandle(STD_ERROR_HANDLE);
-
-	chan = Tcl_MakeFileChannel(GetStdHandle(STD_OUTPUT_HANDLE),TCL_READABLE);
-	Tcl_CreateChannelHandler(chan,TCL_READABLE, std_out_or_err, out);
-	chan = Tcl_MakeFileChannel(GetStdHandle(STD_ERROR_HANDLE),TCL_READABLE);
-	Tcl_CreateChannelHandler(chan,TCL_READABLE, std_out_or_err, err);
 #endif
+
+	chan = Tcl_MakeFileChannel(out, TCL_READABLE);
+	Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, out);
+	chan = Tcl_MakeFileChannel(err, TCL_READABLE);
+	Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, err);
     }
 
     mged_init_flag = 0;	/* all done with initialization */
@@ -1456,6 +1450,7 @@ event_check( int non_blocking )
     register struct dm_list *p;
     struct dm_list *save_dm_list;
     int save_edflag;
+    int handled = 0;
 
     /* Let cool Tk event handler do most of the work */
 
@@ -1465,13 +1460,21 @@ event_check( int non_blocking )
 	   as possible before the next redraw (multiple keypresses, redraw
 	   events, etc... */
 
-	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
+	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
+	    handled++;
+	}
     } else {
 	/* Wait for an event, then handle it */
 	Tcl_DoOneEvent(TCL_ALL_EVENTS);
 
 	/* Handle any other events in the queue */
-	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
+	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
+	    handled++;
+	}
+    }
+
+    if (bu_debug > 0) {
+	bu_log("Handled %d events\n", handled);
     }
 
     non_blocking = 0;
