@@ -345,8 +345,15 @@ bu_backtrace(FILE *fp)
      */
     interrupt_wait = 0;
 #ifdef HAVE_KILL
-    while (interrupt_wait == 0) {
-	/* do nothing, wait for debugger to attach */;
+    {
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+	gettimeofday(&end, NULL);
+	while ((interrupt_wait == 0) && (end.tv_sec - start.tv_sec > 60)) {
+	    /* do nothing, wait for debugger to attach but don't wait too long */;
+	    gettimeofday(&end, NULL);
+	    sleep(1);
+	}
     }
 #else
     /* FIXME: need something better here for win32 */
