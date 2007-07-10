@@ -10750,48 +10750,45 @@ int ON_Brep::ComponentIndex( const ON_BrepFace& face ) const
 
 ON_Brep::COMPONENT_TYPE ON_Brep::ComponentIndexType( int component_index )
 {
-  switch( brep_component_mask & component_index )
-  {
-  case brep_vertex: return brep_vertex;
-  case brep_edge: return brep_edge;
-  case brep_trim: return brep_trim;
-  case brep_loop: return brep_loop;
-  case brep_face: return brep_face;
+  switch( brep_component_mask & component_index ) {
+    case brep_vertex: return brep_vertex;
+    case brep_edge: return brep_edge;
+    case brep_trim: return brep_trim;
+    case brep_loop: return brep_loop;
+    case brep_face: return brep_face;
   }
   return brep_component_unset;
 }
 */
 
-const ON_Geometry* ON_Brep::BrepComponent( 
-  ON_COMPONENT_INDEX ci
-  ) const
+const ON_Geometry* ON_Brep::BrepComponent(ON_COMPONENT_INDEX ci) const
 {
   const ON_Geometry* component = 0;
-  switch ( ci.m_type )
-  {
-  case ON_COMPONENT_INDEX::brep_vertex:
-    component = Vertex(ci.m_index);
-    break;
-  case ON_COMPONENT_INDEX::brep_edge:
-    component = Edge(ci.m_index);
-    break;
-  case ON_COMPONENT_INDEX::brep_face:
-    component = Face(ci.m_index);
-    break;
-  case ON_COMPONENT_INDEX::brep_trim:
-    component = Trim(ci.m_index);
-    break;
-  case ON_COMPONENT_INDEX::brep_loop:
-    component = Loop(ci.m_index);
-    break;
+  switch ( ci.m_type ) {
+    case ON_COMPONENT_INDEX::brep_vertex:
+      component = Vertex(ci.m_index);
+      break;
+    case ON_COMPONENT_INDEX::brep_edge:
+      component = Edge(ci.m_index);
+      break;
+    case ON_COMPONENT_INDEX::brep_face:
+      component = Face(ci.m_index);
+      break;
+    case ON_COMPONENT_INDEX::brep_trim:
+      component = Trim(ci.m_index);
+      break;
+    case ON_COMPONENT_INDEX::brep_loop:
+      component = Loop(ci.m_index);
+      break;
+    default:
+      /* unsupported component type */
+      break;
   }
   return component;
 }
 
 /*
-const ON_Geometry* ON_Brep::BrepComponent( 
-  int component_index
-  ) const
+const ON_Geometry* ON_Brep::BrepComponent(int component_index) const
 {
   const ON_Geometry* component = 0;
   if ( -1 != component_index && 0 != component_index)

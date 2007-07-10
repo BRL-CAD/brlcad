@@ -1019,9 +1019,9 @@ int ON_String::Remove( const char chRemove)
     if (*pstrSource != chRemove)
     {
       *pstrDest = *pstrSource;
-      pstrDest = pstrDest++;
+      pstrDest++;
     }
-    pstrSource = pstrSource++;
+    pstrSource++;
   }
 
   *pstrDest = '\0';

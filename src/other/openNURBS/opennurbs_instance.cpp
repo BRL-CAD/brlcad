@@ -36,35 +36,32 @@ ON_InstanceDefinition::~ON_InstanceDefinition()
 
 BOOL ON_InstanceDefinition::IsValid( ON_TextLog* text_log ) const
 {
-  if ( 0 == ON_UuidCompare( m_uuid, ON_nil_uuid) )
-  {
-    if (text_log)
-    {
+  if (0 == ON_UuidCompare( m_uuid, ON_nil_uuid)) {
+    if (text_log) {
       text_log->Print("ON_InstanceDefinition has nil uuid.\n");
     }
     return false;
   }
-  if ( !m_bbox.IsValid() )
-  {
-    if (text_log)
-    {
+  if (!m_bbox.IsValid()) {
+    if (text_log) {
       text_log->Print("ON_InstanceDefinition has invalid bounding box.\n");
     }
     return false;
   }
-  switch( m_idef_update_type)
-  {
+  switch( m_idef_update_type) {
     case embedded_def:
     case linked_def:
     case linked_and_embedded_def:
-      if( m_source_archive.IsEmpty())
-      {
-        if (text_log)
-        {
+      if( m_source_archive.IsEmpty()) {
+        if (text_log) {
           text_log->Print("ON_InstanceDefinition is linked or embedded but m_source_archive is empty.\n");
         }
         return false;
       }
+      break;
+
+    default:
+      /* unsupported */
       break;
   }
 

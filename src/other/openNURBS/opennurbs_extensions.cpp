@@ -1458,61 +1458,64 @@ int CIndexMaps::RemapGeometryAttributes( ON_Object* object )
 {
   int change_count = 0;
 
-  switch(object ? object->ObjectType() : ON::unknown_object_type )
-  {
-  case ON::layer_object:
-    {
-      ON_Layer* layer = ON_Layer::Cast(object);
-      if ( layer )
-        change_count += RemapLayerAttributes(*layer);
-    }
-    break;
-
-  case ON::annotation_object:
-    {
-      ON_Annotation2* ann = ON_Annotation2::Cast(object);
-      if ( ann )
+  switch (object ? object->ObjectType() : ON::unknown_object_type) {
+    case ON::layer_object:
       {
-        if (ann->IsText() )
-        {
-          // ann->m_index is a font index
-          int old_font_index = ann->m_index;
-          int new_font_index = RemapFontIndex(old_font_index);
-          if ( new_font_index != old_font_index )
-          {
-            ann->m_index = new_font_index;
-            change_count++;
-          }
-        }
-        else
-        {
-          // ann->m_index is a dimstyle index
-          int old_dimstyle_index = ann->m_index;
-          int new_dimstyle_index = RemapDimstyleIndex(old_dimstyle_index);
-          {
-            if ( old_dimstyle_index != new_dimstyle_index )
-            {
-              ann->m_index = new_dimstyle_index;
-              change_count++;
-            }
-          }
-        }
+	ON_Layer* layer = ON_Layer::Cast(object);
+	if ( layer )
+	  change_count += RemapLayerAttributes(*layer);
       }
-    }
-    break;
+      break;
 
-  case ON::hatch_object:
-    {
-      ON_Hatch* hatch_object = ON_Hatch::Cast(object);
-      if ( hatch_object )
+    case ON::annotation_object:
       {
-        int old_hatch_pattern_index = hatch_object->PatternIndex();
-        int new_hatch_pattern_index = RemapHatchPatternIndex(old_hatch_pattern_index);
-        if ( old_hatch_pattern_index != new_hatch_pattern_index )
-          hatch_object->SetPatternIndex(new_hatch_pattern_index);
+	ON_Annotation2* ann = ON_Annotation2::Cast(object);
+	if ( ann )
+	  {
+	    if (ann->IsText() )
+	      {
+		// ann->m_index is a font index
+		int old_font_index = ann->m_index;
+		int new_font_index = RemapFontIndex(old_font_index);
+		if ( new_font_index != old_font_index )
+		  {
+		    ann->m_index = new_font_index;
+		    change_count++;
+		  }
+	      }
+	    else
+	      {
+		// ann->m_index is a dimstyle index
+		int old_dimstyle_index = ann->m_index;
+		int new_dimstyle_index = RemapDimstyleIndex(old_dimstyle_index);
+		{
+		  if ( old_dimstyle_index != new_dimstyle_index )
+		    {
+		      ann->m_index = new_dimstyle_index;
+		      change_count++;
+		    }
+		}
+	      }
+	  }
       }
-    }
-    break;
+      break;
+
+    case ON::hatch_object:
+      {
+	ON_Hatch* hatch_object = ON_Hatch::Cast(object);
+	if ( hatch_object )
+	  {
+	    int old_hatch_pattern_index = hatch_object->PatternIndex();
+	    int new_hatch_pattern_index = RemapHatchPatternIndex(old_hatch_pattern_index);
+	    if ( old_hatch_pattern_index != new_hatch_pattern_index )
+	      hatch_object->SetPatternIndex(new_hatch_pattern_index);
+	  }
+      }
+      break;
+
+    default:
+      /* unsupported */
+      break;
   }
 
   return change_count;

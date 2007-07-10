@@ -3335,11 +3335,9 @@ bool SeamCheckHelper( const ON_TextureMapping& mp,
                       ON_SimpleArray<int>*& Tsd )
 {
   bool bSeamCheck = false;
-  switch(mp.m_type)
-  {
+  switch(mp.m_type) {
     case ON_TextureMapping::box_mapping:
-      if ( ON_TextureMapping::divided == mp.m_texture_space )
-      {
+      if (ON_TextureMapping::divided == mp.m_texture_space) {
         if ( mp.m_bCapped )
           two_pi_tc = 2.0/3.0;
         Tsd = &Tside;
@@ -3348,18 +3346,22 @@ bool SeamCheckHelper( const ON_TextureMapping& mp,
       break;
 
     case ON_TextureMapping::cylinder_mapping:
-      if ( ON_TextureMapping::divided == mp.m_texture_space )
-      {
+      if (ON_TextureMapping::divided == mp.m_texture_space) {
         two_pi_tc = 2.0/3.0;
         Tsd = &Tside;
       }
       bSeamCheck = true;
       break;
-
+      
     case ON_TextureMapping::sphere_mapping:
       bSeamCheck = true;
       break;
+
+    default:
+      /* unsupported */
+      break;
   }
+
   return bSeamCheck;
 }
 

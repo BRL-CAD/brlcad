@@ -7541,27 +7541,28 @@ ON_MeshFaceRef ON_Mesh::FaceRef(ON_COMPONENT_INDEX ci) const
 ON_MeshVertexRef ON_MeshTopology::VertexRef(ON_COMPONENT_INDEX ci) const
 {
   ON_MeshVertexRef vr;
-  if ( ci.m_index >= 0 )
-  {
-    switch(ci.m_type)
-    {
-    case ON_COMPONENT_INDEX::mesh_vertex:
-      if (m_mesh)
-      {
-        vr = m_mesh->VertexRef(ci);
-      }
-      break;
-    case ON_COMPONENT_INDEX::meshtop_vertex:
-      if ( ci.m_index < m_topv.Count() )
-      {
-        vr.m_mesh = m_mesh;
-        vr.m_top_vi = ci.m_index;
-        if ( m_topv[ci.m_index].m_vi && 1 == m_topv[ci.m_index].m_v_count )
-        {
-          vr.m_mesh_vi = m_topv[ci.m_index].m_vi[0];
-        }
-      }
-      break;
+  if (ci.m_index >= 0) {
+    switch(ci.m_type) {
+      
+      case ON_COMPONENT_INDEX::mesh_vertex:
+	if (m_mesh) {
+	  vr = m_mesh->VertexRef(ci);
+	}
+	break;
+
+      case ON_COMPONENT_INDEX::meshtop_vertex:
+	if (ci.m_index < m_topv.Count()) {
+	  vr.m_mesh = m_mesh;
+	  vr.m_top_vi = ci.m_index;
+	  if (m_topv[ci.m_index].m_vi && 1 == m_topv[ci.m_index].m_v_count) {
+	    vr.m_mesh_vi = m_topv[ci.m_index].m_vi[0];
+	  }
+	}
+	break;
+
+      default:
+	/* unsupported */
+	break;
     }
   }
   return vr;  
@@ -7710,42 +7711,42 @@ ON_COMPONENT_INDEX ON_MeshFaceRef::ComponentIndex() const
   return ci;
 }
 
-ON_Geometry* ON_Mesh::MeshComponent( 
-  ON_COMPONENT_INDEX ci
-  ) const
+ON_Geometry* ON_Mesh::MeshComponent(ON_COMPONENT_INDEX ci) const
 {
   ON_Geometry* component = 0;
-  if ( ci.m_index >= 0 )
-  {
-    switch( ci.m_type )
-    {
-    case ON_COMPONENT_INDEX::mesh_vertex: 
-      {
-        ON_MeshVertexRef r = VertexRef(ci);
-        component = new ON_MeshVertexRef(r);
-      }
-      break;
+  if (ci.m_index >= 0) {
+    switch (ci.m_type) {
+      case ON_COMPONENT_INDEX::mesh_vertex: 
+	{
+	  ON_MeshVertexRef r = VertexRef(ci);
+	  component = new ON_MeshVertexRef(r);
+	}
+	break;
+	
+      case ON_COMPONENT_INDEX::meshtop_vertex:
+	{
+	  ON_MeshVertexRef r = Topology().VertexRef(ci);
+	  component = new ON_MeshVertexRef(r);
+	}
+	break;
+	
+      case ON_COMPONENT_INDEX::meshtop_edge:
+	{
+	  ON_MeshEdgeRef r = EdgeRef(ci);
+	  component = new ON_MeshEdgeRef(r);
+	}
+	break;
+	
+      case ON_COMPONENT_INDEX::mesh_face:
+	{
+	  ON_MeshFaceRef r = FaceRef(ci);
+	  component = new ON_MeshFaceRef(r);
+	}
+	break;
 
-    case ON_COMPONENT_INDEX::meshtop_vertex:
-      {
-        ON_MeshVertexRef r = Topology().VertexRef(ci);
-        component = new ON_MeshVertexRef(r);
-      }
-      break;
-
-    case ON_COMPONENT_INDEX::meshtop_edge:
-      {
-        ON_MeshEdgeRef r = EdgeRef(ci);
-        component = new ON_MeshEdgeRef(r);
-      }
-      break;
-
-    case ON_COMPONENT_INDEX::mesh_face:
-      {
-        ON_MeshFaceRef r = FaceRef(ci);
-        component = new ON_MeshFaceRef(r);
-      }
-      break;
+      default:
+	/* unsupported */
+	break;
     }
   }
   return component;

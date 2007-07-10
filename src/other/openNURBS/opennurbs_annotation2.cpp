@@ -79,25 +79,26 @@ ON_Annotation2::~ON_Annotation2()
 bool ON_Annotation2::EvaluatePoint( const ON_ObjRef& objref, ON_3dPoint& P) const
 {
   bool rc = false;
-  switch( objref.m_component_index.m_type )
-  {
-  case ON_COMPONENT_INDEX::dim_linear_point:
-  case ON_COMPONENT_INDEX::dim_radial_point:
-  case ON_COMPONENT_INDEX::dim_angular_point:
-  case ON_COMPONENT_INDEX::dim_ordinate_point:
-  case ON_COMPONENT_INDEX::dim_text_point:
-    {
-      ON_2dPoint uv = Point(objref.m_component_index.m_index);
-      if ( uv.IsValid() )
+  switch( objref.m_component_index.m_type ) {
+    case ON_COMPONENT_INDEX::dim_linear_point:
+    case ON_COMPONENT_INDEX::dim_radial_point:
+    case ON_COMPONENT_INDEX::dim_angular_point:
+    case ON_COMPONENT_INDEX::dim_ordinate_point:
+    case ON_COMPONENT_INDEX::dim_text_point:
       {
-        P = m_plane.PointAt(uv.x,uv.y);
+	ON_2dPoint uv = Point(objref.m_component_index.m_index);
+	if ( uv.IsValid() )
+	  {
+	    P = m_plane.PointAt(uv.x,uv.y);
         rc = true;
+	  }
       }
-    }
-    break;
+      break;
+    default:
+      /* unsupported */
+      break;
   }
-  if (!rc)
-  {
+  if (!rc) {
     P = ON_UNSET_POINT;
   }
   return rc;

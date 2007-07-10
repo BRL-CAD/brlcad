@@ -78,17 +78,18 @@ void ON_COMPONENT_INDEX::UnSet()
 bool ON_COMPONENT_INDEX::IsMeshComponentIndex() const
 {
   bool rc = false;
-  switch(m_type)
-  {
-  case ON_COMPONENT_INDEX::mesh_vertex:
-  case ON_COMPONENT_INDEX::meshtop_vertex:
-  case ON_COMPONENT_INDEX::meshtop_edge:
-  case ON_COMPONENT_INDEX::mesh_face:
-    if ( m_index >= 0 )
-    {
-      rc = true;
-    }
-    break;
+  switch (m_type) {
+    case ON_COMPONENT_INDEX::mesh_vertex:
+    case ON_COMPONENT_INDEX::meshtop_vertex:
+    case ON_COMPONENT_INDEX::meshtop_edge:
+    case ON_COMPONENT_INDEX::mesh_face:
+      if (m_index >= 0) {
+	rc = true;
+      }
+      break;
+    default:
+      /* unsupported */
+      break;
   }
   return rc;
 }
@@ -96,18 +97,19 @@ bool ON_COMPONENT_INDEX::IsMeshComponentIndex() const
 bool ON_COMPONENT_INDEX::IsAnnotationComponentIndex() const
 {
   bool rc = false;
-  switch(m_type)
-  {
-  case ON_COMPONENT_INDEX::dim_linear_point:
-  case ON_COMPONENT_INDEX::dim_radial_point:
-  case ON_COMPONENT_INDEX::dim_angular_point:
-  case ON_COMPONENT_INDEX::dim_ordinate_point:
-  case ON_COMPONENT_INDEX::dim_text_point:
-    if ( m_index >= 0 )
-    {
-      rc = true;
-    }
-    break;
+  switch (m_type) {
+    case ON_COMPONENT_INDEX::dim_linear_point:
+    case ON_COMPONENT_INDEX::dim_radial_point:
+    case ON_COMPONENT_INDEX::dim_angular_point:
+    case ON_COMPONENT_INDEX::dim_ordinate_point:
+    case ON_COMPONENT_INDEX::dim_text_point:
+      if (m_index >= 0) {
+	rc = true;
+      }
+      break;
+    default:
+      /* unsupported */
+      break;
   }
   return rc;
 }
@@ -115,18 +117,19 @@ bool ON_COMPONENT_INDEX::IsAnnotationComponentIndex() const
 bool ON_COMPONENT_INDEX::IsBrepComponentIndex() const
 {
   bool rc = false;
-  switch(m_type)
-  {
-  case ON_COMPONENT_INDEX::brep_vertex:
-  case ON_COMPONENT_INDEX::brep_trim:
-  case ON_COMPONENT_INDEX::brep_loop:
-  case ON_COMPONENT_INDEX::brep_edge:
-  case ON_COMPONENT_INDEX::brep_face:
-    if ( m_index >= 0 )
-    {
-      rc = true;
-    }
-    break;
+  switch (m_type) {
+    case ON_COMPONENT_INDEX::brep_vertex:
+    case ON_COMPONENT_INDEX::brep_trim:
+    case ON_COMPONENT_INDEX::brep_loop:
+    case ON_COMPONENT_INDEX::brep_edge:
+    case ON_COMPONENT_INDEX::brep_face:
+      if (m_index >= 0) {
+	rc = true;
+      }
+      break;
+    default:
+      /* unsupported */
+      break;
   }
   return rc;
 }
@@ -622,39 +625,42 @@ const ON_Brep* ON_BrepParent( const ON_Geometry* geo )
   else
   {
     // ComponentIndex() is the fastest way
-    switch( geo->ComponentIndex().m_type )
-    {
-    case ON_COMPONENT_INDEX::brep_edge:
-      {
-        const ON_BrepEdge* edge = ON_BrepEdge::Cast(geo);
-        if ( edge )
-          brep = edge->Brep();
-      }
-      break;
+    switch (geo->ComponentIndex().m_type) {
+      case ON_COMPONENT_INDEX::brep_edge:
+	{
+	  const ON_BrepEdge* edge = ON_BrepEdge::Cast(geo);
+	  if ( edge )
+	    brep = edge->Brep();
+	}
+	break;
+	
+      case ON_COMPONENT_INDEX::brep_face:
+	{
+	  const ON_BrepFace* face = ON_BrepFace::Cast(geo);
+	  if ( face )
+	    brep = face->Brep();
+	}
+	break;
+	
+      case ON_COMPONENT_INDEX::brep_trim:
+	{
+	  const ON_BrepTrim* trim = ON_BrepTrim::Cast(geo);
+	  if ( trim )
+	    brep = trim->Brep();
+	}
+	break;
+	
+      case ON_COMPONENT_INDEX::brep_loop:
+	{
+	  const ON_BrepLoop* loop = ON_BrepLoop::Cast(geo);
+	  if ( loop )
+	    brep = loop->Brep();
+	}
+	break;
 
-    case ON_COMPONENT_INDEX::brep_face:
-      {
-        const ON_BrepFace* face = ON_BrepFace::Cast(geo);
-        if ( face )
-          brep = face->Brep();
-      }
-      break;
-
-    case ON_COMPONENT_INDEX::brep_trim:
-      {
-        const ON_BrepTrim* trim = ON_BrepTrim::Cast(geo);
-        if ( trim )
-          brep = trim->Brep();
-      }
-      break;
-
-    case ON_COMPONENT_INDEX::brep_loop:
-      {
-        const ON_BrepLoop* loop = ON_BrepLoop::Cast(geo);
-        if ( loop )
-          brep = loop->Brep();
-      }
-      break;
+      default:
+	/* unsupported */
+	break;
     }
   }
 
@@ -673,32 +679,35 @@ const ON_Mesh* ON_MeshParent( const ON_Geometry* geo )
   else
   {
     // ComponentIndex() is the fastest way
-    switch( geo->ComponentIndex().m_type )
-    {
-    case ON_COMPONENT_INDEX::mesh_vertex:
-    case ON_COMPONENT_INDEX::meshtop_vertex:
-      {
-        const ON_MeshVertexRef* vref = ON_MeshVertexRef::Cast(geo);
-        if ( vref )
-          mesh = vref->m_mesh;
-      }
-      break;
-
-    case ON_COMPONENT_INDEX::meshtop_edge:
-      {
-        const ON_MeshEdgeRef* eref = ON_MeshEdgeRef::Cast(geo);
-        if ( eref )
-          mesh = eref->m_mesh;
-      }
-      break;
-
-    case ON_COMPONENT_INDEX::mesh_face:
-      {
-        const ON_MeshFaceRef* fref = ON_MeshFaceRef::Cast(geo);
-        if ( fref )
-          mesh = fref->m_mesh;
-      }
-      break;
+    switch (geo->ComponentIndex().m_type) {
+      case ON_COMPONENT_INDEX::mesh_vertex:
+      case ON_COMPONENT_INDEX::meshtop_vertex:
+	{
+	  const ON_MeshVertexRef* vref = ON_MeshVertexRef::Cast(geo);
+	  if ( vref )
+	    mesh = vref->m_mesh;
+	}
+	break;
+	
+      case ON_COMPONENT_INDEX::meshtop_edge:
+	{
+	  const ON_MeshEdgeRef* eref = ON_MeshEdgeRef::Cast(geo);
+	  if ( eref )
+	    mesh = eref->m_mesh;
+	}
+	break;
+	
+      case ON_COMPONENT_INDEX::mesh_face:
+	{
+	  const ON_MeshFaceRef* fref = ON_MeshFaceRef::Cast(geo);
+	  if ( fref )
+	    mesh = fref->m_mesh;
+	}
+	break;
+	
+      default:
+	/* unsupported */
+	break;
     }
   }
 

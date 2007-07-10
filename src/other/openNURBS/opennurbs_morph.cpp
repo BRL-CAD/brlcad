@@ -649,64 +649,63 @@ bool ON_Mesh::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) cons
   P = ON_UNSET_POINT;
   ON_COMPONENT_INDEX ci = objref.m_component_index;
 
-  switch ( ci.m_type )
-  {
-  case ON_COMPONENT_INDEX::mesh_vertex:
-    if ( ci.m_index >= 0 && ci.m_index < m_V.Count() )
-      P = m_V[ci.m_index];
-    break;
-
-  case ON_COMPONENT_INDEX::meshtop_vertex:
-    if ( ci.m_index >= 0 && ci.m_index < m_top.m_topv.Count() )
-    {
+  switch (ci.m_type) {
+    case ON_COMPONENT_INDEX::mesh_vertex:
+      if (ci.m_index >= 0 && ci.m_index < m_V.Count())
+	P = m_V[ci.m_index];
+      break;
+      
+    case ON_COMPONENT_INDEX::meshtop_vertex:
+      if (ci.m_index >= 0 && ci.m_index < m_top.m_topv.Count()) {
       const ON_MeshTopologyVertex& topv = m_top.m_topv[ci.m_index];
-      if ( topv.m_v_count > 0 && topv.m_vi )
-      {
+      if (topv.m_v_count > 0 && topv.m_vi) {
         int vi = topv.m_vi[0];
         if ( vi >= 0 && vi < m_V.Count() )
           P = m_V[vi];
       }
-    }
-    break;
-
-  case ON_COMPONENT_INDEX::meshtop_edge:
-    if ( 5 == objref.m_evp.m_t_type 
-         && fabs(objref.m_evp.m_t[0] + objref.m_evp.m_t[1] - 1.0) <= ON_SQRT_EPSILON )
-    {
-      ON_Line L = m_top.TopEdgeLine(ci.m_index);
-      if ( L.IsValid() )
-      {
-        P = L.PointAt(objref.m_evp.m_t[0]);
       }
-    }
-    break;
-
-  case ON_COMPONENT_INDEX::mesh_face:
-    if ( 4 == objref.m_evp.m_t_type 
-         && fabs(objref.m_evp.m_t[0] + objref.m_evp.m_t[1] + objref.m_evp.m_t[2] + objref.m_evp.m_t[3] - 1.0) <= ON_SQRT_EPSILON )
-    {
-      if ( ci.m_index >= 0 && ci.m_index < m_F.Count() )
-      {
-        const int* fvi = m_F[ci.m_index].vi;
-        if ( fvi[0] < 0 || fvi[0] >= m_V.Count() )
-          break;
-        if ( fvi[1] < 0 || fvi[1] >= m_V.Count() )
-          break;
-        if ( fvi[2] < 0 || fvi[2] >= m_V.Count() )
-          break;
-        if ( fvi[3] < 0 || fvi[3] >= m_V.Count() )
-          break;
-        ON_3dPoint V[4];
-        V[0] = m_V[fvi[0]];
-        V[1] = m_V[fvi[1]];
-        V[2] = m_V[fvi[2]];
-        V[3] = m_V[fvi[3]];
-        P = objref.m_evp.m_t[0]*V[0] + objref.m_evp.m_t[1]*V[1] + objref.m_evp.m_t[2]*V[2] + objref.m_evp.m_t[3]*V[3];
-      }
-    }
-    break;
+      break;
+      
+    case ON_COMPONENT_INDEX::meshtop_edge:
+      if ( 5 == objref.m_evp.m_t_type 
+	   && fabs(objref.m_evp.m_t[0] + objref.m_evp.m_t[1] - 1.0) <= ON_SQRT_EPSILON )
+	{
+	  ON_Line L = m_top.TopEdgeLine(ci.m_index);
+	  if (L.IsValid()) {
+	    P = L.PointAt(objref.m_evp.m_t[0]);
+	  }
+	}
+      break;
+      
+    case ON_COMPONENT_INDEX::mesh_face:
+      if ( 4 == objref.m_evp.m_t_type 
+	   && fabs(objref.m_evp.m_t[0] + objref.m_evp.m_t[1] + objref.m_evp.m_t[2] + objref.m_evp.m_t[3] - 1.0) <= ON_SQRT_EPSILON )
+	{
+	  if (ci.m_index >= 0 && ci.m_index < m_F.Count()) {
+	    const int* fvi = m_F[ci.m_index].vi;
+	    if ( fvi[0] < 0 || fvi[0] >= m_V.Count() )
+	      break;
+	    if ( fvi[1] < 0 || fvi[1] >= m_V.Count() )
+	      break;
+	    if ( fvi[2] < 0 || fvi[2] >= m_V.Count() )
+	      break;
+	    if ( fvi[3] < 0 || fvi[3] >= m_V.Count() )
+	      break;
+	    ON_3dPoint V[4];
+	    V[0] = m_V[fvi[0]];
+	    V[1] = m_V[fvi[1]];
+	    V[2] = m_V[fvi[2]];
+	    V[3] = m_V[fvi[3]];
+	    P = objref.m_evp.m_t[0]*V[0] + objref.m_evp.m_t[1]*V[1] + objref.m_evp.m_t[2]*V[2] + objref.m_evp.m_t[3]*V[3];
+	  }
+	}
+      break;
+      
+    default:
+      /* unsupported */
+      break;
   }
-
+  
   return P.IsValid();
 }
 
