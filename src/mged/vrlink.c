@@ -285,16 +285,16 @@ ph_cmd(register struct pkg_conn *pc, char *buf)
 {
 	int		status;
 	const char	*result;
-	char buffer[512] = {0};
+	char buffer[RT_BUFSIZE] = {0};
 
 	status = Tcl_Eval(interp, buf);
 	result = Tcl_GetStringResult(interp);
 
-	snprintf(buffer, 512, "%s", result);
+	snprintf(buffer, RT_BUFSIZE, "%s", result);
 
 	if( pkg_2send( VRMSG_CMD_REPLY,
 		(status == TCL_OK) ? "Y" : "N", 1,
-		buffer, 512, pc ) < 0 )  {
+		buffer, RT_BUFSIZE, pc ) < 0 )  {
 		bu_log("ph_cmd: pkg_2send reply to vrmgr failed, disconnecting\n");
 		pkg_close(vrmgr);
 		vrmgr = PKC_NULL;
