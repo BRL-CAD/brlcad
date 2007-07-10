@@ -128,10 +128,11 @@ backtrace(char **args, int fd)
      * child process, which should be this backtrace since it is
      * invoked after a fork() call as the child.
      */
-    backtrace_done = 0;
-
 #ifdef SIGCHLD
     signal(SIGCHLD, backtrace_sigchld);
+#endif
+#ifdef SIGINT
+    signal(SIGINT, backtrace_sigint);
 #endif
 
     if ((pipe(input) == -1) || (pipe(output) == -1)) {
@@ -240,15 +241,6 @@ backtrace(char **args, int fd)
 	}
     }
 
-    if (bu_debug & BU_DEBUG_ATTACH) {
-	bu_log("\nBacktrace complete.\nAttach debugger or interrupt to continue...\n");
-    } else {
-#  ifdef HAVE_KILL
-	/* not attaching, so let the parent continue */
-	kill(getppid(), SIGINT);
-#  endif
-    }
-
     fflush(stdout);
     fflush(stderr);
 
@@ -256,6 +248,22 @@ backtrace(char **args, int fd)
     close(input[1]);
     close(output[0]);
     close(output[1]);
+
+    if (bu_debug & BU_DEBUG_ATTACH) {
+	bu_log("\nBacktrace complete.\nAttach debugger or interrupt to continue...\n");
+    } else {
+#  ifdef HAVE_KILL
+	/* not attaching, so let the parent continue */
+#    ifdef SIGINT
+	kill(getppid(), SIGINT);
+#    endif
+#    ifdef SIGCHLD
+	kill(getppid(), SIGCHLD);
+#    endif
+#  endif
+	sleep(2);
+    }
+
     exit(0);
 }
 
@@ -268,9 +276,8 @@ backtrace(char **args, int fd)
  * bu_bomb() with the appropriate bu_debug flags set.
  *
  * the routine waits indefinitely (in a spin loop) until a signal
- * (SIGINT or SIGCONT) is received, at which point execution
- * continues, or until some other signal is received that terminates
- * the application.
+ * (SIGINT) is received, at which point execution continues, or until
+ * some other signal is received that terminates the application.
  *
  * the stack backtrace will be written to the provided 'fp' file
  * pointer.  it's the caller's responsibility to open and close
@@ -304,7 +311,10 @@ bu_backtrace(FILE *fp)
     }
     locate_gdb = NULL;
 
+#ifdef SIGINT
     signal(SIGINT, backtrace_sigint);
+#endif
+
     snprintf(buffer, BT_BUFSIZE, "%d", bu_process_id());
 
     args[1] = (char*) bu_argv0();
@@ -349,7 +359,7 @@ bu_backtrace(FILE *fp)
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
 	gettimeofday(&end, NULL);
-	while ((interrupt_wait == 0) && (end.tv_sec - start.tv_sec > 60)) {
+	while ((interrupt_wait == 0) && (end.tv_sec - start.tv_sec < 60)) {
 	    /* do nothing, wait for debugger to attach but don't wait too long */;
 	    gettimeofday(&end, NULL);
 	    sleep(1);
@@ -364,8 +374,13 @@ bu_backtrace(FILE *fp)
 	bu_log("\nContinuing.\n");
     }
 
+#ifdef SIGINT
     signal(SIGINT, SIG_DFL);
-    /*    signal(SIGCONT, SIG_DFL); */
+#endif
+#ifdef SIGCHLD
+    signal(SIGCHLD, SIG_DFL);
+#endif
+
     fflush(fp);
 
     return 1;
