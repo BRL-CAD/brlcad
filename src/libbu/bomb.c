@@ -128,10 +128,12 @@ bu_bomb(const char *str)
      * Avoid passing additional format arguments so as to avoid
      * buffer allocations inside fprintf().
      */
-    fprintf(stderr, "\n");
-    fprintf(stderr, str);
-    fprintf(stderr, "\n");
-    fflush(stderr);
+    if (str && (strlen(str) > 0)) {
+	fprintf(stderr, "\n");
+	fprintf(stderr, str);
+	fprintf(stderr, "\n");
+	fflush(stderr);
+    }
 
     /* release the failsafe allocation to help get through to the end */
     _free_bu_bomb_failsafe();
@@ -162,8 +164,10 @@ bu_bomb(const char *str)
     {
 	fd = open("/dev/tty", 1);
 	if (fd > 0) {
-	    write(fd, str, strlen(str));
-	    write(fd, "\n", 1);
+	    if (str && (strlen(str) > 0)) {
+		write(fd, str, strlen(str));
+		write(fd, "\n", 1);
+	    }
 	    close(fd);
 	}
     }
@@ -173,25 +177,12 @@ bu_bomb(const char *str)
     /* save a backtrace, should hopefully have debug symbols */
     {
 	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), bu_process_id());
-	fd = open("/dev/tty", 1);
 
 	fprintf(stderr, "Saving stack trace to ");
-	if (fd > 0) {
-	    write(fd, "Saving stack trace to ", 22);
-	}
-
 	fprintf(stderr, tracefile);
-	if (fd > 0) {
-	    write(fd, tracefile, strlen(tracefile));
-	}
-
 	fprintf(stderr, "\n");
-	if (fd > 0) {
-	    write(fd, "\n", 1);
-	    close(fd);
-	}
-
 	fflush(stderr);
+
 	bu_crashreport(tracefile);
     }
 #endif
