@@ -162,14 +162,22 @@ overlap at the edge!)
 
 [[ some pictures may be useful here ]]
 
+See all instances of "XXX" in the code (some may be out of date, but
+if something was fishy or I was being stupid/lazy/ignorant or some
+other bit of code was causing a problem, I tried to mark it with XXX.
+
 
 -- Conceptual/Implementation Issues --
 
-model-space curve pullback to surface domain for trimming
+model-space curve pullback to surface domain for trimming (introduces
+possible errors while trimming (i.e. at an edge its possible both
+surfaces can be trimmed because of inaccuracies of sampling)...
+
+multiple intersections found 
+
+handling edge/surface grazing consistently
 
 bezier conversion of nurbs curves for trimming
-
-
 
 
 -- IGES converter --
