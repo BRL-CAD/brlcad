@@ -1,0 +1,191 @@
+BRL-CAD Boundary-Representation Primitive
+-----------------------------------------
+
+-- Introduction --
+
+This document describes the new Boundary-representation (BREP)
+primitive that has been implemented in BRL-CAD for use with external
+geometry import and improved visualisation. 
+
+The primitive is not yet complete, and is currently quite buggy, so
+this document also serves to describe the current state of
+development, and the knowledge a developer needs to continue working
+on this primitive.
+
+
+-- BREP Description --
+
+A boundary-representation is a method of representing solid geometry
+by describing its topology and corresponding geometry. In other words,
+the vertexes, edges, and faces as well as the points, curves, and
+surfaces belonging to those topological elements.
+
+For example, a cube has 8 vertexes each mapping to 1 point in space, 6
+faces each mapping to 1 surface, and 8 edges each shared by two faces
+and sharing its two vertexes with two other faces and owning 1 real
+curve.
+
+Actually creating/using a BREP requires keeping track of a lot of details,
+including everything mentioned above, plus curve / face orientations
+(a CCW edge/vertex ordering is usually used for determining front/back
+designations.) 
+
+BRL-CAD has/had an existing BREP structure: the NMG (non-manifold
+geometry) primitive/library. 
+
+[[describe reasons for not using the existing library]]
+
+One can use many types of surface and curve geometry, but generally a
+small subset are used by any particular implementation: e.g. having
+converted a few pieces of Pro/E through IGES to the new BRL-CAD BREP
+primitive, I've seen the following curve and surface types used:
+
+* Line
+* Arc
+* NURBS curve
+* Surface of revolution
+* NURBS surface
+
+The simple IGES converter used to import and test new geometry handles
+those types already. Other limitations of the converter are described
+later in the document.
+
+
+-- Primitive Implementation --
+
+openNURBS was chosen to represent the geometry within BRL-CAD. This
+turned out to be a good and bad choice at the same time:
+
+* contains a lot of solid functionality
+* missing a lot of useful and important functionality
+
+In other words, the openNURBS API provided methods of functions for
+several pieces of functionality that had implementations removed when
+McNeil and Associates released openNURBS as essentially public domain
+code. This slowed development somewhat and meant the functionality had
+to be reimplemented by hand.
+
+The API is relatively straightforward C++, and it is used to evaluate
+geometry and represent/store BREPs in the BRL-CAD geometry file,
+through the built-in serialization facility (i.e. 3DM files).
+
+
+-- Raytracing BREPs --
+
+See Abert et al. (raytracing 06 paper: Direct and Fast Ray Tracing of NURBS
+Surfaces). 
+
+Essentially, we use a two-dimensional root-finding technique: we
+represent the ray as two orthogonal planes (the intersection of the
+planes include the ray), and then find the root of an equation that
+essentially represents the gradient between the image of some estimate
+of domain parameters where the ray intersects the surface to the
+actual intersection point. When this gradient becomes zero (found a
+root), we've also found the uv parameters for the intersection point.
+
+Simple Newton iteration is used, mostly since it is simple, displays
+quadratic convergence with good guesses, and is amenable to
+acceleration using SIMD instructions.
+
+Evaluation of the surface and its derivatives is done by the openNURBS
+library at this point. The Abert paper gives some information on how
+to do the evaluation using SIMD instructions (needed for speeding
+things up).
+
+A simple SIMD vector class has been implemented (see vector.h)
+supporting both SSE2 and FPU vector operations. This is currently only
+lightly used, since no optimization work has taken place yet
+(correctness before optimization).
+
+After intersection, we need to trim the surface. Every edge of a BREP
+is part of a loop "within" a face. Loops define boundaries on
+faces. In our cube example above, the four edges of a each face
+comprise a single loop (in this case an outer boundary). The surface
+may be defined as an infinite plane, but this outer boundary loop
+limits it to the area enclosed within those edges. As you may imagine,
+a face may have more than one loop and these additional loops will
+always be internal. All loops can also be considered trims, although
+this term seems to be reserved for actual geometric curves that are
+parameterized within the domain of an individual surface.
+
+Properly ray tracing a BREP is difficult (thus, the obvious
+explanation why this primitive is incomplete). There are several facts
+about BREPs that result in problematic situations during ray tracing:
+BREPs are not like implicit solid geometry: there is no nice equation
+to simply solve (a lot of numerical techniques are used); surfaces,
+curves and point geometry may not be aligned; there can be gaps
+between two mated surfaces... and the list goes on. 
+
+Since it's possible to miss a surface but *need* a hit (i.e. it hit an
+edge but passed between surfaces that did not mate up or overlap), we
+need to do edge checks: at some point, we find out how far an
+intersection point or a ray is from some set of edges
+
+
+-- Current Capabilities & Limitations --
+
+Developing a BRL-CAD primitive requires a minimum of 4 basic
+capabilities: reading from a geom db, writing to a geom db, providing
+a plot of the primitive (for MGED display), and handling shot
+intersection, which involves finding all intersections with the
+primitive and returning the results as a list of "segments" (these
+segments will later be used by BRL-CAD to do its boolean weaving). 
+
+This primitive currently handles the first 3 capabilities fine, but
+has problems with the intersections (the most important part!)
+
+Issues:
+
+* bad acne (possibly caused by missing surfaces? duplicate
+  intersections (making an odd number of hits along the ray), trimming
+  errors?
+  
+* problems with trimming (not completely sure the bezier clipping is
+  correct)
+
+* possible problems with tolerances (been working with a very small
+  (~2mm) object that has a moderate number of faces/edges)
+
+* no optimization, bad algorithms: bounding boxes (subsurface bounding
+  boxes) should contain correct metadata concerning the need for
+  trimming within the box, also a list of edges touched by the box for
+  more efficient edge checking, evaluation optimization, etc...
+
+
+The current issue seems to be that we're missing surfaces altogther or
+getting extra intersections! or something funky is happening during
+trimming and edge checking. (BTW Pro/E seems to output overlapping
+surfaces, relying on the outer boundary loop to trim it - this implies
+that it should be quite difficult to actually miss both surfaces at an
+edge (since would have to get at least one intersection if they
+overlap at the edge!)
+
+[[ some pictures may be useful here ]]
+
+
+-- Conceptual/Implementation Issues --
+
+model-space curve pullback to surface domain for trimming
+
+bezier conversion of nurbs curves for trimming
+
+
+
+
+-- IGES converter --
+
+A significant bit of time was spent writing the skeleton for a new
+IGES converter in order to get non-trivial BREP geometry from an
+external package into BRL-CAD for testing purposes (have been using
+the piston head part from one of the Pro/E tutorial models). 
+
+I believe this converter can be made production-ready with some work:
+
+* polish options for output
+
+* handle assemblies and their proper mapping to BRL-CAD
+
+* handle naming? (don't know if IGES carries names, or if Pro/E adds
+  them)
+
+* Run lots of test cases!!!
