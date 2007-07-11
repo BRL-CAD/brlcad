@@ -397,9 +397,11 @@ public:
     point_t point;
     vect_t  normal;
     pt2d_t  uv;
+    bool    trimmed;
+    bool    closeToEdge;
     
     brep_hit(const ON_BrepFace& f, const point_t orig, const point_t p, const vect_t n, const pt2d_t _uv) 
-	: face(f)
+	: face(f), trimmed(false), closeToEdge(false)
     {
 	VMOVE(origin, orig); 
 	VMOVE(point, p);
@@ -408,12 +410,12 @@ public:
     }
 
     brep_hit(const brep_hit& h) 
-	: face(h.face)
+	: face(h.face), trimmed(h.trimmed), closeToEdge(h.closeToEdge)
     {
 	VMOVE(origin, h.origin);
 	VMOVE(point, h.point);
 	VMOVE(normal, h.normal);
-	move(uv, h.uv);
+	move(uv, h.uv);	
     }
 
     brep_hit& operator=(const brep_hit& h) {
@@ -421,7 +423,9 @@ public:
 	VMOVE(origin, h.origin);
 	VMOVE(point, h.point);
 	VMOVE(normal, h.normal);
-	move(uv, h.uv);
+	move(uv, h.uv);	
+	trimmed = h.trimmed;
+	closeToEdge = h.closeToEdge;
 
         return *this;
     }
@@ -512,7 +516,6 @@ brep_edge_check(int reason,
 
     set<ON_BrepEdge*> edges;
     ON_3dPoint pt;
-    bool close = false;
     for (int i = 0; i < face->LoopCount(); i++) {
 	ON_BrepLoop* loop = face->Loop(i);
 	for (int j = 0; j < loop->TrimCount(); j++) {
@@ -525,18 +528,13 @@ brep_edge_check(int reason,
 	    const ON_Curve* curve = edge->EdgeCurveOf();
 	    Sample s;
 	    if (curve->CloseTo(ON_3dPoint(hits.back().point), BREP_EDGE_MISS_TOLERANCE, s)) {
-		TRACE1("NOT CLOSE TO EDGE");
-		close = true;
-	    } else {
 		TRACE1("CLOSE TO EDGE");
-	    }
+		hits.back().closeToEdge = true;
+		return BREP_INTERSECT_FOUND;
+	    } 
 	}
     }    
-    if (!close) {
-	hits.pop_back();
-	return BREP_INTERSECT_TRIMMED;
-    }
-    return BREP_INTERSECT_FOUND;
+    return BREP_INTERSECT_TRIMMED;
 }
 
 
@@ -585,6 +583,7 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	hits.push_back(brep_hit(*face,(const fastf_t*)ray.m_origin,(const fastf_t*)_pt,(const fastf_t*)_norm, uv));
 
 	if (sbv->doTrimming() && brep_pt_trimmed(uv, *face)) {
+	    hits.back().trimmed = true;
 	    TRACE1("Should be TRIMMED!");
 	    // if the point was trimmed, see if it is close to the edge before removing it
 	    return brep_edge_check(BREP_INTERSECT_TRIMMED, sbv, face, surf, ray, hits);
@@ -597,7 +596,7 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 }
 
 
-void 
+static void 
 opposite(const SubsurfaceBBNode* sbv, pt2d_t uv) 
 {
     if (uv[1] > sbv->m_v.Mid()) {
@@ -627,6 +626,17 @@ sign(double val) {
     else return -1;
 }
 
+#define PLOTTING 1
+#if PLOTTING
+
+#include "plot3.h"
+
+
+#define COLOR_PLOT(r,g,b) pl_color(stdout,(r),(g),(b))
+#define PT_PLOT(p) pd_3point(stdout,(p)[0],(p)[1],(p)[2])
+#define LINE_PLOT(p1,p2) pdv_3move(stdout,p1); pdv_3line(stdout,p1,p2)
+#endif
+
 /**
  *  			R T _ B R E P _ S H O T
  *
@@ -655,8 +665,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     TRACE1("bboxes: " << inters.size());
 
     // find all the hits (XXX very inefficient right now!)
-    HitList hits;
-    MissList misses;
+    HitList all_hits; // record all hits
+    MissList misses; // XXX - get rid of this stuff (for debugging)
     int s = 0;
     for (BBNode::IsectList::iterator i = inters.begin(); i != inters.end(); i++) {
 	const SubsurfaceBBNode* sbv = dynamic_cast<SubsurfaceBBNode*>((*i).m_node);
@@ -665,25 +675,35 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	brep_hit* hit; 
 	pt2d_t uv = {sbv->m_u.Mid(),sbv->m_v.Mid()};
 	TRACE1("surface: " << s);
-	int status = brep_intersect(sbv, f, surf, uv, r, hits);
+	int status = brep_intersect(sbv, f, surf, uv, r, all_hits);
 	if (status == BREP_INTERSECT_FOUND) {
 	    TRACE1("INTERSECTION: " << PT(hits.back().point));
 	} else {
-// 	    if (status == BREP_INTERSECT_TRIMMED || 
-// 		status == BREP_INTERSECT_ROOT_ITERATION_LIMIT ||
-// 		status == BREP_INTERSECT_RIGHT_OF_EDGE) continue;
-//  	    TRACE("NO INTERSECTION: " << BREP_INTERSECT_GET_REASON(status));
-	    misses.push_back(ip_t(hits.size()-1,status));
+	    misses.push_back(ip_t(all_hits.size()-1,status));
 	}
 	s++;
     }
 
 
+    HitList hits = all_hits;
+
     // sort the hits
     hits.sort();
 
-    int num = 0;
+    int num = 0;    
     for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+	TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal,rp->r_dir) << "]");
+	++num;
+    }    
+
+
+    TRACE("---");
+    num = 0;
+    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+	if (i->trimmed && !i->closeToEdge) { // remove what we were removing earlier
+	    i = hits.erase(i); --i;
+	    continue;
+	}
 	TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal,rp->r_dir) << "]");
 	++num;
     }    
@@ -691,22 +711,48 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     // remove "duplicate" points      
     HitList::iterator new_end = unique(hits.begin(), hits.end());
     hits.erase(new_end, hits.end());
-
-    TRACE("---");
-    num = 0;
-    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal,rp->r_dir) << "]");
-	++num;
-    }    
     
-    // check signs
     if (hits.size() > 0 && (hits.size() % 2) != 0) {
 	cerr << "WTF???" << endl;
+#if PLOTTING
+	point_t min, max;
+	VSET(min,-2048,-2048,-2048);
+	VSET(max,2048,2048,2048);
+	pdv_3space(stdout,min,max);
+
+	point_t ray;
+	point_t vscaled;
+	VSCALE(vscaled,rp->r_dir,10);
+	VADD2(ray,rp->r_pt,vscaled);
+	COLOR_PLOT(200,200,200);
+	LINE_PLOT(rp->r_pt,ray);
+#endif
+
 	num = 0;
 	int lastSign = 0;
 	MissList::iterator m = misses.begin();
-	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+	for (HitList::iterator i = all_hits.begin(); i != all_hits.end(); ++i) {
 	    double dot = VDOT(i->normal,rp->r_dir);
+
+#if PLOTTING
+	    // draw normal
+	    point_t v;
+	    VADD2(v,i->point,i->normal);
+	    COLOR_PLOT(100,100,100);
+	    LINE_PLOT(i->point,v);
+
+	    // draw intersection
+	    if (i->trimmed && i->closeToEdge) {
+		COLOR_PLOT(0,0,255);
+	    } else if (i->trimmed) {
+		COLOR_PLOT(255,255,0);
+	    } else {
+		COLOR_PLOT(255,0,0);
+	    }
+	    PT_PLOT(i->point);
+	    fflush(stdout);
+#endif
+
 // 	    if ((num == 0 && dot > 0) || sign(dot) == lastSign) { // remove hits with "bad" normals
 // 		i = hits.erase(i);
 // 		--i;
@@ -1166,7 +1212,7 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
     
     RT_MemoryArchive archive(ep->ext_buf, ep->ext_nbytes);
     ONX_Model model;
-    ON_TextLog dump(stdout);
+    ON_TextLog dump(stderr);
     //archive.Dump3dmChunk(dump);
     model.Read(archive, &dump);
     
