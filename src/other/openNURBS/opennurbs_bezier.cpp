@@ -17,6 +17,7 @@
 #include "opennurbs.h"
 #include <limits>
 #include <assert.h>
+#include <list>
 
 ON_PolynomialCurve::ON_PolynomialCurve()
                    : m_dim(0), m_is_rat(0), m_order(0), m_domain(0.0,1.0)
@@ -1142,91 +1143,103 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
 {
   ON_TRACE("ON_BezierCurve::NumIntersectionsWith");
   // XXX - assumes the segment is horizontal and to the "right"
+  std::list<ON_BezierCurve> stack;
 
-  int qstats = 0;  
-  ON_Interval dom = Domain();
-  assert(CVCount() > 0);
-  // determine the case (a la Nishita bezier intersection algorithm)
-  for (int i = 0; i < CVCount(); i++) {
-    qstats |= (1 << quadrant(segment[0], CV(i), IsRational() ? Weight(i) : 1.0));
-  }
-  assert(qstats >= 0);
-  int curve_case = case_table[qstats];
-  
-  // handle the specific cases
-  switch (curve_case) {
-  case CASE_A: // there is no possibility of intersection
-    ON_TRACE("\tCASE A");
-    return 0;
-  case CASE_B: // there is either an even or odd number of intersections
-    { 
-      ON_TRACE("\tCASE B");
-      // check the endpoints of the curve to determine if they are in
-      // the same or different quadrants
-      int quad1 = quadrant(segment[0], PointAt(dom.Min()));
-      int quad2 = quadrant(segment[0], PointAt(dom.Max()));
-      // if they are in the same quadrant, then the num intersections is even
-      // otherwise the number of intersections is odd
-      return (quad1 == quad2) ? 0 : 1;
+  int num_isect = 0;
+  stack.push_back(*this);
+  while (stack.size() > 0) {
+    ON_BezierCurve crv = stack.back();
+    stack.pop_back();
+    
+    int qstats = 0;  
+    ON_Interval dom = crv.Domain();
+    assert(crv.CVCount() > 0);
+    // determine the case (a la Nishita bezier intersection algorithm)
+    for (int i = 0; i < crv.CVCount(); i++) {
+      qstats |= (1 << quadrant(segment[0], crv.CV(i), crv.IsRational() ? crv.Weight(i) : 1.0));
     }
-  case CASE_C:
-    {
-      ON_TRACE("\tCASE C");
-      // use Bezier clipping to eliminate segments of the curve that
-      // cannot intersect the segment
-      ON_2dPoint d[m_order]; // control points for the explicit Bezier curve
-      for (int i = 0; i < m_order; i++) {
-	d[i].x = ((double)i)/(double)(m_order-1);
-	d[i].y = CV(i)[1] - segment[0].y; // dist from the segment
-	ON_TRACE("d[" << i << "]: " << d[i].x << "," << d[i].y);
+    assert(qstats >= 0);
+    int curve_case = case_table[qstats];
+    
+    // handle the specific cases
+    switch (curve_case) {
+    case CASE_A: // there is no possibility of intersection
+      ON_TRACE("\tCASE A");
+      break;
+    case CASE_B: // there is either an even or odd number of intersections
+      { 
+	ON_TRACE("\tCASE B");
+	// check the endpoints of the curve to determine if they are in
+	// the same or different quadrants
+	int quad1 = quadrant(segment[0], crv.PointAt(dom.Min()));
+	int quad2 = quadrant(segment[0], crv.PointAt(dom.Max()));
+	// if they are in the same quadrant, then the num intersections is even
+	// otherwise the number of intersections is odd
+	num_isect += (quad1 == quad2) ? 0 : 1;
+	break;
       }
-            
-      // calculate the trimming points
-      // XXX - ack - make sure this handles all cases
-      double tmin = real.infinity();
-      double tmax = -real.infinity();
-      for (int i = 0; i < (m_order-1); i++) {
-	for (int j = i+1; j < m_order; j++) {
-	  int a = i;
-	  int b = j;
-	  if (sign(d[a].y) != sign(d[b].y)) {
-	    double t = d[a].x - d[a].y * (d[b].x - d[a].x) / (d[b].y - d[a].y);
-	    if (t < tmin) tmin = t * 0.99; // XXX why offsets?
-	    if (t > tmax) tmax = t * 1.01; 
+    case CASE_C:
+      {
+	ON_TRACE("\tCASE C");
+	// use Bezier clipping to eliminate segments of the curve that
+	// cannot intersect the segment
+	ON_2dPoint d[crv.m_order]; // control points for the explicit Bezier curve
+	for (int i = 0; i < crv.m_order; i++) {
+	  d[i].x = ((double)i)/(double)(crv.m_order-1);
+	  d[i].y = crv.CV(i)[1] - segment[0].y; // dist from the segment
+	  ON_TRACE("d[" << i << "]: " << d[i].x << "," << d[i].y);
+	}
+	
+	// calculate the trimming points
+	// XXX - ack - make sure this handles all cases
+	double tmin = real.infinity();
+	double tmax = -real.infinity();
+	for (int i = 0; i < (crv.m_order-1); i++) {
+	  for (int j = i+1; j < crv.m_order; j++) {
+	    int a = i;
+	    int b = j;
+	    if (sign(d[a].y) != sign(d[b].y)) {
+	      double t = d[a].x - d[a].y * (d[b].x - d[a].x) / (d[b].y - d[a].y);
+	      if (t < tmin) tmin = t; // XXX why offsets?
+	      if (t > tmax) tmax = t; 
+	    }
 	  }
 	}
+	
+	double tleft = tmin;
+	double tright = tmax;
+	ON_TRACE("tleft : " << tleft);
+	ON_TRACE("tright: " << tright);
+	//assert( tleft <= tright );
+	if (ON_NearZero(abs(tleft-tright),ON_ZERO_TOLERANCE)) {
+	  tleft = .33;
+	  tright = .66;
+	  ON_BezierCurve left(crv), middle(crv), right(crv);
+	  //Split(tleft, left, middle);
+	  //middle.Split((tright-tleft)/(1.0-tleft), middle, right);
+	  left.Trim(ON_Interval(0.0,tleft));
+	  middle.Trim(ON_Interval(tleft, tright));
+	  right.Trim(ON_Interval(tright,1.0));
+	  stack.push_back(left);
+	  stack.push_back(middle);
+	  stack.push_back(right);
+	} else {
+	  ON_BezierCurve middle(crv);
+	  middle.Trim(ON_Interval(tleft,tright));
+	  ON_TRACE("After trim:");
+	  ON_TRACE("middle domain: " << middle.Domain().Min() << " --> " << middle.Domain().Max());
+	  
+	  // since we are limited to horizontal segments for now
+	  // we know that left and right are CASE_A...
+	  stack.push_back(middle);
+	}
+	break;
       }
-
-      double tleft = tmin;
-      double tright = tmax;
-      ON_TRACE("tleft : " << tleft);
-      ON_TRACE("tright: " << tright);
-      //assert( tleft <= tright );
-      if (tleft > tright) return 0; // XXX - todo: handle this
-
-      if (ON_NearZero(tleft, ON_ZERO_TOLERANCE) &&
-	  ON_NearZero(tright-1.0, ON_ZERO_TOLERANCE)) {
-	tleft = 0.3;
-	tright = 0.7;
-	ON_BezierCurve left, middle, right;
-	Split(tleft, left, middle);
-	middle.Split((tright-tleft)/(1.0-tleft), middle, right);
-	//return left.NumIntersectionsWith(segment) + middle.NumIntersectionsWith(segment) + right.NumIntersectionsWith(segment);	
-	return 0;
-      } else {
-	ON_BezierCurve middle(*this);
-	middle.Trim(ON_Interval(tleft,tright));
-	ON_TRACE("After trim:");
-	ON_TRACE("middle domain: " << middle.Domain().Min() << " --> " << middle.Domain().Max());
-      
-	// since we are limited to horizontal segments for now
-	// we know that left and right are CASE_A...
-	return middle.NumIntersectionsWith(segment);
-      }
+    default:
+      assert(false);
     }
-  default:
-    assert(false);
   }
+  return num_isect;
 }
 
 bool ON_BezierCurve::GetNurbForm( ON_NurbsCurve& n ) const
