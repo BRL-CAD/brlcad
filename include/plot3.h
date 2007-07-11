@@ -41,6 +41,11 @@
 #ifndef	PLOT3_H
 #define	PLOT3_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "common.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -495,6 +500,11 @@ BN_EXPORT BU_EXTERN(void BU_FORTRAN(f3vect, F3VECT),
 		     float *fl,
 		     float *tl));
 #endif /* __VMATH_H__ */
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* PLOT3_H */
 /** @} */
