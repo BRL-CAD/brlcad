@@ -196,7 +196,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	)
 {
     struct directory *dp;
-    struct rt_db_internal intern;
+    struct bu_external ext;
     char shape[256];
 
     if( !tp )
@@ -210,20 +210,16 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 		return;
 	    }
 	    //rename tree
-	    snprintf(shape, 256, "%s-%d", name, shape_number++);
+	    snprintf(shape, 256, "%s-%.3d", name, shape_number++);
 	    bu_free(tp->tr_l.tl_name, "bu_strdup");
 	    tp->tr_l.tl_name = bu_strdup(shape);
-	    
-	   //	    db_rename(dbi_p, dp, shape);
 
-	    if( rt_db_get_internal(&intern, dp, dbi_p, NULL, resp) < 0)
+	    if( db_get_external(&ext, dp, dbi_p))
 		bu_bomb("failed to read a leaf");
-	    RT_DIR_FREE_NAMEP(dp);
-	    RT_DIR_SET_NAMEP(dp,shape);
-
-	    if(rt_db_put_internal(dp, dbi_c, &intern, resp) < 0)
+	    if((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
+		bu_bomb("Failed to add new object to the database");
+	    if(db_put_external(&ext,dp, dbi_c ) < 0)
 		bu_bomb("failed to write leaf");
-	    rt_db_free_internal(&intern, resp);
 	    break;
 
 	case OP_UNION:
@@ -242,9 +238,11 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 void
 pop_dup(char *parent, char *child, struct db_i *dbi_p, struct db_i *dbi_c, struct resource *resp)
 {
+    printf("pop dup\n");
     RT_CHECK_DBI( dbi_p );
     RT_CHECK_DBI( dbi_c );
     RT_CK_RESOURCE( resp );
+    printf("pop check done\n");
 
     struct rt_db_internal in;
     struct rt_comb_internal *comb;
@@ -255,20 +253,92 @@ pop_dup(char *parent, char *child, struct db_i *dbi_p, struct db_i *dbi_c, struc
 	exit(1);
 	bu_bomb("db_lookup(parent) failed");
     }
+    /*
+    if(db_get_external(&ext, dp, dbi_p))
+	bu_bomb("Failed to read parent");
+    printf("converting...\n");
+    RT_INIT_DB_INTERNAL(&in);
+    if(rt_db_external5_to_internal5(&in, &ext, child, dbi_p, NULL, resp) < 0)
+	bu_bomb("Faield to convert parent from external to internal");
+    printf("converted\n");
+    */
     if(rt_db_get_internal(&in, dp, dbi_p, NULL, resp) < 0 )
 	bu_bomb("pop_dup: faled to load");
-
     shape_number = 0;
     comb = (struct rt_comb_internal *)in.idb_ptr;
     //rename combination
     pop_functree(dbi_p, dbi_c, comb->tree, resp, child);
 
-    RT_DIR_FREE_NAMEP(dp);
-    RT_DIR_SET_NAMEP(dp,child);
+    /*if(db_get_external(&ext, dp, dbi_p))
+	bu_bomb("failed to read leaf");
+	*/
+//    rt_db_free_internal(&in, resp);
     
-    rt_db_put_internal(dp, dbi_c, &in, resp);
-    rt_db_free_internal(&in, resp);
+    if((dp=db_diradd(dbi_c, child, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL){
+	bu_bomb("Failed to add new individual to child database");
+    }
+    printf("putting external\n");
+    pop_put_internal(child, dp, dbi_c,  &in, resp);
+    printf("external put\n");
+
+    printf("done dup\n");
+
+    
 }
+
+
+int
+pop_put_internal(
+	const char		*name,
+	struct directory	*dp,
+	struct db_i		*dbip,
+	struct rt_db_internal	*ip,
+	struct resource		*resp)
+{
+	struct bu_external	ext;
+
+	RT_CK_DIR(dp);
+	RT_CK_DBI(dbip);
+	RT_CK_DB_INTERNAL( ip );
+	RT_CK_RESOURCE(resp);
+
+	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
+
+	if( rt_db_cvt_to_external5( &ext, dp->d_namep, ip, 1.0, dbip, resp, DB5_MAJORTYPE_BRLCAD ) < 0 )  {
+		bu_log("rt_db_put_internal5(%s):  export failure\n",
+			dp->d_namep);
+		goto fail;
+	}
+	BU_CK_EXTERNAL( &ext );
+
+	if( ext.ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
+		if( db5_realloc( dbip, dp, &ext ) < 0 )  {
+			bu_log("rt_db_put_internal5(%s) db_realloc5() failed\n", dp->d_namep);
+			goto fail;
+		}
+	}
+	BU_ASSERT_LONG( ext.ext_nbytes, ==, dp->d_len );
+
+	if( dp->d_flags & RT_DIR_INMEM )  {
+		bcopy( dp->d_un.ptr, (char *)ext.ext_buf, ext.ext_nbytes );
+		goto ok;
+	}
+	//if((dp=db_diradd(dbic, name, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
+	  //  goto fail;
+	if( db_write( dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr ) < 0 )  {
+		goto fail;
+	}
+ok:
+	bu_free_external( &ext );
+	rt_db_free_internal( ip, resp );
+	return 0;			/* OK */
+
+fail:
+	bu_free_external( &ext );
+	rt_db_free_internal( ip, resp );
+	return -2;		/* FAIL */
+}
+
 
 /** @} */
 /*

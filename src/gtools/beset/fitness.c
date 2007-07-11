@@ -354,6 +354,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     }
     else{
 	bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);
+	fstate->diff /= fstate->res[U_AXIS]*fstate->res[V_AXIS];
     }
 
     rt_clean(fstate->rtip);
