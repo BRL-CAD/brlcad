@@ -1211,7 +1211,7 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
 	ON_TRACE("tleft : " << tleft);
 	ON_TRACE("tright: " << tright);
 	//assert( tleft <= tright );
-	if (ON_NearZero(abs(tleft-tright),ON_ZERO_TOLERANCE)) {
+	if (ON_NearZero(fabs(tleft-tright),ON_ZERO_TOLERANCE)) {
 	  tleft = .33;
 	  tright = .66;
 	  ON_BezierCurve left(crv), middle(crv), right(crv);
