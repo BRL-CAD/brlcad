@@ -422,6 +422,8 @@ public:
 	VMOVE(point, h.point);
 	VMOVE(normal, h.normal);
 	move(uv, h.uv);
+
+        return *this;
     }
 
     bool operator==(const brep_hit& h) {
@@ -619,7 +621,7 @@ opposite(const SubsurfaceBBNode* sbv, pt2d_t uv)
 typedef std::pair<int,int> ip_t;
 typedef std::list<ip_t> MissList;
 
-int
+static int
 sign(double val) {
     if (val >= 0.0) return 1;
     else return -1;
