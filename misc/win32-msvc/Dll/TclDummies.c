@@ -93,3 +93,5 @@ int                  Tcl_Eof() {return 0;}
 void                 Tcl_CreateChannelHandler() {}
 Tcl_Channel          Tcl_MakeFileChannel() {return 0;}
 void                 Tcl_SetErrno() {}
+Tcl_Obj             *Tcl_NewDoubleObj() {return 0;}
+Tcl_Obj             *Tcl_NewIntObj() {return 0;}
