@@ -1092,9 +1092,11 @@ dgo_autoview(struct dg_obj	*dgop,
 	vect_t		minus, plus;
 	vect_t		center;
 	vect_t		radial;
+	vect_t		small;
 
 	VSETALL(min,  INFINITY);
 	VSETALL(max, -INFINITY);
+	VSETALL(small, SQRT_SMALL_FASTF);
 
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 		minus[X] = sp->s_center[X] - sp->s_size;
@@ -1116,7 +1118,11 @@ dgo_autoview(struct dg_obj	*dgop,
 		VSUB2(radial, max, center);
 	}
 
-	if (VNEAR_ZERO(radial , SQRT_SMALL_FASTF))
+	/* make sure it's not inverted */
+	VMAX(radial, small);
+
+	/* make sure it's not too small */
+	if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
 		VSETALL(radial , 1.0);
 
 	MAT_IDN(vop->vo_center);
