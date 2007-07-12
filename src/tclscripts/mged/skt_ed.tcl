@@ -1924,6 +1924,36 @@ class Sketch_carc {
 	}
 }
 
+
+proc bezdex { i j k num_pts } {
+    return [expr $i * [expr $num_pts * 2] + $j * 2 + $k]
+}
+
+proc calc_bezier {num_pts coords t} {
+    for { set j 0 } { $j < $num_pts } { incr j } {
+	set vtemp([bezdex 0 $j 0 $num_pts]) [lindex $coords [expr $j * 2]]
+	set vtemp([bezdex 0 $j 1 $num_pts]) [lindex $coords [expr $j * 2 + 1]]
+    }
+
+    set degree [expr $num_pts - 1]
+    for { set i 1 } { $i < $num_pts } { incr i } {
+	for { set j 0 } { $j <= [expr $degree - $i] } { incr j } {
+	    set vtemp([bezdex $i $j 0 $num_pts]) \
+		[ expr \
+		      [expr [expr 1.0 - $t] * $vtemp([bezdex [expr $i - 1] $j 0 $num_pts])] + \
+		      [expr $t * $vtemp([bezdex [expr $i - 1] [expr $j + 1] 0 $num_pts])]]
+
+	    set vtemp([bezdex $i $j 1 $num_pts]) \
+		[ expr \
+		      [expr [expr 1.0 - $t] * $vtemp([bezdex [expr $i - 1] $j 1 $num_pts])] + \
+		      [expr $t * $vtemp([bezdex [expr $i - 1] [expr $j + 1] 1 $num_pts])]]
+	}
+    }
+
+    return "$vtemp([bezdex $degree 0 0 $num_pts]) $vtemp([bezdex $degree 0 1 $num_pts])"
+}
+
+
 class Sketch_bezier {
     private variable canv
     private variable editor
@@ -1992,14 +2022,29 @@ class Sketch_bezier {
 	set myscale [$editor get_scale]
 	set vlist [$editor get_vlist]
 	set coords ""
+	set count 0
+	
+	# scale the control point coordinates
 	foreach index $index_list {
 	    set pt [lindex $vlist $index]
 	    lappend coords [expr {$myscale * [lindex $pt 0]}] [expr {-$myscale * [lindex $pt 1]}]
+	    incr count
 	}
+
+	# calculate some segments
+	set segments [expr $count * 4]
+	set points ""
+	for { set i 0 } { $i < $segments } { incr i } {
+	    set t [expr {1.0 - [expr [expr $segments - $i - 1.0] / [expr $segments - 1.0]]}]
+	    lappend points [calc_bezier $count $coords $t]
+	}
+	set points [join $points]
+
+	# draw line segments instead
 	if {[lsearch -exact $atag selected ] != -1} {
-	    $canv create bezier $coords -fill red -tags [concat $this segs $atag]
+	    $canv create line $points -fill red -tags [concat $this segs $atag]
 	} else {
-	    $canv create bezier $coords -tags [concat $this segs $atag]
+	    $canv create line $points -tags [concat $this segs $atag]
 	}
     }
 
