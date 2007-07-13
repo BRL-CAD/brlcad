@@ -18,7 +18,7 @@
 /* Maximum per-surface BVH depth */
 #define BREP_MAX_FT_DEPTH 8
 /* Surface flatness parameter, Abert says between 0.8-0.9 */
-#define BREP_SURFACE_FLATNESS 0.8
+#define BREP_SURFACE_FLATNESS 0.9
 /* Max newton iterations when finding closest point */
 #define BREP_MAX_FCP_ITERATIONS 50
 /* Root finding epsilon */
@@ -32,8 +32,10 @@ static std::numeric_limits<double> real;
 #define ON_PRINT2(p) "(" << (p)[0] << "," << (p)[1] << ")"
 #define PT(p) ON_PRINT3(p)
 #define PT2(p) ON_PRINT2(p)
-//#define TRACE(s)
-#define TRACE(s) std::cerr << s << std::endl;
+#define IVAL(_ival) "[" << (_ival).m_t[0] << "," << (_ival).m_t[1] << "]"
+#define TRACE(s)
+//#define TRACE(s) std::cerr << s << std::endl;
+#define TRACE2(s) std::cerr << s << std::endl;
 #define TRACE1(s) 
 //#define TRACE(s) 
 
@@ -140,7 +142,15 @@ namespace brlcad {
   
   template<class BV>
   inline
-  BVNode<BV>::BVNode(const BV& node) : m_node(node) { }
+  BVNode<BV>::BVNode(const BV& node) : m_node(node) {     
+    for (int i = 0; i < 3; i++) {
+      double d = m_node.m_max[i] - m_node.m_min[i];
+      if (ON_NearZero(d,ON_ZERO_TOLERANCE)) {
+	m_node.m_min[i] -= 0.001;
+	m_node.m_max[i] += 0.001;
+      }
+    }
+  }
   
   template<class BV>
   inline
