@@ -140,6 +140,7 @@
 #include <time.h>
 #include <limits.h>
 #include <ctype.h>
+#include <assert.h>
 
 #if defined(ON_COMPILER_IRIX) || defined(ON_COMPILER_SUN)
 #include <alloca.h>

@@ -23,7 +23,6 @@
 #if !defined(OPENNURBS_CURVE_INC_)
 #define OPENNURBS_CURVE_INC_
 
-#include <assert.h>
 
 class ON_Curve;
 class ON_Plane;
