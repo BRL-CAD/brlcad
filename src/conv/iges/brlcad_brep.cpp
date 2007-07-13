@@ -23,6 +23,8 @@ namespace brlcad {
     outfp = wdb_fopen(filename.c_str());
     mk_id(outfp, id_name.c_str());
 
+    // XXX - join trims? iterate and call CloseTrimGap
+
     string sol = geom_name+".s";
     string reg = geom_name+".r";    
     if (_brep_flip) _brep->Flip();
