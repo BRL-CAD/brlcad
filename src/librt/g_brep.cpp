@@ -311,7 +311,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     }
 
     point_t adjust;
-    VSETALL(adjust,0.02);
+    VSETALL(adjust,1);
     bs->bvh->GetBBox(stp->st_min, stp->st_max);
     // expand outer bounding box...
     VSUB2(stp->st_min,stp->st_min,adjust);
@@ -399,9 +399,12 @@ public:
     pt2d_t  uv;
     bool    trimmed;
     bool    closeToEdge;
+    bool    oob;
+    // XXX - calculate the dot of the dir with the normal here!
+    SubsurfaceBBNode const * sbv;
     
     brep_hit(const ON_BrepFace& f, const point_t orig, const point_t p, const vect_t n, const pt2d_t _uv) 
-	: face(f), trimmed(false), closeToEdge(false)
+	: face(f), trimmed(false), closeToEdge(false), oob(false), sbv(NULL)
     {
 	VMOVE(origin, orig); 
 	VMOVE(point, p);
@@ -410,7 +413,7 @@ public:
     }
 
     brep_hit(const brep_hit& h) 
-	: face(h.face), trimmed(h.trimmed), closeToEdge(h.closeToEdge)
+	: face(h.face), trimmed(h.trimmed), closeToEdge(h.closeToEdge), oob(h.oob), sbv(h.sbv)
     {
 	VMOVE(origin, h.origin);
 	VMOVE(point, h.point);
@@ -426,12 +429,14 @@ public:
 	move(uv, h.uv);	
 	trimmed = h.trimmed;
 	closeToEdge = h.closeToEdge;
+	oob = h.oob;
+	sbv = h.sbv;
 
         return *this;
     }
 
     bool operator==(const brep_hit& h) {
-	return NEAR_ZERO(DIST_PT_PT(point,h.point), 2*BREP_EDGE_MISS_TOLERANCE);
+	return NEAR_ZERO(DIST_PT_PT(point,h.point), BREP_SAME_POINT_TOLERANCE);
     }
 
     bool operator<(const brep_hit& h) {
@@ -456,7 +461,7 @@ typedef std::list<brep_hit> HitList;
 void
 brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R)
 {
-    surf->Ev1Der(uv[0], uv[1], pt, su, sv);
+    assert(surf->Ev1Der(uv[0], uv[1], pt, su, sv));
     R[0] = VDOT(pr.n1,((fastf_t*)pt)) - pr.d1;
     R[1] = VDOT(pr.n2,((fastf_t*)pt)) - pr.d2;
 }
@@ -473,7 +478,7 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
 	pt2dsub(out_uv, uv, tmp);
     }
     else {
-	TRACE1("inverse failed"); // XXX how to handle this?
+	TRACE2("inverse failed"); // XXX how to handle this?
 	move(out_uv,uv);
     }
 }
@@ -555,14 +560,14 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	brep_r(surf,pr,uv,pt,su,sv,Rcurr);
 	//fastf_t d = v2mag(Rcurr);	
 	fastf_t d = DIST_PT_PT(pt,ray.m_origin);
-	//	if (d < BREP_INTERSECTION_ROOT_EPSILON) {
+	//if (d < BREP_INTERSECTION_ROOT_EPSILON) {
 	if (NEAR_ZERO(d-Dlast,BREP_INTERSECTION_ROOT_EPSILON)) {
 	    TRACE1("R:"<<ON_PRINT2(Rcurr));
 	    found = BREP_INTERSECT_FOUND; break; 
 	} else if (d > Dlast) {
 	    found = BREP_INTERSECT_ROOT_DIVERGED; //break;
 	    diverge_iter++;
-	    if (diverge_iter > 10) 
+	    if (diverge_iter > 10)
 		break;
 		//return brep_edge_check(found, sbv, face, surf, ray, hits);
 	}	
@@ -573,14 +578,20 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
     if (found > 0) {
 	fastf_t l,h;
 
-	if (!sbv->m_u.Includes(uv[0]) || !sbv->m_v.Includes(uv[1])) 
-	    return BREP_INTERSECT_OOB;
-
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
 	surf->EvNormal(uv[0],uv[1],_pt,_norm);
 	if (face->m_bRev) _norm.Reverse();
 	hits.push_back(brep_hit(*face,(const fastf_t*)ray.m_origin,(const fastf_t*)_pt,(const fastf_t*)_norm, uv));
+	hits.back().sbv = sbv;
+
+ 	if (!sbv->m_u.Includes(uv[0]) || !sbv->m_v.Includes(uv[1])) {	    
+// 	    if (!sbv->m_u.Includes(uv[0]-BREP_SAME_POINT_TOLERANCE) || 
+// 		!sbv->m_v.Includes(uv[1]-BREP_SAME_POINT_TOLERANCE)) {
+	    hits.back().oob = true;
+	    return BREP_INTERSECT_OOB;
+	}
+
 
 	if (sbv->doTrimming() && brep_pt_trimmed(uv, *face)) {
 	    hits.back().trimmed = true;
@@ -590,7 +601,6 @@ brep_intersect(const SubsurfaceBBNode* sbv, const ON_BrepFace* face, const ON_Su
 	    //return BREP_INTERSECT_TRIMMED;
 	}
     } 
-
 
     return found;
 }
@@ -631,10 +641,28 @@ sign(double val) {
 
 #include "plot3.h"
 
+static int pcount = 0;
+static FILE* plot = NULL;
+static FILE* 
+plot_file() {
+    if (plot == NULL) {
+	plot = fopen("out.pl","w");
+	point_t min, max;
+	VSET(min,-2048,-2048,-2048);
+	VSET(max,2048,2048,2048);
+	pdv_3space(plot,min,max);
+    }
+    return plot;
+}
 
-#define COLOR_PLOT(r,g,b) pl_color(stdout,(r),(g),(b))
-#define PT_PLOT(p) pd_3point(stdout,(p)[0],(p)[1],(p)[2])
-#define LINE_PLOT(p1,p2) pdv_3move(stdout,p1); pdv_3line(stdout,p1,p2)
+#define COLOR_PLOT(r,g,b) pl_color(plot_file(),(r),(g),(b))
+#define PT_PLOT(p) 	{ 			\
+    point_t 	pp; 				\
+    VSCALE(pp,p,1.001); 			\
+    pdv_3box(plot_file(),p,pp); 		\
+}
+#define LINE_PLOT(p1,p2) pdv_3move(plot_file(),p1); pdv_3line(plot_file(),p1,p2)
+#define BB_PLOT(p1,p2) pdv_3box(plot_file(),p1,p2)
 #endif
 
 /**
@@ -677,8 +705,9 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	TRACE1("surface: " << s);
 	int status = brep_intersect(sbv, f, surf, uv, r, all_hits);
 	if (status == BREP_INTERSECT_FOUND) {
-	    TRACE1("INTERSECTION: " << PT(hits.back().point));
+	    TRACE("INTERSECTION: " << PT(all_hits.back().point) << all_hits.back().trimmed << ", " << all_hits.back().closeToEdge << ", " << all_hits.back().oob);
 	} else {
+	    TRACE1("dammit");
 	    misses.push_back(ip_t(all_hits.size()-1,status));
 	}
 	s++;
@@ -692,7 +721,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
     int num = 0;    
     for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal,rp->r_dir) << "]");
+	TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal,rp->r_dir) << "] " << i->trimmed << ", " << i->closeToEdge << ", " << i->oob);
 	++num;
     }    
 
@@ -700,7 +729,11 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     TRACE("---");
     num = 0;
     for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	if (i->trimmed && !i->closeToEdge) { // remove what we were removing earlier
+	if ((i->trimmed && !i->closeToEdge) || i->oob || NEAR_ZERO(VDOT(i->normal,rp->r_dir),RT_DOT_TOL)) { // remove what we were removing earlier
+	    if (i->oob) {
+		TRACE("\toob u: " << i->uv[0] << ", " << IVAL(i->sbv->m_u));
+		TRACE("\toob v: " << i->uv[1] << ", " << IVAL(i->sbv->m_v));
+	    }
 	    i = hits.erase(i); --i;
 	    continue;
 	}
@@ -708,24 +741,49 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	++num;
     }    
 
+    {
+	// we should have "valid" points now, remove duplicates or grazes
+	HitList::iterator last = hits.begin();
+	HitList::iterator i = hits.begin();
+	++i;
+	while (i != hits.end()) {
+	    if ((*i) == (*last)) {
+		double lastDot = VDOT(last->normal,rp->r_dir);
+		double iDot = VDOT(i->normal,rp->r_dir);
+
+		if (sign(lastDot) != sign(iDot)) {
+		    // delete them both
+		    i = hits.erase(last);
+		    i = hits.erase(i);
+		    last = i;
+		    ++i;
+		} else {
+		    // just delete the second
+		    i = hits.erase(i);
+		}
+	    } else {
+		last = i;
+		++i;
+	    }	    
+	}
+    }
+
     // remove "duplicate" points      
-    HitList::iterator new_end = unique(hits.begin(), hits.end());
-    hits.erase(new_end, hits.end());
+//     HitList::iterator new_end = unique(hits.begin(), hits.end());
+//     hits.erase(new_end, hits.end());
     
-    if (hits.size() > 0 && (hits.size() % 2) != 0) {
+    if (hits.size() > 1 && (hits.size() % 2) != 0) {
 	cerr << "WTF???" << endl;
 #if PLOTTING
-	point_t min, max;
-	VSET(min,-2048,-2048,-2048);
-	VSET(max,2048,2048,2048);
-	pdv_3space(stdout,min,max);
-
-	point_t ray;
-	point_t vscaled;
-	VSCALE(vscaled,rp->r_dir,10);
-	VADD2(ray,rp->r_pt,vscaled);
-	COLOR_PLOT(200,200,200);
-	LINE_PLOT(rp->r_pt,ray);
+	pcount++;
+	if (pcount > -1) {
+	    point_t ray;
+	    point_t vscaled;
+	    VSCALE(vscaled,rp->r_dir,100);
+	    VADD2(ray,rp->r_pt,vscaled);
+	    COLOR_PLOT(200,200,200);
+	    LINE_PLOT(rp->r_pt,ray);
+	}
 #endif
 
 	num = 0;
@@ -735,22 +793,32 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    double dot = VDOT(i->normal,rp->r_dir);
 
 #if PLOTTING
-	    // draw normal
-	    point_t v;
-	    VADD2(v,i->point,i->normal);
-	    COLOR_PLOT(100,100,100);
-	    LINE_PLOT(i->point,v);
-
-	    // draw intersection
-	    if (i->trimmed && i->closeToEdge) {
-		COLOR_PLOT(0,0,255);
-	    } else if (i->trimmed) {
-		COLOR_PLOT(255,255,0);
-	    } else {
-		COLOR_PLOT(255,0,0);
+	    if (pcount > -1) {
+		// set the color of point and normal
+		if (i->trimmed && i->closeToEdge) {
+		    COLOR_PLOT(0,0,255); // blue is trimmed but close to edge
+		} else if (i->trimmed) {
+		    COLOR_PLOT(255,255,0); // yellow trimmed
+		} else if (i->oob) {
+		    COLOR_PLOT(255,0,0); // red is oob
+		} else if (NEAR_ZERO(VDOT(i->normal,rp->r_dir),RT_DOT_TOL)) {
+		    COLOR_PLOT(0,255,255); // purple is grazing
+		} else {
+		    COLOR_PLOT(0,255,0); // green is regular surface
+		}
+		
+		// draw normal
+		point_t v;
+		VADD2(v,i->point,i->normal);
+		LINE_PLOT(i->point,v);
+		
+		// draw intersection
+		PT_PLOT(i->point);
+		
+		// draw bounding box
+		BB_PLOT(i->sbv->m_node.m_min,i->sbv->m_node.m_max);
+		fflush(plot_file());
 	    }
-	    PT_PLOT(i->point);
-	    fflush(stdout);
 #endif
 
 // 	    if ((num == 0 && dot > 0) || sign(dot) == lastSign) { // remove hits with "bad" normals
@@ -805,7 +873,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    hit = true;
 	} 
 	else {
-	    TRACE("screen xy: " << ap->a_x << "," << ap->a_y);
+	    TRACE2("screen xy: " << ap->a_x << "," << ap->a_y);
 	}
     }
     
