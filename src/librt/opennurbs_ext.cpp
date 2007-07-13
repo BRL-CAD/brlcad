@@ -16,6 +16,8 @@
 #define RANGE_LO 0.45
 #define UNIVERSAL_SAMPLE_COUNT 1001
 
+#define BBOX_GROW 1e-4
+
 using namespace std;
 
 
@@ -69,21 +71,33 @@ namespace brlcad {
   BBNode*
   SurfaceTree::surfaceBBox(bool isLeaf, const ON_Interval& u, const ON_Interval& v)
   {
-    ON_3dPoint corners[4];
+    ON_3dPoint corners[9];
     const ON_Surface* surf = m_face->SurfaceOf();
 
-    if (!surf->EvPoint(u.Min(),v.Min(),corners[0]) ||
-	!surf->EvPoint(u.Max(),v.Min(),corners[1]) ||
-	!surf->EvPoint(u.Max(),v.Max(),corners[2]) ||
-	!surf->EvPoint(u.Min(),v.Max(),corners[3])) {
+    double uq = u.Length()*0.25;
+    double vq = v.Length()*0.25;   
+    if (!surf->EvPoint(u.Min()-BBOX_GROW,v.Min()-BBOX_GROW,corners[0]) ||
+	!surf->EvPoint(u.Max()+BBOX_GROW,v.Min()-BBOX_GROW,corners[1]) ||
+	!surf->EvPoint(u.Max()+BBOX_GROW,v.Max()+BBOX_GROW,corners[2]) ||
+	!surf->EvPoint(u.Min()-BBOX_GROW,v.Max()+BBOX_GROW,corners[3]) ||
+
+	!surf->EvPoint(u.Mid(),v.Mid(),corners[4]) ||
+	!surf->EvPoint(u.Mid()-uq,v.Mid()-vq,corners[5]) ||
+	!surf->EvPoint(u.Mid()-uq,v.Mid()+vq,corners[6]) ||
+	!surf->EvPoint(u.Mid()+uq,v.Mid()-vq,corners[7]) ||
+	!surf->EvPoint(u.Mid()+uq,v.Mid()+vq,corners[8])) {
       bu_bomb("Could not evaluate a point on surface"); // XXX fix this message
     }
 
     point_t min, max;
     VSETALL(min, MAX_FASTF);
     VSETALL(max, -MAX_FASTF);
-    for (int i = 0; i < 4; i++) 
+    for (int i = 0; i < 9; i++) 
       VMINMAX(min,max,((double*)corners[i]));
+    vect_t grow;
+    VSETALL(grow,0.5); // grow the box a bit
+    VSUB2(min, min, grow);
+    VADD2(max, max, grow);
             
     // calculate the estimate point on the surface: i.e. use the point
     // on the surface defined by (u.Mid(), v.Mid()) as a heuristic for
@@ -688,6 +702,7 @@ namespace brlcad {
     toUV(data, p2, tmax);
     assert(sample(data, tmin, tmax, p1, p2));
 
+    // step 2 - interpolate the samples
     return interpolateCurve(data);
   }
 
