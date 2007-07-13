@@ -71,7 +71,8 @@ typedef struct _on_brep_placeholder {
     /* Root finding threshold */
 #define BREP_INTERSECTION_ROOT_EPSILON 1e-6
     /* Jungle Gym epsilon */
-#define BREP_EDGE_MISS_TOLERANCE 1e-6
+#define BREP_EDGE_MISS_TOLERANCE 5e-4
+#define BREP_SAME_POINT_TOLERANCE 1e-3
     /* Use vector operations? For debugging */
 #define DO_VECTOR 1
     
