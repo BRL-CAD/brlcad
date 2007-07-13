@@ -25,8 +25,8 @@
 #define OPENNURBS_INC_
 
 #include <iostream>
-
-#define ON_TRACE(m) std::cout << m << std::endl
+//#define ON_TRACE(m) std::cout << m << std::endl
+#define ON_TRACE(m)
 
 #include "opennurbs_system.h"       /* system headers used by openNURBS code */
 
