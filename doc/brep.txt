@@ -75,16 +75,15 @@ through the built-in serialization facility (i.e. 3DM files).
 See Abert et al. (raytracing 06 paper: Direct and Fast Ray Tracing of NURBS
 Surfaces). 
 
-Essentially, we use a two-dimensional root-finding technique: we
-represent the ray as two orthogonal planes (the intersection of the
-planes include the ray), and then find the root of an equation that
-essentially represents the gradient between the image of some estimate
-of domain parameters where the ray intersects the surface to the
-actual intersection point. When this gradient becomes zero (found a
-root), we've also found the uv parameters for the intersection point.
+We use a two-dimensional root-finding technique: we represent the ray
+as two orthogonal planes (the intersection of the planes includes the
+ray), and then find the root of an equation that represents the
+gradient of the distance from the point to the intersection of the ray
+planes. When this gradient becomes zero (we found a root), we've also
+found the uv parameters for the intersection point.
 
-Simple Newton iteration is used, mostly since it is simple, displays
-quadratic convergence with good guesses, and is amenable to
+Newton iteration is used, mostly since it is simple, displays
+quadratic convergence when using good guesses, and is amenable to
 acceleration using SIMD instructions.
 
 Evaluation of the surface and its derivatives is done by the openNURBS
@@ -179,6 +178,23 @@ handling edge/surface grazing consistently
 
 bezier conversion of nurbs curves for trimming
 
+subsurface bounding boxes: when subdividing a surface domain and
+testing for flatness, hard to create a perfect bounding box around the
+subdomain (i.e. such that all points on the surface lie within the
+bounding box.) For the most part this may not be a problem, but
+oblique shots cause problems here (an image would help). Either way,
+the problem of better fitting bounding boxes (without just arbitrarily
+increasing the size which would seriously affect performance) needs to
+be considered... currently attempting to sample an additional 5 points
+(instead of just the corners). This should serve to handle the current
+problem. 
+
+Close-up axis aligned rendering of a cylinder from the circular ends
+produces a halo of spurious points. Ugh!
+
+Optimize for small objects (there are some fixed size adjustments in
+the bounding box/subsurface code).
+
 
 -- IGES converter --
 
@@ -195,5 +211,13 @@ I believe this converter can be made production-ready with some work:
 
 * handle naming? (don't know if IGES carries names, or if Pro/E adds
   them)
+
+* handle units properly!
+
+* tolerances when converting are still flaky (fix it) (cause BREP
+  validity problems). Trims endpoint are not within zero tolerance
+  (1e-12), so they "don't match" but they are very very close
+  (1e-11)... so need to go through and call ON_Brep::CloseTrimGap() on
+  each pair of trims in a loop.
 
 * Run lots of test cases!!!
