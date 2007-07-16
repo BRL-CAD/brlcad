@@ -1,6 +1,7 @@
 #include <assert.h>
 
 #include "brlcad.hpp"
+#include "vmath.h"
 
 namespace brlcad {
 
@@ -23,7 +24,34 @@ namespace brlcad {
     outfp = wdb_fopen(filename.c_str());
     mk_id(outfp, id_name.c_str());
 
+    ON_TextLog tl;
     // XXX - join trims? iterate and call CloseTrimGap
+    for (int faces = 0; faces < _brep->m_F.Count(); ++faces) {
+      ON_BrepFace* face = _brep->Face(faces);
+      for (int i = 0; i < face->LoopCount(); i++) {
+	ON_BrepLoop* loop = face->Loop(i);
+	for (int j = 0; j < loop->TrimCount()-1; j++) {
+	  ON_BrepTrim* trimA = loop->Trim(j);
+	  ON_BrepTrim* trimB = loop->Trim(j+1);
+	  int curveAIndex = trimA->TrimCurveIndexOf();
+	  int curveBIndex = trimB->TrimCurveIndexOf();
+
+	  ON_Curve* curveA = _brep->m_C2[curveAIndex];
+	  ON_Curve* curveB = _brep->m_C2[curveBIndex];
+
+	  debug("CURVE A");
+	  curveA->Dump(tl);
+	  debug("CURVE B");
+	  curveB->Dump(tl);
+
+	  if (curveA->PointAtEnd().DistanceTo(curveB->PointAtStart()) < 1e-5) {
+	    curveB->SetStartPoint(curveA->PointAtEnd());
+	  } else {
+	    assert(false);
+	  }
+	}
+      }
+    }
 
     string sol = geom_name+".s";
     string reg = geom_name+".r";    
