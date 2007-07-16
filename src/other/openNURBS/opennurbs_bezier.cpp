@@ -1196,7 +1196,7 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
 	double tmax = -real.infinity();
 	for (int i2 = 0; i2 < (crv.m_order-1); i2++) {
 	  for (int j = i2+1; j < crv.m_order; j++) {
-	    int a = i;
+	    int a = i2;
 	    int b = j;
 	    if (sign(d[a].y) != sign(d[b].y)) {
 	      double t = d[a].x - d[a].y * (d[b].x - d[a].x) / (d[b].y - d[a].y);
