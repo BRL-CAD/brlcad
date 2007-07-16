@@ -48,9 +48,11 @@
 #include "population.h"
 #include "beset.h" // GOP options
 
-//cut when pop_random() updated
+
+//narsty globals -- move to main() ?
 float *idx;
-int shape_number; //ugly but keeping
+int shape_number; 
+
 
 /**
  *	P O P _ I N I T --- initialize a population of a given size
@@ -69,7 +71,6 @@ pop_init (struct population **p, int size)
 
 #define SEED 33
     // init in main() bn_rand_init(idx, SEED);
-    // fix this and modularize somehow
     bn_rand_init(idx, SEED);
 }
 
@@ -196,7 +197,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	)
 {
     struct directory *dp;
-    struct bu_external ext;
+    struct rt_db_internal in;
     char shape[256];
 
     if( !tp )
@@ -205,21 +206,18 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
     switch( tp->tr_op )  {
 
 	case OP_DB_LEAF:
-	    if( (dp=db_lookup( dbi_p, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL ){
-		printf("failed to look up %s\n", tp->tr_l.tl_name);
-		return;
-	    }
+	    if( !rt_db_lookup_internal(dbi_p, tp->tr_l.tl_name, &dp, &in, LOOKUP_NOISY, resp))
+		bu_bomb("Failed to read parent");
+
 	    //rename tree
 	    snprintf(shape, 256, "%s-%.3d", name, shape_number++);
 	    bu_free(tp->tr_l.tl_name, "bu_strdup");
 	    tp->tr_l.tl_name = bu_strdup(shape);
 
-	    if( db_get_external(&ext, dp, dbi_p))
-		bu_bomb("failed to read a leaf");
 	    if((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
 		bu_bomb("Failed to add new object to the database");
-	    if(db_put_external(&ext,dp, dbi_c ) < 0)
-		bu_bomb("failed to write leaf");
+	    if(rt_db_put_internal(dp, dbi_c, &in, resp) < 0)
+		bu_bomb("Failed to write new individual to databse");
 	    break;
 
 	case OP_UNION:
@@ -248,96 +246,19 @@ pop_dup(char *parent, char *child, struct db_i *dbi_p, struct db_i *dbi_c, struc
     struct rt_comb_internal *comb;
     struct directory *dp;
 
-    if( (dp = db_lookup(dbi_p, parent, LOOKUP_NOISY)) == DIR_NULL){
-	printf("PARENT LOOKUP FAILED, EXITING\n");
-	exit(1);
-	bu_bomb("db_lookup(parent) failed");
-    }
-    /*
-    if(db_get_external(&ext, dp, dbi_p))
+    if( !rt_db_lookup_internal(dbi_p, parent, &dp, &in, LOOKUP_NOISY, &rt_uniresource))
 	bu_bomb("Failed to read parent");
-    printf("converting...\n");
-    RT_INIT_DB_INTERNAL(&in);
-    if(rt_db_external5_to_internal5(&in, &ext, child, dbi_p, NULL, resp) < 0)
-	bu_bomb("Faield to convert parent from external to internal");
-    printf("converted\n");
-    */
-    if(rt_db_get_internal(&in, dp, dbi_p, NULL, resp) < 0 )
-	bu_bomb("pop_dup: faled to load");
     shape_number = 0;
     comb = (struct rt_comb_internal *)in.idb_ptr;
     //rename combination
     pop_functree(dbi_p, dbi_c, comb->tree, resp, child);
 
-    /*if(db_get_external(&ext, dp, dbi_p))
-	bu_bomb("failed to read leaf");
-	*/
-//    rt_db_free_internal(&in, resp);
-    
     if((dp=db_diradd(dbi_c, child, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL){
 	bu_bomb("Failed to add new individual to child database");
     }
-    printf("putting external\n");
-    pop_put_internal(child, dp, dbi_c,  &in, resp);
-    printf("external put\n");
-
-    printf("done dup\n");
-
-    
+    rt_db_put_internal(dp, dbi_c,  &in, resp);
 }
 
-
-int
-pop_put_internal(
-	const char		*name,
-	struct directory	*dp,
-	struct db_i		*dbip,
-	struct rt_db_internal	*ip,
-	struct resource		*resp)
-{
-	struct bu_external	ext;
-
-	RT_CK_DIR(dp);
-	RT_CK_DBI(dbip);
-	RT_CK_DB_INTERNAL( ip );
-	RT_CK_RESOURCE(resp);
-
-	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
-
-	if( rt_db_cvt_to_external5( &ext, dp->d_namep, ip, 1.0, dbip, resp, DB5_MAJORTYPE_BRLCAD ) < 0 )  {
-		bu_log("rt_db_put_internal5(%s):  export failure\n",
-			dp->d_namep);
-		goto fail;
-	}
-	BU_CK_EXTERNAL( &ext );
-
-	if( ext.ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
-		if( db5_realloc( dbip, dp, &ext ) < 0 )  {
-			bu_log("rt_db_put_internal5(%s) db_realloc5() failed\n", dp->d_namep);
-			goto fail;
-		}
-	}
-	BU_ASSERT_LONG( ext.ext_nbytes, ==, dp->d_len );
-
-	if( dp->d_flags & RT_DIR_INMEM )  {
-		bcopy( dp->d_un.ptr, (char *)ext.ext_buf, ext.ext_nbytes );
-		goto ok;
-	}
-	//if((dp=db_diradd(dbic, name, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
-	  //  goto fail;
-	if( db_write( dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr ) < 0 )  {
-		goto fail;
-	}
-ok:
-	bu_free_external( &ext );
-	rt_db_free_internal( ip, resp );
-	return 0;			/* OK */
-
-fail:
-	bu_free_external( &ext );
-	rt_db_free_internal( ip, resp );
-	return -2;		/* FAIL */
-}
 
 
 /** @} */
