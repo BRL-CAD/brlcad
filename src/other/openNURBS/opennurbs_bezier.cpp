@@ -1155,8 +1155,8 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
     ON_Interval dom = crv.Domain();
     assert(crv.CVCount() > 0);
     // determine the case (a la Nishita bezier intersection algorithm)
-    for (int i = 0; i < crv.CVCount(); i++) {
-      qstats |= (1 << quadrant(segment[0], crv.CV(i), crv.IsRational() ? crv.Weight(i) : 1.0));
+    for (int i1 = 0; i1 < crv.CVCount(); i1++) {
+      qstats |= (1 << quadrant(segment[0], crv.CV(i1), crv.IsRational() ? crv.Weight(i1) : 1.0));
     }
     assert(qstats >= 0);
     int curve_case = case_table[qstats];
@@ -1183,7 +1183,7 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
 	ON_TRACE("\tCASE C");
 	// use Bezier clipping to eliminate segments of the curve that
 	// cannot intersect the segment
-	ON_2dPoint d[crv.m_order]; // control points for the explicit Bezier curve
+	ON_2dPoint* d = static_cast<ON_2dPoint*>(alloca(crv.m_order * sizeof(ON_2dPoint))); // control points for the explicit Bezier curve
 	for (int i = 0; i < crv.m_order; i++) {
 	  d[i].x = ((double)i)/(double)(crv.m_order-1);
 	  d[i].y = crv.CV(i)[1] - segment[0].y; // dist from the segment
@@ -1194,8 +1194,8 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
 	// XXX - ack - make sure this handles all cases
 	double tmin = real.infinity();
 	double tmax = -real.infinity();
-	for (int i = 0; i < (crv.m_order-1); i++) {
-	  for (int j = i+1; j < crv.m_order; j++) {
+	for (int i2 = 0; i2 < (crv.m_order-1); i2++) {
+	  for (int j = i2+1; j < crv.m_order; j++) {
 	    int a = i;
 	    int b = j;
 	    if (sign(d[a].y) != sign(d[b].y)) {
