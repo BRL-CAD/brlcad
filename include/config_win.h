@@ -189,6 +189,10 @@
 #   define for if (0) {} else for           /* proper for-scope */
 #endif
 
+#ifdef small
+#   undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
+#endif
+
 #ifdef __cplusplus
 #   ifdef min
 #       undef min
