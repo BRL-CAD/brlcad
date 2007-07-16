@@ -3154,6 +3154,8 @@ ON_Curve::NumIntersectionsWith(const ON_Line& segment) const {
   ON_TextLog tl;
   Dump(tl);
   assert(false);
+
+  return 0;
 }
 
 
@@ -3282,15 +3284,15 @@ ON_Curve::CloseTo(const ON_3dPoint& pt, double epsilon, Sample& closest) const
   
   assert(samples.size() >= 2);
 
-  for (std::list<Sample>::iterator i = samples.begin(); i != samples.end(); ++i) {
-    i->dist = pt.DistanceTo(i->pt);
+  for (std::list<Sample>::iterator i1 = samples.begin(); i1 != samples.end(); ++i1) {
+    i1->dist = pt.DistanceTo(i1->pt);
   }  
   samples.sort();  
   // after sorting, we have the closest 2 sampled points, which
   // *should* bound the closest point.
 
   // use these to find the closest point through a 'binary' search 
-  std::list<Sample>::iterator i = samples.begin();
+  std::list<Sample>::iterator i2 = samples.begin();
   Sample s1 = samples.front(); samples.pop_front();
   Sample s2 = samples.front();
   
@@ -3330,17 +3332,17 @@ ON_Curve::CloseTo(const ON_Ray& ray, double epsilon, Sample& closest) const
   double tol = (l < 1) ? CLOSETO_CHORD_TOL : CLOSETO_CHORD_TOL * l;
   sample(this, left, right, samples, tol, CLOSETO_DER_TOL);
   
-  for (std::list<Sample>::iterator i = samples.begin(); i != samples.end(); ++i) {
-    i->dist = ray.DistanceTo(i->pt, &i->ray_t);
+  for (std::list<Sample>::iterator i1 = samples.begin(); i1 != samples.end(); ++i1) {
+    i1->dist = ray.DistanceTo(i1->pt, &i1->ray_t);
   }  
   samples.sort();  
   // after sorting, we have the closest 2 sampled points, which
   // *should* bound the closest point.
 
   // use these to find the closest point through a 'binary' search 
-  std::list<Sample>::iterator i = samples.begin();
-  Sample s1 = *i;
-  Sample s2 = *++i;
+  std::list<Sample>::iterator i2 = samples.begin();
+  Sample s1 = *i2;
+  Sample s2 = *++i2;
   if (s1.dist < epsilon) return true;
   closest = search(this, ray, s1, s2, epsilon);
 
