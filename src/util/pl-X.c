@@ -190,7 +190,7 @@ getieee(void)
 	double	d;
 
 	fread( in, 8, 1, stdin );
-	ntohd( &d, in, 1 );
+	ntohd( (unsigned char *)&d, in, 1 );
 	return	d;
 }
 
