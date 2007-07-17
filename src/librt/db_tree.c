@@ -1818,18 +1818,18 @@ db_count_tree_nodes( const union tree *tp, int count )
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
+	case OP_XOR:
 		/* This node is known to be a binary op */
 		count = db_count_tree_nodes( tp->tr_b.tb_left, count );
 		count = db_count_tree_nodes( tp->tr_b.tb_right, count );
-		return(count);
+		return(count+1);
 
-	case OP_XOR:
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
 		/* This node is known to be a unary op */
 		count = db_count_tree_nodes( tp->tr_b.tb_left, count );
-		return(count);
+		return(count+1);
 
 	default:
 		bu_log("db_count_tree_nodes: bad op %d\n", tp->tr_op);
