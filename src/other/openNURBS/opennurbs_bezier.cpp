@@ -608,6 +608,7 @@ bool ON_BezierCurve::Create( int dim, int is_rat, int order )
   m_cv_stride = (m_dim > 0) ? m_dim+m_is_rat : 0;
   m_cv_capacity = m_cv_stride*m_order;
   m_cv = (double*)onrealloc( m_cv, m_cv_capacity*sizeof(m_cv[0]) );
+
   //m_domain.m_t[0] = 0.0;
   //m_domain.m_t[1] = 1.0;
   return IsValid();
@@ -1212,6 +1213,8 @@ int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
 	ON_TRACE("tright: " << tright);
 	//assert( tleft <= tright );
 	if (fabs(tleft-tright) < 0.2) {
+	  // XXX the tleft/tright calc doesn't seem to be working, otherwise
+	  // why would we need this case?
 	  tleft = .33;
 	  tright = .66;
 	  ON_BezierCurve left(crv), middle(crv), right(crv);
