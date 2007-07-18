@@ -64,7 +64,7 @@ fastf_t pop_rand    (void);
 //void pop_dup_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 //		      union tree *tp, struct resource *resp, 
 //		      char *name );
-void pop_dup(char *parent, char * child, struct db_i *dbi_p, 
+void pop_gop(int gop, char *parent1, char *parent2, char * child1, char *child2,  struct db_i *dbi_p, 
 	     struct db_i *dbi_c, struct resource *resp);
 int pop_put_internal(const char *n, struct directory *dp, struct db_i *dbip, struct rt_db_internal *ip,
 	struct resource *resp);

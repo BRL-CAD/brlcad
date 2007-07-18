@@ -100,7 +100,7 @@ parse_args (int argc, char **argv)
 
 int main(int argc, char *argv[]){
     int i, g; /* generation and parent counters */
-    int ind;
+    int parent1, parent2;
     int gop;
     fastf_t total_fitness;
     struct fitness_state *fstate;
@@ -136,6 +136,8 @@ int main(int argc, char *argv[]){
 
     //pop_spawn = gen00
     for(g = 1; g < 10; g++){
+	printf("\nGeneration %d:\n" 
+		"--------------\n", g);
 		//create a new db for each generation
 	snprintf(dbname, 256, "gen%.2d", g);
 	pop->db_c = db_create(dbname, 5);
@@ -155,17 +157,31 @@ int main(int argc, char *argv[]){
 	//qsort(pop->parent, pop->size, sizeof(struct individual), cmp_ind);
 
 	for(i = 0; i < pop->size; i++){
-	    ind = pop_wrand_ind(pop->parent, pop->size, total_fitness);
+
+	    /*
+	     * Choose a random genetic operation and
+	     * two potential parents to the next individual
+	     */
 	    gop = pop_wrand_gop();//to be implemented
-	    printf("-----Generating Individual %d-----\n", i);
-	    snprintf(pop->child[i].id, 256, "gen%.3dind%.3d", g, i);
-	    switch(REPRODUCE){
-		case REPRODUCE:
-		    pop_dup(pop->parent[ind].id, pop->child[i].id, pop->db_p, pop->db_c, &rt_uniresource );
-		    break;
+	    parent1 = parent2 = pop_wrand_ind(pop->parent, pop->size, total_fitness);
+	    snprintf(pop->child[i].id, 256, "gen%.3dind%.3d", g, i); //name the child
+
+	    if(gop == CROSSOVER){
+		//while(parent2 == parent1) -- needed? can crossover be done on same 2 ind?
+		parent2 = pop_wrand_ind(pop->parent, pop->size, total_fitness);
+		++i;
+		snprintf(pop->child[i].id, 256, "gen%.3dind%.3d", g, i); //name the child
+
+		printf("x(%s, %s) --> (%s, %s)\n", pop->parent[parent1].id, pop->parent[parent2].id, pop->child[i-1].id, pop->child[i].id);
+		pop_gop(gop, pop->parent[parent1].id, pop->parent[parent2].id, pop->child[i-1].id, pop->child[i].id,
+			pop->db_p, pop->db_c, &rt_uniresource);
+	    } else {
+		printf("r(%s)\t ---------------> (%s)\n", pop->parent[parent1].id, pop->child[i].id);
+		pop_gop(gop, pop->parent[parent1].id, NULL, pop->child[i].id, NULL,
+			pop->db_p, pop->db_c, &rt_uniresource);
 	    }
+	    
 	}
-	printf("CLOSING DB_P\n");
   db_close(pop->db_p);
 	    pop->db_p = pop->db_c;
 
@@ -173,7 +189,6 @@ int main(int argc, char *argv[]){
 	struct individual *tmp = pop->child;
 pop->child = pop->parent;
 	pop->parent = tmp;
-	printf("GENERATION %d COMPLETE\n", g);
 
     }
     printf("\nFINAL POPULATION\n----------------\n");
@@ -183,8 +198,8 @@ pop->child = pop->parent;
 
     //fit_updateRes(atoi(argv[1])*2, atoi(argv[2])*2);
 
-    fit_clean(fstate);
-    pop_clean(pop);
+    //fit_clean(fstate);
+    //pop_clean(pop);
     return 0;
 }
 
