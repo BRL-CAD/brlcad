@@ -30,9 +30,10 @@ namespace brlcad {
       ON_BrepFace* face = _brep->Face(faces);
       for (int i = 0; i < face->LoopCount(); i++) {
 	ON_BrepLoop* loop = face->Loop(i);
-	for (int j = 0; j < loop->TrimCount()-1; j++) {
+	int trimCount = loop->TrimCount();
+	for (int j = 0; j < trimCount; j++) {
 	  ON_BrepTrim* trimA = loop->Trim(j);
-	  ON_BrepTrim* trimB = loop->Trim(j+1);
+	  ON_BrepTrim* trimB = loop->Trim((j+1) % trimCount);
 	  int curveAIndex = trimA->TrimCurveIndexOf();
 	  int curveBIndex = trimB->TrimCurveIndexOf();
 
