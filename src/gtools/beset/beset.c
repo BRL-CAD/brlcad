@@ -51,8 +51,7 @@
 #include "beset.h"
 
 
-#define _L pop->parent[0]
-void usage(){bu_bomb("Usage: ./beset [options] database rows cols");}
+void usage(){fprintf(stderr, "Usage: %s [options] db.g object\nOptions:\n -p #\t\tPopulation size\n -g #\t\tNumber of generations\n -r #\t\tResolution \n",bu_getprogname());exit(1);}
 
 
 /* fitness of a given object compared to source */
@@ -66,32 +65,37 @@ static int cmp_ind(const void *p1, const void *p2)
 	return -1;
 }
 
-void
-parse_args (int argc, char **argv)
+int
+parse_args (int ac, char *av[], struct options *opts)
 {
     int c;
 
-    bu_setprogname(argv[0]);
+    bu_setprogname(av[0]);
     /* handle options */
     bu_opterr = 0;
     bu_optind = 0;
-    argv++; argc--;
-    while (argv[0][0] == '-') {
-	c = bu_getopt(argc, argv, "x:");
+    av++; ac--;
+
+    while ((c=bu_getopt(ac,av,OPTIONS)) != EOF) {
 	switch (c) {
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug );
-		argc -= 2;
-		argv += 2;
 		continue;
-	    case EOF:
-		break;
+	    case 'p':
+		opts->pop_size = atoi(bu_optarg);
+		continue;
+	    case 'g':
+		opts->gens = atoi(bu_optarg);
+		continue;
+	    case 'r':
+		opts->res = atoi(bu_optarg);
+		continue;
 	    default:
 		fprintf(stderr, "Unrecognized option: -%c\n", c);
 		usage();
-	//	return 1;
 	}
     }
+    return bu_optind;
 }
 
 
@@ -102,104 +106,110 @@ int main(int argc, char *argv[]){
     int i, g; /* generation and parent counters */
     int parent1, parent2;
     int gop;
+    int best;
     fastf_t total_fitness;
     struct fitness_state *fstate;
-    int c;
     struct population *pop;
     char dbname[256]; //name of database
-    char indname[256];
+    struct options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES};
+    struct individual *tmp;
+    int  ac;
 
 
-//    parse_args(argc, argv);
+    ac = parse_args(argc, argv, &opts);
+    if(argc - ac != 3)
+	usage();
     
-    argc--;
-    argv++;
-    if (argc != 4) {
-	fprintf(stderr, "Usage: %s [options] database rows cols source_object\n", bu_getprogname());
-	return 1;
-    }
 
     rt_init_resource(&rt_uniresource,1,NULL);
 
-    fstate = fit_prep(atoi(argv[1]), atoi(argv[2])); //ERROR CHECK
-
     /* read source model into fstate.rays */
-    fit_store(argv[3], argv[0], fstate); 
+    fstate = fit_prep(opts.res, opts.res);
+    fit_store(argv[ac+2], argv[ac+1], fstate); 
 
-    pop_init(&pop, 10);
-
+    /* initialize population and spawn initial individuals */
+    pop_init(&pop, opts.pop_size);
     pop_spawn(pop, pop->db_p->dbi_wdbp);
-    wdb_close(pop->db_p->dbi_wdbp);
-    pop->db_p = db_open("gen00", "r");
-    db_dirbuild(pop->db_p);
-    
 
-    //pop_spawn = gen00
-    for(g = 1; g < 10; g++){
+    
+    for(g = 1; g < opts.gens; g++){
+#ifdef VERBOSE
 	printf("\nGeneration %d:\n" 
 		"--------------\n", g);
-		//create a new db for each generation
-	snprintf(dbname, 256, "gen%.2d", g);
+#endif
+
+	total_fitness = best = 0; 
+
+	snprintf(dbname, 256, "gen%.3d", g);
 	pop->db_c = db_create(dbname, 5);
-	//pop->db_c->dbi_wdbp = wdb_dbopen(pop->db_c,RT_WDB_TYPE_DB_DISK);
 
-	//evaluate fitness of parents
-	total_fitness = 0;
-	
-
-
+	/* calculate sum of all fitnesses and find
+	 * the most fit individual in the population
+	 * note: need to calculate outside of main pop
+	 * loop because it's needed for pop_wrand_ind()*/
 	for(i = 0; i < pop->size; i++) {
-	   pop->parent[i].fitness = 1.0-fit_linDiff(pop->parent[i].id, pop->db_p, fstate);
+	   pop->parent[i].fitness = 2.0/(1+fit_linDiff(pop->parent[i].id, pop->db_p, fstate));
+	   if(pop->parent[i].fitness > pop->parent[best].fitness) best = i;
 	   total_fitness += pop->parent[i].fitness;
-
 	}
+	printf("Most fit from generation %3d was: %s, fitness of %g\n", g-1, pop->parent[best].id, pop->parent[best].fitness);
 
-	//qsort(pop->parent, pop->size, sizeof(struct individual), cmp_ind);
 
 	for(i = 0; i < pop->size; i++){
 
-	    /*
-	     * Choose a random genetic operation and
-	     * two potential parents to the next individual
-	     */
-	    gop = pop_wrand_gop();//to be implemented
-	    parent1 = parent2 = pop_wrand_ind(pop->parent, pop->size, total_fitness);
-	    snprintf(pop->child[i].id, 256, "gen%.3dind%.3d", g, i); //name the child
+	    /* Choose a random genetic operation and
+	     * a parent which the op will be performed on*/
+	    gop = pop_wrand_gop();
+	    parent1 = pop_wrand_ind(pop->parent, pop->size, total_fitness);
+	    snprintf(pop->child[i].id, 256, "gen%.3dind%.3d", g, i); 
 
-	    if(gop == CROSSOVER){
+	    /* If we're performing crossover, we need a second parent */
+	    if(gop == CROSSOVER && i < pop->size-1){
 		//while(parent2 == parent1) -- needed? can crossover be done on same 2 ind?
 		parent2 = pop_wrand_ind(pop->parent, pop->size, total_fitness);
-		++i;
-		snprintf(pop->child[i].id, 256, "gen%.3dind%.3d", g, i); //name the child
+		snprintf(pop->child[i].id, 256, "gen%.3dind%.3d", g, ++i); //name the child and increase pop count
 
+#ifdef VERBOSE 
 		printf("x(%s, %s) --> (%s, %s)\n", pop->parent[parent1].id, pop->parent[parent2].id, pop->child[i-1].id, pop->child[i].id);
+#endif
+		/* perform the genetic operation and output the children to the cihld database */
 		pop_gop(gop, pop->parent[parent1].id, pop->parent[parent2].id, pop->child[i-1].id, pop->child[i].id,
 			pop->db_p, pop->db_c, &rt_uniresource);
 	    } else {
+#ifdef VERBOSE
 		printf("r(%s)\t ---------------> (%s)\n", pop->parent[parent1].id, pop->child[i].id);
-		pop_gop(gop, pop->parent[parent1].id, NULL, pop->child[i].id, NULL,
+#endif
+		/* perform the genetic operation and output the child to the child database */
+		pop_gop(REPRODUCE, pop->parent[parent1].id, NULL, pop->child[i].id, NULL,
 			pop->db_p, pop->db_c, &rt_uniresource);
 	    }
 	    
 	}
-  db_close(pop->db_p);
-	    pop->db_p = pop->db_c;
 
-
-	struct individual *tmp = pop->child;
-pop->child = pop->parent;
+	/* Close parent db and move children 
+	 * to parent database and population
+	 * Note: pop size is constant so we
+	 * can keep the storage from the previous 
+	 * pop->parent for the next pop->child*/
+	db_close(pop->db_p);
+	pop->db_p = pop->db_c;
+	tmp = pop->child;
+	pop->child = pop->parent;
 	pop->parent = tmp;
 
     }
-    printf("\nFINAL POPULATION\n----------------\n");
+
+#ifdef VERBOSE
+    printf("\nFINAL POPULATION\n"
+	    "----------------\n");
     for(i = 0; i < pop->size; i++)
 	printf("%s\tf:%.5g\n", pop->child[i].id, 
 		pop->child[i].fitness);
+#endif
 
-    //fit_updateRes(atoi(argv[1])*2, atoi(argv[2])*2);
 
-    //fit_clean(fstate);
-    //pop_clean(pop);
+    fit_clean(fstate);
+    pop_clean(pop);
     return 0;
 }
 
