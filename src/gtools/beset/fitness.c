@@ -334,15 +334,18 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     }
 
     
-
-       fstate->bbox[0] = fstate->rtip->mdl_min[Z];
-    fstate->bbox[1] = fstate->rtip->mdl_max[Z] - fstate->bbox[0];
-    rt_prep_parallel(fstate->rtip,fstate->ncpu);
-    fstate->bbox[0] = fstate->rtip->mdl_min[Z] - fstate->bbox[0];
+    if(fstate->capture){
+	fstate->bbox[0] = fstate->rtip->mdl_min[Z];
+	fstate->bbox[1] = fstate->rtip->mdl_max[Z] - fstate->bbox[0];
+	rt_prep_parallel(fstate->rtip,fstate->ncpu);
+	fstate->bbox[0] = fstate->rtip->mdl_min[Z] - fstate->bbox[0];
  
-    VSUB2(span, fstate->rtip->mdl_max, fstate->rtip->mdl_min);
-    fstate->gridSpacing[U_AXIS] = (fstate->rtip->mdl_max[U_AXIS]-fstate->rtip->mdl_min[U_AXIS])/ (fstate->res[U_AXIS] + 1);
-    fstate->gridSpacing[V_AXIS] = (fstate->rtip->mdl_max[V_AXIS] - fstate->rtip->mdl_min[V_AXIS]) / (fstate->res[V_AXIS] + 1 );
+	VSUB2(span, fstate->rtip->mdl_max, fstate->rtip->mdl_min);
+	fstate->gridSpacing[U_AXIS] = (fstate->rtip->mdl_max[U_AXIS]-fstate->rtip->mdl_min[U_AXIS])/ (fstate->res[U_AXIS] + 1);
+	fstate->gridSpacing[V_AXIS] = (fstate->rtip->mdl_max[V_AXIS] - fstate->rtip->mdl_min[V_AXIS]) / (fstate->res[V_AXIS] + 1 );
+    } else {
+	rt_prep_parallel(fstate->rtip, fstate->ncpu);
+    }
     fstate->row = 0;
     fstate->diff = 0;
 
@@ -354,7 +357,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     }
     else{
 	bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);
-	fstate->diff /= fstate->res[U_AXIS]*fstate->res[V_AXIS];
+	//fstate->diff /= fstate->res[U_AXIS]*fstate->res[V_AXIS];
     }
 
     rt_clean(fstate->rtip);

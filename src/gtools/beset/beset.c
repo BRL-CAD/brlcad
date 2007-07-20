@@ -21,7 +21,6 @@
  *
  * Ben's Evolutionary Shape Tool
  *
- * CURRENT STATUS: single spheres work
  *
  * Author - Ben Poole
  *
@@ -97,8 +96,6 @@ parse_args (int ac, char *av[], struct options *opts)
     }
     return bu_optind;
 }
-
-
 
 
 

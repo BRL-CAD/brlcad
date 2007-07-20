@@ -65,7 +65,7 @@ pop_init (struct population **p, int size)
     (*p)->parent = bu_malloc(sizeof(struct individual) * size, "parent");
     (*p)->child  = bu_malloc(sizeof(struct individual) * size, "child");
     (*p)->size = size;
-    (*p)->db_p = db_create("gen00", 5); //FIXME: variable names
+    (*p)->db_p = db_create("gen000", 5); //FIXME: variable names
     (*p)->db_p->dbi_wdbp = wdb_dbopen((*p)->db_p, RT_WDB_TYPE_DB_DISK);
     (*p)->db_c = DBI_NULL;
 
@@ -129,6 +129,17 @@ pop_spawn (struct population *p, struct rt_wdb *db_fp)
 	snprintf(p->parent[i].id, 256, "gen%.3dind%.3d", 0, i);
 	mk_lcomb(db_fp, p->parent[i].id, &wm_hd, 1, NULL, NULL, NULL, 0);
     }
+
+/*
+ * reload the db so we dont
+ * have to do any extra checks
+ * in the main looop
+ */
+    wdb_close(p->db_p->dbi_wdbp);
+    if((p->db_p = db_open("gen000", "r")) == DBI_NULL)
+	bu_bomb("Failed to re-open initial population");
+    if(db_dirbuild(p->db_p) < 0)
+	bu_bomb("Failed to load initial database");
 }
 
 /**
@@ -156,7 +167,7 @@ pop_wrand_ind(struct individual *i, int size, fastf_t total_fitness)
 {
     int n = 0;
     fastf_t rindex, psum = 0;
-    rindex = bn_rand0to1(idx) * total_fitness;
+    rindex =pop_rand() * total_fitness;
 
     psum += i[n].fitness;
     for(n = 1; n < size; n++) {
@@ -188,6 +199,7 @@ pop_wrand_gop(void)
 	return REPRODUCE;
     return CROSSOVER;
 }
+
 int node;
 int crossover_node;
 int crossover;

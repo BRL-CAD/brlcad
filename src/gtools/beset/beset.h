@@ -36,6 +36,18 @@
 
 #define SCALE 10
 
+#define DEFAULT_POP_SIZE 20
+#define DEFAULT_GENS 50
+#define DEFAULT_RES 10
+#define OPTIONS ":x:p:g:r:"
+
+struct options{
+    int pop_size;
+    int gens;
+    int res;
+};
+
+
 #endif /* __BESET_H__ */
 
 /*
