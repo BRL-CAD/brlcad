@@ -294,9 +294,9 @@ rt_worker(int cpu, genptr_t g)
 
     while((v = get_next_row(fstate))) {
 	for(u = 1; u <= fstate->res[U_AXIS]; u++) {
-	    ap.a_ray.r_pt[U_AXIS] = ap.a_rt_i->mdl_min[U_AXIS] + u * fstate->gridSpacing[U_AXIS];
-	    ap.a_ray.r_pt[V_AXIS] = ap.a_rt_i->mdl_min[V_AXIS] + v * fstate->gridSpacing[V_AXIS];
-	    ap.a_ray.r_pt[I_AXIS] = ap.a_rt_i->mdl_min[I_AXIS];
+	    ap.a_ray.r_pt[U_AXIS] = fstate->mdl_min[U_AXIS] + u * fstate->gridSpacing[U_AXIS];
+	    ap.a_ray.r_pt[V_AXIS] = fstate->mdl_min[V_AXIS] + v * fstate->gridSpacing[V_AXIS];
+	    ap.a_ray.r_pt[I_AXIS] = fstate->mdl_min[I_AXIS];
 	    ap.a_user = (v-1)*(fstate->res[U_AXIS]) + u-1;
 	    
 	    /* initialize stored partition */
@@ -334,6 +334,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     }
 
     
+    // Calculate bounding box for raytracing 
     if(fstate->capture){
 	fstate->bbox[0] = fstate->rtip->mdl_min[Z];
 	fstate->bbox[1] = fstate->rtip->mdl_max[Z] - fstate->bbox[0];
@@ -343,6 +344,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 	VSUB2(span, fstate->rtip->mdl_max, fstate->rtip->mdl_min);
 	fstate->gridSpacing[U_AXIS] = (fstate->rtip->mdl_max[U_AXIS]-fstate->rtip->mdl_min[U_AXIS])/ (fstate->res[U_AXIS] + 1);
 	fstate->gridSpacing[V_AXIS] = (fstate->rtip->mdl_max[V_AXIS] - fstate->rtip->mdl_min[V_AXIS]) / (fstate->res[V_AXIS] + 1 );
+	VSET(fstate->mdl_min,fstate->rtip->mdl_min[X], fstate->rtip->mdl_min[Y], fstate->rtip->mdl_min[Z]);
     } else {
 	rt_prep_parallel(fstate->rtip, fstate->ncpu);
     }
@@ -360,7 +362,11 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 	//fstate->diff /= fstate->res[U_AXIS]*fstate->res[V_AXIS];
     }
 
-    rt_clean(fstate->rtip);
+    for(i = 0; i < fstate->max_cpus; i++) 
+	rt_clean_resource(fstate->rtip, &fstate->resource[i]);
+    rt_free_rti(fstate->rtip);
+
+
 }
 
 /**

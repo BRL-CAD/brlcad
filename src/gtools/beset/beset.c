@@ -129,7 +129,7 @@ int main(int argc, char *argv[]){
     pop_spawn(pop, pop->db_p->dbi_wdbp);
 
     
-    for(g = 1; g < opts.gens; g++){
+    for(g = 1; g < opts.gens; g++ ){
 #ifdef VERBOSE
 	printf("\nGeneration %d:\n" 
 		"--------------\n", g);
@@ -147,6 +147,10 @@ int main(int argc, char *argv[]){
 	for(i = 0; i < pop->size; i++) {
 	   pop->parent[i].fitness = 2.0/(1+fit_linDiff(pop->parent[i].id, pop->db_p, fstate));
 	   if(pop->parent[i].fitness > pop->parent[best].fitness) best = i;
+	}
+	qsort(pop->parent, pop->size, sizeof(struct individual), cmp_ind);
+	for(i = 0; i < pop->size; i++){
+	    pop->parent[i].fitness *= (pop->size-i)*(pop->size-i)/pop->size;
 	   total_fitness += pop->parent[i].fitness;
 	}
 	printf("Most fit from generation %3d was: %s, fitness of %g\n", g-1, pop->parent[best].id, pop->parent[best].fitness);

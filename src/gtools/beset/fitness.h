@@ -64,6 +64,7 @@ struct fitness_state {
     fastf_t diff; /* linear difference between source and object */
 
     fastf_t bbox[3]; /* z-min/max bounding line */
+    fastf_t mdl_min[3];
 };
 
 /* store a ray that hit */

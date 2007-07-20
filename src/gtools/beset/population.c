@@ -249,6 +249,8 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 		bu_bomb("Failed to add new object to the database");
 	    if(rt_db_put_internal(dp, dbi_c, &in, resp) < 0)
 		bu_bomb("Failed to write new individual to databse");
+	    rt_db_free_internal(&in, resp);//error check?
+
 	    break;
 
 
@@ -342,6 +344,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    if((dp = db_diradd(dbi_c, child2_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
 		bu_bomb("Failed to add new individual to child database");
 	    rt_db_put_internal(dp, dbi_c, &in2, resp);
+	    rt_db_free_internal(&in2, resp);
 
 	    break;
 
@@ -355,6 +358,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	bu_bomb("Failed to add new individual to child database");
     }
     rt_db_put_internal(dp, dbi_c,  &in1, resp);
+    rt_db_free_internal(&in1, resp);
 }
 
 
