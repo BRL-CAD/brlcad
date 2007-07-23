@@ -103,7 +103,7 @@ int main(int argc, char *argv[]){
     int i, g; /* generation and parent counters */
     int parent1, parent2;
     int gop;
-    int best;
+    int best,worst;
     fastf_t total_fitness;
     struct fitness_state *fstate;
     struct population *pop;
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]){
 		"--------------\n", g);
 #endif
 
-	total_fitness = best = 0; 
+	total_fitness = best =worst= 0; 
 
 	snprintf(dbname, 256, "gen%.3d", g);
 	pop->db_c = db_create(dbname, 5);
@@ -147,6 +147,7 @@ int main(int argc, char *argv[]){
 	for(i = 0; i < pop->size; i++) {
 	   pop->parent[i].fitness = 2.0/(1+fit_linDiff(pop->parent[i].id, pop->db_p, fstate));
 	   if(pop->parent[i].fitness > pop->parent[best].fitness) best = i;
+	   if(pop->parent[i].fitness < pop->parent[worst].fitness) worst = i;
 	}
 	qsort(pop->parent, pop->size, sizeof(struct individual), cmp_ind);
 	for(i = 0; i < pop->size; i++){
@@ -154,6 +155,7 @@ int main(int argc, char *argv[]){
 	   total_fitness += pop->parent[i].fitness;
 	}
 	printf("Most fit from generation %3d was: %s, fitness of %g\n", g-1, pop->parent[best].id, pop->parent[best].fitness);
+	printf("%8.6g\t%8.6g\t%8.6g\n", total_fitness/pop->size, pop->parent[worst].fitness, pop->parent[best].fitness);
 
 
 	for(i = 0; i < pop->size; i++){

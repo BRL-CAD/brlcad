@@ -305,6 +305,7 @@ rt_worker(int cpu, genptr_t g)
 		BU_LIST_INIT(&fstate->rays[ap.a_user]->l);
 	    }
 	    rt_shootray(&ap);
+	
 	}
     }
 }
@@ -318,8 +319,16 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 {
     int i;
     double span[3];
+    struct directory *dp;
+    struct rt_db_internal in;
+    int n_leaves;
     
     fstate->rtip = rt_new_rti(db);
+    if(!rt_db_lookup_internal(db, obj, &dp, &in, LOOKUP_NOISY, &rt_uniresource))
+	bu_bomb("Failed to read object to raytrace");
+    n_leaves = db_count_tree_nodes(((struct rt_comb_internal *)in.idb_ptr)->tree, 0);
+    rt_db_free_internal(&in, &rt_uniresource);
+    
 
 
 
@@ -359,7 +368,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     }
     else{
 	bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);
-	//fstate->diff /= fstate->res[U_AXIS]*fstate->res[V_AXIS];
+//	fstate->diff *= 1+n_leaves/500.0;
     }
 
     for(i = 0; i < fstate->max_cpus; i++) 

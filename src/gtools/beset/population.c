@@ -103,15 +103,15 @@ pop_spawn (struct population *p, struct rt_wdb *db_fp)
 
 	BU_LIST_INIT(&wm_hd.l);
 
-	p1[0] = -10+pop_rand()*10;
-	p1[1] = -10+pop_rand()*10;
-	p1[2] = -10+pop_rand()*10;
-	r1 = 10*pop_rand();
+	p1[0] = -20+pop_rand()*20;
+	p1[1] = -20+pop_rand()*20;
+	p1[2] = -20+pop_rand()*20;
+	r1 = 2+4*pop_rand();
 
-	p2[0] = -10+pop_rand()*10;
-	p2[1] = -10+pop_rand()*10;
-	p2[2] = -10+pop_rand()*10;
-	r2 = 10*pop_rand();
+	p2[0] = -20+pop_rand()*20;
+	p2[1] = -20+pop_rand()*20;
+	p2[2] = -20+pop_rand()*20;
+	r2 = 2+4*pop_rand();
 
 
 	p->parent[i].fitness = 0.0;
@@ -195,7 +195,7 @@ int
 pop_wrand_gop(void)
 {
     float i = bn_rand0to1(idx);
-    if(i < 0.5)
+    if(i < 0.1)
 	return REPRODUCE;
     return CROSSOVER;
 }
@@ -281,13 +281,9 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     struct rt_db_internal in1, in2;
     struct rt_comb_internal *parent1;
     struct rt_comb_internal *parent2, *swap;
-    struct rt_comb_internal *child1, *child2;
     struct directory *dp;
     union tree *cpoint, **tmp, **cross_parent;
     
-    int nodes; //number of nodes
-    int node1, node2;
-
     if( !rt_db_lookup_internal(dbi_p, parent1_id, &dp, &in1, LOOKUP_NOISY, &rt_uniresource))
 	bu_bomb("Failed to read parent1");
     shape_number = 0;
@@ -347,6 +343,20 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    rt_db_free_internal(&in2, resp);
 
 	    break;
+	case MUTATE:
+	    break;
+	    /*
+	    //random node to mutate
+	    n = (int)(pop_rand() * db_count_tree_nodes(parent1->tree,0));
+	    s_parent = &parent1->tree;
+	    s_node = n;
+	    node = 0;
+	    //find node
+	    pop_functree(dbi_p, dbi_c, parent1->tree, resp, NULL);
+*/
+
+
+
 
 	default:
 	    bu_log("illegal genetic operator");
