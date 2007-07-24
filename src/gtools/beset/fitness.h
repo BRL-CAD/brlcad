@@ -55,6 +55,7 @@ struct fitness_state {
     struct resource resource[MAX_PSW]; /* memory resource for multi-cpu processing */
     int ncpu;
     int max_cpus;
+    int nodes;
 
     int res[2]; /*  ray resolution on u and v axes */
     double gridSpacing[2]; /* grid spacing on u and v axes */
@@ -62,6 +63,7 @@ struct fitness_state {
     
     int capture; /* flags whether to store the object */
     fastf_t diff; /* linear difference between source and object */
+    fastf_t same;
 
     fastf_t bbox[3]; /* z-min/max bounding line */
     fastf_t mdl_min[3];

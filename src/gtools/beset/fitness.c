@@ -155,8 +155,10 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 	else			yp = mp->inhit_dist;
     	
 	if(status==STATUS_EMPTY){ //neither
-	    if(NEAR_ZERO(xp-yp, 1.0e-5))
+	    if(NEAR_ZERO(xp-yp, 1.0e-5)){
 		status = (STATUS_PP | STATUS_MP);
+		lastpt = xp;
+	    }
 	    else if(xp < yp){
 		lastpt = xp;
 		status = STATUS_PP;
@@ -168,17 +170,22 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 	}
 	else if(status == (STATUS_MP | STATUS_PP)){
 	    if(NEAR_ZERO(xp-yp, 1.0e-5)){
+		fstate->same += xp - lastpt;
 		status = STATUS_EMPTY;
 		pp = pp->pt_forw;
 		mp = BU_LIST_FORW(part, &mp->l);
 	    }
 
 	    else if(xp < yp){
+
+		//printf("lastpt: %g\txp:%g\n", lastpt, xp);
+		fstate->same += xp - lastpt;
 		lastpt = xp;
 		status = STATUS_MP;
 		pp=pp->pt_forw;
 	    }
 	    else if(yp < xp){
+		fstate->same += yp - lastpt;
 		lastpt = yp;
 		status = STATUS_PP;
 		mp = BU_LIST_FORW(part, &mp->l);
@@ -209,6 +216,8 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 	    }
 	}
     }
+    if(fstate->same != 0.0)
+    printf("SAME IS: %g\n", fstate->same);
     if(status == STATUS_PP){
 	fstate->diff+= (fstate->bbox[0] +  pp->pt_outhit->hit_dist)/fstate->bbox[1] - lastpt;
 	pp = pp->pt_forw;
@@ -359,6 +368,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     }
     fstate->row = 0;
     fstate->diff = 0;
+    fstate->same = 0;
 
 
     if(fstate->capture){
@@ -368,6 +378,9 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     }
     else{
 	bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);
+	fstate->diff /= fstate->res[U_AXIS] * fstate->res[V_AXIS];
+
+	fstate->nodes = n_leaves; 
 //	fstate->diff *= 1+n_leaves/500.0;
     }
 

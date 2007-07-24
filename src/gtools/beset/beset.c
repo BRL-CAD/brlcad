@@ -144,11 +144,21 @@ int main(int argc, char *argv[]){
 	 * the most fit individual in the population
 	 * note: need to calculate outside of main pop
 	 * loop because it's needed for pop_wrand_ind()*/
+	fastf_t same;
 	for(i = 0; i < pop->size; i++) {
-	   pop->parent[i].fitness = 2.0/(1+fit_linDiff(pop->parent[i].id, pop->db_p, fstate));
+	   FITNESS = (1 - DIFF)-(abs(1-NODES)/10);//(NODES*5000.0);//(.5+500.0*abs(1-NODES));
+	   printf("Same: %g\t Diff: %g\t Same/(Same+diff): %g\n", fstate->same, fstate->diff, fstate->same/(fstate->same+fstate->diff));
+	
+	   /*
+	   if(i == 0)same = FITNESS;
+	   if(FITNESS != same)printf("DIFF\n");
+*/
+//	   pop->parent[i].fitness = (1-fit_linDiff(pop->parent[i].id, pop->db_p, fstate));
 	   if(pop->parent[i].fitness > pop->parent[best].fitness) best = i;
 	   if(pop->parent[i].fitness < pop->parent[worst].fitness) worst = i;
+	   total_fitness += FITNESS;
 	}
+	//total_fitness =0;
 	qsort(pop->parent, pop->size, sizeof(struct individual), cmp_ind);
 	for(i = 0; i < pop->size; i++){
 	    pop->parent[i].fitness *= (pop->size-i)*(pop->size-i)/pop->size;

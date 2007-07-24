@@ -48,6 +48,16 @@ struct options{
 };
 
 
+/* 
+ * MACROS TO IMPROVE READABILITY
+ * OF FITNESS FUNCTION
+ */
+#define FITNESS pop->parent[i].fitness
+#define DIFF fit_linDiff(pop->parent[i].id, pop->db_p, fstate)
+#define NODES fstate->nodes
+#define INDEX pop->size-i
+
+
 #endif /* __BESET_H__ */
 
 /*
