@@ -1594,37 +1594,21 @@ clinebld(void)
     *np = '\0';
 
     cp = nxt_spc( cp );
-
     V[0] = atof( cp );
-
     cp = nxt_spc( cp );
-
     V[1] = atof( cp );
-
     cp = nxt_spc( cp );
-
     V[2] = atof( cp );
-
     cp = nxt_spc( cp );
-
     height[0] = atof( cp );
-
     cp = nxt_spc( cp );
-
     height[1] = atof( cp );
-
     cp = nxt_spc( cp );
-
     height[2] = atof( cp );
-
     cp = nxt_spc( cp );
-
     radius = atof( cp );
-
     cp = nxt_spc( cp );
-
     thickness = atof( cp );
-
     mk_cline( ofp, my_name, V, height, radius, thickness );
 }
 
@@ -1713,7 +1697,6 @@ botbld(void)
 	    bu_free( (char *)thick, "botbld thick" );
 	    bu_free( (char *)facemode, "botbld facemode" );
 	}
-
 }
 
 /*		P I P E B L D
