@@ -18,14 +18,9 @@
  * information.
  */
 /** @file cursors.h
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
-*/
-/* From AT&T's Teletype 5620 $DMD/icon directory, reformated slightly
-	to be an array of 32 unsigned chars, rather than a Texture16.
+ *	Author:		Gary S. Moss
+ * From AT&T's Teletype 5620 $DMD/icon directory, reformated slightly
+ * to be an array of 32 unsigned chars, rather than a Texture16.
  */
 unsigned char menucursor[32] =
 	{

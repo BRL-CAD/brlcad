@@ -1,16 +1,6 @@
 /** @addtogroup utahrle */
 /** @{ */
 /*
-
-	Modified by :		Gary S. Moss
-				U. S. Army Ballistic Research Laboratory
-				Aberdeen Proving Ground
-				Maryland 21005-5066
-				(301)278-6647 or AV-283-6647
- *
- *  Note:  Users of this file will need to include "fb.h" first.
- */
-/*
  * Runsv.h - Definitions for Run Length Encoding.
  *
  * Author:	Spencer W. Thomas
@@ -18,6 +8,11 @@
  * 		University of Utah
  * Date:	Mon Aug  9 1982
  * Copyright (c) 1982 Spencer W. Thomas
+ */
+/*
+ *	Modified by :		Gary S. Moss
+ *
+ *  Note:  Users of this file will need to include "fb.h" first.
  */
 
 #include "machine.h"		/* for BIG_ENDIAN definition */

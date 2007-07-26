@@ -19,13 +19,8 @@
  *
  */
 /** @file Hm.h
-	Author:	Gary S. Moss
-		U. S. Army Ballistic Research Laboratory
-		Aberdeen Proving Ground
-		Maryland 21005-5066
-
-	$Header$ (BRL)
-*/
+ * Author:	Gary S. Moss
+ */
 /**
 	<Hm.h> -- MUVES "Hm" (hierarchical menu) package definitions
 **/

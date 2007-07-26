@@ -18,12 +18,8 @@
  * information.
  */
 /** @file fb.c
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
-*/
+ *	Author:		Gary S. Moss
+ */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

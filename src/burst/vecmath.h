@@ -19,13 +19,8 @@
  *
  */
 /** @file vecmath.h
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-
-	$Header$
-*/
+ *	Author:		Gary S. Moss
+ */
 #ifndef _POLY9
 #include <math.h>
 #endif

@@ -59,11 +59,6 @@
  *
  *  @author
  *	Michael John Muuss
- *
- *  @par Source
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
  */
 
 #define	SXT(c)		((c)|((c&0x80)?(~0xFF):0))

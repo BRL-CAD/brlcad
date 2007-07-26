@@ -25,10 +25,6 @@
  *
  * This is the file that application programs should include for framebuffer support
  *
- *  @par Source
- *	SECAD/VLD Computing Consortium, Bldg 394
- * @n	The U. S. Army Ballistic Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5066
  */
 
 #ifndef __FB_H__

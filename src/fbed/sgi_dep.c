@@ -18,16 +18,7 @@
  * information.
  */
 /** @file sgi_dep.c
-	SCCS id:	@(#) sgi_dep.c	2.3
-	Modified: 	1/5/87 at 16:57:35
-	Retrieved: 	1/5/87 at 16:58:20
-	SCCS archive:	/vld/moss/src/fbed/s.sgi_dep.c
-
 	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6651 or DSN 298-6651
 */
 #if ! defined( lint )
 static const char RCSid[] = "@(#) sgi_dep.c 2.3, modified 1/5/87 at 16:57:35, archive /vld/moss/src/fbed/s.sgi_dep.c";

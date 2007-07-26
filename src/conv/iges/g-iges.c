@@ -26,11 +26,6 @@
  *	John R. Anderson
  *	Michael J. Markowski
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
- *
- *
  *  Some stupid secret codes:
  *	dp->d_uses - contains the negative of the DE number for the object
  *		     non-negative means it hasn't been written to the IGES file

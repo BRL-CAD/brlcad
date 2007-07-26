@@ -38,10 +38,6 @@
  *  @author	David Becker		Cray
  *  @author	Michael John Muuss	BRL
  *
- *  @par Source
- *	SECAD/VLD Computing Consortium, Bldg 394
- *@n	The U. S. Army Ballistic Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5066
  */
 #if __STDC__
 #	include "noalias-prag.h"

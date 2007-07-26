@@ -18,17 +18,8 @@
  * information.
  */
 /** @file empty.c
-	SCCS id:	@(#) empty.c	2.3
-	Modified: 	1/5/87 at 16:52:54
-	Retrieved: 	1/5/87 at 16:58:01
-	SCCS archive:	/vld/moss/src/fbed/s.empty.c
-
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6651 or DSN 298-6651
-*/
+ *	Author:		Gary S. Moss
+ */
 #if ! defined( lint )
 static const char RCSid[] = "@(#) empty.c 2.3, modified 1/5/87 at 16:52:54, archive /vld/moss/src/fbed/s.empty.c";
 #endif

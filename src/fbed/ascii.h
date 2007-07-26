@@ -18,17 +18,8 @@
  * information.
  */
 /** @file ascii.h
-	SCCS id:	@(#) ascii.h	2.1
-	Modified: 	12/9/86 at 15:55:31
-	Retrieved: 	12/26/86 at 21:53:36
-	SCCS archive:	/vld/moss/src/fbed/s.ascii.h
-
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6651 or DSN 298-6651
-*/
+ *	Author:		Gary S. Moss
+ */
 #define NUL		'\000'
 #define SOH		'\001'
 #define	STX		'\002'

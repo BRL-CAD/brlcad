@@ -18,17 +18,9 @@
  * information.
  */
 /** @file hmenu.h
-	SCCS id:	%Z% %M%	%I%
-	Modified: 	%G% at %U%
-	Retrieved: 	%H% at %T%
-	SCCS archive:	%P%
 
 	Authors:	Gary S. Moss
 			Douglas A. Gwyn
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
 
 	This code is derived in part from menuhit(9.3) in AT&T 9th Edition UNIX,
 		Version 1 Programmer's Manual.

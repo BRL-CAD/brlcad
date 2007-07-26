@@ -35,10 +35,6 @@
  *	The image is printed upside down to simplify the arithmetic,
  *	due to the organization of the input file.
  *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

@@ -27,12 +27,6 @@
  *	Michael John Muuss
  *	Lee A. Butler
  *
- *  Source -
- *	SECAD/VLD Computing Consortium
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
- *
- *
  *	Options
  *	a	autosize image file
  *	c	clear framebuffer first

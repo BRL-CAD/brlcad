@@ -25,10 +25,6 @@
  *	Phillip Dykstra
  *	2 Oct 1985
  *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

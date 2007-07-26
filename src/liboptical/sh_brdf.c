@@ -29,12 +29,6 @@
  *  Authors -
  *	John R. Anderson
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
- *
- *
- *
  *	Based on the simple Isotropic Gaussian Model presented by Gregory Ward
  *	in "Measuring and Modeling Anisotropic Reflection" (Which also references
  *	earlier work by Beckmann, Torrance, and Cook).

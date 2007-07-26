@@ -25,11 +25,6 @@
  *  Authors -
  *	Michael Markowski
  *	John R. Anderson
- *
- *  Source -
- *	The US Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
- *
  */
 #ifndef lint
 static const char RCSid[] = "$Header$";

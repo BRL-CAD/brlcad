@@ -19,17 +19,11 @@
  *
  */
 /** @file Hm.c
-	Author:	Gary S. Moss
-		U. S. Army Ballistic Research Laboratory
-		Aberdeen Proving Ground
-		Maryland 21005-5066
-
-	$Header$ (BRL)
-
-	This code is derived in part from menuhit(9.3) in AT&T 9th Edition UNIX,
-		Version 1 Programmer's Manual.
-
-*/
+ *	Author:	Gary S. Moss
+ *
+ * This code is derived in part from menuhit(9.3) in AT&T 9th Edition UNIX,
+ *	Version 1 Programmer's Manual.
+ */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

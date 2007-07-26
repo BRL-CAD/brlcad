@@ -26,10 +26,6 @@
  *
  * @author Justin Shumaker
  *
- * @par Source
- *	Bldg 238
- * @n	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5066
  */
 
 #include "common.h"

@@ -21,12 +21,6 @@
 	Authors:	Gary S. Moss
 			Jeff Hanes	(math consultation)
 
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6651 or AV-298-6651
-
-
 	Note: preceeding #include "./extern.h" must be the following:
 
 	#include <assert.h>

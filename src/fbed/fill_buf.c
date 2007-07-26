@@ -18,19 +18,10 @@
  * information.
  */
 /** @file fill_buf.c
-	SCCS id:	@(#) fill_buf.c	2.1
-	Modified: 	12/9/86 at 15:55:48
-	Retrieved: 	12/26/86 at 21:54:15
-	SCCS archive:	/vld/moss/src/fbed/s.fill_buf.c
-
-	Author:		Paul R. Stay
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6640 or DSN 298-6640
-*/
-/*
- * fill_buf.c - Two routines for filling the buffers used in the filtering.
+ *
+ * Two routines for filling the buffers used in the filtering.
+ *
+ *	Author:		Paul R. Stay
  */
 #if ! defined( lint )
 static const char RCSid[] = "@(#) fill_buf.c 2.1, modified 12/9/86 at 15:55:48, archive /vld/moss/src/fbed/s.fill_buf.c";

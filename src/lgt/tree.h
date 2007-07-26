@@ -19,17 +19,6 @@
  */
 /** @file tree.h
 	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
-*/
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) tree.h	2.1
-		Modified: 	12/10/86 at 16:04:18	G S M
-		Retrieved: 	2/4/87 at 08:53:50
-		SCCS archive:	/vld/moss/src/lgt/s.tree.h
 */
 
 #define INCL_TREE

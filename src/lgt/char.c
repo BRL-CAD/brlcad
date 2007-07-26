@@ -24,12 +24,7 @@
 	Authors:	Paul R. Stay
 			Gary S. Moss
 			Doug A. Gwyn
-
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
-*/
+ */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif

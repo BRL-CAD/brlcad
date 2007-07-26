@@ -21,15 +21,6 @@
  *
  *  Author -
  *	Gary S. Moss
- *	U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground
- *	Maryland 21005-5066
- *	(301)278-6647 or AV-298-6647
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
  *
  */
 #ifndef lint

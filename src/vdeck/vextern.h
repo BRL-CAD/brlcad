@@ -18,13 +18,8 @@
  * information.
  */
 /** @file vextern.h
-	SCCS archive:	/vld/src/vdeck/s.vextern.h
-
-	Author:		???
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-*/
+ *	Author:		Gary Moss
+ */
 
 /* Special characters.							*/
 #define	LF		"\n"

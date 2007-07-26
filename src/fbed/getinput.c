@@ -18,12 +18,8 @@
  * information.
  */
 /** @file getinput.c
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6651 or DSN 298-6651
-*/
+ *	Author:		Gary S. Moss
+ */
 #if ! defined( lint )
 static const char RCSid[] = "@(#) getinput.c 2.1, modified 12/9/86 at 15:56:41, archive /vld/moss/src/fbed/s.getinput.c";
 #endif

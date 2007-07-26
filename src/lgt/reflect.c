@@ -19,9 +19,6 @@
  */
 /** @file reflect.c
 	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
 
 	Thanks to Edwin O. Davisson and Robert Shnidman for contributions
 	to the refraction algorithm.

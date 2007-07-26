@@ -19,11 +19,6 @@
  */
 /** @file grid_rotate.c
 	Author:		Jeff Hanes
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
-
 	Modified:	Gary S. Moss	(Added roll rotation.)
 */
 #ifndef lint

@@ -18,17 +18,8 @@
  * information.
  */
 /** @file fb_ik.h
-	SCCS id:	@(#) fb_ik.h	1.14
-	Last edit: 	8/6/86 at 13:56:23
-	Retrieved: 	8/6/86 at 13:56:57
-	SCCS archive:	/vld/src/libfb/s.fb_ik.h
-
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
-*/
+ *	Author:		Gary S. Moss
+ */
 
 #ifndef __FB_IK_H__
 #define __FB_IK_H__

@@ -20,13 +20,6 @@
 /** @file font.h
 	Authors:	Paul R. Stay
 			Gary S. Moss
-
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6651 or DSN 298-6651
-
-	$Header$
 */
 /*	font.h - Header file for putting fonts up. */
 #define INCL_FONT

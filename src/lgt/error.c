@@ -28,11 +28,7 @@
  *
  *	Idea originated by Mike John Muuss
  *
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
+ *	Author:		Gary S. Moss
 */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -77,10 +73,8 @@ bu_bomb(const char *str)
 	if( pix_buffered == B_PAGE )
 		(void) fb_flush( fbiop ); /* Write out buffered image.	*/
 	(void) abort();			  /* Should dump.		*/
-#if !__STDC__
 	exit(12);
-#endif
-	}
+}
 
 #if defined(HAVE_STDARG_H)
 void

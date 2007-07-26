@@ -18,18 +18,8 @@
  * information.
  */
 /** @file getfont.c
-	SCCS id:	@(#) getfont.c	2.1
-	Modified: 	12/9/86 at 15:54:45
-	Retrieved: 	12/26/86 at 21:54:19
-	SCCS archive:	/vld/moss/src/fbed/s.getfont.c
-
 	Authors:	Paul R. Stay	(original author)
 			Gary S. Moss	(port to big-endian machine)
-
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6651 or DSN 298-6651
 */
 #if ! defined( lint )
 static const char RCSid[] = "@(#) getfont.c 2.1, modified 12/9/86 at 15:54:45, archive /vld/moss/src/fbed/s.getfont.c";

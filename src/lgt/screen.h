@@ -19,12 +19,6 @@
  */
 /** @file screen.h
 	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6651 or AV-298-6651
-
-	$Header$ (BRL)
 */
 
 #define TITLE_PTR		&template[ 0][ 7]

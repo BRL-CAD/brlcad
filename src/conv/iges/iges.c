@@ -24,15 +24,8 @@
  *  Author -
  *	John R. Anderson
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	Yet to do:
  *
- */
-
-/*	Yet to do:
- *
-
  *		Utilize the IGES Right Angle Wedge entity (may not be worth the effort):
  *			1. arb_is_raw()
  *			2. raw_to_iges()

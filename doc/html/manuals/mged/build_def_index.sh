@@ -21,11 +21,6 @@ echo "         system is in place)"
 # Author -								#
 #	Robert G. Parker						#
 #									#
-# Source -								#
-#	SLAD/BND/ACST							#
-#	The U. S. Army Research Laboratory				#
-#	Aberdeen Proving Ground, Maryland  21005-5066			#
-#									#
 #########################################################################
 
 NUM_COLUMNS_INDEX=3

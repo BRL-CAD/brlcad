@@ -18,17 +18,8 @@
  * information.
  */
 /** @file pos_pad.c
-	SCCS id:	@(#) pos_pad.c	2.1
-	Modified: 	12/9/86 at 15:54:52 by Gary S. Moss
-	Retrieved: 	12/26/86 at 21:54:35
-	SCCS archive:	/vld/moss/src/fbed/s.pos_pad.c
-
 	Author:		Douglas P. Kingston III
 			Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6651 or DSN 298-6651
 */
 #if ! defined( lint )
 static const char RCSid[] = "@(#) pos_pad.c 2.1, modified 12/9/86 at 15:54:52, archive /vld/moss/src/fbed/s.pos_pad.c";

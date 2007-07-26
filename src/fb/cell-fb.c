@@ -21,14 +21,7 @@
 /** @file cell-fb.c
  *
  *	Original author:	Gary S. Moss
- *				(301) 278-2979 or AV 298-2979
- *
  *	Modifications by:	Paul J. Tanenbaum
- *				(301) 278-6691 or AV 298-6691
- *
- *	Both of whom are at:	U. S. Army Ballistic Research Laboratory
- *				Aberdeen Proving Ground
- *				Maryland 21005-5066
  */
 
 #ifndef lint

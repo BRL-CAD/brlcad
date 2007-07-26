@@ -25,10 +25,6 @@
  *  @author	Lee A. Butler
  *  @author	Michael John Muuss
  *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5066
- *
  * @brief
  *  Definition of data structures for "Non-Manifold Geometry Modelling."
  *  Developed from "Non-Manifold Geometric Boundary Modeling" by

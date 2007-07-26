@@ -45,11 +45,6 @@
  *  @authors -
  *	David Becker		Cray
  *	Michael John Muuss	BRL
- *
- *  @par Source
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
  */
 
 #warning "The shortvect.h header is OBSOLETE -- if it is needed, configure.ac modifications will need to be made."

@@ -19,10 +19,7 @@
  *
  */
 /** @file trie.c
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
+ *	Author:		Gary S. Moss
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";

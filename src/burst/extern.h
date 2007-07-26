@@ -19,12 +19,7 @@
  *
  */
 /** @file extern.h
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-
-	$Header$ (BRL)
+ * Author:		Gary S. Moss
  */
 
 #ifndef __EXTERN_H__

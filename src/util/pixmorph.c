@@ -24,11 +24,6 @@
  *  Author -
  *      Glenn Durfee
  *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
- *
  *  Description -
  *      Morphs two pix files.  Performs the morph according to the given line
  *      segment correspondence file and two values in [0,1]: the first,
