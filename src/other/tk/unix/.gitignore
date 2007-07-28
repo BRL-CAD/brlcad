@@ -2,5 +2,6 @@ autom4te.cache
 config.log
 config.status
 configure
+libtk8.5.*
 tkConfig.sh
 wish
