@@ -144,26 +144,16 @@ int main(int argc, char *argv[]){
 	 * the most fit individual in the population
 	 * note: need to calculate outside of main pop
 	 * loop because it's needed for pop_wrand_ind()*/
-	fastf_t same;
 	for(i = 0; i < pop->size; i++) {
-	   FITNESS = (1 - DIFF)-(abs(1-NODES)/10);//(NODES*5000.0);//(.5+500.0*abs(1-NODES));
-	   printf("Same: %g\t Diff: %g\t Same/(Same+diff): %g\n", fstate->same, fstate->diff, fstate->same/(fstate->same+fstate->diff));
-	
-	   /*
-	   if(i == 0)same = FITNESS;
-	   if(FITNESS != same)printf("DIFF\n");
-*/
-//	   pop->parent[i].fitness = (1-fit_linDiff(pop->parent[i].id, pop->db_p, fstate));
+	   fit_linDiff(pop->parent[i].id, pop->db_p, fstate);
+	   pop->parent[i].fitness = fstate->fitness;
 	   if(pop->parent[i].fitness > pop->parent[best].fitness) best = i;
 	   if(pop->parent[i].fitness < pop->parent[worst].fitness) worst = i;
 	   total_fitness += FITNESS;
 	}
 	//total_fitness =0;
-	qsort(pop->parent, pop->size, sizeof(struct individual), cmp_ind);
-	for(i = 0; i < pop->size; i++){
-	    pop->parent[i].fitness *= (pop->size-i)*(pop->size-i)/pop->size;
-	   total_fitness += pop->parent[i].fitness;
-	}
+	//qsort(pop->parent, pop->size, sizeof(struct individual), cmp_ind);
+	//    pop->parent[i].fitness *= (pop->size-i)*(pop->size-i)/pop->size;
 	printf("Most fit from generation %3d was: %s, fitness of %g\n", g-1, pop->parent[best].id, pop->parent[best].fitness);
 	printf("%8.6g\t%8.6g\t%8.6g\n", total_fitness/pop->size, pop->parent[worst].fitness, pop->parent[best].fitness);
 
@@ -174,12 +164,14 @@ int main(int argc, char *argv[]){
 	     * a parent which the op will be performed on*/
 	    gop = pop_wrand_gop();
 	    parent1 = pop_wrand_ind(pop->parent, pop->size, total_fitness);
+	    //printf("selected %g\n", pop->parent[parent1].fitness);
 	    snprintf(pop->child[i].id, 256, "gen%.3dind%.3d", g, i); 
 
 	    /* If we're performing crossover, we need a second parent */
 	    if(gop == CROSSOVER && i < pop->size-1){
 		//while(parent2 == parent1) -- needed? can crossover be done on same 2 ind?
 		parent2 = pop_wrand_ind(pop->parent, pop->size, total_fitness);
+//		printf("selected: %g\n", pop->parent[parent2].fitness);
 		snprintf(pop->child[i].id, 256, "gen%.3dind%.3d", g, ++i); //name the child and increase pop count
 
 #ifdef VERBOSE 

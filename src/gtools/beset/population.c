@@ -103,15 +103,15 @@ pop_spawn (struct population *p, struct rt_wdb *db_fp)
 
 	BU_LIST_INIT(&wm_hd.l);
 
-	p1[0] = -20+pop_rand()*20;
-	p1[1] = -20+pop_rand()*20;
-	p1[2] = -20+pop_rand()*20;
-	r1 = 2+4*pop_rand();
+	p1[0] = -4+pop_rand()*4;
+	p1[1] = -4+pop_rand()*4;
+	p1[2] = -4+pop_rand()*4;
+	r1 = 1+3*pop_rand();
 
-	p2[0] = -20+pop_rand()*20;
-	p2[1] = -20+pop_rand()*20;
-	p2[2] = -20+pop_rand()*20;
-	r2 = 2+4*pop_rand();
+	p2[0] = -4+pop_rand()*4;
+	p2[1] = -4+pop_rand()*4;
+	p2[2] = -4+pop_rand()*4;
+	r2 = 1+3*pop_rand();
 
 
 	p->parent[i].fitness = 0.0;
@@ -120,10 +120,12 @@ pop_spawn (struct population *p, struct rt_wdb *db_fp)
 	mk_sph(db_fp, p->parent[i].id, p1, r1);
 	mk_addmember(p->parent[i].id, &wm_hd.l, NULL, WMOP_UNION);
 
+	/*
 
 	snprintf(p->parent[i].id, 256, "gen%.3dind%.3d-%.3d", 0,i,1);
 	mk_sph(db_fp, p->parent[i].id, p2, r2);
 	mk_addmember(p->parent[i].id, &wm_hd.l, NULL, WMOP_UNION);
+	*/
 
 
 	snprintf(p->parent[i].id, 256, "gen%.3dind%.3d", 0, i);
@@ -169,7 +171,7 @@ pop_wrand_ind(struct individual *i, int size, fastf_t total_fitness)
     fastf_t rindex, psum = 0;
     rindex =pop_rand() * total_fitness;
 
-    psum += i[n].fitness;
+    psum = i[n].fitness;
     for(n = 1; n < size; n++) {
 	psum += i[n].fitness;
 	if( rindex <= psum )
@@ -200,11 +202,62 @@ pop_wrand_gop(void)
     return CROSSOVER;
 }
 
-int node;
+int node_idx;
 int crossover_node;
 int crossover;
+int crossover_op;
+int num_nodes;
 union tree *crossover_point;
 union tree **crossover_parent;
+struct node *node;
+
+int
+pop_find_nodes(	union tree *tp)
+{
+    int n1, n2;
+    struct node *add;
+
+    if(!tp)
+	return 0;
+    
+    switch(tp->tr_op){
+	case OP_DB_LEAF:
+	    return 1;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    crossover_parent = &tp->tr_b.tb_left;
+	    n1 = pop_find_nodes(tp->tr_b.tb_left);
+	    if(n1 == crossover_node){
+		if(tp->tr_b.tb_left->tr_op & crossover_op){
+		add = bu_malloc(sizeof(struct node), "node");
+		add->s_parent = &tp->tr_b.tb_left;
+		add->s_child = tp->tr_b.tb_left;
+		BU_LIST_INSERT(&node->l, &add->l);
+		++num_nodes;
+		}
+	    }
+	    crossover_parent = &tp->tr_b.tb_right;
+	    n2 = pop_find_nodes(tp->tr_b.tb_right);
+	    if(n2 == crossover_node){
+		if(tp->tr_b.tb_right->tr_op & crossover_op){
+		add = bu_malloc(sizeof(struct node), "node");
+		add->s_parent = &tp->tr_b.tb_right;
+		add->s_child = tp->tr_b.tb_right;
+		BU_LIST_INSERT(&node->l, &add->l);
+		++num_nodes;
+		}
+	    }
+	    return 1+n1 + n2;
+    }
+}
+
+
+
+
+
+
 
 
 void
@@ -221,14 +274,14 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
     if( !tp )
 	return;
     if(crossover){
-	if(node > crossover_node) return;
-	if(node == crossover_node){
+	if(node_idx > crossover_node) return;
+	if(node_idx == crossover_node){
 	    crossover_point = tp;
-	    ++node;
+	    ++node_idx;
 	    return;
 	}
 	else
-	    ++node;
+	    ++node_idx;
     }
 
     switch( tp->tr_op )  {
@@ -258,10 +311,10 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    if(crossover && node == crossover_node)
+	    if(crossover && node_idx == crossover_node)
 		crossover_parent = &tp->tr_b.tb_left;
 	    pop_functree( dbi_p, dbi_c, tp->tr_b.tb_left, resp, name);
-	    if(crossover && node == crossover_node)
+	    if(crossover && node_idx == crossover_node)
 		crossover_parent = &tp->tr_b.tb_right;
 	    pop_functree( dbi_p, dbi_c, tp->tr_b.tb_right, resp, name);
 	    break;
@@ -283,10 +336,14 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     struct rt_comb_internal *parent2, *swap;
     struct directory *dp;
     union tree *cpoint, **tmp, **cross_parent;
+    struct node *add;
+    int i = 0;
     
+    struct node *chosen_node;
+    int rand_node;
     if( !rt_db_lookup_internal(dbi_p, parent1_id, &dp, &in1, LOOKUP_NOISY, &rt_uniresource))
 	bu_bomb("Failed to read parent1");
-    shape_number = 0;
+    shape_number =num_nodes= 0;
     parent1 = (struct rt_comb_internal *)in1.idb_ptr;
 
     switch(gop){
@@ -302,31 +359,58 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 	    //temp: swap left trees
 	    //pick two random nodes
-	    
-	    if(db_count_tree_nodes(parent2->tree,0) == 1){
-		swap = parent1;
-		parent1 = parent2;
-		parent2 = swap;
-	    }
-	    
-	    crossover_parent = &parent1->tree;
-	    crossover_node = (int)(pop_rand() * db_count_tree_nodes(parent1->tree,0));
-	    node = 0;
-	    pop_functree(dbi_p, dbi_c, parent1->tree, resp, NULL);
-	    cross_parent = crossover_parent;
-	    cpoint = crossover_point;
+	    //head node is the node we want to cross
+	    node = bu_malloc(sizeof(struct node), "node");
+	    BU_LIST_INIT(&node->l);
 
+	    	   
+	    
+	    chosen_node = NULL;
 	    do{
-		crossover_parent = &parent2->tree;
-		crossover_node = (int)(pop_rand() * db_count_tree_nodes(parent2->tree,0));
-		node = 0;
-		pop_functree(dbi_p, dbi_c, parent2->tree, resp, NULL);//search for node
-	    } while(cpoint->tr_op != OP_DB_LEAF && crossover_point->tr_op == OP_DB_LEAF); //fixme, union and intersects can cross
-	
+		num_nodes = 0;
+		crossover_parent = &parent1->tree;
+		crossover_node = (int)(pop_rand() * db_count_tree_nodes(parent1->tree,0));
+		node_idx = 0;
+		pop_functree(dbi_p, dbi_c, parent1->tree, resp, NULL);
+		cross_parent = crossover_parent;
+		cpoint = crossover_point;
+
+
+		crossover_op = crossover_point->tr_op;
+#define MASK (OP_UNION | OP_XOR | OP_SUBTRACT|OP_INTERSECT)
+		if(crossover_op & MASK)crossover_op = MASK;
+		crossover_node = db_count_tree_nodes(crossover_point, 0);
+		if(pop_find_nodes(parent2->tree) == crossover_node){
+		    add = bu_malloc(sizeof(struct node), "node");
+		    add->s_parent = &parent2->tree;
+		    add->s_child = parent2->tree;
+		    BU_LIST_INSERT(&node->l, &add->l);
+		    ++num_nodes;
+		}
+		if(num_nodes > 0){
+		    rand_node = (int)(pop_rand() * num_nodes);
+		    for(BU_LIST_FOR(add, node, &node->l)){
+			if(i++ == rand_node){
+			    chosen_node = add;
+			    //BREAK CLEANLY!?!?
+			}
+		    }
+		}
+	    }while(chosen_node == NULL);
+
+
 	    
 	    //TODO: MEMORY LEAKS
-	    *cross_parent = db_dup_subtree(crossover_point,resp);
-	    *crossover_parent =db_dup_subtree(cpoint,resp);
+	    *cross_parent = db_dup_subtree(chosen_node->s_child,resp);
+	    *chosen_node->s_parent =db_dup_subtree(cpoint,resp);
+
+	    while(BU_LIST_WHILE(add, node, &node->l)){
+		BU_LIST_DEQUEUE(&add->l);
+		bu_free(add, "node");
+	    }
+	    bu_free(node, "node");
+
+
 
 
 	    crossover = 0;

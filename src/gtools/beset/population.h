@@ -47,10 +47,13 @@ struct population {
     struct db_i *db_p; // parent database
     struct db_i *db_c; // chld database
 
-
-
-
     int size;
+};
+
+struct node{
+    struct bu_list l;
+    union tree **s_parent;
+    union tree *s_child;
 };
 
 void pop_init	    (struct population **p, int size);
@@ -60,6 +63,7 @@ void pop_add	    (struct individual *i, struct rt_wdb *db);
 int  pop_wrand_ind  (struct individual *i, int size, fastf_t total_fitness);
 int  pop_wrand_gop  (void);
 fastf_t pop_rand    (void);
+int pop_find_nodes(union tree *tp);
 
 //void pop_dup_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 //		      union tree *tp, struct resource *resp, 

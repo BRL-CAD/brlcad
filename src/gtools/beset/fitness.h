@@ -56,6 +56,7 @@ struct fitness_state {
     int ncpu;
     int max_cpus;
     int nodes;
+    fastf_t a_len;
 
     int res[2]; /*  ray resolution on u and v axes */
     double gridSpacing[2]; /* grid spacing on u and v axes */
@@ -67,6 +68,7 @@ struct fitness_state {
 
     fastf_t bbox[3]; /* z-min/max bounding line */
     fastf_t mdl_min[3];
+    fastf_t fitness;
 };
 
 /* store a ray that hit */
