@@ -148,14 +148,15 @@ int main(int argc, char *argv[]){
 	   fit_linDiff(pop->parent[i].id, pop->db_p, fstate);
 	   pop->parent[i].fitness = fstate->fitness;
 	   if(pop->parent[i].fitness > pop->parent[best].fitness) best = i;
-	   if(pop->parent[i].fitness < pop->parent[worst].fitness) worst = i;
+	   if(pop->parent[i].fitness < pop->parent[worst].fitness){ worst = i;}
 	   total_fitness += FITNESS;
 	}
 	//total_fitness =0;
-	//qsort(pop->parent, pop->size, sizeof(struct individual), cmp_ind);
 	//    pop->parent[i].fitness *= (pop->size-i)*(pop->size-i)/pop->size;
 	printf("Most fit from generation %3d was: %s, fitness of %g\n", g-1, pop->parent[best].id, pop->parent[best].fitness);
 	printf("%8.6g\t%8.6g\t%8.6g\n", total_fitness/pop->size, pop->parent[worst].fitness, pop->parent[best].fitness);
+
+	qsort(pop->parent, pop->size, sizeof(struct individual), cmp_ind);
 
 
 	for(i = 0; i < pop->size; i++){

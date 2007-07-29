@@ -103,14 +103,14 @@ pop_spawn (struct population *p, struct rt_wdb *db_fp)
 
 	BU_LIST_INIT(&wm_hd.l);
 
-	p1[0] = -4+pop_rand()*4;
-	p1[1] = -4+pop_rand()*4;
-	p1[2] = -4+pop_rand()*4;
+	p1[0] = -10+pop_rand()*10;
+	p1[1] = -10+pop_rand()*10;
+	p1[2] = -10+pop_rand()*10;
 	r1 = 1+3*pop_rand();
 
-	p2[0] = -4+pop_rand()*4;
-	p2[1] = -4+pop_rand()*4;
-	p2[2] = -4+pop_rand()*4;
+	p2[0] = -10+pop_rand()*10;
+	p2[1] = -10+pop_rand()*10;
+	p2[2] = -10+pop_rand()*10;
 	r2 = 1+3*pop_rand();
 
 
@@ -120,12 +120,10 @@ pop_spawn (struct population *p, struct rt_wdb *db_fp)
 	mk_sph(db_fp, p->parent[i].id, p1, r1);
 	mk_addmember(p->parent[i].id, &wm_hd.l, NULL, WMOP_UNION);
 
-	/*
 
 	snprintf(p->parent[i].id, 256, "gen%.3dind%.3d-%.3d", 0,i,1);
 	mk_sph(db_fp, p->parent[i].id, p2, r2);
 	mk_addmember(p->parent[i].id, &wm_hd.l, NULL, WMOP_UNION);
-	*/
 
 
 	snprintf(p->parent[i].id, 256, "gen%.3dind%.3d", 0, i);
