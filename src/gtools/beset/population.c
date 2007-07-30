@@ -94,9 +94,9 @@ void
 pop_spawn (struct population *p, struct rt_wdb *db_fp)
 {
     int i;
-    point_t p1, p2;
+    point_t p1, p2, p3;
     struct wmember wm_hd;
-    double r1, r2;
+    double r1, r2, r3;
 
     for(i = 0; i < p->size; i++)
     {
@@ -112,6 +112,16 @@ pop_spawn (struct population *p, struct rt_wdb *db_fp)
 	p2[1] = -10+pop_rand()*10;
 	p2[2] = -10+pop_rand()*10;
 	r2 = 1+3*pop_rand();
+	
+	p3[0] = -10+pop_rand()*10;
+	p3[1] = -10+pop_rand()*10;
+	p3[2] = -10+pop_rand()*10;
+	r3 = 1+3*pop_rand();
+/*
+	VSET(p1, -5, -5, -5);
+	VSET(p2, 5, 5, 5);
+	r1 = r2 = 2.5;
+	*/
 
 
 	p->parent[i].fitness = 0.0;
@@ -124,6 +134,11 @@ pop_spawn (struct population *p, struct rt_wdb *db_fp)
 	snprintf(p->parent[i].id, 256, "gen%.3dind%.3d-%.3d", 0,i,1);
 	mk_sph(db_fp, p->parent[i].id, p2, r2);
 	mk_addmember(p->parent[i].id, &wm_hd.l, NULL, WMOP_UNION);
+
+	snprintf(p->parent[i].id, 256, "gen%.3dind%.3d-%.3d", 0,i,2);
+	mk_sph(db_fp, p->parent[i].id, p3, r3);
+	mk_addmember(p->parent[i].id, &wm_hd.l, NULL, WMOP_UNION);
+
 
 
 	snprintf(p->parent[i].id, 256, "gen%.3dind%.3d", 0, i);

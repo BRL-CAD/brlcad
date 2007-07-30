@@ -69,6 +69,7 @@ struct fitness_state {
     fastf_t bbox[3]; /* z-min/max bounding line */
     fastf_t mdl_min[3];
     fastf_t fitness;
+    fastf_t norm;
 };
 
 /* store a ray that hit */

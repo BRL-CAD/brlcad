@@ -150,9 +150,20 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 	pp = partHeadp->pt_forw;
 
     mp = BU_LIST_FORW(part, &fstate->rays[ap->a_user]->l);
-
+    if(partHeadp == NULL && mp->outhit_dist == 0.0){
+	fstate->same += fstate->a_len;
+	return 1;
+    }
+/*
+    if(pp->pt_outhit->hit_dist == 0.0 && mp->outhit_dist == 0.0){
+	printf("blah\n");
+	    fstate->same += fstate->a_len;
+	    return 1;
+    }
+*/
 
     int i=0;
+    fastf_t last_same = fstate->same;
     while(pp != partHeadp && mp != fstate->rays[ap->a_user]) {
 //	printf("%d\n", i++);
 	if(status & STATUS_PP)	xp = pp->pt_outhit->hit_dist;
@@ -162,17 +173,22 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 	if(xp < 0) xp = 0; 
 	if(yp < 0) yp = 0;
 	//printf("(%g,%g) vs. (%g,%g) -- [%g,%g]\n", pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist, mp->inhit_dist, mp->outhit_dist, xp, yp);
+	//printf("same: %g\ndiff: %g\n", fstate->same - last_same, fstate->diff);
     	
 	if(status==STATUS_EMPTY){ //neither
 	    if(NEAR_ZERO(xp-yp, 1.0e-5)){
+		fstate->same += xp;
 		status = (STATUS_PP | STATUS_MP);
 		lastpt = xp;
 	    }
 	    else if(xp < yp){
+		fstate->same+= xp;
+
 		lastpt = xp;
 		status = STATUS_PP;
 	    }
 	    else if(yp < xp){
+		fstate->same+= yp;
 		lastpt = yp;
 		status = STATUS_MP;
 	    }
@@ -185,6 +201,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 		status = STATUS_EMPTY;
 		pp = pp->pt_forw;
 		mp = BU_LIST_FORW(part, &mp->l);
+		lastpt = xp;
 	    } else if(xp < yp) {
 		fstate->same += xp - lastpt;
 		lastpt = xp;
@@ -215,6 +232,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 		fstate->diff += xp - lastpt;
 		status = STATUS_EMPTY;
 		pp = pp ->pt_forw;
+		lastpt = xp;
 	    }
 	    bu_semaphore_release(SEM_DIFF);
 	}
@@ -233,39 +251,56 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 		fstate->diff += yp - lastpt;
 		status = STATUS_EMPTY;
 		mp = BU_LIST_FORW(part, &mp->l);
+		lastpt = yp;
 	    }
 	    bu_semaphore_release(SEM_DIFF);
 	}
     }
+    //printf("Final status: %d\nsame: %g\n", status, fstate->same-last_same);
+    //
+    //printf("lastpt: %g\n", lastpt);
 
 
 
     bu_semaphore_acquire(SEM_DIFF);
     if(status == STATUS_PP){
-	if(pp->pt_outhit->hit_dist > fstate->a_len)
+	if(pp->pt_outhit->hit_dist > fstate->a_len){
 	    fstate->diff += fstate->a_len - lastpt;
-	else
+	    lastpt = fstate->a_len;
+	}
+	else{
 	    fstate->diff+= pp->pt_outhit->hit_dist - lastpt;
+	    lastpt = pp->pt_outhit->hit_dist;
+	}
 	pp = pp->pt_forw;
     }
     if(status == STATUS_MP){
 	fstate->diff += mp->outhit_dist - lastpt;
+	lastpt = mp->outhit_dist;
 	mp = BU_LIST_FORW(part, &mp->l);
     }
 	/* if there are a different # of partitions in modelHeadp and partHeadp*/
 	while(mp != fstate->rays[ap->a_user]){
 	    fstate->diff += mp->outhit_dist - mp->inhit_dist;
+	    lastpt = mp->outhit_dist;
 	    mp = BU_LIST_FORW(part, &mp->l);
 	}
 	while(pp != partHeadp && pp->pt_inhit->hit_dist < fstate->a_len){
-	    if(pp->pt_outhit->hit_dist > fstate->a_len)
+	    if(pp->pt_outhit->hit_dist > fstate->a_len){
 		fstate->diff += fstate->a_len - pp->pt_inhit->hit_dist;
-	    else
+		lastpt = fstate->a_len;
+	    }
+	    else{
 		fstate->diff += pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+		lastpt = pp->pt_outhit->hit_dist;
+	    }
 	    pp = pp->pt_forw;
 	}
 	bu_semaphore_release(SEM_DIFF);
-    return 1;
+	bu_semaphore_acquire(SEM_SAME);
+	fstate->same += fstate->a_len - lastpt;
+	bu_semaphore_release(SEM_SAME);
+	    return 1;
 }
 		
 	
@@ -308,6 +343,7 @@ rt_worker(int cpu, genptr_t g)
     struct application ap;
     struct fitness_state *fstate = (struct fitness_state *)g;
     int u, v;
+    fastf_t last_same = fstate->same, last_diff = fstate->diff;
 
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = fstate->rtip;
@@ -328,6 +364,7 @@ rt_worker(int cpu, genptr_t g)
 
     u = -1;
 
+    int rays_shot = 0;
     while((v = get_next_row(fstate))) {
 	for(u = 1; u <= fstate->res[U_AXIS]; u++) {
 	    ap.a_ray.r_pt[U_AXIS] = fstate->mdl_min[U_AXIS] + u * fstate->gridSpacing[U_AXIS];
@@ -340,7 +377,10 @@ rt_worker(int cpu, genptr_t g)
 		fstate->rays[ap.a_user] = bu_malloc(sizeof(struct part), "part");
 		BU_LIST_INIT(&fstate->rays[ap.a_user]->l);
 	    }
+	    last_same = fstate->same;
 	    rt_shootray(&ap);
+	    //printf("%g/%g\n", fstate->same-last_same, fstate->a_len);
+	    //printf("%dx%d; %d\t%g\n", fstate->res[U_AXIS], fstate->res[V_AXIS], ++rays_shot, fstate->same/(fstate->same+fstate->diff));
 	    //printf("Same: %g\tDiff: %g\n", fstate->same, fstate->diff);
 	
 	}
@@ -385,19 +425,21 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 	fstate->bbox[0] = fstate->rtip->mdl_min[Z];
 	fstate->bbox[1] = fstate->rtip->mdl_max[Z];
 	rt_prep_parallel(fstate->rtip,fstate->ncpu);
-	fstate->bbox[0] = fstate->bbox[1] - fstate->rtip->mdl_min[Z];
+	fstate->bbox[0] = fstate->res[U_AXIS] * fstate->res[V_AXIS] ;
  
 	VSUB2(span, fstate->rtip->mdl_max, fstate->rtip->mdl_min);
 	fstate->gridSpacing[U_AXIS] = (fstate->rtip->mdl_max[U_AXIS]-fstate->rtip->mdl_min[U_AXIS])/ (fstate->res[U_AXIS] + 1);
 	fstate->gridSpacing[V_AXIS] = (fstate->rtip->mdl_max[V_AXIS] - fstate->rtip->mdl_min[V_AXIS]) / (fstate->res[V_AXIS] + 1 );
 	VSET(fstate->mdl_min,fstate->rtip->mdl_min[X], fstate->rtip->mdl_min[Y], fstate->rtip->mdl_min[Z]);
+
+    fstate->a_len = fstate->bbox[1]-fstate->rtip->mdl_min[Z];
+    fstate->norm = fstate->a_len * fstate->res[U_AXIS] * fstate->res[V_AXIS];
     } else {
 	rt_prep_parallel(fstate->rtip, fstate->ncpu);
     }
     fstate->row = 0;
     fstate->diff = 0;
     fstate->same = 0;
-    fstate->a_len = fstate->bbox[0];
 
 
     if(fstate->capture){
@@ -409,7 +451,9 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 	bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);
 	//printf("Same: %g\tDiff:%g\n", fstate->same, fstate->diff);
 	//printf("Fitness: %g\n", fstate->same/(fstate->same+fstate->diff));
-	fstate->fitness = fstate->same / (fstate->same + fstate->diff);
+	fstate->fitness = fstate->same / fstate->norm;
+//	printf("%g/(%g+%g)  = %g\n", fstate->same, fstate->same, fstate->diff, fstate->same/(fstate->same+fstate->diff));
+//	fstate->fitness = fstate->same / (fstate->same + fstate->diff);
 	//fstate->same /= fstate->bbox[2] * fstate->res[U_AXIS] * fstate->res[V_AXIS];
 	//fstate->diff /= fstate->bbox[2] *fstate->res[U_AXIS] * fstate->res[V_AXIS];
 
