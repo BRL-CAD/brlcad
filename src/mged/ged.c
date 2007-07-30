@@ -323,10 +323,10 @@ main(int argc, char **argv)
 
     /* Identify ourselves if interactive */
     if( argc <= 2 )  {
-	if( isatty(fileno(stdin)) && isatty(fileno(stdout)) )
+	if (isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	    interactive = 1;
 
-	if(interactive && classic_mged){
+	if (interactive && classic_mged){
 	    fprintf(stdout, "%s\n", brlcad_ident("Geometry Editor (MGED)"));
 	    fflush(stdout);
 
@@ -530,10 +530,10 @@ main(int argc, char **argv)
 
     setview(0.0, 0.0, 0.0);
 
-    if(dpy_string == (char *)NULL)
+    if (dpy_string == (char *)NULL)
 	dpy_string = getenv("DISPLAY");
 
-    if(interactive && !classic_mged){
+    if (interactive && !classic_mged){
 	int status;
 	struct bu_vls vls;
 	struct bu_vls error;
@@ -578,16 +578,15 @@ main(int argc, char **argv)
 	}
     }
 
-    if( dbip != DBI_NULL && (read_only_flag || dbip->dbi_read_only) )
-	{
-	    dbip->dbi_read_only = 1;
-	    bu_log( "Opened in READ ONLY mode\n" );
-	}
+    if( dbip != DBI_NULL && (read_only_flag || dbip->dbi_read_only) ) {
+	dbip->dbi_read_only = 1;
+	bu_log( "Opened in READ ONLY mode\n" );
+    }
 
     pkg_init();
 
     /* --- Now safe to process commands. --- */
-    if(interactive){
+    if (interactive) {
 	/* This is an interactive mged, process .mgedrc */
 	do_rc();
 
@@ -597,6 +596,10 @@ main(int argc, char **argv)
 	 */
 
 	if (classic_mged) {
+	    if( !run_in_foreground && use_pipe ) {
+		notify_parent_done(parent_pipe[1]);
+	    }
+
 	    get_attached();
 	} else {
 	    struct bu_vls vls;
@@ -657,6 +660,13 @@ main(int argc, char **argv)
 		bu_add_hook(&bu_bomb_hook_list, mged_bomb_hook, GENPTR_NULL);
 	    } /* status -- gui initialized */
 	} /* classic */
+
+    } else { /* !interactive */
+
+	if( !run_in_foreground && use_pipe ) {
+	    notify_parent_done(parent_pipe[1]);
+	}
+
     } /* interactive */
 
     /* --- Now safe to process geometry. --- */
