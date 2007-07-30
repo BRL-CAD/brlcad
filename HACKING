@@ -931,6 +931,12 @@ Source or binary release:
       http://freshmeat.net/projects/BRL-CAD/
 	short without news details (sentence format)
 
+      T2 package maintainer
+      http://t2-project.org/packages/brlcad.html
+
+      Rock Linux package maintainer
+      http://www.rocklinux.net/packages/brlcad.html
+
 Binary release (any platform):
 
       News on the BRL-CAD website
@@ -958,9 +964,6 @@ Linux binary release:
 
       Linux Softpedia
       http://linux.softpedia.com/get/Multimedia/Graphics/BRL-CAD-105.shtml
-
-      T2 package maintainer
-      http://t2-project.org/packages/brlcad.html
 
 Mac OS X binary release:
 
