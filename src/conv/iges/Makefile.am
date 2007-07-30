@@ -8,7 +8,7 @@ ON_IGES =
 IGES_FLAGS = 
 endif
 
-bin_PROGRAMS = iges-g g-iges ${ON_IGES}
+bin_PROGRAMS = iges-g g-iges
 EXTRA_PROGRAMS = iges
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS} ${IGES_FLAGS}
@@ -16,14 +16,17 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS} ${IGES_FLAGS}
 man_MANS = g-iges.1 iges-g.1
 
 noinst_HEADERS = \
+	PullbackCurve.h \
+	brlcad.hpp \
 	iges.h \
 	iges_extern.h \
 	iges_struct.h \
-	iges_types.h
+	iges_types.h \
+	n_iges.hpp
 
 iges_SOURCES = \
-	brlcad_brep.cpp \
 	BrepHandler.cpp \
+	brlcad_brep.cpp \
 	n_iges.cpp  \
 	nmain.cpp
 
@@ -127,6 +130,7 @@ g_iges_LDADD = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	PullbackCurve.cpp \
 	add_face.cpp \
 	arrange.c \
 	brep.cpp \
