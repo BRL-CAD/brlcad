@@ -55,3 +55,112 @@ y  e
 There may be more tasks and ideas available in the Tasks section of
 the project website at
 http://sourceforge.net/pm/task.php?group_project_id=35563&group_id=105292
+
+
+Major Domains
+-------------
+CAD
+Solid Modeling
+CADD
+CAE
+CAM/MCAD
+Ray-tracing
+Modeling (non-solid)
+FEM
+
+Geometry Types
+--------------
+Vehicles
+Buildings
+People
+Terrain
+Cities
+Things (Built/Manufactured)
+Plants
+Animals
+Insects
+Marine Life
+
+Geometry Representations
+------------------------
+Explicit Boundary
+	Polygonal
+		Triangles
+		Quadrilaterals
+	Spline Surfaces
+		NURBS
+	Wireframe
+Implicit Primitives
+	CSG
+Volumetric (voxels)
+Textual
+
+Primitives
+----------
+prep
+shot
+medial axis
+bounding box
+bounding sphere
+surface area
+volume
+centroid
+
+Major Work Areas
+----------------
+Geometry Database
+Representation Conversions
+Importers/Exporters
+Geometry Editing
+Global Illumination
+Animation
+Visualization
+Geometric Evaluation
+Materials Database
+
+Major Work Breakdown
+--------------------
+STEP Conversion
+Parts Library
+Graphical Geometry Browser
+Raytracer Backend Library
+Geometry Engine
+Raytrace Server
+Geometry Server
+Polygonal Editing
+BREP Editing
+Multirep Support
+BZW Conversion
+OBJ Conversion
+X3D Export
+Collada Conversion
+Povray Conversion
+New Modeling Interface
+Annotations
+Dimensioning
+Constraints
+Parametrics
+Windows Platform Support
+Material Properties Browser
+Inverse Kinematics
+Nonlinear Editing
+Radiosity Renderer
+Path Tracer
+Voxelization Library
+API Documentation
+Website
+OpenGL Visualization
+Geometry Editing Library
+Testing Infrastructure
+Geometry Types Diagram
+Feature Edit operations
+Revision history
+
+Work Breakdown Structure
+------------------------
+Requirements & Reasoning (why?)
+Features & Capabilities (what?)
+Benefactors & Proponents (who?)
+Benefits
+Tasks broken down into one month effort
+Aggregate tasks indicate integration effort
