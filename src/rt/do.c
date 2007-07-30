@@ -566,7 +566,7 @@ int
 do_frame(int framenumber)
 {
 	struct bu_vls	times;
-	char framename[128];		/* File name to hold current frame */
+	char framename[128] = {0};		/* File name to hold current frame */
 	struct rt_i *rtip = ap.a_rt_i;
 	double	utime = 0.0;			/* CPU time used */
 	double	nutime = 0.0;			/* CPU time used, normalized by ncpu */
