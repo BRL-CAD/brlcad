@@ -60,7 +60,7 @@ void pop_init	    (struct population **p, int size);
 void pop_spawn	    (struct population *p, struct rt_wdb *db_fp);
 void pop_clean	    (struct population *p);
 void pop_add	    (struct individual *i, struct rt_wdb *db);
-int  pop_wrand_ind  (struct individual *i, int size, fastf_t total_fitness);
+int  pop_wrand_ind  (struct individual *i, int size, fastf_t total_fitness, int offset);
 int  pop_wrand_gop  (void);
 fastf_t pop_rand    (void);
 int pop_find_nodes(union tree *tp);

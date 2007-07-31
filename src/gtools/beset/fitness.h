@@ -37,8 +37,11 @@
 #define STATUS_MP 2
 #define STATUS_EMPTY 0
 
-#define DB_OPEN_FAILURE -1
-#define DB_DIRBUILD_FAILURE -2
+#define SEM_WORK RT_SEM_LAST
+#define SEM_DIFF RT_SEM_LAST+1
+#define SEM_SAME RT_SEM_LAST+2
+#define TOTAL_SEMAPHORES SEM_SAME+1
+
 
 struct part {
     struct bu_list  l;
@@ -48,7 +51,7 @@ struct part {
 
 struct fitness_state {
     char *name;
-    struct part **rays; /* internal representation of raytraced source */
+    struct part **ray; /* internal representation of raytraced source */
     //struct db_i *db; /* the database the source and population are a part of */
     struct rt_i *rtip; /* current objects to be raytraced */
 
@@ -66,10 +69,9 @@ struct fitness_state {
     fastf_t diff; /* linear difference between source and object */
     fastf_t same;
 
-    fastf_t bbox[3]; /* z-min/max bounding line */
     fastf_t mdl_min[3];
     fastf_t fitness;
-    fastf_t norm;
+    fastf_t volume;
 };
 
 /* store a ray that hit */
@@ -105,11 +107,11 @@ void fit_store(char *obj, char *dbname, struct fitness_state *fstate);
 /* update grid resolution */
 void fit_updateRes(int rows, int cols, struct fitness_state *fstate);
 
-/* returns total linear difference between object and source */
-fastf_t fit_linDiff(char *obj, struct db_i *db, struct fitness_state *fstate);
+/* calculates difference between object and source */
+void fit_diff(char *obj, struct db_i *db, struct fitness_state *fstate);
 
 /* clear the stored rays */
-void rays_clean (struct fitness_state *fstate);
+void free_rays (struct fitness_state *fstate);
 
 #endif /* __FITNESS_H__ */
 

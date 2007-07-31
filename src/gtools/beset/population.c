@@ -113,10 +113,12 @@ pop_spawn (struct population *p, struct rt_wdb *db_fp)
 	p2[2] = -10+pop_rand()*10;
 	r2 = 1+3*pop_rand();
 	
+	/*
 	p3[0] = -10+pop_rand()*10;
 	p3[1] = -10+pop_rand()*10;
 	p3[2] = -10+pop_rand()*10;
 	r3 = 1+3*pop_rand();
+	*/
 /*
 	VSET(p1, -5, -5, -5);
 	VSET(p2, 5, 5, 5);
@@ -135,9 +137,11 @@ pop_spawn (struct population *p, struct rt_wdb *db_fp)
 	mk_sph(db_fp, p->parent[i].id, p2, r2);
 	mk_addmember(p->parent[i].id, &wm_hd.l, NULL, WMOP_UNION);
 
+	/*
 	snprintf(p->parent[i].id, 256, "gen%.3dind%.3d-%.3d", 0,i,2);
 	mk_sph(db_fp, p->parent[i].id, p3, r3);
 	mk_addmember(p->parent[i].id, &wm_hd.l, NULL, WMOP_UNION);
+	*/
 
 
 
@@ -178,14 +182,13 @@ pop_add(struct individual *i, struct rt_wdb *db_fp)
  *	P O P _ W R A N D -- weighted random index of parent
  */
 int
-pop_wrand_ind(struct individual *i, int size, fastf_t total_fitness)
+pop_wrand_ind(struct individual *i, int size, fastf_t total_fitness, int offset)
 {
-    int n = 0;
+    int n = offset;
     fastf_t rindex, psum = 0;
     rindex =pop_rand() * total_fitness;
-
     psum = i[n].fitness;
-    for(n = 1; n < size; n++) {
+    for(n = offset+1; n < size; n++) {
 	psum += i[n].fitness;
 	if( rindex <= psum )
 	    return n-1;
@@ -212,12 +215,15 @@ pop_wrand_gop(void)
     float i = bn_rand0to1(idx);
     if(i < 0.1)
 	return REPRODUCE;
+    if(i < 0.3)
+	return MUTATE;
     return CROSSOVER;
 }
 
 int node_idx;
 int crossover_node;
 int crossover;
+int mutate;
 int crossover_op;
 int num_nodes;
 union tree *crossover_point;
@@ -296,6 +302,8 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	else
 	    ++node_idx;
     }
+    else if(mutate)
+	++node_idx;
 
     switch( tp->tr_op )  {
 
@@ -310,6 +318,34 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	    snprintf(shape, 256, "%s-%.3d", name, shape_number++);
 	    bu_free(tp->tr_l.tl_name, "bu_strdup");
 	    tp->tr_l.tl_name = bu_strdup(shape);
+#define VSCALE_SELF(a,c) { (a)[X] *= (c); (a)[Y] *= (c); (a)[Z]*=(c);}
+#define VMUT(a,c){(a)[X] += ((a)[X] == 0)?0:(c); (a)[Y] += ((a)[Y] == 0)?0:(c); (a)[Z]+=((a)[Z]==0)?0:(c);}
+#define MUT_STEP .8
+
+	    if(mutate){
+		if(node_idx == crossover_node){
+		    switch(in.idb_minor_type){
+			case ID_ELL:
+			    /*
+			    VSCALE_SELF(((struct rt_ell_internal *)in.idb_ptr)->v,  .3+2*pop_rand()); 
+			    VSCALE_SELF(((struct rt_ell_internal *)in.idb_ptr)->a, .3+2*pop_rand());
+			    VSCALE_SELF(((struct rt_ell_internal *)in.idb_ptr)->b, .3+2*pop_rand());
+			    VSCALE_SELF(((struct rt_ell_internal *)in.idb_ptr)->c, .3+2*pop_rand());
+			    */
+			    VMUT(((struct rt_ell_internal *)in.idb_ptr)->v, -MUT_STEP/2+MUT_STEP*pop_rand()); 
+			    /*
+			    VMUT(((struct rt_ell_internal *)in.idb_ptr)->a,  -MUT_STEP/2+MUT_STEP*pop_rand()); 
+			    VMUT(((struct rt_ell_internal *)in.idb_ptr)->b, -MUT_STEP/2+MUT_STEP*pop_rand()); 
+			    VMUT(((struct rt_ell_internal *)in.idb_ptr)->c, -MUT_STEP/2+MUT_STEP*pop_rand()); 
+			    */
+			    
+			default:
+			    break;
+		    }
+		}
+	    }
+
+
 
 	    if((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
 		bu_bomb("Failed to add new object to the database");
@@ -324,6 +360,11 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
+	    if(mutate){
+		if(node_idx == crossover_node){
+		  //  tp->tr_op = (int)(2+pop_rand()*3);//FIXME: pop_rand() can be 1!
+		}
+	    }
 	    if(crossover && node_idx == crossover_node)
 		crossover_parent = &tp->tr_b.tb_left;
 	    pop_functree( dbi_p, dbi_c, tp->tr_b.tb_left, resp, name);
@@ -346,9 +387,9 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
     struct rt_db_internal in1, in2;
     struct rt_comb_internal *parent1;
-    struct rt_comb_internal *parent2, *swap;
+    struct rt_comb_internal *parent2;
     struct directory *dp;
-    union tree *cpoint, **tmp, **cross_parent;
+    union tree *cpoint, **cross_parent;
     struct node *add;
     int i = 0;
     
@@ -358,7 +399,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	bu_bomb("Failed to read parent1");
     shape_number =num_nodes= 0;
     parent1 = (struct rt_comb_internal *)in1.idb_ptr;
-
+    mutate = 0;
     switch(gop){
 	case REPRODUCE:
 	    pop_functree(dbi_p, dbi_c, parent1->tree, resp, child1_id);
@@ -441,6 +482,12 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 	    break;
 	case MUTATE:
+	    crossover_parent = &parent1->tree;
+	    crossover_node = (int)(pop_rand() * db_count_tree_nodes(parent1->tree, 0));
+	    node_idx = 0;
+	    mutate = 1;
+	    pop_functree(dbi_p, dbi_c, parent1->tree, resp, child1_id);
+	    mutate = 0;
 	    break;
 	    /*
 	    //random node to mutate

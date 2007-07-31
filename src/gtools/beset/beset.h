@@ -39,12 +39,14 @@
 #define DEFAULT_POP_SIZE 20
 #define DEFAULT_GENS 50
 #define DEFAULT_RES 10
-#define OPTIONS ":x:p:g:r:"
+#define OPTIONS ":x:p:g:r:u:l:"
 
 struct options{
     int pop_size;
     int gens;
     int res;
+    int kill_lower;
+    int keep_upper;
 };
 
 
