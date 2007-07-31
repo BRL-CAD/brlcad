@@ -286,11 +286,6 @@ AM_MAINTAINER_MODE
 # write out all of our definitions to this header
 AM_CONFIG_HEADER([include/brlcad_config.h])
 
-# a secondary automated automake may blow away COPYING & INSTALL due
-# to an automake bug in older versions, so restore those files if
-# needed.
-BC_RESTORE_CLOBBERED([COPYING INSTALL], [misc])
-
 # automatically enable and load our configure cache file if available
 BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}])
 

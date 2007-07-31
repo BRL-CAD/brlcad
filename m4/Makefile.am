@@ -5,7 +5,6 @@ brlcad_m4 = \
 	cache.m4 \
 	compiler.m4 \
 	epsilon.m4 \
-	restore.m4 \
 	search.m4 \
 	stage.m4
 
