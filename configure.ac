@@ -115,10 +115,6 @@ AC_SUBST(BRLCAD_VERSION)
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
-# save the command-line in case there's a need to restart
-this="$0"
-args="$*"
-
 CONFIG_DAY=`date +%d`
 CONFIG_MONTH=`date +%m`
 CONFIG_YEAR=`date +%Y`
