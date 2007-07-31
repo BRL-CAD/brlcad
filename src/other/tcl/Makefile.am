@@ -23,27 +23,28 @@ INSTALLED_INCLUDES = \
 	tclTomMathDecls.h
 
 INSTALLED_ARCHIVES = \
-	libtcl8.5.a \
-	libtclstub8.5.a \
+	libtcl8.5.* \
+	libtclstub8.5.* \
 	tcl8/8.4/http-2.5.3.tm \
+	tcl8/8.4/platform/shell-1.1.3.tm \
+	tcl8/8.4/platform \
+	tcl8/8.4/platform-1.0.2.tm \
 	tcl8/8.5/msgcat-1.4.2.tm \
 	tcl8/8.5/tcltest-2.3a1.tm \
 	tcl8.5 \
 	tclConfig.sh
 
 INSTALLED_MANPAGES = \
+	SafeBase.n \
 	TCL_MEM_DEBUG.3 \
-	tclsh.1 \
-	attemptckalloc.3 \
-	attemptckrealloc.3 \
-	ckalloc.3 \
-	ckfree.3 \
-	ckrealloc.3 \
+	Tcl.n \
 	Tcl_*.3 \
 	after.n \
 	append.n \
 	apply.n \
 	array.n \
+	attemptckalloc.3 \
+	attemptckrealloc.3 \
 	auto_execok.n \
 	auto_import.n \
 	auto_load.n \
@@ -65,6 +66,9 @@ INSTALLED_MANPAGES = \
 	cd.n \
 	chan.n \
 	checkbutton.n \
+	ckalloc.3 \
+	ckfree.3 \
+	ckrealloc.3 \
 	clipboard.n \
 	clock.n \
 	close.n \
@@ -126,10 +130,12 @@ INSTALLED_MANPAGES = \
 	lrange.n \
 	lrepeat.n \
 	lreplace.n \
+	lreverse.n \
 	lsearch.n \
 	lset.n \
 	lsort.n \
 	mathfunc.n \
+	mathop.n \
 	memory.n \
 	menu.n \
 	menubutton.n \
@@ -149,6 +155,7 @@ INSTALLED_MANPAGES = \
 	pkg::create.n \
 	pkg_mkIndex.n \
 	place.n \
+	platform*.n \
 	proc.n \
 	puts.n \
 	pwd.n \
@@ -162,7 +169,6 @@ INSTALLED_MANPAGES = \
 	regsub.n \
 	rename.n \
 	return.n \
-	SafeBase.n \
 	scale.n \
 	scan.n \
 	scrollbar.n \
@@ -177,8 +183,8 @@ INSTALLED_MANPAGES = \
 	string.n \
 	subst.n \
 	switch.n \
-	Tcl.n \
 	tcl_*.n \
+	tclsh.1 \
 	tcltest.n \
 	tclvars.n \
 	tell.n \

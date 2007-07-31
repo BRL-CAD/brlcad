@@ -21,20 +21,23 @@ INSTALLED_INCLUDES = \
 	tkPlatDecls.h
 
 INSTALLED_ARCHIVES = \
-	libtk8.5.a \
-	libtkstub8.5.a \
+	libtk8.5.* \
+	libtkstub8.5.* \
 	tk8.5 \
 	tkConfig.sh
 
 INSTALLED_MANPAGES = \
 	wish.1 \
 	Tk_*.3 \
+	Ttk_*.3 \
 	loadTk.n \
 	tk.n \
 	tk_*.n \
+	ttk_*.n \
 	tkerror.n \
 	tkvars.n \
-	tkwait.n
+	tkwait.n \
+	toplevel.n
 
 uninstall-bin:
 	@$(NORMAL_UNINSTALL)
