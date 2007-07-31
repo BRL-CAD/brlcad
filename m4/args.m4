@@ -68,8 +68,9 @@
 # BC_WITH_FLAG_ARGS
 #
 # provides convenience argument handlers for specifying CFLAGS,
-# LDFLAGS, CPPFLAGS, and LIBS.  more specifically, it adds
-# --with-cflags, --with-cppflags, --with-ldflags, --with-libs.
+# CXXFLAGS, LDFLAGS, CPPFLAGS, and LIBS.  more specifically, it adds
+# --with-cflags, --with-cxxflags, --with-cppflags, --with-ldflags, and
+# --with-libs.
 #
 ###
 
@@ -201,6 +202,14 @@ AC_ARG_WITH(cflags, AC_HELP_STRING(--with-cflags,
 	[
 		if test "x$withval" != "xno" ; then
 			CFLAGS="$CFLAGS $withval"
+		fi
+	]
+)
+AC_ARG_WITH(cxxflags, AC_HELP_STRING(--with-cxxflags,
+		[Specify additional flags to pass to the C++ compiler]),
+	[
+		if test "x$withval" != "xno" ; then
+			CXXFLAGS="$CXXFLAGS $withval"
 		fi
 	]
 )
