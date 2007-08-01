@@ -112,12 +112,12 @@ int main(int argc, char *argv[]){
     int parent1, parent2;
     int gop;
     int best,worst;
-    fastf_t total_fitness;
-    struct fitness_state *fstate;
-    struct population *pop;
-    char dbname[256]; //name of database
+    fastf_t total_fitness = 0.0f;
+    struct fitness_state *fstate = NULL;
+    struct population *pop = NULL;
+    char dbname[256] = {0}; //name of database
     struct options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0};
-    struct individual *tmp;
+    struct individual *tmp = NULL;
     int  ac;
 
 
@@ -143,7 +143,8 @@ int main(int argc, char *argv[]){
 		"--------------\n", g);
 #endif
 
-	total_fitness = best =worst= 0; 
+	total_fitness = 0.0f;
+	best = worst = 0; 
 
 	snprintf(dbname, 256, "gen%.3d", g);
 	pop->db_c = db_create(dbname, 5);
@@ -157,14 +158,14 @@ int main(int argc, char *argv[]){
 	   pop->parent[i].fitness = fstate->fitness;
 	   total_fitness += FITNESS;
 	}
-	/* sort population - used for keeping top N and bottom M% */
+	/* sort population - used for keeping top N and dropping bottom M */
 	qsort(pop->parent, pop->size, sizeof(struct individual), cmp_ind);
 
-	/* remove lower % of individuals */
-	for(i = 0; i < opts.kill_lower; i++) {
+	/* remove lower M of individuals */
+	for(i = 0; i < opts.kill_lower > pop->size ? pop->size : opts.kill_lower; i++) {
 	    total_fitness -= pop->parent[i].fitness;
 	}
- 
+
 
 	printf("Most fit individual was %s with a fitness of %g\n", pop->parent[pop->size-1].id, pop->parent[pop->size-1].fitness);
 	printf("%6.8g\t%6.8g\t%6.8g\n", total_fitness/pop->size, pop->parent[0].fitness, pop->parent[pop->size-1].fitness);
@@ -173,8 +174,8 @@ int main(int argc, char *argv[]){
 
 	    snprintf(pop->child[i].id, 256, "gen%.3dind%.3d", g, i); 
 
-	    /* keep upper % */
-	    if(i >= pop->size- opts.keep_upper){
+	    /* keep upper N */
+	    if(i >= pop->size - opts.keep_upper){
 		pop_gop(REPRODUCE, pop->parent[i].id, NULL, pop->child[i].id, NULL,
 			pop->db_p, pop->db_c, &rt_uniresource);
 		continue;
