@@ -161,13 +161,13 @@ int main(int argc, char *argv[]){
 	qsort(pop.parent, pop.size, sizeof(struct individual), cmp_ind);
 
 	/* remove lower M of individuals */
-	for(i = 0; i < opts.kill_lower > pop.size ? pop.size : opts.kill_lower; i++) {
+	for(i = 0; i < (opts.kill_lower > pop.size ? pop.size : opts.kill_lower); i++) {
 	    total_fitness -= pop.parent[i].fitness;
 	}
 
 
-	printf("Most fit individual was %s with a fitness of %g\n", pop.parent[pop.size-1].id, pop.parent[pop.size-1].fitness);
-	printf("%6.8g\t%6.8g\t%6.8g\n", total_fitness/pop.size, pop.parent[0].fitness, pop.parent[pop.size-1].fitness);
+	printf("Most fit individual was %s with a fitness of %lf\n", pop.parent[pop.size-1].id, pop.parent[pop.size-1].fitness);
+	printf("%6.8lf\t%6.8lf\t%6.8lf\n", total_fitness/pop.size, pop.parent[0].fitness, pop.parent[pop.size-1].fitness);
 
 	for(i = 0; i < pop.size; i++){
 
@@ -184,7 +184,7 @@ int main(int argc, char *argv[]){
 	     * a parent which the op will be performed on*/
 	    gop = pop_wrand_gop();
 	    parent1 = pop_wrand_ind(pop.parent, pop.size, total_fitness, opts.kill_lower);
-	    //printf("selected %g\n", pop.parent[parent1].fitness);
+	    //printf("selected %lf\n", pop.parent[parent1].fitness);
 	    /* If we're performing crossover, we need a second parent */
 	    if(gop == CROSSOVER && i >= pop.size-opts.keep_upper-1)gop=REPRODUCE; //cannot cross, so reproduce
 	    if(gop & (REPRODUCE | MUTATE)){
@@ -198,8 +198,9 @@ int main(int argc, char *argv[]){
 	    
 		//while(parent2 == parent1) -- needed? can crossover be done on same 2 ind?
 		parent2 = pop_wrand_ind(pop.parent, pop.size, total_fitness, opts.kill_lower);
-//		printf("selected: %g\n", pop.parent[parent2].fitness);
-		snprintf(pop.child[i].id, 256, "gen%.3dind%.3d", g, ++i); //name the child and increase pop count
+//		printf("selected: %lf\n", pop.parent[parent2].fitness);
+		snprintf(pop.child[i].id, 256, "gen%.3dind%.3d", g, i); //name the child
+		i++; // increase pop count
 
 #ifdef VERBOSE 
 		printf("x(%s, %s) --> (%s, %s)\n", pop.parent[parent1].id, pop.parent[parent2].id, pop.child[i-1].id, pop.child[i].id);

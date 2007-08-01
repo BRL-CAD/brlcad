@@ -91,12 +91,11 @@ void
 pop_spawn (struct population *p, struct rt_wdb *db_fp)
 {
     int i;
-    point_t p1, p2, p3;
+    point_t p1, p2; /* , p3; */
     struct wmember wm_hd;
-    double r1, r2, r3;
+    double r1, r2; /* , r3; */
 
-    for(i = 0; i < p->size; i++)
-    {
+    for(i = 0; i < p->size; i++) {
 
 	BU_LIST_INIT(&wm_hd.l);
 
@@ -274,6 +273,8 @@ pop_find_nodes(	union tree *tp)
 	     * mirror the behavior of db_count_tree_nodes() */
 	    return 1+n1 + n2;
     }
+
+    return 0;
 }
 
 
@@ -411,7 +412,10 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     union tree *cpoint, **cross_parent;
     struct node *add;
     int i = 0;
-    crossover_point = crossover_parent = node = NULL;
+
+    crossover_point = (union tree *)NULL;
+    crossover_parent = (union tree **)NULL;
+    node = (struct node*)NULL;
     
     struct node *chosen_node;
     int rand_node;
