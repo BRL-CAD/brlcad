@@ -270,6 +270,8 @@ pop_find_nodes(	union tree *tp)
 		++num_nodes;
 		}
 	    }
+	    /* include current node as part of the count to 
+	     * mirror the behavior of db_count_tree_nodes() */
 	    return 1+n1 + n2;
     }
 }
@@ -409,6 +411,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     union tree *cpoint, **cross_parent;
     struct node *add;
     int i = 0;
+    crossover_point = crossover_parent = node = NULL;
     
     struct node *chosen_node;
     int rand_node;
