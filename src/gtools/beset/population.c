@@ -58,16 +58,14 @@ int shape_number;
  *	P O P _ I N I T --- initialize a population of a given size
  */
 void 
-pop_init (struct population **p, int size)
+pop_init (struct population *p, int size)
 {
-    *p = bu_malloc(sizeof(struct population), "population");
-
-    (*p)->parent = bu_malloc(sizeof(struct individual) * size, "parent");
-    (*p)->child  = bu_malloc(sizeof(struct individual) * size, "child");
-    (*p)->size = size;
-    (*p)->db_p = db_create("gen000", 5); //FIXME: variable names
-    (*p)->db_p->dbi_wdbp = wdb_dbopen((*p)->db_p, RT_WDB_TYPE_DB_DISK);
-    (*p)->db_c = DBI_NULL;
+    p->parent = bu_malloc(sizeof(struct individual) * size, "parent");
+    p->child  = bu_malloc(sizeof(struct individual) * size, "child");
+    p->size = size;
+    p->db_p = db_create("gen000", 5); //FIXME: variable names
+    p->db_p->dbi_wdbp = wdb_dbopen(p->db_p, RT_WDB_TYPE_DB_DISK);
+    p->db_c = DBI_NULL;
 
 #define SEED 33
     // init in main() bn_rand_init(idx, SEED);
@@ -82,7 +80,6 @@ pop_clean (struct population *p)
 {
     bu_free(p->parent, "parent");
     bu_free(p->child, "child");
-    bu_free(p, "population");
 }
 
 /**

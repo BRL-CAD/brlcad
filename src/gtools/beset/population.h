@@ -63,7 +63,7 @@ struct node{
     union tree *s_child;
 };
 
-void pop_init	    (struct population **p, int size);
+void pop_init	    (struct population *p, int size);
 void pop_spawn	    (struct population *p, struct rt_wdb *db_fp);
 void pop_clean	    (struct population *p);
 void pop_add	    (struct individual *i, struct rt_wdb *db);
