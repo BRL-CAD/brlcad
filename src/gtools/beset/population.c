@@ -230,6 +230,11 @@ union tree *crossover_point;
 union tree **crossover_parent;
 struct node *node;
 
+/**
+ *	P O P _ F I N D _ N O D E S --- find nodes with equal # of children
+ *	note: not part of pop_functree as a lot less arguments are needed 
+ *	and it eliminates a lot of overhead
+ */
 int
 pop_find_nodes(	union tree *tp)
 {
@@ -273,6 +278,33 @@ pop_find_nodes(	union tree *tp)
 }
 
 
+void 
+pop_mutate(int type, genptr_t ptr)
+{
+    int i;
+    switch(type) {
+	case ID_ELL:
+	    VMUTATE(((struct rt_ell_internal *)ptr)->v); 
+	    VMUTATE(((struct rt_ell_internal *)ptr)->a); 
+	    VMUTATE(((struct rt_ell_internal *)ptr)->b); 
+	    VMUTATE(((struct rt_ell_internal *)ptr)->c); 
+	    break;
+	case ID_TGC:
+	    VMUTATE(((struct rt_tgc_internal *)ptr)->v);
+	    VMUTATE(((struct rt_tgc_internal *)ptr)->h);
+	    VMUTATE(((struct rt_tgc_internal *)ptr)->a);
+	    VMUTATE(((struct rt_tgc_internal *)ptr)->b);
+	    VMUTATE(((struct rt_tgc_internal *)ptr)->c);
+	    VMUTATE(((struct rt_tgc_internal *)ptr)->d);
+	    break;
+	case ID_ARB8:
+	    for(i=0; i < 8; i++)
+		VMUTATE(((struct rt_arb_internal *)ptr)->pt[i]);
+
+	default:
+	    break;
+    }
+}
 
 
 
@@ -290,8 +322,9 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
     struct rt_db_internal in;
     char shape[256];
 
-    if( !tp )
+    if( !tp ){
 	return;
+    }
     if(crossover){
 	if(node_idx > crossover_node) return;
 	if(node_idx == crossover_node){
@@ -301,52 +334,37 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	}
 	else
 	    ++node_idx;
-    }
-    else if(mutate)
+    } else if(mutate)
 	++node_idx;
 
     switch( tp->tr_op )  {
 
 	case OP_DB_LEAF:
-	    if(crossover)
+	    /* dont need to do any processing if crossing over */
+	    if(crossover){
 		return;
-
-	    if( !rt_db_lookup_internal(dbi_p, tp->tr_l.tl_name, &dp, &in, LOOKUP_NOISY, resp))
-		bu_bomb("Failed to read parent");
-
-	    //rename tree
-	    snprintf(shape, 256, "%s-%.3d", name, shape_number++);
-	    bu_free(tp->tr_l.tl_name, "bu_strdup");
-	    tp->tr_l.tl_name = bu_strdup(shape);
-#define VSCALE_SELF(a,c) { (a)[X] *= (c); (a)[Y] *= (c); (a)[Z]*=(c);}
-#define VMUT(a,c){(a)[X] += ((a)[X] == 0)?0:(c); (a)[Y] += ((a)[Y] == 0)?0:(c); (a)[Z]+=((a)[Z]==0)?0:(c);}
-#define MUT_STEP .8
-
-	    if(mutate){
-		if(node_idx == crossover_node){
-		    switch(in.idb_minor_type){
-			case ID_ELL:
-			    /*
-			    VSCALE_SELF(((struct rt_ell_internal *)in.idb_ptr)->v,  .3+2*pop_rand()); 
-			    VSCALE_SELF(((struct rt_ell_internal *)in.idb_ptr)->a, .3+2*pop_rand());
-			    VSCALE_SELF(((struct rt_ell_internal *)in.idb_ptr)->b, .3+2*pop_rand());
-			    VSCALE_SELF(((struct rt_ell_internal *)in.idb_ptr)->c, .3+2*pop_rand());
-			    */
-			    VMUT(((struct rt_ell_internal *)in.idb_ptr)->v, -MUT_STEP/2+MUT_STEP*pop_rand()); 
-			    /*
-			    VMUT(((struct rt_ell_internal *)in.idb_ptr)->a,  -MUT_STEP/2+MUT_STEP*pop_rand()); 
-			    VMUT(((struct rt_ell_internal *)in.idb_ptr)->b, -MUT_STEP/2+MUT_STEP*pop_rand()); 
-			    VMUT(((struct rt_ell_internal *)in.idb_ptr)->c, -MUT_STEP/2+MUT_STEP*pop_rand()); 
-			    */
-			    
-			default:
-			    break;
-		    }
-		}
 	    }
 
 
+	    /* if we aren't crossing over, we copy the individual into the
+	     * new database. If we're mutating, mutate the object after loading
+	     * the internetal object */
+	    
+	    if( !rt_db_lookup_internal(dbi_p, tp->tr_l.tl_name, &dp, &in, LOOKUP_NOISY, resp))
+		bu_bomb("Failed to read parent");
 
+	    /* rename leaf based on individual it belongs to */
+	    snprintf(shape, 256, "%s-%.3d", name, shape_number++);
+	    bu_free(tp->tr_l.tl_name, "bu_strdup");
+	    tp->tr_l.tl_name = bu_strdup(shape);
+
+	    /* if we're mutating, and this is the node we've chosen
+	     * to modify. mutate this node */
+	    if( mutate && node_idx == crossover_node )
+		pop_mutate(in.idb_minor_type, in.idb_ptr);
+
+
+	    /* write child to new database */
 	    if((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
 		bu_bomb("Failed to add new object to the database");
 	    if(rt_db_put_internal(dp, dbi_c, &in, resp) < 0)
@@ -355,16 +373,18 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 
 	    break;
 
-
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    if(mutate){
+	    /* mutate CSG operation */
+	    if(mutate)
 		if(node_idx == crossover_node){
 		  //  tp->tr_op = (int)(2+pop_rand()*3);//FIXME: pop_rand() can be 1!
 		}
-	    }
+
+	    /* if we're performing, save parent as it's right or left pointer will need
+	     * to be modified to point to the new child node */
 	    if(crossover && node_idx == crossover_node)
 		crossover_parent = &tp->tr_b.tb_left;
 	    pop_functree( dbi_p, dbi_c, tp->tr_b.tb_left, resp, name);
@@ -372,8 +392,8 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 		crossover_parent = &tp->tr_b.tb_right;
 	    pop_functree( dbi_p, dbi_c, tp->tr_b.tb_right, resp, name);
 	    break;
+
 	default:
-	    bu_log( "pop_functree: unrecognized operator %d\n", tp->tr_op );
 	    bu_bomb( "pop_functree: unrecognized operator\n" );
     }
 }
@@ -455,8 +475,8 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 	    
 	    //TODO: MEMORY LEAKS
-	    *cross_parent = db_dup_subtree(chosen_node->s_child,resp);
-	    *chosen_node->s_parent =db_dup_subtree(cpoint,resp);
+	    *cross_parent = chosen_node->s_child,resp;
+	    *chosen_node->s_parent =cpoint;
 
 	    while(BU_LIST_WHILE(add, node, &node->l)){
 		BU_LIST_DEQUEUE(&add->l);

@@ -30,6 +30,13 @@
 
 #define GEO_SPHERE 1
 
+#define VSCALE_SELF(a,c) { (a)[X] *= (c); (a)[Y] *= (c); (a)[Z]*=(c);}
+#define VMUTATE(a){VMUT(a,-MUT_STEP/2+MUT_STEP*pop_rand())} 
+#define VMUT(a,c){(a)[X] += ((a)[X] == 0)?0:(c); (a)[Y] += ((a)[Y] == 0)?0:(c); (a)[Z]+=((a)[Z]==0)?0:(c);}
+#define MUT_STEP .8
+
+
+
 struct name{
     char n[256];
     int i;

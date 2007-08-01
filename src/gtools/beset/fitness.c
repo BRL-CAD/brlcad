@@ -381,7 +381,8 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     if(fstate->capture)
 	z_max = fstate->rtip->mdl_max[Z];
 
-    rt_prep_parallel(fstate->rtip, fstate->ncpu);
+    //rt_prep_parallel(fstate->rtip, fstate->ncpu);
+    rt_prep(fstate->rtip);
 
     if(fstate->capture){
 	/* Store bounding box of voxel data -- fixed bounding box for fitness */ 
@@ -395,7 +396,8 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 	fstate->ray = bu_malloc(sizeof(struct part *) * fstate->res[X] * fstate->res[Y], "ray");
     } 
     
-    bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);
+    rt_worker(0,(genptr_t)fstate);
+    //bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);
 
     /* normalize fitness if we aren't just saving the source */
     if(!fstate->capture){
@@ -407,7 +409,8 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     /* clean up resources and rtip */
     for(i = 0; i < fstate->max_cpus; i++) 
 	rt_clean_resource(fstate->rtip, &fstate->resource[i]);
-    rt_free_rti(fstate->rtip);
+    rt_clean(fstate->rtip);
+//    rt_free_rti(fstate->rtip);
 
 
 }
@@ -433,7 +436,7 @@ fit_prep(int rows, int cols)
     rt_init_resource(&rt_uniresource, fstate->max_cpus, NULL);
     bn_rand_init(rt_uniresource.re_randptr, 0);
 
-    fstate->max_cpus = fstate->ncpu = bu_avail_cpus();
+    fstate->max_cpus = fstate->ncpu = 1;//bu_avail_cpus();
     fstate->capture = 0;
     fstate->res[X] = rows;
     fstate->res[Y] = cols;
