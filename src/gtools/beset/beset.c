@@ -115,7 +115,7 @@ int main(int argc, char *argv[]){
     fastf_t total_fitness = 0.0f;
     struct fitness_state fstate;
     struct population pop = {NULL,NULL,NULL,NULL,0};
-    char dbname[256] = {0}; //name of database
+    char dbname[256] = {0}; 
     struct options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0};
     struct individual *tmp = NULL;
     int  ac;
@@ -164,8 +164,8 @@ int main(int argc, char *argv[]){
 	}
 
 
-	printf("Most fit individual was %s with a fitness of %lf\n", pop.parent[pop.size-1].id, pop.parent[pop.size-1].fitness);
-	printf("%6.8lf\t%6.8lf\t%6.8lf\n", total_fitness/pop.size, pop.parent[0].fitness, pop.parent[pop.size-1].fitness);
+	printf("Most fit individual was %s with a fitness of %g\n", pop.parent[pop.size-1].id, pop.parent[pop.size-1].fitness);
+	printf("%6.8g\t%6.8g\t%6.8g\n", total_fitness/pop.size, pop.parent[0].fitness, pop.parent[pop.size-1].fitness);
 
 	for(i = 0; i < pop.size; i++){
 
@@ -182,9 +182,9 @@ int main(int argc, char *argv[]){
 	     * a parent which the op will be performed on*/
 	    gop = pop_wrand_gop();
 	    parent1 = pop_wrand_ind(pop.parent, pop.size, total_fitness, opts.kill_lower);
-	    //printf("selected %lf\n", pop.parent[parent1].fitness);
-	    /* If we're performing crossover, we need a second parent */
-	    if(gop == CROSSOVER && i >= pop.size-opts.keep_upper-1)gop=REPRODUCE; //cannot cross, so reproduce
+	    /* only need 1 more individual, can't crossover, so reproduce */
+	    if(gop == CROSSOVER && i >= pop.size-opts.keep_upper-1)gop=REPRODUCE; 
+
 	    if(gop & (REPRODUCE | MUTATE)){
 #ifdef VERBOSE
 		printf("r(%s)\t ---------------> (%s)\n", pop.parent[parent1].id, pop.child[i].id);
@@ -194,11 +194,10 @@ int main(int argc, char *argv[]){
 			pop.db_p, pop.db_c, &rt_uniresource);
 	    } else {
 	    
-		//while(parent2 == parent1) -- needed? can crossover be done on same 2 ind?
+	    /* If we're performing crossover, we need a second parent */
 		parent2 = pop_wrand_ind(pop.parent, pop.size, total_fitness, opts.kill_lower);
-//		printf("selected: %lf\n", pop.parent[parent2].fitness);
 		++i;
-		snprintf(pop.child[i].id, 256, "gen%.3dind%.3d", g, i); //name the child
+		snprintf(pop.child[i].id, 256, "gen%.3dind%.3d", g, i); 
 
 #ifdef VERBOSE 
 		printf("x(%s, %s) --> (%s, %s)\n", pop.parent[parent1].id, pop.parent[parent2].id, pop.child[i-1].id, pop.child[i].id);

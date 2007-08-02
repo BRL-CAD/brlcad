@@ -52,7 +52,6 @@ struct part {
 struct fitness_state {
     char *name;
     struct part **ray; /* internal representation of raytraced source */
-    //struct db_i *db; /* the database the source and population are a part of */
     struct rt_i *rtip; /* current objects to be raytraced */
 
     struct resource resource[MAX_PSW]; /* memory resource for multi-cpu processing */
@@ -63,7 +62,7 @@ struct fitness_state {
 
     int res[2]; /*  ray resolution on u and v axes */
     double gridSpacing[2]; /* grid spacing on u and v axes */
-    int row; /* current v axis index *///IS IT?
+    int row; /* current v axis index */
     
     int capture; /* flags whether to store the object */
     fastf_t diff; /* linear difference between source and object */

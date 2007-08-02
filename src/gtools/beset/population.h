@@ -43,7 +43,7 @@ struct name{
 };
 
 struct individual {
-    char id[256];//the nameeeeee
+    char id[256];
     fastf_t fitness;
 };
 
@@ -51,8 +51,8 @@ struct population {
     struct individual *parent;
     struct individual *child;
 
-    struct db_i *db_p; // parent database
-    struct db_i *db_c; // chld database
+    struct db_i *db_p; 
+    struct db_i *db_c; 
 
     int size;
 };
@@ -72,9 +72,6 @@ int  pop_wrand_gop  (void);
 fastf_t pop_rand    (void);
 int pop_find_nodes(union tree *tp);
 
-//void pop_dup_functree(struct db_i *dbi_p, struct db_i *dbi_c,
-//		      union tree *tp, struct resource *resp, 
-//		      char *name );
 void pop_gop(int gop, char *parent1, char *parent2, char * child1, char *child2,  struct db_i *dbi_p, 
 	     struct db_i *dbi_c, struct resource *resp);
 int pop_put_internal(const char *n, struct directory *dp, struct db_i *dbip, struct rt_db_internal *ip,

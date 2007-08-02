@@ -59,9 +59,7 @@ struct options{
 #define NODES (fstate->nodes)
 #define INDEX (pop.size-i)
 
-
 #endif /* __BESET_H__ */
-
 /*
  * Local Variables:
  * tab-width: 8

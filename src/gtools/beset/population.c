@@ -46,10 +46,10 @@
 #include "wdb.h"
 
 #include "population.h"
-#include "beset.h" // GOP options
+#include "beset.h" 
 
 
-//narsty globals -- move to main() ?
+/* FIXME: get rid of globals*/
 float *idx;
 int shape_number; 
 
@@ -63,12 +63,12 @@ pop_init (struct population *p, int size)
     p->parent = bu_malloc(sizeof(struct individual) * size, "parent");
     p->child  = bu_malloc(sizeof(struct individual) * size, "child");
     p->size = size;
-    p->db_p = db_create("gen000", 5); //FIXME: variable names
+    p->db_p = db_create("gen000", 5); 
     p->db_p->dbi_wdbp = wdb_dbopen(p->db_p, RT_WDB_TYPE_DB_DISK);
     p->db_c = DBI_NULL;
 
 #define SEED 33
-    // init in main() bn_rand_init(idx, SEED);
+    /* init in main() bn_rand_init(idx, SEED);*/
     bn_rand_init(idx, SEED);
 }
 
@@ -369,7 +369,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 		bu_bomb("Failed to add new object to the database");
 	    if(rt_db_put_internal(dp, dbi_c, &in, resp) < 0)
 		bu_bomb("Failed to write new individual to databse");
-	    rt_db_free_internal(&in, resp);//error check?
+	    rt_db_free_internal(&in, resp);
 
 	    break;
 
@@ -380,7 +380,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	    /* mutate CSG operation */
 	    if(mutate)
 		if(node_idx == crossover_node){
-		  //  tp->tr_op = (int)(2+pop_rand()*3);//FIXME: pop_rand() can be 1!
+		  /*  tp->tr_op = (int)(2+pop_rand()*3);//FIXME: pop_rand() can be 1!*/
 		}
 
 	    /* if we're performing, save parent as it's right or left pointer will need
@@ -401,10 +401,6 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 void
 pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *child2_id, struct db_i *dbi_p, struct db_i *dbi_c, struct resource *resp)
 {
-    RT_CHECK_DBI( dbi_p );
-    RT_CHECK_DBI( dbi_c );
-    RT_CK_RESOURCE( resp );
-
     struct rt_db_internal in1, in2;
     struct rt_comb_internal *parent1;
     struct rt_comb_internal *parent2;
@@ -412,12 +408,17 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     union tree *cpoint, **cross_parent;
     struct node *add;
     int i = 0;
+    struct node *chosen_node;
+    int rand_node;
+
+    RT_CHECK_DBI( dbi_p );
+    RT_CHECK_DBI( dbi_c );
+    RT_CK_RESOURCE( resp );
+
+
     crossover_point = (union tree *)NULL;
     crossover_parent = (union tree **)NULL;
     node = (struct node*)NULL;
-    
-    struct node *chosen_node;
-    int rand_node;
 
     if( !rt_db_lookup_internal(dbi_p, parent1_id, &dp, &in1, LOOKUP_NOISY, &rt_uniresource))
 	bu_bomb("Failed to read parent1");
@@ -431,20 +432,15 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	case CROSSOVER:
 
 	    crossover = 1;
-	    //load other parent
+	    /*load other parent */
 	    if( !rt_db_lookup_internal(dbi_p, parent2_id, &dp, &in2, LOOKUP_NOISY, resp))
 		bu_bomb("Failed to read parent2");
 	    parent2 = (struct rt_comb_internal *)in2.idb_ptr;
 
-	    //temp: swap left trees
-	    //pick two random nodes
-	    //head node is the node we want to cross
 	    node = bu_malloc(sizeof(struct node), "node");
 	    BU_LIST_INIT(&node->l);
-
-	    	   
-	    
 	    chosen_node = NULL;
+
 	    do{
 		num_nodes = 0;
 		crossover_parent = &parent1->tree;
@@ -468,18 +464,17 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 		}
 		if(num_nodes > 0){
 		    rand_node = (int)(pop_rand() * num_nodes);
-		    for(BU_LIST_FOR(add, node, &node->l)){
+		    for(add=BU_LIST_FIRST(node, &node->l);BU_LIST_NOT_HEAD(add, &node->l) && chosen_node == NULL; add=BU_LIST_PNEXT(node, add)){
 			if(i++ == rand_node){
 			    chosen_node = add;
-			    //BREAK CLEANLY!?!?
+			    /* break cleanly...? */
 			}
 		    }
 		}
 	    }while(chosen_node == NULL);
 
 
-	    
-	    //TODO: MEMORY LEAKS
+	    /* cross trees */
 	    *cross_parent = chosen_node->s_child,resp;
 	    *chosen_node->s_parent =cpoint;
 
@@ -490,11 +485,9 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    bu_free(node, "node");
 
 
-
-
 	    crossover = 0;
 
-	    //duplicate shapes held in trees
+	    /*duplicate shapes held in trees*/
 	    pop_functree(dbi_p, dbi_c, parent1->tree, resp, child1_id);
 	    shape_number = 0;
 	    pop_functree(dbi_p, dbi_c, parent2->tree, resp, child2_id);

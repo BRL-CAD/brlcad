@@ -147,7 +147,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 	if(xp < 0) xp = 0; 
 	if(yp < 0) yp = 0;
     	
-	if(status==STATUS_EMPTY){ //neither
+	if(status==STATUS_EMPTY){ 
 	    if(NEAR_ZERO(xp-yp, 1.0e-5)){
 		fstate->same += xp;
 		status = (STATUS_PP | STATUS_MP);
@@ -313,7 +313,7 @@ rt_worker(int cpu, genptr_t g)
 	ap.a_miss = compare_miss;
     }
 
-    ap.a_resource = &rt_uniresource;//fstate->resource[cpu];
+    ap.a_resource = &rt_uniresource;/*fstate->resource[cpu];*/
 
     ap.a_ray.r_dir[X] = ap.a_ray.r_dir[Y] = 0.0;
     ap.a_ray.r_dir[Z] = 1.0;
@@ -379,7 +379,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     if(fstate->capture)
 	z_max = fstate->rtip->mdl_max[Z];
 
-    //rt_prep_parallel(fstate->rtip, fstate->ncpu);
+    /*rt_prep_parallel(fstate->rtip, fstate->ncpu);*/
     rt_prep(fstate->rtip);
 
     if(fstate->capture){
@@ -395,7 +395,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     } 
     
     rt_worker(0,(genptr_t)fstate);
-    //bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);
+    /*bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);*/
 
     /* normalize fitness if we aren't just saving the source */
     if(!fstate->capture){
@@ -410,7 +410,6 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 	rt_clean_resource(fstate->rtip, &fstate->resource[i]);
     */
     rt_clean(fstate->rtip);
-//    rt_free_rti(fstate->rtip);
 
 
 }
@@ -430,7 +429,7 @@ fit_diff(char *obj, struct db_i *db, struct fitness_state *fstate)
 void
 fit_prep(struct fitness_state *fstate, int rows, int cols)
 {
-    fstate->max_cpus = fstate->ncpu = 1;//bu_avail_cpus();
+    fstate->max_cpus = fstate->ncpu = 1;/*bu_avail_cpus();*/
     fstate->capture = 0;
     fstate->res[X] = rows;
     fstate->res[Y] = cols;
