@@ -50,7 +50,7 @@
 #include "beset.h"
 
 
-void usage(){fprintf(stderr, "Usage: %s [options] db.g object\nOptions:\n -p #\t\tPopulation size\n -g #\t\tNumber of generations\n -r #\t\tResolution \n",bu_getprogname());exit(1);}
+void usage(){fprintf(stderr, "Usage: %s [options] db.g object\nOptions:\n -p #\t\tPopulation size\n -g #\t\tNumber of generations\n -r #\t\tResolution \n -u #\t\tUpper percent of individuals to keep\n -l #\t\tLower percent of individuals to kill\n",bu_getprogname());exit(1);}
 
 
 /* fitness of a given object compared to source */
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]){
     int best,worst;
     fastf_t total_fitness = 0.0f;
     struct fitness_state fstate;
-    struct population pop;
+    struct population pop = {NULL,NULL,NULL,NULL,0};
     char dbname[256] = {0}; //name of database
     struct options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0};
     struct individual *tmp = NULL;
