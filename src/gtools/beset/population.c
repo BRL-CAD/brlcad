@@ -412,13 +412,13 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     union tree *cpoint, **cross_parent;
     struct node *add;
     int i = 0;
-
     crossover_point = (union tree *)NULL;
     crossover_parent = (union tree **)NULL;
     node = (struct node*)NULL;
     
     struct node *chosen_node;
     int rand_node;
+
     if( !rt_db_lookup_internal(dbi_p, parent1_id, &dp, &in1, LOOKUP_NOISY, &rt_uniresource))
 	bu_bomb("Failed to read parent1");
     shape_number =num_nodes= 0;
@@ -429,6 +429,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    pop_functree(dbi_p, dbi_c, parent1->tree, resp, child1_id);
 	    break;
 	case CROSSOVER:
+
 	    crossover = 1;
 	    //load other parent
 	    if( !rt_db_lookup_internal(dbi_p, parent2_id, &dp, &in2, LOOKUP_NOISY, resp))

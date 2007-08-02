@@ -113,7 +113,7 @@ int main(int argc, char *argv[]){
     int gop;
     int best,worst;
     fastf_t total_fitness = 0.0f;
-    struct fitness_state *fstate = NULL;
+    struct fitness_state fstate;
     struct population pop;
     char dbname[256] = {0}; //name of database
     struct options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0};
@@ -126,11 +126,9 @@ int main(int argc, char *argv[]){
 	usage();
     
 
-    rt_init_resource(&rt_uniresource,1,NULL);
-
     /* read source model into fstate.rays */
-    fstate = fit_prep(opts.res, opts.res);
-    fit_store(argv[ac+2], argv[ac+1], fstate); 
+    fit_prep(&fstate, opts.res, opts.res);
+    fit_store(argv[ac+2], argv[ac+1], &fstate); 
 
     /* initialize population and spawn initial individuals */
     pop_init(&pop, opts.pop_size);
@@ -153,15 +151,15 @@ int main(int argc, char *argv[]){
 	 * note: need to calculate outside of main pop
 	 * loop because it's needed for pop_wrand_ind()*/
 	for(i = 0; i < pop.size; i++) {
-	   fit_diff(pop.parent[i].id, pop.db_p, fstate);
-	   pop.parent[i].fitness = fstate->fitness;
+	   fit_diff(pop.parent[i].id, pop.db_p, &fstate);
+	   pop.parent[i].fitness = fstate.fitness;
 	   total_fitness += FITNESS;
 	}
 	/* sort population - used for keeping top N and dropping bottom M */
 	qsort(pop.parent, pop.size, sizeof(struct individual), cmp_ind);
 
 	/* remove lower M of individuals */
-	for(i = 0; i < (opts.kill_lower > pop.size ? pop.size : opts.kill_lower); i++) {
+	for(i = 0; i < opts.kill_lower; i++) {
 	    total_fitness -= pop.parent[i].fitness;
 	}
 
@@ -199,8 +197,8 @@ int main(int argc, char *argv[]){
 		//while(parent2 == parent1) -- needed? can crossover be done on same 2 ind?
 		parent2 = pop_wrand_ind(pop.parent, pop.size, total_fitness, opts.kill_lower);
 //		printf("selected: %lf\n", pop.parent[parent2].fitness);
+		++i;
 		snprintf(pop.child[i].id, 256, "gen%.3dind%.3d", g, i); //name the child
-		i++; // increase pop count
 
 #ifdef VERBOSE 
 		printf("x(%s, %s) --> (%s, %s)\n", pop.parent[parent1].id, pop.parent[parent2].id, pop.child[i-1].id, pop.child[i].id);
@@ -234,7 +232,7 @@ int main(int argc, char *argv[]){
 #endif
 
 
-    fit_clean(fstate);
+    fit_clean(&fstate);
     pop_clean(&pop);
     return 0;
 }

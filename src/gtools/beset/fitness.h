@@ -96,7 +96,7 @@ void rt_worker(int cpu, genptr_t g);
 void fit_rt (char *obj, struct db_i *db, struct fitness_state *fstate);
 
 /* load database and prepare fstate for work */
-struct fitness_state * fit_prep(int rows, int cols);
+void fit_prep(struct fitness_state *fstate, int rows, int cols);
 
 /* cleanup */
 void fit_clean(struct fitness_state *fstate);

@@ -313,7 +313,7 @@ rt_worker(int cpu, genptr_t g)
 	ap.a_miss = compare_miss;
     }
 
-    ap.a_resource = &fstate->resource[cpu];
+    ap.a_resource = &rt_uniresource;//fstate->resource[cpu];
 
     ap.a_ray.r_dir[X] = ap.a_ray.r_dir[Y] = 0.0;
     ap.a_ray.r_dir[Z] = 1.0;
@@ -328,10 +328,8 @@ rt_worker(int cpu, genptr_t g)
 	    ap.a_ray.r_pt[Z] = fstate->mdl_min[Z];
 	    ap.a_user = (v-1)*(fstate->res[X]) + u-1;
 	    
-	    /* initialize stored partition */
-	    if(fstate->capture){
-	    }
 	    rt_shootray(&ap);
+
 	
 	}
     }
@@ -347,8 +345,6 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     int i;
     fastf_t z_max;
     
-    fstate->rtip = rt_new_rti(db);
-    fstate->row = 0;
 
     /*
      * uncomment to calculate # of nodes
@@ -369,10 +365,12 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     if(rt_gettree(fstate->rtip, obj) < 0)
 	bu_bomb("rt_gettree failed");
     
+    /*
     for(i = 0; i < fstate->max_cpus; i++) {
 	rt_init_resource(&fstate->resource[i], i, fstate->rtip);
 	bn_rand_init(fstate->resource[i].re_randptr, i);
     }
+    */
 
     /* stash max z depth as it will change
      * when the rtip is prepped.
@@ -407,8 +405,10 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     }
 
     /* clean up resources and rtip */
+    /*
     for(i = 0; i < fstate->max_cpus; i++) 
 	rt_clean_resource(fstate->rtip, &fstate->resource[i]);
+    */
     rt_clean(fstate->rtip);
 //    rt_free_rti(fstate->rtip);
 
@@ -427,22 +427,18 @@ fit_diff(char *obj, struct db_i *db, struct fitness_state *fstate)
 /**
  *	F I T _ P R E P --- load database and prepare for raytracing
  */
-struct fitness_state * 
-fit_prep(int rows, int cols)
+void
+fit_prep(struct fitness_state *fstate, int rows, int cols)
 {
-    struct fitness_state *fstate = bu_malloc(sizeof(struct fitness_state), "fstate");
-
-    bu_semaphore_init(TOTAL_SEMAPHORES);
-    rt_init_resource(&rt_uniresource, fstate->max_cpus, NULL);
-    bn_rand_init(rt_uniresource.re_randptr, 0);
-
     fstate->max_cpus = fstate->ncpu = 1;//bu_avail_cpus();
     fstate->capture = 0;
     fstate->res[X] = rows;
     fstate->res[Y] = cols;
     fstate->ray = NULL;
 
-    return fstate;
+    bu_semaphore_init(TOTAL_SEMAPHORES);
+    rt_init_resource(&rt_uniresource, fstate->max_cpus, NULL);
+    bn_rand_init(rt_uniresource.re_randptr, 0);
 }
 
 /**
@@ -452,7 +448,6 @@ void
 fit_clean(struct fitness_state *fstate)
 {
     free_rays(fstate);
-    bu_free(fstate, "fstate");
 }
 
 /**
