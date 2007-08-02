@@ -301,9 +301,6 @@ dnl *** enable options ***
 # enable everything
 BC_ARG_ENABLE([everything], [almost-everything], [Turn on compilation of almost everything], [auto])
 
-# automatic flag updates
-BC_ARG_ENABLE([auto_flags], [automatic-flags], [Automatically configure build flags], [yes])
-
 # only build benchmark
 BC_ARG_ENABLE([only_benchmark], [only-benchmark], [Only build the components necessary for the benchmark], [no])
 
@@ -340,7 +337,8 @@ BC_ARG_ENABLE([build_tcl], [tcl-build], [Build the included Tcl], [auto])
 # force enable/disable building of Tk
 BC_ARG_ENABLE([build_tk], [tk-build], [Build the included Tk], [auto])
 
-BC_ARG_ENABLE([tk_aqua], [aqua], [Use Aqua windowing system on Mac OS X], [no])
+# force enable/disable building Tk using AquaTk (Mac OS X specific)
+BC_ARG_ENABLE([build_aquatk], [aquatk-build], [Use Aqua windowing system on Mac OS X], [no])
 
 # force enable/disable building of incrTcl
 BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [auto])
@@ -438,11 +436,6 @@ BC_ARG_ALIAS([everything], [everything])
 BC_ARG_ALIAS([everything], [everything-build])
 BC_ARG_ALIAS([everything], [build-everything])
 
-# aliases for allowing configure to modify the flags automatically (help uses automatic-flags)
-BC_ARG_ALIAS([auto_flags], [auto-flags])
-BC_ARG_ALIAS([auto_flags], [auto-flag])
-BC_ARG_ALIAS([auto_flags], [automatic-flag])
-
 # aliases for building only the benchmark (help uses only-benchmark)
 BC_ARG_ALIAS([only_benchmark], [only-bench])
 BC_ARG_ALIAS([only_benchmark], [only-benchmarks])
@@ -511,6 +504,14 @@ BC_ARG_ALIAS([build_tcl], [libtcl-build])
 BC_ARG_ALIAS([build_tk], [tk])
 BC_ARG_ALIAS([build_tk], [libtk])
 BC_ARG_ALIAS([build_tk], [libtk-build])
+
+# aliases to force building tkaqua (help uses aquatk-build)
+BC_ARG_ALIAS([build_aquatk], [aquatk])
+BC_ARG_ALIAS([build_aquatk], [aqua-tk])
+BC_ARG_ALIAS([build_aquatk], [aqua-tk-build])
+BC_ARG_ALIAS([build_aquatk], [tkaqua])
+BC_ARG_ALIAS([build_aquatk], [tkaqua-build])
+BC_ARG_ALIAS([build_aquatk], [tk-aqua-build])
 
 # aliases to force building itcl (help uses itcl-build)
 BC_ARG_ALIAS([build_itcl], [itcl])
@@ -829,9 +830,6 @@ fi
 AC_MSG_CHECKING(whether to compile everything was requested)
 AC_MSG_RESULT($bc_everything)
 
-AC_MSG_CHECKING(whether to automatically set build flags)
-AC_MSG_RESULT($bc_auto_flags)
-
 AC_MSG_CHECKING(whether to only build benchmark)
 AC_MSG_RESULT($bc_only_benchmark)
 
@@ -865,8 +863,8 @@ AC_MSG_RESULT($bc_build_tcl)
 AC_MSG_CHECKING(whether to build the Tk library)
 AC_MSG_RESULT($bc_build_tk)
 
-AC_MSG_CHECKING(whether to use Aqua windowing system in the built Tk library)
-AC_MSG_RESULT($bc_tk_aqua)
+AC_MSG_CHECKING(whether to use AquaTk)
+AC_MSG_RESULT($bc_build_aquatk)
 
 AC_MSG_CHECKING(whether to build the incrTcl library)
 AC_MSG_RESULT($bc_build_itcl)
@@ -1161,6 +1159,7 @@ CFBundleRef bref = CFBundleGetMainBundle();
 ], [framework_cf=yes ; FRAMEWORK_COREFOUNDATION="-framework CoreFoundation"])
 LIBS="$PRELIBS"
 AC_MSG_RESULT($framework_cf)
+AC_SUBST(FRAMEWORK_COREFOUNDATION)
 
 dnl check whether the Carbon framework is available (used for X11 focus)
 AC_MSG_CHECKING([whether -framework Carbon is available])
@@ -1181,6 +1180,39 @@ if (processName != NULL) {
 LIBS="$PRELIBS"
 AC_MSG_RESULT($framework_carbon)
 AC_SUBST(FRAMEWORK_CARBON)
+
+dnl check whether the JavaVM framework is available (used for librtserver)
+AC_MSG_CHECKING([whether -framework JavaVM is available])
+framework_javavm=no
+FRAMEWORK_JAVAVM=""
+PRELIBS="$LIBS"
+LIBS="$LIBS -framework JavaVM"
+AC_TRY_LINK([#include <JavaVM/jni.h>], [
+JavaVM *jvm;
+JNIEnv *env;
+JavaVMInitArgs args;
+jint i = JNI_GetDefaultJavaVMInitArgs(&args);
+jboolean j = JNI_CreateJavaVM(&jvm, (void**)&env, &args);
+if (j && jvm) {
+  (*jvm)->DestroyJavaVM(jvm);
+}
+], [framework_javavm=yes ; FRAMEWORK_JAVAVM="-framework JavaVM"])
+LIBS="$PRELIBS"
+AC_MSG_RESULT($framework_javavm)
+AC_SUBST(FRAMEWORK_JAVAVM)
+
+
+dnl check for java
+JAVA_CFLAGS="$FRAMEWORK_JAVAVM"
+JAVA_LDFLAGS="-shrext .jnilib $FRAMEWORK_JAVAVM"
+if test "x$bc_with_java" = "xyes" ; then
+    if test "x$bc_with_java_val" != "x" ; then
+	JAVA_CFLAGS="-I$bc_with_java_val/include -I$bc_with_java_val/include/`uname | tr [A-Z] [a-z]`"
+	JAVA_LDFLAGS="-shrext .jnilib -L$bc_with_java_val/lib64 -L$bc_with_java_val/lib"
+    fi
+fi
+AC_SUBST(JAVA_CFLAGS)
+AC_SUBST(JAVA_LDFLAGS)
 
 
 dnl find a curses or other terminal library
@@ -1456,26 +1488,6 @@ AC_CHECK_LIB(stdc++, main, stdcxx_link_works=yes ; LIBSTDCXX="-lstdc++",
 	 LIBS="$PRELIBS"
 	 )]
 )
-
-dnl check for java
-JAVA_CFLAGS=
-JAVA_LDFLAGS=
-if test "x$bc_with_java" = "xyes" ; then
-    if test "x$bc_with_java_val" != "x" ; then
-	JAVA_CFLAGS="-I$bc_with_java_val/include -I$bc_with_java_val/include/`uname | tr [A-Z] [a-z]`"
-    fi
-fi
-# XXX this should go away and become proper library or compiler option checks
-if test ! "x$bc_auto_flags" = "xno" ; then
-    case "$target" in
-	*-*-darwin*)
-		JAVA_CFLAGS="-framework JavaVM"
-		JAVA_LDFLAGS="-shrext .jnilib -framework JavaVM"
-		;;
-    esac
-fi
-AC_SUBST(JAVA_CFLAGS)
-AC_SUBST(JAVA_LDFLAGS)
 
 dnl check for Pro/ENGINEER
 PRO_ENGINEER_DIR=
@@ -1794,7 +1806,7 @@ dnl ******************************************
 
 BC_CONFIGURE_STAGE([compiler], [6 of 9])
 
-if test ! "x$bc_auto_flags" = "xno" ; then
+if test "xyes" = "xyes" ; then
 
     dnl try to use -pipe to speed up the compiles
     BC_COMPILER_AND_LINKER_RECOGNIZES([-pipe])
@@ -1929,18 +1941,15 @@ if test "x$bc_use_optimized" != "xno" ; then
 #	if test "x$bc_mac_opt_flag_works" = "xno" ; then
 #		BC_COMPILER_AND_LINKER_RECOGNIZES([-fast -mcpu=7450], [mac_opt_flag])
 #	fi
-	# don't set extra optimization flags if auto-flags was turned off
-	if test ! "x$bc_auto_flags" = "xno" ; then
-		if test "x$bc_mac_opt_flag_works" = "xno" ; then
-			extra_optimization_flag="-ffast-math -fstrength-reduce -fexpensive-optimizations -finline-functions"
-			if test "x$bc_use_debug" = "xno" ; then
-				dnl non-debug can omit the frame pointer, debug cannot
-				extra_optimization_flag="$extra_optimization_flag -fomit-frame-pointer"
-			else
-				extra_optimization_flag="$extra_optimization_flag -fno-omit-frame-pointer"
-			fi
-			BC_COMPILER_AND_LINKER_RECOGNIZES([$extra_optimization_flag])
+	if test "xdisabled" = "xyes" ; then
+		extra_optimization_flag="-ffast-math -fstrength-reduce -fexpensive-optimizations -finline-functions"
+		if test "x$bc_use_debug" = "xno" ; then
+			dnl non-debug can omit the frame pointer, debug cannot
+			extra_optimization_flag="$extra_optimization_flag -fomit-frame-pointer"
+		else
+			extra_optimization_flag="$extra_optimization_flag -fno-omit-frame-pointer"
 		fi
+		BC_COMPILER_AND_LINKER_RECOGNIZES([$extra_optimization_flag])
 	fi
 fi
 
@@ -2641,7 +2650,7 @@ if test "x$build_brlcad_tk" = "xyes" ; then
     TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
     TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
     TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
-    if test "x$bc_tk_aqua" = "xyes" ; then
+    if test "x$bc_build_aquatk" = "xyes" ; then
 	TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
     fi
 else
@@ -3211,6 +3220,72 @@ if test "x$bc_with_proe" != "xno" ; then
 fi
 
 
+dnl *** X11 interface compilation ***
+build_against_x11="no"
+if test "x$bc_with_x11" != "xno" ; then
+    x11_works=no
+    AC_MSG_CHECKING(for X11 header functionality)
+    PRELDFLAGS="$LDFLAGS"
+    PRECPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+    AC_TRY_RUN([
+#include <X11/Xlib.h>
+main() {
+    XPoint pt;
+    pt.x = pt.y = 0;
+    return pt.x;
+}
+    ],[x11_works=yes])
+    AC_MSG_RESULT($x11_works)
+    if test "x$x11_works" = "xyes" ; then
+	LDFLAGS="$LDFLAGS $X_LIBS"
+	AC_MSG_CHECKING(for X11 link functionality)
+	AC_TRY_RUN([
+#include <X11/Xlib.h>
+main() {
+    XModifierKeymap *xmkm;
+    xmkm=XNewModifiermap(1);
+    return xmkm==NULL;
+}
+	],,x11_works=no)
+	AC_MSG_RESULT($x11_works)
+    fi
+    LDFLAGS="$PRELDFLAGS"
+    CPPFLAGS="$PRECPPFLAGS"
+
+    dnl figure out whether we need to build against X11
+    if test "x$bc_with_x11" != "xno" ; then
+	if test "x$bc_build_aquatk" = "xyes" ; then
+	    X_LIBS=""
+	    LIBGL=""
+	    X_CFLAGS=""
+	    build_against_opengl="no"
+	    if test "x$bc_with_x11" = "xyes" ; then
+		AC_MSG_ERROR([*** X11 was requested, but tk will be built for AquaTk ***])
+	    fi
+	else
+	    if test "x$x11_works" = "xyes" ; then
+		build_against_x11="yes"
+	    else
+		if test "x$bc_with_x11" = "xyes" ; then
+		    AC_MSG_NOTICE([X11 was requested, but no system X11 libraries were found])
+		    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		    AC_MSG_NOTICE([Try adding --without-x11])
+		    AC_MSG_ERROR([*** Using X11 was requested, yet no system X11 was found ***])
+		else
+		    AC_MSG_NOTICE([X11 does not appear to be functionally available])
+		fi
+	    fi
+	fi
+    fi
+fi
+AC_SUBST(X_PREFIX)
+AC_SUBST(X_CFLAGS)
+AC_SUBST(X_LIBS)
+AC_MSG_CHECKING(whether to build against X11)
+AC_MSG_RESULT($build_against_x11)
+
+
 dnl *** OpenGL interface compilation ***
 build_against_opengl="no"
 if test "x$bc_with_opengl" != "xno" ; then
@@ -3298,72 +3373,6 @@ main(int argc, char *argv[]) {
 fi # bc_with_wgl
 AC_MSG_CHECKING(whether to build against WindowsGL)
 AC_MSG_RESULT($build_against_wgl)
-
-
-dnl *** X11 interface compilation ***
-build_against_x11="no"
-if test "x$bc_with_x11" != "xno" ; then
-    x11_works=no
-    AC_MSG_CHECKING(for X11 header functionality)
-    PRELDFLAGS="$LDFLAGS"
-    PRECPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-    AC_TRY_RUN([
-#include <X11/Xlib.h>
-main() {
-    XPoint pt;
-    pt.x = pt.y = 0;
-    return pt.x;
-}
-    ],[x11_works=yes])
-    AC_MSG_RESULT($x11_works)
-    if test "x$x11_works" = "xyes" ; then
-	LDFLAGS="$LDFLAGS $X_LIBS"
-	AC_MSG_CHECKING(for X11 link functionality)
-	AC_TRY_RUN([
-#include <X11/Xlib.h>
-main() {
-    XModifierKeymap *xmkm;
-    xmkm=XNewModifiermap(1);
-    return xmkm==NULL;
-}
-	],,x11_works=no)
-	AC_MSG_RESULT($x11_works)
-    fi
-    LDFLAGS="$PRELDFLAGS"
-    CPPFLAGS="$PRECPPFLAGS"
-
-    dnl figure out whether we need to build against X11
-    if test "x$bc_with_x11" != "xno" ; then
-	if test "x$bc_tk_aqua" = "xyes" ; then
-	    X_LIBS=""
-	    LIBGL=""
-	    X_CFLAGS=""
-	    build_against_opengl="no"
-	    if test "x$bc_with_x11" = "xyes" ; then
-		AC_MSG_ERROR([*** X11 was requested, but tk is/will be built for aqua ***])
-	    fi
-	else
-	    if test "x$x11_works" = "xyes" ; then
-		build_against_x11="yes"
-	    else
-		if test "x$bc_with_x11" = "xyes" ; then
-		    AC_MSG_NOTICE([X11 was requested, but no system X11 libraries were found])
-		    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		    AC_MSG_NOTICE([Try adding --without-x11])
-		    AC_MSG_ERROR([*** Using X11 was requested, yet no system X11 was found ***])
-		else
-		    AC_MSG_NOTICE([X11 does not appear to be functionally available])
-		fi
-	    fi
-	fi
-    fi
-fi
-AC_SUBST(X_PREFIX)
-AC_SUBST(X_CFLAGS)
-AC_SUBST(X_LIBS)
-AC_MSG_CHECKING(whether to build against X11)
-AC_MSG_RESULT($build_against_x11)
 
 
 dnl *** SDL availability  ***
@@ -3663,10 +3672,12 @@ bc_top_builddir="$ac_top_builddir"
 # for subconfigure
 bc_configure_args="$ac_configure_args"
 
-dnl configure Tcl
+dnl the way to turn on debug for tcl/tk configure
 if test "x$bc_use_debug" != "xno" ; then
    ac_configure_args="$ac_configure_args --enable-symbols"
 fi
+
+dnl configure Tcl
 if test "x$build_brlcad_tcl" = "xyes" ; then
     AC_CONFIG_SUBDIRS([src/other/tcl/unix])
     TCL_PATH="$PWD/${ac_top_builddir}/src/other/tcl/unix"
@@ -3674,12 +3685,14 @@ if test "x$build_brlcad_tcl" = "xyes" ; then
     TK_PATH="$PWD/${ac_top_builddir}/src/other/tk/unix"
     TK_PATH="`echo ${TK_PATH} | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
 fi
-
 AC_SUBST(TCL_PATH)
 AC_SUBST(TK_PATH)
 
 dnl configure Tk
 if test "x$build_brlcad_tk" = "xyes" ; then
+    if test "x$bc_build_aquatk" = "xyes" ; then
+	ac_configure_args="$ac_configure_args --enable-aqua"
+    fi
     AC_CONFIG_SUBDIRS([src/other/tk/unix])
 fi
 
