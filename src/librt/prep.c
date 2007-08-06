@@ -987,6 +987,7 @@ rt_clean(register struct rt_i *rtip)
 
 	bu_hist_free( &rtip->rti_hist_cellsize );
 	bu_hist_free( &rtip->rti_hist_cutdepth );
+	bu_hist_free( &rtip->rti_hist_cell_pieces );
 
 	/*
 	 *  Zero the solid instancing counters in dbip database instance.
