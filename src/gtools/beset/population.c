@@ -60,12 +60,19 @@ int shape_number;
 void 
 pop_init (struct population *p, int size)
 {
+    int i;
     p->parent = bu_malloc(sizeof(struct individual) * size, "parent");
     p->child  = bu_malloc(sizeof(struct individual) * size, "child");
     p->size = size;
-    p->db_p = db_create("gen000", 5); 
-    p->db_p->dbi_wdbp = wdb_dbopen(p->db_p, RT_WDB_TYPE_DB_DISK);
-    p->db_c = DBI_NULL;
+    p->db_c = p->db_p = DBI_NULL;
+    p->name = bu_malloc(sizeof(char **) * size, "names");
+    
+    /* pre-compute indidvidual names */
+    for(i = 0; i < size; i++){
+	p->name[i] = bu_malloc(sizeof(char *) * 256, "name");
+	snprintf(p->name[i], 256, "ind%.3d", i);
+    }
+
 
 #define SEED 33
     /* init in main() bn_rand_init(idx, SEED);*/
@@ -78,6 +85,10 @@ pop_init (struct population *p, int size)
 void 
 pop_clean (struct population *p)
 {
+    int i;
+    for(i = 0; i < p->size; i++)
+	bu_free(p->name[i], "name");
+    bu_free(p->name, "names");
     bu_free(p->parent, "parent");
     bu_free(p->child, "child");
 }
@@ -88,13 +99,18 @@ pop_clean (struct population *p)
  *	also use variable/defined rates, intersection with bounding box, etc...
  */
 void 
-pop_spawn (struct population *p, struct rt_wdb *db_fp)
+pop_spawn (struct population *p)
 {
     int i;
     point_t p1, p2; /* , p3; */
     struct wmember wm_hd;
     double r1, r2; /* , r3; */
 
+    char shape[256];
+
+    p->db_p = db_create("gen000", 5); 
+    p->db_p->dbi_wdbp = wdb_dbopen(p->db_p, RT_WDB_TYPE_DB_DISK);
+ 
     for(i = 0; i < p->size; i++) {
 
 	BU_LIST_INIT(&wm_hd.l);
@@ -123,26 +139,26 @@ pop_spawn (struct population *p, struct rt_wdb *db_fp)
 
 
 	p->parent[i].fitness = 0.0;
+	p->parent[i].id = i;
 
-	snprintf(p->parent[i].id, 256, "gen%.3dind%.3d-%.3d", 0,i,0);
-	mk_sph(db_fp, p->parent[i].id, p1, r1);
-	mk_addmember(p->parent[i].id, &wm_hd.l, NULL, WMOP_UNION);
+	snprintf(shape, 256, "ind%.3d-%.3d", i,0);
+	mk_sph(p->db_p->dbi_wdbp, shape, p1, r1);
+	mk_addmember(shape, &wm_hd.l, NULL, WMOP_UNION);
 
 
-	snprintf(p->parent[i].id, 256, "gen%.3dind%.3d-%.3d", 0,i,1);
-	mk_sph(db_fp, p->parent[i].id, p2, r2);
-	mk_addmember(p->parent[i].id, &wm_hd.l, NULL, WMOP_UNION);
+	snprintf(shape, 256, "ind%.3d-%.3d", i,1);
+	mk_sph(p->db_p->dbi_wdbp,shape, p2, r2);
+	mk_addmember(shape, &wm_hd.l, NULL, WMOP_UNION);
 
 	/*
-	snprintf(p->parent[i].id, 256, "gen%.3dind%.3d-%.3d", 0,i,2);
-	mk_sph(db_fp, p->parent[i].id, p3, r3);
-	mk_addmember(p->parent[i].id, &wm_hd.l, NULL, WMOP_UNION);
+	snprintf(NL_P(p->parent[i].id), 256, "gen%.3dind%.3d-%.3d", 0,i,2);
+	mk_sph(db_fp, NL_P(p->parent[i].id), p3, r3);
+	mk_addmember(NL_P(p->parent[i].id), &wm_hd.l, NULL, WMOP_UNION);
 	*/
 
 
 
-	snprintf(p->parent[i].id, 256, "gen%.3dind%.3d", 0, i);
-	mk_lcomb(db_fp, p->parent[i].id, &wm_hd, 1, NULL, NULL, NULL, 0);
+	mk_lcomb(p->db_p->dbi_wdbp, NL_P(p->parent[i].id), &wm_hd, 1, NULL, NULL, NULL, 0);
     }
 
 /*

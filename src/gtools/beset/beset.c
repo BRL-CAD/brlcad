@@ -114,7 +114,7 @@ int main(int argc, char *argv[]){
     int best,worst;
     fastf_t total_fitness = 0.0f;
     struct fitness_state fstate;
-    struct population pop = {NULL,NULL,NULL,NULL,0};
+    struct population pop = {NULL,NULL,NULL,NULL,NULL,0};
     char dbname[256] = {0}; 
     struct options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0};
     struct individual *tmp = NULL;
@@ -132,7 +132,7 @@ int main(int argc, char *argv[]){
 
     /* initialize population and spawn initial individuals */
     pop_init(&pop, opts.pop_size);
-    pop_spawn(&pop, pop.db_p->dbi_wdbp);
+    pop_spawn(&pop);
     
     for(g = 1; g < opts.gens; g++ ){
 #ifdef VERBOSE
@@ -151,7 +151,7 @@ int main(int argc, char *argv[]){
 	 * note: need to calculate outside of main pop
 	 * loop because it's needed for pop_wrand_ind()*/
 	for(i = 0; i < pop.size; i++) {
-	   fit_diff(pop.parent[i].id, pop.db_p, &fstate);
+	   fit_diff(NL(pop.parent[i].id), pop.db_p, &fstate);
 	   pop.parent[i].fitness = fstate.fitness;
 	   total_fitness += FITNESS;
 	}
@@ -164,16 +164,16 @@ int main(int argc, char *argv[]){
 	}
 
 
-	printf("Most fit individual was %s with a fitness of %g\n", pop.parent[pop.size-1].id, pop.parent[pop.size-1].fitness);
+	printf("Most fit individual was %s with a fitness of %g\n", NL(pop.parent[pop.size-1].id), pop.parent[pop.size-1].fitness);
 	printf("%6.8g\t%6.8g\t%6.8g\n", total_fitness/pop.size, pop.parent[0].fitness, pop.parent[pop.size-1].fitness);
 
 	for(i = 0; i < pop.size; i++){
 
-	    snprintf(pop.child[i].id, 256, "gen%.3dind%.3d", g, i); 
+	    pop.child[i].id = i;
 
 	    /* keep upper N */
 	    if(i >= pop.size - opts.keep_upper){
-		pop_gop(REPRODUCE, pop.parent[i].id, NULL, pop.child[i].id, NULL,
+		pop_gop(REPRODUCE, NL(pop.parent[i].id), NULL, NL(pop.child[i].id), NULL,
 			pop.db_p, pop.db_c, &rt_uniresource);
 		continue;
 	    }
@@ -187,23 +187,23 @@ int main(int argc, char *argv[]){
 
 	    if(gop & (REPRODUCE | MUTATE)){
 #ifdef VERBOSE
-		printf("r(%s)\t ---------------> (%s)\n", pop.parent[parent1].id, pop.child[i].id);
+		printf("r(%s)\t ---------------> (%s)\n", NL(pop.parent[parent1].id), NL(pop.child[i].id));
 #endif
 		/* perform the genetic operation and output the child to the child database */
-		pop_gop(gop, pop.parent[parent1].id, NULL, pop.child[i].id, NULL,
+		pop_gop(gop, NL(pop.parent[parent1].id), NULL, NL(pop.child[i].id), NULL,
 			pop.db_p, pop.db_c, &rt_uniresource);
 	    } else {
 	    
 	    /* If we're performing crossover, we need a second parent */
 		parent2 = pop_wrand_ind(pop.parent, pop.size, total_fitness, opts.kill_lower);
 		++i;
-		snprintf(pop.child[i].id, 256, "gen%.3dind%.3d", g, i); 
+		pop.child[i].id = i;
 
 #ifdef VERBOSE 
-		printf("x(%s, %s) --> (%s, %s)\n", pop.parent[parent1].id, pop.parent[parent2].id, pop.child[i-1].id, pop.child[i].id);
+		printf("x(%s, %s) --> (%s, %s)\n", NL(pop.parent[parent1].id), NL(pop.parent[parent2].id), pop.child[i-1].id, pop.child[i].id);
 #endif
 		/* perform the genetic operation and output the children to the cihld database */
-		pop_gop(gop, pop.parent[parent1].id, pop.parent[parent2].id, pop.child[i-1].id, pop.child[i].id,
+		pop_gop(gop, NL(pop.parent[parent1].id), NL(pop.parent[parent2].id), NL(pop.child[i-1].id), NL(pop.child[i].id),
 			pop.db_p, pop.db_c, &rt_uniresource);
 	    } 
 	    
@@ -226,7 +226,7 @@ int main(int argc, char *argv[]){
     printf("\nFINAL POPULATION\n"
 	    "----------------\n");
     for(i = 0; i < pop.size; i++)
-	printf("%s\tf:%.5g\n", pop.child[i].id, 
+	printf("%s\tf:%.5g\n",NL(pop.child[i].id), 
 		pop.child[i].fitness);
 #endif
 

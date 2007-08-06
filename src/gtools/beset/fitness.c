@@ -409,7 +409,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     for(i = 0; i < fstate->max_cpus; i++) 
 	rt_clean_resource(fstate->rtip, &fstate->resource[i]);
     */
-    rt_clean(fstate->rtip);
+    rt_free_rti(fstate->rtip);
 
 
 }

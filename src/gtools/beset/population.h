@@ -43,7 +43,7 @@ struct name{
 };
 
 struct individual {
-    char id[256];
+    int id;
     fastf_t fitness;
 };
 
@@ -54,6 +54,7 @@ struct population {
     struct db_i *db_p; 
     struct db_i *db_c; 
 
+    char **name;
     int size;
 };
 
@@ -64,7 +65,7 @@ struct node{
 };
 
 void pop_init	    (struct population *p, int size);
-void pop_spawn	    (struct population *p, struct rt_wdb *db_fp);
+void pop_spawn	    (struct population *p);
 void pop_clean	    (struct population *p);
 void pop_add	    (struct individual *i, struct rt_wdb *db);
 int  pop_wrand_ind  (struct individual *i, int size, fastf_t total_fitness, int offset);

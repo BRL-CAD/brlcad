@@ -40,6 +40,8 @@
 #define DEFAULT_GENS 50
 #define DEFAULT_RES 10
 #define OPTIONS ":x:p:g:r:u:l:"
+#define NL(a) pop.name[(a)]
+#define NL_P(a) p->name[(a)]
 
 struct options{
     int pop_size;
