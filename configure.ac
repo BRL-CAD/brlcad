@@ -326,7 +326,7 @@ BC_ARG_ENABLE([build_zlib], [zlib-build], [Build the included zlib compression l
 BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit], [auto])
 
 # force enable/disable building of openNURBS
-BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
+BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [no])
 
 # force enable/disable building of termlib
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
@@ -2411,7 +2411,7 @@ dnl See if openNURBS library support works
 opennurbs_works=no
 AC_MSG_CHECKING(for openNURBS functionality)
 PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBOPENNURBS"
+LDFLAGS="$LDFLAGS $LIBOPENNURBS $LIBZLIB"
 AC_LANG_PUSH([C++])
 AC_TRY_RUN([
 #include <opennurbs.h>
@@ -2449,7 +2449,7 @@ if test "x$build_brlcad_opennurbs" = "xyes" ; then
     OPENNURBS_CPPFLAGS='-I${top_srcdir}/src/other/openNURBS'
     AC_MSG_RESULT(yes)
 else
-    OPENNURBS="$LIBOPENNURBS $LIBSTDCXX"	# produces " " if we're not using OpenNURBS
+    OPENNURBS="$LIBOPENNURBS $LIBSTDCXX $LIBZ"	# produces "  " if we didn't find OpenNURBS
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(OPENNURBS)
@@ -3524,8 +3524,8 @@ AM_CONDITIONAL(WITH_TK, [test "xyes" = "xno"])
 AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
 
-### the echo is to remove leading or trailing whitespace.
-AM_CONDITIONAL(WITH_OPENNURBS, [test "`echo x$OPENNURBS`" != "x"])
+# FIXME: this needs to be actually set up above
+AM_CONDITIONAL(WITH_OPENNURBS, [test "x$build_against_opennurbs" != "x"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
