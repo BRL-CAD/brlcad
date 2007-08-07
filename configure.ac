@@ -2769,7 +2769,7 @@ iwidgets_works=no
 AC_MSG_CHECKING(for iwidgets functionality)
 PRELIBS="$LIBS"
 if test "x$tcl_link_works" = "xyes" ; then
-    LIBS="$LIBS $LIBTCL"
+    LIBS="$LIBS $LIBTCL $LIBITCL"
 fi
 dnl this test is probably not sufficient if iwidgets is not locateable
 dnl in the tcl auto_path.
@@ -2778,14 +2778,28 @@ AC_TRY_RUN([
 #  include <tcl.h>
 #endif
 int main() {
+    int res = TCL_OK;
     Tcl_Interp *interp;
     const char *cmd = "package require Iwidgets";
+    char *b = NULL;
     interp = Tcl_CreateInterp();
-    if (Itcl_Init(interp) == TCL_ERROR) {
+    if (Tcl_Init(interp) == TCL_ERROR) {
+	printf("TCL interpreter failed to init: %s\n", interp->result);
 	return 1;
     }
-    if (Tcl_Eval(interp, cmd) != TCL_OK) {
+    if (Itcl_Init(interp) == TCL_ERROR) {
+	printf("ITCL interp failed to initaliaze: %s\n", interp->result);
 	return 1;
+    }
+    res = Tcl_Eval(interp, cmd); 
+    if ( res != TCL_OK) {
+	printf("Failed to load Iwidgets: %s\n", interp->result);
+	if(Tcl_Eval(interp, "package names") == TCL_ERROR)
+	    return 1;
+	while(b=strtok(b?NULL:interp->result," "))
+	  if(!strncmp(b,"Iwidgets",8))
+	    return 0;
+        return 1;
     }
     return 0;
 }
