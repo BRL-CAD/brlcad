@@ -886,6 +886,7 @@ rt_clean(register struct rt_i *rtip)
 			i = 0;
 			while( regp->attr_values[i] ) {
 				bu_mro_free( regp->attr_values[i] );
+				bu_free(regp->attr_values[i], "rp->attr_values[i]");
 				i++;
 			}
 			bu_free( (char *)regp->attr_values, "regp->attr_values" );
