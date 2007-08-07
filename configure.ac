@@ -2527,7 +2527,7 @@ TCLSTUB=""
 TCL_CPPFLAGS=""
 TCL_VERSION="8.5"
 case $host_os in
-     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd*|*sunos4*)
+     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
 	 TCL_VERSION="`echo ${TCL_VERSION} | tr -d .`"
 	 ;;
@@ -2639,7 +2639,7 @@ TKSTUB=""
 TK_CPPFLAGS=""
 TK_VERSION="8.5"
 case $host_os in
-     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd*|*sunos4*)
+     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
 	 TK_VERSION="`echo ${TK_VERSION} | tr -d .`"
 	 ;;
@@ -2736,7 +2736,7 @@ ITCL_CPPFLAGS=""
 ITK_CPPFLAGS=""
 ITCL_VERSION=3.3
 case $host_os in
-     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd*|*sunos4*)
+     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
 	 ITCL_VERSION="`echo ${ITCL_VERSION} | tr -d .`"
 	 ;;
@@ -2825,7 +2825,7 @@ dnl *** BLT ***
 dnl figure out whether we need to build BLT
 BLT_VERSION="2.4"
 case $host_os in
-     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd*|*sunos4*)
+     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
 	 BLT_VERSION="`echo ${BLT_VERSION} | tr -d .`"
 	 ;;
@@ -2849,7 +2849,7 @@ dnl *** tkImg ***
 dnl figure out whether we need to build tkImg
 TKIMG_VERSION="1.3"
 case $host_os in
-     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd*|*sunos4*)
+     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
 	 TKIMG_VERSION="`echo ${TKIMG_VERSION} | tr -d .`"
 	 ;;
