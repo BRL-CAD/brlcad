@@ -69,6 +69,8 @@ struct fitness_state {
     fastf_t same;
 
     fastf_t mdl_min[3];
+    fastf_t min[3];
+    fastf_t max[3];
     fastf_t fitness;
     fastf_t volume;
 };

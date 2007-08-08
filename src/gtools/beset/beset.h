@@ -39,7 +39,7 @@
 #define DEFAULT_POP_SIZE 20
 #define DEFAULT_GENS 50
 #define DEFAULT_RES 10
-#define OPTIONS ":x:p:g:r:u:l:"
+#define OPTIONS ":c:m:x:p:g:r:u:l:"
 #define NL(a) pop.name[(a)]
 #define NL_P(a) p->name[(a)]
 
@@ -49,6 +49,8 @@ struct options{
     int res;
     int kill_lower;
     int keep_upper;
+    int mut_rate;
+    int cross_rate
 };
 
 

@@ -48,6 +48,7 @@
 #include "fitness.h"
 #include "population.h"
 #include "beset.h"
+struct rt_db_internal source_obj;
 
 
 void usage(){fprintf(stderr, "Usage: %s [options] db.g object\nOptions:\n -p #\t\tPopulation size\n -g #\t\tNumber of generations\n -r #\t\tResolution \n -u #\t\tUpper percent of individuals to keep\n -l #\t\tLower percent of individuals to kill\n",bu_getprogname());exit(1);}
@@ -77,6 +78,12 @@ parse_args (int ac, char *av[], struct options *opts)
 
     while ((c=bu_getopt(ac,av,OPTIONS)) != EOF) {
 	switch (c) {
+	    case 'm':
+		opts->mut_rate = atoi(bu_optarg);
+		continue;
+	    case 'c':
+		opts->cross_rate = atoi(bu_optarg);
+		continue;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 		continue;
@@ -119,6 +126,10 @@ int main(int argc, char *argv[]){
     struct options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0};
     struct individual *tmp = NULL;
     int  ac;
+    struct directory *dp;
+    int d_flags;
+    unsigned char d_minor_type;
+    struct db_i *source_db;
 
 
     ac = parse_args(argc, argv, &opts);
@@ -130,9 +141,16 @@ int main(int argc, char *argv[]){
     fit_prep(&fstate, opts.res, opts.res);
     fit_store(argv[ac+2], argv[ac+1], &fstate); 
 
+
     /* initialize population and spawn initial individuals */
     pop_init(&pop, opts.pop_size);
     pop_spawn(&pop);
+
+    source_db = db_open(argv[ac+1], "r+w");
+    db_dirbuild(source_db);
+       pop.db_c = db_create("testdb", 5);
+    db_close(pop.db_c);
+
     
     for(g = 1; g < opts.gens; g++ ){
 #ifdef VERBOSE
@@ -145,6 +163,10 @@ int main(int argc, char *argv[]){
 
 	snprintf(dbname, 256, "gen%.3d", g);
 	pop.db_c = db_create(dbname, 5);
+
+	pop_gop(REPRODUCE, argv[ac+2], NULL, argv[ac+2], NULL, source_db, pop.db_c, &rt_uniresource);
+ 
+
 
 	/* calculate sum of all fitnesses and find
 	 * the most fit individual in the population
@@ -164,9 +186,8 @@ int main(int argc, char *argv[]){
 	}
 
 
-	printf("Most fit individual was %s with a fitness of %g\n", NL(pop.parent[pop.size-1].id), pop.parent[pop.size-1].fitness);
+	printf("Most fit from %s was %s with a fitness of %g\n", dbname, NL(pop.parent[pop.size-1].id), pop.parent[pop.size-1].fitness);
 	printf("%6.8g\t%6.8g\t%6.8g\n", total_fitness/pop.size, pop.parent[0].fitness, pop.parent[pop.size-1].fitness);
-
 	for(i = 0; i < pop.size; i++){
 
 	    pop.child[i].id = i;
@@ -193,7 +214,6 @@ int main(int argc, char *argv[]){
 		pop_gop(gop, NL(pop.parent[parent1].id), NULL, NL(pop.child[i].id), NULL,
 			pop.db_p, pop.db_c, &rt_uniresource);
 	    } else {
-	    
 	    /* If we're performing crossover, we need a second parent */
 		parent2 = pop_wrand_ind(pop.parent, pop.size, total_fitness, opts.kill_lower);
 		++i;
@@ -209,6 +229,8 @@ int main(int argc, char *argv[]){
 	    
 	}
 
+
+
 	/* Close parent db and move children 
 	 * to parent database and population
 	 * Note: pop size is constant so we
@@ -221,6 +243,7 @@ int main(int argc, char *argv[]){
 	pop.parent = tmp;
 
     }
+    db_close(pop.db_p);
 
 #ifdef VERBOSE
     printf("\nFINAL POPULATION\n"
@@ -231,8 +254,8 @@ int main(int argc, char *argv[]){
 #endif
 
 
-    fit_clean(&fstate);
     pop_clean(&pop);
+    fit_clean(&fstate);
     return 0;
 }
 

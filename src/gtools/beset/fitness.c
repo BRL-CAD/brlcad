@@ -323,9 +323,9 @@ rt_worker(int cpu, genptr_t g)
 
     while((v = get_next_row(fstate))) {
 	for(u = 1; u <= fstate->res[X]; u++) {
-	    ap.a_ray.r_pt[X] = fstate->mdl_min[X] + u * fstate->gridSpacing[X];
-	    ap.a_ray.r_pt[Y] = fstate->mdl_min[Y] + v * fstate->gridSpacing[Y];
-	    ap.a_ray.r_pt[Z] = fstate->mdl_min[Z];
+	    ap.a_ray.r_pt[X] = fstate->min[X] + u * fstate->gridSpacing[X];
+	    ap.a_ray.r_pt[Y] = fstate->min[Y] + v * fstate->gridSpacing[Y];
+	    ap.a_ray.r_pt[Z] = fstate->min[Z];
 	    ap.a_user = (v-1)*(fstate->res[X]) + u-1;
 	    
 	    rt_shootray(&ap);
@@ -343,7 +343,8 @@ void
 fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 {
     int i;
-    fastf_t z_max;
+    fastf_t diff[3];
+    fastf_t min[3], max[3];
     
 
     /*
@@ -372,34 +373,84 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     }
     */
 
-    /* stash max z depth as it will change
-     * when the rtip is prepped.
-     * Don't bother to stash min, just let it
-     * be zero. */
-    if(fstate->capture)
-	z_max = fstate->rtip->mdl_max[Z];
+    /* stash bounding box and if comparing to source
+     * calculate the difference between the bounding boxes */
+    if(fstate->capture) {
+	VMOVE(fstate->min, fstate->rtip->mdl_min);
+	VMOVE(fstate->max, fstate->rtip->mdl_max);
+/*	z_max = fstate->rtip->mdl_max[Z];*/
+    }
+    /*else {
+	* instead of storing min and max, just compute
+	 * what we're going to need later 
+	for(i = 0; i < 3; i++){
+	    diff[i] = 0;
+	    if(fstate->min[i] > fstate->rtip->mdl_min[i]) 
+		diff[i] += fstate->min[i] - fstate->rtip->mdl_min[i];
+	    if(fstate->max[i] < fstate->rtip->mdl_max[i]) 
+		diff[i] += fstate->rtip->mdl_max[i] - fstate->max[i];
+	    if(fstate->min[i]  < fstate->rtip->mdl_min[i])
+		min[i] = fstate->min[i];
+	    else
+		min[i] = fstate->rtip->mdl_min[i];
+	    if(fstate->max[i] > fstate->rtip->mdl_max[i])
+		max[i] = fstate->max[i];
+	    else
+		max[i] = fstate->rtip->mdl_max[i];
+	    diff[i] = max[i] - min[i];
+	}
+	fastf_t tmp = (diff[X]/fstate->gridSpacing[X]-1) * (diff[Y]/fstate->gridSpacing[Y] - 1);
+	fstate->volume = (fstate->a_len + (max[Z] - fstate->max[Z])) * tmp;
+    }
+    */
 
-    /*rt_prep_parallel(fstate->rtip, fstate->ncpu);*/
+
+    /*rt_prep_parallel(fstate->rtip, fstate->ncpu)o;*/
+
     rt_prep(fstate->rtip);
-
-    if(fstate->capture){
+        if(fstate->capture){
 	/* Store bounding box of voxel data -- fixed bounding box for fitness */ 
-	fstate->gridSpacing[X] = (fstate->rtip->mdl_max[X]-fstate->rtip->mdl_min[X])/ (fstate->res[X] + 1);
-	fstate->gridSpacing[Y] = (fstate->rtip->mdl_max[Y] - fstate->rtip->mdl_min[Y]) / (fstate->res[Y] + 1 );
-	VMOVE(fstate->mdl_min, fstate->rtip->mdl_min); 
-	fstate->a_len = z_max-fstate->rtip->mdl_min[Z]; /* maximum ray length (z-dist of bounding box) */
+	fstate->gridSpacing[X] = (fstate->rtip->mdl_max[X] - fstate->rtip->mdl_min[X]) / (fstate->res[X] + 1);
+	fstate->gridSpacing[Y] = (fstate->rtip->mdl_max[Y] - fstate->rtip->mdl_min[Y]) / (fstate->res[Y] + 1);
+	fstate->a_len = fstate->max[Z]-fstate->rtip->mdl_min[Z]; /* maximum ray length (z-dist of bounding box) */
 	fstate->volume = fstate->a_len * fstate->res[X] * fstate->res[Y]; /* volume of vounding box */
 
 	/* allocate storage for saved rays */
 	fstate->ray = bu_malloc(sizeof(struct part *) * fstate->res[X] * fstate->res[Y], "ray");
-    } 
+VMOVE(fstate->min, fstate->rtip->mdl_min);
+    VMOVE(fstate->max, fstate->rtip->mdl_max);
+
+
+    } else {
+	/* instead of storing min and max, just compute
+	 * what we're going to need later */
+	for(i = 0; i < 3; i++){
+	    diff[i] = 0;
+	    if(fstate->min[i]  < fstate->rtip->mdl_min[i])
+		min[i] = fstate->min[i];
+	    else
+		min[i] = fstate->rtip->mdl_min[i];
+	    if(fstate->max[i] > fstate->rtip->mdl_max[i])
+		max[i] = fstate->max[i];
+	    else
+		max[i] = fstate->rtip->mdl_max[i];
+	    diff[i] = max[i] - min[i];
+	}
+	fastf_t tmp = (diff[X]/fstate->gridSpacing[X]-1) * (diff[Y]/fstate->gridSpacing[Y] - 1);
+	fstate->volume = (fstate->a_len + (max[Z] - fstate->max[Z])) * tmp;
+	/* scale fitness to the unon of the sources and individual's bounding boxes */
+	/* FIXME: sloppy 
+	fastf_t tmp = (diff[X]/fstate->gridSpacing[X]-1) * (diff[Y]/fstate->gridSpacing[Y] * diff[Z] - 1);
+	if(tmp < 0) tmp = 0;*/
+    }
+
     
     rt_worker(0,(genptr_t)fstate);
     /*bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);*/
 
     /* normalize fitness if we aren't just saving the source */
     if(!fstate->capture){
-	fstate->fitness = fstate->same / fstate->volume;
+	fstate->fitness = fstate->same / (fstate->volume );
 	/* reset counters for future comparisons */
 	fstate->diff = fstate->same = 0.0;
     }
@@ -447,6 +498,7 @@ void
 fit_clean(struct fitness_state *fstate)
 {
     free_rays(fstate);
+    //bu_semaphore_free();
 }
 
 /**

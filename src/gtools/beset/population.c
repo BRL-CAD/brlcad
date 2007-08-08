@@ -68,10 +68,12 @@ pop_init (struct population *p, int size)
     p->name = bu_malloc(sizeof(char **) * size, "names");
     
     /* pre-compute indidvidual names */
+    /*
     for(i = 0; i < size; i++){
 	p->name[i] = bu_malloc(sizeof(char *) * 256, "name");
 	snprintf(p->name[i], 256, "ind%.3d", i);
     }
+    */
 
 
 #define SEED 33
@@ -101,10 +103,10 @@ pop_clean (struct population *p)
 void 
 pop_spawn (struct population *p)
 {
-    int i;
-    point_t p1, p2; /* , p3; */
+    int i,j;
+    point_t p1, p2, p3;
     struct wmember wm_hd;
-    double r1, r2; /* , r3; */
+    double r1, r2, r3; 
 
     char shape[256];
 
@@ -112,34 +114,28 @@ pop_spawn (struct population *p)
     p->db_p->dbi_wdbp = wdb_dbopen(p->db_p, RT_WDB_TYPE_DB_DISK);
  
     for(i = 0; i < p->size; i++) {
+	p->name[i] = bu_malloc(sizeof(char *) * 256, "name");
+	snprintf(p->name[i], 256, "ind%.3d", i);
 
 	BU_LIST_INIT(&wm_hd.l);
-
-	p1[0] = -10+pop_rand()*10;
-	p1[1] = -10+pop_rand()*10;
-	p1[2] = -10+pop_rand()*10;
-	r1 = 1+3*pop_rand();
-
-	p2[0] = -10+pop_rand()*10;
-	p2[1] = -10+pop_rand()*10;
-	p2[2] = -10+pop_rand()*10;
-	r2 = 1+3*pop_rand();
-	
 	/*
-	p3[0] = -10+pop_rand()*10;
-	p3[1] = -10+pop_rand()*10;
-	p3[2] = -10+pop_rand()*10;
-	r3 = 1+3*pop_rand();
-	*/
-/*
 	VSET(p1, -5, -5, -5);
 	VSET(p2, 5, 5, 5);
 	r1 = r2 = 2.5;
 	*/
+	for(j = 0; j < 5; j++){
+	    VSETALL(p1, -10+pop_rand()*10);
+	    r1 = 1+3*pop_rand();
+	    snprintf(shape, 256, "ind%.3d-%.3d", i, j);
+	    mk_sph(p->db_p->dbi_wdbp, shape, p1, r1);
+	    mk_addmember(shape, &wm_hd.l, NULL, WMOP_UNION);
+	}
+
 
 
 	p->parent[i].fitness = 0.0;
 	p->parent[i].id = i;
+	/*
 
 	snprintf(shape, 256, "ind%.3d-%.3d", i,0);
 	mk_sph(p->db_p->dbi_wdbp, shape, p1, r1);
@@ -150,14 +146,10 @@ pop_spawn (struct population *p)
 	mk_sph(p->db_p->dbi_wdbp,shape, p2, r2);
 	mk_addmember(shape, &wm_hd.l, NULL, WMOP_UNION);
 
-	/*
-	snprintf(NL_P(p->parent[i].id), 256, "gen%.3dind%.3d-%.3d", 0,i,2);
-	mk_sph(db_fp, NL_P(p->parent[i].id), p3, r3);
-	mk_addmember(NL_P(p->parent[i].id), &wm_hd.l, NULL, WMOP_UNION);
+	snprintf(shape, 256, "gen%.3dind%.3d-%.3d", 0,i,2);
+	mk_sph(p->db_p->dbi_wdbp, shape, p3, r3);
+	mk_addmember(shape, &wm_hd.l, NULL, WMOP_UNION);
 	*/
-
-
-
 	mk_lcomb(p->db_p->dbi_wdbp, NL_P(p->parent[i].id), &wm_hd, 1, NULL, NULL, NULL, 0);
     }
 
