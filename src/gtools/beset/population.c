@@ -123,8 +123,11 @@ pop_spawn (struct population *p)
 	VSET(p2, 5, 5, 5);
 	r1 = r2 = 2.5;
 	*/
-	for(j = 0; j < 5; j++){
-	    VSETALL(p1, -10+pop_rand()*10);
+	for(j = 0; j < 6; j++){
+	    //VSETALL(p1, -10+pop_rand()*10);
+	    p1[0] = -10*pop_rand()*10;
+	    p1[1] = -10*pop_rand()*10;
+	    p1[2] = -10*pop_rand()*10;
 	    r1 = 1+3*pop_rand();
 	    snprintf(shape, 256, "ind%.3d-%.3d", i, j);
 	    mk_sph(p->db_p->dbi_wdbp, shape, p1, r1);
