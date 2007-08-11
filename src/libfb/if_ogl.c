@@ -50,8 +50,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-/* Windows is handled by if_wgl.c */
-#if defined(IF_OGL) && !defined(IF_WGL)
+#ifdef IF_OGL
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H
