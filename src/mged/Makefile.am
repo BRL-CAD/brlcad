@@ -46,13 +46,9 @@ POINTS_CFLAGS =
 POINTS_LDADD =
 endif
 
-SUBDIRS = \
-	$(POINTS) \
-	dm_old
+SUBDIRS = $(POINTS)
 
-DIST_SUBDIRS = \
-	${points_dir} \
-	dm_old
+DIST_SUBDIRS = ${points_dir}
 
 bin_PROGRAMS = \
 	cad_boundp \
