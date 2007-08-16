@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-05-XX  Release 7.10.2                                     ---
 ----------------------------------------------------------------------
 
+* support infinite # of shadow rays in the raytracers - Sean Morrison
 * improved anim_hardtrack manual page documentation - Erik Greenwald
 * added 'bomb' command to mged for script termination - Sean Morrison
 * mged and pl-X automatically focus to X11 on Mac OS X - Sean Morrison
