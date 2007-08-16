@@ -199,9 +199,31 @@ light_cvt_visible(register const struct bu_structparse *sdp, register const char
     }
 }
 
+/**
+ * ensure that there are sufficient light samples, allocate more if
+ * necessary in batches.
+ */
+HIDDEN void
+light_pt_allocate(register struct light_specific *lsp)
+{
+    /* make sure we have enough room, allocate in batches of SOME_LIGHT_SAMPLES */
+    if ( lsp->lt_pt_count % SOME_LIGHT_SAMPLES == 0) {
+	if (lsp->lt_pt_count < 1) {
+	    /* assumes initialized to NULL */
+	    if (lsp->lt_sample_pts) {
+		bu_free(lsp->lt_sample_pts, "free light samples array");
+	    }
+	    lsp->lt_sample_pts = (struct light_pt *)bu_calloc(lsp->lt_pt_count + SOME_LIGHT_SAMPLES, sizeof(struct light_pt), "callocate light sample points");
+	} else {
+	    lsp->lt_sample_pts = (struct light_pt *)bu_realloc(lsp->lt_sample_pts, (lsp->lt_pt_count + SOME_LIGHT_SAMPLES) * sizeof(struct light_pt), "reallocate light sample points");
+	}
+    }
+}
+
 
 /**
- * allocate a set of light point samples
+ * create a set of light point samples for specified pt/pn arguments
+ * (for points and points with normals respectively)
  */
 HIDDEN void
 light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
@@ -213,19 +235,6 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
     struct light_specific *lsp = (struct light_specific *)base;
     fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
 
-    /* make sure we have enough room, allocate in batches of SOME_LIGHT_SAMPLES */
-    if ( lsp->lt_pt_count % SOME_LIGHT_SAMPLES == 0) {
-	if (lsp->lt_pt_count == 0) {
-	    /* assumes initialized to NULL */
-	    if (lsp->lt_sample_pts) {
-		bu_free(lsp->lt_sample_pts, "free light samples array");
-	    }
-	    lsp->lt_sample_pts = (struct light_pt *)bu_calloc(lsp->lt_pt_count + SOME_LIGHT_SAMPLES, sizeof(struct light_pt), "callocate light sample points");
-	} else {
-	    lsp->lt_sample_pts = (struct light_pt *)bu_realloc(lsp->lt_sample_pts, (lsp->lt_pt_count + SOME_LIGHT_SAMPLES) * sizeof(struct light_pt), "reallocate light sample points");
-	}
-    }
-
     if (! strcmp("pt", name) ) {
 	/* user just specified point, set normal to zeros */
 	p[3] = p[4] = p[5] = 0.0;
@@ -234,6 +243,7 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
 	return;
     }
 
+    light_pt_allocate(lsp);
     memcpy( &lsp->lt_sample_pts[ lsp->lt_pt_count++ ], p, sizeof( struct light_pt ) );
 
     if (rdebug & RDEBUG_LIGHT ) {
@@ -402,6 +412,7 @@ light_gen_sample_pts_hit(register struct application *ap, struct partition *Part
 	 * light will be emitted in this direction
 	 */
 	if (&lsp->lt_sample_pts) {
+	    light_pt_allocate(lsp);
 	    lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
 	} else {
 	    /* no sample points? */
@@ -440,6 +451,7 @@ light_gen_sample_pts_hit(register struct application *ap, struct partition *Part
 	 * will be emitted in this direction
 	 */
 	if (&lsp->lt_sample_pts) {
+	    light_pt_allocate(lsp);
 	    lpt = &lsp->lt_sample_pts[lsp->lt_pt_count++];
 	} else {
 	    /* no sample points? */
@@ -524,7 +536,6 @@ light_gen_sample_pts(struct application    *upap,
     }
 
     while ( lsp->lt_pt_count < SOME_LIGHT_SAMPLES ) {
-
 	ray_setup(&ap, tree_min, tree_max, span);
 	(void)rt_shootray( &ap );
     }
