@@ -17,12 +17,6 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* ship it
-
-
-THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------
-
 * move openNURBS into librt as sub-library, integrate mods
 
 * clone and tracker
@@ -41,6 +35,12 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * begin 8.0 branch for backwards-incompatible/complex changes
 
 * refactor complex.h and plane.h
+
+
+THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------
+
+* tbd
 
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
