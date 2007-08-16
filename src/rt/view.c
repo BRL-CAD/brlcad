@@ -93,6 +93,7 @@ Options:\n\
  -T #/#		Tolerance: distance/angular\n\
  -r		Report overlaps\n\
  -R		Do not report overlaps\n\
+ -l #		Set the light model\n\
 ";
 
 int		use_air = 0;		/* Handling of air in librt */
