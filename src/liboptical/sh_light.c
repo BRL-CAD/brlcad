@@ -501,6 +501,7 @@ light_gen_sample_pts(struct application    *upap,
     point_t tree_min;
     point_t tree_max;
     vect_t  span;
+    int total_samples;
 
     RT_CK_LIGHT(lsp);
 
@@ -535,7 +536,9 @@ light_gen_sample_pts(struct application    *upap,
 	return;
     }
 
-    while ( lsp->lt_pt_count < SOME_LIGHT_SAMPLES ) {
+    /* need enough samples points to avoid shadow patterns */
+    total_samples = SOME_LIGHT_SAMPLES * lsp->lt_shadows;
+    while ( lsp->lt_pt_count < total_samples ) {
 	ray_setup(&ap, tree_min, tree_max, span);
 	(void)rt_shootray( &ap );
     }
