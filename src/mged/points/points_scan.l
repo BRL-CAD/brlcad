@@ -238,7 +238,7 @@ COMMA	[,]
     /* bad input?  */
     printf("TOKENIZE ERROR: Unexpected character ('%c' 0x%x) on line %ld, column %ld  (file offset %ld)\n", yytext[0], yytext[0], get_lines()+1, get_column(), get_bytes());
     yyerror(yytext);
-    unput(' '); /* unreached, quell yyunput unused warning */
+    unput(' '); /* unreached, quell yyunput unused warning instead of using YY_NO_UNPUT */
     exit(1);
 }
 %%
