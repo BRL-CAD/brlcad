@@ -17,8 +17,6 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* move openNURBS into librt as sub-library, integrate mods
-
 * clone and tracker
 
 * Endgame Framework importer plugin
@@ -32,6 +30,8 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
+
+* move openNURBS into librt as sub-library, integrate mods
 
 * modify the new tree traversal code to be generic
 
