@@ -27,11 +27,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * remove op-bw
 
-* fix potential buffer overflows and security issues detected by
-  Pedro's run of FlawFinder
-
-* modify the new tree traversal code to be generic
-
 * begin 8.0 branch for backwards-incompatible/complex changes
 
 * refactor complex.h and plane.h
@@ -40,7 +35,16 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
 
-* tbd
+* modify the new tree traversal code to be generic
+
+* update adrt with latest changes being used by muves team
+
+* integrate adrt, ensure compilation/execution works cross-platform
+
+* fix potential buffer overflows and security issues detected by
+  Pedro's run of FlawFinder
+
+* implement graphical crash reporter tool (bombardier)
 
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
@@ -94,10 +98,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * Generate plain .zip files for Windows binary releases
 
 * fix the variety of ami.tcl and ampi.tcl tclscript warnings/errors
-
-* update adrt with latest changes being used by muves team
-
-* integrate adrt, ensure compilation/execution works cross-platform
 
 * run indent.sh on directories (one at a time, validating results)
 
