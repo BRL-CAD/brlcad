@@ -877,9 +877,8 @@ significant items added since the previous release.
 latest changes.
 
 3) Update or verify the version numbers minimally in the include/conf
-version files, NEWS, README, and the include/config_win.h header file
-(see VERSION NUMBERS & COMPATIBILITY section).  Commit the changes to
-the source repository.
+version files, NEWS, and README.  See the above VERSION NUMBERS &
+COMPATIBILITY section.  Commit the changes to the source repository.
 
 4) Update the ChangeLog with entries since the last release; commit
 the updated ChangeLog.  Use the YYYY-MM-DD of the previous release.
@@ -915,10 +914,10 @@ SourceForge (i.e. upload them via ftp to upload.sf.net's incoming
 directory and select them on the sf.net File Release System).
 
 13) Increment and commit the next BRL-CAD release numbers to CVS;
-update the include/conf/(MAJOR|MINOR|PATCH) version files, NEWS, and
-include/config_win.h immediately to an odd-numbered minor version or a
-new patch developer version (e.g. 7.11.0 or 7.4.1).  Update the README
-version to next _expected_ release number (e.g. 7.12.0 or 7.4.2).
+update the include/conf/(MAJOR|MINOR|PATCH) version files, and NEWS
+immediately to an odd-numbered minor version or a new patch developer
+version (e.g. 7.11.0 or 7.4.1).  Update the README version to next
+_expected_ release number (e.g. 7.12.0 or 7.4.2).
 
 14) Announce the new release.  The NEWS file should generally be used
 as a basis for making release announcements though the announcements
