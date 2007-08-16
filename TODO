@@ -25,8 +25,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * get archer working, ensure functionality cross-platform
 
-* remove op-bw
-
 * begin 8.0 branch for backwards-incompatible/complex changes
 
 * refactor complex.h and plane.h

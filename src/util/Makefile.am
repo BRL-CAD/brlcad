@@ -52,7 +52,6 @@ bin_PROGRAMS = \
 	mac-pix \
 	msrandom \
 	mst \
-	op-bw \
 	orle-pix \
 	pcd-pix \
 	pix-alias \
@@ -287,9 +286,6 @@ msrandom_LDADD = ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}
 
 mst_SOURCES = mst.c
 mst_LDADD = ${BU} ${BU_LIBS}
-
-op_bw_SOURCES = op-bw.c
-op_bw_LDADD = ${BU} ${BU_LIBS}
 
 orle_pix_SOURCES = orle-pix.c
 orle_pix_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${ORLE} ${ORLE_LIBS}
@@ -574,7 +570,6 @@ man_MANS = \
 	loop.1 \
 	mac-pix.1 \
 	morphedit.1 \
-	op-bw.1 \
 	orle-pix.1 \
 	pcd-pix.1 \
 	pix-alias.1 \

@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-06-XX  Release 7.10.3                                     ---
 ----------------------------------------------------------------------
 
+* removed op-bw for reading Optronics Scanner images - Sean Morrison
 * beset - Ben's Evolutionary Shape Extraction Tool - Ben Poole
 
 
