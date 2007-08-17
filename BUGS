@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* nirt/query_ray reports intersection messages in triplicate if the
+  shot routines miss but still print out messages
+
 * pipe primitive does not produce the right segments if a bend has an
   inner diameter that is different/discontinuous from the adjoining
   end of a straight section.
