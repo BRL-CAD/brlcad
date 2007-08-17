@@ -89,7 +89,7 @@ bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1,
 	product->cf[1] = m1->cf[0] * m2->cf[1] +
 	    m1->cf[1] * m2->cf[0];
 	product->cf[2] = m1->cf[1] * m2->cf[1];
-	return(product);
+	return product;
     }
     if( m1->dgr == 2 && m2->dgr == 2 )  {
 	product->dgr = 4;
@@ -102,7 +102,7 @@ bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1,
 	product->cf[3] = m1->cf[1] * m2->cf[2] +
 	    m1->cf[2] * m2->cf[1];
 	product->cf[4] = m1->cf[2] * m2->cf[2];
-	return(product);
+	return product;
     }
 
     /* Not one of the common (or easy) cases. */
@@ -254,38 +254,67 @@ bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly
  *@brief
  * Uses the quadratic formula to find the roots (in `complex' form) of
  * any quadratic equation with real coefficients.
+ *
+ *	@return 1 for success
+ *	@return 0 for fail.
  */
 int
 bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct bn_poly *quadrat)
 {
-    LOCAL fastf_t	discrim, denom, rad;
+    LOCAL fastf_t discrim, denom, rad;
+    const fastf_t small = SMALL_FASTF;
 
-    if( NEAR_ZERO( quadrat->cf[0], SQRT_SMALL_FASTF ) )  {
+    if( NEAR_ZERO( quadrat->cf[0], small ) )  {
 	/* root = -cf[2] / cf[1] */
-	if( NEAR_ZERO( quadrat->cf[1], SQRT_SMALL_FASTF ) )  {
+	if( NEAR_ZERO( quadrat->cf[1], small ) )  {
 	    /* No solution.  Now what? */
-	    bu_log("bn_poly_quadratic_roots(): ERROR, no solution\n");
-	    return -1;
+	    /*	    bu_log("bn_poly_quadratic_roots(): ERROR, no solution\n"); */
+	    return 0;
 	}
 	/* Fake it as a repeated root. */
 	roots[0].re = roots[1].re = -quadrat->cf[2]/quadrat->cf[1];
 	roots[0].im = roots[1].im = 0.0;
 	return 1;	/* OK - repeated root */
     }
-    /* What to do if cf[1] > SQRT_MAX_FASTF ? */
 
     discrim = quadrat->cf[1]*quadrat->cf[1] - 4.0* quadrat->cf[0]*quadrat->cf[2];
     denom = 0.5 / quadrat->cf[0];
-    if ( discrim >= 0.0 ){
+    //    bu_log("discrim=%.20f cf0=%.20f cf1=%.20f cf2=%.20f; ", discrim, quadrat->cf[0], quadrat->cf[1], quadrat->cf[2]);
+    if (discrim > 0.0) {
 	rad = sqrt( discrim );
-	roots[0].re = ( -quadrat->cf[1] + rad ) * denom;
-	roots[1].re = ( -quadrat->cf[1] - rad ) * denom;
+
+	if (NEAR_ZERO(quadrat->cf[1], small)) {
+	    double r = fabs(rad * denom);
+	    roots[0].re = r;
+	    roots[1].re = -r;
+	} else {
+	    double t, r1, r2;
+
+	    if (quadrat->cf[1] > 0.0) {
+		t = -0.5 * (quadrat->cf[1] + rad);
+	    } else {
+		t = -0.5 * (quadrat->cf[1] - rad);
+	    }
+	    r1 = t / quadrat->cf[0];
+	    r2 = quadrat->cf[2] / t;
+
+	    if (r1 < r2) {
+		roots[0].re = r1;
+		roots[1].re = r2;
+	    } else {
+		roots[0].re = r2;
+		roots[1].re = r1;
+	    }
+	}
+	roots[1].im = roots[0].im = 0.0;
+    } else if (NEAR_ZERO(discrim, small)) {
+	roots[1].re = roots[0].re = -quadrat->cf[1] * denom;
 	roots[1].im = roots[0].im = 0.0;
     } else {
 	roots[1].re = roots[0].re = -quadrat->cf[1] * denom;
 	roots[1].im = -(roots[0].im = sqrt( -discrim ) * denom);
     }
-    return 0;		/* OK */
+    return 1;		/* OK */
 }
 
 
@@ -336,20 +365,20 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 	if( setjmp( bn_abort_buf ) )  {
 	    (void)signal(SIGFPE, bn_catch_FPE);
 	    bu_log("bn_poly_cubic_roots() Floating Point Error\n");
-	    return(0);	/* FAIL */
+	    return 0;	/* FAIL */
 	}
     }
 
     c1 = eqn->cf[1];
-    if( Abs(c1) > SQRT_MAX_FASTF )  return(0);	/* FAIL */
+    if( Abs(c1) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
 
     c1_3rd = c1 * THIRD;
     a = eqn->cf[2] - c1*c1_3rd;
-    if( Abs(a) > SQRT_MAX_FASTF )  return(0);	/* FAIL */
+    if( Abs(a) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
     b = (2.0*c1*c1*c1 - 9.0*c1*eqn->cf[2] + 27.0*eqn->cf[3])*INV_TWENTYSEVEN;
-    if( Abs(b) > SQRT_MAX_FASTF )  return(0);	/* FAIL */
+    if( Abs(b) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
 
-    if( (delta = a*a) > SQRT_MAX_FASTF ) return(0);	/* FAIL */
+    if( (delta = a*a) > SQRT_MAX_FASTF ) return 0;	/* FAIL */
     delta = b*b*0.25 + delta*a*INV_TWENTYSEVEN;
 
     if ( delta > 0.0 ){
@@ -413,7 +442,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
     if( !bu_is_parallel() )
 	bn_expecting_fpe = 0;
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 
@@ -432,6 +461,10 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
     LOCAL struct bn_poly	cube, quad1, quad2;
     LOCAL bn_complex_t	u[3];
     LOCAL fastf_t		U, p, q, q1, q2;
+
+    /* something considerably larger than squared floating point fuss */
+    const fastf_t small = 1.0e-8;
+
 #define Max3(a,b,c) ((c)>((a)>(b)?(a):(b)) ? (c) : ((a)>(b)?(a):(b)))
 
     cube.dgr = 3;
@@ -443,10 +476,10 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
 	- eqn->cf[4]*eqn->cf[1]*eqn->cf[1]
 	+ 4*eqn->cf[4]*eqn->cf[2];
 
-    if( !bn_poly_cubic_roots( u, &cube ) )  {
-	return( 0 );		/* FAIL */
+    if (!bn_poly_cubic_roots( u, &cube )) {
+	return 0;		/* FAIL */
     }
-    if ( u[1].im != 0.0 ){
+    if (u[1].im != 0.0) {
 	U = u[0].re;
     } else {
 	U = Max3( u[0].re, u[1].re, u[2].re );
@@ -455,17 +488,17 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
     p = eqn->cf[1]*eqn->cf[1]*0.25 + U - eqn->cf[2];
     U *= 0.5;
     q = U*U - eqn->cf[4];
-    if( p < 0 )  {
-	if( p < -1.0e-8 )  {
-	    return(0);	/* FAIL */
+    if (p < 0) {
+	if (p < -small) {
+	    return 0;	/* FAIL */
 	}
 	p = 0;
     } else {
 	p = sqrt( p );
     }
-    if( q < 0 )  {
-	if( q < -1.0e-8 )  {
-	    return(0);	/* FAIL */
+    if (q < 0 )  {
+	if (q < -small) {
+	    return 0;	/* FAIL */
 	}
 	q = 0;
     } else {
@@ -482,22 +515,22 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
     q2 = U + q;
 
     p = quad1.cf[1]*q2 + quad2.cf[1]*q1 - eqn->cf[3];
-    if( Abs( p ) < 1.0e-8){
+    if (NEAR_ZERO(p, small)) {
 	quad1.cf[2] = q1;
 	quad2.cf[2] = q2;
     } else {
 	q = quad1.cf[1]*q1 + quad2.cf[1]*q2 - eqn->cf[3];
-	if( Abs( q ) < 1.0e-8 ){
+	if (NEAR_ZERO(q, small)) {
 	    quad1.cf[2] = q2;
 	    quad2.cf[2] = q1;
 	} else {
-	    return(0);	/* FAIL */
+	    return 0;	/* FAIL */
 	}
     }
 
     bn_poly_quadratic_roots( &roots[0], &quad1 );
     bn_poly_quadratic_roots( &roots[2], &quad2 );
-    return(1);		/* SUCCESS */
+    return 1;		/* SUCCESS */
 }
 
 
