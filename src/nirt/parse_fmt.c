@@ -203,21 +203,25 @@ format_output (char *buffer, com_table	*ctp)
 	    return;
     }
 
-    if (use_defaults)
-	if (fmt_type == FMT_NONE)
-	    for (i = 0; i < FMT_NONE; ++i)
+    if (use_defaults) {
+	if (fmt_type == FMT_NONE) {
+	    for (i = 0; i < FMT_NONE; ++i) {
 		parse_fmt(def_fmt[i], i);
-	else
+	    }
+	} else {
 	    parse_fmt(def_fmt[fmt_type], fmt_type);
-    else
+	}
+    } else {
 	parse_fmt(bp, fmt_type);
+    }
 }
 
+
+/**
+ * uoutspect is the user's output specification (format & args).
+ * outcom_type is the type of output command
+ */
 void parse_fmt(char *uoutspec, int outcom_type)
-
-			/* The user's output specification (format & args) */
-			/* Type of output command */
-
 {
     char	*of;		/* Format for current output item */
     char	*up;
