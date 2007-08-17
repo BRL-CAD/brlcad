@@ -217,13 +217,13 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	/* Make sure that A == C, B == D */
 	VSUB2( work, tip->a, tip->c );
-	f = MAGSQ( work );
-	if( ! NEAR_ZERO(f, 0.0001) )  {
+	f = MAGNITUDE( work );
+	if( ! NEAR_ZERO(f, RT_LEN_TOL) )  {
 		return(1);		/* BAD, !cylinder */
 	}
 	VSUB2( work, tip->b, tip->d );
-	f = MAGSQ( work );
-	if( ! NEAR_ZERO(f, 0.0001) )  {
+	f = MAGNITUDE( work );
+	if( ! NEAR_ZERO(f, RT_LEN_TOL) )  {
 		return(1);		/* BAD, !cylinder */
 	}
 

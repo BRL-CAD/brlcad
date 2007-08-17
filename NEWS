@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-06-XX  Release 7.10.3                                     ---
 ----------------------------------------------------------------------
 
+* fixed small TGC (cone) primitive raytrace prep bug - Sean Morrison
 * increased output precision from nirt/query_ray - Sean Morrison
 * removed op-bw for reading Optronics Scanner images - Sean Morrison
 * beset - Ben's Evolutionary Shape Extraction Tool - Ben Poole
