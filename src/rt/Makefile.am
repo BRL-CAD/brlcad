@@ -38,8 +38,8 @@ bin_PROGRAMS = \
 	rtweight \
 	rtxray
 
-noinst_PROGRAMS = \
-	rtexample
+EXTRA_PROGRAMS = hurt
+noinst_PROGRAMS = rtexample
 
 endif
 # end of ONLY_BENCHMARK
@@ -84,6 +84,12 @@ rt_simple_SOURCES = rt_simple.c
 rtexample_SOURCES = rtexample.c
 rtwalk_SOURCES = rtwalk.c
 rtshot_SOURCES = rtshot.c
+
+hurt_SOURCES = hurt.c
+hurt_LDADD = \
+	${OPTICAL} ${OPTICAL_LIBS} \
+	${RT} ${RT_LIBS} \
+	${FB} ${FB_LIBS}
 
 rtregis_SOURCES = \
 	read-rtlog.c \
