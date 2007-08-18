@@ -833,12 +833,15 @@ bu_parallel( func, ncpu, arg )
     bu_nthreads_finished = 0;
     bu_parallel_func = func;
     bu_parallel_arg = arg;
-    avail_cpus = bu_avail_cpus();
-    if( ncpu > avail_cpus ) {
-	bu_log( "%d cpus requested, but only %d available\n", ncpu, avail_cpus );
-	ncpu = avail_cpus;
-    }
 
+    /* if we're in debug mode, allow additional cpus */
+    if (!(bu_debug & BU_DEBUG_PARALLEL)) {
+	avail_cpus = bu_avail_cpus();
+	if( ncpu > avail_cpus ) {
+	    bu_log( "%d cpus requested, but only %d available\n", ncpu, avail_cpus );
+	    ncpu = avail_cpus;
+	}
+    }
 
 #  ifdef HEP
     bu_nthreads_started = 1;

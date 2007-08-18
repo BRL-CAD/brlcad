@@ -139,6 +139,7 @@ siginfo_handler(int arg)
 #endif
 }
 
+
 /*
  *			M E M O R Y _ S U M M A R Y
  */
@@ -297,17 +298,27 @@ int main(int argc, char **argv)
 #ifndef PARALLEL
 	npsw = 1;			/* force serial */
 #endif
+
 	if( npsw < 0 )  {
 		/* Negative number means "all but" npsw */
 		npsw = bu_avail_cpus() + npsw;
 	}
-	if( npsw > MAX_PSW )  npsw = MAX_PSW;
-	if( npsw > 1 )  {
+
+
+	/* allow debug builds to go higher than the max */
+	if (!(bu_debug & BU_DEBUG_PARALLEL)) {
+	    if( npsw > MAX_PSW ) {
+		npsw = MAX_PSW;
+	    }
+	}
+
+	if (npsw > 1) {
 	    rt_g.rtg_parallel = 1;
 	    if (rt_verbosity & VERBOSE_MULTICPU)
 		fprintf(stderr,"Planning to run with %d processors\n", npsw );
-	} else
-		rt_g.rtg_parallel = 0;
+	} else {
+	    rt_g.rtg_parallel = 0;
+	}
 
 	/* Initialize parallel processor support */
 	bu_semaphore_init( RT_SEM_LAST );
@@ -472,6 +483,8 @@ int main(int argc, char **argv)
 #ifdef SIGINFO
 	(void)signal( SIGINFO, siginfo_handler );
 #endif
+
+	signal(SIGILL, sigill_handler);
 
 	if( !matflag )  {
 		int frame_retval;

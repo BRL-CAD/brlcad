@@ -455,16 +455,28 @@ int get_args( int argc, register char **argv )
 
 				npsw = atoi( bu_optarg );
 
-				if( npsw > avail_cpus ) {
-					fprintf( stderr, "Requesting %d cpus, only %d available. ",
+				if (npsw > avail_cpus ) {
+					fprintf( stderr, "Requesting %d cpus, only %d available.",
 						 npsw, avail_cpus );
-					fprintf( stderr, "Will use %d.\n", avail_cpus );
-					npsw = avail_cpus;
+
+					if ((bu_debug & BU_DEBUG_PARALLEL) ||
+					    (RT_G_DEBUG & DEBUG_PARALLEL)) {
+					    fprintf(stderr, "\nAllowing surplus cpus due to debug flag.\n");
+					} else {
+					    fprintf( stderr, "  Will use %d.\n", avail_cpus );
+					    npsw = avail_cpus;
+					}
 				}
 				if( npsw == 0 || npsw < -MAX_PSW || npsw > MAX_PSW )  {
-					fprintf(stderr,"abs(npsw) out of range 1..%d, using -P%d\n",
-						MAX_PSW, MAX_PSW);
-					npsw = MAX_PSW;
+				    fprintf(stderr,"Numer of requested cpus (%d) is out of range 1..%d", npsw, MAX_PSW);
+
+				    if ((bu_debug & BU_DEBUG_PARALLEL) ||
+					(RT_G_DEBUG & DEBUG_PARALLEL)) {
+					fprintf(stderr, ", but allowing due to debug flag\n", DEFAULT_PSW);
+				    } else {
+					fprintf(stderr, ", using -P%d\n", DEFAULT_PSW);
+					npsw = DEFAULT_PSW;
+				    }
 				}
 			}
 			break;
@@ -556,15 +568,20 @@ int get_args( int argc, register char **argv )
 	}
 
 	/* Compat */
-	if( RT_G_DEBUG || R_DEBUG || rt_g.NMG_debug )
+	if (RT_G_DEBUG || R_DEBUG || rt_g.NMG_debug )
 		bu_debug |= BU_DEBUG_COREDUMP;
 
-	if( RT_G_DEBUG & DEBUG_MEM_FULL )  bu_debug |= BU_DEBUG_MEM_CHECK;
-	if( RT_G_DEBUG & DEBUG_MEM )  bu_debug |= BU_DEBUG_MEM_LOG;
-	if( RT_G_DEBUG & DEBUG_PARALLEL )  bu_debug |= BU_DEBUG_PARALLEL;
-	if( RT_G_DEBUG & DEBUG_MATH )  bu_debug |= BU_DEBUG_MATH;
+	if (RT_G_DEBUG & DEBUG_MEM_FULL)
+	    bu_debug |= BU_DEBUG_MEM_CHECK;
+	if (RT_G_DEBUG & DEBUG_MEM)
+	    bu_debug |= BU_DEBUG_MEM_LOG;
+	if (RT_G_DEBUG & DEBUG_PARALLEL)
+	    bu_debug |= BU_DEBUG_PARALLEL;
+	if (RT_G_DEBUG & DEBUG_MATH)
+	    bu_debug |= BU_DEBUG_MATH;
 
-	if( R_DEBUG & RDEBUG_RTMEM_END )  bu_debug |= BU_DEBUG_MEM_CHECK;
+	if (R_DEBUG & RDEBUG_RTMEM_END)
+	    bu_debug |= BU_DEBUG_MEM_CHECK;
 
 	return(1);			/* OK */
 }
