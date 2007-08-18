@@ -484,8 +484,6 @@ int main(int argc, char **argv)
 	(void)signal( SIGINFO, siginfo_handler );
 #endif
 
-	signal(SIGILL, sigill_handler);
-
 	if( !matflag )  {
 		int frame_retval;
 		def_tree( rtip );		/* Load the default trees */
