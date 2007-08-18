@@ -49,7 +49,6 @@
 #include "base.h"
 #include "gpr.h"
 #include "fb.h"
-#include "./fblocal.h"
 
 
 HIDDEN int	ap_open(),

@@ -48,12 +48,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "fb.h"
-#include "./fblocal.h"
 
 
 #define PAGE_BYTES	(63*1024L)		/* Max # of bytes/dma. */
 #define PAGE_PIXELS	(((PAGE_BYTES/sizeof(RGBpixel))/ifp->if_width) *ifp->if_width)
 #define PAGE_SCANS	(ifp->if_ppixels/ifp->if_width)
+
+#define Malloc_Bomb( _bytes_ ) \
+		fb_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \
+				__FILE__, __LINE__, _bytes_ )
 
 
 /*

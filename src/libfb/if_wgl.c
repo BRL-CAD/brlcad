@@ -69,7 +69,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "./fblocal.h"
+
 
 #define CJDEBUG 0
 

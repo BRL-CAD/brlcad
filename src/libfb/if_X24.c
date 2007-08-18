@@ -79,7 +79,6 @@
 
 #include "machine.h"
 #include "fb.h"
-#include "./fblocal.h"
 
 #ifdef HAVE_SYS_MMAN_H
 #  include <unistd.h>

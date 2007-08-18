@@ -53,7 +53,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "fb.h"
-#include "./fblocal.h"
 
 #include <X11/X.h>
 #ifdef HAVE_XOSDEFS_H

@@ -51,7 +51,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "fb.h"
-#include "./fblocal.h"
+
 
 /* typedef unsigned char	u_char;	*/
 int	_fbfd;

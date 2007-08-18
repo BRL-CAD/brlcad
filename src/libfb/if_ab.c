@@ -59,7 +59,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "fb.h"
-#include "./fblocal.h"
 
 
 HIDDEN void	ab_log(FBIO *ifp, char *str);

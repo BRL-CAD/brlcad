@@ -71,7 +71,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
@@ -84,7 +83,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "fb.h"
-#include "./fblocal.h"
+
 
 extern char *shmat();
 

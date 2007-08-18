@@ -42,14 +42,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
+#include <ctype.h>
+#include <gdslib.h>
 
 #include "machine.h"
 #include "fb.h"
-#include "./fblocal.h"
-#include <ctype.h>
-#include <gdslib.h>
+
 
 HIDDEN int	ts_open(),
 		ts_close(),

@@ -56,7 +56,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "fb.h"
-#include "./fblocal.h"
 
 
 #define FILE_CMAP_ADDR	((long) ifp->if_width*ifp->if_height\

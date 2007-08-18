@@ -41,7 +41,7 @@
 
 #include "machine.h"
 #include "fb.h"
-#include "./fblocal.h"
+
 
 Tcl_Interp *fbinterp;
 Tk_Window fbwin;

@@ -42,14 +42,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <errno.h>
+#include <ultra/ugraf.h>
 
 #include "machine.h"
 #include "fb.h"
-#include "./fblocal.h"
-#include <ultra/ugraf.h>
+
 
 #define	FBSAVE	"/usr/tmp/ultrafb"
 

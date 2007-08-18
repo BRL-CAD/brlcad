@@ -47,7 +47,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "fb.h"
-#include "./fblocal.h"
+
+
+#define Malloc_Bomb( _bytes_ ) \
+		fb_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \
+				__FILE__, __LINE__, _bytes_ )
 
 
 static int fb_totally_numeric(register char *s);
@@ -140,7 +144,8 @@ fb_open(char *file, int width, int height)
 	if( width < 0 || height < 0 )
 		return	FBIO_NULL;
 
-	if( (ifp = (FBIO *) calloc( sizeof(FBIO), 1 )) == FBIO_NULL ) {
+	ifp = (FBIO *) calloc(sizeof(FBIO), 1);
+	if (ifp == FBIO_NULL) {
 		Malloc_Bomb( sizeof(FBIO) );
 		return	FBIO_NULL;
 	}
@@ -200,10 +205,8 @@ fb_open(char *file, int width, int height)
 
 found_interface:
 	/* Copy over the name it was opened by. */
-	if( (ifp->if_name = (char*)malloc( (unsigned) strlen( file ) + 1 ))
-	    == (char *) NULL
-	    )
-	{
+	ifp->if_name = (char*)malloc( (unsigned) strlen( file ) + 1 );
+	if (ifp->if_name == (char *)NULL) {
 		Malloc_Bomb( strlen( file ) + 1 );
 		free( (void *) ifp );
 		return	FBIO_NULL;

@@ -85,7 +85,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "bu.h"
 #include "fb.h"
-#include "./fblocal.h"
 
 
 #define CJDEBUG 0

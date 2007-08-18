@@ -70,7 +70,6 @@ noinst_HEADERS = \
 	adagecursor.h \
 	adageframe.h \
 	dmdfb.h \
-	fblocal.h \
 	nilcursor.h \
 	oglcursor.h \
 	sgicursor.h

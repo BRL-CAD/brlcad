@@ -42,8 +42,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "fb.h"
 
-#include "./fblocal.h"
-
 
 HIDDEN int	null_open(FBIO *ifp, char *file, int width, int height),
 		null_close(FBIO *ifp),

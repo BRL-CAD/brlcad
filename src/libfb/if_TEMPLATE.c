@@ -43,12 +43,11 @@
 
 #include "common.h"
 
-
 #include <stdio.h>
 
 #include "machine.h"
 #include "fb.h"
-#include "./fblocal.h"
+
 
 HIDDEN int	DEVNAME_open(FBIO *ifp, char *file, int width, int height),
 		DEVNAME_close(FBIO *ifp),

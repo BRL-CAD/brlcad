@@ -41,7 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "fb.h"
-#include "./fblocal.h"
+
 
 /*
  *			F B _ S I M _ V I E W

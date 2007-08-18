@@ -40,7 +40,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 
 #include "./dmdfb.h"
-#include "./fblocal.h"
 
 
 #define MAX_DIMENSION	256

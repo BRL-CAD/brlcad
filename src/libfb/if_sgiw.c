@@ -42,7 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #undef RED
 
 #include "fb.h"
-#include "./fblocal.h"
+
 
 #define Abs( x_ )	((x_) < 0 ? -(x_) : (x_))
 
