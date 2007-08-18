@@ -163,10 +163,10 @@ brlcad_ident(const char *title)
 	    
     if (version[0] == 0) {
 	snprintf(version, 1024, 
-		 "BRL-CAD Release %d.%d.%d%s\n"
+		 "BRL-CAD Release %s%s\n"
 		 "    %s, Compilation %d\n"
 		 "    %s@%s:%s\n",
-		 BRLCAD_MAJOR, BRLCAD_MINOR, BRLCAD_PATCH, label,
+		 brlcad_version(), label,
 		 BRLCAD_DATE, BRLCAD_COUNT,
 		 BRLCAD_USER, BRLCAD_HOST, BRLCAD_PATH
 		 );
