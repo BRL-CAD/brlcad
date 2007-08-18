@@ -234,7 +234,7 @@ int get_args( int argc, register char **argv )
 			break;
 		case 'C':
 			{
-				char		buf[128];
+				char		buf[128] = {0};
 				int		r,g,b;
 				register char	*cp = bu_optarg;
 
