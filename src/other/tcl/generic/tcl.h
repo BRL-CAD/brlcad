@@ -174,6 +174,9 @@ extern "C" {
 #if (defined(__WIN32__) && (defined(_MSC_VER) || (__BORLANDC__ >= 0x0550) || defined(__LCC__) || defined(__WATCOMC__) || (defined(__GNUC__) && defined(__declspec))))
 #   define HAVE_DECLSPEC 1
 #endif
+#ifndef HAVE_DECLSPEC
+#   define HAVE_DECLSPEC 0
+#endif
 
 #ifdef STATIC_BUILD
 #   define DLLIMPORT
