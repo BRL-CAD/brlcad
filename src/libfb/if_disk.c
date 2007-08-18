@@ -328,16 +328,10 @@ dsk_wmap(FBIO *ifp, const ColorMap *cmap)
 HIDDEN int
 disk_color_clear(FBIO *ifp, register unsigned char *bpp)
 {
-	static unsigned char	*pix_buf = NULL;
+	static unsigned char	pix_buf[DISK_DMA_BYTES] = {0};
 	register unsigned char *pix_to;
 	register long	i;
 	int	fd, pixelstodo;
-
-	if( pix_buf == NULL )
-		if( (pix_buf = (unsigned char *) malloc(DISK_DMA_BYTES)) == PIXEL_NULL ) {
-			Malloc_Bomb(DISK_DMA_BYTES);
-			return	-1;
-		}
 
 	/* Fill buffer with background color. */
 	for( i = DISK_DMA_PIXELS, pix_to = pix_buf; i > 0; i-- ) {
