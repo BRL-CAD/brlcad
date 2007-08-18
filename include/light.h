@@ -73,7 +73,7 @@ struct light_specific {
 	int	lt_exaim;	/**< @brief !0 if explicit aim in lt_target */
 	fastf_t lt_obscure;	/**< @brief percentage obscuration of light */
 	/* Internal fields */
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	struct bn_tabdata *lt_spectrum;	/**< @brief Units?  mw*sr ? */
 #else
 	vect_t	lt_color;	/**< @brief RGB, as 0..1 */
