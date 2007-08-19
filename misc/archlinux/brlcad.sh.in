@@ -1,3 +1,5 @@
+# $Id$
+
 #                    B R L C A D . S H . I N
 # BRL-CAD
 #
@@ -39,9 +41,9 @@
 # Contributor: Loui Chang <louipc.ist@gmail.com>
 #
 ###
-
-export PATH=@BRLCAD_ROOT@/bin:$PATH
-export MANPATH=@BRLCAD_ROOT@/man:$MANPATH
+export BRLCADDIR=@BRLCAD_ROOT@
+export PATH=$PATH:$BRLCADDIR/bin
+export MANPATH=$MANPATH:$BRLCADDIR/man
 
 # Local Variables:
 # tab-width: 8

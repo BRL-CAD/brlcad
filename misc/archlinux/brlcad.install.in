@@ -1,4 +1,6 @@
-#               B R L C A D . I N S T A L L . I N
+# $Id$
+
+#               B R L C A D . I N S T A L L 
 # BRL-CAD
 #
 # Copyright (c) 2007 United States Government as represented by
@@ -41,42 +43,21 @@
 ###
 
 # arg 1:  the new package version
-pre_install() {
-    /bin/true
-}
-
-# arg 1:  the new package version
 post_install() {
-    if ! [ `grep '@BRLCAD_ROOT@/lib' etc/ld.so.conf` ]; then
-	echo "@BRLCAD_ROOT@/lib" >>etc/ld.so.conf
-	sbin/ldconfig -r .
-    fi
-}
-
-# arg 1:  the new package version
-# arg 2:  the old package version
-pre_upgrade() {
-    /bin/true
-}
-
-# arg 1:  the new package version
-# arg 2:  the old package version
-post_upgrade() {
-    /bin/true
+  if ! [ `grep '@BRLCAD_ROOT@/lib' etc/ld.so.conf` ]; then
+    echo "@BRLCAD_ROOT@/brlcad/lib" >>etc/ld.so.conf
+    sbin/ldconfig -r .
+  fi
 }
 
 # arg 1:  the old package version
 pre_remove() {
-    cat etc/ld.so.conf | grep -v '@BRLCAD_ROOT@/lib' >/tmp/.pacbrlcad
-    mv /tmp/.pacbrlcad etc/ld.so.conf
-    chmod 644 etc/ld.so.conf
-    sbin/ldconfig -r .
+  cat etc/ld.so.conf | grep -v '@BRLCAD_ROOT@/lib' >/tmp/.pacbrlcad
+  mv /tmp/.pacbrlcad etc/ld.so.conf
+  chmod 644 etc/ld.so.conf
+  sbin/ldconfig -r .
 }
 
-# arg 1:  the old package version
-post_remove() {
-    /bin/true
-}
 
 op=$1
 shift

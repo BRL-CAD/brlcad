@@ -2,10 +2,16 @@
 
 EXTRA_DIST = \
 	PKGBUILD \
-	PKGBUILD.in
+	PKGBUILD.in \
+        brlcad.install \
+        brlcad.install.in \
+        brlcad.sh \
+        brlcad.sh.in
 
 DISTCLEANFILES = \
-	PKGBUILD
+	PKGBUILD \
+        brlcad.install \
+        brlcad.sh
 
 MAINTAINERCLEANFILES = Makefile.in
 

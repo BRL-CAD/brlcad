@@ -1,3 +1,5 @@
+# $Id$
+
 #                     P K G B U I L D . S T A T I C
 # BRL-CAD
 #
@@ -54,7 +56,7 @@ depends=('libpng' 'zlib' 'libgl' 'jove' 'tk-devel')
 #depends=('libpng' 'zlib' 'libgl' 'jove' 'tk' 'blt' 'itcl' )
 
 options=('!libtool')
-source=('http://dl.sourceforge.net/sourceforge/$pkgname/$pkgname-$pkgver.tar.bz2' 'brlcad.sh' 'brlcad.install')
+source=(http://dl.sourceforge.net/sourceforge/$pkgname/$pkgname-$pkgver.tar.bz2 brlcad.sh brlcad.install)
 md5sums=('6bc9ae0a10a3b2f9ede0d79a58f623dd'
          '6e46ccfca93dd363d931c25ab21ac512'
          '836f44805340102f9feec82958102ff8')
