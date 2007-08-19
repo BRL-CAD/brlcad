@@ -2558,22 +2558,28 @@ AC_TRY_RUN([
 #include <stdio.h>
 int main() {
     Tcl_Interp *interp;
+    const char *arg[5] = {".", "xview", "moveto", "1.0", NULL};
+    double t = 0.0;
     interp = Tcl_CreateInterp();
     if (Tcl_Init(interp) == TCL_ERROR) {
 	fprintf(stderr, "Tcl_Init returned error\n");
 	return 1;
     }
-    if (Tk_Init(interp) == TCL_ERROR) {
-	fprintf(stderr, "Tk_Init returned error\n");
-	return 1;
+    if (Tk_GetScrollInfo(interp, 4, arg, &t, NULL) == TK_SCROLL_ERROR) {
+	fprintf(stderr, "Tk_GetScrollInfo returned an error: %s\n", interp->result);
+	return 2;
+    }
+    if (t != 1.0) {
+	fprintf(stderr, "Tk_GetScrollInfo returned an unexpected value: %f\n", t);
+	return 3;
     }
 
 #if TK_MAJOR_VERSION < 8
-    fprintf(stderr, "major version < 8\n");
-    return 1;
+    fprintf(stderr, "major version < 8  (it's %d)\n", TK_MAJOR_VERSION);
+    return 4;
 #elif TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 5
-    fprintf(stderr, "minor version < 5\n");
-    return 1;
+    fprintf(stderr, "minor version < 5  (it's %d)\n", TK_MINOR_VERSION);
+    return 5;
 #endif
     return 0;
 }
