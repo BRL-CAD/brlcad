@@ -41,32 +41,41 @@
 ###
 
 pkgname=@PACKAGE_NAME@
-pkgver=@MAJOR_VERSION@.@MINOR_VERSION@
-pkgrel=@PATCH_VERSION@
-pkgdesc="BRL-CAD is a powerful open source constructive solid geometry (CSG) solid modeling system that includes interactive geometry editing, ray-tracing for rendering & geometric analyses, network distributed framebuffer support, image & signal-processing tools."
+pkgver=@MAJOR_VERSION@.@MINOR_VERSION@.@PATCH_VERSION@
+pkgrel=1
+pkgdesc="An extensive Constructive Solid Geometry (CSG) solid modeling system."
 url="http://brlcad.org"
-license=("LGPL" "BSD" "BDL")
+license=('custom:BDL' 'BSD' 'LGPL')
 install=brlcad.install
-depends=('libpng' 'tcl' 'tk' 'zlib' 'libgl')
-options=('NOLIBTOOL')
-source=( \
-    http://dl.sourceforge.net/sourceforge/@PACKAGE@/@PACKAGE@-@BRLCAD_VERSION@.tar.bz2 \
-    brlcad.sh \
-    brlcad.install \
-    )
-md5sums=( \
-    '01539c0045e8f6159d6aeea374641cde' \
-    'bb845cbd3cabb288c427cd0e9a0efee1' \
-    '09d5fa0be8ebc2b5495457b8459df2c7' \
-    )
+arch=('i686')
+depends=('libpng' 'zlib' 'libgl' 'jove' 'tk-devel')
+
+# TODO: Make separate packages for itcl, itk, iwidgets
+#depends=('libpng' 'zlib' 'libgl' 'jove' 'tk' 'blt' 'itcl' )
+
+options=('!libtool')
+source=('http://dl.sourceforge.net/sourceforge/$pkgname/$pkgname-$pkgver.tar.bz2' 'brlcad.sh' 'brlcad.install')
+md5sums=('6bc9ae0a10a3b2f9ede0d79a58f623dd'
+         '6e46ccfca93dd363d931c25ab21ac512'
+         '836f44805340102f9feec82958102ff8')
 
 build() {
-    cd $startdir/src/@PACKAGE@-@BRLCAD_VERSION@
-    ./configure --enable-optimized --prefix=@BRLCAD_ROOT@
+    cd $startdir/src/$pkgname-$pkgver
+    ./configure --enable-optimized --disable-sdltest --prefix=/opt/brlcad
     make || return 1
     make DESTDIR=$startdir/pkg install || return 1
+
+    # Specify proper share directory
+    echo -e "export BRLCAD_DATA=\$BRLCADDIR/share/brlcad/$pkgver\n" >> \
+      $startdir/src/brlcad.sh
     mkdir -p $startdir/pkg/etc/profile.d
     install -m755 $startdir/src/brlcad.sh $startdir/pkg/etc/profile.d
+
+    mkdir -p $startdir/pkg/usr/share/licenses/$pkgname
+    cp $startdir/src/$pkgname-$pkgver/doc/legal/bdl.txt \
+        $startdir/pkg/usr/share/licenses/$pkgname
+
+    # TODO: maybe remove irrelevant READMEs, INSTALL etc...
 }
 
 # Local Variables:
