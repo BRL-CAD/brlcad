@@ -102,10 +102,11 @@ struct bend_pipe
 	fastf_t	bend_angle;		/* Angle that bend goes through */
 	vect_t	bend_ra;		/* unit vector in plane of bend (points toward start from bend_V) */
 	vect_t	bend_rb;		/* unit vector in plane of bend (normal to bend_ra) */
+        vect_t  bend_endNorm;           /* unit vector normal to end plane */
+        vect_t  bend_startNorm;         /* unit vector normal to start plane */
 	vect_t	bend_N;			/* unit vector normal to plane of bend */
-	fastf_t	bend_R_SQ;		/* bounding sphere radius squared */
-	point_t bend_min;
-	point_t bend_max;
+        point_t bend_bound_center;      /* center of bounding sphere */
+        fastf_t bend_bound_radius_sq;   /* square of bounding sphere radius */
 };
 
 
@@ -127,12 +128,16 @@ struct hit_list
 #define PIPE_BEND_INNER_BODY	6
 #define	PIPE_BEND_BASE		7
 #define PIPE_BEND_TOP		8
+#define PIPE_RADIUS_CHANGE      9
 
 BU_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
 
 
 HIDDEN int
-rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center, fastf_t *bend_start, fastf_t *bend_end, fastf_t bend_radius, fastf_t bend_angle, fastf_t *v1, fastf_t *v2, fastf_t od, fastf_t id)
+rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center,
+        fastf_t *bend_start, fastf_t *bend_end, fastf_t bend_radius,
+        fastf_t bend_angle, fastf_t *v1, fastf_t *v2, fastf_t od, fastf_t id,
+        fastf_t prev_od, fastf_t next_od)
 {
 	register struct bend_pipe *pipe;
 	LOCAL vect_t	to_start,to_end;
@@ -140,6 +145,9 @@ rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center
 	LOCAL point_t	work;
 	LOCAL vect_t	tmp_vec;
 	LOCAL fastf_t	f;
+        LOCAL fastf_t   max_od;
+        LOCAL fastf_t   max_or;
+        LOCAL fastf_t   max_r;
 
 	pipe = (struct bend_pipe *)bu_malloc( sizeof( struct bend_pipe ), "rt_bend_pipe_prep:pipe" )	 ;
 
@@ -157,6 +165,9 @@ rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center
 	VCROSS( pipe->bend_N, to_start, to_end );
 	VUNITIZE( pipe->bend_N );
 	VCROSS( pipe->bend_rb, pipe->bend_N, pipe->bend_ra );
+        VCROSS( pipe->bend_startNorm, pipe->bend_ra, pipe->bend_N );
+        VCROSS( pipe->bend_endNorm, pipe->bend_N, to_end );
+        VUNITIZE( pipe->bend_endNorm );
 
 	pipe->bend_angle = bend_angle;
 
@@ -169,9 +180,6 @@ rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center
 
 	pipe->bend_alpha_i = pipe->bend_ir/pipe->bend_radius;
 	pipe->bend_alpha_o = pipe->bend_or/pipe->bend_radius;
-
-	pipe->bend_R_SQ = (pipe->bend_radius + pipe->bend_or) *
-				(pipe->bend_radius + pipe->bend_or);
 
 	MAT_IDN( R );
 	VMOVE( &R[0], pipe->bend_ra );
@@ -188,30 +196,35 @@ rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center
 	pipe->bend_SoR[15] *= pipe->bend_radius;
 
 	/* bounding box for entire torus */
-	/* X */
-	VSET( tmp_vec, 1.0, 0.0, 0.0 );
-	VCROSS( work, pipe->bend_N, tmp_vec );
-	f = pipe->bend_or + pipe->bend_radius * MAGNITUDE(work);
-	pipe->bend_min[X] = pipe->bend_V[X] - f;
-	pipe->bend_max[X] = pipe->bend_V[X] + f;
-
-	/* Y */
-	VSET( tmp_vec, 0.0, 1.0, 0.0 );
-	VCROSS( work, pipe->bend_N, tmp_vec );
-	f = pipe->bend_or + pipe->bend_radius * MAGNITUDE(work);
-	pipe->bend_min[Y] = pipe->bend_V[Y] - f;
-	pipe->bend_max[Y] = pipe->bend_V[Y] + f;
-
-	/* Z */
-	VSET( tmp_vec, 0.0, 0.0, 1.0 );
-	VCROSS( work, pipe->bend_N, tmp_vec );
-	f = pipe->bend_or + pipe->bend_radius * MAGNITUDE(work);
-	pipe->bend_min[Z] = pipe->bend_V[Z] - f;
-	pipe->bend_max[Z] = pipe->bend_V[Z] + f;
-
-	PIPE_MM( pipe->bend_min );
-	PIPE_MM( pipe->bend_max );
-
+        /* include od of previous and next segment
+         * to allow for dinscontinuous radii
+         */
+        max_od = od;
+        if( prev_od > max_od ) {
+            max_od = prev_od;
+        }
+        if( next_od > max_od ) {
+            max_od = next_od;
+        }
+        max_or = max_od/2.0;
+        max_r = bend_radius + max_or;
+        
+        VBLEND2(pipe->bend_bound_center, 0.5, bend_start, 0.5, bend_end );
+        pipe->bend_bound_radius_sq = max_r * sin( bend_angle/2.0 );
+        pipe->bend_bound_radius_sq = pipe->bend_bound_radius_sq * pipe->bend_bound_radius_sq;
+        pipe->bend_bound_radius_sq += max_or * max_or;
+        f = sqrt(pipe->bend_bound_radius_sq);
+        VMOVE(work, pipe->bend_bound_center);
+        work[X] -= f;
+        work[Y] -= f;
+        work[Z] -= f;
+        PIPE_MM(work);
+        VMOVE(work, pipe->bend_bound_center);
+        work[X] += f;
+        work[Y] += f;
+        work[Z] += f;
+        PIPE_MM(work);
+        
 	BU_LIST_INSERT( head, &pipe->l );
 
 	return( 0 );
@@ -351,7 +364,7 @@ rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		point_t bend_start, bend_end, bend_center;
 
 		VSUB2( n1, curr_pt, pp2->pp_coord );
-		if( VNEAR_ZERO( n1, SQRT_SMALL_FASTF ) )
+		if( VNEAR_ZERO( n1, RT_LEN_TOL ) )
 		{
 			/* duplicate point, skip to next point */
 			goto next_pt;
@@ -393,7 +406,7 @@ rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		VCROSS( v2, v1, norm );
 		VJOIN1( bend_center, bend_start, -pp2->pp_bendradius, v1 );
 		rt_bend_pipe_prep( stp, head, bend_center, bend_start, bend_end, pp2->pp_bendradius, angle,
-			v1, v2, pp2->pp_od, pp2->pp_id );
+			v1, v2, pp2->pp_od, pp2->pp_id, pp1->pp_od, pp3->pp_od );
 
 		VMOVE( curr_pt, bend_end );
 next_pt:
@@ -494,6 +507,87 @@ rt_vls_pipept(
 	bu_vls_strcat( vp, buf );
 }
 
+/*
+ * Check for hits on surfaces created by discontinuous radius changes from
+ * one pipe segment to the next. Can only happen when one segment is a bend,
+ * because linear segments handle different radii at each end. Bend segments
+ * must have constant radii .
+ * These surfaces are normal to the flow of the pipe.
+ */
+HIDDEN void
+discont_radius_shot(register struct xray *rp, struct seg *seghead,
+        point_t center, vect_t norm,
+        fastf_t or1_sq, fastf_t ir1_sq, fastf_t or2_sq, fastf_t ir2_sq,
+                struct hit_list *hit_headp, int *hit_count, int seg_no)
+{
+    fastf_t dist_to_plane;
+    fastf_t norm_dist;
+    fastf_t slant_factor;
+    fastf_t t_tmp;
+    point_t hit_pt;
+    fastf_t radius_sq;
+    
+    /* calculate interstection with plane at center (with normal "norm") */
+    dist_to_plane = VDOT( norm, center );
+    norm_dist = dist_to_plane - VDOT( norm, rp->r_pt );
+    slant_factor = VDOT( norm, rp->r_dir );
+    if( !NEAR_ZERO( slant_factor, SMALL_FASTF ) ) {
+        vect_t to_center;
+        struct hit_list *hitp;
+        
+        t_tmp = norm_dist/slant_factor;
+        VJOIN1( hit_pt, rp->r_pt, t_tmp, rp->r_dir );
+        VSUB2( to_center, center, hit_pt );
+        radius_sq = MAGSQ( to_center );
+        
+        /* where the radius ranges overlap, there is no hit */
+        if( radius_sq <= or1_sq && radius_sq >= ir1_sq &&
+                radius_sq <= or2_sq && radius_sq >= ir2_sq ) {
+            return;
+        }
+        
+        /* if we are within one of the radius ranges, we have a hit */
+        if( (radius_sq <= or2_sq && radius_sq >= ir2_sq) ||
+                (radius_sq <= or1_sq && radius_sq >= ir1_sq) ) {
+            BU_GETSTRUCT( hitp, hit_list );
+            BU_GETSTRUCT( hitp->hitp, hit );
+            hitp->hitp->hit_magic = RT_HIT_MAGIC;
+            hitp->hitp->hit_dist = t_tmp;
+            hitp->hitp->hit_surfno = seg_no*10 + PIPE_RADIUS_CHANGE;
+            
+            /* within first range, use norm, otherwise reverse */
+            if( radius_sq <= or1_sq && radius_sq >= ir1_sq ) {
+                VMOVE( hitp->hitp->hit_normal, norm );
+            } else {
+                VREVERSE( hitp->hitp->hit_normal, norm );
+            }
+            (*hit_count)++;
+            BU_LIST_INSERT( &hit_headp->l, &hitp->l );
+        }
+    }
+}
+
+/**
+ * check if a ray passes within a bounding sphere
+ */
+int
+rt_in_sph( struct xray *rp, point_t center, fastf_t radius_sq )
+{
+    vect_t toCenter;
+    vect_t toPCA;
+    fastf_t dist_sq;
+    
+    VSUB2( toCenter, center, rp->r_pt );
+    VCROSS( toPCA, toCenter, rp->r_dir );
+    dist_sq = MAGSQ( toPCA );
+    
+    if( dist_sq <= radius_sq) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 HIDDEN void
 bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead, struct bend_pipe *pipe, struct hit_list *hit_headp, int *hit_count, int seg_no)
 {
@@ -508,12 +602,21 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 	LOCAL bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
 	LOCAL vect_t	cor_pprime;	/* new ray origin */
 	LOCAL fastf_t	cor_proj;
+        LOCAL fastf_t   or_sq;          /* outside radius squared */
+        LOCAL fastf_t   ir_sq;          /* inside radius squared */
+        LOCAL fastf_t   or2_sq;         /* outside radius squared (from adjacent seg) */
+        LOCAL fastf_t   ir2_sq;         /* inside radius squared (from adjacent seg) */
+        struct id_pipe  *prev;
+        struct id_pipe  *next;
 
 	*hit_count = 0;
-
-	if( !rt_in_rpp( rp, ap->a_inv_dir, pipe->bend_min, pipe->bend_max ) ) {
-		return;		 /* miss */
-	}
+        
+        if( !rt_in_sph( rp, pipe->bend_bound_center, pipe->bend_bound_radius_sq)) {
+            return;   /* miss */
+        }
+        
+        or_sq = pipe->bend_or * pipe->bend_or;
+        ir_sq = pipe->bend_ir * pipe->bend_ir;
 
 	/* Convert vector into the space of the unit torus */
 	MAT4X3VEC( dprime, pipe->bend_SoR, rp->r_dir );
@@ -599,7 +702,7 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 		    reported=1;
 		}
 	    }
-	    return;	/* MISSED */
+	    goto check_discont_radii;	/* MISSED */
 	}
 
 	/*  Only real roots indicate an intersection in real space.
@@ -642,7 +745,7 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 	}
 
 	if( pipe->bend_alpha_i <= 0.0 )
-		return;		/* no inner torus */
+		goto check_discont_radii;		/* no inner torus */
 
 	/* Now do inner torus */
 	A.cf[2] = X2_Y2.cf[2] + cor_pprime[Z] * cor_pprime[Z] +
@@ -684,7 +787,7 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 		    reported=1;
 		}
 	    }
-	    return;	/* MISSED */
+	    goto check_discont_radii;	/* MISSED */
 	}
 
 	/*  Only real roots indicate an intersection in real space.
@@ -727,6 +830,53 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 	}
 
 	*hit_count += root_count;
+        
+   check_discont_radii:
+        /* check for surfaces created by discontinuous changes in radii */
+        prev = BU_LIST_BACK( id_pipe, &pipe->l );
+        if( prev->l.magic != BU_LIST_HEAD_MAGIC ) {
+            if( prev->pipe_is_bend ) {
+                /* do not process previous bend 
+                struct bend_pipe *bend = (struct bend_pipe *)prev;
+                or2_sq = bend->bend_or*bend->bend_or;
+                ir2_sq = bend->bend_ir*bend->bend_ir; */
+                or2_sq = or2_sq;
+                ir2_sq = ir_sq;
+            } else {
+                struct lin_pipe *lin = (struct lin_pipe *)prev;
+                or2_sq = lin->pipe_rotop_sq;
+                ir2_sq = lin->pipe_ritop_sq;
+                if( !NEAR_ZERO( (or_sq - or2_sq), RT_LEN_TOL) ||
+                        !NEAR_ZERO( (ir_sq - ir2_sq), RT_LEN_TOL) ) {
+                    discont_radius_shot( rp, seghead, pipe->bend_start, pipe->bend_startNorm,
+                            or_sq, ir_sq, or2_sq, ir2_sq, hit_headp, hit_count, seg_no);
+                }
+            }
+        }
+        
+        next = BU_LIST_NEXT( id_pipe, &pipe->l );
+        if( next->l.magic != BU_LIST_HEAD_MAGIC ) {
+            if( next->pipe_is_bend ) {
+                struct bend_pipe *bend = (struct bend_pipe *)next;
+                or2_sq = bend->bend_or*bend->bend_or;
+                ir2_sq = bend->bend_ir*bend->bend_ir;
+                if( !NEAR_ZERO( (or_sq - or2_sq), RT_LEN_TOL) ||
+                    !NEAR_ZERO( (ir_sq - ir2_sq), RT_LEN_TOL) ) {
+                    discont_radius_shot( rp, seghead, pipe->bend_end, pipe->bend_endNorm,
+                            or_sq, ir_sq, or2_sq, ir2_sq, hit_headp, hit_count, seg_no);
+                }
+            } else {
+                struct lin_pipe *lin = (struct lin_pipe *)next;
+                or2_sq = lin->pipe_robase_sq;
+                ir2_sq = lin->pipe_ribase_sq;
+                if( !NEAR_ZERO( (or_sq - or2_sq), RT_LEN_TOL) ||
+                    !NEAR_ZERO( (ir_sq - ir2_sq), RT_LEN_TOL) ) {
+                    discont_radius_shot( rp, seghead, pipe->bend_end, pipe->bend_endNorm,
+                            or_sq, ir_sq, or2_sq, ir2_sq, hit_headp, hit_count, seg_no);
+                }
+            }
+        }
+        
 
 	return;
 
@@ -1232,7 +1382,7 @@ rt_pipe_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 			w = hitp->hit_vpriv[X]*hitp->hit_vpriv[X] +
 			    hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] +
 			    hitp->hit_vpriv[Z]*hitp->hit_vpriv[Z] +
-			    1.0 - pipe_bend->bend_alpha_o*pipe_bend->bend_alpha_o;
+			    1.0 - pipe_bend->bend_alpha_i*pipe_bend->bend_alpha_i;
 			VSET( work,
 				( w - 2.0 ) * hitp->hit_vpriv[X],
 				( w - 2.0 ) * hitp->hit_vpriv[Y],
@@ -1249,6 +1399,8 @@ rt_pipe_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 			VCROSS( hitp->hit_normal, pipe_bend->bend_N, work );
 			VUNITIZE( hitp->hit_normal );
 			break;
+                case PIPE_RADIUS_CHANGE:
+                        break; /* already have normal */
 		default:
 			bu_log( "rt_pipe_norm: Unrecognized surfno (%d)\n", hitp->hit_surfno );
 			break;
@@ -1313,8 +1465,9 @@ rt_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		return( 0 );
 
 	/* calculate hit points and normals */
-	for( BU_LIST_FOR( hitp, hit_list, &hit_head.l ) )
+	for( BU_LIST_FOR( hitp, hit_list, &hit_head.l ) ) {
 		rt_pipe_norm( hitp->hitp, stp , rp );
+	}
 
 	rt_pipe_hitsort( &hit_head, &total_hits, rp, stp );
 
@@ -1690,7 +1843,7 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 		}
 
 		VSUB2( n1, prevp->pp_coord, curp->pp_coord );
-		if( VNEAR_ZERO( n1, SQRT_SMALL_FASTF ) )
+		if( VNEAR_ZERO( n1, RT_LEN_TOL ) )
 		{
 			/* duplicate point, nothing to plot */
 			goto next_pt;
