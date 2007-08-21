@@ -83,6 +83,8 @@ struct lin_pipe
 	fastf_t	pipe_len;			/* length of pipe segment */
 	mat_t	pipe_SoR;	/* Scale and rotate */
 	mat_t	pipe_invRoS;	/* inverse rotation and scale */
+        point_t pipe_min;
+        point_t pipe_max;
 };
 
 struct bend_pipe
@@ -285,25 +287,35 @@ rt_linear_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *pt1, fast
 	/* Compute SoR and invRoS */
 	bn_mat_mul( pipe->pipe_SoR, S, R );
 	bn_mat_mul( pipe->pipe_invRoS, Rinv, S );
-
+        
+        VSETALL( pipe->pipe_min, MAX_FASTF );
+        VSETALL( pipe->pipe_max, -MAX_FASTF );
 
 	VJOIN2( work, pt1, od1, v1, od1, v2 );
 	PIPE_MM( work )
+        VMINMAX( pipe->pipe_min, pipe->pipe_max, work );
 	VJOIN2( work, pt1, -od1, v1, od1, v2 );
 	PIPE_MM( work )
+        VMINMAX( pipe->pipe_min, pipe->pipe_max, work );
 	VJOIN2( work, pt1, od1, v1, -od1, v2 );
 	PIPE_MM( work )
+        VMINMAX( pipe->pipe_min, pipe->pipe_max, work );
 	VJOIN2( work, pt1, -od1, v1, -od1, v2 );
 	PIPE_MM( work )
+        VMINMAX( pipe->pipe_min, pipe->pipe_max, work );
 
 	VJOIN2( work, pt2, od2, v1, od2, v2 );
 	PIPE_MM( work )
+        VMINMAX( pipe->pipe_min, pipe->pipe_max, work );
 	VJOIN2( work, pt2, -od2, v1, od2, v2 );
 	PIPE_MM( work )
+        VMINMAX( pipe->pipe_min, pipe->pipe_max, work );
 	VJOIN2( work, pt2, od2, v1, -od2, v2 );
 	PIPE_MM( work )
+        VMINMAX( pipe->pipe_min, pipe->pipe_max, work );
 	VJOIN2( work, pt2, -od2, v1, -od2, v2 );
 	PIPE_MM( work )
+        VMINMAX( pipe->pipe_min, pipe->pipe_max, work );
 
 }
 
@@ -611,10 +623,6 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 
 	*hit_count = 0;
         
-        if( !rt_in_sph( rp, pipe->bend_bound_center, pipe->bend_bound_radius_sq)) {
-            return;   /* miss */
-        }
-        
         or_sq = pipe->bend_or * pipe->bend_or;
         ir_sq = pipe->bend_ir * pipe->bend_ir;
 
@@ -892,6 +900,7 @@ linear_pipe_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	LOCAL double	t_tmp;
 	LOCAL double	a,b,c;
 	LOCAL double	descrim;
+        LOCAL vect_t    inv_dir;
 
 	if( pipe->pipe_is_bend )
 	{
@@ -900,7 +909,7 @@ linear_pipe_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	}
 
 	*hit_count = 0;
-
+        
 	/* transform ray start point */
 	VSUB2( work_pt, rp->r_pt, pipe->pipe_V );
 	MAT4X3VEC( ray_start, pipe->pipe_SoR, work_pt );
@@ -1450,15 +1459,23 @@ rt_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 		if( !pipe_id->pipe_is_bend )
 		{
-			linear_pipe_shot( stp, rp, ap, seghead, (struct lin_pipe *)pipe_id,
-				&hit_head, &hit_count, seg_no );
-			total_hits += hit_count;
+                    struct lin_pipe *lin = (struct lin_pipe *)pipe_id;
+                    if( !rt_in_rpp( rp, ap->a_inv_dir, lin->pipe_min, lin->pipe_max)) {
+                        continue;
+                    }
+                    linear_pipe_shot( stp, rp, ap, seghead, lin,
+                            &hit_head, &hit_count, seg_no );
+                    total_hits += hit_count;
 		}
 		else
 		{
-			bend_pipe_shot( stp, rp, ap, seghead, (struct bend_pipe *)pipe_id,
-				&hit_head, &hit_count, seg_no );
-			total_hits += hit_count;
+                    struct bend_pipe *bend = (struct bend_pipe *)pipe_id;
+                    if( !rt_in_sph( rp, bend->bend_bound_center, bend->bend_bound_radius_sq)) {
+                        continue;
+                    }
+                    bend_pipe_shot( stp, rp, ap, seghead, bend,
+                            &hit_head, &hit_count, seg_no );
+                    total_hits += hit_count;
 		}
 	}
 	if( !total_hits )
