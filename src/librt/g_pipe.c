@@ -371,6 +371,7 @@ rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		vect_t n1,n2;
 		vect_t norm;
 		vect_t v1,v2;
+                vect_t diff;
 		fastf_t angle;
 		fastf_t dist_to_bend;
 		point_t bend_start, bend_end, bend_center;
@@ -410,8 +411,14 @@ rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		VUNITIZE( norm );
 
 		/* linear section */
-		rt_linear_pipe_prep( stp, head, curr_pt, curr_id, curr_od,
+                VSUB2( diff, curr_pt, bend_start );
+                if( MAGNITUDE( diff ) <= RT_LEN_TOL ) {
+                    /* do not make linear sections that are too small to raytrace */
+                    VMOVE( bend_start, curr_pt );
+                } else {
+                    rt_linear_pipe_prep( stp, head, curr_pt, curr_id, curr_od,
 				bend_start, pp2->pp_id, pp2->pp_od );
+                }
 
 		/* and bend section */
 		VCROSS( v1, n1, norm );
