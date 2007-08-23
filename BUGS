@@ -18,10 +18,6 @@ Recent Bugs
 * nirt/query_ray reports intersection messages in triplicate if the
   shot routines miss but still print out messages
 
-* pipe primitive does not produce the right segments if a bend has an
-  inner diameter that is different/discontinuous from the adjoining
-  end of a straight section.
-
 * mged's plot tool (the gui one, not the 'plot' command) outputs a
   plot file that has an erase as the last command, causing empty plots
 
