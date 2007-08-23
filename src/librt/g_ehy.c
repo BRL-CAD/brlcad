@@ -1444,8 +1444,7 @@ rt_ehy_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	xip->ehy_r2 = rp->s.s_values[3*3+1] / mat[15];
 	xip->ehy_c  = rp->s.s_values[3*3+2] / mat[15];
 
-	if( xip->ehy_r1 < SMALL_FASTF || xip->ehy_r2 < SMALL_FASTF || xip->ehy_c < SMALL_FASTF )
-	{
+	if( xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF ) {
 		bu_log( "rt_ehy_import: r1, r2, or c are zero\n" );
 		bu_free( (char *)ip->idb_ptr , "rt_ehy_import: ip->idb_ptr" );
 		return( -1 );
@@ -1551,8 +1550,7 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	xip->ehy_r2 = vec[3*3+1] / mat[15];
 	xip->ehy_c  = vec[3*3+2] / mat[15];
 
-	if( xip->ehy_r1 < SMALL_FASTF || xip->ehy_r2 < SMALL_FASTF || xip->ehy_c < SMALL_FASTF )
-	{
+	if( xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF ) {
 		bu_log( "rt_ehy_import: r1, r2, or c are zero\n" );
 		bu_free( (char *)ip->idb_ptr , "rt_ehy_import: ip->idb_ptr" );
 		return( -1 );

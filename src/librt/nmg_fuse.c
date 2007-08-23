@@ -2481,15 +2481,15 @@ nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
 		dist = DIST_PT_PLANE( midpt, pl );
 		VJOIN1( midpt, midpt , -dist, pl )
 		dist = fabs( DIST_PT_PLANE( midpt, pl ) );
-		if( dist > SQRT_SMALL_FASTF )
+		if( dist > SMALL_FASTF )
 		{
 			tmp_tol.dist = dist*2.0;
 			tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
 		}
 		else
 		{
-			tmp_tol.dist = SQRT_SMALL_FASTF;
-			tmp_tol.dist_sq = SMALL_FASTF;
+			tmp_tol.dist = SMALL_FASTF;
+			tmp_tol.dist_sq = SMALL_FASTF * SMALL_FASTF;
 		}
 		class = nmg_class_pt_lu_except( midpt, lu, e, &tmp_tol );
 #else

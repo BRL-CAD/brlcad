@@ -308,7 +308,7 @@ rt_grp_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 	/* Verify that normal has unit length */
 	f = MAGNITUDE( gip->normal );
-	if( f < SMALL )  {
+	if( f <= SMALL )  {
 		bu_log("rt_grp_import:  bad normal, len=%g\n", f );
 		return(-1);		/* BAD */
 	}
@@ -383,7 +383,7 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 	/* Verify that normal has unit length */
 	f = MAGNITUDE( gip->normal );
-	if( f < SMALL )  {
+	if( f <= SMALL )  {
 		bu_log("rt_grp_import:  bad normal, len=%g\n", f );
 		return(-1);		/* BAD */
 	}

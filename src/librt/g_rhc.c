@@ -1207,8 +1207,7 @@ rt_rhc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	xip->rhc_r = rp->s.s_values[3*3] / mat[15];
 	xip->rhc_c = rp->s.s_values[3*3+1] / mat[15];
 
-	if( xip->rhc_r < SMALL_FASTF || xip->rhc_c < SMALL_FASTF )
-	{
+	if( xip->rhc_r <= SMALL_FASTF || xip->rhc_c <= SMALL_FASTF ) {
 		bu_log( "rt_rhc_import: r or c are zero\n" );
 		bu_free( (char *)ip->idb_ptr , "rt_rhc_import: ip->idb_ptr" );
 		return( -1 );
@@ -1308,8 +1307,7 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	xip->rhc_r = vec[3*3] / mat[15];
 	xip->rhc_c = vec[3*3+1] / mat[15];
 
-	if( xip->rhc_r < SMALL_FASTF || xip->rhc_c < SMALL_FASTF )
-	{
+	if( xip->rhc_r <= SMALL_FASTF || xip->rhc_c <= SMALL_FASTF ) {
 		bu_log( "rt_rhc_import: r or c are zero\n" );
 		bu_free( (char *)ip->idb_ptr , "rt_rhc_import: ip->idb_ptr" );
 		return( -1 );

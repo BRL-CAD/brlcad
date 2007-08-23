@@ -286,7 +286,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	/* Compute some essential terms */
 	hlen_sq = MAGSQ(pip->part_H );
-	if( hlen_sq < SMALL )  {
+	if( hlen_sq <= SMALL )  {
 		bu_log("part(%s): 0-length H vector\n", stp->st_dp->d_namep);
 		return 1;		/* BAD */
 	}

@@ -129,8 +129,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	RT_SKETCH_CK_MAGIC( skt );
 
 	/* make sure the curve is valid */
-	if( rt_check_curve( &skt->skt_curve, skt, 1 ) )
-	{
+	if( rt_check_curve( &skt->skt_curve, skt, 1 ) )	{
 		bu_log( "ERROR: referenced sketch (%s) is bad!!!\n",
 			eip->sketch_name );
 		return( -1 );
@@ -169,8 +168,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 
 	vert_count = skt->vert_count;
 	/* count how many additional vertices we will need for arc centers */
-	for( i=0 ; i<skt->skt_curve.seg_count ; i++ )
-	{
+	for( i=0 ; i<skt->skt_curve.seg_count ; i++ ) {
 		struct carc_seg *csg=(struct carc_seg *)skt->skt_curve.segments[i];
 
 		if( csg->magic != CURVE_CARC_MAGIC )
@@ -187,8 +185,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 		extr->verts = (point_t *)bu_calloc( vert_count, sizeof( point_t ), "extr->verts" );
 	VSETALL( stp->st_min, MAX_FASTF );
 	VSETALL( stp->st_max, -MAX_FASTF );
-	for( i=0 ; i<skt->vert_count ; i++ )
-	{
+	for( i=0 ; i<skt->vert_count ; i++ ) {
 		VJOIN2( tmp, eip->V, skt->verts[i][0], eip->u_vec, skt->verts[i][1], eip->v_vec );
 		VMINMAX( stp->st_min, stp->st_max, tmp );
 		MAT4X3PNT( extr->verts[i], extr->rot, tmp );
@@ -211,22 +208,16 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	if( tmp_f < 0.0 )
 		tmp_f = -tmp_f;
 	tmp_f -= 1.0;
-	if( NEAR_ZERO( tmp_f, SQRT_SMALL_FASTF ) )
-	{
+	if( NEAR_ZERO( tmp_f, SQRT_SMALL_FASTF ) ) {
 		VSET( extr->rot_axis, 1.0, 0.0, 0.0 );
 		VSET( extr->perp, 0.0, 1.0, 0.0 );
-	}
-	else
-	{
+	} else {
 		VCROSS( extr->rot_axis, tmp, extr->unit_h );
 		VUNITIZE( extr->rot_axis );
-		if( MAGNITUDE( extr->rot_axis ) < SQRT_SMALL_FASTF )
-		{
+		if( MAGNITUDE( extr->rot_axis ) < SQRT_SMALL_FASTF ) {
 			VSET( extr->rot_axis, 1.0, 0.0, 0.0 );
 			VSET( extr->perp, 0.0, 1.0, 0.0 );
-		}
-		else
-		{
+		} else {
 			VCROSS( extr->perp, extr->rot_axis, extr->pl1_rot );
 			VUNITIZE( extr->perp );
 		}
@@ -245,8 +236,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	}
 
 	/* if any part of the curve is a circular arc, the arc may extend beyond the listed vertices */
-	for( i=0 ; i<skt->skt_curve.seg_count ; i++ )
-	{
+	for( i=0 ; i<skt->skt_curve.seg_count ; i++ ) {
 		struct carc_seg *csg=(struct carc_seg *)skt->skt_curve.segments[i];
 		struct carc_seg *csg_extr=(struct carc_seg *)extr->crv.segments[i];
 		point_t center;
@@ -254,8 +244,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 		if( csg->magic != CURVE_CARC_MAGIC )
 			continue;
 
-		if( csg->radius <= 0.0 )	/* full circle */
-		{
+		if( csg->radius <= 0.0 ) {	/* full circle */
 			point_t start;
 			fastf_t radius;
 
@@ -278,9 +267,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 				VADD2( tmp, tmp, eip->h );
 				VMINMAX( stp->st_min, stp->st_max, tmp );
 			}
-		}
-		else	/* circular arc */
-		{
+		} else {	/* circular arc */
 			point_t start, end, mid;
 			vect_t s_to_m;
 			vect_t bisector;
@@ -295,15 +282,13 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 			VUNITIZE( bisector );
 			magsq_s2m = MAGSQ( s_to_m );
 			csg_extr->radius = csg->radius * extr->uv_scale;
-			if( magsq_s2m > csg_extr->radius*csg_extr->radius )
-			{
+			if( magsq_s2m > csg_extr->radius*csg_extr->radius ) {
 				fastf_t max_radius;
 
 				max_radius = sqrt( magsq_s2m );
-				if( NEAR_ZERO( max_radius - csg_extr->radius, RT_LEN_TOL ) )
+				if( NEAR_ZERO( max_radius - csg_extr->radius, RT_LEN_TOL ) ) {
 					csg_extr->radius = max_radius;
-				else
-				{
+				} else {
 					bu_log( "Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!!!\n",
 							stp->st_dp->d_namep, csg_extr->radius, sqrt(magsq_s2m)  );
 					bu_log( "Difference is %g\n", max_radius - csg->radius );
@@ -393,8 +378,7 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
 	ra_4 = ra_sq * ra_sq;
 	rb_sq = V2DOT( rb, rb );
 	rb_4 = rb_sq * rb_sq;
-	if( ra_4 < SMALL_FASTF || rb_4 < SMALL_FASTF )
-	{
+	if( ra_4 <= SMALL_FASTF || rb_4 <= SMALL_FASTF ) {
 		bu_log( "ray (%g %g %g) -> (%g %g %g), semi-axes  = (%g %g %g) and (%g %g %g), center = (%g %g %g)\n",
 			V3ARGS( ray_start ), V3ARGS( ray_dir ), V3ARGS( ra ), V3ARGS( rb ), V3ARGS( center ) );
 		bu_bomb( "ERROR: isect_line2_ellipse: semi-axis length is too small!!!\n" );
@@ -411,8 +395,7 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
 	if( disc < 0.0 )
 		return( 0 );
 
-	if( disc <= SMALL_FASTF )
-	{
+	if( disc <= SMALL_FASTF ) {
 		dist[0] = -b/(2.0*a);
 		return( 1 );
 	}
@@ -621,8 +604,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 
 	/* intersect with top and bottom planes */
 	dot_pl1 = VDOT( rp->r_dir, extr->pl1 );
-	if( NEAR_ZERO( dot_pl1, SMALL_FASTF ) )
-	{
+	if( NEAR_ZERO( dot_pl1, SMALL_FASTF ) )	{
 		/* ray is parallel to top and bottom faces */
 		dist_bottom = DIST_PT_PLANE( rp->r_pt, extr->pl1 );
 		dist_top = DIST_PT_PLANE( rp->r_pt, extr->pl2 );
@@ -632,14 +614,11 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 			return( 0 );
 		dist_bottom = -MAX_FASTF;
 		dist_top = MAX_FASTF;
-	}
-	else
-	{
+	} else {
 		dist_bottom = -DIST_PT_PLANE( rp->r_pt, extr->pl1 )/dot_pl1;
 		to_bottom = dist_bottom;					/* need to remember this */
 		dist_top = -DIST_PT_PLANE( rp->r_pt, extr->pl2 )/dot_pl1;	/* pl1 and pl2 are parallel */
-		if( dist_bottom > dist_top )
-		{
+		if( dist_bottom > dist_top ) {
 			fastf_t tmp1;
 
 			tmp1 = dist_bottom;
@@ -658,8 +637,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 	if( dir_dot_z < 0.0 )
 		dir_dot_z = -dir_dot_z;
 
-	if( NEAR_ZERO( dir_dot_z - 1.0, SMALL_FASTF ) )
-	{
+	if( NEAR_ZERO( dir_dot_z - 1.0, SMALL_FASTF ) )	{
 		/* ray is parallel to extrusion vector
 		 * set mode to just count intersections for Jordan Theorem
 		 */
@@ -674,8 +652,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 	}
 
 	/* intersect with projected curve */
-	for( i=0 ; i<crv->seg_count ; i++ )
-	{
+	for( i=0 ; i<crv->seg_count ; i++ ) {
 		long *lng=(long *)crv->segments[i];
 		struct line_seg *lsg;
 		struct carc_seg *csg=NULL;
@@ -683,8 +660,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		fastf_t diff;
 
 		free_dists = 0;
-		switch( *lng )
-		{
+		switch( *lng ) {
 			case CURVE_LSEG_MAGIC:
 				lsg = (struct line_seg *)lng;
 				VSUB2( tmp, extr->verts[lsg->end], extr->verts[lsg->start] );
@@ -707,8 +683,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 					vect_t ra, rb;
 					fastf_t radius;
 
-					if( csg->radius <= 0.0 )
-					{
+					if( csg->radius <= 0.0 ) {
 						/* full circle */
 						radius = -csg->radius;
 
@@ -720,9 +695,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 
 						dist_count = isect_line2_ellipse( dist, ray_start, ray_dir, extr->verts[csg->end], ra, rb );
 						MAT4X3PNT( tmp, extr->irot, extr->verts[csg->end] ); /* used later in hit->vpriv */
-					}
-					else
-					{
+					} else {
 						VSCALE( ra, extr->rot_axis, csg->radius );
 						VSCALE( rb, extr->perp, csg->radius );
 						dist_count = isect_line_earc( dist, ray_start, ray_dir, extr->verts[csg->center], ra, rb, extr->pl1_rot, extr->verts[csg->start], extr->verts[csg->end], csg->orientation );
@@ -773,14 +746,11 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		}
 
 		/* eliminate duplicate hit distances */
-		for( j=0 ; j<hit_count ; j++ )
-		{
+		for( j=0 ; j<hit_count ; j++ ) {
 			k = 0;
-			while( k < dist_count )
-			{
+			while( k < dist_count ) {
 				diff = dists[k] - hits[j].hit_dist;
-				if( NEAR_ZERO( diff, extr_tol.dist ) )
-				{
+				if( NEAR_ZERO( diff, extr_tol.dist ) ) {
 					int n;
 					for( n=k ; n<dist_count-1 ; n++ ) {
 						dists[n] = dists[n+1];
@@ -789,21 +759,18 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 						}
 					}
 					dist_count--;
-				}
-				else
+				} else {
 					k++;
+				}
 			}
 		}
 
 		/* eliminate duplicate hits below the bottom plane of the extrusion */
-		for( j=0 ; j<hits_before_bottom ; j++ )
-		{
+		for( j=0 ; j<hits_before_bottom ; j++ )	{
 			k = 0;
-			while( k < dist_count )
-			{
+			while( k < dist_count )	{
 				diff = dists[k] - dists_before[j];
-				if( NEAR_ZERO( diff, extr_tol.dist ) )
-				{
+				if( NEAR_ZERO( diff, extr_tol.dist ) ) {
 					int n;
 
 					for( n=k ; n<dist_count-1 ; n++ ) {
@@ -813,37 +780,32 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 						}
 					}
 					dist_count--;
-				}
-				else
+				} else {
 					k++;
+				}
 			}
 		}
 
 		/* eliminate duplicate hits above the top plane of the extrusion */
-		for( j=0 ; j<hits_after_top ; j++ )
-		{
+		for( j=0 ; j<hits_after_top ; j++ ) {
 			k = 0;
-			while( k < dist_count )
-			{
+			while( k < dist_count )	{
 				diff = dists[k] - dists_after[j];
-				if( NEAR_ZERO( diff, extr_tol.dist ) )
-				{
+				if( NEAR_ZERO( diff, extr_tol.dist ) ) {
 					int n;
 
 					for( n=k ; n<dist_count-1 ; n++ )
 						dists[n] = dists[n+1];
 					dist_count--;
-				}
-				else
+				} else {
 					k++;
+				}
 			}
 		}
 
 		/* if we are just doing the Jordan curve thereom */
-		if( check_inout )
-		{
-			for( j=0 ; j<dist_count ; j++ )
-			{
+		if( check_inout ) {
+			for( j=0 ; j<dist_count ; j++ ) {
 				if( dists[j] < 0.0 )
 					hit_count++;
 			}
@@ -851,12 +813,9 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		}
 
 		/* process remaining distances into hits */
-		for( j=0 ; j<dist_count ; j++ )
-		{
-			if( dists[j] < dist_bottom )
-			{
-				if( hits_before_bottom >= MAX_HITS )
-				{
+		for( j=0 ; j<dist_count ; j++ )	{
+			if( dists[j] < dist_bottom ) {
+				if( hits_before_bottom >= MAX_HITS ) {
 					bu_log( "ERROR: rt_extrude_shot: too many hits before bottom on extrusion (%s), limit is %d\n",
 					stp->st_dp->d_namep, MAX_HITS );
 					bu_bomb( "ERROR: rt_extrude_shot: too many hits before bottom on extrusion\n" );
@@ -865,10 +824,8 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 				hits_before_bottom++;
 				continue;
 			}
-			if( dists[j] > dist_top )
-			{
-				if( hits_after_top >= MAX_HITS )
-				{
+			if( dists[j] > dist_top ) {
+				if( hits_after_top >= MAX_HITS ) {
 					bu_log( "ERROR: rt_extrude_shot: too many hits after top on extrusion (%s), limit is %d\n",
 					stp->st_dp->d_namep, MAX_HITS );
 					bu_bomb( "ERROR: rt_extrude_shot: too many hits after top on extrusion\n" );
@@ -880,8 +837,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 			}
 
 			/* got a hit at distance dists[j] */
-			if( hit_count >= MAX_HITS )
-			{
+			if( hit_count >= MAX_HITS ) {
 				bu_log( "Too many hits on extrusion (%s), limit is %d\n",
 					stp->st_dp->d_namep, MAX_HITS );
 				bu_bomb( "Too many hits on extrusion\n" );
@@ -889,8 +845,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 			hits[hit_count].hit_magic = RT_HIT_MAGIC;
 			hits[hit_count].hit_dist = dists[j];
 			hits[hit_count].hit_surfno = surfno;
-			switch( *lng )
-			{
+			switch( *lng ) {
 				case CURVE_CARC_MAGIC:
 					hits[hit_count].hit_private = (genptr_t)csg;
 					VMOVE( hits[hit_count].hit_vpriv, tmp );
@@ -914,10 +869,8 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 			bu_free( (char *)dists, "dists" );
 	}
 
-	if( check_inout )
-	{
-		if( hit_count&1 )
-		{
+	if( check_inout ) {
+		if( hit_count&1 ) {
 			register struct seg *segp;
 
 			hit_count = 2;
@@ -937,23 +890,18 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 			segp->seg_out = hits[1];	/* struct copy */
 			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 			return( 2 );
-		}
-		else
-		{
+		} else {
 			return( 0 );
 		}
 	}
 
-	if( hit_count )
-	{
+	if( hit_count ) {
 		/* Sort hits, Near to Far */
 		rt_hitsort( hits, hit_count );
 	}
 
-	if( hits_before_bottom & 1 )
-	{
-		if( hit_count >= MAX_HITS )
-		{
+	if( hits_before_bottom & 1 ) {
+		if( hit_count >= MAX_HITS ) {
 			bu_log( "Too many hits on extrusion (%s), limit is %d\n",
 				stp->st_dp->d_namep, MAX_HITS );
 			bu_bomb( "Too many hits on extrusion\n" );
@@ -967,10 +915,8 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		hit_count++;
 	}
 
-	if( hits_after_top & 1 )
-	{
-		if( hit_count >= MAX_HITS )
-		{
+	if( hits_after_top & 1 ) {
+		if( hit_count >= MAX_HITS ) {
 			bu_log( "Too many hits on extrusion (%s), limit is %d\n",
 				stp->st_dp->d_namep, MAX_HITS );
 			bu_bomb( "Too many hits on extrusion\n" );
@@ -982,8 +928,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		hit_count++;
 	}
 
-	if( hit_count%2 )
-	{
+	if( hit_count%2 ) {
 		point_t pt;
 
 		if( hit_count != 1 ) {
@@ -1360,7 +1305,7 @@ get_seg_midpoint( genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt )
 				dir[0] = -s2m[1];
 				dir[1] = s2m[0];
 				s2m_len_sq =  s2m[0]*s2m[0] + s2m[1]*s2m[1];
-				if( s2m_len_sq < SMALL_FASTF ) {
+				if( s2m_len_sq <= SMALL_FASTF ) {
 					bu_log( "start and end points are too close together in circular arc of sketch\n" );
 					break;
 				}
@@ -1602,17 +1547,15 @@ isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct lo
 						tmp_dir[0] = -s2m[1];
 					tmp_dir[1] = s2m[0];
 					s2m_len_sq =  s2m[0]*s2m[0] + s2m[1]*s2m[1];
-					if( s2m_len_sq < SMALL_FASTF )
-						{
+					if( s2m_len_sq <= SMALL_FASTF )	{
 							bu_log( "start and end points are too close together in circular arc of sketch\n" );
 							break;
-						}
+					}
 					len_sq = radius*radius - s2m_len_sq;
-					if( len_sq < 0.0 )
-						{
+					if( len_sq < 0.0 ) {
 							bu_log( "Impossible radius for specified start and end points in circular arc\n");
 							break;
-						}
+					}
 					tmp_len = sqrt( tmp_dir[0]*tmp_dir[0] + tmp_dir[1]*tmp_dir[1] );
 					tmp_dir[0] = tmp_dir[0] / tmp_len;
 					tmp_dir[1] = tmp_dir[1] / tmp_len;

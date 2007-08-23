@@ -1200,7 +1200,7 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 			bu_log("\t\tchecking forward edgeuse to %g %g %g\n",
 				V3ARGS(vu_next->v_p->vg_p->coord) );
 
-		if (eu_length_sq >= SMALL_FASTF) {
+		if (eu_length_sq > SMALL_FASTF) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
 				if (rt_g.NMG_debug & DEBUG_TRI) {
 					bu_log("\t\t\teu_dir %g %g %g\n",
@@ -1251,7 +1251,7 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 			bu_log("\t\tchecking reverse edgeuse to %g %g %g\n",
 				V3ARGS(vu_prev->v_p->vg_p->coord) );
 
-		if (eu_length_sq >= SMALL_FASTF) {
+		if (eu_length_sq > SMALL_FASTF) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
 				if (rt_g.NMG_debug & DEBUG_TRI) {
 					bu_log("\t\t\t-eu_dir %g %g %g\n",

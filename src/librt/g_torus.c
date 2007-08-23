@@ -996,7 +996,7 @@ rt_num_circular_segments(double	maxerr, double	radius)
 		return(6);
 	}
 	half_theta = acos( cos_half_theta );
-	if( half_theta < SMALL )  {
+	if( half_theta <= SMALL )  {
 		/* A very large number of segments will be needed.
 		 * Impose an upper bound here
 		 */
@@ -1352,7 +1352,7 @@ rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	tip->r_a = MAGNITUDE(tip->a);
 	tip->r_b = MAGNITUDE(tip->b);
 	tip->r_h = MAGNITUDE(tip->h);
-	if( tip->r_a < SMALL || tip->r_b < SMALL || tip->r_h < SMALL )  {
+	if( tip->r_a <= SMALL || tip->r_b <= SMALL || tip->r_h <= SMALL )  {
 		bu_log("rt_tor_import:  zero length A, B, or H vector\n");
 		return(-1);
 	}

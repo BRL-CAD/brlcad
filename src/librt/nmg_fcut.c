@@ -646,7 +646,7 @@ really_on:
 			/* Edge goes from otherv to v */
 			VSUB2( heading, v->vg_p->coord, otherv->vg_p->coord );
 		}
-		if( MAGSQ(heading) < SMALL_FASTF )  bu_bomb("nmg_assess_eu() null heading\n");
+		if( MAGSQ(heading) <= SMALL_FASTF )  bu_bomb("nmg_assess_eu() null heading\n");
 		if( MAGSQ(heading) < rs->tol->dist_sq )  bu_bomb("nmg_assess_eu() edge len < dist tol\n");
 		if( VDOT( heading, rs->dir ) < 0 )  {
 			ret = NMG_E_ASSESSMENT_ON_REV;
@@ -720,7 +720,7 @@ really_on:
 	 */
 left_right:
 	VSUB2( heading, otherv->vg_p->coord, v->vg_p->coord );
-	if( MAGSQ(heading) < SMALL_FASTF )  bu_bomb("nmg_assess_eu() null heading 2\n");
+	if( MAGSQ(heading) <= SMALL_FASTF )  bu_bomb("nmg_assess_eu() null heading 2\n");
 	if( VDOT( heading, rs->left ) < 0 )  {
 		ret = NMG_E_ASSESSMENT_RIGHT;
 	} else {

@@ -1210,8 +1210,7 @@ rt_rpc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	MAT4X3VEC( xip->rpc_B, mat, &rp->s.s_values[2*3] );
 	xip->rpc_r = rp->s.s_values[3*3] / mat[15];
 
-	if( xip->rpc_r < SMALL_FASTF )
-	{
+	if( xip->rpc_r <= SMALL_FASTF ) {
 		bu_log( "rt_rpc_import: r is zero\n" );
 		bu_free( (char *)ip->idb_ptr , "rt_rpc_import: ip->idp_ptr" );
 		return( -1 );
@@ -1303,8 +1302,7 @@ rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	MAT4X3VEC( xip->rpc_B, mat, &vec[2*3] );
 	xip->rpc_r = vec[3*3] / mat[15];
 
-	if( xip->rpc_r < SMALL_FASTF )
-	{
+	if( xip->rpc_r <= SMALL_FASTF ) {
 		bu_log( "rt_rpc_import: r is zero\n" );
 		bu_free( (char *)ip->idb_ptr , "rt_rpc_import: ip->idp_ptr" );
 		return( -1 );

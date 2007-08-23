@@ -1529,7 +1529,7 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
 	vect_mag = MAGNITUDE( plane );
 
 	/* Error if the area is too small to unitize the normal vector */
-	if( vect_mag < SMALL_FASTF )
+	if( vect_mag <= SMALL_FASTF )
 		return( (fastf_t)(-1.0) );
 
 	area = 0.5 * vect_mag;

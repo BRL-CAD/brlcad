@@ -3835,7 +3835,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	VSUB2( dir, vg2->coord, vg1->coord );
 	VMOVE( edir, dir );
 	eu_len = MAGNITUDE( dir );
-	if( eu_len < is->tol.dist || eu_len < SMALL_FASTF )
+	if( eu_len < is->tol.dist || eu_len <= SMALL_FASTF )
 	{
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			bu_log( "\tnmg_isec_eu_fu: 0 length edge\n" );

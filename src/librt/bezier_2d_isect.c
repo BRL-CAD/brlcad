@@ -115,16 +115,16 @@ ControlPolygonFlatEnough(
 	b = V[degree][X] - V[0][X];
 	c = V[0][X] * V[degree][Y] - V[degree][X] * V[0][Y];
 
-	abSquared = (a * a) + (b * b);
+	abSquared = 1.0 / ((a * a) + (b * b));
 
 	for (i = 1; i < degree; i++) {
 	    /* Compute distance from each of the points to that line	*/
 		distance[i] = a * V[i][X] + b * V[i][Y] + c;
 		if (distance[i] > 0.0) {
-				distance[i] = (distance[i] * distance[i]) / abSquared;
+				distance[i] = (distance[i] * distance[i]) * abSquared;
 		}
 		if (distance[i] < 0.0) {
-				distance[i] = -((distance[i] * distance[i]) / abSquared);
+				distance[i] = -((distance[i] * distance[i]) * abSquared);
 		}
 	}
     }

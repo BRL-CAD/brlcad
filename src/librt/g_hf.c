@@ -492,7 +492,7 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 #if 0
 	dn = VDOT(tri_wn1st, rp->r_dir); /* wn1st points out */
 	abs_dn = (dn >= 0.0) ? dn : (-dn);
-	if (abs_dn <SQRT_SMALL_FASTF)
+	if (abs_dn < SQRT_SMALL_FASTF)
 		goto other_half; /* ray parellel to plane */
 
 	VSUB2( wxb, tri_A, rp->r_pt);
@@ -648,7 +648,7 @@ leave:
 	hitp->hit_surfno = yCell*hfp->hf_w+xCell;
 	hitp++;
 
-	if ((fabs(k1st-k2nd) < SMALL_FASTF) &&
+	if ((fabs(k1st-k2nd) <= SMALL_FASTF) &&
 	    (dir1st + dir2nd != 1)) return 1;
 
 	hitp->hit_magic = RT_HIT_MAGIC;
@@ -907,7 +907,7 @@ bzero(hits,sizeof(hits));
 		return 0;	/* MISS */
 	}
 
-	if ( fabs(in-out) < SMALL_FASTF  || out >= INFINITY ) {
+	if ( fabs(in-out) <= SMALL_FASTF  || out >= INFINITY ) {
 		if (RT_G_DEBUG & DEBUG_HF) {
 			bu_log("rt_hf_shoot(%s): in(%g) >= out(%g) || out >= INFINITY\n",
 			    stp->st_name, in, out);
@@ -958,7 +958,7 @@ bzero(hits,sizeof(hits));
 		VUNITIZE(tmp);
 		cosine = VDOT(tmp, hf->hf_X);
 	}
-	if (fabs(cosine) < SMALL_FASTF) {	/* near enough to Z */
+	if (fabs(cosine) <= SMALL_FASTF) {	/* near enough to Z */
 		vect_t tmp;
 		int xCell, yCell, r;
 		if (RT_G_DEBUG & DEBUG_HF) {

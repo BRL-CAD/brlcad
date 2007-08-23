@@ -920,8 +920,7 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 			dxbdn = VDOT( arbp->arb_face[j].peqn, rp[i]->r_pt ) -
 				arbp->arb_face[j].peqn[3];
-			if( (dn = -VDOT( arbp->arb_face[j].peqn, rp[i]->r_dir )) <
-							-SQRT_SMALL_FASTF )  {
+			if( (dn = -VDOT( arbp->arb_face[j].peqn, rp[i]->r_dir )) < -SQRT_SMALL_FASTF )  {
 			   /* exit point, when dir.N < 0.  out = min(out,s) */
 			   if( segp[i].seg_out.hit_dist > (s = dxbdn/dn) )  {
 				   segp[i].seg_out.hit_dist = s;

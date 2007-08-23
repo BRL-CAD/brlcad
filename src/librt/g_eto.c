@@ -1241,7 +1241,7 @@ rt_eto_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	tip->eto_r  = rp->s.s_values[3*3] / mat[15];
 	tip->eto_rd = rp->s.s_values[3*3+1] / mat[15];
 
-	if( tip->eto_r < SMALL || tip->eto_rd < SMALL )  {
+	if( tip->eto_r <= SMALL || tip->eto_rd <= SMALL )  {
 		bu_log("rt_eto_import:  zero length R or Rd vector\n");
 		return(-1);
 	}
@@ -1332,7 +1332,7 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	tip->eto_r  = vec[3*3] / mat[15];
 	tip->eto_rd = vec[3*3+1] / mat[15];
 
-	if( tip->eto_r < SMALL || tip->eto_rd < SMALL )  {
+	if( tip->eto_r <= SMALL || tip->eto_rd <= SMALL )  {
 		bu_log("rt_eto_import:  zero length R or Rd vector\n");
 		return(-1);
 	}

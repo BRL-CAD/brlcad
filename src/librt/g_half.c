@@ -525,7 +525,7 @@ rt_hlf_xform(
 
 	/* Now some safety.  Verify that the normal has unit length */
 	f = MAGNITUDE( hop->eqn);
-	if ( f < SMALL ) {
+	if ( f <= SMALL ) {
 		bu_log("rt_half_xform: bad normal, len = %g\n", f);
 		return(-1);
 	}
@@ -588,7 +588,7 @@ rt_hlf_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 	/* Verify that normal has unit length */
 	f = MAGNITUDE( hip->eqn );
-	if( f < SMALL )  {
+	if( f <= SMALL )  {
 		bu_log("rt_hlf_import:  bad normal, len=%g\n", f );
 		return(-1);		/* BAD */
 	}
@@ -671,7 +671,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 	/* Verify that normal has unit length */
 	f = MAGNITUDE( hip->eqn );
-	if( f < SMALL )  {
+	if( f <= SMALL )  {
 		bu_log("rt_hlf_import:  bad normal, len=%g\n", f );
 		return(-1);		/* BAD */
 	}

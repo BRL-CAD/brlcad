@@ -905,7 +905,7 @@ rt_ell_norms(register fastf_t *ov, fastf_t *A, fastf_t *B, fastf_t *h_vec, fastf
 	vect_t partial_t, partial_ang;
 
 	sqrt_1mt = sqrt( 1.0 - t );
-	if( sqrt_1mt < SMALL_FASTF )
+	if( sqrt_1mt <= SMALL_FASTF )
 		bu_bomb( "rt_epa_tess: rt_ell_norms: sqrt( 1.0 -t ) is zero\n" );
 	theta = 2 * bn_pi / sides;
 	ang = 0.;
@@ -1483,8 +1483,7 @@ rt_epa_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	xip->epa_r1 = rp->s.s_values[3*3] / mat[15];
 	xip->epa_r2 = rp->s.s_values[3*3+1] / mat[15];
 
-	if( xip->epa_r1 < SMALL_FASTF || xip->epa_r2 < SMALL_FASTF )
-	{
+	if( xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF ) {
 		bu_log( "rt_epa_import: r1 or r2 are zero\n" );
 		bu_free( (char *)ip->idb_ptr , "rt_epa_import: ip->idb_ptr" );
 		return( -1 );
@@ -1589,8 +1588,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	xip->epa_r1 = vec[3*3] / mat[15];
 	xip->epa_r2 = vec[3*3+1] / mat[15];
 
-	if( xip->epa_r1 < SMALL_FASTF || xip->epa_r2 < SMALL_FASTF )
-	{
+	if( xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF ) {
 		bu_log( "rt_epa_import: r1 or r2 are zero\n" );
 		bu_free( (char *)ip->idb_ptr , "rt_epa_import: ip->idb_ptr" );
 		return( -1 );

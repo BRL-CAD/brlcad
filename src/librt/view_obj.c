@@ -1251,7 +1251,7 @@ vo_zoom(struct view_obj	*vop,
 	Tcl_Interp	*interp,
 	fastf_t		sf)
 {
-	if (sf < SMALL_FASTF || INFINITY < sf) {
+	if (sf <= SMALL_FASTF || INFINITY < sf) {
 		Tcl_AppendResult(interp, "vo_zoom - scale factor out of range\n", (char *)0);
 		return TCL_ERROR;
 	}
@@ -2525,7 +2525,7 @@ vo_sca(struct view_obj	*vop,
 	if (func != (int (*)())0)
 		return (*func)(vop, interp, sf);
 
-	if (sf < SMALL_FASTF || INFINITY < sf)
+	if (sf <= SMALL_FASTF || INFINITY < sf)
 		return TCL_OK;
 
 	vop->vo_scale *= sf;
@@ -2789,7 +2789,7 @@ vo_mike_persp_mat(mat_t		pmat,
 	mat_t	t1, t2;
 	point_t	sheared_eye;
 
-	if( eye[Z] < SMALL )  {
+	if( eye[Z] <= SMALL )  {
 		VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
 		return;
 	}

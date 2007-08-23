@@ -251,15 +251,19 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	tgc->tgc_C = mag_c;
 	tgc->tgc_D = mag_d;
 
+	bu_log("%s: a is %.20f, b is %.20f, c is %.20f, d is %.20f\n", stp->st_name, magsq_a, magsq_b, magsq_c, magsq_d);
+
 	/* Part of computing ALPHA() */
-	if( NEAR_ZERO(magsq_c, SMALL) )
+	if( NEAR_ZERO(magsq_c, SMALL) ) {
 		tgc->tgc_AAdCC = VLARGE;
-	else
+	} else {
 		tgc->tgc_AAdCC = magsq_a / magsq_c;
-	if( NEAR_ZERO(magsq_d, SMALL) )
+	}
+	if( NEAR_ZERO(magsq_d, SMALL) ) {
 		tgc->tgc_BBdDD = VLARGE;
-	else
+	} else {
 		tgc->tgc_BBdDD = magsq_b / magsq_d;
+	}
 
 	/*  If the eccentricities of the two ellipses are the same,
 	 *  then the cone equation reduces to a much simpler quadratic
@@ -584,9 +588,13 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 */
 	for( i=0; i<3; i++ )  {
 		/* Direction cosines */
-		if( NEAR_ZERO( dprime[i], 1e-10 ) )  dprime[i] = 0;
+		if( NEAR_ZERO( dprime[i], 1e-10 ) ) {
+		    dprime[i] = 0;
+		}
 		/* Position in -1..+1 coordinates */
-		if( NEAR_ZERO( cor_pprime[i], 1e-20 ) )  cor_pprime[i] = 0;
+		if( NEAR_ZERO( cor_pprime[i], 1e-20 ) ) {
+		    cor_pprime[i] = 0;
+		}
 	}
 
 	/*
@@ -710,6 +718,8 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		/*  The equation is 4th order, so we expect 0 to 4 roots */
 		nroots = rt_poly_roots( &C , val, stp->st_dp->d_namep );
 
+		//		bn_pr_roots("roots", val, nroots);
+
 		/*  Only real roots indicate an intersection in real space.
 		 *
 		 *  Look at each root returned; if the imaginary part is zero
@@ -717,11 +727,13 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		 *  of 't' for the intersections
 		 */
 		for ( l=0, npts=0; l < nroots; l++ ){
-			if ( NEAR_ZERO( val[l].im, 1e-10 ) ) {
+			if ( NEAR_ZERO( val[l].im, 1e-2 ) ) {
 				hit_type[npts] = TGC_NORM_BODY;
 				k[npts++] = val[l].re;
 			}
 		}
+		//		bu_log("npts rooted is %d; ", npts);
+
 		/* Here, 'npts' is number of points being returned */
 		if ( npts != 0 && npts != 2 && npts != 4 && npts > 0 ){
 			bu_log("tgc:  reduced %d to %d roots\n",nroots,npts);
@@ -745,6 +757,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		k[i] += cor_proj;
 	}
 
+	//	bu_log("npts before elimination is %d; ", npts);
 	/*
 	 * Eliminate hits beyond the end planes
 	 */
@@ -768,22 +781,28 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	/*
 	 * Consider intersections with the end ellipses
 	 */
+	//	bu_log("npts before base is %d; ", npts);
 	dir = VDOT( tgc->tgc_N, rp->r_dir );
 	if( !NEAR_ZERO( dprime[Z], SMALL_FASTF ) && !NEAR_ZERO( dir, RT_DOT_TOL ) )  {
 		b = ( -pprime[Z] )/dprime[Z];
 		/*  Height vector is unitized (tgc->tgc_sH == 1.0) */
 		t = ( 1.0 - pprime[Z] )/dprime[Z];
 
+		/* the top end */
 		VJOIN1( work, pprime, b, dprime );
 		/* A and B vectors are unitized (tgc->tgc_A == _B == 1.0) */
 		/* alf1 = ALPHA(work[X], work[Y], 1.0, 1.0 ) */
 		alf1 = work[X]*work[X] + work[Y]*work[Y];
 
+		/* the bottom end */
 		VJOIN1( work, pprime, t, dprime );
-
 		/* Must scale C and D vectors */
 		alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC,tgc->tgc_BBdDD);
 
+		/*
+		bu_log("alf1 is %f, alf2 is %f\n", alf1, alf2);
+		bu_log("work[x]=%f, work[y]=%f, aadcc=%f, bbddd=%f\n", work[X], work[Y], tgc->tgc_AAdCC, tgc->tgc_BBdDD);
+		*/
 		if ( alf1 <= 1.0 ){
 			hit_type[npts] = TGC_NORM_BOT;
 			k[npts++] = b;
@@ -794,6 +813,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		}
 	}
 
+	//	bu_log("npts FINAL is %d\n", npts);
 
 	/* Sort Most distant to least distant: rt_pt_sort( k, npts ) */
 	{
