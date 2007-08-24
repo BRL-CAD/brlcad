@@ -625,10 +625,28 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
         LOCAL fastf_t   ir_sq;          /* inside radius squared */
         LOCAL fastf_t   or2_sq;         /* outside radius squared (from adjacent seg) */
         LOCAL fastf_t   ir2_sq;         /* inside radius squared (from adjacent seg) */
+        LOCAL int       parallel;       /* set to one when ray is parallel to plane of bend */
+        LOCAL fastf_t   dist;           /* distance between ray and plane of bend */
+        LOCAL fastf_t   tmp;
         struct id_pipe  *prev;
         struct id_pipe  *next;
 
 	*hit_count = 0;
+        
+        tmp = VDOT( rp->r_dir, pipe->bend_N );
+        if( NEAR_ZERO(tmp, 0.0000005) ) {
+            /* ray is parallel to plane of bend */
+            parallel = 1;
+            dist = fabs( VDOT(rp->r_pt, pipe->bend_N) -
+                    VDOT(pipe->bend_V, pipe->bend_N) );
+            
+            if( dist > pipe->bend_or ) {
+                /* ray is more than outer radius away from plane of bend */
+                goto check_discont_radii;
+            }
+        } else {
+            parallel = 0;
+        }
         
         or_sq = pipe->bend_or * pipe->bend_or;
         ir_sq = pipe->bend_ir * pipe->bend_ir;
@@ -761,6 +779,11 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 
 	if( pipe->bend_alpha_i <= 0.0 )
 		goto check_discont_radii;		/* no inner torus */
+        
+        if( parallel && dist > pipe->bend_ir ) {
+            /* ray is parallel to plane of bend and more than inner radius away */
+            goto check_discont_radii;
+        }
 
 	/* Now do inner torus */
 	A.cf[2] = X2_Y2.cf[2] + cor_pprime[Z] * cor_pprime[Z] +
@@ -855,7 +878,7 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
                 struct bend_pipe *bend = (struct bend_pipe *)prev;
                 or2_sq = bend->bend_or*bend->bend_or;
                 ir2_sq = bend->bend_ir*bend->bend_ir; */
-                or2_sq = or2_sq;
+                or2_sq = or_sq;
                 ir2_sq = ir_sq;
             } else {
                 struct lin_pipe *lin = (struct lin_pipe *)prev;
