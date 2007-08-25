@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-06-XX  Release 7.10.3                                     ---
 ----------------------------------------------------------------------
 
+* Z clipping now off by default in mged - Sean Morrison
 * add performance optimizations to the pipe primitive - John Anderson
 * handle discontinuous changes in pipe inner radii - John Anderson
 * allow rt more than available cpus for debugging - Sean Morrison

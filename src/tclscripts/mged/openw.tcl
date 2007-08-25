@@ -173,7 +173,7 @@ if {![info exists mged_default(orig_gui)]} {
 }
 
 if {![info exists mged_default(zclip)]} {
-	set mged_default(zclip) 1
+	set mged_default(zclip) 0
 }
 
 if {![info exists mged_default(zbuffer)]} {
