@@ -2497,7 +2497,7 @@ TCLSTUB=""
 TCL_CPPFLAGS=""
 TCL_VERSION="8.5"
 case $host_os in
-     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
+     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd*|*sunos4*)
 	 # some OS's don't like dots in the lib name
 	 TCL_VERSION="`echo ${TCL_VERSION} | tr -d .`"
 	 ;;
