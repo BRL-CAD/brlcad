@@ -24,7 +24,7 @@ benchmark: run.sh
 	cp $(top_srcdir)/bench/run.sh benchmark
 
 run: all
-	@${SH} run.sh
+	@${SH} ${srcdir}/run.sh
 	@$(ECHO) "---"
 	@$(ECHO) "Run 'make clean' in the bench directory to delete the log"
 	@$(ECHO) "and image files generated during the benchmark analysis."
@@ -33,10 +33,10 @@ run: all
 bench: run
 
 clean:
-	@${SH} run.sh clean
+	@${SH} ${srcdir}/run.sh clean
 
 clobber:
-	@${SH} run.sh clobber
+	@${SH} ${srcdir}/run.sh clobber
 
 CLEANFILES = \
 	benchmark
