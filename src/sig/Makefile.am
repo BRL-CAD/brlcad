@@ -76,7 +76,7 @@ dmod_SOURCES = dmod.c
 dmod_LDADD = ${BU} ${BU_LIBS} ${LIBM}
 
 dfft_SOURCES = dfft.c interp.c butter.c
-dfft_LDADD = ${FFT} ${FFT_LIBS}
+dfft_LDADD = ${FFT} ${FFT_LIBS} ${BU} ${BU_LIBS}
 
 dconv_SOURCES = dconv.c
 dconv_LDADD = ${FFT} ${FFT_LIBS}

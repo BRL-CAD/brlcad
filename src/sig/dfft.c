@@ -74,38 +74,29 @@ Usage: dfft [options] [width (1024)] < doubles > 512logmags\n\
 
 int main(int argc, char **argv)
 {
-	int	i, n;
-	int	L;
+	int	i, n, c;
+	int	L = 1024;
 
 	if( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
 		fprintf( stderr, usage );
 		exit( 1 );
 	}
 
-	while( argc > 1 ) {
-		if( strcmp(argv[1], "-d") == 0 ) {
-			mindB = -atof( argv[2] );
-			argc--;
-			argv++;
-		} else if( strcmp(argv[1], "-c") == 0 ) {
-			cflag++;
-		} else if( strcmp(argv[1], "-l") == 0 ) {
-			lflag++;
-		} else if( strcmp(argv[1], "-p") == 0 ) {
-			phase++;
-		} else if( strcmp(argv[1], "-L") == 0 ) {
-			linear_output++;
-		} else if( strcmp(argv[1], "-A") == 0 ) {
-			ascii_output++;
-		} else if( strcmp(argv[1], "-N") == 0 ) {
-			normalize_output++;
-		} else
-			break;
-		argc--;
-		argv++;
-	}
+	while( (c = bu_getopt(argc, argv, "d:clpLANh")) != EOF)
+	    switch(c) {
+	    case 'd': mindB = -atof(optarg); break;
+	    case 'c': cflag++; break;
+	    case 'l': lflag++; break;
+	    case 'p': phase++; break;
+	    case 'L': linear_output++; break;
+	    case 'A': ascii_output++; break;
+	    case 'N': normalize_output++; break;
+	    case 'h': printf(usage); return EXIT_SUCCESS;
+	    case ':': printf("Missing argument to %c\n%s\n", c, usage); return EXIT_FAILURE;
+	    case '?': 
+	    default:  printf("Unknown argument: %c\n%s\n", c, usage); return EXIT_FAILURE;
+	    }
 
-	L = (argc > 1) ? atoi(argv[1]) : 1024;
 	if( L > MAXFFT ) {
 		fprintf( stderr, "dfft: can't go over %d\n", MAXFFT );
 		exit( 2 );
