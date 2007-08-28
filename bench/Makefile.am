@@ -41,4 +41,6 @@ clobber:
 CLEANFILES = \
 	benchmark
 
+DEPS=src/rt src/conv db
+
 include $(top_srcdir)/misc/Makefile.defs

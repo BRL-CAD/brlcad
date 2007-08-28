@@ -29,6 +29,8 @@ EXTRA_DIST = \
 
 MAINTAINERCLEANFILES = Makefile.in
 
+DEPS=src/libwdb src/librt
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

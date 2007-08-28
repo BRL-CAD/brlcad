@@ -654,6 +654,8 @@ EXTRA_DIST = \
 
 MAINTAINERCLEANFILES = Makefile.in
 
+DEPS=src/liborle src/libdm
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

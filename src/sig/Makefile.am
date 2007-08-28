@@ -128,7 +128,7 @@ EXTRA_DIST = \
 
 MAINTAINERCLEANFILES = Makefile.in
 
-DEPS=src/libbu src/libfft
+DEPS=src/libfb src/libfft 
 
 include $(top_srcdir)/misc/Makefile.defs
 
