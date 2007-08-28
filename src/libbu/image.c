@@ -223,7 +223,7 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
 }
 
 int 
-bu_image_save_writeline(struct bu_image_file *bif, int y, char *data)
+bu_image_save_writeline(struct bu_image_file *bif, int y, unsigned char *data)
 {
     if(bif==NULL) { printf("trying to write a line with a null bif\n"); return -1; }
     memcpy(bif->data + bif->width*bif->depth*y, data, bif->width*bif->depth);
