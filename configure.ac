@@ -2857,8 +2857,7 @@ dnl *** TNT ***
 dnl See if template numerical toolkit works
 tnt_works=no
 AC_MSG_CHECKING(for TNT w/JAMA functionality)
-SAVED_CC="$CC"
-CC="$CXX"
+AC_LANG_PUSH(C++)
 AC_TRY_RUN([
 #include <stdio.h>
 #include <jama_lu.h>
@@ -2874,7 +2873,7 @@ int main () {
     return 0;
 }
 ], [tnt_works=yes])
-CC="$SAVED_CC"
+AC_LANG_POP(C++)
 AC_MSG_RESULT($tnt_works)
 
 dnl figure out whether we need to build libz
