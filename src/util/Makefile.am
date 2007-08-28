@@ -654,7 +654,7 @@ EXTRA_DIST = \
 
 MAINTAINERCLEANFILES = Makefile.in
 
-DEPS=src/liborle src/libdm
+DEPS=src/liborle src/libdm src/libfb
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -74,4 +74,6 @@ MOSTLYCLEANFILES = ${MODELS:asc=g}
 
 MAINTAINERCLEANFILES = Makefile.in
 
+DEPS=src/conv
+
 include $(top_srcdir)/misc/Makefile.defs
