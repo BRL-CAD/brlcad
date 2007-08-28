@@ -183,7 +183,7 @@ bu_image_save(char *data, int width, int height, int depth, char *filename, int 
     struct bu_image_file *bif = bu_image_save_open(filename,filetype,width,height,depth);
     if(bif==NULL) return -1;
     for(i=0;i<height;++i) {
-	if(bu_image_save_writeline(bif,i,data+i*width*depth)==-1) {
+	if(bu_image_save_writeline(bif,i,(unsigned char*)(data+i*width*depth))==-1) {
 	    bu_log("Uh?");
 	}
     }
