@@ -411,7 +411,7 @@ bu_avail_cpus(void)
 #endif
 
 
-#if defined(__ppc__)
+#if defined(__ppc__) || defined(__APPLE__)
     {
 	int mib[2], maxproc;
 	size_t len;
