@@ -11,6 +11,8 @@ entire history of the project is available through CVS.
 --- 2007-06-XX  Release 7.10.3                                     ---
 ----------------------------------------------------------------------
 
+* Detect available CPU's instead of total on Mac - Erik Greenwald
+* Detect available CPU's on an Intel Mac - Erik Greenwald
 * Z clipping now off by default in mged - Sean Morrison
 * add performance optimizations to the pipe primitive - John Anderson
 * handle discontinuous changes in pipe inner radii - John Anderson
