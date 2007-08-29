@@ -133,7 +133,7 @@ void	outshort(int n);
 void	outfloat(int n);
 
 static char usage[] = "\
-Usage: pldebug [-v] [unix_plot]\n";
+Usage: plstat [-v] [unix_plot]\n";
 
 
 int
@@ -170,7 +170,7 @@ main(int argc, char **argv)
 	}
 	if( argc == 2 ) {
 		if( (fp = fopen(argv[1],"r")) == NULL ) {
-			perror( "pldebug" );
+			perror( "plstat" );
 			exit( 1 );
 		}
 	} else {
