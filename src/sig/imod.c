@@ -56,7 +56,7 @@ char *progname = "(noname)";
 char *file_name = NULL;
 
 char usage[] = "\
-Usage: smod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n";
+Usage: imod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n";
 
 #define	ADD	1
 #define MULT	2
