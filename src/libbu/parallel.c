@@ -411,13 +411,13 @@ bu_avail_cpus(void)
 #endif
 
 
-#if defined(__ppc__) || defined(__APPLE__)
+#if defined(__APPLE__)
     {
 	int mib[2], maxproc;
 	size_t len;
 
 	mib[0] = CTL_HW;
-	mib[1] = HW_NCPU;
+	mib[1] = HW_AVAILCPU;
 	len = sizeof(maxproc);
 	if (sysctl(mib, 2, &maxproc, &len, NULL, 0) == -1) {
 	    ncpu = 1;
