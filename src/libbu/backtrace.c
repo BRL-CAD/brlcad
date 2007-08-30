@@ -209,7 +209,7 @@ backtrace(char **args, int fd)
 			    /* done processing backtrace output */
 			    processing_bt = 0;
 			} else if (processing_bt == 1) {
-			    if (write(fd, buffer, strlen(buffer)) != strlen(buffer)) {
+			    if ((size_t)write(fd, buffer, strlen(buffer)) != strlen(buffer)) {
 				perror("error writing stack to file");
 				break;
 			    }
