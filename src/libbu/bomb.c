@@ -179,8 +179,8 @@ bu_bomb(const char *str)
 	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), bu_process_id());
 
 	fputs("Saving stack trace to ", stderr);
-	fputs(racefile, stderr);
-	fputc('\n', stderr, "\n");
+	fputs(tracefile, stderr);
+	fputc('\n', stderr);
 	fflush(stderr);
 
 	bu_crashreport(tracefile);
