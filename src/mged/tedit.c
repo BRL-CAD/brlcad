@@ -73,12 +73,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define V3BASE2LOCAL( _pt )	(_pt)[X]*base2local , (_pt)[Y]*base2local , (_pt)[Z]*base2local
 #define V4BASE2LOCAL( _pt )	(_pt)[X]*base2local , (_pt)[Y]*base2local , (_pt)[Z]*base2local , (_pt)[W]*base2local
 
-#define	ED_EDITOR "/bin/ed"
-#define	VI_EDITOR "/usr/bin/vi"
-#define	EMACS_EDITOR "/usr/bin/emacs"
-#define XTERM_EDITOR "/usr/X11R6/bin/xterm"
+/* editors to test, in order of discovery preference (EDITOR overrides) */
 #define WIN_EDITOR "notepad"
 #define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
+#define	EMACS_EDITOR "/usr/bin/emacs"
+#define	VIM_EDITOR "/usr/bin/vim"
+#define	VI_EDITOR "/usr/bin/vi"
+#define	ED_EDITOR "/bin/ed"
+
+/* used to invoke the above editor if X11 is in use */
+#define XTERM_BINARY "/usr/X11R6/bin/xterm"
 
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
@@ -878,19 +882,22 @@ editit(const char *file)
 
 	/* still unset? try mac os x */
 	if (!editor || editor[0] == '\0') {
-#ifdef __APPLE__
 	    if (bu_file_exists(MAC_EDITOR)) {
 		editor = MAC_EDITOR;
 	    }
-#else
-	    editor = (char *)NULL;
-#endif
 	}
 
 	/* still unset? try emacs */
 	if (!editor || editor[0] == '\0') {
 	    if (bu_file_exists(EMACS_EDITOR)) {
 		editor = EMACS_EDITOR;
+	    }
+	}
+
+	/* still unset? try vim */
+	if (!editor || editor[0] == '\0') {
+	    if (bu_file_exists(VIM_EDITOR)) {
+		editor = VIM_EDITOR;
 	    }
 	}
 
@@ -971,12 +978,12 @@ editit(const char *file)
 		    return 0;
 #else /* !DM_WGL */
 
-#  if defined(DM_X) || defined(DM_TK) || defined(DM_OGL)
+#  if defined(DM_X) || defined(DM_OGL)
 		    /* if we have x support, pop open the editor in an
 		     * xterm.  otherwise, use whatever the user gave.
 		     */
-		    if (bu_file_exists(XTERM_EDITOR)) {
-			(void)execlp(XTERM_EDITOR, XTERM_EDITOR, "-e", editor, file, (char *)0);
+		    if (bu_file_exists(XTERM_BINARY)) {
+			(void)execlp(XTERM_BINARY, XTERM_BINARY, "-e", editor, file, (char *)0);
 		    }
 #  endif /* DM_X || DM_OGL */
 		    (void)execlp(editor, editor, file, 0);
