@@ -129,9 +129,9 @@ bu_bomb(const char *str)
      * buffer allocations inside fprintf().
      */
     if (str && (strlen(str) > 0)) {
-	fprintf(stderr, "\n");
-	fprintf(stderr, str);
-	fprintf(stderr, "\n");
+	fputc('\n', stderr);
+	fputs(str, stderr);
+	fputc('\n', stderr);
 	fflush(stderr);
     }
 
@@ -178,9 +178,9 @@ bu_bomb(const char *str)
     {
 	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), bu_process_id());
 
-	fprintf(stderr, "Saving stack trace to ");
-	fprintf(stderr, tracefile);
-	fprintf(stderr, "\n");
+	fputs("Saving stack trace to ", stderr);
+	fputs(racefile, stderr);
+	fputc('\n', stderr, "\n");
 	fflush(stderr);
 
 	bu_crashreport(tracefile);
@@ -192,8 +192,8 @@ bu_bomb(const char *str)
 
     /* try to save a core dump */
     if( bu_debug & BU_DEBUG_COREDUMP )  {
-	fprintf(stdout,"Causing intentional core dump due to debug flag\n");
-	fprintf(stderr,"Causing intentional core dump due to debug flag\n");
+	fputs("Causing intentional core dump due to debug flag\n", stdout);
+	fputs("Causing intentional core dump due to debug flag\n", stderr);
 	fflush(stdout);
 	fflush(stderr);
 	fd = open("/dev/tty", 1);
