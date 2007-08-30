@@ -32,7 +32,7 @@
 
 typedef struct render_path_s {
   int samples;
-  TFLOAT inv_samples;
+  tfloat inv_samples;
 } render_path_t;
 
 

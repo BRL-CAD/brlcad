@@ -58,7 +58,7 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
   tie_id_t	new_id;
   TIE_3		new_pix, accum, T, ref, bax, bay;
   common_mesh_t	*new_mesh;
-  TFLOAT	sin_theta, cos_theta, sin_phi, cos_phi;
+  tfloat	sin_theta, cos_theta, sin_phi, cos_phi;
   int		i, n, propogate;
   render_path_t *rd;
 

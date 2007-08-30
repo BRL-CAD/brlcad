@@ -50,8 +50,8 @@
 
 void	texture_perlin_init(texture_perlin_t *P);
 void	texture_perlin_free(texture_perlin_t *P);
-TFLOAT	texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, TFLOAT Size, int Depth);
-TFLOAT	texture_perlin_omega(texture_perlin_t *P, TIE_3 V);
+tfloat	texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, tfloat Size, int Depth);
+tfloat	texture_perlin_omega(texture_perlin_t *P, TIE_3 V);
 
 
 void texture_perlin_init(texture_perlin_t *P) {
@@ -70,9 +70,9 @@ void texture_perlin_init(texture_perlin_t *P) {
 
   /* Generate Random Vectors */
   for (i = 0; i < B; i++) {
-    P->RV[i].v[0] = (TFLOAT)((PRAND % (2*B)) - B) / B;
-    P->RV[i].v[1] = (TFLOAT)((PRAND % (2*B)) - B) / B;
-    P->RV[i].v[2] = (TFLOAT)((PRAND % (2*B)) - B) / B;
+    P->RV[i].v[0] = (tfloat)((PRAND % (2*B)) - B) / B;
+    P->RV[i].v[1] = (tfloat)((PRAND % (2*B)) - B) / B;
+    P->RV[i].v[2] = (tfloat)((PRAND % (2*B)) - B) / B;
     MATH_VEC_UNITIZE(P->RV[i]);
     P->PV[i] = i;
   }
@@ -97,9 +97,9 @@ void texture_perlin_free(texture_perlin_t *P) {
 }
 
 
-TFLOAT texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, TFLOAT Size, int Depth) {
+tfloat texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, tfloat Size, int Depth) {
   int i;
-  TFLOAT sum;
+  tfloat sum;
 
   sum = 0;
   for(i = 0; i < Depth; i++) {
@@ -111,9 +111,9 @@ TFLOAT texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, TFLOAT Size, int Dept
 }
 
 
-TFLOAT texture_perlin_omega(texture_perlin_t *P, TIE_3 V) {
+tfloat texture_perlin_omega(texture_perlin_t *P, TIE_3 V) {
   TIE_3		q;
-  TFLOAT	r0[3], r1[3], sy, sz, a, b, c, d, t, u, v;
+  tfloat	r0[3], r1[3], sy, sz, a, b, c, d, t, u, v;
   int		b0[3], b1[3], b00, b10, b01, b11;
   int		i, j;
 

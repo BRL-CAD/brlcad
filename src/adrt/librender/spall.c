@@ -43,15 +43,15 @@ void render_plane(tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
 typedef struct render_spall_hit_s {
   tie_id_t id;
   common_mesh_t *mesh;
-  TFLOAT plane[4];
-  TFLOAT mod;
+  tfloat plane[4];
+  tfloat mod;
 } render_spall_hit_t;
 
 
-void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, TFLOAT angle) {
+void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat angle) {
   render_spall_t *d;
   TIE_3 *tri_list, *vec_list, normal, up, vec;
-  TFLOAT plane[4], radius, t;
+  tfloat plane[4], radius, t;
   int i;
 
   render->work = render_spall_work;
@@ -116,7 +116,7 @@ void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, TFLOAT an
     }
   }
 
-  tie_push(&d->tie, tri_list, TESSELATION, NULL, 0);
+  tie_push(&d->tie, &tri_list, TESSELATION, NULL, 0);
   tie_prep(&d->tie);
 
   free(vec_list);
@@ -148,7 +148,7 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
   render_spall_hit_t hit;
   TIE_3 vec, color;
   tie_id_t id;
-  TFLOAT t, angle, dot;
+  tfloat t, angle, dot;
 
 
   rd = (render_spall_t *)render->data;

@@ -87,7 +87,7 @@ void texture_image_free(texture_t *texture) {
 void texture_image_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel) {
   texture_image_t *td;
   TIE_3 pt;
-  TFLOAT u, v;
+  tfloat u, v;
   int ind;
 
 
