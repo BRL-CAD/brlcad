@@ -11,9 +11,10 @@ entire history of the project is available through CVS.
 --- 2007-06-XX  Release 7.10.3                                     ---
 ----------------------------------------------------------------------
 
+* fixed photon-mapping lighting model crash - Erik Greenwald
 * ADRT libtie bug fixes and performance enhancements - Justin Shumaker
 * Mged now tests for vim before vi for text editing - Sean Morrison
-* fixed parallel operability bug on the Intel Mac - Erik Grienwalk
+* fixed parallel operability bug on the Intel Mac - Erik Greenwald
 * detect actually available CPUs on an Intel Mac - Erik Greenwald
 * Z clipping now off by default in mged - Sean Morrison
 * add performance optimizations to the pipe primitive - John Anderson
