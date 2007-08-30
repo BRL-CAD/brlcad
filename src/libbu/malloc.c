@@ -236,7 +236,7 @@ bu_memdebug_check(register char *ptr, const char *str)
 static genptr_t
 bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 {
-	register genptr_t ptr;
+	register genptr_t ptr = 0;
 	register unsigned long int size = cnt * sz;
 
 	extern int bu_bomb_failsafe_init();
@@ -432,7 +432,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	if( bu_debug&BU_DEBUG_MEM_CHECK )  {
 		if( ptr && (mp = bu_memdebug_check( ptr, str )) == MEMDEBUG_NULL )  {
 			fprintf(stderr,"%8lx realloc%6d %s ** barrier check failure\n",
-				(long)ptr, cnt, str );
+				(long)ptr, (int)cnt, str );
 		}
 		/* Pad, plus full long for magic number */
 		cnt = (cnt+2*sizeof(long)-1)&(~(sizeof(long)-1));
@@ -471,10 +471,10 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (ptr == original_ptr) {
 			fprintf(stderr,"%8lx realloc%6d %s [grew in place]\n",
-				   (long)ptr,       cnt, str );
+				   (long)ptr, (int)cnt, str );
 		} else {
 			fprintf(stderr,"%8lx realloc%6d %s [moved from %8lx]\n",
-				   (long)ptr,       cnt, str, original_ptr);
+				   (long)ptr, (int)cnt, str, (long unsigned int)original_ptr);
 		}
 
 		bu_semaphore_release(BU_SEM_SYSCALL);
