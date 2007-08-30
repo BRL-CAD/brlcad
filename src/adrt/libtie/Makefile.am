@@ -2,12 +2,19 @@
 
 lib_LTLIBRARIES = libtie.la
 
-libtie_la_SOURCES = tie.c kdtree.c
+libtie_la_SOURCES = \
+	tie.c \
+	tie_kdtree.c
 
 tieincludedir = $(includedir)/tie
-tieinclude_HEADERS = tie.h define.h struct.h kdtree.h
+tieinclude_HEADERS = \
+	tie.h \
+	tie_define.h \
+	tie_kdtree.h \
+	tie_struct.h
 
-AM_CFLAGS=-Wall -pedantic -std=c99 -pipe
+AM_CFLAGS = -Wall -pedantic -std=c99 -pipe
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 LINT=splint $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
 lint:
