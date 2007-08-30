@@ -52,6 +52,7 @@ kitchensink_dirs = \
 	libmultispectral \
 	libtclcad \
 	libtermio \
+	adrt \
 	anim \
 	archer \
 	brlman \
@@ -78,12 +79,6 @@ kitchensink_dirs = \
 	vas4 \
 	vdeck
 
-if BUILD_ADRT
-adrt_dir = adrt
-else
-adrt_dir =
-endif
-
 #######################
 # put it all together #
 #######################
@@ -94,14 +89,12 @@ if ONLY_RTS
 SUBDIRS = \
 	$(required_dirs) \
 	$(bench_dirs) \
-	$(rts_dirs) \
-	$(adrt_dir)
+	$(rts_dirs)
 
 else !ONLY_RTS
 SUBDIRS = \
 	$(required_dirs) \
-	$(bench_dirs) \
-	$(adrt_dir)
+	$(bench_dirs)
 
 endif
 # end ONLY_RTS
@@ -111,16 +104,14 @@ else !ONLY_BENCHMARK
 if ONLY_RTS
 SUBDIRS = \
 	$(required_dirs) \
-	$(rts_dirs) \
-	$(adrt_dir)
+	$(rts_dirs)
 
 else !ONLY_RTS
 SUBDIRS = \
 	$(required_dirs) \
 	$(bench_dirs) \
 	$(rts_dirs) \
-	$(kitchensink_dirs) \
-	$(adrt_dir)
+	$(kitchensink_dirs)
 
 endif
 # end ONLY_RTS
@@ -132,8 +123,7 @@ DIST_SUBDIRS= \
 	$(required_dirs) \
 	$(bench_dirs) \
 	$(rts_dirs) \
-	$(kitchensink_dirs) \
-	adrt
+	$(kitchensink_dirs)
 
 MAINTAINERCLEANFILES = \
 	Makefile.in

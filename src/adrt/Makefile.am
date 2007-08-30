@@ -1,8 +1,6 @@
 # $Id$
 
-SUBDIRS = \
-	libtie \
-	libtienet \
+adrtd = libtienet \
 	libcommon \
 	librender \
 	libtexture \
@@ -11,9 +9,21 @@ SUBDIRS = \
 	rise \
 	isst
 
+# always compile libite
+if BUILD_ADRT
+SUBDIRS = \
+	libtie \
+	${adrtd}
+else !BUILD_ADRT
+SUBDIRS = \
+	libtie
+endif
+# end !BUILD_ADRT
+
 DIST_SUBDIRS = \
-	$(SUBDIRS) \
+	${adrtd} \
 	doc \
+	libtie \
 	misc \
 	scripts
 
@@ -36,6 +46,6 @@ EXTRA_DIST = \
 
 MAINTAINERCLEANFILES = Makefile.in
 
-DEPS=src/libbu
+DEPS = src/libbu
 
 include $(top_srcdir)/misc/Makefile.defs
