@@ -2387,10 +2387,12 @@ BU_EXPORT BU_EXTERN(void bu_vls_putc,
 BU_EXPORT BU_EXTERN(void bu_vls_trimspace,
 		    (struct bu_vls *vp));
 
+#if defined(HAVE_VARARG_H)
 BU_EXPORT BU_EXTERN(void bu_vls_vprintf,
 		    (struct bu_vls *vls,
 		     const char *fmt,
 		     va_list ap));
+#endif
 
 #if defined(HAVE_STDARG_H)
 BU_EXPORT BU_EXTERN(void bu_vls_printf,
