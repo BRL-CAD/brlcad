@@ -1080,7 +1080,7 @@ const struct rt_functab rt_functab[] = {
 		NULL,
 	},
 #else
-	{RT_FUNCTAB_MAGIC, "ID_BREP_PLACEHOLDER", "brep",
+	{RT_FUNCTAB_MAGIC, "ID_BREP_PLCHLDR", "brep",
 		0,		/* this entry for sanity only */
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
