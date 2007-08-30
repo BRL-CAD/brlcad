@@ -139,7 +139,7 @@ tp_plot(FILE *fp,
 
     /* label first tic */
     lab = xmin;
-    sprintf( str, "%3.3g", xmin );
+    snprintf( str, 32, "%3.3g", xmin );
     tp_2symbol( fp, str, (double)(xpen-171),(double)(yp-TIC-NUM_DISTANCE), cscale, 0.0);
 
     i = 0;
@@ -151,7 +151,7 @@ tp_plot(FILE *fp,
 	lab += dx;
 	/* need if test here to check for overlap */
 	if( (i%xtics) == 0){
-	    sprintf( str, "%3.3g", lab );
+	    snprintf( str, 32, "%3.3g", lab );
 	    tp_2symbol( fp, str, (double)(xpen-171), (double)(yp-TIC-NUM_DISTANCE), cscale, 0.0);
 	}
     }
@@ -166,7 +166,7 @@ tp_plot(FILE *fp,
 
     /* draw first y label */
     lab = ymin;
-    sprintf( str, "%3.3g", lab );
+    snprintf( str, 32, "%3.3g", lab );
     tp_2symbol( fp,str, (double)(xp-TIC-LAB_LNGTH-NUM_DISTANCE), (double)ypen, cscale, 0.0);
 
     i=0;
@@ -177,7 +177,7 @@ tp_plot(FILE *fp,
 	/* label the y-axis now, nicely */
 	lab += dy;
 	if(( i%ytics) ==0){
-	    sprintf( str, "%3.3g", lab );
+	    snprintf( str, 32, "%3.3g", lab );
 	    tp_2symbol( fp,str, (double)(xp-TIC-LAB_LNGTH-NUM_DISTANCE), (double)ypen, cscale, 0.0);
 	}
     }

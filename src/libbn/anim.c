@@ -990,7 +990,7 @@ void anim_mat_printf(
 	const char *endstr)
 {
 	char mystr[80];
-	sprintf(mystr,"%s%s%s%s%%s",formstr,formstr,formstr,formstr);
+	snprintf(mystr, 80, "%s%s%s%s%%s",formstr,formstr,formstr,formstr);
 	bu_flog( fp,mystr, m[0], m[1], m[2], m[3], linestr);
 	bu_flog( fp,mystr, m[4], m[5], m[6], m[7], linestr);
 	bu_flog( fp,mystr, m[8], m[9], m[10], m[11], linestr);

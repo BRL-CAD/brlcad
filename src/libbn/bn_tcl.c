@@ -529,7 +529,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    point_t pt, a;
 	    vect_t dir, c;
 	    int i;
-	    const static struct bn_tol tol = {
+	    static const struct bn_tol tol = {
 		BN_TOL_MAGIC, 0.005, 0.005*0.005, 1e-6, 1-1e-6
 	    };
 	    if (argc != 5) {
@@ -569,7 +569,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    point_t pt, a;
 	    vect_t dir, c;
 	    int i;
-	    const static struct bn_tol tol = {
+	    static const struct bn_tol tol = {
 		BN_TOL_MAGIC, 0.005, 0.005*0.005, 1e-6, 1-1e-6
 	    };
 
@@ -871,7 +871,7 @@ bn_cmd_random(ClientData clientData,
 
 	rnd = BN_RANDOM(val);
 
-	sprintf(buf, "%d", val);
+	snprintf(buf, 32, "%d", val);
 
 	if (!Tcl_SetVar(interp, argv[1], buf, 0)) {
 		Tcl_AppendResult(interp, "Error setting variable ",
@@ -879,7 +879,7 @@ bn_cmd_random(ClientData clientData,
 		return TCL_ERROR;
 	}
 
-	sprintf(buf, "%g", rnd);
+	snprintf(buf, 32, "%g", rnd);
 	Tcl_AppendResult(interp, buf, NULL);
 	return TCL_OK;
 }
@@ -894,7 +894,7 @@ bn_tcl_mat_print(Tcl_Interp		*interp,
 {
 	char		obuf[1024];	/* sprintf may be non-PARALLEL */
 
-	bn_mat_print_guts(title, m, obuf);
+	bn_mat_print_guts(title, m, obuf, 1024);
 	Tcl_AppendResult(interp, obuf, "\n", (char *)NULL);
 }
 

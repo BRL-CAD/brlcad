@@ -350,7 +350,8 @@ BN_EXPORT BU_EXTERN(void bn_mat_print,
 BN_EXPORT BU_EXTERN(void bn_mat_print_guts,
 		    (const char *title,
 		     const mat_t m,
-		     char *buf));
+		     char *buf,
+		     int buflen));
 BN_EXPORT BU_EXTERN(double bn_atan2,
 		    (double x, double y));
 
@@ -1060,7 +1061,7 @@ BN_EXPORT extern void bn_mathtab_constant();
 
 #define CK_POW_2(dimen) { register unsigned long j; register int ok;\
 	for (ok=0, j=0 ; j < sizeof(unsigned long) * 8 ; j++) { \
-		if ( (1<<j) == dimen) { ok = 1;  break; } \
+		if ( (unsigned long)(1<<j) == dimen) { ok = 1;  break; } \
 	} \
 	if ( ! ok ) { \
 		bu_log("%s:%d value %d should be power of 2 (2^%d)\n", \

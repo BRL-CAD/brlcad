@@ -99,6 +99,9 @@ bn_unif_init(long int setseed, int method)
 	p->msr_long_ptr = 0;
 	p->msr_double_ptr = 0;
 
+	if(method != 0)
+	    bu_bomb("Method not yet supported in bn_unif_init()");
+
 	if (setseed&0x7fffffff) p->msr_seed=setseed&0x7fffffff;
 	p->magic = BN_UNIF_MAGIC;
 	return(p);

@@ -151,8 +151,8 @@ tp_3axis(FILE *fp,
 
 		if( ndigits > 0 )  {
 			double f;
-			sprintf( fmt, "%%%dg", ndigits);
-			sprintf( str, fmt, label_start );
+			snprintf( fmt, 32, "%%%dg", ndigits);
+			snprintf( str, 64, fmt, label_start );
 			f = strlen(str) * char_width * 0.5;
 			VJOIN1( num_start, num_center, -f, axis_dir );
 

@@ -101,18 +101,19 @@ const mat_t	bn_mat_identity = {
 void
 bn_mat_print_guts(const char	*title,
 		  const mat_t	m,
-		  char		*obuf)
+		  char		*obuf,
+		  int		len)
 {
 	register int	i;
 	register char	*cp;
 
-	sprintf(obuf, "MATRIX %s:\n  ", title);
+	snprintf(obuf, len, "MATRIX %s:\n  ", title);
 	cp = obuf+strlen(obuf);
 	if (!m) {
-		strcat(obuf, "(Identity)");
+		strncat(obuf, "(Identity)", len-(cp-obuf));
 	} else {
 		for (i=0; i<16; i++)  {
-			sprintf(cp, " %8.3f", m[i]);
+			snprintf(cp, len-(cp-obuf), " %8.3f", m[i]);
 			cp += strlen(cp);
 			if (i == 15) {
 				break;
@@ -135,7 +136,7 @@ bn_mat_print(const char		*title,
 {
 	char		obuf[1024];	/* sprintf may be non-PARALLEL */
 
-	bn_mat_print_guts(title, m, obuf);
+	bn_mat_print_guts(title, m, obuf, 1024);
 	bu_log("%s\n", obuf);
 }
 
