@@ -79,6 +79,7 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #  include <sys/types.h>
 #  include <sys/time.h>
 #  include <sys/resource.h>
+#  include <sys/sysctl.h>
 #  ifdef HAVE_SYS_WAIT_H
 #    include <sys/wait.h>
 #  endif
@@ -574,9 +575,8 @@ bu_get_public_cpus(void)
 	(fp = fopen(PUBLIC_CPUS2, "w")) != NULL
 	)  {
 	fprintf(fp, "%d\n", avail_cpus);
+	fchmod(fileno(fp), 0666);
 	fclose(fp);
-	(void)chmod(PUBLIC_CPUS1, 0666);
-	(void)chmod(PUBLIC_CPUS2, 0666);
     }
 #endif
     return avail_cpus;
@@ -1193,7 +1193,7 @@ bu_parallel( func, ncpu, arg )
 
 	if ( (ret = pthread_join(thread_tbl[x], NULL)) != 0) {
 	    /* badness happened */
-	    fprintf(stderr, "pthread_join(thread_tbl[%d]=0x%x) ret=%d\n", x, (size_t)thread_tbl[x], ret);
+	    fprintf(stderr, "pthread_join(thread_tbl[%d]=0x%lx) ret=%d\n", x, (size_t)thread_tbl[x], ret);
 	}
 	nthreade++;
 	thread_tbl[x] = (rt_thread_t)-1;
