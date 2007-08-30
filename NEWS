@@ -12,8 +12,8 @@ entire history of the project is available through CVS.
 ----------------------------------------------------------------------
 
 * Mged now tests for vim before vi for text editing - Sean Morrison
-* Detect available CPU's instead of total on Mac - Erik Greenwald
-* Detect available CPU's on an Intel Mac - Erik Greenwald
+* fixed parallel operability bug on the Intel Mac - Erik Grienwalk
+* detect actually available CPUs on an Intel Mac - Erik Greenwald
 * Z clipping now off by default in mged - Sean Morrison
 * add performance optimizations to the pipe primitive - John Anderson
 * handle discontinuous changes in pipe inner radii - John Anderson
@@ -33,7 +33,7 @@ entire history of the project is available through CVS.
 * added 'bomb' command to mged for script termination - Sean Morrison
 * mged and pl-X automatically focus to X11 on Mac OS X - Sean Morrison
 * pl-X functionality enhancements for displaying plots - Sean Morrison
-* fixed g_diff bug where -f option missed differences- John Anderson
+* fixed g_diff bug where -f option missed differences - John Anderson
 * fixed mged 'units' command, reports current setting - John Anderson
 * benchmark tool automatically logs all output to file - Sean Morrison
 * added 'clobber' cleanup command to benchmark tool - Sean Morrison
