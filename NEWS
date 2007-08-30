@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-06-XX  Release 7.10.3                                     ---
 ----------------------------------------------------------------------
 
+* ADRT libtie bug fixes and performance enhancements - Justin Shumaker
 * Mged now tests for vim before vi for text editing - Sean Morrison
 * fixed parallel operability bug on the Intel Mac - Erik Grienwalk
 * detect actually available CPUs on an Intel Mac - Erik Greenwald
