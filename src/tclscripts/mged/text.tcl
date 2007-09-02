@@ -1625,6 +1625,171 @@ proc cursor_highlight { w } {
     $w tag configure hlt -background yellow
 }
 
+# find the longest common initial string from a list of strings
+proc get_longest_common_string { matches } {
+    set done 0
+    set lastMatchIndex 0
+    set lastMatchChar [string index [lindex $matches 0] $lastMatchIndex]
+    if { $lastMatchChar == "" } return ""
+    while { $done == 0 } {
+	foreach m $matches {
+	    if { [string index $m $lastMatchIndex] != $lastMatchChar } {
+		set done 1
+		incr lastMatchIndex -1
+		break
+	    }
+	}
+	if { $done == 0 } {
+	    incr lastMatchIndex
+	    set lastMatchChar [string index [lindex $matches 0] $lastMatchIndex]
+	}
+    }
+    if { $lastMatchIndex > -1 } {
+	set name [string range [lindex $matches 0] 0 $lastMatchIndex]
+    } else {
+	set name ""
+    }
+
+    return $name
+}
+
+# do tab expansion
+proc tab_expansion { line } {
+    # list of mged commands
+    global mged_cmds
+
+    if { [info exists mged_cmds] == 0 } {
+	set mged_cmds [?]
+    }
+    set matches {}
+
+    set len [llength $line]
+
+    if { $len > 1 } {
+	# already have complete command, so do object expansion
+	# get last word on command line
+	set word [lindex $line [expr $len - 1]]
+	# look for the last "/" in the object
+	set index2 [string last "/" $word]
+	if { $index2 > 0 } {
+	    incr index2 -1
+	    set index1 [string last "/" $word $index2]
+	    if { $index1 == -1 } {
+		set index1 0
+	    } else {
+		incr index1
+	    }
+
+	    # grp contains the object name that appears prior to the last "/"
+	    set grp [string range $word $index1 $index2]
+
+	    # use anything after the last "/" to create a search pattern
+	    if { $index2 < [expr [string length $word] - 2] } {
+		set pattern "* [string range $word [expr $index2 + 2] end]*"
+	    } else {
+		set pattern "*"
+	    }
+
+	    # get the members of the last object on the command line
+	    # the "lt" command returns a list of elements like "{ op name }"
+	    set members [lt "$grp"]
+
+	    # use the search pattern to find matches in the list of members
+	    set match [lsearch -all -inline $members $pattern]
+
+	    set matchCount [llength $match]
+	    if { $matchCount > 1 } {
+		# eliminate duplicates
+		set match [lsort -index 1 -unique $match]
+		set matchCount [llength $match]
+	    }
+
+	    if { $matchCount == 0 } {
+		# no matches just return
+		set newCommand $line
+	    } elseif { $matchCount == 1 } {
+		# one match, do the substitution
+		set name [lindex [lindex $match 0] 1]
+		set index [string last "/" $line]
+		set newCommand [string replace $line $index end "/$name"]
+	    } else {
+		# multiple matches, find the longest common match
+		# extract the member names from the matches list
+		set matches {}
+		foreach m $match {
+		    lappend matches [lindex $m 1]
+		}
+
+		# get the longest common string from the list of member names
+		set name [get_longest_common_string $matches]
+		if { $name != "" } {
+		    # found something useful, add it to the command line
+		    set index [string last "/" $line]
+		    set newCommand [string replace $line $index end "/$name"]
+		} else {
+		    set newCommand $line
+		}
+	    }
+	} else {
+	    set prependSlash 0
+	    if { $index2 == 0 } {
+		# first char in word is "/" (only "/" in the word)
+		set grp [string range $word 1 end]
+		set prependSlash 1
+	    } else {
+		# no "/" in the object, just expand it with a "*"
+		set grp $word
+	    }
+	    set matches [expand ${grp}*]
+	    set len [llength $matches]
+	    if { $len == 1 } {
+		if [string equal "${grp}*" $matches] {
+		    # expand will return the pattern if nothing matches
+		    set newCommand $line
+		} else {
+		    # we have a unique expansion, so add it to the command line
+		    if { $prependSlash } {
+			set matches "/$matches"
+		    }
+		    set newCommand [lreplace $line end end $matches]
+		}
+	    } elseif { $len > 1 } {
+		# multiple possible matches, find the longest common string
+		set name [get_longest_common_string $matches]
+
+		# add longest common string to the command line
+		if { $prependSlash } {
+		    set name "/$name"
+		}
+		set newCommand [lreplace $line end end $name]
+	    }
+	    # note that {$len == 0} is not possible
+	}
+    } else {
+	# command expansion
+	set cmd [lindex $line 0]
+	if { [string length $cmd] < 1 } {
+	    # just a Tab on an empty line, don't show all commands, we have "?" for that
+	    set newCommand $line
+	} else {
+	    set matches [lsearch -all -inline $mged_cmds "${cmd}*"]
+	    set numMatches [llength $matches]
+	    if { $numMatches == 0  } {
+		# no matches
+		set newCommand $line
+	    } elseif { $numMatches > 1 } {
+		# get longest match
+		set newCommand [get_longest_common_string $matches]
+	    } else {
+		# just one match
+		set newCommand $matches
+	    }
+	}
+    }
+
+    return [list $newCommand $matches]
+}
+
 proc set_text_key_bindings { id } {
     global mged_gui
 
@@ -1819,6 +1984,27 @@ proc set_text_key_bindings { id } {
 
     bind $w <Alt-Key> {
 	::tk::TraverseToMenu %W %A
+	break
+    }
+
+    bind $w <Tab> {
+	set line [%W get -- promptEnd {promptEnd lineend -1c}]
+	set results [tab_expansion $line]
+
+	set expansions [lindex $results 1]
+	if { [llength $expansions] > 1 } {
+	    # show the possible matches
+	    %W delete {insert linestart} {end-2c}
+	    %W insert insert "\n${expansions}\n"
+	    mged_print_prompt %W "mged> "
+	}
+
+	# display the expanded line
+	%W delete promptEnd {end - 2c}
+	%W mark set insert promptEnd
+	%W insert insert [lindex $results 0]
+	%W see insert
+
 	break
     }
 

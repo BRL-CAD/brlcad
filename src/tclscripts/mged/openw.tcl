@@ -270,6 +270,10 @@ proc gui { args } {
 	global mged_color_scheme
 	global mged_Priv
 	global tcl_platform
+        global mged_cmds
+
+        # list of commands for use in tab expansion
+        set mged_cmds [?]
 
 	# configure the stdout chanel for this platform
 	# this is supposedly done automatically by Tcl, but not

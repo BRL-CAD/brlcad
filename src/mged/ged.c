@@ -121,6 +121,8 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #  define LOGFILE "/dev/null"
 #endif
 
+#define SPACES "                                                                                                                                                                                                                                                                                                           "
+        
 extern void mged_setup(void); /* setup.c */
 extern void mged_global_variable_setup(Tcl_Interp *interp); /* cmd.c */
 
@@ -909,6 +911,53 @@ stdin_input(ClientData clientData, int mask)
 #endif
 }
 
+static void
+do_tab_expansion()
+{
+    int ret;
+    char *obj;
+    char *cmd;
+    Tcl_Obj *result;
+    Tcl_Obj *newCommand;
+    Tcl_Obj *matches;
+    int numExpansions=0;
+    struct bu_vls tab_expansion;
+
+    bu_vls_init( &tab_expansion );
+    bu_vls_printf( &tab_expansion, "tab_expansion {%s}", bu_vls_addr(&input_str) );
+    ret = Tcl_Eval( interp, bu_vls_addr( &tab_expansion));
+    if( ret == TCL_OK ){
+        result = Tcl_GetObjResult( interp );
+        Tcl_ListObjIndex(interp, result, 0, &newCommand);
+        Tcl_ListObjIndex(interp, result, 1, &matches);
+        Tcl_ListObjLength(interp, matches, &numExpansions );
+        if( numExpansions > 1 ) {
+            /* show the possible matches */
+            bu_log( "\n%s\n", Tcl_GetString(matches));
+            pr_prompt();
+        }
+
+	/* display the expanded line */
+        /* first clear the current line */
+        pr_prompt();
+        bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
+        pr_prompt();
+        bu_vls_trunc(&input_str, 0);
+        input_str_index = 0;
+        bu_vls_trunc( &input_str, 0 );
+        bu_vls_strcat( &input_str, Tcl_GetString(newCommand));
+        input_str_index = bu_vls_strlen( &input_str );
+        bu_log( "%s", bu_vls_addr(&input_str));
+    } else {
+        bu_vls_free( &tab_expansion );
+        bu_log( "ERROR\n");
+        bu_log( "%s\n", Tcl_GetStringResult(interp));
+        return;
+    }
+
+    bu_vls_free( &tab_expansion );
+}
+
 /* Process character */
 static void
 mged_process_char(char ch)
@@ -936,7 +985,7 @@ mged_process_char(char ch)
 #define BACKSPACE   '\b'
 #define DELETE      127
 
-#define SPACES "                                                                                                                                                                                                                                                                                                           "
+
     /* bu_log("KEY: %d (esc=%d, brk=%d)\n", ch, escaped, bracketed); */
 
     /* ANSI sequence */
@@ -1060,6 +1109,9 @@ mged_process_char(char ch)
 	    --input_str_index;
 	    escaped = bracketed = 0;
 	    break;
+        case '\t':                      /* do TAB expansion */
+            do_tab_expansion();
+            break;
 	case CTRL_A:                    /* Go to beginning of line */
 	    pr_prompt();
 	    input_str_index = 0;
