@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-06-XX  Release 7.10.3                                     ---
 ----------------------------------------------------------------------
 
+* tab-completion for mged - John Anderson
 * fixed various issues reported by flawfinder - Erik Greenwald
 * fixed photon-mapping lighting model crash - Erik Greenwald
 * ADRT libtie bug fixes and performance enhancements - Justin Shumaker
