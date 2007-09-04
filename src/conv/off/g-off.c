@@ -184,7 +184,7 @@ main(int argc, char **argv)
 
 	/* Get rid of any file name extension (probably .g). */
 	if ((dot = strrchr(fig_file, '.')) != (char *)NULL)
-		*dot = (char)NULL;
+		*dot = '\0';
 	strcat(fig_file, ".fig");	/* Add required Jack suffix. */
 
 	if ((fp_fig = fopen(fig_file, "w")) == NULL)

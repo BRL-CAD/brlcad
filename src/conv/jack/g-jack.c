@@ -213,7 +213,7 @@ main(int argc, char **argv)
 
 	/* Get rid of any file name extension (probably .g). */
 	if ((dot = strrchr(bu_vls_addr(&fig_file), '.')) != (char *)NULL)  {
-		*dot = (char)NULL;
+		*dot = '\0';
 		/* Recalculate shorter VLS length.  Ugh. */
 		bu_vls_trunc( &fig_file, dot - bu_vls_addr(&fig_file) );
 	}
