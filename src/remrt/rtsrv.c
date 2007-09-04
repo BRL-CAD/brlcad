@@ -945,7 +945,7 @@ bu_bomb(const char *str)
 {
 	char	*bomb = "RTSRV terminated by bu_bomb()\n";
 
-	if( pkg_send( MSG_PRINT, str, strlen(str)+1, pcsrv ) < 0 )  {
+	if( pkg_send( MSG_PRINT, (char *)str, strlen(str)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"bu_bomb MSG_PRINT failed\n");
 	}
 	if( pkg_send( MSG_PRINT, bomb, strlen(bomb)+1, pcsrv ) < 0 )  {
