@@ -817,6 +817,7 @@ void Irradiance(int pid, struct Photon *P, struct application *ap) {
     lap->a_hit= ap->a_hit;
     lap->a_miss= ap->a_miss;
     lap->a_resource= &GPM_RTAB[pid];
+    lap->a_logoverlap = ap->a_logoverlap;
 
     M= N= GPM_RAYS;
     P->Irrad[0]= P->Irrad[1]= P->Irrad[2]= 0.0;
