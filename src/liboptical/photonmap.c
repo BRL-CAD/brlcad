@@ -34,7 +34,13 @@ static const char RCSphotonmap[] = "";
 #endif
 
 #include "photonmap.h"
+#include "brlcad_config.h"
+
 #include <stdlib.h>
+
+#ifdef HAVE_ALARM
+# include <signal.h>
+#endif
 
 #define	NRoot(x,y) exp(log(x)/y)	/* Not in Use */
 int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs);
@@ -867,29 +873,61 @@ void BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap) {
     if (!Node)
 	return;
 
-
     /* Determine if this pt will be used by calculating a weight */
     bu_semaphore_acquire(PM_SEM);
     if (!Node->C) {
 	ICSize++;
 	Node->C++;
-	/*    bu_log("cp:A:%d\n",Node->C);*/
+#ifndef HAVE_ALARM
 	if (!(ICSize%(PMap[PM_GLOBAL]->MaxPhotons/8)))
 	    bu_log("    Irradiance Cache Progress: %d%%\n",(int)(0.5+100.0*ICSize/PMap[PM_GLOBAL]->MaxPhotons));
+#endif
 	bu_semaphore_release(PM_SEM);
 	Irradiance(pid, &Node->P, ap);
     } else {
 	bu_semaphore_release(PM_SEM);
     }
 
-
     BuildIrradianceCache(pid, Node->L, ap);
     BuildIrradianceCache(pid, Node->R, ap);
 }
 
+#ifdef HAVE_ALARM
+static int starttime = 0;
+void alarmhandler(int sig) {
+    int t;
+    float p, h, m, d, tl;
+    if(sig != SIGALRM)
+	bu_bomb("Funky signals\n");
+    t = time(NULL) - starttime;
+    p = (float)ICSize/PMap[PM_GLOBAL]->MaxPhotons + .015;
+    tl = (float)t*1.0/p - t;
+    bu_log("    Irradiance Cache Progress: %d%%. Approximate time left: ",
+	    (int)(100.0*p), (1.0/p-1.0)*(float)t, (float)t*1.0/p);
+#define BAH(s,w) if(tl > (s)) { float d = floor(tl / (float)(s)); \
+    tl -= d * (s); bu_log("%d "w, (int)d, d>1?"s":""); }
+    BAH(60*60*24, "day%s, ");
+    BAH(60*60, "hour%s, ");
+    BAH(60, "minute%s, ");
+    BAH(0, "second%s.");
+#undef BAH
+    bu_log("\n");
+    alarm(60);
+    return;
+}
+#endif
 
 void IrradianceThread(int pid, genptr_t arg) {
+#ifdef HAVE_ALARM
+    starttime = time(NULL);
+    signal(SIGALRM,alarmhandler);
+    alarm(60);
     BuildIrradianceCache(pid, PMap[PM_GLOBAL]->Root, (struct application*)arg);
+    alarm(0);
+    starttime = 0;
+#else
+    BuildIrradianceCache(pid, PMap[PM_GLOBAL]->Root, (struct application*)arg);
+#endif
 }
 
 
