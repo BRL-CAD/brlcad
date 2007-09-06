@@ -1490,14 +1490,14 @@ nmg_ed(int arg)
 
 			if( wire_loop_count > 1 )
 			{
-			  Tcl_AppendResult(interp, "Too many wire loops!!! Don't know which to extrude!!\n", (char *)NULL);
+			  Tcl_AppendResult(interp, "Too many wire loops!  Don't know which to extrude!\n", (char *)NULL);
 				return;
 			}
 
 			if( !lu || *lu->up.magic_p != NMG_SHELL_MAGIC )
 			{
 				/* This should never happen */
-				bu_bomb( "Cannot find wire loop!!\n" );
+				bu_bomb( "Cannot find wire loop!\n" );
 			}
 
 			/* Make sure loop is not a crack */
@@ -3201,7 +3201,7 @@ sedit(void)
 				   " { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL );
 			if( ret_tcl != TCL_OK )
 			{
-				Tcl_AppendResult(interp, "Mode selection failed!!!\n", (char *)NULL );
+				Tcl_AppendResult(interp, "Mode selection failed!\n", (char *)NULL );
 				break;
 			}
 			radio_result = Tcl_GetVar( interp, "_bot_mode_result", TCL_GLOBAL_ONLY );
@@ -3246,7 +3246,7 @@ sedit(void)
 				   " { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL );
 			if( ret_tcl != TCL_OK )
 			{
-				Tcl_AppendResult(interp, "Face orientation selection failed!!!\n", (char *)NULL );
+				Tcl_AppendResult(interp, "Face orientation selection failed!\n", (char *)NULL );
 				break;
 			}
 			radio_result = Tcl_GetVar( interp, "_bot_orient_result", TCL_GLOBAL_ONLY );
@@ -3267,7 +3267,7 @@ sedit(void)
 					"{Cannot edit face thickness in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
 					(char *)NULL ) != TCL_OK )
 				{
-					bu_log( "cad_dialog failed!!!!: %s\n", Tcl_GetStringResult(interp) );
+					bu_log( "cad_dialog failed: %s\n", Tcl_GetStringResult(interp) );
 				}
 				break;
 			}
@@ -3307,7 +3307,7 @@ sedit(void)
 				}
 				if( face_no < 0 )
 				{
-					bu_log( "Cannot find face with vertices %d %d %d!!\n",
+					bu_log( "Cannot find face with vertices %d %d %d!\n",
 						V3ARGS( bot_verts ) );
 					break;
 				}
@@ -3412,7 +3412,7 @@ sedit(void)
 				}
 				if( face_no < 0 )
 				{
-					bu_log( "Cannot find face with vertices %d %d %d!!\n",
+					bu_log( "Cannot find face with vertices %d %d %d!\n",
 						V3ARGS( bot_verts ) );
 					break;
 				}
@@ -3466,7 +3466,7 @@ sedit(void)
 
 			if( bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0 )
 			{
-				bu_log( "No Face selected!!!\n" );
+				bu_log( "No Face selected!\n" );
 				return;
 			}
 
@@ -3483,7 +3483,7 @@ sedit(void)
 			}
 			if( face_no < 0 )
 			{
-				bu_log( "Cannot find selected face!!!\n");
+				bu_log( "Cannot find selected face!\n");
 				return;
 			}
 			bot->num_faces--;
@@ -3568,7 +3568,7 @@ sedit(void)
 
 			if( (dp=db_lookup( dbip, sketch_name, 0 )) == DIR_NULL )
 			{
-				bu_log( "Warning: %s does not exist!!!\n",
+				bu_log( "Warning: %s does not exist!\n",
 					sketch_name );
 				extr->skt = (struct rt_sketch_internal *)NULL;
 			}
@@ -4653,8 +4653,8 @@ sedit(void)
 				nmg_movevu( next_eu->vu_p , es_eu->vu_p->v_p );
 				if( nmg_keu( es_eu ) )
 				{
-					/* Should never happen!!! */
-					bu_bomb( "sedit(): killed edge and emptied loop!!\n" );
+					/* Should never happen! */
+					bu_bomb( "sedit(): killed edge and emptied loop!\n" );
 				}
 				es_eu = prev_eu;
 				nmg_rebound( m , &mged_tol );
@@ -4823,7 +4823,7 @@ sedit(void)
 			area = nmg_loop_plane_area( new_lu , new_lu_pl );
 			if( area < 0.0 )
 			{
-			  Tcl_AppendResult(interp, "loop to be extruded as no area!!!\n", (char *)NULL);
+			  Tcl_AppendResult(interp, "loop to be extruded as no area!\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
 			  return;
 			}
@@ -5621,13 +5621,13 @@ sedit(void)
 
 			if( bot_verts[1] >= 0 && bot_verts[2] >= 0 )
 			{
-				bu_log( "A triangle is selected, not a BOT point!!!\n" );
+				bu_log( "A triangle is selected, not a BOT point!\n" );
 				break;
 			}
 
 			if( bot_verts[1] >= 0 )
 			{
-				bu_log( "An edge is selected, not a BOT point!!!\n" );
+				bu_log( "An edge is selected, not a BOT point!\n" );
 				break;
 			}
 
@@ -5676,7 +5676,7 @@ sedit(void)
 
 			if( bot_verts[2] >= 0 )
 			{
-				bu_log( "A triangle is selected, not a BOT edge!!!\n" );
+				bu_log( "A triangle is selected, not a BOT edge!\n" );
 				break;
 			}
 			v1 = bot_verts[0];
@@ -6119,7 +6119,7 @@ sedit_mouse( const vect_t mousevec )
 	tmp_vert = rt_bot_find_v_nearest_pt2(bot, pos_view, view_state->vs_vop->vo_model2view);
 	if( tmp_vert < 0 )
 	{
-		Tcl_AppendResult(interp, "ECMD_BOT_PICKV: unable to find a vertex!!!\n", (char *)NULL );
+		Tcl_AppendResult(interp, "ECMD_BOT_PICKV: unable to find a vertex!\n", (char *)NULL );
 		mged_print_result( TCL_ERROR );
 		return;
 	}
@@ -6146,7 +6146,7 @@ sedit_mouse( const vect_t mousevec )
 
 	if (rt_bot_find_e_nearest_pt2(&vert1, &vert2, bot, pos_view, view_state->vs_vop->vo_model2view))
 	{
-		Tcl_AppendResult(interp, "ECMD_BOT_PICKE: unable to find an edge!!!\n", (char *)NULL );
+		Tcl_AppendResult(interp, "ECMD_BOT_PICKE: unable to find an edge!\n", (char *)NULL );
 		mged_print_result( TCL_ERROR );
 		return;
 	}
@@ -7643,7 +7643,7 @@ pscale(void)
 
 				if( ps->l.magic == BU_LIST_HEAD_MAGIC )
 				{
-				  Tcl_AppendResult(interp, "Entire pipe solid has zero OD!!!!\n", (char *)NULL);
+				  Tcl_AppendResult(interp, "Entire pipe solid has zero OD!\n", (char *)NULL);
 				  return;
 				}
 
@@ -8140,7 +8140,7 @@ sedit_apply(int accept_flag)
 		rt_db_free_internal(&es_int, &rt_uniresource);
 	} else {
 		/* XXX hack to restore es_int after rt_db_put_internal blows it away */
-		/* Read solid description into es_int again!!! Gaak! */
+		/* Read solid description into es_int again! Gaak! */
 		if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
 				       dbip, NULL, &rt_uniresource) < 0) {
 			Tcl_AppendResult(interp, "sedit_apply(",
@@ -8449,7 +8449,7 @@ double	xangle, yangle, zangle;
  *			L A B E L _ E D I T E D _ S O L I D
  *
  *  Put labels on the vertices of the currently edited solid.
- *  XXX This really should use import/export interface!!!  Or be part of it.
+ *  XXX This really should use import/export interface!  Or be part of it.
  */
 void
 label_edited_solid(
