@@ -545,6 +545,24 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		}
 		break;
 	    }
+	case ID_BOT:
+	    {
+		struct rt_bot_internal *bot;
+		bot = (struct rt_bot_internal *)internal.idb_ptr;
+		RT_BOT_CK_MAGIC(bot);
+
+		/* mirror each vertex */
+		for( i=0 ; i<bot->num_vertices ; i++ ) {
+		    bot->vertices[(i*3)+axis] *= -1.0;
+		}
+
+		/* fix normals */
+		for( i=0 ; i<bot->num_normals ; i++ ) {
+		    bot->normals[(i*3)+axis] *= -1.0;
+		}
+
+		break;
+	    }
 	default:
 	    {
 		rt_db_free_internal( &internal, resp );
