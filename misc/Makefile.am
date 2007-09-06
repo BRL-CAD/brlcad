@@ -2,6 +2,7 @@
 
 SUBDIRS = \
 	archlinux \
+	debian \
 	enigma \
 	macosx \
 	nsis \

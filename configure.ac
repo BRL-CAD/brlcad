@@ -3719,6 +3719,7 @@ AC_CONFIG_FILES([
 	misc/archlinux/brlcad.sh
 	misc/brlcad-config
 	misc/brlcad.spec
+	misc/debian/Makefile
 	misc/macosx/Makefile
 	misc/macosx/Resources/Makefile
 	misc/macosx/Resources/ReadMe.rtfd/Makefile
