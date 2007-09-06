@@ -6109,6 +6109,7 @@ sedit_mouse( const vect_t mousevec )
 	struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
 	int tmp_vert;
 	char tmp_msg[256];
+	point_t selected_pt;
 
 	RT_BOT_CK_MAGIC( bot );
 
@@ -6127,7 +6128,8 @@ sedit_mouse( const vect_t mousevec )
 	bot_verts[0] = tmp_vert;
 	bot_verts[1] = -1;
 	bot_verts[2] = -1;
-	sprintf( tmp_msg, "picked point at (%g %g %g), vertex #%d\n", V3ARGS( &bot->vertices[tmp_vert*3] ), tmp_vert );
+	VSCALE(selected_pt, &bot->vertices[tmp_vert*3], base2local);
+	sprintf( tmp_msg, "picked point at (%g %g %g), vertex #%d\n", V3ARGS(selected_pt), tmp_vert );
 	Tcl_AppendResult(interp, tmp_msg, (char *)NULL );
 	mged_print_result( TCL_OK );
     }
@@ -6137,6 +6139,7 @@ sedit_mouse( const vect_t mousevec )
 	struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
 	int vert1, vert2;
 	char tmp_msg[256];
+	point_t from_pt, to_pt;
 
 	RT_BOT_CK_MAGIC( bot );
 
@@ -6154,7 +6157,9 @@ sedit_mouse( const vect_t mousevec )
 	bot_verts[0] = vert1;
 	bot_verts[1] = vert2;
 	bot_verts[2] = -1;
-	sprintf( tmp_msg, "picked edge from (%g %g %g) to (%g %g %g)\n", V3ARGS( &bot->vertices[vert1*3] ), V3ARGS( &bot->vertices[vert2*3] ) );
+	VSCALE(from_pt, &bot->vertices[vert1*3], base2local);
+	VSCALE(to_pt, &bot->vertices[vert2*3], base2local);
+	sprintf(tmp_msg, "picked edge from (%g %g %g) to (%g %g %g)\n", V3ARGS(from_pt), V3ARGS(to_pt));
 	Tcl_AppendResult(interp, tmp_msg, (char *)NULL );
 	mged_print_result( TCL_OK );
     }
