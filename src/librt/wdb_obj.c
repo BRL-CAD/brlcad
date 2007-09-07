@@ -3357,26 +3357,28 @@ get_new_name(
 	if( cc_data->unique_mode != OLD_PREFIX ) {
 		bu_vls_strcpy( &new_name, name );
 		aname = bu_vls_addr( &new_name );
-		while(  db_lookup( dbip, aname, LOOKUP_QUIET ) != DIR_NULL ||
-			Tcl_FindHashEntry( used_names_tbl, aname ) != NULL ) {
-			bu_vls_trunc( &new_name, 0 );
-			num++;
-			if( cc_data->unique_mode == ADD_PREFIX ) {
-				bu_vls_printf( &new_name, "%d_", num);
-			}
-			bu_vls_strcat( &new_name, name );
-			if( cc_data->unique_mode == ADD_SUFFIX ) {
-				bu_vls_printf( &new_name, "_%d", num );
-			}
-			aname = bu_vls_addr( &new_name );
-		}
 	} else {
 		bu_vls_vlscat( &new_name, &cc_data->prestr );
 		bu_vls_strcat( &new_name, name );
 		if( cc_data->old_dbip->dbi_version < 5 ) {
 			bu_vls_trunc( &new_name, V4_MAXNAME );
 		}
+		aname = bu_vls_addr( &new_name );
 	}
+        while(  db_lookup( dbip, aname, LOOKUP_QUIET ) != DIR_NULL ||
+                Tcl_FindHashEntry( used_names_tbl, aname ) != NULL ) {
+            bu_vls_trunc( &new_name, 0 );
+            num++;
+            if( cc_data->unique_mode == ADD_PREFIX ) {
+                bu_vls_printf( &new_name, "%d_", num);
+            }
+            bu_vls_strcat( &new_name, name );
+            if( cc_data->unique_mode == ADD_SUFFIX ||
+                    cc_data->unique_mode == OLD_PREFIX ) {
+                bu_vls_printf( &new_name, "_%d", num );
+            }
+            aname = bu_vls_addr( &new_name );
+        }
 
 	/* now have a unique name, make entries for it in both hash tables */
 
