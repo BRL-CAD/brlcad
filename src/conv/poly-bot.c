@@ -52,7 +52,6 @@ static const char RCSid[] = "$Header$";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "../librt/plane.h"
 #include "../librt/debug.h"
 
 

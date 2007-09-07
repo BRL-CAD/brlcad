@@ -52,7 +52,6 @@ static const char RCSbot[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "./debug.h"
-#include "./plane.h"
 #include "./bot.h"
 
 #define GLUE(_a, _b)      _a ## _b

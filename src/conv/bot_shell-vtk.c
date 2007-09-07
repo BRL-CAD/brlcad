@@ -72,7 +72,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 /* local headers */
-#include "../librt/plane.h"
 #include "../librt/bot.h"
 
 

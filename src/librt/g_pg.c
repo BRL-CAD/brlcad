@@ -53,7 +53,6 @@ static const char RCSpg[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 #include "./debug.h"
-#include "./plane.h"
 
 #define TRI_NULL	((struct tri_specific *)0)
 

@@ -55,7 +55,6 @@ static const char RCSars[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "./debug.h"
-#include "./plane.h"
 #include "./bot.h"
 
 

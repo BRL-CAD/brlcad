@@ -202,7 +202,6 @@ include_HEADERS = \
 	bot.h \
 	debug.h \
 	fixpt.h \
-	plane.h \
 	qray.h
 
 dist_man_MANS = librt.3
