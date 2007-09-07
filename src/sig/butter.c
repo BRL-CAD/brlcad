@@ -27,8 +27,18 @@
  *
  * For 1/3 octave filters y = 2^(1/6) - 2^(-1/6).
  */
+
+/*
+ * $Id$
+ */
+
+#include "common.h"
+#include <stdio.h>
 #include <math.h>
-#include "./complex.h"
+#include "machine.h"
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
 
 void cdiv();
 
@@ -41,8 +51,8 @@ double
 butter(double w)
 		/* relative frequency (1.0 = center freq) */
 {
-	COMPLEX	denom, num, H;
-	double	gamma, k1, k2, k3, k4;
+	bn_complex_t	denom, num, h;
+	double		gamma, k1, k2, k3, k4;
 
 	/* 1/3 octave gamma */
 	gamma = pow( 2.0, 1.0/6.0 ) - pow( 2.0, -1.0/6.0 );
@@ -61,9 +71,9 @@ butter(double w)
 	denom.im = k2 * w - k4 * pow( w, 3.0 )
 		 + k2 * pow( w, 5.0 );
 
-	cdiv( &H, &num, &denom );
-/*	printf( "(%f, %f)\n", H.re, H.im );*/
-	return( CMAG( H ) );
+	cdiv( &h, &num, &denom );
+/*	printf( "(%f, %f)\n", h.re, h.im );*/
+	return( hypot( h.re, h.im ) );
 }
 
 /*

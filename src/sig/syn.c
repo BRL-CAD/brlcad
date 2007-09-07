@@ -75,7 +75,7 @@ makesintab(void)
 	double	theta;
 
 	for( i = 0; i < TABSIZE; i ++ ) {
-		theta = i / (double)TABSIZE * TWOPI;
+		theta = i / (double)TABSIZE * 2 * M_PI;
 		sintab[i] = sin(theta);
 	}
 }

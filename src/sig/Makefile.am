@@ -39,8 +39,6 @@ bin_PROGRAMS = \
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-noinst_HEADERS = complex.h
-
 a_d_SOURCES = a-d.c
 a_d_LDADD = ${BU}
 

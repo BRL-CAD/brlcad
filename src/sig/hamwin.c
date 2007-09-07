@@ -22,10 +22,21 @@
  *  Apply a Hamming Window to the given samples.
  *  Precomputes the window function.
  */
+
+/*
+ * $Id$
+ */
+
+#include "common.h"
+
+#include <stdio.h>
 #include <stdlib.h>
-#include <stdio.h>	/* for stderr */
-#include <math.h>	/* for double sin(), cos() */
-#include "./complex.h"
+#include <math.h>
+
+#include "machine.h"
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
 
 int init_hamwintab( int size );
 
@@ -56,7 +67,7 @@ hamwin(double *data, int length)
  * Complex Data Version.
  */
 void
-chamwin(COMPLEX *data, int length)
+chamwin(bn_complex_t *data, int length)
 {
 	int	i;
 
@@ -105,7 +116,7 @@ init_hamwintab(int size)
 	 * Size is okay.  Set up tables.
 	 */
 	for( i = 0; i < size; i++ ) {
-		theta = TWOPI * i / (double)(size);
+		theta = 2 * M_PI * i / (double)(size);
 		hamwintab[ i ] = 0.54 - 0.46 * cos( theta );
 	}
 

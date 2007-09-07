@@ -22,10 +22,14 @@
  *  Do Cosine windowing effecting p percent of the samples in
  *  the buffer.  Precomputes the window function.
  */
-#include <stdlib.h>
-#include <stdio.h>	/* for stderr */
-#include <math.h>	/* for double sin(), cos() */
-#include "./complex.h"
+
+#include "common.h"
+#include <stdio.h>
+#include <math.h>
+#include "machine.h"
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
 
 static int	_init_length = 0;	/* Internal: last initialized size */
 static int	maxinitlen = 0;
@@ -59,7 +63,7 @@ coswin(double *data, int length, double percent)
  * Complex Data Version.
  */
 void
-ccoswin(COMPLEX *data, int length, double percent)
+ccoswin(bn_complex_t *data, int length, double percent)
 {
 	int	num, i;
 
@@ -110,7 +114,7 @@ init_coswintab(int size)
 	 * Size is okay.  Set up tables.
 	 */
 	for( i = 0; i < size; i++ ) {
-		theta = PI * i / (double)(size);
+		theta = M_PI * i / (double)(size);
 		coswintab[ i ] = 0.5 - 0.5 * cos( theta );
 	}
 
