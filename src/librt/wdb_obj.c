@@ -3368,6 +3368,9 @@ get_new_name(
         while(  db_lookup( dbip, aname, LOOKUP_QUIET ) != DIR_NULL ||
                 Tcl_FindHashEntry( used_names_tbl, aname ) != NULL ) {
             bu_vls_trunc( &new_name, 0 );
+            if( cc_data->unique_mode == OLD_PREFIX ) {
+		bu_vls_vlscat( &new_name, &cc_data->prestr );
+            }
             num++;
             if( cc_data->unique_mode == ADD_PREFIX ) {
                 bu_vls_printf( &new_name, "%d_", num);
