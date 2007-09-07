@@ -40,11 +40,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
-#include "./complex.h"
-/*#define	TWOPI	6.283185307179586*/
+
 #define	INVSQ2	0.70710678118654752440
 #define	SQRT2	1.4142136
 
@@ -81,7 +79,7 @@ printf("/* L shaped butterflies */\n");
 		n2 = n2 >> 1;
 		n4 = n2 >> 2;
 		n8 = n4 >> 1;
-		e = TWOPI / n2;
+		e = 2*M_PI / n2;
 l17:
 		for( i = is; i < n; i += id ) {
 			i1 = i + 1;

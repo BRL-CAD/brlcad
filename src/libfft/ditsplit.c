@@ -44,7 +44,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #include <math.h>
-#include "./complex.h"
+
 #define	INVSQ2	0.70710678118654752440
 #define	SQRT2	1.4142136
 
@@ -71,7 +71,7 @@ irfft_adds = irfft_mults = 0;
 		n2 = n2 >> 1;
 		n4 = n2 >> 2;
 		n8 = n4 >> 1;
-		e = TWOPI / n2;
+		e = 2*M_PI / n2;
 l17:
 		for( i = is; i < n; i += id ) {
 			i1 = i + 1;

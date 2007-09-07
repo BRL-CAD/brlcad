@@ -38,7 +38,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <math.h>
 
-#include "./complex.h"	/* for TWOPI */
 #define	INVSQ2	0.70710678118654752440
 
 int	rfft_adds, rfft_mults;
@@ -131,7 +130,7 @@ printf("X[%d] += t0;\n", i0-1 );
 rfft_mults += 2; rfft_adds += 6;
 			}
 		}
-		e = TWOPI/n2;
+		e = 2*M_PI/n2;
 		a = e;
 		if( n4 < 4 ) continue;
 		for( j = 2; j <= n4/2; j++ ) {
