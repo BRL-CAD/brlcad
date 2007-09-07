@@ -15,9 +15,7 @@ noinst_HEADERS = \
 	population.h
 
 beset_LDADD = \
-	${WDB} ${WDB_LIBS} \
-	${RT} ${RT_LIBS} \
-	${BU} ${BU_LIBS}
+	${WDB}
 
 # man_MANS = beset.1
 

@@ -1,15 +1,9 @@
 # $Id$
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
-LDADD = \
-	${OPTICAL} ${OPTICAL_LIBS} \
-	${RT} ${RT_LIBS} \
-	${FB} ${FB_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${PKG} ${PKG_LIBS} \
-	${TCL} \
-	${SYSV} ${SYSV_LIBS}
+LDFLAGS = \
+	${OPTICAL} \
+	${RT} ${FB}
 
 if ONLY_BENCHMARK
 bin_PROGRAMS = \
@@ -87,9 +81,9 @@ rtshot_SOURCES = rtshot.c
 
 hurt_SOURCES = hurt.c
 hurt_LDADD = \
-	${OPTICAL} ${OPTICAL_LIBS} \
-	${RT} ${RT_LIBS} \
-	${FB} ${FB_LIBS}
+	${OPTICAL} \
+	${RT} \
+	${FB}
 
 rtregis_SOURCES = \
 	read-rtlog.c \

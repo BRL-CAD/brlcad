@@ -43,6 +43,7 @@ liboptical_la_SOURCES = \
 	wray.c
 
 liboptical_la_LDFLAGS = -version-info 19:1
+liboptical_la_LIBADD = ${RT}
 
 # convenience library, must NOT be set to static in here
 noinst_LTLIBRARIES = librtms.la

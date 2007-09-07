@@ -14,11 +14,7 @@ halftone_SOURCES = \
 	tonescale.c
 
 halftone_LDADD = \
-	${PKG} ${PKG_LIBS} \
-	${RT} ${RT_LIBS} \
-	${FB} ${FB_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS}
+	${RT} ${FB}
 
 man_MANS = halftone.1
 

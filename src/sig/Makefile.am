@@ -42,7 +42,7 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 noinst_HEADERS = complex.h
 
 a_d_SOURCES = a-d.c
-a_d_LDADD = ${BU} ${BU_LIBS}
+a_d_LDADD = ${BU}
 
 d_a_SOURCES = d-a.c
 i_d_SOURCES = i-d.c
@@ -70,28 +70,28 @@ dwin_SOURCES = dwin.c coswin.c hamwin.c
 dwin_LDADD = ${LIBM}
 
 dauto_SOURCES = dauto.c
-dauto_LDADD = ${BU} ${BU_LIBS}
+dauto_LDADD = ${BU}
 
 dmod_SOURCES = dmod.c
-dmod_LDADD = ${BU} ${BU_LIBS} ${LIBM}
+dmod_LDADD = ${BU}
 
 dfft_SOURCES = dfft.c interp.c butter.c
-dfft_LDADD = ${FFT} ${FFT_LIBS} ${BU} ${BU_LIBS}
+dfft_LDADD = ${FFT} ${BU}
 
 dconv_SOURCES = dconv.c
-dconv_LDADD = ${FFT} ${FFT_LIBS}
+dconv_LDADD = ${FFT}
 
 ddisp_SOURCES = ddisp.c
-ddisp_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BU} ${BU_LIBS}
+ddisp_LDADD = ${FB}
 
 fhor_SOURCES = fhor.c
-fhor_LDADD = ${FB} ${FB_LIBS} ${PKG} ${PKG_LIBS} ${BU} ${BU_LIBS}
+fhor_LDADD = ${FB}
 
 imod_SOURCES = imod.c
-imod_LDADD = ${BU} ${BU_LIBS} ${LIBM}
+imod_LDADD = ${BU} ${LIBM}
 
 umod_SOURCES = umod.c
-umod_LDADD = ${BU} ${BU_LIBS} ${LIBM}
+umod_LDADD = ${BU} ${LIBM}
 
 
 #  Misc
@@ -102,10 +102,10 @@ dstat_LDADD = ${LIBM}
 dsel_SOURCES = dsel.c
 
 istat_SOURCES = istat.c
-istat_LDADD = ${BU} ${BU_LIBS} ${LIBM}
+istat_LDADD = ${BU}
 
 ustat_SOURCES = ustat.c
-ustat_LDADD = ${BU} ${BU_LIBS} ${LIBM}
+ustat_LDADD = ${BU}
 
 
 #  Experimental

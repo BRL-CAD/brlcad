@@ -8,7 +8,7 @@ libtclcad_la_SOURCES = \
 	tkImgFmtPIX.c
 
 libtclcad_la_LDFLAGS = -version-info 19:1
-libtclcad_la_LIBADD = ${TCLCAD_LIBS}
+libtclcad_la_LIBADD = ${TCLCAD_LIBS} ${FB}
 libtclcad_la_CFLAGS = \
 	${X_CFLAGS} \
 	${ITK_CPPFLAGS} \

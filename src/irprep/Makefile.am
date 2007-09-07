@@ -20,54 +20,33 @@ bin_PROGRAMS = \
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 all_sf_SOURCES = all_sf.c
-all_sf_LDADD = \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+all_sf_LDADD = ${RT} 
 
 showtherm_SOURCES = showtherm.c
-showtherm_LDADD = \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+showtherm_LDADD = ${RT}
 
 firpass_SOURCES = firpass.c subroutines.c
-firpass_LDADD = \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+firpass_LDADD = ${RT}
 
 irdisp_SOURCES = irdisp.c
 irdisp_CFLAGS = ${X_CFLAGS}
 
 ir_sgi_SOURCES = ir-sgi.c
-ir_sgi_LDADD = \
-	${BU} ${BU_LIBS}
+ir_sgi_LDADD = ${BU}
 
 if WITH_X11
 ir_X_SOURCES = ir-X.c
 ir_X_CFLAGS = ${X_CFLAGS}
 ir_X_LDADD = \
-	${BU} ${BU_LIBS} \
+	${BU} \
 	${X_LIBS}
 endif
 
 secpass_SOURCES = secpass.c subroutines.c
-secpass_LDADD = \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+secpass_LDADD = ${RT} 
 
 shapefact_SOURCES = shapefact.c
-shapefact_LDADD = \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+shapefact_LDADD = ${RT}
 
 man_MANS = \
 	all_sf.1 \

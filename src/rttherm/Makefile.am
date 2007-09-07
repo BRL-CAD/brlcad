@@ -23,15 +23,9 @@ rttherm_LDFLAGS = -static
 rttherm_CFLAGS = -DRT_MULTISPECTRAL
 rttherm_LDADD = \
 	$(top_builddir)/src/rt/librttherm.a \
-	${MULTISPECTRAL} ${MULTISPECTRAL_LIBS} \
-	${OPTICAL} ${OPTICAL_LIBS} \
-	${PKG} ${PKG_LIBS} \
-	${RT} ${RT_LIBS} \
-	${FB} ${FB_LIBS} \
-	${SYSV} ${SYSV_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${TCL} 
+	${MULTISPECTRAL} \
+	${OPTICAL} \
+	${FB}
 
 ssampview_SOURCES = \
 	spectrum.c \
@@ -41,25 +35,12 @@ ssampview_CFLAGS = \
 	${X_CFLAGS} \
 	${TK_CPPFLAGS}
 ssampview_LDADD = \
-	${OPTICAL} ${OPTICAL_LIBS} \
-	${FB} ${FB_LIBS} \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${PKG} ${PKG_LIBS} \
-	${SYSV} ${SYSV_LIBS} \
-	${TK} \
-	${TCL}
+	${OPTICAL} \
+	${FB} \
+	${TK}
 
-
-ssamp_bw_SOURCES = \
-	ssamp-bw.c
-ssamp_bw_LDADD = \
-	${OPTICAL} ${OPTICAL_LIBS} \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+ssamp_bw_SOURCES = ssamp-bw.c
+ssamp_bw_LDADD = ${OPTICAL}
 
 # pixtest removed, looks like an outdated sample_application
 #pixtest_SOURCES = \

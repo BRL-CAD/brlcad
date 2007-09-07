@@ -1,11 +1,6 @@
 # $Id$
 
-proc_db_libs = \
-	${WDB} ${WDB_LIBS} \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+proc_db_libs = ${WDB} 
 
 LDADD = ${proc_db_libs}
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
@@ -61,20 +56,12 @@ brep_simple_LDADD = \
 	${OPENNURBS}
 
 brickwall_SOURCES = brickwall.c
-brickwall_LDADD = \
-	${WDB} ${WDB_LIBS} \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS}
+brickwall_LDADD = ${WDB} 
 
 clutter_SOURCES = clutter.c common.c
 
 contours_SOURCES = contours.c
-contours_LDADD = \
-	${WDB} ${WDB_LIBS} \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS}
+contours_LDADD = ${WDB} 
 
 fence_SOURCES = fence.c
 globe_SOURCES = globe.c

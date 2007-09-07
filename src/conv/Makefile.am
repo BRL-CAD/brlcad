@@ -95,137 +95,137 @@ asc2g_LDFLAGS =
 endif
 
 asc2g_SOURCES = asc2g.c
-asc2g_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS} ${TCL} ${SYSV} ${SYSV_LIBS}
+asc2g_LDADD = ${WDB}
 
 asc2pix_SOURCES = asc2pix.c
 
 asc_nmg_SOURCES = asc-nmg.c
-asc_nmg_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+asc_nmg_LDADD = ${WDB}
 
 bot_bldxf_SOURCES = bot-bldxf.c
-bot_bldxf_LDADD = ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+bot_bldxf_LDADD = ${RT}
 
 bot_raw_SOURCES = bot-raw.c
-bot_raw_LDADD = ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+bot_raw_LDADD = ${RT}
 
 bot_shell_vtk_SOURCES = bot_shell-vtk.c
-bot_shell_vtk_LDADD = ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS} ${SYSV} ${SYSV_LIBS}
+bot_shell_vtk_LDADD = ${RT}
 
 conv_vg2g_SOURCES = conv-vg2g.c
-conv_vg2g_LDADD = ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+conv_vg2g_LDADD = ${BU} ${SYSV}
 
 cy_g_SOURCES = cy-g.c
-cy_g_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+cy_g_LDADD = ${WDB}
 
 dbupgrade_SOURCES = dbupgrade.c
-dbupgrade_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+dbupgrade_LDADD = ${WDB}
 
 dxf_g_SOURCES = dxf-g.c
-dxf_g_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+dxf_g_LDADD = ${WDB}
 
 enf_g_SOURCES = enf-g.c
-enf_g_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS} ${TCL} ${SYSV} ${SYSV_LIBS}
+enf_g_LDADD = ${WDB}
 
 euclid_format_SOURCES = euclid_format.c
-euclid_format_LDADD = ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+euclid_format_LDADD = ${RT}
 
 euclid_g_SOURCES = euclid-g.c
-euclid_g_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+euclid_g_LDADD = ${WDB}
 
 euclid_unformat_SOURCES = euclid_unformat.c
-euclid_unformat_LDADD = ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+euclid_unformat_LDADD = ${BU} ${SYSV}
 
 fast4_g_SOURCES = fast4-g.c
-fast4_g_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+fast4_g_LDADD = ${WDB}
 
 g2asc_SOURCES = g2asc.c
-g2asc_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL} ${SYSV} ${SYSV_LIBS}
+g2asc_LDADD = ${WDB}
 
 g4_g5_SOURCES = g4-g5.c
-g4_g5_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g4_g5_LDADD = ${WDB}
 
 g5_g4_SOURCES = g5-g4.c
-g5_g4_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g5_g4_LDADD = ${WDB}
 
 g_acad_SOURCES = g-acad.c
-g_acad_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_acad_LDADD = ${WDB}
 
 g_adrt_SOURCES = g-adrt.c
-g_adrt_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_adrt_LDADD = ${WDB}
 
 g_dxf_SOURCES = g-dxf.c
-g_dxf_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_dxf_LDADD = ${WDB}
 
 g_euclid1_SOURCES = g-euclid1.c
-g_euclid1_LDADD = ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_euclid1_LDADD = ${RT}
 
 g_euclid_SOURCES = g-euclid.c
-g_euclid_LDADD = ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_euclid_LDADD = ${RT}
 
 g_nff_SOURCES = g-nff.c
-g_nff_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_nff_LDADD = ${WDB}
 
 g_nmg_SOURCES = g-nmg.c
-g_nmg_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_nmg_LDADD = ${WDB}
 
 g_obj_SOURCES = g-obj.c
-g_obj_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_obj_LDADD = ${WDB}
 
 g_shell_rect_SOURCES = g-shell.rect.c
-g_shell_rect_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_shell_rect_LDADD = ${WDB}
 
 g_stl_SOURCES = g-stl.c
-g_stl_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_stl_LDADD = ${WDB}
 
 g_tankill_SOURCES = g-tankill.c
-g_tankill_LDADD = ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_tankill_LDADD = ${RT}
 
 g_var_SOURCES = g-var.c
-g_var_LDADD = ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_var_LDADD = ${RT}
 
 g_vrml_SOURCES = g-vrml.c
-g_vrml_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_vrml_LDADD = ${WDB}
 
 g_x3d_SOURCES = g-x3d.c
-g_x3d_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_x3d_LDADD = ${WDB}
 
 g_xxx_SOURCES = g-xxx.c
-g_xxx_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_xxx_LDADD = ${WDB}
 
 g_xxx_facets_SOURCES = g-xxx_facets.c
-g_xxx_facets_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+g_xxx_facets_LDADD = ${WDB}
 
 nastran_g_SOURCES = nastran-g.c
-nastran_g_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+nastran_g_LDADD = ${WDB}
 
 nmg_bot_SOURCES = nmg-bot.c
-nmg_bot_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+nmg_bot_LDADD = ${WDB}
 
 nmg_rib_SOURCES = nmg-rib.c
-nmg_rib_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+nmg_rib_LDADD = ${WDB}
 
 nmg_sgp_SOURCES = nmg-sgp.c
-nmg_sgp_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+nmg_sgp_LDADD = ${WDB}
 
 pix2asc_SOURCES = pix2asc.c
 
 ply_g_SOURCES = ply-g.c
-ply_g_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS} ${SYSV} ${SYSV_LIBS}
+ply_g_LDADD = ${WDB}
 
 poly_bot_SOURCES = poly-bot.c
-poly_bot_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+poly_bot_LDADD = ${WDB}
 
 proe_g_SOURCES = proe-g.c
-proe_g_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS} ${TCL} ${SYSV} ${SYSV_LIBS}
+proe_g_LDADD = ${WDB}
 
 stl_g_SOURCES = stl-g.c
-stl_g_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS} ${SYSV} ${SYSV_LIBS}
+stl_g_LDADD = ${WDB}
 
 tankill_g_SOURCES = tankill-g.c
-tankill_g_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+tankill_g_LDADD = ${WDB}
 
 viewpoint_g_SOURCES = viewpoint-g.c
-viewpoint_g_LDADD = ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${SYSV} ${SYSV_LIBS}
+viewpoint_g_LDADD = ${WDB}
 
 
 dist_man_MANS = \

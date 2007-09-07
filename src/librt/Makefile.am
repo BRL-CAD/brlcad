@@ -15,9 +15,7 @@ brep_test_SOURCES = brep_test.cpp
 # cannot set per-target CPPFLAGS until automake 1.7+
 brep_test_CXXFLAGS = ${SSE}
 brep_test_LDADD = \
-	librt.la ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} 
+	librt.la
 
 else # !WITH_OPENNURBS
 
@@ -188,21 +186,16 @@ librt_nil_la_LIBADD = ${BREP_LIBADD}
 librt_la_SOURCES =
 librt_la_LDFLAGS = -version-info 19:1
 librt_la_LIBADD = \
-	librt_nil.la 
+	librt_nil.la \
+	${BN} ${SYSV}
 
 comb_SOURCES = comb.c
 comb_LDADD = \
-	librt.la ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+	librt.la
 
 nurb_example_SOURCES = nurb_example.c
 nurb_example_LDADD = \
-	librt.la ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+	librt.la
 
 # XXX this should be noinst or moved to include
 include_HEADERS = \

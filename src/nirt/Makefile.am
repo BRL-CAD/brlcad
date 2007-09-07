@@ -18,18 +18,10 @@ nirt_SOURCES = \
 	parse_fmt.c
 
 nirt_CFLAGS = -DDFLT_SHELL=\"/bin/sh\"
-nirt_LDADD = \
-	${PKG} ${PKG_LIBS} \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${FB} ${FB_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+nirt_LDADD = ${FB} ${RT}
 
 showshot_SOURCES = showshot.c
-showshot_LDADD = \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS}
+showshot_LDADD = ${BN}
 
 man_MANS = \
 	nirt.1 \

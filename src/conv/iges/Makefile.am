@@ -31,11 +31,7 @@ iges_SOURCES = \
 	nmain.cpp
 
 iges_LDADD = \
-	${WDB} ${WDB_LIBS} \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS} \
+	${WDB} \
 	${OPENNURBS}
 
 iges_g_SOURCES = \
@@ -112,21 +108,14 @@ iges_g_SOURCES = \
 	wedge.c
 
 iges_g_LDADD = \
-	${WDB} ${WDB_LIBS} \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+	${WDB}
 
 g_iges_SOURCES = \
 	g-iges.c \
 	iges.c
 
 g_iges_LDADD = \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+	${RT}
 
 EXTRA_DIST = \
 	$(man_MANS) \

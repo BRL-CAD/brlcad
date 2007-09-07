@@ -57,13 +57,17 @@ libdm_la_CFLAGS = \
 	${PNG_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
 	${TK_CPPFLAGS}
+libdm_la_LIBADD = \
+	${RT} \
+	${FB} \
+	${TK}
 
 EXTRA_DIST = \
 	dm-glx.c \
 	dm-pex.c \
 	libdm.dsp
 
-DEPS=src/librt
+DEPS=src/librt src/libfb
 
 MAINTAINERCLEANFILES = Makefile.in
 

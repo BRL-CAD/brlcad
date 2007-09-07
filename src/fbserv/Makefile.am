@@ -4,10 +4,7 @@ bin_PROGRAMS = fbserv
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-fbserv_LDADD = \
-	${FB} ${FB_LIBS} \
-	${BU} ${BU_LIBS} \
-	${PKG} ${PKG_LIBS}
+fbserv_LDADD = ${FB}
 
 fbserv_SOURCES = \
 	fbserv.c \

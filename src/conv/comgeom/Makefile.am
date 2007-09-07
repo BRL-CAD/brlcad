@@ -12,12 +12,7 @@ comgeom_g_SOURCES = \
 	region.c \
 	solid.c \
 	tools.c
-comgeom_g_LDADD = \
-	${WDB} ${WDB_LIBS} \
-	${RT} ${RT_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${SYSV} ${SYSV_LIBS}
+comgeom_g_LDADD = ${WDB}
 
 noinst_HEADERS = 3d.h ged_types.h
 

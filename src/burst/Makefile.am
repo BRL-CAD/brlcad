@@ -22,12 +22,9 @@ burst_SOURCES = \
 
 burst_CFLAGS = ${TERMLIB_CPPFLAGS} ${TCL_CPPFLAGS}
 burst_LDADD = \
-	${RT} ${RT_LIBS} \
-	${FB} ${FB_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${PKG} ${PKG_LIBS} \
-	${TERMIO} ${TERMIO_LIBS} \
+	${RT} \
+	${FB} \
+	${TERMIO} \
 	${TERMLIB}
 
 noinst_HEADERS = \

@@ -9,7 +9,7 @@ g_sat_SOURCES = g-sat.cxx
 
 # noinst_PROGRAMS = test
 # test_SOURCES = test.cxx
-# test_LDADD = ${RT} ${BU}
+# test_LDADD = ${RT}
 
 AM_CPPFLAGS = \
 	-I${HOME}/local/CGM-10.1/include \
@@ -28,7 +28,7 @@ g_sat_LDFLAGS = \
 	-L${CGM_DIR}/geom \
 	-L${CGM_DIR}/util
 
-g_sat_LDADD = ${WDB} ${WDB_LIBS} ${LIBRT} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} \
+g_sat_LDADD = ${WDB} \
 	-lcubit_geom \
 	-lacisstep \
 	-lxstep \

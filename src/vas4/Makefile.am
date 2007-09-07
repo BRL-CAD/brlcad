@@ -4,10 +4,7 @@ bin_PROGRAMS = vas4
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-vas4_LDADD = \
-	${FB} ${FB_LIBS} \
-	${BU} ${BU_LIBS} \
-	${PKG} ${PKG_LIBS}
+vas4_LDADD = ${FB}
 vas4_SOURCES = \
 	record_seq.c \
 	vas4.c \

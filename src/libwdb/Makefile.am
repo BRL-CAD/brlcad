@@ -43,7 +43,8 @@ libwdb_nil_la_SOURCES = \
 libwdb_la_SOURCES =
 libwdb_la_LDFLAGS = -version-info 19:1
 libwdb_la_LIBADD = \
-	libwdb_nil.la
+	libwdb_nil.la \
+	${RT}
 
 man_MANS = libwdb.3
 
@@ -57,5 +58,7 @@ EXTRA_DIST = \
 	spl.c
 
 MAINTAINERCLEANFILES = Makefile.in
+
+DEPS = src/librt
 
 include $(top_srcdir)/misc/Makefile.defs

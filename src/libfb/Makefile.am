@@ -4,8 +4,10 @@ lib_LTLIBRARIES = libfb.la
 
 if WITH_OPENGL
 IF_OGL_CFLAGS = -DIF_OGL
+IF_OGL_LIBADD = ${LIBGL}
 else
 IF_OGL_CFLAGS =
+IF_OGL_LIBADD =
 endif
 
 if WITH_WGL
@@ -15,15 +17,19 @@ IF_WGL_CFLAGS =
 endif
 
 if WITH_X11
-IF_X_CFLAGS = -DIF_X
+IF_X_CFLAGS = -DIF_X ${X_CFLAGS}
+IF_X_LIBADD = ${X_LIBS}
 else
 IF_X_CFLAGS =
+IF_X_LIBADD =
 endif
 
 if WITH_TK
 IF_TK_CFLAGS = -DIF_TK $(TK_CPPFLAGS)
+IF_TK_LIBADD = ${LIBTK}
 else
 IF_TK_CFLAGS =
+IF_TK_LIBADD =
 endif
 
 libfb_la_SOURCES = \
@@ -55,7 +61,6 @@ libfb_la_LDFLAGS = -version-info 19:1
 libfb_la_CFLAGS = \
 	-DIF_REMOTE \
 	-DIF_AB \
-	${X_CFLAGS} \
 	${GL_CFLAGS} \
 	$(IF_X_CFLAGS) \
 	$(IF_TK_CFLAGS) \
@@ -63,7 +68,12 @@ libfb_la_CFLAGS = \
 	$(IF_WGL_CFLAGS) \
 	${TCL_CPPFLAGS}
 
-libfb_la_LIBADD = ${LIBSOCKET} ${LIBNSL}
+libfb_la_LIBADD = \
+	  ${LIBSOCKET} ${LIBNSL} \
+	  ${PKG} \
+	  ${IF_X_LIBADD} \
+	  ${IF_OGL_LIBADD} \
+	  ${IF_TK_LIBADD}
 
 noinst_HEADERS = \
 	adage.h \

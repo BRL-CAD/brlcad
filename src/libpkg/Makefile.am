@@ -12,11 +12,10 @@ libpkg_la_SOURCES = \
 	vers.c
 
 libpkg_la_LDFLAGS = -version-info 19:1
+libpkg_la_LIBADD = ${BU}
 
 tpkg_SOURCES = tpkg.c
-tpkg_LDADD = \
-	libpkg.la \
-	${BU} ${BU_LIBS}
+tpkg_LDADD = libpkg.la
 
 sample_applicationsdir=$(SAMPLE_APPLICATIONS_DIR)
 sample_applications_DATA = tpkg.c

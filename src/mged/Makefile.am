@@ -141,21 +141,13 @@ mged_CFLAGS = \
 mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
 mged_LDADD = \
 	${POINTS_LDADD} \
-	${TERMIO} ${TERMIO_LIBS} \
-	${TCLCAD} ${TCLCAD_LIBS} \
-	${WDB} ${WDB_LIBS} \
-	${RT} ${RT_LIBS} \
-	${DM} ${DM_LIBS} \
-	${FB} ${FB_LIBS} \
-	${BN} ${BN_LIBS} \
-	${BU} ${BU_LIBS} \
-	${PKG} ${PKG_LIBS} \
-	${SYSV} ${SYSV_LIBS} \
+	${TERMIO} \
+	${WDB} \
+	${DM} \
 	${ITK} \
 	${ITCL} \
 	${TK} \
-	${TCL} \
-	${PNG}
+	${TCLCAD}
 
 EXTRA_PROGRAMS = sged
 sged_SOURCES = $(mged_SOURCES)
@@ -164,10 +156,10 @@ sged_CFLAGS = $(mged_CFLAGS)
 sged_LDADD = $(mged_LDADD)
 
 cad_boundp_SOURCES = cad_boundp.c
-cad_boundp_LDADD = ${BU} ${BU_LIBS}
+cad_boundp_LDADD = ${BU}
 
 cad_parea_SOURCES = cad_parea.c
-cad_parea_LDADD = ${BU} ${BU_LIBS}
+cad_parea_LDADD = ${BU}
 
 noinst_HEADERS = \
 	cmd.h \
@@ -213,7 +205,7 @@ EXTRA_DIST = \
 	memalloc.c \
 	mged.dsp
 
-DEPS=src/librt src/libtermio src/libwdb src/libdm src/libsysv src/other/incrTcl src/libtclcad
+DEPS=src/libtermio src/libwdb src/libdm src/other/incrTcl src/libtclcad
 
 MAINTAINERCLEANFILES = Makefile.in
 
