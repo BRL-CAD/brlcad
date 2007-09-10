@@ -20,11 +20,15 @@
 /** @file syn.c
  *  Multi Sine Synthesis
  */
+
+/*
+ * $Id$
+ */
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <math.h>
-#include "./complex.h"
 
 #define TABSIZE	512
 double	sintab[TABSIZE];

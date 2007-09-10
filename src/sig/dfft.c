@@ -38,7 +38,6 @@
 #include <math.h>
 
 #include "machine.h"
-#include "./complex.h"
 
 #define	MAXFFT	4096
 #define	MAXOUT	2048		/* MAXFFT/2 XXX (Actually + 1) */
