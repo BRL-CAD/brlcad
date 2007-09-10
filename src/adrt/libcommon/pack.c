@@ -39,7 +39,7 @@
 #include "umath.h"
 #include "texture.h"
 #include "tienet.h"
-#include "brlcad_config.h"
+#include "common.h"
 
 
 #define K *1024

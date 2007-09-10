@@ -40,7 +40,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
-#include "brlcad_config.h"
+#include "common.h"
 #include "image.h"
 #include "umath.h"
 

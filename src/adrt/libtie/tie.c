@@ -5,7 +5,7 @@
 */
 
 #ifdef HAVE_CONFIG_H
-# include "brlcad_config.h"
+# include "common.h"
 #endif
 
 #include "tie.h"

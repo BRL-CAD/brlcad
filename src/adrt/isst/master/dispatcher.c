@@ -30,7 +30,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include "adrt_common.h"
-#include "brlcad_config.h"
+#include "common.h"
 #include "isst.h"
 #include "tienet.h"
 
