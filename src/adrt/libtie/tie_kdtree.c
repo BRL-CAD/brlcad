@@ -4,6 +4,10 @@
  *  RCSid:          $Id$
 */
 
+#ifdef HAVE_CONFIG_H
+# include "brlcad_config.h"
+#endif
+
 #include "tie_kdtree.h"
 #include <math.h>
 #include <stdio.h>
@@ -18,7 +22,10 @@
 #include <vmath.h>
 #include <rtgeom.h>
 #include <raytrace.h>
-#include <stdint.h>
+
+#ifdef HAVE_STDINT_H
+# include <stdint.h>
+#endif
 
 tfloat TIE_PREC;
 
