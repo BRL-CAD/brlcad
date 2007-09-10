@@ -13,7 +13,6 @@ tieinclude_HEADERS = \
 	tie_kdtree.h \
 	tie_struct.h
 
-AM_CFLAGS = -Wall -pedantic -std=c99 -pipe
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 LINT=splint $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)

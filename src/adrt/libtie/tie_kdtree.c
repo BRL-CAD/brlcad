@@ -29,7 +29,7 @@ tfloat TIE_PREC;
 
 void tie_kdtree_free_node(tie_kdtree_t *node)
 {
-//  tie_kdtree_t *node_aligned = (tie_kdtree_t *)((intptr_t)node & ~0x7L);
+/*  tie_kdtree_t *node_aligned = (tie_kdtree_t *)((intptr_t)node & ~0x7L); */
   tie_kdtree_t *node_aligned = node;
 
   if(((intptr_t)(node_aligned->data)) & 0x4)
@@ -247,14 +247,14 @@ void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min, TIE_
   uint32_t i, j, n, split, cnt[2];
 
 #if 0
-//  if(depth >= 26)
+/*  if(depth >= 26) */
     printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
 #endif
   /* Terminating criteria for KDTREE subdivision */
 fflush (stdout);
   if (node_gd->tri_num <= TIE_KDTREE_NODE_MAX || depth > tie->max_depth)
   {
-//    tie->stat++;
+/*    tie->stat++; */
     tie->stat += node_gd->tri_num;
 #if 0
     if(node_gd->tri_num > tie->stat)
@@ -324,7 +324,7 @@ fflush (stdout);
   * Calculate number of slices to use as a function of triangle density.
   * Setting slices as a function of relative node size does not work so well.
   */
-//  slice_num = MIN_SLICES + MAX_SLICES * ((tfloat)node_gd->tri_num / (tfloat)tie->tri_num);
+/*  slice_num = MIN_SLICES + MAX_SLICES * ((tfloat)node_gd->tri_num / (tfloat)tie->tri_num); */
   slice_num = 1*node_gd->tri_num > MAX_SLICES ? MAX_SLICES : 1*node_gd->tri_num;
 
   for(d = 0; d < 3; d++) {
@@ -577,8 +577,8 @@ fflush (stdout);
   if(side[split][split_slice][0] == node_a && side[split][split_slice][1] == node_b) {
     if(node_gd->tri_num < 10)
       return;
-//      printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]);
-//      printf("moo: %d - %d\n", depth, node_gd->tri_num);
+/*      printf("%f %f %f %f %f %f\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]); */
+/*      printf("moo: %d - %d\n", depth, node_gd->tri_num); */
   }
 #endif
 
@@ -841,7 +841,7 @@ void tie_kdtree_prep(tie_t *tie)
 #endif
 
   /* Grow the head node to avoid floating point fuzz in the building process with edges */
-  MATH_VEC_MUL_SCALAR(delta, delta, 1.0); // XXX
+  MATH_VEC_MUL_SCALAR(delta, delta, 1.0); /* XXX */
   MATH_VEC_SUB(tie->min, tie->min, delta);
   MATH_VEC_ADD(tie->max, tie->max, delta);
 

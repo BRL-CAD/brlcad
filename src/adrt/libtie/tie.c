@@ -220,7 +220,7 @@ tie_work (tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*,
   stack[0].far = far;
 
   /* Process items on the stack */
-//  while (stack_ind >= 0)
+/*  while (stack_ind >= 0) */
   do
   {
     near = stack[stack_ind].near;
