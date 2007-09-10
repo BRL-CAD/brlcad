@@ -343,7 +343,7 @@ void
 fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 {
     int i;
-    fastf_t diff[3];
+    fastf_t diff[3], tmp;
     fastf_t min[3], max[3];
     
 
@@ -436,7 +436,7 @@ VMOVE(fstate->min, fstate->rtip->mdl_min);
 		max[i] = fstate->rtip->mdl_max[i];
 	    diff[i] = max[i] - min[i];
 	}
-	fastf_t tmp = (diff[X]/fstate->gridSpacing[X]-1) * (diff[Y]/fstate->gridSpacing[Y] - 1);
+	tmp = (diff[X]/fstate->gridSpacing[X]-1) * (diff[Y]/fstate->gridSpacing[Y] - 1);
 	fstate->volume = (fstate->a_len + (max[Z] - fstate->max[Z])) * tmp;
 	/* scale fitness to the unon of the sources and individual's bounding boxes */
 	/* FIXME: sloppy 
