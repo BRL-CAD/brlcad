@@ -33,14 +33,16 @@
 static const char RCSphotonmap[] = "";
 #endif
 
-#include "photonmap.h"
-#include "brlcad_config.h"
+#include "common.h"
 
 #include <stdlib.h>
 
 #ifdef HAVE_ALARM
-# include <signal.h>
+#  include <signal.h>
 #endif
+
+#include "photonmap.h"
+
 
 #define	NRoot(x,y) exp(log(x)/y)	/* Not in Use */
 int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs);

@@ -32,7 +32,7 @@
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-#include "brlcad_config.h"
+#include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
