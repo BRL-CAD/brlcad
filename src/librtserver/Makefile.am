@@ -20,7 +20,11 @@ ON_NIL =
 endif
 
 librtserver_la_LIBADD = \
-	${RT} ${ON_NIL}
+	$(top_builddir)/src/libbu/libbu_nil.la \
+	$(top_builddir)/src/libbn/libbn_nil.la \
+	$(top_builddir)/src/librt/librt_nil.la \
+	${ON_NIL} \
+	${TCL}
 
 EXTRA_PROGRAMS = rtserverTest
 
