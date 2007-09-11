@@ -1096,13 +1096,13 @@ if test ! "x$vgr" = "x" ; then
     $ECHO "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
     $ECHO "Benchmark results indicate an approximate VGR performance metric of $vgr"
     ln=`echo $vgr | awk '{printf "%.2f", log($1)}'`
-    log=`echo $vgr | awk '{printf "%.2f", log($1) / log(10)}'`
-    $ECHO "Logarithmic VGR metric is $log  (natural logarithm is $ln)"
+    lg=`echo $vgr | awk '{printf "%.2f", log($1) / log(10)}'`
+    $ECHO "Logarithmic VGR metric is $lg  (natural logarithm is $ln)"
     $ECHO "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
     $ECHO
     $ECHO "These numbers seem to indicate that this machine is approximately $vgr times"
     $ECHO "faster than the reference machine being used for comparison, a VAX 11/780"
-    $ECHO "running 4.3 BSD named VGR.  These results are in fact approximately $log"
+    $ECHO "running 4.3 BSD named VGR.  These results are in fact approximately $lg"
     $ECHO "orders of magnitude faster than the reference."
     $ECHO
 
