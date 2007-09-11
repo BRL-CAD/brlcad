@@ -1085,9 +1085,12 @@ cat <<EOF
 $performance
 EOF
 
-vgr="`cat <<EOF | grep vgr | awk '{print int($9+0.5)}'
-$performance
-EOF`"
+### this confuses /bin/sh on solaris
+#vgr="`cat <<EOF | grep vgr | awk '{print int($9+0.5)}'
+#$performance
+#EOF`"
+vgr="`echo "$performance" | grep vgr | awk '{print int($9+0.5)}'`"
+
 if test ! "x$vgr" = "x" ; then
     $ECHO
     $ECHO "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
