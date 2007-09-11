@@ -833,10 +833,10 @@ void Irradiance(int pid, struct Photon *P, struct application *ap) {
 	for (j= 1; j <= N; j++) {
 #ifndef HAVE_DRAND48
 	    theta= asin(sqrt((j-rand()/(double)RAND_MAX)/M));
-	    phi= (2*M_PI)*((i-rand()/(double)RAND_MAX)/N);
+	    phi= (2.0*M_PI)*((i-rand()/(double)RAND_MAX)/N);
 #else
 	    theta= asin(sqrt((j-drand48())/M));
-	    phi= (2*M_PI)*((i-drand48())/N);
+	    phi= (2.0*M_PI)*((i-drand48())/N);
 #endif
 
 	    /* Assign pt */

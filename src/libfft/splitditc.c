@@ -130,7 +130,7 @@ printf("X[%d] += t0;\n", i0-1 );
 rfft_mults += 2; rfft_adds += 6;
 			}
 		}
-		e = 2*M_PI/n2;
+		e = 2.0*M_PI/n2;
 		a = e;
 		if( n4 < 4 ) continue;
 		for( j = 2; j <= n4/2; j++ ) {
