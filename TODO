@@ -17,21 +17,19 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
+* test and prepare coordinated release
+
+
+THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------
+
 * clone and tracker
 
 * Endgame Framework importer plugin
 
 * get archer working, ensure functionality cross-platform
 
-* begin 8.0 branch for backwards-incompatible/complex changes
-
-
-THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------
-
 * modify the new tree traversal code to be generic
-
-* update adrt with latest changes being used by muves team
 
 * integrate adrt, ensure compilation/execution works cross-platform
 
