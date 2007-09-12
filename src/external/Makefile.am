@@ -1,12 +1,11 @@
 # $Id$
 
-EXTRA_DIST = README
-
 if BUILD_CUBIT
 CUBIT_DIR = Cubit
+CUBIT_FILES =
 else !BUILD_CUBIT
 CUBIT_DIR =
-EXTRA_DIST += \
+CUBIT_FILES = \
 	Cubit/Makefile.am \
 	Cubit/Makefile.in \
 	Cubit/g-sat.cxx
@@ -14,18 +13,20 @@ endif
 
 if BUILD_EF
 EF_DIR = EndgameFramework
+EF_FILES =
 else !BUILD_EF
 EF_DIR =
-EXTRA_DIST += \
+EF_FILES = \
 	EndgameFramework/Makefile.am \
 	EndgameFramework/Makefile.in
 endif
 
 if WITH_PROE
 PROE_DIR = ProEngineer
+PROE_FILES =
 else !WITH_PROE
 PROE_DIR =
-EXTRA_DIST += \
+PROE_FILES = \
 	ProEngineer/Makefile.am \
 	ProEngineer/Makefile.in \
 	ProEngineer/install.doc \
@@ -40,9 +41,10 @@ endif
 
 if BUILD_UG
 UG_DIR = Unigraphics
+UG_FILES =
 else !BUILD_UG
 UG_DIR =
-EXTRA_DIST += \
+UG_FILES = \
 	Unigraphics/Makefile.am \
 	Unigraphics/Makefile.in \
 	Unigraphics/conv.h \
@@ -58,6 +60,13 @@ SUBDIRS = \
 	$(EF_DIR) \
 	$(PROE_DIR) \
 	$(UG_DIR)
+
+EXTRA_DIST = \
+	README \
+	$(CUBIT_FILES) \
+	$(EF_FILES) \
+	$(PROE_FILES) \
+	$(UG_FILES)
 
 DIST_SUBDIRS = \
 	Cubit \
