@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-06-XX  Release 7.10.3                                     ---
 ----------------------------------------------------------------------
 
+* fixed benchmark results computation on Solaris - Erik Greenwald
 * fix database corruption bug caused during dbconcat - John Anderson
 * mirror BoT primitives - Sean Morrison
 * BoT vertex selection in mged reports local units - Sean Morrison
