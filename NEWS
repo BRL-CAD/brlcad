@@ -12,7 +12,7 @@ entire history of the project is available through CVS.
 ----------------------------------------------------------------------
 
 * fixed benchmark results computation on Solaris - Erik Greenwald
-* fix database corruption bug caused during dbconcat - John Anderson
+* fixed database corruption bug caused during dbconcat - John Anderson
 * mirror BoT primitives - Sean Morrison
 * BoT vertex selection in mged reports local units - Sean Morrison
 * improved photon map irradiance progress reporting - Erik Greenwald
@@ -22,9 +22,9 @@ entire history of the project is available through CVS.
 * ADRT libtie bug fixes and performance enhancements - Justin Shumaker
 * mged now tests for vim before vi for text editing - Sean Morrison
 * fixed parallel operability bug on the Intel Mac - Erik Greenwald
-* detect actually available CPUs on an Intel Mac - Erik Greenwald
+* detect actual available CPUs on an Intel Mac - Erik Greenwald
 * Z clipping now off by default in mged - Sean Morrison
-* add performance optimizations to the pipe primitive - John Anderson
+* added pipe primitive performance optimizations - John Anderson
 * handle discontinuous changes in pipe inner radii - John Anderson
 * allow rt more than available cpus for debugging - Sean Morrison
 * fixed small TGC (cone) primitive raytrace prep bug - Sean Morrison
