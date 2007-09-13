@@ -47,8 +47,8 @@ if [ ! -e /usr/bin/fakeroot ] ; then
     exit 1
 fi
 
-if [ ! -e /usr/bin/debmake ] ; then
-    echo "Need the debmake package."
+if [ ! -e /usr/bin/debuild ] ; then
+    echo "Need the devscripts package."
     exit 1
 fi
 
