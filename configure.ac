@@ -120,11 +120,14 @@ CONFIG_MONTH=`date +%m`
 CONFIG_YEAR=`date +%Y`
 CONFIG_DATE="${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}"
 CONFIG_TIME="`date '+%H %M %S'`"
+CONFIG_TS="`date`"
 AC_SUBST(CONFIG_DAY)
 AC_SUBST(CONFIG_MONTH)
 AC_SUBST(CONFIG_YEAR)
 AC_SUBST(CONFIG_DATE)
 AC_SUBST(CONFIG_TIME)
+AC_SUBST(CONFIG_TS)
+
 
 # print out the title with a pretty box computed to wrap around
 title="Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
@@ -3720,6 +3723,7 @@ AC_CONFIG_FILES([
 	misc/brlcad-config
 	misc/brlcad.spec
 	misc/debian/Makefile
+	misc/debian/changelog
 	misc/macosx/Makefile
 	misc/macosx/Resources/Makefile
 	misc/macosx/Resources/ReadMe.rtfd/Makefile

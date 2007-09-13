@@ -1,0 +1,5 @@
+brlcad (@BRLCAD_VERSION@) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Erik Greenwald <erik@smluc.org>  @CONFIG_TS@

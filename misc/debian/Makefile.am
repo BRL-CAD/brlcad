@@ -1,7 +1,7 @@
 EXTRA_DIST = \
 	README \
 	README.Debian \
-	changelog \
+	changelog.in \
 	compat \
 	control \
 	copyright \
